@@ -175,7 +175,6 @@ static char TamperReadValueMVB[] = "MVB";
 static char TamperWriteValueMVM[] = "MVM";
 // RECOVERY_OBJECT: v1 0x0068AE24 _TamperWriteValueMVB
 static char TamperWriteValueMVB[] = "MVB";
-static char TamperDialogLabel[] = "HOTNOTAMPER";
 // RECOVERY_OBJECT: v1 0x0093A9FC _TamperReadClass
 static char TamperReadClass[1];
 // RECOVERY_OBJECT: v1 0x0093AA00 _TamperWriteClass
@@ -266,7 +265,7 @@ void __cdecl check_tamper() {
             }
 
             set_tamper();
-            X_pop(TamperDialogLabel, 0);
+            X_pop("HOTNOTAMPER", 0);
             return;
         }
     }
@@ -2083,7 +2082,11 @@ void __cdecl interlude(int id, char *text, int mode, int ending) {
 
 // ORIGINAL: 0x00523B50 ?ascent@@YAXXZ 0x00523B50-0x00523C58 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:pact-ascent-owner", "pinned:0x00523B50 original complete span; Player59C fields and real NetMsgPrimary/ConsoleGlobal owners.", "pinned:68E62C PACTTREATY, ASCENT and asctran_sm.pcx text inputs; source literals, never original-image calls.", "pinned:525F08..52600E same turn_upkeep ascent path; plural0, leader gender and console-faction reload after parser; bit2000 unnamed, not PFLAG_MAP_REVEALED200.", "historical seed:src/recovered/units/00523b50.cpp complete mapping/findings retained.", "recovery/tests/test_pact_ascent.py actual-source callback/damage controls, not native layout or runtime acceptance."], "reason": "Recover the complete announcement/turn-flow function using real source-owned players, console, parser state and callbacks. Retain original identity/spans and seed findings; live faction reloads and grammar come from full pinned instructions. No byte or game acceptance claim."}
-void __cdecl ascent() {
+// WORKAROUND(inline): the image expands this body into turn_upkeep
+// (0x005258C0, sharing its ASCENT and asctran_sm.pcx literals) and also keeps
+// this out-of-line copy with no callers; `inline` expands it and dllexport
+// (game.h's MEASURED declaration) keeps the copy.
+MEASURED inline void __cdecl ascent() {
     if (GameDataStateStorage.fields_.turn_current_num_ == 0x4b &&
         has_tech(Facility[FAC_BIOLOGY_LAB].preq_tech,
                  ConsoleGlobal.faction_id_)) {
@@ -2995,10 +2998,8 @@ int __cdecl end_of_game(int check_victory) {
         say_year(StringTemp);
         parse_says(0, StringTemp, -1, -1);
         if ((GameDataStateStorage.fields_.game_state_ & EndgameNetResults) != 0) {
-            if (ScenarioSave.objective_req_victory != 0 &&
-                (GameDataStateStorage.fields_.game_state_ & EndgameScoreMode) == 0) {
-                X_pop(const_cast<char *>("SCENARIO"), "SCENTIMELIMIT", 0);
-            } else {
+            if (ScenarioSave.objective_req_victory == 0 ||
+                (GameDataStateStorage.fields_.game_state_ & EndgameScoreMode) != 0) {
                 int best_faction = ConsoleGlobal.faction_id_;
                 int best_score = -9999;
                 for (int faction_id = 1; faction_id < 8; ++faction_id) {
@@ -3023,6 +3024,8 @@ int __cdecl end_of_game(int check_victory) {
                 } else {
                     X_pop(const_cast<char *>("SCENARIO"), "SCENTIMELOSS", 0);
                 }
+            } else {
+                X_pop(const_cast<char *>("SCENARIO"), "SCENTIMELIMIT", 0);
             }
         } else {
             X_pop("TIMELIMIT", 0);
@@ -3294,23 +3297,7 @@ void __cdecl turn_upkeep() {
     }
 
     random_events(0);
-    // ascent()'s body as the image expands it here (shared ASCENT and
-    // asctran_sm.pcx literals). Calling ascent() instead stays exact only
-    // with game.h's declaration `MEASURED void __cdecl ascent();` and a
-    // `MEASURED inline` definition (proposed; game.h is outside this unit).
-    if (GameDataStateStorage.fields_.turn_current_num_ == 0x4b
-        && has_tech(Facility[FAC_BIOLOGY_LAB].preq_tech, ConsoleGlobal.faction_id_)) {
-        interlude(1, 0, 1, 0);
-    }
-    if (ascending(ConsoleGlobal.faction_id_)
-        && !(PlayersData[ConsoleGlobal.faction_id_].flags & 0x2000)) {
-        PlayersData[ConsoleGlobal.faction_id_].flags |= 0x2000;
-        parse_set(Players[ConsoleGlobal.faction_id_].is_leader_female, 0);
-        parse_says(0, Players[ConsoleGlobal.faction_id_].title_leader, -1, -1);
-        parse_set(Players[ConsoleGlobal.faction_id_].is_leader_female, 0);
-        parse_says(1, Players[ConsoleGlobal.faction_id_].name_leader, -1, -1);
-        popp(ScriptPopupFile, "ASCENT", 0, "asctran_sm.pcx", 0);
-    }
+    ascent();
     if ((GameDataStateStorage.fields_.turn_current_num_ & 3) == 1) reset_territory();
     do_all_non_input();
 }
@@ -3972,14 +3959,25 @@ void __cdecl crash_landing(int faction_id);
 // ORIGINAL: 0x005275B0 ?control_turn@@YAXXZ 0x005275B0-0x00528E94;0x0065D6DD-0x0065DB67 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:6167e270cb6ddcd091b2294560a31b1ec1372cef:src/unrecovered/005275b0.cpp: full original identity/spans and useful historical findings", "ConsoleInfoWin original object7AD2A0 owns suppression memberAC at7AD34C; native527A70/527C9E set1/0; init4592A0 and timer_proc459150 confirm ownership.", "OfferResetCells, PendingDiplomacyFlags and FactionDiplomacyFlags retain original flattened indexing through their actual typed owners.", "Initial text at93AA04/08/0C is proven loader-zero and only read by observed consumers; one-byte source bounds are lower-bound interpretations, not claims of complete original capacity or absence of indirect writers.", "Complete native cleanup-route review supports one real Popup owner; matching and exceptional cleanup restoration remain unfinished.", "recovery/tasks/control-turn-owner-oct5.json", "recovery/tests/test_control_turn_actual_source.py"], "reason": "Recover complete turn orchestration through existing genuine application owners and automatic Popup lifetime. Preserve original branch ordering and error behavior; all primary and exceptional spans remain restoration obligations, not a claim of current native lifetime/byte/runtime equivalence."}
 // TRIED: mismatch #11 near prologue (xor vs push) - popup/end_game_pop declared as real C++ locals rather than the original's staggered same-slot vtable-poke construction; the "big dialog" tail (Dialogs/Spot/ListBox/CheckBox/EditGroup/ SpriteBox/StringStruct x2/Sprite) is reached by raw offset casts into BasePop's own dialogs_/spot_/sprite_ members, not by a modelled derived class - faithful call order/args, not byte fidelity. Main loop, faction dispatch, diplomacy/ tech/council logic transcribed directly from the disasm.
+// WORKAROUND(inline): expand_rect (scroll.cpp) is out of line in this tree;
+// control_turn expands it at each status-frame inset (0x00527853: the negated
+// amount held in esi, added to left/top and subtracted from right/bottom).
+static inline RECT *turn_expand_rect(RECT *rect, int horizontal, int vertical) {
+    rect->left -= horizontal;
+    rect->right += horizontal;
+    rect->top -= vertical;
+    rect->bottom += vertical;
+    return rect;
+}
 // WORKAROUND(inline): dead /Ob2 spend. The image tears its first return site
 // (end_of_game(1)) and the shared ExitTurnLoop/end_of_game(0) site down
 // shallower than this body otherwise does (calls ~FlatButton 0x00406880 and
 // keeps ~Dialogs 0x00406910 out of line there; per-site depths 5,5,6,6,7+13,
-// 7+13,7+18). Two expansions before the password loop and two after the
-// faction loop give 5,6,6,6,7+13,7+13,7+18; the original's spending call
-// sites are unknown, and the second site (save failed, ExitTurnLoop set)
-// stays one level deep under every placement tried.
+// 7+13,7+18). The five expand_rect insets before the password loop supply
+// the spend two probes there used to; two expansions after the faction loop
+// still give 5,6,6,6,7+13,7+13,7+18 (none: 7+18 at the sixth site). Their
+// original spending call sites are unknown, and the second site (save
+// failed, ExitTurnLoop set) stays one level deep under every placement tried.
 static inline int control_turn_spend(int k) { if (k == 1) k = 2; return k; }
 void __cdecl control_turn() {
     int retry_count = 0;
@@ -4048,23 +4046,23 @@ turn_loop:
                 RECT frame;
                 frame = MainInterfaceGlobal.status_left_rect_;
                 MainInterfaceGlobal.Buffer::box_sprite(&frame, &InterfaceBoxStyles[21]);
-                frame.left += 3; frame.top += 3; frame.right -= 3; frame.bottom -= 3;
+                turn_expand_rect(&frame, -3, -3);
                 MainInterfaceGlobal.Buffer::box_sprite(&frame, &InterfaceBoxStyles[18]);
                 frame = MainInterfaceGlobal.status_right_rect_;
                 MainInterfaceGlobal.Buffer::box_sprite(&frame, &InterfaceBoxStyles[21]);
-                frame.left += 3; frame.top += 3; frame.right -= 3; frame.bottom -= 3;
+                turn_expand_rect(&frame, -3, -3);
                 MainInterfaceGlobal.Buffer::box_sprite(&frame, &InterfaceBoxStyles[18]);
                 frame = MainInterfaceGlobal.status_hit_rect_;
                 MainInterfaceGlobal.Buffer::box_sprite(&frame, &InterfaceBoxStyles[21]);
-                frame.left += 3; frame.top += 3; frame.right -= 3; frame.bottom -= 3;
+                turn_expand_rect(&frame, -3, -3);
                 MainInterfaceGlobal.Buffer::box_sprite(&frame, &InterfaceBoxStyles[18]);
                 frame = MainInterfaceGlobal.tutorial_bounds_;
                 MainInterfaceGlobal.Buffer::box_sprite(&frame, &InterfaceBoxStyles[21]);
-                frame.left += 3; frame.top += 3; frame.right -= 3; frame.bottom -= 3;
+                turn_expand_rect(&frame, -3, -3);
                 MainInterfaceGlobal.Buffer::box_sprite(&frame, &InterfaceBoxStyles[18]);
                 frame = MainInterfaceGlobal.message_bounds_;
                 MainInterfaceGlobal.Buffer::box_sprite(&frame, &InterfaceBoxStyles[21]);
-                frame.left += 3; frame.top += 3; frame.right -= 3; frame.bottom -= 3;
+                turn_expand_rect(&frame, -3, -3);
                 MainInterfaceGlobal.Buffer::box_sprite(&frame, &InterfaceBoxStyles[18]);
                 frame = MainInterfaceGlobal.date_rect_;
                 MainInterfaceGlobal.Buffer::box_sprite(&frame, &InterfaceBoxStyles[18]);
@@ -4074,8 +4072,6 @@ turn_loop:
                 ConsoleGlobal.cover_window_.fill(0);
                 ConsoleGlobal.cover_window_.Win::show(0);
                 do_all_draws();
-                control_turn_spend(3); // WORKAROUND(inline): see control_turn_spend
-                control_turn_spend(4);
                 MainInterfaceGlobal.string_box_.clear();
 
                 for (;;) {
@@ -5381,28 +5377,6 @@ extern "C" int __cdecl directplay_install_is_complete() {
 const GUID LobbyAppGuid = {0x02D1B480, 0xD680, 0x11D0,
                                   {0x82, 0x1E, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00}};
 
-// Whether the DirectPlay lobby registration records the intro as complete.
-static inline int control_game_intro_complete() {
-    HKEY hkey;
-    unsigned long value_length;
-    unsigned long value_type;
-    unsigned char value_data[12];
-    int is_complete = 0;
-    if (RegOpenKeyExA(HKEY_LOCAL_MACHINE,
-                      "SOFTWARE\\Microsoft\\DirectPlay\\Applications\\"
-                      "Sid Meier's Alpha Centauri",
-                      0, 0, &hkey) == 0) {
-        value_length = 10;
-        if (RegQueryValueExA(hkey, "Complete", 0, &value_type, value_data,
-                             &value_length) == 0
-            && _strcmpi((const char *)value_data, "Yes") == 0) {
-            is_complete = 1;
-        }
-        RegCloseKey(hkey);
-    }
-    return is_complete;
-}
-
 // WORKAROUND(decl): stand-in for an unidentified header inline that ors bits
 // into MapWin::field_1DD70_. The image materializes 0x8C0 in a callee-saved
 // register before the turn-wheel loop (`mov ebx, 0x8c0` at 0x0052AB8D) and ors
@@ -5465,7 +5439,7 @@ void __cdecl control_game() {
                 // Holding Shift skips the lobby's "is the intro complete" registry
                 // look-up and takes the movie path directly.
                 filefind_init("movies\\virtualWorld.wve",
-                              HIBYTE(GetAsyncKeyState(VK_SHIFT)) || control_game_intro_complete());
+                              HIBYTE(GetAsyncKeyState(VK_SHIFT)) || directplay_install_is_complete());
 
                 prefs_load(0);
                 GameDataStateStorage.fields_.game_preferences_ = AlphaIniPrefs.preferences;

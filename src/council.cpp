@@ -69,12 +69,6 @@ int CouncilNotifyPluralSlots[8];
 // RECOVERY_OBJECT: v2 0x0068BF38 0x0068BF44 ?CouncilPendingMessageArgs@@3PAHA 0x005294D3
 int CouncilPendingMessageArgs[3] = {-1, -1, -1};
 
-// Original .data text, as bounded by the pinned image's terminating NULs.
-static const char CouncilSunspotPcx[] = "solar_sm.pcx";
-static const char CouncilSunspotLabel[] = "SUNSPOTSNO2";
-static const char CouncilPbemLabel[] = "COUNCILHOT";
-static const char CouncilBlockedPcx[] = "council_sm.pcx";
-static const char CouncilBlockedLabel[] = "COUNCILNEEDALL";
 
 /*
 Purpose: Say whether a faction may call the planetary council this turn:
@@ -119,7 +113,7 @@ int __cdecl can_call_council(int faction_id, int announce) {
         if (announce != 0 && faction_id == ConsoleGlobal.faction_id_ &&
             ((1 << faction_id) &
              GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) != 0) {
-            NetMsgPrimary.pop(CouncilSunspotLabel, CouncilSunspotPcx);
+            NetMsgPrimary.pop("SUNSPOTSNO2", "solar_sm.pcx");
         }
         return 0;
     }
@@ -128,7 +122,7 @@ int __cdecl can_call_council(int faction_id, int announce) {
         if (announce != 0 && faction_id == ConsoleGlobal.faction_id_ &&
             ((1 << faction_id) &
              GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) != 0) {
-            NetMsgPrimary.pop(CouncilPbemLabel, static_cast<const char *>(0));
+            NetMsgPrimary.pop("COUNCILHOT", static_cast<const char *>(0));
         }
         return 0;
     }
@@ -184,7 +178,7 @@ int __cdecl can_call_council(int faction_id, int announce) {
         if (announce != 0 && faction_id == ConsoleGlobal.faction_id_ &&
             (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
              (1 << faction_id)) != 0) {
-            NetMsgPrimary.pop(CouncilBlockedLabel, CouncilBlockedPcx);
+            NetMsgPrimary.pop("COUNCILNEEDALL", "council_sm.pcx");
         }
         return 0;
     }
@@ -1062,7 +1056,7 @@ void __cdecl council_action(int proposal, int faction_id) {
                     GameDataStateStorage.fields_.game_state_ |= STATE_UNK_1;
                     EndgameExitReason = 10;
                     PlayersData[faction_id].flags |= PFLAG_UNK_20000;
-                    return;
+
                 }
             } else {
                 council_parse_leader(faction_id);
@@ -1073,7 +1067,7 @@ void __cdecl council_action(int proposal, int faction_id) {
                     GameDataStateStorage.fields_.game_state_ |= STATE_UNK_1;
                     EndgameExitReason = 11;
                     PlayersData[faction_id].flags |= PFLAG_UNK_20000;
-                    return;
+
                 }
             }
         }
@@ -1082,23 +1076,23 @@ void __cdecl council_action(int proposal, int faction_id) {
         }
         popp(ScriptPopupFile, "DEFY", 0, "council_sm.pcx", 0);
         {
-            int local_faction = ConsoleGlobal.faction_id_;
+
             for (int other = 1; other < MaxPlayerNum; ++other) {
-                if (other == local_faction || !is_alive(other)) {
+                if (other == ConsoleGlobal.faction_id_ || !is_alive(other)) {
                     continue;
                 }
-                if ((PlayersData[other].diplo_treaties[local_faction] & DTREATY_PACT)
-                    && (PlayersData[other].diplo_treaties[local_faction] & DTREATY_HAVE_SURRENDERED)) {
+                if ((PlayersData[other].diplo_treaties[ConsoleGlobal.faction_id_] & DTREATY_PACT)
+                    && (PlayersData[other].diplo_treaties[ConsoleGlobal.faction_id_] & DTREATY_HAVE_SURRENDERED)) {
                     continue;
                 }
 
-                treaty_on(other, local_faction, 0x50);
+                treaty_on(other, ConsoleGlobal.faction_id_, 0x50);
                 if (other != faction_id) {
                     treaty_on(other, faction_id, DTREATY_PACT);
                     agenda_on(other, faction_id, DAGENDA_DIPLO_PERMANENT);
                 }
                 set_agenda(other, ConsoleGlobal.faction_id_, DAGENDA_FIGHT_TO_DEATH, TRUE);
-                local_faction = ConsoleGlobal.faction_id_;
+
             }
         }
         return;

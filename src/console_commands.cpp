@@ -1684,14 +1684,15 @@ void Console::terraform(int vehicle_id, int terraform_id) { // 0x004D3470
                     popup.start(PopupStartCaption, "TERRAPAY", -1, nullptr, 0x80, nullptr);
                     log_say("Offering option to pay", 0, 0, 0);
                 }
-                if (popup.exec(0, nullptr) == 0) {
+                if (popup.exec(0, nullptr) != 0) {
+                    log_say("Took option to pay", 0, 0, 0);
+                    PlayersData[faction_id_].energy_reserves -= payment;
+                    synch_energy(faction_id_);
+                    update_data(0);
+                } else {
                     log_say("Didn't or couldn't pay; returning", 0, 0, 0);
                     return;
                 }
-                log_say("Took option to pay", 0, 0, 0);
-                PlayersData[faction_id_].energy_reserves -= payment;
-                synch_energy(faction_id_);
-                update_data(0);
             }
         }
 
@@ -5243,12 +5244,10 @@ void Console::editor_view() {
         StringTemp[0] = 0;
         parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
         strcat(StringTemp, Players[faction].formal_name_faction);
-        // WORKAROUND(decl): the image pushes SocialWinOpenParenText/CloseParenText
-        // here; naming them flips corner_the_market's (0x004E2000) add-register tie.
-        strcat(StringTemp, "(");
+        strcat(StringTemp, SocialWinOpenParenText);
         parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
         strcat(StringTemp, Players[faction].noun_faction);
-        strcat(StringTemp, ")");
+        strcat(StringTemp, SocialWinCloseParenText);
         popup.dialogs().item(StringTemp, faction);
         if (faction == ConsoleGlobal.faction_id_) {
             popup.set_value(faction);

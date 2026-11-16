@@ -506,7 +506,7 @@ void __cdecl diplo(int faction_id, int faction_id_with);
 void __cdecl mon_enemy_destroyed(int faction_id, int target_faction);
 
 // Original endgame announcement, with live Console faction reads.
-void __cdecl ascent();
+MEASURED void __cdecl ascent();
 
 // Existing game.cpp owner, also called by complete base_build selection.
 int __cdecl generators(int faction_id, int *count_out);

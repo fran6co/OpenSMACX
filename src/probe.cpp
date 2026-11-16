@@ -860,10 +860,17 @@ L_59fb64:
             }
             return 0;
         }
-        if (faction_tgt
-            && (Vehs[veh_id_tgt].proto_id >= 0x40
-                || (Weapon[VehPrototypes[Vehs[veh_id_tgt].proto_id].weapon_id].offense_rating >= 0
-                    && Vehs[veh_id_tgt].proto_id != 0x0F))) {
+        if (!faction_tgt
+            || (Vehs[veh_id_tgt].proto_id < 0x40
+                && (Weapon[VehPrototypes[Vehs[veh_id_tgt].proto_id].weapon_id].offense_rating < 0
+                    || Vehs[veh_id_tgt].proto_id == 0x0F))) {
+            // 5a201d
+            if (faction == ConsoleGlobal.faction_id_ && mode && HUMAN_BIT(faction)
+                && (NetDaemonNet.action_mode_ & 1)) {
+                NetMsgPrimary.pop("ALIENPROBE", nullptr);
+            }
+            return 0;
+        } else {
             // 5a1460..5a16f4: inlined vulnerable() (x/y param temps in
             // [ebp-0x34]/[ebp-0x60]; has_fac and 2-arg vector_dist stay calls)
             int dist = vulnerable(faction_tgt, Vehs[veh_id_tgt].x, Vehs[veh_id_tgt].y);
@@ -1037,12 +1044,6 @@ L_59fb64:
             }
             goto L_5a2dcd;
         }
-        // 5a201d
-        if (faction == ConsoleGlobal.faction_id_ && mode && HUMAN_BIT(faction)
-            && (NetDaemonNet.action_mode_ & 1)) {
-            NetMsgPrimary.pop("ALIENPROBE", nullptr);
-        }
-        return 0;
     } else if (action == 6) {
         // No initializers: chunk A enters this block at L_5a2571.
         int cost;       // edi; chunk C (5a2ab3..) reads it
