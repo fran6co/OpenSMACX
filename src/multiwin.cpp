@@ -175,8 +175,7 @@ void MultiWin::draw_player(int faction_id, int row, RECT *bounds) {
   _itoa(row, number, 10);
   strcat(StringTemp, number);
   strcat(StringTemp, MultiWinDotSpaceText);
-  GenderDefault = Players[faction_id].is_leader_female;
-  PluralityDefault = 0;
+  parse_set(Players[faction_id].is_leader_female, 0);
   strcat(StringTemp, Players[faction_id].name_leader);
   write_l(StringTemp, &text_rect);
 
@@ -935,6 +934,7 @@ void MultiWin::on_right_click(int x, int y) {
         parse_says(1, Players[faction].name_leader, -1, -1);
         parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
         parse_says(2, Players[faction].noun_faction, -1, -1);
+        // RECOVERY_LITERAL: v1 0x0068677C 0x00686787 $SG58774 0x00478150
         NetMsgPrimary.pop("ELIMINATED", 5000, 0, 0);
         return;
     }
@@ -1012,9 +1012,9 @@ void MultiWin::init() {
         y += 0x13;
     }
 
-    int height = sprite5_.height() * 7 + sprite7_.height() + sprite3_.height();
+    int height = sprite5_.height() * 7 + sprite3_.height() + sprite7_.height();
     if (IsMultiplayerNet) {
-        height += 0x0E + sprite7_.height() + sprite4_.height();
+        height += sprite4_.height() + sprite7_.height() + 0x0E;
     }
     // The image fills the member through its address (0x0047A221).
     RECT *const bounds = &bounds_;
@@ -1057,10 +1057,10 @@ void MultiWin::init() {
     }
 
     if (WinScreenWidth == 800) {
-        Win::move(800 - dib_.bmiHeader.biWidth, dib_.bmiHeader.biHeight + 0x166);
+        Win::move(800 - pixel_width(), 0x166 - pixel_height());
     } else {
-        Win::move((WinScreenWidth + 0x400) / 2 - dib_.bmiHeader.biWidth,
-                  dib_.bmiHeader.biHeight + WinScreenHeight - 0xFF);
+        Win::move((WinScreenWidth + 0x400) / 2 - pixel_width(),
+                  WinScreenHeight - 0xFF - pixel_height());
     }
     panel_open_ = 0;
     if (IsMultiplayerNet) Win::show(0);
