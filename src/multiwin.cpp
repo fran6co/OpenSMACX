@@ -463,7 +463,7 @@ static inline int draw_sprite(Sprite &sprite, Buffer *destination, int x, int y)
   return sprite.draw(destination, sprite.transparent_index(), x, y);
 }
 
-// ORIGINAL: 0x00479330 ?draw@MultiWin@@QAEXH@Z 0x00479330-0x004798EC
+// ORIGINAL: 0x00479330 ?draw@MultiWin@@QAEXH@Z 0x00479330-0x004798EC BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00479330.cpp", "src/multiwin.h", "src/faction.h", "src/spot.h"], "reason": "Move the panel painter from its fixed-address seed onto MultiWin's owned sprites, Spot and GraphicWin buffer; the two separately mapped row painters remain explicit dependencies."}
 // TRIED: raw self+offset field reads (MultiWin left opaque) with reinterpret_cast to Spot/GraphicWin/Buffer sub-objects at their disassembly-derived offsets; diverges at insn #11
 void MultiWin::draw(int draw_type) {
