@@ -5367,17 +5367,17 @@ void __cdecl demands_withdrawal(int faction_id, int faction_id_with) {
 
     switch (response) {
     case 0:
-// RECOVERY_LITERAL: v1 0x0068D68C 0x0068D697 $SG64474 0x0053E4C0
+// RECOVERY_LITERAL: v1 0x0068D68C 0x0068D697 $SG64476 0x0053E4C0
         NetMsgPrimary.pop("WITHSUNYES", 5000, 0, 0);
         break;
     case 1:
-// RECOVERY_LITERAL: v1 0x0068D680 0x0068D68A $SG64476 0x0053E4C0
+// RECOVERY_LITERAL: v1 0x0068D680 0x0068D68A $SG64478 0x0053E4C0
         NetMsgPrimary.pop("WITHSUNNO", 5000, 0, 0);
         break;
     case 2:
 // The withdrawal response selects the war, refusal or acceptance script topic.
 // Bounds cover the literal payload, not surrounding allocation or lifetime.
-// RECOVERY_LITERAL: v1 0x0068D674 0x0068D67F $SG64478 0x0053E4C0
+// RECOVERY_LITERAL: v1 0x0068D674 0x0068D67F $SG64480 0x0053E4C0
         NetMsgPrimary.pop("WITHSUNWAR", 5000, 0, 0);
         break;
     default:
