@@ -326,7 +326,20 @@ extent. The bounded alignment rules compare every gap byte, including the narrow
 original/candidate-identical two-byte `MOV EDI,EDI` case before a DWORD-aligned
 table; they do not treat arbitrary instructions as padding.
 Unsupported layouts, extra bytes, wrong targets and missing evidence remain
-failures or unknowns. See `docs/DECOMP_MAP.md`; linked retention/allocation,
+failures or unknowns. A direct-index table without one dominating guard may be
+bounded on every incoming path (`associated_binary._path_bounded_dispatch`); a
+register carried across a direct call survives only when
+`callee_preservation` proves from the callee's image bytes that it hands the
+register back (no blanket callee-saved assumption, user decision 2026-11-12).
+Imported Windows functions are the one exception (user decision 2026-11-16):
+`import_contracts` reads each import's convention and argument bytes from its
+header-derived decorated name (`_Name@N` stdcall pops N, `_Name` cdecl pops 0)
+in the short import objects of the declared toolchain's import libraries
+(VC6 `LIB/*.LIB`), matched to the image's own import directory. A call through
+such an IAT slot (`call [slot]`, a register loaded from it, or a `jmp [slot]`
+thunk) takes that stack effect and, per the same documented Win32 contract,
+preserves EBX/ESI/EDI/EBP. Imports without a unique decorated contract and all
+virtual calls still refuse. See `docs/DECOMP_MAP.md`; linked retention/allocation,
 structural/runtime evidence and full acceptance prerequisites are unchanged.
 
 Unplaced compiler labels and all unbound pooled literals remain unknown references

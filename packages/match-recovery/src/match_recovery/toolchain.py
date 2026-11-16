@@ -80,9 +80,40 @@ def _inventory(description):
     return groups, entries
 
 
+def declared_directories(root) -> tuple[Path, ...]:
+    """The canonical directories the project's toolchain description declares.
+
+    Uses the same cached discovery as `snapshot`; an unconfigured toolchain
+    declares none. Content identity remains `snapshot`'s responsibility.
+    """
+    discovered = _discover(Path(root).resolve())
+    if discovered is None:
+        return ()
+    _, _, _, description = discovered
+    return tuple(Path(spelling) for _, spelling in sorted(description["directories"].items())
+                 if isinstance(spelling, str) and Path(spelling).is_absolute())
+
+
 def snapshot(root):
     """Return declared external content identity, or None for unconfigured tools."""
     root = Path(root).resolve()
+    discovered = _discover(root)
+    if discovered is None:
+        return None
+    value, policy, before, description = discovered
+    key = digest({"policy": before, "description": description})
+    groups, entries = _inventory(description)
+
+    def unchanged():
+        if _inventory(description)[1] != entries:
+            raise ValueError("toolchain inputs or directory membership changed during observation")
+        if policy() != before:
+            raise ValueError("toolchain discovery policy changed during observation")
+
+    return _observe(before, description, key, groups, entries, unchanged)
+
+
+def _discover(root):
     project = read_json(root / "recovery/project.json")
     if "toolchain" not in project:
         return None
@@ -138,15 +169,11 @@ def snapshot(root):
             _descriptions.move_to_end(policy_key)
             while len(_descriptions) > _CACHE_LIMIT:
                 _descriptions.popitem(last=False)
-    key = digest({"policy": before, "description": description})
-    groups, entries = _inventory(description)
+    return value, policy, before, description
 
-    def unchanged():
-        if _inventory(description)[1] != entries:
-            raise ValueError("toolchain inputs or directory membership changed during observation")
-        if policy() != before:
-            raise ValueError("toolchain discovery policy changed during observation")
 
+def _observe(before, description, key, groups, entries, unchanged):
+    caching = os.name == "posix" and os.environ.get("MATCH_RECOVERY_TOOLCHAIN_CACHE", "on") == "on"
     with _cache_lock:
         cached = _observations.get(key) if caching else None
         if cached is not None:

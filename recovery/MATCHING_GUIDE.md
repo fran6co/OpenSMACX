@@ -1267,6 +1267,38 @@ raw field access where the original used inline accessors.
 - **Deleting an unused declaration from a wide header is a header change**:
   it shifts `$SG` numbering and can flip ties; vet it with
   `check-matches --since`, not object compares alone.
+- **Shared `return 0` targets follow source order, not layout**: switch
+  arms are laid out by case value, but an arm's conditional `return 0`
+  joins a shared return-0 block only when the arm is written before that
+  block's owning arm. When the image branches backwards into an earlier
+  arm's epilogue, reorder the cases in source (window_proc).
+- **A nested callee's inline decision follows its own spelling cost**:
+  when a depth-2 expansion flips (menu_proc -> quit_game -> reset),
+  adjust the inner callee's cost; caller spend does not move it.
+  Accessors, chained assignments, memset vs loop and sub-struct
+  references cost nothing; cast array-of-struct lvalues do.
+- **The image can refuse a callee at an early site and expand it later
+  in the same function** (go_to in enemy_move).
+- **After merging a callee into its callers' unit, re-measure every
+  caller whose hand-copies became calls**: a real call costs more /Ob2
+  budget than the written-out body, and nested expansions through
+  invented helper layers can flip (base_doctors).
+- **Store order sets an induction pointer's anchor**: in a loop writing
+  `A = P[f].a; B = P[f].b;`, VC6 anchors the walk on the last store's
+  field and emits that store first; write b first to anchor on a.
+- **A repeated block's register shape can come from the function, not
+  the block**: if sibling functions show the same block in different
+  image shapes, spelling the block will not help (ReportIf insets).
+- **A helper called out of line at the first N sites and expanded at the
+  rest means the source called the inline wrapper at every site**;
+  hand-writing its body at some sites moves the cut-off
+  (read_basic_rules).
+- **`mov reg,K; add left,reg; sub right,reg` is an inline inset helper
+  taking K**; hand-written `+= K` gives immediates.
+- **A zero register one use short**: when the image keeps 0 in ebx and
+  ours uses test/immediates, one dead zero store flips the allocation;
+  the original had one more zero use that emits no code (unfound in
+  MapWin::init).
 - **Canonicalised forms (not levers).** `f(a) < f(b)` and its mirrored or
   negated forms give the same call order; `a * b` vs `b * a` compile
   identically.

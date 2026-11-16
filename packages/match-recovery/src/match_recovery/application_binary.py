@@ -729,6 +729,10 @@ def _verify_selection(root: Path, selected: frozenset[str], image_path: Path, *,
         raise ValueError("records refer to a different configured original image")
     image_data = image_path.read_bytes()
     image = PeImage(image_data, snapshot["image_sha256"])
+    # Header-derived stack contracts of imported Windows functions (see
+    # import_contracts); register-preservation proofs may cross those calls.
+    from .import_contracts import declare_toolchain_import_contracts
+    declare_toolchain_import_contracts(root, image)
     object_bindings = read_objects(root, snapshot["image_sha256"], inputs=source_inputs)
     literal_bindings = read_literals(root, snapshot["image_sha256"], inputs=source_inputs)
     associated_bindings = read_associated(root, snapshot["image_sha256"], inputs=source_inputs)
@@ -1447,6 +1451,8 @@ def verify_linked_selection(root: Path, selected, image_path: Path) -> dict:
     if hashlib.sha256(raw_image).hexdigest() != pin:
         raise ValueError("linked source comparison requires the configured pinned original image")
     image = PeImage(raw_image, pin)
+    from .import_contracts import declare_toolchain_import_contracts
+    declare_toolchain_import_contracts(root, image)
     source_roots = replica_roots(settings.source.roots)
     source_files = {name: data for name, data in replica_snapshot(root, source_roots).items()
                     if data is not None}

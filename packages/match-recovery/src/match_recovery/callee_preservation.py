@@ -35,11 +35,26 @@ Indirect jumps are followed only through `jmp [r*4+table]` whose index is
 bounded on the path by an unsigned `cmp r,imm` edge (optionally through one
 byte selector map); every table cell must carry a HIGHLOW relocation.
 
-Everything else refuses: undecodable or non-executable bytes, indirect calls
-while R holds the caller's value (imports included), unbounded indirect
-jumps, interrupts and other unsupported transfers, a restore at an unknown or
-wrong stack depth, recursion and the search/depth bounds. Stores through
-computed pointers (including indexed frame addresses) are outside this model.
+Imported Windows API functions (user decision 2026-11-16: "Take the
+Windows's functions stack effect from it's documented signature") are the one
+exception to "proved from the callee's own bytes". A call is an import call
+when it is `call [slot]`, `call reg` where reg was loaded by `mov reg,[slot]`
+on the path (and survived since), or a direct call/jump into a routine that
+tail-jumps `jmp [slot]`, and the IAT `slot` carries a contract declared for
+this image by `import_contracts.declare_import_contracts` (the
+convention and argument bytes come from the header-derived decorated import
+name in the toolchain's import libraries, never from the caller's code). Such a
+call pops the declared bytes and, per the documented Win32 x86 contract that
+the same documented signature states, hands back EBX, ESI, EDI and EBP
+unchanged while EAX, ECX and EDX are clobbered. That contract applies only to
+slots with a declared signature; an import without one refuses as before.
+
+Everything else refuses: undecodable or non-executable bytes, other indirect
+calls while R holds the caller's value (virtual calls through vtables
+included), unbounded indirect jumps, interrupts and other unsupported
+transfers, a restore at an unknown or wrong stack depth, recursion and the
+search/depth bounds. Stores through computed pointers (including indexed frame
+addresses) are outside this model.
 """
 
 from __future__ import annotations
@@ -49,6 +64,7 @@ from capstone import (
     CS_GRP_JUMP, CS_GRP_RET, CS_MODE_32, Cs, x86,
 )
 
+from .import_contracts import declared_import_contracts
 from .model import Span
 from .pe_coff import PeImage
 
@@ -85,6 +101,9 @@ _STACK_PROBE = bytes.fromhex(
     "2bc88bc485018be18b088b400450c3")
 _STACK_PROBE_PRESERVES = frozenset(("ebx", "ecx", "edx", "esi", "edi", "ebp"))
 _PROBE = "probe"
+# Documented Win32 x86 contract of every documented API function (stdcall and
+# cdecl alike): these registers come back unchanged; EAX, ECX, EDX do not.
+_IMPORT_PRESERVES = frozenset(("ebx", "esi", "edi", "ebp"))
 
 
 class _Refusal(ValueError):
@@ -100,6 +119,7 @@ class _Context:
 
     def __init__(self, image: PeImage):
         self.image = image
+        self.imports: dict = declared_import_contracts(image)
         self.decoded: dict[int, object] = {}
         self.verdicts: dict[tuple[int, str], str] = {}
         self.effects: dict[int, int | str | None] = {}
@@ -165,7 +185,9 @@ _CONTEXTS: dict[int, tuple[PeImage, _Context]] = {}
 
 def _context(image: PeImage) -> _Context:
     cached = _CONTEXTS.get(id(image))
-    if cached is not None and cached[0] is image:
+    # A context built under other declared contracts is stale.
+    if (cached is not None and cached[0] is image
+            and cached[1].imports == declared_import_contracts(image)):
         return cached[1]
     if len(_CONTEXTS) > 8:
         _CONTEXTS.clear()
@@ -196,6 +218,50 @@ def _direct_target(instruction) -> int | None:
     if len(operands) == 1 and operands[0].type == x86.X86_OP_IMM:
         return operands[0].imm & 0xFFFFFFFF
     return None
+
+
+def _absolute_slot(operand) -> int | None:
+    """The address of a plain `[disp32]` memory operand, if it is one."""
+    if operand.type != x86.X86_OP_MEM or operand.size != 4:
+        return None
+    memory = operand.mem
+    if memory.base or memory.index or memory.segment != x86.X86_REG_INVALID:
+        return None
+    return memory.disp & 0xFFFFFFFF
+
+
+def _import_slot(context: "_Context", instruction, held: frozenset) -> int | None:
+    """The declared import an indirect CALL/JMP transfers to, if any."""
+    operands = instruction.operands
+    if len(operands) != 1:
+        return None
+    operand = operands[0]
+    if operand.type == x86.X86_OP_REG and operand.size == 4:
+        slot = dict(held).get(_family(instruction, operand.reg))
+    else:
+        slot = _absolute_slot(operand)
+    return slot if slot in context.imports else None
+
+
+def _held_step(context: "_Context", instruction, held: frozenset) -> frozenset:
+    """Registers holding a declared import's pointer, loaded by `mov r32,[slot]`."""
+    written = _written_families(instruction)
+    result = frozenset(item for item in held if item[0] not in written)
+    operands = instruction.operands
+    if (instruction.mnemonic == "mov" and len(operands) == 2
+            and operands[0].type == x86.X86_OP_REG and operands[0].size == 4):
+        slot = _absolute_slot(operands[1])
+        family = _family(instruction, operands[0].reg)
+        if slot in context.imports and family not in (None, "esp"):
+            result = result | {(family, slot)}
+    return result
+
+
+def _import_label(context: "_Context", slot: int) -> str:
+    contract = context.imports[slot]
+    module = getattr(contract, "module", "?")
+    name = getattr(contract, "name", None) or f"#{getattr(contract, 'ordinal', '?')}"
+    return f"{module}!{name}"
 
 
 def _frame_store_overlaps(instruction, esp: int | None, ebp: int | None, slot: int) -> str | None:
@@ -388,7 +454,7 @@ def _analyse(context: _Context, entry: int, family: str, depth: int,
     if entry in active:
         raise _ContextRefusal(f"callee {entry:#x} is recursive; preservation is not proved")
     active = active | {entry}
-    stack = [(entry, 0, None, None, _ORIGINAL, None, frozenset())]
+    stack = [(entry, 0, None, None, _ORIGINAL, None, frozenset(), frozenset())]
     seen = set()
     returns = 0
     while stack:
@@ -398,7 +464,7 @@ def _analyse(context: _Context, entry: int, family: str, depth: int,
         seen.add(state)
         if len(seen) > PRESERVATION_STATE_LIMIT:
             raise _Refusal(f"callee {entry:#x} exceeds the preservation search bound")
-        address, esp, ebp, eax, status, flags, bounds = state
+        address, esp, ebp, eax, status, flags, bounds, held = state
         instruction = context.decode(address)
         following = address + instruction.size
         if (instruction.group(CS_GRP_INT) or instruction.group(CS_GRP_IRET)
@@ -416,9 +482,33 @@ def _analyse(context: _Context, entry: int, family: str, depth: int,
                 raise _Refusal(f"callee {entry:#x} returns at {address:#x} without restoring {family}")
             returns += 1
             continue
+        if instruction.group(CS_GRP_JUMP) and _direct_target(instruction) is None:
+            slot = _import_slot(context, instruction, held)
+            if slot is not None:
+                # Tail jump into a declared import: it returns to our caller.
+                if saved:
+                    raise _Refusal(f"callee {entry:#x} tail-jumps to {_import_label(context, slot)} "
+                                   f"with {family} saved, at {address:#x}")
+                if family not in _IMPORT_PRESERVES:
+                    raise _Refusal(f"callee {entry:#x} tail-jumps to {_import_label(context, slot)}, "
+                                   f"which does not preserve {family}, at {address:#x}")
+                returns += 1
+                continue
         if instruction.group(CS_GRP_CALL):
             target = _direct_target(instruction)
             next_status = status
+            slot = None if target is not None else _import_slot(context, instruction, held)
+            if slot is not None:
+                if family not in _IMPORT_PRESERVES:
+                    if not saved:
+                        raise _Refusal(f"callee {entry:#x} calls {_import_label(context, slot)}, which "
+                                       f"does not preserve {family}, at {address:#x}")
+                    next_status = (status[0], True)
+                next_esp = None if esp is None else esp + context.imports[slot].popped
+                next_held = frozenset(item for item in held if item[0] in _IMPORT_PRESERVES)
+                stack.append((following, next_esp, ebp, None, next_status, None, frozenset(), next_held))
+                continue
+            next_held = frozenset()
             if target is None or instruction.bytes[0] != 0xE8:
                 if not saved:
                     raise _Refusal(f"callee {entry:#x} makes an unprovable call at {address:#x}")
@@ -436,22 +526,24 @@ def _analyse(context: _Context, entry: int, family: str, depth: int,
                         # The save is live; a nested clobber only means the
                         # POP must restore the register.
                         next_status = (status[0], True)
+                next_held = frozenset(item for item in held
+                                      if _preserves_quietly(context, target, item[0], depth, active))
             if effect == _PROBE:
                 next_esp = None if esp is None or eax is None else esp - eax
             else:
                 next_esp = None if esp is None or effect is None else esp + effect
-            stack.append((following, next_esp, ebp, None, next_status, None, frozenset()))
+            stack.append((following, next_esp, ebp, None, next_status, None, frozenset(), next_held))
             continue
         if instruction.group(CS_GRP_JUMP) or instruction.group(CS_GRP_BRANCH_RELATIVE):
             target = _direct_target(instruction)
             if target is None:
                 for target in context.table_targets(instruction, bounds):
-                    stack.append((target, esp, ebp, eax, status, None, bounds))
+                    stack.append((target, esp, ebp, eax, status, None, bounds, held))
                 continue
             taken, fallthrough = _edge_bounds(instruction, flags, bounds)
-            stack.append((target, esp, ebp, eax, status, flags, taken))
+            stack.append((target, esp, ebp, eax, status, flags, taken, held))
             if instruction.id != x86.X86_INS_JMP:
-                stack.append((following, esp, ebp, eax, status, flags, fallthrough))
+                stack.append((following, esp, ebp, eax, status, flags, fallthrough, held))
             continue
         next_status = status
         operands = instruction.operands
@@ -478,9 +570,19 @@ def _analyse(context: _Context, entry: int, family: str, depth: int,
             next_status = _ORIGINAL  # released while the register still holds the value
         next_flags, next_bounds = _value_step(instruction, flags, bounds, context)
         stack.append((following, next_esp, next_ebp, _eax_constant(instruction, eax), next_status,
-                      next_flags, next_bounds))
+                      next_flags, next_bounds, _held_step(context, instruction, held)))
     if not returns:
         raise _Refusal(f"callee {entry:#x} has no reachable return")
+
+
+def _preserves_quietly(context: _Context, target: int, family: str, depth: int,
+                       active: frozenset[int]) -> bool:
+    """Whether a nested direct callee is proved to hand `family` back."""
+    try:
+        _verdict(context, target, family, depth + 1, active)
+    except _Refusal:
+        return False
+    return True
 
 
 def _standard_stack_write(instruction) -> bool:
@@ -544,6 +646,10 @@ def _effect(context: _Context, entry: int) -> int | str | None:
                 continue
             if instruction.group(CS_GRP_JUMP) or instruction.group(CS_GRP_BRANCH_RELATIVE):
                 target = _direct_target(instruction)
+                slot = None if target is not None else _import_slot(context, instruction, frozenset())
+                if slot is not None:
+                    immediates.add(context.imports[slot].popped)  # tail jump into an import
+                    continue
                 if target is None:
                     pending.extend((item, None, bounds)
                                    for item in context.table_targets(instruction, bounds))
