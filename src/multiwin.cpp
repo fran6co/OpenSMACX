@@ -158,13 +158,14 @@ void MultiWin::draw_player(int faction_id, int row, RECT *bounds) {
   }
   if (IsMultiplayerNet &&
       (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction_id))) {
+    Buffer *const canvas = this;
     int variant;
     if (MultiWindowContactStatusMask & (1 << faction_id)) {
       variant = 1;
     } else {
       variant = (NetDaemonNet.field_1BD0_ & (1 << faction_id)) ? 2 : 0;
     }
-    multiwin_sprite_draw(&sprites2_[variant], this, icon_rect.left,
+    multiwin_sprite_draw(&sprites2_[variant], canvas, icon_rect.left,
                          (icon_rect.bottom - sprites2_[0].height() - icon_rect.top) / 2
                              + icon_rect.top,
                          1, 1);
@@ -308,9 +309,9 @@ void MultiWin::draw_time(RECT *bounds, int draw_type) {
         after_tick.bits = static_cast<uint32_t>(NetDaemonWaitTicks) - 500u;
         NetDaemonWaitTicks = after_tick.value < 0 ? 0 : after_tick.value;
       } else {
-        local_14 = 0;
         const int council_time = static_cast<int32_t>(CouncilWindow.field_A3C_);
         local_10 = council_time > 0 ? 1u : 0u;
+        local_14 = 0;
         union SignedDword {
           uint32_t bits;
           int32_t value;
@@ -383,10 +384,8 @@ void MultiWin::draw_time(RECT *bounds, int draw_type) {
   if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) != 0 &&
       (GameDataStateStorage.fields_.net_turn_faction_ !=
            ConsoleGlobal.faction_id_ || TurnControlWord93A954 != 0)) {
-    const uint32_t faction_bit =
-        1u << (GameDataStateStorage.fields_.net_turn_faction_ & 0x1f);
     if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
-         faction_bit) == 0) {
+         (1 << GameDataStateStorage.fields_.net_turn_faction_)) == 0) {
       goto done;
     }
     StringTemp[0] = 0;
@@ -402,10 +401,8 @@ void MultiWin::draw_time(RECT *bounds, int draw_type) {
       NetDaemonNet.primary_state_.trailing_words_[0] != 0 &&
       NetDaemonNet.primary_state_.trailing_words_[3] == 0 &&
       GameDataStateStorage.fields_.time_controls_selection_ != 0) {
-    const uint32_t local_faction_bit =
-        1u << (ConsoleGlobal.faction_id_ & 0x1f);
     if (countdown_ms == 0 &&
-        (NetDaemonNet.factions_waiting_mask() & local_faction_bit) == 0 &&
+        (NetDaemonNet.factions_waiting_mask() & (1 << ConsoleGlobal.faction_id_)) == 0 &&
         local_c != MultiWinState7FFF78) {
       GameDataStateStorage.fields_.game_state_ |= 0x800;
       if (local_10 != 0) wave_it(0x21);
@@ -413,7 +410,7 @@ void MultiWin::draw_time(RECT *bounds, int draw_type) {
     if (minutes == 0 && local_c != 0 && local_c <= 0x0F &&
         local_c != MultiWinState7FFF78 && ConsoleControlTurnActive == 0 &&
         (GameDataStateStorage.fields_.game_state_ & 0x800) == 0 &&
-        (NetDaemonNet.factions_waiting_mask() & local_faction_bit) == 0) {
+        (NetDaemonNet.factions_waiting_mask() & (1 << ConsoleGlobal.faction_id_)) == 0) {
       if (local_c == 0x0f) {
         NetMsgPrimary.pop("TIMEWARNING", -5000, 0, 0);
       }
@@ -509,22 +506,24 @@ void MultiWin::draw(int draw_type) {
       for (; carets > 0; --carets) strcat(StringTemp, CaretSeparator);
       // WORKAROUND(noinline): the image calls 0x0047A720 out of line here and
       // expands the same inline at the no-player label below.
-      int (Buffer::*const write_centered)(LPSTR, RECT *) = &Buffer::write_cent_l;
-      Buffer &canvas = *this;
-      (canvas.*write_centered)(StringTemp, &rect);
+      int (MultiWin::*const write_centered)(LPSTR, RECT *) = &Buffer::write_cent_l;
+      (this->*write_centered)(StringTemp, &rect);
     }
-    set_clip(&rect2_);
+    restore_clip();
     y = row_bottom;
   }
 
-  const int saved_right = dib_.bmiHeader.biWidth;
-  const int saved_top = y;
-  const int saved_bottom = y + sprite5_.height();
   int drew_player = 0;
+  // The no-player message rectangle is captured before the rows move y.
+  RECT saved;
+  saved.left = 0;
+  saved.right = dib_.bmiHeader.biWidth;
+  saved.top = y;
+  saved.bottom = y + sprite5_.height();
   if (!IsMultiplayerNet || panel_open_) {
     int row = 0;
     for (int faction = 1; faction < 8; ++faction) {
-      if (faction == ConsoleGlobal.faction_id_) continue;
+      if (ConsoleGlobal.faction_id_ == faction) continue;
       if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << faction))) continue;
       if (!(GameDataStateStorage.fields_.game_state_ & 0x80) &&
           !(PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction] & 8) &&
@@ -557,7 +556,7 @@ void MultiWin::draw(int draw_type) {
     strcat(StringTemp, label_get(0x80c / 4));
     strcat(StringTemp, SocialWinColonSpaceText);
     strcat(StringTemp, BufferJoinSpace);
-    char votes_text[84];
+    char votes_text[80];
     const int votes = council_votes(ConsoleGlobal.faction_id_);
     _itoa(votes, votes_text, 10);
     strcat(StringTemp, votes_text);
@@ -577,10 +576,7 @@ void MultiWin::draw(int draw_type) {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x9d0 / 4));
     set_text_color(MessageWinTextColor, MessageWinTextBackground, 1, 1);
-    rect.left = 0;
-    rect.top = saved_top;
-    rect.right = saved_right;
-    rect.bottom = saved_bottom;
+    rect = saved;
     set_font(find_font(12, 1), 0, 0, 0);
     write_cent_l(StringTemp, &rect);
   }
