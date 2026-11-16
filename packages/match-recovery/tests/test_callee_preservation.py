@@ -234,3 +234,46 @@ def test_eh_registration_moves_are_admitted_only_for_a_proved_cleanup_frame():
     with pytest.raises(ValueError, match="segment-relative"):
         _path_bounded_dispatch(instructions, dispatch, "eax", Span(BASE, BASE + len(body)),
                                targets, image=_image({0: body, 0x100: PUSH_POP}), eh_frame=True)
+
+
+def _eh_framed_callee(arm: bytes) -> tuple[dict[int, bytes], tuple[int, ...]]:
+    """custom_planet shape: VC6 EH frame, saved EBX, a bounded table, teardown.
+
+    push ebp; mov ebp,esp; mov eax,fs:[0]; push -1; push HANDLER; push eax;
+    mov fs:[0],esp; push ebx; xor ebx,ebx; cmp ecx,1; ja OUT;
+    jmp [ecx*4+T]; A0: <arm>; jmp OUT; A1: inc ebx;
+    OUT: pop ebx; mov ecx,[ebp-0Ch]; mov fs:[0],ecx; mov esp,ebp; pop ebp; ret
+    The handler is only registered, never on the normal return path.
+    """
+    table = BASE + 0x1F0
+    head = (bytes.fromhex("55 8b ec 64 a1 00 00 00 00 6a ff 68") + struct.pack("<I", BASE + 0x300)
+            + bytes.fromhex("50 64 89 25 00 00 00 00 53 31 db 83 f9 01 77")
+            + bytes([len(arm) + 2 + 7 + 1]) + bytes.fromhex("ff 24 8d") + struct.pack("<I", table))
+    arm0 = BASE + 0x100 + len(head)
+    body = head + arm + bytes([0xEB, 1]) + b"\x43"
+    arm1 = BASE + 0x100 + len(body) - 1
+    body += bytes.fromhex("5b 8b 4d f4 64 89 0d 00 00 00 00 8b e5 5d c3")
+    instructions = list(_ENGINE.disasm(body, BASE + 0x100))
+    assert sum(item.size for item in instructions) == len(body)
+    return {0x100: body, 0x1F0: struct.pack("<II", arm0, arm1),
+            0x300: b"\xcc", 0x380: bytes.fromhex("8b 44 24 04 c2 04 00")}, (table, table + 4)
+
+
+def test_eh_framed_table_dispatching_callee_preserves_through_its_teardown():
+    # Arm 0: push 1; call 0x380 (ret 4). Only the stdcall effect moves ESP.
+    arm = b"\x6a\x01" + _call(BASE + 0x100 + 41, BASE + 0x380)
+    placed, relocations = _eh_framed_callee(arm)
+    assert placed[0x100][39:41] == b"\x6a\x01"
+    _proves(placed, relocations=relocations)
+    # The registration pushes are ordinary depth: the same frame with the
+    # nested callee declared `ret 8` misplaces the restore.
+    wrong = {**placed, 0x380: bytes.fromhex("8b 44 24 04 c2 08 00")}
+    with pytest.raises(ValueError, match="releases|without restoring|unknown stack depth"):
+        _proves(wrong, relocations=relocations)
+
+
+def test_eh_framed_callee_with_a_virtual_call_under_the_save_refuses():
+    # Arm 0: push 1; mov eax,[ecx]; call [eax] (user decision: virtual calls refuse).
+    placed, relocations = _eh_framed_callee(bytes.fromhex("6a 01 8b 01 ff 10 90 90"))
+    with pytest.raises(ValueError, match="restores ebx at an unknown stack depth"):
+        _proves(placed, relocations=relocations)
