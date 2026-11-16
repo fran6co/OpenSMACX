@@ -2105,7 +2105,7 @@ Win *Win::get_mouse_window(int *x, int *y) {
 Purpose: The window procedure the class registers - route every input
          message to the Win the pointer or the keyboard focus is over, and
          hand everything else to DefWindowProc.
-// ORIGINAL: 0x005F0650 ?window_proc@Win@@QAGJPAXIIJ@Z 0x005F0650-0x005F0E27
+// ORIGINAL: 0x005F0650 ?window_proc@Win@@QAGJPAXIIJ@Z 0x005F0650-0x005F0E27 BYTE_EXACT
 // symbol    ?window_proc@Win@@SGJPAUHWND__@@IIJ@Z
 // size      2007 bytes
 // prototype
