@@ -2137,8 +2137,17 @@ Purpose: The window procedure the class registers - route every input
 //     the other handlers neither).
 // One switch: VC6 splits it into the [6,0x101], [0x104,0x200] and
 // [0x202,0x206] tables plus the sparse 0x30F/0x311/0x401 chain, and lays
-// the arms out in source order. DefWindowProc after the switch is the one
-// shared tail at 0x005F0D11 that the WM_USER+1 arm falls into.
+// the arms out by case value whatever their source order. DefWindowProc
+// after the switch is the one shared tail at 0x005F0D11 that the WM_USER+1
+// arm falls into.
+// SOURCE ORDER (2026-11-16): the null-path branches of the wheel and
+// WM_PALETTECHANGED arms join the shared `return 0` block at 0x005F0BD4
+// (the WM_RBUTTONDOWN arm's), while WM_RBUTTONUP's joins its own epilogue
+// copy. VC6 sends an arm's conditional `return 0` exits to that shared
+// block only when the arm precedes WM_RBUTTONDOWN in the source, so the
+// wheel and palette cases stood before the right-button cases and
+// WM_RBUTTONUP after them (moving either pair after WM_RBUTTONDOWN, or
+// WM_RBUTTONUP before it, breaks the image's branch targets).
 //
 // INLINE BUDGET. The image expands every first-level handler except
 // OnLButtonDown and none of their nested helpers: get_hdc, release_hdc,
@@ -2156,13 +2165,6 @@ Purpose: The window procedure the class registers - route every input
 //     WinMessageHook;
 //   - WM_RBUTTONDOWN/WM_RBUTTONDBLCLK pass WinMouseHook the translated
 //     (x, y) get_mouse_window wrote back, not (HWND, lParam).
-Status: 648/657. The play_if_idle receiver is in (OnSysCommand). What
-        is left is three exits: the wheel arm's null path and the three early
-        outs of the WM_PALETTECHANGED arm jump in the image to the shared
-        `return 0` block at 0x005F0BD4, while ours join each arm's own
-        epilogue copy (short jumps: 4 and 12 bytes short). Early-return
-        spellings of win_mouse_wheel/OnPaletteChanged and probe counts
-        9-40 do not move it.
 */
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x005F0650 0x005F0E28 0x005F0E3C 0x005F069D
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x005F0650 0x005F0E3C 0x005F0F38 0x005F0697
@@ -2213,13 +2215,15 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wParam,
         HANDLE_MSG(window, WM_LBUTTONDOWN, OnLButtonDown);
         HANDLE_MSG(window, WM_LBUTTONDBLCLK, OnLButtonDown);
         HANDLE_MSG(window, WM_LBUTTONUP, OnLButtonUp);
-        HANDLE_MSG(window, WM_RBUTTONDBLCLK, OnRButtonDown);
-        HANDLE_MSG(window, WM_RBUTTONDOWN, OnRButtonDown);
-        HANDLE_MSG(window, WM_RBUTTONUP, OnRButtonUp);
     case WM_MOUSEWHEEL:
         win_mouse_wheel(window, static_cast<short>(LOWORD(lParam)),
                         static_cast<short>(HIWORD(lParam)), wParam);
         return 0;
+        HANDLE_MSG(window, WM_PALETTECHANGED, OnPaletteChanged);
+        HANDLE_MSG(window, WM_QUERYNEWPALETTE, OnQueryNewPalette);
+        HANDLE_MSG(window, WM_RBUTTONDBLCLK, OnRButtonDown);
+        HANDLE_MSG(window, WM_RBUTTONDOWN, OnRButtonDown);
+        HANDLE_MSG(window, WM_RBUTTONUP, OnRButtonUp);
     case WM_USER + 1: {
         // The tick a `Time` posts to this window, `wParam` being the Time
         // itself. This is the half of the one-shot emulation that lives
@@ -2247,8 +2251,6 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wParam,
         }
         break;
     }
-        HANDLE_MSG(window, WM_PALETTECHANGED, OnPaletteChanged);
-        HANDLE_MSG(window, WM_QUERYNEWPALETTE, OnQueryNewPalette);
     }
     // WORKAROUND(inline): see window_proc_budget_probe.
     window_proc_budget_probe(0);
