@@ -2522,7 +2522,7 @@ void Console::cursor_on(int cursor_shape, int veh_id) {
     do_non_input();
 }
 
-// ORIGINAL: 0x005148B0 ?move_cursor@Console@@QAEXH@Z 0x005148B0-0x00514990 FILE
+// ORIGINAL: 0x005148B0 ?move_cursor@Console@@QAEXH@Z 0x005148B0-0x00514990 FILE BYTE_EXACT
 // size      224 bytes
 // prototype void (__thiscall ?move_cursor@Console@@QAEXH@Z)(Console* this, int)
 // callers   0   call targets   5
