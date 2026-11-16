@@ -157,6 +157,9 @@ RulesWorldbuilder WorldBuilder;
 // Extent: compiled sizeof 0x38; prefs_load loop ends at `cmp esi, 0x94B49C` (0x0059E4D9).
 // RECOVERY_OBJECT: v2 0x0094B464 0x0094B49C ?AlphaIniPrefs@@3UAlphaIniPref@@A 0x0047D4A4
 AlphaIniPref AlphaIniPrefs;                         // 0x0094B464
+// Extent: compiled sizeof 0x14; its last field top_menu (0x0094B360) is
+// stored by prefs_load at 0x0059DE8E and read by map_menu/top_menu.
+// RECOVERY_OBJECT: v2 0x0094B350 0x0094B364 ?DefaultPrefs@@3UDefaultPref@@A 0x0059DE8E
 DefaultPref DefaultPrefs;                           // 0x0094B350
 
 // THE FACTION/MAP RULES STORAGE (faction.h / map.h) - real zero-initialised

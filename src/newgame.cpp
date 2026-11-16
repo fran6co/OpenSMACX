@@ -1268,8 +1268,11 @@ static inline void random_planet_rules() {
     MapErosiveForces = (erosion_roll + 5) / 5;
 }
 
+// RECOVERY_OBJECT: v2 0x0068F8A0 0x0068F8A8 _MapMenuTitle 0x0058D6B0
 static const char MapMenuTitle[] = "MAPMENU";
+// RECOVERY_OBJECT: v2 0x0068F8A8 0x0068F8B8 _MapXPlanetPath 0x0058D6B0
 static const char MapXPlanetPath[] = "maps\\xplanet.mp";
+// RECOVERY_OBJECT: v2 0x0068F8B8 0x0068F8C9 _MapXPlanetXPath 0x0058D6B0
 static const char MapXPlanetXPath[] = "maps\\xplanetx.mp";
 
 // WORKAROUND(inline): dead /Ob2 budget probe, not recovered code. Two

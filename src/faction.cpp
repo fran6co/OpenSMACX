@@ -1581,48 +1581,6 @@ void __cdecl del_site(int faction_id, int type, int x, int y, int proximity) {
     }
 }
 
-/*
-Purpose: Validate whether each faction meets the requirements to have the Map revealed.
-// ORIGINAL: 0x005A96D0 ?see_map_check@@YAXXZ 0x005A96D0-0x005A9753 BYTE_EXACT
-// LEVER: the image runs BOTH loops unconditionally, every time - no early `break` out of the 4-satellite loop (it always checks all four, re-OR-ing the same bit), and no `if (!PFLAG_MAP_REVEALED)` guard skipping the tech loop once the satellites already set it. Removing both "optimisations" (which changed nothing observable, only the instruction count) reached BYTE_EXACT.
-// size      131 bytes
-// prototype
-// callers   2   call targets   1
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x005B9F20
-// LEVER (2026-09-03): `has_tech_call` at the tech loop. 0 of 51 agreeing,
-//   66 instructions against the image's 51, because technology.h's MEASURED
-//   inline was open-coded at the one `has_tech` site in the body. With the
-//   forwarder the whole body dropped to the image's own 51 AND the winning
-//   flag set flipped to `/O2 /Oy- /GX`, which is what supplies the image's
-//   `push ebp / mov ebp, esp` frame - the /O2 build could never match the
-//   prologue, so the bloat was masking the right set, not just the right
-//   size. 51 of 51, BYTE_EXACT.
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl see_map_check() {
-    for (int faction_id = 1; faction_id < MaxPlayerNum; faction_id++) {
-        PlayersData[faction_id].flags &= ~PFLAG_MAP_REVEALED;
-        uint32_t *satellites = PlayersData[faction_id].satellites_;
-        for (int i = 0; i < 4; i++, satellites++) {
-            if (*satellites) {
-                PlayersData[faction_id].flags |= PFLAG_MAP_REVEALED;
-            }
-        }
-        for (int tech_id = 0; tech_id < MaxTechnologyNum; tech_id++) {
-            // has_tech_call, not has_tech: the image CALLS 0x005B9F20 once
-            // from here (0x005A9718) and technology.h's MEASURED inline was
-            // open-coded into this body.
-            if (Technology[tech_id].flags & TFLAG_REVEALS_MAP
-                && has_tech(tech_id, faction_id)) {
-                PlayersData[faction_id].flags |= PFLAG_MAP_REVEALED;
-            }
-        }
-    }
-}
-
 
 void __cdecl enemy_capabilities_t(uint32_t faction_id) {
     // * PSI could potentially be best weapon?

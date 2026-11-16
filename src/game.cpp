@@ -1091,6 +1091,47 @@ int __cdecl save_map_daemon(char *path) {
     return result;
 }
 
+/*
+Purpose: Validate whether each faction meets the requirements to have the Map revealed.
+// ORIGINAL: 0x005A96D0 ?see_map_check@@YAXXZ 0x005A96D0-0x005A9753 BYTE_EXACT
+// LEVER: the image runs BOTH loops unconditionally, every time - no early `break` out of the 4-satellite loop (it always checks all four, re-OR-ing the same bit), and no `if (!PFLAG_MAP_REVEALED)` guard skipping the tech loop once the satellites already set it. Removing both "optimisations" (which changed nothing observable, only the instruction count) reached BYTE_EXACT.
+// size      131 bytes
+// prototype
+// callers   2   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005B9F20
+// LEVER (2026-09-03): `has_tech_call` at the tech loop. 0 of 51 agreeing,
+//   66 instructions against the image's 51, because technology.h's MEASURED
+//   inline was open-coded at the one `has_tech` site in the body. With the
+//   forwarder the whole body dropped to the image's own 51 AND the winning
+//   flag set flipped to `/O2 /Oy- /GX`, which is what supplies the image's
+//   `push ebp / mov ebp, esp` frame - the /O2 build could never match the
+//   prologue, so the bloat was masking the right set, not just the right
+//   size. 51 of 51, BYTE_EXACT.
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl see_map_check() {
+    for (int faction_id = 1; faction_id < MaxPlayerNum; faction_id++) {
+        PlayersData[faction_id].flags &= ~PFLAG_MAP_REVEALED;
+        for (int i = 0; i < 4; i++) {
+            if (PlayersData[faction_id].satellites_[i]) {
+                PlayersData[faction_id].flags |= PFLAG_MAP_REVEALED;
+            }
+        }
+        for (int tech_id = 0; tech_id < MaxTechnologyNum; tech_id++) {
+            // has_tech_call, not has_tech: the image CALLS 0x005B9F20 once
+            // from here (0x005A9718) and technology.h's MEASURED inline was
+            // open-coded into this body.
+            if (Technology[tech_id].flags & TFLAG_REVEALS_MAP
+                && has_tech(tech_id, faction_id)) {
+                PlayersData[faction_id].flags |= PFLAG_MAP_REVEALED;
+            }
+        }
+    }
+}
+
 // ORIGINAL: 0x005A9760 ?load_daemon@@YAHPADH@Z 0x005A9760-0x005A9B19 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/005a9760.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover the complete load orchestration through actual windows, paths, player/base/vehicle state and PBEM/tamper lifecycle. The called game_data serializer remains explicitly unfinished; this is not working-game acceptance."}
 // symbol    ?load_daemon@@YAHPBDH@Z
@@ -1141,22 +1182,7 @@ int __cdecl load_daemon(LPCSTR path, int linearize_contours) {
                     AltNatural[contour_slot] = AltContour[contour_slot];
                 }
 
-                // Bit 0x200 marks a faction with a satellite or a
-                // map-revealing technology.
-                for (int tech_faction = 1; tech_faction < MaxPlayerNum; ++tech_faction) {
-                    PlayersData[tech_faction].flags &= ~PFLAG_MAP_REVEALED;
-                    for (int satellite_index = 0; satellite_index < 4; ++satellite_index) {
-                        if (PlayersData[tech_faction].satellites_[satellite_index] != 0) {
-                            PlayersData[tech_faction].flags |= PFLAG_MAP_REVEALED;
-                        }
-                    }
-                    for (int technology_id = 0; technology_id < MaxTechnologyNum; ++technology_id) {
-                        if ((Technology[technology_id].flags & 8U) != 0
-                            && has_tech(technology_id, tech_faction) != 0) {
-                            PlayersData[tech_faction].flags |= PFLAG_MAP_REVEALED;
-                        }
-                    }
-                }
+                see_map_check();
 
                 for (int alive_faction = 1; alive_faction < MaxPlayerNum; ++alive_faction) {
                     int has_presence = 0;
