@@ -499,27 +499,19 @@ Purpose: Parse the #RULES & #WORLDBUILDER sections inside the alpha(x).txt.
 //        against `osmx calls`) now that `tech_item` is `MEASURED inline` in
 //        alpha.h - it was a call the image never makes (see its own
 //        `callers 0`). Landed as a real structural fix; this function is
-//        883 image instructions across ~40 unrelated #SECTIONs and stays
-//        MISMATCH on everything else - not chased further this pass.
-// LEVER: all 83 `X = text_get_number(lo, hi);` sites rewritten as the image's
-//        two-statement `text_get(); X = range(text_item_number(), lo, hi);`
-//        (text_get_number is `MEASURED inline` and expands to the same thing
-//        through text_get_source/text_item_number_source, but the image calls
-//        the zero-arg text_get()/text_item_number() wrappers, not those). Under
-//        the /Ob0 flag set this moved 70/883 -> 129/883 agreeing; osmx's own
-//        similarity-picked flag set switches away from /Ob0 on this larger body
-//        (53/883), so `measure`'s default output understates the win - see
-//        AGENT_BRIEF's MEASURING section on this exact artifact. Still deep
-//        MISMATCH; not chased further this pass.
+//        883 image instructions across ~40 unrelated #SECTIONs.
+// LEVER: every `text_get(); X = range(text_item_number(), lo, hi);` pair is
+//        one `X = text_get_number(lo, hi);` call (89 sites). /Ob2 then refuses
+//        the nested range at the first 47 sites (calls to 0x00422F00) and
+//        expands it at the later 42, exactly as the image does; the written-out
+//        pairs instead store the clamp result once per arm and leave the
+//        budget to expand early sites.
 // size      3254 bytes
 // prototype
 // callers   1   call targets   6
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     0x00422F00 0x00584D60 0x005FD550 0x005FD570 0x005FD670 0x005FD740
-// TRIED: plateau after the tech_item and text_get_number rewrites (129/883 under
-//        /Ob0); the ~40 remaining unrelated #SECTION parsers still diverge, deep
-//        MISMATCH
 Return Value: Was there an error? true/false
 Status: Complete
 */
@@ -589,95 +581,56 @@ BOOL __cdecl read_basic_rules() {
     Rules.tech_orb_insert_sans_spc_elev = tech_item();
     Rules.tech_mining_platform_bonus = tech_item();
     Rules.tech_economic_victory = tech_item();
-    text_get();
     // Preserve the signed -1..1 values, not merely their boolean meaning:
     // pinned stores at 0x0058585B/7E/A1 retain -1 after signed clamping.
-    Rules.tgl_probe_can_steal_tech = range(text_item_number(), -1, 1);
-    text_get();
-    Rules.tgl_human_always_contact_net = range(text_item_number(), -1, 1);
-    text_get();
-    Rules.tgl_humans_always_contact_pbem = range(text_item_number(), -1, 1);
-    text_get();
-    Rules.max_pct_dmg_art_vs_unit_base_bnkr = range(text_item_number(), 10, 100);
-    text_get();
-    Rules.max_pct_dmg_art_vs_units_open = range(text_item_number(), 10, 100);
-    text_get();
-    Rules.max_pct_dmg_art_vs_units_sea = range(text_item_number(), 10, 100);
-    text_get();
-    Rules.freq_global_warming_num = range(text_item_number(), 0, 1000);
+    Rules.tgl_probe_can_steal_tech = text_get_number(-1, 1);
+    Rules.tgl_human_always_contact_net = text_get_number(-1, 1);
+    Rules.tgl_humans_always_contact_pbem = text_get_number(-1, 1);
+    Rules.max_pct_dmg_art_vs_unit_base_bnkr = text_get_number(10, 100);
+    Rules.max_pct_dmg_art_vs_units_open = text_get_number(10, 100);
+    Rules.max_pct_dmg_art_vs_units_sea = text_get_number(10, 100);
+    Rules.freq_global_warming_num = text_get_number(0, 1000);
     Rules.freq_global_warming_denom = range(text_item_number(), 1, 1000);
-    text_get();
-    Rules.normal_starting_year = range(text_item_number(), 0, 999999);
-    text_get();
-    Rules.normal_end_year_low_three_diff = range(text_item_number(), 0, 999999);
-    text_get();
-    Rules.normal_end_year_high_three_diff = range(text_item_number(), 0, 999999);
-    text_get();
+    Rules.normal_starting_year = text_get_number(0, 999999);
+    Rules.normal_end_year_low_three_diff = text_get_number(0, 999999);
+    Rules.normal_end_year_high_three_diff = text_get_number(0, 999999);
     // Pinned 0x005859D9..ED uses the same signed -1..1 clamp.
-    Rules.tgl_oblit_base_atrocity = range(text_item_number(), -1, 1);
-    text_get();
-    Rules.size_base_subspace_gen = range(text_item_number(), 1, 999); // SMACX only
-    text_get();
-    Rules.subspace_generators_needed = range(text_item_number(), 1, 999); // SMACX only
+    Rules.tgl_oblit_base_atrocity = text_get_number(-1, 1);
+    Rules.size_base_subspace_gen = text_get_number(1, 999); // SMACX only
+    Rules.subspace_generators_needed = text_get_number(1, 999); // SMACX only
     if (text_open(AlphaxFileID, "WORLDBUILDER")) {
         return 1;
     }
-    text_get();
-    WorldBuilder.land_base = range(text_item_number(), 50, 4000);
-    text_get();
-    WorldBuilder.land_mod = range(text_item_number(), 0, 2000);
-    text_get();
-    WorldBuilder.continent_base = range(text_item_number(), 5, 1000);
-    text_get();
-    WorldBuilder.continent_mod = range(text_item_number(), 5, 1000);
-    text_get();
-    WorldBuilder.hills_base = range(text_item_number(), 0, 100);
-    text_get();
-    WorldBuilder.hills_mod = range(text_item_number(), 0, 100);
-    text_get();
-    WorldBuilder.plateau_base = range(text_item_number(), 0, 500);
-    text_get();
-    WorldBuilder.plateau_mod = range(text_item_number(), 0, 500);
-    text_get();
-    WorldBuilder.rivers_base = range(text_item_number(), 0, 100);
-    text_get();
-    WorldBuilder.rivers_rain_mod = range(text_item_number(), 0, 100);
-    text_get();
-    WorldBuilder.solar_energy = range(text_item_number(), 1, 64);
-    text_get();
-    WorldBuilder.thermal_band = range(text_item_number(), 1, 64);
-    text_get();
-    WorldBuilder.thermal_deviance = range(text_item_number(), 1, 64);
-    text_get();
-    WorldBuilder.global_warming = range(text_item_number(), 1, 64);
-    text_get();
-    WorldBuilder.sea_level_rises = range(text_item_number(), 1, 100);
-    text_get();
-    WorldBuilder.cloudmass_peaks = range(text_item_number(), 0, 20);
-    text_get();
-    WorldBuilder.cloudmass_hills = range(text_item_number(), 0, 20);
-    text_get();
-    WorldBuilder.rainfall_coeff = range(text_item_number(), 0, 8);
-    text_get();
-    WorldBuilder.deep_water = range(text_item_number(), -100, 100);
-    text_get();
-    WorldBuilder.shelf = range(text_item_number(), -100, 100);
-    text_get();
-    WorldBuilder.plains = range(text_item_number(), -100, 100);
-    text_get();
-    WorldBuilder.beach = range(text_item_number(), -100, 100);
-    text_get();
-    WorldBuilder.hills = range(text_item_number(), 0, 100);
-    text_get();
-    WorldBuilder.peaks = range(text_item_number(), -100, 100);
-    text_get();
-    WorldBuilder.fungus = range(text_item_number(), 0, 5);
+    WorldBuilder.land_base = text_get_number(50, 4000);
+    WorldBuilder.land_mod = text_get_number(0, 2000);
+    WorldBuilder.continent_base = text_get_number(5, 1000);
+    WorldBuilder.continent_mod = text_get_number(5, 1000);
+    WorldBuilder.hills_base = text_get_number(0, 100);
+    WorldBuilder.hills_mod = text_get_number(0, 100);
+    WorldBuilder.plateau_base = text_get_number(0, 500);
+    WorldBuilder.plateau_mod = text_get_number(0, 500);
+    WorldBuilder.rivers_base = text_get_number(0, 100);
+    WorldBuilder.rivers_rain_mod = text_get_number(0, 100);
+    WorldBuilder.solar_energy = text_get_number(1, 64);
+    WorldBuilder.thermal_band = text_get_number(1, 64);
+    WorldBuilder.thermal_deviance = text_get_number(1, 64);
+    WorldBuilder.global_warming = text_get_number(1, 64);
+    WorldBuilder.sea_level_rises = text_get_number(1, 100);
+    WorldBuilder.cloudmass_peaks = text_get_number(0, 20);
+    WorldBuilder.cloudmass_hills = text_get_number(0, 20);
+    WorldBuilder.rainfall_coeff = text_get_number(0, 8);
+    WorldBuilder.deep_water = text_get_number(-100, 100);
+    WorldBuilder.shelf = text_get_number(-100, 100);
+    WorldBuilder.plains = text_get_number(-100, 100);
+    WorldBuilder.beach = text_get_number(-100, 100);
+    WorldBuilder.hills = text_get_number(0, 100);
+    WorldBuilder.peaks = text_get_number(-100, 100);
+    WorldBuilder.fungus = text_get_number(0, 5);
     text_get();
     for (int i = 0; i < 5; i++) {
         WorldBuilder.cont_size_ratio[i] = text_item_number();
     }
-    text_get();
-    WorldBuilder.islands = range(text_item_number(), 1, 500);
+    WorldBuilder.islands = text_get_number(1, 500);
     return false;
 }
 
@@ -1677,7 +1630,7 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
         return true;
     }
     for (i = 0; i < MaxOrderNum; i++) {
-        if (i < 4 || i > 23) { // Skipping over orders set by #TERRAIN
+        if (i < 4 || i >= 24) { // Skipping over orders set by #TERRAIN
             text_get();
             Order[i].order = text_item_string();
             // Potential enhancement: Have separate string for sea
@@ -1846,7 +1799,7 @@ for (i = 0; i < MaxCompassNum; i++) {
         for (int entry = 0; entry < MaxTerrainNum; ++entry) {
             if (Terraforming[entry].bit == 0 && terrain >= entry) ++terrain;
         }
-        MainInterfaceGlobal.flat_button(button).set_bubble_text(
+        MainInterfaceGlobal.flat_button_[button].set_bubble_text(
             StringTable.get(Terraforming[terrain].name));
     }
     MainInterfaceGlobal.flat_button(32).set_bubble_text(StringTable.get(Natural[LM_JUNGLE].name_short));

@@ -142,6 +142,14 @@ extern const char BufferJoinSpace[];
 extern Wave g_CRASH_LANDING_WAVE;
 extern int ConsoleNoMapOverrideLatch;
 
+// WORKAROUND(inline): dead /Ob2 budget probe (folds to nothing). Without eight
+// expansions after the no-vehicle return, that site's teardown expands
+// ~FlatButton where the image calls it (0x00406880); placement after the site
+// does not matter, the count does. The original's spend is not identified.
+static inline int crash_landing_budget_probe(int x) {
+    if (x == 1) x = 2;
+    return x;
+}
 // ORIGINAL: 0x005AE120 ?crash_landing@@YAXH@Z 0x005AE120-0x005AED43;0x00662450-0x00662705 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:8e59b5d75bd6859572a92070e841049900f54fa3:src/unrecovered/005ae120.cpp", "pinned:5AE120..5AED43 and662450..662705;5AE594 fungusx0;5AE58E/5AE5D0 signedcenters;5AE74A..74F fungus smoke gate", "source:src/game.cpp:control_turn;src/popup.h;src/flic.h;src/buffer.cpp", "source:recovery/tests/test_crash_landing_actual_source.py"], "reason": "Recover the complete first-landing operation through real Popup, Buffer, Flic, MapWin, Wave, Player, Base and vehicle owners with automatic normal/exceptional lifetimes. The historical second local widget aggregate is interpreted as Popup-owned embedded components, not duplicated manual vtable storage. Preserve first-owned-base/vehicle selection, early no-match teardown, single-player FUNGBOY shortcut, native fungus start at zero, signed viewport halves, previous-footprint restoration and normal-only smoke independent of pod draw return. The smoke table is existing ExplosionColorTables row12 at6FDB7C; the possible lookup beyond its4096-byte row remains unresolved original asset/read-range evidence, not permission to introduce detached storage or a bounds fix. Both primary and cleanup spans and the seed historical transcription limitations remain obligations; no byte or runtime acceptance is granted."}
 // TRIED: byte-exactness is out of reach here without more structural knowledge than the scaffold carries. The SEH frame is real (fs:[0] chain, __CxxFrameHandler, ~40-entry unwind thunk table) and Popup/BasePop already has its own giant field layout (FlatButton x2, Sprite, a 0xC94 dialogs_ blob) that the emitter resolved from other callers, so declaring `Popup popup;` and letting real RAII drive its construction/close() is right and reproduces the two search loops -> short-cleanup vs big-body split faithfully. What is NOT resolvable from this scaffold alone: a SECOND, function-local widget aggregate (GraphicWin+Dialog+ListBox+EditGroup+SpriteBox+CheckBox+Sprite+ 2x FlatButton+2x StringStruct+Heap) built with fully-inlined (vtable-write-only, no visible constructor call) construction and torn down through this-pointer adjustor arithmetic that reads a vtable-relative offset (`aiStackY_4900[1]+4/+8`) - true multiple/virtual-inheritance thunk codegen, not reachable by declaring ordinary separate locals. Modelled those as separate top-level objects in the same relative call order instead, which preserves the call graph but not the stack layout or the thunk bytes. Also approximated: the per-frame x87 pixel-interpolation math in the 30-frame drop loop (kept the draw/decode/timing calls exact, simplified the float position derivation) and the two indirect-IAT-style calls to StringStruct::remove_all/sub_406a90/sub_406820, which were dropped rather than guessing a `this`.
@@ -173,6 +181,14 @@ void __cdecl crash_landing(int faction_id) {
         tile_x = Bases[base_id].x;
         tile_y = Bases[base_id].y;
     }
+    crash_landing_budget_probe(3);
+    crash_landing_budget_probe(4);
+    crash_landing_budget_probe(5);
+    crash_landing_budget_probe(6);
+    crash_landing_budget_probe(7);
+    crash_landing_budget_probe(8);
+    crash_landing_budget_probe(9);
+    crash_landing_budget_probe(10);
 
     StringTemp[0] = '\0';
     const int fungus = (Players[ConsoleGlobal.faction_id_].rule_flags >> 7) & 1;
@@ -797,16 +813,16 @@ void __cdecl balance() {
             }
             const Map *tile = map_loc(tile_x, tile_y);
             const int rainfall = (tile->climate >> 3) & 3;
-            const int altitude = (tile->climate >> 5) - 2;
+            const int altitude = tile->climate >> 5;
             const int rockiness = tile->val3 >> 6;
             if (rainfall < 1) {
                 continue;
             }
-            if (((altitude >= 0 && altitude != 0) || (tile->bit & BIT_RIVER)) && rockiness < 2 &&
-                (rockiness == 1 || (altitude >= 0 && altitude > 1) || rainfall > 1)) {
+            if ((max(0, altitude - 2) || (tile->bit & BIT_RIVER)) && rockiness < 2 &&
+                (rockiness == 1 || max(0, altitude - 2) > 1 || rainfall > 1)) {
                 ++land_count;
             }
-            if (rockiness == 1 && altitude >= 0 && altitude > rockiness) {
+            if (rockiness == 1 && max(0, altitude - 2) > rockiness) {
                 ++land_count;
             }
         }

@@ -20,6 +20,9 @@
 // symbol    ??_GSetupWin@@UAEPAXI@Z
 // kind      game
 #define SETUPWIN_DTOR_CLOSE_WRITTEN_OUT
+// WORKAROUND(decl): basepop.h's guarded friend; image 0x004AE225..0x004AE22E
+// reaches pos_to_id through the popup's dialogs_ member, not dialogs().
+#define BASEPOP_FRIEND_SETUPWIN
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "setupwin.h"
@@ -421,7 +424,7 @@ int SetupWin::do_menu_rightside(char *filename, int flags) {
     hide();
 
     if (menu_popup_ != nullptr && static_cast<int32_t>(selected_row_) >= 0) {
-        return menu_popup_->dialogs().Dialog::pos_to_id(static_cast<int>(selected_row_));
+        return menu_popup_->dialogs_.Dialog::pos_to_id(static_cast<int>(selected_row_));
     }
     return static_cast<int>(selected_row_);
 }

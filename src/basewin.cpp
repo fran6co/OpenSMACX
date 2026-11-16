@@ -656,6 +656,10 @@ void BaseWin::facilities_click(int facility, int, int, int) {
 // TextColourTable is the genuine 195-int text.pcx palette owner at8C6B5C;
 // title indices82/83 and normal indices14/15, not separate globals.
 
+namespace {
+void base_panel_inset(RECT &rect, int amount);
+}
+
 // ORIGINAL: 0x0040D250 ?draw_flash@BaseWin@@QAEXH@Z 0x0040D250-0x0040E35B;0x00651AA2-0x00651ACD
 // RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/unrecovered/0040d250.cpp", "source:src/basewin.h", "image:0x40d250"], "reason": "Recover the complete original operation through genuine owning C++ classes, members and natural lifetimes; preserve retained seed evidence and historical restoration obligations separately from fresh matching."}
 void BaseWin::draw_flash(int redraw_mode) {
@@ -688,8 +692,8 @@ void BaseWin::draw_flash(int redraw_mode) {
     MainInterfaceGlobal.box_sprite(&area, &style);
     UnionRect(&area, &flash_rect_a_, &flash_rect_b_);
     area.left -= 3;
-    area.top -= 3;
     area.right += 3;
+    area.top -= 3;
     area.bottom += 3;
     scratch.create_blank(6, 6, WinFillColour);
     style = InterfaceBoxStyles[3];
@@ -698,23 +702,20 @@ void BaseWin::draw_flash(int redraw_mode) {
     style.corner2_ = 0;
     MainInterfaceGlobal.box_sprite(&area, &style);
     MainInterfaceGlobal.set_clip(&panel);
-    area.left = queue_help_rect_.left + 3;
-    area.top = queue_help_rect_.top + 3;
-    area.right = queue_help_rect_.right - 3;
-    area.bottom = queue_help_rect_.bottom - 3;
+    area = queue_help_rect_;
+    base_panel_inset(area, 3);
     MainInterfaceGlobal.box_sprite(&area, &InterfaceBoxStyles[0]);
-    area.left += 3;
-    area.right -= 3;
-    area.top += 3;
-    area.bottom -= 3;
+    base_panel_inset(area, 3);
     if (WinScreenWidth == 800) normal.init(DefaultFontFace, 10, 0);
     else normal.init(DefaultFontFace, 12, 0);
     title.init(DefaultFontFace, 12, 1);
+    const int center_x = (area.left + area.right) / 2;
+    const int center_y = area.top + 40;
     MapWinCaptionDivisor = 100;
     MapWinCaptionScale = (area.right - area.left) * 3 / 4;
     veh_draw(&MainInterfaceGlobal, vehicle_id,
-             (area.left + area.right) / 2 - MapWinCaptionScale / 2,
-             area.top + 40 - MapWinCaptionScale * 75 / 100 / 2, 1, 8, 0);
+             center_x - MapWinCaptionScale / 2,
+             center_y - MapWinCaptionScale * 75 / 100 / 2, 1, 8, 0);
     MapWinCaptionScale = -1;
     MapWinCaptionDivisor = -1;
     area.top += 65;
@@ -724,10 +725,7 @@ void BaseWin::draw_flash(int redraw_mode) {
     MainInterfaceGlobal.set_text_color(TextColourTable[82], TextColourTable[83], 1, 1);
     MainInterfaceGlobal.set_font(&title, 0, 0, 0);
     area.top = MainInterfaceGlobal.wrap_cent(StringTemp, &area);
-    area.left += 2;
-    area.top += 2;
-    area.right -= 2;
-    area.bottom -= 2;
+    base_panel_inset(area, 2);
     area.bottom -= font_line_advance(normal);
     MainInterfaceGlobal.set_font(&normal, 0, 0, 0);
     MainInterfaceGlobal.set_text_color(TextColourTable[14], TextColourTable[15], 1, 1);
@@ -2456,9 +2454,9 @@ void BaseWin::draw_production(int update_mode) {
     MainInterfaceGlobal.box_sprite(&content, &style);
     UnionRect(&content, &flash_rect_a_, &flash_rect_b_);
     content.left -= 3;
+    content.right += 3;
     content.top -= 3;
     content.bottom += 3;
-    content.right += 3;
     blank_sprite.create_blank(6, 6, WinFillColour);
     style = InterfaceBoxStyles[3];
     style.corner0_ = &blank_sprite;
@@ -2468,15 +2466,10 @@ void BaseWin::draw_production(int update_mode) {
     // Drawing below stays clipped to the whole help panel.
     MainInterfaceGlobal.set_clip(&panel);
 
-    content.left = help->left + 3;
-    content.top = help->top + 3;
-    content.right = help->right - 3;
-    content.bottom = help->bottom - 3;
+    content = *help;
+    base_panel_inset(content, 3);
     MainInterfaceGlobal.box_sprite(&content, &InterfaceBoxStyles[0]);
-    content.left += 3;
-    content.right -= 3;
-    content.bottom -= 3;
-    content.top += 3;
+    base_panel_inset(content, 3);
 
     spot1_.kill_type(5);
     spot1_.add(0, 5, help->left, help->top, help->right - help->left,
@@ -3609,10 +3602,9 @@ void BaseWin::draw_energy_alloc(int update_mode) {
 
     // EBP-4C: the working-area frame first, then the allocation chart frame.
     RECT rect;
-    rect.left = Buffer::rect2_.left + 23;
-    rect.top = Buffer::rect2_.top;
-    rect.right = Buffer::rect2_.right - 55;
-    rect.bottom = Buffer::rect2_.bottom;
+    rect = Buffer::rect2_;
+    rect.left += 23;
+    rect.right -= 55;
     Buffer::box_sprite(&rect, &InterfaceBoxStyles[9]);
     Buffer::box_sprite(&production_content_rect_, &InterfaceBoxStyles[3]);
     rect.left = 346;
@@ -3663,10 +3655,7 @@ void BaseWin::draw_energy_alloc(int update_mode) {
         text.left = production_content_rect_.left + 3;
     }
     Buffer::box_sprite(&text, &InterfaceBoxStyles[6]);
-    text.left += 3;
-    text.top += 3;
-    text.right -= 3;
-    text.bottom -= 3;
+    base_panel_inset(text, 3);
     Buffer::set_text_color(TextColourTable[86], TextColourTable[87], 1, 1);
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(36));
@@ -3688,10 +3677,7 @@ void BaseWin::draw_energy_alloc(int update_mode) {
     text = row;
     text.right = 297;
     Buffer::box_sprite(&text, &InterfaceBoxStyles[6]);
-    text.left += 3;
-    text.top += 3;
-    text.right -= 3;
-    text.bottom -= 3;
+    base_panel_inset(text, 3);
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(366));
     CharUpperA(StringTemp);
@@ -3753,10 +3739,7 @@ void BaseWin::draw_energy_alloc(int update_mode) {
     text = row;
     text.right = 297;
     Buffer::box_sprite(&text, &InterfaceBoxStyles[6]);
-    text.left += 3;
-    text.top += 3;
-    text.right -= 3;
-    text.bottom -= 3;
+    base_panel_inset(text, 3);
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(60));
     CharUpperA(StringTemp);
@@ -3815,10 +3798,7 @@ void BaseWin::draw_energy_alloc(int update_mode) {
     text = row;
     text.right = 297;
     Buffer::box_sprite(&text, &InterfaceBoxStyles[6]);
-    text.left += 3;
-    text.top += 3;
-    text.right -= 3;
-    text.bottom -= 3;
+    base_panel_inset(text, 3);
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(318));
     CharUpperA(StringTemp);
@@ -5720,15 +5700,18 @@ void BaseWin::draw_farm(int update_mode) {
     spot2_.add(0, 0, rect1_.left, rect1_.top,
                rect1_.right - rect1_.left, rect1_.bottom - rect1_.top);
 
-    // 0x40F1B1..0x40F1F0: modes 2/3 explicitly select psych/support (a
-    // sub/dec chain on the mode); modes <= 1 test the live panel selector.
-    // Both branches reach the one map painter below.
+    // 0x40F1B1..0x40F1F0: modes 2/3 are a switch (sub 2 / dec chain) whose
+    // psych case cross-jumps into the selector's psych call; modes <= 1 test
+    // the live panel selector. Both reach the one map painter below.
     if (update_mode > 1) {
-        if (update_mode == 2) {
+        switch (update_mode) {
+        case 2:
             draw_psych();
-        } else if (update_mode == 3) {
+            break;
+        case 3:
             draw_support();
-        } else {
+            break;
+        default:
             goto draw_map;
         }
     } else if (field_40AFC_ == 1) {
@@ -6035,9 +6018,6 @@ void BaseWin::draw_pop(int update_mode) {
     }
     MainInterfaceGlobal.set_clip(&saved_clip);
 }
-namespace {
-void base_panel_inset(RECT &rect, int amount);
-}
 
 // ORIGINAL: 0x00410870 ?draw_commerce@BaseWin@@QAEXH@Z 0x00410870-0x00411235;0x00651B22-0x00651B37
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x004108CC-0x00410A95 copies/clips three BaseWin rectangles, initializes a Font, draws the title and sets the report palette", "image:0x00410B3C-0x00410D54 counts the first 70 Base facility bits and 64 SecretProject homes at the current base, weights projects five, then formats the alien score or sanction warning", "image:0x00410D54-0x0041111C selects partner rows and formats receipts, pact/treaty status, unequal exchanges and sanctions from Base/PlayerData fields", "image:0x004111DE-0x00411211 updates the outer rectangle and restores the clip"], "reason": "Recover the commerce panel's alien score and normal-faction partner rows through owned BaseWin rectangles, typed Base/SecretProject/diplomacy state and source-owned commerce ledgers; original compiler/reference/runtime proof remains separate."}
@@ -6213,14 +6193,12 @@ void BaseWin::draw_nutrients(int update_mode) {
     Buffer::set_clip(&rect);
     Buffer::box_sprite(&nutrient_outer_rect_, &InterfaceBoxStyles[3]);
 
-    font.init(DefaultFontFace, WinScreenWidth == 800 ? 10 : 12, 0);
+    if (WinScreenWidth == 800) font.init(DefaultFontFace, 10, 0);
+    else font.init(DefaultFontFace, 12, 0);
     // One RECT local serves the title and then the content panel (EBP-1C).
     RECT content = nutrient_title_rect_;
     Buffer::box_sprite(&content, &InterfaceBoxStyles[6]);
-    content.left += 3;
-    content.top += 3;
-    content.right -= 3;
-    content.bottom -= 3;
+    base_panel_inset(content, 3);
     Buffer::set_font(&font1_, nullptr, nullptr, nullptr);
     Buffer::set_text_color(TextColourTable[82], TextColourTable[83], 1, 1);
     StringTemp[0] = 0;
@@ -6230,10 +6208,7 @@ void BaseWin::draw_nutrients(int update_mode) {
 
     content = nutrient_content_rect_;
     Buffer::box_sprite(&content, &InterfaceBoxStyles[0]);
-    content.left += 3;
-    content.top += 3;
-    content.right -= 3;
-    content.bottom -= 3;
+    base_panel_inset(content, 3);
     Buffer::set_font(&font, nullptr, nullptr, nullptr);
     Buffer::set_text_color(TextColourTable[104], TextColourTable[105], 1, 1);
 

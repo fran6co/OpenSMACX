@@ -6887,7 +6887,7 @@ static inline void set_alt_detail(MapWin *w, int x, int y, int corner, int value
             w->owned_[(MapLongitudeBounds >> 1) * y + (x >> 1)];
         const int shift = corner * 4 - 4;
         entry.altitude_detail = static_cast<unsigned short>(
-            (~(0xF << shift) & entry.altitude_detail) | ((value & 0xF) << shift));
+            (entry.altitude_detail & ~(0xF << shift)) | ((value & 0xF) << shift));
     }
 }
 
