@@ -515,6 +515,27 @@ extern void __cdecl clock_wait(int milliseconds);
 extern void __cdecl unspot_stack(int veh_id);
 
 
+/*
+Purpose: Determine whether the specified unit is eligible for a monolith morale upgrade.
+// ORIGINAL: 0x00579F80 ?want_monolith@@YAHH@Z 0x00579F80-0x00579FE6 BYTE_EXACT
+// size      102 bytes
+// prototype int (__cdecl ?want_monolith@@YAHH@Z)(int vehID)
+// callers   2   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005C0E40
+Return Value: Is unit eligible for a monolith morale upgrade? true/false
+Status: Complete
+*/
+BOOL __cdecl want_monolith(int veh_id) {
+    if (!(Vehs[veh_id].state & VSTATE_MONOLITH_UPGRADED)
+        && morale_veh(veh_id, true, 0) < MORALE_ELITE && Vehs[veh_id].morale < MORALE_ELITE
+        && get_offense_rating(veh_id)) {
+        return true;
+    }
+    return false;
+}
+
 // ORIGINAL: 0x0057A050 ?monolith@@YAXH@Z 0x0057A050-0x0057A659
 // RECOVERY_BINDING: v1 {"evidence": ["git:b34e6d99635022d29b9b9831a6b0c37bd11d9692:src/unrecovered/0057a050.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json; complete typed owner migration, preserve original spans and seed lessons. Literal content provenance does not assert original allocation or game acceptance."], "reason": "Native monolith lifecycle: exclude prototype IDs16-18, use Veh.state monolith-upgraded bit0x100 and per-faction Map.bit_visible rows. Preserve live console/prototype reads after callbacks and clamp stored morale to6 independently of morale helper output."}
 // TRIED: faithful port of Ghidra's structure using real Veh field offsets (x/y/state/proto_id/faction_id/dmg_incurred/order/waypoint/morale from src/veh.h) as typed globals; matches through instr #10 (address calc). Diverges at #11: original re-reads proto_id with plain 16-bit `mov ax` at the first use and a separate `movsx` at each later use, never caching the sign-extended value; my single `short sVar1` local gets sign-extended once at declaration instead. Not chased further.
@@ -536,7 +557,7 @@ void __cdecl monolith(int veh_id) {
             return;
         }
     }
-    if (!Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating) {
+    if (!get_offense_rating(veh_id)) {
         if (Vehs[veh_id].dmg_incurred) {
             Vehs[veh_id].dmg_incurred = 0;
             veh_skip(veh_id);
@@ -576,9 +597,7 @@ void __cdecl monolith(int veh_id) {
                 return;
             }
         }
-    } else if (Vehs[veh_id].state & VSTATE_MONOLITH_UPGRADED || morale_veh(veh_id, 1, 0) >= 6
-               || Vehs[veh_id].morale >= 6
-               || !Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating) {
+    } else if (!want_monolith(veh_id)) {
         if (Vehs[veh_id].dmg_incurred) {
             Vehs[veh_id].dmg_incurred = 0;
             veh_skip(veh_id);
@@ -661,26 +680,6 @@ void __cdecl monolith(int veh_id) {
 
 
 
-/*
-Purpose: Determine whether the specified unit is eligible for a monolith morale upgrade.
-// ORIGINAL: 0x00579F80 ?want_monolith@@YAHH@Z 0x00579F80-0x00579FE6 BYTE_EXACT
-// size      102 bytes
-// prototype int (__cdecl ?want_monolith@@YAHH@Z)(int vehID)
-// callers   2   call targets   1
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x005C0E40
-Return Value: Is unit eligible for a monolith morale upgrade? true/false
-Status: Complete
-*/
-BOOL __cdecl want_monolith(int veh_id) {
-    if (!(Vehs[veh_id].state & VSTATE_MONOLITH_UPGRADED)
-        && morale_veh(veh_id, true, 0) < MORALE_ELITE && Vehs[veh_id].morale < MORALE_ELITE
-        && get_offense_rating(veh_id)) {
-        return true;
-    }
-    return false;
-}
 
 /*
 Purpose: Read the specified header from a file. This assumes the header string buffer is at least 
@@ -4637,9 +4636,11 @@ extern uint32_t UpgradePromptAnswered;
 // EH map has 56 states, teardown sites (1,2,5,6,6,7+9,7+13), and its call
 // sequence expands ~Scroll at the action-0 return but not at the mode return,
 // and ~Dialogs/~StringList/~Heap one level further at the DESIGNNO and final
-// returns. Thirteen probes after the action-0 return and one after the
+// returns. Twelve probes after the action-0 return and one after the
 // DESIGNNO return reproduce both exactly (a 2-D probe grid; no other placement
-// does); the natural spend the original had there is not found yet. Dialog
+// does) once DESIGNNO goes through the veh_battle_msg wrapper (natural spend:
+// thirteen were needed with the raw NetMsgPrimary.pop(..., 5000, ...) call);
+// the rest of the natural spend the original had there is not found yet. Dialog
 // inline setters for field_34_/field_50_ (they reproduce the image's dead
 // `lea reg,[ebp+reg-0x320c]` after each store) and reading the action at each
 // test leave the required probe count unchanged.
@@ -4739,7 +4740,7 @@ again:
     const uint32_t action = popup.input_poll_state();
     if (action == 0)
         return -1;
-    dw_probe(0);dw_probe(1);dw_probe(2);dw_probe(3);dw_probe(4);dw_probe(5);dw_probe(6);dw_probe(7);dw_probe(8);dw_probe(9);dw_probe(10);dw_probe(11);dw_probe(12);
+    dw_probe(0);dw_probe(1);dw_probe(2);dw_probe(3);dw_probe(4);dw_probe(5);dw_probe(6);dw_probe(7);dw_probe(8);dw_probe(9);dw_probe(10);dw_probe(11);
     if (action == 2) {
         char *prototype_name = VehPrototypes[selected].veh_name;
         if (X_pop_ask("DESIGNNAME", 31, prototype_name, 0, 0) != 0)
@@ -4792,7 +4793,7 @@ again:
     }
     int owner = selected / MaxVehProtoFactionNum;
     if (owner == 0) {
-        NetMsgPrimary.pop("DESIGNNO", 0x1388, 0, 0);
+        veh_battle_msg("DESIGNNO", 0);
         return -1;
     }
     dw_probe(0);

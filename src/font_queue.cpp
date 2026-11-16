@@ -472,11 +472,33 @@ static inline int scoot_tile_visible(MapWin *window, int x, int y) {
     return 0;
 }
 
+// WORKAROUND(decl): file-local stand-in for the original's four-edge rect
+// setter (name unknown): the image evaluates the four edges right to left
+// (bottom, right, top, left) before storing them, as call arguments do
+// (quayle_set_rect in quaylewin.cpp is the same shape).
+static inline void scoot_set_rect(RECT *rect, int left, int top, int right, int bottom) {
+    rect->left = left;
+    rect->top = top;
+    rect->right = right;
+    rect->bottom = bottom;
+}
+
+// WORKAROUND(inline): expand_rect (scroll.cpp) is a plain out-of-line
+// function in this tree; veh_scoot expands it in place (0x0055A976..: left and
+// top lowered, right and bottom raised by the quarter margins).
+static inline RECT *scoot_expand_rect(RECT *rect, int horizontal, int vertical) {
+    rect->left -= horizontal;
+    rect->right += horizontal;
+    rect->top -= vertical;
+    rect->bottom += vertical;
+    return rect;
+}
+
 // ORIGINAL: 0x0055A150 ?veh_scoot@@YAXHHHHH@Z 0x0055A150-0x0055AF11;0x0065FF70-0x0065FFC7
 // RECOVERY_BINDING: v1 {"evidence": ["Original55A175..55A1D9 constructs Buffer[8],Vector[8],singleton Vector,Vector[8], with reverse normal teardown55AEA7..55AEFB and EH65FF70..65FFC7. Use genuine value subtraction, mutating scale and compound operations. Preserve flags1 turn-only cleanup, flags4000 immediate redraw, fresh MapWinTable receivers and preference reads, source/destination copy direction, wrap and timing. Original55A29D/55A65C skips active-slot zeroing for null MapWinTable entries; later reads55AA60/55AC10/55AE26 retain the indeterminate-stack quirk. Buffer array [EBP-2EF8,EBP-2B8) is disjoint from active flags [EBP-B0,EBP-90). Null-slot runtime effects remain unverified, not normalized to inactive.", "Preserve existing seed identity and complete original spans. Source binding is not a measured matching or runtime claim."], "reason": "Recover real movement animation with automatic Buffer and Vector lifetime rather than raw stack/return-slot scaffolding."}
 void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int flags) {
-    Buffer saved[8];
     int retain_origin = 0;
+    Buffer saved[8];
     Vector position[8];
     Vector destination;
     Vector increment[8];
@@ -490,6 +512,10 @@ void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int fl
     RECT intersection;
     RECT end_clip;
     RECT start_clip;
+    // One function-scope RECT serves the origin tile and both per-frame
+    // moving rectangles: the image frame (Buffer array at EBP-2EF8, EH
+    // cleanup 0x0065FF70) has no separate block-scope slots for them.
+    RECT tile_rect;
     int i;
 
     VehDrawPositionY = tile_y;
@@ -511,23 +537,23 @@ void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int fl
             if (i && !MapWinTable[i]->view_active_) continue;
             if (scoot_tile_visible(MapWinTable[i], tile_x, tile_y) ||
                 scoot_tile_visible(MapWinTable[i], next_x, next_y)) {
-                RECT origin;
                 active[i] = 1;
                 MapWinTable[i]->tile_to_pixel(tile_x, tile_y, &start_x[i], &start_y[i]);
                 MapWinTable[i]->tile_to_pixel(next_x, next_y, &end_x[i], &end_y[i]);
                 start_y[i] -= MapWinTable[i]->field_1DDC0_;
                 end_y[i] -= MapWinTable[i]->field_1DDC0_;
-                set_rectangle_dimensions(&origin, start_x[i], start_y[i],
+                set_rectangle_dimensions(&tile_rect, start_x[i], start_y[i],
                     MapWinTable[i]->tile_pixel_width_,
                     MapWinTable[i]->tile_pixel_height_ + MapWinTable[i]->field_1DDC0_);
-                area[i].left = start_x[i] < end_x[i] ? start_x[i] : end_x[i];
-                area[i].top = start_y[i] < end_y[i] ? start_y[i] : end_y[i];
-                area[i].right = (start_x[i] > end_x[i] ? start_x[i] : end_x[i]) +
-                                MapWinTable[i]->tile_pixel_width_;
-                area[i].bottom = (start_y[i] > end_y[i] ? start_y[i] : end_y[i]) +
-                                 MapWinTable[i]->tile_pixel_height_ +
-                                 MapWinTable[i]->field_1DDC0_;
-                UnionRect(&area[i], &origin, &area[i]);
+                scoot_set_rect(&area[i],
+                    start_x[i] < end_x[i] ? start_x[i] : end_x[i],
+                    start_y[i] < end_y[i] ? start_y[i] : end_y[i],
+                    (start_x[i] > end_x[i] ? start_x[i] : end_x[i]) +
+                        MapWinTable[i]->tile_pixel_width_,
+                    (start_y[i] > end_y[i] ? start_y[i] : end_y[i]) +
+                        MapWinTable[i]->tile_pixel_height_ +
+                        MapWinTable[i]->field_1DDC0_);
+                UnionRect(&area[i], &tile_rect, &area[i]);
                 MapWinTable[i]->compute_clip(next_x, next_y, 0, &end_clip);
                 MapWinTable[i]->compute_clip(tile_x, tile_y, 0, &start_clip);
                 UnionRect(&area[i], &end_clip, &start_clip);
@@ -570,22 +596,20 @@ void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int fl
                 increment[i] = destination - position[i];
                 increment[i].scale(1.0f / static_cast<float>(move_frames));
                 position[i] += increment[i];
-                area[i].left = start_x[i] < end_x[i] ? start_x[i] : end_x[i];
-                area[i].top = start_y[i] < end_y[i] ? start_y[i] : end_y[i];
-                area[i].right = (start_x[i] > end_x[i] ? start_x[i] : end_x[i]) +
-                                MapWinTable[i]->tile_pixel_width_;
-                area[i].bottom = (start_y[i] > end_y[i] ? start_y[i] : end_y[i]) +
-                                 MapWinTable[i]->tile_pixel_height_ +
-                                 MapWinTable[i]->field_1DDC0_;
+                scoot_set_rect(&area[i],
+                    start_x[i] < end_x[i] ? start_x[i] : end_x[i],
+                    start_y[i] < end_y[i] ? start_y[i] : end_y[i],
+                    (start_x[i] > end_x[i] ? start_x[i] : end_x[i]) +
+                        MapWinTable[i]->tile_pixel_width_,
+                    (start_y[i] > end_y[i] ? start_y[i] : end_y[i]) +
+                        MapWinTable[i]->tile_pixel_height_ +
+                        MapWinTable[i]->field_1DDC0_);
                 MapWinTable[i]->compute_clip(next_x, next_y, 0, &end_clip);
                 MapWinTable[i]->compute_clip(tile_x, tile_y, 0, &start_clip);
                 UnionRect(&area[i], &end_clip, &start_clip);
                 margin_x[i] = (area[i].right - area[i].left) / 4;
                 margin_y[i] = (area[i].bottom - area[i].top) / 4;
-                area[i].left -= margin_x[i];
-                area[i].right += margin_x[i];
-                area[i].top -= margin_y[i];
-                area[i].bottom += margin_y[i];
+                scoot_expand_rect(&area[i], margin_x[i], margin_y[i]);
                 saved[i].init(area[i].right - area[i].left, area[i].bottom - area[i].top, 0, 0);
                 // Implicit receiver conversion: the image applies the virtual
                 // base offset here without the null test an argument gets.
@@ -602,10 +626,9 @@ void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int fl
         for (frame = 0; frame < turn_frames; ++frame) {
             for (i = 0; i < 8; ++i) {
                 if (active[i]) {
-                    RECT moving;
-                    set_rectangle_dimensions(&moving, start_x[i], start_y[i],
+                    set_rectangle_dimensions(&tile_rect, start_x[i], start_y[i],
                         area[i].right - area[i].left, area[i].bottom - area[i].top);
-                    if (IntersectRect(&intersection, &moving, &area[i])) {
+                    if (IntersectRect(&intersection, &tile_rect, &area[i])) {
                         veh_draw(MapWinTable[i], veh_id, start_x[i], start_y[i],
                             MapWinTable[i]->zoom_offset_, 0x12, frame);
                         MapWinTable[i]->update(&area[i], 0);
@@ -629,11 +652,10 @@ void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int fl
         for (frame = 0; frame < move_frames; ++frame) {
             for (i = 0; i < 8; ++i) {
                 if (active[i]) {
-                    RECT moving;
-                    set_rectangle_dimensions(&moving,
+                    set_rectangle_dimensions(&tile_rect,
                         static_cast<int>(position[i].x_), static_cast<int>(position[i].y_),
                         area[i].right - area[i].left, area[i].bottom - area[i].top);
-                    if (IntersectRect(&intersection, &moving, &area[i])) {
+                    if (IntersectRect(&intersection, &tile_rect, &area[i])) {
                         veh_draw(MapWinTable[i], veh_id,
                             static_cast<int>(position[i].x_), static_cast<int>(position[i].y_),
                             MapWinTable[i]->zoom_offset_, 0x22, frame);
