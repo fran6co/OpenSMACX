@@ -237,7 +237,7 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
             if (VehPrototypes[id].flags & PROTO_ACTIVE
                 && VehPrototypes[id].plan == VehPrototypes[prototype_id].plan
                 && VehPrototypes[id].chassis_id == VehPrototypes[prototype_id].chassis_id) {
-                if (VehPrototypes[id].reactor_id >= VehPrototypes[prototype_id].reactor_id) {
+                if (VehPrototypes[prototype_id].reactor_id <= VehPrototypes[id].reactor_id) {
                     lower = 0;
                     break;
                 }
@@ -406,30 +406,31 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
         }
         // BUG(original): after a restart proto_id is -1 here, so this reads
         // the name slot just before VehPrototypes[0].
-        if (!same && !strcmp(alternate, VehPrototypes[proto_id].veh_name)) {
-            gendered = 0;
-            {
-                char *found = 0;
-                do {
-                    found = strstr(found ? found + 1 : alternate, StringTable.get(Labels.strings_ptr[0xE5C / 4]));
-                } while (found && strstr(found + 1, StringTable.get(Labels.strings_ptr[0xE5C / 4])));
-                if (found && strlen(found) <= strlen(StringTable.get(Labels.strings_ptr[0xE5C / 4])) + 1) {
-                    char *last = &alternate[strlen(alternate) - 1];
-                    if (*last >= '2' && *last < '9') {
-                        (*last)++;
-                    } else {
-                        exhausted = 1;
-                    }
-                } else {
-                    char number[80];
-                    strcat(alternate, BufferJoinSpace);
-                    strcat(alternate, StringTable.get(Labels.strings_ptr[0xE5C / 4]));
-                    _itoa(2, number, 10);
-                    strcat(alternate, number);
-                }
-            }
-            proto_id = -1;
+        if (same || strcmp(alternate, VehPrototypes[proto_id].veh_name)) {
+            continue;
         }
+        gendered = 0;
+        {
+            char *found = 0;
+            do {
+                found = strstr(found ? found + 1 : alternate, StringTable.get(Labels.strings_ptr[0xE5C / 4]));
+            } while (found && strstr(found + 1, StringTable.get(Labels.strings_ptr[0xE5C / 4])));
+            if (found && strlen(found) <= strlen(StringTable.get(Labels.strings_ptr[0xE5C / 4])) + 1) {
+                char *last = &alternate[strlen(alternate) - 1];
+                if (*last >= '2' && *last < '9') {
+                    (*last)++;
+                } else {
+                    exhausted = 1;
+                }
+            } else {
+                char number[80];
+                strcat(alternate, BufferJoinSpace);
+                strcat(alternate, StringTable.get(Labels.strings_ptr[0xE5C / 4]));
+                _itoa(2, number, 10);
+                strcat(alternate, number);
+            }
+        }
+        proto_id = -1;
     }
     if (gendered) {
         strcpy(output, alternate);
@@ -628,7 +629,15 @@ void __cdecl monolith(int veh_id) {
             return;
         }
     }
-    if (!(Vehs[veh_id].state & VSTATE_MONOLITH_UPGRADED) && morale_veh(veh_id, 1, 0) < 6) {
+    if (Vehs[veh_id].state & VSTATE_MONOLITH_UPGRADED || morale_veh(veh_id, 1, 0) >= 6) {
+        if (faction == ConsoleGlobal.faction_id_) {
+            if (GameDataStateStorage.fields_.game_more_preferences_ & 0x800u) {
+                veh_battle_msg("MONOLITHNO", "monolith_sm.pcx");
+            } else {
+                NetMsg::pop("MONOLITHNO", "monolith_sm.pcx");
+            }
+        }
+    } else {
         value = rand() % 32;
         if (!(map_loc(x, y)->bit & 0x02000000u) || GameDataStateStorage.fields_.turn_current_num_ < 100) {
             value = 1;
@@ -665,12 +674,6 @@ void __cdecl monolith(int veh_id) {
                 NetMsg::pop(StringTemp, "monolith_sm.pcx");
             }
             GameDataStateStorage.fields_.game_state_ |= 4u;
-        }
-    } else if (faction == ConsoleGlobal.faction_id_) {
-        if (GameDataStateStorage.fields_.game_more_preferences_ & 0x800u) {
-            veh_battle_msg("MONOLITHNO", "monolith_sm.pcx");
-        } else {
-            NetMsg::pop("MONOLITHNO", "monolith_sm.pcx");
         }
     }
 }

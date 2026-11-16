@@ -779,15 +779,27 @@ L_595137:
         goto L_595734;
     if (stack_check(target_veh, 0x12, -1, -1, -1)
         && !has_abil(Vehs[veh_id].proto_id, ABL_AIR_SUPERIORITY)
-        && !stack_check(target_veh, 6, ABL_CARRIER, -1, -1))
-        goto L_596e0b;
+        && !stack_check(target_veh, 6, ABL_CARRIER, -1, -1)) {
+        if (faction == ConsoleGlobal.faction_id_
+                && (NetDaemonNet.action_mode_ & 1) != 0) {
+            parse_say(0, Ability[abil_index(ABL_AIR_SUPERIORITY)].name, -1, -1);
+            NetMsgPrimary.pop("FIGHTERRULE", 5000, 0, NULL);
+        }
+        if (Vehs[veh_id].state & 0x4200)
+            veh_skip(veh_id);
+        goto done;
+    }
     goto L_595734;
 
 L_595734:
     if (Vehs[veh_id].proto_id != BSC_SEALURK && src_ocean && !dest_ocean
         && triad == TRIAD_SEA && !can_arty(Vehs[veh_id].proto_id, 1)
-        && Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating)
-        goto L_596e85;
+        && Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating) {
+        if (faction == ConsoleGlobal.faction_id_
+                && (NetDaemonNet.action_mode_ & 1) != 0)
+            NetMsgPrimary.pop("PSIBOMB", 5000, 0, NULL);
+        goto done;
+    }
     if (src_ocean && triad == TRIAD_LAND
         && !has_abil(Vehs[veh_id].proto_id, ABL_AMPHIBIOUS)
         && VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_INFO_WARFARE)
@@ -797,8 +809,14 @@ L_595734:
     if (Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].mode == WPN_MODE_INFOWAR
         && stack_check(target_veh, 2, PLAN_INFO_WARFARE, -1, -1))
         goto L_595a92;
-    if (Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating == 0)
-        goto L_596f75;
+    if (Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating == 0) {
+        if ((NetDaemonNet.action_mode_ & 1) != 0
+                && faction == ConsoleGlobal.faction_id_) {
+            g_FX.play(0x33);
+            NetMsgPrimary.pop("NONCOMBATANT", 5000, 0, NULL);
+        }
+        goto done;
+    }
     if (VehPrototypes[Vehs[target_veh].proto_id].plan != PLAN_INFO_WARFARE)
         goto L_595a92;
     if (stack_check(target_veh, 1, -1, -1, -1) != 1)
@@ -1195,22 +1213,6 @@ L_596d5d:
     NetMsgPrimary.pop(owner ? "SPOTTED" : "SPOTTED0", 5000, 0, NULL);
     goto done;
 
-L_596e0b:
-    if (faction == ConsoleGlobal.faction_id_
-            && (NetDaemonNet.action_mode_ & 1) != 0) {
-        parse_say(0, Ability[abil_index(ABL_AIR_SUPERIORITY)].name, -1, -1);
-        NetMsgPrimary.pop("FIGHTERRULE", 5000, 0, NULL);
-    }
-    if (Vehs[veh_id].state & 0x4200)
-        veh_skip(veh_id);
-    goto done;
-
-L_596e85:
-    if (faction == ConsoleGlobal.faction_id_
-            && (NetDaemonNet.action_mode_ & 1) != 0)
-        NetMsgPrimary.pop("PSIBOMB", 5000, 0, NULL);
-    goto done;
-
 L_596ec0:
     {
         int ability = abil_index(ABL_AMPHIBIOUS);
@@ -1222,14 +1224,6 @@ L_596ec0:
             else
                 NetMsgPrimary.pop("NOTAMPHIB", 5000, 0, NULL);
         }
-    }
-    goto done;
-
-L_596f75:
-    if ((NetDaemonNet.action_mode_ & 1) != 0
-            && faction == ConsoleGlobal.faction_id_) {
-        g_FX.play(0x33);
-        NetMsgPrimary.pop("NONCOMBATANT", 5000, 0, NULL);
     }
     goto done;
 
