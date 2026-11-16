@@ -5284,7 +5284,6 @@ void __cdecl load_interface(int mode) {
     FlatButtonDefaultTopLeft[0] = &g_BASEWIN_SPRITES[18];
     FlatButtonDefaultTopLeft[1] = &g_BASEWIN_SPRITES[21];
     FlatButtonDefaultTopLeft[2] = &g_BASEWIN_SPRITES[24];
-    FlatButtonDefaultTopRight[0] = &g_BASEWIN_SPRITES[20];
     FlatButtonDefaultTopTiles[0] = &g_BASEWIN_SPRITES[19];
     FlatButtonDefaultTopRight[2] = &g_BASEWIN_SPRITES[26];
     FlatButtonDefaultTopTiles[2] = &g_BASEWIN_SPRITES[25];
@@ -5300,6 +5299,7 @@ void __cdecl load_interface(int mode) {
         - g_IFACE_GENERAL_WINDOWS_BOT_MID_SPRITE.top_offset();
     InterfaceThirdCaptionHeight = g_UNUSED_SPRITE_VAR08.source_height() + g_UNUSED_SPRITE_VAR08.top_offset();
     InterfaceThirdBottomBorderThickness = g_UNUSED_SPRITE_VAR04.height() - g_UNUSED_SPRITE_VAR04.top_offset();
+    FlatButtonDefaultTopRight[0] = &g_BASEWIN_SPRITES[20];
     FlatButtonDefaultTopTiles[1] = &g_BASEWIN_SPRITES[22];
     FlatButtonDefaultTopRight[1] = &g_BASEWIN_SPRITES[23];
     FlatButtonDefaultBottomLeft[0] = 0;
