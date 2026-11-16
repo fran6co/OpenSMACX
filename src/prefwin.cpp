@@ -1386,7 +1386,7 @@ void PrefWin::on_scrolling(int control_id, int position) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00491400 ?on_button_clicked@PrefWin@@QAEXH@Z 0x00491400-0x00491794;0x00658AC0-0x00658B6C FILE
+// ORIGINAL: 0x00491400 ?on_button_clicked@PrefWin@@QAEXH@Z 0x00491400-0x00491794;0x00658AC0-0x00658B6C FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00491400.cpp", "recovery/tasks/prefwin-owner-coverage-wave.json", "Original control parent 8578D8; ctor/destructor member order, 800-pixel branch, checkbox text-context and callback order independently reviewed."], "reason": "Recover the complete PrefWin ownership group through a genuine GraphicWin base and compiler-owned embedded control lifetimes; preserve seed identity, original spans and unresolved discoveries without granting byte claims."}
 // symbol    ?on_button_clicked@PrefWin@@UAEXH@Z
 void PrefWin::on_button_clicked(int button_id) {
