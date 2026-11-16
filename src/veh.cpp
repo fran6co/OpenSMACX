@@ -3007,7 +3007,7 @@ int __cdecl propose_proto(int faction_id, int chassis_id, int weapon_id,
         if (VehPrototypes[slot].chassis_id == chassis_id
             && VehPrototypes[slot].weapon_id == weapon_id
             && VehPrototypes[slot].armor_id == armor_id
-            && VehPrototypes[slot].ability_flags == (uint32_t)ability_flags
+            && ability_flags == VehPrototypes[slot].ability_flags
             && VehPrototypes[slot].reactor_id == reactor_id
             && !DesignConsiderOverride
             && GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction_id)) {

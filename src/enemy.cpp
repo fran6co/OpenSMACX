@@ -430,7 +430,7 @@ void __cdecl enemy_strategy(int faction_id) {
             }
             int region = region_at(x, y);
             PlayersData[faction_id].region_total_bases[region]++;
-            if (is_coast(Bases[base_id].x, Bases[base_id].y, 0)) {
+            if (is_port(base_id, 0)) {
                 PlayersData[faction_id].unk_77[region] |= 0x80;
             }
             if (!((GameDataStateStorage.fields_.turn_current_num_ + base_id) & 3)) {
@@ -815,7 +815,7 @@ void __cdecl enemy_strategy(int faction_id) {
             if (!abandon) {
                 if (PlayersData[faction_id].region_base_plan[target_region] > 2) {
                     if (PlayersData[faction_id].region_base_plan[target_region] == 8
-                        || !is_coast(Bases[base_id].x, Bases[base_id].y, 0)) {
+                        || !is_port(base_id, 0)) {
                         abandon = 1;
                     } else {
                         PlayersData[faction_id].flags |= 0x800;
@@ -1280,17 +1280,8 @@ void __cdecl enemy_strategy(int faction_id) {
             if (Vehs[veh_id].state & 0x10000000) {
                 plan = 2;
                 PlayersData[faction_id].region_total_offensive_vehs[region]++;
-            } else if (region < 0x40) {
-                int per_base = 2 - PlayersData[faction_id].ai_fight;
-                if (PlayersData[faction_id].region_base_plan[region] == 8) {
-                    per_base += 2;
-                } else if (PlayersData[faction_id].region_base_plan[region] == 2) {
-                    per_base = 1;
-                }
-                if (PlayersData[faction_id].flags & 0x40000000) {
-                    per_base = 1;
-                }
-                int wanted = (PlayersData[faction_id].region_total_bases[region] + per_base - 1) / per_base;
+            } else {
+                int wanted = guard_check(faction_id, region);
                 if (wanted && plan <= 1
                     && (PlayersData[faction_id].region_base_plan[region] > 2
                         || (base_owner_of(sq) == faction_id
@@ -3259,8 +3250,7 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                 for (int k = 0; k < 9; k++) {
                     int x_k = wrap_map_x(VehMoveDeltaX[k] + x);
                     int y_k = VehMoveDeltaY[k] + y;
-                    if (on_map(x_k, y_k) && !(PlayersData[faction_id].flags & PFLAG_MAP_REVEALED)
-                        && !(map_loc(x_k, y_k)->visibility & (1 << faction_id))) {
+                    if (on_map(x_k, y_k) && !is_known(x_k, y_k, faction_id)) {
                         unseen++;
                     }
                 }
@@ -3807,8 +3797,7 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                 }
                 uint8_t triad = Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad;
                 if (triad != TRIAD_AIR) {
-                    if (!(PlayersData[faction_id].flags & PFLAG_MAP_REVEALED)
-                        && !(map_loc(x, y)->visibility & (1 << faction_id))) {
+                    if (!is_known(x, y, faction_id)) {
                         continue;
                     }
                     if (base_who(x, y) < 0 && !(Vehs[target].visibility & (1 << faction_id))) {
@@ -5113,7 +5102,7 @@ L_56dc57:
                 ty = y + VehMoveDeltaY[rad];
                 if (on_map(tx, ty) && (map_loc(tx, ty)->climate & 0xE0) < 0x60) {
                     for (other_id = stack_fix(veh_at(tx, ty)); other_id >= 0;
-                         other_id = other_id < 0 ? other_id : Vehs[other_id].next_veh_id_stack) {
+                         other_id = veh_next_stack_id(other_id)) {
                         if (Vehs[other_id].faction_id == faction_id
                             && VehPrototypes[Vehs[other_id].proto_id].plan == 7
                             && stack_check(other_id, 8, -1, -1, -1) > 0)
@@ -5135,7 +5124,7 @@ L_56de10:
             {
                 int healthy = 1;
                 for (other_id = veh_top(veh_id); other_id >= 0;
-                     other_id = other_id < 0 ? other_id : Vehs[other_id].next_veh_id_stack) {
+                     other_id = veh_next_stack_id(other_id)) {
                     if (VehPrototypes[Vehs[other_id].proto_id].plan == 7
                         && Vehs[other_id].dmg_incurred > proto_power(other_id) / 3)
                         healthy = 0;
@@ -6510,7 +6499,7 @@ L_571982:
                 other_id = stack_fix(veh_at(tx, ty));
                 if (other_id >= 0) {
                     for (other_id = veh_top(other_id); other_id >= 0;
-                         other_id = other_id < 0 ? other_id : Vehs[other_id].next_veh_id_stack) {
+                         other_id = veh_next_stack_id(other_id)) {
                         if (Vehs[other_id].faction_id == faction_id &&
                             VehPrototypes[Vehs[other_id].proto_id].plan <= 1 &&
                             !has_abil(Vehs[other_id].proto_id, 0x8000)) {
@@ -6527,7 +6516,7 @@ L_571982:
                 other_id = stack_fix(veh_at(tx, ty));
                 if (other_id >= 0) {
                     for (other_id = veh_top(other_id); other_id >= 0;
-                         other_id = other_id < 0 ? other_id : Vehs[other_id].next_veh_id_stack) {
+                         other_id = veh_next_stack_id(other_id)) {
                         if (Vehs[other_id].faction_id == faction_id &&
                             VehPrototypes[Vehs[other_id].proto_id].plan <= 1 &&
                             !has_abil(Vehs[other_id].proto_id, 0x8000) &&
@@ -6549,7 +6538,7 @@ L_571982:
                 other_id = stack_fix(veh_at(tx, ty));
                 if (other_id >= 0) {
                     for (other_id = veh_top(other_id); other_id >= 0;
-                         other_id = other_id < 0 ? other_id : Vehs[other_id].next_veh_id_stack) {
+                         other_id = veh_next_stack_id(other_id)) {
                         // BUG(original): the upper bound tests the actor's move_to_ai_type.
                         if (Vehs[other_id].faction_id == faction_id &&
                             VehPrototypes[Vehs[other_id].proto_id].plan <= 1 &&
@@ -7319,9 +7308,9 @@ L_574a88:
             stack_sort_2(veh_id);
         }
         n = 0;
-        // Step is veh_next_stack_id (0x0050B8F0) open-coded: the image re-tests the id.
+        // Step is the expanded veh_next_stack_id (0x0050B8F0): the image re-tests the id.
         for (other_id = veh_top(veh_id); other_id >= 0;
-             other_id = (other_id < 0) ? other_id : Vehs[other_id].next_veh_id_stack) {
+             other_id = veh_next_stack_id(other_id)) {
             if (other_id == veh_id) {
                 continue;
             }
@@ -7630,7 +7619,7 @@ L_574a88:
                         || map_loc(Vehs[veh_id].waypoint_x[0], Vehs[veh_id].waypoint_y[0])->region != faction_bit
                         || Vehs[veh_id].move_to_ai_type == 'e')) {
                     for (other_id = veh_top(veh_id); other_id >= 0;
-                         other_id = (other_id < 0) ? other_id : Vehs[other_id].next_veh_id_stack) {
+                         other_id = veh_next_stack_id(other_id)) {
                         if (Chassis[VehPrototypes[Vehs[other_id].proto_id].chassis_id].triad == TRIAD_LAND
                             && Vehs[other_id].order == ORDER_SENTRY_BOARD
                             && (Vehs[other_id].waypoint_x[0] < 0 || Vehs[other_id].waypoint_x[0] == veh_id)
@@ -7687,7 +7676,7 @@ L_574a88:
                 }
             }
             for (other_id = veh_top(veh_id); other_id >= 0;
-                 other_id = (other_id < 0) ? other_id : Vehs[other_id].next_veh_id_stack) {
+                 other_id = veh_next_stack_id(other_id)) {
                 if (Chassis[VehPrototypes[Vehs[other_id].proto_id].chassis_id].triad == TRIAD_LAND) {
                     Vehs[other_id].order = ORDER_NONE;
                 }
