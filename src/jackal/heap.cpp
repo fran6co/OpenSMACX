@@ -229,7 +229,7 @@ BOOL Heap::init(int req_size) {
 /*
 Purpose: Get the requested memory size. If there currently isn't enough memory to meet the request, 
          allocate additional memory in blocks of 1024 bytes until request is met.
-// ORIGINAL: 0x005D4680 ?get@Heap@@QAEPAXH@Z 0x005D4680-0x005D47CB
+// ORIGINAL: 0x005D4680 ?get@Heap@@QAEPAXH@Z 0x005D4680-0x005D47CB BYTE_EXACT
 // LEVER: call_diff showed FEWER (3 vs 15) - this body called sprintf_s,
 //        MessageBoxA and exit only. `osmx calls --all` on the image gives
 //        realloc, 7x strcat, 3x add_lf, 3x _itoa, MessageBoxA, exit, and
