@@ -426,7 +426,7 @@ int Video::decode_frame(int destination_index) {
   return 1;
 }
 
-// RECOVERY_LITERAL: v1 0x00698978 0x00698981 $SG47702 0x00637D70
+// RECOVERY_LITERAL: v1 0x00698978 0x00698981 $SG47690 0x00637D70
 // ORIGINAL: 0x00637D70 ?play_frame@Video@@QAEHXZ 0x00637D70-0x0063808D FILE BYTE_EXACT
 // symbol    ?play_frame@Video@@QAEHXZ
 // TRIED: prologue register order (large 797-byte function, many branches); landed as a structural transcription rather than chasing every register-allocation choice. Div-by-1000 modelled as plain unsigned int/1000 (VC6's own reciprocal-multiply idiom), not the 64-bit division Ghidra's decompile implied.
