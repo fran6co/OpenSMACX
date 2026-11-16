@@ -6107,14 +6107,14 @@ void MapWin::draw_wars() {
 // WORKAROUND(inline): dead /Ob2 budget probe for MapWin::click. The image's
 // first 18 return sites tear the Popup down five states deep and the last
 // three six deep, final seven (116 EH states); without spend after the
-// right_menu return ours keeps sites 8-20 a level deeper (125 states). Eight
-// constant calls of this folded chain reproduce the image's unwind map
-// exactly; no natural spelling for that spend has been found yet.
+// right_menu return ours keeps sites 8-20 a level deeper (125 states). Ten
+// constant calls of this folded three-test chain reproduce the image's unwind
+// map and teardown calls exactly (as did eight four-test calls); no natural
+// spelling for that spend has been found yet.
 static inline int click_probe(int x) {
-    if (x == 1) x = 7;
+    if (x == 0) x = 7;
+    if (x == 1) x = 8;
     if (x == 2) x = 9;
-    if (x == 3) x = 11;
-    if (x == 4) x = 13;
     return x;
 }
 
@@ -6366,8 +6366,9 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
             return;
         }
         // WORKAROUND(inline): budget probe, see click_probe.
-        click_probe(100); click_probe(101); click_probe(102); click_probe(103);
-        click_probe(104); click_probe(105); click_probe(106); click_probe(107);
+        click_probe(1000); click_probe(1001); click_probe(1002); click_probe(1003);
+        click_probe(1004); click_probe(1005); click_probe(1006); click_probe(1007);
+        click_probe(1008); click_probe(1009);
     }
 
     if (map_view_index_ == 0) {

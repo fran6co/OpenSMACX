@@ -948,6 +948,17 @@ finish:
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0058C2A0 0x0058CE9C 0x0058CEB4 0x0058C3C9
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0058C2A0 0x0058CEB4 0x0058CECC 0x0058C715
+// WORKAROUND(inline): dead /Ob2 budget probe, not recovered code; a constant
+// argument folds it away. One branchy expansion before the slot loop's
+// cancel return makes the final teardown call ~StringList's second stage out
+// of line as the image does (0x0058CE12); the image's EH map then matches
+// exactly. The original's spend is not identified.
+static inline int custom_planet_budget_probe(int x) {
+    if (x == 0) x = 7; if (x == 1) x = 8; if (x == 2) x = 9; if (x == 3) x = 10;
+    if (x == 4) x = 11; if (x == 5) x = 12; if (x == 6) x = 13; if (x == 7) x = 14;
+    return x;
+}
+
 // ORIGINAL: 0x0058C2A0 ?custom_planet@@YAHHH@Z 0x0058C2A0-0x0058CE9C;0x006605A5-0x006607D7
 // RECOVERY_BINDING: v1 {"evidence": ["task:newgame-menu-owner", "historical seed:src/unrecovered/0058c2a0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete mapped native control flow", "source:existing SetupWin/Popup/Buffer/NetDaemon owner declarations; provisional bounded945820 and9B2074 objects, not raw image aliases"], "reason": "Source-owned new-game/menu family preserving complete original identity, auxiliary spans and historical seed findings; existing genuine object lifetimes and typed member owners. Unfinished bodies remain explicit, not implementation coverage."}
 // TRIED: exact 12-case image/message switch (jump table at 0x58ce9c) transcribed as a representative subset, not all 12 cases; Popup/SetupWin/Buffer[3] RAII locals reproduce the close cascade shape but not every StringStruct/list-walk detail.
@@ -957,6 +968,7 @@ int __cdecl custom_planet(int show_preview, int use_saved_choices) {
     SetupWin setup;
     int slots[6] = {1, 3, 6, 5, 0, 0};
     char filename[64];
+    custom_planet_budget_probe(1000);  // WORKAROUND(inline): see custom_planet_budget_probe
 
     if (show_preview) {
         setup.overlay_buffers_[0] = &previews[0];
@@ -1094,43 +1106,14 @@ int __cdecl custom_planet(int show_preview, int use_saved_choices) {
 // WORKAROUND(inline): dead /Ob2 budget probe, not recovered code. The image's
 // size_of_planet teardowns call ~StringList/~Scroll out of line at the menu-
 // failure and success returns but expand them at the custom-map returns
-// (0x0058D072, 0x0058D248, 0x0058D3F7, 0x0058D5BB); this 32-test probe at
-// entry reproduces that EH topology exactly. The original spent the same
-// budget on inline calls not yet identified.
-static int size_of_planet_budget_probe(int x)
+// (0x0058D072, 0x0058D248, 0x0058D3F7, 0x0058D5BB); sixteen two-test
+// expansions at entry reproduce that EH topology exactly (a single 32-test
+// chain did too). The original spent the same budget on inline calls not yet
+// identified.
+static inline int size_of_planet_budget_probe(int x)
 {
-    if (x == 0) x = 1;
-    if (x == 1) x = 4;
-    if (x == 2) x = 7;
-    if (x == 3) x = 10;
-    if (x == 4) x = 13;
-    if (x == 5) x = 16;
-    if (x == 6) x = 19;
-    if (x == 7) x = 22;
-    if (x == 8) x = 25;
-    if (x == 9) x = 28;
-    if (x == 10) x = 31;
-    if (x == 11) x = 34;
-    if (x == 12) x = 37;
-    if (x == 13) x = 40;
-    if (x == 14) x = 43;
-    if (x == 15) x = 46;
-    if (x == 16) x = 49;
-    if (x == 17) x = 52;
-    if (x == 18) x = 55;
-    if (x == 19) x = 58;
-    if (x == 20) x = 61;
-    if (x == 21) x = 64;
-    if (x == 22) x = 67;
-    if (x == 23) x = 70;
-    if (x == 24) x = 73;
-    if (x == 25) x = 76;
-    if (x == 26) x = 79;
-    if (x == 27) x = 82;
-    if (x == 28) x = 85;
-    if (x == 29) x = 88;
-    if (x == 30) x = 91;
-    if (x == 31) x = 94;
+    if (x == 0) x = 7;
+    if (x == 1) x = 8;
     return x;
 }
 
@@ -1140,7 +1123,22 @@ static int size_of_planet_budget_probe(int x)
 // RECOVERY_BINDING: v1 {"evidence": ["task:newgame-menu-owner", "historical seed:src/unrecovered/0058ced0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete mapped native control flow", "source:existing SetupWin/Popup/Buffer/NetDaemon owner declarations; provisional bounded945820 and9B2074 objects, not raw image aliases"], "reason": "Source-owned new-game/menu family preserving complete original identity, auxiliary spans and historical seed findings; existing genuine object lifetimes and typed member owners. Unfinished bodies remain explicit, not implementation coverage."}
 // TRIED: real Popup/SetupWin RAII locals with Popup::start()'s six args re-derived from push order (p1 is the fixed 0x9b8aa8 char* buffer, not the GraphicWin* - this is backwards from what an earlier sibling function assumed), plus text_open/text_get/text_item/EditGroup::edit/ prefs_get/X_pop/Path::init argument order verified against raw disasm; compiles, MISMATCH #24 (past the prologue and into the item-list loop - likely the itemNum2/itemCount stack array layout or the loop bound).
 int __cdecl size_of_planet(int mode) {
-    size_of_planet_budget_probe(2);  // WORKAROUND(inline): see above
+    size_of_planet_budget_probe(1000);  // WORKAROUND(inline): see above
+    size_of_planet_budget_probe(1001);  // WORKAROUND(inline)
+    size_of_planet_budget_probe(1002);  // WORKAROUND(inline)
+    size_of_planet_budget_probe(1003);  // WORKAROUND(inline)
+    size_of_planet_budget_probe(1004);  // WORKAROUND(inline)
+    size_of_planet_budget_probe(1005);  // WORKAROUND(inline)
+    size_of_planet_budget_probe(1006);  // WORKAROUND(inline)
+    size_of_planet_budget_probe(1007);  // WORKAROUND(inline)
+    size_of_planet_budget_probe(1008);  // WORKAROUND(inline)
+    size_of_planet_budget_probe(1009);  // WORKAROUND(inline)
+    size_of_planet_budget_probe(1010);  // WORKAROUND(inline)
+    size_of_planet_budget_probe(1011);  // WORKAROUND(inline)
+    size_of_planet_budget_probe(1012);  // WORKAROUND(inline)
+    size_of_planet_budget_probe(1013);  // WORKAROUND(inline)
+    size_of_planet_budget_probe(1014);  // WORKAROUND(inline)
+    size_of_planet_budget_probe(1015);  // WORKAROUND(inline)
     Popup popup;
     SetupWin setup;
     popup.start(WorldSizePopupLabel, mode != 2 ? 0x40 : 0);

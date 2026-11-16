@@ -2825,46 +2825,13 @@ inline void load_game_reload_faction_art() {
 }
 // WORKAROUND(inline): dead /Ob2 budget probe; folds to nothing. The image's
 // password-return teardown (0x005AB19A) is as shallow as the first one.
-static int load_game_budget_probe(int x)
+// get_title/get_name at the parse slots supply most of that spend; four
+// one-test expansions after the password return supply the rest (one
+// 32-test chain before the return did too).
+static inline int load_game_budget_probe(int x)
 {
     if (x == 0) x = 1;
-    if (x == 1) x = 4;
-    if (x == 2) x = 7;
-    if (x == 3) x = 10;
-    if (x == 4) x = 13;
-    if (x == 5) x = 16;
-    if (x == 6) x = 19;
-    if (x == 7) x = 22;
-    if (x == 8) x = 25;
-    if (x == 9) x = 28;
-    if (x == 10) x = 31;
-    if (x == 11) x = 34;
-    if (x == 12) x = 37;
-    if (x == 13) x = 40;
-    if (x == 14) x = 43;
-    if (x == 15) x = 46;
-    if (x == 16) x = 49;
-    if (x == 17) x = 52;
-    if (x == 18) x = 55;
-    if (x == 19) x = 58;
-    if (x == 20) x = 61;
-    if (x == 21) x = 64;
-    if (x == 22) x = 67;
-    if (x == 23) x = 70;
-    if (x == 24) x = 73;
-    if (x == 25) x = 76;
-    if (x == 26) x = 79;
-    if (x == 27) x = 82;
-    if (x == 28) x = 85;
-    if (x == 29) x = 88;
-    if (x == 30) x = 91;
-    if (x == 31) x = 94;
     return x;
-}
-// WORKAROUND(inline): slot 1 reads Player::title_leader (+0x4C) through an
-// inline accessor; a plain field read leaves the teardowns one level deeper.
-inline char *load_game_title_leader(int faction_id) {
-    return Players[faction_id].title_leader;
 }
 
 /*
@@ -3144,13 +3111,16 @@ again:
             }
         }
         if (faction < MaxPlayerNum) {
-            load_game_budget_probe(2);
             X_pop(ScriptPopupFile, "PASSWORDEDLOADATTEMPT", 0);
             if (WorldClimateSkipTerrainClear == 0) {
                 ExitTurnLoop = 1;
             }
             return 5;
         }
+        load_game_budget_probe(1000);  // WORKAROUND(inline): see load_game_budget_probe
+        load_game_budget_probe(1001);  // WORKAROUND(inline)
+        load_game_budget_probe(1002);  // WORKAROUND(inline)
+        load_game_budget_probe(1003);  // WORKAROUND(inline)
     }
 
     if (result != 0) {
@@ -3177,11 +3147,9 @@ again:
     load_game_reload_faction_art();
     parse_say(0, Difficulty[GameDataStateStorage.fields_.diff_level_current_],
               -1, -1);
-    parse_set(Players[ConsoleGlobal.faction_id_].is_leader_female, 0);
     // Image 0x005AAF35: slot 1 is the leader's title (+0x4C).
-    parse_says(1, load_game_title_leader(ConsoleGlobal.faction_id_), -1, -1);
-    parse_set(Players[ConsoleGlobal.faction_id_].is_leader_female, 0);
-    parse_says(2, Players[ConsoleGlobal.faction_id_].name_leader, -1, -1);
+    parse_says(1, get_title(ConsoleGlobal.faction_id_), -1, -1);
+    parse_says(2, get_name(ConsoleGlobal.faction_id_), -1, -1);
     parse_says(3, get_noun(ConsoleGlobal.faction_id_), -1, -1);
     StringTemp[0] = '\0';
     strcat(StringTemp, load_game_label(0));

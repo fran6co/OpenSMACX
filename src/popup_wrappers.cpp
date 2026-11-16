@@ -79,11 +79,15 @@ void __cdecl parse_it(char *file_name, const char *section) {
 
 // WORKAROUND(inline): zero-code budget stand-in for popp's missing inline
 // spend. The image calls ~BasePop (0x004064D0), the second ~FlatButton and
-// ~GraphicWin out of line; without spend ours expands all of ~BasePop. A
-// 6x 6-way probe reproduces the image's 7-state teardown exactly.
-static inline void popp_budget(int x) {
-    if (x == 1) x = 2; if (x == 2) x = 3; if (x == 3) x = 4;
-    if (x == 4) x = 5; if (x == 5) x = 6; if (x == 6) x = 7;
+// ~GraphicWin out of line; without spend ours expands all of ~BasePop. Ten
+// three-if expansions (anywhere in the body) reproduce the image's 7-state
+// teardown and its call sequence exactly (the earlier six 6-if chains did
+// too).
+static inline int popp_budget(int x) {
+    if (x == 0) x = 7;
+    if (x == 1) x = 8;
+    if (x == 2) x = 9;
+    return x;
 }
 
 // ORIGINAL: 0x0048C0A0 ?popp@@YAHPADPBDHPBDP6AHXZ@Z 0x0048C0A0-0x0048C31F;0x006582E0-0x00658337
@@ -93,8 +97,10 @@ static inline void popp_budget(int x) {
 int __cdecl popp(LPCSTR caption, LPCSTR label, int flags, LPCSTR picture,
                  int (__cdecl *callback)()) {
     Popup popup;
-    popp_budget(0); popp_budget(1); popp_budget(2); // WORKAROUND(inline)
-    popp_budget(3); popp_budget(4); popp_budget(5); // WORKAROUND(inline)
+    popp_budget(1000); popp_budget(1001); popp_budget(1002); // WORKAROUND(inline)
+    popp_budget(1003); popp_budget(1004); popp_budget(1005); // WORKAROUND(inline)
+    popp_budget(1006); popp_budget(1007); popp_budget(1008); // WORKAROUND(inline)
+    popp_budget(1009);                                       // WORKAROUND(inline)
     if (strcmp(caption, ScriptPopupFile) == 0
         || strcmp(caption, "SCRIPT.txt") == 0) {
         char *alternative;

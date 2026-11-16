@@ -6359,34 +6359,11 @@ void BaseWin::draw_nutrients(int update_mode) {
 // spends budget). With the top-level `goto again` loop the EH map matches the
 // image's 17 states, but every Popup teardown then expands ~Dialogs and both
 // ~StringList where the image calls ??_DDialogs 0x00406AF0 and ??_DStringList
-// 0x00406820 out of line. The original spent this budget on something not yet
-// identified (recover permute --probe-sweep: 24 chained ifs).
-static int base_editor_fac_budget_probe(int x)
-{
+// 0x00406820 out of line. One one-if expansion after the cancel return
+// reproduces the image's map (a 2- or 3-if call before the Popup does too).
+// The original spent this budget on something not yet identified.
+static inline int base_editor_fac_budget_probe(int x) {
     if (x == 0) x = 1;
-    if (x == 1) x = 4;
-    if (x == 2) x = 7;
-    if (x == 3) x = 10;
-    if (x == 4) x = 13;
-    if (x == 5) x = 16;
-    if (x == 6) x = 19;
-    if (x == 7) x = 22;
-    if (x == 8) x = 25;
-    if (x == 9) x = 28;
-    if (x == 10) x = 31;
-    if (x == 11) x = 34;
-    if (x == 12) x = 37;
-    if (x == 13) x = 40;
-    if (x == 14) x = 43;
-    if (x == 15) x = 46;
-    if (x == 16) x = 49;
-    if (x == 17) x = 52;
-    if (x == 18) x = 55;
-    if (x == 19) x = 58;
-    if (x == 20) x = 61;
-    if (x == 21) x = 64;
-    if (x == 22) x = 67;
-    if (x == 23) x = 70;
     return x;
 }
 
@@ -6394,7 +6371,6 @@ static int base_editor_fac_budget_probe(int x)
 // ORIGINAL: 0x0041B790 ?base_editor_fac@BaseWin@@QAEXXZ 0x0041B790-0x0041BBBC;0x0065249C-0x0065255E
 // RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/recovered/units/0041b790.cpp", "source:src/basewin.h", "image:0x41b790"], "reason": "Recover the full base-editor callee in its actual BaseWin owner with one genuine Popup lifetime and original cancellation, menu IDs, typed data mutations and virtual redraw; preserve original seed evidence and outstanding structural/matching obligations."}
 void BaseWin::base_editor_fac() {
-    base_editor_fac_budget_probe(2);  // WORKAROUND(inline): see base_editor_fac_budget_probe
     int previous = -1;
     Popup popup;
     // A top-level goto loop: a for(;;) here gives VC6 a phantom closing-brace
@@ -6440,6 +6416,7 @@ again:
         const int selected = popup.exec(0, 0);
         PopupModalState = 0;
         if (selected < 0) return;
+        base_editor_fac_budget_probe(2);  // WORKAROUND(inline): see base_editor_fac_budget_probe
         // Query uses the live selected base; mutation uses this window's
         // focused ID, as the original41B99B/41B9DE separately loads them.
         const int base_id = BaseIDCurrentSelected;
@@ -6458,6 +6435,18 @@ again:
     goto again;
 }
 
+// WORKAROUND(inline): dead /Ob2 budget probe for base_editor_proj (folds
+// away). The image's first cancel return calls ~Scroll and ~BasePop out of
+// line (0x0041BD5D, 0x0041BD6F) while the second expands ~BasePop fully;
+// twelve one-test expansions after the first return reproduce both (EH map
+// 1,2,7,9,7,11 against the image's 1,2,7,9,7,9: the closing teardown still
+// expands ??_DDialogs and both ??_DStringList, 0x00406AF0/0x00406820, at every
+// probe count and placement tried). The original's spend is not identified.
+static inline int base_editor_proj_budget_probe(int x) {
+    if (x == 0) x = 7;
+    return x;
+}
+
 // ORIGINAL: 0x0041BBC0 ?base_editor_proj@BaseWin@@QAEXXZ 0x0041BBC0-0x0041C231;0x0065255E-0x006526E3
 // RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/unrecovered/0041bbc0.cpp", "source:src/basewin.h", "image:0x41bbc0"], "reason": "Recover the full base-editor callee in its actual BaseWin owner with one genuine Popup lifetime and original cancellation, menu IDs, typed data mutations and virtual redraw; preserve original seed evidence and outstanding structural/matching obligations."}
 void BaseWin::base_editor_proj() {
@@ -6472,13 +6461,13 @@ void BaseWin::base_editor_proj() {
         strcat(StringTemp, "|");
         const int owner_base = base_project(project_index);
         if (owner_base == -2) {
-            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0xD54 / 4]));
+            strcat(StringTemp, label_get(0xD54 / 4));
         } else if (owner_base == -1) {
             if (has_tech(Facility[FacilitySPStart + project_index].preq_tech,
                          BaseCurrent->faction_id_current)) {
-                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x3DC / 4]));
+                strcat(StringTemp, label_get(0x3DC / 4));
             } else {
-                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x4D8 / 4]));
+                strcat(StringTemp, label_get(0x4D8 / 4));
             }
         } else {
             // Original41BCCD..41BCDD computes Base's0x134 stride, not
@@ -6492,15 +6481,27 @@ void BaseWin::base_editor_proj() {
     const int project = popup.exec();
     PopupModalState = 0;
     if (project < 0) return;
+    base_editor_proj_budget_probe(1000);  // WORKAROUND(inline): see base_editor_proj_budget_probe
+    base_editor_proj_budget_probe(1001);  // WORKAROUND(inline)
+    base_editor_proj_budget_probe(1002);  // WORKAROUND(inline)
+    base_editor_proj_budget_probe(1003);  // WORKAROUND(inline)
+    base_editor_proj_budget_probe(1004);  // WORKAROUND(inline)
+    base_editor_proj_budget_probe(1005);  // WORKAROUND(inline)
+    base_editor_proj_budget_probe(1006);  // WORKAROUND(inline)
+    base_editor_proj_budget_probe(1007);  // WORKAROUND(inline)
+    base_editor_proj_budget_probe(1008);  // WORKAROUND(inline)
+    base_editor_proj_budget_probe(1009);  // WORKAROUND(inline)
+    base_editor_proj_budget_probe(1010);  // WORKAROUND(inline)
+    base_editor_proj_budget_probe(1011);  // WORKAROUND(inline)
     parse_say(0, Facility[FacilitySPStart + project].name, -1, -1);
     PopupModalState = 6;
     popup.start("PICKAPLACE", 0x42);
     {
-        char *text = StringTable.get(Labels.strings_ptr[0xD64 / 4]);
+        char *text = label_get(0xD64 / 4);
         popup.item(text, 9999);
     }
     {
-        char *text = StringTable.get(Labels.strings_ptr[0xD68 / 4]);
+        char *text = label_get(0xD68 / 4);
         popup.item(text, 9998);
     }
     // Current-faction bases precede other bases, preserving original index IDs.
@@ -6516,9 +6517,7 @@ void BaseWin::base_editor_proj() {
             StringTemp[0] = 0;
             strcat(StringTemp, Bases[base].name_string);
             strcat(StringTemp, "|");
-            const int faction = Bases[base].faction_id_current;
-            parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
-            strcat(StringTemp, Players[faction].noun_faction);
+            strcat(StringTemp, get_noun(Bases[base].faction_id_current));
             popup.item(StringTemp, base);
         }
     }
@@ -6539,32 +6538,24 @@ void BaseWin::base_editor_proj() {
 // spends budget). Without it the image's EH map (24 states) is 33 here: the
 // cancel-return and closing teardowns each expand one level deeper than the
 // image's (0x0041C4xx calls ??1Dialogs/??1Dialog out of line; the closing one
-// calls ??1BasePop 0x004064D0). The original spent this budget on something
-// not yet identified (recover permute --probe-sweep: 16 chained ifs, any line).
-static int base_editor_copy_budget_probe(int x) {
-    if (x == 0) x = 1;
-    if (x == 1) x = 4;
-    if (x == 2) x = 7;
-    if (x == 3) x = 10;
-    if (x == 4) x = 13;
-    if (x == 5) x = 16;
-    if (x == 6) x = 19;
-    if (x == 7) x = 22;
-    if (x == 8) x = 25;
-    if (x == 9) x = 28;
-    if (x == 10) x = 31;
-    if (x == 11) x = 34;
-    if (x == 12) x = 37;
-    if (x == 13) x = 40;
-    if (x == 14) x = 43;
-    if (x == 15) x = 46;
+// calls ??1BasePop 0x004064D0). Five three-if expansions before the Popup
+// reproduce the image's map and teardown calls (six or more expand
+// ??_DDialogs at the cancel return); the original's spend is not yet identified.
+static inline int base_editor_copy_budget_probe(int x) {
+    if (x == 0) x = 7;
+    if (x == 1) x = 8;
+    if (x == 2) x = 9;
     return x;
 }
 
 // ORIGINAL: 0x0041C240 ?base_editor_copy@BaseWin@@QAEXH@Z 0x0041C240-0x0041C798;0x006526E3-0x006527EF BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/unrecovered/0041c240.cpp", "source:src/basewin.h", "image:0x41c240"], "reason": "Recover the full base-editor callee in its actual BaseWin owner with one genuine Popup lifetime and original cancellation, menu IDs, typed data mutations and virtual redraw; preserve original seed evidence and outstanding structural/matching obligations."}
 void BaseWin::base_editor_copy(int copy_to) {
-    base_editor_copy_budget_probe(2);  // WORKAROUND(inline): see base_editor_copy_budget_probe
+    base_editor_copy_budget_probe(1000);  // WORKAROUND(inline): see base_editor_copy_budget_probe
+    base_editor_copy_budget_probe(1001);  // WORKAROUND(inline)
+    base_editor_copy_budget_probe(1002);  // WORKAROUND(inline)
+    base_editor_copy_budget_probe(1003);  // WORKAROUND(inline)
+    base_editor_copy_budget_probe(1004);  // WORKAROUND(inline)
     Popup popup;
     parse_says(0, BaseCurrent->name_string, -1, -1);
     PopupModalState = 6;
