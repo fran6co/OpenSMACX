@@ -5125,10 +5125,10 @@ int DesignWin::design_it() {
                 if (strlen(name) && strcmp(name, VehPrototypes[slot].veh_name)) {
                     parse_says(0, VehPrototypes[slot].veh_name, -1, -1);
                     if (Players[factionID_].rule_flags & RFLAG_ALIEN) {
-                        popp(ScriptTxtID, "INTRINSICNAME", 0,
+                        popp(ScriptPopupFile, "INTRINSICNAME", 0,
                              "alunit_sm.pcx", pop_wait);
                     } else {
-                        popp(ScriptTxtID, "INTRINSICNAME", 0,
+                        popp(ScriptPopupFile, "INTRINSICNAME", 0,
                              "unit_sm.pcx", pop_wait);
                     }
                 }
@@ -5168,10 +5168,10 @@ int DesignWin::design_it() {
         if (protoID_ < 0x40) {
             parse_says(0, VehPrototypes[protoID_].veh_name, -1, -1);
             if (Players[factionID_].rule_flags & RFLAG_ALIEN) {
-                popp(ScriptTxtID, "INTRINSICTYPE", 0,
+                popp(ScriptPopupFile, "INTRINSICTYPE", 0,
                      "alunit_sm.pcx", pop_wait);
             } else {
-                popp(ScriptTxtID, "INTRINSICTYPE", 0,
+                popp(ScriptPopupFile, "INTRINSICTYPE", 0,
                      "unit_sm.pcx", pop_wait);
             }
             return 0;
@@ -5226,10 +5226,10 @@ int DesignWin::design_it() {
             parse_num(0, PlayersData[factionID_].proto_id_active[protoID_]);
             int result;
             if (Players[factionID_].rule_flags & RFLAG_ALIEN) {
-                result = popp(ScriptTxtID, "OVERWRITEPROTO", 0,
+                result = popp(ScriptPopupFile, "OVERWRITEPROTO", 0,
                               "alunit_sm.pcx", pop_wait);
             } else {
-                result = popp(ScriptTxtID, "OVERWRITEPROTO", 0,
+                result = popp(ScriptPopupFile, "OVERWRITEPROTO", 0,
                               "unit_sm.pcx", pop_wait);
             }
             // 0x004382C2: the refusal returns inline; the diplo_lock failure
@@ -5515,11 +5515,11 @@ void DesignWin::select_special(int which) {
             && !has_tech(Rules.tech_two_spec_abilities, factionID_)) {
             parse_say(0, Technology[Rules.tech_two_spec_abilities].name,
                       -1, -1);
-            popp(ScriptTxtID, "TWOSPECIAL", 0, "alunit_sm.pcx", pop_wait);
+            popp(ScriptPopupFile, "TWOSPECIAL", 0, "alunit_sm.pcx", pop_wait);
             return;
         }
         if (Chassis[protoChassisType_].missile) {
-            popp(ScriptTxtID, "MISSILESPECIAL", 0, "alunit_sm.pcx", pop_wait);
+            popp(ScriptPopupFile, "MISSILESPECIAL", 0, "alunit_sm.pcx", pop_wait);
             return;
         }
     } else {
@@ -5527,11 +5527,11 @@ void DesignWin::select_special(int which) {
             && !has_tech(Rules.tech_two_spec_abilities, factionID_)) {
             parse_say(0, Technology[Rules.tech_two_spec_abilities].name,
                       -1, -1);
-            popp(ScriptTxtID, "TWOSPECIAL", 0, "unit_sm.pcx", pop_wait);
+            popp(ScriptPopupFile, "TWOSPECIAL", 0, "unit_sm.pcx", pop_wait);
             return;
         }
         if (Chassis[protoChassisType_].missile) {
-            popp(ScriptTxtID, "MISSILESPECIAL", 0, "unit_sm.pcx", pop_wait);
+            popp(ScriptPopupFile, "MISSILESPECIAL", 0, "unit_sm.pcx", pop_wait);
             return;
         }
     }
