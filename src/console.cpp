@@ -471,8 +471,7 @@ void Console::chat(int target_faction) {
         if ((enabled & network.field_1BD0_) != enabled) {
             for (int faction = 1; faction < 8; ++faction) {
                 const int bit = 1 << faction;
-                if (!(*reinterpret_cast<const unsigned char *>(
-                        &GameDataStateStorage.fields_.lock_masks_.enable_mask_) & bit)) continue;
+                if (!is_human(faction)) continue;
                 if (target_faction > 0) {
                     if (faction != target_faction) continue;
                 } else if (CommlinkPending) {
@@ -2545,13 +2544,15 @@ void Console::cursor_on(int cursor_shape, int veh_id) {
 // this tree: eax) and follows from the image deferring its `this` spill
 // (0x005148CD `mov edi, ecx`) until after both loads.
 // Operands now follow VC6's load-b-first order (x: delta + coord, y: coord +
-// delta), which fixes the loads; residual is esi/edi swapped (this vs new_x).
+// delta), which fixes the loads. The x wrap is the written-out ternary with
+// the flat arm first (MATCHING_GUIDE 3.2); wrap_map_x's if-chain left this
+// and new_x in swapped registers.
 
 
 void Console::move_cursor(int direction) {
-    int new_x = wrap_map_x(
-        VehMoveDeltaX[direction] +
-        ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_]);
+    int x = VehMoveDeltaX[direction] +
+        ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
+    int new_x = (MapIsFlat & 1) ? x : x < 0 ? x + MapLongitudeBounds : x >= MapLongitudeBounds ? x - MapLongitudeBounds : x;
     int new_y = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_] +
                 VehMoveDeltaY[direction];
     if (set_cursor(new_x, new_y) == 0) {
@@ -6593,19 +6594,7 @@ int Console::on_key_click(int a1, int a2) {
                     if (ConsoleGlobal.cursor_active_ == 0) {
                         set_move(0);
                     } else {
-                        ambience(0x1E);
-                        cursor_active_ = 0;
-                        field_23BF8_ = 1;
-                        field_23BFC_ = 1;
-                        if (survey_mode_ != 0) {
-                            survey_mode_ = 0;
-                            MapWinTable[0]->draw_map(1);
-                        }
-                        ::draw_cursor();
-                        ConsoleInfoWin.change(0);
-                        ConsoleStatusWin.redraw();
-                        MapWinTable[0]->main_caption();
-                        alpha_menu_.check(selected_vehicle_);
+                        reset_turn_view();
                         focus(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
                               ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_],
                               faction_id_);
@@ -7225,19 +7214,7 @@ int Console::on_key_click(int a1, int a2) {
         }
         MapWinTable[0]->draw_cursor();
         if (ConsoleGlobal.cursor_active_ != 0) {
-            ambience(0x1E);
-            cursor_active_ = 0;
-            field_23BF8_ = 1;
-            field_23BFC_ = 1;
-            if (survey_mode_ != 0) {
-                survey_mode_ = 0;
-                MapWinTable[0]->draw_map(1);
-            }
-            ::draw_cursor();
-            ConsoleInfoWin.change(0);
-            ConsoleStatusWin.redraw();
-            MapWinTable[0]->main_caption();
-            alpha_menu_.check(selected_vehicle_);
+            reset_turn_view();
         }
         if (--cursor_history_index_ < 0) {
             cursor_history_index_ = 0x1F;
@@ -7378,24 +7355,26 @@ map_keys:
     {
         // 0x51B081: with the 0x20000 bit both high control bits are
         // stripped for the key lookup only; veh_key/cursor_key below still
-        // receive the unmodified a2.
-        const int mode = a2 & 0x20000;
-        int key = a2;
+        // receive the unmodified a2. The direction keys reuse a2 itself for
+        // the direction (the image stores it to a2's home at 0x51B0B9) and
+        // test the unmodified key through a copy kept in edx.
+        const int raw = a2;
+        const int mode = raw & 0x20000;
+        int key = raw;
         if (mode != 0) {
             key &= ~0x30000;
         }
-        int direction;
         // Tables 0x51BB08 (0x21..0x28), 0x51BB28 (0x62..0x69) and
         // 0x51BB48/0x51BB5C (0x10026..0x10068), plus 0x61 and 0x10025.
         switch (key) {
         case 0x61:
         case 0x23:
-            direction = 4;
+            a2 = 4;
         move_direction:
-            if (mode != 0 && (a2 & 0x10000) != 0) {
-                if (direction == 5) {
+            if (mode != 0 && (raw & 0x10000) != 0) {
+                if (a2 == 5) {
                     ConsoleStatusWin.arrow_left();
-                } else if (direction == 1) {
+                } else if (a2 == 1) {
                     ConsoleStatusWin.arrow_right();
                 }
                 return 1;
@@ -7410,7 +7389,7 @@ map_keys:
                     }
                     if (mode != 0) {
                         Vehs[selected_vehicle_].order = 0x19;
-                        Vehs[selected_vehicle_].waypoint_x[0] = static_cast<int16_t>(direction);
+                        Vehs[selected_vehicle_].waypoint_x[0] = static_cast<int16_t>(a2);
                         Vehs[selected_vehicle_].waypoint_x[1] = Vehs[selected_vehicle_].x;
                         Vehs[selected_vehicle_].waypoint_y[1] = Vehs[selected_vehicle_].y;
                         return 1;
@@ -7424,74 +7403,42 @@ map_keys:
                         field_23BE4_ = 0;
                         return 1;
                     }
-                    NetDaemonNet.order_veh(selected_vehicle_, direction, 0);
+                    NetDaemonNet.order_veh(selected_vehicle_, a2, 0);
                     return 1;
                 }
                 if (ConsoleGlobal.cursor_active_ != 0) {
-                    ambience(0x1E);
-                    cursor_active_ = 0;
-                    field_23BF8_ = 1;
-                    field_23BFC_ = 1;
-                    if (survey_mode_ != 0) {
-                        survey_mode_ = 0;
-                        MapWinTable[0]->draw_map(1);
-                    }
-                    ::draw_cursor();
-                    ConsoleInfoWin.change(0);
-                    ConsoleStatusWin.redraw();
-                    MapWinTable[0]->main_caption();
-                    alpha_menu_.check(selected_vehicle_);
+                    reset_turn_view();
                 }
             }
-            {
-                const int step_x = ::wrap_map_x(
-                    ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_] +
-                    VehMoveDeltaX[direction]);
-                const int step_y = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_] +
-                                   VehMoveDeltaY[direction];
-                if (::on_map(step_x, step_y)) {
-                    field_23BF8_ = 0;
-                    if (survey_mode_ != 0) {
-                        survey_mode_ = 0;
-                        MapWinTable[0]->draw_map(1);
-                    }
-                    MapWinTable[0]->draw_cursor();
-                    cursor_next(step_x, step_y);
-                    ConsoleStatusWin.redraw();
-                    field_23BF8_ = 1;
-                    field_23BFC_ = 1;
-                    MapWinTable[0]->draw_cursor();
-                    MapWinTable[0]->focus(step_x, step_y);
-                }
-            }
+            move_cursor(a2);
             return 1;
         case 0x21:
         case 0x69:
-            direction = 0;
+            a2 = 0;
             goto move_direction;
         case 0x27:
         case 0x66:
-            direction = 1;
+            a2 = 1;
             goto move_direction;
         case 0x22:
         case 0x63:
-            direction = 2;
+            a2 = 2;
             goto move_direction;
         case 0x28:
         case 0x62:
-            direction = 3;
+            a2 = 3;
             goto move_direction;
         case 0x25:
         case 0x64:
-            direction = 5;
+            a2 = 5;
             goto move_direction;
         case 0x24:
         case 0x67:
-            direction = 6;
+            a2 = 6;
             goto move_direction;
         case 0x26:
         case 0x68:
-            direction = 7;
+            a2 = 7;
             goto move_direction;
         case 0x10026:
         case 0x10068: {
@@ -7544,19 +7491,7 @@ map_keys:
             return 1;
         }
         if (ConsoleGlobal.cursor_active_ != 0) {
-            ambience(0x1E);
-            cursor_active_ = 0;
-            field_23BF8_ = 1;
-            field_23BFC_ = 1;
-            if (survey_mode_ != 0) {
-                survey_mode_ = 0;
-                MapWinTable[0]->draw_map(1);
-            }
-            ::draw_cursor();
-            ConsoleInfoWin.change(0);
-            ConsoleStatusWin.redraw();
-            MapWinTable[0]->main_caption();
-            alpha_menu_.check(selected_vehicle_);
+            reset_turn_view();
         }
     }
     cursor_key(a1, normalized, a2);

@@ -153,8 +153,6 @@ static inline int bb_probe(int x) {
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004f81a0.cpp", "source:src/base.cpp:base_reset", "source:src/unrecovered/004f81a0.cpp: complete original identity/span and historical seed findings preserved", "Pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; original32280-byte span and68-selector/36-target facility dispatcher", "build/recovery/base-build-owner-resume-oct6/review-receipt-oct6.md: bounded independent review, not exhaustive or native acceptance", "recovery/tests/test_base_build_owner.py: actual-source bounded host/damage controls", "BaseSecretProject true64-word storage; historical scalar-member bindings remain unresolved primitive-array accessor interpretations"], "reason": "Recover complete build selection through real Base, faction, map, prototype, facility and project owners, preserving original unchecked indexes, arithmetic, lifecycle and output contracts. Prior source decision retained as history: Explicitly unfinished Base-owned dependency required to link the recovered base_reset caller; full 72-arm build-selection behavior remains in its seed"}
 // TRIED: mismatch #3 (call vs test) - this is the largest function in the batch (32280 bytes, a 72-entry switch reached via the jump table at 0x4FA56E documented in the brief, one arm per buildable unit/facility/project id) preceded by ~0x360 bytes of reactor/rules-bit eligibility computation and several 0x200/0x36-int array-zeroing blocks. Only the entry parameter normalization (a1<0 fold) plus set_base()/base_compute(1) are transcribed; the switch and its scoring tables are not modelled - the body returns the same -1/"no candidate" sentinel the original's accumulator starts in, rather than fabricate any of the 72 per-item eligibility rules.
 int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *out_score) {
-    // stand-in: the image calls has_fac_built (0x00500290) out of line at every site here.
-    int (__cdecl *const has_fac_built_call)(int) = has_fac_built;
     // WORKAROUND(inline): the image calls range (0x00422F00) and has_project
     // (0x004F80D0) out of line at these sites of base_build.
     int (__cdecl *const range_call)(int, int, int) = range;
@@ -1168,7 +1166,7 @@ L_4fa03d:
         goto L_4fc68f;
     case 2:  // defense
         w *= 16;
-        if (l_160 && !l_28 && has_fac_built_call(FAC_COMMAND_CENTER)) {
+        if (l_160 && !l_28 && has_fac_built(FAC_COMMAND_CENTER)) {
             w /= 2;
         }
         if (l_88 > 1 && !l_5c
@@ -1264,7 +1262,7 @@ L_4fa03d:
         if (l_c == 7) {
             w = w * 2 / 3;
         }
-        if (has_fac_built_call(FAC_NAVAL_YARD)) {
+        if (has_fac_built(FAC_NAVAL_YARD)) {
             w = (l_118 + 2) * w / (l_118 + 3);
         }
         if (VehPrototypes[l_14].unk_1 == 21) {
@@ -2225,7 +2223,7 @@ L_4fcf70:
         }
     }
     if (Weapon[VehPrototypes[l_14].weapon_id].mode <= 2
-        && has_fac_built_call(FAC_BIOENHANCEMENT_CENTER)) {
+        && has_fac_built(FAC_BIOENHANCEMENT_CENTER)) {
         w = (l_134 + 2) * w / (l_134 + 3);
     }
     if (PlayersData[l_8].unk_66 && PlayersData[l_8].unk_66 > PlayersData[l_8].unk_106
@@ -2292,7 +2290,7 @@ L_4fcf70:
         int morale = morale_mod(BaseIDCurrentSelected, l_8,
                                 Chassis[VehPrototypes[l_14].chassis_id].triad)
                      + PlayersData[l_8].soc_effect_pending.values_[SocialEffect::MORALE];
-        if (l_2c == 2 && has_fac_built_call(FAC_CHILDREN_CRECHE)) {
+        if (l_2c == 2 && has_fac_built(FAC_CHILDREN_CRECHE)) {
             int m = morale - PlayersData[l_8].soc_effect_pending.values_[SocialEffect::MORALE] + 1;
             if (morale <= m) {
                 morale = m;
@@ -2514,7 +2512,7 @@ L_4fd912:
             value /= 2;
         }
         value = range(value, 1, 12);
-        if (!has_fac_built_call(FAC_RECYCLING_TANKS) && BaseCurrent->population_size < 5) {
+        if (!has_fac_built(FAC_RECYCLING_TANKS) && BaseCurrent->population_size < 5) {
             break;
         }
         if (BaseCurrent->energy_inefficiency < BaseCurrent->population_size / 2
@@ -2599,7 +2597,7 @@ L_4fd912:
     case FAC_PERIMETER_DEFENSE: {
         if (has_project(SP_CITIZENS_DEFENSE_FORCE, l_8)) break;
         l_90 = 1;
-        int b = range(8 - BaseCurrent->population_size - (has_fac_built_call(FAC_HEADQUARTERS) ? 2 : 0),
+        int b = range(8 - BaseCurrent->population_size - (has_fac_built(FAC_HEADQUARTERS) ? 2 : 0),
                       1, 10);
         // Image: [ebp-0x68] is the induction pointer &PlayersData[i].region_total_bases[l_10].
         for (i = 1; i < 8; i++) {
@@ -2628,7 +2626,7 @@ L_4fd912:
     case FAC_FLECHETTE_DEFENSE_SYS: {
         l_90 = 1;
         int b = range(10 - BaseCurrent->population_size / 2
-                          - (has_fac_built_call(FAC_HEADQUARTERS) ? 2 : 0),
+                          - (has_fac_built(FAC_HEADQUARTERS) ? 2 : 0),
                       1, 10);
         for (i = 1; i < 8; i++) {
             if (!has_treaty(l_8, i, 0x10)) {
@@ -2652,7 +2650,7 @@ L_4fd912:
 
     case FAC_ENERGY_BANK:
         value = range((6 - l_98) * 2 - BaseCurrent->intake_2[RSC_ENERGY] / 2, 1, 10);
-        if (!has_fac_built_call(FAC_RECYCLING_TANKS) && BaseCurrent->population_size < 5) {
+        if (!has_fac_built(FAC_RECYCLING_TANKS) && BaseCurrent->population_size < 5) {
             break;
         }
         bonus = l_40 * 2;
@@ -2800,10 +2798,10 @@ L_4fd912:
                     - ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c) ? 0 : l_7c)
                     + l_120;
         l_24 = 0x90000;
-        if (has_fac_built_call(FAC_COMMAND_CENTER)) {
+        if (has_fac_built(FAC_COMMAND_CENTER)) {
             value--;
         }
-        if (has_fac_built_call(FAC_BIOENHANCEMENT_CENTER)) {
+        if (has_fac_built(FAC_BIOENHANCEMENT_CENTER)) {
             value--;
         }
         // Image: the two stores follow the range call and the arm keeps its own
@@ -3006,7 +3004,7 @@ L_4fe99d:
             break;
         }
         value = range((BaseCurrent->drone_total - BaseCurrent->talent_total
-                       - has_fac_built_call(FAC_BROOD_PIT)) * 2 + 16
+                       - has_fac_built(FAC_BROOD_PIT)) * 2 + 16
                       - BaseCurrent->intake_1[RSC_MINERALS]
                       - PlayersData[l_8].soc_effect_pending.values_[SocialEffect::POLICE],
                       1, 16);
@@ -3021,7 +3019,7 @@ L_4fe99d:
             break;
         }
         if (PlayersData[l_8].soc_effect_pending.values_[SocialEffect::POLICE]
-                + has_fac_built_call(FAC_BROOD_PIT) * 2 <= 0
+                + has_fac_built(FAC_BROOD_PIT) * 2 <= 0
             && BaseCurrent->drone_total >= 2
             && l_c <= 2
             && PlayersData[l_8].soc_effect_pending.values_[SocialEffect::ECONOMY] > 1
@@ -3415,7 +3413,7 @@ L_4ff11f:
         if (l_108) {
             weight /= l_108 + 1;
         }
-        if (has_fac_built_call(FAC_HEADQUARTERS) && !l_84) {
+        if (has_fac_built(FAC_HEADQUARTERS) && !l_84) {
             weight = weight * 3 / 4;
         }
         if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
@@ -3446,10 +3444,10 @@ L_4ff11f:
             continue;
         }
         cap = 9999;
-        if (!has_fac_built_call(FAC_HAB_COMPLEX)
+        if (!has_fac_built(FAC_HAB_COMPLEX)
             && has_tech(Facility[FAC_HAB_COMPLEX].preq_tech, l_8)) {
             cap = Rules.pop_limit_sans_hab_complex;
-        } else if (!has_fac_built_call(FAC_HABITATION_DOME)
+        } else if (!has_fac_built(FAC_HABITATION_DOME)
                    && has_tech(Facility[FAC_HABITATION_DOME].preq_tech, l_8)) {
             cap = Rules.pop_limit_sans_hab_dome;
         }
@@ -3482,7 +3480,7 @@ L_4ff11f:
             continue;
         }
         l_d8 = base_id + FacilitySPStart;
-        if (!has_fac_built_call(FAC_RECREATION_COMMONS)) {
+        if (!has_fac_built(FAC_RECREATION_COMMONS)) {
             if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
                 || (BaseCurrent->governor & 0x10000)) {
                 if (!has_tech(Facility[FAC_RECREATION_COMMONS].preq_tech, l_8)) {
@@ -3600,6 +3598,14 @@ Purpose: Checks whether the facility (non-SP) has been build in the currently se
 Return Value: Does current base have facility? true/false
 Status: Complete
 */
+// WORKAROUND(noinline): base_build is this unit's only caller and the image
+// calls this body out of line at all 16 sites (its copy at 0x00500290 follows
+// base_build with the other header-inline copies only base_build calls). The
+// original was a header inline whose sites base_build's /Ob2 budget refused;
+// defined plainly here, /Ob2 expands it. auto_inline(off) gives the same object
+// as the former local function-pointer stand-in and leaves the sites spelled
+// as plain calls.
+#pragma auto_inline(off)
 int __cdecl has_fac_built(int facility_id) {
     int base_id = BaseIDCurrentSelected;
     if (facility_id >= FacilityRepStart) {
@@ -3609,6 +3615,7 @@ int __cdecl has_fac_built(int facility_id) {
     bitmask(facility_id, &facility_id, &mask);
     return (Bases[base_id].facilities_built[facility_id] & mask) != 0;
 }
+#pragma auto_inline(on)
 
 /*
 Purpose: Get the current status of the specified project.
