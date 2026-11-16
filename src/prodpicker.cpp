@@ -637,7 +637,7 @@ void ProdPicker::calculate() {
                 strcat(stats, retool);
                 strcat(stats, SocialWinCloseParenText);
             }
-            strcat(stats, " ");
+            strcat(stats, BufferJoinSpace);
             strcat(stats, label_get(49));
         }
 
@@ -678,7 +678,7 @@ void ProdPicker::calculate() {
             strcat(name, SocialWinOpenParenText);
             strcat(name, label_get(140));
             strcat(name, SocialWinCloseParenText);
-            strcat(name, " ");
+            strcat(name, BufferJoinSpace);
         }
         strcat(name, StringTable.get(Facility[i].name));
 
@@ -696,9 +696,9 @@ void ProdPicker::calculate() {
             char half[80];
             _itoa(range((BaseCurrent->mineral_surplus + 1) / 2, 0, 9999), half, 10);
             strcat(stats, half);
-            strcat(stats, " ");
+            strcat(stats, BufferJoinSpace);
             strcat(stats, label_get(36));
-            strcat(stats, " ");
+            strcat(stats, BufferJoinSpace);
             strcat(stats, label_get(153));
         } else if (BaseCurrent->mineral_surplus <= 0) {
             strcat(stats, "-");
@@ -709,7 +709,7 @@ void ProdPicker::calculate() {
             _itoa((BaseCurrent->mineral_surplus + cost - 1) / BaseCurrent->mineral_surplus,
                   turns, 10);
             strcat(stats, turns);
-            strcat(stats, " ");
+            strcat(stats, BufferJoinSpace);
             strcat(stats, label_get(49));
         }
 

@@ -1173,40 +1173,15 @@ DesignWin::DesignWin() {
     prototype_name_[0] = 0;
 }
 
-// WORKAROUND(decl): file-local stand-ins for the original's inline rectangle
-// helpers. 0x0043C4DA..4FC / 0x0043C48A..4AC load the four edges in
+// WORKAROUND(decl): file-local stand-in for the original's inline rectangle
+// helper. 0x0043C4DA..4FC / 0x0043C48A..4AC load the four edges in
 // left/right/top/bottom order and add a register holding -3/-4 to right and
-// bottom (an InflateRect-style helper called with a negative amount);
-// 0x0043C4FF..54D compute frame/caption from the source edges with +n/-n
-// through a pointer base (lea ebx) without first copying the source.
+// bottom (an InflateRect-style helper called with a negative amount).
 static inline void design_inflate_rect(RECT *rect, int dx, int dy) {
     rect->left -= dx;
     rect->right += dx;
     rect->top -= dy;
     rect->bottom += dy;
-}
-
-static inline RECT *design_set_rect(RECT *rect, int left, int top, int right,
-                                    int bottom) {
-    rect->left = left;
-    rect->top = top;
-    rect->right = right;
-    rect->bottom = bottom;
-    return rect;
-}
-
-static inline void design_inset_rect(RECT *dst, const RECT *src, int inset) {
-    dst->left = src->left + inset;
-    dst->top = src->top + inset;
-    dst->right = src->right - inset;
-    dst->bottom = src->bottom - inset;
-}
-
-static inline void design_offset_rect(RECT *dst, const RECT *src, int dx, int dy) {
-    dst->left = src->left + dx;
-    dst->top = src->top + dy;
-    dst->right = src->right + dx;
-    dst->bottom = src->bottom + dy;
 }
 
 // ORIGINAL: 0x0043C270 ?init@DesignWin@@QAEXXZ 0x0043C270-0x0043D0B7;0x006546C5-0x006546DA FILE
@@ -1254,25 +1229,25 @@ int DesignWin::init() {
     info_panel_rect_ = MainInterfaceGlobal.info_frame_rect();
     design_inflate_rect(&info_panel_rect_, -4, -4);
     // 0x0043C4FF..0x0043C581: the four edges stay in registers from the
-    // frame through the caption to A7C; each rectangle is stored through
-    // its own pointer.
-    int edge_left = MainInterfaceGlobal.right_frame_rect().left + 4;
-    int edge_top = MainInterfaceGlobal.right_frame_rect().top + 4;
-    int edge_right = MainInterfaceGlobal.right_frame_rect().right - 4;
-    int edge_bottom = MainInterfaceGlobal.right_frame_rect().bottom - 4;
-    design_set_rect(&frame_rect_, edge_left, edge_top, edge_right, edge_bottom);
-    edge_left += 3;
-    edge_top += 3;
-    edge_right -= 3;
-    edge_bottom -= 3;
-    design_set_rect(&caption_rect_, edge_left, edge_top, edge_right, edge_bottom);
-    caption_rect_.bottom = caption_rect_.top + 21;
-    // A7C..A88 get the caption rectangle as it was BEFORE the bottom was
-    // replaced; only the top is then moved below the caption.
+    // frame through the caption to A7C; each rectangle is a whole-RECT copy
+    // through its own pointer (lea ebx), and the caption bottom is kept in a
+    // frame temporary for A80.
+    RECT edge = MainInterfaceGlobal.right_frame_rect();
+    edge.left += 4;
+    edge.top += 4;
+    edge.right -= 4;
+    edge.bottom -= 4;
+    frame_rect_ = edge;
+    edge.left += 3;
+    edge.top += 3;
+    edge.right -= 3;
+    edge.bottom -= 3;
+    caption_rect_ = edge;
+    const int caption_bottom = caption_rect_.top + 21;
+    caption_rect_.bottom = caption_bottom;
     // WORKAROUND(type): field_A7C_..field_A88_ are a RECT in the original.
-    design_set_rect(reinterpret_cast<RECT *>(&field_A7C_), edge_left, edge_top,
-                    edge_right, edge_bottom);
-    field_A80_ = caption_rect_.bottom + 3;
+    *reinterpret_cast<RECT *>(&field_A7C_) = edge;
+    field_A80_ = caption_bottom + 3;
 
     spot2_.init(6);
     int i;
@@ -1339,51 +1314,40 @@ int DesignWin::init() {
     }
     text_close();
 
-    design_offset_rect(&field_CBC_rect_, &MainInterfaceGlobal.stack_button_rect(),
-                       MainInterfaceGlobal.main_frame_rect().left
-                           - MainInterfaceGlobal.stack_button_rect().left + 8,
-                       0);
+    RECT stack = MainInterfaceGlobal.stack_button_rect();
+    offset_rect(&stack, MainInterfaceGlobal.main_frame_rect().left - stack.left + 8, 0);
+    field_CBC_rect_ = stack;
     // WORKAROUND(type): field_CCC_..field_CD8_ are a RECT in the original.
     *reinterpret_cast<RECT *>(&field_CCC_) =
         MainInterfaceGlobal.adjacent_panel_right_rect();
 
     // Five lower action rows.
-    RECT *const working = buffer_working_rect();
-    // The image's four contiguous slots [ebp-0x34..-0x28] are this RECT
-    // (left/right walk the rows, bottom is spilled before the loop, and
-    // top is stored at 0x0043C8D9 and never read). Our compile still drops
-    // the dead top store and lands one slot over the image's 0x5E0 frame.
-    RECT row_rect;
-    row_rect.left = working->left + 0x1B;
-    row_rect.top = working->top;
-    row_rect.right = working->right - 0x20;
-    row_rect.bottom = working->bottom - 0x14;
-    row_rect.right = (row_rect.right - 0x1B - row_rect.left + 3) / 5 - 3 + row_rect.left;
-    const int row_top = row_rect.bottom - 0x14;
+    // The image's four contiguous slots [ebp-0x34..-0x28] are this RECT,
+    // copied whole from the working rectangle: the copy keeps the dead store
+    // of the old top at 0x0043C8D9. The row loop stores the RECT per row and
+    // steps it with offset_rect; 0x1B is subtracted from right on its own
+    // (sub 0x20; sub 0x1B; sub left; add 3), not folded into the +3.
+    RECT row_rect = *buffer_working_rect();
+    RECT &r = row_rect;
+    r.left += 0x1B;
+    r.right -= 0x20;
+    r.bottom -= 0x14;
+    r.right -= 0x1B;
+    r.right = (r.right - r.left + 3) / 5 - 3 + r.left;
+    r.top = r.bottom - 0x14;
     for (row = 0; row < 5; ++row) {
-        lower_panel_rows_[row].left = row_rect.left;
-        lower_panel_rows_[row].top = row_top;
-        lower_panel_rows_[row].right = row_rect.right;
-        lower_panel_rows_[row].bottom = row_rect.bottom;
-        const int step = row_rect.right - row_rect.left + 3;
-        row_rect.left += step;
-        row_rect.right += step;
+        lower_panel_rows_[row] = r;
+        offset_rect(&r, r.right - r.left + 3, 0);
     }
     field_B5C_rect_ = lower_panel_rows_[lower_panel_done];
-    const int vertical_delta = row_top - row_rect.bottom - 6;
-    field_B5C_rect_.top += vertical_delta;
-    field_B5C_rect_.bottom += vertical_delta;
+    const int vertical_delta = r.top - r.bottom - 6;
+    offset_rect(&field_B5C_rect_, 0, vertical_delta);
     field_B6C_rect_ = field_B5C_rect_;
-    const int last_step = row_rect.right - row_rect.left + 3;
-    field_B6C_rect_.left += last_step;
-    field_B6C_rect_.right += last_step;
+    offset_rect(&field_B6C_rect_, r.right - r.left + 3, 0);
     field_B4C_rect_ = lower_panel_rows_[lower_panel_cancel];
-    field_B4C_rect_.top += vertical_delta;
-    field_B4C_rect_.bottom += vertical_delta;
+    offset_rect(&field_B4C_rect_, 0, vertical_delta);
     field_B7C_rect_ = field_B4C_rect_;
-    const int back_step = row_rect.left - row_rect.right - 3;
-    field_B7C_rect_.left += back_step;
-    field_B7C_rect_.right += back_step;
+    offset_rect(&field_B7C_rect_, r.left - r.right - 3, 0);
 
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0xE58 / 4));
@@ -1502,8 +1466,7 @@ int DesignWin::init() {
         flatButtons_[i].set_text_color(0x41, -1, 1, 1);
         flatButtons_[i].set_border_styles(&InterfaceBoxStyles[27],
             &InterfaceBoxStyles[29], &InterfaceBoxStyles[29]);
-        static_cast<Buffer *>(static_cast<GraphicWin *>(&flatButtons_[i]))
-            ->set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
+        flatButtons_[i].Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
         flatButtons_[i].redraw();
     }
     flatButtons_[23].set_scroll_icons(&MainInterfaceGlobal.sprites12_[0],
@@ -4312,8 +4275,9 @@ void DesignWin::draw_vehicle(int redraw) {
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x360 / 4));
         strcat(StringTemp, SocialWinColonSpaceText);                         // 0x682e94
-        _itoa(transport_val(protoChassisType_, protoAbilityFlags_, protoReactorType_),
-              numbuf, 10);
+        const int capacity = transport_val(protoChassisType_, protoAbilityFlags_,
+                                           protoReactorType_);
+        _itoa(capacity, numbuf, 10);
         strcat(StringTemp, numbuf);
         Buffer::write_cent_l(StringTemp, &dest);
     }
@@ -4578,7 +4542,8 @@ void DesignWin::draw_vehicle(int redraw) {
     strcat(StringTemp, StringTable.get(Triad[Chassis[protoChassisType_].triad]));
     StringTemp[4] = 0;                                        // bug-for-bug truncation
     strcat(StringTemp, BufferJoinSpace);
-    _itoa(speed_proto(0x3f) / Rules.move_rate_roads, numbuf, 10);  // idiv [0x949738]
+    const int speed = speed_proto(0x3f) / Rules.move_rate_roads;      // idiv [0x949738]
+    _itoa(speed, numbuf, 10);
     strcat(StringTemp, numbuf);
     Buffer::write_l(StringTemp, x, y);
 

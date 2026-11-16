@@ -936,11 +936,11 @@ void NetWin::draw_session_info() {
 
     RECT *panel = &setup_rects_[1];
     Buffer::box_sprite(panel, &InterfaceBoxStyles[0]);
-    RECT field;
-    field.left = panel->left + 4;
-    field.top = panel->top + 4;
-    field.right = panel->right - 4;
-    field.bottom = panel->bottom - 4;
+    RECT field = *panel;
+    field.left += 4;
+    field.top += 4;
+    field.right -= 4;
+    field.bottom -= 4;
     Buffer::set_clip(&field);
     Buffer::set_text_color(0xDF, -1, 1, 1);
     Buffer::set_text_color2(0xE2, -1, 1, 1);
@@ -950,7 +950,6 @@ void NetWin::draw_session_info() {
     int written;
     int bottom;
     int avail;
-    LPSTR text;
     char tally[0x50];
     // The wrapped-text width every write measures against.
     Buffer::set_wrap_width(0x14);
@@ -1056,7 +1055,7 @@ void NetWin::draw_session_info() {
             static_cast<int8_t>(NetWinSessionOptions.fields_.planet_size_), 0, 0x1F)]);
     }
     avail = field.right - col - 10;
-    if (avail < Buffer::text_width(StringTemp)) {
+    if (Buffer::text_width(StringTemp) > avail) {
         written = field.right - 10;
         bottom = Buffer::wrap(StringTemp, col, row, avail);
     } else {
@@ -1082,15 +1081,14 @@ void NetWin::draw_session_info() {
     strcat(StringTemp, "}");
     strcat(StringTemp, BufferJoinSpace);
     if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] != 0) {
-        text = Labels.strings_ptr[0x1000 / 4];
+        strcat(StringTemp, label_get(0x1000 / 4));
     } else if (static_cast<int8_t>(NetWinSessionOptions.fields_.ocean_coverage_) == -1) {
-        text = Labels.strings_ptr[0xFE4 / 4];
+        strcat(StringTemp, label_get(0xFE4 / 4));
     } else {
-        text = Labels.strings_ptr[static_cast<int8_t>(NetWinSessionOptions.fields_.ocean_coverage_) + 0x3D8];
+        strcat(StringTemp, label_get(static_cast<int8_t>(NetWinSessionOptions.fields_.ocean_coverage_) + 0x3D8));
     }
-    strcat(StringTemp, StringTable.get(text));
     avail = field.right - col - 10;
-    if (avail < Buffer::text_width(StringTemp)) {
+    if (Buffer::text_width(StringTemp) > avail) {
         written = field.right - 10;
         bottom = Buffer::wrap(StringTemp, col, row, avail);
     } else {
@@ -1116,15 +1114,14 @@ void NetWin::draw_session_info() {
     strcat(StringTemp, "}");
     strcat(StringTemp, BufferJoinSpace);
     if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] != 0) {
-        text = Labels.strings_ptr[0x1000 / 4];
+        strcat(StringTemp, label_get(0x1000 / 4));
     } else if (static_cast<int8_t>(NetWinSessionOptions.fields_.erosion_) == -1) {
-        text = Labels.strings_ptr[0xFE4 / 4];
+        strcat(StringTemp, label_get(0xFE4 / 4));
     } else {
-        text = Labels.strings_ptr[static_cast<int8_t>(NetWinSessionOptions.fields_.erosion_) + 0x3DB];
+        strcat(StringTemp, label_get(static_cast<int8_t>(NetWinSessionOptions.fields_.erosion_) + 0x3DB));
     }
-    strcat(StringTemp, StringTable.get(text));
     avail = field.right - col - 10;
-    if (avail < Buffer::text_width(StringTemp)) {
+    if (Buffer::text_width(StringTemp) > avail) {
         written = field.right - 10;
         bottom = Buffer::wrap(StringTemp, col, row, avail);
     } else {
@@ -1150,15 +1147,14 @@ void NetWin::draw_session_info() {
     strcat(StringTemp, "}");
     strcat(StringTemp, BufferJoinSpace);
     if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] != 0) {
-        text = Labels.strings_ptr[0x1000 / 4];
+        strcat(StringTemp, label_get(0x1000 / 4));
     } else if (static_cast<int8_t>(NetWinSessionOptions.fields_.native_life_) == -1) {
-        text = Labels.strings_ptr[0xFE4 / 4];
+        strcat(StringTemp, label_get(0xFE4 / 4));
     } else {
-        text = Labels.strings_ptr[static_cast<int8_t>(NetWinSessionOptions.fields_.native_life_) + 0x3E4];
+        strcat(StringTemp, label_get(static_cast<int8_t>(NetWinSessionOptions.fields_.native_life_) + 0x3E4));
     }
-    strcat(StringTemp, StringTable.get(text));
     avail = field.right - col - 10;
-    if (avail < Buffer::text_width(StringTemp)) {
+    if (Buffer::text_width(StringTemp) > avail) {
         written = field.right - 10;
         bottom = Buffer::wrap(StringTemp, col, row, avail);
     } else {
@@ -1184,15 +1180,14 @@ void NetWin::draw_session_info() {
     strcat(StringTemp, "}");
     strcat(StringTemp, BufferJoinSpace);
     if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] != 0) {
-        text = Labels.strings_ptr[0x1000 / 4];
+        strcat(StringTemp, label_get(0x1000 / 4));
     } else if (static_cast<int8_t>(NetWinSessionOptions.fields_.cloud_cover_) == -1) {
-        text = Labels.strings_ptr[0xFE4 / 4];
+        strcat(StringTemp, label_get(0xFE4 / 4));
     } else {
-        text = Labels.strings_ptr[static_cast<int8_t>(NetWinSessionOptions.fields_.cloud_cover_) + 0x3E1];
+        strcat(StringTemp, label_get(static_cast<int8_t>(NetWinSessionOptions.fields_.cloud_cover_) + 0x3E1));
     }
-    strcat(StringTemp, StringTable.get(text));
     avail = field.right - col - 10;
-    if (avail < Buffer::text_width(StringTemp)) {
+    if (Buffer::text_width(StringTemp) > avail) {
         written = field.right - 10;
         bottom = Buffer::wrap(StringTemp, col, row, avail);
     } else {
@@ -1240,7 +1235,7 @@ void NetWin::draw_session_info() {
         _itoa(unclaimed, tally, 10);
         strcat(StringTemp, tally);
         avail = field.right - col - 10;
-        if (avail < Buffer::text_width(StringTemp)) {
+        if (Buffer::text_width(StringTemp) > avail) {
             written = field.right - 10;
             bottom = Buffer::wrap(StringTemp, col, row, avail);
         } else {
@@ -2238,9 +2233,9 @@ void NetWin::pick_map() {
 
                 StringTemp[0] = 0;
                 strcat(StringTemp, faction_records_[player_slot].filename_);
-                strcat(StringTemp, NetWinPcxSuffix);
+                strcat(StringTemp, ".pcx");
                 if (faction_art.load_pcx(StringTemp, 0, 0x0A, 0xEC) != 0) {
-                    faction_art.load_pcx(NetWinDefaultPcx, 0, 0x0A, 0xEC);
+                    faction_art.load_pcx("faction.pcx", 0, 0x0A, 0xEC);
                 }
                 faction_records_[player_slot].color_ =
                     static_cast<uint8_t>(faction_art.get_pixel(4, 0x2F3));
