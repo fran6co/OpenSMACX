@@ -3362,12 +3362,12 @@ void __cdecl world_rainfall() {
                     if (on_map(x_west, y) && on_map(x_here, y)) {
                         int alt_west = alt_at(x_west, y);
                         int alt_here = alt_at(x_here, y);
-                        if (alt_west == alt_here) {
-                            if (k <= MapCloudCover) {
-                                map_loc(x_west, y)->unk_1 &= ~0x10;
-                            }
-                        } else if (alt_west > alt_here) {
-                            if (k <= MapCloudCover) {
+                        if (alt_west >= alt_here) {
+                            if (alt_west == alt_here) {
+                                if (k <= MapCloudCover) {
+                                    map_loc(x_west, y)->unk_1 &= ~0x10;
+                                }
+                            } else if (k <= MapCloudCover) {
                                 map_loc(x_west, y)->unk_1 &= ~0x10;
                             }
                         }

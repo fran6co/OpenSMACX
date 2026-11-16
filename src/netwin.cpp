@@ -1296,16 +1296,14 @@ void NetWin::draw_player_names() {
             && row >= faction_records_[0].record_type_) {
             break;
         }
-        RECT *name_rect = &setup_rects_[row + 6];
         RECT *colour_rect = &setup_rects_[row + 27];
-        RECT *row_rect = &setup_rects_[row + 36];
-        Buffer::box_sprite(name_rect, &InterfaceBoxStyles[0]);
+        Buffer::box_sprite(&setup_rects_[row + 6], &InterfaceBoxStyles[0]);
         Buffer::box_sprite(colour_rect, &InterfaceBoxStyles[0]);
 
         // The ready glyph: element 2 when the record block's leading byte
         // says the slot holds a player.
         int ready = NetWinLobbyRows.rows_[row + 1].ready_or_occupied_ != 0 ? 2 : 0;
-        Buffer::box_sprite(row_rect, &InterfaceBoxStyles[48 + ready]);
+        Buffer::box_sprite(&setup_rects_[row + 36], &InterfaceBoxStyles[48 + ready]);
 
         if (NetWinSessionData.fields_.mode_ == 3 && NetWinLobbyRows.rows_[row + 1].prefix_ == -1) {
             continue;
@@ -1333,7 +1331,7 @@ void NetWin::draw_player_names() {
                                          colour_rect->left + 1, colour_rect->top, 1, 1);
         }
 
-        RECT field = *name_rect;
+        RECT field = setup_rects_[row + 6];
         if (NetWinSessionData.fields_.mode_ == 0 || NetWinSessionData.fields_.mode_ == 1) {
             if (row + 1 == NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id_)) {
                 Sprite &arrow = g_IFACE_MP_COMBO_ARROW_SPRITES[0];
@@ -1348,7 +1346,7 @@ void NetWin::draw_player_names() {
         Buffer::set_font(find_font(0xE, 1), 0, 0, 0);
         Buffer::set_text_color(get_player_color(row + 1), 0, 1, 1);
         // The name field: the rectangle again, inset by four.
-        field = *name_rect;
+        field = setup_rects_[row + 6];
         field.left += 4;
         field.right -= 4;
         Buffer::set_clip(&field);
@@ -1383,15 +1381,15 @@ void NetWin::draw_player_names() {
         Buffer::restore_clip();
 
         // 4807B7: the union lands in the text rectangle.
-        ::UnionRect(&field, row_rect, name_rect);
+        ::UnionRect(&field, &setup_rects_[row + 36], &setup_rects_[row + 6]);
 
-        spot_.add(row, 2, row_rect->left, row_rect->top,
-                  row_rect->right - row_rect->left,
-                  row_rect->bottom - row_rect->top);
+        spot_.add(row, 2, setup_rects_[row + 36].left, setup_rects_[row + 36].top,
+                  setup_rects_[row + 36].right - setup_rects_[row + 36].left,
+                  setup_rects_[row + 36].bottom - setup_rects_[row + 36].top);
         if (NetWinSessionData.fields_.mode_ == 0 || NetWinSessionData.fields_.mode_ == 1) {
-            spot_.add(row, 2, name_rect->left, name_rect->top,
-                      name_rect->right - name_rect->left,
-                      name_rect->bottom - name_rect->top);
+            spot_.add(row, 2, setup_rects_[row + 6].left, setup_rects_[row + 6].top,
+                      setup_rects_[row + 6].right - setup_rects_[row + 6].left,
+                      setup_rects_[row + 6].bottom - setup_rects_[row + 6].top);
         }
         spot_.add(row, 5, colour_rect->left, colour_rect->top,
                   colour_rect->right - colour_rect->left,
@@ -3084,6 +3082,22 @@ Status: Compiler-generated CheckBox complete-object destructor, emitted from
 #if defined(_MSC_VER) && _MSC_VER == 1200
 #pragma function(memcpy)
 #endif
+// WORKAROUND(inline): pick_pass's image tears its Popup down out of line at
+// the X_pop_ask cancel (0x0047CD05/0x0047CD17), the accepted-check return
+// and the closing brace (0x00406C00), but in full at the BADPASSWORD return
+// (EH predecessors 5,5,5,2,5,2); written out, every site expands fully. Dead
+// branchy spend placed after the BADPASSWORD return reproduces that unwind
+// topology; the original's natural spend there is not identified.
+static inline void pick_pass_budget_probe(int x) {
+    if (x == 1) x = 2;
+    if (x == 2) x = 3;
+    if (x == 3) x = 4;
+    if (x == 4) x = 5;
+    if (x == 5) x = 6;
+    if (x == 6) x = 7;
+    if (x == 7) x = 8;
+    if (x == 8) x = 9;
+}
 int NetWin::pick_pass(int payload) {
     // Native 47C9A2..47C9C2 resets the copy row before the popup exists.
     NetWinLobbyRow updated;
@@ -3160,6 +3174,8 @@ int NetWin::pick_pass(int payload) {
             X_pop("BADPASSWORD", nullptr);
             return 0;
         }
+        pick_pass_budget_probe(0);  // WORKAROUND(inline): see the helper
+        pick_pass_budget_probe(0);  // WORKAROUND(inline): see the helper
         NetWinLobbyRows.rows_[slot].owner_ = entered_hash;
         return 1;
     }

@@ -274,6 +274,10 @@ class StringStruct : public virtual StringAllocationBase {
   // their explicit clear (0x0042CB5F, 0x0042D7CA) while the destructor walks
   // at the end of the same functions expand the same body inline. This twin
   // is the destructor's expansion; the TU sees remove_all() as a declaration.
+  // Where the walk is not expanded (draw_terraform's teardown, 0x00431BD1
+  // and 0x00431C04), the image calls 0x00402970, so the twin's out-of-line
+  // copy is that same original body.
+  // RECOVERY_SHARED: v1 0x00402970 0x004029E3 ?remove_all_walk@StringStruct@@QAEXXZ 0x00431180
   void remove_all_walk() {
     if (!head_) {
       return;

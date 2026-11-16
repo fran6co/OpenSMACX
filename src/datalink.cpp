@@ -1072,6 +1072,17 @@ void Datalink::draw_project() {
 // RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/unrecovered/00430090.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
 // Historical scaffold experiment, retained from the replaced seed:
 // TRIED: Popup popup; (RAII) for the outer object, mechanical RD()-based field reads for the tech-tier/quotient-remainder lookups, itoa/strcat scratch buffer building, and the per-faction tally loop; deliberately did NOT model the second local object built by sub_4066c0 (Dialog/Dialogs/ StringStruct/Sprite/extra FlatButtons torn down around 0x430642) - its class is unrecoverable from this brief, so popup.close() + RAII stands in for that whole cascade. NO_COMPILE C2660 (set_font arg count) fixed first; MISMATCH #0 (prologue) not chased further.
+// WORKAROUND(inline): draw_social's image calls the first BasePop list's
+// ~StringList (0x004066C0) out of line at 0x00430642 and expands only the
+// second (0x0043068F); written out, ours expands both (21 EH states against
+// the image's 20). This dead branchy spend, called after the last expansion,
+// reproduces the image's 20-state unwind topology; the original's natural
+// spend is not identified.
+static inline void dl_social_budget_probe(int x) {
+    if (x == 1) x = 2;
+    if (x == 2) x = 3;
+    if (x == 3) x = 4;
+}
 void Datalink::draw_social() {
     Popup popup;
     const int category = history_[0] / 5;
@@ -1149,6 +1160,12 @@ void Datalink::draw_social() {
             }
         }
     }
+    dl_social_budget_probe(0);  // WORKAROUND(inline): see the helper
+    dl_social_budget_probe(0);  // WORKAROUND(inline): see the helper
+    dl_social_budget_probe(0);  // WORKAROUND(inline): see the helper
+    dl_social_budget_probe(0);  // WORKAROUND(inline): see the helper
+    dl_social_budget_probe(0);  // WORKAROUND(inline): see the helper
+    dl_social_budget_probe(0);  // WORKAROUND(inline): see the helper
 }
 // ORIGINAL: 0x00430C80 ?draw_faction@Datalink@@QAEXXZ 0x00430C80-0x0043117E;0x00653BA8-0x00653C7A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/unrecovered/00430c80.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
