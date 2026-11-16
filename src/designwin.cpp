@@ -5520,16 +5520,13 @@ void DesignWin::select_special(int which) {
         }
     }
 
-    // WORKAROUND(noinline): 0x0043AED5 calls the five-argument start
-    // (0x0043EF70) out of line; the member pointer keeps /Ob2 from expanding
-    // the MEASURED header body (as in diplomacy_menu).
-    void (Popup::*const start5)(char *, const char *, int, char *, int) = &Popup::start;
-    (popup.*start5)(PopupStartCaption, "UNITSPECIAL", -1, nullptr, 0x200042);
-    Dialogs &dialogs = popup.dialogs();
+    // 0x0043AED5 calls the five-argument start (0x0043EF70) out of line:
+    // /Ob2 refuses it here without a member-pointer stand-in.
+    popup.start(PopupStartCaption, "UNITSPECIAL", -1, nullptr, 0x200042);
 
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x88));
-    dialogs.item(StringTemp, 0x1D);
+    popup.item(StringTemp, 0x1D);
 
     int count = 1;
     for (int i = 0; i < MaxAbilityNum; i++) {
@@ -5660,7 +5657,7 @@ void DesignWin::select_special(int which) {
             say_num(cost);
         }
 
-        dialogs.item(StringTemp, i);
+        popup.item(StringTemp, i);
         count++;
     }
 

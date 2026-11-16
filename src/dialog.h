@@ -212,6 +212,12 @@ class Dialog {
   void set_field_34(uint32_t value) { field_34_ = value; }
   void set_field_50(uint32_t value) { field_50_ = value; }
 #endif
+#ifdef DIALOG_LAYOUT_SETTERS3
+  // WORKAROUND(decl): per-unit guard. Datalink::init leaves the dead
+  // `lea eax,[eax+esi+0xF628]` of listBox_'s Dialog virtual base right
+  // after its +0x44 store (0x00429BBA) but not after +0xB4. Name unknown.
+  void set_field_44(uint32_t value) { field_44_ = value; }
+#endif
 #ifdef DIALOG_LAYOUT_SETTERS2
   // WORKAROUND(decl): per-unit guard. MessageWin::init leaves the same dead
   // `lea reg,[reg+esi+0x64]` after its +0x6C and +0x4C stores (0x471E27,

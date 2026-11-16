@@ -1,3 +1,4 @@
+#define DIALOG_LAYOUT_SETTERS3  // stand-in: see set_field_44 in dialog.h
 // WORKAROUND(noinline): the original Datalink TU calls StringStruct::StringStruct
 // (0x00401000) out of line from every StringList local, giving the drawers
 // their three-state EH layout (cold regions 0x00653712..0x0065384A).
@@ -930,6 +931,10 @@ void Datalink::draw_terraform() {
         parse_says(2, DatalinkTerraformExtraText, -1, -1);
     }
     StringTemp[0] = 0;
+    // The help topics are this unit's own literals: 0x004317E7 pushes
+    // "HELPTERRAFORM", 0x0043187F "HELPTERRA", 0x0043189C/0x004318A3 the
+    // "LAND"/"SEA" pair.
+    // RECOVERY_LITERAL: v1 0x00683514 0x00683522 $SG54887 0x00431180
     strcat(StringTemp, "HELPTERRAFORM");
     popup.start(DatalinkHelpFile, StringTemp, -1, 0, 0, 0);
     set_font(&body_font_, 0, 0, &link_font_);
@@ -938,7 +943,10 @@ void Datalink::draw_terraform() {
     set_text_color_hyper(0x96, -1, 1, 1);
     write_strings(&popup.unit_ids_, rect.left, rect.top, rect.right - rect.left, 0);
     StringTemp[0] = 0;
+    // RECOVERY_LITERAL: v1 0x00683524 0x0068352E $SG54888 0x00431180
     strcat(StringTemp, "HELPTERRA");
+    // RECOVERY_LITERAL: v1 0x00683530 0x00683535 $SG54889 0x00431180
+    // RECOVERY_LITERAL: v1 0x00683538 0x0068353C $SG54890 0x00431180
     strcat(StringTemp, land ? "LAND" : "SEA");
     char number[80];
     _itoa(action, number, 10);
@@ -3370,6 +3378,17 @@ void Datalink::exec(unsigned int topic, int index) {
 }
 
 
+// WORKAROUND(inline): expand_rect (scroll.cpp) is a plain out-of-line
+// function in this tree; init expands it inline (0x00429537: the 3 held in
+// eax for right/bottom, -3 immediates for left/top).
+static inline RECT *datalink_expand_rect(RECT *rect, int horizontal, int vertical) {
+    rect->left -= horizontal;
+    rect->right += horizontal;
+    rect->top -= vertical;
+    rect->bottom += vertical;
+    return rect;
+}
+
 // ORIGINAL: 0x00429300 ?init@Datalink@@QAEXXZ 0x00429300-0x0042A012;0x00653579-0x0065358E
 // RECOVERY_BINDING: v1 {"evidence": ["task:datalink-initializer-owner", "Pinned429300..42A012 establishes18RECT rows, typed UI receivers and distinct box bounds/fonts;653579..65358E cleans the local Buffer.", "historical seed:src/unrecovered/00429300.cpp"], "reason": "Recover Datalink initialization through real UI members, panel geometry, renderer camera and local Buffer lifetime; native call arguments supersede the retained seed approximations. Original spans and historical findings are retained without a matching or runtime claim."}
 // TRIED: huge UI-construction initializer (fonts, rects, a 16-entry facility-button loop at self+0x2a3c stride 0xb4c, 3 more BaseButtons, 4 StringBoxes) mostly transcribed from Ghidra (reliable for the field writes) plus raw-disasm-derived `this` pointers for every dropped-this call (Buffer at self+0x444, Caviar at self+0x150c, per-Font self+offset table, ListBox/ Dialog at self+0xf628 through a virtual-base-offset chase). The two uncatalogued quaternion helpers (sub_627d00/sub_6280e0) and the two extra StringBox instances' rect math are best-effort approximations, not individually verified against raw bytes.
@@ -3446,12 +3465,9 @@ void Datalink::init() {
     UnionRect(&panel_rect_, &description_rect, &lower_description_rect);
     UnionRect(&entry_clip_rect_, &description_rect, &lower_description_rect);
     UnionRect(&entry_clip_rect_, &entry_clip_rect_, &title_rect_);
+    entry_update_rect_ = entry_clip_rect_;
+    datalink_expand_rect(&entry_update_rect_, 3, 3);
     RECT &entry_update_rect = entry_update_rect_;
-    entry_update_rect = entry_clip_rect_;
-    entry_update_rect.left -= 3;
-    entry_update_rect.right += 3;
-    entry_update_rect.top -= 3;
-    entry_update_rect.bottom += 3;
     entry_clip_rect_ = panel_rect_;
     RECT &entry_frame_rect = entry_frame_rect_;
     entry_frame_rect.left = left;
@@ -3492,13 +3508,15 @@ void Datalink::init() {
     topic_button_bounds_[16].right = 0x18e;
     topic_button_bounds_[16].top = side_width + 0x14e;
     topic_button_bounds_[16].bottom = topic_button_bounds_[16].top + 0x14;
-    // Through a reference, as the frame and title rects above: brings the
-    // [17] stores to the image's order (0x004296C8..0x004296EC).
+    // [17] keeps its top in a register and adds 0x14 to it in place
+    // (0x004296CE..0x004296E1) instead of reusing [16]'s bottom.
     RECT &bounds17 = topic_button_bounds_[17];
     bounds17.left = 0x192;
     bounds17.right = 0x288;
-    bounds17.top = side_width + 0x14e;
-    bounds17.bottom = bounds17.top + 0x14;
+    int top17 = side_width + 0x14e;
+    bounds17.top = top17;
+    top17 += 0x14;
+    bounds17.bottom = top17;
 
     if (!wide) {
         auxiliary_font10_.init(DefaultFontFace, 12, 4);
@@ -3599,7 +3617,7 @@ void Datalink::init() {
     listBox_.init(&rect, static_cast<Heap *>(0));
     listBox_.field_8_ = 1;
     listBox_.field_2C_ = 0;
-    listBox_.field_44_ = 0;
+    listBox_.set_field_44(0);
     listBox_.field_B4_ = 0;
     listBox_.set_dialog_font(&font2_, 0, 0);
     listBox_.attach(static_cast<GraphicWin *>(this), rect.left, rect.top,
@@ -3652,13 +3670,14 @@ void Datalink::init() {
     button->redraw();
     button->hide();
 
-    // [H] 0x00429E3E/0x00429ED7/0x00429F70: the image adjusts bottom, right,
-    // top, left (ours bottom, top, right, left); spell the three StringBox
-    // rects in the L,R,T,B order used by every other rect in this function.
-    rect.left = interface_update_rect_.left + 3;
-    rect.right = interface_update_rect_.right - 3;
-    rect.top = interface_update_rect_.top + 3;
-    rect.bottom = interface_update_rect_.bottom - 3;
+    // [H] 0x00429E26/0x00429EC2/0x00429F65: each StringBox rect is a whole
+    // copy of its source rect adjusted in place; the image loads bottom,
+    // top, right, left and adjusts bottom, right, top, left.
+    rect = interface_update_rect_;
+    rect.left += 3;
+    rect.right -= 3;
+    rect.top += 3;
+    rect.bottom -= 3;
     blurb_box_.init(rect.left, rect.top, rect.right - rect.left,
                     rect.bottom - rect.top,
                     static_cast<Win *>(&MainInterfaceGlobal), 0, -1);
@@ -3668,10 +3687,11 @@ void Datalink::init() {
     blurb_box_.Buffer::set_text_color_hyper(0x96, -1, 1, 1);
 
     // [H] same order as above.
-    rect.left = panel_rect_.left + 3;
-    rect.right = panel_rect_.right - 3;
-    rect.top = panel_rect_.top + 3;
-    rect.bottom = panel_rect_.bottom - 3;
+    rect = panel_rect_;
+    rect.left += 3;
+    rect.right -= 3;
+    rect.top += 3;
+    rect.bottom -= 3;
     concept_box_.init(rect.left, rect.top, rect.right - rect.left,
                       rect.bottom - rect.top,
                       static_cast<Win *>(this), 0, -1);
@@ -3681,10 +3701,11 @@ void Datalink::init() {
     concept_box_.Buffer::set_text_color_hyper(0x96, -1, 1, 1);
 
     // [H] same order as above.
-    rect.left = lower_description_rect.left + 6;
-    rect.right = lower_description_rect.right - 6;
-    rect.top = lower_description_rect.top + 6;
-    rect.bottom = lower_description_rect.bottom - 6;
+    rect = lower_description_rect;
+    rect.left += 6;
+    rect.right -= 6;
+    rect.top += 6;
+    rect.bottom -= 6;
     detail_box_.init(rect.left, rect.top, rect.right - rect.left,
                      rect.bottom - rect.top,
                      static_cast<Win *>(this), 0, -1);
