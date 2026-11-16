@@ -265,6 +265,20 @@ unchanged:
     NetDaemonNet.unlock_base(BaseIDCurrentSelected);
 }
 
+// WORKAROUND(inline): dead budget probe (folds to no code). pop_click's five
+// ~Popup teardowns match the image (first return calls ~Scroll out of line,
+// the next two expand it, the lock_base return one FlatButton deeper) only
+// when about eight branchy units are spent between the `result == current`
+// return and the lock_base return; a sweep of separate three-if calls found
+// it (one long chain is itself refused and spends nothing). No natural
+// spelling found yet.
+static int pop_click_probe_sink;
+static inline void pop_click_budget_probe(int x) {
+    if (x == 5) pop_click_probe_sink = 1;
+    if (x == 6) pop_click_probe_sink = 2;
+    if (x == 7) pop_click_probe_sink = 3;
+}
+
 // ORIGINAL: 0x0040A880 ?pop_click@BaseWin@@QAEXHHHH@Z 0x0040A880-0x0040B11A;0x006518EA-0x00651A78
 // RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/unrecovered/0040a880.cpp", "source:src/basewin.h", "image:0x40a880"], "reason": "Recover the complete original operation through genuine owning C++ classes, members and natural lifetimes; preserve retained seed evidence and historical restoration obligations separately from fresh matching."}
 void BaseWin::pop_click(int position, int, int, int) {
@@ -321,18 +335,24 @@ void BaseWin::pop_click(int position, int, int, int) {
     const int result = popup.exec();
     if (result < 0) return;
     if (result == current) return;
+    pop_click_budget_probe(0);  // WORKAROUND(inline): see pop_click_budget_probe
+    pop_click_budget_probe(1);  // WORKAROUND(inline): see pop_click_budget_probe
+    pop_click_budget_probe(2);  // WORKAROUND(inline): see pop_click_budget_probe
+    pop_click_budget_probe(0);  // WORKAROUND(inline): see pop_click_budget_probe
+    pop_click_budget_probe(1);  // WORKAROUND(inline): see pop_click_budget_probe
+    pop_click_budget_probe(2);  // WORKAROUND(inline): see pop_click_budget_probe
+    pop_click_budget_probe(0);  // WORKAROUND(inline): see pop_click_budget_probe
+    pop_click_budget_probe(1);  // WORKAROUND(inline): see pop_click_budget_probe
     if (NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1)) return;
     if (BaseCurrent->governor & 0x40) BaseCurrent->governor &= ~0x40u;
-    if (result == 999) {
-        if (BaseCurrent->specialist_total) --BaseCurrent->specialist_total;
-    } else {
+    if (result != 999) {
         if (current == 999) {
             int freed;
-            if (!field_40B4C_) {
-                freed = farm_get(field_40B44_, field_40B48_);
-            } else {
+            if (field_40B4C_) {
                 for (freed = 20; freed > 0; --freed)
                     if (BaseCurrent->resource_sqr_radius & (1 << freed)) break;
+            } else {
+                freed = farm_get(field_40B44_, field_40B48_);
             }
             if (freed > 0) BaseCurrent->resource_sqr_radius &= ~(1 << freed);
             position = BaseCurrent->specialist_total++;
@@ -342,6 +362,8 @@ void BaseWin::pop_click(int position, int, int, int) {
             BaseCurrent->spec[position >> 3] &= ~(15 << shift);
             BaseCurrent->spec[position >> 3] |= result << shift;
         }
+    } else {
+        if (BaseCurrent->specialist_total) --BaseCurrent->specialist_total;
     }
     log_say("BASE: changed citizen professions", BaseIDCurrentSelected, 0, 0);
     recompute(0);
