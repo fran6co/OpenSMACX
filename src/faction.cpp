@@ -3099,6 +3099,19 @@ void __cdecl diplomacy_ends(int faction_id, int faction_id_with) {
     DiploFocusX = -1;
 }
 
+// Moved from diplopop.cpp: it sits in this unit's code run right before
+// diplomacy_caption, which expands it (0x00539B4A..0x00539B6B).
+// ORIGINAL: 0x00539970 sub_539970 0x00539970-0x00539998 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:3f7fc8f78d783f09c46cddc646c31c2f5eb6d013:src/recovered/00539970.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x539970 complete original body; independent source-owner review.", "source:src/diplopop.cpp and corresponding header own real receiver/dependencies; count-zero copy underflow is intentionally unchanged."], "reason": "Complete typed application helper; retain original call ordering, argument contract and historical obligation."}
+// symbol    ?sub_539970@@YAXXZ
+void __cdecl sub_539970() {
+    DiploPop &popup = DiplomacyPopup;
+    if (static_cast<Win &>(popup).is_visible()) {
+        popup.draw_info();
+        static_cast<GraphicWin &>(popup).soft_update(&popup.rect1_);
+    }
+}
+
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005399A0 ?diplomacy_caption@@YAXHH@Z 0x005399A0-0x00539B6B BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned5399A0..539B6B; existing inactive diplomacy-presentation task evidence retained; counterpart Player noun fields and PlayerData20CC treaty strides independently decoded; literal68D594 is the bounded separator. Host source-body controls cover mood thresholds, bidirectional pact/surrender and post-parse visibility."], "reason": "Recover complete diplomacy caption in its faction owner with genuine treaty/noun/mood/scratch data and the actual visible-popup draw operation. Preserve native friction clamp, label predicate, parse defaults and redraw ordering."}
@@ -3150,10 +3163,7 @@ void __cdecl diplomacy_caption(int faction_id, int faction_id_with) {
     }
 
     parse_says(7, caption, -1, -1);
-    if (DiplomacyPopup.is_visible() != 0) {
-        DiplomacyPopup.draw_info();
-        DiplomacyPopup.soft_update(&DiplomacyPopup.rect1_);
-    }
+    sub_539970();
 }
 
 static void contact_dialog_arguments(int other_faction_id) {
@@ -5312,9 +5322,7 @@ done:
 void __cdecl propose_trade_maps(int faction_id, int faction_id_with) {
     PopupDialogFactionID = faction_id_with;
 
-    const int has_prior_map_trade =
-        (PlayersData[faction_id].diplo_treaties[faction_id_with] & 1) != 0;
-    if ((!has_prior_map_trade && DiploFriction > 0) ||
+    if ((!has_treaty(faction_id, faction_id_with, DTREATY_PACT) && DiploFriction > 0) ||
         DiploFriction > 4) {
         parse_says(0, Players[faction_id_with].adj_name_faction, -1, -1);
 // Map-trade refusal and proposal use separate script topics.
@@ -5331,21 +5339,10 @@ void __cdecl propose_trade_maps(int faction_id, int faction_id_with) {
 
     // Native performs an unsigned byte increment at PlayerData + 0xB8.
     // diplo_patience is the source-owned byte array at that displacement.
-    PlayersData[faction_id_with].diplo_patience[faction_id] =
-        static_cast<char>(static_cast<unsigned char>(
-            PlayersData[faction_id_with].diplo_patience[faction_id]) + 2u);
+    PlayersData[faction_id_with].diplo_patience[faction_id] += 2;
 
-    if (IsMultiplayerNet != 0) {
-        log_say(DiploLabelSendingTRADEMAPS, faction_id, faction_id_with, 0);
-        message_data(0x2448, 0, faction_id, faction_id_with, 0, 0);
-        NetDaemonNet.await_diplo(0x448);
-        DiplomacyMapTransferChanged = 1;
-        return;
-    }
-
-    trade_maps(faction_id, faction_id_with);
+    net_maps(faction_id, faction_id_with, 1);
     DiplomacyMapTransferChanged = 1;
-    return;
 }
 // ORIGINAL: 0x0053E4C0 ?demands_withdrawal@@YAXHH@Z 0x0053E4C0-0x0053E5B6 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["Pinned native instructions at 0x0053E4C0..0x0053E5B6: commlink callback precedes multiplayer human gate, demand result and perihelion dialogue.","source:src/faction.h and source:src/netdaemon.h typed dependency declarations."],"reason":"Recover the withdrawal-demand caller with the original callback/gate order and typed result topics; retain the original extent while its two callees are recovered as complete neighboring bodies."}
@@ -8040,14 +8037,13 @@ void __cdecl make_a_proposal(int faction_id, int other_faction_id,
 
     PopupDialogFactionID = other_faction_id;
     DiploScratchFAD0 = 0;
-    // WORKAROUND(inline): six dead probes stand in for spend the image has
+    // WORKAROUND(inline): two dead probes stand in for spend the image has
     // and this body lacks: without them the BasePop teardowns after the
-    // loan and council paths expand deeper than the image's (0, 2, 8 and 12
-    // probes give 922, 875, 802 and 698 instructions against 808).
-    // (The image's out-of-line net_maps call does not follow budget: 40
-    // probes still leave it expanded; see the call below.)
-    communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0);
-    communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0);
+    // loan and council paths expand deeper than the image's (0, 2, 4 and 6
+    // probes give 862, 808, 804 and 729 instructions against 808, with the
+    // propose_trade_maps call expanded).
+    communicate_budget_probe(0); communicate_budget_probe(0);
+
 
     if (selection_ready == 0 && proposal_menu(faction_id, other_faction_id) == 0) {
         return;
@@ -8069,27 +8065,10 @@ void __cdecl make_a_proposal(int faction_id, int other_faction_id,
         return;
     }
     if (DiploScratchFA34 == 7) {
-        PopupDialogFactionID = other_faction_id;
-        if ((!has_treaty(faction_id, other_faction_id, DTREATY_PACT) && DiploFriction > 0)
-            || DiploFriction > 4) {
-            parse_says(0, get_adjective(other_faction_id), -1, -1);
-            X_pops("REJMAPS", 0x100000,
-                         FactionDiplomacyPortraits[other_faction_id],
-                         pop_wait);
-        } else {
-            X_pops("TRADEMAPS", 0x100000,
-                         FactionDiplomacyPortraits[other_faction_id],
-                         pop_wait);
-            PlayersData[other_faction_id].diplo_patience[faction_id] += 2;
-            {
-                // WORKAROUND(noinline): the image calls net_maps (0x00539580)
-                // here (0x0054F625) and at all three communicate sites, while
-                // battle_plans expands it; 40 dead probes still expand it here.
-                void (__cdecl *const maps)(int, int, int) = net_maps;
-                maps(faction_id, other_faction_id, 1);
-            }
-            DiplomacyMapTransferChanged = 1;
-        }
+        // The image expands propose_trade_maps here (its REJMAPS/TRADEMAPS
+        // literals are pushed from 0x0054F5D3/0x0054F5F4) and keeps the
+        // nested net_maps call out of line (0x0054F625).
+        propose_trade_maps(faction_id, other_faction_id);
         return;
     }
     if (DiploScratchFA34 == 10) return;

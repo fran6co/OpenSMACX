@@ -9301,10 +9301,11 @@ void __cdecl drone_riot() {
     int total = 0;
     int shares[8];
     for (int p = 1; p < MaxPlayerNum; p++) {
-        // BUG(original): VC6 compiles this store to the fixed slot one past the
-        // array ([ebp-0x3c]) instead of shares[p], so factions without the
-        // bonus keep uninitialised stack values that the loops below read.
-        shares[p] = -1;
+        // BUG(original): the -1 marker is written one past the array
+        // (shares[MaxPlayerNum], [ebp-0x3c]) rather than to shares[p], so
+        // factions without the bonus keep uninitialised stack values that the
+        // loops below read.
+        shares[MaxPlayerNum] = -1;
         for (int k = 0; k < Players[p].faction_bonus_count; k++) {
             if (Players[p].faction_bonus_id[k] == 13) {
                 shares[p] = range(Players[p].faction_bonus_val1[k], 0, 100);
@@ -9314,7 +9315,7 @@ void __cdecl drone_riot() {
         }
     }
     for (int j = 1; j < MaxPlayerNum; j++) {
-        if (shares[j] != -1) {
+        if (shares[j] + 1 != 0) {
             chance *= 1.0 - shares[j] * 0.01;
         }
     }
@@ -9322,7 +9323,7 @@ void __cdecl drone_riot() {
     if ((int)(chance * 100.0) >= tick % 100) {
         int pick = tick / 100 % total;
         for (int s = 1; s < MaxPlayerNum; s++) {
-            if (shares[s] != -1) {
+            if (shares[s] + 1 != 0) {
                 target = s;
                 if (pick < shares[s]) {
                     s = MaxPlayerNum;

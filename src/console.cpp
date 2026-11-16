@@ -4439,8 +4439,7 @@ void Console::give_hints() {
                 TutorialWindow.tut_map("NEWTERRAFORMER", cursor_x, cursor_y,
                                        selected_vehicle_, 0, 0x100,
                                        -1, -1);
-                GameDataStateStorage.fields_.game_state_ |= 0x400u;
-                return;
+                goto terra_shown;
             }
         }
         // 0x511E99: the one-time colonization map scan is restricted to the
@@ -4460,17 +4459,10 @@ void Console::give_hints() {
                 // the flat (unwrapped) arm first, before the wrapping arm.
                 int raw_x = cursor_x + RadiusOffsetX[49 + radius];
                 const int flat = MapIsFlat & 1;
-                int x;
-                if (flat) {
-                    x = raw_x;
-                } else if (raw_x < 0) {
-                    x = raw_x + MapLongitudeBounds;
-                } else {
-                    if (raw_x >= MapLongitudeBounds) {
-                        raw_x -= MapLongitudeBounds;
-                    }
-                    x = raw_x;
-                }
+                const int x = flat ? raw_x
+                              : raw_x < 0 ? raw_x + MapLongitudeBounds
+                              : raw_x >= MapLongitudeBounds ? raw_x - MapLongitudeBounds
+                              : raw_x;
                 const int y = cursor_y + RadiusOffsetY[49 + radius];
                 if (!on_map(x, y)) {
                     continue;
@@ -4563,7 +4555,8 @@ void Console::give_hints() {
         return;
     }
     proto_id = Vehs[selected_vehicle_].proto_id;
-    const int selected_is_sea =
+    int selected_is_sea;
+    selected_is_sea =
         Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_SEA;
 
     if (Vehs[selected_vehicle_].dmg_incurred != 0 && tut_check(0x200000) != 0) {
@@ -4792,7 +4785,8 @@ void Console::give_hints() {
 
     // 0x512C82 nearby native-unit hints. A rejected spore-launcher checker
     // still falls through to the sealurk prototype test.
-    for (int native_i = 0; native_i < 8; ++native_i) {
+    int native_i;
+    for (native_i = 0; native_i < 8; ++native_i) {
         const int x = wrap_map_x(cursor_x + VehMoveDeltaX[native_i]);
         const int y = cursor_y + VehMoveDeltaY[native_i];
         if (!on_map(x, y)) {
@@ -4816,7 +4810,8 @@ void Console::give_hints() {
     // 0x512D4E resource scan: occupied tiles (inline anything_at), tile
     // exclusions, goody suppression, then a switch on bonus_at. The card
     // re-reads bonus_at inside the tut_map argument list.
-    for (int bonus_i = 0; bonus_i < 8; ++bonus_i) {
+    int bonus_i;
+    for (bonus_i = 0; bonus_i < 8; ++bonus_i) {
         const int x = wrap_map_x(cursor_x + VehMoveDeltaX[bonus_i]);
         const int y = cursor_y + VehMoveDeltaY[bonus_i];
         if (!on_map(x, y)) {
@@ -4938,7 +4933,8 @@ void Console::give_hints() {
     // skips straight to the sensor card (0x513433).
     proto_id = Vehs[selected_vehicle_].proto_id;
     if (VehPrototypes[proto_id].plan == PLAN_TERRAFORMING && !selected_is_sea) {
-        const int base_id = base_find(cursor_x, cursor_y, faction_id_);
+        int base_id;
+        base_id = base_find(cursor_x, cursor_y, faction_id_);
         if (base_id < 0) {
             return;
         }
@@ -4950,11 +4946,11 @@ void Console::give_hints() {
                     TutorialWindow.tut_map("TERRARAISE", cursor_x, cursor_y, -1, 0,
                                            0x200000, -1, -1);
                 }
-                GameDataStateStorage.fields_.game_state_ |= 0x400u;
-                return;
+                goto terra_shown;
             }
 
-            const int improve = can_terraform(faction_id_, cursor_x, cursor_y,
+            int improve;
+            improve = can_terraform(faction_id_, cursor_x, cursor_y,
                                               0, base_id);
             if (improve == 4) {
                 // 0x513344 tests tile bit 0x8000 (`test dh,80h`).
@@ -4970,22 +4966,19 @@ void Console::give_hints() {
                 if ((GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x40000u) == 0) {
                     TutorialWindow.tut_map("TERRAMINE", cursor_x, cursor_y, -1,
                                            &g_TER1_MINE_SPRITE, 0x40000, -1, -1);
-                    GameDataStateStorage.fields_.game_state_ |= 0x400u;
-                    return;
+                    goto terra_shown;
                 }
             } else if (improve == 7) {
                 if ((GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x20000u) == 0) {
                     TutorialWindow.tut_map("TERRASOLAR", cursor_x, cursor_y, -1,
                                            &g_TER1_SOLAR_COLLECTOR_SPRITE, 0x20000, -1, -1);
-                    GameDataStateStorage.fields_.game_state_ |= 0x400u;
-                    return;
+                    goto terra_shown;
                 }
             } else if (improve == 8) {
                 if ((GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x400000u) == 0) {
                     TutorialWindow.tut_map("TERRAFOREST", cursor_x, cursor_y, -1, 0,
                                            0x400000, -1, -1);
-                    GameDataStateStorage.fields_.game_state_ |= 0x400u;
-                    return;
+                    goto terra_shown;
                 }
             }
 
@@ -4994,16 +4987,17 @@ void Console::give_hints() {
                 (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x2000000u) == 0) {
                 TutorialWindow.tut_map("TERRASENSOR", cursor_x, cursor_y, -1, 0,
                                        0x2000000, -1, -1);
-                GameDataStateStorage.fields_.game_state_ |= 0x400u;
-                return;
+                goto terra_shown;
             }
-            const uint32_t tile_flags = map_loc(cursor_x, cursor_y)->bit;
+            uint32_t tile_flags;
+            tile_flags = map_loc(cursor_x, cursor_y)->bit;
             if ((tile_flags & 4u) == 0 &&
                 (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x80000u) == 0 &&
                 ((tile_flags & 0x10u) != 0 ||
                  at_goal(faction_id_, 9, cursor_x, cursor_y) != 0)) {
                 TutorialWindow.tut_map("TERRAROAD", cursor_x, cursor_y, -1, 0,
                                        0x80000, -1, -1);
+            terra_shown:
                 GameDataStateStorage.fields_.game_state_ |= 0x400u;
                 return;
             }
