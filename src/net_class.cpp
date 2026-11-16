@@ -1952,6 +1952,7 @@ int Net::check_for_lobby(char *app_name, _GUID *guid, int option_a,
     char *cursor;
     char *buffer;
     int status;
+    HRESULT queried;
 
     if (app_name != 0) {
         field_44_ = option_b;
@@ -2083,49 +2084,51 @@ have_lobby:
         return 0;
     }
 
-    if (lobby->GetConnectionSettings(0, buffer, &address_size) == 0) {
-        status = (reinterpret_cast<DPLCONNECTION *>(buffer)->dwFlags
-                  != DPOPEN_CREATE) + 1;
-        if (reinterpret_cast<DPLCONNECTION *>(buffer)->lpSessionDesc != 0) {
-            reinterpret_cast<DPLCONNECTION *>(buffer)->lpSessionDesc->dwFlags =
-                DPSESSION_MIGRATEHOST;
-            reinterpret_cast<DPLCONNECTION *>(buffer)->lpSessionDesc
-                ->dwMaxPlayers = 7;
-            if (lobby->SetConnectionSettings(
-                    0, 0, reinterpret_cast<DPLCONNECTION *>(buffer)) == 0) {
-                if (lobby->Connect(0, &direct_play, 0) == 0) {
-                    // The image publishes the interface pointer to the
-                    // receive record before testing QueryInterface's result.
-                    const HRESULT queried = direct_play->QueryInterface(
-                        IID_IDirectPlay2A, reinterpret_cast<void **>(&NetDirectPlay));
-                    thread_info_.direct_play_ = NetDirectPlay;
-                    if (queried == 0) {
-                        direct_play->Release();
-                        direct_play = 0;
-                        if (status == 1) {
-                            voice_flags_D8_ |= 0x10000;
-                        } else {
-                            voice_flags_D8_ |= 0x20000;
-                        }
-                        join_session(
-                            0,
-                            reinterpret_cast<DPLCONNECTION *>(buffer)
-                                ->lpPlayerName->lpszShortNameA,
-                            0);
-                        free(buffer);
-                        return status;
-                    }
-                }
-            }
+    if (lobby->GetConnectionSettings(0, buffer, &address_size) != 0) {
+        goto fail;
+    }
+    status = (reinterpret_cast<DPLCONNECTION *>(buffer)->dwFlags
+              != DPOPEN_CREATE) + 1;
+    if (reinterpret_cast<DPLCONNECTION *>(buffer)->lpSessionDesc == 0) {
+        goto fail;
+    }
+    reinterpret_cast<DPLCONNECTION *>(buffer)->lpSessionDesc->dwFlags =
+        DPSESSION_MIGRATEHOST;
+    reinterpret_cast<DPLCONNECTION *>(buffer)->lpSessionDesc->dwMaxPlayers = 7;
+    if (lobby->SetConnectionSettings(
+            0, 0, reinterpret_cast<DPLCONNECTION *>(buffer)) != 0) {
+        goto fail;
+    }
+    if (lobby->Connect(0, &direct_play, 0) != 0) {
+        goto fail;
+    }
+    // The image publishes the interface pointer to the receive record
+    // before testing QueryInterface's result.
+    queried = direct_play->QueryInterface(
+        IID_IDirectPlay2A, reinterpret_cast<void **>(&NetDirectPlay));
+    thread_info_.direct_play_ = NetDirectPlay;
+    if (queried != 0) {
+fail:
+        if (lobby != 0) {
+            lobby->Release();
         }
+        free(buffer);
+        close();
+        return 0;
     }
-
-    if (lobby != 0) {
-        lobby->Release();
+    direct_play->Release();
+    direct_play = 0;
+    if (status == 1) {
+        voice_flags_D8_ |= 0x10000;
+    } else {
+        voice_flags_D8_ |= 0x20000;
     }
+    join_session(
+        0,
+        reinterpret_cast<DPLCONNECTION *>(buffer)->lpPlayerName->lpszShortNameA,
+        0);
     free(buffer);
-    close();
-    return 0;
+    return status;
 }
 
 // ---------------------------------------------------------------------------
@@ -3767,7 +3770,7 @@ int Net::join_session(NetAllocationNode *session, char *player_name,
 
     {
         if (NetDirectPlay == 0 || player_name == 0) {
-            goto fail;
+            return 0;
         }
 
         DPSESSIONDESC2 requested;
@@ -3787,15 +3790,18 @@ int Net::join_session(NetAllocationNode *session, char *player_name,
             requested.lpszPasswordA =
                 password != 0 && password[0] != 0 ? password : 0;
 
-            const HRESULT opened = NetDirectPlay->Open(&requested, DPOPEN_JOIN);
-            if (opened == DP_OK) {
+            HRESULT opened = NetDirectPlay->Open(&requested, DPOPEN_JOIN);
+            if (opened != DP_OK) {
+                if (opened != DPERR_ALREADYINITIALIZED) {
+                    return 0;
+                }
+            } else {
                 memset(&NetServiceCaps, 0, sizeof(NetServiceCaps));
                 NetServiceCaps.dwSize = sizeof(NetServiceCaps);
-                if (NetDirectPlay->GetCaps(&NetServiceCaps, 1) != DP_OK) {
-                    goto fail;
+                opened = NetDirectPlay->GetCaps(&NetServiceCaps, 1);
+                if (opened != DP_OK) {
+                    return 0;
                 }
-            } else if (opened != DPERR_ALREADYINITIALIZED) {
-                goto fail;
             }
         }
 
@@ -3806,9 +3812,12 @@ int Net::join_session(NetAllocationNode *session, char *player_name,
         // Native control reaches the common return without freeing this block on
         // either allocation/read failure or a version mismatch. Keep that
         // lifetime defect visible; successful version comparison frees it below.
-        if (descriptor == 0
-            || NetDirectPlay->GetSessionDesc(descriptor, &descriptor_size) != DP_OK) {
-            goto fail;
+        if (descriptor == 0) {
+            return 0;
+        }
+        HRESULT result = NetDirectPlay->GetSessionDesc(descriptor, &descriptor_size);
+        if (result != DP_OK) {
+            return 0;
         }
 
         // BUG IN THE ORIGINAL: each warning's second number is the local
@@ -3822,7 +3831,7 @@ int Net::join_session(NetAllocationNode *session, char *player_name,
             older_version_shadow.init("Times New Roman", 0xE, 2);
             pop_caption("jackal.txt", "CLIENTOLDERVERSION", 0);
             NetDirectPlay->Close();
-            goto fail;
+            return 0;
         }
         if (static_cast<int>(descriptor->dwUser1) < static_cast<int>(field_44_)) {
             parse_num(0, field_44_);
@@ -3831,7 +3840,7 @@ int Net::join_session(NetAllocationNode *session, char *player_name,
             older_version_shadow.init("Times New Roman", 0xE, 2);
             pop_caption("jackal.txt", "CLIENTNEWERVERSION", 0);
             NetDirectPlay->Close();
-            goto fail;
+            return 0;
         }
         free(descriptor);
 
@@ -3840,7 +3849,8 @@ int Net::join_session(NetAllocationNode *session, char *player_name,
         player_descriptor.dwSize = sizeof(player_descriptor);
         player_descriptor.lpszLongNameA = player_name;
 
-        DWORD player_data = (voice_flags_D8_ >> 0x10) & 1;
+        unsigned char player_data =
+            static_cast<unsigned char>((voice_flags_D8_ >> 0x10) & 1);
         if ((voice_flags_D8_ & 2) != 0) {
             player_data |= 2;
         }
@@ -3849,11 +3859,11 @@ int Net::join_session(NetAllocationNode *session, char *player_name,
         // the evidenced Net+4 record passed to the worker.
         _beginthread(&net_receive_thread, 0, &thread_info_);
 
-        if (NetDirectPlay->CreatePlayer(
-                &local_player_id_, &player_descriptor, thread_info_.events_[2],
-                &player_data, 1, 0)
-            != DP_OK) {
-            goto fail;
+        result = NetDirectPlay->CreatePlayer(
+            &local_player_id_, &player_descriptor, thread_info_.events_[2],
+            &player_data, 1, 0);
+        if (result != DP_OK) {
+            return 0;
         }
 
         const DWORD host_flag = voice_flags_D8_ & 0x10000;
@@ -3863,7 +3873,7 @@ int Net::join_session(NetAllocationNode *session, char *player_name,
         // The SDK callback can change the process-wide interface. The native
         // host descriptor update tests the live pointer after CreatePlayer.
         if (NetDirectPlay != 0 && host_flag != 0) {
-            DWORD live_size = 0;
+            DWORD live_size;  // uninitialised in the image (0x0062E879)
             NetDirectPlay->GetSessionDesc(0, &live_size);
             DPSESSIONDESC2 *live = static_cast<DPSESSIONDESC2 *>(
                 mem_get(static_cast<int>(live_size)));
@@ -3880,28 +3890,29 @@ int Net::join_session(NetAllocationNode *session, char *player_name,
                        static_cast<unsigned char>(player_data & 0xFF));
         }
 
-        DWORD live_size = 0;
-        NetDirectPlay->GetSessionDesc(0, &live_size);
+        // The image reuses descriptor_size's slot, again uninitialised.
+        NetDirectPlay->GetSessionDesc(0, &descriptor_size);
         DPSESSIONDESC2 *live = static_cast<DPSESSIONDESC2 *>(
-            mem_get(static_cast<int>(live_size)));
+            mem_get(static_cast<int>(descriptor_size)));
         if (live == 0) {
-            goto fail;
+            return 0;
         }
-        if (NetDirectPlay->GetSessionDesc(live, &live_size) != DP_OK) {
+        result = NetDirectPlay->GetSessionDesc(live, &descriptor_size);
+        if (result != DP_OK) {
             free(live);
-            goto fail;
+            return 0;
         }
 
-        if (live->lpszSessionNameA == 0) {
-            // The image calls mem_get(1) and discards its result on this branch.
-            mem_get(1);
-            allocation_node_.session_name_ = 0;
-        } else {
+        if (live->lpszSessionNameA != 0) {
             const size_t length = strlen(live->lpszSessionNameA) + 1;
             allocation_node_.session_name_ =
                 static_cast<char *>(mem_get(static_cast<int>(length)));
             *allocation_node_.session_name_ = 0;
             strcat(allocation_node_.session_name_, live->lpszSessionNameA);
+        } else {
+            // The image calls mem_get(1) and discards its result on this branch.
+            mem_get(1);
+            allocation_node_.session_name_ = 0;
         }
         if (password != 0 && password[0] != 0) {
             const size_t length = strlen(password) + 1;
@@ -3916,19 +3927,15 @@ int Net::join_session(NetAllocationNode *session, char *player_name,
         free(live);
 
         const DWORD start_time = timeGetTime();
+        while (field_6DC_ == 0 && timeGetTime() - start_time < 10000) {
+            do_task();
+        }
         if (field_6DC_ == 0) {
-            while (timeGetTime() - start_time < 10000 && field_6DC_ == 0) {
-                do_task();
-            }
-            if (field_6DC_ == 0) {
-                close();
-                goto fail;
-            }
+            close();
+            return 0;
         }
         return static_cast<int>(local_player_id_);
     }
-fail:
-    return 0;
 }
 
 

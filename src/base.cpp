@@ -1428,8 +1428,16 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
     }
     set_base(base_id);
     // WORKAROUND(noinline): the image calls base_compute out of line here
-    // (0x4F81E7) while every other base.cpp caller expands it; the original
-    // reason (budget or declaration order) is not yet known.
+    // (0x4F81E7) while every other base.cpp caller expands it. Evidence that
+    // base_claimed + base_build were a separate original unit that saw only
+    // base_compute's declaration: no plain base.cpp function is expanded
+    // anywhere in base_build (base_compute, is_coast, worm_mod, cost_factor,
+    // base_lose_minerals, base_claimed all called), header-inline copies
+    // used only by it follow it (0x500120-0x5002F0), and has_project's copy
+    // closes base.cpp's run at 0x4F80D0 before base_claimed. Inside one unit
+    // VC6 expands it whatever the order (base_build defined before
+    // base_compute still expands it); compiled as its own unit, a plain
+    // base_compute(1) gives these exact bytes. Cleanup: split the unit.
     void (__cdecl *const base_compute_call)(int) = base_compute;
     base_compute_call(1);
     l_54 = Bases[base_id].x;
