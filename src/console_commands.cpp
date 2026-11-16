@@ -3341,6 +3341,8 @@ static inline int editor_who_inline(int default_faction, int first_faction) {
     return selected;
 }
 
+static inline int editor_who_raw_inline(int default_faction, int first_faction);
+
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
 // ORIGINAL: 0x004D9DC0 ?on_left_click@DipEdit@@QAEXHH@Z 0x004D9DC0-0x004D9DC3 BYTE_EXACT
@@ -5103,7 +5105,9 @@ void Console::editor_kill_veh(int veh_id) {
 // editor_who_inline, eight expansions (any of the first nine argument pairs;
 // position only moves register ties) give the image's 29-state EH map and its
 // out-of-line five-argument start; zero gives 34 states, all 24 give 24. The
-// original spent this budget on something not yet identified.
+// original spent this budget on something not yet identified. Of the 210
+// four-pair placements, pairs 2-4 and the draw_tile pair come closest to the
+// image's register choices (sites 2-4 still reuse eax where the image does not).
 static inline int veh_cursor_x() { return ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_]; }
 static inline int veh_cursor_y() { return ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_]; }
 // ORIGINAL: 0x004DED00 ?editor_veh@Console@@QAEXXZ 0x004DED00-0x004DF4E5;0x0065BD30-0x0065BE73
@@ -5149,7 +5153,7 @@ again:
         case 2:
         {
             // WORKAROUND(inline): the image's editor_who copy calls start 0x0043EF70 out of line.
-            const int chosen = editor_who_inline(ScenarioVehicleFaction, 0);
+            const int chosen = editor_who_raw_inline(ScenarioVehicleFaction, 0);
             if (chosen >= 0) ScenarioVehicleFaction = chosen;
             goto again;
         }
@@ -5160,8 +5164,8 @@ again:
 
         if (selected_prototype == 0x13) {
             ScenarioVehicleFaction = 0;
-            bit_set(veh_cursor_x(),
-                    veh_cursor_y(), 0x20, 1);
+            bit_set(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                    ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], 0x20, 1);
             bit_set(veh_cursor_x(),
                     veh_cursor_y(), 0x0028805C, 0);
             synch_bit(veh_cursor_x(),
@@ -5178,8 +5182,8 @@ again:
                       ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], 6);
             synch_bit(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
                       ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], 7);
-            ::draw_tile(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
-                        ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], 1);
+            ::draw_tile(veh_cursor_x(),
+                        veh_cursor_y(), 1);
         }
         const int vehicle = veh_init(selected_prototype, ScenarioVehicleFaction,
                                      ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
@@ -6775,3 +6779,28 @@ Purpose: Step the receiver back to the subobject ??_GDipEdit@@UAEPAXI@Z
 Return Value: the forwarded call's
 Status: Complete
 */
+
+// WORKAROUND(inline): editor_veh's expansion of editor_who anchors its Players
+// walk at noun_gender and stores GenderDefault first (0x004DEEEC..0x004DEF02).
+// The parse_set spelling (which editor_diplomacy needs for its exact budget)
+// anchors at is_noun_plural and stores PluralityDefault first; only these raw
+// stores, written plurality-first, reproduce the image here. Defined at the
+// end of the unit: defined beside editor_who_inline it flips the
+// corner_the_market canary.
+static inline int editor_who_raw_inline(int default_faction, int first_faction) {
+    Popup popup;
+    PopupModalState = 6;
+    void (Popup::*const start5)(char *, const char *, int, char *, int) = &Popup::start;
+    (popup.*start5)(PopupStartCaption, ConsoleStrEditorWhoListTitle, -1, 0, 0x40);
+    for (int faction = first_faction; faction < MaxPlayerNum; ++faction) {
+        PluralityDefault = Players[faction].is_noun_plural;
+        GenderDefault = Players[faction].noun_gender;
+        popup.dialogs().item(Players[faction].noun_faction, faction);
+    }
+    if (default_faction >= 0) {
+        popup.set_value(default_faction);
+    }
+    const int selected = popup.exec(0, 0);
+    PopupModalState = 0;
+    return selected;
+}
