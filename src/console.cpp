@@ -6605,8 +6605,8 @@ int Console::on_key_click(int a1, int a2) {
         switch (normalized) {
         case '~':
             if ((GameDataStateStorage.fields_.game_state_ & 0x60) == 0) {
-                if (ConsoleKeyCycleState == -1 ? IsMultiplayerNet == 0
-                                               : ConsoleKeyCycleState < 4) {
+                if ((ConsoleKeyCycleState != -1 || IsMultiplayerNet == 0)
+                    && (ConsoleKeyCycleState == -1 || ConsoleKeyCycleState < 4)) {
                     ++ConsoleKeyCycleState;
                 }
                 if (ConsoleKeyCycleState < (IsMultiplayerNet != 0 ? 4 : 0)) {

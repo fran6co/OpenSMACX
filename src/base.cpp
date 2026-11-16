@@ -4171,7 +4171,9 @@ void __cdecl base_support() {
     BaseCurrentForcesMaintCount = 0;
     BaseCurrentForcesSupported = 0;
     BaseCurrentForcesMaintCost = 0;
-    int free_support[8]; // units supported for free, by SUPPORT rating + 4
+    // Nine slots, eight used: the image's frame is 0x3C with the table at
+    // ebp-0x3C and the ninth dword (ebp-0x1C) never touched.
+    int free_support[9]; // units supported for free, by SUPPORT rating + 4
     for (int support = -4; support <= 3; support++) {
         if (support >= 3) {
             free_support[support + 4] = (BaseCurrent->population_size > 4)
@@ -4240,7 +4242,8 @@ void __cdecl base_support() {
                                 | VSTATE_PACIFISM_FREE_SKIP);
         uint8_t plan = VehPrototypes[Vehs[veh_id].proto_id].plan;
         // A convoy of ours standing in any base is charged as consumption.
-        if (plan == PLAN_SUPPLY_CONVOY && Vehs[veh_id].order == ORDER_CONVOY
+        if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_SUPPLY_CONVOY
+            && Vehs[veh_id].order == ORDER_CONVOY
             && base_who(Vehs[veh_id].x, Vehs[veh_id].y) >= 0) {
             BaseCurrentConvoyFrom[Vehs[veh_id].order_auto_type]++;
         }
@@ -4260,9 +4263,9 @@ void __cdecl base_support() {
                 int support = PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::SUPPORT];
                 if ((int)BaseCurrentForcesSupported > free_support[range(support + 4, 0, 7)]
                     && !has_abil(Vehs[veh_id].proto_id, ABL_CLEAN_REACTOR)) {
+                    BaseCurrentForcesMaintCount++;
                     BaseCurrentForcesMaintCost += (support <= -4) + 1;
                     Vehs[veh_id].state |= VSTATE_REQUIRES_SUPPORT;
-                    BaseCurrentForcesMaintCount++;
                 }
             }
             // Cost of this unit at each of the eight SUPPORT ratings, for social_ai.
