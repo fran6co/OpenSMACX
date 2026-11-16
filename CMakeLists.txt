@@ -166,7 +166,6 @@ set(OPENSMACX_SOURCES
     src/autosound.cpp
     src/base.cpp
     src/score.cpp
-    src/base_compute.cpp
     src/basebutton.cpp
     src/basepop.cpp
     src/buffer.cpp
@@ -548,7 +547,6 @@ set_source_files_properties(src/alphanet.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
 set_source_files_properties(
     src/base.cpp
     src/score.cpp
-    src/base_compute.cpp
     src/multiwin.cpp
     src/socialwin.cpp
     src/technology.cpp

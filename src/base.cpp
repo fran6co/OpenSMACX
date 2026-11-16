@@ -929,6 +929,23 @@ void __cdecl base_energy() {
     base_psych();
 }
 
+// The cached path has no result contract: its EAX is the selected id, while
+// recomputation leaves the last resource pass's register residue. Callers use
+// the published base fields, not a returned integer.
+// ORIGINAL: 0x004EC3B0 ?base_compute@@YAHH@Z 0x004EC3B0-0x004EC3E7 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x004EC3B0-0x004EC3E7"], "reason": "Recover the original base-selection/cache operation with source-owned state and typed fields. The archived seed remains an obligation until this product definition is freshly remeasured."}
+// symbol    ?base_compute@@YAXH@Z
+void __cdecl base_compute(int force) {
+    if (force || BaseComputedID != BaseIDCurrentSelected) {
+        BaseComputedID = BaseIDCurrentSelected;
+        base_support();
+        base_yield();
+        base_nutrient();
+        base_minerals();
+        base_energy();
+    }
+}
+
 // ORIGINAL: 0x004E4B80 ?base_init@@YAHHHH@Z 0x004E4B80-0x004E5250 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004e4b80.cpp: canonical identity, original spans and retained seed history", "source:src/base.h: real Base storage and lifecycle contracts", "source:recovery/tasks/base-lifecycle-owner-closure.json: bounded coordinator authorization"], "reason": "The original base creation operation owns initialization of Bases records and faction base counts; source expresses real Base/PlayerData fields, facility bitmaps, technology and named UI/replay dependencies."}
 // TRIED: `>= 0x200` guard (matches original cmp/jl) over `> 0x1ff` moved divergence #4->#12; raw byte-offset arithmetic on the fixed 0x97dXXX/0x96XXXX globals (record stride 0x134, per-faction stride 0x20cc) rather than the Base struct - field order in src/base.h is only size-checked, not per-field, and several 0x97d0cc-family writes index past their nominal field width (a genuine original OOB-write reproduced faithfully). Not chased to byte-exact given size (1744 bytes / ~330 asm lines).
@@ -1062,12 +1079,7 @@ int __cdecl base_init(int faction_id, int x, int y) {
     reset_territory();
     BaseIDCurrentSelected = base_id;
     BaseCurrent = &Bases[base_id];
-    BaseComputedID = base_id;
-    base_support();
-    base_yield();
-    base_nutrient();
-    base_minerals();
-    base_energy();
+    base_compute(1);
     WorldClimateWorldWin.field_239BC_ |= 2;
     return base_id;
 }
@@ -1415,7 +1427,11 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
         l_108 = 0;
     }
     set_base(base_id);
-    base_compute(1);
+    // WORKAROUND(noinline): the image calls base_compute out of line here
+    // (0x4F81E7) while every other base.cpp caller expands it; the original
+    // reason (budget or declaration order) is not yet known.
+    void (__cdecl *const base_compute_call)(int) = base_compute;
+    base_compute_call(1);
     l_54 = Bases[base_id].x;
     l_8c = Bases[base_id].y;
     l_8 = Bases[base_id].faction_id_current;
@@ -8574,16 +8590,6 @@ static inline BOOL selected_base_has_fac_call(int facility_id) {
     BOOL (__cdecl *const has_fac_call)(int, int, int) = has_fac;
     return has_fac_call(facility_id, BaseIDCurrentSelected, 0);
 }
-static inline void doctors_add_specialist() {
-    int best = best_specialist();
-    int slot = BaseCurrent->specialist_total++;
-    if (slot < 16) {
-        const int word = slot >> 3;
-        const int shift = (slot & 7) * 4;
-        BaseCurrent->spec[word] &= ~(15 << shift);
-        BaseCurrent->spec[word] |= best << shift;
-    }
-}
 
 void __cdecl base_doctors() {
     int faction = BaseCurrent->faction_id_current;
@@ -8610,13 +8616,17 @@ void __cdecl base_doctors() {
         if (BaseNutrientAdequate
             && BaseCurrent->drone_total + riot_adjust > BaseCurrent->talent_total
             && !has_project(SP_TELEPATHIC_MATRIX, faction)) {
-            doctors_add_specialist();
-            BaseComputedID = BaseIDCurrentSelected;
-            base_support();
-            base_yield();
-            base_nutrient();
-            base_minerals();
-            base_energy();
+            {
+                int best = best_specialist();
+                int slot = BaseCurrent->specialist_total++;
+                if (slot < 16) {
+                    const int word = slot >> 3;
+                    const int shift = (slot & 7) * 4;
+                    BaseCurrent->spec[word] &= ~(15 << shift);
+                    BaseCurrent->spec[word] |= best << shift;
+                }
+            }
+            base_compute(1);
             if (BaseCurrent->drone_total + riot_adjust <= BaseCurrent->talent_total) {
                 if (UnkGlobal0093A934 == 0) return;
                 if (faction != ConsoleGlobal.faction_id_) return;
@@ -8643,15 +8653,19 @@ void __cdecl base_doctors() {
                 return;
             }
             BaseCurrent->specialist_total = old_total - 1;
-            BaseComputedID = BaseIDCurrentSelected;
-            base_support();
-            base_yield();
-            base_nutrient();
-            base_minerals();
-            base_energy();
+            base_compute(1);
             if (BaseCurrent->drone_total + riot_adjust > BaseCurrent->talent_total
                 && !has_project(SP_TELEPATHIC_MATRIX, faction)) {
-                doctors_add_specialist();
+                {
+                    int best = best_specialist();
+                    int slot = BaseCurrent->specialist_total++;
+                    if (slot < 16) {
+                        const int word = slot >> 3;
+                        const int shift = (slot & 7) * 4;
+                        BaseCurrent->spec[word] &= ~(15 << shift);
+                        BaseCurrent->spec[word] |= best << shift;
+                    }
+                }
                 return;
             }
             if (old_total <= BaseCurrent->specialist_total) return;
@@ -10460,12 +10474,7 @@ int __cdecl base_growth() {
         if (BaseCurrent->population_size < 127) {
             BaseCurrent->population_size++;
         }
-        BaseComputedID = BaseIDCurrentSelected;
-        base_support();
-        base_yield();
-        base_nutrient();
-        base_minerals();
-        base_energy();
+        base_compute(1);
         draw_tile(x, y, 2);
         if (BaseCurrent->nutrients_accumulated > growth) {
             BaseCurrent->nutrients_accumulated = growth;
@@ -10492,12 +10501,7 @@ int __cdecl base_growth() {
         } else {
             BaseCurrent->nutrients_accumulated = 0;
             BaseCurrent->population_size++;
-            BaseComputedID = BaseIDCurrentSelected;
-            base_support();
-            base_yield();
-            base_nutrient();
-            base_minerals();
-            base_energy();
+            base_compute(1);
             draw_tile(x, y, 2);
         }
     }
@@ -10913,17 +10917,6 @@ void production_spend(Base &base, int owner, int cost) {
         base.minerals_accumulated = cap < 0 ? 0 : cap;
     }
     base.mineral_surplus_final = base.minerals_accumulated;
-}
-
-void production_refresh_base_if_needed(int selected_base_id) {
-    if (BaseComputedID != selected_base_id) {
-        BaseComputedID = selected_base_id;
-        base_support();
-        base_yield();
-        base_nutrient();
-        base_minerals();
-        base_energy();
-    }
 }
 
 bool production_reveal_faction(int faction_id) {
@@ -11546,14 +11539,7 @@ void production_late_reconcile(int completed_item_id, int project_id,
 
     BaseIDCurrentSelected = selected_base_id;
     BaseCurrent = &Bases[selected_base_id];
-    if (BaseComputedID != selected_base_id) {
-        BaseComputedID = selected_base_id;
-        base_support();
-        base_yield();
-        base_nutrient();
-        base_minerals();
-        base_energy();
-    }
+    base_compute(0);
 }
 
 // Native 0x4F2F61..0x4F33D2 project-event tail. The caller performs the
@@ -11756,14 +11742,7 @@ production_again:
                 prune_protos(faction_id, proto_id, 0);
                 BaseIDCurrentSelected = base_id;
                 BaseCurrent = &Bases[base_id];
-                if (BaseComputedID != base_id) {
-                    BaseComputedID = base_id;
-                    base_support();
-                    base_yield();
-                    base_nutrient();
-                    base_minerals();
-                    base_energy();
-                }
+                base_compute(0);
             }
         } else {
             new_proto = 0;
@@ -12515,14 +12494,7 @@ production_again:
     }
     BaseIDCurrentSelected = base_id_current;
     BaseCurrent = &Bases[base_id_current];
-    if (BaseComputedID != base_id_current) {
-        BaseComputedID = base_id_current;
-        base_support();
-        base_yield();
-        base_nutrient();
-        base_minerals();
-        base_energy();
-    }
+    base_compute(0);
     return;
 }
 
@@ -12550,13 +12522,8 @@ int __cdecl base_upkeep(int base_id) {
     BaseCurrent = base;
     const int faction_id = BaseCurrent->faction_id_current;
     BaseProductionZoomRequested = 0;
-    BaseComputedID = base_id;
     Bases[base_id].state &= 0xDFFFFDFFu;
-    base_support();
-    base_yield();
-    base_nutrient();
-    base_minerals();
-    base_energy();
+    base_compute(1);
     base_production();
     base_hurry();
 
@@ -12566,12 +12533,7 @@ int __cdecl base_upkeep(int base_id) {
     if (GameDataStateStorage.fields_.turn_current_num_ > 1) base_check_support();
 
     BaseUpkeepStage = 1;
-    BaseComputedID = BaseIDCurrentSelected;
-    base_support();
-    base_yield();
-    base_nutrient();
-    base_minerals();
-    base_energy();
+    base_compute(1);
 
     int tile_weight;
     int region = region_at(BaseCurrent->x, BaseCurrent->y);
@@ -12597,14 +12559,7 @@ int __cdecl base_upkeep(int base_id) {
 
     BaseIDCurrentSelected = base_id;
     BaseCurrent = base;
-    if (BaseComputedID != base_id) {
-        BaseComputedID = base_id;
-        base_support();
-        base_yield();
-        base_nutrient();
-        base_minerals();
-        base_energy();
-    }
+    base_compute(0);
     base_ecology();
     PlayersData[faction_id].energy_reserves += BaseCurrent->economy_total;
 
@@ -13073,12 +13028,7 @@ void __cdecl drone_riot() {
         }
     }
     owner_set(x, y, target);
-    BaseComputedID = BaseIDCurrentSelected;
-    base_support();
-    base_yield();
-    base_nutrient();
-    base_minerals();
-    base_energy();
+    base_compute(1);
     int console_faction = ConsoleGlobal.faction_id_;
     if (faction_id == console_faction || target == console_faction
         || Bases[BaseIDCurrentSelected].faction_id_current == console_faction
