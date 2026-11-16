@@ -517,45 +517,6 @@ Status: Complete
 #include "game.h"      // PronounBuffer
 
 
-/*
-Purpose: The third pronoun fetcher beside game.cpp's get_his_her/get_him_her:
-         pick the he/she label by the faction leader's gender, copy the string
-         table's text into the shared pronoun buffer, and uppercase it in
-         place when the sentence form asks.
-
-// ORIGINAL: 0x0058FCE0 ?get_he_she@@YAPADHH@Z 0x0058FCE0-0x0058FD6B FILE BYTE_EXACT
-// size      139 bytes
-// prototype char* (__cdecl ?get_he_she@@YAPADHH@Z)(int, int)
-// callers   6   call targets   2
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x006169A0 0x00645460
-// indirect  0x0058FD43 0x0058FD5E
-// TRIED (seed): caching the CharUpperA pointer in a local vs calling through
-//         the import slot at each site - both land 18 bytes over (157-160 vs
-//         139), extra push/push in the prologue before the a1*0x167 multiply;
-//         root cause not found. The fixed-address bindings are renamed to the
-//         tree's own models: Players (faction.h), Labels (alpha.h),
-//         StringTable (strings.h), the CharUpperA import slot (windows.h) and
-//         0x00945838 as PronounBuffer (game.h) - the same census-named buffer
-//         get_his_her and get_him_her fill.
-Status: Coverage transcription - unclaimed body
-*/
-char *__cdecl get_he_she(int faction_id, int sentence_form) {
-    strcpy(PronounBuffer, StringTable.get(Labels.strings_ptr[Players[faction_id].is_leader_female != 0 ? 0xd2 : 0xd1]));
-    if (sentence_form != 0) {
-        if (sentence_form == 1) {
-            char buf[2];
-            buf[0] = PronounBuffer[0];
-            buf[1] = 0;
-            CharUpperA(buf);
-            PronounBuffer[0] = buf[0];
-            return PronounBuffer;
-        }
-        CharUpperA(PronounBuffer);
-    }
-    return PronounBuffer;
-}
 
 // ===========================================================================
 // Coverage-first transcriptions (wave 3, journal w3-stringstruct2-scope).
@@ -677,24 +638,3 @@ class Int2SlotObj { public: void slot(int, int); };
 // ---------------------------------------------------------------------------
 
 
-// These original initializers call CRT functions rather than intrinsic copies.
-#pragma function(memset, strlen, strcpy)
-
-// ORIGINAL: 0x0058FB70 sub_58fb70 0x0058FB70-0x0058FBB2 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/units/0058fb70.cpp", "task:owned-helper-coverage-batch", "Native58FB70 mode0 returns unchanged, mode1 passes a two-byte terminated buffer and writes the first byte back; other nonzero modes call USER32 CharUpperA on the whole text. No mapped-caller claim."], "reason": "Recover a complete native helper through genuine source owners and SDK calls, preserving original identity, extent and historical obligations. Source home is not proof of original TU or complete-game acceptance."}
-// symbol    ?uppercase_text@@YAPADPADH@Z
-char *__cdecl uppercase_text(char *text, int mode) {
-    if (mode == 0) {
-        return text;
-    }
-    if (mode == 1) {
-        char first_character[2];
-        first_character[0] = *text;
-        first_character[1] = '\0';
-        CharUpperA(first_character);
-        *text = first_character[0];
-        return text;
-    }
-    CharUpperA(text);
-    return text;
-}

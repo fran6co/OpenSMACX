@@ -190,7 +190,6 @@ set(OPENSMACX_SOURCES
     src/turn.cpp
     src/setup.cpp
     src/colortables.cpp
-    src/game_desktop.cpp
     src/game_calendar.cpp
     src/newgame.cpp
     src/application_math.cpp
@@ -466,7 +465,6 @@ set_source_files_properties(
     src/setup.cpp
     src/colortables.cpp
     src/interface_assets.cpp
-    src/game_desktop.cpp
     src/game_calendar.cpp
     src/newgame.cpp
     src/netwin.cpp
@@ -613,7 +611,6 @@ set_property(SOURCE
     src/turn.cpp
     src/setup.cpp
     src/colortables.cpp
-    src/game_desktop.cpp
     src/game_calendar.cpp
     src/interface_palette.cpp
     src/interface_assets.cpp

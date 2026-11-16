@@ -1030,22 +1030,6 @@ void MainInterface::clear_message() {
 }
 
 /*
-Purpose: Update the desktop; the legacy implementation is intentionally empty.
-// ORIGINAL: 0x0058EE50 ?desktop_update@@YAXXZ 0x0058EE50-0x0058EE51 BYTE_EXACT
-// size      1 bytes
-// prototype 
-// callers   6   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// notes     Runtime redirect installed by DllMain after byte-signature validation
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl desktop_update() {
-}
-
-/*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
 // ORIGINAL: 0x0045C5B0 ?UNK2@MainInterface@@QAEXXZ 0x0045C5B0-0x0045C5B1 BYTE_EXACT
 // size      1 bytes

@@ -57,6 +57,16 @@
 #include "editgroup.h"
 #include "statuswin.h"
 #include "flic.h"
+#include "ambience.h"  // load_music, the startup faction ambience owner.
+#include "infowin.h"
+#include "diplopop.h"  // DiplomacyPopup
+#include "reportif.h"
+#include "prefwin.h"  // ConsolePrefWin.init needs the complete owner declaration.
+#include "battlewin.h"  // the standing battle window
+#include "multidebug.h"  // MultiDebug, the standing debug window
+#include "messagewin.h"  // the standing MessageWin
+#include "datalink.h"  // DatalinkMain
+#include "random.h"  // random_reseed
 
 // Shared punctuation objects the image pushes instead of unit literals.
 extern char SocialWinCloseParenText[];
@@ -68,11 +78,22 @@ extern const char BufferJoinSpace[];
 extern Wave g_TOP_MENU_WAVE;
 void __cdecl world_build();
 
-// New-game and menu ownership group; original TU boundary is not proven.
+// New-game, menu and desktop/system lifetime unit. One original TU: the
+// image keeps 0x00589870..0x0058FD6B as one code run and 0x0068F5C0..
+// 0x0068FAAC as one literal run, and the bodies expand each other (see the
+// note above desktop_update).
 // Independent DWORD after FastUnitAnim; native map/size callers reset/set it.
 // Provisional descriptive name; complete lifecycle is not established.
 // RECOVERY_OBJECT: v2 0x00945820 0x00945824 ?MapSetupStatus@@3HA 0x0058D6B0
 int MapSetupStatus;
+
+// Shared opening-window owner. The pinned PE places this four-byte pointer
+// in the zero-filled .data virtual tail; init_opening publishes the complete
+// GraphicWin pointer. All compiled consumers use this source storage.
+// RECOVERY_OBJECT: v2 0x00945824 0x00945828 ?OpeningWindow@@3PAVGraphicWin@@A 0x00589B60
+GraphicWin *OpeningWindow = 0;
+
+char PronounBuffer[256];  // 0x00945838 - see game.h for the naming evidence
 
 static const char WorldSizePopupLabel[] = "WORLDSIZE";
 static const char CustomMapPopupLabel[] = "CUSTOMMAP";
@@ -110,9 +131,9 @@ char ConfigRandomLeaderInitial[4];
 
 // ORIGINAL: 0x005898A0 ?thumb_routine@@YAXH@Z 0x005898A0-0x00589A24 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/units/005898a0.cpp", "pinned:5898A0..589A24; preview9403E0; detail945818; diplomacy art78EE48 with65C faction stride", "source:Popup537C and PickWin redraw/ListBox cdecl(int) callback contract; allocation/lifetime selection still requires native qualification"], "reason": "Typed shared faction preview callback with real Popup/SpriteBox/FactionArt owners and genuine global storage; no executable-address aliases or manual vtables."}
-// RECOVERY_LITERAL: v1 0x0068F5C0 0x0068F5CB $SG61822 0x005898A0
-// RECOVERY_LITERAL: v1 0x0068F5CC 0x0068F5D2 $SG61824 0x005898A0
-// RECOVERY_LITERAL: v1 0x0068F5D4 0x0068F5DF $SG61826 0x005898A0
+// RECOVERY_LITERAL: v1 0x0068F5C0 0x0068F5CB $SG63321 0x005898A0
+// RECOVERY_LITERAL: v1 0x0068F5CC 0x0068F5D2 $SG63323 0x005898A0
+// RECOVERY_LITERAL: v1 0x0068F5D4 0x0068F5DF $SG63325 0x005898A0
 void __cdecl thumb_routine(int faction) {
 // RECOVERY_OBJECT: v1 0x0068F5B8 _?preview_skip_filename@?1??thumb_routine@@YAXH@Z@4PADA
     static char preview_skip_filename[] = "JENN282";
@@ -189,44 +210,6 @@ int __cdecl change_opening(char *filename) {
 }
 
 
-
-// WORKAROUND(inline): game_reload (0x0058F450, game.cpp) is expanded here and
-// in multiplayer_init, so the original declared it inline in a header;
-// this twin stands in until game.h carries that body.
-static inline int newgame_game_reload(int mode, int reload) {
-    if (mode != 0) {
-        TutWinDesWindow.close();
-        TutWinBaseWindow.close();
-        mapwin_system_shutdown();
-        ConsoleStatusWin.close();
-        WorldClimateWorldWin.GraphicWin::close();
-        MultiWindow.GraphicWin::close();
-        MainInterfaceGlobal.Win::hide();
-    }
-    stop_timers();
-    labels_shutdown();
-    StringTable.shutdown();
-    if (game_init(1, reload) != 0) {
-        return 1;
-    }
-    if (mode != 0) {
-        desktop_init(1);
-    }
-    WorldClimateSkipTerrainClear = 0;
-    return 0;
-}
-
-
-// WORKAROUND(inline): game.cpp, prefwin.cpp and top_menu write the same
-// preferences-to-dialog-style if/else; the image loads the style word before
-// the test and stores it once, as an inline helper would. This twin supplies
-// top_menu's missing depth-1 spend (its EH topology matches with it).
-static inline void tm_dialog_style(uint32_t preferences) {
-    if (~preferences & 0x20000000u)
-        dialog_default_style() |= 4u;
-    else
-        dialog_default_style() &= ~4u;
-}
 
 /*
 Purpose: Publish the Console's Win base for popup parenting, then destroy
@@ -1501,7 +1484,7 @@ int __cdecl multiplayer_init(int startup_mode) {
         }
 
         if (NetWinSessionData.fields_.mode_ == 3) {
-            newgame_game_reload(1, 0);
+            game_reload(1, 0);
         }
 
         NetDaemonNet.locks_.clear();
@@ -1565,7 +1548,10 @@ int __cdecl top_menu(int mode) {
         g_TOP_MENU_WAVE.load(const_cast<char *>("fx\\opening menu.wav"), 2);
         g_TOP_MENU_WAVE.play();
     }
-    tm_dialog_style(AlphaIniPrefs.preferences);
+    if (~AlphaIniPrefs.preferences & 0x20000000u)
+        dialog_default_style() |= 4u;
+    else
+        dialog_default_style() &= ~4u;
 
     if (ExpansionEnabled != 0) {
         init_opening(WinScreenWidth == 0x320
@@ -1623,7 +1609,7 @@ int __cdecl top_menu(int mode) {
             if (esi != 0) continue;
             ControlTurnPhase = ConsoleGlobal.faction_id_;
             if (GameSessionActive != 0) {
-                newgame_game_reload(0, 0);
+                game_reload(0, 0);
             }
             break;
 
@@ -1658,7 +1644,7 @@ int __cdecl top_menu(int mode) {
                 if (loaded != 0) continue;
             }
             if (GameSessionActive != 0) {
-                newgame_game_reload(0, 0);
+                game_reload(0, 0);
             }
             if (esi != 0) {
                 ControlTurnPhase = ConsoleGlobal.faction_id_;
@@ -1727,4 +1713,953 @@ top_menu_normal_return:
     }
     return ExitTurnLoop;
 }
+
+
+// ---------------------------------------------------------------------------
+// Desktop, system and game lifetime, and the faction phrase helpers. These
+// were game.cpp, game_desktop.cpp, maininterface.cpp and stringstruct.cpp
+// bodies; the image lays them out in this unit's code and literal runs, and
+// top_menu, multiplayer_init, desktop_init and system_close expand its
+// game_reload, desktop_close, game_close and close_opening.
+// ---------------------------------------------------------------------------
+
+/*
+Purpose: Update the desktop; the legacy implementation is intentionally empty.
+// ORIGINAL: 0x0058EE50 ?desktop_update@@YAXXZ 0x0058EE50-0x0058EE51 BYTE_EXACT
+// size      1 bytes
+// prototype 
+// callers   6   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl desktop_update() {
+}
+
+
+// The desktop coordinator calls each real source-owned window and publishes
+// its four bounds in the existing Console storage used by blink_timer and
+// the Console splitter. It sits in this unit's code run and expands the
+// unit's close_opening.
+// ORIGINAL: 0x0058EE60 ?desktop_init@@YAHH@Z 0x0058EE60-0x0058EFEB BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:818efd04347d6f83e98e66d75a443fb646d75aaa:src/unrecovered/0058ee60.cpp", "Pinned58EE60..58EFEB bounds939430..43C are Console+23D80..8C; DIB width/height come from the Console virtual Buffer base, not detached globals.", "Original startup interfaces, multiplayer/PBEM branches and two non-input pumps; OpeningWindow is deleted through its actual GraphicWin owner.", "recovery/tasks/startup-desktop-owner-oct5.json", "recovery/tests/test_startup_actual_source.py"], "reason": "Complete startup coordination through real owned windows and Console bounds; preserve the original calls, stores, redraw/cover ordering and OpeningWindow lifetime. Current source home is game.cpp, not a claim about original translation-unit ownership."}
+// kind      game
+// TRIED: none confirmed byte-exact; MISMATCH #5 push-count differs - the original sets up an ebp frame (push ebp/mov ebp,esp) that this body's register pressure does not need, so /O2 drops it.
+int __cdecl desktop_init(int fresh) {
+    load_music(ConsoleGlobal.faction_id_);
+    ConsoleInfoWin.init();
+    WorldClimateWorldWin.init(fresh);
+    ConsoleStatusWin.init();
+    mapwin_system_init(fresh);
+    MultiWindow.init();
+    TutWinBaseWindow.init();
+    TutWinDesWindow.init();
+    DiplomacyPopup.init();
+    ReportIfGlobal.init();
+    ConsolePrefWin.init();
+
+    // Both native stores survive: the virtual-base width read sits between
+    // them, so VC6 cannot drop the first one.
+    ConsoleGlobal.field_23D80_ = 10;
+    ConsoleGlobal.field_23D84_ = ConsoleGlobal.dib_.bmiHeader.biWidth - 10;
+    ConsoleGlobal.field_23D80_ = ConsoleGlobal.alpha_menu_.client_rect().right
+        - ConsoleGlobal.alpha_menu_.client_rect().left + 10;
+    if (IsMultiplayerNet) {
+        ConsoleGlobal.field_23D84_ += MultiWindow.client_rect().left
+            - MultiWindow.client_rect().right;
+    }
+    ConsoleGlobal.field_23D88_ = 10;
+    ConsoleGlobal.field_23D8C_ = -10 - ConsoleGlobal.dib_.bmiHeader.biHeight;
+
+    if (GameDataStateStorage.fields_.turn_current_num_) {
+        draw_map(1);
+    }
+
+    MainInterfaceGlobal.Win::show(0);
+    ConsoleGlobal.Win::show(0);
+    if (IsMultiplayerPBEM) {
+        ConsoleGlobal.cover_window_.GraphicWin::fill(0);
+        ConsoleGlobal.cover_window_.Win::show(0);
+    }
+    do_all_non_input();
+    close_opening();
+    do_all_non_input();
+    return 0;
+}
+
+
+/*
+Purpose: Tear the desktop down at the end of each main-loop pass.
+// ORIGINAL: 0x0058EFF0 ?desktop_close@@YAXXZ 0x0058EFF0-0x0058F031 FILE BYTE_EXACT
+// size      65 bytes
+// prototype
+// callers   1   call targets   5
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00408710 0x0043C1A0 0x004710E0 0x004B9F80 0x005D4E40
+// LEVER: byte-exact on promotion. The fixed windows are REAL OBJECTS now
+//   (TutWinDesWindow, TutWinBaseWindow in their domain .cpps; ConsoleStatusWin
+//   in statuswin.cpp; MainInterfaceGlobal in mapwin.cpp for TutWinIfaceWindow)
+//   and still fold each receiver to `mov ecx, imm32`, the displacement
+//   relocated; `Win::hide` is qualified to keep the slot-2 virtual a direct
+//   tail `jmp`, and `GraphicWin::close` on the WorldWin and on MultiWindow's
+//   front is qualified so a later base-class declaration cannot steal the
+//   call from the direct E8 the image has. WorldClimateWorldWin is declared
+//   in worldwin.h and defined in map.cpp, so both bodies name the object -
+//   same fold as the old by-value world_climate_window() helper, one binding
+//   name instead of two.
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl desktop_close() {
+    TutWinDesWindow.close();
+    TutWinBaseWindow.close();
+    mapwin_system_shutdown();
+    ConsoleStatusWin.close();
+    WorldClimateWorldWin.GraphicWin::close();
+    // The MultiWin object's GraphicWin front - the image closes that base
+    // directly (`call 0x5d4e40` on `mov ecx, 0x7fd648`).
+    MultiWindow.GraphicWin::close();
+    MainInterfaceGlobal.Win::hide();
+}
+
+
+/*
+Purpose: Bring the shared system up, once per process: create the four data
+         directories, read the language preference and load the string and
+         label tables, upper-case the two default button captions out of them,
+         load the fixed art, then build the eight map-window slots and the
+         desktop's standing windows.
+// ORIGINAL: 0x0058F040 ?system_init@@YAHXZ 0x0058F040-0x0058F245;0x00660BD7-0x00660BEC BYTE_EXACT
+// size      538 bytes
+// prototype int (__cdecl ?system_init@@YAHXZ)(void)
+// callers   1   call targets   23
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004219E0 0x00429300 0x00455E80 0x004595C0 0x00459680 0x004626E0 0x00471D50 0x004BA220 0x0051D890 0x00588AA0 0x0059DB40 0x005C9860 0x006018A0 0x00601910 0x006168F0 0x006169A0 0x00616A00 0x00626450 0x00627100 0x00645470 0x0064557F 0x0064558A 0x00646829
+// indirect  0x0058F11A 0x0058F159
+// LEVER: the SEH frame the archive unit could not reproduce is the
+//   `new MapWin` below it. MapWin has a real destructor (mapwin.h), so /GX
+//   makes VC6 wrap the whole function - `push -1 / push handler / fs:[0]` at
+//   instruction 0, the `[ebp-4]` state toggle around the constructor and the
+//   `operator delete` funclet at 0x660BD7 - which is exactly the frame the
+//   artifact's plain operator-new-plus-placement-new spelling was missing.
+//   `new MapWin` with no argument is also what produces the image's
+//   `push 1` before the ctor call: that 1 is the hidden most-derived flag,
+//   not the catalogue's `H`.
+// LEVER: the two captions are `label_get` (alpha.h's forceinline of
+//   Strings::get over Labels.strings_ptr) at offsets 102 and 101, which is the
+//   image's `[strings_ptr + 0x198]` and `[+ 0x194]`.
+// LEVER: slot 0 of the map-window table is published last, as the Console -
+//   the image's single `mov dword ptr [0x7d3c3c], 0x9156b0` - and the seven
+//   slots above it are the ones the allocation loop walks (0x7D3C40 to
+//   0x7D3C5C exclusive), so the loop is `&MapWinTable[1] .. &MapWinTable[8]`
+//   and not the whole table.
+// Historical constraint below is superseded: InterfaceMessageWin now owns
+// original 0x7F67F8, and WinBubbleWindow has its genuine MultiDebug owner.
+// system_init uses those source objects; no fixed receiver is needed here.
+// TRIED: `static_cast<MultiDebug *>(&WinBubbleWindow)` and a named extern for
+//   the MessageWin storage - the image has no MessageWin object in this tree
+//   (messagewin.cpp defines nothing at 0x7F67F8) and WinBubbleWindow is a
+//   `Win`, so both stay address spellings, the way game_reload reaches
+//   0x008E9F60.
+// The shared graphics-language API is separately compiled: the original
+// calls set_language at 0x0058F0A1, rather than inlining its global store.
+// TRIED: the two caption builds spelled `label_get(102)` / `label_get(101)`
+//   instead of the local `LPSTR *labels` plus `StringTable.get(labels[n])` now
+//   in the body - that spelling scores 32/135 against this one's 34, and
+//   game_init measures the same either way, so the two bodies legitimately
+//   spell it differently. What is left is the register the label value lands
+//   in and the register holding `Labels.strings_ptr` across the StringTemp
+//   store (image eax/eax, ours eax/ecx on the first caption), plus the
+//   `SystemInterfaceFlags` read-modify-write, which the image interleaves with
+//   maininterface_init's argument setup and runs in esi while ours runs it as
+//   a block in edx and re-derives the zero twice. All register assignment;
+//   /Ob0 scores worse (53/135) because map_win_table and friends turn into
+//   real calls.
+Return Value: 1 when the label table fails to load, else 0.
+*/
+int __cdecl system_init() {
+    _mkdir("saves");
+    _mkdir("saves\\auto");
+    _mkdir("maps");
+    _mkdir("scenarios");
+    WorldClimateSkipTerrainClear = 1;
+    log_set_state(0);
+    set_language(prefs_get("Language", 0, 0));
+    textcolor_init();
+    StringTable.init(0xC320);
+    if (labels_init() != 0) {
+        return 1;
+    }
+
+    // The Cancel caption, label 102: upper-cased unless the language is 2.
+    LPSTR *labels = Labels.strings_ptr;
+    StringTemp[0] = '\0';
+    strcat(StringTemp, StringTable.get(labels[102]));
+    LPSTR (WINAPI *string_upper)(LPSTR) = CharUpperA;
+    if (Language != 2) {
+        string_upper(StringTemp);
+    }
+    BasePop::set_def_cancel_text(StringTemp);
+
+    // The OK caption, label 101: upper-cased whatever the language.
+    StringTemp[0] = '\0';
+    strcat(StringTemp, label_get(101));
+    string_upper(StringTemp);
+    BasePop::set_def_ok_text(StringTemp);
+
+    load_fixed_sprites();
+    config_popups();
+
+    // Construct only slots 1..7, publishing each after construction. Keep
+    // the genuine new-expression so failed construction releases its storage;
+    // slot zero is published separately below as the existing Console.
+    for (int slot = 1; slot < static_cast<int>(MapWinTableSlots); ++slot) {
+        MapWinTable[slot] = new MapWin;
+    }
+
+    MapWinTable[0] = &ConsoleGlobal;
+    SystemInterfaceFlags &= ~0x8C0u;
+
+    MainInterfaceGlobal.init(0);
+    g_BattleWin.init();
+    ConsoleGlobal.init(0);
+
+    // The language performs the Console-to-Win virtual-base conversion.
+    Win *console_window = &ConsoleGlobal;
+    WinBubbleWindow.init(&NetDaemonNet, console_window, ShadowColorTable);
+
+    InterfaceMessageWin.init();
+    DatalinkMain.init();
+    bung_momma();
+    return 0;
+}
+
+
+// ORIGINAL: 0x0058F250 ?system_close@@YAXXZ 0x0058F250-0x0058F2E6 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:edbf268ff962712fadc389b8283e4c795b6d27a2:src/unrecovered/0058f250.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json", "Pinned58F27B..58F281 and58F2C4..58F2D9: virtual slot0 with deleting flag1, followed by clearing the respective global slot.", "init_opening and system_init allocate GraphicWin and secondary MapWin owners with new; Win/GraphicWin/MapWin virtual destructors and the separate close_opening path establish typed destruction/free semantics.", "recovery/tasks/game-shutdown-owner-oct26dn.json", "recovery/tests/test_system_close_actual_source.py"], "reason": "Recover system shutdown through real heap-owned GraphicWin and MapWin lifetimes: delete the opening window and secondary MapWin slots1..7, preserving each null guard and shared-slot visibility until destruction/free returns. Keep primary slot0 and the original sound, parent, window, Paths and map cleanup order. This replaces the prior mistaken show(1) translation; source recovery alone does not establish current byte exactness or game acceptance."}
+void __cdecl system_close() {
+    release_sound();
+    close_opening();
+
+    TutWinDesWindow.close();
+    WinBubbleWindow.close();
+    ConsoleGlobal.close();
+    Paths.shutdown();
+    map_shutdown();
+
+    for (int slot = 1; slot < 8; ++slot) {
+        if (MapWinTable[slot] != 0) {
+            delete MapWinTable[slot];
+            MapWinTable[slot] = 0;
+        }
+    }
+}
+
+
+/*
+Purpose: Bring a game up: reseed both random chains off the clock, then either
+         just turn the log off (mode 0) or reload the string table and
+         re-read the two default button captions before the art and the rules
+         load. mode 0 is the first boot, anything else a reload into a live
+         system.
+// ORIGINAL: 0x0058F2F0 ?game_init@@YAHHH@Z 0x0058F2F0-0x0058F421 BYTE_EXACT
+// size      305 bytes
+// prototype BOOL (__cdecl ?game_init@@YAHHH@Z)(BOOL tglParseStrings, BOOL tglAllRules)
+// callers   4   call targets   12
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00455EB0 0x0050F3D0 0x005873C0 0x006018A0 0x00601910 0x006168F0 0x006169A0 0x00616A00 0x006257E0 0x00626450 0x00645470
+// indirect  0x0058F304 0x0058F30F 0x0058F38D 0x0058F3CD
+// LEVER: the clock slot is read ONCE into a register and called twice, the
+//   same shape control_game's GetAsyncKeyState lever records - holding
+//   WaveTimeGetTimeSlot in a local is what keeps the load from happening
+//   twice.
+// LEVER: the `add esp,4` at 0x58F3D9 is one instruction serving BOTH arms -
+//   log_set_state's argument on the mode==0 arm, set_def_ok_text's on the
+//   other - so the source converges the two arms into one `if/else` whose
+//   join the compiler cleans once.
+// TRIED: naming the three caption-icon stores through sprite.cpp's array -
+//   sprite.h does not declare it, and game.h cannot add a member to a header
+//   it does not own, so the three store their addresses (see WinCloseIcon in
+//   game.h for the identification).
+// TRIED: the two caption builds spelled `LPSTR *labels` and
+//   `StringTable.get(labels[n])` instead of label_get - byte-identical output,
+//   so it is a free spelling, not a lever. The six runs that remain are the
+//   register the label value lands in (image eax, ours ecx on the first
+//   caption), the register holding `Labels.strings_ptr` for the second caption
+//   (image ecx, ours edx), and the register `reload` is read into for
+//   read_rules (image edx, ours ecx). Register naming only; the instruction
+//   count and the call set agree exactly.
+Return Value: 1 when the label table or the rules fail to load, else 0.
+Status: homed from src/unrecovered/0058f2f0.cpp on this pass; its pending
+        forwarder is gone. 74/82 agreeing, best set /O2 /Gy /GR- /Oy- /GX,
+        156 bytes discounted as relocations.
+*/
+int __cdecl game_init(int mode, int reload) {
+    DWORD (WINAPI *const time_get_time)() = timeGetTime;
+    WorldClimateSkipTerrainClear = 1;
+    my_srand(time_get_time());
+    random_reseed(time_get_time());
+
+    if (mode == 0) {
+        log_set_state(0);
+    } else {
+        StringTable.init(0xC320);
+        if (labels_init() != 0) {
+            return 1;
+        }
+        // The same two captions system_init builds, for the same two buttons.
+        StringTemp[0] = '\0';
+        strcat(StringTemp, label_get(102));
+        LPSTR (WINAPI *string_upper)(LPSTR) = CharUpperA;
+        if (Language != 2) {
+            string_upper(StringTemp);
+        }
+        BasePop::set_def_cancel_text(StringTemp);
+
+        StringTemp[0] = '\0';
+        strcat(StringTemp, label_get(101));
+        string_upper(StringTemp);
+        BasePop::set_def_ok_text(StringTemp);
+    }
+
+    load_sprites();
+    if (read_rules(reload) != 0) {
+        return 1;
+    }
+    start_timers();
+
+    // The three caption-button icons: sprite.cpp's array at 0x0075AE20, a 0x2c
+    // stride, so these are its [1], [2] and [0]. WinRestoreIcon, the slot
+    // between the last two, is not set here.
+    WinCloseIcon = &g_SILVER_MENU_ICON_SPRITES[1];
+    WinMaximizeIcon = &g_SILVER_MENU_ICON_SPRITES[2];
+    WinMinimizeIcon = &g_SILVER_MENU_ICON_SPRITES[0];
+    return 0;
+}
+
+
+/*
+Purpose: Shut the game state down: timers, label strings, then the string
+         table. The mode parameter is read by none of it.
+// ORIGINAL: 0x0058F430 ?game_close@@YAXH@Z 0x0058F430-0x0058F444 FILE BYTE_EXACT
+// size      20 bytes
+// prototype
+// callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0050F440 0x006169D0
+// LEVER: byte-exact on promotion. StringTable is strings.h's header binding,
+//   so the receiver folds to `mov ecx, 0x9b90d8`; the image's closing `jmp`
+//   into Strings::shutdown comes free from the call being the last statement
+//   of a void function, and the discarded int result costs nothing.
+// Historical LEVER (2026-09-03): temporary stop_timers_call and
+//   labels_shutdown_call forwarders once restored these call boundaries.
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl game_close(int mode) {
+    stop_timers();
+    labels_shutdown();
+    StringTable.shutdown();
+}
+
+
+/*
+Purpose: Restart the game state: tear the desktop down (mode-gated, the same
+         closer sequence desktop_close runs), stop the timers, drop the label
+         and string tables, re-init the game, and re-init the desktop when the
+         caller asked for it. Always clears the climate skip flag.
+// ORIGINAL: 0x0058F450 ?game_reload@@YAHHH@Z 0x0058F450-0x0058F4E7 BYTE_EXACT
+// LEVER (2026-09-03, pair normalisation): the same two forwarders game_close
+//   uses - the image CALLS 0x0050F440 and 0x006169D0 in this body too, and
+//   with the `MEASURED inline` helpers folded in it was 107 compiled
+//   instructions against the image's 44, 12 of 44. 44 of 44 after the switch.
+// LEVER: byte-exact on promotion from the 0058f450 archive unit. The
+//   closer block is desktop_close's own sequence spelled the same way, so
+//   every receiver folds to its `mov ecx, imm32` and every call lands on the
+//   image's E8 target; `mode` is read into esi once at entry (the image's
+//   `mov esi, [ebp + 8]`) because the source uses it twice - the opening
+//   guard and the desktop_init guard - exactly as the image does.
+// LEVER (2026-11-16, TU merge): with desktop_close and game_close defined in
+//   this unit, the hand-written closer and shutdown sequences are plain
+//   calls again; /Ob2 expands both here and game_reload in top_menu and
+//   multiplayer_init, all exact.
+// size      151 bytes
+// prototype int (__cdecl ?game_reload@@YAHHH@Z)(int, BOOL tglAllRules)
+// callers   2   call targets   11
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00408710 0x0043C1A0 0x004710E0 0x004B9F80 0x0050F440 0x0058EE60 0x0058F2F0 0x005D4E40 0x005EDCD0 0x00616950 0x006169D0
+Return Value: 1 when game_init fails, else 0.
+Status: Complete
+*/
+int __cdecl game_reload(int mode, int reload) {
+    if (mode != 0) {
+        desktop_close();
+    }
+    game_close(mode);
+    if (game_init(1, reload) != 0) {
+        return 1;
+    }
+    if (mode != 0) {
+        desktop_init(1);
+    }
+    WorldClimateSkipTerrainClear = 0;
+    return 0;
+}
+
+
+// ORIGINAL: 0x0058F4F0 sub_58f4f0 0x0058F4F0-0x0058F609 FILE BYTE_EXACT
+// symbol    _sub_58f4f0
+// LEVER: string-routines-are-calls the body was already right; the scaffold was compiling a string routine the image CALLS into an `/Oi` inline expansion. What was written down here as a tried source form - "VC6 lowers `local_104[0]=0;` as `and byte ptr [buf],0` rather than `mov`, and each branch shares one `lea` instead of recomputing it, both compiler instruction-selection choices at /O1 that plain restatement did not move" - was that expansion changing the register pressure around them. The if/else-if chain matching Ghidra's structure is the right shape and always was.
+// working copy - scaffold materialised by --work
+// size      281 bytes
+// prototype
+// callers   0   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00625880 0x00645470
+
+// Historical candidate note: the const-pointer spelling reproduced the old
+// fixed-address encoding; it is not the current source-owned token storage.
+// The original reads these eight short markup strings from 0x0068FA70..8C.
+// Keep source-owned semantic constants, not aliases to executable storage.
+// The complete original allocation/pooling extent is unknown.
+// RECOVERY_OBJECT: v1 0x0068FA70 _SayTokOpen
+static const char SayTokOpen[] = "$<";
+// RECOVERY_OBJECT: v1 0x0068FA74 _SayTokMale
+static const char SayTokMale[] = "M";
+// RECOVERY_OBJECT: v1 0x0068FA78 _SayTokFemale
+static const char SayTokFemale[] = "F";
+// RECOVERY_OBJECT: v1 0x0068FA7C _SayTokNeutral
+static const char SayTokNeutral[] = "N";
+// RECOVERY_OBJECT: v1 0x0068FA80 _SayTokOne
+static const char SayTokOne[] = "1";
+// RECOVERY_OBJECT: v1 0x0068FA84 _SayTokTwo
+static const char SayTokTwo[] = "2";
+// RECOVERY_OBJECT: v1 0x0068FA88 _SayTokSep
+static const char SayTokSep[] = ":";
+// RECOVERY_OBJECT: v1 0x0068FA8C _SayTokClose
+static const char SayTokClose[] = ">";
+
+extern "C" char * __cdecl sub_58f4f0(char *a1, int a2, int a3, int a4) {
+    char local_204[256];
+    char local_104[256];
+
+    if (a3 < 0) {
+        a3 = PluralityDefault;
+    }
+    if (a4 < 0) {
+        a4 = GenderDefault;
+    }
+    local_104[0] = 0;
+    strcat(local_104, SayTokOpen);
+    if (a4 == 0) {
+        strcat(local_104, SayTokMale);
+    } else if (a4 == 1) {
+        strcat(local_104, SayTokFemale);
+    } else if (a4 == 2) {
+        strcat(local_104, SayTokNeutral);
+    }
+    if (a3 == 0) {
+        strcat(local_104, SayTokOne);
+    } else if (a3 == 1) {
+        strcat(local_104, SayTokTwo);
+    }
+    strcat(local_104, SayTokSep);
+    strcat(local_104, Players[a2].adj_name_faction);
+    strcat(local_104, SayTokClose);
+    parse_string(local_104, local_204);
+    return strcat(a1, local_204);
+}
+
+
+// RECOVERY_LITERAL: v1 0x0068FAAC 0x0068FAAE $SG64233 0x0058F610
+// RECOVERY_LITERAL: v1 0x0068FAA0 0x0068FAA2 $SG64231 0x0058F610
+// RECOVERY_LITERAL: v1 0x0068FA98 0x0068FA9A $SG64227 0x0058F610
+// RECOVERY_LITERAL: v1 0x0068FA9C 0x0068FA9E $SG64230 0x0058F610
+// RECOVERY_LITERAL: v1 0x0068FA94 0x0068FA96 $SG64224 0x0058F610
+// RECOVERY_LITERAL: v1 0x0068FAA8 0x0068FAAA $SG64232 0x0058F610
+// RECOVERY_LITERAL: v1 0x0068FA90 0x0068FA93 $SG64222 0x0058F610
+// ORIGINAL: 0x0058F610 ?say_special@@YAXPADPADH@Z 0x0058F610-0x0058F6F6 BYTE_EXACT
+// LEVER: the eight fixed-address bindings are .rdata STRING LITERALS, read
+//         out of the image with image_data.py and spelled as the text, the
+//         same way netdaemon.cpp's captions went: 0x0068FA90 "$<",
+//         0x0068FA94 "M", 0x0068FA98 "F", 0x0068FA9C "N", 0x0068FAA0 "1",
+//         0x0068FAA8 ":" and 0x0068FAAC ">". 0x0068FAA4 "2" is not read by
+//         this body and is left for whoever homes its caller. The eight
+//         together are the markup the parser consumes: a faction noun of
+//         M/F/N, a noun form digit, then the substituted text.
+// LEVER: the ninth binding is `Players` (faction.h, 0x00946A50); the image
+//         indexes it `a3 * 0x167` dwords, which is `Players[a3]` - the
+//         stride IS sizeof(Player).
+// symbol   ?say_special@@YAXPAD0H@Z
+//         - this tree's name for the same (char *, char *, int) signature.
+//         VC6 folds the two identical `char *` parameters into a
+//         back-reference, where the catalogued name spells the second `PAD`
+//         longhand; `measure` matches by address, and this fact is what lets
+//         it resolve the symbol.
+void __cdecl say_special(char *output, char *text, int faction_id) {
+    char buffer[256];
+    char parsed[256];
+
+    buffer[0] = 0;
+    int noun = Players[faction_id].is_leader_female;
+    strcat(buffer, "$<");
+
+    if (noun == 0) {
+        strcat(buffer, "M");
+    } else if (noun == 1) {
+        strcat(buffer, "F");
+    } else if (noun == 2) {
+        strcat(buffer, "N");
+    }
+
+    strcat(buffer, "1");
+    strcat(buffer, ":");
+    strcat(buffer, text);
+    strcat(buffer, ">");
+
+    parse_string(buffer, parsed);
+    strcat(output, parsed);
+}
+
+
+// ORIGINAL: 0x0058F700 ?say_fac_special@@YAXPADPADH@Z 0x0058F700-0x0058F80A FILE BYTE_EXACT
+// symbol    ?say_fac_special@@YAXPAD0H@Z
+// size      266 bytes
+// prototype
+// callers   1   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00625880 0x00645470
+// PRESERVED UNIT - measured BYTE_EXACT.
+//
+// The following PRESERVED UNIT / GENERATED SKELETON prose records an earlier
+// address-bound verification artifact, not current product-source placement.
+// Keep its historical compiler and measurement findings intact.
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x0058F700
+// measured tier  BYTE_EXACT
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/0058f700/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?say_fac_special@@YAXPADPADH@Z  at 0x0058F700  (266 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+// Historical candidate note: the const-pointer spelling reproduced the old
+// fixed-address encoding; it is not the current source-owned token storage.
+// This is a distinct original token set at 0x0068FAB0..CC. Its bytes match
+// SayTok's strings, but no shared original allocation/pooling is established.
+// RECOVERY_OBJECT: v1 0x0068FAB0 _SayFacTokOpen
+static const char SayFacTokOpen[] = "$<";
+// RECOVERY_OBJECT: v1 0x0068FAB4 _SayFacTokMale
+static const char SayFacTokMale[] = "M";
+// RECOVERY_OBJECT: v1 0x0068FAB8 _SayFacTokFemale
+static const char SayFacTokFemale[] = "F";
+// RECOVERY_OBJECT: v1 0x0068FABC _SayFacTokNeutral
+static const char SayFacTokNeutral[] = "N";
+// RECOVERY_OBJECT: v1 0x0068FAC0 _SayFacTokOne
+static const char SayFacTokOne[] = "1";
+// RECOVERY_OBJECT: v1 0x0068FAC4 _SayFacTokTwo
+static const char SayFacTokTwo[] = "2";
+// RECOVERY_OBJECT: v1 0x0068FAC8 _SayFacTokSep
+static const char SayFacTokSep[] = ":";
+// RECOVERY_OBJECT: v1 0x0068FACC _SayFacTokClose
+static const char SayFacTokClose[] = ">";
+
+// Historical source-form finding for the former indexed fixed-address table
+// bases: see "the lever that keeps working" above; current token constants are
+// distinct source-owned strings, not indexed table views.
+
+void __cdecl say_fac_special(char *a1, char *a2, int a3) {
+    char buf1[256];
+    char buf2[256];
+
+    int table_b = Players[a3].is_noun_plural;
+    int table_a = Players[a3].noun_gender;
+
+    buf1[0] = 0;
+    strcat(buf1, SayFacTokOpen);
+
+    if (table_a == 0) {
+        strcat(buf1, SayFacTokMale);
+    } else if (table_a == 1) {
+        strcat(buf1, SayFacTokFemale);
+    } else if (table_a == 2) {
+        strcat(buf1, SayFacTokNeutral);
+    }
+
+    if (table_b == 0) {
+        strcat(buf1, SayFacTokOne);
+    } else if (table_b == 1) {
+        strcat(buf1, SayFacTokTwo);
+    }
+
+    strcat(buf1, SayFacTokSep);
+    strcat(buf1, a2);
+    strcat(buf1, SayFacTokClose);
+
+    parse_string(buf1, buf2);
+    strcat(a1, buf2);
+}
+
+
+// ORIGINAL: 0x0058F810 ?get_phrase@@YAPADHH@Z 0x0058F810-0x0058F8A2 BYTE_EXACT
+// LEVER: the faction-table bases at 0x00946A54 and 0x00946A6C are
+//         `Players[a1].filename` and `Players[a1].search_key` - the image
+//         computes `a1 * 0x59c` and adds those two constants, and 0x00946A50
+//         (Players) plus 4 and plus 0x1c are exactly those two fields of
+//         faction.h's Player.
+// LEVER: 0x0068FAD0 is the .rdata literal "PLAYERFILE" (image_data.py), the
+//         popup caption for the section that failed to open.
+// LEVER: 0x009B7D00 is text.h's `TextBufferGetPtr`, already modelled; the
+//         image returns the POINTER stored there (`mov eax, [0x9b7d00]`), so
+//         the binding is a real global, not a buffer.
+char *__cdecl get_phrase(int faction_id, int phrase_id) {
+    // X_pop's PLAYERFILE label has a distinct original start in this function.
+    // RECOVERY_OBJECT: v1 0x0068FAD0 _?PlayerFileSectionKey@?1??get_phrase@@YAPADHH@Z@4QBDB
+    static const char PlayerFileSectionKey[] = "PLAYERFILE";
+    char *search_key = Players[faction_id].search_key;
+    char *filename = Players[faction_id].filename;
+    int ok = text_open(filename, search_key);
+    if (ok != 0) {
+        ok = text_open(filename, filename);
+        if (ok != 0) {
+            parse_says(0, search_key, -1, -1);
+            parse_says(1, filename, -1, -1);
+            X_pop(PlayerFileSectionKey, 0);
+            return StringTable.get(0);
+        }
+    }
+    int remaining = phrase_id + 9;
+    while (remaining > 0) {
+        text_get();
+        --remaining;
+    }
+    // TRIED: the counter as one local driving both the guard and the loop
+    //         (`int n = phrase_id + 9; if (n > 0) { do { text_get(); n--; }`)
+    //         scores 46 of 58 - VC6 folds the add into `lea esi,[eax+9]` and
+    //         tests esi, where the image tests eax and then copies it to esi
+    //         for the loop. Modifying the parameter instead (`phrase_id =
+    //         phrase_id + 9;` with a separate `int i`) moves the whole test
+    //         to esi too: 45 of 58. The image's shape needs the guard value
+    //         and the counter in DIFFERENT registers, which VC6 merges under
+    //         both spellings.
+    return TextBufferGetPtr;
+}
+
+
+// ORIGINAL: 0x0058F8B0 ?get_noun_phrase@@YAPADHH@Z 0x0058F8B0-0x0058F9C9
+// LEVER: same three bindings as get_phrase - Players' filename/search_key at
+//         0x00946A54/0x00946A6C, the "PLAYERFILE" caption at 0x0068FADC, and
+//         text.h's TextBufferGetPtr at 0x009B7D00.
+// BUG IN THE ARCHIVED TRANSCRIPTION, not in the shipped image: the artifact
+//         returned the ADDRESS of the TextBufferGetPtr variable rather than
+//         the pointer it holds. The image loads `[0x9b7d00]` into eax twice,
+//         once as strcpy's destination and once as the return value, so it
+//         returns the buffer. Fixed here; the two loads are kept separate on
+//         purpose - caching one local would delete the second
+//         `mov eax, [0x9b7d00]`.
+char *__cdecl get_noun_phrase(int faction_id, int phrase_id) {
+    // Keep this API label in a separate original storage identity.
+    // RECOVERY_OBJECT: v1 0x0068FADC _?PlayerFileSectionKey@?1??get_noun_phrase@@YAPADHH@Z@4QBDB
+    static const char PlayerFileSectionKey[] = "PLAYERFILE";
+    char buffer[256];
+    char *search_key = Players[faction_id].search_key;
+    char *filename = Players[faction_id].filename;
+
+    if ((text_open(filename, search_key) != 0)
+        && (text_open(filename, filename) != 0)) {
+        parse_says(0, search_key, -1, -1);
+        parse_says(1, filename, -1, -1);
+        X_pop(PlayerFileSectionKey, 0);
+        return StringTable.get(0);
+    }
+
+    phrase_id = phrase_id + 9;
+    if (phrase_id > 0) {
+        int i = phrase_id;
+        do {
+            text_get();
+            --i;
+        } while (i != 0);
+    }
+    strcpy(buffer, text_item());
+    char *item = text_item();
+    char c = item[0];
+    int number = 0;
+    int gender = 0;
+    if (c == 'M' || c == 'm') {
+        gender = 0;
+    }
+    if (c == 'F' || c == 'f') {
+        gender = 1;
+    }
+    if (c == 'N' || c == 'n') {
+        gender = 2;
+    }
+    if (item[1] == '1') {
+        number = 0;
+    }
+    if (item[1] == '2') {
+        number = 1;
+    }
+    parse_set(gender, number);
+    strcpy(TextBufferGetPtr, buffer);
+    return TextBufferGetPtr;
+}
+
+
+// ORIGINAL: 0x0058F9D0 ?get_pact@@YAPADH@Z 0x0058F9D0-0x0058FA19 BYTE_EXACT
+// MISMATCH #3 'xor' vs 'mov': the original zeroes edx BEFORE storing
+// PluralityDefault = 0, and every source order tried compiles that store
+// first. A second divergence follows: the original keeps `add edx, 0xc9` as
+// its own instruction before `mov ecx, [eax+edx*4]` where every spelling
+// tried folds the 0xc9 into the addressing displacement. Tried: inline
+// expression, a named boolean `flag`, a named `off` combining the constant
+// with the flag, and a `char *` base with a manual `*4` multiply - all four
+// byte-identical at the divergence, so it reads as an optimiser
+// canonicalisation this call shape always hits.
+// TRIED: homed out of the archive once its five fixed-address bindings were
+//         all nameable from models the tree already holds (see get_pacts).
+char *__cdecl get_pact(int faction_id) {
+    PluralityDefault = 0;
+    int noun = Players[faction_id].is_leader_female;
+    GenderDefault = noun;
+    return StringTable.get(Labels.strings_ptr[noun != 0 ? 0xca : 0xc9]);
+}
+
+
+// ORIGINAL: 0x0058FA20 ?get_pacts@@YAPADH@Z 0x0058FA20-0x0058FA69 BYTE_EXACT
+// LEVER: the carried bindings renamed to the tree's own models - Players
+//         (faction.h, 0x00946A50), Labels (alpha.h, 0x009B90F8), StringTable
+//         (strings.h, 0x009B90D8) and general.h's noun defaults - so no
+//         anonymous g_ binding arrived with the body.
+// TRIED: as `Players[a1].is_leader_female` for the load; the image reads it
+//         as `[players + a1*0x59c]`, so the member form is the same operand.
+// MISMATCH #10 'mov' vs 'mov': the image keeps `add edx, 0xcb` as its own
+//         instruction before `mov ecx, [eax+edx*4]`, where every spelling
+//         tried folds the 0xcb into the addressing displacement
+//         (`[ecx+edx*4+0x32c]`) and hoists the `Labels.strings_ptr` load
+//         above the store. Tried (as 0x0058F9D0, four spellings): inline
+//         expression, a named boolean, a named `off` combining the constant
+//         with the flag, and a `char *` base with a manual `*4` multiply -
+//         all four byte-identical at this divergence.
+char *__cdecl get_pacts(int faction_id) {
+    PluralityDefault = 1;
+    int noun = Players[faction_id].is_leader_female;
+    GenderDefault = noun;
+    return StringTable.get(Labels.strings_ptr[noun != 0 ? 0xcc : 0xcb]);
+}
+
+
+// ORIGINAL: 0x0058FA70 ?get_pacts@@YAPADHH@Z 0x0058FA70-0x0058FAFA BYTE_EXACT
+// working copy - scaffold materialised by --work
+// size      138 bytes
+// prototype
+// callers   2   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x006169A0
+
+// LEVER: the three fixed-address bindings renamed to the tree's own models -
+//         Players (faction.h), Labels (alpha.h) and StringTable (strings.h), so
+//         no anonymous g_ binding arrived with the body. 0x009BBFEC is
+//         GenderDefault and 0x009BBFF0 is PluralityDefault (general.h).
+// LEVER: `int flag; if (a && b) flag = 1; else flag = 0;` - the two else arms
+//         SHARE one `xor edx,edx` and the true arm jumps over it
+//         (`mov edx,1 / jmp / xor edx,edx`). The ternary and the bare `&&`
+//         both compile the other way (`jne` straight to the store).
+// TRIED: `code` as a ternary, as a nested ternary and with `labels` declared
+//         ahead of it - all three move `mine` off ECX (22/43, 4/43, 12/43)
+//         against 27/43 for the plain `int code = 0xcb; if (...) code = 0xcc;`.
+//         What is left is register ASSIGNMENT: the image keeps `code` in EAX
+//         (reusing the dead `Players[other_id]` load) and `labels` in EDX, and
+//         hoists the third `test ecx,ecx` above the two global stores.
+
+char *__cdecl get_pacts(int faction_id, int other_id) {
+    int mine = Players[faction_id].is_leader_female;
+    int flag;
+    if (mine != 0 && Players[other_id].is_leader_female != 0) {
+        flag = 1;
+    } else {
+        flag = 0;
+    }
+    GenderDefault = flag;
+    PluralityDefault = 1;
+    return label_get((mine != 0 && Players[other_id].is_leader_female != 0) ? 0xcc : 0xcb);
+}
+
+
+// ORIGINAL: 0x0058FB00 ?get_pact_hood@@YAPADHH@Z 0x0058FB00-0x0058FB61 BYTE_EXACT
+// LEVER: the five fixed-address bindings renamed to the tree's own models - see
+//         get_pacts above for the address map. No anonymous g_ binding arrived.
+// TRIED: `int code = 0xcd; if (...) code = 0xce;`, the ternary form, and a
+//         named `other_female` local for the second read - all three score the
+//         same 22/29 as the shared-else `if/else`. The image has no upfront
+//         constant store (both arms materialise into EAX), which the
+//         shared-else form is the only one to reproduce. What is left is
+//         register ASSIGNMENT: the image reuses the dead `Players[other_id]`
+//         register in EAX for `code`, this tree puts it in ECX.
+
+char *__cdecl get_pact_hood(int faction_id, int other_id) {
+    GenderDefault = 0;
+    PluralityDefault = 0;
+    int code;
+    if (Players[faction_id].is_leader_female != 0
+        && Players[other_id].is_leader_female != 0) {
+        code = 0xce;
+    } else {
+        code = 0xcd;
+    }
+    return label_get(code);
+}
+
+
+// ORIGINAL: 0x0058FB70 sub_58fb70 0x0058FB70-0x0058FBB2 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/units/0058fb70.cpp", "task:owned-helper-coverage-batch", "Native58FB70 mode0 returns unchanged, mode1 passes a two-byte terminated buffer and writes the first byte back; other nonzero modes call USER32 CharUpperA on the whole text. No mapped-caller claim."], "reason": "Recover a complete native helper through genuine source owners and SDK calls, preserving original identity, extent and historical obligations. Source home is not proof of original TU or complete-game acceptance."}
+// symbol    ?uppercase_text@@YAPADPADH@Z
+char *__cdecl uppercase_text(char *text, int mode) {
+    if (mode == 0) {
+        return text;
+    }
+    if (mode == 1) {
+        char first_character[2];
+        first_character[0] = *text;
+        first_character[1] = '\0';
+        CharUpperA(first_character);
+        *text = first_character[0];
+        return text;
+    }
+    CharUpperA(text);
+    return text;
+}
+
+
+// ORIGINAL: 0x0058FBC0 ?get_his_her@@YAPADHH@Z 0x0058FBC0-0x0058FC4B BYTE_EXACT
+// LEVER: the fixed-address bindings renamed to the tree's own models - Players
+//         (faction.h), Labels (alpha.h), StringTable (strings.h), the CharUpperA
+//         import slot (windows.h) and 0x00945838 as PronounBuffer below. The
+//         use-site census names that buffer: get_his_her (this body),
+//         get_him_her (0x0058FC50) and get_he_she (0x0058FCE0) are the only
+//         three sites in the image that touch it, and each strcpy's its fetched
+//         pronoun into it and hands back its address.
+// TRIED: `LPSTR *labels` read inline in the call instead of as a named local -
+//         20/42 against 21/42, so the local stays. Naming the flag `female`
+//         first, swapping the `+` operands, and the `(x != 0) + 0xcf` form all
+//         score the same 21/42 as what is committed. What is left is register
+//         ASSIGNMENT: the image zeroes the `0xcf +` accumulator into EDX before
+//         the index chain and keeps `Labels.strings_ptr` in EAX; this tree puts
+//         the accumulator in EAX and the label table in ECX.
+
+char *__cdecl get_his_her(int faction_id, int sentence_form) {
+    strcpy(PronounBuffer, StringTable.get(Labels.strings_ptr[Players[faction_id].is_leader_female != 0 ? 0xd0 : 0xcf]));
+    if (sentence_form != 0) {
+        if (sentence_form == 1) {
+            char buf[2];
+            buf[0] = PronounBuffer[0];
+            buf[1] = 0;
+            CharUpperA(buf);
+            PronounBuffer[0] = buf[0];
+            return PronounBuffer;
+        }
+        CharUpperA(PronounBuffer);
+    }
+    return PronounBuffer;
+}
+
+
+/*
+Purpose: Fetch the "him/her" pronoun into the shared game pronoun buffer,
+         optionally upper-casing it, beside the sibling get_his_her body.
+// ORIGINAL: 0x0058FC50 ?get_him_her@@YAPADHH@Z 0x0058FC50-0x0058FCDB BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Original58FC50..58FCDB; retired seed git:da8a4b7f:src/unrecovered/0058fc50.cpp records the same identity and spans.", "The fixed-address bindings rename to the tree's own models exactly as game.cpp's sibling get_his_her (0x0058FBC0) already does: Players (faction.h, the 0x167-stride first word is is_leader_female), Labels (alpha.h), StringTable (strings.h), PronounBuffer (game.h, 0x00945838) and the CharUpperA import the header supplies.", "Label code 0xC7/0xC8 and the sentence-form handling are the seed's measured behaviour."], "reason": "Home the sibling pronoun fetcher beside its shared buffer and get_his_her in the game source."}
+Return Value: PronounBuffer
+Status: Coverage transcription - unclaimed body
+*/
+char *__cdecl get_him_her(int faction_id, int sentence_form) {
+    strcpy(PronounBuffer, StringTable.get(Labels.strings_ptr[Players[faction_id].is_leader_female != 0 ? 0xC8 : 0xC7]));
+    if (sentence_form != 0) {
+        if (sentence_form == 1) {
+            char buf[2];
+            buf[0] = PronounBuffer[0];
+            buf[1] = 0;
+            CharUpperA(buf);
+            PronounBuffer[0] = buf[0];
+            return PronounBuffer;
+        }
+        CharUpperA(PronounBuffer);
+    }
+    return PronounBuffer;
+}
+
+
+/*
+Purpose: The third pronoun fetcher beside game.cpp's get_his_her/get_him_her:
+         pick the he/she label by the faction leader's gender, copy the string
+         table's text into the shared pronoun buffer, and uppercase it in
+         place when the sentence form asks.
+
+// ORIGINAL: 0x0058FCE0 ?get_he_she@@YAPADHH@Z 0x0058FCE0-0x0058FD6B FILE BYTE_EXACT
+// size      139 bytes
+// prototype char* (__cdecl ?get_he_she@@YAPADHH@Z)(int, int)
+// callers   6   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x006169A0 0x00645460
+// indirect  0x0058FD43 0x0058FD5E
+// TRIED (seed): caching the CharUpperA pointer in a local vs calling through
+//         the import slot at each site - both land 18 bytes over (157-160 vs
+//         139), extra push/push in the prologue before the a1*0x167 multiply;
+//         root cause not found. The fixed-address bindings are renamed to the
+//         tree's own models: Players (faction.h), Labels (alpha.h),
+//         StringTable (strings.h), the CharUpperA import slot (windows.h) and
+//         0x00945838 as PronounBuffer (game.h) - the same census-named buffer
+//         get_his_her and get_him_her fill.
+Status: Coverage transcription - unclaimed body
+*/
+char *__cdecl get_he_she(int faction_id, int sentence_form) {
+    strcpy(PronounBuffer, StringTable.get(Labels.strings_ptr[Players[faction_id].is_leader_female != 0 ? 0xd2 : 0xd1]));
+    if (sentence_form != 0) {
+        if (sentence_form == 1) {
+            char buf[2];
+            buf[0] = PronounBuffer[0];
+            buf[1] = 0;
+            CharUpperA(buf);
+            PronounBuffer[0] = buf[0];
+            return PronounBuffer;
+        }
+        CharUpperA(PronounBuffer);
+    }
+    return PronounBuffer;
+}
+
 
