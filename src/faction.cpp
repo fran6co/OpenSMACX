@@ -2527,8 +2527,8 @@ void __cdecl diplomacy_check(int faction, int other, int update) {
     if (has_treaty(other, faction, 0x20) && fight < 0) {
         fight = -fight;
     }
-    int maximum_bases[7];
-    for (int i = 0; i < 7; i++) {
+    int maximum_bases[8];
+    for (int i = 1; i < 8; i++) {
         maximum_bases[i] = 1;
     }
     for (int allied_faction = 1; allied_faction < 8; allied_faction++) {
@@ -2559,9 +2559,9 @@ void __cdecl diplomacy_check(int faction, int other, int update) {
     for (int census_region = 1; census_region < 128; census_region++) {
         for (int census_faction = 1; census_faction < 8; census_faction++) {
             // Unconditional store: a ternary, not a guarded assignment.
-            maximum_bases[census_faction - 1] =
-                maximum_bases[census_faction - 1] > PlayersData[census_faction].region_total_bases[census_region]
-                ? maximum_bases[census_faction - 1]
+            maximum_bases[census_faction] =
+                maximum_bases[census_faction] > PlayersData[census_faction].region_total_bases[census_region]
+                ? maximum_bases[census_faction]
                 : PlayersData[census_faction].region_total_bases[census_region];
         }
     }
@@ -2651,7 +2651,7 @@ void __cdecl diplomacy_check(int faction, int other, int update) {
     for (int region = 1; region < 128; region++) {
         for (int ally = 1; ally < 8; ally++) {
             if (PlayersData[ally].region_total_bases[region]
-                >= maximum_bases[ally - 1] - maximum_bases[ally - 1] / 4) {
+                >= maximum_bases[ally] - maximum_bases[ally] / 4) {
                 DiplomacyRegionMask[region] |= 1 << ally;
             }
         }

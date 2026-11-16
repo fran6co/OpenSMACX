@@ -986,10 +986,9 @@ int Net::send_group_flagged(void *data, int size, long target,
                     if (players_[index].field_0_ == 0) {
                         pending[index] = 0;
                     } else if (players_[index].field_8_ == 0) {
-                        const DWORD ack_tick = timeGetTime();
-                        pending[index] = 0;
-                        players_[index].field_C_ = (ack_tick +
+                        players_[index].field_C_ = (timeGetTime() +
                             players_[index].field_C_ - sent_at[index] + 0x14) >> 1;
+                        pending[index] = 0;
                     } else {
                         if (now - sent_at[index] > retry_delay[index]) {
                             retry_delay[index] = (retry_delay[index] * 3) >> 1;
@@ -1050,12 +1049,14 @@ int Net::send_group_flagged(void *data, int size, long target,
         }
     } else {
         header->type_flags_ = type;
+        DWORD send_flags;
+        if ((flags & 1) != 0) send_flags = DPSEND_GUARANTEED; else send_flags = 0;
         if (NetDirectPlay == 0) {
             free(packet);
             return 0;
         }
         if (NetDirectPlay->Send(local_player_id_, static_cast<DPID>(target),
-                                (flags & 1) != 0, packet,
+                                send_flags, packet,
                                 static_cast<DWORD>(allocation_size)) != DP_OK) {
             free(packet);
             return 0;
@@ -1541,15 +1542,14 @@ int Net::send_group(void *data, int size, long group_id, int flags) {
 
     NetPacketEnvelope *const header =
         reinterpret_cast<NetPacketEnvelope *>(packet);
-    const int reliable = flags & 1;
-    if (reliable != 0) {
+    if ((flags & 1) != 0) {
         header->sequence_4_ = ++field_E4_;
     } else {
         header->sequence_4_ = 0;
     }
     if (data != 0) memcpy(packet + 8, data, static_cast<size_t>(size));
 
-    if (reliable != 0 && (voice_flags_D8_ & 0x10000000U) == 0) {
+    if ((flags & 1) != 0 && (voice_flags_D8_ & 0x10000000U) == 0) {
         // Unconfirmed reliable send. The callback marks only group members
         // whose NetPlayer flags include bit 1. NetPlayerTable is shared
         // callback context, published exactly as native.
@@ -1609,10 +1609,9 @@ int Net::send_group(void *data, int size, long group_id, int flags) {
                     if (players_[index].field_0_ == 0) {
                         pending[index] = 0;
                     } else if (players_[index].field_8_ == 0) {
-                        const DWORD ack_tick = timeGetTime();
-                        pending[index] = 0;
-                        players_[index].field_C_ = (ack_tick +
+                        players_[index].field_C_ = (timeGetTime() +
                             players_[index].field_C_ - sent_at[index] + 0x14) >> 1;
+                        pending[index] = 0;
                     } else {
                         if (now - sent_at[index] > retry_delay[index]) {
                             retry_delay[index] = (retry_delay[index] * 3) >> 1;
@@ -1673,12 +1672,14 @@ int Net::send_group(void *data, int size, long group_id, int flags) {
         }
     } else {
         header->type_flags_ = 1;
+        DWORD send_flags;
+        if ((flags & 1) != 0) send_flags = DPSEND_GUARANTEED; else send_flags = 0;
         if (NetDirectPlay == 0) {
             free(packet);
             return 0;
         }
         if (NetDirectPlay->Send(local_player_id_, static_cast<DPID>(group_id),
-                                reliable != 0, packet,
+                                send_flags, packet,
                                 static_cast<DWORD>(allocation_size)) != DP_OK) {
             free(packet);
             return 0;
@@ -4387,10 +4388,9 @@ int Net::send_packet_type(void *data, int data_size, unsigned long target,
                     if (players_[index].field_0_ == 0) {
                         pending[index] = 0;
                     } else if (players_[index].field_8_ == 0) {
-                        const DWORD ack_tick = timeGetTime();
-                        pending[index] = 0;
-                        players_[index].field_C_ = (ack_tick +
+                        players_[index].field_C_ = (timeGetTime() +
                             players_[index].field_C_ - sent_at[index] + 0x14) >> 1;
+                        pending[index] = 0;
                     } else {
                         if (now - sent_at[index] > retry_delay[index]) {
                             retry_delay[index] = (retry_delay[index] * 3) >> 1;
@@ -4449,9 +4449,11 @@ int Net::send_packet_type(void *data, int data_size, unsigned long target,
         return 0;
     } else {
         header->type_flags_ = static_cast<WORD>(packet_type);
+        DWORD send_flags;
+        if ((flags & 1) != 0) send_flags = DPSEND_GUARANTEED; else send_flags = 0;
         if (NetDirectPlay == 0) { free(packet); return 0; }
         if (NetDirectPlay->Send(local_player_id_, static_cast<DPID>(target),
-                                (flags & 1) != 0, packet,
+                                send_flags, packet,
                                 static_cast<DWORD>(allocation_size)) != DP_OK) {
             free(packet);
             return 0;
@@ -4656,10 +4658,9 @@ int Net::send(void *data, int data_size, unsigned long target, int flags) {
                     if (players_[index].field_0_ == 0) {
                         pending[index] = 0;
                     } else if (players_[index].field_8_ == 0) {
-                        const DWORD ack_tick = timeGetTime();
-                        pending[index] = 0;
-                        players_[index].field_C_ = (ack_tick +
+                        players_[index].field_C_ = (timeGetTime() +
                             players_[index].field_C_ - sent_at[index] + 0x14) >> 1;
+                        pending[index] = 0;
                     } else {
                         if (now - sent_at[index] > retry_delay[index]) {
                             retry_delay[index] = (retry_delay[index] * 3) >> 1;
@@ -4726,12 +4727,14 @@ int Net::send(void *data, int data_size, unsigned long target, int flags) {
     }
 
     header->type_flags_ = 1;
+    DWORD send_flags;
+    if ((flags & 1) != 0) send_flags = DPSEND_GUARANTEED; else send_flags = 0;
     if (NetDirectPlay == 0) {
         free(packet);
         return 0;
     }
     if (NetDirectPlay->Send(local_player_id_, static_cast<DPID>(target),
-                            (flags & 1) != 0, packet,
+                            send_flags, packet,
                             static_cast<DWORD>(allocation_size)) != DP_OK) {
         MessageBoxA(0, "Oh no!! Send failed!",
                     "Message from the Net Underworld", 0);
