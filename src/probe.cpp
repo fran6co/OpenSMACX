@@ -351,6 +351,14 @@ extern "C" DWORD WINAPI timeGetTime(void);
 #define HUMAN_BIT(f) (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << (f)))
 #define ALIVE_BIT(f) (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << (f)))
 
+// WORKAROUND(inline): file-local twins of the faction.h getters get_title,
+// get_name and get_noun (0x005590A0, 0x00559060, 0x0050B930). The image calls
+// them out of line where probe's /Ob2 budget is exhausted and expands them
+// (raw parse_set + field) where it is not; the expansions are budget spend.
+static inline char *probe_title(int faction_id);
+static inline char *probe_name(int faction_id);
+static inline char *probe_noun(int faction_id);
+
 // ORIGINAL: 0x0059F120 ?probe@@YAHHHHH@Z 0x0059F120-0x005A5837;0x006613D0-0x00661B3D
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original instructions establish distinct actor, target-base and fallback-vehicle roles, genuine PlayerData/Map/Base/Veh owners and one automatic Popup with class-owned teardown.", "The actor lock/state edge skips strategy scoring and energy checks before its shared mode/selector tail. Action-six raw UI results and normalized remote bit tests have distinct threshold stores; false edges retain the original path-local value, with no eager initialization.", "Bounded actual-source controls and native compilation are not full CFG, VC6 unwind-state, linked-preservation or game-runtime proof. Ordered comparison/reload fidelity and historical matching remain restoration obligations.", "Pinned5A292F..5A2961 operands96CD3C equal PlayersData96C9E0+35C, the signed tech_ranking word; trade_source actually begins36C, so its former+8 alias selected the wrong374 word. Preserve target rank/2 > actor rank/2+4 with truncation toward zero and the existing facility/action/pact short-circuit guards."], "reason": "Complete typed Probe action/UI owner in its existing translation unit, retaining the four-argument ABI and both original main/unwind spans."}
 int __cdecl probe(int veh_id, int base_id, int veh_id_tgt, int mode) {
@@ -533,12 +541,9 @@ L_59fb64:
             }
         }
         if (faction_tgt == ConsoleGlobal.faction_id_) {
-            parse_set(Players[faction].is_leader_female, 0);
-            parse_says(0, Players[faction].title_leader, -1, -1);
-            parse_set(Players[faction].is_leader_female, 0);
-            parse_says(1, Players[faction].name_leader, -1, -1);
-            parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
-            parse_says(2, Players[faction].noun_faction, -1, -1);
+            parse_says(0, probe_title(faction), -1, -1);
+            parse_says(1, probe_name(faction), -1, -1);
+            parse_says(2, probe_noun(faction), -1, -1);
             NetMsgPrimary.pop("DETECTINFILTRATE",
                               is_alien ? "al_infil_sm.pcx" : "infil_sm.pcx");
         }
@@ -549,10 +554,8 @@ L_59fb64:
         && (!(PlayersData[faction_tgt].diplo_treaties[faction] & 1)
             || !(PlayersData[faction_tgt].diplo_treaties[faction] & 0x2000000))
         && action > 0) {
-        parse_set(Players[faction_tgt].is_leader_female, 0);
-        parse_says(0, Players[faction_tgt].title_leader, -1, -1);
-        parse_set(Players[faction_tgt].is_leader_female, 0);
-        parse_says(1, Players[faction_tgt].name_leader, -1, -1);
+        parse_says(0, probe_title(faction_tgt), -1, -1);
+        parse_says(1, probe_name(faction_tgt), -1, -1);
         if (!popp(ScriptPopupFile, "RISKEXCUSE", 0,
                   is_alien ? "al_infil_sm.pcx" : "infil_sm.pcx", 0)) {
             return 0;
@@ -2134,4 +2137,17 @@ L_5a4b28:
         }
     }
     return 1;  // 5a5813/5a5816/5a5821: the function's final return
+}
+
+static inline char *probe_title(int faction_id) {
+    parse_set(Players[faction_id].is_leader_female, 0);
+    return Players[faction_id].title_leader;
+}
+static inline char *probe_name(int faction_id) {
+    parse_set(Players[faction_id].is_leader_female, 0);
+    return Players[faction_id].name_leader;
+}
+static inline char *probe_noun(int faction_id) {
+    parse_set(Players[faction_id].noun_gender, Players[faction_id].is_noun_plural);
+    return Players[faction_id].noun_faction;
 }

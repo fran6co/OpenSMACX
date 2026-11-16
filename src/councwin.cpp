@@ -692,13 +692,13 @@ void CouncWin::init(int proposal, int faction_id) {
         }
         for (int round = 0; round < 3; round++) {
             for (i = 0; i < MaxPlayerNum; i++) {
-                if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << i))
+                if (!is_human(i)
                     || (i != ConsoleGlobal.faction_id_ && !IsMultiplayerNet && !IsMultiplayerPBEM)) {
                     leader_label_kind_[i] = council_get_vote(i, field_A1C_, faction_id);
                 } else {
                     leader_label_kind_[i] = 0;
                 }
-                if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << i))) {
+                if (!is_alive(i)) {
                     leader_label_kind_[i] = static_cast<uint32_t>(-5);
                 }
             }
@@ -803,10 +803,10 @@ void CouncWin::init(int proposal, int faction_id) {
             for (candidate = 1; candidate < MaxPlayerNum; candidate++) {
                 support[candidate] = 0;
                 if (Players[candidate].rule_flags & RFLAG_ALIEN) continue;
-                if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << candidate))) continue;
+                if (!is_alive(candidate)) continue;
                 for (int voter = 1; voter < MaxPlayerNum; voter++) {
                     if (!(Players[voter].rule_flags & RFLAG_ALIEN)
-                        && GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << voter)
+                        && is_alive(voter)
                         && static_cast<int>(leader_label_kind_[voter]) == candidate) {
                         support[candidate] += leader_tech_[voter];
                     }
@@ -815,7 +815,7 @@ void CouncWin::init(int proposal, int faction_id) {
             int done = 0;
             for (candidate = 1; candidate < MaxPlayerNum; candidate++) {
                 if (Players[candidate].rule_flags & RFLAG_ALIEN) continue;
-                if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << candidate))) continue;
+                if (!is_alive(candidate)) continue;
                 if (!eligible(candidate)) continue;
                 int best = 0;
                 for (int other = 1; other < MaxPlayerNum; other++) {
@@ -1752,7 +1752,7 @@ void CouncWin::draw_leader(int factionID) {
     }
 
     if (static_cast<int>(field_A1C_) <= 1 && leader_tech_[factionID] != 0 &&
-        (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << factionID)) != 0 &&
+        is_alive(factionID) &&
         PlayersData[factionID].major_atrocities == 0) {
         char number[80];
         StringTemp[0] = '\0';

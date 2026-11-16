@@ -929,16 +929,13 @@ RulesProposal Proposal[MaxProposalNum];  // 0x009A6828, 0xc stride
 // defaults. Keep the leader and faction forms in the same order the native
 // council announcement prepares them.
 static void council_parse_leader(int faction_id) {
-    GenderDefault = Players[faction_id].is_leader_female;
-    PluralityDefault = FALSE;
+    parse_set(Players[faction_id].is_leader_female, FALSE);
     parse_says(0, Players[faction_id].title_leader, -1, -1);
 
-    GenderDefault = Players[faction_id].is_leader_female;
-    PluralityDefault = FALSE;
+    parse_set(Players[faction_id].is_leader_female, FALSE);
     parse_says(1, Players[faction_id].name_leader, -1, -1);
 
-    GenderDefault = Players[faction_id].noun_gender;
-    PluralityDefault = Players[faction_id].is_noun_plural;
+    parse_set(Players[faction_id].noun_gender, Players[faction_id].is_noun_plural);
     parse_says(2, Players[faction_id].noun_faction, -1, -1);
 }
 
