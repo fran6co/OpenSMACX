@@ -1977,13 +1977,15 @@ setup:
             }
         }
         if (old_queue_id <= -0x46 && new_id <= -0x46 && old_count && !new_count)
-            message_data(0x4D00, 0, -0x46 - new_id, 0, 0, 0);
+            goto retool_new;
         else if (old_queue_id <= -0x46 && new_id <= -0x46 && !old_count && !new_count)
             message_data(0x4D00, 0, -0x46 - new_id, 2, -0x46 - old_queue_id, new_count);
         else if (old_queue_id <= -0x46 && !old_count)
             message_data(0x4D00, 0, -0x46 - old_queue_id, 1, 0, 0);
-        else if (new_id <= -0x46 && !new_count)
+        else if (new_id <= -0x46 && !new_count) {
+retool_new:
             message_data(0x4D00, 0, -0x46 - new_id, 0, 0, 0);
+        }
     }
 
     selected_queue_slot_ = 0;
@@ -5688,18 +5690,16 @@ void BaseWin::draw_misc(int update_mode) {
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x0040F0F0; original spans remain load-bearing.", "Retired seed provenance git:ac469904:src/unrecovered/0040f0f0.cpp; historical transcription conflicts remain evidence, not runtime targets.", "image:41E8D0 owns panel geometry; source:src/basewin.h owns real GraphicWin/Buffer and existing Base/Player/Veh/Rules receivers."], "reason": "Recover the complete BaseWin draw_farm panel using genuine owned rectangles, automatic Font lifetime and existing application globals, retaining original branch/call order and unchecked input obligations."}
 void BaseWin::draw_farm(int update_mode) {
     int tile; int resource;
-    RECT panel = rect1_;
+    RECT *const rect = &rect1_;
+    RECT panel = *rect;
     RECT saved_clip = Buffer::current_clip();
     Buffer::set_clip(&panel);
-    Buffer::box_sprite(&rect1_, &InterfaceBoxStyles[15]);
-    ++panel.left;
-    ++panel.top;
-    --panel.right;
-    --panel.bottom;
+    Buffer::box_sprite(rect, &InterfaceBoxStyles[15]);
+    base_panel_inset(panel, 1);
     fill(&panel, 0x41);
     spot2_.kill_type(0);
-    spot2_.add(0, 0, rect1_.left, rect1_.top,
-               rect1_.right - rect1_.left, rect1_.bottom - rect1_.top);
+    spot2_.add(0, 0, rect->left, rect->top,
+               rect->right - rect->left, rect->bottom - rect->top);
 
     // 0x40F1B1..0x40F1F0: modes 2/3 are a switch (sub 2 / dec chain) whose
     // psych case cross-jumps into the selector's psych call; modes <= 1 test
@@ -5724,9 +5724,9 @@ draw_map:
         // EBP-20 keeps only the doubled quarter-scale tile step.
         const int half_tile = ((MapWinCaptionScale > 0
             ? MapWinCaptionScale * 50 / MapWinCaptionDivisor : 50) + 1) / 4 * 2;
-        const int origin_x = (rect1_.right - rect1_.left) / 2
-            - half_tile * 2 + rect1_.left;
-        const int origin_y = half_tile * 3 + 4 + rect1_.top;
+        const int origin_x = (rect->right - rect->left) / 2
+            - half_tile * 2 + rect->left;
+        const int origin_y = half_tile * 3 + 4 + rect->top;
 
         FarmMapWindow.clear_terrain();
         FarmMapWindow.field_1DD6C_ = 0;
@@ -5857,8 +5857,8 @@ draw_map:
         }
 
         Font *font = find_font(12, 1);
-        const int text_right = rect1_.right - 2;
-        const int text_top = rect1_.top + 2;
+        const int text_right = rect->right - 2;
+        const int text_top = rect->top + 2;
         Buffer::set_font(font, 0, 0, 0);
         StringTemp[0] = 0;
         if (BaseCurrent->event & 0x200) {
@@ -5938,7 +5938,6 @@ void BaseWin::draw_pop(int update_mode) {
     panel.bottom = rect->bottom - 3;
     MainInterfaceGlobal.set_clip(&panel);
 
-    int top = panel.top;
     int height = panel.bottom - panel.top;
     int population = BaseCurrent->population_size;
     int spacing;
@@ -5955,9 +5954,11 @@ void BaseWin::draw_pop(int update_mode) {
         }
     }
 
-    int left = panel.left;
-    const int bottom = top + height;
-    int right = left + height;
+    RECT cell;
+    cell.left = panel.left;
+    cell.top = panel.top;
+    cell.bottom = cell.top + height;
+    cell.right = cell.left + height;
     int i;
     if (ExpansionEnabled && (Players[BaseCurrent->faction_id_current].rule_flags & 0x80)) {
         for (i = 0; i < BaseCurrent->population_size; i++) {
@@ -5970,8 +5971,8 @@ void BaseWin::draw_pop(int update_mode) {
                         - BaseCurrent->specialist_total) mood = 3;
                 g_AL_CITIZEN_LG_CURSOR_SPRITES[mood].draw(&MainInterfaceGlobal,
                     g_AL_CITIZEN_LG_CURSOR_SPRITES[mood].transparent_index(),
-                    left, top + (bottom - top - 48) / 2, 1, 1);
-                spot1_.add(-1, 1, left, top, right - left, bottom - top);
+                    cell.left, cell.top + (cell.bottom - cell.top - 48) / 2, 1, 1);
+                spot1_.add(-1, 1, cell.left, cell.top, cell.right - cell.left, cell.bottom - cell.top);
             } else {
                 const int specialist = i - (BaseCurrent->population_size - BaseCurrent->specialist_total);
                 const int type = specialist >= 16 ? best_specialist()
@@ -5979,11 +5980,11 @@ void BaseWin::draw_pop(int update_mode) {
                 specialist_counts[type]++;
                 g_AL_SPECIALIST_LG_CURSOR_SPRITES[type].draw(&MainInterfaceGlobal,
                     g_AL_SPECIALIST_LG_CURSOR_SPRITES[type].transparent_index(),
-                    left, top + (bottom - top - 48) / 2, 1, 1);
-                spot1_.add(specialist, 1, left, top, right - left, bottom - top);
+                    cell.left, cell.top + (cell.bottom - cell.top - 48) / 2, 1, 1);
+                spot1_.add(specialist, 1, cell.left, cell.top, cell.right - cell.left, cell.bottom - cell.top);
             }
-            right += spacing;
-            left += spacing;
+            cell.right += spacing;
+            cell.left += spacing;
         }
     } else {
         for (i = 0; i < BaseCurrent->population_size; i++) {
@@ -5995,8 +5996,8 @@ void BaseWin::draw_pop(int update_mode) {
                 if (i >= BaseCurrent->population_size - BaseCurrent->super_drone_total
                         - BaseCurrent->specialist_total) mood = 3;
                 pop_sprite_at(&MainInterfaceGlobal, g_CITIZEN_LG_CURSOR_SPRITES, random.get(0, 2), mood,
-                    left, top + (bottom - top - 48) / 2);
-                spot1_.add(-1, 1, left, top, right - left, bottom - top);
+                    cell.left, cell.top + (cell.bottom - cell.top - 48) / 2);
+                spot1_.add(-1, 1, cell.left, cell.top, cell.right - cell.left, cell.bottom - cell.top);
             } else {
                 const int specialist = i - (BaseCurrent->population_size - BaseCurrent->specialist_total);
                 const int type = specialist >= 16 ? best_specialist()
@@ -6004,11 +6005,11 @@ void BaseWin::draw_pop(int update_mode) {
                 specialist_counts[type]++;
                 g_SPECIALIST_LG_CURSOR_SPRITES[type].draw(&MainInterfaceGlobal,
                     g_SPECIALIST_LG_CURSOR_SPRITES[type].transparent_index(),
-                    left, top + (bottom - top - 48) / 2, 1, 1);
-                spot1_.add(specialist, 1, left, top, right - left, bottom - top);
+                    cell.left, cell.top + (cell.bottom - cell.top - 48) / 2, 1, 1);
+                spot1_.add(specialist, 1, cell.left, cell.top, cell.right - cell.left, cell.bottom - cell.top);
             }
-            right += spacing;
-            left += spacing;
+            cell.right += spacing;
+            cell.left += spacing;
         }
     }
 
@@ -6649,6 +6650,8 @@ void base_panel_sprite(Sprite &sprite, Buffer *canvas, int x, int y) {
 
 // 0040B140..0040BFE3, EH cleanup 00651A78..00651A8D.
 // The fourth argument is the right-button selector; the middle pair is x/y.
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0040B140 0x0040BFE4 0x0040C010 0x0040B996
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x0040B140 0x0040C010 0x0040C06A 0x0040B990
 // ORIGINAL: 0x0040B140 ?garrison_click@BaseWin@@QAEXHHHH@Z 0x0040B140-0x0040BFE3;0x00651A78-0x00651A8D
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x0040B140; retired seed provenance git:ac469904:src/unrecovered/0040b140.cpp; all original spans and historical obligations retained.", "image:41E8D0 initializes existing Font/FlatButton/Sprite/RECT and Caviar camera members; 420A70 tears down the same declaration order.", "image:41AF5B supplies ConsoleGlobal GraphicWin virtual-base receiver939444; qualified Console callback leaves the result intact.", "image:40B8F8 borrows the vehicle-ID pointer in NetDaemon row1 payload; normal menu cancel-1 reads inherited GraphicWinA0C. Undefined icon-spacing/invalid-index/modal-borrow inputs remain explicit."], "reason": "Genuine BaseWin owner with actual members, automatic base/member lifetimes and native callback receivers, not fixed executable-address forwarding or raw self-offset access."}
 // TRIED: literal goto-per-branch transcription of the repeated viewport/recenter check (4 occurrences) simplified to one shared boolean form each time, not the exact per-occurrence instruction sharing (e.g. the 0x40b581/0x40bf94 cross-jump).
@@ -6688,10 +6691,9 @@ void BaseWin::garrison_click(int vehicle_id, int x, int y, int right) {
     else if (ReportWinGlobal.is_visible()) ReportWinGlobal.client_to_screen(&x, &y);
     if (Vehs[vehicle_id].faction_id != ConsoleGlobal.faction_id_) return;
     menu.init(0);
-    const unsigned state = Vehs[vehicle_id].state;
-    if (Vehs[vehicle_id].order != 0 || (state & 0x4200u)
-        || (state & 0x1000200u) == 0x1000200u
-        || ((state & 0x2000200u) == 0x2000200u
+    if (Vehs[vehicle_id].order != 0 || (Vehs[vehicle_id].state & 0x4200u)
+        || (Vehs[vehicle_id].state & 0x1000200u) == 0x1000200u
+        || ((Vehs[vehicle_id].state & 0x2000200u) == 0x2000200u
             && Vehs[vehicle_id].patrol_current_point < Vehs[vehicle_id].waypoint_count))
         menu.add_item(1, StringTable.get(Labels.strings_ptr[0xB6C / 4]));
     menu.add_item(2, StringTable.get(Labels.strings_ptr[0x958 / 4]));
@@ -6709,11 +6711,8 @@ void BaseWin::garrison_click(int vehicle_id, int x, int y, int right) {
     }
     if (Vehs[vehicle_id].home_base_id == BaseIDCurrentSelected
         && (Vehs[vehicle_id].x != BaseCurrent->x || Vehs[vehicle_id].y != BaseCurrent->y)) {
-        const Map &vehicle_tile = map_tiles()[Vehs[vehicle_id].y * MapLongitude
-            + (Vehs[vehicle_id].x >> 1)];
-        const Map &base_tile = map_tiles()[BaseCurrent->y * MapLongitude
-            + (BaseCurrent->x >> 1)];
-        if (vehicle_tile.region == base_tile.region
+        if (map_tiles()[Vehs[vehicle_id].y * MapLongitude + (Vehs[vehicle_id].x >> 1)].region
+                == map_tiles()[BaseCurrent->y * MapLongitude + (BaseCurrent->x >> 1)].region
             || Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].triad != 0) {
             menu.add_separator(99);
             menu.add_item(30, StringTable.get(Labels.strings_ptr[0xB84 / 4]));
@@ -6731,8 +6730,7 @@ void BaseWin::garrison_click(int vehicle_id, int x, int y, int right) {
     const int action = slot < 64 ? menu.item_id(slot) : -1;
     if (vehicle_id != previous_vehicle) return;
     if (NetDaemonNet.lock_veh(&vehicle_id, 0, -1, -1, 0)) return;
-    const int faction = Vehs[vehicle_id].faction_id;
-    if (faction != ConsoleGlobal.faction_id_) { NetDaemonNet.unlock_veh(); return; }
+    if (Vehs[vehicle_id].faction_id != ConsoleGlobal.faction_id_) { NetDaemonNet.unlock_veh(); return; }
     // Cases in the image's block order (jump table 0x40BFE4).
     switch (action) {
     case 1:
@@ -6756,7 +6754,7 @@ void BaseWin::garrison_click(int vehicle_id, int x, int y, int right) {
         ConsoleGlobal.editor_edit_veh(vehicle_id);
         break;
     case 20:
-        if (Bases[focusedBaseID_].faction_id_current == faction) {
+        if (Bases[focusedBaseID_].faction_id_current == Vehs[vehicle_id].faction_id) {
             Vehs[vehicle_id].home_base_id = static_cast<int16_t>(focusedBaseID_);
             synch_veh(vehicle_id);
             NetDaemonNet.await_synch();
