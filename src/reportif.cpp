@@ -5616,16 +5616,9 @@ void ReportIf::on_status(int mode) {
             int leader = slot + 1;
             if (visible[slot]) {
                 StringTemp[0] = 0;
-                // WORKAROUND(inline): get_title (0x005590A0) and get_name
-                // (0x00559060) are out of line in faction.cpp, but the image
-                // expands both here (0x4A5A02..0x4A5A47) with their exact stores.
-                PluralityDefault = 0;
-                GenderDefault = Players[leader].is_leader_female;
-                strcat(StringTemp, Players[leader].title_leader);
+                strcat(StringTemp, get_title(leader));
                 strcat(StringTemp, BufferJoinSpace);
-                PluralityDefault = 0;
-                GenderDefault = Players[leader].is_leader_female;
-                strcat(StringTemp, Players[leader].name_leader);
+                strcat(StringTemp, get_name(leader));
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, label_get(0xB4));
                 strcat(StringTemp, BufferJoinSpace);

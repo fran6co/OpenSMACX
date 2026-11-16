@@ -115,17 +115,13 @@ extern int DiploScratchFA98;  // Diplomacy producer storage defined below.
 
 // ORIGINAL: 0x00559060 ?get_name@@YAPADH@Z 0x00559060-0x00559092 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:5a0359249be19afbfdbfda27fdc219dda76c5a7c:src/recovered/00559060.cpp", "source:src/faction.h"], "reason": "The pinned entry returns Player::name_leader after selecting leader gender and singular grammar; Player fields have the original stride."}
-char *__cdecl get_name(int faction_id) {
-    parse_set(Players[faction_id].is_leader_female, 0);
-    return Players[faction_id].name_leader;
-}
+// body src/faction.h
+// BODY IN faction.h, as `MEASURED inline`.
 
 // ORIGINAL: 0x005590A0 ?get_title@@YAPADH@Z 0x005590A0-0x005590D2 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:5a0359249be19afbfdbfda27fdc219dda76c5a7c:src/recovered/005590a0.cpp", "source:src/faction.h"], "reason": "The pinned entry returns Player::title_leader after selecting leader gender and singular grammar; the Player type establishes this field and the original record stride."}
-char *__cdecl get_title(int faction_id) {
-    parse_set(Players[faction_id].is_leader_female, 0);
-    return Players[faction_id].title_leader;
-}
+// body src/faction.h
+// BODY IN faction.h, as `MEASURED inline`.
 
 // ORIGINAL: 0x005590E0 ?get_adjective_leader@@YAPADH@Z 0x005590E0-0x005590FA BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:5a0359249be19afbfdbfda27fdc219dda76c5a7c:src/recovered/005590e0.cpp", "source:src/faction.h"], "reason": "The pinned entry returns Player::adj_leader from the typed Player row; the Player type establishes this field and the original record stride."}

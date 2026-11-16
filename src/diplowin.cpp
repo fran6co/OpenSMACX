@@ -1574,18 +1574,6 @@ found:
 // Historical seed finding: Original inherited fields8/C/10/14/18 are zeroed; trailing StringList pending fields are not silently initialized.
 // Historical seed finding: Prior attribution to game.cpp and raw-pointer constructor experiments are historical, not proof of original translation-unit ownership.
 
-// WORKAROUND(inline): the image expands get_title (0x005590A0) and get_name
-// (0x00559060) in on_button_clicked (one faction load per pair at 0x441CCF);
-// faction.h declares them out of line (same stand-in as quaylewin.cpp).
-static inline char *diplo_get_title(int faction) {
-  parse_set(Players[faction].is_leader_female, 0);
-  return Players[faction].title_leader;
-}
-
-static inline char *diplo_get_name(int faction) {
-  parse_set(Players[faction].is_leader_female, 0);
-  return Players[faction].name_leader;
-}
 
 // Superseded seed removal retains historical Git provenance below.
 // ORIGINAL: 0x004415C0 ?on_button_clicked@DiploWin@@QAEXH@Z 0x004415C0-0x004424C6;0x00654A50-0x00654CEA BYTE_EXACT
@@ -1761,8 +1749,8 @@ void DiploWin::on_button_clicked(int button_id) {
       break;
 
     case 12: {
-      parse_says(0, diplo_get_title(faction_id_with_), -1, -1);
-      parse_says(1, diplo_get_name(faction_id_with_), -1, -1);
+      parse_says(0, get_title(faction_id_with_), -1, -1);
+      parse_says(1, get_name(faction_id_with_), -1, -1);
       parse_says(2, get_noun(faction_id_with_), -1, -1);
 
       if (has_treaty(faction_id_, faction_id_with_, 1) == 0) {
@@ -1818,8 +1806,8 @@ void DiploWin::on_button_clicked(int button_id) {
 
         ++line_count;
         StringTemp[0] = 0;
-        parse_says(0, diplo_get_title(faction), -1, -1);
-        parse_says(1, diplo_get_name(faction), -1, -1);
+        parse_says(0, get_title(faction), -1, -1);
+        parse_says(1, get_name(faction), -1, -1);
         parse_says(2, get_noun(faction), -1, -1);
         parse_it(ScriptPopupFile, "ATTACKSTRING");
         popup.item(StringTemp, faction);

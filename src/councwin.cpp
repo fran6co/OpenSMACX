@@ -88,17 +88,6 @@ static int council_humans_present(uint32_t seated) {
     return (static_cast<int>(seated) & alive & humans) == humans;
 }
 
-// WORKAROUND(inline): file-local twins of get_title/get_name (0x005590A0,
-// 0x00559060); on_left_click expands them in place (no calls in its image)
-// and their spend leaves its early teardowns calling ~Scroll out of line.
-static inline char *council_title(int faction_id) {
-    parse_set(Players[faction_id].is_leader_female, 0);
-    return Players[faction_id].title_leader;
-}
-static inline char *council_name(int faction_id) {
-    parse_set(Players[faction_id].is_leader_female, 0);
-    return Players[faction_id].name_leader;
-}
 // WORKAROUND(inline): dead /Ob2 budget stand-in (folds to no code). A
 // 16-way chain called once before on_left_click's Popup gives the image's
 // teardown topology (50 EH states; the deep sites call ~FlatButton out of
@@ -154,8 +143,8 @@ void CouncWin::on_left_click(int x, int y) {
         goto check_selection;
     }
     if ((PlayersData[clicked_faction].diplo_treaties[ConsoleGlobal.faction_id_] & 0x30) != 0) {
-        parse_says(0, council_title(clicked_faction), -1, -1);
-        parse_says(1, council_name(clicked_faction), -1, -1);
+        parse_says(0, get_title(clicked_faction), -1, -1);
+        parse_says(1, get_name(clicked_faction), -1, -1);
         X_pop("BUYNOTALK", pop_wait);
         return;
     }
@@ -177,9 +166,9 @@ void CouncWin::on_left_click(int x, int y) {
             if (is_alive(faction) &&
                 eligible(faction)) {
                 StringTemp[0] = '\0';
-                strcat(StringTemp, council_title(faction));
+                strcat(StringTemp, get_title(faction));
                 strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, council_name(faction));
+                strcat(StringTemp, get_name(faction));
                 council_pop_item(&popup, StringTemp, faction);
                 // Native 0x425324 preselects the local faction's own entry.
                 if (faction == ConsoleGlobal.faction_id_) {
@@ -210,24 +199,24 @@ check_selection:
             CommlinkFaction = clicked_faction;
             message_data(0x1501, clicked_faction, ConsoleGlobal.faction_id_,
                          clicked_faction, 0, 0);
-            parse_says(0, council_title(clicked_faction), -1, -1);
-            parse_says(1, council_name(clicked_faction), -1, -1);
+            parse_says(0, get_title(clicked_faction), -1, -1);
+            parse_says(1, get_name(clicked_faction), -1, -1);
             parse_num(0, clicked_faction);
             NetMsgPrimary.pop("DIPLOCOMM", 0x1388, 0, nullptr);
             field_A40_ = 1;
             goto draw;
         }
         if (!is_alive(clicked_faction)) {
-            parse_says(0, council_title(clicked_faction), -1, -1);
-            parse_says(1, council_name(clicked_faction), -1, -1);
+            parse_says(0, get_title(clicked_faction), -1, -1);
+            parse_says(1, get_name(clicked_faction), -1, -1);
             parse_says(2, get_noun(clicked_faction), -1, -1);
             NetMsgPrimary.pop("ELIMINATED", 0x1388, 0, nullptr);
             field_A40_ = 1;
             return;
         }
         if (NetDaemonNet.open_channel(ConsoleGlobal.faction_id_, clicked_faction)) {
-            parse_says(0, council_title(clicked_faction), -1, -1);
-            parse_says(1, council_name(clicked_faction), -1, -1);
+            parse_says(0, get_title(clicked_faction), -1, -1);
+            parse_says(1, get_name(clicked_faction), -1, -1);
             NetMsgPrimary.pop("NOCHANNEL", 0x1388, 0, nullptr);
             field_A40_ = 1;
             return;
@@ -239,8 +228,8 @@ check_selection:
         field_A40_ = 1;
     } else {
         if (!is_alive(clicked_faction)) {
-            parse_says(0, council_title(clicked_faction), -1, -1);
-            parse_says(1, council_name(clicked_faction), -1, -1);
+            parse_says(0, get_title(clicked_faction), -1, -1);
+            parse_says(1, get_name(clicked_faction), -1, -1);
             parse_says(2, get_noun(clicked_faction), -1, -1);
             NetMsgPrimary.pop("ELIMINATED", 0x1388, 0, nullptr);
             return;

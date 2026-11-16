@@ -3466,17 +3466,6 @@ cleanup:
 #pragma intrinsic(memcpy)
 #endif
 
-// WORKAROUND(inline): get_title/get_name are header inlines in the image (their
-// out-of-line copies sit in the 0x559000 header-inline cluster, and this body
-// reads the faction once into the parameter); faction.h keeps them out of line.
-static inline char *get_title_inline(int faction_id) {
-    parse_set(Players[faction_id].is_leader_female, 0);
-    return Players[faction_id].title_leader;
-}
-static inline char *get_name_inline(int faction_id) {
-    parse_set(Players[faction_id].is_leader_female, 0);
-    return Players[faction_id].name_leader;
-}
 
 uint32_t __cdecl random(int min, int max);
 
@@ -3710,9 +3699,9 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
         if (primary_state_.session_phase_ < 2) {
             strcat(StringTemp, get_player_name(sender_id));
         } else {
-            strcat(StringTemp, get_title_inline(packet->faction_));
+            strcat(StringTemp, get_title(packet->faction_));
             strcat(StringTemp, BufferJoinSpace);
-            strcat(StringTemp, get_name_inline(packet->faction_));
+            strcat(StringTemp, get_name(packet->faction_));
         }
         strcat(StringTemp, SocialWinColonSpaceText);
         strcat(StringTemp, message + 0x10);
@@ -3735,8 +3724,8 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
                     goto project_changed;
                 }
             } else {
-                parse_says(0, get_title_inline(project_faction), -1, -1);
-                parse_says(1, get_name_inline(project_faction), -1, -1);
+                parse_says(0, get_title(project_faction), -1, -1);
+                parse_says(1, get_name(project_faction), -1, -1);
                 parse_says(2, get_noun(project_faction), -1, -1);
                 parse_say(3, project->name, -1, -1);
                 if (packet->payload_14_) {
@@ -3916,8 +3905,8 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
         GameDataStateStorage.fields_.net_turn_faction_ = faction;
         if (faction == ConsoleGlobal.faction_id_) {
             TurnControlWord93A954 = 0;
-            parse_says(0, get_title_inline(faction), -1, -1);
-            parse_says(1, get_name_inline(GameDataStateStorage.fields_.net_turn_faction_), -1, -1);
+            parse_says(0, get_title(faction), -1, -1);
+            parse_says(1, get_name(GameDataStateStorage.fields_.net_turn_faction_), -1, -1);
             parse_says(2, get_noun(GameDataStateStorage.fields_.net_turn_faction_), -1, -1);
             parse_says(3, get_player_name(who_2_pid(GameDataStateStorage.fields_.net_turn_faction_)),
                        -1, -1);
@@ -3926,8 +3915,8 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
             parse_says(4, year_text, -1, -1);
             X_pop("SIMULYOU", pop_wait);
         } else {
-            parse_says(0, get_title_inline(faction), -1, -1);
-            parse_says(1, get_name_inline(GameDataStateStorage.fields_.net_turn_faction_), -1, -1);
+            parse_says(0, get_title(faction), -1, -1);
+            parse_says(1, get_name(GameDataStateStorage.fields_.net_turn_faction_), -1, -1);
             parse_says(2, get_noun(GameDataStateStorage.fields_.net_turn_faction_), -1, -1);
             parse_says(3, get_player_name(who_2_pid(GameDataStateStorage.fields_.net_turn_faction_)),
                        -1, -1);
@@ -3984,8 +3973,8 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
         }
         break;
     laggard_found:
-        parse_says(0, get_title_inline(next_faction), -1, -1);
-        parse_says(1, get_name_inline(next_faction), -1, -1);
+        parse_says(0, get_title(next_faction), -1, -1);
+        parse_says(1, get_name(next_faction), -1, -1);
         parse_says(2, get_noun(next_faction), -1, -1);
         for (int name_slot = 1; name_slot <= player_count_; name_slot++) {
             if (process_slots_[name_slot].identity_ == next_faction) {
@@ -4022,8 +4011,8 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
                     MultiWindow.draw(0);
                     break;
                 slowpoke_found:
-                    parse_says(0, get_title_inline(next_faction), -1, -1);
-                    parse_says(1, get_name_inline(next_faction), -1, -1);
+                    parse_says(0, get_title(next_faction), -1, -1);
+                    parse_says(1, get_name(next_faction), -1, -1);
                     parse_says(2, get_noun(next_faction), -1, -1);
                     for (int slot = 1; slot <= player_count_; ++slot) {
                         if (process_slots_[slot].identity_ == next_faction) {
@@ -4676,8 +4665,8 @@ move_veh_ack:
                 packet->payload_14_, packet->payload_18_);
         if (packet->payload_10_ != ConsoleGlobal.faction_id_) {
             // Image sets these after pushing -1,-1 (inline get_title/get_name).
-            parse_says(0, get_title_inline(packet->payload_10_), -1, -1);
-            parse_says(1, get_name_inline(packet->payload_10_), -1, -1);
+            parse_says(0, get_title(packet->payload_10_), -1, -1);
+            parse_says(1, get_name(packet->payload_10_), -1, -1);
             parse_says(2, get_noun(packet->payload_10_), -1, -1);
             parse_says(3, get_adjective(packet->payload_10_), -1, -1);
             parse_num(0, game_year(packet->payload_14_));
@@ -4736,8 +4725,8 @@ move_veh_ack:
         }
         for (;;) {
             // inlined contact_dialog_arguments(sender)
-            parse_says(0, get_title_inline(sender), -1, -1);
-            parse_says(1, get_name_inline(sender), -1, -1);
+            parse_says(0, get_title(sender), -1, -1);
+            parse_says(1, get_name(sender), -1, -1);
             parse_says(2, get_noun(sender), -1, -1);
             parse_num(0, random(0, 10) + 1);
             parse_says(3, get_him_her(sender, 0), -1, -1);
@@ -4777,8 +4766,8 @@ move_veh_ack:
         if (Language != 0) {
             break;
         }
-        parse_says(0, get_title_inline(packet->faction_), -1, -1);
-        parse_says(1, get_name_inline(packet->faction_), -1, -1);
+        parse_says(0, get_title(packet->faction_), -1, -1);
+        parse_says(1, get_name(packet->faction_), -1, -1);
         NetMsgPrimary.pop("DIPLOCLOSE", 5000, 0, 0);
         break;
 
@@ -4797,8 +4786,8 @@ move_veh_ack:
     case 0x1503:
         CommlinkPending = 0;
         log_say("Received OPEN REFUSE", packet->faction_, 0, 0);
-        parse_says(0, get_title_inline(packet->faction_), -1, -1);
-        parse_says(1, get_name_inline(packet->faction_), -1, -1);
+        parse_says(0, get_title(packet->faction_), -1, -1);
+        parse_says(1, get_name(packet->faction_), -1, -1);
         switch (packet->payload_10_) {
         case 0:
             NetMsgPrimary.pop("DIPLOREFUSE", 5000, 0, 0);
@@ -4812,8 +4801,8 @@ move_veh_ack:
     case 0x1504:
         CommlinkPending = 0;
         log_say("Received OPEN BUSY", packet->faction_, 0, 0);
-        parse_says(0, get_title_inline(packet->faction_), -1, -1);
-        parse_says(1, get_name_inline(packet->faction_), -1, -1);
+        parse_says(0, get_title(packet->faction_), -1, -1);
+        parse_says(1, get_name(packet->faction_), -1, -1);
         switch (packet->payload_10_) {
         case 0:
             NetMsgPrimary.pop("DIPLOBUSY", 5000, 0, 0);
@@ -4878,8 +4867,8 @@ move_veh_ack:
 
     case 0x150F:
         log_say("Received VENDETTA WARNING", packet->faction_, 0, 0);
-        parse_says(0, get_title_inline(packet->faction_), -1, -1);
-        parse_says(1, get_name_inline(packet->faction_), -1, -1);
+        parse_says(0, get_title(packet->faction_), -1, -1);
+        parse_says(1, get_name(packet->faction_), -1, -1);
         parse_says(2, get_noun(packet->faction_), -1, -1);
         NetMsgPrimary.pop("VENDETTAWARNING", 5000, 0, 0);
         break;

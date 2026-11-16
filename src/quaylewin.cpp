@@ -211,17 +211,6 @@ int QuayleWin::on_key_click(int, int) {
   return 1;
 }
 
-// WORKAROUND(inline): the image expands get_title (0x005590A0) and get_name
-// (0x00559060) throughout on_redraw; faction.h declares them out of line.
-static inline char *quayle_get_title(int faction) {
-  parse_set(Players[faction].is_leader_female, 0);
-  return Players[faction].title_leader;
-}
-
-static inline char *quayle_get_name(int faction) {
-  parse_set(Players[faction].is_leader_female, 0);
-  return Players[faction].name_leader;
-}
 
 // ORIGINAL: 0x004956D0 ?on_redraw@QuayleWin@@QAEXXZ 0x004956D0-0x0049649D;0x00658D10-0x00658D4F
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 004956D0; retained seed git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004956d0.cpp", "recovery/tasks/quaylewin-owner-coverage-wave.json", "QuayleWin constructor layout and virtual-slot evidence; fresh isolated build and host controls"], "reason": "Rehome the retained QuayleWin seed into its real GraphicWin owner with typed subobjects; preserve original spans and historical seed obligations."}
@@ -270,8 +259,8 @@ void QuayleWin::on_redraw() {
       strcat(temporary, "BOOKLIST");
       _itoa(field_2144_, number, 10);
       strcat(temporary, number);
-      parse_says(0, quayle_get_title(faction), Players[faction].is_leader_female, -1);
-      parse_says(1, quayle_get_name(faction), Players[faction].is_leader_female, -1);
+      parse_says(0, get_title(faction), Players[faction].is_leader_female, -1);
+      parse_says(1, get_name(faction), Players[faction].is_leader_female, -1);
       parse_it("Holobook", temporary);
       wrap_cent(StringTemp, introduction_rect_.left, introduction_rect_.top,
                 rect_width(&introduction_rect_));
@@ -293,7 +282,7 @@ void QuayleWin::on_redraw() {
       PluralityDefault = 0;
       strcat(StringTemp, Players[faction].title_leader);
       strcat(StringTemp, BufferJoinSpace);
-      strcat(StringTemp, quayle_get_name(faction));
+      strcat(StringTemp, get_name(faction));
       set_font(ReportIfGlobal.field_1E1AC_, 0, 0, 0);
       set_text_color(0x45, -1, 1, 1);
       write_cent_l(StringTemp, &text_scratch_rect_);
@@ -303,9 +292,9 @@ void QuayleWin::on_redraw() {
       quayle_place_rect(&text_scratch_rect_, window_rect_.left + 0x136,
                         window_rect_.top + 0x1A5, 0x1CB, 0x32);
       StringTemp[0] = 0;
-      strcat(StringTemp, quayle_get_title(faction));
+      strcat(StringTemp, get_title(faction));
       strcat(StringTemp, BufferJoinSpace);
-      strcat(StringTemp, quayle_get_name(faction));
+      strcat(StringTemp, get_name(faction));
       set_font(ReportIfGlobal.field_1E1B8_, 0, 0, 0);
       set_text_color(0x45, -1, 1, 1);
       write_cent_l(StringTemp, &text_scratch_rect_);
@@ -315,9 +304,9 @@ void QuayleWin::on_redraw() {
       quayle_place_rect(&text_scratch_rect_, window_rect_.left + 0x13C,
                         window_rect_.top + 0x1DF, 0x1C1, 0x54);
       StringTemp[0] = 0;
-      strcat(StringTemp, quayle_get_title(faction));
+      strcat(StringTemp, get_title(faction));
       strcat(StringTemp, BufferJoinSpace);
-      strcat(StringTemp, quayle_get_name(faction));
+      strcat(StringTemp, get_name(faction));
       set_font(ReportIfGlobal.field_1E1B8_, 0, 0, 0);
       set_text_color(0x5E, -1, 1, 1);
       wrap_cent(StringTemp, &text_scratch_rect_);
@@ -344,8 +333,8 @@ void QuayleWin::on_redraw() {
         strcat(temporary, "BOOKLIST");
         _itoa(page, number, 10);
         strcat(temporary, number);
-        parse_says(0, quayle_get_title(faction), Players[faction].is_leader_female, -1);
-        parse_says(1, quayle_get_name(faction), Players[faction].is_leader_female, -1);
+        parse_says(0, get_title(faction), Players[faction].is_leader_female, -1);
+        parse_says(1, get_name(faction), Players[faction].is_leader_female, -1);
         parse_it("Holobook", temporary);
         if (page == field_2148_) {
           temporary[0] = 0;
@@ -375,8 +364,8 @@ void QuayleWin::on_redraw() {
         strcat(temporary, "BOOKLIST");
         _itoa(page, number, 10);
         strcat(temporary, number);
-        parse_says(0, quayle_get_title(faction), Players[faction].is_leader_female, -1);
-        parse_says(1, quayle_get_name(faction), Players[faction].is_leader_female, -1);
+        parse_says(0, get_title(faction), Players[faction].is_leader_female, -1);
+        parse_says(1, get_name(faction), Players[faction].is_leader_female, -1);
         parse_it("Holobook", temporary);
         list_box_.item(StringTemp, page);
       }

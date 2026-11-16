@@ -1036,8 +1036,17 @@ MEASURED inline LPSTR __cdecl get_adjective(int faction_id) {   // 0050B910
 
 // Faction dialogue forms. The leader-name/title/insult forms also select
 // singular grammar and the leader's gender for the next parse_says call.
-char *__cdecl get_name(int faction_id);
-char *__cdecl get_title(int faction_id);
+// Header inlines: the image expands get_name and get_title in place across
+// many units (parse_set then the leader field); budget-exhausted callers call
+// the out-of-line copies at 0x00559060 and 0x005590A0.
+MEASURED inline char *__cdecl get_name(int faction_id) {   // 00559060
+    parse_set(Players[faction_id].is_leader_female, 0);
+    return Players[faction_id].name_leader;
+}
+MEASURED inline char *__cdecl get_title(int faction_id) {   // 005590A0
+    parse_set(Players[faction_id].is_leader_female, 0);
+    return Players[faction_id].title_leader;
+}
 char *__cdecl get_adjective_leader(int faction_id);
 char *__cdecl get_adjective_insult_leader(int faction_id);
 char *__cdecl get_adjective_faction(int faction_id);

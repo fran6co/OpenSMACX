@@ -8056,23 +8056,6 @@ static inline int production_budget_probe(int x) {
     return x;
 }
 
-// WORKAROUND(inline): the GENERATOR report (0x4F295E..0x4F29D3) expands
-// get_title() and get_name() in place: each stores GenderDefault before the
-// field address is formed and PluralityDefault just before the call, the
-// pattern get_noun() gives, which plain parse_set + field reads do not. The
-// real bodies are out of line in faction.cpp (0x005590A0, 0x00559060) and are
-// not visible here; these twins stand in until the header inline status of
-// get_title/get_name is restored.
-static inline char *production_get_title(int faction_id) {
-    parse_set(Players[faction_id].is_leader_female, FALSE);
-    return Players[faction_id].title_leader;
-}
-
-// WORKAROUND(inline): see production_get_title.
-static inline char *production_get_name(int faction_id) {
-    parse_set(Players[faction_id].is_leader_female, FALSE);
-    return Players[faction_id].name_leader;
-}
 
 // ORIGINAL: 0x004F07E0 ?base_production@@YAXXZ 0x004F07E0-0x004F3FD8;0x0065C8A0-0x0065D0D6
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x004F07E0-0x004F3FD8;0x0065C8A0-0x0065D0D6", "git:59cb5d02:src/unrecovered/004f07e0.cpp", "source:src/base.h", "source:src/faction.h", "source:src/popup.h"], "reason": "Recover the complete colony production operation with real Base, PlayerData, Popup and project lifetimes; helper decomposition preserves redispatch, reporting, unit/facility creation and cleanup paths, including native wrapping arithmetic."}
@@ -8692,8 +8675,8 @@ production_again:
                 parse_num(2, Rules.subspace_generators_needed);
                 parse_num(3, Rules.size_base_subspace_gen);
                 parse_says(0, BaseCurrent->name_string, -1, -1);
-                parse_says(1, production_get_title(faction_id), -1, -1);
-                parse_says(2, production_get_name(faction_id), -1, -1);
+                parse_says(1, get_title(faction_id), -1, -1);
+                parse_says(2, get_name(faction_id), -1, -1);
                 parse_says(3, get_noun(faction_id), -1, -1);
                 popp(ScriptPopupFile, "GENERATOR", 0, "subgen_sm.pcx", 0);
             }

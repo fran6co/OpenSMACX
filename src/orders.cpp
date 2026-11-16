@@ -386,17 +386,6 @@ extern int __cdecl probe(int veh_id, int target_veh_id,
                          int target_base_id, int action);
 int break_treaty(int faction_id, int target_faction_id, int treaty);
 
-// WORKAROUND(inline): order_veh expands get_title/get_name in place (parse_set
-// then the Players field, 0x5958d3, 0x597bc4); faction.cpp keeps them out of
-// line, so this unit carries inline twins of their bodies.
-static inline char *order_title(int faction_id) {
-    parse_set(Players[faction_id].is_leader_female, 0);
-    return Players[faction_id].title_leader;
-}
-static inline char *order_name(int faction_id) {
-    parse_set(Players[faction_id].is_leader_female, 0);
-    return Players[faction_id].name_leader;
-}
 
 // Vehicle movement: moves veh_id one step in `direction` (8 = in place),
 // resolving probes, native capture, artifacts, supply, ZOC, combat, fuel and
@@ -1000,7 +989,7 @@ L_595734:
         if (found_base >= 0 && Bases[found_base].faction_id_current == faction) {
             parse_says(0, get_adjective(owner), -1, -1);
             parse_says(1, VehPrototypes[Vehs[target_veh].proto_id].veh_name, -1, -1);
-            parse_says(2, order_title(faction), -1, -1);
+            parse_says(2, get_title(faction), -1, -1);
             if (!(faction_bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_))
                 goto L_596fbc;
             int picked;
@@ -1040,11 +1029,11 @@ L_595734:
                 draw_tile(dest_x, dest_y, 2);
                 if (owner == ConsoleGlobal.faction_id_) {
                     parse_says(0, get_adjective(faction), -1, -1);
-                    parse_says(1, order_title(owner), -1, -1);
+                    parse_says(1, get_title(owner), -1, -1);
                     NetMsgPrimary.pop("GOTMYPROBE", 5000, 0, NULL);
                 } else if (faction == ConsoleGlobal.faction_id_) {
                     parse_says(0, get_adjective(owner), -1, -1);
-                    parse_says(1, order_title(faction), -1, -1);
+                    parse_says(1, get_title(faction), -1, -1);
                     NetMsgPrimary.pop("GOTYOURPROBE", 5000, 0, NULL);
                 }
                 goto done;
@@ -1054,7 +1043,7 @@ L_595734:
         if (faction == ConsoleGlobal.faction_id_) {
             parse_says(0, get_adjective(owner), -1, -1);
             parse_says(1, VehPrototypes[Vehs[target_veh].proto_id].veh_name, -1, -1);
-            parse_says(2, order_title(faction), -1, -1);
+            parse_says(2, get_title(faction), -1, -1);
             int picked;
             if (Players[owner].rule_flags & RFLAG_ALIEN)
                 picked = popp(ScriptPopupFile, "ENEMYPROBE2", 0, "al_cap_sm.pcx", NULL);
@@ -1447,8 +1436,8 @@ L_597350:
             if ((PlayersData[owner].diplo_treaties[faction] & 7)
                     && owner == ConsoleGlobal.faction_id_) {
                 // get_title / get_name / get_noun, expanded
-                parse_says(0, order_title(faction), -1, -1);
-                parse_says(1, order_name(faction), -1, -1);
+                parse_says(0, get_title(faction), -1, -1);
+                parse_says(1, get_name(faction), -1, -1);
                 parse_says(2, get_noun(faction), -1, -1);
                 NetMsgPrimary.pop("SURPRISE", 5000, 0, 0);
             }
