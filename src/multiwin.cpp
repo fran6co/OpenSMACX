@@ -930,7 +930,7 @@ void MultiWin::on_right_click(int x, int y) {
         parse_says(1, Players[faction].name_leader, -1, -1);
         parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
         parse_says(2, Players[faction].noun_faction, -1, -1);
-        // RECOVERY_LITERAL: v1 0x0068677C 0x00686787 $SG58811 0x00478150
+        // RECOVERY_LITERAL: v1 0x0068677C 0x00686787 $SG58807 0x00478150
         NetMsgPrimary.pop("ELIMINATED", 5000, 0, 0);
         return;
     }

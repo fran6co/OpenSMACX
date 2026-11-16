@@ -1261,7 +1261,7 @@ void BaseWin::rename() {
     // The pinned BaseWin::rename call references bytes 52 45 4E 41 4D 45 00
     // at 0x682C70. This writable-data correspondence says nothing about
     // runtime immutability or linker selection.
-    // RECOVERY_LITERAL: v1 0x682C70 0x682C77 $SG62569 0x41A2B0
+    // RECOVERY_LITERAL: v1 0x682C70 0x682C77 $SG62565 0x41A2B0
     if (X_pop_ask("RENAME", 0x18, BaseCurrent->name_string, nullptr, 0)) {
         NetDaemonNet.unlock_base(BaseIDCurrentSelected);
         return;
@@ -4480,8 +4480,8 @@ char InvertEntries[8][32];
 
 // BaseWin::init independently passes this same file/section pair at
 // 0x0041F2A6/0x0041F2AB; the two bounded literals are shared in this TU.
-// RECOVERY_LITERAL: v1 0x00682824 0x0068282F $SG63815 0x0041E8D0
-// RECOVERY_LITERAL: v1 0x00682830 0x00682839 $SG63816 0x0041E8D0
+// RECOVERY_LITERAL: v1 0x00682824 0x0068282F $SG63811 0x0041E8D0
+// RECOVERY_LITERAL: v1 0x00682830 0x00682839 $SG63812 0x0041E8D0
 void __cdecl load_inverts() {
     if (text_open("BASENAME", "INVERTLIST") == 0) {
         text_get();
