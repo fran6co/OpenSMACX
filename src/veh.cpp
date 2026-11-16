@@ -476,6 +476,8 @@ RulesAbility Ability[MaxAbilityNum];  // 0x009AB538
 RulesMorale Morale[MaxMoraleNum];  // 0x00952328
 RulesCombatMode DefenseModes[MaxDefenseModeNum];  // 0x00946A00
 RulesCombatMode OffenseModes[MaxOffenseModeNum];  // 0x00946178
+// 30 x 0xC records; PlayersData begins at the bound. 0x004316FD reads Order[4].order.
+// RECOVERY_OBJECT: v2 0x0096C878 0x0096C9E0 ?Order@@3PAURulesOrder@@A 0x004316FD
 RulesOrder Order[MaxOrderNum];  // 0x0096C878
 LPSTR PlansShortName[MaxPlanNum];  // 0x00945FE0
 LPSTR PlansFullName[MaxPlanNum];  // 0x00952360
@@ -3804,6 +3806,7 @@ int __cdecl study_artifact(int veh_id) {
 
 
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00581260 0x00583C90 0x00583CAC 0x00581628
 // ORIGINAL: 0x00581260 ?consider_designs@@YAXH@Z 0x00581260-0x00583C8F
 // RECOVERY_BINDING: v1 {"reason":"Recover the complete AI prototype-selection operation through typed faction, rules, prototype and proposal owners, with the original signed faction argument and shared armor-scale lifetime across the strategy routes.","evidence":["Pinned original 0x00581260-0x00583C8F; native dispatch plans 0/4,1,2,6 and skipped 3/5; native negative-armor sentinel gate.","Independent full-owner and proposal-budget reviews; retained mechanical seed TRIED records its unverified shared-push argument history."]}
 // TRIED: mechanical register/stack-slot goto transliteration (304 labels, one 7-case switch off 0x0094A37D, 6375-line body): compiles, MISMATCH sim 0.80 on /O2 /Oy- framed. Cross-branch shared-push args (26 pushes never traced to a specific call by the linear model) are a known soft spot - values landed but not re-verified by hand past the two spots that broke arg *counts* outright.

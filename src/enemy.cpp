@@ -1,4 +1,5 @@
 // Per-vehicle enemy movement, using genuine source-owned game APIs.
+#define NETDAEMON_FLAT_CHANNELS  // the original flat channel words; see netdaemon.h
 #include "stdafx.h"
 #include "alpha.h"
 #include "base.h"
@@ -8806,7 +8807,7 @@ int __cdecl enemy_veh(int veh_id) {
     }
 
     if (IsMultiplayerNet != 0) {
-        NetDaemonNet.channels_[0].leading_words_[3] = 3;
+        NetDaemonNet.action_mode_ = 3;
     }
 
     do_all_non_input();

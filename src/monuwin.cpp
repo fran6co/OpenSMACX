@@ -16,6 +16,7 @@
 // StringStruct::StringStruct (0x00401000) out of line (0x00473733), giving
 // its three-state EH layout; see stringstruct.h.
 #define FONT_LINE_ADVANCE_INLINE
+#define NETDAEMON_FLAT_CHANNELS  // the original flat channel words; see netdaemon.h
 #define STRINGSTRUCT_CTOR_OUT_OF_LINE
 #include "monuwin.h"
 #include "console.h"
@@ -1039,7 +1040,7 @@ void MonuWin::close() {
 void MonuWin::on_left_click(int x, int y) {
   const int faction = ConsoleGlobal.faction_id_;
   if ((NetDaemonNet.primary_state_.trailing_words_[6] & (1u << faction)) != 0 ||
-      NetDaemonNet.channels_[1].payload_.flags != 0 ||
+      NetDaemonNet.field_1BB4_ != 0 ||
       NetDaemonNet.primary_state_.leading_words_[2] != 0) {
     return;
   }
@@ -1071,7 +1072,7 @@ void MonuWin::on_mouse_move(int x, int y) {
   }
   const int faction = ConsoleGlobal.faction_id_;
   if ((NetDaemonNet.primary_state_.trailing_words_[6] & (1u << faction)) != 0 ||
-      NetDaemonNet.channels_[1].payload_.flags != 0 ||
+      NetDaemonNet.field_1BB4_ != 0 ||
       NetDaemonNet.primary_state_.leading_words_[2] != 0) {
     return;
   }

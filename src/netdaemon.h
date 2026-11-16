@@ -222,6 +222,15 @@ class NetDaemon : public AlphaNet {
 
   // Borrowed selection storage already owned by channel1 at this+0x1B78.
   // Callers retain the original callback/clear ordering and lifetime obligations.
+#ifdef NETDAEMON_FLAT_CHANNELS
+  void set_vehicle_selection_follow(int *slot) {
+    locked_veh_ = slot;
+  }
+  int *vehicle_selection_follow() const {
+    return locked_veh_;
+  }
+
+#else
   void set_vehicle_selection_follow(int *slot) {
     channels_[0].payload_.vehicle_selection_follow = slot;
   }
@@ -229,6 +238,7 @@ class NetDaemon : public AlphaNet {
     return channels_[0].payload_.vehicle_selection_follow;
   }
 
+#endif
   // Shared faction wait mask, at NetDaemon+0x1B5C (entry 0 trailing dword 7).
   // The original address is also read by callers outside this class; keeping
   // the accessor on the genuine owner avoids a second scalar storage object.
@@ -238,6 +248,16 @@ class NetDaemon : public AlphaNet {
   const uint32_t &factions_waiting_mask() const {
     return primary_state_.trailing_words_[6];
   }
+#ifdef NETDAEMON_FLAT_CHANNELS
+  // MessageWin's network message count shares entry 2, trailing dword 7.
+  uint32_t &network_message_count() {
+    return field_1BD4_;
+  }
+  const uint32_t &network_message_count() const {
+    return field_1BD4_;
+  }
+
+#else
   // MessageWin's network message count shares entry 2, trailing dword 7.
   uint32_t &network_message_count() {
     return channels_[1].trailing_words_[7];
@@ -246,6 +266,7 @@ class NetDaemon : public AlphaNet {
     return channels_[1].trailing_words_[7];
   }
 
+#endif
  public:
   // 0x005328C0, homed from 005328c0.cpp. faction_id names the event's owner;
   // turn_value is stored into the lock state when no turn is already marked.
@@ -284,6 +305,38 @@ class NetDaemon : public AlphaNet {
     primary_state_.trailing_words_[7] = 0;
     primary_state_.trailing_words_[6] = 0;
 
+#ifdef NETDAEMON_FLAT_CHANNELS
+    field_1B6C_ = 0;
+    field_1B68_ = 0;
+    field_1B7C_ = 0;
+    field_1BA8_ = 0;
+    field_1BA0_ = 0;
+    field_1BA4_ = 0;
+    move_requests_ = 0;
+    lock_word_1BC8_ = 0;
+
+    primary_state_.trailing_words_[3] = 0;
+    primary_state_.trailing_words_[4] = 0;
+    primary_state_.trailing_words_[5] = 0;
+    veh_locked_ = 0;
+    field_1BC0_ = 0;
+    exec_pending_ = 0;
+    lock_held_ = 0;
+    field_1BB4_ = 0;
+    primary_state_.session_phase_ = 0;
+    primary_state_.trailing_words_[0] = 0;
+    field_1BD8_ = 0;
+    field_1BD4_ = 0;
+    primary_state_.trailing_words_[1] = 0;
+    primary_state_.trailing_words_[2] = 0;
+    field_1BD0_ = 0xFF;
+    locked_veh_ = nullptr;
+
+    for (int i = 0; i < 8; ++i) {
+        faction_masks_[i] = 0;
+    }
+
+#else
     channels_[0].leading_words_[1] = 0;
     channels_[0].leading_words_[0] = 0;
     channels_[0].trailing_words_[0] = 0;
@@ -314,6 +367,7 @@ class NetDaemon : public AlphaNet {
         channels_[0].trailing_words_[i] = 0;
     }
 
+#endif
     locks_.clear();
     AlphaNet::close();
   }
@@ -386,37 +440,43 @@ class NetDaemon : public AlphaNet {
   // RECOVERY_MEMBER: v1 NetDaemon primary_state_ 0x1B30 0x005389F0
   PrimaryLockStateTail primary_state_;
   // RECOVERY_MEMBER: v1 NetDaemon channels_ 0x1B68 0x005389F0
-  // WORKAROUND(type): the channel words the wait/lock cluster touches are
-  // single-level members in the original. Every access to 0x1B74 is absolute
-  // (0x0093E904), and wait (0x005303B0) only fits /Ob2's per-callee size cap -
-  // which the image's expansions into await_exec/await_synch/unlock_base and
-  // add_global require - when its save/restore names a direct member; any
+  // THE CHANNEL WORDS ARE FLAT MEMBERS in the original. Every access to
+  // them is absolute (0x0093E904 = action_mode_ is read from ~110 sites), and
+  // wait (0x005303B0) only fits /Ob2's per-callee size cap - which the
+  // image's expansions into await_exec/await_synch/unlock_base and add_global
+  // require - when its save/restore names a direct member; any
   // channels_[i].f[j] spelling is over the cap. Likewise unlock (0x00530D00)
   // is only affordable inside order_veh's await_exec expansion (0x00531EA9)
-  // with direct members. Overlaid on channels_ until the layout around them
-  // is reconstructed and the other users are converted. Only netdaemon.cpp
-  // opts in (NETDAEMON_FLAT_CHANNELS): the union changes the inline cost of
-  // channels_ accesses, and reportif.cpp's ReportIf::on_iface_button_clicked
-  // (0x004A6330) reorders two loads under it.
+  // with direct members. Units that have been converted define
+  // NETDAEMON_FLAT_CHANNELS and see only the flat members; the others keep
+  // the earlier two-LockStateEntry view of the same 0x78 bytes until their
+  // accesses are converted (WORKAROUND(type): reportif.cpp's
+  // ReportIf::on_iface_button_clicked 0x004A6330 reorders two loads when it
+  // sees a different member set, so each unit converts as a whole).
 #ifdef NETDAEMON_FLAT_CHANNELS
-  union {
-    LockStateEntry channels_[2];
-    struct {
-      uint32_t channel0_leading_words_[3];
-      uint32_t action_mode_;          // 0x1B74 = channels_[0].leading_words_[3]
-      int *locked_veh_;               // 0x1B78 = channels_[0].payload_
-      uint32_t channel0_trailing_words_[10];
-      uint32_t channel1_leading_words_[2];
-      uint32_t lock_held_;            // 0x1BAC = channels_[1].leading_words_[2]
-      uint32_t exec_pending_;         // 0x1BB0 = channels_[1].leading_words_[3]
-      uint32_t channel1_payload_;
-      uint32_t synch_pending_;        // 0x1BB8 = channels_[1].trailing_words_[0]
-      uint32_t channel1_trailing_words_[2];
-      uint32_t veh_locked_;           // 0x1BC4 = channels_[1].trailing_words_[3]
-      uint32_t lock_word_1BC8_;       // 0x1BC8 = channels_[1].trailing_words_[4]
-      uint32_t move_requests_;        // 0x1BCC = channels_[1].trailing_words_[5]
-    };
-  };
+  uint32_t field_1B68_;           // cleared by the constructor
+  uint32_t field_1B6C_;
+  uint32_t field_1B70_;
+  uint32_t action_mode_;          // 0x1B74, process_message reads it
+  int *locked_veh_;               // 0x1B78, borrowed vehicle-ID slot (lock_veh)
+  uint32_t field_1B7C_;           // the faction mask hang_up ANDs against
+  uint32_t faction_masks_[8];     // 0x1B80, one wait mask per faction
+  uint32_t field_1BA0_;           // the diplomacy-channel flag close_channel clears
+  uint32_t field_1BA4_;
+  uint32_t field_1BA8_;
+  uint32_t lock_held_;            // 0x1BAC
+  uint32_t exec_pending_;         // 0x1BB0
+  uint32_t field_1BB4_;
+  uint32_t synch_pending_;        // 0x1BB8
+  uint32_t field_1BBC_;
+  uint32_t field_1BC0_;           // end_of_event tests and clears it
+  uint32_t veh_locked_;           // 0x1BC4
+  uint32_t lock_word_1BC8_;       // 0x1BC8
+  uint32_t move_requests_;        // 0x1BCC, maybe_lock's repeat count
+  uint32_t field_1BD0_;           // the constructor stores 0xFF here
+  uint32_t field_1BD4_;
+  uint32_t field_1BD8_;
+  uint32_t field_1BDC_;
 #else
   LockStateEntry channels_[2];
 #endif
@@ -433,13 +493,15 @@ class NetDaemon : public AlphaNet {
   // Separate NetPlayerDropped93F65C and network flags93F660 remain globals.
 };
 #ifdef NETDAEMON_FLAT_CHANNELS
-static_assert(offsetof(NetDaemon, action_mode_) == 0x1B74, "overlaid action mode");
-static_assert(offsetof(NetDaemon, locked_veh_) == 0x1B78, "overlaid vehicle slot");
-static_assert(offsetof(NetDaemon, lock_held_) == 0x1BAC, "overlaid lock flag");
-static_assert(offsetof(NetDaemon, exec_pending_) == 0x1BB0, "overlaid exec wait flag");
-static_assert(offsetof(NetDaemon, synch_pending_) == 0x1BB8, "overlaid synch wait flag");
-static_assert(offsetof(NetDaemon, veh_locked_) == 0x1BC4, "overlaid vehicle lock flag");
-static_assert(offsetof(NetDaemon, move_requests_) == 0x1BCC, "overlaid move request count");
+static_assert(offsetof(NetDaemon, field_1B68_) == 0x1B68, "flat channel words start");
+static_assert(offsetof(NetDaemon, action_mode_) == 0x1B74, "flat action mode");
+static_assert(offsetof(NetDaemon, locked_veh_) == 0x1B78, "flat vehicle slot");
+static_assert(offsetof(NetDaemon, faction_masks_) == 0x1B80, "flat faction masks");
+static_assert(offsetof(NetDaemon, field_1BA0_) == 0x1BA0, "flat diplomacy flag");
+static_assert(offsetof(NetDaemon, lock_held_) == 0x1BAC, "flat lock flag");
+static_assert(offsetof(NetDaemon, synch_pending_) == 0x1BB8, "flat synch wait flag");
+static_assert(offsetof(NetDaemon, move_requests_) == 0x1BCC, "flat move request count");
+static_assert(offsetof(NetDaemon, file_index_records_) == 0x1BE0, "flat channel words end");
 #endif
 
 // Net::get and NetDaemon::process_message are not recovered yet; the Net the
