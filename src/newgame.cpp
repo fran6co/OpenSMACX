@@ -337,12 +337,12 @@ difficulty_menu:
                 if (i == 0) {
                     strcat(StringTemp, BufferJoinSpace);
                     strcat(StringTemp, SocialWinOpenParenText);
-                    strcat(StringTemp, StringTable.get(Labels.strings_ptr[113]));
+                    strcat(StringTemp, label_get(113));
                     strcat(StringTemp, SocialWinCloseParenText);
                 } else if (i == 5) {
                     strcat(StringTemp, BufferJoinSpace);
                     strcat(StringTemp, SocialWinOpenParenText);
-                    strcat(StringTemp, StringTable.get(Labels.strings_ptr[114]));
+                    strcat(StringTemp, label_get(114));
                     strcat(StringTemp, SocialWinCloseParenText);
                 }
                 popup.item(StringTemp, i);
@@ -1545,6 +1545,7 @@ do_cleanup:
 
 
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0058E360 0x0058EE34 0x0058EE4C 0x0058E758
 // ORIGINAL: 0x0058E360 ?top_menu@@YAHH@Z 0x0058E360-0x0058EE31;0x00660A96-0x00660BD7
 // RECOVERY_BINDING: v1 {"evidence": ["task:newgame-menu-owner", "historical seed:src/unrecovered/0058e360.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete mapped native control flow", "source:existing SetupWin/Popup/Buffer/NetDaemon owner declarations; provisional bounded945820 and9B2074 objects, not raw image aliases"], "reason": "Source-owned new-game/menu family preserving complete original identity, auxiliary spans and historical seed findings; existing genuine object lifetimes and typed member owners. Unfinished bodies remain explicit, not implementation coverage."}
 // TRIED: `SetupWin setup; Popup popup;` real locals (RAII for their destructor cascades) with the full main-menu retry loop transcribed via goto+labels matching original addresses (window-creation blocks x3, do_menu switch on 6 cases, new-game wizard parse_says/X_pop block); diverges at instr #14, not chased further given size.
@@ -1579,8 +1580,7 @@ int __cdecl top_menu(int mode) {
     // The menu loop is left only through gotos to the shared exit below; the
     // function ends in a top-level return, so it has no closing-brace
     // teardown (the image has two teardown sites, not three).
-    for (;;) {
-    top_menu_redraw:
+    do {
         if (ExpansionEnabled != 0) {
             init_opening(WinScreenWidth == 0x320
                 ? "xopeningb.pcx" : "xopeninga.pcx");
@@ -1614,38 +1614,34 @@ int __cdecl top_menu(int mode) {
         case 0:
         case 1:
             esi = map_menu(esi == 1 ? 1 : 0);
-    top_menu_after_action:
-            if (esi == 0) goto top_menu_normal_return;
-    top_menu_retry:
-            if (ExitTurnLoop != 0) goto top_menu_normal_return;
-            goto top_menu_redraw;
+            break;
 
         case 3:
             GameDataLoadRequest = mode;
             esi = load_game(0, 0);
             GameDataLoadRequest = 0;
-            if (esi != 0) goto top_menu_retry;
+            if (esi != 0) continue;
             ControlTurnPhase = ConsoleGlobal.faction_id_;
             if (GameSessionActive != 0) {
                 newgame_game_reload(0, 0);
             }
-            goto top_menu_after_action;
+            break;
 
         case 2:
             if (mode == 0) {
                 edi = 1;
                 esi = setup.do_menu(const_cast<char *>("SCENARIOMENU"), edi, 0);
-                if (esi < 0) goto top_menu_retry;
+                if (esi < 0) continue;
                 if (esi == edi) goto top_menu_new_game;
                 if (esi == 2) {
                     esi = load_map();
-                    if (esi != 0) goto top_menu_retry;
+                    if (esi != 0) continue;
                     config_game(3);
                     GameDataStateStorage.fields_.vehicle_current_count_ = 0;
                     setup_game(edi);
                     ControlTurnPhase = ConsoleGlobal.faction_id_;
                     GameDataStateStorage.fields_.game_state_ |= 0x080000E0u;
-                    goto top_menu_after_action;
+                    break;
                 }
             } else {
                 esi = 0;
@@ -1659,7 +1655,7 @@ int __cdecl top_menu(int mode) {
                 } else {
                     IsMultiplayerPBEM = 0;
                 }
-                if (loaded != 0) goto top_menu_retry;
+                if (loaded != 0) continue;
             }
             if (GameSessionActive != 0) {
                 newgame_game_reload(0, 0);
@@ -1672,7 +1668,7 @@ int __cdecl top_menu(int mode) {
             esi = config_game(2);
             if (esi != 0) {
                 read_rules(1);
-                goto top_menu_after_action;
+                break;
             }
             {
                 ControlTurnPhase = ConsoleGlobal.faction_id_;
@@ -1698,13 +1694,15 @@ int __cdecl top_menu(int mode) {
 
         case 4:
             esi = multiplayer_init(0);
-            goto top_menu_after_action;
+            break;
 
         case 5:
             show_credits();
-            goto top_menu_retry;
+            continue;
         }
-        goto top_menu_normal_return;
+        if (esi == 0) break;
+    } while (ExitTurnLoop == 0);
+    goto top_menu_normal_return;
 
     top_menu_new_game:
         size_of_planet(edi);
@@ -1720,8 +1718,6 @@ int __cdecl top_menu(int mode) {
         setup_game(edi);
         ControlTurnPhase = ConsoleGlobal.faction_id_;
         GameDataStateStorage.fields_.game_state_ |= 0x080000E0u;
-        goto top_menu_normal_return;
-    }
 
 top_menu_normal_return:
     if ((mode == 0 && (GameDataStateStorage.fields_.game_preferences_ & 0x800) != 0)
