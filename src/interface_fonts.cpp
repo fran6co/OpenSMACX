@@ -365,9 +365,6 @@ void __cdecl config_popups() {
 // ORIGINAL: 0x00588F90 ?alien_start@@YAXXZ 0x00588F90-0x0058917C BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:6e78872480ef8b4a486516e322f23e9f8652665d:src/recovered/units/00588f90.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json; preserve original extents and historical seed lessons. Ordinary owned literals have pinned content provenance, not exact original data-allocation claims."], "reason": "Recover first-turn alien faction suppression through real Player filename/rules, lock masks, descending Base/Veh lifetimes and faction records."}
 void __cdecl alien_start() {
-    static const char alien_filename_a[] = "FUNGBOY";
-    static const char alien_filename_b[] = "FUNGBOY";
-
     if (GameDataStateStorage.fields_.turn_current_num_ != 0 || ExpansionEnabled == 0) {
         return;
     }
@@ -380,7 +377,7 @@ void __cdecl alien_start() {
     StringTemp[0] = 0;
     strcat(StringTemp, Players[local_faction].filename);
     CharUpperA(StringTemp);
-    if (strcmp(StringTemp, alien_filename_a) == 0) {
+    if (strcmp(StringTemp, "FUNGBOY") == 0) {
         return;
     }
 
@@ -394,7 +391,7 @@ void __cdecl alien_start() {
         strcat(StringTemp, Players[faction_id].filename);
         CharUpperA(StringTemp);
         if ((Players[faction_id].rule_flags & RFLAG_ALIEN) == 0 &&
-            strcmp(StringTemp, alien_filename_b) != 0) {
+            strcmp(StringTemp, "FUNGBOY") != 0) {
             continue;
         }
 

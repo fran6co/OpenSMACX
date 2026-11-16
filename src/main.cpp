@@ -121,6 +121,24 @@ char CommandLineText[0x108];  // 0x007D3970
 // RECOVERY_OBJECT: v1 0x009469FC ?PopupModalActive@@3HA
 int PopupModalActive;  // 0x009469FC
 
+// WinMain's version check and engine bring-up are one inline wrapper around
+// jackal_init_real: its "10.10" literal (0x00685418) follows every WinMain
+// literal ("arialn.ttf" at 0x0068540C) because VC6 emits an inline
+// function's literal as a ??_C COMDAT when the expansion is compiled.
+// WORKAROUND(decl): the wrapper's original home (likely jackal.h) and name
+// are unknown; it is defined here so no other unit sees it.
+inline int __cdecl jackal_init(Palette *palette, Font *font, LPSTR window_name,
+                               int tgl_direct_draw, int display_width,
+                               int display_height, int colour_depth) {
+    // RECOVERY_LITERAL: v1 0x00685418 0x0068541E ??_C@_05DFGP@10?410?$AA@ 0x0045F950
+    int refused = jackal_version_check("10.10");
+    if (!refused) {
+        refused = jackal_init_real(palette, font, window_name, tgl_direct_draw,
+                                   display_width, display_height, colour_depth);
+    }
+    return refused;
+}
+
 /*
 Purpose: Bring up the process - preferences, display, sound, fonts - run the
          game, and tear it back down.
@@ -288,14 +306,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     // call to 0x0045FA54, and the second test at 0x0045FA50 falls INTO that
     // same block. That is one condition variable written twice and tested
     // once, which is this.
-    int refused = jackal_version_check("10.10");
-    if (!refused) {
-        refused = jackal_init_real(&g_PALETTE1, &g_JACKAL_FONT,
-                                   "Sid Meier's Alpha Centauri",
-                                   tgl_direct_draw ? 4 : 0,
-                                   display_width, display_height, colour_depth);
-    }
-    if (refused) {
+    if (jackal_init(&g_PALETTE1, &g_JACKAL_FONT,
+                    "Sid Meier's Alpha Centauri",
+                    tgl_direct_draw ? 4 : 0,
+                    display_width, display_height, colour_depth)) {
         return 0;
     }
 

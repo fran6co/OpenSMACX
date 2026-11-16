@@ -100,6 +100,7 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
     char num_text[80];
     char hex_text[80];
     while (1) {
+        // RECOVERY_LITERAL: v1 0x0069734C 0x0069734E $SG18199 0x00625880
         var = strstr(input, "$");
         if (!var) {
             break;

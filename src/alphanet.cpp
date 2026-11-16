@@ -66,8 +66,6 @@
 // preserve that storage identity; historical global names and TU are unproved.
 // RECOVERY_OBJECT: v1 0x00689238 ?AlphaNetServiceScript@@3PADA
 char AlphaNetServiceScript[7] = "jackal";
-// RECOVERY_OBJECT: v1 0x0068925C ?AlphaNetConnectScript@@3PADA
-char AlphaNetConnectScript[7] = "jackal";
 // RECOVERY_OBJECT: v1 0x00689298 ?AlphaNetCreateScript@@3PADA
 char AlphaNetCreateScript[7] = "jackal";
 // RECOVERY_OBJECT: v1 0x006892B8 ?AlphaNetMissingSessionScript@@3PADA
@@ -320,7 +318,8 @@ int AlphaNet::do_join_or_create() {
     // 54 45 00 at 0x689240. This writable-data correspondence does not claim
     // runtime immutability or linker selection.
     // RECOVERY_LITERAL: v1 0x689240 0x68925A $SG57129 0x4E29E0
-    const int selected = x_pop_caption_flags(AlphaNetConnectScript, "NETCONNECT_JOIN_OR_CREATE", 0x50, 0);
+    // RECOVERY_LITERAL: v1 0x68925C 0x689263 $SG57133 0x4E29E0
+    const int selected = x_pop_caption_flags("jackal", "NETCONNECT_JOIN_OR_CREATE", 0x50, 0);
     if (selected < 0) return 1;
     if (selected == 1) {
         if (join() == 0) return 1;
@@ -424,17 +423,10 @@ int AlphaNet::setup(int option) {
             Net::close();
             return 0;
         }
-        const int selected = x_pop_caption_flags(AlphaNetConnectScript, "NETCONNECT_JOIN_OR_CREATE", 0x50, 0);
-        if (selected < 0) goto failed;
-        if (selected == 1) {
-            if (join() == 0) goto failed;
-            goto connected;
-        }
-        if (create() != 0) goto connected;
-failed:
-        return 1;
+        // do_join_or_create is expanded here: the image pushes its own
+        // "NETCONNECT_JOIN_OR_CREATE"/"jackal" literals (0x689240/0x68925C).
+        if (do_join_or_create() != 0) return 1;
     } else voice_flags_D8_ |= 1;
-connected:
     voice_hotkey_48_ = 0xDC;
     voice_hotkey_4c_ = 0x100DC;
     return 0;

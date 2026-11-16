@@ -36,6 +36,7 @@
 #include "council.h"
 #include "terraforming.h"
 #include "shared_word.h"
+#include "help_link.h"
 
 // Shared punctuation objects the image pushes instead of unit literals.
 extern char SocialWinCloseParenText[];
@@ -1194,13 +1195,11 @@ void __cdecl help_topic(unsigned int topic, int index) {
     DatalinkMain.exec(topic, index);
 }
 
-// The help-link markup tokens, pushed as shared objects by every unit that
-// writes a $LINK<text=id> reference (Datalink and ReportWin renderers too).
-// RECOVERY_OBJECT: v2 0x00683544 0x0068354B ?HelpLinkOpenText@@3PADA 0x0044CB87
+// The image's help-link tokens at 0x00683544/40/3C are help_create_link's
+// own linker-merged literals (datalink.h). These arrays remain only for
+// ReportWin's written-out links until that unit calls the helper.
 char HelpLinkOpenText[] = "$LINK<";                 // 0x00683544
-// RECOVERY_OBJECT: v2 0x00683540 0x00683542 ?HelpLinkEqualsText@@3PADA 0x0044CB9C
 char HelpLinkEqualsText[] = "=";                    // 0x00683540
-// RECOVERY_OBJECT: v2 0x0068353C 0x0068353E ?HelpLinkCloseText@@3PADA 0x0044CBB1
 char HelpLinkCloseText[] = ">";                     // 0x0068353C
 
 /*
@@ -1210,17 +1209,16 @@ Purpose: Append one clickable cross-reference to a caller-owned help buffer.
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0044CB80 ?help_create_link@@YAXPAD00@Z 0x0044CB80-0x0044CBC2 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x0068353C-0x0068354A contains the original markup strings >, = and $LINK<", "source:src/recovered/units/0044cb80.cpp preserves five strcat calls and the original 0x0044CB80 span", "source:src/leaf_recoveries.cpp help builders call this free helper"], "reason": "Home the Datalink-family link formatter as ordinary C++ markup construction in the product TU, replacing the empty leaf placeholder while retaining the original identity."}
+// body      src/datalink.h
 // size      66 bytes
 Return Value: n/a
 Status: Product body; measure before granting a byte claim.
 */
-void __cdecl help_create_link(char *out, char *label, char *id) {
-    strcat(out, HelpLinkOpenText);
-    strcat(out, label);
-    strcat(out, HelpLinkEqualsText);
-    strcat(out, id);
-    strcat(out, HelpLinkCloseText);
-}
+// BODY IN datalink.h, as `MEASURED inline`: help_tech_info and three
+// Datalink pages expand it; this unit keeps the out-of-line copy.
+// RECOVERY_LITERAL: v2 merged 0x00683544 0x0068354B ??_C@_06OJDK@$LINK?$DM?$AA@ 0x0044CB80
+// RECOVERY_LITERAL: v2 merged 0x00683540 0x00683542 ??_C@_01KPOD@?$DN?$AA@ 0x0044CB80
+// RECOVERY_LITERAL: v2 merged 0x0068353C 0x0068353E ??_C@_01FAFK@?$DO?$AA@ 0x0044CB80
 
 // Superseded seed removal retains historical Git provenance below.
 // ORIGINAL: 0x0044CBD0 sub_44cbd0 0x0044CBD0-0x0044CC18 BYTE_EXACT

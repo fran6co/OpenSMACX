@@ -67,11 +67,9 @@
 #include "terraforming.h"
 #include "texture.h"
 #include "font_metrics.h"
+#include "help_link.h"
 
 // Shared punctuation objects the image pushes instead of unit literals.
-extern char HelpLinkOpenText[];
-extern char HelpLinkEqualsText[];
-extern char HelpLinkCloseText[];
 
 // Shared separator objects the image pushes instead of unit literals.
 extern const char BufferJoinSpace[];
@@ -380,11 +378,7 @@ void Datalink::draw_unit() {
         link[0] = 0;
         _itoa(tech + 140000, number, 10);
         strcat(link, number);
-        strcat(StringTemp, HelpLinkOpenText);
-        strcat(StringTemp, name);
-        strcat(StringTemp, HelpLinkEqualsText);
-        strcat(StringTemp, link);
-        strcat(StringTemp, HelpLinkCloseText);
+        help_create_link(StringTemp, name, link);
     } else {
         strcat(StringTemp, name);
     }
@@ -515,11 +509,7 @@ void Datalink::draw_chassis() {
         link[0] = 0;
         _itoa(tech + 140000, number, 10);
         strcat(link, number);
-        strcat(StringTemp, HelpLinkOpenText);
-        strcat(StringTemp, name);
-        strcat(StringTemp, HelpLinkEqualsText);
-        strcat(StringTemp, link);
-        strcat(StringTemp, HelpLinkCloseText);
+        help_create_link(StringTemp, name, link);
     } else {
         strcat(StringTemp, name);
     }
@@ -1149,11 +1139,7 @@ void Datalink::draw_social() {
                     strcat(StringTemp, BufferJoinSpace);
                     char link[20];
                     _itoa(i + 130000, link, 10);
-                    strcat(StringTemp, HelpLinkOpenText);
-                    strcat(StringTemp, SocialEffects[i].set2);
-                    strcat(StringTemp, HelpLinkEqualsText);
-                    strcat(StringTemp, link);
-                    strcat(StringTemp, HelpLinkCloseText);
+                    help_create_link(StringTemp, SocialEffects[i].set2, link);
                     write_l(StringTemp, x, y);
                     y += font_line_advance(body_font_);
                 }

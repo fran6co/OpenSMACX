@@ -160,13 +160,8 @@ static inline void write_label(NetSessionPickerWin *win, char *text,
 }
 
 void NetSessionPickerWin::on_redraw() {
-  // These bytes are the pinned UI literals at 0x698C88 and 0x698C9C. Keep
-  // their exact display spelling; no external data address is used.
-  static char available_sessions[] = "Available Sessions";
-  static char current_players[] = "Current Players";
-
-  write_label(this, available_sessions, &tail_.first_label_rect_);
-  write_label(this, current_players, &tail_.second_label_rect_);
+  write_label(this, "Available Sessions", &tail_.first_label_rect_);
+  write_label(this, "Current Players", &tail_.second_label_rect_);
   draw_selected_rows();
   draw_frame();
 }
@@ -316,9 +311,8 @@ void NetSessionPickerWin::refresh_player_list() {
   items.current_position_ = 0;
   items.allocator_ = 0;
 
-  static char no_sessions[] = "NO SESSIONS (Translate this)";
   if (sessions_.entry_count_ == 0) {
-    view->item(no_sessions, 0);
+    view->item("NO SESSIONS (Translate this)", 0);
   } else {
     sessions_.seek_pos(-1);
 
@@ -578,9 +572,8 @@ int NetSessionPickerWin::connect_session() {
 // flags     sp_ready;purged_ok
 // calls     0x00627200 0x0062E540 0x00644F3A
 int NetSessionPickerWin::join_selected_session() {
-    static char caption[] = "jackal";
-    static char label[] = "NETCONNECT_JOIN";
-    if (pop_caption_value_title(caption, label, 0x3c, 0x44, 0) == -1) {
+    if (pop_caption_value_title("jackal", "NETCONNECT_JOIN", 0x3c, 0x44,
+                                0) == -1) {
         return 1;
     }
 
@@ -595,7 +588,10 @@ int NetSessionPickerWin::join_selected_session() {
     const int result = net_->join_session(
         session, ParseStrBuffer[0].str, 0);
     tail_.action_result_ = result;
-    return result == 0;
+    if (result != 0) {
+        return 0;
+    }
+    return 1;
 }
 
 // ORIGINAL: 0x0063C3A0 sub_63c3a0 0x0063C3A0-0x0063C4D6 FILE BYTE_EXACT
@@ -608,19 +604,11 @@ void NetSessionPickerWin::on_button_clicked(int action) {
     if (connect_session() != 0) return;
     release_modal();
     return;
-  case -1: {
-    const int selection = pop_caption_value_title(
-        "jackal", "NETCONNECT_JOIN", 0x3c, 0x44, 0);
-    if (selection == -1) return;
-
-    sessions_.seek_pos(sessions_view_.selected_position_);
-    NetAllocationNode *session = sessions_.head_ != 0
-        ? sessions_.current_->payload_ : 0;
-    tail_.action_result_ = net_->join_session(
-        session, ParseStrBuffer[0].str, 0);
-    if (tail_.action_result_ != 0) release_modal();
+  case -1:
+    // join_selected_session is expanded here: the image pushes its
+    // "jackal"/"NETCONNECT_JOIN" literals (0x698C60/0x698C50).
+    if (!join_selected_session()) release_modal();
     return;
-  }
   case -2:
     tail_.action_result_ = 0;
     release_modal();

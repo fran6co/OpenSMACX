@@ -4,15 +4,7 @@
 #include "rectangle_operations.h"
 #include <stdio.h>
 
-// Each phase has its own original entry-message object. The process methods
-// and registry pump share these with the corresponding standalone helper.
-// The names and constness are current representations; full original bounds
-// and original source declarations remain unproved.
 namespace {
-// RECOVERY_OBJECT: v1 0x00698870 _video_decode_phase_entering
-const char video_decode_phase_entering[] = "Entering";
-// RECOVERY_OBJECT: v1 0x00698894 _video_read_phase_entering
-const char video_read_phase_entering[] = "Entering";
 // read_frame's still-frame log names its own "read_frame()" copy; a pooled
 // literal lets VC6 merge that push into the normal-frame tail.
 // RECOVERY_OBJECT: v1 0x00698918 _video_read_frame_still_name
@@ -169,32 +161,19 @@ void Video::close() {
 #pragma intrinsic(memset)
 #endif
 
-// RECOVERY_LITERAL: v1 0x0069887C 0x00698891 $SG47515 0x00636FC0
-// RECOVERY_LITERAL: v1 0x006988A0 0x006988B3 $SG47520 0x00636FC0
 // ORIGINAL: 0x00636FC0 ?process@Video@@QAEXXZ 0x00636FC0-0x0063706F FILE BYTE_EXACT
 // symbol    ?process@Video@@QAEXXZ
 // LEVER: one 32-bit `flags` load reused for the first `& 0x8000`/`& 0x10` pair (matches the original's single `mov eax` feeding both `test ah,0x80` and `test al,0x10`), fresh byte reloads for every later `& 0x10` check (matches the repeated `mov al, [esi+0x4ac]` after each intervening call), and `while (r != 0 && (r = decode_frame(0)) != 0) r = play_frame();` for the tail loop. First try, byte exact.
 void Video::process() {
+  // decode_frame_process and read_frame_process are expanded here; the image
+  // pushes their own literals (0x00698870-0x006988A0).
   const unsigned int flags = flags_;
   if ((flags & 0x8000) != 0) {
     if ((flags & 0x10) == 0) {
       if (play_frame() != 0) return;
-      log_say("decode_frame_process", video_decode_phase_entering,
-              static_cast<int>(timeGetTime()), 0, 0);
-      if ((static_cast<unsigned char>(flags_) & 0x10) == 0) {
-        play_frame();
-        if (decode_frame(0) != 0) return;
-      }
+      if (decode_frame_process() != 0) return;
     }
-    log_say("read_frame_process", video_read_phase_entering,
-            static_cast<int>(timeGetTime()), 0, 0);
-    if ((static_cast<unsigned char>(flags_) & 0x10) == 0) {
-      int result = play_frame();
-      while (result != 0 && (result = decode_frame(0)) != 0) {
-        result = play_frame();
-      }
-    }
-    read_frame();
+    read_frame_process();
   }
 }
 
@@ -234,7 +213,9 @@ int __stdcall Video_unk7(int, int) {
 // ORIGINAL: 0x00637870 ?decode_frame_process@Video@@QAEXXZ 0x00637870-0x006378B0 FILE BYTE_EXACT
 // symbol    ?decode_frame_process@Video@@QAEHXZ
 int Video::decode_frame_process() {
-  log_say("decode_frame_process", video_decode_phase_entering,
+  // RECOVERY_LITERAL: v1 0x00698870 0x00698879 $SG47537 0x00637870
+  // RECOVERY_LITERAL: v1 0x0069887C 0x00698891 $SG47538 0x00637870
+  log_say("decode_frame_process", "Entering",
           static_cast<int>(timeGetTime()), 0, 0);
   if ((static_cast<unsigned char>(flags_) & 0x10) != 0) return 0;
   play_frame();
@@ -244,7 +225,9 @@ int Video::decode_frame_process() {
 // ORIGINAL: 0x006378B0 ?read_frame_process@Video@@QAEXXZ 0x006378B0-0x00637906 FILE BYTE_EXACT
 // symbol    ?read_frame_process@Video@@QAEXXZ
 void Video::read_frame_process() {
-  log_say("read_frame_process", video_read_phase_entering,
+  // RECOVERY_LITERAL: v1 0x00698894 0x0069889D $SG47545 0x006378B0
+  // RECOVERY_LITERAL: v1 0x006988A0 0x006988B3 $SG47546 0x006378B0
+  log_say("read_frame_process", "Entering",
           static_cast<int>(timeGetTime()), 0, 0);
   if ((static_cast<unsigned char>(flags_) & 0x10) == 0) {
     int result = play_frame();
@@ -654,30 +637,12 @@ int Video::register_window_buffer(int x, int y, GraphicWin *window,
 // symbol    ?do_video@@YAXXZ
 // TRIED: nothing yet - MISMATCH #2 mov/push, mnemonic similarity 0.908. for-loop and do/while shaped identically; not chased further.
 void __cdecl do_video() {
-  // Native636300 inlines the same pipeline, but its actual call targets are
-  // play_frame/decode_frame/read_frame, not Video::process. Keep those calls.
+  // Video::process is expanded per registered video, with its
+  // decode_frame_process/read_frame_process expansions.
   // Reload the count after each iteration; callbacks can rethread the registry.
   for (int index = 0; index < VideoRegistryCount; ++index) {
     // Count 11 reads past the ten-entry registry, as the original does.
-    Video *const video = VideoRegistry[index];
-    if ((video->flags_ & 0x8000) == 0) continue;
-    if ((video->flags_ & 0x10) == 0) {
-      if (video->play_frame() != 0) continue;
-      log_say("decode_frame_process", video_decode_phase_entering,
-              static_cast<int>(timeGetTime()), 0, 0);
-      if ((video->flags_ & 0x10) == 0) {
-        video->play_frame();
-        if (video->decode_frame(0) != 0) continue;
-      }
-    }
-    log_say("read_frame_process", video_read_phase_entering,
-            static_cast<int>(timeGetTime()), 0, 0);
-    if ((video->flags_ & 0x10) == 0) {
-      int result = video->play_frame();
-      while (result != 0 && (result = video->decode_frame(0)) != 0)
-        result = video->play_frame();
-    }
-    video->read_frame();
+    VideoRegistry[index]->process();
   }
 }
 

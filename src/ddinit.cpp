@@ -434,35 +434,11 @@ Status: Complete
 */
 int DDInit::report_error(int hr) {
     switch (hr) {
-    case DDERR_SURFACEALREADYATTACHED:
-        parse_says(0, "DDERR_SURFACEALREADYATTACHED", -1, -1);
-        break;
-    case DDERR_NOCOLORKEY:
-        parse_says(0, "DDERR_NOCOLORKEY", -1, -1);
-        break;
-    case DDERR_INVALIDCAPS:
-        parse_says(0, "DDERR_INVALIDCAPS", -1, -1);
+    case DDERR_ALREADYINITIALIZED:
+        parse_says(0, "DDERR_ALREADYINITIALIZED", -1, -1);
         break;
     case DDERR_CANNOTATTACHSURFACE:
         parse_says(0, "DDERR_CANNOTATTACHSURFACE", -1, -1);
-        break;
-    case DDERR_OUTOFMEMORY:
-        parse_says(0, "DDERR_OUTOFMEMORY", -1, -1);
-        break;
-    case DDERR_UNSUPPORTED:
-        parse_says(0, "DDERR_UNSUPPORTED", -1, -1);
-        break;
-    case DDERR_GENERIC:
-        parse_says(0, "DDERR_GENERIC", -1, -1);
-        break;
-    case DDERR_NOTINITIALIZED:
-        parse_says(0, "DDERR_NOTINITIALIZED", -1, -1);
-        break;
-    case DDERR_INVALIDPARAMS:
-        parse_says(0, "DDERR_INVALIDPARAMS", -1, -1);
-        break;
-    case DDERR_ALREADYINITIALIZED:
-        parse_says(0, "DDERR_ALREADYINITIALIZED", -1, -1);
         break;
     case DDERR_CANNOTDETACHSURFACE:
         parse_says(0, "DDERR_CANNOTDETACHSURFACE", -1, -1);
@@ -473,11 +449,17 @@ int DDInit::report_error(int hr) {
     case DDERR_EXCEPTION:
         parse_says(0, "DDERR_EXCEPTION", -1, -1);
         break;
+    case DDERR_GENERIC:
+        parse_says(0, "DDERR_GENERIC", -1, -1);
+        break;
     case DDERR_HEIGHTALIGN:
         parse_says(0, "DDERR_HEIGHTALIGN", -1, -1);
         break;
     case DDERR_INCOMPATIBLEPRIMARY:
         parse_says(0, "DDERR_INCOMPATIBLEPRIMARY", -1, -1);
+        break;
+    case DDERR_INVALIDCAPS:
+        parse_says(0, "DDERR_INVALIDCAPS", -1, -1);
         break;
     case DDERR_INVALIDCLIPLIST:
         parse_says(0, "DDERR_INVALIDCLIPLIST", -1, -1);
@@ -487,6 +469,9 @@ int DDInit::report_error(int hr) {
         break;
     case DDERR_INVALIDOBJECT:
         parse_says(0, "DDERR_INVALIDOBJECT", -1, -1);
+        break;
+    case DDERR_INVALIDPARAMS:
+        parse_says(0, "DDERR_INVALIDPARAMS", -1, -1);
         break;
     case DDERR_INVALIDPIXELFORMAT:
         parse_says(0, "DDERR_INVALIDPIXELFORMAT", -1, -1);
@@ -511,6 +496,9 @@ int DDInit::report_error(int hr) {
         break;
     case DDERR_NOCOOPERATIVELEVELSET:
         parse_says(0, "DDERR_NOCOOPERATIVELEVELSET", -1, -1);
+        break;
+    case DDERR_NOCOLORKEY:
+        parse_says(0, "DDERR_NOCOLORKEY", -1, -1);
         break;
     case DDERR_NOCOLORKEYHW:
         parse_says(0, "DDERR_NOCOLORKEYHW", -1, -1);
@@ -569,6 +557,9 @@ int DDInit::report_error(int hr) {
     case DDERR_OUTOFCAPS:
         parse_says(0, "DDERR_OUTOFCAPS", -1, -1);
         break;
+    case DDERR_OUTOFMEMORY:
+        parse_says(0, "DDERR_OUTOFMEMORY", -1, -1);
+        break;
     case DDERR_OUTOFVIDEOMEMORY:
         parse_says(0, "DDERR_OUTOFVIDEOMEMORY", -1, -1);
         break;
@@ -584,8 +575,8 @@ int DDInit::report_error(int hr) {
     case DDERR_COLORKEYNOTSET:
         parse_says(0, "DDERR_COLORKEYNOTSET", -1, -1);
         break;
-    case DDERR_HWNDALREADYSET:
-        parse_says(0, "DDERR_HWNDALREADYSET", -1, -1);
+    case DDERR_SURFACEALREADYATTACHED:
+        parse_says(0, "DDERR_SURFACEALREADYATTACHED", -1, -1);
         break;
     case DDERR_SURFACEALREADYDEPENDENT:
         parse_says(0, "DDERR_SURFACEALREADYDEPENDENT", -1, -1);
@@ -613,6 +604,9 @@ int DDInit::report_error(int hr) {
         break;
     case DDERR_TOOBIGWIDTH:
         parse_says(0, "DDERR_TOOBIGWIDTH", -1, -1);
+        break;
+    case DDERR_UNSUPPORTED:
+        parse_says(0, "DDERR_UNSUPPORTED", -1, -1);
         break;
     case DDERR_UNSUPPORTEDFORMAT:
         parse_says(0, "DDERR_UNSUPPORTEDFORMAT", -1, -1);
@@ -658,6 +652,9 @@ int DDInit::report_error(int hr) {
         break;
     case DDERR_HWNDSUBCLASSED:
         parse_says(0, "DDERR_HWNDSUBCLASSED", -1, -1);
+        break;
+    case DDERR_HWNDALREADYSET:
+        parse_says(0, "DDERR_HWNDALREADYSET", -1, -1);
         break;
     case DDERR_NOPALETTEATTACHED:
         parse_says(0, "DDERR_NOPALETTEATTACHED", -1, -1);
@@ -730,6 +727,9 @@ int DDInit::report_error(int hr) {
         break;
     case DDERR_NOTPAGELOCKED:
         parse_says(0, "DDERR_NOTPAGELOCKED", -1, -1);
+        break;
+    case DDERR_NOTINITIALIZED:
+        parse_says(0, "DDERR_NOTINITIALIZED", -1, -1);
         break;
     default:
         break;
