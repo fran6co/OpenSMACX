@@ -1097,6 +1097,176 @@ raw field access where the original used inline accessors.
   redeclaration after the SDK's dllimport one sends every later call in
   the unit (inline bodies included) through the thunk; one unit cannot mix
   both by declaration order.
+- **A Spot::add reading a partially stored RECT copy** is `RECT r = area;
+  r.right += K;` passed to the RECT-form add expanded in place.
+- **VC6 packs locals into dead parameter slots in an order declarations
+  do not control**: when the image keeps a variable in a specific
+  incoming slot, use that parameter directly (draw_status).
+- **A frame-resident scalar whose dead stores survive** was not a register
+  candidate in the original; `volatile` approximates it (with reloads),
+  `(void)&x` does not.
+- **`G[i]++` on a loaded counter inlines as `mov r2,r1; inc r1`**;
+  `G[i] = loaded + 1` inlines as `lea r2,[r1+1]` (same standalone body):
+  pick by the image's inlined copies.
+- **A shared `return 0` that keeps its own xor** while other sites jump in
+  was reached by goto; VC6 places the block at the last goto in source.
+- **`movsx eax, byte [g]; and eax,1`** comes from a named int local
+  initialised from the char; casts and char-returning inlines fold.
+- **The per-callee inline cap counts invented accessor calls** (an inline
+  returning `T *&` costs like a member call); reading the global directly
+  can bring a callee under the cap.
+- **Inline setter stores pin scheduling**: a store through an inline
+  member setter stops VC6 hoisting a later virtual-base pointer load
+  above it.
+- **A prologue save the image does early** can come from an early arm
+  that duplicates the final tail call and returns.
+- **A guarded tail cross-jumped from two sibling arms** was written once
+  after the arms.
+- **VC6 makes inline decisions at a block's written source position**,
+  not where it lays the block out: an `||` tested at an early goto site
+  whose `= 1` arm sits before a later label was written at that later
+  position (communicate: moving it sent has_treaty/has_agenda out of
+  line and freed probe budget).
+- **Getter spellings are natural spend** (get_title/get_name/get_noun/
+  get_adjective instead of parse_set + field): identical bytes at the
+  site, but they spend /Ob2 budget; measure per function.
+- **The per-callee inline cap counts member-access depth**:
+  `obj.a[i].b[j]` can put a body over the cap where `obj.direct_member`
+  or a plain global fits with identical code; absolute image accesses to
+  a global object's field suggest a direct member.
+- **Inline decisions are not forward-greedy**: an earlier site can refuse
+  a callee a later site expands.
+- **Small callers sit at a minimum budget**: added statements move
+  nothing there, while a few dead statements can flip a large caller's
+  nested decision.
+- **A width computed right-then-left with `sub reg,[left]` inside an
+  argument list** is a `RECT*` width helper; a named width local loads
+  left first and CSEs it with a later argument.
+- **A parameter kept in one register across a clamp** was reassigned in
+  place, not copied to a local.
+- **An index register equal to a value just compared** means the source
+  indexed by the compared expression.
+- **label_get vs written-out label reads is per site and greedy**: one
+  site can rotate registers through the whole function.
+- **Definition order does not gate inlining of explicit inlines**: VC6
+  decides at the end of the unit.
+- **Spend that refuses a depth-2 call must sit inside the inlined callee,
+  before the call**; caller-level probes rarely reach it.
+- **A function whose full body is expanded in another unit's callers is a
+  header inline** (and keeps its out-of-line copy for other callers).
+- **A condition equal to a same-unit predicate's body was a call to it**,
+  expanded inline; the raw expression lays out the then-block after the
+  join (monolith 0.866 -> 0.973).
+- **`if (c) goto L; B; L:` with an earlier goto to L** moves B far away;
+  a fall-through B in the image was a structured `if (!c) { B }`.
+- **Four rect stores after all four edges are computed** (right-to-left
+  argument order) are one inline LTRB setter call.
+- **A raw global store pair can change a later load's register** (and
+  the short `mov eax,[abs]` encoding shifts every later byte): use the
+  accessor (parse_set) and spell the next site as the image does.
+- **`f(a) < f(b)` with the left call first and spilled** is
+  `int t = f(a); if (t < f(b))`.
+- **VC6 drops dead stores to a volatile local after its last read**, so a
+  volatile stand-in reproduces kept dead stores only up to that read.
+- **An inline helper called out of line at every site of one unit,
+  while its owner expands it**, means that unit saw only a declaration
+  (or lies across an original TU boundary); check all image call sites
+  before blaming budget.
+- **A local copy of a byte field in an `a == x || (x == K && ...)` chain**
+  lets VC6 thread the known value (an extra jmp); read the field per use.
+- **Re-sweep dead-probe counts after restoring a natural out-of-line
+  call**: the freed budget changes the count.
+- **A jne back to an earlier inline `return 0` with eax == 0 reused** is
+  an else arm: `if (!f()) { ... } else { return 0; }` tail-merges into the
+  earlier return; `if (f()) return 0;` gets its own epilogue.
+- **A frame gap means a used local is larger or missing**, never dead
+  padding (unused locals get no slot).
+- **A callee's body expanded in a caller with the callee's own static
+  pushed** means they shared an original TU (VC6 cannot inline across
+  TUs): merge the units and a plain call reproduces the expansion
+  (load_game / wipe_undo).
+- **An expanded inline's result assigned straight to a global** can give
+  one store per return arm; a named local then the global gives one store
+  after the join.
+- **Shared-literal proof of TU membership**: under unpooling, a function
+  can push another function's literal only by expanding it in the same
+  object — use this to confirm or rule out TU boundaries.
+- **Replacing a raw predicate body with a call to it can be
+  byte-identical at the site**: keep it for faithfulness; gains come where
+  the raw body differed in register or CSE use.
+- **Tooling: compare object sections order-insensitively** — VC6 shuffles
+  small COMDAT section order between builds of the same source.
+- **An original unit is one unbroken code run and one unbroken literal
+  run in the image**; a source file spanning several long runs holds
+  several original units, and 1-2 function runs are header/initializer
+  copies.
+- **Header inline vs merged unit**: if a function's copy sits in unit X's
+  code, nothing in X calls it out of line, and a small caller elsewhere
+  calls rather than expands it, it was a plain function of X; expansions
+  elsewhere mean that code was compiled in X too (game_reload).
+- **Window positioning through Buffer getters**: `Win::move(K -
+  pixel_width(), ...)` loads width before the divide's cdq; raw
+  `dib_.bmiHeader` reads do not (MultiWin::init).
+- **The final teardown takes all leftover budget**: when the image's
+  final teardown is shallow and ours deep, dead spend cannot fix it.
+- **Retry jumps landing after a loop's zero test, action paths on it**:
+  the source was `do { ... if (!x) break; } while (!exit);` with continue
+  and break, not a for(;;) with gotos.
+- **A dead store the image keeps on a member RECT** means the source
+  wrote through a `RECT &` reference; direct member stores let VC6 drop
+  it (Datalink::init).
+- **A push one byte longer than ours (`mov ecx,[abs]` vs `mov eax,[abs]`)**
+  after a parse call can come from the previous site's label_get vs
+  written-out choice; compare lengths before blaming tables or extents.
+- **Tool trap: `pgrep -f`/`pkill -f` in a wait loop match the loop's own
+  command line**; wait on an output file instead.
+- **Removing a whole original code run from a unit is safe**: the
+  remaining functions' bytes do not move, unlike adding or removing
+  single helpers.
+- **A census "expanded in" flag can be a false positive** (sibling bodies
+  of the same shape): confirm with a call-restore measurement.
+- **VC6 fixes the evaluation order of a sum of calls**: permutations and
+  parenthesisations compile identically.
+- **A per-unit flat-member opt-in is safe for other units**: units on
+  the old view keep identical code; the opted-in unit needs a literal
+  rebind.
+- **Read an expansion shortfall from one written-out site**: write out
+  one earlier branchy expansion; if the target site then expands with no
+  other call change, the shortfall is exactly one expansion.
+- **A goto-shared block is laid out at the early goto** when written after
+  a returning `if (!x) { ...; return; }`; written inside the early or late
+  `if` it is laid out at the late site (propose_attack 648 -> 85 lines).
+- **Teardown depth can be zero-sum between two sites**: a probe count
+  cannot fix it; it needs more total budget (caller size).
+- **A frame a few dwords short with fewer bitmask calls than the image**
+  points to has_fac expansions refused for budget; check the inline's
+  forwarding layers first.
+- **Separate return-0/return-1 epilogues** come from one result variable
+  assigned in an if/else and returned once; early returns cross-jump
+  (Net::check_message).
+- **Cross-jumping happens after register allocation**: identical tails
+  merge only when their arguments share registers; respelling the tail
+  does not stop a merge.
+- **A jump-threaded `||` moves its block to the function end**: test the
+  shared term once and `goto` into `if (!s) { reject: ... }` instead
+  (propose_pact).
+- **Auto-inlining is blocked by a named local pointer in the callee**:
+  index the global directly (see_map_check).
+- **Struct locals are scalarised** unless an inline takes their address;
+  then the frame slots and dead field stores return.
+- **`r = src; expand_rect(&r, K, K)`** gives `mov eax,K; add r,eax` with
+  `add r,-K` immediates; per-field `src.f +/- k` gives a different load
+  order (bottom, right, top, left instead of bottom, top, right, left).
+- **Real getter expansions move a final teardown** where dead probes at
+  the same spot do not (probe).
+- **Declaration order inside an inlined helper can move registers in
+  every caller**, unlike declaration order in the caller itself.
+- **Refused StringList walks under STRINGSTRUCT_REMOVE_ALL_CALLED call
+  `?remove_all_walk`**, which the image does not have; masked measurement
+  hides the wrong relocation target.
+- **Deleting an unused declaration from a wide header is a header change**:
+  it shifts `$SG` numbering and can flip ties; vet it with
+  `check-matches --since`, not object compares alone.
 - **Canonicalised forms (not levers).** `f(a) < f(b)` and its mirrored or
   negated forms give the same call order; `a * b` vs `b * a` compile
   identically.
