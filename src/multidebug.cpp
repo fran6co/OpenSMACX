@@ -92,7 +92,7 @@ void MultiDebug::close() {
     net_ = 0;
 }
 
-// RECOVERY_LITERAL: v1 0x00691E80 0x00691E90 $SG45985 0x005C9860
+// RECOVERY_LITERAL: v1 0x00691E80 0x00691E90 $SG45986 0x005C9860
 /*
 Purpose: Bring the standing debug window up on its GraphicWin base, then
          arm the pieces that make it a debug window: the face it draws with,
