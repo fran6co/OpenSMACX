@@ -6,6 +6,7 @@
 // RECOVERY_BINDING: v1 {"evidence": ["historical deleting-thunk source src/deleting_thunks.cpp; original full spans retained: 0x0047A6C0-0x0047A6E1", "Pinned class constructor ??0MultiWin@@QAE@XZ at 0x0047A590 stores original class/view table VA 0x66c9f0 at 0x0047A69B (mov dword ptr [esi], 0x66c9f0); the current genuine owner vftable ??_7MultiWin@@6BWin@@@ selects generated ??_GMultiWin@@UAEPAXI@Z in slot 0 (+0x0) through weak entry ??_EMultiWin@@UAEPAXI@Z (mode 2).", "Pinned ??_GMultiWin@@UAEPAXI@Z at 0x0047A6C0 calls the source-mapped ??1MultiWin@@QAE@XZ at 0x0047A430, then tests byte ptr [ebp + 8], 1; je 0x47a6da bypasses scalar delete when bit 0 is clear, while bit 0 set calls 0x0064557F; it save original this; call destructor; delete only when flags bit 0 is set; return saved this with ret 4.", "The real class lifetime is owned by src/multiwin.cpp; its compiler-emitted deleting symbol and vftable slot carry this original identity. Hand-written adapter bodies with live adjustor callers remain until those callers are independently qualified and transferred. The linked weak/COMDAT copy is not used to choose source ownership.", "the source writer preserves the historical mapping's exactness state (historical exactness obligation retained); current compiler extent is not asserted equal to the original span"], "reason": "Bind the original MultiWin scalar deleting-destructor identity to the actual compiler-emitted class deleting destructor in its genuine owner translation unit. The original constructor's pinned vptr store and the current owner's physical table slot identify this class/view; no callback/thunk body is hand-authored here."}
 // symbol    ??_GMultiWin@@UAEPAXI@Z
 // kind      game
+#define FLATBUTTON_SLICE_COLOURS_PUBLIC  // direct field_ABC_ stores in init (WORKAROUND(decl) in flatbutton.h)
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "multiwin.h"
@@ -893,17 +894,15 @@ void MultiWin::on_right_click(int x, int y) {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x9F0 / 4));
     strcat(StringTemp, BufferJoinSpace);
-    PluralityDefault = 0;
-    GenderDefault = Players[faction].is_leader_female;
+    parse_set(Players[faction].is_leader_female, 0);
     char *const title = Players[faction].title_leader;
     strcat(StringTemp, title);
     strcat(StringTemp, BufferJoinSpace);
-    PluralityDefault = 0;
-    GenderDefault = Players[faction].is_leader_female;
+    parse_set(Players[faction].is_leader_female, 0);
     char *const name = Players[faction].name_leader;
     strcat(StringTemp, name);
     menu.add_item(1, StringTemp);
-    menu.add_item(2, label_get(0x9F4 / 4));
+    menu.add_item(2, StringTable.get(Labels.strings_ptr[0x9F4 / 4]));
 
     if (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction] & 7) {
         menu.add_separator(0x63);
@@ -1034,7 +1033,11 @@ void MultiWin::init() {
                            static_cast<Win *>(this), 0);
         flat_button2_.hide();
         flat_button2_.set_report_icons(&sprites1_[0], &sprites1_[1], &sprites1_[2]);
-        flat_button2_.set_slice_colours(0x65, 0x41, 0x41);
+        // 0x0047A28E: the colours are stored this-relative, not through
+        // set_slice_colours' receiver register.
+        flat_button2_.field_ABC_[0] = 0x65;
+        flat_button2_.field_ABC_[1] = 0x41;
+        flat_button2_.field_ABC_[2] = 0x41;
         flat_button2_.redraw();
         top -= sprite7_.height();
     }
@@ -1046,7 +1049,10 @@ void MultiWin::init() {
                            static_cast<Win *>(this), 0);
         flat_button1_.hide();
         flat_button1_.set_report_icons(&sprites1_[0], &sprites1_[1], &sprites1_[2]);
-        flat_button1_.set_slice_colours(0x65, 0x41, 0x41);
+        // 0x0047A34E: stored this-relative, as for flat_button2_.
+        flat_button1_.field_ABC_[0] = 0x65;
+        flat_button1_.field_ABC_[1] = 0x41;
+        flat_button1_.field_ABC_[2] = 0x41;
         flat_button1_.redraw();
     }
 

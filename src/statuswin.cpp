@@ -1416,8 +1416,8 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
             strcat(StringTemp, has_fac(FAC_HEADQUARTERS, base_id, 0)
                 ? label_get(0x5c4 / 4)
                 : Bases[base_id].population_size <= 1 ? label_get(0x2f0 / 4)
-                : Bases[base_id].population_size > Rules.pop_limit_sans_hab_complex
-                    ? label_get(0x570 / 4) : label_get(0x2f4 / 4));
+                : Bases[base_id].population_size <= Rules.pop_limit_sans_hab_complex
+                    ? label_get(0x2f4 / 4) : label_get(0x570 / 4));
             line_y = MainInterfaceGlobal.wrap_cent(StringTemp, content_x, line_y,
                                        area.right - area.left);
             StringTemp[0] = '\0';

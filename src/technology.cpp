@@ -2108,9 +2108,12 @@ BOOL __cdecl wants_prototype(int proto_id, int faction_id) {
         } else {
             // The image calls armor_val for the CANDIDATE first (its index is
             // still in edx) and reloads proto_id from the frame for the second
-            // call. A bare `armor_val(proto_id) > armor_val(proto_id_cmp)` makes
-            // VC6 keep proto_id in edx for the whole function: 28/134 -> 79/134.
-            if (armor_val(proto_id_cmp, faction_id) < armor_val(proto_id, faction_id)) {
+            // call. Both orderings of a bare `armor_val(...) < armor_val(...)`
+            // call proto_id first and keep it in edx across the loop; the
+            // candidate's value has to be named to come first (the image then
+            // spills it to [ebp-0xc], which this spelling keeps in ebx).
+            int armor_cmp = armor_val(proto_id_cmp, faction_id);
+            if (armor_cmp < armor_val(proto_id, faction_id)) {
                 continue;
             }
         }
