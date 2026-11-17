@@ -60,8 +60,10 @@ real source fix whenever a break can be explained. A header change (user
 decision, 2026-11-17, replacing the earlier "no losses at all" rule) is
 accepted when it is a net gain measured by `recover check-matches --since
 <base> --baseline <report>`, and the functions it breaks are re-tuned in the
-same batch. Many exact functions were tuned around a wrong header, so a
-correct header can break some before it fixes others. List every claim that
+same batch. A change that comes out even (no net loss) is also kept when it
+improves quality: it restores the original's form or retires stand-ins.
+Many exact functions were tuned around a wrong header, so a correct header
+can break some before it fixes others. List every claim that
 still fails after re-tuning in the commit message.
 Those claims keep their `BYTE_EXACT` markers and historical identities as
 restoration obligations (never demote or edit them), and restoring them is

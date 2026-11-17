@@ -1585,10 +1585,23 @@ raw field access where the original used inline accessors.
   byte-offset row used for the record's other fields, the source indexed with
   a non-constant (a local or an accessor parameter). A literal folds into the
   shared row (shoot 252 → 87 differing instructions, shoot_it 0.974 → 0.994).
+  An inline accessor called with a constant does not reproduce it (VC6
+  substitutes the constant before addressing); use a local, also for `-K`
+  kept inside the index (`t = x - K`, base_build).
 - **Flat-first ternary wrap inside a static helper.** If the image reloads the
   bound in each arm of an x-wrap, write the helper as the ternary
   `(MapIsFlat & 1) ? x : x < 0 ? x + W : x >= W ? x - W : x` and pass the sum
   directly, not through a stored intermediate (vehdraw_scoot_start).
+- **Loop counter spilled to an extra frame slot in the image** where ours
+  keeps it in a register: the loop body called an inline helper whose
+  parameter copies add pressure. Wrapping a written-out test in a static
+  inline made PlanWin::monocenter/opticenter exact.
+- **If/else arms share frame slots; an early return does not.** Rewriting
+  `if (a) {...; return r;} rest; return r;` as `if (a) {...} else {rest}
+  return r;` moved get_nearest_palette_index's slots to the image's.
+- **RECT inset/offset into a local** is `rc = src; expand_rect(&rc, -n, -n)`
+  (or `offset_rect`); a `dst = src ± n` helper schedules differently
+  (DiploWin::exec).
 - **Cross-jump direction follows allocation.** When ours keeps the first of
   identical tails and the image the last, case bodies allocate identically in
   ours but not in the image; check in-case registers before respelling tails
