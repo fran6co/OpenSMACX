@@ -744,7 +744,7 @@ Scroll *Popup::on_listbox_scroll_create() {
 //   entry pointer in eax and the count in edx while this tree walks it through
 //   edx) and the message ternary's zero arms, which the image lays out of line
 //   and this tree in line.
-// fields, field_30A8_, field_3094_, text_block_a_, MainInterfaceGlobal,
+// fields, field_30A8_, field_3094_, text_block_[0], MainInterfaceGlobal,
 // InterfaceMessageWin, BaseIDCurrentSelected - so the homing carries no
 // fixed-slot bindings and no cast of this.
 
@@ -797,14 +797,14 @@ int Popup::on_exec() {
     case 1:
         MainInterfaceGlobal.set_message(StringTemp, 0x5f, 0, 1, 1);
         if ((field_30A8_ & 0x400000) == 0 && field_3094_ != 0) {
-            field_3094_(&text_block_a_, 1);
+            field_3094_(&text_block_[0], 1);
         }
         return 0;
     case 2:
     case 0x3ea:
         InterfaceMessageWin.add_base(BaseIDCurrentSelected, StringTemp, 0);
         if ((field_30A8_ & 0x400000) == 0 && field_3094_ != 0) {
-            field_3094_(&text_block_a_, 1);
+            field_3094_(&text_block_[0], 1);
         }
         return code == 0x3ea;
     default:

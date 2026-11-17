@@ -1139,7 +1139,7 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
 
         // THE CONFIG CALLBACK, only when the popup lacks the lock bit.
         if ((field_30A8_ & 0x400000) == 0 && field_3094_ != 0) {
-            field_3094_(&text_block_a_, 1);
+            field_3094_(&text_block_[0], 1);
         }
         // Publish even a nonmodal popup: the virtual show slot with mode 3
         // before deciding whether to enter the modal pump.
@@ -1171,7 +1171,7 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
             }
             hide();
             if ((field_30A8_ & 0x400000) == 0 && field_3094_ != 0) {
-                field_3094_(&text_block_b_, 0);
+                field_3094_(&text_block_[1], 0);
             }
         }
 
@@ -1838,7 +1838,7 @@ uint32_t BasePopDefaultField3104[3] = {1, 1, 255};  // 0x00696ED8
 BasePopButtonStyle BasePopButtonDefaults = {247, {0, 0, 0}, 7, 248, 2};
 
 // The two 0x118-byte default blocks the ctor copies to +0x2e64 and +0x2f7c,
-// into text_block_a_ / text_block_b_. All zero until popups_normal and the
+// into text_block_[0] / text_block_[1]. All zero until popups_normal and the
 // set_def_* setters fill them; BasePop::close (0x00600f00) restores them
 // from here 70 dwords at a time.
 // RECOVERY_OBJECT: v2 0x009B8AB8 0x009B8BD0 ?BasePopDefaultBlock2E64@@3PAIA 0x00600F00
@@ -1987,8 +1987,8 @@ BasePop::BasePop() {
     field_30A4_ = static_cast<int>(BasePopDefaultField30A4);
     field_3094_ = BasePopDefaultField3094;
 
-    memcpy(&text_block_a_, BasePopDefaultBlock2E64, 0x118);
-    memcpy(&text_block_b_, BasePopDefaultBlock2F7C, 0x118);
+    memcpy(&text_block_[0], BasePopDefaultBlock2E64, 0x118);
+    memcpy(&text_block_[1], BasePopDefaultBlock2F7C, 0x118);
     {
         // A STRAIGHT COPY OF ALL 27 DWORDS, not a transpose. The image's loop
         // loads 0x9b8d10 + 4*column + 0xC*row and stores 0x31b8 + 4*column +
@@ -2153,8 +2153,8 @@ void BasePop::close() {
     field_30A4_ = BasePopDefaultField30A4;
     field_3094_ = BasePopDefaultField3094;
 
-    memcpy(&text_block_a_, BasePopDefaultBlock2E64, sizeof(text_block_a_));
-    memcpy(&text_block_b_, BasePopDefaultBlock2F7C, sizeof(text_block_b_));
+    memcpy(&text_block_[0], BasePopDefaultBlock2E64, sizeof(text_block_[0]));
+    memcpy(&text_block_[1], BasePopDefaultBlock2F7C, sizeof(text_block_[1]));
 
     if (ok_text_ != 0) {
         free(ok_text_);
@@ -3482,9 +3482,7 @@ int BasePop::start(char *text_file, const char *text_label, int value,
             }
             // The five sound directives come in a/b pairs: a '2' right after
             // the keyword selects the second 0x118 block (the image indexes
-            // the pair by 0x118 from text_block_a_).
-            // WORKAROUND(type): text_block_a_/text_block_b_ are two members;
-            // the image indexes them as one two-element array (imul 0x118).
+            // text_block_[] by 0x118).
             if (_strnicmp(tok + 1, "wave", 4) == 0) {
                 token = tok + 5;
                 if (tok[5] == '2') {
@@ -3496,10 +3494,10 @@ int BasePop::start(char *text_file, const char *text_label, int value,
                 purge_spaces(token);
                 purge_leading(token);
                 if (isdigit(*token)) {
-                    (&text_block_a_)[which].field_104_ = atoi(token);
+                    text_block_[which].field_104_ = atoi(token);
                 }
-                (&text_block_a_)[which].text[0] = '\0';
-                strcat((&text_block_a_)[which].text, token);
+                text_block_[which].text[0] = '\0';
+                strcat(text_block_[which].text, token);
                 continue;
             }
             if (_strnicmp(tok + 1, "vol", 3) == 0) {
@@ -3512,7 +3510,7 @@ int BasePop::start(char *text_file, const char *text_label, int value,
                 }
                 purge_spaces(token);
                 purge_leading(token);
-                (&text_block_a_)[which].field_108_ = atol(token);
+                text_block_[which].field_108_ = atol(token);
                 continue;
             }
             if (_strnicmp(tok + 1, "pitch", 5) == 0) {
@@ -3525,7 +3523,7 @@ int BasePop::start(char *text_file, const char *text_label, int value,
                 }
                 purge_spaces(token);
                 purge_leading(token);
-                (&text_block_a_)[which].field_110_ = atoi(token);
+                text_block_[which].field_110_ = atoi(token);
                 continue;
             }
             if (_strnicmp(tok + 1, "fade", 4) == 0) {
@@ -3538,7 +3536,7 @@ int BasePop::start(char *text_file, const char *text_label, int value,
                 }
                 purge_spaces(token);
                 purge_leading(token);
-                (&text_block_a_)[which].field_10C_ = atol(token);
+                text_block_[which].field_10C_ = atol(token);
                 continue;
             }
             if (_strnicmp(tok + 1, "pan", 3) == 0) {
@@ -3551,7 +3549,7 @@ int BasePop::start(char *text_file, const char *text_label, int value,
                 }
                 purge_spaces(token);
                 purge_leading(token);
-                (&text_block_a_)[which].field_114_ = atoi(token);
+                text_block_[which].field_114_ = atoi(token);
                 continue;
             }
             if (_strnicmp(tok + 1, "sprite", 6) == 0) {

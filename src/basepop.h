@@ -143,7 +143,7 @@ class BasePop : public GraphicWin {
    *           SpriteBox + EditGroup over one GraphicWin and one Dialog base
    *           - see dialogs.h for the prefixes, and `THE DIALOG VIRTUAL
    *           BASE` below for how these bodies reach into it
-   *   0x2E64  text_block_a_ (0x118) / 0x2F7C text_block_b_ (0x118)
+   *   0x2E64  text_block_[2] (2 x 0x118; [1] at 0x2F7C)
    *   0x3094  two dwords from BasePopDefaultField3094
    *   0x3098  spot_                    the click spots
    *   0x30A4..0x30F4  twenty-two dwords of state close() zeroes (see below)
@@ -229,7 +229,7 @@ class BasePop : public GraphicWin {
 
  public:
   // Wave index popup_wave_callback plays (+0x2F68); callers store 0x1C, 0x20, 9.
-  void set_wave(int wave) { text_block_a_.field_104_ = wave; }
+  void set_wave(int wave) { text_block_[0].field_104_ = wave; }
 
  public:
   // STATIC, AND THE CATALOGUED NAME IS WRONG. It reads
@@ -622,8 +622,9 @@ class BasePop : public GraphicWin {
   // numbers stay offset-named: start() parses each from its own token with
   // atoi/atol. The sound callback interprets the first two; the remaining
   // fields retain offset names until their consumers establish meanings.
-  BasePopTextBlock text_block_a_;  // 0x2E64
-  BasePopTextBlock text_block_b_;  // 0x2F7C
+  // Two sound/text blocks; start's '2'-suffixed directives select element 1
+  // through one index (imul 0x118 from 0x2E64).
+  BasePopTextBlock text_block_[2];  // 0x2E64, 0x2F7C
   // THE PER-POPUP CONFIG CALLBACK, typed from its only caller. BasePop::exec
   // (0x00602600) reads the slot twice, tests it against null and calls it
   // straight (`call eax`, 0x0060369C and 0x00603787) with a text block and a
