@@ -360,12 +360,13 @@ int Dialog::id_to_pos(int id) {
         for (int traversed = 0; traversed < count; traversed++) {
             StringStructEntry *entry = item_list_.current_;
             if (entry->id == id) {
-                break;
+                goto found;
             }
             item_list_.current_position_++;
             item_list_.current_ = entry->next;
         }
     }
+found:
     return item_list_.current_position_;
 }
 
@@ -379,19 +380,12 @@ Purpose: Select a dialog item by its bounded list ID. The following LEVER/TRIED 
 //        explicit keyword reaches the inline, and `MEASURED`
 //        (__declspec(dllexport) on the in-class declaration) is what keeps
 //        id_to_pos's own out-of-line COMDAT emitted for its 0x00609AF0 claim.
-// RESIDUAL (34 of 36): the image's two duplicated return blocks are laid out
-//        head-null-then-loop-exit; this build emits them loop-exit-then-head-
-//        null, so only the two jump targets swap (`je`/`jle` point at each
-//        other's block). Both blocks are byte-identical and the same two
-//        exits feed each. Not reachable while id_to_pos keeps the single-
-//        return spelling its own 29/29 out-of-line copy needs - a guard
-//        clause would give the inline two explicit returns and cost the
-//        out-of-line body its single epilogue.
-// TRIED (2026-09-06): the guard clause, MEASURED - `if (!head_) return
-//        current_position_;` ahead of the loop in the shared inline cost BOTH
-//        bodies at once: this one 34 of 36 -> 2 of 36, and id_to_pos's own
-//        0x00609AF0 BYTE_EXACT 29 of 29 -> 2 of 29. The single-return spelling
-//        is load-bearing for the pair, and the swapped blocks stay.
+// LEVER (2026-11-16, 34 -> 36 of 36): the match exit is `goto found;` to a
+//        label before the shared return. With `break`, VC6 pairs the
+//        head-null exit with the found exit's duplicated return block; the
+//        goto pairs it with the loop-exhausted block as the image does.
+//        id_to_pos's own 0x00609AF0 stays 29/29. Early `return` in the loop
+//        (26/36) and a guard clause (2/36) both lose.
 // size      115 bytes
 // prototype void (__thiscall ?set_selected_id@Dialog@@QAEXH@Z)(Dialog* this, int)
 // callers   1   call targets   0

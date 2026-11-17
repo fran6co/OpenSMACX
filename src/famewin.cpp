@@ -284,18 +284,17 @@ failed:
   field_A18_ = (rect_height(&awards_rect_) - 0x4F) / 2 + awards_rect_.top;
 
   for (int award = 0; award < 6; ++award) {
-    FlatButton &button = flatButtons2_[award];
     StringTemp[0] = '\0';
     strcat(StringTemp, label_get(974 + award));
-    button.init(0, award + 0x8AE, award * static_cast<int>(field_A1C_) + field_A14_,
+    flatButtons2_[award].init(0, award + 0x8AE, award * static_cast<int>(field_A1C_) + field_A14_,
                 field_A18_, 0x4F, 0x4F, this, 0);
-    button.set_report_icons(&sprites_[award * 2 + 1], &sprites_[award * 2],
+    flatButtons2_[award].set_report_icons(&sprites_[award * 2 + 1], &sprites_[award * 2],
                             &sprites_[award * 2]);
-    button.set_bubble_text(StringTemp);
-    button.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
-    button.redraw();
-    button.redraw();
-    button.hide();
+    flatButtons2_[award].set_bubble_text(StringTemp);
+    flatButtons2_[award].Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
+    flatButtons2_[award].redraw();
+    flatButtons2_[award].redraw();
+    flatButtons2_[award].hide();
   }
 
   field_A1C_ = rect_width(&factions_rect_) / 7;
