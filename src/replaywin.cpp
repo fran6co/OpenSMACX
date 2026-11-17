@@ -262,7 +262,7 @@ void ReplayWin::timer_callback() {
     }
 
     year_label_[0] = 0;
-// RECOVERY_LITERAL: v1 0x006913FC 0x00691405 $SG49596 0x005AD9E0
+// RECOVERY_LITERAL: v1 0x006913FC 0x00691405 $SG49646 0x005AD9E0
     strcat(year_label_, Language == 0 ? "Replay: " : ReplayLocalizedPrefix);
     char year[80];
     _itoa_s(game_year(replay_turn_), year, sizeof(year), 10);
@@ -277,9 +277,9 @@ void ReplayWin::timer_callback() {
 // ORIGINAL: 0x005ADE80 ?replay_base@@YAXHHHH@Z 0x005ADE80-0x005ADF03 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x005ADE80-0x005ADF03 logs Replay Base and Replay Base Info, packs four arguments and TurnCurrentNum into eight bytes at 0x00950324 plus the byte counter at 0x009469F8, then adds eight", "git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/005b3920.cpp clears 0x800 dwords of that buffer; ReplayWin timer_callback reads the same eight-byte records"], "reason": "Own replay-event storage and byte-length accounting in the replay subsystem, replacing fixed-address writes with a typed event record."}
 void __cdecl replay_base(int type, int x, int y, int faction_id) {
-// RECOVERY_LITERAL: v1 0x00691444 0x00691450 $SG49604 0x005ADE80
+// RECOVERY_LITERAL: v1 0x00691444 0x00691450 $SG49654 0x005ADE80
     log_say("Replay Base", x, y, faction_id);
-// RECOVERY_LITERAL: v1 0x00691450 0x00691461 $SG49605 0x005ADE80
+// RECOVERY_LITERAL: v1 0x00691450 0x00691461 $SG49655 0x005ADE80
     log_say("Replay Base Info", GameDataStateStorage.fields_.turn_current_num_, type, ReplayEventBytes);
     ReplayEventRecord event;
     event.turn = static_cast<int16_t>(GameDataStateStorage.fields_.turn_current_num_);
