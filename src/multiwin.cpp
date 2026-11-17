@@ -115,16 +115,6 @@ void MultiWin::UNK2() {
 // ORIGINAL: 0x00478630 ?draw_player@MultiWin@@QAEXHHPAURECT@@@Z 0x00478630-0x00478BDB
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00478630.cpp", "src/multiwin.h", "src/faction.h", "src/maininterface.h", "historical/superseded rationale: The original row painter uses MultiWin's owned Spot, sprite array and first font, typed faction names and treaties, and shared chat colors. Network turn-state suffixes remain pending their global owners.", "pinned 0x478630..0x478BDB: icon variant 0/1/2 selection from MultiWindowContactStatusMask and channels_[1].trailing_words_[6], with vertical centering always using sprites2_[0].height()", "pinned 0x478851..0x478919 preserves the separate offline treaty route and tests target Players[faction_id].rule_flags RFLAG_AQUATIC for the 0x10 treaty", "pinned 0x478919..0x478B17 uses typed GameDataStateWindow, NetDaemonNet primary/channel/lock state, NetUpkeepPhase, and a captured channel-0 selection word; lock state is reread after PlayerLock::active()", "pinned literals 0x686788/78C/790/794/798/79C/7A0 decode as *, (*), (+), (-), (*), (?), (@)"], "reason": "Recover the complete original MultiWin row painter through its owned sprite/hotspot, player, game, network and string-table state. Keep the offline treaty branch distinct from the multiplayer status suffix and its later control-turn treaty gate; preserve original callback and repeated-read ordering."}
 // symbol    ?draw_player@MultiWin@@QAEXHHPAUtagRECT@@@Z
-// WORKAROUND(inline): the image forms the sprite address (lea ecx) and then
-// reads its transparent byte through it (0x0047877A/0x00478793), after the
-// position arguments: an inline draw overload that reads the sprite's own
-// index. sprite.h declares none; adding one there perturbs its includers.
-static inline int multiwin_sprite_draw(Sprite *sprite, Buffer *destination, int x, int y,
-                                       int numerator, int denominator) {
-  return sprite->draw(destination, sprite->transparent_index(), x, y, numerator,
-                      denominator);
-}
-
 #pragma optimize("y", off)
 void MultiWin::draw_player(int faction_id, int row, RECT *bounds) {
   char number[80];
@@ -165,7 +155,7 @@ void MultiWin::draw_player(int faction_id, int row, RECT *bounds) {
     } else {
       variant = (NetDaemonNet.field_1BD0_ & (1 << faction_id)) ? 2 : 0;
     }
-    multiwin_sprite_draw(&sprites2_[variant], canvas, icon_rect.left,
+    sprites2_[variant].draw(canvas, icon_rect.left,
                          (icon_rect.bottom - sprites2_[0].height() - icon_rect.top) / 2
                              + icon_rect.top,
                          1, 1);
@@ -455,14 +445,6 @@ done:
   MultiWinState7FFF78 = local_c;
 }
 
-// WORKAROUND(decl): every panel draw computes the sprite address before
-// reading its transparent index, the shape of a header-inline
-// Sprite::draw(Buffer *, int x, int y) that passes its own index. sprite.h
-// declares no such overload; this file-local helper stands in for it.
-static inline int draw_sprite(Sprite &sprite, Buffer *destination, int x, int y) {
-  return sprite.draw(destination, sprite.transparent_index(), x, y);
-}
-
 // ORIGINAL: 0x00479330 ?draw@MultiWin@@QAEXH@Z 0x00479330-0x004798EC BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00479330.cpp", "src/multiwin.h", "src/faction.h", "src/spot.h"], "reason": "Move the panel painter from its fixed-address seed onto MultiWin's owned sprites, Spot and GraphicWin buffer; the two separately mapped row painters remain explicit dependencies."}
 // TRIED: raw self+offset field reads (MultiWin left opaque) with reinterpret_cast to Spot/GraphicWin/Buffer sub-objects at their disassembly-derived offsets; diverges at insn #11
@@ -474,12 +456,12 @@ void MultiWin::draw(int draw_type) {
 
   int y = (IsMultiplayerNet && !panel_open_)
               ? sprite5_.height() * 7 + sprite7_.height() * 2 : 0;
-  draw_sprite(sprite3_, this, 0, y);
+  sprite3_.draw(this, 0, y);
   y += sprite3_.height();
 
   RECT rect;
   if (IsMultiplayerNet) {
-    draw_sprite(sprite4_, this, 0, y);
+    sprite4_.draw(this, 0, y);
     rect.left = 0;
     rect.top = y;
     rect.right = dib_.bmiHeader.biWidth;
@@ -493,7 +475,7 @@ void MultiWin::draw(int draw_type) {
     rect.right = dib_.bmiHeader.biWidth;
     const int row_bottom = y + 14;
     rect.bottom = row_bottom;
-    draw_sprite(sprite5_, this, 0, y);
+    sprite5_.draw(this, 0, y);
     set_clip(&rect);
     spot_.add(3, 2, &rect);
 
@@ -533,9 +515,9 @@ void MultiWin::draw(int draw_type) {
       ++row;
       drew_player = 1;
       if (hovered_spot_ > 0 && hovered_spot_ == faction) {
-        draw_sprite(sprite6_, this, 0, y);
+        sprite6_.draw(this, 0, y);
       } else {
-        draw_sprite(sprite5_, this, 0, y);
+        sprite5_.draw(this, 0, y);
       }
       rect.left = 0;
       rect.top = y;
@@ -545,13 +527,13 @@ void MultiWin::draw(int draw_type) {
       y += sprite5_.height();
     }
     for (; row < 7; ++row) {
-      draw_sprite(sprite5_, this, 0, y);
+      sprite5_.draw(this, 0, y);
       y += sprite5_.height();
     }
 
     set_font(&font1_, 0, 0, 0);
     y += sprites1_[0].height() - sprite5_.height();
-    draw_sprite(sprite5_, this, 0, y);
+    sprite5_.draw(this, 0, y);
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x80c / 4));
     strcat(StringTemp, SocialWinColonSpaceText);
@@ -566,10 +548,10 @@ void MultiWin::draw(int draw_type) {
       y += sprite5_.height();
     }
     if (IsMultiplayerNet) {
-      draw_sprite(sprite7_, this, 0, y);
+      sprite7_.draw(this, 0, y);
       y += sprite7_.height();
     }
-    draw_sprite(sprite7_, this, 0, y);
+    sprite7_.draw(this, 0, y);
   }
 
   if (!drew_player) {

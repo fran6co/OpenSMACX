@@ -55,6 +55,16 @@ class EditBox : public GraphicWin {
   int is_dialog_focus_chain();
   int text_position(int x);
   int init(int x, int y, int width, int height, Win *parent, int focus_wrap);
+  // RECT-taking form: every caller null-tests the rectangle's address before
+  // the edge loads (0x00444698, 0x00482A38, 0x00611D94, 0x00613A3D) and
+  // EditGroup::attach returns its result, 3 for a missing rectangle.
+  int init(RECT *rect, Win *parent, int focus_wrap) {
+    if (rect == 0) {
+      return 3;
+    }
+    return init(rect->left, rect->top, rect->right - rect->left,
+                rect->bottom - rect->top, parent, focus_wrap);
+  }
   int init_with_font(Font *font, int x, int y, int width, Win *parent,
                      int unused);
   void add_window_flags(uint32_t flags) { iFlags_ |= flags; }
@@ -68,6 +78,13 @@ class EditBox : public GraphicWin {
   void select_all_text() {
     field_B40_ = 0;
     field_B44_ = strlen(text_);
+  }
+  // Select the whole text and show it: EditGroup::attach keeps the box in
+  // one register across the cursor reset, strlen and redraw (611EB8..611EDE).
+  void select_all() {
+    field_B40_ = 0;
+    field_B44_ = strlen(text_);
+    redraw();
   }
 
   // Reusable close at 0x00614F30; this does not end member lifetimes.

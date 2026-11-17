@@ -1638,7 +1638,7 @@ void CouncWin::draw_leader(int factionID) {
 
     Buffer *buffer = this;
     Sprite *backing = leader_portraits_[factionID][GameDataStateStorage.fields_.governor_faction_ == factionID ? 1 : 0];
-    backing->draw(buffer, backing->transparent_index(), rect.left, rect.top, 1, 1);
+    backing->draw(buffer, rect.left, rect.top, 1, 1);
 
     const int centerX = (rect.right + rect.left) / 2;
     int textY = leader_portraits_[factionID][GameDataStateStorage.fields_.governor_faction_ == factionID ? 1 : 0]->height() + rect.top + 4;

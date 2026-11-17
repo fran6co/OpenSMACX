@@ -91,6 +91,26 @@ class Sprite {
            unsigned char *table);
   // Callers receive the palette key widened to int (image: movzx/and 0xff, no byte spill).
   int transparent_index() const { return cTransparentIndex_; }
+  // Inline overloads that key the draw on the sprite's own transparent
+  // index. Their callers form the sprite address after every position
+  // argument and read the key through it (`lea ecx, sprite`, then
+  // `mov al, [ecx+8]`): 0x0047877A, 0x00483E1A, 0x004851D4, 0x004898C4.
+  // WORKAROUND(inline): the scaled draw is defined in the class and the
+  // other three after it. Includer canaries (draw_armor 0x00435400,
+  // wants_to_attack 0x0055BC80, buy_council_vote 0x0053EB50, faction_upkeep
+  // 0x00527290, end_of_game 0x00524870, give_a_base 0x0054CF40,
+  // vehdraw_construct_armor 0x004C3090) all match only with this split;
+  // all four in the class or all four after it flip some of them. The
+  // original header's definition placement is unknown.
+  int draw(Buffer *destination, int x, int y);
+  int draw(Buffer *destination, int x, int y, int numerator,
+           int denominator) {
+    return draw(destination, transparent_index(), x, y, numerator,
+                denominator);
+  }
+  int draw_mono(Buffer *destination, int x, int y, int color);
+  int draw_mono(Buffer *destination, int x, int y, int color, int numerator,
+                int denominator);
   // Presence only; it does not establish complete loading or lifetime.
   bool has_pixel_pointer() const { return pcBits_ != 0; }
   int width() const { return iWidth_; }
@@ -232,6 +252,18 @@ class Sprite {
 };
 
 static_assert(sizeof(Sprite) == 0x2C, "Sprite layout must match the legacy ABI");
+
+inline int Sprite::draw(Buffer *destination, int x, int y) {
+  return draw(destination, transparent_index(), x, y);
+}
+inline int Sprite::draw_mono(Buffer *destination, int x, int y, int color) {
+  return draw_mono(destination, transparent_index(), x, y, color);
+}
+inline int Sprite::draw_mono(Buffer *destination, int x, int y, int color,
+                             int numerator, int denominator) {
+  return draw_mono(destination, transparent_index(), x, y, color, numerator,
+                   denominator);
+}
 
 // The real blank Sprite storage begins at 0x009BEAE8. Keep its once-byte
 // guard as the independent global immediately before it (0x009BEAE0); do not

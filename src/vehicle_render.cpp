@@ -1201,7 +1201,7 @@ void __cdecl vehdraw_construct_weapon(int faction_id, int chassis, int weapon, C
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x004C3090 0x004C3798 0x004C37D0 0x004C30AE
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x004C3090 0x004C37D0 0x004C37F4 0x004C3257
-// ORIGINAL: 0x004C3090 ?vehdraw_construct_armor@@YAHHHHHHPAUCaviar@@@Z 0x004C3090-0x004C3795
+// ORIGINAL: 0x004C3090 ?vehdraw_construct_armor@@YAHHHHHHPAUCaviar@@@Z 0x004C3090-0x004C3795 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original special and ordinary armor cases are separate; transparent armor5 uses the first constant-color ramp. Reactor-independent model arrays are indexed from their actual starts rather than biased original address expressions.", "Original crawler armor adds its crawler model followed by the human/alien body armor, with the same selected tint on both. Do not clamp faction here: unlike chassis and weapon, the original does not."], "reason": "Recover armor overlays, tint and ordered body-specific pairs using actual model owners."}
 // symbol    ?vehdraw_construct_armor@@YAXHHHHHPAVCaviar@@@Z
 void __cdecl vehdraw_construct_armor(int faction_id, int chassis, int weapon,

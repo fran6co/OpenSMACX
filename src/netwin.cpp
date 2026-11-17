@@ -1460,7 +1460,7 @@ void NetWin::draw_custom_rules() {
     const int free_tech = (NetWinSessionOptions.fields_.rule_bits_c_ & 0x10) == 0;
     Buffer *buffer = this;
     Sprite &standing = g_IFACE_CLOSE_X_SPRITES[free_tech ? 2 : 0];
-    standing.draw(buffer, standing.transparent_index(), left, top);
+    standing.draw(buffer, left, top);
     if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
         spot_.add(0x64, 1, rect.left, rect.top, rect.right - rect.left,
                   rect.bottom - rect.top);
@@ -2494,17 +2494,6 @@ void NetWin::pick_planet_size() {
     pick_send_state();
 }
 
-// WORKAROUND(decl): 482A38..482A5E null-tests &setup_rects_[44] before
-// EditBox::init, the shape of an inline RECT-taking EditBox::init overload.
-static inline int netwin_init_edit(EditBox *box, RECT *rect, Win *parent,
-                                   int focus_wrap) {
-    if (rect == 0) {
-        return 0;
-    }
-    return box->init(rect->left, rect->top, rect->right - rect->left,
-                     rect->bottom - rect->top, parent, focus_wrap);
-}
-
 // WORKAROUND(decl): 482B2B..482B44 evaluates find_font before pushing the
 // three zero arguments, the shape of an inline one-argument button set_font.
 static inline void netwin_button_font(FlatButton *button, Font *font) {
@@ -2649,7 +2638,7 @@ int NetWin::exec() {
     stringBox_.set_visible_rows(100);
     stringBox_.show(0);
 
-    netwin_init_edit(&editBox_, &setup_rects_[44], this, 0);
+    editBox_.init(&setup_rects_[44], this, 0);
 
     // Existing EditBox members preserve the native field stores; window
     // flags belong to its actual Win base, not the separate CheckBox.

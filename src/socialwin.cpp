@@ -722,10 +722,6 @@ void __stdcall main_interface_bubble_callback(char *text, int x, int y) {
 // Historical SocBaseIdProbe/Compare at 0x009A6568/0x009A6574 are
 // SecretProject.network_backbone/cloning_vats, not independent selectors.
 
-static inline void social_draw_icon(Sprite *sprite, Buffer *dest, int x, int y) {
-    sprite->draw(dest, sprite->transparent_index(), x, y, 1, 1);
-}
-
 // Text writes with the image's null test on the text.
 static inline void social_write_cent(char *text, RECT *rect) {
     if (text != 0) {
@@ -868,12 +864,12 @@ void SocialWin::draw_social(int a1) {
                 }
                 if (SOCIAL_ABS(value) > 1) {
                     Sprite *number = &socEngModifierNums_[(value <= 0) + SOCIAL_ABS(value) * 2 - 4];
-                    social_draw_icon(number, this, x, rect.bottom - number->height());
+                    number->draw(this, x, rect.bottom - number->height(), 1, 1);
                     x += socEngModifierNums_[0].source_width() + 1;
                 }
-                social_draw_icon(&effectIcons_[(effect < 3 ? effect * 9 : (effect - 1) * 9) + 6
-                                               + (value >= 1 ? 2 : 1)],
-                                 this, x, y);
+                effectIcons_[(effect < 3 ? effect * 9 : (effect - 1) * 9) + 6
+                                               + (value >= 1 ? 2 : 1)].draw(
+                                 this, x, y, 1, 1);
                 x += effectIcons_[0].width() + 1;
             }
         }
@@ -1190,8 +1186,8 @@ void SocialWin::draw_faction_basal() {
         for (int effect = 0; effect < MaxSocialEffectNum; ++effect) {
             const int value = PlayersData[factionID_].soc_effect_base.values_[effect];
             for (int icon = 0; icon < (value < 0 ? -value : value); ++icon) {
-                social_draw_icon(&effectIcons_[6 + (effect < 3 ? effect : effect - 1) * 9 + (value >= 1 ? 2 : 1)],
-                                 this, x, y);
+                effectIcons_[6 + (effect < 3 ? effect : effect - 1) * 9 + (value >= 1 ? 2 : 1)].draw(
+                                 this, x, y, 1, 1);
                 x += step;
             }
         }
@@ -1982,7 +1978,7 @@ int SocialWin::on_button_text_draw(GraphicWin *window, char *text, int button_id
     }
 
     // Original stride 0x84 is three 0x2C-byte Sprites, not one Sprite.
-    social_draw_icon(&effectIcons_[(button_id - 0x11) * 9 + flag * 3], window, 5, y_center);
+    effectIcons_[(button_id - 0x11) * 9 + flag * 3].draw(window, 5, y_center, 1, 1);
 
     window->set_text_color(0, -1, 1, 1);
     rect.left += 0x25;
@@ -2155,9 +2151,9 @@ void SocialWin::draw_mouseover() {
                 strcat(StringTemp, number);
                 social_write_l(StringTemp, &rect);
 
-                social_draw_icon(&effectIcons_[(effect < 3 ? effect * 9 : (effect - 1) * 9) + 6
-                                               + (value >= 0 ? 2 : 1)],
-                                 &MainInterfaceGlobal, rect.left + 0x10, rect.top);
+                effectIcons_[(effect < 3 ? effect * 9 : (effect - 1) * 9) + 6
+                                               + (value >= 0 ? 2 : 1)].draw(
+                                 &MainInterfaceGlobal, rect.left + 0x10, rect.top, 1, 1);
 
                 rect.left = rect.left + 0x10 + effectIcons_[0].width();
                 StringTemp[0] = 0;

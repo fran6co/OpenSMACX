@@ -619,14 +619,6 @@ int PickWin::on_dialog_item_back_draw(GraphicWin *window, int, int index,
   return 1;
 }
 
-// WORKAROUND(inline): on_redraw takes &sprite5_ into a register before
-// reading its transparent byte through it (0x004898C4, 0x004899AD), the
-// shape of an inline helper that receives the sprite pointer; likely a
-// Sprite header inline drawing with its own transparent index.
-static inline int pickwin_draw_sprite(Sprite *sprite, Buffer *destination, int x, int y) {
-  return sprite->draw(destination, sprite->transparent_index(), x, y);
-}
-
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00489660 ?on_redraw@PickWin@@QAEXXZ 0x00489660-0x00489AF7 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00489660.cpp"], "reason": "Recover genuine typed PickWin owner behavior and automatic subobject lifetime from pinned native flow and preserved seed; historical identity and restoration obligations retained, no exactness claim."}
@@ -666,7 +658,7 @@ void PickWin::on_redraw() {
       int y = row_y + row * 0x13;
       Buffer::put_pixel(join_x + 1, y + (row != 0 ? -(row == 6) : 1), 0xE0);
       Buffer::hline(join_x + 2, list_x, y, 0xE0);
-      pickwin_draw_sprite(&sprite5_, static_cast<Buffer *>(this), list_x, y - 6);
+      sprite5_.draw(static_cast<Buffer *>(this), list_x, y - 6);
     }
   } else if (selected > 0 && selected < 8) {
     --selected;
@@ -680,7 +672,7 @@ void PickWin::on_redraw() {
       Buffer::hline(join_x - 2, join_x + 2, row_y, 0xE0);
     }
     Buffer::hline(join_x + 2, list_x, y, 0xE0);
-    pickwin_draw_sprite(&sprite5_, static_cast<Buffer *>(this), list_x, y - 6);
+    sprite5_.draw(static_cast<Buffer *>(this), list_x, y - 6);
   }
 
   flatButton1_.show(0);

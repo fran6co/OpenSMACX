@@ -135,18 +135,6 @@ static inline void diplo_inset_rect(RECT *dst, const RECT *src, int horizontal,
   dst->bottom = src->bottom - vertical;
 }
 
-// WORKAROUND(decl): 0x44469B..4446CF null-tests &rect_F2C_ before
-// EditBox::init, the shape of an inline RECT-taking EditBox::init overload
-// (same shape as netwin.cpp's netwin_init_edit).
-static inline int diplo_init_edit(EditBox *box, RECT *rect, Win *parent,
-                                  int focus_wrap) {
-  if (rect == 0) {
-    return 0;
-  }
-  return box->init(rect->left, rect->top, rect->right - rect->left,
-                   rect->bottom - rect->top, parent, focus_wrap);
-}
-
 // ---------------------------------------------------------------------------
 // ORIGINAL: 0x00443F10 ?exec@DiploWin@@QAEXHH@Z 0x00443F10-0x00444D8B
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00443f10.cpp", "image:terranx_original.exe:443F10-444D8B; callback4412A0 and transcript lifecycle440F30/440F60"], "reason": "Recover the full diplomacy window lifecycle using real base/member controls, singleton transcripts and bilateral offer storage; original catalogue extent retained."}
@@ -309,7 +297,7 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
   string_canvas.set_text_color(0xFF, -1, 1, 1);
   stringBox_.set_visible_rows(100);
 
-  diplo_init_edit(&editBox_, &rect_F2C_,
+  editBox_.init(&rect_F2C_,
                   static_cast<Win *>(&MainInterfaceGlobal), 0);
   editBox_.add_window_flags(0x01000000);
   editBox_.field_B1C_ = 9;

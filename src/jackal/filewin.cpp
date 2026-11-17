@@ -193,8 +193,7 @@ void FileWin::UNK4() {
     const int edit_focused = entry_focus == static_cast<Win *>(&edit_box_);
     char *const typed_name = edit_box_.text_;
 
-    edit_box_.select_all_text();
-    edit_box_.redraw();
+    edit_box_.select_all();
     purge_spaces(typed_name);
 
     char name_buffer[260];
@@ -586,19 +585,6 @@ static inline int init_button(BaseButton &button, LPCSTR name, int id,
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// WORKAROUND(decl): the image tests the address of edit_box_bounds_ for null
-// before EditBox::init (0x6139B0+0x8D) and discards the init result, which is
-// an inline RECT-taking EditBox::init overload expanded here. Its header
-// declaration and null-rect result are unknown; this file-local stand-in
-// carries the expansion until the header is reconstructed.
-static inline void init_edit_box(EditBox &box, RECT *rect, Win *parent,
-                                 int focus_wrap) {
-  if (rect != 0) {
-    box.init(rect->left, rect->top, rect->right - rect->left,
-             rect->bottom - rect->top, parent, focus_wrap);
-  }
-}
-
 // ORIGINAL: 0x006139B0 ?init@FileWin@@QAEHPADPAUGraphicWin@@PAUFileWinConstruct@@@Z 0x006139B0-0x00613B97
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/006139b0.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover FileWin control initialization through genuine embedded controls, typed caller geometry, shared 17-DWORD parameter prefix and Windows list lifecycle. Retain the historical seed and obligations; no matching or game acceptance claim."}
 // symbol    ?init@FileWin@@QAEHPADPAVGraphicWin@@PAUFileWinConstruct@@@Z
@@ -622,7 +608,7 @@ int FileWin::init(char *, GraphicWin *parent, FileWinConstruct *parameters) {
   edit_box_bounds_ = parameters->edit_box_bounds_;
   list_box_bounds_ = parameters->list_box_bounds_;
 
-  init_edit_box(edit_box_, &edit_box_bounds_, static_cast<Win *>(parent), 0);
+  edit_box_.init(&edit_box_bounds_, static_cast<Win *>(parent), 0);
   edit_box_.field_B14_ = 0x104;
   // The image forms the receiver (lea ecx) before reading its vtable through
   // ecx: show is called through a pointer to the box.

@@ -225,7 +225,7 @@ void PullDown::pulldown_update(int old_selected, int new_selected) {
     if ((flags & 1u) != 0) {
       if ((flags & 8u) != 0) {
         CheckBoxDefault2->draw(
-            this, CheckBoxDefault2->transparent_index(), row.left,
+            this, row.left,
             ((row.bottom - CheckBoxDefault2->height()) - row.top) / 2 + row.top,
             1, 1);
         row.left += CheckBoxDefault2->width();

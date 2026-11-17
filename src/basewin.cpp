@@ -1565,16 +1565,11 @@ void BaseWin::click(int x, int y, int right, int is_double) {
     }
 }
 
-// The image evaluates the destination conversion before the sprite index.
-static inline void psych_sprite(Buffer *destination, Sprite *sprite, int x, int y) {
-    sprite->draw(destination, sprite->transparent_index(), x, y);
-}
-
 // Indexed form: the drone row passes the table, the random variant row and
 // the mood column separately; the helper forms row * 4 + type, which keeps the
 // image's register choice (0x00408A27..0x00408A87).
 static inline void psych_sprite_at(Buffer *destination, Sprite *table, int row, int type, int x, int y) {
-    psych_sprite(destination, &table[row * 4 + type], x, y);
+    table[row * 4 + type].draw(destination, x, y);
 }
 
 static inline int psych_specialist_type(int i) {
@@ -1609,30 +1604,30 @@ void BaseWin::psych_row(int x, int y, int width, int sprite_width,
     int i;
     if (ExpansionEnabled && (Players[BaseCurrent->faction_id_current].rule_flags & 0x80)) {
         for (i = 0; i < talents; i++) {
-            psych_sprite(this, &g_AL_CITIZEN_SM_CURSOR_SPRITES[0], x, y);
+            g_AL_CITIZEN_SM_CURSOR_SPRITES[0].draw(this, x, y);
             x += spacing;
         }
         for (i = 0; i < BaseCurrent->population_size - BaseCurrent->specialist_total
                  - talents - drones; i++) {
-            psych_sprite(this, &g_AL_CITIZEN_SM_CURSOR_SPRITES[1], x, y);
+            g_AL_CITIZEN_SM_CURSOR_SPRITES[1].draw(this, x, y);
             x += spacing;
         }
         for (i = 0; i < drones; i++) {
-            psych_sprite(this, &g_AL_CITIZEN_SM_CURSOR_SPRITES[i >= drones - super_drones ? 3 : 2], x, y);
+            g_AL_CITIZEN_SM_CURSOR_SPRITES[i >= drones - super_drones ? 3 : 2].draw(this, x, y);
             x += spacing;
         }
         for (i = 0; i < BaseCurrent->specialist_total; i++) {
-            psych_sprite(this, &g_AL_SPECIALIST_SM_CURSOR_SPRITES[psych_specialist_type(i)], x, y);
+            g_AL_SPECIALIST_SM_CURSOR_SPRITES[psych_specialist_type(i)].draw(this, x, y);
             x += spacing;
         }
     } else {
         for (i = 0; i < talents; i++) {
-            psych_sprite(this, &g_CITIZEN_SM_CURSOR_SPRITES[random.get(0, 2) * 4], x, y);
+            g_CITIZEN_SM_CURSOR_SPRITES[random.get(0, 2) * 4].draw(this, x, y);
             x += spacing;
         }
         for (i = 0; i < BaseCurrent->population_size - BaseCurrent->specialist_total
                  - talents - drones; i++) {
-            psych_sprite(this, &g_CITIZEN_SM_CURSOR_SPRITES[random.get(0, 2) * 4 + 1], x, y);
+            g_CITIZEN_SM_CURSOR_SPRITES[random.get(0, 2) * 4 + 1].draw(this, x, y);
             x += spacing;
         }
         for (i = 0; i < drones; i++) {
@@ -1641,7 +1636,7 @@ void BaseWin::psych_row(int x, int y, int width, int sprite_width,
             x += spacing;
         }
         for (i = 0; i < BaseCurrent->specialist_total; i++) {
-            psych_sprite(this, &g_SPECIALIST_SM_CURSOR_SPRITES[psych_specialist_type(i)], x, y);
+            g_SPECIALIST_SM_CURSOR_SPRITES[psych_specialist_type(i)].draw(this, x, y);
             x += spacing;
         }
     }
@@ -2566,14 +2561,12 @@ void BaseWin::draw_production(int update_mode) {
         if (facility_id < 0x46) {
             const int color = mandate_color(prodPicker_.edbc_fac(facility_id));
             Sprite &icon = g_FACILITY_ICON_SPRITES[facility_id];
-            icon.draw_mono(&MainInterfaceGlobal, icon.transparent_index(),
-                center_x - 0x14, text_y - 0x14, color, 0x28,
+            icon.draw_mono(&MainInterfaceGlobal, center_x - 0x14, text_y - 0x14, color, 0x28,
                 g_FACILITY_ICON_SPRITES[0].width());
         } else {
             const int color = mandate_color(1);
             Sprite &icon = g_SECRET_PROJECT_ICON_SPRITES[facility_id - FacilitySPStart];
-            icon.draw_mono(&MainInterfaceGlobal, icon.transparent_index(),
-                center_x - 0x14, text_y - 0x14, color, 0x28,
+            icon.draw_mono(&MainInterfaceGlobal, center_x - 0x14, text_y - 0x14, color, 0x28,
                 g_SECRET_PROJECT_ICON_SPRITES[0].width());
         }
         content.top += 0x41;
@@ -5842,12 +5835,10 @@ draw_map:
                                 potential_icon.draw_mono(this, potential_icon.transparent_index(),
                                                          cursor, icon_y, 0, 1, 1);
                                 Sprite &actual_icon = g_RESOURCE_ICON_SPRITES[resource * 8 + actual];
-                                actual_icon.draw(this, actual_icon.transparent_index(),
-                                    cursor + (potential - actual) / 2, icon_y, 1, 1);
+                                actual_icon.draw(this, cursor + (potential - actual) / 2, icon_y, 1, 1);
                             } else {
                                 Sprite &actual_icon = g_RESOURCE_ICON_SPRITES[resource * 8 + actual];
-                                actual_icon.draw(this, actual_icon.transparent_index(),
-                                                 cursor, icon_y, 1, 1);
+                                actual_icon.draw(this, cursor, icon_y, 1, 1);
                             }
                             cursor += g_RESOURCE_ICON_SPRITES[resource * 8 + potential].source_width();
                         }
@@ -5915,7 +5906,7 @@ draw_map:
 // and computes y before the random variant row (0x00414EE9..0x00414F3E).
 static inline void pop_sprite_at(Buffer *destination, Sprite *table, int row, int type, int x, int y) {
     Sprite *sprite = &table[row * 4 + type];
-    sprite->draw(destination, sprite->transparent_index(), x, y, 1, 1);
+    sprite->draw(destination, x, y, 1, 1);
 }
 
 // ORIGINAL: 0x00414B40 ?draw_pop@BaseWin@@QAEXH@Z 0x00414B40-0x00415078;0x00651B76-0x00651B93

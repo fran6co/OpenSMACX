@@ -546,11 +546,6 @@ static inline char *current_list_text(StringList &list) {
     return list.head_ ? list.current_->string_payload()->text : 0;
 }
 
-static inline void draw_transparent(Sprite *sprite, Buffer *buffer, int x, int y,
-                                    int numerator, int denominator) {
-    sprite->draw(buffer, sprite->transparent_index(), x, y, numerator, denominator);
-}
-
 void SpriteBox::draw_item(int position) {
     Win *const parent = win_parent_;
     if (parent == 0) return;
@@ -586,7 +581,7 @@ void SpriteBox::draw_item(int position) {
     const int scale_numerator = static_cast<int>(field_1C_);
     const int scale_denominator = static_cast<int>(field_20_);
     if (redraw_callback_ == 0) {
-        draw_transparent(current_list_sprite(list_), static_cast<Buffer *>(this), x, y,
+        current_list_sprite(list_)->draw(static_cast<Buffer *>(this), x, y,
                          scale_numerator, scale_denominator);
     } else {
         SpriteScaleNumerator = scale_numerator;

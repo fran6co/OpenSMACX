@@ -240,29 +240,24 @@ int __cdecl AlphaMenu::fill_func(GraphicWin *target, int mode, RECT *clip) {
   return 1;
 }
 
-// Draws one menu sprite at the left edge with its own transparent key.
-static inline void draw_menu_sprite(Sprite *sprite, Buffer *destination, int y) {
-  sprite->draw(destination, sprite->transparent_index(), 0, y, 1, 1);
-}
-
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00403340 ?on_redraw@AlphaMenu@@QAEXXZ 0x00403340-0x00403544 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Retired seed provenance: src/unrecovered/00402f40.cpp,004032a0.cpp,00403af0.cpp and src/recovered/units/00403340.cpp,00403680.cpp,00403830.cpp; pinned original callback style27/29, positive hide height, branch-only clip restoration and actual caller dispatch audited by coordinator."], "reason": "Recover AlphaMenu owner behavior through existing Menu/GraphicWin/Buffer inheritance and owned Sprite lifetimes; historical seed identity and extents remain obligations, not measurement claims."}
 // symbol    ?on_redraw@AlphaMenu@@UAEXXZ
 void AlphaMenu::on_redraw() {
   GraphicWin::fill(9);
-  draw_menu_sprite(&sprite1_, this, 0);
+  sprite1_.draw(this, 0, 0, 1, 1);
   Buffer::set_font(PopupMenuBoldFont, nullptr, nullptr, nullptr);
 
   int y = sprite1_.height();
   int i;
   for (i = 0; i < count_; ++i) {
     if (i == field_A24_) {
-      draw_menu_sprite(&sprites_[2], this, y);
+      sprites_[2].draw(this, 0, y, 1, 1);
     } else if (i == MenuSelection) {
-      draw_menu_sprite(&sprites_[1], this, y);
+      sprites_[1].draw(this, 0, y, 1, 1);
     } else {
-      draw_menu_sprite(&sprites_[0], this, y);
+      sprites_[0].draw(this, 0, y, 1, 1);
     }
     y += sprites_[0].height();
   }

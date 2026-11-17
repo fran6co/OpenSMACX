@@ -345,8 +345,7 @@ void AlphaSave::on_selected(int) {
     items.seek_pos(list.selected_position_);
     file_win_.edit_box().set_text(items.head_ != 0
         ? items.current_->string_payload()->text : 0);
-    file_win_.edit_box().select_all_text();
-    file_win_.edit_box().redraw();
+    file_win_.edit_box().select_all();
     file_win_.edit_box().redraw();
 }
 

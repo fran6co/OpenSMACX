@@ -98,10 +98,6 @@ static inline void dl_body_colors(Datalink *self, int link_color) {
     self->set_text_color2(0x96, -1, 1, 1);
     self->set_text_color_hyper(link_color, -1, 1, 1);
 }
-static inline void dl_draw_scaled(Buffer *buffer, Sprite *sprite, int x, int y,
-                                  int numerator, int denominator) {
-    sprite->draw(buffer, sprite->transparent_index(), x, y, numerator, denominator);
-}
 // The facility and project icons are scaled by the illustration width the
 // image computes right then left (0x0042F5A3, 0x0042FBC3), as a RECT* helper
 // does; the written-out difference loads left first.
@@ -114,12 +110,10 @@ static inline int dl_rect_width(const RECT *rect) {
 // while still expanding ~Sprite/~FlatButton (draw_faction's EH table
 // 0x00674378 has 19 states, ours 21 without these helpers; draw_project's
 // cold region 0x00653927 likewise). The original inline providers are
-// unknown; these helpers spend that budget. The sprite helpers also give the
-// argument order the image uses (0x00430D70, 0x0042F583, 0x0042FBC3): `this`
-// converted to Buffer* first, the sprite address after.
-static inline void dl_draw_sprite(Buffer *buffer, Sprite *sprite, int x, int y) {
-    sprite->draw(buffer, sprite->transparent_index(), x, y, 1, 1);
-}
+// unknown; these helpers spend that budget. The sprite draws use sprite.h's
+// own-index overload, which gives the argument order the image uses
+// (0x00430D70, 0x0042F583, 0x0042FBC3): `this` converted to Buffer* first,
+// the sprite address after.
 static inline void dl_upper_name(LPSTR name) {
     StringTemp[0] = 0;
     strcat(StringTemp, StringTable.get(name));
@@ -836,24 +830,24 @@ void Datalink::draw_terraform() {
         if (land) {
             g_FARM_TEXTURES[0].draw(this, quad, z, 4, uv);
         } else {
-            dl_draw_sprite(this, &g_TER1_KELP_FARM_SPRITE, rect.left, rect.top + 25);
+            g_TER1_KELP_FARM_SPRITE.draw(this, rect.left, rect.top + 25, 1, 1);
         }
         break;
     case 1:
-        dl_draw_sprite(this, &g_TER1_SOIL_ENRICHER_SPRITES[0], rect.left, rect.top + 25);
+        g_TER1_SOIL_ENRICHER_SPRITES[0].draw(this, rect.left, rect.top + 25, 1, 1);
         break;
     case 2:
         if (land) {
-            dl_draw_sprite(this, &g_TER1_MINE_SPRITE, rect.left, rect.top + 25);
+            g_TER1_MINE_SPRITE.draw(this, rect.left, rect.top + 25, 1, 1);
         } else {
-            dl_draw_sprite(this, &g_TER1_MINING_PLATFORM_SPRITE, rect.left, rect.top + 25);
+            g_TER1_MINING_PLATFORM_SPRITE.draw(this, rect.left, rect.top + 25, 1, 1);
         }
         break;
     case 3:
         if (land) {
-            dl_draw_sprite(this, &g_TER1_SOLAR_COLLECTOR_SPRITE, rect.left, rect.top + 25);
+            g_TER1_SOLAR_COLLECTOR_SPRITE.draw(this, rect.left, rect.top + 25, 1, 1);
         } else {
-            dl_draw_sprite(this, &g_TER1_TIDAL_HARNESS_SPRITE, rect.left, rect.top + 25);
+            g_TER1_TIDAL_HARNESS_SPRITE.draw(this, rect.left, rect.top + 25, 1, 1);
         }
         break;
     case 4:
@@ -866,13 +860,13 @@ void Datalink::draw_terraform() {
         g_MAGTUBE_TEXTURES[0].draw_trans(this, quad, z, 4, uv);
         break;
     case 7:
-        dl_draw_sprite(this, &g_TER1_BUNKER_SPRITE, rect.left, rect.top + 25);
+        g_TER1_BUNKER_SPRITE.draw(this, rect.left, rect.top + 25, 1, 1);
         break;
     case 8:
-        dl_draw_sprite(this, &g_TER1_AIRBASE_SPRITE, rect.left, rect.top + 25);
+        g_TER1_AIRBASE_SPRITE.draw(this, rect.left, rect.top + 25, 1, 1);
         break;
     case 9:
-        dl_draw_sprite(this, &g_TER1_SENSOR_ARRAY_SPRITE, rect.left, rect.top + 25);
+        g_TER1_SENSOR_ARRAY_SPRITE.draw(this, rect.left, rect.top + 25, 1, 1);
         break;
     case 11:
         if (land) {
@@ -882,19 +876,19 @@ void Datalink::draw_terraform() {
         }
         break;
     case 12:
-        dl_draw_sprite(this, &g_TER1_CONDENSER_SPRITE, rect.left, rect.top + 25);
+        g_TER1_CONDENSER_SPRITE.draw(this, rect.left, rect.top + 25, 1, 1);
         break;
     case 13:
-        dl_draw_sprite(this, &g_TER1_ECHELON_MIRROR_SPRITE, rect.left, rect.top + 25);
+        g_TER1_ECHELON_MIRROR_SPRITE.draw(this, rect.left, rect.top + 25, 1, 1);
         break;
     case 14:
-        dl_draw_sprite(this, &g_TER1_BOREHOLE_SPRITE, rect.left, rect.top + 25);
+        g_TER1_BOREHOLE_SPRITE.draw(this, rect.left, rect.top + 25, 1, 1);
         break;
     case 15:
         g_RIVER_TEXTURES[0].draw_trans(this, quad, z, 4, uv);
         break;
     case 19:
-        dl_draw_sprite(this, &g_TER1_MONOLITH_SPRITE, rect.left, rect.top + 25);
+        g_TER1_MONOLITH_SPRITE.draw(this, rect.left, rect.top + 25, 1, 1);
         break;
     }
     if (action < 16 || action > 18) {
@@ -969,7 +963,7 @@ void Datalink::draw_facility() {
     set_text_color(0xE0, -1, 1, 1);
     dl_upper_name(Facility[id].name);
     write_cent_l(StringTemp, &title_rect_);
-    dl_draw_scaled(this, &g_FACILITY_ICON_SPRITES[id], illustration_rect_.left,
+    g_FACILITY_ICON_SPRITES[id].draw(this, illustration_rect_.left,
                    illustration_rect_.top, dl_rect_width(&illustration_rect_),
                    g_FACILITY_ICON_SPRITES[id].width());
     rect.left += illustration_rect_.right - illustration_rect_.left + 6;
@@ -1020,7 +1014,7 @@ void Datalink::draw_project() {
     dl_upper_name(Facility[id].name);
     write_cent_l(StringTemp, &title_rect_);
     // 42FBEC loads the first project sprite's +0x18, without indexing it.
-    dl_draw_scaled(this, &g_SECRET_PROJECT_ICON_SPRITES[id - 70],
+    g_SECRET_PROJECT_ICON_SPRITES[id - 70].draw(this,
                    illustration_rect_.left, illustration_rect_.top,
                    dl_rect_width(&illustration_rect_),
                    g_SECRET_PROJECT_ICON_SPRITES[0].width());
@@ -1167,7 +1161,7 @@ void Datalink::draw_faction() {
     strcat(StringTemp, Players[faction].formal_name_faction);
     CharUpperA(StringTemp);
     write_cent_l(StringTemp, &title_rect_);
-    dl_draw_sprite(this, &FactionsArt[faction].datalink, rect.left, rect.top);
+    FactionsArt[faction].datalink.draw(this, rect.left, rect.top, 1, 1);
     rect.left += FactionsArt[faction].datalink.width() + 5;
     char *file = Players[faction].filename;
     popup.start(file, "DATALINKS1", -1, 0, 0, 0);

@@ -442,31 +442,28 @@ void FlatButton::on_redraw() {
   }
 
   if (field_AD4_[state] != 0) {
-    field_AD4_[state]->draw(this, field_AD4_[state]->transparent_index(),
-                            (dib_.bmiHeader.biWidth - field_AD4_[state]->width()) / 2,
+    field_AD4_[state]->draw(this, (dib_.bmiHeader.biWidth - field_AD4_[state]->width()) / 2,
                             -((field_AD4_[state]->height() + dib_.bmiHeader.biHeight) / 2),
                             1, 1);
   } else if (border_styles_[state] != 0) {
     box_sprite(&rectangle, border_styles_[state]);
   } else if (config[12 + state] != 0) {
     int count = 1;
-    config[12 + state]->draw(this, config[12 + state]->transparent_index(), 0, 0, 1, 1);
+    config[12 + state]->draw(this, 0, 0, 1, 1);
     if (config[15 + state] != 0) {
       count = 2;
-      config[15 + state]->draw(this, config[15 + state]->transparent_index(),
-                               dib_.bmiHeader.biWidth - config[15 + state]->width(),
+      config[15 + state]->draw(this, dib_.bmiHeader.biWidth - config[15 + state]->width(),
                                0, 1, 1);
     }
     if (config[18 + state] != 0) {
       ++count;
-      config[18 + state]->draw(this, config[18 + state]->transparent_index(), 0,
+      config[18 + state]->draw(this, 0,
                                -(config[18 + state]->height() + dib_.bmiHeader.biHeight),
                                1, 1);
     }
     if (config[21 + state] != 0) {
       ++count;
-      config[21 + state]->draw(this, config[21 + state]->transparent_index(),
-                               dib_.bmiHeader.biWidth - config[21 + state]->width(),
+      config[21 + state]->draw(this, dib_.bmiHeader.biWidth - config[21 + state]->width(),
                                -(config[21 + state]->height() + dib_.bmiHeader.biHeight),
                                1, 1);
     }

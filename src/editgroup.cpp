@@ -485,27 +485,6 @@ int EditGroup::calculate_dimensions() {
     return 0;
 }
 
-// WORKAROUND(decl): 611D94..611D9A null-tests the cell RECT's address and
-// returns 3, the shape of an inline RECT-taking EditBox::init overload that
-// FileWin::init (613A3D) and NetWin::exec (482A3E) expand too.
-static inline int editgroup_init_box(EditBox *box, RECT *rect, Win *parent,
-                                     int focus_wrap) {
-    if (rect == 0) {
-        return 3;
-    }
-    return box->init(rect->left, rect->top, rect->right - rect->left,
-                     rect->bottom - rect->top, parent, focus_wrap);
-}
-
-// WORKAROUND(decl): 611EB8..611EDE keeps the box in one register for the
-// cursor reset, strlen and the redraw call, the shape of one inline EditBox
-// member that selects the whole text and redraws.
-static inline void editgroup_select_all(EditBox *box) {
-    box->field_B40_ = 0;
-    box->field_B44_ = strlen(box->text_);
-    box->redraw();
-}
-
 // ORIGINAL: 0x00611AF0 ?attach@EditGroup@@QAEHPAUGraphicWin@@HHH@Z 0x00611AF0-0x00611F79;0x00663047-0x0066305C FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00611af0.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x611af0 complete control/data-access review and src/editgroup.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // TRIED: no source-level trick reproduced the SEH frame (the trigger here is a heap `new EditBox` + placement ctor, not a local by-value object of non-trivial type, so LEVER #1 does not apply); the two virtual-base displacements (vtable[4], vtable[8], read fresh per the disassembly's own re-fetch pattern) were kept as raw offset arithmetic rather than named fields, matching the "class deliberately empty" note; VCall extended to slot062 (used on the freshly built EditBox) purely by declaration-order padding. The row/column geometry (x0/cellRight/halfStore/y0) is a best-effort re-derivation from the register shuffle and likely has the least fidelity of the eight; the call ORDER and TARGETS (calculate_dimensions, GraphicWin::init, three set_text_color + set_font pairs, the delete-old/new/ctor/init/set_text sequence per cell) are transcribed directly from the disassembly. Diverges at #0.
@@ -551,7 +530,7 @@ int EditGroup::attach(GraphicWin *parent, int x, int y, int flags) {
             boxes_[index] = new EditBox();
             if (boxes_[index] == 0) return 4;
 
-            const int box_result = editgroup_init_box(boxes_[index], &cell, this, 1);
+            const int box_result = boxes_[index]->init(&cell, this, 1);
             if (box_result != 0) return box_result;
 
             // Original 0x611DD2 tests AH bit 0x10 of Dialog::field_20_.
@@ -568,7 +547,7 @@ int EditGroup::attach(GraphicWin *parent, int x, int y, int flags) {
             boxes_[index]->field_B2C_ = field_B0_;
             boxes_[index]->field_B30_ = field_B4_;
             boxes_[index]->field_B34_ = Dialog::field_40_;
-            editgroup_select_all(boxes_[index]);
+            boxes_[index]->select_all();
             boxes_[index]->show(0);
 
             offset_rect(&cell, 0, static_cast<int>(Dialog::field_68_));

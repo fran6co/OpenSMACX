@@ -239,13 +239,11 @@ void ProdPicker::draw_item(int item, int update) {
         const int size = row_height_ * 3 / 7;
         if (id < 70) {
             g_FACILITY_ICON_SPRITES[id].draw_mono(this,
-                g_FACILITY_ICON_SPRITES[id].transparent_index(),
                 (cell.right - cell.left) / 2 - size / 2 + cell.left,
                 (cell.bottom - cell.top) / 2 - size / 2 + cell.top,
                 color, size, g_FACILITY_ICON_SPRITES[0].width());
         } else {
             g_SECRET_PROJECT_ICON_SPRITES[id - 70].draw_mono(this,
-                g_SECRET_PROJECT_ICON_SPRITES[id - 70].transparent_index(),
                 (cell.right - cell.left) / 2 - size / 2 + cell.left,
                 (cell.bottom - cell.top) / 2 - size / 2 + cell.top,
                 color, size, g_SECRET_PROJECT_ICON_SPRITES[0].width());

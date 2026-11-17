@@ -397,7 +397,6 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
             : ((metric + 0x10) * 0xD7) / 0x10;
         const int icon_color = TextColourTable[162 + tech_category(tech) * 2];
         g_TECH_ICON_SPRITES[tech].draw_mono(this,
-            g_TECH_ICON_SPRITES[tech].transparent_index(),
             (page_width_ - icon_width) / 2 + rect->left, page_pen_y_, icon_color);
         page_pen_y_ += (MapWinCaptionScale > 0
             ? MapWinCaptionScale * 0xD7 / MapWinCaptionDivisor

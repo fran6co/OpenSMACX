@@ -149,16 +149,6 @@ extern Sprite g_TECH_ICON_SPRITES[MaxTechnologyNum];
 // The Transcendent Thought separator is the shared space object
 // BufferJoinSpace (0x00682820, buffer.h), not a unit-owned copy.
 
-// WORKAROUND(inline): 0x00483E1A forms the sprite address before reading its
-// transparent index (+8): an inline draw_mono overload that reads the index
-// itself. sprite.h does not declare one yet.
-static inline int newtechwin_draw_mono(Sprite *sprite, Buffer *destination,
-                                       int x, int y, int color,
-                                       int numerator, int denominator) {
-    return sprite->draw_mono(destination, sprite->transparent_index(), x, y,
-                             color, numerator, denominator);
-}
-
 // WORKAROUND(decl): 0x00483FB3..483FF2 loads all four source edges through a
 // copy of the source pointer, then +n/-n into the destination.
 static inline void newtechwin_inset_copy(RECT *dst, const RECT *src, int amount) {
@@ -280,7 +270,7 @@ void NewTechWin::on_redraw() {
     scratch.bottom -= 3;
     const int image_height = scratch.bottom - scratch.top;
     const int image_width = scratch.right - scratch.left;
-    newtechwin_draw_mono(&g_TECH_ICON_SPRITES[static_cast<int>(field_B24_)], this,
+    g_TECH_ICON_SPRITES[static_cast<int>(field_B24_)].draw_mono(this,
                          scratch.left + (image_width - 0xA0) / 2,
                          scratch.top + (image_height - 0xA0) / 2,
                          mandate_color(tech_category(static_cast<int>(field_B24_))),
