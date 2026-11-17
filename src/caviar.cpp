@@ -2139,7 +2139,7 @@ Purpose: Set the shadow direction from an elevation and an azimuth:
          {cos(azimuth)*sin(elevation),
          sin(azimuth)*sin(elevation), cos(elevation)}, the vector a shadow
          falls along for a light at those angles.
-// ORIGINAL: 0x006181D0 ?set_shadow_vector@Caviar@@QAEXMM@Z 0x006181D0-0x0061824B FILE
+// ORIGINAL: 0x006181D0 ?set_shadow_vector@Caviar@@QAEXMM@Z 0x006181D0-0x0061824B FILE BYTE_EXACT
 // symbol    ?set_shadow_vector@Caviar@@QAEXMM@Z
 // prototype void (__thiscall ?set_shadow_vector@Caviar@@QAEXMM@Z)(Caviar* this, float, float)
 // callers   1   call targets   0

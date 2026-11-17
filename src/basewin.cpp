@@ -507,7 +507,7 @@ void BaseWin::queue_click(int row, int x, int y, int right) {
 // Original bulk-sale counting deliberately tests BaseCurrent->state, not
 // each candidate base's state. The subsequent bulk mutation deliberately
 // does not retest possession or the one-sale-per-turn bit. Preserve both.
-// ORIGINAL: 0x0040C070 ?facilities_click@BaseWin@@QAEHHHHH@Z 0x0040C070-0x0040C842
+// ORIGINAL: 0x0040C070 ?facilities_click@BaseWin@@QAEHHHHH@Z 0x0040C070-0x0040C842 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/unrecovered/0040c070.cpp", "source:src/basewin.h", "image:0x40c070"], "reason": "Recover the complete original operation through genuine owning C++ classes, members and natural lifetimes; preserve retained seed evidence and historical restoration obligations separately from fresh matching."}
 // symbol    ?facilities_click@BaseWin@@QAEXHHHH@Z
 void BaseWin::facilities_click(int facility, int, int, int) {
