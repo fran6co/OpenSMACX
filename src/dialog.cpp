@@ -372,7 +372,7 @@ found:
 
 /*
 Purpose: Select a dialog item by its bounded list ID. The following LEVER/TRIED notes retain prior header-inline experiments, not the current placement.
-// ORIGINAL: 0x006099D0 ?set_selected_id@Dialog@@QAEXH@Z 0x006099D0-0x00609A43
+// ORIGINAL: 0x006099D0 ?set_selected_id@Dialog@@QAEXH@Z 0x006099D0-0x00609A43 BYTE_EXACT
 // LEVER: the body is the whole id_to_pos walk, INLINED - the image never
 //        calls it here. Declaring id_to_pos `MEASURED` + `inline` (definition
 //        at the end of dialog.h) took this from 0 of 36 to 34 of 36: VC6's
