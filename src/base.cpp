@@ -1508,20 +1508,6 @@ static __forceinline int tile_base_owner(const Map *tile) {
     return (owner < MaxPlayerNum) ? owner : -1;
 }
 
-// x wrap with the flat test first; the image keeps this arm order here.
-static inline int farm_wrap_x(int x) {
-    if (MapIsFlat & 1) {
-        return x;
-    }
-    if (x < 0) {
-        return x + MapLongitudeBounds;
-    }
-    if (x >= (int)MapLongitudeBounds) {
-        return x - MapLongitudeBounds;
-    }
-    return x;
-}
-
 static inline int farm_stack_top(int veh_id) {
     while (Vehs[veh_id].prev_veh_id_stack >= 0) {
         veh_id = Vehs[veh_id].prev_veh_id_stack;
@@ -1581,7 +1567,7 @@ void __cdecl farm_compute() {
             FarmStatus[position] = 1;
             continue;
         }
-        int x = farm_wrap_x(base_x + RadiusOffsetX[position]);
+        int x = wrap_map_x(base_x + RadiusOffsetX[position]);
         int y = base_y + RadiusOffsetY[position];
         if (!on_map(x, y)) {
             FarmStatus[position] = 2;
@@ -2449,21 +2435,6 @@ int __cdecl base_lose_minerals(int base_id, int UNUSED(production_id)) {
 // popup.h.
 int __cdecl POP2(const char *caption, const char *image, int base_id);
 
-// The image tests the flat-map bit with the flat case as the fall-through
-// arm here, unlike wrap_map_x's layout.
-static inline int wrap_x_flat_first(int x) {
-    if (MapIsFlat & 1) {
-        return x;
-    }
-    if (x < 0) {
-        return x + MapLongitudeBounds;
-    }
-    if (x >= MapLongitudeBounds) {
-        return x - MapLongitudeBounds;
-    }
-    return x;
-}
-
 // The superseded partial scaffold was deleted after full owner recovery.
 // Its seed path below is historical Git provenance, not a source dependency.
 // ORIGINAL: 0x004F67F0 ?base_ecology@@YAXXZ 0x004F67F0-0x004F79B3
@@ -2490,7 +2461,7 @@ void __cdecl base_ecology() {
     int best_index = -1;
     int i;
     for (i = 1; i < 49; i++) {
-        int x = wrap_x_flat_first(BaseCurrent->x + RadiusOffsetX[i]);
+        int x = wrap_map_x(BaseCurrent->x + RadiusOffsetX[i]);
         int y = BaseCurrent->y + RadiusOffsetY[i];
         if (!on_map(x, y)) {
             continue;
@@ -6950,7 +6921,7 @@ int __cdecl base_growth() {
         int improvable = 0;  // unworked/fixable squares a former could farm
         int bad_farms = 0;   // BUG(original): counted but never read
         for (int i = 1; i < 21; i++) {
-            int x2 = wrap_x_flat_first(x + RadiusOffsetX[i]);
+            int x2 = wrap_map_x(x + RadiusOffsetX[i]);
             int y2 = y + RadiusOffsetY[i];
             if (!on_map(x2, y2)) {
                 continue;

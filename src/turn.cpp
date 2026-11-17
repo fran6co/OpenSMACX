@@ -1169,9 +1169,7 @@ void __cdecl random_events(int mode) {
         seen = (PlayersData[ConsoleGlobal.faction_id_].flags & PFLAG_MAP_REVEALED) || (map_loc(GameDataStateStorage.fields_.mount_planet_x_, GameDataStateStorage.fields_.mount_planet_y_)->visibility & (1 << ConsoleGlobal.faction_id_));
         for (int i = 0; i < 81; i++) {
             int t = GameDataStateStorage.fields_.mount_planet_x_ + RadiusOffsetX[i];
-            int x2 = (MapIsFlat & 1) ? t
-                : t < 0 ? t + (int)MapLongitudeBounds
-                : t >= (int)MapLongitudeBounds ? t - (int)MapLongitudeBounds : t;
+            int x2 = wrap_map_x(t);
             int y2 = GameDataStateStorage.fields_.mount_planet_y_ + RadiusOffsetY[i];
             if (!on_map(x2, y2)) {
                 continue;
@@ -1589,9 +1587,7 @@ void __cdecl random_events(int mode) {
         seen = 0;
         for (int i = 0; i < 21; i++) {
             int t = base.x + RadiusOffsetX[i];
-            int x2 = (MapIsFlat & 1) ? t
-                : t < 0 ? t + (int)MapLongitudeBounds
-                : t >= (int)MapLongitudeBounds ? t - (int)MapLongitudeBounds : t;
+            int x2 = wrap_map_x(t);
             int y2 = base.y + RadiusOffsetY[i];
             if (!on_map(x2, y2)) {
                 continue;
@@ -1695,7 +1691,7 @@ void __cdecl alien_fauna() {
         int best_y;  // original leaves this uninitialised
         for (int dir = 0; dir < 8; ++dir) {
             int tx = x + VehMoveDeltaX[dir];
-            x2 = (MapIsFlat & 1) ? tx : (tx < 0 ? tx + MapLongitudeBounds : (tx >= MapLongitudeBounds ? tx - MapLongitudeBounds : tx));
+            x2 = wrap_map_x(tx);
             y2 = y + VehMoveDeltaY[dir];
             if (!on_map(x2, y2)) continue;
             Map *cand = map_loc(x2, y2);
@@ -1892,7 +1888,7 @@ void __cdecl alien_fauna() {
         do {
             direction = (direction + 1) % 21;
             int tx = x + RadiusOffsetX[direction];
-            x2 = (MapIsFlat & 1) ? tx : (tx < 0 ? tx + MapLongitudeBounds : (tx >= MapLongitudeBounds ? tx - MapLongitudeBounds : tx));
+            x2 = wrap_map_x(tx);
             y2 = y + RadiusOffsetY[direction];
         } while (!on_map(x2, y2) ||
                  !(map_loc(x2, y2)->bit & BIT_FUNGUS) ||
@@ -1924,7 +1920,7 @@ void __cdecl alien_fauna() {
     }
 }
 
-// ORIGINAL: 0x00522F00 ?do_fungal_towers@@YAXXZ 0x00522F00-0x005230DD
+// ORIGINAL: 0x00522F00 ?do_fungal_towers@@YAXXZ 0x00522F00-0x005230DD BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["Pinned native instructions at 0x00522F00..0x005230DD: descending vehicle traversal, random spread checks, radius offsets, per-faction synchronization and 0x0028805C clear mask.","source:src/veh.h Veh/Vehs and source:src/map.h map, bit, synchronization and radius owners."],"reason":"Recover fungal tower spread and local clearing in the vehicle owner through real vehicle/map state and synchronization calls; preserve original random order and seed identity, without claiming matching or runtime acceptance."}
 void __cdecl do_fungal_towers() {
     for (int vehicle_id = GameDataStateStorage.fields_.vehicle_current_count_ - 1;

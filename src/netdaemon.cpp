@@ -5967,17 +5967,6 @@ int NetDaemon::action(int veh_id, int mode) {
     return 1;
 }
 
-// WORKAROUND(inline): the image's two wraps in order_veh form `lea r,[bounds+x]`;
-// map.h's wrap_map_x (const local bound) gives `[x+bounds]`. This spelling, reading
-// MapLongitudeBounds at each use, reproduces it; the original helper is unknown.
-static inline int net_wrap_x(int x) {
-    if (!(MapIsFlat & 1)) {
-        if (x < 0) return x + MapLongitudeBounds;
-        if (x >= MapLongitudeBounds) return x - MapLongitudeBounds;
-    }
-    return x;
-}
-
 // WORKAROUND(inline): order_veh's stack walk exits straight to the loop end on a
 // negative id (0x532031 `jl 0x532048`), which VC6 threads only from a ternary
 // body; veh.h's if-form veh_next_stack_id stops at the loop test. Switching the
@@ -5995,7 +5984,7 @@ int NetDaemon::order_veh(int veh_id, int direction, int mode) {
     // maybe_lock expanded: the image pushes its 0x0068C474 literal.
     if (maybe_lock(&veh_id, mode, 0, -1, -1, 0) != 0) return 0;
 
-    const int x = net_wrap_x(Vehs[veh_id].x + VehMoveDeltaX[direction]);
+    const int x = wrap_map_x(Vehs[veh_id].x + VehMoveDeltaX[direction]);
     const int y = Vehs[veh_id].y + VehMoveDeltaY[direction];
     const int faction = Vehs[veh_id].faction_id;
     const int base_id = base_at(x, y);
@@ -6072,7 +6061,7 @@ int NetDaemon::order_veh(int veh_id, int direction, int mode) {
             int have_other_vehicle = 0;
             int other_faction_found = 0;
             for (int offset = 0; offset < 21; ++offset) {
-                const int adjacent_x = net_wrap_x(RadiusOffsetX[offset] + x);
+                const int adjacent_x = wrap_map_x(RadiusOffsetX[offset] + x);
                 const int adjacent_y = RadiusOffsetY[offset] + y;
                 if (on_map(adjacent_x, adjacent_y)) {
                     const Map &tile = MapTiles[MapLongitude * adjacent_y + (adjacent_x >> 1)];

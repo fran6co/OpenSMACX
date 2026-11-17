@@ -804,9 +804,7 @@ void __cdecl balance() {
         int land_count = 0;
         for (int i = 0; i < 21; ++i) {
             const int x_raw = RadiusOffsetX[i] + x;
-            const int tile_x = (MapIsFlat & 1) ? x_raw
-                : (x_raw < 0 ? x_raw + MapLongitudeBounds
-                   : (x_raw >= (int)MapLongitudeBounds ? x_raw - MapLongitudeBounds : x_raw));
+            const int tile_x = wrap_map_x(x_raw);
             const int tile_y = RadiusOffsetY[i] + y;
             if (!on_map(tile_x, tile_y)) {
                 continue;
@@ -1637,7 +1635,7 @@ search:
     return 1;
 }
 
-// ORIGINAL: 0x005B3380 ?eliminate_player@@YAHHH@Z 0x005B3380-0x005B38C6
+// ORIGINAL: 0x005B3380 ?eliminate_player@@YAHHH@Z 0x005B3380-0x005B38C6 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/005b3380.cpp: canonical original identity, full spans and retained seed provenance", "source:src/faction.h: real faction record ownership and typed relationships", "source:recovery/tasks/faction-lifecycle-owner-closure.json: coordinator authorization and retained task baseline"], "reason": "The original faction elimination operation belongs to the Faction owner; typed faction diplomacy, base/vehicle lifecycles and shared endgame/script state preserve actual cross-owner relationships rather than raw executable references."}
 // TRIED: direct Ghidra transcription with own extern DAT_ table arrays for every indexed global; diverges at insn #0 (prologue/frame shape of the ~1350-byte body)
 int __cdecl eliminate_player(int faction, int conqueror) {

@@ -184,9 +184,9 @@ void __cdecl quick_zoc(int x_src, int y_src, int faction_id, int x_dst, int y_ds
     int search_zoc = -1;
     for (uint32_t i = 0; i < 8; i++) {
         // The image's wrap stores each arm to the x slot and reloads it for
-        // on_map: the flat-first ternary, not map.h's wrap_map_x.
+        // on_map: map.h's flat-first wrap_map_x.
         int t = x_src + VehMoveDeltaX[i];
-        int x_radius = (MapIsFlat & 1) ? t : t < 0 ? t + MapLongitudeBounds : t >= MapLongitudeBounds ? t - MapLongitudeBounds : t;
+        int x_radius = wrap_map_x(t);
         int y_radius = y_src + VehMoveDeltaY[i];
         if (on_map(x_radius, y_radius)) {
             int owner = veh_who(x_radius, y_radius);

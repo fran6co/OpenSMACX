@@ -1259,13 +1259,6 @@ void __cdecl action_road_to(int veh_id) {
 // cursor_dist in place: arguments evaluate before the body, as the image's
 // early second-coordinate load shows.
 
-// action_home's airbase-ring wrap: the image tests the flat bit first.
-static inline int home_wrap_x(int x) {
-    return (MapIsFlat & 1) ? x
-        : (x < 0 ? x + (int)MapLongitudeBounds
-                 : (x >= (int)MapLongitudeBounds ? x - (int)MapLongitudeBounds : x));
-}
-
 /*
 Purpose: Send a unit home. Search the friendly and pacted bases, then - for an air unit - the
          friendly carriers and air supply convoys, then the airbases inside the search radius, for
@@ -1389,7 +1382,7 @@ int __cdecl action_home(int veh_id, int flags) {
         // saturates at the largest ring when nothing has been found at all.
         const int radius_count = RadiusRange[best_dist < 8 ? best_dist : 8];
         for (int i = 0; i < radius_count; i++) {
-            const int x_radius = home_wrap_x(RadiusOffsetX[i] + veh_x);
+            const int x_radius = wrap_map_x(RadiusOffsetX[i] + veh_x);
             const int y_radius = RadiusOffsetY[i] + veh_y;
             if (!on_map(x_radius, y_radius)) {
                 continue;

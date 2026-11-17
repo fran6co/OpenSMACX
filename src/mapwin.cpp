@@ -1642,20 +1642,6 @@ int MapWin::focus(int x, int y) {
     return moved;
 }
 
-// WORKAROUND(inline): map.h's wrap_map_x caches MapLongitudeBounds in a
-// const local. That extra temporary shifts VC6's register rotation in every
-// caller here: set_center (0x0046B1F0) and get_point_light (0x00470790) are
-// byte exact only with this per-arm read. The original header wrap evidently
-// had no such local; fold this back into map.h once its other callers are
-// remeasured.
-static inline int mapwin_wrap_x(int x) {
-    if (!(MapIsFlat & 1)) {
-        if (x < 0) return x + MapLongitudeBounds;
-        if (x >= (int)MapLongitudeBounds) return x - MapLongitudeBounds;
-    }
-    return x;
-}
-
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0046B1F0 ?set_center@MapWin@@QAEXHHH@Z 0x0046B1F0-0x0046B303 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0046b1f0.cpp and original 0x0046B1F0-0x0046B303; Vehs+0xE is faction_id."], "reason": "Home map recentering with real receiver fields, destination vehicle state and redraw."}
@@ -1674,7 +1660,7 @@ void MapWin::set_center(int x, int y, int draw_type) {
     // The image inlines the shared wrap (one `mov eax,ebx` for both the flat
     // and in-range paths) and sets the -1 destination on the non-Console
     // path only.
-    center_x_ = mapwin_wrap_x(x);
+    center_x_ = wrap_map_x(x);
     center_y_ = y;
 
     int destination;
@@ -2184,31 +2170,6 @@ void MapWin::direct_dest_line(int x1, int y1, int x2, int y2, int triad,
     }
 }
 
-// Whether a tile lies inside the visible map window, across the seam.
-static inline int mapwin_tile_visible(MapWin *w, int x, int y) {
-    if (y < w->field_1DDA8_) {
-        return 0;
-    }
-    if (y >= w->field_1DDD8_ + w->field_1DDD0_ + w->field_1DDA8_) {
-        return 0;
-    }
-    if ((MapIsFlat & 1) == 0) {
-        if (x < w->field_1DDA4_) {
-            x += MapLongitudeBounds;
-        }
-        if (x >= w->field_1DDD4_ + w->field_1DDCC_ + w->field_1DDA4_) {
-            x -= MapLongitudeBounds;
-        }
-    }
-    if (x < w->field_1DDA4_) {
-        return 0;
-    }
-    if (x >= w->field_1DDD4_ + w->field_1DDCC_ + w->field_1DDA4_) {
-        return 0;
-    }
-    return 1;
-}
-
 // Route-preview tile distance: wrapped |dx| plus |dy|. The x term is map.h's
 // x_dist; an open-coded copy with its own temporaries shifts VC6's register
 // choice in draw_vehicles (0x00466CA0).
@@ -2289,8 +2250,8 @@ void MapWin::dest_line(int x1, int y1, int x2, int y2, int proto_id,
                         proto_id, faction, prev_x, prev_y, x, y,
                         speed_proto(proto_id) == Rules.move_rate_roads);
                 }
-                if (mapwin_tile_visible(this, prev_x, prev_y) ||
-                    mapwin_tile_visible(this, x, y)) {
+                if (tile_in_view(prev_x, prev_y, 0) ||
+                    tile_in_view(x, y, 0)) {
                     direct_dest_line(prev_x, prev_y, x, y, triad, pattern_on,
                                      pattern_off, cover);
                 }
@@ -2701,24 +2662,7 @@ void MapWin::draw_vehicles(int x, int y, int radius, int faction) {
             }
             if (tile_y >= 0 && tile_y < MapLatitudeBounds && tile_x >= 0 &&
                 tile_x < MapLongitudeBounds) {
-                bool tile_visible = false;
-                int viewport_x = tile_x;
-                if (tile_y >= field_1DDA8_ &&
-                    tile_y < field_1DDD8_ + field_1DDD0_ + field_1DDA8_) {
-                    if ((MapIsFlat & 1) == 0) {
-                        if (tile_x < field_1DDA4_) {
-                            viewport_x = tile_x + MapLongitudeBounds;
-                        }
-                        if (viewport_x >= field_1DDD4_ + field_1DDCC_ + field_1DDA4_) {
-                            viewport_x -= MapLongitudeBounds;
-                        }
-                    }
-                    if (viewport_x >= field_1DDA4_ &&
-                        viewport_x < field_1DDD4_ + field_1DDCC_ + field_1DDA4_) {
-                        tile_visible = true;
-                    }
-                }
-                if (tile_visible) {
+                if (tile_in_view(tile_x, tile_y, 0)) {
                     int pixel_x;
                     int pixel_y;
                     tile_to_pixel(tile_x, tile_y, &pixel_x, &pixel_y);
@@ -2987,23 +2931,7 @@ void MapWin::draw_radius(int x, int y, int radius, int draw_type) {
                 ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
             int cursor_x =
                 ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
-            bool cursor_visible = false;
-            if (cursor_y >= field_1DDA8_ &&
-                cursor_y < field_1DDD8_ + field_1DDD0_ + field_1DDA8_) {
-                if ((MapIsFlat & 1) == 0) {
-                    if (cursor_x < field_1DDA4_) {
-                        cursor_x += MapLongitudeBounds;
-                    }
-                    if (cursor_x >= field_1DDD4_ + field_1DDCC_ + field_1DDA4_) {
-                        cursor_x -= MapLongitudeBounds;
-                    }
-                }
-                if (cursor_x >= field_1DDA4_ &&
-                    cursor_x < field_1DDD4_ + field_1DDCC_ + field_1DDA4_) {
-                    cursor_visible = true;
-                }
-            }
-            if (cursor_visible) {
+            if (tile_in_view(cursor_x, cursor_y, 0)) {
                 if (zoom_offset_ <= -8) {
                     g_RADIUS2_TEXTURE.draw_trans(this, MapCornerCopy, 0);
                 } else {
@@ -6441,8 +6369,8 @@ void MapWin::draw_base_dest(int draw_type) {
                 const int y = Bases[base_id].y;
                 const int dest_x = Bases[destination].x;
                 const int dest_y = Bases[destination].y;
-                if (mapwin_tile_visible(this, x, y) ||
-                    mapwin_tile_visible(this, dest_x, dest_y)) {
+                if (tile_in_view(x, y, 0) ||
+                    tile_in_view(dest_x, dest_y, 0)) {
                     switch (direction) {
                     case 0:
                         line_type = 10;
@@ -6657,7 +6585,7 @@ void MapWin::gen_map(int a1, int a2) {
             int col = field_1DDA4_ + (i & 1);
             const int count = (i & 1) ? field_1DDCC_ : field_1DDD4_;
             for (int n = count; n > 0; n--, col += 2) {
-                const int wrapped = mapwin_wrap_x(col);
+                const int wrapped = wrap_map_x(col);
                 // No margin here: the terrain scan reads the two damage
                 // rectangles straight from the members (0x469D92..0x469E00).
                 if (on_map(wrapped, row) &&
@@ -6688,7 +6616,7 @@ void MapWin::gen_map(int a1, int a2) {
         const int count = (i & 1) ? field_1DDCC_ : field_1DDD4_;
         for (int n = count; n > 0; n--, col += 2) {
             const int flat = MapIsFlat & 1;
-            const int wrapped = mapwin_wrap_x(col);
+            const int wrapped = wrap_map_x(col);
             if (on_map(wrapped, row)) {
                 if (field_21A44_ != 0) {
                     // 0x469F42..0x469FAA: both rectangles are copied into
@@ -6740,7 +6668,7 @@ void MapWin::gen_map(int a1, int a2) {
             const int count = (i & 1) ? field_1DDCC_ : field_1DDD4_;
             for (int n = count; n > 0; n--, col += 2) {
                 const int flat = MapIsFlat & 1;
-                const int wrapped = mapwin_wrap_x(col);
+                const int wrapped = wrap_map_x(col);
                 if (on_map(wrapped, row)) {
                     if (field_21A44_ != 0) {
                         // 0x46A142..0x46A1AA: same widened copies as above.
@@ -6959,7 +6887,7 @@ int MapWin::get_alt(int x, int y, int corner) {
     int alt_sum = 0;
     int count = 0;
     for (;;) {
-        int nx = mapwin_wrap_x(CornerOffsetX[corner - 1][count] + x);
+        int nx = wrap_map_x(CornerOffsetX[corner - 1][count] + x);
         int ny = CornerOffsetY[corner - 1][count] + y;
         if (!on_map(nx, ny) || (map_loc(nx, ny)->climate & ~0x1F) < 0x60) {
             sum = 0;
@@ -6987,7 +6915,7 @@ int MapWin::get_alt(int x, int y, int corner) {
     }
     // Each neighbour stores the value under its opposite corner.
     for (int opposite = -2; opposite + 2 < 4; ++opposite) {
-        int nx = mapwin_wrap_x(CornerOffsetX[corner - 1][opposite + 2] + x);
+        int nx = wrap_map_x(CornerOffsetX[corner - 1][opposite + 2] + x);
         int ny = CornerOffsetY[corner - 1][opposite + 2] + y;
         if (on_map(nx, ny)) {
             set_alt_cache(this, nx, ny, (opposite & 3) + 1, value);
@@ -7485,8 +7413,8 @@ void MapWin::compute_lighting_table() {
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00470550
 
-// The image's neighbour wraps reload MapLongitudeBounds per arm, unlike
-// wrap_map_x's cached bound (see mapwin_wrap_x).
+// The image's neighbour wraps reload MapLongitudeBounds per arm (map.h's
+// flat-first wrap_map_x).
 int MapWin::get_point_light(int x, int y, int corner) {
     int total = 0;
     int localLight = 0;
@@ -7519,9 +7447,9 @@ int MapWin::get_point_light(int x, int y, int corner) {
 
     for (int j = 0; j < 4; ++j) {
         const int prev_corner = j - 3;
-        total += get_brighting(mapwin_wrap_x(x + CornerOffsetX[corner - 1][j]),
+        total += get_brighting(wrap_map_x(x + CornerOffsetX[corner - 1][j]),
                                y + CornerOffsetY[corner - 1][j], prev_corner & 3);
-        total += get_brighting(mapwin_wrap_x(x + CornerOffsetX[corner - 1][j]),
+        total += get_brighting(wrap_map_x(x + CornerOffsetX[corner - 1][j]),
                                y + CornerOffsetY[corner - 1][j], (j - 2) & 3);
     }
 
@@ -7594,7 +7522,7 @@ void MapWin::calculate_dimensions() {
                                                          : MapLongitudeBounds / 2;
     field_1DDA8_ = center_y_ - field_1DDD0_;
     field_1DDA8_ = range(field_1DDA8_, -2, MapLatitudeBounds + (2 - field_1DDD0_) * 2);
-    field_1DDA4_ = wrap_map_x(center_x_ - field_1DDCC_);
+    field_1DDA4_ = xrange_inline(center_x_ - field_1DDCC_);
     if (MapIsFlat & 1) {
         field_1DDA4_ = range(field_1DDA4_, -4, MapLongitudeBounds + (2 - field_1DDCC_) * 2);
     }
@@ -7749,20 +7677,8 @@ Status: Coverage transcription - unclaimed body
 void MapWin::draw_cursor() {
     int y = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
     int x = ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
-    int adjusted_x = x;
-    if (y >= field_1DDA8_ && y < field_1DDD8_ + field_1DDD0_ + field_1DDA8_) {
-        if ((MapIsFlat & 1) == 0) {
-            if (x < field_1DDA4_) {
-                adjusted_x = MapLongitudeBounds + x;
-            }
-            if (adjusted_x >= field_1DDD4_ + field_1DDCC_ + field_1DDA4_) {
-                adjusted_x -= MapLongitudeBounds;
-            }
-        }
-        if (adjusted_x >= field_1DDA4_ &&
-            adjusted_x < field_1DDD4_ + field_1DDCC_ + field_1DDA4_) {
-            draw_radius(x, y, 0, 2);
-        }
+    if (tile_in_view(x, y, 0)) {
+        draw_radius(x, y, 0, 2);
     }
 }
 

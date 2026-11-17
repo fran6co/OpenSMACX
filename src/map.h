@@ -597,7 +597,20 @@ int __cdecl xrange(int x);
 
 // Shared inline coordinate-wrap implementation. Keep the mapped `xrange`
 // symbol out of line for source owners whose pinned code calls it directly.
+// The flat-first ternary: expanded copies (quick_zoc, brush, borehole,
+// action_home, the scoot sampler) test the flat bit first, store each arm to
+// the result and reread MapLongitudeBounds per arm.
 inline int __cdecl wrap_map_x(int x) {
+    return (MapIsFlat & 1) ? x
+        : x < 0 ? x + MapLongitudeBounds
+        : x >= MapLongitudeBounds ? x - MapLongitudeBounds : x;
+}
+
+// WORKAROUND(decl): a second wrap that hoists MapLongitudeBounds into one
+// register; it is xrange's own out-of-line body (0x0048BEE0) and the shape
+// calculate_dimensions, Path::continents and value_of_base expand. Most likely
+// the original's xrange was itself this header inline; the name is a stand-in.
+inline int __cdecl xrange_inline(int x) {
     if (!(MapIsFlat & 1)) {
         const int longitude_bounds = MapLongitudeBounds;
         if (x < 0) return x + longitude_bounds;

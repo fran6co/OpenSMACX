@@ -1620,16 +1620,6 @@ static inline Map *set_course_tile(int x, int y) {
     return &MapTiles[(x >> 1) + y * MapLongitude];
 }
 
-// wrap_map_x reading MapLongitudeBounds at each use instead of through
-// map.h's local; that local flips the image's lea operand order.
-static inline int set_course_wrap_x(int x) {
-    if (!(MapIsFlat & 1)) {
-        if (x < 0) return x + MapLongitudeBounds;
-        if (x >= MapLongitudeBounds) return x - MapLongitudeBounds;
-    }
-    return x;
-}
-
 void __cdecl set_course(int veh_id, char type, int x, int y) {
     Veh &veh = Vehs[veh_id];
     int veh_region = set_course_tile(veh.x, veh.y)->region;
@@ -1643,7 +1633,7 @@ void __cdecl set_course(int veh_id, char type, int x, int y) {
     }
     int best_frontage = ((destination->climate & ~0x1F) >= ALT_BIT_SHORE_LINE) ? 0 : -1;
     for (int i = 0; i < 21; i++) {   // the destination's own base radius
-        int x_radius = set_course_wrap_x(x + RadiusOffsetX[i]);
+        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (!on_map(x_radius, y_radius)) {
             continue;
@@ -1865,9 +1855,7 @@ int __cdecl good_sensor(int faction_id, int x, int y) {
     int reasons = 0;
     for (int i = 0; i < 25; i++) {
         int x_raw = x + RadiusOffsetX[i];
-        int x_radius = (MapIsFlat & 1) ? x_raw
-            : (x_raw < 0 ? x_raw + MapLongitudeBounds
-               : (x_raw >= (int)MapLongitudeBounds ? x_raw - MapLongitudeBounds : x_raw));
+        int x_radius = wrap_map_x(x_raw);
         int y_radius = y + RadiusOffsetY[i];
         if (!on_map(x_radius, y_radius)) {
             continue;
@@ -2889,9 +2877,7 @@ int __cdecl alien_move(int veh_id) {
         }
         for (i = 0; i < 8; i++) {
             int x_raw = x + VehMoveDeltaX[i];
-            int x2 = (MapIsFlat & 1) ? x_raw
-                : (x_raw < 0 ? x_raw + MapLongitudeBounds
-                   : (x_raw >= (int)MapLongitudeBounds ? x_raw - MapLongitudeBounds : x_raw));
+            int x2 = wrap_map_x(x_raw);
             int y2 = y + VehMoveDeltaY[i];
             if (!on_map(x2, y2)) {
                 continue;
@@ -3053,9 +3039,7 @@ int __cdecl alien_move(int veh_id) {
     int score;
     for (i = 0; i < 8; i++) {
         int x_raw = x + VehMoveDeltaX[i];
-        int x2 = (MapIsFlat & 1) ? x_raw
-            : (x_raw < 0 ? x_raw + MapLongitudeBounds
-               : (x_raw >= (int)MapLongitudeBounds ? x_raw - MapLongitudeBounds : x_raw));
+        int x2 = wrap_map_x(x_raw);
         int y2 = y + VehMoveDeltaY[i];
         if (!on_map(x2, y2)) {
             continue;

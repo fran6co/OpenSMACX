@@ -61,6 +61,8 @@
 // ORIGINAL: 0x0048AE20 _$E19 0x0048AE20-0x0048AE34 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682570 selects original initializer0x48ae00..0x48ae18, registering fini0x48ae20..0x48ae34; complete independent decode establishes exclusive boundaries.", "Source-owned object?PlanWindow@@3VPlanWin@@A identifies original storage0x834d70. Startup arguments/calls: push 1; call 0x48bcd0; push 0x48ae20. Cleanup receiver/calls: mov ecx, 0x856dc0; call 0x48bd80; mov ecx, 0x856dc0; jmp 0x5d4dd0. Constructor/destructor targets retain their existing class-owned source mappings.", "Fresh physical src/planwin.cpp COFF selects _$E21 through .CRT$XCU and registers _$E19, both referencing the genuine source global. Original NetMsg argument triples and implicit PlanWin/Console most-derived flags are preserved by the existing declarations; complete virtual-base teardown is compiler-owned, not authored offsets.", "Current local helper symbols interpret present emission, not original debug names or historical TU boundaries. Object starts do not prove allocation extents. This binding establishes neither cross-TU global order, masked-reference correctness, strict linked preservation, dependency-provider equivalence nor runtime/game acceptance; excluded guarded sprite cleanup remains separate."], "reason": "Bind original exit identity to the genuine compiler-generated lifetime of ?PlanWindow@@3VPlanWin@@A in its actual source owner; no manual lifecycle callback is authored."}
 // symbol    _$E10
+// PlanWin's centering scans expand MapWin::tile_in_view (basewin.h).
+#define MAPWIN_TILE_IN_VIEW_INLINE
 #include "stdafx.h"
 #include "game.h"  // shared state-window owner
 
@@ -75,6 +77,7 @@
 #include "mapwin.h"
 #include "map.h"
 #include "base.h"
+#include "basewin.h"
 #include "spritebox.h"
 #include "net_class.h"
 #include "time.h"
@@ -202,36 +205,6 @@ void PlanWin::find_view(int x1, int y1, int x2, int y2,
     center_y_ = y;
 }
 
-// WORKAROUND(inline): the same view test as mapwin.cpp's mapwin_tile_visible
-// (y bound, seam wrap, x bound). Its own parameter copy is what spills
-// monocenter's loop index to the image's fifth frame slot and gives
-// opticenter's two scans their image allocation (both became byte exact);
-// the original was most likely one shared MapWin header inline, not yet
-// reconstructed.
-static inline int planwin_tile_visible(MapWin *w, int x, int y) {
-    if (y < w->field_1DDA8_) {
-        return 0;
-    }
-    if (y >= w->field_1DDD8_ + w->field_1DDD0_ + w->field_1DDA8_) {
-        return 0;
-    }
-    if ((MapIsFlat & 1) == 0) {
-        if (x < w->field_1DDA4_) {
-            x += MapLongitudeBounds;
-        }
-        if (x >= w->field_1DDD4_ + w->field_1DDCC_ + w->field_1DDA4_) {
-            x -= MapLongitudeBounds;
-        }
-    }
-    if (x < w->field_1DDA4_) {
-        return 0;
-    }
-    if (x >= w->field_1DDD4_ + w->field_1DDCC_ + w->field_1DDA4_) {
-        return 0;
-    }
-    return 1;
-}
-
 // Zoom until both selected points and their neighboring tiles fit the view.
 // ORIGINAL: 0x0048B630 ?opticenter@PlanWin@@QAEXHHHHH@Z 0x0048B630-0x0048B8D6 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x0048B630-0x0048B8D6;git:f2db92dc:src/recovered/units/0048b630.cpp", "source:src/map.h:RadiusOffsetX,RadiusOffsetY;source:src/mapwin.h:viewport fields"], "reason": "The PlanWin member varies the inherited MapWin zoom until the selected two points and their radius samples fit the calculated viewport."}
@@ -271,7 +244,7 @@ void PlanWin::opticenter(int x1, int y1, int x2, int y2, int force_redraw) {
                 x < 0 || x >= MapLongitudeBounds) {
                 continue;
             }
-            if (!planwin_tile_visible(this, x, y)) {
+            if (!tile_in_view(x, y, 0)) {
                 goto too_far;
             }
         }
@@ -289,7 +262,7 @@ void PlanWin::opticenter(int x1, int y1, int x2, int y2, int force_redraw) {
                 x < 0 || x >= MapLongitudeBounds) {
                 continue;
             }
-            if (!planwin_tile_visible(this, x, y)) {
+            if (!tile_in_view(x, y, 0)) {
                 goto too_far;
             }
         }
@@ -336,7 +309,7 @@ void PlanWin::monocenter(int x, int y, int force_redraw) {
                 sample_x < 0 || sample_x >= MapLongitudeBounds) {
                 continue;
             }
-            if (!planwin_tile_visible(this, sample_x, sample_y)) {
+            if (!tile_in_view(sample_x, sample_y, 0)) {
                 tiles_fit = false;
                 break;
             }
@@ -759,12 +732,11 @@ Purpose: Bounds check and handling of x coordinate for round maps.
 Return Value: X coordinate
 Status: Complete
 */
-// The canonical `xrange` symbol is emitted out of line here. Its single
-// wrap implementation is the shared inline `wrap_map_x` in map.h; measured
-// inline callers use that helper directly.
+// The canonical `xrange` symbol is emitted out of line here. Its body is
+// map.h's cached-bound xrange_inline (not the flat-first wrap_map_x).
 // opticenter calls this out of line and discards the result.
 #pragma auto_inline(off)
 int __cdecl xrange(int x) {
-    return wrap_map_x(x);
+    return xrange_inline(x);
 }
 #pragma auto_inline(on)

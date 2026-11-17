@@ -41,6 +41,7 @@
 // symbol    _$E19
 #define NETDAEMON_RESET_INLINE  // stand-in: see NetDaemon::reset in netdaemon.h
 #define NETMSG_IS_ACTIVE_INLINE  // stand-in: see NetMsg::is_active in netmsg.h
+#define MAPWIN_TILE_IN_VIEW_INLINE  // MapWin::tile_in_view body (basewin.h)
 #include "stdafx.h"
 
 // Distinct writable string cells observed at the original call sites.
@@ -2548,15 +2549,15 @@ void Console::cursor_on(int cursor_shape, int veh_id) {
 // this tree: eax) and follows from the image deferring its `this` spill
 // (0x005148CD `mov edi, ecx`) until after both loads.
 // Operands now follow VC6's load-b-first order (x: delta + coord, y: coord +
-// delta), which fixes the loads. The x wrap is the written-out ternary with
-// the flat arm first (MATCHING_GUIDE 3.2); wrap_map_x's if-chain left this
-// and new_x in swapped registers.
+// delta), which fixes the loads. The x wrap is map.h's flat-first ternary
+// wrap_map_x (MATCHING_GUIDE 3.2); the older if-chain form left this and
+// new_x in swapped registers.
 
 
 void Console::move_cursor(int direction) {
     int x = VehMoveDeltaX[direction] +
         ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
-    int new_x = (MapIsFlat & 1) ? x : x < 0 ? x + MapLongitudeBounds : x >= MapLongitudeBounds ? x - MapLongitudeBounds : x;
+    int new_x = wrap_map_x(x);
     int new_y = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_] +
                 VehMoveDeltaY[direction];
     if (set_cursor(new_x, new_y) == 0) {
@@ -4008,38 +4009,6 @@ void Console::name_landmark(int x, int y) {
 extern int IfaceIdToSlotStorage[30];
 extern int ActiveIfaceIdStorage;
 
-// Inlined copy of MapWin::tile_in_view (0x004216F0), which lives in another TU.
-static inline int ready_tile_in_view(MapWin &win, int x, int y, int margin) {
-    if (margin != 0 && y >= 0 && y < MapLatitudeBounds && x >= 0 &&
-        x < MapLongitudeBounds) {
-        if (alt_at(x, y) > 3 &&
-            y - alt_at(x, y) + 3 < win.field_1DDA8_ + margin) {
-            return 0;
-        }
-    }
-    if (y < win.field_1DDA8_ + margin) {
-        return 0;
-    }
-    if (y >= win.field_1DDD8_ + win.field_1DDD0_ - margin + win.field_1DDA8_) {
-        return 0;
-    }
-    if ((MapIsFlat & 1) == 0) {
-        if (x < win.field_1DDA4_ + margin) {
-            x += MapLongitudeBounds;
-        }
-        if (x >= win.field_1DDD4_ + win.field_1DDCC_ - margin + win.field_1DDA4_) {
-            x -= MapLongitudeBounds;
-        }
-    }
-    if (x < win.field_1DDA4_ + margin) {
-        return 0;
-    }
-    if (x >= win.field_1DDD4_ + win.field_1DDCC_ - margin + win.field_1DDA4_) {
-        return 0;
-    }
-    return 1;
-}
-
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00510F50 ?ready@Console@@QAEXXZ 0x00510F50-0x00511471 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00510f50.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
@@ -4067,8 +4036,8 @@ void Console::ready() {
              (Vehs[selected_vehicle_].state & 0x1000200) != 0x1000200)) {
             if (!focus(Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y,
                        Vehs[selected_vehicle_].faction_id)) {
-                if (!ready_tile_in_view(*this, Vehs[selected_vehicle_].x,
-                                        Vehs[selected_vehicle_].y, 3)) {
+                if (!tile_in_view(Vehs[selected_vehicle_].x,
+                                  Vehs[selected_vehicle_].y, 3)) {
                     set_center(Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y, 1);
                 }
             }

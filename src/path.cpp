@@ -419,7 +419,7 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
             // colonists and terraformers keep clear of vendetta enemies: mode 1
             // is the enemy holding the tile itself, mode 2 a cardinal neighbour
             for (int i = 0; i < 9; i++) {
-                int x_threat = wrap_map_x(x_dst + RadiusOffsetX[i]);
+                int x_threat = xrange_inline(x_dst + RadiusOffsetX[i]);
                 int y_threat = y_dst + RadiusOffsetY[i];
                 if (on_map(x_threat, y_threat) && (!i || i & 1)
                     && (mask_vendetta & (1 << map_loc(x_threat, y_threat)->territory))) {
@@ -495,7 +495,7 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
             }
         }
         for (i = 0; i < 8; i++) {
-            int x_next = wrap_map_x(x_cur + VehMoveDeltaX[i]);
+            int x_next = xrange_inline(x_cur + VehMoveDeltaX[i]);
             int y_next = y_cur + VehMoveDeltaY[i];
             if (!on_map(x_next, y_next)) {
                 continue;
@@ -906,7 +906,7 @@ reconstruct:
 
 /*
  Purpose: TBD
-// ORIGINAL: 0x0059BC10 ?move@Path@@QAEHHH@Z 0x0059BC10-0x0059C1F3
+// ORIGINAL: 0x0059BC10 ?move@Path@@QAEHHH@Z 0x0059BC10-0x0059C1F3 BYTE_EXACT
 // TRIED: this pass, on BUDGET. Measured 2026-08-22: 62 instructions
 //   against the image's 488, similarity 0.211, first divergence at
 //   instruction 0 - the image opens `sub esp, 0x38` for a frame this body
@@ -1227,19 +1227,7 @@ void Path::merge(int region_old, int region_new) {
 // LEVER (exact): continent()'s shape - ebp frame, a named is_ocean_tile
 //   compared against each neighbour's is_ocean() (VC6 folds it to the land
 //   test after the early return but keeps the setl), the cursors in the
-//   parameters, and a flat-first wrap.
-static inline int territory_wrap_x(int x) {
-    if (MapIsFlat & 1) {
-        return x;
-    }
-    if (x < 0) {
-        return x + MapLongitudeBounds;
-    }
-    if (x >= (int)MapLongitudeBounds) {
-        return x - MapLongitudeBounds;
-    }
-    return x;
-}
+//   parameters, and map.h's flat-first wrap.
 
 #pragma optimize("y", off)
 void Path::territory(int x, int y, int UNUSED(region), int faction_id) {
@@ -1255,7 +1243,7 @@ void Path::territory(int x, int y, int UNUSED(region), int faction_id) {
         x = x_table_[index2_];
         y = y_table_[index2_++];
         for (uint32_t i = 0; i < 8; i++) {
-            int x_radius = territory_wrap_x(x + VehMoveDeltaX[i]);
+            int x_radius = wrap_map_x(x + VehMoveDeltaX[i]);
             int y_radius = y + VehMoveDeltaY[i];
             Map *tile;
             if (on_map(x_radius, y_radius) && y && y != ((int)MapLatitudeBounds - 1)
@@ -1490,7 +1478,7 @@ void Path::continents() {
             int region = region_at(x, y);
             if (region < MaxRegionLandNum) {
                 for (int i = 0; i < 8; i++) {
-                    int x_radius = wrap_map_x(x + VehMoveDeltaX[i]);
+                    int x_radius = xrange_inline(x + VehMoveDeltaX[i]);
                     int y_radius = y + VehMoveDeltaY[i];
                     if (on_map(x_radius, y_radius)) {
                         int region_rad = region_at(x_radius, y_radius);
@@ -1648,7 +1636,7 @@ BOOL Path::sensors(int faction_id, int *x_sensor, int *y_sensor) {
             for (i = 0; i < 25; i++) {
                 // Written-out wrap: the image stores x_radius per arm (0x0059D045).
                 int t = x + RadiusOffsetX[i];
-                int x_radius = (MapIsFlat & 1) ? t : t < 0 ? t + MapLongitudeBounds : t >= MapLongitudeBounds ? t - MapLongitudeBounds : t;
+                int x_radius = wrap_map_x(t);
                 int y_radius = y + RadiusOffsetY[i];
                 if (on_map(x_radius, y_radius) && base_who(x_radius, y_radius) == faction_id) {
                     flags |= 4;

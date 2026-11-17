@@ -2121,17 +2121,6 @@ void __cdecl base_kill(int base_id);
 
 
 
-// WORKAROUND(inline): image 0x57C30D/0x57C728 lay the flat-map arm first at these two sites.
-static inline int wrap_map_x_flat_first(int x) {
-    if (MapIsFlat & 1) {
-        return x;
-    }
-    const int longitude_bounds = MapLongitudeBounds;
-    if (x < 0) return x + longitude_bounds;
-    if (x >= longitude_bounds) return x - longitude_bounds;
-    return x;
-}
-
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0057A660 0x0057CDE8 0x0057CE30 0x0057A9BF
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0057A660 0x0057CE30 0x0057CE40 0x0057C451
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0057A660 0x0057CE40 0x0057CE50 0x0057C531
@@ -2710,7 +2699,7 @@ reroll:
         int changed = 0;
         for (int i = 0; i < 9; i++) {
             if (i && !bounded_crt_random(3 - (which > 1))) continue;
-            const int tx = wrap_map_x_flat_first(x + RadiusOffsetX[i]);
+            const int tx = wrap_map_x(x + RadiusOffsetX[i]);
             const int ty = y + RadiusOffsetY[i];
             if (!on_map(tx, ty)) continue;
             if (i && map_loc(tx, ty)->bit & 0x100000) continue;
@@ -2812,7 +2801,7 @@ reroll:
         int spawned = 0;
         for (int i = 0; i < 8;) {
             const int dir = (GameDataStateStorage.fields_.turn_current_num_ + i) % 8;
-            const int tx = wrap_map_x_flat_first(x + VehMoveDeltaX[dir]);
+            const int tx = wrap_map_x(x + VehMoveDeltaX[dir]);
             const int ty = y + VehMoveDeltaY[dir];
             if (on_map(tx, ty) && is_ocean(tx, ty) == is_sea && anything_at(tx, ty) < 0) {
                 if (is_sea) {

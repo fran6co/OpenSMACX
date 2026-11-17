@@ -163,14 +163,6 @@ static bool vehdraw_uses_terrain(int veh_id, int x, int y) {
 }
 
 
-// The scoot sampler's wrap reads the bound separately in each arm: the
-// flat-first ternary does; an if-chain hoists the bound into one register.
-static int vehdraw_wrap_x(int x) {
-    return (MapIsFlat & 1) ? x
-        : x < 0 ? x + MapLongitudeBounds
-        : x >= MapLongitudeBounds ? x - MapLongitudeBounds : x;
-}
-
 
 static int vehdraw_facet_index(const int *h1, const int *h2,
                                const int *h3, const int *h4, int cell) {
@@ -358,7 +350,7 @@ void __cdecl vehdraw_scoot_start(int veh_id, int direction, int steps, int flags
     int h1[9], h2[9], h3[9], h4[9];
     int x, y;
     for (int cell = 0; cell < 9; ++cell) {
-        x = vehdraw_wrap_x(VehMoveDeltaX[cell] + VehLiftX);
+        x = wrap_map_x(VehMoveDeltaX[cell] + VehLiftX);
         y = VehMoveDeltaY[cell] + VehLiftY;
         h1[cell] = ConsoleGlobal.get_relative_alt(x, y, 1);
         h2[cell] = ConsoleGlobal.get_relative_alt(x, y, 2);
@@ -385,7 +377,7 @@ void __cdecl vehdraw_scoot_start(int veh_id, int direction, int steps, int flags
         midpoint.values[2] = 1.0f;
     }
     VehDrawAnimationStep = 1;
-    x = vehdraw_wrap_x(VehMoveDeltaX[direction] + VehLiftX);
+    x = wrap_map_x(VehMoveDeltaX[direction] + VehLiftX);
     y = VehMoveDeltaY[direction] + VehLiftY;
     if (vehdraw_uses_terrain(veh_id, x, y)) {
         a = VehDrawFacetNormals[0][vehdraw_facet_index(h1, h2, h3, h4, direction) - 400];

@@ -3714,7 +3714,7 @@ int __cdecl value_of_base(int base_id, int faction_id_req, int faction_id_res,
     }
     int region_base = region_at(Bases[base_id].x, Bases[base_id].y);
     for (int i = 1; i < 169; i++) { // RadiusRange[6], a literal in the image
-        int x_radius = wrap_map_x(Bases[base_id].x + RadiusOffsetX[i]);
+        int x_radius = xrange_inline(Bases[base_id].x + RadiusOffsetX[i]);
         int y_radius = Bases[base_id].y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius)) {
             int base_id_found = base_at(x_radius, y_radius);
@@ -3813,9 +3813,7 @@ void __cdecl give_a_base(int base_id, int new_owner) {
     int y = Bases[base_id].y;
     for (int i = 0; i < 21; i++) {
         int x_raw = x + RadiusOffsetX[i];
-        int x_radius = (MapIsFlat & 1) ? x_raw
-            : x_raw < 0 ? x_raw + MapLongitudeBounds
-            : x_raw >= MapLongitudeBounds ? x_raw - MapLongitudeBounds : x_raw;
+        int x_radius = wrap_map_x(x_raw);
         int y_radius = y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius)) {
             map_loc(x_radius, y_radius)->visibility |= 1 << new_owner;
@@ -7373,15 +7371,6 @@ int __cdecl dont_withdrawal(int faction_id, int against_id) {
 // ORIGINAL: 0x00548F80 ?do_withdrawal@@YAHHH@Z 0x00548F80-0x00549264 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00548f80.cpp retains original identity/spans and contradictory scaffold history.", "Pinned full-span review and genuine Player/PlayerData/Base/Veh/Map declarations own the field interpretation; Popup uses the real C++ lifecycle.", "Related intervention50BA50/pact_withdraw53C370 bodies own the coupled helper behavior. Shared proposal cell93FAB0 and map outcome93FAD8 have native producer/consumer evidence; seed-only workflow producers remain explicit obligations."], "reason": "Recover this original diplomacy identity in its genuine faction owner, preserving typed game records, shared-state lifetimes and every seed obligation. This binding is not a byte or runtime claim."}
 // TRIED: MISMATCH #6 'push' vs 'mov'. Tried both `if (n>0){...}` and the inverted `if (n<=0) return 0;` early-out for the outer guard; neither reproduces the original's push-esi-before-branch / xor+cmp zero-reuse pattern. veh_lift/veh_drop's second push (used as the leftover eax arg to the paired veh_drop call) is reproduced by calling veh_lift(i); veh_drop(i, x, y) as two independent statements rather than chaining a return value, since veh_lift is declared void in this unit.
-// The image tests the flat-map bit first and wraps on the fall-through.
-static inline int withdrawal_wrap_x(int x) {
-    if (MapIsFlat & 1) return x;
-    const int longitude_bounds = MapLongitudeBounds;
-    if (x < 0) return x + longitude_bounds;
-    if (x >= longitude_bounds) return x - longitude_bounds;
-    return x;
-}
-
 int __cdecl do_withdrawal(int faction_id, int other_faction_id) {
     int result = 0;
     for (int veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; ++veh_id) {
@@ -7398,7 +7387,7 @@ int __cdecl do_withdrawal(int faction_id, int other_faction_id) {
         if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_LAND &&
             veh_cargo(veh_id) != 0) {
             for (int neighbor = 0; neighbor < 8; ++neighbor) {
-                const int dest_x = withdrawal_wrap_x(VehMoveDeltaX[neighbor] + x);
+                const int dest_x = wrap_map_x(VehMoveDeltaX[neighbor] + x);
                 const int dest_y = VehMoveDeltaY[neighbor] + y;
                 if (!on_map(dest_x, dest_y)) continue;
 

@@ -171,16 +171,6 @@ void __cdecl world_lower_alt(int x, int y) {
     }
 }
 
-// A wrap that rereads MapLongitudeBounds on each arm instead of caching it the
-// way wrap_map_x does. brush's centre/diagonal wraps and borehole's first ring
-// load the bound into the result register on both the flat and round paths
-// (0x005C2440, 0x005C72AB); wrap_map_x's cached local cannot produce that.
-static inline int world_wrap_x(int x) {
-    return (MapIsFlat & 1) ? x
-        : (x < 0 ? x + (int)MapLongitudeBounds
-                 : (x >= (int)MapLongitudeBounds ? x - (int)MapLongitudeBounds : x));
-}
-
 /*
 Purpose: Set up the brush for creating world terrain.
 // ORIGINAL: 0x005C2440 ?brush@@YAXHHH@Z 0x005C2440-0x005C27E1 BYTE_EXACT
@@ -204,7 +194,7 @@ void __cdecl brush(int x, int y, int altitude) {
         if (i == 2) {
             continue;
         }
-        int x_radius = world_wrap_x(x + RadiusOffsetX[i]);
+        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (!on_map(x_radius, y_radius)) {
             continue;
@@ -232,9 +222,9 @@ void __cdecl brush(int x, int y, int altitude) {
                 int y_rad_base = y_radius + VehMoveDeltaY[k];
                 if (on_map(x_rad_base, y_rad_base)
                     && (map_loc(x_rad_base, y_rad_base)->climate & ~0x1F) == ALT_BIT_SHORE_LINE) {
-                    int x_rad_base2 = world_wrap_x(x_radius + VehMoveDeltaX[(k + 1) & 7]);
+                    int x_rad_base2 = wrap_map_x(x_radius + VehMoveDeltaX[(k + 1) & 7]);
                     int y_rad_base2 = y_radius + VehMoveDeltaY[(k + 1) & 7];
-                    int x_rad_base3 = world_wrap_x(x_radius + VehMoveDeltaX[(k - 1) & 7]);
+                    int x_rad_base3 = wrap_map_x(x_radius + VehMoveDeltaX[(k - 1) & 7]);
                     int y_rad_base3 = y_radius + VehMoveDeltaY[(k - 1) & 7];
                     if (on_map(x_rad_base2, y_rad_base2)
                         && on_map(x_rad_base3, y_rad_base3)
@@ -2137,7 +2127,7 @@ void __cdecl world_borehole(int x, int y) {
         }
     }
     for (i = 0; i < 8; i++) {
-        int x_radius = wrap_map_x(world_wrap_x(x + RadiusOffsetX[val1]) + RadiusOffsetX[i + 1]);
+        int x_radius = wrap_map_x(wrap_map_x(x + RadiusOffsetX[val1]) + RadiusOffsetX[i + 1]);
         int y_radius = y + RadiusOffsetY[val1] + RadiusOffsetY[i + 1];
         if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
             world_alt_set(x_radius, y_radius, ALT_SHORE_LINE, true);
@@ -2497,7 +2487,7 @@ void __cdecl world_mesa(int x, int y) {
 
 /*
 Purpose: Setup the 'Pholus Ridge' landmark.
-// ORIGINAL: 0x005C8150 ?world_ridge@@YAXHH@Z 0x005C8150-0x005C83AB
+// ORIGINAL: 0x005C8150 ?world_ridge@@YAXHH@Z 0x005C8150-0x005C83AB BYTE_EXACT
 // size      603 bytes
 // prototype void (__cdecl ?world_ridge@@YAXHH@Z)(int xCoord, int yCoord)
 // callers   3   call targets   6
@@ -2962,7 +2952,7 @@ void __cdecl world_rivers() {
                         pick -= cand_weight[i];
                     }
                     int ts = RiverStepX[river_dir] + cur_x;
-                    cur_x = (MapIsFlat & 1) ? ts : ts < 0 ? ts + MapLongitudeBounds : ts >= (int)MapLongitudeBounds ? ts - MapLongitudeBounds : ts;
+                    cur_x = wrap_map_x(ts);
                     cur_y = cur_y + RiverStepY[river_dir];
                     int alt = map_loc(cur_x, cur_y)->climate >> 5;
                     if (alt != band) {
