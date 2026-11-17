@@ -175,7 +175,8 @@ int MCIVideo::load(char *moviePath, Win *targetWindow, int x, int y) {
     mciId_ = static_cast<uint16_t>(openParams.wDeviceID);
 
     // Both STATUS requests reuse this block, including any untouched outputs.
-    MCI_STATUS_PARMS statusParams;
+    // The 0x18-byte digital-video block gives the image's 0x464-byte frame.
+    MCI_DGV_STATUS_PARMS statusParams;
     statusParams.dwItem = MCI_DGV_STATUS_HWND;
     mciSendCommandA(mciId_, MCI_STATUS,
                     MCI_STATUS_ITEM,

@@ -2166,9 +2166,9 @@ void Caviar::set_shadow_vector(float elevation, float azimuth) {
     float sin_azimuth = (float)sin(azimuth);
     float cos_elevation = (float)cos(elevation);
     float cos_azimuth = (float)cos(azimuth);
-    scene_context_.shadow_vector_.values[2] = cos_elevation;
     scene_context_.shadow_vector_.values[0] = cos_azimuth * sin_elevation;
     scene_context_.shadow_vector_.values[1] = sin_azimuth * sin_elevation;
+    scene_context_.shadow_vector_.values[2] = cos_elevation;
 }
 
 

@@ -599,17 +599,17 @@ void BaseWin::facilities_click(int facility, int, int, int) {
             if (!NetDaemonNet.lock_base(BaseIDCurrentSelected, selection == 3 ? 2 : 0, -1, -1)) {
                 int proceeds;
                 if (selection == 3) {
-                    proceeds = 0;
+                    int count = 0;
                     int possessed = 0;
                     for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
                         if (Bases[base].faction_id_current != faction) continue;
                         if (facility == 26 && (map_tiles()[Bases[base].y * MapLongitude + (Bases[base].x >> 1)].climate & ~0x1F) < 0x60) continue;
                         if (has_fac(facility, base, 0)) {
                             ++possessed;
-                            if (!(BaseCurrent->state & BSTATE_FACILITY_SCRAPPED) || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) ++proceeds;
+                            if (!(BaseCurrent->state & BSTATE_FACILITY_SCRAPPED) || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) ++count;
                         }
                     }
-                    proceeds = Facility[facility].cost * proceeds * 5;
+                    proceeds = Facility[facility].cost * count * 5;
                     parse_num(0, proceeds);
                     parse_num(1, possessed);
                     parse_say(0, Facility[facility].name, -1, -1);
