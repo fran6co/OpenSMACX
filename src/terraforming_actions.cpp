@@ -2126,6 +2126,10 @@ void __cdecl action_patrol(int veh_id, int x, int y) {
 int __cdecl shoot_it(int attacker, int defender, int x, int y,
                      int fungal_attack) {
     BOOL has_flechette = false;
+    // WORKAROUND(type): the image indexes satellites_ through a dword-scaled
+    // variable subscript ([4*idx+0x96D1F4], idx = faction*0x833), which only a
+    // non-constant index reproduces; a literal [3] folds into the row offset.
+    int sat = 3;
     for (int i = 0; i < 25; i++) {
         if (!has_flechette) {
             int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
@@ -2139,11 +2143,11 @@ int __cdecl shoot_it(int attacker, int defender, int x, int y,
             }
         }
     }
-    if (!PlayersData[defender].satellites_[3] && !has_flechette) {
+    if (!PlayersData[defender].satellites_[sat] && !has_flechette) {
         return 0;
     }
     int result = 0;
-    int unused = PlayersData[defender].satellites_[3] - PlayersData[defender].sat_odp_deployed;
+    int unused = PlayersData[defender].satellites_[sat] - PlayersData[defender].sat_odp_deployed;
     for (int attempt = 0; attempt < unused; attempt++) {
         PlayersData[defender].sat_odp_deployed++;
         if (rand() % 100 >= 50) {
@@ -2151,7 +2155,7 @@ int __cdecl shoot_it(int attacker, int defender, int x, int y,
             break;
         }
     }
-    int remaining = range(PlayersData[defender].satellites_[3] - PlayersData[defender].sat_odp_deployed,
+    int remaining = range(PlayersData[defender].satellites_[sat] - PlayersData[defender].sat_odp_deployed,
         0, 9999);
     if (!result) {
         for (int j = 0; j < 25; j++) {
@@ -2181,7 +2185,7 @@ int __cdecl shoot_it(int attacker, int defender, int x, int y,
                 }
             }
         }
-        if (PlayersData[defender].satellites_[3]) {
+        if (PlayersData[defender].satellites_[sat]) {
             // Image literal order: the must-sacrifice texts precede the
             // human prompt's, so that arm was written first.
             if (IsMultiplayerNet || !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << defender))
@@ -2197,7 +2201,7 @@ int __cdecl shoot_it(int attacker, int defender, int x, int y,
                     popp(ScriptPopupFile, "THEYMUSTSAC", 0, "space_sm.pcx", 0);
                 }
             } else {
-                parse_num(0, PlayersData[defender].satellites_[3]);
+                parse_num(0, PlayersData[defender].satellites_[sat]);
                 int base_id = base_find(x, y);
                 parse_says(0, Bases[base_id].name_string, -1, -1);
                 parse_says(1, get_adjective(attacker), -1, -1);
@@ -2211,9 +2215,9 @@ int __cdecl shoot_it(int attacker, int defender, int x, int y,
                     goto flechette_failed;
                 }
             }
-            PlayersData[defender].satellites_[3]--;
-            if ((int)(PlayersData[defender].satellites_[3] - PlayersData[defender].sat_odp_deployed) < 0) {
-                PlayersData[defender].sat_odp_deployed = PlayersData[defender].satellites_[3];
+            PlayersData[defender].satellites_[sat]--;
+            if ((int)(PlayersData[defender].satellites_[sat] - PlayersData[defender].sat_odp_deployed) < 0) {
+                PlayersData[defender].sat_odp_deployed = PlayersData[defender].satellites_[sat];
             }
         } else {
         flechette_failed:
@@ -2236,7 +2240,7 @@ int __cdecl shoot_it(int attacker, int defender, int x, int y,
         }
         parse_says(0, Bases[base_id].name_string, -1, -1);
     }
-    parse_num(0, PlayersData[defender].satellites_[3]);
+    parse_num(0, PlayersData[defender].satellites_[sat]);
     parse_num(1, remaining);
     if (fungal_attack) {
         if (defender == ConsoleGlobal.faction_id_) {

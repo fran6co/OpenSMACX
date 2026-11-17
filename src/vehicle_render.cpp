@@ -163,16 +163,12 @@ static bool vehdraw_uses_terrain(int veh_id, int x, int y) {
 }
 
 
-// The scoot sampler's wrap reads the bound separately in each arm.
+// The scoot sampler's wrap reads the bound separately in each arm: the
+// flat-first ternary does; an if-chain hoists the bound into one register.
 static int vehdraw_wrap_x(int x) {
-    if (!(MapIsFlat & 1)) {
-        if (x < 0) {
-            x += MapLongitudeBounds;
-        } else if (x >= MapLongitudeBounds) {
-            x -= MapLongitudeBounds;
-        }
-    }
-    return x;
+    return (MapIsFlat & 1) ? x
+        : x < 0 ? x + MapLongitudeBounds
+        : x >= MapLongitudeBounds ? x - MapLongitudeBounds : x;
 }
 
 
@@ -388,9 +384,8 @@ void __cdecl vehdraw_scoot_start(int veh_id, int direction, int steps, int flags
         midpoint.values[1] = 0.0f;
         midpoint.values[2] = 1.0f;
     }
-    x = VehMoveDeltaX[direction] + VehLiftX;
     VehDrawAnimationStep = 1;
-    x = vehdraw_wrap_x(x);
+    x = vehdraw_wrap_x(VehMoveDeltaX[direction] + VehLiftX);
     y = VehMoveDeltaY[direction] + VehLiftY;
     if (vehdraw_uses_terrain(veh_id, x, y)) {
         a = VehDrawFacetNormals[0][vehdraw_facet_index(h1, h2, h3, h4, direction) - 400];
@@ -501,7 +496,8 @@ void __cdecl vehdraw_scoot_start(int veh_id, int direction, int steps, int flags
             break;
         }
     } else {
-        midpoint.values[0] = midpoint.values[1] = 0.0f;
+        midpoint.values[0] = 0.0f;
+        midpoint.values[1] = 0.0f;
         midpoint.values[2] = 1.0f;
     }
     vox_normalise_vector(midpoint.values, midpoint.values);

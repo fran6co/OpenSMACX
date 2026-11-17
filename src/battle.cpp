@@ -211,6 +211,10 @@ uint32_t __cdecl planet_buster(int veh_id) {
 // TRIED: structural transcription (two proximity scan loops with early-exit gotos, extern lever on the three lea-taken-as-pointer table bases 0097d053/00946d34/00946d54) compiles and matches to instr #6 (prologue: original zeroes edi with `xor`, rebuilt uses `mov`).
 int __cdecl shoot(int atk_factionID, int def_factionID, int xDest, int yDest) {
     int adjacent_flechette = 0;
+    // WORKAROUND(type): the image indexes satellites_ through a dword-scaled
+    // variable subscript ([4*idx+0x96D1F4], idx = faction*0x833), which only a
+    // non-constant index reproduces; a literal [3] folds into the row offset.
+    int sat = 3;
     for (int i = 0; i < 25; ++i) {
         if (!adjacent_flechette) {
             const int x = wrap_map_x(RadiusOffsetX[i] + xDest);
@@ -224,11 +228,11 @@ int __cdecl shoot(int atk_factionID, int def_factionID, int xDest, int yDest) {
             }
         }
     }
-    if (!PlayersData[def_factionID].satellites_[3] && !adjacent_flechette) {
+    if (!PlayersData[def_factionID].satellites_[sat] && !adjacent_flechette) {
         return 0;
     }
     int bonus_hit = 0;
-    const int bonus_rounds = static_cast<int>(PlayersData[def_factionID].satellites_[3]
+    const int bonus_rounds = static_cast<int>(PlayersData[def_factionID].satellites_[sat]
         - PlayersData[def_factionID].sat_odp_deployed);
     for (int round = 0; round < bonus_rounds; ++round) {
         ++PlayersData[def_factionID].sat_odp_deployed;
@@ -237,7 +241,7 @@ int __cdecl shoot(int atk_factionID, int def_factionID, int xDest, int yDest) {
             break;
         }
     }
-    const int shots_left = range(static_cast<int>(PlayersData[def_factionID].satellites_[3]
+    const int shots_left = range(static_cast<int>(PlayersData[def_factionID].satellites_[sat]
         - PlayersData[def_factionID].sat_odp_deployed), 0, 9999);
     if (!bonus_hit) {
         for (int i = 0; i < 25; ++i) {
@@ -262,7 +266,7 @@ int __cdecl shoot(int atk_factionID, int def_factionID, int xDest, int yDest) {
             }
         }
         // The live inventory is reread after the Flechette scan.
-        if (PlayersData[def_factionID].satellites_[3]) {
+        if (PlayersData[def_factionID].satellites_[sat]) {
             // The image tests only the low human-mask byte (`test byte ptr`).
             // Its literal order puts WEMUSTSAC/THEYMUSTSAC before BUSTERSAC,
             // so the must-sacrifice arm was written first.
@@ -275,7 +279,7 @@ int __cdecl shoot(int atk_factionID, int def_factionID, int xDest, int yDest) {
                     popp(ScriptPopupFile, "THEYMUSTSAC", 0, "space_sm.pcx", 0);
                 }
             } else {
-                parse_num(0, PlayersData[def_factionID].satellites_[3]);
+                parse_num(0, PlayersData[def_factionID].satellites_[sat]);
                 // base_find runs before parse_says pushes its arguments.
                 const int near_base = base_find(xDest, yDest);
                 parse_says(0, Bases[near_base].name_string, -1, -1);
@@ -297,10 +301,10 @@ int __cdecl shoot(int atk_factionID, int def_factionID, int xDest, int yDest) {
             }
             return 0;
         }
-        --PlayersData[def_factionID].satellites_[3];
-        if (static_cast<int>(PlayersData[def_factionID].satellites_[3]
+        --PlayersData[def_factionID].satellites_[sat];
+        if (static_cast<int>(PlayersData[def_factionID].satellites_[sat]
                 - PlayersData[def_factionID].sat_odp_deployed) < 0) {
-            PlayersData[def_factionID].sat_odp_deployed = PlayersData[def_factionID].satellites_[3];
+            PlayersData[def_factionID].sat_odp_deployed = PlayersData[def_factionID].satellites_[sat];
         }
     }
     {
@@ -309,7 +313,7 @@ int __cdecl shoot(int atk_factionID, int def_factionID, int xDest, int yDest) {
             base_id = base_find(xDest, yDest);
         }
         parse_says(0, Bases[base_id].name_string, -1, -1);
-        parse_num(0, PlayersData[def_factionID].satellites_[3]);
+        parse_num(0, PlayersData[def_factionID].satellites_[sat]);
         parse_num(1, shots_left);
         if (def_factionID == ConsoleGlobal.faction_id_) {
             parse_says(1, get_adjective(atk_factionID), -1, -1);
