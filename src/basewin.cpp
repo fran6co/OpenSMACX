@@ -2031,18 +2031,6 @@ static char *hurry_next_item() {
     return StringTemp;
 }
 
-// WORKAROUND(inline): dead budget probe (folds to no code). hurry's
-// lock_base return site tears down one FlatButton level deeper than the
-// image's unless about one branchy inline unit is spent after it; a probe
-// sweep matched the image's 54-call teardown sequence with one unit anywhere
-// after that site. No natural spelling found yet.
-static int hurry_probe_sink;
-static inline void hurry_budget_probe(int x) {
-    if (x == 1) hurry_probe_sink = 3;
-    if (x == 2) hurry_probe_sink = 5;
-    if (x == 3) hurry_probe_sink = 7;
-}
-
 // ORIGINAL: 0x00418DF0 ?hurry@BaseWin@@QAEXXZ 0x00418DF0-0x00419A8E;0x0065221C-0x0065249C
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00418df0.cpp", "image:0x00418DF0-0x00419A8E native control-flow and operand review", "source:src/basewin.h", "source:src/base.h"], "reason": "Recover full hurry pricing, dialog, payment, lock and Base update flow through source-owned Base/PlayerData/UI state; retain native signed 32-bit arithmetic and callback-time reloads. Shared energy-mirror producer/consumer bodies remain seed-only, so that object's source binding is not proof of end-to-end energy runtime behavior."}
 // TRIED: `Popup popup;` RAII with raw popup-relative offsets for scroll_/flat_button/dialogs_/spot_/sprite_/heap_ reproduces the close cascades' shape and offsets (cross-checked against the scaffold's independently-derived field layout), but the success-path teardown ends with a manual GraphicWin dtor call rather than suppressing the compiler's own implicit ~Popup() at the closing brace, which the original does not emit on that path; MISMATCH #2.
@@ -2100,8 +2088,7 @@ void BaseWin::hurry() {
         lock_held = 1;
     }
 
-    const int choice = popup.exec(0, ConsoleControlTurnActive ? 0 : pop_expire);
-    hurry_budget_probe(9);  // WORKAROUND(inline): see hurry_budget_probe
+    const int choice = popup.exec(ConsoleControlTurnActive ? 0 : pop_expire);
     g_FX.play(0x0F);
     compute_selected_base();
     if (choice < 1 || (GameDataStateStorage.fields_.game_state_ & 0x800u) != 0) {
