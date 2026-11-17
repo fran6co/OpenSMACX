@@ -3943,7 +3943,7 @@ void __cdecl pact_ends(int faction_id, int partner_id) {
             popup.start(PopupStartCaption, "ENDPACT2", -1, nullptr,
                         (IsMultiplayerNet ? 0 : 0x100000) | 0x80, nullptr);
         }
-        popup.exec(0, nullptr);
+        popup.exec();
     } else if (spying(faction_id) || spying(partner_id)
             || (static_cast<uint8_t>(GameDataStateStorage.fields_.game_state_) & 0x80)
             || has_treaty(ConsoleGlobal.faction_id_, faction_id, DTREATY_PACT)
@@ -4388,10 +4388,10 @@ void __cdecl make_gift(int giver, int receiver) {
             char amount_text[80];
             _itoa(offered_energy, amount_text, 10);
             strcat(StringTemp, amount_text);
-            popup.dialogs().item(StringTemp, offered_energy);
+            popup.item(StringTemp, offered_energy);
         } while (offered_energy != 0);
 
-        int selection = popup.exec(0, pop_wait); // callback is 0x5398E0
+        int selection = popup.exec(pop_wait); // callback is 0x5398E0
         if (!selection) return;
 
         int amount = selection;

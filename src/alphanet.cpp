@@ -245,14 +245,6 @@ void AlphaNet::close() {
 }
 // ALPHANET_CLOSE_END
 
-// WORKAROUND(inline): file-local twin of BasePop's inline item wrapper. The
-// image evaluates the label lookup before pushing 9999 (0x4E28A7..0x4E28AE),
-// the argument order of an inline one-call wrapper, and its teardowns are
-// starved (early returns call ~ServiceList 0x4E3730; the final one calls
-// 0x4016C0), so the original spent this budget.
-static inline int alphanet_pop_item(BasePop *pop, char *text, int index) {
-    return pop->dialogs().Dialogs::item(text, index);
-}
 // WORKAROUND(inline): dead budget probe (folds away) standing in for the rest
 // of the budget the original spent; without it every ~ServiceList teardown
 // expands one level deeper than the image's.
@@ -290,10 +282,10 @@ int AlphaNet::pick_service(int *allow_pbem) {
                 } else {
                     name = 0;
                 }
-                alphanet_pop_item(popup, name, row);
+                popup->item(name, row);
             }
-            if (allow_pbem != 0) alphanet_pop_item(popup, label_get(0x1128 / 4), 9999);
-            const int selected = popup->exec(0, 0);
+            if (allow_pbem != 0) popup->item(label_get(0x1128 / 4), 9999);
+            const int selected = popup->exec();
             if (selected == -1) result = 1;
             else if (selected == 9999) {
                 result = 0;

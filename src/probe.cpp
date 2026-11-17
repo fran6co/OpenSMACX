@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #define BASEPOP_FRIEND_PROBE  // WORKAROUND(decl): see basepop.h
+#define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h
 
 #include "probe.h"
 #include "base.h"
@@ -346,8 +347,11 @@ extern "C" DWORD WINAPI timeGetTime(void);
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0059F120 0x005A5838 0x005A5850 0x005A1795
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x0059F120 0x005A5850 0x005A5860 0x005A178F
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0059F120 0x005A5860 0x005A5878 0x005A23A7
-// The image tests the human/alive mask bytes in place at every site; the
-// faction.h is_human/is_alive inlines are not expanded here.
+// The image tests the human/alive mask bytes in place at every site.
+// WORKAROUND(inline): the first five human tests spell faction.h's is_human
+// (same bytes); its expansions are the /Ob2 spend that leaves the FRAME
+// list's get_name a call (0x005A3047), as in the image. Every site as
+// is_human over-spends (two more ~Scroll stages refused, 0.958).
 #define HUMAN_BIT(f) (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << (f)))
 #define ALIVE_BIT(f) (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << (f)))
 
@@ -356,19 +360,6 @@ extern "C" DWORD WINAPI timeGetTime(void);
 // exhausted and expands it (raw parse_set + field) where it is not; the
 // expansions are budget spend.
 static inline char *probe_noun(int faction_id);
-
-// WORKAROUND(inline): dead budget probe (folds to no code). With base.h's
-// one-level has_fac, 24 calls ahead of the morale-bonus block spend what the
-// image spent there: vulnerable()'s HQ test (depth 2) and the facility 0x22
-// bonus test stay calls to 0x00421670, as in the image's has_fac/bitmask call
-// sequence (10 bitmask, has_fac, 5 bitmask, 6 has_fac); 16 or fewer expand
-// one or both, 18-40 match (24 scores best; branchy probes spend less here).
-static inline int probe_budget_probe(int x) {
-    if (x == 1) {
-        x = 2;
-    }
-    return x;
-}
 
 // ORIGINAL: 0x0059F120 ?probe@@YAHHHHH@Z 0x0059F120-0x005A5837;0x006613D0-0x00661B3D
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original instructions establish distinct actor, target-base and fallback-vehicle roles, genuine PlayerData/Map/Base/Veh owners and one automatic Popup with class-owned teardown.", "The actor lock/state edge skips strategy scoring and energy checks before its shared mode/selector tail. Action-six raw UI results and normalized remote bit tests have distinct threshold stores; false edges retain the original path-local value, with no eager initialization.", "Bounded actual-source controls and native compilation are not full CFG, VC6 unwind-state, linked-preservation or game-runtime proof. Ordered comparison/reload fidelity and historical matching remain restoration obligations.", "Pinned5A292F..5A2961 operands96CD3C equal PlayersData96C9E0+35C, the signed tech_ranking word; trade_source actually begins36C, so its former+8 alias selected the wrong374 word. Preserve target rank/2 > actor rank/2+4 with truncation toward zero and the existing facility/action/pact short-circuit guards."], "reason": "Complete typed Probe action/UI owner in its existing translation unit, retaining the four-argument ABI and both original main/unwind spans."}
@@ -401,7 +392,7 @@ int __cdecl probe(int veh_id, int base_id, int veh_id_tgt, int mode) {
                          : !is_ocean(Vehs[veh_id_tgt].x, Vehs[veh_id_tgt].y))
         && get_triad(veh_id) != TRIAD_SEA
         && !has_abil(Vehs[veh_id].proto_id, ABL_AMPHIBIOUS)) {
-        if (faction == ConsoleGlobal.faction_id_ && mode && HUMAN_BIT(faction)
+        if (faction == ConsoleGlobal.faction_id_ && mode && is_human(faction)
             && (NetDaemonNet.action_mode_ & 1)) {
             int ability = abil_index(ABL_AMPHIBIOUS);
             parse_say(0, Ability[ability].name, -1, -1);
@@ -413,7 +404,7 @@ int __cdecl probe(int veh_id, int base_id, int veh_id_tgt, int mode) {
          || base_id >= 0 && is_ocean(Bases[base_id].x, Bases[base_id].y))
         && !is_ocean(Vehs[veh_id].x, Vehs[veh_id].y)
         && !has_abil(Vehs[veh_id].proto_id, ABL_AMPHIBIOUS)) {
-        if (faction == ConsoleGlobal.faction_id_ && mode && HUMAN_BIT(faction)
+        if (faction == ConsoleGlobal.faction_id_ && mode && is_human(faction)
             && (NetDaemonNet.action_mode_ & 1)) {
             int ability = abil_index(ABL_AMPHIBIOUS);
             parse_say(0, Ability[ability].name, -1, -1);
@@ -427,7 +418,7 @@ int __cdecl probe(int veh_id, int base_id, int veh_id_tgt, int mode) {
     if (has_abil(Vehs[veh_id].proto_id, ABL_ALGO_ENHANCEMENT)) {
         ProbeHasAlgoEnhancement = 1;
         if (has_project(SP_HUNTER_SEEKER_ALGO, faction_tgt)) {
-            if (!mode && HUMAN_BIT(faction)) {
+            if (!mode && is_human(faction)) {
                 return 0;
             }
             if ((NetDaemonNet.action_mode_ & 2) && mode) {
@@ -437,7 +428,7 @@ int __cdecl probe(int veh_id, int base_id, int veh_id_tgt, int mode) {
             }
         }
     } else if (has_project(SP_HUNTER_SEEKER_ALGO, faction_tgt)) {
-        if (!mode && HUMAN_BIT(faction)) {
+        if (!mode && is_human(faction)) {
             return 0;
         }
         if ((NetDaemonNet.action_mode_ & 2) && mode) {
@@ -470,10 +461,10 @@ int __cdecl probe(int veh_id, int base_id, int veh_id_tgt, int mode) {
     }
 
     if (base_id >= 0) {
-        if (faction == ConsoleGlobal.faction_id_ && HUMAN_BIT(faction)
+        if (faction == ConsoleGlobal.faction_id_ && is_human(faction)
             && (NetDaemonNet.action_mode_ & 1)) {
             parse_says(1, Players[faction_tgt].adj_name_faction, -1, -1);
-            popup.start(PopupStartCaption, "PROBE", -1, 0, 0x40, 0);
+            popup.start("PROBE", 0x40);
             if (!Buffer::get_pcx_dimensions(
                     is_alien ? "al_infil_sm.pcx" : "infil_sm.pcx",
                     &pcx_width, &pcx_height)
@@ -487,29 +478,29 @@ int __cdecl probe(int veh_id, int base_id, int veh_id_tgt, int mode) {
             }
             text_get();
             if (!(PlayersData[faction].diplo_treaties[faction_tgt] & 0x1000)) {
-                popup.dialogs_.item(TextBufferGetPtr, 0);
+                popup.item(TextBufferGetPtr, 0);
             }
             text_get();
             if (Rules.tgl_probe_can_steal_tech) {
-                popup.dialogs_.item(TextBufferGetPtr, 1);
+                popup.item(TextBufferGetPtr, 1);
             }
             text_get();
-            popup.dialogs_.item(TextBufferGetPtr, 2);
+            popup.item(TextBufferGetPtr, 2);
             text_get();
-            popup.dialogs_.item(TextBufferGetPtr, 3);
+            popup.item(TextBufferGetPtr, 3);
             text_get();
-            popup.dialogs_.item(TextBufferGetPtr, 4);
+            popup.item(TextBufferGetPtr, 4);
             text_get();
             if (has_fac(FAC_HEADQUARTERS, base_id, 0)) {
-                popup.dialogs_.item(TextBufferGetPtr, 5);
+                popup.item(TextBufferGetPtr, 5);
             }
             text_get();
             if (!has_fac(FAC_HEADQUARTERS, base_id, 0)) {
-                popup.dialogs_.item(TextBufferGetPtr, 6);
+                popup.item(TextBufferGetPtr, 6);
             }
             text_get();
             if (has_flag10_tech) {
-                popup.dialogs_.item(TextBufferGetPtr, 7);
+                popup.item(TextBufferGetPtr, 7);
             }
             if (ExpansionEnabled && !IsMultiplayerNet) {
                 text_get();
@@ -524,11 +515,11 @@ int __cdecl probe(int veh_id, int base_id, int veh_id_tgt, int mode) {
                         }
                     }
                     if (found) {
-                        popup.dialogs_.item(TextBufferGetPtr, 8);
+                        popup.item(TextBufferGetPtr, 8);
                     }
                 }
             }
-            action = popup.exec(0, nullptr);
+            action = popup.exec();
             if (action < 0) {
                 return 0;
             }
@@ -741,17 +732,17 @@ L_59fb64:
     diff_modifier = 1;
     if (faction == ConsoleGlobal.faction_id_ && HUMAN_BIT(faction)
         && (NetDaemonNet.action_mode_ & 1)) {
-        popup.start(PopupStartCaption, "VIRUS", -1, 0, 0, 0);
+        popup.start("VIRUS");
         if (stack_check(veh_at(Bases[base_id].x, Bases[base_id].y),
                         2, 5, -1, -1)) {
-            popup.dialogs_.item(label_get(0x404), 0x62);
+            popup.item(label_get(0x404), 0x62);
         }
         for (int fac = 1; fac < 70; fac++) {
             if (fac != 1
                 && (fac != FAC_PRESSURE_DOME
                     || !is_ocean(Bases[base_id].x, Bases[base_id].y))
                 && has_fac(fac, base_id, 0)) {
-                popup.dialogs_.item(StringTable.get(Facility[fac].name), fac);
+                popup.item(StringTable.get(Facility[fac].name), fac);
             }
         }
         StringTemp[0] = '\0';
@@ -760,10 +751,10 @@ L_59fb64:
         strcat(StringTemp, SocialWinOpenParenText);
         strcat(StringTemp, label_get(0xF9));
         strcat(StringTemp, SocialWinCloseParenText);
-        popup.dialogs_.item(StringTemp, 0);
+        popup.item(StringTemp, 0);
         parse_it(ScriptPopupFile, "ABORTSTRING");
-        popup.dialogs_.item(StringTemp, 0x63);
-        sabotage_id = popup.exec(0, nullptr);
+        popup.item(StringTemp, 0x63);
+        sabotage_id = popup.exec();
         if (sabotage_id < 0) {
             return 0;
         }
@@ -1033,11 +1024,11 @@ L_59fb64:
                     parse_num(1, PlayersData[faction].energy_reserves);
                     success_rates(1, morale_veh(veh_id, 1, 0), 0, -1);
                     success_rates(2, morale_veh(veh_id, 1, 0), 1, -1);
-                    popup.start(PopupStartCaption, "SUBVERT", -1, nullptr, 0, nullptr);
+                    popup.start("SUBVERT");
                     if (PlayersData[faction].energy_reserves >= cost) {
-                        popup.start(PopupStartCaption, "SUBVERTMENU", -1, nullptr, 0x80, nullptr);
+                        popup.start("SUBVERTMENU", 0x80);
                     }
-                    choice = popup.exec(0, nullptr);
+                    choice = popup.exec();
                     if (!choice) {
                         return 0;
                     }
@@ -1269,9 +1260,9 @@ L_5a2aa4:
                 return 0;
             }
             wave_it(0x20);
-            popup.start(PopupStartCaption, "THOUGHTCONTROL", -1, NULL, 0, NULL);
-            popup.start(PopupStartCaption, "THOUGHTMENU", -1, NULL, 0x80, NULL);
-            int choice = popup.exec(0, NULL);
+            popup.start("THOUGHTCONTROL");
+            popup.start("THOUGHTMENU", 0x80);
+            int choice = popup.exec();
             if (choice <= 0) {
                 return 0;
             }
@@ -1321,13 +1312,13 @@ L_5a2dcd:
         } else if (!HUMAN_BIT(faction_tgt)) {
             if (faction == ConsoleGlobal.faction_id_
                 && (NetDaemonNet.action_mode_ & 1)) {
-                popup.start(PopupStartCaption, "FRAME", -1, 0, 0, 0);
+                popup.start("FRAME");
                 success_rates(2, morale_veh(veh_id, 1, 0), diff_modifier, base_id);
                 if (success_rates(3, morale_veh(veh_id, 1, 0), diff_modifier + 1, base_id)
                     && !X_text_open(ScriptPopupFile, "FRAMEMENU")) {
                     text_get();
                     parse_string(TextBufferGetPtr, StringTemp);
-                    popup.dialogs_.item(StringTemp, 0);
+                    popup.item(StringTemp, 0);
                     text_get();
                     mode = 0;
                     for (int i = 1; i < MaxPlayerNum; i++) {
@@ -1358,31 +1349,6 @@ L_5a2dcd:
             diff_modifier++;
         }
     }
-    // WORKAROUND(inline): see probe_budget_probe
-    probe_budget_probe(0);
-    probe_budget_probe(0);
-    probe_budget_probe(0);
-    probe_budget_probe(0);
-    probe_budget_probe(0);
-    probe_budget_probe(0);
-    probe_budget_probe(0);
-    probe_budget_probe(0);
-    probe_budget_probe(0);
-    probe_budget_probe(0);
-    probe_budget_probe(0);
-    probe_budget_probe(0);
-    probe_budget_probe(0);
-    probe_budget_probe(0);
-    probe_budget_probe(0);
-    probe_budget_probe(0);
-    probe_budget_probe(0);
-    probe_budget_probe(0);
-    probe_budget_probe(0);
-    probe_budget_probe(0);
-    probe_budget_probe(0);
-    probe_budget_probe(0);
-    probe_budget_probe(0);
-    probe_budget_probe(0);
     if (!(NetDaemonNet.action_mode_ & 2)) {
         return 1;
     }

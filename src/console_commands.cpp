@@ -1662,12 +1662,12 @@ void Console::terraform(int vehicle_id, int terraform_id) { // 0x004D3470
                 StringTemp[0] = 0;
                 strcat(StringTemp, "TERRACOST");
                 strcat(StringTemp, terraform_id == TERRA_LOWER_LAND ? "DOWN" : "UP");
-                popup.start(PopupStartCaption, StringTemp, -1, nullptr, 0, nullptr);
+                popup.start(StringTemp);
                 if (PlayersData[faction_id_].energy_reserves >= payment) {
-                    popup.start(PopupStartCaption, "TERRAPAY", -1, nullptr, 0x80, nullptr);
+                    popup.start("TERRAPAY", 0x80);
                     log_say("Offering option to pay", 0, 0, 0);
                 }
-                if (popup.exec(0, nullptr) != 0) {
+                if (popup.exec() != 0) {
                     log_say("Took option to pay", 0, 0, 0);
                     PlayersData[faction_id_].energy_reserves -= payment;
                     synch_energy(faction_id_);
@@ -2761,7 +2761,7 @@ void Console::use_ability(int vehicle_id) {
             popup.item(StringTable.get(Ability[ability_id].name),
                                  static_cast<int>(ability_bit));
         }
-        const int result = popup.exec(0, nullptr);
+        const int result = popup.exec();
         if (result < 0) {
             return;
         }
@@ -4793,7 +4793,7 @@ void Console::custom_my_faction() {
     popup.dialogs().edit(dip_label(0x790 / 4), Players[faction_idx].adj_leader, 0x17);
     popup.dialogs().edit(dip_label(0x794 / 4), name_buf, 0x17);
 
-    if (popup.exec(0, 0) < 0) {
+    if (popup.exec() < 0) {
         return;
     }
 
@@ -4825,7 +4825,7 @@ void Console::editor_diff() {
         popup.item(StringTemp, i);
     }
     popup.set_value(GameDataStateStorage.fields_.diff_level_current_);
-    const int selected = popup.exec(0, nullptr);
+    const int selected = popup.exec();
     if (selected < 0) {
         return;
     }
@@ -4934,7 +4934,7 @@ void Console::editor_edit_veh(int vehicle_id) {
             }
         }
         const int bonus = morale_veh(vehicle_id, 1, 0) - Vehs[vehicle_id].morale;
-        const int selected = popup.exec(0, nullptr);
+        const int selected = popup.exec();
         if (selected < 0) {
             return;
         }
@@ -4994,7 +4994,7 @@ void Console::editor_edit_veh(int vehicle_id) {
                     Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].range > 1
                         ? "EDITVEH2A" : "EDITVEH2",
                     -1, nullptr, 0x44);
-        if (popup.exec(0, nullptr) < 0) {
+        if (popup.exec() < 0) {
             return;
         }
         Vehs[vehicle_id].dmg_incurred = static_cast<uint8_t>(atoi(ParseStrBuffer[0].str));
@@ -5012,7 +5012,7 @@ void Console::editor_edit_veh(int vehicle_id) {
             popup.item(StringTemp, faction_id);
         }
         popup.set_value(Vehs[vehicle_id].faction_id);
-        const int faction = popup.exec(0, nullptr);
+        const int faction = popup.exec();
         if (faction < 0) {
             return;
         }
@@ -5034,7 +5034,7 @@ void Console::editor_edit_veh(int vehicle_id) {
         } else {
             popup.set_value(Vehs[vehicle_id].home_base_id);
         }
-        int selected_base = popup.exec(0, nullptr);
+        int selected_base = popup.exec();
         if (selected_base < 0) {
             return;
         }
@@ -5106,7 +5106,7 @@ again:
                 if (proto_idx == ScenarioPreviousPrototype) popup.set_value(proto_idx);
             }
         }
-        const int selected_prototype = popup.exec(0, nullptr);
+        const int selected_prototype = popup.exec();
         PopupModalState = 0;
         if (selected_prototype < 0) return;
         ScenarioPreviousPrototype = selected_prototype;
@@ -5121,7 +5121,7 @@ again:
                 popup.item(StringTemp, morale);
                 if (morale == ScenarioVehicleMorale) popup.set_value(morale);
             }
-            ScenarioVehicleMorale = popup.exec(0, nullptr);
+            ScenarioVehicleMorale = popup.exec();
             goto again;
         }
         case 2:
@@ -6405,7 +6405,7 @@ void Console::editor_natural(int place) {
         char *name = StringTable.get(Natural[natural].name);
         popup.item(name, natural);
     }
-    const int selected = popup.exec(0, nullptr);
+    const int selected = popup.exec();
     if (selected < 0) {
         return;
     }

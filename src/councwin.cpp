@@ -28,6 +28,7 @@
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x68206c selects initializer0x4243a0..0x4243b6, registering exit0x4243c0..0x4243ca. Root independent complete decode confirms exclusive RET/JMP bounds; original/source-owned storage is0x6fec80 bound to?CouncilWindow@@3VCouncWin@@A.", "Original startup instruction evidence: [[\"0x4243a0\", \"mov\", \"ecx, 0x6fec80\"], [\"0x4243a5\", \"call\", \"0x428620\"], [\"0x4243aa\", \"push\", \"0x4243c0\"], [\"0x4243af\", \"call\", \"0x645398\"], [\"0x4243b4\", \"pop\", \"ecx\"], [\"0x4243b5\", \"ret\", \"\"]]. Original exit instruction evidence: [[\"0x4243c0\", \"mov\", \"ecx, 0x6fec80\"], [\"0x4243c5\", \"jmp\", \"0x428550\"]]. Preserve constructor arguments, array counts/strides, registration and reverse destruction without authored callback stand-ins.", "Fresh complete build-iveupb5l physical src/councwin.cpp COFF selects _$E21 via .CRT$XCU, registering _$E19. Startup relocation targets: [\"?CouncilWindow@@3VCouncWin@@A\", \"??0CouncWin@@QAE@XZ\", \"_$E19\", \"_atexit\"]; exit targets: [\"?CouncilWindow@@3VCouncWin@@A\", \"??1CouncWin@@UAE@XZ\"]. Actual linked helper occurs once at CRT slot0x63f360; selected same-owner order agrees with the pinned order.", "BaseWin/DesignWin definitions now precede their Wave globals as pinned. Existing DesignWin Wave mappings retain original names/spans and current helper overrides after fresh emission proof. Scalar constructor effects and array construction/cleanup belong to genuine source globals, classes and compiler-generated lifetime machinery.", "Current local labels are emission interpretations, not original debug names or recovered historical TU boundaries. Start bindings grant no allocation extent. Selected same-owner linked order is not full CRT/global-order, retained-selection, reference-target, dependency-provider, runtime or full-game acceptance. Guarded callbacks excluded; no claim grant or bug fix."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned ?CouncilWindow@@3VCouncWin@@A; preserve complete original identity and remaining restoration/structure obligations."}
 // symbol    _$E14
 #include "stdafx.h"
+#define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h
 #include "font_metrics.h"
 #include "interface_fonts.h"
 #include "councwin.h"
@@ -69,17 +70,6 @@ extern char SocialWinOpenParenText[];
 // Shared separator objects the image pushes instead of unit literals.
 extern const char BufferJoinSpace[];
 extern char SocialWinColonSpaceText[];
-
-// WORKAROUND(inline): BasePop::item and BasePop::exec(callback) were header
-// inlines (out-of-line copies 0x005A5990 and 0x00558FC0); their expansions
-// spend the /Ob2 budget that leaves on_left_click's first three teardowns
-// calling ~Scroll out of line (0x004250DB, 0x004251DD, 0x00425234).
-static inline int council_pop_item(BasePop *pop, char *text, int index) {
-    return pop->dialogs().Dialogs::item(text, index);
-}
-static inline int council_pop_exec(BasePop *pop, int (__cdecl *callback)()) {
-    return pop->exec(0, callback);
-}
 
 // Every living human faction is seated in the council (field_A44_ bits).
 static int council_humans_present(uint32_t seated) {
@@ -170,14 +160,14 @@ void CouncWin::on_left_click(int x, int y) {
                 strcat(StringTemp, get_title(faction));
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, get_name(faction));
-                council_pop_item(&popup, StringTemp, faction);
+                popup.item(StringTemp, faction);
                 // Native 0x425324 preselects the local faction's own entry.
                 if (faction == ConsoleGlobal.faction_id_) {
                     popup.set_value(faction);
                 }
             }
         }
-        y = council_pop_exec(&popup, pop_wait);
+        y = popup.exec(pop_wait);
         if (y < 0) {
             goto draw;
         }

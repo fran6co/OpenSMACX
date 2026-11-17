@@ -49,21 +49,6 @@
 extern const char BufferJoinSpace[];
 
 
-// WORKAROUND(inline): file-local twin of Popup::set_picture, whose
-// out-of-line copy is 0x00559000. The image's popv and veh_pick expand it
-// (neg/sbb caller-picture select, then SpriteBox::sprite); the /Ob2 budget it
-// spends is what leaves their teardowns calling ~Scroll/~BasePop out of line.
-// popv measures BYTE_EXACT with it. Replace with a header inline body.
-static inline int pop_set_picture(Popup &pop, Sprite *picture, int mode,
-                                  char *text) {
-    if (!pop.picture_enabled()) {
-        pop.set_caller_picture(picture);
-    } else {
-        pop.set_caller_picture(0);
-    }
-    return pop.dialogs().sprite(picture, text, mode);
-}
-
 // Read a script section into the shared substitution buffer. The text
 // reader owns TextBufferGetPtr; parse_string supplies the substitutions.
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -175,7 +160,7 @@ int __cdecl popv(char *caption, const char *label, int vehicle, int flags) {
     sprite.create_blank(100, 75, WinFillColour);
     popup.start(caption, label, -1, nullptr, flags, nullptr);
     popup.set_redraw_callback(veh_sprite_draw);
-    pop_set_picture(popup, &sprite, vehicle, nullptr);
+    popup.set_picture(&sprite, vehicle, nullptr);
     const int result = popup.exec(0, nullptr);
     ConsoleGroupAction = popup.input_poll_state();
     return result;
@@ -427,7 +412,7 @@ int __cdecl veh_pick(int veh_id, const char *label, int flags) {
             say_morale(listed_vehicle, 0);
             ::strcat(StringTemp, BufferJoinSpace);
             ::strcat(StringTemp, VehPrototypes[Vehs[listed_vehicle].proto_id].veh_name);
-            pop_set_picture(popup, &sprite, listed_vehicle, StringTemp);
+            popup.set_picture(&sprite, listed_vehicle, StringTemp);
             listed_vehicle = Vehs[listed_vehicle].next_veh_id_stack;
             ++listed_count;
         } while (listed_vehicle >= 0);
@@ -443,7 +428,7 @@ int __cdecl veh_pick(int veh_id, const char *label, int flags) {
     popup.set_sprite_double_click_callback(veh_sprite_double_click);
 
     PopupModalState = 6;
-    const int result = popup.exec(0, 0);
+    const int result = popup.exec();
     PopupModalState = 0;
     return result;
 }
