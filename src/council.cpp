@@ -702,10 +702,10 @@ int __cdecl wants_prop(int faction, int proposal, int option) {
             if ((map_loc(x, y)->climate & ~0x1F) < ALT_BIT_SHORE_LINE) {
                 if (dir < 0) {
                     weight = 1;
-                    // WORKAROUND(type): signed `jl` needs int; AltNatural and
-                    // sea_level_rises are declared uint32_t in this tree.
+                    // Signed `jl`: AltNatural and sea_level_rises are ints
+                    // (map.h, alpha.h).
                     if (map_loc(x, y)->contour - MapSeaLevel
-                        >= (int)AltNatural[ALT_SHORE_LINE] - (int)WorldBuilder.sea_level_rises) {
+                        >= AltNatural[ALT_SHORE_LINE] - WorldBuilder.sea_level_rises) {
                         weight = 2;
                     }
                 } else {
@@ -722,9 +722,9 @@ int __cdecl wants_prop(int faction, int proposal, int option) {
                     || (map_loc(x, y)->climate & 0xE0) != ALT_BIT_SHORE_LINE) {
                     // Image loads AltNatural[3] (edi) first, then rises (ebx),
                     // `add ebx, edi` -> rises + AltNatural[3] (uncertain order).
-                    // WORKAROUND(type): signed `jg`, see above.
+                    // Signed `jg`, see above.
                     if (map_loc(x, y)->contour - MapSeaLevel
-                        <= (int)WorldBuilder.sea_level_rises + (int)AltNatural[ALT_SHORE_LINE]) {
+                        <= WorldBuilder.sea_level_rises + AltNatural[ALT_SHORE_LINE]) {
                         weight = -3;
                     } else if ((map_loc(x, y)->climate & ~0x1F) == ALT_BIT_SHORE_LINE) {
                         weight = -1;

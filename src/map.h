@@ -411,7 +411,7 @@ extern int WorldBuildVal1; // TODO: more descriptive variable name
 extern Continent Continents[MaxContinentNum];  // 0x009AA730
 extern RulesNatural Natural[MaxNaturalNum];    // 0x0094ADE0
 extern int MapLongitude; // signed half-width tile-row stride
-extern uint32_t AltNatural[11];
+extern int AltNatural[11];
 // The table AltNatural is RESET from, immediately above it in .data and the
 // same 11 ints: world_build's first statement copies all eleven over
 // AltNatural (`mov ecx, 0xb; rep movsd` from 0x0068FAF4 to 0x0068FB4C) before
@@ -734,8 +734,10 @@ inline uint32_t __cdecl lock_at(uint32_t x, uint32_t y) {
 }
 
 // INLINE: the image has no rocky_at - it open-codes what this names.
-inline uint32_t __cdecl rocky_at(uint32_t x, uint32_t y) {
-    return map_loc(x, y)->val3 & 0xC0;
+// `int` and `& ~0x3F`: Console::terraform compares it signed (and ecx,
+// -0x40 / cmp ecx, 0x40 / jle at 0x004D3C24).
+inline int __cdecl rocky_at(uint32_t x, uint32_t y) {
+    return map_loc(x, y)->val3 & ~0x3F;
 }
 
 // INLINE: the image has no bit2_at - it open-codes what this names.

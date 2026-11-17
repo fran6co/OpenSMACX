@@ -502,7 +502,7 @@ class BaseWin : public GraphicWin, public SubInterface {
   VOX_Vect camera_angles_;  // 0x1E640
   // RECOVERY_MEMBER: v2 BaseWin camera_rotation_ VOX_Matrix 0x1E64C 0x0041E8D0
   VOX_Matrix camera_rotation_;  // 0x1E64C
-  uint32_t field_1E670_;  // 0x1E670
+  int field_1E670_;  // 0x1E670
   MapWin mapWin_;  // 0x1E674
   uint32_t field_40AF4_;  // 0x40AF4
   uint32_t field_40AF8_;  // 0x40AF8

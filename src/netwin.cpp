@@ -2705,9 +2705,8 @@ int NetWin::exec() {
     hide();
     NetDaemonNet.close_game();
 
-    // WORKAROUND(type): 482CBD..482CC3 tests it signed (jle); the header
-    // declares field_7614_ uint32_t.
-    if (static_cast<int>(field_7614_) > 0) {
+    // 482CBD..482CC3 tests it signed (jle): field_7614_ is an int.
+    if (field_7614_ > 0) {
         on_redraw();
         on_update();
         prepare_game();

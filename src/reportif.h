@@ -139,7 +139,7 @@ class ReportIf : public SubInterface {
   // RECOVERY_MEMBER: v1 ReportIf field_10_ 0x10 0x004A702A
   uint32_t field_10_;  // 0x10
   // RECOVERY_MEMBER: v1 ReportIf field_14_ 0x14 0x004A7039
-  uint32_t field_14_;  // 0x14
+  int field_14_;  // 0x14
   // RECOVERY_MEMBER: v1 ReportIf field_18_ 0x18 0x004A7053
   uint32_t field_18_;  // 0x18
   uint32_t field_1C_;  // 0x1C

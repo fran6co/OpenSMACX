@@ -3990,11 +3990,11 @@ void BasePop::on_redraw() {
             // top-down (negative) biHeight.
             field_214C_->draw(
                 static_cast<Buffer *>(this), field_214C_->cTransparentIndex_,
-                // WORKAROUND(type): field_21C8_ is declared uint32_t; the image
-                // divides this centring term signed (cdq/sub/sar at 0x00604BD9).
+                // The image divides this centring term signed (cdq/sub/sar
+                // at 0x00604BD9): field_21C8_ is an int.
                 (dib_.bmiHeader.biWidth - field_214C_->iWidth_ -
-                 static_cast<int>(field_21C8_)) / 2 +
-                    static_cast<int>(field_21C8_),
+                 field_21C8_) / 2 +
+                    field_21C8_,
                 -((field_214C_->iHeight_ + dib_.bmiHeader.biHeight) / 2), 1, 1);
         }
     } else {
@@ -4027,9 +4027,9 @@ void BasePop::on_redraw() {
     if (field_30D4_ == 0) {
         // No text to lay out: publish the picture's extent and stop.
         BasePopDrawnRight = right - field_30D8_ - field_21C8_;
-        // WORKAROUND(type): field_30DC_ is declared uint32_t; both clamps
-        // compare signed in the image (jle at 0x00604CBD, jg at 0x00604E29).
-        if (bottom > static_cast<int>(field_30DC_) + own_bottom) {
+        // Both clamps compare signed in the image (jle at 0x00604CBD, jg at
+        // 0x00604E29): field_30DC_ is an int.
+        if (bottom > field_30DC_ + own_bottom) {
             BasePopDrawnBottom = bottom;
             return;
         }
@@ -4058,8 +4058,7 @@ void BasePop::on_redraw() {
     BasePopDrawnRight = right - field_30D8_ - field_21C8_;
     // The floor is a max-style ternary: the image stores height first and
     // then the floor over it, reading field_30DC_ before the first store.
-    // WORKAROUND(type): see above (signed compare of the uint32_t field)
-    BasePopDrawnBottom = height > static_cast<int>(field_30DC_) + own_bottom
+    BasePopDrawnBottom = height > field_30DC_ + own_bottom
                              ? height
                              : field_30DC_ + own_bottom;
 }

@@ -4667,7 +4667,7 @@ L_56c6d3:
             goto L_578f46;
         }
     } else if (!at_sea && !(own_ground & BIT_FARM)
-               && (map_loc(x, y)->val3 & 0xC0) < 0x80
+               && (map_loc(x, y)->val3 & ~0x3F) < 0x80
                && ((map_loc(x, y)->climate & 0x18) < 0x10
                    // literal: `alt - 2` is tested `< 0` then `<= 1`
                    || (alt - 2 >= 0 && alt - 2 > 1))
@@ -4699,7 +4699,7 @@ L_56c6d3:
         goto L_578f46;
     }
     if (!at_sea && !(map_loc(x, y)->bit & BIT_FARM)
-        && (map_loc(x, y)->val3 & 0xC0) < 0x80
+        && (map_loc(x, y)->val3 & ~0x3F) < 0x80
         && has_tech(Terraforming[TERRA_FARM].prerequisite_tech[0], faction_id)) {
         Vehs[veh_id].order = ORDER_FARM;
         goto L_578f46;

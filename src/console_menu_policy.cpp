@@ -403,7 +403,7 @@ expansion_gate:
 
     if (!(GameDataStateStorage.fields_.game_state_ & STATE_IS_SCENARIO) &&
         ScenarioSave.objective_req_victory >= 1000 &&
-        static_cast<int32_t>(ScenarioSave.objectives_sudden_death_victory) >= 1000) {
+        ScenarioSave.objectives_sudden_death_victory >= 1000) {
         hide_menu_item(1, 0x115);
     } else {
         show_menu_item(1, 0x115);

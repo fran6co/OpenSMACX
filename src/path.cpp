@@ -676,7 +676,7 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
                             }
                         }
                         if (get_proto_triad(proto_id) == TRIAD_SEA
-                            && altitude_at(x_next, y_next) < ALT_BIT_SHORE_LINE
+                            && (map_loc(x_next, y_next)->climate >> 5) < ALT_SHORE_LINE
                             && base_who(x_next, y_next) < 0) {
                             // open water without a base: stand off enemy artillery
                             i = 25; // the image's counter store: the last direction,
@@ -867,7 +867,7 @@ reconstruct:
                         }
                     }
                     if (get_proto_triad(proto_id) == TRIAD_SEA
-                        && altitude_at(x_next, y_next) < ALT_BIT_SHORE_LINE
+                        && (map_loc(x_next, y_next)->climate >> 5) < ALT_SHORE_LINE
                         && base_who(x_next, y_next) < 0) {
                         // open water without a base: stand off enemy artillery
                         i = 25; // the image's counter store: the last direction,

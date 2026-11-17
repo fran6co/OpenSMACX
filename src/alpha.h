@@ -618,7 +618,7 @@ struct RulesWorldbuilder { // Alpha(x).txt
     // #WORLDBUILDER: Magnitude of sea level changes from ice cap melting/freezing
     // Original bounds: 1 to 100
     // Default value: 5
-    uint32_t sea_level_rises;
+    int sea_level_rises;
 
     // #WORLDBUILDER: Size of cloud mass trapped by peaks
     // Original bounds: 0 to 20
@@ -696,7 +696,7 @@ struct AlphaIniPref {
 };
 
 struct DefaultPref {
-    uint32_t difficulty;
+    int difficulty;
     uint32_t faction_id;
     uint32_t pad; // unused
     uint32_t map_type;

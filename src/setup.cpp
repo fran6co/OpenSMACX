@@ -1342,9 +1342,8 @@ search:
                     if (!on_map(nx, ny)) continue;
                     if (Players[faction].rule_flags & 0x100) quality += 2 - (map_loc(nx, ny)->climate >> 5);
                     else {
-                        // 5B21D9: int compare (jl), not a byte compare.
-                        int land = map_loc(nx, ny)->climate & 0xe0;
-                        if (land < 0x60) { ++quality; break; }
+                        // 5B21D9: int compare (jl) of the shifted altitude.
+                        if ((map_loc(nx, ny)->climate >> 5) < ALT_SHORE_LINE) { ++quality; break; }
                     }
                 }
                 if (quality > best) { best = quality; best_offset = offset3; }

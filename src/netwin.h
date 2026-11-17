@@ -546,7 +546,7 @@ class NetWin : public GraphicWin {
   FlatButton flatButton1_;  // 0x4F7C
   FlatButton flatButton2_;  // 0x5AC8
   char world_size_labels_[32][0x80];  // 0x6614..0x7613
-  uint32_t field_7614_;  // 0x7614
+  int field_7614_;  // 0x7614
   uint32_t field_7618_;  // 0x7618
   uint32_t field_761C_;  // 0x761C
   uint32_t field_7620_;  // 0x7620

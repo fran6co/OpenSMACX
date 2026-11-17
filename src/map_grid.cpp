@@ -109,8 +109,8 @@ uint32_t AltNaturalDefault[11] = {
 uint32_t AltContour[11] = {
 #include "terrain_altitude_contour.inc"
 };
-// RECOVERY_OBJECT: v2 0x0068FB4C 0x0068FB78 ?AltNatural@@3PAIA 0x005C86E0
-uint32_t AltNatural[11] = {
+// RECOVERY_OBJECT: v2 0x0068FB4C 0x0068FB78 ?AltNatural@@3PAHA 0x005C86E0
+int AltNatural[11] = {
 #include "terrain_altitude_natural.inc"
 };
 

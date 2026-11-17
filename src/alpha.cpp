@@ -2149,9 +2149,8 @@ void __cdecl prefs_load(BOOL use_default) {
     StringTemp[0] = 0;
     int non_pad = 0;
     uint32_t prefs = default_prefs_load();
-    // WORKAROUND(type): pinned 0x0059DF21 compares the difficulty signed
-    // (`cmp eax, 2; jge`); DefaultPref::difficulty is declared uint32_t.
-    if ((int)DefaultPrefs.difficulty < DLVL_TALENT) {
+    // Pinned 0x0059DF21 compares the difficulty signed (`cmp eax, 2; jge`).
+    if (DefaultPrefs.difficulty < DLVL_TALENT) {
         prefs |= PREF_BSC_TUTORIAL_MSGS;
     }
     for (int shift = 31; shift >= 0; shift--) {

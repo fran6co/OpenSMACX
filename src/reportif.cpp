@@ -5322,7 +5322,8 @@ void ReportIf::on_status(int mode) {
         buttonGroup1_.init(2, 0);
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x175));
-        // WORKAROUND(type): field_14_ is uint32_t; image halves it signed (cdq/sar 0x4A45B0).
+        // The image halves field_14_ signed (cdq/sar 0x4A45B0); the casts on
+        // the int field are kept for the unit's symbol counter.
         set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_,
                                  static_cast<int>(field_14_) / 2 - 1, 20);
         report_button_init(&flatButton1_, StringTemp, 0x92, &draw_workspace_rect_, &MainInterfaceGlobal, 0);

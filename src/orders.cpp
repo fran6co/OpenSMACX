@@ -1346,7 +1346,7 @@ L_597350:
                 && triad == TRIAD_LAND
                 && (veh_moves(veh_id) < Rules.move_rate_roads
                     || ((map_loc(dest_x, dest_y)->bit & BIT_FUNGUS)
-                        && (map_loc(dest_x, dest_y)->climate & 0xE0) >= 0x40
+                        && (map_loc(dest_x, dest_y)->climate & ~0x1F) >= 0x40
                         && (Vehs[veh_id].proto_id >= 64
                             || Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating >= 0)
                         && VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_TERRAFORMING
@@ -1385,7 +1385,7 @@ L_597350:
                 // 597969
                 if (faction == ConsoleGlobal.faction_id_
                         && (map_loc(dest_x, dest_y)->bit & BIT_FUNGUS)
-                        && (map_loc(dest_x, dest_y)->climate & 0xE0) >= 0x40
+                        && (map_loc(dest_x, dest_y)->climate & ~0x1F) >= 0x40
                         && !Vehs[veh_id].order
                         && VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_TERRAFORMING
                         && VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_ALIEN_ARTIFACT

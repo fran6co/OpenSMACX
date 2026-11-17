@@ -2560,7 +2560,7 @@ void __cdecl base_ecology() {
         }
         bit_set(x, y, BIT_FUNGUS, true);
         bit_set(x, y, MapTileFlagClearMask, false);
-        if ((map_loc(x, y)->climate & 0xE0) < ALT_BIT_OCEAN_SHELF) {
+        if ((map_loc(x, y)->climate >> 5) < ALT_OCEAN_SHELF) {
             world_alt_set(x, y, ALT_OCEAN_SHELF, false);
         }
         if ((PlayersData[ConsoleGlobal.faction_id_].flags & PFLAG_MAP_REVEALED)
@@ -6080,7 +6080,7 @@ void __cdecl base_terraform(int force_improve) {
             }
             worked_farmable++;
         } else {
-            if (((sq->climate >> 3) & 3) + ((items >> 15) & 1) < 2) {
+            if (((sq->climate >> 3) & 3) + (int)((items >> 15) & 1) < 2) {
                 continue;
             }
             int free = TRUE;

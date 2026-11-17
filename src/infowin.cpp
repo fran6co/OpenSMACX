@@ -461,8 +461,7 @@ void InfoWin::setup_text() {
             MainInterfaceGlobal.set_clip(&rect);
             text[0] = 0;
             if ((ScenarioSave.objective_req_victory < 9000
-                 // WORKAROUND(type): signed compare in the image (jge at 0x0045791A/0x00457BA0); game.h declares uint32_t.
-                 || static_cast<int>(ScenarioSave.objectives_sudden_death_victory) < 9000)
+                 || ScenarioSave.objectives_sudden_death_victory < 9000)
                 && !ScenarioSave.objective_achieve_points) {
                 strcat(text, label_get(899));
                 CharUpperA(text);
@@ -523,8 +522,7 @@ void InfoWin::setup_text() {
             MainInterfaceGlobal.set_clip(&rect);
             text[0] = 0;
             if ((ScenarioSave.objective_req_victory < 9000
-                 // WORKAROUND(type): signed compare in the image (jge at 0x0045791A/0x00457BA0); game.h declares uint32_t.
-                 || static_cast<int>(ScenarioSave.objectives_sudden_death_victory) < 9000)
+                 || ScenarioSave.objectives_sudden_death_victory < 9000)
                 && !ScenarioSave.objective_achieve_points) {
                 strcat(text, label_get(899));
                 CharUpperA(text);

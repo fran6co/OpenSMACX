@@ -2536,9 +2536,8 @@ void BaseWin::draw_production(int update_mode) {
             caviar_.set_scaling(static_cast<float>(render_width) *
                                 0.000699999975040555f);
             caviar_.set_scene_rotation(
-                // WORKAROUND(type): the image converts this counter with a
-                // signed fild; basewin.h declares it uint32_t.
-                static_cast<float>(static_cast<int>(field_1E670_) + 0x1e) *
+                // The image converts this counter with a signed fild.
+                static_cast<float>(field_1E670_ + 0x1e) *
                     0.017444444820284843f,
                 0.0f, 0.0f);
             caviar_.render(&MainInterfaceGlobal, center_x, text_y, 0);

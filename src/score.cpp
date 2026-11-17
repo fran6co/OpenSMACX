@@ -562,7 +562,7 @@ void __cdecl rankings(int apply_ranks) {
         }
         if (!is_alive(faction_id)) {
             FactionRankingsUnk[faction_id] = 0;
-        } else if ((ScenarioSave.objective_req_victory < 9000 || (int)ScenarioSave.objectives_sudden_death_victory < 9000)
+        } else if ((ScenarioSave.objective_req_victory < 9000 || ScenarioSave.objectives_sudden_death_victory < 9000)
             && !ScenarioSave.objective_achieve_points) {
             FactionRankingsUnk[faction_id] = num_objectives(faction_id, false) * 10;
         } else {
@@ -873,7 +873,7 @@ void __cdecl compute_score(int faction, int *total, int *items, int recursive) {
     }
 
     int required = ScenarioSave.objective_req_victory;
-    if ((required < 9000 || static_cast<int>(ScenarioSave.objectives_sudden_death_victory) < 9000)
+    if ((required < 9000 || ScenarioSave.objectives_sudden_death_victory < 9000)
         && !(GameDataStateStorage.fields_.game_state_ & 0x80000)) {
         // Intentionally clears the faction's GLOBAL score cache even when
         // caller supplied a separate local items array in recursive mode.

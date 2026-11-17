@@ -519,7 +519,7 @@ class BasePop : public GraphicWin {
   uint32_t field_21BC_;
   uint32_t field_21C0_;
   uint32_t field_21C4_;
-  uint32_t field_21C8_;
+  int field_21C8_;
   // Signed optional X coordinate; -1 is the original unset sentinel (+0x21CC).
   int32_t field_21CC_;
   // Split so `field_2274_` - the flag `pops()` (popup.cpp) tests, right
@@ -645,7 +645,7 @@ class BasePop : public GraphicWin {
   uint32_t field_30D0_;
   uint32_t field_30D4_;
   uint32_t field_30D8_;
-  uint32_t field_30DC_;
+  int field_30DC_;
   uint32_t field_30E0_;
   uint32_t field_30E4_;
   uint32_t field_30E8_;

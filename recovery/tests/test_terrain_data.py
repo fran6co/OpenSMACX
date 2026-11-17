@@ -432,7 +432,7 @@ def test_altitude_refusals_preserve_previous_cache(tmp_path, hook, damage):
     raw = data_image(bytes(44), absolute=4) if damage == 'relocation' else data_image(bytes(44))
     root, original, output = project(
         tmp_path, raw, size=43 if damage == 'extent' else 44,
-        unit='map_grid.cpp', symbol='?AltNatural@@3PAIA')
+        unit='map_grid.cpp', symbol='?AltNatural@@3PAHA')
     output = output.with_name('terrain_altitude_natural.inc')
     if damage == 'pin':
         (root / 'src/IMAGE_PIN').write_text('sha256 ' + '0' * 64 + '\n')
@@ -455,7 +455,7 @@ def test_actual_product_altitude_arrays_use_generated_initializers(tmp_path):
     for name, filename in [('AltNaturalDefault', 'terrain_altitude_default.inc'),
                            ('AltContour', 'terrain_altitude_contour.inc'),
                            ('AltNatural', 'terrain_altitude_natural.inc')]:
-        definition, = re.findall(r'uint32_t ' + name + r'\[11\] = \{.*?\};', source, re.S)
+        definition, = re.findall(r'(?:uint32_t|int) ' + name + r'\[11\] = \{.*?\};', source, re.S)
         definitions.append(definition)
         values = list(range(11))
         (tmp_path / filename).write_text(','.join(f'{value}u' for value in values))

@@ -6494,7 +6494,7 @@ int Console::on_key_click(int a1, int a2) {
         case '=':
             if ((GameDataStateStorage.fields_.game_state_ & 0x10) != 0 ||
                 ScenarioSave.objective_req_victory < 0x2328 ||
-                static_cast<int>(ScenarioSave.objectives_sudden_death_victory) < 0x2328) {
+                ScenarioSave.objectives_sudden_death_victory < 0x2328) {
                 show_scen_objectives();
             }
             return 1;
