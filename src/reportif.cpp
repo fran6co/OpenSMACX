@@ -7610,7 +7610,7 @@ void ReportIf::draw_security() {
     int inset = field_1E230_ ? 0x4C : 0;
     field_C_ = inset + field_50_.left;
     field_10_ = field_50_.top;
-    field_14_ = report_rect_width(&field_50_) - (field_1E230_ ? 0x4C : 0);
+    field_14_ = field_50_.right - inset - field_50_.left;
     field_18_ = report_rect_height(&field_50_);
     StringTemp[0] = 0;
     MainInterfaceGlobal.Buffer::set_font(field_1E190_, field_1E194_, field_1E198_, nullptr);
