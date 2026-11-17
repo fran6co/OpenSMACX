@@ -162,7 +162,7 @@ int __cdecl hex_cost(int proto_id, int faction_id, int x_src, int y_src, int x_d
 /*
 Purpose: Quickly check for unit related zone of control conflicts. If a ZOC conflict is found, store
          the coordinates of the tile inside ZOC pointers.
-// ORIGINAL: 0x00593830 ?quick_zoc@@YAXHHHHHPAH0@Z 0x00593830-0x005939FC
+// ORIGINAL: 0x00593830 ?quick_zoc@@YAXHHHHHPAH0@Z 0x00593830-0x005939FC BYTE_EXACT
 // TRIED: 12/152, 0.873 similar (best flag set /Oi-) - call count already
 //            matches the image (`call_diff` agrees). First divergence is
 //            is_ocean's own known plateau (`xor ecx,ecx` before the
@@ -183,7 +183,10 @@ void __cdecl quick_zoc(int x_src, int y_src, int faction_id, int x_dst, int y_ds
     BOOL is_src_ocean = is_ocean(x_src, y_src);
     int search_zoc = -1;
     for (uint32_t i = 0; i < 8; i++) {
-        int x_radius = wrap_map_x(x_src + VehMoveDeltaX[i]);
+        // The image's wrap stores each arm to the x slot and reloads it for
+        // on_map: the flat-first ternary, not map.h's wrap_map_x.
+        int t = x_src + VehMoveDeltaX[i];
+        int x_radius = (MapIsFlat & 1) ? t : t < 0 ? t + MapLongitudeBounds : t >= MapLongitudeBounds ? t - MapLongitudeBounds : t;
         int y_radius = y_src + VehMoveDeltaY[i];
         if (on_map(x_radius, y_radius)) {
             int owner = veh_who(x_radius, y_radius);

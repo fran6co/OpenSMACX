@@ -1738,6 +1738,10 @@ int Palette::get_nearest_palette_index(const HSV *query, const HSV *hsv_block,
     if (PaletteInitialized == nullptr) {
         return 7;
     }
+    // One if/else with a shared return: the two arms' locals are mutually
+    // exclusive, so the first arm's distance temporary shares the image's
+    // frame slot with the second arm's used-row pointer (best/best_index
+    // then land at the image's 0x30/0x3C).
     if (skip_animated == 0) {
         for (i = 0; i < 0x100; i++) {
             double d = hsv_sq_distance(query, &hsv_block[i]);
@@ -1746,27 +1750,27 @@ int Palette::get_nearest_palette_index(const HSV *query, const HSV *hsv_block,
                 best_index = i;
             }
         }
-        return best_index;
-    }
-    int used[256];
-    for (i = 0; i < 0x100; i++) {
-        used[i] = 0;
-    }
-    for (i = 0; i < 5; i++) {
-        if (internal_[i].key != 0xffffffff) {
-            int start = internal_[i].first;
-            int end = start + internal_[i].count;
-            for (int j = start; j < end; j++) {
-                used[j] = 1;
+    } else {
+        int used[256];
+        for (i = 0; i < 0x100; i++) {
+            used[i] = 0;
+        }
+        for (i = 0; i < 5; i++) {
+            if (internal_[i].key != 0xffffffff) {
+                int start = internal_[i].first;
+                int end = start + internal_[i].count;
+                for (int j = start; j < end; j++) {
+                    used[j] = 1;
+                }
             }
         }
-    }
-    for (i = 10; i < 0xf6; i++) {
-        if (used[i] == 0) {
-            double d = hsv_sq_distance(query, &hsv_block[i]);
-            if (d < best) {
-                best = d;
-                best_index = i;
+        for (i = 10; i < 0xf6; i++) {
+            if (used[i] == 0) {
+                double d = hsv_sq_distance(query, &hsv_block[i]);
+                if (d < best) {
+                    best = d;
+                    best_index = i;
+                }
             }
         }
     }

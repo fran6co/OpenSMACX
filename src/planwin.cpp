@@ -202,8 +202,38 @@ void PlanWin::find_view(int x1, int y1, int x2, int y2,
     center_y_ = y;
 }
 
+// WORKAROUND(inline): the same view test as mapwin.cpp's mapwin_tile_visible
+// (y bound, seam wrap, x bound). Its own parameter copy is what spills
+// monocenter's loop index to the image's fifth frame slot and gives
+// opticenter's two scans their image allocation (both became byte exact);
+// the original was most likely one shared MapWin header inline, not yet
+// reconstructed.
+static inline int planwin_tile_visible(MapWin *w, int x, int y) {
+    if (y < w->field_1DDA8_) {
+        return 0;
+    }
+    if (y >= w->field_1DDD8_ + w->field_1DDD0_ + w->field_1DDA8_) {
+        return 0;
+    }
+    if ((MapIsFlat & 1) == 0) {
+        if (x < w->field_1DDA4_) {
+            x += MapLongitudeBounds;
+        }
+        if (x >= w->field_1DDD4_ + w->field_1DDCC_ + w->field_1DDA4_) {
+            x -= MapLongitudeBounds;
+        }
+    }
+    if (x < w->field_1DDA4_) {
+        return 0;
+    }
+    if (x >= w->field_1DDD4_ + w->field_1DDCC_ + w->field_1DDA4_) {
+        return 0;
+    }
+    return 1;
+}
+
 // Zoom until both selected points and their neighboring tiles fit the view.
-// ORIGINAL: 0x0048B630 ?opticenter@PlanWin@@QAEXHHHHH@Z 0x0048B630-0x0048B8D6
+// ORIGINAL: 0x0048B630 ?opticenter@PlanWin@@QAEXHHHHH@Z 0x0048B630-0x0048B8D6 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x0048B630-0x0048B8D6;git:f2db92dc:src/recovered/units/0048b630.cpp", "source:src/map.h:RadiusOffsetX,RadiusOffsetY;source:src/mapwin.h:viewport fields"], "reason": "The PlanWin member varies the inherited MapWin zoom until the selected two points and their radius samples fit the calculated viewport."}
 void PlanWin::opticenter(int x1, int y1, int x2, int y2, int force_redraw) {
     const int32_t old_zoom = zoom_offset_;
@@ -241,20 +271,7 @@ void PlanWin::opticenter(int x1, int y1, int x2, int y2, int force_redraw) {
                 x < 0 || x >= MapLongitudeBounds) {
                 continue;
             }
-            if (y < field_1DDA8_ ||
-                y >= field_1DDA8_ + field_1DDD0_ + field_1DDD8_) {
-                goto too_far;
-            }
-            if (!flat) {
-                if (x < field_1DDA4_) {
-                    x += MapLongitudeBounds;
-                }
-                if (x >= field_1DDA4_ + field_1DDCC_ + field_1DDD4_) {
-                    x -= MapLongitudeBounds;
-                }
-            }
-            if (x < field_1DDA4_ ||
-                x >= field_1DDA4_ + field_1DDCC_ + field_1DDD4_) {
+            if (!planwin_tile_visible(this, x, y)) {
                 goto too_far;
             }
         }
@@ -272,20 +289,7 @@ void PlanWin::opticenter(int x1, int y1, int x2, int y2, int force_redraw) {
                 x < 0 || x >= MapLongitudeBounds) {
                 continue;
             }
-            if (y < field_1DDA8_ ||
-                y >= field_1DDA8_ + field_1DDD0_ + field_1DDD8_) {
-                goto too_far;
-            }
-            if (!flat) {
-                if (x < field_1DDA4_) {
-                    x += MapLongitudeBounds;
-                }
-                if (x >= field_1DDA4_ + field_1DDCC_ + field_1DDD4_) {
-                    x -= MapLongitudeBounds;
-                }
-            }
-            if (x < field_1DDA4_ ||
-                x >= field_1DDA4_ + field_1DDCC_ + field_1DDD4_) {
+            if (!planwin_tile_visible(this, x, y)) {
                 goto too_far;
             }
         }
@@ -304,7 +308,7 @@ done:
 
 // Zoom around the current center until one point's neighborhood no longer
 // fits, then repaint the inherited GraphicWin surface if the view changed.
-// ORIGINAL: 0x0048B8E0 ?monocenter@PlanWin@@QAEXHHH@Z 0x0048B8E0-0x0048BAA1
+// ORIGINAL: 0x0048B8E0 ?monocenter@PlanWin@@QAEXHHH@Z 0x0048B8E0-0x0048BAA1 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x0048B8E0-0x0048BAA1;git:f2db92dc:src/recovered/units/0048b8e0.cpp", "source:src/planwin.h:PlanWin;source:src/map.h:RadiusOffsetX,RadiusOffsetY;source:src/buffer.h:Buffer"], "reason": "The PlanWin member varies inherited MapWin zoom until one point and its neighborhood fit, then redraws its real GraphicWin surface and owned Buffer."}
 void PlanWin::monocenter(int x, int y, int force_redraw) {
     const int32_t old_zoom = zoom_offset_;
@@ -332,21 +336,7 @@ void PlanWin::monocenter(int x, int y, int force_redraw) {
                 sample_x < 0 || sample_x >= MapLongitudeBounds) {
                 continue;
             }
-            if (sample_y < field_1DDA8_ ||
-                sample_y >= field_1DDA8_ + field_1DDD0_ + field_1DDD8_) {
-                tiles_fit = false;
-                break;
-            }
-            if (!flat) {
-                if (sample_x < field_1DDA4_) {
-                    sample_x += MapLongitudeBounds;
-                }
-                if (sample_x >= field_1DDA4_ + field_1DDCC_ + field_1DDD4_) {
-                    sample_x -= MapLongitudeBounds;
-                }
-            }
-            if (sample_x < field_1DDA4_ ||
-                sample_x >= field_1DDA4_ + field_1DDCC_ + field_1DDD4_) {
+            if (!planwin_tile_visible(this, sample_x, sample_y)) {
                 tiles_fit = false;
                 break;
             }

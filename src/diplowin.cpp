@@ -122,7 +122,7 @@ void __cdecl DiploWin::string_callback(int faction_id, int unused) {
 // File-local helpers (place above DiploWin::exec; they replace the old
 // by-value `inset_rect` at the top of diplowin.cpp, which exec no longer uses).
 //
-// 0x443FBA..443FD1 / 0x444140..44415E / 0x4444F9..444515 load all four
+// 0x444140..44415E / 0x4444F9..444515 load all four
 // source edges through a copy of the source pointer, then +n/-n (dead
 // top/bottom copies included when the vertical amount is zero).
 // WORKAROUND(decl): file-local RECT helper stand-in (original name unknown).
@@ -132,15 +132,6 @@ static inline void diplo_inset_rect(RECT *dst, const RECT *src, int horizontal,
   dst->top = src->top + vertical;
   dst->right = src->right - horizontal;
   dst->bottom = src->bottom - vertical;
-}
-
-// 0x444024..44403D: the F4C copy shifted down by 0x17 (left/right untouched).
-// WORKAROUND(decl): file-local RECT helper stand-in (original name unknown).
-static inline void diplo_offset_rect(RECT *dst, const RECT *src, int dx, int dy) {
-  dst->left = src->left + dx;
-  dst->top = src->top + dy;
-  dst->right = src->right + dx;
-  dst->bottom = src->bottom + dy;
 }
 
 // WORKAROUND(decl): 0x44469B..4446CF null-tests &rect_F2C_ before
@@ -181,14 +172,18 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
   expand_rect(&rect_EDC_, -0x17, 0);
   rect_EDC_.right -= 0x20;
 
-  // 0x443FB2: title strip = outer inset 4, then 3, then 0x14 tall.
-  diplo_inset_rect(&rc, &rect_EDC_, 4, 4);
+  // 0x443FB2: title strip = outer inset 4, then 3, then 0x14 tall. The
+  // copy-then-expand_rect spelling gives the image's load order and the
+  // rc.right/bottom spills; the inset helper does not.
+  rc = rect_EDC_;
+  expand_rect(&rc, -4, -4);
   rect_F4C_ = rc;
   expand_rect(&rect_F4C_, -3, -3);
   rect_F4C_.bottom = rect_F4C_.top + 0x14;
 
   // 0x444024: two leader panes under the title strip, gap 2.
-  diplo_offset_rect(&rc, &rect_F4C_, 0, 0x17);
+  rc = rect_F4C_;
+  offset_rect(&rc, 0, 0x17);
   rc.right = rc.left + (rc.right - rc.left + 2) / 2 - 2;
   leader_rect_[0] = rc;
   offset_rect(&rc, rc.right - rc.left + 2, 0);

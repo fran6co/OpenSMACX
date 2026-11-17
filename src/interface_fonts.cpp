@@ -507,25 +507,19 @@ void __cdecl time_controls_dialog(Popup *popup) {
         strcat(StringTemp, SocialWinOpenParenText);
 
         if (index != 0) {
-            char turn_text[80];
-            char base_text[80];
-            char unit_text[80];
-            _itoa(TimeControl[index].turn, turn_text, 10);
-            strcat(StringTemp, turn_text);
+            say_num(TimeControl[index].turn);
             strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, label_get(0x468 / 4));
             strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, label_get(0x1094 / 4));
             strcat(StringTemp, BufferJoinSpace);
 
-            _itoa(TimeControl[index].base, base_text, 10);
-            strcat(StringTemp, base_text);
+            say_num(TimeControl[index].base);
             strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, label_get(0x46C / 4));
             strcat(StringTemp, " + ");
 
-            _itoa(TimeControl[index].unit, unit_text, 10);
-            strcat(StringTemp, unit_text);
+            say_num(TimeControl[index].unit);
             strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, label_get(0x470 / 4));
         } else {
