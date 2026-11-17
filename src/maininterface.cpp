@@ -195,7 +195,7 @@ void MainInterface::draw_edit_pane() {
     case 27: { LPSTR name = Natural[6].name_short; strcat(line, StringTable.get(name)); } break;
     case 28: { LPSTR name = Natural[3].name_short; strcat(line, StringTable.get(name)); } break;
     case 29: { LPSTR name = Natural[10].name_short; strcat(line, StringTable.get(name)); } break;
-    default: strcat(line, StringTable.get(Terraforming[MapEditorPaintId - 6].name)); break;
+    default: strcat(line, StringTable.get(Terraforming[MapEditorPaintId - 6].name[0])); break;
     }
     MainInterfaceGlobal.Buffer::write_l(line, x, y);
     y += MainInterfaceGlobal.Buffer::text_line_height();
@@ -734,7 +734,7 @@ int MainInterface::init(int) {
             for (j = 0; j < 20; j++) {
                 if (Terraforming[j].bit == 0 && tool >= j) tool++;
             }
-            flat_button_[k].set_bubble_text(StringTable.get(Terraforming[tool].name));
+            flat_button_[k].set_bubble_text(StringTable.get(Terraforming[tool].name[0]));
         } else {
             StringTemp[0] = 0;
             switch (k - 11) {

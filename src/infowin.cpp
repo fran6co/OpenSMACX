@@ -639,7 +639,7 @@ void InfoWin::setup_text() {
                 strcat(text, StringTable.get(Natural[10].name_short));
                 break;
             default:
-                strcat(text, StringTable.get(Terraforming[MapEditorPaintId - 6].name));
+                strcat(text, StringTable.get(Terraforming[MapEditorPaintId - 6].name[0]));
                 break;
             }
             strcpy(row_text_[pane][2], text);

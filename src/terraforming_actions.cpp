@@ -68,9 +68,9 @@
 // WORKAROUND(decl): action_give (0x004CEDE0) is a canary whose two spill
 // reloads after owner_set flip with the unit's extern-name count; with
 // action_airdrop's image loop shape it stays exact with 1-3 or 6 extra names
-// (0, 4, 5, 8-24 flip it). Two unused names sit in the middle of the window.
+// (0, 4, 5, 8-24 flip it). With RulesTerraforming's name[2] one unused name
+// is exact (3 flips it).
 extern int TerraformingActionsExternPad1;
-extern int TerraformingActionsExternPad2;
 #include "vector.h"  // vector_add operates on actual three-float arrays.
 
 extern void __cdecl unspot_stack(int veh_id);
@@ -935,7 +935,7 @@ found_terra:
         {
             bits |= Terraforming[terra_id].bit;
             bit_set(x, y, Terraforming[terra_id].bit, 0);
-            parse_says(2, StringTable.get((&Terraforming[terra_id].name)[is_ocean(x, y)]), -1, -1);
+            parse_says(2, StringTable.get(Terraforming[terra_id].name[is_ocean(x, y)]), -1, -1);
             if (terra_id == TERRA_FOREST) {
                 is_forest = true;
             }

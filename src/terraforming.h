@@ -47,8 +47,10 @@ enum TerraformingAction {
 // Pinned 5BAB4A..5BAB4D selects row+8+4*is_sea in a 0x20-byte row.
 // Land is element 0 and sea is element 1; the original index is unchecked.
 struct RulesTerraforming {
-    LPSTR name;
-    LPSTR name_sea;
+    // Land is element 0 and sea is element 1, like prerequisite_tech: the
+    // image indexes the pair by is_ocean (lea [ocean+8*i]) and walks it with
+    // one pointer (dec/jne at 0x00587494).
+    LPSTR name[2];
     int prerequisite_tech[2];
     uint32_t bit;
     uint32_t bit_incompatible;

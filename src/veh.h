@@ -625,8 +625,9 @@ struct RulesCombatMode {
 };
 
 struct RulesOrder {
-    LPSTR order;
-    LPSTR order_sea;
+    // Land is element 0 and sea is element 1: the image indexes the pair by
+    // (land == 0) at 0x004316F8 and fills it in a dec/jne loop (0x00587507).
+    LPSTR order[2];
     LPSTR letter;
 };
 

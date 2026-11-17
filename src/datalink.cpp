@@ -903,9 +903,8 @@ void Datalink::draw_terraform() {
     set_font(&font1_, 0, 0, 0);
     set_text_color(0xE0, -1, 1, 1);
     const int sea = land == 0;
-    // WORKAROUND(type): 0x004316F8 indexes the order/order_sea pair as a
-    // two-entry array by (land == 0); RulesOrder declares two members.
-    dl_upper_name((&Order[action + 4].order)[sea]);
+    // 0x004316F8 indexes the order pair by (land == 0).
+    dl_upper_name(Order[action + 4].order[sea]);
     write_cent_l(StringTemp, &title_rect_);
     const int technology = Terraforming[action].prerequisite_tech[sea];
     parse_says(1, tech_name(technology, 0), -1, -1);
@@ -3124,10 +3123,10 @@ void Datalink::set_cat_terraform() {
     int id = 90020;
     for (int i = 0; i < 0x14; ++i, ++id) {
         if (Terraforming[i].prerequisite_tech[0] >= -1) {
-            category_entry(&listBox_, Order[i + 4].order, DatalinkTerraformIdSeparator, id - 20);
+            category_entry(&listBox_, Order[i + 4].order[0], DatalinkTerraformIdSeparator, id - 20);
         }
         if (i != 16 && i != 17 && Terraforming[i].prerequisite_tech[1] >= -1) {
-            category_entry(&listBox_, Order[i + 4].order_sea, DatalinkTerraformSecondSeparator, id);
+            category_entry(&listBox_, Order[i + 4].order[1], DatalinkTerraformSecondSeparator, id);
         }
     }
 

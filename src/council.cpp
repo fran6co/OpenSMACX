@@ -385,11 +385,11 @@ int __cdecl wants_prop(int faction, int proposal, int option) {
                         if (PlayersData[faction].ai_fight == -PlayersData[option].ai_fight) {
                             score = -1;
                         }
-                        if (Players[faction].soc_ideology_category >= 0) {
+                        if (Players[faction].soc_ideology_category[0] >= 0) {
                             int model = static_cast<int>(PlayersData[option].soc_category_pending.models_[
-                                Players[faction].soc_ideology_category]);
+                                Players[faction].soc_ideology_category[0]]);
                             if (model != 0) {
-                                if (model != Players[faction].soc_ideology_model) {
+                                if (model != Players[faction].soc_ideology_model[0]) {
                                     score--;
                                     flag = 1;
                                 } else {
@@ -397,16 +397,16 @@ int __cdecl wants_prop(int faction, int proposal, int option) {
                                 }
                             }
                         }
-                        if (Players[faction].soc_anti_ideology_category >= 0) {
+                        if (Players[faction].soc_ideology_category[1] >= 0) {
                             int model = static_cast<int>(PlayersData[option].soc_category_pending.models_[
-                                Players[faction].soc_anti_ideology_category]);
-                            if (model != 0 && model == Players[faction].soc_anti_ideology_model) {
+                                Players[faction].soc_ideology_category[1]]);
+                            if (model != 0 && model == Players[faction].soc_ideology_model[1]) {
                                 score--;
                                 flag = 1;
                             }
                         }
-                        if (Players[faction].soc_ideology_category == Players[option].soc_anti_ideology_category &&
-                            Players[faction].soc_ideology_model == Players[option].soc_anti_ideology_model) {
+                        if (Players[faction].soc_ideology_category[0] == Players[option].soc_ideology_category[1] &&
+                            Players[faction].soc_ideology_model[0] == Players[option].soc_ideology_model[1]) {
                             score -= 2;
                             flag = 2;
                         }

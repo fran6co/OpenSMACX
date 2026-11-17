@@ -1588,6 +1588,9 @@ raw field access where the original used inline accessors.
   An inline accessor called with a constant does not reproduce it (VC6
   substitutes the constant before addressing); use a local, also for `-K`
   kept inside the index (`t = x - K`, base_build).
+  Every header spelling folds (literal, `const` local, inline accessor with
+  or without an index local inside it, row-pointer accessor: shoot 195
+  against 64); only a non-constant subscript in the caller's body keeps it.
 - **Flat-first ternary wrap inside a static helper.** If the image reloads the
   bound in each arm of an x-wrap, write the helper as the ternary
   `(MapIsFlat & 1) ? x : x < 0 ? x + W : x >= W ? x - W : x` and pass the sum

@@ -228,7 +228,7 @@ void __cdecl tech_heck(void (__cdecl *a1)(char *), int a2) {
                     (i != 1 || Terraforming[row].prerequisite_tech[0]
                                    != Terraforming[row].prerequisite_tech[1])) {
                     // order and order_sea are read as a two-entry run.
-                    parse_say(0, (&Order[4 + row].order)[i], -1, -1);
+                    parse_say(0, Order[4 + row].order[i], -1, -1);
                     parse_string(StringTemp, TextBufferGetPtr);
                     emit_help(a1);
                 }

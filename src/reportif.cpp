@@ -75,8 +75,9 @@ extern int ReportIfDeclPad5;
 // this/button reload order also needs more distinct unused function
 // declarations (the window moves with header inline counts; extern variables no longer move
 // it). Only 0x004A6330 changes in the unit's object. With base.h's one-level
-// has_fac and map.h's two wrap inlines the window is 6-8 (9-11 with one wrap
-// inline; 7-10 beside the nested has_fac_built form).
+// has_fac, map.h's two wrap inlines and the array-typed RulesTerraforming,
+// RulesOrder, RulesCitizen and Player ideology rows only 12 matches (1-11, 13,
+// 14 and 16 flip it); before those retypes the window was 6-8.
 void ReportIfDeclFnPad0();
 void ReportIfDeclFnPad1();
 void ReportIfDeclFnPad2();
@@ -84,6 +85,11 @@ void ReportIfDeclFnPad3();
 void ReportIfDeclFnPad4();
 void ReportIfDeclFnPad5();
 void ReportIfDeclFnPad6();
+void ReportIfDeclFnPad7();
+void ReportIfDeclFnPad8();
+void ReportIfDeclFnPad9();
+void ReportIfDeclFnPad10();
+void ReportIfDeclFnPad11();
 
 // Shared punctuation objects the image pushes instead of unit literals.
 extern char SocialWinCloseParenText[];
@@ -4748,9 +4754,9 @@ void ReportWin::draw_intel() {
     rect1_.top += field_E268_;
     report_intel_label(0x5C0 / 4);
     int shown = 0;
-    const int category = Players[subject].soc_ideology_category;
+    const int category = Players[subject].soc_ideology_category[0];
     if (category >= 0) {
-        const int model = Players[subject].soc_ideology_model;
+        const int model = Players[subject].soc_ideology_model[0];
         if (model != 0) {
             strcat(StringTemp, StringTable.get(SocialCategories[category].type));
             strcat(StringTemp, SocialWinColonSpaceText);

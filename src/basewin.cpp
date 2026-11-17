@@ -302,7 +302,7 @@ void BaseWin::pop_click(int position, int, int, int) {
         if (has_tech(Citizen[i].obsol_tech, BaseCurrent->faction_id_current)
             && i != current) continue;
         if (BaseCurrent->population_size < Rules.min_base_size_specialists
-            && Citizen[i].psych_bonus < 2) {
+            && Citizen[i].bonus[1] < 2) {
             too_small = 1;
             continue;
         }
@@ -312,13 +312,13 @@ void BaseWin::pop_click(int position, int, int, int) {
         char text[256];
         text[0] = 0;
         for (int k = 0; k < 3; ++k) {
-            // ops_bonus, psych_bonus and research_bonus are consecutive and
-            // walked in step with Energy's three abbreviations.
-            if ((&Citizen[i].ops_bonus)[k]) {
+            // The citizen bonuses are walked in step with Energy's three
+            // abbreviations.
+            if (Citizen[i].bonus[k]) {
                 if (strlen(text)) strcat(text, SocialWinCommaSpaceText);
                 strcat(text, "+");
                 char number[80];
-                _itoa((&Citizen[i].ops_bonus)[k], number, 10);
+                _itoa(Citizen[i].bonus[k], number, 10);
                 strcat(text, number);
                 strcat(text, BufferJoinSpace);
                 strcat(text, StringTable.get(Energy[k].abbrev));

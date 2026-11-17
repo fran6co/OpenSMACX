@@ -184,7 +184,7 @@ int AlphaMenu::menu_init() {
     {
         for (int i = 0; i < 19; ++i) {
             StringTemp[0] = 0;
-            strcat(StringTemp, StringTable.get(Order[i + 4].order));
+            strcat(StringTemp, StringTable.get(Order[i + 4].order[0]));
             strcat(StringTemp, "|");
             strcat(StringTemp, StringTable.get(Terraforming[i].shortcuts));
             add_menu_item(9, 0x900 + i, StringTemp);
@@ -563,7 +563,7 @@ expansion_gate:
                       (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == TRIAD_AIR &&
                        is_ocean(Vehs[veh_id].x, Vehs[veh_id].y));
                 StringTemp[0] = '\0';
-                strcat(StringTemp, StringTable.get((&Order[i + 4].order)[sea]));
+                strcat(StringTemp, StringTable.get(Order[i + 4].order[sea]));
                 strcat(StringTemp, "|");
                 strcat(StringTemp, StringTable.get(Terraforming[i].shortcuts));
                 rename_menu_item(9, i + 0x900, StringTemp);
@@ -608,7 +608,7 @@ expansion_gate:
                 }
                 if (avail) {
                     StringTemp[0] = '\0';
-                    strcat(StringTemp, StringTable.get((&Order[i + 4].order)[sea]));
+                    strcat(StringTemp, StringTable.get(Order[i + 4].order[sea]));
                     turns = action_terraform(veh_id, i, 0);
                     strcat(StringTemp, BufferJoinSpace);
                     strcat(StringTemp, SocialWinOpenParenText);
@@ -636,7 +636,7 @@ expansion_gate:
                     }
                 } else {
                     StringTemp[0] = '\0';
-                    strcat(StringTemp, StringTable.get(Order[i + 4].order));
+                    strcat(StringTemp, StringTable.get(Order[i + 4].order[0]));
                     strcat(StringTemp, "|");
                     strcat(StringTemp, StringTable.get(Terraforming[i].shortcuts));
                     rename_menu_item(9, i + 0x900, StringTemp);

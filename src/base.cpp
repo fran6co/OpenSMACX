@@ -407,7 +407,7 @@ void __cdecl base_yield() {
     if (!automatic || !UnkGlobal0093A934) {
         if (automatic) {
             for (i = 0; i < BaseCurrent->specialist_total; i++) {
-                if (!Citizen[base_specialist_type(i)].psych_bonus) {
+                if (!Citizen[base_specialist_type(i)].bonus[1]) {
                     BaseCurrent->specialist_unk_1++;
                 }
             }
@@ -436,7 +436,7 @@ void __cdecl base_yield() {
     // outer index without re-testing the slot that moved into it.
     if (automatic && BaseCurrent->specialist_total) {
         for (i = 0; i < BaseCurrent->specialist_unk_1 + BaseCurrent->specialist_total; i++) {
-            if (!Citizen[base_specialist_type(i)].psych_bonus) {
+            if (!Citizen[base_specialist_type(i)].bonus[1]) {
                 for (int j = i; j < BaseCurrent->specialist_unk_1 + BaseCurrent->specialist_total; j++) {
                     base_specialist_set(j, base_specialist_type(j + 1));
                 }
@@ -562,10 +562,10 @@ void __cdecl base_yield() {
                     for (int other = 1; other < MaxPlayerNum; other++) {
                         ranking_total += PlayersData[other].tech_ranking;
                     }
-                    int score = Citizen[s].psych_bonus * 64
-                        + (wealth + 2) * BaseCurrent->population_size * Citizen[s].ops_bonus * 64
+                    int score = Citizen[s].bonus[1] * 64
+                        + (wealth + 2) * BaseCurrent->population_size * Citizen[s].bonus[0] * 64
                             / range(BaseCurrent->specialist_unk_1 + BaseCurrent->intake_2[2], 1, 99)
-                        + (tech + 2) * BaseCurrent->population_size * Citizen[s].research_bonus * 64
+                        + (tech + 2) * BaseCurrent->population_size * Citizen[s].bonus[2] * 64
                             / range(BaseCurrent->specialist_unk_1 + BaseCurrent->intake_2[2], 1, 99);
                     if (score > best_score) {
                         best_score = score;
@@ -667,7 +667,7 @@ assign_specialists:
 // ops/psych/research bonuses.
 static inline BOOL citizen_covers(int candidate, int specialist) {
     for (int k = 0; k < 3; k++) {
-        if ((&Citizen[candidate].ops_bonus)[k] < (&Citizen[specialist].ops_bonus)[k]) {
+        if (Citizen[candidate].bonus[k] < Citizen[specialist].bonus[k]) {
             return FALSE;
         }
     }
@@ -793,7 +793,7 @@ void __cdecl base_energy() {
          * energy + 4) / 10,
         0, energy - BaseCurrent->psych_total);
 
-    // The original indexes Citizen[].ops/psych/research_bonus and
+    // The original indexes Citizen[].bonus[] and
     // Base::economy/psych/labs_total as three-element arrays.
     for (int citizen = 0; citizen < BaseCurrent->specialist_total; citizen++) {
         int specialist = range(base_specialist_type(citizen), 0, 6);
@@ -810,7 +810,7 @@ void __cdecl base_energy() {
             }
         }
         for (int k = 0; k < 3; k++) {
-            (&BaseCurrent->economy_total)[k] += (&Citizen[specialist].ops_bonus)[k];
+            (&BaseCurrent->economy_total)[k] += Citizen[specialist].bonus[k];
         }
     }
     BaseCurrent->labs_total += Players[faction].rule_research;
@@ -2079,9 +2079,9 @@ inline uint32_t  __cdecl best_specialist() {
     uint32_t citizen_id = 0;
     for (int i = 0; i < MaxSpecialistNum; i++) {
         if (has_tech(Citizen[i].preq_tech, BaseCurrent->faction_id_current)) {
-            uint32_t bonus = Citizen[i].psych_bonus * 3;
+            uint32_t bonus = Citizen[i].bonus[1] * 3;
             if (BaseCurrent->population_size >= (int)Rules.min_base_size_specialists) {
-                bonus += Citizen[i].ops_bonus + Citizen[i].research_bonus;
+                bonus += Citizen[i].bonus[0] + Citizen[i].bonus[2];
             }
             if ((int)bonus > current_bonus) {
                 current_bonus = bonus;
@@ -2589,7 +2589,7 @@ void __cdecl base_ecology() {
             parse_says(0, BaseCurrent->name_string, -1, -1);
             if (report_terraform >= 0 && faction == ConsoleGlobal.faction_id_) {
                 // name and name_sea are read as a two-entry run.
-                parse_say(1, (&Terraforming[report_terraform].name)[is_ocean(event_x, event_y)],
+                parse_say(1, Terraforming[report_terraform].name[is_ocean(event_x, event_y)],
                           -1, -1);
                 POP2("FUNGUSGROWS2", "fung_sm.pcx", BaseIDCurrentSelected);
             } else {

@@ -2241,10 +2241,10 @@ void __cdecl enemy_diplomacy(int faction_id) {
             }
         }
         if (GameDataStateStorage.fields_.turn_current_num_ & 1) {
-            int category = Players[faction_id].soc_ideology_category;
-            if (category >= 0 && Players[faction_id].soc_ideology_model) {
+            int category = Players[faction_id].soc_ideology_category[0];
+            if (category >= 0 && Players[faction_id].soc_ideology_model[0]) {
                 int model = PlayersData[i].soc_category_pending.models_[category];
-                if (model == Players[faction_id].soc_ideology_model) {
+                if (model == Players[faction_id].soc_ideology_model[0]) {
                     score--;
                 } else if (model) {
                     score++;

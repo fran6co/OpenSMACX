@@ -851,11 +851,10 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
                     if (strlen(StringTemp)) {
                         strcat(StringTemp, SocialWinCommaSpaceText);
                     }
-                    // WORKAROUND(type): the image indexes the name/name_sea
-                    // pair by the is_ocean result (lea [ocean + 8*i]); the
-                    // original row probably declared the pair as an array.
+                    // The image indexes the name pair by the is_ocean result
+                    // (lea [ocean + 8*i]).
                     strcat(StringTemp,
-                           StringTable.get((&Terraforming[i].name)[is_ocean(x, y)]));
+                           StringTable.get(Terraforming[i].name[is_ocean(x, y)]));
                 }
             }
             if (map_loc(x, y)->bit & BIT_MONOLITH) {
@@ -1771,7 +1770,7 @@ void __cdecl say_morale(int veh_id, int faction_id_vs_native) {
 }
 
 // ORIGINAL: 0x004B43E0 ?say_orders@@YAXPADH@Z 0x004B43E0-0x004B496D
-// RECOVERY_BINDING: v1 {"evidence": ["git:038351919772808e976813a96cd7a6d820dc1450:src/recovered/units/004b43e0.cpp: complete original identity/span and historical scaffolding measurement", "Pinned4B5C17 passes StatusWin::draw_active vehicle_id to4B43E0", "96C9B0 is Order[26].order; original ORDERS parser populates this shared record", "Seed g_96c878x/stride12 is Order; g_94615cx/stride8 is Resource.name_plural; g_945d48x/stride4 is parsed Compass", "recovery/tasks/say-orders-owner-oct5.json", "recovery/tests/test_say_orders_actual_source.py"], "reason": "Recover complete vehicle order text builder through genuine vehicle, base, map and parsed rules owners; replace only the old executable forwarder. Native caller passes vehicle_id, not prototype_id. Preserve original branch, buffer and index behavior; parsed Compass/Resource pointer-shaped string IDs retain their current representation pending separate type cleanup."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:038351919772808e976813a96cd7a6d820dc1450:src/recovered/units/004b43e0.cpp: complete original identity/span and historical scaffolding measurement", "Pinned4B5C17 passes StatusWin::draw_active vehicle_id to4B43E0", "96C9B0 is Order[26].order[0]; original ORDERS parser populates this shared record", "Seed g_96c878x/stride12 is Order; g_94615cx/stride8 is Resource.name_plural; g_945d48x/stride4 is parsed Compass", "recovery/tasks/say-orders-owner-oct5.json", "recovery/tests/test_say_orders_actual_source.py"], "reason": "Recover complete vehicle order text builder through genuine vehicle, base, map and parsed rules owners; replace only the old executable forwarder. Native caller passes vehicle_id, not prototype_id. Preserve original branch, buffer and index behavior; parsed Compass/Resource pointer-shaped string IDs retain their current representation pending separate type cleanup."}
 // Historical seed observation: complete scaffold measured MISMATCH at3;
 // its obsolete tool instructions are retired, not a current body claim.
 void __cdecl say_orders(char *text, int veh_id) {
@@ -1809,7 +1808,7 @@ void __cdecl say_orders(char *text, int veh_id) {
 
     const uint32_t state_after_prefix = Vehs[veh_id].state;
     if ((state_after_prefix & 0x00004000u) != 0) {
-        ::strcat(text, vehicle_order_rule_text(Order[26].order));
+        ::strcat(text, vehicle_order_rule_text(Order[26].order[0]));
         return;
     }
 
@@ -1832,7 +1831,7 @@ void __cdecl say_orders(char *text, int veh_id) {
     const int tile_index = Vehs[veh_id].y * MapLongitude
                         + (Vehs[veh_id].x >> 1);
     const int sea = (MapTiles[tile_index].climate & ~0x1F) < 0x60;
-    ::strcat(text, vehicle_order_rule_text((&Order[Vehs[veh_id].order & 0x3F].order)[sea]));
+    ::strcat(text, vehicle_order_rule_text(Order[Vehs[veh_id].order & 0x3F].order[sea]));
 
     if (Vehs[veh_id].order == ORDER_CONVOY) {
         ::strcat(text, BufferJoinSpace);

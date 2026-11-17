@@ -2514,11 +2514,11 @@ void __cdecl diplomacy_check(int faction, int other, int update) {
         - PlayersData[faction].diplo_unk1[other], 0, 99);
     DiploScratchFA78 = blemishes;
     int ideology = 0;
-    int category = Players[other].soc_ideology_category;
-    if (category >= 0 && Players[other].soc_ideology_model
+    int category = Players[other].soc_ideology_category[0];
+    if (category >= 0 && Players[other].soc_ideology_model[0]
         && PlayersData[faction].soc_category_pending.models_[category]
         && PlayersData[faction].soc_category_pending.models_[category]
-            != static_cast<uint32_t>(Players[other].soc_ideology_model)) {
+            != static_cast<uint32_t>(Players[other].soc_ideology_model[0])) {
         ideology = 1;
         if (has_agenda(other, faction, 1)) {
             ideology = 2;
@@ -8367,9 +8367,9 @@ int communicate_stack_50 =
 int communicate_stack_14 = 0;
 DiplomacyContactResult = mode ? 3 : 0;
 if (communicate_stack_44) {
-    int category = Players[faction_id_with].soc_ideology_category;
+    int category = Players[faction_id_with].soc_ideology_category[0];
     if (category >= 0) {
-        int model = Players[faction_id_with].soc_ideology_model;
+        int model = Players[faction_id_with].soc_ideology_model[0];
         if (model) {
             int pending = PlayersData[faction_id].soc_category_pending.models_[category];
             if (pending && pending != model) {
@@ -8382,7 +8382,7 @@ if (communicate_stack_44) {
             }
         }
     }
-    int effect = Players[faction_id_with].soc_ideology_effect;
+    int effect = Players[faction_id_with].soc_ideology_effect[0];
     if (effect >= 0 &&
         PlayersData[faction_id].soc_effect_pending.values_[effect] < 0) {
         PlayersData[faction_id_with].diplo_friction[faction_id] = communicate_range(
@@ -9749,13 +9749,13 @@ if (!mode && !communicate_stack_20 &&
     !has_agenda(faction_id, faction_id_with, 0x2000)) {
     // stand-in: the image indexes the priority/opposition pairs as arrays.
     for (communicate_stack_c = 0; communicate_stack_c < 1; communicate_stack_c++) {
-        if ((&Players[faction_id_with].soc_ideology_category)[communicate_stack_c] >= 0 &&
-            (&Players[faction_id_with].soc_ideology_model)[communicate_stack_c] &&
+        if (Players[faction_id_with].soc_ideology_category[communicate_stack_c] >= 0 &&
+            Players[faction_id_with].soc_ideology_model[communicate_stack_c] &&
             PlayersData[faction_id].soc_category_pending.models_[
-                (&Players[faction_id_with].soc_ideology_category)[communicate_stack_c]] &&
+                Players[faction_id_with].soc_ideology_category[communicate_stack_c]] &&
             PlayersData[faction_id].soc_category_pending.models_[
-                (&Players[faction_id_with].soc_ideology_category)[communicate_stack_c]] !=
-                (&Players[faction_id_with].soc_ideology_model)[communicate_stack_c]) {
+                Players[faction_id_with].soc_ideology_category[communicate_stack_c]] !=
+                Players[faction_id_with].soc_ideology_model[communicate_stack_c]) {
             goto communicate_social_break_pact;
         }
     }
@@ -9799,12 +9799,12 @@ communicate_social_break_pact:
     parse_says(3, get_noun(faction_id_with), -1, -1);
     clear();
     says("SOCIAL");
-    say_num((&Players[faction_id_with].soc_ideology_category)[communicate_stack_c]);
+    say_num(Players[faction_id_with].soc_ideology_category[communicate_stack_c]);
     says("CAT");
     say_num(PlayersData[faction_id].soc_category_pending.models_[
-        (&Players[faction_id_with].soc_ideology_category)[communicate_stack_c]]);
+        Players[faction_id_with].soc_ideology_category[communicate_stack_c]]);
     says(has_treaty(faction_id, faction_id_with, 1) ? "PACT" : "WAR");
-    say_num((&Players[faction_id_with].soc_ideology_model)[communicate_stack_c]);
+    say_num(Players[faction_id_with].soc_ideology_model[communicate_stack_c]);
     X_pops(StringTemp, 0x100000, FactionDiplomacyPortraits[faction_id_with], pop_wait);
     if (has_treaty(faction_id, faction_id_with, 1)) {
         diplo_lock(0);
@@ -10688,21 +10688,21 @@ if (!communicate_stack_34) {
 DiploScratchF7B4 = 0;
 // stand-in: the image indexes the priority/opposition pairs as arrays.
 for (communicate_stack_c = 0; communicate_stack_c < 1; communicate_stack_c++) {
-    if ((&Players[faction_id_with].soc_ideology_category)[communicate_stack_c] >= 0 &&
-        (&Players[faction_id_with].soc_ideology_model)[communicate_stack_c]) {
+    if (Players[faction_id_with].soc_ideology_category[communicate_stack_c] >= 0 &&
+        Players[faction_id_with].soc_ideology_model[communicate_stack_c]) {
         parse_says(0, get_title(faction_id), -1, -1);
         parse_says(1, get_name(faction_id), -1, -1);
         clear();
         says("SOCIAL");
-        say_num((&Players[faction_id_with].soc_ideology_category)[communicate_stack_c]);
+        say_num(Players[faction_id_with].soc_ideology_category[communicate_stack_c]);
         says("CAT");
         if (PlayersData[faction_id].soc_category_pending.models_[
-                (&Players[faction_id_with].soc_ideology_category)[communicate_stack_c]] ==
-            (&Players[faction_id_with].soc_ideology_model)[communicate_stack_c]) {
+                Players[faction_id_with].soc_ideology_category[communicate_stack_c]] ==
+            Players[faction_id_with].soc_ideology_model[communicate_stack_c]) {
             goto communicate_social_good;
         }
         if (PlayersData[faction_id].soc_category_pending.models_[
-                (&Players[faction_id_with].soc_ideology_category)[communicate_stack_c]]) {
+                Players[faction_id_with].soc_ideology_category[communicate_stack_c]]) {
             DiploScratchF7B4 = 1;
             if (!DiploScratchFA98 &&
                 (!has_treaty(faction_id_with, faction_id, 1) ||
@@ -10714,15 +10714,15 @@ for (communicate_stack_c = 0; communicate_stack_c < 1; communicate_stack_c++) {
 }
 goto communicate_social_done;
 communicate_social_good:
-say_num((&Players[faction_id_with].soc_ideology_model)[communicate_stack_c]);
+say_num(Players[faction_id_with].soc_ideology_model[communicate_stack_c]);
 says("GOOD");
 X_pops(StringTemp, 0x100000, FactionDiplomacyPortraits[faction_id_with], pop_wait);
 goto communicate_social_done;
 communicate_social_bad:
 say_num(PlayersData[faction_id].soc_category_pending.models_[
-    (&Players[faction_id_with].soc_ideology_category)[communicate_stack_c]]);
+    Players[faction_id_with].soc_ideology_category[communicate_stack_c]]);
 says("BAD");
-say_num((&Players[faction_id_with].soc_ideology_model)[communicate_stack_c]);
+say_num(Players[faction_id_with].soc_ideology_model[communicate_stack_c]);
 X_pops(StringTemp, 0x100000, FactionDiplomacyPortraits[faction_id_with], pop_wait);
 net_set_agenda(faction_id_with, faction_id, 1, 1, 1);
 communicate_social_done:

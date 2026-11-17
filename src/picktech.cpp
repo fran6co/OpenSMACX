@@ -496,7 +496,7 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
                                Terraforming[row].prerequisite_tech[1])) {
                 StringTemp[0] = '\0';
                 if (page_state_ == 0) strcat(StringTemp, "{");
-                strcat(StringTemp, picktech_name((&Order[row + 4].order)[model]));
+                strcat(StringTemp, picktech_name(Order[row + 4].order[model]));
                 if (page_state_ == 0) strcat(StringTemp, "}");
                 UNK1(StringTemp);
             }
@@ -891,7 +891,7 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
                             } else {
                                 noted = 1;
                                 strcat(StringTemp, SocialWinOpenParenText);
-                                strcat(StringTemp, StringTable.get((&Order[i + 4].order)[sea]));
+                                strcat(StringTemp, StringTable.get(Order[i + 4].order[sea]));
                                 strcat(StringTemp, SocialWinCloseParenText);
                             }
                         }

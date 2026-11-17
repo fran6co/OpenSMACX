@@ -5752,13 +5752,10 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
                 for (int k = 0; k < MaxCitizenNum; k++, stage++) {
                     Citizen[k].preq_tech = stage->preq_tech;
                     Citizen[k].obsol_tech = stage->obsol_tech;
-                    // WORKAROUND(type): the image copies the three bonuses with
-                    // an unrolled three-step loop (0x00533EB8), so the original
-                    // member was an int[3]; RulesCitizen keeps the named
-                    // fields because an anonymous-union int[3] view in base.h
-                    // flips five BYTE_EXACT claims in other units.
+                    // The image copies the three bonuses with an unrolled
+                    // three-step loop (0x00533EB8).
                     for (int j = 0; j < 3; j++) {
-                        (&Citizen[k].ops_bonus)[j] = (&stage->ops_bonus)[j];
+                        Citizen[k].bonus[j] = stage->bonus[j];
                     }
                 }
                 break;

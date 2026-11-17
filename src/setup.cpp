@@ -1846,20 +1846,20 @@ void __cdecl setup_game(int reload) {
             int rejected = 0;
             int category;
             int model;
-            Players[social_faction].soc_ideology_category = -1;
-            Players[social_faction].soc_ideology_model = 0;
-            Players[social_faction].soc_ideology_effect = -1;
+            Players[social_faction].soc_ideology_category[0] = -1;
+            Players[social_faction].soc_ideology_model[0] = 0;
+            Players[social_faction].soc_ideology_effect[0] = -1;
             do {
                 category = rand() % 3;
                 model = rand() % 3 + 1;
             } while (seen_social_models[category * 3 + model] && ++rejected < social_faction + 1);
             if (rejected <= social_faction + 1) {
-                Players[social_faction].soc_ideology_category = category;
-                Players[social_faction].soc_ideology_model = model;
+                Players[social_faction].soc_ideology_category[0] = category;
+                Players[social_faction].soc_ideology_model[0] = model;
                 seen_social_models[category * 3 + model] = 1;
                 for (int effect = 0; effect < 11; effect++) {
                     if (SocialCategories[category].model_effect[model].values_[effect] > 0) {
-                        Players[social_faction].soc_ideology_effect = effect;
+                        Players[social_faction].soc_ideology_effect[0] = effect;
                         break;
                     }
                 }
@@ -2214,8 +2214,8 @@ Return Value: Is social category/model available to faction? true/false
 Status: Complete
 */
 BOOL __cdecl society_avail(int soc_category, int soc_model, int faction_id) {
-    if (Players[faction_id].soc_anti_ideology_category == soc_category
-        && Players[faction_id].soc_anti_ideology_model == soc_model) {
+    if (Players[faction_id].soc_ideology_category[1] == soc_category
+        && Players[faction_id].soc_ideology_model[1] == soc_model) {
         return false;
     }
     // has_tech_call, not has_tech: the image CALLS 0x005B9F20 once from here
@@ -2364,8 +2364,8 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
             int model = bits & 3;
             soc_cat.models_[j] = model;
             if (model) {
-                if ((Players[faction_id].soc_anti_ideology_category == j
-                    && Players[faction_id].soc_anti_ideology_model == model)
+                if ((Players[faction_id].soc_ideology_category[1] == j
+                    && Players[faction_id].soc_ideology_model[1] == model)
                     || !has_tech(SocialCategories[j].preq_tech[model], faction_id)) {
                     unavailable = true;
                     break;
@@ -2384,9 +2384,9 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
             score = soc_eff.values_[effect_focus] * 1000;
         }
         unavailable = false;
-        int ideology_cat = Players[faction_id].soc_ideology_category;
+        int ideology_cat = Players[faction_id].soc_ideology_category[0];
         if (ideology_cat >= 0) {
-            int ideology_model = Players[faction_id].soc_ideology_model;
+            int ideology_model = Players[faction_id].soc_ideology_model[0];
             if (ideology_model) {
                 uint32_t model = soc_cat.models_[ideology_cat];
                 if (model && model != ideology_model) {
@@ -2397,7 +2397,7 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
                 }
             }
         }
-        int ideology_eff = Players[faction_id].soc_ideology_effect;
+        int ideology_eff = Players[faction_id].soc_ideology_effect[0];
         if (ideology_eff >= 0) {
             int value = soc_eff.values_[ideology_eff];
             if (value > 0) {

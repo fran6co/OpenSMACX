@@ -1446,7 +1446,7 @@ void Console::terraform(int vehicle_id, int terraform_id) { // 0x004D3470
     }
 
     // order and order_sea are read as a two-entry run.
-    parse_say(6, (&Order[terraform_id + 4].order)[is_sea], -1, -1); // parse_say, 0x004D3647
+    parse_say(6, Order[terraform_id + 4].order[is_sea], -1, -1); // parse_say, 0x004D3647
 
     if (Terraforming[terraform_id].prerequisite_tech[is_sea] < -1) {
         if (Terraforming[terraform_id].prerequisite_tech[!is_sea] < -1) {
@@ -1491,7 +1491,7 @@ void Console::terraform(int vehicle_id, int terraform_id) { // 0x004D3470
     if (Terraforming[terraform_id].bit != 0 &&
         (bit_at(x, y) & Terraforming[terraform_id].bit) == Terraforming[terraform_id].bit) {
         // name and name_sea are read as a two-entry run.
-        parse_say(0, (&Terraforming[terraform_id].name)[is_sea], -1, -1); // 0x004D396C
+        parse_say(0, Terraforming[terraform_id].name[is_sea], -1, -1); // 0x004D396C
         veh_battle_msg("ALREADYBUILT", nullptr);
         return;
     }
@@ -1754,7 +1754,7 @@ void Console::terraform(int vehicle_id, int terraform_id) { // 0x004D3470
                 for (int i = 0; i < 20; ++i) {
                     if ((Terraforming[i].bit & conflict) != 0) {
                         // name and name_sea are read as a two-entry run.
-                        parse_say(0, (&Terraforming[i].name)[final_altitude < 0x60], -1, -1); // 0x004D4CBF
+                        parse_say(0, Terraforming[i].name[final_altitude < 0x60], -1, -1); // 0x004D4CBF
                         if (X_pop("MIMIMI", nullptr) == 0) {
                             return;
                         }
@@ -1877,7 +1877,7 @@ void Console::destroy(int veh_id) {
             continue;
         }
         // Native4D5839 uses its saved ocean boolean, not the vehicle's x/2.
-        char *label = StringTable.get((&Terraforming[a].name)[ocean]);
+        char *label = StringTable.get(Terraforming[a].name[ocean]);
         popup.item(label, abil_flag);
         item_count++;
     }
@@ -5807,14 +5807,14 @@ void Console::editor_terrain() {
             continue;
         }
         StringTemp[0] = 0;
-        strcat(StringTemp, StringTable.get(Terraforming[index].name));
+        strcat(StringTemp, StringTable.get(Terraforming[index].name[0]));
         // stand-in: named local keeps name_sea's load in eax ahead of `mov ecx, StringTable` (pattern 133).
-        char *name_sea = Terraforming[index].name_sea;
-        if (strcmp(StringTable.get(Terraforming[index].name),
+        char *name_sea = Terraforming[index].name[1];
+        if (strcmp(StringTable.get(Terraforming[index].name[0]),
                    StringTable.get(name_sea)) != 0) {
             strcat(StringTemp, "/");
             // stand-in: a second named local, as above; reusing name_sea keeps it in a register.
-            char *sea_label = Terraforming[index].name_sea;
+            char *sea_label = Terraforming[index].name[1];
             strcat(StringTemp, StringTable.get(sea_label));
         }
         popup.dialogs().item(StringTemp, index);

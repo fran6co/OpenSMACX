@@ -994,9 +994,10 @@ void __cdecl read_faction(Player *player, int toggle) {
     // Societal Ideology + Anti-Ideology. The image walks one pointer over the
     // category/model/effect pairs (+0, +8, +0x10), stepping 4 per pass.
     for (int i = 0; i < 2; i++) {
-        // WORKAROUND(type): the original indexed two-element arrays; faction.h
-        // spells the pairs as adjacent scalars.
-        int *ideology = &player->soc_ideology_category + i;
+        // WORKAROUND(type): one pointer per side walks category, model and
+        // effect (+0, +8, +0x10); indexing the three arrays separately picks
+        // another base register. The original was perhaps one [3][2] array.
+        int *ideology = &player->soc_ideology_category[i];
         ideology[0] = -1;
         ideology[2] = 0;
         ideology[4] = -1;
@@ -1435,11 +1436,10 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
     for (int i = 0; i < MaxTerrainNum; i++) {
         text_get();
         // Land + sea names and prerequisites; the bit masks are static data.
-        // WORKAROUND(type): the image walks name/name_sea and order/order_sea
-        // as two-element arrays (one pointer, dec/jne at 0x00587494 and
-        // 0x00587507); RulesTerraforming/RulesOrder still name the fields.
+        // The image walks name[] and order[] with one pointer (dec/jne at
+        // 0x00587494 and 0x00587507).
         for (int j = 0; j < 2; j++) {
-            (&Terraforming[i].name)[j] = text_item_string();
+            Terraforming[i].name[j] = text_item_string();
             Terraforming[i].prerequisite_tech[j] = tech_name(text_item());
         }
         Terraforming[i].rate = text_item_number();
@@ -1452,10 +1452,10 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
         char order_buf[256];
         strcpy(order_buf, text_item());
         for (j = 0; j < 2; j++) {
-            parse_say(0, (&Terraforming[i].name)[j], -1, -1);
+            parse_say(0, Terraforming[i].name[j], -1, -1);
             StringTemp[0] = 0;
             parse_string(order_buf, StringTemp);
-            (&Order[i + 4].order)[j] = StringTable.put(StringTemp);
+            Order[i + 4].order[j] = StringTable.put(StringTemp);
         }
         Order[i + 4].letter = text_item_string();
         Terraforming[i].shortcuts = text_item_string();
@@ -1631,9 +1631,9 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
     for (i = 0; i < MaxOrderNum; i++) {
         if (i < 4 || i >= 24) { // Skipping over orders set by #TERRAIN
             text_get();
-            Order[i].order = text_item_string();
+            Order[i].order[0] = text_item_string();
             // Potential enhancement: Have separate string for sea
-            Order[i].order_sea = Order[i].order;
+            Order[i].order[1] = Order[i].order[0];
             Order[i].letter = text_item_string();
         }
     }
@@ -1687,10 +1687,9 @@ for (i = 0; i < MaxCompassNum; i++) {
         if (i < 7) {
             Citizen[i].preq_tech = tech_name(text_item());
             Citizen[i].obsol_tech = tech_name(text_item());
-            // WORKAROUND(type): the three bonuses are filled by a dec/jne
-            // loop over consecutive ints (0x00587E30).
+            // The three bonuses are filled by a dec/jne loop (0x00587E30).
             for (int j = 0; j < 3; j++) {
-                (&Citizen[i].ops_bonus)[j] = text_item_number();
+                Citizen[i].bonus[j] = text_item_number();
             }
         }
     }
@@ -1799,7 +1798,7 @@ for (i = 0; i < MaxCompassNum; i++) {
             if (Terraforming[entry].bit == 0 && terrain >= entry) ++terrain;
         }
         MainInterfaceGlobal.flat_button_[button].set_bubble_text(
-            StringTable.get(Terraforming[terrain].name));
+            StringTable.get(Terraforming[terrain].name[0]));
     }
     MainInterfaceGlobal.flat_button(32).set_bubble_text(StringTable.get(Natural[LM_JUNGLE].name_short));
     MainInterfaceGlobal.flat_button(33).set_bubble_text(StringTable.get(Natural[LM_DUNES].name_short));

@@ -457,12 +457,11 @@ struct RulesCitizen {
     int preq_tech;
     // RECOVERY_MEMBER: v1 RulesCitizen obsol_tech 0xC 0x004E80B0
     int obsol_tech;
-    // RECOVERY_MEMBER: v1 RulesCitizen ops_bonus 0x10 0x004E80B0
-    int ops_bonus;
-    // RECOVERY_MEMBER: v1 RulesCitizen psych_bonus 0x14 0x004E80B0
-    int psych_bonus;
-    // RECOVERY_MEMBER: v1 RulesCitizen research_bonus 0x18 0x004E80B0
-    int research_bonus;
+    // Economy, psych and labs bonuses. The image fills them in a dec/jne loop
+    // (0x00587E30), copies them in a three-step loop (0x00533EB8) and indexes
+    // them beside Base's economy/psych/labs totals.
+    // RECOVERY_MEMBER: v1 RulesCitizen bonus 0x10 0x004E80B0
+    int bonus[3];
 };
 
 struct BaseSecretProject {

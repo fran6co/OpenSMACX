@@ -345,12 +345,12 @@ struct Player {
     BOOL ai_tech; // interest in knowledge
     BOOL ai_wealth; // interest in wealth
     BOOL ai_power; // interest in power
-    int soc_ideology_category; // priority
-    int soc_anti_ideology_category; // opposition
-    int soc_ideology_model; // priority
-    int soc_anti_ideology_model; // opposition
-    int soc_ideology_effect; // emphasis/priority
-    int soc_anti_ideology_effect; // opposition ; unused, never set in default factions
+    // Element 0 is the ideology (priority), element 1 the anti-ideology
+    // (opposition). read_faction walks the pairs with one pointer (+0, +8,
+    // +0x10) and the diplomacy text indexes them by a variable side.
+    int soc_ideology_category[2];
+    int soc_ideology_model[2];
+    int soc_ideology_effect[2]; // [1] unused, never set in default factions
 };
 
 // THE STRIDE THE IMAGE INDEXES `Players` (0x00946A50) BY, read off 1378
