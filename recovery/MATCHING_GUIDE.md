@@ -1796,6 +1796,16 @@ raw field access where the original used inline accessors.
   in the image but merged into the final return-0 block in ours
   (facility_avail, drop_player); `setle al; inc eax` reusing eax=0 after
   has_abil (base_support).
+- **Field read before a call, stored after it.** Read it into a const local
+  before the call and store it afterwards; VC6 parks the local in a dead
+  parameter home across the call, as the image does (SpriteBox::attach).
+- **Address-taken RECT extents re-fetch the vbtable.** `r.bottom = a + y;
+  r.right = b + x;` re-fetches the vbtable before the second store. Reading
+  both extents into consts first gives one fetch, with the stores emitted in
+  reverse source order (SpriteBox::draw_item).
+- **VC5 `fstp [var]` then `fmul [var]` on an existing local's slot** means the
+  original reassigned that local (`scale = axis_z * scale`), not a new
+  temporary (vox_transform_camera).
 - **Canonicalised forms (not levers).** `f(a) < f(b)` and its mirrored or
   negated forms give the same call order; `a * b` vs `b * a` compile
   identically.
@@ -1916,6 +1926,36 @@ raw field access where the original used inline accessors.
 - **Inline keywords.** `__forceinline` vs `inline` changes nothing. The per-site
   spelling does (written-out `StringTable.get(Labels.strings_ptr[k])` vs
   `label_get(k)`).
+- **Declaration scope of a scalar local.** Moving it between block and function
+  scope (either order) compiles identically (alien_move). Sharing one variable
+  between two scans does change allocation, and that measured worse.
+- **Sum term order.** A sum of three member loads is canonicalised: reordering
+  the terms, or naming one term, emits the same load order (sub_5cbe30).
+- **Early-return else blocks.** `else { if (c) return; }` and `else if (c)
+  return;` compile identically (sub_5cc940). Folding two COM calls into one
+  HRESULT local merges the calls: a different program.
+- **`push imm` around an address `add`.** A cast, parentheses or a literal for
+  a constant-propagated variable does not move the push (sub_5cb220).
+- **Switch default and case layout.** With a fall-through group plus a small
+  separate case, default always targets the epilogue copy of the last laid-out
+  case. Default position, `default: return`, a `return` in the small case or a
+  goto tail all compile identically (SocialWin::on_button_clicked). Case blocks
+  follow source order; image blocks placed after the epilogue were not
+  reproduced by any case or default order (ProdPicker::on_button_clicked).
+- **`movsx` before `and 1`.** VC6 narrows `(char)x & 1` and
+  `*(signed char *)&x & 1` to `mov reg8`, so an image `movsx` there needs
+  another explanation (scenario_setup, unresolved).
+- **Permute distance is coarse.** Spellings with visibly different code can
+  tie; confirm with `recover diff` before discarding. Slow units (socialwin,
+  about 8 s per compile) need hand decks rather than random permutes.
+- **Commutative operand order.** Swapping or regrouping `+`/`*` operands among
+  calls, globals and locals compiled identically in every test (12 orders in
+  PullDown::compute_length, calculate_dimensions, PullDown::on_redraw,
+  ListBox::UNK1). Read the image's operand order as an allocation outcome;
+  this qualifies the "a + b of globals loads b first" note in section 2.
+- **Mask-test spellings.** `x & C`, `(x & C) != 0`, `(x >> k) & 1` and an
+  accessor all give `test dword ptr [m], C` (world_rainfall). An image
+  `test byte ptr [m+k]` comes from the field's declared type or layout.
 - **Unresolved blockers** (not proof that no source form exists):
   - **`??_H` inside a struct:** VC6 expands the vector constructor iterator
     inline even under `auto_inline(off)`.
