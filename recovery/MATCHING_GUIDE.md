@@ -1567,7 +1567,32 @@ raw field access where the original used inline accessors.
   end with `if (flag) { label: ...; return; } break;` to lay it last.
 - **Mid-body nop runs matching a call sequence's length are post-link
   patches**: write the call; if only those bytes then differ, it is an
-  exclusion candidate, not a matching target (filefind_init).
+  exclusion candidate, not a matching target (filefind_init). An `__asm`
+  nop block is not a stand-in: any `__asm` forces an ebp frame in VC6
+  (measured 0.90, popup spilled). filefind_init stays unmatched until the
+  cleanup pass (user decision, 2026-11-17).
+- **A signed `jl` loop test against a strength-reduced element pointer** means
+  the source bound was `i < N`; `i != N` gives `jne` (menu_init 0x0045FB20).
+- **Block placement follows the successor, not source position.** A shared
+  block reached by `goto` and written after the final `return` still lays
+  out just before its successor (enemy_diplomacy 0x0055F930, identical bytes).
+- **A frameless function (ebp as GPR) keeps a repeated 32-bit constant in a
+  spare callee-saved register** where the image uses immediates; respelling
+  the constant is folded first (WorldWin::on_redraw 0x004C3EC0, unresolved).
+- **A dword-scaled index into a struct array member is a variable
+  subscript.** When the image reads `PlayersData[f].satellites_[3]` as
+  `[4*idx+disp]` with `idx = f*(stride/4)` in its own slot, separate from the
+  byte-offset row used for the record's other fields, the source indexed with
+  a non-constant (a local or an accessor parameter). A literal folds into the
+  shared row (shoot 252 → 87 differing instructions, shoot_it 0.974 → 0.994).
+- **Flat-first ternary wrap inside a static helper.** If the image reloads the
+  bound in each arm of an x-wrap, write the helper as the ternary
+  `(MapIsFlat & 1) ? x : x < 0 ? x + W : x >= W ? x - W : x` and pass the sum
+  directly, not through a stored intermediate (vehdraw_scoot_start).
+- **Cross-jump direction follows allocation.** When ours keeps the first of
+  identical tails and the image the last, case bodies allocate identically in
+  ours but not in the image; check in-case registers before respelling tails
+  (vehdraw_scoot_start, monolith; observation).
 - **A loop's exit tail written inside the loop schedules differently.**
   `for (;;) { if (ok) { tail; return p; } body }` loads and stores the tail
   in a different order from `while (!ok) { body } tail;`. Heap::get

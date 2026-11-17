@@ -51,9 +51,16 @@ forces an expansion but does not spend the /Ob2 budget the original expansion
 did; `#pragma inline_depth(0)` disables every expansion including forced ones;
 there is no `noinline`, so keeping one call site out of line needs a
 non-inline declaration with an `inline` twin for the expanded sites. Prefer a
-real source fix whenever a break can be explained; a header change goes in
-during this phase only when `recover check-matches --since <base> --baseline
-<report>` shows gains and no losses.
+real source fix whenever a break can be explained. A header change (user
+decision, 2026-11-17, replacing the earlier "no losses at all" rule) is
+accepted when it is a net gain measured by `recover check-matches --since
+<base> --baseline <report>`, and the functions it breaks are re-tuned in the
+same batch. Many exact functions were tuned around a wrong header, so a
+correct header can break some before it fixes others. List every claim that
+still fails after re-tuning in the commit message.
+Those claims keep their `BYTE_EXACT` markers and historical identities as
+restoration obligations (never demote or edit them), and restoring them is
+first priority for the next round.
 
 Loop tools: `recover measure` takes about 4.7 s. `recover check-matches --unit
 <tu>` or `--since <rev>` measures only the affected TUs (never a full pass;
