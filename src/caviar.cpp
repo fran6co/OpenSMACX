@@ -2208,10 +2208,21 @@ Purpose: Build the renderer's per-instance table and seed the scene state.
 // normalise call: the image writes three zeros through a pointer from
 // registers copied out of the zero register (`mov eax,ebp; mov ecx,edi;
 // mov edx,edi`), then the explicit 0, 0, -1. memset, a store helper, a
-// zeroed local copied in and a copy from scene_offset_ all miss it.
+// zeroed local copied in and a copy from scene_offset_ all miss it. An inline
+// setter taking three float values restores the double store (150 of 151
+// instructions); VC6 still folds the zero arguments to edi.
 Return Value: n/a
 Status: Complete
 */
+// WORKAROUND(decl): 0x00616F5A..0x00616F68 zero the light vector through a
+// copied pointer before the explicit 0, 0, -1 stores, the shape of an inline
+// three-component setter; the original helper's name and form are unknown.
+static inline void caviar_set_vector(float *v, float x, float y, float z) {
+    v[0] = x;
+    v[1] = y;
+    v[2] = z;
+}
+
 int Caviar::init() {
     close();
 
@@ -2283,43 +2294,41 @@ int Caviar::init() {
     camera_view_.bounds_.lead_[2] = positive_distance_limit;
 
     scene_context_.state_.instance_count_ = 0;
-    scene_context_.state_.instances_ = &slots_[0];
     scene_context_.state_.draw_flags_ = 0;
+    scene_context_.state_.instances_ = &slots_[0];
     scene_context_.state_.instance_steps_ = &instance_steps_[0];
 
+    caviar_set_vector(scene_context_.light_vector_.values, 0, 0, 0);
     scene_context_.light_vector_.values[0] = 0;
     scene_context_.light_vector_.values[1] = 0;
     scene_context_.light_vector_.values[2] = -1.0f;
 
     vox_normalise_vector(scene_context_.light_vector_.values, scene_context_.light_vector_.values);
 
-    // The normalised down vector replaces the whole shadow vector: the image
-    // copies all three components (0x00616F86..0x00616F8C, the z store at
-    // 0x00616FEF), overwriting the sin/cos seed computed above.
-    scene_context_.shadow_vector_ = scene_context_.light_vector_;
-
     scene_context_.state_.scene_rotation_.values[0][0] = 1.0f;
     scene_context_.state_.scene_rotation_.values[0][1] = 0;
+    // The normalised down vector replaces the whole shadow vector: the image
+    // copies all three components (0x00616F86..0x00616F8C, the z store at
+    // 0x00616FEF), overwriting the sin/cos seed computed above. The stores
+    // around it follow the image's store order (zeros, then ones).
+    scene_context_.shadow_vector_ = scene_context_.light_vector_;
     scene_context_.state_.scene_rotation_.values[0][2] = 0;
     scene_context_.state_.scene_rotation_.values[1][0] = 0;
-    scene_context_.state_.scene_rotation_.values[1][1] = 1.0f;
     scene_context_.state_.scene_rotation_.values[1][2] = 0;
     scene_context_.state_.scene_rotation_.values[2][0] = 0;
     scene_context_.state_.scene_rotation_.values[2][1] = 0;
-    scene_context_.state_.scene_rotation_.values[2][2] = 1.0f;
-    scene_context_.shadow_origin_adjustment_ = 0;
-
-    camera_view_.camera_.rotation.values[0][0] = 1.0f;
-    camera_view_.camera_.rotation.values[1][1] = 1.0f;
-    camera_view_.camera_.rotation.values[2][2] = 1.0f;
     camera_view_.camera_.rotation.values[0][1] = 0;
     camera_view_.camera_.rotation.values[0][2] = 0;
     camera_view_.camera_.rotation.values[1][0] = 0;
     camera_view_.camera_.rotation.values[1][2] = 0;
     camera_view_.camera_.rotation.values[2][0] = 0;
     camera_view_.camera_.rotation.values[2][1] = 0;
-
-
+    scene_context_.shadow_origin_adjustment_ = 0;
+    scene_context_.state_.scene_rotation_.values[1][1] = 1.0f;
+    scene_context_.state_.scene_rotation_.values[2][2] = 1.0f;
+    camera_view_.camera_.rotation.values[0][0] = 1.0f;
+    camera_view_.camera_.rotation.values[1][1] = 1.0f;
+    camera_view_.camera_.rotation.values[2][2] = 1.0f;
     scene_context_.shadow_enabled_ = 1;
     scene_context_.shadow_vector_.values[2] = scene_context_.light_vector_.values[2];
     field_4_ |= 1;

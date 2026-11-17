@@ -726,10 +726,12 @@ void __cdecl vox_transform_camera(VoxSceneState *state, int step,
         axis_y.values[1] = part.values[1][1] * axis;
         axis_y.values[2] = part.values[2][1] * axis;
         VOX_Vect axis_z;
-        axis = static_cast<float>(shape.axis_z_) * scale;
-        axis_z.values[0] = part.values[0][2] * axis;
-        axis_z.values[1] = part.values[1][2] * axis;
-        axis_z.values[2] = part.values[2][2] * axis;
+        // The image stores the z axis length over scale's own slot
+        // (0x0063A8C1) and multiplies from memory.
+        scale = static_cast<float>(shape.axis_z_) * scale;
+        axis_z.values[0] = part.values[0][2] * scale;
+        axis_z.values[1] = part.values[1][2] * scale;
+        axis_z.values[2] = part.values[2][2] * scale;
 
         sub_63a9d0(&corner, &centre, &axis_y, &axis_z, &offset, &pivot);
 

@@ -404,10 +404,13 @@ int SpriteBox::attach(GraphicWin *parent, int x, int y, int flags) {
     spots_.init(static_cast<int>(list_.entry_count_));
     // The image's four-slot frame is this RECT: left at [esp+0x10] and right
     // at [esp+0x18] stay in memory, top/bottom live in edi/ebp.
+    // field_54_ is read before abs and parked in a dead parameter home
+    // (0x00610613), then stored to rect.right after the call (0x00610650).
     RECT rect;
-    rect.right = field_54_;
+    const int right = field_54_;
     const int cell_height = Dialog::field_68_;
     rect.top = abs(cell_height - field_58_) >> 1;
+    rect.right = right;
     rect.bottom = cell_height + rect.top;
     rect.left = 0;
     // Park the cursor on the last entry; each item below advances first.
@@ -579,10 +582,15 @@ void SpriteBox::draw_item(int position) {
     if (!list_.seek_pos(position)) return;
     if (!Dialog::item_list_.seek_pos(position)) return;
 
-    // The image stores bottom, right, top, left (0x00610D89..0x00610D9E).
+    // The image stores bottom, right, top, left (0x00610D89..0x00610D9E)
+    // from one vbtable fetch: both extents are read before the first store
+    // (the address-taken RECT otherwise forces a re-fetch). Written right
+    // first, VC6 schedules the bottom store first, as the image does.
     RECT area;
-    area.bottom = static_cast<int>(Dialog::field_68_) + y;
-    area.right = static_cast<int>(Dialog::field_64_) + x;
+    const int height = static_cast<int>(Dialog::field_68_);
+    const int width = static_cast<int>(Dialog::field_64_);
+    area.right = width + x;
+    area.bottom = height + y;
     area.top = y;
     area.left = static_cast<int>(field_54_) + x + 4;
 
