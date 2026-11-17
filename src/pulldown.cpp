@@ -78,8 +78,7 @@ int PullDown::on_key_click(int key_input, int key) {
   switch (key) {
   case 0x1B:
     selected_ = -1;
-    release_modal();
-    return 1;
+    goto release;
 
   case 0x26:
   case 0x68: {
@@ -1436,8 +1435,8 @@ void PullDown::on_redraw() {
   expand_rect(&rect, -(PullDownTextPadding + PullDownBorderPadding), 0);
 
   for (int index = 0; index < item_count_; ++index) {
-    char *text = items_[index].text;
     uint32_t flags = items_[index].flags;
+    char *text = items_[index].text;
     char *right_text = items_[index].right_text;
     char *mnemonic = items_[index].mnemonic;
 
