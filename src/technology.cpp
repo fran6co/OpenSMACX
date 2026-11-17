@@ -519,25 +519,17 @@ __forceinline BOOL __cdecl redundant_inline(int facility_id, int faction_id) {
     return false;
 }
 
-// WORKAROUND(inline): has_fac with the bitmask lookup written out instead of
-// base.h's nested has_fac_built - a cheaper /Ob2 spelling for facility_avail.
-inline BOOL __cdecl has_fac_twin(int facility_id, int base_id, int queue_count) {
-    if (facility_id >= FacilityRepStart) {
-        return false;
-    }
-    int offset;
-    int mask;
-    bitmask(facility_id, &offset, &mask);
-    BOOL is_built = (Bases[base_id].facilities_built[offset] & mask) != 0;
-    if (is_built || !queue_count) {
-        return is_built;
-    }
-    for (int i = 0; i < queue_count; i++) {
-        if (Bases[base_id].queue_production_id[i] == -facility_id) {
-            return true;
-        }
-    }
-    return false;
+// WORKAROUND(inline): dead branchy budget probe (folds to no code). With
+// base.h's one-level has_fac, facility_avail keeps the image's call sequence
+// (bitmask, has_project, nine bitmask, then has_project twice and has_fac
+// for ROBOTIC/GENEJACK) only with two of these ahead of the Aerospace test:
+// none or one expands the late SP_SPACE_ELEVATOR has_project, three call a
+// tenth has_fac. Flat one-if probes only grow the budget here.
+static int fa_probe_sink;
+static inline void fa_budget_probe(int x) {
+    if (x == 1) fa_probe_sink = 3;
+    if (x == 2) fa_probe_sink = 5;
+    if (x == 3) fa_probe_sink = 7;
 }
 
 /*
@@ -656,16 +648,12 @@ BOOL __cdecl facility_avail(int facility_id, int faction_id, int base_id,
             && !has_fac(FAC_TREE_FARM, base_id, queue_count)) {
             return false; // Cumulative
         }
-        // WORKAROUND(inline): has_fac_twin from here on - base.h's has_fac (nested
-        // has_fac_built) spends more /Ob2 budget than the image did: with it every
-        // later site goes out of line, where the image still expands QUANTUM_LAB
-        // through Aerospace and calls 0x421670 only for the last three.
         if (facility_id == FAC_QUANTUM_LAB
-            && !has_fac_twin(FAC_FUSION_LAB, base_id, queue_count)) {
+            && !has_fac(FAC_FUSION_LAB, base_id, queue_count)) {
             return false; // Cumulative
         }
         if (facility_id == FAC_NANOHOSPITAL
-            && !has_fac_twin(FAC_RESEARCH_HOSPITAL, base_id, queue_count)) {
+            && !has_fac(FAC_RESEARCH_HOSPITAL, base_id, queue_count)) {
             return false; // Cumulative
         }
         if (facility_id == FAC_SKUNKWORKS
@@ -673,16 +661,19 @@ BOOL __cdecl facility_avail(int facility_id, int faction_id, int base_id,
             return false; // no prototype costs? skip
         }
         if (facility_id == FAC_PUNISHMENT_SPHERE
-            && has_fac_twin(FAC_PARADISE_GARDEN, base_id, queue_count)) {
+            && has_fac(FAC_PARADISE_GARDEN, base_id, queue_count)) {
             return false; // antithetical
         }
         if (facility_id == FAC_HABITATION_DOME
-            && !has_fac_twin(FAC_HAB_COMPLEX, base_id, queue_count)) {
+            && !has_fac(FAC_HAB_COMPLEX, base_id, queue_count)) {
             return false; // must have Complex
         }
+        // WORKAROUND(inline): see fa_budget_probe
+        fa_budget_probe(9);
+        fa_budget_probe(9);
         if (((facility_id >= FAC_SKY_HYDRO_LAB && facility_id < FAC_STOCKPILE_ENERGY)
             || facility_id == FAC_GEOSYNC_SURVEY_POD) // must have Aerospace Complex
-            && !has_fac_twin(FAC_AEROSPACE_COMPLEX, base_id, queue_count)
+            && !has_fac(FAC_AEROSPACE_COMPLEX, base_id, queue_count)
             && !has_project(SP_CLOUDBASE_ACADEMY, faction_id)
             && !has_project(SP_SPACE_ELEVATOR, faction_id)) {
             return false;
@@ -925,7 +916,7 @@ void __cdecl tech_secret(int tech_id, int faction_id) {
     StringTemp[0] = '\0';
     // The independent tech_achieved announcement at 5BC490 appends the
     // same caption prefix from 6916F0; retain that shared literal identity.
-    // RECOVERY_LITERAL: v1 0x006916F0 0x006916FA $SG60430 0x005BB000
+    // RECOVERY_LITERAL: v1 0x006916F0 0x006916FA $SG60424 0x005BB000
     strcat(StringTemp, "THESECRET");
     say_num(faction_id != ConsoleGlobal.faction_id_);
     X_pop(StringTemp, 0);
@@ -1305,7 +1296,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
         tech_id == Terraforming[TERRA_FOREST].prerequisite_tech[0] && !IsMultiplayerNet) {
         parse_say(0, Technology[tech_id].name, -1, -1);
         // Original TREETIME argument at 0x005BBC5E; independent literal storage.
-        // RECOVERY_LITERAL: v1 0x0069178C 0x00691795 $SG60599 0x005BB000
+        // RECOVERY_LITERAL: v1 0x0069178C 0x00691795 $SG60593 0x005BB000
         X_pop(TutorialPopupCaption, "TREETIME", nullptr);
     }
 
@@ -2221,7 +2212,7 @@ int __cdecl tech_selection(int faction) {
             return PlayersData[faction].tech_id_researching;
         }
     }
-    // RECOVERY_LITERAL: v1 0x0069180C 0x00691818 $SG60965 0x005BE380
+    // RECOVERY_LITERAL: v1 0x0069180C 0x00691818 $SG60959 0x005BE380
     const int result = tech_pick(faction, 0, -1, 0);
     PlayersData[faction].tech_id_researching = result;
     if (IsMultiplayerNet != 0) {
@@ -2240,8 +2231,8 @@ int __cdecl tech_selection(int faction) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// RECOVERY_LITERAL: v1 0x00691828 0x00691845 $SG60994 0x005BE530
-// RECOVERY_LITERAL: v1 0x00691818 0x00691827 $SG60980 0x005BE530
+// RECOVERY_LITERAL: v1 0x00691828 0x00691845 $SG60988 0x005BE530
+// RECOVERY_LITERAL: v1 0x00691818 0x00691827 $SG60974 0x005BE530
 /*
 Purpose: Finish one faction's research turn: log the tech being researched,
          or when the faction finishes (no PBEM/human gate applies) commit

@@ -107,37 +107,13 @@ int __cdecl base_claimed(int x, int y, int site1_free, int site2_free,
 }
 
 #pragma intrinsic(memcpy)
-// WORKAROUND(inline): base.h's has_fac routes its test through the two-argument
-// has_fac_built inline, a forwarding layer the image does not show (0x00421670
-// calls bitmask directly). With the extra layer base_build's /Ob2 budget runs
-// out early: range at the triad clamps, has_fac at the command-centre and
-// aerospace tests and is_human at the hunter-seeker loop stayed calls and the
-// frame lost the inline's offset/mask pair (0x1f5c against 0x1f6c). This
-// single-level twin gives the image's frame and exact callee set; base.h's
-// own body is the cleanup target (header change proposed, not vetted here).
-static inline BOOL has_fac_flat(int facility_id, int base_id, int queue_count) {
-    if (facility_id >= FacilityRepStart) {
-        return false;
-    }
-    int offset;
-    int mask;
-    bitmask(facility_id, &offset, &mask);
-    BOOL is_built = (Bases[base_id].facilities_built[offset] & mask) != 0;
-    if (is_built || !queue_count) {
-        return is_built;
-    }
-    for (int i = 0; i < queue_count; i++) {
-        if (Bases[base_id].queue_production_id[i] == -facility_id) {
-            return true;
-        }
-    }
-    return false;
-}
-// WORKAROUND(inline): dead budget probe (folds to no code). Twelve calls ahead of
+// WORKAROUND(inline): dead budget probe (folds to no code). Ten calls ahead of
 // the probe-team tech checks spend what the image spent before its late refusals:
 // range at the weapon/armour and morale clamps, base_lose_minerals and base_claimed
 // stay calls as in the image. Counted with base_compute, is_coast and worm_mod as
-// plain calls in this unit: 11 leaves one range site expanded, 14+ refuses probes.
+// plain calls in this unit and base.h's one-level has_fac (twelve were needed
+// beside the retired file-local has_fac_flat twin): 9 or fewer leave the frame
+// larger, 11+ spend too much.
 static inline int bb_probe(int x) {
     if (x == 1) {
         x = 2;
@@ -542,22 +518,22 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
             l_a8++;
         }
         int dist = vector_dist(l_54, l_8c, Bases[base_id].x, Bases[base_id].y);
-        // has_fac_flat(.., 0): the image keeps each inline's materialized is_built store.
-        if (has_fac_flat(FAC_NAVAL_YARD, base_id, 0) && dist < l_15c) {
+        // has_fac(.., 0): the image keeps each inline's materialized is_built store.
+        if (has_fac(FAC_NAVAL_YARD, base_id, 0) && dist < l_15c) {
             l_15c = dist;
         }
-        if ((has_fac_flat(FAC_AEROSPACE_COMPLEX, base_id, 0)
+        if ((has_fac(FAC_AEROSPACE_COMPLEX, base_id, 0)
              || has_project(SP_CLOUDBASE_ACADEMY, Bases[base_id].faction_id_current))
             && dist < l_164) {
             l_164 = dist;
         }
-        if (has_fac_flat(FAC_PSI_GATE, base_id, 0)) {
+        if (has_fac(FAC_PSI_GATE, base_id, 0)) {
             l_b4++;
         }
-        if (has_fac_flat(FAC_PUNISHMENT_SPHERE, base_id, 0)) {
+        if (has_fac(FAC_PUNISHMENT_SPHERE, base_id, 0)) {
             l_140++;
         }
-        if (has_fac_flat(FAC_HEADQUARTERS, base_id, 0)
+        if (has_fac(FAC_HEADQUARTERS, base_id, 0)
             || Bases[base_id].queue_production_id[0] == -FAC_HEADQUARTERS) {
             l_14c++;
         }
@@ -620,30 +596,30 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
         if (Bases[base_id].queue_production_id[0] <= -70) {
             l_d4++;
         }
-        if (has_fac_flat(FAC_COMMAND_CENTER, base_id, 0)
+        if (has_fac(FAC_COMMAND_CENTER, base_id, 0)
             || Bases[base_id].queue_production_id[0] == -FAC_COMMAND_CENTER) {
             l_11c++;
         }
-        if (has_fac_flat(FAC_BIOENHANCEMENT_CENTER, base_id, 0)
+        if (has_fac(FAC_BIOENHANCEMENT_CENTER, base_id, 0)
             || Bases[base_id].queue_production_id[0] == -FAC_BIOENHANCEMENT_CENTER) {
             l_134++;
         }
-        if (has_fac_flat(FAC_NAVAL_YARD, base_id, 0)
+        if (has_fac(FAC_NAVAL_YARD, base_id, 0)
             || Bases[base_id].queue_production_id[0] == -FAC_NAVAL_YARD) {
             l_118++;
         }
-        if (has_fac_flat(FAC_AEROSPACE_COMPLEX, base_id, 0)
+        if (has_fac(FAC_AEROSPACE_COMPLEX, base_id, 0)
             || Bases[base_id].queue_production_id[0] == -FAC_AEROSPACE_COMPLEX) {
             l_ac++;
         }
-        if (has_fac_flat(FAC_SKUNKWORKS, base_id, 0)
+        if (has_fac(FAC_SKUNKWORKS, base_id, 0)
             || Bases[base_id].queue_production_id[0] == -FAC_SKUNKWORKS) {
             l_ec++;
         }
-        if (has_fac_flat(FAC_CENTAURI_PRESERVE, base_id, 0)) {
+        if (has_fac(FAC_CENTAURI_PRESERVE, base_id, 0)) {
             l_bc++;
         }
-        if (has_fac_flat(FAC_TEMPLE_OF_PLANET, base_id, 0)) {
+        if (has_fac(FAC_TEMPLE_OF_PLANET, base_id, 0)) {
             l_e4++;  // BUG(original)?: l_e4 is reset to 0 after this loop; the count is dead
         }
         if (Bases[base_id].queue_production_id[0] >= 0) {
@@ -657,10 +633,10 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
         }
         // Garrison of the region's other bases (when this base has a command center
         // and the other one does not).
-        if (!has_fac_flat(FAC_COMMAND_CENTER, BaseIDCurrentSelected, 0)) {
+        if (!has_fac(FAC_COMMAND_CENTER, BaseIDCurrentSelected, 0)) {
             continue;
         }
-        if (has_fac_flat(FAC_COMMAND_CENTER, base_id, 0)) {
+        if (has_fac(FAC_COMMAND_CENTER, base_id, 0)) {
             continue;
         }
         int veh = stack_fix(veh_at(Bases[base_id].x, Bases[base_id].y));
@@ -1048,7 +1024,7 @@ L_4fa03d:
             l_18 = (a_f6c[l_14]
                     + range(a_176c[l_14] + a_3c4[l_2c * 3] + a_4bc[l_2c * 3], 0, lim)
                     + extra + 1) / 2;
-            if (has_fac_flat(FAC_COMMAND_CENTER, BaseIDCurrentSelected, 0)) {
+            if (has_fac(FAC_COMMAND_CENTER, BaseIDCurrentSelected, 0)) {
                 w = (l_11c + 2) * w / (l_11c + 3);
             }
             if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
@@ -1088,7 +1064,7 @@ L_4fa03d:
             n += a_1dc[2];
         }
         w = n * w;
-        if (has_fac_flat(FAC_AEROSPACE_COMPLEX, BaseIDCurrentSelected, 0)) {
+        if (has_fac(FAC_AEROSPACE_COMPLEX, BaseIDCurrentSelected, 0)) {
             w = (l_ac + 2) * w / (l_ac + 3);
         }
         if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
@@ -1863,8 +1839,6 @@ L_4fbd3d:
                       + a_4bc[l_20 + l_2c * 3] + bit_count(has_treaty(l_8, target, 7)) + 13,
                   1, 16)
             * l_34 * 3 / (l_58 - l_60 + 3);
-        bb_probe(0);
-        bb_probe(0);
         bb_probe(0);
         bb_probe(0);
         bb_probe(0);

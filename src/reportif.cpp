@@ -72,9 +72,11 @@ extern int ReportIfDeclPad4;
 extern int ReportIfDeclPad5;
 // WORKAROUND(decl): counter coupling. After faction.h began defining
 // get_name/get_title and this unit switched to help_link.h, the same
-// this/button reload order also needs 7-10 more distinct unused function
-// declarations (6 or fewer and 12 flip it; extern variables no longer move
-// it). Only 0x004A6330 changes in the unit's object.
+// this/button reload order also needs more distinct unused function
+// declarations (the window moves with header inline counts; extern variables no longer move
+// it). Only 0x004A6330 changes in the unit's object. With base.h's one-level
+// has_fac and map.h's two wrap inlines the window is 6-8 (9-11 with one wrap
+// inline; 7-10 beside the nested has_fac_built form).
 void ReportIfDeclFnPad0();
 void ReportIfDeclFnPad1();
 void ReportIfDeclFnPad2();
@@ -82,7 +84,6 @@ void ReportIfDeclFnPad3();
 void ReportIfDeclFnPad4();
 void ReportIfDeclFnPad5();
 void ReportIfDeclFnPad6();
-void ReportIfDeclFnPad7();
 
 // Shared punctuation objects the image pushes instead of unit literals.
 extern char SocialWinCloseParenText[];
@@ -5999,9 +6000,9 @@ int ReportIf::on_iface_dialog_item_back_draw(::GraphicWin *, int, int, RECT *) {
 // The three log_say texts are this handler's own copies in the pinned image
 // (0x687280, 0x687298, 0x6872B8; on_left_click keeps a separate EDBC copy at
 // 0x686F04). The image's advanced-governor text ends in "set".
-// RECOVERY_LITERAL: v1 0x00687280 0x00687295 $SG63477 0x004A6330
-// RECOVERY_LITERAL: v1 0x00687298 0x006872B5 $SG63492 0x004A6330
-// RECOVERY_LITERAL: v1 0x006872B8 0x006872CC $SG63503 0x004A6330
+// RECOVERY_LITERAL: v1 0x00687280 0x00687295 $SG63479 0x004A6330
+// RECOVERY_LITERAL: v1 0x00687298 0x006872B5 $SG63494 0x004A6330
+// RECOVERY_LITERAL: v1 0x006872B8 0x006872CC $SG63505 0x004A6330
 // symbol    ?on_iface_button_clicked@ReportIf@@UAEXH@Z
 void ReportIf::on_iface_button_clicked(int button) {
     int row;

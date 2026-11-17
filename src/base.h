@@ -781,21 +781,35 @@ inline int __cdecl has_fac_built(int facility_id, int base_id) {
     return (Bases[base_id].facilities_built[offset] & mask) != 0;
 }
 
-// Header inline: the image writes has_fac(id, base_id, 0) out at most call
-// sites (is_built stays a materialized variable, `neg/sbb/neg; test eax`)
-// and keeps an out-of-line COMDAT copy at 0x00421670 for the rest.
+// Header inline, one level: 0x00421670 calls bitmask directly, and the image
+// has no two-argument has_fac_built body anywhere, so no caller ever expands
+// has_fac while calling an inner layer (the nested form did: base_growth,
+// probe and production_vehicle_morale called an out-of-line has_fac_built).
+// Callers write has_fac(id, base_id, 0) out at most sites (is_built stays a
+// materialized variable, `neg/sbb/neg; test eax`) and the COMDAT copy at
+// 0x00421670 serves the rest.
+// WORKAROUND(inline): the named `queued` temporary emits no code; it raises
+// the /Ob2 cost of one expansion (base_connect, base_production and
+// draw_production keep their ties, base_growth calls 0x00421670 four times
+// with its own probe). The plain flat body expands too many sites; an `else`
+// around the queue loop or a named byte temporary for the built bits costs
+// more again and flips register ties in unrelated units (set_cat_social).
 MEASURED inline BOOL __cdecl has_fac(int facility_id, int base_id, int queue_count) {
     if (facility_id >= FacilityRepStart) {
         return false;
     }
-    BOOL is_built = has_fac_built(facility_id, base_id);
+    int offset;
+    int mask;
+    bitmask(facility_id, &offset, &mask);
+    BOOL is_built = (Bases[base_id].facilities_built[offset] & mask) != 0;
     if (is_built || !queue_count) {
         return is_built;
     }
     // BUG IN THE ORIGINAL: no upper bound on queue_count (queue_production_id
     // holds 10 entries); reproduced deliberately.
     for (int i = 0; i < queue_count; i++) {
-        if (Bases[base_id].queue_production_id[i] == -facility_id) {
+        int queued = Bases[base_id].queue_production_id[i];
+        if (queued == -facility_id) {
             return true;
         }
     }

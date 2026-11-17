@@ -98,7 +98,6 @@ int __cdecl veh_pick(int veh_id, const char *label, int flags);
 int __cdecl eliminate_player(int faction_id, int is_eliminated);
 int __cdecl veh_init(int prototype, int faction, int x, int y);
 void __cdecl draw_cursor();                               // 0x0046AE00
-void __cdecl ambience_veh(int vehicle);
 int __cdecl veh_ready(int veh_id);                        // 0x005C1B70 ?veh_ready@@YAHH@Z
 int __cdecl tut_check(int veh_id);                            // 0x004BA5F0 ?tut_check@@YAHH@Z
 int __cdecl tut_check2(int veh_id);                           // 0x004BA650 ?tut_check2@@YAHH@Z
@@ -2959,8 +2958,8 @@ void Console::explore(int veh_id) {
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004d8fa0.cpp", "source:src/alpha.h", "pinned:0x004D8FF4 dword value 3 store before supply_options at 0x004D8FFE", "source:src/netdaemon.h:flat member action_mode_ at NetDaemon+0x1B74", "source:src/console.cpp:supply_options reads the same source-owned action flags"], "reason": "Seed 004d8fa0 identifies the Console convoy order and lock lifecycle; typed Veh, Base and RulesResource records replace receiver and table offsets. The resource label run at 0x0094615C is Resource[0].name_plural, with the singular member selected for a yield of one. The original pre-panel dword value 3 write at 0x004D8FF4 targets the already-owned NetDaemonNet.action_mode_, whose singleton-relative offset 0x1B74 identifies 0x0093E904. Preserve that write before supply_options without adding duplicate storage or claiming full matching/acceptance."}
 // Original convoy pushes at 004D9057/004D911D select distinct writable strings.
 // Current NUL-terminated literals have separate complete COMDATs, not lifetime proof.
-// RECOVERY_LITERAL: v1 0x00688ED4 0x00688EDF $SG63977 0x004D8FA0
-// RECOVERY_LITERAL: v1 0x00688EE0 0x00688EEE $SG63985 0x004D8FA0
+// RECOVERY_LITERAL: v1 0x00688ED4 0x00688EDF $SG63978 0x004D8FA0
+// RECOVERY_LITERAL: v1 0x00688EE0 0x00688EEE $SG63986 0x004D8FA0
 void Console::convoy(int veh_id) {
     if (NetDaemonNet.lock_veh(&veh_id, 0, -1, -1, 0) != 0) {
         return;
@@ -3214,10 +3213,10 @@ void Console::assemble() { // 0x004D95F0
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004D9970 ?editor_on@Console@@QAEXXZ 0x004D9970-0x004D9AC5 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004d9970.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
-// RECOVERY_LITERAL: v1 0x00688F3C 0x00688F46 $SG64114 0x004D999D
-// RECOVERY_LITERAL: v1 0x00688F48 0x00688F53 $SG64116 0x004D99B4
-// RECOVERY_LITERAL: v1 0x00688F54 0x00688F5D $SG64119 0x004D99F9
-// RECOVERY_LITERAL: v1 0x00688F60 0x00688F6A $SG64121 0x004D9A11
+// RECOVERY_LITERAL: v1 0x00688F3C 0x00688F46 $SG64115 0x004D999D
+// RECOVERY_LITERAL: v1 0x00688F48 0x00688F53 $SG64117 0x004D99B4
+// RECOVERY_LITERAL: v1 0x00688F54 0x00688F5D $SG64120 0x004D99F9
+// RECOVERY_LITERAL: v1 0x00688F60 0x00688F6A $SG64122 0x004D9A11
 void Console::editor_on() {
     if ((IsMultiplayerNet || IsMultiplayerPBEM) &&
         !(GameDataStateStorage.fields_.game_state_ & 0x61) &&
@@ -6637,9 +6636,7 @@ void Console::corner_the_market() { // 0x004E2000
     const int amount = corner_market(faction_id);
     parse_num(0, amount);
     // Unsigned sum straight into the call: the image adds into ECX.
-    // stand-in: the int cast (as at the two later game_year reports) keeps the
-    // ecx/edx tie once the netmsg/popup/veh header inlines are visible.
-    parse_num(1, static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_ + Rules.turns_corner_gbl_energy_mrkt)));
+    parse_num(1, game_year(GameDataStateStorage.fields_.turn_current_num_ + Rules.turns_corner_gbl_energy_mrkt));
 
     if (PlayersData[faction_id].corner_market_turn > GameDataStateStorage.fields_.turn_current_num_) {
         parse_num(0, static_cast<int>(game_year(PlayersData[faction_id].corner_market_turn)));

@@ -1827,7 +1827,7 @@ int __cdecl base_at(int x, int y) {
     }
     if (!BaseAtErrorGuard) {
         // This base_at diagnostic passes its own format literal to log_say, with x and y as separate values.
-// RECOVERY_LITERAL: v1 0x00689390 0x006893A8 $SG62113 0x004E3A50
+// RECOVERY_LITERAL: v1 0x00689390 0x006893A8 $SG62116 0x004E3A50
         log_say("Base Bits Error  (x, y)", x, y, 0);
     }
     if (!(GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE)) {
@@ -1842,7 +1842,7 @@ int __cdecl base_at(int x, int y) {
         parse_num(0, x);
         parse_num(1, y);
         // This base_at popup key is a separate literal argument from the diagnostic format string above.
-// RECOVERY_LITERAL: v1 0x006893A8 0x006893B0 $SG62117 0x004E3A50
+// RECOVERY_LITERAL: v1 0x006893A8 0x006893B0 $SG62120 0x004E3A50
         X_pop("BASEBIT", NULL);
     }
     BaseAtErrorGuard = 0;
@@ -5417,7 +5417,7 @@ void __cdecl make_base_unique(int base_id) {
     if (collisions != 0) {
         Bases[base_id].name_string[21] = 0;
         // make_base_unique passes this one-byte delimiter to strcat; collision digits use a separate buffer.
-// RECOVERY_LITERAL: v1 0x00689F08 0x00689F0A $SG63492 0x004F7FE0
+// RECOVERY_LITERAL: v1 0x00689F08 0x00689F0A $SG63495 0x004F7FE0
         strcat(Bases[base_id].name_string, "-");
         char digits[0x50];
         _itoa(collisions + 1, digits, 10);
@@ -6821,6 +6821,18 @@ relocate:
     }
 }
 
+// WORKAROUND(inline): dead budget probe (folds to no code). base_growth's two
+// pop_goal_fac expansions call 0x00421670 for all four inner has_fac tests in
+// the image (has_fac x4, then the TREE_FARM test expanded); with base.h's
+// one-level has_fac one inner test still expands unless this spend follows the
+// second pop_goal_fac site.
+static inline int bg_budget_probe(int x) {
+    if (x == 1) {
+        x = 2;
+    }
+    return x;
+}
+
 // ORIGINAL: 0x004EF1C0 ?base_growth@@YAHXZ 0x004EF1C0-0x004EFB4E
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004ef1c0.cpp", "recovery/tasks/base-colony-economy-coverage-wave.json", "Pinned original01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; complete original function extent reviewed against native instructions and VC6 CodeView owners.", "recovery/tests/test_base_colony_production.py", "Native4EF3CE/4EF50E selects BaseIDCurrentSelected for has_fac, contradicting the retained TRIED owner-byte hypothesis. 9A6548 is SecretProject.ascetic_virtues(+34), not network_backbone; 97D046 is population_size(+6)."], "reason": "Recover starvation, population growth/limits and nutrient warnings through real Base/faction/facility/project/vehicle owners. Preserve callback reloads and native signed-byte population behavior; seeds remain, no matching or runtime claim."}
 // symbol    ?base_growth@@YAHXZ
@@ -6893,6 +6905,7 @@ int __cdecl base_growth() {
             return 0;
         }
         int limit_facility = pop_goal_fac(BaseIDCurrentSelected);
+        bg_budget_probe(0);  // WORKAROUND(inline): see bg_budget_probe
         if (limit_facility) {
             BaseCurrent->nutrients_accumulated =
                 cost_factor(BaseCurrent->faction_id_current, 0, BaseIDCurrentSelected)

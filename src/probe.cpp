@@ -357,6 +357,19 @@ extern "C" DWORD WINAPI timeGetTime(void);
 // expansions are budget spend.
 static inline char *probe_noun(int faction_id);
 
+// WORKAROUND(inline): dead budget probe (folds to no code). With base.h's
+// one-level has_fac, 24 calls ahead of the morale-bonus block spend what the
+// image spent there: vulnerable()'s HQ test (depth 2) and the facility 0x22
+// bonus test stay calls to 0x00421670, as in the image's has_fac/bitmask call
+// sequence (10 bitmask, has_fac, 5 bitmask, 6 has_fac); 16 or fewer expand
+// one or both, 18-40 match (24 scores best; branchy probes spend less here).
+static inline int probe_budget_probe(int x) {
+    if (x == 1) {
+        x = 2;
+    }
+    return x;
+}
+
 // ORIGINAL: 0x0059F120 ?probe@@YAHHHHH@Z 0x0059F120-0x005A5837;0x006613D0-0x00661B3D
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original instructions establish distinct actor, target-base and fallback-vehicle roles, genuine PlayerData/Map/Base/Veh owners and one automatic Popup with class-owned teardown.", "The actor lock/state edge skips strategy scoring and energy checks before its shared mode/selector tail. Action-six raw UI results and normalized remote bit tests have distinct threshold stores; false edges retain the original path-local value, with no eager initialization.", "Bounded actual-source controls and native compilation are not full CFG, VC6 unwind-state, linked-preservation or game-runtime proof. Ordered comparison/reload fidelity and historical matching remain restoration obligations.", "Pinned5A292F..5A2961 operands96CD3C equal PlayersData96C9E0+35C, the signed tech_ranking word; trade_source actually begins36C, so its former+8 alias selected the wrong374 word. Preserve target rank/2 > actor rank/2+4 with truncation toward zero and the existing facility/action/pact short-circuit guards."], "reason": "Complete typed Probe action/UI owner in its existing translation unit, retaining the four-argument ABI and both original main/unwind spans."}
 int __cdecl probe(int veh_id, int base_id, int veh_id_tgt, int mode) {
@@ -1345,6 +1358,31 @@ L_5a2dcd:
             diff_modifier++;
         }
     }
+    // WORKAROUND(inline): see probe_budget_probe
+    probe_budget_probe(0);
+    probe_budget_probe(0);
+    probe_budget_probe(0);
+    probe_budget_probe(0);
+    probe_budget_probe(0);
+    probe_budget_probe(0);
+    probe_budget_probe(0);
+    probe_budget_probe(0);
+    probe_budget_probe(0);
+    probe_budget_probe(0);
+    probe_budget_probe(0);
+    probe_budget_probe(0);
+    probe_budget_probe(0);
+    probe_budget_probe(0);
+    probe_budget_probe(0);
+    probe_budget_probe(0);
+    probe_budget_probe(0);
+    probe_budget_probe(0);
+    probe_budget_probe(0);
+    probe_budget_probe(0);
+    probe_budget_probe(0);
+    probe_budget_probe(0);
+    probe_budget_probe(0);
+    probe_budget_probe(0);
     if (!(NetDaemonNet.action_mode_ & 2)) {
         return 1;
     }
