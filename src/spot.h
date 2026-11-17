@@ -40,7 +40,16 @@ class Spot {
   void reset_count() { add_count_ = 0; }
   void replace(int position, int type, int left, int top, int length, int width);
   int add(int position, int type, int left, int top, int length, int width);
+  // 0x0047A6F0: a header inline. Every caller expands it except
+  // MultiWin::draw (call at 0x0047947E), and the copy sits in MultiWin's
+  // range, so multiwin.cpp keeps the out-of-line definition.
+  // WORKAROUND(decl): the body is gated to the units that expand it (guide
+  // 2.5, header vetting); the original's declaration set is not yet known.
+#ifdef SPOT_ADD_RECT_INLINE
+  inline int add(int position, int type, RECT *rect);
+#else
   int add(int position, int type, RECT *rect);
+#endif
   void kill_pos(int position);
   void kill_specific(int position, int type);
   void kill_type(int type);
@@ -70,6 +79,13 @@ class Spot {
   // RECOVERY_MEMBER: v1 Spot add_count_ 0x8 0x005FA900
   int add_count_;  // 0x0008; pinned mapped methods use signed count branches
 };
+
+#ifdef SPOT_ADD_RECT_INLINE
+inline int Spot::add(int position, int type, RECT *rect) {
+    return add(position, type, rect->left, rect->top, rect->right - rect->left,
+               rect->bottom - rect->top);
+}
+#endif
 
 #if defined(_M_IX86) || defined(__i386__)
 static_assert(sizeof(Spot) == 0xC, "Spot layout must match the legacy ABI");

@@ -25,6 +25,7 @@
 // StringStruct::StringStruct (0x00401000) out of line (0x004AA103), giving
 // its three-state EH layout; see stringstruct.h.
 #define STRINGSTRUCT_CTOR_OUT_OF_LINE
+#define SPOT_ADD_RECT_INLINE  // stand-in: see Spot::add(int, int, RECT *) in spot.h
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "reportif.h"
@@ -77,7 +78,9 @@ extern int ReportIfDeclPad5;
 // it). Only 0x004A6330 changes in the unit's object. With base.h's one-level
 // has_fac, map.h's two wrap inlines and the array-typed RulesTerraforming,
 // RulesOrder, RulesCitizen and Player ideology rows only 12 matches (1-11, 13,
-// 14 and 16 flip it); before those retypes the window was 6-8.
+// 14 and 16 flip it); before those retypes the window was 6-8. Not re-tuned for
+// spot.h's gated Spot::add RECT inline: 0x004A6330 is a count-sensitive canary,
+// re-tuned once after the header batch (AGENTS.md, 2026-11-17).
 void ReportIfDeclFnPad0();
 void ReportIfDeclFnPad1();
 void ReportIfDeclFnPad2();
@@ -833,12 +836,6 @@ static inline int report_write_right(char *text, int x, int y) {
         return x;
     }
     return MainInterfaceGlobal.Buffer::write_right_l(text, x, y, static_cast<int>(strlen(text)));
-}
-
-// The image expands Spot::add's RECT form in place at its report callers.
-static inline int report_spot_add(Spot *spot, int position, int type, RECT *rect) {
-    return spot->add(position, type, rect->left, rect->top,
-                     rect->right - rect->left, rect->bottom - rect->top);
 }
 
 // The image expands a RECT-based button init in place, re-reading the RECT.
@@ -3411,8 +3408,8 @@ void ReportWin::draw_ops() {
         //   report_rect_width(&text) + report_rect_width(&icon) + 3.
         set_rectangle_dimensions(&report_work_rect_, icon.left, text.top,
             text.right - text.left - icon.left + icon.right + 3, text.bottom - text.top);
-        report_spot_add(&spot_, entry.base_id + 0x400, 0, &report_work_rect_);
-        report_spot_add(&spot_, entry.base_id + 0xC00, 0, &icon);
+        spot_.add(entry.base_id + 0x400, 0, &report_work_rect_);
+        spot_.add(entry.base_id + 0xC00, 0, &icon);
         if (selected_bases_[entry.base_id / 32] & (1 << (entry.base_id % 32))) {
             Buffer::box_sprite(&text, &InterfaceBoxStyles[2]);
             Buffer::box_sprite(&text, &InterfaceBoxStyles[5]);
@@ -7595,7 +7592,7 @@ void ReportIf::draw_security() {
         strcat(StringTemp, lost_text);
         report_write_right(StringTemp, field_C_ + field_14_, field_10_);
         set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, field_1C_);
-        report_spot_add(&spot_, filter, 0, &draw_workspace_rect_);
+        spot_.add(filter, 0, &draw_workspace_rect_);
         if (filter == 3) {
             field_10_ += field_1C_ - 1;
             MainInterfaceGlobal.Buffer::line(field_C_ - 1, field_10_, field_C_ + field_14_, field_10_, 0x99);

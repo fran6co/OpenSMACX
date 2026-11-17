@@ -26,6 +26,7 @@
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x6825f4 selects original initializer0x4b3fa0..0x4b3fb6, registering fini0x4b3fc0..0x4b3fca; complete independent decode establishes exclusive boundaries.", "Source-owned object?ConsoleStatusWin@@3VStatusWin@@A identifies original storage0x8c5568. Startup arguments/calls: call 0x4ba1a0; push 0x4b3fc0. Cleanup receiver/calls: mov ecx, 0x8c5568; jmp 0x4ba120. Constructor/destructor targets retain their existing class-owned source mappings.", "Fresh physical src/statuswin.cpp COFF selects _$E21 through .CRT$XCU and registers _$E19, both referencing the genuine source global. Original NetMsg argument triples and implicit PlanWin/Console most-derived flags are preserved by the existing declarations; complete virtual-base teardown is compiler-owned, not authored offsets.", "Current local helper symbols interpret present emission, not original debug names or historical TU boundaries. Object starts do not prove allocation extents. This binding establishes neither cross-TU global order, masked-reference correctness, strict linked preservation, dependency-provider equivalence nor runtime/game acceptance; excluded guarded sprite cleanup remains separate."], "reason": "Bind original exit identity to the genuine compiler-generated lifetime of ?ConsoleStatusWin@@3VStatusWin@@A in its actual source owner; no manual lifecycle callback is authored."}
 // symbol    _$E14
 #define BUFFER_WRITE_RIGHT_L3  // guarded Buffer::write_right_l(text, x, y)
+#define SPOT_ADD_RECT_INLINE  // stand-in: see Spot::add(int, int, RECT *) in spot.h
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "base.h"
@@ -423,14 +424,6 @@ void StatusWin::reset() {
 StatusWin ConsoleStatusWin;  // 0x008C5568
 
 // Fixed-slot bindings carried from 004b6570.cpp
-
-// WORKAROUND(inline): draw_status expands Spot::add's RECT form in place
-// (six-argument call 0x005FA960 with right-left/bottom-top read from a RECT
-// copy at [ebp-0x38]); the out-of-line copy 0x0047A6F0 stays in multiwin.cpp.
-static inline int status_spot_add(Spot *spot, int position, int type, RECT *rect) {
-    return spot->add(position, type, rect->left, rect->top,
-                     rect->right - rect->left, rect->bottom - rect->top);
-}
 
 // ORIGINAL: 0x004B6570 ?draw_status@StatusWin@@QAEXHHHHH@Z 0x004B6570-0x004B8825 FILE
 // DEFERRED: genuinely more tractable than this pass reached - frame is only 0xD8 bytes (no embedded C++ objects the way the other six addresses in this batch have; this is plain locals only), and the member map shows this function itself touches exactly ONE StatusWin field (field_15DC_, a plain store at 0x004B6588 - every other offset the tool lists belongs to a SIBLING StatusWin method shown for context, not to draw_status). The remaining size (8885B, 2569 instructions, 829 Ghidra lines) is volume, not structural depth: it is a base-stats HUD renderer, dominated by _strcat(86)/?get@Strings@@(35)/_strlen(28)/?write_l@Buffer@@(15)/ __itoa(12)/?set_text_color@Buffer@@(9) - build a label string, draw it - interleaved with ~25 one-off game-data queries (?mine_yield@@, ?energy_yield@@, ?base_at@@, ?veh_at@@, ?bonus_at@@, ?has_tech@@, ?spying@@, ?base_draw@@, ?kill_type@Spot@@, ...) each needing its own argument set read off the disassembly. Ghidra also reports five "Removing unreachable block" warnings, meaning its own CFG differs from the raw disassembly's in at least five places - a real structural question (dead branches from an inlined constant vs. a genuine goto target this decompile mis-collapsed), not yet checked.
@@ -976,7 +969,7 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
         base_draw(&MainInterfaceGlobal, base_id, item_x, item_y - 1, 0, 0x1800);
         RECT spot_rect = area;
         spot_rect.right += 5;
-        status_spot_add(&spot_, base_id, 11, &spot_rect);
+        spot_.add(base_id, 11, &spot_rect);
         if (base_id == sel_base) {
             area.left -= 2;
             area.right += 2;
@@ -1055,7 +1048,7 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
         }
         RECT spot_rect = area;
         spot_rect.right += 5;
-        status_spot_add(&spot_, v, 0, &spot_rect);
+        spot_.add(v, 0, &spot_rect);
         item_x += item_width + 5;
         area.left += item_width + 5;
         area.right += item_width + 5;

@@ -43,6 +43,7 @@
 // RECOVERY_BINDING: v1 {"evidence": ["pinned image sha256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; retained spans [['0x00611930', '0x0061193E']]", "mapped constructor ??0SpriteBox@@QAE@H@Z directly stores table 0x00670724", "pinned primary slot 0x8 contains original thunk VA 0x00611930", "original tail target 0x00611380 is ?on_redraw@SpriteBox@@UAEXXZ; current emitted thunk preserves receiver arithmetic and relocates to that same method", "source owner emits ?on_redraw@SpriteBox@@$4PPPPPPPM@KBI@AEXXZ in ??_7SpriteBox@@6B@ at the proven view/slot", "identity, original extent, claims and lessons retained; fresh native compile/binding review required"], "reason": "Bind the original ordinary virtual-adjustor identity to the compiler-emitted class/view adjustor selected by both the pinned constructor-installed vftable slot and exact-current owner-object relocation. The original wrapper, slot and receiver view remain distinct; no thunk body is hand-authored."}
 // symbol    ?on_redraw@SpriteBox@@$4PPPPPPPM@KBI@AEXXZ
 // kind      game
+#define SPOT_ADD_RECT_INLINE  // stand-in: see Spot::add(int, int, RECT *) in spot.h
 #include "stdafx.h"
 #include <new>
 #include "spritebox.h"
@@ -375,15 +376,6 @@ void SpriteBox::on_dialog_focus(int a1) {
     redraw();
 }
 
-// WORKAROUND(inline): attach (0x00610540) expands Spot::add's RECT form in
-// place (six-argument call 0x005FA960 with right-left/bottom-top) while the
-// out-of-line copy stays in multiwin.cpp; same twin as diplowin.cpp's
-// diplo_spot_add and reportif.cpp's report_spot_add.
-static inline int sprite_spot_add(Spot *spot, int position, int type, RECT *rect) {
-    return spot->add(position, type, rect->left, rect->top,
-                     rect->right - rect->left, rect->bottom - rect->top);
-}
-
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // Historical seed observations (not fresh measurements or acceptance):
 // TRIED: no Ghidra hypothesis was provided for this address; body is a direct register-to-variable transcription of the disassembly (no vtable shim - all callees are direct calls; `T[1]`/`T[2]` model a per-class layout-offset table read through ebx= this-0xaa4). Compiles and matches through instr #1; diverges at #2 (push vs mov, prologue-adjacent). Landed at MISMATCH.
@@ -429,7 +421,7 @@ int SpriteBox::attach(GraphicWin *parent, int x, int y, int flags) {
                 }
                 id = list_.current_->id;
             }
-            sprite_spot_add(&spots_, id, 0, &rect);
+            spots_.add(id, 0, &rect);
             rect.top += Dialog::field_68_;
             rect.bottom += Dialog::field_68_;
             if (list_.current_position_ == list_.entry_count_ - 1) break;

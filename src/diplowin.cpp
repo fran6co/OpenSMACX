@@ -33,6 +33,7 @@
 #define DIALOGS_DTOR_INLINE  // stand-in: see ~Dialogs in dialogs.h; on_button_clicked
 #define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h
 #define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
+#define SPOT_ADD_RECT_INLINE  // stand-in: see Spot::add(int, int, RECT *) in spot.h
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "diplowin.h"
@@ -667,15 +668,6 @@ char DiploKnownTechOpen[2] = "(";
 // RECOVERY_OBJECT: v2 0x006839F8 0x006839FA ?DiploKnownTechClose@@3PADA 0x00443170
 char DiploKnownTechClose[2] = ")";
 
-// WORKAROUND(inline): draw_offers (0x00443170) expands Spot::add's RECT form
-// in place (six-argument call 0x005FA960 with right-left/bottom-top), while
-// the out-of-line copy 0x0047A6F0 stays in multiwin.cpp; same twin as
-// reportif.cpp's report_spot_add.
-static inline int diplo_spot_add(Spot *spot, int position, int type, RECT *rect) {
-    return spot->add(position, type, rect->left, rect->top,
-                     rect->right - rect->left, rect->bottom - rect->top);
-}
-
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00443170 0x004436A0 0x004436B8 0x00443480
 // ORIGINAL: 0x00443170 ?draw_offers@DiploWin@@QAEXXZ 0x00443170-0x0044369F BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:def4db5d8cde1ddd00c5735adc0e3cd230ec02b8:src/recovered/units/00443170.cpp"], "reason": "Typed offer-panel rendering, technology/energy/treaty/faction labels and Spot ownership, replacing seed raw offsets."}
@@ -769,7 +761,7 @@ void DiploWin::draw_offers() {
             }
             write_cent_text(StringTemp, panel.left, top, width);
             RECT item;
-            diplo_spot_add(&spot_, i, side, set_rectangle_dimensions(&item, panel.left, top, width, line_height));
+            spot_.add(i, side, set_rectangle_dimensions(&item, panel.left, top, width, line_height));
             top += line_height;
         }
         ++side;

@@ -18,6 +18,7 @@
 #define FONT_LINE_ADVANCE_INLINE
 #define STRINGSTRUCT_CTOR_OUT_OF_LINE
 #define WIN_RECT_EXTENT_INLINE  // stand-in: see rect_width in win.h
+#define SPOT_ADD_RECT_INLINE  // stand-in: see Spot::add(int, int, RECT *) in spot.h
 #include "stdafx.h"
 #include "quaylewin.h"
 #include "rectangle_operations.h"
@@ -210,13 +211,6 @@ int QuayleWin::on_key_click(int, int) {
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 004956D0; retained seed git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004956d0.cpp", "recovery/tasks/quaylewin-owner-coverage-wave.json", "QuayleWin constructor layout and virtual-slot evidence; fresh isolated build and host controls"], "reason": "Rehome the retained QuayleWin seed into its real GraphicWin owner with typed subobjects; preserve original spans and historical seed obligations."}
 // TRIED: local StringStruct/Buffer objects reproduce the ctor/dtor calls but MSVC did not regenerate the original's SEH/EH unwind frame (push -1; push handler; fs:[0] chain) from source-level RAII alone here; body is a faithful, compiling transcription (MISMATCH #0, prologue only) - see call order, field offsets and vtable-adjustor reads below for the parts that are semantically verified against raw disassembly.
 // symbol    ?on_redraw@QuayleWin@@UAEXXZ
-// WORKAROUND(inline): the image expands the RECT form of Spot::add
-// (0x0047A6F0, emitted out of line by MultiWin) at 0x00495FF3.
-static inline int quayle_spot_add(Spot *spot, int position, int type, RECT *rect) {
-  return spot->add(position, type, rect->left, rect->top, rect->right - rect->left,
-                   rect->bottom - rect->top);
-}
-
 void QuayleWin::on_redraw() {
   StringList strings;
   int faction = ConsoleGlobal.faction_id_;
@@ -343,7 +337,7 @@ void QuayleWin::on_redraw() {
         field_A1C_ = rect_width(&chapter_list_rect_);
         field_A20_ = wrap_height(StringTemp, field_A1C_);
         quayle_place_rect(&text_scratch_rect_, field_A14_, field_A18_ - field_A20_ - 6, field_A1C_, field_A20_);
-        quayle_spot_add(&spot_, page, 0, &text_scratch_rect_);
+        spot_.add(page, 0, &text_scratch_rect_);
         wrap(StringTemp, &text_scratch_rect_);
       }
     } else {
