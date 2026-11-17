@@ -182,7 +182,7 @@ int AlphaMenu::menu_init() {
     if (text_open(MenuScriptFile, "TERRAFORM") != 0) goto done;
     add_menu(9, text_get(), 0);
     {
-        for (int i = 0; i != 19; ++i) {
+        for (int i = 0; i < 19; ++i) {
             StringTemp[0] = 0;
             strcat(StringTemp, StringTable.get(Order[i + 4].order));
             strcat(StringTemp, "|");
