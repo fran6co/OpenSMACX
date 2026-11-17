@@ -5967,6 +5967,25 @@ int NetDaemon::action(int veh_id, int mode) {
     return 1;
 }
 
+// WORKAROUND(inline): the image's two wraps in order_veh form `lea r,[bounds+x]`;
+// map.h's wrap_map_x (const local bound) gives `[x+bounds]`. This spelling, reading
+// MapLongitudeBounds at each use, reproduces it; the original helper is unknown.
+static inline int net_wrap_x(int x) {
+    if (!(MapIsFlat & 1)) {
+        if (x < 0) return x + MapLongitudeBounds;
+        if (x >= MapLongitudeBounds) return x - MapLongitudeBounds;
+    }
+    return x;
+}
+
+// WORKAROUND(inline): order_veh's stack walk exits straight to the loop end on a
+// negative id (0x532031 `jl 0x532048`), which VC6 threads only from a ternary
+// body; veh.h's if-form veh_next_stack_id stops at the loop test. Switching the
+// header measured a loss in probe (606 -> 572 matching), so the twin stays local.
+static inline int net_next_stack_id(int veh_id) {
+    return veh_id >= 0 ? Vehs[veh_id].next_veh_id_stack : veh_id;
+}
+
 // ORIGINAL: 0x00531780 ?order_veh@NetDaemon@@QAEHHHH@Z 0x00531780-0x00532135
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned531780..532135; retained git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00531780.cpp preserves the original identity and contradictory seed history.", "Native5318D6..5318E8 computes(otherFaction+2099*ownFaction)*4+96C9F8: PlayersData[ownFaction].diplo_treaties[otherFaction], stride20CC, not the seed20C8 transcription.", "Veh34/Base134/Map2C fields and existing coordinate arrays own the accessed state; signed speed and lock cleanup/callback ordering retain native obligations. Literal68C480 is GLOBALFAILED and68C490 is Sending MOVE VEH message; native synchronization and the full message dispatcher remain unfinished."], "reason": "Recover the complete network move request, feasibility, acknowledgement and release paths on the genuine daemon and game records. Preserve unresolved synch/process_message dependencies rather than forwarding this body to the original executable."}
 // TRIED: Ghidra pseudocode used as primary source with call-signature/arg-order fixes confirmed against raw disasm (base_at, veh_at, stack_check, stack_fix, order_veh [both the free function at 0x5947C0 and the recursive-looking unqualified call, which needed `::order_veh` to avoid binding to the member of the same name], message_veh, Net::get/process_message argument mapping). Factored the 3x near-identical "release lock" block into a file-scope #define/#undef macro rather than a helper function. One table access (DAT_0096c9f8 with a stride of 0x20c8 rather than the 0x20cc seen everywhere else in this codebase) is transcribed as Ghidra states it but NOT independently re-derived from raw disasm - flagging this as the weakest point if it mismatches. Compiles; first divergence at instr #34. Not chased to byte-exact given size (2485 bytes).
@@ -5976,7 +5995,7 @@ int NetDaemon::order_veh(int veh_id, int direction, int mode) {
     // maybe_lock expanded: the image pushes its 0x0068C474 literal.
     if (maybe_lock(&veh_id, mode, 0, -1, -1, 0) != 0) return 0;
 
-    const int x = wrap_map_x(Vehs[veh_id].x + VehMoveDeltaX[direction]);
+    const int x = net_wrap_x(Vehs[veh_id].x + VehMoveDeltaX[direction]);
     const int y = Vehs[veh_id].y + VehMoveDeltaY[direction];
     const int faction = Vehs[veh_id].faction_id;
     const int base_id = base_at(x, y);
@@ -6017,10 +6036,10 @@ int NetDaemon::order_veh(int veh_id, int direction, int mode) {
         && veh_moves(veh_id) != 0) {
 
         if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_INFO_WARFARE &&
-            base_id >= 0 && faction != Bases[base_id].faction_id_current) {
-            if (stack_check(veh_at(x, y), 2, PLAN_INFO_WARFARE, -1, -1) == 0 &&
-                !good_base) {
-                if (add_global() == 0) goto send_move;
+            base_id >= 0 && faction != Bases[base_id].faction_id_current &&
+            stack_check(veh_at(x, y), 2, PLAN_INFO_WARFARE, -1, -1) == 0 &&
+            !good_base) {
+            if (add_global() != 0) {
                 if (veh_locked_ != 0) {
                     Vehs[veh_id].order = 0;
                     Vehs[veh_id].state &= 0xFCFFBDFFU;
@@ -6031,9 +6050,7 @@ int NetDaemon::order_veh(int veh_id, int direction, int mode) {
                 NetMsgPrimary.pop("GLOBALFAILED", 5000, 0, nullptr);
                 return 0;
             }
-        }
-
-        if (base_id >= 0 && Bases[base_id].population_size <= 1
+        } else if (base_id >= 0 && Bases[base_id].population_size <= 1
             && (Vehs[veh_id].state & 0x80000U) != 0 && !good_base && add_global() != 0) {
             if (veh_locked_ != 0) {
                 Vehs[veh_id].order = 0;
@@ -6045,7 +6062,6 @@ int NetDaemon::order_veh(int veh_id, int direction, int mode) {
             return 0;
         }
 
-send_move:
         {
             log_say("Sending MOVE VEH message", veh_id, direction, 0);
             message_veh(0x2401, veh_id, direction, 0);
@@ -6056,7 +6072,7 @@ send_move:
             int have_other_vehicle = 0;
             int other_faction_found = 0;
             for (int offset = 0; offset < 21; ++offset) {
-                const int adjacent_x = wrap_map_x(RadiusOffsetX[offset] + x);
+                const int adjacent_x = net_wrap_x(RadiusOffsetX[offset] + x);
                 const int adjacent_y = RadiusOffsetY[offset] + y;
                 if (on_map(adjacent_x, adjacent_y)) {
                     const Map &tile = MapTiles[MapLongitude * adjacent_y + (adjacent_x >> 1)];
@@ -6076,7 +6092,7 @@ send_move:
                                         other_faction_found = other_faction;
                                     }
                                 }
-                                veh_id = veh_next_stack_id(veh_id);
+                                veh_id = net_next_stack_id(veh_id);
                             }
                         }
                     }

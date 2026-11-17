@@ -221,10 +221,9 @@ int DDInit::init(int width, int height, int depth, int tgl) {
         Win::screen_buffer_.fill(0);
         if (buf.load_pcx("logo.pcx", PaletteActive, 10, 0xEC) == 0) {
             buf.copy(&Win::screen_buffer_, 0, 0,
-                     (Win::screen_buffer_.dib_.bmiHeader.biWidth - buf.dib_.bmiHeader.biWidth) / 2,
-                     (buf.dib_.bmiHeader.biHeight - Win::screen_buffer_.dib_.bmiHeader.biHeight) / 2,
-                     buf.dib_.bmiHeader.biWidth,
-                     -buf.dib_.bmiHeader.biHeight);
+                     (Win::screen_buffer_.pixel_width() - buf.pixel_width()) / 2,
+                     (Win::screen_buffer_.pixel_height() - buf.pixel_height()) / 2,
+                     buf.pixel_width(), buf.pixel_height());
         }
     }
 
