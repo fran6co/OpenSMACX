@@ -5849,8 +5849,8 @@ L_57000c:
                         && (map_loc(tx, ty)->climate & 0xE0) >= 0x40) {
                         continue;
                     }
-                    score = site_at(tx, ty, 0) * 10000
-                        / (vector_dist(x_dist(x, tx), abs(y - ty)) + 1);
+                    score = site_at(tx, ty, 0) * 10000;
+                    score /= vector_dist(x_dist(x, tx), abs(y - ty)) + 1;
                     base_id = base_find(tx, ty);
                     if (base_id >= 0 && Bases[base_id].faction_id_current != faction_id
                         && (PlayersData[faction_id].diplo_treaties[Bases[base_id].faction_id_current]
@@ -6167,8 +6167,7 @@ L_570c89:
                     NetDaemonNet.await_exec(1);
                     return 1;
                 }
-                action_destroy(veh_id, 0x800000, -1, -1);
-                return 0;
+                goto destroy_road;  // the image shares this call at 0x570DDF
             }
         } else if (Bases[near_base].faction_id_current == faction_id && near_dist <= 2) {
             if (remote_own) {
@@ -6177,6 +6176,7 @@ L_570c89:
                 NetDaemonNet.await_exec(1);
                 return 1;
             }
+        destroy_road:
             action_destroy(veh_id, 0x800000, -1, -1);
             return 0;
         }
@@ -8347,8 +8347,8 @@ L_577723:
             if (zoc_veh(tx, ty, faction_id))
                 score += defense_value(faction_id, tx, ty, veh_id, -1) * 2;
             if (friendly && !assault) {
-                score += stack_check(other_id, 2, 0, -1, -1) * 4;
-                score -= stack_check(other_id, 2, 2, -1, -1) * 2;
+                score += stack_check(other_id, 2, 0, -1, -1) * 4
+                    - stack_check(other_id, 2, 2, -1, -1) * 2;
             }
             break;
         case 3:
