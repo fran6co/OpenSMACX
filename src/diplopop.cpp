@@ -26,6 +26,7 @@
 #include "font_metrics.h"
 #include "interface_fonts.h"
 #include "diplopop.h"
+#include "rectangle_operations.h"
 #include "basepop.h"
 #include "mapwin.h"  // MainInterfaceGlobal - the modal owner at 0x007AE820
 #include "datalink.h"
@@ -110,16 +111,6 @@ void DiploPop::start(int faction_id) {
     MainInterfaceGlobal.soft_update(flic1_.update_rect());
 }
 
-// WORKAROUND(decl): file-local RECT setter stand-in (original name unknown);
-// 0x00440923 stores the button rectangle through a pointer copy.
-static inline void diplopop_set_rect(RECT *rect, int left, int top, int right,
-                                     int bottom) {
-    rect->left = left;
-    rect->top = top;
-    rect->right = right;
-    rect->bottom = bottom;
-}
-
 // ORIGINAL: 0x00440700 ?init@DiploPop@@QAEXXZ 0x00440700-0x00440D4B;0x006548F4-0x0065491F
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00440700.cpp", "image:terranx_original.exe:0x00440700", "source:src/diplopop.h:DiploPop"], "reason": "Recover the complete DiploPop initializer with temporary Flic, MainInterface geometry, owned fonts/buttons, and native state."}
 // TRIED: the SEH __try/__finally frame and its per-object unwind-state byte; the layout arithmetic (0x004407B3-0x00440A21) is transcribed as algebraically-simplified named quantities rather than a literal register-by-register replay, so it matches the VALUES the original computes but not the register shuffling that produces them.
@@ -173,8 +164,8 @@ void DiploPop::init() {
 
     rect = MainInterfaceGlobal.main_frame_rect();
     expand_rect(&rect, -4, -4);
-    diplopop_set_rect(&portrait_text_rect_, rect.right - frame_width - 2, rect.top,
-                      rect.right, rect.bottom);
+    set_rect(&portrait_text_rect_, rect.right - frame_width - 2, rect.top,
+             rect.right, rect.bottom);
 
     rect = MainInterfaceGlobal.main_frame_rect();
     expand_rect(&rect, -4, -4);

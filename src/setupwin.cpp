@@ -27,6 +27,7 @@
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "setupwin.h"
+#include "rectangle_operations.h"
 #include "filewin.h"
 #include "game.h"
 #include "popup.h"
@@ -205,17 +206,6 @@ int SetupWin::do_menu(Popup *popup, int menu_kind, int flags) {
 // Buffer, Flic, Wave, Palette, Font, Spot, StringList and Popup/Dialog APIs.
 // Current byte restoration remains an obligation, not a coverage prerequisite.
 // Seed path below was retired; Git retains its historical provenance.
-// WORKAROUND(decl): file-local RECT setter stand-in (original name unknown);
-// 0x004ADF95 evaluates the four edges right to left before storing them in
-// order, the shape of an inline call.
-static inline void setupwin_set_rect(RECT *rect, int left, int top, int right,
-                                     int bottom) {
-    rect->left = left;
-    rect->top = top;
-    rect->right = right;
-    rect->bottom = bottom;
-}
-
 // ORIGINAL: 0x004ADB70 ?do_menu_rightside@SetupWin@@QAEHPADH@Z 0x004ADB70-0x004AE336;0x0065960C-0x00659697
 // RECOVERY_BINDING: v1 {"evidence": ["pinned 4ADB70..4AE336 and EH65960C..659697", "historical seed src/unrecovered/004adb70.cpp", "full owner/pending native overlay and observed current QAEHPADH symbol", "actual-source host controls with original text-get ordering, signed DIB geometry, Popup selection and explicit/automatic cleanup"], "reason": "Complete SetupWin right-side menu through genuine inherited members and Popup/Dialog APIs, preserving native branch, error-path and cleanup order; no original-address forwarding."}
 // kind      game
@@ -359,7 +349,7 @@ int SetupWin::do_menu_rightside(char *filename, int flags) {
         }
     }
 
-    setupwin_set_rect(&title_rect, 0x0F, 0, 0x12C, buffer2_.pixel_height());
+    set_rect(&title_rect, 0x0F, 0, 0x12C, buffer2_.pixel_height());
     if (token[0] != '\0') {
         Buffer::set_text_color(0x42, -1, 1, 1);
         title_rect.top += 0x1F;

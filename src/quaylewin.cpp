@@ -20,6 +20,7 @@
 #define WIN_RECT_EXTENT_INLINE  // stand-in: see rect_width in win.h
 #include "stdafx.h"
 #include "quaylewin.h"
+#include "rectangle_operations.h"
 #include "alpha.h"
 #include "base.h"
 #include "console.h"
@@ -71,13 +72,6 @@ static inline void quayle_offset_rect(RECT *rect, int dx, int dy) {
   rect->bottom += dy;
 }
 
-static inline void quayle_set_rect(RECT *rect, int left, int top, int right, int bottom) {
-  rect->left = left;
-  rect->top = top;
-  rect->right = right;
-  rect->bottom = bottom;
-}
-
 static inline void quayle_place_rect(RECT *rect, int x, int y, int width, int height) {
   rect->left = x;
   rect->top = y;
@@ -107,12 +101,12 @@ int QuayleWin::init() {
   if (buffer1_.load_pcx("frame.pcx", 0, 0xA, 0xEC) != 0) return 1;
   if (buffer2_.load_pcx("holobook.pcx", 0, 0xA, 0xEC) != 0) return 1;
 
-  quayle_set_rect(&illustration_rect_, 0x14C, 0x26, 0x2F0, 0x22E);
-  quayle_set_rect(&chapter_list_rect_, 0x13A, 0x19, 0x301, 0x235);
-  quayle_set_rect(&navigation_button_rect_, 0x289, 0x239, 0x301, 0x24D);
-  quayle_set_rect(&rating_rect_, 0x16C, 0x239, 0x27A, 0x24D);
-  quayle_set_rect(&title_rect_, 0x2A, 0x22, 0x116, 0x81);
-  quayle_set_rect(&introduction_rect_, 0x1E, 0x13E, 0x11E, 0x1B0);
+  set_rect(&illustration_rect_, 0x14C, 0x26, 0x2F0, 0x22E);
+  set_rect(&chapter_list_rect_, 0x13A, 0x19, 0x301, 0x235);
+  set_rect(&navigation_button_rect_, 0x289, 0x239, 0x301, 0x24D);
+  set_rect(&rating_rect_, 0x16C, 0x239, 0x27A, 0x24D);
+  set_rect(&title_rect_, 0x2A, 0x22, 0x116, 0x81);
+  set_rect(&introduction_rect_, 0x1E, 0x13E, 0x11E, 0x1B0);
 
   quayle_offset_rect(&illustration_rect_, window_rect_.left, window_rect_.top);
   quayle_offset_rect(&chapter_list_rect_, window_rect_.left, window_rect_.top);
@@ -326,8 +320,8 @@ void QuayleWin::on_redraw() {
       set_text_color(0x63, -1, 1, 1);
       set_text_color2(0x9B, -1, 1, 1);
       set_text_color3(0x9B, -1, 1, 1);
-      quayle_set_rect(&text_scratch_rect_, chapter_list_rect_.left, chapter_list_rect_.bottom + 6,
-                      chapter_list_rect_.right, chapter_list_rect_.bottom + 10);
+      set_rect(&text_scratch_rect_, chapter_list_rect_.left, chapter_list_rect_.bottom + 6,
+               chapter_list_rect_.right, chapter_list_rect_.bottom + 10);
       for (page = 0; page <= field_2148_; ++page) {
         temporary[0] = 0;
         strcat(temporary, "BOOKLIST");

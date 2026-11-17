@@ -3429,10 +3429,10 @@ void Datalink::init() {
     category_rect.top = 7;
     category_rect.right = 230;
     category_rect.bottom = 0x1b;
-    field_103EC_ = 0xe6;
-    field_103F0_ = side_width + 0x143;
-    field_103E4_ = 0x1e;
-    field_103E8_ = 0x1d;
+    field_103E4_rect_.right = 0xe6;
+    field_103E4_rect_.bottom = side_width + 0x143;
+    field_103E4_rect_.left = 0x1e;
+    field_103E4_rect_.top = 0x1d;
 
     illustration_rect_.left = 0xf8;
     illustration_rect_.top = 0x2c;
@@ -3461,7 +3461,7 @@ void Datalink::init() {
     lower_description_rect.top = side_width / 2 + 0xb6;
     lower_description_rect.right = 0x302;
     lower_description_rect.bottom = lower_description_rect.top + side_width / 2 + 0x8d;
-    const int title_left = field_103EC_ + 9;
+    const int title_left = field_103E4_rect_.right + 9;
     title_rect_.left = title_left;
     description_rect.left = title_left;
     lower_description_rect.left = title_left;
@@ -3601,16 +3601,13 @@ void Datalink::init() {
     rect.bottom += 3;
     box_sprite(&rect, &InterfaceBoxStyles[3]);
     box_sprite(&category_rect_, &InterfaceBoxStyles[6]);
-    // WORKAROUND(type): 0x00429AD3 passes this+0x103E4 as one RECT to
-    // UnionRect and copies it whole at 0x00429B20; the header still spells
-    // it as four dwords.
-    UnionRect(&rect, &category_rect_, reinterpret_cast<RECT *>(&field_103E4_));
+    UnionRect(&rect, &category_rect_, &field_103E4_rect_);
     rect.left -= 3;
     rect.right += 3;
     rect.top -= 3;
     rect.bottom += 3;
     box_sprite(&rect, &InterfaceBoxStyles[3]);
-    rect = *reinterpret_cast<RECT *>(&field_103E4_);
+    rect = field_103E4_rect_;
     box_sprite(&rect, &InterfaceBoxStyles[6]);
     rect.left += 3;
     rect.right -= 3;

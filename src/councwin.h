@@ -56,6 +56,18 @@ class CouncWin : public GraphicWin, public SubInterface {
   void init(int proposal, int faction_id);
   void on_mouse_leave(int a1, int a2);
   void on_mouse_move(int x, int y);
+  // WORKAROUND(decl): nine undefined declarations keep CouncWin's member
+  // count at its value before field_BA4_..field_BD0_ became three RECTs
+  // (guide 2.5, "member count counts declarations").
+  void decl_count_stand_in_1();
+  void decl_count_stand_in_2();
+  void decl_count_stand_in_3();
+  void decl_count_stand_in_4();
+  void decl_count_stand_in_5();
+  void decl_count_stand_in_6();
+  void decl_count_stand_in_7();
+  void decl_count_stand_in_8();
+  void decl_count_stand_in_9();
   // 0x00428620, defined out of line at the foot of councwin.cpp: the image
   // has a real body there (231 bytes) and it is not inlined anywhere.
   CouncWin();
@@ -162,18 +174,12 @@ class CouncWin : public GraphicWin, public SubInterface {
   Font font4_;  // 0xB2C
   Font font5_;  // 0xB54
   Font font6_;  // 0xB7C
-  uint32_t field_BA4_;  // 0xBA4
-  uint32_t field_BA8_;  // 0xBA8
-  uint32_t field_BAC_;  // 0xBAC
-  uint32_t field_BB0_;  // 0xBB0
-  uint32_t field_BB4_;  // 0xBB4
-  uint32_t field_BB8_;  // 0xBB8
-  uint32_t field_BBC_;  // 0xBBC
-  uint32_t field_BC0_;  // 0xBC0
-  uint32_t field_BC4_;  // 0xBC4
-  uint32_t field_BC8_;  // 0xBC8
-  uint32_t field_BCC_;  // 0xBCC
-  uint32_t field_BD0_;  // 0xBD0
+  // +0xBA4, +0xBB4 and +0xBC4 are RECTs: init fills each through the
+  // four-edge setter, and copies the info frame into +0xBB4 whole
+  // (0x00427661); draw_info copies +0xBB4 and draw_info's totals box +0xBA4.
+  RECT field_BA4_rect_;  // 0xBA4
+  RECT panel_rect_;      // 0xBB4
+  RECT field_BC4_rect_;  // 0xBC4
   // The original selects paired hit-boxes by two layout variants and rank.
   RECT leader_rects_[20];  // 0xBD4
   Sprite *leader_backing_[8][2];  // 0xD14

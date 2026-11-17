@@ -1280,7 +1280,7 @@ void BaseWin::rename() {
     // The pinned BaseWin::rename call references bytes 52 45 4E 41 4D 45 00
     // at 0x682C70. This writable-data correspondence says nothing about
     // runtime immutability or linker selection.
-    // RECOVERY_LITERAL: v1 0x682C70 0x682C77 $SG62583 0x41A2B0
+    // RECOVERY_LITERAL: v1 0x682C70 0x682C77 $SG62590 0x41A2B0
     if (X_pop_ask("RENAME", 0x18, BaseCurrent->name_string, nullptr, 0)) {
         NetDaemonNet.unlock_base(BaseIDCurrentSelected);
         return;
@@ -4501,8 +4501,8 @@ char InvertEntries[8][32];
 
 // BaseWin::init independently passes this same file/section pair at
 // 0x0041F2A6/0x0041F2AB; the two bounded literals are shared in this TU.
-// RECOVERY_LITERAL: v1 0x00682824 0x0068282F $SG63831 0x0041E8D0
-// RECOVERY_LITERAL: v1 0x00682830 0x00682839 $SG63832 0x0041E8D0
+// RECOVERY_LITERAL: v1 0x00682824 0x0068282F $SG63838 0x0041E8D0
+// RECOVERY_LITERAL: v1 0x00682830 0x00682839 $SG63839 0x0041E8D0
 void __cdecl load_inverts() {
     if (text_open("BASENAME", "INVERTLIST") == 0) {
         text_get();
@@ -6743,12 +6743,12 @@ void BaseWin::garrison_click(int vehicle_id, int x, int y, int right) {
     // Cases in the image's block order (jump table 0x40BFE4).
     switch (action) {
     case 1:
-        // RECOVERY_LITERAL: v1 0x006828DC 0x006828E1 $SG65071 0x0040B140
+        // RECOVERY_LITERAL: v1 0x006828DC 0x006828E1 $SG65078 0x0040B140
         if (veh_jail(vehicle_id)) X_pop("JAIL", 0);
         else { Vehs[vehicle_id].order = 0; synch_veh(vehicle_id); NetDaemonNet.await_synch(); }
         break;
     case 2:
-        // RECOVERY_LITERAL: v1 0x006828E4 0x006828E9 $SG65075 0x0040B140
+        // RECOVERY_LITERAL: v1 0x006828E4 0x006828E9 $SG65082 0x0040B140
         if (veh_jail(vehicle_id)) { X_pop("JAIL", 0); break; }
         Vehs[vehicle_id].order = 0;
         Vehs[vehicle_id].state &= 0xFCFFBDFFu;
@@ -6776,12 +6776,12 @@ void BaseWin::garrison_click(int vehicle_id, int x, int y, int right) {
         zoom(Vehs[vehicle_id].home_base_id, 0);
         return;
     case 10:
-        // RECOVERY_LITERAL: v1 0x006828EC 0x006828F1 $SG65086 0x0040B140
+        // RECOVERY_LITERAL: v1 0x006828EC 0x006828F1 $SG65093 0x0040B140
         if (veh_jail(vehicle_id)) X_pop("JAIL", 0);
         else { sleep(vehicle_id); synch_veh(vehicle_id); NetDaemonNet.await_synch(); }
         break;
     case 11:
-        // RECOVERY_LITERAL: v1 0x006828F4 0x006828F9 $SG65090 0x0040B140
+        // RECOVERY_LITERAL: v1 0x006828F4 0x006828F9 $SG65097 0x0040B140
         if (veh_jail(vehicle_id)) X_pop("JAIL", 0);
         else { Vehs[vehicle_id].order = 2; synch_veh(vehicle_id); NetDaemonNet.await_synch(); }
         break;
@@ -6792,7 +6792,7 @@ void BaseWin::garrison_click(int vehicle_id, int x, int y, int right) {
         else if (ReportWinGlobal.is_visible()) ReportWinGlobal.redraw();
         return;
     case 30:
-        // RECOVERY_LITERAL: v1 0x006828FC 0x00682901 $SG65098 0x0040B140
+        // RECOVERY_LITERAL: v1 0x006828FC 0x00682901 $SG65105 0x0040B140
         if (veh_jail(vehicle_id)) { X_pop("JAIL", 0); break; }
         Vehs[vehicle_id].state &= 0xFCFFBDFFu;
         Vehs[vehicle_id].order = 24;
@@ -7112,12 +7112,6 @@ BaseWin::~BaseWin() {
 extern int InvertEntryCount;
 extern char InvertEntries[8][32];
 
-namespace {
-void base_init_rect(RECT &rect, int left, int top, int right, int bottom) {
-    rect.left = left; rect.top = top; rect.right = right; rect.bottom = bottom;
-}
-}
-
 // ORIGINAL: 0x0041E8D0 ?init@BaseWin@@QAEXXZ 0x0041E8D0-0x00420A3D;0x00652A94-0x00652AA9
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x0041E8D0; retired seed provenance git:ac469904:src/unrecovered/0041e8d0.cpp; all original spans and historical obligations retained.", "image:41E8D0 initializes existing Font/FlatButton/Sprite/RECT and Caviar camera members; 420A70 tears down the same declaration order.", "image:41AF5B supplies ConsoleGlobal GraphicWin virtual-base receiver939444; qualified Console callback leaves the result intact.", "image:40B8F8 borrows the vehicle-ID pointer in NetDaemon row1 payload; normal menu cancel-1 reads inherited GraphicWinA0C. Undefined icon-spacing/invalid-index/modal-borrow inputs remain explicit."], "reason": "Genuine BaseWin owner with actual members, automatic base/member lifetimes and native callback receivers, not fixed executable-address forwarding or raw self-offset access."}
 // TRIED: sim 0.70 (framed /O2 /Oy-), first divergence #9 push-vs-mov in the prologue/Wave-init region; every field store, BaseButton/Sprite/Buffer /Caviar/Time/Spot/Font/Wave call and its receiver was cross-checked against the raw disassembly (not Ghidra's dropped-this renderings), including the trailing 22x1 BaseButton array and the two vtable slot002/slot062 dispatch loops; RECT/float scratch temporaries use fresh locals rather than the original's exact reused stack slots.
@@ -7140,35 +7134,35 @@ void BaseWin::init() {
 
     // Both original resolution paths initialize these same rectangles.
     if (!expanded) {
-        base_init_rect(rect7_, 191, 354, 369, 374);
-        base_init_rect(rect6_, 373, 354, 551, 374);
-        base_init_rect(rect1_, 166, 33, 560, 257);
-        base_init_rect(commerce_report_rect_, 30, 170, 160, 293);
-        base_init_rect(commerce_title_rect_, 30, 149, 160, 169);
-        base_init_rect(commerce_outer_rect_, 27, 146, 163, 296);
-        base_init_rect(rect2_, 566, 57, 696, 254);
-        base_init_rect(facilities_title_rect_, 566, 36, 696, 56);
-        base_init_rect(facilities_help_rect_, 563, 33, 699, 257);
-        base_init_rect(nutrient_content_rect_, 30, 57, 160, 140);
-        base_init_rect(nutrient_title_rect_, 30, 36, 160, 56);
-        base_init_rect(nutrient_outer_rect_, 27, 33, 163, 143);
-        base_init_rect(production_outer_rect_, 166, 260, 699, 349);
+        set_rect(&rect7_, 191, 354, 369, 374);
+        set_rect(&rect6_, 373, 354, 551, 374);
+        set_rect(&rect1_, 166, 33, 560, 257);
+        set_rect(&commerce_report_rect_, 30, 170, 160, 293);
+        set_rect(&commerce_title_rect_, 30, 149, 160, 169);
+        set_rect(&commerce_outer_rect_, 27, 146, 163, 296);
+        set_rect(&rect2_, 566, 57, 696, 254);
+        set_rect(&facilities_title_rect_, 566, 36, 696, 56);
+        set_rect(&facilities_help_rect_, 563, 33, 699, 257);
+        set_rect(&nutrient_content_rect_, 30, 57, 160, 140);
+        set_rect(&nutrient_title_rect_, 30, 36, 160, 56);
+        set_rect(&nutrient_outer_rect_, 27, 33, 163, 143);
+        set_rect(&production_outer_rect_, 166, 260, 699, 349);
         production_content_rect_ = production_outer_rect_;
         const int available = WinScreenHeight - static_cast<int>(MainInterfaceGlobal.field_D7C_);
         if (available > 398) window_height = 398;
         else window_height = available;
     } else {
-        base_init_rect(rect1_, 166, 33, 560, 257);
-        base_init_rect(commerce_report_rect_, 30, 170, 160, 293);
-        base_init_rect(commerce_title_rect_, 30, 149, 160, 169);
-        base_init_rect(commerce_outer_rect_, 27, 146, 163, 296);
-        base_init_rect(rect2_, 566, 57, 696, 254);
-        base_init_rect(facilities_title_rect_, 566, 36, 696, 56);
-        base_init_rect(facilities_help_rect_, 563, 33, 699, 257);
-        base_init_rect(nutrient_content_rect_, 30, 57, 160, 140);
-        base_init_rect(nutrient_title_rect_, 30, 36, 160, 56);
-        base_init_rect(nutrient_outer_rect_, 27, 33, 163, 143);
-        base_init_rect(production_outer_rect_, 166, 260, 699, 349);
+        set_rect(&rect1_, 166, 33, 560, 257);
+        set_rect(&commerce_report_rect_, 30, 170, 160, 293);
+        set_rect(&commerce_title_rect_, 30, 149, 160, 169);
+        set_rect(&commerce_outer_rect_, 27, 146, 163, 296);
+        set_rect(&rect2_, 566, 57, 696, 254);
+        set_rect(&facilities_title_rect_, 566, 36, 696, 56);
+        set_rect(&facilities_help_rect_, 563, 33, 699, 257);
+        set_rect(&nutrient_content_rect_, 30, 57, 160, 140);
+        set_rect(&nutrient_title_rect_, 30, 36, 160, 56);
+        set_rect(&nutrient_outer_rect_, 27, 33, 163, 143);
+        set_rect(&production_outer_rect_, 166, 260, 699, 349);
         RECT *production = &production_content_rect_;
         *production = production_outer_rect_;
         const int half_old_height = rect_height(production) / 2;
@@ -7294,7 +7288,7 @@ void BaseWin::init() {
     r = *buffer_working_rect();
     r.left += 23; r.right -= 55; r.bottom += 3;
     Buffer::box_sprite(&r, &InterfaceBoxStyles[9]);
-    base_init_rect(r, 27, 4, 699, 30);
+    set_rect(&r, 27, 4, 699, 30);
     Buffer::box_sprite(&r, &InterfaceBoxStyles[12]);
     UnionRect(&r, &rect6_, &rect7_);
     expand_rect(&r, 3, 3);
@@ -7382,28 +7376,28 @@ void BaseWin::init() {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x4FC / 4));
     CharUpperA(StringTemp);
-    base_init_rect(rect10_, 169, 234, 297, 254);
+    set_rect(&rect10_, 169, 234, 297, 254);
     flatButtons_[10].init(StringTemp, 10, rect10_.left, rect10_.top,
         rect10_.right - rect10_.left, rect10_.bottom - rect10_.top, this, 0);
     flatButtons_[10].set_bubble_text(StringTable.get(Labels.strings_ptr[0xC1C / 4]));
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0xD4 / 4));
     CharUpperA(StringTemp);
-    base_init_rect(rect9_, 299, 234, 427, 254);
+    set_rect(&rect9_, 299, 234, 427, 254);
     flatButtons_[9].init(StringTemp, 9, rect9_.left, rect9_.top,
         rect9_.right - rect9_.left, rect9_.bottom - rect9_.top, this, 0);
     flatButtons_[9].set_bubble_text(StringTable.get(Labels.strings_ptr[0xC20 / 4]));
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x4F8 / 4));
     CharUpperA(StringTemp);
-    base_init_rect(rect11_, 429, 234, 557, 254);
+    set_rect(&rect11_, 429, 234, 557, 254);
     flatButtons_[11].init(StringTemp, 11, rect11_.left, rect11_.top,
         rect11_.right - rect11_.left, rect11_.bottom - rect11_.top, this, 0);
     flatButtons_[11].set_bubble_text(StringTable.get(Labels.strings_ptr[0xC24 / 4]));
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x824 / 4));
     CharUpperA(StringTemp);
-    base_init_rect(rect14_, 30, 7, 142, 27);
+    set_rect(&rect14_, 30, 7, 142, 27);
     flatButtons_[4].init(StringTemp, 4, rect14_.left, rect14_.top,
         rect14_.right - rect14_.left, rect14_.bottom - rect14_.top, this, 0);
     flatButtons_[4].set_slice_icons(&g_BASEWIN_SPRITES[9], &g_BASEWIN_SPRITES[12], &g_BASEWIN_SPRITES[15],
@@ -7416,7 +7410,7 @@ void BaseWin::init() {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x828 / 4));
     CharUpperA(StringTemp);
-    base_init_rect(rect15_, 144, 7, 256, 27);
+    set_rect(&rect15_, 144, 7, 256, 27);
     flatButtons_[5].init(StringTemp, 5, rect15_.left, rect15_.top,
         rect15_.right - rect15_.left, rect15_.bottom - rect15_.top, this, 0);
     flatButtons_[5].set_slice_icons(&g_BASEWIN_SPRITES[9], &g_BASEWIN_SPRITES[12], &g_BASEWIN_SPRITES[15],
@@ -7429,7 +7423,7 @@ void BaseWin::init() {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0xA54 / 4));
     CharUpperA(StringTemp);
-    base_init_rect(rect16_, 258, 7, 258 + sprites8_[0].width(), 7 + sprites8_[0].height());
+    set_rect(&rect16_, 258, 7, 258 + sprites8_[0].width(), 7 + sprites8_[0].height());
     flatButtons_[18].init(0, 18, rect16_.left, rect16_.top,
         rect16_.right - rect16_.left, rect16_.bottom - rect16_.top, this, 0);
     flatButtons_[18].set_report_icons(&sprites8_[0], &sprites8_[1], &sprites8_[2]);
@@ -7440,7 +7434,7 @@ void BaseWin::init() {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x724 / 4));
     CharUpperA(StringTemp);
-    base_init_rect(rect8_, 280, 7, 446, 27);
+    set_rect(&rect8_, 280, 7, 446, 27);
     flatButtons_[8].init(StringTemp, 8, rect8_.left, rect8_.top,
         rect8_.right - rect8_.left, rect8_.bottom - rect8_.top, this, 0);
     flatButtons_[8].set_slice_icons(&g_BASEWIN_SPRITES[0], &g_BASEWIN_SPRITES[3], &g_BASEWIN_SPRITES[6],
@@ -7453,7 +7447,7 @@ void BaseWin::init() {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0xA54 / 4));
     CharUpperA(StringTemp);
-    base_init_rect(rect17_, 448, 7, 448 + sprites8_[0].width(), 7 + sprites8_[0].height());
+    set_rect(&rect17_, 448, 7, 448 + sprites8_[0].width(), 7 + sprites8_[0].height());
     flatButtons_[19].init(0, 19, rect17_.left, rect17_.top,
         rect17_.right - rect17_.left, rect17_.bottom - rect17_.top, this, 0);
     flatButtons_[19].set_report_icons(&sprites8_[0], &sprites8_[1], &sprites8_[2]);
@@ -7464,7 +7458,7 @@ void BaseWin::init() {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x82C / 4));
     CharUpperA(StringTemp);
-    base_init_rect(rect18_, 470, 7, 582, 27);
+    set_rect(&rect18_, 470, 7, 582, 27);
     flatButtons_[6].init(StringTemp, 6, rect18_.left, rect18_.top,
         rect18_.right - rect18_.left, rect18_.bottom - rect18_.top, this, 0);
     flatButtons_[6].set_slice_icons(&g_BASEWIN_SPRITES[9], &g_BASEWIN_SPRITES[12], &g_BASEWIN_SPRITES[15],
@@ -7477,7 +7471,7 @@ void BaseWin::init() {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x830 / 4));
     CharUpperA(StringTemp);
-    base_init_rect(rect19_, 584, 7, 696, 27);
+    set_rect(&rect19_, 584, 7, 696, 27);
     flatButtons_[7].init(StringTemp, 7, rect19_.left, rect19_.top,
         rect19_.right - rect19_.left, rect19_.bottom - rect19_.top, this, 0);
     flatButtons_[7].set_slice_icons(&g_BASEWIN_SPRITES[9], &g_BASEWIN_SPRITES[12], &g_BASEWIN_SPRITES[15],
@@ -7511,7 +7505,7 @@ void BaseWin::init() {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0xA4C / 4));
     CharUpperA(StringTemp);
-    base_init_rect(rect13_, 169, 263, 169 + sprites8_[3].width(), 263 + sprites8_[3].height());
+    set_rect(&rect13_, 169, 263, 169 + sprites8_[3].width(), 263 + sprites8_[3].height());
     flatButtons_[17].init(0, 17, rect13_.left, rect13_.top,
         rect13_.right - rect13_.left, rect13_.bottom - rect13_.top, this, 0);
         flatButtons_[17].set_report_icons(&sprites8_[3], &sprites8_[4], &sprites8_[5]);

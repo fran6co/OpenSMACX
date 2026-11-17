@@ -182,14 +182,6 @@ static inline RECT *pickwin_offset_rect(RECT *rect, int horizontal, int vertical
   return rect;
 }
 
-// WORKAROUND(type): PickWin's button/geometry words 0x625C..0x6288 and
-// 0x9210..0x926C are RECTs in the original (init fills each through an
-// inlined set_rectangle_dimensions with its arguments evaluated first,
-// 0x00488CD0 and 0x00488E42); pickwin.h still declares them as uint32 words.
-static inline RECT *pickwin_rect(uint32_t *left) {
-  return reinterpret_cast<RECT *>(left);
-}
-
 // WORKAROUND(decl): the list reset at 0x00489DF4..0x00489E4E (and again at
 // 0x0048A226) stores ListBox +0x2C/+0x14, the four Dialog fields, then Win
 // iFlags_ = 0x40 last. Only ListBox::initialize_picker_state can reach the
@@ -294,12 +286,12 @@ void PickWin::init(void (__cdecl *callback)(int), int mode, int faction) {
   field_A18_ = header_panel_rect_.bottom + 4;
   field_A20_ = 0x16;
   field_A1C_ = (header_panel_rect_.right - header_panel_rect_.left - 6) / 3;
-  set_rectangle_dimensions(pickwin_rect(&field_625C_), field_A14_, field_A18_, 0x102, 0x5A);
-  set_rectangle_dimensions(pickwin_rect(&field_626C_), field_6264_ + 2, field_A18_, 0x102, 0x5A);
-  set_rectangle_dimensions(pickwin_rect(&field_627C_), field_6274_ + 2, field_A18_, 0x102, 0x5A);
+  set_rectangle_dimensions(&field_625C_rect_, field_A14_, field_A18_, 0x102, 0x5A);
+  set_rectangle_dimensions(&field_626C_rect_, field_625C_rect_.right + 2, field_A18_, 0x102, 0x5A);
+  set_rectangle_dimensions(&field_627C_rect_, field_626C_rect_.right + 2, field_A18_, 0x102, 0x5A);
 
   field_A14_ = header_panel_rect_.left + 0x159;
-  set_rectangle_dimensions(&list_area_rect_, header_panel_rect_.left + 0x15B, field_6268_ + 3,
+  set_rectangle_dimensions(&list_area_rect_, header_panel_rect_.left + 0x15B, field_625C_rect_.bottom + 3,
                            header_panel_rect_.right - header_panel_rect_.left - 0x15E, 0x88);
   expand_rect(&list_area_rect_, -3, -3);
   pickwin_offset_rect(&list_area_rect_, -0x12, 0);
@@ -313,17 +305,17 @@ void PickWin::init(void (__cdecl *callback)(int), int mode, int faction) {
   field_A14_ = header_panel_rect_.left + 1;
   field_A18_ = list_area_rect_.bottom + 7;
   field_A1C_ = static_cast<int>(field_A1C_) * 3 / 4 - 1;
-  set_rectangle_dimensions(pickwin_rect(&field_9220_), field_A14_, field_A18_, field_A1C_, field_A20_);
-  set_rectangle_dimensions(pickwin_rect(&field_9210_), field_9228_ + 2, field_A18_, field_A1C_, field_A20_);
-  set_rectangle_dimensions(pickwin_rect(&field_9260_), field_9218_ + 2, field_A18_, field_A1C_, field_A20_);
-  set_rectangle_dimensions(pickwin_rect(&field_9230_), field_9268_ + 2, field_A18_, field_A1C_, field_A20_);
+  set_rectangle_dimensions(&field_9220_rect_, field_A14_, field_A18_, field_A1C_, field_A20_);
+  set_rectangle_dimensions(&field_9210_rect_, field_9220_rect_.right + 2, field_A18_, field_A1C_, field_A20_);
+  set_rectangle_dimensions(&field_9260_rect_, field_9210_rect_.right + 2, field_A18_, field_A1C_, field_A20_);
+  set_rectangle_dimensions(&field_9230_rect_, field_9260_rect_.right + 2, field_A18_, field_A1C_, field_A20_);
 
   field_A1C_ = 0xD8;
   field_A14_ = header_panel_rect_.left + 2;
   field_A18_ = list_area_rect_.top - 2;
-  set_rectangle_dimensions(pickwin_rect(&field_9240_), field_A14_, field_A18_, field_A1C_, field_A20_);
+  set_rectangle_dimensions(&field_9240_rect_, field_A14_, field_A18_, field_A1C_, field_A20_);
   field_A18_ += 0x19;
-  set_rectangle_dimensions(pickwin_rect(&field_9250_), field_A14_, field_A18_, field_A1C_, field_A20_);
+  set_rectangle_dimensions(&field_9250_rect_, field_A14_, field_A18_, field_A1C_, field_A20_);
 
   for (i = 0; i < 7; ++i) {
     RECT &button = picker_button_rects_[i];
@@ -336,22 +328,22 @@ void PickWin::init(void (__cdecl *callback)(int), int mode, int faction) {
 
   StringTemp[0] = '\0';
   strcat(StringTemp, label_get(0x45B));
-  flatButton1_.init(0, 0x100, field_625C_, field_6260_,
-                    field_6264_ - field_625C_, field_6268_ - field_6260_, this, 0);
+  flatButton1_.init(0, 0x100, field_625C_rect_.left, field_625C_rect_.top,
+                    field_625C_rect_.right - field_625C_rect_.left, field_625C_rect_.bottom - field_625C_rect_.top, this, 0);
   flatButton1_.set_report_icons(&sprites1_[0], &sprites1_[1], &sprites1_[2]);
   flatButton1_.set_bubble_text(StringTemp);
   flatButton1_.hide();
   StringTemp[0] = '\0';
   strcat(StringTemp, label_get(0x45C));
-  flatButton2_.init(0, 0x101, field_626C_, field_6270_,
-                    field_6274_ - field_626C_, field_6278_ - field_6270_, this, 0);
+  flatButton2_.init(0, 0x101, field_626C_rect_.left, field_626C_rect_.top,
+                    field_626C_rect_.right - field_626C_rect_.left, field_626C_rect_.bottom - field_626C_rect_.top, this, 0);
   flatButton2_.set_report_icons(&sprites2_[0], &sprites2_[1], &sprites2_[2]);
   flatButton2_.set_bubble_text(StringTemp);
   flatButton2_.hide();
   StringTemp[0] = '\0';
   strcat(StringTemp, label_get(0x45D));
-  flatButton3_.init(0, 0x102, field_627C_, field_6280_,
-                    field_6284_ - field_627C_, field_6288_ - field_6280_, this, 0);
+  flatButton3_.init(0, 0x102, field_627C_rect_.left, field_627C_rect_.top,
+                    field_627C_rect_.right - field_627C_rect_.left, field_627C_rect_.bottom - field_627C_rect_.top, this, 0);
   flatButton3_.set_report_icons(&sprites3_[0], &sprites3_[1], &sprites3_[2]);
   flatButton3_.set_bubble_text(StringTemp);
   flatButton3_.hide();
@@ -369,40 +361,40 @@ void PickWin::init(void (__cdecl *callback)(int), int mode, int faction) {
 
   StringTemp[0] = '\0';
   strcat(StringTemp, label_get(0x45E));
-  flatButton4_.init(StringTemp, 0x106, field_9210_, field_9214_, field_9218_ - field_9210_, field_921C_ - field_9214_, this, 0);
+  flatButton4_.init(StringTemp, 0x106, field_9210_rect_.left, field_9210_rect_.top, field_9210_rect_.right - field_9210_rect_.left, field_9210_rect_.bottom - field_9210_rect_.top, this, 0);
   flatButton4_.Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
   flatButton4_.redraw();
   flatButton4_.hide();
   StringTemp[0] = '\0';
   strcat(StringTemp, StringTable.get(field_5DAC_ ? Labels.strings_ptr[0x45F]
                                              : Labels.strings_ptr[0x2AF]));
-  flatButton5_.init(StringTemp, 0x107, field_9220_, field_9224_, field_9228_ - field_9220_, field_922C_ - field_9224_, this, 0);
+  flatButton5_.init(StringTemp, 0x107, field_9220_rect_.left, field_9220_rect_.top, field_9220_rect_.right - field_9220_rect_.left, field_9220_rect_.bottom - field_9220_rect_.top, this, 0);
   flatButton5_.Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
   flatButton5_.redraw();
   flatButton5_.hide();
   StringTemp[0] = '\0';
   strcat(StringTemp, label_get(0x66));
   CharUpperA(StringTemp);
-  flatButton6_.init(StringTemp, 0x103, field_9230_, field_9234_, field_9238_ - field_9230_, field_923C_ - field_9234_, this, 0);
+  flatButton6_.init(StringTemp, 0x103, field_9230_rect_.left, field_9230_rect_.top, field_9230_rect_.right - field_9230_rect_.left, field_9230_rect_.bottom - field_9230_rect_.top, this, 0);
   flatButton6_.Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
   flatButton6_.redraw();
   flatButton6_.hide();
   StringTemp[0] = '\0';
   strcat(StringTemp, label_get(0x65));
   CharUpperA(StringTemp);
-  flatButton9_.init(StringTemp, 0x108, field_9260_, field_9264_, field_9268_ - field_9260_, field_926C_ - field_9264_, this, 0);
+  flatButton9_.init(StringTemp, 0x108, field_9260_rect_.left, field_9260_rect_.top, field_9260_rect_.right - field_9260_rect_.left, field_9260_rect_.bottom - field_9260_rect_.top, this, 0);
   flatButton9_.Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
   flatButton9_.redraw();
   flatButton9_.hide();
   StringTemp[0] = '\0';
   strcat(StringTemp, label_get(0x460));
-  flatButton8_.init(StringTemp, 0x105, field_9250_, field_9254_, field_9258_ - field_9250_, field_925C_ - field_9254_, this, 0);
+  flatButton8_.init(StringTemp, 0x105, field_9250_rect_.left, field_9250_rect_.top, field_9250_rect_.right - field_9250_rect_.left, field_9250_rect_.bottom - field_9250_rect_.top, this, 0);
   flatButton8_.Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
   flatButton8_.redraw();
   flatButton8_.hide();
   StringTemp[0] = '\0';
   strcat(StringTemp, label_get(0x461));
-  flatButton7_.init(StringTemp, 0x104, field_9240_, field_9244_, field_9248_ - field_9240_, field_924C_ - field_9244_, this, 0);
+  flatButton7_.init(StringTemp, 0x104, field_9240_rect_.left, field_9240_rect_.top, field_9240_rect_.right - field_9240_rect_.left, field_9240_rect_.bottom - field_9240_rect_.top, this, 0);
   flatButton7_.Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
   flatButton7_.redraw();
   flatButton7_.hide();
@@ -659,14 +651,14 @@ void PickWin::on_redraw() {
   Buffer::box_sprite(&group, &InterfaceBoxStyles[3]);
 
   int selected = listBox_.Dialog::get_selected_id();
-  int row_y = static_cast<int>(field_9244_) + 10;
+  int row_y = field_9240_rect_.top + 10;
   int line_y = row_y + 0x39;
-  int center_x = (static_cast<int>(field_9240_) + static_cast<int>(field_9248_)) / 2;
+  int center_x = (field_9240_rect_.left + field_9240_rect_.right) / 2;
   int list_x = list_area_rect_.left - 10;
-  int join_x = (list_x + static_cast<int>(field_9248_)) / 2;
+  int join_x = (list_x + field_9240_rect_.right) / 2;
 
   if (buttonGroup_.field_84_ == 0x105) {
-    Buffer::vline(center_x, static_cast<int>(field_925C_) - 2, line_y - 2, 0xE0);
+    Buffer::vline(center_x, field_9250_rect_.bottom - 2, line_y - 2, 0xE0);
     Buffer::put_pixel(center_x + 1, line_y - 1, 0xE0);
     Buffer::hline(center_x + 2, join_x, line_y, 0xE0);
     Buffer::vline(join_x, row_y + 2, row_y + 0x70, 0xE0);
@@ -679,7 +671,7 @@ void PickWin::on_redraw() {
   } else if (selected > 0 && selected < 8) {
     --selected;
     int y = row_y + selected * 0x13;
-    Buffer::hline(static_cast<int>(field_9248_), join_x - 2, row_y, 0xE0);
+    Buffer::hline(field_9240_rect_.right, join_x - 2, row_y, 0xE0);
     if (selected != 0) {
       Buffer::put_pixel(join_x - 1, row_y + 1, 0xE0);
       Buffer::put_pixel(join_x + 1, y - 1, 0xE0);

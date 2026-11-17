@@ -473,17 +473,6 @@ static inline int scoot_tile_visible(MapWin *window, int x, int y) {
     return 0;
 }
 
-// WORKAROUND(decl): file-local stand-in for the original's four-edge rect
-// setter (name unknown): the image evaluates the four edges right to left
-// (bottom, right, top, left) before storing them, as call arguments do
-// (quayle_set_rect in quaylewin.cpp is the same shape).
-static inline void scoot_set_rect(RECT *rect, int left, int top, int right, int bottom) {
-    rect->left = left;
-    rect->top = top;
-    rect->right = right;
-    rect->bottom = bottom;
-}
-
 // ORIGINAL: 0x0055A150 ?veh_scoot@@YAXHHHHH@Z 0x0055A150-0x0055AF11;0x0065FF70-0x0065FFC7
 // RECOVERY_BINDING: v1 {"evidence": ["Original55A175..55A1D9 constructs Buffer[8],Vector[8],singleton Vector,Vector[8], with reverse normal teardown55AEA7..55AEFB and EH65FF70..65FFC7. Use genuine value subtraction, mutating scale and compound operations. Preserve flags1 turn-only cleanup, flags4000 immediate redraw, fresh MapWinTable receivers and preference reads, source/destination copy direction, wrap and timing. Original55A29D/55A65C skips active-slot zeroing for null MapWinTable entries; later reads55AA60/55AC10/55AE26 retain the indeterminate-stack quirk. Buffer array [EBP-2EF8,EBP-2B8) is disjoint from active flags [EBP-B0,EBP-90). Null-slot runtime effects remain unverified, not normalized to inactive.", "Preserve existing seed identity and complete original spans. Source binding is not a measured matching or runtime claim."], "reason": "Recover real movement animation with automatic Buffer and Vector lifetime rather than raw stack/return-slot scaffolding."}
 void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int flags) {
@@ -535,7 +524,7 @@ void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int fl
                 set_rectangle_dimensions(&tile_rect, start_x[i], start_y[i],
                     MapWinTable[i]->tile_pixel_width_,
                     MapWinTable[i]->tile_pixel_height_ + MapWinTable[i]->field_1DDC0_);
-                scoot_set_rect(&area[i],
+                set_rect(&area[i],
                     start_x[i] < end_x[i] ? start_x[i] : end_x[i],
                     start_y[i] < end_y[i] ? start_y[i] : end_y[i],
                     (start_x[i] > end_x[i] ? start_x[i] : end_x[i]) +
@@ -586,7 +575,7 @@ void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int fl
                 increment[i] = destination - position[i];
                 increment[i].scale(1.0f / static_cast<float>(move_frames));
                 position[i] += increment[i];
-                scoot_set_rect(&area[i],
+                set_rect(&area[i],
                     start_x[i] < end_x[i] ? start_x[i] : end_x[i],
                     start_y[i] < end_y[i] ? start_y[i] : end_y[i],
                     (start_x[i] > end_x[i] ? start_x[i] : end_x[i]) +

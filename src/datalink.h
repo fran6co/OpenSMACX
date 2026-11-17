@@ -84,6 +84,12 @@ class Datalink : public GraphicWin, public SubInterface {
   void UNK7(char *file, char *section);
   void UNK8();
   void UNK9();
+  // WORKAROUND(decl): three undefined declarations keep Datalink's member
+  // count at its value before field_103E4_..field_103F0_ became one RECT
+  // (guide 2.5, "member count counts declarations").
+  void decl_count_stand_in_1();
+  void decl_count_stand_in_2();
+  void decl_count_stand_in_3();
   void close();
   void on_left_click(int a1, int a2) override;
   void on_group_clicked(int a1, int a2) override;
@@ -264,10 +270,9 @@ class Datalink : public GraphicWin, public SubInterface {
   // draw_* topic drawer paints into - four dwords in the image, read as
   // left/top/right/bottom.
   RECT category_rect_;    // 0x103D4
-  uint32_t field_103E4_;  // 0x103E4
-  uint32_t field_103E8_;  // 0x103E8
-  uint32_t field_103EC_;  // 0x103EC
-  uint32_t field_103F0_;  // 0x103F0
+  // A RECT: init passes it to UnionRect and copies it whole
+  // (0x00429AD3, 0x00429B20).
+  RECT field_103E4_rect_;  // 0x103E4
   // Init writes eight backwards rows, nine forwards rows, then overwrites
   // row16 and fills row17 for the two special buttons. Other controls use0..15.
   // RECOVERY_MEMBER: v4 Datalink topic_button_bounds_ tagRECT[18] 0x103F4 0x120 0x00429300

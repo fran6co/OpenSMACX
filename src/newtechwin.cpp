@@ -292,8 +292,8 @@ void NewTechWin::on_redraw() {
 // WORKAROUND(type): 0x00483FA7..483FC9 stores the four bounds constants
 // through a pointer copy and 0x00483FD0.. reads them back through another
 // instead of folding the constants: the original store and the RECT read use
-// different types. The A14 words are uint32_t in newtechwin.h; this
-// word-typed setter reproduces the unfolded store/reload.
+// different types (a RECT-typed setter folds them). This word-typed setter
+// reproduces the unfolded store/reload.
 static inline void newtechwin_set_words(uint32_t *rect, int left, int top, int right,
                                         int bottom) {
     rect[0] = left;
@@ -301,7 +301,6 @@ static inline void newtechwin_set_words(uint32_t *rect, int left, int top, int r
     rect[2] = right;
     rect[3] = bottom;
 }
-
 
 // WORKAROUND(inline): 0x00484783..4847A7 is a non-rotated loop whose head
 // runs the modal pass, hide and redraw before the -1 test, the shape of a
@@ -318,15 +317,13 @@ static inline int newtechwin_run_modal(NewTechWin *win) {
 void NewTechWin::exec(int technology_id, int other_faction_id) {
     field_B28_ = static_cast<uint32_t>(other_faction_id);
     field_B24_ = static_cast<uint32_t>(technology_id);
-    // WORKAROUND(type): the A14 words are a RECT in the image
-    // (pointer-parameter stores at 0x00483FA7).
     char number[16];
     RECT boxes[4];
     RECT strip;
     RECT rect;
     uint32_t category_id;
-    RECT *const bounds = reinterpret_cast<RECT *>(&field_A14_);
-    newtechwin_set_words(&field_A14_, 0, 0, 0x226, 0x258);
+    RECT *const bounds = &field_A14_rect_;
+    newtechwin_set_words(reinterpret_cast<uint32_t *>(&field_A14_rect_), 0, 0, 0x226, 0x258);
     newtechwin_inset_copy(&rect, bounds, 12);
     strip = rect;
     strip.left += 3;

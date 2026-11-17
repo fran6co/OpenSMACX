@@ -31,6 +31,7 @@
 #include "font_metrics.h"
 #include "interface_fonts.h"
 #include "councwin.h"
+#include "rectangle_operations.h"
 #include "mapwin.h"   // MainInterfaceGlobal - the interface owner on_status drives
 #include "subinterface.h"
 #include "win.h"
@@ -298,11 +299,6 @@ void CouncWin::set_vote(int faction_id, int vote) {
     }
 }
 
-// field_BB4_..field_BC0_ hold the panel RECT; the image copies it whole.
-static inline RECT &council_area(CouncWin *win) {
-    return *reinterpret_cast<RECT *>(&win->field_BB4_);
-}
-
 // Totals-line writes with the image's null test on the text.
 static inline void council_write_cent(char *text, RECT *rect) {
     if (text != 0) {
@@ -327,8 +323,8 @@ void CouncWin::draw_info() {
     int column = 0;
 redraw:
     MainInterfaceGlobal.Buffer::set_clip(MainInterfaceGlobal.buffer_working_rect());
-    RECT inner = council_area(this);
-    RECT line = council_area(this);
+    RECT inner = panel_rect_;
+    RECT line = panel_rect_;
     line.bottom = line.top + 20;
     MainInterfaceGlobal.Buffer::box_sprite(&line, &InterfaceBoxStyles[6]);
     MainInterfaceGlobal.Buffer::set_font(&font2_, 0, 0, 0);
@@ -372,7 +368,7 @@ redraw:
         MainInterfaceGlobal.Buffer::wrap_cent(StringTemp, &inner);
     }
 
-    line = council_area(this);
+    line = panel_rect_;
     line.top = line.bottom - font_line_advance(font2_);
     line.left += 2;
     line.right -= 2;
@@ -446,7 +442,7 @@ redraw:
         council_write_right(StringTemp, &line);
     }
 
-    MainInterfaceGlobal.soft_update(&council_area(this));
+    MainInterfaceGlobal.soft_update(&panel_rect_);
 }
 
 // ORIGINAL: 0x00424410 ?make_resolution@CouncWin@@QAEHH@Z 0x00424410-0x0042471F FILE
@@ -562,14 +558,6 @@ int CouncWin::make_resolution(int resolve) {
     return 1;
 }
 
-static void set_council_rect(RECT &rect, int left, int top, int right,
-                             int bottom) {
-    rect.left = left;
-    rect.top = top;
-    rect.right = right;
-    rect.bottom = bottom;
-}
-
 // ORIGINAL: 0x00427230 ?init@CouncWin@@QAEXHH@Z 0x00427230-0x00428347;0x006530F4-0x00653109 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00427230.cpp", "image:terranx_original.exe:0x00427230", "Council interface/window declarations identify embedded fonts/buttons, voting arrays and existing MainInterface/Console owners; original instructions determine call and state order."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
 // TRIED: the AI diplomatic-negotiation body (faction relationship scan, tech-trade proposal, vote-threshold check, roughly 0x4281XX-0x4282E2 in the disassembly) was left as a stub comment rather than transcribed - it needed more raw-asm cross-checking than remaining time allowed. VCall::slot001 and slot057 were retyped in place to take the args this call site passes (int; int,void*,void*) per the emitter's own "retype in place" convention. Everything else (field-init prologue, widget/font/spot setup, vote-table build) is a direct transcription of a clean Ghidra decompile.
@@ -581,44 +569,41 @@ void CouncWin::init(int proposal, int faction_id) {
 
     RECT *first;
     RECT *bottom_row;
-    // WORKAROUND(type): field_BA4_..BB0_, BB4_..BC0_ and BC4_..BD0_ are RECTs in
-    // the image (four-dword copy from the info frame into +0xBB4 at
-    // 0x00427661); the header still declares them as separate dwords.
     {
         int wide = WinScreenWidth != 800;
-        set_council_rect(*reinterpret_cast<RECT *>(&field_BC4_), 0x1e, 7, 0x2ee, 0x1b);
-        set_council_rect(leader_rects_[2], 0x1e, 0x35, 0x80, 0x14f);
-        set_council_rect(leader_rects_[4], 0x82, 0x2d, 0xe4, 0x147);
-        set_council_rect(leader_rects_[6], 0xe6, 0x25, 0x148, 0x13f);
-        set_council_rect(leader_rects_[8], 0x14a, 0x1d, 0x1c2, 0x160);
-        set_council_rect(leader_rects_[10], 0x1c4, 0x25, 0x226, 0x13f);
-        set_council_rect(leader_rects_[12], 0x228, 0x2d, 0x28a, 0x147);
-        set_council_rect(leader_rects_[14], 0x28c, 0x35, 0x2ee, 0x14f);
-        set_council_rect(leader_rects_[3], 0x20, 0x1d, 0x82, 0x137);
-        set_council_rect(leader_rects_[5], 0x87, 0x1d, 0xe9, 0x137);
-        set_council_rect(leader_rects_[7], 0xee, 0x1d, 0x150, 0x137);
-        set_council_rect(leader_rects_[9], 0x155, 0x1d, 0x1b7, 0x137);
-        set_council_rect(leader_rects_[11], 0x1bc, 0x1d, 0x21e, 0x137);
-        set_council_rect(leader_rects_[13], 0x223, 0x1d, 0x285, 0x137);
-        set_council_rect(leader_rects_[15], 0x28a, 0x1d, 0x2ec, 0x137);
-        set_council_rect(*reinterpret_cast<RECT *>(&field_BA4_), 0xf5, 0x163, 0x21a, 0x17a);
-        RECT *panel = reinterpret_cast<RECT *>(&field_BB4_);
+        set_rect(&field_BC4_rect_, 0x1e, 7, 0x2ee, 0x1b);
+        set_rect(&leader_rects_[2], 0x1e, 0x35, 0x80, 0x14f);
+        set_rect(&leader_rects_[4], 0x82, 0x2d, 0xe4, 0x147);
+        set_rect(&leader_rects_[6], 0xe6, 0x25, 0x148, 0x13f);
+        set_rect(&leader_rects_[8], 0x14a, 0x1d, 0x1c2, 0x160);
+        set_rect(&leader_rects_[10], 0x1c4, 0x25, 0x226, 0x13f);
+        set_rect(&leader_rects_[12], 0x228, 0x2d, 0x28a, 0x147);
+        set_rect(&leader_rects_[14], 0x28c, 0x35, 0x2ee, 0x14f);
+        set_rect(&leader_rects_[3], 0x20, 0x1d, 0x82, 0x137);
+        set_rect(&leader_rects_[5], 0x87, 0x1d, 0xe9, 0x137);
+        set_rect(&leader_rects_[7], 0xee, 0x1d, 0x150, 0x137);
+        set_rect(&leader_rects_[9], 0x155, 0x1d, 0x1b7, 0x137);
+        set_rect(&leader_rects_[11], 0x1bc, 0x1d, 0x21e, 0x137);
+        set_rect(&leader_rects_[13], 0x223, 0x1d, 0x285, 0x137);
+        set_rect(&leader_rects_[15], 0x28a, 0x1d, 0x2ec, 0x137);
+        set_rect(&field_BA4_rect_, 0xf5, 0x163, 0x21a, 0x17a);
+        RECT *panel = &panel_rect_;
         if (!wide) {
-            set_council_rect(*panel, 0x105, 0x55, 0x235, 0x8c);
+            set_rect(panel, 0x105, 0x55, 0x235, 0x8c);
             first = &leader_rects_[16];
-            set_council_rect(*first, 0x105, 0x8e, 0x169, 0xa2);
-            set_council_rect(leader_rects_[17], 0x16b, 0x8e, 0x1cf, 0xa2);
-            set_council_rect(leader_rects_[18], 0x1d1, 0x8e, 0x235, 0xa2);
+            set_rect(first, 0x105, 0x8e, 0x169, 0xa2);
+            set_rect(&leader_rects_[17], 0x16b, 0x8e, 0x1cf, 0xa2);
+            set_rect(&leader_rects_[18], 0x1d1, 0x8e, 0x235, 0xa2);
             bottom_row = &leader_rects_[19];
-            set_council_rect(*bottom_row, 0x105, 0x8e, 0x235, 0xa2);
+            set_rect(bottom_row, 0x105, 0x8e, 0x235, 0xa2);
         } else {
-            set_council_rect(*panel, 0x120, 0x58, 0x30b, 0x91);
+            set_rect(panel, 0x120, 0x58, 0x30b, 0x91);
             first = &leader_rects_[16];
-            set_council_rect(*first, 0x120, 0x93, 0x1c2, 0xa7);
-            set_council_rect(leader_rects_[17], 0x1c5, 0x93, 0x267, 0xa7);
-            set_council_rect(leader_rects_[18], 0x269, 0x93, 0x30b, 0xa7);
+            set_rect(first, 0x120, 0x93, 0x1c2, 0xa7);
+            set_rect(&leader_rects_[17], 0x1c5, 0x93, 0x267, 0xa7);
+            set_rect(&leader_rects_[18], 0x269, 0x93, 0x30b, 0xa7);
             bottom_row = &leader_rects_[19];
-            set_council_rect(*bottom_row, 0x120, 0x93, 0x30b, 0xa7);
+            set_rect(bottom_row, 0x120, 0x93, 0x30b, 0xa7);
         }
         *panel = MainInterfaceGlobal.info_frame_rect();
         panel->left -= -4;
@@ -630,7 +615,7 @@ void CouncWin::init(int proposal, int faction_id) {
         rect.right -= 3;
         rect.bottom -= 3;
         rect.top = rect.bottom - 0x14;
-        field_BC0_ = rect.top - 3;
+        panel_rect_.bottom = rect.top - 3;
         *bottom_row = rect;
         rect.right = (rect.right - rect.left + 3) / 3 + rect.left - 3;
         *first = rect;
@@ -1008,7 +993,7 @@ void CouncWin::on_redraw() {
         return;
     }
 
-    rect = *reinterpret_cast<RECT *>(&field_BA4_);
+    rect = field_BA4_rect_;
     Buffer::box_sprite(&rect, &InterfaceBoxStyles[0]);
     StringTemp[0] = '\0';
     rect.right -= 3;

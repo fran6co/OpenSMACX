@@ -1235,9 +1235,8 @@ int DesignWin::init() {
     caption_rect_ = edge;
     const int caption_bottom = caption_rect_.top + 21;
     caption_rect_.bottom = caption_bottom;
-    // WORKAROUND(type): field_A7C_..field_A88_ are a RECT in the original.
-    *reinterpret_cast<RECT *>(&field_A7C_) = edge;
-    field_A80_ = caption_bottom + 3;
+    field_A7C_rect_ = edge;
+    field_A7C_rect_.top = caption_bottom + 3;
 
     spot2_.init(6);
     int i;
@@ -1282,13 +1281,13 @@ int DesignWin::init() {
 
     // Two columns of seven automatic-design buttons (ids 9..22).
     X_text_open(ScriptPopupFile, "DESIGNAUTO");
-    int column_x = static_cast<int>(field_A7C_);
-    int grid_width = static_cast<int>(field_A84_ - column_x + 3) / 2 - 3;
+    int column_x = field_A7C_rect_.left;
+    int grid_width = (field_A7C_rect_.right - column_x + 3) / 2 - 3;
     DesignGridButtonIndex = 0;
     int row;
     int column;
-    int y = static_cast<int>(field_A80_);
-    for (row = 0; row < 2; ++row, y = static_cast<int>(field_A80_)) {
+    int y = field_A7C_rect_.top;
+    for (row = 0; row < 2; ++row, y = field_A7C_rect_.top) {
         for (column = 0; column < 7; ++column) {
             text_get();
             CharUpperA(TextBufferGetPtr);
@@ -1307,8 +1306,7 @@ int DesignWin::init() {
     RECT stack = MainInterfaceGlobal.stack_button_rect();
     offset_rect(&stack, MainInterfaceGlobal.main_frame_rect().left - stack.left + 8, 0);
     field_CBC_rect_ = stack;
-    // WORKAROUND(type): field_CCC_..field_CD8_ are a RECT in the original.
-    *reinterpret_cast<RECT *>(&field_CCC_) =
+    field_CCC_rect_ =
         MainInterfaceGlobal.adjacent_panel_right_rect();
 
     // Five lower action rows.
@@ -1447,8 +1445,9 @@ int DesignWin::init() {
         field_CBC_rect_.top, field_CBC_rect_.right - field_CBC_rect_.left,
         field_CBC_rect_.bottom - field_CBC_rect_.top,
         static_cast<Win *>(&MainInterfaceGlobal), 0);
-    flatButtons_[24].init(DesignButtonName24, 0x18, field_CCC_, field_CD0_,
-        field_CD4_ - field_CCC_, field_CD8_ - field_CD0_,
+    flatButtons_[24].init(DesignButtonName24, 0x18, field_CCC_rect_.left,
+        field_CCC_rect_.top, field_CCC_rect_.right - field_CCC_rect_.left,
+        field_CCC_rect_.bottom - field_CCC_rect_.top,
         static_cast<Win *>(&MainInterfaceGlobal), 0);
 
     for (i = 0; i < 25; ++i) {
@@ -1781,7 +1780,7 @@ void DesignWin::select_name() {
     // The original prompt token at 0x006838F4 is DESIGNNAME.
 // The retained prototype-name prompt identifies DESIGNNAME independently of measurement.
 // Bounds cover the literal payload, not surrounding allocation or lifetime.
-// RECOVERY_LITERAL: v1 0x006838F4 0x006838FF $SG61514 0x0043BE30
+// RECOVERY_LITERAL: v1 0x006838F4 0x006838FF $SG61515 0x0043BE30
     if (X_pop_ask("DESIGNNAME", 31, name, 0, 0) == 0) {
         if (strlen(ParseStrBuffer[0].str) == 0) {
             prototype_name_[0] = 0;
@@ -4050,7 +4049,7 @@ void DesignWin::draw_special_1(int redraw) {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x228 / 4));
     strcat(StringTemp, BufferJoinSpace);
-// RECOVERY_LITERAL: v1 0x00683554 0x00683556 $SG62205 0x00435B30
+// RECOVERY_LITERAL: v1 0x00683554 0x00683556 $SG62206 0x00435B30
     strcat(StringTemp, "1"); // Original first special-ability title numeral.
     CharUpperA(StringTemp);
     Buffer::set_text_color(TextColourTable[156], TextColourTable[157], 1, 1);
@@ -4096,7 +4095,7 @@ void DesignWin::draw_special_2(int redraw) {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x228 / 4));
     strcat(StringTemp, BufferJoinSpace);
-// RECOVERY_LITERAL: v1 0x00683560 0x00683562 $SG62218 0x00435DE0
+// RECOVERY_LITERAL: v1 0x00683560 0x00683562 $SG62219 0x00435DE0
     strcat(StringTemp, "2"); // Original second special-ability title numeral.
     CharUpperA(StringTemp);
     Buffer::set_text_color(TextColourTable[156], TextColourTable[157], 1, 1);
@@ -4903,7 +4902,7 @@ void DesignWin::draw_stack() {
     // the neighbouring rectangle at +0xCCC (`mov eax,[ebx+0xccc]` at
     // 0x0043D5BC), not back to the frame's own right edge.
     rc.bottom -= 3;
-    rc.right = field_CCC_ - 3;
+    rc.right = field_CCC_rect_.left - 3;
     rc.top += 3;
     rc.left = field_CBC_rect_.right + 3;
     const int spacer = (rc.right - rc.left + 2) / 10 - 2;

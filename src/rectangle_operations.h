@@ -15,3 +15,16 @@ static inline RECT *__cdecl set_rectangle_dimensions(
     rect->bottom = y + height;
     return rect;
 }
+
+// Descriptive recovery operation; this name does not identify an original
+// entry. The four-edge setter the image expands at 0x00440923 (DiploPop),
+// 0x004ADF95 (SetupWin), 0x0055AFEF (base_draw) and 0x0055A150 (veh_scoot),
+// MonuWin's icon rects and QuayleWin: the edges are evaluated right to left,
+// as call arguments are, then stored in order through the pointer.
+static inline void __cdecl set_rect(RECT *rect, int left, int top, int right,
+                                    int bottom) {
+    rect->left = left;
+    rect->top = top;
+    rect->right = right;
+    rect->bottom = bottom;
+}

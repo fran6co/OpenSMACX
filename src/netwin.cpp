@@ -33,6 +33,7 @@
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "netwin.h"
+#include "rectangle_operations.h"
 #include <cstring>
 
 #include "alpha.h"     // read_faction
@@ -2493,13 +2494,6 @@ void NetWin::pick_planet_size() {
     pick_send_state();
 }
 
-static void netwin_set_rect(RECT *rect, int left, int top, int right, int bottom) {
-    rect->left = left;
-    rect->top = top;
-    rect->right = right;
-    rect->bottom = bottom;
-}
-
 // WORKAROUND(decl): 482A38..482A5E null-tests &setup_rects_[44] before
 // EditBox::init, the shape of an inline RECT-taking EditBox::init overload.
 static inline int netwin_init_edit(EditBox *box, RECT *rect, Win *parent,
@@ -2521,7 +2515,7 @@ static inline void netwin_button_font(FlatButton *button, Font *font) {
 static inline void netwin_set_column(RECT *rows, int left, int top, int right,
                                      int bottom) {
     for (int i = 0; i < 7; ++i) {
-        netwin_set_rect(rows++, left, top, right, bottom);
+        set_rect(rows++, left, top, right, bottom);
         top += 0x16;
         bottom += 0x16;
     }
@@ -2605,22 +2599,22 @@ int NetWin::exec() {
     rect.bottom = rect.top + 0x1A;
     setup_rects_[0] = rect;
 
-    netwin_set_rect(&setup_rects_[1], 7, 0x3A, 0x134, 0x180);
-    netwin_set_rect(&setup_rects_[2], 7, 0x24, 0x134, 0x38);
+    set_rect(&setup_rects_[1], 7, 0x3A, 0x134, 0x180);
+    set_rect(&setup_rects_[2], 7, 0x24, 0x134, 0x38);
     ::UnionRect(&setup_rects_[3], &setup_rects_[1], &setup_rects_[2]);
     expand_rect(&setup_rects_[3], 3, 3);
-    netwin_set_rect(&setup_rects_[4], 0x13D, 0x24, 0x319, 0x38);
-    netwin_set_rect(&setup_rects_[5], 0x13A, 0x21, 0x31C, 0xEB);
+    set_rect(&setup_rects_[4], 0x13D, 0x24, 0x319, 0x38);
+    set_rect(&setup_rects_[5], 0x13A, 0x21, 0x31C, 0xEB);
 
     int i;
     int top = 0x3A;
     int bottom = 0x4E;
     RECT box;
-    netwin_set_rect(&box, 0x13D, top, 0x14D + 0x12, bottom);
+    set_rect(&box, 0x13D, top, 0x14D + 0x12, bottom);
     RECT *rows = &setup_rects_[27];
     for (i = 0; i < 7; ++i) {
-        netwin_set_rect(rows + 9, 0x13D, top, 0x14D, bottom);
-        netwin_set_rect(rows++, 0x14F, box.top, box.right, box.bottom);
+        set_rect(rows + 9, 0x13D, top, 0x14D, bottom);
+        set_rect(rows++, 0x14F, box.top, box.right, box.bottom);
         top += 0x16;
         bottom += 0x16;
         box.top += 0x16;
@@ -2630,19 +2624,19 @@ int NetWin::exec() {
     netwin_set_column(&setup_rects_[13], 0x215, 0x3A, 0x2A1, 0x4E);
     netwin_set_column(&setup_rects_[20], 0x2A3, 0x3A, 0x319, 0x4E);
 
-    netwin_set_rect(&setup_rects_[34], 0x13D, 0xD4, 0x229, 0xE8);
-    netwin_set_rect(&rect, 0x22C, 0xD4, 0x318, 0xE8);
+    set_rect(&setup_rects_[34], 0x13D, 0xD4, 0x229, 0xE8);
+    set_rect(&rect, 0x22C, 0xD4, 0x318, 0xE8);
     setup_rects_[35] = rect;
 
-    netwin_set_rect(&setup_rects_[43], 0x13D, 0xF1, 0x319, 0x162);
-    netwin_set_rect(&setup_rects_[44], 0x13D, 0x164, 0x319, 0x180);
+    set_rect(&setup_rects_[43], 0x13D, 0xF1, 0x319, 0x162);
+    set_rect(&setup_rects_[44], 0x13D, 0x164, 0x319, 0x180);
     ::UnionRect(&setup_rects_[45], &setup_rects_[43], &setup_rects_[44]);
     expand_rect(&setup_rects_[45], 3, 3);
 
-    netwin_set_rect(&setup_rects_[46], 7, 0x189, 0x319, 0x19D);
-    netwin_set_rect(&setup_rects_[48], 0x1B, 0x19F, 0x18F, 0x251);
+    set_rect(&setup_rects_[46], 7, 0x189, 0x319, 0x19D);
+    set_rect(&setup_rects_[48], 0x1B, 0x19F, 0x18F, 0x251);
     // Restored original values (482965..482985): right 0x319, bottom 0x251.
-    netwin_set_rect(&setup_rects_[49], 0x1A5, 0x19F, 0x319, 0x251);
+    set_rect(&setup_rects_[49], 0x1A5, 0x19F, 0x319, 0x251);
     ::UnionRect(&rect, &setup_rects_[46], &setup_rects_[48]);
     ::UnionRect(&setup_rects_[47], &rect, &setup_rects_[49]);
     expand_rect(&setup_rects_[47], 3, 3);

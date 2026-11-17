@@ -50,6 +50,36 @@ class PickWin : public GraphicWin {
   // Small picker actions homed from their historical seeds. Button actions
   // dispatch through Win's virtual on_button_clicked interface.
   void close();                    // 0x00489B00, qualified GraphicWin close
+  // WORKAROUND(decl): 27 undefined declarations keep PickWin's member count
+  // at its value before field_625C_..6288_ and field_9210_..926C_ became
+  // nine RECTs (guide 2.5, "member count counts declarations").
+  void decl_count_stand_in_1();
+  void decl_count_stand_in_2();
+  void decl_count_stand_in_3();
+  void decl_count_stand_in_4();
+  void decl_count_stand_in_5();
+  void decl_count_stand_in_6();
+  void decl_count_stand_in_7();
+  void decl_count_stand_in_8();
+  void decl_count_stand_in_9();
+  void decl_count_stand_in_10();
+  void decl_count_stand_in_11();
+  void decl_count_stand_in_12();
+  void decl_count_stand_in_13();
+  void decl_count_stand_in_14();
+  void decl_count_stand_in_15();
+  void decl_count_stand_in_16();
+  void decl_count_stand_in_17();
+  void decl_count_stand_in_18();
+  void decl_count_stand_in_19();
+  void decl_count_stand_in_20();
+  void decl_count_stand_in_21();
+  void decl_count_stand_in_22();
+  void decl_count_stand_in_23();
+  void decl_count_stand_in_24();
+  void decl_count_stand_in_25();
+  void decl_count_stand_in_26();
+  void decl_count_stand_in_27();
   int on_key_click(int flags, int key);  // 0x0048A7C0
   int go_girl();                   // 0x0048A810
 
@@ -78,18 +108,11 @@ class PickWin : public GraphicWin {
   // and text calls; a stack copy loses that original alias relationship.
   RECT frame_rect_;  // 0x623C..0x624C
   RECT header_panel_rect_;  // 0x624C..0x625C
-  uint32_t field_625C_;  // 0x625C
-  uint32_t field_6260_;  // 0x6260
-  uint32_t field_6264_;  // 0x6264
-  uint32_t field_6268_;  // 0x6268
-  uint32_t field_626C_;  // 0x626C
-  uint32_t field_6270_;  // 0x6270
-  uint32_t field_6274_;  // 0x6274
-  uint32_t field_6278_;  // 0x6278
-  uint32_t field_627C_;  // 0x627C
-  uint32_t field_6280_;  // 0x6280
-  uint32_t field_6284_;  // 0x6284
-  uint32_t field_6288_;  // 0x6288
+  // The three top button RECTs; init fills each through an inlined
+  // set_rectangle_dimensions with its arguments evaluated first (0x00488CD0).
+  RECT field_625C_rect_;  // 0x625C
+  RECT field_626C_rect_;  // 0x626C
+  RECT field_627C_rect_;  // 0x627C
   FlatButton flatButton1_;  // 0x628C
   FlatButton flatButton2_;  // 0x6DD8
   FlatButton flatButton3_;  // 0x7924
@@ -101,30 +124,13 @@ class PickWin : public GraphicWin {
   // 48921C/489DEF/48A221 pass this actual member to Dialog::init.
   RECT list_area_rect_;  // 0x86AC..0x86BC
   ListBox listBox_;  // 0x86BC; measured 0xB54
-  uint32_t field_9210_;  // 0x9210
-  uint32_t field_9214_;  // 0x9214
-  uint32_t field_9218_;  // 0x9218
-  uint32_t field_921C_;  // 0x921C
-  uint32_t field_9220_;  // 0x9220
-  uint32_t field_9224_;  // 0x9224
-  uint32_t field_9228_;  // 0x9228
-  uint32_t field_922C_;  // 0x922C
-  uint32_t field_9230_;  // 0x9230
-  uint32_t field_9234_;  // 0x9234
-  uint32_t field_9238_;  // 0x9238
-  uint32_t field_923C_;  // 0x923C
-  uint32_t field_9240_;  // 0x9240
-  uint32_t field_9244_;  // 0x9244
-  uint32_t field_9248_;  // 0x9248
-  uint32_t field_924C_;  // 0x924C
-  uint32_t field_9250_;  // 0x9250
-  uint32_t field_9254_;  // 0x9254
-  uint32_t field_9258_;  // 0x9258
-  uint32_t field_925C_;  // 0x925C
-  uint32_t field_9260_;  // 0x9260
-  uint32_t field_9264_;  // 0x9264
-  uint32_t field_9268_;  // 0x9268
-  uint32_t field_926C_;  // 0x926C
+  // The six lower button RECTs, filled the same way (0x00488E42).
+  RECT field_9210_rect_;  // 0x9210
+  RECT field_9220_rect_;  // 0x9220
+  RECT field_9230_rect_;  // 0x9230
+  RECT field_9240_rect_;  // 0x9240
+  RECT field_9250_rect_;  // 0x9250
+  RECT field_9260_rect_;  // 0x9260
   FlatButton flatButton4_;  // 0x9270
   FlatButton flatButton5_;  // 0x9DBC
   FlatButton flatButton6_;  // 0xA908

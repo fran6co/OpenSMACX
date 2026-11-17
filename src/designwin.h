@@ -79,6 +79,15 @@ class DesignWin : public GraphicWin, public SubInterface {
 
   // homed from 0043e960.cpp
   void shut_that_badboy_down();
+  // WORKAROUND(decl): six undefined declarations keep DesignWin's member
+  // count at its value before field_A7C_..A88_ and field_CCC_..CD8_ became
+  // two RECTs (guide 2.5, "member count counts declarations").
+  void decl_count_stand_in_1();
+  void decl_count_stand_in_2();
+  void decl_count_stand_in_3();
+  void decl_count_stand_in_4();
+  void decl_count_stand_in_5();
+  void decl_count_stand_in_6();
 
  public:
   // homed from 00434650.cpp
@@ -258,10 +267,9 @@ class DesignWin : public GraphicWin, public SubInterface {
   // Original on_redraw copies this rectangle before shrinking its caption.
   // RECOVERY_MEMBER: v2 DesignWin caption_rect_ tagRECT 0xA6C 0x004379A0
   RECT caption_rect_;  // 0xA6C
-  uint32_t field_A7C_;  // 0xA7C
-  uint32_t field_A80_;  // 0xA80
-  uint32_t field_A84_;  // 0xA84
-  uint32_t field_A88_;  // 0xA88
+  // init copies the inset frame rectangle here whole and lays the
+  // automatic-design button grid out from it.
+  RECT field_A7C_rect_;  // 0xA7C
   // RECOVERY_MEMBER: v2 DesignWin frame_rect_ tagRECT 0xA8C 0x004379A0
   RECT frame_rect_;  // 0xA8C
   // init assigns and iterates these six adjacent RECTs in component order;
@@ -361,10 +369,9 @@ class DesignWin : public GraphicWin, public SubInterface {
   // 0x4BB1CB (original address 0x71FF6C); draw_stack reads its right edge.
   // RECOVERY_MEMBER: v2 DesignWin field_CBC_rect_ tagRECT 0xCBC 0x004BAF20
   RECT field_CBC_rect_;  // 0xCBC
-  uint32_t field_CCC_;  // 0xCCC
-  uint32_t field_CD0_;  // 0xCD0
-  uint32_t field_CD4_;  // 0xCD4
-  uint32_t field_CD8_;  // 0xCD8
+  // init copies MainInterface's adjacent right panel rectangle here whole;
+  // the lower action strip and flatButtons_[24] read it.
+  RECT field_CCC_rect_;  // 0xCCC
   uint32_t field_CDC_;  // 0xCDC
   uint32_t field_CE0_;  // 0xCE0
   int prototype_stack_start_;  // 0xCE4

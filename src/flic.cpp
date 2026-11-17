@@ -290,7 +290,7 @@ Status: Complete
 void Flic::UNK8() {
 }
 
-// RECOVERY_LITERAL: v1 0x00697470 0x00697473 $SG40600 0x00629E50
+// RECOVERY_LITERAL: v1 0x00697470 0x00697473 $SG40607 0x00629E50
 /*
 Purpose: Open a FLIC file and prepare the first frame: zero the per-file
          state, read and validate the 128-byte header, cache both ring
@@ -741,14 +741,6 @@ Purpose: Decode a type-7 (FLC DELTA) chunk: word-run deltas. Per line a
 Return Value: n/a
 Status: Complete
 */
-static inline void flic_set_rect(RECT *rect, int left, int top, int right,
-                                 int bottom) {
-    rect->left = left;
-    rect->top = top;
-    rect->right = right;
-    rect->bottom = bottom;
-}
-
 void Flic::decode_delta_flc() {
     uint8_t run_count;
     uint16_t line_hdr;
@@ -858,8 +850,8 @@ void Flic::decode_delta_flc() {
     if (work_buf != nullptr) {
         free(work_buf);
     }
-    flic_set_rect(&update_rect_, origin_x_ + min_touched, origin_y_ + first_row,
-                  origin_x_ + max_touched + 1, origin_y_ + last_row + 1);
+    set_rect(&update_rect_, origin_x_ + min_touched, origin_y_ + first_row,
+             origin_x_ + max_touched + 1, origin_y_ + last_row + 1);
 }
 
 /*
@@ -1342,8 +1334,8 @@ void Flic::decode_delta_flc_trans() {
             }
         }
     }
-    flic_set_rect(&update_rect_, origin_x_ + min_x, origin_y_ + min_y,
-                  origin_x_ + max_x + 1, origin_y_ + max_y + 1);
+    set_rect(&update_rect_, origin_x_ + min_x, origin_y_ + min_y,
+             origin_x_ + max_x + 1, origin_y_ + max_y + 1);
 }
 
 /*

@@ -835,14 +835,6 @@ static inline int report_spot_add(Spot *spot, int position, int type, RECT *rect
                      rect->right - rect->left, rect->bottom - rect->top);
 }
 
-// Four-coordinate RECT store; arguments evaluate before the stores.
-static inline void report_set_rect(RECT *rect, int left, int top, int right, int bottom) {
-    rect->left = left;
-    rect->top = top;
-    rect->right = right;
-    rect->bottom = bottom;
-}
-
 // The image expands a RECT-based button init in place, re-reading the RECT.
 static inline int report_button_init(FlatButton *button, LPCSTR name, int id, RECT *rect,
                                      Win *parent, int style_flag) {
@@ -2641,7 +2633,7 @@ and the arrow head.
 // g_IFACE_TECH_TREE_ARROW_SPRITES (stride 0x2C, so stB*4 == 44*style_flag).
 // Image shape: every rectangle is addressed as the member itself (the image
 // forms lea esi,[edi+0xE258] at each use, so no pointer local), four-value
-// fills evaluate all coordinates before the stores (report_set_rect), the
+// fills evaluate all coordinates before the stores (set_rect), the
 // 7-pixel shrink reloads the right edge (inflate_frame on the member), and
 // each arrow evaluates the Buffer conversion and sprite address before the
 // positions (the late-sprite report_sprite_draw form).
@@ -2668,7 +2660,7 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
         if (branch_id != static_cast<int>(lab_upper_inner_y_)
             && branch_id != static_cast<int>(lab_lower_inner_y_)) {
             // 0x49B4D3
-            report_set_rect(&report_work_rect_,
+            set_rect(&report_work_rect_,
                 static_cast<int>(lab_prerequisite_x_) + x_offset - 4, line_height,
                 first_id + 7, line_height + 20);
             inflate_frame(&report_work_rect_, -7, 0);
@@ -2685,7 +2677,7 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
             }
         } else {
             // 0x49B57C
-            report_set_rect(&report_work_rect_,
+            set_rect(&report_work_rect_,
                 static_cast<int>(lab_prerequisite_x_) + x_offset + 3,
                 static_cast<int>(lab_upper_inner_y_) + half, first_id,
                 static_cast<int>(lab_lower_inner_y_) + half);
@@ -2700,7 +2692,7 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
             // box_sprite calls, but that spelling flips the canary
             // on_iface_button_clicked through unit coupling; the earlier
             // ternary stays.
-            report_set_rect(&report_work_rect_,
+            set_rect(&report_work_rect_,
                 static_cast<int>(lab_prerequisite_x_) + x_offset - 4,
                 static_cast<int>(lab_upper_inner_y_) + half, first_id,
                 static_cast<int>(lab_lower_inner_y_) + half);
@@ -2709,7 +2701,7 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
             host->Buffer::restore_clip();
         }
         // 0x49B62F
-        report_set_rect(&report_work_rect_,
+        set_rect(&report_work_rect_,
             first_id - 7, line_height,
             static_cast<int>(lab_center_x_) + 4, line_height + 20);
         inflate_frame(&report_work_rect_, -7, 0);
@@ -2740,7 +2732,7 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
                 report_sprite_draw(&g_IFACE_TECH_TREE_ARROW_SPRITES[style_select ? 2 : 0], host,
                                    static_cast<int>(lab_child_x_) - 10,
                                    line_height - 6);
-                report_set_rect(&report_work_rect_,
+                set_rect(&report_work_rect_,
                     first_id - 7, line_height,
                     static_cast<int>(lab_child_x_) + 4, line_height + 20);
                 inflate_frame(&report_work_rect_, -7, 0);
@@ -2750,7 +2742,7 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
                 report_work_rect_.bottom += 7;
             } else {
                 // 0x49B836
-                report_set_rect(&report_work_rect_,
+                set_rect(&report_work_rect_,
                     first_id,
                     static_cast<int>(lab_upper_inner_y_) + half, static_cast<int>(lab_child_x_) - 3,
                     static_cast<int>(lab_lower_inner_y_) + half);
@@ -2766,14 +2758,14 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
                                        static_cast<int>(lab_lower_inner_y_) + half - 7);
                 }
                 host->Buffer::set_clip(&report_work_rect_);
-                report_set_rect(&report_work_rect_,
+                set_rect(&report_work_rect_,
                     first_id,
                     static_cast<int>(lab_upper_inner_y_) + half, static_cast<int>(lab_child_x_) + 4,
                     static_cast<int>(lab_lower_inner_y_) + half);
             }
         } else {
             // 0x49B95C
-            report_set_rect(&report_work_rect_,
+            set_rect(&report_work_rect_,
                 first_id,
                 static_cast<int>(lab_four_child_top_y_) + half, static_cast<int>(lab_child_x_) - 3,
                 static_cast<int>(lab_four_child_bottom_y_) + half);
@@ -2789,14 +2781,14 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
                                    static_cast<int>(lab_four_child_bottom_y_) + half - 7);
             }
             host->Buffer::set_clip(&report_work_rect_);
-            report_set_rect(&report_work_rect_,
+            set_rect(&report_work_rect_,
                 first_id,
                 static_cast<int>(lab_four_child_top_y_) + half, static_cast<int>(lab_child_x_) + 4,
                 static_cast<int>(lab_four_child_bottom_y_) + half);
         }
     } else {
         // 0x49BA82
-        report_set_rect(&report_work_rect_,
+        set_rect(&report_work_rect_,
             first_id,
             static_cast<int>(lab_three_child_upper_y_) + half, static_cast<int>(lab_child_x_) - 3,
             static_cast<int>(lab_three_child_lower_y_) + half);
@@ -2812,7 +2804,7 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
                                static_cast<int>(lab_three_child_lower_y_) + half - 7);
         }
         host->Buffer::set_clip(&report_work_rect_);
-        report_set_rect(&report_work_rect_,
+        set_rect(&report_work_rect_,
             first_id,
             static_cast<int>(lab_three_child_upper_y_) + half, static_cast<int>(lab_child_x_) + 4,
             static_cast<int>(lab_three_child_lower_y_) + half);
@@ -5383,7 +5375,7 @@ void ReportIf::on_status(int mode) {
         window.buttonGroup1_.init(4, 0);
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x2E8));
-        report_set_rect(&draw_workspace_rect_, field_C_, field_10_,
+        set_rect(&draw_workspace_rect_, field_C_, field_10_,
                         field_C_ + static_cast<int>(field_14_) / 3 - 2, field_10_ + 20);
         report_button_init(&window.flatButton4_, StringTemp, 0x8B3, &draw_workspace_rect_, &window, 0);
         window.flatButton4_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
@@ -5392,7 +5384,7 @@ void ReportIf::on_status(int mode) {
         window.flatButton4_.Win::hide();
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x2E9));
-        report_set_rect(&draw_workspace_rect_, field_C_ + static_cast<int>(field_14_) / 3,
+        set_rect(&draw_workspace_rect_, field_C_ + static_cast<int>(field_14_) / 3,
                         field_10_, field_C_ + static_cast<int>(field_14_) / 3 * 2,
                         field_10_ + 20);
         report_button_init(&window.flatButton5_, StringTemp, 0x8B4, &draw_workspace_rect_, &window, 0);
@@ -5402,7 +5394,7 @@ void ReportIf::on_status(int mode) {
         window.flatButton5_.Win::hide();
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x3F));
-        report_set_rect(&draw_workspace_rect_,
+        set_rect(&draw_workspace_rect_,
                         field_C_ + static_cast<int>(field_14_) / 3 * 2 + 2, field_10_,
                         field_C_ + field_14_, field_10_ + 20);
         report_button_init(&window.flatButton6_, StringTemp, 0x8B5, &draw_workspace_rect_, &window, 0);
@@ -5423,7 +5415,7 @@ void ReportIf::on_status(int mode) {
         window.buttonGroup2_.init(6, 0);
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x32C));
-        report_set_rect(&draw_workspace_rect_, field_C_, field_10_,
+        set_rect(&draw_workspace_rect_, field_C_, field_10_,
                         field_C_ + static_cast<int>(field_14_) / 2 - 1, field_10_ + 20);
         report_button_init(&window.flatButton7_, StringTemp, 0xD3C, &draw_workspace_rect_, &window, 0);
         window.flatButton7_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
@@ -5432,7 +5424,7 @@ void ReportIf::on_status(int mode) {
         window.flatButton7_.Win::hide();
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x32D));
-        report_set_rect(&draw_workspace_rect_, field_C_ + static_cast<int>(field_14_) / 2 + 1,
+        set_rect(&draw_workspace_rect_, field_C_ + static_cast<int>(field_14_) / 2 + 1,
                         field_10_, field_C_ + field_14_, field_10_ + 20);
         report_button_init(&window.flatButton8_, StringTemp, 0xD3D, &draw_workspace_rect_, &window, 0);
         window.flatButton8_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
@@ -5446,7 +5438,7 @@ void ReportIf::on_status(int mode) {
         // Full-width window button (0x4A4E1C..0x4A4EFA).
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x32E));
-        report_set_rect(&draw_workspace_rect_, frame.left, panel.bottom - 26,
+        set_rect(&draw_workspace_rect_, frame.left, panel.bottom - 26,
                         frame.right, panel.bottom - 6);
         report_button_init(&window.flatButton9_, StringTemp, 0xD3E, &draw_workspace_rect_, &window, 0);
         window.flatButton9_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
@@ -6605,7 +6597,7 @@ void ReportIf::draw_energy() {
     strcat(StringTemp, label_get(0x2E6));
     strcat(StringTemp, "]");
     MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_ + 4, field_14_);
-    report_set_rect(&draw_workspace_rect_, field_C_, draw_workspace_rect_.bottom + 2,
+    set_rect(&draw_workspace_rect_, field_C_, draw_workspace_rect_.bottom + 2,
                     field_C_ + field_14_, field_10_ + field_18_);
     MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
     inflate_frame(&draw_workspace_rect_, -3, -3);
@@ -6701,7 +6693,7 @@ void ReportIf::draw_energy() {
     strcat(StringTemp, label_get(0x3C2));
     strcat(StringTemp, "]");
     MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_ + 4, field_14_);
-    report_set_rect(&draw_workspace_rect_, field_C_, draw_workspace_rect_.bottom + 2,
+    set_rect(&draw_workspace_rect_, field_C_, draw_workspace_rect_.bottom + 2,
                     field_C_ + field_14_, field_10_ + field_18_);
     MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
     inflate_frame(&draw_workspace_rect_, -3, -3);
@@ -7758,7 +7750,7 @@ void ReportIf::draw_intel() {
     strcat(StringTemp, label_get(0x175));
     strcat(StringTemp, "]");
     MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_ + 4, field_14_);
-    report_set_rect(&draw_workspace_rect_, field_C_, draw_workspace_rect_.bottom + 2,
+    set_rect(&draw_workspace_rect_, field_C_, draw_workspace_rect_.bottom + 2,
                     field_C_ + field_14_, field_10_ + field_18_);
     MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
     inflate_frame(&draw_workspace_rect_, -3, -3);
@@ -7825,7 +7817,7 @@ void ReportIf::draw_intel() {
     strcat(StringTemp, label_get(0x176));
     strcat(StringTemp, "]");
     MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_ + 4, field_14_);
-    report_set_rect(&draw_workspace_rect_, field_C_, draw_workspace_rect_.bottom + 2,
+    set_rect(&draw_workspace_rect_, field_C_, draw_workspace_rect_.bottom + 2,
                     field_C_ + field_14_, field_10_ + field_18_);
     MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
     inflate_frame(&draw_workspace_rect_, -3, -3);
