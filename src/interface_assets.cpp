@@ -1160,10 +1160,10 @@ Sprite g_UNUSED_SPRITE_VAR83;  // 0x007ACC20
 // RECOVERY_OBJECT: v2 0x0077A5C8 0x0077AA6C ?g_BASEWIN_SPRITES@@3PAVSprite@@A 0x00450D90
 Sprite g_BASEWIN_SPRITES[27];
 
-// RECOVERY_LITERAL: v1 0x00685148 0x00685150 $SG69597 0x00455400
-// RECOVERY_LITERAL: v1 0x00685158 0x00685165 $SG69611 0x00455400
-// RECOVERY_LITERAL: v1 0x0068511C 0x00685127 $SG69541 0x00454FC0
-// RECOVERY_LITERAL: v1 0x00685138 0x00685145 $SG69581 0x00454FC0
+// RECOVERY_LITERAL: v1 0x00685148 0x00685150 $SG69595 0x00455400
+// RECOVERY_LITERAL: v1 0x00685158 0x00685165 $SG69609 0x00455400
+// RECOVERY_LITERAL: v1 0x0068511C 0x00685127 $SG69539 0x00454FC0
+// RECOVERY_LITERAL: v1 0x00685138 0x00685145 $SG69579 0x00454FC0
 // Equal filename contents retain separate original source-owned storage.
 // RECOVERY_OBJECT: v2 0x00685064 0x00685071 _InterfaceIconSheetName 0x004547E0
 static char InterfaceIconSheetName[] = "NEWICONS.PCX";
@@ -4564,7 +4564,7 @@ static const char FlagUnitSheet[] = "UNITS.PCX";
 static const char VehicleUnitSheet[] = "UNITS.PCX";
 
 void __cdecl load_flags() {
-    // RECOVERY_LITERAL: v1 0x00685030 0x0068503A $SG69351 0x00453F70
+    // RECOVERY_LITERAL: v1 0x00685030 0x0068503A $SG69349 0x00453F70
     Sprite source[7][2];
     Buffer &sheet = g_PCX_PARSE_TEMP_BUFFER1;
     sheet.load_pcx(FlagUnitSheet, 0, 10, 236);
@@ -4622,9 +4622,9 @@ void __cdecl load_flags() {
 // ORIGINAL: 0x00454270 ?load_vehicles@@YAXXZ 0x00454270-0x004547DB;0x0065515A-0x00655182
 // RECOVERY_BINDING: v1 {"evidence": ["Original454270..4547DB plus unwind65515A..655182 constructs Sprite[2] then a singleton, and destroys them in reverse including partial unwind. All are real even though apparently unused; the shared PCX buffer is not a local lifetime.", "XI is9x16 sprites, XF is4 pairs of8 with receiver indices16*row+column and +8, not seed pointer+0x98. Original CRT construction/destruction independently bounds each Sprite bank. Four sheets perform244 extracts,74 Buffer recolors and37354 pixel queries before load_flags.", "Original palette loop only updates faction0, publishing each of four get_pixel results immediately into distinct eight-color owners. Two UNITS.PCX strings have distinct original storage685024 and685058; named constant arrays preserve the identities without old-image access or forced literal pooling.", "UNITS rows populate chassis9..18 with1,7 or3 variants; marker defaults and repeated get_pixel calls follow original order. The vertical marker scan uses sourceX-2/-1, not seed sourceY. Final chassis0..8 marker-Y stores target slot1 at4546CC while X uses slot0; no normalization or omitted ignored probes.", "load_flags is called after all marker scans; it closes the shared buffer once, followed by two further closes here. Service errors are ignored as in the original and exceptions only destroy locals. Existing unfinished loader/callee/runtime work remains separate; no byte claim or whole asset-startup acceptance."], "reason": "Recover the complete vehicle asset loader through genuine Sprite banks, chassis marker fields and shared palette owners."}
 void __cdecl load_vehicles() {
-    // RECOVERY_LITERAL: v1 0x0068503C 0x00685043 $SG69375 0x00454270
-    // RECOVERY_LITERAL: v1 0x00685044 0x0068504B $SG69396 0x00454270
-    // RECOVERY_LITERAL: v1 0x0068504C 0x00685058 $SG69403 0x00454270
+    // RECOVERY_LITERAL: v1 0x0068503C 0x00685043 $SG69373 0x00454270
+    // RECOVERY_LITERAL: v1 0x00685044 0x0068504B $SG69394 0x00454270
+    // RECOVERY_LITERAL: v1 0x0068504C 0x00685058 $SG69401 0x00454270
     // These apparently unused objects are real original lifetimes: two array
     // elements first, then a separate Sprite; exception cleanup reverses this.
     Sprite scratch[2];
@@ -4819,7 +4819,7 @@ void __cdecl load_icons() {
     buffer.change_color(262, 265);
     g_RED_ALIEN_HEAD_ICON_SPRITE.extract(&buffer, 265, 768, 148, 28, 42, 0);
 
-    // RECOVERY_LITERAL: v1 0x00685084 0x0068508E $SG69488 0x004547E0
+    // RECOVERY_LITERAL: v1 0x00685084 0x0068508E $SG69486 0x004547E0
     buffer.load_pcx("ICONS.PCX", 0, 10, 236);
     buffer.change_color(263, 265);
     buffer.change_color(262, 265);
