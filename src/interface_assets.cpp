@@ -4457,26 +4457,26 @@ void __cdecl load_box_sprites() {
         extract_interface_box_sprite(g_IFACE_MP_COMBO_ARROW_SPRITES[arrow], arrow_x, 537, 7, 13);
     }
 
-    // Seventeen rows of three columns.
-    int row;
-    int col;
+    // Seventeen rows of three columns (51 styles). x is the edge column;
+    // the corner columns sit 7 left and 25 right of it.
+    Buffer *mask;
+    int style;
     int x;
     int y;
-    for (y = 229, row = 0; row < 17; y += 39, ++row) {
-    for (x = 33, col = 0; x < 150; x += 39, ++col) {
-        const int style = row * 3 + col;
-        extract_interface_box_sprite(g_IFACE_BOX_SPRITES1[style], x - 32, y, 6, 6);
-        extract_interface_box_sprite(g_IFACE_BOX_SPRITES2[style], x, y, 6, 6);
-        extract_interface_box_sprite(g_IFACE_BOX_SPRITES3[style], x - 32, y + 32, 6, 6);
-        extract_interface_box_sprite(g_IFACE_BOX_SPRITES4[style], x, y + 32, 6, 6);
-        extract_interface_box_sprite(g_IFACE_BOX_SPRITES5[style], x - 25, y, 24, 6);
-        extract_interface_box_sprite(g_IFACE_BOX_SPRITES6[style], x - 25, y + 32, 24, 6);
-        extract_interface_box_sprite(g_IFACE_BOX_SPRITES7[style], x - 32, y + 7, 6, 24);
-        extract_interface_box_sprite(g_IFACE_BOX_SPRITES8[style], x, y + 7, 6, 24);
+    for (y = 229, style = 0, mask = g_IFACE_BOX_SPRITE_BUFFERS;
+         style < 51; y += 39) {
+    for (x = 8; x + 25 < 150; x += 39) {
+        extract_interface_box_sprite(g_IFACE_BOX_SPRITES1[style], x - 7, y, 6, 6);
+        extract_interface_box_sprite(g_IFACE_BOX_SPRITES2[style], x + 25, y, 6, 6);
+        extract_interface_box_sprite(g_IFACE_BOX_SPRITES3[style], x - 7, y + 32, 6, 6);
+        extract_interface_box_sprite(g_IFACE_BOX_SPRITES4[style], x + 25, y + 32, 6, 6);
+        extract_interface_box_sprite(g_IFACE_BOX_SPRITES5[style], x, y, 24, 6);
+        extract_interface_box_sprite(g_IFACE_BOX_SPRITES6[style], x, y + 32, 24, 6);
+        extract_interface_box_sprite(g_IFACE_BOX_SPRITES7[style], x - 7, y + 7, 6, 24);
+        extract_interface_box_sprite(g_IFACE_BOX_SPRITES8[style], x + 25, y + 7, 6, 24);
 
-        Buffer &mask = g_IFACE_BOX_SPRITE_BUFFERS[style];
-        mask.init(24, 24, 0, nullptr);
-        canvas.copy(&mask, x - 25, y + 7, 0, 0, 24, 24);
+        mask->init(24, 24, 0, nullptr);
+        canvas.copy(mask, x, y + 7, 0, 0, 24, 24);
         InterfaceBoxStyles[style].corner0_ = &g_IFACE_BOX_SPRITES1[style];
         InterfaceBoxStyles[style].corner1_ = &g_IFACE_BOX_SPRITES2[style];
         InterfaceBoxStyles[style].corner2_ = &g_IFACE_BOX_SPRITES3[style];
@@ -4487,13 +4487,15 @@ void __cdecl load_box_sprites() {
         InterfaceBoxStyles[style].edge3_ = &g_IFACE_BOX_SPRITES8[style];
         // This style's Buffer, not canvas. Pointer publication precedes the
         // pixel test; a transparent mask is cleared before close can observe it.
-        if (mask.get_pixel(0, 0) == 9) {
+        if (mask->get_pixel(0, 0) == 9) {
             InterfaceBoxStyles[style].mask_ = nullptr;
-            mask.close();
+            mask->close();
         } else {
-            InterfaceBoxStyles[style].mask_ = &mask;
+            InterfaceBoxStyles[style].mask_ = mask;
         }
         InterfaceBoxStyles[style].mask_color_ = 7;
+        ++style;
+        ++mask;
     }
     }
 
