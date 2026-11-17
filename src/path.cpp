@@ -1499,7 +1499,7 @@ void Path::continents() {
 
 /*
  Purpose: TBD
-// ORIGINAL: 0x0059CCA0 ?sensors@Path@@QAEHHPAHPAH@Z 0x0059CCA0-0x0059D22A
+// ORIGINAL: 0x0059CCA0 ?sensors@Path@@QAEHHPAHPAH@Z 0x0059CCA0-0x0059D22A BYTE_EXACT
 // TRIED: making `get`/`set` `inline` in path.h, on the reasoning that the
 //   image has neither `?get@Path@@QAEHII@Z` nor `?set@Path@@QAEHIIH@Z` so the
 //   `map_table_` accesses here must fold into their callers. MEASURED and
@@ -1616,7 +1616,9 @@ BOOL Path::sensors(int faction_id, int *x_sensor, int *y_sensor) {
             int flags = 0;
             int i;
             for (i = 0; i < 25; i++) {
-                int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
+                // The image adds the bounds first here (0x0059CEE9, lea esi,[edx+eax])
+                // with MapLongitudeBounds held in edx: xrange's hoisted form.
+                int x_radius = xrange_inline(x + RadiusOffsetX[i]);
                 int y_radius = y + RadiusOffsetY[i];
                 if (on_map(x_radius, y_radius)
                     && ((is_sensor(x_radius, y_radius)
