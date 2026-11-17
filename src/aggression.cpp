@@ -127,26 +127,17 @@ void __cdecl intervention(int target_faction, int actor_faction) {
 void __cdecl double_cross(int faction_id, int partner_id, int victim_id) {
     if (IsMultiplayerNet) {
         if (partner_id == ConsoleGlobal.faction_id_ && victim_id > 0) {
-            parse_set(Players[victim_id].is_leader_female, 0);
-            parse_says(0, Players[victim_id].title_leader, -1, -1);
-            parse_set(Players[victim_id].is_leader_female, 0);
-            parse_says(1, Players[victim_id].name_leader, -1, -1);
-            parse_set(Players[victim_id].noun_gender, Players[victim_id].is_noun_plural);
-            parse_says(2, Players[victim_id].noun_faction, -1, -1);
-            parse_set(Players[faction_id].is_leader_female, 0);
-            parse_says(3, Players[faction_id].title_leader, -1, -1);
-            parse_set(Players[faction_id].is_leader_female, 0);
-            parse_says(4, Players[faction_id].name_leader, -1, -1);
-            parse_set(Players[faction_id].noun_gender, Players[faction_id].is_noun_plural);
-            parse_says(5, Players[faction_id].noun_faction, -1, -1);
+            parse_says(0, get_title(victim_id), -1, -1);
+            parse_says(1, get_name(victim_id), -1, -1);
+            parse_says(2, get_noun(victim_id), -1, -1);
+            parse_says(3, get_title(faction_id), -1, -1);
+            parse_says(4, get_name(faction_id), -1, -1);
+            parse_says(5, get_noun(faction_id), -1, -1);
             NetMsgPrimary.pop("INCITED", 0x1388, 0, nullptr);
         } else if (partner_id == ConsoleGlobal.faction_id_ && is_human(faction_id)) {
-            parse_set(Players[faction_id].is_leader_female, 0);
-            parse_says(0, Players[faction_id].title_leader, -1, -1);
-            parse_set(Players[faction_id].is_leader_female, 0);
-            parse_says(1, Players[faction_id].name_leader, -1, -1);
-            parse_set(Players[faction_id].noun_gender, Players[faction_id].is_noun_plural);
-            parse_says(2, Players[faction_id].noun_faction, -1, -1);
+            parse_says(0, get_title(faction_id), -1, -1);
+            parse_says(1, get_name(faction_id), -1, -1);
+            parse_says(2, get_noun(faction_id), -1, -1);
             NetMsgPrimary.pop("VENDETTAWARNING", 0x1388, 0, nullptr);
         }
     }
@@ -401,10 +392,8 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
                     }
                 }
                 if (survivor >= GameDataStateStorage.fields_.base_current_count_) {
-                    parse_set(Players[faction_id_def].is_leader_female, FALSE);
-                    parse_says(0, Players[faction_id_def].title_leader, -1, -1);
-                    parse_set(Players[faction_id_def].is_leader_female, FALSE);
-                    parse_says(1, Players[faction_id_def].name_leader, -1, -1);
+                    parse_says(0, get_title(faction_id_def), -1, -1);
+                    parse_says(1, get_name(faction_id_def), -1, -1);
                     parse_says(2, get_noun(faction_id_def), -1, -1);
                     int halted_id = Bases[base_id].queue_production_id[0];
                     if (halted_id < 0) {
@@ -821,7 +810,7 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
                 parse_says(4, StringTable.get(Labels.strings_ptr[405]), -1, -1);
             }
         } else {
-            parse_says(4, StringTable.get(Labels.strings_ptr[403]), -1, -1);
+            parse_says(4, label_get(403), -1, -1);
         }
         strcpy(hq_name, Players[ConsoleGlobal.faction_id_].assistant_city);
         make_base_unique(base_id);

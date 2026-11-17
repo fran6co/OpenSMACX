@@ -378,64 +378,57 @@ void MonuWin::on_redraw() {
     StringTemp[0] = '\0';
     int faction = preview_faction_or_page_;
     type = FactionMonuments[faction].latest_type_;
+    MonumentRecord *rec = &FactionMonuments[faction].records_[type];
     switch (type) {
     case 0:
-        parse_num(0, FactionMonuments[faction].records_[type].year_);
-        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
-        parse_says(0, Players[preview_faction_or_page_].title_leader,
+        parse_num(0, rec->year_);
+        parse_says(0, get_title(preview_faction_or_page_),
                    Players[preview_faction_or_page_].is_leader_female, -1);
-        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
-        parse_says(1, Players[preview_faction_or_page_].name_leader,
+        parse_says(1, get_name(preview_faction_or_page_),
                    Players[preview_faction_or_page_].is_leader_female, -1);
         parse_says(2, FactionMonuments[preview_faction_or_page_].founding_base_name_, -1, -1);
-        if (FactionMonuments[faction].records_[type].word_14_) {
+        if (rec->word_14_) {
             description.load("monument", "FOUNDCOLONY1ST", 1, 0);   // 0x686404 / 0x6863F4 -> 0x475E50
         } else {
-            parse_says(3, Players[preview_faction_or_page_].adj_name_faction, -1, -1);
-            parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
-            parse_says(4, Players[FactionMonuments[faction].records_[type].owner_faction_].title_leader,
+            parse_says(3, get_adjective(preview_faction_or_page_), -1, -1);
+            parse_says(4, get_title(rec->owner_faction_),
                        Players[preview_faction_or_page_].is_leader_female, -1);
-            parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
-            parse_says(5, Players[FactionMonuments[faction].records_[type].owner_faction_].name_leader,
+            parse_says(5, get_name(rec->owner_faction_),
                        Players[preview_faction_or_page_].is_leader_female, -1);
-            parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].noun_gender,
-                      Players[FactionMonuments[faction].records_[type].owner_faction_].is_noun_plural);
-            parse_says(6, Players[FactionMonuments[faction].records_[type].owner_faction_].noun_faction,
+            parse_says(6, get_noun(rec->owner_faction_),
                        Players[preview_faction_or_page_].noun_gender,
                        Players[preview_faction_or_page_].is_noun_plural);
-            parse_num(1, FactionMonuments[FactionMonuments[faction].records_[type].owner_faction_]
+            parse_num(1, FactionMonuments[rec->owner_faction_]
                              .records_[type].year_);
             description.load("monument", "FOUNDCOLONY2ND", 1, 0);   // 0x686420 / 0x686410 -> 0x475E50
         }
         break;
 
     case 1:                                                          // 0x473A8B
-        parse_num(0, FactionMonuments[faction].records_[type].year_);
-        parse_says(0, Players[preview_faction_or_page_].adj_name_faction, -1, -1);
-        parse_says(1, tech_name(FactionMonuments[faction].records_[type].word_8_, 0), -1, -1);
-        if (FactionMonuments[faction].records_[type].word_14_) {
+        parse_num(0, rec->year_);
+        parse_says(0, get_adjective(preview_faction_or_page_), -1, -1);
+        parse_says(1, tech_name(rec->word_8_, 0), -1, -1);
+        if (rec->word_14_) {
             description.load("monument", "TECHDISCOVER1ST", 1, 0);  // 0x68643C / 0x68642C -> 0x475E50
         } else {                                                     // 0x473B00
-            parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].noun_gender,
-                      Players[FactionMonuments[faction].records_[type].owner_faction_].is_noun_plural);
-            parse_says(2, Players[FactionMonuments[faction].records_[type].owner_faction_].noun_faction,
+            parse_says(2, get_noun(rec->owner_faction_),
                        Players[preview_faction_or_page_].noun_gender,
                        Players[preview_faction_or_page_].is_noun_plural);
-            parse_num(1, FactionMonuments[FactionMonuments[faction].records_[type].owner_faction_]
+            parse_num(1, FactionMonuments[rec->owner_faction_]
                              .records_[type].year_);
             description.load("monument", "TECHDISCOVER2ND", 1, 0);  // 0x686458 / 0x686448 -> 0x475E50
         }
         break;
 
     case 2:                                                          // 0x473B94
-        parse_num(0, FactionMonuments[faction].records_[type].year_);
-        parse_says(0, Players[preview_faction_or_page_].adj_name_faction, -1, -1);
-        if (FactionMonuments[faction].records_[type].word_14_) {
+        parse_num(0, rec->year_);
+        parse_says(0, get_adjective(preview_faction_or_page_), -1, -1);
+        if (rec->word_14_) {
             // 0x473BD5: word_8_ loaded once into eax; `lea ecx,[eax+1]; test; je`
-            if (FactionMonuments[faction].records_[type].word_8_ != -1) {
-                parse_num(1, FactionMonuments[faction].records_[type].word_8_);
-                if (FactionMonuments[faction].records_[type].word_4_ != -1) {
-                    parse_num(2, FactionMonuments[faction].records_[type].word_4_);
+            if (rec->word_8_ + 1 != 0) {
+                parse_num(1, rec->word_8_);
+                if (rec->word_4_ + 1 != 0) {
+                    parse_num(2, rec->word_4_);
                     description.load("monument", "SECRETS1STC", 1, 0);  // 0x686470 / 0x686464
                 } else {                                                 // 0x473C1A
                     description.load("monument", "SECRETS1STB", 1, 0);  // 0x686488 / 0x68647C
@@ -444,19 +437,17 @@ void MonuWin::on_redraw() {
                 description.load("monument", "SECRETS1STA", 1, 0);      // 0x6864A0 / 0x686494
             }
         } else {                                                         // 0x473C40
-            parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].noun_gender,
-                      Players[FactionMonuments[faction].records_[type].owner_faction_].is_noun_plural);
-            parse_says(1, Players[FactionMonuments[faction].records_[type].owner_faction_].noun_faction,
+            parse_says(1, get_noun(rec->owner_faction_),
                        Players[preview_faction_or_page_].noun_gender,
                        Players[preview_faction_or_page_].is_noun_plural);
-            parse_num(1, FactionMonuments[FactionMonuments[faction].records_[type].owner_faction_]
+            parse_num(1, FactionMonuments[rec->owner_faction_]
                              .records_[type].year_);
             // 0x473CBE: `mov ecx,word_8_; inc ecx; je` (value not kept; reloaded at 0x473CEF)
-            if (FactionMonuments[faction].records_[type].word_8_ != -1) {
-                parse_says(2, Players[preview_faction_or_page_].adj_name_faction, -1, -1);
-                parse_num(2, FactionMonuments[faction].records_[type].word_8_);
-                if (FactionMonuments[faction].records_[type].word_4_ != -1) {
-                    parse_num(3, FactionMonuments[faction].records_[type].word_4_);
+            if (rec->word_8_ + 1 != 0) {
+                parse_says(2, get_adjective(preview_faction_or_page_), -1, -1);
+                parse_num(2, rec->word_8_);
+                if (rec->word_4_ + 1 != 0) {
+                    parse_num(3, rec->word_4_);
                     description.load("monument", "SECRETS2NDC", 1, 0);  // 0x6864B8 / 0x6864AC
                 } else {                                                 // 0x473D2D
                     description.load("monument", "SECRETS2NDB", 1, 0);  // 0x6864D0 / 0x6864C4
@@ -468,405 +459,315 @@ void MonuWin::on_redraw() {
         break;
 
     case 3:                                                          // 0x473D53
-        parse_num(0, FactionMonuments[faction].records_[type].year_);
-        if (FactionMonuments[faction].records_[type].word_14_) {
-            parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
-            parse_says(0, Players[preview_faction_or_page_].title_leader,
+        parse_num(0, rec->year_);
+        if (rec->word_14_) {
+            parse_says(0, get_title(preview_faction_or_page_),
                        Players[preview_faction_or_page_].is_leader_female, -1);
-            parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
-            parse_says(1, Players[preview_faction_or_page_].name_leader,
+            parse_says(1, get_name(preview_faction_or_page_),
                        Players[preview_faction_or_page_].is_leader_female, -1);
-            parse_says(2, Players[preview_faction_or_page_].adj_name_faction, -1, -1);
+            parse_says(2, get_adjective(preview_faction_or_page_), -1, -1);
             description.load("monument", "PROTO1ST", 1, 0);         // 0x686500 / 0x6864F4
         } else {                                                     // 0x473E54
-            parse_says(0, Players[preview_faction_or_page_].adj_name_faction, -1, -1);
-            parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
-            parse_says(1, Players[FactionMonuments[faction].records_[type].owner_faction_].title_leader,
+            parse_says(0, get_adjective(preview_faction_or_page_), -1, -1);
+            parse_says(1, get_title(rec->owner_faction_),
                        Players[preview_faction_or_page_].is_leader_female, -1);
-            parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
-            parse_says(2, Players[FactionMonuments[faction].records_[type].owner_faction_].name_leader,
+            parse_says(2, get_name(rec->owner_faction_),
                        Players[preview_faction_or_page_].is_leader_female, -1);
-            parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].noun_gender,
-                      Players[FactionMonuments[faction].records_[type].owner_faction_].is_noun_plural);
-            parse_says(3, Players[FactionMonuments[faction].records_[type].owner_faction_].noun_faction,
+            parse_says(3, get_noun(rec->owner_faction_),
                        Players[preview_faction_or_page_].noun_gender,
                        Players[preview_faction_or_page_].is_noun_plural);
-            parse_num(1, FactionMonuments[FactionMonuments[faction].records_[type].owner_faction_]
+            parse_num(1, FactionMonuments[rec->owner_faction_]
                              .records_[type].year_);
             description.load("monument", "PROTO2ND", 1, 0);         // 0x686518 / 0x68650C
         }
         break;
 
     case 4:                                                          // 0x473FB7
-        parse_num(0, FactionMonuments[faction].records_[type].year_);
-        parse_says(0, Players[preview_faction_or_page_].adj_name_faction, -1, -1);
-        if (FactionMonuments[faction].records_[type].word_14_) {
-            parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
-            parse_says(1, Players[preview_faction_or_page_].title_leader,
+        parse_num(0, rec->year_);
+        parse_says(0, get_adjective(preview_faction_or_page_), -1, -1);
+        if (rec->word_14_) {
+            parse_says(1, get_title(preview_faction_or_page_),
                        Players[preview_faction_or_page_].is_leader_female, -1);
-            parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
-            parse_says(2, Players[preview_faction_or_page_].name_leader,
+            parse_says(2, get_name(preview_faction_or_page_),
                        Players[preview_faction_or_page_].is_leader_female, -1);
             parse_says(3, FactionMonuments[preview_faction_or_page_].facility_base_name_, -1, -1);
             description.load("monument", "FACILITY1ST", 1, 0);      // 0x686530 / 0x686524
         } else {                                                     // 0x4740DC
-            parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
-            parse_says(1, Players[FactionMonuments[faction].records_[type].owner_faction_].title_leader,
+            parse_says(1, get_title(rec->owner_faction_),
                        Players[preview_faction_or_page_].is_leader_female, -1);
-            parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
-            parse_says(2, Players[FactionMonuments[faction].records_[type].owner_faction_].name_leader,
+            parse_says(2, get_name(rec->owner_faction_),
                        Players[preview_faction_or_page_].is_leader_female, -1);
-            parse_says(3, Players[FactionMonuments[faction].records_[type].owner_faction_].adj_name_faction,
+            parse_says(3, get_adjective(rec->owner_faction_),
                        -1, -1);
-            parse_num(1, FactionMonuments[FactionMonuments[faction].records_[type].owner_faction_]
+            parse_num(1, FactionMonuments[rec->owner_faction_]
                              .records_[type].year_);
             description.load("monument", "FACILITY2ND", 1, 0);      // 0x686548 / 0x68653C
         }
         break;
 
     case 5:                                                          // 0x4741E0
-        parse_num(0, FactionMonuments[faction].records_[type].year_);
-        if (FactionMonuments[faction].records_[type].word_14_) {
-            parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
-            parse_says(0, Players[preview_faction_or_page_].title_leader,
+        parse_num(0, rec->year_);
+        if (rec->word_14_) {
+            parse_says(0, get_title(preview_faction_or_page_),
                        Players[preview_faction_or_page_].is_leader_female, -1);
-            parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
-            parse_says(1, Players[preview_faction_or_page_].name_leader,
+            parse_says(1, get_name(preview_faction_or_page_),
                        Players[preview_faction_or_page_].is_leader_female, -1);
             // Facility[70 + word_8_].name: [word_8_*0x30 + 0x9A5888]; StringTable @0x9B90D8
             parse_says(2, StringTable.get(Facility[FacilitySPStart +
-                              FactionMonuments[faction].records_[type].word_8_].name), -1, -1);
+                              rec->word_8_].name), -1, -1);
             description.load("monument", "PROJECT1ST", 1, 0);       // 0x686560 / 0x686554
         } else {                                                     // 0x4742EA
-            parse_says(0, Players[preview_faction_or_page_].adj_name_faction, -1, -1);
+            parse_says(0, get_adjective(preview_faction_or_page_), -1, -1);
             parse_says(1, StringTable.get(Facility[FacilitySPStart +
-                              FactionMonuments[faction].records_[type].word_8_].name), -1, -1);
-            parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
-            parse_says(2, Players[FactionMonuments[faction].records_[type].owner_faction_].title_leader,
+                              rec->word_8_].name), -1, -1);
+            parse_says(2, get_title(rec->owner_faction_),
                        Players[preview_faction_or_page_].is_leader_female, -1);
-            parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
-            parse_says(3, Players[FactionMonuments[faction].records_[type].owner_faction_].name_leader,
+            parse_says(3, get_name(rec->owner_faction_),
                        Players[preview_faction_or_page_].is_leader_female, -1);
-            parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].noun_gender,
-                      Players[FactionMonuments[faction].records_[type].owner_faction_].is_noun_plural);
-            parse_says(4, Players[FactionMonuments[faction].records_[type].owner_faction_].noun_faction,
+            parse_says(4, get_noun(rec->owner_faction_),
                        Players[preview_faction_or_page_].noun_gender,
                        Players[preview_faction_or_page_].is_noun_plural);
-            parse_num(1, FactionMonuments[FactionMonuments[faction].records_[type].owner_faction_]
+            parse_num(1, FactionMonuments[rec->owner_faction_]
                              .records_[type].year_);
             description.load("monument", "PROJECT2ND", 1, 0);       // 0x686578 / 0x68656C
         }
         break;
 
     case 6:                                                          // 0x47447A
-        parse_num(0, FactionMonuments[faction].records_[type].year_);
-        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
-        parse_says(0, Players[preview_faction_or_page_].title_leader,
+        parse_num(0, rec->year_);
+        parse_says(0, get_title(preview_faction_or_page_),
                    Players[preview_faction_or_page_].is_leader_female, -1);
-        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
-        parse_says(1, Players[preview_faction_or_page_].name_leader,
+        parse_says(1, get_name(preview_faction_or_page_),
                    Players[preview_faction_or_page_].is_leader_female, -1);
-        if (FactionMonuments[faction].records_[type].word_14_) {
+        if (rec->word_14_) {
             // word_8_ is the defeated faction here.
-            parse_set(Players[FactionMonuments[faction].records_[type].word_8_].is_leader_female, 0);
-            parse_says(2, Players[FactionMonuments[faction].records_[type].word_8_].title_leader,
+            parse_says(2, get_title(rec->word_8_),
                        Players[preview_faction_or_page_].is_leader_female, -1);
-            parse_set(Players[FactionMonuments[faction].records_[type].word_8_].is_leader_female, 0);
-            parse_says(3, Players[FactionMonuments[faction].records_[type].word_8_].name_leader,
+            parse_says(3, get_name(rec->word_8_),
                        Players[preview_faction_or_page_].is_leader_female, -1);
-            parse_set(Players[FactionMonuments[faction].records_[type].word_8_].noun_gender,
-                      Players[FactionMonuments[faction].records_[type].word_8_].is_noun_plural);
-            parse_says(4, Players[FactionMonuments[faction].records_[type].word_8_].noun_faction,
+            parse_says(4, get_noun(rec->word_8_),
                        Players[preview_faction_or_page_].noun_gender,
                        Players[preview_faction_or_page_].is_noun_plural);
             description.load("monument", "BATTLEWIN1ST", 1, 0);     // 0x686594 / 0x686584
         } else {                                                     // 0x47465C
-            parse_says(2, Players[preview_faction_or_page_].adj_name_faction, -1, -1);
-            parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
-            parse_says(3, Players[FactionMonuments[faction].records_[type].owner_faction_].title_leader,
+            parse_says(2, get_adjective(preview_faction_or_page_), -1, -1);
+            parse_says(3, get_title(rec->owner_faction_),
                        Players[preview_faction_or_page_].is_leader_female, -1);
-            parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
-            parse_says(4, Players[FactionMonuments[faction].records_[type].owner_faction_].name_leader,
+            parse_says(4, get_name(rec->owner_faction_),
                        Players[preview_faction_or_page_].is_leader_female, -1);
-            parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].noun_gender,
-                      Players[FactionMonuments[faction].records_[type].owner_faction_].is_noun_plural);
-            parse_says(5, Players[FactionMonuments[faction].records_[type].owner_faction_].noun_faction,
+            parse_says(5, get_noun(rec->owner_faction_),
                        Players[preview_faction_or_page_].noun_gender,
                        Players[preview_faction_or_page_].is_noun_plural);
-            parse_num(1, FactionMonuments[FactionMonuments[faction].records_[type].owner_faction_]
+            parse_num(1, FactionMonuments[rec->owner_faction_]
                              .records_[type].year_);
             description.load("monument", "BATTLEWIN2ND", 1, 0);     // 0x6865B0 / 0x6865A0
         }
         break;
 
     case 7:                                                          // 0x4747BF
-        parse_num(0, FactionMonuments[faction].records_[type].year_);
-        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
-        parse_says(0, Players[preview_faction_or_page_].title_leader,
+        parse_num(0, rec->year_);
+        parse_says(0, get_title(preview_faction_or_page_),
                    Players[preview_faction_or_page_].is_leader_female, -1);
-        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
-        parse_says(1, Players[preview_faction_or_page_].name_leader,
+        parse_says(1, get_name(preview_faction_or_page_),
                    Players[preview_faction_or_page_].is_leader_female, -1);
-        if (FactionMonuments[faction].records_[type].word_14_) {
-            parse_set(Players[preview_faction_or_page_].noun_gender,
-                      Players[preview_faction_or_page_].is_noun_plural);
-            parse_says(2, Players[preview_faction_or_page_].noun_faction,
+        if (rec->word_14_) {
+            parse_says(2, get_noun(preview_faction_or_page_),
                        Players[preview_faction_or_page_].noun_gender,
                        Players[preview_faction_or_page_].is_noun_plural);
             parse_says(3, FactionMonuments[preview_faction_or_page_].conquered_base_name_, -1, -1);
             description.load("monument", "BASECAP1ST", 1, 0);       // 0x6865C8 / 0x6865BC
         } else {                                                     // 0x47491C
             parse_says(2, FactionMonuments[preview_faction_or_page_].conquered_base_name_, -1, -1);
-            parse_says(3, Players[preview_faction_or_page_].adj_name_faction, -1, -1);
-            parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
-            parse_says(4, Players[FactionMonuments[faction].records_[type].owner_faction_].title_leader,
+            parse_says(3, get_adjective(preview_faction_or_page_), -1, -1);
+            parse_says(4, get_title(rec->owner_faction_),
                        Players[preview_faction_or_page_].is_leader_female, -1);
-            parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
-            parse_says(5, Players[FactionMonuments[faction].records_[type].owner_faction_].name_leader,
+            parse_says(5, get_name(rec->owner_faction_),
                        Players[preview_faction_or_page_].is_leader_female, -1);
-            parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].noun_gender,
-                      Players[FactionMonuments[faction].records_[type].owner_faction_].is_noun_plural);
-            parse_says(6, Players[FactionMonuments[faction].records_[type].owner_faction_].noun_faction,
+            parse_says(6, get_noun(rec->owner_faction_),
                        Players[preview_faction_or_page_].noun_gender,
                        Players[preview_faction_or_page_].is_noun_plural);
-            parse_num(1, FactionMonuments[FactionMonuments[faction].records_[type].owner_faction_]
+            parse_num(1, FactionMonuments[rec->owner_faction_]
                              .records_[type].year_);
             description.load("monument", "BASECAP2ND", 1, 0);       // 0x6865E0 / 0x6865D4
         }
         break;
     case 8:
-      parse_num(0, FactionMonuments[faction].records_[type].year_);
-      if (FactionMonuments[faction].records_[type].word_14_) {
-        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
-        parse_says(0, Players[preview_faction_or_page_].title_leader,
+      parse_num(0, rec->year_);
+      if (rec->word_14_) {
+        parse_says(0, get_title(preview_faction_or_page_),
                    Players[preview_faction_or_page_].is_leader_female, -1);
-        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
-        parse_says(1, Players[preview_faction_or_page_].name_leader,
+        parse_says(1, get_name(preview_faction_or_page_),
                    Players[preview_faction_or_page_].is_leader_female, -1);
-        parse_set(Players[preview_faction_or_page_].noun_gender,
-                  Players[preview_faction_or_page_].is_noun_plural);
-        parse_says(2, Players[preview_faction_or_page_].noun_faction,
+        parse_says(2, get_noun(preview_faction_or_page_),
                    Players[preview_faction_or_page_].noun_gender,
                    Players[preview_faction_or_page_].is_noun_plural);
         description.load("monument", "NAVY1ST", 1, 0);          // 0x6865F4 / 0x6865EC
       } else {
-        parse_says(0, Players[preview_faction_or_page_].adj_name_faction, -1, -1);
-        parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
-        parse_says(1, Players[FactionMonuments[faction].records_[type].owner_faction_].title_leader,
+        parse_says(0, get_adjective(preview_faction_or_page_), -1, -1);
+        parse_says(1, get_title(rec->owner_faction_),
                    Players[preview_faction_or_page_].is_leader_female, -1);
-        parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
-        parse_says(2, Players[FactionMonuments[faction].records_[type].owner_faction_].name_leader,
+        parse_says(2, get_name(rec->owner_faction_),
                    Players[preview_faction_or_page_].is_leader_female, -1);
-        parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].noun_gender,
-                  Players[FactionMonuments[faction].records_[type].owner_faction_].is_noun_plural);
-        parse_says(3, Players[FactionMonuments[faction].records_[type].owner_faction_].noun_faction,
+        parse_says(3, get_noun(rec->owner_faction_),
                    Players[preview_faction_or_page_].noun_gender,
                    Players[preview_faction_or_page_].is_noun_plural);
         // 0x474D05: [edi + owner*0x4F4 + 0x94CA08] - indexed by `type` (edi), not literal 8.
-        parse_num(1, FactionMonuments[FactionMonuments[faction].records_[type].owner_faction_]
+        parse_num(1, FactionMonuments[rec->owner_faction_]
                          .records_[type].year_);
         description.load("monument", "NAVY2ND", 1, 0);          // 0x686608 / 0x686600
       }
       break;
 
     case 9:  // 0x474D3F, same shape as case 8
-      parse_num(0, FactionMonuments[faction].records_[type].year_);
-      if (FactionMonuments[faction].records_[type].word_14_) {
-        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
-        parse_says(0, Players[preview_faction_or_page_].title_leader,
+      parse_num(0, rec->year_);
+      if (rec->word_14_) {
+        parse_says(0, get_title(preview_faction_or_page_),
                    Players[preview_faction_or_page_].is_leader_female, -1);
-        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
-        parse_says(1, Players[preview_faction_or_page_].name_leader,
+        parse_says(1, get_name(preview_faction_or_page_),
                    Players[preview_faction_or_page_].is_leader_female, -1);
-        parse_set(Players[preview_faction_or_page_].noun_gender,
-                  Players[preview_faction_or_page_].is_noun_plural);
-        parse_says(2, Players[preview_faction_or_page_].noun_faction,
+        parse_says(2, get_noun(preview_faction_or_page_),
                    Players[preview_faction_or_page_].noun_gender,
                    Players[preview_faction_or_page_].is_noun_plural);
         description.load("monument", "AIR1ST", 1, 0);           // 0x68661C / 0x686614
       } else {
-        parse_says(0, Players[preview_faction_or_page_].adj_name_faction, -1, -1);
-        parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
-        parse_says(1, Players[FactionMonuments[faction].records_[type].owner_faction_].title_leader,
+        parse_says(0, get_adjective(preview_faction_or_page_), -1, -1);
+        parse_says(1, get_title(rec->owner_faction_),
                    Players[preview_faction_or_page_].is_leader_female, -1);
-        parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
-        parse_says(2, Players[FactionMonuments[faction].records_[type].owner_faction_].name_leader,
+        parse_says(2, get_name(rec->owner_faction_),
                    Players[preview_faction_or_page_].is_leader_female, -1);
-        parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].noun_gender,
-                  Players[FactionMonuments[faction].records_[type].owner_faction_].is_noun_plural);
-        parse_says(3, Players[FactionMonuments[faction].records_[type].owner_faction_].noun_faction,
+        parse_says(3, get_noun(rec->owner_faction_),
                    Players[preview_faction_or_page_].noun_gender,
                    Players[preview_faction_or_page_].is_noun_plural);
-        parse_num(1, FactionMonuments[FactionMonuments[faction].records_[type].owner_faction_]
+        parse_num(1, FactionMonuments[rec->owner_faction_]
                          .records_[type].year_);
         description.load("monument", "AIR2ND", 1, 0);           // 0x686630 / 0x686628
       }
       break;
 
     case 10:  // 0x474FDB
-      parse_num(0, FactionMonuments[faction].records_[type].year_);
-      if (FactionMonuments[faction].records_[type].word_14_) {
-        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
-        parse_says(0, Players[preview_faction_or_page_].title_leader,
+      parse_num(0, rec->year_);
+      if (rec->word_14_) {
+        parse_says(0, get_title(preview_faction_or_page_),
                    Players[preview_faction_or_page_].is_leader_female, -1);
-        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
-        parse_says(1, Players[preview_faction_or_page_].name_leader,
+        parse_says(1, get_name(preview_faction_or_page_),
                    Players[preview_faction_or_page_].is_leader_female, -1);
-        parse_says(2, Players[preview_faction_or_page_].adj_name_faction, -1, -1);
+        parse_says(2, get_adjective(preview_faction_or_page_), -1, -1);
         description.load("monument", "NATIVE1ST", 1, 0);        // 0x686648 / 0x68663C
       } else {
-        parse_says(0, Players[preview_faction_or_page_].adj_name_faction, -1, -1);
-        parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
-        parse_says(1, Players[FactionMonuments[faction].records_[type].owner_faction_].title_leader,
+        parse_says(0, get_adjective(preview_faction_or_page_), -1, -1);
+        parse_says(1, get_title(rec->owner_faction_),
                    Players[preview_faction_or_page_].is_leader_female, -1);
-        parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
-        parse_says(2, Players[FactionMonuments[faction].records_[type].owner_faction_].name_leader,
+        parse_says(2, get_name(rec->owner_faction_),
                    Players[preview_faction_or_page_].is_leader_female, -1);
-        parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].noun_gender,
-                  Players[FactionMonuments[faction].records_[type].owner_faction_].is_noun_plural);
-        parse_says(3, Players[FactionMonuments[faction].records_[type].owner_faction_].noun_faction,
+        parse_says(3, get_noun(rec->owner_faction_),
                    Players[preview_faction_or_page_].noun_gender,
                    Players[preview_faction_or_page_].is_noun_plural);
-        parse_num(1, FactionMonuments[FactionMonuments[faction].records_[type].owner_faction_]
+        parse_num(1, FactionMonuments[rec->owner_faction_]
                          .records_[type].year_);
         description.load("monument", "NATIVE2ND", 1, 0);        // 0x686660 / 0x686654
       }
       break;
 
     case 11:  // 0x47523F
-      parse_num(0, FactionMonuments[faction].records_[type].year_);
+      parse_num(0, rec->year_);
       // ? 0x475255: [esi+0xA50] is loaded and its *45 lea started BEFORE the
       // `je`, shared by both arms (each arm starts with Players[pf]); scheduling only.
-      if (FactionMonuments[faction].records_[type].word_14_) {
-        parse_set(Players[preview_faction_or_page_].noun_gender,
-                  Players[preview_faction_or_page_].is_noun_plural);
-        parse_says(0, Players[preview_faction_or_page_].noun_faction,
+      if (rec->word_14_) {
+        parse_says(0, get_noun(preview_faction_or_page_),
                    Players[preview_faction_or_page_].noun_gender,
                    Players[preview_faction_or_page_].is_noun_plural);
-        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
-        parse_says(1, Players[preview_faction_or_page_].title_leader,
+        parse_says(1, get_title(preview_faction_or_page_),
                    Players[preview_faction_or_page_].is_leader_female, -1);
-        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
-        parse_says(2, Players[preview_faction_or_page_].name_leader,
+        parse_says(2, get_name(preview_faction_or_page_),
                    Players[preview_faction_or_page_].is_leader_female, -1);
         description.load("monument", "SPACE1ST", 1, 0);         // 0x686678 / 0x68666C
       } else {
-        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
-        parse_says(0, Players[preview_faction_or_page_].title_leader,
+        parse_says(0, get_title(preview_faction_or_page_),
                    Players[preview_faction_or_page_].is_leader_female, -1);
-        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
-        parse_says(1, Players[preview_faction_or_page_].name_leader,
+        parse_says(1, get_name(preview_faction_or_page_),
                    Players[preview_faction_or_page_].is_leader_female, -1);
-        parse_says(2, Players[preview_faction_or_page_].adj_name_faction, -1, -1);
-        parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].noun_gender,
-                  Players[FactionMonuments[faction].records_[type].owner_faction_].is_noun_plural);
-        parse_says(3, Players[FactionMonuments[faction].records_[type].owner_faction_].noun_faction,
+        parse_says(2, get_adjective(preview_faction_or_page_), -1, -1);
+        parse_says(3, get_noun(rec->owner_faction_),
                    Players[preview_faction_or_page_].noun_gender,
                    Players[preview_faction_or_page_].is_noun_plural);
-        parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
-        parse_says(4, Players[FactionMonuments[faction].records_[type].owner_faction_].title_leader,
+        parse_says(4, get_title(rec->owner_faction_),
                    Players[preview_faction_or_page_].is_leader_female, -1);
-        parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
-        parse_says(5, Players[FactionMonuments[faction].records_[type].owner_faction_].name_leader,
+        parse_says(5, get_name(rec->owner_faction_),
                    Players[preview_faction_or_page_].is_leader_female, -1);
-        parse_num(1, FactionMonuments[FactionMonuments[faction].records_[type].owner_faction_]
+        parse_num(1, FactionMonuments[rec->owner_faction_]
                          .records_[type].year_);
         description.load("monument", "SPACE2ND", 1, 0);         // 0x686690 / 0x686684
       }
       break;
 
     case 12:  // 0x475575 - two pf parse_says BEFORE the word_14_ test
-      parse_num(0, FactionMonuments[faction].records_[type].year_);
-      parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
-      parse_says(0, Players[preview_faction_or_page_].title_leader,
+      parse_num(0, rec->year_);
+      parse_says(0, get_title(preview_faction_or_page_),
                  Players[preview_faction_or_page_].is_leader_female, -1);
-      parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
-      parse_says(1, Players[preview_faction_or_page_].name_leader,
+      parse_says(1, get_name(preview_faction_or_page_),
                  Players[preview_faction_or_page_].is_leader_female, -1);
-      if (FactionMonuments[faction].records_[type].word_14_) {
-        parse_set(Players[preview_faction_or_page_].noun_gender,
-                  Players[preview_faction_or_page_].is_noun_plural);
-        parse_says(2, Players[preview_faction_or_page_].noun_faction,
+      if (rec->word_14_) {
+        parse_says(2, get_noun(preview_faction_or_page_),
                    Players[preview_faction_or_page_].noun_gender,
                    Players[preview_faction_or_page_].is_noun_plural);
         description.load("monument", "PRESERVE1ST", 1, 0);      // 0x6866A8 / 0x68669C
       } else {
-        parse_says(2, Players[preview_faction_or_page_].adj_name_faction, -1, -1);
-        parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
-        parse_says(3, Players[FactionMonuments[faction].records_[type].owner_faction_].title_leader,
+        parse_says(2, get_adjective(preview_faction_or_page_), -1, -1);
+        parse_says(3, get_title(rec->owner_faction_),
                    Players[preview_faction_or_page_].is_leader_female, -1);
-        parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
-        parse_says(4, Players[FactionMonuments[faction].records_[type].owner_faction_].name_leader,
+        parse_says(4, get_name(rec->owner_faction_),
                    Players[preview_faction_or_page_].is_leader_female, -1);
-        parse_num(1, FactionMonuments[FactionMonuments[faction].records_[type].owner_faction_]
+        parse_num(1, FactionMonuments[rec->owner_faction_]
                          .records_[type].year_);
         description.load("monument", "PRESERVE2ND", 1, 0);      // 0x6866C0 / 0x6866B4
       }
       break;
 
     case 13:  // 0x4757AD - test is `lea edx,[ecx+1]; test edx,edx` = word_8_ != -1
-      parse_num(0, FactionMonuments[faction].records_[type].year_);
-      if (FactionMonuments[faction].records_[type].word_8_ != -1) {
-        parse_set(Players[FactionMonuments[faction].records_[type].word_8_].is_leader_female, 0);
-        parse_says(0, Players[FactionMonuments[faction].records_[type].word_8_].title_leader,
+      parse_num(0, rec->year_);
+      if (rec->word_8_ + 1 != 0) {
+        parse_says(0, get_title(rec->word_8_),
                    Players[preview_faction_or_page_].is_leader_female, -1);
-        parse_set(Players[FactionMonuments[faction].records_[type].word_8_].is_leader_female, 0);
-        parse_says(1, Players[FactionMonuments[faction].records_[type].word_8_].name_leader,
+        parse_says(1, get_name(rec->word_8_),
                    Players[preview_faction_or_page_].is_leader_female, -1);
-        parse_set(Players[FactionMonuments[faction].records_[type].word_8_].noun_gender,
-                  Players[FactionMonuments[faction].records_[type].word_8_].is_noun_plural);
-        parse_says(2, Players[FactionMonuments[faction].records_[type].word_8_].noun_faction,
+        parse_says(2, get_noun(rec->word_8_),
                    Players[preview_faction_or_page_].noun_gender,
                    Players[preview_faction_or_page_].is_noun_plural);
         // Bug-for-bug: slot 3 repeats the same noun as slot 2 (0x4758CF).
-        parse_set(Players[FactionMonuments[faction].records_[type].word_8_].noun_gender,
-                  Players[FactionMonuments[faction].records_[type].word_8_].is_noun_plural);
-        parse_says(3, Players[FactionMonuments[faction].records_[type].word_8_].noun_faction,
+        parse_says(3, get_noun(rec->word_8_),
                    Players[preview_faction_or_page_].noun_gender,
                    Players[preview_faction_or_page_].is_noun_plural);
         description.load("monument", "WINCO-OPUNIFY", 1, 0);    // 0x6866DC / 0x6866CC
       } else {
-        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
-        parse_says(0, Players[preview_faction_or_page_].title_leader,
+        parse_says(0, get_title(preview_faction_or_page_),
                    Players[preview_faction_or_page_].is_leader_female, -1);
-        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
-        parse_says(1, Players[preview_faction_or_page_].name_leader,
+        parse_says(1, get_name(preview_faction_or_page_),
                    Players[preview_faction_or_page_].is_leader_female, -1);
-        parse_says(2, Players[preview_faction_or_page_].adj_name_faction, -1, -1);
+        parse_says(2, get_adjective(preview_faction_or_page_), -1, -1);
         description.load("monument", "WINUNIFY", 1, 0);         // 0x6866F4 / 0x6866E8
       }
       break;
 
     case 14:  // 0x475A22
-      parse_num(0, FactionMonuments[faction].records_[type].year_);
-      if (FactionMonuments[faction].records_[type].word_8_ != -1) {
-        parse_set(Players[FactionMonuments[faction].records_[type].word_8_].is_leader_female, 0);
-        parse_says(0, Players[FactionMonuments[faction].records_[type].word_8_].title_leader,
+      parse_num(0, rec->year_);
+      if (rec->word_8_ + 1 != 0) {
+        parse_says(0, get_title(rec->word_8_),
                    Players[preview_faction_or_page_].is_leader_female, -1);
-        parse_set(Players[FactionMonuments[faction].records_[type].word_8_].is_leader_female, 0);
-        parse_says(1, Players[FactionMonuments[faction].records_[type].word_8_].name_leader,
+        parse_says(1, get_name(rec->word_8_),
                    Players[preview_faction_or_page_].is_leader_female, -1);
-        parse_set(Players[FactionMonuments[faction].records_[type].word_8_].noun_gender,
-                  Players[FactionMonuments[faction].records_[type].word_8_].is_noun_plural);
-        parse_says(2, Players[FactionMonuments[faction].records_[type].word_8_].noun_faction,
+        parse_says(2, get_noun(rec->word_8_),
                    Players[preview_faction_or_page_].noun_gender,
                    Players[preview_faction_or_page_].is_noun_plural);
-        parse_set(Players[FactionMonuments[faction].records_[type].word_8_].noun_gender,
-                  Players[FactionMonuments[faction].records_[type].word_8_].is_noun_plural);
-        parse_says(3, Players[FactionMonuments[faction].records_[type].word_8_].noun_faction,
+        parse_says(3, get_noun(rec->word_8_),
                    Players[preview_faction_or_page_].noun_gender,
                    Players[preview_faction_or_page_].is_noun_plural);
         description.load("monument", "WINCO-OPASCENT", 1, 0);   // 0x686710 / 0x686700
       } else {
-        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
-        parse_says(0, Players[preview_faction_or_page_].title_leader,
+        parse_says(0, get_title(preview_faction_or_page_),
                    Players[preview_faction_or_page_].is_leader_female, -1);
-        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
-        parse_says(1, Players[preview_faction_or_page_].name_leader,
+        parse_says(1, get_name(preview_faction_or_page_),
                    Players[preview_faction_or_page_].is_leader_female, -1);
-        parse_set(Players[preview_faction_or_page_].noun_gender,
-                  Players[preview_faction_or_page_].is_noun_plural);
-        parse_says(2, Players[preview_faction_or_page_].noun_faction,
+        parse_says(2, get_noun(preview_faction_or_page_),
                    Players[preview_faction_or_page_].noun_gender,
                    Players[preview_faction_or_page_].is_noun_plural);
         description.load("monument", "WINTRANSCEND", 1, 0);     // 0x68672C / 0x68671C
@@ -879,26 +780,20 @@ void MonuWin::on_redraw() {
     case 18:
     case 19:
     case 20:  // 0x475CCF
-      parse_num(0, FactionMonuments[faction].records_[type].year_);
-      parse_set(Players[preview_faction_or_page_].noun_gender,
-                Players[preview_faction_or_page_].is_noun_plural);
-      parse_says(0, Players[preview_faction_or_page_].noun_faction,
+      parse_num(0, rec->year_);
+      parse_says(0, get_noun(preview_faction_or_page_),
                  Players[preview_faction_or_page_].noun_gender,
                  Players[preview_faction_or_page_].is_noun_plural);
-      parse_set(Players[FactionMonuments[faction].records_[type].word_8_].noun_gender,
-                Players[FactionMonuments[faction].records_[type].word_8_].is_noun_plural);
-      parse_says(1, Players[FactionMonuments[faction].records_[type].word_8_].noun_faction,
+      parse_says(1, get_noun(rec->word_8_),
                  Players[preview_faction_or_page_].noun_gender,
                  Players[preview_faction_or_page_].is_noun_plural);
-      parse_set(Players[FactionMonuments[faction].records_[type].word_8_].is_leader_female, 0);
-      parse_says(2, Players[FactionMonuments[faction].records_[type].word_8_].title_leader,
+      parse_says(2, get_title(rec->word_8_),
                  Players[preview_faction_or_page_].is_leader_female, -1);
       // ? 0x475E00: here GenderDefault is stored BEFORE PluralityDefault=0
       // (every other parse_set site in 8..20 stores Plurality first). Likely
       // scheduling of the same inline parse_set; if it does not match, try
       // explicit `GenderDefault = ...; PluralityDefault = 0;` for this site.
-      parse_set(Players[FactionMonuments[faction].records_[type].word_8_].is_leader_female, 0);
-      parse_says(3, Players[FactionMonuments[faction].records_[type].word_8_].name_leader,
+      parse_says(3, get_name(rec->word_8_),
                  Players[preview_faction_or_page_].is_leader_female, -1);
       description.load("monument", "KILLFACTION", 1, 0);        // 0x686744 / 0x686738
       break;  // falls straight into the shared tail at 0x475E50

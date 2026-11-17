@@ -1662,14 +1662,10 @@ int __cdecl eliminate_player(int faction, int conqueror) {
         set_treaty(faction, conqueror, 0x2030, 1);
     }
     draw_map(1);
-    parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
-    parse_says(0, Players[faction].noun_faction, -1, -1);
-    parse_set(Players[conqueror].noun_gender, Players[conqueror].is_noun_plural);
-    parse_says(1, Players[conqueror].noun_faction, -1, -1);
-    parse_set(Players[faction].is_leader_female, 0);
-    parse_says(2, Players[faction].title_leader, -1, -1);
-    parse_set(Players[faction].is_leader_female, 0);
-    parse_says(3, Players[faction].name_leader, -1, -1);
+    parse_says(0, get_noun(faction), -1, -1);
+    parse_says(1, get_noun(conqueror), -1, -1);
+    parse_says(2, get_title(faction), -1, -1);
+    parse_says(3, get_name(faction), -1, -1);
     parse_says(4, get_his_her(faction, 0), -1, -1);
     StringTemp[0] = '\0';
     strcat(StringTemp, "WIPEOUT");
@@ -1724,7 +1720,7 @@ int __cdecl eliminate_player(int faction, int conqueror) {
                 // The original deliberately retains the last radius coordinates.
                 draw_tiles(x, y, 2);
                 MapWinTable[0]->set_center(x, y, 1);
-                parse_says(6, Players[faction].adj_name_faction, -1, -1);
+                parse_says(6, get_adjective(faction), -1, -1);
                 if (Players[faction].rule_flags & 0x80) {
                     popp(ScriptPopupFile, "TRACKED", 0, "al_pod_sm.pcx", 0);
                 } else {
@@ -1897,9 +1893,9 @@ void __cdecl setup_game(int reload) {
 
     // The original publishes the default human's labels before the optional
     // new-game diplomacy/time-warp branch, whose callbacks observe them.
-    strcpy(Players[0].formal_name_faction, StringTable.get(Labels.strings_ptr[245]));
-    strcpy(Players[0].noun_faction, StringTable.get(Labels.strings_ptr[245]));
-    strcpy(Players[0].adj_name_faction, StringTable.get(Labels.strings_ptr[244]));
+    strcpy(Players[0].formal_name_faction, label_get(245));
+    strcpy(Players[0].noun_faction, label_get(245));
+    strcpy(Players[0].adj_name_faction, label_get(244));
 
     if (reload == 0) {
         // Pair every unpaired social_faction with a distinct random partner.

@@ -372,20 +372,12 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
             other_id != faction_id &&
             !(PlayersData[faction_id].diplo_treaties[other_id] &
               DTREATY_VENDETTA)) {
-            GenderDefault = Players[faction_id].is_leader_female;
-            PluralityDefault = 0;
-            parse_says(0, Players[faction_id].title_leader, -1, -1);
+            parse_says(0, get_title(faction_id), -1, -1);
             parse_says(1, get_pact_hood(faction_id, other_id), -1, -1);
-            GenderDefault = Players[other_id].noun_gender;
-            PluralityDefault = Players[other_id].is_noun_plural;
-            parse_says(2, Players[other_id].noun_faction, -1, -1);
-            parse_says(3, Players[other_id].adj_name_faction, -1, -1);
-            GenderDefault = Players[other_id].is_leader_female;
-            PluralityDefault = 0;
-            parse_says(5, Players[other_id].title_leader, -1, -1);
-            GenderDefault = Players[other_id].is_leader_female;
-            PluralityDefault = 0;
-            parse_says(6, Players[other_id].name_leader, -1, -1);
+            parse_says(2, get_noun(other_id), -1, -1);
+            parse_says(3, get_adjective(other_id), -1, -1);
+            parse_says(5, get_title(other_id), -1, -1);
+            parse_says(6, get_name(other_id), -1, -1);
             if (PlayersData[faction_id].diplo_treaties[other_id] & DTREATY_PACT) {
                 NetMsgPrimary.pop((map_loc(x, y)->climate & ~0x1F) < 0x60 ? "TERRPACT2"
                                                             : "TERRPACT",
@@ -408,13 +400,9 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
             } else {
                 DiplomacyEndState = 8;
                 wants_to_speak(faction_id, other_id);
-                parse_says(0, Players[other_id].adj_name_faction, -1, -1);
-                GenderDefault = Players[faction_id].is_leader_female;
-                PluralityDefault = 0;
-                parse_says(1, Players[faction_id].title_leader, -1, -1);
-                GenderDefault = Players[faction_id].is_leader_female;
-                PluralityDefault = 0;
-                parse_says(2, Players[faction_id].name_leader, -1, -1);
+                parse_says(0, get_adjective(other_id), -1, -1);
+                parse_says(1, get_title(faction_id), -1, -1);
+                parse_says(2, get_name(faction_id), -1, -1);
                 parse_says(3, Players[faction_id].adj_insult_faction, -1, -1);
                 if (!x_pops_minimal((map_loc(x, y)->climate & ~0x1F) < 0x60
                                         ? "THISLANDISMYLAND2"
@@ -425,12 +413,8 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
                     return;
                 }
                 StringTemp[0] = 0;
-                GenderDefault = Players[faction_id].is_leader_female;
-                PluralityDefault = 0;
-                parse_says(0, Players[faction_id].title_leader, -1, -1);
-                GenderDefault = Players[faction_id].is_leader_female;
-                PluralityDefault = 0;
-                parse_says(1, Players[faction_id].name_leader, -1, -1);
+                parse_says(0, get_title(faction_id), -1, -1);
+                parse_says(1, get_name(faction_id), -1, -1);
                 parse_says(2, Players[faction_id].adj_insult_faction, -1, -1);
                 parse_says(3, Players[faction_id].adj_leader, -1, -1);
                 parse_says(4, get_phrase(other_id, 13), -1, -1);
@@ -2775,7 +2759,7 @@ void Console::use_ability(int vehicle_id) {
             if (has_abil(current_proto_id, static_cast<int>(ability_bit)) == 0) {
                 continue;
             }
-            popup.dialogs().item(StringTable.get(Ability[ability_id].name),
+            popup.item(StringTable.get(Ability[ability_id].name),
                                  static_cast<int>(ability_bit));
         }
         const int result = popup.exec(0, nullptr);
@@ -3949,9 +3933,7 @@ void DipEdit::init(int faction_index) {
     strcat(StringTemp, label_get(866));
     strcat(StringTemp, BufferJoinSpace);
     const int faction = faction_index_;
-    GenderDefault = Players[faction].noun_gender;
-    PluralityDefault = Players[faction].is_noun_plural;
-    strcat(StringTemp, Players[faction].noun_faction);
+    strcat(StringTemp, get_noun(faction));
     CharUpperA(StringTemp);
 
     rect.left += 4;
@@ -3996,9 +3978,7 @@ void DipEdit::init(int faction_index) {
             continue;
         }
         StringTemp[0] = 0;
-        GenderDefault = Players[i].noun_gender;
-        PluralityDefault = Players[i].is_noun_plural;
-        strcat(StringTemp, Players[i].noun_faction);
+        strcat(StringTemp, get_noun(i));
         list_box_.item(StringTemp, i);
         if (selected_target_ == static_cast<int>(faction_index_)) {
             selected_target_ = i;
@@ -4275,15 +4255,9 @@ void Console::editor_personality() {
     }
     auto_undo();
 
-    GenderDefault = Players[faction].is_leader_female;
-    PluralityDefault = 0;
-    parse_says(0, Players[faction].title_leader, -1, -1);
-    GenderDefault = Players[faction].is_leader_female;
-    PluralityDefault = 0;
-    parse_says(1, Players[faction].name_leader, -1, -1);
-    GenderDefault = Players[faction].noun_gender;
-    PluralityDefault = Players[faction].is_noun_plural;
-    parse_says(2, Players[faction].noun_faction, -1, -1);
+    parse_says(0, get_title(faction), -1, -1);
+    parse_says(1, get_name(faction), -1, -1);
+    parse_says(2, get_noun(faction), -1, -1);
 
     if (PlayersData[faction].ai_growth) {
         PopupWriteCheckState |= 1;
@@ -4849,7 +4823,7 @@ void Console::editor_diff() {
     for (int i = 0; i < MaxDiffNum; ++i) {
         StringTemp[0] = 0;
         strcat(StringTemp, StringTable.get(Difficulty[i]));
-        popup.dialogs().item(StringTemp, i);
+        popup.item(StringTemp, i);
     }
     popup.set_value(GameDataStateStorage.fields_.diff_level_current_);
     const int selected = popup.exec(0, nullptr);
@@ -4955,7 +4929,7 @@ void Console::editor_edit_veh(int vehicle_id) {
                     && (Weapon[VehPrototypes[Vehs[vehicle_id].proto_id].weapon_id].offense_rating < 0
                         || Vehs[vehicle_id].proto_id == 0x0F)
                 ? Morale[morale_id].name_lifecycle : Morale[morale_id].name));
-            popup.dialogs().item(StringTemp, morale_id);
+            popup.item(StringTemp, morale_id);
             if (morale_id == morale_veh(vehicle_id, 1, 0)) {
                 popup.set_value(morale_id);
             }
@@ -5036,7 +5010,7 @@ void Console::editor_edit_veh(int vehicle_id) {
         for (int faction_id = 0; faction_id < MaxPlayerNum; ++faction_id) {
             StringTemp[0] = '\0';
             strcat(StringTemp, get_noun(faction_id));
-            popup.dialogs().item(StringTemp, faction_id);
+            popup.item(StringTemp, faction_id);
         }
         popup.set_value(Vehs[vehicle_id].faction_id);
         const int faction = popup.exec(0, nullptr);
@@ -5050,10 +5024,10 @@ void Console::editor_edit_veh(int vehicle_id) {
         popup.start(PopupStartCaption, "EDITVEHHOME", -1, nullptr, 0x42);
         StringTemp[0] = '\0';
         strcat(StringTemp, label_get(25));
-        popup.dialogs().item(StringTemp, 9999);
+        popup.item(StringTemp, 9999);
         for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
             if (Bases[base_id].faction_id_current == Vehs[vehicle_id].faction_id) {
-                popup.dialogs().item(Bases[base_id].name_string, base_id);
+                popup.item(Bases[base_id].name_string, base_id);
             }
         }
         if (Vehs[vehicle_id].home_base_id < 0) {
@@ -5129,7 +5103,7 @@ again:
                 proto_idx < MaxVehProtoFactionNum) {
                 StringTemp[0] = 0;
                 strcat(StringTemp, VehPrototypes[proto_idx].veh_name);
-                popup.dialogs().item(StringTemp, proto_idx);
+                popup.item(StringTemp, proto_idx);
                 if (proto_idx == ScenarioPreviousPrototype) popup.set_value(proto_idx);
             }
         }
@@ -5145,7 +5119,7 @@ again:
             for (int morale = 0; morale <= MORALE_ELITE; ++morale) {
                 StringTemp[0] = 0;
                 strcat(StringTemp, StringTable.get(Morale[morale].name));
-                popup.dialogs().item(StringTemp, morale);
+                popup.item(StringTemp, morale);
                 if (morale == ScenarioVehicleMorale) popup.set_value(morale);
             }
             ScenarioVehicleMorale = popup.exec(0, nullptr);
@@ -6430,7 +6404,7 @@ void Console::editor_natural(int place) {
                 -1, nullptr, 0x40);
     for (int natural = 0; natural < MaxNaturalNum; ++natural) {
         char *name = StringTable.get(Natural[natural].name);
-        popup.dialogs().item(name, natural);
+        popup.item(name, natural);
     }
     const int selected = popup.exec(0, nullptr);
     if (selected < 0) {

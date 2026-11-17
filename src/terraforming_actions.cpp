@@ -654,7 +654,7 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
         }
         if (TerraformDrownedBaseId >= 0) {
             parse_says(0, Bases[TerraformDrownedBaseId].name_string, -1, -1);
-            parse_says(1, Players[faction].adj_name_faction, -1, -1);
+            parse_says(1, get_adjective(faction), -1, -1);
             if (faction == ConsoleGlobal.faction_id_) {
                 NetMsgPrimary.pop(VehLabelTERRAMINE, 5000, 0, 0);
             } else {
@@ -665,7 +665,7 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
         // reads the acting faction's.
         if (MapBaseIdClosestSubmergedVeh[ConsoleGlobal.faction_id_] >= 0) {
             parse_says(0, Bases[MapBaseIdClosestSubmergedVeh[faction]].name_string, -1, -1);
-            parse_says(1, Players[faction].adj_name_faction, -1, -1);
+            parse_says(1, get_adjective(faction), -1, -1);
             if (faction == ConsoleGlobal.faction_id_) {
                 NetMsgPrimary.pop(VehLabelDROWNMINE, 5000, 0, 0);
             } else {
@@ -966,10 +966,9 @@ found_terra:
                     add_goal(owner, 0, 5, Vehs[veh_id].x, Vehs[veh_id].y, -1);
                     if (owner == ConsoleGlobal.faction_id_) {
                         int base_id = base_find(x, y, -1, -1, -1, ConsoleGlobal.faction_id_);
-                        parse_set(Players[faction_id].noun_gender, Players[faction_id].is_noun_plural);
-                        parse_says(0, Players[faction_id].noun_faction, -1, -1);
+                        parse_says(0, get_noun(faction_id), -1, -1);
                         parse_says(1, Bases[base_id].name_string, -1, -1);
-                        parse_says(3, Players[faction_id].adj_name_faction, -1, -1);
+                        parse_says(3, get_adjective(faction_id), -1, -1);
                         NetMsgPrimary.pop(is_assault ? "HAVEDESTROYED1" : "HAVEDESTROYED", 5000, 0, 0);
                     }
                 }
@@ -1690,8 +1689,7 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
         if (is_seen && faction_id != ConsoleGlobal.faction_id_) {
             int base_id = base_find(x, y, -1, -1, -1, 1);
             parse_says(0, Bases[base_id].name_string, -1, -1);
-            parse_set(Players[faction_id].noun_gender, Players[faction_id].is_noun_plural);
-            parse_says(1, Players[faction_id].noun_faction, -1, -1);
+            parse_says(1, get_noun(faction_id), -1, -1);
             if (Players[faction_id].rule_flags & 0x80) {
                 popp(ScriptPopupFile, drop_range(faction_id) > Rules.max_airdrop_sans_orb_insert
                     ? VehLabelMADEORBITAL : VehLabelMADEAIRDROP, 0, VehIconAL_DROP_SM_PCX6, 0);
@@ -2166,17 +2164,17 @@ int __cdecl shoot_it(int attacker, int defender, int x, int y,
                     parse_says(0, Bases[base_id].name_string, -1, -1);
                     if (fungal_attack) {
                         if (defender == ConsoleGlobal.faction_id_) {
-                            parse_says(1, Players[attacker].adj_name_faction, -1, -1);
+                            parse_says(1, get_adjective(attacker), -1, -1);
                             popp(ScriptPopupFile, "FWESHOTIT2", 0, "space_sm.pcx", 0);
                         } else if (attacker == ConsoleGlobal.faction_id_) {
-                            parse_says(1, Players[Bases[base_id].faction_id_current].adj_name_faction, -1, -1);
+                            parse_says(1, get_adjective(Bases[base_id].faction_id_current), -1, -1);
                             popp(ScriptPopupFile, "FTHEYSHOTIT2", 0, "space_sm.pcx", 0);
                         }
                     } else if (defender == ConsoleGlobal.faction_id_) {
-                        parse_says(1, Players[attacker].adj_name_faction, -1, -1);
+                        parse_says(1, get_adjective(attacker), -1, -1);
                         popp(ScriptPopupFile, "TWESHOTIT2", 0, "space_sm.pcx", 0);
                     } else if (attacker == ConsoleGlobal.faction_id_) {
-                        parse_says(1, Players[Bases[base_id].faction_id_current].adj_name_faction, -1, -1);
+                        parse_says(1, get_adjective(Bases[base_id].faction_id_current), -1, -1);
                         popp(ScriptPopupFile, "TTHEYSHOTIT2", 0, "space_sm.pcx", 0);
                     }
                     return 1;
@@ -2195,15 +2193,14 @@ int __cdecl shoot_it(int attacker, int defender, int x, int y,
                         popp(ScriptPopupFile, "TWEMUSTSAC", 0, "space_sm.pcx", 0);
                     }
                 } else if (attacker == ConsoleGlobal.faction_id_) {
-                    parse_set(Players[defender].noun_gender, Players[defender].is_noun_plural);
-                    parse_says(0, Players[defender].noun_faction, -1, -1);
+                    parse_says(0, get_noun(defender), -1, -1);
                     popp(ScriptPopupFile, "THEYMUSTSAC", 0, "space_sm.pcx", 0);
                 }
             } else {
                 parse_num(0, PlayersData[defender].satellites_[3]);
                 int base_id = base_find(x, y);
                 parse_says(0, Bases[base_id].name_string, -1, -1);
-                parse_says(1, Players[attacker].adj_name_faction, -1, -1);
+                parse_says(1, get_adjective(attacker), -1, -1);
                 int dismissed;
                 if (fungal_attack) {
                     dismissed = popp(ScriptPopupFile, "FUNGALSAC", 0, "space_sm.pcx", 0);
@@ -2222,10 +2219,10 @@ int __cdecl shoot_it(int attacker, int defender, int x, int y,
         flechette_failed:
             if (has_flechette) {
                 if (defender == ConsoleGlobal.faction_id_) {
-                    parse_says(1, Players[attacker].adj_name_faction, -1, -1);
+                    parse_says(1, get_adjective(attacker), -1, -1);
                     popp(ScriptPopupFile, "WEFAILEDFLECHETTE", 0, "space_sm.pcx", 0);
                 } else if (attacker == ConsoleGlobal.faction_id_) {
-                    parse_says(1, Players[defender].adj_name_faction, -1, -1);
+                    parse_says(1, get_adjective(defender), -1, -1);
                     popp(ScriptPopupFile, "THEYFAILEDFLECHETTE", 0, "space_sm.pcx", 0);
                 }
             }
@@ -2243,17 +2240,17 @@ int __cdecl shoot_it(int attacker, int defender, int x, int y,
     parse_num(1, remaining);
     if (fungal_attack) {
         if (defender == ConsoleGlobal.faction_id_) {
-            parse_says(1, Players[attacker].adj_name_faction, -1, -1);
+            parse_says(1, get_adjective(attacker), -1, -1);
             popp(ScriptPopupFile, "FWESHOTIT", 0, "space_sm.pcx", 0);
         } else if (attacker == ConsoleGlobal.faction_id_) {
-            parse_says(1, Players[defender].adj_name_faction, -1, -1);
+            parse_says(1, get_adjective(defender), -1, -1);
             popp(ScriptPopupFile, "FTHEYSHOTIT", 0, "space_sm.pcx", 0);
         }
     } else if (defender == ConsoleGlobal.faction_id_) {
-        parse_says(1, Players[attacker].adj_name_faction, -1, -1);
+        parse_says(1, get_adjective(attacker), -1, -1);
         popp(ScriptPopupFile, "TWESHOTIT", 0, "space_sm.pcx", 0);
     } else if (attacker == ConsoleGlobal.faction_id_) {
-        parse_says(1, Players[defender].adj_name_faction, -1, -1);
+        parse_says(1, get_adjective(defender), -1, -1);
         popp(ScriptPopupFile, "TTHEYSHOTIT", 0, "space_sm.pcx", 0);
     }
     return 1;

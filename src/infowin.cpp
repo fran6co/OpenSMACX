@@ -269,11 +269,9 @@ void InfoWin::setup_text() {
             strcat(text, Players[other].formal_name_faction);
             strcpy(row_text_[pane][0], text);
             text[0] = 0;
-            parse_set(Players[other].is_leader_female, 0);
-            strcat(text, Players[other].title_leader);
+            strcat(text, get_title(other));
             strcat(text, BufferJoinSpace);
-            parse_set(Players[other].is_leader_female, 0);
-            strcat(text, Players[other].name_leader);
+            strcat(text, get_name(other));
             strcpy(row_text_[pane][1], text);
             text[0] = 0;
             {
@@ -308,11 +306,9 @@ void InfoWin::setup_text() {
             strcat(text, Players[faction].formal_name_faction);
             strcpy(row_text_[pane][0], text);
             text[0] = 0;
-            parse_set(Players[faction].is_leader_female, 0);
-            strcat(text, Players[faction].title_leader);
+            strcat(text, get_title(faction));
             strcat(text, BufferJoinSpace);
-            parse_set(Players[faction].is_leader_female, 0);
-            strcat(text, Players[faction].name_leader);
+            strcat(text, get_name(faction));
             strcpy(row_text_[pane][1], text);
             text[0] = 0;
             strcat(text, label_get(0xDE));
@@ -355,11 +351,9 @@ void InfoWin::setup_text() {
             strcat(text, label_get(0x41C / 4));
             strcat(text, SocialWinColonSpaceText);
             strcat(text, "{");
-            parse_set(Players[k].is_leader_female, 0);
-            strcat(text, Players[k].title_leader);
+            strcat(text, get_title(k));
             strcat(text, BufferJoinSpace);
-            parse_set(Players[k].is_leader_female, 0);
-            strcat(text, Players[k].name_leader);
+            strcat(text, get_name(k));
             strcat(text, "}");
             strcpy(row_text_[pane][0], text);
 
@@ -376,11 +370,9 @@ void InfoWin::setup_text() {
             strcat(text, label_get(0x420 / 4));
             strcat(text, SocialWinColonSpaceText);
             strcat(text, "{");
-            parse_set(Players[k].is_leader_female, 0);
-            strcat(text, Players[k].title_leader);
+            strcat(text, get_title(k));
             strcat(text, BufferJoinSpace);
-            parse_set(Players[k].is_leader_female, 0);
-            strcat(text, Players[k].name_leader);
+            strcat(text, get_name(k));
             strcat(text, "}");
             strcpy(row_text_[pane][1], text);
 
@@ -397,11 +389,9 @@ void InfoWin::setup_text() {
             strcat(text, label_get(0x424 / 4));
             strcat(text, SocialWinColonSpaceText);
             strcat(text, "{");
-            parse_set(Players[k].is_leader_female, 0);
-            strcat(text, Players[k].title_leader);
+            strcat(text, get_title(k));
             strcat(text, BufferJoinSpace);
-            parse_set(Players[k].is_leader_female, 0);
-            strcat(text, Players[k].name_leader);
+            strcat(text, get_name(k));
             strcat(text, "}");
             strcpy(row_text_[pane][2], text);
 
@@ -418,11 +408,9 @@ void InfoWin::setup_text() {
             strcat(text, label_get(0x4F0 / 4));
             strcat(text, SocialWinColonSpaceText);
             strcat(text, "{");
-            parse_set(Players[k].is_leader_female, 0);
-            strcat(text, Players[k].title_leader);
+            strcat(text, get_title(k));
             strcat(text, BufferJoinSpace);
-            parse_set(Players[k].is_leader_female, 0);
-            strcat(text, Players[k].name_leader);
+            strcat(text, get_name(k));
             strcat(text, "}");
             strcpy(row_text_[pane][3], text);
 
@@ -447,11 +435,9 @@ void InfoWin::setup_text() {
             strcat(text, label_get(0x97C / 4));
             strcat(text, SocialWinColonSpaceText);
             strcat(text, "{");
-            parse_set(Players[k].is_leader_female, 0);
-            strcat(text, Players[k].title_leader);
+            strcat(text, get_title(k));
             strcat(text, BufferJoinSpace);
-            parse_set(Players[k].is_leader_female, 0);
-            strcat(text, Players[k].name_leader);
+            strcat(text, get_name(k));
             strcat(text, "}");
             k = 5;
             strcpy(row_text_[pane][4], text);
@@ -461,11 +447,9 @@ void InfoWin::setup_text() {
                 strcat(text, label_get(0x428 / 4));
                 strcat(text, SocialWinColonSpaceText);
                 strcat(text, "{");
-                parse_set(Players[GameDataStateStorage.fields_.faction_rankings_[7]].is_leader_female, 0);
-                strcat(text, Players[GameDataStateStorage.fields_.faction_rankings_[7]].title_leader);
+                strcat(text, get_title(GameDataStateStorage.fields_.faction_rankings_[7]));
                 strcat(text, BufferJoinSpace);
-                parse_set(Players[GameDataStateStorage.fields_.faction_rankings_[7]].is_leader_female, 0);
-                strcat(text, Players[GameDataStateStorage.fields_.faction_rankings_[7]].name_leader);
+                strcat(text, get_name(GameDataStateStorage.fields_.faction_rankings_[7]));
                 strcat(text, "}");
                 k = 6;
                 strcpy(row_text_[pane][5], text);
