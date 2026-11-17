@@ -17,7 +17,8 @@ rows unknown, with 690 functions not yet byte-exact (623 MISMATCH, 41
 MNEMONIC_ONLY, 9 SHAPE_EXACT, 15 REFUSED, 2 UNRESOLVED). The user chose this
 loop, which supersedes conflicting guidance below and in `recovery/WORKFLOW.md`:
 
-1. Work one translation unit at a time. Iterate on its unmatched functions with
+1. Work one translation unit at a time, except for header changes (rule 7).
+   Iterate on its unmatched functions with
    `uv run recover measure <addrs> --image <image>` (seconds) and
    `uv run recover diff <addr> --image <image>`. Bank exact results only with
    `uv run recover record`.
@@ -37,7 +38,11 @@ loop, which supersedes conflicting guidance below and in `recovery/WORKFLOW.md`:
 6. Priority: fix regressed claims first (they were exact before), then
    unclaimed functions ranked by translation unit and similarity.
 7. Parallel workers each own one source file (conflict domain); the coordinator
-   commits and integrates. Workers may still use isolated worktrees.
+   commits and integrates. Workers may still use isolated worktrees. A header
+   change is its own conflict domain (user decision, 2026-11-17): the worker
+   who owns one header hypothesis (an accessor, inline helper, field type or
+   declaration) may edit every file that uses it, limited to those sites. The
+   coordinator schedules hypotheses so no two workers edit the same lines.
 
 Byte-exact first, workarounds allowed (user decision, 2026-11-09): reach 100%
 byte-exact functions first, even with less-than-ideal code, then run cleanup
