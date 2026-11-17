@@ -4913,7 +4913,7 @@ L_56d46c:
             }
             break;
         case 0:
-            if (!(map_loc(x, y)->bit & 0x8000) && (map_loc(x, y)->val3 & 0xC0) < 0x80)
+            if (!(map_loc(x, y)->bit & 0x8000) && (map_loc(x, y)->val3 & ~0x3F) < 0x80)
                 goto L_56d46c;
             break;
         }
@@ -4927,12 +4927,12 @@ L_56d46c:
         ty = y + RadiusOffsetY[k];
         if (!on_map(tx, ty) || map_loc(tx, ty)->region != region)
             continue;
-        if (triad != 2 && ((map_loc(tx, ty)->climate & 0xE0) < 0x60) != (triad == 1))
+        if (triad != 2 && (is_ocean(tx, ty)) != (triad == 1))
             continue;
         if (!can_convoy(tx, ty))
             continue;
-        if (!bonus_at(tx, ty, 0) && (map_loc(tx, ty)->val3 & 0xC0) < 0x80
-            && (map_loc(tx, ty)->climate & 0xE0) < 0xC0)
+        if (!bonus_at(tx, ty, 0) && (map_loc(tx, ty)->val3 & ~0x3F) < 0x80
+            && (map_loc(tx, ty)->climate & ~0x1F) < 0xC0)
             continue;
         if (whose_territory(faction_id, tx, ty, NULL, 0) != faction_id)
             continue;
@@ -5043,7 +5043,7 @@ L_56d7fc:
             for (rad = 0; rad < 9; rad++) {
                 tx = xrange(x + RadiusOffsetX[rad]);
                 ty = y + RadiusOffsetY[rad];
-                if (on_map(tx, ty) && (map_loc(tx, ty)->climate & 0xE0) >= 0x60
+                if (on_map(tx, ty) && !is_ocean(tx, ty)
                     && (map_loc(tx, ty)->bit & 0x2000)
                     && (!ExpansionEnabled
                         || (Vehs[veh_id].proto_id != 0x10 && Vehs[veh_id].proto_id != 0x11
@@ -5084,7 +5084,7 @@ L_56dc57:
             for (rad = 0; rad < 8; rad++) {
                 tx = xrange(x + VehMoveDeltaX[rad]);
                 ty = y + VehMoveDeltaY[rad];
-                if (on_map(tx, ty) && (map_loc(tx, ty)->climate & 0xE0) < 0x60) {
+                if (on_map(tx, ty) && is_ocean(tx, ty)) {
                     for (other_id = stack_fix(veh_at(tx, ty)); other_id >= 0;
                          other_id = veh_next_stack_id(other_id)) {
                         if (Vehs[other_id].faction_id == faction_id
@@ -5166,7 +5166,7 @@ L_56de10:
                     tx = xrange(x + RadiusOffsetX[n]);
                     ty = y + RadiusOffsetY[n];
                     if (on_map(tx, ty)
-                        && (triad == 2 || ((map_loc(tx, ty)->climate & 0xE0) < 0x60) == keep_count)
+                        && (triad == 2 || (is_ocean(tx, ty)) == keep_count)
                         && map_loc(tx, ty)->region == region
                         && (other_id = stack_fix(veh_at(tx, ty))) >= 0
                         && Vehs[other_id].faction_id != faction_id
@@ -5356,7 +5356,7 @@ L_56e96b:
                                 for (m = 0; m < 24; m++) {
                                     tx = xrange(Bases[base_id].x + RadiusOffsetX[m + 1]);
                                     ty = Bases[base_id].y + RadiusOffsetY[m + 1];
-                                    if (on_map(tx, ty) && (map_loc(tx, ty)->climate & 0xE0) >= 0x60) {
+                                    if (on_map(tx, ty) && !is_ocean(tx, ty)) {
                                         int d = (abs(y - ty) + x_dist(x, tx)) >> 1;
                                         if (d <= dist) {
                                             int who = anything_at(tx, ty);
@@ -5477,7 +5477,7 @@ L_56ef2f:
             tx = xrange(x + RadiusOffsetX[i]);
             ty = y + RadiusOffsetY[i];
             if (on_map(tx, ty)
-                && (map_loc(tx, ty)->climate & 0xE0) < 0x60
+                && is_ocean(tx, ty)
                 && (!home_dist ? base_on_sea(home_base, map_loc(tx, ty)->region)
                                : map_loc(tx, ty)->region == region)
                 && base_who(tx, ty) < 0) {
@@ -5513,7 +5513,7 @@ L_56ef2f:
             if (Vehs[other_id].faction_id != faction_id
                 && (PlayersData[faction_id].diplo_treaties[Vehs[other_id].faction_id] & 0xC30)
                 && (faction_bit & Vehs[other_id].visibility)
-                && (map_loc(Vehs[other_id].x, Vehs[other_id].y)->climate & 0xE0) < 0x60
+                && is_ocean(Vehs[other_id].x, Vehs[other_id].y)
                 && base_who(Vehs[other_id].x, Vehs[other_id].y) < 0) {
                 dist = (abs(y - Vehs[other_id].y) + x_dist(x, Vehs[other_id].x)) >> 1;
                 if (VehPrototypes[Vehs[other_id].proto_id].plan != PLAN_NAVAL_TRANSPORT) {
@@ -5534,7 +5534,7 @@ L_56ef2f:
 
     // Artillery.
     if (!can_arty(Vehs[veh_id].proto_id, 1)
-        || (triad != TRIAD_SEA && (map_loc(x, y)->climate & 0xE0) < 0x60 && near_dist)
+        || (triad != TRIAD_SEA && is_ocean(x, y) && near_dist)
         || near_hostile) {
         goto L_56f8ad;
     }
@@ -5548,7 +5548,7 @@ L_56ef2f:
             continue;
         }
         if (anything_at(tx, ty) < 0) {
-            if ((map_loc(tx, ty)->climate & 0xE0) < 0x60) {
+            if (is_ocean(tx, ty)) {
                 continue;
             }
             {
@@ -5594,12 +5594,12 @@ L_56ef2f:
                 int val = (stack_check(other_id, 2, 6, -1, -1)
                     + stack_check(other_id, 6, 0x8000, -1, -1)) * 8;
                 if (triad == TRIAD_SEA) {
-                    if ((map_loc(tx, ty)->climate & 0xE0) < 0x60 && base_who(tx, ty) >= 0) {
+                    if (is_ocean(tx, ty) && base_who(tx, ty) >= 0) {
                         goto L_56f83a;
                     }
                     // slot -0x60 (tile_owner) is written with tx here: VC6 spill of the
                     // CSE'd tx across the abs call, not a source assignment.
-                    if ((map_loc(tx, ty)->climate & 0xE0) < 0x60
+                    if (is_ocean(tx, ty)
                         && ((abs(y - ty) + x_dist(x, tx)) >> 1)
                             <= veh_moves(veh_id) / Rules.move_rate_roads) {
                         goto L_56f83a;
@@ -5639,7 +5639,7 @@ L_56ef2f:
                 return 1;
             }
             if (best_id >= 9
-                || (triad == TRIAD_SEA && (map_loc(tx, ty)->climate & 0xE0) >= 0x60)) {
+                || (triad == TRIAD_SEA && !is_ocean(tx, ty))) {
                 if (remote_own) {
                     log_say("Auto sending ARTY message", veh_id, faction_id, 0);
                     message_veh(0x2402, veh_id, best_id, 0);
@@ -5693,13 +5693,13 @@ L_56f8ad:
         if (!on_map(tx, ty)) {
             continue;
         }
-        if (((map_loc(tx, ty)->climate & 0xE0) < 0x60) != keep_count) {
+        if ((is_ocean(tx, ty)) != keep_count) {
             continue;
         }
-        if ((map_loc(tx, ty)->bit & 0x20) && (map_loc(tx, ty)->climate & 0xE0) >= 0x40) {
+        if ((map_loc(tx, ty)->bit & 0x20) && (map_loc(tx, ty)->climate & ~0x1F) >= 0x40) {
             continue;
         }
-        if ((map_loc(tx, ty)->val3 & 0xC0) > 0x40 && (map_loc(tx, ty)->climate & 0xE0) >= 0x60) {
+        if ((map_loc(tx, ty)->val3 & ~0x3F) > 0x40 && !is_ocean(tx, ty)) {
             continue;
         }
         if (map_loc(tx, ty)->region != region) {
@@ -5846,7 +5846,7 @@ L_57000c:
                         continue;
                     }
                     if ((map_loc(tx, ty)->bit & 0x20)
-                        && (map_loc(tx, ty)->climate & 0xE0) >= 0x40) {
+                        && (map_loc(tx, ty)->climate & ~0x1F) >= 0x40) {
                         continue;
                     }
                     score = site_at(tx, ty, 0) * 10000;
@@ -5864,7 +5864,7 @@ L_57000c:
                     for (keep_count = 0; keep_count < 81; keep_count++) {
                         int nx = xrange(tx + RadiusOffsetX[keep_count]);
                         int ny = ty + RadiusOffsetY[keep_count];
-                        if (on_map(nx, ny) && (map_loc(nx, ny)->climate & 0xE0) < 0x60) {
+                        if (on_map(nx, ny) && is_ocean(nx, ny)) {
                             base_id = base_at(nx, ny);
                             // BUG(original)? these two tests read the other faction's
                             // row (PlayersData[owner].diplo_treaties[faction_id]).
@@ -5966,16 +5966,16 @@ L_570466:
             add_site(faction_id, 3, (BaseFindDist < 6) + 1, tx, ty);
         }
     }
-    if ((map_loc(tx, ty)->climate & 0xE0) < 0x60) {
+    if (is_ocean(tx, ty)) {
         goto L_570aaf;
     }
-    if ((map_loc(tx, ty)->bit & 0x20) && (map_loc(tx, ty)->climate & 0xE0) >= 0x40) {
+    if ((map_loc(tx, ty)->bit & 0x20) && (map_loc(tx, ty)->climate & ~0x1F) >= 0x40) {
         goto L_570aaf;
     }
     if (map_loc(tx, ty)->bit & 0x2000) {
         goto L_570aaf;
     }
-    if ((map_loc(tx, ty)->val3 & 0xC0) > 0x40) {
+    if ((map_loc(tx, ty)->val3 & ~0x3F) > 0x40) {
         goto L_570aaf;
     }
     if ((m == faction_id || m < 0) && !is_known(tx, ty, faction_id)) {
@@ -6043,13 +6043,13 @@ L_570725:
         if (map_loc(nx, ny)->region != region) {
             continue;
         }
-        if ((map_loc(nx, ny)->bit & 0x20) && (map_loc(nx, ny)->climate & 0xE0) >= 0x40) {
+        if ((map_loc(nx, ny)->bit & 0x20) && (map_loc(nx, ny)->climate & ~0x1F) >= 0x40) {
             continue;
         }
         if (map_loc(nx, ny)->bit & 0x2000) {
             continue;
         }
-        if ((map_loc(nx, ny)->val3 & 0xC0) > 0x40) {
+        if ((map_loc(nx, ny)->val3 & ~0x3F) > 0x40) {
             continue;
         }
         if (base_territory(faction_id, nx, ny) >= 0) {
@@ -6202,7 +6202,7 @@ L_570c89:
          (1 << Bases[near_base].faction_id_current)) &&
         (PlayersData[faction_id].diplo_treaties[Bases[near_base].faction_id_current] & 0x10) &&
         triad != 2 &&
-        (((map_loc(x, y)->climate & 0xE0) < 0x60) == (triad == 1)) &&
+        ((is_ocean(x, y)) == (triad == 1)) &&
         Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating &&
         !near_hostile &&
         whose_territory(faction_id, x, y, NULL, 0) == Bases[near_base].faction_id_current &&
@@ -6264,7 +6264,7 @@ L_5711d4:
             (is_known(tx, ty, faction_id) ||
              (GameDataStateStorage.fields_.diff_level_current_ > 3 &&
               !(faction_bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_))) &&
-            (((map_loc(tx, ty)->climate & 0xE0) < 0x60) == (triad == 1)) &&
+            ((is_ocean(tx, ty)) == (triad == 1)) &&
             map_loc(tx, ty)->region == region) {
             // Image places this block at 0x571537 (after the OBLIT return).
             if (Vehs[veh_id].state & 0x40000000) {
@@ -6547,7 +6547,7 @@ L_571982:
     for (i = 0; i < 8; i++) {
         tx = xrange(x + VehMoveDeltaX[i]);
         ty = y + VehMoveDeltaY[i];
-        if (on_map(tx, ty) && (map_loc(tx, ty)->climate & 0xE0) >= 0x60 &&
+        if (on_map(tx, ty) && !is_ocean(tx, ty) &&
             ((abs(ty - Bases[base_id].y) + x_dist(tx, Bases[base_id].x)) & ~1) == 4) {
             owner = anything_at(tx, ty);
             if (owner < 0 || owner == faction_id) {
@@ -7221,7 +7221,7 @@ L_57460a:
                                 }
                             }
                             if ((map_loc(tx, ty)->bit & BIT_FUNGUS)
-                                && (map_loc(tx, ty)->climate & 0xE0) >= 0x40
+                                && (map_loc(tx, ty)->climate & ~0x1F) >= 0x40
                                 && PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::PLANET] <= 0) {
                                 value /= 2;
                             }
@@ -7881,7 +7881,7 @@ L_575b27:
                 tx = xrange(x + RadiusOffsetX[p] * 2);
                 ty = y + RadiusOffsetY[p] * 2;
                 if (!on_map(tx, ty)) continue;
-                if ((map_loc(tx, ty)->climate & 0xE0) < 0x60) continue;
+                if (is_ocean(tx, ty)) continue;
                 int r = map_loc(tx, ty)->region;
                 if (bad_reg(r)) continue;
                 if (PlayersData[faction_id].region_total_bases[r]) continue;
@@ -7910,7 +7910,7 @@ L_5767ed:
                 if (VehPrototypes[Vehs[other_id].proto_id].plan != 7) continue;
                 tx = Vehs[other_id].x;
                 ty = Vehs[other_id].y;
-                if ((map_loc(tx, ty)->climate & 0xE0) >= 0x60) continue;
+                if (!is_ocean(tx, ty)) continue;
                 if (base_who(tx, ty) >= 0) continue;
                 dist = (abs(y - ty) + x_dist(x, tx)) >> 1;
                 if (dist) {
@@ -7974,7 +7974,7 @@ L_576a95:
             best_score = -9999;
             for (ty = 0; ty < MapLatitudeBounds; ty++) {
                 for (tx = ty & 1; tx < MapLongitudeBounds; tx += 2) {
-                    if ((map_loc(tx, ty)->climate & 0xE0) >= 0x60) continue;
+                    if (!is_ocean(tx, ty)) continue;
                     if (!home_dist ? !base_on_sea(home_base, map_loc(tx, ty)->region)
                                    : map_loc(tx, ty)->region != region) continue;
                     if (((abs(y - ty) + x_dist(x, tx)) & ~1) < 16) continue;
@@ -7990,11 +7990,11 @@ L_576a95:
                         int ax = xrange(tx + RadiusOffsetX[k]);
                         int ay = ty + RadiusOffsetY[k];
                         if (!on_map(ax, ay)) continue;
-                        if ((map_loc(ax, ay)->climate & 0xE0) < 0x60) continue;
+                        if (is_ocean(ax, ay)) continue;
                         int bx = xrange(tx - RadiusOffsetX[k]);
                         int by = ty - RadiusOffsetY[k];
                         if (!on_map(bx, by)) continue;
-                        if ((map_loc(bx, by)->climate & 0xE0) < 0x60) continue;
+                        if (is_ocean(bx, by)) continue;
                         int ar = map_loc(ax, ay)->region;
                         int br = map_loc(bx, by)->region;
                         if (PlayersData[faction_id].region_total_bases[ar] <= 1) continue;
@@ -8030,7 +8030,7 @@ L_576d87:;
     for (ty = 0; ty < MapLatitudeBounds; ty++) {
         for (tx = ty & 1; tx < MapLongitudeBounds; tx += 2) {
             if (!is_known(tx, ty, faction_id)) continue;
-            if ((map_loc(tx, ty)->climate & 0xE0) >= 0x60) continue;
+            if (!is_ocean(tx, ty)) continue;
             if (!home_dist ? !base_on_sea(home_base, map_loc(tx, ty)->region)
                            : map_loc(tx, ty)->region != region) continue;
             score = 0;
@@ -8038,7 +8038,7 @@ L_576d87:;
                 if (!(map_loc(tx, ty)->bit & 0x100000)) {
                     score = 1;
                     if ((map_loc(tx, ty)->bit & 0x20)
-                        && (map_loc(tx, ty)->climate & 0xE0) >= 0x40) {
+                        && (map_loc(tx, ty)->climate & ~0x1F) >= 0x40) {
                         score = 2;
                     }
                     if (map_loc(tx, ty)->bit & 0x2000) score++;
@@ -8088,7 +8088,7 @@ L_57708a:
         for (int d = 0; d < 8; d++) {
             tx = xrange(x + VehMoveDeltaX[d]);
             ty = y + VehMoveDeltaY[d];
-            if (on_map(tx, ty) && (map_loc(tx, ty)->climate & 0xE0) < 0x60) {
+            if (on_map(tx, ty) && is_ocean(tx, ty)) {
                 // Laid out after the loop at 0x577161.
                 add_goal(faction_id, 7, 1, tx, ty, -1);
                 coast_goal = 1;
@@ -8155,7 +8155,7 @@ L_57717f:
     ty = y + RadiusOffsetY[i];
     if (!on_map(tx, ty)) goto L_578ae1;
     if (!i && !zoc_owner && plan != 2) goto L_578ae1;
-    near_hostile = (map_loc(tx, ty)->climate & 0xE0) < 0x60;
+    near_hostile = is_ocean(tx, ty);
     other_id = stack_fix(veh_at(tx, ty));
     base_id = base_at(tx, ty);
     faction_bit = map_loc(tx, ty)->region;
@@ -8261,7 +8261,7 @@ L_577723:
         Map *sq = map_loc(tx, ty);
         if (!(sq->bit & 0x100000)) {
             score += 8;
-            if ((sq->bit & 0x20) && (sq->climate & 0xE0) >= 0x40)
+            if ((sq->bit & 0x20) && (sq->climate & ~0x1F) >= 0x40)
                 score += 8;
             if (sq->bit & 0x2000)
                 score += 8;
@@ -8383,7 +8383,7 @@ L_577723:
                 score += stack_check(other_id, 14, -1, -1, -1) * 2;
             break;
         }
-        if ((map_loc(tx, ty)->climate & 0xE0) > (map_loc(x, y)->climate & 0xE0)
+        if ((map_loc(tx, ty)->climate & ~0x1F) > (map_loc(x, y)->climate & ~0x1F)
             && (Rules.combat_pct_atk_higher_elev || Rules.combat_pen_pct_atk_lwr_elev))
             score += 2;
     }
@@ -8532,7 +8532,7 @@ L_577723:
             if (!on_map(own_ground, tile_owner))
                 continue;
             if (triad != 2
-                && ((map_loc(own_ground, tile_owner)->climate & 0xE0) < 0x60) != (triad == 1))
+                && (is_ocean(own_ground, tile_owner)) != (triad == 1))
                 continue;
             for (n = 0; n < 8; n++) {
                 int nx = xrange(own_ground + VehMoveDeltaX[n]);
@@ -8543,7 +8543,7 @@ L_577723:
                     Map *sq = map_loc(nx, ny);
                     if (!(sq->bit & 0x100000)) {
                         score += 8;
-                        if ((sq->bit & 0x20) && (sq->climate & 0xE0) >= 0x40)
+                        if ((sq->bit & 0x20) && (sq->climate & ~0x1F) >= 0x40)
                             score += 8;
                         if (sq->bit & 0x2000)
                             score += 8;
@@ -8551,7 +8551,7 @@ L_577723:
                 }
                 if (!is_known(nx, ny, faction_id)) {
                     score += state_4000 * 2 + 2;
-                    if (triad == 1 && (map_loc(nx, ny)->climate & 0xE0) >= 0x60
+                    if (triad == 1 && !is_ocean(nx, ny)
                         && !PlayersData[faction_id].region_total_bases[map_loc(nx, ny)->region])
                         score += 8;
                 }
@@ -8599,14 +8599,14 @@ L_578b55:
     if (keep_wp && Vehs[veh_id].order == 0x18)
         goto L_578f46;
     if (can_arty(proto_id, 1) && !Vehs[veh_id].order
-        && (triad == 1 || (map_loc(x, y)->climate & 0xE0) >= 0x60 || !near_dist)) {
+        && (triad == 1 || !is_ocean(x, y) || !near_dist)) {
         // own_ground is the radius index of this artillery search.
         for (own_ground = 0; own_ground < 25; own_ground++) {
             tx = xrange(x + RadiusOffsetX[own_ground]);
             ty = y + RadiusOffsetY[own_ground];
             if (!on_map(tx, ty))
                 continue;
-            if ((map_loc(tx, ty)->climate & 0xE0) < 0x60)
+            if (is_ocean(tx, ty))
                 continue;
             if (anything_at(tx, ty) >= 0)
                 continue;
@@ -8717,8 +8717,8 @@ L_578f46:
             int ny = ty + VehMoveDeltaY[d];
             if (!on_map(nx, ny))
                 continue;
-            if (((map_loc(nx, ny)->climate & 0xE0) < 0x60)
-                != ((map_loc(tx, ty)->climate & 0xE0) < 0x60))
+            if ((is_ocean(nx, ny))
+                != (is_ocean(tx, ty)))
                 continue;
             if (((abs(ny - y) + x_dist(nx, x)) & ~1) <= 2)
                 continue;
