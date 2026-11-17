@@ -1585,6 +1585,217 @@ raw field access where the original used inline accessors.
 - **VC5 file statics:** caviar's objects name file-static data
   `_name$S<n>`; v2 RECOVERY_OBJECT bindings on those statics do not
   resolve yet (framework gap), so referencing functions measure REFUSED.
+- **Function-declaration counter window.** When extern-variable pads stop
+  moving a counter-coupled tie, unused *function* declarations can
+  (on_iface_button_clicked 0x004A6330: 7-10 work; <=6 and 12 do not).
+  Three emitted static/global definitions or three unused `static inline`
+  definitions flip it too. Each shifts `$SG` numbering: rebind literals.
+- **The distinct-literal tie is in-function.** draw_security's register
+  tie follows how many distinct literal constants the function itself
+  holds; literal count elsewhere in the unit has no effect. A literal
+  owned by an inline helper is one `$SG` shared by every expansion, so
+  when the image has a distinct address per site the original did not
+  hold that literal in a helper.
+- **Fast unit loop without `recover`:** compile an alternate copy of a
+  unit on a second prefix and compare masked, function by function,
+  against the image (scratchpad/w6/cc.sh + cmpobj.py, ~4 s/variant).
+- **An unused inline body can flip block layout in a non-caller.**
+  Making expand_rect's body visible in win.h flipped buy_council_vote
+  0x0053EB50 (faction.cpp never calls it) at any position in the header;
+  gate such bodies per unit (`#define X_INLINE` before stdafx.h).
+- **A gate macro alone can flip a tie.** Defining WIN_EXPAND_RECT_INLINE
+  (or WIN_RECT_EXTENT_INLINE) in datalink.cpp without other changes flips
+  Datalink::set_cat_social 0x0042B630; keep that unit's twin instead.
+- **Spend rule, confirmed (control_turn 0x005275B0):** to make one early
+  return site shallower, put the spend in the source gap right after that
+  site (anywhere before the next return). Spend before it or after the
+  next return does nothing. The count of one-if expansions matters (seven
+  here), not how branchy each probe is.
+- **Masked similarity 1.0 but strict extent fails:** look for a loop
+  addressing-mode change, e.g. a pointer cursor in the image against a
+  0-based offset plus absolute displacement (4 bytes per access).
+- **`(uint8_t)x & bit` and `(x & 0xFF) & bit` differ:** the cast keeps an
+  `and 0xff`-first order; the masked form gets reassociated (wants_prop).
+- **Check the call sequence, not just the EH map.** A matching predecessor
+  tuple can come with a different teardown composition: base_editor_copy
+  with 6 x 3-if probes matches the tuple but calls `??_DDialogs` where the
+  image calls `??1Dialogs`; 5 x 3-if gets both. Compare ordered call
+  targets too.
+- **Long single-chain probes can always be shortened** to 1-3-if calls
+  with identical map and bytes; count and position decide, not chain
+  length.
+- **Hand-inlined accessors carry missing spend.** `parse_set(...)` then a
+  `name_leader`/`title_leader`/`noun_faction` read is
+  `get_name`/`get_title`/`get_noun`; restoring them supplied most of
+  load_game's spend.
+- **Fast probe loop:** compile the unit with its command from
+  build/compile_commands.json and read FuncInfo straight from the object
+  (follow the prologue handler push to `mov eax, FuncInfo`); compare with
+  the image's and with call sequences (scratchpad/w2/ psweep, objtopo,
+  imgtopo, callseq).
+- **Tool trap:** editing any source in the worktree fails an in-flight
+  `recover measure` on another file ("source changed during
+  measurement"); sweep only when no recover command runs.
+- **Local-array frame order is not a source lever.** Declaration order
+  and names gave identical bytes (colortables_init 0x00423570).
+- **A surviving dead store before `return` means a parameter home.**
+  `mov [ebp+8],ecx; mov eax,ecx` just before returning: the accumulator
+  shared a parameter's home slot (Buffer::text_width). The Buffer family
+  (tile, tile_mask, write_raw_l, write_cent_l) shares this residual: the
+  image reuses the homes of register-held parameters for temporaries.
+  No reproducing spelling known yet.
+- **Probes cannot make the first N sites call and later ones expand.**
+  A full sweep never refused help_tech_info's early help_create_link
+  sites; a call-site stand-in remains the only lever.
+- **Tool traps:** `permute --candidates` refuses a replacement occurring
+  more than once; editing a running permute's file kills it.
+- **In-place global post-increment.** `if (G[t] >= N) return; int o =
+  G[t]++;` inlines as `mov ecx,reg; inc reg; mov [G],reg` with the copy
+  as index; loading into a local first gives `lea reg,[o+1]`. Separate
+  subscripts `A[t*4+o]` (no shared index variable) let a constant t fold
+  into the base displacement after inlining (add_bat 0x00501D50).
+- **Signedness from the branch:** `jge` after a compare means a signed
+  operand; an unsigned global compiles to `jae` (VehBattleModCount).
+- **An inline with a call inside a loop flips the induction variable.**
+  An expanded inline containing a call (has_fac -> bitmask) inside a loop
+  over a global struct array makes VC6 walk it as offset + absolute
+  displacement instead of a pointer cursor; the call written at the site,
+  or a call-free inline, keeps the pointer (wants_prop 0x0052AEB0). A
+  plain `Bases[i].f` loop's cursor is biased to &Bases[0].y (+2)
+  whichever field is read first. Narrowed (w6 census): only four image
+  facility tests walk a pointer cursor and our build already gets it in
+  allocate_energy/proposal_menu, so the flip is local to wants_prop.
+- **Dead parameter homes are a slot pool.** VC6 packs locals and
+  temporaries into the homes of parameters that are dead or held in
+  registers (435 exact functions; base_coast 0x0050DF30, soft_update
+  0x005D5720, tile 0x005DA860). An unreferenced parameter's home is never
+  reused (`a = a` doesn't count). One extra frame slot in ours usually
+  means a live-range difference: move where a variable is assigned
+  (declaration order is neutral). E.g. tile's `x = start;` before the
+  outer loop and after the inner loop packs one slot fewer than at the
+  top of the outer body.
+- **A local living in a dead parameter's home can be that parameter**:
+  `int &acc = *reinterpret_cast<int *>(&text);` folds to the parameter
+  (WORKAROUND(type); text_width).
+- **Pen in place:** `w = width(...); right = w + x; x += w;` not
+  `next = width(...) + x; ...; x = next;` (write_raw_l 0x005DBD00).
+- **if/else of two calls tail-merges** into one call with the argument in
+  the image's register; a ternary argument adds a `mov eax, ecx`.
+- **An expanded destructor at one later exit makes the -1 state.**
+  Before hunting for a missing return, check which exit expands an inline
+  destructor (session_picker_dialog 0x00631050).
+- **A goto-only block written last** gets the highest EH states, yet VC6
+  can lay it out right after the last test that jumps to it.
+- **Zero-sum probe placement:** when no single position fixes two sites,
+  a dead `if (0) { N stores }` block adds caller size without spend
+  (5 stores in tech_trade 0x00541100; 1-4 did nothing).
+- **Over-spend after an early exit** can be cut by writing a few header
+  getters out at one later site (proposal_menu 0x0054DCF0).
+- **REFUSED "unbound compiler artifact relocation(s) $SGnnnn" with
+  diagnostic similarity 1.0** is usually exact code missing
+  RECOVERY_LITERAL lines: unpooled repeated strings each have their own
+  image copy, numbered in source order (garrison_click 0x0040B140).
+- **Recovered inflate/inset helpers are expand_rect 0x00606F00**
+  (left, right, top, bottom; an inset is a negated amount, emitted
+  identically).
+- **Accessor restoration is not uniformly a gain.** get_title/get_name/
+  get_noun, parse_set and BasePop::item measured neutral at every site
+  tried; label_get in Popup callers is real /Ob2 spend and often too much
+  (base_editor_fac, popb). Measure each site. Census:
+  scratchpad/w2/accessor_census.md (971 sites).
+- **A GenderDefault store after the next call's pushes with a `lea eax`
+  field load** comes from a named local assigned after parse_set, not
+  the header getter (save_game); changing the getter itself loses four
+  claims.
+- **Tool traps:** psweep needs ANCHOR=<signature line> when the ORIGINAL
+  marker sits in a `/* */` block; `pgrep -f pattern` in a wait loop
+  whose own command line contains the pattern never exits.
+- **An address-taken local is never pooled.** When the image reuses a
+  dead slot for a counter our source keeps in an address-taken local
+  (passed by `&` elsewhere), the original used a separate plain local
+  (enemy_diplomacy 0x0055F930).
+- **Read slot assignment from the `/FAs` listing**: VC6 prints
+  `_name$ = -N` for every named frame slot, including inlined helper
+  temps; unnamed slots are CSE temps. scratchpad/wx/slots.py maps image
+  slots to ours; frame_census.md lists 36 frame/home-store candidates.
+- **A frame difference can be strength reduction:** an extra slot with
+  `cmp reg, 4*N` means a scaled twin of the induction variable; fixing
+  the compare can fix the frame yet lose on registers (world_site).
+- **ebp as a general register:** without `mov ebp, esp`, `[ebp+N]` is not
+  a parameter home.
+- **`lea eax,[reg-K]` as an argument from a dying variable** means a
+  named local (`int t = v - K; f(t);`); `f(v - K)` gives `add reg,-K`
+  (tech_achieved 0x005BB000).
+- **`f(a) OP g(b)` evaluates the right call first** whatever the
+  operator; name the left one to call it first.
+- **A unit-wide out-of-line gate fixes a final teardown probes cannot**:
+  when the image calls a header inline in its last teardown and no other
+  function in the unit expands it, gate it out of line for the unit
+  (STRINGSTRUCT_REMOVE_ALL_OUT_OF_LINE, proposal_menu 0x0054DCF0).
+- **Declare loop scalars, then assign them in the image's store order**
+  to change frame packing (make_gift 0x00547C10).
+- **A goto label plus a missing return is an infinite loop.** In VC6
+  (/O2 /GX) an int function containing any label that falls off its end
+  compiles the fall-off as `jmp` to the first label, with no C4715
+  warning (planet_busting 0x00500B60 looped forever after a strike). A
+  void function, or one without labels, gets a normal epilogue. Never
+  accept a score that depends on it.
+- **Equivalent copy spellings coalesce identically** (`a = b = f()`,
+  `a = f(); b = a;`, `int b = a;` at the use); copy spelling cannot
+  separate two variables' slots.
+- **Doubled-term reassociation:** VC6 turns `a + 2*a + 2*b` into
+  `a + 2*(a+b)`; write `3*a + 2*b` for the image's lea chain
+  (minerals_at 0x00591F00).
+- **A tail-merged `return K` block is laid out at the last case returning
+  K in source order;** move that case earlier to pull the block forward.
+- **Member call through an embedded member:** `member_.f()` folds into
+  `lea ecx,[this+off]`; a local pointer to the member gives
+  `lea ecx,[ptr+off]` (the image's CSE'd base). Apply only to the calls
+  that need it (ReplayWin::init).
+- **Renaming a variable's separate assignments is a no-op:** VC6
+  already splits independent live ranges itself. When the image keeps
+  them in one slot (battle_fight 0x00506AF0), look for an original
+  spelling where some use is reached by both assignments.
+- **Fall-off census (2026-11-17):** planet_busting was the only labelled
+  non-void function that could fall off its end; scratchpad/w1/
+  falloff_census.md.
+- **Unit-wide gates are rare (census 2026-11-17).** "Ours expands where
+  the image calls" is not enough: the image may expand the same inline
+  elsewhere in the unit. Gate only after compiling the whole unit with
+  the inline declaration-only and recounting every function; every
+  candidate except proposal_menu's remove_all was worse or neutral
+  (scratchpad/w5/gate_census.md).
+- **has_fac is one level in the original (census 2026-11-17):** bitmask
+  0x0050BA00 is never expanded (263 calls); every expanded has_fac site
+  is complete and no 2-arg has_fac_built exists out of line, so our
+  nested has_fac -> has_fac_built shape produces partial expansions the
+  image never has. Shape candidate: scratchpad/w6/hasfac_shape.patch.
+- **A record pointer formed before a switch keeps the hoisted index.**
+  `T *rec = &A[f].records_[type]; switch (type) { ... rec->field ... }`
+  reproduces the image's hoisted type*size and [idx+base+disp]
+  addressing (MonuWin::on_redraw); switching on a re-read field is worse.
+- **goto vs break pairs duplicated return blocks:** in an inlined search
+  loop, `break` groups the head-null exit with the found exit; `goto
+  found;` before the shared return groups it with the exhausted exit
+  (Dialog::set_selected_id 0x006099D0).
+- **A reference local to an array element flips induction registers**
+  (`T &b = arr[i]; b.f()` vs `arr[i].f()`; FameWin::init).
+- **A mid-function `push ebx` after a loop guard** means the image uses
+  ebx only inside the loop.
+- **One variable as counter and result rotates spill slots function-wide;**
+  split it (facilities_click 0x0040C070). A new local shifts `$SG`
+  numbering: rebind the unit.
+- **VC5 reorders x87 stores itself;** write them in source order
+  (Caviar::set_shadow_vector).
+- **A ternary inline lets VC6 thread a stack-walk exit**
+  (`return id >= 0 ? next : id;` jumps straight out on a negative id; the
+  if-form lands on the loop test). Wrap helpers reading the bound at each
+  use give `lea [bounds+x]`. Two condition blocks sharing an exit: one
+  `if` plus `else if`, not a goto past the second (order_veh 0x00531780).
+- **Unexplained:** early `if (!x) return 0;` kept as a private epilogue
+  in the image but merged into the final return-0 block in ours
+  (facility_avail, drop_player); `setle al; inc eax` reusing eax=0 after
+  has_abil (base_support).
 - **Canonicalised forms (not levers).** `f(a) < f(b)` and its mirrored or
   negated forms give the same call order; `a * b` vs `b * a` compile
   identically.
