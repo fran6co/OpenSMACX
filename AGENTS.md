@@ -68,6 +68,16 @@ still fails after re-tuning in the commit message.
 Those claims keep their `BYTE_EXACT` markers and historical identities as
 restoration obligations (never demote or edit them), and restoring them is
 first priority for the next round.
+Count-sensitive canaries (user decision, 2026-11-17): functions that flip only
+with their unit's front-end symbol counter (the counter that numbers `$SG`
+literals; VC6 breaks some register ties by that counter mod 64) are not
+re-tuned per header change. Measured members: ReportIf::on_iface_button_clicked
+0x004A6330, end_of_game 0x00524870, Console::corner_the_market 0x004E2000,
+buy_council_vote 0x0053EB50. A header batch may land with them listed as lost;
+they are re-tuned once after the header batch, against the final headers.
+Every other loss, including give_a_base and base_energy (measured
+counter-independent: they flip on real header shape), is still re-tuned in the
+same batch.
 
 Loop tools: `recover measure` takes about 4.7 s. `recover check-matches --unit
 <tu>` or `--since <rev>` measures only the affected TUs (never a full pass;
