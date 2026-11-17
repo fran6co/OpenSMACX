@@ -94,6 +94,14 @@ def register(commands):
     rebind.add_argument("--since", help="Rebind TUs a change since this revision can affect")
     rebind.add_argument("--write", action="store_true", help="Publish proven rebinds; otherwise report only")
     rebind.add_argument("--summary", action="store_true", help="Show only bindings that are not valid")
+    canary = commands.add_parser("canary", help="Align a unit's CANARY-PADS block so its counter-sensitive canaries "
+                                 "keep their tie-breaks (front-end symbol counter modulo 64); dry run unless --write")
+    canary.add_argument("--root", type=Path, default=Path.cwd())
+    canary.add_argument("units", nargs="*", help="Units to check (default: every unit with a CANARY-PADS block)")
+    canary.add_argument("--write", action="store_true",
+                        help="Rewrite the pad block to the needed count after verifying it by compilation")
+    canary.add_argument("--calibrate", action="store_true",
+                        help="Report each canary's residues that keep its current bytes over one period; never writes")
     survey = commands.add_parser("survey", help="Derive executable starting hints and source correlations; never infer function or TU extents")
     survey.add_argument("--root", type=Path, default=Path.cwd())
     survey.add_argument("--image", type=Path, required=True)
@@ -444,6 +452,11 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
                                 source_sha256=arguments["source_sha256"], corrections=corrections,
                                 reason=arguments["reason"], evidence=arguments["evidence"], assign=assign,
                                 allow_claimed=arguments.get("allow_claimed", False))
+    if arguments.get("command") == "canary":
+        from .canary import align_canaries
+        output = align_canaries(root, units=arguments.get("units"), write=arguments.get("write", False),
+                                calibrate=arguments.get("calibrate", False))
+        return {"pass": 0, "fail": 1, "unknown": 3}[output["result"]], output
     if arguments.get("command") == "rebind-literals":
         from .literal_rebind import rebind_literals
         output = rebind_literals(root, arguments["image"], units=arguments.get("units"),

@@ -70,6 +70,10 @@
 // extra distinct declarations in the unit: with base.h's one-level has_fac,
 // 4-8 unused function declarations match (0-3 do not; 4 extern variables match,
 // 3 and 5 do not). The original's extra declarations are unidentified.
+// The tie-break is the front-end symbol counter modulo 64 (guide 2.5);
+// `recover canary src/faction.cpp` computes the pad count.
+// CANARY: 0x0053EB50 ?buy_council_vote@@YAXHHHH@Z residues 0,9,12,14-22,25,28-33,35-42,44-46,48-55,57-63
+// CANARY-PADS: function FactionDeclFnPad
 void FactionDeclFnPad0();
 void FactionDeclFnPad1();
 void FactionDeclFnPad2();

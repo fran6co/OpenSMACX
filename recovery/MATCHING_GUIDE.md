@@ -374,9 +374,76 @@ raw field access where the original used inline accessors.
 
 ### 2.5 Unit coupling
 
+- **The symbol counter modulo 64 (measured 2026-11-17).** Most "count"
+  couplings below are one mechanism. VC6's front end numbers every symbol it
+  creates in a TU from one counter; the `$SGn` literal labels are that
+  number. Each function declaration and each extern variable adds 1 (names,
+  lengths, kind and position before the function don't matter). Each string
+  literal adds 1, and so does each local in an earlier function or earlier in
+  the same function. Each struct type and each inline body adds several.
+  Comments, blank lines and same-length renames add nothing. Some register and
+  reload tie-breaks depend on that counter **modulo 64**, presumably through
+  64 hash buckets keyed by symbol number:
+  - reportif's on_iface_button_clicked repeats its exact pattern every 64
+    shifts over 260 shifts, and console_commands' corner_the_market gives
+    identical bytes at shifts 1, 65 and 129.
+  - Shifting by declarations, by literals in an earlier function or by dummy
+    locals in the function itself gives the same result for the same counter
+    value.
+  - The diffs are pure ties: on_iface_button_clicked reloads `[ebp+8]`
+    (button) and `[ebp-8]` (this) in swapped order after
+    `ReportWinGlobal.redraw()`; corner_the_market has `add ecx, edx; push ecx`
+    (image) against `add edx, ecx; push edx`.
+
+  The function is exact when the residue of its first relocated `$SGn`
+  (mod 64) is in a fixed set. Measured sets (wip 2088402dcf, `recover canary
+  --calibrate`):
+
+  | canary | residues |
+  |---|---|
+  | ReportIf::on_iface_button_clicked 0x004A6330 | 28, 39, 54 |
+  | action_give 0x004CEDE0 | 32-35, 40-42 |
+  | corner_the_market 0x004E2000 | 0-4, 7-9, 15-18, 27-45, 53-55 |
+  | end_of_game 0x00524870 | 1-4, 6-19, 21-23, 27-34, 39-49, 52, 54-60, 62-63 |
+  | buy_council_vote 0x0053EB50 | 0, 9, 12, 14-22, 25, 28-33, 35-42, 44-46, 48-55, 57-63 |
+
+  Few functions are counter-sensitive: 2 of 234 in reportif (with sat_attack)
+  and none of faction's 278 across 16 shifts. base_energy 0x004EB560 and
+  give_a_base 0x0054CF40 are **not** counter-sensitive: 64 declaration
+  probes, inline-body probes and struct-type probes leave them unchanged.
+  Their flips come from the header content they use (field types, arrays).
+  The absolute count is not recoverable: each function only constrains the
+  original's count modulo 64, to its residue set, and the whole header stack
+  (vc6_compat.h alone is 1,334 symbols, windows.h 16,655 lean or 41,878 full)
+  only matters modulo 64. So pads are alignment, not missing declarations.
+- **Re-tune with arithmetic, not sweeps.** Each canary unit has one pad block,
+  and the target set lives beside it:
+
+  ```
+  // CANARY: 0x004A6330 ?on_iface_button_clicked@ReportIf@@UAEXH@Z residues 28,39,54
+  // CANARY-PADS: function ReportIfDeclFnPad
+  void ReportIfDeclFnPad0();
+  ```
+
+  `uv run recover canary [<unit>...] [--write]` compiles each block's unit and
+  reads each canary's residue. It reports the pad count nearest the current
+  one that puts every canary of the block in its set (each pad moves the
+  counter by 1). `--write` verifies that count by an overlay compile, then
+  rewrites only the pad lines. Run it after every header batch, then
+  `recover rebind-literals --write`. A unit with no pads keeps an empty block
+  (`CANARY-PADS` with no pad lines) so the tool can add them.
+- **Caveat: residue sets move with the canary's own code.** The residue is
+  read at the function's first literal, but the tie may sit deeper. A change
+  to the canary's body, or to anything it expands inline, moves the set.
+  buy_council_vote was exact at residue 62 on wip although a sweep on the
+  previous wip had marked 62 bad, and reportif's set narrowed from
+  {28-30, 39-41, 54-56} to {28, 39, 54} after the array retypes. When a
+  canary stays inexact at a residue in its set, recalibrate: restore its exact
+  state, run `recover canary <unit> --calibrate` (64 overlay compiles, about
+  2.5 minutes per unit), and copy the reported set into the `CANARY` line.
 - **Edits ripple through the unit.** Any edit can flip register or
   operand-order ties in a *later* function of the same TU, because VC6 shifts
-  its `$SG`/`$L` counters. Edits that do this include:
+  its symbol counter (above). Edits that do this include:
   - removing a redundant cast;
   - adding a file-local static inline;
   - leaving a dead file-local helper behind after a rewrite.
@@ -407,10 +474,11 @@ raw field access where the original used inline accessors.
   canary, look for an equivalent spelling inside the rewritten function
   that compiles to the same code for that function (an if/else assignment
   folded into one `||` expression restored end_of_game).
-- **Extern-name count.** Codegen in a TU depends on how many *distinct* extern
-  variable names it declares; the names and their lengths don't matter, and
-  repeated declarations and enumerators don't count (action_give stays exact
-  with 6–7 PopupTheme* names, flips with 1–5; one extra name flips
+- **Extern-name count** (the symbol counter modulo 64, above; function
+  declarations count the same). Codegen in a TU depends on how many *distinct*
+  extern variable names it declares; the names and their lengths don't
+  matter, and repeated declarations and enumerators don't count (action_give
+  stays exact with 6–7 PopupTheme* names, flips with 1–5; one extra name flips
   base_production, pop_click, sat_attack). When merging globals into an array,
   let the array declaration replace one old declaration and keep the rest as
   `WORKAROUND(decl)` declarations shadowed by element macros, then compare
@@ -440,7 +508,7 @@ raw field access where the original used inline accessors.
   there and is emitted as a pick-any COMDAT (a non-inline definition gives
   LNK2005). Check every function measured in that unit's compile context:
   destructor copies it emits may need an inline twin of the same body.
-- **Member count counts declarations.** Turning N data members into one
+- **Member count counts declarations** (the symbol counter, above). Turning N data members into one
   struct member perturbs includers; adding back exactly the removed number
   of member declarations of any kind restores identical objects
   (multiwin.h bounds_).
@@ -452,10 +520,10 @@ raw field access where the original used inline accessors.
   `measurement.unit_flag_sets` or every recover command refuses. (Before
   2026-11-12, unpinned units were measured under both global trials and the
   better score kept, so a /Oy- unit could be reported from a frameless compile.)
-- **The extern-name count is a window, not a threshold,** and it moves with
-  the other function bodies (action_give needed >=4, then >=6, then 14-16
-  extra names as action_terraform changed). After rewriting a function in a
-  canary unit, sweep 0-24 extra names and keep the middle of the window.
+- **The extern-name count is a window, not a threshold.** Superseded: the
+  window is the counter residue set modulo 64 (above), so it recurs every 64
+  and moves with every earlier symbol. Use `recover canary` instead of
+  sweeping 0-24 extra names.
 - **Include position.** A header's position in the include order can flip ties
   even when it arrives later anyway. Dropping an unused direct include is a
   faithful lever.
@@ -1933,6 +2001,9 @@ raw field access where the original used inline accessors.
   Restore the image's behaviour.
 
 ### 3.6 Canaries (measure after any edit to their unit or a shared header)
+Counter-sensitive canaries carry `CANARY` lines; `uv run recover canary`
+re-aligns their pad blocks (2.5). base_energy 0x004EB560 and give_a_base
+0x0054CF40 flip from header content, not from the counter.
 - **reportif.cpp:** `ReportIf::on_iface_button_clicked` 0x004A6330.
 - **turn.cpp:** `end_of_game` 0x00524870.
 - **console_commands.cpp:** `corner_the_market` 0x004E2000.

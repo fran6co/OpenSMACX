@@ -80,6 +80,12 @@
 #include "buttongroup.h"
 #include "console_commands.h"
 #include "win_pointer.h"  // corner_the_market (0x4E2000) needs Win::grab_pointer's inline body visible in this TU
+// WORKAROUND(decl): counter alignment. corner_the_market's `add ecx, edx;
+// push ecx` (image) against `add edx, ecx; push edx` is a tie-break on the
+// front-end symbol counter modulo 64 (guide 2.5); `recover canary
+// src/console_commands.cpp` computes the pad count (none needed now).
+// CANARY: 0x004E2000 ?corner_the_market@Console@@QAEXXZ residues 0-4,7-9,15-18,27-45,53-55
+// CANARY-PADS: function ConsoleCommandsDeclFnPad
 
 // Shared separator objects the image pushes instead of unit literals.
 extern const char BufferJoinSpace[];

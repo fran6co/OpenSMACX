@@ -105,6 +105,11 @@
 #include "net_checksum_report.h"
 #include "font.h"
 #include "popup_fonts.h"
+// WORKAROUND(decl): counter alignment. end_of_game is a tie-break on the
+// front-end symbol counter modulo 64 (guide 2.5); `recover canary
+// src/turn.cpp` computes the pad count (none needed now).
+// CANARY: 0x00524870 ?end_of_game@@YAHH@Z residues 1-4,6-19,21-23,27-34,39-49,52,54-60,62-63
+// CANARY-PADS: function TurnDeclFnPad
 
 extern int BaseAtDebugPopupFlag;  // base.cpp, original93A94C
 extern char *InterludeTextFile;  // interlude.cpp

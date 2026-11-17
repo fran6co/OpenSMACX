@@ -69,8 +69,12 @@
 // reloads after owner_set flip with the unit's extern-name count; with
 // action_airdrop's image loop shape it stays exact with 1-3 or 6 extra names
 // (0, 4, 5, 8-24 flip it). With RulesTerraforming's name[2] one unused name
-// is exact (3 flips it).
-extern int TerraformingActionsExternPad1;
+// is exact (3 flips it). The tie-break is the front-end symbol counter modulo
+// 64 (guide 2.5); `recover canary src/terraforming_actions.cpp` computes the
+// pad count.
+// CANARY: 0x004CEDE0 ?action_give@@YAXHH@Z residues 32-35,40-42
+// CANARY-PADS: extern TerraformingActionsExternPad
+extern int TerraformingActionsExternPad0;
 #include "vector.h"  // vector_add operates on actual three-float arrays.
 
 extern void __cdecl unspot_stack(int veh_id);

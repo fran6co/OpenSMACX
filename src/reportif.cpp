@@ -78,9 +78,11 @@ extern int ReportIfDeclPad5;
 // it). Only 0x004A6330 changes in the unit's object. With base.h's one-level
 // has_fac, map.h's two wrap inlines and the array-typed RulesTerraforming,
 // RulesOrder, RulesCitizen and Player ideology rows only 12 matches (1-11, 13,
-// 14 and 16 flip it); before those retypes the window was 6-8. Not re-tuned for
-// spot.h's gated Spot::add RECT inline: 0x004A6330 is a count-sensitive canary,
-// re-tuned once after the header batch (AGENTS.md, 2026-11-17).
+// 14 and 16 flip it); before those retypes the window was 6-8. spot.h's gated
+// Spot::add RECT inline moved it again. The tie-break is the front-end symbol counter modulo 64 (guide 2.5);
+// `recover canary src/reportif.cpp` computes the pad count.
+// CANARY: 0x004A6330 ?on_iface_button_clicked@ReportIf@@UAEXH@Z residues 28,39,54
+// CANARY-PADS: function ReportIfDeclFnPad
 void ReportIfDeclFnPad0();
 void ReportIfDeclFnPad1();
 void ReportIfDeclFnPad2();
