@@ -45,6 +45,8 @@
 // kind      game
 #define SPOT_ADD_RECT_INLINE  // stand-in: see Spot::add(int, int, RECT *) in spot.h
 #include "stdafx.h"
+// current_entry() is expanded in SpriteBox's label walk (next_text).
+#define STRINGSTRUCT_CURRENT_ENTRY_INLINE
 #include <new>
 #include "spritebox.h"
 #include "general.h"
@@ -487,22 +489,7 @@ int SpriteBox::calculate_dimensions() {
     for (int i = 0; i < count; ++i) {
         // The image reads payload+4 even without a list head.
         Sprite *const sprite = next_sprite(list_);
-        StringStruct &items = Dialog::item_list_;
-        if (items.head_ != 0) {
-            items.current_ = items.current_->next;
-            ++items.current_position_;
-            if (items.current_position_ == items.entry_count_) {
-                items.current_position_ = 0;
-            }
-        }
-        char *label;
-        if (items.current_ != 0) {
-            StringStructPayload *const payload = items.head_ != 0
-                ? items.current_->string_payload() : 0;
-            label = payload->text;
-        } else {
-            label = 0;
-        }
+        char *const label = Dialog::item_list_.next_text();
         int width = sprite->width() * static_cast<int>(field_1C_)
                     / static_cast<int>(field_20_);
         if (static_cast<int>(field_54_) > width) width = field_54_;

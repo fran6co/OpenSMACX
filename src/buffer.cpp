@@ -10480,16 +10480,6 @@ static inline void string_writer_budget_probe(int x) {
     if (x == 11) x = 34;
 }
 
-// WORKAROUND(inline): the loops' `call next_entry; cmp [list+0xc],0; je;
-// call current_entry` (0x005DAF3C, 0x005DB24F) is a discarded "advance and
-// return the text" helper (SpriteBox's next_text has the same shape). Spelled
-// out at the call site instead, both writers expand different callees; its
-// original name and owner are unknown.
-static inline char *buffer_next_text(StringList *strings) {
-    strings->next_entry();
-    return strings->current_ != 0 ? strings->current_entry()->text : 0;
-}
-
 // WORKAROUND(inline): twin of StringStruct::current_id (0x00401640), which
 // stringstruct.cpp defines out of line. Both writers expand it at their first
 // callback site (`cmp [list+8],0; ...; mov eax,[list+0xc]; mov eax,[eax+4]`)
@@ -10538,7 +10528,7 @@ int Buffer::write_strings_height(StringList *strings, int width, int flags) {
 
     string_writer_budget_probe(0);  // WORKAROUND(inline): see the probe
     while (strings->current_position_ < strings->entry_count_ - 1) {
-        buffer_next_text(strings);
+        strings->next_text();
 
         payload = buffer_current_kind(strings);
 
@@ -10589,7 +10579,7 @@ int Buffer::write_strings(StringList *strings, int left, int top, int width,
     string_writer_budget_probe(0);  // WORKAROUND(inline): see the probe
     while (strings->current_position_ < strings->entry_count_ - 1) {
         if (top > -dib_.bmiHeader.biHeight) break;
-        buffer_next_text(strings);
+        strings->next_text();
         kind = buffer_current_kind(strings);
         if (buffer_current_kind(strings) != 0) {
             int y = wrap_flying_flush();

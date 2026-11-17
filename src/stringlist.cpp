@@ -91,19 +91,6 @@ int StringList::add_special(char *text) {
     return add(0) != 0;
 }
 
-// WORKAROUND(inline): the image's expanded cursor step in sort (608847..60885B)
-// copies the incremented position (`inc edx; mov eax, edx`) where the header
-// next_entry does not; a member pre-increment reproduces that copy. The
-// original spelling of this walk is unknown.
-static inline void stringlist_step(StringList *list) {
-    if (list->head_) {
-        list->current_ = list->current_->next;
-        if (++list->current_position_ == list->entry_count_) {
-            list->current_position_ = 0;
-        }
-    }
-}
-
 // WORKAROUND(inline): dead /Ob2 spend; with it sort keeps the image's
 // out-of-line seek_pos(position) call (0x0060892B). The original spelling
 // that spent this budget is unknown (sort_sessions has the same gap).
@@ -143,7 +130,7 @@ void StringList::sort(int) {
 
         for (int candidate = position + 1; candidate < entry_count_;
              ++candidate) {
-            stringlist_step(this);
+            next_entry();
             // A null head with a live cursor reads text through a null
             // payload (608877), as current_entry() would.
             char *candidate_text = current_ ? current_entry()->text : 0;

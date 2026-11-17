@@ -413,6 +413,19 @@ class StringList : public StringStruct {
   // Provisional name: 0x005E3630 returns the current StringList text.
   // Its original Buffer callers pass this list in ECX and consume a char*.
   char *current_text();
+  // Provisional name: advance the cursor and return the new entry's text.
+  // The image expands it whole (head_ read once, the null-payload
+  // `xor eax,eax; mov eax,[eax+4]` arm) in EditGroup's label walks and
+  // SpriteBox::calculate_dimensions, and as `call next_entry; cmp
+  // [list+0xc],0; je; call current_entry` in Buffer's writers (0x005DAF3C,
+  // 0x005DB24F). StringList::sort expands the same pair (0x00608847..
+  // 0x0060887E) but measures better calling next_entry/current_entry
+  // directly. Defined in the class: an out-of-class definition after
+  // current_entry flips Datalink::set_cat_social (0x0042B630).
+  char *next_text() {
+    next_entry();
+    return current_ ? current_entry()->text : 0;
+  }
 
   // Sort the circular list by payload text, retaining each ID with its
   // payload. The int argument is unused by the original implementation.
@@ -552,13 +565,8 @@ MEASURED inline StringStructPayload *StringStruct::next_entry() {
         return 0;
     }
 
-    StringStructEntry *next = current_->next;
-    int position = current_position_;
-    current_ = next;
-    int count = entry_count_;
-    ++position;
-    current_position_ = position;
-    if (position == count) {
+    current_ = current_->next;
+    if (++current_position_ == entry_count_) {
         current_position_ = 0;
     }
     return current_->string_payload();
@@ -585,6 +593,7 @@ inline StringStructPayload *StringStruct::current_entry() {
     return 0;
 }
 #endif
+
 
 // 0x00401560 is called by CheckBox::on_left_down and expanded inline by
 // Datalink::draw_concept/draw_adv_concept; MEASURED keeps the copy emitted.

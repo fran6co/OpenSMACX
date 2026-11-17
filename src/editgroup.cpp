@@ -30,6 +30,8 @@
 // symbol    ??_GEditGroup@@UAEPAXI@Z
 
 #include "stdafx.h"
+// current_entry() is expanded in EditGroup's label walks (next_text).
+#define STRINGSTRUCT_CURRENT_ENTRY_INLINE
 #include "editgroup.h"
 #include "editbox.h"
 #include "general.h"  // mem_get, for the two coverage bodies below
@@ -436,17 +438,6 @@ int EditGroup::set_default(char *default_text, int index) {
 // ORIGINAL: 0x00612150 ?calculate_dimensions@EditGroup@@QAEHXZ 0x00612150-0x0061244A FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00612150.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x612150 complete control/data-access review and src/editgroup.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // TRIED: MISMATCH #1 push/mov - re-deriving the vbtable-offset macros at every access (matching the original's frequent [esi] re-fetch) gave the allocator no reason to keep `this` pinned in esi or the 0 constant pinned in ebp across the body.
-static inline char *editgroup_next_text(StringList *list) {
-    StringStructEntry *const head = list->head_;
-    if (head) {
-        list->current_ = list->current_->next;
-        if (++list->current_position_ == list->entry_count_) {
-            list->current_position_ = 0;
-        }
-    }
-    return list->current_ ? (head ? list->current_->string_payload() : 0)->text : 0;
-}
-
 int EditGroup::calculate_dimensions() {
     if (item_list_.entry_count_ == 0) {
         return 7;
@@ -463,7 +454,7 @@ int EditGroup::calculate_dimensions() {
     edit_width_ = 0;
     const int count = item_list_.entry_count_;
     for (int i = 0; i < count; i++) {
-        const int label_width = text_width(editgroup_next_text(&item_list_));
+        const int label_width = text_width(item_list_.next_text());
         if (label_width > label_width_) {
             label_width_ = label_width;
         }
@@ -588,27 +579,9 @@ int EditGroup::attach(GraphicWin *parent, int x, int y, int flags) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00612450 ?on_redraw@EditGroup@@QAEXXZ 0x00612450-0x00612669 FILE
+// ORIGINAL: 0x00612450 ?on_redraw@EditGroup@@QAEXXZ 0x00612450-0x00612669 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00612450.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x612450 complete control/data-access review and src/editgroup.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // symbol    ?on_redraw@EditGroup@@UAEXXZ
-
-// Advance the label cursor and read the new entry's text. The original reads
-// payload->text even when head is null; that unsafe path is kept.
-static inline char *edit_group_next_label(StringStruct *list) {
-    char *label = 0;
-    StringStructEntry *const head = list->head_;
-    if (head != 0) {
-        const int count = list->entry_count_;
-        list->current_ = list->current_->next;
-        if (++list->current_position_ == count) {
-            list->current_position_ = 0;
-        }
-    }
-    if (list->current_ != 0) {
-        label = (head != 0 ? list->current_->string_payload() : 0)->text;
-    }
-    return label;
-}
 
 void EditGroup::on_redraw() {
     Win *const parent = win_parent_;
@@ -638,7 +611,7 @@ void EditGroup::on_redraw() {
 
         int row = 0;
         while (row < Dialog::row_count_) {
-            char *const label = edit_group_next_label(&item_list_);
+            char *const label = item_list_.next_text();
             Buffer::write_l(label, &label_area);
 
             offset_rect(&label_area, 0, static_cast<int>(Dialog::field_68_));
