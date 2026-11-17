@@ -923,7 +923,7 @@ void Datalink::draw_terraform() {
     // The help topics are this unit's own literals: 0x004317E7 pushes
     // "HELPTERRAFORM", 0x0043187F "HELPTERRA", 0x0043189C/0x004318A3 the
     // "LAND"/"SEA" pair.
-    // RECOVERY_LITERAL: v1 0x00683514 0x00683522 $SG54897 0x00431180
+    // RECOVERY_LITERAL: v1 0x00683514 0x00683522 $SG54890 0x00431180
     strcat(StringTemp, "HELPTERRAFORM");
     popup.start(DatalinkHelpFile, StringTemp, -1, 0, 0, 0);
     set_font(&body_font_, 0, 0, &link_font_);
@@ -932,10 +932,10 @@ void Datalink::draw_terraform() {
     set_text_color_hyper(0x96, -1, 1, 1);
     write_strings(&popup.unit_ids_, rect.left, rect.top, rect.right - rect.left, 0);
     StringTemp[0] = 0;
-    // RECOVERY_LITERAL: v1 0x00683524 0x0068352E $SG54898 0x00431180
+    // RECOVERY_LITERAL: v1 0x00683524 0x0068352E $SG54891 0x00431180
     strcat(StringTemp, "HELPTERRA");
-    // RECOVERY_LITERAL: v1 0x00683530 0x00683535 $SG54899 0x00431180
-    // RECOVERY_LITERAL: v1 0x00683538 0x0068353C $SG54900 0x00431180
+    // RECOVERY_LITERAL: v1 0x00683530 0x00683535 $SG54892 0x00431180
+    // RECOVERY_LITERAL: v1 0x00683538 0x0068353C $SG54893 0x00431180
     strcat(StringTemp, land ? "LAND" : "SEA");
     char number[80];
     _itoa(action, number, 10);
@@ -1343,7 +1343,7 @@ static inline void append_upper_name(LPSTR name) {
 // The unpooled TU still has one "TECH" object for draw_tech and the copy
 // draw_entry expands: both sites go through this helper's literal.
 static inline void append_tech_topic() {
-    // RECOVERY_LITERAL: v1 0x006834D8 0x006834DD $SG55047 0x00430B30
+    // RECOVERY_LITERAL: v1 0x006834D8 0x006834DD $SG55040 0x00430B30
     strcat(StringTemp, "TECH");
 }
 

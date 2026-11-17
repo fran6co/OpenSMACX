@@ -396,8 +396,8 @@ int DeletionList::add_deletion(int veh_id) {
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00530D50-0x00530E48"], "reason": "Recover the base-menu network guard through real Base records, shared turn state and NetDaemon lock-state members; original calls establish argument forwarding and log strings."}
 // Pinned arguments identify these NUL-terminated keys in the original;
 // the literal spans cover their text and terminators, not surrounding storage.
-// RECOVERY_LITERAL: v1 0x0068C2F4 0x0068C2FD $SG63054 0x00530D50
-// RECOVERY_LITERAL: v1 0x0068C300 0x0068C314 $SG63059 0x00530D50
+// RECOVERY_LITERAL: v1 0x0068C2F4 0x0068C2FD $SG63047 0x00530D50
+// RECOVERY_LITERAL: v1 0x0068C300 0x0068C314 $SG63052 0x00530D50
 int NetDaemon::lock_base(int base_id, int target, int payload_1C, int payload_20) {
     log_say("LockBase", UnkGlobal0093A934, ConsoleControlTurnActive,
             BaseIDCurrentSelected);
@@ -764,7 +764,7 @@ void NetDaemon::unlock() {
     // 0x1BC8 and 0x1BCC are that entry's dword_[2], dword_[3], dword_[9] and
     // dword_[10]. Named through the declared member rather than a raw offset.
     if (IsMultiplayerNet != 0) {
-        // RECOVERY_LITERAL: v1 0x0068C2DC 0x0068C2F2 $SG63176 0x00530D00
+        // RECOVERY_LITERAL: v1 0x0068C2DC 0x0068C2F2 $SG63169 0x00530D00
         log_say("Client releasing lock", ConsoleGlobal.faction_id_, 0, 0);
         message_data(0x2212, 0, 0, 0, 0, 0);
         exec_pending_ = 0;
@@ -2107,12 +2107,12 @@ void __cdecl rebuild_base_bits() {
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00532C30 0x00532DA4 0x00532DC0 0x00532C47
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x00532C30 0x00532DC0 0x00532DF1 0x00532C41
-// RECOVERY_LITERAL: v1 0x0068C594 0x0068C5A5 $SG64151 0x00532C30
-// RECOVERY_LITERAL: v1 0x0068C5C8 0x0068C5DA $SG64157 0x00532C30
-// RECOVERY_LITERAL: v1 0x0068C584 0x0068C592 $SG64149 0x00532C30
-// RECOVERY_LITERAL: v1 0x0068C5A8 0x0068C5B7 $SG64153 0x00532C30
-// RECOVERY_LITERAL: v1 0x0068C5B8 0x0068C5C7 $SG64155 0x00532C30
-// RECOVERY_LITERAL: v1 0x0068C5DC 0x0068C5EB $SG64159 0x00532C30
+// RECOVERY_LITERAL: v1 0x0068C594 0x0068C5A5 $SG64144 0x00532C30
+// RECOVERY_LITERAL: v1 0x0068C5C8 0x0068C5DA $SG64150 0x00532C30
+// RECOVERY_LITERAL: v1 0x0068C584 0x0068C592 $SG64142 0x00532C30
+// RECOVERY_LITERAL: v1 0x0068C5A8 0x0068C5B7 $SG64146 0x00532C30
+// RECOVERY_LITERAL: v1 0x0068C5B8 0x0068C5C7 $SG64148 0x00532C30
+// RECOVERY_LITERAL: v1 0x0068C5DC 0x0068C5EB $SG64152 0x00532C30
 // ORIGINAL: 0x00532C30 ?synch_display@@YAXHHHH@Z 0x00532C30-0x00532DA2 FILE BYTE_EXACT
 // size      370 bytes
 // prototype 
@@ -2222,7 +2222,7 @@ void __cdecl synch_display(int stage, int arg1, int arg2, int arg3) {
 // (2026-09-04).
 // Pinned arguments identify these NUL-terminated keys in the original;
 // the literal spans cover their text and terminators, not surrounding storage.
-// RECOVERY_LITERAL: v1 0x0068C340 0x0068C34C $SG64170 0x00531020
+// RECOVERY_LITERAL: v1 0x0068C340 0x0068C34C $SG64163 0x00531020
 int NetDaemon::lock_veh(int *veh_id, int target, int payload_1C,
                         int payload_20, int payload_18) {
     if (IsMultiplayerNet == 0) {
@@ -5002,7 +5002,7 @@ int NetDaemon::maybe_lock(int *veh_id, int flag, int payload_1C, int payload_20,
       ++move_requests_;
       // The image compares the count SIGNED here (`jle`), not unsigned.
       if (1 < static_cast<int>(move_requests_)) {
-        // RECOVERY_LITERAL: v1 0x0068C474 0x0068C480 $SG65471 0x00531700
+        // RECOVERY_LITERAL: v1 0x0068C474 0x0068C480 $SG65464 0x00531700
         NetMsgPrimary.pop("MOVEPENDING", 0, 2, 0);
       }
     }
