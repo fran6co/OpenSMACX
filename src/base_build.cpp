@@ -157,6 +157,7 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
     // (0x004F80D0) out of line at these sites of base_build.
     int (__cdecl *const range_call)(int, int, int) = range;
     BOOL (__cdecl *const project_call)(int, int) = has_project;
+    int sat_type;  // WORKAROUND(decl): base_build 0x004FED4D forms faction*0x833 + (type - 0x41) before scaling; only a local subscript keeps the -0x41 out of the displacement.
     int a_1f6c[512];
     int a_176c[512];
     int a_f6c[512];
@@ -3065,9 +3066,10 @@ L_4fe99d:
     case FAC_SKY_HYDRO_LAB:
     case FAC_NESSUS_MINING_STATION:
     case FAC_ORBITAL_POWER_TRANS:
-        if ((int)PlayersData[l_8].satellites_[l_20 - FAC_SKY_HYDRO_LAB]
+        sat_type = l_20 - FAC_SKY_HYDRO_LAB;
+        if ((int)PlayersData[l_8].satellites_[sat_type]
             < BaseCurrent->population_size) {
-            value = range(((int)PlayersData[l_8].satellites_[l_20 - FAC_SKY_HYDRO_LAB]
+            value = range(((int)PlayersData[l_8].satellites_[sat_type]
                            + (4 - l_98) * 2 + l_60) * 2 - BaseCurrent->population_size,
                           2, 16);
             if (l_20 == FAC_SKY_HYDRO_LAB && has_project(SP_CLONING_VATS, l_8)) {
