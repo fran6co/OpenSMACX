@@ -1981,6 +1981,14 @@ raw field access where the original used inline accessors.
   - `& ~0x1F` gives a dword compare; `& 0xE0` gives a byte compare.
   - `climate >> 5` against an `ALT_*` level gives an int compare after a byte
     AND.
+  - The same holds for every high-bit mask on a byte field. `val3 & 0xC0`
+    narrows to `and al; cmp al; jb/jae`, while `val3 & ~0x3F` keeps the
+    image's `xor; mov al; and; cmp eax; jl/jge`. Read the image's compare
+    form at each site: enemy_move (0.921 -> 0.940), tour and order_veh
+    gained, but probe's val3 test is a byte compare in the image.
+  - A raw `(map_loc(x, y)->climate & ~0x1F) < 0x60` is `is_ocean(x, y)`
+    expanded. Respelling usually compiles identically but can move /Ob2
+    spend (base_build 0.9511 -> 0.9523); measure each function.
 - **`cmp reg,v; jle; mov reg,other`, or `f()` called twice** is the windows.h
   `max`/`min` macro.
 - **Float types.** A float temporary kept in x87 is `float`; `double` makes the

@@ -1753,7 +1753,7 @@ void TutWin::tour() {
             if (level == 3) {
                 score = yield
                         + ((((4 - lower) * 2 - fungus - special) * 2 - higher) - elevated) * 8;
-                if ((tile->val3 & 0xC0) > 0x40) {
+                if ((tile->val3 & ~0x3F) > 0x40) {
                     score = 0;
                 }
                 if (score > alt_score) {

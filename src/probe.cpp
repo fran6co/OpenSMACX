@@ -996,7 +996,7 @@ L_59fb64:
                 }
                 Map *tile = map_loc(Vehs[veh_id_tgt].x, Vehs[veh_id_tgt].y);
                 if ((tile->val3 & 0xC0) >= 0x80
-                    || ((tile->bit & BIT_FUNGUS) && (tile->climate & 0xE0) >= ALT_BIT_OCEAN_SHELF)
+                    || ((tile->bit & BIT_FUNGUS) && (tile->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF)
                     || (tile->bit & BIT_BUNKER)) {
                     score /= 2;
                 }

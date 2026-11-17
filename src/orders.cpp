@@ -1408,7 +1408,7 @@ L_597350:
                         && !TutorialWindow.tutorial_blocked()
                         && (NetDaemonNet.action_mode_ & 1)
                         && (!(map_loc(dest_x, dest_y)->bit & BIT_FUNGUS)
-                            || (map_loc(dest_x, dest_y)->climate & 0xE0) < 0x40)
+                            || (map_loc(dest_x, dest_y)->climate & ~0x1F) < 0x40)
                         && tut_check(0x4000)) {
                     TutorialWindow.tut_map("FRACTIONALMOVE", dest_x, dest_y, veh_id,
                                            NULL, 0, src_x, src_y);
@@ -1529,8 +1529,8 @@ L_597350:
     stack_veh(veh_id, 1);
     if (stealth) {
         if (faction == ConsoleGlobal.faction_id_) {
-            g_FX.engine_pitch((map_loc(src_x, src_y)->climate & 0xE0)
-                              < (map_loc(dest_x, dest_y)->climate & 0xE0) ? 300 : 200);
+            g_FX.engine_pitch((map_loc(src_x, src_y)->climate & ~0x1F)
+                              < (map_loc(dest_x, dest_y)->climate & ~0x1F) ? 300 : 200);
         }
         veh_scoot(veh_id, src_x, src_y, direction, 0);
         if (faction == ConsoleGlobal.faction_id_) {

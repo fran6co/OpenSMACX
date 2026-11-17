@@ -247,7 +247,7 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
     l_54 = Bases[base_id].x;
     l_8c = Bases[base_id].y;
     l_8 = Bases[base_id].faction_id_current;
-    l_38 = (map_loc(l_54, l_8c)->climate & ~0x1F) < 0x60;
+    l_38 = is_ocean(l_54, l_8c);
     l_10 = map_loc(l_54, l_8c)->region;
     l_c = PlayersData[l_8].region_base_plan[l_10];
     l_100 = best_reactor(l_8);
@@ -514,7 +514,7 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
         if (Bases[base_id].population_size > l_d8) {
             l_d8 = Bases[base_id].population_size;
         }
-        if ((map_loc(Bases[base_id].x, Bases[base_id].y)->climate & ~0x1F) < 0x60) {
+        if (is_ocean(Bases[base_id].x, Bases[base_id].y)) {
             l_a8++;
         }
         int dist = vector_dist(l_54, l_8c, Bases[base_id].x, Bases[base_id].y);
