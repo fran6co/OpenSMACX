@@ -431,7 +431,8 @@ void Datalink::draw_chassis() {
     strcat(StringTemp, "{");
     strcat(StringTemp, StringTable.get(Triad[Chassis[id].triad]));
     strcat(StringTemp, BufferJoinSpace);
-    _itoa(Chassis[id].speed, number, 10);
+    const int speed = Chassis[id].speed;
+    _itoa(speed, number, 10);
     strcat(StringTemp, number);
     strcat(StringTemp, "}");
     description.pending_text_ = StringTemp;
@@ -440,11 +441,12 @@ void Datalink::draw_chassis() {
     description.add(0);
     if (Chassis[id].cargo) {
         StringTemp[0] = 0;
-        strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x360 / 4]));
+        strcat(StringTemp, label_get(0x360 / 4));
         strcat(StringTemp, SocialWinColonSpaceText);
         strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, "{");
-        _itoa(Chassis[id].cargo, number, 10);
+        const int cargo = Chassis[id].cargo;
+        _itoa(cargo, number, 10);
         strcat(StringTemp, number);
         if (Chassis[id].triad == 1) {
             strcat(StringTemp, BufferJoinSpace);
@@ -463,7 +465,8 @@ void Datalink::draw_chassis() {
         strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, "{");
         if (Chassis[id].range) {
-            _itoa(Chassis[id].range, number, 10);
+            const int range = Chassis[id].range;
+            _itoa(range, number, 10);
             strcat(StringTemp, number);
             strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, Chassis[id].range == 1 ? label_get(0xC0 / 4)
@@ -482,7 +485,8 @@ void Datalink::draw_chassis() {
     strcat(StringTemp, SocialWinColonSpaceText);
     strcat(StringTemp, BufferJoinSpace);
     strcat(StringTemp, "{");
-    _itoa(Chassis[id].cost, number, 10);
+    const int cost = Chassis[id].cost;
+    _itoa(cost, number, 10);
     strcat(StringTemp, number);
     strcat(StringTemp, "}");
     description.pending_text_ = StringTemp;
@@ -501,7 +505,10 @@ void Datalink::draw_chassis() {
     if (tech >= 0) {
         char link[256];
         link[0] = 0;
-        _itoa(tech + 140000, number, 10);
+        // 0x0042DBEF forms the link id in a second register (lea), as a
+        // named value does; `tech + 140000` as an argument adds in place.
+        const int link_id = tech + 140000;
+        _itoa(link_id, number, 10);
         strcat(link, number);
         help_create_link(StringTemp, name, link);
     } else {
