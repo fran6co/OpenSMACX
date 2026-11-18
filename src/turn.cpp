@@ -21,6 +21,7 @@
 // rendezvous and control_game, in image order. The boundary is inferred from
 // the CRT init table and subject change; council.cpp follows without a marker.
 #define NETDAEMON_RESET_INLINE  // stand-in: see NetDaemon::reset in netdaemon.h
+#define DIALOGS_DTOR_INLINE  // stand-in: see ~Dialogs in dialogs.h
 #include "stdafx.h"
 
 // Original read_tamper/set_tamper at 0x0051E000/0x0051E090 use these registry exports through the SDK.
@@ -3917,11 +3918,6 @@ char ControlTurnPasswordInitialText[1];      // 0x0093AA08 lower bound
 
 extern uint32_t FactionDiplomacyFlags[MaxPlayerNum];
 
-// WORKAROUND(inline): ~Dialogs is a header inline in the original
-// (dialogs.h); control_turn's final teardown expands it (0x00528BC7..0x00528CD3).
-// Defined here rather than through DIALOGS_DTOR_INLINE so the unit's earlier
-// functions keep their code (faction_upkeep's add flips with the header body).
-inline Dialogs::~Dialogs() { close(); }
 
 // save_game is declared by the real game owner header.
 void __cdecl crash_landing(int faction_id);
