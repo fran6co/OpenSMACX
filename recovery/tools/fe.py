@@ -196,8 +196,17 @@ def main():
     text=open(srcpath,encoding='latin-1').read()
     c,err=compile_unit(unit,srcpath,a.pfx)
     if c is None: print('COMPILE FAIL'); print(err); raise SystemExit(2)
+    ctxc={}
     for addr in addrs:
-        r=evaluate(c,text,addr,wins)
+        cc_=c
+        # A marker with `// compile_context <tu>` is measured (recover measure)
+        # in that unit's compile; do the same unless --src overrides the host.
+        m=re.search(r'// ORIGINAL: 0x%08X [^\n]*\n((?://(?! ORIGINAL)[^\n]*\n)*)'%addr,text)
+        mc=m and re.search(r'// compile_context (\S+)',m.group(1))
+        if mc and mc.group(1)!=unit and not a.src:
+            if mc.group(1) not in ctxc: ctxc[mc.group(1)]=compile_unit(mc.group(1),R+'/'+mc.group(1),a.pfx)[0]
+            if ctxc[mc.group(1)] is not None: cc_=ctxc[mc.group(1)]
+        r=evaluate(cc_,text,addr,wins)
         if 'error' in r: print('FE %08X %s'%(addr,r['error'])); continue
         if wins: print('WIN',' '.join(str(x) for x in r['win']))
         if not a.quiet: show(r,a.all,a.ctx)

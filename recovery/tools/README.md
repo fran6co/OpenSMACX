@@ -7,6 +7,8 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
 - `fe.py <unit> <addr[,addr]> [--src ALT.cpp] [--all] [--ctx N] [--win lo-hi,...] [--quiet]`
   Raw-compiles one unit (0.3-2 s), diffs the function's COMDAT against the image span with
   relocations masked. `!!` = differing row, `!>` = same instruction, different local jump target.
+  A marker with `// compile_context <tu>` is measured in that unit's compile, as `recover measure`
+  does (unless `--src` replaces the host).
 - `feall.py [--all] [--base FILE] [--out FILE]` whole-tree pass: 420 non-exact functions in 13 s,
   all 5,574 markers in 17 s (`--all`). `--base` prints LOST/GAINED/MOVED: a header hypothesis
   can be tested tree-wide in under 20 s. About 46 claimed functions read inexact (measured in
