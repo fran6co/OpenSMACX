@@ -551,6 +551,13 @@ raw field access where the original used inline accessors.
 
 ### 2.6 Other confirmed rules
 
+- **.bss order follows symbol names.** VC6 orders a unit's uninitialised
+  globals in .bss by symbol name (a hash or collation), not by declaration
+  or definition order. With popup_api's four names fixed, moving declarations
+  in headers or definitions to either end of the file left the offsets
+  unchanged. Renaming one object moved it. The image's .bss order is
+  therefore a weak hint about original names. Do not rename to match it
+  without other evidence.
 - **Shared frame slots.** Counters that share one frame slot in the image were
   one function-scope variable; declaration order cannot reproduce the slots.
   This holds across mutually exclusive sections of one function too: walk and
