@@ -2378,8 +2378,9 @@ int __cdecl game_data(FILE *file, int write_mode) {
             }
         } else {
             MessageWinDeferredBaseMessages[faction].remove_all();
-            MessageWinDeferredBaseMessages[faction].current_position_ = 0;
-            MessageWinDeferredBaseMessages[faction].allocator_ = 0;
+            StringList *list = &MessageWinDeferredBaseMessages[faction];
+            list->current_position_ = 0;
+            list->allocator_ = 0;
             if (fread(&string_count, 4, 1, file) == 0)
                 return 1;
             for (int index = 0; index < string_count; ++index) {
@@ -2390,10 +2391,10 @@ int __cdecl game_data(FILE *file, int write_mode) {
                 if (fread(StringTemp, string_length, 1, file) == 0)
                     return 1;
                 StringTemp[string_length] = '\0';
-                MessageWinDeferredBaseMessages[faction].field_20_ = 0;
-                MessageWinDeferredBaseMessages[faction].field_24_ = 0;
-                MessageWinDeferredBaseMessages[faction].pending_text_ = StringTemp;
-                MessageWinDeferredBaseMessages[faction].add(string_id);
+                list->field_20_ = 0;
+                list->field_24_ = 0;
+                list->pending_text_ = StringTemp;
+                list->add(string_id);
             }
         }
     }
@@ -2421,9 +2422,10 @@ int __cdecl game_data(FILE *file, int write_mode) {
                         return 1;
                 }
             } else {
+                StringList *list = &DiplomacyTranscriptLists[row][column];
                 DiplomacyTranscriptLists[row][column].remove_all();
-                DiplomacyTranscriptLists[row][column].current_position_ = 0;
-                DiplomacyTranscriptLists[row][column].allocator_ = 0;
+                list->current_position_ = 0;
+                list->allocator_ = 0;
                 if (fread(&string_count, 4, 1, file) == 0)
                     return 1;
                 for (int index = 0; index < string_count; ++index) {
@@ -2437,7 +2439,7 @@ int __cdecl game_data(FILE *file, int write_mode) {
                     DiplomacyTranscriptLists[row][column].field_20_ = 0;
                     DiplomacyTranscriptLists[row][column].field_24_ = 0;
                     DiplomacyTranscriptLists[row][column].pending_text_ = StringTemp;
-                    DiplomacyTranscriptLists[row][column].add(string_id);
+                    list->add(string_id);
                 }
             }
         }
