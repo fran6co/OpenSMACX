@@ -32,16 +32,6 @@ struct MediaCoefficientTableStorage {
   DWORD words[325]; // selected access/initializer window [009C9594,009C9AA8)
 };
 extern MediaCoefficientTableStorage movie_media_coefficient_tables;
-static const BYTE *movie_media_luma_delta_entries() {
-  return reinterpret_cast<const BYTE *>(
-      movie_media_coefficient_tables.words) +
-      offsetof(MediaCoefficientPredictorViewLayout, luma_delta_entries);
-}
-static const BYTE *movie_media_chroma_delta_entries() {
-  return reinterpret_cast<const BYTE *>(
-      movie_media_coefficient_tables.words) +
-      offsetof(MediaCoefficientPredictorViewLayout, chroma_delta_entries);
-}
 
 // Composite source storage for windows used by 5D35B0, 5D2E70 and the row
 // packer. The first two byte windows are fully covered by observed producer
