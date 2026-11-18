@@ -460,135 +460,116 @@ void GraphicWin::on_redraw_nc(RECT *area, int side) {
         top_right = frame_noncaption_right_;
     }
 
-    int bottom_inset = bottom_border_thickness_;
-    if (bottom_inset == -1) {
-        bottom_inset = border_thickness_;
-    }
-    if ((iFlags_ & 0x10000000) == 0) {
-        Win::on_redraw_nc(area, side);
-        return;
-    }
-
-    // Quadrant 0: top caption/non-caption strip.
-    if (buffer1_ != 0 && (side == -1 || side == 0)) {
-        Buffer *buffer = buffer1_;
-        buffer->fill(WinFillColour);
-        if (top_left != 0) {
-            buffer = buffer1_;
-            top_left->draw(buffer, top_left->transparent_index(), 0, 0, 1, 1);
-        }
-        if (top_right != 0) {
-            buffer = buffer1_;
-            top_right->draw(buffer, top_right->transparent_index(),
-                            buffer->pixel_width() - top_right->width(), 0, 1, 1);
-        }
-        if (top_edge != 0 && top_left != 0 && top_right != 0) {
-            buffer = buffer1_;
-            buffer->tile(top_edge, 0, 0, top_left->width(), 0,
-                         (client_rect_.right - client_rect_.left) -
-                             top_right->width() - top_left->width(),
-                         buffer->pixel_height());
-        }
-        if (field_E0_ != 0 && (iFlags_ & 0x10) != 0) {
-            if (field_A0C_ != 0) {
-                field_A0C_(this, field_E0_, buffer1_);
+    const int bottom_inset = bottom_border_thickness_ == -1
+                                 ? border_thickness_ : bottom_border_thickness_;
+    if ((iFlags_ & 0x10000000) != 0) {
+        // Quadrant 0: top caption/non-caption strip.
+        if (buffer1_ != 0 && (side == -1 || side == 0)) {
+            buffer1_->fill(WinFillColour);
+            if (top_left != 0) {
+                top_left->draw(buffer1_, top_left->transparent_index(), 0, 0, 1, 1);
             }
-            on_draw_caption(field_E0_, buffer1_);
+            if (top_right != 0) {
+                top_right->draw(buffer1_, top_right->transparent_index(),
+                                buffer1_->pixel_width() - top_right->width(), 0, 1, 1);
+            }
+            if (top_edge != 0 && top_right != 0 && top_left != 0) {
+                buffer1_->tile(top_edge, 0, 0, top_left->width(), 0,
+                             (client_rect_.right - client_rect_.left) -
+                                 top_right->width() - top_left->width(),
+                             buffer1_->pixel_height());
+            }
+            if (field_E0_ != 0 && (iFlags_ & 0x10) != 0) {
+                if (field_A0C_ != 0) {
+                    field_A0C_(this, field_E0_, buffer1_);
+                }
+                on_draw_caption(field_E0_, buffer1_);
+            }
+            on_post_redraw_nc_buffer(buffer1_, 0);
         }
-        on_post_redraw_nc_buffer(buffer1_, 0);
-    }
 
-    // Quadrant 2: bottom strip.
-    if (buffer4_ != 0 && (side == -1 || side == 2)) {
-        Buffer *buffer = buffer4_;
-        buffer->fill(WinFillColour);
-        if (frame_bottom_left_ != 0) {
-            buffer = buffer4_;
-            frame_bottom_left_->draw(
-                buffer, frame_bottom_left_->transparent_index(), 0,
-                buffer->pixel_height() - frame_bottom_left_->height(), 1, 1);
+        // Quadrant 2: bottom strip.
+        if (buffer4_ != 0 && (side == -1 || side == 2)) {
+            buffer4_->fill(WinFillColour);
+            if (frame_bottom_left_ != 0) {
+                frame_bottom_left_->draw(
+                    buffer4_, frame_bottom_left_->transparent_index(), 0,
+                    buffer4_->pixel_height() - frame_bottom_left_->height(), 1, 1);
+            }
+            if (frame_bottom_right_ != 0) {
+                frame_bottom_right_->draw(
+                    buffer4_, frame_bottom_right_->transparent_index(),
+                    buffer4_->pixel_width() - frame_bottom_right_->width(),
+                    buffer4_->pixel_height() - frame_bottom_right_->height(), 1, 1);
+            }
+            if (frame_bottom_ != 0 && frame_bottom_left_ != 0 &&
+                frame_bottom_right_ != 0) {
+                buffer4_->tile(
+                    frame_bottom_, 0, 0, frame_bottom_left_->width(),
+                    buffer4_->pixel_height() - frame_bottom_->height(),
+                    (buffer4_->pixel_width() - frame_bottom_right_->width()) -
+                        frame_bottom_left_->width(),
+                    frame_bottom_->height());
+            }
+            on_post_redraw_nc_buffer(buffer4_, 2);
         }
-        if (frame_bottom_right_ != 0) {
-            buffer = buffer4_;
-            frame_bottom_right_->draw(
-                buffer, frame_bottom_right_->transparent_index(),
-                buffer->pixel_width() - frame_bottom_right_->width(),
-                buffer->pixel_height() - frame_bottom_right_->height(), 1, 1);
-        }
-        if (frame_bottom_ != 0 && frame_bottom_left_ != 0 &&
-            frame_bottom_right_ != 0) {
-            buffer = buffer4_;
-            buffer->tile(
-                frame_bottom_, 0, 0, frame_bottom_left_->width(),
-                buffer->pixel_height() - frame_bottom_->height(),
-                (buffer->pixel_width() - frame_bottom_right_->width()) -
-                    frame_bottom_left_->width(),
-                frame_bottom_->height());
-        }
-        on_post_redraw_nc_buffer(buffer4_, 2);
-    }
 
-    // Quadrant 3: right strip.
-    if (buffer3_ != 0 && (side == -1 || side == 3)) {
-        Buffer *buffer = buffer3_;
-        buffer->fill(WinFillColour);
-        if (top_left != 0) {
-            buffer = buffer3_;
-            top_left->draw(buffer, top_left->transparent_index(),
-                           0, -top_inset, 1, 1);
+        // Quadrant 3: right strip.
+        if (buffer3_ != 0 && (side == -1 || side == 3)) {
+            buffer3_->fill(WinFillColour);
+            if (top_left != 0) {
+                top_left->draw(buffer3_, top_left->transparent_index(),
+                               0, -top_inset, 1, 1);
+            }
+            if (frame_bottom_left_ != 0) {
+                frame_bottom_left_->draw(
+                    buffer3_, frame_bottom_left_->transparent_index(), 0,
+                    (bottom_inset + buffer3_->pixel_height()) -
+                        frame_bottom_left_->height(), 1, 1);
+            }
+            if (frame_left_ != 0 && top_left != 0 &&
+                frame_bottom_left_ != 0) {
+                buffer3_->tile(
+                    frame_left_, 0, 0, 0,
+                    top_left->height() - top_inset,
+                    border_thickness_,
+                    (((bottom_inset + buffer3_->pixel_height()) -
+                      frame_bottom_left_->height()) - top_left->height()) +
+                        top_inset);
+            }
+            on_post_redraw_nc_buffer(buffer3_, 3);
         }
-        if (frame_bottom_left_ != 0) {
-            buffer = buffer3_;
-            frame_bottom_left_->draw(
-                buffer, frame_bottom_left_->transparent_index(), 0,
-                (bottom_inset + buffer->pixel_height()) -
-                    frame_bottom_left_->height(), 1, 1);
-        }
-        if (frame_left_ != 0 && top_left != 0 &&
-            frame_bottom_left_ != 0) {
-            buffer = buffer3_;
-            buffer->tile(
-                frame_left_, 0, 0, 0,
-                top_left->height() - top_inset,
-                border_thickness_,
-                (((bottom_inset + buffer->pixel_height()) -
-                  frame_bottom_left_->height()) - top_left->height()) +
-                    top_inset);
-        }
-        on_post_redraw_nc_buffer(buffer3_, 3);
-    }
 
-    // Quadrant 1: left strip.
-    if (buffer2_ != 0 && (side == -1 || side == 1)) {
-        Buffer *buffer = buffer2_;
-        buffer->fill(WinFillColour);
-        if (top_right != 0) {
-            buffer = buffer2_;
-            top_right->draw(buffer, top_right->transparent_index(),
-                            buffer->pixel_width() - top_right->width(),
-                            -top_inset, 1, 1);
+        // Quadrant 1: left strip.
+        if (buffer2_ != 0 && (side == -1 || side == 1)) {
+            buffer2_->fill(WinFillColour);
+            if (top_right != 0) {
+                top_right->draw(buffer2_, top_right->transparent_index(),
+                                buffer2_->pixel_width() - top_right->width(),
+                                -top_inset, 1, 1);
+            }
+            if (frame_bottom_right_ != 0) {
+                frame_bottom_right_->draw(
+                    buffer2_, frame_bottom_right_->transparent_index(),
+                    buffer2_->pixel_width() - frame_bottom_right_->width(),
+                    (bottom_inset + buffer2_->pixel_height()) -
+                        frame_bottom_right_->height(), 1, 1);
+            }
+            if (frame_right_ != 0 && top_right != 0 &&
+                frame_bottom_right_ != 0) {
+                buffer2_->tile(
+                    frame_right_, 0, 0,
+                    buffer2_->pixel_width() - frame_right_->width(),
+                    top_right->height() - top_inset,
+                    frame_right_->width(),
+                    (((bottom_inset + buffer2_->pixel_height()) -
+                      frame_bottom_right_->height()) - top_right->height()) +
+                        top_inset);
+            }
+            on_post_redraw_nc_buffer(buffer2_, 1);
         }
-        if (frame_bottom_right_ != 0) {
-            buffer = buffer2_;
-            frame_bottom_right_->draw(
-                buffer, frame_bottom_right_->transparent_index(),
-                buffer->pixel_width() - frame_bottom_right_->width(),
-                (bottom_inset + buffer->pixel_height()) -
-                    frame_bottom_right_->height(), 1, 1);
-        }
-        if (frame_right_ != 0 && top_right != 0 &&
-            frame_bottom_right_ != 0) {
-            buffer = buffer2_;
-            buffer->tile(
-                frame_right_, 0, 0,
-                buffer->pixel_width() - frame_right_->width(),
-                top_right->height() - top_inset,
-                frame_right_->width(),
-                (((bottom_inset + buffer->pixel_height()) -
-                  frame_bottom_right_->height()) - top_right->height()) +
-                    top_inset);
-        }
-        on_post_redraw_nc_buffer(buffer2_, 1);
+    } else {
+        Win::on_redraw_nc(area, side);
     }
 }
 
