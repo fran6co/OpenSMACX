@@ -2130,13 +2130,7 @@ int Console::selecting(int tile_x, int tile_y) {
     }
     if (field_23D10_ != 0) {
         if (field_23D14_ >= 0) {
-            const int vehicle_y = Vehs[selected_vehicle_].y;
-            const int vehicle_x = Vehs[selected_vehicle_].x;
-            const int abs_dx = abs(tile_x - vehicle_x);
-            const int dx = ((MapIsFlat & 1) == 0 && abs_dx > MapLongitude)
-                ? MapLongitudeBounds - abs_dx : abs_dx;
-            // The original SAR floors negative odd sums rather than truncating.
-            if ((dx + abs(tile_y - vehicle_y)) >> 1 > field_23D14_) {
+            if (map_range(tile_x, tile_y, Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y) > field_23D14_) {
                 selecting_cursor(5);
                 return 1;
             }
@@ -4418,12 +4412,7 @@ void Console::give_hints() {
             for (int radius = 0; radius < 240; ++radius) {
                 // The image keeps `MapIsFlat & 1` in a frame local and lays
                 // the flat (unwrapped) arm first, before the wrapping arm.
-                int raw_x = cursor_x + RadiusOffsetX[49 + radius];
-                const int flat = MapIsFlat & 1;
-                const int x = flat ? raw_x
-                              : raw_x < 0 ? raw_x + MapLongitudeBounds
-                              : raw_x >= MapLongitudeBounds ? raw_x - MapLongitudeBounds
-                              : raw_x;
+                const int x = wrap_map_x(cursor_x + RadiusOffsetX[49 + radius]);
                 const int y = cursor_y + RadiusOffsetY[49 + radius];
                 if (!on_map(x, y)) {
                     continue;
