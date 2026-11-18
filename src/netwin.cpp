@@ -1242,9 +1242,8 @@ void NetWin::draw_player_names() {
             && row >= faction_records_->record_type_) {
             break;
         }
-        RECT *colour_rect = &setup_rects_[row + 27];
         Buffer::box_sprite(&setup_rects_[row + 6], &InterfaceBoxStyles[0]);
-        Buffer::box_sprite(colour_rect, &InterfaceBoxStyles[0]);
+        Buffer::box_sprite(&setup_rects_[row + 27], &InterfaceBoxStyles[0]);
 
         // The ready glyph: element 2 when the record block's leading byte
         // says the slot holds a player.
@@ -1271,10 +1270,10 @@ void NetWin::draw_player_names() {
         }
         if (locked) {
             g_IFACE_LOCK_SPRITES[1].draw(this, g_IFACE_LOCK_SPRITES[1].transparent_index(),
-                                         colour_rect->left + 1, colour_rect->top, 1, 1);
+                                         setup_rects_[row + 27].left + 1, setup_rects_[row + 27].top, 1, 1);
         } else {
             g_IFACE_LOCK_SPRITES[0].draw(this, g_IFACE_LOCK_SPRITES[0].transparent_index(),
-                                         colour_rect->left + 1, colour_rect->top, 1, 1);
+                                         setup_rects_[row + 27].left + 1, setup_rects_[row + 27].top, 1, 1);
         }
 
         RECT field = setup_rects_[row + 6];
@@ -1333,7 +1332,7 @@ void NetWin::draw_player_names() {
         if (NetWinSessionData.fields_.mode_ == 0 || NetWinSessionData.fields_.mode_ == 1) {
             spot_.add(row, 2, &setup_rects_[row + 6]);
         }
-        spot_.add(row, 5, colour_rect);
+        spot_.add(row, 5, &setup_rects_[row + 27]);
         soft_update(&field);
     }
 
@@ -2133,7 +2132,6 @@ void NetWin::pick_map() {
             // factions, packing them into the leading rows.
             NetWinLobbyRow *row = &NetWinLobbyRows.rows_[1];
             for (int player_slot = 1; player_slot < 8; ++player_slot) {
-                const Player &player = Players[player_slot];
                 if ((NetWinSessionOptions.fields_.status_ & (1 << player_slot)) == 0) {
                     faction_records_->records_[player_slot].active_ = 0;
                     continue;
@@ -2141,18 +2139,18 @@ void NetWin::pick_map() {
 
                 faction_records_->records_[player_slot].owner_ = PlayersData[player_slot].unk_102;
                 faction_records_->records_[player_slot].active_ = 1;
-                strcpy(faction_records_->records_[player_slot].filename_, player.filename);
+                strcpy(faction_records_->records_[player_slot].filename_, Players[player_slot].filename);
                 // Native 47D959/47D96A copies the leader name twice.
-                strcpy(faction_records_->records_[player_slot].leader_name_, player.name_leader);
-                strcpy(faction_records_->records_[player_slot].leader_name_, player.name_leader);
-                strcpy(faction_records_->records_[player_slot].formal_faction_name_, player.formal_name_faction);
-                strcpy(faction_records_->records_[player_slot].noun_faction_, player.noun_faction);
-                strcpy(faction_records_->records_[player_slot].adjective_faction_, player.adj_name_faction);
-                strcpy(faction_records_->records_[player_slot].leader_title_, player.title_leader);
+                strcpy(faction_records_->records_[player_slot].leader_name_, Players[player_slot].name_leader);
+                strcpy(faction_records_->records_[player_slot].leader_name_, Players[player_slot].name_leader);
+                strcpy(faction_records_->records_[player_slot].formal_faction_name_, Players[player_slot].formal_name_faction);
+                strcpy(faction_records_->records_[player_slot].noun_faction_, Players[player_slot].noun_faction);
+                strcpy(faction_records_->records_[player_slot].adjective_faction_, Players[player_slot].adj_name_faction);
+                strcpy(faction_records_->records_[player_slot].leader_title_, Players[player_slot].title_leader);
                 strcpy(faction_records_->records_[player_slot].adjective_leader_,
-                       player.adj_leader);
+                       Players[player_slot].adj_leader);
                 faction_records_->records_[player_slot].leader_female_ =
-                    static_cast<uint8_t>(player.is_leader_female);
+                    static_cast<uint8_t>(Players[player_slot].is_leader_female);
 
                 StringTemp[0] = 0;
                 strcat(StringTemp, faction_records_->records_[player_slot].filename_);
@@ -2165,14 +2163,14 @@ void NetWin::pick_map() {
 
                 row->owner_ = 0;
                 row->faction_or_color_ = -1;
-                strcpy(row->leader_name_, player.name_leader);
-                strcpy(row->formal_faction_name_, player.formal_name_faction);
+                strcpy(row->leader_name_, Players[player_slot].name_leader);
+                strcpy(row->formal_faction_name_, Players[player_slot].formal_name_faction);
                 strcpy(row->noun_faction_,
                        label_get(0xFE4 / 4));
-                strcpy(row->adjective_faction_, player.adj_name_faction);
-                strcpy(row->leader_title_, player.title_leader);
-                strcpy(row->adjective_leader_, player.adj_leader);
-                row->tail_[0] = static_cast<uint8_t>(player.is_leader_female);
+                strcpy(row->adjective_faction_, Players[player_slot].adj_name_faction);
+                strcpy(row->leader_title_, Players[player_slot].title_leader);
+                strcpy(row->adjective_leader_, Players[player_slot].adj_leader);
+                row->tail_[0] = static_cast<uint8_t>(Players[player_slot].is_leader_female);
                 ++row;
             }
             send_faction_data(-1);

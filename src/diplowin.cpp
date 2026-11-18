@@ -394,19 +394,17 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
     if (low_faction > high_faction) {
       swap(&low_faction, &high_faction);
     }
-    StringList &destination =
-        DiplomacyTranscriptLists[low_faction][high_faction];
     const int source_count = source.entry_count_;
     for (int source_index = source_count - 3;
          source_index < source_count; ++source_index) {
       if (source_index < 0)
         continue;
       source.seek_pos(source_index);
-      destination.pending_text_ = source.head_ != 0
+      DiplomacyTranscriptLists[low_faction][high_faction].pending_text_ = source.head_ != 0
           ? source.current_->string_payload()->text : 0;
-      destination.field_20_ = 0;
-      destination.field_24_ = 0;
-      destination.add(source.current_id());
+      DiplomacyTranscriptLists[low_faction][high_faction].field_20_ = 0;
+      DiplomacyTranscriptLists[low_faction][high_faction].field_24_ = 0;
+      DiplomacyTranscriptLists[low_faction][high_faction].add(source.current_id());
     }
 
     // Each side is stored twice: in the local cell as seen from here, and

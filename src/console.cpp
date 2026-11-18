@@ -6704,88 +6704,87 @@ int Console::on_key_click(int a1, int a2) {
             report_log.say(" ", 0, 0, 0, 0);
             report_log.say("LEADER CHECKSUMS", 0, 0, 0, 0);
             for (int faction_id = 1; faction_id < MaxPlayerNum; ++faction_id) {
-                PlayerData &player = PlayersData[faction_id];
                 report_log.say(" ", 0, 0, 0, 0);
                 report_log.say(get_noun(faction_id), 0, 0, 0, 0);
                 ::clear();
-                say_num(player.tech_accumulated);
+                say_num(PlayersData[faction_id].tech_accumulated);
                 strcat(StringTemp, " Research");
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 ::clear();
-                say_num(player.tech_id_researching);
+                say_num(PlayersData[faction_id].tech_id_researching);
                 strcat(StringTemp, " Researching");
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 ::clear();
-                say_num(player.planet_ecology);
+                say_num(PlayersData[faction_id].planet_ecology);
                 strcat(StringTemp, " Planet");
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 ::clear();
-                say_num(player.energy_reserves);
+                say_num(PlayersData[faction_id].energy_reserves);
                 strcat(StringTemp, " Energy");
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 ::clear();
-                say_num(player.integrity_blemishes);
+                say_num(PlayersData[faction_id].integrity_blemishes);
                 strcat(StringTemp, " Blacken");
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 for (int social = 0; social < 4; ++social) {
                     ::clear();
-                    say_num(static_cast<int>(player.soc_category_pending.models_[social]));
+                    say_num(static_cast<int>(PlayersData[faction_id].soc_category_pending.models_[social]));
                     strcat(StringTemp, " Social");
                     say_num(social);
                     report_log.say(StringTemp, 0, 0, 0, 0);
                 }
                 for (int satellite = 0; satellite < 4; ++satellite) {
                     ::clear();
-                    say_num(static_cast<int>(player.satellites_[satellite]));
+                    say_num(static_cast<int>(PlayersData[faction_id].satellites_[satellite]));
                     strcat(StringTemp, " Satellites");
                     say_num(satellite);
                     report_log.say(StringTemp, 0, 0, 0, 0);
                 }
                 for (int other = 0; other < MaxPlayerNum; ++other) {
                     ::clear();
-                    say_num(static_cast<int>(player.diplo_treaties[other]));
+                    say_num(static_cast<int>(PlayersData[faction_id].diplo_treaties[other]));
                     strcat(StringTemp, " Treaties with ");
                     strcat(StringTemp, get_noun(other));
                     report_log.say(StringTemp, 0, 0, 0, 0);
                 }
                 for (other = 0; other < MaxPlayerNum; ++other) {
                     ::clear();
-                    say_num(player.diplo_agenda[other]);
+                    say_num(PlayersData[faction_id].diplo_agenda[other]);
                     strcat(StringTemp, " Agenda with ");
                     strcat(StringTemp, get_noun(other));
                     report_log.say(StringTemp, 0, 0, 0, 0);
                 }
                 for (other = 0; other < MaxPlayerNum; ++other) {
                     ::clear();
-                    say_num(static_cast<int>(player.diplo_friction[other]));
+                    say_num(static_cast<int>(PlayersData[faction_id].diplo_friction[other]));
                     strcat(StringTemp, " Friction with ");
                     strcat(StringTemp, get_noun(other));
                     report_log.say(StringTemp, 0, 0, 0, 0);
                 }
                 for (other = 0; other < MaxPlayerNum; ++other) {
                     ::clear();
-                    say_num(player.diplo_patience[other]);
+                    say_num(PlayersData[faction_id].diplo_patience[other]);
                     strcat(StringTemp, " Patience with ");
                     strcat(StringTemp, get_noun(other));
                     report_log.say(StringTemp, 0, 0, 0, 0);
                 }
                 for (other = 0; other < MaxPlayerNum; ++other) {
                     ::clear();
-                    say_num(player.diplo_merc[other]);
+                    say_num(PlayersData[faction_id].diplo_merc[other]);
                     strcat(StringTemp, " Merc with ");
                     strcat(StringTemp, get_noun(other));
                     report_log.say(StringTemp, 0, 0, 0, 0);
                 }
                 for (other = 0; other < MaxPlayerNum; ++other) {
                     ::clear();
-                    say_num(player.diplo_spoke[other]);
+                    say_num(PlayersData[faction_id].diplo_spoke[other]);
                     strcat(StringTemp, " Spoke with ");
                     strcat(StringTemp, get_noun(other));
                     report_log.say(StringTemp, 0, 0, 0, 0);
                 }
                 for (other = 0; other < MaxPlayerNum; ++other) {
                     ::clear();
-                    say_num(player.diplo_wrongs[other]);
+                    say_num(PlayersData[faction_id].diplo_wrongs[other]);
                     strcat(StringTemp, " Wrongs with ");
                     strcat(StringTemp, get_noun(other));
                     report_log.say(StringTemp, 0, 0, 0, 0);
@@ -6840,60 +6839,59 @@ int Console::on_key_click(int a1, int a2) {
             report_log.say(" ", 0, 0, 0, 0);
             report_log.say("BASE ENUMERATION", 0, 0, 0, 0);
             for (base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
-                Base &base = Bases[base_id];
                 report_log.say(" ", 0, 0, 0, 0);
                 ::clear();
                 say_num(base_id);
                 strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, base.name_string);
+                strcat(StringTemp, Bases[base_id].name_string);
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 ::clear();
-                say_num(base.x);
+                say_num(Bases[base_id].x);
                 strcat(StringTemp, " X");
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 ::clear();
-                say_num(base.y);
+                say_num(Bases[base_id].y);
                 strcat(StringTemp, " Y");
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 ::clear();
-                say_num(base.population_size);
+                say_num(Bases[base_id].population_size);
                 strcat(StringTemp, " Size");
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 ::clear();
-                say_num(base.faction_id_former);
+                say_num(Bases[base_id].faction_id_former);
                 strcat(StringTemp, " Former");
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 ::clear();
-                say_num(base.nutrients_accumulated);
+                say_num(Bases[base_id].nutrients_accumulated);
                 strcat(StringTemp, " Nutrient");
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 ::clear();
-                say_num(base.minerals_accumulated);
+                say_num(Bases[base_id].minerals_accumulated);
                 strcat(StringTemp, " Minerals");
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 ::clear();
-                say_num(base.queue_size);
+                say_num(Bases[base_id].queue_size);
                 strcat(StringTemp, " Num Making");
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 ::clear();
-                say_num(base.queue_production_id[0]);
+                say_num(Bases[base_id].queue_production_id[0]);
                 strcat(StringTemp, " Making");
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 ::clear();
-                say_num(base.resource_sqr_radius);
+                say_num(Bases[base_id].resource_sqr_radius);
                 strcat(StringTemp, " Radius");
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 ::clear();
-                say_num(static_cast<int>(base.spec[0]));
+                say_num(static_cast<int>(Bases[base_id].spec[0]));
                 strcat(StringTemp, " Spec 0");
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 ::clear();
-                say_num(static_cast<int>(base.spec[1]));
+                say_num(static_cast<int>(Bases[base_id].spec[1]));
                 strcat(StringTemp, " Spec 1");
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 for (int facility = 0; facility < 9; ++facility) {
                     ::clear();
-                    say_num(base.facilities_built[facility]);
+                    say_num(Bases[base_id].facilities_built[facility]);
                     strcat(StringTemp, " Fac");
                     say_num(facility);
                     report_log.say(StringTemp, 0, 0, 0, 0);

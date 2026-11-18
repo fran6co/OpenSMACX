@@ -5822,14 +5822,11 @@ draw_map:
                             const int actual = range(yield[resource] - 1, 0, 7);
                             const int potential = range(restricted[resource] + actual, 0, 7);
                             if (actual != potential) {
-                                Sprite &potential_icon = g_RESOURCE_ICON_SPRITES[resource * 8 + potential];
-                                potential_icon.draw_mono(this, potential_icon.transparent_index(),
+                                g_RESOURCE_ICON_SPRITES[resource * 8 + potential].draw_mono(this, g_RESOURCE_ICON_SPRITES[resource * 8 + potential].transparent_index(),
                                                          cursor, icon_y, 0, 1, 1);
-                                Sprite &actual_icon = g_RESOURCE_ICON_SPRITES[resource * 8 + actual];
-                                actual_icon.draw(this, cursor + (potential - actual) / 2, icon_y, 1, 1);
+                                g_RESOURCE_ICON_SPRITES[resource * 8 + actual].draw(this, cursor + (potential - actual) / 2, icon_y, 1, 1);
                             } else {
-                                Sprite &actual_icon = g_RESOURCE_ICON_SPRITES[resource * 8 + actual];
-                                actual_icon.draw(this, cursor, icon_y, 1, 1);
+                                g_RESOURCE_ICON_SPRITES[resource * 8 + actual].draw(this, cursor, icon_y, 1, 1);
                             }
                             cursor += g_RESOURCE_ICON_SPRITES[resource * 8 + potential].source_width();
                         }

@@ -3337,11 +3337,11 @@ void ReportWin::draw_ops() {
     int facility;                                                // [ebp-0x50]
     for (int list_index = 0;                                     // [ebp-0x18]
          list_index < GameDataStateStorage.fields_.base_current_count_; ++list_index) {
-        // ebx = &sort_entries_[list_index]; base_id is re-read through it
-        // after every call, so it is not cached in a local.
-        const ReportSortEntry &entry = ReportIfGlobal.sort_entries_[list_index];
+        // ebx = &sort_entries_[list_index] is VC6's own pointer IV; the
+        // entry is indexed at each use, not bound to a local reference, and
+        // base_id is re-read after every call.
         // Image re-reads the global here (not the faction local).
-        if (Bases[entry.base_id].faction_id_current != ReportIfGlobal.report_faction_id_) {
+        if (Bases[ReportIfGlobal.sort_entries_[list_index].base_id].faction_id_current != ReportIfGlobal.report_faction_id_) {
             continue;
         }
         ++ordinal;
@@ -3363,9 +3363,9 @@ void ReportWin::draw_ops() {
         //   rect_width(&text) + rect_width(&icon) + 3.
         set_rectangle_dimensions(&report_work_rect_, icon.left, text.top,
             text.right - text.left - icon.left + icon.right + 3, text.bottom - text.top);
-        spot_.add(entry.base_id + 0x400, 0, &report_work_rect_);
-        spot_.add(entry.base_id + 0xC00, 0, &icon);
-        if (selected_bases_[entry.base_id / 32] & (1 << (entry.base_id % 32))) {
+        spot_.add(ReportIfGlobal.sort_entries_[list_index].base_id + 0x400, 0, &report_work_rect_);
+        spot_.add(ReportIfGlobal.sort_entries_[list_index].base_id + 0xC00, 0, &icon);
+        if (selected_bases_[ReportIfGlobal.sort_entries_[list_index].base_id / 32] & (1 << (ReportIfGlobal.sort_entries_[list_index].base_id % 32))) {
             Buffer::box_sprite(&text, &InterfaceBoxStyles[2]);
             Buffer::box_sprite(&text, &InterfaceBoxStyles[5]);
             Buffer::box_sprite(&icon, &InterfaceBoxStyles[2]);
@@ -3374,7 +3374,7 @@ void ReportWin::draw_ops() {
             Buffer::box_sprite(&text, &InterfaceBoxStyles[1]);
             Buffer::box_sprite(&icon, &InterfaceBoxStyles[1]);
         }
-        const uint32_t governor = Bases[entry.base_id].governor;
+        const uint32_t governor = Bases[ReportIfGlobal.sort_entries_[list_index].base_id].governor;
         if (governor & 0x80000000u) {
             for (int priority = 0; priority < 4; ++priority) {
                 if (governor & (0x1000000u << priority)) {
@@ -3402,14 +3402,14 @@ void ReportWin::draw_ops() {
         rect1_.top = (field_59A4_
             - zoom_scale(75, -6))
             / 2 + icon.top + 1;
-        base_draw(this, entry.base_id, rect1_.left, rect1_.top, -6, 0x40);
+        base_draw(this, ReportIfGlobal.sort_entries_[list_index].base_id, rect1_.left, rect1_.top, -6, 0x40);
         Buffer::set_text_color(0xE1, -1, 1, 1);
         Buffer::set_font(ReportIfGlobal.field_1E18C_, ReportIfGlobal.field_1E184_,
             ReportIfGlobal.field_1E18C_, 0);
-        set_base(entry.base_id);
+        set_base(ReportIfGlobal.sort_entries_[list_index].base_id);
         base_compute(0);
         StringTemp[0] = 0;
-        say_base(StringTemp, entry.base_id);
+        say_base(StringTemp, ReportIfGlobal.sort_entries_[list_index].base_id);
         // Image reads project_base[30] (0x009A658C) inline: has_project.
         if (BaseCurrent->drone_total > BaseCurrent->talent_total
             && !has_project(SP_TELEPATHIC_MATRIX, faction)) {
@@ -3423,7 +3423,7 @@ void ReportWin::draw_ops() {
         CharUpperA(StringTemp);
         Buffer::write_l(StringTemp, rect1_.left, text.top + 5);
         StringTemp[0] = 0;
-        if (is_objective(entry.base_id)
+        if (is_objective(ReportIfGlobal.sort_entries_[list_index].base_id)
             && !(GameDataStateStorage.fields_.game_rules_ & 0x20000000)) {
             // Genuine original: colour indexed by list position, not by the
             // sorted base id (Bases[list_index]).
@@ -3431,9 +3431,9 @@ void ReportWin::draw_ops() {
                 -1, 1, 1);
             strcat(StringTemp, label_get(0xE08 / 4));
             CharUpperA(StringTemp);
-        } else if (Bases[entry.base_id].governor & 0x80000000u) {
+        } else if (Bases[ReportIfGlobal.sort_entries_[list_index].base_id].governor & 0x80000000u) {
             for (int status_priority = 0; status_priority < 4; ++status_priority) {
-                if (Bases[entry.base_id].governor & (0x1000000u << status_priority)) {
+                if (Bases[ReportIfGlobal.sort_entries_[list_index].base_id].governor & (0x1000000u << status_priority)) {
                     Buffer::set_text_color(mandate_color(status_priority), -1, 1, 1);
                     strcat(StringTemp, label_get(0x824 / 4 + status_priority));
                     break;
@@ -3613,7 +3613,7 @@ void ReportWin::draw_ops() {
                  veh_id = Vehs[veh_id].next_veh_id_stack) {
                 rect1_.left -= spacing;
                 veh_draw(this, veh_id, rect1_.left, rect1_.top, -8, 8, 0);
-                spot_.add(entry.base_id + 0x800, veh_id, rect1_.left, rect1_.top, spacing, pitch);
+                spot_.add(ReportIfGlobal.sort_entries_[list_index].base_id + 0x800, veh_id, rect1_.left, rect1_.top, spacing, pitch);
             }
         }
     }
@@ -5238,16 +5238,15 @@ void ReportIf::on_status(int mode) {
         for (int topic = 0; topic <= 6; ++topic) {
             StringTemp[0] = 0;
             strcat(StringTemp, label_get(0x2B1 + topic));
-            FlatButton *category = &flatButtonsB_[topic];
-            category->init(0, topic + 2, report_category_positions_[topic],
+            flatButtonsB_[topic].init(0, topic + 2, report_category_positions_[topic],
                            report_category_center_, spritesA_[0].width(),
                            spritesA_[0].height(), &MainInterfaceGlobal, 0);
-            category->set_report_icons(&spritesA_[topic * 3], &spritesA_[topic * 3 + 1],
+            flatButtonsB_[topic].set_report_icons(&spritesA_[topic * 3], &spritesA_[topic * 3 + 1],
                                        &spritesA_[topic * 3 + 2]);
-            category->set_bubble_text(StringTemp);
-            category->Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
-            category->redraw();
-            category->redraw();
+            flatButtonsB_[topic].set_bubble_text(StringTemp);
+            flatButtonsB_[topic].Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
+            flatButtonsB_[topic].redraw();
+            flatButtonsB_[topic].redraw();
         }
 
         // Report frame and the two window buttons beneath it (0x4A4397..0x4A454F).
@@ -7361,20 +7360,19 @@ void ReportIf::draw_sat() {
                 }
                 strcat(StringTemp, StringTable.get(name));
                 set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, 20);
-                FlatButton *button = &flatButtonsD_[kind];
-                button->init(StringTemp, kind + 65, &draw_workspace_rect_,
+                flatButtonsD_[kind].init(StringTemp, kind + 65, &draw_workspace_rect_,
                                    &MainInterfaceGlobal, 0);
-                button->Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
-                button->redraw();
-                button->hide();
+                flatButtonsD_[kind].Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
+                flatButtonsD_[kind].redraw();
+                flatButtonsD_[kind].hide();
                 elevators = 0;
                 for (base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
                     if (target == Bases[base].faction_id_current && has_fac(41, base, 0)) ++elevators;
                 }
                 if ((kind == 4 && elevators)
                     || (kind != 4 && kind < 4 && PlayersData[target].satellites_[kind])) {
-                    button->show(0);
-                    buttonGroup4_.add(button);
+                    flatButtonsD_[kind].show(0);
+                    buttonGroup4_.add(&flatButtonsD_[kind]);
                     field_10_ += 22;
                 }
             }
