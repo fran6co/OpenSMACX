@@ -326,10 +326,6 @@ int __cdecl shoot(int atk_factionID, int def_factionID, int xDest, int yDest) {
     return 1;
 }
 
-// Inlined: the doubled vector_dist halved once.
-static inline int patrol_dist(int x_a, int y_a, int x_b, int y_b) {
-    return (x_dist(x_a, x_b) + abs(y_a - y_b)) >> 1;
-}
 
 // WORKAROUND(decl): counter alignment. planet_busting (0x00500B60) keeps the
 // image's register choices (MNEMONIC_ONLY) only with one more declaration
@@ -362,7 +358,7 @@ int __cdecl planet_busting(int veh_id, int x, int y) {
         parse_says(3, Bases[nearest_base].name_string, -1, -1);
 
         const char *const sound =
-            (patrol_dist(Bases[nearest_base].x, Bases[nearest_base].y, x, y) <= bust_level)
+            (map_range(Bases[nearest_base].x, Bases[nearest_base].y, x, y) <= bust_level)
             ? "baseobl_sm.pcx" : "astp_sm.pcx";
         popp(ScriptPopupFile, "PLANETBUSTER", 0, sound, 0);
     }
@@ -2438,7 +2434,7 @@ int __cdecl interceptor(int faction_id, int opposing_faction,
             && (base_who(Vehs[vehicle_id].x, Vehs[vehicle_id].y) >= 0
                 || bit_at(Vehs[vehicle_id].x, Vehs[vehicle_id].y) & BIT_AIRBASE
                 || stack_check(vehicle_id, 6, ABL_CARRIER, -1, -1))
-            && patrol_dist(Vehs[vehicle_id].x, Vehs[vehicle_id].y, target_x, target_y) <= 2) {
+            && map_range(Vehs[vehicle_id].x, Vehs[vehicle_id].y, target_x, target_y) <= 2) {
             int weight = 1;
             const int proto_id = Vehs[vehicle_id].proto_id;
             const int8_t offense = get_proto_offense_rating(proto_id);
@@ -2466,7 +2462,7 @@ int __cdecl interceptor(int faction_id, int opposing_faction,
         ConsoleGlobal.focus(x, y, faction_id);
         NetMsgPrimary.pop("AIRSCRAMBLE", 5000, 0, 0);
         // Animate the interceptor one step at a time toward the target.
-        while (patrol_dist(x, y, target_x, target_y)) {
+        while (map_range(x, y, target_x, target_y)) {
             int best_direction = -1;
             int best_distance = 999;
             int next_x;
@@ -2475,7 +2471,7 @@ int __cdecl interceptor(int faction_id, int opposing_faction,
                 const int x_step = wrap_map_x(VehMoveDeltaX[direction] + x);
                 const int y_step = VehMoveDeltaY[direction] + y;
                 if (on_map(x_step, y_step)) {
-                    const int distance = patrol_dist(x_step, y_step, target_x, target_y);
+                    const int distance = map_range(x_step, y_step, target_x, target_y);
                     if (distance < best_distance) {
                         best_distance = distance;
                         best_direction = direction;

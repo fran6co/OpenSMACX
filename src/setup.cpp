@@ -887,10 +887,6 @@ void __cdecl balance() {
     }
 }
 
-// The image expands this four-argument distance once per candidate unit.
-static inline int setup_dist(int x_point_a, int y_point_a, int x_point_b, int y_point_b) {
-    return (x_dist(x_point_a, x_point_b) + abs(y_point_a - y_point_b)) >> 1;
-}
 
 // ORIGINAL: 0x005B0A30 ?scenario_setup@@YAXXZ 0x005B0A30-0x005B0D69
 // RECOVERY_BINDING: v1 {"reason":"Recover complete descending vehicle-placement retries with real prototypes/chassis/Map records, native odd-y x adjustment and failed-placement deletion. Original68FAF0 is MapLongitude for tile-row stride and wrap threshold, not full MapLongitudeBounds; air-only placement does not form a terrain pointer. No byte/reference or runtime claim is granted.","evidence":["git:3f579310:src/unrecovered/005b0a30.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/scenario-artifact-unity-owner-coverage.json","Original full span and native physical COFF emitted symbol ?scenario_setup@@YAXXZ; existing source owns all referenced storage and services."]}
@@ -942,7 +938,7 @@ void __cdecl scenario_setup() {
             int best_distance = 9999;
             for (int other_id = 0; other_id < GameDataStateStorage.fields_.vehicle_current_count_; ++other_id) {
                 if (vehicle_id != other_id) {
-                    int distance = setup_dist(x, y, Vehs[other_id].x, Vehs[other_id].y);
+                    int distance = map_range(x, y, Vehs[other_id].x, Vehs[other_id].y);
                     if (distance < best_distance) {
                         best_distance = distance;
                     }

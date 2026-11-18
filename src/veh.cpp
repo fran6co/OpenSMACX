@@ -501,10 +501,6 @@ VOX_Vect VehInfantryOffset = {{-400.0f, 200.0f, 0.0f}};
 #pragma function(atan)
 #pragma intrinsic(atan)
 
-// Inlined: the doubled vector_dist halved once.
-static inline int patrol_dist(int x_a, int y_a, int x_b, int y_b) {
-    return (x_dist(x_a, x_b) + abs(y_a - y_b)) >> 1;
-}
 
 
 // Typed dependencies: capture_base/spot_all/goody_box have explicitly
@@ -2335,7 +2331,7 @@ reroll:
                 && anything_at(tx, ty) < 0 && !zoc_any(tx, ty, faction_id)
                 && !(PlayersData[faction_id].flags & 0x200)
                 && !(map_loc(tx, ty)->visibility & (1 << faction_id))
-                && patrol_dist(x, y, tx, ty) > 4 && patrol_dist(x, y, tx, ty) <= radius) {
+                && map_range(x, y, tx, ty) > 4 && map_range(x, y, tx, ty) <= radius) {
                 break;
             }
         }

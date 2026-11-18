@@ -1542,10 +1542,6 @@ void __cdecl init_goals(int faction_id) {
 }
 
 
-// The 4-arg vector_dist body, inlined the same way (pact_withdraw).
-static inline int del_site_dist(int x_point_a, int y_point_a, int x_point_b, int y_point_b) {
-    return vector_dist(x_dist(x_point_a, x_point_b), abs(y_point_a - y_point_b));
-}
 
 /*
 Purpose: Delete sites of the specified type within proximity of the tile along with related goals.
@@ -3837,7 +3833,7 @@ void __cdecl give_a_base(int base_id, int new_owner) {
         if (Vehs[veh_id].faction_id != old_owner) {
             continue;
         }
-        int dist = del_site_dist(Vehs[veh_id].x, Vehs[veh_id].y, x, y);
+        int dist = map_dist(Vehs[veh_id].x, Vehs[veh_id].y, x, y);
         if (dist > ((map_loc(Vehs[veh_id].x, Vehs[veh_id].y)->climate & ~0x1F) >= ALT_BIT_SHORE_LINE)) {
             continue;
         }
@@ -3998,7 +3994,7 @@ int __cdecl pact_withdraw(int faction_id, int faction_id_with) {
                 }
             }
 
-            const int distance = del_site_dist(Bases[base_id].x, Bases[base_id].y, Vehs[vehicle_id].x, Vehs[vehicle_id].y);
+            const int distance = map_dist(Bases[base_id].x, Bases[base_id].y, Vehs[vehicle_id].x, Vehs[vehicle_id].y);
             if (distance < best_distance) {
                 best_distance = distance;
                 best_base = base_id;

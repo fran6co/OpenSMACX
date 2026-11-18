@@ -2010,10 +2010,6 @@ the six survivors are dead code or equivalences rather than untested behaviour.
   - `moves_left > 999` against `>= 999` differ only at 999, where the clamp writes the 999 that
     is already there.
 */
-// Inlined: the doubled vector_dist halved once.
-static inline int patrol_dist(int x_a, int y_a, int x_b, int y_b) {
-    return (x_dist(x_a, x_b) + abs(y_a - y_b)) >> 1;
-}
 int __cdecl valid_patrol(int veh_id, int x, int y) {
     // One local: the sea base id and the air start-is-landing flag share a slot.
     int base_veh;
@@ -2066,7 +2062,7 @@ int __cdecl valid_patrol(int veh_id, int x, int y) {
             * (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range
                - Vehs[veh_id].terraforming_turns - 1)
             + veh_moves(veh_id)) / Rules.move_rate_roads;
-        int dist = patrol_dist(x, y, Vehs[veh_id].x, Vehs[veh_id].y);
+        int dist = map_range(x, y, Vehs[veh_id].x, Vehs[veh_id].y);
         if (base_veh && landing_dst) {
             if (dist > reach) {
                 return false;
