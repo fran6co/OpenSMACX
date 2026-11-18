@@ -978,8 +978,7 @@ void NetWin::draw_session_info() {
                           setup_rects_[1].right - setup_rects_[1].left - 0x1E);
     if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
         g_IFACE_MP_COMBO_ARROW_SPRITES[0].draw(
-            this, g_IFACE_MP_COMBO_ARROW_SPRITES[0].transparent_index(),
-            BufferLastWrapWriteResult + 3, bottom - Buffer::text_line_height());
+            this, BufferLastWrapWriteResult + 3, bottom - Buffer::text_line_height());
     }
     spot_.add(0, 0, col, row, setup_rects_[1].right - setup_rects_[1].left,
               bottom - row);

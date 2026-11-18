@@ -3107,15 +3107,11 @@ void __cdecl slide_show(GraphicWin *window, int mode) {
                 const DWORD started = timeGetTime();
                 frame_buffer.draw(&Win::screen_buffer_, 9, area.left, animation_y, 1, 1);
 
-                left_outer.draw(&Win::screen_buffer_, left_outer.transparent_index(),
-                                left_x, animation_y > frame_edge ? animation_y : frame_edge,
+                left_outer.draw(&Win::screen_buffer_, left_x, animation_y > frame_edge ? animation_y : frame_edge,
                                 1, 1);
-                left_inner.draw(&Win::screen_buffer_, left_inner.transparent_index(),
-                                left_inner_x, animation_y, 1, 1);
-                right_inner.draw(&Win::screen_buffer_, right_inner.transparent_index(),
-                                 right_inner_x, animation_y, 1, 1);
-                right_outer.draw(&Win::screen_buffer_, right_outer.transparent_index(),
-                                 right_x, animation_y > frame_edge ? animation_y : frame_edge,
+                left_inner.draw(&Win::screen_buffer_, left_inner_x, animation_y, 1, 1);
+                right_inner.draw(&Win::screen_buffer_, right_inner_x, animation_y, 1, 1);
+                right_outer.draw(&Win::screen_buffer_, right_x, animation_y > frame_edge ? animation_y : frame_edge,
                                  1, 1);
 
                 Win::screen_buffer_.set_clip(&animation_strip);
@@ -3140,23 +3136,17 @@ void __cdecl slide_show(GraphicWin *window, int mode) {
         }
 
         window->Buffer::restore_clip();
-        left_outer.draw(static_cast<Buffer *>(window), left_outer.transparent_index(),
-                        left_x - area.left,
+        left_outer.draw(static_cast<Buffer *>(window), left_x - area.left,
                         (animation_y > frame_edge ? animation_y : frame_edge) - area.top, 1, 1);
-        left_inner.draw(static_cast<Buffer *>(window), left_inner.transparent_index(),
-                        left_inner_x - area.left, 0, 1, 1);
-        right_inner.draw(static_cast<Buffer *>(window), right_inner.transparent_index(),
-                         right_inner_x - area.left, 0, 1, 1);
+        left_inner.draw(static_cast<Buffer *>(window), left_inner_x - area.left, 0, 1, 1);
+        right_inner.draw(static_cast<Buffer *>(window), right_inner_x - area.left, 0, 1, 1);
         if (animation_y <= frame_edge) animation_y = frame_edge;
-        right_outer.draw(static_cast<Buffer *>(window), right_outer.transparent_index(),
-                         right_x - area.left, animation_y - area.top, 1, 1);
+        right_outer.draw(static_cast<Buffer *>(window), right_x - area.left, animation_y - area.top, 1, 1);
     }
 
     if ((mode & 2) != 0) {
         MainInterfaceGlobal.interface_down_sprite().draw(
-            static_cast<Buffer *>(&MainInterfaceGlobal),
-            MainInterfaceGlobal.interface_down_sprite().transparent_index(),
-            MainInterfaceGlobal.bottom_bounds().left,
+            static_cast<Buffer *>(&MainInterfaceGlobal), MainInterfaceGlobal.bottom_bounds().left,
             MainInterfaceGlobal.bottom_bounds().top, 1, 1);
         MainInterfaceTileFlag = 1;
         // The image passes &rect1_ itself (0x45D8EE push 0x7AF5E0).

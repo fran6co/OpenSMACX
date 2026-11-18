@@ -441,8 +441,7 @@ void FameWin::on_redraw() {
     const int landscape_y = landscape_rect_.top + 10;
     const int landscape_x = landscape_rect_.left + 9;
     FactionsArt[faction].diplomacy_landscape.draw(
-        this, FactionsArt[faction].diplomacy_landscape.transparent_index(),
-        landscape_x, landscape_y);
+        this, landscape_x, landscape_y);
     RECT *details = &details_rect_;
     set_clip(details);
     field_A14_ = details->left + 3;
