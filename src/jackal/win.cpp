@@ -27,7 +27,7 @@
 // ORIGINAL: 0x005EB3B0 sub_5eb3b0 0x005EB3B0-0x005EB3CF FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned Win::screen_buffer_ storage starts at 0x9B7490; startup 0x5EB390 constructs the complete Buffer and registers finalizer 0x5EB3B0. The finalizer tests and publishes mask 2 of shared byte0x009B6E30 before the complete Buffer destructor0x005D7410, preserving other bits and repeated-cleanup skip.", "Original CRT slots0x00682678/0x0068267C register drawing then screen; ordinary class-static definitions retain that order and compiler-owned reverse cleanup. No placement storage, manual guard, accessor call, or dynamic pointer/reference facade remains.", "Original0x009B74C0 is screen Buffer+0x30 rect2_, established by pinned0x005EFED9/0x005EFEDE/0x005EFEE3; rendering accesses the real member. The original complete allocation bound remains unproved.", "Current compiler names are carried by the function symbol and object-target facts, not treated as historical debug names. Static members add no instance fields. Fresh strict measurement remains required; this binding transports no claim."], "reason": "Bind the pinned lifetime to typed class-static storage and compiler-generated initialization/destruction. Preserve original identity, spans, historical claims and guard/order obligations. Original nominal declarations and complete historical TU boundaries, linked data placement and game behavior remain unproved."}
 // symbol    _$E20
-// RECOVERY_LITERAL: v1 0x00696DEC 0x00696DF8 $SG53169 0x005F04E0
+// RECOVERY_LITERAL: v1 0x00696DEC 0x00696DF8 $SG49849 0x005F04E0
 #include "stdafx.h"
 // Drawing imports resolve by SDK export identity in the pinned PE directory.
 // RECOVERY_IMPORT: v1 __imp__CreateSolidBrush@4 GDI32.dll name:CreateSolidBrush
@@ -59,7 +59,7 @@
 // Table start is observed in the original constructor; full extent remains unknown.
 // RECOVERY_GENERATED: v1 vtable 0x0066FDD0 0x0066FF30 ??_7Win@@6B@ 0x005EB3D0
 #include "net_class.h"
-#include "multidebug.h"
+#include "jackal_game.h"
 
 // ORIGINAL: 0x005F8630 ??1AutoSound@@UAE@XZ 0x005F8630-0x005F863B FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "pinned:0x00662C60 mov ecx,[ebp-0x10]; jmp 0x005F8630 is Win::~Win's state-0 unwind funclet (funcInfo 0x0067F8B8 via handler 0x00662C76)", "pinned:0x005F8630 mov dword ptr [ecx],0x0066FF34; jmp 0x0062BBF0, ending in int3/nop padding before ??_GAutoSound at 0x005F8640", "source:src/autosound.h AutoSound declares virtual ~AutoSound() { close(); } in class", "source:src/autosound.cpp ??_GAutoSound@@UAEPAXI@Z at 0x005F8640 already maps the deleting twin (same vftable store and close call)"], "reason": "0x005F8630-0x005F863B is the separate AutoSound complete destructor, not a chunk of Win::~Win: it stores AutoSound's vftable 0x0066FF34 and tail-jumps to AutoSound::close 0x0062BBF0; ~Win's state-0 unwind funclet 0x00662C60 jumps to it, and win.cpp emits it as the COMDAT ??1AutoSound@@UAE@XZ from the in-class virtual ~AutoSound."}
@@ -72,7 +72,7 @@ typedef signed char int8;  // a scaffold spelling the artifacts use
 #include "rectangle_operations.h"
 #include "win.h"
 #include "ddinit.h"
-#include "game.h"
+#include "general.h"
 #include "imagebutton.h"
 #include <cstring>
 #include "palette.h"
@@ -2361,7 +2361,7 @@ int __cdecl Win::init_class(LPSTR window_name) {
     wndclass.lpszMenuName = nullptr;
     // `JackalClass` is at 0x00696DC8 and again at 0x00696DD4: one per-site
     // literal for the registration and one for the creation (unpooled).
-    // RECOVERY_LITERAL: v1 0x00696DC8 0x00696DD4 $SG52999 0x005F01F0
+    // RECOVERY_LITERAL: v1 0x00696DC8 0x00696DD4 $SG49679 0x005F01F0
     wndclass.lpszClassName = "JackalClass";
 
     if (RegisterClassA(&wndclass) == 0) {
@@ -2370,7 +2370,7 @@ int __cdecl Win::init_class(LPSTR window_name) {
 
     WinScreenWidth = GetSystemMetrics(SM_CXSCREEN);
     WinScreenHeight = GetSystemMetrics(SM_CYSCREEN);
-    // RECOVERY_LITERAL: v1 0x00696DD4 0x00696DE0 $SG53002 0x005F01F0
+    // RECOVERY_LITERAL: v1 0x00696DD4 0x00696DE0 $SG49682 0x005F01F0
     HandleMain = CreateWindowExA(
         WS_EX_APPWINDOW, "JackalClass", window_name, WS_POPUP,
         0, 0, WinScreenWidth, WinScreenHeight,
@@ -5898,8 +5898,8 @@ int Win::init(int x, int y, int width, int height, char * caption,
             this->close();
             // Per-site literals in the image (the caption, pushed first,
             // was allocated first): 0x00696D60 and 0x00696D80.
-            // RECOVERY_LITERAL: v1 0x00696D80 0x00696D92 $SG54174 0x005EBD80
-            // RECOVERY_LITERAL: v1 0x00696D60 0x00696D7E $SG54173 0x005EBD80
+            // RECOVERY_LITERAL: v1 0x00696D80 0x00696D92 $SG50854 0x005EBD80
+            // RECOVERY_LITERAL: v1 0x00696D60 0x00696D7E $SG50853 0x005EBD80
             MessageBoxA(0, "Too many children", "Increase #define MAX_CHILDREN", 0);
             // MEASURED at 0x005EBFC4: `push 4; call 0x644dff` - the CRT's exit with
             // status 4, not a member call.
@@ -5911,8 +5911,8 @@ int Win::init(int x, int y, int width, int height, char * caption,
     } else {
         if (WinRootCount == 0x28) {
             this->close();
-            // RECOVERY_LITERAL: v1 0x00696DB4 0x00696DC5 $SG54178 0x005EBD80
-            // RECOVERY_LITERAL: v1 0x00696D94 0x00696DB1 $SG54177 0x005EBD80
+            // RECOVERY_LITERAL: v1 0x00696DB4 0x00696DC5 $SG50858 0x005EBD80
+            // RECOVERY_LITERAL: v1 0x00696D94 0x00696DB1 $SG50857 0x005EBD80
             MessageBoxA(0, "Too many parents", "Increase #define MAX_PARENTS", 0);
             exit(4);
         }

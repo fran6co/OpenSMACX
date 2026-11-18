@@ -20,14 +20,14 @@ typedef signed char int8;  // a scaffold spelling the artifacts use
 #include "scroll.h"
 #include "win.h"
 #include "ddinit.h"
-#include "game.h"
+#include "general.h"  // parse_says
 #include "imagebutton.h"
 #include <cstring>
 #include "palette.h"
 #include "jackal.h" // JackalInitFlags lifecycle state
 #include "dialog.h"
 #include "menu.h"
-#include "popup.h"   // pop_caption_title, for DDInit::report_error
+#include "popup_api.h"   // pop_caption_title, for DDInit::report_error
 #include "basepop.h"  // Win::set_bubble_text's popup interfaces
 #include <ddraw.h>  // IDirectDrawSurface::GetDC / ReleaseDC in the hdc pair
 
