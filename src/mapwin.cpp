@@ -4773,20 +4773,17 @@ LAB_00465605:;
             if (iVar5 == 4) {
                 g_TER1_LANDMARK_RESOURCE_SPRITES
                     [4 + (local_18 != 0)]
-                        .draw(buffer, g_TER1_LANDMARK_RESOURCE_SPRITES[4 + (local_18 != 0)].transparent_index(),
-                              a9, a10);
+                        .draw(buffer, a9, a10);
             } else {
-                g_TER1_SEA_LAND_RESOURCE_SPRITES
+                // 0x465E61: index*11 once, scaled by four in the key load
+                // and the receiver, as the keyed Sprite::draw inline gives;
+                // no keyed draw_dest overload is known, so the receiver is
+                // named once.
+                Sprite *const resource = &g_TER1_SEA_LAND_RESOURCE_SPRITES
                     [(((local_14 + a8 & 1U) - 4) +
-                      ((uint32_t)(local_18 != 0) + iVar5 * 2) * 2)]
-                        .draw_dest(
-                            buffer,
-                            g_TER1_SEA_LAND_RESOURCE_SPRITES
-                                [(((local_14 + a8 & 1U) - 4) +
-                                  ((uint32_t)(local_18 != 0) +
-                                   iVar5 * 2) *
-                                      2)].transparent_index(),
-                            a9, a10, ShadowColorTable);
+                      ((uint32_t)(local_18 != 0) + iVar5 * 2) * 2)];
+                resource->draw_dest(buffer, resource->transparent_index(),
+                                    a9, a10, ShadowColorTable);
             }
         }
     }
