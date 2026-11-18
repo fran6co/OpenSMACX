@@ -79,6 +79,14 @@
 #include <cstring>
 #include "buttongroup.h"
 #include "console_commands.h"
+// WORKAROUND(decl): has_treaty is a header inline in the original (see
+// faction_inline.h, which holds the shared body and the out-of-line copy's
+// marker). use_ability expands it at 0x004D82D4; the whole header is not
+// included here because its other statics shift this unit's symbol counter
+// (upgrade is counter-sensitive).
+inline int __cdecl has_treaty(int faction_id, int faction_id_with, int treaty) {
+    return PlayersData[faction_id].diplo_treaties[faction_id_with] & treaty;
+}
 #include "win_pointer.h"  // corner_the_market (0x4E2000) needs Win::grab_pointer's inline body visible in this TU
 // WORKAROUND(decl): counter alignment. corner_the_market's `add ecx, edx;
 // push ecx` (image) against `add edx, ecx; push edx` is a tie-break on the
@@ -2720,6 +2728,19 @@ void Console::set_patrol(int veh_id) {
 // ORIGINAL: 0x004D7F60 ?use_ability@Console@@QAEXH@Z 0x004D7F60-0x004D8A62;0x0065AFD2-0x0065B275
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004d7f60.cpp;source:src/console.h;image:0x004D7F60-0x004D8A62;image:0x0065AFD2-0x0065B275", "Popup constructor before entity reads:0x004D7F85-0x004D7FC4;native inline destruction:0x004D89BE-0x004D8A4A", "Chassis.missile and captured mask:0x004D8043-0x004D8072;missile base/altitude/radius:0x004D8160-0x004D8271;radius source:src/map.h", "Treaty row/arguments and locks:0x004D82D4-0x004D85CC;masked popcount and full selector result:0x004D8653-0x004D875A;drop state at Veh+4 and late moves:0x004D875A-0x004D89BE"], "reason": "Recover the Console ability order handler with automatic Popup lifetime, source-owned vehicle/design/map rules, faction treaties and NetDaemon locking. Preserve the captured terraform-bit mask, native missile/base/altitude gates, typed radius tables, live locked vehicle plan and drop-state/movement checks. The selector branch retains the original masked-popcount guard; no bug fix widens its natural reachability. Retain the full seed and compiler cleanup spans; this source interpretation is not a measured matching or runtime claim."}
 // TRIED: `Popup popup;` RAII (same class this catalog's introduce() at 0x0053D360 established: BasePop(0x3230)+Scroll scroll_, dialogs_ blob at +0x21D0) reproduces the prologue and the per-branch close()+return teardown the compiler generates automatically; matches 21 instructions. The deep branch after the bit_count()>=2 dialog picker (engineer-terraform vs. drop-range-cursor path) is a best-effort shape, not verified instruction-by-instruction against the disasm - next pass should re-derive LAB_004d875a/LAB_004d8969 precisely before trusting it beyond MISMATCH.
+// WORKAROUND(inline): dead /Ob2 budget probes, not recovered code; constant
+// arguments fold them away. With has_treaty expanded and the closing switch,
+// three of them in the DROPBASE arm give every ~Popup return site the
+// image's depth (2,2,2,2,2, nine of 5, then 2) and all 58 EH states; the
+// original's spend is not identified.
+static inline int use_ability_budget_probe1(int x) { if (x == 0) x = 1; return x; }
+static inline int use_ability_budget_probe4(int x) {
+    if (x == 0) x = 1;
+    if (x == 1) x = 4;
+    if (x == 2) x = 7;
+    if (x == 3) x = 10;
+    return x;
+}
 void Console::use_ability(int vehicle_id) {
     int entry_x;
     int entry_y;
@@ -2854,6 +2875,9 @@ void Console::use_ability(int vehicle_id) {
     if ((selected_ability & 0x10u) != 0) {
         if (base_who(entry_x, entry_y) < 0 &&
             !(bit_at(entry_x, entry_y) & BIT_AIRBASE)) {
+            use_ability_budget_probe4(5);  // WORKAROUND(inline): see use_ability_budget_probe1
+            use_ability_budget_probe4(5);  // WORKAROUND(inline): see use_ability_budget_probe1
+            use_ability_budget_probe4(5);  // WORKAROUND(inline): see use_ability_budget_probe1
             X_pop("DROPBASE", nullptr);
             return;
         }
@@ -2867,9 +2891,14 @@ void Console::use_ability(int vehicle_id) {
         }
     }
 
-    if (selected_ability == 0x10u) {
+    // A switch, not an if: the image tests `cmp ebx,0x10; je` over the
+    // closing teardown (0x004D8969) and numbers the case's return first.
+    switch (selected_ability) {
+    case 0x10u:
         ConsoleGlobal.cursor_on(4, drop_range(entry_faction));
         return;
+    default:
+        break;
     }
 }
 
