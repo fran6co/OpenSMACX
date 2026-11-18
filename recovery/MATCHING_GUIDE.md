@@ -443,6 +443,27 @@ raw field access where the original used inline accessors.
 - **Increment order.** The for-clause order sets the order of increments.
   load_terrain became exact with this rule alone. SP3, VC5 and other `/O` flags
   all give the saved base, so this is a matter of source shape.
+- **Which IV carries the test (2026-11-19).** VC6 replaces a counter's loop
+  test only with an induction variable derived from that counter. A coordinate
+  written `x = X0 + i * K` (or used inline) is derived and can become the test
+  (`cmp x, end`); one stepped in the for-clause (`x += K`) is a basic IV and
+  never does, so a pointer or the counter keeps the test. Image tests the
+  coordinate and ours a pointer: derive it (load_box_sprites, load_vehicles'
+  sheet_x). Image tests a pointer and ours the coordinate: step it in the
+  for-clause (load_vehicles' border_y, 0x004546D7).
+- **Per-iteration bindings.** `T &r = A[i];` or `T *p = &A[i];` in a loop body
+  gives VC6 one more pointer to carry; the image indexes `A[i]` at each use and
+  lets VC6 derive its own (read_rules' social effects: a pointer IV and a
+  dec/jne counter became the image's two byte offsets, 59 -> 14 rows; eight
+  more functions closer).
+- **One counter for sibling loops.** Several non-nested `for (int i ...)` loops
+  were often one function-scope `int i;` (game_data 298 -> 240,
+  world_rainfall 311 -> 271, eight more).
+- `cmp reg, K; jl` is `i < K`; `i <= K - 1` gives `cmp reg, K-1; jle`
+  (ProdPicker::calculate).
+- `recovery/tools/analysis/loopscan.py` lists the loop tests of both sides and
+  the source loops with these shapes; `loopsweep.py --rule rebind|sibling|
+  derive|basic` tries each rewrite site by site.
 
 ### 2.5 Unit coupling
 
