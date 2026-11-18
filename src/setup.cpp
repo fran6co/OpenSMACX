@@ -2020,7 +2020,10 @@ Status: Complete
 */
 void __cdecl social_calc(SocialCategory *category, SocialEffect *effect, int faction_id,
     BOOL UNUSED(toggle), BOOL is_quick_calc) {
-    ZeroMemory(effect, sizeof(SocialEffect));
+    int i;
+    for (i = 0; i < 11; i++) {
+        effect->values_[i] = 0;
+    }
     // One counter serves the category walk and the final bonus walk (shared frame slot).
     int cat;
     for (cat = 0; cat < MaxSocialCatNum; cat++) {

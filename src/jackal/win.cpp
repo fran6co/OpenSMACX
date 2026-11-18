@@ -2325,7 +2325,9 @@ int __cdecl Win::init_class(LPSTR window_name) {
     // GetModuleHandleA call that clobbers eax. Four separate assignments make
     // VC6 reuse the one callee-saved zero it already has, and the whole body
     // shifts; this reproduces the pair. 12 of 203 instructions to 16.
-    memset(WinModalStack, 0, sizeof(WinModalStack));
+    for (int i = 0; i < 4; i++) {
+        WinModalStack[i] = 0;
+    }
     WinInstance = GetModuleHandleA(nullptr);
 
     wndclass.style = CS_VREDRAW | CS_HREDRAW | CS_DBLCLKS | CS_OWNDC;  // 0x2B

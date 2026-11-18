@@ -424,7 +424,10 @@ Matrix3 &Matrix3::multiply_assign(const Matrix3 *other) {
             }
         }
     }
-    memcpy(cells, scratch, sizeof(scratch));
+    // WORKAROUND(type): the image ends with one structure assignment
+    // (`mov ecx, 9; rep movsd`, 0x006348A5); the scratch is a Matrix3 local
+    // in the original, written here as its nine floats.
+    *this = *reinterpret_cast<Matrix3 *>(scratch);
     return *this;
 }
 

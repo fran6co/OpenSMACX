@@ -1982,8 +1982,10 @@ BasePop::BasePop() {
     field_30A4_ = static_cast<int>(BasePopDefaultField30A4);
     field_3094_ = BasePopDefaultField3094;
 
-    memcpy(&text_block_[0], BasePopDefaultBlock2E64, 0x118);
-    memcpy(&text_block_[1], BasePopDefaultBlock2F7C, 0x118);
+    // WORKAROUND(type): structure assignments (70-dword rep movsd each); the
+    // default blocks are declared as their 70 words.
+    text_block_[0] = *reinterpret_cast<BasePopTextBlock *>(BasePopDefaultBlock2E64);
+    text_block_[1] = *reinterpret_cast<BasePopTextBlock *>(BasePopDefaultBlock2F7C);
     {
         // A STRAIGHT COPY OF ALL 27 DWORDS, not a transpose. The image's loop
         // loads 0x9b8d10 + 4*column + 0xC*row and stores 0x31b8 + 4*column +
@@ -2148,8 +2150,8 @@ void BasePop::close() {
     field_30A4_ = BasePopDefaultField30A4;
     field_3094_ = BasePopDefaultField3094;
 
-    memcpy(&text_block_[0], BasePopDefaultBlock2E64, sizeof(text_block_[0]));
-    memcpy(&text_block_[1], BasePopDefaultBlock2F7C, sizeof(text_block_[1]));
+    text_block_[0] = *reinterpret_cast<BasePopTextBlock *>(BasePopDefaultBlock2E64);
+    text_block_[1] = *reinterpret_cast<BasePopTextBlock *>(BasePopDefaultBlock2F7C);
 
     if (ok_text_ != 0) {
         free(ok_text_);

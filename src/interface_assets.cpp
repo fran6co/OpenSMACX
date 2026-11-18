@@ -4052,7 +4052,9 @@ void __cdecl load_terrain() {
             *coast++ = static_cast<unsigned char>(g_PCX_PARSE_TEMP_BUFFER1.get_pixel(x, y));
         }
     }
-    memset(remap, 0, sizeof(remap));
+    for (i = 0; i < 256; ++i) {
+        remap[i] = 0;
+    }
     for (i = 0; i < 53; ++i) {
         remap[static_cast<unsigned char>(TerrainCoastRemapSource[i] + 10)] =
             static_cast<unsigned char>(i);
@@ -4063,7 +4065,9 @@ void __cdecl load_terrain() {
     g_RAINFALL_SINGLE_TILE_TEXTURES[1].extract(&scratch, 57, 0, 56, 56, 0);
     const unsigned char nine_colors[9] = {211, 208, 41, 143, 116, 151, 206, 95, 192};
     remapped[0].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 2, 254, 60, 60, 0);
-    memset(remap, 0, sizeof(remap));
+    for (i = 0; i < 256; ++i) {
+        remap[i] = 0;
+    }
     for (i = 0; i < 9; ++i) {
         remap[static_cast<unsigned char>(nine_colors[i] + 10)] = static_cast<unsigned char>(i);
     }

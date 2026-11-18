@@ -2276,8 +2276,11 @@ void __cdecl action_tectonic(int vehicle_id, int x, int y) {
         popp(ScriptPopupFile, "TECTONICMISSILE", 0, "tectonic_sm.pcx", nullptr);
     }
     int hit_faction[MaxPlayerNum];
-    memset(hit_faction, 0, sizeof(hit_faction));
-    for (int i = 0; i < affected_tile_count; ++i) {
+    int i;
+    for (i = 0; i < MaxPlayerNum; ++i) {
+        hit_faction[i] = 0;
+    }
+    for (i = 0; i < affected_tile_count; ++i) {
         const int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
         const int y_radius = y + RadiusOffsetY[i];
         if (!on_map(x_radius, y_radius)) {
@@ -2386,7 +2389,9 @@ void __cdecl action_fungal(int vehicle_id, int x, int y) {
         popp(ScriptPopupFile, "FUNGALMISSILE", 0, "fungpayld_sm.pcx", nullptr);
     }
     int hit_faction[MaxPlayerNum];
-    memset(hit_faction, 0, sizeof(hit_faction));
+    for (i = 0; i < MaxPlayerNum; ++i) {
+        hit_faction[i] = 0;
+    }
     for (i = 0; i < nearby_tile_count; ++i) {
         const int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
         const int y_radius = y + RadiusOffsetY[i];

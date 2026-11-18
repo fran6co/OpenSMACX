@@ -1276,8 +1276,7 @@ Status: Complete
 */
 
 void __cdecl fill_eight_bytes_ff(void *target) {
-    const uint32_t fill_word = 0xFFFFFFFFU;
-    memcpy(target, &fill_word, sizeof(fill_word));
+    *static_cast<uint32_t *>(target) = 0xFFFFFFFFU;
     uint8_t *const bytes = static_cast<uint8_t *>(target);
     const uint8_t fill = 0xFF;
     bytes[4] = fill;

@@ -1481,7 +1481,9 @@ void __cdecl clear_council_notify(int a1) {
 //    near miss from a wrong body.
 
 void __cdecl clear_council_notify() {
-    memset(CouncilNotifyPluralSlots, 0, 8 * sizeof(int));
-    memset(CouncilNotifyFormSlots, 0, 8 * sizeof(int));
+    for (int i = 0; i < 8; i++) {
+        CouncilNotifyFormSlots[i] = 0;
+        CouncilNotifyPluralSlots[i] = 0;
+    }
 }
 

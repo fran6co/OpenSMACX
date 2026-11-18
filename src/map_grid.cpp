@@ -286,7 +286,11 @@ void __cdecl map_wipe() {
         tile->visibility = 0;
         tile->bit = 0;
         tile->val3 = 0;
-        ZeroMemory(&tile->bit2, sizeof(tile->bit2) + sizeof(tile->bit_visible));
+        // WORKAROUND(type): one `rep stosd` of 8 from +0xC (0x0059109D): an
+        // eight-dword array clear; map.h models it as bit2 + bit_visible[7].
+        for (int k = 0; k < 8; k++) {
+            (&tile->bit2)[k] = 0;
+        }
     }
 }
 /*
@@ -1647,13 +1651,24 @@ Status: Complete
 */
 
 void __cdecl fixup_landmarks() {
-    // 113 bytes each: the image inlines every one as `mov ecx, 0x1c / rep
-    // movsd / movsb`, which is 28 dwords plus the last byte.
-    memcpy(AltBonusOcean, AltTemplateOcean, 113);
-    memcpy(AltBonusFlat, AltTemplateFlat, 113);
-    memcpy(AltBonusRainy, AltTemplateRainy, 113);
-    memcpy(AltBonusArid, AltTemplateArid, 113);
-    memcpy(AltBonusMoist, AltTemplateMoist, 113);
+    // 113 bytes each: every byte loop becomes `mov ecx, 0x1c / rep movsd /
+    // movsb`, 28 dwords plus the last byte.
+    int i;
+    for (i = 0; i < 113; i++) {
+        AltBonusOcean[i] = AltTemplateOcean[i];
+    }
+    for (i = 0; i < 113; i++) {
+        AltBonusFlat[i] = AltTemplateFlat[i];
+    }
+    for (i = 0; i < 113; i++) {
+        AltBonusRainy[i] = AltTemplateRainy[i];
+    }
+    for (i = 0; i < 113; i++) {
+        AltBonusArid[i] = AltTemplateArid[i];
+    }
+    for (i = 0; i < 113; i++) {
+        AltBonusMoist[i] = AltTemplateMoist[i];
+    }
 
     for (int y = 0; y < MapLatitudeBounds; y++) {
         for (int x = y & 1; x < MapLongitudeBounds; x += 2) {

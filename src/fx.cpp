@@ -658,7 +658,9 @@ void Effect::init(char *fname, long flags) {
 static inline void fx_set_def_popup_sound(BasePopConfigCallback callback,
                                           const BasePopTextBlock *block) {
     BasePopDefaultField3094 = callback;
-    if (block) memcpy(BasePopDefaultBlock2E64, block, sizeof(*block));
+    // WORKAROUND(type): a structure assignment (70-dword rep movsd); the
+    // default block is declared as its 70 words.
+    if (block) *reinterpret_cast<BasePopTextBlock *>(BasePopDefaultBlock2E64) = *block;
 }
 
 // Initialize the effect and CPU-voice banks in original call order. Qualified

@@ -965,7 +965,9 @@ Status: Complete
 */
 void __cdecl tech_effects(int faction_id) {
     PlayersData[faction_id].tech_commerce_bonus = Players[faction_id].rule_commerce;
-    memset(PlayersData[faction_id].tech_fungus_, 0, sizeof PlayersData[faction_id].tech_fungus_);
+    for (int slot = 0; slot < 4; slot++) {
+        PlayersData[faction_id].tech_fungus_[slot] = 0;
+    }
     for (int tech_id = 0; tech_id < MaxTechnologyNum; tech_id++) {
         if (has_tech(tech_id, faction_id)) {
             uint32_t flags = Technology[tech_id].flags;

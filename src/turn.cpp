@@ -285,8 +285,10 @@ void __cdecl clear_tamper() {
     TamperState93A9AC = 0;
     TamperState93A9B0 = 0;
     TamperState93A9B4 = 0;
-    memset(TamperDialogValue, 0, sizeof TamperDialogValue);
-    memset(TamperDialogFaction, 0, sizeof TamperDialogFaction);
+    for (int i = 0; i < MaxPlayerNum; i++) {
+        TamperDialogFaction[i] = 0;
+        TamperDialogValue[i] = 0;
+    }
 }
 
 // Existing storage belongs to MessageWin's deferred-message owner.
@@ -453,7 +455,9 @@ void __cdecl do_checksums(int type) {
         break;
     }
     if (type == 4) {
-        memcpy(NetTurnChecksums, checksums, 0x54);
+        for (int i = 0; i < NetTurnChecksumWords; i++) {
+            NetTurnChecksums[i] = checksums[i];
+        }
     }
 
     sub_51e6f0("GAME checksum = ", checksums[0]);
@@ -3767,7 +3771,9 @@ void __cdecl production_phase(int faction_id) {
     }
     for (int row = 0; row < 8; row++) {
         PlayersData[faction_id].unk_38[row] = 0;
-        memset(PlayersData[faction_id].unk_39[row], 0, sizeof(PlayersData[faction_id].unk_39[row]));
+        for (int column = 0; column < 9; column++) {
+            PlayersData[faction_id].unk_39[row][column] = 0;
+        }
     }
     PlayersData[faction_id].unk_47 = 0;
     PlayersData[faction_id].unk_48 = 0;

@@ -4327,7 +4327,9 @@ void Console::editor_reset_tech() {
             PlayersData[faction_id].tech_ranking = 0;
         }
 
-        memset(GameDataStateStorage.fields_.game_tech_achieved_, 0, MaxTechnologyNum);
+        for (int tech_id = 0; tech_id < MaxTechnologyNum; ++tech_id) {
+            GameDataStateStorage.fields_.game_tech_achieved_[tech_id] = 0;
+        }
 
         for (int prototype_id = 0; prototype_id < MaxVehProtoNum; ++prototype_id) {
             VehPrototype &prototype = VehPrototypes[prototype_id];

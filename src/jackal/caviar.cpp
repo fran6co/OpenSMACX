@@ -375,11 +375,11 @@ Return Value: n/a
 Status: Complete
 */
 void Caviar::set_scaling(float scaling) {
-    memcpy(&camera_view_.camera_.scaling, &scaling, sizeof(scaling));
+    camera_view_.camera_.scaling = scaling;
 }
 
 void Caviar::set_scaling_bits(uint32_t scaling_bits) {
-    memcpy(&camera_view_.camera_.scaling, &scaling_bits, sizeof(scaling_bits));
+    *reinterpret_cast<uint32_t *>(&camera_view_.camera_.scaling) = scaling_bits;
 }
 
 /*

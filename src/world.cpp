@@ -62,8 +62,10 @@ Return Value: n/a
 Status: Complete - testing
 */
 void __cdecl world_alt_set(int x, int y, int altitude, BOOL is_set_both) {
-    ZeroMemory(MapBaseSubmergedCount, sizeof(int) * MaxPlayerNum);
-    memset(MapBaseIdClosestSubmergedVeh, -1, sizeof(int) * MaxPlayerNum);
+    for (int faction = 0; faction < MaxPlayerNum; faction++) {
+        MapBaseIdClosestSubmergedVeh[faction] = -1;
+        MapBaseSubmergedCount[faction] = 0;
+    }
     if (on_map(x, y)) {
         is_set_both ? alt_set_both(x, y, altitude) : alt_set(x, y, altitude);
     }
@@ -1438,12 +1440,11 @@ void __cdecl world_linearize_contours() {
         }
         do_all_non_input();
     }
-    // `memcpy`, and the ARRAYS, not their addresses. The image ends with
-    // `mov ecx, 0xb; mov esi, 0x68fb20; mov edi, 0x68fb4c; rep movsd` - the
-    // intrinsic, copying AltContour over AltNatural. `memcpy_s` emits a call
-    // with four arguments, and `&AltNatural` wrote over the POINTER rather
-    // than the array it names.
-    memcpy(AltNatural, AltContour, sizeof(AltContour));
+    // The image ends with `mov ecx, 0xb; mov esi, 0x68fb20; mov edi,
+    // 0x68fb4c; rep movsd`: the element loop, AltContour over AltNatural.
+    for (int i = 0; i < 11; i++) {
+        AltNatural[i] = AltContour[i];
+    }
 }
 
 /*

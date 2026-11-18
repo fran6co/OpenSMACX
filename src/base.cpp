@@ -1028,7 +1028,9 @@ int __cdecl base_init(int faction_id, int x, int y) {
     Bases[base_id].unk_x = Bases[base_id].unk_y = -1;
     // The original clears only nine facility bytes, not the entire recycled
     // Base record. Fields it does not initialize deliberately retain their state.
-    memset(Bases[base_id].facilities_built, 0, 9);
+    for (int fac = 0; fac < 9; fac++) {
+        Bases[base_id].facilities_built[fac] = 0;
+    }
     // BUG(original): nerve_staple_count is cleared a second time here.
     // WORKAROUND(type): the image clears 0x124..0x133 with one fresh zero
     // register in ascending order (0x004E4E20..0x004E4E3A), the unrolled form

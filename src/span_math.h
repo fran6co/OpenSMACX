@@ -13,8 +13,8 @@ namespace span_math {
 // not a complete object layout or named original owner.
 struct EndpointPairView {
     uint32_t reserved_00_[4];
-    volatile uint32_t low_at_10_;
-    volatile uint32_t high_at_14_;
+    int low_at_10_;
+    int high_at_14_;
 };
 
 typedef char EndpointPairView_low_at_10[

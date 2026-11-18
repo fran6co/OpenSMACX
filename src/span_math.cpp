@@ -28,13 +28,5 @@ Status: Complete
 */
 int span_math::half_span_plus_addend(const EndpointPairView *source,
                                      int addend) {
-    const volatile EndpointPairView *const view = source;
-    const uint32_t high_bits = view->high_at_14_;
-    const uint32_t low_bits = view->low_at_10_;
-    const uint32_t total_bits =
-        high_bits - low_bits + static_cast<uint32_t>(addend);
-
-    int32_t signed_total;
-    memcpy(&signed_total, &total_bits, sizeof(signed_total));
-    return signed_total / 2;
+    return (source->high_at_14_ - source->low_at_10_ + addend) / 2;
 }

@@ -1348,7 +1348,9 @@ void __cdecl energy_compute(int faction_id, int recompute_bases) {
     EnergyMaintenanceTotal = 0;
     EnergyEconomyTotal = 0;
     EnergyCommerceDelta = 0;
-    memset(EnergyFacilityCounts, 0, sizeof(EnergyFacilityCounts));
+    for (int i = 0; i < 70; i++) {
+        EnergyFacilityCounts[i] = 0;
+    }
 
     int discount_carry = 0;
     for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {

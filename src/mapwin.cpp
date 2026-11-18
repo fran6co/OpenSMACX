@@ -6965,8 +6965,7 @@ void MapWin::UNK6(int UNUSED(x) x, int UNUSED(y) y, int radius) {
                         + (RadiusOffsetX[i] >> 1);
                 TerrainCacheEntry *entry = owned_ + idx;
                 ++i;
-                const uint32_t invalid = 0xFFFFFFFFu;
-                memcpy(entry->brightness, &invalid, sizeof(invalid));
+                *reinterpret_cast<uint32_t *>(entry->brightness) = 0xFFFFFFFFu;
             } while (i < count);
         }
     }
@@ -7032,8 +7031,7 @@ void MapWin::UNK8(int x, int y, int radius) {
                     (RadiusOffsetX[i] >> 1);
                 TerrainCacheEntry *entry = owned_ + index;
                 ++i;
-                const uint32_t invalid = 0xFFFFFFFFu;
-                memcpy(entry->brightness, &invalid, sizeof(invalid));
+                *reinterpret_cast<uint32_t *>(entry->brightness) = 0xFFFFFFFFu;
             } while (i < count);
         }
     }

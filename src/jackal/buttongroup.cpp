@@ -37,7 +37,9 @@ ButtonGroup::ButtonGroup() {
     count_ = 0;
     field_8C_ = 0;
     field_90_ = 0;
-    memset(buttons_, 0, sizeof(buttons_));
+    for (int i = 0; i < 32; i++) {
+        buttons_[i] = 0;
+    }
 }
 
 /*
@@ -58,7 +60,9 @@ void ButtonGroup::close() {
     count_ = 0;
     field_8C_ = 0;
     field_90_ = 0;
-    memset(buttons_, 0, sizeof(buttons_));
+    for (int i = 0; i < 32; i++) {
+        buttons_[i] = 0;
+    }
 }
 
 /*
@@ -77,7 +81,9 @@ Status: Complete
 void ButtonGroup::init(int group_id, int flags) {
     count_ = 0;
     field_90_ = 0;
-    memset(buttons_, 0, sizeof(buttons_));
+    for (int i = 0; i < 32; i++) {
+        buttons_[i] = 0;
+    }
     field_8C_ = static_cast<uint32_t>(group_id);
     field_84_ = 0xFFFFFFFEU;
     field_88_ = static_cast<uint32_t>(flags);

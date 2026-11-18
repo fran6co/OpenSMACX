@@ -852,13 +852,13 @@ MEASURED uint32_t __cdecl planet_buster2(int proto_id);
 
 uint32_t __cdecl planet_buster(int veh_id);
 
-// The image clears 0x00915614..0x00915623 with `xor eax,eax` and four stores
-// and no zero register: one 16-byte intrinsic block clear spanning
-// VehBattleModCount[2], VehBattleUnkTgl and TimerHoldFlag (0x00915620). No
-// indexed access covers all four, so they stay separate objects; the clear
-// relies on their adjacent link order (relocations 0x00915614..0x00915620).
+// The image clears 0x00915614..0x00915620 with `xor eax,eax` and four
+// stores: four plain assignments (the units have no intrinsic memset).
 MEASURED inline void __cdecl battle_init() {
-    memset(VehBattleModCount, 0, 16);
+    VehBattleModCount[0] = 0;
+    VehBattleModCount[1] = 0;
+    VehBattleUnkTgl = FALSE;
+    TimerHoldFlag = 0;
 }
 
 MEASURED inline int __cdecl veh_moves(int veh_id) {

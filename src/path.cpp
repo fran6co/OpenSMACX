@@ -1465,7 +1465,9 @@ void Path::continents() {
     GameDataStateStorage.fields_.game_state_ = (most_tiles >= ((total_tiles * 4) / 5))
         ? GameDataStateStorage.fields_.game_state_ | STATE_UNK_100 : GameDataStateStorage.fields_.game_state_ & ~STATE_UNK_100;
     for (int i_414 = 0; i_414 < MaxRegionLandNum; i_414++) {
-        ZeroMemory(Continents[i_414].sea_coasts, 8);
+        for (int coast = 0; coast < 8; coast++) {
+            Continents[i_414].sea_coasts[coast] = 0;
+        }
     }
     for (y = 0; y < MapLatitudeBounds; y++) {
         for (x = y & 1; x < MapLongitudeBounds; x += 2) {

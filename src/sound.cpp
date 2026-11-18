@@ -273,7 +273,9 @@ int __cdecl init_sound(void *window, unsigned long backends) {
             FreeLibrary(module);
             SoundDllModule = 0;
         }
-        memset(&SoundDllProcs, 0, sizeof(SoundDllProcsTable));
+        for (int ordinal = 0; ordinal < 11; ordinal++) {
+            SoundDllProcs.by_ordinal[ordinal] = 0;
+        }
         return result;
     }
     if ((backends & 2) != 0) {
@@ -436,7 +438,9 @@ void __cdecl unload_sound_dll() {
         FreeLibrary(module);
         SoundDllModule = 0;
     }
-    memset(&SoundDllProcs, 0, sizeof(SoundDllProcsTable));
+    for (int ordinal = 0; ordinal < 11; ordinal++) {
+        SoundDllProcs.by_ordinal[ordinal] = 0;
+    }
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -493,7 +497,9 @@ int __cdecl sub_4c6030(void *device) {
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/004c6060.cpp; docs/recovery/agent-structure-observations.csv:42; src/sound.cpp:SoundDllProcs ownership"], "reason": "Typed source zeros the eleven loader-owned export words, matching the seed block clear. Original seed has a zero-argument return; conservative neutral cdecl void spelling preserves observed no-argument use."}
 // symbol    ?sub_4c6060@@YAXXZ
 void __cdecl sub_4c6060() {
-    memset(&SoundDllProcs, 0, sizeof(SoundDllProcsTable));
+    for (int ordinal = 0; ordinal < 11; ordinal++) {
+        SoundDllProcs.by_ordinal[ordinal] = 0;
+    }
 }
 // The loader above inlines its table clears; every later memset in this TU
 // is a real CRT call in the image.
