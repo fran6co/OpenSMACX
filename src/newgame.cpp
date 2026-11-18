@@ -667,10 +667,11 @@ random_name:
                 if (Players[picked].is_leader_female && PickWinGlobal.field_5DA4_ != 0x105)
                     strcat(StringTemp, "2");
                 if (PickWinGlobal.field_5DA4_ == 0x105) strcat(StringTemp, "3");
-                int answer = X_pop_ask(StringTemp, 0x17,
-                    PickWinGlobal.field_5DA4_ == 0x105 ? ConfigRandomLeaderInitial
-                                                       : Players[picked].name_leader,
-                    0, 0);
+                int answer;
+                if (PickWinGlobal.field_5DA4_ == 0x105)
+                    answer = X_pop_ask(StringTemp, 0x17, ConfigRandomLeaderInitial, 0, 0);
+                else
+                    answer = X_pop_ask(StringTemp, 0x17, Players[picked].name_leader, 0, 0);
                 ConfigFactionPreview.close();
                 if (GameDataStateStorage.fields_.game_more_preferences_ & 0x4000)
                     g_WAVE_GENERAL.Sound::fade(0x7D0);
