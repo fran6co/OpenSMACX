@@ -226,7 +226,7 @@ Purpose: Bring up the movie player's DirectDraw chain: clear and flip the
          create the primary flipping surface with its back buffer and
          clipper, and clear both surfaces through two Blt calls.
 
-// ORIGINAL: 0x004BF4B0 ?play@UV2Player@@QAEHHH@Z 0x004BF4B0-0x004BF6D1 FILE
+// ORIGINAL: 0x004BF4B0 ?play@UV2Player@@QAEHHH@Z 0x004BF4B0-0x004BF6D1 FILE BYTE_EXACT
 // TRIED: plain member access vs a `UV2Player *self = this;` local before the first field_10C_ read - both leave the prologue's `this` spill (`mov [ebp-4],edi`) placed differently than the original (MISMATCH #4 'push' vs 'mov', 84% mnemonic similarity); not chased further. The 21-slot COM vtable dispatch (QueryInterface/ Release/SetCooperativeLevel/SetDisplayMode retry chain/ CreateSurface/GetAttachedSurface/CreateClipper/Blt) and the DDSURFACEDESC/DDBLTFX field offsets are a faithful transcription off the raw disassembly.
 // size      545 bytes
 // prototype int (__thiscall ?play@UV2Player@@QAEHHH@Z)(UV2Player* this, int, int)
@@ -324,7 +324,7 @@ int UV2Player::play(int width, int height) {
 }
 #pragma intrinsic(memset)
 
-// ORIGINAL: 0x004BEF00 ?UNK3@UV2Player@@QAEXXZ 0x004BEF00-0x004BF380;0x00659D00-0x00659D55
+// ORIGINAL: 0x004BEF00 ?UNK3@UV2Player@@QAEXXZ 0x004BEF00-0x004BF380;0x00659D00-0x00659D55 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:uv2player-complete-owner-recovery", "Pinned4BEF00-4BF380 and659D00-659D55; exec4BED47 calls this only when quit8CC250 is clear", "4BEF42-4BEF71 captures allocation owner before StringList construction; native cleanup restores it after derived/base list teardown", "4BF07B-4BF0AE parses left,top,width,height;4BF1C8-4BF20F centers text vertically with signed division", "4BF11D-4BF147 borrows primary surface and clipper via stack ExtDirectDraw;4BF1F0/4BF21A install/clear cdecl writer callback", "Literal687AC0 is movlist; help pointer691B00 is source-owned DatalinkHelpFile", "historical seed:src/recovered/units/004bef00.cpp"], "reason": "Recover the post-play MOVLIST presentation as a real UV2Player member, using Font array lifetime, genuine StringList and outer allocation-base lifetime, source-owned help-file storage and Buffer callback. Preserve original main and cleanup spans; no matching or game acceptance claim is granted."}
 // symbol    ?show_post_movie_text@UV2Player@@QAEXXZ
 void UV2Player::show_post_movie_text() {
