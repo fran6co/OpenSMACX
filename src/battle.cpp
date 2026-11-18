@@ -1078,13 +1078,13 @@ int __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, int
                             * offense / 100;
                         // "Altitude"
                         add_bat(0, (alt_atk - alt_def) * Rules.combat_pct_art_bonus_lvl_alt,
-                            label_get(576));
+                            StringTable.get(Labels.strings_ptr[576]));
                     } else if (alt_def > alt_atk) {
                         defense = ((alt_def - alt_atk) * Rules.combat_pct_art_bonus_lvl_alt + 100)
                             * defense / 100;
                         // "Altitude"
                         add_bat(1, (alt_def - alt_atk) * Rules.combat_pct_art_bonus_lvl_alt,
-                            label_get(576));
+                            StringTable.get(Labels.strings_ptr[576]));
                     }
                 }
             }
@@ -1163,7 +1163,7 @@ int __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, int
                         && (map_loc(Vehs[veh_id_atk].x, Vehs[veh_id_atk].y)->climate & ~0x1F)
                         > (map_loc(x_def, y_def)->climate & ~0x1F)
                         && !has_abil(Vehs[veh_id_def].proto_id, ABL_ANTIGRAV_STRUTS)) {
-                        add_bat(0, Rules.combat_pct_atk_higher_elev, label_get(330)); // "Downhill"
+                        add_bat(0, Rules.combat_pct_atk_higher_elev, StringTable.get(Labels.strings_ptr[330])); // "Downhill"
                         offense = (Rules.combat_pct_atk_higher_elev + 100) * offense / 100;
                     }
                 }
@@ -1172,7 +1172,7 @@ int __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, int
                     // NO C++ LIBRARY: the image's callees here are strcat only,
                     // after clearing the shared buffer; add_bat copies the text.
                     StringTemp[0] = '\0';
-                    strcat(StringTemp, label_get(331)); // "Terrain"
+                    strcat(StringTemp, StringTable.get(Labels.strings_ptr[331])); // "Terrain"
                     strcat(StringTemp, BufferJoinSpace);
                     strcat(StringTemp, SocialWinOpenParenText);
                     strcat(StringTemp, StringTable.get(VehBattleDisplayTerrain));
@@ -1366,12 +1366,12 @@ int __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, int
                         if (Rules.combat_pen_pct_air_supr_vs_grnd) {
                             offense = (100 - Rules.combat_pen_pct_air_supr_vs_grnd) * offense / 100;
                             // "Ground Strike"
-                            add_bat(0, -Rules.combat_pen_pct_air_supr_vs_grnd, label_get(448));
+                            add_bat(0, -Rules.combat_pen_pct_air_supr_vs_grnd, StringTable.get(Labels.strings_ptr[448]));
                         }
                     } else if (Rules.combat_pct_air_supr_vs_air
                         && !has_abil(Vehs[veh_id_def].proto_id, ABL_AIR_SUPERIORITY)) {
                         offense = (Rules.combat_pct_air_supr_vs_air + 100) * offense / 100;
-                        add_bat(0, Rules.combat_pct_air_supr_vs_air, label_get(449)); // "Air-to-Air"
+                        add_bat(0, Rules.combat_pct_air_supr_vs_air, StringTable.get(Labels.strings_ptr[449])); // "Air-to-Air"
                     }
                 }
                 if (get_triad(veh_id_atk) == TRIAD_AIR

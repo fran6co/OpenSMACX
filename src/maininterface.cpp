@@ -639,7 +639,7 @@ int MainInterface::init(int) {
                          editor_tab_rect_.bottom - editor_tab_rect_.top, this, 0);
     flat_button_[2].set_border_styles(&InterfaceBoxStyles[27], &InterfaceBoxStyles[28],
                                       &InterfaceBoxStyles[29]);
-    flat_button_[2].set_bubble_text(label_get(0xDC0 / 4));
+    flat_button_[2].set_bubble_text(StringTable.get(Labels.strings_ptr[0xDC0 / 4]));
     flat_button_[2].hide();
     for (i = 0; i < 3; i++) {
         button_group_[0].add(&flat_button_[i]);
@@ -685,10 +685,10 @@ int MainInterface::init(int) {
     flat_button_[4].field_ABC_[1] = 65;
     flat_button_[4].field_ABC_[2] = 65;
     flat_button_[4].redraw();
-    flat_button_[4].set_bubble_text(label_get(0xC40 / 4));
+    flat_button_[4].set_bubble_text(StringTable.get(Labels.strings_ptr[0xC40 / 4]));
     flat_button_[6].init(0, 1006, rect2_.left, rect2_.top, rect2_.right - rect2_.left,
                          rect2_.bottom - rect2_.top, this, 0);
-    flat_button_[6].set_bubble_text(label_get(0x4C8 / 4));
+    flat_button_[6].set_bubble_text(StringTable.get(Labels.strings_ptr[0x4C8 / 4]));
     flat_button_[6].field_AD4_[0] = &sprites7_[0];
     flat_button_[6].field_AD4_[1] = &sprites7_[1];
     flat_button_[6].field_AD4_[2] = &sprites7_[2];

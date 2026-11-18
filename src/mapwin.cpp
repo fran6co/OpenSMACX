@@ -5429,7 +5429,7 @@ int MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
     menu.init(0);
 
     if (map_view_index_ == 1) {
-        menu.add_item(0x320, label_get(0xC04 / 4));
+        menu.add_item(0x320, StringTable.get(Labels.strings_ptr[0xC04 / 4]));
         menu.add_separator(0x63);
         menu.add_item(0x323, label_get(0xC68 / 4));
         menu.add_item(0x324, label_get(0xC6C / 4));

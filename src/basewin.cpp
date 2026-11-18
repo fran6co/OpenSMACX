@@ -942,7 +942,7 @@ void BaseWin::base_editor() {
         menu.add_item(8, StringTable.get(Labels.strings_ptr[0xE00 / 4]));
     menu.add_separator(99);
     menu.add_item(3, StringTable.get(Labels.strings_ptr[0xD48 / 4]));
-    menu.add_item(4, label_get(0xD4C / 4));
+    menu.add_item(4, StringTable.get(Labels.strings_ptr[0xD4C / 4]));
     menu.add_separator(99);
     menu.add_item(11, label_get(0xF58 / 4));
     menu.add_item(12, StringTable.get(Labels.strings_ptr[0xF5C / 4]));

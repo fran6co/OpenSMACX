@@ -836,7 +836,7 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
                         } else {
                             noted = 1;
                             strcat(StringTemp, SocialWinOpenParenText);
-                            strcat(StringTemp, label_get(0x154 / 4));
+                            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x154 / 4]));
                             strcat(StringTemp, SocialWinColonSpaceText);
                             strcat(StringTemp, StringTable.get(Armor[i].name));
                             strcat(StringTemp, SocialWinCloseParenText);

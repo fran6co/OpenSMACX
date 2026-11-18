@@ -1904,7 +1904,7 @@ void __cdecl setup_game(int reload) {
     // new-game diplomacy/time-warp branch, whose callbacks observe them.
     strcpy(Players[0].formal_name_faction, label_get(245));
     strcpy(Players[0].noun_faction, label_get(245));
-    strcpy(Players[0].adj_name_faction, label_get(244));
+    strcpy(Players[0].adj_name_faction, StringTable.get(Labels.strings_ptr[244]));
 
     if (reload == 0) {
         // Pair every unpaired social_faction with a distinct random partner.

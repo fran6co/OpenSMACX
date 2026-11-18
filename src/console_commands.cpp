@@ -2473,7 +2473,7 @@ void Console::go_to(int subject, int order, int grouped) {
             }
             if (!(order == -3)) {
                 strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, label_get(0xFA));
+                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0xFA]));
                 strcat(StringTemp, SocialWinColonSpaceText);
                 char distance_text[80];
                 _itoa(map_range(source_x, source_y, Bases[id].x, Bases[id].y), distance_text, 10);

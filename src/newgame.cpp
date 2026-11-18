@@ -334,12 +334,12 @@ difficulty_menu:
                 if (i == 0) {
                     strcat(StringTemp, BufferJoinSpace);
                     strcat(StringTemp, SocialWinOpenParenText);
-                    strcat(StringTemp, label_get(113));
+                    strcat(StringTemp, StringTable.get(Labels.strings_ptr[113]));
                     strcat(StringTemp, SocialWinCloseParenText);
                 } else if (i == 5) {
                     strcat(StringTemp, BufferJoinSpace);
                     strcat(StringTemp, SocialWinOpenParenText);
-                    strcat(StringTemp, label_get(114));
+                    strcat(StringTemp, StringTable.get(Labels.strings_ptr[114]));
                     strcat(StringTemp, SocialWinCloseParenText);
                 }
                 popup.item(StringTemp, i);
@@ -538,15 +538,15 @@ select_faction:
                         ? Labels.strings_ptr[739] : Labels.strings_ptr[738]));
                     popup.start("CUSTOMNAMES", 0x44);
                     {
-                        char *label = label_get(174);
+                        char *label = StringTable.get(Labels.strings_ptr[174]);
                         popup.dialogs().EditGroup::edit(label, Players[faction].name_leader, 0x17);
                     }
                     {
-                        char *label = label_get(175);
+                        char *label = StringTable.get(Labels.strings_ptr[175]);
                         popup.dialogs().EditGroup::edit(label, Players[faction].formal_name_faction, 0x27);
                     }
                     {
-                        char *label = label_get(176);
+                        char *label = StringTable.get(Labels.strings_ptr[176]);
                         popup.dialogs().EditGroup::edit(label, Players[faction].noun_faction, 0x17);
                     }
                     {
@@ -558,11 +558,11 @@ select_faction:
                         popup.dialogs().EditGroup::edit(label, Players[faction].title_leader, 0x17);
                     }
                     {
-                        char *label = label_get(484);
+                        char *label = StringTable.get(Labels.strings_ptr[484]);
                         popup.dialogs().EditGroup::edit(label, Players[faction].adj_leader, 0x17);
                     }
                     {
-                        char *label = label_get(485);
+                        char *label = StringTable.get(Labels.strings_ptr[485]);
                         popup.dialogs().EditGroup::edit(label, gender_text, 0x17);
                     }
                     int answer = popup.exec();
@@ -582,7 +582,7 @@ select_faction:
                 strcpy(Players[faction].adj_name_faction, ParseStrBuffer[3].str);
                 strcpy(Players[faction].title_leader, ParseStrBuffer[4].str);
                 strcpy(Players[faction].adj_leader, ParseStrBuffer[5].str);
-                Players[faction].is_leader_female = !_strnicmp(gender_text, label_get(739), 1);
+                Players[faction].is_leader_female = !_strnicmp(gender_text, StringTable.get(Labels.strings_ptr[739]), 1);
             }
         } else {
             int picked;     // [ebp-0x2C]
@@ -692,11 +692,11 @@ edit_names_expansion:
                     ? Labels.strings_ptr[739] : Labels.strings_ptr[738]));
                 popup.start("CUSTOMNAMES", 0x44);
                 {
-                    char *label = label_get(174);
+                    char *label = StringTable.get(Labels.strings_ptr[174]);
                     popup.dialogs().EditGroup::edit(label, Players[picked].name_leader, 0x17);
                 }
                 {
-                    char *label = label_get(175);
+                    char *label = StringTable.get(Labels.strings_ptr[175]);
                     popup.dialogs().EditGroup::edit(label, Players[picked].formal_name_faction, 0x27);
                 }
                 {
@@ -704,19 +704,19 @@ edit_names_expansion:
                     popup.dialogs().EditGroup::edit(label, Players[picked].noun_faction, 0x17);
                 }
                 {
-                    char *label = label_get(177);
+                    char *label = StringTable.get(Labels.strings_ptr[177]);
                     popup.dialogs().EditGroup::edit(label, Players[picked].adj_name_faction, 0x17);
                 }
                 {
-                    char *label = label_get(483);
+                    char *label = StringTable.get(Labels.strings_ptr[483]);
                     popup.dialogs().EditGroup::edit(label, Players[picked].title_leader, 0x17);
                 }
                 {
-                    char *label = label_get(484);
+                    char *label = StringTable.get(Labels.strings_ptr[484]);
                     popup.dialogs().EditGroup::edit(label, Players[picked].adj_leader, 0x17);
                 }
                 {
-                    char *label = label_get(485);
+                    char *label = StringTable.get(Labels.strings_ptr[485]);
                     popup.dialogs().EditGroup::edit(label, gender_text, 0x17);
                 }
                 int answer = popup.exec();
@@ -740,7 +740,7 @@ edit_names_expansion:
             strcpy(Players[picked].adj_name_faction, ParseStrBuffer[3].str);
             strcpy(Players[picked].title_leader, ParseStrBuffer[4].str);
             strcpy(Players[picked].adj_leader, ParseStrBuffer[5].str);
-            Players[picked].is_leader_female = !_strnicmp(gender_text, label_get(739), 1);
+            Players[picked].is_leader_female = !_strnicmp(gender_text, StringTable.get(Labels.strings_ptr[739]), 1);
             goto select_faction;
         }
 

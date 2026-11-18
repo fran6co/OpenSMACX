@@ -321,7 +321,7 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
                 if ((Weapon[weapon_id].mode == 8 || Weapon[weapon_id].mode == 9)
                     && chassis_id == 3) {
                     strcat(output, StringTable.get(Labels.strings_ptr[0x28C / 4]));
-                    strcat(alternate, label_get(0x28C / 4));
+                    strcat(alternate, StringTable.get(Labels.strings_ptr[0x28C / 4]));
                 } else {
                     strcat(output, StringTable.get(Chassis[chassis_id].offsv_1_name));
                     strcat(alternate, StringTable.get(Chassis[chassis_id].offsv_2_name));
@@ -4680,7 +4680,7 @@ again:
                 continue;
             StringTemp[0] = 0;
             strcat(StringTemp, "- ");
-            strcat(StringTemp, label_get(0x1b8 / 4));
+            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x1b8 / 4]));
             strcat(StringTemp, " -");
         } else {
             if (prototype_faction == 0

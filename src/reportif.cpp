@@ -4435,7 +4435,7 @@ void ReportWin::draw_score() {
             if (total > own) {
                 say_num(own);
                 strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, label_get(0xE0C / 4));
+                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0xE0C / 4]));
                 report_topic_line(this, rect1_, rect1_.left);
                 rect1_.top += field_E268_;
                 StringTemp[0] = 0;
