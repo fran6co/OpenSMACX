@@ -3210,14 +3210,7 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
             int explore_x = -1;
             best = 0;
             for (int dir = 0; dir < 8; dir++) {
-                int x = VehMoveDeltaX[dir] * half_range + *a4;
-                if (!(MapIsFlat & 1)) {
-                    if (x < 0) {
-                        x += MapLongitudeBounds;
-                    } else if (x >= MapLongitudeBounds) {
-                        x -= MapLongitudeBounds;
-                    }
-                }
+                int x = wrap_map_x(VehMoveDeltaX[dir] * half_range + *a4);
                 int y = VehMoveDeltaY[dir] * half_range + *a5;
                 if (!on_map(x, y)) {
                     continue;
@@ -3363,14 +3356,7 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                     }
                     int base_score = Bases[i].population_size << 3;
                     for (int k = 0; k < 21; k++) {
-                        int x = RadiusOffsetX[k] + Bases[i].x;
-                        if (!(MapIsFlat & 1)) {
-                            if (x < 0) {
-                                x += MapLongitudeBounds;
-                            } else if (x >= MapLongitudeBounds) {
-                                x -= MapLongitudeBounds;
-                            }
-                        }
+                        int x = wrap_map_x(RadiusOffsetX[k] + Bases[i].x);
                         int y = RadiusOffsetY[k] + Bases[i].y;
                         if (!on_map(x, y)) {
                             continue;
