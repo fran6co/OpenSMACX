@@ -5069,7 +5069,7 @@ typedef unsigned int uint32_t;
 // kind game
 void Win::on_nc_paint(RECT * area, int flags) {
     if ((iFlags_ & 0x11) != 0 && is_visible()) {
-        int stack8 = 0, stack4 = 0;
+        int x = 0, y = 0;
         // TRIED: the image calls client_to_screen out of line here
         // (0x005F5860); forcing that with a member-function pointer gives
         // 0.986, the rest an ebx/edi swap (zero vs. thickness). Not kept.
@@ -5078,61 +5078,61 @@ void Win::on_nc_paint(RECT * area, int flags) {
         // member-function pointer keeps the call (219/219 instructions, the
         // rest an ebx/edi allocation swap).
         void (Win::*const to_screen)(int *, int *) = &Win::client_to_screen;
-        (this->*to_screen)(&stack8, &stack4);
-        stack8 -= outer_rect_.left;
-        stack4 -= outer_rect_.top;
+        (this->*to_screen)(&x, &y);
+        x -= outer_rect_.left;
+        y -= outer_rect_.top;
         if (area != 0) {
             flags = -1;
             Win::screen_buffer_.set_clip(area);
         }
-        int iVar1;
+        int top_inset;
         if ((iFlags_ & 0x10) == 0 || (iFlags_ & 0x400000) != 0) {
-            iVar1 = border_thickness_;
+            top_inset = border_thickness_;
         } else {
-            iVar1 = caption_height_;
+            top_inset = caption_height_;
         }
         if (buffer1_ != 0 && (flags == -1 || flags == 0)) {
             if (WinBackBuffer != 0) {
                 buffer1_->draw(WinBackBuffer, WinFillColour,
-                               stack8 - WinViewOriginX, stack4 - WinViewOriginY, 1, 1);
+                               x - WinViewOriginX, y - WinViewOriginY, 1, 1);
             } else {
                 buffer1_->draw(&Win::screen_buffer_, WinFillColour,
-                               stack8, stack4, 1, 1);
+                               x, y, 1, 1);
             }
         }
         if (buffer4_ != 0 && (flags == -1 || flags == 2)) {
-            int v;
+            int bottom_inset;
             if (bottom_border_thickness_ != -1) {
-                v = bottom_border_thickness_;
+                bottom_inset = bottom_border_thickness_;
             } else {
-                v = border_thickness_;
+                bottom_inset = border_thickness_;
             }
             if (WinBackBuffer != 0) {
-                buffer4_->draw(WinBackBuffer, WinFillColour, stack8 - WinViewOriginX,
-                               (((client_rect_.bottom - client_rect_.top) - WinViewOriginY) - v) + stack4, 1, 1);
+                buffer4_->draw(WinBackBuffer, WinFillColour, x - WinViewOriginX,
+                               (((client_rect_.bottom - client_rect_.top) - WinViewOriginY) - bottom_inset) + y, 1, 1);
             } else {
-                buffer4_->draw(&Win::screen_buffer_, WinFillColour, stack8,
-                               ((client_rect_.bottom - client_rect_.top) - v) + stack4, 1, 1);
+                buffer4_->draw(&Win::screen_buffer_, WinFillColour, x,
+                               ((client_rect_.bottom - client_rect_.top) - bottom_inset) + y, 1, 1);
             }
         }
         if (buffer3_ != 0 && (flags == -1 || flags == 3)) {
             if (WinBackBuffer != 0) {
                 buffer3_->draw(WinBackBuffer, WinFillColour,
-                               stack8 - WinViewOriginX, (iVar1 - WinViewOriginY) + stack4, 1, 1);
+                               x - WinViewOriginX, (top_inset - WinViewOriginY) + y, 1, 1);
             } else {
                 buffer3_->draw(&Win::screen_buffer_, WinFillColour,
-                               stack8, stack4 + iVar1, 1, 1);
+                               x, y + top_inset, 1, 1);
             }
         }
         if (buffer2_ != 0 && (flags == -1 || flags == 1)) {
             if (WinBackBuffer != 0) {
                 buffer2_->draw(WinBackBuffer, WinFillColour,
-                               (((client_rect_.right - client_rect_.left) - border_thickness_) - WinViewOriginX) + stack8,
-                               (iVar1 - WinViewOriginY) + stack4, 1, 1);
+                               (((client_rect_.right - client_rect_.left) - border_thickness_) - WinViewOriginX) + x,
+                               (top_inset - WinViewOriginY) + y, 1, 1);
             } else {
                 buffer2_->draw(&Win::screen_buffer_, WinFillColour,
-                               ((client_rect_.right - client_rect_.left) - border_thickness_) + stack8,
-                               iVar1 + stack4, 1, 1);
+                               ((client_rect_.right - client_rect_.left) - border_thickness_) + x,
+                               top_inset + y, 1, 1);
             }
         }
         Win::screen_buffer_.restore_clip();
