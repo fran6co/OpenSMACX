@@ -5016,10 +5016,13 @@ nexus_done:
             if ((map_tiles()[MapLongitude * a8 + local_14].bit & 0x1000) != 0) {
                 uVar12 = 0;
             } else {
-                uVar12 = (uint32_t)(map_tiles()[MapLongitude * a8 + local_14].val2 >> 4);
-                if (uVar12 == 0) {
-                    uVar12 = (uint32_t)world_site(a7, a8, 0);
-                    site_set(a7, a8, uVar12);
+                const int stored_site = map_tiles()[MapLongitude * a8 + local_14].val2 >> 4;
+                if (stored_site != 0) {
+                    uVar12 = stored_site;
+                } else {
+                    const int new_site = world_site(a7, a8, 0);
+                    site_set(a7, a8, new_site);
+                    uVar12 = new_site;
                 }
             }
             _itoa(uVar12, numbuf, 10);
