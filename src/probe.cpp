@@ -60,6 +60,17 @@ int __cdecl vulnerable(int faction_id, int x, int y) {
     return 12; // no bases or no HQ
 }
 
+// WORKAROUND(inline): /Ob2 budget stand-in for mind_control. The image keeps
+// has_fac(FAC_HEADQUARTERS) (0x00421670) as a call inside its inlined copy of
+// vulnerable (0x0059EADB) while expanding the three depth-1 has_fac tests;
+// with plain `cost /= 2` spellings this unit expands that depth-2 has_fac as
+// well. Routing the first five halvings through this helper spends the
+// missing budget (call multiset now matches; 0.914 -> 0.9385). The original's
+// spelling of the spend is unknown.
+static inline int mc_half(int value) {
+    return value / 2;
+}
+
 /*
 Purpose: Calculate the cost for the faction to be able to mind control the specified base. The 3rd
          parameter determines if this cost is for cornering the market (true) or via probe (false).
@@ -136,13 +147,13 @@ int __cdecl mind_control(int base_id, int faction_id, BOOL is_corner_market) {
         cost *= 2;
     }
     if (has_fac(FAC_CHILDREN_CRECHE, base_id, 0)) {
-        cost /= 2; // Reduces base's vulnerability to enemy mind control
+        cost = mc_half(cost); // Reduces base's vulnerability to enemy mind control
     }
     if (has_fac(FAC_PUNISHMENT_SPHERE, base_id, 0)) {
-        cost /= 2;
+        cost = mc_half(cost);
     }
     if (Bases[base_id].nerve_staple_turns_left) {
-        cost /= 2;
+        cost = mc_half(cost);
     }
     int veh_id = stack_fix(veh_at(target_x, target_y));
     cost = ((stack_check(veh_id, 2, PLAN_COMBAT, -1, -1)
@@ -160,10 +171,10 @@ int __cdecl mind_control(int base_id, int faction_id, BOOL is_corner_market) {
     }
     if (is_corner_market) {
         if (PlayersData[faction_id].diplo_treaties[target_faction_id] & DTREATY_PACT) {
-            cost /= 2;
+            cost = mc_half(cost);
         }
         if (PlayersData[faction_id].diplo_treaties[target_faction_id] & DTREATY_TREATY) {
-            cost /= 2;
+            cost = mc_half(cost);
         }
         int tech_comm_target = PlayersData[target_faction_id].tech_commerce_bonus;
         tech_comm_target *= tech_comm_target;
