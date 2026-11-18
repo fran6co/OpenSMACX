@@ -864,6 +864,13 @@ struct NetPeerPlayerRecord {
     char name_[0x20];
     DWORD flags_;
 };
+// The peer table a host broadcasts: a count byte, three unused bytes and
+// then that many records (the usual one-element trailing array).
+struct NetPeerPlayerTable {
+    unsigned char count_;
+    unsigned char unused_1_[3];
+    NetPeerPlayerRecord records_[1];
+};
 static_assert(sizeof(NetPacketEnvelope) == 8, "DirectPlay packet header extent");
 static_assert(sizeof(NetPeerPlayerRecord) == 0x28, "peer snapshot record stride");
 static_assert(offsetof(NetPeerPlayerRecord, flags_) == 0x24, "peer snapshot flags");
@@ -3035,14 +3042,15 @@ void Net::broadcast_player_table() {
         return;
     }
     const int size = count * 0x2C + 4;
-    unsigned char *const packet = static_cast<unsigned char *>(mem_get(size));
-    *packet = static_cast<unsigned char>(count);
+    NetPeerPlayerTable *const packet =
+        static_cast<NetPeerPlayerTable *>(mem_get(size));
+    packet->count_ = static_cast<unsigned char>(count);
     for (int index = 0; index < count; index++) {
-        reinterpret_cast<NetPeerPlayerRecord *>(packet + 4)[index].id_ = players_[index].field_0_;
-        reinterpret_cast<NetPeerPlayerRecord *>(packet + 4)[index].name_[0] = 0;
+        packet->records_[index].id_ = players_[index].field_0_;
+        packet->records_[index].name_[0] = 0;
         players_[index].name_and_tail_[0x1F] = 0;
-        strcat(reinterpret_cast<NetPeerPlayerRecord *>(packet + 4)[index].name_, players_[index].name_and_tail_);
-        reinterpret_cast<NetPeerPlayerRecord *>(packet + 4)[index].flags_ = players_[index].flags_14_;
+        strcat(packet->records_[index].name_, players_[index].name_and_tail_);
+        packet->records_[index].flags_ = players_[index].flags_14_;
     }
     send_packet_type(packet, size, 0, 0x10, 1);
     if (packet != 0) {
@@ -3293,17 +3301,13 @@ namespace {
 // but the original receiver does not impose that bound on incoming packets.
 struct NetPeerPlayerTableMessage {
     NetPacketEnvelope envelope_;
-    unsigned char count_;
-    unsigned char unused_9_[3];
-    NetPeerPlayerRecord *records() {
-        return reinterpret_cast<NetPeerPlayerRecord *>(this + 1);
-    }
+    NetPeerPlayerTable table_;
 };
 struct NetPeerDropPlayerMessage {
     NetPacketEnvelope envelope_;
     DPID id_;
 };
-static_assert(sizeof(NetPeerPlayerTableMessage) == 0xC, "peer snapshot header extent");
+static_assert(offsetof(NetPeerPlayerTableMessage, table_.records_) == 0xC, "peer snapshot header extent");
 static_assert(offsetof(DPMSG_CREATEPLAYERORGROUP, lpData) == 0x10, "create data field");
 static_assert(offsetof(DPMSG_SETPLAYERORGROUPDATA, lpData) == 0xC, "player data field");
 static_assert(offsetof(DPMSG_SETPLAYERORGROUPNAME, dpnName) == 0xC, "changed name header");
@@ -3509,11 +3513,11 @@ void Net::handle_sys_msg() {
                     reinterpret_cast<NetPeerPlayerTableMessage *>(NetGetScratch);
                 // Original632E3D reloads the count byte after each insertion
                 // (byte test on entry); the loop index is an integer.
-                for (int seen = 0; seen < message->count_; ++seen) {
+                for (int seen = 0; seen < message->table_.count_; ++seen) {
                     // The image passes the whole flags DWORD (int parameter).
-                    sub_632cc0(message->records()[seen].name_,
-                               message->records()[seen].id_,
-                               message->records()[seen].flags_);
+                    sub_632cc0(message->table_.records_[seen].name_,
+                               message->table_.records_[seen].id_,
+                               message->table_.records_[seen].flags_);
                 }
             }
             continue;
