@@ -6444,17 +6444,17 @@ void BaseWin::base_editor_proj() {
         const int owner_base = (GameDataStateStorage.fields_.secret_project_.project_base[project_index]);
         if (owner_base == -2) {
             strcat(StringTemp, label_get(0xD54 / 4));
-        } else if (!(owner_base == -1)) {
-            // Original41BCCD..41BCDD computes Base's0x134 stride, not
-            // the seed's incorrect Player0x59C stride. No new index guard.
-            strcat(StringTemp, Bases[owner_base].name_string);
-        } else {
+        } else if (owner_base == -1) {
             if (has_tech(Facility[FacilitySPStart + project_index].preq_tech,
                          BaseCurrent->faction_id_current)) {
                 strcat(StringTemp, label_get(0x3DC / 4));
             } else {
                 strcat(StringTemp, label_get(0x4D8 / 4));
             }
+        } else {
+            // Original41BCCD..41BCDD computes Base's0x134 stride, not
+            // the seed's incorrect Player0x59C stride. No new index guard.
+            strcat(StringTemp, Bases[owner_base].name_string);
         }
         // The item id is the project index (original 0x0041BCF5 pushes the
         // loop counter), which the selection below indexes by.
