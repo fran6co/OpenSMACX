@@ -4276,6 +4276,15 @@ char EnemyBuildBaseMessageText[1] = {0};
 
 // Complete owner assembly. Native stack words are stored only on proven edges.
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0056B5B0 0x00579208 0x00579238 0x00577DD3
+// WORKAROUND(inline): the passenger loop at 0x574AE7 leaves from the step's
+// negative test straight to the loop exit (jl 0x574C9C), which VC6 only does
+// when the negative arm is a constant; veh_next_stack_id returns its argument
+// there (0x0050B8F0) and rejoins the loop test. The other stack loops keep
+// veh_next_stack_id: with this form they store -1 on exit, which the image
+// does not.
+static inline int stack_next_or_none(int veh_id) {
+    return veh_id >= 0 ? Vehs[veh_id].next_veh_id_stack : -1;
+}
 static inline int map_range(int x1, int y1, int x2, int y2) {
     return (abs(y1 - y2) + x_dist(x1, x2)) >> 1;
 }
@@ -5312,8 +5321,7 @@ L_56e6a9:
                 best_score = 99999;
                 for (m = 0; m < GameDataStateStorage.fields_.base_current_count_; m++) {
                     if (Bases[m].faction_id_current == faction_id
-                        && ((abs(Bases[m].y - Bases[best_id].y)
-                             + x_dist(Bases[m].x, Bases[best_id].x)) >> 1) <= dist
+                        && map_range(Bases[m].x, Bases[m].y, Bases[best_id].x, Bases[best_id].y) <= dist
                         && !stack_check(veh_at(Bases[m].x, Bases[m].y), 6, 16, -1, -1)) {
                         if (map_range(Bases[m].x, Bases[m].y, x, y) <= dist)
                             goto L_56e96b;
@@ -5472,8 +5480,7 @@ L_56ef2f:
         if (!(Vehs[veh_id].order == ORDER_MOVE_TO)) {
             best_score = 9999;
         } else {
-            best_score = (abs(y - Vehs[veh_id].waypoint_y[0])
-                + x_dist(x, Vehs[veh_id].waypoint_x[0])) >> 1;
+            best_score = map_range(x, y, Vehs[veh_id].waypoint_x[0], Vehs[veh_id].waypoint_y[0]);
         }
         // The radius bound is re-evaluated (veh_moves/range calls) every iteration.
         for (i = 0; i < RadiusRange[range(veh_moves(veh_id) / Rules.move_rate_roads, 1, 8)]; i++) {
@@ -6694,8 +6701,7 @@ L_572a5c:
                     && (vector_dist(x_dist(PlayersData[faction_id].goals[k].x, Bases[base_id].x),
                             abs(PlayersData[faction_id].goals[k].y - Bases[base_id].y)) <= 2
                         || (!j && PlayersData[faction_id].goals[k].base_id == base_id))) {
-                    if (!((abs(y - PlayersData[faction_id].goals[k].y)
-                           + x_dist(x, PlayersData[faction_id].goals[k].x)) & ~1)) {
+                    if (!map_range(x, y, PlayersData[faction_id].goals[k].x, PlayersData[faction_id].goals[k].y)) {
                         Vehs[veh_id].order = 0;
                         own_ground = 1;
                         if (!home_dist) goto L_578b34;
@@ -7244,8 +7250,7 @@ L_57460a:
                                     if (Vehs[other_id].faction_id == faction_id
                                         && other_id != veh_id
                                         && Vehs[other_id].order == ORDER_MOVE_TO) {
-                                        dist = (abs(ty - Vehs[other_id].waypoint_y[0])
-                                                + x_dist(tx, Vehs[other_id].waypoint_x[0])) >> 1;
+                                        dist = map_range(tx, ty, Vehs[other_id].waypoint_x[0], Vehs[other_id].waypoint_y[0]);
                                         if (dist <= 1
                                             && map_range(x, y, tx, ty)
                                                 >= map_range(Vehs[other_id].x, Vehs[other_id].y, tx, ty) - 1) {
@@ -7295,9 +7300,8 @@ L_574a88:
             stack_sort_2(veh_id);
         }
         n = 0;
-        // Step is the expanded veh_next_stack_id (0x0050B8F0): the image re-tests the id.
         for (other_id = veh_top(veh_id); other_id >= 0;
-             other_id = veh_next_stack_id(other_id)) {
+             other_id = stack_next_or_none(other_id)) {
             if (other_id == veh_id) {
                 continue;
             }
@@ -7950,8 +7954,7 @@ L_5767ed:
                     if (other_id == veh_id) continue;
                     if (Vehs[other_id].faction_id != faction_id) continue;
                     if (VehPrototypes[Vehs[other_id].proto_id].plan != 6) continue;
-                    if (((abs(Vehs[other_id].y - Bases[base_id].y)
-                          + x_dist(Vehs[other_id].x, Bases[base_id].x)) & ~1) <= 4
+                    if (map_range(Vehs[other_id].x, Vehs[other_id].y, Bases[base_id].x, Bases[base_id].y) <= 2
                         || (Vehs[other_id].move_to_ai_type == '6'
                             && Vehs[other_id].waypoint_x[0] == Bases[base_id].x
                             && Vehs[other_id].waypoint_y[0] == Bases[base_id].y)) {
