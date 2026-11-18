@@ -162,22 +162,17 @@ double Gamma::exec(Palette *target, float initial_gamma, int apply_only) {
 // symbol    ?adjust_palette@Gamma@@QAEXXZ
 void Gamma::adjust_palette() {
     gamma_ = static_cast<double>(scroll_.position()) * GammaPositionScale;
-    unsigned char *green = reinterpret_cast<unsigned char *>(&palette_.entries_) +
-        10 * sizeof(PALETTEENTRY) + offsetof(PALETTEENTRY, peGreen);
-    int i = 0;
-    do {
+    for (int i = 0; i < 236; i++) {
         double value = pow(static_cast<double>(i) * GammaComponentScale,
                            1.0 / gamma_);
         if (value < 0.0) value = 0.0;
         else if (value > 1.0) value = 1.0;
         const unsigned char shade = static_cast<unsigned char>(
             static_cast<int>(value * 235.99));
-        green[-1] = shade;
-        green[0] = shade;
-        green[1] = shade;
-        ++i;
-        green += sizeof(PALETTEENTRY);
-    } while (i < 236);
+        palette_.entries_[i + 10].peRed = shade;
+        palette_.entries_[i + 10].peGreen = shade;
+        palette_.entries_[i + 10].peBlue = shade;
+    }
     palette_.reseed();
     palette_.set();
     on_redraw();

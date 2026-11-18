@@ -1070,23 +1070,12 @@ MonumentFaction FactionMonuments[MaxPlayerNum];
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned476B30 starts its writes at94CA18 with38stride in8faction rows4F4apart; founding476B70 and secrets476DA0 establish containing-record base94CA08", "recovery/tests/test_setup_dependencies_behavior.py checks everybyte against the exact original22word mutation footprint", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/00476b30.cpp"], "reason": "Reset the shared natural monument container: clear21achieved words atrecord+10 andlatest_type atrow+498, preserving all other bytes. Historical reset-only shifted interpretation remains in Git/task history; original seed and restoration obligations are intact. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // kind      game
 void __cdecl clear_monuments() {
-    intptr_t latest = reinterpret_cast<intptr_t>(FactionMonuments)
-                    + offsetof(MonumentFaction, latest_type_);
-    const intptr_t end = latest + sizeof(FactionMonuments);
-    const uintptr_t achieved_offset =
-        offsetof(MonumentFaction, latest_type_)
-        - offsetof(MonumentFaction, records_)
-        - offsetof(MonumentRecord, achieved_);
-    do {
-        uintptr_t achieved = static_cast<uintptr_t>(latest) - achieved_offset;
-        int slots = 21;
-        do {
-            *reinterpret_cast<int *>(achieved) = 0;
-            achieved += sizeof(MonumentRecord);
-        } while (--slots);
-        *reinterpret_cast<int *>(latest) = -1;
-        latest += sizeof(MonumentFaction);
-    } while (latest < end);
+    for (int faction = 0; faction < MaxPlayerNum; faction++) {
+        for (int i = 0; i < 21; i++) {
+            FactionMonuments[faction].records_[i].achieved_ = 0;
+        }
+        FactionMonuments[faction].latest_type_ = -1;
+    }
 }
 
 // First-achiever producers: when a peer already holds the record, the image

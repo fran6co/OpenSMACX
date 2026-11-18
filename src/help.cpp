@@ -315,7 +315,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
             DatalinkMain.construct_id(idbuf, 5,
                                                                   idx + 1);
             char *link = StringTable.get(record.name);
-            help_create_link_call(buf, reinterpret_cast<char *>(link), idbuf);
+            help_create_link_call(buf, link, idbuf);
             flushed = *buf;
             if (a4 >= 0 && flushed) {
                 a1(buf);
@@ -347,7 +347,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
             DatalinkMain.construct_id(idbuf, 4,
                                                                   idx);
             char *link = StringTable.get(record.offsv_1_name);
-            help_create_link_call(buf, reinterpret_cast<char *>(link), idbuf);
+            help_create_link_call(buf, link, idbuf);
             TechnologyHelpEntryKind = 0x62;
             TechnologyHelpEntryName = record.offsv_1_name;
             strcat(buf, BufferJoinSpace);
