@@ -2549,11 +2549,11 @@ void __cdecl BasePop::close_class() {
     BasePopDefaultButtonFonts[0] = 0;
 
     if (ok_text != 0) {
-        free(reinterpret_cast<void *>(ok_text));
+        free(ok_text);
         BasePopDefaultOkText = 0;
     }
     if (BasePopDefaultCancelText != 0) {
-        free(reinterpret_cast<void *>(BasePopDefaultCancelText));
+        free(BasePopDefaultCancelText);
         BasePopDefaultCancelText = 0;
     }
     if (PopupInstanceSlotA != 0) {

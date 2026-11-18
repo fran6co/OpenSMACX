@@ -1774,7 +1774,7 @@ void DesignWin::select_name() {
     if (strlen(name) == 0) {
         name_proto(name, protoID_, factionID_, protoChassisType_, protoWeaponType_,
                    protoArmorType_, protoAbilityFlags_, protoReactorType_);
-        reinterpret_cast<unsigned char &>(VehPrototypes[protoID_].flags) &= 0xFD;
+        VehPrototypes[protoID_].flags &= ~2;
     }
     name[31] = 0;
     // The original prompt token at 0x006838F4 is DESIGNNAME.
@@ -1784,7 +1784,7 @@ void DesignWin::select_name() {
     if (X_pop_ask("DESIGNNAME", 31, name, 0, 0) == 0) {
         if (strlen(ParseStrBuffer[0].str) == 0) {
             prototype_name_[0] = 0;
-            reinterpret_cast<unsigned char &>(VehPrototypes[protoID_].flags) &= 0xFD;
+            VehPrototypes[protoID_].flags &= ~2;
         } else if (strcmp(name, ParseStrBuffer[0].str) != 0) {
             strncpy(prototype_name_, ParseStrBuffer[0].str, sizeof(prototype_name_));
             prototype_name_[31] = 0;
@@ -5243,7 +5243,7 @@ int DesignWin::design_it() {
 settled:
     make_proto(protoID_, protoChassisType_, protoWeaponType_, protoArmorType_,
                protoAbilityFlags_, protoReactorType_);
-    reinterpret_cast<unsigned char &>(VehPrototypes[protoID_].flags) &= 0x3F;
+    VehPrototypes[protoID_].flags &= ~0xC0;
     if (!strlen(name)) {
         // No name typed: generate one straight into the name buffer and trim
         // it to the field's 31 characters.
