@@ -924,6 +924,16 @@ void __cdecl caviar_build_projection_tables() {
     // the evaluation order: the orders below were chosen by measuring every
     // permutation of each cell against the image (6404F0..6409E3), not read
     // from it.
+    // Executing the image symbolically gives each cell's tree. All match
+    // except the three two-plus-one-minus cells: the image forms 8, 19 and
+    // 23 as (sum of the positives) - negative in x and y (8 from a fresh
+    // lea, 19 and 23 from the pairs cells 3 and 1 spilled) and as
+    // (positive - negative) + positive in z (the cell 5, 11 and 14 pairs).
+    // VC6 gives the opposite association for every spelling of these cells
+    // and of their neighbours 5, 7, 9 and 16 (384 combinations), so their
+    // original expressions were not three-term chains of the basis reads.
+    // Cell 17 is the image's (b0 - b1) - b2 with the pair shared by cell 18;
+    // 19 x and 25 z are spelled to keep the thirteen temporaries.
     PROJ_CELL(0).x_ = -(PROJ_X0 + PROJ_X1 + PROJ_X2);
     PROJ_CELL(0).y_ = -(PROJ_Y0 + PROJ_Y1 + PROJ_Y2);
     PROJ_CELL(0).z_ = -(PROJ_Z0 + PROJ_Z1 + PROJ_Z2) << 8;
@@ -975,13 +985,13 @@ void __cdecl caviar_build_projection_tables() {
     PROJ_CELL(16).x_ = PROJ_X1 + PROJ_X2;
     PROJ_CELL(16).y_ = PROJ_Y1 + PROJ_Y2;
     PROJ_CELL(16).z_ = (PROJ_Z1 + PROJ_Z2) << 8;
-    PROJ_CELL(17).x_ = PROJ_X0 - PROJ_X2 - PROJ_X1;
-    PROJ_CELL(17).y_ = PROJ_Y0 - PROJ_Y2 - PROJ_Y1;
-    PROJ_CELL(17).z_ = (PROJ_Z0 - PROJ_Z1 - PROJ_Z2) << 8;
+    PROJ_CELL(17).x_ = PROJ_X0 - PROJ_X1 - PROJ_X2;
+    PROJ_CELL(17).y_ = PROJ_Y0 - PROJ_Y1 - PROJ_Y2;
+    PROJ_CELL(17).z_ = (PROJ_Z0 - PROJ_Z2 - PROJ_Z1) << 8;
     PROJ_CELL(18).x_ = PROJ_X0 - PROJ_X1;
     PROJ_CELL(18).y_ = PROJ_Y0 - PROJ_Y1;
     PROJ_CELL(18).z_ = (PROJ_Z0 - PROJ_Z1) << 8;
-    PROJ_CELL(19).x_ = PROJ_X0 + PROJ_X2 - PROJ_X1;
+    PROJ_CELL(19).x_ = -PROJ_X1 + PROJ_X2 + PROJ_X0;
     PROJ_CELL(19).y_ = PROJ_Y0 + PROJ_Y2 - PROJ_Y1;
     PROJ_CELL(19).z_ = (PROJ_Z2 - PROJ_Z1 + PROJ_Z0) << 8;
     PROJ_CELL(20).x_ = PROJ_X0 - PROJ_X2;
@@ -1001,7 +1011,7 @@ void __cdecl caviar_build_projection_tables() {
     PROJ_CELL(24).z_ = (PROJ_Z0 + PROJ_Z1) << 8;
     PROJ_CELL(25).x_ = PROJ_X1 + PROJ_X2 + PROJ_X0;
     PROJ_CELL(25).y_ = PROJ_Y0 + PROJ_Y1 + PROJ_Y2;
-    PROJ_CELL(25).z_ = (PROJ_Z0 + PROJ_Z2 + PROJ_Z1) << 8;
+    PROJ_CELL(25).z_ = (PROJ_Z0 + PROJ_Z1 + PROJ_Z2) << 8;
 
     // The three unit cells as floats; fild reads the cells just stored.
     CaviarKernelProjectionWindow.current_views_.tail_.scratch_ec_ = (float)PROJ_CELL(13).x_;
