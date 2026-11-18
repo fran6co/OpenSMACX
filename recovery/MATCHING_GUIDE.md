@@ -136,6 +136,23 @@ each statement sits) can be enumerated exhaustively: 288 forms take 12 s on
 14 compiler prefixes. Restrict the score to the image address window being
 worked on so that unrelated ties do not hide a structural match.
 
+### 1.2 Rewrite sweeps (2026-11-18)
+
+`recovery/tools/ruleall.py <rule> --write` tries one rewrite at every site
+inside the non-exact functions of every unit and keeps a site that lowers
+its unit's difference by three rows or more without breaking a frame or
+call-count match (it does not protect exact functions). Rules: `ifswap`
+(exchange if/else arms), `earlyret` (exchange an early-return block with
+the rest of its scope), `declswap` (adjacent local declarations),
+`stmtswap` (adjacent independent assignments), `cmpswap` (mirror a
+comparison's operands), `ternary` (`v = c ? a : b` as if/else);
+`accall.py` replaces inline accessors by the member they return. First
+pass: 95,432 differing rows over the non-exact functions -> 90,818, 94
+functions closer, Scroll::on_mouse_move exact; statement order (57 sites)
+and arm order (62) gave the most. A second pass adds a handful, so rerun
+them only after other source work. Register-only differences are still
+about a third of all differing rows; the sweeps reach few of them.
+
 ## 2. Established VC6 rules (measured with micro-experiments)
 
 These rules apply to the production recipe (`/O2 /Ob2 /Gy /GR- /GX`, with or
