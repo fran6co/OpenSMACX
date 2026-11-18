@@ -1823,8 +1823,8 @@ void __cdecl action_arty(int veh_id, int x, int y) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/recovered/units/004cd2f0.cpp", "recovery/tasks/mapwin-owner-coverage-wave.json", "Pinned instructions 4CD365 and 4CD44E identify reactor_id and PLAN_ALIEN_ARTIFACT, correcting seed cost/class labels."], "reason": "Recover vehicle self-destruction through typed reactor and plan fields, nine radius offsets and real stack lifecycle; original rereads the vehicle prototype after weap_val. Preserve seed identity and original extent without granting a byte claim."}
 // LEVER: (0.84 -> 0.994) range()/wrap_map_x()/on_map() inlines, stack_kill
 //   kept out of line (auto_inline off at its definition), and the kill pass
-//   restarts the stack walk from an outer loop. Left: the post-break `< 0`
-//   test the image threads straight into the kill block.
+//   restarts the stack walk from an outer do/while on a `killed` flag (the
+//   image jumps back to the stack_fix call; a goto restart rotated it).
 void __cdecl action_destruct(int veh_id) {
     int x = Vehs[veh_id].x;
     int y = Vehs[veh_id].y;
@@ -1843,21 +1843,27 @@ void __cdecl action_destruct(int veh_id) {
             Vehs[veh_id_dmg].dmg_incurred += (uint8_t)damage;
         }
         // A kill reshapes the stack, so the walk restarts from its new top.
-        int veh_id_kill;
-    restart_kill_walk:
-        for (veh_id_kill = stack_fix(veh_at(x_radius, y_radius)); veh_id_kill >= 0;) {
+        int killed;
+        do {
+            killed = 0;
+            int veh_id_kill = stack_fix(veh_at(x_radius, y_radius));
+            if (veh_id_kill >= 0) {
+              for (;;) {
             int threshold = (VehPrototypes[Vehs[veh_id_kill].proto_id].plan == PLAN_ALIEN_ARTIFACT)
                 ? 1 : range(VehPrototypes[Vehs[veh_id_kill].proto_id].reactor_id, 1, 100) * 10;
-            if (Vehs[veh_id_kill].dmg_incurred >= threshold) {
-                stack_veh(veh_id_kill, 1);
-                stack_kill(veh_id_kill);
-                goto restart_kill_walk;
+                if (Vehs[veh_id_kill].dmg_incurred >= threshold) {
+                    stack_veh(veh_id_kill, 1);
+                    stack_kill(veh_id_kill);
+                    killed = 1;
+                    break;
+                }
+                veh_id_kill = Vehs[veh_id_kill].next_veh_id_stack;
+                if (veh_id_kill < 0) {
+                    break;
+                }
+              }
             }
-            veh_id_kill = Vehs[veh_id_kill].next_veh_id_stack;
-            if (veh_id_kill < 0) {
-                break;
-            }
-        }
+        } while (killed);
     }
 }
 
