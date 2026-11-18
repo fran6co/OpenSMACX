@@ -3696,10 +3696,7 @@ int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3, int a4,
         local_38 = 0;
         local_24 = 0;
         local_70 = 1;
-LAB_00463589:
         local_1c = 1;
-LAB_0046358c:
-        *tile_bit2_ptr = *tile_bit2_ptr & 0xffdfffff;
     } else if ((GameDataStateStorage.fields_.game_rules_ & 0x100) != 0 &&
                (GameDataStateStorage.fields_.game_state_ & 0x80) == 0 &&
                // 0x4635C4: no observer guard; a4 == -1 reads the byte
@@ -3712,15 +3709,13 @@ LAB_0046358c:
         local_24 = local_24 & 0xffffffdf;
         local_70 = 1;
         local_1c = 0;
-LAB_004635f8:
-        *tile_bit2_ptr = *tile_bit2_ptr | 0x200000;
     } else {
         local_70 = 0;
         if ((GameDataStateStorage.fields_.game_state_ & 0x80) != 0 || a4 < 1 ||
             (GameDataStateStorage.fields_.game_more_preferences_ & 1) == 0 ||
             a3 <= -8) {
-            goto LAB_00463589;
-        }
+            local_1c = 1;
+        } else {
         local_1c = 0;
         // THE 25-SQUARE RADIUS SCAN (0x4636BE-0x463A1D). The counter is
         // strength-reduced to a byte offset in [ebp-0x3c] (`cmp 0x24` is
@@ -3734,32 +3729,37 @@ LAB_004635f8:
                     // unguarded, as the shipped code does.
                     const int owner = anything_at((int)local_20, iVar5);
                     if (owner == a4) {
-                        goto LAB_00463b55;
+                        local_1c = 1;
+                        break;
                     }
                     if (VehDrawPositionX >= 0 &&
                         Vehs[VehDrawPositionVehicle].faction_id == a4 &&
                         VehDrawPositionX == (int)local_20 &&
                         VehDrawPositionY == iVar5) {
-                        goto LAB_00463b55;
+                        local_1c = 1;
+                        break;
                     }
                     if ((PlayersData[a4].diplo_treaties[owner] & 1) != 0) {
                         for (iVar19 = veh_at((int)local_20, iVar5); iVar19 >= 0;
                              iVar19 = veh_next_stack_id(iVar19)) {
                             if (Vehs[iVar19].faction_id == a4) {
-                                goto LAB_00463b55;
+                                local_1c = 1;
+                                break;
                             }
                         }
                         if (local_1c != 0) {
-                            goto LAB_0046358c;
+                            break;
                         }
                     }
                 }
                 if (is_sensor((int)local_20, iVar5) != 0 &&
                     map_loc((int)local_20, iVar5)->territory == a4) {
-                    goto LAB_00463b55;
+                    local_1c = 1;
+                        break;
                 }
                 if (base_who((int)local_20, iVar5) == a4) {
-                    goto LAB_00463b55;
+                    local_1c = 1;
+                        break;
                 }
                 if (VehDrawPositionX == (int)local_20 &&
                     VehDrawPositionY == iVar5) {
@@ -3771,7 +3771,8 @@ LAB_004635f8:
                         (Chassis[VehPrototypes[Vehs[draw_veh].proto_id].chassis_id].triad == '\x02' ||
                          local_18 ==
                              (uint32_t)(Chassis[VehPrototypes[Vehs[draw_veh].proto_id].chassis_id].triad == '\x01'))) {
-                        goto LAB_00463b55;
+                        local_1c = 1;
+                        break;
                     }
                 }
                 // 0x463943: the no-owner -1 row is read unguarded as well.
@@ -3792,10 +3793,7 @@ LAB_004635f8:
                 }
             }
         }
-        if (local_1c != 0) {
-            goto LAB_0046358c;
-        }
-        if (ExpansionEnabled != 0) {
+        if (local_1c == 0 && ExpansionEnabled != 0) {
             // Geosynchronous Survey Pods within the 81-square diamond.
             for (iVar7 = 0; iVar7 < 81; ++iVar7) {
                 iVar6 = RadiusOffsetY[iVar7];
@@ -3807,17 +3805,18 @@ LAB_004635f8:
                     iVar5 = iVar6 + a8;
                     if (on_map(iVar19, iVar5) && base_who(iVar19, iVar5) == a4 &&
                         has_fac(FAC_GEOSYNC_SURVEY_POD, base_at(iVar19, iVar5), 0)) {
-                        goto LAB_00463b55;
+                        local_1c = 1;
+                        break;
                     }
                 }
             }
         }
-        // Not seen: only the fog bit changes (0x463A38/0x463B50 jump past
-        // the unexplored-tile resets to 0x4635F8).
-        goto LAB_004635f8;
-LAB_00463b55:
-        local_1c = 1;
+        }
+    }
+    if (local_1c != 0) {
         *tile_bit2_ptr = *tile_bit2_ptr & 0xffdfffff;
+    } else {
+        *tile_bit2_ptr = *tile_bit2_ptr | 0x200000;
     }
 
     // THE CORNER MASKS: which corners of a land tile touch ocean (the
