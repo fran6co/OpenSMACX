@@ -193,9 +193,8 @@ class JackalVoiceRx : public virtual StringAllocationBase {
   Heap *entries_heap_;          // 0x18
 };
 
-// Defined under frame retention so the generated deleting and vbase
-// destructors (0x004E3900, 0x004E3660) keep their ebp frames.
-#pragma optimize("y", off)
+// The generated deleting and vbase destructors (0x004E3900, 0x004E3660) are
+// copies emitted by the /Oy- alphanet unit (measured there: compile_context).
 inline JackalVoiceRx::JackalVoiceRx() {
   head_ = 0;
   cursor_ = 0;
@@ -207,10 +206,13 @@ inline JackalVoiceRx::~JackalVoiceRx() {
   close();
 }
 // Header-visible: ~Net (0x004E34D0) expands it; 0x00538EC0 is the
-// out-of-line copy ~AlphaNet/~NetDaemon call.
-// stand-in: a TU defining JACKALVOICERX_CLEAR_OUT_OF_LINE sees only the
-// declaration; netdaemon.cpp does, so ~AlphaNet calls it out of line as the
-// image does.
+// out-of-line copy ~AlphaNet/~NetDaemon call, emitted by the /Oy- netdaemon
+// unit. Measured in alphanet.cpp (/Oy-, compile_context) while the stand-in
+// below keeps netdaemon.cpp from emitting it.
+// WORKAROUND(noinline): a TU defining JACKALVOICERX_CLEAR_OUT_OF_LINE sees
+// only the declaration; netdaemon.cpp does, so ~AlphaNet calls it out of line
+// as the image does (with the body visible ~AlphaNet 0x00538B60 expands it,
+// 97 -> 139 rows, while ~NetDaemon still calls it).
 #ifndef JACKALVOICERX_CLEAR_OUT_OF_LINE
 inline void JackalVoiceRx::clear() {
   if (head_) {
@@ -229,7 +231,6 @@ inline void JackalVoiceRx::clear() {
   }
 }
 #endif
-#pragma optimize("", on)
 
 // The list subobject at Net+0x72C, not the receiver at Net+0xB0.
 // Net construction (0x0062D788..0x0062D7FD) installs its vbptr at +4;
@@ -308,13 +309,12 @@ class NetUnk72C : public NetTextListBase {
 };
 
 // Inline: ~Net and its inlined copies in ~AlphaNet/~NetDaemon expand this
-// body; 0x004023A0 is the standalone frame-retaining copy.
-#pragma optimize("y", off)
+// body; 0x004023A0 is the standalone copy of the /Oy- 0x00401000 game unit
+// (alphanet_records.cpp, compile_context).
 inline NetUnk72C::~NetUnk72C() {
   close();
   // Natural base destruction supplies the distinct second list stage.
 }
-#pragma optimize("", on)
 
 // Provisional name for the distinct allocation-owning node at Net+0x700.
 // Original construction at 0x0062D763 installs a vbptr at relative zero:
@@ -772,10 +772,9 @@ class Net {
 static_assert(sizeof(Net) == 0x768, "Net ends before AlphaNet's player count");
 
 // Inline: ~AlphaNet/~NetDaemon (0x00538B60/0x00538D10) expand this body and
-// its member teardown; 0x004E34D0 is the standalone frame-retaining copy.
-#pragma optimize("y", off)
+// its member teardown; 0x004E34D0 is the standalone copy of the /Oy-
+// alphanet unit (compile_context).
 inline Net::~Net() { close(); }
-#pragma optimize("", on)
 
 
 

@@ -209,3 +209,208 @@ void AlphaNetLedgerEntry::operator delete(void *memory) {
 
 NetAllocationNode *AlphaNetStringStruct::next_entry() { return next_owned_list(this); }
 ServiceStruct *ServiceProviderList::next_entry() { return next_owned_list(this); }
+
+// ~NetTextListBase belongs to this game unit: ??_GNetTextListBase 0x00402AD0
+// and ~NetUnk72C 0x004023A0 here expand it, while ~Net, ~AlphaNet and
+// ~NetDaemon call 0x00401BE0 out of line.
+/*
+// ORIGINAL: 0x00401BE0 sub_401be0 0x00401BE0-0x00401C79 BYTE_EXACT
+// symbol    ??1NetTextListBase@@UAE@XZ
+// size      153 bytes
+// prototype
+// callers   3   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x00401C22 0x00401C34 0x00401C50
+Status: Complete
+*/
+// The receiver arrives in ECX pointing 0x1c into the real object - a
+// virtual-base subobject - so the body first recovers the object's own
+// start (`self`). It then writes two vtable pointers: its own, and a
+// second one reached through a displacement read out of a small table at
+// self+4 (a vbtable: entry [1] holds the byte offset from self+4 to the
+// virtual base's vtable slot, because that offset is only known once the
+// most-derived class is). The same "read a vtable, take its [1] entry as
+// a THIS-adjustment rather than a function, add it to the pointer, then
+// call through the adjusted object's own vtable[0]" shape recurs for
+// every node torn down in the loop below - that is the scalar deleting
+// destructor called through a pointer typed as a virtual base, which is
+// why the adjustment has to be data instead of a compile-time constant.
+//
+// MISMATCH, 52/64 (0.984 similar), best over every flag set this tree
+// tries. The one surviving divergence is the SECOND per-node teardown
+// call (deleting the list node itself, `node` below): the image computes
+// the adjusted `this` with `lea ecx,[edx+eax]` and then re-derives the
+// target vtable via `[edx+eax]` addressing instead of reading `[ecx]`,
+// where the FIRST teardown call (on `sub_obj`, same shape) compiles
+// byte-exact with `add`+`[ecx]`. TRIED: a named `int *vtbl`/`int
+// disp` pair, a fused single expression, and routing the call through
+// `vtable_method` all reproduce the identical `add`+`[ecx]` form as the
+// first call - the allocator's choice between the two forms tracks
+// register pressure at the call site, not source spelling, and no
+// spelling tried moves it. Everything else - both vtable-pointer writes,
+// the loop's trip count re-read each iteration, the first per-node call,
+// and the trailing field clears - is byte-exact.
+class SubBase401be0 { public:
+    virtual void slot0(int);   // vtable[0]: scalar-deleting-destructor style
+    virtual void slot1(int);   // vtable[4]: notifies `self` a node is going
+};
+
+NetTextListBase::~NetTextListBase() {
+    close(); // also when empty; current_ is NOT cleared
+}
+
+// cleanup_failed_net_construction and NetAllocationNode's deletes belong to
+// this game unit too: ??_GNetAllocationNode 0x00402CC0 expands both levels.
+/*
+// ORIGINAL: 0x00402320 sub_402320 0x00402320-0x00402349 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:30611dd8dcac1d36c7ad6321170c4bf4cc359561:src/recovered/00402320.cpp", "pinned:terranx_original:0x402320", "source:src/net_class.cpp"], "reason": "Original cleanup preserves StringAllocationHeap on null input; otherwise free only when owner is null, then clear handoff. Real Net/AlphaNet placement-delete callers discard its result. Indirect return consumers remain unverified. Preserve all original spans, names, claims and seed discoveries; no new byte grant."}
+// symbol    ?cleanup_failed_net_construction@@YAXPAX@Z
+*/
+void cleanup_failed_net_construction(void *memory) {
+    if (memory != 0) {
+        if (StringAllocationHeap == 0) free(memory);
+        StringAllocationHeap = 0;
+    }
+    // Native 402320 leaves the handoff untouched when memory is null.
+}
+void NetAllocationNode::operator delete(void *memory, Heap *) {
+    cleanup_failed_net_construction(memory);
+}
+void NetAllocationNode::operator delete(void *memory, AlphaNetStringStruct *) {
+    cleanup_failed_net_construction(memory);
+}
+void NetAllocationNode::operator delete(void *memory) {
+    cleanup_failed_net_construction(memory);
+}
+
+// ServiceProviderList's constructor and add are this game unit's too: both
+// keep the unit's ebp frame, and Jackal's Net code calls 0x00401660 and
+// 0x00401760 out of line.
+/*
+// ORIGINAL: 0x00401660 ??0ServiceStruct@@QAE@H@Z 0x00401660-0x004016B8 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00401660.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Original provider base tables6693D4/6693D0 and five cleared receiver fields; legacy ServiceStruct catalogue name is not payload ownership."}
+// symbol    ??0ServiceProviderList@@QAE@XZ
+// ORIGINAL: 0x00401760 ?add@ServiceStruct@@QAEHH@Z 0x00401760-0x00401B73 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:0e184947304cbb843b26264d5145e9b9b452cf16:src/unrecovered/00401760.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the transferred historical seed findings and complete original spans.", "git:0e184947304cbb843b26264d5145e9b9b452cf16:src/unrecovered/00401760.cpp", "Historical seed spelling ?add@ServiceStruct@@QAEHH@Z; current source mapping ?add@ServiceStruct@@QAEHH@Z; emitted symbol ?add@ServiceProviderList@@QAEHH@Z."], "reason": "Original allocates entry1C/payload20 and invokes provider hook. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
+// TRIED: goto-preserving transcription of the Ghidra decompile (3-tier Heap::get/mem_get fallback, twice per node-type A/B, VCall slot0 insert callback); diverges at insn #7 in the prologue/local register allocation, not in the control-flow shape
+// symbol    ?add@ServiceProviderList@@QAEHH@Z
+*/
+// ServiceProviderList::add (0x00401760) allocates each node
+// `allocator_ ? new(allocator_) T : new(this) T` (payloads as if/else, whose
+// explicit-heap arm keeps its own construction copy, 0x00401863): the Heap
+// overload is fatal on failure; the list overload tries the inherited owner
+// (fatal on failure), then mem_get. Each fatal block sits directly before
+// the next arm's code in the image.
+inline void *ServiceStruct::operator new(size_t size, Heap *owner) throw() {
+    void *memory = owner->get(size);
+    if (memory != 0) {
+        StringAllocationHeap = owner;
+        return memory;
+    }
+    MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
+    exit(3);
+    return 0;
+}
+inline void *ServiceStruct::operator new(size_t size, ServiceProviderList *list) throw() {
+    void *memory;
+    Heap *owner = list->allocation_owner_;
+    if (owner != 0) {
+        memory = owner->get(size);
+        if (memory != 0) {
+            StringAllocationHeap = owner;
+            return memory;
+        }
+        MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
+        exit(3);
+    }
+    memory = mem_get(size);
+    if (memory == 0) return 0;
+    StringAllocationHeap = owner;
+    return memory;
+}
+void ServiceStruct::operator delete(void *memory, Heap *) { cleanup_failed_net_construction(memory); }
+void ServiceStruct::operator delete(void *memory, ServiceProviderList *) { cleanup_failed_net_construction(memory); }
+void ServiceStruct::operator delete(void *memory) { cleanup_failed_net_construction(memory); }
+
+inline void *ServiceListEntry::operator new(size_t size, Heap *owner) throw() {
+    void *memory = owner->get(size);
+    if (memory != 0) {
+        StringAllocationHeap = owner;
+        return memory;
+    }
+    MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
+    exit(3);
+    return 0;
+}
+inline void *ServiceListEntry::operator new(size_t size, ServiceProviderList *list) throw() {
+    void *memory;
+    Heap *owner = list->allocation_owner_;
+    if (owner != 0) {
+        memory = owner->get(size);
+        if (memory != 0) {
+            StringAllocationHeap = owner;
+            return memory;
+        }
+        MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
+        exit(3);
+    }
+    memory = mem_get(size);
+    if (memory == 0) return 0;
+    StringAllocationHeap = owner;
+    return memory;
+}
+void ServiceListEntry::operator delete(void *memory, Heap *) { cleanup_failed_net_construction(memory); }
+void ServiceListEntry::operator delete(void *memory, ServiceProviderList *) { cleanup_failed_net_construction(memory); }
+void ServiceListEntry::operator delete(void *memory) { cleanup_failed_net_construction(memory); }
+
+ServiceProviderList::ServiceProviderList() {
+    head_ = 0;
+    current_ = 0;
+    entry_count_ = 0;
+    current_position_ = 0;
+    allocator_ = 0;
+}
+
+int ServiceProviderList::on_insert(ServiceStruct *) { return 0; }
+
+void ServiceProviderList::on_remove(ServiceStruct *) { }
+
+// ServiceProviderList::seek_pos is inline in net_class.h; next_entry lives in
+// alphanet_records.cpp (choose_service and pick_service call it out of line).
+
+// Original401760 installs6693C4 at each entry's allocation base (+0x14).
+// Its deleting slot targets402C20, shared with StringStructEntry. The real
+// constructions below emit this additional deleting entry; the canonical
+// ORIGINAL and historical claim remain in stringstruct.cpp.
+// RECOVERY_SHARED: v1 0x00402C20 0x00402C62 ??_GServiceListEntry@@UAEPAXI@Z 0x00401760
+int ServiceProviderList::add(int id) {
+    if (entry_count_ == 0) {
+        head_ = allocator_ ? new(allocator_) ServiceListEntry : new(this) ServiceListEntry;
+        if (head_ == 0) return 4;
+        head_->id_ = id;
+        head_->next_ = head_;
+        head_->previous_ = head_;
+        if (allocator_) head_->payload_ = new(allocator_) ServiceStruct;
+        else head_->payload_ = new(this) ServiceStruct;
+        if (head_->payload_ == 0) return 4;
+        on_insert(head_->payload_);
+        current_ = head_;
+    } else {
+        head_->previous_->next_ = allocator_ ? new(allocator_) ServiceListEntry : new(this) ServiceListEntry;
+        if (head_->previous_->next_ == 0) return 4;
+        head_->previous_->next_->previous_ = head_->previous_;
+        head_->previous_->next_->next_ = head_;
+        head_->previous_ = head_->previous_->next_;
+        current_ = head_->previous_;
+        current_->id_ = id;
+        if (allocator_) current_->payload_ = new(allocator_) ServiceStruct;
+        else current_->payload_ = new(this) ServiceStruct;
+        if (current_->payload_ == 0) return 4;
+        on_insert(current_->payload_);
+    }
+    current_position_ = entry_count_;
+    ++entry_count_;
+    return 0;
+}

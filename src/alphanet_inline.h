@@ -15,8 +15,11 @@
 
 // The picker at 0x0063BB20 constructs this base inline without a later
 // throwing helper call; keep the same ordinary C++ lifetime visible here.
-// The standalone 0x00401C80 entry retains its argument frame even when this
-// visible definition is emitted by a caller TU that otherwise omits frames.
+// The standalone 0x00401C80 entry is the out-of-line copy of the
+// 0x00401000 game unit (/Oy-), the first object that referenced it.
+// WORKAROUND(inline): no recovered function of that unit (alphanet_records.cpp,
+// stringstruct.cpp) references the constructor out of line, so the marker is
+// hosted by net_class.cpp (/Oy) and this region gives the copy that unit's frame.
 #pragma optimize("y", off)
 inline AlphaNetStringStruct::AlphaNetStringStruct() {
     head_ = 0;
@@ -98,7 +101,6 @@ inline void *NetAllocationNode::operator new(size_t size, AlphaNetStringStruct *
     return memory;
 }
 
-#pragma optimize("y", off)
 inline NetTextListBase::NetTextListBase() {
     head_ = 0;
     current_ = 0;
@@ -106,26 +108,19 @@ inline NetTextListBase::NetTextListBase() {
     current_position_ = 0;
     allocator_ = 0;
 }
-#pragma optimize("", on)
 
-#pragma optimize("y", off)
 inline NetUnk72C::NetUnk72C() {
     // Source text and field_20_ remain uninitialized, as in 402D10.
 }
-#pragma optimize("", on)
 
-#pragma optimize("y", off)
 inline NetAllocationNode::NetAllocationNode() {
     // No scalar field stores exist in either inline original construction.
     // Its own allocation base captures the pending Heap BEFORE entries_'s
     // independent virtual base consumes the now-cleared handoff.
 }
-#pragma optimize("", on)
 
 // Visible to alphanet.cpp: ~ServiceList (0x004E3730) expands it there.
 // 0x004016C0 is the standalone copy.
-#pragma optimize("y", off)
 inline ServiceProviderList::~ServiceProviderList() {
     close();
 }
-#pragma optimize("", on)
