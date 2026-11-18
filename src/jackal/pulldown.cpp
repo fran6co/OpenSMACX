@@ -200,8 +200,12 @@ void PullDown::pulldown_update(int old_selected, int new_selected) {
   const int width = pixel_width();
   const int height = text_line_height();
   int top = PullDownBorderPadding;
-  RECT base = {0, top, width, top + height};
-  expand_rect(&base, -(PullDownTextPadding + top), 0);
+  RECT base;
+  base.left = 0;
+  base.top = top;
+  base.right = width;
+  base.bottom = top + height;
+  expand_rect(&base, -(PullDownTextPadding + PullDownBorderPadding), 0);
   RECT row;
 
   if (old_selected != -1) {
