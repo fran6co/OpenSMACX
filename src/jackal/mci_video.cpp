@@ -16,7 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
-#include "alphamovie.h"  // MCIVideo is declared there (split pending)
+#include "mci_video.h"
 #include "jackal_game.h"  // WaveDeviceGlobal
 #include <mmsystem.h>
 #include <digitalv.h>

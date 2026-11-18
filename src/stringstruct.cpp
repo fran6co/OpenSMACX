@@ -67,7 +67,7 @@
 // ORIGINAL: 0x00402310 sub_402310 0x00402310-0x0040231F FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:allocation-base-destructor-owner", "Original 0x00402310..0x0040231F reads the captured Heap at this+4, stages allocation-base table 0x006693AC and publishes owner 0x009B3374; StringAllocationBase and StringAllocationHeap own these relationships.", "historical seed:src/recovered/00402310.cpp"], "reason": "The retained synthetic owner-publication seed is the existing genuine allocation-base destructor. Real member/global and compiler-owned destructor table stage replace fixed executable addresses; retain original identity and historical exact obligation."}
 // compile_context src/alphanet.cpp
-// body src/stringstruct.h
+// body src/jackal/stringstruct.h
 // symbol    ??1StringAllocationBase@@UAE@XZ
 
 // ORIGINAL: 0x00401000 ??0StringStruct@@QAE@H@Z 0x00401000-0x00401058 BYTE_EXACT
@@ -328,7 +328,7 @@ inline StringStructPayload *StringStruct::current_entry() {
 /*
 Purpose: Advance the current string-list entry and return its payload.
 // ORIGINAL: 0x00402500 ?next_entry@StringStruct@@QAEHXZ 0x00402500-0x0040252F BYTE_EXACT
-// body      src/stringstruct.h
+// body      src/jackal/stringstruct.h
 // symbol    ?next_entry@StringStruct@@QAEPAVStringStructPayload@@XZ
 //   as current_entry above: typed for the string, resolved through this
 //   emitted name.
@@ -350,7 +350,7 @@ Status: Complete
 /*
 Purpose: Position the string-list cursor at the first matching item ID.
 // ORIGINAL: 0x00401560 ?seek_id@StringStruct@@QAEHH@Z 0x00401560-0x004015AE BYTE_EXACT
-// body src/stringstruct.h
+// body src/jackal/stringstruct.h
 // size      78 bytes
 // prototype int (__thiscall ?seek_id@StringStruct@@QAEHH@Z)(StringStruct* this, int)
 // callers   1   call targets   0
@@ -377,7 +377,7 @@ Purpose: Release every entry in the list, notifying the owner about each
 // ORIGINAL: 0x00402970 StringStruct::remove_all 0x00402970-0x004029E3 FILE BYTE_EXACT
 // compile_context src/stringstruct.cpp
 // symbol    ?remove_all@StringStruct@@QAEXXZ
-// body      src/stringstruct.h
+// body      src/jackal/stringstruct.h
 // size      115 bytes
 // prototype 
 // callers   79   call targets   0
@@ -421,7 +421,7 @@ Purpose: Destroy the StringStruct subobject, releasing entries under the base
 // ORIGINAL: 0x00401060 ?close@StringStruct@@QAEXXZ 0x00401060-0x004010F9 FILE BYTE_EXACT
 // compile_context src/alphanet.cpp
 // symbol    ??1StringStruct@@UAE@XZ
-// body      src/stringstruct.h
+// body      src/jackal/stringstruct.h
 // size      153 bytes
 // prototype void (__thiscall ?close@StringStruct@@QAEXXZ)(StringStruct* this)
 // callers   25   call targets   0
@@ -489,7 +489,7 @@ Heap *StringAllocationHeap;  // 0x009B3374
 
 /*
 // ORIGINAL: 0x004015B0 ?seek_pos@StringStruct@@QAEHH@Z 0x004015B0-0x00401636 BYTE_EXACT
-// body      src/stringstruct.h
+// body      src/jackal/stringstruct.h
 // size      134 bytes
 // prototype int (__thiscall ?seek_pos@StringStruct@@QAEHH@Z)(StringStruct* this, int)
 // callers   2   call targets   1
