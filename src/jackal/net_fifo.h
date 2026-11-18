@@ -33,7 +33,9 @@ class NetFifo {
   int peek_head(void *data, unsigned int *key_out, int *caller_value_out,
                 int *size_out);
   int get(void *data, int key, int *type, int *len);
-  int get(void *data, unsigned int *key, int *type, unsigned int *len);
+  // Key and size are unsigned long, as in the image's own name for add
+  // (?add@NetFifo@@QAEHPAXKKHK@Z); Net::get hands its DPID/size pointers on.
+  int get(void *data, unsigned long *key, int *type, unsigned long *len);
 
   // Each original add allocates one 0x18-byte intrusive node; the gets free
   // nodes, while peek operations retain them. Fields are based on actual

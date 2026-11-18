@@ -225,8 +225,8 @@ int NetFifo::get(void *data, int key, int *type, int *len) {
 #if defined(_MSC_VER) && _MSC_VER == 1200
 #pragma function(memcpy)
 #endif
-int NetFifo::get(void *data, unsigned int *key, int *type,
-                 unsigned int *len) {
+int NetFifo::get(void *data, unsigned long *key, int *type,
+                 unsigned long *len) {
   EnterCriticalSection(&lock_);
 
   if (head_ == 0) {

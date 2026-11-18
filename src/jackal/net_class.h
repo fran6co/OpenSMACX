@@ -628,7 +628,8 @@ class Net {
   void *sub_6309c0(int key, int *length_out);
   // The timeout readers operate on the embedded middle FIFO. The head form
   // writes the key out; the keyed form uses the supplied key and signed size.
-  void *read_queue_head_until_timeout(unsigned int *key_out, unsigned int *length_out);
+  void *read_queue_head_until_timeout(unsigned long *key_out,
+                                      unsigned long *length_out);
   void *read_queue_key_until_timeout(int key, int *length_out);
   // DirectPlay receive pump and its source-owned player/session companions.
   void receive_directplay_messages(int player_id);

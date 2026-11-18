@@ -1715,9 +1715,7 @@ Status: Complete
 void *Net::get(unsigned long *a, unsigned long *b) {
     if (NetDirectPlay != 0) {
         if (a != 0) {
-            int result = queue_10c_.get(NetGetScratch,
-                                   reinterpret_cast<unsigned int *>(a), 0,
-                                   reinterpret_cast<unsigned int *>(b));
+            int result = queue_10c_.get(NetGetScratch, a, 0, b);
             return result ? NetGetScratch : 0;
         }
     }
@@ -2919,7 +2917,8 @@ Purpose: Read one packet off Net's middle queue, retrying until something
 Return Value: NetGetScratch when a packet was read, zero otherwise
 Status: Complete
 */
-void *Net::read_queue_head_until_timeout(unsigned int *key_out, unsigned int *length_out) {
+void *Net::read_queue_head_until_timeout(unsigned long *key_out,
+                                         unsigned long *length_out) {
     if (NetDirectPlay == 0 || key_out == 0) {
         return 0;
     }
@@ -3494,11 +3493,11 @@ void Net::handle_sys_msg() {
     if (NetDirectPlay == 0) {
         return;
     }
-    unsigned int key;
+    unsigned long key;
     // The pop-the-head read: the routing key comes out with the message, and
     // the scratch receives the body either way.
     while (queue_130_.get(NetGetScratch, &key, 0,
-                          static_cast<unsigned int *>(0)) != 0) {
+                          static_cast<unsigned long *>(0)) != 0) {
         // These casts are the received-message ABI boundary, not raw object
         // member offsets or executable-address aliases. The source-owned
         // scratch is shared and must be re-read after external callbacks.
