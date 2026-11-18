@@ -3949,6 +3949,12 @@ void __cdecl crash_landing(int faction_id);
 // the next return (any position in that gap; six or fewer, or fewer branchy
 // probes, change nothing): teardown decisions start at the first return after
 // the last spend region, so spend there makes the earlier site shallower.
+// Eight in that gap and one after the faction loop (instead of seven and two)
+// give the image's StringStruct depth at the 0x005289A0..0x00528A26 site
+// (remove_all called directly, no ~StringStruct call); the one call that
+// still differs is the last site's ~RadioButton (0x00528CB9, out of line in
+// the image, expanded to close() here). Any expansion counts as one step,
+// whatever its body, so no count lands between these two.
 // Their original spending call sites are unknown.
 static inline int control_turn_spend(int k) { if (k == 1) k = 2; return k; }
 void __cdecl control_turn() {
@@ -4062,7 +4068,7 @@ turn_loop:
                                 control_turn_spend(30); control_turn_spend(31);
                                 control_turn_spend(32); control_turn_spend(33);
                                 control_turn_spend(34); control_turn_spend(35);
-                                control_turn_spend(36);
+                                control_turn_spend(36); control_turn_spend(37);
                                 continue;
                             }
                             ExitTurnLoop = 1;
@@ -4257,7 +4263,6 @@ turn_loop:
             }
         }
         control_turn_spend(20); // WORKAROUND(inline): see control_turn_spend
-        control_turn_spend(21);
         if (human_turn_shown == 0) {
             ConsoleGlobal.human_turn();
         }
