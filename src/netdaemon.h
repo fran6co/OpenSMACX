@@ -384,7 +384,7 @@ class NetDaemon : public AlphaNet {
     struct {
       uint32_t field_1B68_;           // cleared by the constructor
       uint32_t field_1B6C_;
-      uint32_t field_1B70_;
+      int field_1B70_;
       uint32_t action_mode_;          // 0x1B74, process_message reads it
       int *locked_veh_;               // 0x1B78, borrowed vehicle-ID slot (lock_veh)
       uint32_t field_1B7C_;           // the faction mask hang_up ANDs against
@@ -399,8 +399,8 @@ class NetDaemon : public AlphaNet {
       uint32_t field_1BBC_;
       uint32_t field_1BC0_;           // end_of_event tests and clears it
       uint32_t veh_locked_;           // 0x1BC4
-      uint32_t lock_word_1BC8_;       // 0x1BC8
-      uint32_t move_requests_;        // 0x1BCC, maybe_lock's repeat count
+      int lock_word_1BC8_;            // 0x1BC8
+      int move_requests_;             // 0x1BCC, maybe_lock's repeat count
       uint32_t field_1BD0_;           // the constructor stores 0xFF here
       uint32_t field_1BD4_;
       uint32_t field_1BD8_;

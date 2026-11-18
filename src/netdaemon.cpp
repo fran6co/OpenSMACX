@@ -2308,8 +2308,8 @@ int NetDaemon::lock(int target, int x, int y, int payload_18, int payload_1C, in
 
     if (veh_locked_ == 0) {
         // Native INC wraps, while its JG/JLE comparisons interpret signed bits.
-        if ((int32_t)++lock_word_1BC8_ > 0
-            || (int32_t)field_1B70_ > 2) {
+        if (++lock_word_1BC8_ > 0
+            || field_1B70_ > 2) {
             const char *msg = (field_1B70_ == 2) ? (const char *)"NOLOCK" : (const char *)"NOLOCKGLOBAL";
             NetMsgPrimary.pop(msg, 5000, 2, (const char *)0);
             lock_word_1BC8_ = 0;
@@ -2471,8 +2471,8 @@ int NetDaemon::add_global() {
 
     if (veh_locked_ == 0) {
         // Native INC wraps, while its JG/JLE comparisons interpret signed bits.
-        if ((int32_t)++lock_word_1BC8_ > 0
-            || (int32_t)field_1B70_ > 2) {
+        if (++lock_word_1BC8_ > 0
+            || field_1B70_ > 2) {
             const char *msg = (field_1B70_ == 2) ? "NOLOCK" : "NOLOCKGLOBAL";
             NetMsgPrimary.pop(msg, 5000, 2, 0);
             lock_word_1BC8_ = 0;
@@ -4666,7 +4666,7 @@ int NetDaemon::maybe_lock(int *veh_id, int flag, int payload_1C, int payload_20,
     if (veh_locked_ == 0) {
       ++move_requests_;
       // The image compares the count SIGNED here (`jle`), not unsigned.
-      if (1 < static_cast<int>(move_requests_)) {
+      if (1 < move_requests_) {
         // RECOVERY_LITERAL: v1 0x0068C474 0x0068C480 $SG65528 0x00531700
         NetMsgPrimary.pop("MOVEPENDING", 0, 2, 0);
       }
