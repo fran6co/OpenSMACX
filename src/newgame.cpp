@@ -1606,9 +1606,12 @@ int __cdecl top_menu(int mode) {
 
         case 3:
             GameDataLoadRequest = mode;
-            esi = load_game(0, 0);
-            GameDataLoadRequest = 0;
-            if (esi != 0) continue;
+            {
+                const int loaded = load_game(0, 0);
+                esi = loaded;
+                GameDataLoadRequest = 0;
+                if (loaded != 0) continue;
+            }
             ControlTurnPhase = ConsoleGlobal.faction_id_;
             if (GameSessionActive != 0) {
                 game_reload(0, 0);
@@ -1622,8 +1625,9 @@ int __cdecl top_menu(int mode) {
                 if (esi < 0) continue;
                 if (esi == edi) goto top_menu_new_game;
                 if (esi == 2) {
-                    esi = load_map();
-                    if (esi != 0) continue;
+                    const int loaded = load_map();
+                    esi = loaded;
+                    if (loaded != 0) continue;
                     config_game(3);
                     GameDataStateStorage.fields_.vehicle_current_count_ = 0;
                     setup_game(edi);
