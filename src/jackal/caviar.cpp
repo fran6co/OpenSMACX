@@ -1249,9 +1249,6 @@ Purpose: Render with the engine's flat monochrome table: fill the shared
 Return Value: the result returned by Caviar::render.
 Status: Complete
 */
-#if defined(_MSC_VER) && _MSC_VER <= 1200
-#pragma function(memset)
-#endif
 int Caviar::render_mono(Buffer *buffer, int centre_x, int centre_y,
                          int colour, int flags) {
     memset(CaviarColourSource, colour & 0xff, 0x1800);
@@ -1260,9 +1257,6 @@ int Caviar::render_mono(Buffer *buffer, int centre_x, int centre_y,
     field_4_ &= ~0x08;
     return result;
 }
-#if defined(_MSC_VER) && _MSC_VER <= 1200
-#pragma intrinsic(memset)
-#endif
 
 /*
 Purpose: Append every part of one loaded .cvr definition to the renderer's
@@ -2155,9 +2149,6 @@ Return Value: n/a
 // turns `sin` into a call but has no entry for `cos`, which this build
 // compiles to the FPU's own `fcos`. One TU-local pragma makes it a call for
 // the rest of the file - nothing after this body uses it.
-#if defined(_MSC_VER) && _MSC_VER <= 1200
-#pragma function(cos)
-#endif
 void Caviar::set_shadow_vector(float elevation, float azimuth) {
     // The trig names the angles: cos(elevation) is the vector's whole z
     // component and sin(elevation) scales the in-plane pair, so this angle
@@ -2373,9 +2364,6 @@ Return Value: 0 on success, 7 without a record, 0x10 without a shadow table.
 // file - which is this body alone, every earlier one being above it. The
 // mirror of vox_stage_error's `#pragma intrinsic(strcpy)` at the foot, which
 // works the other way round.
-#if defined(_MSC_VER) && _MSC_VER <= 1200
-#pragma function(memcpy)
-#endif
 int Caviar::set_shadow_table(unsigned char *table) {
     if (CaviarScene.created_ == 0) {
         return 7;
@@ -2440,9 +2428,6 @@ void __cdecl Caviar::object_start(VOX_ScnRenderHnd *handle, long instance,
 // The two methods above require out-of-line memcpy. Restore the ordinary
 // intrinsic context for following ordinary copies. The original callbacks
 // are direct live member reads rather than out-of-line representation copies.
-#if defined(_MSC_VER) && _MSC_VER <= 1200
-#pragma intrinsic(memcpy)
-#endif
 // The five CaviarData methods form one mapped neighborhood at 0x616BC0-
 // 0x616D66, between VoxInstance at 0x616B20 and Caviar at 0x616DA0, beside
 // the Caviar scene Buffer lifetimes at 0x616AA0. This source grouping is an

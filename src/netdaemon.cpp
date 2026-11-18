@@ -2922,9 +2922,6 @@ static inline int netdaemon_slots_reached(NetDaemon *daemon, uint8_t level) {
 }
 
 // Native 0x52F315/0x52F364 call CRT memcpy (0x645930) for both chunks.
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma function(memcpy)
-#endif
 int NetDaemon::send_files() {
     NetDaemonFileControlPacket control;
     WIN32_FIND_DATAA found_file;
@@ -3142,16 +3139,10 @@ cleanup:
     NetDaemonFileTransferMode = 0;
     return static_cast<int>(NetDaemonNet.field_1BDC_);
 }
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma intrinsic(memcpy)
-#endif
 
 
 uint32_t __cdecl random(int min, int max);
 
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma function(memcpy)
-#endif
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00534400 0x005388BC 0x005388E8 0x0053459B
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00534400 0x005388E8 0x00538908 0x00534E1C
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00534400 0x00538908 0x0053891C 0x00535811
@@ -4638,9 +4629,6 @@ move_veh_ack:
         field_1BA8_ = 0;
     }
 }
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma intrinsic(memcpy)
-#endif
 
 // ORIGINAL: 0x00530360 ?net_tasks@NetDaemon@@QAEXXZ 0x00530360-0x005303A9 BYTE_EXACT
 // symbol    ?net_tasks@NetDaemon@@QAEXXZ
@@ -4739,9 +4727,6 @@ static union {
 // Opcodes without an address case use the chunk offset itself as the address,
 // exactly as the image does. Diplomacy (0x16) travels through a local tuple
 // that is scattered back after the loop.
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma function(memcpy)
-#endif
 void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
                       int outgoing, int16_t flags) {
     int wire[18];
@@ -5497,9 +5482,6 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
     }
 }
 
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma intrinsic(memcpy)
-#endif
 
 // Clear the real daemon lock entries, then close its AlphaNet base.
 // Superseded seed deleted; seed paths below are historical Git provenance.

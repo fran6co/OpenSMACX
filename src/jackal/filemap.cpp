@@ -229,9 +229,6 @@ Status: Complete
 */
 // The original calls CRT memset at 0x006287A2, rather than an intrinsic
 // expansion or a reconstruction-only forwarder.
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma function(memset)
-#endif
 
 LPVOID Filemap::create(LPCSTR file_name, uint32_t size, BOOL is_sequential) {
     // THE SAME FLAGS SHAPE AS open_read/open, computed first before close().
@@ -274,9 +271,6 @@ LPVOID Filemap::create(LPCSTR file_name, uint32_t size, BOOL is_sequential) {
     memset(map_view_addr_, 0, size);
     return map_view_addr_;
 }
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma intrinsic(memset)
-#endif
 
 
 /*

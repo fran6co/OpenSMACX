@@ -203,7 +203,6 @@ Return Value: Checksum
 Status: Complete
 */
 // The image calls strcpy out of line here.
-#pragma function(strcpy)
 uint32_t __cdecl checksum_password(LPCSTR password) {
     if (!strlen(password)) {
         return 0;
@@ -214,7 +213,6 @@ uint32_t __cdecl checksum_password(LPCSTR password) {
     uint8_t chksum = checksum(buffer, strlen(buffer), 0);
     return chksum + 1;
 }
-#pragma intrinsic(strcpy)
 
 
 

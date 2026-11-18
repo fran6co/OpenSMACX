@@ -29,11 +29,9 @@
 
 // The moved text overload calls the CRT length routine in the original,
 // rather than expanding the compiler intrinsic. Keep the ordinary C API spelling.
-#pragma function(strlen)
 
 // The moved numeric prompt calls strcat out of line; retain the ordinary
 // CRT API call rather than VC6's intrinsic expansion.
-#pragma function(strcat)
 
 
 /*

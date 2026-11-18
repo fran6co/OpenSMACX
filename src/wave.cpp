@@ -44,12 +44,6 @@
 #include "net_class.h"
 #include "basepop.h"
 #include "ambience.h"
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma function(memset)
-#endif
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma intrinsic(memset)
-#endif
 
 
 

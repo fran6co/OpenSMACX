@@ -19,7 +19,6 @@
 // 0x0063456A calls the CRT sqrt with a double argument. Do not substitute
 // the compiler's fsqrt intrinsic: it omits that argument-rounding boundary
 // and the runtime's floating-point handling.
-#pragma function(sqrt)
 
 /*
 Purpose: Initialize a zero vector.

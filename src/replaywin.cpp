@@ -226,7 +226,6 @@ void ReplayWin::remove_base_site(int x, int y, int) {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005AD9E0 ?timer_callback@ReplayWin@@QAEXXZ 0x005AD9E0-0x005ADBCC BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:a98446ad:src/recovered/units/005ad9e0.cpp", "image:0x005AD9E0-0x005ADBCC", "src/replaywin.h replay_turn_, event_offset_, year_label_ and base_sites_", "src/win.h release_modal slot58 and redraw slot62"], "reason": "Consume typed replay events and update the ReplayWin-owned site table; replace the original-image forwarder without raw self-offsets or vtable shims. The retained seed remains a restoration input, not a product body."}
-#pragma function(memcpy)
 void ReplayWin::timer_callback() {
     if (replay_turn_ >= GameDataStateStorage.fields_.turn_current_num_) {
         if (replay_turn_ >= GameDataStateStorage.fields_.turn_current_num_ + 50) {
@@ -290,7 +289,6 @@ void __cdecl replay_base(int type, int x, int y, int faction_id) {
     memcpy(ReplayEvents + ReplayEventBytes, &event, sizeof(event));
     ReplayEventBytes += sizeof(ReplayEventRecord);
 }
-#pragma intrinsic(memcpy)
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005AD560 ?make_bases@ReplayWin@@QAEXXZ 0x005AD560-0x005AD607 BYTE_EXACT

@@ -26,9 +26,6 @@
 #include "dialog.h"
 
 // The sound-device constructor family calls the CRT even for its four-byte clear.
-#if defined(_MSC_VER) && _MSC_VER <= 1200
-#pragma function(memset)
-#endif
 
 
 

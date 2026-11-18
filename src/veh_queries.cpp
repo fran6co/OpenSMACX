@@ -507,7 +507,6 @@ Status: MISMATCH #15 - the `xor edx,edx` zero-extending faction_id for log_say
         indirect target matches (0.79 past it).
 */
 // The image calls memcpy out of line here.
-#pragma function(memcpy)
 void __cdecl veh_kill(int veh_id) {
     if (veh_id < 0) {
         return;
@@ -593,7 +592,6 @@ void __cdecl veh_kill(int veh_id) {
     TutWinBaseWindow.check_loc(x, y, 0);
     TutWinBaseWindow.check_base(home_base_id);
 }
-#pragma intrinsic(memcpy)
 
 
 /*

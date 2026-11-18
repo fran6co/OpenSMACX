@@ -742,9 +742,6 @@ int DDInit::report_error(int hr) {
 // ===== homed from src/unrecovered/006357d0.cpp =====
 // The original calls CRT memset here; keep that target rather than a
 // reconstruction-only wrapper or an intrinsic expansion.
-#if defined(_MSC_VER)
-#pragma function(memset)
-#endif
 // ORIGINAL: 0x006357D0 sub_6357d0 0x006357D0-0x00635835 FILE BYTE_EXACT
 // symbol    ?lock_surface@DDInit@@QAEPAXXZ
 // size      101 bytes
@@ -785,9 +782,6 @@ LPVOID DDInit::lock_surface() {
     locked_bits_ = description.lpSurface;
     return locked_bits_;
 }
-#if defined(_MSC_VER)
-#pragma intrinsic(memset)
-#endif
 
 
 // ===== homed from src/recovered/00635840.cpp =====

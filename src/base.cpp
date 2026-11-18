@@ -1133,7 +1133,6 @@ static inline int base_kill_find(int x, int y, int faction_id) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004e5250.cpp: canonical identity, original spans and retained seed history", "source:src/base.h: real Base storage and lifecycle contracts", "source:recovery/tasks/base-lifecycle-owner-closure.json: bounded coordinator authorization"], "reason": "The original base destruction operation belongs to the Base owner and repairs real faction/project/base/vehicle references and count/selection state rather than forwarding into the original executable."}
 // TRIED: full line-by-line transcription landed (MISMATCH #3, prologue push/mov divergence); stack-slot reuse across phases not replicated (used per-phase named locals instead), and the two adjustor-thunk virtual calls (vtable[1] read as delta, then slot0 on the adjusted `this`) route through VCall with a manually computed adjusted receiver rather than the shim alone.
 // The image calls the CRT memcpy for the record compaction.
-#pragma function(memcpy)
 void __cdecl base_kill(int base_id) {
     int veh_id;
     int x = Bases[base_id].x;
@@ -1291,7 +1290,6 @@ void __cdecl base_kill(int base_id) {
     reset_territory();
     WorldClimateWorldWin.field_239BC_ |= 2;
 }
-#pragma intrinsic(memcpy)
 
 
 

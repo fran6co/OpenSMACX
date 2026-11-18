@@ -44,9 +44,6 @@ char VideoAudioBufferLogContext[1];
 
 // ORIGINAL: 0x00636400 ??0Video@@QAE@XZ 0x00636400-0x0063652E;0x00663890-0x006638C9 FILE BYTE_EXACT
 // symbol    ??0Video@@QAE@XZ
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma function(memset)
-#endif
 Video::Video()
     : sound_state_(), palette_(), frame_queue_(), output_buffer_() {
   // Preserve constructor clear boundaries and order after subobject creation.
@@ -76,9 +73,6 @@ Video::Video()
   last_tick_ = 0;
   memset(&source_rect_, 0, sizeof source_rect_);
 }
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma intrinsic(memset)
-#endif
 
 // ORIGINAL: 0x00636530 ??1Video@@QAE@XZ 0x00636530-0x006365A6;0x006638C9-0x00663902 FILE BYTE_EXACT
 // symbol    ??1Video@@QAE@XZ
@@ -96,9 +90,6 @@ Video::~Video() {
 // ORIGINAL: 0x006365B0 Video_unk1 0x006365B0-0x00636732 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned entry-rooted PE flow has103 reachable instructions ending at RET636731, exclusive636732; IDA and Ghidra agree independently. The next reset begins636740 after14NOPs.", "Historical2f1f617d:src/video.cpp assigned6365B0..637310 as an owner run. Later reset/register/load/process/play/stop/seek/rewind identities remain separate, and UNBOUND637190 retains its original identity/span/claim without implementation.", "The removed region also contains independently recognized padding and load636960 switch-target data636F9C..636FB4 referenced at6369D0; preserve that explicit source association, not close code. No C++ bodies, layout, flags or claims change."], "reason": "Bind Video::close to its complete reachable original cleanup body rather than the former multi-entry owner interval."}
 // symbol    ?close@Video@@QAEXXZ
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma function(memset)
-#endif
 void Video::close() {
   int registry_index = 0;
   while (registry_index < 10 && VideoRegistry[registry_index] != this)
@@ -155,9 +146,6 @@ void Video::close() {
   set_rectangle_dimensions(&source_rect_, 0, 0, 0, 0);
   output_buffer_.close();
 }
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma intrinsic(memset)
-#endif
 
 // ORIGINAL: 0x00636FC0 ?process@Video@@QAEXXZ 0x00636FC0-0x0063706F FILE BYTE_EXACT
 // symbol    ?process@Video@@QAEXXZ
@@ -702,9 +690,6 @@ int Video::seek(int requested_frame) {
 // ORIGINAL: 0x00636740 Video_unk2 0x00636740-0x0063684D FILE BYTE_EXACT
 // symbol    ?reset@Video@@QAEXXZ
 // TRIED: not chased to byte-exact (MISMATCH from instruction 1, 276 vs 269 bytes). Landed for the field-write order and call order, which match the disassembly one-for-one, including the `and ch,0x7f` / `test al,1` pair - a mask-after-copy on the SAME dword (`bit0` read before the 0x8000 bit is cleared).
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma function(memset)
-#endif
 void Video::reset() {
   // Unlike close(), reset preserves registration, coordinates and flags
   // other than the playback bit. This distinction is load-bearing in load().
@@ -739,17 +724,11 @@ void Video::reset() {
   set_rectangle_dimensions(&source_rect_, 0, 0, 0, 0);
   output_buffer_.close();
 }
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma intrinsic(memset)
-#endif
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00636960 0x00636F9C 0x00636FB4 0x006369D0
 // ORIGINAL: 0x00636960 Video_unk5 0x00636960-0x00636F99 FILE BYTE_EXACT
 // symbol    ?load@Video@@QAEHPADH@Z
 // TRIED: __stdcall(int,int) free function - ecx is read as `this` and passed straight into Video::advance_frame(), so recast as a __thiscall Video member; the 6-entry `jmp [eax*4+0x636f9c]` table is data (not disassembled), so its case targets are unknown and every in-range reason falls through to the shared setup path instead of the (unrecoverable-without-the-bytes) per-case returns; field offsets and DirectDraw/AVI enumeration call order transcribed directly from the disasm.
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma function(memset, memcpy)
-#endif
 int Video::load(char *filename, int unused) {
   (void)unused; // Native ret8; second argument is not read by this body.
   if (filename == 0) return 16;
@@ -885,9 +864,6 @@ fail:
   close();
   return status;
 }
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma intrinsic(memset, memcpy)
-#endif
 
 // ORIGINAL: 0x00637530 Video_unk13 0x00637530-0x00637865 FILE BYTE_EXACT
 // symbol    ?configure_codec@Video@@QAEHXZ
@@ -895,9 +871,6 @@ fail:
 // LEVER: the trailing block is vfw.h's inline ICDecompressExBegin; the colour
 //        loop copies rgbRed, rgbGreen, rgbBlue in that order; the 0xC test is
 //        two flag tests VC6 merges; mode is stored before selector.
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma function(memcpy)
-#endif
 int Video::configure_codec() {
   if (media_file_ == 0) return 7;
   if (codec_ != 0) {
@@ -977,6 +950,3 @@ int Video::configure_codec() {
                              &destination.bmiHeader, 0, VideoDirtyRect.left,
                              VideoDirtyRect.top, width, height) != 0;
 }
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma intrinsic(memcpy)
-#endif

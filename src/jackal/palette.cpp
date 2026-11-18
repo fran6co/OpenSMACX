@@ -236,9 +236,6 @@ not chased further given the size of the function.
 2026-11-06: exact once every field is spelled internal_[index].x (no slot
 reference) and the compaction is a counted for loop over an unused index.
 */
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma function(memcpy)
-#endif
 void Palette::remove_animation(int key) {
     // get_pos INLINED - the image never calls it here (`osmx calls` lists
     // no reference to it), it repeats the search loop directly.
@@ -275,9 +272,6 @@ void Palette::remove_animation(int key) {
         internal_[index].colours = internal_[index + 1].colours;
     }
 }
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma intrinsic(memcpy)
-#endif
 
 /*
 Purpose: Find the palette entry nearest the given colour.
@@ -1007,9 +1001,6 @@ int Palette::set_rgbquad(const RGBQUAD *src, int start, int count) {
 // 2026-11-06: exact with direct channel stores, the call rereading them, and
 //   the second fill loop starting at `start + count`.
 
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma function(memcpy)
-#endif
 int Palette::make_blend_table(const Palette *other, uint8_t *table, int start,
                               int count, int self_weight, int other_weight) {
     if (other == 0) {
@@ -1060,9 +1051,6 @@ int Palette::make_blend_table(const Palette *other, uint8_t *table, int start,
 
     return 0;
 }
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma intrinsic(memcpy)
-#endif
 
 // ORIGINAL: 0x005FEFF0 ?create_table_from_color@Palette@@QAEHHPAEHHHH@Z 0x005FEFF0-0x005FF19E BYTE_EXACT
 // TRIED: MISMATCH #3 test/push - Palette has no named per-field layout (all generic field_XX_), so `this` is treated as a raw unsigned char* (the 256-entry colour table, then the 5-record "special colours" table at +0x40c) rather than named members.
@@ -1333,9 +1321,6 @@ void __cdecl Palette::timer_callback(int key, void *context) {
 
 
 
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma function(memcpy)
-#endif
 // 2026-11-06: the image writes the blend into this->entries_ and animates
 //   &entries_[start] (memcpy #1 copies this, the loop base is the spilled
 //   this); the old body wrote into other. Left: two blue-channel delta slots
@@ -1403,9 +1388,6 @@ int Palette::fade_to(Palette *other, int start, int count, int steps,
 
   return 0;
 }
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma intrinsic(memcpy)
-#endif
 
 // ORIGINAL: 0x005FE700 ?init_cycle@Palette@@QAEHHHHK@Z 0x005FE700-0x005FE8AC;0x00662D60-0x00662D75 FILE BYTE_EXACT
 // TRIED: plain 'new Time()'/'operator delete'/'free' expressions relying on VC6's own SEH codegen instead of hand-written __try/__finally; diverges at #1, prologue register order
@@ -1429,9 +1411,6 @@ int Palette::fade_to(Palette *other, int start, int count, int steps,
 // The third argument is the colour count (5FE73E, 5FE7FF, 5FE805);
 // the fourth is only the timer interval (5FE87C). They are independent:
 // a slow timer must not allocate or copy more palette entries.
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma function(memcpy)
-#endif
 int Palette::init_cycle(int key, int first, int count, unsigned long interval) {
     // The image masks the colour index in place (5FE71A..5FE727) and
     // compares it signed; the slot is then addressed by index, not pointer.
@@ -1490,9 +1469,6 @@ int Palette::init_cycle(int key, int first, int count, unsigned long interval) {
                                static_cast<uint32_t>(interval), 5);
     return 0;
 }
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma intrinsic(memcpy)
-#endif
 
 // ORIGINAL: 0x005FFB10 ?UNK9@Palette@@QAEHHHHHH@Z 0x005FFB10-0x005FFD7F FILE BYTE_EXACT
 // symbol    ?fade_to_entry@Palette@@QAEHHHHHH@Z
@@ -1515,9 +1491,6 @@ int Palette::init_cycle(int key, int first, int count, unsigned long interval) {
 //   `get_nearest_palette_index` above - not re-derived here.
 // indirect  0x005FFB82 0x005FFBCC 0x005FFC18 0x005FFD05 0x005FFD0B 0x005FFD1A
 
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma function(memcpy)
-#endif
 // 2026-11-06: the DirectDraw/GDI block is the inlined set(); body follows
 //   fade_to. Left: start/this/timeGetTime load scheduling at the loop head.
 int Palette::fade_to_entry(int colour_index, int start, int count, int steps,
@@ -1565,9 +1538,6 @@ int Palette::fade_to_entry(int colour_index, int start, int count, int steps,
 
     return 0;
 }
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma intrinsic(memcpy)
-#endif
 
 // ORIGINAL: 0x005FF630 ?get_nearest_palette_index@Palette@@QAEHPAUHSV@@0H@Z 0x005FF630-0x005FF92D FILE
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CFG 5FF67E..5FF789 and5FF7F7..5FF91A are mutually exclusive stride-one scans, not unrolled loops. Each eligible distance evaluates sine(query),sine(candidate) twice, then cosine(query),cosine(candidate) twice.", "Pinned5FF756..5FF766 accumulates sine/cosine squares before the squared value difference;5FF773..5FF777 and5FF8F9..5FF8FD save the winner only after a successful comparison. No winner-slot initialization precedes either loop.", "Original hue products repeatedly read qword0x670280; current source uses its matching TU-private double. The const-HSV array interpretation is corroborated by create_table passing its real HSV[256]."], "reason": "Recover the original per-expression trig evaluation, floating-point accumulation order and winning-index lifetime, preserving the unsafe no-winner path."}
@@ -1928,9 +1898,6 @@ static void *memcpy_call(void *dst, const void *src, unsigned len) {
     return memcpy(dst, src, len);
 }
 
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma function(memcpy)
-#endif
 Palette &Palette::copy_from(Palette *src) {
     memcpy(entries_, src->entries_, sizeof(entries_));
 
@@ -1941,6 +1908,3 @@ Palette &Palette::copy_from(Palette *src) {
 
     return *this;
 }
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma intrinsic(memcpy)
-#endif

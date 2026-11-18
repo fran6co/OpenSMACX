@@ -959,11 +959,9 @@ int __cdecl POP3(const char *section, const char *unused, int recipient,
 
 // This overload calls the CRT length routine in the original, rather than
 // expanding the compiler intrinsic. Keep the ordinary C API spelling.
-#pragma function(strlen)
 
 // The original numeric prompt calls strcat out of line; retain the ordinary
 // CRT API and its call rather than VC6's intrinsic expansion.
-#pragma function(strcat)
 
 
 

@@ -182,7 +182,6 @@ static void vehdraw_finish_frame(Buffer *buffer, int veh_id, int x, int y, int f
 // ORIGINAL: 0x004BF740 ?compute_camera@@YAXPAUVOX_Vect@@PAUVOX_Matrix@@@Z 0x004BF740-0x004BF8C1 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original control flow and original seed extent; observed VC6 external symbol. Tests exercise actual bodies, call/publication order, unordered/zero camera branches and complete facet tables at both established baselines.", "Camera publishes its first Euler triple before the second rotation; original CRT atan calls round their quotient to double. Facet initialization snapshots ConsoleGlobal inherited MapWin field at1DD6C, established by receiver-relative MapWin initialization; four independent 2401-element tables replace cross-object pointer arithmetic."], "reason": "Vehicle rendering setup with real VOX types, source-owned tables and actual Console terrain-height state."}
 // The image calls the CRT atan rather than expanding fpatan.
-#pragma function(atan)
 void __cdecl compute_camera(VOX_Vect *normal, VOX_Matrix *matrix) {
     VOX_Vect angles = {{0.0f, 0.0f, -1.0466667f}};
     VOX_Matrix first_rotation;
@@ -226,7 +225,6 @@ void __cdecl compute_camera(VOX_Vect *normal, VOX_Matrix *matrix) {
     matrix->values[2][2] = -matrix->values[2][2];
 }
 
-#pragma intrinsic(atan)
 
 // ORIGINAL: 0x004BF8D0 ?vehdraw_turn_start@@YAHHHHH@Z 0x004BF8D0-0x004BFC67
 // RECOVERY_BINDING: v1 {"evidence": ["Original4BF8D0..4BFC67 returns the integer animation step count, snapshots light before selection, publishes selection before facing access, loads the map pointer slot, and uses unsigned Weapon.mode at+0A.", "All four facet vectors are copied before calls; camera/light/shadow publication follows original call order. Original stores only negative arc to float before comparison; preserving positive precision determines half-turn direction. Zero angle preserves zero steps and NaN increment. Observed VC6 emitted symbol and layouts."], "reason": "Recover vehicle turn setup using actual map, vehicle, renderer and vector ownership instead of fixed executable storage."}

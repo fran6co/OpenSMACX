@@ -3814,7 +3814,6 @@ static inline int reportwin_write_cent_box(ReportWin *win, char *text, int x, in
 // ORIGINAL: 0x0049F350 ?draw_sat@ReportWin@@QAEXXZ 0x0049F350-0x0049FE1E
 // RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/unrecovered/0049f350.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 // The image calls sqrt out of line here (0x49FC32, 0x49FC69).
-#pragma function(sqrt)
 void ReportWin::draw_sat() {
     const int faction_id = ReportIfGlobal.report_faction_id_;
     int orbital_tech = 0;
@@ -4007,7 +4006,6 @@ void ReportWin::draw_sat() {
     time2_.init(sat_anim_daemon, reinterpret_cast<int>(this), 4000, 5);
     time2_.start();
 }
-#pragma intrinsic(sqrt)
 
 /*
 Purpose: Advance the satellite orbital overlay one tick: clear the orbit

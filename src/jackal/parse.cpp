@@ -82,9 +82,6 @@ Status: WIP
 // local-variable layout, which is out of scope for this pass. Left as
 // MISMATCH with the call graph corrected rather than attempting a full
 // rewrite blind.
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma function(memcpy)
-#endif
 int __cdecl parse_string(LPSTR input, LPSTR output) {
     if (!input || !output) {
         return 3;
@@ -369,9 +366,6 @@ done:
 
     return 0;
 }
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma intrinsic(memcpy)
-#endif
 
 /*
 Purpose: Copies the value into a number global message buffer using id.

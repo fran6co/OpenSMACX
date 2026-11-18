@@ -963,9 +963,6 @@ int __cdecl load_map_daemon(char *path) {
 // ORIGINAL: 0x005A94F0 ?save_daemon@@YAHPAD@Z 0x005A94F0-0x005A96C3 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:ee0a7309708fe62c6408f9896b1bea59ef9f288b:src/unrecovered/005a94f0.cpp: complete identity/span and historical return-accumulator lesson", "Pinned5A95A1..5A95CD copies eight live process records93D4FC..93E1DC to93E978..93F658", "Pinned5389F0 preserves partial alias writes through the24-entry lock-state constructor loop", "src/game.cpp: reset_saved_process_slot_state separately initializes snapshot identity bytes at93E99C+i*19C", "recovery/tasks/save-daemon-owner-oct5.json", "recovery/tests/test_save_daemon_actual_source.py"], "reason": "Recover complete daemon save operation with original mutable-pointer ABI, error statuses, side-effect order and file cleanup. Persistent snapshot is an overlapping NetDaemon storage view; its observed endpoint is a lower bound, not a proven original class size or union declaration. Existing lock-state constructor initialization and separate startup identity initializer remain unchanged."}
 // TRIED: `fclose`/`remove` are catalogued nullary cdecl, so they are reached through explicit function-pointer casts rather than by name (a direct call fails C2660: too many arguments). The return-value accumulator (`edi`) starts at 2 before `header_write`, becomes 3 once the first `fwrite` succeeds, and only reaches 0 once `game_data` and the second `fwrite` both succeed - the fclose/remove tail runs unconditionally, and `remove` only when the status is still nonzero. Landing the closest control-flow-faithful form (divergence starts at instruction #6, on the `inc` vs. explicit reload of the reentrancy counter).
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma function(memcpy)
-#endif
 int __cdecl save_daemon(char *save_path) {
 // RECOVERY_OBJECT: v1 0x00690D80 _?PathDot@?1??save_daemon@@YAHPAD@Z@4PADA
     static char PathDot[] = ".";
@@ -1023,9 +1020,6 @@ int __cdecl save_daemon(char *save_path) {
     if (result != 0) remove(filename);
     return result;
 }
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma intrinsic(memcpy)
-#endif
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005A9B20 ?save_map_daemon@@YAHPAD@Z 0x005A9B20-0x005A9C05 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/005a9b20.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover map-save header/version/data flow and preserve the original unconditional fclose and failed-file removal error behavior."}
@@ -1850,7 +1844,6 @@ typedef char GameDataBaseV1Extent[sizeof(GameDataBaseV1) == 0x130 ? 1 : -1];
 
 
 // The image calls memcpy out of line for the whole-record copies here.
-#pragma function(memcpy)
 // ORIGINAL: 0x005A6AC0 ?game_data@@YAHPAUFILE@@H@Z 0x005A6AC0-0x005A9279
 // symbol    ?game_data@@YAHPAU_iobuf@@H@Z
 int __cdecl game_data(FILE *file, int write_mode) {
@@ -2502,7 +2495,6 @@ int __cdecl game_data(FILE *file, int write_mode) {
     }
     return 0;
 }
-#pragma intrinsic(memcpy)
 
 // ORIGINAL: 0x005AB600 ?load_map@@YAHXZ 0x005AB600-0x005ABB8D;0x006620A7-0x0066221F BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/005ab600.cpp", "recovery/tasks/game-save-load-owner-coverage.json", "pinned image sha256:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_load_map_behavior.py"], "reason": "Recover map loading through AlphaSave's real selected-path return and existing extension, map-daemon, multiplayer, preference, and dialog owners."}

@@ -817,7 +817,6 @@ int __cdecl X_pop_ask(const char *label, int value,
 
 // The original text wrapper calls strlen out of line. Use the real CRT API,
 // with VC6's explicit function selection rather than a scaffold alias.
-#pragma function(strlen)
 
 // ORIGINAL: 0x005BFB80 ?X_pop_ask@@YAHPBDPADP6AHXZH@Z 0x005BFB80-0x005BFBC0 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["original:terranx_original.exe:0x005BFB80-0x005BFBC0", "source:src/xpops.cpp:typed owner", "source:src/xpops.h:X_pop_ask overload family", "source:src/popup.cpp:existing text-dialog core", "seed:retained original source identity 0x005BFB80"], "reason": "The text-bearing X_pop_ask overload preserves its null-text return and derives length with the existing C string API before forwarding."}

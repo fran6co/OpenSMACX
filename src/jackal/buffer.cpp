@@ -9032,7 +9032,6 @@ void Buffer::set_dc_text_color(unsigned int color) {
 #include <string.h>
 
 #ifdef _MSC_VER
-#pragma function(strlen)
 #endif
 
 extern char BufferFlyingText[];

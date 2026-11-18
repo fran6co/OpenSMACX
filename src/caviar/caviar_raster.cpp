@@ -17,6 +17,9 @@
 #include "caviar_cpu.h"
 #include "vox_engine.h"
 #include "vector.h"
+// This library keeps its intrinsics (built /O2 on its own; the image has
+// inline block copies, fsqrt/fsin/fcos here): undo stdafx.h's game-wide list.
+#pragma intrinsic(memcpy, memset, sqrt, atan, atan2, pow, fabs, labs, exp, log, log10, tan, acos, asin, cosh, sinh, tanh, fmod)
 
 #include <stddef.h>
 #include <string.h>

@@ -630,7 +630,6 @@ BOOL __cdecl text_open(LPCSTR src_id, LPCSTR section_id) {
 // This copy is the large, called form in the original image.  memcpy is
 // intentionally not project-wide forced out of line because small copies in
 // other translation units are known to inline.
-#pragma function(memcpy)
 #endif
 
 /*

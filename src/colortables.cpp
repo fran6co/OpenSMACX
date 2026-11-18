@@ -137,9 +137,6 @@ unsigned char BodyTintColorTables[8][24][256];
 // TRIED: homed into general.cpp (its real TU) 2026-09-03 and measured there - MISMATCH 10/85 against an image of 64, so the homing was reverted and the claim left here. Two independent walls, both from the include context this TU gives the body: (1) `Filemap::close` is the MEASURED in-class definition in filemap.h, so VC6 INLINES it at this site and the body grows 21 instructions of UnmapViewOfFile/CloseHandle chain where the image CALLS 0x006287C0 - the brief's MEASURED-inline ceiling, and the out-of-line forwarder idiom does not fix that one. (2) the four null tests in the body make VC6 keep a zero register: `xor edi,edi` then `cmp esi,edi` against the image's `test esi,esi`, and `mov [ebp-4],edi` against the image's immediate 0. Home it only together with a way to make `close` out-of-line at this site alone.
 // This routine calls CRT memcpy in the original. Keep that call boundary
 // without cast-call scaffolding; restore the TU's intrinsic policy afterward.
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma function(memcpy)
-#endif
 int __cdecl compare_palettes() {
     Filemap file;
     void *cache = file.open(PaletteCompareOpenPath, 1);
@@ -163,7 +160,6 @@ int __cdecl compare_palettes() {
 // RECOVERY_BINDING: v1 {"evidence": ["historical retired seed src/recovered/units/00423000.cpp", "recovery/tasks/ambience-faction-art-owner-oct5.json", "pinned complete original spans; fresh native owner compilation and actual-source behavior controls"], "reason": "Complete semantic recovery through genuine source-owned members, globals and lifetime operations; retain original defects and historical obligations. Current byte restoration remains unfinished."}
 // symbol    ?colortables_init_faction@@YAXH@Z
 // The original calls the CRT memcpy here.
-#pragma function(memcpy)
 void __cdecl colortables_init_faction(int faction_id) {
     Palette local_palette;
     Filemap cache_file;
@@ -305,13 +301,11 @@ open_tables:
 done:
     cache_file.close();
 }
-#pragma intrinsic(memcpy)
 
 
 // ORIGINAL: 0x00423570 ?colortables_init@@YAXXZ 0x00423570-0x0042439F;0x00652C0A-0x00652C32
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original primary and EH spans establish operations, local destruction order, standing receiver and mapped cache branches.", "Original bounded row loops and cache sizes establish array extents; model record palette pointer is independently owned storage, not a record-relative address.", "Original paths and dependency-doubled behavioral tests cover cache reuse and invalidation, tint results, parser sequencing and exceptional cleanup."], "reason": "Recover the palette cache and table producer with real Filemap, Buffer and Palette lifetimes, standing palette and model owners, and typed independently owned remap arrays. Historical seeds remain evidence and restoration obligations, not borrowed product claims."}
 // TRIED: full instruction-level transcription of the palette-cache load/rebuild state machine (6 Filemap opens, text_open/ text_get resource loads, memcmp cache validation, the create_table_from_color regenerate loops, two RGB_to_HSV tint passes) using goto-labelled control flow matching the original's jump targets and a raw ebp-relative scratch buffer (FRM macro) for the untyped stack locals; no SEH frame reconstruction attempted (MISMATCH #0, prologue only).
-#pragma function(memcpy)
 void __cdecl colortables_init() {
     // These are genuine local lifetimes even though all remap operations use
     // the standing palette. Normal and EH tails destroy Buffer, Filemap,
@@ -589,5 +583,4 @@ make_transparent:
     }
     file.close();
 }
-#pragma intrinsic(memcpy)
 

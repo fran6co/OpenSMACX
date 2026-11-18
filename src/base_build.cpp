@@ -106,7 +106,6 @@ int __cdecl base_claimed(int x, int y, int site1_free, int site2_free,
     return 0;
 }
 
-#pragma intrinsic(memcpy)
 // WORKAROUND(inline): dead budget probe (folds to no code). Ten calls ahead of
 // the probe-team tech checks spend what the image spent before its late refusals:
 // range at the weapon/armour and morale clamps, base_lose_minerals and base_claimed

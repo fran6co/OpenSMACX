@@ -28,6 +28,9 @@
 #include "movie_decoder_owner.h"
 #include "movie_decoder_huffman.h"
 #include "movie_decoder_idct.h"
+// This library keeps its intrinsics (built /O2 on its own; the image has
+// inline block copies, fsqrt/fsin/fcos here): undo stdafx.h's game-wide list.
+#pragma intrinsic(memcpy, memset, sqrt, atan, atan2, pow, fabs, labs, exp, log, log10, tan, acos, asin, cosh, sinh, tanh, fmod)
 
 #include <cstring>
 #include <stdlib.h>

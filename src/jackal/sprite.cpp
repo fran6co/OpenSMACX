@@ -204,9 +204,6 @@ int Sprite::change_color(int old_color, int new_color) {
 // ORIGINAL: 0x005EAE4F ?copy@Sprite@@QAEHPAUSprite@@@Z 0x005EAE4F-0x005EAF34 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["5EAE57 checks source bits before touching destination.5EAE6C..5EAEC4 performs the same owned/borrowed cleanup and field clearing as Sprite::close, preserving the transparent key.5EAEC7 captures wrapped32bit stride*height only after cleanup; allocation pointer publishes before null failure4.", "5EAEEA rereads source bits after allocation;5EAEF5..5EAF29 reads metadata after memcpy, writes dimensions/offsets/key, clears borrowed status and copies stride last. Original has no pixel-allocation increment to SpriteMemoryUsed and no self/null destination guard. Valid pixel allocations and ordinary C++ memcpy domains remain required; no behavioral repair is invented."], "reason": "Recover source.copy(destination) through Sprite ownership and close semantics, retaining original allocation failure and metadata observation order."}
 // symbol    ?copy@Sprite@@QAEHPAV1@@Z
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma function(memcpy)
-#endif
 int Sprite::copy(Sprite *destination) {
     if (pcBits_ == 0) {
         return 7;
@@ -254,9 +251,6 @@ int Sprite::copy(Sprite *destination) {
     destination->iSpriteWidth2_ = iSpriteWidth2_;
     return 0;
 }
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma intrinsic(memcpy)
-#endif
 
 // Sprite's first initialised object: 0x00696D14 runs straight into
 // SpriteScaleNumerator at 0x00696D18, while Buffer's .data ends at 0x00696CE4.
@@ -7740,9 +7734,6 @@ The bounds come off `dib_.bmiHeader`, whose `biHeight` is NEGATIVE for a
 top-down DIB - so the bottom bound really is `-biHeight`, and the
 two-coordinate `get_data` rejects the same way.
 */
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma function(memcpy)
-#endif
 int Sprite::extract(Buffer *buffer, int transparent, int left, int top,
                     int width, int height, TexHeap *heap) {
     int stride;
@@ -7933,9 +7924,6 @@ int Sprite::extract(Buffer *buffer, int transparent, int left, int top,
     }
     return 3;
 }
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma intrinsic(memcpy)
-#endif
 
 
 
@@ -8028,9 +8016,6 @@ static_assert(sizeof(SpriteFileHeader) == 0x1D, "packed Sprite file header");
 // every early return runs its destructor without an explicit close.
 // Calls 0x00628380 (ctor) 0x00628650 (create) 0x006287C0 (close)
 // 0x006283E0 (dtor) 0x00645930 (memcpy).
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma function(memcpy)
-#endif
 int Sprite::save(const char *filename) {
     Filemap fm;
     if (pcBits_ == 0) {
@@ -8122,9 +8107,6 @@ int Sprite::load(const char *filename) {
     fm.close();
     return 0;
 }
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma intrinsic(memcpy)
-#endif
 
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====
 // In the shipped image these live at fixed data addresses and are

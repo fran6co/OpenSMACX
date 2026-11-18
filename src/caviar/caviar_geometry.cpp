@@ -14,6 +14,9 @@
 #include "vector.h"
 #include <math.h>
 #include <cmath>
+// This library keeps its intrinsics (built /O2 on its own; the image has
+// inline block copies, fsqrt/fsin/fcos here): undo stdafx.h's game-wide list.
+#pragma intrinsic(memcpy, memset, sqrt, atan, atan2, pow, fabs, labs, exp, log, log10, tan, acos, asin, cosh, sinh, tanh, fmod)
 // VC5 orders commutative x87 operands by translation-unit symbol state.
 // With float.h included, vox_matrix_vector_mul and vox_cross_product take the
 // image's operand order; the library's real include set is not known.

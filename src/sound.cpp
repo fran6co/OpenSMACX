@@ -497,7 +497,6 @@ void __cdecl sub_4c6060() {
 }
 // The loader above inlines its table clears; every later memset in this TU
 // is a real CRT call in the image.
-#pragma function(memset)
 // stand-in: a nothrow redeclaration. The image's derived audio constructors
 // (Wave, Ambience, 0x004C75B0) call memset without opening a base-complete
 // unwind state, so the original treated this call as non-throwing.

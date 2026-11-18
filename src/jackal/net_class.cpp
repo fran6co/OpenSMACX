@@ -127,9 +127,6 @@ extern char SocialWinCommaSpaceText[];
 #endif
 
 // Original Net API zeroing sites call the CRT rather than intrinsic stores.
-#if defined(_MSC_VER) && _MSC_VER <= 1200
-#pragma function(memset)
-#endif
 
 // 0x697548 - the application GUID the lobby session registers under, read out
 // four dwords at a time into session.guidInstance. It holds the same
@@ -877,9 +874,6 @@ static int __stdcall net_group_player_callback(unsigned long player_id, unsigned
 // ORIGINAL: 0x0062F390 sub_62f390 0x0062F390-0x0062F89D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x00631A60 callsite passes (buffer, size, voice_key, 0x100, 0).", "Pinned 0x0062F390 body uses the shared NetPlayerTable, Net FIFO, DirectPlay send interface, events and timeout UI.", "No byte claim is transferred or granted; preserve the native indeterminate pending/retry stack reads."], "reason": "Recover the group sender as a real Net member; pinned process_voice passes data, byte count, destination, packet type and flags in that order."}
 // symbol    ?send_group_flagged@Net@@QAEHPAXHJGI@Z
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma function(memcpy)
-#endif
 int Net::send_group_flagged(void *data, int size, long target,
                             unsigned short type, unsigned int flags) {
     HANDLE wait_handles[2];
@@ -1075,9 +1069,6 @@ uint32_t NetHostChangeSlot;
 // RECOVERY_OBJECT: v2 0x009BE60C 0x009BE610 ?NetReapBusy@@3IA 0x006320E0
 uint32_t NetReapBusy;
 // RECOVERY_OBJECT: v2 0x009BE610 0x009BE614 ?NetKeepAliveBusy@@3IA 0x006320E0
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma intrinsic(memcpy)
-#endif
 uint32_t NetKeepAliveBusy;
 
 // The voice receiver loses one player's entry: walk from the cursor, unlink,
@@ -1502,9 +1493,6 @@ int Net::create_group(char *group_name) {
 // stride/16-slot extent is independently established by Net and player APIs.
 // ORIGINAL: 0x0062EEA0 ?send_group@Net@@QAEHPAXHJH@Z 0x0062EEA0-0x0062F38C BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned62EEA0..62F38C; retained git:06163ca7db005f89326ea0681a26af574b6ae2c3:src/unrecovered/0062eea0.cpp; genuine NetPlayer/FIFO/DirectPlay owners.", "Native62EFDD loads ESI with players_+0x15C before the clear loop and 62F036..62F044 scans [ESI] (NetPlayer +8), so the search selects the first player the group callback marked, not the first nonzero DPID. Native62F06E..62F080 writes only that pending/retry slot;62F14A..62F199 later reads all sixteen entries. Native62F0A2..62F0B9 initializes every base-time slot from one tick."], "reason": "Recover the original group send and retry operation through genuine Net state and the SDK, preserving its untouched pending/retry stack entries and separate full base-time initialization. The deterministic all-peer repair remains in Git history for the later improvement milestone."}
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma function(memcpy)
-#endif
 int Net::send_group(void *data, int size, long group_id, int flags) {
     HANDLE wait_handles[2];
     DWORD sent_at[16];
@@ -1690,9 +1678,6 @@ done:
 finish:
     return static_cast<int>(field_E4_);
 }
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma intrinsic(memcpy)
-#endif
 
 /*
 Purpose: Poll the embedded NetFifo for a message, when net play is enabled
@@ -4139,9 +4124,6 @@ void cleanup_failed_net_construction(void *memory) {
 // ORIGINAL: 0x0062F8A0 ?send_packet_type@Net@@QAEHPAXHKHH@Z 0x0062F8A0-0x0063007F
 // RECOVERY_BINDING: v1 {"evidence": ["task:net-transport-owner", "pinned:terranx_original.exe:0062F8A0 complete direct/reliable targeted/broadcast control flow", "source:src/net_class.h:NetPlayer acknowledgement +8 and RTT +C; existing FIFO and thread event owners", "historical seed:src/unrecovered/0062f8a0.cpp"], "reason": "Recover the complete sender through genuine Net peer state, queues, event handles, SDK DirectPlay and allocator ownership; preserve native timeout error behavior and all original seed obligations without a new byte claim."}
 // TRIED: MISMATCH #0 'sub' vs 'push' (prologue diverges; best sim 0.44). Net::send_packet_type - reliable-UDP-style send with per-peer RTT tracking, retry, and a "who's stalling" prompt on timeout. Used the scaffold's own COM-style dispatch hint for slot 26 (the DirectPlay Send call pushes the interface as an explicit arg rather than passing it in ecx) - declared a local function- pointer typedef under a name that does NOT collide with the scaffold's own nullary `ComSlot026`, since redeclaring that symbol with a different signature is a hard conflict, not an override. Hoisted `buf`, `allocSize` and `ackFlag` to function scope: MSVC 6 (C2362) refuses a `goto` that skips a later local's initializer even when the type is POD, and this control flow's early special-case return has to jump past the buffer-allocation block entirely.
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma function(memcpy)
-#endif
 int Net::send_packet_type(void *data, int data_size, unsigned long target,
                           int packet_type, int flags) {
     HANDLE wait_handles[2];
@@ -4395,17 +4377,11 @@ int Net::send_packet_type(void *data, int data_size, unsigned long target,
 finish:
     return static_cast<int>(field_E4_);
 }
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma intrinsic(memcpy)
-#endif
 
 
 // ORIGINAL: 0x00630080 ?send@Net@@QAEHPAXHKH@Z 0x00630080-0x00630978
 // RECOVERY_BINDING: v1 {"evidence": ["task:net-transport-owner", "pinned:terranx_original.exe:00630080 complete direct/reliable targeted/broadcast control flow", "source:src/net_class.h:NetPlayer acknowledgement +8 and RTT +C; existing FIFO and thread event owners", "historical seed:src/unrecovered/00630080.cpp"], "reason": "Recover the complete sender through genuine Net peer state, queues, event handles, SDK DirectPlay and allocator ownership; preserve native timeout error behavior and all original seed obligations without a new byte claim."}
 // TRIED: Ghidra-structure translation with the parameter mapping re-derived from raw ESP tracking (Ghidra's param_2..5 are thiscall's stack args a1..a4, one off from its own printed __thiscall param_1), COM-style vtable slot 26 dispatch retyped to 6 args per the scaffold's ComSlot026 note, and Net::close/check_polling/handle_sys_msg and NetFifo::add receivers fixed (Ghidra flattened those away too); compiles, MISMATCH #3 (early - likely the this->ebp store-back-for-stashed-handles at the very top).
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma function(memcpy)
-#endif
 int Net::send(void *data, int data_size, unsigned long target, int flags) {
     HANDLE wait_handles[2];
     DWORD sent_at[16];
@@ -4677,9 +4653,6 @@ int Net::send(void *data, int data_size, unsigned long target, int flags) {
 finish:
     return static_cast<int>(field_E4_);
 }
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma intrinsic(memcpy)
-#endif
 // ORIGINAL: 0x004E3710 sub_4e3710 0x004E3710-0x004E372B FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x004E3710..0x004E372A adjusts ECX by +0x58, calls 0x00402DD0, restores vptr 0x006693AC, republishes saved owner to 0x009B3374, and returns", "pinned Net, AlphaNet, and NetDaemon cleanup continuations pass the embedded complete NetAllocationNode receiver to 0x004E3710; helper reads no caller-frame state", "src/net_class.h declares NetAllocationNode virtually derives from StringAllocationBase, with vbtable 0x00669430 and base at +0x58; the captured allocator owner is at +4"], "reason": "Bind the pinned generated NetAllocationNode virtual-base cleanup entry to its genuine StringAllocationBase subobject and allocator-owner stage."}
 // compile_context src/alphanet.cpp

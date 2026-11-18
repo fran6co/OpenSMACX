@@ -32,7 +32,6 @@
 
 // These pinned sites call the ordinary CRT pow entry with double arguments.
 #ifdef _MSC_VER
-#pragma function(pow)
 #endif
 
 // RECOVERY_LITERAL: v1 0x0066FA68 0x0066FA70 __real@8@4006ebfd70a3d70a4000 0x005C959C

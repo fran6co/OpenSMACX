@@ -498,8 +498,6 @@ VOX_Vect VehInfantryOffset = {{-400.0f, 200.0f, 0.0f}};
 
 // The original calls the CRT atan entry after storing a double argument;
 // the compiler's default fpatan intrinsic bypasses that rounding boundary.
-#pragma function(atan)
-#pragma intrinsic(atan)
 
 
 

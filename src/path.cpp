@@ -45,9 +45,6 @@ Path Paths;                                              // 0x00945B00
 // helper whose emitted symbol has no original identity, which left every
 // strict reference through it permanently unresolved; a direct `_memset`
 // reference resolves against the pinned CRT component binding.
-#if defined(_MSC_VER) && _MSC_VER <= 1200
-#pragma function(memset)
-#endif
 
 /*
 Purpose: Initialize an instance of the class.
@@ -1393,9 +1390,6 @@ void Path::continent(int x, int y, int region) {
 // Continents' own clear is NOT a memset call in the image (its calls list
 // has no 0x006465F0): the constant-8 ZeroMemory over sea_coasts stays the
 // intrinsic's inline stores, so the expansion comes back on here.
-#if defined(_MSC_VER) && _MSC_VER <= 1200
-#pragma intrinsic(memset)
-#endif
 
 // LEVER: ebp frame; function-scope cursors and bitmask outputs fix the
 //   stack slots; the pole/row bounds are re-read, not cached.
@@ -1565,9 +1559,6 @@ void Path::continents() {
 */
 // ...and off again for sensors (0x0059CCA0): the file's third real memset
 // call - `ZeroMemory(map_table_, MapArea * 4)` is `call 0x006465F0` there.
-#if defined(_MSC_VER) && _MSC_VER <= 1200
-#pragma function(memset)
-#endif
 
 // Rewritten 2026-11-13 from 0x0059CCA0-0x0059D227: the radius scans run 25
 // fixed squares; the first takes an own-territory sensor or a planned tile

@@ -53,47 +53,27 @@
 #include <stdlib.h>
 #include <windows.h>
 
-// THE LIBRARY ROUTINES ON THIS LINE ARE CALLS IN THE SHIPPED IMAGE, NOT
-// INTRINSICS, and one line here is the whole of reproducing that.
+// THE GAME AND JACKAL WERE COMPILED WITHOUT /Oi: NO INTRINSIC EXPANDS.
 //
-// `/O2` implies `/Oi`, which expands `strcat` into an inlined `repne scasb`
-// walk. The image does not have one: it makes 4,332 direct `call _strcat`,
-// 875 `_strlen`, 339 `_strcpy` and 155 `_strcmp`. The same holds for the
-// two names added 2026-09-03: verified `call _abs` sites, and `sin` as a
-// real CRT call. This is a shared default, not a whole-image intrinsic rule:
-// the Caviar octant bodies at 0x63FE00/0x63FFE0 use inline integer abs and
-// select that policy locally. For sin, `/Oi` would
-// emit `fsin` and drop the `and esp,-8` the stack-passed double needs
-// (trig_init). Gating the whole project on `/Oi-` instead of naming names
-// measures 619 REGRESSED of 2,385 claims against the settled pair's 3 -
-// the intrinsic machinery is load bearing, only these names are off.
+// Image census outside the separately built Caviar and UV libraries
+// (2026-11-18): 4,332 `call _strcat`, 875 `_strlen`, 339 `_strcpy`, 155
+// `_strcmp`, 125 `_memcpy` (77 with a constant size, 48 variable), 69
+// `_memset` (50 constant), 18 `_memcmp`, and not one expansion: no
+// `repne scasb`, no `fsqrt`/`fsin`/`fcos`/`fpatan`/`fabs`, no variable-size
+// `rep movsd`/`rep movsb` pair. Every `rep movsd`/`rep stosd` the image has
+// there is a structure assignment, an aggregate initializer or a copy/zero
+// loop that VC6's /Og turns into a block operation (message_big_data
+// 0x00592FF0 is two such loops), none of which needs /Oi.
 //
-// `memcpy` IS MIXED AND STAYS OFF THE LIST, measured 2026-09-03: adding it
-// here flipped 33 verified claims whose small constant-size copies
-// (`memcpy(&v, p, sizeof(v))` - Random::get's 4-byte copy is the named one,
-// folded into a body the image spells with no call at all) inline as plain
-// `mov` pairs the image has, while the large copy (Palette::copy_from's
-// constant 0x400) is a real `call _memcpy` in the image. Per-site
-// forwarders carry the called minority, the same device path.cpp's
-// `memset_call` already is. `memset` is the same story from the start: 19
-// BYTE_EXACT bodies carry a `rep stosd`/`rep movsd` that only `/Oi`
-// produces (??0ButtonGroup's constant-size `memset` is one, verified at
-// the instruction level - `/Oi-` turns it into `call` + `add esp`, the
-// image has the `rep stosd`), 34 functions call `strcat` and inline a
-// block op in the SAME body, and no per-file compiler flag can produce
-// that mix. So the split is not in the invocation, it is here, and it is
-// the ordinary 1990s move: turn off the expansion that bloats a binary,
-// keep the block routines.
-//
-// It has to follow the headers that declare the names - <string.h> and
-// <stdlib.h> are above (<windows.h> and directly), <math.h> was added for
-// `sin`; `#pragma function` on an undeclared name is C4163, and `memcmp` joined
-// the list for Net's enumeration callback (net_class.cpp), whose image calls
-// the real function rather than letting /Oi expand it inline. The byte-match
-// scaffold compiles through this same stdafx.h (build/compile_commands),
-// so the measured unit and the built one agree about it.
+// WORKAROUND(decl): the unit flags still carry /Oi (the build is the
+// coordinator's), so this line names every intrinsic the headers declare
+// instead. It stands in for dropping /Oi from the game and Jackal units;
+// once that lands this line and the Caviar/UV `#pragma intrinsic` lines
+// that undo it go away together. A body that needs `memset`/`memcpy` to
+// expand here is spelled wrong: write the loop or the assignment.
 #if defined(_MSC_VER) && _MSC_VER <= 1200
 #pragma function(strcat, strcpy, strlen, strcmp, abs, sin, cos, memcmp)
+#pragma function(memcpy, memset, sqrt, atan, atan2, pow, fabs, labs, exp, log, log10, tan, acos, asin, cosh, sinh, tanh, fmod)
 #endif
 
 // Marks a parameter as deliberately unused. Expands to NOTHING, which

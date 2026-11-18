@@ -65,7 +65,6 @@
 // instead of expanding rep stos/rep movs loops, and stdafx.h's project-wide
 // `#pragma function(...)` line deliberately leaves both names to each
 // translation unit (text.cpp and buffer.cpp do the same locally).
-#pragma function(memset, memcpy)
 
 // The header defines the close-only destructor before any close implementation
 // is visible, preserving its opaque call and ordinary member teardown. The
