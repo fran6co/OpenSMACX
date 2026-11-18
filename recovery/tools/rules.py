@@ -172,6 +172,35 @@ def rule_declsplit(t,mt,pos):
         rep=t[top:m.start()]+'\n'+ind+name+' = '+t[m.start(4):m.end(4)]+';'
         yield (top,m.end(),decl+rep,'declsplit',m.end())
 RULES['declsplit']=rule_declsplit
+def rule_unname(t,mt,pos):
+    # `T v = SIMPLE;` -> drop the local and read SIMPLE at every use in the rest of its block.
+    # Not semantics-preserving in general (SIMPLE may change before a use): run with RULE_EXACT_ONLY=1,
+    # where only a byte-exact result is accepted.
+    rx=re.compile(r'\n([ \t]+)(?:const )?(?:unsigned |signed )?[A-Za-z_][\w:]*(?: \*+| )(\w+) = ([A-Za-z_][\w\.\[\]]*(?:->[\w\.\[\]]+)*);(?=\n)')
+    p=pos
+    while True:
+        m=rx.search(mt,p)
+        if not m: return
+        p=m.end()
+        if len(m.group(1))<4: continue
+        v=m.group(2); expr=t[m.start(3):m.end(3)]
+        d=0; k=m.end(); n=len(mt); end=-1
+        while k<n:
+            if mt[k]=='{': d+=1
+            elif mt[k]=='}':
+                if d==0: end=k; break
+                d-=1
+            k+=1
+        if end<0: continue
+        rest=t[m.end():end]; mrest=mt[m.end():end]
+        if re.search(r'\b'+v+r'\b\s*(=[^=]|\+=|-=|\*=|/=|\|=|&=|\+\+|--|<<=|>>=)',mrest) or re.search(r'(\+\+|--|&)\s*'+v+r'\b',mrest): continue
+        if not re.search(r'\b'+v+r'\b',mrest): continue
+        out=[]; last=0
+        for u in re.finditer(r'(?<![\w\.>])'+v+r'\b',mrest):
+            out.append(rest[last:u.start()]); out.append(expr); last=u.end()
+        out.append(rest[last:])
+        yield (m.start()+1,end,''.join(out).lstrip('\n'),'unname',m.end())
+RULES['unname']=rule_unname
 def main():
     rule=RULES[sys.argv[1]]; unit=sys.argv[2]; unit=unit if unit.startswith('src/') else 'src/'+unit; pfx=sys.argv[3]
     path=R+'/'+unit; text=open(path,encoding='latin-1').read()
@@ -208,7 +237,8 @@ def main():
         # No ratchet on exact functions (AGENTS.md, 'Structure first'): a site is kept when it
         # breaks no structural match (frame, call count) and the unit's difference drops.
         # structure first: a site that gains a frame or call-count match is kept whatever the row count does
-        if sc and not (base[3]-sc[3]) and ((sc[3]-base[3]) or sc[1]<=base[1]-int(os.environ.get('RULE_MIN','3'))):
+        exact_only=os.environ.get('RULE_EXACT_ONLY')=='1'
+        if sc and ((sc[0]-base[0]) if exact_only else (not (base[3]-sc[3]) and ((sc[3]-base[3]) or sc[1]<=base[1]-int(os.environ.get('RULE_MIN','3'))))):
             line=cur.count('\n',0,s)+1
             ch=[('%08X'%a,base[2][a],sc[2][a]) for a in sc[2] if sc[2][a]!=base[2].get(a)]
             acc.append((line,label,ch,['%08X'%a for a in sc[0]-base[0]]))
