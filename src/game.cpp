@@ -420,19 +420,10 @@ MultiWin MultiWindow;  // 0x007FD648
 
 
 void reset_saved_process_slot_state() {
-    uintptr_t cursor = reinterpret_cast<uintptr_t>(NetDaemonNet.saved_process_slots_)
-                     + offsetof(NetDaemonSaveProcessSlot, field_26_);
-    int remaining = 8;
-    do {
-        *reinterpret_cast<int8_t *>(cursor -
-            (offsetof(NetDaemonSaveProcessSlot, field_26_)
-             - offsetof(NetDaemonSaveProcessSlot, identity_))) = -1;
-        *reinterpret_cast<uint8_t *>(cursor - 1) = 0;
-        *reinterpret_cast<uint8_t *>(cursor) = 0;
-        *reinterpret_cast<int8_t *>(cursor + 1) = -1;
-        *reinterpret_cast<uint8_t *>(cursor + 2) = 2;
-        cursor += sizeof(NetDaemonSaveProcessSlot);
-    } while (--remaining);
+    NetDaemonSaveProcessSlot *slot = NetDaemonNet.saved_process_slots_;
+    for (int i = 0; i < 8; i++, slot++) {
+        slot->state_.reset();
+    }
 }
 
 // ===== homed out of the archive 2026-09-04 =====

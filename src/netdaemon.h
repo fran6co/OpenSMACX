@@ -124,26 +124,41 @@ static_assert(sizeof(LockStateEntry) == 0x3C, "lock state stride");
 // AlphaNet process record at 0x93E99C + n*0x19C; save_daemon copies the eight
 // complete live records over this view, and game_data transfers the same
 // 0xCE0-byte interval. This POD view has no snapshot constructor/destructor.
+//
+// The bytes from +0x24 are one nested record with its own inline reset: the
+// initializer at 0x0052DB40 walks a cursor at +0x26 with a count of eight,
+// which VC6 produces for a loop calling the nested record's reset() and not
+// for five stores to members of the slot itself (those put the cursor at
+// +0x25 and compare an end address).
 struct NetDaemonSaveProcessSlot {
   char name_[0x20];
   uint32_t pid_;
-  int8_t identity_;
-  uint8_t field_25_;
-  uint8_t field_26_;
-  int8_t field_27_;
-  uint8_t status_bytes_[0x174];
+  struct State {
+    int8_t identity_;
+    uint8_t field_25_;
+    uint8_t field_26_;
+    int8_t field_27_;
+    uint8_t status_bytes_[0x174];
+    void reset() {
+      identity_ = -1;
+      field_25_ = 0;
+      field_26_ = 0;
+      field_27_ = -1;
+      status_bytes_[0] = 2;
+    }
+  } state_;
 };
 static_assert(offsetof(NetDaemonSaveProcessSlot, pid_) ==
                   offsetof(AlphaNetProcessSlot, pid_),
               "saved process-slot PID matches live layout");
-static_assert(offsetof(NetDaemonSaveProcessSlot, identity_) == 0x24,
+static_assert(offsetof(NetDaemonSaveProcessSlot, state_.identity_) == 0x24,
               "saved process-slot identity offset");
-static_assert(offsetof(NetDaemonSaveProcessSlot, identity_) ==
+static_assert(offsetof(NetDaemonSaveProcessSlot, state_.identity_) ==
                   offsetof(AlphaNetProcessSlot, identity_),
               "saved process-slot identity matches live layout");
-static_assert(offsetof(NetDaemonSaveProcessSlot, status_bytes_) == 0x28,
+static_assert(offsetof(NetDaemonSaveProcessSlot, state_.status_bytes_) == 0x28,
               "saved process-slot status offset");
-static_assert(offsetof(NetDaemonSaveProcessSlot, status_bytes_) ==
+static_assert(offsetof(NetDaemonSaveProcessSlot, state_.status_bytes_) ==
                   offsetof(AlphaNetProcessSlot, status_bytes_),
               "saved process-slot status matches live layout");
 static_assert(sizeof(NetDaemonSaveProcessSlot) == 0x19C,
