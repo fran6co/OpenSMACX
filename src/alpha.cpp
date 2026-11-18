@@ -1711,9 +1711,8 @@ for (i = 0; i < MaxCompassNum; i++) {
             text_get();
             SocialCategories[i].name[j] = text_item_string();
             SocialCategories[i].preq_tech[j] = tech_name(text_item());
-            SocialEffect *effect = &SocialCategories[i].model_effect[j];
             for (int clear = 0; clear < 11; clear++) {
-                effect->values_[clear] = 0;
+                SocialCategories[i].model_effect[j].values_[clear] = 0;
             }
             // The image adds the value to every matching effect: no break.
             while (strlen(text_item())) {
@@ -1725,7 +1724,7 @@ for (i = 0; i < MaxCompassNum; i++) {
                 }
                 for (int k = 0; k < MaxSocialEffectNum; k++) {
                     if (!_stricmp(mod_value, SocialEffects[k].set1)) {
-                        effect->values_[k] += value;
+                        SocialCategories[i].model_effect[j].values_[k] += value;
                     }
                 }
             }
