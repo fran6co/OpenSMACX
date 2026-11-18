@@ -26,11 +26,9 @@
 #include "graphicwin.h"
 #include "scroll.h"
 #include "stringstruct.h"
-// Dependencies retain their ordinary compiler context. Parse only StringBox
-// with frame pointers to reproduce its generated deleting entry in this TU.
-#pragma optimize("y", off)
+// ~StringBox 0x004325C0 and its deleting entry 0x00432770 are copies emitted
+// by /Oy- game units (datalink.cpp, maininterface.cpp: compile_context).
 #include "stringbox.h"
-#pragma optimize("", on)
 #include <cstring>
 
 // The StringBox scroll-in-progress hook is Win slot 48. Use the real

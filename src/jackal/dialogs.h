@@ -163,12 +163,9 @@ class Dialogs : public ListBox,
 };
 
 #ifdef DIALOGS_DTOR_INLINE
-// The image's copy keeps an ebp frame (its emitting unit was /Oy-).
-// WORKAROUND(inline): dialogs.cpp hosts the measured copy under /Oy, so the
-// pragma restores that frame; expansions follow each caller's options.
-#pragma optimize("y", off)
+// The image's copy keeps an ebp frame: its emitting unit was /Oy- (the
+// marker is measured in basewin.cpp, compile_context).
 inline Dialogs::~Dialogs() { close(); }
-#pragma optimize("", on)
 #endif
 
 static_assert(sizeof(Dialogs) == 0xC94,

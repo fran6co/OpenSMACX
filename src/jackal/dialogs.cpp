@@ -10,9 +10,7 @@
 #include "graphicwin.h"
 #include <new>
 #include <stddef.h>
-#pragma optimize("y", off)
 #include "radiobutton.h"  // RadioButton::close (source-owned)
-#pragma optimize("", on)
 #include "dialogs.h"
 #include "scroll.h"
 #include <cstring>

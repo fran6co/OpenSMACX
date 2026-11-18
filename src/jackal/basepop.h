@@ -807,16 +807,12 @@ class BasePop : public GraphicWin {
 #ifdef POPUP_WRAPPERS_INLINE
 inline int BasePop::exec() { return exec(0, nullptr); }
 // The image's out-of-line copies 0x00558FC0/0x00558FE0 were emitted by
-// faction.cpp, a /Oy- unit, and keep its frame.
-// WORKAROUND(inline): basepop.cpp hosts their measured copies under /Oy, so
-// the pragma restores the emitting unit's frame; expansions follow each
-// caller's own options.
-#pragma optimize("y", off)
+// faction.cpp, a /Oy- unit, and keep its frame; their markers are measured
+// there (compile_context).
 inline int BasePop::exec(int (__cdecl *callback)()) { return exec(0, callback); }
 inline int BasePop::item(char *text, int index) {
   return dialogs_.Dialogs::item(text, index);
 }
-#pragma optimize("", on)
 #endif
 
 
