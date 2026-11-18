@@ -3932,9 +3932,7 @@ extern uint32_t FactionDiplomacyFlags[MaxPlayerNum];
 // (dialogs.h); control_turn's final teardown expands it (0x00528BC7..0x00528CD3).
 // Defined here rather than through DIALOGS_DTOR_INLINE so the unit's earlier
 // functions keep their code (faction_upkeep's add flips with the header body).
-#pragma optimize("y", off)
 inline Dialogs::~Dialogs() { close(); }
-#pragma optimize("", on)
 
 // save_game is declared by the real game owner header.
 void __cdecl crash_landing(int faction_id);

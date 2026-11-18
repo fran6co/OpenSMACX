@@ -940,7 +940,6 @@ void MonuWin::on_left_click(int x, int y) {
 // ORIGINAL: 0x00476850 ?on_mouse_move@MonuWin@@QAEXHH@Z 0x00476850-0x004769A9 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00476850; retired seed provenance git:d8200f17:src/recovered/units/00476850.cpp; original spans and historical lessons retained.", "image:477C80/477B10 member order and36DC extent; primary66C880 slots12/17/19/25/44.", "image:476A50 binds singleton7F9F58 and independent count7FD634; Player59C and MonumentFaction4F4 strides.", "image:4737EE..475E58 localized owner/grammar cases; 472230/4736E0 resource, clipping, sprite and Spot accesses."], "reason": "Genuine GraphicWin-derived MonuWin owner with actual FlatButton/Spot/Buffer/Sprite members, real callback slots and automatic lifetimes; localized parser owner and grammar inputs follow the original branches rather than current-faction stand-ins."}
 // symbol    ?on_mouse_move@MonuWin@@UAEXHH@Z
-#pragma optimize("y", off)
 void MonuWin::on_mouse_move(int x, int y) {
   if (selection_pending_ != 0) {
     return;
@@ -978,7 +977,6 @@ void MonuWin::on_mouse_move(int x, int y) {
   selected_monument_type_ = y;
   soft_update();
 }
-#pragma optimize("", on)
 
 // ORIGINAL: 0x004769B0 ?on_button_clicked@MonuWin@@QAEXH@Z 0x004769B0-0x004769F7 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x004769B0; retired seed provenance git:d8200f17:src/recovered/units/004769b0.cpp; original spans and historical lessons retained.", "image:477C80/477B10 member order and36DC extent; primary66C880 slots12/17/19/25/44.", "image:476A50 binds singleton7F9F58 and independent count7FD634; Player59C and MonumentFaction4F4 strides.", "image:4737EE..475E58 localized owner/grammar cases; 472230/4736E0 resource, clipping, sprite and Spot accesses."], "reason": "Genuine GraphicWin-derived MonuWin owner with actual FlatButton/Spot/Buffer/Sprite members, real callback slots and automatic lifetimes; localized parser owner and grammar inputs follow the original branches rather than current-faction stand-ins."}

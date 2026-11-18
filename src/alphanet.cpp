@@ -426,11 +426,9 @@ int AlphaNet::setup(int option) {
 
 // Defined in this TU: Net::choose_service (0x00630D70) never expands it,
 // while pick_service expands its final teardown.
-#pragma optimize("y", off)
 ServiceList::~ServiceList() {
     close();
 }
-#pragma optimize("", on)
 
 // Drain for this unit's explicit callers (see alphanet.h); the image's copy
 // is the linker-folded StringStruct body at 0x00402970. Defined after join

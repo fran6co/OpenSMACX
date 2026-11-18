@@ -556,7 +556,6 @@ Purpose: The full builder every xpops wrapper funnels into. When the label
 Return Value: whatever the shared pop builder returns
 Status: Complete
 */
-#pragma optimize("y", off)
 int __cdecl X_pop(char *caption, const char *label, int a3, char *a4, int a5,
                   int (__cdecl *callback)()) {
 // RECOVERY_OBJECT: v1 0x00691C80 _?XPopModCheckString2Text@?1??X_pop@@YAHPADPBDH0HP6AHXZ@Z@4QBDB
@@ -607,7 +606,6 @@ int __cdecl X_pop(char *caption, const char *label, int a3, char *a4, int a5,
     }
     return pop_full(caption, label2, a3, a4, a5, callback);
 }
-#pragma optimize("", on)
 
 /*
 Purpose: The two-argument popup form: caption from the shared buffer, no

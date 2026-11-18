@@ -3743,7 +3743,6 @@ int Midi::set_tempo(unsigned long a1) {
     }
     return 0x14;
 }
-#pragma optimize("y", off)
 
 /*
 Purpose: Load the MIDI from a caller-supplied filename. With no wrapped
@@ -3814,7 +3813,6 @@ int Midi::load(const char *a1) {
     }
     return Sound::load(a1);
 }
-#pragma optimize("", on)
 
 /*
 Purpose: Load the MIDI from its remembered filename. With no wrapped
@@ -4573,7 +4571,6 @@ Verification note: the base-level constructor at 0x004C75B0 is byte-identical
 Ambience::Ambience() {
     set_type(5);
 }
-#pragma optimize("y", off)
 
 // ORIGINAL: 0x004C8530 ?load@Ambience@@QAEHPBD@Z 0x004C8530-0x004C85EF FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:291c01ea:src/unrecovered/004c8530.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
@@ -4596,7 +4593,6 @@ int Ambience::load(const char *filename) {
     static_cast<Midi *>(device_)->set_mode(field_54_ & 1);
     return Sound::load(found);
 }
-#pragma optimize("", on)
 
 // ORIGINAL: 0x004C85F0 ?unload@Ambience@@QAEXXZ 0x004C85F0-0x004C861C FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:291c01ea:src/recovered/units/004c85f0.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}

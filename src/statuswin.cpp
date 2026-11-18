@@ -1556,7 +1556,6 @@ void StatusWin::on_left_click(int x, int y) {
 
 // ORIGINAL: 0x004B4A20 ?set_title@StatusWin@@QAEXH@Z 0x004B4A20-0x004B4BE3 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004b4a20.cpp", "StringTemp, label_get and vehicle/console declarations in src/", "StatusWin tile members in src/statuswin.h"], "reason": "Recover title assembly using source-owned string, label, console and vehicle state."}
-#pragma optimize("y", off)
 void StatusWin::set_title(int title_id) {
     const unsigned int flags = static_cast<unsigned int>(title_id);
     StringTemp[0] = '\0';
@@ -1602,7 +1601,6 @@ void StatusWin::set_title(int title_id) {
                 ConsoleGlobal.cursor_active_ == 0, ConsoleGlobal.cursor_active_);
     }
 }
-#pragma optimize("", on)
 
 // ORIGINAL: 0x004B4970 ?say_orders@@YAXH@Z 0x004B4970-0x004B4987 BYTE_EXACT
 // LEVER: 2026-09-05 homed from 004b4970.cpp. StringTemp (strings.h,

@@ -423,7 +423,6 @@ void BattleWin::pulse_timer() {
 // RECOVERY_BINDING: v1 {"evidence": ["pinned image 4219E0..421B1F complete instructions", "historical seed src/recovered/units/004219e0.cpp", "421B0D stores the incoming receiver at 7AE818, slot 10 of InterfaceRegistry at 7AE7F0; BattleWin's SubInterface base is at offset zero"], "reason": "Initialize the genuine BattleWin owner, preserving rectangle arithmetic and automatic Buffer lifetime, then publish its typed interface pointer in the shared registry. The old independent receiver-slot interpretation was incorrect; its original identity is retained beside InterfaceRegistry."}
 // kind      game
 // symbol    ?init@BattleWin@@QAEXXZ
-#pragma optimize("y", off)
 void BattleWin::init() {
     // The original constructs and tears down this temporary Buffer even though
     // it does not use it. Keep that lifetime visible to C++ and to unwind.
@@ -461,7 +460,6 @@ void BattleWin::init() {
 
     InterfaceRegistry[10] = this;
 }
-#pragma optimize("", on)
 
 // ORIGINAL: 0x00421B40 ?stop_timer@BattleWin@@QAEXXZ 0x00421B40-0x00421B48 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["The image's 0x00421B40 adds eight to the receiver and tail-jumps to Time::stop.", "BattleWin's constructor and destructor establish a real Time member at +8."], "reason": "Home the timer stop through BattleWin's typed Time member."}

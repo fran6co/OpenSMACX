@@ -2044,7 +2044,6 @@ Purpose: Check who owns a tile. Optional parameter to get closest base.
 Return Value: Faction id of the territory's owner or -1 if no owner or unknown faction
 Status: Complete
 */
-#pragma optimize("y", off)
 int __cdecl whose_territory(int faction_id, int x, int y, int *base_id, 
                             BOOL ignore_comm) {
     int owner = (int)map_loc(x, y)->territory;
@@ -2068,7 +2067,6 @@ int __cdecl whose_territory(int faction_id, int x, int y, int *base_id,
     }
     return owner;
 }
-#pragma optimize("", on)
 
 /*
 Purpose: Find the best specialist available to the current base with more weight placed on psych.

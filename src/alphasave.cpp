@@ -93,7 +93,6 @@ AlphaSave *ActiveAlphaSave = 0;
 // The selected row lives in CurrentListBoxDraw's Dialog virtual base.
 // Two tile calls differing only in the mask: VC6 hoists their shared pushes
 // and branches just before the first argument, as the image does.
-#pragma optimize("y", off)
 void __cdecl alpha_save_filebox_draw(GraphicWin *window, int item_kind,
                                     int item_id, int x, int y, int height) {
     if (CurrentListBoxDraw == 0 || ActiveAlphaSave == 0) {
@@ -108,7 +107,6 @@ void __cdecl alpha_save_filebox_draw(GraphicWin *window, int item_kind,
     }
     FileWin::filebox_draw(window, item_kind, item_id, x, y, height);
 }
-#pragma optimize("", on)
 
 void __cdecl scroll_hide(GraphicWin *window, Scroll *scroll);
 void __cdecl scroll_show(GraphicWin *window, Scroll *scroll);

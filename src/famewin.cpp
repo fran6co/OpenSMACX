@@ -221,7 +221,6 @@ int FameWin::on_key_click(int, int code) {
 // ORIGINAL: 0x00448400 ?init@FameWin@@QAEHXZ 0x00448400-0x00448D60;0x00654E90-0x00654EA5 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00448400.cpp", "Pinned original owner review: original clip resets and absent-record branches, CharUpperA import, difficulty-label capitalization and exact demote tail copying."], "reason": "Recover FameWin owner behavior through existing GraphicWin/Buffer bases, owned buttons and sprites, and typed HallOfFame/Player records; retain historical seed identity and extents without a measurement claim."}
 // TRIED: full transcription landed (MISMATCH #1, no SEH frame reproduced). Used a plain local `Buffer localBuf;` since ~Buffer() is declared here (unlike the sibling StringStruct cases) - RAII reproduces the real destructor call on every return path, matching the disassembly exactly. Did not use the now-retired hypothesis umbrella's FameWin field names per the brief's warning; every FameWin/BaseButton field access is a raw self+offset cast, cross-checked against the raw bytes (not Ghidra) for both BaseButton::init 8-arg calls.
-#pragma optimize("y", off)  // the image keeps an ebp frame (0x00448400)
 int FameWin::init() {
   Buffer icon_sheet;
   field_A1C_ = 800;
@@ -351,7 +350,6 @@ failed:
   fill(0);
   return 0;
 }
-#pragma optimize("", on)
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0044A640 ?on_group_clicked@FameWin@@QAEXHHH@Z 0x0044A640-0x0044A655 BYTE_EXACT
@@ -393,7 +391,6 @@ void FameWin::on_button_clicked(int button_id) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00448d90.cpp"], "reason": "Product definition uses the typed FameWin ownership model while retaining the historical seed and its recovery obligations."}
 // TRIED: literal register-machine transliteration (pseudo-regs eax..edi, an EBP(n)-mapped scratch buffer for the small ebp-relative locals, a real local `Buffer localBuf` for the Buffer ctor/load_pcx/copy/dtor, and `canvas = (Buffer*)(self+0x444)` for FameWin's embedded canvas Buffer, goto per basic block). VCall::slot001 retyped to take an int (matches its `push 0` call site) - only its signature changed, per the emitter's own note that this is free to set. Repeated write_l/write_right_l/wrap_cent+wrap_height call sites collapsed the register shuffle to the four underlying FameWin fields (self+0xa14/0xa18/0xa1c/0xa44) directly, since the two are provably the same value at the call - verified against several call sites' actual push order before simplifying. One `fill(...)` call (population-graph highlight box) has approximated arguments: its inputs are two text_width() results left on the stack by a deferred-cleanup (no `add esp` between calls) sequence that a later `fill`'s five thiscall args partly reuse, which was not fully reconstructed. Covers the full control-flow graph and call order otherwise (4843 rebuilt vs 5917 original bytes; sim 0.50 best flag set).
 // symbol    ?on_redraw@FameWin@@UAEXXZ
-#pragma optimize("y", off)  // the image keeps an ebp frame (0x00448D90)
 void FameWin::on_redraw() {
   int banner_drawn = 0;
   Buffer portrait;
@@ -688,7 +685,6 @@ void FameWin::on_redraw() {
     offset_rect(cell, 0, rect_height(&ranks_rect_) + 6);
   }
 }
-#pragma optimize("", on)
 
 // ORIGINAL: 0x0044A500 ?on_left_click@FameWin@@QAEXHH@Z 0x0044A500-0x0044A563 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/0044a500.cpp", "Pinned original owner review: original clip resets and absent-record branches, CharUpperA import, difficulty-label capitalization and exact demote tail copying."], "reason": "Recover FameWin owner behavior through existing GraphicWin/Buffer bases, owned buttons and sprites, and typed HallOfFame/Player records; retain historical seed identity and extents without a measurement claim. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
@@ -709,7 +705,6 @@ void FameWin::on_left_click(int x, int y) {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0044AC10 ?demote@FameWin@@QAEXH@Z 0x0044AC10-0x0044AE42;0x00654EBA-0x00654ECF FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0044ac10.cpp", "Pinned original owner review: original clip resets and absent-record branches, CharUpperA import, difficulty-label capitalization and exact demote tail copying."], "reason": "Recover FameWin owner behavior through existing GraphicWin/Buffer bases, owned buttons and sprites, and typed HallOfFame/Player records; retain historical seed identity and extents without a measurement claim."}
-#pragma optimize("y", off)
 void FameWin::demote(int rank) {
   Buffer buffer;
   if (rank >= 4) return;
@@ -755,14 +750,12 @@ void FameWin::demote(int rank) {
     destination.unknown_6C[i] = source.unknown_6C[i];
   }
 }
-#pragma optimize("", on)
 
 // ORIGINAL: 0x0044A660 ?try_to_add_me@FameWin@@QAEXXZ 0x0044A660-0x0044AC05 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0044a660.cpp", "Pinned original owner review: original clip resets and absent-record branches, CharUpperA import, difficulty-label capitalization and exact demote tail copying."], "reason": "Recover FameWin owner behavior through existing GraphicWin/Buffer bases, owned buttons and sprites, and typed HallOfFame/Player records; retain historical seed identity and extents without a measurement claim."}
 // The image re-reads factionID_ for every lookup and runs the award scans as
 // three separate passes sharing one counter. Each name copy reads factionID_
 // once into a block-local index (the image recomputes the row per block).
-#pragma optimize("y", off)
 void FameWin::try_to_add_me() {
   // Native 0x44A666/0x44A922 test game_state_ (0x9A64C0) throughout.
   if ((GameDataStateStorage.fields_.game_state_ & 0x20) != 0) return;
@@ -910,7 +903,6 @@ void FameWin::try_to_add_me() {
   strcat(StringTemp, ".pcx");
   WorldClimateWorldWin.write_pcx(StringTemp);
 }
-#pragma optimize("", on)
 
 // Native constructor 0x0044B200 installs the Win and Buffer views at
 // complete-object +0 and +0x444. Table slots select the mapped FameWin

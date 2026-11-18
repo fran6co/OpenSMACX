@@ -144,7 +144,6 @@ Purpose: The buffered writer's re-entry half, run as the embedded Buffer's
 Return Value: the x coordinate the last write left off at
 Status: Coverage transcription - unclaimed body
 */
-#pragma optimize("y", off)
 int __cdecl UV2Player::writer_redirect(LPSTR text, int x_coord, int y_coord,
                                        int row_count) {
     UV2Player *const instance = UV2PlayerActive;
@@ -168,7 +167,6 @@ int __cdecl UV2Player::writer_redirect(LPSTR text, int x_coord, int y_coord,
     }
     return 0;
 }
-#pragma optimize("", on)
 
 
 /*
@@ -433,7 +431,6 @@ void UV2Player::show_post_movie_text() {
 // Drop this definition into src/uv2player.cpp after reviewing the companion
 // evidence report and the MediaDescriptor +0xB0 union proposal.
 
-#pragma optimize("y", off)
 int UV2Player::exec(char *movie_file, int width, int height, int flags) {
     if (movie_file == 0) {
         return 1;
@@ -548,6 +545,5 @@ int UV2Player::exec(char *movie_file, int width, int height, int flags) {
     }
     return 0;
 }
-#pragma optimize("", on)
 
 // RECOVERY_IMPORT: v1 __imp__GetMessageA@16 USER32.dll name:GetMessageA

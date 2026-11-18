@@ -98,7 +98,6 @@ void WorldWin::init(int reset_map) {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004C3AB0 ?right_menu@WorldWin@@QAEXHH@Z 0x004C3AB0-0x004C3D0C;0x00659E80-0x00659E95 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004c3ab0.cpp and original 0x004C3AB0 disassembly; PullDown::get_selected_id owns 0xA20 item indexing."], "reason": "Home the retained world context menu over PullDown and owned map windows, preserving the EH cleanup span."}
-#pragma optimize("y", off)
 void WorldWin::right_menu(int x, int y) {
     PullDown menu;
     int tile_x;
@@ -145,12 +144,10 @@ void WorldWin::right_menu(int x, int y) {
         break;
     }
 }
-#pragma optimize("", on)
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004C3D40 ?click@WorldWin@@QAEXHHHH@Z 0x004C3D40-0x004C3E48 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004c3d40.cpp; original disassembly 0x004C3D40-0x004C3E48; BaseWin+0x40B28 is 0x006E8150."], "reason": "Home the shared world click handler using owned tutorial state and map windows."}
-#pragma optimize("y", off)
 void WorldWin::click(int x, int y, int button, int is_double) {
     TutWinBaseWindow.cancel_zoom_wait();
     if (button != 0) {
@@ -176,7 +173,6 @@ void WorldWin::click(int x, int y, int button, int is_double) {
         WorldClimateWorldWin.Win::hide();
     }
 }
-#pragma optimize("", on)
 
 // 0x004C4230 reads this flag and stores one/zero around the overview rebuild.
 // Its address is adjacent to, but distinct from, MapInputEnabled at 0x0090D938.
@@ -397,7 +393,6 @@ void WorldWin::follow_center(int xCoord, int yCoord) {
 // frame retention and the right clip-test polarity were sensitive. Its last
 // mismatch was spill/register scheduling. This typed owner body is a fresh
 // structural expression, not a claim that the old attempt's bytes match.
-#pragma optimize("y", off)
 int WorldWin::pixel_to_tile(int pixel_x, int pixel_y, int *tile_x, int *tile_y) {
     const int origin_x = field_239C4_;
     int width;
@@ -442,14 +437,12 @@ int WorldWin::pixel_to_tile(int pixel_x, int pixel_y, int *tile_x, int *tile_y) 
     }
     return 1;
 }
-#pragma optimize("", on)
 
 // ORIGINAL: 0x004C44E0 ?tile_to_pixel@WorldWin@@QAEHHHPAH0@Z 0x004C44E0-0x004C45D2 BYTE_EXACT
 // TRIED: nested `if`/`else if` clamp plus a single `||`-chained bounds check (`if (row<0 || row>=numRows || a1<0 || a1>=numCols) return 1;`) matches the prologue's push/pop set exactly (fixed by caching `numCols` in a local reused for BOTH final `idiv`s, matching `ebx` being loaded once and never reloaded) but stalls at 258B vs 242B: the last bounds check (`a1 < numCols`) always compiles to the INVERSE polarity (`jge`) of the original's `jl`, regardless of whether it is spelled as part of one big `||`, as a chain of nested positive `if`s, or with explicit `goto fail;` for the first three conditions - all three spellings produced byte-identical output, so the compiler's block layout here does not appear to be steerable from this function's own source text. Adding a `goto check_upper;` that skips the (proveably redundant) `row < 0` re-check on the zero-clamp path - mirroring the original's own `jmp` that skips exactly that check - got closest (240B vs 242B, divergence moves later) but the compiler then proves the SAME check dead on the OTHER path too (max-clamp / unclamped), deleting it where the original keeps it; splitting `row<0 || maxRow<0` into two independent `if`s so each one only proves ITS OWN half made this worse, not better. Best landed: the `goto check_upper` version. numCols is cached (`ebx`-shaped); numRows is cached for the bounds check (`edi`-shaped) but read fresh from `*g_00949874` for the final divisions, matching `idiv dword ptr [0x949874]` reloading rather than reusing a register.
 // compiler inverted the final upper-bound branch, and a goto attempt caused
 // a redundant lower-bound test to be optimized away. Kept as seed history;
 // the typed body below has not yet been byte-measured.
-#pragma optimize("y", off)
 int WorldWin::tile_to_pixel(int tile_x, int tile_y, int *pixel_x, int *pixel_y) {
     tile_x = wrap_map_x(tile_x);
     const int row = range(tile_y, 0, MapLatitudeBounds - 1);
@@ -471,11 +464,9 @@ int WorldWin::tile_to_pixel(int tile_x, int tile_y, int *pixel_x, int *pixel_y) 
                    MapLatitudeBounds;
     return 0;
 }
-#pragma optimize("", on)
 
 // ORIGINAL: 0x004C47F0 ?UNK3@WorldWin@@QAEXXZ 0x004C47F0-0x004C499C BYTE_EXACT
 // symbol    ?draw_viewport_outline@WorldWin@@QAEXXZ
-#pragma optimize("y", off)
 void WorldWin::draw_viewport_outline() {
     if (viewport_outline_enabled_ == 0) {
         return;
@@ -521,12 +512,10 @@ void WorldWin::draw_viewport_outline() {
     }
     Buffer::box(&rect, 0xFB, 0xFB);
 }
-#pragma optimize("", on)
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004C4630 ?draw_box@WorldWin@@QAEXXZ 0x004C4630-0x004C47E7 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004c4630.cpp; original 0x0093347C is ConsoleGlobal / MapWinTable[0] plus member offset 0x1DDCC."], "reason": "Home the selection outline over the primary MapWin member state and Buffer drawing."}
-#pragma optimize("y", off)
 void WorldWin::draw_box() {
     if (ConsoleGlobal.field_1DDCC_ == 0 ||
         ConsoleGlobal.field_1DDAC_ != 0 ||
@@ -566,7 +555,6 @@ void WorldWin::draw_box() {
     }
     Buffer::box(&rect, 0xFF, 0xFF);
 }
-#pragma optimize("", on)
 
 // The redraw rebuilds the owned MapWin and buffers according to field_239BC_.
 // All receiver offsets in the original are these declared subobjects.
@@ -641,7 +629,6 @@ void WorldWin::on_redraw() {
 
 // ORIGINAL: 0x004C4230 ?UNK2@WorldWin@@QAEXH@Z 0x004C4230-0x004C43F0 BYTE_EXACT
 // symbol    ?refresh_world_map@WorldWin@@QAEXH@Z
-#pragma optimize("y", off)
 void WorldWin::refresh_world_map(int resize_buffers) {
     if (WorldWinRebuildBusy != 0) {
         return;
@@ -680,7 +667,6 @@ void WorldWin::refresh_world_map(int resize_buffers) {
     clear_dirty();
     WorldWinRebuildBusy = 0;
 }
-#pragma optimize("", on)
 
 // ORIGINAL: 0x004C38E0 sub_4c38e0 0x004C38E0-0x004C3910 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:world-map-view-callbacks", "Pinned original004c38e0; ButtonGroup7CD12C = MainInterface7AE820 +1E878 +94; MapWinTable[1]=7D3C40; global WorldWin8E9F60", "historical seed:src/recovered/004c38e0.cpp"], "reason": "Recover the complete global map-view operation through actual source-owned button group and windows. This callback does not change WorldWin selection state; preserve the historical byte obligation independently of current matching."}

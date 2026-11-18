@@ -597,7 +597,6 @@ Return Value: 1 the cell was drawn or tiled, 0 the index was past the table
 Status: Coverage transcription - unclaimed body; historical seed at
         git:85463515:src/unrecovered/00433d60.cpp.
 */
-#pragma optimize("y", off)
 int SelectPartWin::draw_part(int a1, int a2) {
     if (a1 >= field_2B60_ && a1 < field_2B60_ + field_2B64_) {
         int top = (a1 - field_2B60_) / field_2B6C_ * 94 + 4;
@@ -639,7 +638,6 @@ int SelectPartWin::draw_part(int a1, int a2) {
     }
     return 1;
 }
-#pragma optimize("", on)
 
 /*
 Purpose: Draw one chassis entry's label and render: find the a1'th enabled
@@ -664,7 +662,6 @@ Return Value: 1 the entry was drawn, 0 the index ran past the table
 Status: Coverage transcription - unclaimed body; historical seed at
         git:85463515:src/unrecovered/004329b0.cpp.
 */
-#pragma optimize("y", off)
 int SelectPartWin::draw_chassis(int a1, RECT *a2, int a3) {
     int has_tech_failed = 0;
     int valid_count = 0;
@@ -721,7 +718,6 @@ int SelectPartWin::draw_chassis(int a1, RECT *a2, int a3) {
     }
     return !has_tech_failed;
 }
-#pragma optimize("", on)
 
 // The reactor walk runs on veh.h's Reactor[] itself: the enable test reads
 // Reactor[i].preq_tech, and the tech-id and name reads sit one record back
@@ -751,7 +747,6 @@ Return Value: 1 the entry was drawn, 0 the index ran past the table
 Status: Coverage transcription - unclaimed body; historical seed at
         git:85463515:src/unrecovered/00433520.cpp.
 */
-#pragma optimize("y", off)
 int SelectPartWin::draw_reactor(int a1, RECT *a2, int a3) {
     int valid_count = 0;
     int has_tech_failed = 0;
@@ -808,7 +803,6 @@ int SelectPartWin::draw_reactor(int a1, RECT *a2, int a3) {
     }
     return !has_tech_failed;
 }
-#pragma optimize("", on)
 
 // Armor availability is RulesChassis::missile. The armor prerequisite walk
 // uses the existing 14-record Armor[] owner and its preq_tech member.
@@ -835,7 +829,6 @@ Return Value: 1 the entry was drawn, 0 the index ran past the table
 Status: Coverage transcription - unclaimed body; historical seed at
         git:85463515:src/unrecovered/00433170.cpp.
 */
-#pragma optimize("y", off)
 int SelectPartWin::draw_armor(int a1, RECT *a2, int a3) {
     int has_tech_failed = 0;
     int slot;
@@ -915,7 +908,6 @@ int SelectPartWin::draw_armor(int a1, RECT *a2, int a3) {
     }
     return !has_tech_failed;
 }
-#pragma optimize("", on)
 
 // Pinned 0x00432E63 uses MOVSX to read the signed byte at 0x009AB9CE.
 // VehPrototypes starts at 0x009AB868 with 0x34-byte rows; +6*0x34+0x2E
@@ -946,7 +938,6 @@ Return Value: 1 the entry was drawn, 0 the index ran past the table
 Status: Coverage transcription - unclaimed body; historical seed at
         git:85463515:src/unrecovered/00432cc0.cpp.
 */
-#pragma optimize("y", off)
 int SelectPartWin::draw_weapon(int a1, RECT *a2, int a3) {
     int has_tech_failed = 0;
     int valid_count = 0;
@@ -1064,7 +1055,6 @@ int SelectPartWin::draw_weapon(int a1, RECT *a2, int a3) {
     }
     return !has_tech_failed;
 }
-#pragma optimize("", on)
 
 // These mappings describe the compiler-generated deletion and secondary-base
 // adjustment for the real class above; no handwritten thunk is installed.

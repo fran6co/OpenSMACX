@@ -1118,7 +1118,6 @@ int Path::move(int veh_id, int faction_id) {
  Return Value: n/a
  Status: Complete
 */
-#pragma optimize("y", off)
 void Path::make_abstract() {
     for (int y = 0; y < (int)MapAbstractLatBounds; y++) {
         for (int x = y & 1; x < (int)MapAbstractLongBounds; x += 2) {
@@ -1135,7 +1134,6 @@ void Path::make_abstract() {
         }
     }
 }
-#pragma optimize("", on)
 
 /*
  Purpose: Merge the old region into the new region.
@@ -1226,7 +1224,6 @@ void Path::merge(int region_old, int region_new) {
 //   test after the early return but keeps the setl), the cursors in the
 //   parameters, and map.h's flat-first wrap.
 
-#pragma optimize("y", off)
 void Path::territory(int x, int y, int UNUSED(region), int faction_id) {
     BOOL is_ocean_tile = is_ocean(x, y);
     if (is_ocean_tile) {
@@ -1255,7 +1252,6 @@ void Path::territory(int x, int y, int UNUSED(region), int faction_id) {
     } while (index2_ && index1_ != index2_);
     do_all_non_input();
 }
-#pragma optimize("", on)
 
 /*
  Purpose: Populate the continent and path table for the specified tile and region.
@@ -1295,7 +1291,6 @@ void Path::territory(int x, int y, int UNUSED(region), int faction_id) {
 */
 // LEVER: ebp frame; the cursor reuses parameter y; the fresh-water test
 //   re-reads is_ocean() rather than the cached comparison.
-#pragma optimize("y", off)
 void Path::continent(int x, int y, int region) {
     Continents[region].tile_count = 0;
     int fresh_water_count = 0;
@@ -1340,7 +1335,6 @@ void Path::continent(int x, int y, int region) {
     }
     do_all_non_input();
 }
-#pragma optimize("", on)
 
 /*
  Purpose: Populate and set up all the continents and path tables.
@@ -1393,7 +1387,6 @@ void Path::continent(int x, int y, int region) {
 
 // LEVER: ebp frame; function-scope cursors and bitmask outputs fix the
 //   stack slots; the pole/row bounds are re-read, not cached.
-#pragma optimize("y", off)
 void Path::continents() {
     int offset;
     int mask;
@@ -1491,7 +1484,6 @@ void Path::continents() {
     make_abstract();
     do_all_non_input();
 }
-#pragma optimize("", on)
 
 /*
  Purpose: TBD

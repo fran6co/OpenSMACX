@@ -295,7 +295,6 @@ Purpose: Lock both of a slot's square entries in one call. Refuses when another
 Return Value: 1 on refusal or lock failure, 0 on success
 Status: Complete
 */
-#pragma optimize("y", off)
 int Lock::lock(int slot, int flags, int a3, int a4, int a5, int a6, int a7) {
     // Refuse when another owner already holds the global lock.
     if (field_E0_ != 0 && field_E0_ != static_cast<uint32_t>(slot)) {
@@ -349,4 +348,3 @@ failed:
     }
     return 0;
 }
-#pragma optimize("", on)

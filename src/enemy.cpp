@@ -2106,7 +2106,6 @@ Bug note: both fungus-removal paths read Terraforming[TERRA_REMOVE_FUNGUS].preq_
 terraform.txt gives Remove Fungus the same technology for both, so it is invisible in a default
 game and visible in a mod that splits them. Transcribed as written.
 */
-#pragma optimize("y", off)
 int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int base_id) {
     Map *tile = map_loc(x, y);
     if (map_loc(x, y)->bit & BIT_BASE_IN_TILE) {
@@ -2463,7 +2462,6 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
     }
     return result;
 }
-#pragma optimize("", on)
 
 /*
 Purpose: Weight the raw odds of an attack by how badly the faction's AI wants that particular

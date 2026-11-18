@@ -69,7 +69,6 @@ Status: Complete
 // `call rel32`; the two images are far apart, so the shared reconstruction TU
 // is not original. Without the pragma /Ob2 folds this body into parse_it.
 #pragma auto_inline(off)
-#pragma optimize("y", off)
 #pragma inline_depth(0)
 int __cdecl X_text_open(char *src_file_id, const char *section_id) {
     if (strcmp(src_file_id, ScriptPopupFile) != 0) { return text_open(src_file_id, section_id); }
@@ -80,5 +79,4 @@ int __cdecl X_text_open(char *src_file_id, const char *section_id) {
     return text_open(src_file_id, section_id);
 }
 #pragma inline_depth(8)
-#pragma optimize("y", on)
 #pragma auto_inline(on)

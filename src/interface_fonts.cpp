@@ -584,7 +584,6 @@ void GraphicWin::j_close() {
 // ORIGINAL: 0x00589560 sub_589560 0x00589560-0x00589748 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00589560-0x00589748 reads receiver fields and Popup at +0xA3C, builds the faction profile content and finishes through the update slot", "source:src/faction.h Player formal_name_faction is +0x384; source:src/game.cpp owns InterfaceBoxStyles[51], populated by load_box_sprites; 0x78D690 is entry 9 at 0x28 stride"], "reason": "Carry the complete seed identity and body span into the typed show_profile member, preserving fresh owner-field reads across callback-capable Popup and SpriteBox operations. The class role is provisional and does not claim original identity or allocation registration."}
 // symbol    ?show_profile@FactionProfileWin@@QAEXXZ
-#pragma optimize("y", off)
 void FactionProfileWin::show_profile() {
   RECT local_bounds = clip_rect();
   box_sprite(&local_bounds, &InterfaceBoxStyles[9]);
@@ -627,7 +626,6 @@ void FactionProfileWin::show_profile() {
 
   on_update();
 }
-#pragma optimize("", on)
 
 // ORIGINAL: 0x00589750 sub_589750 0x00589750-0x00589760 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:0x00589750-0x00589760 stores its argument at receiver+0xA34", "source:src/factionprofilewin.h RECOVERY_MEMBER faction_id_ at +0xA34, anchored by 0x00589760", "pinned/current owner:0x00589760 initialize writes faction_id_ and profile_mode_ at +0xA34/+0xA38"], "reason": "Carry the one-word receiver store into the existing FactionProfileWin member that owns the anchored faction_id_ field; class role and method spelling remain provisional."}
@@ -640,7 +638,6 @@ void FactionProfileWin::set_faction_id(int faction_id) {
 // ORIGINAL: 0x00589760 sub_589760 0x00589760-0x0058986A;0x00660240-0x00660255 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00589760-0x0058986A stores the arguments at receiver+0xA34/+0xA38, frame fields and RECT, then calls GraphicWin initialization/fill and the slot-1 show dispatch", "image:0x00660240-0x00660255 is the local Buffer unwind funclet and remains the stack lifetime in the source body"], "reason": "Carry the complete seed identity and both image spans into the typed initialize member. FactionProfileWin remains a provisional role name; original class identity and allocation/caller registration are unproved."}
 // symbol    ?initialize@FactionProfileWin@@QAEXHH@Z
-#pragma optimize("y", off)
 void FactionProfileWin::initialize(int faction_id, int profile_mode) {
   Buffer local_buffer;
 
@@ -661,7 +658,6 @@ void FactionProfileWin::initialize(int faction_id, int profile_mode) {
   fill(9);
   show(0);
 }
-#pragma optimize("", on)
 
 
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====

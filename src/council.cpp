@@ -95,7 +95,6 @@ Return Value: 1 the council may be called, 0 not
 Status: Coverage transcription - unclaimed body, seed
         git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0052c670.cpp retained.
 */
-#pragma optimize("y", off)
 int __cdecl can_call_council(int faction_id, int announce) {
     if ((Players[faction_id].rule_flags & 0x80) != 0) {
         return 0;
@@ -183,7 +182,6 @@ int __cdecl can_call_council(int faction_id, int announce) {
         return 0;
     }
 }
-#pragma optimize("", on)
 
 /*
 Purpose: Score one council proposal for a faction: proposal 0 (propose
@@ -213,7 +211,6 @@ Status: Coverage transcription - unclaimed body; the seed
         git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0052be60.cpp is retained until this product
         definition measures fresh BYTE_EXACT.
 */
-#pragma optimize("y", off)
 int __cdecl council_get_vote(int faction, int proposal, int target_faction) {
     int result;
 
@@ -260,7 +257,6 @@ int __cdecl council_get_vote(int faction, int proposal, int target_faction) {
     }
     return result;
 }
-#pragma optimize("", on)
 
 // The leader proposals share this opening: a living, non-alien option that
 // fewer than two living factions outvote. The image keeps the count in the

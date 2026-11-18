@@ -417,7 +417,6 @@ void __cdecl sub_496610(int page) {
 // TRIED: MISMATCH #15 add/mov, table-index lea chain differs from the do/while division idiom form used
 // ORIGINAL: 0x00496670 ?quayle@@YAXH@Z 0x00496670-0x0049670F BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 00496670; retained seed src/unrecovered/00496670.cpp", "recovery/tasks/quaylewin-owner-coverage-wave.json", "QuayleWin constructor layout and virtual-slot evidence; fresh isolated build and host controls"], "reason": "Rehome the retained QuayleWin seed into its real GraphicWin owner with typed subobjects; preserve original spans and historical seed obligations."}
-#pragma optimize("y", off)
 void __cdecl quayle(int faction_id) {
   int rating = get_rating(faction_id, PlayersData[faction_id].unk_107);
   int rank = 0;
@@ -437,4 +436,3 @@ void __cdecl quayle(int faction_id) {
   Win &modal_window = QuayleWinGlobal;
   modal_window.set_modal(0, 0, 0);
 }
-#pragma optimize("", on)

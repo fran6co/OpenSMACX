@@ -66,7 +66,6 @@ Purpose: Register the multiplayer time-bonus hotspot and draw its caret markers.
 // SUPERSEDED_BINDING_HISTORY: v1 {"evidence": ["Original479270..47932C; retired seed git:ee30a69d:src/unrecovered/00479270.cpp records the same identity and spans.", "The receiver's Spot subobject at +0x28AC (spot.h's own add/3,2 overload) and the +0x444 Buffer (write_cent_l is buffer.h's own) carry the walk; the difficulty table is the 0x833-dword PlayerData stride faction.h pins, read at the +0x2054 record offset through the local-faction slot 0x00939284.", "The caret row is built into strings.h's StringTemp (0x009B86A0) from the one-space and caret .rdata strings exactly as the seed strcat-walks them."], "reason": "Coverage transcription of the multiplayer spot label with the receiver spelled explicitly because MultiWin has no header declaration yet."}
 Status: Coverage transcription - unclaimed body
 */
-#pragma optimize("y", off)
 void MultiWin::draw_time_bonus_markers(RECT *rect) {
     const int top = rect->top;
     const int height = rect->bottom - top;
@@ -87,7 +86,6 @@ void MultiWin::draw_time_bonus_markers(RECT *rect) {
         }
     }
 }
-#pragma optimize("", on)
 
 
 
@@ -115,7 +113,6 @@ void MultiWin::UNK2() {
 // ORIGINAL: 0x00478630 ?draw_player@MultiWin@@QAEXHHPAURECT@@@Z 0x00478630-0x00478BDB
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00478630.cpp", "src/multiwin.h", "src/faction.h", "src/maininterface.h", "historical/superseded rationale: The original row painter uses MultiWin's owned Spot, sprite array and first font, typed faction names and treaties, and shared chat colors. Network turn-state suffixes remain pending their global owners.", "pinned 0x478630..0x478BDB: icon variant 0/1/2 selection from MultiWindowContactStatusMask and channels_[1].trailing_words_[6], with vertical centering always using sprites2_[0].height()", "pinned 0x478851..0x478919 preserves the separate offline treaty route and tests target Players[faction_id].rule_flags RFLAG_AQUATIC for the 0x10 treaty", "pinned 0x478919..0x478B17 uses typed GameDataStateWindow, NetDaemonNet primary/channel/lock state, NetUpkeepPhase, and a captured channel-0 selection word; lock state is reread after PlayerLock::active()", "pinned literals 0x686788/78C/790/794/798/79C/7A0 decode as *, (*), (+), (-), (*), (?), (@)"], "reason": "Recover the complete original MultiWin row painter through its owned sprite/hotspot, player, game, network and string-table state. Keep the offline treaty branch distinct from the multiplayer status suffix and its later control-turn treaty gate; preserve original callback and repeated-read ordering."}
 // symbol    ?draw_player@MultiWin@@QAEXHHPAUtagRECT@@@Z
-#pragma optimize("y", off)
 void MultiWin::draw_player(int faction_id, int row, RECT *bounds) {
   char number[80];
   set_font(&font1_, 0, 0, 0);
@@ -262,7 +259,6 @@ void MultiWin::draw_player(int faction_id, int row, RECT *bounds) {
     write_right_l(StringTemp, &text_rect);
   }
 }
-#pragma optimize("", on)
 
 // ORIGINAL: 0x00478BE0 ?draw_time@MultiWin@@QAEXPAURECT@@H@Z 0x00478BE0-0x00479269
 // RECOVERY_BINDING: v1 {"evidence": ["historical rationale retained verbatim: Recover the clock region's owned hotspot, font and visible turn-state label; the countdown value and timer side effects await binding of the original shared time-control globals. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations.", "pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: draw_time performs the timer, council, multiplayer-label, warning, timeout, wave and FX paths over 0x00478BE0..0x00479269.", "source owners: existing NetDaemonWaitTicks, TurnRedrawPending, CouncilWindow fields +0xA24/+0xA3C/+0xA54, NetDaemonProgressInterval, NetDaemonNet lock-state words, Console, GameDataStateStorage, NetMsg and FX APIs.", "the 0x007FFF78 and 0x007FFF7C source objects retain separate original dword spans; no larger allocation or semantic-name claim."], "reason": "Recover the original clock, turn-control, countdown and timeout paths through existing typed state plus the shared NetDaemonProgressInterval and two original-span MultiWin state words. This updates the superseded scaffold rationale only; it grants no BYTE_EXACT or SEMANTIC claim, matching/restoration result, native build result or whole-project acceptance."}
@@ -659,7 +655,6 @@ void MultiWin::on_button_clicked(int button_id) {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00479970 ?show@MultiWin@@QAEXXZ 0x00479970-0x00479BF1;0x006563F5-0x0065640A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00479970.cpp; src/multiwin.h; src/faction.h; src/console.h; src/wave.cpp"], "reason": "The original show uses MultiWin's owned controls and GraphicWin buffer, the local Console faction, Player rule flags, process window animation state, and the source-owned wave, screen, visibility and frame-delay objects."}
-#pragma optimize("y", off)
 void MultiWin::show() {
   Buffer background;
   if (IsMultiplayerNet == 0 && panel_open_ != 0) return;
@@ -710,7 +705,6 @@ void MultiWin::show() {
   if (GameDataStateStorage.fields_.game_preferences_ & 0x400) g_MULTIWIN_WAVE.fade(50);
   if (IsMultiplayerNet == 0) Win::show(3);
 }
-#pragma optimize("", on)
 
 // 0x00479C00. The Win slot-2 override hides the multi-player panel, restores
 // its background and runs the original optional slide-out animation.
@@ -718,7 +712,6 @@ void MultiWin::show() {
 // ORIGINAL: 0x00479C00 ?hide@MultiWin@@QAEXXZ 0x00479C00-0x00479F8E;0x0065640A-0x0065641F BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00479c00.cpp; src/win.h; src/buffer.h; src/wave.cpp"], "reason": "The original panel teardown uses its real GraphicWin Buffer extent, owned animation buffer and sprites, typed console/screen globals, and Win/GraphicWin callbacks. The retained seed preserves the historical byte obligation until remeasurement."}
 // symbol    ?hide@MultiWin@@UAEXXZ
-#pragma optimize("y", off)
 void MultiWin::hide() {
   Buffer background;
   if (IsMultiplayerNet != 0 || panel_open_ != 0) {
@@ -787,7 +780,6 @@ void MultiWin::hide() {
     buffer_.close();
   }
 }
-#pragma optimize("", on)
 
 // Separate contact/display faction bits; provisional descriptive name.
 // Native click writers and535xxx/537xxx readers prove a DWORD, not its full lifecycle.
@@ -797,7 +789,6 @@ int MultiWindowContactStatusMask;
 // ORIGINAL: 0x00477F30 ?on_left_click@MultiWin@@QAEXHH@Z 0x00477F30-0x00478148 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:multiwin-contact-owner", "historical seed:src/recovered/units/00477f30.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete original mapped span and native call/branch order", "native:478500 subtracts item ID1; jump-table indices7..10 select items8renounce,9withdrawal,10contact,11chat; withdrawal arguments local then clicked", "source:existing typed subobjects, faction/player/parser/network and separate bounded contact-state storage; automatic PullDown/Buffer lifetime"], "reason": "Recover the complete original in its genuine MultiWin or diplomacy C++ owner, retaining identity, auxiliary spans and historical seed findings; no current match or runtime claim."}
 // symbol    ?on_left_click@MultiWin@@UAEXHH@Z
-#pragma optimize("y", off)
 void MultiWin::on_left_click(int x, int y) {
     ConsoleInfoWin.reset();
     ConsoleStatusWin.reset();
@@ -851,13 +842,11 @@ void MultiWin::on_left_click(int x, int y) {
         draw(0);
     }
 }
-#pragma optimize("", on)
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00478150 0x004785FC 0x00478628 0x0047850A
 // ORIGINAL: 0x00478150 ?on_right_click@MultiWin@@QAEXHH@Z 0x00478150-0x004785FA;0x006563E0-0x006563F5 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:multiwin-contact-owner", "historical seed:src/recovered/units/00478150.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete original mapped span and native call/branch order", "native:478500 subtracts item ID1; jump-table indices7..10 select items8renounce,9withdrawal,10contact,11chat; withdrawal arguments local then clicked", "source:existing typed subobjects, faction/player/parser/network and separate bounded contact-state storage; automatic PullDown/Buffer lifetime"], "reason": "Recover the complete original in its genuine MultiWin or diplomacy C++ owner, retaining identity, auxiliary spans and historical seed findings; no current match or runtime claim."}
 // symbol    ?on_right_click@MultiWin@@UAEXHH@Z
-#pragma optimize("y", off)
 void MultiWin::on_right_click(int x, int y) {
     PullDown menu;
     int faction;
@@ -957,7 +946,6 @@ void MultiWin::on_right_click(int x, int y) {
         break;
     }
 }
-#pragma optimize("", on)
 
 // ORIGINAL: 0x00479F90 ?init@MultiWin@@QAEXXZ 0x00479F90-0x0047A429;0x0065641F-0x00656434 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:multiwin-contact-owner", "historical seed:src/recovered/units/00479f90.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete original mapped span and native call/branch order", "native:478500 subtracts item ID1; jump-table indices7..10 select items8renounce,9withdrawal,10contact,11chat; withdrawal arguments local then clicked", "source:existing typed subobjects, faction/player/parser/network and separate bounded contact-state storage; automatic PullDown/Buffer lifetime"], "reason": "Recover the complete original in its genuine MultiWin or diplomacy C++ owner, retaining identity, auxiliary spans and historical seed findings; no current match or runtime claim."}
@@ -1057,13 +1045,11 @@ void MultiWin::init() {
 // image calls 0x0047A6F0; VC6 auto-inlines it here otherwise (C4711).
 #pragma auto_inline(off)
 #pragma inline_depth(0)
-#pragma optimize("y", off)
 int Spot::add(int position, int type, RECT *rect) {
     return add(position, type, rect->left, rect->top, rect->right - rect->left, 
         rect->bottom - rect->top);
 }
 #pragma inline_depth(8)
-#pragma optimize("", on)
 #pragma auto_inline(on)
 
 // ORIGINAL: 0x0047A720 ?UNK4@MultiWin@@QAEHPADPAURECT@@@Z 0x0047A720-0x0047A752 BYTE_EXACT

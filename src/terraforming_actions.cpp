@@ -131,7 +131,6 @@ Purpose: Calculate the credit cost to lower or raise the tile's terrain for the 
 Return Value: Credit cost
 Status: Complete
 */
-#pragma optimize("y", off)
 int __cdecl terraform_cost(int x, int y, int faction_id) {
     Map *const tile = map_loc(x, y);
     const uint32_t climate = tile->climate;
@@ -181,7 +180,6 @@ int __cdecl terraform_cost(int x, int y, int faction_id) {
     cost /= 2;
     return range(cost, 1, 30000);
 }
-#pragma optimize("", on)
 
 // Neutral source captions for the initial bytes at 0x687B60 and 0x687B6C: original `push` references at 0x4C9713/0x4C972B and terminating NULs bound 12/17 bytes. The original .data section is writable; original symbols and wider allocation extents are unproved.
 // RECOVERY_OBJECT: v2 0x00687B60 0x00687B6C ?ActionBuildLogCaption@@3PADA 0x004C9713

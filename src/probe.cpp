@@ -130,7 +130,6 @@ Purpose: Calculate the cost for the faction to be able to mind control the speci
 Return Value: Mind control cost
 Status: Complete
 */
-#pragma optimize("y", off)
 int __cdecl mind_control(int base_id, int faction_id, BOOL is_corner_market) {
     uint32_t target_faction_id = Bases[base_id].faction_id_current;
     int cost = vulnerable(target_faction_id, Bases[base_id].x, Bases[base_id].y);
@@ -199,7 +198,6 @@ int __cdecl mind_control(int base_id, int faction_id, BOOL is_corner_market) {
     }
     return cost;
 }
-#pragma optimize("", on)
 
 /*
 Purpose: Calculate the cost for the faction to corner the Global Energy Market (Economic Victory).
@@ -256,7 +254,6 @@ Status: Complete
 //   `mind_control` LEVER note just above this function for the same shape
 //   of ceiling.
 */
-#pragma optimize("y", off)
 int __cdecl success_rates(int id, int morale, int diff_modifier, int base_id) {
     // STRINGTEMP CLEARED BEFORE THE MORALE GUARD. The image's
     // `mov byte ptr [StringTemp], 0` is scheduled ahead of the `cmp ebx, 1`
@@ -316,7 +313,6 @@ int __cdecl success_rates(int id, int morale, int diff_modifier, int base_id) {
     parse_says(id, StringTemp, -1, -1);
     return success_rate;
 }
-#pragma optimize("", on)
 
 #include "popup.h"
 #include "dialogs.h"
