@@ -3955,6 +3955,7 @@ base_attack:
 // symbol    ?enemy_planet_buster@@YAHH@Z
 // TRIED: full-fidelity register-level transcription; direct struct fields (Vehs/Bases/VehPrototypes/Weapon layouts confirmed via src/veh.h, src/base.h) instead of raw address casts didn't close the divergence either; prologue shape differs (#0 push vs sub) from local/frame layout, not from any single wrong op.
 int __cdecl enemy_planet_buster(int vehicle_id) {
+    int y;
     const int faction_id = Vehs[vehicle_id].faction_id;
     // The image tests only the mask's low byte; faction bits all live there.
     if ((1 << faction_id) & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_) {
@@ -4070,7 +4071,7 @@ int __cdecl enemy_planet_buster(int vehicle_id) {
             score = 0;
             for (int i = 0; i < blast_radius; i++) {
                 int x = wrap_map_x(Bases[base_id].x + RadiusOffsetX[i]);
-                int y = Bases[base_id].y + RadiusOffsetY[i];
+                y = Bases[base_id].y + RadiusOffsetY[i];
                 if (!on_map(x, y)) {
                     continue;
                 }
@@ -4158,7 +4159,7 @@ int __cdecl enemy_planet_buster(int vehicle_id) {
                 int y_target = Bases[best_target_base].y;
                 for (int i = 0; i < 8; i++) {
                     int x = wrap_map_x(x_target + VehMoveDeltaX[i]);
-                    int y = y_target + VehMoveDeltaY[i];
+                    y = y_target + VehMoveDeltaY[i];
                     if (on_map(x, y) && anything_at(x, y) < 0) {
                         veh_drop(veh_lift(vehicle_id), x, y);
                         Vehs[vehicle_id].visibility = 0;
