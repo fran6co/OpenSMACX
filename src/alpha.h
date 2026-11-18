@@ -546,74 +546,74 @@ struct RulesWorldbuilder { // Alpha(x).txt
     // #WORLDBUILDER: Seeded land size of a standard world
     // Original bounds: 50 to 4000
     // Default value: 384
-    uint32_t land_base;
+    int land_base;
 
     // #WORLDBUILDER: Additional land from LAND selection: x0, x1, x2
     // Original bounds: 0 to 2000
     // Default value: 256
-    uint32_t land_mod;
+    int land_mod;
 
     // #WORLDBUILDER: Base size of a land mass seed
     // Original bounds: 5 to 1000
     // Default value: 12
-    uint32_t continent_base;
+    int continent_base;
 
     // #WORLDBUILDER: Increased size from LAND selection: x0, x1, x2
     // Original bounds: 5 to 1000
     // Default value: 24
-    uint32_t continent_mod;
+    int continent_mod;
 
     // #WORLDBUILDER: Base # of extra hills
     // Original bounds: 0 to 100
     // Default value: 1
-    uint32_t hills_base;
+    int hills_base;
 
     // #WORLDBUILDER: Additional hills from TIDAL selection: x0, x1, x2
     // Original bounds: 0 to 100
     // Default value: 2
-    uint32_t hills_mod;
+    int hills_mod;
 
     // #WORLDBUILDER: Basic plateau size
     // Original bounds: 0 to 500
     // Default value: 4
-    uint32_t plateau_base;
+    int plateau_base;
 
     // #WORLDBUILDER: Plateau modifier based on LAND selection: x0, x1, x2
     // Original bounds: 0 to 500
     // Default value: 8
-    uint32_t plateau_mod;
+    int plateau_mod;
 
     // #WORLDBUILDER: Basic # of rivers
     // Original bounds: 0 to 100
     // Default value: 8
-    uint32_t rivers_base;
+    int rivers_base;
 
     // #WORLDBUILDER: Additional rivers based on RAIN selection
     // Original bounds: 0 to 100
     // Default value: 12
-    uint32_t rivers_rain_mod;
+    int rivers_rain_mod;
 
     // #WORLDBUILDER: Latitude DIVISOR for temperature based on HEAT;
     // Smaller # increases effect of HEAT selection
     // Original bounds: 1 to 64
     // Default value: 14
-    uint32_t solar_energy;
+    int solar_energy;
 
     // #WORLDBUILDER: Latitude DIVISOR for thermal banding; Smaller # widens hot bands
     // Original bounds: 1 to 64
     // Default value: 14
-    uint32_t thermal_band;
+    int thermal_band;
 
     // #WORLDBUILDER: Latitude DIVISOR for thermal deviance; Smaller # increases randomness
     // Original bounds: 1 to 64
     // Default value: 8
-    uint32_t thermal_deviance;
+    int thermal_deviance;
 
     // #WORLDBUILDER: Latitude DIVISOR for global warming;
     // Smaller # increases effect of warming
     // Original bounds: 1 to 64
     // Default value: 8
-    uint32_t global_warming;
+    int global_warming;
 
     // #WORLDBUILDER: Magnitude of sea level changes from ice cap melting/freezing
     // Original bounds: 1 to 100
@@ -623,17 +623,17 @@ struct RulesWorldbuilder { // Alpha(x).txt
     // #WORLDBUILDER: Size of cloud mass trapped by peaks
     // Original bounds: 0 to 20
     // Default value: 5
-    uint32_t cloudmass_peaks;
+    int cloudmass_peaks;
 
     // #WORLDBUILDER: Size of cloud mass trapped by hills
     // Original bounds: 0 to 20
     // Default value: 3
-    uint32_t cloudmass_hills;
+    int cloudmass_hills;
 
     // #WORLDBUILDER: Multiplier for rainfall belts
     // Original bounds: 0 to 8
     // Default value: 1
-    uint32_t rainfall_coeff;
+    int rainfall_coeff;
 
     // #WORLDBUILDER: Encourages fractal to grow deep water
     // Original bounds: -100 to 100
@@ -658,7 +658,7 @@ struct RulesWorldbuilder { // Alpha(x).txt
     // #WORLDBUILDER: Encourages hills x TIDAL selection
     // Original bounds: 0 to 100
     // Default value: 10
-    uint32_t hills;
+    int hills;
 
     // #WORLDBUILDER: Encourages peaks
     // Original bounds: -100 to 100
@@ -668,7 +668,7 @@ struct RulesWorldbuilder { // Alpha(x).txt
     // #WORLDBUILDER: Fungus coefficient based on LIFE selection
     // Original bounds: 0 to 5
     // Default value: 1
-    uint32_t fungus;
+    int fungus;
 
     // #WORLDBUILDER: Continent size ratios #1..#5
     // Original bounds: n/a. Defaults: 3, 6, 12, 18, 24.

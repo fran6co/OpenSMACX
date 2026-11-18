@@ -994,7 +994,7 @@ void __cdecl council_action(int proposal, int faction_id) {
         MapSeaLevelCouncil -= 3;
         {
             int step = GameDataStateStorage.fields_.climate_sea_level_delta_ -=
-                static_cast<int>(WorldBuilder.sea_level_rises);
+                WorldBuilder.sea_level_rises;
             if (step < 0) {
                 step = -step;
             }
@@ -1003,7 +1003,7 @@ void __cdecl council_action(int proposal, int faction_id) {
         GameDataStateStorage.fields_.climate_rise_limit_ = 20;
         GameDataStateStorage.fields_.climate_rise_accum_ = 0;
         parse_num(0, 20);
-        parse_num(1, (static_cast<int>(WorldBuilder.sea_level_rises) * 1000) / 15);
+        parse_num(1, (WorldBuilder.sea_level_rises * 1000) / 15);
         if (Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) {
             popp(ScriptPopupFile, "WILLFALLALIEN", 0, "seafal_sm.pcx", 0);
             return;
@@ -1015,7 +1015,7 @@ void __cdecl council_action(int proposal, int faction_id) {
         MapSeaLevelCouncil += 3;
         {
             int step = GameDataStateStorage.fields_.climate_sea_level_delta_ +=
-                static_cast<int>(WorldBuilder.sea_level_rises);
+                WorldBuilder.sea_level_rises;
             if (step < 0) {
                 step = -step;
             }
@@ -1024,7 +1024,7 @@ void __cdecl council_action(int proposal, int faction_id) {
         GameDataStateStorage.fields_.climate_rise_limit_ = 20;
         GameDataStateStorage.fields_.climate_rise_accum_ = 0;
         parse_num(0, 20);
-        parse_num(1, (static_cast<int>(WorldBuilder.sea_level_rises) * 1000) / 15);
+        parse_num(1, (WorldBuilder.sea_level_rises * 1000) / 15);
         if (Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) {
             popp(ScriptPopupFile, "WILLRISEALIEN", 0, "searis_sm.pcx", 0);
             return;

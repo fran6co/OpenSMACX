@@ -481,16 +481,9 @@ void __cdecl world_riverbeds() {
         tile->bit &= ~(BIT_RIVERBED);
         tile++;
     }
-    // Pinned5C36C4..36FF: low-dword multiply/add/subtract, signed /3,
-    // another low-dword multiply by the retained area, then signed /3200.
-    // Unsigned builder storage must not turn these two quotients unsigned.
-    uint32_t rain_bits = WorldBuilder.rivers_base
-        + static_cast<uint32_t>(MapCloudCover) * WorldBuilder.rivers_rain_mod;
-    uint32_t target_bits = (4u - static_cast<uint32_t>(MapOceanCoverage)) * rain_bits;
-    int target = target_bits;
-    uint32_t scaled_bits = static_cast<uint32_t>(MapArea) * static_cast<uint32_t>(target / 3);
-    int scaled = scaled_bits;
-    int max_riverbeds = scaled / 3200;
+    int max_riverbeds = (int)MapArea
+        * ((WorldBuilder.rivers_base + MapCloudCover * WorldBuilder.rivers_rain_mod)
+           * (4 - MapOceanCoverage) / 3) / 3200;
     for (i = 0; i < 4000 && riverbed_count < max_riverbeds; i++) {
         int x = bounded_crt_random(MapLongitudeBounds);
         int y = bounded_crt_random(MapLatitudeBounds);
@@ -604,10 +597,10 @@ Status: Complete - testing
 void __cdecl world_temperature() {
     random_reseed(MapRandSeed + 17);
     // `int / uint32_t` would be an unsigned div; the image uses idiv.
-    int temp_heat = MapLatitudeBounds / (int)WorldBuilder.solar_energy;
-    int thermal_banding = MapLatitudeBounds / (int)WorldBuilder.thermal_band;
-    int thermal_deviance = MapLatitudeBounds / (int)WorldBuilder.thermal_deviance;
-    int global_warming = MapLatitudeBounds / (int)WorldBuilder.global_warming;
+    int temp_heat = MapLatitudeBounds / WorldBuilder.solar_energy;
+    int thermal_banding = MapLatitudeBounds / WorldBuilder.thermal_band;
+    int thermal_deviance = MapLatitudeBounds / WorldBuilder.thermal_deviance;
+    int global_warming = MapLatitudeBounds / WorldBuilder.global_warming;
     // Dead walk: the image advances this tile pointer but never reads it.
     Map *tile = MapTiles;
     for (int y = 0; y < MapLatitudeBounds; y++) {
@@ -3123,7 +3116,7 @@ void __cdecl world_erosion() {
                         result = WorldBuilder.shelf + intensity;
                     }
                     if (result >= (int)AltNatural[alt + 1]) {
-                        result -= (count - 3) * (int)WorldBuilder.shelf / 4;
+                        result -= (count - 3) * WorldBuilder.shelf / 4;
                     }
                 } else if (alt <= 3) {
                     if (flag) {
@@ -3131,7 +3124,7 @@ void __cdecl world_erosion() {
                     }
                     result = (8 - count) * WorldBuilder.plains * world_scale / (map_scale * 8) + intensity;
                     if (result < contour) {
-                        result += (MapErosiveForces * (int)WorldBuilder.hills / 2 * (8 - count)
+                        result += (MapErosiveForces * WorldBuilder.hills / 2 * (8 - count)
                                    / (range(MapOceanCoverage, 1, 2) * 8)
                                    + WorldBuilder.beach) * world_scale / map_scale;
                     } else {
@@ -3401,7 +3394,7 @@ void __cdecl world_rainfall() {
                 int cloudmass = (int)(altitude > 5 ? WorldBuilder.cloudmass_peaks
                                                    : WorldBuilder.cloudmass_hills);
                 for (i = -1;
-                     i >= -((MapCloudCover - 1) * (int)WorldBuilder.rainfall_coeff + cloudmass);
+                     i >= -((MapCloudCover - 1) * WorldBuilder.rainfall_coeff + cloudmass);
                      i--) {
                     int x_cloud = wrap_map_x(x + i * 2);
                     if (on_map(x_cloud, y)) {
@@ -3412,7 +3405,7 @@ void __cdecl world_rainfall() {
                     }
                 }
                 for (i = 1;
-                     i <= cloudmass - (MapCloudCover - 1) * (int)WorldBuilder.rainfall_coeff;
+                     i <= cloudmass - (MapCloudCover - 1) * WorldBuilder.rainfall_coeff;
                      i++) {
                     int x_cloud = wrap_map_x(x + i * 2);
                     if (on_map(x_cloud, y)) {
@@ -3473,7 +3466,7 @@ void __cdecl world_rainfall() {
                     else adjustment = adjustment;
                 }
                 if (altitude > 3) {
-                    if (++pass2_count > (int)WorldBuilder.rainfall_coeff * cloud_cover * 4 + 1
+                    if (++pass2_count > WorldBuilder.rainfall_coeff * cloud_cover * 4 + 1
                         && rain_carry) {
                         rain_carry--;
                     }
