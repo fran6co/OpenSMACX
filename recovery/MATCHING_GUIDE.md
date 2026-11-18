@@ -931,6 +931,63 @@ Using it
   register. A constant stored several times (`mov ebx, 6; mov [order], ebx`)
   is a piece of the stored variable, not a constant temporary.
 
+Reading a function with regprio.py (2026-11-19 par-1)
+
+`recovery/tools/analysis/regprio.py <unit> <0xADDR>` applies rule 4 to our
+source (blocks and loops from our listing, webs by reaching definitions) and
+lists, for every web, the predicted register, ours and the image's, then the
+interfering pairs the image orders differently from ours with the blocks that
+feed each side. It is a screen: on 60-odd exact functions it orders 62-64% of
+interfering register pairs right. The misses teach what the source count does
+not see, and those are the levers:
+
+- **An in-place coordinate wrap is three extra references.** `int x = e; if
+  (!(MapIsFlat & 1)) { if (x < 0) x += B; else if (x >= B) x -= B; }` defines
+  and reads `x` in every arm; the image wraps a temporary and stores each arm
+  to `x` (`lea edi,[eax+edx]` / `mov edi,eax`), the shape of `int x =
+  wrap_map_x(e);`. The extra references reorder the loop's registers (high,
+  three functions): air_power 1639 -> 1272, BaseWin::farm_click 291 -> 269
+  (esi score / edi tile_x as the image), BaseWin::draw_farm 413 -> 404.
+  `grep -n "+= MapLongitudeBounds"` lists the remaining in-place wraps;
+  MapWin::editor, gen_terrain_poly and pixel_to_tile (mapwin.cpp) and
+  diplomacy_check (one site, 914 -> 908) are untested or small.
+- **Hoisted loop-invariant globals are candidates.** In can_terraform's
+  radius census the image hoists MapLongitudeBounds (four references per
+  iteration) into edi and rereads MapLongitude; the statement form of the
+  private wrap helper (a static function /Ob2 expands) hoisted MapLongitude
+  instead. The flat-first ternary body gives the image's map (336 -> 325).
+  The same body change in course_xrange/territory_xrange moves nothing: the
+  form matters where the wrap's arms reach the caller's variable or invariant.
+- **Compiler temporaries the source count misses.** A base-class `this`
+  (`this+0x444`, the Buffer of a Win; FlatButton::on_redraw holds it in edi
+  with 21 uses), an address CSE that replaces an index (`&rows_[slot].field`
+  in esi, NetWin::on_button_clicked), a strength-reduced loop pointer, and a
+  global cached across a block. regprio prints them as `T:` webs; when the
+  model agrees with the image and ours does not, look there first.
+- **A constant can be a memory-homed loser.** MultiWin::draw_player: ours
+  computes `1 << faction_id` as `mov ecx,1; mov [ebp+0x10],ecx; mov ecx,ebx;
+  mov ebx,[ebp+0x10]; shl ebx,cl`, the constant 1 parked in a dead parameter
+  slot, and that splits faction_id into pieces; the image has `mov edx,1`.
+  Same instruction-level reference counts on both sides (this 7, faction_id
+  18), so the difference is a candidate or block weight we do not see. Nested
+  ifs, a named bit, declaration moves and `height` scope do not move it.
+- **Exact ties stay unknown** (rule 5): success_rates is morale 17 against
+  diff_modifier 17. In the image diff_modifier is a loser whose first piece is
+  coalesced with success_rate (edi) and whose second read comes from memory;
+  ours keeps diff_modifier in ebx. `int success_rate = diff_modifier;` before
+  the test (53 -> 52), an early return, the clamp after the string clear and
+  the assignment first in the arm do not flip it.
+- **Structure seen through regprio, not yet a register fix.** BaseWin::draw_pop
+  forms `&table[index]` (`imul r,r,0x2c; add r,table; mov al,[r+8]; mov
+  ecx,r`) at all four sprite draws; ours indexes `[r+table]`. A named pointer
+  or an inline helper gives the pointer form but mood still loses ebx to the
+  BaseCurrent copy (248 -> 257..272); the loop top in the image is a separate
+  reload block (`jle exit; jmp body; reload: mov ebx,[BaseCurrent]`) that ours
+  lacks. base_production's morale/BaseIDCurrentSelected (esi/edi swapped),
+  set_time_controls and vehdraw_construct_chassis (faction_id winner in ours,
+  armor_grade in the image; the model agrees with the image) did not move
+  under reference-local, loop-form or clamp spellings.
+
 Constant candidates and phantom registers (2026-11-18 par-1, standalone probes)
 
 - A constant with several references is a candidate (rule 4) and can win a
@@ -961,8 +1018,10 @@ What the model does not predict
   candidate set differs somewhere not visible in the listing; ternary, `max`,
   `<= 0`, reordered arm and a named `morale / 2` do not move it.
 - can_terraform 0x00565320: the image holds `order` in ebx as a written-back
-  piece and keeps `solar_tech` in memory (hence the 0x44 frame); ours gives
-  `solar_tech` the register. Not re-examined under rule 4.
+  piece and keeps `solar_tech` in memory (`mov ebx,eax; mov [ebp-0x2c],ebx`,
+  a rule-9 piece; hence the 0x44 frame); ours gives `solar_tech` the
+  register. regprio: order 43 against solar_tech 17, so the model agrees with
+  the image; the census-loop registers are fixed (see regprio above).
 - MultiWin::draw_player 0x00478630: image `this` ebx, `faction_id` edi (from
   its first read), ours the reverse with `faction_id` reloaded in each arm and
   the constant 1 spilled around a shift. Rule 4 by raw count favours the
