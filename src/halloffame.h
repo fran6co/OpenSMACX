@@ -23,7 +23,8 @@ struct HallOfFameRecord {
   char leader_title[24];
   char leader_name[24];
   char faction_noun[24];
-  uint8_t unknown_6A[0x22];
+  uint8_t unknown_6A[2];
+  int unknown_6C[8];  // eight dwords FameWin copies one by one
 };
 
 enum { HallOfFameRecordCount = 35 };

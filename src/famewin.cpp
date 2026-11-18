@@ -753,8 +753,7 @@ void FameWin::demote(int rank) {
   strncpy(destination.faction_noun, source.faction_noun,
           sizeof(destination.faction_noun));
   for (int i = 0; i < 8; i++) {
-    reinterpret_cast<int *>(destination.unknown_6A + 2)[i] =
-        reinterpret_cast<const int *>(source.unknown_6A + 2)[i];
+    destination.unknown_6C[i] = source.unknown_6C[i];
   }
 }
 #pragma optimize("", on)
