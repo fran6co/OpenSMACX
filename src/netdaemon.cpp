@@ -1586,6 +1586,7 @@ int NetDaemon::game_checksum(int *results) {
 
 
 // ORIGINAL: 0x005328C0 ?end_of_event@NetDaemon@@QAEHHH@Z 0x005328C0-0x00532934 FILE BYTE_EXACT
+// symbol    ?end_of_event@NetDaemon@@QAEXHH@Z
 // working copy - scaffold materialised by --work
 // size      116 bytes
 // prototype int (__thiscall ?end_of_event@NetDaemon@@QAEHHH@Z)(NetDaemon* this, int, int)
