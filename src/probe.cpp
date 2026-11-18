@@ -1362,7 +1362,7 @@ L_5a2dcd:
     }
     {
         int bonus;
-        if (action != -1) {
+        if ((action + 1) != 0) {
             bonus = has_fac(0x22, base_id, 0) ? 2 : 0;
         } else {
             bonus = 0;
