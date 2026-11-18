@@ -25,3 +25,8 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   intrinsics, so the multisets must be equal; a difference names a wrong spelling.
 - `FE_DROP_FLAGS="/Oi"` (fe.py, feall.py) removes compiler flags from game/Jackal commands for a
   hypothesis run without touching the build.
+- `analysis/constreg.py [unit ...] [--addr A] [--src ALT] [--weak] [--agree] [--json F]` constant-register
+  diagnosis for every non-exact function (48 s tree-wide): where the image and ours dedicate a
+  callee-saved register to a constant (IMG_ONLY = our source lacks a store, OURS_ONLY = one store too
+  many or the register is not free, START, REG), with the stretch's uses and the function-wide
+  immediate store/push/compare counts of that constant on both sides.
