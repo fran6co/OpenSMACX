@@ -45,7 +45,9 @@ struct TerrainCacheEntry {
     // RECOVERY_MEMBER: v1 TerrainCacheEntry brightness 0x0 0x0046FD90
     unsigned char brightness[4];
     // RECOVERY_MEMBER: v1 TerrainCacheEntry altitude 0x4 0x0046FD90
-    signed char altitude[5];
+    // Unsigned bytes: every reset stores 0xFF with `mov r8, 0xFF` (a signed
+    // -1 would be `or r8, 0xFF`) and get_alt compares the cached byte with 0xFF.
+    unsigned char altitude[5];
     // RECOVERY_MEMBER: v1 TerrainCacheEntry terrain_bits 0x9 0x00470ED0
     unsigned char terrain_bits;
     // RECOVERY_MEMBER: v1 TerrainCacheEntry altitude_detail 0xA 0x0046FE70

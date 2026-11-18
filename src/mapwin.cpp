@@ -625,7 +625,7 @@ void MapWin::init(RECT *bounds, char *caption, int flags) {
                 owned_[tile].brightness[sample] = 0xFF;
             }
             for (sample = 0; sample < 5; ++sample) {
-                reinterpret_cast<unsigned char *>(owned_[tile].altitude)[sample] = 0xFF;
+                owned_[tile].altitude[sample] = 0xFF;
             }
             owned_[tile].terrain_bits = 0;
             owned_[tile].terrain_bits |= map_tiles()[0].climate & 0xD0;
@@ -5118,7 +5118,7 @@ LAB_wireframe:
                         window->get_alt(a7, a8, corner_id);
                         delta = (signed char)(window->owned_ == 0
                             ? 0
-                            : (unsigned char)window->owned_[(MapLongitudeBounds >> 1) * a8 + local_14]
+                            : window->owned_[(MapLongitudeBounds >> 1) * a8 + local_14]
                                   .altitude[corner_id]);
                     }
                     land_vertices[step].y -= delta;
@@ -6778,7 +6778,7 @@ void MapWin::init_dummy() {
                 owned_[i].brightness[j] = 0xFF;
             }
             for (j = 0; j < 5; j++) {
-                reinterpret_cast<unsigned char *>(owned_[i].altitude)[j] = 0xFF;
+                owned_[i].altitude[j] = 0xFF;
             }
             owned_[i].terrain_bits = 0;
             owned_[i].terrain_bits |= map_tiles()[0].climate & 0xD0;
@@ -6805,7 +6805,7 @@ static inline void set_alt_cache(MapWin *w, int x, int y, int corner, int value)
             value = 0x7F;
         }
         w->owned_[(MapLongitudeBounds >> 1) * y + (x >> 1)].altitude[corner] =
-            static_cast<signed char>(value);
+            static_cast<unsigned char>(value);
     }
 }
 
@@ -6845,7 +6845,7 @@ int MapWin::get_alt(int x, int y, int corner) {
         cached = 0;
     } else {
         entry = owned_ + ((MapLongitudeBounds >> 1) * y + (x >> 1));
-        cached = static_cast<unsigned char>(entry->altitude[corner]);
+        cached = entry->altitude[corner];
     }
     if (cached != 0xFF) {
         return static_cast<signed char>(cached);
@@ -7016,7 +7016,7 @@ void __cdecl terrain_fixup(MapWin * window) {
                     window->owned_[count2].brightness[j] = 0xFF;
                 }
                 for (j = 0; j < 5; j++) {
-                    reinterpret_cast<unsigned char *>(window->owned_[count2].altitude)[j] = 0xFF;
+                    window->owned_[count2].altitude[j] = 0xFF;
                 }
                 window->owned_[count2].terrain_bits = 0;
                 const unsigned char first_climate = map_tiles()[0].climate;
@@ -7038,7 +7038,7 @@ void MapWin::clear_all_altitude() {
     if (owned_ != 0) {
         for (int tile = 0; tile < MapArea; ++tile) {
             for (int sample = 0; sample < 5; ++sample) {
-                reinterpret_cast<unsigned char *>(owned_[tile].altitude)[sample] = 0xFF;
+                owned_[tile].altitude[sample] = 0xFF;
             }
         }
     }
@@ -8088,8 +8088,7 @@ void MapWin::clear_terrain() {
             // An unsigned 0xFF byte store; a signed -1 is hoisted into a
             // register.
             for (int slot = 0; slot < 5; ++slot) {
-                reinterpret_cast<unsigned char *>(
-                    owned_[altitude_entry].altitude)[slot] = 0xFF;
+                owned_[altitude_entry].altitude[slot] = 0xFF;
             }
         }
     }
