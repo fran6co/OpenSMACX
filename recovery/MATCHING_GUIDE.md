@@ -1669,6 +1669,18 @@ raw field access where the original used inline accessors.
   Every header spelling folds (literal, `const` local, inline accessor with
   or without an index local inside it, row-pointer accessor: shoot 195
   against 64); only a non-constant subscript in the caller's body keeps it.
+- **Null-test register rotation (guarded write_l/write_cent_l).** Each
+  inlined `text == 0` test loads the StringTemp address into a register.
+  VC6 cycles that load through eax, ecx and edx. With eax it emits
+  `test eax,eax; je` (eax already holds the 0 return value); with ecx or edx
+  it emits `jne; xor eax,eax; jmp`. One step of phase difference makes every
+  later block differ. Compare the image's sequence of these loads against
+  ours: the first mismatch shows which statement before it to move. The
+  statement order just before a block sets the phase. `title = row;` before
+  `expenses_help_rects_[n] = row;` fixed draw_expenses' energy and minerals
+  panels, and `text = row;` before `expenses_help_rects_[5] = row;` fixed
+  draw_energy_alloc (diff weight 85 -> 39). Declaration order and the order
+  of RECT inset statements do not move it.
 - **Flat-first ternary wrap inside a static helper.** If the image reloads the
   bound in each arm of an x-wrap, write the helper as the ternary
   `(MapIsFlat & 1) ? x : x < 0 ? x + W : x >= W ? x - W : x` and pass the sum

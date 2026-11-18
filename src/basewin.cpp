@@ -3595,7 +3595,8 @@ void BaseWin::draw_energy_alloc(int update_mode) {
     char number[80];
     int faction = BaseCurrent->faction_id_current;
     int wide = WinScreenWidth != 800;
-    RECT clip = production_content_rect_;
+    RECT *const content = &production_content_rect_;
+    RECT clip = *content;
     RECT saved_clip = Buffer::rect1_;
     Buffer::set_clip(&clip);
     font.init(DefaultFontFace, 12, 1);
@@ -3607,13 +3608,13 @@ void BaseWin::draw_energy_alloc(int update_mode) {
     rect.left += 23;
     rect.right -= 55;
     Buffer::box_sprite(&rect, &InterfaceBoxStyles[9]);
-    Buffer::box_sprite(&production_content_rect_, &InterfaceBoxStyles[3]);
+    Buffer::box_sprite(content, &InterfaceBoxStyles[3]);
     rect.left = 346;
     rect.top = 284;
     rect.right = 696;
     rect.bottom = 346;
     if (wide) {
-        int shift = production_content_rect_.bottom - production_content_rect_.top + 3;
+        int shift = content->bottom - content->top + 3;
         rect.top = shift + 284;
         rect.bottom = shift + 346;
     }
@@ -3627,7 +3628,7 @@ void BaseWin::draw_energy_alloc(int update_mode) {
     row.right = 696;
     row.bottom = 283;
     if (wide) {
-        int shift = production_content_rect_.bottom - production_content_rect_.top + 3;
+        int shift = content->bottom - content->top + 3;
         row.top = shift + 263;
         row.bottom = shift + 283;
     }
@@ -3653,7 +3654,7 @@ void BaseWin::draw_energy_alloc(int update_mode) {
     if (!wide) {
         text.left = 191;
     } else {
-        text.left = production_content_rect_.left + 3;
+        text.left = content->left + 3;
     }
     Buffer::box_sprite(&text, &InterfaceBoxStyles[6]);
     expand_rect(&text, -3, -3);
@@ -3674,8 +3675,8 @@ void BaseWin::draw_energy_alloc(int update_mode) {
     base_row.bottom += 21;
     row = base_row;
     Buffer::set_text_color(TextColourTable[128], TextColourTable[129], 1, 1);
-    expenses_help_rects_[5] = row;
     text = row;
+    expenses_help_rects_[5] = row;
     text.right = 297;
     Buffer::box_sprite(&text, &InterfaceBoxStyles[6]);
     expand_rect(&text, -3, -3);
@@ -3849,8 +3850,8 @@ void BaseWin::draw_energy_alloc(int update_mode) {
     strcat(StringTemp, number);
     Buffer::write_right_l(StringTemp, &text);
 
-    if (update_mode) GraphicWin::update(&production_content_rect_, 0);
-    else GraphicWin::soft_update(&production_content_rect_);
+    if (update_mode) GraphicWin::update(content, 0);
+    else GraphicWin::soft_update(content);
     Buffer::set_clip(&saved_clip);
 }
 
