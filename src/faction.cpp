@@ -10031,9 +10031,7 @@ communicate_pact_offer_fallthrough:
         range(PlayersData[faction_id_with].tech_commerce_bonus -
                   PlayersData[faction_id].tech_commerce_bonus, 0, 99) +
             (strcmp(Players[faction_id_with].filename, "HIVE") == 0) +
-            // WORKAROUND(type): the image's compare is signed (jge at 0x00555E6C)
-            // while game_rules_ is uint32_t; the rule bit was probably an int-promoted field.
-            static_cast<int>((GameDataStateStorage.fields_.game_rules_ >> 12) & 1) +
+            ((GameDataStateStorage.fields_.game_rules_ & 0x1000) != 0) +
             (DiploScratchFA8C != 0) + 3) {
         goto communicate_special_war_rival_gates;
     }
