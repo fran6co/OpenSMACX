@@ -6279,9 +6279,8 @@ void MapWin::draw_base_dest(int draw_type) {
             if (Bases[base_id].faction_id_current != ConsoleGlobal.faction_id_) {
                 continue;
             }
-            const int16_t *slot = Bases[base_id].auto_forward_slots;
-            for (direction = 0; direction < 3; ++direction, ++slot) {
-                const int16_t destination = *slot;
+            for (direction = 0; direction < 3; ++direction) {
+                const int16_t destination = Bases[base_id].auto_forward_slots[direction];
                 if (destination < 0) {
                     continue;
                 }
@@ -6291,16 +6290,16 @@ void MapWin::draw_base_dest(int draw_type) {
                 const int dest_y = Bases[destination].y;
                 if (tile_in_view(x, y, 0) ||
                     tile_in_view(dest_x, dest_y, 0)) {
+                    // The three cases fall through (no break): one store
+                    // survives, reached by three dispatch tests, and
+                    // line_type takes the frame's last slot ([ebp-0x20]).
                     switch (direction) {
                     case 0:
                         line_type = 10;
-                        break;
                     case 1:
                         line_type = 10;
-                        break;
                     case 2:
                         line_type = 10;
-                        break;
                     }
                     dest_line(x, Bases[base_id].y, dest_x, dest_y, line_type,
                               ConsoleGlobal.faction_id_, direction, 0, 3, 5, 0);
