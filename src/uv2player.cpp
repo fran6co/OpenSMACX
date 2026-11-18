@@ -32,6 +32,13 @@
 #include "text.h"
 #include "stringstruct.h"
 #include "wave_device.h"
+// WORKAROUND(inline): show_post_movie_text's early-return teardown calls
+// ~StringStruct out of line (0x004BEFD2) while the final teardown expands
+// it. That depth needs four more small /Ob2 expansions after the early
+// return than the written-out body spends; their original spelling (list
+// clear helper, member getters) is unknown, so an empty inline stands in.
+static inline void uv2_probe_flat(int) {}
+
 
 // Shared help-file pointer; its storage is owned by datalink.cpp.
 extern char *DatalinkHelpFile;
@@ -353,10 +360,14 @@ void UV2Player::show_post_movie_text() {
         }
 
         text_get();
+        // 4BF09B/4BF0A8 store right and bottom in the last two fields of a
+        // RECT at EBP-0x90 that overlays the dead height array; left and
+        // top are plain scalars (EBP-0x10/-0x14).
+        RECT r;
         const int left = text_item_number();
-        const int top = text_item_number();
-        const int right = text_item_number() + left;
-        const int bottom = text_item_number() + top;
+        int top = text_item_number();
+        r.right = text_item_number() + left;
+        r.bottom = text_item_number() + top;
 
         text_get();
         write_delay_ = text_item_number();
@@ -377,6 +388,11 @@ void UV2Player::show_post_movie_text() {
             help_line = text_get();
         }
         text_close();
+        // WORKAROUND(inline): four expansions, see uv2_probe_flat.
+        uv2_probe_flat(0);
+        uv2_probe_flat(0);
+        uv2_probe_flat(0);
+        uv2_probe_flat(0);
 
         ExtDirectDraw display;
         // Original4BF11D..4BF147 borrows the existing Surface2 pointer
@@ -394,19 +410,16 @@ void UV2Player::show_post_movie_text() {
         buffer_.set_text_color_hyper(color_first[0], color_second[0],
                                      color_third[0], color_fourth[0]);
 
-        const int width = right - left;
-        const int drawn_height = buffer_.write_strings_height(&help_lines,
-                                                               width, 0);
-        const int y = top + (bottom - drawn_height - top) / 2;
+        const int drawn_height = buffer_.write_strings_height(
+            &help_lines, r.right - left, 0);
+        top += (r.bottom - drawn_height - top) / 2;
 
         buffer_.set_write_raw_callback(&uv2_player_writer_redirect);
-        buffer_.write_strings(&help_lines, left, y, width, 0);
+        buffer_.write_strings(&help_lines, left, top, r.right - left, 0);
         buffer_.set_write_raw_callback(0);
 
         const DWORD start = timeGetTime();
-        DWORD now = timeGetTime();
-        while (now - start < static_cast<DWORD>(timeout)) {
-            now = timeGetTime();
+        while (timeGetTime() - start < static_cast<DWORD>(timeout)) {
         }
     }
 }
