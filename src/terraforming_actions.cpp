@@ -287,7 +287,7 @@ Purpose: Select the live road or magtube terraforming rate from tile mask 0x4,
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004C99D0 sub_4c99d0 0x004C99D0-0x004C9A43 FILE BYTE_EXACT
-// symbol    _sub_4c99d0
+// symbol    ?sub_4c99d0@@YAHHH@Z
 // size      115 bytes
 // prototype
 // callers   0   call targets   0
@@ -757,23 +757,23 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
 }
 
 // Separate writable objects preserve the original popup operands at each use.
-// RECOVERY_OBJECT: v1 0x00687C84 ?staple_fail_alien_picture@?%src/terraforming_actions.cpp@@3PADA
+// RECOVERY_OBJECT: v1 0x00687C84 _staple_fail_alien_picture
 static char staple_fail_alien_picture[] = "ALdrone_sm.pcx";
-// RECOVERY_OBJECT: v1 0x00687C94 ?staple_fail_alien_label@?%src/terraforming_actions.cpp@@3PADA
+// RECOVERY_OBJECT: v1 0x00687C94 _staple_fail_alien_label
 static char staple_fail_alien_label[] = "NERVESTAPLEFAIL";
-// RECOVERY_OBJECT: v1 0x00687CA4 ?staple_fail_human_picture@?%src/terraforming_actions.cpp@@3PADA
+// RECOVERY_OBJECT: v1 0x00687CA4 _staple_fail_human_picture
 static char staple_fail_human_picture[] = "drone_sm.pcx";
-// RECOVERY_OBJECT: v1 0x00687CB4 ?staple_fail_human_label@?%src/terraforming_actions.cpp@@3PADA
+// RECOVERY_OBJECT: v1 0x00687CB4 _staple_fail_human_label
 static char staple_fail_human_label[] = "NERVESTAPLEFAIL";
-// RECOVERY_OBJECT: v1 0x00687CC4 ?staple_done_alien_picture@?%src/terraforming_actions.cpp@@3PADA
+// RECOVERY_OBJECT: v1 0x00687CC4 _staple_done_alien_picture
 static char staple_done_alien_picture[] = "ALdrone_sm.pcx";
-// RECOVERY_OBJECT: v1 0x00687CD4 ?staple_done_alien_label@?%src/terraforming_actions.cpp@@3PADA
+// RECOVERY_OBJECT: v1 0x00687CD4 _staple_done_alien_label
 static char staple_done_alien_label[] = "NERVESTAPLEDONE";
-// RECOVERY_OBJECT: v1 0x00687CE4 ?staple_done_human_picture@?%src/terraforming_actions.cpp@@3PADA
+// RECOVERY_OBJECT: v1 0x00687CE4 _staple_done_human_picture
 static char staple_done_human_picture[] = "drone_sm.pcx";
-// RECOVERY_OBJECT: v1 0x00687CF4 ?staple_done_human_label@?%src/terraforming_actions.cpp@@3PADA
+// RECOVERY_OBJECT: v1 0x00687CF4 _staple_done_human_label
 static char staple_done_human_label[] = "NERVESTAPLEDONE";
-// RECOVERY_OBJECT: v1 0x00687D04 ?staple_foreign_label@?%src/terraforming_actions.cpp@@3PADA
+// RECOVERY_OBJECT: v1 0x00687D04 _staple_foreign_label
 static char staple_foreign_label[] = "NERVESTAPLETHEM";
 
 // Current code uses PlayerData::proto_id_active for the byte table historically
@@ -2331,7 +2331,7 @@ Purpose: Place fungus, clear the original improvement masks, raise low
          when the local faction can see it.
 
 // ORIGINAL: 0x004CE6B0 sub_4ce6b0 0x004CE6B0-0x004CE78D FILE BYTE_EXACT
-// symbol    _sub_4ce6b0
+// symbol    ?sub_4ce6b0@@YAXHH@Z
 // TRIED: caching the recomputed table index in one local instead of re-reading the row stride fresh each use loses the frame; the cached `half` matches the original's stack-slot reuse of the a2 parameter.
 // size      221 bytes
 // prototype

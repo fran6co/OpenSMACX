@@ -876,7 +876,7 @@ Purpose: Range-and-parity screen test for one map coordinate: halve the
          computed band.
 
 // ORIGINAL: 0x004468F0 sub_4468f0 0x004468F0-0x0044695B FILE BYTE_EXACT
-// symbol    _sub_4468f0
+// symbol    ?sub_4468f0@@YAHH@Z
 // size      107 bytes
 // prototype
 // callers   0   call targets   0

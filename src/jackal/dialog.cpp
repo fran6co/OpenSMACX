@@ -626,7 +626,7 @@ Purpose: Set the default dialog text colour for one of the four colour
          binding folds the same way; a `static T *const` binding does not -
          it costs the extra base add the image does not have).
 // ORIGINAL: 0x00609D50 ?set_def_dialog_text_color@Dialog@@QAAXHHHHH@Z 0x00609D50-0x00609D8C BYTE_EXACT
-// symbol    _dialog_set_def_dialog_text_color
+// symbol    ?set_def_dialog_text_color@Dialog@@SAXHHHHH@Z
 // size      60 bytes
 // prototype
 // callers   1   call targets   0

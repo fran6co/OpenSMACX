@@ -502,7 +502,7 @@ struct MapDataTransferHeader {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005A6510 sub_5a6510 0x005A6510-0x005A6594 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/005a6510.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover direction-sign lookup through the genuine nine-entry movement tables and historical C linkage. Preserve the exact seed obligation; new matching claims require native recording."}
-// symbol    _sub_5a6510
+// symbol    ?sub_5a6510@@YAHHH@Z
 int __cdecl sub_5a6510(int x, int y) {
     int sign_x;
     if (x > 0) {

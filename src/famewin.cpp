@@ -96,7 +96,7 @@ Purpose: Hall-of-fame I/O: store the read/write mode, then transfer the
 // The pinned 0x0064603F/0x00646178 targets are CRT fwrite/fread wrappers.
 // The retained LEVER describes the seed's integer-address spelling; this
 // typed loop expresses the fixed 35-record table as seven groups of five.
-// symbol    _sub_44af90
+// symbol    ?sub_44af90@@YAHPAU_iobuf@@H@Z
 int __cdecl sub_44af90(FILE *a1, int a2) {
     HallOfFameIOMode = a2;
     int result;

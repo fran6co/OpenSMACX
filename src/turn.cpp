@@ -360,7 +360,7 @@ Purpose: Build one log line for the say-buffer: decimal the number,
 
 // ORIGINAL: 0x0051E6F0 sub_51e6f0 0x0051E6F0-0x0051E75A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned image 0x0051E6F0 full span", "original separator slot 0x00682820 is the existing BufferJoinSpace object; log_say_hex is source-owned in log.cpp"], "reason": "Home the original decimal/space/text concatenation and four-argument logger call without changing its call order or unsafe buffers."}
-// symbol    _sub_51e6f0
+// symbol    ?sub_51e6f0@@YAXPBDH@Z
 // size      106 bytes
 // prototype
 // callers   0   call targets   3
@@ -5304,7 +5304,7 @@ int __cdecl sub_52a980() {
 // spelling, not a requirement to keep an executable-address table.
 
 // ORIGINAL: 0x0052A9B0 sub_52a9b0 0x0052A9B0-0x0052AA2D FILE BYTE_EXACT
-// symbol    _directplay_install_is_complete
+// symbol    ?directplay_install_is_complete@@YAHXZ
 // LEVER: the six fixed-address bindings renamed or deleted. Three of them -
 //         0x00669000, 0x0066900C and 0x00669010 - are ADVAPI32 import slots
 //         (tools/iat_names.py: RegQueryValueExA, RegOpenKeyExA, RegCloseKey),

@@ -52,7 +52,7 @@ Purpose: The sound-header version the game was built with. The whole image
          a BYTE_EXACT claim in field_accessors.cpp under the redirect's
          symbol; re-record here against the real name.
 // ORIGINAL: 0x0062D390 sub_62d390 0x0062D390-0x0062D396 BYTE_EXACT
-// symbol    _sound_header_version
+// symbol    ?sound_header_version@@YAHXZ
 // size      6 bytes
 // prototype
 // callers   1   call targets   0

@@ -9784,7 +9784,7 @@ void Win::screen_to_nonclient(int * x, int * y) {
 /*
 Purpose: Refresh the cached screen metrics from the system.
 // ORIGINAL: 0x005EFD00 sub_5efd00 0x005EFD00-0x005EFD1B BYTE_EXACT
-// symbol    _DDInitRefreshScreenMetrics
+// symbol    ?DDInitRefreshScreenMetrics@@YAHXZ
 // size      27 bytes
 // callers   3   call targets   0
 // kind      game

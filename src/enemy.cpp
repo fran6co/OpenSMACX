@@ -1915,7 +1915,7 @@ Purpose: Return 1 immediately for a unity-bonus tile. Otherwise select the
          lacks fungus or lies below the ocean-shelf altitude; else return 0.
 
 // ORIGINAL: 0x00565160 sub_565160 0x00565160-0x0056531A FILE BYTE_EXACT
-// symbol    _sub_565160
+// symbol    ?sub_565160@@YAHHHH@Z
 // TRIED (seed): two-phase radius-table scan (find owning base, then scan
 //            around it) with direct treaty-flags array indexing; reaches #11
 //            before the second bonus_at-style helper call ordering

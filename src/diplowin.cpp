@@ -1916,7 +1916,7 @@ Purpose: Publish the (a1,a2) id pair into the 0x30-byte dialog entry slot
 
 // ORIGINAL: 0x00441040 sub_441040 0x00441040-0x004410F1 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["DiploWin owns stringBox_ at +0xA388; StringBox::stringList_ is at +0x2B70, giving the exact original StringList receiver at DiploWindow+0xCEF8 = 0x00747BD0.", "The pinned words 0x747BD8/BC/E0/E4 therefore map to StringList head_/current_/entry_count_/current_position_; 0x737CD8 is the typed 8x8 destination list table."], "reason": "Move the global callback into the owner of both the observed source StringList member and destination transcript array; preserve cursor caching, pair-index arithmetic, target-field writes and add order."}
-// symbol    _sub_441040
+// symbol    ?sub_441040@@YAXHH@Z
 // TRIED: void __cdecl(int a1, int a2), direct linked-list walk transcription; diverges at #29 mov vs cmp, not chased further
 // size      177 bytes
 // prototype
@@ -1967,7 +1967,7 @@ Purpose: Refill one hot-seat chat view: order the two record indices, clear
 
 // ORIGINAL: 0x00441100 sub_441100 0x00441100-0x004411EC FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["diplowin.cpp owns the direct DiploWin::exec caller, the shared DiploWindow StringBox/EditBox and the typed DiplomacyTranscriptLists array.", "The original implementation clears both shared controls, normalizes the pair, then reads the last three entries from the selected list in its existing order."], "reason": "Move the complete externally named callback from the catch-all leaf TU into the owning diplomacy TU; retain normalization, clear order, loop bounds and typed list/control behavior."}
-// symbol    _sub_441100
+// symbol    ?sub_441100@@YAXHH@Z
 // TRIED: signature had no params in the fallback head (IDA guessed 2 stack ints, confirmed by [ebp+8]/[ebp+0xc] reads before any push, and no meaningful eax at ret so void not int - both changed). Landed at MISMATCH (90% mnemonic similarity, 11 edits).
 // size      236 bytes
 // prototype

@@ -133,7 +133,7 @@ Purpose: The buffered writer's re-entry half, run as the embedded Buffer's
          with this function before returning.
 
 // ORIGINAL: 0x004BEE60 ?UNK2@UV2Player@@QAAHHHHH@Z 0x004BEE60-0x004BEEFD FILE BYTE_EXACT
-// symbol   _uv2_player_writer_redirect
+// symbol   ?writer_redirect@UV2Player@@SAHPADHHH@Z
 // size      157 bytes
 // prototype
 // callers   0   call targets   1

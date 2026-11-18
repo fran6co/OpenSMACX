@@ -289,7 +289,7 @@ int __cdecl sub_62d0f0() {
 }
 
 // ORIGINAL: 0x0062D100 sub_62d100 0x0062D100-0x0062D13A BYTE_EXACT
-// symbol    _sub_62d100
+// symbol    ?sub_62d100@@YAHXZ
 // kind game
 int __cdecl sub_62d100() {
     if (BufferDirectDraw != 0) {

@@ -2073,7 +2073,7 @@ Purpose: Bubble-sort one int array descending while applying the identical
          exchanges to a parallel array addressed relative to it.
 // ORIGINAL: 0x004D5F70 sub_4d5f70 0x004D5F70-0x004D5FE6 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original4D5F70..4D5FE6; retired seed git:da8a4b7f:src/unrecovered/004d5f70.cpp records the same identity and spans.", "The pinned body calls integer swap at 0x628A50; the typed declaration and implementation are owned by general.h/general.cpp.", "The parallel array is reached by the same base-plus-index arithmetic the seed measured."], "reason": "Coverage transcription of the paired bubble sort with the source-owned integer swap; the parallel-array base stays an int because no owning array is named anywhere in the tree."}
-// symbol    _sub_4d5f70
+// symbol    ?sub_4d5f70@@YAXPAH0H@Z
 Status: Coverage transcription - unclaimed body
 */
 void __cdecl sub_4d5f70(int *parallel, int *values, int count) {
@@ -2098,7 +2098,7 @@ Purpose: Bubble-sort an id list into base-name order: repeatedly walk the
 
 // ORIGINAL: 0x004D5FF0 sub_4d5ff0 0x004D5FF0-0x004D606E FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["The pinned routine repeatedly compares Bases[id].name_string using case-insensitive string comparison and swaps neighboring entries in the caller-owned id list.","The current Base array/count are source-owned in base.h/base.cpp; the global address-derived identity remains sub_4d5ff0, not a newly named Base method.","The one-element/negative-count early return, repeated bubble passes, comparator polarity, and caller-list mutation are preserved."],"reason":"Move the existing base-name id sort to the owner of its genuine Base storage while retaining the original global identity and exact comparison/swap control flow."}
-// symbol    _sub_4d5ff0
+// symbol    ?sub_4d5ff0@@YAXPAH@Z
 // size      126 bytes
 // prototype
 // callers   0   call targets   2
