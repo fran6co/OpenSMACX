@@ -85,12 +85,6 @@ extern int ReportIfDeclPad5;
 // CANARY-PADS: function ReportIfDeclFnPad
 void ReportIfDeclFnPad0();
 void ReportIfDeclFnPad1();
-void ReportIfDeclFnPad2();
-void ReportIfDeclFnPad3();
-void ReportIfDeclFnPad4();
-void ReportIfDeclFnPad5();
-void ReportIfDeclFnPad6();
-void ReportIfDeclFnPad7();
 
 // Shared punctuation objects the image pushes instead of unit literals.
 extern char SocialWinCloseParenText[];
@@ -3825,6 +3819,8 @@ static inline int reportwin_write_cent_box(ReportWin *win, char *text, int x, in
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0049F350 0x0049FE20 0x0049FE34 0x0049F758
 // ORIGINAL: 0x0049F350 ?draw_sat@ReportWin@@QAEXXZ 0x0049F350-0x0049FE1E
 // RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/unrecovered/0049f350.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+// The image calls sqrt out of line here (0x49FC32, 0x49FC69).
+#pragma function(sqrt)
 void ReportWin::draw_sat() {
     const int faction_id = ReportIfGlobal.report_faction_id_;
     int orbital_tech = 0;
@@ -3860,10 +3856,12 @@ void ReportWin::draw_sat() {
             rect1_.bottom -= 50;
             const int row_height = (rect1_.bottom - rect1_.top - 2) / 8;
             int heading_width = rect1_.right / 3;
+            const int avail = rect1_.right - 4;
             if (ExpansionEnabled) {
                 heading_width = rect1_.right / 5;
             }
-            const int cell_width = (rect1_.right - 4 - heading_width) / (ExpansionEnabled ? 5 : 4);
+            const int cell_width = (avail - heading_width) / (ExpansionEnabled ? 5 : 4);
+            RECT *const work = &report_work_rect_;
             for (int other = 0; other < 8; ++other) {
                 spot_.kill_type(other);
                 rect1_.left = energy_panel_rect_.left + 2;
@@ -3873,17 +3871,11 @@ void ReportWin::draw_sat() {
                     PluralityDefault = Players[other].is_noun_plural;
                     strcat(StringTemp, Players[other].noun_faction);
                     Buffer::set_text_color(ChatItemIdTable[other], ChatShadowColors[other], 1, 1);
-                    report_work_rect_.top = rect1_.top;
-                    report_work_rect_.left = rect1_.left;
-                    report_work_rect_.right = rect1_.left + heading_width;
-                    report_work_rect_.bottom = rect1_.top + row_height;
-                    Buffer::write_l(StringTemp, &report_work_rect_);
+                    set_rectangle_dimensions(work, rect1_.left, rect1_.top, heading_width, row_height);
+                    Buffer::write_l(StringTemp, work);
                 }
                 rect1_.left += heading_width;
-                report_work_rect_.left = rect1_.left;
-                report_work_rect_.top = rect1_.top;
-                report_work_rect_.right = rect1_.left + cell_width;
-                report_work_rect_.bottom = rect1_.top + row_height;
+                set_rectangle_dimensions(work, rect1_.left, rect1_.top, cell_width, row_height);
                 for (satellite_index_ = 0; satellite_index_ < (ExpansionEnabled ? 5 : 4);
                      ++satellite_index_) {
                     if (other) {
@@ -3929,21 +3921,21 @@ void ReportWin::draw_sat() {
                         } else {
                             say_num(PlayersData[other].satellites_[satellite_index_]);
                         }
-                        Buffer::write_cent_l(StringTemp, &report_work_rect_);
-                        spot_.add(satellite_index_, other, report_work_rect_.left,
-                                  report_work_rect_.top,
-                                  report_work_rect_.right - report_work_rect_.left,
-                                  report_work_rect_.bottom - report_work_rect_.top);
+                        Buffer::write_cent_l(StringTemp, work);
+                        spot_.add(satellite_index_, other, work->left,
+                                  work->top,
+                                  work->right - work->left,
+                                  work->bottom - work->top);
                     } else {
                         Buffer::set_text_color(0xFF, -1, 1, 1);
                         StringTemp[0] = 0;
                         strcat(StringTemp, StringTable.get(
                             ExpansionEnabled && satellite_index_ == 4
                                 ? Facility[41].name : Facility[65 + satellite_index_].name));
-                        Buffer::wrap_cent(StringTemp, &report_work_rect_);
+                        Buffer::wrap_cent(StringTemp, work);
                     }
-                    report_work_rect_.left += cell_width;
-                    report_work_rect_.right += cell_width;
+                    work->left += cell_width;
+                    work->right += cell_width;
                 }
                 rect1_.top += row_height;
             }
@@ -3966,24 +3958,17 @@ void ReportWin::draw_sat() {
     field_59A4_ = 210;
     rect1_.left = (energy_panel_rect_.left + energy_panel_rect_.right - 576) / 2;
     rect1_.top = (energy_panel_rect_.top + energy_panel_rect_.bottom - 210) / 2 + 20;
-    // Image store order (0x49FAA3..0x49FABC): top, left, bottom, right.
-    satellite_rect_.top = rect1_.top;
-    satellite_rect_.left = rect1_.left;
-    satellite_rect_.bottom = rect1_.top + 210;
-    satellite_rect_.right = rect1_.left + 576;
+    set_rectangle_dimensions(&satellite_rect_, rect1_.left, rect1_.top, 576, 210);
     flic_.init(this, "satellite.flc", 0, 0, 0);
     field_E2A8_ = (satellite_rect_.right + satellite_rect_.left) / 2;
-    field_E2A0_ = field_E2A8_ - flic_.decoded_width() / 2;
     field_E2AC_ = (satellite_rect_.bottom + satellite_rect_.top) / 2;
+    field_E2A0_ = field_E2A8_ - flic_.decoded_width() / 2;
     field_E2A4_ = field_E2AC_ - flic_.decoded_height() / 2;
     buffer2_.init(flic_.decoded_width(), flic_.decoded_height(), 0, 0);
     buffer2_.fill(9);
     flic_.init(&buffer2_, "satellite.flc", 0, 0, 0);
     Buffer::box_sprite(&satellite_rect_, &InterfaceBoxStyles[4]);
-    satellite_rect_.left += 3;
-    satellite_rect_.top += 3;
-    satellite_rect_.right -= 3;
-    satellite_rect_.bottom -= 3;
+    inflate_frame(&satellite_rect_, -3, -3);
     field_F918_ = 0;
     for (i = 1; i < 8; ++i) {
         for (satellite_index_ = 0; satellite_index_ < 4; ++satellite_index_) {
@@ -4028,6 +4013,7 @@ void ReportWin::draw_sat() {
     time2_.init(sat_anim_daemon, reinterpret_cast<int>(this), 4000, 5);
     time2_.start();
 }
+#pragma intrinsic(sqrt)
 
 /*
 Purpose: Advance the satellite orbital overlay one tick: clear the orbit
