@@ -1534,28 +1534,6 @@ void __cdecl enemy_strategy(int faction_id) {
 
 
 /*
-Purpose: Wrap an x coordinate on a round map, as set_course does it.
-Original Offset: n/a
-Return Value: Wrapped x
-Status: Complete
-
-xrange() at 0048BEE0 cannot stand in, for one bit: it tests the whole of MapIsFlat while
-set_course reads the low BYTE and tests bit zero (`mov cl, byte ptr [94988Ch] / test cl, 1`),
-the same reading valid_patrol above and reset_territory use. The two agree on the 0 and 1 the
-game stores there and disagree on everything else.
-*/
-static inline int course_xrange(int x) {
-    if (!(MapIsFlat & 1)) {
-        if (x < 0) {
-            x += MapLongitudeBounds;
-        } else if (x >= MapLongitudeBounds) {
-            x -= MapLongitudeBounds;
-        }
-    }
-    return x;
-}
-
-/*
 Purpose: Send the unit toward the given tile the long way round - by water - choosing the anchorage
          next to it that fronts the most of the destination's own landmass.
 // ORIGINAL: 0x00564890 ?set_course@@YAXHDHH@Z 0x00564890-0x00564B82 BYTE_EXACT
@@ -1975,28 +1953,6 @@ int __cdecl sub_565160(int faction_id, int tile_x, int tile_y) {
 }
 
 /*
-Purpose: Wrap an x coordinate on a round map, as can_terraform() wraps it.
-Original Offset: n/a
-Return Value: Wrapped x
-Status: Complete
-
-The third private copy of this, after map.cpp's site_xrange() and game.cpp's
-territory_xrange(), and for the same reason: the exported xrange() at 0048BEE0
-tests the whole of MapIsFlat while can_terraform's base-radius census reads the
-low BYTE and tests bit zero (`mov ebx, [94988Ch] / and ebx, 1`). The two agree
-on the 0 and 1 the game stores there and disagree on everything else, and the
-difference is in the original rather than in the transcription.
-*/
-static int terraform_xrange(int x) {
-    // The flat-first ternary, as map.h's shared wrap: with the if/else
-    // statement form the hoisted MapLongitudeBounds loses edi to MapLongitude
-    // in the census loop (0x005656E7 holds the bounds in edi).
-    return (MapIsFlat & 1) ? x
-        : x < 0 ? x + MapLongitudeBounds
-        : x >= MapLongitudeBounds ? x - MapLongitudeBounds : x;
-}
-
-/*
 Purpose: Decide which Former order, if any, should be issued on the specified tile.
 // ORIGINAL: 0x00565320 ?can_terraform@@YAHHHHHH@Z 0x00565320-0x00565F1E
 // LEVER: real-bitmask-calls the two facility checks in the forest-value block
@@ -2204,7 +2160,7 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
                 int base_x = Bases[base_id].x;
                 int base_y = Bases[base_id].y;
                 for (int i = 0; i < 21; i++) {
-                    int x_radius = terraform_xrange(base_x + RadiusOffsetX[i]);
+                    int x_radius = wrap_map_x(base_x + RadiusOffsetX[i]);
                     int y_radius = base_y + RadiusOffsetY[i];
                     if (!on_map(x_radius, y_radius)) {
                         continue;
@@ -2534,9 +2490,9 @@ Bug notes, reproduced rather than corrected:
   - The `while` below terminates only because `defenders` is known nonzero; the guard is the
     original's, not an addition.
 
-The x wrap is course_xrange() rather than xrange(), for the one bit that separates them: the
-original reads the low BYTE of MapIsFlat and tests bit zero (`mov cl, byte ptr [94988Ch] /
-test cl, 1`), exactly as set_course and reset_territory do.
+The x wrap is map.h's wrap_map_x() rather than the out-of-line xrange(), for the one bit that
+separates them: the original reads the low BYTE of MapIsFlat and tests bit zero (`mov cl, byte
+ptr [94988Ch] / test cl, 1`), exactly as set_course and reset_territory do.
 
 Verification note: eighteen mutants survive the sweep and every one is an equivalence that can be
 read off another recovered body.
@@ -2628,7 +2584,7 @@ int __cdecl compute_odds(int odds, int faction_id, int veh_id_atk, int veh_id_de
         if (base_id >= 0) {
             for (int i = 0; i < 8; i++) {
                 // The ninth RadiusBase entry is the tile itself and is never reached.
-                const int x_radius = course_xrange(x_def + VehMoveDeltaX[i]);
+                const int x_radius = wrap_map_x(x_def + VehMoveDeltaX[i]);
                 const int y_radius = y_def + VehMoveDeltaY[i];
                 if (!on_map(x_radius, y_radius)) {
                     continue;
@@ -2670,7 +2626,7 @@ int __cdecl compute_odds(int odds, int faction_id, int veh_id_atk, int veh_id_de
     } else if (base_id >= 0) {
         int attackers = 0;
         for (int i = 0; i < 8; i++) {
-            const int x_radius = course_xrange(x_def + VehMoveDeltaX[i]);
+            const int x_radius = wrap_map_x(x_def + VehMoveDeltaX[i]);
             const int y_radius = y_def + VehMoveDeltaY[i];
             if (!on_map(x_radius, y_radius)) {
                 continue;
