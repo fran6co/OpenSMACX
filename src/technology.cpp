@@ -916,7 +916,7 @@ void __cdecl tech_secret(int tech_id, int faction_id) {
     StringTemp[0] = '\0';
     // The independent tech_achieved announcement at 5BC490 appends the
     // same caption prefix from 6916F0; retain that shared literal identity.
-    // RECOVERY_LITERAL: v1 0x006916F0 0x006916FA $SG60466 0x005BB000
+    // RECOVERY_LITERAL: v1 0x006916F0 0x006916FA $SG60470 0x005BB000
     strcat(StringTemp, "THESECRET");
     say_num(faction_id != ConsoleGlobal.faction_id_);
     X_pop(StringTemp, 0);
@@ -1296,7 +1296,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
         tech_id == Terraforming[TERRA_FOREST].prerequisite_tech[0] && !IsMultiplayerNet) {
         parse_say(0, Technology[tech_id].name, -1, -1);
         // Original TREETIME argument at 0x005BBC5E; independent literal storage.
-        // RECOVERY_LITERAL: v1 0x0069178C 0x00691795 $SG60635 0x005BB000
+        // RECOVERY_LITERAL: v1 0x0069178C 0x00691795 $SG60639 0x005BB000
         X_pop(TutorialPopupCaption, "TREETIME", nullptr);
     }
 
@@ -2212,7 +2212,7 @@ int __cdecl tech_selection(int faction) {
             return PlayersData[faction].tech_id_researching;
         }
     }
-    // RECOVERY_LITERAL: v1 0x0069180C 0x00691818 $SG61001 0x005BE380
+    // RECOVERY_LITERAL: v1 0x0069180C 0x00691818 $SG61005 0x005BE380
     const int result = tech_pick(faction, 0, -1, 0);
     PlayersData[faction].tech_id_researching = result;
     if (IsMultiplayerNet != 0) {
@@ -2231,8 +2231,8 @@ int __cdecl tech_selection(int faction) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// RECOVERY_LITERAL: v1 0x00691828 0x00691845 $SG61030 0x005BE530
-// RECOVERY_LITERAL: v1 0x00691818 0x00691827 $SG61016 0x005BE530
+// RECOVERY_LITERAL: v1 0x00691828 0x00691845 $SG61034 0x005BE530
+// RECOVERY_LITERAL: v1 0x00691818 0x00691827 $SG61020 0x005BE530
 /*
 Purpose: Finish one faction's research turn: log the tech being researched,
          or when the faction finishes (no PBEM/human gate applies) commit
