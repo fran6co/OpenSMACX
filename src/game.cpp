@@ -2379,18 +2379,17 @@ int __cdecl game_data(FILE *file, int write_mode) {
     int string_id;
     int string_length;
     for (int faction = 1; faction < 8; ++faction) {
-        StringList &list = MessageWinDeferredBaseMessages[faction];
         if (write_mode != 0) {
-            string_count = list.entry_count_;
+            string_count = MessageWinDeferredBaseMessages[faction].entry_count_;
             if (fwrite(&string_count, 4, 1, file) == 0)
                 return 1;
             for (int index = 0; index < string_count; ++index) {
-                list.seek_pos(index);
-                string_id = game_data_current_id(&list);
+                MessageWinDeferredBaseMessages[faction].seek_pos(index);
+                string_id = game_data_current_id(&MessageWinDeferredBaseMessages[faction]);
                 if (fwrite(&string_id, 4, 1, file) == 0)
                     return 1;
-                strcpy(StringTemp, list.head_
-                    ? list.current_->string_payload()->text : 0);
+                strcpy(StringTemp, MessageWinDeferredBaseMessages[faction].head_
+                    ? MessageWinDeferredBaseMessages[faction].current_->string_payload()->text : 0);
                 string_length = static_cast<int>(strlen(StringTemp));
                 if (fwrite(&string_length, 4, 1, file) == 0)
                     return 1;
@@ -2399,9 +2398,9 @@ int __cdecl game_data(FILE *file, int write_mode) {
                     return 1;
             }
         } else {
-            list.remove_all();
-            list.current_position_ = 0;
-            list.allocator_ = 0;
+            MessageWinDeferredBaseMessages[faction].remove_all();
+            MessageWinDeferredBaseMessages[faction].current_position_ = 0;
+            MessageWinDeferredBaseMessages[faction].allocator_ = 0;
             if (fread(&string_count, 4, 1, file) == 0)
                 return 1;
             for (int index = 0; index < string_count; ++index) {
@@ -2412,10 +2411,10 @@ int __cdecl game_data(FILE *file, int write_mode) {
                 if (fread(StringTemp, string_length, 1, file) == 0)
                     return 1;
                 StringTemp[string_length] = '\0';
-                list.field_20_ = 0;
-                list.field_24_ = 0;
-                list.pending_text_ = StringTemp;
-                list.add(string_id);
+                MessageWinDeferredBaseMessages[faction].field_20_ = 0;
+                MessageWinDeferredBaseMessages[faction].field_24_ = 0;
+                MessageWinDeferredBaseMessages[faction].pending_text_ = StringTemp;
+                MessageWinDeferredBaseMessages[faction].add(string_id);
             }
         }
     }
@@ -2424,18 +2423,17 @@ int __cdecl game_data(FILE *file, int write_mode) {
     // through column-1, the 21 off-diagonal lists in columns 2 through 7.
     for (int column = 1; column < 8; ++column) {
         for (int row = 1; row < column; ++row) {
-            StringList &list = DiplomacyTranscriptLists[row][column];
             if (write_mode != 0) {
-                string_count = list.entry_count_;
+                string_count = DiplomacyTranscriptLists[row][column].entry_count_;
                 if (fwrite(&string_count, 4, 1, file) == 0)
                     return 1;
                 for (int index = 0; index < string_count; ++index) {
-                    list.seek_pos(index);
-                    string_id = game_data_current_id(&list);
+                    DiplomacyTranscriptLists[row][column].seek_pos(index);
+                    string_id = game_data_current_id(&DiplomacyTranscriptLists[row][column]);
                     if (fwrite(&string_id, 4, 1, file) == 0)
                         return 1;
-                    strcpy(StringTemp, list.head_
-                        ? list.current_->string_payload()->text : 0);
+                    strcpy(StringTemp, DiplomacyTranscriptLists[row][column].head_
+                        ? DiplomacyTranscriptLists[row][column].current_->string_payload()->text : 0);
                     string_length = static_cast<int>(strlen(StringTemp));
                     if (fwrite(&string_length, 4, 1, file) == 0)
                         return 1;
@@ -2444,9 +2442,9 @@ int __cdecl game_data(FILE *file, int write_mode) {
                         return 1;
                 }
             } else {
-                list.remove_all();
-                list.current_position_ = 0;
-                list.allocator_ = 0;
+                DiplomacyTranscriptLists[row][column].remove_all();
+                DiplomacyTranscriptLists[row][column].current_position_ = 0;
+                DiplomacyTranscriptLists[row][column].allocator_ = 0;
                 if (fread(&string_count, 4, 1, file) == 0)
                     return 1;
                 for (int index = 0; index < string_count; ++index) {
@@ -2457,10 +2455,10 @@ int __cdecl game_data(FILE *file, int write_mode) {
                     if (fread(StringTemp, string_length, 1, file) == 0)
                         return 1;
                     StringTemp[string_length] = '\0';
-                    list.field_20_ = 0;
-                    list.field_24_ = 0;
-                    list.pending_text_ = StringTemp;
-                    list.add(string_id);
+                    DiplomacyTranscriptLists[row][column].field_20_ = 0;
+                    DiplomacyTranscriptLists[row][column].field_24_ = 0;
+                    DiplomacyTranscriptLists[row][column].pending_text_ = StringTemp;
+                    DiplomacyTranscriptLists[row][column].add(string_id);
                 }
             }
         }
