@@ -864,8 +864,6 @@ int __cdecl game_data_plain_transfer(FILE *file, void *buffer, unsigned int byte
     return static_cast<int>(fread(buffer, byte_count, 1, file));
 }
 
-// Both map daemons call map_data out of line.
-#pragma auto_inline(off)
 // ORIGINAL: 0x005A9280 ?map_data@@YAHPAUFILE@@HH@Z 0x005A9280-0x005A94ED BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/005a9280.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover complete map-data transfer including archive-header blocks, legacy version-dependent block length, failure ordering and real map_read/map_write owners."}
 // symbol    ?map_data@@YAHPAU_iobuf@@HH@Z
@@ -894,7 +892,6 @@ int __cdecl map_data(FILE *file, int write_mode, int transfer_map_header) {
 fail:
     return 1;
 }
-#pragma auto_inline(on)
 
 // ORIGINAL: 0x005A9C10 ?load_map_daemon@@YAHPAD@Z 0x005A9C10-0x005A9DAD BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/005a9c10.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover extension/header/version validation, map windows and map tiles, contour copy direction and Paths lifecycle through existing genuine owners."}

@@ -1201,7 +1201,6 @@ void InfoWin::on_right_click(int a, int b) {
 // The original pulls each menu caption from the label table, then applies
 // the chosen state to the active pane. The menu's stored item ID is not the
 // same as its selected slot; PullDown owns that translation.
-#pragma auto_inline(off)
 // ORIGINAL: 0x004589C0 ?right_menu@InfoWin@@QAEXHH@Z 0x004589C0-0x00458D3A;0x00655280-0x00655295 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x004589C0-0x00458D3A", "image:0x00655280-0x00655295", "git:bfa66ccf:src/recovered/units/004589c0.cpp", "source:src/pulldown.h:get_selected_id"], "reason": "Home the information-pane context menu with the real PullDown item-ID API, source-owned label table, pane state and MainInterface renderer; retain the original secondary EH span as a restoration obligation."}
 void InfoWin::right_menu(int x, int y) {
@@ -1251,7 +1250,6 @@ void InfoWin::right_menu(int x, int y) {
         }
     }
 }
-#pragma auto_inline(on)
 
 
 // ---------------------------------------------------------------------------

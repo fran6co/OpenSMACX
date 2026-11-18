@@ -1400,8 +1400,6 @@ Status: Complete
 // command family calls it by name.
 void __cdecl veh_kill(int vehID);
 
-// Every caller in the image calls this out of line.
-#pragma auto_inline(off)
 void __cdecl stack_kill(int a1) {
     if (a1 >= 0) {
         short s = Vehs[a1].prev_veh_id_stack;
@@ -1426,7 +1424,6 @@ void __cdecl stack_kill(int a1) {
         } while (a1 >= 0);
     }
 }
-#pragma auto_inline(on)
 
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x005B9580 0x005B9BB8 0x005B9C08 0x005B95D7

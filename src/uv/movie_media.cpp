@@ -2609,9 +2609,6 @@ Purpose: Create the codec's draw/audio surface through COM: QueryInterface
 // calls     (none)
 // indirect  0x005CDB3E 0x005CDB56 0x005CDB73
 */
-// stand-in: auto_inline(off) keeps sub_5cd560's direct call, as the image
-// calls 0x005CDAD0; VC6 auto-inlines it even after its caller (C4711).
-#pragma auto_inline(off)
 int __fastcall sub_5cdad0(IDirectDraw2 *provider,
                           IDirectDrawSurface2 **out_slot,
                           int width, int height, int format_tail) {
@@ -2638,7 +2635,6 @@ int __fastcall sub_5cdad0(IDirectDraw2 *provider,
   }
   return 1;
 }
-#pragma auto_inline(on)
 
 
 

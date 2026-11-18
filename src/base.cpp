@@ -1756,12 +1756,10 @@ Purpose: Set the current base globals.
 Return Value: n/a
 Status: Complete
 */
-#pragma auto_inline(off)
 void __cdecl set_base(int base_id) {
     BaseCurrent = &Bases[base_id];
     BaseIDCurrentSelected = base_id;
 }
-#pragma auto_inline(on)
 
 
 /*
@@ -1924,7 +1922,6 @@ Purpose: Find the base id closest to the specified coordinates owned by faction.
 Return Value: Base id or -1 if not found
 Status: Complete
 */
-#pragma auto_inline(off)
 int __cdecl base_find(int x, int y, int faction_id) {
     int proximity = 9999;
     int base_id = -1;
@@ -1942,7 +1939,6 @@ int __cdecl base_find(int x, int y, int faction_id) {
     }
     return base_id;
 }
-#pragma auto_inline(on)
 
 /*
 Purpose: Find the base id closest to the specified coordinates meeting various conditional checks.

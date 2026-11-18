@@ -65,10 +65,6 @@ Status: Complete
 // historical Return Value: text_open's result for the section
 // historical Status: Measured BYTE_EXACT here in place (wave 7 record-then-retire); the
 // LEVER: string-routines-are-calls "Original keeps a `push ebp; mov ebp, esp` frame this source form never reproduces (register-pressure shape, not yet found)" was the note here, and the shape has now been found: the scaffold inlined a string routine the image calls, the expansion needs esi and edi, and VC6 answered by changing what it saved on entry. The prologue was downstream of the intrinsic. The `g_00691b0c`/`g_00691b20` reading stands - they are PTR_s_ globals holding a `char*`, one dereference more than the address of the string itself.
-// auto_inline(off): parse_it (0x0048C060) calls X_text_open (0x005BECA0) by
-// `call rel32`; the two images are far apart, so the shared reconstruction TU
-// is not original. Without the pragma /Ob2 folds this body into parse_it.
-#pragma auto_inline(off)
 int __cdecl X_text_open(char *src_file_id, const char *section_id) {
     if (strcmp(src_file_id, ScriptPopupFile) != 0) { return text_open(src_file_id, section_id); }
     const int faction_id = ConsoleGlobal.faction_id_;
@@ -77,4 +73,3 @@ int __cdecl X_text_open(char *src_file_id, const char *section_id) {
     }
     return text_open(src_file_id, section_id);
 }
-#pragma auto_inline(on)

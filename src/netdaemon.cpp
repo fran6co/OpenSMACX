@@ -191,8 +191,6 @@ static int turns_assigned() {
     return static_cast<int>(NetDaemonNet.primary_state_.leading_words_[0]);
 }
 
-// net_control_turn calls this out of line.
-#pragma auto_inline(off)
 int __cdecl next_player_turn() {
     if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) == 0) {
         return 0;
@@ -209,7 +207,6 @@ int __cdecl next_player_turn() {
     NextTurnReady = 1;
     return 1;
 }
-#pragma auto_inline(on)
 
 /*
 Purpose: Determine whether the turn currently belongs to another faction in a

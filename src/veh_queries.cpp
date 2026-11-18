@@ -258,8 +258,6 @@ Purpose: Move the specified unit to the top of the stack.
 Return Value: n/a
 Status: Complete
 */
-// stack_fix calls this out of line.
-#pragma auto_inline(off)
 void __cdecl veh_promote(int veh_id) {
     // The image expands veh_top's signed-word climb here.
     int veh_id_top = veh_top(veh_id);
@@ -275,7 +273,6 @@ void __cdecl veh_promote(int veh_id) {
         veh_drop(veh_id, Vehs[veh_id_top].x, Vehs[veh_id_top].y);
     }
 }
-#pragma auto_inline(on)
 
 
 /*
@@ -1234,8 +1231,6 @@ Purpose: Can this vehicle act this turn?
 Return Value: 1 when the vehicle has moves left and is not jailed.
 Status: Complete
 */
-// action_arty calls this out of line.
-#pragma auto_inline(off)
 int __cdecl veh_ready(int veh_id) {
     if (!veh_selectable(veh_id)) {
         return 0;
@@ -1248,7 +1243,6 @@ int __cdecl veh_ready(int veh_id) {
     // does (`!= 0` or a ternary gives setne).
     return veh_moves(veh_id) || false;
 }
-#pragma auto_inline(on)
 
 
 /*

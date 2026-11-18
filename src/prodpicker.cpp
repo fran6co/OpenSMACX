@@ -1216,13 +1216,10 @@ Purpose: Close the picker - clear the field at 0xA14 that marks it live, then
 Return Value: n/a
 Status: Complete
 */
-// Both image callers (the destructor among them) call this out of line.
-#pragma auto_inline(off)
 void ProdPicker::close() {
     field_A14_ = 0;
     GraphicWin::close();
 }
-#pragma auto_inline(on)
 
 
 /*

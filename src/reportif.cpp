@@ -251,19 +251,6 @@ Purpose: Tear down every sub-object the constructor built, in exactly the
 
 
 
-// The seams and definitions for the unrecovered bodies, at the end of the file
-// so no recovered body above shifts.
-//
-// auto_inline(off) is load-bearing, not tidiness, and being defined after the
-// caller is NOT enough on its own: VC6 at /Ob2 defers codegen to the end of
-// the translation unit and folds a forwarder defined later back into a caller
-// defined earlier. Measured - without the pragma cl reports C4711 at
-// reportif.cpp(219), which is the release_iface_mode call inside ReportIf::done,
-// and done's 22-byte BYTE_EXACT match is a `call rel32` there.
-
-
-
-#pragma auto_inline(on)
 
 // Research state87BE24/885F30 is ReportWinGlobal+59AC/+FAB8.
 // The energy list87BE84 is ReportWinGlobal+5A0C. No duplicate storage.

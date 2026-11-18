@@ -1051,13 +1051,10 @@ Purpose: Calculate the negative reputation the specified faction has with anothe
 Return Value: Bad reputation
 Status: Complete
 */
-// Every in-TU caller (rankings, enemy_diplomacy) calls it out of line.
-#pragma auto_inline(off)
 int __cdecl reputation(int faction_id, int faction_id_with) {
     return range(PlayersData[faction_id].integrity_blemishes
         - PlayersData[faction_id].diplo_unk1[faction_id_with], 0, 99);
 }
-#pragma auto_inline(on)
 
 /*
 Purpose: Calculate the amount of patience the specified faction has with another.
