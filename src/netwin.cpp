@@ -30,6 +30,7 @@
 // its three-state EH layout; see stringstruct.h.
 #define STRINGSTRUCT_CTOR_OUT_OF_LINE
 #define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
+#define SPOT_ADD_RECT_INLINE  // stand-in: see Spot::add(int, int, RECT *) in spot.h
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "netwin.h"
@@ -1329,17 +1330,11 @@ void NetWin::draw_player_names() {
         // 4807B7: the union lands in the text rectangle.
         ::UnionRect(&field, &setup_rects_[row + 36], &setup_rects_[row + 6]);
 
-        spot_.add(row, 2, setup_rects_[row + 36].left, setup_rects_[row + 36].top,
-                  setup_rects_[row + 36].right - setup_rects_[row + 36].left,
-                  setup_rects_[row + 36].bottom - setup_rects_[row + 36].top);
+        spot_.add(row, 2, &setup_rects_[row + 36]);
         if (NetWinSessionData.fields_.mode_ == 0 || NetWinSessionData.fields_.mode_ == 1) {
-            spot_.add(row, 2, setup_rects_[row + 6].left, setup_rects_[row + 6].top,
-                      setup_rects_[row + 6].right - setup_rects_[row + 6].left,
-                      setup_rects_[row + 6].bottom - setup_rects_[row + 6].top);
+            spot_.add(row, 2, &setup_rects_[row + 6]);
         }
-        spot_.add(row, 5, colour_rect->left, colour_rect->top,
-                  colour_rect->right - colour_rect->left,
-                  colour_rect->bottom - colour_rect->top);
+        spot_.add(row, 5, colour_rect);
         soft_update(&field);
     }
 
