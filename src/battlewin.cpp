@@ -580,7 +580,7 @@ void BattleWin::battle_report(int first_vehicle_id, int second_vehicle_id,
         VehPrototypes[Vehs[first_vehicle_id].proto_id].plan == 0x0B
         && VehPrototypes[Vehs[second_vehicle_id].proto_id].plan == 0x0B;
     if (attack_odds >= 0 && defense_odds >= 0
-        && (Weapon[VehPrototypes[Vehs[first_vehicle_id].proto_id].weapon_id].offense_rating < 0
+        && (get_proto_offense_rating(Vehs[first_vehicle_id].proto_id) < 0
             || Armor[VehPrototypes[Vehs[second_vehicle_id].proto_id].armor_id].defense_rating < 0
             || !Vehs[first_vehicle_id].faction_id)) {
         psi_label = 1;

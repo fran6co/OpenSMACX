@@ -1883,7 +1883,7 @@ void Console::destroy(int veh_id) {
         return;
     }
 
-    const uint8_t triad = Chassis[VehPrototypes[proto_id].chassis_id].triad;
+    const uint8_t triad = get_proto_triad(proto_id);
     if ((triad != 2) && (ocean != (triad == 1))) {
         NetDaemonNet.unlock_veh();
         veh_battle_msg(ConsoleStrNotInTriad, nullptr);
@@ -2765,7 +2765,7 @@ void Console::use_ability(int vehicle_id) {
             const int target_faction = whose_territory(
                 entry_faction, target_x, target_y, nullptr, 0);
             if (target_faction < 0 || target_faction == entry_faction ||
-                (PlayersData[entry_faction].diplo_treaties[target_faction] & 7u) == 0) {
+                has_treaty(entry_faction, target_faction, 7u) == 0) {
                 continue;
             }
 

@@ -253,6 +253,36 @@ def rule_expand(t,mt,pos):
         if ps: out=re.sub(r'\b('+'|'.join(map(re.escape,ps))+r')\b',sub,expr)
         yield (m.start(),e+1,'('+out+')','expand:'+m.group(1))
 RULES['expand']=rule_expand
+A_=r'([\w\.\[\]]+(?:->[\w\.\[\]]+)*|\([^()]*\))'
+CONTRACT=[
+ (r'map_loc\('+A_+r', '+A_+r'\)->bit\b(?!2)', r'bit_at(\1, \2)'),
+ (r'map_loc\('+A_+r', '+A_+r'\)->bit2\b', r'bit2_at(\1, \2)'),
+ (r'map_loc\('+A_+r', '+A_+r'\)->region\b', r'region_at(\1, \2)'),
+ (r'\(map_loc\('+A_+r', '+A_+r'\)->climate >> 5\)', r'alt_at(\1, \2)'),
+ (r'map_loc\('+A_+r', '+A_+r'\)->contour\b', r'alt_detail_at(\1, \2)'),
+ (r'\(PlayersData\['+A_+r'\]\.diplo_treaties\['+A_+r'\] & '+A_+r'\)', r'has_treaty(\1, \2, \3)'),
+ (r'PlayersData\['+A_+r'\]\.diplo_treaties\['+A_+r'\] & (DTREATY_\w+)', r'has_treaty(\1, \2, \3)'),
+ (r'get_proto_triad\(Vehs\['+A_+r'\]\.proto_id\)', r'get_triad(\1)'),
+ (r'Chassis\[VehPrototypes\['+A_+r'\]\.chassis_id\]\.triad', r'get_proto_triad(\1)'),
+ (r'Weapon\[VehPrototypes\['+A_+r'\]\.weapon_id\]\.offense_rating', r'get_proto_offense_rating(\1)'),
+ (r'Armor\[VehPrototypes\['+A_+r'\]\.armor_id\]\.defense_rating', r'get_proto_defense_rating(\1)'),
+ (r'GameDataStateStorage\.fields_\.secret_project_\.project_base\['+A_+r'\]', r'base_project(\1)'),
+]
+def rule_contract(t,mt,pos):
+    best=None
+    for rx,rep in CONTRACT:
+        m=re.compile(rx).search(mt,pos)
+        if m and (best is None or m.start()<best[0].start()): best=(m,rx,rep)
+    while best:
+        m,rx,rep=best
+        mm=re.compile(rx).match(t,m.start())
+        if mm: yield (m.start(),m.end(),mm.expand(rep),'contract:'+rep.split('(')[0])
+        nxt=None
+        for rx2,rep2 in CONTRACT:
+            m2=re.compile(rx2).search(mt,m.start()+1)
+            if m2 and (nxt is None or m2.start()<nxt[0].start()): nxt=(m2,rx2,rep2)
+        best=nxt
+RULES['contract']=rule_contract
 def main():
     rule=RULES[sys.argv[1]]; unit=sys.argv[2]; unit=unit if unit.startswith('src/') else 'src/'+unit; pfx=sys.argv[3]
     path=R+'/'+unit; text=open(path,encoding='latin-1').read()

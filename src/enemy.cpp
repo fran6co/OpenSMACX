@@ -3395,7 +3395,7 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                             > speed(veh_id, 0) / Rules.move_rate_roads - Rules.move_rate_roads) {
                             score = base_score / 2;
                         }
-                        score += bit_count(map_loc(x, y)->bit & 0x1E8881C);
+                        score += bit_count(bit_at(x, y) & 0x1E8881C);
                         if (score > best) {
                             best = score;
                             target_x = x;

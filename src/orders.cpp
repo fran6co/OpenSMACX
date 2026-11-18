@@ -558,7 +558,7 @@ L_5949b3:
 
     // 594e09
     if (direction >= 8) {
-        if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == TRIAD_AIR
+        if (get_proto_triad(Vehs[veh_id].proto_id) == TRIAD_AIR
                 && Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range != 0
                 && (NetDaemonNet.action_mode_ & 1) != 0
                 && faction == ConsoleGlobal.faction_id_

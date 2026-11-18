@@ -2525,7 +2525,7 @@ void __cdecl base_ecology() {
         }
         if (prob) {
             if (prob > 1) {
-                prob += bit_count(map_loc(x, y)->bit & MapTileFlagClearMask);
+                prob += bit_count(bit_at(x, y) & MapTileFlagClearMask);
                 if (i < 9) {
                     prob++;
                 }

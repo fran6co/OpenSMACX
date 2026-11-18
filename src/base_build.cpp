@@ -2326,7 +2326,7 @@ L_4fcf70:
     if (l_68 >= 0x100) {
         w *= 2;
     }
-    if (l_30 && Weapon[VehPrototypes[l_14].weapon_id].offense_rating && l_2c != 2) {
+    if (l_30 && get_proto_offense_rating(l_14) && l_2c != 2) {
         w /= 2;
     }
     if (l_3c) {
