@@ -1955,9 +1955,11 @@ int __cdecl game_data(FILE *file, int write_mode) {
                 }
                 for (f = 0; f < 8; ++f) {
                     for (k = 0; k < 32; ++k) {
-                        rows[v].proto_id_active[f * 64 + k] = old_rows[v].proto_id_active[f * 32 + k];
-                        rows[v].proto_id_queue[f * 64 + k] = old_rows[v].proto_id_queue[f * 32 + k];
-                        rows[v].proto_id_lost[f * 64 + k] = old_rows[v].proto_id_lost[f * 32 + k];
+                        const int dst = f * 64 + k;
+                        const int src = f * 32 + k;
+                        rows[v].proto_id_active[dst] = old_rows[v].proto_id_active[src];
+                        rows[v].proto_id_queue[dst] = old_rows[v].proto_id_queue[src];
+                        rows[v].proto_id_lost[dst] = old_rows[v].proto_id_lost[src];
                     }
                 }
                 rows[v].total_mil_veh = old_rows[v].total_mil_veh;
