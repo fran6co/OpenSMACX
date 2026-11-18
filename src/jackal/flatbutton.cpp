@@ -416,6 +416,16 @@ void FlatButton::on_mouse_leave(int x, int y) {
 }
 
 
+// WORKAROUND(decl): the image forms `right - left` before the text_width call
+// and holds it in ebp across it, then applies the 6-pixel margin
+// (0x00608406..0x00608421: sub ebp,eax; call; add ebp,-6; cmp eax,ebp). That
+// is an inline taking the width by value; written in place VC6 measures the
+// text first and rereads the rectangle. The original helper's name and owner
+// are unknown.
+static inline int flatbutton_text_fits(FlatButton *button, char *text, int width) {
+  return button->text_width(text) <= width - 6;
+}
+
 // ORIGINAL: 0x00607E50 ?on_redraw@FlatButton@@QAEXXZ 0x00607E50-0x006084F9
 // RECOVERY_BINDING: v1 {"evidence": ["task:pulldown-flatbutton-renderer-and-sprite-ownership", "historical seed:src/unrecovered/00607e50.cpp", "Pinned original00607E50; full native instructions, current class and producer/consumer closure."], "reason": "Recover the complete redraw in its genuine virtual C++ owner using real source-owned members, callbacks, sprites and Buffer operations; pointer configuration is borrowed, not owned."}
 // symbol    ?on_redraw@FlatButton@@UAEXXZ
@@ -544,7 +554,8 @@ void FlatButton::on_redraw() {
           - text_line_height() + text_height();
       const int y = ((rectangle.bottom - rectangle.top) - shift) / 2 + rectangle.top;
       if (y >= 0 && (static_cast<int>(field_18_) >= 2
-                     || text_width(name_) <= rectangle.right - rectangle.left - 6)) {
+                     || flatbutton_text_fits(this, name_,
+                                             rectangle.right - rectangle.left))) {
         wrap_cent(name_, rectangle.left + 3, y, rectangle.right - rectangle.left - 6);
         return;
       }
