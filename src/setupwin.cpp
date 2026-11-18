@@ -460,7 +460,7 @@ void SetupWin::draw_item(int position, int selected) {
         if (position >= 0) {
             item_texts_->seek_pos(position);
             char *name = item_texts_->head_ != 0
-                ? item_texts_->current_entry()->text : 0;
+                ? item_texts_->current_->string_payload()->text : 0;
             CharUpperA(name);
             char *pipe = strchr(name, '|');
             if (pipe != 0) *pipe = ' ';
@@ -476,24 +476,20 @@ void SetupWin::draw_item(int position, int selected) {
 
         if (selected && opening_window() != 0 &&
             (WinScreenWidth == 800 || WinScreenWidth == 1024)) {
-            if (position >= 0) {
-                if (position > 2) {
-                    position = 2;
-                }
-            } else {
-                position = 0;
-            }
-            Buffer *overlay = overlay_buffers_[position];
+            // A separate clamped index: reusing `position` gives it the
+            // second callee-saved register; the image keeps it in ebx, third.
+            int index = range(position, 0, 2);
+            Buffer *overlay = overlay_buffers_[index];
             if (overlay != 0) {
                 if (overlay->get_pixel(0, 0) == 9) {
-                    overlay->draw(opening_window(), 9, overlay_x_[position],
-                                  overlay_y_[position], 1, 1);
+                    overlay->draw(opening_window(), 9, overlay_x_[index],
+                                  overlay_y_[index], 1, 1);
                 } else {
-                    overlay->copy(opening_window(), 0, 0, overlay_x_[position],
-                                  overlay_y_[position], overlay->dib_.bmiHeader.biWidth,
+                    overlay->copy(opening_window(), 0, 0, overlay_x_[index],
+                                  overlay_y_[index], overlay->dib_.bmiHeader.biWidth,
                                   overlay->pixel_height());
                 }
-                opening_window()->soft_update(overlay_x_[position], overlay_y_[position],
+                opening_window()->soft_update(overlay_x_[index], overlay_y_[index],
                                               overlay->dib_.bmiHeader.biWidth,
                                               overlay->pixel_height());
             }
