@@ -951,6 +951,19 @@ not see, and those are the levers:
   `grep -n "+= MapLongitudeBounds"` lists the remaining in-place wraps;
   MapWin::editor, gen_terrain_poly and pixel_to_tile (mapwin.cpp) and
   diplomacy_check (one site, 914 -> 908) are untested or small.
+  Tree-wide sweep (2026-11-19 par-1): gen_terrain_poly 1666 -> 1565,
+  world_rivers 286 -> 271, energy_yield 301 -> 297, diplomacy_check 914 ->
+  908; opticenter/monocenter/find_view/draw_vehicles/draw_legend stay exact.
+  A frame or register copy of `MapIsFlat & 1` (`mov [ebp-x], eax` after
+  `and eax, 1`, then `test`/`jne` on it per iteration) is VC6's
+  loop-invariant hoist, not a `const int flat` source local: the planwin
+  scans are exact with wrap_map_x and no flat local, and world_rivers gains
+  only when the local goes. Not every written-out wrap is the helper: the
+  image adds the bounds to the variable itself (`add ecx, ebx` on near_x,
+  no separate result register) in diplomacy_check's second radius loop,
+  draw_farm's 21-tile loop (hoisted `longitude` local) and alien_move's
+  first neighbour wrap (bounds loaded before the flat test); there
+  wrap_map_x costs 6-50 rows. Test each site.
 - **Hoisted loop-invariant globals are candidates.** In can_terraform's
   radius census the image hoists MapLongitudeBounds (four references per
   iteration) into edi and rereads MapLongitude; the statement form of the
