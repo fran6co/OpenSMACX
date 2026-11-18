@@ -4171,27 +4171,14 @@ void __cdecl sat_expl_daemon(int context) {
     window->exp_anim();
 }
 
-// WORKAROUND(inline): dead /Ob2 budget stand-ins (fold to no code). sat_attack's
+// WORKAROUND(inline): dead /Ob2 budget stand-in (folds to no code). sat_attack's
 // eight ~Popup return sites have teardown depths 2,2,2,5,2,2,5,6 in the image
-// (EH unwind map); without spend after the NOKILLERS return ours are
-// 5,5,2,2,2,2,2,6. Two one-step probes after that return and one after the
-// break_treaty return reproduce the image's distribution. The original
-// spelling that spent this budget is unknown.
+// (EH unwind map). Two one-step probes after the NOKILLERS return reproduce
+// that distribution. The original spelling that spent this budget is unknown.
 static int sat_attack_budget_probe_a(int x)
 {
     if (x == 0) x = 1;
     if (x == 1) x = 4;
-    return x;
-}
-static int sat_attack_budget_probe_b(int x)
-{
-    if (x == 0) x = 1;
-    if (x == 1) x = 4;
-    return x;
-}
-static int sat_attack_budget_probe_c(int x)
-{
-    if (x == 0) x = 1;
     return x;
 }
 
@@ -4210,7 +4197,7 @@ void __cdecl sat_attack(int attacker, int target, int kind) {
                  "NOKILLERS", 0, "space_sm.pcx", 0);
         return;
     }
-    sat_attack_budget_probe_b(2); // WORKAROUND(inline): see above
+    sat_attack_budget_probe_a(2); // WORKAROUND(inline): see above
     sat_attack_budget_probe_a(2); // WORKAROUND(inline): see above
     if (static_cast<int>(PlayersData[attacker].sat_odp_deployed)
         >= static_cast<int>(PlayersData[attacker].satellites_[3])) {
@@ -4223,10 +4210,13 @@ void __cdecl sat_attack(int attacker, int target, int kind) {
     for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
         if (Bases[base].faction_id_current == target && has_fac(41, base, 0)) ++targets;
     }
-    // Original guards only the signed upper bound; no new lower guard.
-    if (kind == 4 ? !targets : (kind >= 4 || !PlayersData[target].satellites_[kind])) return;
+    // The negation of the admission test below: the image branches on each
+    // term (0x4A0485: cmp/jne, test/jne, jge, test/je) and never
+    // materializes a flag; the signed upper bound is the only guard on kind.
+    if (!((kind == 4 && targets)
+          || (kind != 4 && kind < 4 && PlayersData[target].satellites_[kind])))
+        return;
     if (break_treaty(attacker, target, 7)) return;
-    sat_attack_budget_probe_c(2); // WORKAROUND(inline): see above
     if (diplo_lock(100)) return;
     if (PlayersData[attacker].satellites_[3]
         && static_cast<int>(PlayersData[attacker].sat_odp_deployed)
