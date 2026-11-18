@@ -689,7 +689,7 @@ extern "C" void __cdecl sub_63fa80(const VOX_Matrix *sources) {
 // Native 0x63FCA0 direction selection. The original 24-row table is composed
 // from typed source-owned pointers and its pinned bytes come from the existing
 // configure-time terrain-data initializer hook.
-// ORIGINAL: 0x0063FCA0 sub_63fca0 0x0063FCA0-0x0063FDF6
+// ORIGINAL: 0x0063FCA0 sub_63fca0 0x0063FCA0-0x0063FDF6 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original identity/name/span and complete historical lesson run are transported from the matching seed record by match_recovery.source.", "The staged typed definition is uniquely found by match_recovery.source.reader.function_line and compiles in the coordinator's three-TU VC6 overlay.", "The emitted symbol is read from the coordinator's fresh native COFF observation log; it is not inferred from the C++ spelling.", "Caviar data access windows and initialization remain separate coordinator-owned object-mapping obligations; this transfer creates no allocation-bound or initializer claim."], "reason": "Rehome this complete pinned original identity from its generated seed file to the typed Caviar renderer owner; preserve the original span and seed lesson history without asserting BYTE_EXACT. The old FILE interpretation is converted to a function BODY because the new owner contains multiple original identities."}
 // symbol    ?caviar_direction_to_projection_index@@YAXPBUVOX_Matrix@@PBUVOX_Vect@@M0@Z
 // TRIED: FPU scheduling of the two-argument sub_627f50 call push sequence (register-save push esi + call-arg pushes) does not reproduce exactly; landed at 0.77 mnemonic similarity. The logic itself (spherical-to-index trig via acos/atan2/table lookup) is transcribed directly from the disassembly.
