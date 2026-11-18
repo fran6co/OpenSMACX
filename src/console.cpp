@@ -1714,8 +1714,8 @@ void Console::zoom(int zoom_command, int window_index) {
     if (window_index < 0) {
         WorldClimateWorldWin.get_mouse_pos(&mouse_x, &mouse_y);
         if (in_box(mouse_x, mouse_y, 0, 0,
-                   WorldClimateWorldWin.dib_.bmiHeader.biWidth,
-                   -WorldClimateWorldWin.dib_.bmiHeader.biHeight) != 0 &&
+                   WorldClimateWorldWin.Buffer::pixel_width(),
+                   WorldClimateWorldWin.Buffer::pixel_height()) != 0 &&
             WorldClimateWorldWin.pixel_to_tile(mouse_x, mouse_y,
                                                &tile_x, &tile_y) == 0 &&
             on_map(tile_x, tile_y) &&
@@ -1734,8 +1734,8 @@ void Console::zoom(int zoom_command, int window_index) {
                 }
                 MapWinTable[slot]->get_mouse_pos(&mouse_x, &mouse_y);
                 if (in_box(mouse_x, mouse_y, 0, 0,
-                           MapWinTable[slot]->dib_.bmiHeader.biWidth,
-                           -MapWinTable[slot]->dib_.bmiHeader.biHeight) == 0 ||
+                           MapWinTable[slot]->Buffer::pixel_width(),
+                           MapWinTable[slot]->Buffer::pixel_height()) == 0 ||
                     MapWinTable[slot]->pixel_to_tile(mouse_x, mouse_y,
                                                      &tile_x, &tile_y) != 0 ||
                     !on_map(tile_x, tile_y)) {
