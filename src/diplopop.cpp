@@ -21,6 +21,7 @@
 // kind      game
 // ORIGINAL: 0x00440EF0 ??_EDiploPop@@WEEE@AEPAXI@Z 0x00440EF0-0x00440EFB FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor at 0x0043EFF0 installs Buffer table 0x0066B470 at this+0x444; its first slot points to 0x00440EF0.", "Pinned entry 0x00440EF0 has exactly eleven bytes: SUB ECX,0x444 then JMP to already mapped primary deleting destructor 0x00440EC0, followed by INT3 padding.", "Owner diplopop.cpp physical COFF emits eleven-byte COMDAT ??_EDiploPop@@WEEE@AEPAXI@Z; Buffer table ??_7DiploPop@@6BBuffer@@@ selects it, and its REL32 targets weak ??_EDiploPop@@UAEPAXI@Z with scalar ??_GDiploPop@@UAEPAXI@Z fallback.", "The genuine GraphicWin:Win,Buffer hierarchy provides the receiver adjustment. Independent original constructor/table/body and physical COFF review supports this binding; local equality does not prove full linked table selection or runtime acceptance."], "reason": "Bind the original Buffer-view deleting receiver adjustment to the genuine DiploPop compiler-emitted operation. The symbol names this tree emits, not an original debug name; no adapter body is authored."}
+#define WIN_RECT_EXTENT_INLINE  // stand-in: see rect_width in win.h
 #define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
 #include "stdafx.h"
 #include "font_metrics.h"
@@ -139,8 +140,7 @@ void DiploPop::init() {
     int x = MainInterfaceGlobal.right_frame_rect().right - MainInterfaceGlobal.rect3().right + MainInterfaceGlobal.right_frame_rect().left;
     rect.right = rect.left - 3;
     rect.left = x;
-    RECT *panel = &right_panel_button_rect_;
-    *panel = rect;
+    right_panel_button_rect_ = rect;
 
     rect = MainInterfaceGlobal.right_frame_rect();
     expand_rect(&rect, -4, -4);
@@ -203,14 +203,14 @@ void DiploPop::init() {
 
     flatButtons_[0].init(StringTable.get(Labels.strings_ptr[0xEA8 / 4]), 0,
                          button_left_rect_.left, button_left_rect_.top,
-                         button_left_rect_.right - button_left_rect_.left,
-                         button_left_rect_.bottom - button_left_rect_.top,
+                         rect_width(&button_left_rect_),
+                         rect_height(&button_left_rect_),
                          &MainInterfaceGlobal, 0);
     flatButtons_[2].init(StringTable.get(Labels.strings_ptr[0xEAC / 4]), 2,
-                         panel->left,
+                         right_panel_button_rect_.left,
                          right_panel_button_rect_.top,
-                         panel->right - panel->left,
-                         panel->bottom - panel->top,
+                         rect_width((&right_panel_button_rect_)),
+                         rect_height((&right_panel_button_rect_)),
                          &MainInterfaceGlobal, 0);
 
     StringTemp[0] = '\0';
@@ -218,8 +218,8 @@ void DiploPop::init() {
     CharUpperA(StringTemp);
     flatButtons_[1].init(StringTemp, 1,
                          button_right_rect_.left, button_right_rect_.top,
-                         button_right_rect_.right - button_right_rect_.left,
-                         button_right_rect_.bottom - button_right_rect_.top,
+                         rect_width(&button_right_rect_),
+                         rect_height(&button_right_rect_),
                          &MainInterfaceGlobal, 0);
 
     for (int button_index = 0; button_index < 3; ++button_index) {
