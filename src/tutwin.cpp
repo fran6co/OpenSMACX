@@ -26,6 +26,7 @@
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x6825f8 selects original initializer0x4ba5c0..0x4ba5d6, registering fini0x4ba5e0..0x4ba5ea; complete independent decode establishes exclusive boundaries.", "Source-owned object?TutorialWindow@@3VTutWin@@A identifies original storage0x8c6e68. Startup arguments/calls: call 0x4ba6b0; push 0x4ba5e0. Cleanup receiver/calls: mov ecx, 0x8c6e68; jmp 0x4be7d0. Constructor/destructor targets retain their existing class-owned source mappings.", "Fresh physical src/tutwin.cpp COFF selects _$E21 through .CRT$XCU and registers _$E19, both referencing the genuine source global. Original NetMsg argument triples and implicit PlanWin/Console most-derived flags are preserved by the existing declarations; complete virtual-base teardown is compiler-owned, not authored offsets.", "Current local helper symbols interpret present emission, not original debug names or historical TU boundaries. Object starts do not prove allocation extents. This binding establishes neither cross-TU global order, masked-reference correctness, strict linked preservation, dependency-provider equivalence nor runtime/game acceptance; excluded guarded sprite cleanup remains separate."], "reason": "Bind original exit identity to the genuine compiler-generated lifetime of ?TutorialWindow@@3VTutWin@@A in its actual source owner; no manual lifecycle callback is authored."}
 // symbol    _$E14
 #include "stdafx.h"
+#define MAPWIN_TILE_IN_VIEW_INLINE  // tour expands MapWin::tile_in_view (basewin.h) in both scans
 #define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h (tut_win's set_picture)
 #include "tutwin.h"
 #include "basewin.h"
@@ -1358,68 +1359,76 @@ static inline void tour_iface_rect(RECT *rect, int *x, int *y) {
 // ORIGINAL: 0x004BC6E0 ?tour@TutWin@@QAEXXZ 0x004BC6E0-0x004BDCBE FILE
 // RECOVERY_BINDING: v1 {"evidence": ["seed:src/unrecovered/004bc6e0.cpp", "image:0x004bc6e0; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
 // TRIED: full structural transcription of both scoring loops and the 10x tut_win/client_to_screen chain (from raw disasm, cross-checked against Ghidra); diverges at instr #33 (push vs mov) - register allocation for the phase-1 direction-search loop, not a logic gap.
-// Retranscribed 2026-11-12 in the image's block order and frame slots. The
+// Both scans call MapWin::tile_in_view(x, y, 2) on MapWinTable[0] (the image
+// keeps the inline parameter x in its own slot, [ebp-0x40], at 0x004BC843)
+// and wrap x through wrap_map_x; the three small tables are cleared by a
+// loop that VC6 unrolls (0x004BCBF8: one register per array). Frame slots
+// are not declaration-ordered: VC6 numbers them by descending reference
+// count after packing disjoint live ranges, so no variable is shared by hand.
+// The image's block order is kept. The
 // image expands reset() at its three sites (0x004BD8A6, 0x004BDBB2,
 // 0x004BDC43). Both arms of reset end in UNK1 (0x004BA720), which /Ob2
 // expands too; with the ten stores written out in each arm reset was too
 // costly to expand here.
 void TutWin::tour() {
-    // Frame slots are shared by role: each variable below keeps the image's
-    // slot through both the direction search and the two-ring survey.
-    int x;               // [ebp-0x4]; address taken by iface_rect
-    int y;               // [ebp-0x8]
-    Map *tile;           // [ebp-0x10]
-    int flat;            // [ebp-0x14]
-    int special;         // [ebp-0x18]; first the direction counter
-    int index;           // [ebp-0x1c]; first the probed direction
-    int site_x;          // [ebp-0x20]
-    int site_y;          // [ebp-0x24]
-    int fungus;          // [ebp-0x28]
-    int fungus_x;        // [ebp-0x2c]; first the cursor y
-    int fungus_y;        // [ebp-0x30]; first the best direction
-    int ring;            // [ebp-0x34]; first the cursor x
-    int wettest;         // [ebp-0x38]; first the best direction score
-    int lower;           // [ebp-0x3c]
-    int one_rock_x;      // [ebp-0x40]; first the unwrapped x
-    int higher;          // [ebp-0x44]
-    int flat_y;          // [ebp-0x48]; first the random start
-    int yield;           // [ebp-0x4c]
-    int coldest;         // [ebp-0x50]
-    int peak_x;          // [ebp-0x54]
-    int peak_y;          // [ebp-0x58]
-    int two_rock_score;  // [ebp-0x5c]
-    int alt_y;           // [ebp-0x60]
-    int highest;         // [ebp-0x64]
-    int two_rock_x;      // [ebp-0x68]
-    int hottest;         // [ebp-0x6c]
-    int two_rock_y;      // [ebp-0x70]
-    int yield1_score;    // [ebp-0x74]
-    int one_rock_y;      // [ebp-0x78]
-    int site_score;      // [ebp-0x7c]
-    int flat_x;          // [ebp-0x80]
-    int ocean_y;         // [ebp-0x84]
-    int flat_score;      // [ebp-0x88]
-    int dry_x;           // [ebp-0x8c]
-    int yield2_score;    // [ebp-0x90]
-    int ocean_score;     // [ebp-0x94]
-    int one_rock_score;  // [ebp-0x98]
-    int alt_score;       // [ebp-0x9c]
-    int ocean_x;         // [ebp-0xa0]
-    int alt_x;           // [ebp-0xa4]
-    int wet_x;           // [ebp-0xa8]
-    int driest;          // [ebp-0xac]
-    int wet_y;           // [ebp-0xb0]
-    int temp_score[3];   // [ebp-0xbc]
-    int rain_score[3];   // [ebp-0xc8]
-    int elevated;        // [ebp-0xcc]
-    int bits;            // [ebp-0xd0]
-    int rain_kind[3];    // [ebp-0xdc]
-    int rain_x[3];       // [ebp-0xe8]
-    int rain_y[3];       // [ebp-0xf4]
-    int temp_x[3];       // [ebp-0x100]
-    int temp_y[3];       // [ebp-0x10c]
-    int temp_kind[3];    // [ebp-0x118]
-    MapWin *map_window;
+    int x;
+    int y;
+    Map *tile;
+    int special;
+    int index;
+    int site_x;
+    int site_y;
+    int fungus;
+    int fungus_x;
+    int fungus_y;
+    int ring;
+    int wettest;
+    int lower;
+    int one_rock_x;
+    int higher;
+    int flat_y;
+    int yield;
+    int coldest;
+    int peak_x;
+    int peak_y;
+    int two_rock_score;
+    int alt_y;
+    int highest;
+    int two_rock_x;
+    int hottest;
+    int two_rock_y;
+    int yield1_score;
+    int one_rock_y;
+    int site_score;
+    int flat_x;
+    int ocean_y;
+    int flat_score;
+    int dry_x;
+    int yield2_score;
+    int ocean_score;
+    int one_rock_score;
+    int alt_score;
+    int ocean_x;
+    int alt_x;
+    int wet_x;
+    int driest;
+    int wet_y;
+    int temp_score[3];
+    int rain_score[3];
+    int elevated;
+    int bits;
+    int rain_kind[3];
+    int rain_x[3];
+    int rain_y[3];
+    int temp_x[3];
+    int temp_y[3];
+    int temp_kind[3];
+    int best_score;
+    int best_dir;
+    int start;
+    int cursor_x;
+    int cursor_y;
+    int step;
 
     if (field_53B4_ != 0) {
         return;
@@ -1449,65 +1458,26 @@ void TutWin::tour() {
 
     // THE OPENING DIRECTION: the visible land neighbour the cursor faces,
     // probed from a random start; cardinal steps and open land score best.
-    wettest = 0;
-    fungus_y = 0;
-    flat_y = random(0, 8);
-    map_window = MapWinTable[0];
-    ring = ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
-    fungus_x = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
-    flat = MapIsFlat & 1;
-    for (special = 0; special < 8; special++) {
-        index = (special + flat_y) % 8;
-        x = ring + VehMoveDeltaX[index];
-        if (!flat) {
-            if (x < 0) {
-                x += MapLongitudeBounds;
-            } else if (x >= MapLongitudeBounds) {
-                x -= MapLongitudeBounds;
-            }
-        }
-        y = fungus_x + VehMoveDeltaY[index];
-        if (y >= 0 && y < MapLatitudeBounds && x >= 0 && x < MapLongitudeBounds) {
-            one_rock_x = x;
-            tile = map_loc(x, y);
-            int altitude = tile->climate & 0xE0;
-            if (altitude > 0x60
-                && y - (tile->climate >> 5) + 3 < map_window->field_1DDA8_ + 2) {
-                continue;
-            }
-            if (y < map_window->field_1DDA8_ + 2
-                || y >= map_window->field_1DDD8_ + map_window->field_1DDD0_
-                            + map_window->field_1DDA8_ - 2) {
-                continue;
-            }
-            int screen_x = one_rock_x;
-            if (!flat) {
-                if (screen_x < map_window->field_1DDA4_ + 2) {
-                    screen_x += MapLongitudeBounds;
-                }
-                if (screen_x >= map_window->field_1DDD4_ + map_window->field_1DDCC_
-                                    + map_window->field_1DDA4_ - 2) {
-                    screen_x -= MapLongitudeBounds;
-                }
-            }
-            if (screen_x < map_window->field_1DDA4_ + 2
-                || screen_x >= map_window->field_1DDD4_ + map_window->field_1DDCC_
-                                   + map_window->field_1DDA4_ - 2) {
-                continue;
-            }
-            if (altitude < 0x60) {
-                continue;
-            }
+    best_score = 0;
+    best_dir = 0;
+    start = random(0, 8);
+    cursor_x = ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
+    cursor_y = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
+    for (step = 0; step < 8; step++) {
+        int dir = (step + start) % 8;
+        x = wrap_map_x(cursor_x + VehMoveDeltaX[dir]);
+        y = cursor_y + VehMoveDeltaY[dir];
+        if (on_map(x, y) && MapWinTable[0]->tile_in_view(x, y, 2) && !is_ocean(x, y)) {
             int score = 8;
-            if ((tile->bit & BIT_FUNGUS) && altitude >= 0x40) {
+            if ((map_loc(x, y)->bit & BIT_FUNGUS) && (map_loc(x, y)->climate & ~0x1F) >= 0x40) {
                 score = 4;
             }
-            if (!VehMoveDeltaX[index] || !VehMoveDeltaY[index]) {
+            if (!VehMoveDeltaX[dir] || !VehMoveDeltaY[dir]) {
                 score++;
             }
-            if (score >= wettest) {
-                wettest = score;
-                fungus_y = index;
+            if (score >= best_score) {
+                best_score = score;
+                best_dir = dir;
             }
         }
     }
@@ -1534,9 +1504,9 @@ void TutWin::tour() {
         }
         MapWinTable[0]->field_1DD70_ |= 0x20000;
         MapWinTable[0]->draw_map(1);
-        parse_num(0, MapDirectionPermutation[fungus_y]);
+        parse_num(0, MapDirectionPermutation[best_dir]);
         if (!text_open(TutorialPopupCaption, "DIRECTIONS")) {
-            for (int line = 0; line <= fungus_y; line++) {
+            for (int line = 0; line <= best_dir; line++) {
                 text_get();
             }
             text_close();
@@ -1552,7 +1522,7 @@ void TutWin::tour() {
         }
     } else if (field_53C0_ == 3 && ConsoleGlobal.selected_vehicle_ >= 0
                && Vehs[ConsoleGlobal.selected_vehicle_].proto_id == 1) {
-        if (!tut_map("TERRAFORMER", ring, fungus_x, ConsoleGlobal.selected_vehicle_,
+        if (!tut_map("TERRAFORMER", cursor_x, cursor_y, ConsoleGlobal.selected_vehicle_,
                      0, 2, -1, -1)) {
             goto tour_cleanup;
         }
@@ -1594,67 +1564,32 @@ void TutWin::tour() {
     two_rock_score = -1;
     yield1_score = -1;
     yield2_score = -1;
-    rain_score[0] = -1;
-    temp_score[0] = -1;
-    rain_kind[0] = -1;
-    rain_score[1] = -1;
-    temp_score[1] = -1;
-    rain_kind[1] = -1;
-    rain_score[2] = -1;
-    temp_score[2] = -1;
-    rain_kind[2] = -1;
+    for (index = 0; index < 3; index++) {
+        rain_score[index] = -1;
+        temp_score[index] = -1;
+        rain_kind[index] = -1;
+    }
     for (ring = 0; ring < 2; ring++) {
         for (index = 1; index < 21; index++) {
-            x = ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_]
-                + RadiusOffsetX[index];
-            flat = MapIsFlat & 1;
-            if (!flat) {
-                if (x < 0) {
-                    x += MapLongitudeBounds;
-                } else if (x >= MapLongitudeBounds) {
-                    x -= MapLongitudeBounds;
-                }
-            }
+            x = xrange_inline(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_]
+                              + RadiusOffsetX[index]);
             y = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_]
                 + RadiusOffsetY[index];
             if (y < 0 || y >= MapLatitudeBounds || x < 0 || x >= MapLongitudeBounds) {
                 continue;
             }
-            tile = map_loc(x, y);
-            int altitude = tile->climate & ~0x1F;
-            if (altitude > 0x60
-                && y - (tile->climate >> 5) + 3 < MapWinTable[0]->field_1DDA8_ + 2) {
-                continue;
-            }
-            if (y < MapWinTable[0]->field_1DDA8_ + 2
-                || y >= MapWinTable[0]->field_1DDD8_ + MapWinTable[0]->field_1DDD0_
-                            + MapWinTable[0]->field_1DDA8_ - 2) {
-                continue;
-            }
-            int screen_x = x;
-            if (!flat) {
-                if (screen_x < MapWinTable[0]->field_1DDA4_ + 2) {
-                    screen_x = MapLongitudeBounds + x;
-                }
-                if (screen_x >= MapWinTable[0]->field_1DDD4_ + MapWinTable[0]->field_1DDCC_
-                                    + MapWinTable[0]->field_1DDA4_ - 2) {
-                    screen_x -= MapLongitudeBounds;
-                }
-            }
-            if (screen_x < MapWinTable[0]->field_1DDA4_ + 2
-                || screen_x >= MapWinTable[0]->field_1DDD4_ + MapWinTable[0]->field_1DDCC_
-                                   + MapWinTable[0]->field_1DDA4_ - 2) {
+            if (!MapWinTable[0]->tile_in_view(x, y, 2)) {
                 continue;
             }
             if (!(PlayersData[ConsoleGlobal.faction_id_].flags & RFLAG_FREEPROTO)
-                && !(tile->visibility & (1 << ConsoleGlobal.faction_id_))
+                && !(map_loc(x, y)->visibility & (1 << ConsoleGlobal.faction_id_))
                 && !(GameDataStateStorage.fields_.game_state_ & 0x80)) {
                 continue;
             }
-            if (altitude < 0x60) {
+            if (is_ocean(x, y)) {
                 // the ocean tile closest to land
                 int score;
-                if ((tile->bit & BIT_FUNGUS) && altitude >= 0x40) {
+                if ((map_loc(x, y)->bit & BIT_FUNGUS) && (map_loc(x, y)->climate & ~0x1F) >= 0x40) {
                     score = 1;
                 } else {
                     score = 2;
@@ -1666,10 +1601,10 @@ void TutWin::tour() {
                 }
                 continue;
             }
-            if ((tile->bit & BIT_FUNGUS) && altitude >= 0x40) {
+            if ((map_loc(x, y)->bit & BIT_FUNGUS) && (map_loc(x, y)->climate & ~0x1F) >= 0x40) {
                 // land fungus, preferring a tile that is not rocky
                 if (fungus_y >= 0 && fungus_y < MapLatitudeBounds && fungus_x >= 0
-                    && fungus_x < MapLongitudeBounds && (tile->val3 & ~0x3F) >= 0x80) {
+                    && fungus_x < MapLongitudeBounds && (map_loc(x, y)->val3 & ~0x3F) >= 0x80) {
                     continue;
                 }
                 fungus_x = x;
@@ -1686,18 +1621,10 @@ void TutWin::tour() {
             } else {
                 fungus = 0;
             }
-            flat = MapIsFlat & 1;
             higher = 0;
             lower = 0;
             for (int dir = 0; dir < 8; dir++) {
-                int x_adj = x + VehMoveDeltaX[dir];
-                if (!flat) {
-                    if (x_adj < 0) {
-                        x_adj += MapLongitudeBounds;
-                    } else if (x_adj >= MapLongitudeBounds) {
-                        x_adj -= MapLongitudeBounds;
-                    }
-                }
+                int x_adj = wrap_map_x(x + VehMoveDeltaX[dir]);
                 int y_adj = VehMoveDeltaY[dir] + y;
                 if (y_adj < 0 || y_adj >= MapLatitudeBounds || x_adj < 0
                     || x_adj >= MapLongitudeBounds) {
@@ -1769,8 +1696,8 @@ void TutWin::tour() {
             }
             int temperature = tile->climate & 7;
             int rainfall = (tile->climate >> 3) & 3;
-            fungus = higher && !lower;
-            score = fungus - (fungus + special) * 3 - (tile->val3 >> 6) - elevated
+            int ridge = higher && !lower;
+            score = ridge - (fungus + special) * 3 - (tile->val3 >> 6) - elevated
                     + (8 - lower) * 2;
             if (score > temp_score[temperature]) {
                 temp_x[temperature] = x;
