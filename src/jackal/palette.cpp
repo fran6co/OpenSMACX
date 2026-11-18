@@ -46,13 +46,11 @@ IDirectDrawPalette *DirectDrawPalette;  // 0x009BC4A0
 // its own .rdata copies and the relocation mask makes the addressing match
 // the image's absolute references - verified by measure on all three
 // bodies, which is why there is no pointer indirection left here.
-namespace {
 // RECOVERY_OBJECT: v1 0x0066EB38 _hsv_percent_scale
-const double hsv_percent_scale = 0.01;              // 0x0066EB38
+static const double hsv_percent_scale = 0.01;              // 0x0066EB38
 // RECOVERY_OBJECT: v1 0x00670280 _hsv_deg_to_rad
-const double hsv_deg_to_rad = 0.017453292519444445; // pi/180, 0x00670280
-const double hsv_degrees_per_sector = 60.0;         // 0x00670C40
-}
+static const double hsv_deg_to_rad = 0.017453292519444445; // pi/180, 0x00670280
+static const double hsv_degrees_per_sector = 60.0;         // 0x00670C40
 
 // 0x0067022C - see palette.h. Blue, green, red, reserved, per RGBQUAD.
 // RECOVERY_OBJECT: v1 0x0067022C ?SystemColours@@3QBEB

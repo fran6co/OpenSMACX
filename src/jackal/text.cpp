@@ -26,16 +26,14 @@
 // These reconstruction names and array bounds do not establish original declarations.
 // RECOVERY_OBJECT: v1 0x00696E68 ?TextFileExtension@@3PADA
 char TextFileExtension[] = ".txt";
-namespace {
 // RECOVERY_OBJECT: v1 0x00696E7C ?text_open_named_mode@?%src/text.cpp@@3PADA
-char text_open_named_mode[] = "rt";
+static char text_open_named_mode[] = "rt";
 // RECOVERY_OBJECT: v1 0x00696E80 ?text_open_reopen_mode@?%src/text.cpp@@3PADA
-char text_open_reopen_mode[] = "rt";
+static char text_open_reopen_mode[] = "rt";
 // RECOVERY_OBJECT: v1 0x00696E84 ?text_open_section_prefix@?%src/text.cpp@@3PADA
-char text_open_section_prefix[] = "#";
+static char text_open_section_prefix[] = "#";
 // RECOVERY_OBJECT: v1 0x00696E88 ?text_open_seek_log_key@?%src/text.cpp@@3PADA
-char text_open_seek_log_key[] = "Seeking to";
-}
+static char text_open_seek_log_key[] = "Seeking to";
 
 /*
 Purpose: Initialize the class instance.

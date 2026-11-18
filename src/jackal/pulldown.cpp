@@ -401,15 +401,13 @@ void PullDown::pulldown_update(int old_selected, int new_selected) {
   do_all_draws();
 }
 
-namespace {
 
 static const int ItemNotFound = 11;
 
-__forceinline int int_from_bits(uint32_t bits) {
+static __forceinline int int_from_bits(uint32_t bits) {
     return static_cast<int>(bits);
 }
 
-}  // namespace
 
 /*
 Purpose: Hide the first item with the requested ID.

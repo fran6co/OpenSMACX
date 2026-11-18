@@ -194,10 +194,8 @@ int Dialogs::init(Heap *heap) {
 // ---------------------------------------------------------------------------
 
 
-namespace {
 
 
-}  // namespace
 
 /*
 Purpose: Fetch one item's text, from whichever widget this kind of dialog

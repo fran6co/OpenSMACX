@@ -43,15 +43,13 @@
 #include "strings.h"
 #include "tutwin.h"
 
-namespace {
 // This checked lookup describes the existing StringList current-text operation.
 // Its two call sites retain separate original lookup phases; the name is local.
-inline char *current_message_text(StringList &items) {
+static inline char *current_message_text(StringList &items) {
     return items.head_ != 0 ? items.current_entry()->text : 0;
 }
-inline uint32_t current_message_height(StringList &items) {
+static inline uint32_t current_message_height(StringList &items) {
     return items.head_ != 0 ? items.current_->string_payload()->field_C_ : 0;
-}
 }
 
 // 0x007F67F8, declared in messagewin.h.

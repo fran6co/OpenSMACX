@@ -69,26 +69,24 @@ extern char SocialWinCommaSpaceText[];
 // Equal text does not imply one original object: the pinned operands below
 // identify separate instances. These role names and const arrays describe the
 // reconstruction; original declarations, qualifiers and full bounds are unknown.
-namespace {
 // RECOVERY_OBJECT: v1 0x0068F2F0 _alpha_tech_identifiers_section
-const char alpha_tech_identifiers_section[] = "TECHNOLOGY";
+static const char alpha_tech_identifiers_section[] = "TECHNOLOGY";
 // RECOVERY_OBJECT: v1 0x0068F30C _alpha_tech_values_section
-const char alpha_tech_values_section[] = "TECHNOLOGY";
+static const char alpha_tech_values_section[] = "TECHNOLOGY";
 // RECOVERY_OBJECT: v1 0x00690110 _alpha_primary_laptop_key
-const char alpha_primary_laptop_key[] = "Laptop";
+static const char alpha_primary_laptop_key[] = "Laptop";
 // RECOVERY_OBJECT: v1 0x00690118 _alpha_secondary_laptop_key
-const char alpha_secondary_laptop_key[] = "Laptop";
+static const char alpha_secondary_laptop_key[] = "Laptop";
 // RECOVERY_OBJECT: v1 0x006900FC _alpha_profile_default_zero
-const char alpha_profile_default_zero[] = "0";
+static const char alpha_profile_default_zero[] = "0";
 // RECOVERY_OBJECT: v1 0x00690204 _alpha_binary_output_zero
-const char alpha_binary_output_zero[] = "0";
+static const char alpha_binary_output_zero[] = "0";
 // RECOVERY_OBJECT: v1 0x00690200 _alpha_binary_output_one
-const char alpha_binary_output_one[] = "1";
+static const char alpha_binary_output_one[] = "1";
 // RECOVERY_OBJECT: v1 0x00690100 _alpha_profile_format_key
-const char alpha_profile_format_key[] = "Prefs Format";
+static const char alpha_profile_format_key[] = "Prefs Format";
 // RECOVERY_OBJECT: v1 0x00690120 _alpha_faction_prefix
-const char alpha_faction_prefix[] = "Faction";
-}
+static const char alpha_faction_prefix[] = "Faction";
 
 // The profile APIs are SDK imports, not recovered bodies: prefs_get (both
 // overloads), prefs_fac_load, prefs_load and both prefs_put overloads reach

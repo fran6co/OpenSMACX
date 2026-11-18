@@ -155,11 +155,9 @@ void __cdecl help_any();
 void __cdecl action_arty(int vehicle_id, int x, int y);
 void __cdecl action_patrol(int vehicle_id, int x, int y);
 
-namespace {
-int mapwin_dest_add(int left, int right);
-int mapwin_dest_sub(int left, int right);
-int mapwin_dest_mul(int left, int right);
-}
+static int mapwin_dest_add(int left, int right);
+static int mapwin_dest_sub(int left, int right);
+static int mapwin_dest_mul(int left, int right);
 
 /*
 Purpose: Shore-edge detail for one corner of a tile whose scan found the coast.
@@ -2070,37 +2068,36 @@ void MapWin::draw_map(int draw_type) {
     }
 }
 
-namespace {
-int mapwin_dest_add(int left, int right);
-int mapwin_dest_sub(int left, int right);
-int mapwin_dest_mul(int left, int right);
+static int mapwin_dest_add(int left, int right);
+static int mapwin_dest_sub(int left, int right);
+static int mapwin_dest_mul(int left, int right);
 
-int map_dest_signed(uint32_t value) {
+static int map_dest_signed(uint32_t value) {
     return value <= 0x7fffffffU ? static_cast<int>(value)
                               : -1 - static_cast<int>(0xffffffffU - value);
 }
 
-int mapwin_dest_add(int left, int right) {
+static int mapwin_dest_add(int left, int right) {
     return map_dest_signed(static_cast<uint32_t>(left) + static_cast<uint32_t>(right));
 }
 
-int mapwin_dest_sub(int left, int right) {
+static int mapwin_dest_sub(int left, int right) {
     return map_dest_signed(static_cast<uint32_t>(left) - static_cast<uint32_t>(right));
 }
 
-int mapwin_dest_mul(int left, int right) {
+static int mapwin_dest_mul(int left, int right) {
     return map_dest_signed(static_cast<uint32_t>(left) * static_cast<uint32_t>(right));
 }
 
-int map_dest_abs(int value) {
+static int map_dest_abs(int value) {
     return abs(value);
 }
 
-int map_dest_half(int value) {
+static int map_dest_half(int value) {
     return value >> 1;
 }
 
-int map_dest_distance(int x1, int y1, int x2, int y2) {
+static int map_dest_distance(int x1, int y1, int x2, int y2) {
     int dx = map_dest_abs(mapwin_dest_sub(x1, x2));
     if ((MapIsFlat & 1) == 0 && dx > MapLongitude) {
         dx = mapwin_dest_sub(MapLongitudeBounds, dx);
@@ -2108,7 +2105,6 @@ int map_dest_distance(int x1, int y1, int x2, int y2) {
     return mapwin_dest_add(dx, map_dest_abs(mapwin_dest_sub(y1, y2)));
 }
 
-}
 
 // ORIGINAL: 0x004672C0 ?direct_dest_line@MapWin@@QAEXHHHHHHHH@Z 0x004672C0-0x0046742C BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original4672C0..46742C; retired seed git:5605e9af:src/recovered/units/004672c0.cpp records this identity and exact span.", "Original467388 uses source Y as the default color; both tile conversions precede center-offset reads, and cover rendering performs both screen-to-client conversions."], "reason": "MapWin projects both endpoints and draws the route edge on either CoverWindow or its own Buffer. Preserve both target branches and the original phase/color selection; the patterned Buffer dependency remains explicitly unfinished."}
@@ -2459,8 +2455,7 @@ void MapWin::on_mouse_move(int pixel_x, int pixel_y) {
     }
 }
 
-namespace {
-int map_radius_wrap_x(int x) {
+static int map_radius_wrap_x(int x) {
     if ((MapIsFlat & 1) == 0) {
         if (x < 0) {
             x = mapwin_dest_add(x, MapLongitudeBounds);
@@ -2471,17 +2466,16 @@ int map_radius_wrap_x(int x) {
     return x;
 }
 
-bool map_radius_valid(int x, int y) {
+static bool map_radius_valid(int x, int y) {
     return y >= 0 && y < MapLatitudeBounds &&
            x >= 0 && x < MapLongitudeBounds;
 }
 
-int map_radius_half_width(int extent, int row) {
+static int map_radius_half_width(int extent, int row) {
     // This is intentionally NOT a symmetric diamond. Original4693A4..3BB
     // narrows negative rows by their distance, but positive rows by parity.
     const int inset = row < 0 ? mapwin_dest_sub(0, row) : row & 1;
     return mapwin_dest_sub(extent, inset);
-}
 }
 
 // Original4216F0..42180C: genuine MapWin thiscall, not the seed's stdcall.
@@ -2712,12 +2706,11 @@ void MapWin::gen_tile(int x, int y, int a3, int a4) {
     }
 }
 
-namespace {
 // WORKAROUND(inline): image 0x00469237..0x469288 and 0x4692C3..0x469314 expand
 // gen_tile (0x00468C20) inline with a4 == 0 - the flags word loads before
 // the receiver conversion and the folded `on_map(x, y) && 0` leaves only the
 // out-of-line on_map call - but VC6 does not auto-inline the member here.
-inline void gen_tile_expanded(MapWin *window, int x, int y, int a3, int a4) {
+static inline void gen_tile_expanded(MapWin *window, int x, int y, int a3, int a4) {
     int pixel_x;
     int pixel_y;
     window->tile_to_pixel(x, y, &pixel_x, &pixel_y);
@@ -2733,7 +2726,6 @@ inline void gen_tile_expanded(MapWin *window, int x, int y, int a3, int a4) {
         window->draw_vehicles(x, y, pixel_x, pixel_y - window->field_1DDC0_, a3);
         window->gen_overlays(x, y);
     }
-}
 }
 
 // Original469190..469718, not the register/goto seed's rectangle arguments.

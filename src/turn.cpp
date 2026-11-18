@@ -2766,7 +2766,6 @@ void __cdecl quayle(int faction_id);
 
 
 
-namespace {
 enum EndgameReasonValue {
     EndgameReason1 = 1, EndgameReason2, EndgameReason3, EndgameReason4,
     EndgameReason5, EndgameReason6, EndgameReason7, EndgameReason8,
@@ -2774,17 +2773,17 @@ enum EndgameReasonValue {
     EndgameReason13, EndgameReason14, EndgameReason15, EndgameReason16,
     EndgameReason17, EndgameReason18
 };
-const uint32_t EndgameRecorded = STATE_UNK_1;
-const uint32_t EndgamePresented = STATE_UNK_8;
-const uint32_t EndgameNetResults = STATE_IS_SCENARIO;
-const uint32_t EndgameScoreMode = STATE_SCN_VICT_HIGHEST_AC_SCORE_WINS;
-const uint32_t PlayerEndgameFlagA = 0x00020000u;
-const uint32_t PlayerEndgameFlagB = 0x00040000u;
-const uint32_t PlayerGeneratorWin = 0x00100000u;
-const uint32_t PlayerConquestWin = 0x00040000u;
-const uint32_t PlayerConquestLoss = 0x00020000u;
+static const uint32_t EndgameRecorded = STATE_UNK_1;
+static const uint32_t EndgamePresented = STATE_UNK_8;
+static const uint32_t EndgameNetResults = STATE_IS_SCENARIO;
+static const uint32_t EndgameScoreMode = STATE_SCN_VICT_HIGHEST_AC_SCORE_WINS;
+static const uint32_t PlayerEndgameFlagA = 0x00020000u;
+static const uint32_t PlayerEndgameFlagB = 0x00040000u;
+static const uint32_t PlayerGeneratorWin = 0x00100000u;
+static const uint32_t PlayerConquestWin = 0x00040000u;
+static const uint32_t PlayerConquestLoss = 0x00020000u;
 
-void parse_player_identity(int faction_id) {
+static void parse_player_identity(int faction_id) {
     PluralityDefault = 0;
     GenderDefault = Players[faction_id].is_leader_female;
     parse_says(0, Players[faction_id].title_leader, -1, -1);
@@ -2796,7 +2795,6 @@ void parse_player_identity(int faction_id) {
     parse_says(2, Players[faction_id].noun_faction, -1, -1);
 }
 
-}
 
 // WORKAROUND(inline): generators(faction_id, NULL) as end_of_game expands it.
 // The image inlines generators here but keeps its has_fac call out of line

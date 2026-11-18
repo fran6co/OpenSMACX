@@ -126,38 +126,37 @@ int BaseCommercePartnerReceipts[7];
 extern int BaseSiteClaimX[4];
 extern int BaseSiteClaimY[4];
 
-namespace {
 
 // The scoring expressions use x86 low-word arithmetic followed by signed
 // division. Express that wrapping without signed overflow or negative shifts.
-int base_yield_signed_bits(uint32_t value) {
+static int base_yield_signed_bits(uint32_t value) {
     return value <= 0x7FFFFFFFu ? static_cast<int>(value)
         : -1 - static_cast<int>(0xFFFFFFFFu - value);
 }
-int base_yield_add(int left, int right) {
+static int base_yield_add(int left, int right) {
     return base_yield_signed_bits(static_cast<uint32_t>(left) + static_cast<uint32_t>(right));
 }
-int base_yield_sub(int left, int right) {
+static int base_yield_sub(int left, int right) {
     return base_yield_signed_bits(static_cast<uint32_t>(left) - static_cast<uint32_t>(right));
 }
-int base_yield_mul(int left, int right) {
+static int base_yield_mul(int left, int right) {
     return base_yield_signed_bits(static_cast<uint32_t>(left) * static_cast<uint32_t>(right));
 }
-int base_yield_shift(int value, int shift) {
+static int base_yield_shift(int value, int shift) {
     return base_yield_signed_bits(static_cast<uint32_t>(value) << shift);
 }
-int base_yield_denominator(int value) {
+static int base_yield_denominator(int value) {
     return value < 1 ? 1 : (value > 99 ? 99 : value);
 }
 
-int base_yield_satellite(int faction, int resource) {
+static int base_yield_satellite(int faction, int resource) {
     switch (resource) {
     case 0: return base_yield_signed_bits(PlayersData[faction].satellites_[0]);
     case 1: return base_yield_signed_bits(PlayersData[faction].satellites_[1]);
     default: return base_yield_signed_bits(PlayersData[faction].satellites_[2]);
     }
 }
-bool base_yield_has_facility(int facility) {
+static bool base_yield_has_facility(int facility) {
     const int selected = BaseIDCurrentSelected;
     int byte_index;
     int mask;
@@ -165,7 +164,7 @@ bool base_yield_has_facility(int facility) {
     return (Bases[selected].facilities_built[byte_index]
         & static_cast<unsigned char>(mask)) != 0;
 }
-int base_yield_specialist(Base *&base, int index) {
+static int base_yield_specialist(Base *&base, int index) {
     if (index < 16) {
         return (base->spec[index >> 3] >> ((index & 7) * 4)) & 15;
     }
@@ -173,7 +172,7 @@ int base_yield_specialist(Base *&base, int index) {
     base = BaseCurrent;
     return result;
 }
-void base_yield_set_specialist(Base *&base, int index, int specialist) {
+static void base_yield_set_specialist(Base *&base, int index, int specialist) {
     if (index < 16) {
         const int word = index >> 3;
         const int shift = (index & 7) * 4;
@@ -186,7 +185,7 @@ void base_yield_set_specialist(Base *&base, int index, int specialist) {
 
 // The caller has already wrapped x. Invalid selected positions still consume
 // a worker, but perform no resource calls and do not refresh map_width.
-void base_yield_apply_tile(Base *&base, int &map_width, int x, int y, bool subtract) {
+static void base_yield_apply_tile(Base *&base, int &map_width, int x, int y, bool subtract) {
     if (y < 0 || y >= MapLatitudeBounds || x < 0 || x >= map_width) {
         return;
     }
@@ -205,7 +204,7 @@ void base_yield_apply_tile(Base *&base, int &map_width, int x, int y, bool subtr
     // Resource 3 returns zero but clears TileYieldRestricted: keep its call.
     map_width = MapLongitudeBounds;
 }
-int base_yield_wrap_x(int x, int map_width) {
+static int base_yield_wrap_x(int x, int map_width) {
     if ((MapIsFlat & 1) == 0) {
         if (x < 0) x += map_width;
         else if (x >= map_width) x -= map_width;
@@ -213,7 +212,6 @@ int base_yield_wrap_x(int x, int map_width) {
     return x;
 }
 
-} // namespace
 
 
 
@@ -7239,10 +7237,9 @@ void __cdecl help_project(int project_id);
 void __cdecl set_dirty();
 int __cdecl generators(int faction_id, int *count_out);
 
-namespace {
 
-int base_yield_add(int left, int right);
-int base_yield_mul(int left, int right);
+static int base_yield_add(int left, int right);
+static int base_yield_mul(int left, int right);
 
 enum ProductionReportResume {
     PRODUCTION_REPORT_RESUME_274F,
@@ -7250,45 +7247,45 @@ enum ProductionReportResume {
     PRODUCTION_REPORT_RESUME_2752
 };
 
-int production_abs(int value) {
+static int production_abs(int value) {
     return value < 0 ? base_yield_sub(0, value) : value;
 }
 
-int production_project(int item) {
+static int production_project(int item) {
     return item <= -FacilitySPStart
         ? base_yield_sub(base_yield_sub(0, item), FacilitySPStart) : -1;
 }
 
-void production_set_project_owner(int project_id, int base_id) {
+static void production_set_project_owner(int project_id, int base_id) {
     // The original indexed store has no upper-bound check. Invalid project
     // IDs remain an unsafe native path, not a no-op or a host layout claim.
     if (project_id >= 0) GameDataStateStorage.fields_.secret_project_[project_id] = base_id;
 }
 
-bool production_faction_human(int faction_id) {
+static bool production_faction_human(int faction_id) {
     return (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & (1u << faction_id)) != 0;
 }
 
-bool production_facility_built(int base_id, int facility_id, int &bitmask_offset) {
+static bool production_facility_built(int base_id, int facility_id, int &bitmask_offset) {
     int mask;
     bitmask(facility_id, &bitmask_offset, &mask);
     return (Bases[base_id].facilities_built[bitmask_offset]
         & static_cast<uint8_t>(mask)) != 0;
 }
 
-int production_wrapped_subtract(int left, int right) {
+static int production_wrapped_subtract(int left, int right) {
     return left - right;
 }
 
-int production_wrapped_add(int left, int right) {
+static int production_wrapped_add(int left, int right) {
     return left + right;
 }
 
-int production_wrapped_multiply(int left, int right) {
+static int production_wrapped_multiply(int left, int right) {
     return left * right;
 }
 
-bool production_colony_abandon_prompt(int owner, int prototype_id) {
+static bool production_colony_abandon_prompt(int owner, int prototype_id) {
     const bool human = production_faction_human(owner);
     if (!human) {
         if (GameDataStateStorage.fields_.diff_level_current_ > DLVL_LIBRARIAN) {
@@ -7335,7 +7332,7 @@ bool production_colony_abandon_prompt(int owner, int prototype_id) {
     return true;
 }
 
-void production_spend(Base &base, int owner, int cost) {
+static void production_spend(Base &base, int owner, int cost) {
     base.minerals_accumulated = production_wrapped_subtract(
         base.minerals_accumulated, cost);
     const int exemption = Rules.retool_exemption;
@@ -7349,7 +7346,7 @@ void production_spend(Base &base, int owner, int cost) {
     base.mineral_surplus_final = base.minerals_accumulated;
 }
 
-bool production_reveal_faction(int faction_id) {
+static bool production_reveal_faction(int faction_id) {
     PlayerData &player_data = PlayersData[faction_id];
     if ((player_data.flags & PFLAG_MAP_REVEALED) != 0) return false;
 
@@ -7372,7 +7369,7 @@ bool production_reveal_faction(int faction_id) {
     return true;
 }
 
-void production_clear_artifact_orders() {
+static void production_clear_artifact_orders() {
     BaseCurrent->state &=
         ~(BSTATE_ARTIFACT_LINKED | BSTATE_ARTIFACT_ALREADY_LINKED);
     int vehicle_id = stack_fix(veh_at(BaseCurrent->x, BaseCurrent->y));
@@ -7385,7 +7382,7 @@ void production_clear_artifact_orders() {
     }
 }
 
-void production_voice_of_planet_spread(int &offset_attempt) {
+static void production_voice_of_planet_spread(int &offset_attempt) {
     int faction_already_handled[MaxPlayerNum];
     for (int faction_index = 0; faction_index < MaxPlayerNum;
          ++faction_index) {
@@ -7474,7 +7471,7 @@ void production_voice_of_planet_spread(int &offset_attempt) {
     }
 }
 
-int production_vehicle_morale(int selected_base_id, int owner,
+static int production_vehicle_morale(int selected_base_id, int owner,
                               int prototype_id, bool new_prototype) {
     const VehPrototype &prototype = VehPrototypes[prototype_id];
     int morale;
@@ -7507,7 +7504,7 @@ int production_vehicle_morale(int selected_base_id, int owner,
     return morale;
 }
 
-void production_vehicle_notice(int selected_base_id, int owner,
+static void production_vehicle_notice(int selected_base_id, int owner,
                               int prototype_id, bool new_prototype,
                               int queue_result) {
     (void)selected_base_id;
@@ -7574,11 +7571,11 @@ void production_vehicle_notice(int selected_base_id, int owner,
     popb(StringTemp, popup_flags, -1, picture, 0);
 }
 
-int production_report_signed_bits(uint32_t bits) {
+static int production_report_signed_bits(uint32_t bits) {
     return static_cast<int>(bits);
 }
 
-ProductionReportResume production_report_stage(
+static ProductionReportResume production_report_stage(
     Popup &popup, int owner, int facility_id, int project_id,
     int queue_result, bool orbital_report) {
     if (owner != ConsoleGlobal.faction_id_ && facility_id < 40) {
@@ -7792,7 +7789,7 @@ static ProductionReportResume production_report_stage_v3(
 
 // Native duplicate project/facility notice branches. A return to the caller
 // lets the one entry-owned Popup unwind through normal C++ lifetime.
-void production_existing_project_notice(int owner, int facility_id,
+static void production_existing_project_notice(int owner, int facility_id,
                                         int project_id) {
     const uint32_t governor = BaseCurrent->governor;
     if (!production_faction_human(owner)
@@ -7819,7 +7816,7 @@ void production_existing_project_notice(int owner, int facility_id,
     popb(StringTemp, 0x200, -1, "secproj_sm.pcx", 0);
 }
 
-void production_existing_facility_notice(int owner, int facility_id) {
+static void production_existing_facility_notice(int owner, int facility_id) {
     const uint32_t governor = BaseCurrent->governor;
     if (!production_faction_human(owner)
         || ((governor & GOV_MANAGES_PRODUCTION) != 0
@@ -7835,7 +7832,7 @@ void production_existing_facility_notice(int owner, int facility_id) {
 }
 
 
-void production_finish_vehicle(int selected_base_id, int owner,
+static void production_finish_vehicle(int selected_base_id, int owner,
                                int prototype_id, bool new_prototype) {
     BaseCurrent->state |= BSTATE_PRODUCTION_DONE;
     BaseCurrent->state &= 0x7fffffffu;
@@ -7887,7 +7884,7 @@ void production_finish_vehicle(int selected_base_id, int owner,
     }
 }
 
-void production_late_reconcile(int completed_item_id, int project_id,
+static void production_late_reconcile(int completed_item_id, int project_id,
                                uint32_t faction_mask, int queue_result) {
     const uint32_t managed_active = GOV_MANAGES_PRODUCTION | GOV_ACTIVE;
     Base *current = BaseCurrent;
@@ -7972,7 +7969,7 @@ void production_late_reconcile(int completed_item_id, int project_id,
 
 // Native 0x4F2F61..0x4F33D2 project-event tail. The caller performs the
 // initial project interlude/movie/help actions and Voice of Planet spread.
-bool production_project_events_tail(int owner, int project_id) {
+static bool production_project_events_tail(int owner, int project_id) {
     if (project_id == SP_VOICE_OF_PLANET) {
         interlude(13, 0, 1, 0);
         PluralityDefault = 0;
@@ -8043,7 +8040,6 @@ bool production_project_events_tail(int owner, int project_id) {
 }
 
 
-} // namespace
 
 // WORKAROUND(inline): folds to no code; see the probe calls in base_production.
 static inline int production_budget_probe(int x) {

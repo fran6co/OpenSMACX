@@ -244,7 +244,6 @@ BOOL __cdecl not_my_turn() {
     return GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_;
 }
 
-namespace {
 // The .rdata strings the deletion paths hand to log_say, read out of the
 // image beside the bindings the same family already carries in veh.cpp.
 // Original starts identify the read-only strings, not pointer cells or
@@ -253,7 +252,6 @@ namespace {
 static const char StrDeletingVehicle[] = "Deleting vehicle";
 // RECOVERY_OBJECT: v1 0x0068C120 _StrDelConvertedIndex
 static const char StrDelConvertedIndex[] = "DelConverted index";
-}
 
 /*
 Purpose: Initialize the 24 deletion records and the current owner. The image

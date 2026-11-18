@@ -113,20 +113,18 @@ int __cdecl popm(char *label, int x, int y, int (__cdecl *poll)());
 void __cdecl slide_show(GraphicWin *window, int mode);
 void __cdecl slide_hide(GraphicWin *window, int mode);
 
-namespace {
 
-int psych_display_signed(uint32_t value) {
+static int psych_display_signed(uint32_t value) {
     return value <= 0x7FFFFFFFu ? static_cast<int>(value)
         : -1 - static_cast<int>(0xFFFFFFFFu - value);
 }
-int psych_display_add(int left, int right) {
+static int psych_display_add(int left, int right) {
     return psych_display_signed(static_cast<uint32_t>(left) + static_cast<uint32_t>(right));
 }
-int psych_display_sub(int left, int right) {
+static int psych_display_sub(int left, int right) {
     return psych_display_signed(static_cast<uint32_t>(left) - static_cast<uint32_t>(right));
 }
 
-} // namespace
 
 // Recompute can change the worked-square allocation. Network notification is
 // conditional on that live state changing, not simply on invoking the screen.
@@ -141,14 +139,12 @@ void BaseWin::compute_selected_base() {
     }
 }
 
-namespace {
-inline int specialist_type(int i) {
+static inline int specialist_type(int i) {
     return i >= 16 ? best_specialist()
         : (BaseCurrent->spec[i >> 3] >> ((i & 7) * 4)) & 15;
 }
-int specialist_at(const Base &base, int position) {
+static int specialist_at(const Base &base, int position) {
     return (base.spec[position >> 3] >> ((position & 7) * 4)) & 15;
-}
 }
 
 // farm_click, pop_click, base_editor and garrison_click expand this body
@@ -6637,15 +6633,13 @@ int BaseWin::on_iface_dialog_item_back_draw(GraphicWin *, int, int, RECT *) {
 #include <cstring>
 
 
-namespace {
-int base_native_clamp(int value, int lower, int upper) {
+static int base_native_clamp(int value, int lower, int upper) {
     // Both limits and their order are explicit in the original branches.
     if (value < lower || upper < lower) return lower;
     return value > upper ? upper : value;
 }
-void base_panel_sprite(Sprite &sprite, Buffer *canvas, int x, int y) {
+static void base_panel_sprite(Sprite &sprite, Buffer *canvas, int x, int y) {
     sprite.draw(canvas, sprite.transparent_index(), x, y);
-}
 }
 
 // 0040B140..0040BFE3, EH cleanup 00651A78..00651A8D.

@@ -1226,14 +1226,12 @@ void Buffer::close_class() {
 }
 
 
-namespace {
 
 // An RGNDATA holding exactly one rectangle: 48 bytes, which is what the
 // original reserves - `Buffer::set_clip` builds the block at `esp + 0x24`
 // and its last store is `esp + 0x50`, so 0x30 bytes, `RGNDATAHEADER`'s 32
 // plus a `RECT`'s 16.
 //
-}  // namespace
 
 /*
 Purpose: Release acquired references to the buffer's pixel data, unlocking the
@@ -1341,7 +1339,6 @@ uint32_t BufferFillRowGap;
 // RECOVERY_OBJECT: v1 0x00696BF8 ?PcxAssetPrefix@@3PADA
 char PcxAssetPrefix[] = "monkey sweats on a tuesday";
 
-namespace {
 
 // The pinned PCX writer copies all 0x80 bytes after assigning only the named
 // fields below; retain the untouched palette and reserved byte ranges in this
@@ -1367,9 +1364,8 @@ struct PcxHeaderView {
     uint8_t reserved[54];
 };
 
-const size_t PcxHeaderSize = 0x80;
+static const size_t PcxHeaderSize = 0x80;
 
-}  // namespace
 
 /*
 Purpose: Decode a PCX image out of memory into this buffer, then install the
@@ -3259,25 +3255,23 @@ done:
 }
 
 
-namespace {
 
 // RECT edges wrap as raw 32-bit values, exactly as the original's inc/dec
 // instructions do. Unsigned arithmetic keeps the wrap defined; the final
 // signed conversion follows the pinned VC6 32-bit integer representation.
-uint32_t edge_bits(LONG value) {
+static uint32_t edge_bits(LONG value) {
     static_assert(sizeof(uint32_t) == sizeof(value),
                   "Buffer geometry requires 32-bit RECT fields");
     return static_cast<uint32_t>(value);
 }
 
-int edge_int(uint32_t bits) {
+static int edge_int(uint32_t bits) {
     static_assert(sizeof(int) == sizeof(bits),
                   "Buffer geometry requires 32-bit int");
     // VC6's pinned 32-bit signed conversion preserves the low word's bits.
     return static_cast<int>(bits);
 }
 
-}  // namespace
 
 /*
 Purpose: Fill one horizontal run of pixels, clipped to the buffer's rectangle.

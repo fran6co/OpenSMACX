@@ -70,13 +70,11 @@ Font *BasePopDefaultStringFonts[4];  // 0x009B8D98
 // RECOVERY_OBJECT: v1 0x009B8DA8 ?BasePopDefaultButtonFonts@@3PAPAVFont@@A
 Font *BasePopDefaultButtonFonts[3];  // 0x009B8DA8
 
-namespace {
 
 // Shared by every default-font setter in the codebase: the primary is
 // published only when it is initialized, the remaining slots are stored
 // unconditionally, and only a null primary is an error.
 
-}  // namespace
 
 /*
 Purpose: Set the default string fonts shared by every popup.
@@ -241,9 +239,7 @@ uint32_t BasePopDefaultButtonColors[4][3] = {
 // per the start artifact's CORRECTIONS - so a keyword's compare length is NOT
 // its strlen here; take each length off the image's own call site.
 
-namespace {
 
-}  // namespace
 
 /*
 Purpose: Set default string colour tier 0 shared by every popup.

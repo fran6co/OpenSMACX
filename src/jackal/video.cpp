@@ -4,12 +4,10 @@
 #include "rectangle_operations.h"
 #include <stdio.h>
 
-namespace {
 // read_frame's still-frame log names its own "read_frame()" copy; a pooled
 // literal lets VC6 merge that push into the normal-frame tail.
 // RECOVERY_OBJECT: v1 0x00698918 _video_read_frame_still_name
-const char video_read_frame_still_name[] = "read_frame()";
-}
+static const char video_read_frame_still_name[] = "read_frame()";
 // RECOVERY_IMPORT: v1 __imp__ICClose@4 MSVFW32.dll name:ICClose
 // RECOVERY_IMPORT: v1 __imp__ICOpen@12 MSVFW32.dll name:ICOpen
 // RECOVERY_IMPORT: v1 __imp__mmioAscend@12 WINMM.dll name:mmioAscend

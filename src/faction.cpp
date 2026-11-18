@@ -3546,13 +3546,11 @@ static void call_off_vendetta_budget_probe(int x) {
     if (x == 8) x = 18;
 }
 
-namespace {
 // Every source line is consumed even when its menu item is suppressed.
-void read_diplomacy_menu_line() {
+static void read_diplomacy_menu_line() {
     text_get();
     StringTemp[0] = 0;
     parse_string(TextBufferGetPtr, StringTemp);
-}
 }
 
 // ORIGINAL: 0x0054BEC0 ?call_off_vendetta@@YAXHH@Z 0x0054BEC0-0x0054C552;0x0065F8FC-0x0065FA01 BYTE_EXACT

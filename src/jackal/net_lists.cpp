@@ -38,7 +38,6 @@
 // on_remove bodies are inline in net_class.h and are measured where their
 // tables are emitted.
 
-namespace {
 // Source-only typed algorithms shared by genuine list owners. They own no
 // executable identity. Each instantiated body/reference requires measurement;
 // sharing source does not prove the original compiler folded any particular pair.
@@ -52,7 +51,6 @@ template<class List> inline typename List::Payload *next_owned_list(List *list) 
     return list->current_->payload_;
 }
 
-}  // namespace
 
 /*
 Purpose: Copy one text record's string into fresh storage chosen by the

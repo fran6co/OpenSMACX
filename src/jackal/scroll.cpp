@@ -84,12 +84,11 @@ Sprite *ScrollDefaultBackground;  // 0x009B8E20
 // itself. Separate globals made 0x006051D0 and 0x00605370 BYTE_EXACT.
 
 
-namespace {
 
 
 
 
-inline LONG long_from_bits(uint32_t bits) {
+static inline LONG long_from_bits(uint32_t bits) {
     return static_cast<LONG>(bits);
 }
 
@@ -111,7 +110,7 @@ inline LONG long_from_bits(uint32_t bits) {
 //     where the image has it - after the three stores, before the branch.
 // Measured 2026-09-03: 5/21 (volatile alias, raw dib reads) -> 8/21 (named
 // dib reads, volatile alias kept) -> 21/21 with the volatile dropped.
-__forceinline void set_sprite_triplet(Scroll *object, Sprite *primary[3],
+static __forceinline void set_sprite_triplet(Scroll *object, Sprite *primary[3],
                         FlatButton *button, bool horizontal, Sprite *sprite1,
                         Sprite *sprite2, Sprite *sprite3) {
     primary[0] = sprite1;
@@ -128,15 +127,14 @@ __forceinline void set_sprite_triplet(Scroll *object, Sprite *primary[3],
     }
 }
 
-uint32_t arithmetic_shift_right_one(uint32_t value) {
+static uint32_t arithmetic_shift_right_one(uint32_t value) {
     return (value >> 1U) | (value & 0x80000000U);
 }
 
-uint32_t signed_min(uint32_t left, uint32_t right) {
+static uint32_t signed_min(uint32_t left, uint32_t right) {
     return long_from_bits(left) < long_from_bits(right) ? left : right;
 }
 
-}  // namespace
 
 
 /*

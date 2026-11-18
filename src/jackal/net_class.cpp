@@ -148,7 +148,6 @@ static const GUID NetLobbyAppGuid = {
 // This binding covers that observed four-byte pointer cell only.
 AlphaNetLedger *SessionEnumTarget;
 BOOL __stdcall enumerate_session_callback(LPCDPSESSIONDESC2, LPDWORD, DWORD, LPVOID);
-namespace {
 // Source-only typed algorithms shared by genuine list owners. They own no
 // executable identity. Each instantiated body/reference requires measurement;
 // sharing source does not prove the original compiler folded any particular pair.
@@ -189,7 +188,6 @@ template<class List> inline typename List::Payload *next_owned_list(List *list) 
     return list->current_->payload_;
 }
 
-}
 
 
 
@@ -850,7 +848,6 @@ void Net::stop_voice() {
 // RECOVERY_OBJECT: v2 0x009BC4BC 0x009BE4BC ?NetGetScratch@@3PAEA 0x00630A00
 unsigned char NetGetScratch[0x2000];
 
-namespace {
 // Shared wire views for the sender and receiver. Only the fields explicitly
 // written below are initialized; neither envelope padding nor packet tails
 // acquire default values merely because their layout is named.
@@ -874,7 +871,6 @@ struct NetPeerPlayerTable {
 static_assert(sizeof(NetPacketEnvelope) == 8, "DirectPlay packet header extent");
 static_assert(sizeof(NetPeerPlayerRecord) == 0x28, "peer snapshot record stride");
 static_assert(offsetof(NetPeerPlayerRecord, flags_) == 0x24, "peer snapshot flags");
-}
 
 static int __stdcall net_group_player_callback(unsigned long player_id, unsigned long, const DPNAME *, unsigned long, void *);
 
@@ -3294,7 +3290,6 @@ int Net::sub_632cc0(char *text, int id, int flag) {
     return voice->init(0x1000, 0, 0);
 }
 
-namespace {
 // Peer table payload after the eight-byte envelope: count DWORD then a
 // variable-length row tail. The local producer sends at most sixteen rows,
 // but the original receiver does not impose that bound on incoming packets.
@@ -3312,7 +3307,6 @@ static_assert(offsetof(DPMSG_SETPLAYERORGROUPDATA, lpData) == 0xC, "player data 
 static_assert(offsetof(DPMSG_SETPLAYERORGROUPNAME, dpnName) == 0xC, "changed name header");
 static_assert(offsetof(DPNAME, lpszLongNameA) == 0xC, "ANSI long name field");
 static_assert(sizeof(MMIOINFO) == 0x48, "voice packet MMIOINFO extent");
-}
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x006327E0 ?internal_receive@Net@@QAAHPAUNetThreadInfo@@@Z 0x006327E0-0x00632CB3

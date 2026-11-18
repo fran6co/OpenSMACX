@@ -192,11 +192,9 @@ static char IconWreckSheetName[] = "TER1WRECK.PCX";
 static char CyclingConfigFile[] = "system";
 // RECOVERY_OBJECT: v1 0x00685168 _OceanOffsetsConfigFile
 static char OceanOffsetsConfigFile[] = "system";
-namespace {
-void extract_interface_box_sprite(Sprite &sprite, int x, int y, int width, int height) {
+static void extract_interface_box_sprite(Sprite &sprite, int x, int y, int width, int height) {
     sprite.extract(&g_PCX_PARSE_TEMP_BUFFER1, WinFillColour,
                    x, y, width, height, nullptr);
-}
 }
 
 // Lifetime rationales retain earlier donor-object observations. The symbol

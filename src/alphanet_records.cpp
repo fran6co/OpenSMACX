@@ -37,7 +37,6 @@
 // compile_context src/alphanet.cpp
 // symbol    ??_DAlphaNetLedger@@QAEXXZ
 
-namespace {
 // Source-only typed algorithms shared by genuine list owners. They own no
 // executable identity. Each instantiated body/reference requires measurement;
 // sharing source does not prove the original compiler folded any particular pair.
@@ -51,7 +50,6 @@ template<class List> inline typename List::Payload *next_owned_list(List *list) 
     return list->current_->payload_;
 }
 
-}
 
 // The ledger's five list fields, zeroed; the rest of the construction (the
 // vtable staging and the owner capture) belongs to the compiler.

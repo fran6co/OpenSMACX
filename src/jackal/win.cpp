@@ -264,16 +264,15 @@ Win::Win() {
 }
 
 
-namespace {
 
-uint32_t midpoint(uint32_t near_edge, uint32_t far_edge) {
+static uint32_t midpoint(uint32_t near_edge, uint32_t far_edge) {
     const uint32_t delta = far_edge - near_edge;
     const uint32_t adjusted = delta + (delta >> 31);
     const uint32_t half = (adjusted >> 1) | (adjusted & 0x80000000U);
     return near_edge + half;
 }
 
-void move_rect(RECT &rect, int x, int y) {
+static void move_rect(RECT &rect, int x, int y) {
     // PLAIN ARITHMETIC. The bit-cast chain made this too big for VC6 to
     // inline, and `Win::move` at 0x005ED7D0 has it written out in BOTH arms
     // of its ternary - 43 instructions where a call is 14.
@@ -285,7 +284,6 @@ void move_rect(RECT &rect, int x, int y) {
     rect.bottom += dy;
 }
 
-}  // namespace
 
 /*
 Purpose: Move the active window rectangle while preserving its dimensions.
@@ -2388,8 +2386,6 @@ int __cdecl Win::init_class(LPSTR window_name) {
 
 
 
-namespace {
-}  // namespace
 
 /*
 Purpose: Route a mouse-move event either to the primary handler chain (a4

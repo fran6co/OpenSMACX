@@ -539,7 +539,6 @@ Status: Complete
 #include "map.h"       // MapIsFlat / MapLongitudeBounds - the cursor wrap
 #include "maininterface.h"  // MainInterface::restore_back - DiploPop's opener
 
-namespace {
 
 // The one-space join string this file's flying-text wrapper already binds as
 // SpaceText, and the caret separator MultiWin's spot label builds from.
@@ -550,17 +549,14 @@ namespace {
 // The spot label is built in strings.h's StringTemp (0x009B86A0), the same
 // shared scratch the sibling alpha.cpp prefs paths fill.
 
-}
 
 // Buffer owns its shared surface Sprite at 0x009B3A50; this unit does not
 // access that object directly. Sprite owns the tech-wizard facility icons.
 extern Sprite g_TECH_ICON_SPRITES[89];  // 0x00759E28, sprite.cpp's definition
 
-namespace {
 // The published unit draw-state block: the words the surface sprite's
 // draw_dest_unk1 readers consume, 0x009B3A54..0x009B3A78.
 
-}
 
 // ---------------------------------------------------------------------------
 // FX::play, 0x00446A00. The bank's sound trigger: gate on the sound bit of
@@ -625,9 +621,7 @@ char *TechWizardPopupFile = TechWizardPopupFileText;
 
 
 // ---------------------------------------------------------------------------
-namespace {
 class Int2SlotObj { public: void slot(int, int); };
-}
 
 
 // ---------------------------------------------------------------------------

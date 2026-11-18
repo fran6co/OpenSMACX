@@ -95,16 +95,14 @@ void __cdecl HSV_to_RGB(HSV *hsv_in, PALETTEENTRY *entry_out) {
 // HSV_to_RGB's own constants (0x00670C20..0x00670C38) in this member's
 // .rdata, so the function and its constants belong here, not with Palette.
 // 0.0 and 360.0 are the copies HSV_to_RGB's literals fold onto.
-namespace {
 // 0x0066FA70 and 0x00670C30 are bound once, by the merged HSV_to_RGB
 // literals above: in one unit the named copy and the literal share the cell.
-const double hsv_zero = 0.0;                        // 0x0066FA70
-const double hsv_sector_offset_b_minus_r = 2.0;     // 0x00670C48
-const double hsv_sector_offset_r_minus_g = 4.0;     // 0x0066FDC8
-const double hsv_hue_wrap_degrees = 360.0;          // 0x00670C30
+static const double hsv_zero = 0.0;                        // 0x0066FA70
+static const double hsv_sector_offset_b_minus_r = 2.0;     // 0x00670C48
+static const double hsv_sector_offset_r_minus_g = 4.0;     // 0x0066FDC8
+static const double hsv_hue_wrap_degrees = 360.0;          // 0x00670C30
 // RECOVERY_OBJECT: v1 0x00670C50 _hsv_value_byte_scale
-const double hsv_value_byte_scale = 0.00390625;     // 1/256, 0x00670C50
-}
+static const double hsv_value_byte_scale = 0.00390625;     // 1/256, 0x00670C50
 
 // ORIGINAL: 0x00628DB0 ?RGB_to_HSV@@YAXPAUPALETTEENTRY@@PAUHSV@@@Z 0x00628DB0-0x00628F27 FILE BYTE_EXACT
 // symbol    ?RGB_to_HSV@@YAXPBUtagPALETTEENTRY@@PAUHSV@@@Z

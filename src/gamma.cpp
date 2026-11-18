@@ -36,13 +36,11 @@
 #endif
 
 // RECOVERY_LITERAL: v1 0x0066FA68 0x0066FA70 __real@8@4006ebfd70a3d70a4000 0x005C959C
-namespace {
-const double GammaPositionScale = 0.01;
+static const double GammaPositionScale = 0.01;
 // Original 5C955F reads this scalar as a qword. Bind only its observed start;
 // the enclosing original allocation and typed initializer extent are unproved.
 // RECOVERY_OBJECT: v1 0x0066FA78 _GammaComponentScale
-const double GammaComponentScale = 1.0 / 235.0;
-}
+static const double GammaComponentScale = 1.0 / 235.0;
 
 static inline void gamma_inset(RECT *rect, int dx, int dy) {
     rect->left += dx;

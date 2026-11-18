@@ -17,12 +17,10 @@
 
 #include <cstring>
 
-namespace {
-inline void release_text(char *text) {
+static inline void release_text(char *text) {
     if (text != 0) {
         free(text);
     }
-}
 }
 
 // ORIGINAL: 0x006086F0 ?on_insert@StringList@@UAEHPAVStringStructPayload@@@Z 0x006086F0-0x00608761 BYTE_EXACT

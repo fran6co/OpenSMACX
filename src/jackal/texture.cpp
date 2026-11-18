@@ -530,12 +530,10 @@ Texture::Texture() {
     borrowed_ = 0;
 }
 
-namespace {
-inline void release_texture_pixels(unsigned char *pixels) {
+static inline void release_texture_pixels(unsigned char *pixels) {
     if (pixels != 0) {
         free(pixels);
     }
-}
 }
 
 /*

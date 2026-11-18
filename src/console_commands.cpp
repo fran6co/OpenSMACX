@@ -4980,20 +4980,18 @@ void Console::editor_diff() {
     }
 }
 
-namespace {
 
-void append_decimal(char *output, int value) {
+static void append_decimal(char *output, int value) {
     char digits[80];
     _itoa(value, digits, 10);
     ::strcat(output, digits);
 }
 
-void update_then_redraw_vehicle_editor_tile(const Veh &vehicle) {
+static void update_then_redraw_vehicle_editor_tile(const Veh &vehicle) {
     ConsoleGlobal.update_data(0);
     draw_tile(vehicle.x, vehicle.y, 1);
 }
 
-}
 
 // WORKAROUND(inline): popup.cpp's popup_set_write_check_bit (0x0051DCC0) body,
 // visible here so editor_edit_veh expands it as the image does: each flag test

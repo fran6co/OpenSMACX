@@ -756,27 +756,25 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
     return 1;
 }
 
-namespace {
 // Separate writable objects preserve the original popup operands at each use.
 // RECOVERY_OBJECT: v1 0x00687C84 ?staple_fail_alien_picture@?%src/terraforming_actions.cpp@@3PADA
-char staple_fail_alien_picture[] = "ALdrone_sm.pcx";
+static char staple_fail_alien_picture[] = "ALdrone_sm.pcx";
 // RECOVERY_OBJECT: v1 0x00687C94 ?staple_fail_alien_label@?%src/terraforming_actions.cpp@@3PADA
-char staple_fail_alien_label[] = "NERVESTAPLEFAIL";
+static char staple_fail_alien_label[] = "NERVESTAPLEFAIL";
 // RECOVERY_OBJECT: v1 0x00687CA4 ?staple_fail_human_picture@?%src/terraforming_actions.cpp@@3PADA
-char staple_fail_human_picture[] = "drone_sm.pcx";
+static char staple_fail_human_picture[] = "drone_sm.pcx";
 // RECOVERY_OBJECT: v1 0x00687CB4 ?staple_fail_human_label@?%src/terraforming_actions.cpp@@3PADA
-char staple_fail_human_label[] = "NERVESTAPLEFAIL";
+static char staple_fail_human_label[] = "NERVESTAPLEFAIL";
 // RECOVERY_OBJECT: v1 0x00687CC4 ?staple_done_alien_picture@?%src/terraforming_actions.cpp@@3PADA
-char staple_done_alien_picture[] = "ALdrone_sm.pcx";
+static char staple_done_alien_picture[] = "ALdrone_sm.pcx";
 // RECOVERY_OBJECT: v1 0x00687CD4 ?staple_done_alien_label@?%src/terraforming_actions.cpp@@3PADA
-char staple_done_alien_label[] = "NERVESTAPLEDONE";
+static char staple_done_alien_label[] = "NERVESTAPLEDONE";
 // RECOVERY_OBJECT: v1 0x00687CE4 ?staple_done_human_picture@?%src/terraforming_actions.cpp@@3PADA
-char staple_done_human_picture[] = "drone_sm.pcx";
+static char staple_done_human_picture[] = "drone_sm.pcx";
 // RECOVERY_OBJECT: v1 0x00687CF4 ?staple_done_human_label@?%src/terraforming_actions.cpp@@3PADA
-char staple_done_human_label[] = "NERVESTAPLEDONE";
+static char staple_done_human_label[] = "NERVESTAPLEDONE";
 // RECOVERY_OBJECT: v1 0x00687D04 ?staple_foreign_label@?%src/terraforming_actions.cpp@@3PADA
-char staple_foreign_label[] = "NERVESTAPLETHEM";
-}
+static char staple_foreign_label[] = "NERVESTAPLETHEM";
 
 // Current code uses PlayerData::proto_id_active for the byte table historically
 // viewed as veh.cpp's FactionProtoSeenCount; the original LEVER annotations below

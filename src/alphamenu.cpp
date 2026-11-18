@@ -42,19 +42,17 @@ extern int WindowAnimationFrameDelay;
 // RECOVERY_OBJECT: v1 0x006A7090 ?g_ALPHAMENU_WAVE@@3VWave@@A
 Wave g_ALPHAMENU_WAVE;  // 0x006A7090
 
-namespace {
 
-int animation_frame_x() {
+static int animation_frame_x() {
   return WinScreenWidth == 0x320 ? 0 : (WinScreenWidth - 0x400) / 2;
 }
 
-void wait_for_animation_frame(DWORD started) {
+static void wait_for_animation_frame(DWORD started) {
   while (timeGetTime() - started < static_cast<DWORD>(WindowAnimationFrameDelay)) {
     do_sound();
   }
 }
 
-}  // namespace
 
 // The compiler destroys sprites_[2..0], sprite1_, buffer_, then the Menu
 // base in the order observed at 0x0051DC10. Keep this as C++ ownership,

@@ -158,21 +158,17 @@ Sound *SoundChainHead;
 Sound *SoundChainTail;
 
 
-namespace {
 // Historical LEVER/TRIED notes below document manual dispatch spellings that
 // predate this typed external call view; their compiler observations remain
 // useful history, not descriptions of the current call expressions.
 // Sound wraps its device at 0x3C and asks it these questions through the
 // device's own vtable; the original tail-jumps, so the device's answer is the
 // caller's, and with no device wrapped the answer is zero.
-__forceinline Sound *sound_device(Sound *device) {
+static __forceinline Sound *sound_device(Sound *device) {
     return device;
 }
-}  // namespace
 
 
-namespace {
-}  // namespace
 
 // Root slot 0 has the same original body as root slot 1. Sound overrides
 // only this slot to notify its wrapped device; the root only remembers it.
@@ -205,21 +201,19 @@ int VideoSoundState::get_attrib() {
   return 0;
 }
 
-namespace {
 // SoundX mode-1 constructor10028750 clears its child at+3C; factory helper
 // 10028B70 only replaces the filename. Its getter10035A30->10028F40 therefore
 // has no nested callback on the newly-created paths in dyna_load/init.
 // The original captures the provider vptr before get_attrib and rereads the
 // receiver afterward; the typed calls preserve behavior for this pinned
 // read-only getter, not arbitrary replacement/reentrant provider DLLs.
-inline WavePlaybackDeviceInterface *wave_playback_device(
+static inline WavePlaybackDeviceInterface *wave_playback_device(
     Sound *device) {
     return static_cast<WavePlaybackDeviceInterface *>(device);
 }
 
-inline uint32_t wave_streaming_mode(unsigned long flags) {
+static inline uint32_t wave_streaming_mode(unsigned long flags) {
     return flags & 4;
-}
 }
 
 

@@ -66,11 +66,9 @@ PrefWin ConsolePrefWin;   // 0x008578D8
 // RECOVERY_OBJECT: v2 0x008577F0 0x00857884 ?PrefWinButtonGroup@@3VButtonGroup@@A 0x0048D840
 ButtonGroup PrefWinButtonGroup;
 
-namespace {
 // Original caption storage begins NUL; the writable extent and indirect
 // writers at its image location 0x872CAC remain unproved.
-char PrefWinCaption[] = "";
-}
+static char PrefWinCaption[] = "";
 
 // The geometry object is recovered in the adjacent global-arithmetic owner.
 // Keep these as ordinary object declarations here; they are not executable
@@ -94,21 +92,19 @@ float PrefWinGammaCorrection = 1.0f;
 // `* 100.0f` in on_button_clicked (it is fmul's memory operand, loaded after
 // the correction), not a named object.
 
-namespace {
 
-Win *console_window() {
+static Win *console_window() {
   return static_cast<Win *>(static_cast<GraphicWin *>(&ConsoleGlobal));
 }
 
-Win *preference_window() {
+static Win *preference_window() {
   // Embedded controls belong to the canonical preferences window (8578D8),
   // not its Console parent (9156B0).
   return static_cast<Win *>(static_cast<GraphicWin *>(&ConsolePrefWin));
 }
 
-int label_index(int byte_offset) { return byte_offset / 4; }
+static int label_index(int byte_offset) { return byte_offset / 4; }
 
-}  // namespace
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004921E0 ??0PrefWin@@QAE@XZ 0x004921E0-0x004923DA;0x00658930-0x00658ABC FILE BYTE_EXACT
