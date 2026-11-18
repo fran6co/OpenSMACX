@@ -95,7 +95,14 @@ def ident(text,addr):
     if not m: return None
     sym=m.group(1); m2=re.search(r'// symbol\s+(\S+)',m.group(4))
     if m2: sym=m2.group(1)
-    return sym,int(m.group(2),16),int(m.group(3),16)
+    lo,hi=int(m.group(2),16),int(m.group(3),16)
+    # A RECOVERY_FRAGMENT of this parent that overlaps the span's end (a terminal
+    # ret reached by fallthrough) belongs to the listing: without it the image
+    # side has no final ret and is trimmed back to its last jmp.
+    for f in re.finditer(r'// RECOVERY_FRAGMENT: [^\n]*?:0x([0-9A-Fa-f]{8})-0x([0-9A-Fa-f]{8})"[^\n]*"parent_address":"0x%08X"'%addr,text):
+        flo,fhi=int(f.group(1),16),int(f.group(2),16)
+        if flo<=hi<fhi: hi=fhi
+    return sym,lo,hi
 _IMGC={}
 def imgdis(lo,hi):
     if (lo,hi) not in _IMGC:
