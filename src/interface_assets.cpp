@@ -4461,13 +4461,13 @@ void __cdecl load_box_sprites() {
 
     // Seventeen rows of three columns (51 styles). x is the edge column;
     // the corner columns sit 7 left and 25 right of it.
-    Buffer *mask;
-    int style;
-    int x;
-    int y;
-    for (y = 229, style = 0, mask = g_IFACE_BOX_SPRITE_BUFFERS;
-         style < 51; y += 39) {
-    for (x = 8; x + 25 < 150; x += 39) {
+    int row;
+    int col;
+    int y = 229;
+    for (row = 0; row < 17; row++) {
+    for (col = 0; col < 3; col++) {
+        const int x = 8 + col * 39;
+        const int style = row * 3 + col;
         extract_interface_box_sprite(g_IFACE_BOX_SPRITES1[style], x - 7, y, 6, 6);
         extract_interface_box_sprite(g_IFACE_BOX_SPRITES2[style], x + 25, y, 6, 6);
         extract_interface_box_sprite(g_IFACE_BOX_SPRITES3[style], x - 7, y + 32, 6, 6);
@@ -4477,8 +4477,8 @@ void __cdecl load_box_sprites() {
         extract_interface_box_sprite(g_IFACE_BOX_SPRITES7[style], x - 7, y + 7, 6, 24);
         extract_interface_box_sprite(g_IFACE_BOX_SPRITES8[style], x + 25, y + 7, 6, 24);
 
-        mask->init(24, 24, 0, nullptr);
-        canvas.copy(mask, x, y + 7, 0, 0, 24, 24);
+        g_IFACE_BOX_SPRITE_BUFFERS[style].init(24, 24, 0, nullptr);
+        canvas.copy(&g_IFACE_BOX_SPRITE_BUFFERS[style], x, y + 7, 0, 0, 24, 24);
         InterfaceBoxStyles[style].corner0_ = &g_IFACE_BOX_SPRITES1[style];
         InterfaceBoxStyles[style].corner1_ = &g_IFACE_BOX_SPRITES2[style];
         InterfaceBoxStyles[style].corner2_ = &g_IFACE_BOX_SPRITES3[style];
@@ -4489,16 +4489,15 @@ void __cdecl load_box_sprites() {
         InterfaceBoxStyles[style].edge3_ = &g_IFACE_BOX_SPRITES8[style];
         // This style's Buffer, not canvas. Pointer publication precedes the
         // pixel test; a transparent mask is cleared before close can observe it.
-        if (mask->get_pixel(0, 0) == 9) {
+        if (g_IFACE_BOX_SPRITE_BUFFERS[style].get_pixel(0, 0) == 9) {
             InterfaceBoxStyles[style].mask_ = nullptr;
-            mask->close();
+            g_IFACE_BOX_SPRITE_BUFFERS[style].close();
         } else {
-            InterfaceBoxStyles[style].mask_ = mask;
+            InterfaceBoxStyles[style].mask_ = &g_IFACE_BOX_SPRITE_BUFFERS[style];
         }
         InterfaceBoxStyles[style].mask_color_ = 7;
-        ++style;
-        ++mask;
     }
+    y += 39;
     }
 
     extract_interface_box_sprite(g_IFACE_STD_POPUPS_TOP_LEFT_SPRITE, 296, 711, 61, 44);
