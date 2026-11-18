@@ -7440,10 +7440,15 @@ int MapWin::pixel_to_tile(int x_pixel, int y_pixel, int *out_tile_x,
         wrap_map_x(field_1DDA4_ + (x_pixel / tile_pixel_width_) * 2 + 1);
     int column = tile_x;
     int row = field_1DDA8_ + (y_pixel / tile_pixel_height_) * 2 + 1;
-    const int half_width = field_1DDBC_;
     int upper;
+    // No half-width local: the image reads field_1DDBC_ once here and keeps
+    // it as a compiler CSE temporary in its own frame slot ([ebp-0x10],
+    // 0x463109) for the two corner products; a named copy is propagated
+    // back to member reads and loses that slot (frame 0x14 vs 0x18).
+    // WORKAROUND(type): the field is declared uint32_t; the image divides
+    // signed (idiv), so the subtraction is cast here.
     if (wrap_map_x(field_1DDA4_ +
-                   ((x_pixel - half_width) / tile_pixel_width_) * 2 + 1) ==
+                   ((x_pixel - (int)field_1DDBC_) / tile_pixel_width_) * 2 + 1) ==
         tile_x) {
         tile_x++;
         column = tile_x;
@@ -7456,8 +7461,8 @@ int MapWin::pixel_to_tile(int x_pixel, int y_pixel, int *out_tile_x,
     }
     // Pixel offsets of the diamond's left and right corners.
     const int offset = column - field_1DDA4_;
-    const int left = half_width * wrap_map_x(offset - 1);
-    const int right = half_width * wrap_map_x_in_place(offset);
+    const int left = field_1DDBC_ * wrap_map_x(offset - 1);
+    const int right = field_1DDBC_ * wrap_map_x_in_place(offset);
     x_pixel -= left;
     const int span = right - left;
     int top;
