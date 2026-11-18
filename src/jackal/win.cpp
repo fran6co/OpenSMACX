@@ -28,6 +28,7 @@
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned Win::screen_buffer_ storage starts at 0x9B7490; startup 0x5EB390 constructs the complete Buffer and registers finalizer 0x5EB3B0. The finalizer tests and publishes mask 2 of shared byte0x009B6E30 before the complete Buffer destructor0x005D7410, preserving other bits and repeated-cleanup skip.", "Original CRT slots0x00682678/0x0068267C register drawing then screen; ordinary class-static definitions retain that order and compiler-owned reverse cleanup. No placement storage, manual guard, accessor call, or dynamic pointer/reference facade remains.", "Original0x009B74C0 is screen Buffer+0x30 rect2_, established by pinned0x005EFED9/0x005EFEDE/0x005EFEE3; rendering accesses the real member. The original complete allocation bound remains unproved.", "Current compiler names are carried by the function symbol and object-target facts, not treated as historical debug names. Static members add no instance fields. Fresh strict measurement remains required; this binding transports no claim."], "reason": "Bind the pinned lifetime to typed class-static storage and compiler-generated initialization/destruction. Preserve original identity, spans, historical claims and guard/order obligations. Original nominal declarations and complete historical TU boundaries, linked data placement and game behavior remain unproved."}
 // symbol    _$E20
 // RECOVERY_LITERAL: v1 0x00696DEC 0x00696DF8 $SG49853 0x005F04E0
+#define WIN_RECT_EXTENT_INLINE  // rect_width/rect_height (win.h)
 #include "stdafx.h"
 // Drawing imports resolve by SDK export identity in the pinned PE directory.
 // RECOVERY_IMPORT: v1 __imp__CreateSolidBrush@4 GDI32.dll name:CreateSolidBrush
@@ -3171,7 +3172,7 @@ void Win::on_paint(RECT *area) {
             } else {
                 // One tile in the centre, the four strips around it filled.
                 set_rectangle_dimensions(&edge, 0, 0,
-                    outer_rect_.right - outer_rect_.left, y);
+                    rect_width(&outer_rect_), y);
                 FillRect(hdc, &edge, brush);
                 source->copy_to_window(this, 0, 0, x, y,
                     source->pixel_width(), source->pixel_height());

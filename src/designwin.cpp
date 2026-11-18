@@ -38,6 +38,7 @@
 #define DIALOGS_DTOR_INLINE  // stand-in: see ~Dialogs in dialogs.h
 #define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h
 #define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
+#define WIN_RECT_EXTENT_INLINE  // rect_width/rect_height (win.h)
 #include "stdafx.h"
 #include "font_metrics.h"
 #include "interface_fonts.h"
@@ -1346,8 +1347,8 @@ int DesignWin::init() {
     strcat(StringTemp, label_get(0xE74 / 4));
     CharUpperA(StringTemp);
     flatButtons_[0].init(StringTemp, 0, field_B4C_rect_.left, field_B4C_rect_.top,
-        field_B4C_rect_.right - field_B4C_rect_.left,
-        field_B4C_rect_.bottom - field_B4C_rect_.top, static_cast<Win *>(this), 0);
+        rect_width(&field_B4C_rect_),
+        rect_height(&field_B4C_rect_), static_cast<Win *>(this), 0);
     flatButtons_[0].set_bubble_text(label_get(0xE78 / 4));
 
     StringTemp[0] = 0;

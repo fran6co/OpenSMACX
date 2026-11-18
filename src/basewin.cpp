@@ -7165,7 +7165,7 @@ void BaseWin::init() {
     expand_rect(&garrison_rect_, -4, -4);
     garrison_rect_.left -= 4;  // Original removes only the left inset again.
     queue_help_rect_ = MainInterfaceGlobal.rect4_;
-    queue_help_rect_.right = (queue_help_rect_.right - queue_help_rect_.left) * 7 / 12;
+    queue_help_rect_.right = rect_width(&queue_help_rect_) * 7 / 12;
     expand_rect(&queue_help_rect_, -4, -4);
     r = queue_help_rect_;
     r.left = queue_help_rect_.right + 3;
@@ -7330,7 +7330,7 @@ void BaseWin::init() {
     strcat(StringTemp, label_get(0x194 / 4));
     CharUpperA(StringTemp);
     flatButtons_[0].init(StringTemp, 0, rect6_.left, rect6_.top,
-        rect6_.right - rect6_.left, rect6_.bottom - rect6_.top, this, 0);
+        rect6_.right - rect6_.left, rect_height(&rect6_), this, 0);
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x1F4 / 4));
     CharUpperA(StringTemp);

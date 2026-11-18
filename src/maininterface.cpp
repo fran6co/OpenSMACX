@@ -40,6 +40,7 @@ Status: Complete
 // symbol    ??_GMainInterface@@UAEPAXI@Z
 // kind      game
 #define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
+#define WIN_RECT_EXTENT_INLINE  // rect_width/rect_height (win.h)
 #include "stdafx.h"
 #include "rectangle_operations.h"
 #include "interface_fonts.h"
@@ -414,7 +415,7 @@ int MainInterface::init(int) {
     expand_rect(&r, -6, -6);
     message_bounds_ = r;
     status_left_rect_ = rect4_;
-    status_left_rect_.right = (status_left_rect_.right - status_left_rect_.left) * 7 / 12;
+    status_left_rect_.right = rect_width(&status_left_rect_) * 7 / 12;
     expand_rect(&status_left_rect_, -4, -4);
     status_hit_rect_ = lower_frame_rect_;
     expand_rect(&status_hit_rect_, -4, -4);

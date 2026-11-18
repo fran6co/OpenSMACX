@@ -21,6 +21,7 @@
 // symbol    ??_GFlatButton@@UAEPAXI@Z
 // kind      game
 #define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
+#define WIN_RECT_EXTENT_INLINE  // rect_width/rect_height (win.h)
 #include "stdafx.h"
 #include "flatbutton.h"
 #include "win.h"
@@ -550,13 +551,13 @@ void FlatButton::on_redraw() {
     if (parent_window() != 0
         && parent_window()->on_button_text_draw(this, name_,
                                                 static_cast<int>(field_A78_)) == 0) {
-      const int shift = wrap_height(name_, rectangle.right - rectangle.left - 6)
+      const int shift = wrap_height(name_, rect_width(&rectangle) - 6)
           - text_line_height() + text_height();
-      const int y = ((rectangle.bottom - rectangle.top) - shift) / 2 + rectangle.top;
+      const int y = (rect_height(&rectangle) - shift) / 2 + rectangle.top;
       if (y >= 0 && (static_cast<int>(field_18_) >= 2
                      || flatbutton_text_fits(this, name_,
-                                             rectangle.right - rectangle.left))) {
-        wrap_cent(name_, rectangle.left + 3, y, rectangle.right - rectangle.left - 6);
+                                             rect_width(&rectangle)))) {
+        wrap_cent(name_, rectangle.left + 3, y, rect_width(&rectangle) - 6);
         return;
       }
       expand_rect(&rectangle, -3, 0);
@@ -564,7 +565,7 @@ void FlatButton::on_redraw() {
       set_clip(&rectangle);
       write_l(name_, &rectangle);
       restore_clip();
-      offset_rect(&rectangle, rectangle.right - rectangle.left, 0);
+      offset_rect(&rectangle, rect_width(&rectangle), 0);
       write_l("...", &rectangle);
     }
   }

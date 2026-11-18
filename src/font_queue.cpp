@@ -31,6 +31,7 @@
 #define VECTOR_CTOR_OUT_OF_LINE
 #define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
 #define MAPWIN_TILE_IN_VIEW_INLINE  // veh_scoot expands MapWin::tile_in_view (basewin.h)
+#define WIN_RECT_EXTENT_INLINE  // rect_width/rect_height (win.h)
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "font_queue.h"
@@ -564,14 +565,14 @@ void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int fl
                 MapWinTable[i]->compute_clip(next_x, next_y, 0, &end_clip);
                 MapWinTable[i]->compute_clip(tile_x, tile_y, 0, &start_clip);
                 UnionRect(&area[i], &end_clip, &start_clip);
-                margin_x[i] = (area[i].right - area[i].left) / 4;
+                margin_x[i] = rect_width(&area[i]) / 4;
                 margin_y[i] = (area[i].bottom - area[i].top) / 4;
                 expand_rect(&area[i], margin_x[i], margin_y[i]);
-                saved[i].init(area[i].right - area[i].left, area[i].bottom - area[i].top, 0, 0);
+                saved[i].init(rect_width(&area[i]), rect_height(&area[i]), 0, 0);
                 // Implicit receiver conversion: the image applies the virtual
                 // base offset here without the null test an argument gets.
                 MapWinTable[i]->copy(&saved[i], area[i].left, area[i].top, 0, 0,
-                    area[i].right - area[i].left, area[i].bottom - area[i].top);
+                    rect_width(&area[i]), rect_height(&area[i]));
             }
         }
         // Preference is re-read after all preparation callbacks.
@@ -584,7 +585,7 @@ void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int fl
             for (i = 0; i < 8; ++i) {
                 if (active[i]) {
                     set_rectangle_dimensions(&tile_rect, start_x[i], start_y[i],
-                        area[i].right - area[i].left, area[i].bottom - area[i].top);
+                        rect_width(&area[i]), rect_height(&area[i]));
                     if (IntersectRect(&intersection, &tile_rect, &area[i])) {
                         veh_draw(MapWinTable[i], veh_id, start_x[i], start_y[i],
                             MapWinTable[i]->zoom_offset_, 0x12, frame);
@@ -593,7 +594,7 @@ void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int fl
                             start_x[i] - margin_x[i] - area[i].left,
                             start_y[i] - margin_y[i] - area[i].top,
                             start_x[i] - margin_x[i], start_y[i] - margin_y[i],
-                            area[i].right - area[i].left, area[i].bottom - area[i].top);
+                            rect_width(&area[i]), rect_height(&area[i]));
                     }
                 }
             }
@@ -611,7 +612,7 @@ void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int fl
                 if (active[i]) {
                     set_rectangle_dimensions(&tile_rect,
                         static_cast<int>(position[i].x_), static_cast<int>(position[i].y_),
-                        area[i].right - area[i].left, area[i].bottom - area[i].top);
+                        rect_width(&area[i]), rect_height(&area[i]));
                     if (IntersectRect(&intersection, &tile_rect, &area[i])) {
                         veh_draw(MapWinTable[i], veh_id,
                             static_cast<int>(position[i].x_), static_cast<int>(position[i].y_),
@@ -622,7 +623,7 @@ void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int fl
                             static_cast<int>(position[i].y_) - margin_y[i] - area[i].top,
                             static_cast<int>(position[i].x_) - margin_x[i],
                             static_cast<int>(position[i].y_) - margin_y[i],
-                            area[i].right - area[i].left, area[i].bottom - area[i].top);
+                            rect_width(&area[i]), rect_height(&area[i]));
                     }
                     position[i] += increment[i];
                 }

@@ -31,6 +31,7 @@
 #define STRINGSTRUCT_CTOR_OUT_OF_LINE
 #define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
 #define SPOT_ADD_RECT_INLINE  // stand-in: see Spot::add(int, int, RECT *) in spot.h
+#define WIN_RECT_EXTENT_INLINE  // rect_width/rect_height (win.h)
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "netwin.h"
@@ -981,7 +982,7 @@ void NetWin::draw_session_info() {
         g_IFACE_MP_COMBO_ARROW_SPRITES[0].draw(
             this, BufferLastWrapWriteResult + 3, bottom - Buffer::text_line_height());
     }
-    spot_.add(0, 0, col, row, setup_rects_[1].right - setup_rects_[1].left,
+    spot_.add(0, 0, col, row, rect_width(&setup_rects_[1]),
               bottom - row);
     row = bottom;
 
@@ -1396,7 +1397,7 @@ void NetWin::draw_custom_rules() {
     RECT rect;
     rect.left = left;
     rect.top = top;
-    rect.right = (setup_rects_[48].right - setup_rects_[48].left) + left - 6;
+    rect.right = rect_width(&setup_rects_[48]) + left - 6;
     rect.bottom = top + 0x12;
 
     // The standing free-technology checkbox, spot id 100, and its label
@@ -1406,8 +1407,8 @@ void NetWin::draw_custom_rules() {
     Sprite &standing = g_IFACE_CLOSE_X_SPRITES[free_tech ? 2 : 0];
     standing.draw(buffer, left, top);
     if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
-        spot_.add(0x64, 1, rect.left, rect.top, rect.right - rect.left,
-                  rect.bottom - rect.top);
+        spot_.add(0x64, 1, rect.left, rect.top, rect_width(&rect),
+                  rect_height(&rect));
     }
     rect.left += 0x19;
     if (free_tech) {
@@ -1497,8 +1498,8 @@ void NetWin::draw_custom_rules() {
         Sprite &check = g_IFACE_CLOSE_X_SPRITES[state != 0 ? 2 : 0];
         check.draw(buffer, check.transparent_index(), rect.left, rect.top);
         if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
-            spot_.add(row, 1, rect.left, rect.top, rect.right - rect.left,
-                      rect.bottom - rect.top);
+            spot_.add(row, 1, rect.left, rect.top, rect_width(&rect),
+                      rect_height(&rect));
         }
         rect.left += 0x19;
         if (line != 0) {
