@@ -562,19 +562,20 @@ Purpose: Determine if there are any issues with how the world continents are set
 Return Value: Are there any issues with the world continents? true/false
 Status: Complete - testing
 */
-#pragma auto_inline(off)
+// world_build calls this out of line (0x005C8874), in the same unit. The
+// tile count is read at each use, not through a named local: so written, the
+// body is over VC6's per-callee auto-inline size cap and stays a call.
 BOOL __cdecl world_validate() {
     Paths.continents();
     int val1 = 0; // rename to better var descriptions
     int val2 = 0; // rename to better var descriptions
     for (uint32_t region = 1; region < MaxRegionLandNum; region++) {
         if (!bad_reg(region)) {
-            int tile_count = Continents[region].tile_count;
-            if (tile_count >= val2) {
+            if (Continents[region].tile_count >= val2) {
                 val1 = val2;
-                val2 = tile_count;
-            } else if (tile_count >= val1) {
-                val1 = tile_count;
+                val2 = Continents[region].tile_count;
+            } else if (Continents[region].tile_count >= val1) {
+                val1 = Continents[region].tile_count;
             }
         }
     }
@@ -585,7 +586,6 @@ BOOL __cdecl world_validate() {
         return val1 < val2 / 2;
     }
 }
-#pragma auto_inline(on)
 
 /*
 Purpose: Set up the world temperature.
