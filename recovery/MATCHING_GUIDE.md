@@ -395,9 +395,10 @@ raw field access where the original used inline accessors.
     `ReportWinGlobal.redraw()`; corner_the_market has `add ecx, edx; push ecx`
     (image) against `add edx, ecx; push edx`.
 
-  The function is exact when the residue of its first relocated `$SGn`
-  (mod 64) is in a fixed set. Measured sets (wip 2088402dcf, `recover canary
-  --calibrate`):
+  At one revision, the function is exact when the residue of its first
+  relocated `$SGn` (mod 64) is in a set. That set is not fixed across
+  revisions (see the drift caveat below). The first sets measured
+  (wip 2088402dcf, against each function's own exact bytes):
 
   | canary | residues |
   |---|---|
@@ -416,8 +417,8 @@ raw field access where the original used inline accessors.
   original's count modulo 64, to its residue set, and the whole header stack
   (vc6_compat.h alone is 1,334 symbols, windows.h 16,655 lean or 41,878 full)
   only matters modulo 64. So pads are alignment, not missing declarations.
-- **Re-tune with arithmetic, not sweeps.** Each canary unit has one pad block,
-  and the target set lives beside it:
+- **Re-tune by sweeping against the image.** Each canary unit has one pad
+  block, and the last measured set lives beside it:
 
   ```
   // CANARY: 0x004A6330 ?on_iface_button_clicked@ReportIf@@UAEXH@Z residues 28,39,54
@@ -425,22 +426,31 @@ raw field access where the original used inline accessors.
   void ReportIfDeclFnPad0();
   ```
 
-  `uv run recover canary [<unit>...] [--write]` compiles each block's unit and
-  reads each canary's residue. It reports the pad count nearest the current
-  one that puts every canary of the block in its set (each pad moves the
-  counter by 1). `--write` verifies that count by an overlay compile, then
-  rewrites only the pad lines. Run it after every header batch, then
-  `recover rebind-literals --write`. A unit with no pads keeps an empty block
+  `uv run recover canary --image <image> [<unit>...]` measures every canary
+  against the image at the current pad count. When one misses, it predicts a
+  count from the recorded sets (each pad moves the counter by 1) and measures
+  the prediction as an overlay compile. `--write` publishes only a prediction
+  that measures BYTE_EXACT; a stale set refuses and asks for a sweep.
+  `--sweep` measures one full period (64 overlay compiles, about 5 minutes per
+  unit) and picks the exact count nearest the current one. `--sweep --write`
+  writes that count and the measured sets into the `CANARY` lines.
+
+  After each header batch, run `recover canary --image <image> --sweep --write`,
+  then `recover rebind-literals --write`. Every pad renumbers the `$SG`
+  literals after the block, so the tool counts a body that matches with only
+  stale literal bindings as exact. A unit with no pads keeps an empty block
   (`CANARY-PADS` with no pad lines) so the tool can add them.
-- **Caveat: residue sets move with the canary's own code.** The residue is
-  read at the function's first literal, but the tie may sit deeper. A change
-  to the canary's body, or to anything it expands inline, moves the set.
-  buy_council_vote was exact at residue 62 on wip although a sweep on the
-  previous wip had marked 62 bad, and reportif's set narrowed from
-  {28-30, 39-41, 54-56} to {28, 39, 54} after the array retypes. When a
-  canary stays inexact at a residue in its set, recalibrate: restore its exact
-  state, run `recover canary <unit> --calibrate` (64 overlay compiles, about
-  2.5 minutes per unit), and copy the reported set into the `CANARY` line.
+- **Caveat: residue sets drift when other functions in the unit change.** The
+  residue is read at the function's first literal, but the tie depends on
+  more than that. Edits to the canary's body, to anything it expands inline,
+  and to other functions in the same unit all move the set. Measured on
+  0x004A6330 within a day: {28, 39, 54}, then {29-34, 40-45, 55-60} after a
+  labs_line edit, then {0-27, 38, 49-53} after the next header batch. In the
+  same batch action_give went from {32-35, 40-42} to {17-20, 25-27} and
+  corner_the_market from {0-4, 7-9, 15-18, 27-45, 53-55} to
+  {0-2, 15-45, 54-55, 58, 60-63}. A `--write` that trusted the stale set moved
+  0x004A6330 from an exact count to an inexact one. Treat a recorded set as a
+  prediction only, and recalibrate by sweep (above) after each batch.
 - **Edits ripple through the unit.** Any edit can flip register or
   operand-order ties in a *later* function of the same TU, because VC6 shifts
   its symbol counter (above). Edits that do this include:

@@ -84,7 +84,7 @@
 // push ecx` (image) against `add edx, ecx; push edx` is a tie-break on the
 // front-end symbol counter modulo 64 (guide 2.5); `recover canary
 // src/console_commands.cpp` computes the pad count (none needed now).
-// CANARY: 0x004E2000 ?corner_the_market@Console@@QAEXXZ residues 0-4,7-9,15-18,27-45,53-55
+// CANARY: 0x004E2000 ?corner_the_market@Console@@QAEXXZ residues 0-2,15-45,54-55,58,60-63
 // CANARY-PADS: function ConsoleCommandsDeclFnPad
 
 // Shared separator objects the image pushes instead of unit literals.

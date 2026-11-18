@@ -6,8 +6,10 @@ import subprocess
 
 import pytest
 
-from match_recovery.canary import (align_canaries, first_literal, format_residues, parse_block,
-                                   parse_residues, rewrite_pads, solve)
+from match_recovery.canary import (align_canaries, first_literal, format_residues, literal_binding_only,
+                                   parse_block, parse_residues, rewrite_pads, rewrite_residues, solve)
+from match_recovery.source.asm import AsmComparison
+from match_recovery.source.model import Tier
 from match_recovery.cli import main
 from match_recovery.pe_coff import Coff
 
@@ -141,20 +143,17 @@ def project(tmp_path):
 
 
 class Counting:
-    """A fake compiler whose literal counter is ``base`` plus the unit's pad count.
+    """A fake compiler whose literal counter is ``base`` plus the unit's pad count."""
 
-    ``good`` residues compile the canary to its exact body; others to a variant.
-    """
+    def __init__(self, base):
+        self.base, self.overlays = base, 0
 
-    def __init__(self, base, good=None):
-        self.base, self.good, self.overlays = base, good, 0
+    def residue(self, text):
+        return (self.base + parse_block(text)["count"]) % 64
 
     def emit(self, text):
         number = self.base + parse_block(text)["count"]
-        body = [number, number + 9]
-        if self.good is not None and number % 64 not in self.good:
-            body = body + [number + 10]
-        return obj({FUNCTION: body})
+        return obj({FUNCTION: [number, number + 9]})
 
     def __call__(self, path, arguments, flags):
         return self.emit(path.read_text())
@@ -165,70 +164,128 @@ class Counting:
         return self.emit(data.decode())
 
 
-def counting(project, base):
-    return Counting(base)
+def image(compiler, project, exact):
+    """A fake image judge: the canary is BYTE_EXACT when its residue is in ``exact``."""
+    calls = []
+
+    def judge(unit, data, canaries):
+        text = (project / unit).read_text() if data is None else data.decode()
+        calls.append(parse_block(text)["count"])
+        return {canary["address"]: compiler.residue(text) in exact for canary in canaries}
+    judge.calls = calls
+    return judge
 
 
-def test_aligned_block_passes_and_is_untouched(project):
+def run(project, compiler, exact, **options):
+    return align_canaries(project, compiler=compiler, judge=image(compiler, project, exact), **options)
+
+
+def test_exact_block_passes_untouched_and_flags_a_stale_set(project):
+    compiler = Counting(64 * 900 + 9)  # two pads: residue 11, recorded set 10-12
     before = (project / "code/f.cc").read_bytes()
-    report = align_canaries(project, compiler=counting(project, 64 * 900 + 9), write=True)
-    assert report["result"] == "pass" and report["published"] == []
-    row = report["units"][0]["canaries"][0]
-    assert (row["residue"], row["aligned"], report["units"][0]["needed"]) == (11, True, 2)
+    report = run(project, compiler, {11}, write=True)
+    unit = report["units"][0]
+    assert report["result"] == "pass" and report["published"] == [] and "stale" not in unit
+    assert (unit["canaries"][0]["residue"], unit["canaries"][0]["exact"], unit["needed"]) == (11, True, 2)
+    report = run(project, compiler, {30, 11})  # exact here too
+    assert report["result"] == "pass"
+    report = run(project, Counting(64 * 900 + 20), {22})  # exact at residue 22, outside 10-12
+    assert report["result"] == "pass" and "sweep" in report["units"][0]["stale"]
     assert (project / "code/f.cc").read_bytes() == before
 
 
-def test_dry_run_reports_the_needed_count_and_write_verifies(project):
-    compiler = counting(project, 64 * 900 + 5)  # residue 7 with two pads: needs 5 more
+def test_write_publishes_a_prediction_only_when_the_image_confirms_it(project):
+    compiler = Counting(64 * 900 + 5)  # residue 7 with two pads; recorded set 10-12 needs 5 pads
     before = (project / "code/f.cc").read_bytes()
-    report = align_canaries(project, units=["code/f.cc"], compiler=compiler)
+    report = run(project, compiler, {10, 11, 12})
     assert report["result"] == "fail" and report["units"][0]["needed"] == 5
+    assert report["units"][0]["prediction_exact"] is True
     assert (project / "code/f.cc").read_bytes() == before
-    report = align_canaries(project, units=["code/f.cc"], compiler=compiler, write=True)
+    report = run(project, compiler, {10, 11, 12}, write=True)
     assert report["result"] == "pass" and report["published"] == ["code/f.cc"]
     assert (project / "code/f.cc").read_text() == unit_text(5)
-    assert report["units"][0]["canaries_after"][0]["aligned"] is True
 
 
-def test_write_refuses_when_the_overlay_misses(project):
-    class Fixed(Counting):
-        def emit(self, text):
-            return obj({FUNCTION: [64 * 900 + 1]})  # pads do not move this counter
+def test_write_refuses_a_stale_set_without_writing(project):
+    compiler = Counting(64 * 900 + 5)  # recorded 10-12 predicts 5 pads, but only residue 40 is exact
     before = (project / "code/f.cc").read_bytes()
-    compiler = Fixed(0)
-    report = align_canaries(project, compiler=compiler, write=True)
+    report = run(project, compiler, {40}, write=True)
     unit = report["units"][0]
-    assert report["result"] == "unknown" and report["published"] == [] and compiler.overlays == 1
-    assert unit["canaries_after"][0]["aligned"] is False
+    assert report["result"] == "unknown" and report["published"] == []
+    assert unit["prediction_exact"] is False and "--sweep" in unit["reason"]
     assert (project / "code/f.cc").read_bytes() == before
 
 
-def test_calibrate_reports_the_residues_that_keep_current_bytes(project):
-    # Two pads put the counter at residue 11 (good); the exact body recurs at 10-12 and 40.
-    compiler = Counting(64 * 900 + 9, good={10, 11, 12, 40})
+def test_sweep_measures_one_period_and_writes_count_and_sets(project):
+    # Residue is (5 + pads) mod 64; the image is exact at residues 3 and 40-41,
+    # i.e. 62 or 35-36 pads. From two pads, 35 is the nearest exact count.
+    compiler = Counting(64 * 900 + 5)
+    judge = image(compiler, project, {3, 40, 41})
+    report = align_canaries(project, compiler=compiler, judge=judge, sweep=True)
+    unit = report["units"][0]
+    assert len(judge.calls) == 64 and sorted(judge.calls) == list(range(0, 64))
+    assert unit["needed"] == 35
+    assert (unit["canaries"][0]["recorded"], unit["canaries"][0]["measured"]) == ("10-12", "3,40-41")
+    assert report["result"] == "fail"
+    report = align_canaries(project, compiler=compiler, judge=image(compiler, project, {3, 40, 41}),
+                            sweep=True, write=True)
+    assert report["result"] == "pass" and report["published"] == ["code/f.cc"]
+    assert (project / "code/f.cc").read_text() == unit_text(35, residues="3,40-41")
+
+
+def test_sweep_without_an_exact_count_fails_without_writing(project):
+    compiler = Counting(64 * 900 + 5)
     before = (project / "code/f.cc").read_bytes()
-    report = align_canaries(project, calibrate=True, compiler=compiler)
-    row = report["units"][0]["canaries"][0]
-    assert (row["recorded"], row["calibrated"]) == ("10-12", "10-12,40")
-    assert report["result"] == "fail" and compiler.overlays == 64
+    report = align_canaries(project, compiler=compiler, judge=image(compiler, project, set()),
+                            sweep=True, write=True)
+    assert report["result"] == "fail" and report["published"] == []
     assert (project / "code/f.cc").read_bytes() == before
-    with pytest.raises(ValueError, match="never writes"):
-        align_canaries(project, calibrate=True, write=True, compiler=compiler)
 
 
-def test_missing_literal_or_block_is_refused(project):
-    report = align_canaries(project, compiler=lambda *_: obj({FUNCTION: []}))
+def test_missing_literal_block_or_image_is_refused(project):
+    report = align_canaries(project, compiler=lambda *_: obj({FUNCTION: []}), judge=lambda *_: {})
     assert report["result"] == "unknown" and "no $SG" in report["units"][0]["reason"]
     with pytest.raises(ValueError, match="no CANARY-PADS block"):
         align_canaries(project, units=["code/g.cc"], compiler=lambda *_: obj({FUNCTION: [1]}))
     with pytest.raises(ValueError, match="not configured"):
         align_canaries(project, units=["code/h.cc"], compiler=lambda *_: obj({FUNCTION: [1]}))
+    with pytest.raises(ValueError, match="image"):
+        align_canaries(project, compiler=lambda *_: obj({FUNCTION: [1]}))
+
+
+def test_rewrite_residues_replaces_only_the_named_line():
+    text = unit_text(2, ending="\r\n")
+    block = parse_block(text)
+    assert rewrite_residues(text, block, {2: {3, 40, 41}}) == unit_text(2, residues="3,40-41", ending="\r\n")
+    assert rewrite_residues(text, block, {}) == text
 
 
 def test_cli_dispatches_the_canary_command(project, monkeypatch, capsys):
     import match_recovery.canary as module
     original = module.align_canaries
+    compiler = Counting(64 * 900 + 9)
     monkeypatch.setattr(module, "align_canaries",
-                        lambda root, **options: original(root, compiler=counting(project, 64 * 900 + 9), **options))
-    assert main(["canary", "--root", str(project), "code/f.cc"]) == 0
+                        lambda root, **options: original(root, compiler=compiler,
+                                                         judge=image(compiler, project, {11}),
+                                                         **{k: v for k, v in options.items() if k != "image"}))
+    assert main(["canary", "--root", str(project), "--image", "x.exe", "code/f.cc"]) == 0
     assert json.loads(capsys.readouterr().out)["result"] == "pass"
+
+
+def test_only_stale_literal_bindings_count_as_exact():
+    exact = {"available": True, "masked_verdict": str(Tier.BYTE_EXACT)}
+    def case(text, payload=exact):
+        return literal_binding_only(AsmComparison(verdict=Tier.REFUSED, diagnostic=text,
+                                                  diagnostic_comparison=payload))
+    advice = ("; bind each literal with `RECOVERY_LITERAL` from the image's operand, or run "
+              "`recover rebind-literals --unit <this TU>` if an existing binding went stale")
+    assert case("strict body proof unknown: unbound compiler artifact relocation(s): "
+                "+0x18a $SG63514, +0x2b5 $SG63529" + advice)
+    assert case("strict body proof failed: relocated target(s) differ: +0x10 $SG5; "
+                "if a $SG literal binding went stale, run `recover rebind-literals --unit <this TU>`")
+    assert not case("strict body proof unknown: unbound compiler artifact relocation(s): +0x10 ?f@@YAXXZ")
+    assert not case("strict body proof failed: 4 non-relocation byte(s) differ at +0x46d; "
+                    "relocated target(s) differ: +0x10 $SG5")
+    assert not case("strict body proof unknown: unbound compiler artifact relocation(s): +0x10 $SG5",
+                    {"available": True, "masked_verdict": str(Tier.MISMATCH)})
+    assert not case("compiler failed")

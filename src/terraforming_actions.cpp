@@ -72,7 +72,7 @@
 // is exact (3 flips it). The tie-break is the front-end symbol counter modulo
 // 64 (guide 2.5); `recover canary src/terraforming_actions.cpp` computes the
 // pad count.
-// CANARY: 0x004CEDE0 ?action_give@@YAXHH@Z residues 32-35,40-42
+// CANARY: 0x004CEDE0 ?action_give@@YAXHH@Z residues 17-20,25-27
 // CANARY-PADS: extern TerraformingActionsExternPad
 extern int TerraformingActionsExternPad0;
 #include "vector.h"  // vector_add operates on actual three-float arrays.

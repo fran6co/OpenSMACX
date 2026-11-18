@@ -743,7 +743,7 @@ uv run recover --help
 uv run recover check-build --summary
 uv run recover check-data --image /path/to/the/pinned/original.exe --summary
 uv run recover rebind-literals --image /path/to/the/pinned/original.exe --unit src/game.cpp [--write]
-uv run recover canary [src/reportif.cpp ...] [--write | --calibrate]
+uv run recover canary --image /path/to/the/pinned/original.exe [src/reportif.cpp ...] [--write] [--sweep]
 uv run recover inventory
 uv run recover check-claims --summary
 uv run recover partition

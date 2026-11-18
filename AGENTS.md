@@ -220,7 +220,7 @@ uv run recover check-layout --summary
 uv run recover check-claims --summary
 uv run recover audits check storage --summary
 uv run recover record <addresses> --image <image> --in <source-file>
-uv run recover canary [<unit>...] [--write | --calibrate]
+uv run recover canary --image <image> [<unit>...] [--write] [--sweep]
 uv run recover run <task> --worker <config> --reviewer <config>
 uv run recover dispatch --plan <batch-plan>
 uv run recover campaign --config <campaign-authorization>

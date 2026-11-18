@@ -28,13 +28,27 @@ smallest change that brings every canary of the block into its set. A unit may
 have at most one pad block, and its canaries must follow it in the TU.
 
 This is a matching aid, not evidence about the original's declarations: it
-keeps tie-breaks stable while the true declaration set is unknown. ``--write``
-compiles the proposed pad count as an overlay first and rewrites only the pad
-lines when every canary lands in its set. ``--calibrate`` shifts the block over
-one full period and reports, per canary, the residues at which its body keeps
-its current bytes: a candidate target set for an exact current state, to review
-before it replaces the recorded one (a set can move when the canary's own body,
-or what it expands, changes).
+keeps tie-breaks stable while the true declaration set is unknown.
+
+Recorded sets drift: a set measured at one revision moved three times in a day
+as other functions in the same unit changed, because the tie depends on more
+than the residue at the function's first literal. So the recorded set is only
+a prediction, and every verdict here comes from the pinned image:
+
+- the default run measures each canary against the image at the current pad
+  count, and when one misses, predicts a count from the recorded sets and
+  measures that prediction too;
+- ``--write`` publishes a predicted count only when the prediction measures
+  BYTE_EXACT against the image, and otherwise refuses and asks for a sweep;
+- a body that matches but whose only strict-proof problem is stale ``$SGn``
+  literal bindings (every pad renumbers them) counts as exact; run
+  ``recover rebind-literals --write`` after writing a count;
+- ``--sweep`` measures one full period of pad counts (64 overlay compiles)
+  against the image, takes the count nearest the current one at which every
+  canary of the block is exact, and with ``--write`` writes that count and the
+  measured residue sets into the ``CANARY`` lines.
+
+Run ``--sweep --write`` after each header batch.
 """
 
 import re
@@ -46,6 +60,7 @@ from .measurement import Measurement
 from .model import Result
 from .pe_coff import Coff
 from .records import read_json
+from .source.model import Tier
 from .source.publication import publish
 from .source_replica import artifact_parent
 
@@ -170,56 +185,128 @@ def _objects(compiler, root: Path, unit: str, flags_list, data: bytes | None) ->
     return objects
 
 
-def _body(obj: Coff, symbol: str) -> bytes:
-    definitions = [entry for entry in obj.symbols.values()
-                   if entry.name == symbol and entry.section > 0 and entry.type == 0x20]
-    if len(definitions) != 1:
-        raise ValueError(f"object defines {symbol} {len(definitions)} times")
-    return obj.sections[definitions[0].section - 1].data
-
-
-def _measure(objects: list[Coff], block: dict) -> list[dict]:
-    """Each canary's residue; configured trials must agree."""
-    rows = []
+def rewrite_residues(text: str, block: dict, sets: dict) -> str:
+    """Replace the residue list of each CANARY line named by ``{line: residues}``."""
+    lines = text.split("\n")
     for canary in block["canaries"]:
-        numbers = {first_literal(obj, canary["symbol"]) for obj in objects}
-        if None in numbers:
-            raise ValueError(f"{canary['symbol']} relocates against no $SG literal")
-        if len(numbers) != 1:
-            raise ValueError("configured compiler trials disagree on the literal counter")
-        number = numbers.pop()
-        rows.append({"address": canary["address"], "symbol": canary["symbol"], "line": canary["line"],
-                     "targets": format_residues(canary["residues"]), "literal": f"$SG{number}",
-                     "residue": number % PERIOD, "aligned": number % PERIOD in canary["residues"]})
-    return rows
+        if canary["line"] not in sets:
+            continue
+        index = canary["line"] - 1
+        line = lines[index]
+        ending = "\r" if line.endswith("\r") else ""
+        match = CANARY.fullmatch(line.rstrip("\r"))
+        if not match:
+            raise ValueError(f"line {canary['line']} is no longer a CANARY line")
+        start, end = match.span(3)
+        lines[index] = line[:start] + format_residues(sets[canary["line"]]) + line.rstrip("\r")[end:] + ending
+    return "\n".join(lines)
 
 
-def _calibrate(compiler, root: Path, unit: str, flags_list, text: str, block: dict) -> list[dict]:
-    """Residues at which each canary compiles to its current bytes, over one full period.
+def image_judge(root: Path, settings, image: Path, compiler):
+    """``judge(unit, data, canaries) -> {address: BYTE_EXACT?}`` against the pinned image.
 
-    The current source is assumed to be the exact state; the result is a
-    candidate target set to review, not a measurement against the image.
+    ``data`` is the proposed unit text (an overlay; the file is not written),
+    or None for the file as it is. Each canary's own source mapping is measured
+    with the same per-unit comparer as ``measure``.
     """
-    current = _objects(compiler, root, unit, flags_list, None)
-    expected = [_body(current[0], canary["symbol"]) for canary in block["canaries"]]
-    found = [set() for _ in block["canaries"]]
-    for shift in range(PERIOD):
-        data = rewrite_pads(text, block, block["count"] + shift).encode("utf-8", errors="surrogateescape")
-        objects = _objects(compiler, root, unit, flags_list, data)
-        for index, canary in enumerate(block["canaries"]):
-            number = first_literal(objects[0], canary["symbol"])
-            if number is None:
-                raise ValueError(f"{canary['symbol']} relocates against no $SG literal")
-            if all(_body(obj, canary["symbol"]) == expected[index] for obj in objects):
-                found[index].add(number % PERIOD)
-    return [{"address": canary["address"], "symbol": canary["symbol"], "line": canary["line"],
-             "recorded": format_residues(canary["residues"]), "calibrated": format_residues(values)}
-            for canary, values in zip(block["canaries"], found)]
+    from .source.asm import compare_unit, shared_spans
+    from .source_inventory import source_snapshot
+    from .source_selection import (eh_fragment_group, measurement_reference_targets, select_records,
+                                   selected_source_records, snapshot_mappings)
+    snapshot = source_snapshot(root, allow_empty=True)
+    mappings = snapshot_mappings(root, snapshot)
+    shared = shared_spans(mappings)
+    references = measurement_reference_targets(root, settings, snapshot)
+
+    def judge(unit: str, data: bytes | None, canaries) -> dict:
+        path = (root / unit).resolve()
+        grid = tuple(tuple(flags) for flags in settings.flags_for(unit))
+        cache = {}
+
+        def compile_trial(source, arguments, trial):
+            key = (Path(source).resolve(), tuple(arguments), tuple(trial))
+            if key not in cache:
+                if Path(source).resolve() == path and data is not None and not arguments:
+                    cache[key] = bytes(compiler.overlay(path, {unit: data}, (), tuple(trial)))
+                else:
+                    cache[key] = bytes(compiler(source, arguments, tuple(trial)))
+            return cache[key]
+
+        verdicts = {}
+        for canary in canaries:
+            selected = select_records(mappings, [canary["address"]], path, settings.source.symbol_format)
+            record, = selected_source_records(root, snapshot, selected)
+            group = eh_fragment_group(root, settings, snapshot, mappings, selected[0])
+            measured = compare_unit([record], image, path, (), grid, shared, compiler=compile_trial, root=root,
+                                    targets=references, fragment_pairs=(group,) if group else (),
+                                    diagnostics=True)
+            comparison = measured.results[0][1]
+            verdicts[canary["address"]] = (not isinstance(comparison, str)
+                                           and (comparison.verdict is Tier.BYTE_EXACT
+                                                or literal_binding_only(comparison)))
+        return verdicts
+    return judge
 
 
-def align_canaries(root: Path, *, units=None, write=False, calibrate=False, compiler=None) -> dict:
-    if write and calibrate:
-        raise ValueError("--calibrate reports candidate target sets and never writes")
+_LITERAL_ONLY = ("strict body proof unknown: unbound compiler artifact relocation(s): ",
+                 "strict body proof failed: relocated target(s) differ: ")
+
+
+def literal_binding_only(comparison) -> bool:
+    """True when the body matches and only ``$SGn`` literal bindings disagree.
+
+    Every pad renumbers the literals after the block, so a shifted count leaves
+    the unit's RECOVERY_LITERAL lines stale by construction; that is fixed by
+    ``recover rebind-literals``, not by the pad count. Anything else in the
+    strict diagnostic, a named non-literal target, or masked bytes that are not
+    BYTE_EXACT keeps the verdict a miss.
+    """
+    text = comparison.diagnostic or ""
+    if not text.startswith(_LITERAL_ONLY):
+        return False
+    parts = [part.strip() for part in text.split(";")]
+    head, rest = parts[0], parts[1:]
+    if any("rebind-literals" not in part for part in rest):
+        return False
+    named = re.findall(r"\+0x[0-9a-f]+ (\S+?)(?:,|$| and| \()", head)
+    if not named or not all(re.fullmatch(r"\$SG[0-9]+", name) for name in named):
+        return False
+    payload = comparison.diagnostic_comparison or {}
+    return payload.get("available") is True and payload.get("masked_verdict") == str(Tier.BYTE_EXACT)
+
+
+def _residues(compiler, root: Path, unit: str, flags_list, block: dict, data: bytes | None) -> list[int]:
+    numbers = []
+    objects = _objects(compiler, root, unit, flags_list, data)
+    for canary in block["canaries"]:
+        found = {first_literal(obj, canary["symbol"]) for obj in objects}
+        if None in found:
+            raise ValueError(f"{canary['symbol']} relocates against no $SG literal")
+        if len(found) != 1:
+            raise ValueError("configured compiler trials disagree on the literal counter")
+        numbers.append(found.pop() % PERIOD)
+    return numbers
+
+
+def _sweep(compiler, judge, root: Path, unit: str, flags_list, text: str, block: dict) -> dict:
+    """Measure one full period of pad counts around the current one against the image."""
+    base = max(0, block["count"] - PERIOD // 2)
+    rows = []
+    for count in range(base, base + PERIOD):
+        data = rewrite_pads(text, block, count).encode("utf-8", errors="surrogateescape")
+        residues = _residues(compiler, root, unit, flags_list, block, data)
+        verdicts = judge(unit, data, block["canaries"])
+        rows.append({"count": count, "residues": residues,
+                     "exact": [verdicts[canary["address"]] for canary in block["canaries"]]})
+    sets = {canary["line"]: {row["residues"][index] for row in rows if row["exact"][index]}
+            for index, canary in enumerate(block["canaries"])}
+    good = [row["count"] for row in rows if all(row["exact"])]
+    best = min(good, key=lambda count: (abs(count - block["count"]), -count)) if good else None
+    return {"rows": rows, "sets": sets, "needed": best}
+
+
+def align_canaries(root: Path, *, units=None, image=None, write=False, sweep=False, compiler=None,
+                   judge=None) -> dict:
     root = root.resolve()
     settings = Measurement.read(root)
     project = read_json(root / "recovery/project.json")
@@ -245,6 +332,15 @@ def align_canaries(root: Path, *, units=None, write=False, calibrate=False, comp
         raise ValueError("no CANARY-PADS block in: " + ", ".join(missing))
     if compiler is None:
         compiler = Compiler(root, profile=settings.compiler_profile)
+    if judge is None:
+        if image is None:
+            raise ValueError("canary verdicts need the pinned original image (--image)")
+        import hashlib
+        from .source_inventory import image_pin
+        image = Path(image) if Path(image).is_absolute() else root / image
+        if hashlib.sha256(image.read_bytes()).hexdigest() != image_pin(root, settings.source):
+            raise ValueError("image does not match the source pin")
+        judge = image_judge(root, settings, image, compiler)
     metadata = {"operation": "canary", "units": sorted(blocks)}
     before = settings.snapshot(root, metadata)
 
@@ -253,64 +349,85 @@ def align_canaries(root: Path, *, units=None, write=False, calibrate=False, comp
                 (root / unit).read_bytes() != raw for unit, raw in raws.items()):
             raise ValueError("source or compiler inputs changed during canary alignment")
 
+    def publish_unit(unit, replacement):
+        nonlocal before
+        fresh()
+        staging = artifact_parent(root, "build/recovery/publications", excluded_roots=settings.source.roots)
+        publish({root / unit: raws[unit]}, {root / unit: replacement}, validate=fresh, staging_directory=staging)
+        raws[unit] = replacement
+        before = settings.snapshot(root, metadata)
+        published.append(unit)
+
     reports, published = [], []
     for unit in sorted(blocks):
         block, flags = blocks[unit], settings.flags_for(unit)
         text = raws[unit].decode("utf-8", errors="surrogateescape")
         report = {"unit": unit, "line": block["line"], "pads": block["count"]}
+        reports.append(report)
         try:
-            if calibrate:
-                report["canaries"] = _calibrate(compiler, root, unit, flags, text, block)
-                report["result"] = (Result.PASS if all(row["recorded"] == row["calibrated"]
-                                                       for row in report["canaries"]) else Result.FAIL)
-                reports.append(report)
+            if sweep:
+                found = _sweep(compiler, judge, root, unit, flags, text, block)
+                needed = found["needed"]
+                report["needed"] = needed
+                report["canaries"] = [
+                    {"address": canary["address"], "symbol": canary["symbol"], "line": canary["line"],
+                     "recorded": format_residues(canary["residues"]),
+                     "measured": format_residues(found["sets"][canary["line"]])}
+                    for canary in block["canaries"]]
+                if needed is None:
+                    report.update(result=Result.FAIL, reason="no pad count in one period makes every canary exact")
+                    continue
+                stale = any(row["recorded"] != row["measured"] for row in report["canaries"])
+                if not write:
+                    report["result"] = Result.PASS if needed == block["count"] and not stale else Result.FAIL
+                    continue
+                replacement = rewrite_residues(rewrite_pads(text, block, needed), block,
+                                               {line: values for line, values in found["sets"].items() if values})
+                replacement = replacement.encode("utf-8", errors="surrogateescape")
+                if replacement != raws[unit]:
+                    publish_unit(unit, replacement)
+                report.update(result=Result.PASS, written=needed,
+                              next=f"recover rebind-literals --unit {unit} --write")
                 continue
-            rows = _measure(_objects(compiler, root, unit, flags, None), block)
+            residues = _residues(compiler, root, unit, flags, block, None)
+            verdicts = judge(unit, None, block["canaries"])
+            report["canaries"] = [
+                {"address": canary["address"], "symbol": canary["symbol"], "line": canary["line"],
+                 "targets": format_residues(canary["residues"]), "residue": residue,
+                 "aligned": residue in canary["residues"], "exact": verdicts[canary["address"]]}
+                for canary, residue in zip(block["canaries"], residues)]
+            if all(row["exact"] for row in report["canaries"]):
+                report.update(result=Result.PASS, needed=block["count"])
+                if not all(row["aligned"] for row in report["canaries"]):
+                    report["stale"] = "exact outside a recorded set; run --sweep --write"
+                continue
+            needed = solve(block["count"], [(row["residue"], canary["residues"])
+                                            for row, canary in zip(report["canaries"], block["canaries"])])
+            report["needed"] = needed
+            if needed is None:
+                report.update(result=Result.UNKNOWN, reason="no count fits the recorded sets; run --sweep")
+                continue
+            replacement = rewrite_pads(text, block, needed).encode("utf-8", errors="surrogateescape")
+            predicted = judge(unit, replacement, block["canaries"])
+            report["prediction_exact"] = all(predicted.values())
+            if not report["prediction_exact"]:
+                report.update(result=Result.UNKNOWN,
+                              reason="the recorded residue sets are stale: the predicted count does not measure "
+                                     "BYTE_EXACT against the image; run --sweep")
+            elif not write:
+                report["result"] = Result.FAIL
+            else:
+                publish_unit(unit, replacement)
+                report.update(result=Result.PASS, written=needed,
+                              next=f"recover rebind-literals --unit {unit} --write")
         except ValueError as error:
             report.update(result=Result.UNKNOWN, reason=str(error))
-            reports.append(report)
-            continue
-        report["canaries"] = rows
-        needed = solve(block["count"], [(row["residue"], canary["residues"])
-                                        for row, canary in zip(rows, block["canaries"])])
-        report["needed"] = needed
-        if needed is None:
-            report.update(result=Result.FAIL, reason="no pad count aligns every canary of the block")
-        elif needed == block["count"]:
-            report["result"] = Result.PASS
-        elif not write:
-            report["result"] = Result.FAIL
-        else:
-            replacement = rewrite_pads(text, block, needed).encode("utf-8", errors="surrogateescape")
-            try:
-                verified = _measure(_objects(compiler, root, unit, flags, replacement),
-                                    parse_block(replacement.decode("utf-8", errors="surrogateescape"), unit))
-            except ValueError as error:
-                verified, reason = None, str(error)
-            else:
-                reason = None if all(row["aligned"] for row in verified) else \
-                    "the proposed pad count did not land every canary in its set"
-            report["canaries_after"] = verified
-            if reason:
-                report.update(result=Result.UNKNOWN, reason=reason)
-            else:
-                fresh()
-                staging = artifact_parent(root, "build/recovery/publications",
-                                          excluded_roots=settings.source.roots)
-                publish({root / unit: raws[unit]}, {root / unit: replacement}, validate=fresh,
-                        staging_directory=staging)
-                raws[unit] = replacement
-                before = settings.snapshot(root, metadata)
-                published.append(unit)
-                report.update(result=Result.PASS, written=needed)
-        reports.append(report)
     fresh()
     results = {report["result"] for report in reports}
     result = (Result.UNKNOWN if Result.UNKNOWN in results else Result.FAIL if Result.FAIL in results
               else Result.PASS)
-    return {"schema_version": 1, "operation": "canary-calibrate" if calibrate else "canary",
+    return {"schema_version": 1, "operation": "canary-sweep" if sweep else "canary",
             "result": result, "write": bool(write), "published": published, "units": reports,
             "limitations": ["a matching aid for counter-sensitive tie-breaks, not evidence of the "
                             "original declaration set",
-                            *(["calibration assumes the current source compiles each canary exactly; "
-                               "it reports candidate sets and never compares with the image"] if calibrate else [])]}
+                            "verdicts are masked-byte BYTE_EXACT against the pinned image, as measure reports"]}
