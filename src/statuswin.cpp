@@ -2033,9 +2033,9 @@ Status: Complete
 // (too large, whether defined before or after); the explicit inline member
 // is, even defined here at its image position after UNK4. Measured
 // 2026-11-12: a header inline is refuted, since console.cpp then expands all
-// 26 of its sites. Nothing in the image needs the copy from this unit, so
-// the redirect below is what emits it.
-inline void StatusWin::redraw() {
+// 26 of its sites. Nothing in this unit calls the copy out of line, so the
+// MEASURED declaration in statuswin.h is what emits it.
+MEASURED inline void StatusWin::redraw() {
     int sizeVal = (WinScreenWidth != 0x320) ? 0xC : 0xA;
     if (sizeVal != font_size_) {
         font_size_ = sizeVal;
@@ -2060,13 +2060,6 @@ inline void StatusWin::redraw() {
     MainInterfaceGlobal.soft_update(&localRect);
 }
 
-// WORKAROUND(noinline): non-original; its real call under inline_depth(0)
-// emits redraw's out-of-line copy for the other units.
-#pragma inline_depth(0)
-void __fastcall status_win_redraw_redirect(StatusWin *self, void *) {
-    self->redraw();
-}
-#pragma inline_depth(8)
 
 // ORIGINAL: 0x004B8DF0 ?UNK3@StatusWin@@QAEXXZ 0x004B8DF0-0x004B8E31 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["The historical body tests StatusWin offsets +0x15BC and +0x15C0; statuswin.h maps these to iUnitIndex_ and iCityIndex_.", "The store at 0x0093928C is ConsoleGlobal.selected_vehicle_ (Console offset +0x23BDC), and the remaining dispatches match veh_wake, Console::set_move, and TutWinBaseWindow.zoom.", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/004b8df0.cpp"], "reason": "Home the compact selected-unit/base action in StatusWin using the recovered members and process-owned C++ objects. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
