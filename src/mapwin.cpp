@@ -5297,33 +5297,30 @@ void MapWin::draw_base_names() {
         int pixel_x;
         int pixel_y;
         for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
-            Base &base = Bases[base_id];
             // 0x00467EB2: the visibility test comes first; the console
             // faction is reread for each test and shifted without masking.
             if ((GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) == 0 &&
-                base.faction_id_current != ConsoleGlobal.faction_id_ &&
-                (base.visibility & (1 << ConsoleGlobal.faction_id_)) == 0) {
+                Bases[base_id].faction_id_current != ConsoleGlobal.faction_id_ &&
+                (Bases[base_id].visibility & (1 << ConsoleGlobal.faction_id_)) == 0) {
                 continue;
             }
 
-            const int tile_y = base.y;
-            const int tile_x = base.x;
-            // 0x00467EEC: tile_in_view(tile_x, tile_y, 0) expanded in place.
-            if (!tile_in_view(tile_x, tile_y, 0)) {
+            // 0x00467EEC: tile_in_view(Bases[base_id].x, Bases[base_id].y, 0) expanded in place.
+            if (!tile_in_view(Bases[base_id].x, Bases[base_id].y, 0)) {
                 continue;
             }
 
-            tile_to_pixel(tile_x, tile_y, &pixel_x, &pixel_y);
+            tile_to_pixel(Bases[base_id].x, Bases[base_id].y, &pixel_x, &pixel_y);
             // 0x00467F8B: the font is selected per drawn base, not once.
             set_font(&font_a_, 0, 0, 0);
             text[0] = '\0';
-            strcat(text, base.name_string);
-            if ((base.state & 0x10U) != 0 &&
-                base.faction_id_current == ConsoleGlobal.faction_id_) {
+            strcat(text, Bases[base_id].name_string);
+            if ((Bases[base_id].state & 0x10U) != 0 &&
+                Bases[base_id].faction_id_current == ConsoleGlobal.faction_id_) {
                 strcat(text, " (*)");
             }
-            set_text_color(InfoFactionTextColors[base.faction_id_current],
-                           InfoFactionShadowColors[base.faction_id_current], 1, 1);
+            set_text_color(InfoFactionTextColors[Bases[base_id].faction_id_current],
+                           InfoFactionShadowColors[Bases[base_id].faction_id_current], 1, 1);
             if ((GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) != 0 &&
                 ((GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0 ||
                  (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
@@ -5331,9 +5328,9 @@ void MapWin::draw_base_names() {
                 // 0x00468025: one scaled PlayersData index (shl eax,2) is
                 // reused for both targets; no PlayerData pointer is formed.
                 // 0x00468043: a negative target x never highlights.
-                if (PlayersData[base.faction_id_current].x_target >= 0 &&
-                    base.x == PlayersData[base.faction_id_current].x_target &&
-                    base.y == PlayersData[base.faction_id_current].y_target) {
+                if (PlayersData[Bases[base_id].faction_id_current].x_target >= 0 &&
+                    Bases[base_id].x == PlayersData[Bases[base_id].faction_id_current].x_target &&
+                    Bases[base_id].y == PlayersData[Bases[base_id].faction_id_current].y_target) {
                     set_text_color(0xFF, 0, 1, 1);
                 }
             }
@@ -5343,16 +5340,16 @@ void MapWin::draw_base_names() {
             if ((GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) != 0 &&
                 (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0 &&
                 zoom_offset_ > -4) {
-                const int region = map_loc(base.x, base.y)->region;
+                const int region = map_loc(Bases[base_id].x, Bases[base_id].y)->region;
                 // 0x0046812E: the line reuses the name buffer.
                 text[0] = '\0';
                 strcat(text, SocialWinOpenParenText);
                 strcat(text, StringTable.get(PlansShortName[
-                    PlayersData[base.faction_id_current].region_base_plan[region]]));
+                    PlayersData[Bases[base_id].faction_id_current].region_base_plan[region]]));
                 strcat(text, SocialWinColonSpaceText);
                 // 0x0046819D/0x004685B6: two strcat statements cross-jumped
                 // at their shared push/call, each cleaned up by add esp,8.
-                const int production_id = base.queue_production_id[0];
+                const int production_id = Bases[base_id].queue_production_id[0];
                 if (!(production_id >= 0)) {
                     strcat(text, StringTable.get(Facility[-production_id].name));
                 } else {
@@ -5374,8 +5371,8 @@ void MapWin::draw_base_names() {
                                  pixel_y + static_cast<int>(field_1DDC8_) * 7 / 2 +
                                      font_line_advance(font_a_));
                 }
-            } else if (base.faction_id_current != ConsoleGlobal.faction_id_ &&
-                       !spying(base.faction_id_current)) {
+            } else if (Bases[base_id].faction_id_current != ConsoleGlobal.faction_id_ &&
+                       !spying(Bases[base_id].faction_id_current)) {
                 if (is_objective(base_id) &&
                     (GameDataStateStorage.fields_.game_rules_ & 0x20000000U) == 0) {
                     text[0] = '\0';
@@ -5393,16 +5390,16 @@ void MapWin::draw_base_names() {
                     strcat(text, label_get(898));
                     strcat(text, SocialWinColonSpaceText);
                     CharUpperA(text);
-                } else if ((base.governor & GOV_ACTIVE) != 0 &&
-                           (base.governor & GOV_MANAGES_PRODUCTION) != 0) {
+                } else if ((Bases[base_id].governor & GOV_ACTIVE) != 0 &&
+                           (Bases[base_id].governor & GOV_MANAGES_PRODUCTION) != 0) {
                     // 0x004684F1: one strcat per label; VC6 cross-jumps them.
-                    if ((base.governor & GOV_PRIORITY_EXPLORE) != 0) {
+                    if ((Bases[base_id].governor & GOV_PRIORITY_EXPLORE) != 0) {
                         strcat(text, label_get(650));
-                    } else if ((base.governor & GOV_PRIORITY_DISCOVER) != 0) {
+                    } else if ((Bases[base_id].governor & GOV_PRIORITY_DISCOVER) != 0) {
                         strcat(text, label_get(651));
-                    } else if ((base.governor & GOV_PRIORITY_BUILD) != 0) {
+                    } else if ((Bases[base_id].governor & GOV_PRIORITY_BUILD) != 0) {
                         strcat(text, label_get(652));
-                    } else if ((base.governor & GOV_PRIORITY_CONQUER) != 0) {
+                    } else if ((Bases[base_id].governor & GOV_PRIORITY_CONQUER) != 0) {
                         strcat(text, label_get(653));
                     } else {
                         strcat(text, label_get(649));
@@ -5411,7 +5408,7 @@ void MapWin::draw_base_names() {
                 }
                 // 0x0046819D/0x004685B6: two strcat statements cross-jumped
                 // at their shared push/call, each cleaned up by add esp,8.
-                const int production_id = base.queue_production_id[0];
+                const int production_id = Bases[base_id].queue_production_id[0];
                 if (production_id >= 0) {
                     strcat(text, VehPrototypes[production_id].veh_name);
                 } else {
