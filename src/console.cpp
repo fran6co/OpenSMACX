@@ -3929,9 +3929,8 @@ void Console::quit_game() {
                    ? ConsoleReallyWimpOut : "REALLYQUIT", nullptr)) return;
     if (IsMultiplayerPBEM) {
         // The original modifies only the human-faction byte of this word.
-        unsigned char &human_mask = reinterpret_cast<unsigned char &>(
-            GameDataStateStorage.fields_.lock_masks_.enable_mask_);
-        human_mask &= static_cast<unsigned char>(~(1u << ConsoleGlobal.faction_id_));
+        GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &=
+            static_cast<unsigned char>(~(1u << ConsoleGlobal.faction_id_));
         save_game(0);
     }
     if ((GameDataStateStorage.fields_.game_rules_ & 0x400) && !IsMultiplayerPBEM) auto_save();
@@ -4117,9 +4116,8 @@ void Console::retire_game() { // 0x00514B30
     }
 
     if (IsMultiplayerPBEM) {
-        unsigned char &human_mask = reinterpret_cast<unsigned char &>(
-            GameDataStateStorage.fields_.lock_masks_.enable_mask_);
-        human_mask &= static_cast<unsigned char>(~(1u << ConsoleGlobal.faction_id_));
+        GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &=
+            static_cast<unsigned char>(~(1u << ConsoleGlobal.faction_id_));
         save_game(0);
     }
 
