@@ -4359,14 +4359,18 @@ void BaseWin::on_button_clicked(int button_id) {
     case 9: set_view_mode(this, 2); return;
     case 11: set_view_mode(this, 1); return;
     case 17: {
-        const int selected = flatButtons_[17].selected_state();
-        StringTemp[0] = 0;
-        if (selected) {
+        // Each arm clears the buffer itself. VC6 hoists the two identical
+        // leading stores into one (0x41D8B6) but counts both: with the two
+        // dword clears that makes four zero stores, the count at which it
+        // keeps zero in ebx for the whole function (0x41D524).
+        if (flatButtons_[17].selected_state()) {
+            StringTemp[0] = 0;
             strcat(StringTemp, label_get(0xA4C / 4));
             CharUpperA(StringTemp);
             flatButtons_[17].set_name(StringTemp);
             flatButtons_[17].set(0);
         } else {
+            StringTemp[0] = 0;
             strcat(StringTemp, label_get(0xA50 / 4));
             CharUpperA(StringTemp);
             flatButtons_[17].set_name(StringTemp);
@@ -4386,15 +4390,14 @@ void BaseWin::on_button_clicked(int button_id) {
             || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) base_editor();
         return;
     case 1009: {
-        int vehicle = veh_at(BaseCurrent->x, BaseCurrent->y);
+        const int vehicle = veh_at(BaseCurrent->x, BaseCurrent->y);
         if (vehicle < 0) return;
-        // Original 0x41D9FE/0x41DA15 follows nonnegative next links.
-        int16_t next = Vehs[vehicle].next_veh_id_stack;
-        while (next >= 0) {
-            vehicle = next;
-            next = Vehs[vehicle].next_veh_id_stack;
-        }
-        veh_promote(vehicle);
+        // Original 0x41D9FE/0x41DA15 follows nonnegative next links: the
+        // link stays 16-bit in ax and the last unit is a separate value.
+        int last = vehicle;
+        for (int16_t i = Vehs[vehicle].next_veh_id_stack; i >= 0;
+             i = Vehs[i].next_veh_id_stack) last = i;
+        veh_promote(last);
         redraw();
         return;
     }
