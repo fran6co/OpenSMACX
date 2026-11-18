@@ -121,36 +121,13 @@ PrefWin::PrefWin() : GraphicWin() {}
 
 // ORIGINAL: 0x0048D840 ?init@PrefWin@@QAEXXZ 0x0048D840-0x0048F9F5 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0048d840.cpp", "recovery/tasks/prefwin-owner-coverage-wave.json", "Original control parent 8578D8; ctor/destructor member order, 800-pixel branch, checkbox text-context and callback order independently reviewed."], "reason": "Recover the complete PrefWin ownership group through a genuine GraphicWin base and compiler-owned embedded control lifetimes; preserve seed identity, original spans and unresolved discoveries without granting byte claims."}
-// TRIED: loop/array transcription over invented tables (superseded 2026-11-12
-// by the image's straight-line body). Remaining MNEMONIC_ONLY residue: the
-// first set_font of each button group addresses the Buffer base as
-// [edi+0x444] in the image (0x48DA0A, 0x48F6E9, 0x48F8F3) where ours uses
-// [esi+member+0x444]; static_cast and reference spellings add null checks.
-// WORKAROUND(decl): three stand-ins for header inlines whose names and homes
-// are unknown. Where the image addresses a control through its pointer after
-// an earlier call on it (mov [edi+0x10]/[edi+0x14] for the two check sprites
-// at 48DE2B and four more; lea ecx,[edi+0x444] for set_font at 48DA0A, 48F6E9
-// and 48F8F3), two statements on the member fold the address into `this`
-// ([esi+K]). An inline whose object parameter is used twice keeps the
-// pointer and reproduces all ten sites. The tab buttons could equally use
-// prefwin_button_font after a plain init: that spelling differs only in the
-// operand order of one lea at 48F9AE, which follows the unit's symbol count.
-static inline void prefwin_check_sprites(CheckBox *box, Sprite *unchecked, Sprite *checked) {
-    box->unchecked_sprite_ = unchecked;
-    box->checked_sprite_ = checked;
-}
-
-static inline void prefwin_button_init(BaseButton *button, LPCSTR name, int id, int x, int y,
-                                       int width, int height, Win *parent, int style_flag) {
-    button->init(name, id, x, y, width, height, parent, style_flag);
-    button->Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
-}
-
-static inline void prefwin_button_font(BaseButton *button) {
-    button->Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
-    button->redraw();
-}
-
+// The first button of each group and the first five check boxes are reached
+// through a held control pointer: set_font addresses the Buffer base as
+// [edi+0x444] (0x48DA0A, 0x48F6E9, 0x48F8F3) and the two sprite stores go
+// through [edi+0x10]/[edi+0x14] (0x48DE2B, 0x48E0C8, 0x48E457, 0x48E883,
+// 0x48EB36), where the member spelling folds the offset into `this`. Pointer
+// locals assigned at those sites reproduce it; the last two check boxes and
+// the other buttons use the member directly.
 void PrefWin::init() {
   // Original preference reads use four distinct static key starts.
   // Keep function-local storage so init and destroy do not pool identical keys.
@@ -209,11 +186,14 @@ void PrefWin::init() {
   // ---- page tabs: label copied into StringTemp, then BaseButton::init ----
   StringTemp[0] = 0;                                          // 48D9AA
   strcat(StringTemp, label_get(750));   /* 0xBB8 */           // 48D9C7
-  prefwin_button_init(&bscPrefButton_, StringTemp, 0, PrefWinGeometryValue_85788C,
+  CheckBox *check;
+  FlatButton *button = &bscPrefButton_;
+  button->init(StringTemp, 0, PrefWinGeometryValue_85788C,
                       PrefWinGeometryValue_857890,
                       PrefWinGeometryValue_857894, PrefWinTitleButtonHeight,
-                      preference_window() /* 0x8578D8 */, 0); // 48D9FD // 48DA10
-  bscPrefButton_.redraw();              // ? 48DA19 virtual slot +0xF8 // 48DA19
+                      preference_window() /* 0x8578D8 */, 0); // 48D9FD
+  button->Buffer::set_font(&TutWinBaseWindow.font1_ /* 0x6E84B4 */, 0, 0, 0); // 48DA10
+  button->redraw();              // ? 48DA19 virtual slot +0xF8 // 48DA19
 
   StringTemp[0] = 0;                                          // 48DA24
   strcat(StringTemp, label_get(751));   /* 0xBBC */           // 48DA41
@@ -282,7 +262,9 @@ void PrefWin::init() {
   bscPrefCheckBox_.init(PrefWinGeometryValue_8578C8, PrefWinGeometryValue_8578C4,
                         PrefWinGeometryValue_8578A0, PrefWinGeometryValue_8578A4,
                         0);                                   // 48DE09 / 48DE26
-  prefwin_check_sprites(&bscPrefCheckBox_, &g_IFACE_CLOSE_X_SPRITES[1], &g_IFACE_CLOSE_X_SPRITES[2]); // 48DE2B 0x779504   // 48DE32 0x779530
+  check = &bscPrefCheckBox_;
+  check->unchecked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[1]; // 48DE2B 0x779504
+  check->checked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[2];   // 48DE32 0x779530
   StringTemp[0] = 0;  text_get();                             // 48DE39
   strcat(StringTemp, " " /* 0x686BA4 */);
   strcat(StringTemp, TextBufferGetPtr /* [9B7D00] */);
@@ -328,7 +310,9 @@ void PrefWin::init() {
   advPrefCheckBox_.init(PrefWinGeometryValue_8578C8, PrefWinGeometryValue_8578C4,
                         PrefWinGeometryValue_8578A0, PrefWinGeometryValue_8578A4,
                         0);                                   // 48E0A6 / 48E0C3
-  prefwin_check_sprites(&advPrefCheckBox_, &g_IFACE_CLOSE_X_SPRITES[1], &g_IFACE_CLOSE_X_SPRITES[2]); // 48E0C8   // 48E0CF
+  check = &advPrefCheckBox_;
+  check->unchecked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[1]; // 48E0C8
+  check->checked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[2];   // 48E0CF
   StringTemp[0] = 0;  text_get();
   strcat(StringTemp, " " /* 0x686BD4 */);
   strcat(StringTemp, TextBufferGetPtr);
@@ -389,7 +373,9 @@ void PrefWin::init() {
   autoPrefCheckBox_.init(PrefWinGeometryValue_8578C8, PrefWinGeometryValue_8578C4,
                          PrefWinGeometryValue_8578A0, PrefWinGeometryValue_8578A4,
                          0);                                  // 48E435 / 48E452
-  prefwin_check_sprites(&autoPrefCheckBox_, &g_IFACE_CLOSE_X_SPRITES[1], &g_IFACE_CLOSE_X_SPRITES[2]); // 48E457   // 48E45E
+  check = &autoPrefCheckBox_;
+  check->unchecked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[1]; // 48E457
+  check->checked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[2];   // 48E45E
   StringTemp[0] = 0;  text_get();
   strcat(StringTemp, " " /* 0x686C14 */);
   strcat(StringTemp, TextBufferGetPtr);
@@ -461,7 +447,9 @@ void PrefWin::init() {
   text_get();
   audioVisPrefCheckBox_.init(PrefWinGeometryValue_8578C8, PrefWinGeometryValue_8578C4, PrefWinGeometryValue_8578A0,
       PrefWinGeometryValue_8578A4 - PrefWinGeometryConstant_686B78 - PrefWinGeometryValue_8577E0 - frame_adjustment, 0);
-  prefwin_check_sprites(&audioVisPrefCheckBox_, &g_IFACE_CLOSE_X_SPRITES[1], &g_IFACE_CLOSE_X_SPRITES[2]);  // 0x779504    // 0x779530
+  check = &audioVisPrefCheckBox_;
+  check->unchecked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[1];  // 0x779504
+  check->checked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[2];    // 0x779530
   StringTemp[0] = 0;
   text_get();
   strcat(StringTemp, " ");  // 0x686C60
@@ -513,7 +501,9 @@ void PrefWin::init() {
   text_get();
   warnPrefCheckBox_.init(PrefWinGeometryValue_8578C8, PrefWinGeometryValue_8578C4, PrefWinGeometryValue_8578A0,
       PrefWinGeometryValue_8578A4 - PrefWinGeometryConstant_686B78 - PrefWinGeometryValue_8577E0 + 0x28, 0);
-  prefwin_check_sprites(&warnPrefCheckBox_, &g_IFACE_CLOSE_X_SPRITES[1], &g_IFACE_CLOSE_X_SPRITES[2]);
+  check = &warnPrefCheckBox_;
+  check->unchecked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[1];
+  check->checked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[2];
   StringTemp[0] = 0;
   text_get();
   strcat(StringTemp, " ");  // 0x686C90
@@ -713,10 +703,15 @@ void PrefWin::init() {
   volumeMusicToggle_.init(StringTable.get(Labels.strings_ptr[0x10F8 / 4]), 0x58, PrefWinGeometryValue_8578B4,
       PrefWinGeometryValue_8578BC - PrefWinNarrowDisplayVerticalOffset + 0x42,
       PrefWinToggleWidth, PrefWinToggleHeight, preference_window(), 0);
-  prefwin_button_font(&volumeMainToggle_);  // 0x6E84B4
-  prefwin_button_font(&volumeVoiceToggle_);
-  prefwin_button_font(&volumeSFXToggle_);
-  prefwin_button_font(&volumeMusicToggle_);
+  button = &volumeMainToggle_;
+  button->Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);  // 0x6E84B4
+  button->redraw();
+  volumeVoiceToggle_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
+  volumeVoiceToggle_.redraw();
+  volumeSFXToggle_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
+  volumeSFXToggle_.redraw();
+  volumeMusicToggle_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
+  volumeMusicToggle_.redraw();
   // Stores at 0x48F771: main, voice, sfx, music (+0x15820,+0x16EB8,+0x1636C,+0x17A04).
   volumeMainToggle_.field_A18_ = 0;
   volumeVoiceToggle_.field_A18_ = 0;
@@ -741,9 +736,13 @@ void PrefWin::init() {
   cancelButton_.init(StringTemp, 0x5B, PrefWinGeometryValue_85788C,
       PrefWinGeometryValue_8578C0 - PrefWinNarrowDisplayVerticalOffset + PrefWinGeometryValue_857884 - 0x17,
       PrefWinGeometryValue_857894, PrefWinTitleButtonHeight, preference_window(), 0);
-  prefwin_button_font(&restoreDefaultButton_);
-  prefwin_button_font(&okButton_);
-  prefwin_button_font(&cancelButton_);
+  button = &restoreDefaultButton_;
+  button->Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
+  button->redraw();
+  okButton_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
+  okButton_.redraw();
+  cancelButton_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
+  cancelButton_.redraw();
   // Stores at 0x48F956: restore, ok, cancel (+0x1909C,+0x1A734,+0x19BE8).
   restoreDefaultButton_.field_A18_ = 0;
   okButton_.field_A18_ = 0;
