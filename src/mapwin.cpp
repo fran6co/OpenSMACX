@@ -3539,7 +3539,7 @@ int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3, int a4,
         return 0;
     }
     local_14 = a7 >> 1;
-    uint32_t *const tile_bit2_ptr = &map_tiles()[MapLongitude * a8 + local_14].bit2;
+    int *const tile_bit2_ptr = &map_tiles()[MapLongitude * a8 + local_14].bit2;
     local_34 = *tile_bit2_ptr;
     if (window != 0 && window == &WorldClimateWorldWin.mapWin_ &&
         (a6 & 0x80000000) == 0 && (local_34 & 0x400000) == 0) {
@@ -3554,8 +3554,7 @@ int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3, int a4,
     // No else: [ebp-0x90] is stored only here (0x4633F0); the shipped code
     // reads it uninitialized for tiles without a landmark code.
     if ((local_34 & 0x103) != 0) {
-        local_94 = static_cast<int32_t>(
-                       map_tiles()[MapLongitude * a8 + local_14].bit2) >> 24;
+        local_94 = map_tiles()[MapLongitude * a8 + local_14].bit2 >> 24;
     }
     iVar5 = zoom_scale(50, a3);
     local_98 = (iVar5 + 1) / 4;
@@ -6668,7 +6667,7 @@ int MapWin::get_alt(int x, int y, int corner) {
         return static_cast<signed char>(cached);
     }
     int bonus = 0;
-    const int direction = static_cast<int>(tile->bit2) >> 24;
+    const int direction = tile->bit2 >> 24;
     // Original 0x0046FF47 zero-extends Arid; the other four table loads
     // sign-extend their bytes.
     if (tile->bit2 & 2) {

@@ -3714,7 +3714,7 @@ int __cdecl mine_yield(int faction_id, int base_id, int x, int y,
     // that are not taken. Read directly off tile->bit2, not a cached local:
     // the image re-reads bit2 from memory for the landmark_bonus mask below,
     // rather than keeping this value live across the bonus_at() call.
-    int code = (int)tile->bit2 >> 24;
+    int code = tile->bit2 >> 24;
     // Bonus id 2 is the mineral bonus.
     BOOL has_mineral_bonus = bonus_at(x, y, 0) == 2;
     tile = yield_tile(x, y);
@@ -3894,7 +3894,7 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
     // image re-reads it from memory the second time rather than keeping the
     // pre-shift value live across the bonus_at() call - same shape as
     // mine_yield's borehole/landmark computation.
-    int code = (int)tile->bit2 >> 24;
+    int code = tile->bit2 >> 24;
     BOOL is_ocean_tile = (tile->climate & ~0x1F) < ALT_BIT_SHORE_LINE;
     BOOL has_base_in_tile = yield_tile_owner(yield_tile(x, y)) >= 0;
     // Bonus id 3 is the energy bonus.

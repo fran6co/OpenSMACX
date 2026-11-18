@@ -177,7 +177,7 @@ struct Map {
     uint8_t unk_1; // flags? bitfield
     int8_t territory; // physical owner factionID of geographic area or -1 for unclaimed
     uint32_t bit; // see terrain_bit
-    uint32_t bit2; // bitwho[0]? FF FF FFFF | code (landmark tile sequence); unk flags; landmark id
+    int bit2; // bitwho[0]? FF FF FFFF | code (landmark tile sequence); unk flags; landmark id
     uint32_t bit_visible[7]; // how each faction sees tile (ex. pods another faction already got)
 };
 

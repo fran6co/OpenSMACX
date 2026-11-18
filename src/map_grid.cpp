@@ -993,7 +993,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl bit2_set(int x, int y, int bit2, BOOL set) {
-    uint32_t *const field = &map_loc(x, y)->bit2; // same LEVER as bit_set: fold the offset once.
+    int *const field = &map_loc(x, y)->bit2; // same LEVER as bit_set: fold the offset once.
     if (set) {
         *field |= bit2;
     } else {
@@ -1017,7 +1017,7 @@ void __cdecl code_set(int x, int y, int code) {
     // the address computation - `lea eax, [ecx + eax*4 + 0xc]` at 0x00591E29 -
     // and reading and writing `tile->bit2` twice puts the 0xc on the `mov`
     // instead. Taking `&tile->bit2` once is what produces the image's lea.
-    uint32_t *const field = &map_loc(x, y)->bit2;
+    int *const field = &map_loc(x, y)->bit2;
     *field = (*field & 0xFFFFFF) | (static_cast<uint32_t>(code) << 24);
     WorldClimateWorldWin.field_239BC_ |= 4;
 }
@@ -1584,7 +1584,7 @@ void __cdecl delete_landmark(int x, int y) {
         return;
     }
     bit2_set(x, y, 0x80, 0);
-    const int type = static_cast<int32_t>(map_loc(x, y)->bit2) >> 24;
+    const int type = map_loc(x, y)->bit2 >> 24;
     if (type < 0) {
         return;
     }
@@ -1680,7 +1680,7 @@ void __cdecl fixup_landmarks() {
                 continue;
             }
             // Native5929F3 uses SAR, not an unsigned top-byte extraction.
-            int type = static_cast<int32_t>(map_loc(x, y)->bit2) >> 24;
+            int type = map_loc(x, y)->bit2 >> 24;
             if (type >= 0) {
                 continue;
             }
