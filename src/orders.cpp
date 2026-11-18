@@ -20,7 +20,6 @@
 // boundary is inferred from the image (it follows the message/synch run and
 // ends at the path TU's initializer); the original file name is unknown.
 #include "stdafx.h"
-#define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h
 #define DIALOGS_DTOR_INLINE  // stand-in: see ~Dialogs in dialogs.h
 #include "popup.h"
 #include "basepop.h"

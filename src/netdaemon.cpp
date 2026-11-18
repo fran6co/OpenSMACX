@@ -45,7 +45,6 @@
 #define NETDAEMON_RESET_INLINE  // stand-in: see NetDaemon::reset in netdaemon.h
 #define VEH_BUNGLIST_VISIBLE  // WORKAROUND(decl): synch addresses BungList directly; see veh.h
 #define DIALOGS_DTOR_INLINE  // stand-in: see ~Dialogs in dialogs.h
-#define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h
 #define DIPLOWIN_RECEIVE_INLINE  // stand-in: see the receive steps in diplowin.h
 #include "stdafx.h"
 #include <mmsystem.h>

@@ -17,7 +17,6 @@
  */
 #define NETDAEMON_RESET_INLINE  // stand-in: see NetDaemon::reset in netdaemon.h
 #define DIALOGS_DTOR_INLINE  // stand-in: see ~Dialogs in dialogs.h
-#define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h
 #include "stdafx.h"
 #include "game.h"
 #include "interface_palette.h"

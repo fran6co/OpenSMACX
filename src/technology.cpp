@@ -19,7 +19,6 @@
 // WORKAROUND(decl): tech_achieved expands Popup::set_picture (0x005BB930) and
 // the BasePop 0x3104/0x3108 sprite-layout stores (0x005BB978) in place, and
 // starts its notice through the start(label, value) wrapper.
-#define POPUP_WRAPPERS_INLINE
 #define BASEPOP_SET_SPRITE_LAYOUT
 #include "stdafx.h"
 #include "technology.h"

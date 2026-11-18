@@ -17,7 +17,6 @@
  */
 #define VEH_BUNGLIST_VISIBLE  // stand-in: see BungList in veh.h
 #define DIALOG_LAYOUT_SETTERS  // stand-in: see Dialog::set_field_34/50 in dialog.h (design_workshop)
-#define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h (design_workshop's start, item and exec)
 #include "stdafx.h"
 #include "popup.h"
 #include "basepop.h"

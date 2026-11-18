@@ -36,7 +36,6 @@
 // on_button_clicked expands BasePop::item (0x00438D10 calls Dialogs::item
 // 0x00612A70, not the out-of-line copy 0x00558FE0).
 #define DIALOGS_DTOR_INLINE  // stand-in: see ~Dialogs in dialogs.h
-#define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h
 #include "stdafx.h"
 #include "font_metrics.h"
 #include "interface_fonts.h"

@@ -1,6 +1,5 @@
 // veh_pick uses BasePop::set_sprite_layout, which only this TU sees.
 #define BASEPOP_SET_SPRITE_LAYOUT
-#define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h
 /*
  * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.
  * Copyright (C) 2013-2021 Brendan Casey

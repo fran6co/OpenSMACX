@@ -27,7 +27,6 @@
 // symbol    _$E14
 #include "stdafx.h"
 #define MAPWIN_TILE_IN_VIEW_INLINE  // tour expands MapWin::tile_in_view (basewin.h) in both scans
-#define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h (tut_win's set_picture)
 #include "tutwin.h"
 #include "basewin.h"
 #include "maininterface.h"

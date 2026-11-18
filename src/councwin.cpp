@@ -29,7 +29,6 @@
 // symbol    _$E14
 #define SPOT_ADD_RECT_INLINE  // stand-in: see Spot::add(int, int, RECT *) in spot.h
 #include "stdafx.h"
-#define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h
 #include "font_metrics.h"
 #include "interface_fonts.h"
 #include "councwin.h"

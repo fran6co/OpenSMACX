@@ -16,7 +16,6 @@
 // expands the same body inline (0x00485EB0); see stringstruct.h.
 #define STRINGSTRUCT_REMOVE_ALL_CALLED
 #include "stdafx.h"
-#define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h
 #include "interface_fonts.h"
 #include "picktech.h"
 #include "palette.h"

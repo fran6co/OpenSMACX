@@ -403,7 +403,7 @@ class BasePop : public GraphicWin {
   // Header inlines in the original: probe.cpp keeps calls to the
   // out-of-line exec() at 0x005A5900 and faction.cpp's communicate to
   // exec(callback) at 0x00558FC0 (markers in basepop.cpp; bodies below the
-  // class, behind POPUP_WRAPPERS_INLINE).
+  // class).
   MEASURED int exec();
   MEASURED int exec(int (__cdecl *callback)());
   int set_string_font(Font *font1, Font *font2, Font *font3, Font *font4);
@@ -799,12 +799,6 @@ class BasePop : public GraphicWin {
 // BasePop's caller wrappers (and Popup's in popup.h) are header inlines in
 // the original: out-of-line copies exist only for the two callers that ran
 // out of /Ob2 budget (communicate, probe).
-// WORKAROUND(decl): only TUs defining POPUP_WRAPPERS_INLINE see the bodies.
-// Making them visible to every includer flips register/scheduling ties in
-// the pattern-260 canaries (capture_base, base_build, battle_compute,
-// enemy_move, game_data, load_interface, ReportIf::on_iface_button_clicked,
-// SocialWin::init, setup_player, ...), none of which calls them.
-#ifdef POPUP_WRAPPERS_INLINE
 inline int BasePop::exec() { return exec(0, nullptr); }
 // The image's out-of-line copies 0x00558FC0/0x00558FE0 were emitted by
 // faction.cpp, a /Oy- unit, and keep its frame; their markers are measured
@@ -813,7 +807,6 @@ inline int BasePop::exec(int (__cdecl *callback)()) { return exec(0, callback); 
 inline int BasePop::item(char *text, int index) {
   return dialogs_.Dialogs::item(text, index);
 }
-#endif
 
 
 

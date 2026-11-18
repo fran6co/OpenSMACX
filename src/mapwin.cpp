@@ -66,7 +66,6 @@ extern char SocialWinColonSpaceText[];/*
 // symbol    _$E14
 // click's base-routing Popup uses BasePop's item and exec() wrappers, which
 // expand to the image's direct Dialogs::item and exec(0, 0) calls.
-#define POPUP_WRAPPERS_INLINE
 #define MAPWIN_TILE_IN_VIEW_INLINE  // MapWin::tile_in_view body (basewin.h)
 // WORKAROUND(decl): Buffer's guarded three-argument write_cent_l (buffer.h).
 #define BUFFER_WRITE_CENT_XY_INLINE

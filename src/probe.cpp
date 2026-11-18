@@ -17,7 +17,6 @@
  */
 #include "stdafx.h"
 #define BASEPOP_FRIEND_PROBE  // WORKAROUND(decl): see basepop.h
-#define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h
 
 #include "probe.h"
 #include "base.h"

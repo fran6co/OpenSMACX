@@ -1,7 +1,6 @@
 // WORKAROUND(decl): exec expands current_entry (0x006030B9 `mov ecx,[ecx+8];
 // mov eax,[ecx+4]` under its current_/head_ tests); see stringstruct.h.
 #define STRINGSTRUCT_CURRENT_ENTRY_INLINE
-#define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h
 #define DIALOG_STYLE_BITS_0_1_INLINE  // stand-in: see Dialog::set_style_bits_0_1
 /*
  * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.
