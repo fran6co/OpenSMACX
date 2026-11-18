@@ -6548,6 +6548,34 @@ Purpose: Generate the whole visible map - background, terrain, vehicles,
 // the nested on_map call at 0x469E4E is out of line with its result
 // discarded). inline_depth(0) suppresses all of these, which is why the old
 // body had to hand-copy them.
+// The vehicle and overlay scans test the tile against both damage rectangles
+// widened by two tiles. The image copies each rectangle through a pointer
+// temporary (lea eax,[esi+0x21a58]; mov edx,eax at 0x469F42 and 0x46A142) and
+// expands the same code in both scans: one inline taking the two rectangles
+// by address. X is half-open and may wrap the seam; Y is inclusive.
+static inline int tile_near_damage(int x, int y, const MapTileDamageRect *vertical,
+                                   const MapTileDamageRect *horizontal) {
+    MapTileDamageRect near_vertical;
+    MapTileDamageRect near_horizontal;
+    near_vertical = *vertical;
+    near_horizontal = *horizontal;
+    near_vertical.left -= 2;
+    near_vertical.top -= 2;
+    near_vertical.right += 2;
+    near_vertical.bottom += 2;
+    near_horizontal.left -= 2;
+    near_horizontal.top -= 2;
+    near_horizontal.right += 2;
+    near_horizontal.bottom += 2;
+    return (y >= near_vertical.top && y <= near_vertical.bottom &&
+            (near_vertical.left > near_vertical.right && (MapIsFlat & 1) == 0
+                 ? x >= near_vertical.left || x < near_vertical.right
+                 : x >= near_vertical.left && x < near_vertical.right)) ||
+           (y >= near_horizontal.top && y <= near_horizontal.bottom &&
+            (near_horizontal.left > near_horizontal.right && (MapIsFlat & 1) == 0
+                 ? x >= near_horizontal.left || x < near_horizontal.right
+                 : x >= near_horizontal.left && x < near_horizontal.right));
+}
 void MapWin::gen_map(int a1, int a2) {
     int i;
     int row;
@@ -6596,42 +6624,10 @@ void MapWin::gen_map(int a1, int a2) {
         const int count = odd ? field_1DDCC_ : field_1DDD4_;
         for (int j = 0; j < count; j++) {
             const int col = start + j * 2;
-            const int flat = MapIsFlat & 1;
             const int wrapped = wrap_map_x(col);
-            if (on_map(wrapped, row)) {
-                if (field_21A44_ != 0) {
-                    // 0x469F42..0x469FAA: both rectangles are copied into
-                    // frame RECTs ([ebp-0x38] and [ebp-0x28]) through a
-                    // pointer temporary, then widened by two tiles.
-                    MapTileDamageRect near_vertical;
-                    MapTileDamageRect near_horizontal;
-                    const MapTileDamageRect *source = &vertical_damage_;
-                    near_vertical = *source;
-                    source = &horizontal_damage_;
-                    near_horizontal = *source;
-                    near_vertical.left -= 2;
-                    near_vertical.top -= 2;
-                    near_vertical.right += 2;
-                    near_vertical.bottom += 2;
-                    near_horizontal.left -= 2;
-                    near_horizontal.top -= 2;
-                    near_horizontal.right += 2;
-                    near_horizontal.bottom += 2;
-                    if (!((row >= near_vertical.top && row <= near_vertical.bottom &&
-                           (near_vertical.left > near_vertical.right && flat == 0
-                                ? wrapped >= near_vertical.left ||
-                                      wrapped < near_vertical.right
-                                : wrapped >= near_vertical.left &&
-                                      wrapped < near_vertical.right)) ||
-                          (row >= near_horizontal.top && row <= near_horizontal.bottom &&
-                           (near_horizontal.left > near_horizontal.right && flat == 0
-                                ? wrapped >= near_horizontal.left ||
-                                      wrapped < near_horizontal.right
-                                : wrapped >= near_horizontal.left &&
-                                      wrapped < near_horizontal.right)))) {
-                        continue;
-                    }
-                }
+            if (on_map(wrapped, row) &&
+                (field_21A44_ == 0 ||
+                 tile_near_damage(wrapped, row, &vertical_damage_, &horizontal_damage_))) {
                 tile_to_pixel(wrapped, row, &px, &py);
                 draw_vehicles(wrapped, row, px, py - field_1DDC0_, a1);
             }
@@ -6648,40 +6644,10 @@ void MapWin::gen_map(int a1, int a2) {
             const int count = odd ? field_1DDCC_ : field_1DDD4_;
             for (int j = 0; j < count; j++) {
                 const int col = start + j * 2;
-                const int flat = MapIsFlat & 1;
                 const int wrapped = wrap_map_x(col);
-                if (on_map(wrapped, row)) {
-                    if (field_21A44_ != 0) {
-                        // 0x46A142..0x46A1AA: same widened copies as above.
-                        MapTileDamageRect near_vertical;
-                        MapTileDamageRect near_horizontal;
-                        const MapTileDamageRect *source = &vertical_damage_;
-                        near_vertical = *source;
-                        source = &horizontal_damage_;
-                        near_horizontal = *source;
-                        near_vertical.left -= 2;
-                        near_vertical.top -= 2;
-                        near_vertical.right += 2;
-                        near_vertical.bottom += 2;
-                        near_horizontal.left -= 2;
-                        near_horizontal.top -= 2;
-                        near_horizontal.right += 2;
-                        near_horizontal.bottom += 2;
-                        if (!((row >= near_vertical.top && row <= near_vertical.bottom &&
-                               (near_vertical.left > near_vertical.right && flat == 0
-                                    ? wrapped >= near_vertical.left ||
-                                          wrapped < near_vertical.right
-                                    : wrapped >= near_vertical.left &&
-                                          wrapped < near_vertical.right)) ||
-                              (row >= near_horizontal.top && row <= near_horizontal.bottom &&
-                               (near_horizontal.left > near_horizontal.right && flat == 0
-                                    ? wrapped >= near_horizontal.left ||
-                                          wrapped < near_horizontal.right
-                                    : wrapped >= near_horizontal.left &&
-                                          wrapped < near_horizontal.right)))) {
-                            continue;
-                        }
-                    }
+                if (on_map(wrapped, row) &&
+                    (field_21A44_ == 0 ||
+                     tile_near_damage(wrapped, row, &vertical_damage_, &horizontal_damage_))) {
                     // The pixel pair is discarded, as in the image (0x46A215).
                     tile_to_pixel(wrapped, row, &px, &py);
                     gen_overlays(wrapped, row);
