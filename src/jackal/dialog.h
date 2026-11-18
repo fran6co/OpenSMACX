@@ -217,7 +217,7 @@ class Dialog {
   uint32_t field_44_;
   uint32_t field_48_;
   int field_4C_;
-  uint32_t field_50_;
+  int field_50_;
 #ifdef DIALOG_LAYOUT_SETTERS
   // WORKAROUND(decl): per-unit guard. The image leaves a dead
   // `lea reg,[ebp+reg-base]` of the Dialog virtual base right after its
@@ -247,7 +247,7 @@ class Dialog {
   // RECOVERY_MEMBER: v1 Dialog row_count_ 0x58 0x00611400
   int column_count_;
   int row_count_;
-  uint32_t field_5C_;
+  int field_5C_;
   uint32_t field_60_;
   // The laid-out extent when one was computed, else the requested one.
   // BasePop::calculate_dimensions (0x00603B60..0x00603C4F) reads both

@@ -326,7 +326,7 @@ int RadioButton::calculate_dimensions() {
     }
 
     Dialog::row_count_ = min(Dialog::item_list_.entry_count_,
-                             static_cast<int>(Dialog::field_50_));
+                             Dialog::field_50_);
     if (Dialog::row_count_ < Dialog::item_list_.entry_count_) {
         Dialog::field_4C_ = Dialog::item_list_.entry_count_ / Dialog::row_count_ + 1;
         Dialog::row_count_ = Dialog::item_list_.entry_count_ / Dialog::field_4C_;
@@ -379,7 +379,7 @@ int RadioButton::calculate_dimensions() {
     } else {
         Dialog::field_5C_ = max(Dialog::field_2C_ + Dialog::field_40_ * 2,
                                 Dialog::field_64_ * Dialog::field_4C_ + Dialog::field_40_ * 2);
-        Dialog::field_64_ = (static_cast<int>(Dialog::field_5C_) - Dialog::field_40_ * 2)
+        Dialog::field_64_ = (Dialog::field_5C_ - Dialog::field_40_ * 2)
                           / Dialog::field_4C_ - Dialog::field_44_;
         Dialog::field_5C_ -= Dialog::field_44_;
     }

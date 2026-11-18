@@ -447,7 +447,7 @@ int EditGroup::calculate_dimensions() {
     set_text_color3(text_color_3a_, text_color_3b_, text_color_3c_, text_color_3d_);
     set_font(font1_, font2_, font3_, 0);
 
-    row_count_ = min(item_list_.entry_count_, static_cast<int>(field_50_));
+    row_count_ = min(item_list_.entry_count_, field_50_);
     item_list_.seek_pos(-1);
 
     label_width_ = 0;
@@ -473,7 +473,7 @@ int EditGroup::calculate_dimensions() {
         column_count_ = field_2C_ / field_64_;
     } else {
         field_5C_ = max(field_2C_, field_64_ * field_4C_);
-        field_64_ = static_cast<int>(field_5C_) / field_4C_;
+        field_64_ = field_5C_ / field_4C_;
         column_count_ = field_4C_;
     }
     if ((field_20_ & 1) && field_30_) {

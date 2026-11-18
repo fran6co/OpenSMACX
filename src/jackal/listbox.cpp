@@ -910,7 +910,7 @@ int ListBox::calculate_dimensions() {
                            Dialog::text_color_3c_, Dialog::text_color_3d_);
     Buffer::set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
 
-    int visible_rows = static_cast<int>(Dialog::field_50_);
+    int visible_rows = Dialog::field_50_;
     int rows = Dialog::item_list_.entry_count_;
     if (!(rows < visible_rows)) rows = visible_rows;
     Dialog::row_count_ = rows;
@@ -952,7 +952,7 @@ int ListBox::calculate_dimensions() {
             int width = static_cast<int32_t>(width_bits);
             int min_width = static_cast<int32_t>(Dialog::field_2C_);
             if (min_width > width) width = min_width;
-            Dialog::field_5C_ = static_cast<uint32_t>(width);
+            Dialog::field_5C_ = width;
             Dialog::field_64_ = Dialog::field_5C_ - Dialog::field_40_ * 2u;
         } else {
             uint32_t numerator = Dialog::field_5C_ - Dialog::field_40_ * 2u
@@ -966,11 +966,11 @@ int ListBox::calculate_dimensions() {
             int width = static_cast<int32_t>(width_bits);
             int min_width = static_cast<int32_t>(Dialog::field_2C_);
             if (min_width > width) width = min_width;
-            Dialog::field_5C_ = static_cast<uint32_t>(width);
+            Dialog::field_5C_ = width;
         }
         Dialog::column_count_ = Dialog::field_4C_;
     } else {
-        Dialog::field_5C_ = static_cast<uint32_t>(tmp);
+        Dialog::field_5C_ = tmp;
         Dialog::column_count_ = Dialog::field_4C_;
         if (Dialog::column_count_ == 1)
             Dialog::field_64_ = Dialog::field_5C_ - Dialog::field_40_ * 2u;
@@ -1112,7 +1112,7 @@ int ListBox::attach(GraphicWin *a1, int a2, int a3, int a4) {
     // Width is Dialog +0x5C and height +0x60.
     int init_result = GraphicWin::init(
         a2, a3,
-        static_cast<int32_t>(Dialog::field_5C_),
+        Dialog::field_5C_,
         static_cast<int32_t>(Dialog::field_60_), flags, a1);
     if (init_result != 0) {
         return init_result;

@@ -416,7 +416,7 @@ int CheckBox::calculate_dimensions() {
     } else {
         Dialog::field_5C_ = max(Dialog::field_2C_ + Dialog::field_40_ * 2,
                                 Dialog::field_64_ * Dialog::field_4C_ + Dialog::field_40_ * 2);
-        Dialog::field_64_ = (static_cast<int>(Dialog::field_5C_) - Dialog::field_40_ * 2)
+        Dialog::field_64_ = (Dialog::field_5C_ - Dialog::field_40_ * 2)
                           / Dialog::field_4C_ - Dialog::field_44_;
         Dialog::field_5C_ -= Dialog::field_44_;
     }

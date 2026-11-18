@@ -506,7 +506,7 @@ int SpriteBox::calculate_dimensions() {
     if (static_cast<int>(field_60_) > row_height) row_height = field_60_;
     Dialog::field_68_ = Dialog::field_44_ + row_height;
     Dialog::field_64_ = field_5C_ + Dialog::field_40_ * 2 + field_54_;
-    Dialog::row_count_ = static_cast<int>(Dialog::field_50_) > list_.entry_count_
+    Dialog::row_count_ = Dialog::field_50_ > list_.entry_count_
         ? list_.entry_count_ : Dialog::field_50_;
     if ((Dialog::field_20_ & 1) != 0 && Dialog::field_30_ != 0) {
         Dialog::row_count_ = Dialog::field_30_ / Dialog::field_68_;
