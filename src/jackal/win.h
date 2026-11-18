@@ -982,18 +982,8 @@ RECT *__cdecl make_rect(RECT *rect, int x, int y, int width, int height);
 // written-out difference does not give; each of those units carried its own
 // file-local twin, so the original most likely declared one shared helper
 // beside make_rect/offset_rect. Names are descriptive.
-// WORKAROUND(decl): gated to the units that use it. Merely making these two
-// bodies visible flips register ties in units that never call them
-// (corner_the_market, MainInterface::draw_edit_pane and literal numbering in
-// six more units ungated; Datalink::set_cat_social with the gate defined on an
-// otherwise unchanged unit, and ReportIf::on_iface_button_clicked with
-// reportif's twins replaced, at every extern-name pad count tried), so
-// reportif.cpp and datalink.cpp keep their file-local twins for now; the
-// original's declaration set around these helpers is not yet known.
-#ifdef WIN_RECT_EXTENT_INLINE
 inline int rect_width(const RECT *rect) { return rect->right - rect->left; }
 inline int rect_height(const RECT *rect) { return rect->bottom - rect->top; }
-#endif
 
 
 // Shared device-context state: the reference count, the cached handle, and

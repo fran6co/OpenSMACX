@@ -98,12 +98,6 @@ static inline void dl_body_colors(Datalink *self, int link_color) {
     self->set_text_color2(0x96, -1, 1, 1);
     self->set_text_color_hyper(link_color, -1, 1, 1);
 }
-// The facility and project icons are scaled by the illustration width the
-// image computes right then left (0x0042F5A3, 0x0042FBC3), as a RECT* helper
-// does; the written-out difference loads left first.
-static inline int dl_rect_width(const RECT *rect) {
-    return rect->right - rect->left;
-}
 // WORKAROUND(inline): the faction, facility and project drawers spend more
 // /Ob2 budget before their Popup teardown than written-out calls do: the
 // image calls ~StringList (0x004066C0) out of line for both BasePop lists
@@ -970,7 +964,7 @@ void Datalink::draw_facility() {
     dl_upper_name(Facility[id].name);
     write_cent_l(StringTemp, &title_rect_);
     g_FACILITY_ICON_SPRITES[id].draw(this, illustration_rect_.left,
-                   illustration_rect_.top, dl_rect_width(&illustration_rect_),
+                   illustration_rect_.top, rect_width(&illustration_rect_),
                    g_FACILITY_ICON_SPRITES[id].width());
     rect.left += illustration_rect_.right - illustration_rect_.left + 6;
     parse_num(0, cost_factor(ConsoleGlobal.faction_id_, 1, -1) * Facility[id].cost);
@@ -1022,7 +1016,7 @@ void Datalink::draw_project() {
     // 42FBEC loads the first project sprite's +0x18, without indexing it.
     g_SECRET_PROJECT_ICON_SPRITES[id - 70].draw(this,
                    illustration_rect_.left, illustration_rect_.top,
-                   dl_rect_width(&illustration_rect_),
+                   rect_width(&illustration_rect_),
                    g_SECRET_PROJECT_ICON_SPRITES[0].width());
     const int project = id - 70;
     rect.left += illustration_rect_.right - illustration_rect_.left + 6;

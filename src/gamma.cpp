@@ -20,7 +20,6 @@
 // compile_context src/interface_assets.cpp
 // symbol    ??_GGamma@@UAEPAXI@Z
 // kind      game
-#define WIN_RECT_EXTENT_INLINE  // stand-in: see rect_width in win.h
 #include "stdafx.h"
 #include "gamma.h"
 #include "worldwin.h"

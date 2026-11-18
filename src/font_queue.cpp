@@ -30,7 +30,6 @@
 // WORKAROUND(decl): see vector.h; veh_scoot calls 0x006343C0 out of line at 0x0055A1BB.
 #define VECTOR_CTOR_OUT_OF_LINE
 #define MAPWIN_TILE_IN_VIEW_INLINE  // veh_scoot expands MapWin::tile_in_view (basewin.h)
-#define WIN_RECT_EXTENT_INLINE  // rect_width/rect_height (win.h)
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "font_queue.h"

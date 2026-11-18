@@ -47,7 +47,6 @@ extern char SocialWinCommaSpaceText[];/*
 #define MAPWIN_TILE_IN_VIEW_INLINE  // MapWin::tile_in_view body in mapwin.h
 #define BUFFER_WRITE_RIGHT_L3  // guarded Buffer::write_right_l(text, x, y)
 #define FLATBUTTON_SLICE_COLOURS_PUBLIC  // direct field_ABC_ stores in init
-#define WIN_RECT_EXTENT_INLINE  // stand-in: see rect_width in win.h
 #include "stdafx.h"
 #include "font_metrics.h"
 #include "interface_fonts.h"

@@ -800,15 +800,6 @@ void ReportWin::init() {
     field_E268_ = font_line_advance(*ReportIfGlobal.field_1E184_);
 }
 
-// Descriptive recovery helpers; not original entries.
-static inline int report_rect_width(const RECT *rect) {
-    return rect->right - rect->left;
-}
-
-static inline int report_rect_height(const RECT *rect) {
-    return rect->bottom - rect->top;
-}
-
 // Guarded full-length right-aligned write; callers inline the null test.
 static inline int report_write_right(char *text, int x, int y) {
     if (text == 0) {
@@ -3366,7 +3357,7 @@ void ReportWin::draw_ops() {
         // UNSURE: the image computes right as
         //   ((text.right - text.left) - icon.left) + icon.right + 3 + icon.left
         // (sub, sub, lea [edx+edi+3], add). Alternative width spelling:
-        //   report_rect_width(&text) + report_rect_width(&icon) + 3.
+        //   rect_width(&text) + rect_width(&icon) + 3.
         set_rectangle_dimensions(&report_work_rect_, icon.left, text.top,
             text.right - text.left - icon.left + icon.right + 3, text.bottom - text.top);
         spot_.add(entry.base_id + 0x400, 0, &report_work_rect_);
@@ -3638,7 +3629,7 @@ void ReportWin::draw_projects() {
     title.bottom = energy_panel_rect_.top + field_E268_ + 9;
     field_59A4_ = 54;
     const int rows = (energy_panel_rect_.bottom - title.bottom - 5) / 54;
-    field_59A0_ = (report_rect_width(&energy_panel_rect_) - 6) / 2 - 1;
+    field_59A0_ = (rect_width(&energy_panel_rect_) - 6) / 2 - 1;
     spot_.kill_type(0);
     spot_.reset_count();
     Buffer::box_sprite(&energy_panel_rect_, &InterfaceBoxStyles[0]);
@@ -5260,7 +5251,7 @@ void ReportIf::on_status(int mode) {
         frame.top = panel.bottom + 7;
         frame.bottom = frame.top + 20;
         frame.left = panel.left + 75;
-        frame.right = frame.left + report_rect_width(&panel) - 150;
+        frame.right = frame.left + rect_width(&panel) - 150;
         int center = (panel.right + panel.left) / 2;
         strcat(StringTemp, label_get(0x21B));
         set_rectangle_dimensions(&draw_workspace_rect_, frame.left, frame.top,
@@ -5279,7 +5270,7 @@ void ReportIf::on_status(int mode) {
         // First paired selector (0x4A4554..0x4A4727).
         field_C_ = field_20_.left + 9;
         field_10_ = field_20_.top + 9;
-        field_14_ = report_rect_width(&field_20_) - 18;
+        field_14_ = rect_width(&field_20_) - 18;
         buttonGroup1_.init(2, 0);
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x175));
@@ -5305,7 +5296,7 @@ void ReportIf::on_status(int mode) {
         // Second paired selector (0x4A472C..0x4A48FE).
         field_C_ = field_20_.left + 9;
         field_10_ = field_20_.top + 9;
-        field_14_ = report_rect_width(&field_20_) - 18;
+        field_14_ = rect_width(&field_20_) - 18;
         buttonGroup2_.init(4, 0);
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x1EE));
@@ -5329,7 +5320,7 @@ void ReportIf::on_status(int mode) {
         // Window three-way selector (0x4A4903..0x4A4C0E).
         field_C_ = panel.left + 3;
         field_10_ = field_1C_ + panel.top + 11;
-        field_14_ = report_rect_width(&panel) - 6;
+        field_14_ = rect_width(&panel) - 6;
         window.buttonGroup1_.init(4, 0);
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x2E8));
@@ -5366,7 +5357,7 @@ void ReportIf::on_status(int mode) {
         // Window two-way selector (0x4A4C13..0x4A4E17).
         field_C_ = panel.left + 3;
         field_10_ = field_1C_ + panel.top + 11;
-        field_14_ = report_rect_width(&panel) - 6;
+        field_14_ = rect_width(&panel) - 6;
         window.buttonGroup2_.init(6, 0);
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x32C));
@@ -5403,7 +5394,7 @@ void ReportIf::on_status(int mode) {
         // Seven order buttons, straight-line (0x4A4EFF..0x4A54FA).
         field_C_ = field_20_.left + 9;
         field_10_ = field_20_.top + 35;
-        field_14_ = report_rect_width(&field_20_) - 18;
+        field_14_ = rect_width(&field_20_) - 18;
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x2EA));
         set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, 20);
@@ -5464,7 +5455,7 @@ void ReportIf::on_status(int mode) {
         // Three security buttons (0x4A54FD..0x4A574A).
         field_C_ = field_30_.left + 9;
         field_10_ = field_30_.top + 32;
-        field_14_ = report_rect_width(&field_30_) - 18;
+        field_14_ = rect_width(&field_30_) - 18;
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x2EA));
         set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, 20);
@@ -5490,7 +5481,7 @@ void ReportIf::on_status(int mode) {
         // Per-faction satellite-owner buttons (0x4A574D..0x4A5949).
         field_C_ = field_20_.left + 9;
         field_10_ = field_20_.top + 32;
-        field_14_ = report_rect_width(&field_20_) - 18;
+        field_14_ = rect_width(&field_20_) - 18;
         buttonGroup3_.init(0x6A, 0);
         for (int other = 1; other < 8; ++other) {
             if (other != ConsoleGlobal.faction_id_) {
@@ -6173,8 +6164,8 @@ void ReportIf::draw_labs() {
     MainInterfaceGlobal.Buffer::set_clip(&field_20_);
     field_C_ = field_20_.left + 6;
     field_10_ = field_20_.top + 6;
-    field_14_ = report_rect_width(&field_20_) - 0xC;
-    field_18_ = report_rect_height(&field_20_) - 0xC;
+    field_14_ = rect_width(&field_20_) - 0xC;
+    field_18_ = rect_height(&field_20_) - 0xC;
     flatButton1_.show(0);
     flatButton2_.show(0);
     set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, 26);
@@ -6275,8 +6266,8 @@ void ReportIf::draw_labs() {
     int inset = field_1E230_ ? 0x4C : 0;
     field_C_ = field_50_.left + inset;
     field_10_ = field_50_.top;
-    field_14_ = report_rect_width(&field_50_) - inset;
-    field_18_ = report_rect_height(&field_50_);
+    field_14_ = rect_width(&field_50_) - inset;
+    field_18_ = rect_height(&field_50_);
     StringTemp[0] = 0;
     MainInterfaceGlobal.Buffer::set_font(field_1E190_, field_1E194_, field_1E198_, 0);
     MainInterfaceGlobal.Buffer::set_text_color(0xE1, -1, 1, 1);
@@ -6335,8 +6326,8 @@ void ReportIf::draw_labs() {
     MainInterfaceGlobal.Buffer::set_clip(&field_30_);
     field_C_ = field_30_.left + 6;
     field_10_ = field_30_.top + 6;
-    field_14_ = report_rect_width(&field_30_) - 0xC;
-    field_18_ = report_rect_height(&field_30_) - 0xC;
+    field_14_ = rect_width(&field_30_) - 0xC;
+    field_18_ = rect_height(&field_30_) - 0xC;
     MainInterfaceGlobal.Buffer::set_font(field_1E184_, field_1E18C_, field_1E198_, 0);
     set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, field_1C_ + 6);
     MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
@@ -6519,8 +6510,8 @@ void ReportIf::draw_energy() {
     MainInterfaceGlobal.Buffer::set_clip(&field_20_);
     field_C_ = field_20_.left + 6;
     field_10_ = field_20_.top + 6;
-    field_14_ = report_rect_width(&field_20_) - 0xC;
-    field_18_ = report_rect_height(&field_20_) - 0xC;
+    field_14_ = rect_width(&field_20_) - 0xC;
+    field_18_ = rect_height(&field_20_) - 0xC;
     MainInterfaceGlobal.Buffer::set_font(field_1E190_, field_1E194_, field_1E198_, nullptr);
     set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, field_1C_ + 6);
     MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
@@ -6586,8 +6577,8 @@ void ReportIf::draw_energy() {
     MainInterfaceGlobal.Buffer::set_clip(&field_50_);
     field_C_ = field_50_.left + (field_1E230_ ? 0x4C : 0);
     field_10_ = field_50_.top;
-    field_14_ = report_rect_width(&field_50_) - (field_1E230_ ? 0x4C : 0);
-    field_18_ = report_rect_height(&field_50_);
+    field_14_ = rect_width(&field_50_) - (field_1E230_ ? 0x4C : 0);
+    field_18_ = rect_height(&field_50_);
     StringTemp[0] = 0;
     MainInterfaceGlobal.Buffer::set_font(field_1E190_, field_1E194_, field_1E198_, 0);
     MainInterfaceGlobal.Buffer::set_text_color(0xE1, -1, 1, 1);
@@ -6618,8 +6609,8 @@ void ReportIf::draw_energy() {
     MainInterfaceGlobal.Buffer::set_clip(&field_30_);
     field_C_ = field_30_.left + 6;
     field_10_ = field_30_.top + 6;
-    field_14_ = report_rect_width(&field_30_) - 0xC;
-    field_18_ = report_rect_height(&field_30_) - 0xC;
+    field_14_ = rect_width(&field_30_) - 0xC;
+    field_18_ = rect_height(&field_30_) - 0xC;
     set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, field_1C_ + 6);
     MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
     StringTemp[0] = 0;
@@ -6725,10 +6716,10 @@ void ReportIf::draw_ops() {
     MainInterfaceGlobal.Buffer::set_clip(&field_20_);
     field_C_ = field_20_.left + 9;
     field_10_ = field_20_.top + 40;
-    field_14_ = report_rect_width(&field_20_) - 18;
-    field_18_ = report_rect_height(&field_20_) - 46;
+    field_14_ = rect_width(&field_20_) - 18;
+    field_18_ = rect_height(&field_20_) - 46;
     set_rectangle_dimensions(&draw_workspace_rect_, field_20_.left + 6, field_20_.top + 6,
-                             report_rect_width(&field_20_) - 12, 26);
+                             rect_width(&field_20_) - 12, 26);
     RECT *const workspace = &draw_workspace_rect_;
     MainInterfaceGlobal.Buffer::box_sprite(workspace, &InterfaceBoxStyles[3]);
     workspace->top = workspace->bottom;
@@ -6951,8 +6942,8 @@ void ReportIf::draw_ops() {
     MainInterfaceGlobal.Buffer::set_clip(&field_50_);
     field_C_ = field_50_.left + (field_1E230_ ? 0x4C : 0);
     field_10_ = field_50_.top;
-    field_14_ = report_rect_width(&field_50_) - (field_1E230_ ? 0x4C : 0);
-    field_18_ = report_rect_height(&field_50_);
+    field_14_ = rect_width(&field_50_) - (field_1E230_ ? 0x4C : 0);
+    field_18_ = rect_height(&field_50_);
     StringTemp[0] = 0;
     MainInterfaceGlobal.Buffer::set_font(field_1E190_, field_1E194_, field_1E198_, 0);
     MainInterfaceGlobal.Buffer::set_text_color(0xE1, -1, 1, 1);
@@ -6982,8 +6973,8 @@ void ReportIf::draw_ops() {
     MainInterfaceGlobal.Buffer::set_clip(&field_30_);
     field_C_ = field_30_.left + 6;
     field_10_ = field_30_.top + 6;
-    field_14_ = report_rect_width(&field_30_) - 12;
-    field_18_ = report_rect_height(&field_30_) - 12;
+    field_14_ = rect_width(&field_30_) - 12;
+    field_18_ = rect_height(&field_30_) - 12;
     MainInterfaceGlobal.Buffer::box_sprite(&field_30_, &InterfaceBoxStyles[33]);
     set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, field_1C_ + 6);
     inflate_frame(&draw_workspace_rect_, 3, 3);
@@ -7051,8 +7042,8 @@ void ReportIf::draw_projects() {
     MainInterfaceGlobal.Buffer::set_clip(&field_20_);
     field_C_ = field_20_.left + 6;
     field_10_ = field_20_.top + 6;
-    field_14_ = report_rect_width(&field_20_) - 0xC;
-    field_18_ = report_rect_height(&field_20_) - 0xC;
+    field_14_ = rect_width(&field_20_) - 0xC;
+    field_18_ = rect_height(&field_20_) - 0xC;
 
     // The seed draws a narrow title frame followed by a second frame around
     // the selected project's description.  Both use the shared work rectangle.
@@ -7088,16 +7079,16 @@ void ReportIf::draw_projects() {
         _itoa(project, number, 10);
         strcat(StringTemp, number);
         if (description.load(DatalinkHelpFile, StringTemp, 1, 0) == 0) {
-            if (report_rect_height(&draw_workspace_rect_)
+            if (rect_height(&draw_workspace_rect_)
                 < MainInterfaceGlobal.Buffer::write_strings_height(
-                    &description, report_rect_width(&draw_workspace_rect_), 0)) {
+                    &description, rect_width(&draw_workspace_rect_), 0)) {
                 MainInterfaceGlobal.Buffer::set_font(find_font(10, 0), find_font(10, 2),
                                                      find_font(10, 1), 0);
             }
             MainInterfaceGlobal.Buffer::set_text_color(0xE1, -1, 1, 1);
             MainInterfaceGlobal.Buffer::write_strings(&description, draw_workspace_rect_.left,
                 draw_workspace_rect_.top,
-                report_rect_width(&draw_workspace_rect_), 0);
+                rect_width(&draw_workspace_rect_), 0);
         }
     } else if (ReportWinGlobal.shared_report_selection() + 1 == 0) {
         StringTemp[0] = 0;
@@ -7105,15 +7096,15 @@ void ReportIf::draw_projects() {
         MainInterfaceGlobal.Buffer::set_text_color(0xE1, -1, 1, 1);
         MainInterfaceGlobal.Buffer::wrap(StringTemp, draw_workspace_rect_.left,
             draw_workspace_rect_.top,
-            report_rect_width(&draw_workspace_rect_));
+            rect_width(&draw_workspace_rect_));
     }
 
     MainInterfaceGlobal.Buffer::set_clip(MainInterfaceGlobal.buffer_working_rect());
     MainInterfaceGlobal.Buffer::set_clip(&field_50_);
     field_C_ = field_50_.left + (field_1E230_ ? 0x4C : 0);
     field_10_ = field_50_.top;
-    field_14_ = report_rect_width(&field_50_) - (field_1E230_ ? 0x4C : 0);
-    field_18_ = report_rect_height(&field_50_);
+    field_14_ = rect_width(&field_50_) - (field_1E230_ ? 0x4C : 0);
+    field_18_ = rect_height(&field_50_);
     StringTemp[0] = 0;
     MainInterfaceGlobal.Buffer::set_font(field_1E190_, field_1E194_, field_1E198_, nullptr);
     MainInterfaceGlobal.Buffer::set_text_color(0xE1, -1, 1, 1);
@@ -7137,8 +7128,8 @@ void ReportIf::draw_projects() {
     MainInterfaceGlobal.Buffer::set_clip(&field_30_);
     field_C_ = field_30_.left + 6;
     field_10_ = field_30_.top + 6;
-    field_14_ = report_rect_width(&field_30_) - 0xC;
-    field_18_ = report_rect_height(&field_30_) - 0xC;
+    field_14_ = rect_width(&field_30_) - 0xC;
+    field_18_ = rect_height(&field_30_) - 0xC;
     MainInterfaceGlobal.Buffer::box_sprite(&field_30_, &InterfaceBoxStyles[33]);
     set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, field_1C_ + 6);
     inflate_frame(&draw_workspace_rect_, 3, 3);
@@ -7180,8 +7171,8 @@ void ReportIf::draw_sat() {
     if (ReportWinGlobal.buttonGroup2_.field_84_ == 0xD3C) {
         field_C_ = field_20_.left + 6;
         field_10_ = field_20_.top + 6;
-        field_14_ = report_rect_width(&field_20_) - 0xC;
-        field_18_ = report_rect_height(&field_20_) - 0xC;
+        field_14_ = rect_width(&field_20_) - 0xC;
+        field_18_ = rect_height(&field_20_) - 0xC;
         set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, field_18_);
         MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
         field_C_ += 4;
@@ -7222,8 +7213,8 @@ void ReportIf::draw_sat() {
     } else {
         field_C_ = field_20_.left + 6;
         field_10_ = field_20_.top + 6;
-        field_14_ = report_rect_width(&field_20_) - 0xC;
-        field_18_ = report_rect_height(&field_20_) - 0xC;
+        field_14_ = rect_width(&field_20_) - 0xC;
+        field_18_ = rect_height(&field_20_) - 0xC;
         set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, field_1C_ + 6);
         MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
         draw_workspace_rect_.top = draw_workspace_rect_.bottom + 2;
@@ -7257,8 +7248,8 @@ void ReportIf::draw_sat() {
     int inset = field_1E230_ ? 0x4C : 0;
     field_C_ = field_50_.left + inset;
     field_10_ = field_50_.top;
-    field_14_ = report_rect_width(&field_50_) - inset;
-    field_18_ = report_rect_height(&field_50_);
+    field_14_ = rect_width(&field_50_) - inset;
+    field_18_ = rect_height(&field_50_);
     StringTemp[0] = 0;
     MainInterfaceGlobal.Buffer::set_font(field_1E190_, field_1E194_, field_1E198_, 0);
     MainInterfaceGlobal.Buffer::set_text_color(0xE1, -1, 1, 1);
@@ -7283,8 +7274,8 @@ void ReportIf::draw_sat() {
     if (ReportWinGlobal.buttonGroup2_.field_84_ == 0xD3C) {
         field_C_ = field_30_.left + 6;
         field_10_ = field_30_.top + 6;
-        field_14_ = report_rect_width(&field_30_) - 0xC;
-        field_18_ = report_rect_height(&field_30_) - 0xC;
+        field_14_ = rect_width(&field_30_) - 0xC;
+        field_18_ = rect_height(&field_30_) - 0xC;
         set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, field_18_);
         MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
         field_C_ += 4;
@@ -7323,8 +7314,8 @@ void ReportIf::draw_sat() {
     } else {
         field_C_ = field_30_.left + 6;
         field_10_ = field_30_.top + 6;
-        field_14_ = report_rect_width(&field_30_) - 0xC;
-        field_18_ = report_rect_height(&field_30_) - 0xC;
+        field_14_ = rect_width(&field_30_) - 0xC;
+        field_18_ = rect_height(&field_30_) - 0xC;
         set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, field_1C_ + 6);
         MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
         draw_workspace_rect_.top = draw_workspace_rect_.bottom + 2;
@@ -7340,7 +7331,7 @@ void ReportIf::draw_sat() {
         MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_ + 4, field_14_);
         field_C_ = field_30_.left + 9;
         field_10_ = field_30_.top + 32;
-        field_14_ = report_rect_width(&field_30_) - 18;
+        field_14_ = rect_width(&field_30_) - 18;
         int target = buttonGroup3_.field_84_;
         if (target < 1 || target >= 8) target = -1;
         if (target + 1 != 0) {
@@ -7464,8 +7455,8 @@ void ReportIf::draw_security() {
     MainInterfaceGlobal.Buffer::set_clip(&field_20_);
     field_C_ = field_20_.left + 6;
     field_10_ = field_20_.top + 6;
-    field_14_ = report_rect_width(&field_20_) - 0xC;
-    field_18_ = report_rect_height(&field_20_) - 0xC;
+    field_14_ = rect_width(&field_20_) - 0xC;
+    field_18_ = rect_height(&field_20_) - 0xC;
     set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, field_1C_ + 6);
     MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
     draw_workspace_rect_.top = draw_workspace_rect_.bottom + 2;
@@ -7541,7 +7532,7 @@ void ReportIf::draw_security() {
     field_C_ = inset + field_50_.left;
     field_10_ = field_50_.top;
     field_14_ = field_50_.right - inset - field_50_.left;
-    field_18_ = report_rect_height(&field_50_);
+    field_18_ = rect_height(&field_50_);
     StringTemp[0] = 0;
     MainInterfaceGlobal.Buffer::set_font(field_1E190_, field_1E194_, field_1E198_, nullptr);
     MainInterfaceGlobal.Buffer::set_text_color(0xE1, -1, 1, 1);
@@ -7565,8 +7556,8 @@ void ReportIf::draw_security() {
     MainInterfaceGlobal.Buffer::set_clip(&field_30_);
     field_C_ = field_30_.left + 6;
     field_10_ = field_30_.top + 6;
-    field_14_ = report_rect_width(&field_30_) - 0xC;
-    field_18_ = report_rect_height(&field_30_) - 0xC;
+    field_14_ = rect_width(&field_30_) - 0xC;
+    field_18_ = rect_height(&field_30_) - 0xC;
     set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, field_1C_ + 6);
     MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
     draw_workspace_rect_.top = draw_workspace_rect_.bottom + 2;
@@ -7603,8 +7594,8 @@ void ReportIf::draw_score() {
     MainInterfaceGlobal.Buffer::set_clip(&field_20_);
     field_C_ = field_20_.left + 6;
     field_10_ = field_20_.top + 6;
-    field_14_ = report_rect_width(&field_20_) - 0xC;
-    field_18_ = report_rect_height(&field_20_) - 0xC;
+    field_14_ = rect_width(&field_20_) - 0xC;
+    field_18_ = rect_height(&field_20_) - 0xC;
     set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, field_18_);
     MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
     MainInterfaceGlobal.Buffer::set_clip(MainInterfaceGlobal.buffer_working_rect());
@@ -7613,8 +7604,8 @@ void ReportIf::draw_score() {
     int left_inset = field_1E230_ != 0 ? 0x4C : 0;
     field_C_ = field_50_.left + left_inset;
     field_10_ = field_50_.top;
-    field_14_ = report_rect_width(&field_50_) - (field_1E230_ != 0 ? 0x4C : 0);
-    field_18_ = report_rect_height(&field_50_);
+    field_14_ = rect_width(&field_50_) - (field_1E230_ != 0 ? 0x4C : 0);
+    field_18_ = rect_height(&field_50_);
 
     StringTemp[0] = 0;
 
@@ -7644,8 +7635,8 @@ void ReportIf::draw_score() {
     MainInterfaceGlobal.Buffer::set_clip(&field_30_);
     field_C_ = field_30_.left + 6;
     field_10_ = field_30_.top + 6;
-    field_14_ = report_rect_width(&field_30_) - 0xC;
-    field_18_ = report_rect_height(&field_30_) - 0xC;
+    field_14_ = rect_width(&field_30_) - 0xC;
+    field_18_ = rect_height(&field_30_) - 0xC;
     set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, field_18_);
     MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
     MainInterfaceGlobal.Buffer::set_clip(MainInterfaceGlobal.buffer_working_rect());
@@ -7677,8 +7668,8 @@ void ReportIf::draw_intel() {
     MainInterfaceGlobal.Buffer::set_clip(&field_20_);
     field_C_ = field_20_.left + 6;
     field_10_ = field_20_.top + 6;
-    field_14_ = report_rect_width(&field_20_) - 0xC;
-    field_18_ = report_rect_height(&field_20_) - 0xC;
+    field_14_ = rect_width(&field_20_) - 0xC;
+    field_18_ = rect_height(&field_20_) - 0xC;
     MainInterfaceGlobal.Buffer::set_font(field_1E190_, field_1E194_, field_1E198_, 0);
     set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, field_1C_ + 6);
     MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
@@ -7723,8 +7714,8 @@ void ReportIf::draw_intel() {
     int inset = field_1E230_ ? 0x4C : 0;
     field_C_ = inset + field_50_.left;
     field_10_ = field_50_.top;
-    field_14_ = report_rect_width(&field_50_) - (field_1E230_ ? 0x4C : 0);
-    field_18_ = report_rect_height(&field_50_);
+    field_14_ = rect_width(&field_50_) - (field_1E230_ ? 0x4C : 0);
+    field_18_ = rect_height(&field_50_);
     StringTemp[0] = 0;
     MainInterfaceGlobal.Buffer::set_font(field_1E190_, field_1E194_, field_1E198_, 0);
     MainInterfaceGlobal.Buffer::set_text_color(0xE1, -1, 1, 1);
@@ -7745,8 +7736,8 @@ void ReportIf::draw_intel() {
     MainInterfaceGlobal.Buffer::set_clip(&field_30_);
     field_C_ = field_30_.left + 6;
     field_10_ = field_30_.top + 6;
-    field_14_ = report_rect_width(&field_30_) - 0xC;
-    field_18_ = report_rect_height(&field_30_) - 0xC;
+    field_14_ = rect_width(&field_30_) - 0xC;
+    field_18_ = rect_height(&field_30_) - 0xC;
     set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, field_1C_ + 6);
     MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
     StringTemp[0] = 0;

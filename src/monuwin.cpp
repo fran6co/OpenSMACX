@@ -18,7 +18,6 @@
 #define FONT_LINE_ADVANCE_INLINE
 #define STRINGSTRUCT_CTOR_OUT_OF_LINE
 #define SPOT_ADD_RECT_INLINE  // stand-in: see Spot::add(int, int, RECT *) in spot.h
-#define WIN_RECT_EXTENT_INLINE  // rect_width/rect_height (win.h): on_redraw reads its extents through the RECT
 #include "monuwin.h"
 #include "rectangle_operations.h"
 #include "console.h"

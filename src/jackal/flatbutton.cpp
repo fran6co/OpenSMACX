@@ -20,7 +20,6 @@
 // compile_context src/alphasave.cpp
 // symbol    ??_GFlatButton@@UAEPAXI@Z
 // kind      game
-#define WIN_RECT_EXTENT_INLINE  // rect_width/rect_height (win.h)
 #include "stdafx.h"
 #include "flatbutton.h"
 #include "win.h"

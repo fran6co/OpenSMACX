@@ -21,7 +21,6 @@
 // kind      game
 // ORIGINAL: 0x00440EF0 ??_EDiploPop@@WEEE@AEPAXI@Z 0x00440EF0-0x00440EFB FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor at 0x0043EFF0 installs Buffer table 0x0066B470 at this+0x444; its first slot points to 0x00440EF0.", "Pinned entry 0x00440EF0 has exactly eleven bytes: SUB ECX,0x444 then JMP to already mapped primary deleting destructor 0x00440EC0, followed by INT3 padding.", "Owner diplopop.cpp physical COFF emits eleven-byte COMDAT ??_EDiploPop@@WEEE@AEPAXI@Z; Buffer table ??_7DiploPop@@6BBuffer@@@ selects it, and its REL32 targets weak ??_EDiploPop@@UAEPAXI@Z with scalar ??_GDiploPop@@UAEPAXI@Z fallback.", "The genuine GraphicWin:Win,Buffer hierarchy provides the receiver adjustment. Independent original constructor/table/body and physical COFF review supports this binding; local equality does not prove full linked table selection or runtime acceptance."], "reason": "Bind the original Buffer-view deleting receiver adjustment to the genuine DiploPop compiler-emitted operation. The symbol names this tree emits, not an original debug name; no adapter body is authored."}
-#define WIN_RECT_EXTENT_INLINE  // stand-in: see rect_width in win.h
 #include "stdafx.h"
 #include "font_metrics.h"
 #include "interface_fonts.h"

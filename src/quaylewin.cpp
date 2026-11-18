@@ -17,7 +17,6 @@
 // its three-state EH layout; see stringstruct.h.
 #define FONT_LINE_ADVANCE_INLINE
 #define STRINGSTRUCT_CTOR_OUT_OF_LINE
-#define WIN_RECT_EXTENT_INLINE  // stand-in: see rect_width in win.h
 #define SPOT_ADD_RECT_INLINE  // stand-in: see Spot::add(int, int, RECT *) in spot.h
 #include "stdafx.h"
 #include "quaylewin.h"
