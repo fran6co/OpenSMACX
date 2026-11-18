@@ -449,6 +449,26 @@ def parpos():
     write('parpos', P)
 
 
+@family
+def local():
+    """Rule 6: which of c's references are discounted against a block-local d (M = 8 unless named)?"""
+    P = []
+    ks = range(0, 16)
+    for J in (1, 3, 5, 9):
+        P += duel2('aft%d' % J, ks, lambda K: 'Dp Dq Dc p30 q30 c%d { C } Dd d8 c%d p q' % (K, J))      # c: K+1 in B0, J after d in d's block
+        P += duel2('bef%d' % J, ks, lambda K: 'Dp Dq Dc p30 q30 c%d { C } c%d Dd d8 p q c' % (K, J))    # J before d's definition, same block
+        P += duel2('tout%d' % J, ks, lambda K: 'Dp Dq Dc p30 q30 c%d Dd d8 { C } c%d p q' % (K, J))     # d in the entry block, J of c's in the last
+        P += duel2('mid%d' % J, ks, lambda K: 'Dp Dq Dc p30 q30 c%d { C } Dd d8 c%d { C } p q c' % (K, J))  # d local to a middle block with J of c's
+    P += duel2('two_w', ks, lambda K: 'Dp Dq Dc p30 q30 c%d { C } Dd d4 { C } d4 p q c' % K)             # d spans a loop
+    P += duel2('two_i', ks, lambda K: 'Dp Dq Dc p30 q30 c%d { C } Dd d4 [ C ] d4 p q c' % K)
+    P += duel2('two_e', ks, lambda K: 'Dp Dq Dc p30 q30 c%d Dd d4 [ C ] d4 p q c' % K)                   # d from the entry block to the last
+    P += duel2('arm', ks, lambda K: 'Dp Dq Dc p30 q30 c%d [ Dd d8 ] p q c' % K)                          # d local to an if arm
+    P += duel2('arm_c', ks, lambda K: 'Dp Dq Dc p30 q30 c%d [ Dd d8 c3 ] p q c' % K)
+    P += duel2('loop', ks, lambda K: 'Dp Dq Dc p30 q30 c%d { Dd d8 } p q c' % K)                         # d local to a loop body
+    P += duel2('loop_c', ks, lambda K: 'Dp Dq Dc p30 q30 c%d { Dd d8 c3 } p q c' % K)
+    write('local', P)
+
+
 if __name__ == '__main__':
     import sys
     for n, f in FAM.items():
