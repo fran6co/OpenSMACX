@@ -900,6 +900,16 @@ raw field access where the original used inline accessors.
   three are taken. So when the image has variable X in a register and
   ours has it in memory, X needs one more reference than its rival (or
   the rival one fewer); reordering declarations only breaks exact ties.
+- **Two zero stores as immediates or through `xor eax,eax`.** Measured on a
+  standalone copy of Credits::unload: with `/Oy-` VC6 emits `xor eax,eax`
+  and two register stores; with `/Oy` (and with `/Os`) it emits two
+  immediate stores. `/G3`-`/G6`, `/Oa`, `/Ow`, `/Op`, `/Ob1` do not change
+  it. credits.cpp is built `/Oy` with `#pragma optimize("y", off)` around
+  its framed functions for this reason, and Credits::exec (0x004289F0, 3
+  rows) is the case that fits neither: the image has an ebp frame AND
+  immediate stores, ours has the frame and `xor` with the pragma, no frame
+  and `xor` without it. What gives a frame under `/Oy` is not known; the
+  other 72 `optimize("y", off)` pragmas in the tree may hide the same gap.
 - **Statement vs conditional expression.** `d = a - b; if (d < 0) d = b - a;`
   and `d = (a - b < 0) ? b - a : a - b;` emit the same instructions with two
   registers swapped (on_scrolled's distance). Try the other form on a
