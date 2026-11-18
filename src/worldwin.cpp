@@ -571,7 +571,7 @@ void WorldWin::draw_box() {
 // The redraw rebuilds the owned MapWin and buffers according to field_239BC_.
 // All receiver offsets in the original are these declared subobjects.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004C3EC0 ?on_redraw@WorldWin@@QAEXXZ 0x004C3EC0-0x004C4227
+// ORIGINAL: 0x004C3EC0 ?on_redraw@WorldWin@@QAEXXZ 0x004C3EC0-0x004C4227 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x004C3EC0-0x004C4227 disassembly via recover inspect; src/recovered/units/004c3ec0.cpp seed has no implementation."], "reason": "Recover WorldWin redraw control flow through owned MapWin and Buffer subobjects while recording base-only overlay as an unfinished dependency."}
 // symbol    ?on_redraw@WorldWin@@UAEXXZ
 #pragma optimize("y", on)
