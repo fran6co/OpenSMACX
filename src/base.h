@@ -640,9 +640,9 @@ extern uint32_t BaseCurrentConvoyTo[4]; // resources convoyed/extracted to base
 extern int BaseCommerceReceipts[7];
 extern int BaseCommercePartnerReceipts[7];
 extern int BaseCurrentGrowthRate;
-extern uint32_t BaseCurrentVehPacifismCount;
-extern uint32_t BaseCurrentForcesSupported; // Forces Supported by Base
-extern uint32_t BaseCurrentForcesMaintCost; // Minerals expended for Forces Supported maintenance
+extern int BaseCurrentVehPacifismCount;
+extern int BaseCurrentForcesSupported; // Forces Supported by Base
+extern int BaseCurrentForcesMaintCost; // Minerals expended for Forces Supported maintenance
 extern uint32_t BaseCurrentForcesMaintCount; // Forces past the free allowance; never read back
 extern int TileYieldRestricted; // resource a square lost to the per-square restriction
 extern uint32_t FarmStatus[25]; // per-position status; final four positions excluded

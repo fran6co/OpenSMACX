@@ -232,7 +232,7 @@ void BaseWin::farm_click(int x, int y, int) {
                     int score = resource_yield(0, faction, BaseIDCurrentSelected, tile_x, tile_y)
                         * (growth + 3) * 4 / nutrient_divisor;
                     const int mineral_divisor = range(BaseCurrent->intake_2[RSC_MINERALS]
-                        - static_cast<int>(BaseCurrentForcesMaintCost), 1, 99);
+                        - BaseCurrentForcesMaintCost, 1, 99);
                     score += resource_yield(1, faction, BaseIDCurrentSelected, tile_x, tile_y)
                         * (fight + power + 4) * BaseCurrent->population_size / mineral_divisor;
                     const int energy_divisor = range(BaseCurrent->intake_2[RSC_ENERGY], 1, 99);
@@ -2910,7 +2910,7 @@ void BaseWin::zoom(int base_id, int wait) {
         const int mineral_surplus = BaseCurrent->mineral_surplus;
         bool tutorial_popup_opened = false;
         if (mineral_surplus < (population_size + 1) / 2
-            && static_cast<int32_t>(BaseCurrentForcesMaintCost) >= 1
+            && BaseCurrentForcesMaintCost >= 1
             && (population_size >= 4 || mineral_surplus <= 0)
             && tut_check2(0x200) != 0) {
             parse_says(0, BaseCurrent->name_string, -1, -1);
@@ -2920,7 +2920,7 @@ void BaseWin::zoom(int base_id, int wait) {
 
         if (!tutorial_popup_opened && BaseCurrent->mineral_surplus <= 1) {
             const int8_t population = BaseCurrent->population_size;
-            if (static_cast<int32_t>(BaseCurrentForcesMaintCost)
+            if (BaseCurrentForcesMaintCost
                     < population / 2
                 && population >= 3 && tut_check2(0x40) != 0) {
                 parse_says(0, BaseCurrent->name_string, -1, -1);

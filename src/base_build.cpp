@@ -2183,7 +2183,7 @@ L_4fc68f:
             }
             extra = 1;
         }
-        if ((int)BaseCurrentForcesSupported >= free_units) {
+        if (BaseCurrentForcesSupported >= free_units) {
             cons += extra;
         }
         int t = (l_98 - (l_70 || l_cc) - l_60 + 3) * cons;

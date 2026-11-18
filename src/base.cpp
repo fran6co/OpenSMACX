@@ -551,7 +551,7 @@ void __cdecl base_yield() {
                          + BasePopulationUnassigned) * 2 - 2, 1, 99);
             int mineral_weight = (BaseCurrent->queue_production_id[0] < -70) ? 2 : -tech;
             int mineral_divisor = range((BaseCurrent->intake_2[1]
-                - static_cast<int>(BaseCurrentForcesMaintCost) + 1) / 2, 1, 99);
+                - BaseCurrentForcesMaintCost + 1) / 2, 1, 99);
             score += (fight + mineral_weight + power + wealth + 6)
                 * BaseCurrent->population_size * minerals * 64 / mineral_divisor;
             score += (wealth + tech * 2 + 1) * range(BaseCurrent->population_size - power, 1, 99)
@@ -1492,11 +1492,11 @@ uint32_t UpgradePromptAnswered;  // 0x0090EA3C
 
 int BaseCurrentGrowthRate;  // 0x0090E918
 // RECOVERY_OBJECT: v2 0x0090E980 0x0090E984 ?BaseCurrentVehPacifismCount@@3IA 0x004E9550
-uint32_t BaseCurrentVehPacifismCount;  // 0x0090E980
+int BaseCurrentVehPacifismCount;  // 0x0090E980
 // RECOVERY_OBJECT: v2 0x0090E8FC 0x0090E900 ?BaseCurrentForcesSupported@@3IA 0x004E95AB
-uint32_t BaseCurrentForcesSupported;  // 0x0090E8FC
+int BaseCurrentForcesSupported;  // 0x0090E8FC
 // RECOVERY_OBJECT: v2 0x0090E91C 0x0090E920 ?BaseCurrentForcesMaintCost@@3IA 0x0040A6A5
-uint32_t BaseCurrentForcesMaintCost;  // 0x0090E91C
+int BaseCurrentForcesMaintCost;  // 0x0090E91C
 
 /*
  * How many of the base's supported units are past its free allowance, counted
@@ -2952,7 +2952,7 @@ void __cdecl base_check_support() {
     int best_score;
     int veh_id;
     int best_veh;
-    while ((int)BaseCurrentForcesMaintCost > BaseCurrent->intake_2[RSC_MINERALS]) {
+    while (BaseCurrentForcesMaintCost > BaseCurrent->intake_2[RSC_MINERALS]) {
         best_score = -1;
         best_veh = -1;
         for (veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; veh_id++) {
@@ -4217,7 +4217,7 @@ void __cdecl base_support() {
                 || (tile->climate & ~0x1F) < ALT_BIT_OCEAN_SHELF) {
                 BaseCurrentForcesSupported++;
                 int support = PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::SUPPORT];
-                if ((int)BaseCurrentForcesSupported > free_support[range(support + 4, 0, 7)]
+                if (BaseCurrentForcesSupported > free_support[range(support + 4, 0, 7)]
                     && !has_abil(Vehs[veh_id].proto_id, ABL_CLEAN_REACTOR)) {
                     BaseCurrentForcesMaintCount++;
                     BaseCurrentForcesMaintCost += (support <= -4) + 1;
@@ -4227,7 +4227,7 @@ void __cdecl base_support() {
             // Cost of this unit at each of the eight SUPPORT ratings, for social_ai.
             if (BaseUpkeepStage == 1) {
                 for (int support = -4; support <= 3; support++) {
-                    if ((int)BaseCurrentForcesSupported <= free_support[support + 4]) {
+                    if (BaseCurrentForcesSupported <= free_support[support + 4]) {
                         continue;
                     }
                     int cost = has_abil(Vehs[veh_id].proto_id, ABL_CLEAN_REACTOR)
@@ -4381,7 +4381,7 @@ void __cdecl base_minerals() {
         mineral_bonus++;
     }
     BaseCurrent->intake_2[RSC_MINERALS] = (BaseCurrent->intake_2[RSC_MINERALS] * (mineral_bonus + 2)) / 2;
-    BaseCurrent->mineral_consumption = ((int)BaseCurrentForcesMaintCost + (int)BaseCurrentConvoyFrom[RSC_MINERALS]);
+    BaseCurrent->mineral_consumption = (BaseCurrentForcesMaintCost + (int)BaseCurrentConvoyFrom[RSC_MINERALS]);
     BaseCurrent->mineral_surplus = (BaseCurrent->intake_2[RSC_MINERALS] - BaseCurrent->mineral_consumption);
     BaseCurrent->mineral_inefficiency = 0; // ?
     BaseCurrent->mineral_surplus = (BaseCurrent->mineral_surplus - BaseCurrent->mineral_inefficiency); // ?
@@ -4866,7 +4866,7 @@ void __cdecl base_psych() {
                 switch (police) {
                 case -3:
                     // Signed compare in the image (jle); the global is declared uint32_t.
-                    if (static_cast<int>(BaseCurrentVehPacifismCount) > 1) {
+                    if (BaseCurrentVehPacifismCount > 1) {
                         BaseCurrent->drone_total += BaseCurrentVehPacifismCount - 1;
                     }
                     break;
