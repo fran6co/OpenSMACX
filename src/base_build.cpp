@@ -106,13 +106,15 @@ int __cdecl base_claimed(int x, int y, int site1_free, int site2_free,
     return 0;
 }
 
-// WORKAROUND(inline): dead budget probe (folds to no code). Ten calls ahead of
+// WORKAROUND(inline): dead budget probe (folds to no code). Calls ahead of
 // the probe-team tech checks spend what the image spent before its late refusals:
 // range at the weapon/armour and morale clamps, base_lose_minerals and base_claimed
 // stay calls as in the image. Counted with base_compute, is_coast and worm_mod as
-// plain calls in this unit and base.h's one-level has_fac (twelve were needed
-// beside the retired file-local has_fac_flat twin): 9 or fewer leave the frame
-// larger, 11+ spend too much.
+// plain calls in this unit and base.h's one-level has_fac. Since the game units
+// dropped /Oi (2026-11-18) ten were too many: seven stayed out-of-line calls of
+// this probe. Five: the range at 0x4FD528 is a call as in the image and one
+// probe still is (four: no probe call, but that range expands); the frame
+// (0x1F6C) matches at every count from 4 to 10.
 static inline int bb_probe(int x) {
     if (x == 1) {
         x = 2;
@@ -1858,11 +1860,6 @@ L_4fbd3d:
                       + a_4bc[l_20 + l_2c * 3] + bit_count(has_treaty(l_8, target, 7)) + 13,
                   1, 16)
             * l_34 * 3 / (l_58 - l_60 + 3);
-        bb_probe(0);
-        bb_probe(0);
-        bb_probe(0);
-        bb_probe(0);
-        bb_probe(0);
         bb_probe(0);
         bb_probe(0);
         bb_probe(0);
