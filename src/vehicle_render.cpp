@@ -932,9 +932,9 @@ static void vehdraw_add_reactor(int faction_id, int reactor,
 // symbol    ?vehdraw_construct_chassis@@YAXHHHHHPAVCaviar@@@Z
 void __cdecl vehdraw_construct_chassis(int faction_id, int chassis, int weapon,
                                       int armor, int reactor, Caviar *renderer) {
-    unsigned char *armor_colors = 0;
     if (faction_id < 0 || faction_id > 7) faction_id = 0;
     unsigned char *body_colors = &BodyTintColorTables[faction_id][0][0];
+    unsigned char *armor_colors = 0;
     int armor_grade;
     switch (armor) {
     case 0: case 9: armor_grade = 0; armor_colors = 0; break;
