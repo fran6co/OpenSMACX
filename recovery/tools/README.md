@@ -16,3 +16,7 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   any hand-built deck of whole-file variants.
 - `padsweep2.py <unit> <addr> [--write]` sweeps the CANARY-PADS count 0..63 in seconds.
 - `objdis.py <unit> <src> <addr>` raw listing of our function with real jump targets.
+- `analysis/regmap.py <unit> <addr> [--src ALT.cpp] [--min N] [--ranges]` which callee-saved register holds
+  which role (this, a named slot's cached copy, a call result at a source line, a temporary), for the image
+  and for ours, with what the other side uses in the same aligned rows. Read it with MATCHING_GUIDE 2.7.
+- `analysis/regalloc/` the probe sources and runner behind MATCHING_GUIDE 2.7 (see its README).

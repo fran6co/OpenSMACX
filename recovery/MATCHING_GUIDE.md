@@ -806,6 +806,142 @@ raw field access where the original used inline accessors.
   - Switch cases follow source order; out-of-order cases make strict measurement
     refuse with a jump-table cell diagnostic.
 
+### 2.7 Callee-saved register allocation model
+
+Measured 2026-11-18 with about 9,000 generated probe functions
+(`recovery/tools/analysis/regalloc/`, flags of a game unit). Each rule names
+its probe family; rerun with `python3 run.py <file>` or
+`python3 thresh.py g_<family>.cpp` in that directory. Use
+`recovery/tools/analysis/regmap.py <unit> <0xADDR>` to see, for the image and
+for ours, which role each callee-saved register holds and what the other side
+has in the same rows. Confidence: **high** = holds in every probe and in a real
+function, **medium** = holds in every probe, **low** = partial.
+
+Candidates and order
+
+1. **The candidates are live ranges (webs), not variables** (high). A variable
+   redefined after its last read is a new candidate (`redef` in g_factors2);
+   two variables with disjoint ranges reuse one register (`disjoint3`,
+   `stagger` in g_split). Declaration order and position have no effect; only
+   references do (`c_2222d`, `decl`).
+2. **Registers go out in the order esi, edi, ebx, and ebp fourth under /Oy**
+   (high; p01_count, both flag sets). Candidates are served in priority order
+   and each takes the first of these that no interfering, already served
+   candidate holds. So the register *name* tells the rank: a role in ebx in the
+   image and edi in ours means one more candidate outranks it and overlaps it
+   in the image (or one fewer in ours).
+3. **Priority is a weighted reference count** (high for the shapes below).
+   Definitions and reads count alike; every textual occurrence counts
+   (`garr[d] + d` is two); push arguments, compares, indexes, arithmetic and
+   global stores count the same (g_factors). A parameter gets no credit for
+   its entry value and no penalty for being a parameter; `this` counts its
+   prologue copy as one reference in the entry block (g_factors, g_factors2,
+   g_parpos, `this3`/`this4` in g_temps). char and short count like int.
+4. **Weights by position of the reference** (medium; g_calib, g_depth,
+   g_middle, g_shapes), in units of one reference in the entry block:
+
+   | where the reference sits | weight |
+   | --- | --- |
+   | entry block, and the last block of the function (after the last join) | 1 |
+   | any other block outside loops: if/else arms, code between two ifs or loops, code skipped by a forward goto | 1/4 |
+   | a `switch` case outside loops | 1/8 |
+   | loop body, depth 1 (`while`, `do`, `while (1)`; ifs and switches inside do not reduce it) | 1/2 |
+   | loop depth 2, 3, 4, 5 | 1, 2, 4, 8 |
+   | body of `for (init; cond; step)` at depth 1 | 3/4 |
+   | first block of `for (;;)` before its first `if (...) break` | 3/2 |
+
+   Each block that references the candidate adds half a reference of that
+   block's weight (four loops with one read each outweigh one loop with four
+   reads: `l4x1` against `l1x4` in g_const). `while (1)` and `for (;;)` produce
+   the same code and different weights, so loop spelling is a lever that
+   changes no instruction except through the allocation.
+5. **Ties go to the candidate referenced first in the code** (high;
+   `c_2222`, `c_2222d`, `early`, `ppd`, `dfirst`). For a local that is its
+   first definition; for a parameter its first read. Among two parameters the
+   one read first wins whatever their order in the signature. The earlier rule
+   "locals before parameters" was this: the local was defined before the
+   parameter was first read.
+6. **Range and locality change the priority** (low: measured, not reduced to
+   a formula). With equal ranges the count decides exactly. A candidate
+   confined to one block beats a rival that only passes through that block
+   with up to 4/3 of its weighted count (g_span `w1`, `w1f`, `i1`, any number
+   of blocks spanned: g_position `dlast_w1..3`), but gets no such advantage
+   when the rival's references sit in the same block (g_span `t`, `s`).
+   Block-local candidates in a conditional arm take esi and edi ahead of a
+   whole-function parameter or `this` with a larger count (p06_arm_local,
+   p04_param_tie). Rule of thumb: short candidates first, then long ones by
+   count.
+
+Losers: memory home, cached pieces, write-back
+
+7. **A candidate needs one register free over its whole range** (high). It
+   never takes a register through another candidate's idle stretch: a winner
+   keeps its register across loops in which it is not referenced (`hole_*` in
+   g_split). This is why ours can hold a variable in esi over a long stretch
+   while the image keeps it in memory: in the image some higher candidate
+   overlaps it on each of the three registers.
+8. **A loser lives in its frame slot and its reads are cached as new, short
+   candidates** (high; g_cache, g_split). A cached copy needs at least two
+   references; it is loaded at the first of them; it survives calls; it is
+   carried through ifs when every path has it, is reloaded at each loop
+   iteration and after a loop (`loop_w`, `loop_multi`, `dead_before`), and it
+   takes the first register free over its own stretch. These pieces compete by
+   the same priority with every other candidate, including whole variables
+   defined later (`cache_vs_web2`: a cached parameter with nine reads takes the
+   register from a local with four). This is the image's "kept in memory and
+   cached block by block".
+9. **Register with write-back is the loser's piece before the winner starts**
+   (high; `par4_cd_k1` in g_factors, `short*` in g_rangelen). When the winner's
+   range begins later (a parameter first read late, a local defined late), the
+   loser holds the register from its definition up to that point and every
+   definition is also stored (`mov ebx, eax; mov [slot], ebx`); after it the
+   loser is read from memory.
+10. **Not candidates** (high): address-taken locals (`addr`), globals and
+    members across calls (`global`, `this_field`), a value consumed once from
+    eax (`def_use`), a constant initialiser that propagates (`const`). An
+    index used only as `table[i].field` is replaced by one address candidate
+    that counts the field reads (`cse_addr`), so the index stops competing.
+
+Using it
+
+- Run regmap. If one role sits in a different register on the two sides and
+  nothing else moves, compare counts: the image's higher-ranked role needs more
+  weighted references than the other, or the first reference.
+- Levers that change a count without changing the code: one variable split in
+  two where the second starts as the first dies (the second inherits the
+  register; parse_string 0x00625880, 129 rows to exact with
+  `LPSTR p = var + 2;` for the alternative scan, which dropped `var` below
+  `output`); the reverse merge; a value read from its source again instead of
+  a named copy; `while (1)` against `for (;;)`; a reference moved between the
+  entry block and a later block (statement order across the first branch).
+- If the image keeps a variable in memory with cached pieces and ours gives it
+  a register (or the reverse), count the candidates that overlap it on each
+  register. A constant stored several times (`mov ebx, 6; mov [order], ebx`)
+  is a piece of the stored variable, not a constant temporary.
+
+What the model does not predict
+
+- success_rates 0x0059EEE0: the image enregisters `morale`, ours
+  `diff_modifier`. Rules 3 to 5 give `morale` the higher count. The stand-alone
+  copy (p04, p05, p07, p08) behaves like ours with parameters and like the
+  model with locals defined in the entry block; one more reference to `morale`
+  after the clamp flips it. No natural spelling found.
+- can_terraform 0x00565320: the image holds `order` in ebx as a written-back
+  piece and keeps `solar_tech` in memory (hence the 0x44 frame); ours gives
+  `solar_tech` the register although `order`'s piece has more references.
+  Rule 6 is the gap: a short whole candidate against a piece of a long one.
+- MultiWin::draw_player 0x00478630: `this` in ebx (image) against edi (ours)
+  follows rule 2 from the first block, where the image holds `height` in edi
+  and ours holds the copied `top` in ebx; eight spellings of the rectangle
+  arithmetic did not move it.
+- PullDown::compute_length 0x005F9D30 (/Oy): the image evicts `this` from
+  ebp for a call result held across one call inside the loop (rule 9
+  mirrored: `this` is stored at entry and reloaded after); ours keeps `this`
+  and spills the result. By count `this` wins; rule 6 again.
+- The weights of rule 4 were measured with both rivals live over the whole
+  function. Entry and last block count four times a middle block; why is not
+  known, and `for` loops look like a sum of two contexts.
+
 ## 3. Symptom → first thing to check
 
 ### 3.1 Calls and inlining
@@ -888,18 +1024,11 @@ raw field access where the original used inline accessors.
   returns, so the code looks as if it had early returns. Any `return 0xC;`
   or `if (r != 0) return r;` swaps the two registers (Wave::dyna_load
   0x004C6BB0, VoiceTx::init 0x004C8F70).
-- **Which variable gets a callee-saved register** (micro-experiment,
-  2026-11-18: four locals set from calls, each read N times across calls).
-  VC6 hands out esi, edi, ebx in descending order of reference count; a
-  read inside a loop counts for more than one outside. Equal counts go in
-  declaration order, and the last variable stays in its stack slot. A
-  local outranks a parameter with the same count; a parameter left out is
-  reloaded from `[ebp+N]` at each use; among parameters the earlier one
-  wins. The first result of `f(a) < f(b)` is a compiler temporary that
-  takes the next free callee-saved register, or a stack slot when all
-  three are taken. So when the image has variable X in a register and
-  ours has it in memory, X needs one more reference than its rival (or
-  the rival one fewer); reordering declarations only breaks exact ties.
+- **Which variable gets a callee-saved register**: see section 2.7 (order
+  esi, edi, ebx by weighted reference count; ties to the first referenced;
+  position weights; cached pieces of memory-homed variables). The earlier
+  wording here ("declaration order", "a local outranks a parameter") was
+  wrong: equal counts go to the candidate referenced first in the code.
 - **Two zero stores as immediates or through `xor eax,eax`.** Measured on a
   standalone copy of Credits::unload: with `/Oy-` VC6 emits `xor eax,eax`
   and two register stores; with `/Oy` (and with `/Os`) it emits two
@@ -2095,8 +2224,9 @@ raw field access where the original used inline accessors.
   function and stores every assignment to a frame or dead-parameter slot
   (`mov ebx,K; mov [slot],ebx`, reloads at joins), VC6 split V: V had the
   register over its dense part and a shorter, hotter local took it in
-  between. Memory-homed locals are never cached in callee-saved registers
-  across calls, so if ours keeps V memory-only, another local holds that
+  between (rule 9 of section 2.7). A memory-homed local is cached in a
+  callee-saved register only where one is free over the whole cached stretch
+  (rule 8), so if ours keeps V memory-only, another candidate holds that
   register across V's piece. List each register's occupants in the image
   and ours and fix the balance of uses (a missing or extra re-read, a named
   local the original re-read, an initialisation placed elsewhere): the
