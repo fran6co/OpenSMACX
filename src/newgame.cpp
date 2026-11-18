@@ -1533,6 +1533,16 @@ do_cleanup:
 
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0058E360 0x0058EE34 0x0058EE4C 0x0058E758
+// WORKAROUND(inline): dead /Ob2 spend for top_menu, not recovered code (a
+// constant argument folds it away). The image expands one more member
+// destructor at the menu loop's `return 1` teardown (0x0058EC75) than the
+// body alone pays for; two flat units anywhere before the loop's last
+// init_opening expansion reproduce it, one or three do not, and spend after
+// that point goes to the wrong site. Tried as real spellings without effect:
+// Popup::start(label), opening_window(), a ternary helper for the file name,
+// a helper layer over init_opening, a style-flag helper.
+static inline int top_menu_spend(int x) { if (x == 0) x = 1; return x; }
+
 // ORIGINAL: 0x0058E360 ?top_menu@@YAHH@Z 0x0058E360-0x0058EE31;0x00660A96-0x00660BD7
 // RECOVERY_BINDING: v1 {"evidence": ["task:newgame-menu-owner", "historical seed:src/unrecovered/0058e360.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete mapped native control flow", "source:existing SetupWin/Popup/Buffer/NetDaemon owner declarations; provisional bounded945820 and9B2074 objects, not raw image aliases"], "reason": "Source-owned new-game/menu family preserving complete original identity, auxiliary spans and historical seed findings; existing genuine object lifetimes and typed member owners. Unfinished bodies remain explicit, not implementation coverage."}
 // TRIED: `SetupWin setup; Popup popup;` real locals (RAII for their destructor cascades) with the full main-menu retry loop transcribed via goto+labels matching original addresses (window-creation blocks x3, do_menu switch on 6 cases, new-game wizard parse_says/X_pop block); diverges at instr #14, not chased further given size.
@@ -1557,6 +1567,8 @@ int __cdecl top_menu(int mode) {
     else
         dialog_default_style() &= ~4u;
 
+    top_menu_spend(5);  // WORKAROUND(inline): see top_menu_spend
+    top_menu_spend(5);  // WORKAROUND(inline): see top_menu_spend
     if (ExpansionEnabled != 0) {
         init_opening(WinScreenWidth == 0x320
             ? "xopeningb.pcx" : "xopeninga.pcx");
