@@ -522,8 +522,21 @@ void __cdecl input_callback() {
 }
 
 
+// WORKAROUND(inline): /Ob2 budget stand-ins for load_music. The image
+// calls ??0FactionAmbience (0x004471F0) out of line at the first two
+// ambience sites (0x0044587D, 0x004458D3) and expands it at the other six;
+// with plain strcat/stricmp spellings every site expands it. Spending the
+// budget through these two helpers (fx_is at the last test only) reproduces
+// exactly that split. The original's spelling of the spend is unknown.
+static inline bool fx_is(const char *name, const char *key) {
+    return stricmp(name, key) == 0;
+}
+static inline void fx_set_name(int k) {
+    strcat(StringTemp, FxAmbienceSetFiles[k]);
+}
+
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004457E0 ?load_music@@YAXH@Z 0x004457E0-0x00445BA4;0x00654CF0-0x00654D52 FILE
+// ORIGINAL: 0x004457E0 ?load_music@@YAXH@Z 0x004457E0-0x00445BA4;0x00654CF0-0x00654D52 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:291c01ea:src/recovered/units/004457e0.cpp", "src/ambience.h", "src/midi.h", "src/fx.h"], "reason": "Original constructor staging, actual event tables and compiler-call contracts identify the genuine audio owner operation; compatible historical seed spans and claims remain available for restoration, not an acceptance verdict."}
 void __cdecl load_music(int faction_id) {
     StringTemp[0] = 0;
@@ -535,25 +548,25 @@ void __cdecl load_music(int faction_id) {
     const char *const name = Players[faction_id].search_key;
     FactionAmbience *music;
     if (stricmp(name, "gaians") == 0) {
-        strcat(StringTemp, FxAmbienceSetFiles[1]);
+        fx_set_name(1);
         music = new GAmbience;
     } else if (stricmp(name, "hive") == 0) {
-        strcat(StringTemp, FxAmbienceSetFiles[2]);
+        fx_set_name(2);
         music = new MAmbience;
     } else if (stricmp(name, "univ") == 0) {
-        strcat(StringTemp, FxAmbienceSetFiles[3]);
+        fx_set_name(3);
         music = new UAmbience;
     } else if (stricmp(name, "morgan") == 0) {
-        strcat(StringTemp, FxAmbienceSetFiles[4]);
+        fx_set_name(4);
         music = new MAmbience;
     } else if (stricmp(name, "spartans") == 0) {
-        strcat(StringTemp, FxAmbienceSetFiles[5]);
+        fx_set_name(5);
         music = new SAmbience;
     } else if (stricmp(name, "believers") == 0) {
-        strcat(StringTemp, FxAmbienceSetFiles[6]);
+        fx_set_name(6);
         music = new BAmbience;
-    } else if (stricmp(name, "peace") == 0) {
-        strcat(StringTemp, FxAmbienceSetFiles[7]);
+    } else if (fx_is(name, "peace")) {
+        fx_set_name(7);
         music = new GAmbience;
     } else {
         strcat(StringTemp, "aset1.amb");
