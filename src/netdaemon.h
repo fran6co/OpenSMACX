@@ -98,13 +98,12 @@ static_assert(offsetof(PrimaryLockStateTail, session_phase_) == 0x10,
               "primary session phase offset");
 static_assert(offsetof(PrimaryLockStateTail, trailing_words_) == 0x14,
               "primary trailing words follow the session phase");
-// WORKAROUND(decl): the former two-entry view of the flat channel words
-// (0x1B68-0x1BDF), used only by reset's WORKAROUND(type) stores. Deleting this
-// declaration with its three static_asserts flips buy_council_vote
-// (0x0053EB50, a block-layout tie) and faction_upkeep (0x00527290, an add
-// operand tie); deleting only the static_asserts flips
-// ReportIf::on_iface_button_clicked (0x004A6330). Remove it once those
-// functions no longer depend on the unit's declaration counters.
+// The two-entry view of the flat channel words (0x1B68-0x1BDF). NetDaemon
+// holds it as channels_, in an anonymous union with the flat members; only
+// reset's WORKAROUND(type) stores use it. The unit's declaration counters
+// depend on this declaration and its static_asserts (buy_council_vote
+// 0x0053EB50, faction_upkeep 0x00527290, ReportIf::on_iface_button_clicked
+// 0x004A6330 are count-sensitive).
 struct LockStateEntry {
   uint32_t leading_words_[4];
   union Payload {
@@ -289,45 +288,46 @@ class NetDaemon : public AlphaNet {
     primary_state_.trailing_words_[7] = 0;
     primary_state_.trailing_words_[6] = 0;
 
-    // WORKAROUND(type): the flat words are stored through the former
-    // two-entry LockStateEntry view. The image calls this reset out of line
-    // (0x0051DD00) inside menu_proc's quit_game expansion (0x51C0F9) while
-    // on_key_click and quit_game itself expand it: the original body costs
-    // /Ob2 more than eighteen flat-member stores do. With flat names menu_proc
-    // expands it (0.990 -> 0.950); spend placed in menu_proc does not move
-    // it, two non-folding compares inside reset do, and so does this view.
-    // Emitted code is unchanged at every site. Accessors, chained stores,
-    // memset, a primary_state_ reference and a local view pointer were
-    // neutral or (the pointer) changed reset's own code. The original
-    // spelling of the extra cost is unknown.
-    reinterpret_cast<LockStateEntry *>(&field_1B68_)[0].leading_words_[1] = 0;
-    reinterpret_cast<LockStateEntry *>(&field_1B68_)[0].leading_words_[0] = 0;
-    reinterpret_cast<LockStateEntry *>(&field_1B68_)[0].trailing_words_[0] = 0;
-    reinterpret_cast<LockStateEntry *>(&field_1B68_)[1].leading_words_[1] = 0;
-    reinterpret_cast<LockStateEntry *>(&field_1B68_)[0].trailing_words_[9] = 0;
-    reinterpret_cast<LockStateEntry *>(&field_1B68_)[1].leading_words_[0] = 0;
-    reinterpret_cast<LockStateEntry *>(&field_1B68_)[1].trailing_words_[5] = 0;
-    reinterpret_cast<LockStateEntry *>(&field_1B68_)[1].trailing_words_[4] = 0;
+    // WORKAROUND(type): the flat words are stored through channels_, the
+    // two-entry LockStateEntry view that shares their storage in an anonymous
+    // union. The image calls this reset out of line (0x0051DD00) inside
+    // menu_proc's quit_game expansion (0x51C0F9) while on_key_click and
+    // quit_game itself expand it: the original body costs /Ob2 more than
+    // eighteen flat-member stores do. With flat names menu_proc expands it
+    // (0.990 -> 0.950); spend placed in menu_proc does not move it, two
+    // non-folding compares inside reset do, and so does this view. Emitted
+    // code is unchanged at every site. Accessors, chained stores, memset, a
+    // primary_state_ reference and a local view pointer were neutral or (the
+    // pointer) changed reset's own code. The original spelling of the extra
+    // cost is unknown.
+    channels_[0].leading_words_[1] = 0;
+    channels_[0].leading_words_[0] = 0;
+    channels_[0].trailing_words_[0] = 0;
+    channels_[1].leading_words_[1] = 0;
+    channels_[0].trailing_words_[9] = 0;
+    channels_[1].leading_words_[0] = 0;
+    channels_[1].trailing_words_[5] = 0;
+    channels_[1].trailing_words_[4] = 0;
 
     primary_state_.trailing_words_[3] = 0;
     primary_state_.trailing_words_[4] = 0;
     primary_state_.trailing_words_[5] = 0;
-    reinterpret_cast<LockStateEntry *>(&field_1B68_)[1].trailing_words_[3] = 0;
-    reinterpret_cast<LockStateEntry *>(&field_1B68_)[1].trailing_words_[2] = 0;
-    reinterpret_cast<LockStateEntry *>(&field_1B68_)[1].leading_words_[3] = 0;
-    reinterpret_cast<LockStateEntry *>(&field_1B68_)[1].leading_words_[2] = 0;
-    reinterpret_cast<LockStateEntry *>(&field_1B68_)[1].payload_.flags = 0;
+    channels_[1].trailing_words_[3] = 0;
+    channels_[1].trailing_words_[2] = 0;
+    channels_[1].leading_words_[3] = 0;
+    channels_[1].leading_words_[2] = 0;
+    channels_[1].payload_.flags = 0;
     primary_state_.session_phase_ = 0;
     primary_state_.trailing_words_[0] = 0;
-    reinterpret_cast<LockStateEntry *>(&field_1B68_)[1].trailing_words_[8] = 0;
-    reinterpret_cast<LockStateEntry *>(&field_1B68_)[1].trailing_words_[7] = 0;
+    channels_[1].trailing_words_[8] = 0;
+    channels_[1].trailing_words_[7] = 0;
     primary_state_.trailing_words_[1] = 0;
     primary_state_.trailing_words_[2] = 0;
-    reinterpret_cast<LockStateEntry *>(&field_1B68_)[1].trailing_words_[6] = 0xFF;
-    reinterpret_cast<LockStateEntry *>(&field_1B68_)[0].payload_.vehicle_selection_follow = nullptr;
+    channels_[1].trailing_words_[6] = 0xFF;
+    channels_[0].payload_.vehicle_selection_follow = nullptr;
 
     for (int i = 1; i <= 8; ++i) {
-        reinterpret_cast<LockStateEntry *>(&field_1B68_)[0].trailing_words_[i] = 0;
+        channels_[0].trailing_words_[i] = 0;
     }
 
     locks_.clear();
@@ -410,29 +410,34 @@ class NetDaemon : public AlphaNet {
   // channels_[i].f[j] array spelling is over the cap. Likewise unlock
   // (0x00530D00) is only affordable inside order_veh's await_exec expansion
   // (0x00531EA9) with direct members.
-  uint32_t field_1B68_;           // cleared by the constructor
-  uint32_t field_1B6C_;
-  uint32_t field_1B70_;
-  uint32_t action_mode_;          // 0x1B74, process_message reads it
-  int *locked_veh_;               // 0x1B78, borrowed vehicle-ID slot (lock_veh)
-  uint32_t field_1B7C_;           // the faction mask hang_up ANDs against
-  uint32_t faction_masks_[8];     // 0x1B80, one wait mask per faction
-  uint32_t field_1BA0_;           // the diplomacy-channel flag close_channel clears
-  uint32_t field_1BA4_;
-  uint32_t field_1BA8_;
-  uint32_t lock_held_;            // 0x1BAC
-  uint32_t exec_pending_;         // 0x1BB0
-  uint32_t field_1BB4_;
-  uint32_t synch_pending_;        // 0x1BB8
-  uint32_t field_1BBC_;
-  uint32_t field_1BC0_;           // end_of_event tests and clears it
-  uint32_t veh_locked_;           // 0x1BC4
-  uint32_t lock_word_1BC8_;       // 0x1BC8
-  uint32_t move_requests_;        // 0x1BCC, maybe_lock's repeat count
-  uint32_t field_1BD0_;           // the constructor stores 0xFF here
-  uint32_t field_1BD4_;
-  uint32_t field_1BD8_;
-  uint32_t field_1BDC_;
+  union {
+    struct {
+      uint32_t field_1B68_;           // cleared by the constructor
+      uint32_t field_1B6C_;
+      uint32_t field_1B70_;
+      uint32_t action_mode_;          // 0x1B74, process_message reads it
+      int *locked_veh_;               // 0x1B78, borrowed vehicle-ID slot (lock_veh)
+      uint32_t field_1B7C_;           // the faction mask hang_up ANDs against
+      uint32_t faction_masks_[8];     // 0x1B80, one wait mask per faction
+      uint32_t field_1BA0_;           // the diplomacy-channel flag close_channel clears
+      uint32_t field_1BA4_;
+      uint32_t field_1BA8_;
+      uint32_t lock_held_;            // 0x1BAC
+      uint32_t exec_pending_;         // 0x1BB0
+      uint32_t field_1BB4_;
+      uint32_t synch_pending_;        // 0x1BB8
+      uint32_t field_1BBC_;
+      uint32_t field_1BC0_;           // end_of_event tests and clears it
+      uint32_t veh_locked_;           // 0x1BC4
+      uint32_t lock_word_1BC8_;       // 0x1BC8
+      uint32_t move_requests_;        // 0x1BCC, maybe_lock's repeat count
+      uint32_t field_1BD0_;           // the constructor stores 0xFF here
+      uint32_t field_1BD4_;
+      uint32_t field_1BD8_;
+      uint32_t field_1BDC_;
+    };
+    LockStateEntry channels_[2];
+  };
   // The constructor leaves the file-index pointer and save rows untouched.
   // RECOVERY_MEMBER: v1 NetDaemon file_index_records_ 0x1BE0 0x0052ED40
   NetDaemonFileIndexRecord *file_index_records_;
