@@ -2313,11 +2313,10 @@ int NetDaemon::init(int option) {
     primary_state_.flags_ = 0;
     primary_state_.leading_words_[2] = 0;
 
+    // The image's fall-through path leaves setup's own eax (zero) in place
+    // and has a second epilogue: the original fell off the end here.
     if (AlphaNet::setup(option)) {
         return 1;
-    }
-    else {
-        return 0;
     }
 }
 
