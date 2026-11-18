@@ -259,7 +259,11 @@ int UV2Player::play(int width, int height) {
     if (DirectDrawCreate(nullptr, &direct_draw_, nullptr) != DD_OK) {
         return 1;
     }
-    if (direct_draw_->SetCooperativeLevel(HandleMain,
+    // 0x004BF519 loads the window handle through ECX before the vtable
+    // (EDX), as a named value does; passed directly the two swap and the
+    // later Release keeps its pointer in EAX instead of EDI.
+    HWND window = HandleMain;
+    if (direct_draw_->SetCooperativeLevel(window,
             DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE) != DD_OK) {
         return 1;
     }
