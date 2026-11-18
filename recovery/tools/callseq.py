@@ -12,7 +12,7 @@ for p in glob.glob(R+'/src/**/*.cpp',recursive=True):
         addr2sym[int(m.group(1),16)]=m2.group(1) if m2 else sym
 CRT={'sub_645470':'_strcat','sub_645460':'_strcpy','sub_64601d':'_rand','sub_6453e0':'_strlen','sub_644f3a':'_abs','sub_64fc88':'__itoa','sub_644ef2':'_free','sub_644dff':'_exit','sub_645660':'_strcmp','sub_645550':'__chkstk','sub_64558a':'??2@YAPAXI@Z','sub_6458c8':'__ftol','sub_647851':'_floor','sub_645da7':'_atoi','sub_645dd0':'_strchr','sub_6468d0':'_strstr','sub_645e90':'_strncpy','sub_6465f0':'_memset','sub_645930':'_memcpy'}
 t=open(R+'/'+unit,encoding='latin-1').read()
-SRC=sys.argv[4] if len(sys.argv)>4 else R+'/'+unit; t=open(SRC,encoding='latin-1').read(); c,err=fe.compile_unit(unit,SRC,sys.argv[3] if len(sys.argv)>3 else '9')
+SRC=sys.argv[4] if len(sys.argv)>4 else R+'/'+unit; t=open(SRC,encoding='latin-1').read(); c,err=fe.compile_unit(unit,SRC,sys.argv[3] if len(sys.argv)>3 else os.environ.get('FE_PFX_BASE','33'))
 sym,lo,hi=fe.ident(t,addr)
 s=c.function(sym); sec=c.sections[s.section-1]
 rm={r[0]:r for r in sec.relocations}

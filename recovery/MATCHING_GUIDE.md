@@ -2296,6 +2296,31 @@ Types
 - A signed `-1` store into a byte array gives `or r8,0xFF`; the image's
   `mov r8,0xFF` needs `unsigned char` (TerrainCacheEntry::altitude).
 
+Constant registers (measured with standalone probes, 2026-11-18)
+- VC6 dedicates a callee-saved register to a constant (zero, -1, 5, …) once
+  the function has four memory stores of it. Any width counts; a store in a
+  loop counts double, in a nested loop four times. The count is taken before
+  head-merging and dead-store elimination, so identical leading stores in both
+  arms of an if, a store overwritten later in the block, and a store inside an
+  expanded inline all count. Pushes, compares, `test reg,reg` and
+  register-local initialisers never count, but use the register once it
+  exists (`push ebx`, `cmp [mem],ebx`, `mov [mem],bl`).
+- It needs a free callee-saved register: three live locals deny it at four
+  stores and it wins at eight. /Oy only adds ebp as a candidate.
+- A named `int z = 0` never reassigned equals the literal. A zero-initialised
+  local that keeps a callee-saved register is used as the zero while known
+  zero.
+- So a function-wide `xor ebx,ebx` the source lacks is a missing fourth store
+  (BaseWin::on_button_clicked: clearing StringTemp in each arm of a toggle,
+  hoisted by VC6 into one store, 62 rows -> exact); a zero register the image
+  lacks is one store too many or lost register competition
+  (InfoWin::setup_text: 67 immediate zero stores, no register).
+- VC6 evaluates `a + b - c` as `(b - c) + a` whatever the spelling; a
+  `(pos + pos) - neg` tree in an image is not a plain three-term chain.
+- `if (c) { …; return 0; } …; return 0;` folds a final
+  `if (f() == 0) return 1; return 0;` into neg/sbb/inc; one if/else falling
+  to the closing return keeps `test; jne`.
+
 ## 4. Measured and neutral (do not retry without new evidence)
 
 - **String pooling.** The original is unpooled everywhere: identical literals stay

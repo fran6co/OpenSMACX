@@ -4301,7 +4301,7 @@ static inline void set_view_mode(BaseWin *win, uint32_t mode) {
 //           enters it on the front table, while the image spells the same
 //           body Q and its own table 0x66A4BC holds the raw address.
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0041D500 0x0041DA6C 0x0041DACC 0x0041D5C5
-// ORIGINAL: 0x0041D500 ?on_button_clicked@BaseWin@@QAEXH@Z 0x0041D500-0x0041DA6C
+// ORIGINAL: 0x0041D500 ?on_button_clicked@BaseWin@@QAEXH@Z 0x0041D500-0x0041DA6C BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/recovered/units/0041d500.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
 // symbol    ?on_button_clicked@BaseWin@@UAEXH@Z
 void BaseWin::on_button_clicked(int button_id) {
