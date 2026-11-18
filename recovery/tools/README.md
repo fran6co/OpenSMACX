@@ -21,6 +21,15 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
 - `analysis/regmap.py <unit> <addr> [--src ALT.cpp] [--min N] [--ranges]` which callee-saved register holds
   which role (this, a named slot's cached copy, a call result at a source line, a temporary), for the image
   and for ours, with what the other side uses in the same aligned rows. Read it with MATCHING_GUIDE 2.7.
+- `analysis/regprio.py <unit> <addr> [--src ALT.cpp] [--const N] [--blocks] [--cand a,b] [--quiet]` rule-4 priorities
+  (MATCHING_GUIDE 2.7) of one function: blocks, loops and switch cases from our /FAsc listing, source references
+  per block, webs by reaching definitions, `n_b * 2^depth` per reference, the predicted register beside the
+  register our compile and the image (through the fe alignment) give each web, then every interfering pair the
+  image orders differently from ours with the blocks that contribute most to each side. It also lists our
+  compiler temporaries (`T:this+0x444` base-class `this`, `T:tmp[-4]` unnamed frame slots, `T:expr@line:reg`
+  CSE'd values) as candidates, since those are usually the candidate a source-only count misses. Screen only:
+  on 50 exact functions it orders 64% of interfering register pairs right (strength-reduced loop counters,
+  address CSEs that replace an index, and constant pieces are the misses).
 - `analysis/regalloc/` the probe sources and runner behind MATCHING_GUIDE 2.7 (see its README).
 - `crtcalls.py OUT.json` compares, per function, the calls to memcpy/memmove/memset/strlen/strcpy/
   strcat/strcmp/memcmp in our objects with the image's (20 s). The game and Jackal have no
