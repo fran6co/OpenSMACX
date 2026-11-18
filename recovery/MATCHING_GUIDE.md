@@ -2461,8 +2461,8 @@ Constant registers (measured with standalone probes, 2026-11-18)
   `rep movsb`). Dropping /Oi with every per-site pragma removed kept 5,052 of
   5,093 exact functions; the 41 others used an expanding `memset`/`memcpy`
   as a stand-in and all became exact as loops/assignments.
-  `.opensmacx`-style check: count CRT calls per function in ours (relocations)
-  and in the image (call targets); they must be equal.
+  `recovery/tools/crtcalls.py` compares the CRT calls per function in ours
+  and in the image; they must be equal.
 - **Loop fission order.** One loop storing to two arrays becomes two block
   operations in reverse statement order (`for (...) { A[i] = 0; B[i] = 0; }`
   clears B first: clear_tamper 0x0051E390, clear_council_notify).

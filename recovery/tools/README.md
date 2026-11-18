@@ -20,3 +20,8 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   which role (this, a named slot's cached copy, a call result at a source line, a temporary), for the image
   and for ours, with what the other side uses in the same aligned rows. Read it with MATCHING_GUIDE 2.7.
 - `analysis/regalloc/` the probe sources and runner behind MATCHING_GUIDE 2.7 (see its README).
+- `crtcalls.py OUT.json` compares, per function, the calls to memcpy/memmove/memset/strlen/strcpy/
+  strcat/strcmp/memcmp in our objects with the image's (20 s). The game and Jackal have no
+  intrinsics, so the multisets must be equal; a difference names a wrong spelling.
+- `FE_DROP_FLAGS="/Oi"` (fe.py, feall.py) removes compiler flags from game/Jackal commands for a
+  hypothesis run without touching the build.
