@@ -3582,7 +3582,7 @@ int Buffer::write_multi_font_raw_l(LPSTR text, int x_coord, int y_coord,
             if (strncmp(stop, "$LINK<", 6) == 0) {
                 markup_pending_ = 1;
                 next_slot = 3;
-                if (static_cast<int>(++link_count_) > 20) {
+                if ((++link_count_) > 20) {
                     MessageBoxA(nullptr, "Maximum hypertext links exceeded!",
                                 "WARNING!", 0);
                 }
@@ -3640,7 +3640,7 @@ int Buffer::write_multi_font_raw_l(LPSTR text, int x_coord, int y_coord,
             LPSTR const close = strchr(stop, '>');
             if (close) {
                 // The label between `=` and `>` is copied out and owned.
-                if (static_cast<int>(link_count_) < 20) {
+                if (link_count_ < 20) {
                     const int label = static_cast<int>(close - str);
                     link_labels_[link_count_ - 1] =
                         static_cast<char *>(mem_get(label + 1));
@@ -3660,7 +3660,7 @@ int Buffer::write_multi_font_raw_l(LPSTR text, int x_coord, int y_coord,
         // The height is the link font's, and `font4_` falling back to
         // `font1_` is the image's own guard - `unk_1_` when negative,
         // `height_ + unk_1_` when not.
-        if (write_font_slot_ == 3 && static_cast<int>(link_count_) < 20) {
+        if (write_font_slot_ == 3 && link_count_ < 20) {
             Font *const link_font = fonts_[3] ? fonts_[3] : fonts_[0];
             if (link_font) {
                 const int height = link_font->unk_1_ >= 0
@@ -3677,7 +3677,7 @@ int Buffer::write_multi_font_raw_l(LPSTR text, int x_coord, int y_coord,
     const int opened_at = x;
     const int reached = write_raw_l(str, x, y_coord,
                                     static_cast<int>(stop - str));
-    if (write_font_slot_ == 3 && static_cast<int>(link_count_) < 20) {
+    if (write_font_slot_ == 3 && link_count_ < 20) {
         Font *const link_font = fonts_[3] ? fonts_[3] : fonts_[0];
         if (link_font) {
             const int height = link_font->unk_1_ >= 0

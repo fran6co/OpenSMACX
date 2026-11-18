@@ -779,7 +779,7 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
    * is `OwnedAllocationCount`, so the two really are the same table.
    * `clear_links` zeroes it beside freeing all twenty.
    */
-  uint32_t link_count_;
+  int link_count_;
   Spot spot_;
   // 0x4BC. TWENTY OWNED LINK-LABEL STRINGS - `Buffer::init` and `Buffer::close`
   // both walk `for (20) { if (*p) { free(*p); *p = 0; } p += 4; }` from
