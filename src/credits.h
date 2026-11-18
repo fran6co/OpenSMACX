@@ -58,14 +58,14 @@ class Credits : public GraphicWin {
   // 1 member(s) from the IDA database, 0 named; it starts a member at 0xA14, which is where src/ ends.
 
   // RECOVERY_MEMBER: v1 Credits frame_count_ 0xA14 0x00428DC0
-  uint32_t frame_count_;  // 0xA14
+  int frame_count_;  // 0xA14
 
   // Storage the image proves is here: the timer ends at 0x2D6C.
   // The constructor allocation and size assertion pin the full extent.
   // 12 member(s) from the IDA database, 4 named; it starts a member at 0xA18, which is where src/ ends.
 
   // RECOVERY_MEMBER: v1 Credits line_count_ 0xA18 0x00428C00
-  uint32_t line_count_;  // 0xA18
+  int line_count_;  // 0xA18
   // draw_credits indexes this owned string table; unload frees all 512
   // slots, establishing the pointer element width and complete extent.
   char *lines_[512];  // 0xA1C
@@ -75,8 +75,8 @@ class Credits : public GraphicWin {
   uint32_t field_1228_;  // 0x1228
   // Source draw_credits divides the vertical position by this row step.
   // RECOVERY_MEMBER: v1 Credits line_height_ 0x122C 0x00428C00
-  uint32_t line_height_;  // 0x122C
-  uint32_t field_1230_;  // 0x1230
+  int line_height_;  // 0x122C
+  int field_1230_;  // 0x1230
   // Typed from the sizes the tree already asserts: GraphicWin 0xA14,
   // Font 0x28, Buffer 0x588, each verified against the real class by
   // tools/verify_class_layouts.py. Size-neutral by construction, and

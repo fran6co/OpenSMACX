@@ -102,7 +102,7 @@ void Credits::load() {
       if (stored != 0) {
         ++line_count_;
         strcpy(stored, TextBufferGetPtr);
-        const int maximum = static_cast<int>(field_1230_);
+        const int maximum = field_1230_;
         const int measured = font_.width(lines_[line_count_ - 1]);
         field_1230_ = maximum > measured
             ? maximum : font_.width(lines_[line_count_ - 1]);
@@ -184,26 +184,26 @@ void __cdecl Credits::timer_callback_daemon(int a1) {
 // ORIGINAL: 0x00428C00 ?draw_credits@Credits@@QAEXXZ 0x00428C00-0x00428D5C BYTE_EXACT
 void Credits::draw_credits() {
   graphicWin2_.fill(9);
-  int y = -(static_cast<int>(frame_count_) +
+  int y = -(frame_count_ +
             graphicWin2_.dib_.bmiHeader.biHeight);
   int line_index = 0;
-  if (y <= -static_cast<int>(line_height_)) {
-    line_index = -(y / static_cast<int>(line_height_));
-    y %= static_cast<int>(line_height_);
+  if (y <= -line_height_) {
+    line_index = -(y / line_height_);
+    y %= line_height_;
   }
-  if (line_index >= static_cast<int>(line_count_)) {
+  if (line_index >= line_count_) {
     release_modal();
     return;
   }
   while (y < -graphicWin2_.dib_.bmiHeader.biHeight &&
-         line_index < static_cast<int>(line_count_)) {
+         line_index < line_count_) {
     graphicWin2_.Buffer::set_text_color(0, -1, 1, 1);
     const int width = graphicWin2_.dib_.bmiHeader.biWidth;
     char *line = lines_[line_index];
     if (line != 0) {
       graphicWin2_.Buffer::write_cent_l(line, 0, y, width, strlen(line));
     }
-    y += static_cast<int>(line_height_);
+    y += line_height_;
     ++line_index;
   }
   int x = 0;
