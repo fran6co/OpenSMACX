@@ -2193,6 +2193,109 @@ re-aligns their pad blocks (2.5). base_energy 0x004EB560 and give_a_base
   `base_production`, `battle_fight`, `enemy_move`, `game_data`,
   `load_interface`, `SocialWin::init`, `tech_achieved`.
 
+### 3.7 Rules from the 2026-11-18 parallel rounds
+
+Each line names the image fingerprint, the source that reproduces it and one
+function where it was measured. They are per-site choices unless stated.
+
+Helpers and inlines
+- All four coordinates loaded into registers before the first call of a
+  distance expression: an inline helper. `map_range(x1,y1,x2,y2)` is
+  `(abs(y1 - y2) + x_dist(x1, x2)) >> 1`; `map_dist` is
+  `vector_dist(x_dist(x1,x2), abs(y1-y2))` (map.h). `!(( … ) & ~1)` and
+  `( … & ~1) < 8` are the folded `map_range(...)` compares (enemy_move, 40
+  sites; eleven exact functions stay exact with the helper).
+- An inline helper written `if (c) { return a; } return b;` differs from the
+  `?:` form and from the written-out chain (sort_sessions). For the stack step
+  it is the reverse: `return id >= 0 ? Vehs[id].next_veh_id_stack : id;`
+  leaves the loop straight from the negative test (veh_next_stack_id).
+- A value formed before a call and adjusted after it is an inline taking that
+  value as a parameter (FlatButton::on_redraw).
+- A 6-byte `jmp [__imp__X]` among a unit's own COMDATs with one caller is an
+  inline wrapper, expanded at early sites and called once budget is gone
+  (probe, 0x005A58D0).
+- Expression-only inlines cost no /Ob2 budget; an inline with an `if`
+  statement costs one flat unit. Explicit casts spend budget too: retyping
+  `Buffer::locked_bits_` to drop casts made Buffer::copy expand a call the
+  image keeps out of line. Nested inline levels decide which `range` stays a
+  call (draw_active).
+- Accessor against raw member read (`Buffer::pixel_width()` against
+  `dib_.bmiHeader.biWidth`) changes CSE and load order at some sites and is
+  neutral at most; the image rejects it at several exact sites.
+- A virtual-base receiver adjusted once with no null test and reused across
+  two calls comes only from a member body of the base class (BasePop::exec).
+
+Registers and scratch choice
+- A named local for a global or field read, against the bare argument
+  expression, changes scratch-register choice, sometimes far downstream
+  (`HWND window = HandleMain;` in UV2Player::play). Dropping a named temporary
+  can do the same (show_post_movie_text).
+- `f(c ? a : b)` against `if (c) f(a); else f(b);` changes which variable
+  gets the callee-saved register (draw_social). `x = m; if (x == -1) x = d;`
+  ranks `x` first; `x = m == -1 ? d : m` does not (on_redraw_nc).
+- A value known from a branch stays with the tested symbol, not its copy:
+  `const int r = f(); v = r; if (r != 0) continue;` keeps `mov v,eax; cmp`
+  and the block in place (top_menu).
+- `if (c) m |= K;` leaves nothing to forward; `if (c) { p |= K; m = p; }`
+  makes later inlined reads use p's register (Win::init).
+- A member pointer read at every use, against a local reassigned from the
+  member, changes subtraction operand order (on_redraw_nc).
+- `inc eax; je` after a call is `f() + 1 == 0`; `== -1` gives `cmp eax,-1`.
+- A `v = 0` before a large switch can become a function-wide zero register.
+
+Frame and slots
+- Slots of scalar locals are ordered by reference count, most used nearest
+  ebp; slot-only rows are a symptom of a structural difference elsewhere.
+- Address-taken locals with slots of their own are function-scope; declared
+  in disjoint blocks they share a slot (base_production, +12 bytes).
+- A local stored to its slot at every assignment while cached in a register
+  is one function-scope variable shared across blocks (alien_move 194 -> 4).
+  The reverse is not safe: check the frame size.
+- Separate locals with disjoint live ranges share a slot, and compiler
+  temporaries share those slots; a variable reused for several roles and read
+  unwritten on some path forces an extra slot (enemy_move).
+- A dead `int[3]` is overlaid by a later RECT; a hole plus two stored fields
+  identifies a scalarised RECT (show_post_movie_text).
+- `mov dl,[slot]; or [mem],dl` is a named `int bit = 1 << n`; `x |= 1 << n`
+  on a byte recomputes a narrowed shift.
+
+Rectangles
+- Stores through one register from single loads are
+  `set_rectangle_dimensions(ptr, x, y, w, h)`; field statements reread the
+  sources. An address held across a loop is a `RECT *` local (draw_sat).
+- Paired `r.top += d; r.bottom += d` that load both edges first are
+  `offset_rect(&r, 0, d)` expanded (BaseWin::init).
+
+Layout
+- A far `je` to a fallback call at the function end is
+  `if (c) { body } else { fallback(); }`, not an early return.
+- A guard that is the negation of a later admission test is written as that
+  negation, `if (!((a && b) || (c && d && e))) return;` (sat_attack).
+- `switch (x) { case K: …; return; default: break; }` before the closing
+  brace gives `je` over the closing teardown; `if (x == K) { …; return; }`
+  gives `jne` and the opposite placement (use_ability).
+- `while (a && b && c) body` tests `a` first, then re-tests `a` at the bottom
+  and jumps back into `b` (write_pcx).
+- Two cases ending in the same tail: `return;` in both keeps the code in the
+  last copy, `break;` (switch last in the function) keeps it in the first
+  (on_left_click).
+- `if (!(a && b && c && d)) return 0;` with a teardown is parked behind the
+  final `ret`; a helper call `if (!on_map(x, y)) return 0;` stays in place.
+- `if (c) goto L; …; L:` and `if (!c) { … }` lay out differently.
+  `if (c >= 0) goto L; B; goto M; L:` defers B; `if (c < 0) { B; goto M; }`
+  keeps it inline (config_game).
+- Blocks reached only through labels are placed by control flow; their source
+  order has no effect (order_veh, 24 permutations).
+- Tail merging follows the closing teardown depth and the per-site scratch
+  register, so which copy survives can follow a register tie.
+
+Types
+- Wrong declarations hide as casts: a member cast at each use, a byte buffer
+  written through `memcpy(bytes + offsetof(...))`, `this + 1`. Declare the
+  union, nested record or trailing array; the code is usually unchanged.
+- A signed `-1` store into a byte array gives `or r8,0xFF`; the image's
+  `mov r8,0xFF` needs `unsigned char` (TerrainCacheEntry::altitude).
+
 ## 4. Measured and neutral (do not retry without new evidence)
 
 - **String pooling.** The original is unpooled everywhere: identical literals stay
