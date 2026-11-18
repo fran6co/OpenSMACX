@@ -30,7 +30,6 @@ namespace {
 // immediate-address vptr store. Pinned constructor 0x0045EF10 builds the
 // 42-element FlatButton member array at this+0xE00, stride 0xB4C; element
 // 2 is 0x007B0CB8. Keep the same object's behavior through that owner.
-static const uintptr_t TurnUpkeepCallerReturn = 0x0052768F;
 // The turn-loop exit flag and the turn phase are named globals now - see
 // game.h (ExitTurnLoop, ControlTurnPhase); the raw uintptr_t bindings that
 // stood here were retired when control_game was homed into game.cpp on
@@ -409,14 +408,16 @@ extern "C" void __cdecl scenario_human_turn_ready(Console *self) {
     }
 }
 
-extern "C" void __cdecl scenario_turn_advanced(uintptr_t caller_return) {
+// The turn-advance check validates game state only. It used to compare its
+// caller's return address with a fixed address of the original image
+// (a return site in control_turn), which no rebuilt executable can satisfy.
+extern "C" void __cdecl scenario_turn_advanced() {
     if (State.phase != ScenarioPhase::AwaitingAdvance) {
         return;
     }
     int advanced_turn = GameDataStateStorage.fields_.turn_current_num_;
     uint32_t expected_year = game_year(advanced_turn);
-    bool turn_advanced = caller_return == TurnUpkeepCallerReturn
-        && advanced_turn == State.initial_turn + 1
+    bool turn_advanced = advanced_turn == State.initial_turn + 1
         && GameDataStateStorage.fields_.mission_year_current_ == expected_year
         && Vehs[State.vehicle_id].x == State.target_x
         && Vehs[State.vehicle_id].y == State.target_y;
@@ -426,8 +427,6 @@ extern "C" void __cdecl scenario_turn_advanced(uintptr_t caller_return) {
             "{\n"
             "  \"status\": \"failed\",\n"
             "  \"error\": \"turn_advance_validation_failed\",\n"
-            "  \"caller_return\": %u,\n"
-            "  \"expected_caller_return\": %u,\n"
             "  \"initial_turn\": %d,\n"
             "  \"advanced_turn\": %d,\n"
             "  \"mission_year\": %u,\n"
@@ -435,8 +434,6 @@ extern "C" void __cdecl scenario_turn_advanced(uintptr_t caller_return) {
             "  \"vehicle_position\": [%d, %d],\n"
             "  \"target\": [%d, %d]\n"
             "}\n",
-            static_cast<unsigned int>(caller_return),
-            static_cast<unsigned int>(TurnUpkeepCallerReturn),
             State.initial_turn, advanced_turn, GameDataStateStorage.fields_.mission_year_current_, expected_year,
             Vehs[State.vehicle_id].x, Vehs[State.vehicle_id].y,
             State.target_x, State.target_y);
