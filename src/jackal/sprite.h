@@ -138,6 +138,11 @@ class Sprite {
                      unsigned char *bits);
   int draw_multi_table_dest(Buffer *buffer, int a, int b, int c,
                             ColorTable *bits);
+  // Keyed on the sprite's own transparent index, like draw/draw_mono above:
+  // boom forms the sprite address in ecx after the destination conversion
+  // and reads the key through it (0x005059A1..0x005059DD, 0x00505A28..6B).
+  int draw_multi_table_dest(Buffer *destination, int x, int y,
+                            ColorTable *table);
   int draw_multi_table_dest(Buffer *buffer, int a, int b, int c, int x, int y,
                             ColorTable *bits);
   // Buffer's software drawing wrappers borrow the shared Sprite descriptor.
@@ -258,6 +263,10 @@ inline int Sprite::draw(Buffer *destination, int x, int y) {
 }
 inline int Sprite::draw_mono(Buffer *destination, int x, int y, int color) {
   return draw_mono(destination, transparent_index(), x, y, color);
+}
+inline int Sprite::draw_multi_table_dest(Buffer *destination, int x, int y,
+                                         ColorTable *table) {
+  return draw_multi_table_dest(destination, transparent_index(), x, y, table);
 }
 inline int Sprite::draw_mono(Buffer *destination, int x, int y, int color,
                              int numerator, int denominator) {

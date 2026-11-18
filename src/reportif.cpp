@@ -4126,7 +4126,6 @@ void ReportWin::exp_anim() {
                       explosion_rect_.left, explosion_rect_.top);
         Sprite *const bank = &g_XI_BOOM_VEH_SPRITES[48];  // fourth 16-frame bank
         bank[field_F934_].draw_multi_table_dest(static_cast<Buffer *>(this),
-            bank[field_F934_].transparent_index(),
             explosion_rect_.left, explosion_rect_.top, ExplosionColorTables[1]);
         if (++field_F934_ >= 16) field_F91C_ = 1;
         update(&explosion_rect_, 0);

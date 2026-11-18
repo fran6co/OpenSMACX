@@ -1598,17 +1598,6 @@ static const int BoomColorGroupByWeapon[MaxWeaponNum] = {
 // RECOVERY_OBJECT: v2 0x0090F7D4 0x0090F7D8 ?BoomAnimationLevel@@3HA 0x00500B60
 int BoomAnimationLevel;
 
-// WORKAROUND(decl): boom forms the sprite address in ecx and reads the
-// transparency key through it after the destination conversion
-// (0x005059A1..0x005059DD, 0x00505A28..0x00505A6B): the shape of a Sprite
-// wrapper that supplies transparent_index() itself, like Sprite::draw and
-// draw_mono in sprite.h. The four-argument member is not declared there yet.
-static inline int boom_draw_table(Sprite *sprite, Buffer *destination, int x, int y,
-                                  ColorTable *table) {
-    return sprite->draw_multi_table_dest(destination, sprite->transparent_index(), x, y,
-                                         table);
-}
-
 // ORIGINAL: 0x00504AA0 ?boom@@YAHHHH@Z 0x00504AA0-0x00505D1B FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00504aa0.cpp", "src/veh.h", "src/flic.h", "recovery/tasks/mapwin-owner-coverage-wave.json", "Pinned 0x00504AA0 guard 0x0090F7D8 lazily constructs the two Buffer[8] arrays at 0x0090F7E0 and 0x00912428, registers distinct atexit destructors, then constructs/registers Flic at 0x0090EA68 and Buffer at 0x00915068.", "The four adjacent original teardown identities now have source-owned local-static object bindings at their exact original data extents; fresh retained COFF callback relocations and MAP owner rows are preserved in the generated identity records beside each declaration.", "All original callback spans, claims and TRIED lesson text are transferred to the corresponding source declaration mapping. Physical wrapper names are written back from retained COFF facts, not inferred from seed names."], "reason": "Recover per-window explosion and Flic animation with genuine typed static buffers, real MapWin/GraphicWin bases, source-owned weapon tables and original branch/timing/sound behavior; preserve the original seed and its correction evidence."}
 // TRIED: mechanical transcription of the Ghidra decompilation (integer fixed-point animation math, no float). Two one-time static-init pools (8 Buffers at 0x912428, 8 more at 0x90f7e0, each array-constructed via the compiler's own `??_L` array- construct helper already declared as fn_006457c2) plus a lone Flic/Buffer pair at 0x90ea68/0x915068 constructed with placement `new` and registered via atexit for teardown - all four receivers confirmed from the raw disassembly's `mov ecx, ADDR` before each ctor call. Every FUN_ callee resolved to a real name from the disassembly's own comments. Not fully chased: several Buffer::copy/init/draw_multi_ table_dest calls inside the 8-slot animation loop use a fixed 0x915068 receiver as a placeholder - the raw asm shows the true receiver is a per-iteration resolved screen-buffer pointer (the same `*(int*)0x7d3c3c`-based idiom used throughout this codebase) that would take another pass to thread through every call site correctly. Landed at MISMATCH #4 without chasing the prologue divergence, given the size of this function and the remaining time in this batch.
@@ -1956,17 +1945,17 @@ int __cdecl boom(int x, int y, int flags) {
             } else if (play) {
                 // [C6] 0x505999..0x5059DE: the destination conversion is
                 // formed before the sprite address; no sprite local.
-                boom_draw_table(&g_XI_BOOM_VEH_SPRITES[divisor_or_bank * 16 + frame],
-                                MapWinTable[slot], pixel_x[slot], pixel_y[slot],
-                                ExplosionColorTables[palette_row]);
+                g_XI_BOOM_VEH_SPRITES[divisor_or_bank * 16 + frame].draw_multi_table_dest(
+                    MapWinTable[slot], pixel_x[slot], pixel_y[slot],
+                    ExplosionColorTables[palette_row]);
             } else {
                 const int bank = (flags & 0x100) ? 3
                     : (flags & 0x80) ? 2
                     : VehPrototypes[Vehs[veh_b].proto_id].reactor_id >= 2;
                 // [C6] 0x505A20..0x505A4B: conversion, then sprite address.
-                boom_draw_table(&g_XF_BOOM_VEH_SPRITES[bank * 16 + frame],
-                                MapWinTable[slot], pixel_x[slot], pixel_y[slot],
-                                ExplosionColorTables[bank == 3 ? 6 : 0]);
+                g_XF_BOOM_VEH_SPRITES[bank * 16 + frame].draw_multi_table_dest(
+                    MapWinTable[slot], pixel_x[slot], pixel_y[slot],
+                    ExplosionColorTables[bank == 3 ? 6 : 0]);
             }
             MapWinTable[slot]->update(&rects[slot], 0);
             if (IsMultiplayerNet) {
