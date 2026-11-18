@@ -3801,13 +3801,13 @@ int BasePop::calculate_dimensions() {
                                                   text_left);
             } else {
                 owner_window_->wrap_height_flying(
-                    unit_ids_.head_ != 0 ? unit_ids_.current_->string_payload()->text
+                    unit_ids_.head_ != 0 ? unit_ids_.current_entry()->text
                                          : static_cast<char *>(0),
                     text_left);
             }
         } else {
             owner_window_->wrap_height_flying(
-                unit_ids_.head_ != 0 ? unit_ids_.current_->string_payload()->text
+                unit_ids_.head_ != 0 ? unit_ids_.current_entry()->text
                                      : static_cast<char *>(0));
         }
     }

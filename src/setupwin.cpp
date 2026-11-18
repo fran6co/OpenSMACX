@@ -24,6 +24,7 @@
 // reaches pos_to_id through the popup's dialogs_ member, not dialogs().
 #define BASEPOP_FRIEND_SETUPWIN
 #define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
+#define STRINGSTRUCT_CURRENT_ENTRY_INLINE
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "setupwin.h"
@@ -459,7 +460,7 @@ void SetupWin::draw_item(int position, int selected) {
         if (position >= 0) {
             item_texts_->seek_pos(position);
             char *name = item_texts_->head_ != 0
-                ? item_texts_->current_->string_payload()->text : 0;
+                ? item_texts_->current_entry()->text : 0;
             CharUpperA(name);
             char *pipe = strchr(name, '|');
             if (pipe != 0) *pipe = ' ';

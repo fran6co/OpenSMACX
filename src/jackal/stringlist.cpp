@@ -104,7 +104,7 @@ static inline int stringlist_sort_budget_probe(int x) {
 /*
 Purpose: Sort the circular list by payload text, keeping each ID with its
          payload and retaining the original cursor side effects.
-// ORIGINAL: 0x006087A0 ?sort@StringList@@QAEXH@Z 0x006087A0-0x00608980
+// ORIGINAL: 0x006087A0 ?sort@StringList@@QAEXH@Z 0x006087A0-0x00608980 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:c4c11a8a retained the historical selection-pass seed at 0x006087A0-0x00608980 before its product migration", "image:0x006087A0 scans StringStructEntry next links, compares payload text with strcmp, then swaps the winning entry's id and payload", "source:src/stringstruct.h declares the real circular StringStructEntry and StringStructPayload members and the inherited seek_pos cursor operation"], "reason": "Replace Datalink's fixed-image sort forwarder with a typed StringList selection sort in the list's owning translation unit."}
 // size      480 bytes
 // callers   3   call targets   3
@@ -125,7 +125,9 @@ void StringList::sort(int) {
         stringlist_sort_budget_probe(0);
         stringlist_sort_budget_probe(0);
         stringlist_sort_budget_probe(0);
-        char *smallest_text = head_ ? current_->string_payload()->text : 0;
+        // The guarded current_entry() chase (StringList::current_text's
+        // body): its repeated head test keeps every link in eax.
+        char *smallest_text = head_ ? current_entry()->text : 0;
         int smallest_position = position;
 
         for (int candidate = position + 1; candidate < entry_count_;
@@ -135,7 +137,7 @@ void StringList::sort(int) {
             // payload (608877), as current_entry() would.
             char *candidate_text = current_ ? current_entry()->text : 0;
             if (strcmp(candidate_text, smallest_text) < 0) {
-                smallest_text = head_ ? current_->string_payload()->text : 0;
+                smallest_text = head_ ? current_entry()->text : 0;
                 smallest_position = current_position_;
             }
         }

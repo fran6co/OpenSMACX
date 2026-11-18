@@ -533,6 +533,19 @@ int SpriteBox::calculate_dimensions() {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00610C50 ?draw_item@SpriteBox@@QAEXH@Z 0x00610C50-0x0061103B FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00610c50.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x610c50 complete control/data-access review and src/spritebox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+// StringStruct::current_entry's body for the sprite list (statement form;
+// the conditional form does not fold under an outer head test).
+static inline SpriteStruct *current_sprite_entry(SpriteList &list) {
+    if (list.head_) {
+        return list.current_->sprite_payload();
+    }
+    return 0;
+}
+
+static inline Sprite *guarded_list_sprite(SpriteList &list) {
+    return list.head_ ? current_sprite_entry(list)->sprite_ : 0;
+}
+
 // The image reads the current entry's sprite through a head_ test at each use.
 static inline Sprite *current_list_sprite(SpriteList &list) {
     return list.head_ ? list.current_->sprite_payload()->sprite_ : 0;
@@ -543,7 +556,7 @@ static inline int current_list_id(SpriteList &list) {
 }
 
 static inline char *current_list_text(StringList &list) {
-    return list.head_ ? list.current_->string_payload()->text : 0;
+    return list.head_ ? list.current_entry()->text : 0;
 }
 
 void SpriteBox::draw_item(int position) {
@@ -577,7 +590,10 @@ void SpriteBox::draw_item(int position) {
     y += (static_cast<int>(Dialog::field_68_) -
           current_list_sprite(list_)->height() * static_cast<int>(field_1C_) / static_cast<int>(field_20_)) / 2;
     x += (static_cast<int>(field_54_) -
-          current_list_sprite(list_)->width() * static_cast<int>(field_1C_) / static_cast<int>(field_20_)) / 2;
+          // This one read goes through the guarded entry helper (the head
+          // test twice, as StringStruct::current_entry has it), which keeps
+          // every link of the chase in eax (0x00610E1B).
+          guarded_list_sprite(list_)->width() * static_cast<int>(field_1C_) / static_cast<int>(field_20_)) / 2;
     const int scale_numerator = static_cast<int>(field_1C_);
     const int scale_denominator = static_cast<int>(field_20_);
     if (redraw_callback_ == 0) {

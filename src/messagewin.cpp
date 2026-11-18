@@ -25,6 +25,7 @@
 #define LISTBOX_FRIEND_MESSAGEWIN
 #define DIALOG_LAYOUT_SETTERS   // stand-in: Dialog::set_field_34 (dialog.h)
 #define DIALOG_LAYOUT_SETTERS2  // stand-in: Dialog::set_field_4C/6C (dialog.h)
+#define STRINGSTRUCT_CURRENT_ENTRY_INLINE
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "messagewin.h"
@@ -46,7 +47,7 @@ namespace {
 // This checked lookup describes the existing StringList current-text operation.
 // Its two call sites retain separate original lookup phases; the name is local.
 inline char *current_message_text(StringList &items) {
-    return items.head_ != 0 ? items.current_->string_payload()->text : 0;
+    return items.head_ != 0 ? items.current_entry()->text : 0;
 }
 inline uint32_t current_message_height(StringList &items) {
     return items.head_ != 0 ? items.current_->string_payload()->field_C_ : 0;
