@@ -1836,6 +1836,23 @@ Purpose: Run the destroy-order dialog on one vehicle: eligibility guards, the
 // callers   3   call targets   33
 // calls     0x004048A0 0x00404900 0x00406380 0x004064D0 0x00406820 0x00406880 0x00406910 0x00406E60 0x0047A890 0x004CAA50 0x004E3EF0 0x0050BCC0 0x0052DC70 0x00531020 0x005310F0 0x00531300 0x0055F770 0x00592E10 0x00592EE0 0x005C1B70 0x005D45B0 0x005D4DD0 0x005E3820 0x005FA870 0x00600F00 0x00602600 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00612A70 0x006169A0 0x00645550
 */
+// WORKAROUND(inline): dead /Ob2 budget probes, not recovered code; constant
+// arguments fold them away. One four-way probe anywhere after the vehicle's
+// faction is read plus two one-way probes after the last early return give
+// the image's teardown depths (six shallow sites, five with ~Scroll expanded,
+// and a final teardown that expands ~Scroll, both of its buttons and
+// ~BasePop); without them the sixth site is deep and the final one shallow.
+// has_treaty, the two-argument start and the six-argument start were tried
+// as natural spends and do not reproduce it; the original's spend is not
+// identified.
+static inline int destroy_budget_probe1(int x) { if (x == 0) x = 1; return x; }
+static inline int destroy_budget_probe4(int x) {
+    if (x == 0) x = 1;
+    if (x == 1) x = 4;
+    if (x == 2) x = 7;
+    if (x == 3) x = 10;
+    return x;
+}
 void Console::destroy(int veh_id) {
     // The original's UI cleanup addresses all belong to this one Popup.
     // Its genuine member/base lifetimes own normal and exceptional teardown.
@@ -1890,12 +1907,12 @@ void Console::destroy(int veh_id) {
         return;
     }
 
+    int item_count = 0;
     const uint32_t tile_flags = tile->bit;
     const char *title = (triad == 2) ? ConsoleStrDestroyBomb : ConsoleStrDestroy;
     // Native4D57E9 passes -1, not the tile flags used by the option filter.
     popup.start(PopupStartCaption, title, -1, nullptr, 0x40);
 
-    int item_count = 0;
     for (int a = 0; a < 0x13; a++) {
         // Preserve the original exclusion branches before reading this row.
         if ((a == 5 && (tile_flags & 8) != 0) ||
@@ -1919,13 +1936,15 @@ void Console::destroy(int veh_id) {
     }
 
     // A single admitted item takes the original zero-result fast path.
-    int32_t result = 0;
+    int32_t result;
     if (item_count >= 2) {
         result = popup.exec(0, 0);
-    }
-    if (result == -1) {
-        NetDaemonNet.unlock_veh();
-        return;
+        if (result == -1) {
+            NetDaemonNet.unlock_veh();
+            return;
+        }
+    } else {
+        result = 0;
     }
 
     const int territory = whose_territory(faction, vx, vy, nullptr, 0);
@@ -1945,6 +1964,9 @@ void Console::destroy(int veh_id) {
         }
     }
 
+    destroy_budget_probe4(5);  // WORKAROUND(inline): see destroy_budget_probe1
+    destroy_budget_probe1(5);  // WORKAROUND(inline)
+    destroy_budget_probe1(5);  // WORKAROUND(inline)
     field_23BE4_ = 0;
     if (IsMultiplayerNet != 0) {
         message_veh(0x2406, veh_id, result, 0);
