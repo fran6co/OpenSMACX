@@ -663,7 +663,7 @@ void ProdPicker::calculate() {
         field_A818_++;
     }
 
-    for (i = 1; i <= 0x85; i++) {
+    for (i = 1; i < MaxFacilityNum; i++) {
         if (!facility_avail(i, BaseCurrent->faction_id_current, base_id, field_B68_)) continue;
 
         name[0] = 0;
