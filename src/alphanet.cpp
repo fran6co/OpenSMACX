@@ -123,7 +123,7 @@ Status: Complete
 int AlphaNet::pid_2_who(uint32_t process_id) {
     for (int index = 1; index < 8; index++) {
         if (process_slots_[index].pid_ == process_id) {
-            return process_slots_[index].identity_;
+            return process_slots_[index].state_.identity_;
         }
     }
     return 0;
@@ -144,7 +144,7 @@ Status: Complete
 */
 int AlphaNet::who_2_pid(int identity) {
     for (int index = 1; index < 8; index++) {
-        if (process_slots_[index].identity_ == identity) {
+        if (process_slots_[index].state_.identity_ == identity) {
             return process_slots_[index].pid_;
         }
     }
@@ -167,7 +167,7 @@ Status: Complete
 */
 int AlphaNet::who_2_idx(int identity) {
     for (int index = 1; index < 8; index++) {
-        if (process_slots_[index].identity_ == identity) {
+        if (process_slots_[index].state_.identity_ == identity) {
             return index;
         }
     }

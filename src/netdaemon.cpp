@@ -441,7 +441,7 @@ void NetDaemon::on_player_added(char *name, unsigned long id) {
 
         NetWinLobbyRows.rows_[player_count_].field_2_ = NetWinSessionOptions.fields_.difficulty_;
         NetWinLobbyRows.rows_[player_count_].prefix_ = static_cast<int8_t>(player_count_);
-        process_slots_[player_count_].identity_ = static_cast<int8_t>(player_count_);
+        process_slots_[player_count_].state_.identity_ = static_cast<int8_t>(player_count_);
 
         int duplicate_host = 0;
         const int count = player_count_;
@@ -518,13 +518,13 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
             parse_says(0, process_slots_[slot].name_, -1, -1);
             if (NetDaemonNet.primary_state_.session_phase_ == 2) {
                 GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &=
-                    ~(1 << process_slots_[slot].identity_);
+                    ~(1 << process_slots_[slot].state_.identity_);
             }
-            field_1BBC_ &= ~(1 << process_slots_[slot].identity_);
+            field_1BBC_ &= ~(1 << process_slots_[slot].state_.identity_);
             if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) != 0
                 && NetDaemonNet.primary_state_.leading_words_[0] != 0
                 && GameDataStateStorage.fields_.net_turn_faction_
-                    == process_slots_[slot].identity_) {
+                    == process_slots_[slot].state_.identity_) {
                 for (int next = GameDataStateStorage.fields_.net_turn_faction_ + 1;
                      next < 8; ++next) {
                     if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << next))
@@ -540,9 +540,9 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
     }
 player_found:
 
-    locks_.records_[process_slots_[slot].identity_].clear();
-    field_1B7C_ &= ~faction_masks_[process_slots_[slot].identity_];
-    if (locks_.field_E0_ == process_slots_[slot].identity_) {
+    locks_.records_[process_slots_[slot].state_.identity_].clear();
+    field_1B7C_ &= ~faction_masks_[process_slots_[slot].state_.identity_];
+    if (locks_.field_E0_ == process_slots_[slot].state_.identity_) {
         locks_.field_E0_ = 0;
         locks_.field_E4_ = 0;
     }
@@ -555,7 +555,7 @@ player_found:
             PlayerLock *lock = &locks_.records_[faction];
             if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << faction))
                 && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction))
-                && faction != process_slots_[slot].identity_ && lock->active()
+                && faction != process_slots_[slot].state_.identity_ && lock->active()
                 && !(lock->active_ & 1)) {
                 lock->active_ |= 1 << slot;
                 if ((lock->active_ & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)
@@ -570,11 +570,11 @@ player_found:
 
     log_say(ParseStrBuffer[0].str, "Dropped *************************",
             static_cast<int>(id), slot, 0);
-    process_slots_[slot].identity_ = -1;
-    process_slots_[slot].field_25_ = 0;
-    process_slots_[slot].field_26_ = 0;
-    process_slots_[slot].field_27_ = -1;
-    process_slots_[slot].status_bytes_[0] = 2;
+    process_slots_[slot].state_.identity_ = -1;
+    process_slots_[slot].state_.field_25_ = 0;
+    process_slots_[slot].state_.field_26_ = 0;
+    process_slots_[slot].state_.field_27_ = -1;
+    process_slots_[slot].state_.status_bytes_[0] = 2;
     if (NetDaemonNet.primary_state_.session_phase_ < 2) {
         NetWinLobbyRows.rows_[slot].prefix_ = -1;
     }
@@ -2937,7 +2937,7 @@ int NetDaemonTransferResetWord = -1;
 // Every lobby slot's transfer status has reached the given level.
 static inline int netdaemon_slots_reached(NetDaemon *daemon, uint8_t level) {
     for (int slot = 0; slot < NetDaemonNet.player_count_; ++slot) {
-        if (daemon->process_slots_[slot + 1].status_bytes_[0] < level) return 0;
+        if (daemon->process_slots_[slot + 1].state_.status_bytes_[0] < level) return 0;
     }
     return 1;
 }
@@ -2967,7 +2967,7 @@ int NetDaemon::send_files() {
     if (primary_state_.leading_words_[0] != 0 && NetDaemonNet.player_count_ > 0) {
         for (int index = 0; index < NetDaemonNet.player_count_; ++index) {
             if (local_index != index + 1) send_mask |= 1U << (index + 1);
-            process_slots_[index + 1].status_bytes_[0] =
+            process_slots_[index + 1].state_.status_bytes_[0] =
                 static_cast<uint8_t>(local_index == index + 1 ? 2 : 0);
         }
     }
@@ -3285,11 +3285,11 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
     }
 
     case 0xF0A:
-        process_slots_[packet->faction_].status_bytes_[0] = 1;
+        process_slots_[packet->faction_].state_.status_bytes_[0] = 1;
         break;
 
     case 0xF0C:
-        process_slots_[packet->faction_].status_bytes_[0] = 2;
+        process_slots_[packet->faction_].state_.status_bytes_[0] = 2;
         break;
 
     case 0xF06:
@@ -3632,7 +3632,7 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
         field_1B68_ |= done_bit;
         if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) == 0) {
             for (int notify_slot = 1; notify_slot <= player_count_; notify_slot++) {
-                int target = process_slots_[notify_slot].identity_;
+                int target = process_slots_[notify_slot].state_.identity_;
                 if (target != ConsoleGlobal.faction_id_) {
                     message_data(0x1301, target, who, 1,
                                  GameDataStateStorage.fields_.turn_current_num_, 0);
@@ -3678,7 +3678,7 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
         parse_says(1, get_name(next_faction), -1, -1);
         parse_says(2, get_noun(next_faction), -1, -1);
         for (int name_slot = 1; name_slot <= player_count_; name_slot++) {
-            if (process_slots_[name_slot].identity_ == next_faction) {
+            if (process_slots_[name_slot].state_.identity_ == next_faction) {
                 parse_says(3, process_slots_[name_slot].name_, -1, -1);
             }
         }
@@ -3716,7 +3716,7 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
                     parse_says(1, get_name(next_faction), -1, -1);
                     parse_says(2, get_noun(next_faction), -1, -1);
                     for (int slot = 1; slot <= player_count_; ++slot) {
-                        if (process_slots_[slot].identity_ == next_faction) {
+                        if (process_slots_[slot].state_.identity_ == next_faction) {
                             parse_says(3, process_slots_[slot].name_, -1, -1);
                         }
                     }
@@ -3760,8 +3760,8 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
         if (!(primary_state_.trailing_words_[7] & bit)) {
             primary_state_.trailing_words_[7] |= bit;
             for (int slot = 1; slot <= player_count_; ++slot) {
-                if (process_slots_[slot].identity_ != ConsoleGlobal.faction_id_) {
-                    message_data(0x1303, process_slots_[slot].identity_, who, 1,
+                if (process_slots_[slot].state_.identity_ != ConsoleGlobal.faction_id_) {
+                    message_data(0x1303, process_slots_[slot].state_.identity_, who, 1,
                                  GameDataStateStorage.fields_.turn_current_num_, 0);
                 }
             }
@@ -3876,9 +3876,9 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
             message_data(0x1302, who, GameDataStateStorage.fields_.turn_current_num_,
                          0, 0, 0);
             for (int slot = 1; slot <= player_count_; ++slot) {
-                if (process_slots_[slot].identity_ != who &&
-                    process_slots_[slot].identity_ != ConsoleGlobal.faction_id_) {
-                    message_data(0x1301, process_slots_[slot].identity_, who, 0,
+                if (process_slots_[slot].state_.identity_ != who &&
+                    process_slots_[slot].state_.identity_ != ConsoleGlobal.faction_id_) {
+                    message_data(0x1301, process_slots_[slot].state_.identity_, who, 0,
                                  GameDataStateStorage.fields_.turn_current_num_, 0);
                 }
             }
@@ -4608,9 +4608,9 @@ move_veh_ack:
         primary_state_.leading_words_[1] = 1;
         // fall through: 0x2F00 enters at 0x537bdf
     case 0x2F00:
-        process_slots_[packet->faction_].identity_ = (int8_t)packet->payload_18_;
-        process_slots_[packet->faction_].field_26_ = (uint8_t)packet->payload_14_;
-        process_slots_[packet->faction_].field_25_ = (uint8_t)packet->payload_10_;
+        process_slots_[packet->faction_].state_.identity_ = (int8_t)packet->payload_18_;
+        process_slots_[packet->faction_].state_.field_26_ = (uint8_t)packet->payload_14_;
+        process_slots_[packet->faction_].state_.field_25_ = (uint8_t)packet->payload_10_;
         if (packet->opcode_ & 0x2000) {
             packet->opcode_ = (packet->opcode_ & 0xDFFF) | 0x4000;
             send_message(message, message_size, 0);

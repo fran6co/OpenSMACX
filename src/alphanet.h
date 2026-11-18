@@ -209,29 +209,41 @@ static_assert(sizeof(AlphaNetLedger) == 0x40, "session ledger fields precede its
 // One complete player record, including the name before the process ID.
 // Name storage ends at the ID; the meanings/types of the trailing status
 // region are not yet established beyond the observed byte writes.
-struct AlphaNetProcessSlot {
-  // RECOVERY_MEMBER: v1 AlphaNetProcessSlot name_ 0x0 0x0052E160
-  char name_[0x20];
-  // RECOVERY_MEMBER: v1 AlphaNetProcessSlot pid_ 0x20 0x0052E160
-  uint32_t pid_;
+//
+// The bytes from +0x24 are one nested record with its own constructor: both
+// array constructions in the image (AlphaNet's member array at 0x004E24BF and
+// the saved-slot initializer 0x0052DB40) walk a cursor at record +0x26 with
+// a count of eight, which VC6 produces for the nested record's inlined
+// constructor; five stores to members of the slot itself put the cursor at
+// +0x25.
+struct AlphaNetProcessState {
   // The lookup functions sign-extend this identity byte.
-  // RECOVERY_MEMBER: v1 AlphaNetProcessSlot identity_ 0x24 0x004E2610
+  // RECOVERY_MEMBER: v1 AlphaNetProcessState identity_ 0x0 0x004E2610
   int8_t identity_;
   uint8_t field_25_;
   uint8_t field_26_;
   int8_t field_27_;
-  // Starts at original +0x794. process_message writes its first byte in
+  // Starts at original AlphaNet +0x794 (slot +0x28). process_message writes its first byte in
   // the indexed player record; the remaining bytes stay untyped evidence.
-  // RECOVERY_MEMBER: v1 AlphaNetProcessSlot status_bytes_ 0x28 0x00534400
+  // RECOVERY_MEMBER: v1 AlphaNetProcessState status_bytes_ 0x4 0x00534400
   uint8_t status_bytes_[0x174];
 
-  AlphaNetProcessSlot() {
+  AlphaNetProcessState() {
     identity_ = -1;
     field_25_ = 0;
     field_26_ = 0;
     field_27_ = -1;
     status_bytes_[0] = 2;
   }
+};
+
+struct AlphaNetProcessSlot {
+  // RECOVERY_MEMBER: v1 AlphaNetProcessSlot name_ 0x0 0x0052E160
+  char name_[0x20];
+  // RECOVERY_MEMBER: v1 AlphaNetProcessSlot pid_ 0x20 0x0052E160
+  uint32_t pid_;
+  // RECOVERY_MEMBER: v1 AlphaNetProcessSlot state_ 0x24 0x004E2490
+  AlphaNetProcessState state_;
 };
 static_assert(sizeof(AlphaNetProcessSlot) == 0x19C, "process slot stride");
 

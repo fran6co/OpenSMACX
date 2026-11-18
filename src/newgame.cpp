@@ -1399,7 +1399,7 @@ int __cdecl multiplayer_init(int startup_mode) {
             GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ = 0;
             for (int i = 1; i <= NetDaemonNet.player_count_; ++i)
                 GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ |=
-                    1 << NetDaemonNet.process_slots_[i].identity_;
+                    1 << NetDaemonNet.process_slots_[i].state_.identity_;
 
             if (NetWinSessionData.fields_.mode_ == 0) {
                 if (text_open(AlphaxFileID, "WORLDSIZE") != 0) {
@@ -1451,7 +1451,7 @@ int __cdecl multiplayer_init(int startup_mode) {
 
         // Native 0x58DE3D stores PlayerData +0x2088 (unk_102).
         for (int i = 1; i <= NetDaemonNet.player_count_; ++i)
-            PlayersData[NetDaemonNet.process_slots_[i].identity_].unk_102 =
+            PlayersData[NetDaemonNet.process_slots_[i].state_.identity_].unk_102 =
                 NetWinLobbyRows.rows_[i].owner_;
 
         GameDataStateStorage.fields_.game_state_ |= NetWinSessionOptions.fields_.rule_bits_b_ & 0x01800000u;
@@ -1482,7 +1482,7 @@ int __cdecl multiplayer_init(int startup_mode) {
             GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ = 0;
             for (int i = 1; i <= NetDaemonNet.player_count_; ++i)
                 GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ |=
-                    1 << NetDaemonNet.process_slots_[i].identity_;
+                    1 << NetDaemonNet.process_slots_[i].state_.identity_;
             NetDaemonNet.send_rules();
             NetDaemonNet.send_game();
         } else {

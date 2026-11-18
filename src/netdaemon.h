@@ -154,12 +154,12 @@ static_assert(offsetof(NetDaemonSaveProcessSlot, pid_) ==
 static_assert(offsetof(NetDaemonSaveProcessSlot, state_.identity_) == 0x24,
               "saved process-slot identity offset");
 static_assert(offsetof(NetDaemonSaveProcessSlot, state_.identity_) ==
-                  offsetof(AlphaNetProcessSlot, identity_),
+                  offsetof(AlphaNetProcessSlot, state_.identity_),
               "saved process-slot identity matches live layout");
 static_assert(offsetof(NetDaemonSaveProcessSlot, state_.status_bytes_) == 0x28,
               "saved process-slot status offset");
 static_assert(offsetof(NetDaemonSaveProcessSlot, state_.status_bytes_) ==
-                  offsetof(AlphaNetProcessSlot, status_bytes_),
+                  offsetof(AlphaNetProcessSlot, state_.status_bytes_),
               "saved process-slot status matches live layout");
 static_assert(sizeof(NetDaemonSaveProcessSlot) == 0x19C,
               "saved process-slot stride");

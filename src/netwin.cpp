@@ -705,15 +705,15 @@ void NetWin::prepare_game() {
     // Each process slot receives the leading 0x176 row bytes at its identity.
     if (NetWinSessionData.fields_.mode_ != 0 && NetWinSessionData.fields_.mode_ != 1) {
         for (i = 0; i < 8; i++) {
-            memcpy(&NetDaemonNet.process_slots_[i].identity_, &NetWinLobbyRows.rows_[i], 0x176);
-            NetDaemonNet.process_slots_[i].identity_ =
+            memcpy(&NetDaemonNet.process_slots_[i].state_.identity_, &NetWinLobbyRows.rows_[i], 0x176);
+            NetDaemonNet.process_slots_[i].state_.identity_ =
                 NetWinLobbyRows.rows_[i].faction_or_color_ == -1
                 ? 0 : NetWinLobbyRows.rows_[i].faction_or_color_;
         }
     } else {
         for (i = 0; i < 8; i++) {
-            memcpy(&NetDaemonNet.process_slots_[i].identity_, &NetWinLobbyRows.rows_[i], 0x176);
-            NetDaemonNet.process_slots_[i].identity_ = static_cast<int8_t>(i);
+            memcpy(&NetDaemonNet.process_slots_[i].state_.identity_, &NetWinLobbyRows.rows_[i], 0x176);
+            NetDaemonNet.process_slots_[i].state_.identity_ = static_cast<int8_t>(i);
         }
     }
 
@@ -749,8 +749,8 @@ void NetWin::prepare_game() {
         }
         for (seat = 1; seat < 8; seat++) {
             const AlphaNetProcessSlot &process = NetDaemonNet.process_slots_[seat];
-            const int faction = process.identity_;
-            PlayersData[faction].diff_level = static_cast<int8_t>(process.field_26_);
+            const int faction = process.state_.identity_;
+            PlayersData[faction].diff_level = static_cast<int8_t>(process.state_.field_26_);
             if (!(hidden_mask & (1u << seat))) {
                 const NetWinLobbyRow &row = NetWinLobbyRows.rows_[seat];
                 strcpy(Players[faction].name_leader, row.leader_name_);
