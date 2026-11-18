@@ -1,13 +1,13 @@
-"""psearch.py <unit> <0xADDR> <name> [--iters N] [--seed S] [--apply] [--deep]
+"""psearch.py <unit> <0xADDR> <name> [--iters N] [--seed S] [--apply] [--deep] [--line N] [--vec LINE:n1:n4,...]
 Hill-climb dead /Ob2 budget probes over the statement gaps of one function; score = fe differing rows."""
 import sys,os,re,random,argparse
 os.environ.setdefault('FE_PFX_BASE','14'); os.environ.setdefault('FE_JOBS','5')
 sys.path.insert(0,'recovery/tools')
 import perm
-ap=argparse.ArgumentParser(); ap.add_argument('unit'); ap.add_argument('addr'); ap.add_argument('name'); ap.add_argument('--iters',type=int,default=8); ap.add_argument('--seed',type=int,default=1); ap.add_argument('--apply',action='store_true'); ap.add_argument('--deep',action='store_true'); ap.add_argument('--n',type=int,default=60)
+ap=argparse.ArgumentParser(); ap.add_argument('unit'); ap.add_argument('addr'); ap.add_argument('name'); ap.add_argument('--iters',type=int,default=8); ap.add_argument('--seed',type=int,default=1); ap.add_argument('--apply',action='store_true'); ap.add_argument('--deep',action='store_true'); ap.add_argument('--n',type=int,default=60); ap.add_argument('--vec',help='apply this result without searching: LINE:n1:n4,... as printed'); ap.add_argument('--line',type=int,default=0,help='1-based line of the signature when the body is not the first definition after the marker')
 a=ap.parse_args()
 t=open(a.unit,encoding='latin-1').read(); L=t.split('\n')
-mi=[i for i,l in enumerate(L) if '// ORIGINAL: 0x%08X'%int(a.addr,16) in l][0]
+mi=a.line-2 if a.line else [i for i,l in enumerate(L) if '// ORIGINAL: 0x%08X'%int(a.addr,16) in l][0]
 # skip to end of comment block if inside /* */
 st=None
 for i in range(mi+1,len(L)):
@@ -61,6 +61,11 @@ def build(vec,final=False):
 st_decl=st
 while st_decl>0 and (L[st_decl].startswith((' ','\t')) or not L[st_decl].strip()): st_decl-=1
 random.seed(a.seed)
+if a.vec:
+    v={}
+    for it in a.vec.split(','):
+        ln,n1,n4=[int(x) for x in it.split(':')]; v[gaps.index(ln-1)]=(n1,n4)
+    open(a.unit,'w',encoding='latin-1').write(build(v,final=True)); print('APPLIED vec'); sys.exit(0)
 def key(v): return tuple(sorted((g,n) for g,n in v.items() if n!=(0,0)))
 seen={}
 best={}; 

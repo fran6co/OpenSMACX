@@ -180,6 +180,18 @@ NetMsg NetMsgSecondary(-5, 40, 1);
 // ORIGINAL: 0x0047A890 ?pop@NetMsg@@QAEXPBDHHPBD@Z 0x0047A890-0x0047ACE3;0x00656550-0x0065664C
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0047a890.cpp"], "reason": "Complete genuine NetMsg owner implementation replaces executable aliases/forwarders; original seed establishes catalogue identity and spans, native emitted symbols are separately recorded. Full private application compile/link and both native flag sets checked; preserve seed and historical claims, no exactness granted by binding."}
 // symbol    ?pop@NetMsg@@QAEXPBDHH0@Z
+// WORKAROUND(inline): dead /Ob2 budget probes, not recovered code; constant
+// arguments fold them away. They spend the budget the image spends before
+// this function's Popup teardowns (found by a probe hill-climb scored on the
+// image diff); the original's spend is not identified.
+static inline int netmsg_pop_budget_probe1(int x) { if (x == 0) x = 1; return x; }
+static inline int netmsg_pop_budget_probe4(int x) {
+    if (x == 0) x = 1;
+    if (x == 1) x = 4;
+    if (x == 2) x = 7;
+    if (x == 3) x = 10;
+    return x;
+}
 void NetMsg::pop(const char *label, int duration, int channel,
                  const char *target) {
     // The original constructs this local Popup before either mode branch.
@@ -211,6 +223,8 @@ void NetMsg::pop(const char *label, int duration, int channel,
         if (Popup::start(PopupStartCaption, label, -1, nullptr, 0x180,
                          nullptr) == 0) {
             char button_label[80];
+            netmsg_pop_budget_probe1(5);  // WORKAROUND(inline): see netmsg_pop_budget_probe1
+            netmsg_pop_budget_probe1(5);  // WORKAROUND(inline): see netmsg_pop_budget_probe1
             button_label[0] = '\0';
             strcat(button_label, label_get(219));
             BasePop::button(button_label);
@@ -219,6 +233,9 @@ void NetMsg::pop(const char *label, int duration, int channel,
             BasePop::exec(0, 0);
             PopupModalState = 0;
 
+            netmsg_pop_budget_probe4(5);  // WORKAROUND(inline): see netmsg_pop_budget_probe1
+            netmsg_pop_budget_probe4(5);  // WORKAROUND(inline): see netmsg_pop_budget_probe1
+            netmsg_pop_budget_probe4(5);  // WORKAROUND(inline): see netmsg_pop_budget_probe1
             if (duration > 0) {
                 timer_.start(NetMsg::timer_daemon, field_5388_ + 0x46,
                              static_cast<uint32_t>(duration), 0x3c);
@@ -226,6 +243,9 @@ void NetMsg::pop(const char *label, int duration, int channel,
         }
         PopupModalState = 0;
     } else {
+        netmsg_pop_budget_probe1(5);  // WORKAROUND(inline): see netmsg_pop_budget_probe1
+        netmsg_pop_budget_probe1(5);  // WORKAROUND(inline): see netmsg_pop_budget_probe1
+        netmsg_pop_budget_probe1(5);  // WORKAROUND(inline): see netmsg_pop_budget_probe1
         popup.start(PopupStartCaption, label, -1, nullptr, 0, nullptr);
 
         // Native predicates: active is false only for a non-network game with a
@@ -244,6 +264,8 @@ void NetMsg::pop(const char *label, int duration, int channel,
         popup.BasePop::exec(0, 0);
         return;
     }
+    netmsg_pop_budget_probe4(5);  // WORKAROUND(inline): see netmsg_pop_budget_probe1
+    netmsg_pop_budget_probe4(5);  // WORKAROUND(inline): see netmsg_pop_budget_probe1
 }
 
 // Pinned wrapper reads [ebp+8/+0xc], uses plain RET, and callers clean both args.
