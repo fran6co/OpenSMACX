@@ -92,34 +92,50 @@ void __cdecl vox_matrix_matrix_mul(const float (*left)[3], const float (*right)[
         + left[2][2] * right[2][2];
 }
 
+// The image reserves nine cofactor slots (sub esp,0x24) and stores the
+// reciprocal in the dead `matrix` home. The chained stores back into
+// cof[0][1]/cof[0][2] give its schedule (0.660 -> 0.737); the image never
+// writes those two slots, and no spelling found keeps them unwritten.
 // All cofactors are formed before any destination write. This preserves the
 // inverse's in-place/overlapping behavior, unlike the sequential multiply.
 // A zero determinant is not special-cased in the original arithmetic.
 // ORIGINAL: 0x00627F50 ?vox_matrix_inverse@@YAXPAY02$$CBMPAY02M@Z 0x00627F50-0x006280DF
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original body, complete seed extent, and fresh VC6 symbol observation; recovery/tests/test_caviar_geometry.py checks original expression trees and bounded host behavior.", "Inverse snapshots cofactor inputs before stores and has no singular guard; cross preserves sequential overlapping writes; rotation uses scoped x87 intrinsics and reads all angles before stores. Numerical spill precision is not established by these structural bindings."], "reason": "Source-owned voxel geometry with typed matrix rows and original arithmetic/store ordering."}
 void __cdecl vox_matrix_inverse(const float (*matrix)[3], float (*out)[3]) {
-    float c00 = matrix[1][1] * matrix[2][2] - matrix[1][2] * matrix[2][1];
-    float c10 = matrix[1][0] * matrix[2][2] - matrix[2][0] * matrix[1][2];
-    float c20 = matrix[1][0] * matrix[2][1] - matrix[2][0] * matrix[1][1];
-    float reciprocal = 1.0f / ((matrix[0][0] * c00 - c10 * matrix[0][1])
-                              + c20 * matrix[0][2]);
-    float c01 = matrix[0][1] * matrix[2][2] - matrix[0][2] * matrix[2][1];
-    float c11 = matrix[0][0] * matrix[2][2] - matrix[0][2] * matrix[2][0];
-    float c21 = matrix[0][0] * matrix[2][1] - matrix[0][1] * matrix[2][0];
-    float c02 = matrix[0][1] * matrix[1][2] - matrix[0][2] * matrix[1][1];
-    float c12 = matrix[0][0] * matrix[1][2] - matrix[0][2] * matrix[1][0];
-    float c22 = matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
+    float cof[3][3];
+    cof[0][0] = matrix[1][1] * matrix[2][2] - matrix[1][2] * matrix[2][1];
+    cof[0][1] = matrix[1][0] * matrix[2][2] - matrix[2][0] * matrix[1][2];
+    cof[0][2] = matrix[1][0] * matrix[2][1] - matrix[2][0] * matrix[1][1];
+    float reciprocal = 1.0f / ((matrix[0][0] * cof[0][0] - cof[0][1] * matrix[0][1])
+                              + cof[0][2] * matrix[0][2]);
+    cof[1][0] = matrix[0][1] * matrix[2][2] - matrix[0][2] * matrix[2][1];
+    cof[1][1] = matrix[0][0] * matrix[2][2] - matrix[0][2] * matrix[2][0];
+    cof[1][2] = matrix[0][0] * matrix[2][1] - matrix[0][1] * matrix[2][0];
+    cof[2][0] = matrix[0][1] * matrix[1][2] - matrix[0][2] * matrix[1][1];
+    cof[2][1] = matrix[0][0] * matrix[1][2] - matrix[0][2] * matrix[1][0];
+    cof[2][2] = matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
 
-    out[0][0] = reciprocal * c00;
-    out[0][1] = -(reciprocal * c01);
-    out[0][2] = reciprocal * c02;
-    out[1][0] = -(reciprocal * c10);
-    out[1][2] = -(reciprocal * c12);
-    out[1][1] = reciprocal * c11;
-    out[2][0] = reciprocal * c20;
-    out[2][1] = -(reciprocal * c21);
-    out[2][2] = reciprocal * c22;
+    out[0][0] = reciprocal * cof[0][0];
+    out[0][1] = -(reciprocal * cof[1][0]);
+    out[0][2] = reciprocal * cof[2][0];
+    out[1][0] = cof[0][1] = -(reciprocal * cof[0][1]);
+    out[1][2] = -(reciprocal * cof[2][1]);
+    out[1][1] = reciprocal * cof[1][1];
+    out[2][0] = cof[0][2] = reciprocal * cof[0][2];
+    out[2][1] = -(reciprocal * cof[1][2]);
+    out[2][2] = reciprocal * cof[2][2];
 }
+
+// WORKAROUND(decl): six unused declarations restore the front-end symbol
+// state vox_matrix_vector_mul and vox_cross_product need for their x87
+// operand order after vox_matrix_inverse's cofactor array (6 and 8 keep both
+// exact; 0-5, 7, 10 and 12 flip one or both).
+extern float vox_geometry_pad_0;
+extern float vox_geometry_pad_1;
+extern float vox_geometry_pad_2;
+extern float vox_geometry_pad_3;
+extern float vox_geometry_pad_4;
+extern float vox_geometry_pad_5;
 
 // 0x006280E0. A 3x3 times a vector: three rows of three multiplies and a
 // store, 107 bytes, no calls of its own.
