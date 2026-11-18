@@ -1313,6 +1313,11 @@ Purpose: Keep the session alive and reap the players that have gone quiet:
 // also spend EBX on a zero register, so it tests and pushes immediates where
 // this tree compares against and pushes the zero register. Six attempts, and
 // the trigger for VC6's hoist-without-home is not in this file's spelling.
+// RESOLVED: the zero register came from the store count, not from the clock.
+// Spelling `NetReapBusy = 0; return;` inside the host and row-1 arms gave the
+// function four zero stores, VC6's threshold for a constant register. The
+// source is one if / else if / else falling to a single closing clear; VC6
+// duplicates that clear into each arm's epilogue itself.
 Return Value: n/a
 */
 void Net::check_polling() {
@@ -1347,16 +1352,11 @@ void Net::check_polling() {
                     }
                 }
             }
-            NetReapBusy = 0;
-            return;
-        }
-        if (local_player_id_ == players_[1].field_0_) {
+        } else if (local_player_id_ == players_[1].field_0_) {
             const DWORD stamp = players_[0].stamp_10_;
             if (stamp != 0 && timeGetTime() - stamp > poll_timeout_E0_
                 && drop_player(players_[0].field_0_, 0) == 0) {
                 players_[0].stamp_10_ = timeGetTime();
-                NetReapBusy = 0;
-                return;
             }
         } else {
             // Neither leading row is this player: both stale cuts the lot.
