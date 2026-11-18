@@ -1269,7 +1269,7 @@ Purpose: Keep the session alive and reap the players that have gone quiet:
          compares now - 2000 with the stored tick as unsigned values; preserve
          that wraparound behavior rather than rewriting it as an elapsed-time
          subtraction.
-// ORIGINAL: 0x006320E0 ?check_polling@Net@@QAEXXZ 0x006320E0-0x00632290
+// ORIGINAL: 0x006320E0 ?check_polling@Net@@QAEXXZ 0x006320E0-0x00632290 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"The one-player reaping arm compares the local player ID with row 1's ID, not row 1's timestamp. Preserve the original row-0 timestamp/drop logic, distinct timeout comparisons, failure returns and busy-flag effects.","evidence":["pinned:0x0063216E loads Net+0x760 into EAX; 0x006321E2 compares EAX with Net+0x1AC","source:Net players_ begins at +0x154; NetPlayer stride is 0x58, field_0_ is the ID at +0 and stamp_10_ is the timestamp at +0x10, so row 1 ID is +0x1AC and row 1 stamp is +0x1BC","pinned:0x006321EA reads row 0 stamp at +0x164; 0x00632206 loads row 0 ID at +0x154 for drop_player and 0x0063221A refreshes the timestamp after successful drop"]}
 // symbol    ?check_polling@Net@@QAEXXZ
 // size      432 bytes
