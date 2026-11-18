@@ -4325,12 +4325,10 @@ LAB_0046441f:
         uVar12 = map_tiles()[MapLongitude * a8 + local_14].bit2;
         if ((uVar12 & 0x80000008) == 8) {
             g_TER1_LANDMARK_RESOURCE_SPRITES[4].draw(
-                buffer, sprite_transparent(g_TER1_LANDMARK_RESOURCE_SPRITES[4]),
-                a9, a10);
+                buffer, a9, a10);
         } else if ((uVar12 & 0x80000400) == 0x400) {
             g_TER1_LANDMARK_RESOURCE_SPRITES[5].draw(
-                buffer, sprite_transparent(g_TER1_LANDMARK_RESOURCE_SPRITES[5]),
-                a9, a10);
+                buffer, a9, a10);
         }
     }
 
@@ -4666,7 +4664,7 @@ LAB_00465605:;
     // THE KELP FARM SPRITE (site 22).
     if ((a6 & 1) != 0 && (local_24 & 0x8000) != 0 && local_18 != 0) {
         g_TER1_KELP_FARM_SPRITE.draw(
-            buffer, sprite_transparent(g_TER1_KELP_FARM_SPRITE), a9, a10);
+            buffer, a9, a10);
     }
 
     // THE BASE/ROAD/MAGTUBE PASS (sites 18-20 and the sensor-array
@@ -4798,11 +4796,11 @@ LAB_00465605:;
     if (local_30b != 0) {
         if ((local_24 & 0x800) != 0 && -8 < a3 && local_18 == 0) {
             g_TER1_BUNKER_SPRITE.draw(
-                buffer, sprite_transparent(g_TER1_BUNKER_SPRITE), a9, a10);
+                buffer, a9, a10);
         }
         if ((local_24 & 0x40000) != 0 && -8 < a3 && local_18 == 0) {
             g_TER1_AIRBASE_SPRITE.draw(
-                buffer, sprite_transparent(g_TER1_AIRBASE_SPRITE), a9,
+                buffer, a9,
                 a10);
         }
         if ((local_24 & 0x80000000) != 0 && -8 < a3) {
@@ -4820,13 +4818,11 @@ LAB_00465605:;
                 iVar5 = range(crop_diff - 1, 0, 3);
                 g_TER1_SOIL_ENRICHER_SPRITES[iVar5].draw(
                     buffer,
-                    sprite_transparent(g_TER1_SOIL_ENRICHER_SPRITES[iVar5]),
                     a9, a10);
             } else {
                 iVar5 = range(crop_diff - 1, 0, 3);
                 g_TER1_FARM_SPRITES[iVar5].draw(
-                    buffer, sprite_transparent(g_TER1_FARM_SPRITES[iVar5]),
-                    a9, a10);
+                    buffer, a9, a10);
             }
         }
         if ((local_24 & 0x10) != 0 && -8 < a3) {
@@ -4834,12 +4830,12 @@ LAB_00465605:;
                 if (ExpansionEnabled != 0 || (int)local_8c == 2) {
                     g_TER1_MINING_PLATFORM_SPRITE.draw(
                         buffer,
-                        sprite_transparent(g_TER1_MINING_PLATFORM_SPRITE), a9,
+                        a9,
                         a10);
                 }
             } else {
                 g_TER1_MINE_SPRITE.draw(
-                    buffer, sprite_transparent(g_TER1_MINE_SPRITE), a9,
+                    buffer, a9,
                     a10);
             }
         }
@@ -4848,43 +4844,40 @@ LAB_00465605:;
                 if (ExpansionEnabled != 0 || (int)local_8c == 2) {
                     g_TER1_TIDAL_HARNESS_SPRITE.draw(
                         buffer,
-                        sprite_transparent(g_TER1_TIDAL_HARNESS_SPRITE), a9,
+                        a9,
                         a10);
                 }
             } else {
                 g_TER1_SOLAR_COLLECTOR_SPRITE.draw(
                     buffer,
-                    sprite_transparent(g_TER1_SOLAR_COLLECTOR_SPRITE), a9,
+                    a9,
                     a10);
             }
         }
         if ((local_24 & 0x400000) != 0 && -8 < a3) {
             g_TER1_CONDENSER_SPRITE.draw(
-                buffer, sprite_transparent(g_TER1_CONDENSER_SPRITE), a9,
+                buffer, a9,
                 a10);
         }
         if ((local_24 & 0x800000) != 0 && -8 < a3) {
             g_TER1_ECHELON_MIRROR_SPRITE.draw(
-                buffer, sprite_transparent(g_TER1_ECHELON_MIRROR_SPRITE),
-                a9, a10);
+                buffer, a9, a10);
         }
         if ((local_24 & 0x1000000) != 0 && -8 < a3) {
             if ((map_tiles()[MapLongitude * a8 + local_14].bit2 & 0x80001000) ==
                 0x1000) {
                 g_TER1_BOREHOLE_CLUSTER_SPRITE.draw(
-                    buffer, sprite_transparent(g_TER1_BOREHOLE_CLUSTER_SPRITE),
-                    a9, a10);
+                    buffer, a9, a10);
             } else {
                 g_TER1_BOREHOLE_SPRITE.draw(
-                    buffer, sprite_transparent(g_TER1_BOREHOLE_SPRITE), a9,
+                    buffer, a9,
                     a10);
             }
         }
         if (local_9c != 0 && -8 < a3 && local_18 == 0 && crop_diff >= 5 &&
             (local_24 & 0x80000) != 0) {
             g_TER1_SOIL_ENRICHER_SPRITES[0].draw(
-                buffer, sprite_transparent(g_TER1_SOIL_ENRICHER_SPRITES[0]),
-                a9, a10);
+                buffer, a9, a10);
         }
         uVar12 = map_tiles()[MapLongitude * a8 + local_14].bit2;
         if ((uVar12 & 0x80002000) == 0x2000) {
@@ -4897,8 +4890,7 @@ LAB_00465605:;
                 goto nexus_done;
             }
             g_TER1_MANIFOLD_NEXUS_SPRITES[iVar5].draw(
-                buffer, sprite_transparent(g_TER1_MANIFOLD_NEXUS_SPRITES[iVar5]),
-                a9, a10);
+                buffer, a9, a10);
         }
 nexus_done:
         // 0x4661F8-0x4663CA: every arm draws its own constant receiver
@@ -4910,75 +4902,61 @@ nexus_done:
                 if (goody_at(a7, a8) != 0) {
                     g_TER1WRECK_UNITY_WRECKAGE_SPRITES[0].draw(
                         buffer,
-                        sprite_transparent(g_TER1WRECK_UNITY_WRECKAGE_SPRITES[0]),
                         a9, a10);
                 } else {
                     g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES[0].draw(
                         buffer,
-                        sprite_transparent(g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES[0]),
                         a9, a10);
                 }
             } else if ((int)uVar16b < 0x8000000) {
                 g_TER1WRECK_UNITY_WRECKAGE_SPRITES[(int)uVar12 >> 0x18].draw(
                     buffer,
-                    sprite_transparent(
-                        g_TER1WRECK_UNITY_WRECKAGE_SPRITES[(int)uVar12 >> 0x18]),
                     a9, a10);
             } else if (uVar16b == 0x8000000) {
                 if (goody_at(a7, a8) != 0) {
                     g_TER1WRECK_UNITY_WRECKAGE_SPRITES[8].draw(
                         buffer,
-                        sprite_transparent(g_TER1WRECK_UNITY_WRECKAGE_SPRITES[8]),
                         a9, a10);
                 } else {
                     g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES[1].draw(
                         buffer,
-                        sprite_transparent(g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES[1]),
                         a9, a10);
                 }
             } else if (uVar16b == 0xa000000) {
                 if (goody_at(a7, a8) != 0) {
                     g_TER1WRECK_UNITY_WRECKAGE_SPRITES[9].draw(
                         buffer,
-                        sprite_transparent(g_TER1WRECK_UNITY_WRECKAGE_SPRITES[9]),
                         a9, a10);
                 } else {
                     g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES[2].draw(
                         buffer,
-                        sprite_transparent(g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES[2]),
                         a9, a10);
                 }
             } else if (uVar16b == 0xc000000) {
                 g_TER1WRECK_UNITY_WRECKAGE_SPRITES[10].draw(
                     buffer,
-                    sprite_transparent(g_TER1WRECK_UNITY_WRECKAGE_SPRITES[10]),
                     a9, a10);
             } else if (uVar16b == 0xf000000) {
                 g_TER1WRECK_UNITY_WRECKAGE_SPRITES[11].draw(
                     buffer,
-                    sprite_transparent(g_TER1WRECK_UNITY_WRECKAGE_SPRITES[11]),
                     a9, a10);
             } else if (uVar16b == 0x10000000) {
                 g_TER1WRECK_UNITY_WRECKAGE_SPRITES[12].draw(
                     buffer,
-                    sprite_transparent(g_TER1WRECK_UNITY_WRECKAGE_SPRITES[12]),
                     a9, a10);
             } else if (uVar16b == 0x13000000) {
                 if (goody_at(a7, a8) != 0) {
                     g_TER1WRECK_UNITY_WRECKAGE_SPRITES[13].draw(
                         buffer,
-                        sprite_transparent(g_TER1WRECK_UNITY_WRECKAGE_SPRITES[13]),
                         a9, a10);
                 } else {
                     g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES[3].draw(
                         buffer,
-                        sprite_transparent(g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES[3]),
                         a9, a10);
                 }
             } else if (uVar16b == 0x14000000) {
                 g_TER1WRECK_UNITY_WRECKAGE_SPRITES[14].draw(
                     buffer,
-                    sprite_transparent(g_TER1WRECK_UNITY_WRECKAGE_SPRITES[14]),
                     a9, a10);
             }
         }
@@ -4986,8 +4964,7 @@ nexus_done:
         if ((uVar12 & 0x80008000) == 0x8000 && ExpansionEnabled != 0 &&
             (int)(uVar12 & 0xff000000) < 0x6000000) {
             g_FOSSIL_FIELD_RIDGE_SPRITES[(int)uVar12 >> 0x18].draw(
-                buffer, sprite_transparent(g_FOSSIL_FIELD_RIDGE_SPRITES[(int)uVar12 >> 0x18]),
-                a9, a10);
+                buffer, a9, a10);
         }
     }
 
@@ -5001,8 +4978,7 @@ nexus_done:
                  (uVar12 != 0xa000000 && uVar12 != 0x13000000))) {
                 g_TER1_UNITY_POD_SPRITES
                     [local_18 + ((int)(a7 * 7 + a8 * 5) % 3) * 2]
-                        .draw(buffer, sprite_transparent(g_TER1_UNITY_POD_SPRITES [local_18 + ((int)(a7 * 7 + a8 * 5) % 3) * 2]),
-                              a9, a10);
+                        .draw(buffer, a9, a10);
             }
         }
         if ((map_tiles()[MapLongitude * a8 + local_14].bit & 0x2000) != 0) {
@@ -5017,8 +4993,7 @@ nexus_done:
         if (local_a4 != 0) {
             g_TER1_WHITE_ORG_YEL_TILE_SPRITES
                 [local_90 + (map_tiles()[MapLongitude * a8 + local_14].climate & 7) * 2]
-                    .draw(buffer, sprite_transparent(g_TER1_WHITE_ORG_YEL_TILE_SPRITES [local_90 + (map_tiles()[MapLongitude * a8 + local_14].climate & 7) * 2]),
-                          a9, a10);
+                    .draw(buffer, a9, a10);
         }
         if (local_20 == 0 && (a6 & 0x10) != 0) {
             // 0x4665BA: the rainfall bits are read before local_90 moves.
@@ -5028,7 +5003,6 @@ nexus_done:
             }
             g_TER1_BOTTOM_LEFT_TILE_SPRITES[local_90 + iVar5 * 3].draw(
                 buffer,
-                sprite_transparent(g_TER1_BOTTOM_LEFT_TILE_SPRITES[local_90 + iVar5 * 3]),
                 a9, a10);
         }
     }
