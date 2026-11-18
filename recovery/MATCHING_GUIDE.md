@@ -2135,18 +2135,26 @@ re-aligns their pad blocks (2.5). base_energy 0x004EB560 and give_a_base
   case. Default position, `default: return`, a `return` in the small case or a
   goto tail all compile identically (SocialWin::on_button_clicked). Case blocks
   follow source order.
-- **Jump-table case blocks after the epilogue, each jumping back to the
-  code after the switch.** The image's last in-line case is reached by what
-  looks like a fall-through. It is a `goto` into the case written *last* in
-  the switch: `case 2: if (x) return; goto accept; case 4: ... case 7:
-  accept: f = 7; break;`. VC6 moves the goto target up behind the goto, the
-  code after the switch follows it (it was the textually last case), and
-  the cases written in between land after the `ret`. No case or default
-  order, `break`/`goto` join, flag, nested switch or loop form does this;
-  duplicated tails that VC6 merges give the layout but enregister the
-  selector (ProdPicker::on_button_clicked 0x004945D0). Only three game
-  functions have the symptom: this one, ReportIf::on_status and
-  Console::go_to.
+- **Identical code in two cases is merged into the textually last copy.**
+  VC6 keeps the last copy, makes the earlier case jump into it, moves that
+  last case up behind the jump, lets the code after the switch follow it,
+  and emits the cases written in between after the epilogue. So when the
+  image shows what looks like a fall-through (`case 2` running into
+  `case 7`) followed directly by the code after the switch, with other
+  case blocks after the `ret` jumping back, or a `default` that targets
+  the first of two epilogue copies, the source did not fall through. Each
+  case wrote the shared statements itself and the second one is last in
+  the switch:
+  `case 2: if (x) return; f = 7; break; case 4: ... case 7: f = 7; break;`.
+  The shared code is often an inlined helper (ReportIf::on_status:
+  `case 3: close_energy(); ... case 0: close_intel();`, where
+  close_energy ends with close_intel's two calls). A real fall-through,
+  any case or `default` order, a `break`/`goto` join, a flag, a nested
+  switch and a loop all keep every case before the tail. An empty inline
+  helper as a case body (`case 8: close_score(); break;`) keeps that case
+  in the jump table's range, which a bare `case 8: break;` does not.
+  Solved ProdPicker::on_button_clicked 0x004945D0 and
+  SocialWin::on_button_clicked 0x004B1E00.
 - **`movsx` before `and 1`.** VC6 narrows `(char)x & 1` and
   `*(signed char *)&x & 1` to `mov reg8`, so an image `movsx` there needs
   another explanation (scenario_setup, unresolved).

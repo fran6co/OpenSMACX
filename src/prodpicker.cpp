@@ -313,12 +313,13 @@ void ProdPicker::on_button_clicked(int button_id) {
         break;
     case 2:
         if (field_A774_ == static_cast<uint32_t>(-1)) return;
-        // A goto into the switch's last case, not a fall-through: the image
-        // lays case 7 and the code after the switch right behind this block
-        // and puts cases 4, 5, 6, -1 and -2 after the epilogue, each jumping
-        // back. Only this form does that; with an adjacent fall-through
-        // every case precedes the tail.
-        goto accept;
+        // The same action as case 7, written out here and again in the
+        // switch's last case, not a fall-through. VC6 merges the two
+        // identical endings into the last case, lays that case and the code
+        // after the switch right behind this block, and puts cases 4, 5, 6,
+        // -1 and -2 after the epilogue, each jumping back, as the image has.
+        field_A778_ = 7;
+        break;
     case 4:
         field_A778_ = 4;
         break;
@@ -337,7 +338,6 @@ void ProdPicker::on_button_clicked(int button_id) {
         field_A774_ = static_cast<uint32_t>(-1);
         break;
     case 7:
-    accept:
         field_A778_ = 7;
         break;
     default:

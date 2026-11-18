@@ -91,7 +91,6 @@ void ReportIfDeclFnPad4();
 void ReportIfDeclFnPad5();
 void ReportIfDeclFnPad6();
 void ReportIfDeclFnPad7();
-void ReportIfDeclFnPad8();
 
 // Shared punctuation objects the image pushes instead of unit literals.
 extern char SocialWinCloseParenText[];
@@ -5687,30 +5686,20 @@ void ReportIf::on_status(int mode) {
         for (int portrait_slot = 0; portrait_slot < 7; ++portrait_slot) {
             flatButtonsA_[portrait_slot].close();
         }
+        // The same close chain as report(): the small closers are expanded
+        // here, close_ops and close_sat are called. close_energy ends with
+        // close_intel's two list closes, and VC6 merges that ending into
+        // case 0, which is why the image jumps from case 3 into the last
+        // case and lays cases 4, 6 and 7 out after the epilogue. The empty
+        // close_score keeps case 8 in the jump table's range.
         switch (field_8_) {
-        case 2:
-            listBox1_.close();
-            flatButton1_.hide();
-            flatButton2_.hide();
-            break;
-        case 3:
-            window.listBox_.close();
-            // Original falls through to both local lists.
-        case 0:
-            listBox1_.close();
-            listBox2_.close();
-            break;
-        case 4:
-            close_ops();
-            break;
-        case 6:
-            close_sat();
-            break;
-        case 7:
-            flatButton12_.hide();
-            flatButton14_.hide();
-            flatButton13_.hide();
-            break;
+        case 2: close_labs(); break;
+        case 3: close_energy(); break;
+        case 4: close_ops(); break;
+        case 6: close_sat(); break;
+        case 7: close_security(); break;
+        case 8: close_score(); break;
+        case 0: close_intel(); break;
         }
         WorldClimateWorldWin.hide_all();
         for (int main_button = 6; main_button <= 7; ++main_button) {
