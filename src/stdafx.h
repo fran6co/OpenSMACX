@@ -65,16 +65,7 @@
 // loop that VC6's /Og turns into a block operation (message_big_data
 // 0x00592FF0 is two such loops), none of which needs /Oi.
 //
-// WORKAROUND(decl): the unit flags still carry /Oi (the build is the
-// coordinator's), so this line names every intrinsic the headers declare
-// instead. It stands in for dropping /Oi from the game and Jackal units;
-// once that lands this line and the Caviar/UV `#pragma intrinsic` lines
-// that undo it go away together. A body that needs `memset`/`memcpy` to
-// expand here is spelled wrong: write the loop or the assignment.
-#if defined(_MSC_VER) && _MSC_VER <= 1200
-#pragma function(strcat, strcpy, strlen, strcmp, abs, sin, cos, memcmp)
-#pragma function(memcpy, memset, sqrt, atan, atan2, pow, fabs, labs, exp, log, log10, tan, acos, asin, cosh, sinh, tanh, fmod)
-#endif
+// The game and Jackal units are compiled without /Oi (CMakeLists.txt).
 
 // Marks a parameter as deliberately unused. Expands to NOTHING, which
 // works for both spellings in this tree: `int UNUSED(x)` leaves an unnamed

@@ -743,13 +743,13 @@ target_compile_options(OpenSMACX PRIVATE $<$<COMPILE_LANGUAGE:CXX>:/W4>)
 # (caviar_loader pushes "CPU not supported" from two functions and "No room
 # for color table" twice in one through a single address each), so every unit
 # gets /O2's expansion minus /Gf and only the Caviar library keeps /O2. VC6
-# has no /Gf-, so the expansion is spelled out. /Oy and /Oi are part of it
+# has no /Gf-, so the expansion is spelled out. /Oy and /Oi (UV only) are part of it
 # except in units whose own options disable them (/Oy-, /Oi-): both spellings
 # together make VC6 warn D4025, which fails the reproducibility pass. The profile is prepended so each unit's own
 # options (/Oy-, /Oi-, /Ob1, /Z7) still follow it; /Ob2 follows the profile
 # because /O2 alone means /Ob1.
 function(opensmacx_apply_optimization target)
-    cmake_parse_arguments(PARSE_ARGV 1 arg "POOLED" "" "")
+    cmake_parse_arguments(PARSE_ARGV 1 arg "POOLED;NO_INTRINSICS" "" "")
     get_target_property(target_sources ${target} SOURCES)
     get_target_property(target_dir ${target} SOURCE_DIR)
     set(optimized "$<CONFIG:Release,RelWithDebInfo>")
@@ -763,7 +763,11 @@ function(opensmacx_apply_optimization target)
             set(profile /O2 /Ob2)
         else()
             set(profile /Og)
-            if(NOT existing MATCHES "/Oi-")
+            # The game and Jackal were built without /Oi: the image calls the
+            # CRT for every memcpy/memset/strlen/strcat/math call and has no
+            # intrinsic expansion outside Caviar and UV (125 memcpy, 69
+            # memset, 875 strlen calls; no repne scasb, fsqrt or fsin).
+            if(NOT arg_NO_INTRINSICS AND NOT existing MATCHES "/Oi-")
                 list(APPEND profile /Oi)
             endif()
             list(APPEND profile /Ot)
@@ -780,8 +784,8 @@ function(opensmacx_apply_optimization target)
             PROPERTY COMPILE_OPTIONS ${options} ${existing})
     endforeach()
 endfunction()
-opensmacx_apply_optimization(OpenSMACX)
-opensmacx_apply_optimization(jackal)
+opensmacx_apply_optimization(OpenSMACX NO_INTRINSICS)
+opensmacx_apply_optimization(jackal NO_INTRINSICS)
 opensmacx_apply_optimization(uv)
 opensmacx_apply_optimization(caviar POOLED)
 
