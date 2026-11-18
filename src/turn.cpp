@@ -616,6 +616,10 @@ void __cdecl wait_2() {
 // RECOVERY_BINDING: v1 {"evidence": ["git:6e78872480ef8b4a486516e322f23e9f8652665d:src/unrecovered/0051f2e0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json; preserve original extents and historical seed lessons. Ordinary owned literals have pinned content provenance, not exact original data-allocation claims.", "pinned native CFG 0x0051F2E0-0x0052211D, switch table 0x0097D044; event kinds 0-21, common selection and early returns retained.", "Native 0x0051F5A2-0x0051F5FC captures selected base coordinates before parser callbacks. Cases 7/8 reread coordinates; case 19 uses live base coordinates; cases 17/20/21 retain the captured coordinates. Contradictory case-20/21 climate tests remain in source rather than being optimized away as assumed dead behavior."], "reason": "Typed random-events dispatcher and all 22 native cases, called by turn_upkeep. Base selection captures faction and coordinates before parser callbacks; later case-specific live reads remain live. Original map/UI, lifecycle and notification services are supplied by their genuine source owners."}
 // TRIED: mechanical register/stack-slot goto transliteration (260 labels, 39 independent per-case epilogues auto-detected from the pop/pop/ pop/mov-esp-ebp/pop/ret shape, a 22-case switch off 0x0097D044, two thiscall-via-fixed-ecx targets on Console/MapWin, one indirect GetKeyState call through g_00669330): compiles, MISMATCH sim 0.32 on /O2 /Oy- framed, divergence at instruction #33. Large negative 32-bit immediates (e.g. 0xfffffc18) need an explicit (int) cast before a signed compare, or MSVC types the literal unsigned and turns jge into jae - fixed once, may still be lurking elsewhere unverified.
 void __cdecl random_events(int mode) {
+    int f;
+    int j;
+    int v;
+    int k;
     int seen;
     if (mode == 0) {
         if (GameDataStateStorage.fields_.global_energy_event_state_ & 2) {
@@ -1002,7 +1006,7 @@ void __cdecl random_events(int mode) {
             return;
         }
         int changed = 0;
-        for (int f = 1; f < MaxPlayerNum; f++) {
+        for (f = 1; f < MaxPlayerNum; f++) {
             if (PlayersData[f].satellites_[2] || PlayersData[f].satellites_[3]) {
                 PlayersData[f].satellites_[2] = 0;
                 PlayersData[f].satellites_[3] = 0;
@@ -1022,7 +1026,7 @@ void __cdecl random_events(int mode) {
             return;
         }
         int changed = 0;
-        for (int f = 1; f < MaxPlayerNum; f++) {
+        for (f = 1; f < MaxPlayerNum; f++) {
             if (PlayersData[f].satellites_[1]) {
                 PlayersData[f].satellites_[1] = 0;
                 changed = 1;
@@ -1115,7 +1119,7 @@ void __cdecl random_events(int mode) {
             }
             bit_set(tx, ty, BIT_SOLAR_TIDAL, 0);
             synch_bit(tx, ty, faction);
-            for (int j = 1; j < 8; j++) {
+            for (j = 1; j < 8; j++) {
                 map_loc(tx, ty)->bit_visible[j - 1] &= ~BIT_SOLAR_TIDAL;
             }
             if (seen) {
@@ -1172,13 +1176,13 @@ void __cdecl random_events(int mode) {
             synch_bit(x2, y2, ConsoleGlobal.faction_id_);
             rocky_set(x2, y2, ROCKINESS_ROCKY);
             if ((map_loc(x2, y2)->bit2 & (BIT2_UNK_80000000 | BIT2_VOLCANO)) == BIT2_VOLCANO) {
-                for (int v = GameDataStateStorage.fields_.vehicle_current_count_ - 1; v >= 0; v--) {
+                for (v = GameDataStateStorage.fields_.vehicle_current_count_ - 1; v >= 0; v--) {
                     if (Vehs[v].x == x2 && Vehs[v].y == y2) {
                         veh_kill(v);
                     }
                 }
             } else {
-                for (int v = GameDataStateStorage.fields_.vehicle_current_count_ - 1; v >= 0; v--) {
+                for (v = GameDataStateStorage.fields_.vehicle_current_count_ - 1; v >= 0; v--) {
                     if (Vehs[v].x == x2 && Vehs[v].y == y2) {
                         Vehs[v].dmg_incurred += range(proto_power(v) - Vehs[v].dmg_incurred, 0, 9999) / 2;
                     }
@@ -1264,7 +1268,7 @@ void __cdecl random_events(int mode) {
                 }
                 base_kill(hit);
             }
-            for (int v = GameDataStateStorage.fields_.vehicle_current_count_ - 1; v >= 0; v--) {
+            for (v = GameDataStateStorage.fields_.vehicle_current_count_ - 1; v >= 0; v--) {
                 if (Vehs[v].x == x2 && Vehs[v].y == y2) {
                     if (Vehs[v].faction_id == ConsoleGlobal.faction_id_) {
                         seen = 1;
@@ -1322,7 +1326,7 @@ void __cdecl random_events(int mode) {
                 synch_bit(x2, y2, faction);
                 // The original clears the console faction's word seven times
                 // instead of every faction's word.
-                for (int k = 1; k < 8; k++) {
+                for (k = 1; k < 8; k++) {
                     if (map_loc(x2, y2)->bit_visible[ConsoleGlobal.faction_id_ - 1]
                         & (BIT_FOREST | BIT_SOIL_ENRICHER | BIT_FARM)) {
                         map_loc(x2, y2)->bit_visible[ConsoleGlobal.faction_id_ - 1]
@@ -1393,7 +1397,7 @@ void __cdecl random_events(int mode) {
                 }
                 bit_set(x2, y2, BIT_MINE, 0);
                 synch_bit(x2, y2, faction);
-                for (int k = 1; k < 8; k++) {
+                for (k = 1; k < 8; k++) {
                     if (map_loc(x2, y2)->bit_visible[k - 1] & BIT_MINE) {
                         map_loc(x2, y2)->bit_visible[k - 1] &= ~BIT_MINE;
                     }
@@ -1551,7 +1555,7 @@ void __cdecl random_events(int mode) {
             }
             bit_set(x2, y2, BIT_FARM, 0);
             synch_bit(x2, y2, faction);
-            for (int j = 1; j < 8; j++) {
+            for (j = 1; j < 8; j++) {
                 map_loc(x2, y2)->bit_visible[j - 1] &= ~BIT_FARM;
             }
             if (seen) {
@@ -1616,7 +1620,7 @@ void __cdecl random_events(int mode) {
             }
             bit_set(x2, y2, BIT_MINE, 0);
             synch_bit(x2, y2, faction);
-            for (int j = 1; j < 8; j++) {
+            for (j = 1; j < 8; j++) {
                 map_loc(x2, y2)->bit_visible[j - 1] &= ~BIT_MINE;
             }
             if (seen) {

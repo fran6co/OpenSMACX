@@ -4727,6 +4727,8 @@ static union {
 // that is scattered back after the loop.
 void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
                       int outgoing, int16_t flags) {
+    int k;
+    int j;
     int wire[18];
     int faction1;
     int faction2;
@@ -5323,7 +5325,7 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
             switch (opcode) {
             case 0x80: {
                 RulesTechnology *stage = NetDaemonRulesSyncStaging.technology;
-                for (int k = 0; k < MaxTechnologyNum; k++, stage++) {
+                for (k = 0; k < MaxTechnologyNum; k++, stage++) {
                     Technology[k].flags = stage->flags;
                     Technology[k].growth_value = stage->growth_value;
                     Technology[k].tech_value = stage->tech_value;
@@ -5336,8 +5338,8 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
             }
             case 0x83: {
                 RulesTerraforming *stage = NetDaemonRulesSyncStaging.terraforming;
-                for (int k = 0; k < MaxTerrainNum; k++, stage++) {
-                    for (int j = 0; j < 2; j++) {
+                for (k = 0; k < MaxTerrainNum; k++, stage++) {
+                    for (j = 0; j < 2; j++) {
                         Terraforming[k].prerequisite_tech[j] = stage->prerequisite_tech[j];
                     }
                     Terraforming[k].bit = stage->bit;
@@ -5348,7 +5350,7 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
             }
             case 0x85: {
                 RulesTimeControl *stage = NetDaemonRulesSyncStaging.time_control;
-                for (int k = 0; k < MaxTimeControlNum; k++, stage++) {
+                for (k = 0; k < MaxTimeControlNum; k++, stage++) {
                     LPSTR name = TimeControl[k].name;
                     TimeControl[k] = *stage;
                     TimeControl[k].name = name;
@@ -5357,7 +5359,7 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
             }
             case 0x86: {
                 RulesChassis *stage = NetDaemonRulesSyncStaging.chassis;
-                for (int k = 0; k < MaxChassisNum; k++, stage++) {
+                for (k = 0; k < MaxChassisNum; k++, stage++) {
                     Chassis[k].speed = stage->speed;
                     Chassis[k].triad = stage->triad;
                     Chassis[k].range = stage->range;
@@ -5370,14 +5372,14 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
             }
             case 0x87: {
                 RulesReactor *stage = NetDaemonRulesSyncStaging.reactor;
-                for (int k = 0; k < MaxReactorNum; k++, stage++) {
+                for (k = 0; k < MaxReactorNum; k++, stage++) {
                     Reactor[k].preq_tech = stage->preq_tech;
                 }
                 break;
             }
             case 0x88: {
                 RulesWeapon *stage = NetDaemonRulesSyncStaging.weapon;
-                for (int k = 0; k < MaxWeaponNum; k++, stage++) {
+                for (k = 0; k < MaxWeaponNum; k++, stage++) {
                     Weapon[k].offense_rating = stage->offense_rating;
                     Weapon[k].icon = stage->icon;
                     Weapon[k].mode = stage->mode;
@@ -5388,7 +5390,7 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
             }
             case 0x89: {
                 RulesArmor *stage = NetDaemonRulesSyncStaging.armor;
-                for (int k = 0; k < MaxArmorNum; k++, stage++) {
+                for (k = 0; k < MaxArmorNum; k++, stage++) {
                     Armor[k].defense_rating = stage->defense_rating;
                     Armor[k].mode = stage->mode;
                     Armor[k].cost = stage->cost;
@@ -5398,7 +5400,7 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
             }
             case 0x8A: {
                 RulesAbility *stage = NetDaemonRulesSyncStaging.ability;
-                for (int k = 0; k < MaxAbilityNum; k++, stage++) {
+                for (k = 0; k < MaxAbilityNum; k++, stage++) {
                     Ability[k].cost_factor = stage->cost_factor;
                     Ability[k].unk_1 = stage->unk_1;
                     Ability[k].flags = stage->flags;
@@ -5408,7 +5410,7 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
             }
             case 0x8B: {
                 RulesFacility *stage = NetDaemonRulesSyncStaging.facility;
-                for (int k = 0; k < MaxFacilityNum; k++, stage++) {
+                for (k = 0; k < MaxFacilityNum; k++, stage++) {
                     LPSTR name = Facility[k].name;
                     LPSTR effect = Facility[k].effect;
                     Facility[k] = *stage;
@@ -5419,12 +5421,12 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
             }
             case 0x8C: {
                 RulesCitizen *stage = NetDaemonRulesSyncStaging.citizen;
-                for (int k = 0; k < MaxCitizenNum; k++, stage++) {
+                for (k = 0; k < MaxCitizenNum; k++, stage++) {
                     Citizen[k].preq_tech = stage->preq_tech;
                     Citizen[k].obsol_tech = stage->obsol_tech;
                     // The image copies the three bonuses with an unrolled
                     // three-step loop (0x00533EB8).
-                    for (int j = 0; j < 3; j++) {
+                    for (j = 0; j < 3; j++) {
                         Citizen[k].bonus[j] = stage->bonus[j];
                     }
                 }
@@ -5432,8 +5434,8 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
             }
             case 0x8D: {
                 RulesSocialCategory *stage = NetDaemonRulesSyncStaging.social_category;
-                for (int k = 0; k < MaxSocialCatNum; k++, stage++) {
-                    for (int j = 0; j < 4; j++) {
+                for (k = 0; k < MaxSocialCatNum; k++, stage++) {
+                    for (j = 0; j < 4; j++) {
                         SocialCategories[k].model_effect[j] = stage->model_effect[j];
                         SocialCategories[k].preq_tech[j] = stage->preq_tech[j];
                     }
