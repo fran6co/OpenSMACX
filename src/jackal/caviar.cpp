@@ -1007,12 +1007,12 @@ int Caviar::init_class() {
     }
 
     VoxRenderRecord *const record = CaviarScene.created_;
-    record->draw_left_ = 0;
-    record->draw_top_ = 0;
-    record->draw_right_ = 0xff;
-    record->draw_bottom_ = 0xff;
-    record->draw_width_ = 0x100;
-    record->draw_height_ = 0x100;
+    record->draw_.left_ = 0;
+    record->draw_.top_ = 0;
+    record->draw_.right_ = 0xff;
+    record->draw_.bottom_ = 0xff;
+    record->draw_.width_ = 0x100;
+    record->draw_.height_ = 0x100;
     record->object_start_callback_ = &Caviar::object_start;
 
     // The record's two 256-entry ramp tables. Table A's entries are the
@@ -1930,12 +1930,12 @@ int Caviar::render(Buffer *buffer, int centre_x, int centre_y, int flags) {
     area.bottom += dy;
 
     // The record's fields are re-read through the global at every store.
-    CaviarScene.created_->draw_left_ = area.left;
-    CaviarScene.created_->draw_top_ = area.top;
-    CaviarScene.created_->draw_right_ = area.right;
-    CaviarScene.created_->draw_bottom_ = area.bottom;
-    CaviarScene.created_->draw_width_ = area.right - area.left;
-    CaviarScene.created_->draw_height_ = area.bottom - area.top;
+    CaviarScene.created_->draw_.left_ = area.left;
+    CaviarScene.created_->draw_.top_ = area.top;
+    CaviarScene.created_->draw_.right_ = area.right;
+    CaviarScene.created_->draw_.bottom_ = area.bottom;
+    CaviarScene.created_->draw_.width_ = area.right - area.left;
+    CaviarScene.created_->draw_.height_ = area.bottom - area.top;
 
     if (flags & 4) {
         saved = scene_context_.state_.scene_rotation_;

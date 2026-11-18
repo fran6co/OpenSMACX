@@ -626,10 +626,7 @@ void __cdecl vox_load_scene_view(
         primary.width_ = 0;
         primary.height_ = 0;
     }
-    // WORKAROUND(type): the record's windows are declared as unsigned
-    // VoxRenderClipBounds in caviar.h, but the image compares them signed and
-    // copies whole six-int blocks; the copies go through the signed view.
-    *reinterpret_cast<CaviarRenderClipWindowCandidate *>(&record->primary_clip_) = primary;
+    record->primary_clip_ = primary;
     if (secondary.right_ >= 0 && secondary.bottom_ >= 0) {
         secondary.width_ = secondary.right_ - secondary.left_ + 1;
         secondary.height_ = secondary.bottom_ - secondary.top_ + 1;
@@ -637,7 +634,7 @@ void __cdecl vox_load_scene_view(
         secondary.width_ = 0;
         secondary.height_ = 0;
     }
-    *reinterpret_cast<CaviarRenderClipWindowCandidate *>(&record->secondary_clip_) = secondary;
+    record->secondary_clip_ = secondary;
 }
 
 /*

@@ -1249,33 +1249,33 @@ VoxRenderRecord *__cdecl vox_create_record(
     // +0x7FFF and maxes at -0x7FFF, extents and the draw origin at 0.
     record->primary_clip_.left_ = 0x7FFF;
     record->primary_clip_.top_ = 0x7FFF;
-    record->primary_clip_.right_ = (uint32_t)-0x7FFF;
-    record->primary_clip_.bottom_ = (uint32_t)-0x7FFF;
+    record->primary_clip_.right_ = -0x7FFF;
+    record->primary_clip_.bottom_ = -0x7FFF;
     record->primary_clip_.width_ = 0;
     record->primary_clip_.height_ = 0;
     record->secondary_clip_.left_ = 0x7FFF;
     record->secondary_clip_.top_ = 0x7FFF;
-    record->secondary_clip_.right_ = (uint32_t)-0x7FFF;
-    record->secondary_clip_.bottom_ = (uint32_t)-0x7FFF;
+    record->secondary_clip_.right_ = -0x7FFF;
+    record->secondary_clip_.bottom_ = -0x7FFF;
     record->secondary_clip_.width_ = 0;
     record->secondary_clip_.height_ = 0;
-    record->draw_left_ = 0;
-    record->draw_top_ = 0;
+    record->draw_.left_ = 0;
+    record->draw_.top_ = 0;
 
     // Original bound setup sign-extends each low word. The descriptor's
     // full dwords still control the later row-table allocation path.
-    record->draw_right_ =
+    record->draw_.right_ =
         static_cast<int>(static_cast<int16_t>(static_cast<uint16_t>(
             setup_block->colour_width_))) - 1;
-    record->draw_bottom_ =
+    record->draw_.bottom_ =
         static_cast<int>(static_cast<int16_t>(static_cast<uint16_t>(
             setup_block->height_))) - 1;
-    if (record->draw_right_ >= 0 && record->draw_bottom_ >= 0) {
-        record->draw_width_ = record->draw_right_ + 1;
-        record->draw_height_ = record->draw_bottom_ + 1;
+    if (record->draw_.right_ >= 0 && record->draw_.bottom_ >= 0) {
+        record->draw_.width_ = record->draw_.right_ + 1;
+        record->draw_.height_ = record->draw_.bottom_ + 1;
     } else {
-        record->draw_width_ = 0;
-        record->draw_height_ = 0;
+        record->draw_.width_ = 0;
+        record->draw_.height_ = 0;
     }
 
     switch (CaviarVoxelAlgoFlag) {

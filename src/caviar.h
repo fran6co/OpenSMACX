@@ -11,6 +11,7 @@
 
 #include <stddef.h>
 #include "jackal/color_table.h"
+#include "caviar_render_types.h"
 
 // caviar.cpp includes buffer.h; this forward declaration is only for the
 // renderer's own Buffer-taking members declared below.
@@ -833,28 +834,22 @@ void __cdecl vox_fill_colour_table(void *table, unsigned long value,
 // The renderer record vox_create_record builds. 0x80 bytes are allocated and
 // all of them are zeroed. Historical tail-as-padding interpretation is
 // superseded by the dispatch/callsite evidence for five nonvirtual callbacks.
-// Renderer-owned accumulated bounds. Unsigned cells preserve the original
-// modulo arithmetic when consumers convert inclusive ends to exclusive ends.
-struct VoxRenderClipBounds {
-    uint32_t left_, top_, right_, bottom_, width_, height_;
-};
-static_assert(sizeof(VoxRenderClipBounds) == 0x18,
-              "each renderer clip window contains six dwords");
+// The record holds three six-dword windows of one type (caviar_render_types.h):
+// the two accumulated bounds vox_draw_scene copies in whole (signed compares,
+// 0x0063A280) and the draw rectangle the part drawers copy out whole
+// (rep movsd, ecx=6, from +0x38: 0x0063E994, 0x0063F029, 0x0063F61E).
 
 struct VoxRenderRecord {
     uint32_t setup_id_;        // 0x00 - first argument, stored verbatim
     CaviarSceneSetupDescriptorCandidate *setup_block_; // 0x04 borrowed scene view
-    VoxRenderClipBounds primary_clip_;   // +0x08, bounds and extents
-    VoxRenderClipBounds secondary_clip_; // +0x20, bounds and extents
-    int32_t draw_left_;        // 0x38 - the draw rectangle's left and top,
-    int32_t draw_top_;         // 0x3C - both zero until the first draw
-    // 0x40..0x4C: the rectangle the last draw covered and its extent. Created
-    // as {0xff, 0xff, 0x100, 0x100} - a right/bottom one short of the extent,
-    // which is why the body that reads them adds one.
-    int32_t draw_right_;       // 0x40
-    int32_t draw_bottom_;      // 0x44
-    int32_t draw_width_;       // 0x48 - width, or 0 when a side is negative
-    int32_t draw_height_;      // 0x4C
+    CaviarRenderClipWindowCandidate primary_clip_;   // +0x08, bounds and extents
+    CaviarRenderClipWindowCandidate secondary_clip_; // +0x20, bounds and extents
+    // +0x38: the draw rectangle. left/top are zero until the first draw;
+    // right/bottom/width/height are the rectangle the last draw covered and
+    // its extent, created as {0xff, 0xff, 0x100, 0x100} - a right/bottom one
+    // short of the extent, which is why the body that reads them adds one.
+    // width is 0 when a side is negative.
+    CaviarRenderClipWindowCandidate draw_;           // +0x38..+0x4F
     void *colour_table_;       // 0x50
     void *shadow_table_;       // 0x54
     // 0x58: six-argument per-instance callback installed by init_class.
@@ -898,8 +893,7 @@ static_assert(offsetof(VoxRenderRecord, primary_clip_) == 0x08,
               "primary clip bounds start at +0x08");
 static_assert(offsetof(VoxRenderRecord, secondary_clip_) == 0x20,
               "secondary clip bounds start at +0x20");
-static_assert(offsetof(VoxRenderRecord, draw_left_) == 0x38 &&
-              offsetof(VoxRenderRecord, draw_top_) == 0x3C,
+static_assert(offsetof(VoxRenderRecord, draw_) == 0x38,
               "draw origin follows the two clip windows");
 static_assert(offsetof(VoxRenderRecord, colour_table_) == 0x50,
               "the callback handle's colour table is at +0x50");

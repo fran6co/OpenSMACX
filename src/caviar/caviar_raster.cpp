@@ -84,7 +84,7 @@ void __cdecl vox_draw_part(
                                          shape_scale, camera_rotation);
 
     // 63E994: the record's draw rectangle and extents, six dwords from +0x38.
-    memcpy(clip, &record->draw_left_, sizeof(clip));
+    memcpy(clip, &record->draw_, sizeof(clip));
     if (scratch.part_clip_.width_ != 0 && scratch.part_clip_.height_ != 0) {
         if (clip[0] < scratch.part_clip_.left_) clip[0] = scratch.part_clip_.left_;
         if (clip[1] < scratch.part_clip_.top_) clip[1] = scratch.part_clip_.top_;
@@ -257,15 +257,13 @@ void __cdecl vox_draw_shadow(
     float rotated[3];                     // esp+0x2C
     int box[6];                           // esp+0x38
     // WORKAROUND(type): record+0x38..+0x4F is copied whole as one six-dword
-    // window (rep movsd, ecx=6 at 0x63F029); VoxRenderRecord still spells it
-    // as six loose ints (draw_left_ .. draw_height_).
+    // window (rep movsd, ecx=6 at 0x63F029).
     CaviarRenderClipWindowCandidate clip; // esp+0x50
     int flags;                            // the dead `visible` slot
     const CvrRasterItemHeaderCandidate *item;
 
     sub_63fa80(part_matrix);
-    clip = *reinterpret_cast<const CaviarRenderClipWindowCandidate *>(
-        &record->draw_left_);
+    clip = record->draw_;
     if (CaviarSceneProjectionScratch.shadow_clip_.width_ != 0 &&
         CaviarSceneProjectionScratch.shadow_clip_.height_ != 0) {
         if (clip.left_ < CaviarSceneProjectionScratch.shadow_clip_.left_)
@@ -432,7 +430,7 @@ void __cdecl caviar_clip_shape(VoxRenderRecord *record,
     // 63F61E: the record's draw rectangle and extents, six dwords from +0x38
     // (rep movsd, ecx=6). Unlike the draw siblings, width/height are not
     // recomputed after the clamp.
-    memcpy(local_box, &record->draw_left_, sizeof(local_box));
+    memcpy(local_box, &record->draw_, sizeof(local_box));
     if (clip->width_ != 0 && clip->height_ != 0) {
         if (local_box[0] < clip->left_) local_box[0] = clip->left_;
         if (local_box[1] < clip->top_) local_box[1] = clip->top_;
