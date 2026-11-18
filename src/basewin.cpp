@@ -5732,12 +5732,8 @@ draw_map:
         MapWinCaptionScale = MapWinCaptionDivisor = 1;
         for (tile = 0; tile < 21; ++tile) {
             const int dx = BaseRadiusOffsetX[tile];
-            int x = BaseCurrent->x + dx;
+            const int x = wrap_map_x(BaseCurrent->x + dx);
             const int dy = BaseRadiusOffsetY[tile];
-            if (!(MapIsFlat & 1)) {
-                if (x < 0) x += MapLongitudeBounds;
-                else if (x >= MapLongitudeBounds) x -= MapLongitudeBounds;
-            }
             const int y = BaseCurrent->y + dy;
             if (y < 0 || y >= MapLatitudeBounds || x < 0 || x >= MapLongitudeBounds)
                 continue;
