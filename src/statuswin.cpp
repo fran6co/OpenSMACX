@@ -898,7 +898,7 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
               MainInterfaceGlobal.status_right_rect().bottom
                   - MainInterfaceGlobal.status_right_rect().top);
     MainInterfaceGlobal.soft_update(
-        const_cast<RECT *>(&MainInterfaceGlobal.status_right_rect()));
+        &MainInterfaceGlobal.status_right_rect());
     hover_base_id_ = -1;
     hover_vehicle_id_ = -1;
     field_15CC_ = veh;
@@ -1056,7 +1056,7 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
     }
     find_font(0x14, 0);
     MainInterfaceGlobal.soft_update(
-        const_cast<RECT *>(&MainInterfaceGlobal.status_hit_rect()));
+        &MainInterfaceGlobal.status_hit_rect());
     MainInterfaceGlobal.restore_clip();
 }
 

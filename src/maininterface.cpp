@@ -3117,10 +3117,9 @@ void __cdecl slide_show(GraphicWin *window, int mode) {
             MainInterfaceGlobal.bottom_bounds().left,
             MainInterfaceGlobal.bottom_bounds().top, 1, 1);
         MainInterfaceTileFlag = 1;
-        // WORKAROUND(decl): the image passes &rect1_ itself (0x45D8EE push 0x7AF5E0);
-        // the header exposes it only through a const accessor.
+        // The image passes &rect1_ itself (0x45D8EE push 0x7AF5E0).
         MainInterfaceGlobal.Buffer::set_clip(
-            const_cast<RECT *>(&MainInterfaceGlobal.main_layout_rect()));
+            &MainInterfaceGlobal.main_layout_rect());
         MainInterfaceGlobal.restore_back(0);
         MainInterfaceGlobal.Buffer::restore_clip();
         MainInterfaceGlobal.soft_update();

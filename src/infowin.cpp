@@ -524,7 +524,7 @@ void InfoWin::setup_text() {
                     rect.right += width;
                 }
             }
-            MainInterfaceGlobal.set_clip(const_cast<RECT *>(&MainInterfaceGlobal.clip_rect()));
+            MainInterfaceGlobal.restore_clip();
             break;
 
         case 4:
@@ -599,7 +599,7 @@ void InfoWin::setup_text() {
                 }
                 strcpy(row_text_[0][row_base + 8 - i], text);
             }
-            MainInterfaceGlobal.set_clip(const_cast<RECT *>(&MainInterfaceGlobal.clip_rect()));
+            MainInterfaceGlobal.restore_clip();
             break;
 
         case 7:

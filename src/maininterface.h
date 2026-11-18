@@ -137,7 +137,7 @@ class MainInterface : public GraphicWin, public SubInterface {
   StringBox &shared_string_box() { return string_box_; }
   FlatButton &flat_button(int index) { return flat_button_[index]; }
   const RECT &main_frame_rect() const { return rect4_; }
-  const RECT &main_layout_rect() const { return rect1_; }
+  RECT &main_layout_rect() { return rect1_; }
   const RECT &bottom_bounds() const { return bottom_bounds_; }
   Sprite &slide_frame_sprite(int index) { return sprites2_[index]; }
   // Original sprites1_ starts at 0x7CFF14; Sprite height is +0x1C.
@@ -312,9 +312,9 @@ class MainInterface : public GraphicWin, public SubInterface {
 
   const RECT &stack_button_rect() const { return stack_button_rect_; }
   const RECT &adjacent_panel_right_rect() const { return adjacent_panel_right_rect_; }
-  const RECT &status_hit_rect() const { return status_hit_rect_; }
+  RECT &status_hit_rect() { return status_hit_rect_; }
   const RECT &status_left_rect() const { return status_left_rect_; }
-  const RECT &status_right_rect() const { return status_right_rect_; }
+  RECT &status_right_rect() { return status_right_rect_; }
   const RECT &info_panel_frame() const { return info_panel_frame_; }
   ButtonGroup &button_group(int index) { return button_group_[index]; }
   uint32_t input_gate_state() const { return field_1EAC8_; }
