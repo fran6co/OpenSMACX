@@ -3688,16 +3688,16 @@ int BasePop::calculate_dimensions() {
 
     if (external_window_ != 0) {
         // With a window attached the popup's own edges win outright.
-        field_30BC_ = (dialogs_.Dialog::field_5C_ != 0 ? dialogs_.Dialog::field_5C_ : dialogs_.Dialog::field_2C_);
-        field_30C0_ = (dialogs_.Dialog::field_60_ != 0 ? dialogs_.Dialog::field_60_ : dialogs_.Dialog::field_30_);
+        field_30BC_ = dialogs_.Dialog::laid_out_width();
+        field_30C0_ = dialogs_.Dialog::laid_out_height();
     } else {
         // Without one the list's own edge competes with the drawn popup's
         // (the windef max macro: the edge expression is evaluated twice),
         // and field_21CC_ offsets it when it is set at all.
         if (field_21CC_ == -1) {
-            field_30BC_ = max(static_cast<int>(dialogs_.Dialog::field_5C_ != 0 ? dialogs_.Dialog::field_5C_ : dialogs_.Dialog::field_2C_), static_cast<int>(field_30D8_)) + field_30E0_ * 2;
+            field_30BC_ = max(static_cast<int>(dialogs_.Dialog::laid_out_width()), static_cast<int>(field_30D8_)) + field_30E0_ * 2;
         } else {
-            field_30BC_ = field_21CC_ + field_30E0_ + max(static_cast<int>(dialogs_.Dialog::field_5C_ != 0 ? dialogs_.Dialog::field_5C_ : dialogs_.Dialog::field_2C_), static_cast<int>(field_30D8_));
+            field_30BC_ = field_21CC_ + field_30E0_ + max(static_cast<int>(dialogs_.Dialog::laid_out_width()), static_cast<int>(field_30D8_));
         }
     }
     field_30C4_ = dialogs_.Dialog::field_60_;

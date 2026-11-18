@@ -252,6 +252,13 @@ class Dialog {
   int row_count_;
   uint32_t field_5C_;
   uint32_t field_60_;
+  // The laid-out extent when one was computed, else the requested one.
+  // BasePop::calculate_dimensions (0x00603B60..0x00603C4F) reads both
+  // fields through one Dialog pointer (lea ecx,[esi+edx+0x21D0], then
+  // [ecx+0x5C]/[ecx+0x2C]): an inline that uses `this` more than once.
+  // WORKAROUND(decl): the names are descriptive, not recovered.
+  uint32_t laid_out_width() { return field_5C_ != 0 ? field_5C_ : field_2C_; }
+  uint32_t laid_out_height() { return field_60_ != 0 ? field_60_ : field_30_; }
   int field_64_;
   int field_68_;
   uint32_t field_6C_;
