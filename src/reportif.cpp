@@ -1618,7 +1618,9 @@ void ReportWin::on_group_clicked(int group, int, int state) {
 //   pass (-0x10) and the child index / host+0x444 (-0x0c) share slots in the
 //   image; block scopes are used below so VC6 can overlap them.
 void ReportWin::draw_labs() {
-    int children[4];
+    // Seven technology ids in one array: the tech itself, its two
+    // prerequisites and up to four children (image [ebp-0x88]..[ebp-0x70]).
+    int ids[7];
     RECT header;
     RECT frame;
     RECT box;
@@ -1628,10 +1630,10 @@ void ReportWin::draw_labs() {
     int y;
 
     int faction = ReportIfGlobal.report_faction_id_;
-    children[0] = -1;
-    children[1] = -1;
-    children[2] = -1;
-    children[3] = -1;
+    ids[3] = -1;
+    ids[4] = -1;
+    ids[5] = -1;
+    ids[6] = -1;
     int datalink = IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 8;
     if (datalink) {
         // 0x498B75..0x498C55
@@ -1910,36 +1912,37 @@ void ReportWin::draw_labs() {
     {
         // 0x49968A..0x49970B: up to five children (two prerequisite slots
         // per technology). Genuine original: the bound is tested before the
-        // store, so a fifth match writes one past children[] (into the
+        // store, so a fifth match writes one past ids[] (into the
         // header RECT's left edge in the image frame); only four are drawn.
-        int prerequisite1 = Technology[tech].preq_tech_1;
-        int prerequisite2 = Technology[tech].preq_tech_2;
+        ids[0] = tech;
+        ids[1] = Technology[tech].preq_tech_1;
+        ids[2] = Technology[tech].preq_tech_2;
         int count = 0;
         int i;
         for (int j = 0; j < 0xB2 && count <= 4; j++) {
             if ((&Technology[j >> 1].preq_tech_1)[j & 1] == tech) {
                 // UNSURE: the image carries both count and a pointer.
-                children[count] = j >> 1;
+                ids[3 + count] = j >> 1;
                 count++;
             }
         }
 
         // 0x49970D: prerequisites. The one-prerequisite arm is laid out
         // first and its final box_sprite tail-merges with the two-arm's.
-        if (prerequisite1 < 0 || prerequisite2 < 0) {
-            if (prerequisite1 + 1 != 0) {
+        if (ids[1] < 0 || ids[2] < 0) {
+            if (ids[1] + 1 != 0) {
                 // 0x49972B..0x499862
                 labs_line(field_A28_, lab_center_y_, lab_prerequisite_x_,
                           lab_center_y_, field_59A0_, field_59A4_, 0);
                 StringTemp[0] = 0;
-                say_tech(StringTemp, prerequisite1, 0);
+                say_tech(StringTemp, ids[1], 0);
                 CharUpperA(StringTemp);
                 FlatButton *button = &flatButtons1_[1];
                 button->init(StringTemp, 0x379, lab_prerequisite_x_,
                              lab_center_y_, field_59A0_, field_59A4_, host, 0);
                 button->set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
                 button->redraw();
-                if (has_tech(prerequisite1, faction)) {
+                if (has_tech(ids[1], faction)) {
                     button->set_text_color(0xFF, -1, 1, 1);
                 }
                 button->set_border_styles(&InterfaceBoxStyles[27],
@@ -1956,14 +1959,14 @@ void ReportWin::draw_labs() {
             labs_line(field_A28_, lab_center_y_, lab_prerequisite_x_,
                       lab_upper_inner_y_, field_59A0_, field_59A4_, 0);
             StringTemp[0] = 0;
-            say_tech(StringTemp, prerequisite1, 0);
+            say_tech(StringTemp, ids[1], 0);
             CharUpperA(StringTemp);
             FlatButton *button = &flatButtons1_[1];
             button->init(StringTemp, 0x379, lab_prerequisite_x_,
                          lab_upper_inner_y_, field_59A0_, field_59A4_, host, 0);
             button->set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
             button->redraw();
-            if (has_tech(prerequisite1, faction)) {
+            if (has_tech(ids[1], faction)) {
                 button->set_text_color(0xFF, -1, 1, 1);
             }
             button->set_border_styles(&InterfaceBoxStyles[27],
@@ -1980,14 +1983,14 @@ void ReportWin::draw_labs() {
             labs_line(lab_center_x_, lab_center_y_, lab_prerequisite_x_,
                       lab_lower_inner_y_, field_59A0_, field_59A4_, 0);
             StringTemp[0] = 0;
-            say_tech(StringTemp, prerequisite2, 0);
+            say_tech(StringTemp, ids[2], 0);
             CharUpperA(StringTemp);
             button = &flatButtons1_[2];
             button->init(StringTemp, 0x37A, lab_prerequisite_x_,
                          lab_lower_inner_y_, field_59A0_, field_59A4_, host, 0);
             button->set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
             button->redraw();
-            if (has_tech(prerequisite2, faction)) {
+            if (has_tech(ids[2], faction)) {
                 button->set_text_color(0xFF, -1, 1, 1);
             }
             button->set_border_styles(&InterfaceBoxStyles[27],
@@ -2009,7 +2012,7 @@ void ReportWin::draw_labs() {
                           lab_center_x_, lab_center_y_, field_59A0_,
                           field_59A4_, 0);
                 StringTemp[0] = 0;
-                say_tech(StringTemp, children[i], 0);
+                say_tech(StringTemp, ids[3 + i], 0);
                 CharUpperA(StringTemp);
                 FlatButton *button = &flatButtons1_[i + 3];
                 button->init(StringTemp, i + 0x37B, lab_child_x_,
@@ -2017,7 +2020,7 @@ void ReportWin::draw_labs() {
                              field_59A4_, host, 0);
                 button->set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
                 button->redraw();
-                if (has_tech(children[i], faction)) {
+                if (has_tech(ids[3 + i], faction)) {
                     button->set_text_color(0xFF, -1, 1, 1);
                 }
                 button->set_border_styles(&InterfaceBoxStyles[27],
@@ -2040,7 +2043,7 @@ void ReportWin::draw_labs() {
                           lab_center_x_, lab_center_y_, field_59A0_,
                           field_59A4_, 0);
                 StringTemp[0] = 0;
-                say_tech(StringTemp, children[i], 0);
+                say_tech(StringTemp, ids[3 + i], 0);
                 CharUpperA(StringTemp);
                 FlatButton *button = &flatButtons1_[i + 3];
                 // Genuine original spelling: the id is formed as
@@ -2050,7 +2053,7 @@ void ReportWin::draw_labs() {
                     field_59A0_, field_59A4_, host, 0);
                 button->set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
                 button->redraw();
-                if (has_tech(children[i], faction)) {
+                if (has_tech(ids[3 + i], faction)) {
                     button->set_text_color(0xFF, -1, 1, 1);
                 }
                 button->set_border_styles(&InterfaceBoxStyles[27],
@@ -2069,7 +2072,7 @@ void ReportWin::draw_labs() {
                           lab_center_x_, lab_center_y_, field_59A0_,
                           field_59A4_, 0);
                 StringTemp[0] = 0;
-                say_tech(StringTemp, children[i], 0);
+                say_tech(StringTemp, ids[3 + i], 0);
                 CharUpperA(StringTemp);
                 FlatButton *button = &flatButtons1_[i + 3];
                 button->init(StringTemp, i + 0x37B, lab_child_x_,
@@ -2077,7 +2080,7 @@ void ReportWin::draw_labs() {
                              field_59A4_, host, 0);
                 button->set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
                 button->redraw();
-                if (has_tech(children[i], faction)) {
+                if (has_tech(ids[3 + i], faction)) {
                     button->set_text_color(0xFF, -1, 1, 1);
                 }
                 button->set_border_styles(&InterfaceBoxStyles[27],
@@ -2102,11 +2105,11 @@ void ReportWin::draw_labs() {
         host->Buffer::set_font(ReportIfGlobal.field_1E19C_,
                                ReportIfGlobal.field_1E19C_,
                                ReportIfGlobal.field_1E19C_, 0);
-        host->Buffer::set_text_color3(has_tech(tech, faction) ? 0xFF : 0xE1,
+        host->Buffer::set_text_color3(has_tech(ids[0], faction) ? 0xFF : 0xE1,
                                       -1, 1, 1);
         StringTemp[0] = 0;
         strcat(StringTemp, "[");
-        say_tech(StringTemp, tech, 0);
+        say_tech(StringTemp, ids[0], 0);
         CharUpperA(StringTemp);
         strcat(StringTemp, "]");
         if (pass) {
@@ -2129,7 +2132,7 @@ void ReportWin::draw_labs() {
         host->Buffer::set_font(ReportIfGlobal.field_1E190_,
                                ReportIfGlobal.field_1E190_,
                                ReportIfGlobal.field_1E190_, 0);
-        host->Buffer::set_text_color3(mandate_color(tech_category(tech)),
+        host->Buffer::set_text_color3(mandate_color(tech_category(ids[0])),
                                       -1, 1, 1);
         StringTemp[0] = 0;
         strcat(StringTemp, "[");
@@ -2149,9 +2152,9 @@ void ReportWin::draw_labs() {
         }
         y -= field_E268_;
         if (pass) {
-            g_TECH_ICON_SPRITES[tech].draw_mono(host,
+            g_TECH_ICON_SPRITES[ids[0]].draw_mono(host,
                 x + (static_cast<int>(field_59A8_) - 0x34) / 2 + 3, y + 3,
-                mandate_color(tech_category(tech)), 0x32,
+                mandate_color(tech_category(ids[0])), 0x32,
                 g_TECH_ICON_SPRITES[tech].width());
             y += 0x3A;
         } else {
