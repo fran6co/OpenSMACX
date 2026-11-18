@@ -1598,6 +1598,15 @@ static const int BoomColorGroupByWeapon[MaxWeaponNum] = {
 // RECOVERY_OBJECT: v2 0x0090F7D4 0x0090F7D8 ?BoomAnimationLevel@@3HA 0x00500B60
 int BoomAnimationLevel;
 
+// WORKAROUND(decl): the caption-scale / zoom ternary boom repeats for every
+// sprite dimension, as one inline; the image loads each dimension once
+// (0x00505123 keeps the sprite height in edi across both uses), the
+// fingerprint of an inline parameter. Its header name and owner are unknown.
+static inline int boom_zoom(MapWin *window, int value) {
+    return MapWinCaptionScale > 0 ? MapWinCaptionScale * value / MapWinCaptionDivisor
+                                  : (window->zoom_offset_ + 16) * value / 16;
+}
+
 // WORKAROUND(decl): boom forms the sprite address in ecx and reads the
 // transparency key through it after the destination conversion
 // (0x005059A1..0x005059DD, 0x00505A28..0x00505A6B): the shape of a Sprite
@@ -1762,24 +1771,16 @@ int __cdecl boom(int x, int y, int flags) {
         if (animation_state) {
             sprite_explosion = 0;
             const int width = size_or_psi * 300 / divisor_or_bank;
-            pixel_x[slot] -= (MapWinCaptionScale > 0
-                ? MapWinCaptionScale * width / MapWinCaptionDivisor
-                : (MapWinTable[slot]->zoom_offset_ + 16) * width / 16) / 2;
+            pixel_x[slot] -= boom_zoom(MapWinTable[slot], width) / 2;
             const int height = size_or_psi * 248 / divisor_or_bank;
             // [C3] 0x504F97..0x504FB4: the image scales the height, then
             // computes size*60/div once before the scale test (one idiv
             // [ebp-0xC], no per-arm copy), then updates pixel_y in one go.
-            const int scaled_height = MapWinCaptionScale > 0
-                ? MapWinCaptionScale * height / MapWinCaptionDivisor
-                : (MapWinTable[slot]->zoom_offset_ + 16) * height / 16;
-            const int lift = size_or_psi * 60 / divisor_or_bank;
-            pixel_y[slot] = pixel_y[slot] - scaled_height +
-                (MapWinCaptionScale > 0
-                    ? MapWinCaptionScale * lift / MapWinCaptionDivisor
-                    : (MapWinTable[slot]->zoom_offset_ + 16) * lift / 16);
+            pixel_y[slot] = pixel_y[slot] - boom_zoom(MapWinTable[slot], height) +
+                boom_zoom(MapWinTable[slot], size_or_psi * 60 / divisor_or_bank);
             {
-                const int rect_height = MapWinCaptionScale > 0 ? MapWinCaptionScale * height / MapWinCaptionDivisor : (MapWinTable[slot]->zoom_offset_ + 16) * height / 16;
-                const int rect_width = MapWinCaptionScale > 0 ? MapWinCaptionScale * width / MapWinCaptionDivisor : (MapWinTable[slot]->zoom_offset_ + 16) * width / 16;
+                const int rect_height = boom_zoom(MapWinTable[slot], height);
+                const int rect_width = boom_zoom(MapWinTable[slot], width);
                 rects[slot].left = pixel_x[slot];
                 rects[slot].top = pixel_y[slot];
                 rects[slot].right = pixel_x[slot] + rect_width;
@@ -1791,17 +1792,11 @@ int __cdecl boom(int x, int y, int flags) {
                 // [C4] 0x5050E4..0x5050F6: width()/2 is formed once before
                 // the scale test (`mov edx,eax; sar edx,1; test ebx,ebx`).
                 const int half_width = g_XI_BOOM_VEH_SPRITES[0].width() / 2;
-                pixel_x[slot] -= MapWinCaptionScale > 0
-                    ? MapWinCaptionScale * half_width / MapWinCaptionDivisor
-                    : (MapWinTable[slot]->zoom_offset_ + 16) * half_width / 16;
-                pixel_y[slot] -= MapWinCaptionScale > 0
-                    ? MapWinCaptionScale * g_XI_BOOM_VEH_SPRITES[0].height() /
-                          MapWinCaptionDivisor
-                    : (MapWinTable[slot]->zoom_offset_ + 16) *
-                          g_XI_BOOM_VEH_SPRITES[0].height() / 16;
+                pixel_x[slot] -= boom_zoom(MapWinTable[slot], half_width);
+                pixel_y[slot] -= boom_zoom(MapWinTable[slot], g_XI_BOOM_VEH_SPRITES[0].height());
                 {
-                    const int rect_height = MapWinCaptionScale > 0 ? MapWinCaptionScale * g_XI_BOOM_VEH_SPRITES[0].height() / MapWinCaptionDivisor : (MapWinTable[slot]->zoom_offset_ + 16) * g_XI_BOOM_VEH_SPRITES[0].height() / 16;
-                    const int rect_width = MapWinCaptionScale > 0 ? MapWinCaptionScale * g_XI_BOOM_VEH_SPRITES[0].width() / MapWinCaptionDivisor : (MapWinTable[slot]->zoom_offset_ + 16) * g_XI_BOOM_VEH_SPRITES[0].width() / 16;
+                    const int rect_height = boom_zoom(MapWinTable[slot], g_XI_BOOM_VEH_SPRITES[0].height());
+                    const int rect_width = boom_zoom(MapWinTable[slot], g_XI_BOOM_VEH_SPRITES[0].width());
                     rects[slot].left = pixel_x[slot];
                     rects[slot].top = pixel_y[slot];
                     rects[slot].right = pixel_x[slot] + rect_width;
@@ -1810,17 +1805,11 @@ int __cdecl boom(int x, int y, int flags) {
             } else {
                 // [C4] 0x5051DC..0x5051EE: same for the XF bank.
                 const int half_width = g_XF_BOOM_VEH_SPRITES[0].width() / 2;
-                pixel_x[slot] -= MapWinCaptionScale > 0
-                    ? MapWinCaptionScale * half_width / MapWinCaptionDivisor
-                    : (MapWinTable[slot]->zoom_offset_ + 16) * half_width / 16;
-                pixel_y[slot] -= MapWinCaptionScale > 0
-                    ? MapWinCaptionScale * g_XF_BOOM_VEH_SPRITES[0].height() /
-                          MapWinCaptionDivisor
-                    : (MapWinTable[slot]->zoom_offset_ + 16) *
-                          g_XF_BOOM_VEH_SPRITES[0].height() / 16;
+                pixel_x[slot] -= boom_zoom(MapWinTable[slot], half_width);
+                pixel_y[slot] -= boom_zoom(MapWinTable[slot], g_XF_BOOM_VEH_SPRITES[0].height());
                 {
-                    const int rect_height = MapWinCaptionScale > 0 ? MapWinCaptionScale * g_XF_BOOM_VEH_SPRITES[0].height() / MapWinCaptionDivisor : (MapWinTable[slot]->zoom_offset_ + 16) * g_XF_BOOM_VEH_SPRITES[0].height() / 16;
-                    const int rect_width = MapWinCaptionScale > 0 ? MapWinCaptionScale * g_XF_BOOM_VEH_SPRITES[0].width() / MapWinCaptionDivisor : (MapWinTable[slot]->zoom_offset_ + 16) * g_XF_BOOM_VEH_SPRITES[0].width() / 16;
+                    const int rect_height = boom_zoom(MapWinTable[slot], g_XF_BOOM_VEH_SPRITES[0].height());
+                    const int rect_width = boom_zoom(MapWinTable[slot], g_XF_BOOM_VEH_SPRITES[0].width());
                     rects[slot].left = pixel_x[slot];
                     rects[slot].top = pixel_y[slot];
                     rects[slot].right = pixel_x[slot] + rect_width;
