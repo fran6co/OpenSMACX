@@ -4138,14 +4138,14 @@ LAB_0046441f:
                         ocean_zvals[3] = OceanCornerShades[corner * 4 + 3] - 0x10;
                         // 0x46468B pushes the literal 0x41: no shade select
                         // on this path.
-                        if (!(local_1c != 0)) {
-                            g_OCEAN_TEXTURES[1].draw(
-                                buffer, OceanCornerVerts + corner * 4,
-                                ocean_zvals, 4, ocean_uv + corner * 4, 0x41);
-                        } else {
+                        if (local_1c != 0) {
                             g_OCEAN_TEXTURES[1].draw(
                                 buffer, OceanCornerVerts + corner * 4,
                                 ocean_zvals, 4, ocean_uv + corner * 4);
+                        } else {
+                            g_OCEAN_TEXTURES[1].draw(
+                                buffer, OceanCornerVerts + corner * 4,
+                                ocean_zvals, 4, ocean_uv + corner * 4, 0x41);
                         }
                     }
                     g_OCEAN_TEXTURES[0].draw2(
@@ -5529,10 +5529,9 @@ int MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
         menu.show(screen_x, screen_y, pop_expire);
         if ((GameDataStateStorage.fields_.game_state_ & 0x800U) != 0) return 0;
 
-        // Both original paths apply only a signed upper bound to the slot;
-        // the convenience get_selected_id() adds a non-original lower bound.
-        const int selected_item = menu.get_selected();
-        const int item_id = selected_item < 64 ? menu.item_id(selected_item) : -1;
+        // Both paths apply only the signed upper bound to the slot:
+        // PullDown::get_selected_id().
+        const int item_id = menu.get_selected_id();
         // 0x0046C2C4/2E3/2F8: three separate early returns.
         if (base_id != base_at(tile_x, tile_y)) return 0;
         if (vehicle_id != veh_at(tile_x, tile_y)) return 0;
@@ -5753,8 +5752,7 @@ int MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
 
     menu.show(screen_x, screen_y, pop_expire);
     if ((GameDataStateStorage.fields_.game_state_ & 0x800U) != 0) return 0;
-    const int selected_item = menu.get_selected();
-    const int item_id = selected_item < 64 ? menu.item_id(selected_item) : -1;
+    const int item_id = menu.get_selected_id();
     if (base_id != base_at(tile_x, tile_y) ||
         vehicle_id != veh_at(tile_x, tile_y) ||
         selected_vehicle != ConsoleGlobal.selected_vehicle_) {
