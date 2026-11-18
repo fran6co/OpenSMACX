@@ -2841,7 +2841,7 @@ void __cdecl diplomacy_check(int faction, int other, int update) {
     if (DiploScratchFA78 > 1) {
         DiploFriction += DiploScratchFA78 - 1;
     }
-    if (PlayersData[faction].tech_commerce_bonus < PlayersData[other].tech_commerce_bonus) {
+    if (PlayersData[other].tech_commerce_bonus > PlayersData[faction].tech_commerce_bonus) {
         DiploFriction += (PlayersData[faction].tech_commerce_bonus - PlayersData[other].tech_commerce_bonus) * 2;
     }
     if (PlayersData[faction].tech_commerce_bonus > PlayersData[other].tech_commerce_bonus) {

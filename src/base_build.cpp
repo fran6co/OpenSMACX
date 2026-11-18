@@ -2838,10 +2838,10 @@ L_4fd912:
         l_24 = 0x10200;
         l_90 = 1;
         l_14 = 1;
-        if (l_20 == FAC_COMMAND_CENTER) {
-            l_68 = l_11c;
-        } else {
+        if (!(l_20 == FAC_COMMAND_CENTER)) {
             l_68 = l_134;
+        } else {
+            l_68 = l_11c;
         }
         value = l_120 + (l_58 - l_60) * 2 + 5;
         if (l_20 == FAC_BROOD_PIT) {

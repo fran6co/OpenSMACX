@@ -1864,8 +1864,8 @@ void Console::destroy(int veh_id) {
     }
 
     const int faction = Vehs[veh_id].faction_id;
-    const int vy = Vehs[veh_id].y;
     const int vx = Vehs[veh_id].x;
+    const int vy = Vehs[veh_id].y;
     Map *const tile = map_loc(vx, vy);
     const int ocean = ::is_ocean(vx, vy);
     const int proto_id = Vehs[veh_id].proto_id;
@@ -2242,10 +2242,10 @@ void Console::go_to(int subject, int order, int grouped) {
                 goto finish;
             }
         } else if (order == 128) {
-            if (Chassis[VehPrototypes[Vehs[subject].proto_id].chassis_id].range == 1) {
-                max_range = speed(subject, 0) / 2;
-            } else {
+            if (!(Chassis[VehPrototypes[Vehs[subject].proto_id].chassis_id].range == 1)) {
                 max_range = speed(subject, 0);
+            } else {
+                max_range = speed(subject, 0) / 2;
             }
             if (base_who(source_x, source_y) >= 0) {
                 centre_x = source_x;

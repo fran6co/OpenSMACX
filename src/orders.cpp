@@ -436,8 +436,8 @@ int __cdecl order_veh(int veh_id, int direction, int mode) {
         ConsoleGlobal.field_23BE4_ = 0;
     else
         ConsoleGlobal.vehicle_order_ui_state() = 0;
-    group_count_at_entry = GameDataStateStorage.fields_.vehicle_current_count_;
     src_y = Vehs[veh_id].y;
+    group_count_at_entry = GameDataStateStorage.fields_.vehicle_current_count_;
     src_x = Vehs[veh_id].x;
     faction = Vehs[veh_id].faction_id;
     if (direction < 0)

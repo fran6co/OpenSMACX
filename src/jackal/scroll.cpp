@@ -1462,7 +1462,16 @@ void Scroll::on_mouse_move(int x, int y) {
         if (border_color_ != -1) {
             denominator -= 2;
         }
-        if (!(dib_.bmiHeader.biWidth > -dib_.bmiHeader.biHeight)) {
+        if (!(!(dib_.bmiHeader.biWidth > -dib_.bmiHeader.biHeight))) {
+            denominator += dib_.bmiHeader.biWidth;
+            x -= extent;
+            if (border_color_ != -1) {
+                --x;
+            }
+            position_ = (x - (extent >> 1)) * (range_maximum_ - range_minimum_)
+                        / denominator + range_minimum_;
+            field_A3C_ = x;
+        } else {
             denominator -= dib_.bmiHeader.biHeight;
             y -= extent;
             if (border_color_ != -1) {
@@ -1472,15 +1481,6 @@ void Scroll::on_mouse_move(int x, int y) {
                         / denominator + range_minimum_;
             position_ = next;
             field_A3C_ = y;
-        } else {
-            denominator += dib_.bmiHeader.biWidth;
-            x -= extent;
-            if (border_color_ != -1) {
-                --x;
-            }
-            position_ = (x - (extent >> 1)) * (range_maximum_ - range_minimum_)
-                        / denominator + range_minimum_;
-            field_A3C_ = x;
         }
         position_ = max(range_minimum_, min(range_maximum_, position_));
     } else {

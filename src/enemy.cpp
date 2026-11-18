@@ -3175,19 +3175,19 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
     if (!Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range) {
         return_range = speed(veh_id, 0) * 6;
         strike_range = return_range;
-    } else if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range == 1) {
-        return_range = veh_moves(veh_id);
-        strike_range = return_range;
-        if (!Vehs[veh_id].dmg_incurred) {
-            strike_range = speed(veh_id, 0) + return_range;
-        }
-    } else {
+    } else if (!(Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range == 1)) {
         int moves = veh_moves(veh_id);
         return_range = speed(veh_id, 0)
             * (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range
                - Vehs[veh_id].terraforming_turns - 1)
             + moves;
         strike_range = return_range;
+    } else {
+        return_range = veh_moves(veh_id);
+        strike_range = return_range;
+        if (!Vehs[veh_id].dmg_incurred) {
+            strike_range = speed(veh_id, 0) + return_range;
+        }
     }
     strike_range /= Rules.move_rate_roads;
     return_range /= Rules.move_rate_roads;
@@ -3406,8 +3406,10 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                 if (target_x < 0) {
                     goto stockpile;
                 }
-                if (alien_dist(*a4, *a5, target_x, target_y)
-                    > speed(veh_id, 0) / Rules.move_rate_roads - Rules.move_rate_roads) {
+                if (!(alien_dist(*a4, *a5, target_x, target_y)
+                    > speed(veh_id, 0) / Rules.move_rate_roads - Rules.move_rate_roads)) {
+                    go_to(veh_id, 'm', target_x, target_y);
+                } else {
                     int nearest = 9999;
                     // BUG(original): walks every base slot, not just the live bases.
                     for (i = 0; i < MaxBaseNum; i++) {
@@ -3421,8 +3423,6 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                             }
                         }
                     }
-                } else {
-                    go_to(veh_id, 'm', target_x, target_y);
                 }
             } else {
                 int pods = 0;
@@ -4575,8 +4575,8 @@ L_56c30f:
             n = Bases[base_id].y;
             int bx = Bases[base_id].x;
             if (region_at(bx, n) == region) {
-                int py = y;
                 int px = x;
+                int py = y;
                 i = 0;
                 m = 1;
                 dist = 0;
