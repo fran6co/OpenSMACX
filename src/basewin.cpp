@@ -224,11 +224,10 @@ void BaseWin::farm_click(int x, int y, int) {
                 }
                 int worst_score = 999, worst_position = 0;
                 for (int i = 1; i < 21; ++i) {
-                    int tile_x = BaseCurrent->x + RadiusOffsetX[i];
-                    if (!(MapIsFlat & 1)) {
-                        if (tile_x < 0) tile_x += MapLongitudeBounds;
-                        else if (tile_x >= MapLongitudeBounds) tile_x -= MapLongitudeBounds;
-                    }
+                    // The image wraps a temporary and stores each arm to tile_x
+                    // (0x0040A5FD lea edi / 0x0040A608 mov edi): the shared
+                    // ternary wrap, not an in-place if/else on tile_x.
+                    const int tile_x = wrap_map_x(BaseCurrent->x + RadiusOffsetX[i]);
                     const int tile_y = BaseCurrent->y + RadiusOffsetY[i];
                     if (tile_y < 0 || tile_y >= MapLatitudeBounds || tile_x < 0 || tile_x >= MapLongitudeBounds
                         || !(BaseCurrent->resource_sqr_radius & (1u << i))) continue;
