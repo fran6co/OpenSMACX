@@ -980,7 +980,7 @@ void BaseWin::base_editor() {
     }
     case 7: {
         for (int pass = 0; pass < 10; ++pass) {
-            for (int facility = 1; facility <= 64; ++facility) {
+            for (int facility = 1; facility < 65; ++facility) {
                 if (facility_avail(facility, BaseCurrent->faction_id_current,
                                    BaseIDCurrentSelected, 0))
                     set_fac(facility, BaseIDCurrentSelected, 1);
