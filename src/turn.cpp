@@ -2322,8 +2322,8 @@ void __cdecl reset_territory() {
     Map *tile = map_tiles();
     for (int y = 0; y < MapLatitudeBounds; y++) {
         for (int x = y & 1; x < MapLongitudeBounds; tile++, x += 2) {
-            int region = tile->region;
-            for (int faction_id = 1; faction_id < MaxPlayerNum; faction_id++) {
+            region = tile->region;
+            for (faction_id = 1; faction_id < MaxPlayerNum; faction_id++) {
                 uint32_t flags = PlayersData[faction_id].flags;
                 if (flags & PFLAG_STRAT_SEARCH_OBJECTIVES) {
                     if (tile->bit & BIT_SUPPLY_REMOVE) {
