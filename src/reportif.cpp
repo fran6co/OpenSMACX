@@ -3719,7 +3719,7 @@ void ReportWin::draw_projects() {
                     if ((mode == 0 && Bases[base_id].faction_id_current != viewer)
                         || (mode != 0 && Bases[base_id].faction_id_current == viewer)
                         || Bases[base_id].queue_production_id[0] != -facility) {
-                        if (++base_id >= GameDataStateStorage.fields_.base_current_count_) break;
+                        if (++base_id >= GameDataStateStorage.fields_.base_current_count_) goto next_project;
                         continue;
                     }
                     if (base_id >= GameDataStateStorage.fields_.base_current_count_) break;
@@ -3732,12 +3732,10 @@ void ReportWin::draw_projects() {
                     rect1_.left = title.left + (field_59A0_ + 2) * (ordinal % 2);
                     rect1_.top = title.bottom + 56 * (row - static_cast<int>(field_C0FC_)) + 2;
                     set_rectangle_dimensions(&report_work_rect_, rect1_.left, rect1_.top, field_59A0_, field_59A4_);
-                    if (!(mode < 2)) {
-                        spot_.add(project, 0, report_work_rect_.left, report_work_rect_.top,
-                                  report_work_rect_.right - report_work_rect_.left, report_work_rect_.bottom - report_work_rect_.top);
+                    if (mode < 2) {
+                        spot_.add(base_id + 0x400, 0, &report_work_rect_);
                     } else {
-                        spot_.add(base_id + 0x400, 0, report_work_rect_.left, report_work_rect_.top,
-                                  report_work_rect_.right - report_work_rect_.left, report_work_rect_.bottom - report_work_rect_.top);
+                        spot_.add(project, 0, &report_work_rect_);
                     }
                     if ((mode < 2 && base_id == field_59AC_ - 0x400)
                         || (mode == 2 && project == field_59AC_)) {
@@ -3793,6 +3791,7 @@ void ReportWin::draw_projects() {
                 }
                 if (mode >= 2 || ++base_id >= GameDataStateStorage.fields_.base_current_count_) break;
             }
+        next_project:;
         }
     }
 }
