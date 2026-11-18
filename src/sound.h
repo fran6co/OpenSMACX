@@ -183,14 +183,7 @@ int __cdecl load_sound_dll();
 // load), and the array reference is C2101. The image's own readers of the
 // 0x0090DB24/0x0090DB78 words (the unrecovered 0x4C5D8E/0x4C5F68 bands)
 // read the shipped binary's storage until they are recovered.
-typedef void *SoundDllProcsTable[11];
-extern SoundDllProcsTable SoundDllProcs;
-extern HMODULE SoundDllModule;
-
 // Pinned soundx.dll exports ordinals 1..11 form one fixed callable contract.
-// Keep their physically observed storage as eleven opaque pointer words, but
-// centralize each ABI conversion here. These accessors return the current
-// slot value on every call; they do not cache provider objects.
 typedef int (__cdecl *SoundXCreateSoundProc)(Sound **,
                                              const char *, int);
 typedef int (__cdecl *SoundXDeleteSoundProc)(void *);
@@ -204,47 +197,69 @@ typedef int (__cdecl *SoundXWaveInDeviceCreateProc)(void **, unsigned long);
 typedef int (__cdecl *SoundXWaveInDeviceDeleteProc)();
 typedef unsigned int (__cdecl *SoundXVersionProc)();
 
+// The table has two real views: load_sound_dll fills the eleven words by
+// ordinal in one indexed loop (0x004C5E50), and every other reader calls one
+// slot by role with its own signature. The accessors below return the
+// current slot value on every call; they do not cache provider objects.
+union SoundDllProcsTable {
+  FARPROC by_ordinal[11];
+  struct {
+    SoundXCreateSoundProc create_sound;                  // ordinal 1
+    SoundXDeleteSoundProc delete_sound;                  // ordinal 2
+    SoundXInitTimerProc init_timer;                      // ordinal 3
+    SoundXReleaseSoundProc release_sound;                // ordinal 4
+    SoundXWaveDeviceCreateProc wave_device_create;       // ordinal 5
+    SoundXWaveDeviceDeleteProc wave_device_delete;       // ordinal 6
+    SoundXMidiDeviceCreateProc midi_device_create;       // ordinal 7
+    SoundXMidiDeviceDeleteProc midi_device_delete;       // ordinal 8
+    SoundXWaveInDeviceCreateProc wave_in_device_create;  // ordinal 9
+    SoundXWaveInDeviceDeleteProc wave_in_device_delete;  // ordinal 10
+    SoundXVersionProc version;                           // ordinal 11
+  } proc;
+};
+extern SoundDllProcsTable SoundDllProcs;
+extern HMODULE SoundDllModule;
+
 inline SoundXCreateSoundProc SoundXOrdinal1CreateSound() {
-  return reinterpret_cast<SoundXCreateSoundProc>(SoundDllProcs[0]);
+  return SoundDllProcs.proc.create_sound;
 }
 inline SoundXDeleteSoundProc SoundXOrdinal2DeleteSound() {
-  return reinterpret_cast<SoundXDeleteSoundProc>(SoundDllProcs[1]);
+  return SoundDllProcs.proc.delete_sound;
 }
 inline SoundXInitTimerProc SoundXOrdinal3InitTimer() {
-  return reinterpret_cast<SoundXInitTimerProc>(SoundDllProcs[2]);
+  return SoundDllProcs.proc.init_timer;
 }
 inline SoundXReleaseSoundProc SoundXOrdinal4ReleaseSound() {
-  return reinterpret_cast<SoundXReleaseSoundProc>(SoundDllProcs[3]);
+  return SoundDllProcs.proc.release_sound;
 }
 inline SoundXWaveDeviceCreateProc SoundXOrdinal5WaveDeviceCreate() {
-  return reinterpret_cast<SoundXWaveDeviceCreateProc>(SoundDllProcs[4]);
+  return SoundDllProcs.proc.wave_device_create;
 }
 inline SoundXWaveDeviceDeleteProc SoundXOrdinal6WaveDeviceDelete() {
-  return reinterpret_cast<SoundXWaveDeviceDeleteProc>(SoundDllProcs[5]);
+  return SoundDllProcs.proc.wave_device_delete;
 }
 inline SoundXMidiDeviceCreateProc SoundXOrdinal7MidiDeviceCreate() {
-  return reinterpret_cast<SoundXMidiDeviceCreateProc>(SoundDllProcs[6]);
+  return SoundDllProcs.proc.midi_device_create;
 }
 inline SoundXMidiDeviceDeleteProc SoundXOrdinal8MidiDeviceDelete() {
-  return reinterpret_cast<SoundXMidiDeviceDeleteProc>(SoundDllProcs[7]);
+  return SoundDllProcs.proc.midi_device_delete;
 }
 inline SoundXWaveInDeviceCreateProc SoundXOrdinal9WaveInDeviceCreate() {
-  return reinterpret_cast<SoundXWaveInDeviceCreateProc>(SoundDllProcs[8]);
+  return SoundDllProcs.proc.wave_in_device_create;
 }
 inline SoundXWaveInDeviceDeleteProc SoundXOrdinal10WaveInDeviceDelete() {
-  return reinterpret_cast<SoundXWaveInDeviceDeleteProc>(SoundDllProcs[9]);
+  return SoundDllProcs.proc.wave_in_device_delete;
 }
 inline SoundXVersionProc SoundXOrdinal11Version() {
-  return reinterpret_cast<SoundXVersionProc>(SoundDllProcs[10]);
+  return SoundDllProcs.proc.version;
 }
 
 // Product wrappers around the loader-owned module/export table.
 void __cdecl unload_sound_dll();
 int __cdecl init_sound_timer(unsigned long timer, unsigned long resolution);
 int __cdecl get_sound_version();
-// The accessors' value conversions are the unavoidable DLL boundary. Every
-// invocation reloads the current opaque table cell; the loader's ordinal
-// storage and ordering remain unchanged.
+// Every accessor invocation reloads the current table cell; the loader's
+// ordinal storage and ordering remain unchanged.
 
 int __cdecl release_sound();
 
