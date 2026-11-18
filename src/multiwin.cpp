@@ -1044,12 +1044,10 @@ void MultiWin::init() {
 // stand-in: auto_inline(off) keeps MultiWin::draw calling it out of line, as the
 // image calls 0x0047A6F0; VC6 auto-inlines it here otherwise (C4711).
 #pragma auto_inline(off)
-#pragma inline_depth(0)
 int Spot::add(int position, int type, RECT *rect) {
     return add(position, type, rect->left, rect->top, rect->right - rect->left, 
         rect->bottom - rect->top);
 }
-#pragma inline_depth(8)
 #pragma auto_inline(on)
 
 // ORIGINAL: 0x0047A720 ?UNK4@MultiWin@@QAEHPADPAURECT@@@Z 0x0047A720-0x0047A752 BYTE_EXACT

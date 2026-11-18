@@ -39,11 +39,9 @@ Purpose: Tear down CheckButton and its GraphicWin base through ordinary C++
 // RECOVERY_BINDING: v1 {"evidence":["source:src/recovered/units/004b3ec0.cpp","original:0x004B3EC0-0x004B3F18","source:src/jackal/checkbutton.h:CheckButton"],"reason":"Let C++ emit the base teardown and exception cleanup instead of patching vtable addresses and manually invoking a base destructor."}
 // symbol    ??1CheckButton@@UAE@XZ
 */
-#pragma inline_depth(0)
 CheckButton::~CheckButton() {
     close();
 }
-#pragma inline_depth(8)
 
 /*
 Purpose: Step the receiver back to the subobject ??_GCheckButton@@UAEPAXI@Z
