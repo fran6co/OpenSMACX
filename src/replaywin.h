@@ -70,7 +70,12 @@ struct ReplayEventRecord {
 static_assert(sizeof(ReplayEventRecord) == 8,
               "Replay events must keep the original eight-byte stride");
 
-extern ReplayEventRecord ReplayEvents[1024];
+// The recorder is a byte buffer: its fill count (ReplayEventBytes) and the
+// replay cursor (ReplayWin::event_offset_) are byte offsets, the save file
+// and the net sync transfer ReplayEventBytes bytes of it, and both users
+// move one eight-byte record in or out with a real memcpy call
+// (0x005ADE80, 0x005AD9E0). 0x2000 bytes: 1024 records.
+extern char ReplayEvents[0x2000];
 extern int ReplayEventBytes;
 void __cdecl replay_base(int type, int x, int y, int faction_id);
 

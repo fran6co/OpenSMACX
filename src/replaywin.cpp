@@ -34,7 +34,7 @@
 // setup_game clears 0x800 dwords at 0x00950324 and timer_callback reads
 // eight-byte records from the same interval. The counter advances in bytes.
 // RECOVERY_OBJECT: v2 0x00950324 0x00952324 ?ReplayEvents@@3PAUReplayEventRecord@@A 0x005ADE80
-ReplayEventRecord ReplayEvents[1024];
+char ReplayEvents[0x2000];
 // RECOVERY_OBJECT: v2 0x009469F8 0x009469FC ?ReplayEventBytes@@3HA 0x005ADE80
 int ReplayEventBytes;
 
@@ -238,7 +238,7 @@ void ReplayWin::timer_callback() {
     int next_turn = replay_turn_ + 1;
     while (event_offset_ < ReplayEventBytes) {
         ReplayEventRecord event;
-        memcpy(&event, reinterpret_cast<char *>(ReplayEvents) + event_offset_, sizeof(event));
+        memcpy(&event, ReplayEvents + event_offset_, sizeof(event));
         if (event.turn > replay_turn_) {
             next_turn = event.turn;
             break;
@@ -287,7 +287,7 @@ void __cdecl replay_base(int type, int x, int y, int faction_id) {
     event.x = static_cast<int16_t>(x);
     event.y = static_cast<int16_t>(y);
     event.faction_id = static_cast<uint8_t>(faction_id);
-    memcpy(reinterpret_cast<char *>(ReplayEvents) + ReplayEventBytes, &event, sizeof(event));
+    memcpy(ReplayEvents + ReplayEventBytes, &event, sizeof(event));
     ReplayEventBytes += sizeof(ReplayEventRecord);
 }
 #pragma intrinsic(memcpy)
