@@ -90,10 +90,7 @@ namespace {
 
 
 inline LONG long_from_bits(uint32_t bits) {
-    LONG value;
-    static_assert(sizeof(value) == sizeof(bits), "Scroll geometry requires 32-bit LONG");
-    memcpy(&value, &bits, sizeof(value));
-    return value;
+    return static_cast<LONG>(bits);
 }
 
 // THE FOUR SPRITE SETTERS' SHARED BODY, BYTE_EXACT in all four (0x00605BE0,

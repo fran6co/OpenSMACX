@@ -7195,8 +7195,7 @@ int MapWin::get_relative_alt(int x, int y, int detail) {
     const uint32_t row_bits = static_cast<uint32_t>(MapLongitudeBounds >> 1) *
                              static_cast<uint32_t>(y) +
                              static_cast<uint32_t>(x >> 1);
-    int32_t row;
-    memcpy(&row, &row_bits, sizeof(row));
+    int32_t row = row_bits;
     const unsigned short val = owned_[row].altitude_detail;
     const unsigned int shift =
         (static_cast<uint32_t>(detail) + 0x3fffU) << 2;

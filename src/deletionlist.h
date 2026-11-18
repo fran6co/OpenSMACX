@@ -55,7 +55,7 @@ class DeletionList {
     return static_cast<uint32_t>(current_owner_);
   }
   void set_sequence_bits(uint32_t bits) {
-    memcpy(&current_owner_, &bits, sizeof bits);
+    current_owner_ = bits;
   }
   uint32_t advance_sequence() {
     const uint32_t next = sequence_bits() + 1;

@@ -432,22 +432,16 @@ void __cdecl build_hills(int altitude) {
         if (rejected_seed) {
             continue;
         }
-        const uint32_t plat_mod_bits = WorldBuilder.plateau_mod
+        int plat_mod = WorldBuilder.plateau_mod
             * (2u - static_cast<uint32_t>(MapOceanCoverage));
-        int plat_mod;
-        memcpy(&plat_mod, &plat_mod_bits, sizeof(plat_mod));
         if (altitude != ALT_1_LEVEL_ABOVE_SEA) {
             plat_mod /= 4;
         }
-        int plat_base;
-        memcpy(&plat_base, &WorldBuilder.plateau_base, sizeof(plat_base));
+        int plat_base = WorldBuilder.plateau_base;
         if (MapOceanCoverage >= 2) {
             plat_base /= 2;
         }
-        const uint32_t radius_bits = static_cast<uint32_t>(plat_mod)
-            + static_cast<uint32_t>(plat_base);
-        int radius;
-        memcpy(&radius, &radius_bits, sizeof(radius));
+        int radius = plat_mod + plat_base;
         paint_land(x, y, altitude, radius);
         do_all_non_input();
         return;
@@ -491,11 +485,9 @@ void __cdecl world_riverbeds() {
     uint32_t rain_bits = WorldBuilder.rivers_base
         + static_cast<uint32_t>(MapCloudCover) * WorldBuilder.rivers_rain_mod;
     uint32_t target_bits = (4u - static_cast<uint32_t>(MapOceanCoverage)) * rain_bits;
-    int target;
-    memcpy(&target, &target_bits, sizeof(target));
+    int target = target_bits;
     uint32_t scaled_bits = static_cast<uint32_t>(MapArea) * static_cast<uint32_t>(target / 3);
-    int scaled;
-    memcpy(&scaled, &scaled_bits, sizeof(scaled));
+    int scaled = scaled_bits;
     int max_riverbeds = scaled / 3200;
     for (i = 0; i < 4000 && riverbed_count < max_riverbeds; i++) {
         int x = bounded_crt_random(MapLongitudeBounds);

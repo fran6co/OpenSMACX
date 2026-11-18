@@ -976,9 +976,7 @@ static void *texture_pointer_from_address(uintptr_t address) {
 // Direct raster-global accesses remove private alias cells; preserve the key's
 // former signed-int view as representation bits here.
 static int texture_raster_key_signed_bits() {
-    int value;
-    memcpy(&value, &TextureRasterKey, sizeof(value));
-    return value;
+    return static_cast<int>(TextureRasterKey);
 }
 
 

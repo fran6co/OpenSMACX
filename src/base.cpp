@@ -7282,27 +7282,15 @@ bool production_facility_built(int base_id, int facility_id, int &bitmask_offset
 }
 
 int production_wrapped_subtract(int left, int right) {
-    const uint32_t bits = static_cast<uint32_t>(left)
-                        - static_cast<uint32_t>(right);
-    int result;
-    memcpy(&result, &bits, sizeof(result));
-    return result;
+    return left - right;
 }
 
 int production_wrapped_add(int left, int right) {
-    const uint32_t bits = static_cast<uint32_t>(left)
-                        + static_cast<uint32_t>(right);
-    int result;
-    memcpy(&result, &bits, sizeof(result));
-    return result;
+    return left + right;
 }
 
 int production_wrapped_multiply(int left, int right) {
-    const uint32_t bits = static_cast<uint32_t>(left)
-                        * static_cast<uint32_t>(right);
-    int result;
-    memcpy(&result, &bits, sizeof(result));
-    return result;
+    return left * right;
 }
 
 bool production_colony_abandon_prompt(int owner, int prototype_id) {
@@ -7592,9 +7580,7 @@ void production_vehicle_notice(int selected_base_id, int owner,
 }
 
 int production_report_signed_bits(uint32_t bits) {
-    int value;
-    memcpy(&value, &bits, sizeof(value));
-    return value;
+    return static_cast<int>(bits);
 }
 
 ProductionReportResume production_report_stage(

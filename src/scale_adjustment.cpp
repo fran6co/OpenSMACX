@@ -27,7 +27,5 @@ int __cdecl apply_scale_adjustment(int value) {
     // Original add/imul wrap at32bits before signed division truncates to zero.
     const uint32_t bits = (static_cast<uint32_t>(StoredScaleAdjustment) + 16u)
         * static_cast<uint32_t>(value);
-    int product;
-    memcpy(&product, &bits, sizeof(product));
-    return product / 16;
+    return static_cast<int>(bits) / 16;
 }
