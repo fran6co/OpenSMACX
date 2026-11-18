@@ -3913,8 +3913,10 @@ int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3, int a4,
     for (tri = 0; tri < 4; ++tri) {
         for (int corner = 0; corner < 3; ++corner) {
             const int vertex = tri * 3 + corner;
-            land_vertices[vertex].x = LandCornerXStep[vertex] * local_78 + a9;
-            land_vertices[vertex].y = LandCornerYStep[vertex] * local_98 + a10;
+            const int dx = LandCornerXStep[vertex] * local_78;
+            const int dy = LandCornerYStep[vertex] * local_98;
+            land_vertices[vertex].x = dx + a9;
+            land_vertices[vertex].y = dy + a10;
             // Both paths use 686090, not the overlay's shifted 686098.
             if (local_18 == 0 && (local_24 & 0x8000) == 0 && local_84 != 0 &&
                 local_20 == 0) {
@@ -3938,13 +3940,15 @@ int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3, int a4,
     // 463F9F-46401E initializes four quads, not eight vertices.
     edge_vertex = 0;
     for (corner = 0; corner < 4; ++corner) {
-        for (int direction = corner - 2; direction < corner + 2; ++direction, ++edge_vertex) {
-            edge_vertices[edge_vertex].x =
-                CornerOffsetX[corner][direction & 3] * local_78 + a9;
-            edge_vertices[edge_vertex].y =
-                CornerOffsetY[corner][direction & 3] * local_98 + a10;
+        for (int k = 0; k < 4; ++k) {
+            const int direction = (corner + k - 2) & 3;
+            const int ex = CornerOffsetX[corner][direction] * local_78;
+            const int ey = CornerOffsetY[corner][direction] * local_98;
+            edge_vertices[edge_vertex].x = ex + a9;
+            edge_vertices[edge_vertex].y = ey + a10;
             edge_uv[edge_vertex].x = EdgeMidUVs[edge_vertex].x;
             edge_uv[edge_vertex].y = EdgeMidUVs[edge_vertex].y;
+            ++edge_vertex;
         }
     }
     local_80 = 0;
