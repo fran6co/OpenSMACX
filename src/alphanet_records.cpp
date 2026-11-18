@@ -108,7 +108,6 @@ Status: Coverage transcription - unclaimed body; the two list hooks link
 // 0x005D4xxx ones omit it; this TU's recipe (/Oy) only reproduces the latter.
 // add() is EH-framed in the image (push ebp; push -1; ...) and its cleanup
 // actions address the frame through EBP (0x006504E0).
-#pragma optimize("y", off)
 int AlphaNetStringStruct::add(int id) {
     // The cold actions at 0x006504E0 unwind a partially constructed heap
     // payload, including its virtual allocation base at +0x58. Keep typed
@@ -152,7 +151,6 @@ int AlphaNetStringStruct::add(int id) {
     ++entry_count_;
     return 0;
 }
-#pragma optimize("", on)
 
 
 /*

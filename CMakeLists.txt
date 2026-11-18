@@ -332,6 +332,13 @@ add_subdirectory(src/caviar)
 # Electronic Arts UK 1997"): a separate third-party archive in the original,
 # linked after the game objects and before ddraw.lib's thunk and JACKAL.LIB.
 add_subdirectory(src/uv)
+# These units were built /Oy- as a whole: every function in them keeps an
+# ebp frame in the image (the per-function optimize("y", off) regions that
+# stood in for this are gone).
+set_source_files_properties(
+    src/credits.cpp src/font_queue.cpp src/alphanet_records.cpp
+    src/stringbox.cpp src/checkbutton.cpp src/main.cpp
+    PROPERTIES COMPILE_OPTIONS "/Oy-")
 # These owners retain frame-based parameter accesses. Match their
 # existing explicit recovery measurement profiles without changing the
 # application's default compiler flags.

@@ -44,7 +44,6 @@ extern Wave g_CREDITS_WAVE;
 // RECOVERY_BINDING: v1 {"evidence": ["retired seed git:2911e1d2:src/unrecovered/00428780.cpp records the member construction order and zero-filled line array", "Credits embeds real GraphicWin, Font, Buffer, FlatButton and Time members of the original sizes"], "reason": "Use genuine C++ base and member construction instead of fixed vtable stores and placement-new at raw offsets."}
 // Preserve the original frame-based lifetime/callback emission locally;
 // each restore below returns unrelated definitions to the TU defaults.
-#pragma optimize("y", off)
 Credits::Credits() {
   for (int i = 0; i < 512; ++i) {
     lines_[i] = 0;
@@ -52,17 +51,14 @@ Credits::Credits() {
   line_count_ = 0;
   frame_count_ = 0;
 }
-#pragma optimize("", on)
 
 // ORIGINAL: 0x00428E90 ??1Credits@@QAE@XZ 0x00428E90-0x00428F72;0x00653170-0x006531D0 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["retired seed git:2911e1d2:src/recovered/units/00428e90.cpp records close followed by reverse member/base teardown", "The class declares the original typed owned subobjects"], "reason": "Let VC6 destroy the real C++ members and base after the image's explicit close phase."}
 // symbol    ??1Credits@@UAE@XZ
 // GraphicWin's inherited virtual destructor makes this destructor virtual.
-#pragma optimize("y", off)
 Credits::~Credits() {
   close();
 }
-#pragma optimize("", on)
 
 // Credits' list is populated with owned C-heap strings by load(); unload()
 // releases every slot and clears both count fields before releasing audio.
@@ -93,7 +89,6 @@ const char CreditsFileLabel[] = "CREDITS";
 // and fixed executable addresses; its original error paths are preserved.
 // ORIGINAL: 0x00428880 ?load@Credits@@QAEXXZ 0x00428880-0x004289BA FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["retired seed git:53f15d57:src/recovered/units/00428880.cpp preserves the original call order and field offsets", "Credits::unload and Credits::draw_credits establish the owned 512-line array and font usage", "Pinned428892 writes receiver+A18 line_count tozero before the512-entry release loop;4288C0 writes itzero again after. Standalone unload428830..42887D correctly has only the post-loop count/frame resets.", "Pinned428957/42896C reload current count and lines[count-1] after strcpy;428983/42898B reload them again after the first Font::width call.42895D caches previous maximum before width;428998 always stores the selected maximum. Calls428976 and428993 both target Font::width619280.", "Pinned42892B stores allocation into lines[current count];428932 reloads current count and428938 reloads that slot intoECX before the null gate42893F andstrcpy428952.", "Pinned4288D4 pushes WAV path68328C (20bytesincludingNUL);4288E2 pushes section6832A0 and4288E7 pushes filename6832A8 for text_open(filename,section). Both CREDITS objects are8bytesincludingNUL and distinct. Fullrawbytes and adjacent starts were independently verified; object names and original nominal constness remain unproved."], "reason": "Home the credits text loader on its real Credits owner with typed members and project globals. Clear the visible line count before releasing previous lines, while retaining unload's independent post-release count resets. After copying, reload the last installed line for each width call, cache the previous maximum before the first call, and publish the selected maximum on either branch. Publish the allocation through the current owner slot, then read that slot for the null gate and copy. Preserve the separately addressed filename and section text objects, instead of assigning one pooled literal to both identities."}
-#pragma optimize("y", off)
 void Credits::load() {
   line_count_ = 0;
   unload();
@@ -116,7 +111,6 @@ void Credits::load() {
     text_close();
   }
 }
-#pragma optimize("", on)
 
 // Close the owned timer and graphics window, then the embedded button.
 // ORIGINAL: 0x004289C0 ?close@Credits@@QAEXXZ 0x004289C0-0x004289E9 BYTE_EXACT
@@ -131,7 +125,6 @@ void Credits::close() {
 // Win::set_modal and FlatButton::close on these real subobjects.
 // ORIGINAL: 0x004289F0 ?exec@Credits@@QAEXXZ 0x004289F0-0x00428BF2 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["retired seed git:2911e1d2:src/recovered/units/004289f0.cpp records the 514-byte call order", "Win virtual slots 1 and 57 are show and set_modal; Credits::close owns the same Time/GraphicWin/FlatButton teardown"], "reason": "Run the credits lifecycle through real C++ owners instead of an empty link placeholder and hand-built vtable calls."}
-#pragma optimize("y", off)
 void Credits::exec() {
   close();
   GraphicWin::init(0, 0, WinScreenWidth, WinScreenHeight, 0, 0);
@@ -169,7 +162,6 @@ void Credits::exec() {
   unload();
   close();
 }
-#pragma optimize("", on)
 
 // The timer entry points and renderer are expressed through the Credits
 // members and embedded GraphicWin/Buffer rather than seed pointer arithmetic.
@@ -181,7 +173,6 @@ void Credits::timer_callback_daemon() {
 
 // ORIGINAL: 0x00428DD0 ?timer_callback_daemon@Credits@@QAAXH@Z 0x00428DD0-0x00428DE7 BYTE_EXACT
 // symbol    ?timer_callback_daemon@Credits@@SAXH@Z
-#pragma optimize("y", off)
 void __cdecl Credits::timer_callback_daemon(int a1) {
   Credits *credits = reinterpret_cast<Credits *>(a1);
   if (credits != 0) {
@@ -189,10 +180,8 @@ void __cdecl Credits::timer_callback_daemon(int a1) {
     credits->draw_credits();
   }
 }
-#pragma optimize("", on)
 
 // ORIGINAL: 0x00428C00 ?draw_credits@Credits@@QAEXXZ 0x00428C00-0x00428D5C BYTE_EXACT
-#pragma optimize("y", off)
 void Credits::draw_credits() {
   graphicWin2_.fill(9);
   int y = -(static_cast<int>(frame_count_) +
@@ -229,7 +218,6 @@ void Credits::draw_credits() {
   }
   graphicWin2_.on_update();
 }
-#pragma optimize("", on)
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -388,12 +376,10 @@ Status: Typed Credits construction, execution and deleting-destructor
         dispatch. The owned lifecycle bodies still require restoration.
 */
 // The image keeps an ebp frame around this EH-scoped new/exec/delete.
-#pragma optimize("y", off)
 void __cdecl show_credits() {
     Credits *credits = new Credits();
     credits->exec();
     delete credits;
 }
-#pragma optimize("", on)
 // RECOVERY_GENERATED: v1 vtable 0x0066AC58 ? ??_7Credits@@6BWin@@@ 0x00428E90
 // RECOVERY_GENERATED: v1 vtable 0x0066AC50 ? ??_7Credits@@6BBuffer@@@ 0x00428E90

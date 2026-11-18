@@ -86,7 +86,6 @@ FontQueue::FontQueue() {
 // ORIGINAL: 0x005592D0 ?get_zoom@FontQueue@@QAEHHHHH@Z 0x005592D0-0x005593D9 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned5592D0..5593D9 computes signed scale and height in two division stages, substitutes11 for10, and reads the shared691E6C/70 override only when its numerator is positive. The constructor559290 establishes three Font objects of stride28 followed by height/style/order arrays at78/84/90.", "Original559334..559374 rotates the oldest slot, publishes keys before calling actual Font::init618F40 with the source-owned DefaultFontFace, ignores the status result and returns the same Font pointer. Original559382..5593D9 promotes a cache hit without initialization; missing order entries leave the order unchanged. Retain the unclaimed seed and catalogue signature as historical evidence."], "reason": "Recover the three-slot font-height/style LRU as the existing FontQueue owner, returning its actual Font member rather than a synthetic integer address."}
 // symbol    ?get_zoom@FontQueue@@QAEPAVFont@@HHHH@Z
-#pragma optimize("y", off)
 Font *FontQueue::get_zoom(int zoom, int numerator, int denominator, int style) {
     int scale = zoom_scale(50, zoom);
     int height = (scale * numerator) / denominator;
@@ -126,14 +125,12 @@ Font *FontQueue::get_zoom(int zoom, int numerator, int denominator, int style) {
     font->init(DefaultFontFace, height, style);
     return font;
 }
-#pragma optimize("", on)
 
 // Movement rendering publishes this font for the current order label.
 // Original 0x00559DF6 stores the FontQueue result, also passed to set_font.
 // RECOVERY_OBJECT: v2 0x0093FAE0 0x0093FAE4 ?VehDrawFont@@3PAVFont@@A 0x005594F0
 Font *VehDrawFont;
 
-#pragma optimize("y", off)
 // ORIGINAL: 0x005593E0 ?pick_top_veh@@YAHH@Z 0x005593E0-0x005594EB BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original5593E0..5594EB climbs signed previous links then visits next links, snapshots the Console faction, excludes temporary suppression, prefers eligible selected vehicle and retains the first highest-score entry.", "Original559466 test dh,42 establishes state mask4200, correcting the seed420000. Original ctor/reset member accesses and ConsoleGlobal9156B0 establish faction/cursor/selected/enable ownership, not independent globals. Observed VC6 symbol and original complete seed extent."], "reason": "Recover stack display selection against real vehicle/prototype/chassis records and Console state."}
 int __cdecl pick_top_veh(int veh_id) {
@@ -653,14 +650,12 @@ finish:
     VehDrawPositionY = -1;
     flush_input();
 }
-#pragma optimize("", on)
 
 // The base-caption renderer retains the font selected from its shared queue.
 // Original storage: 0x0093FC24. No other product owner currently publishes it.
 // RECOVERY_OBJECT: v2 0x0093FC24 0x0093FC28 ?BaseDrawFont@@3PAVFont@@A 0x0055AF20
 Font *BaseDrawFont;
 
-#pragma optimize("y", off)
 // base_draw is the 2073-byte base renderer reached by MapWin::draw_bases.
 // The seed's coordinate, sprite, caption, visibility and status branches are
 // expressed through their owning objects below. The original span and seed
@@ -824,7 +819,6 @@ void __cdecl base_draw(Buffer *target, int base_id, int pixel_x, int pixel_y,
     SpriteScaleNumerator = 1;
     SpriteScaleDenominator = 1;
 }
-#pragma optimize("", on)
 
 /*
 Purpose: Destroy the queue: hand the three-slot walk to the CRT vector
