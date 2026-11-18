@@ -4736,8 +4736,7 @@ void __cdecl load_vehicles() {
             }
         }
     }
-    for (row = 0; row < 9; ++row) {
-        border_y = 2 + row * 77;
+    for (border_y = 2, row = 0; row < 9; border_y += 77, ++row) {
         for (x = 0; x < 100; ++x) {
             for (y = border_y - 1; y <= border_y; ++y) {
                 sheet.get_pixel(918 + x, y - 1);
