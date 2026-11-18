@@ -35,8 +35,9 @@ loop, which supersedes conflicting guidance below and in `recovery/WORKFLOW.md`:
    `recover check-claims` must stay clean.
 5. Framework/package work is frozen unless a measured matching problem is
    blocked by it, or it speeds up this loop (see "Loop tools" below).
-6. Priority: fix regressed claims first (they were exact before), then
-   unclaimed functions ranked by translation unit and similarity.
+6. Priority: structural fixes first (see "Structure first, no ratchet"),
+   whatever they break; then functions ranked by translation unit. Regressed
+   claims are restored by the next fix, not by reverting.
 7. Parallel workers each own one source file (conflict domain); the coordinator
    commits and integrates. Workers may still use isolated worktrees. A header
    change is its own conflict domain (user decision, 2026-11-17): the worker
@@ -56,18 +57,31 @@ forces an expansion but does not spend the /Ob2 budget the original expansion
 did; `#pragma inline_depth(0)` disables every expansion including forced ones;
 there is no `noinline`, so keeping one call site out of line needs a
 non-inline declaration with an `inline` twin for the expanded sites. Prefer a
-real source fix whenever a break can be explained. A header change (user
-decision, 2026-11-17, replacing the earlier "no losses at all" rule) is
-accepted when it is a net gain measured by `recover check-matches --since
-<base> --baseline <report>`, and the functions it breaks are re-tuned in the
-same batch. A change that comes out even (no net loss) is also kept when it
-improves quality: it restores the original's form or retires stand-ins.
-Many exact functions were tuned around a wrong header, so a correct header
-can break some before it fixes others. List every claim that
-still fails after re-tuning in the commit message.
-Those claims keep their `BYTE_EXACT` markers and historical identities as
-restoration obligations (never demote or edit them), and restoring them is
-first priority for the next round.
+real source fix whenever a break can be explained.
+
+Structure first, no ratchet (user decision, 2026-11-18; replaces the
+"net gain" rule and every "no claim may be lost" check). The remaining
+functions are stuck in local minima, so progress is judged by structure, not
+by similarity or by the count of exact functions:
+
+- Compare a candidate with the image in this order: EH states, call multiset
+  (callee, count, expanded or out of line), frame size, block layout, stored
+  and reloaded slots, registers, bytes. A change that fixes a higher rung is
+  KEPT, even when similarity drops and even when it breaks functions that
+  were byte-exact. This holds for body, header, class, global and build
+  changes alike.
+- Do not revert a structurally correct change to protect a score or a claim,
+  and do not gate a change, a sweep or an integration on "no exact function
+  lost". Exact functions that were tuned around a wrong structure are
+  expected to break; they become exact again through the next fix, or
+  through another structural change, not through a revert.
+- Revert only a change that is shown to be wrong against the image.
+- A broken claim keeps its `BYTE_EXACT` marker and historical identity as a
+  restoration obligation (never demote or edit them). List the claims a
+  commit breaks in its message. There is no deadline to restore them in the
+  same batch.
+- Commits must still build and link, and `recover check-claims` must stay
+  clean (it checks identities, not byte equality).
 Count-sensitive canaries (user decision, 2026-11-17): functions that flip only
 with their unit's front-end symbol counter (the counter that numbers `$SG`
 literals; VC6 breaks some register ties by that counter mod 64) are not
@@ -75,9 +89,11 @@ re-tuned per header change. Measured members: ReportIf::on_iface_button_clicked
 0x004A6330, end_of_game 0x00524870, Console::corner_the_market 0x004E2000,
 buy_council_vote 0x0053EB50. A header batch may land with them listed as lost;
 they are re-tuned once after the header batch, against the final headers.
-Every other loss, including give_a_base and base_energy (measured
-counter-independent: they flip on real header shape), is still re-tuned in the
-same batch.
+
+Fast tools live in `recovery/tools/` (see its README): a 0.5 s
+compile-and-diff evaluator, a 17 s whole-tree pass, a deck/permutation runner
+and single-site rewrite sweeps. They are screens; `recover measure` and
+`recover record` remain the authority for claims.
 
 Loop tools: `recover measure` takes about 4.7 s. `recover check-matches --unit
 <tu>` or `--since <rev>` measures only the affected TUs (never a full pass;

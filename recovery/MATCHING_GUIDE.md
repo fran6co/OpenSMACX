@@ -64,16 +64,17 @@ preservation. Never fix an original bug. Read `AGENTS.md` ("Current mode" and
     `BUG(original)`/compat branches, and never copy its code or names.
   - No `_emit`, copied machine code or fixed-address calls. `__asm` is for
     original hand-written assembly only.
-  - A stand-in is kept only if it makes a function exact, or clearly moves it
-    with image evidence. Tag it `// WORKAROUND(<inline|noinline|type|decl|volatile>): <evidence>`.
+  - A stand-in is kept if it reproduces a structural property of the image
+    (frame, calls, layout), exact or not. Tag it `// WORKAROUND(<inline|noinline|type|decl|volatile>): <evidence>`.
   - Never edit `ORIGINAL:` lines or `BYTE_EXACT` tokens or compiler flags. Add no
     tests or JSON.
   - Time-box each hypothesis. Check `git log -p -S'<name>'` for earlier attempts
     and exact seeds first.
-- **No-loss check (required).** At the end, measure every `BYTE_EXACT` address in
-  every file you edited, plus your newly exact addresses, and fix or revert any
-  regression. `cmake --build build` must link. Each TU has canaries that flip
-  first (section 3.6).
+- **Report what broke; do not revert for it.** At the end, measure every
+  `BYTE_EXACT` address in every file you edited and list the ones that no
+  longer match. A structurally correct change stays even when it breaks
+  exact functions (AGENTS.md, "Structure first, no ratchet"); revert only
+  what the image shows to be wrong. `cmake --build build` must link.
 - **Report**, concise:
   - per file, the claimed count and how many claims are still exact;
   - newly exact addresses, each with a one-line cause;
@@ -119,8 +120,9 @@ Tooling traps:
 
 The remaining functions are stuck in local minima, so do not accept or
 reject a candidate on similarity. Compare structure in this order and keep
-a change that fixes a higher rung even when similarity falls, as long as no
-claim is lost: EH states, call multiset, frame size, block layout, stored and
+a change that fixes a higher rung even when similarity falls and even when
+it breaks byte-exact functions (they were tuned around the wrong structure
+and are restored by the next fix, never by a revert): EH states, call multiset, frame size, block layout, stored and
 reloaded slots, registers, bytes. ProdPicker::on_scrolled went 0.893 → 0.78
 → 0.91 → exact; the 0.78 step was the one that reproduced the frame.
 
@@ -1086,9 +1088,9 @@ raw field access where the original used inline accessors.
   file-state redeclaration found under one recipe must be re-swept after a
   recipe or literal change, and may no longer be needed at all
   (corner_the_market's two redeclarations, action_give's 17 names).
-- **Fix before reverting.** When a faithful change breaks a claim, diagnose
-  and repair the break (widening scope is fine) before considering a
-  revert; revert only if no repair exists and the change is not faithful.
+- **Never revert a faithful change for a broken claim.** Diagnose and repair
+  the break (widening scope is fine), now or later; revert only a change
+  the image shows to be wrong.
 - **Read a switch's jump-table case order first.** A case-order mismatch
   accounted for most of DiploWin::on_button_clicked's 0.51.
 - **When every probe placement gives the same EH topology**, spend is not
