@@ -194,6 +194,23 @@ struct PickWinListAccess : ListBox {
   }
 };
 
+// WORKAROUND(inline): the six text buttons are set up by the same four
+// calls, and each button's Buffer base is reached from the register that
+// holds the button (lea ecx,[ebx+0x444] at 0x48930B and five more), not folded
+// into this + offset: the button is a pointer, here an inline's parameter.
+// A set_font forwarder member on the button does not give that (its `this`
+// folds: lea ecx,[esi+0x96b4]); a block-scoped pointer local gives the same
+// six sites but 17 more differing rows before them (115 against 98). The
+// original helper's name and owner are unknown.
+static inline void pickwin_init_button(FlatButton *button, char *text, int id, RECT *rect,
+                                       Win *parent) {
+  button->init(text, id, rect->left, rect->top, rect->right - rect->left,
+               rect->bottom - rect->top, parent, 0);
+  button->Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
+  button->redraw();
+  button->hide();
+}
+
 // ORIGINAL: 0x004887A0 ?init@PickWin@@QAEXP6AXH@ZHH@Z 0x004887A0-0x0048965F;0x00657F70-0x00657F85
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004887a0.cpp"], "reason": "Recover genuine typed PickWin owner behavior and automatic subobject lifetime from pinned native flow and preserved seed; historical identity and restoration obligations retained, no exactness claim."}
 // TRIED: nothing exotic here (no x87, no computed jumps) - transcribed mechanically from the Ghidra pseudocode (which is accurate for this straight-line function) using raw `self+offset` field access and real member calls resolved against pickwin.h field names where they matched. sim 0.65-0.71 across flag sets.
@@ -381,64 +398,25 @@ void PickWin::init(void (__cdecl *callback)(int), int mode, int faction) {
 
   StringTemp[0] = '\0';
   strcat(StringTemp, label_get(0x45E));
-  // WORKAROUND(inline): each button's Buffer base is reached from the
-  // register that holds the button (lea ecx,[ebx+0x444] at 0x48930B and five
-  // more), not folded into this + offset: the calls go through a pointer.
-  {
-    FlatButton *button = &flatButton4_;
-    button->init(StringTemp, 0x106, field_9210_rect_.left, field_9210_rect_.top, field_9210_rect_.right - field_9210_rect_.left, field_9210_rect_.bottom - field_9210_rect_.top, this, 0);
-    button->Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
-    button->redraw();
-    button->hide();
-  }
+  pickwin_init_button(&flatButton4_, StringTemp, 0x106, &field_9210_rect_, this);
   StringTemp[0] = '\0';
   strcat(StringTemp, StringTable.get(field_5DAC_ ? Labels.strings_ptr[0x45F]
                                              : Labels.strings_ptr[0x2AF]));
-  {
-    FlatButton *button = &flatButton5_;
-    button->init(StringTemp, 0x107, field_9220_rect_.left, field_9220_rect_.top, field_9220_rect_.right - field_9220_rect_.left, field_9220_rect_.bottom - field_9220_rect_.top, this, 0);
-    button->Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
-    button->redraw();
-    button->hide();
-  }
+  pickwin_init_button(&flatButton5_, StringTemp, 0x107, &field_9220_rect_, this);
   StringTemp[0] = '\0';
   strcat(StringTemp, label_get(0x66));
   CharUpperA(StringTemp);
-  {
-    FlatButton *button = &flatButton6_;
-    button->init(StringTemp, 0x103, field_9230_rect_.left, field_9230_rect_.top, field_9230_rect_.right - field_9230_rect_.left, field_9230_rect_.bottom - field_9230_rect_.top, this, 0);
-    button->Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
-    button->redraw();
-    button->hide();
-  }
+  pickwin_init_button(&flatButton6_, StringTemp, 0x103, &field_9230_rect_, this);
   StringTemp[0] = '\0';
   strcat(StringTemp, label_get(0x65));
   CharUpperA(StringTemp);
-  {
-    FlatButton *button = &flatButton9_;
-    button->init(StringTemp, 0x108, field_9260_rect_.left, field_9260_rect_.top, field_9260_rect_.right - field_9260_rect_.left, field_9260_rect_.bottom - field_9260_rect_.top, this, 0);
-    button->Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
-    button->redraw();
-    button->hide();
-  }
+  pickwin_init_button(&flatButton9_, StringTemp, 0x108, &field_9260_rect_, this);
   StringTemp[0] = '\0';
   strcat(StringTemp, label_get(0x460));
-  {
-    FlatButton *button = &flatButton8_;
-    button->init(StringTemp, 0x105, field_9250_rect_.left, field_9250_rect_.top, field_9250_rect_.right - field_9250_rect_.left, field_9250_rect_.bottom - field_9250_rect_.top, this, 0);
-    button->Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
-    button->redraw();
-    button->hide();
-  }
+  pickwin_init_button(&flatButton8_, StringTemp, 0x105, &field_9250_rect_, this);
   StringTemp[0] = '\0';
   strcat(StringTemp, label_get(0x461));
-  {
-    FlatButton *button = &flatButton7_;
-    button->init(StringTemp, 0x104, field_9240_rect_.left, field_9240_rect_.top, field_9240_rect_.right - field_9240_rect_.left, field_9240_rect_.bottom - field_9240_rect_.top, this, 0);
-    button->Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
-    button->redraw();
-    button->hide();
-  }
+  pickwin_init_button(&flatButton7_, StringTemp, 0x104, &field_9240_rect_, this);
 
   buttonGroup_.init(0, 0);
   buttonGroup_.add(&flatButton7_);
