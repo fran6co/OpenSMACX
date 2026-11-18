@@ -507,19 +507,17 @@ int EditGroup::attach(GraphicWin *parent, int x, int y, int flags) {
                             Dialog::text_color_3c_, Dialog::text_color_3d_);
     Buffer::set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
 
+    int index = 0;
     const int margin = static_cast<int>(Dialog::field_44_);
     const int cell_height = static_cast<int>(Dialog::field_68_) - margin;
-    const int box_width = static_cast<int>(Dialog::field_64_) - margin * 2 -
-                          label_width_;
-    const int base_left = static_cast<int>(Dialog::field_34_) + margin * 2 +
-                          label_width_;
+    const int box_width = static_cast<int>(Dialog::field_64_) - margin * 2 - label_width_;
     const int base_top = margin >> 1;
+    const int base_left = static_cast<int>(Dialog::field_34_) + margin * 2 + label_width_;
     RECT base;
     base.left = base_left;
     base.right = box_width + base_left;
     base.top = base_top;
     base.bottom = cell_height + base_top;
-    int index = 0;
     for (int column = 0; column < Dialog::column_count_; ++column) {
         RECT cell = base;
         offset_rect(&cell, static_cast<int>(Dialog::field_64_) * column, 0);
