@@ -288,9 +288,12 @@ void __cdecl map_wipe() {
         tile->val3 = 0;
         // WORKAROUND(type): one `rep stosd` of 8 from +0xC (0x0059109D): an
         // eight-dword array clear; map.h models it as bit2 + bit_visible[7].
-        for (int k = 0; k < 8; k++) {
+        // do/while, not for: the for form costs more inline budget and
+        // map_resample (0x00592B40) then calls map_wipe instead of expanding it.
+        int k = 0;
+        do {
             (&tile->bit2)[k] = 0;
-        }
+        } while (++k < 8);
     }
 }
 /*

@@ -697,16 +697,22 @@ void NetWin::prepare_game() {
     }
 
     // Each process slot receives the leading 0x176 row bytes at its identity.
+    // WORKAROUND(type): a structure assignment (rep movsd 0x5d + movsw,
+    // 0x00482EDB): the player record is a 0x176-byte type embedded at the head
+    // of both the lobby row and the process slot; modelled here by its extent.
+    struct NetWinLobbyRowPrefix176 { char bytes_[0x176]; };
     if (NetWinSessionData.fields_.mode_ != 0 && NetWinSessionData.fields_.mode_ != 1) {
         for (i = 0; i < 8; i++) {
-            memcpy(&NetDaemonNet.process_slots_[i].state_.identity_, &NetWinLobbyRows.rows_[i], 0x176);
+            *reinterpret_cast<NetWinLobbyRowPrefix176 *>(&NetDaemonNet.process_slots_[i].state_.identity_) =
+                *reinterpret_cast<NetWinLobbyRowPrefix176 *>(&NetWinLobbyRows.rows_[i]);
             NetDaemonNet.process_slots_[i].state_.identity_ =
                 NetWinLobbyRows.rows_[i].faction_or_color_ == -1
                 ? 0 : NetWinLobbyRows.rows_[i].faction_or_color_;
         }
     } else {
         for (i = 0; i < 8; i++) {
-            memcpy(&NetDaemonNet.process_slots_[i].state_.identity_, &NetWinLobbyRows.rows_[i], 0x176);
+            *reinterpret_cast<NetWinLobbyRowPrefix176 *>(&NetDaemonNet.process_slots_[i].state_.identity_) =
+                *reinterpret_cast<NetWinLobbyRowPrefix176 *>(&NetWinLobbyRows.rows_[i]);
             NetDaemonNet.process_slots_[i].state_.identity_ = static_cast<int8_t>(i);
         }
     }
