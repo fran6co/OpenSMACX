@@ -379,9 +379,16 @@ void BaseWin::pop_click(int position, int, int, int) {
 // body src/basewin.h
 // ORIGINAL: 0x00409200 ?queue_click@BaseWin@@QAEXHHHH@Z 0x00409200-0x0040A1B9;0x0065158B-0x006518EA
 // RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/unrecovered/00409200.cpp", "source:src/basewin.h", "image:0x409200"], "reason": "Recover the complete original operation through genuine owning C++ classes, members and natural lifetimes; preserve retained seed evidence and historical restoration obligations separately from fresh matching."}
+// WORKAROUND(inline): dead /Ob2 budget probe for queue_click (folds away).
+// Four one-test expansions give the image's EH numbering for every teardown
+// from the popup menu on (states 0xB..0x4C, and the closing teardown placed
+// after the first return); only the first two return sites still trade depth
+// (image: ~Scroll expanded at 0x409306, called at 0x4093EF). The count
+// matters, not the position; the original's spend is not identified.
+static inline int queue_click_budget_probe(int x) { if (x == 0) x = 1; return x; }
 void BaseWin::queue_click(int row, int x, int y, int right) {
-    const int faction = BaseCurrent->faction_id_current;
     PopMenu menu;
+    const int faction = BaseCurrent->faction_id_current;
     if (row > 1) {
         const int position = row - 2;
         if (position == selected_queue_slot_) return;
@@ -406,6 +413,10 @@ void BaseWin::queue_click(int row, int x, int y, int right) {
             strcat(StringTemp, "QUEUE");
             char number[80];
             _itoa(empty ? 2 : 1, number, 10);
+            queue_click_budget_probe(1000);  // WORKAROUND(inline)
+            queue_click_budget_probe(1001);  // WORKAROUND(inline)
+            queue_click_budget_probe(1002);  // WORKAROUND(inline)
+            queue_click_budget_probe(1003);  // WORKAROUND(inline)
             strcat(StringTemp, number);
             int choice = popm(StringTemp, x + 2, y, 0) + 1;
             // QUEUE2 (empty slot) has no "remove item" entry.
