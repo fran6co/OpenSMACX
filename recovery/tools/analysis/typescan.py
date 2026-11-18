@@ -171,11 +171,11 @@ class Types:
                 return s.kind(c.u('<I'), depth + 1)
             if leaf == 0x1002:
                 return ('scalar', 4, 'U', 'pointer')
-            if leaf == 0x1507:
+            if leaf in (0x1507, 0x1007):
                 c.u('<H'); c.u('<H'); ut = c.u('<I'); c.u('<I'); nm = c.name()
                 k = s.kind(ut, depth + 1)
                 return ('scalar', k[1], k[2], 'enum ' + nm) if k and k[0] == 'scalar' else None
-            if leaf == 0x1503:
+            if leaf in (0x1503, 0x1003):
                 et = c.u('<I'); c.u('<I'); size = c.num()
                 ek = s.size(et)
                 return ('array', et, size // ek if ek else 0, ek)
@@ -202,7 +202,8 @@ class Types:
         return k[2] * k[3]
 
     def flat(s, cname):
-        """-> [(offset, span, stride, owner, field, width, sign, typename)] for every scalar leaf of cname."""
+        """-> [(offset, dims, owner, field, width, sign, typename)] for every scalar leaf of cname;
+        dims = ((stride, count), ...) of the arrays the leaf repeats in, innermost first."""
         if cname in s._flat:
             return s._flat[cname]
         s._flat[cname] = []
@@ -220,17 +221,15 @@ class Types:
         if not k or depth > 6:
             return []
         if k[0] == 'scalar':
-            return [(off, k[1], k[1], owner, nm, k[1], k[2], k[3])]
+            return [(off, (), owner, nm, k[1], k[2], k[3])]
         if k[0] == 'class':
-            return [(off + o, sp, st, ow, f, w, sg, tn) for o, sp, st, ow, f, w, sg, tn in s.flat(k[1])]
+            return [(off + o, d, ow, f, w, sg, tn) for o, d, ow, f, w, sg, tn in s.flat(k[1])]
         et, cnt, esz = k[1], k[2], k[3]
         if not cnt or not esz:
             return []
-        ek = s.kind(et)
-        if ek and ek[0] == 'scalar':
-            return [(off, cnt * esz, esz, owner, nm, ek[1], ek[2], ek[3] + '[]')]
         inner = s._leaves(et, 0, owner, nm, depth + 1)
-        return [(off + o, cnt * esz - o, esz, ow, f, w, sg, tn) for o, sp, st, ow, f, w, sg, tn in inner if sp <= esz]
+        return [(off + o, d + ((esz, cnt),), ow, f, w, sg, tn + ('[]' if s.kind(et) and s.kind(et)[0] == 'scalar' else ''))
+                for o, d, ow, f, w, sg, tn in inner]
 
     def by_name(s):
         """field name -> every flattened leaf of every class (offsets relative to that class)"""
@@ -238,16 +237,25 @@ class Types:
             s._byname = collections.defaultdict(set)
             for cname in list(s.classes):
                 for e in s.flat(cname):
-                    s._byname[e[4]].add(e)
+                    s._byname[e[3]].add(e)
         return s._byname
 
     def at(s, cname, disp, names=None):
-        """leaves of cname covering disp (exact element start)."""
-        res = []
-        for o, sp, st, ow, f, w, sg, tn in s.flat(cname):
-            if o <= disp < o + sp and (disp - o) % st == 0 and (names is None or f in names):
-                res.append((ow, f, w, sg, tn))
-        return res
+        """leaves of cname at disp (an element start)."""
+        return [(ow, f, w, sg, tn) for o, d, ow, f, w, sg, tn in s.flat(cname)
+                if covers(o, d, disp) and (names is None or f in names)]
+
+
+def covers(o, dims, disp):
+    rem = disp - o
+    if rem < 0:
+        return False
+    for st, cnt in sorted(dims, reverse=True):
+        q = rem // st
+        if q >= cnt:
+            return False
+        rem -= q * st
+    return rem == 0
 
 
 DECO = {'C': (1, 'S', 'signed char'), 'D': (1, 'S', 'char'), 'E': (1, 'U', 'unsigned char'), 'F': (2, 'S', 'short'),
@@ -585,8 +593,8 @@ def attribute(ty, optext, dis_text, srcline):
             return []
         idx = ty.by_name()
         for nm in names:
-            for o, sp, st, ow, f, w, sg, tn in idx.get(nm, ()):
-                if o <= disp < o + sp and (disp - o) % st == 0:
+            for o, d, ow, f, w, sg, tn in idx.get(nm, ()):
+                if covers(o, d, disp):
                     cands.append(('%s::%s' % (ow, f), w, sg, tn))
     kinds = {(w, sg) for _, w, sg, _ in cands}
     keys = {k for k, _, _, _ in cands}
