@@ -3553,7 +3553,8 @@ int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3, int a4,
     Vert land_uv[12];
     Vert land_vertices[12];
     int ocean_zvals[4];
-    int triangle_light[3];
+    int triangle_light[4];
+    RECT text_rect;
     uint32_t local_11c;
     int coastal_mask[4];
     // [ebp-0xf4]: zeroed before the Random constructor (0x4632F6), so it is
@@ -5036,7 +5037,6 @@ nexus_done:
     // 0x466970 and 0x466A94) on one frame RECT ([ebp-0xA4]).
     if (window != 0) {
         char numbuf[80];
-        RECT text_rect;
         if ((a6 & 4) != 0) {
             StringTemp[0] = 0;
             if ((map_tiles()[MapLongitude * a8 + local_14].bit & 0x1000) != 0) {
