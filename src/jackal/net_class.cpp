@@ -450,8 +450,10 @@ Return Value: 7 with no DirectPlay session, 0x10 with no list, 1 when the
          enumeration reported a failure, else 0
 Status: Coverage transcription - unclaimed body
 */
-// stand-in: auto_inline(off) keeps sub_631050's two direct calls (0x0062E420)
-// now that it shares this TU; VC6 auto-inlines the first one otherwise (C4711).
+// WORKAROUND(noinline): session_picker_dialog (sub_631050, same address band)
+// calls this at both sites (0x0063132B, 0x006313A5); /Ob2 here expands the
+// first one. A same-band callee refused at one site of two is a budget cut-off
+// in the caller, not the per-callee size cap.
 #pragma auto_inline(off)
 int Net::enumerate_sessions(AlphaNetLedger *ledger, const char *password) {
     if (NetDirectPlay == 0) return 7;

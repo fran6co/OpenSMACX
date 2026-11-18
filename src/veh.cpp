@@ -1344,8 +1344,10 @@ Purpose: Record a prototype design in the faction's run.
 Return Value: n/a
 Status: MISMATCH.
 */
-// stand-in: retire_proto and propose_proto call these out of line in the
-// image; in one TU /Ob2 would otherwise inline them.
+// WORKAROUND(noinline): retire_proto and propose_proto call these out of
+// line (0x0057F1E1, 0x005808B3); /Ob2 expands them here. The bung family
+// (sub_57dee0 .. is_bunged, 0x0057DEE0-0x0057E037) follows the stat-text
+// band and may be its own unit; no layout evidence settles it.
 #pragma auto_inline(off)
 void __cdecl proto_bung_put(int faction_id, int proto_id) {
     const int slot = PlayersData[faction_id].prototype_history_cursor;

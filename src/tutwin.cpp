@@ -1188,8 +1188,8 @@ tut_check2(int flag) {
  */
 
 
-// The original calls these four centring helpers out of line from every tour
-// even though they share this TU; keep them out of automatic inline expansion.
+// WORKAROUND(noinline): tour1/tour5/tour7 (this band) call these four
+// centring helpers out of line at every site; /Ob2 expands them here.
 #pragma auto_inline(off)
 /*
 Purpose: Centre the rectangle on both axes and convert the result to screen
@@ -1881,6 +1881,8 @@ tour_menu:
     tut_map("TOUROVER", site_x, site_y, ConsoleGlobal.selected_vehicle_, 0, 0, -1, -1);
     return;
 }
+// WORKAROUND(noinline): tour1/tour5/tour7 call do_base/do_iface/do_soc/do_des
+// out of line (and BaseWin::zoom calls do_base); /Ob2 expands them here.
 #pragma auto_inline(off)
 
 

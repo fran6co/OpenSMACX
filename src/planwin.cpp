@@ -659,7 +659,9 @@ Status: Complete
 
 // ORIGINAL: 0x0048B3F0 ?back_redraw@PlanWin@@QAEXXZ 0x0048B3F0-0x0048B445 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["The body sets MapWin +0x1DD70, fills the GraphicWin virtual base, redraws the MapWin, then copies that base's Buffer into PlanWin's own Buffer using DIB width and top-down height.", "MapWin virtually inherits GraphicWin and PlanWin declares its own Buffer at +0x21A70. Typed base conversions follow the vbtable; Buffer::dib_ supplies the observed +0x4C4/+0x4C8 dimensions.", "Pinned48B432 forms ECX=virtual GraphicWin base+0x444 (Buffer source);48B43D pushes PlanWin+0x21A70 as destination before Buffer::copy5D95B0. Its five-argument wrapper and full blitter preserve receiver-as-source and pointer-argument-as-destination."], "reason": "Recover PlanWin's backing-image refresh through its real MapWin/GraphicWin hierarchy and typed buffers."}
-// opticenter calls this out of line.
+// WORKAROUND(noinline): opticenter (this band) and four other units call
+// 0x0048B3F0 out of line; /Ob2 expands it into opticenter here. opticenter
+// also refuses xrange (below), so this is its budget, not the size cap.
 #pragma auto_inline(off)
 void PlanWin::back_redraw() {
     field_1DD70_ = 0x84010002;
@@ -696,6 +698,9 @@ Status: Complete
 // The canonical `xrange` symbol is emitted out of line here. Its body is
 // map.h's cached-bound xrange_inline (not the flat-first wrap_map_x).
 // opticenter calls this out of line and discards the result.
+// WORKAROUND(noinline): the copy at 0x0048BEE0 sits after ~PlanWin among the
+// unit's generated COMDATs (??_GPlanWin follows): a header inline refused by
+// opticenter's budget; enemy_move, base_build and battle_fight call it too.
 #pragma auto_inline(off)
 int __cdecl xrange(int x) {
     return xrange_inline(x);

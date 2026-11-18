@@ -310,7 +310,13 @@ Purpose: Move the active window rectangle while preserving its dimensions.
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
-// Out of line at every caller in the image.
+// WORKAROUND(noinline): every caller in the image calls 0x005ED7D0, the four
+// in this band too (center and sub_5ed700 before it, resize_event and
+// redo_caption_buttons after it), so the original body was over VC6's
+// per-callee auto-inline size cap; spelled as here it is under it and /Ob2
+// expands it into center, sub_5ed700 and resize_event. The costlier original
+// spelling is not found: explicit this-> and an early return leave it
+// expanded, named deltas change move's own bytes (measured 2026-11-19).
 #pragma auto_inline(off)
 int Win::move(int x, int y) {
     // Both arms call offset_rect (0x005F8670), which /Ob2 inlines here.

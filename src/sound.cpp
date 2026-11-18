@@ -560,9 +560,11 @@ Status: Complete
 // recorded instruction span: its type-1 entry reaches 4C6215 (OR 4), and
 // its type-4 entry reaches 4C61F5 (OR 0x10). Keep that dispatch as well as
 // the original arm order; matching the instructions alone misses this error.
-// stand-in: auto_inline(off) keeps set_type out of line in this TU. The image
-// calls it from the Wave, Midi, Ambience and Voice constructors (0x004C6787,
-// 0x004C8A14); with the definition visible, /Ob2 inlines the switch instead.
+// WORKAROUND(noinline): the Wave, Ambience, sub_4c8620 and Voice constructors
+// (this band) call set_type out of line (0x004C6787, 0x004C8515, 0x004C86B1,
+// 0x004C8A14, 0x004C8D97); with the definition visible, /Ob2 expands the
+// switch. Five small callers all refusing it points at the per-callee size
+// cap; the costlier original spelling is not found.
 #pragma auto_inline(off)
 void Sound::set_type(unsigned int type) {
     // EACH ARM INLINE, not a shared `type_ = type; flags_40_ |= class_bit;`

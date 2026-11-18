@@ -1501,7 +1501,10 @@ static inline void restore_back_strip(RECT *rect, int widen) {
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005D8000 0x005DA860
 
-// Kept out of line: the image calls it from on_redraw.
+// WORKAROUND(noinline): on_redraw, slide_show and slide_hide (this band) and
+// eight other units call 0x0045C290 out of line; as spelled here the body is
+// under VC6's per-callee auto-inline size cap and /Ob2 expands it into
+// on_redraw. The original spelling that is over the cap is not found.
 #pragma auto_inline(off)
 void MainInterface::restore_back(int a1) {
     if (a1 != 0) {

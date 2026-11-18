@@ -1104,7 +1104,11 @@ Purpose: Refresh the map's image buttons; the legacy implementation is a bare
 Return Value: n/a
 Status: Complete
 */
-// Both callers (init, on_resize) call this empty body out of line.
+// WORKAROUND(noinline): both callers (on_resize before it, init after it, one
+// band) call this empty body out of line. An empty body is never over the
+// per-callee size cap, so the original's source was not empty (code that
+// compiles to nothing still counts toward the cap) or the callers could not
+// see it; neither is established.
 #pragma auto_inline(off)
 void MapWin::do_image_buttons() {
 }
