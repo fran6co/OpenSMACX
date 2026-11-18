@@ -283,6 +283,13 @@ def rule_contract(t,mt,pos):
             if m2 and (nxt is None or m2.start()<nxt[0].start()): nxt=(m2,rx2,rep2)
         best=nxt
 RULES['contract']=rule_contract
+def rule_ternret(t,mt,pos):
+    # inline helper body `return C ? A : B;` -> `if (C) { return A; } return B;`
+    for m in re.finditer(r'(inline [^\n{;]*\{\s*)return ([^;?{}]+?) \? ([^;:{}]+?) : ([^;{}]+?);(\s*\})',mt[pos:]):
+        s0=pos+m.start(2)-len('return '); e0=pos+m.end(4)+1
+        g=[t[pos+m.start(k):pos+m.end(k)] for k in (2,3,4)]
+        yield (s0,e0,'if ('+g[0].strip()+') { return '+g[1].strip()+'; } return '+g[2].strip()+';','ternret')
+RULES['ternret']=rule_ternret
 def main():
     rule=RULES[sys.argv[1]]; unit=sys.argv[2]; unit=unit if unit.startswith('src/') else 'src/'+unit; pfx=sys.argv[3]
     path=R+'/'+unit; text=open(path,encoding='latin-1').read()
@@ -310,7 +317,7 @@ def main():
         mt=mask(cur); sp=spans_nonexact(cur)
         cand=None
         for c in rule(cur,mt,pos):
-            if any(a<=c[0]<b for a,b in sp): cand=c; break
+            if os.environ.get('RULE_ALL_SPANS')=='1' or any(a<=c[0]<b for a,b in sp): cand=c; break
         if cand is None: break
         s,e,rep,label=cand[:4]; resume=cand[4] if len(cand)>4 else None
         new=cur[:s]+rep+cur[e:]

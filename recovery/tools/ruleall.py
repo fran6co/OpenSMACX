@@ -2,7 +2,7 @@ import sys,os,re,json,subprocess
 from concurrent.futures import ThreadPoolExecutor
 R=os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))); S=os.path.dirname(os.path.abspath(__file__))
 rules_=sys.argv[1].split(','); extra=sys.argv[2:]
-PFX=[i for i in range(0,39) if i not in (1,20)] if os.environ.get('RULE_WIDE')=='1' else list(range(21,37))
+PFX=[i for i in range(0,39) if i not in (1,20)] if os.environ.get('RULE_WIDE')=='1' else (list(range(int(os.environ['RULE_PFX'].split('-')[0]),int(os.environ['RULE_PFX'].split('-')[1])+1)) if os.environ.get('RULE_PFX') else list(range(21,37)))
 N=len(PFX)
 cc=json.load(open(R+'/build/compile_commands.json'))
 units=[e['file'][len(R)+1:] for e in cc if e['file'].startswith(R+'/src/')]

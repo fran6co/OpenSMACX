@@ -186,9 +186,7 @@ static inline void base_draw_shrink_rect(RECT *rect, int dx, int dy) {
 // macro repeating it in both arms would not do.
 // WORKAROUND(decl): file-local stand-in for the original's zoom-scale helper/macro (name unknown).
 static inline int veh_draw_scale(int value, int zoom) {
-    return MapWinCaptionScale > 0
-        ? value * MapWinCaptionScale / MapWinCaptionDivisor
-        : (zoom + 16) * value / 16;
+    if (MapWinCaptionScale > 0) { return value * MapWinCaptionScale / MapWinCaptionDivisor; } return (zoom + 16) * value / 16;
 }
 
 // ORIGINAL: 0x005594F0 ?veh_draw@@YAHPAUBuffer@@HHHHHH@Z 0x005594F0-0x0055A14E
