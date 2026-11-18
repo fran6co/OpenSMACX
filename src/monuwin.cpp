@@ -865,10 +865,8 @@ void MonuWin::on_redraw() {
     } else if (type < 0xF) {
       sprites_2EA0_[type].draw(this, rects_3134_[0].left, rects_3134_[0].top);
     } else {
-      Sprite &mark = sprites_34E0_[FactionMonuments[preview_faction_or_page_]
-                                       .records_[type].word_8_ - 1];
-      mark.draw(this, rects_3134_[0].left,
-                rects_3134_[0].top);
+      sprites_34E0_[FactionMonuments[preview_faction_or_page_].records_[type].word_8_ - 1]
+          .draw(this, rects_3134_[0].left, rects_3134_[0].top);
     }
     int count = 0;
     for (type = 15; type < 21; type++) {
@@ -889,10 +887,8 @@ void MonuWin::on_redraw() {
           type++;
           continue;
         }
-        Sprite &mark = sprites_33AC_[FactionMonuments[preview_faction_or_page_]
-                                         .records_[type].word_8_ - 1];
-        mark.draw(this, rects_366C_[i].left,
-                  rects_366C_[i].top);
+        sprites_33AC_[FactionMonuments[preview_faction_or_page_].records_[type].word_8_ - 1]
+            .draw(this, rects_366C_[i].left, rects_366C_[i].top);
         spot_.add(type, 0, rects_366C_[i].left, rects_366C_[i].top,
                   rect_width(&rects_366C_[i]),
                   rect_height(&rects_366C_[i]));
