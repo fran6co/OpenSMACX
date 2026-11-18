@@ -2481,26 +2481,24 @@ int __cdecl game_data(FILE *file, int write_mode) {
         return 1;
 
     // The trailing screen size is a raw transfer, unlike the blocks above.
+    int saved_width;
+    int saved_height;
     if (write_mode != 0) {
         if (fwrite(&IfaceScreenWidth, 4, 1, file) == 0)
             return 1;
         if (fwrite(&IfaceScreenHeight, 4, 1, file) == 0)
             return 1;
-        return 0;
-    }
-
-    int saved_width;
-    int saved_height;
-    if (fread(&saved_width, 4, 1, file) == 0)
-        return 1;
-    if (fread(&saved_height, 4, 1, file) == 0)
-        return 1;
-    if (saved_width != IfaceScreenWidth || saved_height != IfaceScreenHeight) {
-        for (int map_slot = 1; map_slot < 8; ++map_slot) {
-            if (MapWinTable[map_slot] != 0)
-                MapWinTable[map_slot]->view_active_ = 0;
+    } else {
+        if (fread(&saved_width, 4, 1, file) == 0)
+            return 1;
+        if (fread(&saved_height, 4, 1, file) == 0)
+            return 1;
+        if (saved_width != IfaceScreenWidth || saved_height != IfaceScreenHeight) {
+            for (int map_slot = 1; map_slot < 8; ++map_slot) {
+                if (MapWinTable[map_slot] != 0)
+                    MapWinTable[map_slot]->view_active_ = 0;
+            }
         }
-        return 0;
     }
     return 0;
 }
