@@ -2175,35 +2175,35 @@ static const char SayTokSep[] = ":";
 // RECOVERY_OBJECT: v1 0x0068FA8C _SayTokClose
 static const char SayTokClose[] = ">";
 
-extern "C" char * __cdecl sub_58f4f0(char *a1, int a2, int a3, int a4) {
-    char local_204[256];
-    char local_104[256];
+extern "C" char * __cdecl sub_58f4f0(char *output, int faction_id, int plurality, int gender) {
+    char parsed[256];
+    char buffer[256];
 
-    if (a3 < 0) {
-        a3 = PluralityDefault;
+    if (plurality < 0) {
+        plurality = PluralityDefault;
     }
-    if (a4 < 0) {
-        a4 = GenderDefault;
+    if (gender < 0) {
+        gender = GenderDefault;
     }
-    local_104[0] = 0;
-    strcat(local_104, SayTokOpen);
-    if (a4 == 0) {
-        strcat(local_104, SayTokMale);
-    } else if (a4 == 1) {
-        strcat(local_104, SayTokFemale);
-    } else if (a4 == 2) {
-        strcat(local_104, SayTokNeutral);
+    buffer[0] = 0;
+    strcat(buffer, SayTokOpen);
+    if (gender == 0) {
+        strcat(buffer, SayTokMale);
+    } else if (gender == 1) {
+        strcat(buffer, SayTokFemale);
+    } else if (gender == 2) {
+        strcat(buffer, SayTokNeutral);
     }
-    if (a3 == 0) {
-        strcat(local_104, SayTokOne);
-    } else if (a3 == 1) {
-        strcat(local_104, SayTokTwo);
+    if (plurality == 0) {
+        strcat(buffer, SayTokOne);
+    } else if (plurality == 1) {
+        strcat(buffer, SayTokTwo);
     }
-    strcat(local_104, SayTokSep);
-    strcat(local_104, Players[a2].adj_name_faction);
-    strcat(local_104, SayTokClose);
-    parse_string(local_104, local_204);
-    return strcat(a1, local_204);
+    strcat(buffer, SayTokSep);
+    strcat(buffer, Players[faction_id].adj_name_faction);
+    strcat(buffer, SayTokClose);
+    parse_string(buffer, parsed);
+    return strcat(output, parsed);
 }
 
 
@@ -2326,36 +2326,36 @@ static const char SayFacTokClose[] = ">";
 // bases: see "the lever that keeps working" above; current token constants are
 // distinct source-owned strings, not indexed table views.
 
-void __cdecl say_fac_special(char *a1, char *a2, int a3) {
-    char buf1[256];
-    char buf2[256];
+void __cdecl say_fac_special(char *output, char *text, int faction_id) {
+    char buffer[256];
+    char parsed[256];
 
-    int table_b = Players[a3].is_noun_plural;
-    int table_a = Players[a3].noun_gender;
+    int plurality = Players[faction_id].is_noun_plural;
+    int gender = Players[faction_id].noun_gender;
 
-    buf1[0] = 0;
-    strcat(buf1, SayFacTokOpen);
+    buffer[0] = 0;
+    strcat(buffer, SayFacTokOpen);
 
-    if (table_a == 0) {
-        strcat(buf1, SayFacTokMale);
-    } else if (table_a == 1) {
-        strcat(buf1, SayFacTokFemale);
-    } else if (table_a == 2) {
-        strcat(buf1, SayFacTokNeutral);
+    if (gender == 0) {
+        strcat(buffer, SayFacTokMale);
+    } else if (gender == 1) {
+        strcat(buffer, SayFacTokFemale);
+    } else if (gender == 2) {
+        strcat(buffer, SayFacTokNeutral);
     }
 
-    if (table_b == 0) {
-        strcat(buf1, SayFacTokOne);
-    } else if (table_b == 1) {
-        strcat(buf1, SayFacTokTwo);
+    if (plurality == 0) {
+        strcat(buffer, SayFacTokOne);
+    } else if (plurality == 1) {
+        strcat(buffer, SayFacTokTwo);
     }
 
-    strcat(buf1, SayFacTokSep);
-    strcat(buf1, a2);
-    strcat(buf1, SayFacTokClose);
+    strcat(buffer, SayFacTokSep);
+    strcat(buffer, text);
+    strcat(buffer, SayFacTokClose);
 
-    parse_string(buf1, buf2);
-    strcat(a1, buf2);
+    parse_string(buffer, parsed);
+    strcat(output, parsed);
 }
 
 
