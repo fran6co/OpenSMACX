@@ -924,9 +924,9 @@ void __cdecl caviar_build_projection_tables() {
     // the evaluation order: the orders below were chosen by measuring every
     // permutation of each cell against the image (6404F0..6409E3), not read
     // from it.
-    PROJ_CELL(0).x_ = -(PROJ_X1 + PROJ_X2 + PROJ_X0);
-    PROJ_CELL(0).y_ = -(PROJ_Y1 + PROJ_Y2 + PROJ_Y0);
-    PROJ_CELL(0).z_ = -(PROJ_Z2 + PROJ_Z0 + PROJ_Z1) << 8;
+    PROJ_CELL(0).x_ = -(PROJ_X0 + PROJ_X1 + PROJ_X2);
+    PROJ_CELL(0).y_ = -(PROJ_Y0 + PROJ_Y1 + PROJ_Y2);
+    PROJ_CELL(0).z_ = -(PROJ_Z0 + PROJ_Z1 + PROJ_Z2) << 8;
     PROJ_CELL(1).x_ = -(PROJ_X0 + PROJ_X1);
     PROJ_CELL(1).y_ = -(PROJ_Y0 + PROJ_Y1);
     PROJ_CELL(1).z_ = -(PROJ_Z0 + PROJ_Z1) << 8;
@@ -948,7 +948,7 @@ void __cdecl caviar_build_projection_tables() {
     PROJ_CELL(7).x_ = PROJ_X1 - PROJ_X0;
     PROJ_CELL(7).y_ = PROJ_Y1 - PROJ_Y0;
     PROJ_CELL(7).z_ = (PROJ_Z1 - PROJ_Z0) << 8;
-    PROJ_CELL(8).x_ = PROJ_X2 + PROJ_X1 - PROJ_X0;
+    PROJ_CELL(8).x_ = PROJ_X1 + PROJ_X2 - PROJ_X0;
     PROJ_CELL(8).y_ = PROJ_Y1 + PROJ_Y2 - PROJ_Y0;
     PROJ_CELL(8).z_ = (PROJ_Z2 - PROJ_Z0 + PROJ_Z1) << 8;
     PROJ_CELL(9).x_ = -(PROJ_X1 + PROJ_X2);
