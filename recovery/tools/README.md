@@ -48,3 +48,10 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   (`??1StringList=?remove_all@StringStruct,??1StringStruct`).
 - `analysis/inline/` the probe families and runner behind MATCHING_GUIDE 2.8 (see its README);
   `realdeck.run(unit, addr, deck)` evaluates whole-file variants and reports the call-count differences.
+- `analysis/framescan.py [unit ...] [--addr A,..] [--from FEALL.json] [--all] [--slots] [--json F]` frame-size scan
+  (13 s tree-wide with FE_JOBS=5): reads N from each prologue (`sub esp,N`, `push ecx`, `mov eax,N; call
+  __chkstk`, with or without `push ebp` and the EH registration) in the image and in our compile, and lists
+  the functions whose frames differ, largest difference first, with EH and ebp-frame flags. With `--addr`
+  (or `--slots`) it prints both slot maps: every frame offset each side uses, access widths, `&` when the
+  address is taken, reference counts, and our /Fa variable names. `--all` includes claimed markers (broken
+  claims); markers with `// compile_context` are measured in that unit, as fe.py does.
