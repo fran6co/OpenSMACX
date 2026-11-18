@@ -87,7 +87,11 @@ with their unit's front-end symbol counter (the counter that numbers `$SG`
 literals; VC6 breaks some register ties by that counter mod 64) are not
 re-tuned per header change. Measured members: ReportIf::on_iface_button_clicked
 0x004A6330, end_of_game 0x00524870, Console::corner_the_market 0x004E2000,
-buy_council_vote 0x0053EB50. A header batch may land with them listed as lost;
+buy_council_vote 0x0053EB50, action_give 0x004CEDE0, faction_upkeep
+0x00527290, vehdraw_construct_armor 0x004C3090, Datalink::set_cat_social
+0x0042B630, wants_to_attack 0x0055BC80, DesignWin::draw_armor 0x00435400,
+PrefWin::init 0x0048D840, world_volcano 0x005C6DB0 (and the large swings of
+custom_planet and Console::upgrade). A header batch may land with them listed as lost;
 they are re-tuned once after the header batch, against the final headers.
 
 Fast tools live in `recovery/tools/` (see its README): a 0.5 s

@@ -167,7 +167,6 @@ void __cdecl sub_500380(int faction_id, int x, int y) {
 /*
 Purpose: Check whether the specified prototype is a planet buster.
 // ORIGINAL: 0x005004F0 ?planet_buster2@@YAHH@Z 0x005004F0-0x00500518 BYTE_EXACT
-// body      src/veh.h
 // symbol    ?planet_buster2@@YAIH@Z
 // size      40 bytes
 // prototype int (__cdecl ?planet_buster2@@YAHH@Z)(int protoID)
