@@ -417,6 +417,11 @@ raw field access where the original used inline accessors.
   original's count modulo 64, to its residue set, and the whole header stack
   (vc6_compat.h alone is 1,334 symbols, windows.h 16,655 lean or 41,878 full)
   only matters modulo 64. So pads are alignment, not missing declarations.
+- **Pad sweeps do not fix general register ties (measured 2026-11-18).**
+  Full 64-step `extern int` pad sweeps over about 33 units holding
+  MNEMONIC_ONLY and register-cause functions flipped no non-exact function,
+  and lost no claim. The counter governs only the listed canaries. Don't
+  sweep pads to try to close an ordinary register tie; look for the spelling.
 - **Re-tune by sweeping against the image.** Each canary unit has one pad
   block, and the last measured set lives beside it:
 
