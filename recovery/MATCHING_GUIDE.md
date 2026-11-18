@@ -179,7 +179,9 @@ without `/Oy-`).
   - The number of small expansions is a lever that does not depend on position:
     roughly two expansions move a teardown one level.
 - **Order.** First-level call sites are decided greedily in source order, and a
-  refused site is skipped while cheaper later sites can still inline. Every
+  refused site is skipped while cheaper later sites can still inline. Calls
+  inside expanded copies are decided in a second pass with reservations;
+  see 2.8 for the measured model. Every
   expansion competes, including code after the return sites, and there is a
   per-callee size cap as well.
 - **Per-callee auto-inline size cap (2026-11-19).** Separately from the
@@ -1086,10 +1088,145 @@ What the model does not predict
   member-pointer call standing in for a budget-refused inline (MapWin::gen_radius
   0x00469190, see 2.1).
 
+### 2.8 /Ob2 inlining model
+
+Measured 2026-11-19 (par-4) with generated probe families in
+`recovery/tools/analysis/inline/` (game unit flags with /GX, see its README).
+Each rule names the script that reproduces it. Confidence: **high** = holds in
+every probe family, **medium** = holds in the families but is not confirmed in
+a real function, **low** = partial. Use
+`recovery/tools/analysis/inlinemap.py <unit> <0xADDR>` to see every site of
+an inline callee, expanded (E) or called (c), image against ours.
+
+Unit: costs below are in "if units", where one unit is
+`if (ga[i] == 1000) mk(k);` inside a callee. Real sizes are IL node counts that
+we cannot see, so the numbers are fitted within about 0.3 unit.
+
+1. **Two passes, each in source order** (high; `level1_cutoff.py`,
+   `nested_breadth.py`, `dtor_sites.py`). Pass 1 decides every call site in the
+   caller's own body. That includes the destructor calls the front end writes
+   at each scope exit and `return`, with the closing-brace teardown last. It
+   is greedy with skip: a refused site does not stop a cheaper later site
+   (`f40` expands, `f16` is refused, the `f2` calls after it expand). Pass 2
+   then decides the calls inside the copies that pass 1 made: member and base
+   destructors inside an expanded destructor, and a helper's own inline calls.
+   Pass 2 comes after *all* of pass 1. In `nested_breadth`, five costly
+   top-level calls written after sixteen outer sites still expand, while
+   inner sites are refused.
+2. **One budget per caller: B = max(B0, k × caller size)** (high in shape,
+   medium in numbers; `level1_cutoff.py`, `caller_growth.py`).
+   - B0 is about 58 units. Examples: 12 expansions of a 4-if body, 21 of a
+     2-if body, one 48-if body, but not one 64-if body.
+   - Above the floor, B grows linearly with the caller's own statements,
+     dead or alive. Each `g = K;` adds about 0.47 unit, each call statement
+     about 0.7, and each `if (x == K) use(1);` about 1.9.
+   - No separate per-callee cap was found: a 128-if body expands in a caller
+     with 400 stores.
+   - Filler added while B is still at the floor changes nothing.
+     `dtor_nested_filler.py` is flat until about 66 stores and then shifts
+     one site per two stores.
+3. **Cost of an expansion** (high; `costs.py`).
+   - **Free inlines.** Below a small size threshold an inline expands and
+     charges nothing. That covers one to four calls with constant arguments,
+     up to six global stores, one `if` with one call, and expression-only
+     bodies. Each parameter reference adds size: `mk(k); use(1)` ×3 is free,
+     while `mk(k); use(k)` ×3 costs.
+   - **Charged inlines.** Above the threshold the cost is about the size
+     plus an overhead of about 0.7 unit (fits: 2-if 2.74, 4-if 4.74, 8-if
+     8.74).
+   - **Dead code inside the callee counts in full.** `if (k == 12345) {4 ifs}`
+     costs more than the 4 ifs.
+   - **`__forceinline` sites expand and charge nothing**, even with 8 ifs
+     (`force_if4`, `force_big`).
+4. **Pass-2 room** (high on the synthetic families; fitted by `fam1.py` and
+   `fitftb.py`, with a single solution for the destructor family
+   `dtor_nested.py`). At nested site i:
+
+       room(i) = B − (pass-1 charges) − (nested expansions accepted before i)
+                   − Σ over first-level expansions j after i of max(0, r_j − c_j)
+
+   The site expands when room(i) ≥ its cost.
+   - c_j is the instance's pass-1 charge.
+   - r_j is its reservation, about the cost of the inline nested inside it.
+     The fits give r = 0.98–1.00 × c_in for c_o = 0, 0.54 and 0.84 × c_in.
+   - In other words, every first-level expansion that pass 2 has not reached
+     yet holds its nested callee's cost; a visited one holds only what it
+     really spent.
+   - The shape of the decisions follows from c_o (the outer's charge) against
+     c_in (the inner's cost):
+     - **Outer free or much cheaper than inner: suffix.** The early sites
+       call, every site after the first expansion expands, and the count is
+       fixed by B (`nested_explicit.py '' 4`: the last 10 of 12, 16 or 20
+       sites). This is the image of probe's ~Popup → ~Scroll (9 calls, then
+       29 expansions) and of PickTech::pick (4 calls, then 12 expansions).
+     - **Outer close to inner: periodic.** One expansion every
+       c_in/(c_in − c_o) sites, starting late, such as `sssssSsssss` (11
+       ~P sites, `dtor_nested.py`). These are the non-monotone depths
+       (5,2,5) of 2.3.
+     - **Outer dearer than inner: prefix.** Plain greedy in source order
+       (`fam1.py 12 2`).
+   - **Placement matters only in pass 2.** A free inline placed after site i
+     holds a reservation but charges nothing. It refuses nested expansions
+     at sites before it and never at sites after it (`probe_position.py 6 3
+     if1`). This is the mechanism behind 2.3's "dead spend takes depth only
+     from return sites before it".
+5. **Deeper levels** (medium). A third level, such as ~FlatButton inside an
+   expanded ~Scroll, is decided after pass 2. Its order was not measured.
+6. **Teardown with real headers** (high; `real_popup.py`). An isolated
+   `Popup p;` with M returns expands ~Popup at every site up to the budget.
+   Its ~Scroll then falls in the periodic regime: 5 returns give
+   `SSSSSs`, 10 give `sssssssSsss`. From 20 returns on, the closing sites
+   call ~Popup itself.
+
+Using it
+- Run inlinemap. For each callee row:
+  - The *shape* names the regime.
+  - The *count* difference is missing pass-2 room in units of the inner's
+    cost.
+- **The image has a suffix and ours expands earlier sites too.** Ours has
+  more pass-2 room. Supply it from either source:
+  - pass-1 charge from an inline the original expanded and ours writes raw,
+    such as a wrapper or accessor with a body above the threshold;
+  - reservation *after* the refused sites from free inlines (is_human,
+    on_map, getters).
+
+  Free inlines written before the first refused site do not move it.
+- **A callee is called at an early pass-1 site and expanded at a later one.**
+  Pass 1 cannot do that with equal costs, so the called site was a pass-2
+  site in the original, inside an inline helper.
+- **When to stop.** Dead probes that change other teardowns before they move
+  the target mean that pass 1 is the binding limit, not pass 2. Look for a
+  structural difference: which object owns the teardown, or a per-TU header
+  guard (2.3).
+
+What the model does not predict (2026-11-19)
+- **MapWin::click 0x0046D5D0.** The image calls `::draw_map` in the first
+  editor arm (0x46D977) and expands it in the second. Moving the first site
+  into a free helper, which makes it a pass-2 site, still expands it. Free
+  probes before or after it change the ~Popup teardowns (FlatButton 39 →
+  41) before draw_map flips. No natural spelling was found.
+- **probe 0x0059F120.** Free probes after the 9th teardown site do not
+  refuse ~Scroll at sites 1–9: up to 24 change only the last two teardowns.
+  Spelling every human test as is_human does not refuse them either. With
+  hundreds of first-level instances, the reservations of all later
+  instances are not modelled. The suffix shape needs ~Popup's charge to be
+  near zero, whereas the isolated `real_popup` caller is periodic.
+- **NetWin::pick_player 0x0047BBF0.** One cheap probe before the first
+  return flips one of the two closing-teardown ~StringList sites (image
+  calls both). Two to four probes do not flip the second; eight change the
+  Dialogs stage instead. This is 2.3's two-stage behaviour, which the
+  additive model cannot express.
+- **config_game 0x00589D30.** Ours expands ~StringList at its two sites;
+  the image calls both. Not attempted beyond the inlinemap reading.
+- The units are approximate. Costs come from fitted counts, not node
+  counts, so a prediction is good to about one expansion. Use it to choose
+  the *kind* and *place* of a missing spend, then confirm with fe.
+
 ## 3. Symptom → first thing to check
 
 ### 3.1 Calls and inlining
-- **The image calls something we inline (or the reverse).** Check the budget
+- **The image calls something we inline (or the reverse).** Run
+  `analysis/inlinemap.py` and read the site shape with 2.8; check the budget
   rule (2.1), definition order, and a hand-copied callee body. The most common
   regression cause is a hand-copied first level of a recursive helper such as
   `is_visible` or `screen_to_client`.

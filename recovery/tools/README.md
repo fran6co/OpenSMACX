@@ -41,3 +41,10 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   callee-saved register to a constant (IMG_ONLY = our source lacks a store, OURS_ONLY = one store too
   many or the register is not free, START, REG), with the stretch's uses and the function-wide
   immediate store/push/compare counts of that constant on both sides.
+- `analysis/inlinemap.py <unit> <addr> [--src ALT.cpp] [--seq] [--sig KEY=a,b] [--callee KEY]` /Ob2 decisions:
+  for every inline callee (found from call-count differences and the image's out-of-line copies), each site
+  expanded (E) or called (c), image row over ours, with the addresses that disagree. Read with
+  MATCHING_GUIDE 2.8. `--sig` supplies a signature for a copy whose own calls are all expanded
+  (`??1StringList=?remove_all@StringStruct,??1StringStruct`).
+- `analysis/inline/` the probe families and runner behind MATCHING_GUIDE 2.8 (see its README);
+  `realdeck.run(unit, addr, deck)` evaluates whole-file variants and reports the call-count differences.
