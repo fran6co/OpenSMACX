@@ -2195,30 +2195,6 @@ void __cdecl set_time_controls() {
 
 
 /*
-Purpose: Wrap an x coordinate the way reset_territory() wraps it.
-Original Offset: n/a
-Return Value: Wrapped x
-Status: Complete
-
-xrange() at 0048BEE0 cannot stand in, for one bit. It tests the whole of
-MapIsFlat; reset_territory reads the low BYTE and tests bit zero
-(`mov cl, byte ptr [94988Ch] / test cl, 1`). The two agree on the 0 and 1 the
-game stores there and disagree on everything else, and the difference is in the
-original rather than in the transcription. world_site() at 005C4FD0 carries the
-same distinction as map.cpp's site_xrange().
-*/
-__forceinline static int territory_xrange(int x) {
-    if (!(MapIsFlat & 1)) {
-        if (x < 0) {
-            x += MapLongitudeBounds;
-        } else if (x >= MapLongitudeBounds) {
-            x -= MapLongitudeBounds;
-        }
-    }
-    return x;
-}
-
-/*
 Purpose: Recompute which faction owns each tile of the map, and rebuild every
          per-faction and per-region tally that ownership feeds.
 // ORIGINAL: 0x00523DD0 ?reset_territory@@YAXXZ 0x00523DD0-0x00524202
@@ -2240,7 +2216,8 @@ Purpose: Recompute which faction owns each tile of the map, and rebuild every
 //   to a byte, which is what puts `xor ecx, ecx / mov cl, [edi] / and ecx,
 //   0xFFFFFFE0 / cmp ecx, 0x60 / setl` in place of `and cl, 0xE0 / cmp cl, 0x60 /
 //   sbb / neg`. 0.583 -> 0.613, and it brought the compiled instruction count to
-//   the image's 349 exactly. (5) `territory_xrange` again, rewritten
+//   the image's 349 exactly. (5) `territory_xrange` (since replaced by map.h's
+//   wrap_map_x, which measures the same) again, rewritten
 //   `if (x < 0) ... else if (x >= bounds) ...`: the image's `jge` falls through to
 //   the negative arm, the `if (x >= 0)` spelling inverts it. 0.613 -> 0.630.
 //   (6) ONE `Continent *` for the region, reused by the unk_3 store and the pods
@@ -2374,7 +2351,7 @@ void __cdecl reset_territory() {
             }
             if (is_ocean_tile) {
                 for (int i = 0; i < 9; i++) {
-                    int x_adj = territory_xrange(x + VehMoveDeltaX[i]);
+                    int x_adj = wrap_map_x(x + VehMoveDeltaX[i]);
                     int y_adj = y + VehMoveDeltaY[i];
                     if (!on_map(x_adj, y_adj)) {
                         continue;

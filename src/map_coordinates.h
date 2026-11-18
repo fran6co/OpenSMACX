@@ -24,32 +24,6 @@ extern uint32_t WorldCanyonOffsetValues[12];
 extern uint32_t world_ridge_offset_val[13];
 
 /*
-Purpose: Wrap an x coordinate on a round map, as world_site() and good_sensor() do it.
-Original Offset: n/a
-Return Value: Wrapped x
-Status: Complete
-
-xrange() at 0048BEE0 cannot stand in, for one bit. It tests the whole of
-MapIsFlat while these two read the low BYTE and test bit zero
-(`mov cl, byte ptr [94988Ch] / test cl, 1`). The two agree on the 0 and 1 the
-game stores there and disagree on everything else, and the difference is in the
-original rather than in the transcription. game.cpp's territory_xrange() carries
-the same distinction for reset_territory().
-*/
-__forceinline static int site_xrange(int x) {
-    if (!(MapIsFlat & 1)) {
-        if (x >= 0) {
-            if (x >= MapLongitudeBounds) {
-                x -= MapLongitudeBounds;
-            }
-        } else {
-            x += MapLongitudeBounds;
-        }
-    }
-    return x;
-}
-
-/*
 Purpose: Address the map tile world_site() scores.
 Original Offset: n/a
 Return Value: Pointer to map tile
