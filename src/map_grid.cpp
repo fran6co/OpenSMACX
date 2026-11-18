@@ -1570,16 +1570,13 @@ remove_landmark:
 // ORIGINAL: 0x005927D0 ?delete_landmark@@YAXHH@Z 0x005927D0-0x00592938
 // RECOVERY_BINDING: v1 {"evidence": ["git:7e269a283e888ff1ee459699529fb7ce8c44b171:src/recovered/units/005927d0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json"], "reason": "Recover landmark clearing through real Map members, shared source-owned lookup arrays and MapWin callbacks. Preserve the duplicate Flat-table clear, numeric9,999,999 cache sentinel, store-before-clear order and native absence of extra window/bounds guards. Historical mappings and seed lessons are retained; no new byte/layout/runtime/linked-preservation claim."}
 void __cdecl delete_landmark(int x, int y) {
-    uint32_t *const field = &map_loc(x, y)->bit2;
-    // WORKAROUND(volatile): the image keeps old_flags in a frame slot
-    // ([ebp-4]) and re-reads it at every flag test, leaving edi for the
-    // second tile pointer; a plain local takes edx and spills the pointer.
-    volatile uint32_t old_flags = *field;
+    // bit2_at then bit2_set(.., 0x80, 0), both expanded: the image keeps the
+    // old flags in a frame slot and re-reads them at every flag test.
+    int old_flags = bit2_at(x, y);
     if (old_flags == 0) {
         return;
     }
-
-    *field = old_flags & ~0x80u;
+    bit2_set(x, y, 0x80, 0);
     const int type = static_cast<int32_t>(map_loc(x, y)->bit2) >> 24;
     if (type < 0) {
         return;
