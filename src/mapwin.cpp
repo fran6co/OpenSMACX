@@ -136,7 +136,7 @@ int MapWinStartupWords[256];
 // The original layout writer MapWin_UNK5 and mode-zero initializer share
 // these two 16-byte records and their accumulated dirty bits.
 // RECOVERY_OBJECT: v2 0x00939F48 0x00939F68 ?MapPanelRects@@3PAUMapPanelRect@@A 0x0046FA20
-MapPanelRect MapPanelRects[2];
+RECT MapPanelRects[2];
 // RECOVERY_OBJECT: v2 0x00939EDC 0x00939EE0 ?MapPanelDirtyMask@@3IA 0x0046FA20
 uint32_t MapPanelDirtyMask;
 
@@ -475,7 +475,7 @@ Status: Coverage transcription - unclaimed body, seed
 void MapWin::UNK5(int panel) {
     if (panel != 0) {
         const int width = ConsoleGlobal.dib_.bmiHeader.biWidth;
-        set_rectangle_dimensions(reinterpret_cast<RECT *>(&MapPanelRects[panel]),
+        set_rectangle_dimensions(&MapPanelRects[panel],
                                  (width * 3) / 4, 0, width / 4,
                                  (WorldClimateWorldWin.client_rect().top -
                                   ConsoleGlobal.dib_.bmiHeader.biHeight -
@@ -487,7 +487,7 @@ void MapWin::UNK5(int panel) {
         } else {
             right = ConsoleGlobal.dib_.bmiHeader.biWidth;
         }
-        set_rectangle_dimensions(reinterpret_cast<RECT *>(&MapPanelRects[0]), 0, 0, right,
+        set_rectangle_dimensions(&MapPanelRects[0], 0, 0, right,
                                  WorldClimateWorldWin.client_rect().top -
                                  ConsoleGlobal.dib_.bmiHeader.biHeight -
                                  WorldClimateWorldWin.client_rect().bottom);
@@ -518,7 +518,7 @@ void MapWin::init(int mode, int update) {
             if ((MapPanelDirtyMask & (1 << index)) == 0) {
                 UNK5(index);
             }
-            const MapPanelRect &panel = MapPanelRects[map_view_index_];
+            const RECT &panel = MapPanelRects[map_view_index_];
             bounds.left = panel.left;
             bounds.top = panel.top;
             bounds.right = panel.right;

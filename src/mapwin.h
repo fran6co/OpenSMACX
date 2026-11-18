@@ -68,15 +68,9 @@ struct MapTileDamageRect {
 static_assert(sizeof(MapTileDamageRect) == 16, "four signed tile bounds");
 
 // The two panel rectangles selected by MapWin::init(0, ...) and filled by
-// MapWin_UNK5. The original uses a 16-byte stride from 0x00939F48.
-struct MapPanelRect {
-  int left;
-  int top;
-  int right;
-  int bottom;
-};
-static_assert(sizeof(MapPanelRect) == 16, "map panel rectangle stride");
-extern MapPanelRect MapPanelRects[2];
+// MapWin_UNK5 through set_rectangle_dimensions(RECT *...): two RECTs, a
+// 16-byte stride from 0x00939F48.
+extern RECT MapPanelRects[2];
 extern uint32_t MapPanelDirtyMask;
 
  /*
