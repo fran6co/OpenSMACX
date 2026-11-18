@@ -554,7 +554,8 @@ void BattleWin::battle_report(int first_vehicle_id, int second_vehicle_id,
     Font font_alt;
     Font font_third;
 
-    if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] != 10) {
+    const int iface_slot = IfaceIdToSlotStorage[ActiveIfaceIdStorage];
+    if (iface_slot != 10) {
         return;
     }
 

@@ -1070,8 +1070,8 @@ static inline void dl_social_budget_probe(int x) {
 }
 void Datalink::draw_social() {
     Popup popup;
-    const int category = history_[0] / 5;
-    const int model = history_[0] % 5 - 1;
+    int category = history_[0] / 5;
+    int model = history_[0] % 5 - 1;
     RECT rect = description_rect_;
     rect.left += 3;
     rect.right -= 3;
@@ -1106,11 +1106,10 @@ void Datalink::draw_social() {
     rect.right -= 3;
     rect.bottom -= 3;
     if (model >= 0) {
-        const SocialEffect &effect = SocialCategories[category].model_effect[model];
         int count = 0;
         int i;
         for (i = 0; i < 11; ++i) {
-            if (effect.values_[i] != 0) {
+            if (SocialCategories[category].model_effect[model].values_[i] != 0) {
                 ++count;
             }
         }
@@ -1122,7 +1121,7 @@ void Datalink::draw_social() {
             int y = rect.top
                 + (rect.bottom - font_line_advance(body_font_) * count - rect.top) / 2;
             for (i = 0; i < 11; ++i) {
-                const int value = effect.values_[i];
+                const int value = SocialCategories[category].model_effect[model].values_[i];
                 if (value != 0) {
                     StringTemp[0] = 0;
                     _itoa(value, number, 10);
@@ -1337,7 +1336,7 @@ static inline void append_upper_name(LPSTR name) {
 // The unpooled TU still has one "TECH" object for draw_tech and the copy
 // draw_entry expands: both sites go through this helper's literal.
 static inline void append_tech_topic() {
-    // RECOVERY_LITERAL: v1 0x006834D8 0x006834DD $SG55075 0x00430B30
+    // RECOVERY_LITERAL: v1 0x006834D8 0x006834DD $SG55074 0x00430B30
     strcat(StringTemp, "TECH");
 }
 
