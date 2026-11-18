@@ -3729,28 +3729,22 @@ void ReportWin::draw_projects() {
                     const int row = ordinal / 2;
                     if (row < static_cast<int>(field_C0FC_)
                         || row >= rows + static_cast<int>(field_C0FC_)) break;
-                    const int card_left = title.left + (field_59A0_ + 2) * (ordinal % 2);
-                    const int card_top = title.bottom + 56 * (row - static_cast<int>(field_C0FC_)) + 2;
-                    rect1_.left = card_left;
-                    rect1_.top = card_top;
-                    RECT *const card = &report_work_rect_;
-                    card->top = card_top;
-                    card->left = card_left;
-                    card->right = card_left + field_59A0_;
-                    card->bottom = card_top + field_59A4_;
+                    rect1_.left = title.left + (field_59A0_ + 2) * (ordinal % 2);
+                    rect1_.top = title.bottom + 56 * (row - static_cast<int>(field_C0FC_)) + 2;
+                    set_rectangle_dimensions(&report_work_rect_, rect1_.left, rect1_.top, field_59A0_, field_59A4_);
                     if (!(mode < 2)) {
-                        spot_.add(project, 0, card->left, card->top,
-                                  card->right - card->left, card->bottom - card->top);
+                        spot_.add(project, 0, report_work_rect_.left, report_work_rect_.top,
+                                  report_work_rect_.right - report_work_rect_.left, report_work_rect_.bottom - report_work_rect_.top);
                     } else {
-                        spot_.add(base_id + 0x400, 0, card->left, card->top,
-                                  card->right - card->left, card->bottom - card->top);
+                        spot_.add(base_id + 0x400, 0, report_work_rect_.left, report_work_rect_.top,
+                                  report_work_rect_.right - report_work_rect_.left, report_work_rect_.bottom - report_work_rect_.top);
                     }
                     if ((mode < 2 && base_id == field_59AC_ - 0x400)
                         || (mode == 2 && project == field_59AC_)) {
-                        Buffer::box_sprite(card, &InterfaceBoxStyles[2]);
-                        Buffer::box_sprite(card, &InterfaceBoxStyles[5]);
+                        Buffer::box_sprite(&report_work_rect_, &InterfaceBoxStyles[2]);
+                        Buffer::box_sprite(&report_work_rect_, &InterfaceBoxStyles[5]);
                     } else {
-                        Buffer::box_sprite(card, &InterfaceBoxStyles[1]);
+                        Buffer::box_sprite(&report_work_rect_, &InterfaceBoxStyles[1]);
                     }
                     g_SECRET_PROJECT_ICON_SPRITES[project].draw_mono(this,
                         rect1_.left + 2, rect1_.top + 1, mandate_color(1),
