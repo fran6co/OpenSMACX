@@ -4370,6 +4370,10 @@ void ReportWin::draw_security() {
 // ORIGINAL: 0x004A1140 ?draw_score@ReportWin@@QAEXXZ 0x004A1140-0x004A2208
 // RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/unrecovered/004a1140.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 void ReportWin::draw_score() {
+    // Function scope: most_objectives' outputs have their own address-taken
+    // slots at [ebp-0x30]/[ebp-0x2c] in the image (frame 0x180); declared in
+    // the objective block they packed with later locals (frame 0x178).
+    int leader, pacts;
     const int faction = ReportIfGlobal.report_faction_id_;
     RECT title = {energy_panel_rect_.left + 3, energy_panel_rect_.top + 3,
                   energy_panel_rect_.right - 3,
@@ -4522,7 +4526,6 @@ void ReportWin::draw_score() {
             int most;  // Genuine original: only set when objective_req_victory == 0.
             if (ScenarioSave.objective_req_victory == 0) {
                 const int objectives = num_objectives(faction, GameDataStateStorage.fields_.game_rules_ & 0x1000);
-                int leader, pacts;
                 most = most_objectives(&leader, &pacts);
                 if (objectives >= (most < 0 ? 0 : most)) {
                     if (pacts) {
