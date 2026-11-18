@@ -479,13 +479,6 @@ Status: Genuine destructor; original inlining and strict matching remain unprove
 // above owns the derived cleanup before ~StringStruct's base stage. The EH
 // frame's funclet span 0x00650980-0x00650995 is that machinery's own.
 
-// THE ALLOCATOR HAND-OFF SLOT: the Heap published by the allocation wrapper
-// and captured by the next StringAllocationBase construction.
-// Original 0x00401020/0x00401029 captures/clears the Heap* handoff; 0x00402319 publishes it; cell only.
-// Bound: scalar; every original access is a dword at the start, never indexed, and the following bytes are never referenced.
-// RECOVERY_OBJECT: v2 0x009B3374 0x009B3378 ?StringAllocationHeap@@3PAVHeap@@A 0x00401020
-Heap *StringAllocationHeap;  // 0x009B3374
-
 
 /*
 // ORIGINAL: 0x004015B0 ?seek_pos@StringStruct@@QAEHH@Z 0x004015B0-0x00401636 BYTE_EXACT

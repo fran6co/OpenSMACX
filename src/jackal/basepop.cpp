@@ -1303,6 +1303,14 @@ static char BasePopInitialOkCaption[] = "OK";
 // RECOVERY_OBJECT: v1 0x00696ECC ?PopupAllocHook@@3P6APAVBasePop@@XZA
 func_popup_alloc *PopupAllocHook = &BasePop::basepop_alloc;
 
+// The game's shared 1032-byte scratch string. In Jackal's .bss it sits at
+// 0x009B86A0, after FilefindPath's 0x500 bytes end at 0x009B8698 and on the
+// next 16-byte boundary, running exactly up to PopupStartCaption (0x009B8AA8):
+// the first object of BasePop's .bss contribution rather than the tail of
+// Filefind's. INFERRED from placement; only game code reads it.
+// RECOVERY_OBJECT: v2 0x009B86A0 0x009B8AA8 ?StringTemp@@3PADA 0x00500120
+char StringTemp[1032];   // 0x009B86A0
+
 // AN ARRAY, NOT A POINTER. 0x009B8AA8 is in .bss - zero-filled, in no
 // file section - and the image pushes its ADDRESS as an immediate
 // (`push 0x9b8aa8`), which is a decayed array. Through a `char *`
@@ -1336,14 +1344,6 @@ int BasePopFalloutGate;   // 0x009B8D00
 // Original on_modal at 0x00604A80 reads the flag that fallout at 0x00604A99 sets; start only.
 // RECOVERY_OBJECT: v1 0x009B8CFC ?BasePopFalloutFlag@@3HA
 int BasePopFalloutFlag;   // 0x009B8CFC
-// init_class stores each BasePop-returning allocator result in these cells;
-// callers reload them across visibility and destruction callbacks. The pinned
-// loader image supplies zero initial DWORDs. Bind starts only: these observed
-// pointer-width accesses do not establish a larger original allocation.
-// RECOVERY_OBJECT: v1 0x009BC074 ?PopupInstanceSlotA@@3PAVBasePop@@A
-BasePop *PopupInstanceSlotA;  // 0x009BC074
-// RECOVERY_OBJECT: v1 0x009BC078 ?PopupInstanceSlotB@@3PAVBasePop@@A
-BasePop *PopupInstanceSlotB;  // 0x009BC078
 
 
 /*

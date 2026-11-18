@@ -950,3 +950,25 @@ int __cdecl set_popup_saved_location(int x, int y) {
     PopupSavedLocY = y;
     return x;
 }
+
+// Popup API's .bss, 0x009BC06C..0x009BC07B: after GraphicsLanguage's
+// (0x009BC054) and before AutoSound's (0x009BC080), in image order.
+// Read before write_check() and overwritten from read_check()'s result at
+// the bottom of the non-modal-close tail - a request/response pair the two
+// calls share across invocations. Zero-initialised .bss in the image at
+// 0x009BC06C.
+// BaseWin::governor (0x00419A90) shares this checkbox request/response
+// word with the popup owner; it is not translation-unit-private storage.
+// RECOVERY_OBJECT: v1 0x009BC06C ?PopupWriteCheckState@@3HA
+int PopupWriteCheckState;  // 0x009BC06C
+// The adjacent action selector distinguishes grouping versus removal.
+// RECOVERY_OBJECT: v2 0x009BC070 0x009BC074 ?ConsoleGroupAction@@3HA 0x004D95F0
+int ConsoleGroupAction;  // 0x009BC070
+// init_class stores each BasePop-returning allocator result in these cells;
+// callers reload them across visibility and destruction callbacks. The pinned
+// loader image supplies zero initial DWORDs. Bind starts only: these observed
+// pointer-width accesses do not establish a larger original allocation.
+// RECOVERY_OBJECT: v1 0x009BC074 ?PopupInstanceSlotA@@3PAVBasePop@@A
+BasePop *PopupInstanceSlotA;  // 0x009BC074
+// RECOVERY_OBJECT: v1 0x009BC078 ?PopupInstanceSlotB@@3PAVBasePop@@A
+BasePop *PopupInstanceSlotB;  // 0x009BC078

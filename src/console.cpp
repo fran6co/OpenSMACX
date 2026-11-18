@@ -121,9 +121,6 @@ char *TutorialPopupCaption = TutorialPopupCaptionText;
 // assemble uses Popup's shared checkbox result word for Vehicle Groups;
 // do not duplicate the source-owned storage in popup.cpp.
 extern int PopupWriteCheckState;
-// The adjacent action selector distinguishes grouping versus removal.
-// RECOVERY_OBJECT: v2 0x009BC070 0x009BC074 ?ConsoleGroupAction@@3HA 0x004D95F0
-int ConsoleGroupAction;
 // Existing free-function owners used by the commands below.
 void __cdecl action_oblit(int vehicle_id, int base_id);
 int __cdecl tut_check(int marker);

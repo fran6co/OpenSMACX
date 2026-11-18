@@ -409,14 +409,6 @@ Popup::Popup() {
 // a second time under a name this function would have to guess too.
 extern int ConsoleGroupAction;  // 0x009BC070
 
-// Read before write_check() and overwritten from read_check()'s result at
-// the bottom of the non-modal-close tail - a request/response pair the two
-// calls share across invocations. Zero-initialised .bss in the image at
-// 0x009BC06C.
-// BaseWin::governor (0x00419A90) shares this checkbox request/response
-// word with the popup owner; it is not translation-unit-private storage.
-// RECOVERY_OBJECT: v1 0x009BC06C ?PopupWriteCheckState@@3HA
-int PopupWriteCheckState;  // 0x009BC06C
 
 
 

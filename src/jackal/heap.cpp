@@ -293,3 +293,13 @@ LPVOID Heap::get(int req_size) {
         free_size_ += 1024;
     }
 }
+
+// Jackal's .bss at 0x009B3374, just ahead of GraphicWin's (0x009B3390), so the
+// handoff slot is Heap's member data even though only game code reads it.
+// THE ALLOCATOR HAND-OFF SLOT: the Heap published by the allocation wrapper
+// and captured by the next StringAllocationBase construction.
+// Original 0x00401020/0x00401029 captures/clears the Heap* handoff; 0x00402319 publishes it; cell only.
+// Bound: scalar; every original access is a dword at the start, never indexed, and the following bytes are never referenced.
+// RECOVERY_OBJECT: v2 0x009B3374 0x009B3378 ?StringAllocationHeap@@3PAVHeap@@A 0x00401020
+Heap *StringAllocationHeap;  // 0x009B3374
+

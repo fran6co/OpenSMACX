@@ -24,10 +24,6 @@
 #include "base.h"
 #include "faction.h"
 
-// The 1032-byte buffer ends where PopupStartCaption begins at 0x009B8AA8.
-// RECOVERY_OBJECT: v2 0x009B86A0 0x009B8AA8 ?StringTemp@@3PADA 0x00500120
-char StringTemp[1032];   // 0x009B86A0
-
 // Clear the first character without disturbing the reusable buffer storage.
 // ORIGINAL: 0x00500120 ?clear@@YAXXZ 0x00500120-0x00500128 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00500120-0x00500128 writes 0x009B86A0", "git:49d164a4:src/recovered/00500120.cpp;source:src/strings.cpp:StringTemp"], "reason": "The original zeroes the first byte of the shared scratch buffer, whose real storage is StringTemp in this translation unit."}

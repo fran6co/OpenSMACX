@@ -51,15 +51,7 @@ namespace {
 const double hsv_percent_scale = 0.01;              // 0x0066EB38
 // RECOVERY_OBJECT: v1 0x00670280 _hsv_deg_to_rad
 const double hsv_deg_to_rad = 0.017453292519444445; // pi/180, 0x00670280
-// RECOVERY_OBJECT: v1 0x0066FA70 _hsv_zero
-const double hsv_zero = 0.0;                        // 0x0066FA70
-const double hsv_sector_offset_b_minus_r = 2.0;     // 0x00670C48
-const double hsv_sector_offset_r_minus_g = 4.0;     // 0x0066FDC8
-// RECOVERY_OBJECT: v1 0x00670C30 _hsv_hue_wrap_degrees
-const double hsv_hue_wrap_degrees = 360.0;          // 0x00670C30
 const double hsv_degrees_per_sector = 60.0;         // 0x00670C40
-// RECOVERY_OBJECT: v1 0x00670C50 _hsv_value_byte_scale
-const double hsv_value_byte_scale = 0.00390625;     // 1/256, 0x00670C50
 }
 
 // 0x0067022C - see palette.h. Blue, green, red, reserved, per RGBQUAD.
@@ -1578,111 +1570,6 @@ int Palette::fade_to_entry(int colour_index, int start, int count, int steps,
 #if defined(_MSC_VER) && _MSC_VER == 1200
 #pragma intrinsic(memcpy)
 #endif
-
-// ORIGINAL: 0x00628DB0 ?RGB_to_HSV@@YAXPAUPALETTEENTRY@@PAUHSV@@@Z 0x00628DB0-0x00628F27 FILE BYTE_EXACT
-// symbol    ?RGB_to_HSV@@YAXPBUtagPALETTEENTRY@@PAUHSV@@@Z
-// size      375 bytes
-// prototype 
-// callers   3   call targets   0
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     (none)
-// TRIED: 2026-08-24, from a 6/133 baseline to 96/133 (0.894 similar, best of all ten
-//   flag sets) on three levers, each independently measured: (1) dropped the
-//   `const double scale/zero` locals and the named `int ir/ig/ib` temporaries in
-//   favour of `hsv_value_byte_scale`/`hsv_zero` and inline `entry->peRed` casts -
-//   the named copies alone cost an extra callee-saved register (`push esi`) and
-//   12 bytes more stack frame the image never pays for, even though they are
-//   themselves `const` and should have folded; (2) wrote `out->h = ...;` directly
-//   in each arm of the `if (r==vmax)/else if (g==vmax)/else` chain instead of
-//   assigning a local `h` and storing it once after the chain - the image's
-//   asymmetric tail (branch 1 stores-and-jumps-around, branches 2/3 share a
-//   tail-merged store) only appears when each arm owns its own store; (3) replaced
-//   `bool neg = h2 < zero; out->h = h2; if (neg) out->h = h2 + wrap;` with a direct
-//   `if (h2 < hsv_zero)` on the raw comparison - the image never materialises the
-//   condition as a byte (no `test al,al`), it stores h2 unconditionally then
-//   conditionally re-stores. Two plateaus remain, both isolated to single spots:
-//   the first vmax comparison (`(r<g)?g:r`) compiles `fld st(1); fcomp st(1)` where
-//   the image has one `fcom st(1)` - tried `(g>r)?g:r`, `(g>=r)?g:r`, `(r<=g)?g:r`;
-//   the `?g:r` forms regress hard (44-45/133, the frame-size problem returns), the
-//   `<=` form is byte-identical to `<` (VC6 treats them the same for a pure
-//   max-select). And `double h2 = out->h * hsv_degrees_per_sector;` folds the
-//   CONSTANT into an explicit `fld` and the pointer read into the `fmul`'s memory
-//   operand (`fld [0]; fmul [ecx]`) where the image folds the opposite way
-//   (`fld [ecx]; fmul [0x670c40]`) - swapping the written multiplicand order
-//   (`hsv_degrees_per_sector * out->h`) compiles byte-IDENTICAL to the unswapped
-//   form, so this is VC6's own operand-selection heuristic, not a source-order
-//   question this tree's spellings reach.
-// PRESERVED UNIT - measured MISMATCH.
-//
-// Kept for COVERAGE. This directory IS on the ratchet: every file here
-// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
-// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
-// quarter of the project's total. It is still in no build; the earlier
-// header said "on no ratchet", which stopped being true when the map
-// moved into src/ and was still being written into new files.
-//
-// address        0x00628DB0
-// measured tier  MISMATCH
-// divergence     2
-//
-// The WHOLE unit as measured, scaffolding included: for the units
-// that are byte-exact yet refuse extraction, the agent tuned the
-// emitted scaffolding and the body alone will not reproduce the
-// verdict. To resume, copy everything below back over
-//   build/byte-match/00628db0/unit.cpp
-// and score it with tools/agent_brief.py.
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?RGB_to_HSV@@YAXPAUPALETTEENTRY@@PAUHSV@@@Z  at 0x00628DB0  (375 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// The VC6 dialect limits and the source-form rules used to live here.
-// They are knowledge, not scaffolding, so they now live in the agent
-// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
-// where they can be edited without regenerating anything and are in
-// context from the first token rather than behind a file read. This
-// emitter computes declarations; it does not carry lessons.
-
-// 2026-11-06: exact with `>` max-selects, a ternary s, compound *=/+= on
-//   out->h and literal 60.0 / 0.0 in the hue tail.
-void __cdecl RGB_to_HSV(const PALETTEENTRY *entry, HSV *out) {
-    if (out != 0 && entry != 0) {
-        double r = static_cast<double>(static_cast<int>(entry->peRed)) * hsv_value_byte_scale;
-        double g = static_cast<double>(static_cast<int>(entry->peGreen)) * hsv_value_byte_scale;
-        double b = static_cast<double>(static_cast<int>(entry->peBlue)) * hsv_value_byte_scale;
-        double vmax = (g > r) ? g : r;
-        vmax = (b > vmax) ? b : vmax;
-        double vmin = (g < r) ? g : r;
-        vmin = (b < vmax) ? b : vmin;
-        out->v = vmax;
-        double s = (vmax != hsv_zero) ? (vmax - vmin) / vmax : hsv_zero;
-        out->s = s;
-        if (s == hsv_zero) {
-            // The transcription wrote this as two int stores of 0x00000000
-            // and 0xBFF00000 - which are exactly the bit halves of the
-            // double -1.0. Say the constant; the compiler emits the halves.
-            out->h = -1.0;
-            return;
-        }
-        double delta = vmax - vmin;
-        if (r == vmax) {
-            out->h = (g - b) / delta;
-        } else if (g == vmax) {
-            out->h = (b - r) / delta + hsv_sector_offset_b_minus_r;
-        } else {
-            out->h = (r - g) / delta + hsv_sector_offset_r_minus_g;
-        }
-        // Literals: named const doubles reorder these two (fmul operand
-        // order, fst/fcom order); 0x66FA70/0x670C40 are shared constants.
-        out->h *= 60.0;
-        if (out->h < 0.0) {
-            out->h += hsv_hue_wrap_degrees;
-        }
-    }
-}
 
 // ORIGINAL: 0x005FF630 ?get_nearest_palette_index@Palette@@QAEHPAUHSV@@0H@Z 0x005FF630-0x005FF92D FILE
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CFG 5FF67E..5FF789 and5FF7F7..5FF91A are mutually exclusive stride-one scans, not unrolled loops. Each eligible distance evaluates sine(query),sine(candidate) twice, then cosine(query),cosine(candidate) twice.", "Pinned5FF756..5FF766 accumulates sine/cosine squares before the squared value difference;5FF773..5FF777 and5FF8F9..5FF8FD save the winner only after a successful comparison. No winner-slot initialization precedes either loop.", "Original hue products repeatedly read qword0x670280; current source uses its matching TU-private double. The const-HSV array interpretation is corroborated by create_table passing its real HSV[256]."], "reason": "Recover the original per-expression trig evaluation, floating-point accumulation order and winning-index lifetime, preserving the unsafe no-winner path."}

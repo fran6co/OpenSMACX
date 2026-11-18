@@ -56,6 +56,10 @@ DWORD DirectDrawDensityLimit;
 // Separate from WinSharedHdc9B7B2C despite sharing WinHdcRefCount9B3AB0.
 // RECOVERY_OBJECT: v2 0x009BC48C 0x009BC490 ?DirectDrawHdc@@3PAUHDC__@@A 0x0062D160
 HDC DirectDrawHdc;
+// The DirectDraw interface Buffer's surfaces are created from; game code
+// (load_cursors, 0x00454FC0) reads it too, but the cell is in DirectDraw's .bss.
+// RECOVERY_OBJECT: v2 0x009BC494 0x009BC498 ?BufferDirectDraw@@3PAUIDirectDraw2@@A 0x00454FC0
+IDirectDraw2 *BufferDirectDraw;
 // RECOVERY_OBJECT: v2 0x009BC4A4 0x009BC4A8 ?DirectDrawClipper@@3PAUIDirectDrawClipper@@A 0x0062CD50
 IDirectDrawClipper *DirectDrawClipper;
 // RECOVERY_OBJECT: v2 0x009BC4A8 0x009BC4AC ?DirectDrawSelectionCancelled@@3HA 0x0062C8E0

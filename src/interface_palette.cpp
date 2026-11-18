@@ -247,8 +247,3 @@ void __cdecl textcolor_init() {
     } while ((int)p < (int)&TextColourTable[69]);
 }
 
-// The Buffer drawing family reads the one-byte default transparency key
-// at 696D14; its pinned initial value is 9. This is constant storage, not
-// a pointer to an original-image object or a mutable palette instance.
-// RECOVERY_OBJECT: v2 0x00696D14 0x00696D15 ?WinFillColour@@3EB 0x005D8650
-const unsigned char WinFillColour = 9;  // 0x00696D14, read from the image
