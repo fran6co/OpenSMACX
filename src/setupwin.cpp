@@ -341,7 +341,7 @@ int SetupWin::do_menu_rightside(char *filename, int flags) {
                           buffer2_.pixel_height());
             y -= buffer2_.dib_.bmiHeader.biHeight;
             if (copy_row_intro == 0 && token[0] != '\0') {
-                fill(copy_row_intro, y, buffer2_.dib_.bmiHeader.biWidth, 0x14, 9);
+                fill(copy_row_intro, y, buffer2_.pixel_width(), 0x14, 9);
                 y += 0x14;
             }
         }
@@ -360,7 +360,7 @@ int SetupWin::do_menu_rightside(char *filename, int flags) {
         --row_count_;
         expand_rect(&title_rect, 4, 0);
         title_rect.bottom = buffer2_.pixel_height();
-        title_rect.top = 0x14 - buffer2_.dib_.bmiHeader.biHeight;
+        title_rect.top = buffer2_.pixel_height() + 0x14;
         title_rect.bottom += title_rect.top;
     }
 
@@ -390,7 +390,7 @@ int SetupWin::do_menu_rightside(char *filename, int flags) {
                           buffer2_.pixel_height());
             y -= buffer2_.dib_.bmiHeader.biHeight;
             if (copy_row_outro == 0 && token[0] != '\0') {
-                fill(copy_row_outro, y, buffer2_.dib_.bmiHeader.biWidth, 0x14, 9);
+                fill(copy_row_outro, y, buffer2_.pixel_width(), 0x14, 9);
                 y += 0x14;
             }
         }

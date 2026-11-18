@@ -163,7 +163,7 @@ void StringBox::add_fixup() {
     }
 
     scroll_.range_maximum_ = list->entry_count_;
-    scroll_.paging_ = -1 - (dib_.bmiHeader.biHeight / line_height);
+    scroll_.paging_ = pixel_height() / line_height - 1;
     if ((scroll_.iSomeFlag_ & WinFlagVisible) == 0) {
         if (write_strings_height(list, dib_.bmiHeader.biWidth, 0) > -dib_.bmiHeader.biHeight) {
             scroll_.show(0);
