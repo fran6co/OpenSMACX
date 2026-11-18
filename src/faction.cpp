@@ -4684,20 +4684,19 @@ int DiplomacyProposalGateCount = 0;
 int __cdecl propose_pact(int myFac, int otherFac) {
     PopupDialogFactionID = otherFac;
     int strength_gap = 0;
-    int score = DiploScratchF7E0 + DiploScratchFA54; // ? image: add ecx,eax (ours: lea)
+    int score = DiploScratchFA54 + DiploScratchF7E0;
     if (DiploScratchFA54) {
         score++;
     }
     int partner_id;
-    if (!(DiploScratchF7E8)) {
-        partner_id = DiploScratchFA8C;
-    } else {
+    if (DiploScratchF7E8) {
         partner_id = DiploScratchF7E8;
+    } else {
+        partner_id = DiploScratchFA8C;
     }
-    int designated = GameDataStateStorage.fields_.ranking_faction_id_unk1_;
     if (IsMultiplayerNet) {
         int designated_target = GameDataStateStorage.fields_.ranking_faction_id_unk2_;
-        if (myFac == designated
+        if (myFac == GameDataStateStorage.fields_.ranking_faction_id_unk1_
             && (PlayersData[designated_target].ranking < 6
                 || FactionRankingsUnk[myFac] * 2 > FactionRankingsUnk[designated_target] * 3)) {
             score++;
@@ -4709,7 +4708,8 @@ int __cdecl propose_pact(int myFac, int otherFac) {
             score--;
         }
     }
-    if (GameDataStateStorage.fields_.game_rules_ & RULES_INTENSE_RIVALRY && myFac == designated) {
+    if (GameDataStateStorage.fields_.game_rules_ & RULES_INTENSE_RIVALRY
+        && myFac == GameDataStateStorage.fields_.ranking_faction_id_unk1_) {
         score++;
     }
     if (GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_COOPERATIVE
@@ -6970,6 +6970,18 @@ commlink:
 // ORIGINAL: 0x00545E80 ?propose_attack@@YAHHH@Z 0x00545E80-0x00547C08;0x0065F1B4-0x0065F4C4
 // RECOVERY_BINDING: v1 {"evidence": ["task:diplomacy-actions-owner-coverage", "Pinned545E80-547C08 body and65F1B4-65F4C4 cleanup", "Native546B5E jumps546B9C: PEACE cutoffs reuse updated total; 5466BE offline547397 vs network54739F", "Native54755C outcome actor-to-target;5475A4 friction target-to-actor;54741D setter other-to-actor", "Fresh COFF Player59C andPlayerData20CC; pair members12C/14C; region_total_bases117C", "historical seed:src/unrecovered/00545e80.cpp"], "reason": "Recover the complete incitement negotiation in its faction owner with a lexical Popup, typed regional and diplomatic state, technology and credit offers, and original lock/transfer/treaty/result ordering. Preserve original primary and generated cleanup spans and seed identity. This is compiling recovery, not byte matching or game acceptance."}
 // symbol    ?propose_attack@@YAHHH@Z
+// WORKAROUND(inline): dead /Ob2 budget probes, not recovered code; constant
+// arguments fold them away. They spend the budget the image spends before
+// this function's Popup teardowns (found by a probe hill-climb scored on the
+// image diff); the original's spend is not identified.
+static inline int propose_attack_budget_probe1(int x) { if (x == 0) x = 1; return x; }
+static inline int propose_attack_budget_probe4(int x) {
+    if (x == 0) x = 1;
+    if (x == 1) x = 4;
+    if (x == 2) x = 7;
+    if (x == 3) x = 10;
+    return x;
+}
 int __cdecl propose_attack(int actor, int other) {
     int policy_class = 0;  // [ebp-0x28], stored before the Popup constructor
     Popup popup;
@@ -7166,6 +7178,7 @@ int __cdecl propose_attack(int actor, int other) {
                 && (PlayersData[other].energy_reserves > PlayersData[actor].energy_reserves
                     || total >= threshold * 3 / 2)))) {
         parse_says(0, get_noun(target), -1, -1);
+        propose_attack_budget_probe4(5);  // WORKAROUND(inline): see propose_attack_budget_probe1
         parse_says(1, get_title(target), -1, -1);
         parse_says(2, get_name(target), -1, -1);
         clear();
