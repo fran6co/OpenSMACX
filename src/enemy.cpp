@@ -3843,8 +3843,7 @@ base_attack:
             if (PlayersData[faction_id].region_base_plan[base_region] <= 2) {
                 score *= 4;
             }
-            int dist = map_range(*a4, *a5, Bases[i].x, Bases[i].y);
-            score /= (dist - 1) / range(strike_range / 2, 1, 99) + 1;
+            score /= (map_range(*a4, *a5, Bases[i].x, Bases[i].y) - 1) / range(strike_range / 2, 1, 99) + 1;
             if (score >= best) {
                 best = score;
                 risky_best = risky;
