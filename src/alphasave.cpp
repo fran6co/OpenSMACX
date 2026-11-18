@@ -173,7 +173,7 @@ void AlphaSave::init() {
     }
     file_win_.init(0, this, &layout);
 
-    Dialog &list_dialog = file_win_.list_box();
+    Dialog &list_dialog = file_win_.list_box_;
     list_dialog.set_dialog_font(MainInterfaceGlobal.secondary_font(), 0, 0);
     list_dialog.set_dialog_text_color(TextColourTable[0], TextColourTable[1], 1, 1);
     file_win_.list_box().set_report_text_color(TextColourTable[2]);
