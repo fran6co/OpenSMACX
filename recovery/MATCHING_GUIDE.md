@@ -1000,8 +1000,13 @@ What the model does not predict
   assigned after the stores gives eax; one assigned before the stores gives
   ecx. An image span equal to an accessor's body does not prove the accessor
   was a header inline (get_title/get_name became faction.h MEASURED inlines on 2026-11-16, measured neutral).
-- **The image calls `memcpy`/`memset` out of line.** Wrap the function in
-  `#pragma function(...)` … `#pragma intrinsic(...)`.
+- **`memcpy`/`memset`/`str*`/`abs`/`sqrt` are always calls in the game and
+  Jackal** (no /Oi; `stdafx.h` names every intrinsic in `#pragma function`
+  until the flag is dropped; Caviar and UV keep theirs). Never add a
+  per-site `#pragma function`/`intrinsic`. An image `rep stosd`/`rep movsd`
+  there is an element loop (`for (i = 0; i < N; i++) a[i] = 0;` — an odd byte
+  count adds `stosb`/`movsb`/`movsw`), a structure assignment, or an
+  aggregate initializer; a 4-byte "memcpy" is a cast store. See 3.7.
 - **A `vector_dist`-style computation is inlined.** Write a two-level static
   inline helper modelled on the existing ones.
 
@@ -1906,10 +1911,10 @@ What the model does not predict
   scratchpad mx/.
 - **Consecutive early returns before any call merge their teardown
   tails**; one combined return gets full per-site depth.
-- **N adjacent globals cleared with `xor eax,eax` + N stores and no zero
-  register** were one block clear (intrinsic memset) in the original;
-  separate `= 0` stores count toward VC6's zero-register choice
-  (battle_compute/battle_init).
+- **N adjacent words cleared with a fresh `xor eax,eax` + N stores although
+  a zero register is live** are a short array-clear loop, unrolled (N = 4:
+  battle_init inside battle_compute 0x00501DB4, Win::init_class,
+  base_init); separate `= 0` stores reuse the live zero register.
 - **The last `break` in source order places a loop's after-loop block**:
   end with `if (flag) { label: ...; return; } break;` to lay it last.
 - **Mid-body nop runs matching a call sequence's length are post-link
@@ -2450,6 +2455,26 @@ Constant registers (measured with standalone probes, 2026-11-18)
 - `if (c) { …; return 0; } …; return 0;` folds a final
   `if (f() == 0) return 1; return 0;` into neg/sbb/inc; one if/else falling
   to the closing return keeps `test; jne`.
+- **No intrinsics (pass 4).** Outside Caviar/UV the image has 125
+  `call _memcpy`, 69 `call _memset` and no expansion of any intrinsic (no
+  `repne scasb`, `fsqrt`, `fsin`, `fabs`, no variable-size `rep movsd` +
+  `rep movsb`). Dropping /Oi with every per-site pragma removed kept 5,052 of
+  5,093 exact functions; the 41 others used an expanding `memset`/`memcpy`
+  as a stand-in and all became exact as loops/assignments.
+  `.opensmacx`-style check: count CRT calls per function in ours (relocations)
+  and in the image (call targets); they must be equal.
+- **Loop fission order.** One loop storing to two arrays becomes two block
+  operations in reverse statement order (`for (...) { A[i] = 0; B[i] = 0; }`
+  clears B first: clear_tamper 0x0051E390, clear_council_notify).
+- **`do { } while (++k < N)` costs less inline budget than `for`.** map_wipe's
+  inner 8-word clear written as `for` made map_resample (0x00592B40) call it
+  instead of expanding it; the do/while form is expanded.
+- **A new loop variable can shift a budget-sensitive caller**: reuse the
+  function's existing counter (BaseWin::production 577 -> 117 rows).
+- **`#pragma optimize("y", off)` is a no-op in a /Oy- unit** (51 regions
+  removed, no function changed). Where it is load-bearing the function sits
+  at a game address but lives in a unit built /Oy: fix the unit's flag or
+  move the body to the header that the game unit instantiates.
 
 ## 4. Measured and neutral (do not retry without new evidence)
 

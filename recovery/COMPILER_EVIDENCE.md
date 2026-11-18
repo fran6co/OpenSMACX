@@ -211,8 +211,9 @@ is not permission to replace it with Win::hide or move it outside the interface.
 
 Net's ten source zeroing sites in seven methods call the verified CRT memset
 at 0x006465F0 in the pin. Intrinsic stores erase those call boundaries and can
-also hide required global reloads. The owner TU uses a narrow function(memset)
-policy; this does not justify disabling all intrinsics across the application.
+also hide required global reloads. (2026-11-18: the whole game and Jackal
+were compiled without /Oi; see `src/stdafx.h` and MATCHING_GUIDE 3.7. The
+narrow per-TU policy this paragraph described is superseded.)
 An uninitialized SDK output slot must also remain uninitialized until its
 callee writes it when that is the original path. These are source/compiler
 meaning observations, not matching claims or proof of complete original TUs.
