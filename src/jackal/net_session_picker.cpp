@@ -672,3 +672,118 @@ int NetSessionPickerWin::scale_client_height(int factor) {
 // RECOVERY_GENERATED: v1 vtable 0x0066EAE4 ? ??_7AlphaNetLedger@@6BStringAllocationBase@@@ 0x0063BB20
 // RECOVERY_GENERATED: v1 vtable 0x00670DDC ? ??_7NetSessionPickerWin@@6BWin@@@ 0x0063BB20
 // RECOVERY_GENERATED: v1 vtable 0x00670DD4 ? ??_7NetSessionPickerWin@@6BBuffer@@@ 0x0063BB20
+
+// The blank-sprite class statics belong to this unit: sub_63cdc0,
+// Sprite::init_class and Sprite::close_class (0x0063CDC0..0x0063CEFA) follow
+// the picker's functions, and init_class's unwind data (0x00663998) follows
+// the picker's (0x00663940). init_class calls Sprite::create_blank
+// (0x005EAF3F, the sprite unit) out of line: this unit sees only its
+// declaration.
+
+/*
+// symbol    ?init_class@Sprite@@SAHXZ
+// LEVER 2026-09-03: two things, and the first one is worth stating because
+//   this body carried a TRIED note for two passes claiming otherwise. The /GX
+//   SEH frame over the local Buffer IS reproduced by the plain /O2 /Ob0 /GX
+//   build - `sub esp, 0x588`, the fs:[0] swap and the `mov dword ptr
+//   [esp+0x594], -1` state stores are all there - so the frame was never the
+//   wall. What was missing was the return shape: two SEPARATE epilogues,
+//   `if (result != 0) return result;` then `return 0;`, which is the
+//   split-epilogue lever. 34/53 -> 53/53 BYTE_EXACT. The SEH span at 0x663998
+//   stays cold code the image lays elsewhere.
+// size      220 bytes
+// prototype
+// callers   1   call targets   5
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D7210 0x005D7410 0x005D7DE0 0x005E39A0 0x005EAF3F
+//
+// NAMED Sprite::init_class 2026-08-30: jackal_init_real runs it in the
+// X::init_class() chain between FileWin::init_class and the font bring-up,
+// and it seeds the class-shared sprite (g_BLANK_SPRITE, 0x009BEAE8) from
+// jackal.pcx - or blank when the PCX is missing. The catalogue carries no
+// name for it, so the address keeps the marker line. The teardown twin,
+// 0x0063CEF0 below, is close_class by the same reading.
+//
+// Promoted 2026-08-15 from src/unrecovered/0063ce20.cpp to retire its
+// pending_bodies forwarder. Loads the 16x16 sprite at 0x9BEAE8 from a PCX, or
+// creates it blank if the PCX is missing.
+Status: Complete
+*/
+// Historical note: the earlier recovery draft described 0x009BEAE8 using
+// guarded_teardowns.h's TeardownObject009BEAE8 scaffold name. The current
+// source owner is BlankSpriteStorageOwner and its blank_sprite() accessor;
+// retain that older interpretation here as provenance, not as a current owner.
+// The pinned short-string read at 0x00698CAC independently establishes this
+// filename's spelling and terminator, not its original allocation extent.
+// RECOVERY_OBJECT: v1 0x00698CAC _JackalPcxPath
+static const char JackalPcxPath[] = "jackal.pcx";
+
+// ORIGINAL: 0x0063CDC0 sub_63cdc0 0x0063CDC0-0x0063CE17 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned image span 0x0063CDC0-0x0063CE17: early argument-2/null and dword-at-+8 checks; argument-1 selects null or +0x444 Buffer; final call targets Sprite::draw at 0x005E4B9A.", "Current GraphicWin multiply-inherits Buffer after Win; sizeof(Win)==0x444. Typed GraphicWin-to-Buffer conversion replaces the observed +0x444 destination adjustment.", "The absolute reads 0x009BEAF0 and 0x009BEB04 are the blank Sprite's cTransparentIndex_ (+8) and iHeight_ (+0x1c) in source-owned storage at 0x009BEAE8; access them through blank_sprite().", "The retired seed recorded the same identity/span and historical BYTE_EXACT claim; the claim remains an obligation, not fresh proof.", "Argument 2 remains opaque: only the original dword-at-+8 nonzero test is recovered; no caller edge or enclosing type is established in the current mapped-source closure."], "reason": "Draw the source-owned shared blank Sprite through blank_sprite() and a typed GraphicWin/Buffer destination while preserving the unknown gate context's original dword test, centering and ignored draw result."}
+// symbol    ?sub_63cdc0@@YAXPAVGraphicWin@@PAXHHHH@Z
+// Purpose: conditionally draw the shared blank sprite centered in a window buffer.
+// No caller is inferred: mapped-span inspection reports call target 0x005E4B9A,
+// and no caller edge for this entry in the current mapped closure.
+// Preserved seed facts: the measured span was 87 bytes; the source prototype
+// was unknown; catalog metadata reported zero callers, one call target,
+// game code, flags sp_ready/purged_ok, and direct call target 0x005E4B9A.
+void __cdecl sub_63cdc0(GraphicWin *window, void *gate_context, int unused,
+                       int x, int top, int region_height) {
+  if (gate_context != 0 &&
+      *reinterpret_cast<const uint32_t *>(
+          static_cast<const unsigned char *>(gate_context) + 8) != 0) {
+    Buffer *destination;
+    if (window != 0) {
+      destination = static_cast<Buffer *>(window);
+    } else {
+      destination = 0;
+    }
+    const int y = top + (region_height - blank_sprite().height()) / 2;
+    blank_sprite().draw(destination, blank_sprite().transparent_index(), x, y);
+  }
+}
+
+// ORIGINAL: 0x0063CE20 sub_63ce20 0x0063CE20-0x0063CEE7;0x00663998-0x006639AD BYTE_EXACT
+// kind      game
+// symbol    ?init_class@Sprite@@SAHXZ
+int Sprite::init_class() {
+    Buffer buf;
+    int result;
+    if (buf.load_pcx(JackalPcxPath, 0, 10, 0xec) != 0) {
+        result = blank_sprite().create_blank(0x10, 0x10, 9);
+    } else {
+        result = blank_sprite().extract(&buf, 9, 1, 0x12, 0x10, 0x10, 0);
+    }
+    // TWO RETURNS, not one: the image does not share the Buffer destructor
+    // between the two exits, so a single `return result` costs nine
+    // instructions (34/53) - a guard clause for the failure value puts the
+    // `mov eax,esi` epilogue first and the `xor eax,eax` one second, exactly
+    // the image's order, and the state store lands between `mov esi,eax` and
+    // the destructor receiver's `lea` where the image has it.
+    if (result != 0) {
+        return result;
+    }
+    return 0;
+}
+
+/*
+Purpose: close_class - close the blank sprite (0x009BEAE8 in the image, the
+         real object g_BLANK_SPRITE here), unguarded; the caller
+         (jackal_close) tail-calls it as the sprite's teardown stage. Named
+         Sprite::close_class 2026-08-30 as the mirror of Sprite::init_class
+         (0x0063CE20) - the catalogue carries no name for either.
+// ORIGINAL: 0x0063CEF0 sub_63cef0 0x0063CEF0-0x0063CEFA BYTE_EXACT
+// symbol    ?close_class@Sprite@@SAXXZ
+// size      10 bytes
+// prototype
+// callers   1   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void Sprite::close_class() {
+    blank_sprite().close();
+}
