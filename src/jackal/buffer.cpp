@@ -8087,7 +8087,8 @@ int Buffer::write_pcx(char *filename) {
         header.bits_per_pixel = 8; // eight bits per plane
         header.x_min = 0;
         header.y_min = 0;
-        header.x_max = static_cast<short>(dib_.bmiHeader.biWidth - 1);
+        const int last_x = dib_.bmiHeader.biWidth - 1;
+        header.x_max = static_cast<short>(last_x);
         header.y_max = -1 - static_cast<short>(dib_.bmiHeader.biHeight);
         header.h_res = 0;
         header.v_res = 0;
@@ -8102,21 +8103,15 @@ int Buffer::write_pcx(char *filename) {
         // The mapped view itself is the output cursor past the header.
         view += 0x80;
         // Original5DF7BC reads the row count after the header-copy call.
-        int rows_left = -dib_.bmiHeader.biHeight;
-        if (rows_left > 0) do {
+        const int rows = -dib_.bmiHeader.biHeight;
+        for (int row = 0; row < rows; ++row) {
             unsigned int col = 0;
             while (col < stride_) {
                 const uint8_t value = bits[col];
                 uint8_t count = 1;
-                if (value == bits[col + 1]) {
-                    unsigned int probe = col + 1;
-                    do {
-                        if (probe >= stride_ || count >= 0x3f) {
-                            break;
-                        }
-                        count++;
-                        probe = count + col;
-                    } while (value == bits[probe]);
+                while (value == bits[col + count] && col + count < stride_ &&
+                       count < 0x3f) {
+                    count++;
                 }
                 if (count > 1 || value >= 0x40) {
                     *view++ = static_cast<uint8_t>(count | 0xc0);
@@ -8125,7 +8120,7 @@ int Buffer::write_pcx(char *filename) {
                 col += count;
             }
             bits += stride_;
-        } while (--rows_left != 0);
+        }
         *view++ = 0xc;
 
         // PCX wants RGB triplets; the DIB table is BGRX, so each entry is

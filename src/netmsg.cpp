@@ -230,8 +230,8 @@ void NetMsg::pop(const char *label, int duration, int channel,
 
         // Native predicates: active is false only for a non-network game with a
         // negative duration (47ABD3..47ABE9).
-        const bool active = IsMultiplayerNet != 0 || duration >= 0;
-        popup.set_auto_hide_value(active ? 1u : 0u);
+        const int active = IsMultiplayerNet != 0 || duration >= 0;
+        popup.set_auto_hide_value(active);
         if (target != nullptr && !active) {
             int size[2];  // image frame: height [ebp-0x14], width [ebp-0x10]
             if (Buffer::get_pcx_dimensions(target, &size[1], &size[0]) == 0 &&
