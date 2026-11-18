@@ -194,6 +194,27 @@ struct PickWinListAccess : ListBox {
   }
 };
 
+// WORKAROUND(inline): by-value helpers on the layout cursor (x, y, width,
+// height at 0xA14..0xA20). A store through `this` makes VC6 reload the other
+// members, and the image does not reload them here, so the values crossed
+// the store as inline arguments:
+// - 0x488A17..0x488A30 reads width, x and height, stores x + width + 1 and
+//   only then reads y for the same rectangle: the advanced x is one argument
+//   of set_rectangle_dimensions, produced by an inline that takes the width.
+//   Written in place (`field_A14_ += field_A1C_ + 1` as the argument) or with
+//   the +1 at the call site the image is not reproduced (162 and 129 rows
+//   against 92).
+// - 0x488E0E..0x488E26 reads both edges before either store: set_pos(x, y).
+// Names and owner unknown; the other windows with fields at 0xA14 show no
+// site of either shape (PrefWin uses those words as page state).
+static inline int pickwin_next_x(PickWin *window, int width) {
+  return window->field_A14_ += width + 1;
+}
+static inline void pickwin_set_pos(PickWin *window, int x, int y) {
+  window->field_A14_ = x;
+  window->field_A18_ = y;
+}
+
 // WORKAROUND(inline): the six text buttons are set up by the same four
 // calls, and each button's Buffer base is reached from the register that
 // holds the button (lea ecx,[ebx+0x444] at 0x48930B and five more), not folded
@@ -261,11 +282,9 @@ void PickWin::init(void (__cdecl *callback)(int), int mode, int faction) {
   RECT area;
   // WORKAROUND(inline): the image keeps the cell height in a register from
   // the 0x5A store (0x4889A1) into the loop and from each row step
-  // (0x488ABC) into the next row's first rectangle, and reads the width and
-  // height of the second and third rectangles before it stores the advanced
-  // x (0x488A17..0x488A30). Plain member statements reload them after every
-  // member store; the locals stand in for whatever by-value helper the
-  // original read them through.
+  // (0x488ABC) into the next row's first rectangle; `h` stands in for
+  // whatever the original read it through. The second and third rectangles
+  // go through pickwin_next_x (above).
   int h = 0x5A;
   field_A1C_ = 0x102;
   field_A20_ = h;
@@ -273,17 +292,11 @@ void PickWin::init(void (__cdecl *callback)(int), int mode, int faction) {
   for (i = 0; i < 3; ++i) {
     set_rectangle_dimensions(&area, field_A14_ = 1, field_A18_, field_A1C_, h);
     sprites1_[i].extract(&source, WinFillColour, &area, 0);
-    {
-      int cell_w = field_A1C_, cell_h = field_A20_;
-      field_A14_ += cell_w + 1;
-      set_rectangle_dimensions(&area, field_A14_, field_A18_, cell_w, cell_h);
-    }
+    set_rectangle_dimensions(&area, pickwin_next_x(this, field_A1C_), field_A18_, field_A1C_,
+                             field_A20_);
     sprites2_[i].extract(&source, WinFillColour, &area, 0);
-    {
-      int cell_w = field_A1C_, cell_h = field_A20_;
-      field_A14_ += cell_w + 1;
-      set_rectangle_dimensions(&area, field_A14_, field_A18_, cell_w, cell_h);
-    }
+    set_rectangle_dimensions(&area, pickwin_next_x(this, field_A1C_), field_A18_, field_A1C_,
+                             field_A20_);
     sprites3_[i].extract(&source, WinFillColour, &area, 0);
     h = field_A20_;
     field_A18_ += h + 1;
@@ -334,13 +347,7 @@ void PickWin::init(void (__cdecl *callback)(int), int mode, int faction) {
                              i + list_area_rect_.top, 0x10, 0x10);
   }
 
-  {
-    // WORKAROUND(inline): both edges are read before either store
-    // (0x488E0E..0x488E26).
-    int x = header_panel_rect_.left + 1, y = list_area_rect_.bottom + 7;
-    field_A14_ = x;
-    field_A18_ = y;
-  }
+  pickwin_set_pos(this, header_panel_rect_.left + 1, list_area_rect_.bottom + 7);
   field_A1C_ = static_cast<int>(field_A1C_) * 3 / 4 - 1;
   set_rectangle_dimensions(&field_9220_rect_, field_A14_, field_A18_, field_A1C_, field_A20_);
   set_rectangle_dimensions(&field_9210_rect_, field_9220_rect_.right + 2, field_A18_, field_A1C_, field_A20_);
