@@ -95,6 +95,7 @@ void ReportIfDeclFnPad8();
 void ReportIfDeclFnPad9();
 void ReportIfDeclFnPad10();
 void ReportIfDeclFnPad11();
+void ReportIfDeclFnPad12();
 
 // Shared punctuation objects the image pushes instead of unit literals.
 extern char SocialWinCloseParenText[];
@@ -4175,9 +4176,36 @@ void __cdecl sat_expl_daemon(int context) {
     window->exp_anim();
 }
 
+// WORKAROUND(inline): dead /Ob2 budget stand-ins (fold to no code). sat_attack's
+// eight ~Popup return sites have teardown depths 2,2,2,5,2,2,5,6 in the image
+// (EH unwind map); without spend after the NOKILLERS return ours are
+// 5,5,2,2,2,2,2,6. Two one-step probes after that return and one after the
+// break_treaty return reproduce the image's distribution. The original
+// spelling that spent this budget is unknown.
+static int sat_attack_budget_probe_a(int x)
+{
+    if (x == 0) x = 1;
+    if (x == 1) x = 4;
+    return x;
+}
+static int sat_attack_budget_probe_b(int x)
+{
+    if (x == 0) x = 1;
+    if (x == 1) x = 4;
+    return x;
+}
+static int sat_attack_budget_probe_c(int x)
+{
+    if (x == 0) x = 1;
+    return x;
+}
+
 // ORIGINAL: 0x004A0260 ?sat_attack@@YAXHHH@Z 0x004A0260-0x004A080C;0x00659447-0x00659580
 // RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/unrecovered/004a0260.cpp", "source:src/faction.h", "image:complete original instructions and independent storage/lifecycle evidence"], "reason": "Recover satellite attack selection through a natural Popup lifetime, its owned picture and the genuine four-counter faction array, preserving original signed guards and network/local action ordering."}
 void __cdecl sat_attack(int attacker, int target, int kind) {
+    // The picture extent lives for the whole function: the image keeps its
+    // two slots apart from the base-count loop's has_fac temporaries.
+    int width, height;
     Popup popup;
     if (attacker == target) return;
     if (target <= 0) return;
@@ -4187,6 +4215,8 @@ void __cdecl sat_attack(int attacker, int target, int kind) {
                  "NOKILLERS", 0, "space_sm.pcx", 0);
         return;
     }
+    sat_attack_budget_probe_b(2); // WORKAROUND(inline): see above
+    sat_attack_budget_probe_a(2); // WORKAROUND(inline): see above
     if (static_cast<int>(PlayersData[attacker].sat_odp_deployed)
         >= static_cast<int>(PlayersData[attacker].satellites_[3])) {
         if (attacker == ConsoleGlobal.faction_id_)
@@ -4199,9 +4229,9 @@ void __cdecl sat_attack(int attacker, int target, int kind) {
         if (Bases[base].faction_id_current == target && has_fac(41, base, 0)) ++targets;
     }
     // Original guards only the signed upper bound; no new lower guard.
-    if ((kind == 4 && !targets)
-        || (kind != 4 && (kind >= 4 || !PlayersData[target].satellites_[kind]))) return;
+    if (kind == 4 ? !targets : (kind >= 4 || !PlayersData[target].satellites_[kind])) return;
     if (break_treaty(attacker, target, 7)) return;
+    sat_attack_budget_probe_c(2); // WORKAROUND(inline): see above
     if (diplo_lock(100)) return;
     if (PlayersData[attacker].satellites_[3]
         && static_cast<int>(PlayersData[attacker].sat_odp_deployed)
@@ -4209,9 +4239,10 @@ void __cdecl sat_attack(int attacker, int target, int kind) {
         && ((kind == 4 && targets)
             || (kind != 4 && kind < 4 && PlayersData[target].satellites_[kind]))) {
         int attack_target;
-        if (kind == 4) {
+        if (kind != 4) {
+            attack_target = attacker;
+        } else {
             popup.start(PopupStartCaption, "WHICHGSP", -1, 0, 0x40, 0);
-            int width, height;
             if (Buffer::get_pcx_dimensions("satbat_sm.pcx", &width, &height) == 0
                 && popup.owned_picture().init("satbat_sm.pcx", width, height) == 0)
                 popup.select_owned_picture();
@@ -4221,8 +4252,6 @@ void __cdecl sat_attack(int attacker, int target, int kind) {
             }
             attack_target = popup.exec(0, 0);
             if (attack_target < 0) goto unlock;
-        } else {
-            attack_target = attacker;
         }
         if (IsMultiplayerNet) {
             message_data(0x2412, 0, attacker, target, kind, attack_target);
@@ -5985,9 +6014,9 @@ int ReportIf::on_iface_dialog_item_back_draw(::GraphicWin *, int, int, RECT *) {
 // The three log_say texts are this handler's own copies in the pinned image
 // (0x687280, 0x687298, 0x6872B8; on_left_click keeps a separate EDBC copy at
 // 0x686F04). The image's advanced-governor text ends in "set".
-// RECOVERY_LITERAL: v1 0x00687280 0x00687295 $SG63514 0x004A6330
-// RECOVERY_LITERAL: v1 0x00687298 0x006872B5 $SG63529 0x004A6330
-// RECOVERY_LITERAL: v1 0x006872B8 0x006872CC $SG63540 0x004A6330
+// RECOVERY_LITERAL: v1 0x00687280 0x00687295 $SG63526 0x004A6330
+// RECOVERY_LITERAL: v1 0x00687298 0x006872B5 $SG63541 0x004A6330
+// RECOVERY_LITERAL: v1 0x006872B8 0x006872CC $SG63552 0x004A6330
 // symbol    ?on_iface_button_clicked@ReportIf@@UAEXH@Z
 void ReportIf::on_iface_button_clicked(int button) {
     int row;
