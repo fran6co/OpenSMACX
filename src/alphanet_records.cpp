@@ -122,8 +122,8 @@ int AlphaNetStringStruct::add(int id) {
             ? new(entry_owner) AlphaNetLedgerEntry
             : new(this) AlphaNetLedgerEntry;
         if (head_ == 0) return 4;
-        head_->next_ = head_;
         head_->id_ = id;
+        head_->next_ = head_;
         head_->previous_ = head_;
         head_->payload_ = allocator_ != 0
             ? new(allocator_) NetAllocationNode
@@ -175,33 +175,29 @@ Status: Complete
 
 
 void *AlphaNetLedgerEntry::operator new(size_t size, Heap *owner) throw() {
-    void *memory;
-    if (owner != 0) {
-        memory = owner->get(size);
-        if (memory == 0) {
-            MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
-            exit(3);
-        }
-    } else {
-        memory = mem_get(size);
-        if (memory == 0) return 0;
+    void *memory = owner->get(size);
+    if (memory != 0) {
+        StringAllocationHeap = owner;
+        return memory;
     }
-    StringAllocationHeap = owner;
-    return memory;
+    MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
+    exit(3);
+    return 0;
 }
 void *AlphaNetLedgerEntry::operator new(size_t size, AlphaNetStringStruct *list) throw() {
-    Heap *const owner = list->allocation_owner_;
     void *memory;
+    Heap *owner = list->allocation_owner_;
     if (owner != 0) {
         memory = owner->get(size);
-        if (memory == 0) {
-            MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
-            exit(3);
+        if (memory != 0) {
+            StringAllocationHeap = owner;
+            return memory;
         }
-    } else {
-        memory = mem_get(size);
-        if (memory == 0) return 0;
+        MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
+        exit(3);
     }
+    memory = mem_get(size);
+    if (memory == 0) return 0;
     StringAllocationHeap = owner;
     return memory;
 }

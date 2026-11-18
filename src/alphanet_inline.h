@@ -49,48 +49,51 @@ inline void *NetAllocationNode::operator new(size_t size, Heap *owner) throw() {
     void *memory;
     if (owner != 0) {
         memory = owner->get(size);
-        if (memory == 0) {
-            MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
-            exit(3);
+        if (memory != 0) {
+            StringAllocationHeap = owner;
+            return memory;
         }
-    } else {
-        memory = mem_get(size);
-        if (memory == 0) return 0;
+        MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
+        exit(3);
     }
+    memory = mem_get(size);
+    if (memory == 0) return 0;
     StringAllocationHeap = owner;
     return memory;
 }
 
 inline void *NetAllocationNode::operator new(size_t size, StringAllocationBase *base) throw() {
-    Heap *const owner = base->allocation_owner_;
+    Heap *owner = base->allocation_owner_;
     void *memory;
     if (owner != 0) {
         memory = owner->get(size);
-        if (memory == 0) {
-            MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
-            exit(3);
+        if (memory != 0) {
+            StringAllocationHeap = owner;
+            return memory;
         }
-    } else {
-        memory = mem_get(size);
-        if (memory == 0) return 0;
+        MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
+        exit(3);
     }
+    memory = mem_get(size);
+    if (memory == 0) return 0;
     StringAllocationHeap = owner;
     return memory;
 }
 
 inline void *NetAllocationNode::operator new(size_t size, AlphaNetStringStruct *list) throw() {
-    Heap *const owner = list->allocation_owner_;
+    Heap *owner = list->allocation_owner_;
     void *memory;
     if (owner != 0) {
         memory = owner->get(size);
-        if (memory == 0) {
-            MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
-            exit(3);
+        if (memory != 0) {
+            StringAllocationHeap = owner;
+            return memory;
         }
-    } else {
-        memory = mem_get(size);
-        if (memory == 0) return 0;
+        MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
+        exit(3);
     }
+    memory = mem_get(size);
+    if (memory == 0) return 0;
     StringAllocationHeap = owner;
     return memory;
 }
