@@ -318,8 +318,7 @@ int MonuWin::init() {
                      scratch_rect_.bottom - scratch_rect_.top, this, 0);
   button_first_.set_border_styles(&InterfaceBoxStyles[47], &InterfaceBoxStyles[46],
                                   &InterfaceBoxStyles[45]);
-  button_first_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
-  button_first_.redraw();
+  button_first_.set_font_redraw(&TutWinBaseWindow.font1_);
   button_first_.hide();
   StringTemp[0] = '\0';
   strcat(StringTemp, label_get(0xB60 / 4));
@@ -338,8 +337,7 @@ int MonuWin::init() {
                       scratch_rect_.bottom - scratch_rect_.top, this, 0);
   button_second_.set_border_styles(&InterfaceBoxStyles[47], &InterfaceBoxStyles[46],
                                    &InterfaceBoxStyles[45]);
-  button_second_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
-  button_second_.redraw();
+  button_second_.set_font_redraw(&TutWinBaseWindow.font1_);
   button_second_.hide();
   fill(0);
   selection_pending_ = 0;

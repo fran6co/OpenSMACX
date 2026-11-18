@@ -47,11 +47,6 @@ static inline void gamma_inset(RECT *rect, int dx, int dy) {
     rect->top += dy;
     rect->bottom -= dy;
 }
-static inline void gamma_button_init(PushButton *button, LPCSTR text, int id,
-                                     RECT *rect, Win *parent) {
-    button->init(text, id, rect->left, rect->top, rect->right - rect->left,
-                 rect->bottom - rect->top, parent, 0);
-}
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005C8E60 ?exec@Gamma@@QAEXPAUPalette@@MH@Z 0x005C8E60-0x005C9325
@@ -109,9 +104,8 @@ double Gamma::exec(Palette *target, float initial_gamma, int apply_only) {
     scroll_.show(0);
 
     PushButton *ok = &pushButton1_;
-    gamma_button_init(ok, BasePopDefaultOkText, -1, &rect4_, this);
-    ok->Buffer::set_font(&font_, 0, 0, 0);
-    ok->redraw();
+    ok->init(BasePopDefaultOkText, -1, &rect4_, this, 0);
+    ok->set_font_redraw(&font_);
     ok->set_text_color(0, -1, 1, 1);
     pushButton1_.color_ = 0xF8;
     pushButton1_.bevel_upper_ = 7;
@@ -126,9 +120,8 @@ double Gamma::exec(Palette *target, float initial_gamma, int apply_only) {
     pushButton1_.redraw();
 
     PushButton *cancel = &pushButton2_;
-    gamma_button_init(cancel, BasePopDefaultCancelText, -2, &rect5_, this);
-    cancel->Buffer::set_font(&font_, 0, 0, 0);
-    cancel->redraw();
+    cancel->init(BasePopDefaultCancelText, -2, &rect5_, this, 0);
+    cancel->set_font_redraw(&font_);
     cancel->set_text_color(0, -1, 1, 1);
     pushButton2_.color_ = 0xF8;
     pushButton2_.bevel_upper_ = 7;

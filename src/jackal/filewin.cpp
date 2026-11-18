@@ -575,15 +575,6 @@ Sprite FileWin::shared_sprite0_;
 // RECOVERY_OBJECT: v4 0x009B9078 _FileWinSprite2 target ?shared_sprite2_@FileWin@@0VSprite@@A
 Sprite FileWin::shared_sprite2_;
 
-// WORKAROUND(decl): the image loads each button caption before the bound
-// arithmetic it pushes later (0x6139B0+0xE3/+0x115), the order of an inline
-// RECT-taking BaseButton::init overload whose parameter is copied first.
-static inline int init_button(BaseButton &button, LPCSTR name, int id,
-                              const RECT &rect, Win *parent, int flags) {
-  return button.init(name, id, rect.left, rect.top, rect.right - rect.left,
-                     rect.bottom - rect.top, parent, flags);
-}
-
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x006139B0 ?init@FileWin@@QAEHPADPAUGraphicWin@@PAUFileWinConstruct@@@Z 0x006139B0-0x00613B97
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/006139b0.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover FileWin control initialization through genuine embedded controls, typed caller geometry, shared 17-DWORD parameter prefix and Windows list lifecycle. Retain the historical seed and obligations; no matching or game acceptance claim."}
@@ -617,14 +608,14 @@ int FileWin::init(char *, GraphicWin *parent, FileWinConstruct *parameters) {
   EditBox *const edit = &edit_box_;
   edit->show(0);
 
-  result = init_button(flat_button2_, BasePopDefaultOkText, -1,
-                       parameters->button2_bounds_, static_cast<Win *>(parent), 0);
+  result = flat_button2_.init(BasePopDefaultOkText, -1,
+                       &parameters->button2_bounds_, static_cast<Win *>(parent), 0);
   if (result != 0) {
     return result;
   }
 
-  result = init_button(flat_button1_, BasePopDefaultCancelText, -2,
-                       parameters->button1_bounds_, static_cast<Win *>(parent), 0);
+  result = flat_button1_.init(BasePopDefaultCancelText, -2,
+                       &parameters->button1_bounds_, static_cast<Win *>(parent), 0);
   if (result != 0) {
     return result;
   }

@@ -198,8 +198,7 @@ void PrefWin::init() {
                       PrefWinGeometryValue_857890 + 0x16,
                       PrefWinGeometryValue_857894, PrefWinTitleButtonHeight,
                       preference_window(), 0);                // 48DA79
-  advPrefButton_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);  // 48DA8C
-  advPrefButton_.redraw();                                    // 48DA9D
+  advPrefButton_.set_font_redraw(&TutWinBaseWindow.font1_);
 
   StringTemp[0] = 0;                                          // 48DAA8
   strcat(StringTemp, label_get(752));   /* 0xBC0 */           // 48DAC5
@@ -207,8 +206,7 @@ void PrefWin::init() {
                        PrefWinGeometryValue_857890 + 0x2C,
                        PrefWinGeometryValue_857894, PrefWinTitleButtonHeight,
                        preference_window(), 0);               // 48DAFD
-  warnPrefButton_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0); // 48DB10
-  warnPrefButton_.redraw();                                   // 48DB21
+  warnPrefButton_.set_font_redraw(&TutWinBaseWindow.font1_);
 
   StringTemp[0] = 0;                                          // 48DB2C
   strcat(StringTemp, label_get(753));   /* 0xBC4 */           // 48DB49
@@ -216,8 +214,7 @@ void PrefWin::init() {
                        PrefWinGeometryValue_857890 + 0x42,
                        PrefWinGeometryValue_857894, PrefWinTitleButtonHeight,
                        preference_window(), 0);               // 48DB81
-  autoPrefButton_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0); // 48DB94
-  autoPrefButton_.redraw();                                   // 48DBA5
+  autoPrefButton_.set_font_redraw(&TutWinBaseWindow.font1_);
 
   StringTemp[0] = 0;                                          // 48DBB0
   strcat(StringTemp, label_get(754));   /* 0xBC8 */           // 48DBCD
@@ -225,8 +222,7 @@ void PrefWin::init() {
                            PrefWinGeometryValue_857890 + 0x58,
                            PrefWinGeometryValue_857894, PrefWinTitleButtonHeight,
                            preference_window(), 0);           // 48DC05
-  audioVisPrefButton_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0); // 48DC18
-  audioVisPrefButton_.redraw();                               // 48DC29
+  audioVisPrefButton_.set_font_redraw(&TutWinBaseWindow.font1_);
 
   StringTemp[0] = 0;                                          // 48DC34
   strcat(StringTemp, label_get(1077));  /* 0x10D4 */          // 48DC51
@@ -234,8 +230,7 @@ void PrefWin::init() {
                       PrefWinGeometryValue_857890 + 0x6E,
                       PrefWinGeometryValue_857894, PrefWinTitleButtonHeight,
                       preference_window(), 0);                // 48DC89
-  mapPrefButton_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);  // 48DC9C
-  mapPrefButton_.redraw();                                    // 48DCAD
+  mapPrefButton_.set_font_redraw(&TutWinBaseWindow.font1_);
 
   StringTemp[0] = 0;                                          // 48DCB8
   strcat(StringTemp, label_get(1078));  /* 0x10D8 */          // 48DCD5
@@ -243,8 +238,7 @@ void PrefWin::init() {
                     PrefWinGeometryValue_857890 + 0x9A,
                     PrefWinGeometryValue_857894, PrefWinTitleButtonHeight,
                     preference_window(), 0);                  // 48DD10
-  gammaButton_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);    // 48DD23
-  gammaButton_.redraw();                                      // 48DD34
+  gammaButton_.set_font_redraw(&TutWinBaseWindow.font1_);
 
   PrefWinButtonGroup.init(0x5D, 0);                           // 48DD42
   PrefWinButtonGroup.add(&bscPrefButton_);   // edi still = this+0xA60  48DD4D
@@ -696,15 +690,10 @@ void PrefWin::init() {
   volumeMusicToggle_.init(StringTable.get(Labels.strings_ptr[0x10F8 / 4]), 0x58, PrefWinGeometryValue_8578B4,
       PrefWinGeometryValue_8578BC - PrefWinNarrowDisplayVerticalOffset + 0x42,
       PrefWinToggleWidth, PrefWinToggleHeight, preference_window(), 0);
-  button = &volumeMainToggle_;
-  button->Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);  // 0x6E84B4
-  button->redraw();
-  volumeVoiceToggle_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
-  volumeVoiceToggle_.redraw();
-  volumeSFXToggle_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
-  volumeSFXToggle_.redraw();
-  volumeMusicToggle_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
-  volumeMusicToggle_.redraw();
+  volumeMainToggle_.set_font_redraw(&TutWinBaseWindow.font1_);
+  volumeVoiceToggle_.set_font_redraw(&TutWinBaseWindow.font1_);
+  volumeSFXToggle_.set_font_redraw(&TutWinBaseWindow.font1_);
+  volumeMusicToggle_.set_font_redraw(&TutWinBaseWindow.font1_);
   // Stores at 0x48F771: main, voice, sfx, music (+0x15820,+0x16EB8,+0x1636C,+0x17A04).
   volumeMainToggle_.field_A18_ = 0;
   volumeVoiceToggle_.field_A18_ = 0;
@@ -729,13 +718,9 @@ void PrefWin::init() {
   cancelButton_.init(StringTemp, 0x5B, PrefWinGeometryValue_85788C,
       PrefWinGeometryValue_8578C0 - PrefWinNarrowDisplayVerticalOffset + PrefWinGeometryValue_857884 - 0x17,
       PrefWinGeometryValue_857894, PrefWinTitleButtonHeight, preference_window(), 0);
-  button = &restoreDefaultButton_;
-  button->Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
-  button->redraw();
-  okButton_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
-  okButton_.redraw();
-  cancelButton_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
-  cancelButton_.redraw();
+  restoreDefaultButton_.set_font_redraw(&TutWinBaseWindow.font1_);
+  okButton_.set_font_redraw(&TutWinBaseWindow.font1_);
+  cancelButton_.set_font_redraw(&TutWinBaseWindow.font1_);
   // Stores at 0x48F956: restore, ok, cancel (+0x1909C,+0x1A734,+0x19BE8).
   restoreDefaultButton_.field_A18_ = 0;
   okButton_.field_A18_ = 0;

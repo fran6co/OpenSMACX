@@ -77,6 +77,17 @@ class BaseButton : public GraphicWin {
   virtual void hide();
   int init(LPCSTR name, int id, int x, int y, int width, int height,
            Win *parent, int style_flag);
+  // Header inline: the button placed on a RECT. Spelling the call through
+  // this overload (one inline level) instead of the five edge expressions
+  // reproduces ReportIf::on_status's jump tables and RECT reads (82 -> 63
+  // rows), DesignWin::init (195 -> 107), PickWin::init (92 -> 74) and
+  // MainInterface::init (382 -> 372); FileWin::init's caption-first load
+  // order (0x6139B0+0xE3) comes from its parameter being copied first.
+  // WORKAROUND(decl): the overload is inferred, its name is not evidenced.
+  int init(LPCSTR name, int id, const RECT *rect, Win *parent, int style_flag) {
+    return init(name, id, rect->left, rect->top, rect->right - rect->left,
+                rect->bottom - rect->top, parent, style_flag);
+  }
   int UNK1(Font *font, char *name, int id, int x, int y, int width,
            Win *parent, int style_flag);
   void UNK2();
@@ -90,6 +101,17 @@ class BaseButton : public GraphicWin {
   // AlphaMenu toggles the visual pressed state of its owner button while the
   // menu is shown/hidden. Keep the legacy word encapsulated in BaseButton.
   void set_pressed_visual(int value) { field_A9C_ = static_cast<uint32_t>(value); }
+  // Header inline: a single-font setup followed by a repaint. Where the
+  // image forms the Buffer base from the register that already holds the
+  // button (lea ecx,[edi+0x444] at MonuWin::init 0x473535, ReportIf::on_status's
+  // fixed buttons) this is the inline's `this`, used twice; at sites where the
+  // button has no register of its own the offset still folds into the
+  // owner's `this`, so the call is neutral there (PrefWin, FameWin, DiploPop).
+  // WORKAROUND(decl): the name is descriptive; the original's is unknown.
+  void set_font_redraw(Font *font) {
+    Buffer::set_font(font, 0, 0, 0);
+    redraw();
+  }
   int selected_state() const { return static_cast<int>(field_A18_); }
   int field_A74() const { return static_cast<int>(field_A74_); }
   // Store-only configuration used by PrefWin: unlike set(), this must not

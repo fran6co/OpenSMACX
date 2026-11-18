@@ -621,23 +621,17 @@ int MainInterface::init(int) {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0xABC / 4));
     StringTemp[1] = 0;
-    flat_button_[1].init(StringTemp, 1001, scroll_down_rect_.left, scroll_down_rect_.top,
-                         scroll_down_rect_.right - scroll_down_rect_.left,
-                         scroll_down_rect_.bottom - scroll_down_rect_.top, this, 0);
+    flat_button_[1].init(StringTemp, 1001, &scroll_down_rect_, this, 0);
     flat_button_[1].set_bubble_text(StringTable.get(Labels.strings_ptr[0xC48 / 4]));
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0xAC0 / 4));
     StringTemp[1] = 0;
-    flat_button_[0].init(StringTemp, 1000, scroll_up_rect_.left, scroll_up_rect_.top,
-                         scroll_up_rect_.right - scroll_up_rect_.left,
-                         scroll_up_rect_.bottom - scroll_up_rect_.top, this, 0);
+    flat_button_[0].init(StringTemp, 1000, &scroll_up_rect_, this, 0);
     flat_button_[0].set_bubble_text(StringTable.get(Labels.strings_ptr[0xC44 / 4]));
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0xDBC / 4));
     StringTemp[1] = 0;
-    flat_button_[2].init(StringTemp, 1002, editor_tab_rect_.left, editor_tab_rect_.top,
-                         editor_tab_rect_.right - editor_tab_rect_.left,
-                         editor_tab_rect_.bottom - editor_tab_rect_.top, this, 0);
+    flat_button_[2].init(StringTemp, 1002, &editor_tab_rect_, this, 0);
     flat_button_[2].set_border_styles(&InterfaceBoxStyles[27], &InterfaceBoxStyles[28],
                                       &InterfaceBoxStyles[29]);
     flat_button_[2].set_bubble_text(StringTable.get(Labels.strings_ptr[0xDC0 / 4]));
@@ -649,52 +643,31 @@ int MainInterface::init(int) {
         flat_button_[i].redraw();
     }
     button_group_[0].set(1, 1);
-    flat_button_[3].init(label_get(0x9C0 / 4), 1003, menu_button_rect_.left,
-                         menu_button_rect_.top,
-                         menu_button_rect_.right - menu_button_rect_.left,
-                         menu_button_rect_.bottom - menu_button_rect_.top, this, 0);
+    flat_button_[3].init(label_get(0x9C0 / 4), 1003, &menu_button_rect_, this, 0);
     flat_button_[3].set_report_icons(&sprites8_[0], &sprites8_[1], &sprites8_[2]);
-    // WORKAROUND(inline): the Buffer base is taken from the register that
-    // holds the button (lea ecx,[edi+0x444] at 0x0045ABC1 and 0x0045ACA6) and
-    // the icon links are stored through it, while the slice colours are
-    // stored at this + offset (0x0045ABF2): icons through the inline setter,
-    // colours as plain member stores, the font call through a pointer.
-    {
-        FlatButton *button = &flat_button_[3];
-        button->Buffer::set_font(&font1_, 0, 0, 0);
-    }
-    flat_button_[3].redraw();
+    flat_button_[3].set_font_redraw(&font1_);
     flat_button_[3].set_text_color(64, -1, 1, 1);
     flat_button_[3].field_ABC_[0] = 101;
     flat_button_[3].field_ABC_[1] = 65;
     flat_button_[3].field_ABC_[2] = 65;
     flat_button_[3].redraw();
     flat_button_[3].set_bubble_text(StringTable.get(Labels.strings_ptr[0xC3C / 4]));
-    flat_button_[4].init(label_get(0x83C / 4), 1004, multiplayer_button_rect_.left,
-                         multiplayer_button_rect_.top,
-                         multiplayer_button_rect_.right - multiplayer_button_rect_.left,
-                         multiplayer_button_rect_.bottom - multiplayer_button_rect_.top,
+    flat_button_[4].init(label_get(0x83C / 4), 1004, &multiplayer_button_rect_,
                          this, 0);
     flat_button_[4].set_report_icons(&sprites8_[0], &sprites8_[1], &sprites8_[2]);
-    {
-        FlatButton *button = &flat_button_[4];
-        button->Buffer::set_font(&font1_, 0, 0, 0);
-    }
-    flat_button_[4].redraw();
+    flat_button_[4].set_font_redraw(&font1_);
     flat_button_[4].set_text_color(64, -1, 1, 1);
     flat_button_[4].field_ABC_[0] = 101;
     flat_button_[4].field_ABC_[1] = 65;
     flat_button_[4].field_ABC_[2] = 65;
     flat_button_[4].redraw();
     flat_button_[4].set_bubble_text(StringTable.get(Labels.strings_ptr[0xC40 / 4]));
-    flat_button_[6].init(0, 1006, rect2_.left, rect2_.top, rect2_.right - rect2_.left,
-                         rect2_.bottom - rect2_.top, this, 0);
+    flat_button_[6].init(0, 1006, &rect2_, this, 0);
     flat_button_[6].set_bubble_text(StringTable.get(Labels.strings_ptr[0x4C8 / 4]));
     flat_button_[6].field_AD4_[0] = &sprites7_[0];
     flat_button_[6].field_AD4_[1] = &sprites7_[1];
     flat_button_[6].field_AD4_[2] = &sprites7_[2];
-    flat_button_[7].init(0, 1007, rect3_.left, rect3_.top, rect3_.right - rect3_.left,
-                         rect3_.bottom - rect3_.top, this, 0);
+    flat_button_[7].init(0, 1007, &rect3_, this, 0);
     flat_button_[7].set_bubble_text(StringTable.get(Labels.strings_ptr[0xF20 / 4]));
     flat_button_[7].field_AD4_[0] = &sprites7_[3];
     flat_button_[7].field_AD4_[1] = &sprites7_[4];
@@ -704,26 +677,18 @@ int MainInterface::init(int) {
         flat_button_[i].redraw();
     }
     button_group_[1].set(1006, 1);
-    flat_button_[8].init(0, 1008, stack_button_rect_.left, stack_button_rect_.top,
-                         stack_button_rect_.right - stack_button_rect_.left,
-                         stack_button_rect_.bottom - stack_button_rect_.top, this, 0);
+    flat_button_[8].init(0, 1008, &stack_button_rect_, this, 0);
     flat_button_[8].hide();
     flat_button_[8].field_AD4_[0] = &sprites12_[0];
     flat_button_[8].field_AD4_[1] = &sprites12_[1];
     flat_button_[8].field_AD4_[2] = &sprites12_[2];
-    flat_button_[9].init(0, 1009, adjacent_panel_left_rect_.left,
-                         adjacent_panel_left_rect_.top,
-                         adjacent_panel_left_rect_.right - adjacent_panel_left_rect_.left,
-                         adjacent_panel_left_rect_.bottom - adjacent_panel_left_rect_.top,
+    flat_button_[9].init(0, 1009, &adjacent_panel_left_rect_,
                          this, 0);
     flat_button_[9].hide();
     flat_button_[9].field_AD4_[0] = &sprites12_[0];
     flat_button_[9].field_AD4_[1] = &sprites12_[1];
     flat_button_[9].field_AD4_[2] = &sprites12_[2];
-    flat_button_[10].init(0, 1010, adjacent_panel_right_rect_.left,
-                          adjacent_panel_right_rect_.top,
-                          adjacent_panel_right_rect_.right - adjacent_panel_right_rect_.left,
-                          adjacent_panel_right_rect_.bottom - adjacent_panel_right_rect_.top,
+    flat_button_[10].init(0, 1010, &adjacent_panel_right_rect_,
                           this, 0);
     flat_button_[10].hide();
     flat_button_[10].field_AD4_[0] = &sprites12_[3];
@@ -768,10 +733,7 @@ int MainInterface::init(int) {
         UnionRect(&editor_panel_rect_, &editor_panel_rect_, &editor_button_rects_[k - 11]);
         // Live in ebx across init/hide: the image derives the id as tool + 1017.
         tool = k - 17;
-        flat_button_[k].init(0, k + 1000, editor_button_rects_[k - 11].left,
-                             editor_button_rects_[k - 11].top,
-                             editor_button_rects_[k - 11].right - editor_button_rects_[k - 11].left,
-                             editor_button_rects_[k - 11].bottom - editor_button_rects_[k - 11].top,
+        flat_button_[k].init(0, k + 1000, &editor_button_rects_[k - 11],
                              this, 0);
         flat_button_[k].hide();
         flat_button_[k].field_AD4_[0] = &sprites9_[(k - 11) * 3];
@@ -827,10 +789,7 @@ int MainInterface::init(int) {
     if (WinScreenWidth != 800) {
         for (k = 36; k < 42; k++) {
             UnionRect(&editor_tools_rect_, &editor_tools_rect_, &brush_button_rects_[k - 36]);
-            flat_button_[k].init(0, k + 1000, brush_button_rects_[k - 36].left,
-                                 brush_button_rects_[k - 36].top,
-                                 brush_button_rects_[k - 36].right - brush_button_rects_[k - 36].left,
-                                 brush_button_rects_[k - 36].bottom - brush_button_rects_[k - 36].top,
+            flat_button_[k].init(0, k + 1000, &brush_button_rects_[k - 36],
                                  this, 0);
             flat_button_[k].hide();
             flat_button_[k].field_AD4_[0] = &sprites10_[(k - 36) * 3];
