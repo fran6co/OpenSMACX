@@ -476,33 +476,53 @@ int MainInterface::init(int) {
         assets.load_pcx("console_x_A.pcx", 0, 10, 236);
     else
         assets.load_pcx("console_x2_A.pcx", 0, 10, 236);
-    for (i = 0, x = 1; i < 2; i++, x += 191) {
-        for (j = 0, y = 1; j < 5; j++, y += 27)
-            sprites6_[i * 5 + j].extract(&assets, WinFillColour, x, y,
-                                         190, 26, 0);
+    // The sprite sheets are walked with a hand-stepped x/y cursor beside the
+    // loop counters: the image keeps a down-counter per loop and a separate
+    // stepped coordinate, sets both coordinates before the outer loop and
+    // resets the inner one at the outer loop's end (0x0045A03A/3D and
+    // 0x0045A09E/A1 here; 0x0045A686..6F6, 0x0045A78E..7FE below). A
+    // coordinate computed from the counter (1 + i * 52) or stepped in the
+    // for header lets VC6 drop the counter and test the coordinate.
+    x = 1;
+    y = 1;
+    for (i = 0; i < 2; i++) {
+        for (j = 0; j < 5; j++) {
+            sprites6_[i * 5 + j].extract(&assets, WinFillColour, x, y, 190, 26, 0);
+            y += 27;
+        }
+        x += 191;
+        y = 1;
     }
     if (WinScreenWidth == 800) {
         sprites4_[0].extract(&assets, WinFillColour, 194, 136, 131, 51, 0);
         sprites4_[1].extract(&assets, WinFillColour, 194, 188, 166, 48, 0);
         sprites3_[0].extract(&assets, WinFillColour, 194, 237, 131, 51, 0);
         sprites3_[1].extract(&assets, WinFillColour, 194, 289, 166, 48, 0);
-        for (i = 0; i < 5; ++i)
-            sprites5_[2*i].extract(&assets, WinFillColour, 384, 1 + i * 52,
-                                  131, 51, 0);
-        for (i = 0; i < 5; ++i)
-            sprites5_[2*i+1].extract(&assets, WinFillColour, 516,
-                                    1 + i * 49, 166, 48, 0);
+        y = 1;
+        for (i = 0; i < 5; ++i) {
+            sprites5_[2*i].extract(&assets, WinFillColour, 384, y, 131, 51, 0);
+            y += 52;
+        }
+        y = 1;
+        for (i = 0; i < 5; ++i) {
+            sprites5_[2*i+1].extract(&assets, WinFillColour, 516, y, 166, 48, 0);
+            y += 49;
+        }
     } else {
         sprites4_[0].extract(&assets, WinFillColour, 194, 136, 164, 60, 0);
         sprites4_[1].extract(&assets, WinFillColour, 194, 197, 164, 64, 0);
         sprites3_[0].extract(&assets, WinFillColour, 194, 262, 164, 60, 0);
         sprites3_[1].extract(&assets, WinFillColour, 194, 323, 164, 64, 0);
-        for (i = 0; i < 5; ++i)
-            sprites5_[2*i].extract(&assets, WinFillColour, 384, 1 + i * 61,
-                                  164, 60, 0);
-        for (i = 0; i < 5; ++i)
-            sprites5_[2*i+1].extract(&assets, WinFillColour, 549,
-                                    1 + i * 65, 164, 64, 0);
+        y = 1;
+        for (i = 0; i < 5; ++i) {
+            sprites5_[2*i].extract(&assets, WinFillColour, 384, y, 164, 60, 0);
+            y += 61;
+        }
+        y = 1;
+        for (i = 0; i < 5; ++i) {
+            sprites5_[2*i+1].extract(&assets, WinFillColour, 549, y, 164, 64, 0);
+            y += 65;
+        }
     }
     // 0x0045A36F..3D6 steps r.top/r.bottom (ebp-0x24/-0x1C) by the height + 1.
     r.top = 217;
@@ -528,35 +548,47 @@ int MainInterface::init(int) {
     sprites1_[2].extract(&assets, WinFillColour, 1, 341, 32, 25, 0);
     sprites1_[3].extract(&assets, WinFillColour, 1, 367, 32, 34, 0);
     assets.load_pcx("interface.pcx", 0, 10, 236);
-    for (i = 0, y = 143; i < 3; i++, y += 33) {
+    y = 143;
+    for (i = 0; i < 3; i++) {
         sprites7_[i].extract(&assets, WinFillColour, 532, y, 54, 32, 0);
         sprites7_[i + 3].extract(&assets, WinFillColour, 587, y, 54, 32, 0);
+        y += 33;
     }
     sprite11_.extract(&assets, WinFillColour, 212, 1, 9, 147, 0);
+    x = 397;
+    y = 153;
     for (i = 0; i < 2; i++) {
-        for (j = 0, x = 397; j < 3; j++, x += 13)
-            sprites12_[i * 3 + j].extract(&assets, WinFillColour, x, 153 + i * 43,
-                                          12, 42, 0);
+        for (j = 0; j < 3; j++) {
+            sprites12_[i * 3 + j].extract(&assets, WinFillColour, x, y, 12, 42, 0);
+            x += 13;
+        }
+        x = 397;
+        y += 43;
     }
     x = 350;
     y = 245;
     for (i = 0; i < 25; i++) {
         if (i) {
-            if (!(i % 8 == 0)) {
-                x += 44;
-            } else {
+            if (i % 8 == 0) {
                 x = 350;
                 y += 57;
+            } else {
+                x += 44;
             }
         }
         for (j = 0; j < 3; j++)
             sprites9_[i * 3 + j].extract(&assets, WinFillColour, x, y + j * 19,
                                          43, 18, 0);
     }
+    x = 465;
+    y = 438;
     for (i = 0; i < 6; i++) {
-        for (j = 0; j < 3; j++)
-            sprites10_[i * 3 + j].extract(&assets, WinFillColour, 465 + i * 25,
-                                          438 + j * 25, 24, 24, 0);
+        for (j = 0; j < 3; j++) {
+            sprites10_[i * 3 + j].extract(&assets, WinFillColour, x, y, 24, 24, 0);
+            y += 25;
+        }
+        y = 438;
+        x += 25;
     }
     assets.close();
     r = status_hit_rect_;
