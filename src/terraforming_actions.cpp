@@ -1576,7 +1576,7 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
         }
         return 0;
     }
-    if (!get_proto_offense_rating(Vehs[veh_id].proto_id) && zoc_move(x, y, faction_id)) {
+    if (!(Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating) && zoc_move(x, y, faction_id)) {
         if (NetDaemonNet.action_mode_ & 1 && faction_id == ConsoleGlobal.faction_id_) {
             if (Players[faction_id].rule_flags & 0x80) {
                 NetMsgPrimary.pop(VehLabelNONCOMDROP, VehIconAL_DROP_SM_PCX4);

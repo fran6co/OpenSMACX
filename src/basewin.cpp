@@ -6438,7 +6438,7 @@ void BaseWin::base_editor_proj() {
         StringTemp[0] = 0;
         strcat(StringTemp, StringTable.get(Facility[FacilitySPStart + project_index].name));
         strcat(StringTemp, "|");
-        const int owner_base = base_project(project_index);
+        const int owner_base = (GameDataStateStorage.fields_.secret_project_.project_base[project_index]);
         if (owner_base == -2) {
             strcat(StringTemp, label_get(0xD54 / 4));
         } else if (owner_base == -1) {

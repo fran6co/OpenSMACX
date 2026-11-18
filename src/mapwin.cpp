@@ -3630,7 +3630,7 @@ int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3, int a4,
 
     // Own early epilogue at 0x463322: the on_map inline's last test falls
     // through into the `return 0` (Random destroyed via 0x625740).
-    if (!on_map(a7, a8)) {
+    if (!(a8 >= 0 && a8 < (int)MapLatitudeBounds && a7 >= 0 && a7 < (int)MapLongitudeBounds)) {
         return 0;
     }
     local_14 = a7 >> 1;

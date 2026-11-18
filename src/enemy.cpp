@@ -532,7 +532,7 @@ void __cdecl enemy_strategy(int faction_id) {
                 && (old_plan != 3 || PlayersData[faction_id].region_base_plan[region] != 8
                     || Vehs[veh_id].order == 2)
                 && (base_who(x, y) < 0 || stack_check(veh_id, 1, faction_id, -1, -1) > 1)
-                && alt_at(x, y) >= ALT_SHORE_LINE
+                && (map_loc(x, y)->climate >> 5) >= ALT_SHORE_LINE
                 && PlayersData[faction_id].region_base_plan[region] != 2
                 && !zoc_sea(x, y, faction_id)) {
                 BOOL better = false;
@@ -2877,7 +2877,7 @@ int __cdecl alien_move(int veh_id) {
         }
         for (i = 0; i < 8; i++) {
             int x_raw = x + VehMoveDeltaX[i];
-            int x2 = wrap_map_x(x_raw);
+            int x2 = ((MapIsFlat & 1) ? x_raw : x_raw < 0 ? x_raw + MapLongitudeBounds : x_raw >= MapLongitudeBounds ? x_raw - MapLongitudeBounds : x_raw);
             int y2 = y + VehMoveDeltaY[i];
             if (!on_map(x2, y2)) {
                 continue;
@@ -3183,7 +3183,7 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
             + moves;
         strike_range = return_range;
     } else {
-        return_range = veh_moves(veh_id);
+        return_range = (range(speed(veh_id, false) - Vehs[veh_id].moves_expended, 0, 999));
         strike_range = return_range;
         if (!Vehs[veh_id].dmg_incurred) {
             strike_range = speed(veh_id, 0) + return_range;
@@ -4497,7 +4497,7 @@ L_56bf5f:
     if (Vehs[veh_id].order == ORDER_MOVE_TO) {
         goto L_578f46;
     }
-    if ((map_loc(x, y)->bit & BIT_FUNGUS) && (map_loc(x, y)->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF) {
+    if (((&map_tiles()[(x >> 1) + y * MapLongitude])->bit & BIT_FUNGUS) && (map_loc(x, y)->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF) {
         Vehs[veh_id].order = ORDER_REMOVE_FUNGUS;
         goto L_578f46;
     }

@@ -6791,7 +6791,7 @@ commlink:
         for (i = 1; i < MaxPlayerNum; i++) {
             if (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << i)
                 && i != faction_id && i != faction_id_with
-                && !has_treaty(faction_id, i, DTREATY_COMMLINK)) {
+                && !(PlayersData[faction_id].diplo_treaties[i] & DTREATY_COMMLINK)) {
                 parse_says(0, get_title(i), -1, -1);
                 parse_says(1, get_name(i), -1, -1);
                 parse_says(2, get_noun(i), -1, -1);
@@ -7102,7 +7102,7 @@ int __cdecl propose_attack(int actor, int other) {
         }
         if (DiplomacyProposalMode == 1 || DiplomacyProposalMode == 3) {
             if (!wants_to_attack(other, target, 0)
-                && !((has_treaty(other, actor, DTREATY_PACT) || DiploScratchFA98)
+                && !(((PlayersData[other].diplo_treaties[actor] & DTREATY_PACT) || DiploScratchFA98)
                      && wants_to_attack(target, other, 0)
                      && has_treaty(actor, target, DTREATY_VENDETTA))) {
                 if (DiplomacyProposalMode == 3) {

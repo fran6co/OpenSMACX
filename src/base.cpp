@@ -6206,7 +6206,7 @@ void __cdecl base_terraform(int force_improve) {
     for (i = 0; i < 21; i++) {
         int x = wrap_map_x(BaseCurrent->x + RadiusOffsetX[i]);
         int y = BaseCurrent->y + RadiusOffsetY[i];
-        if (!on_map(x, y)) {
+        if (!(y >= 0 && y < (int)MapLatitudeBounds && x >= 0 && x < (int)MapLongitudeBounds)) {
             rain_sum++;
             continue;
         }

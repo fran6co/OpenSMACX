@@ -538,7 +538,7 @@ void __cdecl spot_all(int veh_id, int toggle) {
         for (i = 0; i < (sensor ? 49 : 25); i++) {
             x = wrap_map_x(x0 + RadiusOffsetX[i]);
             y = y0 + RadiusOffsetY[i];
-            if (!on_map(x, y)) {
+            if (!(y >= 0 && y < (int)MapLatitudeBounds && x >= 0 && x < (int)MapLongitudeBounds)) {
                 continue;
             }
             if (i >= (sensor ? 25 : 9) && (map_loc(x, y)->bit2 & 0x200000)) {

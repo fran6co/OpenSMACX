@@ -208,6 +208,51 @@ def rule_labelraw(t,mt,pos):
     for m in re.finditer(r'\blabel_get\(([^()]+)\)',mt[pos:]):
         yield (pos+m.start(),pos+m.end(),'StringTable.get(Labels.strings_ptr['+t[pos+m.start(1):pos+m.end(1)]+'])','labelraw')
 RULES['labelget']=rule_labelget; RULES['labelraw']=rule_labelraw
+_INL=None
+def _inlines():
+    global _INL
+    if _INL is None:
+        import glob
+        _INL={}
+        for hp in glob.glob(R+'/src/**/*.h',recursive=True):
+            ht=open(hp,encoding='latin-1').read()
+            for m in re.finditer(r'(?:^|\n)(?:MEASURED )?(?:static )?inline [\w \*&:<>]+?\b(?:__cdecl )?(\w+)\(([^()]*)\) \{\s*return ([^;{}]+);\s*\}',ht):
+                if '::' in m.group(0).split('(')[0]: continue
+                ps=[x.strip().split(' ')[-1].lstrip('*&') for x in m.group(2).split(',') if x.strip() and x.strip()!='void']
+                _INL[m.group(1)]=(ps,' '.join(m.group(3).split()))
+        for k in ('label_get','map_tiles','console_map_win','opening_window','MapAbstract'): _INL.pop(k,None)
+    return _INL
+def rule_expand(t,mt,pos):
+    # call of a one-return free inline -> its expression with the arguments substituted (in parentheses)
+    inl=_inlines()
+    rx=re.compile(r'(?<![\w\.>:])('+'|'.join(map(re.escape,inl))+r')\(')
+    for m in rx.finditer(mt,pos):
+        ps,expr=inl[m.group(1)]
+        e=match(mt,m.end()-1,'(',')')
+        if e<0: continue
+        # split arguments at top-level commas
+        args=[]; d=0; last=m.end()
+        for k in range(m.end(),e):
+            c=mt[k]
+            if c in '([{': d+=1
+            elif c in ')]}': d-=1
+            elif c==',' and d==0: args.append(t[last:k].strip()); last=k+1
+        tail=t[last:e].strip()
+        if tail or ps: args.append(tail)
+        if len(args)!=len(ps): continue
+        ok=True; out=expr
+        for a,pn in zip(args,ps):
+            uses=len(re.findall(r'\b'+re.escape(pn)+r'\b',expr))
+            simple=re.fullmatch(r'[\w\.\[\]\->: ]+',a) is not None
+            if uses!=1 and not simple: ok=False; break
+        if not ok: continue
+        # simultaneous substitution
+        def sub(mm):
+            i=ps.index(mm.group(0)); a=args[i]
+            return a if re.fullmatch(r'[\w\.\[\]]+',a) else '('+a+')'
+        if ps: out=re.sub(r'\b('+'|'.join(map(re.escape,ps))+r')\b',sub,expr)
+        yield (m.start(),e+1,'('+out+')','expand:'+m.group(1))
+RULES['expand']=rule_expand
 def main():
     rule=RULES[sys.argv[1]]; unit=sys.argv[2]; unit=unit if unit.startswith('src/') else 'src/'+unit; pfx=sys.argv[3]
     path=R+'/'+unit; text=open(path,encoding='latin-1').read()

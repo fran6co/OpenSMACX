@@ -516,7 +516,7 @@ void __cdecl time_warp() {
                 for (int offset = 0; offset < 264; ++offset) {
                     int cx = wrap_map_x(RadiusOffsetX[offset + 25] + x);
                     int cy = RadiusOffsetY[offset + 25] + y;
-                    if (!on_map(cx, cy)) continue;
+                    if (!(cy >= 0 && cy < (int)MapLatitudeBounds && cx >= 0 && cx < (int)MapLongitudeBounds)) continue;
                     Map *tile = map_loc(cx, cy);
                     if ((tile->bit & BIT_FUNGUS)
                         && (tile->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF) continue;

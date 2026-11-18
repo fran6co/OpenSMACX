@@ -888,7 +888,7 @@ void __cdecl random_events(int mode) {
         for (i = 0; i < 9; i++) {
             tx = wrap_map_x(base.x + RadiusOffsetX[i]);
             ty = base.y + RadiusOffsetY[i];
-            if (on_map(tx, ty) && bonus_at(tx, ty, 0)
+            if ((ty >= 0 && ty < (int)MapLatitudeBounds && tx >= 0 && tx < (int)MapLongitudeBounds) && bonus_at(tx, ty, 0)
                 && ((PlayersData[faction].flags & PFLAG_MAP_REVEALED)
                     || (map_loc(tx, ty)->visibility & (1 << faction)))) {
                 int owner;

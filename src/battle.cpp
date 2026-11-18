@@ -3431,7 +3431,7 @@ L_50835D:
             for (move_charge = 0; move_charge < 8; move_charge++) {
                 rx = wrap_map_x(VehMoveDeltaX[move_charge] + target_x);
                 ry = VehMoveDeltaY[move_charge] + target_y;
-                if (!on_map(rx, ry)) continue;
+                if (!(ry >= 0 && ry < (int)MapLatitudeBounds && rx >= 0 && rx < (int)MapLongitudeBounds)) continue;
                 if (zoc_move(rx, ry, def_faction)) continue;
                 // 0x5094A9: the chassis triad byte stays in cl for both compares
                 if (get_triad(def_id) != TRIAD_AIR &&

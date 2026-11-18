@@ -3562,7 +3562,7 @@ void __cdecl world_rainfall() {
                     int old_class = (cursor->climate >> 3) & 3;
                     if (old_class != rainfall_class && TerraformDrownedBaseId < 0) {
                         if (old_class > rainfall_class
-                            && (TerraformTileFaction < 0 || !is_human(TerraformTileFaction))) {
+                            && (TerraformTileFaction < 0 || !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1u << TerraformTileFaction)))) {
                             int base_id = base_find(x, y);
                             if (base_id >= 0) {
                                 TerraformTileFaction = Bases[base_id].faction_id_current;

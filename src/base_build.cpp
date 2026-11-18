@@ -248,7 +248,7 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
     l_8c = Bases[base_id].y;
     l_8 = Bases[base_id].faction_id_current;
     l_38 = is_ocean(l_54, l_8c);
-    l_10 = map_loc(l_54, l_8c)->region;
+    l_10 = (&map_tiles()[(l_54 >> 1) + l_8c * MapLongitude])->region;
     l_c = PlayersData[l_8].region_base_plan[l_10];
     l_100 = best_reactor(l_8);
     l_1c = 1 << l_8;

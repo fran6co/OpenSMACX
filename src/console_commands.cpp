@@ -1489,7 +1489,7 @@ void Console::terraform(int vehicle_id, int terraform_id) {
         return;
     }
     if (terraform_id == TERRA_SOIL_ENR) {
-        if ((bit_at(x, y) & BIT_FARM) == 0) {
+        if (((map_loc(x, y)->bit) & BIT_FARM) == 0) {
             return;
         }
     } else if (terraform_id == TERRA_MAGTUBE) {
@@ -1519,7 +1519,7 @@ void Console::terraform(int vehicle_id, int terraform_id) {
         return;
     }
     if (Terraforming[terraform_id].bit != 0 &&
-        (bit_at(x, y) & Terraforming[terraform_id].bit) == Terraforming[terraform_id].bit) {
+        ((map_loc(x, y)->bit) & Terraforming[terraform_id].bit) == Terraforming[terraform_id].bit) {
         // name and name_sea are read as a two-entry run.
         parse_say(0, Terraforming[terraform_id].name[is_sea], -1, -1); // 0x004D396C
         veh_battle_msg("ALREADYBUILT", nullptr);
@@ -1611,7 +1611,7 @@ void Console::terraform(int vehicle_id, int terraform_id) {
                 alt_at(adjacent_x, adjacent_y) < 3) {
                 continue;
             }
-            if ((bit_at(adjacent_x, adjacent_y) & BIT_THERMAL_BORE) != 0) {
+            if (((map_loc(adjacent_x, adjacent_y)->bit) & BIT_THERMAL_BORE) != 0) {
                 X_pop("TWOBOREHOLES", nullptr);
                 return;
             }
@@ -6576,7 +6576,7 @@ found:
         for (int clear_offset = 0; clear_offset < limit; ++clear_offset) {
             const int tile_x = wrap_map_x(x + RadiusOffsetX[clear_offset]);
             const int tile_y = y + RadiusOffsetY[clear_offset];
-            if (on_map(tile_x, tile_y) && (bit2_at(tile_x, tile_y) & (1u << selected))) {
+            if (on_map(tile_x, tile_y) && ((map_loc(tile_x, tile_y)->bit2) & (1u << selected))) {
                 bit2_set(tile_x, tile_y, 1u << selected, 0);
                 code_set(tile_x, tile_y, 0);
                 if (selected == 4) {
