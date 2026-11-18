@@ -16,6 +16,8 @@
 // symbol    ??_GAlphaSave@@UAEPAXI@Z
 // kind      game
 #define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
+// on_selected expands StringStruct::current_entry (stringstruct.h gate).
+#define STRINGSTRUCT_CURRENT_ENTRY_INLINE
 #include "stdafx.h"
 #include "rectangle_operations.h"
 #include "interface_fonts.h"
@@ -331,21 +333,22 @@ void AlphaSave::hide() {
     Win::hide();
 }
 
-// ORIGINAL: 0x00407D90 ?on_selected@AlphaSave@@QAEXH@Z 0x00407D90-0x00407E7B
+// ORIGINAL: 0x00407D90 ?on_selected@AlphaSave@@QAEXH@Z 0x00407D90-0x00407E7B BYTE_EXACT
 // symbol    ?on_selected@AlphaSave@@UAEXH@Z
 // The callback argument is unused in the image. The selected position is
 // held by the embedded ListBox's Dialog virtual base, whose StringList
-// supplies the filename. The retired seed reached 96.4% mnemonic similarity
-// with raw offsets but could not make VC6 assign the original ebx=this,
-// esi=list-base, edi=count register trio. The typed body is not yet exact;
-// restore its historical extent through the source identity above.
+// supplies the filename. Three things make the image's code: the controls
+// are addressed as direct members of file_win_ (one `this + vbdisp` base
+// register for every Dialog field), the item list is bound once, and the
+// text is the guarded current_entry() chase that StringList::current_text
+// (0x005E3630) is the out-of-line copy of.
 void AlphaSave::on_selected(int) {
-    ListBox &list = file_win_.list_box();
-    list.item_list_.seek_pos(list.selected_position_);
-    file_win_.edit_box().set_text(list.item_list_.head_ != 0
-        ? list.item_list_.current_->string_payload()->text : 0);
-    file_win_.edit_box().select_all();
-    file_win_.edit_box().redraw();
+    StringList &list = file_win_.list_box_.item_list_;
+    list.seek_pos(file_win_.list_box_.selected_position_);
+    file_win_.edit_box_.set_text(
+        list.head_ != 0 ? list.current_entry()->text : 0);
+    file_win_.edit_box_.select_all();
+    file_win_.edit_box_.redraw();
 }
 
 // ORIGINAL: 0x00407920 ?save@AlphaSave@@QAEXXZ 0x00407920-0x00407A7E BYTE_EXACT

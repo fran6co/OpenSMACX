@@ -793,6 +793,22 @@ raw field access where the original used inline accessors.
   0x004C6030): call the wrapper at every site that repeats the guard.
 - **An inlined accessor skews register choice through the whole function.**
   Read or write the member directly (the netwin fix covered 10 functions).
+  For a member control with a virtual base the difference is larger: the
+  image addresses the base's fields as `[vbdisp + this + K]` with one
+  `lea esi,[ecx+ebx]` base, and reuses it after calls; through an accessor
+  that returns a reference (`file_win_.list_box().item_list_`) VC6 first
+  materializes the control's address (`lea esi,[ecx+ebx+0x3280]`, small
+  displacements) and reloads the vbptr later. Write the member chain
+  (`file_win_.list_box_.item_list_`), making the member public if needed,
+  and bind a nested object once with a reference when the image keeps its
+  base across calls (AlphaSave::on_selected 0x00407D90).
+- **A pointer chase that reuses eax for every link**
+  (`mov eax,[list+0xc]; mov eax,[eax+8]; mov eax,[eax+4]` under a head
+  test, `xor eax,eax` otherwise) is `list.head_ ? list.current_entry()->text
+  : 0` with StringStruct::current_entry expanded (it repeats the head test;
+  the unit must define STRINGSTRUCT_CURRENT_ENTRY_INLINE). Every plain
+  spelling of the chain routes the middle link through ecx and shifts the
+  register rotation of the code after it by one.
 - **A register rotation runs through the whole function.** Look for a lost
   inline-helper boundary around a repeated subsequence, or a hand-duplicated
   shared tail.
