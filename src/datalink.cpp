@@ -1056,13 +1056,12 @@ void Datalink::draw_project() {
 // Historical scaffold experiment, retained from the replaced seed:
 // TRIED: Popup popup; (RAII) for the outer object, mechanical RD()-based field reads for the tech-tier/quotient-remainder lookups, itoa/strcat scratch buffer building, and the per-faction tally loop; deliberately did NOT model the second local object built by sub_4066c0 (Dialog/Dialogs/ StringStruct/Sprite/extra FlatButtons torn down around 0x430642) - its class is unrecoverable from this brief, so popup.close() + RAII stands in for that whole cascade. NO_COMPILE C2660 (set_font arg count) fixed first; MISMATCH #0 (prologue) not chased further.
 // WORKAROUND(inline): draw_social's image calls the first BasePop list's
-// ~StringList (0x004066C0) out of line at 0x00430642 and expands only the
-// second (0x0043068F); written out, ours expands both (21 EH states against
-// the image's 20). Two calls of this dead branchy spend give 20 states (re-swept
-// 2026-11-16: 0-10 calls at four positions; position is irrelevant). The final
-// teardown still keeps state 13 where the image keeps 12 (13,10,9 vs 12,10,9):
-// spend drops 12 before 13, so the remaining difference is the teardown's
-// composition, not budget. The original's natural spend is not identified.
+// ~StringList (0x004066C0) out of line at 0x00430642 and expands the second
+// one level (remove_all 0x0043068F, ~StringStruct 0x004306A8). Three calls of
+// this dead branchy spend reproduce that composition once the title is built
+// in two arms (re-swept 2026-11-18 with 0-4 calls; two gave the image's state
+// count with the wrong composition). The original's natural spend is not
+// identified.
 static inline void dl_social_budget_probe(int x) {
     if (x == 1) x = 2;
     if (x == 2) x = 3;
@@ -1075,12 +1074,18 @@ void Datalink::draw_social() {
     RECT rect = description_rect_;
     rect.left += 3;
     rect.right -= 3;
-    rect.bottom -= 3;
     rect.top += 3;
+    rect.bottom -= 3;
     set_font(&font1_, 0, 0, 0);
     set_text_color(0xE0, -1, 1, 1);
-    dl_upper_name(model < 0 ? SocialCategories[category].type
-                            : SocialCategories[category].name[model]);
+    // 0x00430157 selects the name in two arms that share one upper-casing
+    // tail; category stays in EBX and the Buffer base is reloaded from
+    // EBP-0x10. A ?: argument puts category in memory instead.
+    if (model < 0) {
+        dl_upper_name(SocialCategories[category].type);
+    } else {
+        dl_upper_name(SocialCategories[category].name[model]);
+    }
     write_cent_l(StringTemp, &title_rect_);
     if (model >= 0) {
         const int technology = SocialCategories[category].preq_tech[model];
@@ -1140,6 +1145,7 @@ void Datalink::draw_social() {
             }
         }
     }
+    dl_social_budget_probe(0);  // WORKAROUND(inline): see the helper
     dl_social_budget_probe(0);  // WORKAROUND(inline): see the helper
     dl_social_budget_probe(0);  // WORKAROUND(inline): see the helper
 }
