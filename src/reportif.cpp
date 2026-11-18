@@ -6336,7 +6336,7 @@ void ReportIf::draw_labs() {
     listBox1_.Dialog::field_B4_ = 0;
     list->ListBox::attach(&MainInterfaceGlobal, list->Dialog::window_x_, list->Dialog::window_y_, 0x80020);
     if (field_1E1D8_) {
-        list->set_selected_id(ReportWinGlobal.shared_research_focus());
+        list->set_selected_id(ReportWinGlobal.field_FAB8_);
     } else {
         list->set_selected_pos(-1, 1);
     }

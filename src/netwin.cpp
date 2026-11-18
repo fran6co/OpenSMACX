@@ -2137,7 +2137,7 @@ void NetWin::pick_map() {
             NetWinSessionData.fields_.scenario_text_wire_tail_[0] = 0;
             NetWinSessionOptions.fields_.status_ = 0xFF;
             send_session_packet(
-                NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id()), 0);
+                NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id_), 0);
         } else {
             GameDataLoadRequest = 1;
             if (choice == 1) {
