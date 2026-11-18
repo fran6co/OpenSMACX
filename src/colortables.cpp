@@ -567,7 +567,11 @@ make_armor:
     }
     file.close();
 
-    for (i = 0; i < 24; ++i) memset(ConstantColorTables[i], i, sizeof(ConstantColorTables[i]));
+    for (i = 0; i < 24; ++i) {
+        for (int entry = 0; entry < 256; ++entry) {
+            ConstantColorTables[i][entry] = static_cast<unsigned char>(i);
+        }
+    }
 
     if (regenerate) {
 make_transparent:

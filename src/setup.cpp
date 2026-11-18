@@ -1112,7 +1112,9 @@ int __cdecl setup_player(int faction, int conqueror, int retry) {
         for (int council = 0; council < 11; ++council)
             PlayersData[faction].unk_30[council] = PlayersData[faction].unk_29[council] = 0;
         // 5B1369: one rep stosd of ten dwords, corner_market_turn..unk_109.
-        memset(&PlayersData[faction].corner_market_turn, 0, 10 * sizeof(int));
+        for (int clear = 0; clear < 10; clear++) {
+            (&PlayersData[faction].corner_market_turn)[clear] = 0;
+        }
         PlayersData[faction].unk_93 = 0;
         PlayersData[faction].unk_94 = 0;
         PlayersData[faction].unk_95 = 0;
@@ -1824,20 +1826,30 @@ void __cdecl setup_game(int reload) {
     if (!IsMultiplayerNet && reload != 0 && GameRestartQueued == 0)
         GameDataStateStorage.fields_.game_state_ |= 0xE0;
 
-    memset(GameDataStateStorage.fields_.game_tech_achieved_, 0,
-           sizeof GameDataStateStorage.fields_.game_tech_achieved_);
-    memset(&GameDataStateStorage.fields_.secret_project_, 0xFF, sizeof GameDataStateStorage.fields_.secret_project_);
-    memset(ReplayEvents, 0, sizeof ReplayEvents);
-    memset(FactionRankingHistory, 0, sizeof FactionRankingHistory);
+    int clear;
+    for (clear = 0; clear < MaxTechnologyNum; clear++) {
+        GameDataStateStorage.fields_.game_tech_achieved_[clear] = 0;
+    }
+    for (clear = 0; clear < int(sizeof GameDataStateStorage.fields_.secret_project_.project_base / sizeof(int)); clear++) {
+        GameDataStateStorage.fields_.secret_project_.project_base[clear] = SP_Unbuilt;
+    }
+    for (clear = 0; clear < 0x2000; clear++) {
+        ReplayEvents[clear] = 0;
+    }
+    for (clear = 0; clear < MaxPlayerNum * MaxRankingHistoryTurns; clear++) {
+        FactionRankingHistory[clear] = 0;
+    }
     // One block clear of the ten event words sunspot_duration_ through
     // ecology_event_accumulator_ (+0x370..+0x394), as the image's rep stosd.
-    memset(&GameDataStateStorage.fields_.sunspot_duration_, 0,
-           offsetof(GameDataStateWindowFields, ecology_event_accumulator_) + sizeof(int)
-           - offsetof(GameDataStateWindowFields, sunspot_duration_));
+    for (clear = 0; clear < 10; clear++) {
+        (&GameDataStateStorage.fields_.sunspot_duration_)[clear] = 0;
+    }
 
     if (GameDataStateStorage.fields_.game_state_ & 0x01000000u) {
         int seen_social_models[12];
-        memset(seen_social_models, 0, sizeof seen_social_models);
+        for (clear = 0; clear < 12; clear++) {
+            seen_social_models[clear] = 0;
+        }
         for (int social_faction = 1; social_faction < MaxPlayerNum; social_faction++) {
             int rejected = 0;
             int category;
@@ -1872,7 +1884,9 @@ void __cdecl setup_game(int reload) {
             setup_results[human_faction] = 0;
         }
     }
-    memset(TectonicDetonationCount, 0, sizeof TectonicDetonationCount);
+    for (clear = 0; clear < 8; clear++) {
+        TectonicDetonationCount[clear] = 0;
+    }
     for (int computer_faction = 0; computer_faction < MaxPlayerNum; computer_faction++) {
         if (!is_human(computer_faction)) {
             setup_player(computer_faction, -1 - reload, 0);
@@ -1882,7 +1896,9 @@ void __cdecl setup_game(int reload) {
 
     // This is the row-major 8x8 pending-diplomacy flag matrix. Its native
     // reset follows both setup_player passes and precedes the label copies.
-    memset(PendingDiplomacyFlags, 0, sizeof PendingDiplomacyFlags);
+    for (clear = 0; clear < MaxPlayerNum * MaxPlayerNum; clear++) {
+        PendingDiplomacyFlags[0][clear] = 0;
+    }
 
     // The original publishes the default human's labels before the optional
     // new-game diplomacy/time-warp branch, whose callbacks observe them.

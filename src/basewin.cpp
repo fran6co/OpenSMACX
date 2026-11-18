@@ -1757,7 +1757,9 @@ void BaseWin::production(int a1, int a2) {
         return;
 
     const int saved_queue_size = BaseCurrent->queue_size;
-    memcpy(saved_queue, BaseCurrent->queue_production_id, sizeof(saved_queue));
+    for (i = 0; i < 10; i++) {
+        saved_queue[i] = BaseCurrent->queue_production_id[i];
+    }
     const int old_queue_id = BaseCurrent->queue_production_id[a1];
     displayed_production_id_ = BaseCurrent->production_id_last;
     const int faction = BaseCurrent->faction_id_current;
@@ -5920,7 +5922,9 @@ void BaseWin::draw_pop(int update_mode) {
     MainInterfaceGlobal.box_sprite(rect, &InterfaceBoxStyles[3]);
     // Per-type specialist tally; filled below and never read.
     int specialist_counts[7];
-    memset(specialist_counts, 0, sizeof(specialist_counts));
+    for (int clear = 0; clear < 7; clear++) {
+        specialist_counts[clear] = 0;
+    }
     font.init(DefaultFontFace, 9, 1);
     spot1_.kill_type(1);
 

@@ -1622,18 +1622,18 @@ typedef char GameDataLegacyVehRowExtent[sizeof(GameDataLegacyVehRow) == 0x30 ? 1
 
 // game_data calls memcpy out of line for its whole-record copies (0x31C,
 // 0x1CBC, 0x20BC, 0x130 bytes) yet copies these five array blocks with inline
-// rep movsd. This helper is defined outside game_data's
-// `#pragma function(memcpy)` region, so its memcpy calls stay intrinsic when
-// it is expanded there.
+// rep movsd: element loops, which /Og turns into block copies.
 static void game_data_migrate_legacy_header(
         const GameDataHeaderWire *header, int) {
     // Keep the pin's field-specific order after game_data has copied the full
     // 0x31C input record into the live state window.
-    memcpy(GameDataStateStorage.fields_.secret_project_.project_base,
-           header->legacy_secret_project_prefix_,
-           sizeof(header->legacy_secret_project_prefix_));
-    memset(&GameDataStateStorage.fields_.secret_project_.project_base[33],
-           0xFF, 31 * sizeof(int));
+    int k;
+    for (k = 0; k < int(sizeof(header->legacy_secret_project_prefix_) / sizeof(header->legacy_secret_project_prefix_[0])); ++k) {
+        GameDataStateStorage.fields_.secret_project_.project_base[k] = header->legacy_secret_project_prefix_[k];
+    }
+    for (k = 33; k < 64; ++k) {
+        GameDataStateStorage.fields_.secret_project_.project_base[k] = -1;
+    }
     GameDataStateStorage.fields_.governor_faction_ = header->governor_faction_;
 
     // The original loads each pair before storing that pair, then advances
@@ -1649,11 +1649,12 @@ static void game_data_migrate_legacy_header(
             last_resolution_turn;
     }
 
-    memcpy(GameDataStateStorage.fields_.game_tech_achieved_,
-           header->game_tech_achieved_, sizeof(header->game_tech_achieved_));
-    memcpy(GameDataStateStorage.fields_.legacy_game_save_name_,
-           header->legacy_game_save_name_,
-           sizeof(header->legacy_game_save_name_));
+    for (k = 0; k < int(sizeof(header->game_tech_achieved_)); ++k) {
+        GameDataStateStorage.fields_.game_tech_achieved_[k] = header->game_tech_achieved_[k];
+    }
+    for (k = 0; k < int(sizeof(header->legacy_game_save_name_)); ++k) {
+        GameDataStateStorage.fields_.legacy_game_save_name_[k] = header->legacy_game_save_name_[k];
+    }
     GameDataStateStorage.fields_.climate_rise_step_ = header->climate_rise_step_;
     GameDataStateStorage.fields_.climate_rise_limit_ = header->climate_rise_limit_;
     // Preserve the original target write order: +0x34C, +0x344, then +0x348.
@@ -1662,12 +1663,12 @@ static void game_data_migrate_legacy_header(
     GameDataStateStorage.fields_.climate_rise_accum_ = header->climate_rise_accum_;
     GameDataStateStorage.fields_.climate_sea_level_delta_ =
         header->climate_sea_level_delta_;
-    memcpy(GameDataStateStorage.fields_.transcendence_score_weights_,
-           header->transcendence_score_weights_,
-           sizeof(header->transcendence_score_weights_));
-    memcpy(&GameDataStateStorage.fields_.sunspot_duration_,
-           header->legacy_terminal_words_,
-           sizeof(header->legacy_terminal_words_));
+    for (k = 0; k < int(sizeof(header->transcendence_score_weights_) / sizeof(header->transcendence_score_weights_[0])); ++k) {
+        GameDataStateStorage.fields_.transcendence_score_weights_[k] = header->transcendence_score_weights_[k];
+    }
+    for (k = 0; k < int(sizeof(header->legacy_terminal_words_) / sizeof(header->legacy_terminal_words_[0])); ++k) {
+        (&GameDataStateStorage.fields_.sunspot_duration_)[k] = header->legacy_terminal_words_[k];
+    }
 }
 
 // Legacy save-format rows converted by game_data. Offsets are the pinned
@@ -1985,7 +1986,8 @@ int __cdecl game_data(FILE *file, int write_mode) {
                 memcpy(&PlayersData[v], &rows[v], sizeof(GameDataPlayerV3));
                                 for (k = 0; k < 5; k++)
                     PlayersData[v].facility_announced[k] = rows[v].facility_announced[k];
-                memset(&PlayersData[v].facility_announced[5], 0, 4);
+                for (k = 5; k < 9; k++)
+                    PlayersData[v].facility_announced[k] = 0;
                 PlayersData[v].planet_ecology = rows[v].planet_ecology;
                 PlayersData[v].base_id_atk_target = rows[v].base_id_atk_target;
                 PlayersData[v].unk_37 = rows[v].unk_37;
@@ -2071,7 +2073,8 @@ int __cdecl game_data(FILE *file, int write_mode) {
                 PlayersData[v].unk_99 = rows[v].unk_99;
                 for (k = 0; k < 5; k++)
                     PlayersData[v].secret_project_intel[k] = rows[v].secret_project_intel[k];
-                memset(&PlayersData[v].secret_project_intel[5], 0, 3 * sizeof(uint32_t));
+                for (k = 5; k < 8; k++)
+                    PlayersData[v].secret_project_intel[k] = 0;
                 // WORKAROUND(type): one 10-dword loop -> these 10 PlayerData scalars were an array.
                 for (k = 0; k < 10; k++)
                     (&PlayersData[v].corner_market_turn)[k] = rows[v].corner_market_[k];
@@ -2239,7 +2242,8 @@ int __cdecl game_data(FILE *file, int write_mode) {
             int k;
             for (k = 0; k < 5; k++)                                // 5A8033
                 Bases[i].facilities_built[k] = old[i].facilities_built[k];
-            memset(&Bases[i].facilities_built[5], 0, 4);           // 5A8040
+            for (k = 5; k < 9; k++)                                // 5A8040
+                Bases[i].facilities_built[k] = 0;
             Bases[i].mineral_surplus_final = old[i].mineral_surplus_final;   // +98 <- +94
             Bases[i].minerals_accumulated_2 = old[i].minerals_accumulated_2; // +9C <- +98
             for (k = 0; k < 4; k++) {                              // 5A8061, counter [ebp+8]

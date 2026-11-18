@@ -365,7 +365,9 @@ int __cdecl planet_busting(int veh_id, int x, int y) {
     }
 
     int notified[MaxPlayerNum];
-    memset(notified, 0, sizeof(notified));
+    for (int clear = 0; clear < MaxPlayerNum; clear++) {
+        notified[clear] = 0;
+    }
     for (offset = 0; offset < weapon_count; ++offset) {
         const int blast_x = wrap_map_x(RadiusOffsetX[offset] + x);
         const int blast_y = RadiusOffsetY[offset] + y;

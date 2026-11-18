@@ -631,7 +631,9 @@ void __cdecl rankings(int apply_ranks) {
         FactionRankingsUnk[best_faction] = -1;
         PlayersData[best_faction].ranking = (uint32_t)rank;
     }
-    memset(GameDataStateStorage.fields_.faction_rankings_, 0, sizeof(GameDataStateStorage.fields_.faction_rankings_));
+    for (int clear = 0; clear < 8; clear++) {
+        GameDataStateStorage.fields_.faction_rankings_[clear] = 0;
+    }
     for (faction_id = 1; faction_id < MaxPlayerNum; faction_id++) {
         if ((1 << faction_id) & GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_) {
             GameDataStateStorage.fields_.faction_rankings_[PlayersData[faction_id].ranking] = (uint32_t)faction_id;

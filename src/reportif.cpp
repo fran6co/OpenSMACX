@@ -5243,7 +5243,9 @@ void ReportIf::on_status(int mode) {
         window.fill(9);
         report_faction_id_ = ConsoleGlobal.faction_id_;
         // U1: rep stosd with eax = -1 (0x4A423E).
-        memset(report_page_history_, 0xFF, sizeof(report_page_history_));
+        for (int page = 0; page < 19; page++) {
+            report_page_history_[page] = -1;
+        }
         window.shared_report_selection() = -1;
         field_1E1D8_ = 1;
         if ((GameDataStateStorage.fields_.game_state_ & 0x80)

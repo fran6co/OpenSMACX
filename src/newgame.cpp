@@ -983,7 +983,9 @@ int __cdecl custom_planet(int show_preview, int use_saved_choices) {
         setup.overlay_buffers_[1] = &previews[1];
         setup.overlay_buffers_[2] = &previews[2];
     }
-    memset(&MapOceanCoverage, 0, 6 * sizeof(int));
+    for (int clear = 0; clear < 6; clear++) {
+        (&MapOceanCoverage)[clear] = 0;
+    }
 
     for (int i = 1; i < 7; i++) {
         int slot = slots[i - 1];

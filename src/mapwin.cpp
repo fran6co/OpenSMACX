@@ -4371,8 +4371,9 @@ LAB_0046441f:
             // WORKAROUND(type): a block `uint8_t[10] = {0}` gets its own
             // 12-byte slot at [ebp-0x8c] and leaves the frame 0x100 short;
             // `memset(territory_mask, 0, 10)` stores dword/dword/word.
-            territory_mask[0] = 0;
-            memset(territory_mask + 1, 0, 9);
+            for (int clear = 0; clear < 10; clear++) {
+                territory_mask[clear] = 0;
+            }
             local_44 = 0;
             // Original 0x0046517B/0x004651B2 reload the map width/base
             // after whose_territory, then cache the center's region (+3).
@@ -4446,7 +4447,7 @@ LAB_0046441f:
                 if (uVar12 == 7 && ((a8 - a7) & 2) != 0) {
                     coast_remap[5] = 0;
                     // 0x4653C0: one dword store clears 0x0E..0x11.
-                    memset(coast_remap + 0xe, 0, 4);
+                    *reinterpret_cast<uint32_t *>(coast_remap + 0xe) = 0;
                     // Three separate runs (0x4653CA/0x4653E6/0x465402),
                     // each reading the four published colors backward.
                     int shade;
@@ -5048,7 +5049,9 @@ LAB_wireframe:
             ConsoleGlobal.cursor_history_y_
                     [ConsoleGlobal.cursor_history_index_] == a8) {
             // 0x466C21: `mov ecx, 8; rep movsd`.
-            memcpy(MapCornerCopy, MapCornerScratch, sizeof(MapCornerCopy));
+            for (int corner = 0; corner < 4; corner++) {
+                MapCornerCopy[corner] = MapCornerScratch[corner];
+            }
         }
     }
 

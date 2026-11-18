@@ -593,8 +593,10 @@ int FileWin::init(char *, GraphicWin *parent, FileWinConstruct *parameters) {
     return 0x10;
   }
 
-  memcpy(&FileWinInitSharedParameters, parameters,
-         sizeof(FileWinConstructPrefix));
+  // WORKAROUND(type): a structure assignment of the leading prefix (rep
+  // movsd); the parameter is declared as the larger FileWinConstruct.
+  FileWinInitSharedParameters =
+      *reinterpret_cast<const FileWinConstructPrefix *>(parameters);
 
   modal_window_ = parent;
   SpriteScaleNumerator = 1;

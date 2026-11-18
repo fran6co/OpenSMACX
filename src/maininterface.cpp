@@ -343,8 +343,12 @@ int MainInterface::init(int) {
     RECT r;
     int i, j, k, tool, x, y;
     field_1EAC8_ = 0;
-    memset(InterfaceRegistry, 0, sizeof(InterfaceRegistry));
-    memset(IfaceIdToSlotStorage, 0, sizeof(IfaceIdToSlotStorage));
+    for (int slot = 0; slot < 12; slot++) {
+        InterfaceRegistry[slot] = 0;
+    }
+    for (int iface = 0; iface < 30; iface++) {
+        IfaceIdToSlotStorage[iface] = 0;
+    }
     // The image stores through this+0xA14 with no null test: the inline
     // SubInterface::register_iface member, not a pointer conversion.
     register_iface(0);

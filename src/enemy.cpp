@@ -7665,8 +7665,10 @@ L_575b27:
     // already known false on that path.
     if (Vehs[veh_id].order != ORDER_MOVE_TO && (i & 0x100) && j < 1) {
         // Pick, per region, a coastal land tile away from the poles.
-        memset(coast_y, -1, sizeof(coast_y));
-        memset(coast_x, -1, sizeof(coast_x));
+        for (int region = 0; region < 64; region++) {
+            coast_x[region] = -1;
+            coast_y[region] = -1;
+        }
         for (ty = 1; ty < MapLatitudeBounds - 1; ty++) {
             for (tx = ty & 1; tx < MapLongitudeBounds; tx += 2) {
                 int r = map_loc(tx, ty)->region;

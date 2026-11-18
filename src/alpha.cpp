@@ -1712,7 +1712,9 @@ for (i = 0; i < MaxCompassNum; i++) {
             SocialCategories[i].name[j] = text_item_string();
             SocialCategories[i].preq_tech[j] = tech_name(text_item());
             SocialEffect *effect = &SocialCategories[i].model_effect[j];
-            ZeroMemory(effect, sizeof(SocialEffect));
+            for (int clear = 0; clear < 11; clear++) {
+                effect->values_[clear] = 0;
+            }
             // The image adds the value to every matching effect: no break.
             while (strlen(text_item())) {
                 LPSTR mod_value = TextBufferItemPtr;

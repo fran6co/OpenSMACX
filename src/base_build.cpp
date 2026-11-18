@@ -301,17 +301,33 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
             l_fc++;
         }
     }
-    memset(a_f6c, 0, sizeof(a_f6c));
-    memset(a_1f6c, 0, sizeof(a_1f6c));
-    memset(a_176c, 0, sizeof(a_176c));
-    memset(a_4bc, 0, sizeof(a_4bc));
-    memset(a_2ec, 0, sizeof(a_2ec));
-    memset(a_594, 0, sizeof(a_594));
-    memset(a_3c4, 0, sizeof(a_3c4));
+    for (int z_a_f6c = 0; z_a_f6c < 512; z_a_f6c++) {
+        a_f6c[z_a_f6c] = 0;
+    }
+    for (int z_a_1f6c = 0; z_a_1f6c < 512; z_a_1f6c++) {
+        a_1f6c[z_a_1f6c] = 0;
+    }
+    for (int z_a_176c = 0; z_a_176c < 512; z_a_176c++) {
+        a_176c[z_a_176c] = 0;
+    }
+    for (int z_a_4bc = 0; z_a_4bc < 54; z_a_4bc++) {
+        a_4bc[z_a_4bc] = 0;
+    }
+    for (int z_a_2ec = 0; z_a_2ec < 54; z_a_2ec++) {
+        a_2ec[z_a_2ec] = 0;
+    }
+    for (int z_a_594 = 0; z_a_594 < 54; z_a_594++) {
+        a_594[z_a_594] = 0;
+    }
+    for (int z_a_3c4 = 0; z_a_3c4 < 54; z_a_3c4++) {
+        a_3c4[z_a_3c4] = 0;
+    }
     a_1dc[2] = 0;
     a_1dc[0] = 0;
     a_1dc[1] = 0;
-    memset(a_76c, 0, sizeof(a_76c));
+    for (int z_a_76c = 0; z_a_76c < 54; z_a_76c++) {
+        a_76c[z_a_76c] = 0;
+    }
     l_14c = 0;
     l_134 = 0;
     l_11c = 0;
@@ -451,8 +467,12 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
     }
 
     // Secret projects: those of this base, and of the faction per group of eight.
-    memset(a_3e4, 0, sizeof(a_3e4));
-    memset(a_694, 0, sizeof(a_694));
+    for (int z_a_3e4 = 0; z_a_3e4 < 8; z_a_3e4++) {
+        a_3e4[z_a_3e4] = 0;
+    }
+    for (int z_a_694 = 0; z_a_694 < 64; z_a_694++) {
+        a_694[z_a_694] = 0;
+    }
     l_148 = 0;
     for (i = 0; i < 64; i++) {
         if (GameDataStateStorage.fields_.secret_project_.project_base[i] == BaseIDCurrentSelected) {
