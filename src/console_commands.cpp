@@ -1819,7 +1819,7 @@ void Console::terraform(int vehicle_id, int terraform_id) {
         synch_veh(vehicle_id);
         log_say("Issuing Vehicle Orders", vehicle_id, terraform_id + 4, 0);
         if (IsMultiplayerNet) {
-            if (range(speed(vehicle_id, 0) - Vehs[vehicle_id].moves_expended, 0, 999)) {
+            if (veh_moves(vehicle_id)) {
                 NetDaemonNet.action(vehicle_id, 1);
             } else {
                 NetDaemonNet.unlock_veh();
