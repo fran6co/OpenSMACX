@@ -182,6 +182,30 @@ without `/Oy-`).
   refused site is skipped while cheaper later sites can still inline. Every
   expansion competes, including code after the return sites, and there is a
   per-callee size cap as well.
+- **Per-callee auto-inline size cap (2026-11-19).** Separately from the
+  caller's budget, /Ob2 refuses to auto-inline a plain (non-`inline`)
+  function whose *own source* exceeds a fixed size, at every site and
+  whatever the caller's size. Micro-tests: 7 one-line `if`s inline, 8 do
+  not; a 12-term sum inlines, 16 does not. What counts is the callee's
+  source spelling, not its bytes: each separate statement or guard clause,
+  each repeated expression written out (two `Chassis[VehPrototypes[...]]`
+  triad reads, `Continents[r].tile_count` at each use instead of a named
+  local), member calls on subobjects/globals more than plain calls; calls to
+  inline helpers inside the callee do not count. So the same bytes can be
+  under or over the cap: tech_avail as one combined condition expands into
+  tech_ai, as three guard clauses it is called (image); veh_jail with the
+  triads open-coded is called from all eight sites. An explicit `inline`
+  (or in-class) function is not held to the cap; only the caller's budget
+  limits it. Definition order is not a lever for the cap: a capped callee
+  stays a call whether defined before or after its caller, an uncapped one
+  expands either way. Diagnosis: a same-band callee that *every* caller in
+  its unit calls out of line, while the callers have budget left, is over
+  the cap; find the original spelling that puts it there (delete one
+  statement at a time and watch C4711) instead of `auto_inline(off)`. A
+  callee expanded at some sites and called at others is a budget effect,
+  not the cap. When an explicit inline is refused by a budget, its
+  out-of-line COMDAT copy is emitted right after the first function that
+  calls it (see "Out-of-line copies of explicit inlines" below).
 - **Depth before position.** Depth-1 sites expand before depth-2 sites. Every
   invented forwarding layer in a recovered helper (`write_cent` →
   `write_cent_text`) pushes the real body one level deeper and moves the
