@@ -680,10 +680,6 @@ class BaseWin : public GraphicWin, public SubInterface {
 // marker stays in mapwin.cpp, whose painters expand it too (draw_base_names).
 // It lives here, not in mapwin.h, because map.h's include chain reaches
 // mapwin.h before map.h declares MapLongitudeBounds and alt_at.
-// WORKAROUND(decl): only TUs defining MAPWIN_TILE_IN_VIEW_INLINE (basewin.cpp,
-// mapwin.cpp) see the body; the other includers keep their out-of-line calls
-// and codegen.
-#ifdef MAPWIN_TILE_IN_VIEW_INLINE
 #include "map.h"
 #include "mapwin.h"
 inline int MapWin::tile_in_view(int x, int y, int margin) {
@@ -717,7 +713,6 @@ inline int MapWin::tile_in_view(int x, int y, int margin) {
     }
     return 1;
 }
-#endif  // MAPWIN_TILE_IN_VIEW_INLINE
 
 // BaseWin::recompute (0x00416D90), delete_queue (0x00416FB0) and exit
 // (0x0041A4C0) are expanded by basewin.cpp callers that precede their

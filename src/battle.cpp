@@ -16,7 +16,6 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
-#define MAPWIN_TILE_IN_VIEW_INLINE  // boom expands MapWin::tile_in_view (basewin.h)
 #include "popup.h"
 #include "basepop.h"
 #include "text.h"

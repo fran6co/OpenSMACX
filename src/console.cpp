@@ -41,7 +41,6 @@
 // symbol    _$E19
 #define NETDAEMON_RESET_INLINE  // stand-in: see NetDaemon::reset in netdaemon.h
 #define NETMSG_IS_ACTIVE_INLINE  // stand-in: see NetMsg::is_active in netmsg.h
-#define MAPWIN_TILE_IN_VIEW_INLINE  // MapWin::tile_in_view body (basewin.h)
 #include "stdafx.h"
 
 // Distinct writable string cells observed at the original call sites.
