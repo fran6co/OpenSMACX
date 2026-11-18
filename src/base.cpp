@@ -204,13 +204,6 @@ static void base_yield_apply_tile(Base *&base, int &map_width, int x, int y, boo
     // Resource 3 returns zero but clears TileYieldRestricted: keep its call.
     map_width = MapLongitudeBounds;
 }
-static int base_yield_wrap_x(int x, int map_width) {
-    if ((MapIsFlat & 1) == 0) {
-        if (x < 0) x += map_width;
-        else if (x >= map_width) x -= map_width;
-    }
-    return x;
-}
 
 
 
@@ -1241,14 +1234,7 @@ void __cdecl base_kill(int base_id) {
         }
     }
     for (i = 0; i < 49; i++) {
-        int x_radius = x + RadiusOffsetX[i];
-        if (!(MapIsFlat & 1)) {
-            if (x_radius < 0) {
-                x_radius += MapLongitudeBounds;
-            } else if (x_radius >= MapLongitudeBounds) {
-                x_radius -= MapLongitudeBounds;
-            }
-        }
+        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (y_radius >= 0 && y_radius < MapLatitudeBounds
             && x_radius >= 0 && x_radius < MapLongitudeBounds) {
@@ -4014,25 +4000,11 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
                   || assume_improved) ? solar : 0;
         if (bit & BIT_SOLAR_TIDAL) {
             // Each adjacent echelon mirror belonging to the current base's
-            // faction reflects one more energy onto this collector. The x wrap
-            // is xrange() inlined, except that the original masks MapIsFlat with
-            // 1 rather than testing it for nonzero.
-            BOOL is_flat = MapIsFlat & 1;
-            int longitude_bounds = MapLongitudeBounds;
+            // faction reflects one more energy onto this collector.
             for (int i = 0; i < 8; i++) {
-                int x_adj = x + VehMoveDeltaX[i];
-                if (!is_flat) {
-                    if (x_adj < 0) {
-                        x_adj += longitude_bounds;
-                    } else if (x_adj >= longitude_bounds) {
-                        x_adj -= longitude_bounds;
-                    }
-                }
+                int x_adj = wrap_map_x(x + VehMoveDeltaX[i]);
                 int y_adj = y + VehMoveDeltaY[i];
-                if (y_adj < 0 || y_adj >= MapLatitudeBounds) {
-                    continue;
-                }
-                if (x_adj < 0 || x_adj >= longitude_bounds) {
+                if (!on_map(x_adj, y_adj)) {
                     continue;
                 }
                 Map *adjacent = yield_tile(x_adj, y_adj);
