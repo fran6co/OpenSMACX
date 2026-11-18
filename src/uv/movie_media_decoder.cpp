@@ -72,33 +72,7 @@ MediaDecoderIdctStorage movie_media_idct_storage = {
 extern "C" void __cdecl sub_5d29e1(int *source, int *destination);
 extern "C" void __cdecl sub_5d2c0a(int *destination, int *source);
 
-static DWORD movie_media_read_bits32(const BYTE *input, DWORD bit_position) {
-  const DWORD word_index = bit_position >> 5;
-  const DWORD shift = bit_position & 31;
-  DWORD high_word;
-  DWORD low_word;
-  // The original SHLD path loads both adjacent DWORDs, including at shift 0.
-  std::memcpy(&high_word, input + word_index * 4, sizeof(high_word));
-  std::memcpy(&low_word, input + word_index * 4 + 4, sizeof(low_word));
-  if (shift == 0) return high_word;
-  return (high_word << shift) | (low_word >> (32 - shift));
-}
 
-static DWORD movie_media_decode_predictor_delta(
-    const BYTE *input, DWORD &bit_position, const BYTE *lookup,
-    unsigned lookup_shift) {
-  const BYTE code = lookup[movie_media_read_bits32(input, bit_position) >>
-                           lookup_shift];
-  const unsigned width = code >> 4;
-  bit_position += code & 0x0f;
-  if (width == 0) return 0;
-
-  const DWORD value = movie_media_read_bits32(input, bit_position) >>
-                      (32 - width);
-  bit_position += width;
-  if (((value >> (width - 1)) & 1) != 0) return value;
-  return value - ((1u << width) - 1u);
-}
 
 /*
 Purpose: Decode one 64-coefficient block for the movie codec: dequant the DC
@@ -123,103 +97,18 @@ Status: Coverage transcription - unclaimed body (the original keeps the
         TRIED).
 */
 
-static LONG movie_media_add_ecx(LONG value, int amount) {
-    DWORD bits;
-    std::memcpy(&bits, &value, sizeof(bits));
-    bits += static_cast<DWORD>(amount);
-    std::memcpy(&value, &bits, sizeof(value));
-    return value;
-}
 
-static int movie_media_low32(__int64 value) {
-    const DWORD bits = static_cast<DWORD>(value);
-    int result;
-    std::memcpy(&result, &bits, sizeof(result));
-    return result;
-}
 
-static int movie_media_low32_after_arithmetic_shift16(__int64 value) {
-    uint64_t bits;
-    std::memcpy(&bits, &value, sizeof(bits));
-    // Only the low dword of the arithmetic shift survives; sign extension
-    // above bit 47 cannot affect those 32 result bits.
-    const DWORD low = static_cast<DWORD>(bits >> 16);
-    int result;
-    std::memcpy(&result, &low, sizeof(result));
-    return result;
-}
 
-static int movie_media_negate32(int value) {
-    DWORD bits;
-    std::memcpy(&bits, &value, sizeof(bits));
-    bits = 0u - bits;
-    std::memcpy(&value, &bits, sizeof(value));
-    return value;
-}
 
-static int movie_media_signed32(DWORD value) {
-    int result;
-    std::memcpy(&result, &value, sizeof(result));
-    return result;
-}
 
-static DWORD movie_media_raw_word_at(const DWORD *base, DWORD index_bits) {
-    uintptr_t address = reinterpret_cast<uintptr_t>(base);
-    address += static_cast<uintptr_t>(index_bits) * sizeof(DWORD);
-    DWORD value;
-    std::memcpy(&value, reinterpret_cast<const void *>(address), sizeof(value));
-    return value;
-}
 
-static void movie_media_raw_workspace_store(DWORD index_bits, DWORD value) {
-    uintptr_t address = reinterpret_cast<uintptr_t>(
-        movie_media_transform_workspace.row_and_butterfly_words);
-    address += static_cast<uintptr_t>(index_bits) * sizeof(DWORD);
-    std::memcpy(reinterpret_cast<void *>(address), &value, sizeof(value));
-}
 
-static DWORD movie_media_int_bits(int value) {
-    DWORD bits;
-    std::memcpy(&bits, &value, sizeof(bits));
-    return bits;
-}
 
-// The pinned x86 ADD/SUB/SHL operations wrap as 32-bit bit patterns.
-// Avoid relying on signed-overflow behavior in the translated row path.
-static int movie_media_add32(int left, int right) {
-    return movie_media_signed32(movie_media_int_bits(left) +
-                                 movie_media_int_bits(right));
-}
 
-static int movie_media_sub32(int left, int right) {
-    return movie_media_signed32(movie_media_int_bits(left) -
-                                 movie_media_int_bits(right));
-}
 
-static int movie_media_mul2(int value) {
-    return movie_media_signed32(movie_media_int_bits(value) << 1);
-}
 
-static int movie_media_signed_high_product(int left, int right) {
-    const __int64 product = static_cast<__int64>(left) * right;
-    uint64_t bits;
-    std::memcpy(&bits, &product, sizeof(bits));
-    return movie_media_signed32(static_cast<DWORD>(bits >> 32));
-}
 
-static MediaTransformRegisterContinuation movie_media_transform_return(
-    MediaTransformBitState &reader, const BYTE *cursor, DWORD accumulator,
-    LONG available_bits, int coefficient_index) {
-    reader.cursor = cursor;
-    reader.accumulator = accumulator;
-    reader.available_bits = available_bits;
-    MediaTransformRegisterContinuation result;
-    result.esi_cursor = cursor;
-    result.ebp_accumulator = accumulator;
-    result.ecx_available_bits = available_bits;
-    result.edi_coefficient_index = coefficient_index;
-    return result;
-}
 
 // 0x005CF150 is assembled from src/movie_media_decoder_uv.asm: it dispatches
 // through an eight-entry code-pointer table in UVA_DATA (0x009C9AA8), which
@@ -493,57 +382,13 @@ m5cf2f0_5cf5a9:
     }
 }
 
-static DWORD movie_media_coefficient_entry(DWORD code) {
-  const DWORD *const words = movie_media_coefficient_tables.words;
-  if (code >= 0x8000)
-    return words[65 + (code >> 13)]; // 009C9698
-  if (code >= 0x0800)
-    return words[77 + (code >> 9)];  // 009C96C8
-  if (code >= 0x0400)
-    return words[133 + (code >> 7)]; // 009C97A8
-  if (code >= 0x0200)
-    return words[133 + (code >> 5)]; // same 009C97A8 base
-  if (code >= 0x0100)
-    return words[149 + (code >> 4)]; // 009C97E8
-  if (code >= 0x0080)
-    return words[165 + (code >> 3)]; // 009C9828
-  if (code >= 0x0040)
-    return words[181 + (code >> 2)]; // 009C9868
-  return words[197 + (code >> 1)];   // 009C98A8
-}
 
-static int movie_media_sar17(DWORD value) {
-  // Pinned 5D2CC5..5D2D09 and 5D119D use SAR17 without a division bias.
-  // VC6 preserves the DWORD bits on conversion and shifts signed values
-  // arithmetically, including negative values not divisible by 2^17.
-  return static_cast<int>(value) >> 17;
-}
 
 // The first five source-owned coefficient words are the exact operands read
 // at 009C9594..009C95A4. They remain part of the shared decoder table window.
-// The image's FILD inputs retain signed dword precision through the x87
-// arithmetic. Promote each loaded binary32 coefficient before calculation;
-// these binary64 intermediates avoid float truncation but do not claim the
-// original x87 precision/control-word result for every input.
 // The TRIED lines in this family retain superseded General-transcript history.
-// Current bodies use source-owned coefficient words and qword low-DWORD
-// extraction; prior numeric-cast/raw-alias descriptions are not current code.
-static int movie_media_idct_coefficient_integer(unsigned index) {
-    return movie_media_signed32(movie_media_coefficient_tables.words[index]);
-}
 
-static float movie_media_idct_coefficient_float(unsigned index) {
-    float value;
-    std::memcpy(&value, &movie_media_coefficient_tables.words[index],
-                sizeof(value));
-    return value;
-}
 
-static int movie_media_idct_biased_low_dword(const double &value) {
-    DWORD low_dword;
-    std::memcpy(&low_dword, &value, sizeof(low_dword));
-    return movie_media_signed32(low_dword);
-}
 
 // ORIGINAL: 0x005D29E1 sub_5d29e1 0x005D29E1-0x005D2B20 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned005D29E1..005D2B20 full decode ends RET; eight destination offsets are [0, 36, 72, 108, 144, 180, 216, 252]; SAR17 count is 0. The row variant has an AC-zero broadcast path; dense siblings differ by eight final SAR17 reductions.", "Current ordinary extern-C declaration sub_5d29e1 has the unique independently owned COFF COMDAT _sub_5d29e1 in the qualified production object; only its current emitted-name fact is corrected.", "The stripped original provides no nominal name/type proof. Original ESI/EDI entry contracts and the current normalized cdecl mismatch remain recovery obligations; historical asm-only assertions are unproved hypotheses, not exclusions. No byte, ABI, lifetime or complete-behavior claim is granted."], "reason": "Retain the original butterfly identity and spans while selecting its actual current emitted symbol for strict observation."}
@@ -2034,18 +1879,7 @@ __declspec(naked) void __cdecl sub_5d1278(BYTE *base, int stride, MediaDecoderCo
 // Source-owned 005CF5C7 and 005CF852 row converters. Their table slices are
 // the three observed 128-DWORD banks at the front of the shared conversion
 // owner; the source indices select entries using bits 17..23.
-// Preserve the pinned access sequence with volatile loads. The destination
-// read is a native, redundant DWORD read; it is intentionally retained.
-static DWORD movie_pixel_read_dword_address(uintptr_t address) {
-  const volatile DWORD *const word =
-      reinterpret_cast<const volatile DWORD *>(address);
-  return *word;
-}
 
-static DWORD movie_pixel_read_dword_at(const void *base, DWORD byte_offset) {
-  const uintptr_t address = reinterpret_cast<uintptr_t>(base) + byte_offset;
-  return movie_pixel_read_dword_address(address);
-}
 
 // ORIGINAL: 0x005CF5C7 OutputPixelRow 0x005CF5C7-0x005CF852 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["recovery/tasks/movie-decoder-owner-oct5.json", "pinned caller/body and shared-storage review; fresh VC6 public symbol", "Use the single MediaConversionTableStorage owner and its observed three 128-DWORD output banks; preserve the row's 8-pair lookup order. No independent table copy."], "reason": "Faithful semantic media decoder owner recovery with normalized custom-register helper interfaces. Original identities, spans and historical findings retained; no matching, runtime or game acceptance granted."}
@@ -3699,70 +3533,23 @@ m5ce640_5ce6dc:
 // accumulated sum - sub_5d2761 forms `(sum >> 23)`, `(sum >> 11) & 0x1ff` and
 // `sum & 0x1ff` and adds one entry from each - plus a 256-entry byte remap
 // that sub_5ceb12 packs two at a time into each output word.
-static DWORD *const MovieBlendTableHi =
-    movie_media_conversion_tables.blend_high;
-static DWORD *const MovieBlendTableMid =
-    movie_media_conversion_tables.blend_mid;
-static DWORD *const MovieBlendTableLow =
-    movie_media_conversion_tables.blend_low;
-static unsigned char *const MovieByteRemapLut =
-    reinterpret_cast<unsigned char *>(movie_media_conversion_tables.remap_or_lookup_storage.words);
 
 // A second tier of the same family, named from the lane each one indexes.
 // sub_5d2834 / sub_5d2901 build a sum and pull one entry per BYTE lane out of
 // it - `[sum >> 0x18]`, `[sum & 0xff]`, `[(sum >> 8) & 0xff]` - so each of
 // these is a 256-entry-per-byte-value contribution table for one lane.
-static DWORD *const MovieColourTableByte3 =
-    movie_media_conversion_tables.contribution_byte3;
-static DWORD *const MovieColourTableByte1 =
-    movie_media_conversion_tables.contribution_byte1;
-static DWORD *const MovieColourTableByte0 =
-    movie_media_conversion_tables.contribution_byte0;
 // sub_5d1b88 / sub_5d2037 index these three by three DIFFERENT coefficient
 // streams rather than by byte lanes: `data[i]`, `tables[i]` and
 // `tables[0x40 + i]` respectively.
-static DWORD *const MovieBlendTableData =
-    movie_media_conversion_tables.contribution_byte3 + 256;
-static DWORD *const MovieBlendTableQuant =
-    movie_media_conversion_tables.contribution_byte1 + 256;
-static DWORD *const MovieBlendTableQuant2 =
-    movie_media_conversion_tables.contribution_byte0 + 256;
 
 
 // 0x005CEB12 is assembled from src/movie_media_decoder_uv.asm: its eight
 // `[ebp*1+disp32]` stores (89 04 2D) are a form VC6 inline asm rewrites as
 // `[ebp+disp8]`. The declaration in general.h names the assembled symbol.
 
-// Volatile accesses preserve the pinned order on unchecked indices. On the
-// 32-bit target uintptr_t addition supplies native modulo-2^32 addressing;
-// no bounds check/clamp is introduced. Host controls exercise valid indices.
-static int movie_blend_read_index(const int *base, DWORD word_offset) {
-    const uintptr_t address = reinterpret_cast<uintptr_t>(base) +
-                              static_cast<uintptr_t>(word_offset) * 4u;
-    return *reinterpret_cast<const volatile int *>(address);
-}
 
-static DWORD movie_blend_read_word(const DWORD *base, DWORD word_index) {
-    const uintptr_t address = reinterpret_cast<uintptr_t>(base) +
-                              static_cast<uintptr_t>(word_index) * 4u;
-    return *reinterpret_cast<const volatile DWORD *>(address);
-}
 
-static DWORD movie_blend_low_half_ordered(DWORD sum) {
-    const DWORD high = movie_blend_read_word(MovieBlendTableHi, sum >> 0x17);
-    const DWORD middle = movie_blend_read_word(
-        MovieBlendTableMid, (sum & 0x000ff800u) >> 0x0b);
-    const DWORD low = movie_blend_read_word(MovieBlendTableLow, sum & 0x1ffu);
-    return (high | middle | low) & 0xffffu;
-}
 
-static DWORD movie_blend_high_half_ordered(DWORD sum) {
-    const DWORD high = movie_blend_read_word(MovieBlendTableHi, sum >> 0x17);
-    const DWORD low = movie_blend_read_word(MovieBlendTableLow, sum & 0x1ffu);
-    const DWORD middle = movie_blend_read_word(
-        MovieBlendTableMid, (sum & 0x000ff800u) >> 0x0b);
-    return (high | low | middle) & 0xffff0000u;
-}
 
 // ORIGINAL: 0x005D2037 sub_5d2037 0x005D2037-0x005D2536 FILE BYTE_EXACT
 // symbol    ?sub_5d2037@@YAXPAH0PAI@Z
@@ -4695,17 +4482,6 @@ __declspec(naked) void __cdecl sub_5d1b88(unsigned int *packed_output, int *data
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
 
-static DWORD movie_coefficient_pack_word(int index) {
-    // Pinned 5D2536 indexes DWORDs at 9C672C + index*8: this is word 512
-    // in the source-owned remap/lookup window at 9C5F2C.
-    // Preserve flat x86 address arithmetic, including unchecked indices;
-    // indexing the declared subarray would introduce an unproved bound.
-    const DWORD displacement = (DWORD)index * 8u;
-    const uintptr_t address = reinterpret_cast<uintptr_t>(
-        &movie_media_conversion_tables.remap_or_lookup_storage.words[512])
-        + static_cast<int32_t>(displacement);
-    return *reinterpret_cast<const volatile DWORD *>(address);
-}
 
 // ESI supplies 16 coefficient indices; EDI supplies 8 lower and 8 upper
 // selector indices at offsets 0 and 64; EBP receives eight packed DWORDs.
