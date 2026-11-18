@@ -122,7 +122,7 @@ Status: homed on this pass; its forwarder and its archive unit are gone, and
 int MultiDebug::init(Net *net, Win *window, unsigned char *shadow_table) {
     net_ = net;
     int const result =
-        GraphicWin::init(0, 0, 0x96, 0x12c, 0, 0x1000002, window, 0, 0);
+        GraphicWin::init(0, 0, 0x96, 0x12c, 0x1000002, window);
     if (result != 0) {
         return result;
     }

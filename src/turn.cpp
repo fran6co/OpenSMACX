@@ -2674,7 +2674,7 @@ int Demo::init() {
     Buffer local_buffer;
 
     const int large_layout = WinScreenWidth != 0x320;
-    GraphicWin::init(0, 0, WinScreenWidth, WinScreenHeight, 0, 0, 0, 0, 0);
+    GraphicWin::init(0, 0, WinScreenWidth, WinScreenHeight, 0, 0);
     load_pcx(const_cast<char *>(
         large_layout ? "demosplash1024.pcx" : "demosplash800.pcx"), 0, 10, 0xEC);
 

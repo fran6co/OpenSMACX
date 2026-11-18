@@ -630,7 +630,7 @@ int BaseButton::init(LPCSTR name, int id, int x, int y, int width, int height,
     // bit rather than masked in.
     const int style = 0x01000320 | (style_flag ? 0x8000 : 0);
     const int status = GraphicWin::init(
-        x, y, width, height, nullptr, style, parent, nullptr, nullptr);
+        x, y, width, height, style, parent);
     if (status) {
         return status;
     }

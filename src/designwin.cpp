@@ -186,8 +186,8 @@ int SelectPartWin::exec(int x, int y, int faction, int kind, int selected,
 
     const int width = TutWinDesWindow.pixel_width();
     const int height = TutWinDesWindow.pixel_height();
-    GraphicWin::init(0, 0, width, height, 0, 0x1000020,
-                     static_cast<Win *>(&TutWinDesWindow), 0, 0);
+    GraphicWin::init(0, 0, width, height, 0x1000020,
+                     static_cast<Win *>(&TutWinDesWindow));
     GraphicWin::fill(9);
     RECT frame;
     frame.left = 0x17;
@@ -1269,9 +1269,8 @@ int DesignWin::init() {
 
     const int frame_height = 0x258 - MainInterfaceGlobal.field_D7C_;
     buffer_.load_pcx("deswin.pcx", 0, 0x0A, 0xEC);
-    GraphicWin::init(0, 0, buffer_.pixel_width(), frame_height, 0, 0x01000000,
-                     static_cast<Win *>(static_cast<GraphicWin *>(&ConsoleGlobal)),
-                     0, 0);
+    GraphicWin::init(0, 0, buffer_.pixel_width(), frame_height, 0x01000000,
+                     static_cast<Win *>(static_cast<GraphicWin *>(&ConsoleGlobal)));
     move((WinScreenWidth - pixel_width() + 0x20) / 2,
          -pixel_height() - MainInterfaceGlobal.field_D7C_ + WinScreenHeight);
     // The source pointer is the null-checked Buffer view of this; the extent

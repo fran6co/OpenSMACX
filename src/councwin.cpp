@@ -686,7 +686,7 @@ void CouncWin::init(int proposal, int faction_id) {
     }
     int left = (WinScreenWidth - 0x30c) / 2;
     GraphicWin::init(left, height - window_height, 0x32c,
-                     window_height, nullptr, 0x1000000, &ConsoleGlobal, nullptr, nullptr);
+                     window_height, 0x1000000, &ConsoleGlobal);
     fill(9);
 
     StringTemp[0] = 0;

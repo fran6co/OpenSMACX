@@ -100,7 +100,7 @@ int StringBox::init(int x, int y, int width, int height, Win *parent,
         flags = 0x1000120;
     }
     const int init_result =
-        GraphicWin::init(x, y, width, height, 0, flags, parent, 0, 0);
+        GraphicWin::init(x, y, width, height, flags, parent);
     if (init_result != 0) {
         return init_result;
     }

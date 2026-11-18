@@ -7248,8 +7248,8 @@ void BaseWin::init() {
     time_.init(BaseWin::timer_callback, 0, this, 50, 5);
     const int left = (WinScreenWidth - 726) / 2;
     const int top = WinScreenHeight - MainInterfaceGlobal.field_D7C_ - window_height;
-    GraphicWin::init(left, top, 758, window_height, 0, 0x05000000,
-        static_cast<Win *>(static_cast<GraphicWin *>(&ConsoleGlobal)), 0, 0);
+    GraphicWin::init(left, top, 758, window_height, 0x05000000,
+        static_cast<Win *>(static_cast<GraphicWin *>(&ConsoleGlobal)));
     GraphicWin::fill(9);
     r = *buffer_working_rect();
     r.left += 23; r.right -= 55; r.bottom += 3;

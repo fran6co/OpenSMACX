@@ -4037,7 +4037,7 @@ void DipEdit::init(int faction_index) {
     height_ = 0x18E;
     faction_index_ = faction_index;
 
-    GraphicWin::init(0, 0, 0x2F6, 0x18E, 0, 0x1000000, 0, 0, 0);
+    GraphicWin::init(0, 0, 0x2F6, 0x18E, 0x1000000, 0);
     center();
     fill(9);
 

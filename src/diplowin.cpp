@@ -280,10 +280,8 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
   rect_F2C_ = rc;
   rc.bottom = rc.top + 0x14;
 
-  GraphicWin::init(window_x, window_y, 0x340, window_height,
-                   0, 0x05000000,
-                   static_cast<GraphicWin *>(&ConsoleGlobal),
-                   0, 0);
+  GraphicWin::init(window_x, window_y, 0x340, window_height, 0x05000000,
+                   static_cast<GraphicWin *>(&ConsoleGlobal));
   field_16C_ = 0x1A;
   fill(9);
   static_cast<Buffer &>(*this).box_sprite(&rect_EDC_, &InterfaceBoxStyles[9]);

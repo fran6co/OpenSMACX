@@ -3589,8 +3589,7 @@ void Datalink::init() {
     const int frame_height = entry_frame_rect_.bottom - entry_frame_rect_.top;
     const int frame_width = entry_frame_rect_.right - entry_frame_rect_.left;
     GraphicWin::init(entry_frame_rect_.left, entry_frame_rect_.top,
-                     frame_width, frame_height,
-                     0, 0x1000000, parent, 0, 0);
+                     frame_width, frame_height, 0x1000000, parent);
     GraphicWin::fill(9);
 
     rect.left = 0x17;

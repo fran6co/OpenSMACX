@@ -549,8 +549,8 @@ int EditBox::init(int x, int y, int width, int height, Win *parent,
     if ((parent->iFlags_ & 0x1000) == 0) {
         style_flags = 0x102020;
     }
-    const int result = GraphicWin::init(x, y, width, height, 0,
-                                        style_flags, parent, 0, 0);
+    const int result = GraphicWin::init(x, y, width, height,
+                                        style_flags, parent);
     if (result != 0) return result;
 
     Buffer::set_markup_enabled(0);

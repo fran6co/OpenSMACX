@@ -69,7 +69,7 @@ int Menu::init(Win *owner) {
     const int top = owner->outer_rect().top - height;
     const int result = GraphicWin::init(
         owner->outer_rect().left, top, width,
-        height, 0, 0x8020, owner, 0, 0);
+        height, 0x8020, owner);
     if (result != 0) return result;
 
     Buffer::set_markup_enabled(0);

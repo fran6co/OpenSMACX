@@ -89,8 +89,8 @@ double Gamma::exec(Palette *target, float initial_gamma, int apply_only) {
     offset_rect(&rect5_, rect_width(&rect5_) + 3, 0);
 
     font_.init("Arial", 14, 1);
-    GraphicWin::init(0, 0, screen_width, screen_height, 0, 0,
-                     0, 0, 0);
+    GraphicWin::init(0, 0, screen_width, screen_height, 0,
+                     0);
     GraphicWin::fill(0xF8);
 
     scroll_.init(&rect3_, this, 0, 0);

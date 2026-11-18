@@ -392,7 +392,7 @@ int SpriteBox::attach(GraphicWin *parent, int x, int y, int flags) {
     Dialog::window_y_ = y;
     if ((parent->iFlags_ & 0x1000) == 0) flags |= 0x100000;
     const int init_result = GraphicWin::init(
-        x, y, Dialog::field_5C_, Dialog::field_60_, 0, flags, parent, 0, 0);
+        x, y, Dialog::field_5C_, Dialog::field_60_, flags, parent);
     if (init_result != 0) return init_result;
 
     spots_.init(static_cast<int>(list_.entry_count_));

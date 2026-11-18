@@ -496,7 +496,7 @@ int EditGroup::attach(GraphicWin *parent, int x, int y, int flags) {
     Dialog::window_y_ = y;
     if ((parent->iFlags_ & 0x1000) == 0) flags |= 0x100000;
     const int result = GraphicWin::init(x, y, Dialog::field_5C_,
-                                        Dialog::field_60_, 0, flags, parent, 0, 0);
+                                        Dialog::field_60_, flags, parent);
     if (result != 0) return result;
 
     Buffer::set_text_color(Dialog::text_color_a_, Dialog::text_color_b_,

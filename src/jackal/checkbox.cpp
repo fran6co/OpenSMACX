@@ -444,7 +444,7 @@ int CheckBox::attach(GraphicWin *parent, int x, int y, int flags) {
     Dialog::window_y_ = y;
     if ((parent->iFlags_ & 0x1000) == 0) flags |= 0x100000;
     const int init_result = GraphicWin::init(
-        x, y, Dialog::field_5C_, Dialog::field_60_, 0, flags, parent, 0, 0);
+        x, y, Dialog::field_5C_, Dialog::field_60_, flags, parent);
     if (init_result != 0) return init_result;
     Buffer::set_text_color(text_color_a_, text_color_b_, text_color_c_, text_color_d_);
     Buffer::set_text_color2(text_color_2a_, text_color_2b_, text_color_2c_, text_color_2d_);

@@ -131,8 +131,8 @@ void AlphaSave::init() {
     int x = (WinScreenWidth - 0x13C) / 2 - inset;
     int y = WinScreenHeight - MainInterfaceGlobal.panel_height() - top - 0x177;
     GraphicWin::init(x, y, visible ? 0x18A : 0x14E,
-                     (visible ? 0 : -9) + top + 0x177, 0, 0x1001000,
-                     visible ? &ConsoleGlobal : 0, 0, 0);
+                     (visible ? 0 : -9) + top + 0x177, 0x1001000,
+                     visible ? &ConsoleGlobal : 0);
     GraphicWin::fill(9);
 
     RECT frame = *buffer_working_rect();

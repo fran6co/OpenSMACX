@@ -91,7 +91,7 @@ static inline void rect_shift_y(RECT *rect, int dy) {
 // TRIED: many named C locals (rect, w, qv, qh, str_height, half, i, ...) push the compiler to `sub esp,N` for the frame; original reserves one dword via `push ecx` for the single Buffer* local that survives calls. Structure/order matches Ghidra.
 void Interlude::exec(char *section) {
     close();
-    GraphicWin::init(0, 0, WinScreenWidth, WinScreenHeight, 0, 0, 0, 0, 0);
+    GraphicWin::init(0, 0, WinScreenWidth, WinScreenHeight, 0, 0);
     set_text_color(MessageWinTextColor, -1, 1, 1);
     set_text_color2(MessageWinTextColor, -1, 1, 1);
     set_text_color3(MessageWinTextColor, -1, 1, 1);

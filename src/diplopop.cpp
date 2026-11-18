@@ -188,8 +188,7 @@ void DiploPop::init() {
 
     GraphicWin::init(0, 0, 0x2BC,
                      (WinScreenWidth == 0x320)
-                         ? (0x258 - MainInterfaceGlobal.panel_height()) : 0x1C2,
-                     0, 0x05000000, static_cast<Win *>(&ConsoleGlobal), 0, 0);
+                         ? (0x258 - MainInterfaceGlobal.panel_height()) : 0x1C2, 0x05000000, static_cast<Win *>(&ConsoleGlobal));
     field_16C_ = 0x1A;
     move((WinScreenWidth - pixel_width() + 0x20) / 2,
          WinScreenHeight - pixel_height() - MainInterfaceGlobal.panel_height());

@@ -452,8 +452,7 @@ int MainInterface::init(int) {
               end_turn_rect_.bottom - end_turn_rect_.top);
     GraphicWin::init(window_bounds_.left, window_bounds_.top,
                      window_bounds_.right - window_bounds_.left,
-                     window_bounds_.bottom - window_bounds_.top,
-                     0, 0x1400000, 0, 0, 0);
+                     window_bounds_.bottom - window_bounds_.top, 0x1400000, 0);
     // `this` converts to Buffer * (null-tested in the image) as the copy
     // destination; the destination size is read through this directly.
     assets.copy(this, 0, 0, assets.pixel_width(), assets.pixel_height(),

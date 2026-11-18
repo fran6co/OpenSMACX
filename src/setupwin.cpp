@@ -314,8 +314,8 @@ int SetupWin::do_menu_rightside(char *filename, int flags) {
     int y = field_A18_ - menu_height;
     int x = field_A14_ - buffer2_.dib_.bmiHeader.biWidth;
     GraphicWin::init(x, y,
-                     buffer2_.dib_.bmiHeader.biWidth, menu_height, nullptr, 0x1000020,
-                     opening_window_snapshot_, nullptr, nullptr);
+                     buffer2_.dib_.bmiHeader.biWidth, menu_height, 0x1000020,
+                     opening_window_snapshot_);
 
     if (ExpansionEnabled) {
         color_table_ = RedTintColorTable;

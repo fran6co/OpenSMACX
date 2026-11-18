@@ -1113,8 +1113,7 @@ int ListBox::attach(GraphicWin *a1, int a2, int a3, int a4) {
     int init_result = GraphicWin::init(
         a2, a3,
         static_cast<int32_t>(Dialog::field_5C_),
-        static_cast<int32_t>(Dialog::field_60_),
-        0, flags, a1, 0, 0);
+        static_cast<int32_t>(Dialog::field_60_), flags, a1);
     if (init_result != 0) {
         return init_result;
     }

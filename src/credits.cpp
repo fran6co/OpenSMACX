@@ -134,7 +134,7 @@ void Credits::close() {
 #pragma optimize("y", off)
 void Credits::exec() {
   close();
-  GraphicWin::init(0, 0, WinScreenWidth, WinScreenHeight, 0, 0, 0, 0, 0);
+  GraphicWin::init(0, 0, WinScreenWidth, WinScreenHeight, 0, 0);
 
   StringTemp[0] = 0;
   strcat(StringTemp, WinScreenWidth == 800 ? "credits.pcx" : "credits2.pcx");

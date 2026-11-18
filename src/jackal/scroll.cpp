@@ -454,11 +454,11 @@ int Scroll::init(int x, int y, int width, int height, Win *parent,
     }
     int result;
     if (ScrollNonClientInit != 0) {
-        result = GraphicWin::init(x, y, width, height, nullptr, flags | 0x9020,
-                                  parent, nullptr, nullptr);
+        result = GraphicWin::init(x, y, width, height, flags | 0x9020,
+                                  parent);
     } else {
-        result = GraphicWin::init(x, y, width, height, nullptr, flags | 0x1020,
-                                  parent, nullptr, nullptr);
+        result = GraphicWin::init(x, y, width, height, flags | 0x1020,
+                                  parent);
     }
     if (result != 0) {
         return result;

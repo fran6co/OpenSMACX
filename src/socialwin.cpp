@@ -2610,8 +2610,8 @@ void SocialWin::init(int faction_id) {
         int cx = (WinScreenWidth - 0x321) / 2;
         // Original 0x007AF59C is MainInterface::field_D7C_ at +0xD7C.
         int cy = (WinScreenHeight - MainInterfaceGlobal.panel_height()) - 0x162;
-        GraphicWin::init(cx, cy, 0x341, 0x162, 0, 0x1000000,
-            static_cast<Win *>(&ConsoleGlobal), 0, 0);
+        GraphicWin::init(cx, cy, 0x341, 0x162, 0x1000000,
+            static_cast<Win *>(&ConsoleGlobal));
     }
     GraphicWin::fill(9);
     rect.left = 0x17;

@@ -925,7 +925,7 @@ void PullDown::init(Menu *menu) {
         PullDownDefaultFont = FontDefault;
     }
     menu_ = menu;
-    GraphicWin::init(0, 0, 0, 0, 0, 0, 0, 0, 0);
+    GraphicWin::init(0, 0, 0, 0, 0, 0);
     set_markup_enabled(0);
 }
 

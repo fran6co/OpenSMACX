@@ -122,8 +122,7 @@ int AlphaMenu::init(Win *parent) {
 
   sheet.close();
   const int init_result = GraphicWin::init(
-      0, 0, 0x51, 0x8F, nullptr, 0x1000000, &MainInterfaceGlobal,
-      nullptr, nullptr);
+      0, 0, 0x51, 0x8F, 0x1000000, &MainInterfaceGlobal);
   if (init_result != 0) return init_result;
 
   Buffer::set_markup_enabled(0);

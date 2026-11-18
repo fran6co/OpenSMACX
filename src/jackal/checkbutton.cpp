@@ -171,8 +171,8 @@ int CheckButton::init(int x, int y, GraphicWin *parent, int toggle_argument) {
     // unchecked Sprite's iHeight_ at +0x1C.
     const int height = unchecked_sprite_->height();
     const int width = checked_sprite_->width();
-    const int result = GraphicWin::init(x, y, width, height, 0, 0x1020,
-                                        parent, 0, 0);
+    const int result = GraphicWin::init(x, y, width, height, 0x1020,
+                                        parent);
     if (result != 0) {
         return result;
     }

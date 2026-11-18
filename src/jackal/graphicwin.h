@@ -155,6 +155,16 @@ class GraphicWin : public Win, public Buffer {
   // A plain member: no virtual, so nothing adjusts the receiver and VC6 can
   // tail-jump it.
   void j_close();
+  // Untitled child window: the nine-argument init with no caption, menu or
+  // border. An inline: the dialog controls' attach (CheckBox 0x0060E86D,
+  // RadioButton, ListBox, SpriteBox, EditGroup) form the GraphicWin receiver
+  // before the sizes (`lea eax, [eax + esi - 0xa34]` ... `mov ecx, eax`),
+  // keep x in ebp and read y twice from its parameter home.
+  // WORKAROUND(decl): the parameter set of the original overload is unknown
+  // (the caption may have been one of them).
+  int init(int x, int y, int width, int height, int flags, Win *parent) {
+    return init(x, y, width, height, 0, flags, parent, 0, 0);
+  }
   int init(int x, int y, int width, int height, LPSTR title, int flags,
            Win *parent, Menu *menu, BorderSizing *border);
   int init(RECT *bounds, char *caption, int flags, Win *parent,
