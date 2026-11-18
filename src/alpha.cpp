@@ -1432,6 +1432,10 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
         return true;
     }
     for (int i = 0; i < MaxTerrainNum; i++) {
+        // A named order index: the image carries (i + 4) * 12 as one byte
+        // offset from Order (0x30 .. cmp 0x120); `Order[i + 4]` at each use
+        // gives a pointer IV tested against the table address instead.
+        int order_id = i + ORDER_FARM;
         text_get();
         // Land + sea names and prerequisites; the bit masks are static data.
         // The image walks name[] and order[] with one pointer (dec/jne at
@@ -1453,9 +1457,9 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
             parse_say(0, Terraforming[i].name[j], -1, -1);
             StringTemp[0] = 0;
             parse_string(order_buf, StringTemp);
-            Order[i + 4].order[j] = StringTable.put(StringTemp);
+            Order[order_id].order[j] = StringTable.put(StringTemp);
         }
-        Order[i + 4].letter = text_item_string();
+        Order[order_id].letter = text_item_string();
         Terraforming[i].shortcuts = text_item_string();
     }
     if (text_open(AlphaxFileID, "RESOURCEINFO")) {
@@ -1802,7 +1806,7 @@ for (i = 0; i < MaxCompassNum; i++) {
     MainInterfaceGlobal.flat_button(32).set_bubble_text(table_text(Natural[LM_JUNGLE].name_short));
     MainInterfaceGlobal.flat_button(33).set_bubble_text(StringTable.get(Natural[LM_DUNES].name_short));
     MainInterfaceGlobal.flat_button(34).set_bubble_text(table_text(Natural[LM_URANIUM].name_short));
-    MainInterfaceGlobal.flat_button(35).set_bubble_text(table_text(Natural[LM_GEOTHERMAL].name_short));
+    MainInterfaceGlobal.flat_button(35).set_bubble_text(StringTable.get(Natural[LM_GEOTHERMAL].name_short));
     return false;
 }
 
