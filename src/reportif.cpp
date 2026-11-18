@@ -1066,7 +1066,7 @@ void ReportWin::on_left_click(int x, int y) {
             ReportIfGlobal.bl_anim();
             time1_.init(bl_daemon, reinterpret_cast<int>(&ReportIfGlobal), 150, 5);
             time1_.start();
-            return;
+            break;
         }
         case 5: {
             field_59AC_ = selected;
@@ -1087,7 +1087,7 @@ void ReportWin::on_left_click(int x, int y) {
             ReportIfGlobal.bl_anim();
             time1_.init(bl_daemon, reinterpret_cast<int>(&ReportIfGlobal), 150, 5);
             time1_.start();
-            return;
+            break;
         }
         case 7: {
             if (ReportIfGlobal.report_faction_id_ != ConsoleGlobal.faction_id_) return;
