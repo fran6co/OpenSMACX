@@ -160,6 +160,20 @@ Purpose: Sort one pass of the string list: walk the ring from the current
 // symbol    ?sort_sessions@AlphaNetStringStruct@@QAEXXZ
 Status: Coverage transcription - unclaimed body
 */
+// WORKAROUND(decl): sort_sessions expands the list's current_entry() under
+// each head test: the image reuses EAX for every link and forms the GUID
+// address with lea (0x005D4A4E..0x005D4A54, 0x005D4AC8..0x005D4ACE), which
+// only the if/return inline body gives (a ?: helper and the written-out
+// chain compile to mov/add in the result register and swap EBX/EBP through
+// the whole function). AlphaNetStringStruct::current_entry is declared here
+// but defined out of line in net_class.cpp, so this twin carries its body.
+static inline NetAllocationNode *sort_sessions_current(AlphaNetStringStruct *list)
+{
+    if (list->head_) {
+        return list->current_->payload_;
+    }
+    return 0;
+}
 // WORKAROUND(inline): dead /Ob2 spend; with it sort_sessions keeps the image's
 // out-of-line seek_pos(walk_index) call (0x005D4B50) and its block layout.
 // The original spelling that spent this budget is unknown.
@@ -199,7 +213,7 @@ void AlphaNetStringStruct::sort_sessions() {
         // behavior; the callback-free scan starts only from valid list state.
         sort_sessions_budget_probe(2); // WORKAROUND(inline): see above
         seek_pos(walk_index);
-        const GUID *best = head_ ? &current_->payload_->instance_guid_ : 0;
+        const GUID *best = head_ ? &sort_sessions_current(this)->instance_guid_ : 0;
         int best_index = walk_index;
         for (int scan_index = walk_index + 1; scan_index < entry_count_; scan_index++) {
             next_owned_list(this);
@@ -207,9 +221,9 @@ void AlphaNetStringStruct::sort_sessions() {
             // comparator. This named-member expression retains that
             // invalid-domain UB; it does not clamp or repair it.
             const GUID *candidate = current_
-                ? &(head_ ? current_->payload_ : 0)->instance_guid_ : 0;
+                ? &sort_sessions_current(this)->instance_guid_ : 0;
             if (compare_session_guid(candidate, best) < 0) {
-                best = head_ ? &current_->payload_->instance_guid_ : 0;
+                best = head_ ? &sort_sessions_current(this)->instance_guid_ : 0;
                 best_index = current_position_;
             }
         }
