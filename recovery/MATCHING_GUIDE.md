@@ -2569,6 +2569,22 @@ What the model does not predict (2026-11-19)
   store and later ones lose theirs (ProdPicker::on_scrolled 0x00493CB0).
 - **Two same-type locals in disjoint block scopes share one slot**
   (on_scrolled's two shifted rectangles in a 0x10 frame).
+- **Frame-size differences: run `analysis/framescan.py` first** (13 s tree-wide);
+  `--addr A` prints both slot maps with widths, `&` and our /Fa names. A frame
+  that differs is a declaration problem, never a register tie.
+- **Address-taken outputs of a call in an inner block, frame 8 short:** the
+  original declared them at function scope, where they get their own slots
+  instead of packing with the block's other locals (Console::upgrade 0x5400 ->
+  0x5408 with get_pcx_dimensions' outputs; ReportWin::draw_score 0x178 ->
+  0x180 with most_objectives' leader/pacts).
+- **Several contiguous id slots read as one run** (`lea` of a middle element,
+  each scalar read from its own slot) are one array: ReportWin::draw_labs keeps
+  the tech copy, two prerequisites and four children as `int ids[7]`, not
+  `children[4]` plus scalars (0x210 -> 0x218).
+- **One slot more in the image for a member read once and reused** (a compiler
+  CSE temporary): read the member in place at each use; a named `const` copy
+  is propagated back into member reads and loses the slot
+  (MapWin::pixel_to_tile 0x14 -> 0x18).
 
 ### 3.4 Arithmetic idioms
 - **`rand() & 0x80000001; jns; dec; or -2; inc`** is `rand() % 2`.
