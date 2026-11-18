@@ -65,8 +65,8 @@ int __cdecl vulnerable(int faction_id, int x, int y) {
 // vulnerable (0x0059EADB) while expanding the three depth-1 has_fac tests;
 // with plain `cost /= 2` spellings this unit expands that depth-2 has_fac as
 // well. Routing the first five halvings through this helper spends the
-// missing budget (call multiset now matches; 0.914 -> 0.9385). The original's
-// spelling of the spend is unknown.
+// missing budget (five to seven uses all work; one to four leave the call
+// expanded). The original's spelling of the spend is unknown.
 static inline int mc_half(int value) {
     return value / 2;
 }
@@ -133,9 +133,7 @@ Status: Complete
 #pragma optimize("y", off)
 int __cdecl mind_control(int base_id, int faction_id, BOOL is_corner_market) {
     uint32_t target_faction_id = Bases[base_id].faction_id_current;
-    int target_x = Bases[base_id].x;
-    int target_y = Bases[base_id].y;
-    int cost = vulnerable(target_faction_id, target_x, target_y);
+    int cost = vulnerable(target_faction_id, Bases[base_id].x, Bases[base_id].y);
     if (cost <= 0) {
         if (is_corner_market) {
             cost = 1;
@@ -155,7 +153,7 @@ int __cdecl mind_control(int base_id, int faction_id, BOOL is_corner_market) {
     if (Bases[base_id].nerve_staple_turns_left) {
         cost = mc_half(cost);
     }
-    int veh_id = stack_fix(veh_at(target_x, target_y));
+    int veh_id = stack_fix(veh_at(Bases[base_id].x, Bases[base_id].y));
     cost = ((stack_check(veh_id, 2, PLAN_COMBAT, -1, -1)
         + stack_check(veh_id, 2, PLAN_OFFENSIVE, -1, -1))
         * (stack_check(veh_id, 6, ABL_POLY_ENCRYPTION, -1, -1) + 1)
