@@ -266,26 +266,6 @@ Win::Win() {
 
 namespace {
 
-__forceinline LONG long_from_bits(uint32_t bits) {
-    LONG value;
-    static_assert(sizeof(value) == sizeof(bits), "Win geometry requires 32-bit LONG");
-    memcpy(&value, &bits, sizeof(value));
-    return value;
-}
-
-__forceinline uint32_t long_bits(LONG value) {
-    uint32_t bits;
-    memcpy(&bits, &value, sizeof(bits));
-    return bits;
-}
-
-__forceinline int int_from_bits(uint32_t bits) {
-    int value;
-    static_assert(sizeof(value) == sizeof(bits), "Win geometry requires 32-bit int");
-    memcpy(&value, &bits, sizeof(value));
-    return value;
-}
-
 uint32_t midpoint(uint32_t near_edge, uint32_t far_edge) {
     const uint32_t delta = far_edge - near_edge;
     const uint32_t adjusted = delta + (delta >> 31);
@@ -2398,7 +2378,7 @@ int __cdecl Win::init_class(LPSTR window_name) {
     }
 
     if ((JackalInitFlags & 4) == 0) {
-        ShowWindow(reinterpret_cast<HWND>(HandleMain), SW_SHOW);
+        ShowWindow(HandleMain, SW_SHOW);
         Win::flip(0);
     }
 
