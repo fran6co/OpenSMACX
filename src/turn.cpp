@@ -422,10 +422,8 @@ void __cdecl do_checksums(int type) {
     // The original passes a 256-dword local buffer (frame 0x400 bytes) to
     // game_checksum(int *); NetChecksumReport names its first 47 words.
     // The tail is never initialized when the producer does not write it.
-    // WORKAROUND(type): game_checksum takes NetChecksumReport* here; the
-    // image's producer takes int* (?game_checksum@NetDaemon@@QAEXPAH@Z).
     int checksums[256];
-    NetDaemonNet.game_checksum(reinterpret_cast<NetChecksumReport *>(checksums));
+    NetDaemonNet.game_checksum(checksums);
 
     // WORKAROUND(inline): dead caller size; the image expands all 19
     // sub_51e6f0 sites, ours refuses the last two without it (one to three

@@ -1235,9 +1235,10 @@ void NetDaemon::send_rules() {
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x0050BA30 0x00539090
 
-int NetDaemon::game_checksum(NetChecksumReport *results) {
-    // The image walks one output cursor through the report's dwords.
-    int *out = reinterpret_cast<int *>(results);
+int NetDaemon::game_checksum(int *results) {
+    // The image walks one output cursor through the report's dwords
+    // (net_checksum_report.h names the 47 words).
+    int *out = results;
     unsigned char cs;
     int i; // one slot: the map walk, then the vehicle faction loop
 
