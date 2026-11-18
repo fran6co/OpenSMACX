@@ -855,17 +855,18 @@ void MonuWin::on_redraw() {
                   scratch_rect_.right - scratch_rect_.left, rect_height(&scratch_rect_));
       }
     }
-    selected_monument_type_ = FactionMonuments[preview_faction_or_page_].latest_type_;
+    type = FactionMonuments[preview_faction_or_page_].latest_type_;
+    selected_monument_type_ = type;
     spot_.add(0x45, 0, rects_3134_[0].left, rects_3134_[0].top,
               rect_width(&rects_3134_[0]),
               rect_height(&rects_3134_[0]));
-    if (selected_monument_type_ == 0xD) {
+    if (type == 0xD) {
       sprite_first_.draw(this, rects_3134_[0].left, rects_3134_[0].top);
-    } else if (selected_monument_type_ < 0xF) {
-      sprites_2EA0_[selected_monument_type_].draw(this, rects_3134_[0].left, rects_3134_[0].top);
+    } else if (type < 0xF) {
+      sprites_2EA0_[type].draw(this, rects_3134_[0].left, rects_3134_[0].top);
     } else {
       Sprite &mark = sprites_34E0_[FactionMonuments[preview_faction_or_page_]
-                                       .records_[selected_monument_type_].word_8_ - 1];
+                                       .records_[type].word_8_ - 1];
       mark.draw(this, rects_3134_[0].left,
                 rects_3134_[0].top);
     }
