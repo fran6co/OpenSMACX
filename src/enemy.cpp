@@ -4265,15 +4265,6 @@ char EnemyBuildBaseMessageText[1] = {0};
 
 // Complete owner assembly. Native stack words are stored only on proven edges.
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0056B5B0 0x00579208 0x00579238 0x00577DD3
-// WORKAROUND(inline): the passenger loop at 0x574AE7 leaves from the step's
-// negative test straight to the loop exit (jl 0x574C9C), which VC6 only does
-// when the negative arm is a constant; veh_next_stack_id returns its argument
-// there (0x0050B8F0) and rejoins the loop test. The other stack loops use
-// veh_next_stack_id: with this form they store -1 on exit, which the image
-// does not.
-static inline int stack_next_or_none(int veh_id) {
-    return veh_id >= 0 ? Vehs[veh_id].next_veh_id_stack : -1;
-}
 // ORIGINAL: 0x0056B5B0 ?enemy_move@@YAHH@Z 0x0056B5B0-0x00579208 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:ac587b44f8a4f670c7c73f0dfa434885adc49ebf:src/unrecovered/0056b5b0.cpp is deleted seed history; its original identity, full span, claims and useful lessons are retained here through the source writer.", "Pinned instructions establish distinct raw route/damage flags, integer stack priority, saved versus live callback reads, and original unguarded/uninitialized error paths.", "Complete selected, strategic, nonsea, sea and tactical continuations execute once; helpers do not introduce new original identities.", "Vehicle, prototype, PlayerData and Base fields use their real source owners; original matching and full runtime restoration obligations remain."], "reason": "Complete typed per-vehicle enemy movement owner with one path-dependent raw frame and genuine product owners; superseded executable forwarding and scaffold are removed together."}
 // kind game
@@ -7288,7 +7279,7 @@ L_574a88:
         }
         n = 0;
         for (other_id = veh_top(veh_id); other_id >= 0;
-             other_id = stack_next_or_none(other_id)) {
+             other_id = veh_next_stack_id(other_id)) {
             if (other_id == veh_id) {
                 continue;
             }
