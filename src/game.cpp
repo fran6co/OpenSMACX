@@ -23,6 +23,7 @@
 // symbol    _$E18
 #define NETDAEMON_RESET_INLINE  // stand-in: see NetDaemon::reset in netdaemon.h
 #define VEH_BUNGLIST_VISIBLE  // stand-in: see BungList in veh.h
+#define STRINGSTRUCT_CURRENT_ID_INLINE
 #include "stdafx.h"
 
 #include <shellapi.h>
@@ -1575,15 +1576,6 @@ typedef char GameDataHeaderWireVersionOffset[
 // game_data expands this four-way transfer at every block (the image makes
 // 50 encrypt_read/encrypt_write and 60 fread/fwrite calls); forwarding to the
 // nested map_data_block/map_data_plain_block pair left most sites as calls.
-// WORKAROUND(inline): StringStruct::current_id (0x00401640) is out of line
-// in this tree; game_data expands it with the receiver formed first
-// (`lea eax,[list]` before the head test, 0x005A885A).
-static inline int game_data_current_id(StringStruct *list) {
-    if (list->head_) {
-        return list->current_->id;
-    }
-    return 0;
-}
 
 static int game_data_candidate_transfer(FILE *file, void *buffer,
                                         unsigned int byte_count) {
@@ -2372,7 +2364,7 @@ int __cdecl game_data(FILE *file, int write_mode) {
                 return 1;
             for (int index = 0; index < string_count; ++index) {
                 MessageWinDeferredBaseMessages[faction].seek_pos(index);
-                string_id = game_data_current_id(&MessageWinDeferredBaseMessages[faction]);
+                string_id = MessageWinDeferredBaseMessages[faction].current_id();
                 if (fwrite(&string_id, 4, 1, file) == 0)
                     return 1;
                 strcpy(StringTemp, MessageWinDeferredBaseMessages[faction].head_
@@ -2416,7 +2408,7 @@ int __cdecl game_data(FILE *file, int write_mode) {
                     return 1;
                 for (int index = 0; index < string_count; ++index) {
                     DiplomacyTranscriptLists[row][column].seek_pos(index);
-                    string_id = game_data_current_id(&DiplomacyTranscriptLists[row][column]);
+                    string_id = DiplomacyTranscriptLists[row][column].current_id();
                     if (fwrite(&string_id, 4, 1, file) == 0)
                         return 1;
                     strcpy(StringTemp, DiplomacyTranscriptLists[row][column].head_

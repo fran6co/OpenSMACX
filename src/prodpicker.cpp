@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
+#define STRINGSTRUCT_CURRENT_ID_INLINE
 #include "stdafx.h"
 // WORKAROUND(decl): calculate calls StringStruct::remove_all (0x00402970)
 // out of line for all three lists (0x00492FC3..0x00492FE9).
@@ -125,15 +126,6 @@ void ProdPicker::on_mousewheel(int delta) {
     }
 }
 
-// WORKAROUND(inline): StringStruct::current_id (0x00401640) expanded inline;
-// the image reloads head_ for the id read (0x00493F88, and both arms of
-// exec's signed result at 0x00495100).
-static inline int prodpicker_current_id(StringStruct *list) {
-    if (list->head_) {
-        return list->current_->id;
-    }
-    return 0;
-}
 
 // ORIGINAL: 0x004927C0 ?draw_item@ProdPicker@@QAEXHH@Z 0x004927C0-0x00492F9F
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004927c0.cpp", "source:src/prodpicker.h", "source:src/stringstruct.h", "source:src/buffer.h", "source:src/sprite.h", "source:src/veh.h"], "reason": "Paint production-picker cells through typed item lists, buffer/base services, sprite tables and Caviar rendering; preserve observed wrapped icon and panel-style data views."}
@@ -164,7 +156,7 @@ void ProdPicker::draw_item(int item, int update) {
     prod_c_.seek_pos(item);
     prod_b_.seek_pos(item);
 
-    int id = prodpicker_current_id(&prod_a_);
+    int id = prod_a_.current_id();
     const uint32_t flags = prod_a_.head_
         ? prod_a_.current_->string_payload()->field_8_ : 0;
     if (!(flags & 0x20)) id = -id;
@@ -998,9 +990,9 @@ int ProdPicker::exec(Base *base, int factionId, GraphicWin *owner, int modal) {
         ? prod_a_.current_->string_payload()->field_8_ : 0;
     int result;
     if (flags & 0x20) {
-        result = prodpicker_current_id(&prod_a_);
+        result = prod_a_.current_id();
     } else {
-        result = -prodpicker_current_id(&prod_a_);
+        result = -prod_a_.current_id();
     }
     return result;
 }
@@ -1020,7 +1012,7 @@ void ProdPicker::on_right_click(int x, int y) {
     const uint32_t flags = prod_a_.head_ != 0
         ? prod_a_.current_->string_payload()->field_8_ : 0;
     const int productionId = (flags & 0x20) != 0
-        ? prodpicker_current_id(&prod_a_) : -1;
+        ? prod_a_.current_id() : -1;
 
     menu.init();
     if (field_B68_ == 0)

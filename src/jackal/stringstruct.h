@@ -306,7 +306,7 @@ class StringStruct : public virtual StringAllocationBase {
   }
 #endif
   MEASURED int seek_pos(int a1);
-  int current_id();
+  MEASURED int current_id();
   // Both return the entry's payload node - StringStructPayload, whose +4 is
   // the string the entry carries. The catalogue spelled both returns H (int)
   // and the image's own symbols spell them PAX (void *); this tree's emitted
@@ -589,6 +589,22 @@ MEASURED inline StringStructPayload *StringStruct::next_entry() {
 inline StringStructPayload *StringStruct::current_entry() {
     if (head_) {
         return current_->string_payload();
+    }
+    return 0;
+}
+#endif
+
+// 0x00401640 has one caller in the image (Buffer::write_strings' plain-text
+// arm, 0x005DB3B6) and is expanded everywhere else with the receiver formed
+// first (`lea eax,[list]` before the head test, game_data 0x005A885A;
+// ProdPicker, PopMenu::exec, both Buffer string writers). stringstruct.cpp
+// keeps the out-of-line copy, defined `inline` there like current_entry.
+// WORKAROUND(decl): the body is visible only in TUs that define
+// STRINGSTRUCT_CURRENT_ID_INLINE, for the reason given at current_entry.
+#ifdef STRINGSTRUCT_CURRENT_ID_INLINE
+inline int StringStruct::current_id() {
+    if (head_) {
+        return current_->id;
     }
     return 0;
 }

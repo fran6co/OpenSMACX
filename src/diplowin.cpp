@@ -34,6 +34,7 @@
 #define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h
 #define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
 #define SPOT_ADD_RECT_INLINE  // stand-in: see Spot::add(int, int, RECT *) in spot.h
+#define STRINGSTRUCT_CURRENT_ID_INLINE
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "diplowin.h"
@@ -1927,9 +1928,6 @@ Status: Coverage transcription - unclaimed body; the walk now goes through
         measured bodies are the image's 0x00401100 and 0x00628A50.
 */
 // The image reads the list head separately for each of these two values.
-static inline int transcript_current_id(StringList *list) {
-  return list->head_ ? list->current_->id : 0;
-}
 static inline char *transcript_current_text(StringList *list) {
   return list->head_ ? list->current_entry()->text : 0;
 }
@@ -1952,7 +1950,7 @@ void __cdecl sub_441040(int a1, int a2) {
             source.seek_pos(i);
             transcript_add(&DiplomacyTranscriptLists[a1][a2],
                            transcript_current_text(&source),
-                           transcript_current_id(&source));
+                           source.current_id());
         }
     }
 }
@@ -1990,7 +1988,7 @@ void __cdecl sub_441100(int faction_id, int faction_id_with) {
   for (int index = saved_count - 3; index < saved_count; ++index) {
     if (index < 0) continue;
     DiplomacyTranscriptLists[faction_id][faction_id_with].seek_pos(index);
-    int id = transcript_current_id(&DiplomacyTranscriptLists[faction_id][faction_id_with]);
+    int id = DiplomacyTranscriptLists[faction_id][faction_id_with].current_id();
     char *text = transcript_current_text(&DiplomacyTranscriptLists[faction_id][faction_id_with]);
     DiploWindow.shared_string_box().add(text, id, 1);
   }

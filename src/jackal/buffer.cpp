@@ -38,6 +38,7 @@
 // WORKAROUND(decl): current_text expands current_entry (0x005E3637) while
 // the string writers' copies of it call 0x00402530.
 #define STRINGSTRUCT_CURRENT_ENTRY_INLINE
+#define STRINGSTRUCT_CURRENT_ID_INLINE
 #include "stdafx.h"
 
 // Distinct writable string cells observed at the original call sites.
@@ -10471,21 +10472,13 @@ static inline void string_writer_budget_probe(int x) {
     if (x == 6) x = 19;
     if (x == 7) x = 22;
     if (x == 8) x = 25;
-    if (x == 9) x = 28;
-    if (x == 10) x = 31;
-    if (x == 11) x = 34;
 }
 
-// WORKAROUND(inline): twin of StringStruct::current_id (0x00401640), which
-// stringstruct.cpp defines out of line. Both writers expand it at their first
-// callback site (`cmp [list+8],0; ...; mov eax,[list+0xc]; mov eax,[eax+4]`)
-// and write_strings calls it out of line in its plain-text arm (0x005DB3B6).
-static inline int buffer_current_id(StringList *strings) {
-    if (strings->head_) {
-        return strings->current_->id;
-    }
-    return 0;
-}
+// StringStruct::current_id (0x00401640) is the header inline. Both writers
+// expand it at their first callback site (`cmp [list+8],0; ...;
+// mov eax,[list+0xc]; mov eax,[eax+4]`) and write_strings calls it out of
+// line in its plain-text arm (0x005DB3B6) once the budget is spent. The
+// probe above is sized against it (nine tests; twelve with the old twin).
 
 // WORKAROUND(inline): the current entry's metadata word behind a head test;
 // every site in both writers calls current_entry (0x00402530) out of line
@@ -10508,7 +10501,7 @@ int Buffer::write_strings_height(StringList *strings, int width, int flags) {
     int payload = buffer_current_kind(strings);
 
     if (field_C_ != 0) {
-        field_C_(buffer_current_id(strings), payload);
+        field_C_(strings->current_id(), payload);
     }
 
     int total_height = 0;
@@ -10529,7 +10522,7 @@ int Buffer::write_strings_height(StringList *strings, int width, int flags) {
         payload = buffer_current_kind(strings);
 
         if (field_C_ != 0) {
-            field_C_(buffer_current_id(strings), payload);
+            field_C_(strings->current_id(), payload);
         }
 
         if (buffer_current_kind(strings) != 0) {
@@ -10560,7 +10553,7 @@ int Buffer::write_strings(StringList *strings, int left, int top, int width,
     }
     int kind = buffer_current_kind(strings);
     if (field_C_ != 0) {
-        field_C_(buffer_current_id(strings), kind);
+        field_C_(strings->current_id(), kind);
     }
     if (kind == 3) {
         top += text_line_height();
@@ -10580,7 +10573,7 @@ int Buffer::write_strings(StringList *strings, int left, int top, int width,
         if (buffer_current_kind(strings) != 0) {
             int y = wrap_flying_flush();
             if (field_C_ != 0) {
-                field_C_(buffer_current_id(strings), kind);
+                field_C_(strings->current_id(), kind);
             }
             if (y >= top) top = y;
             if (kind == 3) {
@@ -10594,7 +10587,7 @@ int Buffer::write_strings(StringList *strings, int left, int top, int width,
             }
         } else {
             if (field_C_ != 0) {
-                // current_id is called out of line here (0x00401640).
+                // current_id stays a call here (0x005DB3B6).
                 field_C_(strings->current_id(), kind);
             }
             wrap_flying(strings->current_text());

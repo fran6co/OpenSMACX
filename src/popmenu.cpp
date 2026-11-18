@@ -20,6 +20,7 @@
 #define STRINGSTRUCT_CURRENT_ENTRY_INLINE
 // WORKAROUND(decl): PopMenu::exec reads BasePop::dialogs_ (basepop.h).
 #define BASEPOP_FRIEND_POPMENU
+#define STRINGSTRUCT_CURRENT_ID_INLINE
 #include "stdafx.h"
 #include "popmenu.h"
 #include "dialog.h"
@@ -33,20 +34,14 @@
 // body src/popmenu.h
 // symbol    ??1PopMenu@@UAE@XZ
 
-// WORKAROUND(inline): StringList::current_text (0x005E3630) and
-// StringStruct::current_id (0x00401640) expanded inline; exec tests head_
-// straight off the member, then reloads it through the list pointer for the
-// id (0x0059D2F5..0x0059D32C).
+// WORKAROUND(inline): StringList::current_text (0x005E3630) expanded
+// inline; exec tests head_ straight off the member, then reloads it through
+// the list pointer for the id (0x0059D2F5..0x0059D32C), which is the header
+// inline StringStruct::current_id (0x00401640).
 static inline char *popmenu_current_text(StringList *list) {
     return list->head_ != 0 ? list->current_entry()->text : 0;
 }
 
-static inline int popmenu_current_id(StringStruct *list) {
-    if (list->head_) {
-        return list->current_->id;
-    }
-    return 0;
-}
 
 // ORIGINAL: 0x0059D250 ?exec@PopMenu@@QAEXHHP6AHXZ@Z 0x0059D250-0x0059D392 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x0059D250-0x0059D392"], "reason": "Recovered original behavior through real source classes and owned members; source remains subject to byte and structural verification."}
@@ -56,7 +51,7 @@ int PopMenu::exec(int x, int y, int (*poll)()) {
     for (int i = 0; i < dialogs_.get_num_items(); ++i) {
         dialogs_.item_list_.seek_pos(i);
         char *text = popmenu_current_text(&dialogs_.item_list_);
-        int id = popmenu_current_id(&dialogs_.item_list_);
+        int id = dialogs_.item_list_.current_id();
         // Dialog menu separator literal at 0x006900C8.
         if (strcmp(text, "*") == 0) PullDown::add_separator(id);
         else PullDown::add_item(id, text);
