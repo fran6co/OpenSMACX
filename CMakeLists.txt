@@ -251,7 +251,6 @@ set(OPENSMACX_SOURCES
     src/basepop.cpp
     src/popmenu.cpp
     src/probe.cpp
-    src/scenario.cpp
     src/strings.cpp
     src/vehicle_cost.cpp
     src/winnodelist.cpp

@@ -3539,24 +3539,6 @@
           "-c"
         ]
       },
-      "src/scenario.cpp": {
-        "flags": [
-          "/nologo",
-          "/TP",
-          "/Zm200",
-          "/GX",
-          "-MT",
-          "/W4",
-          "/Og",
-          "/Oi",
-          "/Ot",
-          "/Oy",
-          "/Gs",
-          "/Gy",
-          "/Ob2",
-          "-c"
-        ]
-      },
       "src/span_math.cpp": {
         "flags": [
           "/nologo",
