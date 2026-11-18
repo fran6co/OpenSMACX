@@ -332,7 +332,9 @@ def refs_on_line(code, names, structs, member, consts):
         out.append((key, kind, m.start()))
     if consts:
         for m in re.finditer(r'(?<![\w.\[])(-?(?:0x[0-9a-fA-F]+|\d+))[uUlL]*\b(?!\s*\])', code):
-            out.append(('#%d' % int(m.group(1), 0), 'u', m.start()))
+            v = m.group(1)
+            v = int(v, 16) if v.lstrip('-').startswith('0x') else int(v, 10)
+            out.append(('#%d' % v, 'u', m.start()))
     return out
 
 
@@ -386,6 +388,7 @@ def build_webs(F, refs, entrydef):
                 if inn != IN[b] or out != OUT[b]:
                     IN[b], OUT[b] = inn, out
                     changed = True
+        orphans = []
         for b, lst in ev.items():
             cur = set(IN[b])
             for i in lst:
@@ -394,8 +397,19 @@ def build_webs(F, refs, entrydef):
                 if k in ('u', 'ud'):
                     for d in cur:
                         uf.union(i, d)
+                    if not cur:
+                        orphans.append(i)
                 if k in ('d', 'ud'):
                     cur = {i}
+        # a use no definition reaches (listing line attribution put the definition after it, or code motion):
+        # join the nearest earlier definition in source order
+        alldefs = sorted((refs[i]['line'], i) for i in idxs if refs[i]['kind'] in ('d', 'ud'))
+        for i in orphans:
+            prev = [d for ln, d in alldefs if ln <= refs[i]['line'] and d != i]
+            if prev:
+                uf.union(i, prev[-1])
+            elif alldefs:
+                uf.union(i, alldefs[0][1])
         groups = collections.defaultdict(list)
         for i in idxs:
             groups[uf.find(i)].append(i)
@@ -690,6 +704,10 @@ def main():
                     t['web'] = web_at(t['name'], F.block_of(off))
                     if t['web']:
                         break
+        if t['web'] is None and byvar.get(t['name']):
+            # fall back to the web whose source lines are nearest the tenure's line
+            ln = lineof.get(t['start'], 0)
+            t['web'] = min(byvar[t['name']], key=lambda w: min(abs(refs[i]['line'] - ln) for i in webs[w]['refs']))
     for off in regname:
         for rg in regname[off]:
             pass
