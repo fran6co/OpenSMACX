@@ -4309,12 +4309,12 @@ int __cdecl enemy_move(int veh_id) {
     stay = 0;
     coast_goal = 0;
     no_moves = 0;
-    if (!(veh_id < 0)) {
-        hint = 0;
-    } else {
+    if (veh_id < 0) {
         // Hint mode: the caller passes -(veh_id + 1); the image open-codes |veh_id + 1|.
         veh_id = (veh_id + 1 < 0) ? -(veh_id + 1) : veh_id + 1;
         hint = 1;
+    } else {
+        hint = 0;
     }
     remote_own = IsMultiplayerNet
         && Vehs[veh_id].faction_id == ConsoleGlobal.faction_id_;
@@ -4326,14 +4326,14 @@ int __cdecl enemy_move(int veh_id) {
     faction_id = Vehs[veh_id].faction_id;
     x = Vehs[veh_id].x;
     y = Vehs[veh_id].y;
-    plan = VehPrototypes[proto_id].plan;
-    triad = Chassis[VehPrototypes[proto_id].chassis_id].triad;
+    plan = VehPrototypes[Vehs[veh_id].proto_id].plan;
+    triad = Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad;
     alt = alt_at(x, y);
     at_sea = is_ocean(x, y);
     region = region_at(x, y);
     assault = (Vehs[veh_id].state & 0x60000) == 0x40000;
     retreat = (Vehs[veh_id].state & 0x60000) == 0x60000;
-    k = plan == PLAN_RECONNAISANCE && has_abil(proto_id, 0x800);
+    k = plan == PLAN_RECONNAISANCE && has_abil(Vehs[veh_id].proto_id, 0x800);
     region_plan = PlayersData[faction_id].region_base_plan[region];
     {
         int dmg = Vehs[veh_id].dmg_incurred;
