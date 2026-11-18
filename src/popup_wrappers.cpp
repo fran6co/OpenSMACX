@@ -231,7 +231,7 @@ int __cdecl popb(LPCSTR text_label, int warning_mask, int sound_id,
         && IsMultiplayerNet == 0
         && !IsMultiplayerPBEM) {
         popup.item(StringTable.get(Labels.strings_ptr[0xB0 / 4]), 0);
-        popup.item(StringTable.get(Labels.strings_ptr[0xB4 / 4]), 1);
+        popup.item(label_get(0xB4 / 4), 1);
         if ((warning_mask & 8) != 0 && BaseCurrent->population_size > 1
             && IsMultiplayerNet == 0) {
             // Nerve stapling needs POLICE >= 0, a Brood Pit adding 2.
