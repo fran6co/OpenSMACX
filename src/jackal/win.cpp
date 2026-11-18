@@ -4126,6 +4126,18 @@ inline void Win::hide() {
 // member of this unit defined earlier (lower address), while VC6 /Ob2
 // auto-inlines it here (42 rows); the only change without the region. The
 // other Win functions that run its loop spell the body out by hand.
+// Measured 2026-11-19 (fe, win.cpp): the root-raise block above is
+// bring_parent_to_top's body (same `this != nullptr` test), but calling
+// bring_parent_to_top here is no fix. Written with its loop, bring_parent_to_top
+// is over the per-callee size cap and stays a call (117 rows, 143 in the
+// image); written as find/shift + update_zorder() it is under the cap and
+// expands here with update_zorder at depth 2 (168 rows), and also into show
+// and on_r_button_down, which the image calls it from (0x005EDA3E,
+// 0x005F672A). Replacing the other hand-written loops with update_zorder()
+// does the same. A for-loop update_zorder is byte-exact standalone but
+// breaks show's expanded copy (43 rows), so its local-cached spelling is the
+// original. Unresolved: why on_l refuses a depth-1 update_zorder that show
+// (larger, defined earlier) expands is a budget question.
 #pragma inline_depth(0)
 void Win::on_l_button_down(long double_click, int x, int y, unsigned int, int from_parent) {
     Win *child = win_parent_;
