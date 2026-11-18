@@ -534,7 +534,7 @@ void FameWin::on_redraw() {
     field_A18_ += field_A44_;
 
     StringTemp[0] = '\0';
-    strcat(StringTemp, label_get(76));
+    strcat(StringTemp, StringTable.get(Labels.strings_ptr[76]));
     CharUpperA(StringTemp);
     write_l(StringTemp, field_A14_, field_A18_);
     StringTemp[0] = '\0';

@@ -977,7 +977,7 @@ void NetWin::draw_session_info() {
     // Time controls.
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
-    strcat(StringTemp, label_get(0x100C / 4));
+    strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x100C / 4]));
     strcat(StringTemp, SocialWinColonSpaceText);
     strcat(StringTemp, "}");
     strcat(StringTemp, BufferJoinSpace);
@@ -995,7 +995,7 @@ void NetWin::draw_session_info() {
     // Rules or scenario, with the game mode in parentheses.
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
-    strcat(StringTemp, label_get(0x1078 / 4));
+    strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x1078 / 4]));
     strcat(StringTemp, SocialWinColonSpaceText);
     strcat(StringTemp, "}");
     strcat(StringTemp, BufferJoinSpace);
@@ -1038,7 +1038,7 @@ void NetWin::draw_session_info() {
     // Planet size, or the scenario map's dimensions.
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
-    strcat(StringTemp, label_get(0xFAC / 4));
+    strcat(StringTemp, StringTable.get(Labels.strings_ptr[0xFAC / 4]));
     strcat(StringTemp, SocialWinColonSpaceText);
     strcat(StringTemp, "}");
     strcat(StringTemp, BufferJoinSpace);
@@ -1282,7 +1282,7 @@ void NetWin::draw_player_names() {
 
     StringTemp[0] = 0;
     strcat(StringTemp,
-           label_get(0x414 / 4));
+           StringTable.get(Labels.strings_ptr[0x414 / 4]));
     CharUpperA(StringTemp);
     Buffer::set_font(find_font(0xE, 1), 0, 0, 0);
     Buffer::set_text_color(0xE1, -1, 1, 1);
@@ -1434,7 +1434,7 @@ void NetWin::draw_custom_rules() {
     Buffer::box_sprite(&setup_rects_[46], &InterfaceBoxStyles[0]);
 
     StringTemp[0] = 0;
-    strcat(StringTemp, StringTable.get(Labels.strings_ptr[0xF9C / 4]));
+    strcat(StringTemp, label_get(0xF9C / 4));
     CharUpperA(StringTemp);
     Buffer::set_font(find_font(0xE, 1), 0, 0, 0);
     Buffer::set_text_color(0xE1, -1, 1, 1);
@@ -1473,7 +1473,7 @@ void NetWin::draw_custom_rules() {
     }
     char text[0x100];
     text[0] = 0;
-    strcat(text, StringTable.get(Labels.strings_ptr[0x10A4 / 4]));
+    strcat(text, label_get(0x10A4 / 4));
     strcat(text, ".");
     Buffer::write_l(text, &rect);
     rect.left -= 0x19;

@@ -5392,7 +5392,7 @@ void MapWin::draw_base_names() {
                 if (is_objective(base_id) &&
                     (GameDataStateStorage.fields_.game_rules_ & 0x20000000U) == 0) {
                     text[0] = '\0';
-                    strcat(text, label_get(898));
+                    strcat(text, StringTable.get(Labels.strings_ptr[898]));
                     CharUpperA(text);
                     Buffer::write_cent_l(text, pixel_x + field_1DDBC_,
                                  pixel_y + static_cast<int>(field_1DDC8_) * 7 / 2 +
@@ -5608,7 +5608,7 @@ int MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
             spying(Bases[base_id].faction_id_current) != 0 ||
             (PlayersData[ConsoleGlobal.faction_id_]
                  .diplo_treaties[Bases[base_id].faction_id_current] & 1U) != 0) {
-            menu.add_item(5, label_get(0x894 / 4));
+            menu.add_item(5, StringTable.get(Labels.strings_ptr[0x894 / 4]));
         }
         // 0x0046C632: owner is tested before the omniscient bit, and the
         // trailing separator belongs to this block.
@@ -5665,7 +5665,7 @@ int MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
     }
 
     if (ConsoleGlobal.cursor_active_ != 0) {
-        menu.add_item(1, label_get(0x8B4 / 4));
+        menu.add_item(1, StringTable.get(Labels.strings_ptr[0x8B4 / 4]));
         if (tile_x != Vehs[selected_vehicle].x || tile_y != Vehs[selected_vehicle].y) {
             if ((GameDataStateStorage.fields_.game_more_preferences_ &
                  MPREF_ADV_DETAIL_RIGHT_CLICK_MENUS) != 0) {
@@ -5674,7 +5674,7 @@ int MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
                         TRIAD_AIR &&
                     Weapon[VehPrototypes[Vehs[selected_vehicle].proto_id].weapon_id]
                             .offense_rating != 0) {
-                    menu.add_item(0x6A, label_get(0x8BC / 4));
+                    menu.add_item(0x6A, StringTable.get(Labels.strings_ptr[0x8BC / 4]));
                 }
             }
             if (has_abil(Vehs[selected_vehicle].proto_id, ABL_DROP_POD)) {
@@ -5683,15 +5683,15 @@ int MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
             if (can_arty(Vehs[selected_vehicle].proto_id, 1) &&
                 cursor_dist(tile_x, tile_y, Vehs[selected_vehicle].x,
                             Vehs[selected_vehicle].y) <= Rules.artillery_max_rng) {
-                menu.add_item(0x68, label_get(0x8C8 / 4));
+                menu.add_item(0x68, StringTable.get(Labels.strings_ptr[0x8C8 / 4]));
             }
         }
         // 0x0046CB14: VC6 folds the `>> 1` of cursor_dist into `& ~1` <= 2.
         if (cursor_dist(tile_x, tile_y, Vehs[selected_vehicle].x,
                         Vehs[selected_vehicle].y) <= 1) {
-            menu.add_item(0x65, label_get(0x8CC / 4));
+            menu.add_item(0x65, StringTable.get(Labels.strings_ptr[0x8CC / 4]));
             if (VehPrototypes[Vehs[selected_vehicle].proto_id].plan == 9) {
-                menu.add_item(0x66, label_get(0x8D0 / 4));
+                menu.add_item(0x66, StringTable.get(Labels.strings_ptr[0x8D0 / 4]));
             }
         }
         menu.add_item(0xC7, label_get(0xE1C / 4));

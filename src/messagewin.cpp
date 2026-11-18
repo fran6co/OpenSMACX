@@ -86,7 +86,7 @@ void MessageWin::on_selected(int code, int) {
     ConsoleGlobal.get_mouse_pos(&mouse_x, &mouse_y);
     ConsoleGlobal.client_to_screen(&mouse_x, &mouse_y);
     menu.init(0);
-    menu.add_item(1, label_get(0x44C));
+    menu.add_item(1, StringTable.get(Labels.strings_ptr[0x44C]));
     menu.add_item(2, label_get(0x44D));
     menu.add_item(3, label_get(0x44E));
     menu.show(mouse_x, mouse_y, 0);

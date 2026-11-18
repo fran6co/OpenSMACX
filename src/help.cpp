@@ -303,7 +303,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
             if (a4 < 0) {
                 if (!flushed) {
                     strcat(buf, "^");
-                    char *s = label_get(0x234 / 4);
+                    char *s = StringTable.get(Labels.strings_ptr[0x234 / 4]);
                     strcat(buf, s);
                     strcat(buf, SocialWinColonSpaceText);
                 } else {

@@ -295,7 +295,7 @@ void BaseWin::pop_click(int position, int, int, int) {
     if (current < 0) current = 1;
     popup.start("CITIZEN", 0x40);
     StringTemp[0] = 0;
-    strcat(StringTemp, label_get(0x2C8 / 4));
+    strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x2C8 / 4]));
     popup.item(StringTemp, 999);
     for (int i = 0; i < 7; ++i) {
         if (!has_tech(Citizen[i].preq_tech, BaseCurrent->faction_id_current)) continue;
@@ -785,7 +785,7 @@ void BaseWin::draw_flash(int redraw_mode) {
         if (Vehs[vehicle_id].faction_id == ConsoleGlobal.faction_id_) {
             if (veh_moves(vehicle_id) == 0) {
                 StringTemp[0] = 0;
-                strcat(StringTemp, label_get(0x9E4 / 4));
+                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x9E4 / 4]));
                 MainInterfaceGlobal.set_text_color(0xF9, -1, 1, 1);
                 y = MainInterfaceGlobal.wrap(StringTemp, x, y, area.right - area.left);
             } else {
@@ -1908,8 +1908,8 @@ setup:
 
                     popup.start(PopupStartCaption, StringTemp, -1, 0, 0, 0);
                     if (BaseCurrent->queue_size == 0)
-                        popup.item(label_get(0xB0C / 4), 2);
-                    popup.item(label_get(0xB10 / 4), 3);
+                        popup.item(StringTable.get(Labels.strings_ptr[0xB0C / 4]), 2);
+                    popup.item(StringTable.get(Labels.strings_ptr[0xB10 / 4]), 3);
                     switch (popup.exec()) {
                     case 0:
                         if (a2 == 0)
@@ -4378,7 +4378,7 @@ void BaseWin::on_button_clicked(int button_id) {
             flatButtons_[17].set_name(StringTemp);
             flatButtons_[17].set(0);
         } else {
-            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0xA50 / 4]));
+            strcat(StringTemp, label_get(0xA50 / 4));
             CharUpperA(StringTemp);
             flatButtons_[17].set_name(StringTemp);
             flatButtons_[17].set(1);
@@ -6144,7 +6144,7 @@ void BaseWin::draw_commerce(int update_mode) {
                 // 0x410EE3: the pact test rereads BaseCurrent's faction.
                 strcat(StringTemp,
                        (PlayersData[BaseCurrent->faction_id_current].diplo_treaties[partner]
-                        & DTREATY_PACT) != 0 ? label_get(645) : label_get(644));
+                        & DTREATY_PACT) != 0 ? StringTable.get(Labels.strings_ptr[645]) : label_get(644));
                 detail_x = Buffer::write_l(StringTemp, detail_x, detail_y);
                 if (BaseCommercePartnerReceipts[slot] != BaseCommerceReceipts[slot]) {
                     Buffer::set_text_color(ChatItemIdTable[partner], -1, 1, 1);
@@ -6476,11 +6476,11 @@ void BaseWin::base_editor_proj() {
     PopupModalState = 6;
     popup.start("PICKAPLACE", 0x42);
     {
-        char *text = label_get(0xD64 / 4);
+        char *text = StringTable.get(Labels.strings_ptr[0xD64 / 4]);
         popup.item(text, 9999);
     }
     {
-        char *text = label_get(0xD68 / 4);
+        char *text = StringTable.get(Labels.strings_ptr[0xD68 / 4]);
         popup.item(text, 9998);
     }
     // Current-faction bases precede other bases, preserving original index IDs.

@@ -130,7 +130,7 @@ void StatusWin::on_right_click(int x, int y, int) {
             display_menu.init();
             char *text = label_get(0xFEC / 4);
             display_menu.dialogs().item(text, 0);
-            text = StringTable.get(Labels.strings_ptr[0xFF0 / 4]);
+            text = label_get(0xFF0 / 4);
             display_menu.dialogs().item(text, 1);
             text = label_get(0xFF4 / 4);
             display_menu.dialogs().item(text, 2);
@@ -818,7 +818,7 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
                     if (strlen(StringTemp)) {
                         strcat(StringTemp, SocialWinCommaSpaceText);
                     }
-                    strcat(StringTemp, label_get(0x398 / 4));
+                    strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x398 / 4]));
                 }
                 if (strlen(StringTemp)) {
                     col = MainInterfaceGlobal.write_l(StringTemp, text_x, line_y);
@@ -1410,7 +1410,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
                 ? label_get(0x5c4 / 4)
                 : Bases[base_id].population_size <= 1 ? label_get(0x2f0 / 4)
                 : Bases[base_id].population_size <= Rules.pop_limit_sans_hab_complex
-                    ? label_get(0x2f4 / 4) : label_get(0x570 / 4));
+                    ? StringTable.get(Labels.strings_ptr[0x2f4 / 4]) : label_get(0x570 / 4));
             line_y = MainInterfaceGlobal.wrap_cent(StringTemp, content_x, line_y,
                                        area.right - area.left);
             StringTemp[0] = '\0';
@@ -1789,7 +1789,7 @@ void __cdecl say_orders(char *text, int veh_id) {
                 ::strcat(text, suffix);
             }
         } else if (Vehs[veh_id].order_auto_type == 11) {
-            ::strcat(text, label_get(0x6F4 / 4));
+            ::strcat(text, StringTable.get(Labels.strings_ptr[0x6F4 / 4]));
         } else if (VehPrototypes[Vehs[veh_id].proto_id].plan == 9
                    && Vehs[veh_id].order_auto_type != 0) {
             ::strcat(text, label_get(0x62C / 4 + Vehs[veh_id].order_auto_type));

@@ -1129,7 +1129,7 @@ void CouncWin::on_button_clicked(int button_id) {
                     popup.select_owned_picture();
                 }
                 Dialogs &options = popup.dialogs();
-                options.item(label_get(0x7c4 / 4), 0);
+                options.item(StringTable.get(Labels.strings_ptr[0x7c4 / 4]), 0);
                 for (int faction = 1; faction < MaxPlayerNum; ++faction) {
                     if ((Players[faction].rule_flags & RFLAG_ALIEN) == 0
                         && is_alive(faction)

@@ -744,7 +744,7 @@ again:
     if (!both_artifacts) {
         StringTemp[0] = '\0';
         if (psi_label) {
-            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x310 / 4]));
+            strcat(StringTemp, label_get(0x310 / 4));
         } else if (first_vehicle_id == second_vehicle_id
                    && (!(flags & 2)
                        || Chassis[VehPrototypes[Vehs[first_vehicle_id].proto_id].chassis_id].triad == 1)) {
@@ -802,7 +802,7 @@ again:
     }
 
     StringTemp[0] = '\0';
-    strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x520 / 4]));
+    strcat(StringTemp, label_get(0x520 / 4));
     strcat(StringTemp, SocialWinColonSpaceText);
     strcat(StringTemp, "{");
     say_num((first_vehicle_id == second_vehicle_id ? defense_odds : attack_odds) >> 8);

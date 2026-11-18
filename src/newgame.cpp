@@ -553,11 +553,11 @@ time_controls:
                         popup.dialogs().EditGroup::edit(label, Players[faction].noun_faction, 0x17);
                     }
                     {
-                        char *label = label_get(177);
+                        char *label = StringTable.get(Labels.strings_ptr[177]);
                         popup.dialogs().EditGroup::edit(label, Players[faction].adj_name_faction, 0x17);
                     }
                     {
-                        char *label = label_get(483);
+                        char *label = StringTable.get(Labels.strings_ptr[483]);
                         popup.dialogs().EditGroup::edit(label, Players[faction].title_leader, 0x17);
                     }
                     {
@@ -702,7 +702,7 @@ edit_names_expansion:
                     popup.dialogs().EditGroup::edit(label, Players[picked].formal_name_faction, 0x27);
                 }
                 {
-                    char *label = label_get(176);
+                    char *label = StringTable.get(Labels.strings_ptr[176]);
                     popup.dialogs().EditGroup::edit(label, Players[picked].noun_faction, 0x17);
                 }
                 {
@@ -1203,7 +1203,7 @@ int __cdecl size_of_planet(int mode) {
             _itoa(pref_x, number, 10);
             strcat(StringTemp, number);
             {
-                LPSTR label = label_get(0x1108 / 4);
+                LPSTR label = StringTable.get(Labels.strings_ptr[0x1108 / 4]);
                 popup.dialogs().edit(label, StringTemp, 8);
             }
             StringTemp[0] = 0;

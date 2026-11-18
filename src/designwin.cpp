@@ -1295,7 +1295,7 @@ int DesignWin::init() {
                 TextBufferGetPtr, DesignGridButtonIndex + 9, column_x, y,
                 grid_width, 0x15, static_cast<Win *>(&MainInterfaceGlobal), 0);
             flatButtons_[DesignGridButtonIndex + 9].set_bubble_text(
-                label_get(0xCEC / 4));
+                StringTable.get(Labels.strings_ptr[0xCEC / 4]));
             ++DesignGridButtonIndex;
             y += 0x17;
         }
@@ -1351,7 +1351,7 @@ int DesignWin::init() {
     flatButtons_[2].init(StringTemp, 2, field_B6C_rect_.left, field_B6C_rect_.top,
         field_B6C_rect_.right - field_B6C_rect_.left,
         field_B6C_rect_.bottom - field_B6C_rect_.top, static_cast<Win *>(this), 0);
-    flatButtons_[2].set_bubble_text(label_get(0x1028 / 4));
+    flatButtons_[2].set_bubble_text(StringTable.get(Labels.strings_ptr[0x1028 / 4]));
 
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0xE74 / 4));
@@ -1367,7 +1367,7 @@ int DesignWin::init() {
     flatButtons_[3].init(StringTemp, 3, field_B7C_rect_.left, field_B7C_rect_.top,
         field_B7C_rect_.right - field_B7C_rect_.left,
         field_B7C_rect_.bottom - field_B7C_rect_.top, static_cast<Win *>(this), 0);
-    flatButtons_[3].set_bubble_text(label_get(0x1038 / 4));
+    flatButtons_[3].set_bubble_text(StringTable.get(Labels.strings_ptr[0x1038 / 4]));
 
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0xBD0 / 4));
@@ -1380,7 +1380,7 @@ int DesignWin::init() {
         lower_panel_rows_[lower_panel_obsolete].bottom
             - lower_panel_rows_[lower_panel_obsolete].top,
         static_cast<Win *>(this), 0);
-    flatButtons_[6].set_bubble_text(label_get(0xC58 / 4));
+    flatButtons_[6].set_bubble_text(StringTable.get(Labels.strings_ptr[0xC58 / 4]));
 
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0xBD4 / 4));
@@ -1393,7 +1393,7 @@ int DesignWin::init() {
         lower_panel_rows_[lower_panel_upgrade].bottom
             - lower_panel_rows_[lower_panel_upgrade].top,
         static_cast<Win *>(this), 0);
-    flatButtons_[7].set_bubble_text(label_get(0xC5C / 4));
+    flatButtons_[7].set_bubble_text(StringTable.get(Labels.strings_ptr[0xC5C / 4]));
 
     // Index select (and/neg/sbb) for the label, but a branch per bubble arm.
     StringTemp[0] = 0;
@@ -1411,8 +1411,8 @@ int DesignWin::init() {
             - lower_panel_rows_[lower_panel_cancel].top,
         static_cast<Win *>(this), 0);
     flatButtons_[8].set_bubble_text((VehPrototypes[protoID_].flags & 0x80)
-                                    ? label_get(0xC64 / 4)
-                                    : label_get(0xC60 / 4));
+                                    ? StringTable.get(Labels.strings_ptr[0xC64 / 4])
+                                    : StringTable.get(Labels.strings_ptr[0xC60 / 4]));
 
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x438 / 4));
@@ -1425,7 +1425,7 @@ int DesignWin::init() {
         lower_panel_rows_[lower_panel_done].bottom
             - lower_panel_rows_[lower_panel_done].top,
         static_cast<Win *>(this), 0);
-    flatButtons_[4].set_bubble_text(label_get(0xC50 / 4));
+    flatButtons_[4].set_bubble_text(StringTable.get(Labels.strings_ptr[0xC50 / 4]));
 
     // Rename has its own label (0x0043CEBF..CF0), not Done's StringTemp.
     StringTemp[0] = 0;
@@ -1439,7 +1439,7 @@ int DesignWin::init() {
         lower_panel_rows_[lower_panel_rename].bottom
             - lower_panel_rows_[lower_panel_rename].top,
         static_cast<Win *>(this), 0);
-    flatButtons_[5].set_bubble_text(label_get(0xC54 / 4));
+    flatButtons_[5].set_bubble_text(StringTable.get(Labels.strings_ptr[0xC54 / 4]));
 
     flatButtons_[23].init(DesignButtonName23, 0x17, field_CBC_rect_.left,
         field_CBC_rect_.top, field_CBC_rect_.right - field_CBC_rect_.left,
@@ -4262,7 +4262,7 @@ void DesignWin::draw_vehicle(int redraw) {
         dest.top += n;
         Buffer::set_font(&font2_, 0, 0, 0);
         StringTemp[0] = 0;
-        strcat(StringTemp, label_get(0x360 / 4));
+        strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x360 / 4]));
         strcat(StringTemp, SocialWinColonSpaceText);                         // 0x682e94
         const int capacity = transport_val(protoChassisType_, protoAbilityFlags_,
                                            protoReactorType_);
@@ -5413,7 +5413,7 @@ void DesignWin::draw_flash() {
 
             if (VehPrototypes[shown].obsolete_factions & (1 << factionID_)) {
                 StringTemp[0] = '\0';
-                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0xE40 / 4]));
+                strcat(StringTemp, label_get(0xE40 / 4));
                 CharUpperA(StringTemp);
                 MainInterfaceGlobal.Buffer::wrap_cent(
                     StringTemp, line_left, y, rc.right - rc.left);

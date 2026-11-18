@@ -2714,7 +2714,7 @@ void SocialWin::init(int faction_id) {
     // Initialize SocialWin flat buttons 27 and 28 from their separate labels.
     {
         StringTemp[0] = 0;
-        strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x4F4 / 4]));
+        strcat(StringTemp, label_get(0x4F4 / 4));
         CharUpperA(StringTemp);
         FlatButton *button = &flatButtons_[27];
         BaseButton *base_button = static_cast<BaseButton *>(button);

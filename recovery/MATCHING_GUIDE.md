@@ -935,6 +935,16 @@ raw field access where the original used inline accessors.
   `Base::f()` / `obj.Base::f()`. Passing `this` as a `Base*` argument
   legitimately emits neg/sbb/and. Member data through a virtual base needs no
   check; a reference conversion does.
+- **label_get or the written-out lookup is a per-site choice, and many
+  sites had the wrong one.** A sweep in both directions (2026-11-18) kept
+  8 sites as `label_get(k)` and 110 sites as
+  `StringTable.get(Labels.strings_ptr[k])`; 45 functions moved closer
+  (battle_compute 895 -> 254 rows, say_orders 90 -> 3,
+  CouncWin::on_button_clicked 104 -> 38) and AlphaNet::pick_service
+  became exact. The wrapper changes argument evaluation order and spends
+  inline budget, so a wrong choice shows as shifted loads and as
+  destructor expansions of the wrong depth. Rerun
+  `ruleall.py labelget` / `labelraw` after source work on popup code.
 - **label_get vs written-out order.** A `label_get(k)` argument is evaluated
   before the other arguments; `StringTable.get(Labels.strings_ptr[k])` at its
   own position. Pick per site from the image.

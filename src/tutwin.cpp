@@ -340,9 +340,9 @@ int TutWin::tut_win(GraphicWin *owner, const char *text, int x, int y,
 
     start(TutorialPopupCaption, text, -1, 0, popup_flags, 0);
     if (flags < 2) {
-        set_ok_text(label_get(219));
+        set_ok_text(StringTable.get(Labels.strings_ptr[219]));
     } else {
-        set_ok_text(label_get(236));
+        set_ok_text(StringTable.get(Labels.strings_ptr[236]));
         set_cancel_text(label_get(235));
     }
 

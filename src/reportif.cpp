@@ -2393,7 +2393,7 @@ void ReportWin::draw_labs() {
                 if ((VehPrototypes[i].flags & 1)
                     && VehPrototypes[i].preq_tech == tech) {
                     if (!StringTemp[0]) {
-                        strcat(StringTemp, label_get(0x318 / 4));
+                        strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x318 / 4]));
                         strcat(StringTemp, SocialWinColonSpaceText);
                     } else {
                         strcat(StringTemp, SocialWinCommaSpaceText);
@@ -3019,7 +3019,7 @@ void ReportWin::draw_energy() {
         StringTemp[0] = 0;
         if (PlayersData[faction].diplo_treaties[other] & 0x10) {
             strcat(StringTemp, "*");
-            strcat(StringTemp, label_get(0x604 / 4));
+            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x604 / 4]));
             strcat(StringTemp, BufferJoinSpace);
         } else if ((PlayersData[faction].loan_balance[other] != 0
                     && PlayersData[other].sanction_turns != 0)
@@ -3793,7 +3793,7 @@ void ReportWin::draw_projects() {
                     if (mode < 2) {
                         Buffer::set_text_color(0xF9, -1, 1, 1);
                         Buffer::set_text_color3(0xF9, -1, 1, 1);
-                        strcat(StringTemp, label_get(0x6BC / 4));
+                        strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x6BC / 4]));
                     } else {
                         parse_set(Players[Bases[base_id].faction_id_current].noun_gender,
                                   Players[Bases[base_id].faction_id_current].is_noun_plural);
@@ -4490,7 +4490,7 @@ void ReportWin::draw_score() {
             if (item == 7) {
                 if (GameDataStateStorage.fields_.game_state_ & 0x200000) strcat(StringTemp, label_get(0xE70 / 4));
                 else if (GameDataStateStorage.fields_.game_state_ & 0x400000) strcat(StringTemp, label_get(0xE88 / 4));
-                else if (PlayersData[faction].flags & 0x100000) strcat(StringTemp, label_get(0x1198 / 4));
+                else if (PlayersData[faction].flags & 0x100000) strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x1198 / 4]));
                 else if (!(GameDataStateStorage.fields_.game_state_ & 0x2000)) strcat(StringTemp, label_get(0xE10 / 4));
                 else strcat(StringTemp, TextBufferGetPtr);
             } else {
@@ -4727,7 +4727,7 @@ void ReportWin::draw_intel() {
     report_topic_line(this, rect1_, text_x);
     rect1_.top += field_E268_;
     report_intel_label(0x5A0 / 4);
-    if (PlayersData[subject].ai_fight > 0) strcat(StringTemp, label_get(0x5A4 / 4));
+    if (PlayersData[subject].ai_fight > 0) strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x5A4 / 4]));
     else if (PlayersData[subject].ai_fight < 0) strcat(StringTemp, label_get(0x5AC / 4));
     else strcat(StringTemp, label_get(0x5A8 / 4));
     CharUpperA(StringTemp);

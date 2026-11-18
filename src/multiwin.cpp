@@ -210,7 +210,7 @@ void MultiWin::draw_player(int faction_id, int row, RECT *bounds) {
         }
       } else if (ConsoleControlTurnActive) {
         strcat(StringTemp, "*");
-        strcat(StringTemp, label_get(0x42C / 4));
+        strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x42C / 4]));
         strcat(StringTemp, BufferJoinSpace);
         _itoa(NetUpkeepPhase, number, 10);
         strcat(StringTemp, number);

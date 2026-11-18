@@ -625,7 +625,7 @@ int MainInterface::init(int) {
     flat_button_[3].set_text_color(64, -1, 1, 1);
     flat_button_[3].set_slice_colours(101, 65, 65);
     flat_button_[3].redraw();
-    flat_button_[3].set_bubble_text(label_get(0xC3C / 4));
+    flat_button_[3].set_bubble_text(StringTable.get(Labels.strings_ptr[0xC3C / 4]));
     flat_button_[4].init(label_get(0x83C / 4), 1004, multiplayer_button_rect_.left,
                          multiplayer_button_rect_.top,
                          multiplayer_button_rect_.right - multiplayer_button_rect_.left,
@@ -648,7 +648,7 @@ int MainInterface::init(int) {
     flat_button_[6].field_AD4_[2] = &sprites7_[2];
     flat_button_[7].init(0, 1007, rect3_.left, rect3_.top, rect3_.right - rect3_.left,
                          rect3_.bottom - rect3_.top, this, 0);
-    flat_button_[7].set_bubble_text(label_get(0xF20 / 4));
+    flat_button_[7].set_bubble_text(StringTable.get(Labels.strings_ptr[0xF20 / 4]));
     flat_button_[7].field_AD4_[0] = &sprites7_[3];
     flat_button_[7].field_AD4_[1] = &sprites7_[4];
     flat_button_[7].field_AD4_[2] = &sprites7_[5];
@@ -739,7 +739,7 @@ int MainInterface::init(int) {
             StringTemp[0] = 0;
             switch (k - 11) {
               case 0:
-                strcat(StringTemp, label_get(0xEBC / 4));
+                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0xEBC / 4]));
                 break;
               case 1:
                 strcat(StringTemp, label_get(0xEC0 / 4));
@@ -789,7 +789,7 @@ int MainInterface::init(int) {
             flat_button_[k].field_AD4_[0] = &sprites10_[(k - 36) * 3];
             flat_button_[k].field_AD4_[1] = &sprites10_[(k - 36) * 3 + 1];
             flat_button_[k].field_AD4_[2] = &sprites10_[(k - 36) * 3 + 2];
-            flat_button_[k].set_bubble_text(label_get(0xF64 / 4 + k - 36));
+            flat_button_[k].set_bubble_text(StringTable.get(Labels.strings_ptr[0xF64 / 4 + k - 36]));
             button_group_[3].add(&flat_button_[k]);
         }
         expand_rect(&editor_tools_rect_, 3, 3);

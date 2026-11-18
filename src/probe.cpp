@@ -744,7 +744,7 @@ L_59fb64:
         popup.start("VIRUS");
         if (stack_check(veh_at(Bases[base_id].x, Bases[base_id].y),
                         2, 5, -1, -1)) {
-            popup.item(label_get(0x404), 0x62);
+            popup.item(StringTable.get(Labels.strings_ptr[0x404]), 0x62);
         }
         for (int fac = 1; fac < 70; fac++) {
             if (fac != 1

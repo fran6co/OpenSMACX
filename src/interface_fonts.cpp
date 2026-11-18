@@ -507,7 +507,7 @@ void __cdecl time_controls_dialog(Popup *popup) {
         strcat(StringTemp, SocialWinOpenParenText);
 
         if (!(index != 0)) {
-            strcat(StringTemp, label_get(0x474 / 4));
+            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x474 / 4]));
         } else {
             say_num(TimeControl[index].turn);
             strcat(StringTemp, BufferJoinSpace);

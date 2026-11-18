@@ -219,7 +219,7 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
                     alternate[strlen(output) - 1] = '\0';
                 }
             } else if (Weapon[weapon_id].offense_rating >= 2) {
-                strcat(output, label_get(0x2D8 / 4));
+                strcat(output, StringTable.get(Labels.strings_ptr[0x2D8 / 4]));
                 strcat(alternate, label_get(0x2D8 / 4));
             } else {
                 strcat(output, label_get(0x248 / 4));
@@ -320,7 +320,7 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
                     || !strchr(output, ' '))) {
                 if ((Weapon[weapon_id].mode == 8 || Weapon[weapon_id].mode == 9)
                     && chassis_id == 3) {
-                    strcat(output, label_get(0x28C / 4));
+                    strcat(output, StringTable.get(Labels.strings_ptr[0x28C / 4]));
                     strcat(alternate, label_get(0x28C / 4));
                 } else {
                     strcat(output, StringTable.get(Chassis[chassis_id].offsv_1_name));

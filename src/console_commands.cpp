@@ -4067,7 +4067,7 @@ void DipEdit::init(int faction_index) {
     check_box_.Dialog::init(&rect, 0);
     check_box_.unchecked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[1];
     check_box_.checked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[2];
-    check_box_.item(label_get(875), DTREATY_COMMLINK, 0);
+    check_box_.item(StringTable.get(Labels.strings_ptr[875]), DTREATY_COMMLINK, 0);
     check_box_.item(label_get(646), DTREATY_VENDETTA, 0);
     check_box_.item(label_get(643), DTREATY_TRUCE, 0);
     check_box_.item(label_get(644), DTREATY_TREATY, 0);
@@ -4893,7 +4893,7 @@ void Console::custom_my_faction() {
 
     // The entered leader name counts as female when its first letter matches
     // the female wording of the question.
-    Players[faction_idx].is_leader_female = !_strnicmp(name_buf, label_get(0x2E3), 1);
+    Players[faction_idx].is_leader_female = !_strnicmp(name_buf, StringTable.get(Labels.strings_ptr[0x2E3]), 1);
 
     NetDaemonNet.synch(7, faction_idx, 0, 0, nullptr, 1, 0x2101);
 }
@@ -5108,7 +5108,7 @@ void Console::editor_edit_veh(int vehicle_id) {
     } else if (ConsoleGroupAction == 4) {
         popup.start(PopupStartCaption, "EDITVEHHOME", -1, nullptr, 0x42);
         StringTemp[0] = '\0';
-        strcat(StringTemp, label_get(25));
+        strcat(StringTemp, StringTable.get(Labels.strings_ptr[25]));
         popup.item(StringTemp, 9999);
         for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
             if (Bases[base_id].faction_id_current == Vehs[vehicle_id].faction_id) {

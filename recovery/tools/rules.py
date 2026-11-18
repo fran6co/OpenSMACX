@@ -201,6 +201,13 @@ def rule_unname(t,mt,pos):
         out.append(rest[last:])
         yield (m.start()+1,end,''.join(out).lstrip('\n'),'unname',m.end())
 RULES['unname']=rule_unname
+def rule_labelget(t,mt,pos):
+    for m in re.finditer(r'StringTable\.get\(Labels\.strings_ptr\[([^\]]+)\]\)',mt[pos:]):
+        yield (pos+m.start(),pos+m.end(),'label_get('+t[pos+m.start(1):pos+m.end(1)]+')','labelget')
+def rule_labelraw(t,mt,pos):
+    for m in re.finditer(r'\blabel_get\(([^()]+)\)',mt[pos:]):
+        yield (pos+m.start(),pos+m.end(),'StringTable.get(Labels.strings_ptr['+t[pos+m.start(1):pos+m.end(1)]+'])','labelraw')
+RULES['labelget']=rule_labelget; RULES['labelraw']=rule_labelraw
 def main():
     rule=RULES[sys.argv[1]]; unit=sys.argv[2]; unit=unit if unit.startswith('src/') else 'src/'+unit; pfx=sys.argv[3]
     path=R+'/'+unit; text=open(path,encoding='latin-1').read()

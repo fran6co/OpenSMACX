@@ -255,7 +255,7 @@ static void pick_service_probe(int x) {
     if (x == 7) x = 8;
 }
 
-// ORIGINAL: 0x004E26E0 ?pick_service@AlphaNet@@QAEHPAH@Z 0x004E26E0-0x004E29DF;0x0065C630-0x0065C664
+// ORIGINAL: 0x004E26E0 ?pick_service@AlphaNet@@QAEHPAH@Z 0x004E26E0-0x004E29DF;0x0065C630-0x0065C664 BYTE_EXACT
 // kind      game
 // Historical TRIED record predates separating the complete ServiceList cleanup helper below.
 // TRIED: full transcription (guard/save-global, ServiceStruct local, BasePop::start/exec, Dialogs::item list build, join_service) compiles but this address is catalogued SHARED_TAIL - one of its spans is COMDAT-folded with another function, so no body, not even a one-line stub, gets a MISMATCH/BYTE_EXACT verdict
@@ -284,7 +284,7 @@ int AlphaNet::pick_service(int *allow_pbem) {
                 }
                 popup->item(name, row);
             }
-            if (allow_pbem != 0) popup->item(label_get(0x1128 / 4), 9999);
+            if (allow_pbem != 0) popup->item(StringTable.get(Labels.strings_ptr[0x1128 / 4]), 9999);
             const int selected = popup->exec();
             if (selected == -1) result = 1;
             else if (selected == 9999) {

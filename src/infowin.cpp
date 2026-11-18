@@ -191,7 +191,7 @@ void InfoWin::setup_text() {
             }
             infowin_append_number(text, NetIncomeGlobal);
             strcat(text, "/");
-            strcat(text, label_get(0x30));
+            strcat(text, StringTable.get(Labels.strings_ptr[0x30]));
             strcat(text, SocialWinCloseParenText);
             strcat(text, "}");
             strcpy(row_text_[0][row_base + 2], text);
@@ -242,7 +242,7 @@ void InfoWin::setup_text() {
             strcat(text, "}");
             strcpy(row_text_[0][row_base + 1], text);
             text[0] = 0;
-            strcat(text, label_get(302));
+            strcat(text, StringTable.get(Labels.strings_ptr[302]));
             strcat(text, SocialWinColonSpaceText);
             strcat(text, "{");
             infowin_append_number(text, EnergyEconomyTotal);
@@ -292,7 +292,7 @@ void InfoWin::setup_text() {
             strcpy(row_text_[0][row_base + 2], text);
             text[0] = 0;
             if (PlayersData[faction].diplo_treaties[other] & 1) {
-                strcat(text, label_get(0xD3));
+                strcat(text, StringTable.get(Labels.strings_ptr[0xD3]));
             } else if (PlayersData[faction].diplo_treaties[other] & 2) {
                 strcat(text, label_get(0xD4));
             } else if (PlayersData[faction].diplo_treaties[other] & 4) {
@@ -442,7 +442,7 @@ void InfoWin::setup_text() {
                 }
             }
             text[0] = 0;
-            strcat(text, label_get(0x97C / 4));
+            strcat(text, StringTable.get(Labels.strings_ptr[0x97C / 4]));
             strcat(text, SocialWinColonSpaceText);
             strcat(text, "{");
             strcat(text, get_title(k));
@@ -672,14 +672,14 @@ void InfoWin::setup_text() {
             if (MapIsFlat & 1) {
                 strcat(text, label_get(0xD80 / 4));
             } else {
-                strcat(text, label_get(0xD84 / 4));
+                strcat(text, StringTable.get(Labels.strings_ptr[0xD84 / 4]));
             }
             strcpy(row_text_[0][row_base + 4], text);
             text[0] = 0;
-            strcat(text, label_get(0x84 / 4));
+            strcat(text, StringTable.get(Labels.strings_ptr[0x84 / 4]));
             strcat(text, SocialWinColonSpaceText);
             strcat(text, "{");
-            strcat(text, label_get(0x14 + MapCloudCover));
+            strcat(text, StringTable.get(Labels.strings_ptr[0x14 + MapCloudCover]));
             strcat(text, "}");
             k = 6;
             strcpy(row_text_[0][row_base + 5], text);
