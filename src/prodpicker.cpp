@@ -295,7 +295,7 @@ void ProdPicker::on_left_double_click(int x, int y) {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // Historical seed observations (not fresh measurements or acceptance):
 // TRIED: `switch(a1)` with case 2 falling through to case 7 reproduces the jump-table dispatch; MISMATCH remains in the prologue (push esi/edi ordering around the range check), not the switch body itself.
-// ORIGINAL: 0x004945D0 ?on_button_clicked@ProdPicker@@QAEXH@Z 0x004945D0-0x004946A1
+// ORIGINAL: 0x004945D0 ?on_button_clicked@ProdPicker@@QAEXH@Z 0x004945D0-0x004946A1 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004945d0.cpp"], "reason": "Recover product-selection button routing against ProdPicker selection and action members, then release modality and hide when the cancel action closes a modal picker."}
 // symbol    ?on_button_clicked@ProdPicker@@UAEXH@Z
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x004945D0 0x004946A4 0x004946CC 0x004945E5
@@ -313,10 +313,12 @@ void ProdPicker::on_button_clicked(int button_id) {
         break;
     case 2:
         if (field_A774_ == static_cast<uint32_t>(-1)) return;
-        // fall through
-    case 7:
-        field_A778_ = 7;
-        break;
+        // A goto into the switch's last case, not a fall-through: the image
+        // lays case 7 and the code after the switch right behind this block
+        // and puts cases 4, 5, 6, -1 and -2 after the epilogue, each jumping
+        // back. Only this form does that; with an adjacent fall-through
+        // every case precedes the tail.
+        goto accept;
     case 4:
         field_A778_ = 4;
         break;
@@ -333,6 +335,10 @@ void ProdPicker::on_button_clicked(int button_id) {
     case -2:
         field_A778_ = 0;
         field_A774_ = static_cast<uint32_t>(-1);
+        break;
+    case 7:
+    accept:
+        field_A778_ = 7;
         break;
     default:
         return;

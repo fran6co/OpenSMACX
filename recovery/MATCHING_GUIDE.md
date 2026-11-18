@@ -2134,8 +2134,19 @@ re-aligns their pad blocks (2.5). base_energy 0x004EB560 and give_a_base
   separate case, default always targets the epilogue copy of the last laid-out
   case. Default position, `default: return`, a `return` in the small case or a
   goto tail all compile identically (SocialWin::on_button_clicked). Case blocks
-  follow source order; image blocks placed after the epilogue were not
-  reproduced by any case or default order (ProdPicker::on_button_clicked).
+  follow source order.
+- **Jump-table case blocks after the epilogue, each jumping back to the
+  code after the switch.** The image's last in-line case is reached by what
+  looks like a fall-through. It is a `goto` into the case written *last* in
+  the switch: `case 2: if (x) return; goto accept; case 4: ... case 7:
+  accept: f = 7; break;`. VC6 moves the goto target up behind the goto, the
+  code after the switch follows it (it was the textually last case), and
+  the cases written in between land after the `ret`. No case or default
+  order, `break`/`goto` join, flag, nested switch or loop form does this;
+  duplicated tails that VC6 merges give the layout but enregister the
+  selector (ProdPicker::on_button_clicked 0x004945D0). Only three game
+  functions have the symptom: this one, ReportIf::on_status and
+  Console::go_to.
 - **`movsx` before `and 1`.** VC6 narrows `(char)x & 1` and
   `*(signed char *)&x & 1` to `mov reg8`, so an image `movsx` there needs
   another explanation (scenario_setup, unresolved).
