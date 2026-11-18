@@ -1615,7 +1615,7 @@ void TutWin::tour() {
             yield = crop_yield(ConsoleGlobal.faction_id_, -1, x, y, 0);
             tile = map_loc(x, y);
             bits = tile->bit;
-            elevated = bits & 0x80;
+            elevated = tile->bit & 0x80;
             if ((bits & BIT_FUNGUS) && (tile->climate & ~0x1F) >= 0x40) {
                 fungus = 1;
             } else {
@@ -1651,28 +1651,30 @@ void TutWin::tour() {
                     }
                 }
             }
-            int score = (higher && !lower) - (fungus + special) * 3 - elevated
-                        + (8 - lower) * 2;
+            int score = higher && !lower;
+            score -= (fungus + special) * 3;
+            score -= elevated;
+            score += (8 - lower) * 2;
             if (!special) {
                 int rocks = tile->val3 & ~0x3F;
                 if (!rocks) {
                     if (score > flat_score) {
                         flat_score = score;
-                        flat_y = y;
                         flat_x = x;
+                        flat_y = y;
                     }
                 } else if (rocks == 0x40) {
                     score = yield + score * 8;
                     if (score > one_rock_score && (!ring || one_rock_x < 0)) {
                         one_rock_score = score;
-                        one_rock_y = y;
                         one_rock_x = x;
+                        one_rock_y = y;
                     }
                 } else if (rocks == 0x80) {
                     if (score > two_rock_score) {
                         two_rock_score = score;
-                        two_rock_y = y;
                         two_rock_x = x;
+                        two_rock_y = y;
                     }
                 }
             }
@@ -1685,8 +1687,8 @@ void TutWin::tour() {
                 }
                 if (score > alt_score) {
                     alt_score = score;
-                    alt_y = y;
                     alt_x = x;
+                        alt_y = y;
                 }
             }
             if (level > highest) {
@@ -1743,8 +1745,8 @@ void TutWin::tour() {
                 int site = world_site(x, y, 0);
                 if (site > site_score) {
                     site_score = site;
-                    site_x = x;
                     site_y = y;
+                    site_x = x;
                 }
             }
         }
