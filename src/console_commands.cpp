@@ -1821,7 +1821,7 @@ void Console::terraform(int vehicle_id, int terraform_id) {
 Purpose: Run the destroy-order dialog on one vehicle: eligibility guards, the
          terraforming-option picker, the diplomacy consequences of attacking
          inside another faction's territory, then the destroy itself.
-// ORIGINAL: 0x004D52A0 ?destroy@Console@@QAEXH@Z 0x004D52A0-0x004D5D23;0x0065AB02-0x0065AD6A FILE
+// ORIGINAL: 0x004D52A0 ?destroy@Console@@QAEXH@Z 0x004D52A0-0x004D5D23;0x0065AB02-0x0065AD6A FILE BYTE_EXACT
 // TRIED (seed history): an SEH-heavy function (7+ automatic RAII objects);
 //        the guard-clause prefix is transcribed from the raw disassembly and
 //        the post-exec tail is structurally present but its trailing
