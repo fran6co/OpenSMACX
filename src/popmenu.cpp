@@ -20,7 +20,6 @@
 #define STRINGSTRUCT_CURRENT_ENTRY_INLINE
 // WORKAROUND(decl): PopMenu::exec reads BasePop::dialogs_ (basepop.h).
 #define BASEPOP_FRIEND_POPMENU
-#define STRINGSTRUCT_CURRENT_ID_INLINE
 #include "stdafx.h"
 #include "popmenu.h"
 #include "dialog.h"

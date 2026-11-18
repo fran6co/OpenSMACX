@@ -580,18 +580,17 @@ inline StringStructPayload *StringStruct::current_entry() {
 // 0x00401640 has one caller in the image (Buffer::write_strings' plain-text
 // arm, 0x005DB3B6) and is expanded everywhere else with the receiver formed
 // first (`lea eax,[list]` before the head test, game_data 0x005A885A;
-// ProdPicker, PopMenu::exec, both Buffer string writers). stringstruct.cpp
-// keeps the out-of-line copy, defined `inline` there like current_entry.
-// WORKAROUND(decl): the body is visible only in TUs that define
-// STRINGSTRUCT_CURRENT_ID_INLINE, for the reason given at current_entry.
-#ifdef STRINGSTRUCT_CURRENT_ID_INLINE
+// ProdPicker, PopMenu::exec, both Buffer string writers). Every unit sees
+// this body; the MEASURED declaration keeps stringstruct.cpp's copy emitted.
+// Measured 2026-11-19: no caller's call/expand decision depends on the former
+// per-unit gate (nine units use it, none changes); the only movement is the
+// front-end counter in non-using units (count canaries).
 inline int StringStruct::current_id() {
     if (head_) {
         return current_->id;
     }
     return 0;
 }
-#endif
 
 
 // 0x00401560 is called by CheckBox::on_left_down and expanded inline by

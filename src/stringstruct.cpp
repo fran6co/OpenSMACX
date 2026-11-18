@@ -289,14 +289,8 @@ Purpose: Return the current string-list item ID.
 Return Value: Current ID, or zero when the list is empty
 Status: Complete
 */
-// WORKAROUND(inline): pick-any copy of the header inline, kept emitted by the
-// MEASURED declaration (see current_entry below).
-inline int StringStruct::current_id() {
-    if (head_) {
-        return current_->id;
-    }
-    return 0;
-}
+// Defined inline in stringstruct.h; every unit sees the body and the MEASURED
+// declaration keeps this unit's copy emitted.
 
 /*
 Purpose: Return the current string-list payload.

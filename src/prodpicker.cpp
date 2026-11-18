@@ -15,7 +15,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
-#define STRINGSTRUCT_CURRENT_ID_INLINE
 #include "stdafx.h"
 // WORKAROUND(decl): calculate calls StringStruct::remove_all (0x00402970)
 // out of line for all three lists (0x00492FC3..0x00492FE9).

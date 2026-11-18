@@ -37,7 +37,6 @@
 // WORKAROUND(decl): current_text expands current_entry (0x005E3637) while
 // the string writers' copies of it call 0x00402530.
 #define STRINGSTRUCT_CURRENT_ENTRY_INLINE
-#define STRINGSTRUCT_CURRENT_ID_INLINE
 #include "stdafx.h"
 
 // Distinct writable string cells observed at the original call sites.
