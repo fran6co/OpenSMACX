@@ -7215,6 +7215,8 @@ void ReportIf::close_projects() {
 void ReportIf::draw_sat() {
     char paragraph[1024];
     char line[256];
+    int base;
+    int elevators;
     MainInterfaceGlobal.Buffer::set_clip(&field_20_);
     if (ReportWinGlobal.buttonGroup2_.field_84_ == 0xD3C) {
         field_C_ = field_20_.left + 6;
@@ -7277,8 +7279,8 @@ void ReportIf::draw_sat() {
         MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_ + 4, field_14_);
         for (int other = 1; other < 8; ++other) {
             if (other != ConsoleGlobal.faction_id_) {
-                int elevators = 0;
-                for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
+                elevators = 0;
+                for (base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
                     if (Bases[base].faction_id_current == other && has_fac(41, base, 0)) ++elevators;
                 }
                 if (PlayersData[other].satellites_[0] + PlayersData[other].satellites_[1]
@@ -7387,8 +7389,8 @@ void ReportIf::draw_sat() {
             int selected = buttonGroup4_.field_84_;
             if (selected < 65 || selected >= 70) selected = -1;
             buttonGroup4_.init(0xCE, 0);
-            int elevators;
             for (int kind = 0; kind < 5; ++kind) {
+                char *name;
                 StringTemp[0] = 0;
                 if (kind == 4) {
                     if (!ExpansionEnabled) {
@@ -7397,10 +7399,11 @@ void ReportIf::draw_sat() {
                         MainInterfaceGlobal.Buffer::set_clip(MainInterfaceGlobal.buffer_working_rect());
                         return;
                     }
-                    strcat(StringTemp, StringTable.get(Facility[41].name));
+                    name = Facility[41].name;
                 } else {
-                    strcat(StringTemp, StringTable.get(Facility[kind + 65].name));
+                    name = Facility[kind + 65].name;
                 }
+                strcat(StringTemp, StringTable.get(name));
                 set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, 20);
                 FlatButton *button = &flatButtonsD_[kind];
                 report_button_init(button, StringTemp, kind + 65, &draw_workspace_rect_,
@@ -7409,18 +7412,18 @@ void ReportIf::draw_sat() {
                 button->redraw();
                 button->hide();
                 elevators = 0;
-                for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
+                for (base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
                     if (target == Bases[base].faction_id_current && has_fac(41, base, 0)) ++elevators;
                 }
-                if (kind == 4 ? elevators != 0
-                    : kind < 4 && PlayersData[target].satellites_[kind] != 0) {
+                if ((kind == 4 && elevators)
+                    || (kind != 4 && kind < 4 && PlayersData[target].satellites_[kind])) {
                     button->show(0);
                     buttonGroup4_.add(button);
                     field_10_ += 22;
                 }
             }
-            if (selected != -1 && (selected - 65 == 4 ? elevators != 0
-                : selected - 65 < 4 && PlayersData[target].satellites_[selected - 65] != 0)) {
+            if (selected + 1 != 0 && ((selected - 65 == 4 && elevators)
+                || (selected - 65 != 4 && selected - 65 < 4 && PlayersData[target].satellites_[selected - 65]))) {
                 buttonGroup4_.set(selected, 1);
             } else {
                 ReportWinGlobal.flatButton9_.reset_field_A9C_if_ungrouped();
