@@ -915,7 +915,26 @@
           "-c"
         ]
       },
-      "src/net_class.cpp": {
+      "src/jackal/net_class.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/Og",
+          "/Oi",
+          "/Ot",
+          "/Oy",
+          "/Gs",
+          "/Gy",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Z7",
+          "-c"
+        ]
+      },
+      "src/jackal/net_lists.cpp": {
         "flags": [
           "/nologo",
           "/TP",

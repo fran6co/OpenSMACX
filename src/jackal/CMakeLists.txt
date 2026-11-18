@@ -14,9 +14,9 @@
 # This build keeps them as their own targets (src/caviar, zlib) by decision;
 # grouping does not change per-function bytes.
 #
-# Files whose original members also left header-inline copies in game objects
-# (net_class, basepop, dialog, dialogs, win, ...) still live in src/ until they
-# are split.
+# Where a member's header-inline copies landed in game objects, the copies stay
+# measured in game units: a compile_context fact, or a small src/ residual for
+# bodies that are still out of line.
 add_library(jackal STATIC
     jackal.cpp palette.cpp font.cpp graphics_language.cpp heap.cpp
     time.cpp
@@ -41,7 +41,9 @@ add_library(jackal STATIC
     win.cpp
     mem_get.cpp
     env_open.cpp
-    hsv.cpp)
+    hsv.cpp
+    net_class.cpp
+    net_lists.cpp)
 target_include_directories(jackal PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 target_compile_definitions(jackal PRIVATE $<$<CONFIG:Debug>:BUILD_DEBUG>)
 target_compile_options(jackal PRIVATE /W4 "--repro-root=${PROJECT_SOURCE_DIR}")
@@ -54,7 +56,7 @@ target_link_libraries(jackal PRIVATE caviar)
 set_property(SOURCE checkbox.cpp radiobutton.cpp filewin.cpp palette.cpp
     string_table.cpp buffer.cpp caviar.cpp log.cpp sprite.cpp texheap.cpp
     ddinit.cpp filefind.cpp parse.cpp trig.cpp menu.cpp win.cpp mem_get.cpp
-    env_open.cpp hsv.cpp
+    env_open.cpp hsv.cpp net_class.cpp net_lists.cpp
     APPEND PROPERTY COMPILE_OPTIONS "/Z7")
 # Buffer's original hline5E1B94 and init5D77C3 call the CRT memset.
 # Keep memory-call selection at TU scope; this is an evidence-led build policy,

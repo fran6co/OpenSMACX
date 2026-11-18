@@ -269,7 +269,6 @@ set(OPENSMACX_SOURCES
     src/game_calendar.cpp
     src/gamma.cpp
     src/multidebug.cpp
-    src/net_class.cpp
 )
 
 # `<stdint.h>` and `<cstdint>` are C99 and C++11; cl 12.00.8168 ships neither,
@@ -562,7 +561,6 @@ set_property(SOURCE
     src/prefwin.cpp
     src/newtechwin.cpp
     src/console_commands.cpp
-    src/net_class.cpp
     src/terraforming_actions.cpp
     src/world.cpp
     src/datalink.cpp

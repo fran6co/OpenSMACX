@@ -39,6 +39,7 @@
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00402350 sub_402350 0x00402350-0x0040239B FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00402350.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Receiver-24, calls4023A0, publishes owner, tests deletion bit1 and conditionally frees complete receiver."}
+// compile_context src/alphanet_records.cpp
 // symbol    ??_GNetUnk72C@@UAEPAXI@Z
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004023A0 sub_4023a0 0x004023A0-0x004024F8;0x00650580-0x00650595 FILE BYTE_EXACT
@@ -47,6 +48,7 @@
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00402A60 ServiceStruct::dt 0x00402A60-0x00402AC6 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00402a60.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Receiver-1C, stages provider-base tables, clear402970, zero cursor, owner publication then bit1/free."}
+// compile_context src/alphanet.cpp
 // symbol    ??_GServiceProviderList@@UAEPAXI@Z
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00402AD0 sub_402ad0 0x00402AD0-0x00402B36 FILE BYTE_EXACT
@@ -62,10 +64,12 @@
 // symbol    ??_GServiceStruct@@UAEPAXI@Z
 // ORIGINAL: 0x004E3660 sub_4e3660 0x004E3660-0x004E370C FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:0e184947304cbb843b26264d5145e9b9b452cf16:src/unrecovered/004e3660.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the transferred historical seed findings and complete original spans.", "git:0e184947304cbb843b26264d5145e9b9b452cf16:src/unrecovered/004e3660.cpp", "Historical seed spelling sub_4e3660; current source mapping sub_4e3660; emitted symbol ??_DJackalVoiceRx@@QAEXXZ."], "reason": "Complete receiver stages66EAFC/66EAF8, walk then allocation-owner publication, no delete flag/free. Already genuine Voice-associated class behavior. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
+// compile_context src/alphanet.cpp
 // TRIED: [ecx+N] reads with no stack args -> a thiscall receiver (Obj4e3660), not the given nullary __cdecl. 0.91 mnemonic sim; remaining diff is the prologue's `push ecx` stack-slot local vs a register-kept loop counter, and one lea/add adjustor-call addressing mode (same shape as 0x0051E480's) - not chased.
 // symbol    ??_DJackalVoiceRx@@QAEXXZ
 // ORIGINAL: 0x004E38E0 sub_4e38e0 0x004E38E0-0x004E38FB FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:0x004E38E0-0x004E38FB is a complete 27-byte entry ending in RET; it adjusts to the ServiceList virtual base, calls the mapped destructor, and restores the saved allocation owner", "pinned:0x006634FF and 0x0065C630 caller-specific EH paths tail-jump to 0x004E38E0; normal paths call 0x004E3730 and restore the owner's saved virtual-base field", "COFF:src/net_class.cpp.obj and src/alphanet.cpp.obj both emit ??_DServiceList@@QAEXXZ with destructor, StringAllocationBase vftable and StringAllocationHeap relocations", "source:src/net_class.h:ServiceList/ServiceProviderList virtual StringAllocationBase hierarchy; original name remains address-derived sub_4e38e0"], "reason": "Map the complete original ServiceList cleanup entry to the actual generated COFF helper while keeping each caller's distinct EH cleanup in its parent mapping."}
+// compile_context src/alphanet.cpp
 // symbol    ??_DServiceList@@QAEXXZ
 // ORIGINAL: 0x004E3730 sub_4e3730 0x004E3730-0x004E3888;0x0065C880-0x0065C895 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:0e184947304cbb843b26264d5145e9b9b452cf16:src/unrecovered/004e3730.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the transferred historical seed findings and complete original spans.", "git:0e184947304cbb843b26264d5145e9b9b452cf16:src/unrecovered/004e3730.cpp", "Historical seed spelling sub_4e3730; current source mapping sub_4e3730; emitted symbol ??1ServiceList@@UAE@XZ."], "reason": "Receiver-24 stages provider-derived66EB20/66EB1C, walk then provider base; retained65C880 EH span. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
@@ -78,16 +82,9 @@
 // symbol    ??_GServiceList@@UAEPAXI@Z
 // ORIGINAL: 0x004E3900 sub_4e3900 0x004E3900-0x004E39CF FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:0e184947304cbb843b26264d5145e9b9b452cf16:src/unrecovered/004e3900.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the transferred historical seed findings and complete original spans.", "git:0e184947304cbb843b26264d5145e9b9b452cf16:src/unrecovered/004e3900.cpp", "Historical seed spelling sub_4e3900; current source mapping sub_4e3900; emitted symbol ??_GJackalVoiceRx@@UAEPAXI@Z."], "reason": "Receiver-1C stagesVoiceRx tables, walk, allocation-owner publication and bit1/free. Not a new handwritten body. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
+// compile_context src/alphanet.cpp
 // TRIED: register-save push order (ebx/esi/edi prologue) drifts from a struct-model body; single-level VCall casts used for the three argument-taking slots. 207 vs 197 rebuilt bytes.
 // symbol    ??_GJackalVoiceRx@@UAEPAXI@Z
-// ORIGINAL: 0x005D4860 sub_5d4860 0x005D4860-0x005D4887 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/005d4860.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed.", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/005d4860.cpp"], "reason": "Provider table slot1 frees/nulls name +4 only when allocator+18 null; retained exact seed. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
-// kind      game
-// symbol    ?on_remove@ServiceList@@UAEXPAUServiceStruct@@@Z
-// ORIGINAL: 0x005D4CC0 sub_5d4cc0 0x005D4CC0-0x005D4CE7 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/005d4cc0.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed.", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/005d4cc0.cpp"], "reason": "Nested list slot1 cleanup at observed payload+4; original factory/complete extent unknown, retain exact seed. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
-// kind      game
-// symbol    ?on_remove@NetUnk72C@@UAEXPAVNetTextPayload@@@Z
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00630C30 sub_630c30 0x00630C30-0x00630C7C FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00630c30.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "SDK session descriptor fields populate ledger borrowed fields and call401D80; synchronous borrow target."}
@@ -260,7 +257,7 @@ static const GUID KeptServiceProviderGuid = {
 // boundaries; each empty-option restore returns to command-line optimization.
 // `inline` lets /Ob2 expand it in Net::close (0x0062E010) and the receiver's
 // generated destructors; MEASURED keeps the out-of-line copy emitted.
-// body src/net_class.h
+// body src/jackal/net_class.h
 
 
 int JackalVoiceRx::on_insert(void *) { return 0; }
@@ -654,7 +651,7 @@ void Net::close() {
 // symbol    ??1Net@@QAE@XZ
 // LEVER: call_diff said MORE, 8 calls against the image's 7, and all three causes were real defects rather than encoding ones. (1) `voice_tx_.VoiceTx::~VoiceTx()` was written out in the body of a REAL destructor whose `voice_tx_` is a REAL member, so VC6 emitted the destruction TWICE - once here and once after the body, where the image has it. (2) 0x004E3529 `call 0x402970` is StringStruct::remove_all entered on the list at sub1 - 0x24, and (3) 0x004E353A `call 0x401be0` is leaf_recoveries.cpp's sub_401be0 on sub1 - 8. Both went through no-argument `NetVectorTeardownHelper*()` forwarders, which is an indirect call the image does not make AND a receiver it does pass. call_diff is now clean.
 // TRIED: 12 of 110 even so, and the ceiling is not spelling. THE IMAGE'S BODY IS COMPILER-GENERATED MEMBER TEARDOWN, and this tree writes it out by hand. The image carries EIGHT EH state stores into [ebp - 4] - 5 before `Net::close`, 6 before remove_all, 4 before sub_401be0, then 3, 2, 1 for the three NetFifos, 0 for the container at 0xB0 and -1 at the end - and VC6 emits those ONLY for members it is destroying itself. The order is exactly reverse declaration order, which is the evidence: the objects in the 0x72C..0x750 region go first, then the fifos at 0x130, 0x10C, 0xE8, then the 0xB0 container, then `voice_tx_` at 0x58. `field_E8_[0x6C]` is precisely three 0x24-byte NetFifos, so the three explicit `reinterpret_cast<NetFifo *>(self + N)->~NetFifo()` calls in this body are the compiler's job; so is the 0xB0 walk and the 0x72C list. Declaring those members - and dropping the matching explicit construction from Net::Net, which double_construction.py will then flag - is what this body needs, and it is a layout job rather than a spelling one.
-// body src/net_class.h
+// body src/jackal/net_class.h
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 1.
@@ -3676,70 +3673,6 @@ NetTextListBase::~NetTextListBase() {
 
 
 
-/*
-Purpose: Copy one text record's string into fresh storage chosen by the
-         record's own allocator (the CRT heap when none is installed) and
-         hand the copy plus the four metadata words to the caller's array.
-// ORIGINAL: 0x005D47D0 sub_5d47d0 0x005D47D0-0x005D4851 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original 5D47D0-5D4851 and its retained seed/history preserve identity and extent.", "Provider callback 630BF0 borrows name and provider GUID through ServiceList +1C/+20 before add; receiver +18 selects Heap versus mem_get. Payload owns copied name +4 and GUID +8. These are ServiceList/ServiceStruct roles, not the sibling nested-text owner.", "Native v3 emits the genuine virtual ServiceList insertion symbol; source nominal names remain evidence-backed interpretations, not new byte claims."], "reason": "Recover provider-list insertion as ServiceList::on_insert on the real enumerated provider payload."}
-// Historical superseded binding interpretation: {"evidence": ["Original5D47D0..5D4851; retired seed git:da8a4b7f:src/unrecovered/005d47d0.cpp records the same identity and spans.", "The receiver is the +0x18 Heap pointer, +0x1C string and +0x20 metadata record the sibling 0x005D4C50 installs into; mem_get is general.cpp's and Heap::get is heap.h's own, both already linked by this TU's list machinery."], "reason": "Coverage transcription of the record copy-out with the thiscall receiver spelled as an explicit first argument; no in-tree class owns the record yet, so its slots stay documented offsets."}
-// symbol    ?on_insert@ServiceList@@UAEHPAUServiceStruct@@@Z
-Status: Coverage transcription - unclaimed body
-*/
-int ServiceList::on_insert(ServiceStruct *payload) {
-    const char *text = name_;
-    if (text != 0) {
-        char *copy;
-        if (allocator_ != 0) {
-            const size_t length = strlen(text) + 1;
-            copy = static_cast<char *>(allocator_->get(length));
-        } else {
-            copy = static_cast<char *>(mem_get(strlen(text) + 1));
-        }
-        payload->name_ = copy;
-        if (copy == 0) return 4;
-        *copy = 0;
-        // Native re-reads the borrowed input after allocation and the output
-        // pointer after publication; neither can be cached across the helper.
-        strcat(payload->name_, name_);
-    }
-    // Four scalar words copied in the native hook; GUID value assignment may
-    // lower as a block copy and therefore needs native reference measurement.
-    payload->provider_guid_ = *provider_guid_;
-    return 0;
-}
-
-
-/*
-Purpose: Copy one text record's string into fresh storage chosen by the
-         record's own allocator and park the copy in the caller's output
-         block; the metadata half is left to the caller.
-// ORIGINAL: 0x005D4C50 sub_5d4c50 0x005D4C50-0x005D4CBC FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original 5D4C50-5D4CBC and its retained seed/history preserve identity and extent.", "The nested list receiver uses Heap +18 and borrowed text +1C to copy text into payload +4 through mem_get or Heap::get. Genuine NetUnk72C and NetTextPayload declarations replace the old raw receiver facade.", "The unseen factory, original nominal payload identity and complete allocation extent remain unresolved; observed prefix and delete protocol do not identify them."], "reason": "Recover NetUnk72C::on_insert for its dedicated observed-prefix NetTextPayload role."}
-// Historical superseded binding interpretation: {"evidence": ["Original5D4C50..5D4CBC; retired seed git:da8a4b7f:src/unrecovered/005d4c50.cpp records the same identity and spans.", "Same +0x18/+0x1C receiver record as sub_5d47d0 above, with mem_get and Heap::get resolving exactly as there; the seed's function-pointer CRT spellings are ordinary strlen/strcat calls here."], "reason": "Coverage transcription of the record copy-out's string half with the receiver as an explicit first argument."}
-// symbol    ?on_insert@NetUnk72C@@UAEHPAVNetTextPayload@@@Z
-Status: Coverage transcription - unclaimed body
-*/
-int NetUnk72C::on_insert(Payload *payload) {
-    payload->field_8_ = 0;
-    if (source_text_ != 0) {
-        if (allocator_ != 0) {
-            size_t const length = strlen(source_text_) + 1;
-            // Native 5D4C73 reloads allocator_ AFTER the strlen call.
-            payload->text = static_cast<char *>(allocator_->get(length));
-        } else {
-            payload->text = static_cast<char *>(mem_get(strlen(source_text_) + 1));
-        }
-        if (payload->text == 0) {
-            return 4;
-        }
-        *payload->text = 0;
-        strcat(payload->text, source_text_);
-    }
-    // Null source does NOT clear payload->text; no unseen payload tail is named.
-    return 0;
-}
-
 // ORIGINAL: 0x0062E540 ?join_session@Net@@QAEHPAUSessionStruct@@PADPAD@Z 0x0062E540-0x0062EA97;0x006634DF-0x006634FF
 // kind      game
 // symbol    ?join_session@Net@@QAEHPAVNetAllocationNode@@PAD1@Z
@@ -4204,6 +4137,8 @@ Status: Compiler-generated. NetAllocationNode declares no destructor; the
 
 
 
+
+
 /*
 // ORIGINAL: 0x00402320 sub_402320 0x00402320-0x00402349 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:30611dd8dcac1d36c7ad6321170c4bf4cc359561:src/recovered/00402320.cpp", "pinned:terranx_original:0x402320", "source:src/net_class.cpp"], "reason": "Original cleanup preserves StringAllocationHeap on null input; otherwise free only when owner is null, then clear handoff. Real Net/AlphaNet placement-delete callers discard its result. Indirect return consumers remain unverified. Preserve all original spans, names, claims and seed discoveries; no new byte grant."}
@@ -4218,8 +4153,6 @@ void cleanup_failed_net_construction(void *memory) {
     // Native 402320 leaves the handoff untouched when memory is null.
 }
 #pragma optimize("", on)
-
-
 // ORIGINAL: 0x0062F8A0 ?send_packet_type@Net@@QAEHPAXHKHH@Z 0x0062F8A0-0x0063007F
 // RECOVERY_BINDING: v1 {"evidence": ["task:net-transport-owner", "pinned:terranx_original.exe:0062F8A0 complete direct/reliable targeted/broadcast control flow", "source:src/net_class.h:NetPlayer acknowledgement +8 and RTT +C; existing FIFO and thread event owners", "historical seed:src/unrecovered/0062f8a0.cpp"], "reason": "Recover the complete sender through genuine Net peer state, queues, event handles, SDK DirectPlay and allocator ownership; preserve native timeout error behavior and all original seed obligations without a new byte claim."}
 // TRIED: MISMATCH #0 'sub' vs 'push' (prologue diverges; best sim 0.44). Net::send_packet_type - reliable-UDP-style send with per-peer RTT tracking, retry, and a "who's stalling" prompt on timeout. Used the scaffold's own COM-style dispatch hint for slot 26 (the DirectPlay Send call pushes the interface as an explicit arg rather than passing it in ecx) - declared a local function- pointer typedef under a name that does NOT collide with the scaffold's own nullary `ComSlot026`, since redeclaring that symbol with a different signature is a hard conflict, not an override. Hoisted `buf`, `allocSize` and `ackFlag` to function scope: MSVC 6 (C2362) refuses a `goto` that skips a later local's initializer even when the type is POD, and this control flow's early special-case return has to jump past the buffer-allocation block entirely.

@@ -85,6 +85,8 @@
       {"archive": "src/jackal/jackal.lib", "object": "src/jackal/CMakeFiles/jackal.dir/mem_get.cpp.obj", "member": "src/jackal/CMakeFiles/jackal.dir/mem_get.cpp.obj"},
       {"archive": "src/jackal/jackal.lib", "object": "src/jackal/CMakeFiles/jackal.dir/env_open.cpp.obj", "member": "src/jackal/CMakeFiles/jackal.dir/env_open.cpp.obj"},
       {"archive": "src/jackal/jackal.lib", "object": "src/jackal/CMakeFiles/jackal.dir/hsv.cpp.obj", "member": "src/jackal/CMakeFiles/jackal.dir/hsv.cpp.obj"},
+      {"archive": "src/jackal/jackal.lib", "object": "src/jackal/CMakeFiles/jackal.dir/net_class.cpp.obj", "member": "src/jackal/CMakeFiles/jackal.dir/net_class.cpp.obj"},
+      {"archive": "src/jackal/jackal.lib", "object": "src/jackal/CMakeFiles/jackal.dir/net_lists.cpp.obj", "member": "src/jackal/CMakeFiles/jackal.dir/net_lists.cpp.obj"},
       {"archive": "src/caviar/caviar.lib", "object": "src/caviar/CMakeFiles/caviar.dir/caviar_geometry.cpp.obj", "member": "src/caviar/CMakeFiles/caviar.dir/caviar_geometry.cpp.obj"},
       {"archive": "src/caviar/caviar.lib", "object": "src/caviar/CMakeFiles/caviar.dir/caviar_loader.cpp.obj", "member": "src/caviar/CMakeFiles/caviar.dir/caviar_loader.cpp.obj"},
       {"archive": "src/caviar/caviar.lib", "object": "src/caviar/CMakeFiles/caviar.dir/caviar_scene.cpp.obj", "member": "src/caviar/CMakeFiles/caviar.dir/caviar_scene.cpp.obj"},
