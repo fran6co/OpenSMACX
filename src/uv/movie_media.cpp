@@ -942,9 +942,6 @@ int __fastcall media_component_mask_bits_31(uint32_t value) {
 //        pixel-format block; red/green counts written out, the helper called
 //        for blue (so this caller must not inline it), signed shift masks.
 //        The image passes this runtime in EDX to the fastcall sub_5cc450.
-// WORKAROUND(noinline): keeps media_component_mask_bits_31 a call. The uV
-// unit was built /Ob1 (see sub_5cb220); this region goes with that flag.
-#pragma inline_depth(0)
 void MediaRuntime::sub_5cbe30() {
   if (descriptor->stream_gate_80 != 0) return;
 
@@ -1086,7 +1083,6 @@ void MediaRuntime::sub_5cbe30() {
   }
   teardown_gate_3c = 1;
 }
-#pragma inline_depth(8)
 
 // Caller/native receiver evidence identifies this as a MediaRuntime method.
 // ORIGINAL: 0x005CE2B0 sub_5ce2b0 0x005CE2B0-0x005CE2F0 BYTE_EXACT
@@ -2121,12 +2117,6 @@ void MediaRuntime::sub_5cbbc0() {
 // symbol    ?sub_5cb220@MediaDescriptor@@QAEXXZ
 // kind      game
 // TRIED: __thiscall member (class Sub5cb220Obj) with `this` reassigned to *(int**)this, matching Ghidra's structure closely; BOTH indirect calls (slots 9 and 12) are COM-style (interface pushed as an explicit stack arg, not passed in ecx) despite the brief's emitter flagging only slot 9 - confirmed by the raw asm's "push eax; call [ecx+0x30]" shape for slot 12 too, per LEVER 3. MISMATCH #0 (frame layout), not chased further.
-// WORKAROUND(noinline): keeps sub_5ce2b0 a call. Evidence for /Ob1 on the
-// whole uV library: with /Ob1 and neither region, all 41 movie_media.cpp
-// markers measure as now (32 exact, same rows elsewhere), and both
-// decoders are unchanged; under /Ob2 these two tiny same-unit callees are
-// expanded (sub_5cbe30 7 -> 69 rows, sub_5cb220 4 -> 81).
-#pragma inline_depth(0)
 void MediaDescriptor::sub_5cb220() {
   // Every field goes through r->descriptor, reloaded at each use.
   MediaRuntime *r = runtime;
@@ -2250,7 +2240,6 @@ finish_worker:
   r->release_playback_buffer();
   InterlockedExchange(&r->descriptor->state, 5);
 }
-#pragma inline_depth(8)
 
 // ORIGINAL: 0x005CAE80 sub_5cae80 0x005CAE80-0x005CB046
 // symbol    _sub_5cae80
