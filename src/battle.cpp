@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#define MAPWIN_TILE_IN_VIEW_INLINE  // boom expands MapWin::tile_in_view (basewin.h)
 #include "popup.h"
 #include "basepop.h"
 #include "text.h"
@@ -1642,6 +1643,8 @@ int __cdecl boom(int x, int y, int flags) {
     int veh_b;            // EBP-0x14
     int animation_state;  // EBP-0x20
     // Explosion colour group by faction; read by the Flic draw (0x0050595A).
+    int flic_divisor[4] = { 2, 2, 2, 2 };
+    int flic_size[4] = { 3, 4, 5, 5 };
     int faction_color_group[8] = { 0, 5, 2, 10, 9, 11, 0, 2 };
     // EBP-0x10: PSI flag in the sprite path, Flic size numerator otherwise.
     // The post-loop FX test (0x0050550C) reads it in both modes.
@@ -1650,9 +1653,6 @@ int __cdecl boom(int x, int y, int flags) {
     int divisor_or_bank;
     int palette_row;
     {
-        // These two share stack with active_windows (EBP-0x94..-0x78).
-        int flic_divisor[4] = { 2, 2, 2, 2 };
-        int flic_size[4] = { 3, 4, 5, 5 };
         veh_a = VehDrawSelection689F28;
         veh_b = VehDrawSelection689F2C;
         animation_state = flags & 0x70;
@@ -1728,31 +1728,7 @@ int __cdecl boom(int x, int y, int flags) {
         if (slot && !MapWinTable[slot]->view_active_) {
             continue;
         }
-        if (y < MapWinTable[slot]->field_1DDA8_) {
-            continue;
-        }
-        if (y >= MapWinTable[slot]->field_1DDA8_ +
-                     MapWinTable[slot]->field_1DDD8_ +
-                     MapWinTable[slot]->field_1DDD0_) {
-            continue;
-        }
-        int wrapped_x = x;
-        if (!(MapIsFlat & 1)) {
-            if (wrapped_x < MapWinTable[slot]->field_1DDA4_) {
-                wrapped_x += MapLongitudeBounds;
-            }
-            if (wrapped_x >= MapWinTable[slot]->field_1DDA4_ +
-                                 MapWinTable[slot]->field_1DDD4_ +
-                                 MapWinTable[slot]->field_1DDCC_) {
-                wrapped_x -= MapLongitudeBounds;
-            }
-        }
-        if (wrapped_x < MapWinTable[slot]->field_1DDA4_) {
-            continue;
-        }
-        if (wrapped_x >= MapWinTable[slot]->field_1DDA4_ +
-                             MapWinTable[slot]->field_1DDD4_ +
-                             MapWinTable[slot]->field_1DDCC_) {
+        if (!MapWinTable[slot]->tile_in_view(x, y, 0)) {
             continue;
         }
         any_window = 1;
