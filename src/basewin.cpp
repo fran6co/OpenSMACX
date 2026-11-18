@@ -2593,12 +2593,12 @@ void BaseWin::draw_production(int update_mode) {
         const int mineral_surplus = BaseCurrent->mineral_surplus;
         int max_cell_index;
         int progress_boundary;
-        if (gross_cost < current_minerals) {
-            max_cell_index = current_minerals;
-            progress_boundary = gross_cost;
-        } else {
+        if (!(gross_cost < current_minerals)) {
             max_cell_index = gross_cost;
             progress_boundary = current_minerals;
+        } else {
+            max_cell_index = current_minerals;
+            progress_boundary = gross_cost;
         }
         // The native dimension search and row-major cell walk keep their
         // unguarded integer divisions and signed limits.

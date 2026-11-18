@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 R=os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))); S=os.path.dirname(os.path.abspath(__file__))
 def run_deck(unit,addr,deck,jobs=14,win=None):
     """deck: list of (key, source_text). Returns list of (win, diff, exact, key) sorted best first."""
-    d=S+'/perm'; os.makedirs(d,exist_ok=True)
+    d=R+'/build/recovery/fe/perm'; os.makedirs(d,exist_ok=True)
     def lane(k):
         cmd=['uv','run','python',S+'/fe.py',unit,addr,'--batch','--pfx',str(21+k)]
         if win: cmd+=['--win',win]

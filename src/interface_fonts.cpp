@@ -506,7 +506,9 @@ void __cdecl time_controls_dialog(Popup *popup) {
         strcat(StringTemp, "|");
         strcat(StringTemp, SocialWinOpenParenText);
 
-        if (index != 0) {
+        if (!(index != 0)) {
+            strcat(StringTemp, label_get(0x474 / 4));
+        } else {
             say_num(TimeControl[index].turn);
             strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, label_get(0x468 / 4));
@@ -522,8 +524,6 @@ void __cdecl time_controls_dialog(Popup *popup) {
             say_num(TimeControl[index].unit);
             strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, label_get(0x470 / 4));
-        } else {
-            strcat(StringTemp, label_get(0x474 / 4));
         }
 
         strcat(StringTemp, SocialWinCloseParenText);

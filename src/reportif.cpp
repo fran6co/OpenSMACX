@@ -3744,11 +3744,11 @@ void ReportWin::draw_projects() {
                     card->left = card_left;
                     card->bottom = card_top + field_59A4_;
                     card->right = card_left + field_59A0_;
-                    if (mode < 2) {
-                        spot_.add(base_id + 0x400, 0, card->left, card->top,
+                    if (!(mode < 2)) {
+                        spot_.add(project, 0, card->left, card->top,
                                   card->right - card->left, card->bottom - card->top);
                     } else {
-                        spot_.add(project, 0, card->left, card->top,
+                        spot_.add(base_id + 0x400, 0, card->left, card->top,
                                   card->right - card->left, card->bottom - card->top);
                     }
                     if ((mode < 2 && base_id == field_59AC_ - 0x400)
@@ -4467,7 +4467,10 @@ void ReportWin::draw_score() {
             const int own = num_objectives(faction, 0);
             const int total = num_objectives(faction, GameDataStateStorage.fields_.game_rules_ & 0x1000);
             StringTemp[0] = 0;
-            if (total > own) {
+            if (!(total > own)) {
+                say_num(own);
+                strcat(StringTemp, BufferJoinSpace);
+            } else {
                 say_num(own);
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, label_get(0xE0C / 4));
@@ -4480,9 +4483,6 @@ void ReportWin::draw_score() {
                 report_topic_line(this, rect1_, rect1_.left);
                 rect1_.top += static_cast<int>(field_E268_ * 3) / 2;
                 StringTemp[0] = 0;
-            } else {
-                say_num(own);
-                strcat(StringTemp, BufferJoinSpace);
             }
             strcat(StringTemp, TextBufferGetPtr);
         } else {

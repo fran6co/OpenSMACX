@@ -549,7 +549,9 @@ void __cdecl enemy_strategy(int faction_id) {
                             better = true;
                         }
                     }
-                } else if (veh_plan == 2) {
+                } else if (!(veh_plan == 2)) {
+                    better = true;
+                } else {
                     for (int k = 0; k < 64; k++) {
                         int other = faction_id * 64 + k;
                         if ((VehPrototypes[other].flags & 1)
@@ -562,8 +564,6 @@ void __cdecl enemy_strategy(int faction_id) {
                             better = true;
                         }
                     }
-                } else {
-                    better = true;
                 }
                 if (better) {
                     if (!(Vehs[veh_id].flags & 0x20)) {
@@ -945,10 +945,10 @@ void __cdecl enemy_strategy(int faction_id) {
                 }
             } else if (my_bases && (treaty & 0x20) && their_force > my_combat) {
                 int level;
-                if ((my_force > their_combat && their_bases && their_force < my_force * 2) || !path) {
-                    level = 2;
-                } else {
+                if (!((my_force > their_combat && their_bases && their_force < my_force * 2) || !path)) {
                     level = 1;
+                } else {
+                    level = 2;
                 }
                 threat |= level;
             }
@@ -3517,8 +3517,10 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                         value *= weight;
                         if (value >= threshold) {
                             threshold = value;
-                            if (alien_dist(*a4, *a5, Vehs[i].x, Vehs[i].y)
-                                > speed(veh_id, 0) / Rules.move_rate_roads - Rules.move_rate_roads) {
+                            if (!(alien_dist(*a4, *a5, Vehs[i].x, Vehs[i].y)
+                                > speed(veh_id, 0) / Rules.move_rate_roads - Rules.move_rate_roads)) {
+                                go_to(veh_id, 'm', Vehs[i].x, Vehs[i].y);
+                            } else {
                                 int nearest = 9999;
                                 // BUG(original): walks every base slot, not just the live bases.
                                 for (int base_slot = 0; base_slot < MaxBaseNum; base_slot++) {
@@ -3534,8 +3536,6 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                                         }
                                     }
                                 }
-                            } else {
-                                go_to(veh_id, 'm', Vehs[i].x, Vehs[i].y);
                             }
                         }
                     }
@@ -4302,12 +4302,12 @@ int __cdecl enemy_move(int veh_id) {
     stay = 0;
     coast_goal = 0;
     no_moves = 0;
-    if (veh_id < 0) {
+    if (!(veh_id < 0)) {
+        hint = 0;
+    } else {
         // Hint mode: the caller passes -(veh_id + 1); the image open-codes |veh_id + 1|.
         veh_id = (veh_id + 1 < 0) ? -(veh_id + 1) : veh_id + 1;
         hint = 1;
-    } else {
-        hint = 0;
     }
     remote_own = IsMultiplayerNet
         && Vehs[veh_id].faction_id == ConsoleGlobal.faction_id_;
@@ -5466,11 +5466,11 @@ L_56ef2f:
         goto L_57460a;
     }
     if (plan == PLAN_NAVAL_SUPERIORITY) {
-        if (Vehs[veh_id].order == ORDER_MOVE_TO) {
+        if (!(Vehs[veh_id].order == ORDER_MOVE_TO)) {
+            best_score = 9999;
+        } else {
             best_score = (abs(y - Vehs[veh_id].waypoint_y[0])
                 + x_dist(x, Vehs[veh_id].waypoint_x[0])) >> 1;
-        } else {
-            best_score = 9999;
         }
         // The radius bound is re-evaluated (veh_moves/range calls) every iteration.
         for (i = 0; i < RadiusRange[range(veh_moves(veh_id) / Rules.move_rate_roads, 1, 8)]; i++) {
@@ -8048,10 +8048,10 @@ L_576d87:;
                 int ax = xrange(tx + VehMoveDeltaX[d]);
                 int ay = ty + VehMoveDeltaY[d];
                 if (!on_map(ax, ay)) continue;
-                if (PlayersData[faction_id].flags & PFLAG_STRAT_SEARCH_OBJECTIVES) {
-                    if ((map_loc(ax, ay)->bit & 0x100000) && is_known(ax, ay, faction_id)) continue;
-                } else {
+                if (!(PlayersData[faction_id].flags & PFLAG_STRAT_SEARCH_OBJECTIVES)) {
                     if (is_known(ax, ay, faction_id)) continue;
+                } else {
+                    if ((map_loc(ax, ay)->bit & 0x100000) && is_known(ax, ay, faction_id)) continue;
                 }
                 score += 2;
                 if (ay >= 2 && ay < MapLatitudeBounds - 3) score += 4;

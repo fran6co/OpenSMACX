@@ -683,12 +683,12 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
         if (def < l_f0) {
             // The image loads the production item once, before the l_5c test.
             int prod = Bases[base_id].queue_production_id[0];
-            if (!l_5c && l_f0 != l_c8) {
-                if (prod >= 0 && VehPrototypes[prod].plan <= 1 && ++def >= l_f0) {
+            if (!(!l_5c && l_f0 != l_c8)) {
+                if (prod >= 0 && VehPrototypes[prod].plan == 2 && ++def >= l_f0) {
                     continue;
                 }
             } else {
-                if (prod >= 0 && VehPrototypes[prod].plan == 2 && ++def >= l_f0) {
+                if (prod >= 0 && VehPrototypes[prod].plan <= 1 && ++def >= l_f0) {
                     continue;
                 }
             }
@@ -2082,16 +2082,16 @@ L_4fc68f:
         if (l_e0 >= PlayersData[l_8].unk_28 * 2 / 3 && l_c != 8) {
             w = w * 2 / 3;
         }
-        if (l_e0 < PlayersData[l_8].unk_28 / 2) {
-            if (!l_124 && !(l_80 && l_2c == 2)) {
-                w *= 2;
-            }
-        } else {
+        if (!(l_e0 < PlayersData[l_8].unk_28 / 2)) {
             if (!l_158 && l_c != 8) {
                 w = w * 3 / 4;
             }
             if (l_3c && !l_124) {
                 w /= 2;
+            }
+        } else {
+            if (!l_124 && !(l_80 && l_2c == 2)) {
+                w *= 2;
             }
         }
     }
@@ -2365,7 +2365,13 @@ L_4fcf70:
         }
     }
     l_18 *= w;
-    if (!l_78) {
+    if (!(!l_78)) {
+        l_90 = 0;
+        if ((a_130[1] < 90000 && l_2c != 9 && l_2c != 8) || !VehPrototypes[l_14].plan
+            || l_2c == 4 || l_2c == 6) {
+            goto L_4fd8f6;
+        }
+    } else {
         int s = l_18;
         if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c) {
             // Governor permission the unit's plan needs (jump table 0x500018).
@@ -2425,12 +2431,6 @@ L_4fcf70:
                 a_114[0] = s;
                 a_130[0] = l_14;
             }
-        }
-    } else {
-        l_90 = 0;
-        if ((a_130[1] < 90000 && l_2c != 9 && l_2c != 8) || !VehPrototypes[l_14].plan
-            || l_2c == 4 || l_2c == 6) {
-            goto L_4fd8f6;
         }
     }
     if (l_18 <= a_114[(l_90 != 0) + 1]) {
@@ -3341,10 +3341,10 @@ L_4ff11f:
             if (Facility[base_id + FacilitySPStart].preq_tech >= 0) {
                 for (l_5c = 1; l_5c < 8; l_5c++) {
                     if (l_5c != l_8 && PlayersData[l_5c].ranking > PlayersData[l_8].ranking) {
-                        if (!has_tech(Facility[base_id + FacilitySPStart].preq_tech, l_5c)) {
-                            weight /= 2;
-                        } else {
+                        if (!(!has_tech(Facility[base_id + FacilitySPStart].preq_tech, l_5c))) {
                             weight *= 2;
+                        } else {
+                            weight /= 2;
                         }
                     }
                 }

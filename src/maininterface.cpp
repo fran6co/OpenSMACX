@@ -542,11 +542,11 @@ int MainInterface::init(int) {
     y = 245;
     for (i = 0; i < 25; i++) {
         if (i) {
-            if (i % 8 == 0) {
+            if (!(i % 8 == 0)) {
+                x += 44;
+            } else {
                 x = 350;
                 y += 57;
-            } else {
-                x += 44;
             }
         }
         for (j = 0; j < 3; j++)

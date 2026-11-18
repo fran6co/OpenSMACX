@@ -2434,10 +2434,7 @@ void Console::go_to(int subject, int order, int grouped) {
                     strcat(StringTemp, SocialWinCloseParenText);
                 }
             }
-            if (order == -3) {
-                strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, label_get((Bases[id].state & 0x20000000) ? 0x212 : 0x211));
-            } else {
+            if (!(order == -3)) {
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, label_get(0xFA));
                 strcat(StringTemp, SocialWinColonSpaceText);
@@ -2452,6 +2449,9 @@ void Console::go_to(int subject, int order, int grouped) {
                     _itoa(Bases[id].population_size, size_text, 10);
                     strcat(StringTemp, size_text);
                 }
+            } else {
+                strcat(StringTemp, BufferJoinSpace);
+                strcat(StringTemp, label_get((Bases[id].state & 0x20000000) ? 0x212 : 0x211));
             }
             popup.item(StringTemp, id);
             count++;

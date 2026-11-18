@@ -267,11 +267,11 @@ void Datalink::draw_unit() {
             strcat(StringTemp, SocialWinColonSpaceText);
             strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, "{");
-            if (Weapon[VehPrototypes[id].weapon_id].offense_rating < 0) {
-                strcat(StringTemp, label_get(0x310 / 4));
-            } else {
+            if (!(Weapon[VehPrototypes[id].weapon_id].offense_rating < 0)) {
                 _itoa(Weapon[VehPrototypes[id].weapon_id].offense_rating, number, 10);
                 strcat(StringTemp, number);
+            } else {
+                strcat(StringTemp, label_get(0x310 / 4));
             }
             strcat(StringTemp, "}");
         }

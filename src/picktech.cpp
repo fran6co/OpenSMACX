@@ -351,14 +351,14 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
     const int requirement_count = tech_recurse(tech, 0);
     if (item_count_ > 8)
         Buffer::set_text_color(mandate_color(category), 0, 1, 1);
-    if (item_count_ > 8) {
+    if (!(item_count_ > 8)) {
+        page_pen_y_ = Buffer::wrap_cent(text_buffer, page_x_ + 2,
+                                      page_pen_y_, page_width_ - 6);
+    } else {
         const int wrapped_height = Buffer::wrap_height(text_buffer, rect->right - rect->left - 4);
         page_pen_y_ = Buffer::wrap_cent(text_buffer, rect->left + 2,
             (rect->bottom - rect->top - wrapped_height) / 2 + rect->top,
             rect->right - rect->left - 4);
-    } else {
-        page_pen_y_ = Buffer::wrap_cent(text_buffer, page_x_ + 2,
-                                      page_pen_y_, page_width_ - 6);
     }
     if (item_count_ > 8) return 1;
 
@@ -942,9 +942,7 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
         }
     }
     if (item_count_ == 0) return -1;
-    if (!is_human(faction)) {
-        return recommendation;
-    } else {
+    if (!(!is_human(faction))) {
 
         int title_height;
         int header_height;
@@ -1019,5 +1017,7 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
         hide();
         do_all_draws();
         return technology_ids_[selected_index_];
+    } else {
+        return recommendation;
     }
 }

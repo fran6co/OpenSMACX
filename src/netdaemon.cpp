@@ -3719,11 +3719,7 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
             break;
         }
         if (packet->payload_14_ >= 0) {
-            if (packet->payload_14_ > 1) {
-                if (packet->payload_14_ == 2) {
-                    goto project_changed;
-                }
-            } else {
+            if (!(packet->payload_14_ > 1)) {
                 parse_says(0, get_title(project_faction), -1, -1);
                 parse_says(1, get_name(project_faction), -1, -1);
                 parse_says(2, get_noun(project_faction), -1, -1);
@@ -3734,6 +3730,10 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
                     }
                 } else {
                     NetMsgPrimary.pop("BEGINPROJECT", 5000, 2, 0);
+                }
+            } else {
+                if (packet->payload_14_ == 2) {
+                    goto project_changed;
                 }
             }
         }
@@ -3872,10 +3872,7 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
         break;
 
     case 0x2215:
-        if (SpockHelpActive || TurnControlWord93A954) {
-            log_say("(Sending: Lock failed -- REJECT)", 0, 0, 0);
-            message_data(0x1208, who, 0, 0, 0, 0);
-        } else {
+        if (!(SpockHelpActive || TurnControlWord93A954)) {
             log_say("From Client: ADD LOCK", who, packet->payload_10_, packet->payload_14_);
             if (locks_.add_lock(who, packet->payload_18_, packet->payload_10_,
                                 packet->payload_14_)) {
@@ -3885,6 +3882,9 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
                 log_say("(Sending: Add OK)", 0, 0, 0);
                 message_data(0x1207, who, 0, 0, 0, 0);
             }
+        } else {
+            log_say("(Sending: Lock failed -- REJECT)", 0, 0, 0);
+            message_data(0x1208, who, 0, 0, 0, 0);
         }
         break;
 
@@ -5293,10 +5293,10 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
     for (i = 0; i < total; i++) {
         if (!outgoing) {
             if (header->index == total - 1 && remainder) {
-                if (total == 1) {
-                    src = 0;
-                } else {
+                if (!(total == 1)) {
                     src = reinterpret_cast<char *>(total * 0x800 - 0x800);
+                } else {
+                    src = 0;
                 }
                 length = remainder;
             } else {
@@ -5308,16 +5308,16 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
             }
             i = total - 1;
         } else {
-            if (i == total - 1 && remainder) {
+            if (!(i == total - 1 && remainder)) {
+                src = reinterpret_cast<char *>(i * 0x800);
+                length = 0x800;
+            } else {
                 if (total == 1) {
                     src = 0;
                 } else {
                     src = reinterpret_cast<char *>(total * 0x800 - 0x800);
                 }
                 length = remainder;
-            } else {
-                src = reinterpret_cast<char *>(i * 0x800);
-                length = 0x800;
             }
         }
 

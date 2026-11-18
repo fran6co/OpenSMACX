@@ -1162,9 +1162,7 @@ void __cdecl base_kill(int base_id) {
     for (veh_id = GameDataStateStorage.fields_.vehicle_current_count_ - 1; veh_id >= 0; veh_id--) {
         if (veh_id < GameDataStateStorage.fields_.vehicle_current_count_
             && Vehs[veh_id].home_base_id == base_id) {
-            if (Vehs[veh_id].faction_id != faction_id) {
-                Vehs[veh_id].home_base_id = -1;
-            } else {
+            if (!(Vehs[veh_id].faction_id != faction_id)) {
                 // Hide the dying base from the search for a new home.
                 Bases[base_id].faction_id_current = 0xFF;
                 int home_id = base_kill_find(x, y, faction_id);
@@ -1174,6 +1172,8 @@ void __cdecl base_kill(int base_id) {
                 } else {
                     kill(veh_id);
                 }
+            } else {
+                Vehs[veh_id].home_base_id = -1;
             }
         }
     }
@@ -8260,9 +8260,7 @@ production_again:
         }
         BaseCurrent->state |= BSTATE_PRODUCTION_DONE;
         BaseCurrent->state &= ~0x80000000u;
-        if (!is_human(faction_id)) {
-            base_reset(BaseIDCurrentSelected, 0);
-        } else {
+        if (!(!is_human(faction_id))) {
             int queued = base_queue(BaseIDCurrentSelected);
             parse_says(1, VehPrototypes[proto_id].veh_name, -1, -1);
             uint32_t warnings = GameDataStateStorage.fields_.game_warnings_;
@@ -8342,6 +8340,8 @@ production_again:
                 && BaseCurrent->governor & GOV_ACTIVE) {
                 base_reset(BaseIDCurrentSelected, 0);
             }
+        } else {
+            base_reset(BaseIDCurrentSelected, 0);
         }
         if (new_proto) {
             mon_prototype_built(faction_id);
@@ -8515,7 +8515,9 @@ production_again:
     }
     if (project_id >= 0) {
         GameDataStateStorage.fields_.secret_project_[project_id] = BaseIDCurrentSelected;
-    } else if (is_orbital) {
+    } else if (!(is_orbital)) {
+        set_fac(facility_id, BaseIDCurrentSelected, TRUE);
+    } else {
         PlayersData[faction_id].satellites_[facility_id - FacilityRepStart]++;
         if (!(PlayersData[faction_id].flags & PFLAG_MAP_REVEALED)) {
             for (int i = 0; i < MapArea; i++) {
@@ -8537,8 +8539,6 @@ production_again:
                 WorldClimateWorldWin.GraphicWin::redraw();
             }
         }
-    } else {
-        set_fac(facility_id, BaseIDCurrentSelected, TRUE);
     }
     if (facility_id == FAC_NETWORK_NODE) {
         BaseCurrent->state &= ~(BSTATE_ARTIFACT_LINKED | BSTATE_ARTIFACT_ALREADY_LINKED);
@@ -8568,10 +8568,35 @@ production_again:
                 parse_num(3, Rules.size_base_subspace_gen);
                 parse_says(0, BaseCurrent->name_string, -1, -1);
                 popp(ScriptPopupFile, "GENERATORME", 0, "subgen_sm.pcx", 0);
-            } else if (facility_id < FacilitySPStart
+            } else if (!(facility_id < FacilitySPStart
                        && !has_fac_announced(faction_id, facility_id)
                        && !(GameDataStateStorage.fields_.game_state_ & 1)
-                       && GameDataStateStorage.fields_.game_warnings_ & 1) {
+                       && GameDataStateStorage.fields_.game_warnings_ & 1)) {
+                StringTemp[0] = '\0';
+                strcat(StringTemp, "PRODUCE");
+                if (queued) {
+                    parse_num(1, BaseCurrent->queue_size + 1);
+                    strcat(StringTemp, "Q");
+                } else if (BaseCurrent->governor & GOV_MANAGES_PRODUCTION
+                           && BaseCurrent->governor & GOV_ACTIVE) {
+                    strcat(StringTemp, "G");
+                }
+                const char *picture;
+                if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
+                    picture = is_orbital ? "space_sm.pcx"
+                        : facility_id >= FacilitySPStart ? "secproj_sm.pcx"
+                        : "alfacblt_sm.pcx";
+                } else {
+                    picture = is_orbital ? "space_sm.pcx"
+                        : facility_id >= FacilitySPStart ? "secproj_sm.pcx"
+                        : "facblt_sm.pcx";
+                }
+                popb(StringTemp,
+                     ((queued || (BaseCurrent->governor & GOV_MANAGES_PRODUCTION
+                                  && BaseCurrent->governor & GOV_ACTIVE))
+                      && !(GameDataStateStorage.fields_.game_warnings_ & 0x2000)) ? 0 : 1,
+                     -1, picture, 0);
+            } else {
                 parse_says(0, BaseCurrent->name_string, -1, -1);
                 popup.init(0, 0);
                 popup.set_width(500);
@@ -8628,31 +8653,6 @@ production_again:
                     && GameDataStateStorage.fields_.game_more_preferences_ & 0x20000) {
                     g_WAVE_GENERAL.Sound::fade(2000);
                 }
-            } else {
-                StringTemp[0] = '\0';
-                strcat(StringTemp, "PRODUCE");
-                if (queued) {
-                    parse_num(1, BaseCurrent->queue_size + 1);
-                    strcat(StringTemp, "Q");
-                } else if (BaseCurrent->governor & GOV_MANAGES_PRODUCTION
-                           && BaseCurrent->governor & GOV_ACTIVE) {
-                    strcat(StringTemp, "G");
-                }
-                const char *picture;
-                if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
-                    picture = is_orbital ? "space_sm.pcx"
-                        : facility_id >= FacilitySPStart ? "secproj_sm.pcx"
-                        : "alfacblt_sm.pcx";
-                } else {
-                    picture = is_orbital ? "space_sm.pcx"
-                        : facility_id >= FacilitySPStart ? "secproj_sm.pcx"
-                        : "facblt_sm.pcx";
-                }
-                popb(StringTemp,
-                     ((queued || (BaseCurrent->governor & GOV_MANAGES_PRODUCTION
-                                  && BaseCurrent->governor & GOV_ACTIVE))
-                      && !(GameDataStateStorage.fields_.game_warnings_ & 0x2000)) ? 0 : 1,
-                     -1, picture, 0);
             }
         } else if (project_id >= 0) {
             parse_says(0, BaseCurrent->name_string, -1, -1);
@@ -8679,7 +8679,14 @@ production_again:
                 }
                 popup.exec(0, 0);
             }
-        } else if (facility_id == FAC_SUBSPACE_GENERATOR) {
+        } else if (!(facility_id == FAC_SUBSPACE_GENERATOR)) {
+            parse_says(0, BaseCurrent->name_string, -1, -1);
+            if (!(GameDataStateStorage.fields_.game_state_ & 1)
+                || GameDataStateStorage.fields_.game_state_ & 8) {
+                popp(ScriptPopupFile, is_orbital ? "PRODUCE3" : "PRODUCE2", 0,
+                     is_orbital ? "space_sm.pcx" : "secproj_sm.pcx", 0);
+            }
+        } else {
             if (!(GameDataStateStorage.fields_.game_state_ & 1)
                 || GameDataStateStorage.fields_.game_state_ & 8) {
                 if (!(Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN)) {
@@ -8695,13 +8702,6 @@ production_again:
                 parse_says(2, get_name(faction_id), -1, -1);
                 parse_says(3, get_noun(faction_id), -1, -1);
                 popp(ScriptPopupFile, "GENERATOR", 0, "subgen_sm.pcx", 0);
-            }
-        } else {
-            parse_says(0, BaseCurrent->name_string, -1, -1);
-            if (!(GameDataStateStorage.fields_.game_state_ & 1)
-                || GameDataStateStorage.fields_.game_state_ & 8) {
-                popp(ScriptPopupFile, is_orbital ? "PRODUCE3" : "PRODUCE2", 0,
-                     is_orbital ? "space_sm.pcx" : "secproj_sm.pcx", 0);
             }
         }
     }
@@ -9267,9 +9267,7 @@ void __cdecl drone_riot() {
         return;
     }
     int target;
-    if (BaseCurrent->faction_id_former != faction_id) {
-        target = BaseCurrent->faction_id_former;
-    } else {
+    if (!(BaseCurrent->faction_id_former != faction_id)) {
         target = -1;
         int best_dist = 9999;
         for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
@@ -9294,6 +9292,8 @@ void __cdecl drone_riot() {
                 }
             }
         }
+    } else {
+        target = BaseCurrent->faction_id_former;
     }
     // Factions with the revolt bonus (13) attract the defection.
     double chance = 1.0;

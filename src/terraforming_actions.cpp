@@ -533,13 +533,13 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
     int progress_accum = 0;
     for (int v = veh_top(veh_id); v >= 0; v = Vehs[v].next_veh_id_stack) {
         if (v != veh_id && Vehs[v].order == action + 4) {
-            if (!do_it) {
-                turns_accum += contribution(v, action);
-                progress_accum += Vehs[v].terraforming_turns;
-            } else {
+            if (!(!do_it)) {
                 Vehs[veh_id].terraforming_turns =
                     Vehs[veh_id].terraforming_turns + Vehs[v].terraforming_turns;
                 Vehs[v].terraforming_turns = 0;
+            } else {
+                turns_accum += contribution(v, action);
+                progress_accum += Vehs[v].terraforming_turns;
             }
         }
     }
@@ -2185,19 +2185,8 @@ int __cdecl shoot_it(int attacker, int defender, int x, int y,
         if (PlayersData[defender].satellites_[sat]) {
             // Image literal order: the must-sacrifice texts precede the
             // human prompt's, so that arm was written first.
-            if (IsMultiplayerNet || !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << defender))
-                || defender != ConsoleGlobal.faction_id_) {
-                if (defender == ConsoleGlobal.faction_id_) {
-                    if (fungal_attack) {
-                        popp(ScriptPopupFile, "FWEMUSTSAC", 0, "space_sm.pcx", 0);
-                    } else {
-                        popp(ScriptPopupFile, "TWEMUSTSAC", 0, "space_sm.pcx", 0);
-                    }
-                } else if (attacker == ConsoleGlobal.faction_id_) {
-                    parse_says(0, get_noun(defender), -1, -1);
-                    popp(ScriptPopupFile, "THEYMUSTSAC", 0, "space_sm.pcx", 0);
-                }
-            } else {
+            if (!(IsMultiplayerNet || !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << defender))
+                || defender != ConsoleGlobal.faction_id_)) {
                 parse_num(0, PlayersData[defender].satellites_[sat]);
                 int base_id = base_find(x, y);
                 parse_says(0, Bases[base_id].name_string, -1, -1);
@@ -2210,6 +2199,17 @@ int __cdecl shoot_it(int attacker, int defender, int x, int y,
                 }
                 if (dismissed) {
                     goto flechette_failed;
+                }
+            } else {
+                if (defender == ConsoleGlobal.faction_id_) {
+                    if (fungal_attack) {
+                        popp(ScriptPopupFile, "FWEMUSTSAC", 0, "space_sm.pcx", 0);
+                    } else {
+                        popp(ScriptPopupFile, "TWEMUSTSAC", 0, "space_sm.pcx", 0);
+                    }
+                } else if (attacker == ConsoleGlobal.faction_id_) {
+                    parse_says(0, get_noun(defender), -1, -1);
+                    popp(ScriptPopupFile, "THEYMUSTSAC", 0, "space_sm.pcx", 0);
                 }
             }
             PlayersData[defender].satellites_[sat]--;

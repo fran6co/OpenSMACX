@@ -1315,17 +1315,17 @@ int __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, int
                             // ocean arm ends `jne next; jmp join`, the land arm
                             // (laid out after it) `jl join; jne next` and falls
                             // into the join.
-                            if (is_ocean(x_radius, y_radius)) {
-                                // Preserve the unchecked lookup result.
-                                if (Bases[base_find(x_radius, y_radius)].faction_id_current
-                                    != Vehs[veh_id_def].faction_id) {
-                                    continue;
-                                }
-                            } else {
+                            if (!(is_ocean(x_radius, y_radius))) {
                                 int faction_id_terr = whose_territory(Vehs[veh_id_def].faction_id,
                                     x_radius, y_radius, NULL, false);
                                 if (faction_id_terr >= 0
                                     && faction_id_terr != Vehs[veh_id_def].faction_id) {
+                                    continue;
+                                }
+                            } else {
+                                // Preserve the unchecked lookup result.
+                                if (Bases[base_find(x_radius, y_radius)].faction_id_current
+                                    != Vehs[veh_id_def].faction_id) {
                                     continue;
                                 }
                             }
@@ -3211,16 +3211,16 @@ L_50835D:
             int dmg = bounded_crt_random(dmg_max);   // edi, then ebx
             // 0x50864B .. 0x50876A: never take the unit below `keep`
             int keep;   // esi
-            if (base_id < 0 && !(map_loc(target_x, target_y)->bit & BIT_BUNKER)) {
+            if (!(base_id < 0 && !(map_loc(target_x, target_y)->bit & BIT_BUNKER))) {
+                // 0x508712
+                keep = (100 - Rules.max_pct_dmg_art_vs_unit_base_bnkr) * proto_power(def_id) + 99;
+            } else {
                 // 0x5086A2: `100 - pct` is computed before proto_power here
                 // (right operand first), unlike the bunker arm at 0x508712
                 keep = proto_power(def_id)
                        * (100 - (get_triad(def_id) == TRIAD_LAND
                                      ? Rules.max_pct_dmg_art_vs_units_open
                                      : Rules.max_pct_dmg_art_vs_units_sea)) + 99;
-            } else {
-                // 0x508712
-                keep = (100 - Rules.max_pct_dmg_art_vs_unit_base_bnkr) * proto_power(def_id) + 99;
             }
             keep /= 100;   // 0x50876A
             // 0x50876F
@@ -3857,7 +3857,10 @@ L_509980:
                                                          ? 1 : Bases[base_id].population_size;
                 }
                 // 0x50AE6C
-                if (Bases[base_id].population_size <= 0) {
+                if (!(Bases[base_id].population_size <= 0)) {
+                    // 0x50AEB2
+                    spot_base(base_id, att_faction);
+                } else {
                     base_kill(base_id);
                     base_id = -1;
                     for (int i = 0; i < 8; i++) {
@@ -3868,9 +3871,6 @@ L_509980:
                     if (eliminate_player(def_faction, att_faction)) {
                         pact_report = 0;
                     }
-                } else {
-                    // 0x50AEB2
-                    spot_base(base_id, att_faction);
                 }
             }
 L_50aebf:
@@ -3967,12 +3967,12 @@ L_50b203:
 
     // 0x50B2FA: on-screen aftermath
     if (display != 0) {
-        if (atk_left != 0) {
-            draw_tile(src_x, src_y, 1);
-            draw_tile_fixup(target_x, target_y, 2, 1);
-        } else {
+        if (!(atk_left != 0)) {
             draw_tile_fixup(src_x, src_y, 2, 1);
             draw_tile(target_x, target_y, 1);
+        } else {
+            draw_tile(src_x, src_y, 1);
+            draw_tile_fixup(target_x, target_y, 2, 1);
         }
         do_all_draws();
         // 0x50B354 (the local faction is loaded once into ECX for 0x50B370/0x50B424/0x50B428)

@@ -569,19 +569,19 @@ void FameWin::on_redraw() {
 
     if (record->field_21 != 0) {
       StringTemp[0] = '\0';
-      if (record->field_21 == 2) {
-        strcat(StringTemp, label_get(578));
-        CharUpperA(StringTemp);
-        write_l(StringTemp, field_A14_, field_A18_);
-        StringTemp[0] = '\0';
-        strcat(StringTemp, "+25%");
-        write_right(StringTemp, field_A14_, field_A18_, field_A1C_);
-      } else {
+      if (!(record->field_21 == 2)) {
         strcat(StringTemp, label_get(577));
         CharUpperA(StringTemp);
         write_l(StringTemp, field_A14_, field_A18_);
         StringTemp[0] = '\0';
         strcat(StringTemp, "-25%");
+        write_right(StringTemp, field_A14_, field_A18_, field_A1C_);
+      } else {
+        strcat(StringTemp, label_get(578));
+        CharUpperA(StringTemp);
+        write_l(StringTemp, field_A14_, field_A18_);
+        StringTemp[0] = '\0';
+        strcat(StringTemp, "+25%");
         write_right(StringTemp, field_A14_, field_A18_, field_A1C_);
       }
       field_A18_ += field_A44_;

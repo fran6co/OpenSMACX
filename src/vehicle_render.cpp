@@ -396,7 +396,11 @@ void __cdecl vehdraw_scoot_start(int veh_id, int direction, int steps, int flags
     // Re-read terrain/prototype after the normalizer calls. The midpoint is
     // the shared edge (even directions) or the eight meeting facets (odd).
     // Every case is written out; the even cases are four identical bodies.
-    if (vehdraw_uses_terrain(veh_id, x, y)) {
+    if (!(vehdraw_uses_terrain(veh_id, x, y))) {
+        midpoint.values[0] = 0.0f;
+        midpoint.values[1] = 0.0f;
+        midpoint.values[2] = 1.0f;
+    } else {
         switch (direction) {
         case 0:
             a = VehDrawFacetNormals[3][vehdraw_facet_index(h1, h2, h3, h4, direction) - 400];
@@ -487,10 +491,6 @@ void __cdecl vehdraw_scoot_start(int veh_id, int direction, int steps, int flags
             vector_add(midpoint.values, h.values, midpoint.values);
             break;
         }
-    } else {
-        midpoint.values[0] = 0.0f;
-        midpoint.values[1] = 0.0f;
-        midpoint.values[2] = 1.0f;
     }
     vox_normalise_vector(midpoint.values, midpoint.values);
     vec3_subtract(midpoint.values, start.values, VehDrawScootFirstIncrement.values);

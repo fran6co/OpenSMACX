@@ -4134,14 +4134,14 @@ LAB_0046441f:
                         ocean_zvals[3] = OceanCornerShades[corner * 4 + 3] - 0x10;
                         // 0x46468B pushes the literal 0x41: no shade select
                         // on this path.
-                        if (local_1c != 0) {
-                            g_OCEAN_TEXTURES[1].draw(
-                                buffer, OceanCornerVerts + corner * 4,
-                                ocean_zvals, 4, ocean_uv + corner * 4);
-                        } else {
+                        if (!(local_1c != 0)) {
                             g_OCEAN_TEXTURES[1].draw(
                                 buffer, OceanCornerVerts + corner * 4,
                                 ocean_zvals, 4, ocean_uv + corner * 4, 0x41);
+                        } else {
+                            g_OCEAN_TEXTURES[1].draw(
+                                buffer, OceanCornerVerts + corner * 4,
+                                ocean_zvals, 4, ocean_uv + corner * 4);
                         }
                     }
                     g_OCEAN_TEXTURES[0].draw2(
@@ -5377,10 +5377,10 @@ void MapWin::draw_base_names() {
                 // 0x0046819D/0x004685B6: two strcat statements cross-jumped
                 // at their shared push/call, each cleaned up by add esp,8.
                 const int production_id = base.queue_production_id[0];
-                if (production_id >= 0) {
-                    strcat(text, VehPrototypes[production_id].veh_name);
-                } else {
+                if (!(production_id >= 0)) {
                     strcat(text, StringTable.get(Facility[-production_id].name));
+                } else {
+                    strcat(text, VehPrototypes[production_id].veh_name);
                 }
                 strcat(text, SocialWinCloseParenText);
                 Buffer::write_cent_l(text, pixel_x + field_1DDBC_,

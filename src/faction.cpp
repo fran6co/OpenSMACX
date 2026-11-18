@@ -4689,10 +4689,10 @@ int __cdecl propose_pact(int myFac, int otherFac) {
         score++;
     }
     int partner_id;
-    if (DiploScratchF7E8) {
-        partner_id = DiploScratchF7E8;
-    } else {
+    if (!(DiploScratchF7E8)) {
         partner_id = DiploScratchFA8C;
+    } else {
+        partner_id = DiploScratchF7E8;
     }
     int designated = GameDataStateStorage.fields_.ranking_faction_id_unk1_;
     if (IsMultiplayerNet) {
@@ -8649,13 +8649,13 @@ parse_says(5, get_title(faction_id), -1, -1);
 parse_says(6, get_pact(DiploScratchF7E8), -1, -1);
 StringTemp[0] = 0;
 strcat(StringTemp, "PROPOSE");
-if (PlayersData[faction_id].diplo_treaties[DiploScratchF7E8] & 1) {
+if (!(PlayersData[faction_id].diplo_treaties[DiploScratchF7E8] & 1)) {
+    parse_says(8, get_adjective_insult_faction(DiploScratchF7E8), -1, -1);
+    parse_says(9, get_phrase(DiploScratchF7E8, 5), -1, -1);
+} else {
     strcat(StringTemp, "PACT");
     parse_says(8, get_title(faction_id_with), -1, -1);
     parse_says(9, get_phrase(DiploScratchF7E8, 2), -1, -1);
-} else {
-    parse_says(8, get_adjective_insult_faction(DiploScratchF7E8), -1, -1);
-    parse_says(9, get_phrase(DiploScratchF7E8, 5), -1, -1);
 }
 if (X_pops(StringTemp, 0x100000,
             FactionDiplomacyPortraits[faction_id_with], pop_wait)) {
@@ -10082,16 +10082,8 @@ communicate_pact_offer_fallthrough:
     if (DiploScratchF7E8 != 0) {
         parse_says(5, get_title(faction_id), -1, -1);
         parse_says(6, get_noun(DiploScratchF7E8), -1, -1);
-        if (X_pops("GIMMEHELP", 0x100000,
-                         FactionDiplomacyPortraits[faction_id_with], pop_wait) != 0) {
-            diplo_lock(0);
-            net_double_cross(faction_id, DiploScratchF7E8, faction_id_with, 0);
-            net_treaty_off(faction_id, faction_id_with, 0x800000, 0);
-            net_set_treaty(faction_id, DiploScratchF7E8, 0x40, 1, 1);
-            diplo_unlock();
-            DiploScratchF7E8 = 0;
-            DiploScratchFA4C = 0;
-        } else {
+        if (!(X_pops("GIMMEHELP", 0x100000,
+                         FactionDiplomacyPortraits[faction_id_with], pop_wait) != 0)) {
             if (DiploScratchFA98 == 0) {
                 parse_says(2, get_pacts(faction_id, faction_id_with), -1, -1);
                 X_pops("REJPACTNOHELP", 0x100000,
@@ -10103,6 +10095,14 @@ communicate_pact_offer_fallthrough:
                 communicate_stack_34 = 1;
                 goto communicate_special_war_rival_gates;
             }
+        } else {
+            diplo_lock(0);
+            net_double_cross(faction_id, DiploScratchF7E8, faction_id_with, 0);
+            net_treaty_off(faction_id, faction_id_with, 0x800000, 0);
+            net_set_treaty(faction_id, DiploScratchF7E8, 0x40, 1, 1);
+            diplo_unlock();
+            DiploScratchF7E8 = 0;
+            DiploScratchFA4C = 0;
         }
     }
     pact_of_brotherhood(faction_id, faction_id_with);

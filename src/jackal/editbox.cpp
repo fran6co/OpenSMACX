@@ -421,10 +421,10 @@ void EditBox::on_redraw() {
     const int y = -(Buffer::text_line_height() + dib_.bmiHeader.biHeight) >> 1;
     if (field_B48_) {
         int x;
-        if (field_B3C_ & 2) {
-            x = Buffer::text_width(masked, field_B44_ - field_B18_);
-        } else {
+        if (!(field_B3C_ & 2)) {
             x = Buffer::text_width(text_ + field_B18_, field_B44_ - field_B18_);
+        } else {
+            x = Buffer::text_width(masked, field_B44_ - field_B18_);
         }
         x += field_B34_;
         Buffer::vline(x, y, Buffer::text_line_height() + y,

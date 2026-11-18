@@ -879,12 +879,12 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
                     field_30B4_ = (owner_window_->client_rect().left -
                                    owner_window_->client_rect().right +
                                    WinScreenWidth) >> 1;
-                } else if (static_cast<int>(loc_a_) < 0) {
+                } else if (!(static_cast<int>(loc_a_) < 0)) {
+                    field_30B4_ = loc_a_;
+                } else {
                     field_30B4_ = owner_window_->client_rect().left -
                                   owner_window_->client_rect().right +
                                   static_cast<int>(loc_a_) + WinScreenWidth;
-                } else {
-                    field_30B4_ = loc_a_;
                 }
                 if (loc_b_ == 0x1000) {
                     field_30B8_ = (owner_window_->client_rect().top -
@@ -927,12 +927,12 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
                 field_30B4_ = (static_cast<int>(
                                    owner_window_->dib_.bmiHeader.biWidth) -
                                static_cast<int>(field_30BC_)) >> 1;
-            } else if (static_cast<int>(loc_a_) < 0) {
+            } else if (!(static_cast<int>(loc_a_) < 0)) {
+                field_30B4_ = loc_a_;
+            } else {
                 field_30B4_ =
                     static_cast<int>(owner_window_->dib_.bmiHeader.biWidth) -
                     static_cast<int>(field_30BC_) + static_cast<int>(loc_a_);
-            } else {
-                field_30B4_ = loc_a_;
             }
             if (loc_b_ == 0x1000) {
                 field_30B8_ = -(static_cast<int>(field_30C0_) +

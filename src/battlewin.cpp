@@ -659,16 +659,16 @@ again:
     int width;
     int text_x;
     int text_y;
-    if (first_vehicle_id != second_vehicle_id) {
-        width = inner_first.right - inner_first.left;
-        text_x = inner_first.left;
-        text_y = inner_first.top;
-        MainInterfaceGlobal.set_clip(&inner_first);
-    } else {
+    if (!(first_vehicle_id != second_vehicle_id)) {
         width = inner_second.right - inner_second.left;
         text_x = inner_second.left;
         text_y = inner_second.top;
         MainInterfaceGlobal.set_clip(&inner_second);
+    } else {
+        width = inner_first.right - inner_first.left;
+        text_x = inner_first.left;
+        text_y = inner_first.top;
+        MainInterfaceGlobal.set_clip(&inner_first);
     }
     int half_width;
     if (wide) {
@@ -691,10 +691,10 @@ again:
             StringTemp[0] = '\0';
             if (VehPrototypes[Vehs[first_vehicle_id].proto_id].plan == 0x0C) {
                 strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x4A0 / 4]));
-            } else if (!Vehs[first_vehicle_id].faction_id) {
-                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x49C / 4]));
-            } else {
+            } else if (!(!Vehs[first_vehicle_id].faction_id)) {
                 strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x498 / 4]));
+            } else {
+                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x49C / 4]));
             }
             MainInterfaceGlobal.write_cent_text(StringTemp, text_x, label_y, half_width);
         }
@@ -759,11 +759,11 @@ again:
             if (first_vehicle_id == second_vehicle_id
                 && (!(flags & 2)
                     || Chassis[VehPrototypes[Vehs[first_vehicle_id].proto_id].chassis_id].triad == 1)) {
-                if (psi_label) {
+                if (!(psi_label)) {
+                    say_num(armor_proto(Vehs[first_vehicle_id].proto_id, -1, 0));
+                } else {
                     say_num(Rules.psi_combat_ratio_def[
                         Chassis[VehPrototypes[Vehs[second_vehicle_id].proto_id].chassis_id].triad]);
-                } else {
-                    say_num(armor_proto(Vehs[first_vehicle_id].proto_id, -1, 0));
                 }
             } else if (psi_label) {
                 say_num(Rules.psi_combat_ratio_atk[

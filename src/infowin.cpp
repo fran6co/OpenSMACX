@@ -531,13 +531,13 @@ void InfoWin::setup_text() {
             line_height = 0;
             MainInterfaceGlobal.set_clip(&rect);
             text[0] = 0;
-            if ((ScenarioSave.objective_req_victory < 9000
+            if (!((ScenarioSave.objective_req_victory < 9000
                  || ScenarioSave.objectives_sudden_death_victory < 9000)
-                && !ScenarioSave.objective_achieve_points) {
+                && !ScenarioSave.objective_achieve_points)) {
+                strcat(text, label_get(0x1B8));
+            } else {
                 strcat(text, label_get(899));
                 CharUpperA(text);
-            } else {
-                strcat(text, label_get(0x1B8));
             }
             strcpy(row_text_[0][row_base + 0], text);
             {
