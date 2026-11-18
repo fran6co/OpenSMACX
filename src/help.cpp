@@ -283,8 +283,8 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
     char *const buf = StringTemp;
     char numbuf[80];
     char idbuf[64];
-    char flushed;
     int idx;
+    char flushed;
     // stand-in: the image calls help_create_link out of line in the first
     // two sections and expands it in the rest; a local const pointer keeps
     // VC6 from inlining those two sites.
@@ -319,7 +319,6 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
             flushed = *buf;
             if (a4 >= 0 && flushed) {
                 a1(buf);
-                flushed = 0;
                 *buf = 0;
             }
         }

@@ -1437,22 +1437,23 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
 
     if (has_tech(tech_id, faction_id)) {
         for (int receiver = 1; receiver < MaxPlayerNum; receiver++) {
-            if (Players[receiver].rule_sharetech > 0 && !has_tech(tech_id, receiver)) {
-                int known = 0;
-                for (int donor = 1; donor < MaxPlayerNum; donor++) {
-                    if (has_tech(tech_id, donor) &&
-                        (!ExpansionEnabled || !(Players[receiver].rule_flags & RFLAG_TECHSHARE) ||
-                         (PlayersData[receiver].diplo_treaties[donor] & DTREATY_HAVE_INFILTRATOR) ||
-                         (PlayersData[receiver].diplo_treaties[donor] & DTREATY_PACT) ||
-                         has_project(SP_EMPATH_GUILD, receiver) ||
-                         (receiver == GameDataStateStorage.fields_.governor_faction_ &&
-                          !(Players[donor].rule_flags & RFLAG_ALIEN)))) {
-                        known++;
-                    }
+            if (!(Players[receiver].rule_sharetech > 0 && !has_tech(tech_id, receiver))) {
+                continue;
+            }
+            int known = 0;
+            for (int donor = 1; donor < MaxPlayerNum; donor++) {
+                if (has_tech(tech_id, donor) &&
+                    (!ExpansionEnabled || !(Players[receiver].rule_flags & RFLAG_TECHSHARE) ||
+                     (PlayersData[receiver].diplo_treaties[donor] & DTREATY_HAVE_INFILTRATOR) ||
+                     (PlayersData[receiver].diplo_treaties[donor] & DTREATY_PACT) ||
+                     has_project(SP_EMPATH_GUILD, receiver) ||
+                     (receiver == GameDataStateStorage.fields_.governor_faction_ &&
+                      !(Players[donor].rule_flags & RFLAG_ALIEN)))) {
+                    known++;
                 }
-                if (known >= Players[receiver].rule_sharetech) {
-                    tech_achieved(receiver, tech_id, -2, 1);
-                }
+            }
+            if (known >= Players[receiver].rule_sharetech) {
+                tech_achieved(receiver, tech_id, -2, 1);
             }
         }
     }
