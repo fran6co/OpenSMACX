@@ -230,7 +230,7 @@ class NetDaemon : public AlphaNet {
  public:
   // 0x005328C0, homed from 005328c0.cpp. faction_id names the event's owner;
   // turn_value is stored into the lock state when no turn is already marked.
-  int end_of_event(int faction_id, int turn_value);
+  void end_of_event(int faction_id, int turn_value);
 
  public:
   // 0x0052F8E0, homed from 0052f8e0.cpp. Writes the observed 47-word report:
@@ -472,14 +472,13 @@ int __cdecl order_veh(int veh_id, int x, int y);
 // parameters are named for the record offset they land at, which is the one
 // thing about them the bodies prove.
 //
-// message_data's source type exposes the live 32-bit EAX result; its original
-// decorated name remains void. Only unlock_veh consumes the value in current
-// source; the other callers ignore it.
+// message_data returns nothing (0x00592EE0 never sets EAX after its send;
+// no caller reads it).
 void __cdecl message_veh(int opcode, int payload_10, int payload_14,
                          int target);
 void __cdecl message_base(int opcode, int payload_10, char *text, int target);
-int __cdecl message_data(int opcode, int target, int payload_10,
-                         int payload_14, int payload_18, int payload_1C);
+void __cdecl message_data(int opcode, int target, int payload_10,
+                          int payload_14, int payload_18, int payload_1C);
 void __cdecl message_big_data(int opcode, int target, int *payload, int count);
 void __cdecl message_lock(int opcode, int target, int payload_10,
                           int payload_14, int payload_18, int payload_1C,

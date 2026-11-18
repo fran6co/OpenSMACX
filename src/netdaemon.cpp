@@ -1596,7 +1596,7 @@ int NetDaemon::game_checksum(int *results) {
 
 // 0x1B2C/0x1B30 are lock_state_[0].dword_[0]/[1]; 0x1BB0 and 0x1BC0 are
 // lock_state_[2].dword_[3] and [7].
-int NetDaemon::end_of_event(int faction_id, int turn_value) {
+void NetDaemon::end_of_event(int faction_id, int turn_value) {
     if (primary_state_.leading_words_[0] == 0) {
         deletion_list_.set_sequence_bits(turn_value);
     }
@@ -1604,12 +1604,11 @@ int NetDaemon::end_of_event(int faction_id, int turn_value) {
         if (field_1BC0_ != 0) {
             log_say("Remaining Locked2", 0, 0, 0);
             field_1BC0_ = 0;
-            return message_data(0x2214, 0, 0, 0, 0, 0);
+            message_data(0x2214, 0, 0, 0, 0, 0);
+            return;
         }
         exec_pending_ = 0;
     }
-    // No return statement here in the original (C4715): EAX keeps the
-    // last value loaded on each path.
 }
 
 
