@@ -6809,10 +6809,8 @@ commlink:
             // WORKAROUND(inline): the three getters written out (same bytes);
             // as get_title/get_name/get_noun they spend the budget the image's
             // ATTACKSTRING exit (done) needs for its expanded ~Scroll teardown.
-            parse_set(Players[DiploScratchFA5C].is_leader_female, 0);
-            parse_says(0, Players[DiploScratchFA5C].title_leader, -1, -1);
-            parse_set(Players[DiploScratchFA5C].is_leader_female, 0);
-            parse_says(1, Players[DiploScratchFA5C].name_leader, -1, -1);
+            parse_says(0, get_title(DiploScratchFA5C), -1, -1);
+            parse_says(1, get_name(DiploScratchFA5C), -1, -1);
             parse_set(Players[DiploScratchFA5C].noun_gender,
                       Players[DiploScratchFA5C].is_noun_plural);
             parse_says(2, Players[DiploScratchFA5C].noun_faction, -1, -1);
