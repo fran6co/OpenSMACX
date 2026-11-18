@@ -85,7 +85,7 @@ void ButtonGroup::init(int group_id, int flags) {
         buttons_[i] = 0;
     }
     field_8C_ = static_cast<uint32_t>(group_id);
-    field_84_ = 0xFFFFFFFEU;
+    field_84_ = -2;
     field_88_ = static_cast<uint32_t>(flags);
 }
 
@@ -183,13 +183,13 @@ int ButtonGroup::button_click(int clicked_id) {
 
     const uint32_t flags = field_88_;
     if ((flags & 2) != 0) {
-        if (static_cast<int>(field_84_) == clicked_id) {
-            field_84_ = 0xFFFFFFFFu;
+        if (field_84_ == clicked_id) {
+            field_84_ = -1;
             found_clicked = 0;
         }
     }
 
-    if (static_cast<int>(field_84_) != clicked_id || (flags & 1) != 0) {
+    if (field_84_ != clicked_id || (flags & 1) != 0) {
         if (found_active != 0) {
             buttons_[active_index]->set(0);
             buttons_[active_index]->redraw();
@@ -197,9 +197,9 @@ int ButtonGroup::button_click(int clicked_id) {
         if (found_clicked != 0) {
             buttons_[clicked_index]->set(1);
             buttons_[clicked_index]->redraw();
-            field_84_ = static_cast<uint32_t>(clicked_id);
+            field_84_ = clicked_id;
         } else {
-            field_84_ = 0xFFFFFFFFu;
+            field_84_ = -1;
         }
 
         if (field_90_ == 0 && count_ != 0) {

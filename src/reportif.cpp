@@ -1558,7 +1558,7 @@ void ReportWin::on_button_clicked(int id) {
     if (ReportIfGlobal.field_8_ == 6 && id == 0xD3E) {
         const int target = ReportIfGlobal.buttonGroup3_.field_84_;
         if (target > 0 && target < 8) {
-            const int type = static_cast<int>(ReportIfGlobal.buttonGroup4_.field_84_) - 65;
+            const int type = ReportIfGlobal.buttonGroup4_.field_84_ - 65;
             if (type >= 0 && type < 5) {
                 sat_attack(ConsoleGlobal.faction_id_, target, type);
                 return;

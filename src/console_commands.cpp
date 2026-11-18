@@ -5942,7 +5942,7 @@ void Console::editor_paints(int paint_id) {
         }
         result = paint_id + 0x3f9;
     }
-    if (static_cast<int>(MainInterfaceGlobal.button_group(2).field_84_) != result) {
+    if (MainInterfaceGlobal.button_group(2).field_84_ != result) {
         MainInterfaceGlobal.button_group(2).set(result, 1);
     }
 }

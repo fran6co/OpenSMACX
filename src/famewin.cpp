@@ -411,7 +411,7 @@ void FameWin::on_redraw() {
   }
   flatButton3_.show(0);
 
-  int faction = static_cast<int>(buttonGroup_.field_84_);
+  int faction = buttonGroup_.field_84_;
   i = static_cast<int>(selectedRecord_);
   StringTemp[0] = '\0';
   strcat(StringTemp, "hof_");

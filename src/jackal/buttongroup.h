@@ -44,7 +44,7 @@ class ButtonGroup {
   // boundary. Declaration order is untouched - MSVC lays non-static data
   // members out in declaration order, so the static_assert below still pins
   // the same 0x94 - only the access section around it moves.
-  uint32_t field_84_;  // 0x0084
+  int field_84_;  // 0x0084
  private:
   uint32_t field_88_;
   uint32_t field_8C_;
