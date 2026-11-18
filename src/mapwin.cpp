@@ -5205,15 +5205,6 @@ void MapWin::gen_overlays(int x, int y) {
     }
 }
 
-// WORKAROUND(decl): the image loads each string-table offset into eax and
-// sets ecx to StringTable before the push (0x00468162, 0x004681AC,
-// 0x004685C5), the shape of an argument passed through an inline rather than
-// StringTable.get(expr) written at the call (which pushes from ecx first).
-// The original header's name for this wrapper is unknown; label_get is the
-// same shape for Labels entries.
-static inline LPSTR table_text(LPSTR offset) {
-    return StringTable.get(offset);
-}
 // Original0x00467DE0 draws base labels and map landmarks in the visible map
 // rectangle. Both data collections use their source-owned records and counts.
 // ORIGINAL: 0x00467DE0 ?draw_base_names@MapWin@@QAEXXZ 0x00467DE0-0x004688E0 FILE
@@ -6053,7 +6044,7 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
         popup.start(PopupStartCaption, "DESTTRIAD2", -1, nullptr, 0x40, nullptr);
         for (int triad = 0; triad < MaxTriadNum; ++triad) {
             StringTemp[0] = '\0';
-            strcat(StringTemp, StringTable.get(Triad[triad]));
+            strcat(StringTemp, table_text(Triad[triad]));
             strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, SocialWinOpenParenText);
             say_base(StringTemp, Bases[editor_tool].auto_forward_slots[triad]);

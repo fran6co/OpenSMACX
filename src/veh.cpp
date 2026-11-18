@@ -160,7 +160,7 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
     *output = '\0';
     for (int ability_id = 0; ability_id < MaxAbilityNum; ability_id++) {
         if (ability_flags & (1 << ability_id)
-            && strlen(StringTable.get(Ability[ability_id].abbreviation))
+            && strlen(table_text(Ability[ability_id].abbreviation))
             && (ability_id != abil_index(ABL_AIR_SUPERIORITY)
                 || Chassis[chassis_id].triad != TRIAD_AIR)
             && ability_id != abil_index(ABL_ARTILLERY)
@@ -168,7 +168,7 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
                 || Chassis[chassis_id].speed != 1
                 || Weapon[weapon_id].offense_rating < Armor[armor_id].defense_rating
                 || ability_flags & ABL_ARTILLERY)) {
-            strcat(output, StringTable.get(Ability[ability_id].abbreviation));
+            strcat(output, table_text(Ability[ability_id].abbreviation));
             strcat(output, BufferJoinSpace);
             break;
         }
@@ -251,7 +251,7 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
         if (!unique) {
             gendered ^= Armor[armor_id].defense_rating & 1;
             if (lower) {
-                strcat(output, StringTable.get(Reactor[reactor_id - 1].name_short));
+                strcat(output, table_text(Reactor[reactor_id - 1].name_short));
                 strcat(alternate, StringTable.get(Reactor[reactor_id - 1].name_short));
             } else {
                 strcat(output, StringTable.get(Armor[armor_id].name_short));

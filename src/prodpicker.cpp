@@ -674,7 +674,7 @@ void ProdPicker::calculate() {
             strcat(name, SocialWinCloseParenText);
             strcat(name, BufferJoinSpace);
         }
-        strcat(name, StringTable.get(Facility[i].name));
+        strcat(name, table_text(Facility[i].name));
 
         stats[0] = 0;
         int cost = cost_factor(BaseCurrent->faction_id_current, 1, -1) * Facility[i].cost;
@@ -709,7 +709,7 @@ void ProdPicker::calculate() {
 
         effect[0] = 0;
         if (strlen(StringTable.get(Facility[i].effect))) {
-            strcat(effect, StringTable.get(Facility[i].effect));
+            strcat(effect, table_text(Facility[i].effect));
         }
         {
             const int kind = edbc_fac(i) | 0x10;

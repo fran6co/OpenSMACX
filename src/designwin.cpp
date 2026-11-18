@@ -4234,7 +4234,7 @@ void DesignWin::draw_vehicle(int redraw) {
                 if (strlen(ability_names) != 0) {
                     strcat(ability_names, SocialWinCommaSpaceText);               // 0x682e90
                 }
-                strcat(ability_names, StringTable.get(Ability[i].abbreviation));
+                strcat(ability_names, table_text(Ability[i].abbreviation));
             }
         }
     }
@@ -4249,7 +4249,7 @@ void DesignWin::draw_vehicle(int redraw) {
         dest.top += n;
         Buffer::set_font(&font2_, 0, 0, 0);
         StringTemp[0] = 0;
-        strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x360 / 4]));
+        strcat(StringTemp, table_text(Labels.strings_ptr[0x360 / 4]));
         strcat(StringTemp, SocialWinColonSpaceText);                         // 0x682e94
         const int capacity = transport_val(protoChassisType_, protoAbilityFlags_,
                                            protoReactorType_);
@@ -4515,7 +4515,7 @@ void DesignWin::draw_vehicle(int redraw) {
     strcat(StringTemp, preset_names_[10]);                    // +0x14432
     strcat(StringTemp, "}");                                  // 0x6835b4
     strcat(StringTemp, BufferJoinSpace);
-    strcat(StringTemp, StringTable.get(Triad[Chassis[protoChassisType_].triad]));
+    strcat(StringTemp, table_text(Triad[Chassis[protoChassisType_].triad]));
     StringTemp[4] = 0;                                        // bug-for-bug truncation
     strcat(StringTemp, BufferJoinSpace);
     const int speed = speed_proto(0x3f) / Rules.move_rate_roads;      // idiv [0x949738]
@@ -4543,7 +4543,7 @@ void DesignWin::draw_vehicle(int redraw) {
         strcat(StringTemp, "-");                              // 0x6835c8
     } else {
         ability_names[0] = 0;                                 // [ebp-0x190]
-        strcat(ability_names, StringTable.get(Ability[protoAbilityIDs_[0]].name));
+        strcat(ability_names, table_text(Ability[protoAbilityIDs_[0]].name));
         strcat(StringTemp, ability_names);
         StringTemp[6] = 0;                                    // stored after strchr's pushes
         char *word = strchr(ability_names, ' ');
@@ -4564,7 +4564,7 @@ void DesignWin::draw_vehicle(int redraw) {
         strcat(StringTemp, "-");                              // 0x6835d4
     } else {
         ability_names[0] = 0;
-        strcat(ability_names, StringTable.get(Ability[protoAbilityIDs_[1]].name));
+        strcat(ability_names, table_text(Ability[protoAbilityIDs_[1]].name));
         strcat(StringTemp, ability_names);
         StringTemp[6] = 0;
         char *word = strchr(ability_names, ' ');
@@ -5567,9 +5567,9 @@ void DesignWin::select_special(int which) {
         }
 
         StringTemp[0] = 0;
-        strcat(StringTemp, StringTable.get(Ability[i].name));
+        strcat(StringTemp, table_text(Ability[i].name));
         strcat(StringTemp, SocialWinColonSpaceText);
-        strcat(StringTemp, StringTable.get(Ability[i].description));
+        strcat(StringTemp, table_text(Ability[i].description));
         strcat(StringTemp, "|");
         strcat(StringTemp, label_get(0x58));
         strcat(StringTemp, SocialWinColonSpaceText);
@@ -5656,7 +5656,7 @@ void DesignWin::select_special(int which) {
             strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, SocialWinOpenParenText);
             strcat(StringTemp,
-                   StringTable.get(Triad[Chassis[protoChassisType_].triad]));
+                   table_text(Triad[Chassis[protoChassisType_].triad]));
             strcat(StringTemp, SocialWinCloseParenText);
         } else {
             say_num(cost);

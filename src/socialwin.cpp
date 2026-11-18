@@ -2700,7 +2700,7 @@ void SocialWin::init(int faction_id) {
 
     {
         StringTemp[0] = 0;
-        strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x198 / 4]));
+        strcat(StringTemp, table_text(Labels.strings_ptr[0x198 / 4]));
         if (Language != 2) {
             CharUpperA(StringTemp);
         }

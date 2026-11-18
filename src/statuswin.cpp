@@ -593,7 +593,7 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
             line_y -= 4;
             MainInterfaceGlobal.set_text_color(TextColourTable[18], TextColourTable[19], 1, 1);
             StringTemp[0] = '\0';
-            strcat(StringTemp, StringTable.get(Resource[0].name_plural));
+            strcat(StringTemp, table_text(Resource[0].name_plural));
             strcat(StringTemp, SocialWinColonSpaceText);
             strcat(StringTemp, BufferJoinSpace);
             int crop = crop_yield(ConsoleGlobal.faction_id_, -1, x, y, 0);
@@ -621,7 +621,7 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
             }
             line_y += row_pitch;
             StringTemp[0] = '\0';
-            strcat(StringTemp, StringTable.get(Resource[1].name_plural));
+            strcat(StringTemp, table_text(Resource[1].name_plural));
             strcat(StringTemp, SocialWinColonSpaceText);
             strcat(StringTemp, BufferJoinSpace);
             int minerals = mine_yield(ConsoleGlobal.faction_id_, -1, x, y, 0);
@@ -647,7 +647,7 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
             }
             line_y += row_pitch;
             StringTemp[0] = '\0';
-            strcat(StringTemp, StringTable.get(Resource[2].name_plural));
+            strcat(StringTemp, table_text(Resource[2].name_plural));
             strcat(StringTemp, SocialWinColonSpaceText);
             strcat(StringTemp, BufferJoinSpace);
             int energy = energy_yield(ConsoleGlobal.faction_id_, -1, x, y, 0);
@@ -693,7 +693,7 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
             }
             StringTemp[0] = '\0';
             // 0x004B727D: two branch loads joined before one get call.
-            strcat(StringTemp, StringTable.get(alt >= 0 ? Labels.strings_ptr[0x2c / 4]
+            strcat(StringTemp, table_text(alt >= 0 ? Labels.strings_ptr[0x2c / 4]
                                                         : Labels.strings_ptr[0x30 / 4]));
             strcat(StringTemp, SocialWinColonSpaceText);
             int elevation = elev_at(x, y);
@@ -752,7 +752,7 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
                 }
                 if ((map_loc(x, y)->bit2 & 0x80000004) == BIT2_JUNGLE
                     && (map_loc(x, y)->climate & ~0x1F) >= ALT_BIT_SHORE_LINE) {
-                    strcat(StringTemp, StringTable.get(Natural[2].name_short));
+                    strcat(StringTemp, table_text(Natural[2].name_short));
                 }
                 if ((map_loc(x, y)->bit2 & 0x80000008) == BIT2_URANIUM) {
                     strcat(StringTemp, StringTable.get(Natural[3].name_short));
@@ -770,11 +770,11 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
                     strcat(StringTemp, StringTable.get(Natural[11].name_short));
                 }
                 if ((map_loc(x, y)->bit2 & 0x80002000) == BIT2_NEXUS) {
-                    strcat(StringTemp, StringTable.get(Natural[13].name_short));
+                    strcat(StringTemp, table_text(Natural[13].name_short));
                 }
                 if (ExpansionEnabled
                     && (map_loc(x, y)->bit2 & 0x80004000) == BIT2_UNITY) {
-                    strcat(StringTemp, StringTable.get(Natural[14].name_short));
+                    strcat(StringTemp, table_text(Natural[14].name_short));
                 }
                 if (strlen(StringTemp)) {
                     MainInterfaceGlobal.write_l(StringTemp, text_x, line_y);
@@ -804,21 +804,21 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
                 StringTemp[0] = '\0';
                 if (ExpansionEnabled
                     && (map_loc(x, y)->bit2 & 0x80008000) == BIT2_FOSSIL) {
-                    strcat(StringTemp, StringTable.get(Natural[15].name_short));
+                    strcat(StringTemp, table_text(Natural[15].name_short));
                 }
                 if ((map_loc(x, y)->bit2 & BIT2_FRESH)
                     && (map_loc(x, y)->climate & ~0x1F) < ALT_BIT_SHORE_LINE) {
-                    strcat(StringTemp, StringTable.get(Natural[7].name_short));
+                    strcat(StringTemp, table_text(Natural[7].name_short));
                 }
                 if ((map_loc(x, y)->bit2 & 0x80000400) == BIT2_GEOTHERMAL) {
-                    strcat(StringTemp, StringTable.get(Natural[10].name_short));
+                    strcat(StringTemp, table_text(Natural[10].name_short));
                 }
                 if ((map_loc(x, y)->bit & BIT_FUNGUS)
                     && (map_loc(x, y)->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF) {
                     if (strlen(StringTemp)) {
                         strcat(StringTemp, SocialWinCommaSpaceText);
                     }
-                    strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x398 / 4]));
+                    strcat(StringTemp, table_text(Labels.strings_ptr[0x398 / 4]));
                 }
                 if (strlen(StringTemp)) {
                     col = MainInterfaceGlobal.write_l(StringTemp, text_x, line_y);
@@ -848,7 +848,7 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
                     // The image indexes the name pair by the is_ocean result
                     // (lea [ocean + 8*i]).
                     strcat(StringTemp,
-                           StringTable.get(Terraforming[i].name[is_ocean(x, y)]));
+                           table_text(Terraforming[i].name[is_ocean(x, y)]));
                 }
             }
             if (map_loc(x, y)->bit & BIT_MONOLITH) {
@@ -1013,7 +1013,7 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
             strcat(StringTemp, digits);
             strcat(StringTemp, BufferJoinSpace);
             // 0x004B85E5: two branch loads joined before one get call.
-            strcat(StringTemp, StringTable.get(turns != 1 ? Labels.strings_ptr[0xc4 / 4]
+            strcat(StringTemp, table_text(turns != 1 ? Labels.strings_ptr[0xc4 / 4]
                                                           : Labels.strings_ptr[0xc0 / 4]));
             MainInterfaceGlobal.set_text_color(0xfb, 3, 1, 1);
         } else {
@@ -1171,7 +1171,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
         }
         for (int ability = 0; ability < MaxAbilityNum; ++ability) {
             if (has_abil(Vehs[vehicle_id].proto_id, 1 << ability)
-                && strlen(StringTable.get(Ability[ability].abbreviation))) {
+                && strlen(table_text(Ability[ability].abbreviation))) {
                 strcat(StringTemp, SocialWinCommaSpaceText);
                 strcat(StringTemp, StringTable.get(Ability[ability].abbreviation));
             }
@@ -1460,7 +1460,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
                        VehPrototypes[Bases[base_id].queue_production_id[0]].veh_name);
                 cost = VehPrototypes[Bases[base_id].queue_production_id[0]].cost;
             } else {
-                strcat(StringTemp, StringTable.get(
+                strcat(StringTemp, table_text(
                     Facility[-Bases[base_id].queue_production_id[0]].name));
                 cost = Facility[-Bases[base_id].queue_production_id[0]].cost;
             }

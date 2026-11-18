@@ -1127,7 +1127,7 @@ void Datalink::draw_social() {
         }
         if (count == 0) {
             rect.left += 20;
-            write_l(StringTable.get(Labels.strings_ptr[0xFD4 / 4]), &rect);
+            write_l(table_text(Labels.strings_ptr[0xFD4 / 4]), &rect);
         } else {
             const int x = rect.left + 20;
             int y = rect.top

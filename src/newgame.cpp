@@ -330,7 +330,7 @@ difficulty_menu:
         {
             for (int i = 0; i < 6; ++i) {
                 StringTemp[0] = 0;
-                strcat(StringTemp, StringTable.get(Difficulty[i]));
+                strcat(StringTemp, table_text(Difficulty[i]));
                 if (i == 0) {
                     strcat(StringTemp, BufferJoinSpace);
                     strcat(StringTemp, SocialWinOpenParenText);
@@ -534,7 +534,7 @@ select_faction:
                     if (!ConsoleGroupAction) goto parse_factions;
                 }
                 for (;;) {
-                    strcpy(gender_text, StringTable.get(Players[faction].is_leader_female
+                    strcpy(gender_text, table_text(Players[faction].is_leader_female
                         ? Labels.strings_ptr[739] : Labels.strings_ptr[738]));
                     popup.start("CUSTOMNAMES", 0x44);
                     {
@@ -688,7 +688,7 @@ random_name:
 
 edit_names_expansion:
             for (;;) {
-                strcpy(gender_text, StringTable.get(Players[picked].is_leader_female
+                strcpy(gender_text, table_text(Players[picked].is_leader_female
                     ? Labels.strings_ptr[739] : Labels.strings_ptr[738]));
                 popup.start("CUSTOMNAMES", 0x44);
                 {

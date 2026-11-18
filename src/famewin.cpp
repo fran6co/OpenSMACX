@@ -486,7 +486,7 @@ void FameWin::on_redraw() {
     if ((record->present & 4) != 0) {
       StringTemp[0] = '\0';
       strcat(StringTemp,
-             StringTable.get(Facility[FAC_ASCENT_TO_TRANSCENDENCE].name));
+             table_text(Facility[FAC_ASCENT_TO_TRANSCENDENCE].name));
       CharUpperA(StringTemp);
       wrap_cent(StringTemp, field_A14_, field_A18_, field_A1C_);
       field_A18_ += wrap_height(StringTemp, field_A1C_);
@@ -530,7 +530,7 @@ void FameWin::on_redraw() {
     field_A18_ += field_A44_;
 
     StringTemp[0] = '\0';
-    strcat(StringTemp, StringTable.get(Labels.strings_ptr[76]));
+    strcat(StringTemp, table_text(Labels.strings_ptr[76]));
     CharUpperA(StringTemp);
     write_l(StringTemp, field_A14_, field_A18_);
     StringTemp[0] = '\0';
@@ -558,7 +558,7 @@ void FameWin::on_redraw() {
     strcat(StringTemp, label_get(1064));
     write_l(StringTemp, field_A14_, field_A18_);
     StringTemp[0] = '\0';
-    strcat(StringTemp, StringTable.get(Difficulty[record->field_20]));
+    strcat(StringTemp, table_text(Difficulty[record->field_20]));
     CharUpperA(StringTemp);
     write_right(StringTemp, field_A14_, field_A18_, field_A1C_);
     field_A18_ += field_A44_;

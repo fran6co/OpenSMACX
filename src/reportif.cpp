@@ -1774,7 +1774,7 @@ void ReportWin::draw_labs() {
                 Buffer::set_text_color3(mandate_color(tech_category(
                     PlayersData[faction].tech_id_researching)), -1, 1, 1);
                 strcat(StringTemp, "[");
-                strcat(StringTemp, StringTable.get(Mandate[tech_category(
+                strcat(StringTemp, table_text(Mandate[tech_category(
                     PlayersData[faction].tech_id_researching)].name_caps));
                 strcat(StringTemp, BufferJoinSpace);
                 say_num(tech_recurse(
@@ -2242,7 +2242,7 @@ void ReportWin::draw_labs() {
                     }
                     if (!datalink) {
                         strcat(StringTemp,
-                               StringTable.get(Chassis[i].offsv_1_name));
+                               table_text(Chassis[i].offsv_1_name));
                     } else {
                         DatalinkMain.construct_id(id, 4, i);
                         LPSTR name = StringTable.get(Chassis[i].offsv_1_name);
@@ -2279,7 +2279,7 @@ void ReportWin::draw_labs() {
                         strcat(StringTemp, SocialWinCommaSpaceText);
                     }
                     if (!datalink) {
-                        strcat(StringTemp, StringTable.get(Weapon[i].name));
+                        strcat(StringTemp, table_text(Weapon[i].name));
                     } else {
                         DatalinkMain.construct_id(id, 6, i);
                         LPSTR name = StringTable.get(Weapon[i].name);
@@ -2322,7 +2322,7 @@ void ReportWin::draw_labs() {
                         strcat(StringTemp, SocialWinCommaSpaceText);
                     }
                     if (!datalink) {
-                        strcat(StringTemp, StringTable.get(Armor[i].name));
+                        strcat(StringTemp, table_text(Armor[i].name));
                     } else {
                         DatalinkMain.construct_id(id, 7, i);
                         LPSTR name = StringTable.get(Armor[i].name);
@@ -3757,7 +3757,7 @@ void ReportWin::draw_projects() {
                     Buffer::set_text_color3(ChatItemIdTable[Bases[base_id].faction_id_current], -1, 1, 1);
                     StringTemp[0] = 0;
                     if (mode == 2) strcat(StringTemp, "[");
-                    strcat(StringTemp, StringTable.get(Facility[facility].name));
+                    strcat(StringTemp, table_text(Facility[facility].name));
                     if (mode == 2) strcat(StringTemp, "]");
                     Buffer::write_l(StringTemp, rect1_.left, rect1_.top);
                     rect1_.top += field_E268_;

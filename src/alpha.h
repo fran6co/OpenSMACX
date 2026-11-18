@@ -769,6 +769,18 @@ inline LPSTR __cdecl compass_name(int direction) {
     return StringTable.get(Compass[direction]);
 }
 
+// WORKAROUND(decl): the image loads a string-table offset into eax and sets
+// ecx to StringTable before the push (draw_base_names 0x00468162, 0x004681AC,
+// 0x004685C5), the shape of an argument passed through an inline rather than
+// StringTable.get(expr) written at the call (which pushes from ecx first).
+// The original header's name for this wrapper is unknown; label_get and
+// compass_name are the same shape. Per site: 85 sites in 21 units take it
+// (AlphaMenu::menu_init, AlphaMenu::check, Console::editor_diff and
+// make_a_proposal exact with it); the image rejects it at most others.
+inline LPSTR table_text(LPSTR offset) {
+    return StringTable.get(offset);
+}
+
 void __cdecl say_label(int label_offset);
 LPSTR __cdecl label_get(int label_offset);
 

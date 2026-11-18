@@ -965,7 +965,7 @@ void DiploPop::draw_info() {
             } else {
                 relation_label = Labels.strings_ptr[0x64 / 4];
             }
-            strcat(StringTemp, StringTable.get(relation_label));
+            strcat(StringTemp, table_text(relation_label));
             CharUpperA(StringTemp);
             y = MainInterfaceGlobal.wrap(StringTemp, x, y, r.right - x);
         }
@@ -973,7 +973,7 @@ void DiploPop::draw_info() {
         StringTemp[0] = '\0';
         strcat(StringTemp, label_get(0xE9C / 4));
         strcat(StringTemp, SocialWinColonSpaceText);
-        strcat(StringTemp, StringTable.get(spying(faction) ? Labels.strings_ptr[0x614 / 4]
+        strcat(StringTemp, table_text(spying(faction) ? Labels.strings_ptr[0x614 / 4]
                                                            : Labels.strings_ptr[0xEA0 / 4]));
         y = MainInterfaceGlobal.wrap(StringTemp, x, y, r.right - x);
 
@@ -994,7 +994,7 @@ void DiploPop::draw_info() {
 
         StringTemp[0] = '\0';
         say_special(StringTemp,
-                    StringTable.get(Might[range(7 - PlayersData[faction].ranking, 0, 6)].adj_start),
+                    table_text(Might[range(7 - PlayersData[faction].ranking, 0, 6)].adj_start),
                     faction);
         CharUpperA(StringTemp);
         MainInterfaceGlobal.write_l(StringTemp, x, y);

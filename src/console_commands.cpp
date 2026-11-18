@@ -709,7 +709,7 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
             strcat(StringTemp, BufferJoinSpace);
             for (int i = 0; i < MaxAbilityNum; i++) {
                 if (has_abil(Vehs[veh_id].proto_id, 1 << i)) {
-                    strcat(StringTemp, StringTable.get(Ability[i].abbreviation));
+                    strcat(StringTemp, table_text(Ability[i].abbreviation));
                 }
             }
         }
@@ -851,7 +851,7 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
                 strcat(StringTemp, BufferJoinSpace);
                 for (int j = 0; j < MaxAbilityNum; j++) {
                     if (has_abil(proto_id, 1 << j)) {
-                        strcat(StringTemp, StringTable.get(Ability[j].abbreviation));
+                        strcat(StringTemp, table_text(Ability[j].abbreviation));
                     }
                 }
             }
@@ -896,7 +896,7 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
         strcat(StringTemp, BufferJoinSpace);
         for (int i = 0; i < MaxAbilityNum; i++) {
             if (has_abil(Vehs[veh_id].proto_id, 1 << i)) {
-                strcat(StringTemp, StringTable.get(Ability[i].abbreviation));
+                strcat(StringTemp, table_text(Ability[i].abbreviation));
             }
         }
     }
@@ -912,7 +912,7 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
         strcat(StringTemp, BufferJoinSpace);
         for (int i = 0; i < MaxAbilityNum; i++) {
             if (has_abil(choice, 1 << i)) {
-                strcat(StringTemp, StringTable.get(Ability[i].abbreviation));
+                strcat(StringTemp, table_text(Ability[i].abbreviation));
             }
         }
     }
@@ -2220,7 +2220,7 @@ void Console::go_to(int subject, int order, int grouped) {
         popup.start("DESTTRIAD", 0x40);
         for (int i = 0; i < MaxTriadNum; i++) {
             StringTemp[0] = '\0';
-            strcat(StringTemp, StringTable.get(Triad[i]));
+            strcat(StringTemp, table_text(Triad[i]));
             strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, SocialWinOpenParenText);
             say_base(StringTemp, Bases[base_id].auto_forward_slots[i]);
@@ -2462,7 +2462,7 @@ void Console::go_to(int subject, int order, int grouped) {
                 if (id == GameDataStateStorage.fields_.secret_project_.universal_translator()) {
                     strcat(StringTemp, BufferJoinSpace);
                     strcat(StringTemp, SocialWinOpenParenText);
-                    strcat(StringTemp, StringTable.get(Facility[FAC_UNIVERSAL_TRANSLATOR].name));
+                    strcat(StringTemp, table_text(Facility[FAC_UNIVERSAL_TRANSLATOR].name));
                     strcat(StringTemp, SocialWinCloseParenText);
                 } else if (has_fac(FAC_NETWORK_NODE, id, 0) && !(Bases[id].state & 0x400)) {
                     strcat(StringTemp, BufferJoinSpace);
@@ -4968,7 +4968,7 @@ void Console::editor_diff() {
     popup.start(PopupStartCaption, "EDITORDIFF", -1, nullptr, 0x40);
     for (int i = 0; i < MaxDiffNum; ++i) {
         StringTemp[0] = 0;
-        strcat(StringTemp, StringTable.get(Difficulty[i]));
+        strcat(StringTemp, table_text(Difficulty[i]));
         popup.item(StringTemp, i);
     }
     popup.set_value(GameDataStateStorage.fields_.diff_level_current_);

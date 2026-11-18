@@ -2064,7 +2064,7 @@ void BaseWin::hurry() {
     parse_says(0, BaseCurrent->name_string, -1, -1);
     parse_says(1, BaseCurrent->queue_production_id[0] >= 0
         ? VehPrototypes[production_id].veh_name
-        : StringTable.get(Facility[facility_id].name), -1, -1);
+        : table_text(Facility[facility_id].name), -1, -1);
     parse_num(0, cost);
     parse_num(1, PlayersData[faction_id].energy_reserves - PlayersData[faction_id].hurry_cost_total);
     popup.start("HURRY");
@@ -2575,7 +2575,7 @@ void BaseWin::draw_production(int update_mode) {
         }
         content.top += 0x41;
         StringTemp[0] = 0;
-        strcat(StringTemp, StringTable.get(Facility[facility_id].name));
+        strcat(StringTemp, table_text(Facility[facility_id].name));
         CharUpperA(StringTemp);
         MainInterfaceGlobal.set_text_color(TextColourTable[116],
                                            TextColourTable[117], 1, 1);
@@ -6431,7 +6431,7 @@ void BaseWin::base_editor_proj() {
     // the64 SecretProject words at4-byte stride, independently of expansion.
     for (int project_index = 0; project_index < MaxSecretProjectNum; ++project_index) {
         StringTemp[0] = 0;
-        strcat(StringTemp, StringTable.get(Facility[FacilitySPStart + project_index].name));
+        strcat(StringTemp, table_text(Facility[FacilitySPStart + project_index].name));
         strcat(StringTemp, "|");
         const int owner_base = (GameDataStateStorage.fields_.secret_project_.project_base[project_index]);
         if (owner_base == -2) {
@@ -7013,7 +7013,7 @@ void BaseWin::draw_facilities(int update_mode) {
             if (has_fac(facility, BaseIDCurrentSelected, 0)) strcat(StringTemp, "*");
             Buffer::set_text_color(TextColourTable[124], TextColourTable[125], 1, 1);
         } else Buffer::set_text_color(TextColourTable[122], TextColourTable[123], 1, 1);
-        strcat(StringTemp, StringTable.get(Facility[facility].name));
+        strcat(StringTemp, table_text(Facility[facility].name));
         if (facility == 8 && (BaseCurrent->state & 0x400u)) {
             strcat(StringTemp, BufferJoinSpace); strcat(StringTemp, SocialWinOpenParenText);
             strcat(StringTemp, label_get(0x3A0 / 4)); strcat(StringTemp, SocialWinCloseParenText);

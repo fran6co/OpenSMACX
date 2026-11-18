@@ -598,7 +598,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
                     }
                     DatalinkMain.construct_id(
                         idbuf, 0xC, outerIndex * 5 + j + 1);
-                    char *link = StringTable.get(
+                    char *link = table_text(
                         SocialCategories[outerIndex].name[j]);
                     help_create_link(buf, link, idbuf);
                     if (*buf != 0) {

@@ -8221,9 +8221,9 @@ void __cdecl make_a_proposal(int faction_id, int other_faction_id,
                 break;
             }
             clear();
-            strcat(StringTemp, StringTable.get(Proposal[proposal].name));
+            strcat(StringTemp, table_text(Proposal[proposal].name));
             strcat(StringTemp, "|");
-            strcat(StringTemp, StringTable.get(Proposal[proposal].description));
+            strcat(StringTemp, table_text(Proposal[proposal].description));
             popup.item(StringTemp, proposal);
         }
 

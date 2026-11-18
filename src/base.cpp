@@ -7111,7 +7111,7 @@ int __cdecl upgrade_prototype(int faction_id, int proto_id_new,
                 strcat(StringTemp, BufferJoinSpace);
                 for (i = 0; i < MaxAbilityNum; i++) {
                     if (has_abil(proto_id_old, 1 << i)) {
-                        strcat(StringTemp, StringTable.get(Ability[i].abbreviation));
+                        strcat(StringTemp, table_text(Ability[i].abbreviation));
                     }
                 }
             }
@@ -7127,7 +7127,7 @@ int __cdecl upgrade_prototype(int faction_id, int proto_id_new,
                 strcat(StringTemp, BufferJoinSpace);
                 for (i = 0; i < MaxAbilityNum; i++) {
                     if (has_abil(proto_id_new, 1 << i)) {
-                        strcat(StringTemp, StringTable.get(Ability[i].abbreviation));
+                        strcat(StringTemp, table_text(Ability[i].abbreviation));
                     }
                 }
             }

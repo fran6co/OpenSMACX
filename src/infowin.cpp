@@ -165,7 +165,7 @@ void InfoWin::setup_text() {
                 strcat(text, label_get(0x6A));
                 strcat(text, SocialWinColonSpaceText);
                 strcat(text, "{");
-                strcat(text, StringTable.get(
+                strcat(text, table_text(
                     Technology[PlayersData[faction].tech_id_researching].name));
                 strcat(text, "}");
                 strcpy(row_text_[0][row_base + 1], text);
@@ -185,7 +185,7 @@ void InfoWin::setup_text() {
             }
             infowin_append_number(text, NetIncomeGlobal);
             strcat(text, "/");
-            strcat(text, StringTable.get(Labels.strings_ptr[0x30]));
+            strcat(text, table_text(Labels.strings_ptr[0x30]));
             strcat(text, SocialWinCloseParenText);
             strcat(text, "}");
             strcpy(row_text_[0][row_base + 2], text);
@@ -236,7 +236,7 @@ void InfoWin::setup_text() {
             strcat(text, "}");
             strcpy(row_text_[0][row_base + 1], text);
             text[0] = 0;
-            strcat(text, StringTable.get(Labels.strings_ptr[302]));
+            strcat(text, table_text(Labels.strings_ptr[302]));
             strcat(text, SocialWinColonSpaceText);
             strcat(text, "{");
             infowin_append_number(text, EnergyEconomyTotal);
@@ -666,7 +666,7 @@ void InfoWin::setup_text() {
             if (MapIsFlat & 1) {
                 strcat(text, label_get(0xD80 / 4));
             } else {
-                strcat(text, StringTable.get(Labels.strings_ptr[0xD84 / 4]));
+                strcat(text, table_text(Labels.strings_ptr[0xD84 / 4]));
             }
             strcpy(row_text_[0][row_base + 4], text);
             text[0] = 0;

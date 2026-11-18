@@ -365,7 +365,7 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
     Buffer::set_font(&title_font_, &body_font_primary_, &body_font_secondary_, 0);
     Buffer::set_text_color(mandate_color(category), 0, 1, 1);
     StringTemp[0] = '\0';
-    strcat(StringTemp, StringTable.get(Mandate[category].name_caps));
+    strcat(StringTemp, table_text(Mandate[category].name_caps));
     strcat(StringTemp, BufferJoinSpace);
     _itoa(requirement_count, number_buffer, 10);
     strcat(StringTemp, number_buffer);
@@ -809,7 +809,7 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
                             strcat(StringTemp, SocialWinOpenParenText);
                             strcat(StringTemp, label_get(0x13C / 4));
                             strcat(StringTemp, SocialWinColonSpaceText);
-                            strcat(StringTemp, StringTable.get(Reactor[i].name));
+                            strcat(StringTemp, table_text(Reactor[i].name));
                             strcat(StringTemp, SocialWinCloseParenText);
                             noted = 1;
                         }

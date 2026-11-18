@@ -688,11 +688,11 @@ again:
             MainInterfaceGlobal.set_text_color(0x6A, 0, 1, 1);
             StringTemp[0] = '\0';
             if (VehPrototypes[Vehs[first_vehicle_id].proto_id].plan == 0x0C) {
-                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x4A0 / 4]));
+                strcat(StringTemp, table_text(Labels.strings_ptr[0x4A0 / 4]));
             } else if (!(!Vehs[first_vehicle_id].faction_id)) {
-                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x498 / 4]));
+                strcat(StringTemp, table_text(Labels.strings_ptr[0x498 / 4]));
             } else {
-                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x49C / 4]));
+                strcat(StringTemp, table_text(Labels.strings_ptr[0x49C / 4]));
             }
             MainInterfaceGlobal.write_cent_text(StringTemp, text_x, label_y, half_width);
         }
@@ -746,10 +746,10 @@ again:
         } else if (first_vehicle_id == second_vehicle_id
                    && (!(flags & 2)
                        || Chassis[VehPrototypes[Vehs[first_vehicle_id].proto_id].chassis_id].triad == 1)) {
-            strcat(StringTemp, StringTable.get(
+            strcat(StringTemp, table_text(
                 Armor[VehPrototypes[Vehs[first_vehicle_id].proto_id].armor_id].name));
         } else {
-            strcat(StringTemp, StringTable.get(
+            strcat(StringTemp, table_text(
                 Weapon[VehPrototypes[Vehs[first_vehicle_id].proto_id].weapon_id].name));
         }
         if (attack_odds >= 0 && defense_odds >= 0) {
