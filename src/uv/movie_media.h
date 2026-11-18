@@ -300,9 +300,9 @@ struct MediaRuntime {
   MediaDecodedPixelBlock4x4 *decoded_pixel_blocks; // +648; decoder_capacity_634 blocks
   MediaMotionCoordinate *motion_coordinates;     // +64c; decoder_capacity_630 pairs
   int *motion_pixel_offsets;                     // +650; decoder_capacity_630 signed entries
-  BYTE *decoder_coefficient_plane_654;            // +654, allocator result
-  BYTE *decoder_temporary_plane_a_658;            // +658, allocator result
-  BYTE *decoder_temporary_plane_b_65c;            // +65c, allocator result
+  unsigned int *decoder_coefficient_plane_654;    // +654; 32-bit cells, width*height*4 bytes
+  unsigned int *decoder_temporary_plane_a_658;    // +658; same shape
+  unsigned int *decoder_temporary_plane_b_65c;    // +65c; same shape
 };
 
 typedef char media_descriptor_extent_check[

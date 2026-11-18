@@ -29,6 +29,6 @@ struct State {
 // Typed body for original 0x005CE85C. Decodes the coefficient
 // sequence until the terminal table class is met. Keep the semantic C++ name;
 // the native writer owns the original mapping and emitted linker identity.
-int decode_coefficients(State &state);
+int decode_coefficients();
 
 }  // namespace movie_decoder_huffman

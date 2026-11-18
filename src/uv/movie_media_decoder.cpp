@@ -2851,11 +2851,11 @@ typedef unsigned char uint8;
 // `src` (ecx) and `mode` (edx) are __fastcall register args; `stride`,
 // `dst` and `adjust` are the three stack args the `ret 0xc` pops - see
 // TRIED above for the signature evidence.
-extern "C" void __fastcall sub_5d2d20(char *src, int mode, int stride,
-                                      char *dst, char adjust) {
+extern "C" void __fastcall sub_5d2d20(BYTE *src, int mode, int stride,
+                                      BYTE *dst, int adjust) {
     int step = stride * 4;
-    char *p;
-    char *q;
+    BYTE *p;
+    BYTE *q;
     int i;
     if (mode != 0) {
         // q, i, p: this initialisation order sets the image's registers.
@@ -3337,10 +3337,10 @@ typedef unsigned char uint8;
 // single byte - matches `ret 0xc` (3 stack slots popped by the callee).
 // a1 and a4 are pointers the census's H was only guessing at; the body adds a
 // byte offset to each, which is the proof.
-void __fastcall sub_5d2e00(char *a1, int a2, int a3, char *a4, char a5) {
-    char *src = a1 + a2;
+void __fastcall sub_5d2e00(BYTE *a1, int a2, int a3, BYTE *a4, int a5) {
+    BYTE *src = a1 + a2;
     int stride = a3 * 8;
-    char *dst = a4 + 6;
+    BYTE *dst = a4 + 6;
     int count = 8;
     do {
         dst[-4] = src[0] + a5;
@@ -5657,10 +5657,10 @@ __declspec(naked) void __cdecl sub_5d02cc(BYTE *compressed, void *destination,
 
 // Existing mapped product helpers share this decoder source owner.
 // Keep one implementation of the pixel-lane decoding arithmetic.
-extern "C" void __fastcall sub_5d2d20(char *src, int mode, int stride,
-                                      char *dst, char adjust);
-void __fastcall sub_5d2e00(char *src, int byte_offset, int stride,
-                           char *dst, char adjust);
+extern "C" void __fastcall sub_5d2d20(BYTE *src, int mode, int stride,
+                                      BYTE *dst, int adjust);
+void __fastcall sub_5d2e00(BYTE *src, int byte_offset, int stride,
+                           BYTE *dst, int adjust);
 
 namespace movie_decoder_huffman {
 
@@ -5672,12 +5672,12 @@ namespace movie_decoder_huffman {
 // callee-saved registers (VC6 never does) and keeps the reader cursor,
 // accumulator and bit count in ESI/EDI/EBP for the whole walk. It works on
 // the shared movie_media_decoder_tables reader/tables directly and ignores
-// its State argument; decode_six_blocks passes only that shared state.
+// no argument (the six-block caller 0x005D2E70 pushes none).
 // Offsets: +0x0 decoded words (DC at +0, AC from +4), +0x200 coefficient
 // byte offsets, +0x300 primary, +0xB00/+0xF00 secondary tables, +0x1400
 // scale words; the movie_media_frame_bit_cursor/_accumulator/_count globals
 // hold the reader.
-__declspec(naked) int decode_coefficients(State &) {
+__declspec(naked) int decode_coefficients() {
   __asm {
     push ebx
     push ecx
@@ -5868,20 +5868,6 @@ inline int media_fixed_mul(int factor, int value) {
 #pragma warning(default : 4035)
 
 
-// WORKAROUND(decl): the image calls 0x005D2E70's coefficient decoder
-// (0x005CE85C) with no argument - that hand-written routine reads the shared
-// reader directly - while the shared header declares it with a State&.
-static inline int movie_decode_coefficients() {
-  return reinterpret_cast<int(__cdecl *)()>(
-      &movie_decoder_huffman::decode_coefficients)();
-}
-
-// The two delta-copy helpers above declare their last argument `char`, but
-// this caller pushes the full `(code >> 22) - 0x40` word (sar/sub/push, no
-// byte narrowing).
-// WORKAROUND(decl): calls go through an int-typed view of both helpers.
-typedef void(__fastcall *MovieChromaDelta)(char *src, int byte_offset,
-                                           int stride, char *dst, int adjust);
 
 // The six-block decoder's shared bit reader, spelled as macros: every step
 // reads and writes the three reader globals directly. The bit count compares
@@ -5930,31 +5916,25 @@ typedef void(__fastcall *MovieChromaDelta)(char *src, int byte_offset,
   }
 #define MOVIE_LUMA_BLOCK(bit, block, source)                                 \
   if ((flags & (bit)) == 0) {                                                \
-    if (movie_decode_coefficients() == 1) {                                  \
+    if (movie_decoder_huffman::decode_coefficients() == 1) {                                  \
       MOVIE_FILL_BLOCK(block, 0x10)                                          \
     } else {                                                                 \
       sub_5cef8a(block, 0x10);                                               \
     }                                                                        \
   } else {                                                                   \
     MOVIE_BLOCK_CODE(adjust)                                                 \
-    reinterpret_cast<MovieChromaDelta>(&sub_5d2d20)(                         \
-               reinterpret_cast<char *>(source), delta_mode, row_width,      \
-               reinterpret_cast<char *>(block),                              \
-               adjust - 0x40);                                               \
+    sub_5d2d20(source, delta_mode, row_width, block, adjust - 0x40);         \
   }
 #define MOVIE_CHROMA_BLOCK(bit, block, plane)                                \
   if ((flags & (bit)) == 0) {                                                \
-    if (movie_decode_coefficients() == 1) {                                  \
+    if (movie_decoder_huffman::decode_coefficients() == 1) {                                  \
       MOVIE_FILL_BLOCK(block, 8)                                             \
     } else {                                                                 \
       sub_5cef8a(block, 8);                                                  \
     }                                                                        \
   } else {                                                                   \
     MOVIE_BLOCK_CODE(adjust)                                                 \
-    reinterpret_cast<MovieChromaDelta>(&sub_5d2e00)(                         \
-               reinterpret_cast<char *>(coefficient_block), (plane),         \
-               row_width, reinterpret_cast<char *>(block),                   \
-               adjust - 0x40);                                               \
+    sub_5d2e00(coefficient_block, (plane), row_width, block, adjust - 0x40); \
   }
 
 
@@ -6034,13 +6014,13 @@ int __fastcall sub_5d35b0(MediaRuntime *runtime,
                           DWORD output_pitch, int record_kind) {
   if (movie_media_decoder_process_storage.plane_allocation_gate_3368 == 0) {
     movie_media_decoder_process_storage.plane_allocation_gate_3368 = 1;
-    runtime->decoder_coefficient_plane_654 = static_cast<BYTE *>(
+    runtime->decoder_coefficient_plane_654 = static_cast<unsigned int *>(
         calloc(1, runtime->descriptor->output_width_64 *
                       runtime->descriptor->output_height_60 * 4));
-    runtime->decoder_temporary_plane_a_658 = static_cast<BYTE *>(
+    runtime->decoder_temporary_plane_a_658 = static_cast<unsigned int *>(
         calloc(1, runtime->descriptor->output_width_64 *
                       runtime->descriptor->output_height_60 * 4));
-    runtime->decoder_temporary_plane_b_65c = static_cast<BYTE *>(
+    runtime->decoder_temporary_plane_b_65c = static_cast<unsigned int *>(
         calloc(1, runtime->descriptor->output_width_64 *
                       runtime->descriptor->output_height_60 * 4));
   }
@@ -6130,30 +6110,28 @@ int __fastcall sub_5d35b0(MediaRuntime *runtime,
         scale_source[k]);
   }
 
-  DWORD *selected = reinterpret_cast<DWORD *>(
-      record_kind == 7 ? runtime->decoder_temporary_plane_b_65c
-                       : runtime->decoder_temporary_plane_a_658);
+  unsigned int *selected = record_kind == 7
+                               ? runtime->decoder_temporary_plane_b_65c
+                               : runtime->decoder_temporary_plane_a_658;
   BYTE *destination = output;
   for (DWORD y = 0; y < runtime->descriptor->output_height_60; y += 0x10) {
     for (DWORD x = 0; x < runtime->descriptor->output_width_64; x += 0x10) {
       const DWORD width = runtime->descriptor->output_width_64;
       const DWORD half = (width * y + x) >> 1;
       sub_5d2e70(reinterpret_cast<BYTE *>(
-                     reinterpret_cast<DWORD *>(
-                         runtime->decoder_coefficient_plane_654) + half),
+                     runtime->decoder_coefficient_plane_654 + half),
                  reinterpret_cast<BYTE *>(selected + half), width);
     }
   }
   for (DWORD row = 0; row < runtime->descriptor->output_height_60 - 1; ++row) {
-    sub_5d2761(reinterpret_cast<unsigned int *>(selected),
-               reinterpret_cast<unsigned int *>(destination),
+    sub_5d2761(selected, reinterpret_cast<unsigned int *>(destination),
                runtime->descriptor->output_width_64 >> 1);
     destination += output_pitch;
     selected += runtime->descriptor->output_width_64 >> 1;
   }
 
   if (record_kind != 7) {
-    BYTE *const coefficient = runtime->decoder_coefficient_plane_654;
+    unsigned int *const coefficient = runtime->decoder_coefficient_plane_654;
     runtime->decoder_coefficient_plane_654 =
         runtime->decoder_temporary_plane_a_658;
     runtime->decoder_temporary_plane_a_658 = coefficient;
