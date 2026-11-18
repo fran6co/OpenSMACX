@@ -222,15 +222,6 @@ void vox_engine_close();
 
 namespace {
 
-// Historical: /O2 expands direct `memset` into `rep stosd`; render_mono used
-// this helper when the intrinsic expansion differed from the pinned call.
-// The selected body now scopes VC6 `#pragma function(memset)` around its
-// direct call. This helper remains as an unused legacy form until its
-// ownership and removal are reviewed.
-void *__cdecl caviar_memset_call(void *dst, int value, unsigned count) {
-    return memset(dst, value, count);
-}
-
 
 OPENSMACX_NOINLINE
 uint32_t load_scaling_bits(const void *source) {

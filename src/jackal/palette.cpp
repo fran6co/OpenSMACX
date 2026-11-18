@@ -1886,18 +1886,8 @@ void Palette::stop_animation(int key) {
 //    near miss from a wrong body.
 
 
-// Non-inline forwarder to `memcpy`, path.cpp's `memset_call` idiom: the
-// image's memcpy is MIXED (small constant-size copies inline as mov pairs
-// across 33 claimed bodies; the large ones call), so `memcpy` is
-// deliberately NOT on stdafx.h's `#pragma function` line - naming it there
-// flipped those 33 on 2026-09-03 and was reverted the same day. This
-// body's copy is the called kind: constant 0x400, real `call _memcpy`
-// (0x00645930) in the image, and /Oi's intrinsic renders it
-// `mov ecx,0x100; rep movsd` instead (see the TRIED note above).
-static void *memcpy_call(void *dst, const void *src, unsigned len) {
-    return memcpy(dst, src, len);
-}
-
+// The copy below is a real `call _memcpy` (0x00645930, constant 0x400): the
+// units have no intrinsics (stdafx.h).
 Palette &Palette::copy_from(Palette *src) {
     memcpy(entries_, src->entries_, sizeof(entries_));
 
