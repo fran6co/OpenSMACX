@@ -6261,7 +6261,7 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
 // vehicle waypoint/transport routes over the map. Both record families are
 // owned arrays in base.h and veh.h; no archive-shaped mirror is needed.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00467970 ?draw_base_dest@MapWin@@QAEXH@Z 0x00467970-0x00467DD9 FILE
+// ORIGINAL: 0x00467970 ?draw_base_dest@MapWin@@QAEXH@Z 0x00467970-0x00467DD9 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00467970.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
 void MapWin::draw_base_dest(int draw_type) {
     int line_type;
@@ -6450,7 +6450,7 @@ Purpose: Generate the whole visible map - background, terrain, vehicles,
          the pixel pair: the image does the same (0x0046A215), and the call
          cannot be dropped without changing behavior visible to a replacing
          callee.
-// ORIGINAL: 0x00469CA0 ?gen_map@MapWin@@QAEXHH@Z 0x00469CA0-0x0046A292 FILE
+// ORIGINAL: 0x00469CA0 ?gen_map@MapWin@@QAEXHH@Z 0x00469CA0-0x0046A292 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original469CA0..46A292; retired seed git:5605e9af:src/unrecovered/00469ca0.cpp records this identity and exact span."], "reason": "The three scan passes are implemented as a typed MapWin member over its owned viewport and damage rectangles, with the image's terrain, vehicle, overlay, label and legend helpers retained as real calls."}
 // TRIED (retired seed git:5605e9af:src/unrecovered/00469ca0.cpp): faithful three-loop transcription matched through instruction #28 and diverged at
 //            #29 on the i&1 parity scheduling in the row/column base

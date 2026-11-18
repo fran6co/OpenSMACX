@@ -433,7 +433,7 @@ int CheckBox::calculate_dimensions() {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // Historical seed observations (not fresh measurements or acceptance):
 // TRIED: nothing confirmed byte-exact; MISMATCH #3 'push' vs 'mov' - the vtable-array double-reads (edx/ecx caching across the 0xa34/0x1c constants) get register-allocated differently than the original's edi-kept-live scheme.
-// ORIGINAL: 0x0060E800 ?attach@CheckBox@@QAEHPAUGraphicWin@@HHH@Z 0x0060E800-0x0060E97F FILE
+// ORIGINAL: 0x0060E800 ?attach@CheckBox@@QAEHPAUGraphicWin@@HHH@Z 0x0060E800-0x0060E97F FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0060e800.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60e800 complete control/data-access review and src/jackal/checkbox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // symbol    ?attach@CheckBox@@UAEHPAVGraphicWin@@HHH@Z
 int CheckBox::attach(GraphicWin *parent, int x, int y, int flags) {

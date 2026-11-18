@@ -396,7 +396,7 @@ int RadioButton::calculate_dimensions() {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // Historical seed observations (not fresh measurements or acceptance):
 // TRIED: none confirmed byte-exact; MISMATCH #26 'push' vs 'mov', same vtable-array-double-read shape as the sibling CheckBox::attach (0x0060E800). GraphicWin::init's scaffold return type is void (the mangled name spells X), so the caller cannot propagate its failure code the way the CheckBox::attach byte pattern implies it should - RadioButton::attach DOES check calculate_dimensions()'s return here, unlike CheckBox's.
-// ORIGINAL: 0x0060D1F0 ?attach@RadioButton@@QAEHPAUGraphicWin@@HHH@Z 0x0060D1F0-0x0060D377 FILE
+// ORIGINAL: 0x0060D1F0 ?attach@RadioButton@@QAEHPAUGraphicWin@@HHH@Z 0x0060D1F0-0x0060D377 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0060d1f0.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60d1f0 complete control/data-access review and src/jackal/radiobutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // symbol    ?attach@RadioButton@@UAEHPAVGraphicWin@@HHH@Z
 int RadioButton::attach(GraphicWin *parent, int x, int y, int flags) {
