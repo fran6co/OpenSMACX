@@ -55,3 +55,13 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   (or `--slots`) it prints both slot maps: every frame offset each side uses, access widths, `&` when the
   address is taken, reference counts, and our /Fa variable names. `--all` includes claimed markers (broken
   claims); markers with `// compile_context` are measured in that unit, as fe.py does.
+- `analysis/typescan.py [unit ...] [--addr A,..] [--field SUBSTR] [--min N] [--uses] [--json F]` field-type scan
+  (about 2 min tree-wide with FE_JOBS=5): compiles every unit with /FAsc, names the field behind each member
+  and global operand (the source line's identifiers at that offset in the object's CodeView layouts, or the
+  decorated global's type), and classifies the image's paired instruction: S (movsx; jl/jg.. after a dword
+  compare; cdq+idiv; sar) or U (movzx or xor+mov r8; jb/ja..; xor edx+div; shr), following a loaded dword
+  through moves and add/sub/imul. Lists the fields whose image uses contradict the declared signedness (or
+  width), with counts in non-exact/exact functions, sample image addresses and the casts on that field in
+  our source. A signed use of a 32-bit field is strong evidence against `unsigned` (int op uint is
+  unsigned); an unsigned use can come from the other operand, so read U as a majority. Byte/word fields are
+  judged by their extension only. `--uses` prints every attributed use of the `--field` selection.
