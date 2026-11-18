@@ -194,50 +194,56 @@ void PrefWin::init() {
 
   StringTemp[0] = 0;                                          // 48DA24
   strcat(StringTemp, label_get(751));   /* 0xBBC */           // 48DA41
-  prefwin_button_init(&advPrefButton_, StringTemp, 1, PrefWinGeometryValue_85788C,
+  advPrefButton_.init(StringTemp, 1, PrefWinGeometryValue_85788C,
                       PrefWinGeometryValue_857890 + 0x16,
                       PrefWinGeometryValue_857894, PrefWinTitleButtonHeight,
-                      preference_window(), 0);                // 48DA79  // 48DA8C
+                      preference_window(), 0);                // 48DA79
+  advPrefButton_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);  // 48DA8C
   advPrefButton_.redraw();                                    // 48DA9D
 
   StringTemp[0] = 0;                                          // 48DAA8
   strcat(StringTemp, label_get(752));   /* 0xBC0 */           // 48DAC5
-  prefwin_button_init(&warnPrefButton_, StringTemp, 2, PrefWinGeometryValue_85788C,
+  warnPrefButton_.init(StringTemp, 2, PrefWinGeometryValue_85788C,
                        PrefWinGeometryValue_857890 + 0x2C,
                        PrefWinGeometryValue_857894, PrefWinTitleButtonHeight,
-                       preference_window(), 0);               // 48DAFD // 48DB10
+                       preference_window(), 0);               // 48DAFD
+  warnPrefButton_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0); // 48DB10
   warnPrefButton_.redraw();                                   // 48DB21
 
   StringTemp[0] = 0;                                          // 48DB2C
   strcat(StringTemp, label_get(753));   /* 0xBC4 */           // 48DB49
-  prefwin_button_init(&autoPrefButton_, StringTemp, 3, PrefWinGeometryValue_85788C,
+  autoPrefButton_.init(StringTemp, 3, PrefWinGeometryValue_85788C,
                        PrefWinGeometryValue_857890 + 0x42,
                        PrefWinGeometryValue_857894, PrefWinTitleButtonHeight,
-                       preference_window(), 0);               // 48DB81 // 48DB94
+                       preference_window(), 0);               // 48DB81
+  autoPrefButton_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0); // 48DB94
   autoPrefButton_.redraw();                                   // 48DBA5
 
   StringTemp[0] = 0;                                          // 48DBB0
   strcat(StringTemp, label_get(754));   /* 0xBC8 */           // 48DBCD
-  prefwin_button_init(&audioVisPrefButton_, StringTemp, 4, PrefWinGeometryValue_85788C,
+  audioVisPrefButton_.init(StringTemp, 4, PrefWinGeometryValue_85788C,
                            PrefWinGeometryValue_857890 + 0x58,
                            PrefWinGeometryValue_857894, PrefWinTitleButtonHeight,
-                           preference_window(), 0);           // 48DC05 // 48DC18
+                           preference_window(), 0);           // 48DC05
+  audioVisPrefButton_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0); // 48DC18
   audioVisPrefButton_.redraw();                               // 48DC29
 
   StringTemp[0] = 0;                                          // 48DC34
   strcat(StringTemp, label_get(1077));  /* 0x10D4 */          // 48DC51
-  prefwin_button_init(&mapPrefButton_, StringTemp, 5, PrefWinGeometryValue_85788C,
+  mapPrefButton_.init(StringTemp, 5, PrefWinGeometryValue_85788C,
                       PrefWinGeometryValue_857890 + 0x6E,
                       PrefWinGeometryValue_857894, PrefWinTitleButtonHeight,
-                      preference_window(), 0);                // 48DC89  // 48DC9C
+                      preference_window(), 0);                // 48DC89
+  mapPrefButton_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);  // 48DC9C
   mapPrefButton_.redraw();                                    // 48DCAD
 
   StringTemp[0] = 0;                                          // 48DCB8
   strcat(StringTemp, label_get(1078));  /* 0x10D8 */          // 48DCD5
-  prefwin_button_init(&gammaButton_, StringTemp, 6, PrefWinGeometryValue_85788C,
+  gammaButton_.init(StringTemp, 6, PrefWinGeometryValue_85788C,
                     PrefWinGeometryValue_857890 + 0x9A,
                     PrefWinGeometryValue_857894, PrefWinTitleButtonHeight,
-                    preference_window(), 0);                  // 48DD10    // 48DD23
+                    preference_window(), 0);                  // 48DD10
+  gammaButton_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);    // 48DD23
   gammaButton_.redraw();                                      // 48DD34
 
   PrefWinButtonGroup.init(0x5D, 0);                           // 48DD42
