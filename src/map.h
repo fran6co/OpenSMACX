@@ -750,17 +750,12 @@ inline uint32_t __cdecl code_at(uint32_t x, uint32_t y) {
     return map_loc(x, y)->bit2 >> 24;
 }
 
-// INLINE: the image has no cursor_dist out of line; its callers expand it
-// (action_destroy, action_home, action_airdrop, action_give: sar 1, not a
-// signed /2).
-inline int __cdecl cursor_dist(int x_point_a, int y_point_a, int x_point_b, int y_point_b) {
-    return (x_dist(x_point_a, x_point_b) + abs(y_point_a - y_point_b)) >> 1;
-}
-
 // The halved |dy| + x_dist reach. alien_move, enemy_planet_buster and
 // enemy_move load all four coordinates into registers before the abs call at
 // each site (0x56F0E0: y, ty, tx, x; abs; push tx, x; x_dist), the fingerprint
-// of inline parameters. The |dy| term comes first, unlike cursor_dist.
+// of inline parameters. The image has no copy out of line; every caller
+// expands it (action_destroy, action_home, action_airdrop, action_give too:
+// sar 1, not a signed /2).
 inline int map_range(int x1, int y1, int x2, int y2) {
     return (abs(y1 - y2) + x_dist(x1, x2)) >> 1;
 }

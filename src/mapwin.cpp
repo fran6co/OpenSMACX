@@ -5681,13 +5681,13 @@ int MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
                 menu.add_item(0x67, label_get(0x8C0 / 4));
             }
             if (can_arty(Vehs[selected_vehicle].proto_id, 1) &&
-                cursor_dist(tile_x, tile_y, Vehs[selected_vehicle].x,
+                map_range(tile_x, tile_y, Vehs[selected_vehicle].x,
                             Vehs[selected_vehicle].y) <= Rules.artillery_max_rng) {
                 menu.add_item(0x68, StringTable.get(Labels.strings_ptr[0x8C8 / 4]));
             }
         }
-        // 0x0046CB14: VC6 folds the `>> 1` of cursor_dist into `& ~1` <= 2.
-        if (cursor_dist(tile_x, tile_y, Vehs[selected_vehicle].x,
+        // 0x0046CB14: VC6 folds the `>> 1` of map_range into `& ~1` <= 2.
+        if (map_range(tile_x, tile_y, Vehs[selected_vehicle].x,
                         Vehs[selected_vehicle].y) <= 1) {
             menu.add_item(0x65, StringTable.get(Labels.strings_ptr[0x8CC / 4]));
             if (VehPrototypes[Vehs[selected_vehicle].proto_id].plan == 9) {

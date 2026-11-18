@@ -5858,7 +5858,7 @@ int __cdecl base_connect(int priority) {
         if (region_at(Bases[i].x, Bases[i].y) != region) {
             continue;
         }
-        int dist = cursor_dist(BaseCurrent->x, BaseCurrent->y, Bases[i].x, Bases[i].y);
+        int dist = map_range(BaseCurrent->x, BaseCurrent->y, Bases[i].x, Bases[i].y);
         if (Bases[i].faction_id_current != BaseCurrent->faction_id_current) {
             if (dist > 5
                 || !(PlayersData[BaseCurrent->faction_id_current]

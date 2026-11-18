@@ -2358,7 +2358,7 @@ void Console::go_to(int subject, int order, int grouped) {
                 scores[i] = Bases[i].population_size;
                 break;
             case 2:
-                scores[i] = -cursor_dist(source_x, source_y, Bases[i].x, Bases[i].y);
+                scores[i] = -map_range(source_x, source_y, Bases[i].x, Bases[i].y);
                 break;
             }
         }
@@ -2427,12 +2427,12 @@ void Console::go_to(int subject, int order, int grouped) {
                     }
                 } else if (triad == TRIAD_AIR) {
                     if (order == 128) {
-                        if (cursor_dist(centre_x, centre_y, Bases[id].x, Bases[id].y) > max_range) {
+                        if (map_range(centre_x, centre_y, Bases[id].x, Bases[id].y) > max_range) {
                             continue;
                         }
                     } else if (order >= 0) {
                         if (Chassis[VehPrototypes[Vehs[subject].proto_id].chassis_id].range) {
-                            if (cursor_dist(source_x, source_y, Bases[id].x, Bases[id].y)
+                            if (map_range(source_x, source_y, Bases[id].x, Bases[id].y)
                                 > (speed(subject, 0)
                                        * (Chassis[VehPrototypes[Vehs[subject].proto_id].chassis_id].range
                                           - Vehs[subject].terraforming_turns - 1)
@@ -2476,7 +2476,7 @@ void Console::go_to(int subject, int order, int grouped) {
                 strcat(StringTemp, label_get(0xFA));
                 strcat(StringTemp, SocialWinColonSpaceText);
                 char distance_text[80];
-                _itoa(cursor_dist(source_x, source_y, Bases[id].x, Bases[id].y), distance_text, 10);
+                _itoa(map_range(source_x, source_y, Bases[id].x, Bases[id].y), distance_text, 10);
                 strcat(StringTemp, distance_text);
                 if (sorting == 1) {
                     strcat(StringTemp, SocialWinCommaSpaceText);

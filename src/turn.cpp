@@ -853,7 +853,7 @@ void __cdecl random_events(int mode) {
                 seen = 0;
             }
             for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
-                if (cursor_dist(Bases[i].x, Bases[i].y, base.x, base.y) <= radius
+                if (map_range(Bases[i].x, Bases[i].y, base.x, base.y) <= radius
                     && !has_fac(FAC_RESEARCH_HOSPITAL, i, 0)
                     && !has_fac(FAC_NANOHOSPITAL, i, 0)
                     && !has_project(SP_HUMAN_GENOME_PROJ, Bases[i].faction_id_current)
@@ -1147,7 +1147,7 @@ void __cdecl random_events(int mode) {
              & (BIT2_UNK_80000000 | BIT2_VOLCANO)) != BIT2_VOLCANO) {
             return;
         }
-        if (cursor_dist(base.x, base.y, GameDataStateStorage.fields_.mount_planet_x_, GameDataStateStorage.fields_.mount_planet_y_) > 5) {
+        if (map_range(base.x, base.y, GameDataStateStorage.fields_.mount_planet_x_, GameDataStateStorage.fields_.mount_planet_y_) > 5) {
             return;
         }
         if (!(PlayersData[faction].flags & PFLAG_MAP_REVEALED)

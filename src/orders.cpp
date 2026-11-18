@@ -233,7 +233,7 @@ int __cdecl supply_options(int veh_id, int base_id) {
         return 0;
     }
     if (Vehs[veh_id].order == ORDER_MOVE_TO
-        && cursor_dist(Vehs[veh_id].x, Vehs[veh_id].y, Vehs[veh_id].waypoint_x[0],
+        && map_range(Vehs[veh_id].x, Vehs[veh_id].y, Vehs[veh_id].waypoint_x[0],
                        Vehs[veh_id].waypoint_y[0]) > 1) {
         return 0;
     }

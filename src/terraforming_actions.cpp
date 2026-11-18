@@ -103,7 +103,7 @@ Purpose: Calculate the credit cost to lower or raise the tile's terrain for the 
 //   sub ecx, eax`. `abs()` compiles to VC6's branchless intrinsic
 //   `cdq; xor eax, edx; sub eax, edx`, which is three different instructions in
 //   the same place. Note the image DOES call `_abs` at 0x004C94F0, inside the
-//   inlined `cursor_dist`, so this is per-site and not the `/Oi-` axis.
+//   inlined `map_range`, so this is per-site and not the `/Oi-` axis.
 // LEVER: climate-unsigned-alt-signed `uint32_t climate` gives the image's
 //   `shr eax, 5`; as `int` it is `sar`. The two comparisons ON the result are
 //   signed - `cmp edx, 0x40; jl` and `cmp eax, 3; jge` - so `alt` and the
@@ -876,7 +876,7 @@ void __cdecl action_destroy(int veh_id, int bits, int x, int y) {
             for (int i = 1; i < 25; i++) {
                 int x_radius = wrap_map_x(Vehs[veh_id].x + RadiusOffsetX[i]);
                 int y_radius = Vehs[veh_id].y + RadiusOffsetY[i];
-                if (on_map(x_radius, y_radius) && cursor_dist(x_radius, y_radius, x, y) <= 2) {
+                if (on_map(x_radius, y_radius) && map_range(x_radius, y_radius, x, y) <= 2) {
                     int veh_id_stack = stack_fix(veh_at(x_radius, y_radius));
                     if (veh_id_stack >= 0 && stack_check(veh_id_stack, 15, owner, -1, -1)) {
                         battle_fight(veh_id, i, 1, 1, 0);
@@ -1254,7 +1254,7 @@ void __cdecl action_road_to(int veh_id) {
 }
 
 // action_destroy, action_home, action_airdrop and action_arty expand map.h's
-// cursor_dist in place: arguments evaluate before the body, as the image's
+// map_range in place: arguments evaluate before the body, as the image's
 // early second-coordinate load shows.
 
 /*
@@ -1332,7 +1332,7 @@ int __cdecl action_home(int veh_id, int flags) {
         if (flags == 2 && (Bases[base_id].state & BSTATE_UNK_200000)) {
             continue;
         }
-        const int dist = cursor_dist(veh_x, veh_y, Bases[base_id].x, Bases[base_id].y);
+        const int dist = map_range(veh_x, veh_y, Bases[base_id].x, Bases[base_id].y);
         if ((Vehs[veh_id].state & VSTATE_UNK_200)
             && Vehs[veh_id].order_auto_type == ORDERA_ON_ALERT
             && Bases[base_id].x == Vehs[veh_id].waypoint_x[1]
@@ -1357,13 +1357,13 @@ int __cdecl action_home(int veh_id, int flags) {
                 && (has_abil(Vehs[other_id].proto_id, ABL_CARRIER)
                     || (VehPrototypes[Vehs[other_id].proto_id].plan == PLAN_SUPPLY_CONVOY
                         && get_triad(other_id) == TRIAD_AIR))) {
-                int dist = cursor_dist(veh_x, veh_y, Vehs[other_id].x, Vehs[other_id].y);
+                int dist = map_range(veh_x, veh_y, Vehs[other_id].x, Vehs[other_id].y);
                 if ((flags & 1) || flags == 4) {
                     if (!is_human(faction_id)) {
                         dist += (int)speed(other_id, false) / Rules.move_rate_roads;
                     }
                     if (VehPrototypes[Vehs[other_id].proto_id].plan == PLAN_SUPPLY_CONVOY
-                        && cursor_dist(veh_x, veh_y, Vehs[other_id].x, Vehs[other_id].y)
+                        && map_range(veh_x, veh_y, Vehs[other_id].x, Vehs[other_id].y)
                             > veh_moves(veh_id) / Rules.move_rate_roads) {
                         continue; // the convoy is not reachable this turn
                     }
@@ -1407,7 +1407,7 @@ int __cdecl action_home(int veh_id, int flags) {
                     continue;
                 }
             }
-            const int dist = cursor_dist(veh_x, veh_y, x_radius, y_radius);
+            const int dist = map_range(veh_x, veh_y, x_radius, y_radius);
             if ((Vehs[veh_id].state & VSTATE_UNK_200) && Vehs[veh_id].order_auto_type == ORDERA_ON_ALERT
                 && !Vehs[veh_id].dmg_incurred && x_radius == Vehs[veh_id].waypoint_x[1]
                 && y_radius == Vehs[veh_id].waypoint_y[1] && dist <= max_dist) {
@@ -1537,7 +1537,7 @@ char VehLabelMADEAIRDROP2[] = "MADEAIRDROP";
 int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
     NetDaemonNet.action_mode_ = mode;
     const int faction_id = Vehs[veh_id].faction_id;
-    if (cursor_dist(Vehs[veh_id].x, Vehs[veh_id].y, x, y) > drop_range(faction_id)) {
+    if (map_range(Vehs[veh_id].x, Vehs[veh_id].y, x, y) > drop_range(faction_id)) {
         if (NetDaemonNet.action_mode_ & 1 && faction_id == ConsoleGlobal.faction_id_) {
             parse_num(0, Rules.max_airdrop_sans_orb_insert);
             if (Players[faction_id].rule_flags & 0x80) {
@@ -1785,7 +1785,7 @@ void __cdecl action_arty(int veh_id, int x, int y) {
         NetMsgPrimary.pop("UNITMOVED", 5000, 0, nullptr);
         return;
     }
-    if (cursor_dist(Vehs[veh_id].x, Vehs[veh_id].y, x, y) > 2) {
+    if (map_range(Vehs[veh_id].x, Vehs[veh_id].y, x, y) > 2) {
         NetMsgPrimary.pop("OUTOFRANGE", 5000, 0, nullptr);
         return;
     }
