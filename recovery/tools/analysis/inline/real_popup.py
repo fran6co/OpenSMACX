@@ -4,7 +4,8 @@ def fn(name,M,pre=''):
     body=' '.join('if (cond()) { at(%d); return; }'%i for i in range(1,M+1))
     return 'void %s() { Popup p; %s %s at(%d); }'%(name,pre,body,M+1)
 Ms=[int(x) for x in sys.argv[1:]]
-asm=ib.compile_in_unit('src/probe.cpp',HDR+'\n'.join(fn('r%d'%M,M) for M in Ms),'21')
+UNIT=__import__('os').environ.get('UNIT','src/probe.cpp')
+asm=ib.compile_in_unit(UNIT,HDR+'\n'.join(fn('r%d'%M,M) for M in Ms),'21')
 F={n:l for n,s,l in ib.functions(asm)}
 for M in Ms:
     tl=ib.tails(F['r%d'%M])

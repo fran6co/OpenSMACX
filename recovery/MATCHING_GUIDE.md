@@ -1171,7 +1171,9 @@ we cannot see, so the numbers are fitted within about 0.3 unit.
      if1`). This is the mechanism behind 2.3's "dead spend takes depth only
      from return sites before it".
 5. **Deeper levels** (medium). A third level, such as ~FlatButton inside an
-   expanded ~Scroll, is decided after pass 2. Its order was not measured.
+   expanded ~Scroll, is decided after pass 2 and gets what is left. In
+   PickTech::pick, each added dead probe removes one ~FlatButton expansion
+   before any ~Scroll changes. Its order within the level was not measured.
 6. **Teardown with real headers** (high; `real_popup.py`). An isolated
    `Popup p;` with M returns expands ~Popup at every site up to the budget.
    Its ~Scroll then falls in the periodic regime: 5 returns give
@@ -1218,6 +1220,15 @@ What the model does not predict (2026-11-19)
   additive model cannot express.
 - **config_game 0x00589D30.** Ours expands ~StringList at its two sites;
   the image calls both. Not attempted beyond the inlinemap reading.
+- **PickTech::pick 0x00486510.** The image calls ~Scroll at the four Popup
+  teardowns of the first `return tech_ai(...)`; ours expands it at all 16
+  sites. Up to 24 dead 4-if probes after that return all expand. Each one
+  costs exactly one more ~FlatButton expansion (12 → 24 calls), never a
+  ~Scroll. In a real function, extra spend comes out of the deepest pass
+  first (level 3, ~FlatButton inside ~Scroll), which confirms rule 5's
+  ordering. The image instead keeps level-3 expansions at later sites while
+  refusing level 2 at the earliest ones, so its pass-2 reservations are
+  larger than ours in a way that dead spend cannot imitate.
 - The units are approximate. Costs come from fitted counts, not node
   counts, so a prediction is good to about one expansion. Use it to choose
   the *kind* and *place* of a missing spend, then confirm with fe.
