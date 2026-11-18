@@ -2517,6 +2517,7 @@ class Demo : public GraphicWin { public:
     int init();
     virtual void redraw();
     virtual void on_left_down(int x, int y);
+    int on_key(int a1, int a2);
     void toggle_and_repaint();
     static void __cdecl timer_callback(int self);
 
@@ -2608,7 +2609,7 @@ void __cdecl Demo::timer_callback(int self) {
 
 // RECOVERY_ROLE: SCAFFOLD Fabricated Widget receiver and manual virtual-slot adapter; original class, receiver ownership and lifecycle remain unproved.
 // ORIGINAL: 0x00524370 sub_524370 0x00524370-0x00524396 BYTE_EXACT
-// symbol    ?on_key@Widget@@QAEHHH@Z
+// symbol    ?on_key@Demo@@QAEHHH@Z
 // size      38 bytes
 // prototype
 // callers   0   call targets   0
@@ -2637,20 +2638,10 @@ Status: Complete
 // A __thiscall member, not the catalogued `extern "C" int __stdcall`: ecx is
 // used directly with no stack load, and `ret 8` pops the two explicit
 // arguments a thiscall callee cleans up itself. The first is dead.
-class Slot058 { public: int slot058(); };
-typedef int (Slot058::*Slot058Fn)();
-
-class Widget {
- public:
-    int on_key(int a1, int a2);
-};
-
-int Widget::on_key(int, int a2) {
+int Demo::on_key(int, int a2) {
     // 0xd, 0x1b, 0x20 are VK_RETURN, VK_ESCAPE and VK_SPACE.
     if (a2 == 0xd || a2 == 0x1b || a2 == 0x20) {
-        (reinterpret_cast<Slot058 *>(this)->*(*reinterpret_cast<Slot058Fn *>(
-            reinterpret_cast<char *>(*reinterpret_cast<void **>(this))
-            + 0xe8)))();
+        release_modal();
     }
     return 1;
 }
