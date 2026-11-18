@@ -6891,7 +6891,7 @@ int Win::minimize() {
 }
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x005F7580 0x005F7E48 0x005F7E88 0x005F77DF
-// ORIGINAL: 0x005F7580 ?do_tracking@Win@@QAEXHH@Z 0x005F7580-0x005F7E47 FILE
+// ORIGINAL: 0x005F7580 ?do_tracking@Win@@QAEXHH@Z 0x005F7580-0x005F7E47 FILE BYTE_EXACT
 // kind game
 // TRIED: Ghidra's pseudocode was unsafe here in three separate ways, all fixed from raw disasm: (1) the client_to_screen/nonclient_to_screen "vacuous test" branches Ghidra rendered as a no-op `if(&stack!=0x20){FUN();}` actually apply the screen origin to a size-rect afterward - Ghidra dropped that entirely; (2) the slot003 vtable call takes 3 args (width,height,0), Ghidra showed only 1; (3) two of the screen_to_client/client_to_screen calls are on win_parent_, not `this` (ecx is never reloaded to esi before them). The switch-case clamp arithmetic itself did match Ghidra once independently checked against raw disasm. Compiles; original is frameless (sub esp direct), rebuilt took a framed prologue - not chased given size (2247 bytes).
 // ===== homed from src/unrecovered/005f7580.cpp =====
