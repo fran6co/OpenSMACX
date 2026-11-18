@@ -417,11 +417,11 @@ extern int AltNatural[11];
 // AltNatural (`mov ecx, 0xb; rep movsd` from 0x0068FAF4 to 0x0068FB4C) before
 // any altitude band is computed. Shipped values { 0, 20, 40, 60, 80, 100,
 // 120, 140, 160, 180, 200 } - the nominal contour of each altitude band.
-extern uint32_t AltNaturalDefault[11];
+extern int AltNaturalDefault[11];
 // Shared contour targets: world_rivers selects a tile's river contour,
 // elev_at compares the climate band, and world_linearize_contours maps the
 // AltNaturalDefault intervals into this table before copying it to AltNatural.
-extern uint32_t AltContour[11];
+extern int AltContour[11];
 
 // `int` throughout, matching both the definition in src/map.cpp and the
 // catalogue's ?whose_territory@@YAHHHHPAHH@Z. The header said `uint32_t`,
@@ -584,10 +584,10 @@ int __cdecl mandate_color(int mandate);
 // claim that the original allocations have exactly those upper bounds.
 extern const unsigned char AltDirectionTable[49 * 5];
 extern unsigned char AltBonusArid[113];
-extern unsigned char AltBonusMoist[113];
-extern unsigned char AltBonusRainy[113];
-extern unsigned char AltBonusFlat[113];
-extern unsigned char AltBonusOcean[113];
+extern char AltBonusMoist[113];
+extern char AltBonusRainy[113];
+extern char AltBonusFlat[113];
+extern char AltBonusOcean[113];
 
 MEASURED inline BOOL __cdecl on_map(int x, int y) {
     return y >= 0 && y < (int)MapLatitudeBounds && x >= 0 && x < (int)MapLongitudeBounds;

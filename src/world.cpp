@@ -1429,7 +1429,7 @@ void __cdecl world_linearize_contours() {
             int target = (band < ALT_3_LEVELS_ABOVE_SEA) ? AltContour[band + 1] : AltContour[band + 4];
             // Preserve the original divide faults; there is no zero guard.
             alt_put_detail(x, y, contour + (target - contour) * value
-                / (int)(AltNaturalDefault[band + 1] - AltNaturalDefault[band]));
+                / (AltNaturalDefault[band + 1] - AltNaturalDefault[band]));
         }
         do_all_non_input();
     }
@@ -2946,7 +2946,7 @@ void __cdecl world_rivers() {
                     band = alt;
                     int new_contour = map_loc(cur_x, cur_y)->contour;
                     if (new_contour > contour) {
-                        new_contour = (int)AltContour[band];
+                        new_contour = AltContour[band];
                         if (contour - 1 > new_contour) {
                             new_contour = contour - 1;
                         }

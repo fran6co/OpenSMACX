@@ -72,25 +72,25 @@ extern const unsigned char AltTemplateArid[113] = {
 #include "terrain_landmark_arid.inc"
 };
 // RECOVERY_OBJECT: v1 0x007F65D0 ?AltBonusMoist@@3PAEA
-unsigned char AltBonusMoist[113];
+char AltBonusMoist[113];
 // RECOVERY_OBJECT: v1 0x006857F0 ?AltTemplateMoist@@3QBEB
 extern const unsigned char AltTemplateMoist[113] = {
 #include "terrain_landmark_moist.inc"
 };
 // RECOVERY_OBJECT: v1 0x007F655C ?AltBonusRainy@@3PAEA
-unsigned char AltBonusRainy[113];
+char AltBonusRainy[113];
 // RECOVERY_OBJECT: v1 0x0068593C ?AltTemplateRainy@@3QBEB
 extern const unsigned char AltTemplateRainy[113] = {
 #include "terrain_landmark_rainy.inc"
 };
 // RECOVERY_OBJECT: v1 0x007D3A78 ?AltBonusFlat@@3PAEA
-unsigned char AltBonusFlat[113];
+char AltBonusFlat[113];
 // RECOVERY_OBJECT: v1 0x00685864 ?AltTemplateFlat@@3QBEB
 extern const unsigned char AltTemplateFlat[113] = {
 #include "terrain_landmark_flat.inc"
 };
 // RECOVERY_OBJECT: v1 0x007F64E8 ?AltBonusOcean@@3PAEA
-unsigned char AltBonusOcean[113];
+char AltBonusOcean[113];
 // RECOVERY_OBJECT: v1 0x006859B0 ?AltTemplateOcean@@3QBEB
 extern const unsigned char AltTemplateOcean[113] = {
 #include "terrain_landmark_ocean.inc"
@@ -102,11 +102,11 @@ extern const unsigned char AltTemplateOcean[113] = {
 // old executable. Preserve the initial values in pinned ignored includes;
 // recovered callers read and mutate these source-owned objects only.
 // RECOVERY_OBJECT: v2 0x0068FAF4 0x0068FB20 ?AltNaturalDefault@@3PAIA 0x005C86E0
-uint32_t AltNaturalDefault[11] = {
+int AltNaturalDefault[11] = {
 #include "terrain_altitude_default.inc"
 };
 // RECOVERY_OBJECT: v2 0x0068FB20 0x0068FB4C ?AltContour@@3PAIA 0x005C38B0
-uint32_t AltContour[11] = {
+int AltContour[11] = {
 #include "terrain_altitude_contour.inc"
 };
 // RECOVERY_OBJECT: v2 0x0068FB4C 0x0068FB78 ?AltNatural@@3PAHA 0x005C86E0
@@ -670,7 +670,7 @@ int __cdecl elev_at(int x, int y) {
     Map *const tile = map_loc(x, y);
     int contour = tile->contour;
     int elev = 50 * (contour - MapSeaLevel - AltContour[3]);
-    if (contour > (int)AltContour[tile->climate >> 5]) {
+    if (contour > AltContour[tile->climate >> 5]) {
         elev += (x * 113 + y * 217 + MapSeaLevel * 301) % 50;
     } else {
         elev += 10;

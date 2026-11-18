@@ -6673,13 +6673,13 @@ int MapWin::get_alt(int x, int y, int corner) {
     if (tile->bit2 & 2) {
         bonus = AltBonusArid[AltDirectionTable[corner + direction * 5]];
     } else if (tile->bit2 & 1) {
-        bonus = static_cast<signed char>(AltBonusMoist[AltDirectionTable[corner + direction * 5]]);
+        bonus = AltBonusMoist[AltDirectionTable[corner + direction * 5]];
     } else if (tile->bit2 & 0x200) {
-        bonus = static_cast<signed char>(AltBonusRainy[AltDirectionTable[corner + direction * 5]]);
+        bonus = AltBonusRainy[AltDirectionTable[corner + direction * 5]];
     } else if (tile->bit2 & 0x100) {
-        bonus = static_cast<signed char>(AltBonusFlat[AltDirectionTable[corner + direction * 5]]);
+        bonus = AltBonusFlat[AltDirectionTable[corner + direction * 5]];
     } else if (tile->bit2 & 0x800) {
-        bonus = static_cast<signed char>(AltBonusOcean[AltDirectionTable[corner + direction * 5]]);
+        bonus = AltBonusOcean[AltDirectionTable[corner + direction * 5]];
     }
     if (corner == 0) {
         int value = (alt - 3) * get_alt_scale(this, field_1DD6C_);
