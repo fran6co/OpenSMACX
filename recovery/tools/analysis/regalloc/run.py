@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """run.py [--oy] [--asm] [--pfx N] <probe.cpp>... [-f func]
-Compile each probe file with the game's unit flags (/Og /Oi /Ot /Gs /Gy /Ob2 /Oy-; --oy uses /Oy)
+Compile each probe file with the game's unit flags (/Og /Ot /Gs /Gy /Ob2 /Oy-; --oy uses /Oy)
 and print, per function, the home of every probe variable at each of its sites:
   name  a:esi b:edi c:ebx d:[d]      (reg, [slot] = reloaded from the frame, r/[s] = changes along the function)
 A variable x is defined by def_x() and read by use_x(x) / sink_x = x (see probe.h).  --asm prints the listing."""
@@ -16,7 +16,7 @@ def compile_asm(src, pfx, oy=False, extra=()):
     scr = os.environ.get('FE_SCRATCH', R + '/build/recovery/fe') + '/regalloc'
     os.makedirs(scr, exist_ok=True)
     base = '%s/%s_%s' % (scr, os.path.basename(src)[:-4], pfx)
-    cmd = [MAIN + '/recovery/environment/vc6-cl', '/nologo', '/TP', '/GX', '/DNDEBUG', '-MT', '/Og', '/Oi', '/Ot', '/Gs', '/Gy',
+    cmd = [MAIN + '/recovery/environment/vc6-cl', '/nologo', '/TP', '/GX', '/DNDEBUG', '-MT', '/Og', '/Ot', '/Gs', '/Gy',
            '/Ob2', '/Oy' if oy else '/Oy-'] + list(extra) + ['-I' + HERE, '/FAs', '/Fa' + base + '.asm', '/Fo' + base + '.obj', '-c', os.path.abspath(src)]
     env = dict(os.environ, VC6_PREFIX='%s/.opensmacx/wine/worker-%s' % (MAIN, pfx))
     if os.path.exists(base + '.asm'):

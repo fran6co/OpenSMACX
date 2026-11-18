@@ -443,13 +443,16 @@ void FlatButton::on_redraw() {
   RECT rectangle = *buffer_working_rect();
   fill(WinFillColour);
 
-  int state = static_cast<int>(field_AB8_);
-  if (state < 0 || state > 2) {
-    if (field_A9C_ == 0 && field_A18_ == 0) {
-      state = field_A74_ != 0;
-    } else {
-      state = 2;
-    }
+  // The image tests the field itself (cmp 3 / jl) and only then copies it:
+  // a state variable defined from the field first is one web through the
+  // test and takes ebx ahead of the sprite count.
+  int state;
+  if (static_cast<int>(field_AB8_) >= 0 && static_cast<int>(field_AB8_) < 3) {
+    state = static_cast<int>(field_AB8_);
+  } else if (field_A9C_ == 0 && field_A18_ == 0) {
+    state = field_A74_ != 0;
+  } else {
+    state = 2;
   }
 
   if (field_AD4_[state] != 0) {
