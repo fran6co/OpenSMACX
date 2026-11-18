@@ -562,7 +562,7 @@ Purpose: Copy one faction record's name/title block into the lobby row
          re-reads just noun_faction_ through the string table, for the row
          the scenario file's own faction entry describes.
 // ORIGINAL: 0x00481DA0 ?fill_player@NetWin@@QAEXPAUPlayerData@@H@Z 0x00481DA0-0x00481E8D FILE BYTE_EXACT
-// symbol    ?fill_player@NetWin@@QAEXVNetWinLobbyRowView@@H@Z
+// symbol    ?fill_player@NetWin@@QAEXPAUNetWinLobbyRow@@H@Z
 // size      237 bytes
 // prototype void (__thiscall ?fill_player@NetWin@@QAEXPAUPlayerData@@H@Z)(NetWin* this, PlayerData*, int)
 // callers   2   call targets   3

@@ -1227,7 +1227,7 @@ void NetDaemon::send_rules() {
 //        zeroed before their count tests and one shared map/faction counter
 //        reach 882/886; returning int 0 (the image's `xor eax, eax`) closes it.
 // working copy - scaffold materialised by --work
-// symbol    ?game_checksum@NetDaemon@@QAEHPAUNetChecksumReport@@@Z
+// symbol    ?game_checksum@NetDaemon@@QAEHPAH@Z
 // size      2622 bytes
 // prototype void (__thiscall ?game_checksum@NetDaemon@@QAEXPAH@Z)(NetDaemon* this, int*)
 // callers   1   call targets   2
