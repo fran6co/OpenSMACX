@@ -8577,23 +8577,22 @@ L_578ae1:
     ;
     } while (++hint < 9);   // nine-tile scan, opened in chunk 6 at 0x5774ac
     // Post-scan.
-    if (!alt)
-        goto L_578b55;
-    if (planet_buster(veh_id)) {
-        best_dir = -1;
-        Vehs[veh_id].order = 0;
-    }
+    if (!(!alt)) {
+        if (planet_buster(veh_id)) {
+            best_dir = -1;
+            Vehs[veh_id].order = 0;
+        }
 L_578b1c:
-    Vehs[veh_id].move_to_ai_type = 'x';
+        Vehs[veh_id].move_to_ai_type = 'x';
 L_578b26:
 L_578b29:
-    if (best_dir >= 0)
-        goto L_578da8;
+        if (best_dir >= 0)
+            goto L_578da8;
 L_578b34:
-    Vehs[veh_id].state &= ~0x10000;
-    Vehs[veh_id].order = 0;
-    goto L_578f46;
-L_578b55:
+        Vehs[veh_id].state &= ~0x10000;
+        Vehs[veh_id].order = 0;
+        goto L_578f46;
+    }
     if (stay) {
         best_dir = -1;
         Vehs[veh_id].order = 0;
