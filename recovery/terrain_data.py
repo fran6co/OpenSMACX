@@ -339,7 +339,7 @@ def movie_decoder_initializers(root: Path, original: Path,
 def graphicwin_palette_initializer(root: Path, original: Path, output: Path) -> None:
     _terrain_initializer(root, original, output,
                          output_name='graphicwin_palette_polynomials.inc',
-                         unit='src/graphicwin.cpp',
+                         unit='src/jackal/graphicwin.cpp',
                          symbol='?GraphicWinBlitPolynomialWords@@3PAIA', size=132,
                          unsigned_words=True, accessed_window=True,
                          require_start_only=True)

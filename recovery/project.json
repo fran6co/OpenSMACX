@@ -1358,7 +1358,25 @@
           "-c"
         ]
       },
-      "src/dialog.cpp": {
+      "src/jackal/dialog.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/Og",
+          "/Oi",
+          "/Ot",
+          "/Oy",
+          "/Gs",
+          "/Gy",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "-c"
+        ]
+      },
+      "src/jackal/dialog_style.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -1451,7 +1469,25 @@
           "-c"
         ]
       },
-      "src/flic.cpp": {
+      "src/jackal/flic.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/Og",
+          "/Oi",
+          "/Ot",
+          "/Oy",
+          "/Gs",
+          "/Gy",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "-c"
+        ]
+      },
+      "src/jackal/graphicwin.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -2201,7 +2237,7 @@
           "-c"
         ]
       },
-      "src/stringlist.cpp": {
+      "src/jackal/stringlist.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -2760,6 +2796,24 @@
           "-c"
         ]
       },
+      "src/jackal/basebutton.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/Og",
+          "/Oi",
+          "/Ot",
+          "/Oy",
+          "/Gs",
+          "/Gy",
+          "/Ob2",
+          "-c"
+        ]
+      },
       "src/basebutton.cpp": {
         "flags": [
           "/nologo",
@@ -3076,24 +3130,6 @@
           "/Gy",
           "/Ob2",
           "/Oy-",
-          "-c"
-        ]
-      },
-      "src/matrix3.cpp": {
-        "flags": [
-          "/nologo",
-          "/TP",
-          "/Zm200",
-          "/GX",
-          "-MT",
-          "/W4",
-          "/Og",
-          "/Oi",
-          "/Ot",
-          "/Oy",
-          "/Gs",
-          "/Gy",
-          "/Ob2",
           "-c"
         ]
       },

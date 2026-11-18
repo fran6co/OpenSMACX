@@ -33,6 +33,7 @@ Purpose: Compiler-generated complete StringList destructor. Dialog owns a
          real StringList member, so its normal and unwind lifetimes emit this
          entry without a handwritten wrapper or measurement-only export.
 // ORIGINAL: 0x00406820 sub_406820 0x00406820-0x0040683B FILE BYTE_EXACT
+// compile_context src/popup.cpp
 // TRIED: THE SECOND PARAMETER WAS INVENTED, so it is gone rather than worked
 //   around. 0x00406820 sets only ECX (`mov ecx, esi; call 0x4066c0`) and never
 //   EDX, and 0x004066C0's body reads only ECX - the `_redirect` name is this
@@ -164,41 +165,6 @@ void Dialog::set_dialog_text_color3(int color1, int color2, int color3, int colo
     text_color_3b_ = color2;
     text_color_3c_ = color3;
     text_color_3d_ = color4;
-}
-
-// Both setters operate on this Dialog style word, not on AutoSound.
-// ORIGINAL: 0x00605180 ?UNK3@BasePop@@QAEXH@Z 0x00605180-0x0060519B BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned:602758-602775 forms the embedded Dialogs virtual Dialog base before calls605180/6051A0", "pinned:603B16-603B35 forms the same Dialog receiver and writes Dialog+20 before calling6051A0", "pinned:setters605180-60519B and6051A0-6051BB update low style bits preserving upper bits", "historical:BasePop catalogue names and byte claims retained, but identical-body folding does not establish a second BasePop owner"], "reason": "Bind the preserved setter identity to the actual Dialog receiver proved by original callers; remove the unsupported BasePop alias and its erroneous AutoSound flag attribution."}
-// symbol    ?set_style_bit_0@Dialog@@QAEXH@Z
-// size      27 bytes
-// prototype void (__thiscall ?UNK3@BasePop@@QAEXH@Z)(BasePop* this, int)
-// callers   1   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-void Dialog::set_style_bit_0(int on) {
-    if (on) {
-        field_20_ |= 1U;
-    } else {
-        field_20_ &= ~1U;
-    }
-}
-
-// ORIGINAL: 0x006051A0 ?UNK4@BasePop@@QAEXH@Z 0x006051A0-0x006051BB BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned:602758-602775 forms the embedded Dialogs virtual Dialog base before calls605180/6051A0", "pinned:603B16-603B35 forms the same Dialog receiver and writes Dialog+20 before calling6051A0", "pinned:setters605180-60519B and6051A0-6051BB update low style bits preserving upper bits", "historical:BasePop catalogue names and byte claims retained, but identical-body folding does not establish a second BasePop owner"], "reason": "Bind the preserved setter identity to the actual Dialog receiver proved by original callers; remove the unsupported BasePop alias and its erroneous AutoSound flag attribution."}
-// symbol    ?set_style_bit_1@Dialog@@QAEXH@Z
-// size      27 bytes
-// prototype void (__thiscall ?UNK4@BasePop@@QAEXH@Z)(BasePop* this, int)
-// callers   2   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-void Dialog::set_style_bit_1(int on) {
-    if (on) {
-        field_20_ |= 2U;
-    } else {
-        field_20_ &= ~2U;
-    }
 }
 
 /*
@@ -334,7 +300,7 @@ int Dialog::init(RECT *rect, Heap *heap) {
 /*
 Purpose: Find an item ID's bounded position in the dialog string list. Inline-placement notes below are historical; this is now an ordinary cpp API.
 // ORIGINAL: 0x00609AF0 ?id_to_pos@Dialog@@QAEHH@Z 0x00609AF0-0x00609B4B BYTE_EXACT
-// body      src/dialog.cpp
+// body      src/jackal/dialog.cpp
 // MEASURED inline: the body lives at the end of dialog.h. The image keeps
 //        this out-of-line copy at 0x00609AF0 AND inlines the same walk into
 //        set_selected_id (0x006099D0); the `inline` keyword is what makes

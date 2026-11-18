@@ -29,7 +29,10 @@ add_library(jackal STATIC
     pushbutton.cpp random.cpp spot.cpp sprite.cpp spritebox.cpp
     string_table.cpp text.cpp texheap.cpp texture.cpp timer_messages.cpp
     trig.cpp vector.cpp video.cpp video_queue.cpp win_coordinates.cpp
-    win_input.cpp)
+    win_input.cpp
+    dialog.cpp
+    dialog_style.cpp
+    stringlist.cpp flic.cpp basebutton.cpp graphicwin.cpp)
 target_include_directories(jackal PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 target_compile_definitions(jackal PRIVATE $<$<CONFIG:Debug>:BUILD_DEBUG>)
 target_compile_options(jackal PRIVATE /W4 "--repro-root=${PROJECT_SOURCE_DIR}")

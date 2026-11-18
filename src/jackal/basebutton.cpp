@@ -1,0 +1,995 @@
+/*
+ * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.
+ * Copyright (C) 2013-2021 Brendan Casey
+ *
+ * OpenSMACX is free software: you can redistribute it and / or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * OpenSMACX is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
+ */
+// ORIGINAL: 0x00607CC0 ??_GBaseButton@@UAEPAXI@Z 0x00607CC0-0x00607CDE FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["historical deleting-thunk source src/deleting_thunks.cpp; original full spans retained: 0x00607CC0-0x00607CDE", "Pinned class constructor ??0BaseButton@@QAE@XZ at 0x00606F30 stores original class/view table VA 0x670290 at 0x00606F77 (mov dword ptr [esi], 0x670290); the current genuine owner vftable ??_7BaseButton@@6BWin@@@ selects generated ??_GBaseButton@@UAEPAXI@Z in slot 0 (+0x0) through weak entry ??_EBaseButton@@UAEPAXI@Z (mode 2).", "Pinned ??_GBaseButton@@UAEPAXI@Z at 0x00607CC0 calls the source-mapped ??1BaseButton@@QAE@XZ at 0x00607040, then tests byte ptr [esp + 8], 1; je 0x607cd8 bypasses scalar delete when bit 0 is clear, while bit 0 set calls 0x0064557F; it save original this; call destructor; delete only when flags bit 0 is set; return saved this with ret 4.", "The real class lifetime is owned by src/basebutton.cpp; its compiler-emitted deleting symbol and vftable slot carry this original identity. Hand-written adapter bodies with live adjustor callers remain until those callers are independently qualified and transferred. The linked weak/COMDAT copy is not used to choose source ownership.", "the source writer preserves the historical mapping's exactness state (historical exactness obligation retained); current compiler extent is not asserted equal to the original span"], "reason": "Bind the original BaseButton scalar deleting-destructor identity to the actual compiler-emitted class deleting destructor in its genuine owner translation unit. The original constructor's pinned vptr store and the current owner's physical table slot identify this class/view; no callback/thunk body is hand-authored here."}
+// symbol    ??_GBaseButton@@UAEPAXI@Z
+// kind      game
+#include "stdafx.h"
+#include "general.h"
+#include "basebutton.h"
+#include "buttongroup.h"
+#include "palette.h"
+#include "sound.h"
+
+// The zero-init .bss slots BaseButton's setup reads its field defaults from
+// (0x009B8E2C/0x009B8E30), rebindable like CheckBoxDefault1/2.
+// Original 0x00606FC9/0x006070FE copy this default cell into the matching field; start only.
+// RECOVERY_OBJECT: v1 0x009B8E2C ?BaseButtonA94Default@@3IA
+uint32_t BaseButtonA94Default;  // 0x009B8E2C
+// Original 0x00607003/0x00607138 copy this separate default cell; no pointee or extent claim.
+// RECOVERY_OBJECT: v1 0x009B8E30 ?BaseButtonA98Default@@3IA
+uint32_t BaseButtonA98Default;  // 0x009B8E30
+
+#include <new>
+#include "win_pointer.h"
+
+// The pinned constructor stores these starts at 0x00606F77/7D; its matching COFF relocations at +0x49/+0x53 name the Win/Buffer tables.
+// RECOVERY_GENERATED: v1 vtable 0x00670290 0x006703FC ??_7BaseButton@@6BWin@@@ 0x00606F30
+// RECOVERY_GENERATED: v1 vtable 0x00670288 ? ??_7BaseButton@@6BBuffer@@@ 0x00606F30
+/*
+Purpose: Construct the GraphicWin base and two Time members, then install the
+         BaseButton tables and process defaults.
+// ORIGINAL: 0x00606F30 ??0BaseButton@@QAE@XZ 0x00606F30-0x00607033;0x00662E50-0x00662E70 BYTE_EXACT
+// The original initializes GraphicWin and two Time members before these
+// fields. The real C++ constructor owns their lifetimes.
+// symbol    ??0BaseButton@@QAE@XZ
+// size      291 bytes
+// prototype void (__thiscall ??0BaseButton@@QAE@XZ)(BaseButton* this)
+// callers   3   call targets   2
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005D4CF0 0x006161D0
+*/
+BaseButton::BaseButton() {
+    field_A74_ = 0;
+    field_A44_ = 0xFFFFFFFFU;
+    field_A48_ = 0xFFFFFFFFU;
+    field_A78_ = 0;
+    field_A9C_ = 0;
+    name_ = nullptr;
+    bubble_text_ = nullptr;
+    group_ = nullptr;
+    field_AAC_ = 0;
+    field_AB0_ = 0;
+    field_AB4_ = 0;
+    // Read each default through its own absolute lvalue rather than a named
+    // pointer alias - the alias materialises the table's base address into a
+    // register before indexing element 0, where the image folds every
+    // element, including 0, straight into the operand (the same lever that
+    // took close() from 2/47 to 41/47).
+    field_A94_ = BaseButtonA94Default;
+    color_ = DialogDefaults[0];
+    bevel_upper_ = DialogDefaults[1];
+    bevel_lower_ = DialogDefaults[2];
+    bevel_thickness_ = DialogDefaults[3];
+    field_A98_ = BaseButtonA98Default;
+    field_AA4_ = 0;
+    field_AA0_ = DialogDefaults[4];
+}
+
+void __cdecl base_button_timer_callback(int stage, void *context);
+
+/*
+Purpose: Close the GraphicWin base, reset BaseButton-owned state from the
+         process defaults, then release the owned name and bubble strings.
+// ORIGINAL: 0x006070C0 ?close@BaseButton@@QAEXXZ 0x006070C0-0x00607190 BYTE_EXACT
+// symbol    ?close@BaseButton@@UAEXXZ
+// size      208 bytes
+// prototype void (__thiscall ?close@BaseButton@@QAEXXZ)(BaseButton* this)
+// callers   3   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4E40 0x00644EF2
+Return Value: None; EAX after free is not a result.
+*/
+void BaseButton::close() {
+    GraphicWin::close();
+
+    // Read each default through its own absolute lvalue rather than a named
+    // `fixed`/`dynamic` pointer alias - the alias materialises the table's
+    // base address into a register before indexing element 0, where the
+    // image folds every element, including 0, straight into the operand.
+    field_A74_ = 0;
+    field_A9C_ = 0;
+    field_A78_ = 0;
+    field_A44_ = 0xFFFFFFFFU;
+    field_A48_ = 0xFFFFFFFFU;
+    field_AAC_ = 0;
+    field_AB0_ = 0;
+    field_AB4_ = 0;
+    field_A94_ = BaseButtonA94Default;
+    color_ = DialogDefaults[0];
+    bevel_upper_ = DialogDefaults[1];
+    bevel_lower_ = DialogDefaults[2];
+    bevel_thickness_ = DialogDefaults[3];
+    field_A98_ = BaseButtonA98Default;
+    field_AA4_ = 0;
+    field_AA0_ = DialogDefaults[4];
+
+    if (name_ != nullptr) {
+        free(name_);
+        name_ = nullptr;
+    }
+    // THE RESIDUE IS THE IMAGE'S, NOT OURS. EAX at 0x00607179 holds whatever
+    // `free` left there, and the image never sets it on purpose - its own
+    // name spells the return `X`, void. Modelling it as a `uint32_t` return
+    // cost exactly one instruction (`xor eax,eax`) at the close of the body,
+    // which is why this is void now.
+    if (bubble_text_ != nullptr) {
+        free(bubble_text_);
+        bubble_text_ = nullptr;
+    }
+    group_ = nullptr;
+}
+
+/*
+Purpose: Destroy a BaseButton by installing its two virtual tables, closing
+         it, destroying Time2 then Time1, and finally destroying GraphicWin.
+// ORIGINAL: 0x00607040 ??1BaseButton@@QAE@XZ 0x00607040-0x006070B9;0x00662E70-0x00662E9E BYTE_EXACT
+// The real destructor closes this object and lets C++ destroy its Time
+// members and GraphicWin base. Its inherited virtuality emits UAE instead
+// of the catalogue's QAE. The symbol binding must select this destructor.
+// symbol    ??1BaseButton@@UAE@XZ
+// size      167 bytes
+// prototype void (__thiscall ??1BaseButton@@QAE@XZ)(BaseButton* this)
+// callers   134   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4DD0 0x006070C0 0x00616200
+Return Value: Instance pointer in EAX
+Status: Complete
+*/
+// DECLARATION-ONLY IN THE HEADER (2026-09-02): the image calls
+// ??1BaseButton@@QAE@XZ out-of-line 134 times - ??1FlatButton's own teardown
+// is `call ??1BaseButton`, and so are the five FlatButton teardowns expanded
+// in ??1DipEdit - so the definition must NOT be inline-visible, or those
+// sites expand through it. The body is just close(); the staging, the Time
+// members and the GraphicWin base are the compiler's, which is the whole
+// content the image's own ??1BaseButton has. destroy() stays beside it for
+// the nine external callers, exactly as FlatButton keeps destroy().
+BaseButton::~BaseButton() {
+    close();
+}
+
+/*
+Purpose: Step the receiver back to the subobject ??_GBaseButton@@UAEPAXI@Z
+         expects, then forward unchanged.
+// ORIGINAL: 0x00607CE0 ??_GBaseButton@@WEEE@AEPAXI@Z 0x00607CE0-0x00607CEB FILE BYTE_EXACT
+// MOVED HERE from flatbutton.cpp, 2026-09-03. flatbutton.obj emits no
+//        BaseButton symbol at all, so the claim measured UNRESOLVED from
+//        there; ??_EBaseButton is defined by this object alone, because this
+//        is where ~BaseButton lives. A comparison compiles a TRANSLATION
+//        UNIT, so the claim has to live where the COMDAT is emitted.
+// symbol    ??_EBaseButton@@WEEE@AEPAXI@Z
+// CORRECTED from ??3BaseButton@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x00607CC0` into
+//   ??_GBaseButton@@UAEPAXI@Z, which executes `ret 4`; no stack access
+//   and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/
+
+/*
+Purpose: Set the button's bubble text.
+// ORIGINAL: 0x00607550 ?set_bubble_text@BaseButton@@QAEHPAD@Z 0x00607550-0x006075B7 BYTE_EXACT
+// symbol    ?set_bubble_text@BaseButton@@QAEHPBD@Z
+// size      103 bytes
+// prototype int (__thiscall ?set_bubble_text@BaseButton@@QAEHPAD@Z)(BaseButton* this, int8*)
+// callers   8   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x00644EF2 0x006453E0 0x00645470
+// LEVER: strcat, not vc6_compat.h's strcat_s. stdafx.h's `#pragma
+//   function(strcat, ...)` makes a direct `strcat` a real `call 0x645470`
+//   everywhere in this tree, but the compat wrapper is an inline function
+//   whose body VC6 parsed BEFORE that pragma - so `strcat_s(d, n, s)` still
+//   expands to the /Oi `repne scasb`/`rep movsd` sequence and this body grew
+//   past the image's 36 instructions. Same fix in set_name and init below.
+Return Value: Zero on success, non-zero on error
+Status: Complete. Historical note: an earlier DLL/CRT migration recorded a
+        `free` compatibility concern; this recovered body follows the pinned
+        original path and uses the canonical `mem_get` allocator.
+*/
+int BaseButton::set_bubble_text(LPCSTR input) {
+    if (bubble_text_) {
+        free(bubble_text_);
+        bubble_text_ = 0;
+    }
+    if (input) {
+        size_t len = strlen(input) + 1;
+        LPSTR const allocated = (LPSTR)mem_get(static_cast<int>(len));
+        bubble_text_ = allocated;
+        if (!allocated) {
+            return 4;
+        }
+        // Empty then concatenate, the same idiom BaseButton::init uses - the
+        // image empties through the allocation register still live in EAX,
+        // then re-reads the field for the strcat destination.
+        allocated[0] = '\0';
+        strcat(bubble_text_, input);
+    }
+    return 0;
+}
+
+/*
+Purpose: Set the button's name string.
+// ORIGINAL: 0x006074E0 ?set_name@BaseButton@@QAEHPAD@Z 0x006074E0-0x0060754D BYTE_EXACT
+// LEVER: strcat, not strcat_s - see set_bubble_text above. 20/37 -> 37/37 on
+//   that alone, and the register choice follows: the image holds `this` in
+//   esi, which the expanded `rep movsd` was stealing for its own use.
+// LEVER: THE CONCAT BLOCK SITS OUTSIDE THE `if (input)`, and that is the whole
+//   body. 25/37 -> 26/37 was the empty-then-concatenate spelling; 26/37 ->
+//   37/37 was moving `name_[0] = '\0'; strcat_s(...)` out of the `if (input)`
+//   so the join of the `input == 0` branch and the `allocation != 0` branch is
+//   the concat block itself. At a join with a predecessor that does not hold
+//   name_ in a register, VC6 MUST reload it, which is where the image's two
+//   0xA7C re-reads (into eax and then ecx) come from - not from any register
+//   preference. `size_t len` is dead on both paths (vc6_compat.h's strcat_s
+//   discards its size), so its declaration costs no instruction.
+// BUG IN THE ORIGINAL: with `input == 0` the image reaches the concat block
+//   with name_ == 0 and input == 0, so it executes `mov byte ptr [eax], 0`
+//   writing to address 0 - a null-pointer write, before strcat is reached.
+//   0x00607507 `je 0x60752d` and 0x00607521 `jne 0x60752d` both target the
+//   concat block at 0x0060752d, so the `if (input)` guard does not cover it.
+//   Reproduced deliberately: a body that hoists the block back inside the `if`
+//   is a different, safer program that never matches these 37 instructions.
+// symbol    ?set_name@BaseButton@@QAEHPBD@Z
+// size      109 bytes
+// prototype int (__thiscall ?set_name@BaseButton@@QAEHPAD@Z)(BaseButton* this, int8*)
+// callers   4   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x00644EF2 0x006453E0 0x00645470
+Return Value: Zero on success, non-zero on error
+Status: Complete. Historical note: an earlier DLL/CRT migration recorded a
+        `free` compatibility concern; this recovered body follows the pinned
+        original path and uses the canonical `mem_get` allocator.
+*/
+int BaseButton::set_name(LPCSTR input) {
+    if (name_) {
+        free(name_);
+        name_ = 0;
+    }
+    size_t len = 0;
+    if (input) {
+        len = strlen(input) + 1;
+        name_ = (LPSTR)mem_get(static_cast<int>(len));
+        if (!name_) {
+            return 4;
+        }
+    }
+    // Empty then concatenate, both through the field - the image re-reads
+    // 0xA7C twice, once for the zeroing and once for the strcat destination,
+    // unlike set_bubble_text which zeroes through the allocation register. Do
+    // not collapse the two reads into one local.
+    name_[0] = '\0';
+    strcat(name_, input);
+    return 0;
+}
+
+// The three default colour tiers interleave within one table: slot s and
+// tier t live at 0x00697060 + s * 0xC + t * 4, so each setter strides 0xC.
+// set_def_font6074B0 writes all three slots; init607210 reads them after
+// setting colors. The existing owner is shared by producer and consumer.
+// RECOVERY_OBJECT: v2 0x009B8E34 0x009B8E40 ?BaseButtonDefaultFonts@@3PAPAVFont@@A 0x00607210
+Font *BaseButtonDefaultFonts[3];
+
+/*
+Purpose: Set the primary default text colours shared by every button.
+// ORIGINAL: 0x00607420 ?set_def_text_color@BaseButton@@QAAXHHHH@Z 0x00607420-0x00607447 BYTE_EXACT
+// symbol    ?set_def_text_color@BaseButton@@SAXHHHH@Z
+// size      39 bytes
+// prototype
+// callers   3   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Status: Complete
+*/
+void BaseButton::set_def_text_color(int color1, int color2, int color3, int color4) {
+    DialogDefaults[5] = static_cast<uint32_t>(color1);
+    DialogDefaults[8] = static_cast<uint32_t>(color2);
+    DialogDefaults[11] = static_cast<uint32_t>(color3);
+    DialogDefaults[14] = static_cast<uint32_t>(color4);
+}
+
+/*
+Purpose: Set the secondary default text colours shared by every button.
+// ORIGINAL: 0x00607450 ?set_def_text_color2@BaseButton@@QAAXHHHH@Z 0x00607450-0x00607477 BYTE_EXACT
+// symbol    ?set_def_text_color2@BaseButton@@SAXHHHH@Z
+// size      39 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Status: Complete
+*/
+void BaseButton::set_def_text_color2(int color1, int color2, int color3, int color4) {
+    DialogDefaults[6] = static_cast<uint32_t>(color1);
+    DialogDefaults[9] = static_cast<uint32_t>(color2);
+    DialogDefaults[12] = static_cast<uint32_t>(color3);
+    DialogDefaults[15] = static_cast<uint32_t>(color4);
+}
+
+/*
+Purpose: Set the tertiary default text colours shared by every button.
+// ORIGINAL: 0x00607480 ?set_def_text_color3@BaseButton@@QAAXHHHH@Z 0x00607480-0x006074A7 BYTE_EXACT
+// symbol    ?set_def_text_color3@BaseButton@@SAXHHHH@Z
+// size      39 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Status: Complete
+*/
+void BaseButton::set_def_text_color3(int color1, int color2, int color3, int color4) {
+    DialogDefaults[7] = static_cast<uint32_t>(color1);
+    DialogDefaults[10] = static_cast<uint32_t>(color2);
+    DialogDefaults[13] = static_cast<uint32_t>(color3);
+    DialogDefaults[16] = static_cast<uint32_t>(color4);
+}
+
+/*
+Purpose: Set the default fonts shared by every button.
+// ORIGINAL: 0x006074B0 ?set_def_font@BaseButton@@QAAHPAUFont@@PAUFont@@PAUFont@@@Z 0x006074B0-0x006074E0 BYTE_EXACT
+// symbol    ?set_def_font@BaseButton@@SAHPAVFont@@00@Z
+// size      48 bytes
+// prototype 
+// callers   4   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: No errors (0); invalid primary font (3)
+Status: Complete
+*/
+int BaseButton::set_def_font(Font *font1, Font *font2, Font *font3) {
+    if (!font1) {
+        return 3;
+    }
+    // Only an initialized primary font is published, but the secondary and
+    // tertiary slots are stored either way and the call still succeeds. Each
+    // slot is an independent absolute lvalue - a named `Font **const` alias
+    // reloads the pointer at every use instead of folding to the immediate.
+    if (font1->is_initialized()) {
+        BaseButtonDefaultFonts[0] = font1;
+    }
+    BaseButtonDefaultFonts[1] = font2;
+    BaseButtonDefaultFonts[2] = font3;
+    return 0;
+}
+
+
+
+
+
+// The active palette these setters publish before recolouring. This is a
+// different global from `PaletteCurrent` at 0x009B8174, which is what
+// Buffer's constructor reads.
+
+/*
+Purpose: Set the button's primary text colours.
+// ORIGINAL: 0x00607360 ?set_text_color@BaseButton@@QAEXHHHH@Z 0x00607360-0x0060739D BYTE_EXACT
+// size      61 bytes
+// prototype void (__thiscall ?set_text_color@BaseButton@@QAEXHHHH@Z)(BaseButton* this, int, int, int, int)
+// callers   11   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DACB0 0x005DE8F0
+Status: Complete
+Verification note: the parentless guard on all three setters carries no
+literal or comparison operator, so the mutation harness cannot perturb it;
+the no-parent case is covered behaviourally instead, asserting the whole
+object is untouched. The dispatch is deliberately one statement per setter so
+dropping it is a valid mutant - split across lines it produced only
+uncompilable fragments and the sweep reported no signal at all.
+*/
+void BaseButton::set_text_color(int color1, int color2, int color3, int color4) {
+    // A parentless button has nothing to draw into, so the legacy body skips
+    // the palette sync and the recolour entirely.
+    if (!win_parent_) {
+        return;
+    }
+    Buffer::sync_to_palette(PaletteActive);
+    Buffer::set_text_color(color1, color2, color3, color4);
+}
+
+/*
+Purpose: Set the button's secondary text colours.
+// ORIGINAL: 0x006073A0 ?set_text_color2@BaseButton@@QAEXHHHH@Z 0x006073A0-0x006073DD BYTE_EXACT
+// size      61 bytes
+// prototype void (__thiscall ?set_text_color2@BaseButton@@QAEXHHHH@Z)(BaseButton* this, int, int, int, int)
+// callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DACE0 0x005DE8F0
+Status: Complete
+*/
+void BaseButton::set_text_color2(int color1, int color2, int color3, int color4) {
+    if (!win_parent_) {
+        return;
+    }
+    Buffer::sync_to_palette(PaletteActive);
+    Buffer::set_text_color2(color1, color2, color3, color4);
+}
+
+/*
+Purpose: Set the button's tertiary text colours.
+// ORIGINAL: 0x006073E0 ?set_text_color3@BaseButton@@QAEXHHHH@Z 0x006073E0-0x0060741D BYTE_EXACT
+// size      61 bytes
+// prototype void (__thiscall ?set_text_color3@BaseButton@@QAEXHHHH@Z)(BaseButton* this, int, int, int, int)
+// callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DAD10 0x005DE8F0
+Status: Complete
+*/
+void BaseButton::set_text_color3(int color1, int color2, int color3, int color4) {
+    if (!win_parent_) {
+        return;
+    }
+    Buffer::sync_to_palette(PaletteActive);
+    Buffer::set_text_color3(color1, color2, color3, color4);
+}
+
+
+
+
+/*
+Purpose: Give the button a new value, redrawing and notifying its parent only
+         when the value actually changes.
+// ORIGINAL: 0x00607C80 ?set@BaseButton@@QAEXH@Z 0x00607C80-0x00607CBD BYTE_EXACT
+// size      61 bytes
+// prototype void (__thiscall ?set@BaseButton@@QAEXH@Z)(BaseButton* this, int)
+// callers   7   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x00607C98 0x00607CB2
+Return Value: n/a
+Status: Complete
+
+Ordering is load-bearing and matches the original instruction for instruction:
+the field is stored before the redraw dispatch, and both the button's id and
+the parent link are read *after* it. A redraw handler that retargets the
+button therefore has its new id and new parent used for the notification,
+which is why neither is cached up front.
+*/
+void BaseButton::set(int value) {
+    if (value == field_A18_) {
+        return;
+    }
+    field_A18_ = value;
+
+    // Slot 0xF8 is Win::redraw - the window's own repaint-and-notify hook,
+    // reached the way any virtual call is reached, so it is spelled as one.
+    redraw();
+
+    if (!win_parent_) {
+        return;
+    }
+    // Slot 0xB4 is Win::on_button_toggled, the parent's value-changed notifier; the
+    // id goes first and the new value second. Read AFTER the store above, so
+    // a redraw that retargeted the button is seen here.
+    win_parent_->on_button_toggled(static_cast<int>(field_A78_), value);
+}
+
+
+/*
+Purpose: Legacy stub; the original body returns nothing without reading its
+// ORIGINAL: 0x006077F0 ?on_key_click@BaseButton@@QAEHHH@Z 0x006077F0-0x006077F5 BYTE_EXACT
+// symbol    ?on_key_click@BaseButton@@UAEHHH@Z
+// CORRECTED from ?on_key_click@BaseButton@@QAEXHH@Z
+//   body is `xor eax, eax; ret 8` - it returns zero, and the sibling
+//   class BasePop declares the same handler `int on_key_click(int, int)`
+// size      5 bytes
+// prototype int (__thiscall ?on_key_click@BaseButton@@QAEHHH@Z)(BaseButton* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: zero - the base class handles no key click
+Status: Complete
+*/
+int BaseButton::on_key_click(int a, int b) {
+    return 0;
+}
+
+
+/*
+Purpose: Legacy stub; the original body returns nothing without reading its
+// ORIGINAL: 0x00607800 ?on_key_down@BaseButton@@QAEHH@Z 0x00607800-0x00607805 BYTE_EXACT
+// symbol    ?on_key_down@BaseButton@@UAEHH@Z
+// CORRECTED from ?on_key_down@BaseButton@@QAEXH@Z
+//   body is `xor eax, eax; ret 4`; BasePop::on_key_down returns int
+// size      5 bytes
+// prototype int (__thiscall ?on_key_down@BaseButton@@QAEHH@Z)(BaseButton* this, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: zero - the base class handles no key down
+Status: Complete
+*/
+int BaseButton::on_key_down(int a) {
+    return 0;
+}
+
+
+/*
+Purpose: Legacy stub; the original body returns nothing without reading its
+// ORIGINAL: 0x00607810 ?on_key_up@BaseButton@@QAEHH@Z 0x00607810-0x00607815 BYTE_EXACT
+// symbol    ?on_key_up@BaseButton@@UAEHH@Z
+// CORRECTED from ?on_key_up@BaseButton@@QAEXH@Z
+//   body is `xor eax, eax; ret 4`; BasePop::on_key_up returns int
+// size      5 bytes
+// prototype int (__thiscall ?on_key_up@BaseButton@@QAEHH@Z)(BaseButton* this, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: zero - the base class handles no key up
+Status: Complete
+*/
+int BaseButton::on_key_up(int a) {
+    return 0;
+}
+
+
+/*
+Purpose: Reinitialise a button - close whatever it currently holds, take a
+         private copy of its name, build the GraphicWin base with the button
+         style word, publish the shared default colours and fonts into the
+         window buffer, then show it.
+// ORIGINAL: 0x00607210 ?init@BaseButton@@QAEHPADHHHHHPAUWin@@H@Z 0x00607210-0x00607352 BYTE_EXACT
+// symbol    ?init@BaseButton@@QAEHPBDHHHHHPAVWin@@H@Z
+// size      322 bytes
+// prototype int (__thiscall ?init@BaseButton@@QAEHPADHHHHHPAUWin@@H@Z)(BaseButton* this, int8*, int, int, int, int, int, Win*, int)
+// callers   30   call targets   8
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x005D4EF0 0x005DAC70 0x005DACB0 0x005DACE0 0x005DAD10 0x006453E0 0x00645470
+// indirect  0x00607217 0x00607347
+// LEVER: strcat, not strcat_s - see set_bubble_text above. 2/110 (126
+//   compiled) -> 110/110: the expanded `rep movsd` walk cost 16 instructions,
+//   the real `call 0x645470`, and the esi register the image keeps `this` in.
+Return Value: No parent (3); name allocation failed (4); otherwise
+              GraphicWin::init's own code, which is zero on success
+Status: Complete
+Verification note: the `return 4` arm is unreachable through the recovered
+         mem_get, which pops a message box and calls exit(4) rather than
+         answering null, exactly as the original 0x005D4510 does. The
+         store-then-test order is transcribed from the bytes - 0x00607248
+         stores, 0x0060724E tests - but no leaf fixture can drive that arm
+         without replacing mem_get itself, so it is unobserved by
+         construction rather than by omission.
+Verification note: the eight arguments do NOT map straight through to
+         GraphicWin::init. The name is not forwarded at all - a literal null
+         goes into the caption slot at 0x00607296, and the Menu and
+         BorderSizing slots take literal nulls at 0x00607282 and 0x0060727E -
+         while the four geometry arguments arrive as arguments 3 to 6 of this
+         function, not 1 to 4.
+*/
+int BaseButton::init(LPCSTR name, int id, int x, int y, int width, int height,
+                     Win *parent, int style_flag) {
+    // The close runs before every guard, so even a rejected init leaves the
+    // button torn down. The original dispatches straight through `this` and
+    // its vtable at 0x00607215 with no null check on either; none is added.
+    close();
+
+    // Both remaining arguments are read after the close, not cached across it.
+    if (!parent) {
+        return 3;
+    }
+
+    if (name) {
+        const size_t len = strlen(name) + 1;
+        // name_ is overwritten without being freed first. The slot-0x168 close
+        // above is what released and zeroed the previous string, and the
+        // original relies on that instead of repeating set_name's guard.
+        LPSTR const allocated = static_cast<LPSTR>(mem_get(static_cast<int>(len)));
+        name_ = allocated;
+        if (!allocated) {
+            return 4;
+        }
+        // The original empties the buffer and concatenates rather than
+        // copying, the same shape set_name above uses. The emptying goes
+        // through the allocation register at 0x0060725D, but the
+        // concatenation destination is RE-READ from 0xA7C at 0x00607260 - do
+        // not collapse the two into one local.
+        allocated[0] = '\0';
+        strcat(name_, name);
+    }
+
+    // neg/sbb/and/or at 0x00607278-0x0060728B: `neg edx` sets the carry from
+    // style_flag != 0 and `sbb edx, edx` broadcasts it, so any nonzero flag
+    // contributes 0x8000 and nothing else - the value is normalised to one
+    // bit rather than masked in.
+    const int style = 0x01000320 | (style_flag ? 0x8000 : 0);
+    const int status = GraphicWin::init(
+        x, y, width, height, nullptr, style, parent, nullptr, nullptr);
+    if (status) {
+        return status;
+    }
+
+    field_A78_ = static_cast<uint32_t>(id);
+
+    // Slot s tier t of the shared default table lives at
+    // 0x00697060 + s * 0xC + t * 4, so tier 0 reads 0x00697060, 0x0069706C,
+    // 0x00697078 and 0x00697084. The table is read here rather than cached at
+    // construction, so a set_def_text_color issued between construct and init
+    // is the one that lands.
+    Buffer::set_text_color(
+        static_cast<int>(DialogDefaults[5]), static_cast<int>(DialogDefaults[8]),
+        static_cast<int>(DialogDefaults[11]), static_cast<int>(DialogDefaults[14]));
+    Buffer::set_text_color2(
+        static_cast<int>(DialogDefaults[6]), static_cast<int>(DialogDefaults[9]),
+        static_cast<int>(DialogDefaults[12]), static_cast<int>(DialogDefaults[15]));
+    Buffer::set_text_color3(
+        static_cast<int>(DialogDefaults[7]), static_cast<int>(DialogDefaults[10]),
+        static_cast<int>(DialogDefaults[13]), static_cast<int>(DialogDefaults[16]));
+
+    // The fourth font slot is a literal null pushed at 0x00607335, not a
+    // fourth default. set_font's result is discarded, so an uninitialised
+    // primary font - its code 3 - does not fail init. Read the same three
+    // source-owned slots that set_def_font publishes.
+    Buffer::set_font(BaseButtonDefaultFonts[0], BaseButtonDefaultFonts[1],
+                     BaseButtonDefaultFonts[2], nullptr);
+
+    // Slot 0x04 is Win::show - a declared virtual, so the call is spelled as
+    // one and the table is re-read at the call, after every GraphicWin::init
+    // and Buffer setter above it, exactly as the image re-reads it at
+    // 0x00607341. BaseButton's own slot90 similarly uses real dispatch above.
+    show(0);
+    return 0;
+}
+
+// ORIGINAL: 0x00607190 ?UNK1@BaseButton@@QAEHPAUFont@@PADHHHHPAUWin@@H@Z 0x00607190-0x0060720A FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:cdfbd8b3:src/unrecovered/00607190.cpp", "source:src/jackal/font.h:Font::height_", "source:src/graphicwin.h:GraphicWin inherits Buffer"], "reason": "Size the button from the supplied font's own height, initialize its typed BaseButton owner, select the font on the inherited Buffer and redraw."}
+// symbol    ?UNK1@BaseButton@@QAEHPAVFont@@PADHHHHPAVWin@@H@Z
+int BaseButton::UNK1(Font *font, char *name, int id, int x, int y,
+                     int width, Win *parent, int style_flag) {
+    if (font == 0) return 3;
+    // The product wraps to 32 bits before the signed division by four.
+    const uint32_t font_height = static_cast<uint32_t>(font->height_);
+    const int result = init(name, id, x, y, width,
+        static_cast<int32_t>(font_height * 7u) / 4,
+        parent, style_flag);
+    if (result != 0) return result;
+    set_font(font, 0, 0, 0);
+    redraw();
+    return 0;
+}
+
+// ORIGINAL: 0x00607820 ?on_mouse_leave@BaseButton@@QAEXHH@Z 0x00607820-0x0060784D FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:cdfbd8b3:src/recovered/units/00607820.cpp", "source:src/win.h:WinPointerOwner1/WinPointerOwner2/WinSizingFlag", "source:src/win.h:on_mouse_move is slot 17"], "reason": "Dispatch the leave feedback through the real Win virtual when this button is the active pointer owner."}
+// symbol    ?on_mouse_leave@BaseButton@@UAEXHH@Z
+void BaseButton::on_mouse_leave(int x, int y) {
+    Win *active = WinPointerOwner1 ? WinPointerOwner1 : WinPointerOwner2;
+    if (active == this && WinSizingFlag == 1) {
+        on_mouse_move(x, y);
+    }
+}
+
+// ORIGINAL: 0x00607C30 ?UNK2@BaseButton@@QAEXXZ 0x00607C30-0x00607C74 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/00607c30.cpp", "source:src/basebutton.cpp:BaseButton::set"], "reason": "Toggle through the already-typed value setter so redraw and parent notification use the same proven ownership path; the seed's exact claim remains a restoration obligation. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
+void BaseButton::UNK2() {
+    set(field_A18_ == 0);
+}
+
+/*
+// ORIGINAL: 0x00607A00 ?on_right_click@BaseButton@@QAEXHH@Z 0x00607A00-0x00607A14 BYTE_EXACT
+// symbol    ?on_right_click@BaseButton@@UAEXHH@Z
+// size      20 bytes
+// prototype void (__thiscall ?on_right_click@BaseButton@@QAEXHH@Z)(BaseButton* this, int, int)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00607B30
+Status: Complete
+*/
+void BaseButton::on_right_click(int a, int b) {
+    // A NULL TEST ON A POINTER, read through an int only because the
+    // offset was raw. bubble_text_ is LPSTR at 0xA80.
+    if (bubble_text_ != nullptr) {
+        timer_callback(0);
+    }
+}
+
+// 0x006075C0. The two process-wide pointer cells implement Win's existing
+// mouse capture protocol. The button state, timer and notifications remain
+// owned by this BaseButton and its real Win parent.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x006075C0 ?on_left_down@BaseButton@@QAEXHH@Z 0x006075C0-0x0060771C FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/006075c0.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x6075c0 complete control/data-access review and src/basebutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+// symbol    ?on_left_down@BaseButton@@UAEXHH@Z
+void BaseButton::on_left_down(int, int) {
+    grab_pointer();
+    Win::clear_bubble_text();
+
+    if (field_A9C_ == 0) {
+        Win *const sound_parent = win_parent_;
+        field_A9C_ = 1;
+        Sound *const owner = sound_parent->legacy_sound_30();
+        if (owner != 0 && owner->is_playing() == 0) owner->play();
+        // Both group paths notify the parent in the original.
+        if (group_) {
+            win_parent_->vslot_43(static_cast<int>(field_A78_));
+        } else {
+            win_parent_->vslot_43(static_cast<int>(field_A78_));
+        }
+        redraw();
+        if (field_A44_ != 0xFFFFFFFFU) {
+            time2_.pulse(base_button_timer_callback, 1, this, field_A44_, 5);
+        }
+        return;
+    }
+
+    field_AA4_ = timeGetTime();
+    WinCallbackWindow = win_parent_;
+    if (field_AAC_ == 0) {
+        Sound *const owner = win_parent_->legacy_sound_28();
+        if (owner != 0 && owner->is_playing() == 0) {
+            owner->play();
+        }
+        if (group_) {
+            if (win_parent_->on_button_pressed(static_cast<int>(field_A78_)) != 0 &&
+                field_A44_ != 0xFFFFFFFFU) {
+                time2_.pulse(base_button_timer_callback, 1, this, field_A44_, 5);
+            }
+        } else {
+            if (win_parent_->on_button_pressed(static_cast<int>(field_A78_)) != 0 &&
+                field_A44_ != 0xFFFFFFFFU) {
+                time2_.pulse(base_button_timer_callback, 1, this, field_A44_, 5);
+            }
+        }
+    }
+    if (field_AB4_ != 0) {
+        field_AB4_(static_cast<int>(field_A78_));
+    }
+}
+
+// 0x00607720. Complete the capture release before servicing the long-click
+// timer, matching the order of the image's two capture-slot tests.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// TRIED: extra VC24/VC43 shims for the two non-void vtable slots (23 returns int, 42 takes int); IAT-style function pointers for timeGetTime/Sleep instead of named imports. First divergence #43 test/push.
+// Slot 23 returns int (used as a boolean); slot 42 takes one int. The
+// scaffold's VCall types every slot void(), so a second/third shim
+// with the real trailing signature is needed for these two calls.
+// Deleted seed provenance: git:5ab1f8ce:src/unrecovered/00607720.cpp
+// ORIGINAL: 0x00607720 ?on_left_up@BaseButton@@QAEXHH@Z 0x00607720-0x006077E6 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00607720.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x607720 complete control/data-access review and src/basebutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+// symbol    ?on_left_up@BaseButton@@UAEXHH@Z
+void BaseButton::on_left_up(int, int) {
+    if (WinPointerOwner3 == this) {
+        WinPointerOwner3 = 0;
+        on_lose_mouse_capture();
+    }
+    if (WinPointerOwner4 == this) {
+        WinPointerOwner4 = 0;
+    }
+
+    if (win_parent_ == 0) {
+        return;
+    }
+    time2_.stop();
+    const DWORD elapsed = timeGetTime() - field_AA4_;
+    if (elapsed < field_AA0_) {
+        Sleep(field_AA0_ - elapsed);
+    }
+    if (field_A9C_ == 1) {
+        Win *const sound_parent = win_parent_;
+        field_A9C_ = 0;
+        Sound *const owner = sound_parent->legacy_sound_29();
+        if (owner != 0 && owner->is_playing() == 0) {
+            owner->play();
+        }
+        if (group_) {
+            win_parent_->vslot_42(static_cast<int>(field_A78_));
+        } else {
+            win_parent_->vslot_42(static_cast<int>(field_A78_));
+        }
+        redraw();
+    }
+}
+
+// 0x00607A20. The group owns the optional radio-style click policy; ordinary
+// parents receive their existing Win callback and per-button callback.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// TRIED: caching *(self+0xc4) into one local instead of re-reading it at each of the two use sites moved `push edi` out of place. A member-pointer union shim per call site (void/int-return/int-arg) reproduces direct `call [reg+disp]` for the void and arg slots; the int-returning slot (0x5c) still gets an extra `mov eax,[...]` before `call eax` instead of a direct `call [eax+0x5c]`, and the target==-1/-2 short-circuit collapses the original's per-branch duplicated `test/je` into one shared test. 2 edits, 63/65 shared.
+// ORIGINAL: 0x00607A20 ?on_left_click@BaseButton@@QAEXHH@Z 0x00607A20-0x00607AF3 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00607a20.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x607a20 complete control/data-access review and src/basebutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+// symbol    ?on_left_click@BaseButton@@UAEXHH@Z
+void BaseButton::on_left_click(int, int) {
+    if (WinPointerOwner3 == this) {
+        WinPointerOwner3 = 0;
+        on_lose_mouse_capture();
+    }
+    if (WinPointerOwner4 == this) {
+        WinPointerOwner4 = 0;
+    }
+
+    WinCallbackWindow = win_parent_;
+    if (field_AAC_ == 0) {
+        const int hook_id = static_cast<int>(field_A78_);
+        if (hook_id == -1) {
+            if (WinOkHook != 0) WinOkHook();
+        } else if (hook_id == -2) {
+            if (WinCancelHook != 0) WinCancelHook();
+        }
+        Win *const sound_parent = win_parent_;
+        Sound *const owner = sound_parent->legacy_sound_31();
+        if (owner != 0 && owner->is_playing() == 0) {
+            owner->play();
+        }
+        if (group_ == 0 ||
+            group_->button_click(static_cast<int>(field_A78_)) != 0) {
+            Win *const notification_parent = win_parent_;
+            const int notification_id = static_cast<int>(field_A78_);
+            notification_parent->on_button_clicked(notification_id);
+        }
+    }
+    if (field_AB0_ != 0) {
+        field_AB0_(static_cast<int>(field_A78_));
+    }
+}
+
+// 0x00607850. Buffer::rect2_ is the client rectangle used by the original
+// hit test. The hover owners and sizing flag are Win's own published state.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00607850 ?on_mouse_move@BaseButton@@QAEXHH@Z 0x00607850-0x006079F3 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00607850.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x607850 complete control/data-access review and src/basebutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+// symbol    ?on_mouse_move@BaseButton@@UAEXHH@Z
+void BaseButton::on_mouse_move(int x, int y) {
+    RECT area = Buffer::rect2_;
+    const uint32_t dy = 0u - static_cast<uint32_t>(area.top);
+    const uint32_t dx = 0u - static_cast<uint32_t>(area.left);
+    area.left = static_cast<int32_t>(static_cast<uint32_t>(area.left) + dx);
+    area.right = static_cast<int32_t>(static_cast<uint32_t>(area.right) + dx);
+    area.top = static_cast<int32_t>(static_cast<uint32_t>(area.top) + dy);
+    area.bottom = static_cast<int32_t>(static_cast<uint32_t>(area.bottom) + dy);
+
+    Win *active = WinPointerOwner1;
+    if (active == 0) {
+        active = WinPointerOwner2;
+    }
+    if (active != this || WinSizingFlag == 0) {
+        return;
+    }
+
+    if (in_box(x, y, &area) == 0 && field_A9C_ == 1) {
+        time2_.stop();
+        Win *const sound_parent = win_parent_;
+        field_A9C_ = 0;
+        Sound *const owner = sound_parent->legacy_sound_29();
+        if (owner != 0 && owner->is_playing() == 0) owner->play();
+        if (group_) {
+            win_parent_->vslot_42(static_cast<int>(field_A78_));
+        } else {
+            win_parent_->vslot_42(static_cast<int>(field_A78_));
+        }
+        redraw();
+        return;
+    }
+    if (in_box(x, y, &area) != 0) {
+        if (field_A9C_ != 0) {
+            if (get_lbutton_state() != 0) {
+                on_left_down(x, y); // Original0x607970: live vtable offset0x50.
+            }
+        } else {
+            if (field_A44_ != 0xFFFFFFFFU) {
+                time2_.start(base_button_timer_callback, 1, this, field_A44_, 5);
+            }
+            Win *const sound_parent = win_parent_;
+            field_A9C_ = 1;
+            Sound *const owner = sound_parent->legacy_sound_30();
+            if (owner != 0 && owner->is_playing() == 0) owner->play();
+            if (group_) {
+                win_parent_->vslot_43(static_cast<int>(field_A78_));
+            } else {
+                win_parent_->vslot_43(static_cast<int>(field_A78_));
+            }
+            redraw();
+        }
+    }
+}
+
+/*
+// ORIGINAL: 0x00607B10 ?timer_callback_daemon@BaseButton@@QAAXHH@Z 0x00607B10-0x00607B23 BYTE_EXACT
+// symbol    ?base_button_timer_callback@@YAXHPAX@Z
+// size      19 bytes
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00607B30
+Status: Complete
+*/
+// The context is borrowed from the owning button's live timer registration.
+void __cdecl base_button_timer_callback(int stage, void *context) {
+    if (context) {
+        static_cast<BaseButton *>(context)->timer_callback(stage);
+    }
+}
+
+// The first timer stage shows the button's bubble at its screen position;
+// the second schedules the repeating stage. Other ticks use Win's actual
+// virtual callback rather than a synthetic slot-table shim.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// TRIED: reading the 4 rect fields through a `RECT*` base pointer, and through 4 plain named int locals (Ghidra's own local_10/local_c/local_8/ local_4 shape) - neither recovers the original's single `lea`-then-4-reads codegen; /O2 keeps re-deriving `[esi+0x13c+k]` per read either way. Not reproduced; everything else (branch shape, vtable shim at +0x50, Time start/stop calls) matches.
+// ORIGINAL: 0x00607B30 ?timer_callback@BaseButton@@QAEXH@Z 0x00607B30-0x00607C29 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00607b30.cpp;src/basebutton.h:Time members;image:0x00607B30-0x00607C29"], "reason": "The BaseButton timer stage owns bubble positioning, repeat scheduling, and its inherited Win callback; the former pending forwarder has been replaced by typed state and calls."}
+void BaseButton::timer_callback(int stage) {
+    if (stage == 0) {
+        time1_.stop();
+        if (bubble_text_ != 0) {
+            RECT area = outer_rect_;
+            int x = 0;
+            // This arm reuses the now-dead stage argument for the Y coordinate.
+            stage = 0;
+            client_to_screen(&x, &stage);
+            const uint32_t dy = static_cast<uint32_t>(stage) - static_cast<uint32_t>(area.top);
+            const uint32_t dx = static_cast<uint32_t>(x) - static_cast<uint32_t>(area.left);
+            area.left = static_cast<int32_t>(static_cast<uint32_t>(area.left) + dx);
+            area.right = static_cast<int32_t>(static_cast<uint32_t>(area.right) + dx);
+            area.top = static_cast<int32_t>(static_cast<uint32_t>(area.top) + dy);
+            area.bottom = static_cast<int32_t>(static_cast<uint32_t>(area.bottom) + dy);
+            Win::set_bubble_text(bubble_text_, &area);
+        }
+    } else if (stage == 1) {
+        const uint32_t interval = static_cast<int>(field_A48_) > 0
+                                      ? field_A48_ : field_A44_;
+        time2_.start(base_button_timer_callback, 2, this, interval, 5);
+    } else {
+        on_left_down(0, 0);
+    }
+}
+
+/*
+Purpose: ?on_dialog_focus@BaseButton@@QAEXH@Z - dispatch to slot 0xf8 of this object's OWN
+         vtable with NO arguments: the original pushes nothing between the
+         vtable load and the call, so the parameters this function declares are
+         discarded and only the `ret` cleans them up.
+// ORIGINAL: 0x00607B00 ?on_dialog_focus@BaseButton@@QAEXH@Z 0x00607B00-0x00607B0B BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned original own table 0x00670290, pointer word at +0xCC, identifies original entry 0x00607B00", "source:src/win.h inherited virtual interface; actual emitted method ?on_dialog_focus@BaseButton@@UAEXH@Z in primary Win table ??_7BaseButton@@6BWin@@@"], "reason": "The original own Win table binds this entry as virtual slot 51. Use genuine member dispatch, not an opaque redirect; retain the catalogued original spelling as historical evidence."}
+// symbol    ?on_dialog_focus@BaseButton@@UAEXH@Z
+// size      11 bytes
+// prototype void (__thiscall ?on_dialog_focus@BaseButton@@QAEXH@Z)(BaseButton* this, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x00607B02
+Return Value: n/a
+Status: Complete
+*/
+void BaseButton::on_dialog_focus(int) {
+  redraw();
+}

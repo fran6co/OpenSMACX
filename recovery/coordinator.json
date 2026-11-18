@@ -20,7 +20,7 @@
     "src/lock.cpp",
     "src/palette.h",
     "src/palette.cpp",
-    "src/flic.cpp",
+    "src/jackal/flic.cpp",
     "src/jackal/buffer.h",
     "src/jackal/buffer.cpp"
   ],

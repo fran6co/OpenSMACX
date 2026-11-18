@@ -3467,7 +3467,7 @@ m5d4448_5d44ee:
     }
 }
 
-// The 3x3 numerical member bodies are consolidated in src/matrix3.cpp.
+// The 3x3 numerical member bodies are consolidated in src/jackal/vector.cpp.
 
 // ORIGINAL: 0x005D2E00 sub_5d2e00 0x005D2E00-0x005D2E6E FILE BYTE_EXACT
 // symbol    ?sub_5d2e00@@YIXPADHH0D@Z

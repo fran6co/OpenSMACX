@@ -149,13 +149,14 @@ target_include_directories(zlib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/vendor/z
 target_compile_options(zlib PRIVATE /W0 $<$<NOT:$<CONFIG:Debug>>:/Ob1>)
 
 set(OPENSMACX_SOURCES
+    src/graphicwin.cpp
+    src/basebutton.cpp
     src/alphamenu.cpp
     src/console_menu_policy.cpp
     src/alpha.cpp
     src/alphasave.cpp
     src/main.cpp
     src/multiwin.cpp
-    src/matrix3.cpp
     src/span_math.cpp
     src/scale_adjustment.cpp
     src/technology_queries.cpp
@@ -165,17 +166,14 @@ set(OPENSMACX_SOURCES
     src/base.cpp
     src/base_build.cpp
     src/score.cpp
-    src/basebutton.cpp
     src/basepop.cpp
     src/council.cpp
-    src/dialog.cpp
     src/dialogs.cpp
     src/faction.cpp
     src/faction_treaty.cpp
     src/aggression.cpp
     src/famewin.cpp
     src/flatbutton.cpp
-    src/flic.cpp
     src/font_queue.cpp
     src/interface_fonts.cpp
     src/interface_assets.cpp
@@ -190,7 +188,6 @@ set(OPENSMACX_SOURCES
     src/general.cpp
     src/danger.cpp
     src/crt_random.cpp
-    src/graphicwin.cpp
     src/graphicwin_events.cpp
     src/maininterface.cpp
     src/worldwin.cpp
@@ -258,7 +255,6 @@ set(OPENSMACX_SOURCES
     src/sprite_objects.cpp
     src/stdafx.cpp
     src/stringbox.cpp
-    src/stringlist.cpp
     src/stringstruct.cpp
     src/strings.cpp
     src/string_formatting.cpp
@@ -636,7 +632,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/src/map.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/map_grid.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/uv/movie_media_decoder.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/graphicwin.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/jackal/graphicwin.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/recovery/terrain_data.py")
 target_include_directories(OpenSMACX PRIVATE "${OPENSMACX_TERRAIN_DIRECTORY}")
 # The Firaxis Caviar wrapper (Jackal) and the uV decoder read generated tables too.

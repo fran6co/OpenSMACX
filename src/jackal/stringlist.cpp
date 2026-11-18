@@ -256,7 +256,7 @@ int StringList::load(LPSTR file_name, LPSTR section_id, int clear_existing,
 
 /*
 // ORIGINAL: 0x00608C00 ??1Text@@QAE@XZ 0x00608C00-0x00608C05 FILE BYTE_EXACT
-// compile_context src/stringlist.cpp
+// compile_context src/jackal/stringlist.cpp
 // body      src/jackal/text.h
 // size      5 bytes
 // prototype void (__thiscall ??1Text@@QAE@XZ)(_Text* this)
