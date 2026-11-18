@@ -16,37 +16,16 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
-#include "interface_fonts.h"
 #include <shellapi.h>
 #include <mmsystem.h>
 #include <cstring>
 #include "popup.h"
-#include "popup_fonts.h"
 #include "buffer.h"
-#include "diplopop.h"
-#include "main.h"
-#include "wave.h"
-#include "fx.h"
-#include "ambience.h"
 #include "win.h"
 #include "spritebox.h"
-#include "net_class.h"
-#include "time.h"
 #include "strings.h"
-#include "mapwin.h"
-#include "messagewin.h"
-#include "base.h"
 #include "lock.h"
-#include "map.h"
-#include "veh.h"
-#include "alpha.h"
-#include "xpops.h"
-#include "console.h"
-#include "game.h"
-#include "interface_palette.h"
 #include "palette.h"
-#include "general.h"
-#include "faction.h"
 
 // The moved text overload calls the CRT length routine in the original,
 // rather than expanding the compiler intrinsic. Keep the ordinary C API spelling.

@@ -16,9 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
-#include "interface_palette.h"
 #include "alphamovie.h"
-#include "alpha.h"  // HandleMain
 #include "wave_device.h"  // WaveDeviceGlobal
 #include <mmsystem.h>
 #include <digitalv.h>

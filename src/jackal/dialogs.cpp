@@ -14,8 +14,6 @@
 #include "radiobutton.h"  // RadioButton::close (source-owned)
 #pragma optimize("", on)
 #include "dialogs.h"
-#include "worldwin.h"
-#include "net_class.h"
 #include "scroll.h"
 #include <cstring>
 

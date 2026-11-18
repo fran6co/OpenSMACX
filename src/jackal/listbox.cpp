@@ -60,8 +60,6 @@
 #include "listbox.h"
 #include "scroll.h"
 #include "spritebox.h"
-#include "net_class.h"
-#include "mapwin.h"
 #include "rectangle_operations.h"
 static int listbox_frame_edge_count(uint32_t stored_count) {
     return static_cast<int>(stored_count);

@@ -22,13 +22,8 @@
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x6826b0 selects initializer0x6168a0..0x6168b6, registering exit0x6168c0..0x6168ca. Root independent complete decode confirms exclusive RET/JMP bounds; original/source-owned storage is0x9b90d8 bound to?StringTable@@3VStrings@@A.", "Original startup instruction evidence: [[\"0x6168a0\", \"mov\", \"ecx, 0x9b90d8\"], [\"0x6168a5\", \"call\", \"0x6168d0\"], [\"0x6168aa\", \"push\", \"0x6168c0\"], [\"0x6168af\", \"call\", \"0x645398\"], [\"0x6168b4\", \"pop\", \"ecx\"], [\"0x6168b5\", \"ret\", \"\"]]. Original exit instruction evidence: [[\"0x6168c0\", \"mov\", \"ecx, 0x9b90d8\"], [\"0x6168c5\", \"jmp\", \"0x6169c0\"]]. Preserve constructor arguments, array counts/strides, registration and reverse destruction without authored callback stand-ins.", "Fresh complete build-iveupb5l physical src/strings.cpp COFF selects _$E21 via .CRT$XCU, registering _$E19. Startup relocation targets: [\"?StringTable@@3VStrings@@A\", \"??0Strings@@QAE@XZ\", \"_$E19\", \"_atexit\"]; exit targets: [\"?StringTable@@3VStrings@@A\", \"??1Strings@@QAE@XZ\"]. Actual linked helper occurs once at CRT slot0x63f890; selected same-owner order agrees with the pinned order.", "BaseWin/DesignWin definitions now precede their Wave globals as pinned. Existing DesignWin Wave mappings retain original names/spans and current helper overrides after fresh emission proof. Scalar constructor effects and array construction/cleanup belong to genuine source globals, classes and compiler-generated lifetime machinery.", "Current local labels are emission interpretations, not original debug names or recovered historical TU boundaries. Start bindings grant no allocation extent. Selected same-owner linked order is not full CRT/global-order, retained-selection, reference-target, dependency-provider, runtime or full-game acceptance. Guarded callbacks excluded; no claim grant or bug fix."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned ?StringTable@@3VStrings@@A; preserve complete original identity and remaining restoration/structure obligations."}
 // symbol    _$E10
 #include "stdafx.h"
-#include "strings.h"
 #include "buffer.h"
 #include "alpha.h"
-#include "technology.h"
-#include "veh.h"
-#include "base.h"
-#include "faction.h"
 #include "text.h"
 
 // The one game-wide string table, 0x009B90D8 in the image - REAL STORAGE,
@@ -71,7 +66,7 @@ BOOL Strings::init(size_t mem_size) {
     // Both pinned strlen/strcpy arguments select the one object 6971FC (the
     // inlined put() parameter: one literal, not one per call). The six literal
     // bytes precede alignment padding and the independently used labels keys.
-    // RECOVERY_LITERAL: v1 0x006971FC 0x00697202 $SG49995 0x006168F0
+    // RECOVERY_LITERAL: v1 0x006971FC 0x00697202 $SG48650 0x006168F0
     LPCSTR input = "-Nil-";
     size_t len = strlen(input) + 1;
     LPSTR table_addr = LPSTR(Heap::get(len));

@@ -21,13 +21,11 @@
 // kind      game
 #include "stdafx.h"
 #include "sound.h"
-#include "wave.h"
 #include "menu.h"
 #include "pulldown.h"
 #include "filewin.h"
 #include "win.h"
 
-#include "console.h"
 #include "general.h"  // mem_get for Menu's owned label copies
 
 // The entry padding and text-width margins are per-site literals: the image

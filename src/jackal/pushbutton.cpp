@@ -18,8 +18,6 @@
 #define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
 #include "stdafx.h"
 #include "pushbutton.h"
-#include "gamma.h"
-#include "worldwin.h"
 #include "basepop.h"
 #include "win.h"
 #include <math.h>

@@ -16,8 +16,6 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
-#include "net_class.h"
-#include "multidebug.h"
 typedef signed char int8;  // a scaffold spelling the artifacts use
 #include "scroll.h"
 #include "win.h"
@@ -26,11 +24,8 @@ typedef signed char int8;  // a scaffold spelling the artifacts use
 #include "imagebutton.h"
 #include <cstring>
 #include "palette.h"
-#include "general.h"
 #include "jackal.h" // JackalInitFlags lifecycle state
 #include "dialog.h"
-#include "sounddevice.h"
-#include "sound.h"
 #include "menu.h"
 #include "popup.h"   // pop_caption_title, for DDInit::report_error
 #include "basepop.h"  // Win::set_bubble_text's popup interfaces

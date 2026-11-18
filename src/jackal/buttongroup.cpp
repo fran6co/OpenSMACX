@@ -17,7 +17,6 @@
  */
 #include "stdafx.h"
 #include "buttongroup.h"
-#include "worldwin.h"
 
 #include <new>
 
