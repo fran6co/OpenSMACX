@@ -7,8 +7,6 @@
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  */
-// WORKAROUND(decl): see vector.h; this unit owns the out-of-line 0x006343C0.
-#define VECTOR_CTOR_OUT_OF_LINE
 #include "stdafx.h"
 #include "vector.h"
 #include "matrix3.h"

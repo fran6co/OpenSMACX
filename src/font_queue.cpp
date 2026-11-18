@@ -27,8 +27,6 @@
 // ORIGINAL: 0x00559280 _$E24 0x00559280-0x0055928A FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original CRT slot0x00682640 selects initializer0x00559260-0x00559276 and its registration names fini0x00559280-0x0055928A; complete instruction decode fixes both ends.", "Original operations identify storage0x0093FAE8; FontQueue constructor/destructor559290/55B740. Source object binding names ?g_FONTQUEUE_VAL1@@3VFontQueue@@A.", "Fresh owner COFF selects _$E26 via .CRT$XCU and registers _$E24, both naming the same global. Fresh linked callback order is singleton, FontQueue VAL2/VAL1, FontTable, agreeing with their original slots.", "Current compiler-local names are emission interpretations, not original debug names or historical TU proof. The selected relative order does not establish complete CRT order, strict reference/linked preservation, dependency equivalence or runtime acceptance."], "reason": "Bind the original exit function to the genuine compiler-generated lifetime of source-owned g_FONTQUEUE_VAL1; declarations and construction order, not authored callbacks, provide the implementation."}
 // symbol    _$E15
-// WORKAROUND(decl): see vector.h; veh_scoot calls 0x006343C0 out of line at 0x0055A1BB.
-#define VECTOR_CTOR_OUT_OF_LINE
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "font_queue.h"
