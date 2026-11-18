@@ -340,11 +340,11 @@ class MapWin : public virtual GraphicWin {
   // RECOVERY_MEMBER: v1 MapWin field_1DD70_ 0x1DD70 0x0046FA00
   uint32_t field_1DD70_;  // 0x1DD70
   uint32_t view_active_;  // 0x1DD74
-  uint32_t map_view_index_;  // 0x1DD78
+  int map_view_index_;  // 0x1DD78
   // DWORD, not uint8_t[4]: the image writes it whole
   // (`mov dword ptr [entered - 0x3cf0], 0` in on_right_down), and the
   // byte-array form made that a member pun.
-  uint32_t field_1DD7C_;  // 0x1DD7C
+  int field_1DD7C_;  // 0x1DD7C
   uint32_t field_1DD80_;  // 0x1DD80
   uint32_t field_1DD84_;  // 0x1DD84
   uint32_t field_1DD88_;  // 0x1DD88
@@ -380,10 +380,10 @@ class MapWin : public virtual GraphicWin {
   int tile_pixel_width_;
   // RECOVERY_MEMBER: v1 MapWin tile_pixel_height_ 0x1DDB8 0x00463040
   int tile_pixel_height_;
-  uint32_t field_1DDBC_;  // 0x1DDBC
+  int field_1DDBC_;  // 0x1DDBC
   uint32_t field_1DDC0_;  // 0x1DDC0
   uint32_t field_1DDC4_;  // 0x1DDC4
-  uint32_t field_1DDC8_;  // 0x1DDC8
+  int field_1DDC8_;  // 0x1DDC8
   // RECOVERY_MEMBER: v1 MapWin field_1DDCC_ 0x1DDCC 0x00462F00
   int field_1DDCC_;
   // RECOVERY_MEMBER: v1 MapWin field_1DDD0_ 0x1DDD0 0x00462F00

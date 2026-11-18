@@ -1332,10 +1332,10 @@ void MapWin::on_button_clicked(int button) {
         }
         break;
     case 1:
-        ConsoleGlobal.zoom(0x203, static_cast<int>(map_view_index_));
+        ConsoleGlobal.zoom(0x203, map_view_index_);
         break;
     case 2:
-        ConsoleGlobal.zoom(0x204, static_cast<int>(map_view_index_));
+        ConsoleGlobal.zoom(0x204, map_view_index_);
         break;
     case 3:
         if (map_view_index_ != 0) {
@@ -5218,7 +5218,7 @@ void MapWin::draw_base_names() {
                 }
             }
             Buffer::write_cent_l(text, pixel_x + field_1DDBC_,
-                         pixel_y + static_cast<int>(field_1DDC8_) * 7 / 2);
+                         pixel_y + field_1DDC8_ * 7 / 2);
 
             if ((GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) != 0 &&
                 (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0 &&
@@ -5240,7 +5240,7 @@ void MapWin::draw_base_names() {
                 }
                 strcat(text, SocialWinCloseParenText);
                 Buffer::write_cent_l(text, pixel_x + field_1DDBC_,
-                             pixel_y + static_cast<int>(field_1DDC8_) * 7 / 2 +
+                             pixel_y + field_1DDC8_ * 7 / 2 +
                                  font_line_advance(font_a_));
             } else if ((GameDataStateStorage.fields_.game_more_preferences_ &
                         MPREF_MAP_SHOW_PROD_WITH_BASE_NAMES) == 0 &&
@@ -5251,7 +5251,7 @@ void MapWin::draw_base_names() {
                     strcat(text, label_get(898));
                     CharUpperA(text);
                     Buffer::write_cent_l(text, pixel_x + field_1DDBC_,
-                                 pixel_y + static_cast<int>(field_1DDC8_) * 7 / 2 +
+                                 pixel_y + field_1DDC8_ * 7 / 2 +
                                      font_line_advance(font_a_));
                 }
             } else if (Bases[base_id].faction_id_current != ConsoleGlobal.faction_id_ &&
@@ -5262,7 +5262,7 @@ void MapWin::draw_base_names() {
                     strcat(text, label_get(898));
                     CharUpperA(text);
                     Buffer::write_cent_l(text, pixel_x + field_1DDBC_,
-                                 pixel_y + static_cast<int>(field_1DDC8_) * 7 / 2 +
+                                 pixel_y + field_1DDC8_ * 7 / 2 +
                                      font_line_advance(font_a_));
                 }
             } else {
@@ -5299,7 +5299,7 @@ void MapWin::draw_base_names() {
                 }
                 strcat(text, SocialWinCloseParenText);
                 Buffer::write_cent_l(text, pixel_x + field_1DDBC_,
-                             pixel_y + static_cast<int>(field_1DDC8_) * 7 / 2 +
+                             pixel_y + field_1DDC8_ * 7 / 2 +
                                  font_line_advance(font_a_));
             }
         }
@@ -5338,7 +5338,7 @@ void MapWin::draw_base_names() {
             }
             tile_to_pixel(tile_x, tile_y, &pixel_x, &pixel_y);
             Buffer::write_cent_l(MapLandmark[index].name, pixel_x + field_1DDBC_,
-                         pixel_y + static_cast<int>(field_1DDC8_) * 7 / 2);
+                         pixel_y + field_1DDC8_ * 7 / 2);
         }
         set_clip(&saved_clip);
         return;
@@ -6152,7 +6152,7 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
             ConsoleGlobal.set_cursor(tile_x, tile_y);
         }
     }
-    if (button != 0 && static_cast<int32_t>(field_1DD7C_) > 1) return;
+    if (button != 0 && field_1DD7C_ > 1) return;
 
     int base_id = base_at(tile_x, tile_y);
     if (map_view_index_ != 1 && base_id >= 0 && button == 0 &&
@@ -7443,10 +7443,8 @@ int MapWin::pixel_to_tile(int x_pixel, int y_pixel, int *out_tile_x,
     // it as a compiler CSE temporary in its own frame slot ([ebp-0x10],
     // 0x463109) for the two corner products; a named copy is propagated
     // back to member reads and loses that slot (frame 0x14 vs 0x18).
-    // WORKAROUND(type): the field is declared uint32_t; the image divides
-    // signed (idiv), so the subtraction is cast here.
     if (wrap_map_x(field_1DDA4_ +
-                   ((x_pixel - (int)field_1DDBC_) / tile_pixel_width_) * 2 + 1) ==
+                   ((x_pixel - field_1DDBC_) / tile_pixel_width_) * 2 + 1) ==
         tile_x) {
         tile_x++;
         column = tile_x;
@@ -7807,7 +7805,7 @@ void MapWin::on_left_down(int x_coord, int y_coord) {
             return;
         }
     }
-    MapWinSelectedSlot = static_cast<int>(map_view_index_);
+    MapWinSelectedSlot = map_view_index_;
     if (HIBYTE(GetAsyncKeyState(VK_SHIFT)) &&
         (GameDataStateStorage.fields_.game_state_ & 0x40) == 0) {
         go_timer(3);
