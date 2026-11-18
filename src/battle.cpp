@@ -178,10 +178,10 @@ Purpose: Check whether the specified prototype is a planet buster.
 Return Value: Reactor id if planet buster, otherwise 0
 Status: Complete
 */
-// BODY IN veh.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
+uint32_t __cdecl planet_buster2(int proto_id) {
+    return VehPrototypes[proto_id].plan == PLAN_PLANET_BUSTER
+        ? VehPrototypes[proto_id].reactor_id : 0;
+}
 
 /*
 Purpose: Check whether the specified unit is a planet buster.

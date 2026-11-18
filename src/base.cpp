@@ -16,7 +16,6 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #define DIALOGS_DTOR_INLINE  // stand-in: see ~Dialogs in dialogs.h
-#define PLANET_BUSTER2_OUT_OF_LINE  // see planet_buster2 in veh.h
 #include "stdafx.h"
 #include "popup.h"
 #include "base.h"

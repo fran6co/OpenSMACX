@@ -831,18 +831,9 @@ int __cdecl compute_odds(int odds, int faction_id, int veh_id_atk, int veh_id_de
                                   int base_id);
 int __cdecl alien_base(int veh_id, int x, int y);
 
-// WORKAROUND(decl): the image calls planet_buster2 (0x005004F0) out of line
-// at every base.cpp site (0x4F423F base_hurry, 0x4FD4B5 base_build) while
-// battle.cpp expands it, so base.cpp saw only a declaration. A TU defining
-// PLANET_BUSTER2_OUT_OF_LINE sees the declaration alone.
-#ifndef PLANET_BUSTER2_OUT_OF_LINE
-MEASURED inline uint32_t __cdecl planet_buster2(int proto_id) {
-    return VehPrototypes[proto_id].plan == PLAN_PLANET_BUSTER
-        ? VehPrototypes[proto_id].reactor_id : 0;
-}
-#else
-MEASURED uint32_t __cdecl planet_buster2(int proto_id);
-#endif
+// Defined in battle.cpp (0x005004F0, in the battle band): a plain function
+// that battle.cpp's own callers expand and base.cpp/base_build.cpp call.
+uint32_t __cdecl planet_buster2(int proto_id);
 
 uint32_t __cdecl planet_buster(int veh_id);
 
