@@ -5266,6 +5266,15 @@ void MapWin::gen_overlays(int x, int y) {
     }
 }
 
+// WORKAROUND(decl): the image loads each string-table offset into eax and
+// sets ecx to StringTable before the push (0x00468162, 0x004681AC,
+// 0x004685C5), the shape of an argument passed through an inline rather than
+// StringTable.get(expr) written at the call (which pushes from ecx first).
+// The original header's name for this wrapper is unknown; label_get is the
+// same shape for Labels entries.
+static inline LPSTR table_text(LPSTR offset) {
+    return StringTable.get(offset);
+}
 // Original0x00467DE0 draws base labels and map landmarks in the visible map
 // rectangle. Both data collections use their source-owned records and counts.
 // ORIGINAL: 0x00467DE0 ?draw_base_names@MapWin@@QAEXXZ 0x00467DE0-0x004688E0 FILE
@@ -5344,16 +5353,16 @@ void MapWin::draw_base_names() {
                 // 0x0046812E: the line reuses the name buffer.
                 text[0] = '\0';
                 strcat(text, SocialWinOpenParenText);
-                strcat(text, StringTable.get(PlansShortName[
+                strcat(text, table_text(PlansShortName[
                     PlayersData[Bases[base_id].faction_id_current].region_base_plan[region]]));
                 strcat(text, SocialWinColonSpaceText);
                 // 0x0046819D/0x004685B6: two strcat statements cross-jumped
                 // at their shared push/call, each cleaned up by add esp,8.
                 const int production_id = Bases[base_id].queue_production_id[0];
-                if (!(production_id >= 0)) {
-                    strcat(text, StringTable.get(Facility[-production_id].name));
-                } else {
+                if (production_id >= 0) {
                     strcat(text, VehPrototypes[production_id].veh_name);
+                } else {
+                    strcat(text, table_text(Facility[-production_id].name));
                 }
                 strcat(text, SocialWinCloseParenText);
                 Buffer::write_cent_l(text, pixel_x + field_1DDBC_,
@@ -5365,7 +5374,7 @@ void MapWin::draw_base_names() {
                 if (is_objective(base_id) &&
                     (GameDataStateStorage.fields_.game_rules_ & 0x20000000U) == 0) {
                     text[0] = '\0';
-                    strcat(text, StringTable.get(Labels.strings_ptr[898]));
+                    strcat(text, label_get(898));
                     CharUpperA(text);
                     Buffer::write_cent_l(text, pixel_x + field_1DDBC_,
                                  pixel_y + static_cast<int>(field_1DDC8_) * 7 / 2 +
@@ -5412,7 +5421,7 @@ void MapWin::draw_base_names() {
                 if (production_id >= 0) {
                     strcat(text, VehPrototypes[production_id].veh_name);
                 } else {
-                    strcat(text, StringTable.get(Facility[-production_id].name));
+                    strcat(text, table_text(Facility[-production_id].name));
                 }
                 strcat(text, SocialWinCloseParenText);
                 Buffer::write_cent_l(text, pixel_x + field_1DDBC_,
