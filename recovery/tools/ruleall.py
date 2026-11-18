@@ -24,5 +24,6 @@ for l in res:
     except Exception: print(l[:200]); continue
     tried+=max(0,j['tried'])
     if j.get('err'): print(j['unit'],'ERR',j['err'][-150:])
+    if j.get('exact_lost'): print(j['unit'],'EXACT_LOST',j['exact_lost'])
     if j['accepted']: print(j['unit'],'tried',j['tried']); [print('   ',a) for a in j['accepted']]
 print('units',len(res),'sites tried',tried)

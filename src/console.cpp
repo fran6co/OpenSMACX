@@ -4860,10 +4860,8 @@ void Console::give_hints() {
                 site_set(cursor_x, cursor_y, site);
             }
         }
-        if (site < 4 &&
-            site < PlayersData[faction_id_].unk_82[map_loc(cursor_x, cursor_y)->region]) {
-            return;
-        }
+        if (!(site < 4 &&
+            site < PlayersData[faction_id_].unk_82[map_loc(cursor_x, cursor_y)->region])) {
         for (int site_i = 0; site_i < 21; ++site_i) {
             const int x = wrap_map_x(cursor_x + RadiusOffsetX[site_i]);
             const int y = cursor_y + RadiusOffsetY[site_i];
@@ -4892,6 +4890,8 @@ void Console::give_hints() {
                                0x10000, -1, -1);
         return;
     }
+            return;
+}
 
     // 0x51323A terraforming chain, only for plan 9 when the captured sea flag
     // is false. BaseFindDist and BaseCurrent are written/read by base_find.
@@ -7345,9 +7345,7 @@ map_keys:
             }
             if (ConsoleGlobal.cursor_active_ != 0) {
                 if (edit_lock() == 0) {
-                    if (net_lock != 0) {
-                        return 1;
-                    }
+                    if (!(net_lock != 0)) {
                     if (selected_vehicle_ < 0) {
                         return 1;
                     }
@@ -7369,7 +7367,9 @@ map_keys:
                     }
                     NetDaemonNet.order_veh(selected_vehicle_, a2, 0);
                     return 1;
-                }
+    }
+                        return 1;
+}
                 if (ConsoleGlobal.cursor_active_ != 0) {
                     reset_turn_view();
                 }
