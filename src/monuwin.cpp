@@ -17,6 +17,7 @@
 // its three-state EH layout; see stringstruct.h.
 #define FONT_LINE_ADVANCE_INLINE
 #define STRINGSTRUCT_CTOR_OUT_OF_LINE
+#define WIN_RECT_EXTENT_INLINE  // rect_width/rect_height (win.h): on_redraw reads its extents through the RECT
 #include "monuwin.h"
 #include "rectangle_operations.h"
 #include "console.h"
@@ -792,7 +793,7 @@ void MonuWin::on_redraw() {
     }
     Buffer::set_clip(&rects_3134_[1]);
     Buffer::write_strings(&description, rects_3134_[1].left, rects_3134_[1].top,
-                  rects_3134_[1].right - rects_3134_[1].left, 0);
+                  rect_width(&rects_3134_[1]), 0);
     Buffer::restore_clip();
     StringTemp[0] = '\0';
     if (type == 0xD) {
@@ -851,13 +852,13 @@ void MonuWin::on_redraw() {
         scratch_rect_ = rects_3134_[row + 3];
         sprites_2C0C_[order[row]].draw(this, scratch_rect_.left, scratch_rect_.top);
         spot_.add(order[row], 0, scratch_rect_.left, scratch_rect_.top,
-                  scratch_rect_.right - scratch_rect_.left, scratch_rect_.bottom - scratch_rect_.top);
+                  scratch_rect_.right - scratch_rect_.left, rect_height(&scratch_rect_));
       }
     }
     selected_monument_type_ = FactionMonuments[preview_faction_or_page_].latest_type_;
     spot_.add(0x45, 0, rects_3134_[0].left, rects_3134_[0].top,
-              rects_3134_[0].right - rects_3134_[0].left,
-              rects_3134_[0].bottom - rects_3134_[0].top);
+              rect_width(&rects_3134_[0]),
+              rect_height(&rects_3134_[0]));
     if (selected_monument_type_ == 0xD) {
       sprite_first_.draw(this, rects_3134_[0].left, rects_3134_[0].top);
     } else if (selected_monument_type_ < 0xF) {
@@ -892,8 +893,8 @@ void MonuWin::on_redraw() {
         mark.draw(this, rects_366C_[i].left,
                   rects_366C_[i].top);
         spot_.add(type, 0, rects_366C_[i].left, rects_366C_[i].top,
-                  rects_366C_[i].right - rects_366C_[i].left,
-                  rects_366C_[i].bottom - rects_366C_[i].top);
+                  rect_width(&rects_366C_[i]),
+                  rect_height(&rects_366C_[i]));
       }
     }
     sprite_second_.draw(this, rects_366C_[6].left, rects_366C_[6].top);
