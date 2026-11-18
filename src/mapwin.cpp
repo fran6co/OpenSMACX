@@ -7597,6 +7597,17 @@ void MapWin::calculate_dimensions() {
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x0046FE70
 
+// WORKAROUND(inline): the last wrap of pixel_to_tile (0x463182) updates its
+// operand in place under the cached flat bit; wrap_map_x's ternary keeps a
+// separate result there and moves the whole corner computation.
+static inline int wrap_map_x_in_place(int x) {
+    if (!(MapIsFlat & 1)) {
+        if (x < 0) x += MapLongitudeBounds;
+        else if (x >= MapLongitudeBounds) x -= MapLongitudeBounds;
+    }
+    return x;
+}
+
 int MapWin::pixel_to_tile(int x_pixel, int y_pixel, int *out_tile_x,
                           int *out_tile_y) {
     if (x_pixel >= pixel_width() || y_pixel >= pixel_height()) {
@@ -7607,28 +7618,30 @@ int MapWin::pixel_to_tile(int x_pixel, int y_pixel, int *out_tile_x,
     if (x_pixel < 0 || y_pixel < 0) {
         return 1;
     }
-    int column =
+    // The image keeps two values: the tile column in [ebp-4]/esi and a copy
+    // (0x4630ED) that becomes the corner offset below.
+    int tile_x =
         wrap_map_x(field_1DDA4_ + (x_pixel / tile_pixel_width_) * 2 + 1);
+    int column = tile_x;
     int row = field_1DDA8_ + (y_pixel / tile_pixel_height_) * 2 + 1;
     const int half_width = field_1DDBC_;
-    int tile_x;
     int upper;
     if (wrap_map_x(field_1DDA4_ +
                    ((x_pixel - half_width) / tile_pixel_width_) * 2 + 1) ==
-        column) {
-        // The column itself advances: the corner offsets below use it.
-        tile_x = ++column;
+        tile_x) {
+        tile_x++;
+        column = tile_x;
         row--;
         upper = 1;
     } else {
-        tile_x = column - 1;
+        tile_x--;
         row--;
         upper = 0;
     }
     // Pixel offsets of the diamond's left and right corners.
     const int offset = column - field_1DDA4_;
     const int left = half_width * wrap_map_x(offset - 1);
-    const int right = half_width * wrap_map_x(offset);
+    const int right = half_width * wrap_map_x_in_place(offset);
     x_pixel -= left;
     const int span = right - left;
     int top;
@@ -7641,6 +7654,7 @@ int MapWin::pixel_to_tile(int x_pixel, int y_pixel, int *out_tile_x,
             bottom = (row - field_1DDA8_ - 1) * static_cast<int>(field_1DDC0_) -
                      get_alt(tile_x, row, 2);
             tile_x--;
+            row++;
         } else {
             upper = 1;
             top = (row - field_1DDA8_ - 1) * static_cast<int>(field_1DDC0_) -
@@ -7648,8 +7662,8 @@ int MapWin::pixel_to_tile(int x_pixel, int y_pixel, int *out_tile_x,
             bottom = (row - field_1DDA8_) * static_cast<int>(field_1DDC0_) -
                      get_alt(tile_x, row, 3);
             tile_x++;
+            row++;
         }
-        row++;
     } while ((bottom - top) * x_pixel <= (y_pixel - top) * span);
     row -= 2;
     *out_tile_x = wrap_map_x(tile_x);
