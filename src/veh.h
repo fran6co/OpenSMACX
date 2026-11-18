@@ -762,7 +762,6 @@ int __cdecl armor_budget(int faction_id, int max_cost);
 // ?hex_cost@@YAHHHHHHHH@Z - eight H. The coordinates are int.
 int __cdecl hex_cost(int proto_id, int faction_id, int x_src, int y_src,
                                int x_dst, int y_dst, BOOL toggle);
-int __cdecl veh_health(int veh_id);
 // `int` throughout, matching the definition in src/veh.cpp. The earlier
 // unsigned-parameter spelling named an undefined overload; it was corrected
 // when inline base_cost made this declaration visible to additional callers.
@@ -906,6 +905,21 @@ MEASURED inline int __cdecl proto_power(int veh_id) {
         return 1;
     }
     return range(VehPrototypes[Vehs[veh_id].proto_id].reactor_id, 1, 100) * 10;
+}
+
+// Current hit points (0x005A59E0). BODY HERE: probe calls it, and
+// StatusWin::draw_active (0x004B59CA) expands this body, the reactor byte
+// copied through the named local before range (`mov eax,ecx; push eax`).
+// The `// ORIGINAL:` marker stays in veh.cpp.
+MEASURED inline int __cdecl veh_health(int veh_id) {
+    int proto_id = Vehs[veh_id].proto_id;
+    int health;
+    if (VehPrototypes[proto_id].plan == PLAN_ALIEN_ARTIFACT) {
+        health = 1;
+    } else {
+        health = range(VehPrototypes[proto_id].reactor_id, 1, 100) * 10;
+    }
+    return range(health - Vehs[veh_id].dmg_incurred, 0, 9999);
 }
 
 // INLINE: the image has no get_proto_triad - it open-codes what this names.

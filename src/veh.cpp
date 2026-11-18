@@ -1621,6 +1621,7 @@ Status: Complete
 /*
 Purpose: Get the current health of the specified unit factoring in damage.
 // ORIGINAL: 0x005A59E0 ?veh_health@@YAHH@Z 0x005A59E0-0x005A5A52 BYTE_EXACT
+// body      src/veh.h
 // LEVER: ternary -> if/else. The image branches on `plan != ALIEN_ARTIFACT`
 // with `jne` to the range()*10 path and falls through `mov eax,1; jmp` on
 // the equal side; a `cond ? range(...)*10 : 1` ternary compiled the
@@ -1637,16 +1638,10 @@ Purpose: Get the current health of the specified unit factoring in damage.
 Return Value: Unit health
 Status: Complete
 */
-int __cdecl veh_health(int veh_id) {
-    int proto_id = Vehs[veh_id].proto_id;
-    int health;
-    if (VehPrototypes[proto_id].plan == PLAN_ALIEN_ARTIFACT) {
-        health = 1;
-    } else {
-        health = range(VehPrototypes[proto_id].reactor_id, 1, 100) * 10;
-    }
-    return range(health - Vehs[veh_id].dmg_incurred, 0, 9999);
-}
+// BODY IN veh.h, as `MEASURED inline`: the image calls it from probe
+// (0x005A59E0) and writes the same body out in StatusWin::draw_active
+// (0x004B59CA..0x004B5A9E), and a .cpp definition is only ever one of those.
+// The marker stays here because that is where the catalogue reads it.
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x005A5A60 0x005A5CE4 0x005A5D00 0x005A5AF4
 /*

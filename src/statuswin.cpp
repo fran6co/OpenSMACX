@@ -1083,30 +1083,11 @@ void StatusWin::draw(int tile_x, int tile_y, int city_index, int unit_index,
     MainInterfaceGlobal.soft_update(&localRect);
 }
 
-// WORKAROUND(decl): the damage percentage at 0x004B59CA..0x004B5A9E expands
-// veh_health's own body (0x005A59E0: the reactor byte copied through a named
-// local before range, `mov eax,ecx; push eax`) between two proto_power
-// expansions, and calls range out of line for the 0..9999 clamp (0x4B5A39).
-// veh_health is out of line in veh.cpp and cannot expand here, so this is a
-// copy of its body; most likely the original's veh_health was a header
-// inline. Written as proto_power(v) - range(...) in place VC6 expands every
-// range. Open: the image also calls range for the 1..100 clamp (0x4B5A1A).
-static inline int status_veh_health(int veh_id) {
-    int proto_id = Vehs[veh_id].proto_id;
-    int health;
-    if (VehPrototypes[proto_id].plan == PLAN_ALIEN_ARTIFACT) {
-        health = 1;
-    } else {
-        health = range(VehPrototypes[proto_id].reactor_id, 1, 100) * 10;
-    }
-    return range(health - Vehs[veh_id].dmg_incurred, 0, 9999);
-}
-
 // WORKAROUND(decl): one inline level around the percentage; with the three
 // expansions written directly in draw_active VC6 has budget to expand the
 // outer range too. The original helper's name and owner are unknown.
 static inline int status_damage_percent(int veh_id) {
-    return (proto_power(veh_id) - status_veh_health(veh_id)) * 100
+    return (proto_power(veh_id) - veh_health(veh_id)) * 100
         / proto_power(veh_id);
 }
 
