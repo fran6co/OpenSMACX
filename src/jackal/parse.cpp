@@ -211,57 +211,59 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
                 input = next;
                 break;
             }
-            var += 2;
+            // A second pointer walks the alternatives: `var` keeps too few
+            // references to outrank `output` for esi (MATCHING_GUIDE 2.7).
+            LPSTR p = var + 2;
             input = end_bracket + 1;
-            while (*var == ' ') {
-                ++var;
+            while (*p == ' ') {
+                ++p;
             }
             number = -1;
             int plurality = 0;
             int gender; // The '#' route leaves this local unset.
-            if (*var == 'M' || *var == 'm') {
+            if (*p == 'M' || *p == 'm') {
                 gender = 0;
-            } else if (*var == 'F' || *var == 'f') {
+            } else if (*p == 'F' || *p == 'f') {
                 gender = 1;
-            } else if (*var == 'N' || *var == 'n') {
+            } else if (*p == 'N' || *p == 'n') {
                 gender = 2;
-            } else if (*var == '#') {
-                ++var;
-                number = *var - '0';
+            } else if (*p == '#') {
+                ++p;
+                number = *p - '0';
                 plurality = ParseNumTable[number] != 1;
             } else {
-                number = *var - '0';
+                number = *p - '0';
                 if (number >= 10) {
                     continue;
                 }
                 gender = ParseStrGender[number];
                 plurality = ParseStrPlurality[number];
             }
-            ++var;
-            if (number < 0 && *var >= '0' && *var <= '9') {
-                plurality = *var - '1';
-                ++var;
+            ++p;
+            if (number < 0 && *p >= '0' && *p <= '9') {
+                plurality = *p - '1';
+                ++p;
             }
-            while (*var == ' ') {
-                ++var;
+            while (*p == ' ') {
+                ++p;
             }
-            if (*var == ':') {
-                ++var;
+            if (*p == ':') {
+                ++p;
             }
             // The scan runs up to the text after '>', not to the bracket.
             int count = 0;
-            for (LPSTR scan = var; scan < input; ++scan) {
+            for (LPSTR scan = p; scan < input; ++scan) {
                 if (*scan == ':') {
                     ++count;
                 }
             }
-            if (!count && findnum(var)) {
-                const int index = *findnum(var) - '0';
+            if (!count && findnum(p)) {
+                const int index = *findnum(p) - '0';
                 if (index >= 10) {
                     continue;
                 }
-                var = ParseStrBuffer[index].str;
-                for (LPSTR text = var; *text; ++text) {
+                p = ParseStrBuffer[index].str;
+                for (LPSTR text = p; *text; ++text) {
                     if (*text == ':') {
                         ++count;
                     }
@@ -278,12 +280,12 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
             }
             // No terminator test: a short alternative list reads past it.
             while (count) {
-                if (*var++ == ':') {
+                if (*p++ == ':') {
                     --count;
                 }
             }
-            while (*var && *var != ':' && *var != '>') {
-                *output++ = *var++;
+            while (*p && *p != ':' && *p != '>') {
+                *output++ = *p++;
             }
             *output = 0;
             break;
