@@ -2843,8 +2843,7 @@ void __cdecl world_rivers() {
                         continue;
                     }
                     int t = RiverStepX[dir] + cur_x;
-                    int flat = MapIsFlat & 1;
-                    int next_x = flat ? t : t < 0 ? t + MapLongitudeBounds : t >= (int)MapLongitudeBounds ? t - MapLongitudeBounds : t;
+                    int next_x = wrap_map_x(t);
                     int next_y = RiverStepY[dir] + cur_y;
                     if (!on_map(next_x, next_y)) {
                         continue;
@@ -2858,7 +2857,7 @@ void __cdecl world_rivers() {
                             int rivers = 0;
                             for (int j = 0; j < 4; j++) {
                                 int tj = RiverStepX[j] + next_x;
-                                int jx = flat ? tj : tj < 0 ? tj + MapLongitudeBounds : tj >= (int)MapLongitudeBounds ? tj - MapLongitudeBounds : tj;
+                                int jx = wrap_map_x(tj);
                                 int jy = RiverStepY[j] + next_y;
                                 if (on_map(jx, jy) && (map_loc(jx, jy)->bit & BIT_RIVERBED)) {
                                     rivers++;
@@ -2891,7 +2890,7 @@ void __cdecl world_rivers() {
                                 continue;
                             }
                             int tk = RiverStepX[k] + next_x;
-                            int kx = flat ? tk : tk < 0 ? tk + MapLongitudeBounds : tk >= (int)MapLongitudeBounds ? tk - MapLongitudeBounds : tk;
+                            int kx = wrap_map_x(tk);
                             int ky = RiverStepY[k] + next_y;
                             if (!on_map(kx, ky)) {
                                 continue;
