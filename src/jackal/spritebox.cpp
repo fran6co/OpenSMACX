@@ -403,10 +403,11 @@ int SpriteBox::attach(GraphicWin *parent, int x, int y, int flags) {
     RECT rect;
     const int right = field_54_;
     const int cell_height = Dialog::field_68_;
-    rect.top = abs(cell_height - field_58_) >> 1;
-    rect.right = right;
-    rect.bottom = cell_height + rect.top;
+    const int top = abs(cell_height - field_58_) >> 1;
     rect.left = 0;
+    rect.top = top;
+    rect.right = right;
+    rect.bottom = cell_height + top;
     // Park the cursor on the last entry; each item below advances first.
     list_.seek_pos(-1);
     for (int column = 0; column < Dialog::column_count_; ++column) {
@@ -415,10 +416,8 @@ int SpriteBox::attach(GraphicWin *parent, int x, int y, int flags) {
             if (!list_.head_) {
                 id = 0;
             } else {
-                StringStructEntry *const next = list_.current_->next;
-                const int count = list_.entry_count_;
-                list_.current_ = next;
-                if (++list_.current_position_ == count) {
+                list_.current_ = list_.current_->next;
+                if (++list_.current_position_ == list_.entry_count_) {
                     list_.current_position_ = 0;
                 }
                 id = list_.current_->id;
