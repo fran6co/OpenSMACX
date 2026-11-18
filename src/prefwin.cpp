@@ -121,13 +121,11 @@ PrefWin::PrefWin() : GraphicWin() {}
 
 // ORIGINAL: 0x0048D840 ?init@PrefWin@@QAEXXZ 0x0048D840-0x0048F9F5 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0048d840.cpp", "recovery/tasks/prefwin-owner-coverage-wave.json", "Original control parent 8578D8; ctor/destructor member order, 800-pixel branch, checkbox text-context and callback order independently reviewed."], "reason": "Recover the complete PrefWin ownership group through a genuine GraphicWin base and compiler-owned embedded control lifetimes; preserve seed identity, original spans and unresolved discoveries without granting byte claims."}
-// The first button of each group and the first five check boxes are reached
-// through a held control pointer: set_font addresses the Buffer base as
-// [edi+0x444] (0x48DA0A, 0x48F6E9, 0x48F8F3) and the two sprite stores go
-// through [edi+0x10]/[edi+0x14] (0x48DE2B, 0x48E0C8, 0x48E457, 0x48E883,
-// 0x48EB36), where the member spelling folds the offset into `this`. Pointer
-// locals assigned at those sites reproduce it; the last two check boxes and
-// the other buttons use the member directly.
+// The first button of each group is reached through a held control pointer:
+// set_font addresses the Buffer base as [edi+0x444] (0x48DA0A, 0x48F6E9,
+// 0x48F8F3) where the member spelling folds the offset into `this`; a
+// FlatButton* local assigned at those three sites reproduces it. The check
+// boxes take their sprites through CheckBox::set_sprites.
 void PrefWin::init() {
   // Original preference reads use four distinct static key starts.
   // Keep function-local storage so init and destroy do not pool identical keys.
@@ -186,7 +184,6 @@ void PrefWin::init() {
   // ---- page tabs: label copied into StringTemp, then BaseButton::init ----
   StringTemp[0] = 0;                                          // 48D9AA
   strcat(StringTemp, label_get(750));   /* 0xBB8 */           // 48D9C7
-  CheckBox *check;
   FlatButton *button = &bscPrefButton_;
   button->init(StringTemp, 0, PrefWinGeometryValue_85788C,
                       PrefWinGeometryValue_857890,
@@ -262,9 +259,7 @@ void PrefWin::init() {
   bscPrefCheckBox_.init(PrefWinGeometryValue_8578C8, PrefWinGeometryValue_8578C4,
                         PrefWinGeometryValue_8578A0, PrefWinGeometryValue_8578A4,
                         0);                                   // 48DE09 / 48DE26
-  check = &bscPrefCheckBox_;
-  check->unchecked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[1]; // 48DE2B 0x779504
-  check->checked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[2];   // 48DE32 0x779530
+  bscPrefCheckBox_.set_sprites(&g_IFACE_CLOSE_X_SPRITES[1], &g_IFACE_CLOSE_X_SPRITES[2]);
   StringTemp[0] = 0;  text_get();                             // 48DE39
   strcat(StringTemp, " " /* 0x686BA4 */);
   strcat(StringTemp, TextBufferGetPtr /* [9B7D00] */);
@@ -310,9 +305,7 @@ void PrefWin::init() {
   advPrefCheckBox_.init(PrefWinGeometryValue_8578C8, PrefWinGeometryValue_8578C4,
                         PrefWinGeometryValue_8578A0, PrefWinGeometryValue_8578A4,
                         0);                                   // 48E0A6 / 48E0C3
-  check = &advPrefCheckBox_;
-  check->unchecked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[1]; // 48E0C8
-  check->checked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[2];   // 48E0CF
+  advPrefCheckBox_.set_sprites(&g_IFACE_CLOSE_X_SPRITES[1], &g_IFACE_CLOSE_X_SPRITES[2]);
   StringTemp[0] = 0;  text_get();
   strcat(StringTemp, " " /* 0x686BD4 */);
   strcat(StringTemp, TextBufferGetPtr);
@@ -373,9 +366,7 @@ void PrefWin::init() {
   autoPrefCheckBox_.init(PrefWinGeometryValue_8578C8, PrefWinGeometryValue_8578C4,
                          PrefWinGeometryValue_8578A0, PrefWinGeometryValue_8578A4,
                          0);                                  // 48E435 / 48E452
-  check = &autoPrefCheckBox_;
-  check->unchecked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[1]; // 48E457
-  check->checked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[2];   // 48E45E
+  autoPrefCheckBox_.set_sprites(&g_IFACE_CLOSE_X_SPRITES[1], &g_IFACE_CLOSE_X_SPRITES[2]);
   StringTemp[0] = 0;  text_get();
   strcat(StringTemp, " " /* 0x686C14 */);
   strcat(StringTemp, TextBufferGetPtr);
@@ -447,9 +438,7 @@ void PrefWin::init() {
   text_get();
   audioVisPrefCheckBox_.init(PrefWinGeometryValue_8578C8, PrefWinGeometryValue_8578C4, PrefWinGeometryValue_8578A0,
       PrefWinGeometryValue_8578A4 - PrefWinGeometryConstant_686B78 - PrefWinGeometryValue_8577E0 - frame_adjustment, 0);
-  check = &audioVisPrefCheckBox_;
-  check->unchecked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[1];  // 0x779504
-  check->checked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[2];    // 0x779530
+  audioVisPrefCheckBox_.set_sprites(&g_IFACE_CLOSE_X_SPRITES[1], &g_IFACE_CLOSE_X_SPRITES[2]);
   StringTemp[0] = 0;
   text_get();
   strcat(StringTemp, " ");  // 0x686C60
@@ -501,9 +490,7 @@ void PrefWin::init() {
   text_get();
   warnPrefCheckBox_.init(PrefWinGeometryValue_8578C8, PrefWinGeometryValue_8578C4, PrefWinGeometryValue_8578A0,
       PrefWinGeometryValue_8578A4 - PrefWinGeometryConstant_686B78 - PrefWinGeometryValue_8577E0 + 0x28, 0);
-  check = &warnPrefCheckBox_;
-  check->unchecked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[1];
-  check->checked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[2];
+  warnPrefCheckBox_.set_sprites(&g_IFACE_CLOSE_X_SPRITES[1], &g_IFACE_CLOSE_X_SPRITES[2]);
   StringTemp[0] = 0;
   text_get();
   strcat(StringTemp, " ");  // 0x686C90
@@ -574,7 +561,7 @@ void PrefWin::init() {
   // takes no leading text_get() before its init (0x48EE85).
   warnContPrefCheckBox_.init(PrefWinGeometryValue_8578C8, PrefWinGeometryValue_8578C4, PrefWinGeometryValue_8578A0,
       PrefWinGeometryValue_8578A4 - PrefWinGeometryConstant_686B78 - PrefWinGeometryValue_8577E0, 0);
-  prefwin_check_sprites(&warnContPrefCheckBox_, &g_IFACE_CLOSE_X_SPRITES[1], &g_IFACE_CLOSE_X_SPRITES[2]);
+  warnContPrefCheckBox_.set_sprites(&g_IFACE_CLOSE_X_SPRITES[1], &g_IFACE_CLOSE_X_SPRITES[2]);
   StringTemp[0] = 0;
   text_get();
   strcat(StringTemp, " ");  // 0x686CC4
@@ -605,7 +592,7 @@ void PrefWin::init() {
   text_get();
   text_get();
   mapPrefCheckBox_.init(PrefWinGeometryValue_8578C8, PrefWinGeometryValue_8578C4, PrefWinGeometryValue_8578A0, PrefWinGeometryValue_8578A4, 0);
-  prefwin_check_sprites(&mapPrefCheckBox_, &g_IFACE_CLOSE_X_SPRITES[1], &g_IFACE_CLOSE_X_SPRITES[2]);
+  mapPrefCheckBox_.set_sprites(&g_IFACE_CLOSE_X_SPRITES[1], &g_IFACE_CLOSE_X_SPRITES[2]);
   StringTemp[0] = 0;
   text_get();
   strcat(StringTemp, " ");  // 0x686CE0

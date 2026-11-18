@@ -179,6 +179,16 @@ class CheckBox : public virtual GraphicWin, public virtual Dialog {
   Sprite *unchecked_sprite_;
   // RECOVERY_MEMBER: v3 CheckBox checked_sprite_ Sprite* 0x14 0x0060F030
   Sprite *checked_sprite_;
+  // Header inline: PrefWin::init and DipEdit::init store both pointers
+  // through whichever register already holds the check box (0x0048DE2B
+  // [edi+0x10]/[edi+0x14] at five boxes, [esi+N] at two), the shape of the
+  // receiver passed to an inline; the two stores written at the call fold the
+  // member offset into the owner's `this` at every site.
+  // WORKAROUND(decl): the name is descriptive.
+  void set_sprites(Sprite *unchecked, Sprite *checked) {
+    unchecked_sprite_ = unchecked;
+    checked_sprite_ = checked;
+  }
  private:
   // The vbtable puts the base at 0x1C; the declared fields reach
   // 0x18, so 4 bytes sit between them.

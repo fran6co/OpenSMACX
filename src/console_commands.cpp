@@ -4124,8 +4124,7 @@ void DipEdit::init(int faction_index) {
     rect.right -= 4;
     check_box_.close();
     check_box_.Dialog::init(&rect, 0);
-    check_box_.unchecked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[1];
-    check_box_.checked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[2];
+    check_box_.set_sprites(&g_IFACE_CLOSE_X_SPRITES[1], &g_IFACE_CLOSE_X_SPRITES[2]);
     check_box_.item(StringTable.get(Labels.strings_ptr[875]), DTREATY_COMMLINK, 0);
     check_box_.item(label_get(646), DTREATY_VENDETTA, 0);
     check_box_.item(label_get(643), DTREATY_TRUCE, 0);
