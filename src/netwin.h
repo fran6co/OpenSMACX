@@ -86,52 +86,10 @@ static_assert(offsetof(NetWinLobbyRowsStorage, rows_) == 0,
               "lobby global storage base");
 extern NetWinLobbyRowsStorage NetWinLobbyRows; // 0x0090DB98
 
-// Mutable borrowed access to one row-shaped byte region. This is used for
-// received packet payloads whose storage is not a constructed NetWinLobbyRow;
-// it performs no copy, initialization, or extent check.
-class NetWinLobbyRowView {
-public:
-  explicit NetWinLobbyRowView(unsigned char *bytes)
-      : bytes_(reinterpret_cast<char *>(bytes)) {}
-  explicit NetWinLobbyRowView(char *bytes)
-      : bytes_(bytes) {}
-  explicit NetWinLobbyRowView(NetWinLobbyRow &row)
-      : bytes_(reinterpret_cast<char *>(&row)) {}
-
-  char *leader_name() const {
-    return bytes_ + offsetof(NetWinLobbyRow, leader_name_);
-  }
-  char *formal_faction_name() const {
-    return bytes_ + offsetof(NetWinLobbyRow, formal_faction_name_);
-  }
-  char *noun_faction() const {
-    return bytes_ + offsetof(NetWinLobbyRow, noun_faction_);
-  }
-  char *adjective_faction() const {
-    return bytes_ + offsetof(NetWinLobbyRow, adjective_faction_);
-  }
-  char *leader_title() const {
-    return bytes_ + offsetof(NetWinLobbyRow, leader_title_);
-  }
-  char *adjective_leader() const {
-    return bytes_ + offsetof(NetWinLobbyRow, adjective_leader_);
-  }
-  void set_tail_0(uint8_t value) const {
-    std::memcpy(bytes_ + offsetof(NetWinLobbyRow, tail_), &value, sizeof(value));
-  }
-
-private:
-  char *bytes_;
-};
-static_assert(sizeof(NetWinLobbyRowView) == sizeof(void *),
-              "lobby row view is a borrowed pointer");
-
 // The first 16 bytes are common to lobby button/picker packets. Session-block
 // senders with only an opcode and reserved tail keep their distinct schema.
 struct NetWinLobbyPacketHeader {
-  void set_opcode(uint16_t value) {
-    std::memcpy(this, &value, sizeof(value));
-  }
+  void set_opcode(uint16_t value) { opcode_ = value; }
   // The 16-bit message word carries routing bits above the opcode, such as
   // 0x4000 (all players) and 0x1000 (one slot): 0x0F04 | 0x4000 == 0x4F04.
   uint16_t opcode_;
@@ -172,87 +130,6 @@ static_assert(offsetof(NetWinLobbyFullPacket, rows_) == 0x10,
 static_assert(sizeof(NetWinLobbyLeavePacket) == 0x20,
               "leave lobby packet size");
 
-// Borrowed packet views deliberately describe only fields used by these
-// receivers. They do not claim a packet extent or validate short/malformed
-// messages; the native paths can read beyond their logical payload.
-class NetWinPacketView {
-public:
-  explicit NetWinPacketView(unsigned char *bytes) : bytes_(bytes) {}
-  explicit NetWinPacketView(char *bytes)
-      : bytes_(reinterpret_cast<unsigned char *>(bytes)) {}
-
-  uint16_t opcode() const {
-    uint16_t value;
-    std::memcpy(&value, bytes_ + offsetof(NetWinLobbyPacketHeader, opcode_), sizeof(value));
-    return value;
-  }
-  void set_opcode(uint16_t value) const {
-    std::memcpy(bytes_ + offsetof(NetWinLobbyPacketHeader, opcode_), &value, sizeof(value));
-  }
-  uint32_t selector() const {
-    uint32_t value;
-    std::memcpy(&value, bytes_ + offsetof(NetWinLobbyPacketHeader, slot_), sizeof(value));
-    return value;
-  }
-  unsigned char *payload() const {
-    return bytes_ + sizeof(NetWinLobbyPacketHeader);
-  }
-
-private:
-  unsigned char *bytes_;
-};
-static_assert(sizeof(NetWinPacketView) == sizeof(void *),
-              "packet view is a borrowed pointer");
-
-class NetWinLobbyPacketView {
-public:
-  explicit NetWinLobbyPacketView(unsigned char *bytes) : bytes_(bytes) {}
-  int8_t faction_or_color() const {
-    int8_t value;
-    std::memcpy(&value, bytes_ + sizeof(NetWinLobbyPacketHeader) +
-                              offsetof(NetWinLobbyRow, faction_or_color_), sizeof(value));
-    return value;
-  }
-  // Payload +0x178 is the existing row owner at packet +0x188, not an
-  // additional status word or packet extension.
-  uint32_t owner() const {
-    uint32_t value;
-    std::memcpy(&value, bytes_ + sizeof(NetWinLobbyPacketHeader) +
-                              offsetof(NetWinLobbyRow, owner_), sizeof(value));
-    return value;
-  }
-  unsigned char *payload() const {
-    return bytes_ + sizeof(NetWinLobbyPacketHeader);
-  }
-
-private:
-  unsigned char *bytes_;
-};
-static_assert(sizeof(NetWinLobbyPacketView) == sizeof(void *),
-              "lobby packet view is a borrowed pointer");
-
-// The status receiver has no known producer or extent. These narrow accessors
-// name only the fields observed in its native consumer; a short packet can
-// leave these reads in the receiver's existing scratch tail.
-class NetWinSessionStatusView {
-public:
-  explicit NetWinSessionStatusView(char *bytes)
-      : bytes_(reinterpret_cast<unsigned char *>(bytes)) {}
-  int faction() const {
-    int value;
-    std::memcpy(&value, bytes_ + 4, sizeof(value));
-    return value;
-  }
-  int8_t identity() const { return static_cast<int8_t>(bytes_[0x18]); }
-  uint8_t field_14() const { return bytes_[0x14]; }
-  uint8_t field_10() const { return bytes_[0x10]; }
-
-private:
-  unsigned char *bytes_;
-};
-static_assert(sizeof(NetWinSessionStatusView) == sizeof(void *),
-              "session status view is a borrowed pointer");
-
 // Only NetWin::exec constructs these stack-local rows. The passive wire/global
 // record above must not acquire this constructor or a dynamic initializer.
 // Composition names the observed payload, not an inferred class hierarchy.
@@ -275,23 +152,10 @@ struct NetWinSessionBlock {
   char scenario_text_wire_tail_[0x144];
   void receive_wire_block(const unsigned char *bytes);
 
-  // The native missing-player tail addresses lobby row 8, which begins
-  // inside this live session object. These views do not create a ninth row.
-  void write_row8_prefix(uint8_t value);
-  char *row8_leader_name();
-  char *row8_noun_faction();
 };
 static_assert(sizeof(NetWinSessionBlock) == 0x168, "session block extent");
 static_assert(offsetof(NetWinSessionBlock, scenario_text_wire_tail_) == 0x24,
               "scenario text begins at the observed session storage offset");
-static_assert(offsetof(NetWinLobbyRow, prefix_) < sizeof(NetWinSessionBlock),
-              "row-eight prefix is inside session storage");
-static_assert(offsetof(NetWinLobbyRow, leader_name_) +
-                  sizeof(((NetWinLobbyRow *)0)->leader_name_) <= sizeof(NetWinSessionBlock),
-              "row-eight leader text is inside session storage");
-static_assert(offsetof(NetWinLobbyRow, noun_faction_) +
-                  sizeof(((NetWinLobbyRow *)0)->noun_faction_) <= sizeof(NetWinSessionBlock),
-              "row-eight faction text is inside session storage");
 struct NetWinSessionDataStorage {
   NetWinSessionBlock fields_;
 
@@ -500,7 +364,7 @@ class NetWin : public GraphicWin {
   void UNK3();
   // 0x00481DA0. Copies one faction record's name/title block into the
   // lobby row carried in the packet, or just resets +0x45 for slot -1.
-  void fill_player(NetWinLobbyRowView lobby_row, int slot);
+  void fill_player(NetWinLobbyRow *lobby_row, int slot);
   // 0x00481E90. Seeds the seven base faction records of the static faction
   // table from the 0x59C-stride template records, and resets the trailing
   // eighth/ninth slot words.

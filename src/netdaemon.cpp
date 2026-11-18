@@ -4190,7 +4190,7 @@ move_veh_ack:
             if (lobby_slot != -1) {
                 if (message[0x13] != NetWinLobbyRows.rows_[lobby_slot].faction_or_color_
                     || previous_faction != NetWinLobbyRows.rows_[lobby_slot].faction_or_color_) {
-                    NetWinDialog.fill_player(NetWinLobbyRowView(message + 0x10), message[0x13]);
+                    NetWinDialog.fill_player(reinterpret_cast<NetWinLobbyRow *>(message + 0x10), message[0x13]);
                 }
             }
             send_message(message, message_size, 0);

@@ -88,34 +88,6 @@ static_assert(offsetof(NetWinFactionDataPrefix, timestamp_) == 8,
 static_assert(offsetof(NetWinFactionDataPrefix, sequence_) == 0x0C,
               "faction-data packet sequence offset");
 
-// A borrowed byte view writes only the fields initialized by the F0D sender.
-// It does not construct the prefix or initialize its unresolved bytes.
-class NetWinFactionDataPacketView {
-public:
-    explicit NetWinFactionDataPacketView(char *bytes) : bytes_(bytes) {}
-
-    void set_opcode(uint16_t value) const {
-        std::memcpy(bytes_ + offsetof(NetWinFactionDataPrefix, opcode_), &value,
-                    sizeof(value));
-    }
-    void set_faction(int32_t value) const {
-        std::memcpy(bytes_ + offsetof(NetWinFactionDataPrefix, faction_), &value,
-                    sizeof(value));
-    }
-    void set_timestamp(uint32_t value) const {
-        std::memcpy(bytes_ + offsetof(NetWinFactionDataPrefix, timestamp_), &value,
-                    sizeof(value));
-    }
-    char *payload() const {
-        return bytes_ + sizeof(NetWinFactionDataPrefix);
-    }
-
-private:
-    char *bytes_;
-};
-static_assert(sizeof(NetWinFactionDataPacketView) == sizeof(void *),
-              "faction-data packet view is a borrowed pointer");
-
 // Compiler-generated non-EH array-constructor iterator for the stack-local
 // NetWinConstructedLobbyRow array. The original callback returns its receiver;
 // ordinary constructor/array controls reproduce both original bodies.
@@ -184,21 +156,6 @@ void NetWinSessionBlock::receive_wire_block(const unsigned char *bytes) {
 
 void NetWinSessionOptionsState::receive_wire_block(const unsigned char *bytes) {
     std::memcpy(this, bytes, sizeof(*this));
-}
-
-void NetWinSessionBlock::write_row8_prefix(uint8_t value) {
-    unsigned char *bytes = reinterpret_cast<unsigned char *>(this);
-    std::memcpy(bytes + offsetof(NetWinLobbyRow, prefix_), &value, sizeof(value));
-}
-
-char *NetWinSessionBlock::row8_leader_name() {
-    unsigned char *bytes = reinterpret_cast<unsigned char *>(this);
-    return reinterpret_cast<char *>(bytes + offsetof(NetWinLobbyRow, leader_name_));
-}
-
-char *NetWinSessionBlock::row8_noun_faction() {
-    unsigned char *bytes = reinterpret_cast<unsigned char *>(this);
-    return reinterpret_cast<char *>(bytes + offsetof(NetWinLobbyRow, noun_faction_));
 }
 
 // Native pick_pass passes these distinct zero-filled input bytes as X_pop_ask
@@ -615,23 +572,23 @@ Purpose: Copy one faction record's name/title block into the lobby row
 // Homed from src/unrecovered/00481da0.cpp.
 Return Value: n/a
 */
-void NetWin::fill_player(NetWinLobbyRowView lobby_row, int slot) {
+void NetWin::fill_player(NetWinLobbyRow *lobby_row, int slot) {
     if (slot == -1) {
-        lobby_row.noun_faction()[0] = 0;
-        strcat(lobby_row.noun_faction(),
+        lobby_row->noun_faction_[0] = 0;
+        strcat(lobby_row->noun_faction_,
                StringTable.get(Labels.strings_ptr[0xFE4 / 4]));
         return;
     }
-    strcpy(lobby_row.leader_name(), faction_records_->records_[slot].leader_name_);
-    strcpy(lobby_row.formal_faction_name(),
+    strcpy(lobby_row->leader_name_, faction_records_->records_[slot].leader_name_);
+    strcpy(lobby_row->formal_faction_name_,
            faction_records_->records_[slot].formal_faction_name_);
-    strcpy(lobby_row.noun_faction(), faction_records_->records_[slot].noun_faction_);
-    strcpy(lobby_row.adjective_faction(),
+    strcpy(lobby_row->noun_faction_, faction_records_->records_[slot].noun_faction_);
+    strcpy(lobby_row->adjective_faction_,
            faction_records_->records_[slot].adjective_faction_);
-    strcpy(lobby_row.leader_title(), faction_records_->records_[slot].leader_title_);
-    strcpy(lobby_row.adjective_leader(),
+    strcpy(lobby_row->leader_title_, faction_records_->records_[slot].leader_title_);
+    strcpy(lobby_row->adjective_leader_,
            faction_records_->records_[slot].adjective_leader_);
-    lobby_row.set_tail_0(faction_records_->records_[slot].leader_female_);
+    lobby_row->tail_[0] = faction_records_->records_[slot].leader_female_;
 }
 
 // 0x0090E778 / 0x0090E79C - the two words beside the seven records
@@ -3494,19 +3451,19 @@ void __cdecl send_faction_data(int slot_id) {
         const uint8_t count = NetWinDialog.faction_records_->record_count_;
         const int records = count * 133;
         const uint32_t size = records * 3 + 0x1A4;
-        char *frame = static_cast<char *>(mem_get(size));
-        NetWinFactionDataPacketView packet(frame);
-        packet.set_opcode(0xF0D);
-        packet.set_faction(-1);
-        packet.set_timestamp(0);
-        memcpy(packet.payload(), NetWinDialog.faction_records_,
+        NetWinFactionDataPrefix *packet =
+            static_cast<NetWinFactionDataPrefix *>(mem_get(size));
+        packet->opcode_ = 0xF0D;
+        packet->faction_ = -1;
+        packet->timestamp_ = 0;
+        memcpy(packet + 1, NetWinDialog.faction_records_,
                records * 3 + 0x194);
         if (slot_id < 0) {
-            NetDaemonNet.Net::send(frame, size, 0, 1);
+            NetDaemonNet.Net::send(packet, size, 0, 1);
             return;
         }
         NetDaemonNet.Net::send(
-            frame, size, NetDaemonNet.process_slots_[slot_id].pid_, 1);
+            packet, size, NetDaemonNet.process_slots_[slot_id].pid_, 1);
     }
 }
 
