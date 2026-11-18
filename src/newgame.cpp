@@ -771,24 +771,26 @@ parse_factions:
                 }
             }
             if (special_count == 1) {
-                int last_random = 0;
+                // The last random slot is kept in special_b itself (ebx,
+                // 0x0058B40B), not in a local of its own; the pair test
+                // below clears it again.
                 {
                     for (int i = 1; i < 8; ++i) {
-                        if (!strcmp(Players[i].filename, "JENN282")) last_random = i;
+                        if (!strcmp(Players[i].filename, "JENN282")) special_b = i;
                     }
                 }
-                if (last_random) {
+                if (special_b) {
                     if (text_open(AlphaxFileID, "NEWFACTIONS")) goto select_faction;
                     text_get();
                     for (int skip = 0; skip < 5; ++skip) text_get();
-                    strcpy(Players[last_random].filename, text_item());
-                    if (!strcmp(Players[last_random].filename, first_special)) {
+                    strcpy(Players[special_b].filename, text_item());
+                    if (!strcmp(Players[special_b].filename, first_special)) {
                         text_get();
-                        strcpy(Players[last_random].filename, text_item());
+                        strcpy(Players[special_b].filename, text_item());
                     }
-                    strcpy(Players[last_random].search_key, Players[last_random].filename);
-                    read_faction(&Players[last_random], 0);
-                    load_faction_art(last_random);
+                    strcpy(Players[special_b].search_key, Players[special_b].filename);
+                    read_faction(&Players[special_b], 0);
+                    load_faction_art(special_b);
                 }
             } else if (!special_count && rand() % 2) {
                 int start = rand() % 7;
