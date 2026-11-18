@@ -163,7 +163,7 @@ int FileBox::set_def_ext(const char *extension) {
         def_ext_[0] = 0;
         return 0;
     }
-    if (std::strlen(extension) > 3) {
+    if (strlen(extension) > 3) {
         return 3;
     }
     def_ext_[0] = 0;
@@ -184,7 +184,7 @@ int FileBox::set_def_name(const char *name) {
     }
     // The original rejects > 0x104, not >=; its boundary case remains an
     // overflow obligation, not a silently changed behavior.
-    if (std::strlen(name) > 0x104) {
+    if (strlen(name) > 0x104) {
         return 3;
     }
     def_name_[0] = 0;
@@ -203,7 +203,7 @@ int FileBox::set_initial_dir(const char *directory) {
         initial_dir_[0] = 0;
         return 0;
     }
-    if (std::strlen(directory) > 0x104) {
+    if (strlen(directory) > 0x104) {
         return 3;
     }
     initial_dir_[0] = 0;

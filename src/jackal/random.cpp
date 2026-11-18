@@ -139,7 +139,7 @@ double Random::get() {
     seed_ = seed_ * 0x19660D + 0x3C6EF35F;
     const uint32_t bits = (seed_ & 0x7FFFFF) | 0x3F800000;
     float unit;
-    std::memcpy(&unit, &bits, sizeof(unit));
+    memcpy(&unit, &bits, sizeof(unit));
     return static_cast<double>(unit) - 1.0;
 }
 

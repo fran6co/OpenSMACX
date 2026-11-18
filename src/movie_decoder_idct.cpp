@@ -7,13 +7,13 @@ namespace {
 
 uint32_t bits(int32_t value) {
   uint32_t result;
-  std::memcpy(&result, &value, sizeof(result));
+  memcpy(&result, &value, sizeof(result));
   return result;
 }
 
 int32_t signed_bits(uint32_t value) {
   int32_t result;
-  std::memcpy(&result, &value, sizeof(result));
+  memcpy(&result, &value, sizeof(result));
   return result;
 }
 
@@ -83,8 +83,8 @@ void transform(const int32_t *source,
   int32_t source_two;
   int32_t source_six;
   load_source_pair(source_two, source_six);
-  std::memcpy(&scratch_words[2], &second_float, sizeof(second_float));
-  std::memcpy(&scratch_words[0], &first_float, sizeof(first_float));
+  memcpy(&scratch_words[2], &second_float, sizeof(second_float));
+  memcpy(&scratch_words[0], &first_float, sizeof(first_float));
   const int32_t first = signed_bits(bits(scratch_words[0]));
   const int32_t second = signed_bits(bits(scratch_words[2]));
 

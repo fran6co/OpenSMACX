@@ -156,7 +156,7 @@ void NetSessionPickerWin::draw_frame() {
 static inline void write_label(NetSessionPickerWin *win, char *text,
                                RECT *rect) {
   if (text != 0) {
-    win->Buffer::write_l(text, rect, static_cast<int>(std::strlen(text)));
+    win->Buffer::write_l(text, rect, static_cast<int>(strlen(text)));
   }
 }
 
@@ -262,7 +262,7 @@ void NetSessionPickerWin::draw_selected_rows() {
       char *text = payload->text;
       if (text != 0) {
         Buffer::write_l(text, &rect,
-                        static_cast<unsigned int>(std::strlen(text)));
+                        static_cast<unsigned int>(strlen(text)));
       }
     }
     rect.top += tail_.row_height_;

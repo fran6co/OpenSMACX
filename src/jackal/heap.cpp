@@ -105,7 +105,7 @@ void Heap::Heap2() {
 void Heap::reset() {
     // IMAGE ORDER, and the null goes INSIDE the guard as well as after it.
     if (base_) {
-        std::free(base_);
+        free(base_);
         base_ = nullptr;
     }
     err_flags_ = 0;
@@ -153,7 +153,7 @@ Heap::~Heap() {
 // RECOVERY_SHARED: v1 0x005D45B0 0x005D45DA ?shutdown@Heap@@QAEXXZ 0x005FDF60
 void Heap::shutdown() {
     if (base_) {
-        std::free(base_);
+        free(base_);
         base_ = nullptr;
     }
     err_flags_ = 0;

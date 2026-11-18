@@ -151,11 +151,11 @@ NetWinSessionDataStorage NetWinSessionData;
 NetWinLobbyRowsStorage NetWinLobbyRows;
 
 void NetWinSessionBlock::receive_wire_block(const unsigned char *bytes) {
-    std::memcpy(this, bytes, sizeof(*this));
+    memcpy(this, bytes, sizeof(*this));
 }
 
 void NetWinSessionOptionsState::receive_wire_block(const unsigned char *bytes) {
-    std::memcpy(this, bytes, sizeof(*this));
+    memcpy(this, bytes, sizeof(*this));
 }
 
 // Native pick_pass passes these distinct zero-filled input bytes as X_pop_ask

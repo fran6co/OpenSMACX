@@ -47,7 +47,7 @@ int __cdecl X_pops(char *caption, const char *label, char *text, int value,
     if (text == nullptr) {
         return -1;
     }
-    const int length = static_cast<int>(std::strlen(text));
+    const int length = static_cast<int>(strlen(text));
     return X_pops(caption, label, length, text, value, sprite, 1, 1,
                   callback);
 }
@@ -67,7 +67,7 @@ int __cdecl X_pops(char *caption, const char *label, char *text, int value,
     if (text == nullptr) {
         return -1;
     }
-    return X_pops(caption, label, static_cast<int>(std::strlen(text)), text,
+    return X_pops(caption, label, static_cast<int>(strlen(text)), text,
                   value, sprite, flag1, flag2, callback);
 }
 
@@ -631,7 +631,7 @@ int __cdecl X_pop(const char *label, int (__cdecl *callback)()) {
 int __cdecl X_pop(char *caption, const char *label, char *text, int value,
                   int (__cdecl *callback)()) {
     if (text == nullptr) return -1;
-    return X_pop(caption, label, static_cast<int>(std::strlen(text)), text,
+    return X_pop(caption, label, static_cast<int>(strlen(text)), text,
                  value, callback);
 }
 
@@ -658,7 +658,7 @@ int __cdecl X_pop_ask(char *caption, const char *label, int value,
 int __cdecl X_pop_ask(char *caption, const char *label, char *text,
                       int (__cdecl *callback)(), int flags) {
     if (text == nullptr) return -1;
-    return X_pop_ask(caption, label, static_cast<int>(std::strlen(text)),
+    return X_pop_ask(caption, label, static_cast<int>(strlen(text)),
                      text, callback, flags);
 }
 
@@ -682,8 +682,8 @@ int __cdecl X_pop_ask(char *caption, const char *label, int value,
     static const char XPopModCheckMode2Text[] = "rb";
 
     char *const section = const_cast<char *>(label);
-    if (std::strcmp(caption, XPopModCheckString1()) != 0 &&
-        std::strcmp(caption, XPopModCheckString2Text) != 0) {
+    if (strcmp(caption, XPopModCheckString1()) != 0 &&
+        strcmp(caption, XPopModCheckString2Text) != 0) {
         return pop_ask(caption, section, value, text, callback, flags);
     }
 
@@ -775,8 +775,8 @@ int __cdecl X_pop_ask_number(char *caption, const char *label, int value,
     static const char XPopModCheckMode2Text[] = "rb";
 
     char *const section = const_cast<char *>(label);
-    if (std::strcmp(caption, XPopModCheckString1()) != 0 &&
-        std::strcmp(caption, XPopModCheckString2Text) != 0) {
+    if (strcmp(caption, XPopModCheckString1()) != 0 &&
+        strcmp(caption, XPopModCheckString2Text) != 0) {
         return pop_ask_number(caption, section, value, callback);
     }
 
@@ -826,7 +826,7 @@ int __cdecl X_pop_ask(const char *label, char *text,
     if (text == 0) {
         return -1;
     }
-    return X_pop_ask(PopupStartCaption, label, static_cast<int>(std::strlen(text)), text,
+    return X_pop_ask(PopupStartCaption, label, static_cast<int>(strlen(text)), text,
                      callback, flags);
 }
 
@@ -849,8 +849,8 @@ int __cdecl X_pops(char *caption, const char *label, int text_length,
     static const char XPopModCheckMode2Text[] = "rb";
 
     char *const mutable_label = const_cast<char *>(label);
-    if (std::strcmp(caption, XPopModCheckString1()) != 0 &&
-        std::strcmp(caption, XPopModCheckString2Text) != 0) {
+    if (strcmp(caption, XPopModCheckString1()) != 0 &&
+        strcmp(caption, XPopModCheckString2Text) != 0) {
         return pops(caption, mutable_label, text_length, text, value,
                     sprite, flag_a, flag_b, callback);
     }

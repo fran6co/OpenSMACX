@@ -1759,7 +1759,7 @@ void BaseWin::production(int a1, int a2) {
         return;
 
     const int saved_queue_size = BaseCurrent->queue_size;
-    std::memcpy(saved_queue, BaseCurrent->queue_production_id, sizeof(saved_queue));
+    memcpy(saved_queue, BaseCurrent->queue_production_id, sizeof(saved_queue));
     const int old_queue_id = BaseCurrent->queue_production_id[a1];
     displayed_production_id_ = BaseCurrent->production_id_last;
     const int faction = BaseCurrent->faction_id_current;

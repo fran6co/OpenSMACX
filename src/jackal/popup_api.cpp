@@ -880,7 +880,7 @@ int __cdecl pop(char *caption, char *label, char *text, int value,
     if (text == 0) {
         return -1;
     }
-    const int text_length = static_cast<int>(std::strlen(text));
+    const int text_length = static_cast<int>(strlen(text));
     return pops(caption, label, text_length, text, value, 0, 1, 1,
                 callback);
 }
@@ -893,7 +893,7 @@ int __cdecl pops(char *caption, char *label, char *text, int value,
     if (text == 0) {
         return -1;
     }
-    const int text_length = static_cast<int>(std::strlen(text));
+    const int text_length = static_cast<int>(strlen(text));
     return pops(caption, label, text_length, text, value, sprite, 1, 1,
                 callback);
 }
@@ -907,7 +907,7 @@ int __cdecl pops(char *caption, char *label, char *text, int value,
     if (text == 0) {
         return -1;
     }
-    return pops(caption, label, static_cast<int>(std::strlen(text)), text, value, sprite,
+    return pops(caption, label, static_cast<int>(strlen(text)), text, value, sprite,
                 flag_a, flag_b, callback);
 }
 

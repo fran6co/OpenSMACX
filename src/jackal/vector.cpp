@@ -425,7 +425,7 @@ Matrix3 &Matrix3::multiply_assign(const Matrix3 *other) {
             }
         }
     }
-    std::memcpy(cells, scratch, sizeof(scratch));
+    memcpy(cells, scratch, sizeof(scratch));
     return *this;
 }
 

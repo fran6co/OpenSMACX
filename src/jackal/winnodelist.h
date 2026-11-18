@@ -74,11 +74,11 @@ class WinNodeList {
               for (int i = 0; i < count_; ++i) {
                   current_ = head_->next_;
                   if (head_->allocation_ != 0) {
-                      std::free(head_->allocation_);
+                      free(head_->allocation_);
                   }
                   head_->allocation_ = 0;
                   if (head_ != 0) {
-                      std::free(head_);
+                      free(head_);
                   }
                   head_ = current_;
               }
