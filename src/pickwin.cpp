@@ -242,30 +242,45 @@ void PickWin::init(void (__cdecl *callback)(int), int mode, int faction) {
   source.load_pcx("pickfac.pcx", 0, 10, 0xEC);
 
   RECT area;
+  // WORKAROUND(inline): the image keeps the cell height in a register from
+  // the 0x5A store (0x4889A1) into the loop and from each row step
+  // (0x488ABC) into the next row's first rectangle, and reads the width and
+  // height of the second and third rectangles before it stores the advanced
+  // x (0x488A17..0x488A30). Plain member statements reload them after every
+  // member store; the locals stand in for whatever by-value helper the
+  // original read them through.
+  int h = 0x5A;
   field_A1C_ = 0x102;
-  field_A20_ = 0x5A;
+  field_A20_ = h;
   field_A18_ = 1;
   for (i = 0; i < 3; ++i) {
-    field_A14_ = 1;
-    set_rectangle_dimensions(&area, field_A14_, field_A18_, field_A1C_, field_A20_);
+    set_rectangle_dimensions(&area, field_A14_ = 1, field_A18_, field_A1C_, h);
     sprites1_[i].extract(&source, WinFillColour, &area, 0);
-    field_A14_ += field_A1C_ + 1;
-    set_rectangle_dimensions(&area, field_A14_, field_A18_, field_A1C_, field_A20_);
+    {
+      int cell_w = field_A1C_, cell_h = field_A20_;
+      field_A14_ += cell_w + 1;
+      set_rectangle_dimensions(&area, field_A14_, field_A18_, cell_w, cell_h);
+    }
     sprites2_[i].extract(&source, WinFillColour, &area, 0);
-    field_A14_ += field_A1C_ + 1;
-    set_rectangle_dimensions(&area, field_A14_, field_A18_, field_A1C_, field_A20_);
+    {
+      int cell_w = field_A1C_, cell_h = field_A20_;
+      field_A14_ += cell_w + 1;
+      set_rectangle_dimensions(&area, field_A14_, field_A18_, cell_w, cell_h);
+    }
     sprites3_[i].extract(&source, WinFillColour, &area, 0);
-    field_A18_ += field_A20_ + 1;
+    h = field_A20_;
+    field_A18_ += h + 1;
   }
 
   field_A14_ = 1;
   field_A1C_ = 0x10;
-  field_A20_ = 0x10;
+  field_A20_ = h = 0x10;
   field_A18_ = 0x139;
   for (i = 0; i < 3; ++i) {
-    set_rectangle_dimensions(&area, field_A14_, field_A18_, field_A1C_, field_A20_);
+    set_rectangle_dimensions(&area, field_A14_, field_A18_, field_A1C_, h);
     sprites4_[i].extract(&source, WinFillColour, &area, 0);
-    field_A18_ += field_A20_ + 1;
+    h = field_A20_;
+    field_A18_ += h + 1;
   }
   sprite5_.extract(&source, WinFillColour, field_A14_, field_A18_, 7, 0xD, 0);
 
@@ -284,8 +299,8 @@ void PickWin::init(void (__cdecl *callback)(int), int mode, int faction) {
   field_A14_ = header_panel_rect_.left + 1;
   header_panel_rect_.bottom = header_panel_rect_.top + 0x1E;
   field_A18_ = header_panel_rect_.bottom + 4;
-  field_A20_ = 0x16;
   field_A1C_ = (header_panel_rect_.right - header_panel_rect_.left - 6) / 3;
+  field_A20_ = 0x16;
   set_rectangle_dimensions(&field_625C_rect_, field_A14_, field_A18_, 0x102, 0x5A);
   set_rectangle_dimensions(&field_626C_rect_, field_625C_rect_.right + 2, field_A18_, 0x102, 0x5A);
   set_rectangle_dimensions(&field_627C_rect_, field_626C_rect_.right + 2, field_A18_, 0x102, 0x5A);
@@ -302,8 +317,13 @@ void PickWin::init(void (__cdecl *callback)(int), int mode, int faction) {
                              i + list_area_rect_.top, 0x10, 0x10);
   }
 
-  field_A14_ = header_panel_rect_.left + 1;
-  field_A18_ = list_area_rect_.bottom + 7;
+  {
+    // WORKAROUND(inline): both edges are read before either store
+    // (0x488E0E..0x488E26).
+    int x = header_panel_rect_.left + 1, y = list_area_rect_.bottom + 7;
+    field_A14_ = x;
+    field_A18_ = y;
+  }
   field_A1C_ = static_cast<int>(field_A1C_) * 3 / 4 - 1;
   set_rectangle_dimensions(&field_9220_rect_, field_A14_, field_A18_, field_A1C_, field_A20_);
   set_rectangle_dimensions(&field_9210_rect_, field_9220_rect_.right + 2, field_A18_, field_A1C_, field_A20_);
@@ -356,48 +376,69 @@ void PickWin::init(void (__cdecl *callback)(int), int mode, int faction) {
   listBox_.Dialog::field_48_ = 0x13;
   listBox_.Dialog::field_44_ = 3;
   PickWinListAccess::set_win_flags(this, 0x40);
-  listBox_.Dialog::field_20_ &= ~4u;
+  listBox_.clear_style_bits(4);
   listBox_.double_click_callback_ = list_was_dblclicked;
 
   StringTemp[0] = '\0';
   strcat(StringTemp, label_get(0x45E));
-  flatButton4_.init(StringTemp, 0x106, field_9210_rect_.left, field_9210_rect_.top, field_9210_rect_.right - field_9210_rect_.left, field_9210_rect_.bottom - field_9210_rect_.top, this, 0);
-  flatButton4_.Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
-  flatButton4_.redraw();
-  flatButton4_.hide();
+  // WORKAROUND(inline): each button's Buffer base is reached from the
+  // register that holds the button (lea ecx,[ebx+0x444] at 0x48930B and five
+  // more), not folded into this + offset: the calls go through a pointer.
+  {
+    FlatButton *button = &flatButton4_;
+    button->init(StringTemp, 0x106, field_9210_rect_.left, field_9210_rect_.top, field_9210_rect_.right - field_9210_rect_.left, field_9210_rect_.bottom - field_9210_rect_.top, this, 0);
+    button->Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
+    button->redraw();
+    button->hide();
+  }
   StringTemp[0] = '\0';
   strcat(StringTemp, StringTable.get(field_5DAC_ ? Labels.strings_ptr[0x45F]
                                              : Labels.strings_ptr[0x2AF]));
-  flatButton5_.init(StringTemp, 0x107, field_9220_rect_.left, field_9220_rect_.top, field_9220_rect_.right - field_9220_rect_.left, field_9220_rect_.bottom - field_9220_rect_.top, this, 0);
-  flatButton5_.Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
-  flatButton5_.redraw();
-  flatButton5_.hide();
+  {
+    FlatButton *button = &flatButton5_;
+    button->init(StringTemp, 0x107, field_9220_rect_.left, field_9220_rect_.top, field_9220_rect_.right - field_9220_rect_.left, field_9220_rect_.bottom - field_9220_rect_.top, this, 0);
+    button->Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
+    button->redraw();
+    button->hide();
+  }
   StringTemp[0] = '\0';
   strcat(StringTemp, label_get(0x66));
   CharUpperA(StringTemp);
-  flatButton6_.init(StringTemp, 0x103, field_9230_rect_.left, field_9230_rect_.top, field_9230_rect_.right - field_9230_rect_.left, field_9230_rect_.bottom - field_9230_rect_.top, this, 0);
-  flatButton6_.Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
-  flatButton6_.redraw();
-  flatButton6_.hide();
+  {
+    FlatButton *button = &flatButton6_;
+    button->init(StringTemp, 0x103, field_9230_rect_.left, field_9230_rect_.top, field_9230_rect_.right - field_9230_rect_.left, field_9230_rect_.bottom - field_9230_rect_.top, this, 0);
+    button->Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
+    button->redraw();
+    button->hide();
+  }
   StringTemp[0] = '\0';
   strcat(StringTemp, label_get(0x65));
   CharUpperA(StringTemp);
-  flatButton9_.init(StringTemp, 0x108, field_9260_rect_.left, field_9260_rect_.top, field_9260_rect_.right - field_9260_rect_.left, field_9260_rect_.bottom - field_9260_rect_.top, this, 0);
-  flatButton9_.Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
-  flatButton9_.redraw();
-  flatButton9_.hide();
+  {
+    FlatButton *button = &flatButton9_;
+    button->init(StringTemp, 0x108, field_9260_rect_.left, field_9260_rect_.top, field_9260_rect_.right - field_9260_rect_.left, field_9260_rect_.bottom - field_9260_rect_.top, this, 0);
+    button->Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
+    button->redraw();
+    button->hide();
+  }
   StringTemp[0] = '\0';
   strcat(StringTemp, label_get(0x460));
-  flatButton8_.init(StringTemp, 0x105, field_9250_rect_.left, field_9250_rect_.top, field_9250_rect_.right - field_9250_rect_.left, field_9250_rect_.bottom - field_9250_rect_.top, this, 0);
-  flatButton8_.Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
-  flatButton8_.redraw();
-  flatButton8_.hide();
+  {
+    FlatButton *button = &flatButton8_;
+    button->init(StringTemp, 0x105, field_9250_rect_.left, field_9250_rect_.top, field_9250_rect_.right - field_9250_rect_.left, field_9250_rect_.bottom - field_9250_rect_.top, this, 0);
+    button->Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
+    button->redraw();
+    button->hide();
+  }
   StringTemp[0] = '\0';
   strcat(StringTemp, label_get(0x461));
-  flatButton7_.init(StringTemp, 0x104, field_9240_rect_.left, field_9240_rect_.top, field_9240_rect_.right - field_9240_rect_.left, field_9240_rect_.bottom - field_9240_rect_.top, this, 0);
-  flatButton7_.Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
-  flatButton7_.redraw();
-  flatButton7_.hide();
+  {
+    FlatButton *button = &flatButton7_;
+    button->init(StringTemp, 0x104, field_9240_rect_.left, field_9240_rect_.top, field_9240_rect_.right - field_9240_rect_.left, field_9240_rect_.bottom - field_9240_rect_.top, this, 0);
+    button->Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
+    button->redraw();
+    button->hide();
+  }
 
   buttonGroup_.init(0, 0);
   buttonGroup_.add(&flatButton7_);
