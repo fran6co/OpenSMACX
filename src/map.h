@@ -757,6 +757,23 @@ inline int __cdecl cursor_dist(int x_point_a, int y_point_a, int x_point_b, int 
     return (x_dist(x_point_a, x_point_b) + abs(y_point_a - y_point_b)) >> 1;
 }
 
+// The halved |dy| + x_dist reach. alien_move, enemy_planet_buster and
+// enemy_move load all four coordinates into registers before the abs call at
+// each site (0x56F0E0: y, ty, tx, x; abs; push tx, x; x_dist), the fingerprint
+// of inline parameters. The |dy| term comes first, unlike cursor_dist.
+inline int map_range(int x1, int y1, int x2, int y2) {
+    return (abs(y1 - y2) + x_dist(x1, x2)) >> 1;
+}
+
+// The base-to-tile distance: enemy_move loads the first x into a register
+// before the abs call at each site (0x576FF1: y, ty, x; abs; push tx, x;
+// x_dist; vector_dist), the fingerprint of inline parameters, and so can
+// share one tail between two arms (0x576FEE jmp 0x576FFD). Unlike the
+// four-argument vector_dist it names no locals.
+inline int map_dist(int x1, int y1, int x2, int y2) {
+    return vector_dist(x_dist(x1, x2), abs(y1 - y2));
+}
+
 MEASURED inline BOOL __cdecl is_ocean(int x, int y) {
     return (map_loc(x, y)->climate & ~0x1F) < ALT_BIT_SHORE_LINE;
 }

@@ -1265,7 +1265,7 @@ void __cdecl base_kill(int base_id) {
     if (is_ocean(x, y)) {
         for (veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; veh_id++) {
             if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_NAVAL_TRANSPORT
-                && !((x_dist(Vehs[veh_id].x, x) + abs(Vehs[veh_id].y - y)) & ~1)) {
+                && !map_range(Vehs[veh_id].x, Vehs[veh_id].y, x, y)) {
                 stack_veh(veh_id, 0);
             }
         }
@@ -1273,7 +1273,7 @@ void __cdecl base_kill(int base_id) {
         // Do not silently repair that stale-slot/error-path read with a new guard.
         for (veh_id = GameDataStateStorage.fields_.vehicle_current_count_; veh_id >= 0; veh_id--) {
             if (get_triad(veh_id) == TRIAD_LAND
-                && !((x_dist(Vehs[veh_id].x, x) + abs(Vehs[veh_id].y - y)) & ~1)
+                && !map_range(Vehs[veh_id].x, Vehs[veh_id].y, x, y)
                 && (Vehs[veh_id].order != ORDER_SENTRY_BOARD || Vehs[veh_id].waypoint_x[0] < 0)) {
                 kill(veh_id);
             }
@@ -1281,7 +1281,7 @@ void __cdecl base_kill(int base_id) {
     } else {
         for (veh_id = GameDataStateStorage.fields_.vehicle_current_count_; veh_id >= 0; veh_id--) {
             if (get_triad(veh_id) == TRIAD_SEA
-                && !((x_dist(Vehs[veh_id].x, x) + abs(Vehs[veh_id].y - y)) & ~1)) {
+                && !map_range(Vehs[veh_id].x, Vehs[veh_id].y, x, y)) {
                 kill(veh_id);
             }
         }
@@ -3075,13 +3075,8 @@ void __cdecl base_check_support() {
         if (bounded_crt_random(divisor)) {
             continue;
         }
-        int vy = Vehs[veh_id].y;
-        int by = BaseCurrent->y;
-        int bx = BaseCurrent->x;
-        int vx = Vehs[veh_id].x;
-        int dx = x_dist(vx, bx);
-        int cost = range(VehPrototypes[Vehs[veh_id].proto_id].cost, 1, 99);
-        int score = ((dx + abs(vy - by)) >> 1) * 100 / cost;
+        int score = map_range(Vehs[veh_id].x, Vehs[veh_id].y, BaseCurrent->x, BaseCurrent->y) * 100
+            / range(VehPrototypes[Vehs[veh_id].proto_id].cost, 1, 99);
         if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_DEFENSIVE) {
             score += score;
         }

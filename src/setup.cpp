@@ -556,7 +556,7 @@ void __cdecl time_warp() {
                     if (offset < 24) score /= 2;
                     int nearest = base_find(cx, cy);
                     if (base_id != nearest
-                        && ((x_dist(cx, Bases[nearest].x) + abs(cy - Bases[nearest].y)) & ~1) < 8)
+                        && map_range(cx, cy, Bases[nearest].x, Bases[nearest].y) < 4)
                         continue;
                     if (Bases[nearest].faction_id_current != faction_id) {
                         // Original quirk: the same tile as `region`, so always equal.

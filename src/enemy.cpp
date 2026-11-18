@@ -2827,13 +2827,6 @@ int __cdecl alien_base(int veh_id, int x, int y) {
     return base_id_best;
 }
 
-// The halved x_dist + |dy| reach. alien_move, enemy_planet_buster and
-// enemy_move load all four coordinates into registers before the abs call at
-// each site (0x56F0E0: y, ty, tx, x; abs; push tx, x; x_dist), the fingerprint
-// of inline parameters.
-static inline int map_range(int x1, int y1, int x2, int y2) {
-    return (abs(y1 - y2) + x_dist(x1, x2)) >> 1;
-}
 
 // ORIGINAL: 0x00566810 ?alien_move@@YAHH@Z 0x00566810-0x005678B9
 // RECOVERY_BINDING: v1 {"evidence": ["historical retired seed src/unrecovered/00566810.cpp", "recovery/tasks/alien-buster-owner-oct5.json", "pinned full native instruction/argument and directed-field review; compiler-observed current function symbol", "PlayerData sites[14].base_id alias: native addresses and compiler offsetof witness; original policy order checked by actual-product controls"], "reason": "Full vehicle-owner semantic recovery with actual Base, PlayerData, vehicle, map and callback relationships. Preserve original no-base adjacent-storage reads, native radius exits and uninitialized launch scratch; byte restoration and runtime fidelity remain unfinished."}
@@ -4272,13 +4265,6 @@ char EnemyBuildBaseMessageText[1] = {0};
 
 // Complete owner assembly. Native stack words are stored only on proven edges.
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0056B5B0 0x00579208 0x00579238 0x00577DD3
-// The base-to-tile distance: enemy_move loads the first x into a register
-// before the abs call at each site (0x576FF1: y, ty, x; abs; push tx, x;
-// x_dist; vector_dist), the fingerprint of inline parameters, and so can
-// share one tail between two arms (0x576FEE jmp 0x576FFD).
-static inline int map_dist(int x1, int y1, int x2, int y2) {
-    return vector_dist(x_dist(x1, x2), abs(y1 - y2));
-}
 // WORKAROUND(inline): every stack loop of enemy_move leaves from the step's
 // negative test straight to the loop exit (0x5720AD jl 0x5720C4, eleven
 // sites) and stores nothing on that path. The step written in place as a
