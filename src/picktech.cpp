@@ -17,6 +17,7 @@
 #define STRINGSTRUCT_REMOVE_ALL_CALLED
 #define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
 #include "stdafx.h"
+#define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h
 #include "interface_fonts.h"
 #include "picktech.h"
 #include "palette.h"
@@ -703,7 +704,7 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
     if (IsMultiplayerNet != 0 && ConsoleControlTurnActive != 0)
         g_FX.play(0x21);
 
-    popup.start(PopupStartCaption, section_id ? section_id : "TECHNOLOGY", -1, 0, 2, 0);
+    popup.start(section_id ? section_id : "TECHNOLOGY", 2);
     int best_value = -1;
     int recommendation = -1;
     int best_military_score = -1;
