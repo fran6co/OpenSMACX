@@ -1421,7 +1421,7 @@ int NetDaemon::game_checksum(int *results) {
                 cs = checksum((char *)player.diplo_friction, 0x20, cs);
                 // The original hashes 32 bytes here, not just the eight
                 // patience bytes: retain the following sanction/loan bytes.
-                cs = checksum((char *)&player + offsetof(PlayerData, diplo_patience), 0x20, cs);
+                cs = checksum(player.diplo_patience, 0x20, cs);
                 cs = checksum((char *)player.diplo_merc, 0x20, cs);
                 cs = checksum((char *)player.diplo_spoke, 0x20, cs);
                 cs = checksum((char *)player.diplo_wrongs, 0x20, cs);
@@ -1524,7 +1524,7 @@ int NetDaemon::game_checksum(int *results) {
                             cs = checksum((char *)&Vehs[idxBb].y, 2, cs);
                             // Original three-byte range includes the low
                             // byte of unk_1, beyond the two-byte proto_id.
-                            cs = checksum((char *)&Vehs[idxBb] + offsetof(Veh, proto_id), 3, cs);
+                            cs = checksum((char *)&Vehs[idxBb].proto_id, 3, cs);
                             cs = checksum((char *)&Vehs[idxBb].morale, 1, cs);
                             cs = checksum((char *)&Vehs[idxBb].moves_expended, 1, cs);
                             cs = checksum((char *)&Vehs[idxBb].home_base_id, 2, cs);
