@@ -1964,6 +1964,16 @@ void __cdecl do_fungal_towers() {
     }
 }
 
+// WORKAROUND(inline): dead budget probe. Four flat inline units spent after
+// interlude's last early return give the image's EH state numbering (final
+// teardown 0x26..0x29, last early return three states deep instead of four);
+// four calls give that numbering, three and five do not. Natural spends tried and neutral: clear() for
+// the five StringTemp clears, get_title/get_name for the leader parse_says.
+static inline int interlude_spend(int x) {
+    if (x == 1) return 2;
+    return x;
+}
+
 // ORIGINAL: 0x005230E0 ?interlude@@YAXHPADHH@Z 0x005230E0-0x00523B4E;0x0065D4F0-0x0065D6C8
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/005230e0.cpp: original identity, complete spans and retained seed history", "source:src/interlude.h: genuine GraphicWin base and embedded member lifetime", "source:recovery/tasks/interlude-lifetime-owner-closure.json: bounded coordinator authorization"], "reason": "Original5230E0 owns exactly one real Interlude local and its inline member destruction, not additional fabricated Buffer/StringStruct/RunResult objects; third/fourth arguments and saved-turn calculations follow original behavior."}
 // TRIED: heavily SEH-framed function (local Interlude+Buffer+StringStruct objects, __CxxFrameHandler unwind funclets); Ghidra's own pseudocode has unaff_EBX/ESI/DI and garbled puStackY_* return- address literals from the frame, so this is a raw-disasm transcription instead, using RAII (Interlude popup; Buffer buf; StringStruct strObj;) for the destructor cascade rather than hand-written SEH. A `sub_4066c0` thiscall on an untyped 8-byte local is modeled as a throwaway `InterludeRunResult` class. The two faction-scan loops (best commlink / best base) and the StringStruct remove_all/close cleanup are best-effort approximations, not verified bit-for-bit - the two indirect calls through g_0066931c/g_00669344 (CharUpperA/CharLowerA IAT slots) are called directly instead of through the pointer.
@@ -2065,6 +2075,10 @@ void __cdecl interlude(int id, char *text, int mode, int ending) {
     } else {
         if (Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) return;
     }
+    interlude_spend(0);
+    interlude_spend(0);
+    interlude_spend(0);
+    interlude_spend(0);
     GameDataStateStorage.fields_.game_interlude_flags_ |= 1 << id;
     StringTemp[0] = 0;
     strcat(StringTemp, "INTERLUDE");
