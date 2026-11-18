@@ -86,6 +86,15 @@ void InfoWin::setup_text() {
     int line_height;
     int shifted_x;
     int k;
+    // WORKAROUND(type): the image addresses every text row as
+    // `this + 0xB8 + (pane*12 + row)*80` with pane*12 carried in a register
+    // (0x004571CD..0x004571DA) rather than caching a per-pane row pointer:
+    // a flat [24][80] row table indexed by pane*12 + row (0.765 -> 0.851).
+    // Retyping row_text_ in infowin.h flips ReportIf::draw_security and
+    // draw_intel, so this body indexes the existing [2][12][80] member flat
+    // through its first pane instead. Case 5's closing strcpy still does not
+    // cross-jump into case 6's as the image's does (0x004571E1).
+    int row_base;
     int value;
     int i;
     int j;
@@ -142,6 +151,7 @@ void InfoWin::setup_text() {
         rect.top += 3;
         rect.bottom -= 3;
         k = 0;
+        row_base = pane * 12;
 
         switch (pane_states_[pane] % 8) {
         case 0:
@@ -152,7 +162,7 @@ void InfoWin::setup_text() {
             strcat(text, "{");
             say_year(text);
             strcat(text, "}");
-            strcpy(row_text_[pane][0], text);
+            strcpy(row_text_[0][row_base + 0], text);
             energy_compute(faction, 0);
             if (PlayersData[faction].tech_id_researching >= 0
                 && (GameDataStateStorage.fields_.game_state_ & 0x80
@@ -164,7 +174,7 @@ void InfoWin::setup_text() {
                 strcat(text, StringTable.get(
                     Technology[PlayersData[faction].tech_id_researching].name));
                 strcat(text, "}");
-                strcpy(row_text_[pane][1], text);
+                strcpy(row_text_[0][row_base + 1], text);
             }
             text[0] = 0;
             strcat(text, StringTable.get(Energy[0].abbrev));
@@ -184,7 +194,7 @@ void InfoWin::setup_text() {
             strcat(text, label_get(0x30));
             strcat(text, SocialWinCloseParenText);
             strcat(text, "}");
-            strcpy(row_text_[pane][2], text);
+            strcpy(row_text_[0][row_base + 2], text);
             text[0] = 0;
             strcat(text, StringTable.get(Energy[1].abbrev));
             strcat(text, SocialWinColonSpaceText);
@@ -192,7 +202,7 @@ void InfoWin::setup_text() {
             infowin_append_number(text, PlayersData[faction].se_alloc_psych * 10);
             strcat(text, PercentText);
             strcat(text, "}");
-            strcpy(row_text_[pane][3], text);
+            strcpy(row_text_[0][row_base + 3], text);
             text[0] = 0;
             strcat(text, StringTable.get(Energy[2].abbrev));
             strcat(text, SocialWinColonSpaceText);
@@ -210,7 +220,7 @@ void InfoWin::setup_text() {
             }
             strcat(text, "}");
             k = 5;
-            strcpy(row_text_[pane][4], text);
+            strcpy(row_text_[0][row_base + 4], text);
             break;
 
         case 1:
@@ -222,7 +232,7 @@ void InfoWin::setup_text() {
             strcat(text, "{");
             infowin_append_number(text, PlayersData[faction].tech_commerce_bonus + 1);
             strcat(text, "}");
-            strcpy(row_text_[pane][0], text);
+            strcpy(row_text_[0][row_base + 0], text);
             text[0] = 0;
             strcat(text, label_get(301));
             strcat(text, SocialWinColonSpaceText);
@@ -230,7 +240,7 @@ void InfoWin::setup_text() {
             infowin_append_number(text, PlayersData[faction].turn_commerce_income);
             strcat(text, label_get(304));
             strcat(text, "}");
-            strcpy(row_text_[pane][1], text);
+            strcpy(row_text_[0][row_base + 1], text);
             text[0] = 0;
             strcat(text, label_get(302));
             strcat(text, SocialWinColonSpaceText);
@@ -239,7 +249,7 @@ void InfoWin::setup_text() {
             strcat(text, label_get(304));
             strcat(text, "}");
             k = 3;
-            strcpy(row_text_[pane][2], text);
+            strcpy(row_text_[0][row_base + 2], text);
             if (Language == 0) {
                 text[0] = 0;
                 strcat(text, "Total Costs");
@@ -249,7 +259,7 @@ void InfoWin::setup_text() {
                 strcat(text, label_get(304));
                 strcat(text, "}");
                 k = 4;
-                strcpy(row_text_[pane][3], text);
+                strcpy(row_text_[0][row_base + 3], text);
             }
             text[0] = 0;
             strcat(text, label_get(0x3BF));
@@ -258,7 +268,7 @@ void InfoWin::setup_text() {
             infowin_append_number(text, NetIncomeGlobal);
             strcat(text, label_get(304));
             strcat(text, "}");
-            strcpy(row_text_[pane][k++], text);
+            strcpy(row_text_[0][row_base + k++], text);
             break;
 
         case 2: {
@@ -267,19 +277,19 @@ void InfoWin::setup_text() {
             text[0] = 0;
             parse_set(Players[other].noun_gender, Players[other].is_noun_plural);
             strcat(text, Players[other].formal_name_faction);
-            strcpy(row_text_[pane][0], text);
+            strcpy(row_text_[0][row_base + 0], text);
             text[0] = 0;
             strcat(text, get_title(other));
             strcat(text, BufferJoinSpace);
             strcat(text, get_name(other));
-            strcpy(row_text_[pane][1], text);
+            strcpy(row_text_[0][row_base + 1], text);
             text[0] = 0;
             {
                 int mood = get_mood(DiploFriction);
                 say_special(text, StringTable.get(Mood[mood]), other);
             }
             k = 3;
-            strcpy(row_text_[pane][2], text);
+            strcpy(row_text_[0][row_base + 2], text);
             text[0] = 0;
             if (PlayersData[faction].diplo_treaties[other] & 1) {
                 strcat(text, label_get(0xD3));
@@ -294,7 +304,7 @@ void InfoWin::setup_text() {
             // first character, so the treaty row is always published.
             if (text) {
                 k = 4;
-                strcpy(row_text_[pane][3], text);
+                strcpy(row_text_[0][row_base + 3], text);
             }
             break;
         }
@@ -304,12 +314,12 @@ void InfoWin::setup_text() {
             text[0] = 0;
             parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
             strcat(text, Players[faction].formal_name_faction);
-            strcpy(row_text_[pane][0], text);
+            strcpy(row_text_[0][row_base + 0], text);
             text[0] = 0;
             strcat(text, get_title(faction));
             strcat(text, BufferJoinSpace);
             strcat(text, get_name(faction));
-            strcpy(row_text_[pane][1], text);
+            strcpy(row_text_[0][row_base + 1], text);
             text[0] = 0;
             strcat(text, label_get(0xDE));
             strcat(text, SocialWinColonSpaceText);
@@ -317,7 +327,7 @@ void InfoWin::setup_text() {
             say_special(text, StringTable.get(
                 Repute[range(PlayersData[faction].integrity_blemishes, 0, 7)]), faction);
             strcat(text, "}");
-            strcpy(row_text_[pane][2], text);
+            strcpy(row_text_[0][row_base + 2], text);
             text[0] = 0;
             strcat(text, label_get(0xDF));
             strcat(text, SocialWinColonSpaceText);
@@ -325,7 +335,7 @@ void InfoWin::setup_text() {
             say_special(text, StringTable.get(
                 Might[7 - range(PlayersData[faction].ranking, 1, 7)].adj), faction);
             strcat(text, "}");
-            strcpy(row_text_[pane][3], text);
+            strcpy(row_text_[0][row_base + 3], text);
             text[0] = 0;
             strcat(text, label_get(0x3C0));
             strcat(text, SocialWinColonSpaceText);
@@ -333,7 +343,7 @@ void InfoWin::setup_text() {
             infowin_append_number(text, council_votes(faction));
             strcat(text, "}");
             k = 5;
-            strcpy(row_text_[pane][4], text);
+            strcpy(row_text_[0][row_base + 4], text);
             break;
 
         case 6:
@@ -355,7 +365,7 @@ void InfoWin::setup_text() {
             strcat(text, BufferJoinSpace);
             strcat(text, get_name(k));
             strcat(text, "}");
-            strcpy(row_text_[pane][0], text);
+            strcpy(row_text_[0][row_base + 0], text);
 
             value = 0;
             k = ConsoleGlobal.faction_id_;
@@ -374,7 +384,7 @@ void InfoWin::setup_text() {
             strcat(text, BufferJoinSpace);
             strcat(text, get_name(k));
             strcat(text, "}");
-            strcpy(row_text_[pane][1], text);
+            strcpy(row_text_[0][row_base + 1], text);
 
             value = 0;
             k = ConsoleGlobal.faction_id_;
@@ -393,7 +403,7 @@ void InfoWin::setup_text() {
             strcat(text, BufferJoinSpace);
             strcat(text, get_name(k));
             strcat(text, "}");
-            strcpy(row_text_[pane][2], text);
+            strcpy(row_text_[0][row_base + 2], text);
 
             value = 0;
             k = ConsoleGlobal.faction_id_;
@@ -412,7 +422,7 @@ void InfoWin::setup_text() {
             strcat(text, BufferJoinSpace);
             strcat(text, get_name(k));
             strcat(text, "}");
-            strcpy(row_text_[pane][3], text);
+            strcpy(row_text_[0][row_base + 3], text);
 
             value = 0;
             k = ConsoleGlobal.faction_id_;
@@ -440,7 +450,7 @@ void InfoWin::setup_text() {
             strcat(text, get_name(k));
             strcat(text, "}");
             k = 5;
-            strcpy(row_text_[pane][4], text);
+            strcpy(row_text_[0][row_base + 4], text);
             // Signed test in the image (test/jle, 0x004577F4).
             if ((int)GameDataStateStorage.fields_.ranking_faction_id_unk1_ > 0) {
                 text[0] = 0;
@@ -452,7 +462,7 @@ void InfoWin::setup_text() {
                 strcat(text, get_name(GameDataStateStorage.fields_.faction_rankings_[7]));
                 strcat(text, "}");
                 k = 6;
-                strcpy(row_text_[pane][5], text);
+                strcpy(row_text_[0][row_base + 5], text);
             }
             break;
 
@@ -469,7 +479,7 @@ void InfoWin::setup_text() {
                 strcat(text, label_get(0x1B8));
             }
             k = 1;
-            strcpy(row_text_[pane][0], text);
+            strcpy(row_text_[0][row_base + 0], text);
             {
                 int plot_height = rect.bottom - rect.top - row_pitch - 4;
                 int base = rect.bottom - 2;
@@ -529,7 +539,7 @@ void InfoWin::setup_text() {
             } else {
                 strcat(text, label_get(0x1B8));
             }
-            strcpy(row_text_[pane][0], text);
+            strcpy(row_text_[0][row_base + 0], text);
             {
                 int plot_height = rect.bottom - rect.top - row_pitch - 4;
                 int step;
@@ -587,7 +597,7 @@ void InfoWin::setup_text() {
                        && rect.right - rect.left - MainInterfaceGlobal.text_width(text) - 2 < x) {
                     text[strlen(text) - 1] = 0;
                 }
-                strcpy(row_text_[pane][8 - i], text);
+                strcpy(row_text_[0][row_base + 8 - i], text);
             }
             MainInterfaceGlobal.set_clip(const_cast<RECT *>(&MainInterfaceGlobal.clip_rect()));
             break;
@@ -596,14 +606,14 @@ void InfoWin::setup_text() {
             text[0] = 0;
             line_height = 0;
             strcat(text, label_get(0x6AC / 4));
-            strcpy(row_text_[pane][0], text);
+            strcpy(row_text_[0][row_base + 0], text);
             text[0] = 0;
             strcat(text, label_get(0x6A8 / 4));
             strcat(text, SocialWinColonSpaceText);
             strcat(text, "{");
             strcat(text, MapFilePath);
             strcat(text, "}");
-            strcpy(row_text_[pane][1], text);
+            strcpy(row_text_[0][row_base + 1], text);
             text[0] = 0;
             strcat(text, label_get(0x6A4 / 4));
             strcat(text, SocialWinColonSpaceText);
@@ -642,7 +652,7 @@ void InfoWin::setup_text() {
                 strcat(text, StringTable.get(Terraforming[MapEditorPaintId - 6].name[0]));
                 break;
             }
-            strcpy(row_text_[pane][2], text);
+            strcpy(row_text_[0][row_base + 2], text);
             text[0] = 0;
             strcat(text, label_get(0x684 / 4));
             strcat(text, SocialWinColonSpaceText);
@@ -651,7 +661,7 @@ void InfoWin::setup_text() {
             } else {
                 infowin_append_number(text, MapEditorBrushId ? MapEditorBrushId - 1 : 0);
             }
-            strcpy(row_text_[pane][3], text);
+            strcpy(row_text_[0][row_base + 3], text);
             text[0] = 0;
             strcat(text, label_get(0xD7C / 4));
             strcat(text, SocialWinColonSpaceText);
@@ -664,7 +674,7 @@ void InfoWin::setup_text() {
             } else {
                 strcat(text, label_get(0xD84 / 4));
             }
-            strcpy(row_text_[pane][4], text);
+            strcpy(row_text_[0][row_base + 4], text);
             text[0] = 0;
             strcat(text, label_get(0x84 / 4));
             strcat(text, SocialWinColonSpaceText);
@@ -672,7 +682,7 @@ void InfoWin::setup_text() {
             strcat(text, label_get(0x14 + MapCloudCover));
             strcat(text, "}");
             k = 6;
-            strcpy(row_text_[pane][5], text);
+            strcpy(row_text_[0][row_base + 5], text);
             break;
         }
 
@@ -682,7 +692,7 @@ void InfoWin::setup_text() {
             if (line_height && row_y_[pane][k] < line_height + y + 2) {
                 row_x_[pane][k] = shifted_x;
             }
-            text_lengths_[pane] += strlen(row_text_[pane][k]);
+            text_lengths_[pane] += strlen(row_text_[0][row_base + k]);
         }
     }
 }
