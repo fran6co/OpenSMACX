@@ -4207,6 +4207,7 @@ char EnemyBuildBaseMessageText[1] = {0};
 // RECOVERY_BINDING: v1 {"evidence": ["git:ac587b44f8a4f670c7c73f0dfa434885adc49ebf:src/unrecovered/0056b5b0.cpp is deleted seed history; its original identity, full span, claims and useful lessons are retained here through the source writer.", "Pinned instructions establish distinct raw route/damage flags, integer stack priority, saved versus live callback reads, and original unguarded/uninitialized error paths.", "Complete selected, strategic, nonsea, sea and tactical continuations execute once; helpers do not introduce new original identities.", "Vehicle, prototype, PlayerData and Base fields use their real source owners; original matching and full runtime restoration obligations remain."], "reason": "Complete typed per-vehicle enemy movement owner with one path-dependent raw frame and genuine product owners; superseded executable forwarding and scaffold are removed together."}
 // kind game
 int __cdecl enemy_move(int veh_id) {
+    int w;
     // One variable per original frame slot; the original reuses several of
     // them for unrelated roles, and some paths read a slot this call has not
     // written (original uninitialised reads).
@@ -8578,7 +8579,7 @@ L_578de9:
             Vehs[veh_id].order = 0x18;
             // BUG(original): index w + 1 reaches waypoint_x[4] (== waypoint_y[0])
             // and past waypoint_y[3].
-            for (int w = 0; w < Vehs[veh_id].waypoint_count; w++) {
+            for (w = 0; w < Vehs[veh_id].waypoint_count; w++) {
                 Vehs[veh_id].waypoint_x[w] = Vehs[veh_id].waypoint_x[w + 1];
                 Vehs[veh_id].waypoint_y[w] = Vehs[veh_id].waypoint_y[w + 1];
             }
@@ -8587,7 +8588,7 @@ L_578de9:
         } else {
             tx = Vehs[veh_id].waypoint_x[0];
             ty = Vehs[veh_id].waypoint_y[0];
-            for (int w = 0; w < Vehs[veh_id].waypoint_count; w++) {
+            for (w = 0; w < Vehs[veh_id].waypoint_count; w++) {
                 Vehs[veh_id].waypoint_x[w] = Vehs[veh_id].waypoint_x[w + 1];
                 Vehs[veh_id].waypoint_y[w] = Vehs[veh_id].waypoint_y[w + 1];
             }

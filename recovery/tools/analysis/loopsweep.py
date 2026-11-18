@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""unbind.py [--json loopscan.json] [--addr 0xADDR] [--write] [--min N]
-Loop-form sweep for the `rebind` tag of loopscan.py: a loop body that binds
+"""loopsweep.py [--rule rebind|sibling] [--json loopscan.json | --unit U --addr 0xADDR] [--write] [--min N]
+Loop-form sweeps for loopscan.py's tags.
+rebind: a loop body that binds
 `T &r = A[i];` or `T *p = &A[i];` each iteration is rewritten to write `A[i]` at
 each use (`r.f` -> `A[i].f`, `p->f` -> `A[i].f`, `*p` -> `A[i]`, `p` -> `&A[i]`) and the
 declaration is dropped.  A site is skipped when the bound name or a variable of the
@@ -8,7 +9,9 @@ subscript is assigned after the declaration, or the subscript calls a function.
 Each site is measured alone with fe.py; --write keeps every site that lowers its
 function's differing rows by at least --min (default 1) without changing the frame
 size or the loop-test multiset away from the image.  Screen only.
-Run from the worktree root: FE_PFX_BASE=27 FE_JOBS=5 uv run python recovery/tools/analysis/unbind.py --json loops.json"""
+sibling: a counter name declared by several non-nested `for (int NAME ...)` loops, and not used
+outside them, becomes one function-scope `int NAME;` (one variant per name, one for all names).
+Run from the worktree root: FE_PFX_BASE=27 FE_JOBS=5 uv run python recovery/tools/analysis/loopsweep.py --json loops.json"""
 import sys,os,re,json,argparse
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
@@ -49,21 +52,44 @@ def sites(text,clean,lo,hi):
         new+=seg[pos:]
         out.append(dict(line=clean.count('\n',0,m.start())+1,name=name,expr=e,text=text[:m.start()]+text[m.end():m.end()]+new+text[end:]))
     return out
+def sibling_sites(text,clean,lo,hi):
+    found={}
+    for m in re.finditer(r'\bfor\s*\(\s*int\s+([A-Za-z_]\w*)\s*=',clean[:hi]):
+        if m.start()<lo: continue
+        p0=clean.index('(',m.start()); p1=loopscan.match(clean,p0,'(',')'); s_,e=loopscan.stmt_end(clean,p1+1)
+        found.setdefault(m.group(1),[]).append((m.start(),e,m))
+    names=[]
+    for name,L in found.items():
+        if len(L)<2: continue
+        if any(a<c<b for a,b,_ in L for c,d,_ in L if (a,b)!=(c,d)): continue      # nested reuse
+        outside=clean[lo:hi]
+        for a,b,_ in sorted(L,reverse=True): outside=outside[:a-lo]+outside[b+1-lo:]
+        if re.search(r'\b%s\b'%name,outside): continue
+        names.append((name,L))
+    def apply(sel):
+        t=text; ms=sorted([x for n,L in sel for x in L],key=lambda x:-x[0])
+        for a,b,m in ms: t=t[:m.start()]+re.sub(r'int\s+','',t[m.start():m.end()],count=1)+t[m.end():]
+        decl=''.join('\n    int %s;'%n for n,_ in sel)
+        return t[:lo+1]+decl+t[lo+1:]
+    out=[dict(line=clean.count('\n',0,L[0][0])+1,name=n,expr='%d loops'%len(L),text=apply([(n,L)])) for n,L in names]
+    if len(names)>1: out.append(dict(line=0,name='+'.join(n for n,_ in names)[:12],expr='all',text=apply(names)))
+    return out
 def main():
-    ap=argparse.ArgumentParser(); ap.add_argument('--json'); ap.add_argument('--addr'); ap.add_argument('--unit'); ap.add_argument('--write',action='store_true'); ap.add_argument('--min',type=int,default=1)
+    ap=argparse.ArgumentParser(); ap.add_argument('--json'); ap.add_argument('--addr'); ap.add_argument('--unit'); ap.add_argument('--write',action='store_true'); ap.add_argument('--min',type=int,default=1); ap.add_argument('--rule',default='rebind',choices=['rebind','sibling'])
     ap.add_argument('--jobs',type=int,default=int(os.environ.get('FE_JOBS','14')))
     a=ap.parse_args(); base=int(os.environ.get('FE_PFX_BASE','21'))
     if a.addr: targets=[(a.unit if a.unit.startswith('src/') else 'src/'+a.unit,int(a.addr,16))]
-    else: targets=[(f['unit'],f['addr']) for f in json.load(open(a.json)) if any(t.startswith('rebind') for x in f['src'] for t in x['tags'])]
+    elif a.rule=='rebind': targets=[(f['unit'],f['addr']) for f in json.load(open(a.json)) if any(t.startswith('rebind') for x in f['src'] for t in x['tags'])]
+    else: targets=[(f['unit'],f['addr']) for f in json.load(open(a.json)) if f.get('sibling')]
     jobs=[]
     for unit,addr in targets:
         t=open(R+'/'+unit,encoding='latin-1').read(); clean=loopscan.strip_comments(t)
         fb=loopscan.func_body(t,clean,addr)
         if not fb: continue
-        for s in sites(t,clean,fb[0],fb[1]+1): jobs.append((unit,addr,t,s))
+        for s in (sites if a.rule=='rebind' else sibling_sites)(t,clean,fb[0],fb[1]+1): jobs.append((unit,addr,t,s))
     if not jobs: print('no sites'); return
     fe.compile_cmd(jobs[0][0])
-    D=R+'/build/recovery/fe/unbind'; os.makedirs(D,exist_ok=True)
+    D=R+'/build/recovery/fe/loopsweep'; os.makedirs(D,exist_ok=True)
     def measure(unit,addr,text,lane,tag):
         p='%s/%s_%d.cpp'%(D,tag,lane); open(p,'w',encoding='latin-1').write(text)
         c,err=fe.compile_unit(unit,p,base+lane)

@@ -72,8 +72,10 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   `memloop` memset/memcpy-shaped body, sibling counter names) and prints both sides' loop tests
   (`dec/jne`, `reg<&G jl` linear-subscript pointer, `reg<K jl` index/offset, `[m]<K` counter in a slot,
   signed/unsigned) with the frame size. STRUCT = frame or loop-test multiset differs; those sort first.
-- `analysis/unbind.py --json loops.json | --unit U --addr A [--write] [--min N]` sweep for loopscan's `rebind` tag:
+- `analysis/loopsweep.py [--rule rebind|sibling] --json loops.json | --unit U --addr A [--write] [--min N]`; rebind:
   drops a `T &r = A[i]` / `T *p = &A[i]` local and writes `A[i]` at each use (skipped when the name or a
   subscript variable is reassigned), measures each site alone and with --write keeps the best site per
   function that lowers its rows without moving the frame or loop tests away from the image. Rerun per
   function until it writes nothing (first pass: 9 functions, 2,429 -> 2,304 rows, none exact lost).
+  sibling: one counter name declared by several non-nested `for (int i ...)` loops and unused outside them
+  becomes one function-scope `int i;` (per name, and all names together).

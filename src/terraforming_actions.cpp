@@ -1531,6 +1531,7 @@ char VehLabelMADEAIRDROP2[] = "MADEAIRDROP";
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004cc360.cpp retained signature/extents and complete seed; no historical claim copied", "Coordinator full pinned original instruction decode 004CC360..004CD051, typed source owner fields and corrected original call/branch evidence", "recovery/tests/test_airdrop_network.py actual-body directional treaty and network reentrancy controls; not linked/runtime/game acceptance"], "reason": "Recover complete typed airdrop admission/interception, landing selection, stack movement, capture and post-drop updates. Preserve unsigned damage storage with integer thresholds and directional treaty evidence; referenced unfinished dependencies remain explicit, not game acceptance."}
 // TRIED: direct field-for-field transcription (validation chain of terrain/ZOC/treaty/AA checks, each guarding a NetMsg::pop error-return; airdrop-site scoring loop; base-capture tail) diverges at instr #7 (push vs xor), early register-allocation choice; not chased further given the 3313-byte scope.
 int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
+    int i;
     NetDaemonNet.action_mode_ = mode;
     const int faction_id = Vehs[veh_id].faction_id;
     if (map_range(Vehs[veh_id].x, Vehs[veh_id].y, x, y) > drop_range(faction_id)) {
@@ -1594,7 +1595,7 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
             return 0;
         }
     }
-    for (int i = 0; i < 25; i++) {
+    for (i = 0; i < 25; i++) {
         int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius)) {
@@ -1624,7 +1625,7 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
         int is_seen = faction_id == ConsoleGlobal.faction_id_
             || anything_at(x, y) == ConsoleGlobal.faction_id_
             || GameDataStateStorage.fields_.game_state_ & 0x80;
-        for (int i = 0; !is_seen && i < 8; i++) {
+        for (i = 0; !is_seen && i < 8; i++) {
             int x_radius = wrap_map_x(x + VehMoveDeltaX[i]);
             int y_radius = y + VehMoveDeltaY[i];
             if (on_map(x_radius, y_radius) && anything_at(x_radius, y_radius) == ConsoleGlobal.faction_id_) {

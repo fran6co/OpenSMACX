@@ -544,8 +544,9 @@ rejection is the one filter no fixture can observe: the only effect a betrayal h
 same bit in, so a faction already carrying it reads identically either way.
 */
 void __cdecl rankings(int apply_ranks) {
+    int proto_id;
     int best_offense = 1;
-    for (int proto_id = MaxVehProtoFactionNum; proto_id < MaxVehProtoNum; proto_id++) {
+    for (proto_id = MaxVehProtoFactionNum; proto_id < MaxVehProtoNum; proto_id++) {
         if (VehPrototypes[proto_id].flags & PROTO_ACTIVE
             && VehPrototypes[proto_id].flags & PROTO_TYPED_COMPLETE
             && get_proto_offense_rating(proto_id) >= best_offense
@@ -587,7 +588,7 @@ void __cdecl rankings(int apply_ranks) {
                 }
             }
             FactionRankingsUnk[faction_id] += num_objectives(faction_id, false) * (int)ScenarioSave.objective_achieve_points;
-            for (int proto_id = 0; proto_id < MaxVehProtoNum; proto_id++) {
+            for (proto_id = 0; proto_id < MaxVehProtoNum; proto_id++) {
                 if (proto_id < MaxVehProtoFactionNum
                     && !has_tech(VehPrototypes[proto_id].preq_tech, faction_id)) {
                     continue;

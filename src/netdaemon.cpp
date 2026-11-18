@@ -3175,6 +3175,7 @@ static inline void progress_backoff() {
 // indirect  0x00534EC9 0x00534ED0 0x005374DF 0x00537F83 0x00538561 0x00538573 0x00538595 0x00538611 0x00538623 0x00538645 0x005386E0 0x005386F4 0x00538715 0x00538791 0x005387A5 0x005387C6
 
 void NetDaemon::process_message(char *message, unsigned long message_size, int sender_id) {
+    int slot;
     Popup popup;
     Filemap filemap;
     int who = pid_2_who(sender_id);
@@ -3682,7 +3683,7 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
                     parse_says(0, get_title(next_faction), -1, -1);
                     parse_says(1, get_name(next_faction), -1, -1);
                     parse_says(2, get_noun(next_faction), -1, -1);
-                    for (int slot = 1; slot <= player_count_; ++slot) {
+                    for (slot = 1; slot <= player_count_; ++slot) {
                         if (process_slots_[slot].state_.identity_ == next_faction) {
                             parse_says(3, process_slots_[slot].name_, -1, -1);
                         }
@@ -3726,7 +3727,7 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
         field_1B6C_ |= bit;
         if (!(primary_state_.trailing_words_[7] & bit)) {
             primary_state_.trailing_words_[7] |= bit;
-            for (int slot = 1; slot <= player_count_; ++slot) {
+            for (slot = 1; slot <= player_count_; ++slot) {
                 if (process_slots_[slot].state_.identity_ != ConsoleGlobal.faction_id_) {
                     message_data(0x1303, process_slots_[slot].state_.identity_, who, 1,
                                  GameDataStateStorage.fields_.turn_current_num_, 0);
@@ -3844,7 +3845,7 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
             NetDaemonNet.factions_waiting_mask() &= ~(1 << who);
             message_data(0x1302, who, GameDataStateStorage.fields_.turn_current_num_,
                          0, 0, 0);
-            for (int slot = 1; slot <= player_count_; ++slot) {
+            for (slot = 1; slot <= player_count_; ++slot) {
                 if (process_slots_[slot].state_.identity_ != who &&
                     process_slots_[slot].state_.identity_ != ConsoleGlobal.faction_id_) {
                     message_data(0x1301, process_slots_[slot].state_.identity_, who, 0,

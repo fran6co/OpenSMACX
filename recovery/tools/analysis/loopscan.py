@@ -122,7 +122,7 @@ def split_top(s,ch):
 DECL=r'(?:int|short|char|long|unsigned|signed|size_t|uint\d+_t|int\d+_t|BOOL|DWORD|WORD|BYTE|UINT)'
 def src_loops(clean,lo,hi):
     body=clean[lo:hi+1]; base=lo
-    ptrs=set(re.findall(r'\b[A-Za-z_]\w*(?:\s+const)?\s*\*+\s*(?:const\s+)?([A-Za-z_]\w*)\s*(?=[=;,)\[])',body))
+    ptrs=set(re.findall(r'(?:^|[;{}(])\s*(?:const\s+)?(?:(?:struct|unsigned|signed)\s+)?[A-Za-z_][\w:]*(?:\s+const)?\s*\*+\s*(?:const\s+)?([A-Za-z_]\w*)\s*(?=[=;,)\[])',body,re.M))
     sig=clean[max(0,clean.rfind('\n',0,clean.rfind(')',0,lo))-400):lo]
     ptrs|=set(re.findall(r'\*\s*([A-Za-z_]\w*)\s*(?=[,)])',sig[sig.rfind('('):] if '(' in sig else ''))
     res=[]

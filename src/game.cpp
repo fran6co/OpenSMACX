@@ -1845,6 +1845,7 @@ typedef char GameDataBaseV1Extent[sizeof(GameDataBaseV1) == 0x130 ? 1 : -1];
 // ORIGINAL: 0x005A6AC0 ?game_data@@YAHPAUFILE@@H@Z 0x005A6AC0-0x005A9279
 // symbol    ?game_data@@YAHPAU_iobuf@@H@Z
 int __cdecl game_data(FILE *file, int write_mode) {
+    int index;
     GameDataHeaderWire header;  // deliberately not initialized before write
     GameDataWriteMode = write_mode;
     GameDataEncryptedMode = 0;
@@ -2356,7 +2357,7 @@ int __cdecl game_data(FILE *file, int write_mode) {
             string_count = MessageWinDeferredBaseMessages[faction].entry_count_;
             if (fwrite(&string_count, 4, 1, file) == 0)
                 return 1;
-            for (int index = 0; index < string_count; ++index) {
+            for (index = 0; index < string_count; ++index) {
                 MessageWinDeferredBaseMessages[faction].seek_pos(index);
                 string_id = MessageWinDeferredBaseMessages[faction].current_id();
                 if (fwrite(&string_id, 4, 1, file) == 0)
@@ -2377,7 +2378,7 @@ int __cdecl game_data(FILE *file, int write_mode) {
             list->allocator_ = 0;
             if (fread(&string_count, 4, 1, file) == 0)
                 return 1;
-            for (int index = 0; index < string_count; ++index) {
+            for (index = 0; index < string_count; ++index) {
                 if (fread(&string_id, 4, 1, file) == 0)
                     return 1;
                 if (fread(&string_length, 4, 1, file) == 0)
@@ -2401,7 +2402,7 @@ int __cdecl game_data(FILE *file, int write_mode) {
                 string_count = DiplomacyTranscriptLists[row][column].entry_count_;
                 if (fwrite(&string_count, 4, 1, file) == 0)
                     return 1;
-                for (int index = 0; index < string_count; ++index) {
+                for (index = 0; index < string_count; ++index) {
                     DiplomacyTranscriptLists[row][column].seek_pos(index);
                     string_id = DiplomacyTranscriptLists[row][column].current_id();
                     if (fwrite(&string_id, 4, 1, file) == 0)
@@ -2422,7 +2423,7 @@ int __cdecl game_data(FILE *file, int write_mode) {
                 list->allocator_ = 0;
                 if (fread(&string_count, 4, 1, file) == 0)
                     return 1;
-                for (int index = 0; index < string_count; ++index) {
+                for (index = 0; index < string_count; ++index) {
                     if (fread(&string_id, 4, 1, file) == 0)
                         return 1;
                     if (fread(&string_length, 4, 1, file) == 0)

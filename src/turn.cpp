@@ -1655,6 +1655,7 @@ static bool alien_tile_vehicle_visible(int vehicle_id, int faction) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:6e78872480ef8b4a486516e322f23e9f8652665d:src/unrecovered/00522180.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json; preserve original extents and historical seed lessons. Ordinary owned literals have pinned content provenance, not exact original data-allocation claims."], "reason": "Recover native-life spread and spawning through real Map/PlayerData/Base/Veh/UI owners. Preserve native-life versus difficulty operands and the complementary signed JL/JGE pair with one saved wrapped limit; the original reproduction tail is unreachable by that pair. Do not invent guards or entry edges. No matching or game acceptance claim."}
 // TRIED: near-literal transcription of Ghidra (reliable here, no unaff_* registers, all callees are free functions except MapWin::focus and NetMsg::pop, whose `this` (g_007d3c3c, g_00805338) came from raw disasm since Ghidra drops it); the CONCAT31(...)&0xffffffdf idiom simplified to (uVar13|uVar14)& 0xffffffdf since uVar14's low byte is always 0. Diverges at insn #3 (xor vs mov), likely register-zeroing choice.
 void __cdecl alien_fauna() {
+    int i;
     int very_early = 0;          // [ebp-0x20], zeroed in the prologue
     int spore_launcher = 0;      // [ebp-0x34], zeroed in the prologue
     int x;
@@ -1667,7 +1668,7 @@ void __cdecl alien_fauna() {
     int base_id;  // shared by the spread notice and the sampler
 
     // Fungus/kelp spread.
-    for (int i = 0; i < MapArea / (GameDataStateStorage.fields_.turn_current_num_ / 4 + 32); ++i) {
+    for (i = 0; i < MapArea / (GameDataStateStorage.fields_.turn_current_num_ / 4 + 32); ++i) {
         x = bounded_crt_random(MapLongitudeBounds);
         y = bounded_crt_random(MapLatitudeBounds);
         x = (y & 1) - (x & 1) + x;
@@ -1822,7 +1823,7 @@ void __cdecl alien_fauna() {
         const int owner = veh_who(x, y);
         if (owner > 0 && (base_id < 0 || BaseFindDist > 2)) {
             // Spawn beside an unaware faction's unit, out of its sight.
-            for (int i = 0; i < 16; ++i) {
+            for (i = 0; i < 16; ++i) {
                 x2 = wrap_map_x(x + RadiusOffsetX[9 + i]);
                 y2 = y + RadiusOffsetY[9 + i];
                 if (!on_map(x2, y2)) continue;

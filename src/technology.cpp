@@ -1038,6 +1038,10 @@ static inline void tech_achieved_budget_probe(int x) {
 // RECOVERY_BINDING: v1 {"evidence": ["Retired draft git:de105f04:src/unrecovered/005bb000.cpp retains original identity and primary/EH spans; pinned native branches establish the actual argument roles, reactor upgrades, per-model repeated tutorial, recipient visibility/intel and both recursive technology propagation paths.", "recovery/tests/test_tech_achieved_behavior.py exercises actual owner source and rejects inverted reactor/view/treaty predicates, truncated tutorial traversal, swapped recursion arguments and wrong intel ownership. Task38/40 authorize shared945F40 gate and spy-base scalar without changing the original baseline.", "Pinned 5BB461 XOR ECX,ECX and 5BB465 SETE CL form a zero/one snapshot; 5BB468 stores it as a dword at EBP-0x30, and 5BC43C reloads/tests that full word after achievement callbacks. The source keeps the snapshot as int, without moving its early read."], "reason": "Recover the full technology acquisition lifecycle in its real owner using source-owned player/map/base/prototype storage and real scoped Popup, SpriteBox, DesignWin and NewTech interactions; retain all independent callee and historical seed obligations."}
 void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
                            int give_freebie) {
+    int tile_id;
+    int base_id;
+    int j;
+    int other;
     Popup popup;
 
     if (tech_id < 0) {
@@ -1056,7 +1060,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
         PlayersData[faction_id].traded_maps |=
             PlayersData[faction_id_with].traded_maps | (1 << faction_id_with);
         Map *tile = MapTiles;
-        for (int tile_id = 0; tile_id < MapArea; tile++, tile_id++) {
+        for (tile_id = 0; tile_id < MapArea; tile++, tile_id++) {
             if (tile->visibility & (1 << faction_id_with)) {
                 tile->visibility |= faction_mask;
                 if (faction_id && faction_id_with) {
@@ -1065,7 +1069,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
                 }
             }
         }
-        for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
+        for (base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
             if ((Bases[base_id].visibility & (1 << faction_id_with)) ||
                 Bases[base_id].faction_id_current == faction_id_with) {
                 spot_base(base_id, faction_id);
@@ -1144,7 +1148,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
                     !(VehPrototypes[proto_id].obsolete_factions & faction_mask) &&
                     VehPrototypes[proto_id].reactor_id < reactor_level) {
                     // The image keeps this free-slot scan although nothing reads its result.
-                    for (int j = 0; j < MaxVehProtoFactionNum; j++) {
+                    for (j = 0; j < MaxVehProtoFactionNum; j++) {
                         int slot_id = faction_id * MaxVehProtoFactionNum + j;
                         if (!(VehPrototypes[slot_id].flags & PROTO_ACTIVE)) {
                             break;
@@ -1271,7 +1275,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
         if (Players[faction_id].faction_bonus_id[i] == RULE_FREEFAC &&
             tech_id == Facility[Players[faction_id].faction_bonus_val1[i]].preq_tech) {
             give_freebie = 1;
-            for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
+            for (base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
                 if (Bases[base_id].faction_id_current == faction_id) {
                     set_fac(Players[faction_id].faction_bonus_val1[i], base_id, true);
                 }
@@ -1286,7 +1290,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
     if (give_freebie) {
         NetDaemonNet.synch(0x14, 0, 0, 0, nullptr, 1, 0x2101);
     }
-    for (int j = 0; j < Players[faction_id].faction_bonus_count; j++) {
+    for (j = 0; j < Players[faction_id].faction_bonus_count; j++) {
         if (Players[faction_id].faction_bonus_id[j] == RULE_FREEABIL &&
             tech_id == Ability[Players[faction_id].faction_bonus_val1[j]].preq_tech &&
             faction_id == ConsoleGlobal.faction_id_) {
@@ -1382,13 +1386,13 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
 
     if ((Technology[tech_id].flags & TFLAG_REVEALS_MAP) && !(PlayersData[faction_id].flags & 0x200)) {
         Map *tile = MapTiles;
-        for (int tile_id = 0; tile_id < MapArea; tile++, tile_id++) {
+        for (tile_id = 0; tile_id < MapArea; tile++, tile_id++) {
             tile->visibility |= faction_mask;
             if (faction_id) {
                 tile->bit_visible[faction_id - 1] = tile->bit;
             }
         }
-        for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
+        for (base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
             Bases[base_id].visibility |= faction_mask;
             Bases[base_id].faction_pop_size_intel[faction_id] = Bases[base_id].population_size;
         }
@@ -1417,7 +1421,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
             interlude(0x10, nullptr, 0, 0);
         }
         if (tech_id == 4 && (Players[faction_id].rule_flags & RFLAG_ALIEN)) {
-            for (int other = 1; other < MaxPlayerNum; other++) {
+            for (other = 1; other < MaxPlayerNum; other++) {
                 if (faction_id != other && !(Players[other].rule_flags & RFLAG_ALIEN) &&
                     (PlayersData[faction_id].diplo_treaties[other] & DTREATY_COMMLINK)) {
                     interlude(0x24, nullptr, 1, 0);
@@ -1431,7 +1435,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
         int owner = Bases[datalinks_base].faction_id_current;
         if (owner > 0 && has_tech(tech_id, faction_id) && !has_tech(tech_id, owner)) {
             int known = 0;
-            for (int other = 1; other < MaxPlayerNum; other++) {
+            for (other = 1; other < MaxPlayerNum; other++) {
                 if (has_tech(tech_id, other)) {
                     known++;
                 }

@@ -139,6 +139,7 @@ static inline void diplo_inset_rect(RECT *dst, const RECT *src, int horizontal,
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00443f10.cpp", "image:terranx_original.exe:443F10-444D8B; callback4412A0 and transcript lifecycle440F30/440F60"], "reason": "Recover the full diplomacy window lifecycle using real base/member controls, singleton transcripts and bilateral offer storage; original catalogue extent retained."}
 // TRIED: the ~500-instruction layout-RECT tree (this+0xedc onward, built by repeatedly splitting/insetting a screen rect) is approximated at the right field offsets with plausible rather than register-derived values; likewise the AI offer-table indexing (0x7388d8/0x7388e0/0x7388e8/0x738928, 9-wide rows keyed by ab4/ab8) is a simplified approximation, not the exact addressing. The widget init/call sequence (Spot::init, GraphicWin::init/fill, box_sprite, StringBox::init, EditBox::init, the 13-button BaseButton loop, add_offer/rand dispatch, message_data/iface teardown) is transcribed in order with matching argument counts. MISMATCH #20 (layout block, lea vs sub).
 void DiploWin::exec(int faction_id, int faction_id_with) {
+    int side;
   // Frame: three ints (x/y/height) and two RECT locals (rc at ebp-0x20,
   // row at ebp-0x30) = 0x2C, plus one compiler temp = the image's 0x30.
   RECT rc;
@@ -337,7 +338,7 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
 
   if (IsMultiplayerPBEM != 0) {
     sub_441100(faction_id_, faction_id_with_);
-    for (int side = 0; side < 2; ++side) {
+    for (side = 0; side < 2; ++side) {
       offer_count_[side] = OfferResetCells[faction_id_][faction_id_with_].count_[side];
       offer_state_[side] = OfferResetCells[faction_id_][faction_id_with_].state_[side];
       for (int item = 0; item < 8; ++item) {
@@ -409,7 +410,7 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
 
     // Each side is stored twice: in the local cell as seen from here, and
     // mirrored into the counterpart's cell with the parties swapped.
-    for (int side = 0; side < 2; ++side) {
+    for (side = 0; side < 2; ++side) {
       OfferResetCells[faction_id_][faction_id_with_].count_[side] = offer_count_[side];
       OfferResetCells[faction_id_][faction_id_with_].state_[side] = offer_state_[side];
       OfferResetCells[faction_id_with_][faction_id_].count_[side] = offer_count_[1 - side];
