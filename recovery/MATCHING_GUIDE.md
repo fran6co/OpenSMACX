@@ -880,6 +880,18 @@ raw field access where the original used inline accessors.
   returns, so the code looks as if it had early returns. Any `return 0xC;`
   or `if (r != 0) return r;` swaps the two registers (Wave::dyna_load
   0x004C6BB0, VoiceTx::init 0x004C8F70).
+- **Which variable gets a callee-saved register** (micro-experiment,
+  2026-11-18: four locals set from calls, each read N times across calls).
+  VC6 hands out esi, edi, ebx in descending order of reference count; a
+  read inside a loop counts for more than one outside. Equal counts go in
+  declaration order, and the last variable stays in its stack slot. A
+  local outranks a parameter with the same count; a parameter left out is
+  reloaded from `[ebp+N]` at each use; among parameters the earlier one
+  wins. The first result of `f(a) < f(b)` is a compiler temporary that
+  takes the next free callee-saved register, or a stack slot when all
+  three are taken. So when the image has variable X in a register and
+  ours has it in memory, X needs one more reference than its rival (or
+  the rival one fewer); reordering declarations only breaks exact ties.
 - **Statement vs conditional expression.** `d = a - b; if (d < 0) d = b - a;`
   and `d = (a - b < 0) ? b - a : a - b;` emit the same instructions with two
   registers swapped (on_scrolled's distance). Try the other form on a
