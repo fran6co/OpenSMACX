@@ -894,7 +894,7 @@ BOOL __cdecl has_temple(int faction_id) {
 }
 
 // timer_daemon reads this climate gate before dispatch; its wider contract remains unresolved.
-// RECOVERY_OBJECT: v1 0x0068F21C ?WorldClimateSkipTerrainClear@@3IA
+// RECOVERY_OBJECT: v2 0x0068F21C 0x0068F220 ?WorldClimateSkipTerrainClear@@3IA 0x0058E360
 uint32_t WorldClimateSkipTerrainClear = 1;  // 0x0068F21C
 // RECOVERY_OBJECT: v1 0x009B22EC ?WorldClimateSkipTerritoryReset@@3IA
 uint32_t WorldClimateSkipTerritoryReset;  // 0x009B22EC
