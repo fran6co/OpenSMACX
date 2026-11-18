@@ -5644,7 +5644,7 @@ L_56f8ad:
         if (!triad) {
             if (!(PlayersData[faction_id].unk_77[region] & 0x80)
                 && !is_coast(tx, ty, 0)
-                && (int)(Continents[region].open_terrain
+                && (Continents[region].open_terrain
                          - PlayersData[faction_id].unk_81[region]) < 20) {
                 continue;
             }
@@ -5686,7 +5686,7 @@ L_56f8ad:
                 }
                 if (site < threshold
                     && (plan != PLAN_COLONIZATION || Vehs[veh_id].order == ORDER_MOVE_TO
-                        || (int)Continents[region].open_terrain
+                        || Continents[region].open_terrain
                             >= (PlayersData[faction_id].region_total_bases[region] + 1) * 6)) {
                     continue;
                 }
@@ -5947,7 +5947,7 @@ L_570725:
     // element address, reused at 0x5708f7), not a source assignment.
     if (!(PlayersData[faction_id].unk_77[region] & 0x80)
         && !is_coast(tx, ty, 0)
-        && (int)(Continents[region].open_terrain - PlayersData[faction_id].unk_81[region]) < 20) {
+        && (Continents[region].open_terrain - PlayersData[faction_id].unk_81[region]) < 20) {
         goto L_570aa9;
     }
     score = site_at(tx, ty, 0);
@@ -5996,7 +5996,7 @@ L_570725:
         }
         if (!(PlayersData[faction_id].unk_77[region] & 0x80)
             && !is_coast(nx, ny, 0)
-            && (int)(Continents[region].open_terrain
+            && (Continents[region].open_terrain
                      - PlayersData[faction_id].unk_81[region]) < 20) {
             continue;
         }
@@ -7493,7 +7493,7 @@ L_574a88:
                     continue;
                 }
                 if ((i & 0x100)
-                    && (int)Continents[faction_bit].open_terrain >= 4
+                    && Continents[faction_bit].open_terrain >= 4
                     && (!PlayersData[faction_id].region_total_bases[faction_bit]
                         || PlayersData[faction_id].region_base_plan[faction_bit] == 8)) {
                     if (j || PlayersData[faction_id].region_base_plan[region] > 2) {

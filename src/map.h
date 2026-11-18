@@ -206,8 +206,8 @@ struct Landmark {
 
 struct Continent {
     int tile_count; // signed: original uses signed division and ordering comparisons
-    uint32_t open_terrain; // count of non-rocky, non-fungus tiles (only 1 movement point to travel)
-    uint32_t unk_3; // highest world_site value (0-15)
+    int open_terrain; // count of non-rocky, non-fungus tiles (only 1 movement point to travel)
+    int unk_3; // highest world_site value (0-15)
     uint32_t pods; // current count of supply and unity pods in region
     uint32_t unk_5; // padding?
     uint8_t sea_coasts[8]; // sea specific regions, connections to land regions? bitmask

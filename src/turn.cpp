@@ -2406,7 +2406,7 @@ void __cdecl reset_territory() {
             // `region * 28` in EDI as an index (`[edi + 0x9AA738]`). Earlier
             // a `Continent *` beat this; with the loop/BaseFindDist fixes the
             // direct index measures better (0.868 -> 0.974).
-            int region_best = (int)Continents[region].unk_3;
+            int region_best = Continents[region].unk_3;
             if (site > region_best) {
                 region_best = site;
             }
