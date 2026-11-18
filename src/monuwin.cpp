@@ -70,12 +70,14 @@ int MonuWin::init() {
   spot_.init(0x40);
   field_A48_ = ReportIfGlobal.field_1E230_;
   if (!field_A48_) {
+    const int width = window_width_;
+    const int height = window_height_;
     origin_x_ = 0;
     origin_y_ = 0;
     client_rect_.left = 0;
     client_rect_.top = 0;
-    client_rect_.right = window_width_;
-    client_rect_.bottom = window_height_;
+    client_rect_.right = width;
+    client_rect_.bottom = height;
     GraphicWin::init(0, 0, 0x320, 0x258, MonuWinWindowedTitle, 0x1000000, 0, 0, 0);
   } else {
     const int width = window_width_;
