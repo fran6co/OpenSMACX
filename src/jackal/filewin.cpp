@@ -468,7 +468,7 @@ int FileWin::populate_directory(char *directory) {
     }
 
     ListBox *list = &list_box_;
-    list->item_list_.StringStruct::remove_all();
+    list->item_list_.remove_all();
     // Native6143DC reloads the virtual Dialog view after the clear call.
     list->selected_position_ = 0;
     list->field_18_ = 0;

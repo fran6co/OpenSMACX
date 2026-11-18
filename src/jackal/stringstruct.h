@@ -368,39 +368,8 @@ class StringList : public StringStruct {
   ~StringList() {
     close();
   }
-  // Callers clear StringList entries through this inline-visible walk; it
-  // has the same body as StringStruct::remove_all. Folding the two into one
-  // declaration perturbs unrelated register allocation in other TUs
-  // (Datalink::set_cat_social 0x0042B630), so both stay declared.
-  void remove_all() {
-    if (!head_) {
-      return;
-    }
-    // The original initializes its index before testing the entry count.
-    int index = 0;
-    if (entry_count_ > 0) {
-      do {
-        StringStructEntry *const entry = head_;
-        current_ = entry->next;
-#ifdef STRINGSTRUCT_PAYLOAD_DIRECT_BASE
-        StringStructPayload *const payload = (StringStructPayload *)entry->payload;
-#else
-        ListPayloadBase *const payload = entry->payload;
-#endif
-        on_remove(payload);
-        delete payload;
-        head_->payload = nullptr;
-        delete head_;
-        head_ = current_;
-        ++index;
-        // The loop bound is re-read every iteration, so a visitor that
-        // changes the count changes how far the walk goes.
-      } while (index < entry_count_);
-    }
-    head_ = nullptr;
-    current_position_ = 0;
-    entry_count_ = 0;
-  }
+  // remove_all() is inherited: the image has one body, StringStruct's
+  // 0x00402970, which every StringList caller reaches (called or expanded).
   // Original primary slots name 0x006086F0 and 0x00608770. BasePop's
   // constructor (0x00600860) installs this table in both embedded lists;
   // the next table at 0x006698CC belongs to BasePop's Buffer subobject.

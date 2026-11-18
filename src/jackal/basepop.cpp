@@ -1,5 +1,3 @@
-// The original TU calls StringStruct::remove_all out of line (BasePop::init).
-#define STRINGSTRUCT_REMOVE_ALL_OUT_OF_LINE
 // WORKAROUND(decl): exec expands current_entry (0x006030B9 `mov ecx,[ecx+8];
 // mov eax,[ecx+4]` under its current_/head_ tests); see stringstruct.h.
 #define STRINGSTRUCT_CURRENT_ENTRY_INLINE
@@ -2203,18 +2201,8 @@ void BasePop::close() {
     flat_button1_.close();
     flat_button2_.close();
 
-    // The two list teardowns: inlined StringList::remove_all, then the
-    // cursor reset through the same list pointer (no head_ guard here).
-    {
-        StringList *list = &unit_ids_;
-        list->remove_all();
-        list->current_position_ = 0;
-    }
-    {
-        StringList *list = &item_ids_;
-        list->remove_all();
-        list->current_position_ = 0;
-    }
+    unit_ids_.close();
+    item_ids_.close();
 
 
     for (i = 0; i < 8; i++) {
@@ -2664,28 +2652,24 @@ int BasePop::init(int flags, long heap_base) {
     if (heap_base != 0 && (flags & 0x40000) == 0) {
         {
             StringList *list = &unit_ids_;
-            list->StringStruct::remove_all();
-            list->current_position_ = 0;
+            list->close();
             list->allocator_ = &heap_;
         }
         {
             StringList *list = &item_ids_;
-            list->StringStruct::remove_all();
-            list->current_position_ = 0;
+            list->close();
             list->allocator_ = &heap_;
         }
         dialogs_.init(&heap_);
     } else {
         {
             StringList *list = &unit_ids_;
-            list->StringStruct::remove_all();
-            list->current_position_ = 0;
+            list->close();
             list->allocator_ = 0;
         }
         {
             StringList *list = &item_ids_;
-            list->StringStruct::remove_all();
-            list->current_position_ = 0;
+            list->close();
             list->allocator_ = 0;
         }
         dialogs_.init(0);

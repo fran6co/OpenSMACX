@@ -422,7 +422,7 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
         if (loaded == 0) {
             page_pen_y_ = Buffer::write_strings(&technology_notes, page_x_ + 4,
                                                  page_pen_y_, page_width_ - 8, 0);
-            technology_notes.StringStruct::remove_all();
+            technology_notes.remove_all();
             // Native485408 resets the cursor even when remove_all's head
             // guard returns without clearing it.
             technology_notes.current_position_ = 0;

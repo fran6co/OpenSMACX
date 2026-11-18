@@ -529,10 +529,7 @@ void SetupWin::close() {
     spot_.shutdown();
 
     StringList &entries = field_FE0_;
-    // WORKAROUND(decl): the original has one remove_all, StringStruct's
-    // 0x00402970; do_menu_rightside (0x004ADC07) calls it out of line. The
-    // header's StringList::remove_all twin would emit its own copy there.
-    entries.StringStruct::remove_all();
+    entries.remove_all();
     entries.current_position_ = 0;
 }
 
@@ -557,7 +554,7 @@ inline SetupWin::~SetupWin() {
     buffer_.close();
     spot_.shutdown();
     StringList &entries = field_FE0_;
-    entries.StringStruct::remove_all();
+    entries.remove_all();
     entries.current_position_ = 0;
 }
 

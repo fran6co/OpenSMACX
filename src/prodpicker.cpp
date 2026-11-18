@@ -536,13 +536,13 @@ void ProdPicker::calculate() {
     char active[80];
     char queued[80];
 
-    prod_a_.StringStruct::remove_all();
+    prod_a_.remove_all();
     prod_a_.current_position_ = 0;
     prod_a_.allocator_ = 0;
-    prod_b_.StringStruct::remove_all();
+    prod_b_.remove_all();
     prod_b_.current_position_ = 0;
     prod_b_.allocator_ = 0;
-    prod_c_.StringStruct::remove_all();
+    prod_c_.remove_all();
     prod_c_.current_position_ = 0;
     prod_c_.allocator_ = 0;
     field_A818_ = 0;

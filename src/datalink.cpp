@@ -236,7 +236,7 @@ void Datalink::draw_unit() {
     write_cent_l(StringTemp, &title_rect_);
     rect.left += illustration_rect_.right - illustration_rect_.left + 3;
     char number[80];
-    description.StringStruct::remove_all();
+    description.remove_all();
     description.current_position_ = 0;
     description.allocator_ = 0;
     StringTemp[0] = 0;
@@ -421,7 +421,7 @@ void Datalink::draw_chassis() {
     write_cent_l(StringTemp, &title_rect_);
     rect.left += illustration_rect_.right - illustration_rect_.left + 3;
     char number[80];
-    description.StringStruct::remove_all();
+    description.remove_all();
     description.current_position_ = 0;
     description.allocator_ = 0;
     StringTemp[0] = 0;
@@ -561,7 +561,7 @@ void Datalink::draw_reactor() {
     parse_says(1, tech_name(tech, 0), -1, -1);
     const int link = tech + 140000;
     parse_num(1, link);
-    description.StringStruct::remove_all();
+    description.remove_all();
     description.current_position_ = 0;
     description.allocator_ = 0;
     description.load(DatalinkHelpFile, "HELPREACTOR", 1, 0);
@@ -636,8 +636,7 @@ void Datalink::draw_weapon() {
         _itoa(2, number, 10);
         strcat(StringTemp, number);
     }
-    description.remove_all();
-    description.current_position_ = 0;
+    description.close();
     description.allocator_ = 0;
     description.load(DatalinkHelpFile, StringTemp, 1, 0);
     set_font(&body_font_, 0, 0, technology >= 0 ? &link_font_ : 0);
@@ -699,7 +698,7 @@ void Datalink::draw_defense() {
     parse_says(2, tech_name(technology, 0), -1, -1);
     const int link = technology + 140000;
     parse_num(2, link);
-    help.StringStruct::remove_all();
+    help.remove_all();
     help.current_position_ = 0;
     help.allocator_ = 0;
     help.load(DatalinkHelpFile,
@@ -787,7 +786,7 @@ void Datalink::draw_ability() {
     parse_say(2, Ability[ability_id].description, -1, -1);
     parse_says(3, StringTemp, -1, -1);
     parse_num(0, technology + 140000);
-    help.StringStruct::remove_all();
+    help.remove_all();
     help.current_position_ = 0;
     help.allocator_ = 0;
     help.load(DatalinkHelpFile, "HELPABIL", 1, 0);
@@ -2243,7 +2242,10 @@ void Datalink::set_cat(unsigned int category, int index) {
     field_29DC_ = category;
     ReportWinGlobal.reset();
 
-    listBox_.item_list_.remove_all();
+    // WORKAROUND(inline): set_cat expands 0x00402970 whole (0x0042A31E..
+    // 0x0042A3A0, no cursor store on the empty-list path); this TU sees
+    // remove_all() as a declaration, so it names the header's expansion.
+    listBox_.item_list_.remove_all_walk();
     ListBox *const list = &listBox_;
     list->selected_position_ = 0;
     list->field_18_ = 0;

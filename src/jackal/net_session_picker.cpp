@@ -291,13 +291,13 @@ void NetSessionPickerWin::refresh_player_list() {
 
   {
     StringList &items = sessions_view_.item_list_;
-    items.StringStruct::remove_all();
+    items.remove_all();
     items.current_position_ = 0;
   }
   // Native63C874 reloads the virtual Dialog view between the two clears.
   // Each call's following stores use that call's captured list receiver.
   StringList &items = sessions_view_.item_list_;
-  items.StringStruct::remove_all();
+  items.remove_all();
   items.current_position_ = 0;
   items.allocator_ = 0;
 

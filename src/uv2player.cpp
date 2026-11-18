@@ -376,7 +376,7 @@ void UV2Player::show_post_movie_text() {
         text_get();
         LPSTR help_line = text_get();
 
-        help_lines.StringStruct::remove_all();
+        help_lines.remove_all();
         help_lines.current_position_ = 0;
         help_lines.allocator_ = 0;
         while (help_line != 0 && help_line[0] != '\0') {
