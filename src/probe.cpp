@@ -762,10 +762,10 @@ L_59fb64:
         if (sabotage_id < 0) {
             return 0;
         }
-        Vehs[veh_id].probe_sabotage_id = (uint8_t)sabotage_id;
+        Vehs[veh_id].probe_sabotage_id = (int8_t)sabotage_id;
     } else {
-        // WORKAROUND(type): movsx at 5a0af5 - the field reads as signed char.
-        sabotage_id = (int8_t)Vehs[veh_id].probe_sabotage_id;
+        // movsx at 5a0af5: the field is a signed char.
+        sabotage_id = Vehs[veh_id].probe_sabotage_id;
     }
     if (sabotage_id == 0x63) {
         goto L_5a2dcd;

@@ -563,7 +563,7 @@ struct Veh {
     // secondary options: THOUGHTMENU, ADVVIRUS, DECIPHER, SUBVERTMENU
     // 000 0 0000 : framed faction : n/a : probe action id (8) ; Freeing Captured Leaders only
     uint8_t probe_action; // see above and ProbePrimaryAction, last action taken by probe team
-    uint8_t probe_sabotage_id; // for targeted sabotage: production: 0, abort: 99, or facility id
+    int8_t probe_sabotage_id;  // for targeted sabotage: production: 0, abort: 99, or facility id
     int16_t home_base_id;
     int16_t next_veh_id_stack;
     int16_t prev_veh_id_stack;
