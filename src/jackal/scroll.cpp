@@ -1270,18 +1270,11 @@ statements earlier, so off-by-small-constant offset mutants read the same
 zeros.
 */
 void Scroll::compute_thumb_rect(RECT *rect) {
-    *rect = thumb_rect_;
-    const LONG top = -rect->top;
-    const LONG left = -rect->left;
-    rect->left += left;
-    rect->right += left;
-    rect->top += top;
-    rect->bottom += top;
+    RECT *thumb = &thumb_rect_;
+    *rect = *thumb;
+    offset_rect(rect, -rect->left, -rect->top);
     if (border_color_ != -1) {
-        rect->left += 1;
-        rect->right += 1;
-        rect->top += 1;
-        rect->bottom += 1;
+        offset_rect(rect, 1, 1);
     }
     const LONG extent = rect->right - rect->left;
     if (field_A3C_ == -1) {
@@ -1291,81 +1284,59 @@ void Scroll::compute_thumb_rect(RECT *rect) {
             thumb_offset = 0;
             span = extent;
         } else {
-            thumb_offset = extent + 1;
             span = extent * 3;
+            thumb_offset = extent + 1;
         }
         // The image subtracts from -1, not 0 (0x00606CEE `mov edx,ebx`).
         LONG adjustment = -1 - span;
         if (border_color_ != -1) {
             adjustment -= 2;
         }
-        const LONG height = -dib_.bmiHeader.biHeight;
-        const LONG width = dib_.bmiHeader.biWidth;
-        if (width > height) {
+        if (dib_.bmiHeader.biWidth > -dib_.bmiHeader.biHeight) {
             if (range_maximum_ != range_minimum_) {
                 thumb_offset += (position_ - range_minimum_)
-                    * (width + adjustment) / (range_maximum_ - range_minimum_);
+                    * (dib_.bmiHeader.biWidth + adjustment) / (range_maximum_ - range_minimum_);
             }
-            rect->left += thumb_offset;
-            rect->right += thumb_offset;
+            offset_rect(rect, thumb_offset, 0);
         } else {
             if (range_maximum_ != range_minimum_) {
                 thumb_offset += (position_ - range_minimum_)
-                    * (height + adjustment) / (range_maximum_ - range_minimum_);
+                    * (-dib_.bmiHeader.biHeight + adjustment) / (range_maximum_ - range_minimum_);
             }
-            rect->top += thumb_offset;
-            rect->bottom += thumb_offset;
+            offset_rect(rect, 0, thumb_offset);
         }
     } else {
         // MIN/MAX are macro-shaped: the image re-evaluates the inner MIN.
         if ((field_A14_ & 2) != 0) {
             const LONG far_edge = rect->left + extent;
-            const LONG candidate = static_cast<LONG>(field_A3C_) + (extent >> 1);
-            field_A3C_ = candidate;
-            LONG offset;
-            const LONG height = -dib_.bmiHeader.biHeight;
-            const LONG width = dib_.bmiHeader.biWidth;
-            if (width > height) {
-                const LONG upper = width - far_edge;
-                offset = (candidate < upper ? candidate : upper) < 0
-                    ? 0 : (candidate < upper ? candidate : upper);
+            LONG offset = static_cast<LONG>(field_A3C_) + (extent >> 1);
+            field_A3C_ = offset;
+            if (dib_.bmiHeader.biWidth > -dib_.bmiHeader.biHeight) {
+                offset = max(0, min(offset, dib_.bmiHeader.biWidth - far_edge));
                 field_A3C_ = offset;
-                rect->left += offset;
-                rect->right += offset;
+                offset_rect(rect, offset, 0);
             } else {
-                const LONG upper = height - far_edge;
-                offset = (candidate < upper ? candidate : upper) < 0
-                    ? 0 : (candidate < upper ? candidate : upper);
+                offset = max(0, min(offset, -dib_.bmiHeader.biHeight - far_edge));
                 field_A3C_ = offset;
-                rect->top += offset;
-                rect->bottom += offset;
+                offset_rect(rect, 0, offset);
             }
         } else {
             const LONG far_edge = rect->left + extent;
-            const LONG candidate = static_cast<LONG>(field_A3C_) + (extent >> 1);
-            field_A3C_ = candidate;
-            LONG offset;
-            const LONG height = -dib_.bmiHeader.biHeight;
-            const LONG width = dib_.bmiHeader.biWidth;
-            if (width > height) {
-                const LONG upper = width - far_edge * 2;
-                offset = far_edge > (candidate < upper ? candidate : upper)
-                    ? far_edge : (candidate < upper ? candidate : upper);
+            LONG offset = static_cast<LONG>(field_A3C_) + (extent >> 1);
+            field_A3C_ = offset;
+            if (dib_.bmiHeader.biWidth > -dib_.bmiHeader.biHeight) {
+                offset = max(far_edge, min(offset, dib_.bmiHeader.biWidth - far_edge * 2));
                 field_A3C_ = offset;
-                rect->left += offset;
-                rect->right += offset;
+                offset_rect(rect, offset, 0);
             } else {
-                const LONG upper = height - far_edge * 2;
-                offset = far_edge > (candidate < upper ? candidate : upper)
-                    ? far_edge : (candidate < upper ? candidate : upper);
+                offset = max(far_edge, min(offset, -dib_.bmiHeader.biHeight - far_edge * 2));
                 field_A3C_ = offset;
-                rect->top += offset;
-                rect->bottom += offset;
+                offset_rect(rect, 0, offset);
             }
         }
         field_A3C_ = -1;
     }
-    thumb_rect_ = *rect;
+    *thumb = *rect;
 }
 
 /*
