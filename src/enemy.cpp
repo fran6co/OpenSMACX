@@ -2827,11 +2827,12 @@ int __cdecl alien_base(int veh_id, int x, int y) {
     return base_id_best;
 }
 
-// Inlined: alien_move's halved x_dist + |dy| reach.
-static inline int alien_dist(int x_point_a, int y_point_a, int x_point_b, int y_point_b) {
-    int x_distance = x_dist(x_point_a, x_point_b);
-    int y_distance = abs(y_point_a - y_point_b);
-    return (x_distance + y_distance) >> 1;
+// The halved x_dist + |dy| reach. alien_move, enemy_planet_buster and
+// enemy_move load all four coordinates into registers before the abs call at
+// each site (0x56F0E0: y, ty, tx, x; abs; push tx, x; x_dist), the fingerprint
+// of inline parameters.
+static inline int map_range(int x1, int y1, int x2, int y2) {
+    return (abs(y1 - y2) + x_dist(x1, x2)) >> 1;
 }
 
 // ORIGINAL: 0x00566810 ?alien_move@@YAHH@Z 0x00566810-0x005678B9
@@ -2842,6 +2843,11 @@ int __cdecl alien_move(int veh_id) {
     int dir_selected = -1;
     int i;
     int best_score;
+    // One score for the artillery and the move scans: the image stores every
+    // assignment of both to [ebp-0x10]. The move scan does not reset it per
+    // tile: only the 12345 sea-base sentinel survives the test there.
+    int score;
+    int x2, y2;
     if (!veh_moves(veh_id)) {
         return 0;
     }
@@ -2877,8 +2883,8 @@ int __cdecl alien_move(int veh_id) {
         }
         for (i = 0; i < 8; i++) {
             int x_raw = x + VehMoveDeltaX[i];
-            int x2 = ((MapIsFlat & 1) ? x_raw : x_raw < 0 ? x_raw + MapLongitudeBounds : x_raw >= MapLongitudeBounds ? x_raw - MapLongitudeBounds : x_raw);
-            int y2 = y + VehMoveDeltaY[i];
+            x2 = ((MapIsFlat & 1) ? x_raw : x_raw < 0 ? x_raw + MapLongitudeBounds : x_raw >= MapLongitudeBounds ? x_raw - MapLongitudeBounds : x_raw);
+            y2 = y + VehMoveDeltaY[i];
             if (!on_map(x2, y2)) {
                 continue;
             }
@@ -2892,7 +2898,7 @@ int __cdecl alien_move(int veh_id) {
             if (is_ocean(x2, y2) || region_at(x2, y2) != region) {
                 continue;
             }
-            if (base_id >= 0 && alien_dist(x2, y2, Bases[base_id].x, Bases[base_id].y) > 6) {
+            if (base_id >= 0 && map_range(x2, y2, Bases[base_id].x, Bases[base_id].y) > 6) {
                 continue;
             }
             {
@@ -2934,7 +2940,7 @@ int __cdecl alien_move(int veh_id) {
         set_course(veh_id, 99, Bases[base_id].x, Bases[base_id].y);
         if (Vehs[veh_id].order == ORDER_MOVE_TO
             && !is_ocean(Vehs[veh_id].waypoint_x[0], Vehs[veh_id].waypoint_y[0])
-            && alien_dist(x, y, Vehs[veh_id].waypoint_x[0], Vehs[veh_id].waypoint_y[0]) <= 1) {
+            && map_range(x, y, Vehs[veh_id].waypoint_x[0], Vehs[veh_id].waypoint_y[0]) <= 1) {
             veh_skip(veh_id);
         }
         return 0;
@@ -2962,12 +2968,11 @@ int __cdecl alien_move(int veh_id) {
         best_score = 0;
         int best_offset = -1;
         for (i = 0; i < 25; i++) {
-            int x2 = wrap_map_x(x + RadiusOffsetX[i]);
-            int y2 = y + RadiusOffsetY[i];
+            x2 = wrap_map_x(x + RadiusOffsetX[i]);
+            y2 = y + RadiusOffsetY[i];
             if (!on_map(x2, y2)) {
                 continue;
             }
-            int score;
             if (anything_at(x2, y2) < 0) {
                 if (is_ocean(x2, y2) || !(map_loc(x2, y2)->bit & 0x81208854)) {
                     continue;
@@ -2990,7 +2995,7 @@ int __cdecl alien_move(int veh_id) {
                 if (!zoc_veh(x, y, 0) || i < 9) {
                     score += stack_check(veh_id_stack, 4, -1, -1, -1);
                 }
-                if (alien_dist(x, y, x2, y2) > Rules.artillery_max_rng && score > 1) {
+                if (map_range(x, y, x2, y2) > Rules.artillery_max_rng && score > 1) {
                     score = 1;
                 }
                 if (!i) {
@@ -3003,9 +3008,9 @@ int __cdecl alien_move(int veh_id) {
             }
         }
         if (best_offset >= 0) {
-            int x2 = wrap_map_x(x + RadiusOffsetX[best_offset]);
-            int y2 = y + RadiusOffsetY[best_offset];
-            if (alien_dist(x, y, x2, y2) <= Rules.artillery_max_rng) {
+            x2 = wrap_map_x(x + RadiusOffsetX[best_offset]);
+            y2 = y + RadiusOffsetY[best_offset];
+            if (map_range(x, y, x2, y2) <= Rules.artillery_max_rng) {
                 if (anything_at(x2, y2) < 0) {
                     log_say("Enemy doing ARTY destroy 1...", veh_id, x2, y2);
                     action_destroy(veh_id, 0, x2, y2);
@@ -3035,12 +3040,10 @@ int __cdecl alien_move(int veh_id) {
     }
     best_score = 0;
     const int morale = morale_alien(-1, 0);
-    // Not reset per tile: only the 12345 sea-base sentinel survives the test below.
-    int score;
     for (i = 0; i < 8; i++) {
         int x_raw = x + VehMoveDeltaX[i];
-        int x2 = wrap_map_x(x_raw);
-        int y2 = y + VehMoveDeltaY[i];
+        x2 = wrap_map_x(x_raw);
+        y2 = y + VehMoveDeltaY[i];
         if (!on_map(x2, y2)) {
             continue;
         }
@@ -3050,7 +3053,7 @@ int __cdecl alien_move(int veh_id) {
             }
         } else {
             if (get_triad(veh_id) == TRIAD_SEA) {
-                if (Vehs[veh_id].proto_id != BSC_SEALURK || base_at(x2, y2) == -1) {
+                if (Vehs[veh_id].proto_id != BSC_SEALURK || base_at(x2, y2) + 1 == 0) {
                     continue;
                 }
                 score = 12345;
@@ -3252,7 +3255,7 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
             int pick_value = -1;
             for (i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
                 if (Bases[i].faction_id_current == faction_id) {
-                    int dist = alien_dist(*a4, *a5, Bases[i].x, Bases[i].y);
+                    int dist = map_range(*a4, *a5, Bases[i].x, Bases[i].y);
                     if (dist <= return_range) {
                         int value = bounded_crt_random(dist + 1);
                         if (value > pick_value) {
@@ -3282,7 +3285,7 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                 for (int goal_id = 0; goal_id < 75; goal_id++) {
                     if (PlayersData[faction_id].goals[goal_id].type == AI_GOAL_LANDING_SITE) {
                         int score = PlayersData[faction_id].goals[goal_id].priority * 8;
-                        if (alien_dist(*a4, *a5, PlayersData[faction_id].goals[goal_id].x,
+                        if (map_range(*a4, *a5, PlayersData[faction_id].goals[goal_id].x,
                                        PlayersData[faction_id].goals[goal_id].y)
                             > speed(veh_id, 0) / Rules.move_rate_roads - Rules.move_rate_roads) {
                             score /= 2;
@@ -3320,7 +3323,7 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                     if (anything_at(x, y) >= 0) {
                         continue;
                     }
-                    if (alien_dist(*a4, *a5, x, y)
+                    if (map_range(*a4, *a5, x, y)
                         > speed(veh_id, 0) / Rules.move_rate_roads - Rules.move_rate_roads) {
                         score /= 2;
                     }
@@ -3333,15 +3336,15 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                 if (target_x < 0) {
                     goto stockpile;
                 }
-                if (alien_dist(*a4, *a5, target_x, target_y)
+                if (map_range(*a4, *a5, target_x, target_y)
                     > speed(veh_id, 0) / Rules.move_rate_roads - Rules.move_rate_roads) {
                     int nearest = 9999;
                     // BUG(original): walks every base slot, not just the live bases.
                     for (i = 0; i < MaxBaseNum; i++) {
                         if (Bases[i].faction_id_current == faction_id
-                            && alien_dist(*a4, *a5, Bases[i].x, Bases[i].y)
+                            && map_range(*a4, *a5, Bases[i].x, Bases[i].y)
                                 <= speed(veh_id, 0) / Rules.move_rate_roads - Rules.move_rate_roads) {
-                            int dist = alien_dist(target_x, target_y, Bases[i].x, Bases[i].y);
+                            int dist = map_range(target_x, target_y, Bases[i].x, Bases[i].y);
                             if (dist < nearest) {
                                 nearest = dist;
                                 go_to(veh_id, 'M', Bases[i].x, Bases[i].y);
@@ -3391,7 +3394,7 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                             continue;
                         }
                         int score = base_score;
-                        if (alien_dist(*a4, *a5, x, y)
+                        if (map_range(*a4, *a5, x, y)
                             > speed(veh_id, 0) / Rules.move_rate_roads - Rules.move_rate_roads) {
                             score = base_score / 2;
                         }
@@ -3406,7 +3409,7 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                 if (target_x < 0) {
                     goto stockpile;
                 }
-                if (!(alien_dist(*a4, *a5, target_x, target_y)
+                if (!(map_range(*a4, *a5, target_x, target_y)
                     > speed(veh_id, 0) / Rules.move_rate_roads - Rules.move_rate_roads)) {
                     go_to(veh_id, 'm', target_x, target_y);
                 } else {
@@ -3414,9 +3417,9 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                     // BUG(original): walks every base slot, not just the live bases.
                     for (i = 0; i < MaxBaseNum; i++) {
                         if (Bases[i].faction_id_current == faction_id
-                            && alien_dist(*a4, *a5, Bases[i].x, Bases[i].y)
+                            && map_range(*a4, *a5, Bases[i].x, Bases[i].y)
                                 <= speed(veh_id, 0) / Rules.move_rate_roads - Rules.move_rate_roads) {
-                            int dist = alien_dist(target_x, target_y, Bases[i].x, Bases[i].y);
+                            int dist = map_range(target_x, target_y, Bases[i].x, Bases[i].y);
                             if (dist < nearest) {
                                 nearest = dist;
                                 go_to(veh_id, 'M', Bases[i].x, Bases[i].y);
@@ -3445,7 +3448,7 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                     int near_base;
                     if (Vehs[i].order == 0x15 && is_ocean(Vehs[i].x, Vehs[i].y)
                         && (near_base = base_find(Vehs[i].x, Vehs[i].y, faction_id)) >= 0
-                        && alien_dist(Vehs[i].x, Vehs[i].y, Bases[near_base].x, Bases[near_base].y) <= 2) {
+                        && map_range(Vehs[i].x, Vehs[i].y, Bases[near_base].x, Bases[near_base].y) <= 2) {
                         close = 1;
                     } else if ((Vehs[i].faction_id != faction_id || (Vehs[i].flags & 0x440) == 0x440)
                                && !(self_bit & Vehs[i].visibility)
@@ -3509,7 +3512,7 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                         odds <<= 3;
                     }
                     int value = odds / 2;
-                    if (alien_dist(*a4, *a5, Vehs[i].x, Vehs[i].y)
+                    if (map_range(*a4, *a5, Vehs[i].x, Vehs[i].y)
                         > speed(veh_id, 0) / Rules.move_rate_roads - Rules.move_rate_roads) {
                         weight /= 2;
                     }
@@ -3517,7 +3520,7 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                         value *= weight;
                         if (value >= threshold) {
                             threshold = value;
-                            if (!(alien_dist(*a4, *a5, Vehs[i].x, Vehs[i].y)
+                            if (!(map_range(*a4, *a5, Vehs[i].x, Vehs[i].y)
                                 > speed(veh_id, 0) / Rules.move_rate_roads - Rules.move_rate_roads)) {
                                 go_to(veh_id, 'm', Vehs[i].x, Vehs[i].y);
                             } else {
@@ -3525,10 +3528,10 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                                 // BUG(original): walks every base slot, not just the live bases.
                                 for (int base_slot = 0; base_slot < MaxBaseNum; base_slot++) {
                                     if (Bases[base_slot].faction_id_current == faction_id
-                                        && alien_dist(*a4, *a5, Bases[base_slot].x, Bases[base_slot].y)
+                                        && map_range(*a4, *a5, Bases[base_slot].x, Bases[base_slot].y)
                                             <= speed(veh_id, 0) / Rules.move_rate_roads
                                                 - Rules.move_rate_roads) {
-                                        int dist = alien_dist(Vehs[i].x, Vehs[i].y,
+                                        int dist = map_range(Vehs[i].x, Vehs[i].y,
                                                               Bases[base_slot].x, Bases[base_slot].y);
                                         if (dist < nearest) {
                                             nearest = dist;
@@ -3583,7 +3586,7 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                 for (i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
                     if (Bases[i].faction_id_current == faction_id
                         && stack_check(veh_at(Bases[i].x, Bases[i].y), 0xD, -1, -1, -1) < stacked
-                        && alien_dist(*a4, *a5, Bases[i].x, Bases[i].y)
+                        && map_range(*a4, *a5, Bases[i].x, Bases[i].y)
                             <= speed(veh_id, 0) / Rules.move_rate_roads - Rules.move_rate_roads) {
                         veh_drop(veh_lift(veh_id), Bases[i].x, Bases[i].y);
                         Vehs[veh_id].visibility = 0;
@@ -3615,7 +3618,7 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                     && ((Chassis[VehPrototypes[Vehs[i].proto_id].chassis_id].triad == TRIAD_AIR
                          && VehPrototypes[Vehs[i].proto_id].plan != PLAN_AIR_SUPERIORITY)
                         || VehPrototypes[Vehs[i].proto_id].plan == 7)) {
-                    int dist = alien_dist(*a4, *a5, Vehs[i].x, Vehs[i].y);
+                    int dist = map_range(*a4, *a5, Vehs[i].x, Vehs[i].y);
                     int cost = dist * 2 + 1;
                     if (speed(veh_id, 0) / Rules.move_rate_roads < dist) {
                         cost <<= 2;
@@ -3633,7 +3636,7 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
             int near_base;
             if (Vehs[i].order == 0x15 && is_ocean(Vehs[i].x, Vehs[i].y)
                 && (near_base = base_find(Vehs[i].x, Vehs[i].y, faction_id)) >= 0
-                && alien_dist(Vehs[i].x, Vehs[i].y, Bases[near_base].x, Bases[near_base].y) <= 2) {
+                && map_range(Vehs[i].x, Vehs[i].y, Bases[near_base].x, Bases[near_base].y) <= 2) {
                 close = 1;
             } else if ((Vehs[i].faction_id != faction_id || (Vehs[i].flags & 0x440) == 0x440)
                        && !(Vehs[i].visibility & (1 << faction_id))) {
@@ -3697,7 +3700,7 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                     continue;
                 }
             }
-            int dist = alien_dist(*a4, *a5, Vehs[i].x, Vehs[i].y);
+            int dist = map_range(*a4, *a5, Vehs[i].x, Vehs[i].y);
             int cost = dist;
             if (strike_range / 2 >= dist) {
                 int region = region_at(Vehs[i].x, Vehs[i].y);
@@ -3740,7 +3743,7 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                     if (Bases[i].faction_id_current == faction_id
                         || (PlayersData[faction_id].diplo_treaties[Bases[i].faction_id_current]
                             & DTREATY_PACT)) {
-                        int dist = alien_dist(escort_x, escort_y, Bases[i].x, Bases[i].y);
+                        int dist = map_range(escort_x, escort_y, Bases[i].x, Bases[i].y);
                         if (return_range >= dist && dist < best_dist) {
                             best_dist = dist;
                             go_to(veh_id, 'a', Bases[i].x, Bases[i].y);
@@ -3907,7 +3910,7 @@ base_attack:
             if (PlayersData[faction_id].region_base_plan[base_region] <= 2) {
                 score *= 4;
             }
-            int dist = alien_dist(*a4, *a5, Bases[i].x, Bases[i].y);
+            int dist = map_range(*a4, *a5, Bases[i].x, Bases[i].y);
             score /= (dist - 1) / range(strike_range / 2, 1, 99) + 1;
             if (score >= best) {
                 best = score;
@@ -3917,7 +3920,7 @@ base_attack:
             }
         }
         if (on_map(target_x, target_y)) {
-            if (alien_dist(*a4, *a5, target_x, target_y) <= strike_range / 2) {
+            if (map_range(*a4, *a5, target_x, target_y) <= strike_range / 2) {
                 if (!risky_best) {
                     go_to(veh_id, 'a', target_x, target_y);
                 }
@@ -3927,7 +3930,7 @@ base_attack:
                     if (Bases[i].faction_id_current == faction_id
                         || (PlayersData[faction_id].diplo_treaties[Bases[i].faction_id_current]
                             & DTREATY_PACT)) {
-                        int dist = alien_dist(target_x, target_y, Bases[i].x, Bases[i].y);
+                        int dist = map_range(target_x, target_y, Bases[i].x, Bases[i].y);
                         if (return_range >= dist && dist < nearest) {
                             nearest = dist;
                             go_to(veh_id, 'a', Bases[i].x, Bases[i].y);
@@ -3945,14 +3948,6 @@ base_attack:
         }
     }
     return -3;
-}
-
-// Inlined: the halved x_dist + |dy| reach test.
-static inline int buster_dist(int x_point_a, int y_point_a, int x_point_b, int y_point_b) {
-    int x_distance = x_dist(x_point_a, x_point_b);
-    int y_distance = abs(y_point_a - y_point_b);
-    int distance = (x_distance + y_distance) >> 1;
-    return distance;
 }
 
 // ORIGINAL: 0x0056A8A0 ?enemy_planet_buster@@YAHH@Z 0x0056A8A0-0x0056B31A
@@ -4003,14 +3998,14 @@ int __cdecl enemy_planet_buster(int vehicle_id) {
             int score = 0;
             int reachable = 0;
             if (!pass) {
-                if (buster_dist(Vehs[vehicle_id].x, Vehs[vehicle_id].y, Bases[base_id].x, Bases[base_id].y)
+                if (map_range(Vehs[vehicle_id].x, Vehs[vehicle_id].y, Bases[base_id].x, Bases[base_id].y)
                     > speed(vehicle_id, 0) / Rules.move_rate_roads) {
                     continue;
                 }
             } else {
                 for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
                     if (Bases[i].faction_id_current == faction_id
-                        && buster_dist(Bases[i].x, Bases[i].y, Bases[base_id].x, Bases[base_id].y)
+                        && map_range(Bases[i].x, Bases[i].y, Bases[base_id].x, Bases[base_id].y)
                             <= speed(vehicle_id, 0) / Rules.move_rate_roads) {
                         reachable = 1;
                         launch_base_id = i;
@@ -4290,9 +4285,6 @@ char EnemyBuildBaseMessageText[1] = {0};
 // does not.
 static inline int stack_next_or_none(int veh_id) {
     return veh_id >= 0 ? Vehs[veh_id].next_veh_id_stack : -1;
-}
-static inline int map_range(int x1, int y1, int x2, int y2) {
-    return (abs(y1 - y2) + x_dist(x1, x2)) >> 1;
 }
 // ORIGINAL: 0x0056B5B0 ?enemy_move@@YAHH@Z 0x0056B5B0-0x00579208 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:ac587b44f8a4f670c7c73f0dfa434885adc49ebf:src/unrecovered/0056b5b0.cpp is deleted seed history; its original identity, full span, claims and useful lessons are retained here through the source writer.", "Pinned instructions establish distinct raw route/damage flags, integer stack priority, saved versus live callback reads, and original unguarded/uninitialized error paths.", "Complete selected, strategic, nonsea, sea and tactical continuations execute once; helpers do not introduce new original identities.", "Vehicle, prototype, PlayerData and Base fields use their real source owners; original matching and full runtime restoration obligations remain."], "reason": "Complete typed per-vehicle enemy movement owner with one path-dependent raw frame and genuine product owners; superseded executable forwarding and scaffold are removed together."}
