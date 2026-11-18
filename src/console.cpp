@@ -6753,7 +6753,7 @@ int Console::on_key_click(int a1, int a2) {
                 }
                 for (other = 0; other < MaxPlayerNum; ++other) {
                     ::clear();
-                    say_num(static_cast<int>(PlayersData[faction_id].diplo_friction[other]));
+                    say_num(PlayersData[faction_id].diplo_friction[other]);
                     strcat(StringTemp, " Friction with ");
                     strcat(StringTemp, get_noun(other));
                     report_log.say(StringTemp, 0, 0, 0, 0);

@@ -1065,7 +1065,7 @@ void __cdecl enemies_trade_tech(int faction_id, int faction_id_with) {
                     const int minimum_friction =
                         (PlayersData[faction_id].diplo_treaties[faction_id_with]
                          & DTREATY_PACT) != 0 ? 6 : 16;
-                    if (static_cast<int>(PlayersData[faction_id_with].diplo_friction[donor_source])
+                    if (PlayersData[faction_id_with].diplo_friction[donor_source]
                         < minimum_friction) eligible = false;
                 }
                 if (eligible) {
@@ -1100,7 +1100,7 @@ void __cdecl enemies_trade_tech(int faction_id, int faction_id_with) {
                  & DTREATY_PACT) != 0 ? 6 : 16;
             const char recipient_source =
                 PlayersData[faction_id_with].tech_trade_source[tech_id];
-            if (static_cast<int>(PlayersData[faction_id_with].diplo_friction[recipient_source])
+            if (PlayersData[faction_id_with].diplo_friction[recipient_source]
                 < minimum_friction) eligible = false;
         }
         if (eligible) {

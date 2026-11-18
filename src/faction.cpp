@@ -2502,7 +2502,7 @@ void __cdecl diplomacy_check(int faction, int other, int update) {
         DiploScratchFA3C = 0;
         DiploScratchF7F0 = 1;
     }
-    DiploFriction = static_cast<int>(PlayersData[other].diplo_friction[faction]);
+    DiploFriction = PlayersData[other].diplo_friction[faction];
     int blemishes = range(PlayersData[faction].integrity_blemishes
         - PlayersData[faction].diplo_unk1[other], 0, 99);
     DiploScratchFA78 = blemishes;

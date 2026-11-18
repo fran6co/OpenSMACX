@@ -371,7 +371,7 @@ struct PlayerData {
     int last_turn_new_base; // turn for last built, captured or acquired (drone riot) base
     uint32_t diplo_treaties[8];
     int diplo_agenda[8];
-    uint32_t diplo_friction[8]; // between 0-20
+    int diplo_friction[8]; // between 0-20
     int diplo_spoke[8]; // Turn for the last player-to-AI communication; -1 for never
     int diplo_merc[8]; // mercifulness? Possibly higher values indicate willingness for deal-making
     char diplo_patience[8]; // AI-to-player

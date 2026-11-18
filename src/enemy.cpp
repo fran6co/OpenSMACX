@@ -4665,7 +4665,7 @@ L_56c9e1:
             && !(PlayersData[faction_id].diplo_treaties[Bases[near_base].faction_id_current] & 1)
             && Vehs[veh_id].order != ORDER_MOVE_TO
             && whose_territory(faction_id, x, y, NULL, 0) == Bases[near_base].faction_id_current
-            && (int)PlayersData[faction_id].diplo_friction[Bases[near_base].faction_id_current] < 10
+            && PlayersData[faction_id].diplo_friction[Bases[near_base].faction_id_current] < 10
             && !(PlayersData[faction_id].diplo_treaties[Bases[near_base].faction_id_current] & 0xC00)
             && ((Vehs[veh_id].faction_id == Bases[near_base].faction_id_current
                  && (Vehs[veh_id].flags & 0x440) != 0x440)
