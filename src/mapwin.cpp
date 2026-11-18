@@ -4433,9 +4433,16 @@ LAB_0046441f:
         territory_faction =
             whose_territory(ConsoleGlobal.faction_id_, a7, a8, 0, 0);
         if ((int)territory_faction >= 0) {
-            // 0x465185..0x46519F: byte 0, dwords at +1/+5 and byte +9 is
-            // VC6's `char[10] = {0}` initializer, at this point.
-            uint8_t faction_mask[10] = {0};
+            // 0x465185..0x46519F: byte 0 as an immediate, dwords at +1/+5
+            // and byte +9 from the zero register: the shape of a
+            // `char[10] = {0}` initializer, but stored into the 0x100-byte
+            // table at [ebp-0x4c8] (the frame gap up to rocky_uv, and the
+            // table draw_mask_dest takes beside the 256-entry colour rows).
+            // WORKAROUND(type): a block `uint8_t[10] = {0}` gets its own
+            // 12-byte slot at [ebp-0x8c] and leaves the frame 0x100 short;
+            // `memset(territory_mask, 0, 10)` stores dword/dword/word.
+            territory_mask[0] = 0;
+            memset(territory_mask + 1, 0, 9);
             local_44 = 0;
             // Original 0x0046517B/0x004651B2 reload the map width/base
             // after whose_territory, then cache the center's region (+3).
@@ -4466,14 +4473,14 @@ LAB_0046441f:
                         cVar4 = (char)territory_faction;
                         if (((uint32_t)k & 1) == 0) {
                             if (k == 0) {
-                                faction_mask[8] = cVar4 + 1;
-                                faction_mask[2] = cVar4 + 1;
+                                territory_mask[8] = cVar4 + 1;
+                                territory_mask[2] = cVar4 + 1;
                             } else {
-                                faction_mask[k] = cVar4 + 1;
-                                faction_mask[k + 2] = cVar4 + 1;
+                                territory_mask[k] = cVar4 + 1;
+                                territory_mask[k + 2] = cVar4 + 1;
                             }
                         }
-                        faction_mask[k + 1] = cVar4 + 1;
+                        territory_mask[k + 1] = cVar4 + 1;
                     }
                 }
             }
@@ -4487,7 +4494,7 @@ LAB_0046441f:
                 overlay_uv[1].y = 0;
                 overlay_uv[3].x = 0;
                 g_RAINFALL_SINGLE_TILE_TEXTURE.draw_mask_dest(
-                    buffer, MapCornerScratch, faction_mask,
+                    buffer, MapCornerScratch, territory_mask,
                     reinterpret_cast<uint8_t *>(TerritoryColorTables), 4,
                     overlay_uv);
             }
