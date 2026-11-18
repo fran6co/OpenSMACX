@@ -373,7 +373,7 @@ HMODULE SoundDllModule;
 // through ordinal 11, and stops at 0x0090DB50 (0x004C5EA8). Its failure
 // path clears the same eleven words. This is pre-loader storage, not a
 // claim that the DLL exports or their ABI have been verified.
-// RECOVERY_OBJECT: v2 0x0090DB24 0x0090DB50 ?SoundDllProcs@@3PAPAXA 0x004C5E50
+// RECOVERY_OBJECT: v2 0x0090DB24 0x0090DB50 ?SoundDllProcs@@3TSoundDllProcsTable@@A 0x004C5E50
 SoundDllProcsTable SoundDllProcs;
 
 // The version warnings are named read-only objects, not unit literals: the

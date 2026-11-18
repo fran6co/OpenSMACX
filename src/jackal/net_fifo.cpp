@@ -213,7 +213,7 @@ int NetFifo::get(void *data, int key, int *type, int *len) {
 #endif
 
 // ORIGINAL: 0x00633F70 ?get@NetFifo@@QAEHPAXPAIPAHPAI@Z 0x00633F70-0x0063401D BYTE_EXACT
-// symbol    ?get@NetFifo@@QAEHPAXPAIPAH1@Z
+// symbol    ?get@NetFifo@@QAEHPAXPAKPAH1@Z
 // prototype int (__thiscall ?get@NetFifo@@QAEHPAXPAIPAHPAI@Z)(NetFifo* this, void*, unsigned int*, int*, unsigned int*)
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok

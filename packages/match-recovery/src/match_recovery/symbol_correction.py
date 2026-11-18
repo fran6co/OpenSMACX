@@ -76,8 +76,11 @@ def correct_symbol(root: Path, *, address: int, source: str, symbol: str, source
                          f"storage ({', '.join(differences['identity'])}); pass --allow-identity-change "
                          "only after reviewing that identity change")
     for row in records:
-        if row is not record and symbol in (row.symbol or row.name, row.name):
-            raise ValueError(f"symbol is already the identity of the mapping at line {row.line}")
+        # Only the symbol a row emits can collide. A row whose catalogue name
+        # differs from its emitted symbol (compiler-numbered `_$E` thunks) does
+        # not own that name in the object.
+        if row is not record and symbol == (row.symbol or row.name):
+            raise ValueError(f"symbol is already emitted by the mapping at line {row.line}")
 
     unit = record.context or source
     project = read_json(root / "recovery/project.json")

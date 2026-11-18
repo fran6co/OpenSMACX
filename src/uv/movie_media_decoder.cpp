@@ -3304,7 +3304,7 @@ m5d4448_5d44ee:
 // The 3x3 numerical member bodies are consolidated in src/jackal/vector.cpp.
 
 // ORIGINAL: 0x005D2E00 sub_5d2e00 0x005D2E00-0x005D2E6E FILE BYTE_EXACT
-// symbol    ?sub_5d2e00@@YIXPADHH0D@Z
+// symbol    ?sub_5d2e00@@YIXPAEHH0H@Z
 // working copy - scaffold materialised by --work
 // size      110 bytes
 // prototype
@@ -5666,7 +5666,7 @@ namespace movie_decoder_huffman {
 
 // ORIGINAL: 0x005CE85C sub_5ce85c 0x005CE85C-0x005CEA09 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["recovery/tasks/movie-decoder-owner-oct5.json", "pinned caller/body and shared-storage review; fresh VC6 public symbol", "Keep the semantic C++ name; body state is explicitly passed and uses the shared typed tables/bit-state owners. Do not copy executable bytes, use original-address calls, or treat a provisional owner name as native mangling."], "reason": "Faithful semantic media decoder owner recovery with normalized custom-register helper interfaces. Original identities, spans and historical findings retained; no matching, runtime or game acceptance granted."}
-// symbol    ?decode_coefficients@movie_decoder_huffman@@YAHAAUState@1@@Z
+// symbol    ?decode_coefficients@movie_decoder_huffman@@YAHXZ
 // TRIED: MISMATCH #1 push/mov - the bit-reader state (accumulator, bits-available count, word cursor) that the original keeps in esi/edi/ebp for the whole function is modelled as ordinary locals written back once at the shared epilogue and at the single early-return branch; entry-frame shape differs first.
 // Hand-written assembly in the original: it saves ECX/EDX alongside the
 // callee-saved registers (VC6 never does) and keeps the reader cursor,

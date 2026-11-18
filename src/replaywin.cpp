@@ -33,7 +33,7 @@
 
 // setup_game clears 0x800 dwords at 0x00950324 and timer_callback reads
 // eight-byte records from the same interval. The counter advances in bytes.
-// RECOVERY_OBJECT: v2 0x00950324 0x00952324 ?ReplayEvents@@3PAUReplayEventRecord@@A 0x005ADE80
+// RECOVERY_OBJECT: v2 0x00950324 0x00952324 ?ReplayEvents@@3PADA 0x005ADE80
 char ReplayEvents[0x2000];
 // RECOVERY_OBJECT: v2 0x009469F8 0x009469FC ?ReplayEventBytes@@3HA 0x005ADE80
 int ReplayEventBytes;

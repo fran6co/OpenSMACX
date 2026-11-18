@@ -22,7 +22,7 @@
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682634 selects init 0x0052DB10-0x0052DB26, registering fini 0x0052DB30-0x0052DB3A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x0093CD90; scalar NetDaemon constructor/destructor 0x005389F0/0x00538D10.", "Current owner physical COFF selects _$E21 via .CRT$XCU and registers _$E19, with relocations naming ?NetDaemonNet@@3VNetDaemon@@A; the genuine global definition owns this lifetime, including possible inline scalar construction.", "Current helper names are compiler-output interpretations, not original debug symbols. These individual bindings do not establish full initialization order, allocation extents, linked retained selection or runtime acceptance."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned NetDaemonNet; no callback body is authored."}
 // symbol    _$E14
 // ORIGINAL: 0x0052DB40 sub_52db40 0x0052DB40-0x0052DB67 BYTE_EXACT
-// symbol    ?reset_saved_process_slot_state@@YAXXZ
+// symbol    _$E19
 // size      39 bytes
 // prototype
 // callers   0   call targets   0
@@ -837,8 +837,8 @@ void NetDaemon::unlock_veh() {
 // RECOVERY_OBJECT: v3 0x0093E964 0x0093E968 ?MessageWinNetworkMessageCount@@3HA 0x004713B0 member ?NetDaemonNet@@3VNetDaemon@@A field_1BD4_
 // RECOVERY_OBJECT: v3 0x0093D4F0 ?NetWinPlayerId@@3HA member ?NetDaemonNet@@3VNetDaemon@@A local_player_id_
 // RECOVERY_OBJECT: v3 0x0093D4F4 ?NetWinOtherPlayerId@@3HA member ?NetDaemonNet@@3VNetDaemon@@A host_player_id_
-// Bound: the trailing save table (+0x1BE8) is saved/loaded as 0xCE0 bytes from 0x0093E978 (0x005A6CCB), ending at 0x0093F658; the next dword is unreferenced and NetPlayerDropped (0x0093F65C) is separate.
-// RECOVERY_OBJECT: v2 0x0093CD90 0x0093F658 ?NetDaemonNet@@3VNetDaemon@@A 0x005A6CCB
+// Bound: NetDaemon ends at +0x1BE8 (0x0093E978), where the separate saved process slot array begins (its own CRT initializer, 0x0052DB40).
+// RECOVERY_OBJECT: v2 0x0093CD90 0x0093E978 ?NetDaemonNet@@3VNetDaemon@@A 0x005A6CCB
 NetDaemon NetDaemonNet;  // 0x0093CD90
 
 // The saved copy of the eight process slots: its own global, constructed by

@@ -195,7 +195,7 @@ Status: Complete with a temporary dependency on the network close
 Purpose: Build an AlphaNet: the Net base (implicit), the eight process
          slots' {FF,0,0,FF,2} patterns, the ledger, and the trailing Heap -
          all through its typed members.
-// ORIGINAL: 0x004E2490 ??0AlphaNet@@QAE@XZ 0x004E2490-0x004E25A5;0x0065C610-0x0065C630
+// ORIGINAL: 0x004E2490 ??0AlphaNet@@QAE@XZ 0x004E2490-0x004E25A5;0x0065C610-0x0065C630 BYTE_EXACT
 // symbol    ??0AlphaNet@@QAE@XZ
 // size      277 bytes
 // kind      game

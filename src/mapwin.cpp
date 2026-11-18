@@ -135,7 +135,7 @@ int MapWinStartupWords[256];
 
 // The original layout writer MapWin_UNK5 and mode-zero initializer share
 // these two 16-byte records and their accumulated dirty bits.
-// RECOVERY_OBJECT: v2 0x00939F48 0x00939F68 ?MapPanelRects@@3PAUMapPanelRect@@A 0x0046FA20
+// RECOVERY_OBJECT: v2 0x00939F48 0x00939F68 ?MapPanelRects@@3PAUtagRECT@@A 0x0046FA20
 RECT MapPanelRects[2];
 // RECOVERY_OBJECT: v2 0x00939EDC 0x00939EE0 ?MapPanelDirtyMask@@3IA 0x0046FA20
 uint32_t MapPanelDirtyMask;

@@ -2904,7 +2904,7 @@ Purpose: Read one packet off Net's middle queue, retrying until something
          success, zero on timeout.
 
 // ORIGINAL: 0x00630A80 sub_630a80 0x00630A80-0x00630AFC BYTE_EXACT
-// symbol    ?read_queue_head_until_timeout@Net@@QAEPAXPAI0@Z
+// symbol    ?read_queue_head_until_timeout@Net@@QAEPAXPAK0@Z
 // TRIED: original spills its cached timeGetTime() start value into the (now-unused) first stack argument slot instead of a fresh local; not reproduced.
 // Historical emitted-symbol hint: @sub_630a80@16
 // size      124 bytes
