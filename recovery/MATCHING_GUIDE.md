@@ -908,8 +908,14 @@ raw field access where the original used inline accessors.
   its framed functions for this reason, and Credits::exec (0x004289F0, 3
   rows) is the case that fits neither: the image has an ebp frame AND
   immediate stores, ours has the frame and `xor` with the pragma, no frame
-  and `xor` without it. What gives a frame under `/Oy` is not known; the
-  other 72 `optimize("y", off)` pragmas in the tree may hide the same gap.
+  and `xor` without it. Every framed function in credits.cpp has stack
+  parameters or locals and every frameless one has none, which is plain
+  `/Oy-` behaviour, so the unit was most likely built `/Oy-` like the rest
+  of the game and the open question is the reverse one: what makes `/Oy-`
+  emit immediates in Credits::unload and Credits::exec. Measured so far:
+  under `/Oy` the `xor` form appears exactly when ebp is also taken as a
+  fourth register; member types (unsigned, int, pointer, enum, float) and
+  chained assignment do not matter.
 - **Statement vs conditional expression.** `d = a - b; if (d < 0) d = b - a;`
   and `d = (a - b < 0) ? b - a : a - b;` emit the same instructions with two
   registers swapped (on_scrolled's distance). Try the other form on a
