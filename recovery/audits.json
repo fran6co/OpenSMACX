@@ -10,7 +10,8 @@
         ".h"
       ],
       "exclude_roots": [
-        "src/vendor"
+        "src/vendor",
+        "recovery/components"
       ],
       "ceilings": {
         "vtable": 0,
@@ -62,7 +63,8 @@
         ".h"
       ],
       "exclude_roots": [
-        "src/vendor"
+        "src/vendor",
+        "recovery/components"
       ],
       "ceilings": {
         "duplicate global identities": 0,
@@ -79,7 +81,8 @@
         ".h"
       ],
       "exclude_roots": [
-        "src/vendor"
+        "src/vendor",
+        "recovery/components"
       ],
       "ceilings": {
         "unk-method": 197,

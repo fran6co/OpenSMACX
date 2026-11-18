@@ -23,7 +23,7 @@ code. Preserve their provenance, version uncertainty, archive identity and licen
 constraints. A familiar symbol name or an available compiler distribution does
 not prove which library member the original linker selected.
 
-src/vendor/vc6-runtime.recovery.h owns the currently declared bounded runtime
+recovery/components/vc6-runtime.recovery.h owns the currently declared bounded runtime
 interpretation. It identifies selected members of a pinned external archive; it
 does not establish coverage of the entire CRT. The archive is not redistributed.
 Use the native component checks documented in recovery/README.md to test those

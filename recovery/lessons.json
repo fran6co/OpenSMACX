@@ -283,7 +283,7 @@
       "category": "candidate_strategy",
       "evidence": {
         "commit": "bdebd6c88636969053de2a27afd47537fe9ea9c5",
-        "witness": "src/vendor/vc6-runtime.recovery.h existing sin/cos/sqrt code-section entries; packages/match-recovery/src/match_recovery/component_binary.py"
+        "witness": "recovery/components/vc6-runtime.recovery.h existing sin/cos/sqrt code-section entries; packages/match-recovery/src/match_recovery/component_binary.py"
       },
       "requires": [
         "The archive bytes match the source-owned archive pin.",
@@ -301,7 +301,7 @@
       "id": "bind-complete-initialized-dependency-pools",
       "category": "candidate_strategy",
       "evidence": {
-        "witness": "src/vendor/vc6-runtime.recovery.h initialized sin/cos/sqrt/atan/pow/common data-section bindings; .opensmacx/recovery/image-frontier-nov05ae/data-review.json"
+        "witness": "recovery/components/vc6-runtime.recovery.h initialized sin/cos/sqrt/atan/pow/common data-section bindings; .opensmacx/recovery/image-frontier-nov05ae/data-review.json"
       },
       "requires": [
         "The referring code contribution is independently bounded and its non-relocation bytes match the pinned archive.",

@@ -55,7 +55,8 @@
       ".cpp"
     ],
     "exclude_roots": [
-      "src/vendor"
+      "src/vendor",
+      "recovery/components"
     ]
   },
   "mappings": {
@@ -74,6 +75,10 @@
       ".hpp",
       ".hh",
       ".asm"
+    ],
+    "roots": [
+      "src",
+      "recovery/components"
     ],
     "seed_roots": [
       "src/recovered",

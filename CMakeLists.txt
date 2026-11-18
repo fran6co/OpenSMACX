@@ -78,7 +78,7 @@ endif()
 enable_language(ASM_MASM)
 
 # The original allocator includes the static multithreaded CRT's lock and
-# small-block-heap code (src/vendor/vc6-runtime.recovery.h). CMake's default
+# small-block-heap code (recovery/components/vc6-runtime.recovery.h). CMake's default
 # DLL runtime instead links import thunks, even when application bodies match.
 # Keep this runtime in every configuration; debug code generation must not
 # silently select a different allocator. This project decision applies to zlib

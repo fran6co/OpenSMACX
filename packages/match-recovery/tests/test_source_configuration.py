@@ -156,3 +156,27 @@ def test_component_ownership_validation_spans_all_configured_roots():
     other = render_component(replace(manifest, component=replace(manifest.component, component_id="other")))
     with pytest.raises(ValueError, match="multiple components"):
         parse_components({"code/codec.recovery.h": first, "other/codec.recovery.h": other})
+
+
+def _with_component_root(root, roots):
+    configuration = json.loads((root / "recovery/project.json").read_text())
+    configuration["source"]["roots"] = roots
+    (root / "recovery/project.json").write_text(json.dumps(configuration))
+
+
+def test_component_metadata_may_live_in_its_own_configured_root(configured):
+    # Component companions are recovery metadata, not original source: a
+    # project may keep them in a dedicated root outside the C++ tree.
+    (configured / "metadata").mkdir()
+    (configured / "metadata/codec.recovery.h").write_text(render_component(vendor_manifest()))
+    _with_component_root(configured, ["code", "hints", "metadata"])
+    report = partition_report(configured)
+    assert report["groups"][0]["selector"] == "component:codec"
+    assert "metadata/codec.recovery.h" in source_snapshot(configured, allow_empty=True)["files"]
+
+
+def test_component_metadata_outside_configured_roots_is_not_discovered(configured):
+    (configured / "metadata").mkdir()
+    (configured / "metadata/codec.recovery.h").write_text(render_component(vendor_manifest()))
+    assert partition_report(configured)["groups"][0]["selector"] == "source:code/owner.cc"
+    assert "metadata/codec.recovery.h" not in source_snapshot(configured, allow_empty=True)["files"]

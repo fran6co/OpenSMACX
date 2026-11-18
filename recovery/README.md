@@ -759,7 +759,7 @@ uv run pytest packages/match-recovery/tests recovery/tests
 uv build --package match-recovery
 ```
 
-The runtime companion `src/vendor/vc6-runtime.recovery.h` binds the ledger's
+The runtime companion `recovery/components/vc6-runtime.recovery.h` binds the ledger's
 `_free` dependency, four lock/small-block-heap callees and two heap initialization
 entries, with source-declared system imports. The precompiled-library command reads the pinned archive without
 compiler invocation or extraction. Its strict reference check resolves original
