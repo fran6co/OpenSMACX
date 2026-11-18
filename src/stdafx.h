@@ -93,7 +93,7 @@
 // scaffold compiles through this same stdafx.h (build/compile_commands),
 // so the measured unit and the built one agree about it.
 #if defined(_MSC_VER) && _MSC_VER <= 1200
-#pragma function(strcat, strcpy, strlen, strcmp, abs, sin, memcmp)
+#pragma function(strcat, strcpy, strlen, strcmp, abs, sin, cos, memcmp)
 #endif
 
 // Marks a parameter as deliberately unused. Expands to NOTHING, which

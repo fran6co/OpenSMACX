@@ -3513,10 +3513,10 @@ void ReportWin::draw_ops() {
                     mandate_color(TutWinBaseWindow.prodPicker_.edbc_unit(production)), -1, 1, 1);
             } else {
                 facility = -production;
-                item_cost = Facility[facility].cost;
                 strcat(StringTemp, StringTable.get(Facility[facility].name));
                 Buffer::set_text_color(
                     mandate_color(TutWinBaseWindow.prodPicker_.edbc_fac(facility)), -1, 1, 1);
+                item_cost = Facility[facility].cost;
             }
             rect1_.left += 60;
             Buffer::write_l(StringTemp, rect1_.left, text_y);
