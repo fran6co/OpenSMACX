@@ -400,32 +400,6 @@ MultiWin MultiWindow;  // 0x007FD648
 
 
 
-// ORIGINAL: 0x0052DB40 sub_52db40 0x0052DB40-0x0052DB67 BYTE_EXACT
-// symbol    ?reset_saved_process_slot_state@@YAXXZ
-// size      39 bytes
-// prototype
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// 0x0052DB40  sub_52db40  ->  _sub_52db40
-//
-// The following notes describe the earlier verification artifact, when this
-// identity had no product owner; current source uses NetDaemon's save view.
-// Preserve the original measurement/history details below as such.
-// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
-// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
-// and rewriting it in the tree's own style is a later phase. See README.md
-// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
-
-
-void reset_saved_process_slot_state() {
-    NetDaemonSaveProcessSlot *slot = NetDaemonNet.saved_process_slots_;
-    for (int i = 0; i < 8; i++, slot++) {
-        slot->state_.reset();
-    }
-}
-
 // ===== homed out of the archive 2026-09-04 =====
 
 
@@ -1018,9 +992,9 @@ int __cdecl save_daemon(char *save_path) {
     if (IsMultiplayerNet != 0) {
         GameDataStateStorage.fields_.game_state_ |= save_state_flag;
         GameDataPlayerCountSnapshot = NetDaemonNet.player_count_;
-        memcpy(NetDaemonNet.saved_process_slots_,
+        memcpy(NetDaemonSavedProcessSlots,
                NetDaemonNet.process_slots_,
-               sizeof(NetDaemonNet.saved_process_slots_));
+               sizeof(NetDaemonSavedProcessSlots));
     }
 
     char filename[0x100];
@@ -1932,7 +1906,7 @@ int __cdecl game_data(FILE *file, int write_mode) {
                     file, &GameDataStateStorage, 0x398) == 0)
                 return 1;
             if (game_data_candidate_transfer(
-                    file, NetDaemonNet.saved_process_slots_, 0xCE0) == 0)
+                    file, NetDaemonSavedProcessSlots, 0xCE0) == 0)
                 return 1;
             if (game_data_candidate_transfer(
                     file, &GameDataPlayerCountSnapshot, 4) == 0)

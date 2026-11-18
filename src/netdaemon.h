@@ -119,54 +119,16 @@ static_assert(offsetof(LockStateEntry, trailing_words_) == 0x14,
               "lock-state trailing words");
 static_assert(sizeof(LockStateEntry) == 0x3C, "lock state stride");
 
-// Persistent save/restore storage begins at NetDaemon+0x1BE8.
-// The native secondary initializer writes the same five leading bytes as an
-// AlphaNet process record at 0x93E99C + n*0x19C; save_daemon copies the eight
-// complete live records over this view, and game_data transfers the same
-// 0xCE0-byte interval. This POD view has no snapshot constructor/destructor.
-//
-// The bytes from +0x24 are one nested record with its own inline reset: the
-// initializer at 0x0052DB40 walks a cursor at +0x26 with a count of eight,
-// which VC6 produces for a loop calling the nested record's reset() and not
-// for five stores to members of the slot itself (those put the cursor at
-// +0x25 and compare an end address).
-struct NetDaemonSaveProcessSlot {
-  char name_[0x20];
-  uint32_t pid_;
-  struct State {
-    int8_t identity_;
-    uint8_t field_25_;
-    uint8_t field_26_;
-    int8_t field_27_;
-    uint8_t status_bytes_[0x174];
-    void reset() {
-      identity_ = -1;
-      field_25_ = 0;
-      field_26_ = 0;
-      field_27_ = -1;
-      status_bytes_[0] = 2;
-    }
-  } state_;
-};
-static_assert(offsetof(NetDaemonSaveProcessSlot, pid_) ==
-                  offsetof(AlphaNetProcessSlot, pid_),
-              "saved process-slot PID matches live layout");
-static_assert(offsetof(NetDaemonSaveProcessSlot, state_.identity_) == 0x24,
-              "saved process-slot identity offset");
-static_assert(offsetof(NetDaemonSaveProcessSlot, state_.identity_) ==
-                  offsetof(AlphaNetProcessSlot, state_.identity_),
-              "saved process-slot identity matches live layout");
-static_assert(offsetof(NetDaemonSaveProcessSlot, state_.status_bytes_) == 0x28,
-              "saved process-slot status offset");
-static_assert(offsetof(NetDaemonSaveProcessSlot, state_.status_bytes_) ==
-                  offsetof(AlphaNetProcessSlot, state_.status_bytes_),
-              "saved process-slot status matches live layout");
-static_assert(sizeof(NetDaemonSaveProcessSlot) == 0x19C,
-              "saved process-slot stride");
-static_assert(sizeof(NetDaemonSaveProcessSlot) == sizeof(AlphaNetProcessSlot),
-              "saved process-slot matches live stride");
-static_assert(sizeof(NetDaemonSaveProcessSlot) * 8 == 0xCE0,
-              "saved process-slot table extent");
+// The persistent save/restore copy of AlphaNet's eight process slots is a
+// separate global at 0x0093E978, straight after NetDaemonNet (which ends at
+// +0x1BE8): the image constructs it from its own CRT initializer entry
+// (0x00682638 -> 0x0052DB40, no atexit registration), the entry after
+// NetDaemonNet's (0x00682634 -> 0x0052DB10), and NetDaemon's constructor
+// (0x005389F0) never touches the rows. The initializer is the same inlined
+// array construction as AlphaNet's own member array (0x004E24BF), so the
+// element is the same AlphaNetProcessSlot. save_daemon copies the eight live
+// records over it and game_data transfers the same 0xCE0 bytes.
+extern AlphaNetProcessSlot NetDaemonSavedProcessSlots[8];
 
 class NetDaemonTransferModalCloseGuard;
 class Filemap;
@@ -457,14 +419,10 @@ class NetDaemon : public AlphaNet {
   // RECOVERY_MEMBER: v1 NetDaemon file_index_records_ 0x1BE0 0x0052ED40
   NetDaemonFileIndexRecord *file_index_records_;
   uint32_t field_1BE4_;
-  // Separate from AlphaNet's live process_slots_ at +0x76C.
-  // RECOVERY_MEMBER: v1 NetDaemon saved_process_slots_ 0x1BE8 0x0052DB40
-  NetDaemonSaveProcessSlot saved_process_slots_[8];
-
-  // Observed storage reaches+0x28C8 through the persistent save table.
-  // Extent only: this is not proof of complete original sizeof.
-  // Separate NetPlayerDropped93F65C and network flags93F660 remain globals.
+  // The object ends here, at +0x1BE8: NetDaemonSavedProcessSlots is the next
+  // global (0x0093E978), constructed by its own initializer.
 };
+static_assert(sizeof(NetDaemon) == 0x1BE8, "NetDaemon ends before the saved slots");
 static_assert(offsetof(NetDaemon, field_1B68_) == 0x1B68, "flat channel words start");
 static_assert(offsetof(NetDaemon, action_mode_) == 0x1B74, "flat action mode");
 static_assert(offsetof(NetDaemon, locked_veh_) == 0x1B78, "flat vehicle slot");

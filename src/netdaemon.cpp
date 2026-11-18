@@ -21,6 +21,26 @@
 // ORIGINAL: 0x0052DB30 _$E19 0x0052DB30-0x0052DB3A FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682634 selects init 0x0052DB10-0x0052DB26, registering fini 0x0052DB30-0x0052DB3A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x0093CD90; scalar NetDaemon constructor/destructor 0x005389F0/0x00538D10.", "Current owner physical COFF selects _$E21 via .CRT$XCU and registers _$E19, with relocations naming ?NetDaemonNet@@3VNetDaemon@@A; the genuine global definition owns this lifetime, including possible inline scalar construction.", "Current helper names are compiler-output interpretations, not original debug symbols. These individual bindings do not establish full initialization order, allocation extents, linked retained selection or runtime acceptance."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned NetDaemonNet; no callback body is authored."}
 // symbol    _$E14
+// ORIGINAL: 0x0052DB40 sub_52db40 0x0052DB40-0x0052DB67 BYTE_EXACT
+// symbol    ?reset_saved_process_slot_state@@YAXXZ
+// size      39 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// 0x0052DB40  sub_52db40  ->  _sub_52db40
+//
+// The following notes describe the earlier verification artifact, when this
+// identity had no product owner; current source uses NetDaemon's save view.
+// Preserve the original measurement/history details below as such.
+// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
+// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
+// and rewriting it in the tree's own style is a later phase. See README.md
+// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
+// Moved here from game.cpp with its lines unchanged: the span is the dynamic
+// initializer of NetDaemonSavedProcessSlots (defined below, after
+// NetDaemonNet), not a function.
 #define JACKALVOICERX_CLEAR_OUT_OF_LINE  // stand-in: see net_class.h
 #define NETDAEMON_RESET_INLINE  // stand-in: see NetDaemon::reset in netdaemon.h
 #define VEH_BUNGLIST_VISIBLE  // WORKAROUND(decl): synch addresses BungList directly; see veh.h
@@ -820,6 +840,11 @@ void NetDaemon::unlock_veh() {
 // Bound: the trailing save table (+0x1BE8) is saved/loaded as 0xCE0 bytes from 0x0093E978 (0x005A6CCB), ending at 0x0093F658; the next dword is unreferenced and NetPlayerDropped (0x0093F65C) is separate.
 // RECOVERY_OBJECT: v2 0x0093CD90 0x0093F658 ?NetDaemonNet@@3VNetDaemon@@A 0x005A6CCB
 NetDaemon NetDaemonNet;  // 0x0093CD90
+
+// The saved copy of the eight process slots: its own global, constructed by
+// the initializer 0x0052DB40 (see netdaemon.h).
+// RECOVERY_OBJECT: v1 0x0093E978 ?NetDaemonSavedProcessSlots@@3PAUAlphaNetProcessSlot@@A
+AlphaNetProcessSlot NetDaemonSavedProcessSlots[8];
 
 
 
