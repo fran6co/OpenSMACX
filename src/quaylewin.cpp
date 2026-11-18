@@ -396,7 +396,7 @@ void QuayleWin::on_redraw() {
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x004951A0
 // indirect  0x00496660
-extern "C" void __cdecl sub_496610(int page) {
+void __cdecl sub_496610(int page) {
     if (IsMultiplayerNet == 0) {
         if (QuayleWinGlobal.init() == 0) {
             if (page >= 0x19) {

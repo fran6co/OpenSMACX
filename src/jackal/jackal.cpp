@@ -62,7 +62,7 @@ Purpose: The sound-header version the game was built with. The whole image
 Return Value: 1
 Status: Complete
 */
-extern "C" int __cdecl sound_header_version() {
+int __cdecl sound_header_version() {
     return 1;
 }
 

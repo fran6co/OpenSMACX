@@ -345,7 +345,7 @@ int __cdecl release_sound() {
 // ---- callees, declared and never defined here ----
 // sound_header_version runs from general.cpp: the sound-header version the
 // game was built with, a real `mov eax,1 / ret` recovered under its own name.
-extern "C" int __cdecl sound_header_version();
+int __cdecl sound_header_version();
 // sound_version_warning is homed below, under its own marker in this file.
 void __cdecl sound_version_warning(const char *text, const char *caption);
 
@@ -466,7 +466,7 @@ int __cdecl get_sound_version() {
 // ORIGINAL: 0x004C6000 sub_4c6000 0x004C6000-0x004C602A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical seed src/recovered/004c6000.cpp; docs/recovery/ghidra-functions.csv:1214; src/sound.h:SoundXOrdinal1CreateSound; src/wave.cpp/src/midi.cpp slot-0 calls"], "reason": "Image wrapper gates ordinal 1 on the existing wave-device release guard and forwards its three stack arguments to the typed slot-0 device-create callback; stack cleanup matches cdecl. The same signature is exercised by Midi/Wave call sites."}
 // symbol    _sub_4c6000
-extern "C" int __cdecl sub_4c6000(Sound **device_slot,
+int __cdecl sub_4c6000(Sound **device_slot,
                                  const char *filename,
                                   int mode) {
     if (WaveDeviceReleaseGuard == 0) {
@@ -481,7 +481,7 @@ extern "C" int __cdecl sub_4c6000(Sound **device_slot,
 // ORIGINAL: 0x004C6030 sub_4c6030 0x004C6030-0x004C6052 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical seed src/recovered/004c6030.cpp and src/wave.h:func_wave_device_release; original image disassembly 0x004C6030-0x004C6052; src/sound.h:SoundXOrdinal2DeleteSound; src/midi.cpp:Midi::~Midi"], "reason": "The original wrapper tests the wave release guard, pushes one 32-bit argument, calls slot 1, explicitly cleans four stack bytes, and returns callback EAX. The shared contract is int cdecl(void*); Wave/Midi callers ignore EAX without changing the shared cell or calling convention."}
 // symbol    _sub_4c6030
-extern "C" int __cdecl sub_4c6030(void *device) {
+int __cdecl sub_4c6030(void *device) {
     if (WaveDeviceReleaseGuard == 0) {
         return 1;
     }
@@ -492,7 +492,7 @@ extern "C" int __cdecl sub_4c6030(void *device) {
 // ORIGINAL: 0x004C6060 sub_4c6060 0x004C6060-0x004C6071 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/004c6060.cpp; docs/recovery/agent-structure-observations.csv:42; src/sound.cpp:SoundDllProcs ownership"], "reason": "Typed source zeros the eleven loader-owned export words, matching the seed block clear. Original seed has a zero-argument return; conservative neutral cdecl void spelling preserves observed no-argument use."}
 // symbol    _sub_4c6060
-extern "C" void __cdecl sub_4c6060() {
+void __cdecl sub_4c6060() {
     memset(&SoundDllProcs, 0, sizeof(SoundDllProcsTable));
 }
 // The loader above inlines its table clears; every later memset in this TU

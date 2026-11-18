@@ -469,7 +469,7 @@ void __cdecl time_warp();
 extern const GUID LobbyAppGuid;
 
 // Shared native945D78 load-request selector, owned in game.cpp.
-extern "C" int __cdecl sub_5a6510(int x, int y);
+int __cdecl sub_5a6510(int x, int y);
 extern int GameDataLoadRequest;  // 0x00945D78, distinct selector
 // Save/load transaction words are shared with game_data and the daemons.
 extern int GameDataWriteMode;       // 0x00945D6C

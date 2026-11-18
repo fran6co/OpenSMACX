@@ -97,7 +97,7 @@ Purpose: Hall-of-fame I/O: store the read/write mode, then transfer the
 // The retained LEVER describes the seed's integer-address spelling; this
 // typed loop expresses the fixed 35-record table as seven groups of five.
 // symbol    _sub_44af90
-extern "C" int __cdecl sub_44af90(FILE *a1, int a2) {
+int __cdecl sub_44af90(FILE *a1, int a2) {
     HallOfFameIOMode = a2;
     int result;
     if (a2 != 0) {

@@ -1943,7 +1943,7 @@ static inline void transcript_add(StringList *list, char *text, int id) {
   list->add(id);
 }
 
-extern "C" void __cdecl sub_441040(int a1, int a2) {
+void __cdecl sub_441040(int a1, int a2) {
     StringList &source = DiploWindow.shared_string_box().strings();
     if (a1 > a2) {
         swap(&a1, &a2);
@@ -1982,7 +1982,7 @@ Status: The body now lives beside the real DiploWindow StringBox/EditBox
 */
 // The shared window is the typed DiploWindow object; its saved entries are
 // held in the 8x8 StringList table at the observed 0x737CD8 storage region.
-extern "C" void __cdecl sub_441100(int faction_id, int faction_id_with) {
+void __cdecl sub_441100(int faction_id, int faction_id_with) {
   if (faction_id > faction_id_with)
     swap(&faction_id, &faction_id_with);
   DiploWindow.shared_string_box().clear();

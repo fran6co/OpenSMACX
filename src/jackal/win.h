@@ -1338,7 +1338,7 @@ extern RECT DirectDrawClipRect;        // 0x009BC2D0
 // 0x005EFD00, 27 bytes - refreshes `WinScreenWidth`/`WinScreenHeight` from
 // `GetSystemMetrics`. Defined in win.cpp as part of the inferred Win contribution;
 // the body was promoted intact from its previous recovery home.
-extern "C" int __cdecl DDInitRefreshScreenMetrics();
+int __cdecl DDInitRefreshScreenMetrics();
 
 // 0x00628F30, a pending_bodies forwarder. `DDInit::report_error` tails into
 // it once its popup is dismissed: the install-media check, 432 bytes against

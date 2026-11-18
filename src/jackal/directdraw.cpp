@@ -291,7 +291,7 @@ int __cdecl sub_62d0f0() {
 // ORIGINAL: 0x0062D100 sub_62d100 0x0062D100-0x0062D13A BYTE_EXACT
 // symbol    _sub_62d100
 // kind game
-extern "C" int __cdecl sub_62d100() {
+int __cdecl sub_62d100() {
     if (BufferDirectDraw != 0) {
         BufferDirectDraw->Release();
         BufferDirectDraw = 0;

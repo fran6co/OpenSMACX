@@ -24,7 +24,7 @@
 
 struct BufferSpecialText;
 
-extern "C" int __cdecl sub_62d100();
+int __cdecl sub_62d100();
 
 class Palette;
 class StringList;

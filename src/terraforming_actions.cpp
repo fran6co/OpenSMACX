@@ -297,7 +297,7 @@ Purpose: Select the live road or magtube terraforming rate from tile mask 0x4,
 Return Value: the selected terraforming rate plus tile-derived contributions
 Status: Coverage transcription - unclaimed body
 */
-extern "C" int __cdecl sub_4c99d0(int x_coord, int y_coord) {
+int __cdecl sub_4c99d0(int x_coord, int y_coord) {
     const Map *tile = map_tiles() + MapLongitude * y_coord + (x_coord >> 1);
     const uint32_t bits = tile->bit;
     const int selected = (bits & BIT_ROAD) ? TERRA_MAGTUBE : TERRA_ROAD;
@@ -2342,7 +2342,7 @@ Purpose: Place fungus, clear the original improvement masks, raise low
 Return Value: n/a
 Status: Coverage transcription - unclaimed body
 */
-extern "C" void __cdecl sub_4ce6b0(int x_coord, int y_coord) {
+void __cdecl sub_4ce6b0(int x_coord, int y_coord) {
     bit_set(x_coord, y_coord, 0x20, 1);
     bit_set(x_coord, y_coord, 0x28805C, 0);
     bit_set(x_coord, y_coord, MapTileFlagClearMask, 0);

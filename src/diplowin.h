@@ -438,8 +438,8 @@ inline void DiploWin::receive_maybe_deal(const int &sender) {
 #endif
 
 void __cdecl clear_hotseat_chat();
-extern "C" void __cdecl sub_441040(int a1, int a2);
-extern "C" void __cdecl sub_441100(int faction_id, int faction_id_with);
+void __cdecl sub_441040(int a1, int a2);
+void __cdecl sub_441100(int faction_id, int faction_id_with);
 
 extern DiploWin DiploWindow;
 extern StringList DiplomacyTranscriptLists[8][8];

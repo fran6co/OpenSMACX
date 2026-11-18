@@ -300,7 +300,7 @@ static inline int radius_yield_add(int radius_index) {
     return sum;
 }
 
-extern "C" int __cdecl sub_4e7e50(int radius_index) {
+int __cdecl sub_4e7e50(int radius_index) {
     return radius_yield_add(radius_index);
 }
 
@@ -345,7 +345,7 @@ static inline int radius_yield_sub(int radius_index) {
     return sum;
 }
 
-extern "C" int __cdecl sub_4e7f80(int radius_index) {
+int __cdecl sub_4e7f80(int radius_index) {
     return radius_yield_sub(radius_index);
 }
 
@@ -9474,7 +9474,7 @@ void __cdecl drone_riot() {
 Return Value: zero
 Status: Complete
 */
-extern "C" int __cdecl sub_4e7db0() {
+int __cdecl sub_4e7db0() {
     TileYieldRestricted = 0;
     return 0;
 }

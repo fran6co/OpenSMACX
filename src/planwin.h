@@ -146,4 +146,4 @@ static_assert(sizeof(PlanWin) == 0x22A64, "PlanWin layout must match terranx.exe
 extern PlanWin PlanWindow;
 
 void __cdecl battle_routine(int base_id);
-extern "C" void __cdecl sub_54dc90(int base_id);
+void __cdecl sub_54dc90(int base_id);

@@ -887,7 +887,7 @@ Status: Coverage transcription - unclaimed body (direct transcription of
         the seed's materialised /O2 arithmetic; no caller in the product
         yet, so the body stands on its own disassembly).
 */
-extern "C" int __cdecl sub_4468f0(int a1) {
+int __cdecl sub_4468f0(int a1) {
     const int center = MapWinTable[0]->center_x_ / 2;
     const int quarter = MapLongitudeBounds / 4;
     const int half_width = MapLongitudeBounds / 2;

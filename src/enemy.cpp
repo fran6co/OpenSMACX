@@ -1933,7 +1933,7 @@ Status: Coverage transcription - unclaimed body. The original mapping and
         Map owns the climate and fungus bits. The image calls bonus_at out
         of line; source inlining remains a separate measurement question.
 */
-extern "C" int __cdecl sub_565160(int faction_id, int tile_x, int tile_y) {
+int __cdecl sub_565160(int faction_id, int tile_x, int tile_y) {
     int found = -1;
     if (bonus_at(tile_x, tile_y, 0) == 3) {
         return 1;

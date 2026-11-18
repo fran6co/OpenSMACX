@@ -9794,7 +9794,7 @@ Purpose: Refresh the cached screen metrics from the system.
 Return Value: The height, which is the second value read.
 Status: Complete
 */
-extern "C" int __cdecl DDInitRefreshScreenMetrics() {
+int __cdecl DDInitRefreshScreenMetrics() {
     WinScreenWidth = GetSystemMetrics(SM_CXSCREEN);
     return (WinScreenHeight = GetSystemMetrics(SM_CYSCREEN));
 }

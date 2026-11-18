@@ -2076,7 +2076,7 @@ Purpose: Bubble-sort one int array descending while applying the identical
 // symbol    _sub_4d5f70
 Status: Coverage transcription - unclaimed body
 */
-extern "C" void __cdecl sub_4d5f70(int *parallel, int *values, int count) {
+void __cdecl sub_4d5f70(int *parallel, int *values, int count) {
     int swapped;
     do {
         swapped = 0;
@@ -2109,7 +2109,7 @@ Return Value: n/a
 Status: Coverage transcription - unclaimed body
 */
 // DEC wraps at entry; the comparison latch reloads the live base count.
-extern "C" void __cdecl sub_4d5ff0(int *id_list) {
+void __cdecl sub_4d5ff0(int *id_list) {
     int did_swap;
     do {
         did_swap = 0;

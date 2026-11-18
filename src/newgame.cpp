@@ -2175,7 +2175,7 @@ static const char SayTokSep[] = ":";
 // RECOVERY_OBJECT: v1 0x0068FA8C _SayTokClose
 static const char SayTokClose[] = ">";
 
-extern "C" char * __cdecl sub_58f4f0(char *output, int faction_id, int plurality, int gender) {
+char * __cdecl sub_58f4f0(char *output, int faction_id, int plurality, int gender) {
     char parsed[256];
     char buffer[256];
 

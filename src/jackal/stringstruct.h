@@ -658,7 +658,7 @@ static_assert(sizeof(PathRecord) == 0x28, "Original path record footprint");
 // receivers. No direct source caller is currently proven; this typed
 // declaration records the proposed source API without claiming caller ABI
 // provenance beyond the pinned argument count/convention.
-extern "C" void __cdecl tech_wizard_unk1(Popup *, Popup *, int, int, int);
+void __cdecl tech_wizard_unk1(Popup *, Popup *, int, int, int);
 
 // Original StringList virtual-base offsets: the vbptr is at +4; its
 // second word places StringAllocationBase at complete-object +0x28.

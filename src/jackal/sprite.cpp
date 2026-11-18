@@ -7600,7 +7600,7 @@ BlankSpriteStorageOwner g_BLANK_SPRITE_OWNER;
 // Preserved seed facts: the measured span was 87 bytes; the source prototype
 // was unknown; catalog metadata reported zero callers, one call target,
 // game code, flags sp_ready/purged_ok, and direct call target 0x005E4B9A.
-extern "C" void __cdecl sub_63cdc0(GraphicWin *window, void *gate_context, int unused,
+void __cdecl sub_63cdc0(GraphicWin *window, void *gate_context, int unused,
                        int x, int top, int region_height) {
   if (gate_context != 0 &&
       *reinterpret_cast<const uint32_t *>(

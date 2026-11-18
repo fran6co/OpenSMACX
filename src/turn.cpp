@@ -370,7 +370,7 @@ Purpose: Build one log line for the say-buffer: decimal the number,
 Return Value: n/a
 Status: Coverage transcription - claim pending re-measurement
 */
-extern "C" void __cdecl sub_51e6f0(const char *text, int value) {
+void __cdecl sub_51e6f0(const char *text, int value) {
     char line[0x100];
     char digits[0x50];
     line[0] = 0;
@@ -5328,7 +5328,7 @@ int __cdecl sub_52a980() {
 // RECOVERY_LITERAL: v1 0x0068BE94 0x0068BEDA $SG67669 0x0052A9B0
 // RECOVERY_LITERAL: v1 0x0068BEDC 0x0068BEE5 $SG67675 0x0052A9B0
 // RECOVERY_LITERAL: v1 0x0068BEE8 0x0068BEEC $SG67678 0x0052A9B0
-extern "C" int __cdecl directplay_install_is_complete() {
+int __cdecl directplay_install_is_complete() {
     int result = 0;
     HKEY key;
     LONG status = RegOpenKeyExA(HKEY_LOCAL_MACHINE,

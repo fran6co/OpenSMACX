@@ -1975,7 +1975,7 @@ static inline void tech_wizard_append_number(int value) {
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00406380 0x005B9C40 0x00602600 0x006108E0 0x00625810 0x00625EC0 0x00645470 0x0064FC88
-extern "C" void __cdecl tech_wizard_unk1(Popup *first_popup,
+void __cdecl tech_wizard_unk1(Popup *first_popup,
                                           Popup *second_popup,
                                           int first_tech, int second_tech,
                                           int force_roll) {
@@ -2141,7 +2141,7 @@ Status: Coverage transcription - unclaimed body
 // The pinned first stack word is adjusted by the GraphicWin-to-Buffer base
 // offset when non-null. Caller provenance is incomplete: this type reflects
 // the observed +0x444 base view, not proof of the original source class.
-extern "C" void __cdecl tech_wizard_unk2(GraphicWin *canvas, int index, int odd,
+void __cdecl tech_wizard_unk2(GraphicWin *canvas, int index, int odd,
                                          int base_x, int base_y, int base_bottom) {
     if (index < 0x59) {
         const int size = MapWinCaptionScale;
