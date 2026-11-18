@@ -296,6 +296,14 @@ inline int __cdecl init_opening(const char *filename) {
 // ORIGINAL: 0x00589D30 ?config_game@@YAHH@Z 0x00589D30-0x0058C29D;0x0066028A-0x006605A5
 // RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/unrecovered/00589d30.cpp; existing original identity and useful lessons preserved", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:589D30..58C29D and66028A..6605A5", "pinned:5898A0..589A24 typed cdecl(int) preview callback; ListBox dispatch retains current declaration", "source:BasePop +A44 value setter,+3100 input poll state; Popup picture/dialog/font and PickWin owned ListBox", "pinned:58A9BA passes zero-filled945834 initial string, allocation extent remains unknown", "source:recovery/tests/test_config_game_actual_source.py actual installed body, bounded API fixture and six compile-success runtime damage controls", "source:589870 initializer and589890 teardown identities now bind to the generated ConfigFactionPreview lifetime in this owner"], "reason": "Complete new-game rules, faction selection, custom naming, PBEM/network and world/setup flow with genuine Popup/SetupWin automatic local lifetimes and a source-owned shared preview. Original undefined and unchecked paths and historical main/cleanup spans remain restoration obligations; no byte or runtime acceptance is granted."}
 // TRIED: mismatch #0 - only the entry (a1&1 defaults shortcut) and the first two do_menu() results (0=default_rules toggle, 1=difficulty rules-flag encode) are transcribed from the 2618-instruction original; the disassembly shows several more do_menu() results driving a PickWin faction picker, Wave/Sound playback, EditGroup name entry and a time_controls_dialog that are NOT modelled - this body loops back to do_menu() for any other result rather than fabricating their bit-flag encodings.
+// WORKAROUND(inline): the 17 rule checkboxes go through one set-or-clear
+// helper. The expansions compile to the same rows as the written-out
+// if/else pairs (0x0058A29C-0x0058A393) and their /Ob2 spend makes both
+// early `return 1` teardowns call ~FlatButton out of line as the image does
+// (0x00589FC0, 0x0058A142); the helper's original name is unknown.
+static inline void config_rule_check(int &checks, int bit, int on) {
+    if (on) checks |= bit; else checks &= ~bit;
+}
 // Full config_game candidate. Original identities/claims remain on the owning
 // TU; this ignored include is a body proposal, not a measurement or annotation.
 int __cdecl config_game(int mode) {
@@ -392,23 +400,23 @@ custom_rules:
         // Rules checklist seed (0x0058A29C-0x0058A393): one checkbox bit per
         // rule, built in a register and published before the RULES popup.
         int checks = (GameDataStateStorage.fields_.game_rules_ & 0x800) != 0;
-        if (GameDataStateStorage.fields_.game_rules_ & 0x2) checks |= 0x2; else checks &= ~0x2;
-        if (GameDataStateStorage.fields_.game_rules_ & 0x8) checks |= 0x4; else checks &= ~0x4;
-        if (GameDataStateStorage.fields_.game_rules_ & 0x4) checks |= 0x8; else checks &= ~0x8;
-        if (GameDataStateStorage.fields_.game_rules_ & 0x1000) checks |= 0x10; else checks &= ~0x10;
-        if (GameDataStateStorage.fields_.game_rules_ & 0x1) checks |= 0x20; else checks &= ~0x20;
-        if (GameDataStateStorage.fields_.game_rules_ & 0x10) checks |= 0x40; else checks &= ~0x40;
-        if (GameDataStateStorage.fields_.game_rules_ & 0x20) checks |= 0x80; else checks &= ~0x80;
-        if (GameDataStateStorage.fields_.game_rules_ & 0x4000) checks |= 0x100; else checks &= ~0x100;
-        if (GameDataStateStorage.fields_.game_rules_ & 0x200) checks |= 0x200; else checks &= ~0x200;
-        if (GameDataStateStorage.fields_.game_rules_ & 0x40) checks |= 0x400; else checks &= ~0x400;
-        if (~GameDataStateStorage.fields_.game_rules_ & 0x100) checks |= 0x800; else checks &= ~0x800;
-        if (GameDataStateStorage.fields_.game_rules_ & 0x2000) checks |= 0x1000; else checks &= ~0x1000;
-        if (GameDataStateStorage.fields_.game_rules_ & 0x8000) checks |= 0x2000; else checks &= ~0x2000;
-        if (GameDataStateStorage.fields_.game_rules_ & 0x80) checks |= 0x4000; else checks &= ~0x4000;
-        if (GameDataStateStorage.fields_.game_rules_ & 0x400) checks |= 0x8000; else checks &= ~0x8000;
-        if (GameDataStateStorage.fields_.game_state_ & 0x00800000) checks |= 0x10000; else checks &= ~0x10000;
-        if (GameDataStateStorage.fields_.game_state_ & 0x01000000) checks |= 0x20000; else checks &= ~0x20000;
+        config_rule_check(checks, 0x2, GameDataStateStorage.fields_.game_rules_ & 0x2);
+        config_rule_check(checks, 0x4, GameDataStateStorage.fields_.game_rules_ & 0x8);
+        config_rule_check(checks, 0x8, GameDataStateStorage.fields_.game_rules_ & 0x4);
+        config_rule_check(checks, 0x10, GameDataStateStorage.fields_.game_rules_ & 0x1000);
+        config_rule_check(checks, 0x20, GameDataStateStorage.fields_.game_rules_ & 0x1);
+        config_rule_check(checks, 0x40, GameDataStateStorage.fields_.game_rules_ & 0x10);
+        config_rule_check(checks, 0x80, GameDataStateStorage.fields_.game_rules_ & 0x20);
+        config_rule_check(checks, 0x100, GameDataStateStorage.fields_.game_rules_ & 0x4000);
+        config_rule_check(checks, 0x200, GameDataStateStorage.fields_.game_rules_ & 0x200);
+        config_rule_check(checks, 0x400, GameDataStateStorage.fields_.game_rules_ & 0x40);
+        config_rule_check(checks, 0x800, ~GameDataStateStorage.fields_.game_rules_ & 0x100);
+        config_rule_check(checks, 0x1000, GameDataStateStorage.fields_.game_rules_ & 0x2000);
+        config_rule_check(checks, 0x2000, GameDataStateStorage.fields_.game_rules_ & 0x8000);
+        config_rule_check(checks, 0x4000, GameDataStateStorage.fields_.game_rules_ & 0x80);
+        config_rule_check(checks, 0x8000, GameDataStateStorage.fields_.game_rules_ & 0x400);
+        config_rule_check(checks, 0x10000, GameDataStateStorage.fields_.game_state_ & 0x00800000);
+        config_rule_check(checks, 0x20000, GameDataStateStorage.fields_.game_state_ & 0x01000000);
         PopupWriteCheckState = checks;
     }
     if (x_pop_short("RULES", 0x41, 0) < 0) goto rules_menu;
@@ -445,19 +453,6 @@ custom_rules:
 select_faction:
     if ((GameDataStateStorage.fields_.game_rules_ & 0x00100000) && !IsMultiplayerPBEM) {
         selected = ConsoleGlobal.faction_id_;
-store_single_faction:
-        ConsoleGlobal.faction_id_ = selected;
-        GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ =
-            static_cast<unsigned char>(1 << selected);
-time_controls:
-        if (!IsMultiplayerNet) goto finish;
-        time_controls_dialog(&popup);
-        popup.set_value(AlphaIniPrefs.time_controls);
-        time_choice = popup.exec();
-        if (time_choice >= 0) goto store_time_controls;
-        if (!(GameDataStateStorage.fields_.game_rules_ & 0x00100000)) goto select_faction;
-        if (mode != 2) goto rules_menu;
-        goto difficulty_menu;
     } else {
         if (!ExpansionEnabled || (mode & 2)) {
             popup.start("FACTIONX", 0x40);
@@ -880,8 +875,7 @@ parse_factions:
         do_all_draws();
 
 pbem_selection:
-        if (!IsMultiplayerPBEM) goto store_single_faction;
-        {
+        if (IsMultiplayerPBEM) {
             int bit = 1 << selected;    // edi
             human_mask |= bit;
             popup.start("HOTSEATADD0", 0x40);
@@ -907,21 +901,33 @@ pbem_selection:
             }
         }
 pbem_commit:
-        if (!IsMultiplayerPBEM) goto store_single_faction;
-        GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ =
-            static_cast<unsigned char>(human_mask);
-        for (selected = 1; selected < 8; ++selected) {
-            if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << selected)) break;
+        if (IsMultiplayerPBEM) {
+            GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ =
+                static_cast<unsigned char>(human_mask);
+            for (selected = 1; selected < 8; ++selected) {
+                if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << selected)) break;
+            }
+            if (selected >= 8) selected = 1;
+            ConsoleGlobal.faction_id_ = selected;
+            goto time_controls;
         }
-        if (selected >= 8) selected = 1;
-        ConsoleGlobal.faction_id_ = selected;
-        goto time_controls;
     }
-
-store_time_controls:
-    AlphaIniPrefs.time_controls = time_choice;
-    GameDataStateStorage.fields_.time_controls_selection_ = time_choice;
-finish:
+    ConsoleGlobal.faction_id_ = selected;
+    GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ =
+        static_cast<unsigned char>(1 << selected);
+time_controls:
+    if (IsMultiplayerNet) {
+        time_controls_dialog(&popup);
+        popup.set_value(AlphaIniPrefs.time_controls);
+        time_choice = popup.exec();
+        if (time_choice < 0) {
+            if (!(GameDataStateStorage.fields_.game_rules_ & 0x00100000)) goto select_faction;
+            if (mode != 2) goto rules_menu;
+            goto difficulty_menu;
+        }
+        AlphaIniPrefs.time_controls = time_choice;
+        GameDataStateStorage.fields_.time_controls_selection_ = time_choice;
+    }
     prefs_save(0);
     log_set_state(0);
     if (!(mode & 2)) GameDataStateStorage.fields_.vehicle_current_count_ = 0;
