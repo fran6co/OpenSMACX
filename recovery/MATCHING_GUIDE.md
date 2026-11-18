@@ -837,40 +837,52 @@ Candidates and order
    its entry value and no penalty for being a parameter; `this` counts its
    prologue copy as one reference in the entry block (g_factors, g_factors2,
    g_parpos, `this3`/`this4` in g_temps). char and short count like int.
-4. **Weights by position of the reference** (medium; g_calib, g_depth,
-   g_middle, g_shapes), in units of one reference in the entry block:
-
-   | where the reference sits | weight |
-   | --- | --- |
-   | entry block, and the last block of the function (after the last join) | 1 |
-   | any other block outside loops: if/else arms, code between two ifs or loops, code skipped by a forward goto | 1/4 |
-   | a `switch` case outside loops | 1/8 |
-   | loop body, depth 1 (`while`, `do`, `while (1)`; ifs and switches inside do not reduce it) | 1/2 |
-   | loop depth 2, 3, 4, 5 | 1, 2, 4, 8 |
-   | body of `for (init; cond; step)` at depth 1 | 3/4 |
-   | first block of `for (;;)` before its first `if (...) break` | 3/2 |
-
-   Each block that references the candidate adds half a reference of that
-   block's weight (four loops with one read each outweigh one loop with four
-   reads: `l4x1` against `l1x4` in g_const). `while (1)` and `for (;;)` produce
-   the same code and different weights, so loop spelling is a lever that
-   changes no instruction except through the allocation.
-5. **Ties go to the candidate referenced first in the code** (high;
-   `c_2222`, `c_2222d`, `early`, `ppd`, `dfirst`). For a local that is its
-   first definition; for a parameter its first read. Among two parameters the
-   one read first wins whatever their order in the signature. The earlier rule
-   "locals before parameters" was this: the local was defined before the
-   parameter was first read.
-6. **Range and locality change the priority** (low: measured, not reduced to
-   a formula). With equal ranges the count decides exactly. A candidate
-   confined to one block beats a rival that only passes through that block
-   with up to 4/3 of its weighted count (g_span `w1`, `w1f`, `i1`, any number
-   of blocks spanned: g_position `dlast_w1..3`), but gets no such advantage
-   when the rival's references sit in the same block (g_span `t`, `s`).
-   Block-local candidates in a conditional arm take esi and edi ahead of a
-   whole-function parameter or `this` with a larger count (p06_arm_local,
-   p04_param_tie). Rule of thumb: short candidates first, then long ones by
-   count.
+4. **A reference weighs the number of candidates referenced in its block**
+   (high, 2026-11-18 par-1; `regalloc/homes.py 40 cd < blockn.spec`, about 60
+   thresholds, both flag sets). Priority = sum over the candidate's
+   references of `n_b * 2^depth(b)`, where `n_b` is the number of *distinct*
+   candidates referenced anywhere in that basic block (the candidate itself
+   included; how often each is referenced does not matter) and `depth` the loop
+   depth. Calls do not end a block; every branch target and join does, so
+   `&&`, `||`, `?:` and each if/else arm are blocks of their own.
+   - What counts in `n_b`: locals, parameters and `this` with at least two
+     references, compiler temporaries (an address CSE such as
+     `gobj[i].f1 .. f3` counts as one more), and a constant used several times
+     (`use_a(7)` five times counts). Not counted: a parameter read once,
+     globals, a candidate that is only live through the block (`live_p` against
+     `ref_p`).
+   - A `switch` case block counts half. The first block of `for (;;)` counts
+     double against `while (1)` (same code, different weight). A
+     `for (n = 0; ...)` body references the counter too, so it has `n_b` one
+     higher than the same `while` body.
+   - This one rule replaces the old position table and rule 6. The old table
+     (entry and last block 1, other blocks 1/4, loop 1/2, for body 3/4) was
+     measured with p, q, c, d all referenced in the entry and last blocks
+     (`n` = 4) against blocks that reference d alone (`n` = 1, times 2 in a
+     loop). The "4/3 advantage of a block-local candidate" was a block with
+     four candidates against an entry block with three. "Arm locals take esi
+     ahead of a parameter with more references" is a parameter whose blocks
+     reference nothing else.
+   - Worked check, no other variables: `c` defined with K uses, `if`, then a
+     local `d` with eight uses, then a final use of `c`. Entry `{c}` = 1, last
+     block `{c,d}` = 2: `d` scores 18, `c` scores K+1+2; `c` takes esi from
+     K = 16 (measured 16). Add a parameter read twice in the entry block: entry
+     = 2, `c` = 2(K+1)+2, threshold 8 (measured 8). Put those reads in the last
+     block instead: last = 3, threshold 24 (measured 24).
+5. **Ties** (medium). Exact ties under rule 4 went to the candidate referenced
+   first in single-block probes (`c_2222`, `early`, `dfirst`), but to the later,
+   shorter candidate in most multi-block probes of blockn.spec. Treat a tie as
+   unknown and change a count instead.
+6. **Register names follow the same priority with or without contention**
+   (high). Two candidates and three free registers still get esi and edi in
+   rule-4 order (blockn.spec `N*`, `L_*`, `W_*`), so a role in edi in the image
+   and esi in ours is a priority question even when nothing is spilled.
+   Source levers, in order of how often they move a real function: a
+   reference moved into a block with more (or fewer) candidates; a candidate's
+   first definition moved out of a test block (FlatButton::on_redraw: testing
+   the field itself and assigning `state` only in the in-range arm gave the
+   image's ebp/ebx order, exact); a block split or merged by `&&`/`?:`; a value
+   reread from its source instead of a named copy.
 
 Losers: memory home, cached pieces, write-back
 
@@ -919,28 +931,64 @@ Using it
   register. A constant stored several times (`mov ebx, 6; mov [order], ebx`)
   is a piece of the stored variable, not a constant temporary.
 
+Constant candidates and phantom registers (2026-11-18 par-1, standalone probes)
+
+- A constant with several references is a candidate (rule 4) and can win a
+  register *name* that then holds nothing: the prologue saves the register and
+  the body never uses it, or the next candidate skips a name. Freeing a
+  destructor's string table (`if (p) { free(p); p = 0; }` twice in a 64-step
+  loop) gives esi = pointer, edi = phantom, then the rest; with nonzero
+  constants the phantom moves to ebx. In ~PullDown 0x005F88A0 (/Oy) the image
+  is pointer esi, phantom edi, `this` ebx, counter ebp; ours ranks `this`
+  above the phantom (`this` edi, phantom ebx). Stand-alone copy: the tail
+  `dirty = 1; f1 = g1; f2 = g2;` after the loop gives ours; any two of the
+  three tail stores give the image's order. No natural spelling with all three
+  found (order, struct copy, inline reset, member destructor, `while`/`do`).
+- A loser constant still forms short pieces: two adjacent zero stores in one
+  block always become `xor eax,eax` + two register stores (both flag sets). The
+  image's immediates mean the zero *won* a callee-saved register (and was then
+  not materialised). Credits::unload 0x00428830 and Credits::exec 0x004289F0:
+  under /Oy the zero wins ebp and the stores are immediates (a
+  `#pragma optimize("y", on)` copy is exact); under the unit's /Oy- it loses.
+  Exec's frame proves /Oy- for exec, so its source must give the zero more
+  weight or one rival less; not found.
+
 What the model does not predict
 
-- success_rates 0x0059EEE0: the image enregisters `morale`, ours
-  `diff_modifier`. Rules 3 to 5 give `morale` the higher count. The stand-alone
-  copy (p04, p05, p07, p08) behaves like ours with parameters and like the
-  model with locals defined in the entry block; one more reference to `morale`
-  after the clamp flips it. No natural spelling found.
+- success_rates 0x0059EEE0: the image enregisters `morale` (ebx; its home
+  slot 0xc is reused for a has_fac temporary), ours `diff_modifier`. Rule 4
+  with the constant 1 counted in the clamp blocks predicts the image, so our
+  candidate set differs somewhere not visible in the listing; ternary, `max`,
+  `<= 0`, reordered arm and a named `morale / 2` do not move it.
 - can_terraform 0x00565320: the image holds `order` in ebx as a written-back
   piece and keeps `solar_tech` in memory (hence the 0x44 frame); ours gives
-  `solar_tech` the register although `order`'s piece has more references.
-  Rule 6 is the gap: a short whole candidate against a piece of a long one.
-- MultiWin::draw_player 0x00478630: `this` in ebx (image) against edi (ours)
-  follows rule 2 from the first block, where the image holds `height` in edi
-  and ours holds the copied `top` in ebx; eight spellings of the rectangle
-  arithmetic did not move it.
-- PullDown::compute_length 0x005F9D30 (/Oy): the image evicts `this` from
-  ebp for a call result held across one call inside the loop (rule 9
-  mirrored: `this` is stored at entry and reloaded after); ours keeps `this`
-  and spills the result. By count `this` wins; rule 6 again.
-- The weights of rule 4 were measured with both rivals live over the whole
-  function. Entry and last block count four times a middle block; why is not
-  known, and `for` loops look like a sum of two contexts.
+  `solar_tech` the register. Not re-examined under rule 4.
+- MultiWin::draw_player 0x00478630: image `this` ebx, `faction_id` edi (from
+  its first read), ours the reverse with `faction_id` reloaded in each arm and
+  the constant 1 spilled around a shift. Rule 4 by raw count favours the
+  image; the gap is again a candidate set we cannot see.
+- PullDown::compute_length 0x005F9D30 (/Oy): the image evaluates the item
+  sum as `2*width("  ")`, `width(text)`, `width(right_text)` in the first
+  max operand and the other order in the re-evaluated one, holding the partial
+  sum in ebp (evicting `this`). All twelve operand orders and groupings of the
+  sum compile identically (VC6 orders commutative call operands itself), so
+  the lever is not the spelling of the sum.
+- set_time_controls 0x00523C60: the image keeps `active_factions` as a
+  write-back piece in ebx (it is the zero that initialises the other two
+  accumulators) and runs the vehicle loop in scratch registers; ours puts
+  the vehicle counter in edi. Declaration order, chained zeroing and the
+  increment's position do not move it.
+- Residues that look like register ties but are not callee-saved
+  allocation: `lea r,[edx+eax]` against `[eax+edx]` in the wrap of a hoisted
+  MapLongitudeBounds (action_airdrop 0x004CC360, planet_busting 0x00500B60;
+  `MapLongitudeBounds + x` in wrap_map_x changes nothing tree-wide);
+  `cmp r,ebx` against `test r,r` with a zero-initialised local in ebx
+  (Console::zoom 0x005150D0); operand load order of two members or a member
+  and a local (ListBox::attach 0x0060A670, MapWin::draw_base_names 0x00467DE0:
+  operand swaps and casts compile identically); push scheduling of
+  `veh_drop(veh_lift(id), x, y)` (enemy_planet_buster 0x0056A8A0); a fat
+  member-pointer call standing in for a budget-refused inline (MapWin::gen_radius
+  0x00469190, see 2.1).
 
 ## 3. Symptom → first thing to check
 

@@ -1,7 +1,7 @@
 # Register-allocation probes (VC6, game unit flags)
 
 Micro-experiments behind `recovery/MATCHING_GUIDE.md` section 2.7. They compile with the flags of a
-game unit (`/Og /Oi /Ot /Gs /Gy /Ob2 /Oy-`, or `/Oy` with `--oy`) and read the result from the `/FAs`
+game unit (`/Og /Ot /Gs /Gy /Ob2 /Oy-`, no /Oi since 2026-11-18, or `/Oy` with `--oy`) and read the result from the `/FAs`
 listing. Prefix: `FE_PFX_BASE` (default 2).
 
     python3 gen.py                       # write the generated families g_<family>.cpp (not committed, 5 MB)
@@ -9,6 +9,7 @@ listing. Prefix: `FE_PFX_BASE` (default 2).
     python3 run.py g_split.cpp -f stagger --asm
     python3 thresh.py g_calib.cpp        # duel families: score of d's context in entry-block uses
     python3 tab.py g_weights.cpp cd -v   # one row per family, one column per K
+    python3 homes.py 40 cd < blockn.spec  # rule 4 (block weight = candidates referenced in the block): register per K
 
 Conventions (`probe.h`): variable `x` is defined by `def_x()` and read by `use_x(x)`, so the listing shows
 where it lives at every site. `[x]` means read from its frame slot; `esi/[x]` means the home changes along
@@ -29,3 +30,4 @@ two definitions: a threshold that moves by one between them is an exact tie.
 | g_rangelen, g_span | a block-local candidate against one that spans blocks |
 | g_temps | cached pieces against whole variables, `this`, address temporaries, globals |
 | p04..p08 | the shape of success_rates (0x0059EEE0), which the model does not predict |
+| blockn.spec (homes.py) | rule 4: a reference weighs the number of distinct candidates referenced in its block |
