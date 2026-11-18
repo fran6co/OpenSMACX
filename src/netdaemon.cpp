@@ -5025,7 +5025,22 @@ char NetDaemonFileTransferPath[0x104];
 // observed required window is 0x1920; the image's complete allocation extent
 // remains unknown. This object is not cleared between calls.
 // RECOVERY_OBJECT: v1 0x0093AD8C _NetDaemonRulesSyncStaging
-static unsigned char NetDaemonRulesSyncStaging[0x1920];
+// Each rule transfer stages one table here and the final chunk compacts it
+// into the live table, so the buffer is one union of the eleven tables.
+static union {
+    unsigned char bytes[0x1920];
+    RulesTechnology technology[MaxTechnologyNum];
+    RulesTerraforming terraforming[MaxTerrainNum];
+    RulesTimeControl time_control[MaxTimeControlNum];
+    RulesChassis chassis[MaxChassisNum];
+    RulesReactor reactor[MaxReactorNum];
+    RulesWeapon weapon[MaxWeaponNum];
+    RulesArmor armor[MaxArmorNum];
+    RulesAbility ability[MaxAbilityNum];
+    RulesFacility facility[MaxFacilityNum];
+    RulesCitizen citizen[MaxCitizenNum];
+    RulesSocialCategory social_category[MaxSocialCatNum];
+} NetDaemonRulesSyncStaging;
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00532E00 0x0053412C 0x005341D4 0x00532E4E
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00532E00 0x005341D4 0x0053420C 0x005331E5
@@ -5456,77 +5471,77 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
             if (outgoing) {
                 src += reinterpret_cast<int>(Technology);
             } else {
-                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging);
+                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging.bytes);
             }
             break;
         case 0x83:
             if (outgoing) {
                 src += reinterpret_cast<int>(Terraforming);
             } else {
-                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging);
+                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging.bytes);
             }
             break;
         case 0x85:
             if (outgoing) {
                 src += reinterpret_cast<int>(TimeControl);
             } else {
-                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging);
+                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging.bytes);
             }
             break;
         case 0x86:
             if (outgoing) {
                 src += reinterpret_cast<int>(Chassis);
             } else {
-                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging);
+                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging.bytes);
             }
             break;
         case 0x87:
             if (outgoing) {
                 src += reinterpret_cast<int>(Reactor);
             } else {
-                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging);
+                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging.bytes);
             }
             break;
         case 0x88:
             if (outgoing) {
                 src += reinterpret_cast<int>(Weapon);
             } else {
-                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging);
+                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging.bytes);
             }
             break;
         case 0x89:
             if (outgoing) {
                 src += reinterpret_cast<int>(Armor);
             } else {
-                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging);
+                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging.bytes);
             }
             break;
         case 0x8A:
             if (outgoing) {
                 src += reinterpret_cast<int>(Ability);
             } else {
-                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging);
+                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging.bytes);
             }
             break;
         case 0x8B:
             if (outgoing) {
                 src += reinterpret_cast<int>(Facility);
             } else {
-                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging);
+                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging.bytes);
             }
             break;
         case 0x8C:
             if (outgoing) {
                 src += reinterpret_cast<int>(Citizen);
             } else {
-                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging);
+                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging.bytes);
             }
             break;
         case 0x8D:
             if (outgoing) {
                 src += reinterpret_cast<int>(SocialCategories);
             } else {
-                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging);
+                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging.bytes);
             }
             break;
         case 0x81:
@@ -5641,8 +5656,7 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
         if (header->index == total - 1) {
             switch (opcode) {
             case 0x80: {
-                RulesTechnology *stage =
-                    reinterpret_cast<RulesTechnology *>(NetDaemonRulesSyncStaging);
+                RulesTechnology *stage = NetDaemonRulesSyncStaging.technology;
                 for (int k = 0; k < MaxTechnologyNum; k++, stage++) {
                     Technology[k].flags = stage->flags;
                     Technology[k].growth_value = stage->growth_value;
@@ -5655,8 +5669,7 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
                 break;
             }
             case 0x83: {
-                RulesTerraforming *stage =
-                    reinterpret_cast<RulesTerraforming *>(NetDaemonRulesSyncStaging);
+                RulesTerraforming *stage = NetDaemonRulesSyncStaging.terraforming;
                 for (int k = 0; k < MaxTerrainNum; k++, stage++) {
                     for (int j = 0; j < 2; j++) {
                         Terraforming[k].prerequisite_tech[j] = stage->prerequisite_tech[j];
@@ -5668,8 +5681,7 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
                 break;
             }
             case 0x85: {
-                RulesTimeControl *stage =
-                    reinterpret_cast<RulesTimeControl *>(NetDaemonRulesSyncStaging);
+                RulesTimeControl *stage = NetDaemonRulesSyncStaging.time_control;
                 for (int k = 0; k < MaxTimeControlNum; k++, stage++) {
                     LPSTR name = TimeControl[k].name;
                     TimeControl[k] = *stage;
@@ -5678,8 +5690,7 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
                 break;
             }
             case 0x86: {
-                RulesChassis *stage =
-                    reinterpret_cast<RulesChassis *>(NetDaemonRulesSyncStaging);
+                RulesChassis *stage = NetDaemonRulesSyncStaging.chassis;
                 for (int k = 0; k < MaxChassisNum; k++, stage++) {
                     Chassis[k].speed = stage->speed;
                     Chassis[k].triad = stage->triad;
@@ -5692,16 +5703,14 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
                 break;
             }
             case 0x87: {
-                RulesReactor *stage =
-                    reinterpret_cast<RulesReactor *>(NetDaemonRulesSyncStaging);
+                RulesReactor *stage = NetDaemonRulesSyncStaging.reactor;
                 for (int k = 0; k < MaxReactorNum; k++, stage++) {
                     Reactor[k].preq_tech = stage->preq_tech;
                 }
                 break;
             }
             case 0x88: {
-                RulesWeapon *stage =
-                    reinterpret_cast<RulesWeapon *>(NetDaemonRulesSyncStaging);
+                RulesWeapon *stage = NetDaemonRulesSyncStaging.weapon;
                 for (int k = 0; k < MaxWeaponNum; k++, stage++) {
                     Weapon[k].offense_rating = stage->offense_rating;
                     Weapon[k].icon = stage->icon;
@@ -5712,8 +5721,7 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
                 break;
             }
             case 0x89: {
-                RulesArmor *stage =
-                    reinterpret_cast<RulesArmor *>(NetDaemonRulesSyncStaging);
+                RulesArmor *stage = NetDaemonRulesSyncStaging.armor;
                 for (int k = 0; k < MaxArmorNum; k++, stage++) {
                     Armor[k].defense_rating = stage->defense_rating;
                     Armor[k].mode = stage->mode;
@@ -5723,8 +5731,7 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
                 break;
             }
             case 0x8A: {
-                RulesAbility *stage =
-                    reinterpret_cast<RulesAbility *>(NetDaemonRulesSyncStaging);
+                RulesAbility *stage = NetDaemonRulesSyncStaging.ability;
                 for (int k = 0; k < MaxAbilityNum; k++, stage++) {
                     Ability[k].cost_factor = stage->cost_factor;
                     Ability[k].unk_1 = stage->unk_1;
@@ -5734,8 +5741,7 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
                 break;
             }
             case 0x8B: {
-                RulesFacility *stage =
-                    reinterpret_cast<RulesFacility *>(NetDaemonRulesSyncStaging);
+                RulesFacility *stage = NetDaemonRulesSyncStaging.facility;
                 for (int k = 0; k < MaxFacilityNum; k++, stage++) {
                     LPSTR name = Facility[k].name;
                     LPSTR effect = Facility[k].effect;
@@ -5746,8 +5752,7 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
                 break;
             }
             case 0x8C: {
-                RulesCitizen *stage =
-                    reinterpret_cast<RulesCitizen *>(NetDaemonRulesSyncStaging);
+                RulesCitizen *stage = NetDaemonRulesSyncStaging.citizen;
                 for (int k = 0; k < MaxCitizenNum; k++, stage++) {
                     Citizen[k].preq_tech = stage->preq_tech;
                     Citizen[k].obsol_tech = stage->obsol_tech;
@@ -5760,8 +5765,7 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
                 break;
             }
             case 0x8D: {
-                RulesSocialCategory *stage =
-                    reinterpret_cast<RulesSocialCategory *>(NetDaemonRulesSyncStaging);
+                RulesSocialCategory *stage = NetDaemonRulesSyncStaging.social_category;
                 for (int k = 0; k < MaxSocialCatNum; k++, stage++) {
                     for (int j = 0; j < 4; j++) {
                         SocialCategories[k].model_effect[j] = stage->model_effect[j];
