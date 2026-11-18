@@ -7282,7 +7282,7 @@ L_574a88:
         goto L_5767ed;
     }
     {
-        int count = 0;  // passengers released to act on their own (ebx)
+        // hint counts the passengers released to act on their own.
         if (!home_dist) {
             stack_sort_2(veh_id);
         }
@@ -7312,7 +7312,7 @@ L_574a88:
                         if ((Vehs[other_id].order == ORDER_SENTRY_BOARD
                              && (Vehs[other_id].waypoint_x[0] < 0 || Vehs[other_id].waypoint_x[0] == veh_id))
                             || (Vehs[other_id].order == ORDER_NONE && near_dist)) {
-                            count++;
+                            hint++;
                             if (healthy) {
                                 i |= (VehPrototypes[Vehs[other_id].proto_id].plan == PLAN_COMBAT)
                                     ? 7 : (1 << VehPrototypes[Vehs[other_id].proto_id].plan);
@@ -7335,7 +7335,7 @@ L_574a88:
                     } else if (!home_dist && !healthy) {
                         Vehs[other_id].order = ORDER_HOLD;
                     } else {
-                        count++;
+                        hint++;
                         Vehs[other_id].order = ORDER_NONE;
                         if (healthy) {
                             i |= (VehPrototypes[Vehs[other_id].proto_id].plan == PLAN_COMBAT)
@@ -7367,15 +7367,14 @@ L_574a88:
                         }
                         n++;
                     }
-                    count++;
+                    hint++;
                     Vehs[other_id].order = ORDER_NONE;
                     i |= (VehPrototypes[Vehs[other_id].proto_id].plan == PLAN_COMBAT)
                         ? 7 : (1 << VehPrototypes[Vehs[other_id].proto_id].plan);
                 }
             }
         }
-        hint = count;
-        if (!count) {
+        if (!hint) {
             if (Vehs[veh_id].order == ORDER_MOVE_TO
                 && (Vehs[veh_id].move_to_ai_type == 'J' || Vehs[veh_id].move_to_ai_type == 'r'
                     || Vehs[veh_id].move_to_ai_type == 'I' || Vehs[veh_id].move_to_ai_type == 'E')) {
