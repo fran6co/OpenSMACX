@@ -153,6 +153,14 @@ and arm order (62) gave the most. A second pass adds a handful, so rerun
 them only after other source work. Register-only differences are still
 about a third of all differing rows; the sweeps reach few of them.
 
+Exhausted on the near-misses (do not rerun without new rules): every
+single site and every pair of sites of the behaviour-preserving rewrites,
+inside each of the 90 functions within 12 differing rows
+(`recovery/tools/pairsall.py`), lowered none of them. Dropping a local
+that names a simple read (`unname`, exact-only) and hoisting declarations
+(`declsplit`) reached nothing either. The remaining near-misses are not a
+matter of arm, statement, declaration or comparison order.
+
 ## 2. Established VC6 rules (measured with micro-experiments)
 
 These rules apply to the production recipe (`/O2 /Ob2 /Gy /GR- /GX`, with or
