@@ -17,6 +17,7 @@
 // its three-state EH layout; see stringstruct.h.
 #define FONT_LINE_ADVANCE_INLINE
 #define STRINGSTRUCT_CTOR_OUT_OF_LINE
+#define SPOT_ADD_RECT_INLINE  // stand-in: see Spot::add(int, int, RECT *) in spot.h
 #define WIN_RECT_EXTENT_INLINE  // rect_width/rect_height (win.h): on_redraw reads its extents through the RECT
 #include "monuwin.h"
 #include "rectangle_operations.h"
@@ -851,15 +852,12 @@ void MonuWin::on_redraw() {
           && FactionMonuments[preview_faction_or_page_].records_[order[row]].achieved_) {
         scratch_rect_ = rects_3134_[row + 3];
         sprites_2C0C_[order[row]].draw(this, scratch_rect_.left, scratch_rect_.top);
-        spot_.add(order[row], 0, scratch_rect_.left, scratch_rect_.top,
-                  scratch_rect_.right - scratch_rect_.left, rect_height(&scratch_rect_));
+        spot_.add(order[row], 0, &scratch_rect_);
       }
     }
     type = FactionMonuments[preview_faction_or_page_].latest_type_;
     selected_monument_type_ = type;
-    spot_.add(0x45, 0, rects_3134_[0].left, rects_3134_[0].top,
-              rect_width(&rects_3134_[0]),
-              rect_height(&rects_3134_[0]));
+    spot_.add(0x45, 0, &rects_3134_[0]);
     if (type == 0xD) {
       sprite_first_.draw(this, rects_3134_[0].left, rects_3134_[0].top);
     } else if (type < 0xF) {
@@ -878,20 +876,19 @@ void MonuWin::on_redraw() {
       int last = count - 1;
       scratch_rect_ = icon_rects_[last / 2 * 2];
       sprites_3244_[last / 2 * 2].draw(this, scratch_rect_.left, scratch_rect_.top);
-      if (last) {
-        scratch_rect_ = icon_rects_[(last - 1) / 2 * 2 + 1];
-        sprites_3244_[(last - 1) / 2 * 2 + 1].draw(this, scratch_rect_.left, scratch_rect_.top);
+      count = last;
+      if (count) {
+        scratch_rect_ = icon_rects_[(count - 1) / 2 * 2 + 1];
+        sprites_3244_[(count - 1) / 2 * 2 + 1].draw(this, scratch_rect_.left, scratch_rect_.top);
       }
-      for (i = 0, type = 15; i < count; i++, type++) {
-        if (!FactionMonuments[preview_faction_or_page_].records_[type].achieved_) {
-          type++;
+      for (i = 0, j = 0; i < count + 1; i++, j++) {
+        if (!FactionMonuments[preview_faction_or_page_].records_[j + 15].achieved_) {
+          j++;
           continue;
         }
-        sprites_33AC_[FactionMonuments[preview_faction_or_page_].records_[type].word_8_ - 1]
+        sprites_33AC_[FactionMonuments[preview_faction_or_page_].records_[j + 15].word_8_ - 1]
             .draw(this, rects_366C_[i].left, rects_366C_[i].top);
-        spot_.add(type, 0, rects_366C_[i].left, rects_366C_[i].top,
-                  rect_width(&rects_366C_[i]),
-                  rect_height(&rects_366C_[i]));
+        spot_.add(j + 15, 0, &rects_366C_[i]);
       }
     }
     sprite_second_.draw(this, rects_366C_[6].left, rects_366C_[6].top);
