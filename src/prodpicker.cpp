@@ -343,58 +343,55 @@ void ProdPicker::on_button_clicked(int button_id) {
     }
 }
 
-// ORIGINAL: 0x00493CB0 ?on_scrolled@ProdPicker@@QAEXHH@Z 0x00493CB0-0x00493E6F
+// ORIGINAL: 0x00493CB0 ?on_scrolled@ProdPicker@@QAEXHH@Z 0x00493CB0-0x00493E6F BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00493cb0.cpp", "source:src/prodpicker.h", "source:src/buffer.h", "source:src/win.h", "pinned original own table 0x0066A250, pointer word at +0xC0, identifies original entry 0x00493CB0", "source:src/win.h inherited virtual interface; actual emitted method ?vslot_48@ProdPicker@@UAEXHH@Z in primary Win table ??_7ProdPicker@@6BWin@@@"], "reason": "Scroll the displayed item window using measured picker geometry, its real Buffer blit operation, draw_item, and inherited redraw virtual. The original own Win table binds this entry as virtual slot 48. Use genuine member dispatch, not an opaque redirect; retain the catalogued original spelling as historical evidence. The previous on_scrolled definition is the class slot-48 target; renaming connects the unchanged body to its real virtual slot."}
 // symbol    ?on_scrolled@ProdPicker@@UAEXHH@Z
 void ProdPicker::on_scrolled(int, int position) {
-    RECT rect;
-    const int pageSize = column_count_;
-    const int oldPosition = static_cast<int>(field_A77C_);
-    // Native IMUL/SUB/JNS/reverse-SUB keeps the low word. In particular,
-    // an INT_MIN distance remains negative rather than becoming positive.
-    const uint32_t newPositionBits = static_cast<uint32_t>(pageSize)
-        * static_cast<uint32_t>(position);
-    const int newPosition = static_cast<int32_t>(newPositionBits);
-    field_A77C_ = newPosition;
-
-    int distance = static_cast<int32_t>(newPositionBits
-        - static_cast<uint32_t>(oldPosition));
-    if (distance < 0) {
-        distance = static_cast<int32_t>(static_cast<uint32_t>(oldPosition)
-            - newPositionBits);
-    }
-    if (distance > pageSize) {
+    const int oldPosition = field_A77C_;
+    field_A77C_ = column_count_ * position;
+    // The distance is one conditional expression; the reversed subtraction
+    // (not a negation) is the image's, so an INT_MIN distance stays negative.
+    int distance = (field_A77C_ - oldPosition < 0)
+        ? oldPosition - field_A77C_
+        : field_A77C_ - oldPosition;
+    if (distance > column_count_) {
         redraw();
-        soft_update();
-        return;
-    }
-
-    if (newPosition < oldPosition) {
+    } else if (field_A77C_ < oldPosition) {
+        // The list moves down one row: the rows are copied from the list
+        // rectangle to a copy of it shifted by a row, and the vacated first
+        // row is redrawn. The shifted copy is the rectangle the image keeps
+        // in memory (0x10 frame); the list rectangle itself folds away.
+        RECT list;
+        RECT moved;
         restore_clip();
-        set_rectangle_dimensions(&rect, 0x15, 4,
-                                 cell_width_ * column_count_ + 2,
+        set_rectangle_dimensions(&list, 0x15, 4, cell_width_ * column_count_ + 2,
                                  (static_cast<int>(field_A814_) - 1) * row_height_);
-        rect.right += 2;
-        rect.bottom += row_height_;
-        copy(this, 0x15, 4, rect.left, rect.top + row_height_,
-             rect.right - rect.left, rect.bottom - (rect.top + row_height_));
+        list.right += 2;
+        moved = list;
+        offset_rect(&moved, 0, row_height_);
+        copy(this, list.left, list.top, moved.left, moved.top,
+             moved.right - moved.left, moved.bottom - moved.top);
 
-        for (int item = field_A77C_; item < column_count_ + field_A77C_;
+        for (int item = field_A77C_; item < field_A77C_ + column_count_;
              ++item) {
             draw_item(item, 0);
         }
-    } else if (newPosition != oldPosition) {
+    } else if (field_A77C_ > oldPosition) {
+        // The list moves up one row: the shifted copy is now the source.
+        RECT list;
+        RECT moved;
         restore_clip();
-        set_rectangle_dimensions(&rect, 0x15, 4,
-                                 cell_width_ * column_count_ + 2,
+        set_rectangle_dimensions(&list, 0x15, 4, cell_width_ * column_count_ + 2,
                                  (static_cast<int>(field_A814_) - 1) * row_height_);
-        rect.right += 2;
-        copy(this, rect.left, rect.top + row_height_, 0x15, 4,
-             rect.right - rect.left, rect.bottom - rect.top);
+        list.right += 2;
+        moved = list;
+        offset_rect(&moved, 0, row_height_);
+        copy(this, moved.left, moved.top, list.left, list.top,
+             list.right - list.left, list.bottom - list.top);
 
         const int first = (static_cast<int>(field_A814_) - 1) * column_count_
             + field_A77C_;
-        for (int item = first; item < first + column_count_; ++item) {
+        for (int item = first; item < column_count_ + first; ++item) {
             draw_item(item, 0);
         }
     }
