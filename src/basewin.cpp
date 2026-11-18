@@ -4400,8 +4400,11 @@ void BaseWin::on_button_clicked(int button_id) {
         int vehicle = veh_at(BaseCurrent->x, BaseCurrent->y);
         if (vehicle < 0) return;
         // Original 0x41D9FE/0x41DA15 follows nonnegative next links.
-        while (Vehs[vehicle].next_veh_id_stack >= 0)
-            vehicle = Vehs[vehicle].next_veh_id_stack;
+        int16_t next = Vehs[vehicle].next_veh_id_stack;
+        while (next >= 0) {
+            vehicle = next;
+            next = Vehs[vehicle].next_veh_id_stack;
+        }
         veh_promote(vehicle);
         redraw();
         return;
