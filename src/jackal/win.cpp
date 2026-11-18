@@ -3153,9 +3153,13 @@ void Win::on_paint(RECT *area) {
     int width;
     RECT edge;
     RECT frame;
+    int index;
+    Buffer *source;
+    int x;
+    int y;
     hdc = get_hdc();
-    const int index = static_cast<int>(field_F4_);
-    Buffer *const source = buffer5_;
+    index = static_cast<int>(field_F4_);
+    source = buffer5_;
     brush = CreateSolidBrush(
         RGB(PaletteActive->entries_[index].peRed,
             PaletteActive->entries_[index].peGreen,
@@ -3167,19 +3171,21 @@ void Win::on_paint(RECT *area) {
         } else {
             width = source->dib_.bmiHeader.biWidth;
             frame = outer_rect_;
-            int x = (frame.right - frame.left - width) / 2;
+            x = (frame.right - frame.left - width) / 2;
             // `biHeight` is stored negative for a top-down DIB.
             height = -source->dib_.bmiHeader.biHeight;
-            int y = (frame.bottom - frame.top - height) / 2;
+            y = (frame.bottom - frame.top - height) / 2;
 
             if (field_130_ == 0) {
                 // Tile the whole area, wrapping the origin into the first
                 // tile; `abs` really is called (0x00644F3A).
                 x = x > 0 ? width - abs(x) % width : -x;
                 y = y > 0 ? height - abs(y) % height : -y;
-                for (y = -y; y < area->bottom; y += height) {
-                    for (int px = -x; px < area->right; px += width) {
-                        source->copy_to_window(this, 0, 0, px, y,
+                y = -y;
+                x = -x;
+                for (int py = y; py < area->bottom; py += height) {
+                    for (int px = x; px < area->right; px += width) {
+                        source->copy_to_window(this, 0, 0, px, py,
                             source->pixel_width(),
                             source->pixel_height());
                     }
