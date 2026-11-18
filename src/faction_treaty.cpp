@@ -726,6 +726,11 @@ void __cdecl pact_attacks(int faction_id, int faction_id_with) {
 
 
 // The image calls has_project (0x004F80D0) out of line here; every other callee is a call.
+// WORKAROUND(noinline): the image keeps get_noun (3 calls) and has_project
+// (2) out of line but expands bounded_crt_random (rand called directly), a
+// /Ob2 budget cut-off in this caller; enemies_unpact 0x0055CE20 in the same
+// unit expands get_noun. Without the region every header inline expands
+// (184 rows); the budget arrangement is not found.
 #pragma inline_depth(0)
 // ORIGINAL: 0x0055C840 ?enemies_war@@YAXHH@Z 0x0055C840-0x0055CC9A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x0055C840:complete-mapped-spans", "git:2ab1312e:src/recovered/units/0055c840.cpp", "source:src/faction.h:PlayersData-and-diplomacy-interfaces"], "reason": "Use genuine player treaty rows, local console, owned NetMsg and parser state for war declarations. The observed protected-notice bit is 0x1000, not 0x100000; preserve the original treaty and agenda calls and notice ordering."}

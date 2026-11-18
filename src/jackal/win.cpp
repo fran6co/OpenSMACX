@@ -4117,6 +4117,10 @@ inline void Win::hide() {
 // explain8F4 and900. Win is Buffer's friend, so these are real members.
 // ORIGINAL: 0x005F63C0 ?on_l_button_down@Win@@UAEXJHHIH@Z 0x005F63C0-0x005F654E FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Historical3cb99d43^:src/recovered/units/005f63c0.cpp recorded unclaimed FILE398-byte5F63C0..5F654E under catalogue ?on_l_button_down@Win@@QAEXJHHIH@Z. Commit3cb99d431fb928d698e7eb29afee4ac2fc664027 deleted the seed without its source binding. No exact claim is inferred.", "Original Win-family tables place5F63C0 at slot81; observed actual compiler emits virtual UAEXJHHIH. Use that evidence-backed virtual name interpretation instead of retaining the old plain-method catalogue guess. Full original endsRET20 at5F654B; next two bytes are padding before5F6550.", "Original5F6442 fifth argument selects both capture owner and slot28/38; fourth WPARAM is unused. Pushes5F64B0/B1 and5F64D4/D5 deliver x,y; original seed had both coordinate reversals and wrong fourth-argument selector. Preserve live parent/related receiver reloads and virtual admission as predicate only.", "GraphicWin owns Buffer at444, Spot4B0 and link texts4BC. Original5F6523 loads this+900+4*index; slot88 on_link_clicked result controls left_down_event fallback. This binding does not verify every original-address service, class lifetime or full GUI."], "reason": "Restore original identity lost during Win rehoming; recover full left-down argument routing and genuine GraphicWin link dispatch."}
+// WORKAROUND(noinline): the image calls update_zorder 0x005F5020, a static
+// member of this unit defined earlier (lower address), while VC6 /Ob2
+// auto-inlines it here (42 rows); the only change without the region. The
+// other Win functions that run its loop spell the body out by hand.
 #pragma inline_depth(0)
 void Win::on_l_button_down(long double_click, int x, int y, unsigned int, int from_parent) {
     Win *child = win_parent_;
