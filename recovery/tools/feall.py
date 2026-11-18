@@ -4,10 +4,11 @@ Writes scratchpad/feall.json: [{unit, addr, sym, exact, diff, img, ours, ratio}]
 import sys,os,re,json,subprocess,argparse
 from concurrent.futures import ThreadPoolExecutor
 R=os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))); S=os.path.dirname(os.path.abspath(__file__))
-ap=argparse.ArgumentParser(); ap.add_argument('units',nargs='*'); ap.add_argument('--jobs',type=int,default=14); ap.add_argument('--out',default=S+'/feall.json'); ap.add_argument('--all',action='store_true'); ap.add_argument('--base'); ap.add_argument('--root',default=R)
+ap=argparse.ArgumentParser(); ap.add_argument('units',nargs='*'); ap.add_argument('--jobs',type=int,default=int(os.environ.get('FE_JOBS','14'))); ap.add_argument('--out',default=S+'/feall.json'); ap.add_argument('--all',action='store_true'); ap.add_argument('--base'); ap.add_argument('--root',default=R)
 a=ap.parse_args()
-cc=json.load(open(R+'/build/compile_commands.json'))
-units=[e['file'][len(R)+1:] for e in cc if e['file'].startswith(R+'/src/')]
+MAIN=os.environ.get('OPENSMACX_MAIN', R if os.path.exists(R+'/.opensmacx/game/terranx_original.exe') else '/home/fran6co/code/OpenSMACX')
+cc=json.load(open(MAIN+'/build/compile_commands.json'))
+units=[e['file'][len(MAIN)+1:] for e in cc if e['file'].startswith(MAIN+'/src/')]
 if a.units: units=[u for u in units if u in a.units or os.path.basename(u) in a.units]
 work=[]
 for u in units:
@@ -17,7 +18,7 @@ for u in units:
     if addrs: work.append((u,addrs,'BYTE_EXACT' and {m.group(1) for m in re.finditer(r'// ORIGINAL: (0x[0-9A-F]{8}) \S+ 0x[0-9A-Fa-f]+-0x[0-9A-Fa-f]+([^\n]*)',t) if 'BYTE_EXACT' in m.group(2)}))
 def run(i):
     u,addrs,claimed=work[i]; out=[]
-    p=subprocess.run(['uv','run','python',S+'/fe.py',u,','.join(addrs),'--quiet','--pfx',str(21+i%a.jobs)],cwd=R,capture_output=True,text=True)
+    p=subprocess.run(['uv','run','python',S+'/fe.py',u,','.join(addrs),'--quiet','--pfx',str(int(os.environ.get('FE_PFX_BASE','21'))+i%a.jobs)],cwd=R,capture_output=True,text=True)
     for l in p.stdout.split('\n'):
         m=re.match(r'FE ([0-9A-F]{8}) (\S+) exact=(\w+) diff=(\d+) img=(\d+) ours=(\d+) ratio=([\d.]+)(?: jt=(\d+))?',l)
         if m: out.append(dict(unit=u,addr=m.group(1),sym=m.group(2),claimed=('0x'+m.group(1)) in claimed,exact=m.group(3)=='True',diff=int(m.group(4)),img=int(m.group(5)),ours=int(m.group(6)),ratio=float(m.group(7)),jt=int(m.group(8) or 0)))

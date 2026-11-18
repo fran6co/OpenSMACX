@@ -1875,12 +1875,14 @@ setup:
                 BaseCurrent->governor &= 0x3FFFFFFFu;
         }
         if (a1 == 0 && BaseCurrent->minerals_accumulated_2 != 0) {
-            if (base_making(sel, BaseIDCurrentSelected)
+            if (!(base_making(sel, BaseIDCurrentSelected)
                     != base_making(displayed_production_id_, BaseIDCurrentSelected)
                 && PlayersData[faction].diff_level > 1
                 && Rules.retool_pct_pen_prod_chg != 0
                 && BaseCurrent->minerals_accumulated_2 > Rules.retool_exemption
-                && (displayed_id = displayed_production_id_) != -0x45) {
+                && (displayed_id = displayed_production_id_) != -0x45)) {
+                BaseCurrent->minerals_accumulated = BaseCurrent->minerals_accumulated_2;
+            } else {
                 if (base_making(BaseCurrent->queue_production_id[0], BaseIDCurrentSelected)
                     == base_making(displayed_id, BaseIDCurrentSelected)) {
                     if (BaseCurrent->queue_production_id[0] >= 0)
@@ -1939,8 +1941,6 @@ setup:
                         break;
                     }
                 }
-            } else {
-                BaseCurrent->minerals_accumulated = BaseCurrent->minerals_accumulated_2;
             }
         }
 
@@ -6441,17 +6441,17 @@ void BaseWin::base_editor_proj() {
         const int owner_base = (GameDataStateStorage.fields_.secret_project_.project_base[project_index]);
         if (owner_base == -2) {
             strcat(StringTemp, label_get(0xD54 / 4));
-        } else if (owner_base == -1) {
+        } else if (!(owner_base == -1)) {
+            // Original41BCCD..41BCDD computes Base's0x134 stride, not
+            // the seed's incorrect Player0x59C stride. No new index guard.
+            strcat(StringTemp, Bases[owner_base].name_string);
+        } else {
             if (has_tech(Facility[FacilitySPStart + project_index].preq_tech,
                          BaseCurrent->faction_id_current)) {
                 strcat(StringTemp, label_get(0x3DC / 4));
             } else {
                 strcat(StringTemp, label_get(0x4D8 / 4));
             }
-        } else {
-            // Original41BCCD..41BCDD computes Base's0x134 stride, not
-            // the seed's incorrect Player0x59C stride. No new index guard.
-            strcat(StringTemp, Bases[owner_base].name_string);
         }
         // The item id is the project index (original 0x0041BCF5 pushes the
         // loop counter), which the selection below indexes by.

@@ -1315,17 +1315,17 @@ int __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, int
                             // ocean arm ends `jne next; jmp join`, the land arm
                             // (laid out after it) `jl join; jne next` and falls
                             // into the join.
-                            if (!(is_ocean(x_radius, y_radius))) {
+                            if (!(!(is_ocean(x_radius, y_radius)))) {
+                                // Preserve the unchecked lookup result.
+                                if (Bases[base_find(x_radius, y_radius)].faction_id_current
+                                    != Vehs[veh_id_def].faction_id) {
+                                    continue;
+                                }
+                            } else {
                                 int faction_id_terr = whose_territory(Vehs[veh_id_def].faction_id,
                                     x_radius, y_radius, NULL, false);
                                 if (faction_id_terr >= 0
                                     && faction_id_terr != Vehs[veh_id_def].faction_id) {
-                                    continue;
-                                }
-                            } else {
-                                // Preserve the unchecked lookup result.
-                                if (Bases[base_find(x_radius, y_radius)].faction_id_current
-                                    != Vehs[veh_id_def].faction_id) {
                                     continue;
                                 }
                             }
@@ -2941,8 +2941,8 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
     }
 
     // 0x507964
-    def_proto = Vehs[def_id].proto_id;
     att_proto = Vehs[veh_id].proto_id;
+    def_proto = Vehs[def_id].proto_id;
     if ((att_faction == ConsoleGlobal.faction_id_ || def_faction == ConsoleGlobal.faction_id_) &&
         !IsMultiplayerNet &&
         (Weapon[VehPrototypes[att_proto].weapon_id].offense_rating < 0 ||

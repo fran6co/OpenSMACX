@@ -4463,7 +4463,18 @@ void ReportWin::draw_score() {
     for (int item = 0; item < 9; ++item) {
         text_get();
         if (PlayersData[faction].score_items_[item] == 0 || item == 5) continue;
-        if (item == 6) {
+        if (!(item == 6)) {
+            StringTemp[0] = 0;
+            if (item == 7) {
+                if (GameDataStateStorage.fields_.game_state_ & 0x200000) strcat(StringTemp, label_get(0xE70 / 4));
+                else if (GameDataStateStorage.fields_.game_state_ & 0x400000) strcat(StringTemp, label_get(0xE88 / 4));
+                else if (PlayersData[faction].flags & 0x100000) strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x1198 / 4]));
+                else if (!(GameDataStateStorage.fields_.game_state_ & 0x2000)) strcat(StringTemp, label_get(0xE10 / 4));
+                else strcat(StringTemp, TextBufferGetPtr);
+            } else {
+                strcat(StringTemp, TextBufferGetPtr);
+            }
+        } else {
             const int own = num_objectives(faction, 0);
             const int total = num_objectives(faction, GameDataStateStorage.fields_.game_rules_ & 0x1000);
             StringTemp[0] = 0;
@@ -4485,17 +4496,6 @@ void ReportWin::draw_score() {
                 StringTemp[0] = 0;
             }
             strcat(StringTemp, TextBufferGetPtr);
-        } else {
-            StringTemp[0] = 0;
-            if (item == 7) {
-                if (GameDataStateStorage.fields_.game_state_ & 0x200000) strcat(StringTemp, label_get(0xE70 / 4));
-                else if (GameDataStateStorage.fields_.game_state_ & 0x400000) strcat(StringTemp, label_get(0xE88 / 4));
-                else if (PlayersData[faction].flags & 0x100000) strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x1198 / 4]));
-                else if (!(GameDataStateStorage.fields_.game_state_ & 0x2000)) strcat(StringTemp, label_get(0xE10 / 4));
-                else strcat(StringTemp, TextBufferGetPtr);
-            } else {
-                strcat(StringTemp, TextBufferGetPtr);
-            }
         }
         report_topic_line(this, rect1_, rect1_.left);
         StringTemp[0] = 0;

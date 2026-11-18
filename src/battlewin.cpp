@@ -585,8 +585,8 @@ void BattleWin::battle_report(int first_vehicle_id, int second_vehicle_id,
             || !Vehs[first_vehicle_id].faction_id)) {
         psi_label = 1;
     }
-    const int second_faction = Vehs[second_vehicle_id].faction_id;
     const int first_faction = Vehs[first_vehicle_id].faction_id;
+    const int second_faction = Vehs[second_vehicle_id].faction_id;
     RECT inner_first = battle_rects_[0];
     inner_first.left += 3;
     inner_first.top += 3;
@@ -659,16 +659,16 @@ again:
     int width;
     int text_x;
     int text_y;
-    if (!(first_vehicle_id != second_vehicle_id)) {
-        width = inner_second.right - inner_second.left;
-        text_x = inner_second.left;
-        text_y = inner_second.top;
-        MainInterfaceGlobal.set_clip(&inner_second);
-    } else {
+    if (!(!(first_vehicle_id != second_vehicle_id))) {
         width = inner_first.right - inner_first.left;
         text_x = inner_first.left;
         text_y = inner_first.top;
         MainInterfaceGlobal.set_clip(&inner_first);
+    } else {
+        width = inner_second.right - inner_second.left;
+        text_x = inner_second.left;
+        text_y = inner_second.top;
+        MainInterfaceGlobal.set_clip(&inner_second);
     }
     int half_width;
     if (wide) {
@@ -817,7 +817,7 @@ again:
     row_y = MainInterfaceGlobal.wrap(StringTemp, column_x, row_y, half_width);
 
     StringTemp[0] = '\0';
-    strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x1E4 / 4]));
+    strcat(StringTemp, label_get(0x1E4 / 4));
     strcat(StringTemp, SocialWinColonSpaceText);
     strcat(StringTemp, "{");
     say_num(range(proto_power(first_vehicle_id) - Vehs[first_vehicle_id].dmg_incurred, 0, 9999));

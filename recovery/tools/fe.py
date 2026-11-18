@@ -7,12 +7,13 @@ Summary line: 'FE <addr> <sym> exact=<bool> diff=<n> img=<n> ours=<n> ratio=<r>'
 This is a screen only: confirm with `recover measure` and bank with `recover record`."""
 import sys, os, re, json, subprocess, struct, difflib, argparse, hashlib
 R=os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+MAIN=os.environ.get('OPENSMACX_MAIN', R if os.path.exists(R+'/.opensmacx/game/terranx_original.exe') else '/home/fran6co/code/OpenSMACX')
 SCR=os.environ.get('FE_SCRATCH', R+'/build/recovery/fe')
 sys.path.insert(0, R+'/packages/match-recovery/src')
 from match_recovery.pe_coff import Coff
 import capstone
 os.makedirs(SCR,exist_ok=True)
-_img=open(R+'/.opensmacx/game/terranx_original.exe','rb').read()
+_img=open(MAIN+'/.opensmacx/game/terranx_original.exe','rb').read()
 _pe=struct.unpack_from('<I',_img,0x3c)[0]; _nsec=struct.unpack_from('<H',_img,_pe+6)[0]; _opt=struct.unpack_from('<H',_img,_pe+20)[0]
 _base=struct.unpack_from('<I',_img,_pe+24+28)[0]; _secs=[]
 for _i in range(_nsec):
@@ -24,7 +25,10 @@ md=capstone.Cs(capstone.CS_ARCH_X86,capstone.CS_MODE_32)
 _CC=None
 def compile_cmd(unit):
     global _CC
-    if _CC is None: _CC={e['file']:e['command'].split() for e in json.load(open(R+'/build/compile_commands.json'))}
+    if _CC is None:
+        _CC={}
+        for e in json.load(open(MAIN+'/build/compile_commands.json')):
+            _CC[e['file'].replace(MAIN+'/src',R+'/src')]=[t.replace(MAIN+'/src',R+'/src') for t in e['command'].split()]
     return _CC.get(R+'/'+unit)
 SENT=0x5A5A5A5A
 def dis(data,org,relocs=(),lo=None,hi=None,selfsec=None,syms=None):
@@ -108,7 +112,7 @@ def compile_unit(unit,srcpath,pfx):
         elif t.startswith('/Fd') or t.startswith('--repro-root') or t=='/W4': continue
         elif t==R+'/'+unit: t=srcpath
         out.append(t)
-    env=dict(os.environ, VC6_PREFIX=f'{R}/.opensmacx/wine/worker-{pfx}')
+    env=dict(os.environ, VC6_PREFIX=f'{MAIN}/.opensmacx/wine/worker-{pfx}')
     if os.path.exists(obj): os.remove(obj)
     p=subprocess.run(out,cwd=SCR,env=env,capture_output=True,text=True)
     if not os.path.exists(obj):

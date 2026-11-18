@@ -5,11 +5,11 @@ variants.py-style use: --deck FILE (python file defining DECK = [(name, full_sou
 import sys,os,re,json,subprocess,argparse,itertools,random,threading
 from concurrent.futures import ThreadPoolExecutor
 R=os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))); S=os.path.dirname(os.path.abspath(__file__))
-def run_deck(unit,addr,deck,jobs=14,win=None):
+def run_deck(unit,addr,deck,jobs=int(os.environ.get('FE_JOBS','14')),win=None):
     """deck: list of (key, source_text). Returns list of (win, diff, exact, key) sorted best first."""
     d=R+'/build/recovery/fe/perm'; os.makedirs(d,exist_ok=True)
     def lane(k):
-        cmd=['uv','run','python',S+'/fe.py',unit,addr,'--batch','--pfx',str(21+k)]
+        cmd=['uv','run','python',S+'/fe.py',unit,addr,'--batch','--pfx',str(int(os.environ.get('FE_PFX_BASE','21'))+k)]
         if win: cmd+=['--win',win]
         p=subprocess.Popen(cmd,cwd=R,stdin=subprocess.PIPE,stdout=subprocess.PIPE,text=True)
         out=[]
@@ -30,7 +30,7 @@ def run_deck(unit,addr,deck,jobs=14,win=None):
     return res
 if __name__=='__main__':
     ap=argparse.ArgumentParser(); ap.add_argument('unit'); ap.add_argument('addr'); ap.add_argument('--lines'); ap.add_argument('--max',type=int,default=5040)
-    ap.add_argument('--jobs',type=int,default=14); ap.add_argument('--win'); ap.add_argument('--apply',type=int); ap.add_argument('--top',type=int,default=8); ap.add_argument('--deck')
+    ap.add_argument('--jobs',type=int,default=int(os.environ.get('FE_JOBS','14'))); ap.add_argument('--win'); ap.add_argument('--apply',type=int); ap.add_argument('--top',type=int,default=8); ap.add_argument('--deck')
     a=ap.parse_args()
     unit=a.unit if a.unit.startswith('src/') else 'src/'+a.unit
     src=open(R+'/'+unit,encoding='latin-1').read()

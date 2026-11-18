@@ -588,14 +588,14 @@ int MainInterface::init(int) {
     flat_button_[1].init(StringTemp, 1001, scroll_down_rect_.left, scroll_down_rect_.top,
                          scroll_down_rect_.right - scroll_down_rect_.left,
                          scroll_down_rect_.bottom - scroll_down_rect_.top, this, 0);
-    flat_button_[1].set_bubble_text(label_get(0xC48 / 4));
+    flat_button_[1].set_bubble_text(StringTable.get(Labels.strings_ptr[0xC48 / 4]));
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0xAC0 / 4));
     StringTemp[1] = 0;
     flat_button_[0].init(StringTemp, 1000, scroll_up_rect_.left, scroll_up_rect_.top,
                          scroll_up_rect_.right - scroll_up_rect_.left,
                          scroll_up_rect_.bottom - scroll_up_rect_.top, this, 0);
-    flat_button_[0].set_bubble_text(label_get(0xC44 / 4));
+    flat_button_[0].set_bubble_text(StringTable.get(Labels.strings_ptr[0xC44 / 4]));
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0xDBC / 4));
     StringTemp[1] = 0;
