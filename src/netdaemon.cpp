@@ -1595,152 +1595,9 @@ int NetDaemon::end_of_event(int faction_id, int turn_value) {
 extern const char BufferJoinSpace[];
 extern char SocialWinColonSpaceText[];
 
-// Borrowed wire view over the layout already owned by message_data's sender.
-// Read one field at a time: MOVE packets have only two payload words, while
-// AIRDROP/DOUBLE CROSS have three, and diplomacy commands can use all four.
-// Do not copy a full 32-byte record, impose alignment, cache fields across
-// calls, or initialize original unwritten bytes.
-// This is a serialization boundary, not a claim about a new original class.
-class MessageCommandView {
-public:
-    explicit MessageCommandView(const unsigned char *bytes) : bytes_(bytes) {}
-    explicit MessageCommandView(const char *bytes)
-        : bytes_(reinterpret_cast<const unsigned char *>(bytes)) {}
-    uint16_t opcode() const {
-        uint16_t value;
-        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, opcode_), sizeof value);
-        return value;
-    }
-    int faction() const {
-        int value;
-        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, faction_), sizeof value);
-        return value;
-    }
-    int timestamp_bits() const {
-        int value;
-        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, timestamp_), sizeof value);
-        return value;
-    }
-    uint32_t sequence() const {
-        uint32_t value;
-        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, sequence_), sizeof value);
-        return value;
-    }
-    int payload_10() const {
-        int value;
-        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, payload_10_), sizeof value);
-        return value;
-    }
-    int payload_14() const {
-        int value;
-        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, payload_14_), sizeof value);
-        return value;
-    }
-    int payload_18() const {
-        int value;
-        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, payload_18_), sizeof value);
-        return value;
-    }
-    int8_t payload_18_byte() const {
-        int8_t value;
-        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, payload_18_), sizeof value);
-        return value;
-    }
-    int payload_1C() const {
-        int value;
-        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, payload_1C_), sizeof value);
-        return value;
-    }
-private:
-    const unsigned char *bytes_;
-};
 
-// The 0x4406 vehicle and data producers share only the fields read by that
-// receiver arm. This view deliberately does not select either complete record.
-class MessageCommonCommandPrefixView {
-public:
-    explicit MessageCommonCommandPrefixView(const unsigned char *bytes) : bytes_(bytes) {}
 
-    int faction() const {
-        int value;
-        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, faction_), sizeof value);
-        return value;
-    }
-    int timestamp_bits() const {
-        int value;
-        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, timestamp_), sizeof value);
-        return value;
-    }
-    int payload_10() const {
-        int value;
-        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, payload_10_), sizeof value);
-        return value;
-    }
-    int payload_14() const {
-        int value;
-        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, payload_14_), sizeof value);
-        return value;
-    }
 
-private:
-    const unsigned char *bytes_;
-};
-
-class MessageVehicleView {
-public:
-    explicit MessageVehicleView(const unsigned char *bytes) : bytes_(bytes) {}
-
-    int faction() const {
-        int value;
-        std::memcpy(&value, bytes_ + offsetof(MessageVehicleRecord, faction_), sizeof value);
-        return value;
-    }
-    int timestamp_bits() const {
-        int value;
-        std::memcpy(&value, bytes_ + offsetof(MessageVehicleRecord, time_), sizeof value);
-        return value;
-    }
-    int payload_10() const {
-        int value;
-        std::memcpy(&value, bytes_ + offsetof(MessageVehicleRecord, field_10_), sizeof value);
-        return value;
-    }
-    int payload_14() const {
-        int value;
-        std::memcpy(&value, bytes_ + offsetof(MessageVehicleRecord, field_14_), sizeof value);
-        return value;
-    }
-
-private:
-    const unsigned char *bytes_;
-};
-
-class MessageBaseTextView {
-public:
-    explicit MessageBaseTextView(unsigned char *bytes) : bytes_(bytes) {}
-
-    int faction() const {
-        int value;
-        std::memcpy(&value, bytes_ + offsetof(MessageBaseTextRecord, faction_), sizeof value);
-        return value;
-    }
-    int timestamp_bits() const {
-        int value;
-        std::memcpy(&value, bytes_ + offsetof(MessageBaseTextRecord, time_), sizeof value);
-        return value;
-    }
-    int payload_10() const {
-        int value;
-        std::memcpy(&value, bytes_ + offsetof(MessageBaseTextRecord, payload_10_), sizeof value);
-        return value;
-    }
-    char *text() const {
-        return reinterpret_cast<char *>(bytes_ + offsetof(MessageBaseTextRecord, text_));
-    }
-
-private:
-    unsigned char *bytes_;
-};
 
 // E2213 has only a consumer-backed sequence/player-index prefix; its producer
 // and any wider packet record remain unresolved.
@@ -1755,25 +1612,6 @@ static_assert(offsetof(MessageAcknowledgementPrefix, sequence_) == 0x0C,
 static_assert(offsetof(MessageAcknowledgementPrefix, player_index_) == 0x10,
               "acknowledgement player-index offset");
 
-class MessageAcknowledgementPrefixView {
-public:
-    explicit MessageAcknowledgementPrefixView(const unsigned char *bytes)
-        : bytes_(bytes) {}
-
-    int32_t sequence() const {
-        int32_t value;
-        std::memcpy(&value, bytes_ + offsetof(MessageAcknowledgementPrefix, sequence_), sizeof value);
-        return value;
-    }
-    int32_t player_index() const {
-        int32_t value;
-        std::memcpy(&value, bytes_ + offsetof(MessageAcknowledgementPrefix, player_index_), sizeof value);
-        return value;
-    }
-
-private:
-    const unsigned char *bytes_;
-};
 
 // F4305/4306 support only these consumed fields, not a complete packet type.
 struct MessageEventPrefix {
@@ -1788,89 +1626,9 @@ static_assert(offsetof(MessageEventPrefix, faction_) == 0x04,
 static_assert(offsetof(MessageEventPrefix, payload_10_) == 0x10,
               "event prefix payload offset");
 
-class MessageEventPrefixView {
-public:
-    explicit MessageEventPrefixView(const unsigned char *bytes) : bytes_(bytes) {}
-
-    int faction() const {
-        int value;
-        std::memcpy(&value, bytes_ + offsetof(MessageEventPrefix, faction_), sizeof value);
-        return value;
-    }
-    int payload_10() const {
-        int value;
-        std::memcpy(&value, bytes_ + offsetof(MessageEventPrefix, payload_10_), sizeof value);
-        return value;
-    }
-
-private:
-    const unsigned char *bytes_;
-};
 
 
-class MessageBigDataView {
-public:
-    explicit MessageBigDataView(const unsigned char *bytes) : bytes_(bytes) {}
 
-    int faction() const {
-        int value;
-        std::memcpy(&value, bytes_ + offsetof(MessageBigDataRecord, faction_), sizeof value);
-        return value;
-    }
-    int data_word(int index) const {
-        int value;
-        std::memcpy(&value, bytes_ + offsetof(MessageBigDataRecord, data_) +
-                              index * sizeof(int), sizeof value);
-        return value;
-    }
-
-private:
-    const unsigned char *bytes_;
-};
-
-class MessageLockView {
-public:
-    explicit MessageLockView(const unsigned char *bytes) : bytes_(bytes) {}
-
-    int payload_10() const {
-        int value;
-        std::memcpy(&value, bytes_ + offsetof(MessageLockRecord, field_10_), sizeof value);
-        return value;
-    }
-    int payload_14() const {
-        int value;
-        std::memcpy(&value, bytes_ + offsetof(MessageLockRecord, field_14_), sizeof value);
-        return value;
-    }
-    int payload_18() const {
-        int value;
-        std::memcpy(&value, bytes_ + offsetof(MessageLockRecord, field_18_), sizeof value);
-        return value;
-    }
-    int payload_1C() const {
-        int value;
-        std::memcpy(&value, bytes_ + offsetof(MessageLockRecord, field_1C_), sizeof value);
-        return value;
-    }
-    int payload_20() const {
-        int value;
-        std::memcpy(&value, bytes_ + offsetof(MessageLockRecord, field_20_), sizeof value);
-        return value;
-    }
-    int payload_24() const {
-        int value;
-        std::memcpy(&value, bytes_ + offsetof(MessageLockRecord, field_24_), sizeof value);
-        return value;
-    }
-    unsigned char payload_18_byte() const {
-        unsigned char value;
-        std::memcpy(&value, bytes_ + offsetof(MessageLockRecord, field_18_), sizeof value);
-        return value;
-    }
-
-private:
-    const unsigned char *bytes_;
-};
 
 
 // Fixed-slot bindings carried from 00532940.cpp
@@ -2416,9 +2174,7 @@ int NetDaemon::open_channel(int payload_10, int payload_14) {
     NetDaemonNet.action_mode_ = savedE904;
     (NetBusyCount)--;
 
-    int32_t response;
-    std::memcpy(&response, &field_1BA4_, sizeof response);
-    if (response >= 2) {
+    if (field_1BA4_ >= 2) {
       field_1BA0_ = 0;
       return 1;
     }
@@ -3020,61 +2776,6 @@ static_assert(offsetof(SyncHeaderPrefix, argument_4) == 0x1C,
 static_assert(offsetof(SyncHeaderPrefix, unresolved_20) == 0x20,
               "synchronization unwritten bytes 20..23 offset");
 
-// Borrowed field-by-field views keep accesses valid for unaligned packet
-// addresses and leave every unwritten interval untouched.
-class SyncHeaderPrefixReader {
-public:
-    explicit SyncHeaderPrefixReader(const unsigned char *bytes) : bytes_(bytes) {}
-
-    int16_t flags() const {
-        int16_t value;
-        std::memcpy(&value, bytes_ + offsetof(SyncHeaderPrefix, flags), sizeof value);
-        return value;
-    }
-    uint32_t faction() const {
-        uint32_t value;
-        std::memcpy(&value, bytes_ + offsetof(SyncHeaderPrefix, faction), sizeof value);
-        return value;
-    }
-    uint32_t sequence() const {
-        uint32_t value;
-        std::memcpy(&value, bytes_ + offsetof(SyncHeaderPrefix, sequence), sizeof value);
-        return value;
-    }
-    int32_t signed_sequence() const {
-        int32_t value;
-        std::memcpy(&value, bytes_ + offsetof(SyncHeaderPrefix, sequence), sizeof value);
-        return value;
-    }
-    int16_t opcode() const {
-        int16_t value;
-        std::memcpy(&value, bytes_ + offsetof(SyncHeaderPrefix, opcode), sizeof value);
-        return value;
-    }
-    int16_t index() const {
-        int16_t value;
-        std::memcpy(&value, bytes_ + offsetof(SyncHeaderPrefix, index), sizeof value);
-        return value;
-    }
-    int32_t argument_2() const {
-        int32_t value;
-        std::memcpy(&value, bytes_ + offsetof(SyncHeaderPrefix, argument_2), sizeof value);
-        return value;
-    }
-    int32_t argument_3() const {
-        int32_t value;
-        std::memcpy(&value, bytes_ + offsetof(SyncHeaderPrefix, argument_3), sizeof value);
-        return value;
-    }
-    int32_t argument_4() const {
-        int32_t value;
-        std::memcpy(&value, bytes_ + offsetof(SyncHeaderPrefix, argument_4), sizeof value);
-        return value;
-    }
-
-private:
-    const unsigned char *bytes_;
-};
 
 // ORIGINAL: 0x00534330 ?fixup_message@NetDaemon@@QAEHPAD@Z 0x00534330-0x005343FC FILE BYTE_EXACT
 // A switch over the direct packet fields. 0x2403 is a separate (empty) label

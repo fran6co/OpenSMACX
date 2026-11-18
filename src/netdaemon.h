@@ -420,7 +420,7 @@ class NetDaemon : public AlphaNet {
       uint32_t field_1B7C_;           // the faction mask hang_up ANDs against
       uint32_t faction_masks_[8];     // 0x1B80, one wait mask per faction
       uint32_t field_1BA0_;           // the diplomacy-channel flag close_channel clears
-      uint32_t field_1BA4_;
+      int32_t field_1BA4_;            // signed: open_channel tests >= 2 with jl
       uint32_t field_1BA8_;
       uint32_t lock_held_;            // 0x1BAC
       uint32_t exec_pending_;         // 0x1BB0
