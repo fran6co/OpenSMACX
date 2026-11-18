@@ -3178,19 +3178,19 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
     if (!Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range) {
         return_range = speed(veh_id, 0) * 6;
         strike_range = return_range;
-    } else if (!(Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range == 1)) {
+    } else if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range == 1) {
+        return_range = (range(speed(veh_id, false) - Vehs[veh_id].moves_expended, 0, 999));
+        strike_range = return_range;
+        if (!Vehs[veh_id].dmg_incurred) {
+            strike_range = speed(veh_id, 0) + return_range;
+        }
+    } else {
         int moves = veh_moves(veh_id);
         return_range = speed(veh_id, 0)
             * (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range
                - Vehs[veh_id].terraforming_turns - 1)
             + moves;
         strike_range = return_range;
-    } else {
-        return_range = (range(speed(veh_id, false) - Vehs[veh_id].moves_expended, 0, 999));
-        strike_range = return_range;
-        if (!Vehs[veh_id].dmg_incurred) {
-            strike_range = speed(veh_id, 0) + return_range;
-        }
     }
     strike_range /= Rules.move_rate_roads;
     return_range /= Rules.move_rate_roads;
