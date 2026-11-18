@@ -6055,14 +6055,14 @@ void __cdecl base_terraform(int force_improve) {
     int food_want = range(3 - energy_low - mineral_low, 0, 3);
     int food_need;
     if (BaseCurrent->nutrient_surplus < food_want) {
-        food_need = 1;
         BaseCurrent->state |= BSTATE_UNK_4000;
+        food_need = 1;
         if (BaseCurrent->nutrient_surplus < 0) {
             food_need = 2;
         }
     } else {
-        food_need = 0;
         BaseCurrent->state &= ~BSTATE_UNK_4000;
+        food_need = 0;
     }
 
     // Survey of the base's own land squares.
@@ -9277,7 +9277,9 @@ void __cdecl drone_riot() {
         return;
     }
     int target;
-    if (!(BaseCurrent->faction_id_former != faction_id)) {
+    if (BaseCurrent->faction_id_former != faction_id) {
+        target = BaseCurrent->faction_id_former;
+    } else {
         target = -1;
         int best_dist = 9999;
         for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
@@ -9302,8 +9304,6 @@ void __cdecl drone_riot() {
                 }
             }
         }
-    } else {
-        target = BaseCurrent->faction_id_former;
     }
     // Factions with the revolt bonus (13) attract the defection.
     double chance = 1.0;
