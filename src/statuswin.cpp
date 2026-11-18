@@ -1083,6 +1083,33 @@ void StatusWin::draw(int tile_x, int tile_y, int city_index, int unit_index,
     MainInterfaceGlobal.soft_update(&localRect);
 }
 
+// WORKAROUND(decl): the damage percentage at 0x004B59CA..0x004B5A9E expands
+// veh_health's own body (0x005A59E0: the reactor byte copied through a named
+// local before range, `mov eax,ecx; push eax`) between two proto_power
+// expansions, and calls range out of line for the 0..9999 clamp (0x4B5A39).
+// veh_health is out of line in veh.cpp and cannot expand here, so this is a
+// copy of its body; most likely the original's veh_health was a header
+// inline. Written as proto_power(v) - range(...) in place VC6 expands every
+// range. Open: the image also calls range for the 1..100 clamp (0x4B5A1A).
+static inline int status_veh_health(int veh_id) {
+    int proto_id = Vehs[veh_id].proto_id;
+    int health;
+    if (VehPrototypes[proto_id].plan == PLAN_ALIEN_ARTIFACT) {
+        health = 1;
+    } else {
+        health = range(VehPrototypes[proto_id].reactor_id, 1, 100) * 10;
+    }
+    return range(health - Vehs[veh_id].dmg_incurred, 0, 9999);
+}
+
+// WORKAROUND(decl): one inline level around the percentage; with the three
+// expansions written directly in draw_active VC6 has budget to expand the
+// outer range too. The original helper's name and owner are unknown.
+static inline int status_damage_percent(int veh_id) {
+    return (proto_power(veh_id) - status_veh_health(veh_id)) * 100
+        / proto_power(veh_id);
+}
+
 // ORIGINAL: 0x004B4CF0 ?draw_active@StatusWin@@QAEXHHH@Z 0x004B4CF0-0x004B652B
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004b4cf0.cpp retained full transcription and original span", "MainInterfaceGlobal Buffer and status_left_rect_ layout", "Veh and Base records, destination state and box styles in source"], "reason": "Home the active-status panel's frame, unit/base identity display, selection spots and destination lifecycle in their real owners; retain omitted detail branches as restoration obligations."}
 // TRIED: full-function transcription (~1843 instructions, sim 0.46 vs original at /O2 /Oy-); diverges at instr #3. Both the vehicle- display and base-display halves are transcribed from Ghidra with the Buffer receiver confirmed as the fixed global g_007aec64 (checked against raw disasm at two call sites); the repeated chassis-speed/range mini-blocks were copied by pattern from the first verified instance rather than each re-checked individually against the disassembly.
@@ -1289,10 +1316,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
                 MainInterfaceGlobal.set_text_color(0xf9, -1, 1, 1);
             }
             StringTemp[0] = '\0';
-            _itoa((proto_power(vehicle_id)
-                   - range(proto_power(vehicle_id) - Vehs[vehicle_id].dmg_incurred,
-                           0, 9999)) * 100 / proto_power(vehicle_id),
-                  digits, 10);
+            _itoa(status_damage_percent(vehicle_id), digits, 10);
             strcat(StringTemp, digits);
             strcat(StringTemp, "%");
             MainInterfaceGlobal.write_l(StringTemp, next_x, line_y);
