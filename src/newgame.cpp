@@ -272,7 +272,9 @@ inline int __cdecl init_opening(const char *filename) {
             return 4;
         }
 
-        const int result = window->init(0, 0, WinScreenWidth, WinScreenHeight,
+        const int height = WinScreenHeight;
+        const int width = WinScreenWidth;
+        const int result = window->init(0, 0, width, height,
                                         0, 0x400000, 0, 0,
                                         0);
         if (result != 0) {
