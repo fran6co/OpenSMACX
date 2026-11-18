@@ -883,7 +883,7 @@ int Net::send_group_flagged(void *data, int size, long target,
     wait_handles[0] = thread_info_.events_[0];
     wait_handles[1] = thread_info_.events_[1];
 
-    if (NetDirectPlay == 0 || size < 0 || size > static_cast<int>(field_6E4_)) {
+    if (NetDirectPlay == 0 || size < 0 || size > field_6E4_) {
         return 0;
     }
     check_polling();
@@ -898,7 +898,7 @@ int Net::send_group_flagged(void *data, int size, long target,
         if (target == 0) {
             queue_10c_.add(data, static_cast<unsigned long>(size),
                            local_player_id_, target, 0xFFFFFFFFUL);
-            if (static_cast<int>(field_6DC_) < 2)
+            if (field_6DC_ < 2)
                 goto finish;
         }
     }
@@ -1501,7 +1501,7 @@ int Net::send_group(void *data, int size, long group_id, int flags) {
     wait_handles[0] = thread_info_.events_[0];
     wait_handles[1] = thread_info_.events_[1];
 
-    if (NetDirectPlay == 0 || size < 0 || size > static_cast<int>(field_6E4_)) {
+    if (NetDirectPlay == 0 || size < 0 || size > field_6E4_) {
         return 0;
     }
     check_polling();
@@ -1515,7 +1515,7 @@ int Net::send_group(void *data, int size, long group_id, int flags) {
         if (group_id == 0) {
             queue_10c_.add(data, static_cast<unsigned long>(size),
                            local_player_id_, group_id, 0xFFFFFFFFUL);
-            if (static_cast<int>(field_6DC_) < 2)
+            if (field_6DC_ < 2)
                 goto finish;
         }
     }
@@ -3016,7 +3016,7 @@ void Net::broadcast_player_table() {
     if (local_player_id_ != host_player_id_) {
         return;
     }
-    const int count = static_cast<int>(field_6DC_);
+    const int count = field_6DC_;
     if (count == 0) {
         return;
     }
@@ -3363,7 +3363,7 @@ int __cdecl internal_receive(NetThreadInfo *thread_info) {
                 // payload if that recheck fails.
                 VoiceRxAllocation *const voice = receivers.current_entry();
                 const int level = voice->get_nbuffers();
-                if (static_cast<int>((net->field_6DC_ - 1) * level) < 0xC8) {
+                if ((net->field_6DC_ - 1) * level < 0xC8) {
                     voice->add_buffer(&voice_packet);
                 }
                 if ((get_sound_version() & 1) != 0
@@ -3943,7 +3943,7 @@ int Net::send_packet_type(void *data, int data_size, unsigned long target,
     wait_handles[1] = thread_info_.events_[1];
 
     if (NetDirectPlay == 0 || data_size < 0 ||
-        data_size > static_cast<int>(field_6E4_)) {
+        data_size > field_6E4_) {
         return 0;
     }
     check_polling();
@@ -3957,7 +3957,7 @@ int Net::send_packet_type(void *data, int data_size, unsigned long target,
         if (target == 0) {
             queue_10c_.add(data, static_cast<unsigned long>(data_size),
                            local_player_id_, target, 0xFFFFFFFFUL);
-            if (static_cast<int>(field_6DC_) < 2)
+            if (field_6DC_ < 2)
                 goto finish;
         }
     }
@@ -4203,7 +4203,7 @@ int Net::send(void *data, int data_size, unsigned long target, int flags) {
         MessageBoxA(0, "Oh no! NULL pointer!!", "Net::send", 0);
         return 0;
     }
-    if (data_size <= 0 || data_size > static_cast<int>(field_6E4_)) {
+    if (data_size <= 0 || data_size > field_6E4_) {
         MessageBoxA(0, "Oh no! data_size is weird!", "Net::send", 0);
         return 0;
     }
@@ -4218,7 +4218,7 @@ int Net::send(void *data, int data_size, unsigned long target, int flags) {
         if (target == 0) {
             queue_10c_.add(data, static_cast<unsigned long>(data_size),
                            local_player_id_, target, 0xFFFFFFFFUL);
-            if (static_cast<int>(field_6DC_) < 2)
+            if (field_6DC_ < 2)
                 goto finish;
         }
     }
