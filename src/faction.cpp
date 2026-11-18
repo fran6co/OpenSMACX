@@ -2601,14 +2601,7 @@ void __cdecl diplomacy_check(int faction, int other, int update) {
                 int limit = stack_check(veh_at(x, y), 14, -1, -1, -1);
                 int threat = 0;
                 for (int i = 0; i < 21; i++) {
-                    int near_x = Bases[base_id].x + RadiusOffsetX[i];
-                    if (!(MapIsFlat & 1)) {
-                        if (near_x < 0) {
-                            near_x += MapLongitudeBounds;
-                        } else if (near_x >= MapLongitudeBounds) {
-                            near_x -= MapLongitudeBounds;
-                        }
-                    }
+                    int near_x = wrap_map_x(Bases[base_id].x + RadiusOffsetX[i]);
                     int near_y = Bases[base_id].y + RadiusOffsetY[i];
                     if (near_y < 0 || near_y >= MapLatitudeBounds
                         || near_x < 0 || near_x >= MapLongitudeBounds) {
