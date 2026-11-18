@@ -106,7 +106,7 @@ def signature(k, cands=None):
         _SIG[k] = raw
         return raw
     _SIG[k] = raw  # provisional, breaks recursion
-    others = {c for c in (cands or ()) if c != k}
+    others = sorted(c for c in (cands or ()) if c != k)
     if others:
         toks = parse([(0, n) for n in raw], others)
         _SIG[k] = [n for _, n, _, _ in toks]
@@ -124,7 +124,7 @@ def parse(stream, cands, depth=0):
     while p < len(names):
         best = None
         if depth < 4:
-            for k in cands:
+            for k in sorted(cands):  # deterministic tie-breaks
                 sig = _SIG[k] if k in _SIG else raw_signature(k)
                 if not sig or names[p] == k:
                     continue
@@ -172,6 +172,72 @@ def flatten(toks):
     return out
 
 
+def analyse(c, sym, lo, hi, callees=(), sigs=()):
+    """-> (img stream, our stream, aligned token rows, per-callee site pairs, candidates)"""
+    _SIG.clear()  # collapsed signatures depend on the candidate set
+    img = img_stream(lo, hi)
+    ours = our_stream(c, sym)
+    ci = collections.Counter(n for _, n in img)
+    co = collections.Counter(n for _, n in ours)
+    cands = set(callees)
+    for spec in sigs:
+        k, _, items = spec.partition('=')
+        _RAW[k] = [x for x in items.split(',') if x]
+        _SIG.pop(k, None)
+        cands.add(k)
+    for n in set(ci) | set(co):
+        if ci[n] != co[n] and raw_signature(n) and not n.startswith('??0'):
+            cands.add(n)
+    # callees of a differing candidate's copy, two levels down (an expanded ~Popup shows ~Scroll)
+    frontier = list(cands)
+    for _ in range(2):
+        nxt = []
+        for k in frontier:
+            for n in raw_signature(k) or []:
+                if n not in cands and raw_signature(n) and not n.startswith('??0') and n != '__chkstk':
+                    cands.add(n)
+                    nxt.append(n)
+        frontier = nxt
+    # collapse expansions inside each copy, smallest copies first
+    for k in sorted(cands, key=lambda k: (len(raw_signature(k) or []), k)):
+        signature(k, cands)
+    # a candidate whose copy makes no calls cannot be recognised when expanded
+    cands = {k for k in cands if signature(k)}
+    ti = parse(img, cands)
+    to = parse(ours, cands)
+    A = [n for _, n, _, _ in ti]
+    B = [n for _, n, _, _ in to]
+    rows = []  # aligned (img_tok or None, our_tok or None)
+    for tag, i1, i2, j1, j2 in difflib.SequenceMatcher(None, A, B, autojunk=False).get_opcodes():
+        if tag == 'equal':
+            rows += list(zip(ti[i1:i2], to[j1:j2]))
+        else:
+            rows += [(t, None) for t in ti[i1:i2]] + [(None, t) for t in to[j1:j2]]
+    # per-callee aligned decisions (top level and one level of nesting)
+    per = collections.OrderedDict()
+    for x, y in rows:
+        fx = flatten([x]) if x else []
+        fy = flatten([y]) if y else []
+        names = []
+        for t in fx + fy:
+            if t[1] in cands and t[1] not in names:
+                names.append(t[1])
+        for n in names:
+            sx = [t for t in fx if t[1] == n]
+            sy = [t for t in fy if t[1] == n]
+            for q in range(max(len(sx), len(sy))):
+                per.setdefault(n, []).append((sx[q] if q < len(sx) else None, sy[q] if q < len(sy) else None))
+    return img, ours, rows, per, cands
+
+
+def strings(sites):
+    """-> (image E/c/. string, ours E/c/. string, nesting level string 0/1)"""
+    ri = ''.join(s[0][2] if s[0] else '.' for s in sites)
+    ro = ''.join(s[1][2] if s[1] else '.' for s in sites)
+    lv = ''.join(str((s[0] or s[1])[3]) for s in sites)
+    return ri, ro, lv
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('unit')
@@ -190,63 +256,13 @@ def main():
     c, err = fe.compile_unit(a.unit, src, a.pfx)
     if c is None:
         raise SystemExit(err)
-    img = img_stream(lo, hi)
-    ours = our_stream(c, sym)
-    ci = collections.Counter(n for _, n in img)
-    co = collections.Counter(n for _, n in ours)
-    for spec in a.sig:
-        k, _, items = spec.partition('=')
-        _RAW[k] = [x for x in items.split(',') if x]
-        a.callee.append(k)
-    cands = set(a.callee)
-    for n in set(ci) | set(co):
-        if ci[n] != co[n] and raw_signature(n) and not n.startswith('??0'):
-            cands.add(n)
-    # callees of a differing candidate's copy, two levels down (an expanded ~Popup shows ~Scroll)
-    frontier = list(cands)
-    for _ in range(2):
-        nxt = []
-        for k in frontier:
-            for n in raw_signature(k) or []:
-                if n not in cands and raw_signature(n) and not n.startswith('??0') and n != '__chkstk':
-                    cands.add(n)
-                    nxt.append(n)
-        frontier = nxt
-    # collapse expansions inside each copy, smallest copies first
-    for k in sorted(cands, key=lambda k: len(raw_signature(k) or [])):
-        signature(k, cands)
-    # a candidate whose copy makes no calls cannot be recognised when expanded
-    cands = {k for k in cands if signature(k)}
-    ti = parse(img, cands)
-    to = parse(ours, cands)
-    A = [n for _, n, _, _ in ti]
-    B = [n for _, n, _, _ in to]
-    rows = []  # aligned (img_tok or None, our_tok or None)
-    for tag, i1, i2, j1, j2 in difflib.SequenceMatcher(None, A, B, autojunk=False).get_opcodes():
-        if tag == 'equal':
-            rows += list(zip(ti[i1:i2], to[j1:j2]))
-        else:
-            rows += [(t, None) for t in ti[i1:i2]] + [(None, t) for t in to[j1:j2]]
+    img, ours, rows, per, cands = analyse(c, sym, lo, hi, a.callee, a.sig)
     print('%s %s  image calls %d, ours %d; %d inline candidates' % (a.addr, sym, len(img), len(ours), len(cands)))
     if a.seq:
         for x, y in rows:
             fx = '%x %s%s' % (x[0], x[1], '*' if x[2] == 'E' else '') if x else ''
             fy = '%x %s%s' % (y[0], y[1], '*' if y[2] == 'E' else '') if y else ''
             print('  %-50s %-50s%s' % (fx, fy, '' if x and y and x[1:3] == y[1:3] else '  <>'))
-    # per-callee aligned decisions (top level and one level of nesting)
-    per = collections.OrderedDict()
-    for x, y in rows:
-        fx = flatten([x]) if x else []
-        fy = flatten([y]) if y else []
-        names = []
-        for t in fx + fy:
-            if t[1] in cands and t[1] not in names:
-                names.append(t[1])
-        for n in names:
-            sx = [t for t in fx if t[1] == n]
-            sy = [t for t in fy if t[1] == n]
-            for q in range(max(len(sx), len(sy))):
-                per.setdefault(n, []).append((sx[q] if q < len(sx) else None, sy[q] if q < len(sy) else None))
     for n, sites in per.items():
         ri = ''.join(s[0][2] if s[0] else '.' for s in sites)
         ro = ''.join(s[1][2] if s[1] else '.' for s in sites)
