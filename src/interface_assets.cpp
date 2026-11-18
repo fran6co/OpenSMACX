@@ -4643,7 +4643,6 @@ void __cdecl load_vehicles() {
     int marker_x;
     int marker_y;
     int y_offset;
-    int source_x;
     int source_y;
     int border_y;
     int faction;
@@ -4696,9 +4695,8 @@ void __cdecl load_vehicles() {
         } else if (source_y == 464) {
             count = 3;
         }
-        for (variant = 0, source_x = 2; variant < count;
-             ++variant, source_x += 102) {
-            int sheet_x = source_x;
+        for (variant = 0; variant < count; ++variant) {
+            int sheet_x = 2 + variant * 102;
             int sheet_y = source_y;
             if (row == 9) {
                 sheet_x = 716;
