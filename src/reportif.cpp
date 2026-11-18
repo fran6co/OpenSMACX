@@ -81,7 +81,7 @@ extern int ReportIfDeclPad5;
 // 14 and 16 flip it); before those retypes the window was 6-8. spot.h's gated
 // Spot::add RECT inline moved it again. The tie-break is the front-end symbol counter modulo 64 (guide 2.5);
 // `recover canary src/reportif.cpp` computes the pad count.
-// CANARY: 0x004A6330 ?on_iface_button_clicked@ReportIf@@UAEXH@Z residues 28,39,54
+// CANARY: 0x004A6330 ?on_iface_button_clicked@ReportIf@@UAEXH@Z residues 0-27,38,49-53
 // CANARY-PADS: function ReportIfDeclFnPad
 void ReportIfDeclFnPad0();
 void ReportIfDeclFnPad1();
@@ -2800,9 +2800,13 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
             static_cast<int>(lab_three_child_lower_y_) + half);
     }
     // 0x49BBA9
-    host->Buffer::box_sprite(&report_work_rect_,
-        style_select ? &InterfaceBoxStyles[5] : &InterfaceBoxStyles[3]);
-    host->Buffer::restore_clip();
+    if (style_select) {
+        host->Buffer::box_sprite(&report_work_rect_, &InterfaceBoxStyles[5]);
+        host->Buffer::restore_clip();
+    } else {
+        host->Buffer::box_sprite(&report_work_rect_, &InterfaceBoxStyles[3]);
+        host->Buffer::restore_clip();
+    }
     // 0x49BBCF
     report_work_rect_.left = static_cast<int>(field_59A8_) + static_cast<int>(lab_center_x_) - 4;
     report_work_rect_.top = line_height;
