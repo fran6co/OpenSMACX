@@ -393,15 +393,11 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
             SpriteScaleDenominator = 0x10;
             SpriteScaleNumerator = metric + 0x10;
         }
-        const int icon_width = MapWinCaptionScale > 0
-            ? MapWinCaptionScale * 0xD7 / MapWinCaptionDivisor
-            : ((metric + 0x10) * 0xD7) / 0x10;
+        const int icon_width = zoom_scale(0xD7, metric);
         const int icon_color = TextColourTable[162 + tech_category(tech) * 2];
         g_TECH_ICON_SPRITES[tech].draw_mono(this,
             (page_width_ - icon_width) / 2 + rect->left, page_pen_y_, icon_color);
-        page_pen_y_ += (MapWinCaptionScale > 0
-            ? MapWinCaptionScale * 0xD7 / MapWinCaptionDivisor
-            : ((metric + 0x10) * 0xD7) / 0x10) + row_pitch_;
+        page_pen_y_ += zoom_scale(0xD7, metric) + row_pitch_;
         SpriteScaleNumerator = 1;
         SpriteScaleDenominator = 1;
     }
@@ -409,14 +405,10 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
         if (tech >= 0x59) return 1;
         page_pen_y_ += row_pitch_;
         const int fake_vehicle = veh_fake(tech - 0x61, faction_id_);
-        const int vehicle_width = MapWinCaptionScale > 0
-            ? MapWinCaptionScale * 100 / MapWinCaptionDivisor
-            : ((metric * 5 + 0x50) * 20) / 16;
+        const int vehicle_width = zoom_scale(100, metric);
         veh_draw(this, fake_vehicle, (page_width_ - vehicle_width) / 2 + rect->left,
                  page_pen_y_, metric, 0, 0);
-        page_pen_y_ += (MapWinCaptionScale > 0
-            ? MapWinCaptionScale * 0x4B / MapWinCaptionDivisor
-            : ((metric * 5 + 0x50) * 0x0F) / 16) + row_pitch_;
+        page_pen_y_ += zoom_scale(0x4B, metric) + row_pitch_;
     }
     if (tech >= 0x59) return 1;
 

@@ -576,12 +576,7 @@ void WorldWin::draw_box() {
 // symbol    ?on_redraw@WorldWin@@UAEXXZ
 #pragma optimize("y", on)
 void WorldWin::on_redraw() {
-    int scale;
-    if (MapWinCaptionScale > 0) {
-        scale = (MapWinCaptionScale * 50) / MapWinCaptionDivisor;
-    } else {
-        scale = 6;
-    }
+    int scale = zoom_scale(50, -14);
     const int cell_size = ((scale + 1) / 4) * 4;
     if (field_239BC_ & 8) {
         field_239BC_ |= 4;
@@ -653,12 +648,7 @@ void WorldWin::refresh_world_map(int resize_buffers) {
     }
     WorldWinRebuildBusy = 1;
 
-    int scale;
-    if (MapWinCaptionScale > 0) {
-        scale = (MapWinCaptionScale * 50) / MapWinCaptionDivisor;
-    } else {
-        scale = 6;
-    }
+    int scale = zoom_scale(50, -14);
     const int cell_size = ((scale + 1) / 4) * 4;
 
     field_A14_ = static_cast<int32_t>(

@@ -134,14 +134,8 @@ void InfoWin::setup_text() {
         }
     }
 
-    if (MapWinCaptionScale > 0) {
-        line_height = MapWinCaptionScale * 75 / MapWinCaptionDivisor;
-    } else {
-        line_height = (mode + 16) * 75 / 16;
-    }
-    shifted_x = (MapWinCaptionScale > 0
-                     ? MapWinCaptionScale * 100 / MapWinCaptionDivisor
-                     : (mode + 16) * 100 / 16) + x + 2;
+    line_height = zoom_scale(75, mode);
+    shifted_x = zoom_scale(100, mode) + x + 2;
 
     for (pane = active_pane_; pane < active_pane_ + 1; pane++) {
         rect = pane_rects_[pane];

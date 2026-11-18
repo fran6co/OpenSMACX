@@ -4172,11 +4172,9 @@ void DesignWin::draw_vehicle(int redraw) {
         VehPrototypes[0x3f].icon_offset = VehPrototypes[protoID_].icon_offset;
         int veh_id = veh_fake(0x3f, factionID_);          // [ebp-0x28]
         // Image: test scale; jle -> constant, so the computed arm comes first.
-        const int x_offset = (src.right - (MapWinCaptionScale > 0
-                ? MapWinCaptionScale * 100 / MapWinCaptionDivisor : 0xbb)
+        const int x_offset = (src.right - zoom_scale(100, 14)
             - src.left) / 2;
-        const int y_offset = (src.bottom - (MapWinCaptionScale > 0
-                ? MapWinCaptionScale * 0x4b / MapWinCaptionDivisor : 0x8c)
+        const int y_offset = (src.bottom - zoom_scale(0x4b, 14)
             - src.top) / 2;
         veh_draw(this, veh_id, src.left + x_offset, src.top + y_offset,
                  0xe, 0x44, 0);

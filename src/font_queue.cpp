@@ -85,12 +85,7 @@ FontQueue::FontQueue() {
 // symbol    ?get_zoom@FontQueue@@QAEPAVFont@@HHHH@Z
 #pragma optimize("y", off)
 Font *FontQueue::get_zoom(int zoom, int numerator, int denominator, int style) {
-    int scale;
-    if (MapWinCaptionScale > 0) {
-        scale = (MapWinCaptionScale * 50) / MapWinCaptionDivisor;
-    } else {
-        scale = ((zoom * 5 + 80) * 10) / 16;
-    }
+    int scale = zoom_scale(50, zoom);
     int height = (scale * numerator) / denominator;
     if (height == 10) {
         height = 11;
@@ -185,6 +180,8 @@ static inline void base_draw_shrink_rect(RECT *rect, int dx, int dy) {
 // evaluates the value once before the scale test (0x55983A, 0x559874), which a
 // macro repeating it in both arms would not do.
 // WORKAROUND(decl): file-local stand-in for the original's zoom-scale helper/macro (name unknown).
+// mapwin.h's zoom_scale (the ?: spelling) fits boom and is code-neutral in base_draw, but costs
+// veh_draw six rows (153 -> 159); this `if` spelling costs boom three (180 -> 183).
 static inline int veh_draw_scale(int value, int zoom) {
     if (MapWinCaptionScale > 0) { return value * MapWinCaptionScale / MapWinCaptionDivisor; } return (zoom + 16) * value / 16;
 }
@@ -687,9 +684,6 @@ Font *BaseDrawFont;
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // Historical seed observations (not fresh measurements or acceptance):
 // TRIED: full line-by-line translation compiles and matches control flow, call args verified against raw disasm (bitmask/box/fill/draw_dest/ get_zoom/set_font/set_text_color/write_l/width/itoa/strcat all cross-checked); prologue register allocation differs (#0 push/sub).
-// Tile-zoom scaling repeated at every use in the image: the scale branch
-// first (`test esi,esi; jle`), else (style + 16) * n / 16.
-#define BASE_DRAW_SCALE(n) (MapWinCaptionScale > 0 ? MapWinCaptionScale * (n) / MapWinCaptionDivisor : (style + 16) * (n) / 16)
 
 // ORIGINAL: 0x0055AF20 ?base_draw@@YAXPAUBuffer@@HHHHH@Z 0x0055AF20-0x0055B739
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0055af20.cpp retains the 2073-byte transcription and original span; the seed's Base, Map, Sprite, FontQueue and Buffer dependencies have typed product owners."], "reason": "Recover the base renderer's distant zoom badge, faction sprite, population caption, visibility check and riot marker through typed objects; compiler and runtime verification remain separate."}
@@ -704,18 +698,18 @@ void __cdecl base_draw(Buffer *target, int base_id, int pixel_x, int pixel_y,
     // At distant zoom, show the base as a colored lozenge.
     if ((style < -8 || (flags & 0x100)) && !(flags & 8) && !(flags & 0x800)) {
         set_rectangle_dimensions(&rect, pixel_x, pixel_y,
-                                 BASE_DRAW_SCALE(100), BASE_DRAW_SCALE(50));
+                                 zoom_scale(100, style), zoom_scale(50, style));
         const int outline = flags & 0x200;
         if (!outline) {
-            base_draw_shrink_rect(&rect, BASE_DRAW_SCALE(4), BASE_DRAW_SCALE(4));
+            base_draw_shrink_rect(&rect, zoom_scale(4, style), zoom_scale(4, style));
         } else {
             base_draw_shrink_rect(&rect, -2, -2);
         }
         int trim = (rect.right - rect.bottom - rect.left + rect.top) / 2;
         rect.left += trim;
         rect.right -= trim;
-        const int inset = outline ? 2 : BASE_DRAW_SCALE(4);
-        int shift = BASE_DRAW_SCALE(6) - inset;
+        const int inset = outline ? 2 : zoom_scale(4, style);
+        int shift = zoom_scale(6, style) - inset;
         rect.top += shift;
         rect.bottom += shift;
         int border = strcmp(Players[faction].search_key, "SPARTANS") == 0 ? 44 : 0;
@@ -846,7 +840,6 @@ void __cdecl base_draw(Buffer *target, int base_id, int pixel_x, int pixel_y,
     SpriteScaleNumerator = 1;
     SpriteScaleDenominator = 1;
 }
-#undef BASE_DRAW_SCALE
 #pragma optimize("", on)
 
 /*

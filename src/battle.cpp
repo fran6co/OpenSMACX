@@ -1598,15 +1598,6 @@ static const int BoomColorGroupByWeapon[MaxWeaponNum] = {
 // RECOVERY_OBJECT: v2 0x0090F7D4 0x0090F7D8 ?BoomAnimationLevel@@3HA 0x00500B60
 int BoomAnimationLevel;
 
-// WORKAROUND(decl): the caption-scale / zoom ternary boom repeats for every
-// sprite dimension, as one inline; the image loads each dimension once
-// (0x00505123 keeps the sprite height in edi across both uses), the
-// fingerprint of an inline parameter. Its header name and owner are unknown.
-static inline int zoom_scale(int value, int zoom) {
-    return MapWinCaptionScale > 0 ? MapWinCaptionScale * value / MapWinCaptionDivisor
-                                  : (zoom + 16) * value / 16;
-}
-
 // WORKAROUND(decl): boom forms the sprite address in ecx and reads the
 // transparency key through it after the destination conversion
 // (0x005059A1..0x005059DD, 0x00505A28..0x00505A6B): the shape of a Sprite

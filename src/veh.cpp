@@ -4589,13 +4589,10 @@ void __cdecl hq_list_draw(GraphicWin *window, int prototype, int flags,
                           int x, int y, int height) {
     const int zoom = WorkshopPreviewZoom;
     const int scale = MapWinCaptionScale;
-    x += (flags & 1) ? (scale > 0 ? 132 * scale / MapWinCaptionDivisor
-                                  : 132 * (WorkshopPreviewZoom + 16) / 16)
-                     : 0;
+    x += (flags & 1) ? zoom_scale(132, WorkshopPreviewZoom) : 0;
     if ((VehPrototypes[prototype].flags & 1) == 0) return;
 
-    const int draw_height = scale > 0 ? 75 * scale / MapWinCaptionDivisor
-                                      : 75 * (WorkshopPreviewZoom + 16) / 16;
+    const int draw_height = zoom_scale(75, WorkshopPreviewZoom);
     y += (height - draw_height) / 2;
     if (scale > 0) {
         SpriteScaleNumerator = scale;
@@ -4671,13 +4668,9 @@ again:
     PopupModalState = 5;
     popup.dialogs().set_draw_callback(&hq_list_draw);
     const int zoom = WorkshopPreviewZoom;
-    int width = MapWinCaptionScale > 0
-        ? 132 * MapWinCaptionScale / MapWinCaptionDivisor
-        : 132 * (zoom + 16) / 16;
+    int width = zoom_scale(132, zoom);
     popup.dialogs().set_field_34(width * 2 + 3);
-    popup.dialogs().field_48_ = MapWinCaptionScale > 0
-        ? 75 * MapWinCaptionScale / MapWinCaptionDivisor
-        : 75 * (zoom + 16) / 16;
+    popup.dialogs().field_48_ = zoom_scale(75, zoom);
     popup.dialogs().set_field_50(8);
 
     for (int row = 0; row < 128; ++row) {

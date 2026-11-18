@@ -3585,11 +3585,7 @@ int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3, int a4,
         local_94 = static_cast<int32_t>(
                        map_tiles()[MapLongitude * a8 + local_14].bit2) >> 24;
     }
-    if (MapWinCaptionScale > 0) {
-        iVar5 = MapWinCaptionScale * 50 / MapWinCaptionDivisor;
-    } else {
-        iVar5 = (a3 * 5 + 80) * 10 / 16;
-    }
+    iVar5 = zoom_scale(50, a3);
     local_98 = (iVar5 + 1) / 4;
     local_78 = local_98 * 2;
     if (window != 0) {

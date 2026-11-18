@@ -1080,11 +1080,9 @@ void BaseWin::draw_support() {
     mapWin_.field_1DD70_ = 0x200402;
     int zoom;
     for (zoom = 2; zoom > -15; --zoom) {
-        const int horizontal = MapWinCaptionScale > 0
-            ? MapWinCaptionScale * 50 / MapWinCaptionDivisor : (zoom + 16) * 50 / 16;
+        const int horizontal = zoom_scale(50, zoom);
         if ((MapLongitudeBounds / 2) * horizontal <= width) {
-            const int vertical = MapWinCaptionScale > 0
-                ? MapWinCaptionScale * 25 / MapWinCaptionDivisor : (zoom + 16) * 25 / 16;
+            const int vertical = zoom_scale(25, zoom);
             if ((MapLatitudeBounds / 2) * vertical <= height) break;
         }
     }
@@ -3902,12 +3900,7 @@ void BaseWin::draw_garrison(int update_mode) {
     // it lays the row spots out again.
     spot1_.kill_type(6);
 
-    int spacing;
-    if (MapWinCaptionScale > 0) {
-        spacing = (MapWinCaptionScale * 100) / MapWinCaptionDivisor;
-    } else {
-        spacing = 0x38;
-    }
+    int spacing = zoom_scale(100, -7);
 
     // stand-in: named coordinates load x before y, as the image does.
     const int base_x = BaseCurrent->x;
@@ -3975,12 +3968,7 @@ void BaseWin::draw_garrison(int update_mode) {
         MainInterfaceGlobal.set_text_color(TextColourTable[112], TextColourTable[113], 1, 1);
         // Text width is recomputed after the calls above, independently of
         // overflow-adjusted column spacing (0x41074A..0x41079D).
-        int text_spacing;
-        if (MapWinCaptionScale > 0) {
-            text_spacing = (MapWinCaptionScale * 100) / MapWinCaptionDivisor;
-        } else {
-            text_spacing = 0x38;
-        }
+        int text_spacing = zoom_scale(100, -7);
         MainInterfaceGlobal.write_cent_text(StringTemp, column_left,
                              frame_rect.bottom - line_height + 6, text_spacing);
         const int cell_height = frame_rect.bottom - frame_rect.top;
@@ -5730,8 +5718,7 @@ void BaseWin::draw_farm(int update_mode) {
     } else {
 draw_map:
         // EBP-20 keeps only the doubled quarter-scale tile step.
-        const int half_tile = ((MapWinCaptionScale > 0
-            ? MapWinCaptionScale * 50 / MapWinCaptionDivisor : 50) + 1) / 4 * 2;
+        const int half_tile = (zoom_scale(50, 0) + 1) / 4 * 2;
         const int origin_x = (rect->right - rect->left) / 2
             - half_tile * 2 + rect->left;
         const int origin_y = half_tile * 3 + 4 + rect->top;
@@ -5820,22 +5807,19 @@ draw_map:
                     int width;
                     if (empty) {
                         const int sw = g_NULL_RESOURCE_ICON_SPRITE.width();
-                        width = MapWinCaptionScale > 0
-                            ? sw * MapWinCaptionScale / MapWinCaptionDivisor : sw * 17 / 16;
+                        width = zoom_scale(sw, 1);
                     } else {
                         width = 0;
                         for (resource = 0; resource < 4; ++resource) {
                             if (yield[resource]) {
                                 const int index = range(yield[resource] - 1, 0, 7);
                                 const int sw = g_RESOURCE_ICON_SPRITES[resource * 8 + index].source_width();
-                                width += MapWinCaptionScale > 0
-                                    ? sw * MapWinCaptionScale / MapWinCaptionDivisor : sw * 17 / 16;
+                                width += zoom_scale(sw, 1);
                             }
                         }
                     }
                     int cursor = half_tile * 2 * 2 / 2 - width / 2 + px;
-                    const int icon_y = py - ((MapWinCaptionScale > 0
-                        ? MapWinCaptionScale * 40 / MapWinCaptionDivisor : 42) >> 1) + half_tile;
+                    const int icon_y = py - (zoom_scale(40, 1) >> 1) + half_tile;
                     for (resource = 0; resource < 4; ++resource) {
                         if (yield[resource]) {
                             const int actual = range(yield[resource] - 1, 0, 7);

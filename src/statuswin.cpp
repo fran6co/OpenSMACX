@@ -919,8 +919,7 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
     if (!GameDataStateStorage.fields_.turn_current_num_) {
         return;
     }
-    int item_width = (MapWinCaptionScale > 0
-        ? MapWinCaptionScale * 100 / MapWinCaptionDivisor : 50) + 11;
+    int item_width = zoom_scale(100, -8) + 11;
     row = MainInterfaceGlobal.status_hit_rect().bottom
         - MainInterfaceGlobal.status_hit_rect().top - 12;
     int count = 0;

@@ -3423,10 +3423,10 @@ void ReportWin::draw_ops() {
         // pitch / 2 is CSE'd into [ebp-0x14] and reused by the 0x8B4 page.
         const int text_y = pitch / 2 - static_cast<int>(field_E268_) / 2 + text.top;  // [ebp-0x5c]
         rect1_.left = (static_cast<int>(field_59A0_)
-            - (MapWinCaptionScale > 0 ? MapWinCaptionScale * 100 / MapWinCaptionDivisor : 62))
+            - zoom_scale(100, -6))
             / 2 + icon.left + 1;
         rect1_.top = (static_cast<int>(field_59A4_)
-            - (MapWinCaptionScale > 0 ? MapWinCaptionScale * 75 / MapWinCaptionDivisor : 46))
+            - zoom_scale(75, -6))
             / 2 + icon.top + 1;
         base_draw(this, entry.base_id, rect1_.left, rect1_.top, -6, 0x40);
         Buffer::set_text_color(0xE1, -1, 1, 1);

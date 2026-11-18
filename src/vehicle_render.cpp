@@ -145,14 +145,6 @@ static float vehdraw_scale(int zoom) {
 }
 
 
-static int vehdraw_centre_offset(int numerator, int zoom) {
-    if (numerator > 0) {
-        return (numerator * 50) / MapWinCaptionDivisor;
-    }
-    return ((zoom * 5 + 80) * 10) / 16;
-}
-
-
 static bool vehdraw_uses_terrain(int veh_id, int x, int y) {
     const Map *tiles = map_tiles();
     if ((tiles[y * MapLongitude + (x >> 1)].climate & ~0x1F) < 0x60) {
@@ -325,9 +317,8 @@ void __cdecl vehdraw_turn(Buffer *buffer, int x, int y, int frame, int zoom) {
     g_VEHDRAW_CAVIAR.set_scene_rotation(
         frame * VehDrawTurnIncrement + VehDrawTurnAngle - VehDrawCameraAngles.values[0],
         0.0f, 0.0f);
-    const int numerator = MapWinCaptionScale;
-    const int draw_x = x + vehdraw_centre_offset(numerator, zoom);
-    const int draw_y = y + vehdraw_centre_offset(numerator, zoom);
+    const int draw_x = x + zoom_scale(50, zoom);
+    const int draw_y = y + zoom_scale(50, zoom);
     g_VEHDRAW_CAVIAR.reset_objects();
     vehdraw_construct_vehicle(veh_id, &g_VEHDRAW_CAVIAR);
     g_VEHDRAW_CAVIAR.render(buffer, draw_x, draw_y, 1);
@@ -545,9 +536,8 @@ void __cdecl vehdraw_scoot(Buffer *buffer, int x, int y, int frame, int zoom) {
     const int veh_id = VehDrawTurnVehicle;
     vehdraw_construct_vehicle(veh_id, &g_VEHDRAW_CAVIAR);
     ++VehDrawAnimationStep;
-    const int numerator = MapWinCaptionScale;
-    const int draw_x = x + vehdraw_centre_offset(numerator, zoom);
-    const int draw_y = y + vehdraw_centre_offset(numerator, zoom);
+    const int draw_x = x + zoom_scale(50, zoom);
+    const int draw_y = y + zoom_scale(50, zoom);
     g_VEHDRAW_CAVIAR.render(buffer, draw_x, draw_y, 1);
     vehdraw_finish_frame(buffer, veh_id, draw_x, draw_y, 0);
 }
@@ -610,9 +600,8 @@ void __cdecl vehdraw_draw(Buffer *buffer, int veh_id, int x, int y, int flags,
     vehdraw_construct_vehicle(veh_id, &g_VEHDRAW_CAVIAR);
     g_VEHDRAW_CAVIAR.set_scene_rotation(
         ((facing - 3) & 7) * 0.785375f - VehDrawCameraAngles.values[0], 0.0f, 0.0f);
-    const int numerator = MapWinCaptionScale;
-    const int draw_x = x + vehdraw_centre_offset(numerator, zoom);
-    const int draw_y = y + vehdraw_centre_offset(numerator, zoom);
+    const int draw_x = x + zoom_scale(50, zoom);
+    const int draw_y = y + zoom_scale(50, zoom);
     g_VEHDRAW_CAVIAR.render(buffer, draw_x, draw_y,
         ((static_cast<unsigned int>(flags) >> 12) & 2) | 1);
     vehdraw_finish_frame(buffer, veh_id, draw_x, draw_y,

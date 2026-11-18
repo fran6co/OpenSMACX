@@ -2148,11 +2148,7 @@ void __cdecl tech_wizard_unk2(GraphicWin *canvas, int index, int odd,
         const int divisor = MapWinCaptionDivisor;
         int x_offset;
         if ((odd & 1) != 0) {
-            if (size > 0) {
-                x_offset = (size * 0xD9) / divisor;
-            } else {
-                x_offset = 0x6C;
-            }
+            x_offset = zoom_scale(0xD9, -8);
         } else {
             x_offset = 0;
         }
@@ -2160,12 +2156,7 @@ void __cdecl tech_wizard_unk2(GraphicWin *canvas, int index, int odd,
         // x/y local moves `index` out of edi and x out of ebx.
         base_x += x_offset;
 
-        int y_offset;
-        if (size > 0) {
-            y_offset = (size * 0xD7) / divisor;
-        } else {
-            y_offset = 0x6B;
-        }
+        int y_offset = zoom_scale(0xD7, -8);
         base_y += (base_bottom - y_offset) / 2;
 
         if (size > 0) {

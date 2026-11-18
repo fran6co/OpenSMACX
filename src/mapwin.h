@@ -552,6 +552,16 @@ extern int MapWinSelectedSlot;  // 0x0068A5CC
 extern int MapWinCaptionScale;    // 0x00691E6C, initially -1
 extern int MapWinCaptionDivisor;  // 0x00691E70, initially -1
 
+// A map-overlay length at the current scale: by the caption override when one
+// is active, otherwise by the window zoom step out of 16. boom (0x00505123)
+// loads each scaled value once, the fingerprint of an inline parameter; at
+// constant zooms the second arm folds (zoom -4: 100 -> 75, 75 -> 56).
+// WORKAROUND(decl): the original name and owning header are unknown.
+inline int zoom_scale(int value, int zoom) {
+    return MapWinCaptionScale > 0 ? MapWinCaptionScale * value / MapWinCaptionDivisor
+                                  : (zoom + 16) * value / 16;
+}
+
 // Per-window "this window is live" dword. The MapWin constructor clears it
 // (0x00462822), MapWin::clear writes it (0x004628AF), and mapwin_system_init
 // sets it per slot (0x00471090, 0x0047109E). Every free drawing helper gates
