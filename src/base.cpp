@@ -4420,7 +4420,7 @@ void __cdecl base_minerals() {
     // The native pass tests the human mask and computes the divisor again;
     // combining these two numerators changes even ordinary rounding.
     if (is_human(faction_id)) {
-        BaseCurrent->eco_damage = (BaseCurrent->eco_damage + (((int)TectonicDetonationCount[faction_id] * 5)
+        BaseCurrent->eco_damage = (BaseCurrent->eco_damage + ((TectonicDetonationCount[faction_id] * 5)
                 / ((range(MapSeaLevel, 0, 100)
                     / range(WorldBuilder.sea_level_rises, 1, 100)) + eco_dmg_reduction)));
     }

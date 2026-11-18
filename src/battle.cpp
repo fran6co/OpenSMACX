@@ -1551,7 +1551,7 @@ LPSTR VehBattleDisplayTerrain;
 // reads the selected value at 0x004227DC.
 // Extent: compiled sizeof 0x8; next mapped object at 0x00912428.
 // RECOVERY_OBJECT: v2 0x00912420 0x00912428 ?VehBasicBattleMorale@@3PAIA 0x004227DC
-uint32_t VehBasicBattleMorale[2];  // 0x00912420
+int VehBasicBattleMorale[2];  // 0x00912420
 // Original battle_init at 0x00501D32 clears the start; add_bat at 0x00501D5D/0x00501D70 indexes counters; no bounds claim.
 // Extent: compiled sizeof 0x8; next mapped object at 0x0091561C.
 // RECOVERY_OBJECT: v2 0x00915614 0x0091561C ?VehBattleModCount@@3PAHA 0x0042287B

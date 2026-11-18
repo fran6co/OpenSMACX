@@ -331,7 +331,7 @@ int EndgameExitReason;
 // Logical faction0..7 indexing is independently observed; original
 // containing allocation bounds are not asserted.
 // RECOVERY_OBJECT: v1 0x00946138 ?TectonicDetonationCount@@3PAIA
-uint32_t TectonicDetonationCount[8];
+int TectonicDetonationCount[8];
 // Original691B0C contains pointer691B7C, whose file-backed text is SCRIPT.
 // This owns the observed text and shared pointer cell.
 // Bound: the original bytes are "SCRIPT" and its NUL; one zero pad byte precedes the next string, "EDITOR", at 0x00691B84.
@@ -1331,7 +1331,7 @@ void __cdecl auto_save() {
 
 // Original load_undo at 0x005ABE4E/0x005ABE59 updates this cursor; auto_undo at 0x005ABF37 resets 1; start only.
 // RECOVERY_OBJECT: v1 0x00690D7C ?ScenEditorUndoPosition@@3IA
-uint32_t ScenEditorUndoPosition = 1; // 0x00690D7C
+int ScenEditorUndoPosition = 1; // 0x00690D7C
 
 /*
 Purpose: Load a Scenario Editor undo (type: 1) or redo (type: -1) auto-save. TODO: Revisit in the 
@@ -1344,9 +1344,8 @@ Purpose: Load a Scenario Editor undo (type: 1) or redo (type: -1) auto-save. TOD
 //        image calls NEITHER an early `return` on `type==-1`, NOR
 //        `draw_map` at the end - both were invented, not transcribed; the
 //        image's only calls are the two `strcat`s, `_itoa` and
-//        `load_daemon`. (3) `static_cast<int>(ScenEditorUndoPosition)` at
-//        both comparisons - the global is `uint32_t`, and the image's own
-//        `cmp`s are signed (`jle`/`jge`), giving `jbe`/`jae` uncast.
+//        `load_daemon`. (3) the image's `cmp`s on ScenEditorUndoPosition
+//        are signed (`jle`/`jge`): the global is `int`.
 // size      127 bytes
 // prototype void (__cdecl ?load_undo@@YAXH@Z)(int type)
 // callers   2   call targets   3
@@ -1360,7 +1359,7 @@ Status: Complete
 // though their text agrees. Keep their source storage separate; the bindings
 // identify starts, without claiming the enclosing original allocations.
 void __cdecl load_undo(int type) {
-    if (type < 0 && static_cast<int>(ScenEditorUndoPosition) > 1) {
+    if (type < 0 && ScenEditorUndoPosition > 1) {
         ScenEditorUndoPosition--;
     }
     // THE PRE-sprintf IDIOM, same as `wipe_undo`/`auto_undo` immediately
@@ -1374,7 +1373,7 @@ void __cdecl load_undo(int type) {
     char number[80];
     _itoa(ScenEditorUndoPosition, number, 10);
     strcat(StringTemp, number);
-    if (type > 0 && static_cast<int>(ScenEditorUndoPosition) < 9) {
+    if (type > 0 && ScenEditorUndoPosition < 9) {
         ScenEditorUndoPosition++;
     }
     load_daemon(StringTemp, false);

@@ -55,7 +55,7 @@ extern int ParseNumTable[10];
 extern int ParseStrGender[10];
 extern char256 ParseStrBuffer[10];
 
-extern uint32_t ScenEditorUndoPosition;
+extern int ScenEditorUndoPosition;
 
 // THE DEFAULT NOUN FORMS, at 0x009BBFEC and 0x009BBFF0 in the shipped image -
 // REAL OBJECTS, defined in general.cpp. They used to be

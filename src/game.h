@@ -229,7 +229,7 @@ extern ScenarioSaveState ScenarioSave;
 
 
 
-extern uint32_t TectonicDetonationCount[8];  // 0x00946138, logical faction slots
+extern int TectonicDetonationCount[8];  // 0x00946138, logical faction slots
 extern int IfaceScreenHeight;
 extern int IfaceScreenWidth;
 // load_interface samples ten colours from iface.pcx into one int[10] table at

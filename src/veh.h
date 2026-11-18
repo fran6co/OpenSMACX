@@ -689,7 +689,7 @@ extern int VehDropLiftVehID;
 extern int VehLiftX;
 extern int VehLiftY;
 extern BOOL VehBitError;
-extern uint32_t VehBasicBattleMorale[2];  // 0x00912420
+extern int VehBasicBattleMorale[2];  // 0x00912420
 extern int VehMoraleModifierCount;
 // Battle related globals
 // Fills to VehBattleUnkTgl: 2 * 4 ends exactly at 0x0091561C.

@@ -778,7 +778,7 @@ again:
                first_vehicle_id == second_vehicle_id ? first_faction : second_faction);
     strcat(StringTemp, SocialWinColonSpaceText);
     const int side = first_vehicle_id == second_vehicle_id;
-    const int morale = ((int)VehBasicBattleMorale[side] - 2) * 100 / 8;
+    const int morale = (VehBasicBattleMorale[side] - 2) * 100 / 8;
     if (morale >= 0) {
         strcat(StringTemp, "+");
     }
