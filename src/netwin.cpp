@@ -913,7 +913,7 @@ void NetWin::draw_session_info() {
     strcat(StringTemp, "}");
     strcat(StringTemp, BufferJoinSpace);
     strcat(StringTemp, StringTable.get(Difficulty[range(
-        static_cast<int8_t>(NetWinSessionOptions.fields_.difficulty_), 0, 6)]));
+        NetWinSessionOptions.fields_.difficulty_, 0, 6)]));
     written = Buffer::write_l(StringTemp, col, row);
     if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
         g_IFACE_MP_COMBO_ARROW_SPRITES[0].draw(
@@ -998,11 +998,11 @@ void NetWin::draw_session_info() {
         strcat(StringTemp, BufferJoinSpace);
         _itoa(NetWinSessionOptions.fields_.option_5_, tally, 10);
         strcat(StringTemp, tally);
-    } else if (static_cast<int8_t>(NetWinSessionOptions.fields_.planet_size_) == -1) {
+    } else if (NetWinSessionOptions.fields_.planet_size_ == -1) {
         strcat(StringTemp, label_get(0xFE4 / 4));
     } else {
         strcat(StringTemp, world_size_labels_[range(
-            static_cast<int8_t>(NetWinSessionOptions.fields_.planet_size_), 0, 0x1F)]);
+            NetWinSessionOptions.fields_.planet_size_, 0, 0x1F)]);
     }
     avail = field.right - col - 10;
     if (Buffer::text_width(StringTemp) > avail) {
@@ -1032,10 +1032,10 @@ void NetWin::draw_session_info() {
     strcat(StringTemp, BufferJoinSpace);
     if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] != 0) {
         strcat(StringTemp, label_get(0x1000 / 4));
-    } else if (static_cast<int8_t>(NetWinSessionOptions.fields_.ocean_coverage_) == -1) {
+    } else if (NetWinSessionOptions.fields_.ocean_coverage_ == -1) {
         strcat(StringTemp, label_get(0xFE4 / 4));
     } else {
-        strcat(StringTemp, label_get(static_cast<int8_t>(NetWinSessionOptions.fields_.ocean_coverage_) + 0x3D8));
+        strcat(StringTemp, label_get(NetWinSessionOptions.fields_.ocean_coverage_ + 0x3D8));
     }
     avail = field.right - col - 10;
     if (Buffer::text_width(StringTemp) > avail) {
@@ -1065,10 +1065,10 @@ void NetWin::draw_session_info() {
     strcat(StringTemp, BufferJoinSpace);
     if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] != 0) {
         strcat(StringTemp, label_get(0x1000 / 4));
-    } else if (static_cast<int8_t>(NetWinSessionOptions.fields_.erosion_) == -1) {
+    } else if (NetWinSessionOptions.fields_.erosion_ == -1) {
         strcat(StringTemp, label_get(0xFE4 / 4));
     } else {
-        strcat(StringTemp, label_get(static_cast<int8_t>(NetWinSessionOptions.fields_.erosion_) + 0x3DB));
+        strcat(StringTemp, label_get(NetWinSessionOptions.fields_.erosion_ + 0x3DB));
     }
     avail = field.right - col - 10;
     if (Buffer::text_width(StringTemp) > avail) {
@@ -1098,10 +1098,10 @@ void NetWin::draw_session_info() {
     strcat(StringTemp, BufferJoinSpace);
     if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] != 0) {
         strcat(StringTemp, label_get(0x1000 / 4));
-    } else if (static_cast<int8_t>(NetWinSessionOptions.fields_.native_life_) == -1) {
+    } else if (NetWinSessionOptions.fields_.native_life_ == -1) {
         strcat(StringTemp, label_get(0xFE4 / 4));
     } else {
-        strcat(StringTemp, label_get(static_cast<int8_t>(NetWinSessionOptions.fields_.native_life_) + 0x3E4));
+        strcat(StringTemp, label_get(NetWinSessionOptions.fields_.native_life_ + 0x3E4));
     }
     avail = field.right - col - 10;
     if (Buffer::text_width(StringTemp) > avail) {
@@ -1131,10 +1131,10 @@ void NetWin::draw_session_info() {
     strcat(StringTemp, BufferJoinSpace);
     if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] != 0) {
         strcat(StringTemp, label_get(0x1000 / 4));
-    } else if (static_cast<int8_t>(NetWinSessionOptions.fields_.cloud_cover_) == -1) {
+    } else if (NetWinSessionOptions.fields_.cloud_cover_ == -1) {
         strcat(StringTemp, label_get(0xFE4 / 4));
     } else {
-        strcat(StringTemp, label_get(static_cast<int8_t>(NetWinSessionOptions.fields_.cloud_cover_) + 0x3E1));
+        strcat(StringTemp, label_get(NetWinSessionOptions.fields_.cloud_cover_ + 0x3E1));
     }
     avail = field.right - col - 10;
     if (Buffer::text_width(StringTemp) > avail) {
@@ -2587,7 +2587,7 @@ int NetWin::exec() {
 
     if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
         NetWinSessionOptions.fields_.rule_bits_a_ = AlphaIniPrefs.rules;
-        NetWinSessionOptions.fields_.difficulty_ = static_cast<uint8_t>(DefaultPrefs.difficulty);
+        NetWinSessionOptions.fields_.difficulty_ = DefaultPrefs.difficulty;
         NetWinSessionOptions.fields_.rule_bits_c_ |= 0x10;
         NetWinLobbyRows.rows_[1].field_2_ = static_cast<uint8_t>(DefaultPrefs.difficulty);
         NetWinSessionOptions.fields_.rule_bits_b_ = AlphaIniPrefs.semaphore;

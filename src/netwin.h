@@ -192,15 +192,15 @@ static_assert(offsetof(NetWinSessionLobbyPacket, session_) == 0x10,
 struct NetWinSessionOptionsState {
   uint8_t status_;          // +0
   uint8_t player_count_;    // +1, pick_num_players clamps selected index + lower bound to 2..7
-  uint8_t difficulty_;      // +2
+  int8_t difficulty_;       // +2
   uint8_t time_control_;    // +3
   uint8_t option_4_;        // +4
   uint8_t option_5_;        // +5
-  uint8_t planet_size_;     // +6
-  uint8_t ocean_coverage_;  // +7
-  uint8_t erosion_;         // +8
-  uint8_t native_life_;     // +9
-  uint8_t cloud_cover_;     // +0xA
+  int8_t planet_size_;      // +6
+  int8_t ocean_coverage_;   // +7
+  int8_t erosion_;          // +8
+  int8_t native_life_;      // +9
+  int8_t cloud_cover_;      // +0xA
   int8_t reserved_B_;       // +0xB
   uint32_t rule_bits_a_; // +0xC, 0x0090E8EC
   uint32_t rule_bits_b_; // +0x10, 0x0090E8F0

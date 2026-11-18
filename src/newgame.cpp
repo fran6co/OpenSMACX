@@ -1387,7 +1387,7 @@ int __cdecl multiplayer_init(int startup_mode) {
     NetDaemonNet.primary_state_.trailing_words_[1] = 0;
     if (ExitTurnLoop == 0 && NetWinDialog.exec() >= 1) {
         GameDataStateStorage.fields_.diff_level_current_ =
-            static_cast<int8_t>(NetWinSessionOptions.fields_.difficulty_);
+            NetWinSessionOptions.fields_.difficulty_;
         GameDataStateStorage.fields_.game_rules_ = NetWinSessionOptions.fields_.rule_bits_a_;
         GameDataStateStorage.fields_.game_state_ |= NetWinSessionOptions.fields_.rule_bits_b_ & 0x01800000u;
         if ((NetWinSessionOptions.fields_.rule_bits_c_ & 0x10u) != 0)
@@ -1420,7 +1420,7 @@ int __cdecl multiplayer_init(int startup_mode) {
                         latitude[i] = text_item_number();
                     }
                     const int8_t selected =
-                        static_cast<int8_t>(NetWinSessionOptions.fields_.planet_size_);
+                        NetWinSessionOptions.fields_.planet_size_;
                     const int index = selected == -1 ? rand() % 5 : selected;
                     MapSizePlanet = static_cast<uint32_t>(index);
                     MapLongitudeBounds = longitude[index] << 1;
@@ -1432,14 +1432,10 @@ int __cdecl multiplayer_init(int startup_mode) {
                 WorldClimateWorldWin.field_239BC_ |= 8;
 
                 random_planet_rules();
-                MapOceanCoverage = static_cast<int8_t>(
-                    NetWinSessionOptions.fields_.ocean_coverage_);
-                MapErosiveForces = static_cast<int8_t>(
-                    NetWinSessionOptions.fields_.erosion_);
-                MapCloudCover = static_cast<int8_t>(
-                    NetWinSessionOptions.fields_.cloud_cover_);
-                MapNativeLifeForms = static_cast<int8_t>(
-                    NetWinSessionOptions.fields_.native_life_);
+                MapOceanCoverage = NetWinSessionOptions.fields_.ocean_coverage_;
+                MapErosiveForces = NetWinSessionOptions.fields_.erosion_;
+                MapCloudCover = NetWinSessionOptions.fields_.cloud_cover_;
+                MapNativeLifeForms = NetWinSessionOptions.fields_.native_life_;
                 world_build();
             }
 
