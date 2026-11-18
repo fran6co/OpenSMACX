@@ -5894,8 +5894,7 @@ int Win::init(int x, int y, int width, int height, char * caption,
     this->win_parent_ = parent;
 
     if (caption != 0 && caption[0] != 0 && (flags & 0x400080) == 0) {
-        flags |= 0x10;
-        this->iFlags_ = flags;
+        this->iFlags_ |= 0x10;
     }
 
     if (parent != 0) {
