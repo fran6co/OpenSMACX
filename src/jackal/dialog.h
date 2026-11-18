@@ -130,6 +130,11 @@ class Dialog {
  public:
   // Static default shared by every dialog; __cdecl in the original.
   static int set_def_dialog_font(Font *font1, Font *font2, Font *font3);
+  // 0x00609D50: no receiver (five stack arguments, bare `ret`); writes the
+  // four text-color groups of DialogDefaults.
+  static void __cdecl set_def_dialog_text_color(int color_a, int color_b,
+                                                int color_c, int color_d,
+                                                int slot);
   // ??0Dialog@@QAE@XZ (0x00608C10), a real out-of-line constructor. The
   // implicit member machinery owns most of the image's body: heap_'s Heap
   // construction (its `lea ecx,[esi+4]; call 0x5d4560`), item_list_'s whole
@@ -320,13 +325,6 @@ extern Font *DialogDefaultFonts[3];
 // the original color setter's accepted slot 3 writes it through [33 + slot].
 // NOT CONST: the image's set_def_dialog_text_color (0x00609D50, homed in
 // dialog.cpp) writes the twelve text-color slots at runtime.
-
-// 0x00609D50, homed in dialog.cpp. The catalogued name spells a __thiscall
-// member; the body is a __cdecl free function over the defaults table, so
-// the emitted name is the extern "C" one and the `// symbol` fact under the
-// marker carries it.
-extern "C" void __cdecl dialog_set_def_dialog_text_color(
-    int color_a, int color_b, int color_c, int color_d, int slot);
 
 // The zero-init .bss slots the Dialog constructor reads its field defaults
 // from (0x009B8EB4..0x009B8ED8), rebindable like ListBoxCloseDynamicDefault.

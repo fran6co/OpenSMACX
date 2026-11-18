@@ -193,7 +193,7 @@ void __cdecl popups_normal() {
     PullDownBorderPadding = 1;
     PullDownDefaultFont = PopupMenuFont;
     DialogDefaults[23] = 0;
-    dialog_set_def_dialog_text_color(0xE0, -1, 1, 1, 0);
+    Dialog::set_def_dialog_text_color(0xE0, -1, 1, 1, 0);
     DialogFieldACDefault = PopupThemeBevelUpper;
     DialogFieldB0Default = PopupThemeBevelLower;
     ListBoxDefault24 = PopupThemeBevelUpper;

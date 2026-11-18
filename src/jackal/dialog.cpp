@@ -618,7 +618,7 @@ Purpose: Set the default dialog text colour for one of the four colour
          spells ?set_def_dialog_text_color@Dialog@@QAAXHHHHH@Z, a __thiscall
          member, while the body reads all five arguments off the stack
          ([esp+4]..[esp+0x14]), never touches ecx, and returns with a bare
-         `ret` - a __cdecl free function with no receiver. The artifact this
+         `ret` - a static member with no receiver. The artifact this
          was transcribed from proved the same thing the hard way: spelled as
          a member, every stack read compiled four bytes too high. The four
          stores go through the defaults table BY NAME, which keeps the
@@ -640,7 +640,7 @@ Purpose: Set the default dialog text colour for one of the four colour
 Return Value: n/a
 Status: Complete
 */
-void __cdecl dialog_set_def_dialog_text_color(
+void __cdecl Dialog::set_def_dialog_text_color(
     int color_a, int color_b, int color_c, int color_d, int slot) {
     if (slot < 0 || slot > 3) {
         slot = 0;
