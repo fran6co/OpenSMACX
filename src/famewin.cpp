@@ -393,6 +393,7 @@ void FameWin::on_button_clicked(int button_id) {
 // symbol    ?on_redraw@FameWin@@UAEXXZ
 void FameWin::on_redraw() {
   int banner_drawn = 0;
+  int i;
   Buffer portrait;
   restore_clip();
   if (field_A48_ != 0) {
@@ -403,46 +404,44 @@ void FameWin::on_redraw() {
   set_font(ReportIfGlobal.field_1E190_, 0, 0, 0);
   set_text_color(0xE6, -1, 1, 1);
 
-  for (int award_hide = 0; award_hide < 6; ++award_hide) {
-    flatButtons2_[award_hide].show(0);
+  for (i = 0; i < 6; ++i) {
+    flatButtons2_[i].show(0);
   }
-  for (int faction_hide = 0; faction_hide < 7; ++faction_hide) {
-    flatButtons1_[faction_hide].show(0);
+  for (i = 0; i < 7; ++i) {
+    flatButtons1_[i].show(0);
   }
   flatButton3_.show(0);
 
   int faction = static_cast<int>(buttonGroup_.field_84_);
-  int selected = static_cast<int>(selectedRecord_);
+  i = static_cast<int>(selectedRecord_);
   StringTemp[0] = '\0';
   strcat(StringTemp, "hof_");
   say_num(faction);
   strcat(StringTemp, "_");
-  say_num(selected + 1);
+  say_num(i + 1);
   strcat(StringTemp, ".pcx");
-  HallOfFameRecord *record = &HallOfFameRecords[faction * 5 - 5 + selected];
+  HallOfFameRecord *record = &HallOfFameRecords[faction * 5 - 5 + i];
 
   if ((record->present & 1) != 0) {
     if (portrait.load_pcx(StringTemp, 0, 0, 0xEC) == 0) {
       portrait.copy(this, 0, 0, portrait_rect_.left, portrait_rect_.top,
                     rect_width(&portrait_rect_), rect_height(&portrait_rect_));
     }
-    for (int award = 0; award < 6; ++award) {
-      if ((record->award_flags & (1 << award)) != 0) {
-        flatButtons2_[award].set_report_page_state(2);
+    for (i = 0; i < 6; ++i) {
+      if ((record->award_flags & (1 << i)) != 0) {
+        flatButtons2_[i].set_report_page_state(2);
       } else {
-        flatButtons2_[award].set_report_page_state(-1);
+        flatButtons2_[i].set_report_page_state(-1);
       }
-      flatButtons2_[award].redraw();
+      flatButtons2_[i].redraw();
     }
 
-    const int landscape_y = landscape_rect_.top + 10;
-    const int landscape_x = landscape_rect_.left + 9;
     FactionsArt[faction].diplomacy_landscape.draw(
-        this, landscape_x, landscape_y);
+        this, landscape_rect_.left + 9, landscape_rect_.top + 10);
     RECT *details = &details_rect_;
     set_clip(details);
     field_A14_ = details->left + 3;
-    field_A18_ = details->top + 3;
+    field_A18_ = details_rect_.top + 3;
     field_A1C_ = details->right - details->left - 6;
     field_A20_ = details->bottom - details->top - 6;
 
@@ -565,19 +564,19 @@ void FameWin::on_redraw() {
 
     if (record->field_21 != 0) {
       StringTemp[0] = '\0';
-      if (!(record->field_21 == 2)) {
-        strcat(StringTemp, label_get(577));
-        CharUpperA(StringTemp);
-        write_l(StringTemp, field_A14_, field_A18_);
-        StringTemp[0] = '\0';
-        strcat(StringTemp, "-25%");
-        write_right(StringTemp, field_A14_, field_A18_, field_A1C_);
-      } else {
+      if (record->field_21 == 2) {
         strcat(StringTemp, label_get(578));
         CharUpperA(StringTemp);
         write_l(StringTemp, field_A14_, field_A18_);
         StringTemp[0] = '\0';
         strcat(StringTemp, "+25%");
+        write_right(StringTemp, field_A14_, field_A18_, field_A1C_);
+      } else {
+        strcat(StringTemp, label_get(577));
+        CharUpperA(StringTemp);
+        write_l(StringTemp, field_A14_, field_A18_);
+        StringTemp[0] = '\0';
+        strcat(StringTemp, "-25%");
         write_right(StringTemp, field_A14_, field_A18_, field_A1C_);
       }
       field_A18_ += field_A44_;
@@ -616,10 +615,10 @@ void FameWin::on_redraw() {
     restore_clip();
     set_font(ReportIfGlobal.field_1E1B4_, 0, 0, 0);
     set_text_color(0xF4, -1, 1, 1);
-    for (int banner = 0; banner < 6; ++banner) {
-      if (banner_drawn == 0 && (record->award_flags & (1 << banner)) != 0) {
+    for (i = 0; i < 6; ++i) {
+      if (banner_drawn == 0 && (record->award_flags & (1 << i)) != 0) {
         StringTemp[0] = '\0';
-        strcat(StringTemp, label_get(974 + banner));
+        strcat(StringTemp, label_get(974 + i));
         fill(frame_rect_.left - text_width(StringTemp) / 2 + 0x186, frame_rect_.top + 0xF,
              text_width(StringTemp) + 0x14, 0x15, 0x41);
         write_cent_text(StringTemp, frame_rect_.left, frame_rect_.top + 0x10, 0x320);
@@ -629,9 +628,9 @@ void FameWin::on_redraw() {
     set_font(ReportIfGlobal.field_1E190_, 0, 0, 0);
     set_text_color(0xE6, -1, 1, 1);
   } else {
-    for (int award = 0; award < 6; ++award) {
-      flatButtons2_[award].set_report_page_state(-1);
-      flatButtons2_[award].redraw();
+    for (i = 0; i < 6; ++i) {
+      flatButtons2_[i].set_report_page_state(-1);
+      flatButtons2_[i].redraw();
     }
   }
 
@@ -651,15 +650,15 @@ void FameWin::on_redraw() {
   set_font(ReportIfGlobal.field_1E190_, 0, 0, 0);
   set_text_color(0xE6, -1, 1, 1);
   spot_.kill_type(0);
+  cell_rect_ = ranks_rect_;
   RECT *cell = &cell_rect_;
-  *cell = ranks_rect_;
-  for (int rank = 0; rank < 5; ++rank) {
-    HallOfFameRecord *entry = &HallOfFameRecords[faction * 5 - 5 + rank];
+  for (i = 0; i < 5; ++i) {
+    HallOfFameRecord *entry = &HallOfFameRecords[faction * 5 - 5 + i];
     field_A14_ = cell->left;
-    field_A18_ = cell->top + 3;
+    field_A18_ = cell_rect_.top + 3;
     field_A1C_ = cell->right - cell->left;
     if ((entry->present & 1) != 0) {
-      if (rank == static_cast<int>(selectedRecord_)) set_text_color(0x9B, -1, 1, 1);
+      if (i == static_cast<int>(selectedRecord_)) set_text_color(0x9B, -1, 1, 1);
       else set_text_color(0xE6, -1, 1, 1);
       StringTemp[0] = '\0';
       strcat(StringTemp, entry->leader_title);
@@ -679,7 +678,7 @@ void FameWin::on_redraw() {
       strcat(StringTemp, label_get(730));
       say_num(entry->year);
       write_cent_text(StringTemp, field_A14_, field_A18_, field_A1C_);
-      spot_.add(rank, 0, cell->left, cell->top, cell->right - cell->left,
+      spot_.add(i, 0, cell->left, cell->top, cell->right - cell->left,
                 cell->bottom - cell->top);
     }
     offset_rect(cell, 0, rect_height(&ranks_rect_) + 6);
