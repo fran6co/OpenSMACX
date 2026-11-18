@@ -345,13 +345,12 @@ int __cdecl success_rates(int id, int morale, int diff_modifier, int base_id) {
 #include <cstring>
 #include "tutwin.h"
 #include "crt_random_inline.h"
-// WORKAROUND(decl): probe's four `timeGetTime() & 1` coin flips call the
-// WINMM thunk 0x005A58D0 in the image, not the import slot; a plain
-// (non-dllimport) redeclaration routes calls through the thunk. The two
-// random_reseed(timeGetTime()) sites call the import slot in the image and
-// now go through the thunk too: VC6 binds every call to the latest
-// declaration, so one unit cannot reproduce both.
-extern "C" DWORD WINAPI timeGetTime(void);
+// 0x005A58D0 (`jmp [__imp__timeGetTime@0]`, among probe's own COMDATs, called
+// only from probe): an inline wrapper around timeGetTime. /Ob2 expands it at
+// the two early random_reseed sites (import-slot calls in the image) and
+// calls the copy at the four late `& 1` coin flips (0x5A31B8, 0x5A3231,
+// 0x5A4434, 0x5A4466). Its original name and header are unknown.
+static inline DWORD probe_time() { return timeGetTime(); }
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0059F120 0x005A5838 0x005A5850 0x005A1795
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x0059F120 0x005A5850 0x005A5860 0x005A178F
@@ -597,7 +596,7 @@ L_59fb64:
                           + GameDataStateStorage.fields_.turn_current_num_
                           + faction);
             tech_start = random(0, MaxTechnologyNum);
-            random_reseed(timeGetTime());
+            random_reseed(probe_time());
         } else {
             tech_start = rand() % MaxTechnologyNum;
         }
@@ -687,7 +686,7 @@ L_59fb64:
                           + GameDataStateStorage.fields_.turn_current_num_
                           + faction);
             rnd_amount = random(0, morale_veh(veh_id, 1, 0) / 2 + 2);
-            random_reseed(timeGetTime());
+            random_reseed(probe_time());
         } else {
             rnd_amount = bounded_crt_random(morale_veh(veh_id, 1, 0) / 2 + 2);
         }
@@ -1376,7 +1375,7 @@ L_5a2dcd:
         if ((int)rnd(local_4c / 2
                 - range(PlayersData[faction_tgt].soc_effect_active.values_[SocialEffect::PROBE]
                         + bonus, -2, 0) + 1, "PROBEBUST") < diff_modifier) {
-            if (!ProbeHasAlgoEnhancement || ProbeTargetHasHSA || (timeGetTime() & 1)) {
+            if (!ProbeHasAlgoEnhancement || ProbeTargetHasHSA || (probe_time() & 1)) {
                 mode = -mode;
                 if (faction == ConsoleGlobal.faction_id_) {
                     if (Players[faction].rule_flags & RFLAG_ALIEN) {
@@ -1391,7 +1390,7 @@ L_5a2dcd:
                 kill(veh_id);
                 goto L_5a4b15;
             }
-        } else if (ProbeTargetHasHSA && (timeGetTime() & 1)) {
+        } else if (ProbeTargetHasHSA && (probe_time() & 1)) {
             mode = -mode;
             if (faction == ConsoleGlobal.faction_id_) {
                 if (Players[faction].rule_flags & RFLAG_ALIEN) {
@@ -1751,13 +1750,13 @@ L_5a2dcd:
                 if (reloc_base >= GameDataStateStorage.fields_.base_current_count_) {
                     reloc_base = -1;
                 }
-                if (ProbeTargetHasHSA && (timeGetTime() & 1)) {
+                if (ProbeTargetHasHSA && (probe_time() & 1)) {
                     reloc_base = -1;
                     mode = -mode;
                 }
             }
         } else if (!ProbeTargetHasHSA && ProbeHasAlgoEnhancement
-                   && (timeGetTime() & 1)) {
+                   && (probe_time() & 1)) {
             reloc_base = base_find(Vehs[veh_id].x, Vehs[veh_id].y, faction);
             if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == TRIAD_SEA
                 && reloc_base >= 0 && !is_port(reloc_base, 0)) {
