@@ -1634,25 +1634,18 @@ struct GameDataLegacyVehRow {
 };
 typedef char GameDataLegacyVehRowExtent[sizeof(GameDataLegacyVehRow) == 0x30 ? 1 : -1];
 
-// WORKAROUND(type): game_data calls memcpy out of line for its whole-record
-// copies (0x31C, 0x1CBC, 0x20BC, 0x130 bytes) yet copies these smaller blocks
-// with inline rep movsd, i.e. as aggregate assignments; the original block
-// types are unknown, so a sized byte block stands in for each.
-template <unsigned int N> struct GameDataBlock { unsigned char bytes[N]; };
-typedef GameDataBlock<33 * sizeof(int)> GameDataProjectPrefixBlock;
-typedef GameDataBlock<89> GameDataTechBlock;
-typedef GameDataBlock<256> GameDataSaveNameBlock;
-typedef GameDataBlock<8 * sizeof(int)> GameDataWeightsBlock;
-typedef GameDataBlock<10 * sizeof(int)> GameDataTailBlock;
-
+// game_data calls memcpy out of line for its whole-record copies (0x31C,
+// 0x1CBC, 0x20BC, 0x130 bytes) yet copies these five array blocks with inline
+// rep movsd. This helper is defined outside game_data's
+// `#pragma function(memcpy)` region, so its memcpy calls stay intrinsic when
+// it is expanded there.
 static void game_data_migrate_legacy_header(
         const GameDataHeaderWire *header, int) {
     // Keep the pin's field-specific order after game_data has copied the full
     // 0x31C input record into the live state window.
-    *reinterpret_cast<GameDataProjectPrefixBlock *>(
-        GameDataStateStorage.fields_.secret_project_.project_base) =
-        *reinterpret_cast<const GameDataProjectPrefixBlock *>(
-            header->legacy_secret_project_prefix_);
+    memcpy(GameDataStateStorage.fields_.secret_project_.project_base,
+           header->legacy_secret_project_prefix_,
+           sizeof(header->legacy_secret_project_prefix_));
     memset(&GameDataStateStorage.fields_.secret_project_.project_base[33],
            0xFF, 31 * sizeof(int));
     GameDataStateStorage.fields_.governor_faction_ = header->governor_faction_;
@@ -1670,13 +1663,11 @@ static void game_data_migrate_legacy_header(
             last_resolution_turn;
     }
 
-    *reinterpret_cast<GameDataTechBlock *>(
-        GameDataStateStorage.fields_.game_tech_achieved_) =
-        *reinterpret_cast<const GameDataTechBlock *>(header->game_tech_achieved_);
-    *reinterpret_cast<GameDataSaveNameBlock *>(
-        GameDataStateStorage.fields_.legacy_game_save_name_) =
-        *reinterpret_cast<const GameDataSaveNameBlock *>(
-            header->legacy_game_save_name_);
+    memcpy(GameDataStateStorage.fields_.game_tech_achieved_,
+           header->game_tech_achieved_, sizeof(header->game_tech_achieved_));
+    memcpy(GameDataStateStorage.fields_.legacy_game_save_name_,
+           header->legacy_game_save_name_,
+           sizeof(header->legacy_game_save_name_));
     GameDataStateStorage.fields_.climate_rise_step_ = header->climate_rise_step_;
     GameDataStateStorage.fields_.climate_rise_limit_ = header->climate_rise_limit_;
     // Preserve the original target write order: +0x34C, +0x344, then +0x348.
@@ -1685,14 +1676,12 @@ static void game_data_migrate_legacy_header(
     GameDataStateStorage.fields_.climate_rise_accum_ = header->climate_rise_accum_;
     GameDataStateStorage.fields_.climate_sea_level_delta_ =
         header->climate_sea_level_delta_;
-    *reinterpret_cast<GameDataWeightsBlock *>(
-        GameDataStateStorage.fields_.transcendence_score_weights_) =
-        *reinterpret_cast<const GameDataWeightsBlock *>(
-            header->transcendence_score_weights_);
-    *reinterpret_cast<GameDataTailBlock *>(
-        &GameDataStateStorage.fields_.sunspot_duration_) =
-        *reinterpret_cast<const GameDataTailBlock *>(
-            header->legacy_terminal_words_);
+    memcpy(GameDataStateStorage.fields_.transcendence_score_weights_,
+           header->transcendence_score_weights_,
+           sizeof(header->transcendence_score_weights_));
+    memcpy(&GameDataStateStorage.fields_.sunspot_duration_,
+           header->legacy_terminal_words_,
+           sizeof(header->legacy_terminal_words_));
 }
 
 // Legacy save-format rows converted by game_data. Offsets are the pinned
