@@ -942,7 +942,8 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
         }
     }
     if (item_count_ == 0) return -1;
-    if (!(!is_human(faction))) {
+    if (!is_human(faction)) return recommendation;
+    {
 
         int title_height;
         int header_height;
@@ -1017,7 +1018,5 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
         hide();
         do_all_draws();
         return technology_ids_[selected_index_];
-    } else {
-        return recommendation;
     }
 }
