@@ -3872,10 +3872,10 @@ void ReportWin::draw_sat() {
                      ++satellite_index_) {
                     if (other) {
                         int elevators = 0;
-                        for (int base_id = 0;
-                             base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
-                            if (Bases[base_id].faction_id_current == other
-                                && has_fac(41, base_id, 0)) {
+                        for (i = 0;
+                             i < GameDataStateStorage.fields_.base_current_count_; ++i) {
+                            if (Bases[i].faction_id_current == other
+                                && has_fac(41, i, 0)) {
                                 ++elevators;
                             }
                         }
@@ -3904,7 +3904,7 @@ void ReportWin::draw_sat() {
                         }
                         StringTemp[0] = 0;
                         if (satellite_index_ == 3) {
-                            say_num(PlayersData[other].satellites_[3]
+                            say_num(PlayersData[other].satellites_[satellite_index_]
                                               - PlayersData[other].sat_odp_deployed);
                             strcat(StringTemp, "/");
                         }
@@ -3977,23 +3977,22 @@ void ReportWin::draw_sat() {
         satellite_acceleration_[satellite_index_] = static_cast<float>(
             sqrt(1.0 / (satellite_acceleration_[satellite_index_]
                         * satellite_acceleration_[satellite_index_]
-                        * satellite_acceleration_[satellite_index_])) * 700.0f);
+                        * satellite_acceleration_[satellite_index_]))) * 700.0f;
         phase_x[satellite_index_] = satellite_index_ * 0.0625f;
         {
-            const double offset = (satellite_index_ & 1) ? 0.125 : -0.125;
             const float angle = phase_x[satellite_index_];
+            const float offset = (satellite_index_ & 1) ? 0.125 : -0.125;
             phase_x[satellite_index_] = angle * 6.28f;
-            phase_y[satellite_index_] = static_cast<float>((offset + angle) * 6.28f);
+            phase_y[satellite_index_] = (offset + angle) * 6.28f;
         }
         satellite_x_[satellite_index_] = static_cast<float>(
-            cos(satellite_acceleration_[satellite_index_] + phase_x[satellite_index_])
+            cos(phase_x[satellite_index_] + satellite_acceleration_[satellite_index_])
             * radius_x[satellite_index_]);
         satellite_y_[satellite_index_] = static_cast<float>(
             sin(satellite_acceleration_[satellite_index_] + phase_y[satellite_index_])
             * radius_y[satellite_index_]);
         satellite_dx_[satellite_index_] = static_cast<float>(
-            sin(satellite_acceleration_[satellite_index_] + phase_x[satellite_index_])
-            * -radius_x[satellite_index_] * satellite_acceleration_[satellite_index_]);
+            (sin(satellite_acceleration_[satellite_index_] + phase_x[satellite_index_]) * -radius_x[satellite_index_]) * satellite_acceleration_[satellite_index_]);
         satellite_dy_[satellite_index_] = static_cast<float>(
             cos(satellite_acceleration_[satellite_index_] + phase_y[satellite_index_])
             * satellite_acceleration_[satellite_index_] * radius_y[satellite_index_]);
