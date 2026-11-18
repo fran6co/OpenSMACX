@@ -4805,7 +4805,7 @@ void Console::editor_scen_victory() {
             popup.dialogs().item(name, facility);
         }
         popup.set_value(GameDataStateStorage.fields_.scenario_victory_facility_);
-        GameDataStateStorage.fields_.scenario_victory_facility_ = static_cast<uint32_t>(popup.exec(0, nullptr));
+        GameDataStateStorage.fields_.scenario_victory_facility_ = popup.exec(0, nullptr);
     }
 }
 
@@ -5713,7 +5713,7 @@ void Console::editor_date() {
     const int accepted = X_pop_ask_number(
         ConsoleStrEditorYear, static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_)), 0);
     if (accepted == 0) {
-        GameDataStateStorage.fields_.turn_current_num_ = ParseNumTable[0] - static_cast<int>(ScenarioSave.starting_mission_year);
+        GameDataStateStorage.fields_.turn_current_num_ = ParseNumTable[0] - ScenarioSave.starting_mission_year;
         if (GameDataStateStorage.fields_.turn_current_num_ < 1) {
             GameDataStateStorage.fields_.turn_current_num_ = 1;
         }

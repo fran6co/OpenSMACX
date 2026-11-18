@@ -37,7 +37,7 @@ struct GameDataStateWindowFields {
     int base_current_count_;                    // +0x03C
     int game_setup_reset_word_;                 // +0x040
     int turn_current_num_;                      // +0x044
-    uint32_t mission_year_current_;             // +0x048
+    int mission_year_current_;                  // +0x048
     int vehicle_selection_follow_limit_;        // +0x04C
     int time_controls_selection_;               // +0x050
     int turn_control_duration_milliseconds_;    // +0x054
@@ -59,11 +59,11 @@ struct GameDataStateWindowFields {
     int transcendence_score_bonus_;             // +0x34C
     int transcendence_score_weights_[8];        // +0x350
     int sunspot_duration_;                      // +0x370
-    uint32_t mount_planet_x_;                   // +0x374
-    uint32_t mount_planet_y_;                   // +0x378
+    int mount_planet_x_;                        // +0x374
+    int mount_planet_y_;                        // +0x378
     int dust_cloud_duration_;                   // +0x37C
     int save_daemon_state_word_;                // +0x380
-    uint32_t scenario_victory_facility_;        // +0x384
+    int scenario_victory_facility_;             // +0x384
     int global_energy_event_state_;             // +0x388
     uint32_t net_turn_flags_;                   // +0x38C
     int net_turn_faction_;                      // +0x390

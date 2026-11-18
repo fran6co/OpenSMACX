@@ -1515,7 +1515,7 @@ int __cdecl multiplayer_init(int startup_mode) {
             parse_num(0, ScenarioSave.objective_req_victory);
             parse_num(1, ScenarioSave.objectives_sudden_death_victory);
             parse_num(2, num_objectives(ConsoleGlobal.faction_id_, GameDataStateStorage.fields_.game_rules_ & 0x1000u));
-            parse_num(3, static_cast<int>(ScenarioSave.ending_mission_year));
+            parse_num(3, ScenarioSave.ending_mission_year);
             X_pop("SCENARIO", "INTRO", 0);
         }
 
@@ -1695,7 +1695,7 @@ int __cdecl top_menu(int mode) {
                 parse_num(0, ScenarioSave.objective_req_victory);
                 parse_num(1, ScenarioSave.objectives_sudden_death_victory);
                 parse_num(2, num_objectives(ConsoleGlobal.faction_id_, GameDataStateStorage.fields_.game_rules_ & 0x1000));
-                parse_num(3, static_cast<int>(ScenarioSave.ending_mission_year));
+                parse_num(3, ScenarioSave.ending_mission_year);
                 X_pop("SCENARIO", "INTRO", 0);
                 ConsoleGlobal.set_move(1);
             }

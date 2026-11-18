@@ -214,10 +214,10 @@ int __cdecl display_player_messages(int faction);
 struct ScenarioSaveState {
     int objective_req_victory;  // former ObjectiveReqVictory global, src/game.cpp, 0x0094B4C0; no separate object marker
     int objectives_sudden_death_victory;  // former ObjectivesSuddenDeathVictory global, src/game.cpp, 0x0094B4C4; no separate object marker
-    uint32_t objective_achieve_points;  // former ObjectiveAchievePts global, src/game.cpp, 0x0094B4C8; no separate object marker
+    int objective_achieve_points;  // former ObjectiveAchievePts global, src/game.cpp, 0x0094B4C8; no separate object marker
     uint32_t victory_achieve_bonus_points;  // former VictoryAchieveBonusPts global, src/game.cpp, 0x0094B4CC; no separate object marker
-    uint32_t starting_mission_year;  // former StartingMissionYear global, src/game.cpp, 0x0094B4D0; no separate object marker
-    uint32_t ending_mission_year;  // former EndingMissionYear global, src/game.cpp, 0x0094B4D4; no separate object marker
+    int starting_mission_year;  // former StartingMissionYear global, src/game.cpp, 0x0094B4D0; no separate object marker
+    int ending_mission_year;  // former EndingMissionYear global, src/game.cpp, 0x0094B4D4; no separate object marker
     uint8_t wire_opaque_94b4d8[0x80];  // old ?GameWireOpaque_94B4D8@@3PAEA start 0x0094B4D8, former src/game.cpp, parent member +0x18
 };
 extern ScenarioSaveState ScenarioSave;

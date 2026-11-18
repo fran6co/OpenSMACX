@@ -2835,8 +2835,8 @@ int __cdecl end_of_game(int check_victory) {
 
     if ((GameDataStateStorage.fields_.game_state_ & EndgameRecorded) == 0 &&
         check_victory != 0) {
-        if (static_cast<int>(GameDataStateStorage.fields_.mission_year_current_) >=
-            static_cast<int>(ScenarioSave.ending_mission_year)) {
+        if (GameDataStateStorage.fields_.mission_year_current_ >=
+            ScenarioSave.ending_mission_year) {
             EndgameExitReason = EndgameReason8;
             GameDataStateStorage.fields_.game_state_ |= EndgameRecorded;
         }
@@ -2906,23 +2906,23 @@ int __cdecl end_of_game(int check_victory) {
     if (check_victory != 0) {
         if ((GameDataStateStorage.fields_.game_state_ & STATE_IS_SCENARIO) == 0 &&
             (GameDataStateStorage.fields_.game_state_ & EndgameRecorded) == 0 &&
-            static_cast<int>(GameDataStateStorage.fields_.mission_year_current_) ==
-                static_cast<int>(ScenarioSave.ending_mission_year) - 20) {
-            parse_num(0, static_cast<int>(ScenarioSave.ending_mission_year));
+            GameDataStateStorage.fields_.mission_year_current_ ==
+                ScenarioSave.ending_mission_year - 20) {
+            parse_num(0, ScenarioSave.ending_mission_year);
             StringTemp[0] = 0;
-            _itoa(static_cast<int>(ScenarioSave.ending_mission_year), year_text, 10);
+            _itoa(ScenarioSave.ending_mission_year, year_text, 10);
             strcat(StringTemp, year_text);
             parse_says(0, StringTemp, -1, -1);
             X_pop("RETIREWARNING", 0);
         } else if ((GameDataStateStorage.fields_.game_state_ & STATE_IS_SCENARIO) != 0 &&
                    (GameDataStateStorage.fields_.game_state_ & EndgameRecorded) == 0 &&
-                   (static_cast<int>(GameDataStateStorage.fields_.mission_year_current_) ==
-                        static_cast<int>(ScenarioSave.ending_mission_year) - 20 ||
-                    static_cast<int>(GameDataStateStorage.fields_.mission_year_current_) ==
-                        static_cast<int>(ScenarioSave.ending_mission_year) - 10)) {
-            parse_num(0, static_cast<int>(ScenarioSave.ending_mission_year));
+                   (GameDataStateStorage.fields_.mission_year_current_ ==
+                        ScenarioSave.ending_mission_year - 20 ||
+                    GameDataStateStorage.fields_.mission_year_current_ ==
+                        ScenarioSave.ending_mission_year - 10)) {
+            parse_num(0, ScenarioSave.ending_mission_year);
             StringTemp[0] = 0;
-            _itoa(static_cast<int>(ScenarioSave.ending_mission_year), year_text, 10);
+            _itoa(ScenarioSave.ending_mission_year, year_text, 10);
             strcat(StringTemp, year_text);
             parse_says(0, StringTemp, -1, -1);
             X_pop("SCENARIO", "SCENARIOWARNING", 0);
@@ -2968,7 +2968,7 @@ int __cdecl end_of_game(int check_victory) {
         }
         break;
     case EndgameReason8:
-        parse_num(0, static_cast<int>(GameDataStateStorage.fields_.mission_year_current_));
+        parse_num(0, GameDataStateStorage.fields_.mission_year_current_);
         StringTemp[0] = 0;
         say_year(StringTemp);
         parse_says(0, StringTemp, -1, -1);

@@ -137,7 +137,7 @@ BOOL __cdecl is_objective(int base_id) {
         // followed by has_fac_built(), and the image inlines exactly that
         // (its `cmp eax, 0x41 / jge` IS has_fac's `facility_id >=
         // FacilityRepStart` guard) rather than calling has_fac out of line.
-        if ((int)GameDataStateStorage.fields_.scenario_victory_facility_ < FacilityRepStart) {
+        if (GameDataStateStorage.fields_.scenario_victory_facility_ < FacilityRepStart) {
             // Retain the Base before the helper replaces the consumed base_id
             // argument with its byte offset, then its normalized result.
             Base *base = &Bases[base_id];
@@ -587,7 +587,7 @@ void __cdecl rankings(int apply_ranks) {
                     FactionRankingsUnk[faction_id] += 10;
                 }
             }
-            FactionRankingsUnk[faction_id] += num_objectives(faction_id, false) * (int)ScenarioSave.objective_achieve_points;
+            FactionRankingsUnk[faction_id] += num_objectives(faction_id, false) * ScenarioSave.objective_achieve_points;
             for (proto_id = 0; proto_id < MaxVehProtoNum; proto_id++) {
                 if (proto_id < MaxVehProtoFactionNum
                     && !has_tech(VehPrototypes[proto_id].preq_tech, faction_id)) {
@@ -778,7 +778,7 @@ void __cdecl compute_score(int faction, int *total, int *items, int recursive) {
     for (int technology = 0; technology < 89; ++technology)
         if (has_tech(technology, faction)) items[2]++;
     items[3] = PlayersData[faction].theory_of_everything * 10;
-    int objective_points = static_cast<int>(ScenarioSave.objective_achieve_points);
+    int objective_points = ScenarioSave.objective_achieve_points;
     if (objective_points < 1) objective_points = 1;
     items[6] = objective_points * num_objectives(faction, GameDataStateStorage.fields_.game_rules_ & 0x1000);
     for (int project = 0; project < 64; ++project) {
