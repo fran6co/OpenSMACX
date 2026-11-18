@@ -6550,15 +6550,20 @@ Purpose: Generate the whole visible map - background, terrain, vehicles,
 // body had to hand-copy them.
 void MapWin::gen_map(int a1, int a2) {
     int i;
+    int row;
+    int px;
+    int py;
     if (a2 == 0) {
         if ((field_1DD70_ & 0x82000000) == 0 && field_21A44_ == 0) {
             GraphicWin::fill(0x41);
         }
         for (i = 0; i < field_1DDD0_ + field_1DDD8_ + 1; i++) {
-            const int row = field_1DDA8_ + i;
-            int col = field_1DDA4_ + (i & 1);
-            const int count = (i & 1) ? field_1DDCC_ : field_1DDD4_;
-            for (int n = count; n > 0; n--, col += 2) {
+            row = field_1DDA8_ + i;
+            const int odd = i & 1;
+            const int start = field_1DDA4_ + odd;
+            const int count = odd ? field_1DDCC_ : field_1DDD4_;
+            for (int j = 0; j < count; j++) {
+                const int col = start + j * 2;
                 const int wrapped = wrap_map_x(col);
                 // No margin here: the terrain scan reads the two damage
                 // rectangles straight from the members (0x469D92..0x469E00).
@@ -6585,10 +6590,12 @@ void MapWin::gen_map(int a1, int a2) {
     }
 
     for (i = 0; i < field_1DDD0_ + field_1DDD8_ + 1; i++) {
-        const int row = field_1DDA8_ + i;
-        int col = field_1DDA4_ + (i & 1);
-        const int count = (i & 1) ? field_1DDCC_ : field_1DDD4_;
-        for (int n = count; n > 0; n--, col += 2) {
+        row = field_1DDA8_ + i;
+        const int odd = i & 1;
+        const int start = field_1DDA4_ + odd;
+        const int count = odd ? field_1DDCC_ : field_1DDD4_;
+        for (int j = 0; j < count; j++) {
+            const int col = start + j * 2;
             const int flat = MapIsFlat & 1;
             const int wrapped = wrap_map_x(col);
             if (on_map(wrapped, row)) {
@@ -6625,8 +6632,6 @@ void MapWin::gen_map(int a1, int a2) {
                         continue;
                     }
                 }
-                int px;
-                int py;
                 tile_to_pixel(wrapped, row, &px, &py);
                 draw_vehicles(wrapped, row, px, py - field_1DDC0_, a1);
             }
@@ -6637,10 +6642,12 @@ void MapWin::gen_map(int a1, int a2) {
 
     if ((field_1DD70_ & 0x2000) != 0) {
         for (i = 0; i < field_1DDD0_ + field_1DDD8_ + 1; i++) {
-            const int row = field_1DDA8_ + i;
-            int col = field_1DDA4_ + (i & 1);
-            const int count = (i & 1) ? field_1DDCC_ : field_1DDD4_;
-            for (int n = count; n > 0; n--, col += 2) {
+            row = field_1DDA8_ + i;
+            const int odd = i & 1;
+            const int start = field_1DDA4_ + odd;
+            const int count = odd ? field_1DDCC_ : field_1DDD4_;
+            for (int j = 0; j < count; j++) {
+                const int col = start + j * 2;
                 const int flat = MapIsFlat & 1;
                 const int wrapped = wrap_map_x(col);
                 if (on_map(wrapped, row)) {
@@ -6676,8 +6683,6 @@ void MapWin::gen_map(int a1, int a2) {
                         }
                     }
                     // The pixel pair is discarded, as in the image (0x46A215).
-                    int px;
-                    int py;
                     tile_to_pixel(wrapped, row, &px, &py);
                     gen_overlays(wrapped, row);
                 }
