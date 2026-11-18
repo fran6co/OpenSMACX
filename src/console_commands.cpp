@@ -689,6 +689,11 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
 
     int count = 0;
     int faction_id = Vehs[veh_id].faction_id;
+    // Function scope: the picture dimensions have their own address-taken
+    // slots ([ebp-0x30]/[ebp-0x2c], frame 0x5408); block-scoped they packed
+    // with later locals (frame 0x5400).
+    int width;
+    int height;
     if (is_human(faction_id)) {
         if (NetDaemonNet.lock_veh(&veh_id, 0, -1, -1, 0)) {
             return 0;
@@ -716,8 +721,6 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
         parse_says(0, StringTemp, -1, -1);
         popup.start("WHICHUPGRADE", 0x40);
 
-        int width;
-        int height;
         if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
             if (!Buffer::get_pcx_dimensions(
                     get_triad(veh_id) == TRIAD_AIR
