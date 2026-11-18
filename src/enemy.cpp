@@ -3067,9 +3067,11 @@ int __cdecl alien_move(int veh_id) {
         && veh_moves(veh_id) <= Rules.move_rate_roads && get_triad(veh_id) != TRIAD_AIR) {
         int level = (GameDataStateStorage.fields_.game_rules_ & RULES_INTENSE_RIVALRY)
             ? 5 : PlayersData[Bases[base_id].faction_id_current].diff_level;
-        if (bounded_crt_random(level + 1) && map_loc(x, y)->bit & 0x80E88058) {
-            action_destroy(veh_id, 0, -1, -1);
-            return 0;
+        if (bounded_crt_random(level + 1)) {
+            if (map_loc(x, y)->bit & 0x80E88058) {
+                action_destroy(veh_id, 0, -1, -1);
+                return 0;
+            }
         }
     }
     if (best_score < 999 && !Vehs[veh_id].moves_expended && Vehs[veh_id].dmg_incurred) {
