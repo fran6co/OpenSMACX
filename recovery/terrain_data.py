@@ -293,11 +293,11 @@ def movie_decoder_initializers(root: Path, original: Path,
             # Select this reviewed window from accesses, never from a claimed
             # original object extent.
             bindings = [obj for obj in objects
-                        if obj.unit == 'src/movie_media_decoder.cpp'
+                        if obj.unit == 'src/uv/movie_media_decoder.cpp'
                         and obj.origin.address == start and obj.span is None]
         else:
             bindings = [obj for obj in objects
-                        if obj.unit == 'src/movie_media_decoder.cpp'
+                        if obj.unit == 'src/uv/movie_media_decoder.cpp'
                         and obj.span == span]
         if len(bindings) != 1:
             expectation = 'one v1 start-only source binding' if accessed_window \
@@ -417,7 +417,7 @@ def caviar_projection_rows_initializer(root: Path, original: Path,
 
     pin = image_pin(root)
     bindings = [item for item in read_objects(root, pin)
-                if item.unit == "src/caviar.cpp"
+                if item.unit == "src/jackal/caviar.cpp"
                 and item.origin.address == _CAVIAR_PROJECTION_ROWS.start and item.span is None
                 and item.symbol == _CAVIAR_PROJECTION_ROW_SYMBOL]
     if len(bindings) != 1:

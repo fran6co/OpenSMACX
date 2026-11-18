@@ -191,7 +191,7 @@
           "-c"
         ]
       },
-      "src/listbox.cpp": {
+      "src/jackal/listbox.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -294,7 +294,7 @@
           "-c"
         ]
       },
-      "src/caviar.cpp": {
+      "src/jackal/caviar.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -450,7 +450,7 @@
           "-c"
         ]
       },
-      "src/video.cpp": {
+      "src/jackal/video.cpp": {
         "flags": [
           "/c",
           "/Og",
@@ -464,7 +464,7 @@
           "/Ob2"
         ]
       },
-      "src/video_queue.cpp": {
+      "src/jackal/video_queue.cpp": {
         "flags": [
           "/c",
           "/Og",
@@ -478,7 +478,7 @@
           "/Ob2"
         ]
       },
-      "src/pulldown.cpp": {
+      "src/jackal/pulldown.cpp": {
         "flags": [
           "/c",
           "/Og",
@@ -524,7 +524,7 @@
           "-c"
         ]
       },
-      "src/pushbutton.cpp": {
+      "src/jackal/pushbutton.cpp": {
         "flags": [
           "/c",
           "/Og",
@@ -538,7 +538,7 @@
           "/Ob2"
         ]
       },
-      "src/mci_video.cpp": {
+      "src/jackal/mci_video.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -620,7 +620,7 @@
           "-c"
         ]
       },
-      "src/popup_api.cpp": {
+      "src/jackal/popup_api.cpp": {
         "flags": [
           "/c",
           "/Og",
@@ -856,7 +856,7 @@
           "-c"
         ]
       },
-      "src/spritebox.cpp": {
+      "src/jackal/spritebox.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -965,7 +965,7 @@
           "-c"
         ]
       },
-      "src/sprite.cpp": {
+      "src/jackal/sprite.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -1021,7 +1021,7 @@
           "-c"
         ]
       },
-      "src/net_fifo.cpp": {
+      "src/jackal/net_fifo.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -1302,7 +1302,7 @@
           "-c"
         ]
       },
-      "src/buffer.cpp": {
+      "src/jackal/buffer.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -1487,7 +1487,7 @@
           "-c"
         ]
       },
-      "src/string_table.cpp": {
+      "src/jackal/string_table.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -1673,7 +1673,7 @@
           "-c"
         ]
       },
-      "src/editgroup.cpp": {
+      "src/jackal/editgroup.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -1797,7 +1797,7 @@
           "/GX"
         ]
       },
-      "src/log.cpp": {
+      "src/jackal/log.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -1873,7 +1873,7 @@
           "-c"
         ]
       },
-      "src/filefind.cpp": {
+      "src/jackal/filefind.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -1892,7 +1892,7 @@
           "-c"
         ]
       },
-      "src/parse.cpp": {
+      "src/jackal/parse.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -1911,7 +1911,7 @@
           "-c"
         ]
       },
-      "src/trig.cpp": {
+      "src/jackal/trig.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -2021,7 +2021,7 @@
           "-c"
         ]
       },
-      "src/menu.cpp": {
+      "src/jackal/menu.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -2128,7 +2128,7 @@
           "-c"
         ]
       },
-      "src/win_input.cpp": {
+      "src/jackal/win_input.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -2146,7 +2146,7 @@
           "-c"
         ]
       },
-      "src/texture.cpp": {
+      "src/jackal/texture.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -2238,7 +2238,7 @@
           "-c"
         ]
       },
-      "src/text.cpp": {
+      "src/jackal/text.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -2256,7 +2256,7 @@
           "-c"
         ]
       },
-      "src/movie_media.cpp": {
+      "src/uv/movie_media.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -2312,7 +2312,7 @@
           "-c"
         ]
       },
-      "src/texheap.cpp": {
+      "src/jackal/texheap.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -2423,7 +2423,7 @@
           "-c"
         ]
       },
-      "src/movie_media_decoder.cpp": {
+      "src/uv/movie_media_decoder.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -2441,7 +2441,7 @@
           "-c"
         ]
       },
-      "src/movie_media_decoder_g6.cpp": {
+      "src/uv/movie_media_decoder_g6.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -2498,7 +2498,7 @@
           "-c"
         ]
       },
-      "src/ddinit.cpp": {
+      "src/jackal/ddinit.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -2517,7 +2517,7 @@
           "-c"
         ]
       },
-      "src/movie_media_decoder_uv.asm": {
+      "src/uv/movie_media_decoder_uv.asm": {
         "flags": [
           "-nologo",
           "-coff",
@@ -2742,7 +2742,7 @@
           "-c"
         ]
       },
-      "src/autosound.cpp": {
+      "src/jackal/autosound.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -2796,7 +2796,7 @@
           "-c"
         ]
       },
-      "src/buttongroup.cpp": {
+      "src/jackal/buttongroup.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -2845,7 +2845,7 @@
           "-c"
         ]
       },
-      "src/cursor.cpp": {
+      "src/jackal/cursor.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -2863,7 +2863,7 @@
           "-c"
         ]
       },
-      "src/directdraw.cpp": {
+      "src/jackal/directdraw.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -2881,7 +2881,7 @@
           "-c"
         ]
       },
-      "src/editbox.cpp": {
+      "src/jackal/editbox.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -2917,7 +2917,7 @@
           "-c"
         ]
       },
-      "src/filebox.cpp": {
+      "src/jackal/filebox.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -2935,7 +2935,7 @@
           "-c"
         ]
       },
-      "src/filemap.cpp": {
+      "src/jackal/filemap.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -3007,7 +3007,7 @@
           "-c"
         ]
       },
-      "src/imagebutton.cpp": {
+      "src/jackal/imagebutton.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -3151,7 +3151,7 @@
           "-c"
         ]
       },
-      "src/net_session_picker.cpp": {
+      "src/jackal/net_session_picker.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -3205,7 +3205,7 @@
           "-c"
         ]
       },
-      "src/number_parsing.cpp": {
+      "src/jackal/number_parsing.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -3259,7 +3259,7 @@
           "-c"
         ]
       },
-      "src/polygon.cpp": {
+      "src/jackal/polygon.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -3313,7 +3313,7 @@
           "-c"
         ]
       },
-      "src/random.cpp": {
+      "src/jackal/random.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -3385,7 +3385,7 @@
           "-c"
         ]
       },
-      "src/spot.cpp": {
+      "src/jackal/spot.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -3421,7 +3421,7 @@
           "-c"
         ]
       },
-      "src/timer_messages.cpp": {
+      "src/jackal/timer_messages.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -3457,7 +3457,7 @@
           "-c"
         ]
       },
-      "src/vector.cpp": {
+      "src/jackal/vector.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -3637,7 +3637,7 @@
           "-c"
         ]
       },
-      "src/win_coordinates.cpp": {
+      "src/jackal/win_coordinates.cpp": {
         "flags": [
           "/nologo",
           "/TP",

@@ -39,7 +39,7 @@ char VideoAdvanceVideoLogContext[1];
 char VideoAudioBufferLogContext[1];
 
 // ORIGINAL: 0x006381E0 Video_unk16 0x006381E0-0x006381E5 FILE BYTE_EXACT
-// body src/video.h
+// body src/jackal/video.h
 // symbol    ??1VideoFrameQueue@@QAE@XZ
 // LEVER: tail call to the unnamed sub via a plain extern "C" declaration
 

@@ -562,7 +562,7 @@ Text::Text() {
 /*
 Purpose: Construct a Text with `size` bytes of parse buffer.
 // ORIGINAL: 0x005FD880 ??0Text@@QAE@H@Z 0x005FD880-0x005FD8CF BYTE_EXACT
-// body      src/text.cpp
+// body      src/jackal/text.cpp
 // size      79 bytes
 // prototype Text* (__thiscall ??0Text@@QAE@H@Z)(Text* this, int size)
 // callers   1   call targets   1

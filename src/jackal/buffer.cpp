@@ -2381,7 +2381,7 @@ Buffer::~Buffer() { close(); }
 /*
 Purpose: Acquire the device context, taking one reference on the shared handle.
 // ORIGINAL: 0x005E3503 ?get_hdc@Buffer@@QAEHXZ 0x005E3503-0x005E355C BYTE_EXACT
-// body      src/buffer.cpp
+// body      src/jackal/buffer.cpp
 // symbol    ?get_hdc@Buffer@@QAEPAUHDC__@@XZ
 // size      89 bytes
 // prototype int (__thiscall ?get_hdc@Buffer@@QAEHXZ)(Buffer* this)
@@ -2422,7 +2422,7 @@ HDC Buffer::get_hdc() {
 Purpose: Drop the given number of device-context references, releasing the
          handle once the last one is gone.
 // ORIGINAL: 0x005E3563 ?release_hdc@Buffer@@QAEXH@Z 0x005E3563-0x005E35C3 BYTE_EXACT
-// body      src/buffer.cpp
+// body      src/jackal/buffer.cpp
 // size      96 bytes
 // prototype void (__thiscall ?release_hdc@Buffer@@QAEXH@Z)(Buffer* this, int)
 // callers   8   call targets   0
@@ -7963,7 +7963,7 @@ int Buffer::copy(Buffer *destination, int src_x, int src_y, int src_w,
 
 
 // ORIGINAL: 0x005DAD70 ?write_strings_height@Buffer@@QAEHPAUStringList@@HH@Z 0x005DAD70-0x005DB03E FILE
-// compile_context src/buffer.cpp
+// compile_context src/jackal/buffer.cpp
 // symbol    ?write_strings_height@Buffer@@QAEHPAVStringList@@HH@Z
 //           The image spells the list `PAUStringList@@`; this tree declares
 //           `class StringList`, and the first visible tag declaration fixes
@@ -9835,7 +9835,7 @@ void Buffer::select_text_slot(int requested) {
 }
 
 // ORIGINAL: 0x005DB040 ?write_strings@Buffer@@QAEHPAUStringList@@HHHH@Z 0x005DB040-0x005DB3F6 FILE
-// compile_context src/buffer.cpp
+// compile_context src/jackal/buffer.cpp
 // symbol    ?write_strings@Buffer@@QAEHPAVStringList@@HHHH@Z
 // Deleted seed provenance: git:4014c7f4:src/recovered/005e3730.cpp
 // TRIED: the scaffold's `extern "C" sub_5eXXXX()` externs implied the wrong conventions for their callers here (nullary cdecl); the disasm's ecx=receiver setup before each call site shows they are thiscall members (sub_5e3630/current_entry family on StringStruct with ecx=a1, sub_5e3650 on Font, sub_5e3660/ 3690/3730/3770 on Buffer with ecx=this) - redeclared as such, since relocations are masked and only the caller-side marshalling bytes are scored. Confirmed against the already- recovered src/recovered/005e3730.cpp and git:276d612614085e5d57743cf8cc92903d9468e346:src/recovered/units/005e3770.cpp (both thiscall(Buffer*,...)), and against src/leaf_recoveries.cpp's sub_5e3630/3650/3660 bodies for their real (nullary/one-int) arities. Reaches MISMATCH, 265/318 mnemonics shared (0.836), 956 vs 950 bytes, first divergence at #1 (prologue register order).
@@ -10436,7 +10436,7 @@ Purpose: Return the current StringList text, or null when the list is empty.
 //            whole chase and every guard-clause / named-link / walking-
 //            pointer spelling still routes the middle link through ecx.
 // symbol    ?current_text@StringList@@QAEPADXZ
-// body      src/buffer.cpp
+// body      src/jackal/buffer.cpp
 // size      20 bytes
 // prototype
 // callers   2   call targets   0

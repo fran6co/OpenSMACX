@@ -22,7 +22,7 @@
 /*
 Purpose: Shutdown the class instance.
 // ORIGINAL: 0x005FA830 ?shutdown@Spot@@QAEXXZ 0x005FA830-0x005FA85E BYTE_EXACT
-// body      src/spot.cpp
+// body      src/jackal/spot.cpp
 // size      46 bytes
 // prototype void (__thiscall ?shutdown@Spot@@QAEXXZ)(Spot* this)
 // callers   9   call targets   1
@@ -351,7 +351,7 @@ Spot::~Spot() {
 
 /*
 // ORIGINAL: 0x005FA820 ?clear@Spot@@QAEXXZ 0x005FA820-0x005FA82B BYTE_EXACT
-// body      src/spot.h
+// body      src/jackal/spot.h
 // size      11 bytes
 // prototype void (__thiscall ?clear@Spot@@QAEXXZ)(Spot* this)
 // callers   0   call targets   0

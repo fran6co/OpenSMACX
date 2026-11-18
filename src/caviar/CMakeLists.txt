@@ -1,6 +1,6 @@
 # The AnimaTek Caviar/VOX voxel library (0x00627D00..0x00640A42 and its
-# _SELFMOD kernels at 0x00664000), archived separately from the game-side
-# Caviar class (src/caviar.cpp, 0x00616AA0..0x00618E9E). The original was a
+# _SELFMOD kernels at 0x00664000), archived separately from Firaxis's
+# Jackal-side Caviar class (src/jackal/caviar.cpp, 0x00616AA0..0x00618E9E). The original was a
 # separately built library: its C translation units were compiled by Visual
 # C++ 5.0 (CL 11.00.7022) at /O2 /Ob1 - recovery/COMPILER_EVIDENCE.md, "Caviar
 # library compiler" - while the hand-written MASM modules are assembled by ML

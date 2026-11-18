@@ -11,7 +11,7 @@
         "All known family methods occur inside this band; no other mapped origin or unexplained non-padding bytes were found within the proposed core.",
         "Primary function spans and independently observed NOP/INT3 padding account for the core; associated data/import/generated obligations must still be checked from current source."
       ],
-      "recovered_tu": "src/filemap.cpp"
+      "recovered_tu": "src/jackal/filemap.cpp"
     },
     {
       "name": "NetFifo",
@@ -23,7 +23,7 @@
         "All known family methods occur inside this band; no other mapped origin or unexplained non-padding bytes were found within the proposed core.",
         "Primary function spans and independently observed NOP/INT3 padding account for the core; associated data/import/generated obligations must still be checked from current source."
       ],
-      "recovered_tu": "src/net_fifo.cpp"
+      "recovered_tu": "src/jackal/net_fifo.cpp"
     },
     {
       "name": "Random",
@@ -35,7 +35,7 @@
         "All known family methods occur inside this band; no other mapped origin or unexplained non-padding bytes were found within the proposed core.",
         "Primary function spans and independently observed NOP/INT3 padding account for the core; associated data/import/generated obligations must still be checked from current source."
       ],
-      "recovered_tu": "src/random.cpp"
+      "recovered_tu": "src/jackal/random.cpp"
     },
     {
       "name": "Log",
@@ -47,7 +47,7 @@
         "All known family methods occur inside this band; no other mapped origin or unexplained non-padding bytes were found within the proposed core.",
         "Primary function spans and independently observed NOP/INT3 padding account for the core; associated data/import/generated obligations must still be checked from current source."
       ],
-      "recovered_tu": "src/log.cpp"
+      "recovered_tu": "src/jackal/log.cpp"
     },
     {
       "name": "Time",
@@ -77,12 +77,12 @@
       "name": "Polygon",
       "start": "0x00626470",
       "end_exclusive": "0x00627100",
-      "recovered_tu": "src/polygon.cpp",
+      "recovered_tu": "src/jackal/polygon.cpp",
       "reason": "Inferred compact polygon-rasterizer contribution core. The complete known mapped family forms one contiguous address neighborhood with no foreign mapped identities; the band is not asserted to be the historical object boundary.",
       "evidence": [
         "The candidate report lists eight complete mapped primary identities in this band: flat edge setup/advance, solid span/polygon, Gouraud edge/polygon, remapped span/polygon_dest.",
         "All five mapped primary gaps are classified as original-image NOP/INT3 padding; there are no foreign mapped interleavers, same-family outliers, or cold nonpadding/unreadable spans.",
-        "All eight identities are currently mapped in src/polygon.cpp, which also owns the polygon scratch globals and typed storage anchors used by this family; those data spans remain associated evidence outside this code interval.",
+        "All eight identities are currently mapped in src/jackal/polygon.cpp, which also owns the polygon scratch globals and typed storage anchors used by this family; those data spans remain associated evidence outside this code interval.",
         "The pinned source mappings and primary spans establish the candidate membership evidence; current filename and matching results alone do not prove historical TU membership."
       ]
     },
@@ -103,7 +103,7 @@
       "name": "Cursor",
       "start": "0x0063B2D0",
       "end_exclusive": "0x0063B931",
-      "recovered_tu": "src/cursor.cpp",
+      "recovered_tu": "src/jackal/cursor.cpp",
       "reason": "Inferred complete Cursor class core, including constructor/destructor and class startup/shutdown entries.",
       "evidence": [
         "Whole-current-home frontier reports all five Cursor primary identities in one band, zero foreign mapped identities, and zero nonpadding gaps.",
@@ -126,7 +126,7 @@
       "name": "EditGroup",
       "start": "0x00611940",
       "end_exclusive": "0x0061282E",
-      "recovered_tu": "src/editgroup.cpp",
+      "recovered_tu": "src/jackal/editgroup.cpp",
       "reason": "Inferred complete EditGroup ownership core, including its compiler-generated adjustment entries and local helper bodies.",
       "evidence": [
         "Whole-current-home frontier reports all 23 mapped primary identities in one band, zero foreign mapped identities, and zero nonpadding gaps.",
@@ -138,7 +138,7 @@
       "name": "FileBox",
       "start": "0x00634BE0",
       "end_exclusive": "0x00634FA1",
-      "recovered_tu": "src/filebox.cpp",
+      "recovered_tu": "src/jackal/filebox.cpp",
       "reason": "Inferred compact complete FileBox class core.",
       "evidence": [
         "Whole-current-home frontier reports all nine mapped primary identities in one band, zero foreign mapped identities, and zero nonpadding gaps.",
@@ -149,7 +149,7 @@
       "name": "ImageButton",
       "start": "0x006252E0",
       "end_exclusive": "0x006256FB",
-      "recovered_tu": "src/imagebutton.cpp",
+      "recovered_tu": "src/jackal/imagebutton.cpp",
       "reason": "Inferred compact complete ImageButton class core, including its deleting and vector-deleting entries.",
       "evidence": [
         "Whole-current-home frontier reports all eight mapped primary identities in one band, zero foreign mapped identities, and zero nonpadding gaps.",
@@ -183,7 +183,7 @@
       "name": "MCIVideo",
       "start": "0x005FFD80",
       "end_exclusive": "0x00600326",
-      "recovered_tu": "src/mci_video.cpp",
+      "recovered_tu": "src/jackal/mci_video.cpp",
       "reason": "Inferred complete MCIVideo playback-control core, including constructor, teardown, local helpers, and playback/status methods.",
       "evidence": [
         "Whole-current-home frontier reports all ten mapped primary identities in one band, zero foreign mapped identities, and zero nonpadding gaps.",
@@ -230,7 +230,7 @@
       "name": "PushButton",
       "start": "0x0062BF20",
       "end_exclusive": "0x0062C85B",
-      "recovered_tu": "src/pushbutton.cpp",
+      "recovered_tu": "src/jackal/pushbutton.cpp",
       "reason": "Inferred complete PushButton core, including base/vector deleting entries.",
       "evidence": [
         "Whole-current-home frontier reports all six mapped primary identities in one band, zero foreign mapped identities, and zero nonpadding gaps.",
@@ -265,7 +265,7 @@
       "name": "TexHeap",
       "start": "0x00634FB0",
       "end_exclusive": "0x00635402",
-      "recovered_tu": "src/texheap.cpp",
+      "recovered_tu": "src/jackal/texheap.cpp",
       "reason": "Inferred compact complete TexHeap lifecycle and memory-query core.",
       "evidence": [
         "Whole-current-home frontier reports all six mapped primary identities in one band, zero foreign mapped identities, and zero nonpadding gaps.",
@@ -276,7 +276,7 @@
       "name": "Texture",
       "start": "0x00619650",
       "end_exclusive": "0x006252DE",
-      "recovered_tu": "src/texture.cpp",
+      "recovered_tu": "src/jackal/texture.cpp",
       "reason": "Inferred complete current texture-rendering contribution core, including TextureStore lifecycle entries and mapped local renderer helpers. Synthetic asset-table ownership is excluded.",
       "evidence": [
         "Whole-current-home frontier reports all 56 mapped primary identities in one band, zero foreign mapped identities, and zero nonpadding gaps.",
@@ -289,12 +289,12 @@
       "name": "VideoFrameQueue",
       "start": "0x0063E520",
       "end_exclusive": "0x0063E85B",
-      "recovered_tu": "src/video_queue.cpp",
+      "recovered_tu": "src/jackal/video_queue.cpp",
       "reason": "Inferred compact complete video-frame queue operation core, including node cleanup and allocation failure paths.",
       "evidence": [
         "Whole-current-home frontier reports all seven mapped primary identities in one band, zero foreign mapped identities, and zero nonpadding gaps.",
         "The current owner defines the VideoFrameQueue constructor, limit/clear/allocate/append/peek/discard_head operations, all inside the interval; source-wide search found no VideoFrameQueue member elsewhere.",
-        "The separate src/video.cpp home is not absorbed based on callers or adjacency."
+        "The separate src/jackal/video.cpp home is not absorbed based on callers or adjacency."
       ]
     },
     {
@@ -362,7 +362,7 @@
       "name": "PopupAPI",
       "start": "0x00627110",
       "end_exclusive": "0x00627CFC",
-      "recovered_tu": "src/popup_api.cpp",
+      "recovered_tu": "src/jackal/popup_api.cpp",
       "reason": "Inferred complete popup API overload-wrapper contribution core, including its local helper and the full pop/pops/pop_ask/pop_ask_number overload families.",
       "evidence": [
         "The whole-home frontier reports 39 mapped primary identities in one band, with no foreign mapped identities and no nonpadding gaps.",
@@ -481,7 +481,7 @@
       "name": "PullDown",
       "start": "0x005F8800",
       "end_exclusive": "0x005FA79B",
-      "recovered_tu": "src/pulldown.cpp",
+      "recovered_tu": "src/jackal/pulldown.cpp",
       "reason": "Inferred complete known PullDown contribution including its mapped lifecycle/helpers and dispatch data. Source correspondence permits imperfect bodies; original TU identity and unresolved associated evidence remain unproved.",
       "evidence": [
         "Fresh source audit includes all35known primary identities in this entire current source home, with no foreign mapped primary inside the candidate bracket.",
@@ -493,7 +493,7 @@
       "name": "ListBox",
       "start": "0x00609DB0",
       "end_exclusive": "0x0060D05E",
-      "recovered_tu": "src/listbox.cpp",
+      "recovered_tu": "src/jackal/listbox.cpp",
       "reason": "Inferred complete known ListBox contribution including its mapped lifecycle/helpers and dispatch data. Source correspondence permits imperfect bodies; original TU identity and unresolved associated evidence remain unproved.",
       "evidence": [
         "Fresh source audit includes all46known primary identities in this entire current source home, with no foreign mapped primary inside the candidate bracket.",
@@ -505,7 +505,7 @@
       "name": "EditBox",
       "start": "0x00614E50",
       "end_exclusive": "0x006161CA",
-      "recovered_tu": "src/editbox.cpp",
+      "recovered_tu": "src/jackal/editbox.cpp",
       "reason": "Inferred complete known EditBox contribution including its mapped lifecycle/helpers and dispatch data. Source correspondence permits imperfect bodies; original TU identity and unresolved associated evidence remain unproved.",
       "evidence": [
         "Fresh source audit includes all17known primary identities in this entire current source home, with no foreign mapped primary inside the candidate bracket.",
@@ -578,7 +578,7 @@
       "name": "StringTableLabels",
       "start": "0x006168A0",
       "end_exclusive": "0x00616A93",
-      "recovered_tu": "src/string_table.cpp",
+      "recovered_tu": "src/jackal/string_table.cpp",
       "reason": "Inferred complete known contribution core with a corresponding recovered CPP. Compiling placeholders or mismatched bodies remain eligible for source correspondence; this is not proven historical TU membership or byte-exact acceptance.",
       "evidence": [
         "Eight Strings/StringTable primary identities and the two Labels lifecycle methods form this compact core, between the Time and Caviar contributions; every raw IDA start is already mapped and primary gaps are original NOP/INT3 padding.",
@@ -601,7 +601,7 @@
       "name": "TextParser",
       "start": "0x005FD400",
       "end_exclusive": "0x005FE299",
-      "recovered_tu": "src/text.cpp",
+      "recovered_tu": "src/jackal/text.cpp",
       "reason": "Inferred complete known contribution core with a corresponding recovered CPP. Compiling placeholders or mismatched bodies remain eligible for source correspondence; this is not proven historical TU membership or byte-exact acceptance.",
       "evidence": [
         "All35 known primary identities from the Text and TextIndex sources form one band with only original NOP/INT3 primary gaps and no foreign mapped interleavers. The generic parser, index builder/search and their shared current-file/section storage form one SDK service.",
@@ -613,7 +613,7 @@
       "name": "ButtonGroup",
       "start": "0x0062B7C0",
       "end_exclusive": "0x0062BA77",
-      "recovered_tu": "src/buttongroup.cpp",
+      "recovered_tu": "src/jackal/buttongroup.cpp",
       "reason": "Inferred complete known contribution core with a corresponding recovered CPP. Compiling placeholders or mismatched bodies remain eligible for source correspondence; this is not proven historical TU membership or byte-exact acceptance.",
       "evidence": [
         "All six mapped operations over the same ButtonGroup state fit this entire current source home: constructor, close/init, add/set and button_click. No extra mapped primary lies outside the band.",
@@ -741,7 +741,7 @@
         "The original target and selector tables at 0x005FC220..0x005FC28E account for non-padding primary gaps. Constructor, add_menu and destructor retain detached spans covering 0x00662CF0..0x00662D37.",
         "Application Wave resources are a separate startup contribution, not Menu member state."
       ],
-      "recovered_tu": "src/menu.cpp"
+      "recovered_tu": "src/jackal/menu.cpp"
     },
     {
       "name": "AppWaveResources",
@@ -787,10 +787,10 @@
       "name": "Buffer",
       "start": "0x005D7170",
       "end_exclusive": "0x005E37DA",
-      "recovered_tu": "src/buffer.cpp",
+      "recovered_tu": "src/jackal/buffer.cpp",
       "reason": "Inferred Buffer-centered source contribution candidate from a complete configured-source address census and primary-band audit. The candidate preserves mapped bodies, associated state and lifetimes in the current Buffer owner; it does not establish a historical TU boundary or original filename.",
       "evidence": [
-        "All 168 existing identities in 0x005D7170..0x005E37DA are represented in src/buffer.cpp after transport: 163 non-UNBOUND mapped records (82 BODY and 81 FILE-mode) and five existing UNBOUND notes. The five pending notes remain unresolved owner/prototype/caller obligations, do not assert Buffer class membership, and have no invented bodies. Their four historical BYTE_EXACT claims and the unclaimed 0x005DFB40 state are retained.",
+        "All 168 existing identities in 0x005D7170..0x005E37DA are represented in src/jackal/buffer.cpp after transport: 163 non-UNBOUND mapped records (82 BODY and 81 FILE-mode) and five existing UNBOUND notes. The five pending notes remain unresolved owner/prototype/caller obligations, do not assert Buffer class membership, and have no invented bodies. Their four historical BYTE_EXACT claims and the unclaimed 0x005DFB40 state are retained.",
         "The 160 existing Buffer.cpp identities remain, with complete copy_mask and parameterless get_data mappings moved from the retired src/buffer_mask.cpp, StringList::current_text moved with its mapping from src/stringstruct.cpp as a Buffer text-writer provider, and three mask scratch object bindings retained beside copy_mask. StringList declarations and its other methods remain in src/stringstruct.h/stringstruct.cpp.",
         "Pinned-band accounting includes associated switch data: text_width targets 0x005DCA04..0x005DCA20 and selector bytes 0x005DCA20..0x005DCA7A; write_multi_font_raw_l targets 0x005DCE24..0x005DCE40 and selector bytes 0x005DCE40..0x005DCE9A; find_line_break_l targets 0x005DC70C..0x005DC728 and selector bytes 0x005DC728..0x005DC782.",
         "Nine mapped cold spans remain attached to their original Buffer primaries: constructor 0x00662B50..0x00662B68, destructor 0x00662B68..0x00662B80, helper 0x00662B80..0x00662B92, load_tga 0x00662B92..0x00662BA7, load_bmp 0x00662BA7..0x00662BBC, load_pcx 0x00662BBC..0x00662BD1, sub_5d7f20 0x00662BD1..0x00662BFC, write_pcx 0x00662BFC..0x00662C11, and get_pcx_dimensions 0x00662C11..0x00662C26.",
@@ -805,12 +805,12 @@
       "end_exclusive": "0x005EB294",
       "reason": "Inferred contribution core: 35 complete Sprite primaries occupy a compact post-Buffer band and use one recovered owner. This is a reviewed correspondence candidate, not proof of historical object boundaries or original filename. Remote Sprite lifecycle satellites remain in the same source and are recorded separately because the unit schema has one address interval.",
       "evidence": [
-        "Pinned original mapping/source audit found exactly 35 primary identities in [0x005E37E0,0x005EB294), all in src/sprite.cpp; all 34 gaps between consecutive primary spans contain only NOP byte 0x90.",
+        "Pinned original mapping/source audit found exactly 35 primary identities in [0x005E37E0,0x005EB294), all in src/jackal/sprite.cpp; all 34 gaps between consecutive primary spans contain only NOP byte 0x90.",
         "SpriteMemoryUsed, scale/cache state, clipped/scaling scratch tables, row/column counters, pitch/tail state and remap storage are source-annotated with the Sprite implementation in src/sprite.cpp.",
         "Sprite::save and Sprite::load keep their detached 0x00662C30..0x00662C54 secondary spans; Sprite::init_class keeps 0x00663998..0x006639AD.",
         "The same Sprite source contains guarded blank Sprite storage and callback pair at 0x0063BAE0/0x0063BB00, blank drawing helper 0x0063CDC0 and Sprite::init_class 0x0063CE20. Sprite::close_class 0x0063CEF0 was moved intact from general.cpp into sprite.cpp as its matching teardown provider."
       ],
-      "recovered_tu": "src/sprite.cpp"
+      "recovered_tu": "src/jackal/sprite.cpp"
     },
     {
       "name": "WinCore",
@@ -824,14 +824,14 @@
         "Win::window_proc at 0x005F0650 directly indexes five target/selector arrays whose pinned addresses and limits are annotated as RECOVERY_ASSOCIATED. Three other table spans at 0x005F2200..2250, 0x005F4C84..4C94 and 0x005F7E48..7E88 already carry owner facts.",
         "Primary-to-primary gaps are pinned NOP/INT3 after all associated switch data is accounted. Unassigned 8B FF at 0x005F4C82..4C84 and LEA 8D 49 00 at 0x005F1049..104C remain explicitly unassigned and are not padding.",
         "Win destructor, Win::init and Win::init_class retain all detached cold spans. Static drawing_buffer_/screen_buffer_ state and generated startup/finalizers remain in their existing source order with shared guard byte 0x009B6E30 and bits 1/2.",
-        "WinNodeList dtor, Win folded virtual views, message pump, cd_check and rectangle/Sound helpers remain out-of-band records with separate evidence and uncertainty. DDInit has its own inferred contribution candidate and corresponding src/ddinit.cpp; no complete historical Win or DDInit TU boundary is claimed."
+        "WinNodeList dtor, Win folded virtual views, message pump, cd_check and rectangle/Sound helpers remain out-of-band records with separate evidence and uncertainty. DDInit has its own inferred contribution candidate and corresponding src/jackal/ddinit.cpp; no complete historical Win or DDInit TU boundary is claimed."
       ]
     },
     {
       "name": "DDInitCore",
       "start": "0x00635410",
       "end_exclusive": "0x006362F1",
-      "recovered_tu": "src/ddinit.cpp",
+      "recovered_tu": "src/jackal/ddinit.cpp",
       "reason": "Inferred DirectDraw device contribution: nine mapped primaries and the five target/selector pairs of report_error occupy this compact band. This is a source ownership decision, not proof of a historical filename or complete original object boundary.",
       "evidence": [
         "The nine original identities, complete declared spans and historical claims move intact from win.cpp. DDInit::init retains its detached cold span 0x00663870..0x00663885, and report_error retains all ten associated switch-data spans.",

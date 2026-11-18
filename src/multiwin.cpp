@@ -1069,7 +1069,7 @@ int Spot::add(int position, int type, RECT *rect) {
 // ORIGINAL: 0x0047A720 ?UNK4@MultiWin@@QAEHPADPAURECT@@@Z 0x0047A720-0x0047A752 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:rectangle-owner-overloads", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x47a720", "seed:src/recovered/units/0047a720.cpp all identity/spans/claims and parsed discoveries retained; seed retirement requires fresh verification.", "source:src/multiwin.h caller receiver evidence and existing genuine Spot/Buffer interfaces."], "reason": "Recover genuine existing-owner rectangle convenience method. Original catalog MultiWin attribution is contradicted by unchanged receiver forwarding and typed Spot/Buffer callee evidence; original identity and historical obligations are retained, not renamed or newly banked."}
 // symbol    ?write_cent_l@Buffer@@QAEHPADPAUtagRECT@@@Z
-// body      src/buffer.h
+// body      src/jackal/buffer.h
 // BODY IN buffer.h, as `MEASURED inline`.
 
 // RECOVERY_GENERATED: v1 vtable 0x0066C9F0 ? ??_7MultiWin@@6BWin@@@ 0x0047A590

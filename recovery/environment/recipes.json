@@ -1,4 +1,4 @@
 {
   "schema_version": 1,
-  "seed_donor": "src/buffer.cpp"
+  "seed_donor": "src/jackal/buffer.cpp"
 }

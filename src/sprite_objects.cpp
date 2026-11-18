@@ -176,7 +176,7 @@
 // Canonical mapping for the inline destructor emitted by these object lifetimes.
 /*
 // ORIGINAL: 0x00406850 ??1Sprite@@QAE@XZ 0x00406850-0x00406855 BYTE_EXACT
-// body      src/sprite.h
+// body      src/jackal/sprite.h
 // size      5 bytes
 // prototype
 // callers   1   call targets   0

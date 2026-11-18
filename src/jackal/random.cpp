@@ -32,7 +32,7 @@
 
 /*
 // ORIGINAL: 0x00625730 ??0Random@@QAE@XZ 0x00625730-0x00625739 BYTE_EXACT
-// compile_context src/random.cpp
+// compile_context src/jackal/random.cpp
 // size      9 bytes
 // prototype void (__thiscall ??0Random@@QAE@XZ)(Random* this)
 // callers   5   call targets   0
@@ -50,7 +50,7 @@ Random::Random() : seed_(0) {
 // assignment is byte exact.
 /*
 // ORIGINAL: 0x00625740 ??1Random@@QAE@XZ 0x00625740-0x00625747 BYTE_EXACT
-// compile_context src/random.cpp
+// compile_context src/jackal/random.cpp
 // size      7 bytes
 // prototype void (__thiscall ??1Random@@QAE@XZ)(Random* this)
 // callers   5   call targets   0

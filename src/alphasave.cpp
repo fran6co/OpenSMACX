@@ -72,7 +72,7 @@ Status: Complete
 
 // ORIGINAL: 0x00408010 ??1EditBox@@QAE@XZ 0x00408010-0x00408077;0x00650CF0-0x00650D10 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00408010.cpp", "Original constructor/destructor direct-call receivers and unwind stages"], "reason": "408010 closes EditBox then destroys its Time member and nonvirtual GraphicWin base; normal and unwind paths agree."}
-// body src/editbox.h
+// body src/jackal/editbox.h
 // Deleted seed provenance: git:ee30a69d14801283c26950b1385f39f087e6d82b:src/unrecovered/00408010.cpp
 // symbol    ??1EditBox@@UAE@XZ
 

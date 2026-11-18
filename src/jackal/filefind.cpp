@@ -302,7 +302,7 @@ LPSTR __cdecl filefind_get(LPCSTR file_name) {
 /*
 Purpose: Trim the trailing spaces in-line from the end of the string.
 // ORIGINAL: 0x00600780 ?purge_trailing@@YAXPAD@Z 0x00600780-0x006007AD BYTE_EXACT
-// body      src/filefind.cpp
+// body      src/jackal/filefind.cpp
 // size      45 bytes
 // prototype 
 // callers   0   call targets   1

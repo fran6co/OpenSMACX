@@ -213,7 +213,7 @@ Label Labels;                                       // 0x009B90F8
 /*
 Purpose: Shutdown or reset the labels global variable.
 // ORIGINAL: 0x006169D0 ?labels_shutdown@@YAXXZ 0x006169D0-0x006169F7 BYTE_EXACT
-// body      src/string_table.cpp
+// body      src/jackal/string_table.cpp
 // size      39 bytes
 // prototype
 // callers   4   call targets   1

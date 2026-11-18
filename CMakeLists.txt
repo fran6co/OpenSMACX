@@ -156,23 +156,17 @@ set(OPENSMACX_SOURCES
     src/main.cpp
     src/multiwin.cpp
     src/matrix3.cpp
-    src/filebox.cpp
     src/span_math.cpp
     src/scale_adjustment.cpp
     src/technology_queries.cpp
     src/fx.cpp
     src/alphanet.cpp
     src/alphanet_records.cpp
-    src/autosound.cpp
     src/base.cpp
     src/base_build.cpp
     src/score.cpp
     src/basebutton.cpp
     src/basepop.cpp
-    src/buffer.cpp
-    src/polygon.cpp
-    src/buttongroup.cpp
-    src/caviar.cpp
     src/council.cpp
     src/dialog.cpp
     src/dialogs.cpp
@@ -180,7 +174,6 @@ set(OPENSMACX_SOURCES
     src/faction_treaty.cpp
     src/aggression.cpp
     src/famewin.cpp
-    src/filemap.cpp
     src/flatbutton.cpp
     src/flic.cpp
     src/font_queue.cpp
@@ -195,16 +188,10 @@ set(OPENSMACX_SOURCES
     src/application_math.cpp
     src/application_text.cpp
     src/general.cpp
-    src/filefind.cpp
-    src/parse.cpp
-    src/trig.cpp
     src/danger.cpp
-    src/directdraw.cpp
-    src/number_parsing.cpp
     src/crt_random.cpp
     src/graphicwin.cpp
     src/graphicwin_events.cpp
-    src/log.cpp
     src/maininterface.cpp
     src/worldwin.cpp
     src/map.cpp
@@ -213,8 +200,6 @@ set(OPENSMACX_SOURCES
     src/mapwin.cpp
     src/mapwin_terrain.cpp
     src/basewin.cpp
-    src/video.cpp
-    src/video_queue.cpp
     src/datalink.cpp
     src/help.cpp
     src/datalink_entries.cpp
@@ -223,14 +208,7 @@ set(OPENSMACX_SOURCES
     src/designwin.cpp
     src/diplowin.cpp
     src/alphamovie.cpp
-    src/mci_video.cpp
-    src/movie_media.cpp
-    src/movie_media_decoder.cpp
-    src/movie_media_decoder_g6.cpp
-    src/movie_media_decoder_uv.asm
     src/movie_decoder_idct.cpp
-    src/cursor.cpp
-    src/imagebutton.cpp
     src/infowin.cpp
     src/interlude.cpp
     src/statuswin.cpp
@@ -240,7 +218,6 @@ set(OPENSMACX_SOURCES
     src/credits.cpp
     src/diplopop.cpp
     src/gamma.cpp
-    src/pushbutton.cpp
     src/messagewin.cpp
     src/newtechwin.cpp
     src/picktech.cpp
@@ -253,10 +230,7 @@ set(OPENSMACX_SOURCES
     src/popmenu.cpp
     src/popup.cpp
     src/popup_wrappers.cpp
-    src/popup_api.cpp
     src/netmsg.cpp
-    src/editbox.cpp
-    src/editgroup.cpp
     src/xpops.cpp
     src/planwin.cpp
     src/playerlock.cpp
@@ -271,40 +245,26 @@ set(OPENSMACX_SOURCES
     src/console_commands.cpp
     src/uv2player.cpp
     src/sound.cpp
-    src/spritebox.cpp
-    src/listbox.cpp
     src/net_class.cpp
-    src/net_fifo.cpp
-    src/net_session_picker.cpp
     src/node.cpp
     src/squarelock.cpp
     src/lock.cpp
-    src/texture.cpp
-    src/menu.cpp
     src/interface_palette.cpp
     src/path.cpp
     src/probe.cpp
-    src/pulldown.cpp
-    src/random.cpp
     src/scroll.cpp
     src/scenario.cpp
     src/sounddevice.cpp
-    src/spot.cpp
-    src/sprite.cpp
-    src/texheap.cpp
     src/sprite_objects.cpp
     src/stdafx.cpp
     src/stringbox.cpp
     src/stringlist.cpp
     src/stringstruct.cpp
     src/strings.cpp
-    src/string_table.cpp
     src/string_formatting.cpp
     src/technology.cpp
     src/terraforming_actions.cpp
-    src/text.cpp
     src/time.cpp
-    src/timer_messages.cpp
     src/enemy.cpp
     src/veh.cpp
     src/orders.cpp
@@ -314,11 +274,7 @@ set(OPENSMACX_SOURCES
     src/veh_queries.cpp
     src/vehicle_storage.cpp
     src/vehicle_cost.cpp
-    src/vector.cpp
     src/win.cpp
-    src/ddinit.cpp
-    src/win_coordinates.cpp
-    src/win_input.cpp
     src/winnodelist.cpp
 )
 
@@ -371,15 +327,19 @@ endif()
 # in src/main.cpp - and calls the game's own startup sequence from it. It is
 # not yet a recovered or accepted game. But the artifact is the program
 # being recovered rather than a probe, and its name should say so.
-# The confirmed Jackal lifecycle/version owner is a distinct library. Its
-# referenced entry points and generic palette/font/control owners are explicit
-# archive inputs; there is no synthetic retention anchor. Other drawing
-# subsystems remain direct application inputs until their membership is
-# established. This is not a claim of complete JACKAL.LIB recovery.
+# JACKAL.LIB (Firaxis's toolkit) is a distinct library. Its whole-file members
+# are archive inputs, with no synthetic retention anchor; src/jackal/CMakeLists.txt
+# records the image evidence for its membership. Files that still mix
+# library members with game-side inline copies remain application inputs until
+# they are split. This is not a claim of complete JACKAL.LIB recovery.
 add_subdirectory(src/jackal)
 # The AnimaTek Caviar/VOX library is its own archive with its own (VC5)
-# compiler recipe; the game-side Caviar class stays in src/caviar.cpp.
+# compiler recipe; Firaxis's Caviar wrapper is Jackal's src/jackal/caviar.cpp.
 add_subdirectory(src/caviar)
+# EA UK's uV/uV2 movie player ("Play uV/uV2 Version 1.50, Martin Griffiths,
+# Electronic Arts UK 1997"): a separate third-party archive in the original,
+# linked after the game objects and before ddraw.lib's thunk and JACKAL.LIB.
+add_subdirectory(src/uv)
 # These owners retain frame-based parameter accesses. Match their
 # existing explicit recovery measurement profiles without changing the
 # application's default compiler flags.
@@ -555,16 +515,9 @@ set_source_files_properties(
     src/technology_queries.cpp
     src/uv2player.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
-# Buffer's original hline5E1B94 and init5D77C3 call the CRT memset.
-# Keep memory-call selection at TU scope; this is an evidence-led build policy,
-# not proof of the original command line. Source byte loops retain inline fills.
-set_property(SOURCE src/buffer.cpp APPEND PROPERTY COMPILE_OPTIONS "/Oi-")
-# Preserve original out-of-line close/bit-helper calls in this owner.
-# Video and MCI use separate implementation units under default app inlining.
 # Danger's measurement recipe is plain /O2 (VC6: /Ob1); keep the build equal.
 # This optimized matching exception must not override Debug's /Ob0.
 set_property(SOURCE
-    src/pulldown.cpp
     src/danger.cpp
     APPEND PROPERTY COMPILE_OPTIONS "$<$<NOT:$<CONFIG:Debug>>:/Ob1>")
 # Preserve the original frame-based AlphaMovie owner context without changing
@@ -573,12 +526,6 @@ set_source_files_properties(src/alphamovie.cpp PROPERTIES COMPILE_OPTIONS "/Oy-"
 # Gamma's modal window keeps its measured frame context; the independent
 # PushButton implementation retains its default frameless context.
 set_source_files_properties(src/gamma.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
-# The movie decoder's C owners 0x005D3980..0x005D4231 carry Pentium Pro
-# instruction scheduling; 0x005D2E00, 0x005D2E70 and 0x005D35B0 measure
-# closer without it (all three live in movie_media_decoder.cpp).
-# The split unit is an inferred boundary, not a historical filename.
-set_source_files_properties(src/movie_media_decoder_g6.cpp PROPERTIES COMPILE_OPTIONS "/G6")
-
 # Retain standalone compiler type evidence for these source-owned global/member
 # groups. This adds observability, not a different optimization/frame policy;
 # reference checks consume each production object's own types and relocations.
@@ -595,7 +542,6 @@ set_property(SOURCE
     src/battle.cpp
     src/veh_stack.cpp
     src/enemy.cpp
-    src/string_table.cpp
     src/strings.cpp
     src/sounddevice.cpp
     src/fx.cpp
@@ -605,8 +551,6 @@ set_property(SOURCE
     src/console.cpp
     src/statuswin.cpp
     src/vehicle_storage.cpp
-    src/buffer.cpp
-    src/caviar.cpp
     src/credits.cpp
     src/game.cpp
     src/turn.cpp
@@ -622,27 +566,18 @@ set_property(SOURCE
     src/mapwin_terrain.cpp
     src/netdaemon.cpp
     src/prefwin.cpp
-    src/log.cpp
     src/newtechwin.cpp
     src/console_commands.cpp
     src/net_class.cpp
-    src/sprite.cpp
     src/terraforming_actions.cpp
-    src/texheap.cpp
     src/world.cpp
     src/win.cpp
-    src/ddinit.cpp
     src/datalink.cpp
     src/designwin.cpp
     src/diplowin.cpp
     src/general.cpp
-    src/filefind.cpp
-    src/parse.cpp
-    src/trig.cpp
     src/infowin.cpp
-    src/menu.cpp
     src/messagewin.cpp
-    src/movie_media.cpp
     src/netwin.cpp
     src/newgame.cpp
     src/socialwin.cpp
@@ -700,10 +635,13 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/src/mapwin_terrain.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/map.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/map_grid.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/movie_media_decoder.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/uv/movie_media_decoder.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/graphicwin.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/recovery/terrain_data.py")
 target_include_directories(OpenSMACX PRIVATE "${OPENSMACX_TERRAIN_DIRECTORY}")
+# The Firaxis Caviar wrapper (Jackal) and the uV decoder read generated tables too.
+target_include_directories(jackal PRIVATE "${OPENSMACX_TERRAIN_DIRECTORY}")
+target_include_directories(uv PRIVATE "${OPENSMACX_TERRAIN_DIRECTORY}")
 
 target_compile_definitions(OpenSMACX PRIVATE
     $<$<CONFIG:Debug>:BUILD_DEBUG>
@@ -730,7 +668,7 @@ target_compile_options(OpenSMACX PRIVATE "$<$<COMPILE_LANGUAGE:ASM_MASM>:-nologo
 # the build.
 
 # FileBox owns the open/save dialog imports from comdlg32.
-target_link_libraries(OpenSMACX PRIVATE jackal caviar zlib user32 gdi32 winmm dxguid ddraw vfw32 dsound comdlg32)
+target_link_libraries(OpenSMACX PRIVATE uv jackal caviar zlib user32 gdi32 winmm dxguid ddraw vfw32 dsound comdlg32)
 
 # `/MAP /MAPINFO:LINES` is the only debug format in this toolchain that gdb can
 # be taught to read. VC6's own three cannot be: the PDB is 2.0 (`JG`, which
@@ -853,6 +791,7 @@ function(opensmacx_apply_optimization target)
 endfunction()
 opensmacx_apply_optimization(OpenSMACX)
 opensmacx_apply_optimization(jackal)
+opensmacx_apply_optimization(uv)
 opensmacx_apply_optimization(caviar POOLED)
 
 

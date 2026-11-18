@@ -21,7 +21,7 @@
 /*
 Purpose: Convert the binary string to an integer.
 // ORIGINAL: 0x006288D0 ?btoi@@YAHPAD@Z 0x006288D0-0x006288ED BYTE_EXACT
-// body      src/number_parsing.cpp
+// body      src/jackal/number_parsing.cpp
 // symbol    ?btoi@@YAHPBD@Z
 // size      29 bytes
 // prototype int (__cdecl ?btoi@@YAHPAD@Z)(int8* input)
@@ -46,7 +46,7 @@ MEASURED int __cdecl btoi(LPCSTR str) {
 /*
 Purpose: Convert the hex string to an integer.
 // ORIGINAL: 0x006288F0 ?htoi@@YAHPAD@Z 0x006288F0-0x0062894B BYTE_EXACT
-// body      src/number_parsing.cpp
+// body      src/jackal/number_parsing.cpp
 // symbol    ?htoi@@YAHPBD@Z
 // size      91 bytes
 // prototype int (__cdecl ?htoi@@YAHPAD@Z)(int8* input)
@@ -116,7 +116,7 @@ int __cdecl stoi(LPCSTR str) {
 Purpose: Swap two 32-bit variables with the original XOR sequence; if both
          pointers alias, the sequence produces zero.
 // ORIGINAL: 0x00628A50 ?swap@@YAXPAHPAH@Z 0x00628A50-0x00628A73 BYTE_EXACT
-// body      src/number_parsing.cpp
+// body      src/jackal/number_parsing.cpp
 // symbol    ?swap@@YAXPAH0@Z
 // size      35 bytes
 // prototype void (__cdecl ?swap@@YAXPAHPAH@Z)(int*, int*)
@@ -141,7 +141,7 @@ void __cdecl swap(int *var1, int *var2) {
 Purpose: Swap the values of two 8-bit variables. Added an additional check when swapping the same
          memory location.
 // ORIGINAL: 0x00628A80 ?swap@@YAXPAEPAE@Z 0x00628A80-0x00628AA3 BYTE_EXACT
-// body      src/number_parsing.cpp
+// body      src/jackal/number_parsing.cpp
 // symbol    ?swap@@YAXPAE0@Z
 // size      35 bytes
 // prototype 
