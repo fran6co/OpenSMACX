@@ -1211,7 +1211,7 @@ extern "C" void __cdecl sub_5cdfa0(void *argument) {
 int __fastcall MediaRuntime::initialize_stream(LPSTR filename,
                                                MediaRuntime *runtime) {
   MediaRuntime &r = *runtime;
-  *reinterpret_cast<volatile LONG *>(&r.stream_eof) = 0;
+  r.stream_eof = 0;
   DWORD signature;  // not initialized by the original; a short read keeps stack garbage
   if ((r.descriptor->flags & 0x00080000) == 0)
     r.descriptor->stream = mmioOpenA(filename, 0, 0);
