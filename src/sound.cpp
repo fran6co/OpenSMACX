@@ -1811,7 +1811,7 @@ Purpose: Load the wave from in-memory data. Refuses (0xC) when a device is
          the data pointer. The wave's own slot 0x70 composes the attribute
          mask, which is sent to the created provider through its typed setter;
          attach follows that setter.
-// ORIGINAL: 0x004C6BB0 ?dyna_load@Wave@@QAEHPAD@Z 0x004C6BB0-0x004C6C1A
+// ORIGINAL: 0x004C6BB0 ?dyna_load@Wave@@QAEHPAD@Z 0x004C6BB0-0x004C6C1A BYTE_EXACT
 // size      106 bytes
 // prototype int (__thiscall ?dyna_load@Wave@@QAEHPAD@Z)(Wave* this, int8*)
 // callers   0   call targets   0
@@ -1839,25 +1839,26 @@ Return Value: 0 on success, 0xC with a device already wrapped, 1 with a dead
 Status: Complete
 */
 int Wave::dyna_load(char *fname) {
-    // THE WORK IN THE POSITIVE BRANCH, and the guard clause on `created` - the
-    // two shapes reload and set_fname record. The image's 0xC exit is a shared
-    // tail at the END of the body, not an inline return at the top, and its
-    // `created` is spilled to the dead parameter slot at [ebp+8] and re-read
-    // for the final return - which only happens when the value stays live past
-    // the block instead of being returned early on the nonzero path.
+    // The guarded creation wrapper (0x004C6000) is expanded here; its dead
+    // hook answers 1. The already-wrapped answer 0xC is the else arm of the
+    // creation itself, and the attribute hand-over tests the one result
+    // afterwards: VC6 threads the 1 and 0xC paths past that test into their
+    // own returns, keeps the real epilogue behind the hand-over and queues
+    // the 0xC arm after it, which is the image's layout. Returning 0xC or
+    // the creation result directly swaps the registers of `this` and of
+    // the device slot.
+    int created;
     if (device_ == nullptr) {
-        if (!WaveDeviceReleaseGuard) {
-            return 1;
-        }
-        const int created = (SoundXOrdinal1CreateSound())(&device_, fname, 1);
-        if (created == 0) {
-            device_->set_attrib(
-                static_cast<unsigned long>(get_attrib()));
-            attach();
-        }
-        return created;
+        created = sub_4c6000(&device_, fname, 1);
+    } else {
+        created = 0xC;
     }
-    return 0xC;
+    if (created == 0) {
+        device_->set_attrib(
+            static_cast<unsigned long>(get_attrib()));
+        attach();
+    }
+    return created;
 }
 
 
@@ -5129,24 +5130,22 @@ int VoiceTx::unload() {
     return 0;
 }
 
-// ORIGINAL: 0x004C8F70 ?init@VoiceTx@@QAEHKPAXK@Z 0x004C8F70-0x004C9007 FILE
+// ORIGINAL: 0x004C8F70 ?init@VoiceTx@@QAEHKPAXK@Z 0x004C8F70-0x004C9007 FILE BYTE_EXACT
 // symbol    ?init@VoiceTx@@UAEHKPAXK@Z
 int VoiceTx::init(unsigned long size, void *context, unsigned long flags) {
+    // Both guarded wrappers (0x004C6000 create, 0x004C6030 delete) are
+    // expanded here. A failed creation is not returned early: the one
+    // result gates the device block and reaches the single final return,
+    // which is what puts `this` in edi and the result in ebx (guide 3.2).
     int result = 0;
     unload();
     if (device_ == 0) {
-        if (WaveDeviceReleaseGuard == 0) {
-            return 1;
-        }
-        result = SoundXOrdinal1CreateSound()(&device_, 0, 7);
-        if (result != 0) return result;
+        result = sub_4c6000(&device_, 0, 7);
     }
-    if (device_ != 0) {
+    if (result == 0 && device_ != 0) {
         result = static_cast<VoiceTxDeviceInterface *>(device_)->init(size, context, flags);
         if (result != 0 && result != 0x10) {
-            if (WaveDeviceReleaseGuard != 0) {
-                SoundXOrdinal2DeleteSound()(device_);
-            }
+            sub_4c6030(device_);
             device_ = 0;
         }
         if (device_ != 0) {

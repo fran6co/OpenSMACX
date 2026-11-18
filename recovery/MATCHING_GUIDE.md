@@ -788,6 +788,9 @@ raw field access where the original used inline accessors.
   `is_visible` or `screen_to_client`.
 - **A hand-written block equals a same-TU function body.** Call the function;
   write it inline before its callers if the image expands it there.
+  The same holds for small guard wrappers the image keeps one out-of-line
+  copy of (`if (guard == 0) return 1; return hook(args);`, 0x004C6000 and
+  0x004C6030): call the wrapper at every site that repeats the guard.
 - **An inlined accessor skews register choice through the whole function.**
   Read or write the member directly (the netwin fix covered 10 functions).
 - **A register rotation runs through the whole function.** Look for a lost
@@ -832,6 +835,16 @@ raw field access where the original used inline accessors.
   function referenced first. Reorder the earlier references instead: reading
   the field into a local before the first use of the count flipped both loop
   bounds of ProdPicker::on_scrolled (`mov eax,[count]; mov edx,[first]`).
+- **`this` and a member-address temporary in each other's registers**
+  (image `this` in esi and `&member` in edi, ours the reverse), often with
+  the real epilogue behind the wrong block. The function returned through
+  one result variable and one final `return result;`: each arm assigns it
+  (`if (m == 0) r = create(&m); else r = 0xC;`), later work is gated on it
+  (`if (r == 0) {...}`, `if (r == 0 && m != 0) {...}`) and nothing returns
+  early. VC6 threads the constant arms past the gate into their own
+  returns, so the code looks as if it had early returns. Any `return 0xC;`
+  or `if (r != 0) return r;` swaps the two registers (Wave::dyna_load
+  0x004C6BB0, VoiceTx::init 0x004C8F70).
 - **Statement vs conditional expression.** `d = a - b; if (d < 0) d = b - a;`
   and `d = (a - b < 0) ? b - a : a - b;` emit the same instructions with two
   registers swapped (on_scrolled's distance). Try the other form on a
