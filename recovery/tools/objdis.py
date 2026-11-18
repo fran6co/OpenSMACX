@@ -4,7 +4,7 @@ S=os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0,S); import fe
 unit,srcp,addr=sys.argv[1],sys.argv[2],int(sys.argv[3],16)
 unit=unit if unit.startswith('src/') else 'src/'+unit
-c,err=fe.compile_unit(unit,srcp,os.environ.get('FE_PFX_BASE','22'))
+c,err=fe.compile_unit(unit,srcp,os.environ.get('FE_PFX_BASE','33'))
 t=open(srcp,encoding='latin-1').read(); sym,lo,hi=fe.ident(t,addr)
 s=c.function(sym); sec=c.sections[s.section-1]
 for i in fe.md.disasm(sec.data,0):
