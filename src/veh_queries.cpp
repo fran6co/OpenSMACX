@@ -1260,12 +1260,16 @@ Purpose: Check if the land unit inside an air transport can disembark. The trans
 Return Value: Can the specified unit disembark? true/false
 Status: Complete
 */
-// Every caller in the image calls this out of line.
-#pragma auto_inline(off)
+// Every caller in the image calls this out of line, the three above in this
+// unit too. The triads are open-coded, as the image has no get_triad: the
+// written-out body is over VC6's per-callee auto-inline size cap, which counts
+// the callee's own source and not the inline helpers it calls.
 BOOL __cdecl veh_jail(int veh_id) {
-    if (get_triad(veh_id) == TRIAD_LAND && Vehs[veh_id].order == ORDER_SENTRY_BOARD) {
+    if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == TRIAD_LAND
+        && Vehs[veh_id].order == ORDER_SENTRY_BOARD) {
         int transport_id = Vehs[veh_id].waypoint_x[0]; // sentry/board stores the transport id
-        if (transport_id >= 0 && get_triad(transport_id) == TRIAD_AIR
+        if (transport_id >= 0
+            && Chassis[VehPrototypes[Vehs[transport_id].proto_id].chassis_id].triad == TRIAD_AIR
             && base_who(Vehs[veh_id].x, Vehs[veh_id].y) <= 0
             && !(bit_at(Vehs[veh_id].x, Vehs[veh_id].y) & BIT_AIRBASE)) {
             return true;
@@ -1273,7 +1277,6 @@ BOOL __cdecl veh_jail(int veh_id) {
     }
     return false;
 }
-#pragma auto_inline(on)
 
 
 /*
