@@ -65,3 +65,10 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   our source. A signed use of a 32-bit field is strong evidence against `unsigned` (int op uint is
   unsigned); an unsigned use can come from the other operand, so read U as a majority. Byte/word fields are
   judged by their extension only. `--uses` prints every attributed use of the `--field` selection.
+- `analysis/loopscan.py [unit ...] [--addr A] [--src ALT] [--struct] [--tagged] [--json F]` loop-form census
+  (MATCHING_GUIDE 2.4) over the non-exact functions (35 s tree-wide): tags the source loops that hand-write
+  what VC6's induction-variable optimiser derives (`ptr+ctr` pointer stepped beside a counter, `clause+=`
+  coordinate stepped in the for-clause, `down` trip-count down-counter, `rebind` `T *p = &A[i]` in the body,
+  `memloop` memset/memcpy-shaped body, sibling counter names) and prints both sides' loop tests
+  (`dec/jne`, `reg<&G jl` linear-subscript pointer, `reg<K jl` index/offset, `[m]<K` counter in a slot,
+  signed/unsigned) with the frame size. STRUCT = frame or loop-test multiset differs; those sort first.
