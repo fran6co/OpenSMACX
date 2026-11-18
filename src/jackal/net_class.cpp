@@ -1813,29 +1813,15 @@ int Net::init(_GUID *guid, int option_a, int option_b) {
     field_6D8_ = 0xC8;
     // VoiceTx::init, slot 0x84 of the table at voice_tx_'s front.
     voice_tx_.init(0x1000, 0, 0);
-    // Preserve the pinned store sequence for every 0x58-byte record:
-    // dwords +0/+4/+8, byte +0x14 (flags), then dword +0x10 (stamp).
-    // field_C_ and all name bytes are untouched by this initialization.
-    uintptr_t player_cursor = reinterpret_cast<uintptr_t>(
-        &players_[0].field_4_);
-    int count = 0x10;
-    do {
-        *reinterpret_cast<uint32_t *>(
-            player_cursor - offsetof(NetPlayer, field_4_)
-                + offsetof(NetPlayer, field_0_)) = 0;
-        *reinterpret_cast<uint32_t *>(player_cursor) = 0;
-        *reinterpret_cast<uint32_t *>(
-            player_cursor - offsetof(NetPlayer, field_4_)
-                + offsetof(NetPlayer, field_8_)) = 0;
-        *reinterpret_cast<uint8_t *>(
-            player_cursor - offsetof(NetPlayer, field_4_)
-                + offsetof(NetPlayer, flags_14_)) = 0;
-        *reinterpret_cast<uint32_t *>(
-            player_cursor - offsetof(NetPlayer, field_4_)
-                + offsetof(NetPlayer, stamp_10_)) = 0;
-        player_cursor += sizeof(NetPlayer);
-        --count;
-    } while (count != 0);
+    // Store order per 0x58-byte record: +0/+4/+8, byte +0x14 (flags), then
+    // +0x10 (stamp). field_C_ and the name bytes are untouched.
+    for (int i = 0; i < 16; i++) {
+        players_[i].field_0_ = 0;
+        players_[i].field_4_ = 0;
+        players_[i].field_8_ = 0;
+        players_[i].flags_14_ = 0;
+        players_[i].stamp_10_ = 0;
+    }
     thread_info_.owner_ = this;
     thread_info_.buffer_ = buffer_6E0_;
     thread_info_.direct_play_ = NetDirectPlay;
