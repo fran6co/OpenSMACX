@@ -6901,7 +6901,7 @@ int Win::minimize() {
 // RECT conversions called the way the image shows, VC6 here still expands
 // one level deeper than the image in the first section and the "before"
 // rect (the image calls 0x005ED2D0 from screen_to_nonclient's body and
-// 0x005ED240/0x005ED3F0 from the rect helpers' bodies). 14-24 calls placed
+// 0x005ED240/0x005ED3F0 from the rect helpers' bodies). 16-26 calls placed
 // after the "before" rect give the image's decisions there; the original
 // spending is not identified.
 static int do_tracking_budget_probe(int x) {
@@ -6956,6 +6956,12 @@ void Win::do_tracking(int x, int y) {
     do_tracking_budget_probe(0);
     do_tracking_budget_probe(0);
     do_tracking_budget_probe(0);
+    do_tracking_budget_probe(0);
+    do_tracking_budget_probe(0);
+    do_tracking_budget_probe(0);
+    do_tracking_budget_probe(0);
+    do_tracking_budget_probe(0);
+    do_tracking_budget_probe(0);
     // ---- 0x005F77CD-0x005F77DF: dispatch on drag-handle id ----
     switch (WinTrackingMode) {
     case 2:
@@ -6990,9 +6996,8 @@ void Win::do_tracking(int x, int y) {
         if (dx != 0) {
             client_rect_.right += dx;
             WinTrackingX += dx;
-            int width = client_rect_.right - client_rect_.left;
-            if (width < minW) {
-                int deficit = minW - width;
+            if (client_rect_.right - client_rect_.left < minW) {
+                int deficit = client_rect_.left - client_rect_.right + minW;
                 client_rect_.right += deficit;
                 WinTrackingX += deficit;
             }
@@ -7019,9 +7024,8 @@ void Win::do_tracking(int x, int y) {
         if (dy != 0) {
             client_rect_.bottom += dy;
             WinTrackingY += dy;
-            int height = client_rect_.bottom - client_rect_.top;
-            if (height < minH) {
-                int deficit = minH - height;
+            if (client_rect_.bottom - client_rect_.top < minH) {
+                int deficit = client_rect_.top - client_rect_.bottom + minH;
                 client_rect_.bottom += deficit;
                 WinTrackingY += deficit;
             }
@@ -7032,15 +7036,13 @@ void Win::do_tracking(int x, int y) {
         break;
 
     case 0xd: {
-        int right = client_rect_.right;
-        int bottom = client_rect_.bottom;
         client_rect_.left += dx;
         client_rect_.top += dy;
-        if (bottom - client_rect_.top < minH) {
-            client_rect_.top = bottom - minH;
+        if (client_rect_.bottom - client_rect_.top < minH) {
+            client_rect_.top = client_rect_.bottom - minH;
         }
-        if (right - client_rect_.left < minW) {
-            client_rect_.left = right - minW;
+        if (client_rect_.right - client_rect_.left < minW) {
+            client_rect_.left = client_rect_.right - minW;
         }
         int w = client_rect_.right - client_rect_.left;
         int h = client_rect_.bottom - client_rect_.top;
@@ -7055,9 +7057,8 @@ void Win::do_tracking(int x, int y) {
         if (client_rect_.bottom - client_rect_.top < minH) {
             client_rect_.top = client_rect_.bottom - minH;
         }
-        int width = client_rect_.right - client_rect_.left;
-        if (width < minW) {
-            int deficit = minW - width;
+        if (client_rect_.right - client_rect_.left < minW) {
+            int deficit = client_rect_.left - client_rect_.right + minW;
             client_rect_.right += deficit;
             WinTrackingX += deficit;
         }
@@ -7071,9 +7072,8 @@ void Win::do_tracking(int x, int y) {
         client_rect_.left += dx;
         client_rect_.bottom += dy;
         WinTrackingY += dy;
-        int height = client_rect_.bottom - client_rect_.top;
-        if (height < minH) {
-            int deficit = minH - height;
+        if (client_rect_.bottom - client_rect_.top < minH) {
+            int deficit = client_rect_.top - client_rect_.bottom + minH;
             client_rect_.bottom += deficit;
             WinTrackingY += deficit;
         }
@@ -7092,15 +7092,13 @@ void Win::do_tracking(int x, int y) {
         client_rect_.bottom += dy;
         WinTrackingX += dx;
         WinTrackingY += dy;
-        int height = client_rect_.bottom - client_rect_.top;
-        if (height < minH) {
-            int deficit = minH - height;
+        if (client_rect_.bottom - client_rect_.top < minH) {
+            int deficit = client_rect_.top - client_rect_.bottom + minH;
             client_rect_.bottom += deficit;
             WinTrackingY += deficit;
         }
-        int width = client_rect_.right - client_rect_.left;
-        if (width < minW) {
-            int deficit = minW - width;
+        if (client_rect_.right - client_rect_.left < minW) {
+            int deficit = client_rect_.left - client_rect_.right + minW;
             client_rect_.right += deficit;
             WinTrackingX += deficit;
         }
