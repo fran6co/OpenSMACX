@@ -318,7 +318,7 @@ void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
                 ? 8
                 : static_cast<int>(message_faction_data->record_count_);
         int size = count * 399 + 0x194;
-        faction_records_ = static_cast<NetWinFactionRecord *>(mem_get(size));
+        faction_records_ = static_cast<NetWinFactionTable *>(mem_get(size));
         memcpy(faction_records_, &message_faction_data->record_type_, size);
         return;
     }
@@ -348,12 +348,12 @@ void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
     int record_size = (record_count >= 8 ? record_count : 8) * 399 + 0x194;
 
     faction_records_ =
-        static_cast<NetWinFactionRecord *>(mem_get(record_size));
+        static_cast<NetWinFactionTable *>(mem_get(record_size));
     faction_records_copy_ =
-        static_cast<NetWinFactionRecord *>(mem_get(record_size));
+        static_cast<NetWinFactionTable *>(mem_get(record_size));
 
-    faction_records_[0].record_count_ = static_cast<uint8_t>(record_count);
-    faction_records_[0].record_type_ = 7;
+    faction_records_->record_count_ = static_cast<uint8_t>(record_count);
+    faction_records_->record_type_ = 7;
     if (text_open(AlphaxFileID, NetWinSectionFactions) != 0) {
         return;
     }
@@ -362,73 +362,71 @@ void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
     int name_index = 0;
     int record_index;
     for (record_index = 0; record_index < 7; ++record_index) {
-        faction_records_[record_index].active_ = 1;
+        faction_records_->records_[record_index].active_ = 1;
         text_get();
-        strcpy(faction_records_[name_index++].filename_, text_item());
+        strcpy(faction_records_->records_[name_index++].filename_, text_item());
     }
     if (text_open(AlphaxFileID, NetWinSectionNewFactions) != 0) {
         return;
     }
     for (record_index = 0; record_index < 7; ++record_index) {
-        faction_records_[record_index].active_ = 1;
+        faction_records_->records_[record_index].active_ = 1;
         text_get();
-        strcpy(faction_records_[name_index++].filename_, text_item());
+        strcpy(faction_records_->records_[name_index++].filename_, text_item());
     }
     if (text_open(AlphaxFileID, NetWinSectionCustom) != 0) {
         return;
     }
     for (record_index = 0; record_index < custom_count; ++record_index) {
-        faction_records_[record_index].active_ = 1;
+        faction_records_->records_[record_index].active_ = 1;
         text_get();
-        strcpy(faction_records_[name_index++].filename_, text_item());
+        strcpy(faction_records_->records_[name_index++].filename_, text_item());
     }
 
     // Each record is then re-read from its own file - the faction name IS the
     // file id - to pull the leader titles, the noun and the colour pixel.
     Player player;
     for (record_index = 0; record_index < record_count; ++record_index) {
-        const int opened = text_open(faction_records_[record_index].filename_,
-                                     faction_records_[record_index].filename_);
+        const int opened = text_open(faction_records_->records_[record_index].filename_,
+                                     faction_records_->records_[record_index].filename_);
         if (opened != 0) {
             return;
         }
-        faction_records_[record_index].active_ = 1;
+        faction_records_->records_[record_index].active_ = 1;
         // The image stores text_open's zero result as the owner dword.
-        faction_records_[record_index].owner_ = opened;
+        faction_records_->records_[record_index].owner_ = opened;
 
         text_get();
         text_item();
         text_item();
-        strncpy(faction_records_[record_index].leader_name_, text_item(), 0x18);
-        faction_records_[record_index].leader_name_[0x17] = 0;
+        strncpy(faction_records_->records_[record_index].leader_name_, text_item(), 0x18);
+        faction_records_->records_[record_index].leader_name_[0x17] = 0;
 
         StringTemp[0] = 0;
-        netwin_pcx_name(faction_records_[record_index].filename_);
+        netwin_pcx_name(faction_records_->records_[record_index].filename_);
 
         if (buffer.load_pcx(StringTemp, 0, 0xa, 0xec) != 0) {
             buffer.load_pcx(NetWinDefaultPcx, 0, 0xa, 0xec);
         }
-        faction_records_[record_index].color_ =
+        faction_records_->records_[record_index].color_ =
             static_cast<uint8_t>(buffer.get_pixel(4, 0x2f3));
 
         // read_faction fills the Player from the faction's own file; its
         // strings are copied back into the record, and the leader-gender
         // flag crosses the 0x190-byte row stride.
-        strcpy(player.filename, faction_records_[record_index].filename_);
-        strcpy(player.search_key, faction_records_[record_index].filename_);
+        strcpy(player.filename, faction_records_->records_[record_index].filename_);
+        strcpy(player.search_key, faction_records_->records_[record_index].filename_);
         read_faction(&player, 0);
-        strcpy(faction_records_[record_index].leader_name_, player.name_leader);
-        strcpy(faction_records_[record_index].formal_faction_name_,
+        strcpy(faction_records_->records_[record_index].leader_name_, player.name_leader);
+        strcpy(faction_records_->records_[record_index].formal_faction_name_,
                player.formal_name_faction);
-        strcpy(faction_records_[record_index].noun_faction_, player.noun_faction);
-        strcpy(faction_records_[record_index].adjective_faction_,
+        strcpy(faction_records_->records_[record_index].noun_faction_, player.noun_faction);
+        strcpy(faction_records_->records_[record_index].adjective_faction_,
                player.adj_name_faction);
-        strcpy(faction_records_[record_index].leader_title_, player.title_leader);
-        // +0x112 and +0x192 lie past the recovered fields (the latter in the
-        // next row); keep them in the allocation's byte domain.
-        strcpy(reinterpret_cast<char *>(faction_records_[record_index].unresolved_112_),
+        strcpy(faction_records_->records_[record_index].leader_title_, player.title_leader);
+        strcpy(faction_records_->records_[record_index].adjective_leader_,
                player.adj_leader);
-        reinterpret_cast<unsigned char *>(&faction_records_[record_index])[0x192] =
+        faction_records_->records_[record_index].leader_female_ =
             static_cast<unsigned char>(player.is_leader_female);
     }
 
@@ -461,8 +459,7 @@ int NetWin::get_player_color(int faction) {
     if (faction_records_ == 0) {
         return 0;
     }
-    const NetWinFactionRecord *const records =
-        static_cast<const NetWinFactionRecord *>(faction_records_);
+    const NetWinFactionTable *const records = faction_records_;
     int color = NetWinLobbyRows.rows_[faction].faction_or_color_;
     if (color == -1) {
         return 0xFF;
@@ -480,10 +477,10 @@ int NetWin::get_player_color(int faction) {
     }
     // A unique colour returns its own record directly (native 0x0047B3E5).
     if (taken == faction) {
-        return records[color].color_;
+        return records->records_[color].color_;
     }
     int index = 0;
-    int record_count = records[0].record_count_;
+    int record_count = records->record_count_;
     if (record_count > 0) {
         int bound = NetDaemonNet.player_count_ + 1;
         for (;;) {
@@ -507,7 +504,7 @@ int NetWin::get_player_color(int faction) {
             }
         }
     }
-    return records[index].color_;
+    return records->records_[index].color_;
 }
 
 /*
@@ -625,20 +622,16 @@ void NetWin::fill_player(NetWinLobbyRowView lobby_row, int slot) {
                StringTable.get(Labels.strings_ptr[0xFE4 / 4]));
         return;
     }
-    strcpy(lobby_row.leader_name(), faction_records_[slot].leader_name_);
+    strcpy(lobby_row.leader_name(), faction_records_->records_[slot].leader_name_);
     strcpy(lobby_row.formal_faction_name(),
-           faction_records_[slot].formal_faction_name_);
-    strcpy(lobby_row.noun_faction(), faction_records_[slot].noun_faction_);
+           faction_records_->records_[slot].formal_faction_name_);
+    strcpy(lobby_row.noun_faction(), faction_records_->records_[slot].noun_faction_);
     strcpy(lobby_row.adjective_faction(),
-           faction_records_[slot].adjective_faction_);
-    strcpy(lobby_row.leader_title(), faction_records_[slot].leader_title_);
+           faction_records_->records_[slot].adjective_faction_);
+    strcpy(lobby_row.leader_title(), faction_records_->records_[slot].leader_title_);
     strcpy(lobby_row.adjective_leader(),
-           reinterpret_cast<const char *>(
-               reinterpret_cast<const unsigned char *>(faction_records_)
-               + slot * 0x190 + 0x112));
-    lobby_row.set_tail_0(
-        reinterpret_cast<const unsigned char *>(faction_records_)
-            [slot * 0x190 + 0x192]);
+           faction_records_->records_[slot].adjective_leader_);
+    lobby_row.set_tail_0(faction_records_->records_[slot].leader_female_);
 }
 
 // 0x0090E778 / 0x0090E79C - the two words beside the seven records
@@ -714,10 +707,10 @@ void NetWin::prepare_game() {
 
     unsigned int used_mask = 0;
     unsigned int hidden_mask = 0;
-    const int faction_count = faction_records_[0].record_count_;
+    const int faction_count = faction_records_->record_count_;
     int i;
     for (i = 0; i < faction_count; i++) {
-        if (faction_records_[i].active_ == 0) {
+        if (faction_records_->records_[i].active_ == 0) {
             const int bit = 1 << i;
             used_mask |= bit;
         }
@@ -731,7 +724,7 @@ void NetWin::prepare_game() {
     }
     int needed = 0;
     for (i = 0; i < faction_count; i++) {
-        if (faction_records_[i].active_ != 0 && !(used_mask & (1u << i))) {
+        if (faction_records_->records_[i].active_ != 0 && !(used_mask & (1u << i))) {
             needed++;
         }
     }
@@ -770,7 +763,7 @@ void NetWin::prepare_game() {
     if (NetWinSessionData.fields_.mode_ != 0 && NetWinSessionData.fields_.mode_ != 1) {
         if (NetDaemonNet.local_player_id_ != NetDaemonNet.host_player_id_) {
             for (i = 1; i < 8; i++) {
-                strcpy(Players[i].filename, faction_records_[i].filename_);
+                strcpy(Players[i].filename, faction_records_->records_[i].filename_);
                 load_faction_art(i);
             }
         }
@@ -791,9 +784,9 @@ void NetWin::prepare_game() {
         }
         for (i = 1; i < 8; i++) {
             strcpy(Players[i].filename,
-                   faction_records_[NetWinLobbyRows.rows_[i].faction_or_color_].filename_);
+                   faction_records_->records_[NetWinLobbyRows.rows_[i].faction_or_color_].filename_);
             strcpy(Players[i].search_key,
-                   faction_records_[NetWinLobbyRows.rows_[i].faction_or_color_].filename_);
+                   faction_records_->records_[NetWinLobbyRows.rows_[i].faction_or_color_].filename_);
             read_faction(i);
             compute_faction_modifiers(i);
         }
@@ -1214,7 +1207,7 @@ void NetWin::draw_session_info() {
         // Factions with a password that no connected player holds.
         int unclaimed = 0;
         for (int faction = 0; faction < 8; ++faction) {
-            const uint32_t owned = faction_records_[faction].owner_;
+            const uint32_t owned = faction_records_->records_[faction].owner_;
             if (owned != 0) {
                 int player;
                 for (player = 0; player < NetDaemonNet.player_count_; ++player) {
@@ -1290,7 +1283,7 @@ void NetWin::draw_player_names() {
 
     for (int row = 0; row < 7; ++row) {
         if (NetWinSessionData.fields_.mode_ == 3
-            && row >= faction_records_[0].record_type_) {
+            && row >= faction_records_->record_type_) {
             break;
         }
         RECT *colour_rect = &setup_rects_[row + 27];
@@ -1312,7 +1305,7 @@ void NetWin::draw_player_names() {
         int locked = 0;
         if (NetWinSessionData.fields_.mode_ == 2 || NetWinSessionData.fields_.mode_ == 3) {
             if (mode != -1) {
-                const unsigned long owned = faction_records_[mode].owner_;
+                const unsigned long owned = faction_records_->records_[mode].owner_;
                 if (owned != 0 && owned != NetWinLobbyRows.rows_[row + 1].owner_) {
                     locked = 1;
                 }
@@ -1604,7 +1597,7 @@ void NetWin::draw_diffs() {
     spot_.kill_type(4);
     for (int index = 0; index < 7; ++index) {
         if (NetWinSessionData.fields_.mode_ == 3
-            && index >= faction_records_[0].record_type_) {
+            && index >= faction_records_->record_type_) {
             break;
         }
         RECT *rect = &setup_rects_[20 + index];
@@ -1669,7 +1662,7 @@ void NetWin::draw_factions() {
     // Native 47FEF2 walks rows_[index + 1].noun_faction_ (0x90DD59).
     for (int index = 0; index < 7; ++index) {
         if (NetWinSessionData.fields_.mode_ == 3
-            && index >= faction_records_[0].record_type_) {
+            && index >= faction_records_->record_type_) {
             break;
         }
         Buffer::box_sprite(&setup_rects_[13 + index], &InterfaceBoxStyles[0]);
@@ -1700,8 +1693,8 @@ void NetWin::draw_factions() {
         // Native 47FFF3/480043: both name branches skip or join one shared
         // ": <noun>" append.
         if (mode != -1) {
-            strcat(StringTemp, faction_records_[mode].noun_faction_);
-            if (strcmp(faction_records_[mode].noun_faction_,
+            strcat(StringTemp, faction_records_->records_[mode].noun_faction_);
+            if (strcmp(faction_records_->records_[mode].noun_faction_,
                        NetWinLobbyRows.rows_[index + 1].noun_faction_) == 0) {
                 goto named;
             }
@@ -1996,11 +1989,10 @@ void NetWin::pick_faction(int slot) {
     char *label = StringTable.get(Labels.strings_ptr[0xFE4 / 4]);
     pop_menu.dialogs().item(label, 0);
 
-    const int count = static_cast<NetWinFactionRecord *>(
-        faction_records_)[0].record_count_;
+    const int count = faction_records_->record_count_;
     for (int faction = 0; faction < count; ++faction) {
         // Native 47C618 reloads the allocation, but not the captured count.
-        if (faction_records_[faction].active_ == 0) {
+        if (faction_records_->records_[faction].active_ == 0) {
             continue;
         }
         if (NetWinSessionData.fields_.mode_ == 3 || NetWinSessionData.fields_.mode_ == 2) {
@@ -2015,7 +2007,7 @@ void NetWin::pick_faction(int slot) {
                 continue;
             }
         }
-        char *noun = faction_records_[faction].noun_faction_;
+        char *noun = faction_records_->records_[faction].noun_faction_;
         pop_menu.dialogs().item(noun, faction + 1);
     }
 
@@ -2123,9 +2115,9 @@ void NetWin::pick_map() {
     const int choice = pick_answer_at(*this, menu, &x, &y);
     if (choice >= 0) {
         if (choice == 0) {
-            const NetWinFactionRecord *const source_records =
-                static_cast<const NetWinFactionRecord *>(faction_records_copy_);
-            const int record_count = source_records[0].record_count_;
+            const NetWinFactionTable *const source_records =
+                faction_records_copy_;
+            const int record_count = source_records->record_count_;
             const unsigned int record_bytes =
                 static_cast<unsigned int>(record_count) * 399u + 0x194u;
             memcpy(faction_records_, faction_records_copy_, record_bytes);
@@ -2162,11 +2154,10 @@ void NetWin::pick_map() {
 
             GameDataLoadRequest = 0;
             if (field_7728_ != 0) {
-                NetWinFactionRecord *const records =
-                    static_cast<NetWinFactionRecord *>(faction_records_);
+                NetWinFactionTable *const records = faction_records_;
                 // Native 47D7AD..47D7D0 copies all eight owners, slot 0 too.
                 for (int faction = 0; faction < 8; ++faction) {
-                    records[faction].owner_ = PlayersData[faction].unk_102;
+                    records->records_[faction].owner_ = PlayersData[faction].unk_102;
                 }
 
                 NetWinSessionOptions.fields_.option_4_ = static_cast<uint8_t>(
@@ -2200,12 +2191,11 @@ void NetWin::pick_map() {
         }
 
         if (field_7728_ != 0 && field_7728_ != 1) {
-            NetWinFactionRecord *const records =
-                static_cast<NetWinFactionRecord *>(faction_records_);
-            records[0].record_count_ = 8;
-            records[0].record_type_ = static_cast<uint8_t>(
+            NetWinFactionTable *const records = faction_records_;
+            records->record_count_ = 8;
+            records->record_type_ = static_cast<uint8_t>(
                 bit_count(static_cast<int>(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & 0xFFFE)));
-            records[0].active_ = 0;
+            records->records_[0].active_ = 0;
 
             // Native 47D8FE: the lobby row cursor advances only for live
             // factions, packing them into the leading rows.
@@ -2213,33 +2203,32 @@ void NetWin::pick_map() {
             for (int player_slot = 1; player_slot < 8; ++player_slot) {
                 const Player &player = Players[player_slot];
                 if ((NetWinSessionOptions.fields_.status_ & (1 << player_slot)) == 0) {
-                    faction_records_[player_slot].active_ = 0;
+                    faction_records_->records_[player_slot].active_ = 0;
                     continue;
                 }
 
-                faction_records_[player_slot].owner_ = PlayersData[player_slot].unk_102;
-                faction_records_[player_slot].active_ = 1;
-                strcpy(faction_records_[player_slot].filename_, player.filename);
+                faction_records_->records_[player_slot].owner_ = PlayersData[player_slot].unk_102;
+                faction_records_->records_[player_slot].active_ = 1;
+                strcpy(faction_records_->records_[player_slot].filename_, player.filename);
                 // Native 47D959/47D96A copies the leader name twice.
-                strcpy(faction_records_[player_slot].leader_name_, player.name_leader);
-                strcpy(faction_records_[player_slot].leader_name_, player.name_leader);
-                strcpy(faction_records_[player_slot].formal_faction_name_, player.formal_name_faction);
-                strcpy(faction_records_[player_slot].noun_faction_, player.noun_faction);
-                strcpy(faction_records_[player_slot].adjective_faction_, player.adj_name_faction);
-                strcpy(faction_records_[player_slot].leader_title_, player.title_leader);
-                strcpy(reinterpret_cast<char *>(
-                           faction_records_[player_slot].unresolved_112_),
+                strcpy(faction_records_->records_[player_slot].leader_name_, player.name_leader);
+                strcpy(faction_records_->records_[player_slot].leader_name_, player.name_leader);
+                strcpy(faction_records_->records_[player_slot].formal_faction_name_, player.formal_name_faction);
+                strcpy(faction_records_->records_[player_slot].noun_faction_, player.noun_faction);
+                strcpy(faction_records_->records_[player_slot].adjective_faction_, player.adj_name_faction);
+                strcpy(faction_records_->records_[player_slot].leader_title_, player.title_leader);
+                strcpy(faction_records_->records_[player_slot].adjective_leader_,
                        player.adj_leader);
-                faction_records_[player_slot + 1].field_2_[0] =
+                faction_records_->records_[player_slot].leader_female_ =
                     static_cast<uint8_t>(player.is_leader_female);
 
                 StringTemp[0] = 0;
-                strcat(StringTemp, faction_records_[player_slot].filename_);
+                strcat(StringTemp, faction_records_->records_[player_slot].filename_);
                 strcat(StringTemp, ".pcx");
                 if (faction_art.load_pcx(StringTemp, 0, 0x0A, 0xEC) != 0) {
                     faction_art.load_pcx("faction.pcx", 0, 0x0A, 0xEC);
                 }
-                faction_records_[player_slot].color_ =
+                faction_records_->records_[player_slot].color_ =
                     static_cast<uint8_t>(faction_art.get_pixel(4, 0x2F3));
 
                 row->owner_ = 0;
@@ -2257,11 +2246,10 @@ void NetWin::pick_map() {
             send_faction_data(-1);
         } else {
             if (initial_mode != 0 && initial_mode != 1) {
-                const NetWinFactionRecord *const source_records =
-                    static_cast<const NetWinFactionRecord *>(
-                        faction_records_copy_);
+                const NetWinFactionTable *const source_records =
+                    faction_records_copy_;
                 const unsigned int record_bytes =
-                    static_cast<unsigned int>(source_records[0].record_count_) *
+                    static_cast<unsigned int>(source_records->record_count_) *
                         399u +
                     0x194u;
                 memcpy(faction_records_, faction_records_copy_, record_bytes);
@@ -3092,7 +3080,7 @@ int NetWin::pick_pass(int payload) {
     }
 
     if (faction_mode) {
-        const uint32_t expected_hash = faction_records_[faction].owner_;
+        const uint32_t expected_hash = faction_records_->records_[faction].owner_;
         // Native 47CB5A..47CB64 bypasses the row read for a zero hash.
         if (expected_hash == 0 ||
             expected_hash == NetWinLobbyRows.rows_[slot].owner_) {
@@ -3109,7 +3097,7 @@ int NetWin::pick_pass(int payload) {
         uint32_t verify_hash = 0;
         const char *prompt;
         if (faction_mode) {
-            parse_says(0, faction_records_[faction].noun_faction_, -1, -1);
+            parse_says(0, faction_records_->records_[faction].noun_faction_, -1, -1);
             prompt = "ENTERPASSWORDFACTION";
         } else {
             prompt = "ENTERPASSWORDNEW";
@@ -3138,7 +3126,7 @@ int NetWin::pick_pass(int payload) {
         if (faction_mode) {
         check:
             // Native 47CD43..47CD4C checks the live post-modal allocation.
-            if (faction_records_[faction].owner_ != entered_hash) {
+            if (faction_records_->records_[faction].owner_ != entered_hash) {
                 X_pop("BADPASSWORD", nullptr);
                 return 0;
             }
@@ -3409,7 +3397,7 @@ void NetWin::on_button_clicked(int clicked_id) {
         const int transport = NetWinSessionData.fields_.mode_;
         if (transport == 2 || transport == 3) {
             for (int faction = 1; faction < 8; ++faction) {
-                if (faction_records_[faction].owner_ != 0) {
+                if (faction_records_->records_[faction].owner_ != 0) {
                     int scan;
                     for (scan = 1; scan < NetDaemonNet.player_count_ + 1; ++scan) {
                         if (NetWinLobbyRows.rows_[scan].faction_or_color_ ==
@@ -3418,7 +3406,7 @@ void NetWin::on_button_clicked(int clicked_id) {
                         }
                     }
                     if (scan == NetDaemonNet.player_count_ + 1 ||
-                        faction_records_[faction].owner_ !=
+                        faction_records_->records_[faction].owner_ !=
                             NetWinLobbyRows.rows_[scan].owner_) {
                         X_pop(ScriptPopupFile,
                                             "PASSWORDSNOTVALIDATED", 0);
@@ -3503,7 +3491,7 @@ void __cdecl send_faction_data(int slot_id) {
         if (NetWinDialog.faction_records_ == 0) {
             NetWinDialog.setup_faction_data(0);
         }
-        const uint8_t count = NetWinDialog.faction_records_[0].record_count_;
+        const uint8_t count = NetWinDialog.faction_records_->record_count_;
         const int records = count * 133;
         const uint32_t size = records * 3 + 0x1A4;
         char *frame = static_cast<char *>(mem_get(size));

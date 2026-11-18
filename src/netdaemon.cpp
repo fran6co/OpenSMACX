@@ -4165,7 +4165,7 @@ move_veh_ack:
                 if (lobby_slot != -1) {
                     int lobby_choice = message[0x13];
                     if (lobby_choice != -1) {
-                        uint32_t owner = NetWinDialog.faction_records_[lobby_choice].owner_;
+                        uint32_t owner = NetWinDialog.faction_records_->records_[lobby_choice].owner_;
                         if (owner != 0 && owner != *(uint32_t *)(message + 0x188)) {
                             break;
                         }

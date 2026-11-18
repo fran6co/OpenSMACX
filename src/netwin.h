@@ -409,47 +409,42 @@ struct MessageFactionData {
   uint8_t field_12_[1];    // 0x12 - the rest of the cloned block
 };
 
-// The heap clone advances by 0x190 bytes per faction. Its first record also
-// carries the table type/count; subsequent records use the same prefix for
-// their own data. setup_faction_data writes +4, +8 and +9, while
-// get_player_color reads the first count and each record's colour byte.
+// The heap faction table: a four-byte header (type, count) and then one
+// 0x190-byte record per faction. setup_faction_data allocates
+// count * 399 + 0x194 bytes, 0x194 being this struct with its one declared
+// record; every record access in the image is table + 4 + n * 0x190 + field.
+// The leader adjective (record + 0x10E) runs to the female flag at + 0x18E.
 struct NetWinFactionRecord {
-  uint8_t record_type_;      // +0; table type in record zero
-  uint8_t record_count_;     // +1; table count in record zero
-  uint8_t field_2_[2];      // +2..+3
-  uint32_t owner_;           // +4
-  uint8_t color_;            // +8
-  uint8_t active_;           // +9
-  char filename_[0x18]; // +0xA..+0x21, text section/file id
-  char leader_name_[0x18]; // +0x22..+0x39, copied by setup_faction_data
-  char formal_faction_name_[0x28]; // +0x3A..+0x61, copied by setup_faction_data
-  char noun_faction_[0x18]; // +0x62..+0x79, copied from Player::noun_faction
-  char adjective_faction_[0x80]; // +0x7A..+0xF9
-  char leader_title_[0x18]; // +0xFA..+0x111
-  uint8_t unresolved_112_[0x7E]; // +0x112..+0x18F
+  uint32_t owner_;                  // +0
+  uint8_t color_;                   // +4
+  uint8_t active_;                  // +5
+  char filename_[0x18];             // +6, text section/file id
+  char leader_name_[0x18];          // +0x1E
+  char formal_faction_name_[0x28];  // +0x36
+  char noun_faction_[0x18];         // +0x5E
+  char adjective_faction_[0x80];    // +0x76
+  char leader_title_[0x18];         // +0xF6
+  char adjective_leader_[0x80];     // +0x10E
+  uint8_t leader_female_;           // +0x18E
+};
+struct NetWinFactionTable {
+  uint8_t record_type_;   // +0
+  uint8_t record_count_;  // +1
+  uint8_t field_2_[2];    // +2..+3
+  NetWinFactionRecord records_[1];  // +4, record_count_ of them
 };
 static_assert(sizeof(NetWinFactionRecord) == 0x190,
               "faction record stride");
-static_assert(offsetof(NetWinFactionRecord, owner_) == 4,
-              "faction owner offset");
-static_assert(offsetof(NetWinFactionRecord, color_) == 8,
-              "faction colour offset");
-static_assert(offsetof(NetWinFactionRecord, filename_) == 0xA,
+static_assert(sizeof(NetWinFactionTable) == 0x194,
+              "faction table header plus one record");
+static_assert(offsetof(NetWinFactionTable, records_) == 4,
+              "faction records follow the four-byte header");
+static_assert(offsetof(NetWinFactionRecord, filename_) == 6,
               "faction filename offset");
-static_assert(offsetof(NetWinFactionRecord, leader_name_) == 0x22,
-              "faction leader name offset");
-static_assert(offsetof(NetWinFactionRecord, formal_faction_name_) == 0x3A,
-              "faction formal name offset");
-static_assert(offsetof(NetWinFactionRecord, noun_faction_) == 0x62,
-              "faction noun offset");
-static_assert(offsetof(NetWinFactionRecord, adjective_faction_) == 0x7A,
-              "faction adjective offset");
-static_assert(offsetof(NetWinFactionRecord, leader_title_) == 0xFA,
+static_assert(offsetof(NetWinFactionRecord, leader_title_) == 0xF6,
               "faction leader title offset");
-static_assert(offsetof(NetWinFactionRecord, unresolved_112_) == 0x112,
-              "faction unresolved suffix offset");
-static_assert(sizeof(((NetWinFactionRecord *)0)->noun_faction_) == 0x18,
-              "faction noun extent");
+static_assert(offsetof(NetWinFactionRecord, leader_female_) == 0x18E,
+              "faction leader gender offset");
 
  /*
   * NetWin class
@@ -560,8 +555,8 @@ class NetWin : public GraphicWin {
   // setup_faction_data (0x00481FD0) allocates with mem_get and frees again.
   // The second is a byte-for-byte copy of the first; their pointers retain
   // the same four-byte object extent as the former unnamed dwords.
-  NetWinFactionRecord *faction_records_;      // 0x772C
-  NetWinFactionRecord *faction_records_copy_; // 0x7730
+  NetWinFactionTable *faction_records_;      // 0x772C
+  NetWinFactionTable *faction_records_copy_; // 0x7730
 
   // 0x00481FD0. Rebuilds the two faction-record blocks at 0x772C/0x7730 -
   // one cloned from the network message the caller hands in, one rebuilt
