@@ -4429,33 +4429,7 @@ void Console::give_hints() {
                     continue;
                 }
 
-                // The primary map window is assumed to exist, as in the image;
-                // MapWinTable[0] is reloaded in each test group.
-                if ((map_loc(x, y)->climate & ~0x1F) > 0x60 &&
-                    y - (map_loc(x, y)->climate >> 5) + 3 <
-                        MapWinTable[0]->field_1DDA8_ + 2) {
-                    continue;
-                }
-                if (y < MapWinTable[0]->field_1DDA8_ + 2 ||
-                    y >= MapWinTable[0]->field_1DDD8_ + MapWinTable[0]->field_1DDD0_ +
-                             MapWinTable[0]->field_1DDA8_ - 2) {
-                    continue;
-                }
-                int screen_x = x;
-                if (!flat) {
-                    if (screen_x < MapWinTable[0]->field_1DDA4_ + 2) {
-                        screen_x = MapLongitudeBounds + x;
-                    }
-                    if (screen_x >= MapWinTable[0]->field_1DDD4_ +
-                                        MapWinTable[0]->field_1DDCC_ +
-                                        MapWinTable[0]->field_1DDA4_ - 2) {
-                        screen_x -= MapLongitudeBounds;
-                    }
-                }
-                if (screen_x < MapWinTable[0]->field_1DDA4_ + 2 ||
-                    screen_x >= MapWinTable[0]->field_1DDD4_ +
-                                    MapWinTable[0]->field_1DDCC_ +
-                                    MapWinTable[0]->field_1DDA4_ - 2) {
+                if (!MapWinTable[0]->tile_in_view(x, y, 2)) {
                     continue;
                 }
                 // Both region bytes are read after the viewport checks.
@@ -4681,28 +4655,7 @@ void Console::give_hints() {
                 const int y = Bases[base_id].y;
                 int x = Bases[base_id].x;
                 MapWin *map_window = MapWinTable[0];
-                if (on_map(x, y) && (map_loc(x, y)->climate & ~0x1F) > 0x60 &&
-                    y - (map_loc(x, y)->climate >> 5) + 3 <
-                        map_window->field_1DDA8_ + 2) {
-                    continue;
-                }
-                if (y < map_window->field_1DDA8_ + 2 ||
-                    y >= map_window->field_1DDD8_ + map_window->field_1DDD0_ +
-                             map_window->field_1DDA8_ - 2) {
-                    continue;
-                }
-                if (!(MapIsFlat & 1)) {
-                    if (x < map_window->field_1DDA4_ + 2) {
-                        x += MapLongitudeBounds;
-                    }
-                    if (x >= map_window->field_1DDD4_ + map_window->field_1DDCC_ +
-                                 map_window->field_1DDA4_ - 2) {
-                        x -= MapLongitudeBounds;
-                    }
-                }
-                if (x < map_window->field_1DDA4_ + 2 ||
-                    x >= map_window->field_1DDD4_ + map_window->field_1DDCC_ +
-                             map_window->field_1DDA4_ - 2) {
+                if (!map_window->tile_in_view(x, y, 2)) {
                     continue;
                 }
                 if (tut_check2(0x100) != 0 ||

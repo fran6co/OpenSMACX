@@ -253,29 +253,12 @@ int TutWin::tut_map(const char *text, int x_coord, int y_coord, int pixel_x,
     screen_y += map_window->field_1DDC0_;
 
     if (arrow_x >= 0) {
-        int adjusted_arrow_x = arrow_x;
-        if (arrow_y >= map_window->field_1DDA8_ &&
-            arrow_y < map_window->field_1DDD8_ + map_window->field_1DDD0_ +
-                          map_window->field_1DDA8_) {
-            if ((MapIsFlat & 1) == 0) {
-                if (adjusted_arrow_x < map_window->field_1DDA4_) {
-                    adjusted_arrow_x = MapLongitudeBounds + arrow_x;
-                }
-                if (adjusted_arrow_x >= map_window->field_1DDD4_ +
-                        map_window->field_1DDCC_ + map_window->field_1DDA4_) {
-                    adjusted_arrow_x -= MapLongitudeBounds;
-                }
-            }
-            if (adjusted_arrow_x >= map_window->field_1DDA4_ &&
-                adjusted_arrow_x < map_window->field_1DDD4_ +
-                                      map_window->field_1DDCC_ +
-                                      map_window->field_1DDA4_) {
-                map_window->tile_to_pixel(arrow_x, arrow_y, &arrow_pixel_x,
-                                              &arrow_pixel_y);
-                map_window = MapWinTable[0];
-                arrow_pixel_x += map_window->field_1DDBC_;
-                arrow_pixel_y += map_window->field_1DDC0_;
-            }
+        if (map_window->tile_in_view(arrow_x, arrow_y, 0)) {
+            map_window->tile_to_pixel(arrow_x, arrow_y, &arrow_pixel_x,
+                                          &arrow_pixel_y);
+            map_window = MapWinTable[0];
+            arrow_pixel_x += map_window->field_1DDBC_;
+            arrow_pixel_y += map_window->field_1DDC0_;
         }
     }
 

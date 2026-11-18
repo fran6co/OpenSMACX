@@ -7616,26 +7616,8 @@ void __cdecl draw_cursor() {
                 // MapWin::draw_cursor, expanded: the image inlines it here.
                 int y = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
                 int x = ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
-                int adjusted_x = x;
-                if (y >= window->field_1DDA8_ &&
-                    y < window->field_1DDD8_ + window->field_1DDD0_ +
-                            window->field_1DDA8_) {
-                    if ((MapIsFlat & 1) == 0) {
-                        if (x < window->field_1DDA4_) {
-                            adjusted_x = MapLongitudeBounds + x;
-                        }
-                        if (adjusted_x >= window->field_1DDD4_ +
-                                              window->field_1DDCC_ +
-                                              window->field_1DDA4_) {
-                            adjusted_x -= MapLongitudeBounds;
-                        }
-                    }
-                    if (adjusted_x >= window->field_1DDA4_ &&
-                        adjusted_x < window->field_1DDD4_ +
-                                         window->field_1DDCC_ +
-                                         window->field_1DDA4_) {
-                        window->draw_radius(x, y, 0, 2);
-                    }
+                if (window->tile_in_view(x, y, 0)) {
+                    window->draw_radius(x, y, 0, 2);
                 }
             }
         }
