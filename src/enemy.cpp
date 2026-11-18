@@ -5439,24 +5439,19 @@ L_56ed87:
         air_result = air_power(veh_id, home_dist, zoc_moved, &x, &y);
         if (air_result == -5)
             goto L_578d9c;
-        if (air_result != -1)
-            goto L_56ee8f;
-        if (Vehs[veh_id].x == Vehs[veh_id].waypoint_x[0] && Vehs[veh_id].y == Vehs[veh_id].waypoint_y[0]) {
-            stay = 1;
+        if (air_result == -1) {
+            if (Vehs[veh_id].x == Vehs[veh_id].waypoint_x[0] && Vehs[veh_id].y == Vehs[veh_id].waypoint_y[0]) {
+                stay = 1;
+                goto L_57707f;
+            }
+            owner = anything_at(Vehs[veh_id].waypoint_x[0], Vehs[veh_id].waypoint_y[0]);
+            // BUG(original): with nothing at the waypoint, owner == -1 still indexes the treaty row.
+            if ((owner >= 0 && owner == faction_id)
+                || (PlayersData[faction_id].diplo_treaties[owner] & DTREATY_PACT)) {
+                goto L_578f46;
+            }
             goto L_57707f;
-        }
-        // falls through to 0x56ee44 (chunk 2): air_result == -1, not at the waypoint.
-        // ---- chunk 2: 0x56ee44-0x570969 ----
-        // (continuation of `if (air_result == -1)`: unit is not on its waypoint)
-        owner = anything_at(Vehs[veh_id].waypoint_x[0], Vehs[veh_id].waypoint_y[0]);
-        // BUG(original): with nothing at the waypoint, owner == -1 still indexes the treaty row.
-        if ((owner >= 0 && owner == faction_id)
-            || (PlayersData[faction_id].diplo_treaties[owner] & DTREATY_PACT)) {
-            goto L_578f46;
-        }
-        goto L_57707f;
-L_56ee8f:
-        if (air_result == -2) {
+        } else if (air_result == -2) {
             if (Vehs[veh_id].x != Vehs[veh_id].waypoint_x[0]
                 || Vehs[veh_id].y != Vehs[veh_id].waypoint_y[0]) {
                 goto L_578f46;
