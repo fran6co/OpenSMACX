@@ -111,6 +111,21 @@ line and shares one surface-release tail across the failure paths.
 // RECOVERY_OBJECT: v1 0x009B39E4 _BufferCopyRemainder
 static int BufferCopyRemainder;
 
+// WORKAROUND(inline): dead /Ob2 budget probes, not recovered code; constant
+// arguments fold them away. With them the two closing free_data calls stay
+// out of line as in the image (0x005E0781, 0x005E078B) while the five
+// failure-path copies still expand (found by a probe hill-climb scored on
+// the image diff); the original's spend is not identified. What remains is
+// block sharing: the image keeps one surface-release tail for all five arms
+// after the last arm and a separate no-surface copy in arms 1 to 3.
+static inline int buffer_copy_budget_probe1(int x) { if (x == 0) x = 1; return x; }
+static inline int buffer_copy_budget_probe4(int x) {
+    if (x == 0) x = 1;
+    if (x == 1) x = 4;
+    if (x == 2) x = 7;
+    if (x == 3) x = 10;
+    return x;
+}
 int Buffer::copy(Buffer *buffer, int xCoord, int yCoord, int wx, int wy,
                  int width, int height) {
     if (dib_bits_ == nullptr && surface_ == nullptr) {
@@ -308,6 +323,8 @@ int Buffer::copy(Buffer *buffer, int xCoord, int yCoord, int wx, int wy,
         if (destination == 0) {
             return 3;
         }
+        buffer_copy_budget_probe4(5);  // WORKAROUND(inline): see buffer_copy_budget_probe1
+        buffer_copy_budget_probe4(5);  // WORKAROUND(inline): see buffer_copy_budget_probe1
         if (source == 0) {
             buffer->free_data(1);
             return 3;
