@@ -562,7 +562,6 @@ void WorldWin::draw_box() {
 // ORIGINAL: 0x004C3EC0 ?on_redraw@WorldWin@@QAEXXZ 0x004C3EC0-0x004C4227 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x004C3EC0-0x004C4227 disassembly via recover inspect; src/recovered/units/004c3ec0.cpp seed has no implementation."], "reason": "Recover WorldWin redraw control flow through owned MapWin and Buffer subobjects while recording base-only overlay as an unfinished dependency."}
 // symbol    ?on_redraw@WorldWin@@UAEXXZ
-#pragma optimize("y", on)
 void WorldWin::on_redraw() {
     int scale = zoom_scale(50, -14);
     const int cell_size = ((scale + 1) / 4) * 4;
@@ -625,7 +624,6 @@ void WorldWin::on_redraw() {
     draw_box();
     field_239BC_ = 0;
 }
-#pragma optimize("", on)
 
 // ORIGINAL: 0x004C4230 ?UNK2@WorldWin@@QAEXH@Z 0x004C4230-0x004C43F0 BYTE_EXACT
 // symbol    ?refresh_world_map@WorldWin@@QAEXH@Z

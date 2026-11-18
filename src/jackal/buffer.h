@@ -879,15 +879,14 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
 
 static_assert(sizeof(Buffer) == 0x588, "Buffer layout must match the original executable");
 
-// The emitted copy at 0x0047A720 keeps an ebp frame.
-#pragma optimize("y", off)
+// The emitted copy at 0x0047A720 keeps an ebp frame: multiwin.cpp, an /Oy-
+// unit, emits it.
 inline int Buffer::write_cent_l(LPSTR text, RECT *rect) {
     if (text == 0) {
         return 0;
     }
     return write_cent_l(text, rect, static_cast<int>(strlen(text)));
 }
-#pragma optimize("", on)
 
 // 0x00696C58 / 0x00696C60 / 0x00696C68, and 0x00696C70 / 0x00696C78 behind
 // them - the per-language graphics-file extensions `load_tga` and `load_bmp`
