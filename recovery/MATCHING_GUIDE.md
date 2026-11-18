@@ -916,6 +916,12 @@ raw field access where the original used inline accessors.
   under `/Oy` the `xor` form appears exactly when ebp is also taken as a
   fourth register; member types (unsigned, int, pointer, enum, float) and
   chained assignment do not matter.
+  Also ruled out on the standalone copy: 28 further switches (debug
+  info, RTTI, string pooling, calling convention, packing, /Os is the only
+  one that changes it and it breaks nine other functions), the SP3 back
+  end (same `xor`), loop spellings, block scoping, volatile members, a
+  64-bit member, `memset`. VC5 does emit the immediates but keeps `this`
+  in eax, unlike the image, and cannot compile the unit's headers.
 - **Statement vs conditional expression.** `d = a - b; if (d < 0) d = b - a;`
   and `d = (a - b < 0) ? b - a : a - b;` emit the same instructions with two
   registers swapped (on_scrolled's distance). Try the other form on a
