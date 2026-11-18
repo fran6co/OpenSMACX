@@ -1030,16 +1030,21 @@ void __cdecl caviar_build_projection_tables() {
     CaviarKernelProjectionWindow.current_views_.tail_.scratch_e8_ = (float)PROJ_CELL(21).y_;
     CaviarKernelProjectionWindow.current_views_.tail_.scratch_a04_ = (float)PROJ_CELL(21).z_;
 
-    // 6409E3..640A38: indexed walk (strength-reduced to ecx/esi cursors plus
-    // edi = -&cells[0] for the [edi+ecx+K] accesses), counted down from 26.
-    for (i = 0; i < 0x1A; i++) {
-        CaviarOutputMessageWindow.projection_rows_[i].depth_offset_ =
-            (PROJ_CELL(i).y_ >> 8) * (int32_t)vox_setup_copy_.depth_row_step_ +
-            (PROJ_CELL(i).x_ >> 8);
-        CaviarOutputMessageWindow.projection_rows_[i].packed_x_ =
-            (PROJ_CELL(i).x_ << 24) + (PROJ_CELL(i).y_ & 0xff);
-        CaviarOutputMessageWindow.projection_rows_[i].packed_z_ =
-            (((uint32_t)PROJ_CELL(i).z_ >> 16) + (PROJ_CELL(i).z_ << 16)) & 0xff00ffff;
+    // 6409E3..640A38: a cell cursor (ecx, with edi = -&cells[0] for the
+    // [edi+ecx+K] accesses) and a row cursor (esi), with the 26-trip counter
+    // kept as a dec/jne slot. Of the 64 pointer/index mixes of the six
+    // accesses only both cursors give the counter; an index loop lets VC6
+    // test one shared byte offset instead (cmp eax, 0x1A0).
+    CaviarProjectionCell *cell = &PROJ_CELL(0);
+    CaviarProjectionOutputRowCandidate *row = CaviarOutputMessageWindow.projection_rows_;
+    for (i = 0; i < 0x1A; i++, cell++, row++) {
+        (*row).depth_offset_ =
+            ((*cell).y_ >> 8) * (int32_t)vox_setup_copy_.depth_row_step_ +
+            ((*cell).x_ >> 8);
+        (*row).packed_x_ =
+            ((*cell).x_ << 24) + ((*cell).y_ & 0xff);
+        (*row).packed_z_ =
+            (((uint32_t)(*cell).z_ >> 16) + ((*cell).z_ << 16)) & 0xff00ffff;
     }
 }
 #undef PROJ_CELL
