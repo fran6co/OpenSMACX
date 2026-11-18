@@ -2450,6 +2450,25 @@ Constant registers (measured with standalone probes, 2026-11-18)
   hoisted by VC6 into one store, 62 rows -> exact); a zero register the image
   lacks is one store too many or lost register competition
   (InfoWin::setup_text: 67 immediate zero stores, no register).
+- `recovery/tools/analysis/constreg.py` lists every non-exact function where
+  the image and ours disagree about a constant register (IMG_ONLY, OURS_ONLY,
+  START, REG) with the stretch's uses and both sides' immediate counts.
+- Clears that VC6 copies into each return's epilogue are one source store. A
+  function whose image repeats `mov [flag],0` before several `ret`s and has
+  no zero register had one closing clear reached by fallthrough; spelling
+  `flag = 0; return;` in each arm adds stores and buys the register
+  (Net::check_polling: four spelled clears -> ebx zero from the prologue,
+  one closing clear in an if / else if / else -> exact).
+- The count belongs to the stretch where a register is free. In interlude a
+  probe store of -1 before the loops gave edi = -1 from the prologue; the same
+  store after the loops gave the image's esi = -1 tail.
+- EH state stores count: `mov [ebp-4],-1` at each return is a store of -1.
+  Once a register holds -1 the last teardown writes `mov [ebp-4],reg`, which
+  no longer equals the other returns' immediate stores, so the return tails
+  stay unmerged (interlude: four immediate state stores plus one from esi).
+- Not counted in MapWin::init trials: the same store twice in a row, a zero
+  store followed by a ternary assignment to the same member, pushes (16
+  added) and memory compares (8 added). A live extra store did count there.
 - VC6 evaluates `a + b - c` as `(b - c) + a` whatever the spelling; a
   `(pos + pos) - neg` tree in an image is not a plain three-term chain.
 - `if (c) { …; return 0; } …; return 0;` folds a final
