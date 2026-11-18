@@ -73,34 +73,6 @@ typedef signed char    int8_t;
 typedef          __int64 int64_t;
 typedef unsigned __int64 uint64_t;
 
-namespace std {
-using ::fflush;
-using ::fprintf;
-using ::printf;
-using ::sprintf;
-
-using ::memcmp;
-using ::memcpy;
-using ::memmove;
-using ::memset;
-
-using ::strcmp;
-using ::strstr;
-using ::strcpy;
-using ::strlen;
-using ::strncmp;
-
-using ::free;
-using ::malloc;
-using ::realloc;
-
-using ::rand;
-using ::srand;
-
-using ::abs;
-using ::sqrt;
-}  // namespace std
-
 /*
  * Types the VC6 SDK predates. DWORD_PTR is pointer-sized and this is a
  * 32-bit target, so `unsigned long` is exact rather than approximate.
@@ -221,13 +193,6 @@ inline int _snprintf_s(char *destination, size_t size, size_t, const char *forma
 #ifndef INVALID_SET_FILE_POINTER
 #define INVALID_SET_FILE_POINTER ((unsigned long)-1)
 #endif
-
-/*
- * `snprintf` is C99. VC6 has the same function under the reserved spelling,
- * with one difference the callers here do not depend on: it returns -1 rather
- * than the required length when the result does not fit.
- */
-#define snprintf _snprintf
 
 /* ARRAYSIZE arrived in a later Platform SDK than the one VC6 shipped with. */
 #ifndef ARRAYSIZE
