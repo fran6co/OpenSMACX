@@ -341,10 +341,9 @@ void AlphaSave::hide() {
 // restore its historical extent through the source identity above.
 void AlphaSave::on_selected(int) {
     ListBox &list = file_win_.list_box();
-    StringList &items = list.item_list_;
-    items.seek_pos(list.selected_position_);
-    file_win_.edit_box().set_text(items.head_ != 0
-        ? items.current_->string_payload()->text : 0);
+    list.item_list_.seek_pos(list.selected_position_);
+    file_win_.edit_box().set_text(list.item_list_.head_ != 0
+        ? list.item_list_.current_->string_payload()->text : 0);
     file_win_.edit_box().select_all();
     file_win_.edit_box().redraw();
 }
