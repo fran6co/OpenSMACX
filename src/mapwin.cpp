@@ -766,11 +766,7 @@ void MapWin::editor(int tile_x, int tile_y, int erase) {
         // increment at 46BE55 and jumps back to it.
         while (1) {
             if (index >= limit) break;
-            int x = tile_x + RadiusOffsetX[index];
-            if ((MapIsFlat & 1) == 0) {
-                if (x < 0) x += MapLongitudeBounds;
-                else if (x >= MapLongitudeBounds) x -= MapLongitudeBounds;
-            }
+            int x = wrap_map_x(tile_x + RadiusOffsetX[index]);
             const int y = tile_y + RadiusOffsetY[index];
             if (y >= 0 && y < MapLatitudeBounds && x >= 0 && x < MapLongitudeBounds) {
                 switch (MapEditorPaintId) {
@@ -2451,17 +2447,6 @@ void MapWin::on_mouse_move(int pixel_x, int pixel_y) {
     }
 }
 
-static int map_radius_wrap_x(int x) {
-    if ((MapIsFlat & 1) == 0) {
-        if (x < 0) {
-            x = mapwin_dest_add(x, MapLongitudeBounds);
-        } else if (x >= MapLongitudeBounds) {
-            x = mapwin_dest_sub(x, MapLongitudeBounds);
-        }
-    }
-    return x;
-}
-
 static bool map_radius_valid(int x, int y) {
     return y >= 0 && y < MapLatitudeBounds &&
            x >= 0 && x < MapLongitudeBounds;
@@ -2639,17 +2624,7 @@ void MapWin::draw_vehicles(int x, int y, int radius, int faction) {
             half_width += 2;
         }
         for (int column = -half_width; column <= half_width; column += 2) {
-            const int column_x = x + column;
-            int tile_x;
-            if (MapIsFlat & 1) {
-                tile_x = column_x;
-            } else if (column_x < 0) {
-                tile_x = column_x + MapLongitudeBounds;
-            } else if (column_x >= MapLongitudeBounds) {
-                tile_x = column_x - MapLongitudeBounds;
-            } else {
-                tile_x = column_x;
-            }
+            const int tile_x = wrap_map_x(x + column);
             if (tile_y >= 0 && tile_y < MapLatitudeBounds && tile_x >= 0 &&
                 tile_x < MapLongitudeBounds) {
                 if (tile_in_view(tile_x, tile_y, 0)) {
@@ -4263,14 +4238,7 @@ LAB_0046441f:
     if (local_30 != 0 && local_18 == 0 && local_70 == 0) {
         a5 = 0;  // the image's dead-slot mask
         for (int k = 0; k < 4; k++) {
-            int nx = RiverStepX[k] + a7;
-            if ((MapIsFlat & 1) == 0) {
-                if (nx < 0) {
-                    nx += MapLongitudeBounds;
-                } else if (nx >= MapLongitudeBounds) {
-                    nx -= MapLongitudeBounds;
-                }
-            }
+            int nx = wrap_map_x(RiverStepX[k] + a7);
             const int ny = RiverStepY[k] + a8;
             if (ny >= 0 && ny < MapLatitudeBounds && nx >= 0 &&
                 nx < MapLongitudeBounds) {
@@ -4301,14 +4269,7 @@ LAB_0046441f:
             (a6 & 1) != 0 && local_70 == 0) {
             uVar12 = 0;  // esi in the image
             for (int k = 0; k < 4; k++) {
-                int nx = RiverStepX[k] + a7;
-                if ((MapIsFlat & 1) == 0) {
-                    if (nx < 0) {
-                        nx += MapLongitudeBounds;
-                    } else if (nx >= MapLongitudeBounds) {
-                        nx -= MapLongitudeBounds;
-                    }
-                }
+                int nx = wrap_map_x(RiverStepX[k] + a7);
                 const int ny = RiverStepY[k] + a8;
                 if (ny >= 0 && ny < MapLatitudeBounds && nx >= 0 &&
                     nx < MapLongitudeBounds &&
@@ -4375,14 +4336,7 @@ LAB_0046441f:
             // after whose_territory, then cache the center's region (+3).
             local_c0 = map_tiles()[MapLongitude * a8 + local_14].region;
             for (int k = 0; k < 8; k++) {
-                iVar5 = VehMoveDeltaX[k] + a7;
-                if ((MapIsFlat & 1) == 0) {
-                    if (iVar5 < 0) {
-                        iVar5 = MapLongitudeBounds + iVar5;
-                    } else if (iVar5 >= MapLongitudeBounds) {
-                        iVar5 = iVar5 - MapLongitudeBounds;
-                    }
-                }
+                iVar5 = wrap_map_x(VehMoveDeltaX[k] + a7);
                 iVar19 = VehMoveDeltaY[k] + a8;
                 if (iVar19 >= 0 && iVar19 < MapLatitudeBounds && iVar5 >= 0 &&
                     iVar5 < MapLongitudeBounds &&
@@ -4481,14 +4435,7 @@ LAB_0046441f:
         local_18 == 0) {
         uVar12 = 0;  // ebx in the image
         for (int k = 0; k < 4; k++) {
-            int nx = RiverStepX[k] + a7;
-            if ((MapIsFlat & 1) == 0) {
-                if (nx < 0) {
-                    nx += MapLongitudeBounds;
-                } else if (nx >= MapLongitudeBounds) {
-                    nx -= MapLongitudeBounds;
-                }
-            }
+            int nx = wrap_map_x(RiverStepX[k] + a7);
             const int ny = RiverStepY[k] + a8;
             if (ny >= 0 && ny < MapLatitudeBounds && nx >= 0 &&
                 nx < MapLongitudeBounds &&
@@ -5849,15 +5796,8 @@ void MapWin::draw_legend() {
         // Reloaded at the loop head in the original; drawing callbacks may
         // run before the next direction reads the cursor history again.
         const int cursor = ConsoleGlobal.cursor_history_index_;
-        int tile_x = ConsoleGlobal.cursor_history_x_[cursor] +
-                     VehMoveDeltaX[direction];
-        if ((MapIsFlat & 1) == 0) {
-            if (tile_x < 0) {
-                tile_x += MapLongitudeBounds;
-            } else if (tile_x >= MapLongitudeBounds) {
-                tile_x -= MapLongitudeBounds;
-            }
-        }
+        int tile_x = wrap_map_x(ConsoleGlobal.cursor_history_x_[cursor] +
+                                VehMoveDeltaX[direction]);
         const int tile_y = ConsoleGlobal.cursor_history_y_[cursor] +
                            VehMoveDeltaY[direction];
         if (tile_y < 0 || tile_y >= MapLatitudeBounds || tile_x < 0 ||
