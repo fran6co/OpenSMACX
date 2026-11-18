@@ -43,7 +43,6 @@
 // RECOVERY_BINDING: v1 {"evidence": ["pinned image sha256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; retained spans [['0x00611930', '0x0061193E']]", "mapped constructor ??0SpriteBox@@QAE@H@Z directly stores table 0x00670724", "pinned primary slot 0x8 contains original thunk VA 0x00611930", "original tail target 0x00611380 is ?on_redraw@SpriteBox@@UAEXXZ; current emitted thunk preserves receiver arithmetic and relocates to that same method", "source owner emits ?on_redraw@SpriteBox@@$4PPPPPPPM@KBI@AEXXZ in ??_7SpriteBox@@6B@ at the proven view/slot", "identity, original extent, claims and lessons retained; fresh native compile/binding review required"], "reason": "Bind the original ordinary virtual-adjustor identity to the compiler-emitted class/view adjustor selected by both the pinned constructor-installed vftable slot and exact-current owner-object relocation. The original wrapper, slot and receiver view remain distinct; no thunk body is hand-authored."}
 // symbol    ?on_redraw@SpriteBox@@$4PPPPPPPM@KBI@AEXXZ
 // kind      game
-#define SPOT_ADD_RECT_INLINE  // stand-in: see Spot::add(int, int, RECT *) in spot.h
 #include "stdafx.h"
 // current_entry() is expanded in SpriteBox's label walk (next_text).
 #define STRINGSTRUCT_CURRENT_ENTRY_INLINE

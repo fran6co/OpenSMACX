@@ -473,7 +473,11 @@ void MultiWin::draw(int draw_type) {
     rect.bottom = row_bottom;
     sprite5_.draw(this, 0, y);
     set_clip(&rect);
-    spot_.add(3, 2, &rect);
+    // WORKAROUND(noinline): the image calls the header inline here
+    // (0x0047947E), a site draw's /Ob2 budget refused; every other caller
+    // in the tree expands it. A non-const member pointer keeps the call.
+    int (Spot::*add_rect)(int, int, RECT *) = &Spot::add;
+    (spot_.*add_rect)(3, 2, &rect);
 
     // The seed reads PlayerData +0x2054: the local faction's time bonus.
     const int time_bonus = PlayersData[ConsoleGlobal.faction_id_].time_bonus_count;
@@ -1041,16 +1045,7 @@ void MultiWin::init() {
 // ORIGINAL: 0x0047A6F0 ?UNK3@MultiWin@@QAEHHHPAURECT@@@Z 0x0047A6F0-0x0047A71E BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:rectangle-owner-overloads", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x47a6f0", "seed:src/recovered/0047a6f0.cpp all identity/spans/claims and parsed discoveries retained; seed retirement requires fresh verification.", "source:src/multiwin.h caller receiver evidence and existing genuine Spot/Buffer interfaces."], "reason": "Recover genuine existing-owner rectangle convenience method. Original catalog MultiWin attribution is contradicted by unchanged receiver forwarding and typed Spot/Buffer callee evidence; original identity and historical obligations are retained, not renamed or newly banked."}
 // symbol    ?add@Spot@@QAEHHHPAUtagRECT@@@Z
-// WORKAROUND(noinline): MultiWin::draw calls 0x0047A6F0, a copy in the run
-// after ??_GMultiWin with write_cent_l's (buffer.h): a header inline (spot.h)
-// that draw's /Ob2 budget refused, expanded by every other caller. Visible
-// here, /Ob2 expands it into draw.
-#pragma auto_inline(off)
-int Spot::add(int position, int type, RECT *rect) {
-    return add(position, type, rect->left, rect->top, rect->right - rect->left, 
-        rect->bottom - rect->top);
-}
-#pragma auto_inline(on)
+// The body is spot.h's header inline; draw's call below emits this copy.
 
 // ORIGINAL: 0x0047A720 ?UNK4@MultiWin@@QAEHPADPAURECT@@@Z 0x0047A720-0x0047A752 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:rectangle-owner-overloads", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x47a720", "seed:src/recovered/units/0047a720.cpp all identity/spans/claims and parsed discoveries retained; seed retirement requires fresh verification.", "source:src/multiwin.h caller receiver evidence and existing genuine Spot/Buffer interfaces."], "reason": "Recover genuine existing-owner rectangle convenience method. Original catalog MultiWin attribution is contradicted by unchanged receiver forwarding and typed Spot/Buffer callee evidence; original identity and historical obligations are retained, not renamed or newly banked."}

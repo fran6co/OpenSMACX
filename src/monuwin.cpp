@@ -16,7 +16,6 @@
 // StringStruct::StringStruct (0x00401000) out of line (0x00473733), giving
 // its three-state EH layout; see stringstruct.h.
 #define STRINGSTRUCT_CTOR_OUT_OF_LINE
-#define SPOT_ADD_RECT_INLINE  // stand-in: see Spot::add(int, int, RECT *) in spot.h
 #include "monuwin.h"
 #include "rectangle_operations.h"
 #include "console.h"
