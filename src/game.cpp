@@ -2199,37 +2199,35 @@ int __cdecl game_data(FILE *file, int write_mode) {
                     static_cast<unsigned int>(GameDataStateStorage.fields_.vehicle_current_count_) * 0x30u) == 0)
                 return 1;
             for (int vehicle_id = 0; vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle_id) {
-                const GameDataLegacyVehRow &row = old_rows[vehicle_id];
-                Veh &vehicle = Vehs[vehicle_id];
-                vehicle.x = row.x;
-                vehicle.state = row.state;
-                vehicle.y = row.y;
-                vehicle.flags = row.flags;
-                vehicle.proto_id = row.proto_id;
-                vehicle.faction_id = row.faction_id;
-                vehicle.dmg_incurred = row.dmg_incurred;
-                vehicle.order = row.order;
-                vehicle.waypoint_count = row.waypoint_count;
-                vehicle.patrol_current_point = row.patrol_current_point;
-                vehicle.year_end_lurking = 0;
-                vehicle.unk_1 = 0;
+                Vehs[vehicle_id].x = old_rows[vehicle_id].x;
+                Vehs[vehicle_id].y = old_rows[vehicle_id].y;
+                Vehs[vehicle_id].state = old_rows[vehicle_id].state;
+                Vehs[vehicle_id].flags = old_rows[vehicle_id].flags;
+                Vehs[vehicle_id].proto_id = old_rows[vehicle_id].proto_id;
+                Vehs[vehicle_id].faction_id = old_rows[vehicle_id].faction_id;
+                Vehs[vehicle_id].dmg_incurred = old_rows[vehicle_id].dmg_incurred;
+                Vehs[vehicle_id].order = old_rows[vehicle_id].order;
+                Vehs[vehicle_id].waypoint_count = old_rows[vehicle_id].waypoint_count;
+                Vehs[vehicle_id].patrol_current_point = old_rows[vehicle_id].patrol_current_point;
+                Vehs[vehicle_id].year_end_lurking = 0;
+                Vehs[vehicle_id].unk_1 = 0;
                 for (int point = 0; point < 4; ++point) {
-                    vehicle.waypoint_x[point] = row.waypoint_x[point];
-                    vehicle.waypoint_y[point] = row.waypoint_y[point];
+                    Vehs[vehicle_id].waypoint_x[point] = old_rows[vehicle_id].waypoint_x[point];
+                    Vehs[vehicle_id].waypoint_y[point] = old_rows[vehicle_id].waypoint_y[point];
                 }
-                vehicle.morale = row.morale;
-                vehicle.terraforming_turns = row.terraforming_turns;
-                vehicle.order_auto_type = row.order_auto_type;
-                vehicle.visibility = row.visibility;
-                vehicle.moves_expended = row.moves_expended;
-                vehicle.facing = row.facing;
-                vehicle.unk_6 = row.unk_6;
-                vehicle.move_to_ai_type = row.move_to_ai_type;
-                vehicle.probe_action = row.probe_action;
-                vehicle.probe_sabotage_id = row.probe_sabotage_id;
-                vehicle.home_base_id = row.home_base_id;
-                vehicle.next_veh_id_stack = row.next_veh_id_stack;
-                vehicle.prev_veh_id_stack = row.prev_veh_id_stack;
+                Vehs[vehicle_id].morale = old_rows[vehicle_id].morale;
+                Vehs[vehicle_id].terraforming_turns = old_rows[vehicle_id].terraforming_turns;
+                Vehs[vehicle_id].order_auto_type = old_rows[vehicle_id].order_auto_type;
+                Vehs[vehicle_id].visibility = old_rows[vehicle_id].visibility;
+                Vehs[vehicle_id].moves_expended = old_rows[vehicle_id].moves_expended;
+                Vehs[vehicle_id].facing = old_rows[vehicle_id].facing;
+                Vehs[vehicle_id].unk_6 = old_rows[vehicle_id].unk_6;
+                Vehs[vehicle_id].move_to_ai_type = old_rows[vehicle_id].move_to_ai_type;
+                Vehs[vehicle_id].probe_action = old_rows[vehicle_id].probe_action;
+                Vehs[vehicle_id].probe_sabotage_id = old_rows[vehicle_id].probe_sabotage_id;
+                Vehs[vehicle_id].home_base_id = old_rows[vehicle_id].home_base_id;
+                Vehs[vehicle_id].next_veh_id_stack = old_rows[vehicle_id].next_veh_id_stack;
+                Vehs[vehicle_id].prev_veh_id_stack = old_rows[vehicle_id].prev_veh_id_stack;
             }
             if (old_rows != 0) free(old_rows);
         }
