@@ -594,8 +594,8 @@ void WorldWin::on_redraw() {
         mapWin_.field_1DDAC_ = 0;
         mapWin_.field_1DDB0_ = 0;
         mapWin_.center_x_ = MapLongitudeBounds / 2;
-        mapWin_.zoom_offset_ = -14;
         mapWin_.center_y_ = MapLatitudeBounds / 2;
+        mapWin_.zoom_offset_ = -14;
         mapWin_.field_1DD70_ = 0x80000000;
         mapWin_.resize(field_A14_, field_A18_, 1);
         buffer2_.init(field_A14_, field_A18_, 0, 0);
@@ -621,14 +621,14 @@ void WorldWin::on_redraw() {
         mapWin_.gen_bases_only();
         mapWin_.Buffer::copy(&buffer1_, 0, 0, 0, 0, field_A14_, field_A18_);
     }
-    if (Buffer::dib_.bmiHeader.biWidth >= field_A14_ &&
-        -Buffer::dib_.bmiHeader.biHeight >= field_A18_) {
-        field_239C4_ = (Buffer::dib_.bmiHeader.biWidth - field_A14_) / 2;
-        field_239C8_ = -((Buffer::dib_.bmiHeader.biHeight + field_A18_) / 2);
+    if (Buffer::pixel_width() >= field_A14_ &&
+        Buffer::pixel_height() >= field_A18_) {
+        field_239C4_ = (Buffer::pixel_width() - field_A14_) / 2;
+        field_239C8_ = (Buffer::pixel_height() - field_A18_) / 2;
         buffer1_.copy(static_cast<Buffer *>(this), 0, 0,
                       field_239C4_, field_239C8_,
-                      mapWin_.GraphicWin::dib_.bmiHeader.biWidth,
-                      -mapWin_.GraphicWin::dib_.bmiHeader.biHeight);
+                      mapWin_.Buffer::pixel_width(),
+                      mapWin_.Buffer::pixel_height());
     } else {
         SetStretchBltMode(Buffer::get_hdc(), 0);
         Buffer::release_hdc(1);
