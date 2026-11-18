@@ -649,13 +649,21 @@ int MainInterface::init(int) {
                          menu_button_rect_.top,
                          menu_button_rect_.right - menu_button_rect_.left,
                          menu_button_rect_.bottom - menu_button_rect_.top, this, 0);
-    flat_button_[3].field_AD4_[0] = &sprites8_[0];
-    flat_button_[3].field_AD4_[1] = &sprites8_[1];
-    flat_button_[3].field_AD4_[2] = &sprites8_[2];
-    flat_button_[3].Buffer::set_font(&font1_, 0, 0, 0);
+    flat_button_[3].set_report_icons(&sprites8_[0], &sprites8_[1], &sprites8_[2]);
+    // WORKAROUND(inline): the Buffer base is taken from the register that
+    // holds the button (lea ecx,[edi+0x444] at 0x0045ABC1 and 0x0045ACA6) and
+    // the icon links are stored through it, while the slice colours are
+    // stored at this + offset (0x0045ABF2): icons through the inline setter,
+    // colours as plain member stores, the font call through a pointer.
+    {
+        FlatButton *button = &flat_button_[3];
+        button->Buffer::set_font(&font1_, 0, 0, 0);
+    }
     flat_button_[3].redraw();
     flat_button_[3].set_text_color(64, -1, 1, 1);
-    flat_button_[3].set_slice_colours(101, 65, 65);
+    flat_button_[3].field_ABC_[0] = 101;
+    flat_button_[3].field_ABC_[1] = 65;
+    flat_button_[3].field_ABC_[2] = 65;
     flat_button_[3].redraw();
     flat_button_[3].set_bubble_text(StringTable.get(Labels.strings_ptr[0xC3C / 4]));
     flat_button_[4].init(label_get(0x83C / 4), 1004, multiplayer_button_rect_.left,
@@ -663,13 +671,16 @@ int MainInterface::init(int) {
                          multiplayer_button_rect_.right - multiplayer_button_rect_.left,
                          multiplayer_button_rect_.bottom - multiplayer_button_rect_.top,
                          this, 0);
-    flat_button_[4].field_AD4_[0] = &sprites8_[0];
-    flat_button_[4].field_AD4_[1] = &sprites8_[1];
-    flat_button_[4].field_AD4_[2] = &sprites8_[2];
-    flat_button_[4].Buffer::set_font(&font1_, 0, 0, 0);
+    flat_button_[4].set_report_icons(&sprites8_[0], &sprites8_[1], &sprites8_[2]);
+    {
+        FlatButton *button = &flat_button_[4];
+        button->Buffer::set_font(&font1_, 0, 0, 0);
+    }
     flat_button_[4].redraw();
     flat_button_[4].set_text_color(64, -1, 1, 1);
-    flat_button_[4].set_slice_colours(101, 65, 65);
+    flat_button_[4].field_ABC_[0] = 101;
+    flat_button_[4].field_ABC_[1] = 65;
+    flat_button_[4].field_ABC_[2] = 65;
     flat_button_[4].redraw();
     flat_button_[4].set_bubble_text(label_get(0xC40 / 4));
     flat_button_[6].init(0, 1006, rect2_.left, rect2_.top, rect2_.right - rect2_.left,
