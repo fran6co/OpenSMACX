@@ -1162,7 +1162,9 @@ void __cdecl base_kill(int base_id) {
     for (veh_id = GameDataStateStorage.fields_.vehicle_current_count_ - 1; veh_id >= 0; veh_id--) {
         if (veh_id < GameDataStateStorage.fields_.vehicle_current_count_
             && Vehs[veh_id].home_base_id == base_id) {
-            if (!(Vehs[veh_id].faction_id != faction_id)) {
+            if (Vehs[veh_id].faction_id != faction_id) {
+                Vehs[veh_id].home_base_id = -1;
+            } else {
                 // Hide the dying base from the search for a new home.
                 Bases[base_id].faction_id_current = 0xFF;
                 int home_id = base_kill_find(x, y, faction_id);
@@ -1172,8 +1174,6 @@ void __cdecl base_kill(int base_id) {
                 } else {
                     kill(veh_id);
                 }
-            } else {
-                Vehs[veh_id].home_base_id = -1;
             }
         }
     }
