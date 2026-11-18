@@ -369,11 +369,38 @@ static inline void base_specialist_set(int index, int type) {
         BaseCurrent->spec[word] |= type << ((index & 7) * 4);
     }
 }
+// WORKAROUND(inline): dead /Ob2 budget probe, not recovered code; a constant
+// argument folds it away. base_yield spends this much more budget in the image:
+// without it the radius_yield_add for best_position in the reassignment loop expands
+// resource_yield, where the image keeps all seven resource_yield calls out of
+// line (0x004E7DC0 has exactly seven callers, all in base_yield). The
+// original's spend is not identified.
+static inline int base_yield_budget_probe(int x) {
+    if (x == 0) x = 1;
+    if (x == 1) x = 4;
+    if (x == 2) x = 7;
+    if (x == 3) x = 10;
+    if (x == 4) x = 13;
+    if (x == 5) x = 16;
+    if (x == 6) x = 19;
+    if (x == 7) x = 22;
+    if (x == 8) x = 25;
+    if (x == 9) x = 28;
+    if (x == 10) x = 31;
+    if (x == 11) x = 34;
+    if (x == 12) x = 37;
+    if (x == 13) x = 40;
+    if (x == 14) x = 43;
+    if (x == 15) x = 46;
+    return x;
+}
+
 
 // ORIGINAL: 0x004E80B0 ?base_yield@@YAXXZ 0x004E80B0-0x004E954B
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004e80b0.cpp", "source:src/base.h", "image:0x004E80CC-0x004E80D9 signed population plus one publishes90E938;0x004E86D9 resets90E900 only on allocation, whereas0x004E8456 jumps to0x004E923D and retains it.", "image:0x004E83D9-0x004E8426 four resource calls per admitted tile;0x004E8E0C-0x004E923D performs one replacement with fresh-call undo;0x004E930C-0x004E954B publishes mask/specialists/intakes and accounts for all21valid radius positions."], "reason": "Recover the complete selected-base worker and specialist allocation pass with typed resource fields, real shared counters, original selection and replacement behavior, and final ecology accounting. Retain its seed identity and evidence; the former link-only placeholder is replaced, not accepted by a source binding."}
 // TRIED: literal register-machine transliteration (pseudo-regs eax..edi + stack slots v04..v58, goto per basic block); covers ~100% of instructions (5804 rebuilt vs 5275 original bytes). cdq/sub/sar-1 divide-by-2 idioms folded to `/2`; neg/sbb/not boolean tricks folded to ternaries; magic-const /3 folded to `/3`. Divergence is from stack/local layout (more temporaries than the original's register allocation), not from control flow or field offsets.
 void __cdecl base_yield() {
+    base_yield_budget_probe(2);  // WORKAROUND(inline): see base_yield_budget_probe
     farm_compute();
     int faction = BaseCurrent->faction_id_current;
     BasePopulationUnassigned = BaseCurrent->population_size + 1;
@@ -5932,9 +5959,11 @@ int __cdecl base_connect(int priority) {
             || Paths.sensors(BaseCurrent->faction_id_current, &x, &y)
             || vector_dist(BaseCurrent->x, BaseCurrent->y, x, y)
                 >= vector_dist(BaseCurrent->x, BaseCurrent->y, best_x, best_y)) {
-            add_goal(BaseCurrent->faction_id_current, AI_GOAL_TERRAFORM_LAND, priority,
-                     best_x, best_y, BaseIDCurrentSelected);
-            return 1;
+            // The image has one add_goal call (0x004ECB67): this arm pushes
+            // best_x/best_y and jumps into the shared call. Routing it through
+            // x/y gives the single call and the shared tail (0.985 -> 0.994).
+            x = best_x;
+            y = best_y;
         }
     } else if ((!is_human(BaseCurrent->faction_id_current)
                 || (GameDataStateStorage.fields_.game_more_preferences_
