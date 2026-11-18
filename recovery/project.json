@@ -947,7 +947,7 @@
           "-c"
         ]
       },
-      "src/dialogs.cpp": {
+      "src/jackal/dialogs.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -1000,6 +1000,24 @@
           "/W4",
           "/Oy-",
           "/Z7",
+          "-c"
+        ]
+      },
+      "src/jackal/stringbox.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/Og",
+          "/Oi",
+          "/Ot",
+          "/Oy",
+          "/Gs",
+          "/Gy",
+          "/Ob2",
+          "-MT",
+          "/W4",
           "-c"
         ]
       },
@@ -1451,7 +1469,7 @@
           "-c"
         ]
       },
-      "src/scroll.cpp": {
+      "src/jackal/scroll.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -1688,6 +1706,24 @@
           "-MT",
           "/W4",
           "/Oy-",
+          "-c"
+        ]
+      },
+      "src/jackal/basepop.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/Og",
+          "/Oi",
+          "/Ot",
+          "/Oy",
+          "/Gs",
+          "/Gy",
+          "/Ob2",
+          "-MT",
+          "/W4",
           "-c"
         ]
       },
@@ -3007,7 +3043,7 @@
           "-c"
         ]
       },
-      "src/flatbutton.cpp": {
+      "src/jackal/flatbutton.cpp": {
         "flags": [
           "/nologo",
           "/TP",

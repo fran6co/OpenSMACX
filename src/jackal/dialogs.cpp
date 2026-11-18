@@ -37,7 +37,7 @@ Purpose: Construct the dialog manager: the five vbtable pointers, the two
          virtual-base constructions, and the five base constructors.
 // ORIGINAL: 0x00612830 ??0Dialogs@@QAE@H@Z 0x00612830-0x0061295F;0x00663060-0x006630D3 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:prolog 0x612832 registers handler 0x6630C9; FuncInfo 0x67FD68 and unwind map 0x67FD88 contain six HIGHLOW-backed actions in the completely decoded cold region 0x663060..0x6630D3."], "reason": "The constructor owns its partial-construction unwind actions and handler through the original exception metadata; retain their complete generated-lifetime matching obligation."}
-// body src/dialogs.cpp
+// body src/jackal/dialogs.cpp
 // symbol    ??0Dialogs@@QAE@XZ
 // size      303 bytes (primary constructor); cold EH region 115 bytes
 // prototype void (__thiscall ??0Dialogs@@QAE@H@Z)(Dialogs* this, int)
@@ -56,7 +56,7 @@ its complete compiler correspondence remains unqualified.
 */
 
 // ORIGINAL: 0x00612960 ?close@Dialogs@@QAEXXZ 0x00612960-0x00612961 BYTE_EXACT
-// body src/dialogs.cpp
+// body src/jackal/dialogs.cpp
 // kind      game
 // symbol    ?close@Dialogs@@QAEXXZ
 
@@ -533,7 +533,7 @@ void Dialogs::on_mousewheel(int a) {
 // symbol    ??1Dialogs@@UAE@XZ
 // kind      game
 // HISTORICAL TRIED (superseded by recovered Dialogs/SpriteBox ownership): same SEH-frame symptom as `Dialog::~Dialog()` (this file's sibling class in dialog.cpp) and FlatButton's own constructor/destructor pair. Not attempted: the comment above claims the frame is "unreachable, omitted per policy", which is UNVERIFIED here (flagged, not trusted - see the note on Dialog::~Dialog for why). This body is the most complex of the three (six member teardowns across five classes chained together); reproducing the frame plus whatever member-destruction reordering it would take is out of scope for this pass's budget.
-// body src/dialogs.h
+// body src/jackal/dialogs.h
 // BODY IN dialogs.h, as an in-class `MEASURED` inline member.
 
 Dialogs::Dialogs() { }

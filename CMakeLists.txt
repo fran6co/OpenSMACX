@@ -149,6 +149,8 @@ target_include_directories(zlib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/vendor/z
 target_compile_options(zlib PRIVATE /W0 $<$<NOT:$<CONFIG:Debug>>:/Ob1>)
 
 set(OPENSMACX_SOURCES
+    src/stringbox.cpp
+    src/basepop.cpp
     src/graphicwin.cpp
     src/basebutton.cpp
     src/alphamenu.cpp
@@ -166,14 +168,11 @@ set(OPENSMACX_SOURCES
     src/base.cpp
     src/base_build.cpp
     src/score.cpp
-    src/basepop.cpp
     src/council.cpp
-    src/dialogs.cpp
     src/faction.cpp
     src/faction_treaty.cpp
     src/aggression.cpp
     src/famewin.cpp
-    src/flatbutton.cpp
     src/font_queue.cpp
     src/interface_fonts.cpp
     src/interface_assets.cpp
@@ -249,12 +248,10 @@ set(OPENSMACX_SOURCES
     src/interface_palette.cpp
     src/path.cpp
     src/probe.cpp
-    src/scroll.cpp
     src/scenario.cpp
     src/sounddevice.cpp
     src/sprite_objects.cpp
     src/stdafx.cpp
-    src/stringbox.cpp
     src/stringstruct.cpp
     src/strings.cpp
     src/string_formatting.cpp

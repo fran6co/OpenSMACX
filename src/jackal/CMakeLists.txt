@@ -32,7 +32,12 @@ add_library(jackal STATIC
     win_input.cpp
     dialog.cpp
     dialog_style.cpp
-    stringlist.cpp flic.cpp basebutton.cpp graphicwin.cpp)
+    stringlist.cpp flic.cpp basebutton.cpp graphicwin.cpp
+    flatbutton.cpp
+    scroll.cpp
+    stringbox.cpp
+    dialogs.cpp
+    basepop.cpp)
 target_include_directories(jackal PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 target_compile_definitions(jackal PRIVATE $<$<CONFIG:Debug>:BUILD_DEBUG>)
 target_compile_options(jackal PRIVATE /W4 "--repro-root=${PROJECT_SOURCE_DIR}")
