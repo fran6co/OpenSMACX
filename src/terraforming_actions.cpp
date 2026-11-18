@@ -2206,7 +2206,7 @@ int __cdecl shoot_it(int attacker, int defender, int x, int y,
                 }
             }
             PlayersData[defender].satellites_[sat]--;
-            if ((int)(PlayersData[defender].satellites_[sat] - PlayersData[defender].sat_odp_deployed) < 0) {
+            if ((PlayersData[defender].satellites_[sat] - PlayersData[defender].sat_odp_deployed) < 0) {
                 PlayersData[defender].sat_odp_deployed = PlayersData[defender].satellites_[sat];
             }
         } else {

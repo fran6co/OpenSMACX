@@ -6732,7 +6732,7 @@ int Console::on_key_click(int a1, int a2) {
                 }
                 for (int satellite = 0; satellite < 4; ++satellite) {
                     ::clear();
-                    say_num(static_cast<int>(PlayersData[faction_id].satellites_[satellite]));
+                    say_num(PlayersData[faction_id].satellites_[satellite]);
                     strcat(StringTemp, " Satellites");
                     say_num(satellite);
                     report_log.say(StringTemp, 0, 0, 0, 0);

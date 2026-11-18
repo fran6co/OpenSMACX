@@ -4147,8 +4147,8 @@ void __cdecl sat_attack(int attacker, int target, int kind) {
     }
     sat_attack_budget_probe_a(2); // WORKAROUND(inline): see above
     sat_attack_budget_probe_a(2); // WORKAROUND(inline): see above
-    if (static_cast<int>(PlayersData[attacker].sat_odp_deployed)
-        >= static_cast<int>(PlayersData[attacker].satellites_[3])) {
+    if (PlayersData[attacker].sat_odp_deployed
+        >= PlayersData[attacker].satellites_[3]) {
         if (attacker == ConsoleGlobal.faction_id_)
             popp(ScriptPopupFile,
                  "KILLERSDEPLOYED", 0, "space_sm.pcx", 0);
@@ -4167,8 +4167,8 @@ void __cdecl sat_attack(int attacker, int target, int kind) {
     if (break_treaty(attacker, target, 7)) return;
     if (diplo_lock(100)) return;
     if (PlayersData[attacker].satellites_[3]
-        && static_cast<int>(PlayersData[attacker].sat_odp_deployed)
-            < static_cast<int>(PlayersData[attacker].satellites_[3])
+        && PlayersData[attacker].sat_odp_deployed
+            < PlayersData[attacker].satellites_[3]
         && ((kind == 4 && targets)
             || (kind != 4 && kind < 4 && PlayersData[target].satellites_[kind]))) {
         int attack_target;
@@ -4215,7 +4215,7 @@ void __cdecl sat_edit(int report_faction_id, int target_faction_id, int satellit
             // The original compares the signed result of a wrapping 32-bit
             // subtraction, not the two unsigned counters.
             if (satellite_type == 3
-                && (int)(PlayersData[target_faction_id].satellites_[satellite_type]
+                && (PlayersData[target_faction_id].satellites_[satellite_type]
                     - PlayersData[target_faction_id].sat_odp_deployed) < 0) {
                 PlayersData[target_faction_id].sat_odp_deployed =
                     PlayersData[target_faction_id].satellites_[satellite_type];

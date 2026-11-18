@@ -423,7 +423,7 @@ struct PlayerData {
     uint32_t tech_pact_shared_goals[12]; // Bitfield; Suggested techID goals from pacts (TEAMTECH)
     int tech_ranking; // Twice the number of techs achieved
     int unk_26;
-    uint32_t sat_odp_deployed;
+    int sat_odp_deployed;
     int theory_of_everything;
     char tech_trade_source[92];
     int tech_accumulated; // Research
@@ -465,7 +465,7 @@ struct PlayerData {
     // Original 4CF64C and 49FBB0 index four consecutive word counters.
     // Nutrient, mineral, energy and orbital defense pod counts, respectively.
     // RECOVERY_MEMBER: v1 PlayerData satellites_ 0x808 0x004CF480
-    uint32_t satellites_[4];
+    int satellites_[4];
     int best_weapon_value;
     int best_psi_offense;
     int best_psi_defense;

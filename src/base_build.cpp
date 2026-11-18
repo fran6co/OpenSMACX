@@ -1358,11 +1358,11 @@ L_4fa03d:
             if (i != l_8
                 && (!has_treaty(l_8, i, 1)
                     || is_human(i))) {
-                if (l_54 <= (int)PlayersData[i].satellites_[3]) {
+                if (l_54 <= PlayersData[i].satellites_[3]) {
                     l_54 = PlayersData[i].satellites_[3];
                 }
                 if (!l_44 && (has_treaty(l_8, i, 0x30) || PlayersData[i].major_atrocities)
-                    && PlayersData[l_8].planet_busters < (int)PlayersData[i].satellites_[3] + 1) {
+                    && PlayersData[l_8].planet_busters < PlayersData[i].satellites_[3] + 1) {
                     l_44 = 1;
                     w /= 2;
                 }
@@ -3056,9 +3056,9 @@ L_4fe99d:
     case FAC_NESSUS_MINING_STATION:
     case FAC_ORBITAL_POWER_TRANS:
         sat_type = l_20 - FAC_SKY_HYDRO_LAB;
-        if ((int)PlayersData[l_8].satellites_[sat_type]
+        if (PlayersData[l_8].satellites_[sat_type]
             < BaseCurrent->population_size) {
-            value = range(((int)PlayersData[l_8].satellites_[sat_type]
+            value = range((PlayersData[l_8].satellites_[sat_type]
                            + (4 - l_98) * 2 + l_60) * 2 - BaseCurrent->population_size,
                           2, 16);
             if (l_20 == FAC_SKY_HYDRO_LAB && has_project(SP_CLONING_VATS, l_8)) {
@@ -3085,20 +3085,20 @@ L_4fe99d:
                         if (has_treaty(l_8, l_5c, 0x30)
                             || (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_
                                 & (1 << l_5c))) {
-                            if (best <= (int)PlayersData[l_5c].satellites_[3]) {
+                            if (best <= PlayersData[l_5c].satellites_[3]) {
                                 best = PlayersData[l_5c].satellites_[3];
                             }
                         }
                     }
                 }
             }
-            if ((int)PlayersData[l_8].satellites_[3] < best + 2) {
-                value = range(((int)PlayersData[l_8].satellites_[3] - best) * 2 + 12
+            if (PlayersData[l_8].satellites_[3] < best + 2) {
+                value = range((PlayersData[l_8].satellites_[3] - best) * 2 + 12
                               - BaseCurrent->population_size, 1, 12);
                 if (!PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk1_].planet_busters
                     && !PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk1_].major_atrocities
-                    && (int)PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk1_].satellites_[3]
-                           <= (int)PlayersData[l_8].satellites_[3]) {
+                    && PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk1_].satellites_[3]
+                           <= PlayersData[l_8].satellites_[3]) {
                     value *= 2;
                 }
             }

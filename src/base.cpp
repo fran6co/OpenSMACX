@@ -4410,7 +4410,7 @@ void __cdecl base_minerals() {
     if (has_project_via_base_project(SP_PHOLUS_MUTAGEN, faction_id)) {
         eco_dmg_reduction++;
     }
-    BaseCurrent->eco_damage = (BaseCurrent->eco_damage + ((((BaseCurrent->intake_2[RSC_MINERALS] - planet_eco_factor)) - (range((int)PlayersData[faction_id].satellites_[1],
+    BaseCurrent->eco_damage = (BaseCurrent->eco_damage + ((((BaseCurrent->intake_2[RSC_MINERALS] - planet_eco_factor)) - (range(PlayersData[faction_id].satellites_[1],
                 0, BaseCurrent->population_size))) / eco_dmg_reduction));
     if (is_human(faction_id)) {
         BaseCurrent->eco_damage = (BaseCurrent->eco_damage + ((PlayersData[faction_id].major_atrocities * 5)

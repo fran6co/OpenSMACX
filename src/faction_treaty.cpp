@@ -2304,17 +2304,17 @@ void __cdecl enemy_diplomacy(int faction_id) {
                 ? PlayersData[i].planet_busters / 2 : PlayersData[i].planet_busters);
     }
     int attack_type = 0;
-    while ((int)(PlayersData[faction_id].satellites_[3] - PlayersData[faction_id].sat_odp_deployed) > threshold
+    while ((PlayersData[faction_id].satellites_[3] - PlayersData[faction_id].sat_odp_deployed) > threshold
            && attack_type >= 0) {
         attack_type = -1;
         for (i = 1; i < MaxPlayerNum; i++) {
             if (!(PlayersData[faction_id].diplo_treaties[i] & 0x810)
                 // Signed compare in the image (jle, 0x00560928).
-                || (int)PlayersData[faction_id].satellites_[3] <= (int)PlayersData[i].satellites_[3]) {
+                || PlayersData[faction_id].satellites_[3] <= PlayersData[i].satellites_[3]) {
                 continue;
             }
             if (PlayersData[i].satellites_[3]
-                && (int)PlayersData[i].satellites_[3] >= PlayersData[faction_id].planet_busters) {
+                && PlayersData[i].satellites_[3] >= PlayersData[faction_id].planet_busters) {
                 attack_type = 3;
             } else {
                 // Its own counter, not territory's address-taken pod_count:

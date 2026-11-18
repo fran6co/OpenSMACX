@@ -231,7 +231,7 @@ int __cdecl shoot(int atk_factionID, int def_factionID, int xDest, int yDest) {
         return 0;
     }
     int bonus_hit = 0;
-    const int bonus_rounds = static_cast<int>(PlayersData[def_factionID].satellites_[sat]
+    const int bonus_rounds = (PlayersData[def_factionID].satellites_[sat]
         - PlayersData[def_factionID].sat_odp_deployed);
     for (int round = 0; round < bonus_rounds; ++round) {
         ++PlayersData[def_factionID].sat_odp_deployed;
@@ -240,7 +240,7 @@ int __cdecl shoot(int atk_factionID, int def_factionID, int xDest, int yDest) {
             break;
         }
     }
-    const int shots_left = range(static_cast<int>(PlayersData[def_factionID].satellites_[sat]
+    const int shots_left = range((PlayersData[def_factionID].satellites_[sat]
         - PlayersData[def_factionID].sat_odp_deployed), 0, 9999);
     if (!bonus_hit) {
         for (int i = 0; i < 25; ++i) {
@@ -301,7 +301,7 @@ int __cdecl shoot(int atk_factionID, int def_factionID, int xDest, int yDest) {
             return 0;
         }
         --PlayersData[def_factionID].satellites_[sat];
-        if (static_cast<int>(PlayersData[def_factionID].satellites_[sat]
+        if ((PlayersData[def_factionID].satellites_[sat]
                 - PlayersData[def_factionID].sat_odp_deployed) < 0) {
             PlayersData[def_factionID].sat_odp_deployed = PlayersData[def_factionID].satellites_[sat];
         }
