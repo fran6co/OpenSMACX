@@ -721,9 +721,12 @@ void __cdecl caviar_direction_to_projection_index(
             -CaviarProjectionDirectionCandidate.values[2];
     }
 
-    float polar_angle = CaviarProjectionDirectionCandidate.values[2] >= CaviarProjectionAngleLimit
-        ? CaviarProjectionRoundThreshold
-        : acos(CaviarProjectionDirectionCandidate.values[2]);
+    float polar_angle;
+    if (CaviarProjectionDirectionCandidate.values[2] >= CaviarProjectionAngleLimit) {
+        polar_angle = CaviarProjectionRoundThreshold;
+    } else {
+        polar_angle = acos(CaviarProjectionDirectionCandidate.values[2]);
+    }
 
     const float raw_azimuth = atan2(CaviarProjectionDirectionCandidate.values[1],
                                     CaviarProjectionDirectionCandidate.values[0]);
