@@ -96,6 +96,13 @@ struct Dib : BITMAPINFO {
 // observe an embedded Dib through compiler debug information.
 static_assert(sizeof(Dib) == 0x428, "Dib is BITMAPINFOHEADER + 256 RGBQUAD");
 
+// The three writer font slots a Font*-first wrapper saves and restores.
+struct BufferFontTriple {
+  Font *primary;
+  Font *second;
+  Font *third;
+};
+
 class Buffer;
 class GraphicWin;
 class CheckBox;
@@ -818,8 +825,14 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
  protected:
   // Derived controls use their inherited font and text-style state directly.
   // This does not establish the original access labels.
+  // The first three slots are also saved and restored as one block by every
+  // Font*-first wrapper (three moves of three fields in the image), so the
+  // triple view shares the storage.
   // RECOVERY_MEMBER: v1 Buffer fonts_ 0x52C 0x005DC917
-  Font *fonts_[4];
+  union {
+    Font *fonts_[4];
+    BufferFontTriple font_triple_;
+  };
   // Four contiguous rows of four 32-bit parameters at 0x53C..0x578. The
   // pinned writer indexes each row by slot; setters write one slot column
   // across the rows. Row roles are foreground, shadow color, shadow x, and

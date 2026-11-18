@@ -60,16 +60,6 @@ static char BufferPcxLoadSuffix[] = ".pcx";
 #include <new>
 #include <math.h>
 
-// THE THREE WRITER FONT SLOTS (font1_/font2_/font3_) ARE SAVED AND RESTORED
-// AS ONE BLOCK by every Font*-first wrapper in this file. The struct names the
-// three members without punning them; the save and the restore stay three
-// moves of three named fields, which is what the image has.
-struct BufferFontTriple {
-  Font *primary;
-  Font *second;
-  Font *third;
-};
-
 // Drawing SDK dependencies; the pinned PE supplies their original import slots.
 // RECOVERY_IMPORT: v1 __imp__SetRect@20 USER32.dll name:SetRect
 // RECOVERY_IMPORT: v1 __imp__CreateRectRgnIndirect@4 GDI32.dll name:CreateRectRgnIndirect
@@ -5586,7 +5576,7 @@ int Buffer::write_right_l(char *text, RECT *area, int len) {
 
 int Buffer::write_cent_l(Font * font, char * text, int x_coord, int y_coord,
                          int width, int len) {
-    BufferFontTriple *const fonts = reinterpret_cast<BufferFontTriple *>(fonts_);
+    BufferFontTriple *const fonts = &font_triple_;
     BufferFontTriple savedFonts = *fonts;
     if (font != 0 && font->font_obj_ != 0) {
         fonts->primary = font;
@@ -5610,7 +5600,7 @@ int Buffer::write_cent_l(Font * font, char * text, int x_coord, int y_coord,
 
 int Buffer::write_right_l(Font *font, char *text, int x_coord, int y_coord,
                           int field_width, int len) {
-    BufferFontTriple *const fonts = reinterpret_cast<BufferFontTriple *>(fonts_);
+    BufferFontTriple *const fonts = &font_triple_;
     BufferFontTriple savedFonts = *fonts;
     if (font != 0 && font->font_obj_ != 0) {
         fonts->primary = font;
@@ -5863,7 +5853,7 @@ int Buffer::wrap_cent(char * text, RECT * rect) {
 int Buffer::wrap_cent(Font * font_override, char * text, int x_coord,
                       int y_coord, int width) {
     
-    BufferFontTriple *const fonts = reinterpret_cast<BufferFontTriple *>(fonts_);
+    BufferFontTriple *const fonts = &font_triple_;
     BufferFontTriple savedFonts = *fonts;
 
     if (font_override != 0 && font_override->font_obj_ != 0) {
@@ -5925,7 +5915,7 @@ int Buffer::wrap_cent(Font * font_override, char * text, int x_coord,
 
 int Buffer::wrap_cent(Font *font_override, char *text, int x_coord, int y_coord,
                       int width, int line_advance) {
-    BufferFontTriple *const fonts = reinterpret_cast<BufferFontTriple *>(fonts_);
+    BufferFontTriple *const fonts = &font_triple_;
     BufferFontTriple savedFonts = *fonts;
     if (font_override != 0 && font_override->font_obj_ != 0) {
         fonts_[0] = font_override;
@@ -6206,7 +6196,7 @@ int Buffer::wrap_flying(char *text) {
 //        through a type that is not there.
 
 int Buffer::write_l(Font * font, char * text, int x, int y, int maxLen) {
-    BufferFontTriple *const fonts = reinterpret_cast<BufferFontTriple *>(fonts_);
+    BufferFontTriple *const fonts = &font_triple_;
     BufferFontTriple savedFonts = *fonts;
     int result;
     if (font != 0 && font->font_obj_ != 0) {
@@ -6251,7 +6241,7 @@ nothing_drawn:
 
 int Buffer::wrap_right(Font *font_override, char *text, int x_coord,
                        int y_coord, int width) {
-    BufferFontTriple *const fonts = reinterpret_cast<BufferFontTriple *>(fonts_);
+    BufferFontTriple *const fonts = &font_triple_;
     BufferFontTriple savedFonts = *fonts;
     if (font_override != 0 && font_override->font_obj_ != 0) {
         fonts->primary = font_override;
@@ -6280,7 +6270,7 @@ int Buffer::wrap_right(Font *font_override, char *text, int x_coord,
 
 
 int Buffer::wrap_right(Font *font, char *text, RECT *area) {
-    BufferFontTriple *const fonts = reinterpret_cast<BufferFontTriple *>(fonts_);
+    BufferFontTriple *const fonts = &font_triple_;
     BufferFontTriple savedFonts = *fonts;
     if (font != 0 && font->font_obj_ != 0) {
         fonts->primary = font;
@@ -6304,7 +6294,7 @@ int Buffer::wrap_right(Font *font, char *text, RECT *area) {
 
 int Buffer::write_cent_l(Font *font_override, char *text, int x_coord,
                          int y_coord, int width) {
-    BufferFontTriple *const fonts = reinterpret_cast<BufferFontTriple *>(fonts_);
+    BufferFontTriple *const fonts = &font_triple_;
     BufferFontTriple savedFonts = *fonts;
     if (font_override != 0 && font_override->font_obj_ != 0) {
         fonts->primary = font_override;
@@ -6328,7 +6318,7 @@ int Buffer::write_cent_l(Font *font_override, char *text, int x_coord,
 
 int Buffer::write_right_l(Font *font, char *text, int x_coord, int y_coord,
                           int len) {
-    BufferFontTriple *const fonts = reinterpret_cast<BufferFontTriple *>(fonts_);
+    BufferFontTriple *const fonts = &font_triple_;
     BufferFontTriple savedFonts = *fonts;
     if (font != 0 && font->font_obj_ != 0) {
         fonts->primary = font;
@@ -6351,7 +6341,7 @@ int Buffer::write_right_l(Font *font, char *text, int x_coord, int y_coord,
 
 int Buffer::write_cent_l(Font *font_override, char *text, int x_coord,
                          int y_coord, int width, int height, int len) {
-    BufferFontTriple *const fonts = reinterpret_cast<BufferFontTriple *>(fonts_);
+    BufferFontTriple *const fonts = &font_triple_;
     BufferFontTriple savedFonts = *fonts;
     if (font_override != 0 && font_override->font_obj_ != 0) {
         fonts->primary = font_override;
@@ -6487,7 +6477,7 @@ int Buffer::write_cent_l(char *a1, int a2, int a3, int a4, int a5, int a6) {
 
 
 int Buffer::write_l(Font *a1, char *a2, RECT *a3, int a4) {
-    BufferFontTriple *const fonts = reinterpret_cast<BufferFontTriple *>(fonts_);
+    BufferFontTriple *const fonts = &font_triple_;
     BufferFontTriple savedFonts = *fonts;
     if (a1 != 0 && a1->font_obj_ != 0) {
         fonts->primary = a1;
@@ -6562,7 +6552,7 @@ int Buffer::write_l(Font *a1, char *a2, RECT *a3, int a4) {
 //    near miss from a wrong body.
 
 int Buffer::write_cent_l(Font *font, char *text, RECT *area, int len) {
-    BufferFontTriple *const fonts = reinterpret_cast<BufferFontTriple *>(fonts_);
+    BufferFontTriple *const fonts = &font_triple_;
     BufferFontTriple savedFonts = *fonts;
     if (font != 0 && font->font_obj_ != 0) {
         fonts->primary = font;
@@ -6638,7 +6628,7 @@ int Buffer::write_cent_l(Font *font, char *text, RECT *area, int len) {
 
 
 int Buffer::wrap_cent(Font *font_override, char *text, RECT *area) {
-    BufferFontTriple *const fonts = reinterpret_cast<BufferFontTriple *>(fonts_);
+    BufferFontTriple *const fonts = &font_triple_;
     BufferFontTriple savedFonts = *fonts;
     if (font_override != 0 && font_override->font_obj_ != 0) {
         fonts->primary = font_override;
@@ -6692,7 +6682,7 @@ int Buffer::wrap_cent(Font *font_override, char *text, RECT *area) {
 // emitter computes declarations; it does not carry lessons.
 
 int Buffer::wrap(Font *font_override, char *text, RECT *area) {
-    BufferFontTriple *const fonts = reinterpret_cast<BufferFontTriple *>(fonts_);
+    BufferFontTriple *const fonts = &font_triple_;
     BufferFontTriple savedFonts = *fonts;
     if (font_override && font_override->font_obj_) {
         fonts->primary = font_override;
@@ -8020,7 +8010,7 @@ int Buffer::copy(Buffer *destination, int src_x, int src_y, int src_w,
 int Buffer::write_right_l(Font *font, char *text, RECT *area, int len) {
     // The three slots are saved and restored as one block through a pointer
     // to the trio (`lea esi,[this+0x52c]`), as in write_l above.
-    BufferFontTriple *const fonts = reinterpret_cast<BufferFontTriple *>(fonts_);
+    BufferFontTriple *const fonts = &font_triple_;
     BufferFontTriple savedFonts = *fonts;
     if (font != 0 && font->font_obj_ != 0) {
         fonts->primary = font;
@@ -9126,7 +9116,7 @@ extern int BufferFlyingWidth;
 // three explicit stack arguments.
 
 int Buffer::write_vertical(Font *font, char *text, RECT *area) {
-    BufferFontTriple *const fonts = reinterpret_cast<BufferFontTriple *>(fonts_);
+    BufferFontTriple *const fonts = &font_triple_;
     BufferFontTriple savedFonts = *fonts;
     if (font != 0 && font->is_initialized()) {
         fonts->primary = font;
