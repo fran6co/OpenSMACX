@@ -113,11 +113,11 @@ class ReportWin : public GraphicWin {
   // 100 member(s) from the IDA database, 21 named; it starts a member at 0xA14, which is where src/ ends.
 
   RECT rect1_;  // 0xA14, IDB `rect1`
-  uint32_t field_A24_;  // 0xA24
+  int field_A24_;  // 0xA24
   uint32_t field_A28_;  // 0xA28
-  uint32_t field_A2C_;  // 0xA2C
+  int field_A2C_;  // 0xA2C
   uint32_t field_A30_;  // 0xA30
-  uint32_t field_A34_;  // 0xA34
+  int field_A34_;  // 0xA34
   // Genuine members are constructed after GraphicWin, in declaration order.
   FlatButton flatButtons1_[7];  // 0xA38
   // Signed-coordinate views of the chart anchors written by draw_labs and
@@ -139,9 +139,9 @@ class ReportWin : public GraphicWin {
   RECT energy_panel_rect_;  // 0x5974; all four edges form one frame
   RECT report_panel_rect_;  // 0x5984, passed to Buffer::box_sprite
   Spot spot_;  // 0x5994
-  uint32_t field_59A0_;  // 0x59A0
-  uint32_t field_59A4_;  // 0x59A4
-  uint32_t field_59A8_;  // 0x59A8
+  int field_59A0_;  // 0x59A0
+  int field_59A4_;  // 0x59A4
+  int field_59A8_;  // 0x59A8
   int field_59AC_;  // 0x59AC; singleton87BE24, signed selection/sentinel
   uint32_t field_59B0_;  // 0x59B0
   uint32_t selected_bases_[16];  // 0x59B4, original 512-base selection bitmap
@@ -162,15 +162,15 @@ class ReportWin : public GraphicWin {
   FlatButton flatButton8_;  // 0xAA60
   FlatButton flatButton9_;  // 0xB5AC
   uint32_t field_C0F8_;  // 0xC0F8
-  uint32_t field_C0FC_;  // 0xC0FC, selected scroll position
-  uint32_t field_C100_;  // 0xC100
+  int field_C0FC_;  // 0xC0FC, selected scroll position
+  int field_C100_;  // 0xC100
   uint32_t field_C104_;  // 0xC104
   uint32_t field_C108_;  // 0xC108
   Scroll scroll_;  // 0xC10C
   // The original redraw and passover paths share this full rectangle.
   // RECOVERY_MEMBER: v1 ReportWin report_work_rect_ 0xE258 0x0049B220
   RECT report_work_rect_;  // 0xE258
-  uint32_t field_E268_;  // 0xE268
+  int field_E268_;  // 0xE268
   uint32_t field_E26C_;  // 0xE26C
   uint32_t field_E270_;  // 0xE270
   Time time1_;  // 0xE274
@@ -213,7 +213,7 @@ class ReportWin : public GraphicWin {
   // ?start_attack@ReportWin@@QAEXHHHH@Z, which then writes 0xF91C..0xF934;
   // nothing in the image ever touches 0xF914. The trailing extent to 0xFABC
   // is unchanged, so sizeof(ReportWin) is what it was.
-  uint32_t field_F918_;  // 0xF918
+  int field_F918_;  // 0xF918
   uint32_t field_F91C_;  // 0xF91C
   uint32_t field_F920_;  // 0xF920
   uint32_t field_F924_;  // 0xF924

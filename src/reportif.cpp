@@ -1877,7 +1877,7 @@ void ReportWin::draw_labs() {
     rect1_.right = frame.right - frame.left;
     rect1_.bottom = energy_panel_rect_.bottom - y - 0x1E;
     if (!datalink) {
-        lab_center_y_ = (rect1_.bottom - static_cast<int>(field_59A4_)) / 2 + y;
+        lab_center_y_ = (rect1_.bottom - field_59A4_) / 2 + y;
         // Store order in the image is center, lower, upper.
         lab_three_child_lower_y_ = field_59A4_ + lab_center_y_ + 0x10;
         lab_three_child_upper_y_ = lab_center_y_ - field_59A4_ - 0x10;
@@ -1886,7 +1886,7 @@ void ReportWin::draw_labs() {
         // 200 on non-800-wide screens only while placing the tiers, then
         // restores it.
         if (WinScreenWidth != 800) rect1_.bottom -= 200;
-        lab_center_y_ = (rect1_.bottom - static_cast<int>(field_59A4_)) / 2 + y;
+        lab_center_y_ = (rect1_.bottom - field_59A4_) / 2 + y;
         lab_three_child_lower_y_ = field_59A4_ + lab_center_y_ + 0x10;
         lab_three_child_upper_y_ = lab_center_y_ - field_59A4_ - 0x10;
         if (WinScreenWidth != 800) rect1_.bottom += 200;
@@ -1897,17 +1897,17 @@ void ReportWin::draw_labs() {
         // `int x[3]` at 0x594C and `int y[7]` at 0x5958 in the original.
         for (int i = 0; i < 3; i++) {
             (&lab_four_child_top_y_)[i] =
-                (i - 1) * (static_cast<int>(field_59A4_) + 0x10)
-                - (static_cast<int>(field_59A4_) + 0x10) / 2
+                (i - 1) * (field_59A4_ + 0x10)
+                - (field_59A4_ + 0x10) / 2
                 + lab_center_y_;
             (&lab_prerequisite_x_)[i] = frame.left + 5
-                + (rect1_.right - static_cast<int>(field_59A0_)) * i / 2
+                + (rect1_.right - field_59A0_) * i / 2
                 - i * 5;
         }
     }
     lab_center_x_ = field_A28_;
-    lab_four_child_bottom_y_ = (static_cast<int>(field_59A4_) + 0x10) * 2
-        - (static_cast<int>(field_59A4_) + 0x10) / 2 + lab_center_y_;
+    lab_four_child_bottom_y_ = (field_59A4_ + 0x10) * 2
+        - (field_59A4_ + 0x10) / 2 + lab_center_y_;
 
     {
         // 0x49968A..0x49970B: up to five children (two prerequisite slots
@@ -2114,7 +2114,7 @@ void ReportWin::draw_labs() {
         strcat(StringTemp, "]");
         if (pass) {
             x = field_A28_;
-            y = static_cast<int>(field_A34_ + field_A2C_ - field_A24_) / 2;
+            y = (field_A34_ + field_A2C_ - field_A24_) / 2;
             box.right = x + field_59A8_ + 3;
             box.left = x - 3;
             box.bottom = field_A24_ + y + 6;
@@ -2153,7 +2153,7 @@ void ReportWin::draw_labs() {
         y -= field_E268_;
         if (pass) {
             g_TECH_ICON_SPRITES[ids[0]].draw_mono(host,
-                x + (static_cast<int>(field_59A8_) - 0x34) / 2 + 3, y + 3,
+                x + (field_59A8_ - 0x34) / 2 + 3, y + 3,
                 mandate_color(tech_category(ids[0])), 0x32,
                 g_TECH_ICON_SPRITES[tech].width());
             y += 0x3A;
@@ -2535,21 +2535,21 @@ void ReportWin::on_button_passover(int button_id, int state) {
 
     RECT marker;
     int x = (int)field_A28_;
-    int center_y = ((int)field_A34_ + (int)field_A2C_ - (int)field_A24_) / 2 - 3;
-    set_rectangle_dimensions(&marker, x, center_y, (int)field_59A8_, (int)field_A24_ + 3);
+    int center_y = (field_A34_ + field_A2C_ - field_A24_) / 2 - 3;
+    set_rectangle_dimensions(&marker, x, center_y, field_59A8_, field_A24_ + 3);
     inflate_frame(&marker, 3, 6);
     if (state != 0) {
         host->Buffer::box_sprite(&marker, &InterfaceBoxStyles[5]);
         inflate_frame(&marker, -3, -3);
         host->Buffer::box_sprite(&report_work_rect_, &InterfaceBoxStyles[5]);
         labs_line(first_x, first_y, last_x, last_y,
-                  (int)field_59A0_, (int)field_59A4_, 1);
+                  field_59A0_, field_59A4_, 1);
     } else {
         host->Buffer::box_sprite(&marker, &InterfaceBoxStyles[3]);
         inflate_frame(&marker, -3, -3);
         host->Buffer::box_sprite(&report_work_rect_, &InterfaceBoxStyles[3]);
         labs_line(first_x, first_y, last_x, last_y,
-                  (int)field_59A0_, (int)field_59A4_, 0);
+                  field_59A0_, field_59A4_, 0);
     }
     host->soft_update();
 }
@@ -2674,7 +2674,7 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
     }
 
     // 0x49B710
-    first_id = (static_cast<int>(field_59A8_) + static_cast<int>(lab_child_x_)
+    first_id = (field_59A8_ + static_cast<int>(lab_child_x_)
         + static_cast<int>(lab_center_x_)) / 2 - 2;
     if (second_id != static_cast<int>(lab_three_child_upper_y_)
         && second_id != static_cast<int>(lab_three_child_lower_y_)) {
@@ -2772,7 +2772,7 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
         host->Buffer::restore_clip();
     }
     // 0x49BBCF
-    report_work_rect_.left = static_cast<int>(field_59A8_) + static_cast<int>(lab_center_x_) - 4;
+    report_work_rect_.left = field_59A8_ + static_cast<int>(lab_center_x_) - 4;
     report_work_rect_.top = line_height;
     if (style_select) {
         report_work_rect_.right = first_id + 7;
@@ -3345,13 +3345,13 @@ void ReportWin::draw_ops() {
             continue;
         }
         ++ordinal;
-        if (ordinal < static_cast<int>(field_C0FC_)) {
+        if (ordinal < field_C0FC_) {
             continue;
         }
-        if (ordinal >= static_cast<int>(field_C0FC_) + rows) {
+        if (ordinal >= field_C0FC_ + rows) {
             continue;
         }
-        if (ordinal > static_cast<int>(field_C0FC_)) {
+        if (ordinal > field_C0FC_) {
             text.top += pitch;
             text.bottom += pitch;
             icon.top += pitch;
@@ -3395,11 +3395,11 @@ void ReportWin::draw_ops() {
             }
         }
         // pitch / 2 is CSE'd into [ebp-0x14] and reused by the 0x8B4 page.
-        const int text_y = pitch / 2 - static_cast<int>(field_E268_) / 2 + text.top;  // [ebp-0x5c]
-        rect1_.left = (static_cast<int>(field_59A0_)
+        const int text_y = pitch / 2 - field_E268_ / 2 + text.top;  // [ebp-0x5c]
+        rect1_.left = (field_59A0_
             - zoom_scale(100, -6))
             / 2 + icon.left + 1;
-        rect1_.top = (static_cast<int>(field_59A4_)
+        rect1_.top = (field_59A4_
             - zoom_scale(75, -6))
             / 2 + icon.top + 1;
         base_draw(this, entry.base_id, rect1_.left, rect1_.top, -6, 0x40);
@@ -3701,10 +3701,10 @@ void ReportWin::draw_projects() {
                 ++ordinal;
                 {
                     const int row = ordinal / 2;
-                    if (row < static_cast<int>(field_C0FC_)
-                        || row >= rows + static_cast<int>(field_C0FC_)) break;
+                    if (row < field_C0FC_
+                        || row >= rows + field_C0FC_) break;
                     rect1_.left = title.left + (field_59A0_ + 2) * (ordinal % 2);
-                    rect1_.top = title.bottom + 56 * (row - static_cast<int>(field_C0FC_)) + 2;
+                    rect1_.top = title.bottom + 56 * (row - field_C0FC_) + 2;
                     set_rectangle_dimensions(&report_work_rect_, rect1_.left, rect1_.top, field_59A0_, field_59A4_);
                     if (mode < 2) {
                         spot_.add(base_id + 0x400, 0, &report_work_rect_);
@@ -3722,7 +3722,7 @@ void ReportWin::draw_projects() {
                         rect1_.left + 2, rect1_.top + 1, mandate_color(1),
                         field_59A4_ - 2, g_SECRET_PROJECT_ICON_SPRITES[0].height());
                     rect1_.top += 5;
-                    rect1_.left += static_cast<int>(field_59A4_ - 2)
+                    rect1_.left += (field_59A4_ - 2)
                         * g_SECRET_PROJECT_ICON_SPRITES[0].width()
                         / g_SECRET_PROJECT_ICON_SPRITES[0].height() + 7;
                     if (mode == 2) base_id = GameDataStateStorage.fields_.secret_project_.project_base[project];
@@ -3943,7 +3943,7 @@ void ReportWin::draw_sat() {
     }
     field_EE30_ = 0.02f;
     for (satellite_index_ = 0; satellite_index_ < 16; ++satellite_index_) {
-        radius_x[satellite_index_] = static_cast<int>(field_59A4_) / 2 - 10;
+        radius_x[satellite_index_] = field_59A4_ / 2 - 10;
         radius_y[satellite_index_] = radius_x[satellite_index_];
         satellite_acceleration_[satellite_index_] = static_cast<float>(sqrt(static_cast<double>(
             radius_x[satellite_index_] * radius_x[satellite_index_]
@@ -3972,7 +3972,7 @@ void ReportWin::draw_sat() {
             * satellite_acceleration_[satellite_index_] * radius_y[satellite_index_]);
         satellite_acceleration_[satellite_index_] = satellite_acceleration_[satellite_index_]
             * field_EE30_ * satellite_acceleration_[satellite_index_];
-        satellite_live_[satellite_index_] = satellite_index_ < static_cast<int>(field_F918_);
+        satellite_live_[satellite_index_] = satellite_index_ < field_F918_;
     }
     sat_anim();
     time2_.init(sat_anim_daemon, reinterpret_cast<int>(this), 4000, 5);
@@ -4059,7 +4059,7 @@ void ReportWin::start_attack(int attacker, int target, int type, int base_id) {
     field_F91C_ = 0;
     field_F934_ = 0;
     if (field_F918_ != 0) {
-        const int counter = static_cast<int>(--field_F918_);
+        const int counter = --field_F918_;
         const int index = counter % 16;
         if (counter < 16) satellite_live_[index] = 0;
         sat_anim();
@@ -4315,8 +4315,8 @@ void ReportWin::draw_security() {
             + (PlayersData[faction_id].proto_id_queue[id] > 0)
             + PlayersData[faction_id].proto_id_lost[id] == 0) continue;
         ++last_row;
-        if (last_row < static_cast<int>(field_C0FC_)
-            || last_row >= rows + static_cast<int>(field_C0FC_)) continue;
+        if (last_row < field_C0FC_
+            || last_row >= rows + field_C0FC_) continue;
         if (last_row - field_C0FC_ != 0) {
             row.top += 43;
             row.bottom += 43;
@@ -4329,7 +4329,7 @@ void ReportWin::draw_security() {
         }
         spot_.add(id, 0, row.left, row.top, row.right - row.left, row.bottom - row.top);
         rect1_.top = row.top;
-        const int text_y = row.top - static_cast<int>(field_E268_) / 2 + 21;
+        const int text_y = row.top - field_E268_ / 2 + 21;
         const int vehicle_y = row.top + 2;
         const int vehicle = veh_fake(id, faction_id);
         veh_draw(this, vehicle, energy_panel_rect_.left, vehicle_y, -6, 8, 0);
@@ -4380,7 +4380,7 @@ void ReportWin::draw_score() {
     const int faction = ReportIfGlobal.report_faction_id_;
     RECT title = {energy_panel_rect_.left + 3, energy_panel_rect_.top + 3,
                   energy_panel_rect_.right - 3,
-                  energy_panel_rect_.top + static_cast<int>(field_E268_) + 9};
+                  energy_panel_rect_.top + field_E268_ + 9};
     RECT body = {title.left, title.bottom + 2, title.right, energy_panel_rect_.bottom - 3};
     Buffer::box_sprite(&energy_panel_rect_, &InterfaceBoxStyles[0]);
     Buffer::box_sprite(&title, &InterfaceBoxStyles[1]);
@@ -4421,7 +4421,7 @@ void ReportWin::draw_score() {
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, label_get(0x1030 / 4));
                 report_topic_line(this, rect1_, rect1_.left);
-                rect1_.top += static_cast<int>(field_E268_ * 3) / 2;
+                rect1_.top += field_E268_ * 3 / 2;
                 StringTemp[0] = 0;
             } else {
                 say_num(own);
@@ -4617,7 +4617,7 @@ void ReportWin::draw_intel() {
     const int viewer = ReportIfGlobal.report_faction_id_;
     RECT title = {energy_panel_rect_.left + 3, energy_panel_rect_.top + 3,
                   energy_panel_rect_.right - 3,
-                  energy_panel_rect_.top + static_cast<int>(field_E268_) + 9};
+                  energy_panel_rect_.top + field_E268_ + 9};
     RECT body = {energy_panel_rect_.left + 3, title.bottom + 2, energy_panel_rect_.right - 3,
                  energy_panel_rect_.bottom - 3};
     Buffer::box_sprite(&energy_panel_rect_, &InterfaceBoxStyles[0]);
