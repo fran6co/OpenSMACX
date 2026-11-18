@@ -4265,17 +4265,11 @@ char EnemyBuildBaseMessageText[1] = {0};
 
 // Complete owner assembly. Native stack words are stored only on proven edges.
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0056B5B0 0x00579208 0x00579238 0x00577DD3
-// WORKAROUND(inline): every stack loop of enemy_move leaves from the step's
-// negative test straight to the loop exit (0x5720AD jl 0x5720C4, eleven
-// sites) and stores nothing on that path. The step written in place as a
-// conditional on the loop variable does that; the veh_next_stack_id inline
-// (0x0050B8F0, same value) rejoins at the loop test instead.
-#define VEH_STACK_NEXT(id) ((id) >= 0 ? Vehs[id].next_veh_id_stack : (id))
 // WORKAROUND(inline): the passenger loop at 0x574AE7 leaves from the step's
 // negative test straight to the loop exit (jl 0x574C9C), which VC6 only does
 // when the negative arm is a constant; veh_next_stack_id returns its argument
 // there (0x0050B8F0) and rejoins the loop test. The other stack loops use
-// VEH_STACK_NEXT: with this form they store -1 on exit, which the image
+// veh_next_stack_id: with this form they store -1 on exit, which the image
 // does not.
 static inline int stack_next_or_none(int veh_id) {
     return veh_id >= 0 ? Vehs[veh_id].next_veh_id_stack : -1;
@@ -4409,7 +4403,7 @@ int __cdecl enemy_move(int veh_id) {
             PlayersData[faction_id].x_target = -1;
             retreat = 1;
             for (other_id = veh_top(veh_id); other_id >= 0;
-                 other_id = VEH_STACK_NEXT(other_id)) {
+                 other_id = veh_next_stack_id(other_id)) {
                 if (other_id == veh_id || (Vehs[other_id].state & 0x40000)) {
                     Vehs[other_id].state |= 0x60000;
                 }
@@ -5090,7 +5084,7 @@ L_56dc57:
                 ty = y + VehMoveDeltaY[rad];
                 if (on_map(tx, ty) && is_ocean(tx, ty)) {
                     for (other_id = stack_fix(veh_at(tx, ty)); other_id >= 0;
-                         other_id = VEH_STACK_NEXT(other_id)) {
+                         other_id = veh_next_stack_id(other_id)) {
                         if (Vehs[other_id].faction_id == faction_id
                             && VehPrototypes[Vehs[other_id].proto_id].plan == 7
                             && stack_check(other_id, 8, -1, -1, -1) > 0)
@@ -5112,7 +5106,7 @@ L_56de10:
             {
                 int healthy = 1;
                 for (other_id = veh_top(veh_id); other_id >= 0;
-                     other_id = VEH_STACK_NEXT(other_id)) {
+                     other_id = veh_next_stack_id(other_id)) {
                     if (VehPrototypes[Vehs[other_id].proto_id].plan == 7
                         && Vehs[other_id].dmg_incurred > proto_power(other_id) / 3)
                         healthy = 0;
@@ -6479,7 +6473,7 @@ L_571982:
                 other_id = stack_fix(veh_at(tx, ty));
                 if (other_id >= 0) {
                     for (other_id = veh_top(other_id); other_id >= 0;
-                         other_id = VEH_STACK_NEXT(other_id)) {
+                         other_id = veh_next_stack_id(other_id)) {
                         if (Vehs[other_id].faction_id == faction_id &&
                             VehPrototypes[Vehs[other_id].proto_id].plan <= 1 &&
                             !has_abil(Vehs[other_id].proto_id, 0x8000)) {
@@ -6496,7 +6490,7 @@ L_571982:
                 other_id = stack_fix(veh_at(tx, ty));
                 if (other_id >= 0) {
                     for (other_id = veh_top(other_id); other_id >= 0;
-                         other_id = VEH_STACK_NEXT(other_id)) {
+                         other_id = veh_next_stack_id(other_id)) {
                         if (Vehs[other_id].faction_id == faction_id &&
                             VehPrototypes[Vehs[other_id].proto_id].plan <= 1 &&
                             !has_abil(Vehs[other_id].proto_id, 0x8000) &&
@@ -6518,7 +6512,7 @@ L_571982:
                 other_id = stack_fix(veh_at(tx, ty));
                 if (other_id >= 0) {
                     for (other_id = veh_top(other_id); other_id >= 0;
-                         other_id = VEH_STACK_NEXT(other_id)) {
+                         other_id = veh_next_stack_id(other_id)) {
                         // BUG(original): the upper bound tests the actor's move_to_ai_type.
                         if (Vehs[other_id].faction_id == faction_id &&
                             VehPrototypes[Vehs[other_id].proto_id].plan <= 1 &&
@@ -7594,7 +7588,7 @@ L_574a88:
                         || map_loc(Vehs[veh_id].waypoint_x[0], Vehs[veh_id].waypoint_y[0])->region != faction_bit
                         || Vehs[veh_id].move_to_ai_type == 'e')) {
                     for (other_id = veh_top(veh_id); other_id >= 0;
-                         other_id = VEH_STACK_NEXT(other_id)) {
+                         other_id = veh_next_stack_id(other_id)) {
                         if (Chassis[VehPrototypes[Vehs[other_id].proto_id].chassis_id].triad == TRIAD_LAND
                             && Vehs[other_id].order == ORDER_SENTRY_BOARD
                             && (Vehs[other_id].waypoint_x[0] < 0 || Vehs[other_id].waypoint_x[0] == veh_id)
@@ -7651,7 +7645,7 @@ L_574a88:
                 }
             }
             for (other_id = veh_top(veh_id); other_id >= 0;
-                 other_id = VEH_STACK_NEXT(other_id)) {
+                 other_id = veh_next_stack_id(other_id)) {
                 if (Chassis[VehPrototypes[Vehs[other_id].proto_id].chassis_id].triad == TRIAD_LAND) {
                     Vehs[other_id].order = ORDER_NONE;
                 }

@@ -974,9 +974,12 @@ void __cdecl monolith(int vehicle_id);
 
 // Header inline: the image expands the next-in-stack step in place across
 // ~25 units; only battle_fight and probe call the copy at 0x0050B8F0.
+// One conditional expression, not an early return: enemy_move's eleven stack
+// loops leave from the step's negative test straight to the loop exit
+// (0x5720AD jl 0x5720C4) and draw_status keeps the test after its count
+// (0x4B820C), which the if/return body does not give.
 MEASURED inline int __cdecl veh_next_stack_id(int veh_id) {   // 0050B8F0
-  if (veh_id < 0) return veh_id;
-  return Vehs[veh_id].next_veh_id_stack;
+  return veh_id >= 0 ? Vehs[veh_id].next_veh_id_stack : veh_id;
 }
 
 // Existing source-owned APIs used by enemy movement.
