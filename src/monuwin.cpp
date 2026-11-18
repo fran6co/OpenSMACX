@@ -849,9 +849,7 @@ void MonuWin::on_redraw() {
       if (order[row] != -1
           && FactionMonuments[preview_faction_or_page_].records_[order[row]].achieved_) {
         scratch_rect_ = rects_3134_[row + 3];
-        sprites_2C0C_[order[row]].draw(this,
-                                       sprites_2C0C_[order[row]].transparent_index(),
-                                       scratch_rect_.left, scratch_rect_.top);
+        sprites_2C0C_[order[row]].draw(this, scratch_rect_.left, scratch_rect_.top);
         spot_.add(order[row], 0, scratch_rect_.left, scratch_rect_.top,
                   scratch_rect_.right - scratch_rect_.left, scratch_rect_.bottom - scratch_rect_.top);
       }
@@ -861,16 +859,13 @@ void MonuWin::on_redraw() {
               rects_3134_[0].right - rects_3134_[0].left,
               rects_3134_[0].bottom - rects_3134_[0].top);
     if (selected_monument_type_ == 0xD) {
-      sprite_first_.draw(this, sprite_first_.transparent_index(),
-                         rects_3134_[0].left, rects_3134_[0].top);
+      sprite_first_.draw(this, rects_3134_[0].left, rects_3134_[0].top);
     } else if (selected_monument_type_ < 0xF) {
-      sprites_2EA0_[selected_monument_type_].draw(
-          this, sprites_2EA0_[selected_monument_type_].transparent_index(),
-          rects_3134_[0].left, rects_3134_[0].top);
+      sprites_2EA0_[selected_monument_type_].draw(this, rects_3134_[0].left, rects_3134_[0].top);
     } else {
       Sprite &mark = sprites_34E0_[FactionMonuments[preview_faction_or_page_]
                                        .records_[selected_monument_type_].word_8_ - 1];
-      mark.draw(this, mark.transparent_index(), rects_3134_[0].left,
+      mark.draw(this, rects_3134_[0].left,
                 rects_3134_[0].top);
     }
     int count = 0;
@@ -882,13 +877,10 @@ void MonuWin::on_redraw() {
     if (count) {
       int last = count - 1;
       scratch_rect_ = icon_rects_[last / 2 * 2];
-      sprites_3244_[last / 2 * 2].draw(this, sprites_3244_[last / 2 * 2].transparent_index(),
-                                      scratch_rect_.left, scratch_rect_.top);
+      sprites_3244_[last / 2 * 2].draw(this, scratch_rect_.left, scratch_rect_.top);
       if (last) {
         scratch_rect_ = icon_rects_[(last - 1) / 2 * 2 + 1];
-        sprites_3244_[(last - 1) / 2 * 2 + 1].draw(
-            this, sprites_3244_[(last - 1) / 2 * 2 + 1].transparent_index(),
-            scratch_rect_.left, scratch_rect_.top);
+        sprites_3244_[(last - 1) / 2 * 2 + 1].draw(this, scratch_rect_.left, scratch_rect_.top);
       }
       for (i = 0, type = 15; i < count; i++, type++) {
         if (!FactionMonuments[preview_faction_or_page_].records_[type].achieved_) {
@@ -897,15 +889,14 @@ void MonuWin::on_redraw() {
         }
         Sprite &mark = sprites_33AC_[FactionMonuments[preview_faction_or_page_]
                                          .records_[type].word_8_ - 1];
-        mark.draw(this, mark.transparent_index(), rects_366C_[i].left,
+        mark.draw(this, rects_366C_[i].left,
                   rects_366C_[i].top);
         spot_.add(type, 0, rects_366C_[i].left, rects_366C_[i].top,
                   rects_366C_[i].right - rects_366C_[i].left,
                   rects_366C_[i].bottom - rects_366C_[i].top);
       }
     }
-    sprite_second_.draw(this, sprite_second_.transparent_index(),
-                        rects_366C_[6].left, rects_366C_[6].top);
+    sprite_second_.draw(this, rects_366C_[6].left, rects_366C_[6].top);
     button_second_.hide();
     button_first_.show(0);
   }
@@ -970,12 +961,12 @@ void MonuWin::on_mouse_move(int x, int y) {
   if (y == 0xD) {
     Buffer *canvas = static_cast<Buffer *>(this);
     Sprite &sprite = sprite_first_;
-    sprite.draw(canvas, sprite.transparent_index(), rects_3134_[0].left,
+    sprite.draw(canvas, rects_3134_[0].left,
                 rects_3134_[0].top);
   } else if (y < 0xF) {
     Buffer *canvas = static_cast<Buffer *>(this);
     Sprite &sprite = sprites_2EA0_[y];
-    sprite.draw(canvas, sprite.transparent_index(), rects_3134_[0].left,
+    sprite.draw(canvas, rects_3134_[0].left,
                 rects_3134_[0].top);
   } else {
     // These victory/defeat records store the counterpart faction (0..7) and
@@ -983,7 +974,7 @@ void MonuWin::on_mouse_move(int x, int y) {
     Buffer *canvas = static_cast<Buffer *>(this);
     Sprite &sprite = sprites_33AC_[6 + FactionMonuments[preview_faction_or_page_]
                                            .records_[y].word_8_];
-    sprite.draw(canvas, sprite.transparent_index(), rects_3134_[0].left,
+    sprite.draw(canvas, rects_3134_[0].left,
                 rects_3134_[0].top);
   }
   selected_monument_type_ = y;
