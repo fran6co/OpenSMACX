@@ -4292,6 +4292,15 @@ int __cdecl enemy_move(int veh_id) {
     int air_result;
     int rad;
     int cand;
+    // The garrison need is its own variable: it shares frame slot -0x48 with
+    // the early ring counters only through VC6's slot packing. As one variable
+    // with them it stays live from the first counter to 0x574c61 (the
+    // 0x571579 skip leaves it unwritten) and costs a 52nd slot (frame 0x2c8,
+    // image 0x2c4). The other short-lived roles of that slot are separate
+    // variables for the same reason; keep_count stays for the two ring scans
+    // whose reduced index the image keeps there.
+    int garrison;
+    int ring, sea_unit, sea_veh, good_sites, fights;
     // ---- chunk 0: 0x56b5b0-0x56d265 ----
     best_dir = -1;
     near_hostile = 0;
@@ -4503,7 +4512,7 @@ L_56bf5f:
         goto L_57717f;
     }
     best_score = 99999;
-    for (keep_count = 2; keep_count <= (Vehs[veh_id].order_auto_type == 6 ? 6 : 3); keep_count++) {
+    for (ring = 2; ring <= (Vehs[veh_id].order_auto_type == 6 ? 6 : 3); ring++) {
         if (Vehs[veh_id].order == ORDER_MOVE_TO) {
             goto L_578f46;
         }
@@ -4512,8 +4521,8 @@ L_56bf5f:
                 && (triad == TRIAD_SEA
                     ? base_on_sea(base_id, region)
                     : region_at(Bases[base_id].x, Bases[base_id].y) == region)) {
-                for (int r = (keep_count == 2 ? 1 : RadiusRange[keep_count - 1]);
-                     r < RadiusRange[keep_count]; r++) {
+                for (int r = (ring == 2 ? 1 : RadiusRange[ring - 1]);
+                     r < RadiusRange[ring]; r++) {
                     tx = wrap_map_x(Bases[base_id].x + RadiusOffsetX[r]);
                     ty = Bases[base_id].y + RadiusOffsetY[r];
                     if (on_map(tx, ty) && region_at(tx, ty) == region
@@ -5158,13 +5167,13 @@ L_56de10:
             return 1;
         }
         if (!state_4000) {
-            keep_count = triad == 1;
-            if (at_sea == keep_count) {
+            sea_unit = triad == 1;
+            if (at_sea == sea_unit) {
                 for (n = 0; n < 21; n++) {
                     tx = xrange(x + RadiusOffsetX[n]);
                     ty = y + RadiusOffsetY[n];
                     if (on_map(tx, ty)
-                        && (triad == 2 || (is_ocean(tx, ty)) == keep_count)
+                        && (triad == 2 || (is_ocean(tx, ty)) == sea_unit)
                         && map_loc(tx, ty)->region == region
                         && (other_id = stack_fix(veh_at(tx, ty))) >= 0
                         && Vehs[other_id].faction_id != faction_id
@@ -5665,8 +5674,8 @@ L_56f8ad:
     if ((plan != PLAN_COLONIZATION && triad) || near_hostile) {
         goto L_570002;
     }
-    keep_count = (triad == TRIAD_SEA);
-    if (at_sea != keep_count) {
+    sea_veh = (triad == TRIAD_SEA);
+    if (at_sea != sea_veh) {
         goto L_570002;
     }
     if (plan == PLAN_COLONIZATION) {
@@ -5683,7 +5692,7 @@ L_56f8ad:
         if (!on_map(tx, ty)) {
             continue;
         }
-        if ((is_ocean(tx, ty)) != keep_count) {
+        if ((is_ocean(tx, ty)) != sea_veh) {
             continue;
         }
         if ((map_loc(tx, ty)->bit & 0x20) && (map_loc(tx, ty)->climate & ~0x1F) >= 0x40) {
@@ -5888,7 +5897,7 @@ L_5702c1:
         goto L_570c89;
     }
     j = 0;           // matching sites in this region
-    keep_count = 0;  // of those, still worthwhile
+    good_sites = 0;  // of those, still worthwhile
     // VC6 turns this loop into a pointer walk with a 25..1 down-counter kept in
     // tile_owner's slot.
     for (tile_owner = 0; tile_owner < 25; tile_owner++) {
@@ -5900,7 +5909,7 @@ L_5702c1:
             if (plan == PLAN_RECONNAISANCE) {
                 if (goody_at(PlayersData[faction_id].sites[tile_owner].x,
                              PlayersData[faction_id].sites[tile_owner].y)) {
-                    keep_count++;
+                    good_sites++;
                 }
             } else {
                 int threshold = PlayersData[faction_id].unk_82[region] > 8
@@ -5910,13 +5919,13 @@ L_5702c1:
                 }
                 if (site_at(PlayersData[faction_id].sites[tile_owner].x,
                             PlayersData[faction_id].sites[tile_owner].y, 0) >= threshold) {
-                    keep_count++;
+                    good_sites++;
                 }
             }
         }
     }
     i = (Vehs[veh_id].order == ORDER_MOVE_TO);
-    if (j && ((GameDataStateStorage.fields_.turn_current_num_ + faction_id) & (keep_count ? 15 : 3))
+    if (j && ((GameDataStateStorage.fields_.turn_current_num_ + faction_id) & (good_sites ? 15 : 3))
         && near_dist) {
         goto L_570bdb;
     }
@@ -6294,13 +6303,13 @@ L_571579:
     {
         int def;   // edi
         int avail; // esi
-        keep_count = garrison_check(near_base);
+        garrison = garrison_check(near_base);
         def = defensive_check(near_base);
         j = stack_check(veh_id, 11, 0x10000000, 0x10000000, -1);
         avail = range(stack_check(veh_id, 2, 2, faction_id, -1), 0, def) + j;
         if (Vehs[veh_id].state & 0x10000000) {
             int need; // eax
-            need = keep_count - def;
+            need = garrison - def;
             if (need < 1) need = 1;
             if (j <= need) plan = 2;
         }
@@ -6310,7 +6319,7 @@ L_571579:
         }
         if (!avail) avail = stack_check(veh_id, 2, 3, faction_id, -1);
         if (!assault && !retreat) {
-            keep_count += stack_check(veh_id, 11, 0x40000, 0x40000, -1);
+            garrison += stack_check(veh_id, 11, 0x40000, 0x40000, -1);
         }
         if (!zoc_veh(x, y, faction_id) && region_plan > 2 && !hint &&
             (plan == 3 ||
@@ -6331,8 +6340,8 @@ L_571579:
         if (hint) return 1;
         goto L_57707f;
 L_571853:
-        if (avail < keep_count) add_goal(faction_id, 2, 2, x, y, -1);
-        if ((avail > keep_count && (plan != 2 || !j || avail > 2)) || assault || retreat) {
+        if (avail < garrison) add_goal(faction_id, 2, 2, x, y, -1);
+        if ((avail > garrison && (plan != 2 || !j || avail > 2)) || assault || retreat) {
             if (avail > 1 && (!k || !zoc_owner)) goto L_571977;
         }
         if (!home_dist && Vehs[veh_id].home_base_id >= 0 &&
@@ -6343,7 +6352,7 @@ L_571853:
         stay = 1;
         defend = (avail <= 1) + 1;
         if (hint) return 1;
-        if (plan != 2 || region_plan <= 2 || avail < keep_count ||
+        if (plan != 2 || region_plan <= 2 || avail < garrison ||
             (Bases[home_base].state & 0x4000000)) goto L_57707f;
         // BUG(original)? region_total_combat_vehs is read from PlayersData[0].
         if (avail <= 1 && (PlayersData[0].region_total_combat_vehs[region] ||
@@ -7320,7 +7329,7 @@ L_574a88:
                         continue;
                     }
                     if (VehPrototypes[Vehs[other_id].proto_id].plan == PLAN_DEFENSIVE
-                        && k < keep_count && !home_dist) {
+                        && k < garrison && !home_dist) {
                         k++;
                         Vehs[other_id].order = ORDER_HOLD;
                     } else if (!home_dist && !healthy) {
@@ -7350,7 +7359,7 @@ L_574a88:
                                 && (VehPrototypes[Vehs[other_id].proto_id].plan == PLAN_COMBAT
                                     || VehPrototypes[Vehs[other_id].proto_id].plan == PLAN_RECONNAISANCE))
                             || !stack_check(other_id, 16, -1, -1, -1))) {
-                        if (++k <= keep_count) {
+                        if (++k <= garrison) {
                             continue;
                         }
                         if (region_plan <= 2 && n) {
@@ -8369,7 +8378,7 @@ L_577723:
             && (Rules.combat_pct_atk_higher_elev || Rules.combat_pen_pct_atk_lwr_elev))
             score += 2;
     }
-    keep_count = 0;   // combat flag for this candidate
+    fights = 0;   // combat flag for this candidate
     if (other_id >= 0) {
         owner = Vehs[other_id].faction_id;
         if (triad == 2
@@ -8386,14 +8395,14 @@ L_577723:
                 && whose_territory(faction_id, tx, ty, 0, 0) != faction_id
                 && !rnd(2, const_cast<char *>("ENEMYMISC")))
                 goto L_578ae1;
-            keep_count = 1;
+            fights = 1;
             score += 8;
         } else if (plan == 11 && owner == faction_id) {
             // own probe team target: no combat score
         } else if (plan == 11 && stack_check(other_id, 2, 11, -1, -1)
                    && (!(PlayersData[faction_id].diplo_treaties[owner] & 1)
                        || !(PlayersData[faction_id].diplo_treaties[owner] & 0x2000000))) {
-            keep_count = 1;
+            fights = 1;
             int odds = battle_fight(veh_id, i - 1, 0, 0, &other_id);
             if (whose_territory(faction_id, tx, ty, 0, 0) == faction_id)
                 odds *= 2;
@@ -8412,7 +8421,7 @@ L_577723:
                 && (PlayersData[faction_id].diplo_treaties[Vehs[other_id].faction_id] & 6)
                 && whose_territory(faction_id, Vehs[other_id].x, Vehs[other_id].y, 0, 0)
                        == faction_id) {
-                keep_count = 1;
+                fights = 1;
                 score += 99;
             } else {
                 if (plan == 7) {
@@ -8447,7 +8456,7 @@ L_577723:
                     goto L_578ae1;
                 if (!(PlayersData[faction_id].diplo_treaties[owner] & 0x810))
                     goto L_578ae1;
-                keep_count = 1;
+                fights = 1;
                 int odds = battle_fight(veh_id, i - 1, 0, 0, &other_id);
                 if (defend
                     || (veh_moves(veh_id) < Rules.move_rate_roads && proto_id != 8)
@@ -8494,7 +8503,7 @@ L_577723:
             }
             if (!Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating)
                 goto L_578ae1;
-            keep_count = 1;
+            fights = 1;
             score += 9999;
         }
         if ((map_loc(tx, ty)->bit & 0x2000) && want_monolith(veh_id))
@@ -8551,7 +8560,7 @@ L_577723:
     if (score > best_score) {
         best_score = score;
         best_dir = i - 1;
-        alt = keep_count;   // combat flag of the best candidate
+        alt = fights;   // combat flag of the best candidate
     }
 L_578ae1:
     ;
