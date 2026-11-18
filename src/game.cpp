@@ -2016,8 +2016,11 @@ int __cdecl game_data(FILE *file, int write_mode) {
                 PlayersData[v].base_id_atk_target = rows[v].base_id_atk_target;
                 PlayersData[v].unk_37 = rows[v].unk_37;
                 for (j = 0; j < 8; j++) {
-                    for (k = 0; k < 24; k++)
-                        PlayersData[v].saved_queue_name[j][k] = rows[v].saved_queue_name[j][k];
+                    {
+                    int n = j * 24;
+                    for (k = 0; k < 24; k++, n++)
+                        PlayersData[v].saved_queue_name[0][n] = rows[v].saved_queue_name[0][n];
+                    }
                     PlayersData[v].saved_queue_size[j] = rows[v].saved_queue_size[j];
                     for (k = 0; k < 10; k++)
                         PlayersData[v].saved_queue_items[j][k] = rows[v].saved_queue_items[j][k];
