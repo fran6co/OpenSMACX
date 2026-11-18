@@ -115,6 +115,25 @@ Tooling traps:
 - `measure` similarity uses difflib autojunk, which underrates functions above
   about 200 instructions; compare differing-line counts from `diff` instead.
 
+### 1.1 Judging candidates and searching (2026-11-18)
+
+The remaining functions are stuck in local minima, so do not accept or
+reject a candidate on similarity. Compare structure in this order and keep
+a change that fixes a higher rung even when similarity falls, as long as no
+claim is lost: EH states, call multiset, frame size, block layout, stored and
+reloaded slots, registers, bytes. ProdPicker::on_scrolled went 0.893 → 0.78
+→ 0.91 → exact; the 0.78 step was the one that reproduced the frame.
+
+A raw compile of one unit takes 0.3 to 2 s, against 4 s or more for
+`recover measure`. Compile the unit directly (the command is in
+`build/compile_commands.json`), disassemble the function's COMDAT and the
+image span, and diff them with relocations masked; confirm the final
+candidate with `recover measure` and bank with `recover record`. At that
+speed a small grammar of source forms (which object each read uses, where
+each statement sits) can be enumerated exhaustively: 288 forms take 12 s on
+14 compiler prefixes. Restrict the score to the image address window being
+worked on so that unrelated ties do not hide a structural match.
+
 ## 2. Established VC6 rules (measured with micro-experiments)
 
 These rules apply to the production recipe (`/O2 /Ob2 /Gy /GR- /GX`, with or
@@ -808,6 +827,15 @@ raw field access where the original used inline accessors.
 - **Operand order of commutatives.** For `a + b` of globals, VC6 loads `b` first.
   For `f(a) OP f(b)` it calls the right side first. It canonicalises
   `(a + b) / 2`.
+- **Which of two member loads comes first** in `a + b` is not set by the
+  spelling (`a + b` and `b + a` compile alike) but by which operand the
+  function referenced first. Reorder the earlier references instead: reading
+  the field into a local before the first use of the count flipped both loop
+  bounds of ProdPicker::on_scrolled (`mov eax,[count]; mov edx,[first]`).
+- **Statement vs conditional expression.** `d = a - b; if (d < 0) d = b - a;`
+  and `d = (a - b < 0) ? b - a : a - b;` emit the same instructions with two
+  registers swapped (on_scrolled's distance). Try the other form on a
+  two-register tie around an absolute difference or a clamp.
 - **expand_rect's constants.** For `expand_rect(&r, -N, -N)` the image's
   "+N immediate on left/top, register holding -N added to right/bottom" comes
   from the helper body `left -= h; right += h`; hand-written `+=`/`-=` pairs
@@ -2002,6 +2030,18 @@ raw field access where the original used inline accessors.
   `(&size[1], &size[0])`; named scalars move into dead parameter slots.
 - **Buffer sizes.** Read them from the frame gap to the next local.
 - **A local the image never stores** was uninitialized in the original.
+- **A RECT in memory whose constant edges are stored through a register**
+  (`mov ebx,0x15; mov [ebp-0x10],ebx; mov ebx,4; mov [ebp-0xc],ebx`) and
+  whose left edge is reloaded while the other edges are folded is a struct
+  copy followed by `offset_rect(&copy, 0, dy)`: `copy = rect;
+  offset_rect(&copy, 0, dy);`. The source rectangle folds to constants, the
+  copy's stores survive, and `left += 0` stops VC6 forwarding the left edge.
+  No pointer-setter, reference, aggregate-initializer or POINT form keeps the
+  rectangle in memory; a by-value helper return does, but reloads top too.
+  After a struct copy, the first field modified with `+=` keeps its copy
+  store and later ones lose theirs (ProdPicker::on_scrolled 0x00493CB0).
+- **Two same-type locals in disjoint block scopes share one slot**
+  (on_scrolled's two shifted rectangles in a 0x10 frame).
 
 ### 3.4 Arithmetic idioms
 - **`rand() & 0x80000001; jns; dec; or -2; inc`** is `rand() % 2`.
