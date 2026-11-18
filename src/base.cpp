@@ -8079,6 +8079,9 @@ void __cdecl base_production() {
     // The only class-typed local: its constructor runs first (0x4F0805) and
     // every return below expands ~Popup in place with its own EH states.
     Popup popup;
+    int undersized;
+    int height;
+    int width;
 
     int faction_id = BaseCurrent->faction_id_current;
     BaseCurrent->state &= ~BSTATE_PRODUCTION_DONE;
@@ -8185,10 +8188,9 @@ production_again:
                 max(0, min(Rules.retool_exemption, BaseCurrent->mineral_surplus));
         }
         BaseCurrent->minerals_accumulated_2 = BaseCurrent->minerals_accumulated;
-        int veh_id;
-        if (BaseProductionUnitCreationDisabled
-            || (veh_id = veh_init(proto_id, faction_id, BaseCurrent->x,
-                                  BaseCurrent->y)) < 0) {
+        if (!BaseProductionUnitCreationDisabled) {
+        int veh_id = veh_init(proto_id, faction_id, BaseCurrent->x, BaseCurrent->y);
+        if (veh_id < 0) {
             return;
         }
         if (VehPrototypes[proto_id].plan == PLAN_COLONIZATION) {
@@ -8260,7 +8262,9 @@ production_again:
         }
         BaseCurrent->state |= BSTATE_PRODUCTION_DONE;
         BaseCurrent->state &= ~0x80000000u;
-        if (!(!is_human(faction_id))) {
+        if (!is_human(faction_id)) {
+            base_reset(BaseIDCurrentSelected, 0);
+        } else {
             int queued = base_queue(BaseIDCurrentSelected);
             parse_says(1, VehPrototypes[proto_id].veh_name, -1, -1);
             uint32_t warnings = GameDataStateStorage.fields_.game_warnings_;
@@ -8340,8 +8344,6 @@ production_again:
                 && BaseCurrent->governor & GOV_ACTIVE) {
                 base_reset(BaseIDCurrentSelected, 0);
             }
-        } else {
-            base_reset(BaseIDCurrentSelected, 0);
         }
         if (new_proto) {
             mon_prototype_built(faction_id);
@@ -8376,6 +8378,7 @@ production_again:
             if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_AIR) {
                 mon_air_unit_built(faction_id);
             }
+        }
         }
         return;
     }
@@ -8515,19 +8518,19 @@ production_again:
     }
     if (project_id >= 0) {
         GameDataStateStorage.fields_.secret_project_[project_id] = BaseIDCurrentSelected;
-    } else if (!(is_orbital)) {
-        set_fac(facility_id, BaseIDCurrentSelected, TRUE);
-    } else {
+    } else if (is_orbital) {
         PlayersData[faction_id].satellites_[facility_id - FacilityRepStart]++;
         if (!(PlayersData[faction_id].flags & PFLAG_MAP_REVEALED)) {
-            for (int i = 0; i < MapArea; i++) {
-                MapTiles[i].visibility |= 1 << faction_id;
+            int bit = 1 << faction_id;
+            Map *tile = MapTiles;
+            for (int i = 0; i < MapArea; tile++, i++) {
+                tile->visibility |= bit;
                 if (faction_id) {
-                    MapTiles[i].bit_visible[faction_id - 1] = MapTiles[i].bit;
+                    tile->bit_visible[faction_id - 1] = tile->bit;
                 }
             }
             for (i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
-                Bases[i].visibility |= 1 << faction_id;
+                Bases[i].visibility |= bit;
                 Bases[i].faction_pop_size_intel[faction_id] = Bases[i].population_size;
             }
             PlayersData[faction_id].flags |= PFLAG_MAP_REVEALED;
@@ -8539,6 +8542,8 @@ production_again:
                 WorldClimateWorldWin.GraphicWin::redraw();
             }
         }
+    } else {
+        set_fac(facility_id, BaseIDCurrentSelected, TRUE);
     }
     if (facility_id == FAC_NETWORK_NODE) {
         BaseCurrent->state &= ~(BSTATE_ARTIFACT_LINKED | BSTATE_ARTIFACT_ALREADY_LINKED);
@@ -8561,7 +8566,6 @@ production_again:
         if (faction_id == ConsoleGlobal.faction_id_) {
             if (facility_id == FAC_SUBSPACE_GENERATOR) {
                 interlude(38, 0, 1, 0);
-                int undersized;
                 parse_num(0, generators(faction_id, &undersized));
                 parse_num(1, undersized);
                 parse_num(2, Rules.subspace_generators_needed);
@@ -8581,21 +8585,30 @@ production_again:
                            && BaseCurrent->governor & GOV_ACTIVE) {
                     strcat(StringTemp, "G");
                 }
-                const char *picture;
+                // Two calls, tail-merged after the flag test: each arm
+                // selects its picture and repeats the queued/governor test
+                // (0x4F26E6, 0x4F2712).
                 if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
-                    picture = is_orbital ? "space_sm.pcx"
-                        : facility_id >= FacilitySPStart ? "secproj_sm.pcx"
-                        : "alfacblt_sm.pcx";
+                    popb(StringTemp,
+                         ((queued || (BaseCurrent->governor & GOV_MANAGES_PRODUCTION
+                                      && BaseCurrent->governor & GOV_ACTIVE))
+                          && !(GameDataStateStorage.fields_.game_warnings_ & 0x2000)) ? 0 : 1,
+                         -1,
+                         is_orbital ? "space_sm.pcx"
+                             : facility_id >= FacilitySPStart ? "secproj_sm.pcx"
+                             : "alfacblt_sm.pcx",
+                         0);
                 } else {
-                    picture = is_orbital ? "space_sm.pcx"
-                        : facility_id >= FacilitySPStart ? "secproj_sm.pcx"
-                        : "facblt_sm.pcx";
+                    popb(StringTemp,
+                         ((queued || (BaseCurrent->governor & GOV_MANAGES_PRODUCTION
+                                      && BaseCurrent->governor & GOV_ACTIVE))
+                          && !(GameDataStateStorage.fields_.game_warnings_ & 0x2000)) ? 0 : 1,
+                         -1,
+                         is_orbital ? "space_sm.pcx"
+                             : facility_id >= FacilitySPStart ? "secproj_sm.pcx"
+                             : "facblt_sm.pcx",
+                         0);
                 }
-                popb(StringTemp,
-                     ((queued || (BaseCurrent->governor & GOV_MANAGES_PRODUCTION
-                                  && BaseCurrent->governor & GOV_ACTIVE))
-                      && !(GameDataStateStorage.fields_.game_warnings_ & 0x2000)) ? 0 : 1,
-                     -1, picture, 0);
             } else {
                 parse_says(0, BaseCurrent->name_string, -1, -1);
                 popup.init(0, 0);
@@ -8670,8 +8683,6 @@ production_again:
             popup.start(PopupStartCaption, "PRODUCE2", -1, 0, 0x80, 0);
             if (!(GameDataStateStorage.fields_.game_state_ & 1)
                 || GameDataStateStorage.fields_.game_state_ & 8) {
-                int width;
-                int height;
                 if (!Buffer::get_pcx_dimensions("secproj_sm.pcx", &width, &height)
                     && !popup.owned_picture().init(const_cast<char *>("secproj_sm.pcx"),
                                                    width, height)) {
@@ -8679,20 +8690,12 @@ production_again:
                 }
                 popup.exec(0, 0);
             }
-        } else if (!(facility_id == FAC_SUBSPACE_GENERATOR)) {
-            parse_says(0, BaseCurrent->name_string, -1, -1);
-            if (!(GameDataStateStorage.fields_.game_state_ & 1)
-                || GameDataStateStorage.fields_.game_state_ & 8) {
-                popp(ScriptPopupFile, is_orbital ? "PRODUCE3" : "PRODUCE2", 0,
-                     is_orbital ? "space_sm.pcx" : "secproj_sm.pcx", 0);
-            }
-        } else {
+        } else if (facility_id == FAC_SUBSPACE_GENERATOR) {
             if (!(GameDataStateStorage.fields_.game_state_ & 1)
                 || GameDataStateStorage.fields_.game_state_ & 8) {
                 if (!(Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN)) {
                     interlude(26, BaseCurrent->name_string, 1, 0);
                 }
-                int undersized;
                 parse_num(0, generators(faction_id, &undersized));
                 parse_num(1, undersized);
                 parse_num(2, Rules.subspace_generators_needed);
@@ -8702,6 +8705,13 @@ production_again:
                 parse_says(2, get_name(faction_id), -1, -1);
                 parse_says(3, get_noun(faction_id), -1, -1);
                 popp(ScriptPopupFile, "GENERATOR", 0, "subgen_sm.pcx", 0);
+            }
+        } else {
+            parse_says(0, BaseCurrent->name_string, -1, -1);
+            if (!(GameDataStateStorage.fields_.game_state_ & 1)
+                || GameDataStateStorage.fields_.game_state_ & 8) {
+                popp(ScriptPopupFile, is_orbital ? "PRODUCE3" : "PRODUCE2", 0,
+                     is_orbital ? "space_sm.pcx" : "secproj_sm.pcx", 0);
             }
         }
     }
