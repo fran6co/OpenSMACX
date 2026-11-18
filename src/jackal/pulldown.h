@@ -81,11 +81,12 @@ class PullDown : public GraphicWin {
   // ReportWin::right_menu performs the original signed upper-bound check;
   // this accessor intentionally does not add a lower-bound check.
   int item_id(int index) const { return items_[index].id; }
-  // get_selected returns a slot, not its action ID. Cancellation must not
-  // index before items_: the old status-menu seed confused these two values.
+  // get_selected returns a slot, not its action ID. The image's expansions
+  // (BaseWin::base_editor 0x41CA94, MapWin 0x46C2xx) apply only the signed
+  // upper bound to the slot; there is no lower-bound test.
   int get_selected_id() {
     int index = get_selected();
-    return index >= 0 && index < 64 ? items_[index].id : -1;
+    return index < 64 ? items_[index].id : -1;
   }
   int id_to_index(int id);
 

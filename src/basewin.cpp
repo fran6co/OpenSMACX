@@ -917,9 +917,9 @@ void BaseWin::draw_flash(int redraw_mode) {
 }
 
 // Original 41C7A0..41D4BA, cleanup 6527EF..652A94.
-// Requires PullDown::item_id(int), an unchecked typed slot accessor: the
-// original tests only selected < 64, not selected >= 0. Do not substitute
-// get_selected_id(), which changes that signed error path.
+// The selected action comes from PullDown::get_selected_id(), expanded in
+// place: only selected < 64 is tested (0x41CA94), and its -1 is threaded
+// straight into the first return's teardown, which stays inline.
 // Both modal objects are constructed at entry; their complete teardown is RAII.
 // ORIGINAL: 0x0041C7A0 ?base_editor@BaseWin@@QAEXXZ 0x0041C7A0-0x0041D4BA;0x006527EF-0x00652A94
 // RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/unrecovered/0041c7a0.cpp", "source:src/basewin.h", "image:0x41c7a0"], "reason": "Recover the complete original operation through genuine owning C++ classes, members and natural lifetimes; preserve retained seed evidence and historical restoration obligations separately from fresh matching."}
@@ -955,11 +955,8 @@ void BaseWin::base_editor() {
     menu.add_item(14, label_get(0x1040 / 4));
     menu.add_item(9, StringTable.get(Labels.strings_ptr[0xE18 / 4]));
     menu.show(x, y, pop_expire);
-    const int slot = menu.get_selected();
-    int action;
-    // 0x41CA94..0x41CAA5: slot >= 64 and a negative id both branch straight
-    // to the first teardown; no -1 is materialized.
-    if (slot >= 64 || (action = menu.item_id(slot)) < 0) return;
+    int action = menu.get_selected_id();
+    if (action < 0) return;
     switch (action) {
     case 1:
         // Table entries 0/1 are separate blocks (0x41CB2E, 0x41CB3F); the
