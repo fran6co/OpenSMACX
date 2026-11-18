@@ -126,6 +126,31 @@ PrefWin::PrefWin() : GraphicWin() {}
 // first set_font of each button group addresses the Buffer base as
 // [edi+0x444] in the image (0x48DA0A, 0x48F6E9, 0x48F8F3) where ours uses
 // [esi+member+0x444]; static_cast and reference spellings add null checks.
+// WORKAROUND(decl): three stand-ins for header inlines whose names and homes
+// are unknown. Where the image addresses a control through its pointer after
+// an earlier call on it (mov [edi+0x10]/[edi+0x14] for the two check sprites
+// at 48DE2B and four more; lea ecx,[edi+0x444] for set_font at 48DA0A, 48F6E9
+// and 48F8F3), two statements on the member fold the address into `this`
+// ([esi+K]). An inline whose object parameter is used twice keeps the
+// pointer and reproduces all ten sites. The tab buttons could equally use
+// prefwin_button_font after a plain init: that spelling differs only in the
+// operand order of one lea at 48F9AE, which follows the unit's symbol count.
+static inline void prefwin_check_sprites(CheckBox *box, Sprite *unchecked, Sprite *checked) {
+    box->unchecked_sprite_ = unchecked;
+    box->checked_sprite_ = checked;
+}
+
+static inline void prefwin_button_init(BaseButton *button, LPCSTR name, int id, int x, int y,
+                                       int width, int height, Win *parent, int style_flag) {
+    button->init(name, id, x, y, width, height, parent, style_flag);
+    button->Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
+}
+
+static inline void prefwin_button_font(BaseButton *button) {
+    button->Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
+    button->redraw();
+}
+
 void PrefWin::init() {
   // Original preference reads use four distinct static key starts.
   // Keep function-local storage so init and destroy do not pool identical keys.
@@ -184,65 +209,58 @@ void PrefWin::init() {
   // ---- page tabs: label copied into StringTemp, then BaseButton::init ----
   StringTemp[0] = 0;                                          // 48D9AA
   strcat(StringTemp, label_get(750));   /* 0xBB8 */           // 48D9C7
-  bscPrefButton_.init(StringTemp, 0, PrefWinGeometryValue_85788C,
+  prefwin_button_init(&bscPrefButton_, StringTemp, 0, PrefWinGeometryValue_85788C,
                       PrefWinGeometryValue_857890,
                       PrefWinGeometryValue_857894, PrefWinTitleButtonHeight,
-                      preference_window() /* 0x8578D8 */, 0); // 48D9FD
-  bscPrefButton_.Buffer::set_font(&TutWinBaseWindow.font1_ /* 0x6E84B4 */, 0, 0, 0); // 48DA10
+                      preference_window() /* 0x8578D8 */, 0); // 48D9FD // 48DA10
   bscPrefButton_.redraw();              // ? 48DA19 virtual slot +0xF8 // 48DA19
 
   StringTemp[0] = 0;                                          // 48DA24
   strcat(StringTemp, label_get(751));   /* 0xBBC */           // 48DA41
-  advPrefButton_.init(StringTemp, 1, PrefWinGeometryValue_85788C,
+  prefwin_button_init(&advPrefButton_, StringTemp, 1, PrefWinGeometryValue_85788C,
                       PrefWinGeometryValue_857890 + 0x16,
                       PrefWinGeometryValue_857894, PrefWinTitleButtonHeight,
-                      preference_window(), 0);                // 48DA79
-  advPrefButton_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);  // 48DA8C
+                      preference_window(), 0);                // 48DA79  // 48DA8C
   advPrefButton_.redraw();                                    // 48DA9D
 
   StringTemp[0] = 0;                                          // 48DAA8
   strcat(StringTemp, label_get(752));   /* 0xBC0 */           // 48DAC5
-  warnPrefButton_.init(StringTemp, 2, PrefWinGeometryValue_85788C,
+  prefwin_button_init(&warnPrefButton_, StringTemp, 2, PrefWinGeometryValue_85788C,
                        PrefWinGeometryValue_857890 + 0x2C,
                        PrefWinGeometryValue_857894, PrefWinTitleButtonHeight,
-                       preference_window(), 0);               // 48DAFD
-  warnPrefButton_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0); // 48DB10
+                       preference_window(), 0);               // 48DAFD // 48DB10
   warnPrefButton_.redraw();                                   // 48DB21
 
   StringTemp[0] = 0;                                          // 48DB2C
   strcat(StringTemp, label_get(753));   /* 0xBC4 */           // 48DB49
-  autoPrefButton_.init(StringTemp, 3, PrefWinGeometryValue_85788C,
+  prefwin_button_init(&autoPrefButton_, StringTemp, 3, PrefWinGeometryValue_85788C,
                        PrefWinGeometryValue_857890 + 0x42,
                        PrefWinGeometryValue_857894, PrefWinTitleButtonHeight,
-                       preference_window(), 0);               // 48DB81
-  autoPrefButton_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0); // 48DB94
+                       preference_window(), 0);               // 48DB81 // 48DB94
   autoPrefButton_.redraw();                                   // 48DBA5
 
   StringTemp[0] = 0;                                          // 48DBB0
   strcat(StringTemp, label_get(754));   /* 0xBC8 */           // 48DBCD
-  audioVisPrefButton_.init(StringTemp, 4, PrefWinGeometryValue_85788C,
+  prefwin_button_init(&audioVisPrefButton_, StringTemp, 4, PrefWinGeometryValue_85788C,
                            PrefWinGeometryValue_857890 + 0x58,
                            PrefWinGeometryValue_857894, PrefWinTitleButtonHeight,
-                           preference_window(), 0);           // 48DC05
-  audioVisPrefButton_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0); // 48DC18
+                           preference_window(), 0);           // 48DC05 // 48DC18
   audioVisPrefButton_.redraw();                               // 48DC29
 
   StringTemp[0] = 0;                                          // 48DC34
   strcat(StringTemp, label_get(1077));  /* 0x10D4 */          // 48DC51
-  mapPrefButton_.init(StringTemp, 5, PrefWinGeometryValue_85788C,
+  prefwin_button_init(&mapPrefButton_, StringTemp, 5, PrefWinGeometryValue_85788C,
                       PrefWinGeometryValue_857890 + 0x6E,
                       PrefWinGeometryValue_857894, PrefWinTitleButtonHeight,
-                      preference_window(), 0);                // 48DC89
-  mapPrefButton_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);  // 48DC9C
+                      preference_window(), 0);                // 48DC89  // 48DC9C
   mapPrefButton_.redraw();                                    // 48DCAD
 
   StringTemp[0] = 0;                                          // 48DCB8
   strcat(StringTemp, label_get(1078));  /* 0x10D8 */          // 48DCD5
-  gammaButton_.init(StringTemp, 6, PrefWinGeometryValue_85788C,
+  prefwin_button_init(&gammaButton_, StringTemp, 6, PrefWinGeometryValue_85788C,
                     PrefWinGeometryValue_857890 + 0x9A,
                     PrefWinGeometryValue_857894, PrefWinTitleButtonHeight,
-                    preference_window(), 0);                  // 48DD10
-  gammaButton_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);    // 48DD23
+                    preference_window(), 0);                  // 48DD10    // 48DD23
   gammaButton_.redraw();                                      // 48DD34
 
   PrefWinButtonGroup.init(0x5D, 0);                           // 48DD42
@@ -264,8 +282,7 @@ void PrefWin::init() {
   bscPrefCheckBox_.init(PrefWinGeometryValue_8578C8, PrefWinGeometryValue_8578C4,
                         PrefWinGeometryValue_8578A0, PrefWinGeometryValue_8578A4,
                         0);                                   // 48DE09 / 48DE26
-  bscPrefCheckBox_.unchecked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[1]; // 48DE2B 0x779504
-  bscPrefCheckBox_.checked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[2];   // 48DE32 0x779530
+  prefwin_check_sprites(&bscPrefCheckBox_, &g_IFACE_CLOSE_X_SPRITES[1], &g_IFACE_CLOSE_X_SPRITES[2]); // 48DE2B 0x779504   // 48DE32 0x779530
   StringTemp[0] = 0;  text_get();                             // 48DE39
   strcat(StringTemp, " " /* 0x686BA4 */);
   strcat(StringTemp, TextBufferGetPtr /* [9B7D00] */);
@@ -311,8 +328,7 @@ void PrefWin::init() {
   advPrefCheckBox_.init(PrefWinGeometryValue_8578C8, PrefWinGeometryValue_8578C4,
                         PrefWinGeometryValue_8578A0, PrefWinGeometryValue_8578A4,
                         0);                                   // 48E0A6 / 48E0C3
-  advPrefCheckBox_.unchecked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[1]; // 48E0C8
-  advPrefCheckBox_.checked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[2];   // 48E0CF
+  prefwin_check_sprites(&advPrefCheckBox_, &g_IFACE_CLOSE_X_SPRITES[1], &g_IFACE_CLOSE_X_SPRITES[2]); // 48E0C8   // 48E0CF
   StringTemp[0] = 0;  text_get();
   strcat(StringTemp, " " /* 0x686BD4 */);
   strcat(StringTemp, TextBufferGetPtr);
@@ -373,8 +389,7 @@ void PrefWin::init() {
   autoPrefCheckBox_.init(PrefWinGeometryValue_8578C8, PrefWinGeometryValue_8578C4,
                          PrefWinGeometryValue_8578A0, PrefWinGeometryValue_8578A4,
                          0);                                  // 48E435 / 48E452
-  autoPrefCheckBox_.unchecked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[1]; // 48E457
-  autoPrefCheckBox_.checked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[2];   // 48E45E
+  prefwin_check_sprites(&autoPrefCheckBox_, &g_IFACE_CLOSE_X_SPRITES[1], &g_IFACE_CLOSE_X_SPRITES[2]); // 48E457   // 48E45E
   StringTemp[0] = 0;  text_get();
   strcat(StringTemp, " " /* 0x686C14 */);
   strcat(StringTemp, TextBufferGetPtr);
@@ -446,8 +461,7 @@ void PrefWin::init() {
   text_get();
   audioVisPrefCheckBox_.init(PrefWinGeometryValue_8578C8, PrefWinGeometryValue_8578C4, PrefWinGeometryValue_8578A0,
       PrefWinGeometryValue_8578A4 - PrefWinGeometryConstant_686B78 - PrefWinGeometryValue_8577E0 - frame_adjustment, 0);
-  audioVisPrefCheckBox_.unchecked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[1];  // 0x779504
-  audioVisPrefCheckBox_.checked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[2];    // 0x779530
+  prefwin_check_sprites(&audioVisPrefCheckBox_, &g_IFACE_CLOSE_X_SPRITES[1], &g_IFACE_CLOSE_X_SPRITES[2]);  // 0x779504    // 0x779530
   StringTemp[0] = 0;
   text_get();
   strcat(StringTemp, " ");  // 0x686C60
@@ -499,8 +513,7 @@ void PrefWin::init() {
   text_get();
   warnPrefCheckBox_.init(PrefWinGeometryValue_8578C8, PrefWinGeometryValue_8578C4, PrefWinGeometryValue_8578A0,
       PrefWinGeometryValue_8578A4 - PrefWinGeometryConstant_686B78 - PrefWinGeometryValue_8577E0 + 0x28, 0);
-  warnPrefCheckBox_.unchecked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[1];
-  warnPrefCheckBox_.checked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[2];
+  prefwin_check_sprites(&warnPrefCheckBox_, &g_IFACE_CLOSE_X_SPRITES[1], &g_IFACE_CLOSE_X_SPRITES[2]);
   StringTemp[0] = 0;
   text_get();
   strcat(StringTemp, " ");  // 0x686C90
@@ -571,8 +584,7 @@ void PrefWin::init() {
   // takes no leading text_get() before its init (0x48EE85).
   warnContPrefCheckBox_.init(PrefWinGeometryValue_8578C8, PrefWinGeometryValue_8578C4, PrefWinGeometryValue_8578A0,
       PrefWinGeometryValue_8578A4 - PrefWinGeometryConstant_686B78 - PrefWinGeometryValue_8577E0, 0);
-  warnContPrefCheckBox_.unchecked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[1];
-  warnContPrefCheckBox_.checked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[2];
+  prefwin_check_sprites(&warnContPrefCheckBox_, &g_IFACE_CLOSE_X_SPRITES[1], &g_IFACE_CLOSE_X_SPRITES[2]);
   StringTemp[0] = 0;
   text_get();
   strcat(StringTemp, " ");  // 0x686CC4
@@ -603,8 +615,7 @@ void PrefWin::init() {
   text_get();
   text_get();
   mapPrefCheckBox_.init(PrefWinGeometryValue_8578C8, PrefWinGeometryValue_8578C4, PrefWinGeometryValue_8578A0, PrefWinGeometryValue_8578A4, 0);
-  mapPrefCheckBox_.unchecked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[1];
-  mapPrefCheckBox_.checked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[2];
+  prefwin_check_sprites(&mapPrefCheckBox_, &g_IFACE_CLOSE_X_SPRITES[1], &g_IFACE_CLOSE_X_SPRITES[2]);
   StringTemp[0] = 0;
   text_get();
   strcat(StringTemp, " ");  // 0x686CE0
@@ -702,14 +713,10 @@ void PrefWin::init() {
   volumeMusicToggle_.init(StringTable.get(Labels.strings_ptr[0x10F8 / 4]), 0x58, PrefWinGeometryValue_8578B4,
       PrefWinGeometryValue_8578BC - PrefWinNarrowDisplayVerticalOffset + 0x42,
       PrefWinToggleWidth, PrefWinToggleHeight, preference_window(), 0);
-  volumeMainToggle_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);  // 0x6E84B4
-  volumeMainToggle_.redraw();
-  volumeVoiceToggle_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
-  volumeVoiceToggle_.redraw();
-  volumeSFXToggle_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
-  volumeSFXToggle_.redraw();
-  volumeMusicToggle_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
-  volumeMusicToggle_.redraw();
+  prefwin_button_font(&volumeMainToggle_);  // 0x6E84B4
+  prefwin_button_font(&volumeVoiceToggle_);
+  prefwin_button_font(&volumeSFXToggle_);
+  prefwin_button_font(&volumeMusicToggle_);
   // Stores at 0x48F771: main, voice, sfx, music (+0x15820,+0x16EB8,+0x1636C,+0x17A04).
   volumeMainToggle_.field_A18_ = 0;
   volumeVoiceToggle_.field_A18_ = 0;
@@ -734,12 +741,9 @@ void PrefWin::init() {
   cancelButton_.init(StringTemp, 0x5B, PrefWinGeometryValue_85788C,
       PrefWinGeometryValue_8578C0 - PrefWinNarrowDisplayVerticalOffset + PrefWinGeometryValue_857884 - 0x17,
       PrefWinGeometryValue_857894, PrefWinTitleButtonHeight, preference_window(), 0);
-  restoreDefaultButton_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
-  restoreDefaultButton_.redraw();
-  okButton_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
-  okButton_.redraw();
-  cancelButton_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
-  cancelButton_.redraw();
+  prefwin_button_font(&restoreDefaultButton_);
+  prefwin_button_font(&okButton_);
+  prefwin_button_font(&cancelButton_);
   // Stores at 0x48F956: restore, ok, cancel (+0x1909C,+0x1A734,+0x19BE8).
   restoreDefaultButton_.field_A18_ = 0;
   okButton_.field_A18_ = 0;

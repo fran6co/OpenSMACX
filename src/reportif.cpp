@@ -5227,16 +5227,15 @@ void ReportIf::bl_anim() {
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004a41d0.cpp retained original identity, full spans and seed history", "recovery/tasks/interface-contract-report-closure.json authorized coupled owner recovery", "original:0x4a41d0 complete control/data-access audit; ReportIf declarations and genuine ReportWin control storage"], "reason": "Recover ReportIf's status transition through its genuine SubInterface owner and ReportWin's embedded controls, following the retained original behavior. The source's emitted virtual symbol is recorded separately from the historical catalogue spelling."}
 // TRIED: full hand transcription from raw disassembly (not Ghidra, whose &DAT_x+idx*N pseudocode over-scales by 4x on 0x96cdac/0x96c9f8 - fixed here against the raw asm multiply chain and byte tests); covers close path (switch+jump table+loops), init path (7-button report loop, 4 button groups, single-column cef..cf8, has_tech/ bitmask channel grid, spying flags, 4-way spy-report geometry, scroll/report/slide tail). First divergence is instruction #3 (prologue 'mov'/'push' scheduling) - approximate throughout, not byte-verified block by block beyond the ones cited above.
 // symbol    ?on_status@ReportIf@@UAEXH@Z
-// WORKAROUND(decl): the helper's original name and home are unknown. At
-// each of on_status's 22 fixed-button sites the image forms the Buffer base
-// from the button pointer (lea ecx,[reg+0x444]) for the set_font that follows
-// the RECT init, where two statements on the member fold it into `this`
-// (lea ecx,[esi+K]): the pointer is an inline parameter used twice.
-static inline void report_button_setup(FlatButton *button, LPCSTR name, int id, RECT *rect,
-                                       Win *parent, int style_flag) {
-    button->init(name, id, rect->left, rect->top, rect->right - rect->left,
-                 rect->bottom - rect->top, parent, style_flag);
+// WORKAROUND(decl): stand-in for a header inline whose name and home are
+// unknown (PrefWin::init shows the same one). At on_status's fixed-button
+// sites the image forms the Buffer base from the button pointer
+// (lea ecx,[reg+0x444]) for the set_font after the RECT init, where
+// statements on the member fold it into `this` (lea ecx,[esi+K]): the
+// pointer is an inline parameter used twice.
+static inline void report_button_font(FlatButton *button) {
     button->Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
+    button->redraw();
 }
 
 void ReportIf::on_status(int mode) {
@@ -5297,15 +5296,15 @@ void ReportIf::on_status(int mode) {
         strcat(StringTemp, label_get(0x21B));
         set_rectangle_dimensions(&draw_workspace_rect_, frame.left, frame.top,
                                  center - frame.left - 1, 20);
-        report_button_setup(&window.flatButton3_, StringTemp, 1, &draw_workspace_rect_, &window, 0);
-        window.flatButton3_.redraw();
+        report_button_init(&window.flatButton3_, StringTemp, 1, &draw_workspace_rect_, &window, 0);
+        report_button_font(&window.flatButton3_);
         window.flatButton3_.GraphicWin::redraw();
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x299));
         set_rectangle_dimensions(&draw_workspace_rect_, center + 1, frame.top,
                                  center - frame.left - 1, 20);
-        report_button_setup(&window.flatButton2_, StringTemp, 9, &draw_workspace_rect_, &window, 0);
-        window.flatButton2_.redraw();
+        report_button_init(&window.flatButton2_, StringTemp, 9, &draw_workspace_rect_, &window, 0);
+        report_button_font(&window.flatButton2_);
         window.flatButton2_.GraphicWin::redraw();
 
         // First paired selector (0x4A4554..0x4A4727).
@@ -5319,16 +5318,16 @@ void ReportIf::on_status(int mode) {
         // the int field are kept for the unit's symbol counter.
         set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_,
                                  static_cast<int>(field_14_) / 2 - 1, 20);
-        report_button_setup(&flatButton1_, StringTemp, 0x92, &draw_workspace_rect_, &MainInterfaceGlobal, 0);
-        flatButton1_.redraw();
+        report_button_init(&flatButton1_, StringTemp, 0x92, &draw_workspace_rect_, &MainInterfaceGlobal, 0);
+        report_button_font(&flatButton1_);
         flatButton1_.hide();
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x176));
         set_rectangle_dimensions(&draw_workspace_rect_,
                                  field_C_ + static_cast<int>(field_14_) / 2 + 1, field_10_,
                                  static_cast<int>(field_14_) / 2, 20);
-        report_button_setup(&flatButton2_, StringTemp, 0x93, &draw_workspace_rect_, &MainInterfaceGlobal, 0);
-        flatButton2_.redraw();
+        report_button_init(&flatButton2_, StringTemp, 0x93, &draw_workspace_rect_, &MainInterfaceGlobal, 0);
+        report_button_font(&flatButton2_);
         flatButton2_.hide();
         buttonGroup1_.add(&flatButton1_);
         buttonGroup1_.add(&flatButton2_);
@@ -5343,16 +5342,16 @@ void ReportIf::on_status(int mode) {
         strcat(StringTemp, label_get(0x1EE));
         set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_,
                                  static_cast<int>(field_14_) / 2 - 1, 20);
-        report_button_setup(&flatButton3_, StringTemp, 0xD0A, &draw_workspace_rect_, &MainInterfaceGlobal, 0);
-        flatButton3_.redraw();
+        report_button_init(&flatButton3_, StringTemp, 0xD0A, &draw_workspace_rect_, &MainInterfaceGlobal, 0);
+        report_button_font(&flatButton3_);
         flatButton3_.hide();
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x2AA));
         set_rectangle_dimensions(&draw_workspace_rect_,
                                  field_C_ + static_cast<int>(field_14_) / 2 + 1, field_10_,
                                  static_cast<int>(field_14_) / 2, 20);
-        report_button_setup(&flatButton4_, StringTemp, 0xD0B, &draw_workspace_rect_, &MainInterfaceGlobal, 0);
-        flatButton4_.redraw();
+        report_button_init(&flatButton4_, StringTemp, 0xD0B, &draw_workspace_rect_, &MainInterfaceGlobal, 0);
+        report_button_font(&flatButton4_);
         flatButton4_.hide();
         buttonGroup2_.add(&flatButton3_);
         buttonGroup2_.add(&flatButton4_);
@@ -5367,8 +5366,8 @@ void ReportIf::on_status(int mode) {
         strcat(StringTemp, label_get(0x2E8));
         set_rect(&draw_workspace_rect_, field_C_, field_10_,
                         field_C_ + static_cast<int>(field_14_) / 3 - 2, field_10_ + 20);
-        report_button_setup(&window.flatButton4_, StringTemp, 0x8B3, &draw_workspace_rect_, &window, 0);
-        window.flatButton4_.redraw();
+        report_button_init(&window.flatButton4_, StringTemp, 0x8B3, &draw_workspace_rect_, &window, 0);
+        report_button_font(&window.flatButton4_);
         window.flatButton4_.reset_field_A9C_if_ungrouped();
         window.flatButton4_.Win::hide();
         StringTemp[0] = 0;
@@ -5376,8 +5375,8 @@ void ReportIf::on_status(int mode) {
         set_rect(&draw_workspace_rect_, field_C_ + static_cast<int>(field_14_) / 3,
                         field_10_, field_C_ + static_cast<int>(field_14_) / 3 * 2,
                         field_10_ + 20);
-        report_button_setup(&window.flatButton5_, StringTemp, 0x8B4, &draw_workspace_rect_, &window, 0);
-        window.flatButton5_.redraw();
+        report_button_init(&window.flatButton5_, StringTemp, 0x8B4, &draw_workspace_rect_, &window, 0);
+        report_button_font(&window.flatButton5_);
         window.flatButton5_.reset_field_A9C_if_ungrouped();
         window.flatButton5_.Win::hide();
         StringTemp[0] = 0;
@@ -5385,8 +5384,8 @@ void ReportIf::on_status(int mode) {
         set_rect(&draw_workspace_rect_,
                         field_C_ + static_cast<int>(field_14_) / 3 * 2 + 2, field_10_,
                         field_C_ + field_14_, field_10_ + 20);
-        report_button_setup(&window.flatButton6_, StringTemp, 0x8B5, &draw_workspace_rect_, &window, 0);
-        window.flatButton6_.redraw();
+        report_button_init(&window.flatButton6_, StringTemp, 0x8B5, &draw_workspace_rect_, &window, 0);
+        report_button_font(&window.flatButton6_);
         window.flatButton6_.reset_field_A9C_if_ungrouped();
         window.flatButton6_.Win::hide();
         window.buttonGroup1_.add(&window.flatButton4_);
@@ -5404,16 +5403,16 @@ void ReportIf::on_status(int mode) {
         strcat(StringTemp, label_get(0x32C));
         set_rect(&draw_workspace_rect_, field_C_, field_10_,
                         field_C_ + static_cast<int>(field_14_) / 2 - 1, field_10_ + 20);
-        report_button_setup(&window.flatButton7_, StringTemp, 0xD3C, &draw_workspace_rect_, &window, 0);
-        window.flatButton7_.redraw();
+        report_button_init(&window.flatButton7_, StringTemp, 0xD3C, &draw_workspace_rect_, &window, 0);
+        report_button_font(&window.flatButton7_);
         window.flatButton7_.reset_field_A9C_if_ungrouped();
         window.flatButton7_.Win::hide();
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x32D));
         set_rect(&draw_workspace_rect_, field_C_ + static_cast<int>(field_14_) / 2 + 1,
                         field_10_, field_C_ + field_14_, field_10_ + 20);
-        report_button_setup(&window.flatButton8_, StringTemp, 0xD3D, &draw_workspace_rect_, &window, 0);
-        window.flatButton8_.redraw();
+        report_button_init(&window.flatButton8_, StringTemp, 0xD3D, &draw_workspace_rect_, &window, 0);
+        report_button_font(&window.flatButton8_);
         window.flatButton8_.reset_field_A9C_if_ungrouped();
         window.flatButton8_.Win::hide();
         window.buttonGroup2_.add(&window.flatButton7_);
@@ -5425,8 +5424,8 @@ void ReportIf::on_status(int mode) {
         strcat(StringTemp, label_get(0x32E));
         set_rect(&draw_workspace_rect_, frame.left, panel.bottom - 26,
                         frame.right, panel.bottom - 6);
-        report_button_setup(&window.flatButton9_, StringTemp, 0xD3E, &draw_workspace_rect_, &window, 0);
-        window.flatButton9_.redraw();
+        report_button_init(&window.flatButton9_, StringTemp, 0xD3E, &draw_workspace_rect_, &window, 0);
+        report_button_font(&window.flatButton9_);
         window.flatButton9_.set_border_styles(&InterfaceBoxStyles[47], &InterfaceBoxStyles[46],
                                               &InterfaceBoxStyles[45]);
         window.flatButton9_.reset_field_A9C_if_ungrouped();
@@ -5439,8 +5438,8 @@ void ReportIf::on_status(int mode) {
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x2EA));
         set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, 20);
-        report_button_setup(&flatButton5_, StringTemp, 0xCEF, &draw_workspace_rect_, &MainInterfaceGlobal, 0);
-        flatButton5_.redraw();
+        report_button_init(&flatButton5_, StringTemp, 0xCEF, &draw_workspace_rect_, &MainInterfaceGlobal, 0);
+        report_button_font(&flatButton5_);
         flatButton5_.hide();
         field_10_ += 22;
         StringTemp[0] = 0;
@@ -5448,8 +5447,8 @@ void ReportIf::on_status(int mode) {
         strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, label_get(0x209));
         set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, 20);
-        report_button_setup(&flatButton6_, StringTemp, 0xCF0, &draw_workspace_rect_, &MainInterfaceGlobal, 0);
-        flatButton6_.redraw();
+        report_button_init(&flatButton6_, StringTemp, 0xCF0, &draw_workspace_rect_, &MainInterfaceGlobal, 0);
+        report_button_font(&flatButton6_);
         flatButton6_.hide();
         field_10_ += 22;
         StringTemp[0] = 0;
@@ -5457,8 +5456,8 @@ void ReportIf::on_status(int mode) {
         strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, label_get(0x20A));
         set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, 20);
-        report_button_setup(&flatButton7_, StringTemp, 0xCF1, &draw_workspace_rect_, &MainInterfaceGlobal, 0);
-        flatButton7_.redraw();
+        report_button_init(&flatButton7_, StringTemp, 0xCF1, &draw_workspace_rect_, &MainInterfaceGlobal, 0);
+        report_button_font(&flatButton7_);
         flatButton7_.hide();
         field_10_ += 22;
         StringTemp[0] = 0;
@@ -5466,8 +5465,8 @@ void ReportIf::on_status(int mode) {
         strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, label_get(0x20B));
         set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, 20);
-        report_button_setup(&flatButton8_, StringTemp, 0xCF2, &draw_workspace_rect_, &MainInterfaceGlobal, 0);
-        flatButton8_.redraw();
+        report_button_init(&flatButton8_, StringTemp, 0xCF2, &draw_workspace_rect_, &MainInterfaceGlobal, 0);
+        report_button_font(&flatButton8_);
         flatButton8_.hide();
         field_10_ += 22;
         StringTemp[0] = 0;
@@ -5475,22 +5474,22 @@ void ReportIf::on_status(int mode) {
         strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, label_get(0x20C));
         set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, 20);
-        report_button_setup(&flatButton9_, StringTemp, 0xCF3, &draw_workspace_rect_, &MainInterfaceGlobal, 0);
-        flatButton9_.redraw();
+        report_button_init(&flatButton9_, StringTemp, 0xCF3, &draw_workspace_rect_, &MainInterfaceGlobal, 0);
+        report_button_font(&flatButton9_);
         flatButton9_.hide();
         field_10_ += 22;
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x2EC));
         set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, 20);
-        report_button_setup(&flatButton10_, StringTemp, 0xCF4, &draw_workspace_rect_, &MainInterfaceGlobal, 0);
-        flatButton10_.redraw();
+        report_button_init(&flatButton10_, StringTemp, 0xCF4, &draw_workspace_rect_, &MainInterfaceGlobal, 0);
+        report_button_font(&flatButton10_);
         flatButton10_.hide();
         field_10_ += 22;
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x2ED));
         set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, 20);
-        report_button_setup(&flatButton11_, StringTemp, 0xCF5, &draw_workspace_rect_, &MainInterfaceGlobal, 0);
-        flatButton11_.redraw();
+        report_button_init(&flatButton11_, StringTemp, 0xCF5, &draw_workspace_rect_, &MainInterfaceGlobal, 0);
+        report_button_font(&flatButton11_);
         flatButton11_.hide();
 
         // Three security buttons (0x4A54FD..0x4A574A).
@@ -5500,23 +5499,23 @@ void ReportIf::on_status(int mode) {
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x2EA));
         set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, 20);
-        report_button_setup(&flatButton12_, StringTemp, 0xCF6, &draw_workspace_rect_, &MainInterfaceGlobal, 0);
-        flatButton12_.redraw();
+        report_button_init(&flatButton12_, StringTemp, 0xCF6, &draw_workspace_rect_, &MainInterfaceGlobal, 0);
+        report_button_font(&flatButton12_);
         flatButton12_.hide();
         field_10_ += 22;
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x3BB));
         set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, 20);
-        report_button_setup(&flatButton14_, StringTemp, 0xCF8, &draw_workspace_rect_, &MainInterfaceGlobal, 0);
-        flatButton14_.redraw();
+        report_button_init(&flatButton14_, StringTemp, 0xCF8, &draw_workspace_rect_, &MainInterfaceGlobal, 0);
+        report_button_font(&flatButton14_);
         flatButton14_.hide();
         field_10_ += 22;
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x2DB));
         CharUpperA(StringTemp);
         set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, 20);
-        report_button_setup(&flatButton13_, StringTemp, 0xCF7, &draw_workspace_rect_, &MainInterfaceGlobal, 0);
-        flatButton13_.redraw();
+        report_button_init(&flatButton13_, StringTemp, 0xCF7, &draw_workspace_rect_, &MainInterfaceGlobal, 0);
+        report_button_font(&flatButton13_);
         flatButton13_.hide();
 
         // Per-faction satellite-owner buttons (0x4A574D..0x4A5949).
@@ -5542,8 +5541,8 @@ void ReportIf::on_status(int mode) {
                     set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_,
                                              field_14_, 20);
                     FlatButton *owner = &flatButtonsC_[other - 1];
-                    report_button_setup(owner, StringTemp, other, &draw_workspace_rect_, &MainInterfaceGlobal, 0);
-                    owner->redraw();
+                    report_button_init(owner, StringTemp, other, &draw_workspace_rect_, &MainInterfaceGlobal, 0);
+                    report_button_font(owner);
                     owner->hide();
                     buttonGroup3_.add(owner);
                     field_10_ += 22;
