@@ -104,6 +104,18 @@ class Dialog {
   //        instructions where the image holds the subobject in one register.
   void set_style_bit_0(int on);
   void set_style_bit_1(int on);
+#ifdef DIALOG_STYLE_BITS_0_1_INLINE
+  // WORKAROUND(decl): BasePop::exec (0x00602758..0x00602775) adjusts to this
+  // virtual base once, without a null test, and makes both setter calls on
+  // the same receiver register. Only a Dialog member body has that shape:
+  // a reference or pointer bound at the call site tests &dialogs_ for null,
+  // and two qualified calls redo the vbtable walk. Name is a stand-in; it is
+  // gated to basepop.cpp so that no other unit's declaration count moves.
+  void set_style_bits_0_1(int on) {
+    set_style_bit_0(on);
+    set_style_bit_1(on);
+  }
+#endif
   // TRIED (2026-09-02, phase B): `virtual uint32_t close()` - the four
   // Dialog-part thunks in the image's ListBox table suggested close was a
   // Dialog virtual. REFUTED by the family closes' own bodies: the image's

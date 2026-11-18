@@ -4,6 +4,7 @@
 // mov eax,[ecx+4]` under its current_/head_ tests); see stringstruct.h.
 #define STRINGSTRUCT_CURRENT_ENTRY_INLINE
 #define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h
+#define DIALOG_STYLE_BITS_0_1_INLINE  // stand-in: see Dialog::set_style_bits_0_1
 /*
  * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.
  * Copyright (C) 2013-2021 Brendan Casey
@@ -795,11 +796,10 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
         set_width(dialog_width_);
         set_height(dialog_height_);
         set_loc(default_loc_a_, default_loc_b_);
-        // The two show bits, with the vbtable-adjusted Dialog receiver
-        // computed once for both calls.
-        Dialog &dialog = dialogs_;
-        dialog.set_style_bit_0(1);
-        dialog.set_style_bit_1(1);
+        // The two show bits on the embedded Dialog virtual base: the image
+        // adjusts the receiver once (0x602758..0x602763, no null test) and
+        // never holds &dialogs_ in a register.
+        dialogs_.Dialog::set_style_bits_0_1(1);
     } else {
         external_window_ = 0;
         field_30A8_ &= 0xffefffff;
@@ -901,23 +901,24 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
                 if (loc_a_ == 0x1000) {
                     field_30B4_ = (WinScreenWidth -
                                    static_cast<int>(
-                                       owner_window_->dib_.bmiHeader.biWidth)) >> 1;
+                                       owner_window_->pixel_width())) >> 1;
                 } else if (static_cast<int>(loc_a_) < 0) {
                     field_30B4_ = static_cast<int>(loc_a_) -
                                   static_cast<int>(
-                                      owner_window_->dib_.bmiHeader.biWidth) +
+                                      owner_window_->pixel_width()) +
                                   WinScreenWidth;
                 } else {
                     field_30B4_ = loc_a_;
                 }
                 if (loc_b_ == 0x1000) {
-                    field_30B8_ = (static_cast<int>(
-                                       owner_window_->dib_.bmiHeader.biHeight) +
-                                   WinScreenHeight) >> 1;
+                    field_30B8_ = (WinScreenHeight -
+                                   static_cast<int>(
+                                       owner_window_->pixel_height())) >> 1;
                 } else if (static_cast<int>(loc_b_) < 0) {
-                    field_30B8_ = static_cast<int>(
-                                      owner_window_->dib_.bmiHeader.biHeight) +
-                                  static_cast<int>(loc_b_) + WinScreenHeight;
+                    field_30B8_ = static_cast<int>(loc_b_) -
+                                  static_cast<int>(
+                                      owner_window_->pixel_height()) +
+                                  WinScreenHeight;
                 } else {
                     field_30B8_ = loc_b_;
                 }
@@ -925,23 +926,23 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
         } else {
             if (loc_a_ == 0x1000) {
                 field_30B4_ = (static_cast<int>(
-                                   owner_window_->dib_.bmiHeader.biWidth) -
+                                   owner_window_->pixel_width()) -
                                static_cast<int>(field_30BC_)) >> 1;
-            } else if (!(static_cast<int>(loc_a_) < 0)) {
-                field_30B4_ = loc_a_;
-            } else {
+            } else if (static_cast<int>(loc_a_) < 0) {
                 field_30B4_ =
-                    static_cast<int>(owner_window_->dib_.bmiHeader.biWidth) -
+                    owner_window_->pixel_width() -
                     static_cast<int>(field_30BC_) + static_cast<int>(loc_a_);
+            } else {
+                field_30B4_ = loc_a_;
             }
             if (loc_b_ == 0x1000) {
-                field_30B8_ = -(static_cast<int>(field_30C0_) +
-                                static_cast<int>(
-                                    owner_window_->dib_.bmiHeader.biHeight)) >> 1;
+                field_30B8_ = (static_cast<int>(
+                                   owner_window_->pixel_height()) -
+                               static_cast<int>(field_30C0_)) >> 1;
             } else if (static_cast<int>(loc_b_) < 0) {
-                field_30B8_ = static_cast<int>(loc_b_) -
-                              static_cast<int>(field_30C0_) -
-                              static_cast<int>(owner_window_->dib_.bmiHeader.biHeight);
+                field_30B8_ =
+                    owner_window_->pixel_height() -
+                    static_cast<int>(field_30C0_) + static_cast<int>(loc_b_);
             } else {
                 field_30B8_ = loc_b_;
             }
