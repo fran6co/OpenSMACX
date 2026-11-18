@@ -1673,8 +1673,8 @@ void ReportWin::draw_labs() {
         host = &DatalinkMain;
         DatalinkMain.set_text_color_hyper(0xFE, -1, 1, 1);
         field_59A0_ = 0x96;
-        field_59A4_ = 0x28;
         field_59A8_ = 0xAA;
+        field_59A4_ = 0x28;
         frame.left = DatalinkMain.entry_clip_rect().left + 3;
         frame.top = DatalinkMain.entry_clip_rect().top + 3;
         // UNSURE: the image forms right-left once and derives both
@@ -1717,8 +1717,8 @@ void ReportWin::draw_labs() {
         int icon_x = x + 3;
         int icon_y = y + 3;
         header.left = icon_x + 0x43;
-        header.top = icon_y;
         header.right = frame.right - 3;
+        header.top = icon_y;
         // Genuine original: literal bottoms, not offsets from the frame.
         header.bottom = 0x2F;
         bar.left = icon_x + 0x43;
@@ -1907,8 +1907,8 @@ void ReportWin::draw_labs() {
     int tech = field_FAB8_;
     x = frame.left;
     y = field_E268_ + frame.bottom + 0xF;
-    rect1_.bottom = energy_panel_rect_.bottom - y - 0x1E;
     rect1_.right = frame.right - frame.left;
+    rect1_.bottom = energy_panel_rect_.bottom - y - 0x1E;
     if (!datalink) {
         lab_center_y_ = (rect1_.bottom - static_cast<int>(field_59A4_)) / 2 + y;
         // Store order in the image is center, lower, upper.
@@ -2147,10 +2147,10 @@ void ReportWin::draw_labs() {
         if (pass) {
             x = field_A28_;
             y = static_cast<int>(field_A34_ + field_A2C_ - field_A24_) / 2;
-            box.left = x - 3;
             box.right = x + field_59A8_ + 3;
-            box.top = y - 9;
+            box.left = x - 3;
             box.bottom = field_A24_ + y + 6;
+            box.top = y - 9;
             host->Buffer::box_sprite(&box, &InterfaceBoxStyles[3]);
             inflate_frame(&box, -3, -3);
             host->Buffer::box_sprite(&box, &InterfaceBoxStyles[0]);
@@ -2896,8 +2896,8 @@ void ReportWin::draw_energy() {
     ++account_head.top;
     ++account_head.bottom;
 
-    rect1_.left = account_body.left + 6;
     rect1_.top = account_body.top + 6;
+    rect1_.left = account_body.left + 6;
     rect1_.right = account_body.right - account_body.left - 12;
 
     // Reserves.
@@ -3742,8 +3742,8 @@ void ReportWin::draw_projects() {
                     RECT *const card = &report_work_rect_;
                     card->top = card_top;
                     card->left = card_left;
-                    card->bottom = card_top + field_59A4_;
                     card->right = card_left + field_59A0_;
+                    card->bottom = card_top + field_59A4_;
                     if (!(mode < 2)) {
                         spot_.add(project, 0, card->left, card->top,
                                   card->right - card->left, card->bottom - card->top);
@@ -3873,8 +3873,8 @@ void ReportWin::draw_sat() {
                     PluralityDefault = Players[other].is_noun_plural;
                     strcat(StringTemp, Players[other].noun_faction);
                     Buffer::set_text_color(ChatItemIdTable[other], ChatShadowColors[other], 1, 1);
-                    report_work_rect_.left = rect1_.left;
                     report_work_rect_.top = rect1_.top;
+                    report_work_rect_.left = rect1_.left;
                     report_work_rect_.right = rect1_.left + heading_width;
                     report_work_rect_.bottom = rect1_.top + row_height;
                     Buffer::write_l(StringTemp, &report_work_rect_);
@@ -6346,8 +6346,8 @@ void ReportIf::draw_labs() {
 
     MainInterfaceGlobal.Buffer::set_clip(&field_50_);
     int inset = field_1E230_ ? 0x4C : 0;
-    field_10_ = field_50_.top;
     field_C_ = field_50_.left + inset;
+    field_10_ = field_50_.top;
     field_14_ = report_rect_width(&field_50_) - inset;
     field_18_ = report_rect_height(&field_50_);
     StringTemp[0] = 0;
@@ -7326,8 +7326,8 @@ void ReportIf::draw_sat() {
 
     MainInterfaceGlobal.Buffer::set_clip(&field_50_);
     int inset = field_1E230_ ? 0x4C : 0;
-    field_10_ = field_50_.top;
     field_C_ = field_50_.left + inset;
+    field_10_ = field_50_.top;
     field_14_ = report_rect_width(&field_50_) - inset;
     field_18_ = report_rect_height(&field_50_);
     StringTemp[0] = 0;
@@ -7442,7 +7442,7 @@ void ReportIf::draw_sat() {
                 button->hide();
                 elevators = 0;
                 for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
-                    if (Bases[base].faction_id_current == target && has_fac(41, base, 0)) ++elevators;
+                    if (target == Bases[base].faction_id_current && has_fac(41, base, 0)) ++elevators;
                 }
                 if (kind == 4 ? elevators != 0
                     : kind < 4 && PlayersData[target].satellites_[kind] != 0) {

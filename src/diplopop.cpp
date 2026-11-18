@@ -144,8 +144,8 @@ void DiploPop::init() {
 
     rect = MainInterfaceGlobal.right_frame_rect();
     expand_rect(&rect, -4, -4);
-    rect.bottom = right_panel_button_rect_.top - 6;
     frame_inset_rect_ = rect;
+    rect.bottom = right_panel_button_rect_.top - 6;
 
     content_rect_ = MainInterfaceGlobal.lower_frame_rect();
     expand_rect(&content_rect_, -4, -4);
@@ -171,8 +171,8 @@ void DiploPop::init() {
     expand_rect(&rect, -4, -4);
     rect.right = portrait_text_rect_.left - 3;
     bioscan_title_rect_ = rect;
-    bioscan_title_rect_.bottom = bioscan_title_rect_.top + 20;
     bioscan_picture_rect_ = rect;
+    bioscan_title_rect_.bottom = bioscan_title_rect_.top + 20;
     bioscan_picture_rect_.top = bioscan_title_rect_.bottom + 2;
 
     register_iface(4);

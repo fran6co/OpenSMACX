@@ -740,7 +740,7 @@ int __cdecl world_site(int x, int y, BOOL is_ocean_site) {
                 deep_count++;
             }
             // Only the nine innermost tiles decide whether this is a big land.
-            if (9 > i && Continents[radius_tile->region].tile_count >= 50) {
+            if (i < 9 && Continents[radius_tile->region].tile_count >= 50) {
                 big_continent = true;
             }
             if (!i || !bonus_at(x_radius, y_radius, 1)) {
@@ -2881,7 +2881,7 @@ void __cdecl world_rivers() {
                         }
                         int nb_contour = next->contour;
                         int weight = range(contour - nb_contour + 2, 1, 9999) * 0x20;
-                        if (dir == turn) {
+                        if (turn == dir) {
                             weight += 0x1f;
                         }
                         if (nb_contour > contour) {
@@ -2945,8 +2945,8 @@ void __cdecl world_rivers() {
                     river_dir = 0;
                     for (i = 0; i < cand_count; i++) {
                         if (pick < cand_weight[i]) {
-                            joined = cand_split[i];
                             river_dir = cand_dir[i];
+                            joined = cand_split[i];
                             break;
                         }
                         pick -= cand_weight[i];
@@ -3363,7 +3363,7 @@ void __cdecl world_rainfall() {
                         int alt_here = alt_at(x_here, y);
                         if (alt_west >= alt_here) {
                             if (alt_west == alt_here) {
-                                if (k <= MapCloudCover) {
+                                if (MapCloudCover >= k) {
                                     map_loc(x_west, y)->unk_1 &= ~0x10;
                                 }
                             } else if (k <= MapCloudCover) {
@@ -3476,7 +3476,8 @@ void __cdecl world_rainfall() {
                 if ((scratch & 0x40) && altitude <= 5 && altitude <= 4) {
                     pass2_count = 0;
                     cloud_count = 0;
-                    adjustment = (adjustment < 0) ? 0 : adjustment;
+                    if ((adjustment < 0)) adjustment = 0;
+                    else adjustment = adjustment;
                 }
                 if (altitude > 3) {
                     if (++pass2_count > (int)WorldBuilder.rainfall_coeff * cloud_cover * 4 + 1

@@ -604,8 +604,8 @@ extern "C" void __fastcall sub_5cc940(MediaRuntime *runtime,
     break;
   }
 
-  runtime->output_rect_left_14 = 0;
   runtime->output_rect_top_18 = 0;
+  runtime->output_rect_left_14 = 0;
   runtime->output_rect_extent_0c = runtime->descriptor->output_width_64;
   runtime->output_rect_height_10 = runtime->descriptor->output_height_60;
   if ((runtime->descriptor->flags & 0x40) != 0) runtime->output_rect_extent_0c <<= 1;

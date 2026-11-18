@@ -576,7 +576,7 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
     }
 
     for (int armor_id = 0; armor_id < MaxArmorNum; ++armor_id) {
-        if (Armor[armor_id].preq_tech == tech) {
+        if (tech == Armor[armor_id].preq_tech) {
             StringTemp[0] = '\0';
             strcat(StringTemp, "{");
             strcat(StringTemp, picktech_name(Armor[armor_id].name));
@@ -883,7 +883,7 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
                 }
                 for (i = 0; i < MaxTerrainNum - 1; ++i) {
                     for (int sea = 0; sea <= 1; ++sea) {
-                        if (Terraforming[i].prerequisite_tech[sea] == tech_id &&
+                        if (tech_id == Terraforming[i].prerequisite_tech[sea] &&
                             (sea != 1 || Terraforming[i].prerequisite_tech[0] !=
                                          Terraforming[i].prerequisite_tech[1])) {
                             if (noted) {

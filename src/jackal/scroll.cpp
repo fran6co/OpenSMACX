@@ -1470,8 +1470,8 @@ void Scroll::on_mouse_move(int x, int y) {
             }
             const int next = (y - (extent >> 1)) * (range_maximum_ - range_minimum_)
                         / denominator + range_minimum_;
-            field_A3C_ = y;
             position_ = next;
+            field_A3C_ = y;
         } else {
             denominator += dib_.bmiHeader.biWidth;
             x -= extent;

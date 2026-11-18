@@ -354,8 +354,8 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
     log_say("Capture Base", Bases[base_id].name_string, base_id, faction_id, 0);
     int faction_id_def = Bases[base_id].faction_id_current;
     BOOL liberated = Bases[base_id].faction_id_former == faction_id;
-    int base_y = Bases[base_id].y;
     int base_x = Bases[base_id].x;
+    int base_y = Bases[base_id].y;
     int region = region_at(base_x, base_y);
     PlayersData[faction_id].diplo_unk4[faction_id_def] += Bases[base_id].population_size * 2;
     PlayersData[faction_id].diplo_unk3[faction_id_def] += Bases[base_id].population_size * 2;
@@ -435,8 +435,8 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
         best_base = -1;
         for (int candidate = 0; candidate < GameDataStateStorage.fields_.base_current_count_; candidate++) {
             if (candidate != base_id && Bases[candidate].faction_id_current == faction_id_def) {
-                int other_y = Bases[candidate].y;
                 int other_x = Bases[candidate].x;
+                int other_y = Bases[candidate].y;
                 int dist_sum = 1;
                 int other_region = region_at(other_x, other_y);
                 for (int neighbor = 0; neighbor < GameDataStateStorage.fields_.base_current_count_; neighbor++) {

@@ -374,8 +374,8 @@ int GraphicWin::fill(RECT *area, int color) {
     const int origin_x = client_rect_.left + outer_rect_.left;
     const int origin_y = client_rect_.top + outer_rect_.top;
     Buffer *const surface = this;
-    const int left = area->left;
     const int top = area->top;
+    const int left = area->left;
     const int width = area->right - left;
     const int height = area->bottom - top;
     static_cast<GraphicWin *>(win_parent_)->Buffer::copy(

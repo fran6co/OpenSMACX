@@ -277,8 +277,8 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
   rc.bottom -= 0x17;
   rect_F3C_ = rc;
   rc.top = rc.bottom + 3;
-  rc.bottom = rc.top + 0x14;
   rect_F2C_ = rc;
+  rc.bottom = rc.top + 0x14;
 
   GraphicWin::init(window_x, window_y, 0x340, window_height,
                    0, 0x05000000,
@@ -392,8 +392,8 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
 
   if (IsMultiplayerPBEM != 0) {
     StringList &source = DiploWindow.stringBox_.strings();
-    int low_faction = faction_id_;
     int high_faction = faction_id_with_;
+    int low_faction = faction_id_;
     if (low_faction > high_faction) {
       swap(&low_faction, &high_faction);
     }

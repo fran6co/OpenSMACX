@@ -740,7 +740,8 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
                 strcat(StringTemp,
                        label_get(0x50 / 4 + ((map_loc(x, y)->climate >> 3) & 3)));
                 int rain_width = MainInterfaceGlobal.write_l(StringTemp, text_x, line_y);
-                max_width = max_width > rain_width ? max_width : rain_width;
+                if (max_width > rain_width) max_width = max_width;
+                else max_width = rain_width;
                 line_y += row_pitch;
                 StringTemp[0] = '\0';
                 if ((map_loc(x, y)->bit2 & 0x80000002) == BIT2_VOLCANO) {

@@ -686,8 +686,8 @@ void __cdecl time_warp() {
                 int px = Bases[other].x;
                 int py = Bases[other].y;
                 if (region_at(px, py) != region_at(Bases[base_id].x, Bases[base_id].y)) continue;
-                y = Bases[base_id].y;
                 x = Bases[base_id].x;
+                y = Bases[base_id].y;
                 int path_length = 0;
                 int step = Paths.find(px, py, x, y, 0, -1,
                     has_tech(Rules.tech_build_roads_fungus, faction_id) ? 0 : 4, -1);
@@ -2532,7 +2532,7 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
             if (power_val && !growth_val && !wealth_val) {
                 morale_weight *= 2;
             }
-            if (fight_val < 0 && !power_val && (wealth_val || tech_val) && !threat) {
+            if (0 > fight_val && !power_val && (wealth_val || tech_val) && !threat) {
                 morale_weight /= 2;
             }
         }

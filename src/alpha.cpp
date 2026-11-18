@@ -1594,8 +1594,8 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
     if (tgl_all_rules) {
         for (int i = 0; i < MaxVehProtoNum; i++) {
             VehPrototypes[i].veh_name[0] = 0;
-            VehPrototypes[i].unk_1 = 0;
             VehPrototypes[i].flags = 0;
+            VehPrototypes[i].unk_1 = 0;
         }
         if (read_units()) {
             return true;

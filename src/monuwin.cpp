@@ -122,8 +122,8 @@ int MonuWin::init() {
   rects_3134_[4].right = 0x1F3;
   rects_3134_[4].bottom = 0x1D3;
   rects_3134_[5].left = 0x12D;
-  rects_3134_[5].top = 0x175;
   rects_3134_[5].right = 0x159;
+  rects_3134_[5].top = 0x175;
   rects_3134_[5].bottom = 0x19F;
   rects_3134_[6].left = 0x1C7;
   rects_3134_[6].top = 0x175;

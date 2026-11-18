@@ -457,8 +457,8 @@ int NetSessionPickerWin::initialize(Net *network, char *caption,
   tail_.first_label_rect_.right = margin_x * -2 - cancel_button_.pixel_width()
       + width;
   tail_.first_label_rect_.bottom = margin_y + cancel_button_.pixel_height();
-  tail_.panel_rect_.left = margin_x;
   tail_.second_label_rect_.right = width - margin_x;
+  tail_.panel_rect_.left = margin_x;
   const int second_left = tail_.first_label_rect_.right + margin_x;
   tail_.second_label_rect_.left = second_left;
   tail_.panel_rect_.bottom = height - margin_y;

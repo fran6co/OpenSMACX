@@ -738,7 +738,7 @@ void Buffer::line(int x1, int y1, int x2, int y2, int first_color,
             error = 2 * dy - dx;
             along = dy << 1;
             diagonal = (dy - dx) << 1;
-            while (x1 < clip.left || y1 >= clip.bottom) {
+            while (clip.left > x1 || y1 >= clip.bottom) {
                 if (error <= 0) {
                     error += along;
                 } else {
@@ -10011,8 +10011,8 @@ int Buffer::gouraud(Vert *vertices, int *lights, int count, int mode,
             BufferGouraudClipLeft = clip->left;
             BufferGouraudClipBottom.coordinate = clip->bottom;
             BufferGouraudClipTop.coordinate = clip->top;
-            min_y = 0x7fff;
             max_y = -0x7ffd;
+            min_y = 0x7fff;
             min_x = 0x7fff;
             max_x = -0x7ffd;
             for (int i = 0; i < count; ++i) {
@@ -10257,8 +10257,8 @@ int Buffer::write_vertical(char *text, RECT *area) {
     // in EDI as the image does (86 -> 97/106). The image still loads y
     // first and gives it EDI, width ESI; every y-before-width order tried
     // mirrors the whole allocation instead.
-    int width = area->right - area->left;
     int y = area->top;
+    int width = area->right - area->left;
     int x = area->left;
     char one_character[2];
     one_character[1] = 0;

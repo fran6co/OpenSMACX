@@ -5765,8 +5765,8 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
                     reinterpret_cast<RulesSocialCategory *>(NetDaemonRulesSyncStaging);
                 for (int k = 0; k < MaxSocialCatNum; k++, stage++) {
                     for (int j = 0; j < 4; j++) {
-                        SocialCategories[k].preq_tech[j] = stage->preq_tech[j];
                         SocialCategories[k].model_effect[j] = stage->model_effect[j];
+                        SocialCategories[k].preq_tech[j] = stage->preq_tech[j];
                     }
                 }
                 break;

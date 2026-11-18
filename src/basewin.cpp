@@ -380,8 +380,8 @@ void BaseWin::pop_click(int position, int, int, int) {
 // ORIGINAL: 0x00409200 ?queue_click@BaseWin@@QAEXHHHH@Z 0x00409200-0x0040A1B9;0x0065158B-0x006518EA
 // RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/unrecovered/00409200.cpp", "source:src/basewin.h", "image:0x409200"], "reason": "Recover the complete original operation through genuine owning C++ classes, members and natural lifetimes; preserve retained seed evidence and historical restoration obligations separately from fresh matching."}
 void BaseWin::queue_click(int row, int x, int y, int right) {
-    PopMenu menu;
     const int faction = BaseCurrent->faction_id_current;
+    PopMenu menu;
     if (row > 1) {
         const int position = row - 2;
         if (position == selected_queue_slot_) return;
@@ -701,8 +701,8 @@ void BaseWin::draw_flash(int redraw_mode) {
     MainInterfaceGlobal.box_sprite(&area, &style);
     style.corner0_ = 0;
     style.edge0_ = 0;
-    style.corner1_ = 0;
     area = queue_outer_rect_;
+    style.corner1_ = 0;
     area.left -= 5;
     area.top -= 5;
     area.right += 5;
@@ -3635,8 +3635,8 @@ void BaseWin::draw_energy_alloc(int update_mode) {
     RECT base_row = row;
     Buffer::set_font(&font, nullptr, nullptr, nullptr);
 
-    int psych_pct = PlayersData[faction].se_alloc_psych;
     int labs_pct = PlayersData[faction].se_alloc_labs;
+    int psych_pct = PlayersData[faction].se_alloc_psych;
     int econ_pct = 10 - psych_pct - labs_pct;
     int energy = range(BaseCurrent->energy_surplus, 0, 9999);
     int psych = range((psych_pct * energy + 4) / 10, 0, energy);
@@ -5427,7 +5427,7 @@ void BaseWin::draw_expenses(int update_mode) {
     tile.top = (line.bottom - line.top - font.pixel_height()) / 2 + line.top;
     tile.bottom = tile.top + font.pixel_height();
     count = 0;
-    if (energy >= 0) {
+    if (0 <= energy) {
         for (i = 0; i < energy_ineff; i++) {
             Buffer::tile(&sprite5_, tile.left, tile.top, tile.left, tile.top,
                          tile.right - tile.left, tile.bottom - tile.top);
@@ -5737,8 +5737,8 @@ draw_map:
         MapWinCaptionScale = MapWinCaptionDivisor = 1;
         for (tile = 0; tile < 21; ++tile) {
             const int dx = BaseRadiusOffsetX[tile];
-            const int dy = BaseRadiusOffsetY[tile];
             int x = BaseCurrent->x + dx;
+            const int dy = BaseRadiusOffsetY[tile];
             if (!(MapIsFlat & 1)) {
                 if (x < 0) x += MapLongitudeBounds;
                 else if (x >= MapLongitudeBounds) x -= MapLongitudeBounds;
@@ -5936,8 +5936,8 @@ void BaseWin::draw_pop(int update_mode) {
     RECT panel;
     panel.left = rect->left + 3;
     panel.top = rect->top + 3;
-    panel.right = rect->right - 3;
     panel.bottom = rect->bottom - 3;
+    panel.right = rect->right - 3;
     MainInterfaceGlobal.set_clip(&panel);
 
     int height = panel.bottom - panel.top;

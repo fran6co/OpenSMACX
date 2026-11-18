@@ -585,8 +585,8 @@ void BattleWin::battle_report(int first_vehicle_id, int second_vehicle_id,
             || !Vehs[first_vehicle_id].faction_id)) {
         psi_label = 1;
     }
-    const int first_faction = Vehs[first_vehicle_id].faction_id;
     const int second_faction = Vehs[second_vehicle_id].faction_id;
+    const int first_faction = Vehs[first_vehicle_id].faction_id;
     RECT inner_first = battle_rects_[0];
     inner_first.left += 3;
     inner_first.top += 3;

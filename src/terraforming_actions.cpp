@@ -1726,8 +1726,8 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
                 if (!((1 << faction_id) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)) {
                     veh_skip(veh_id);
                 }
-                GameDataStateStorage.fields_.vehicle_selection_follow_limit_ = veh_id;
                 Vehs[veh_id].dmg_incurred = 0;
+                GameDataStateStorage.fields_.vehicle_selection_follow_limit_ = veh_id;
                 act_of_aggression(faction_id, Bases[base_id].faction_id_current);
                 capture_base(base_id, faction_id, 0);
                 veh_id = GameDataStateStorage.fields_.vehicle_selection_follow_limit_;

@@ -969,7 +969,7 @@ void __cdecl enemy_strategy(int faction_id) {
             int full = (sites < 2 && PlayersData[faction_id].region_total_bases[region]) ? 1 : 0;
             int good_tiles = PlayersData[faction_id].unk_80[region];
             int free_tiles = good_tiles - PlayersData[faction_id].unk_81[region];
-            full |= (PlayersData[faction_id].unk_77[region] & 8) | (my_bases >= 20) | (free_tiles < 4);
+            full |= (PlayersData[faction_id].unk_77[region] & 8) | (my_bases >= 20) | (4 > free_tiles);
             // BUG(original): adds faction 0's count for the region.
             int grow = ((PlayersData[faction_id].ai_growth - PlayersData[faction_id].ai_wealth + pressure)
                             * my_bases * 2
@@ -1153,8 +1153,8 @@ void __cdecl enemy_strategy(int faction_id) {
                 if (Bases[base_id].faction_id_current != faction_id) {
                     continue;
                 }
-                int x = Bases[base_id].x;
                 int y = Bases[base_id].y;
+                int x = Bases[base_id].x;
                 if (is_ocean(x, y) || region_at(x, y) != best_region) {
                     continue;
                 }
@@ -3277,8 +3277,8 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
             }
             if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_TECTONIC_MISSILE) {
                 best = 0;
-                target_x = -1;
                 target_y = -1;
+                target_x = -1;
                 for (int goal_id = 0; goal_id < 75; goal_id++) {
                     if (PlayersData[faction_id].goals[goal_id].type == AI_GOAL_LANDING_SITE) {
                         int score = PlayersData[faction_id].goals[goal_id].priority * 8;
@@ -3829,8 +3829,8 @@ base_attack:
     if (!VehPrototypes[Vehs[veh_id].proto_id].plan
         || (automated && Vehs[veh_id].order_auto_type == ORDERA_BOMBING_RUN)) {
         target_x = -1;
-        target_y = -1;
         best = 0;
+        target_y = -1;
         int risky_best;
         for (i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
             if (Bases[i].faction_id_current == faction_id
@@ -4317,10 +4317,10 @@ int __cdecl enemy_move(int veh_id) {
     }
     proto_id = Vehs[veh_id].proto_id;
     faction_id = Vehs[veh_id].faction_id;
-    y = Vehs[veh_id].y;
     x = Vehs[veh_id].x;
-    plan = VehPrototypes[proto_id].plan;
+    y = Vehs[veh_id].y;
     triad = Chassis[VehPrototypes[proto_id].chassis_id].triad;
+    plan = VehPrototypes[proto_id].plan;
     alt = alt_at(x, y);
     at_sea = is_ocean(x, y);
     region = region_at(x, y);
@@ -4575,10 +4575,10 @@ L_56c30f:
             n = Bases[base_id].y;
             int bx = Bases[base_id].x;
             if (region_at(bx, n) == region) {
-                int px = x;
                 int py = y;
-                m = 1;
+                int px = x;
                 i = 0;
+                m = 1;
                 dist = 0;
                 do {
                     best_dir = Paths.find(px, py, bx, n, 0, -1,
@@ -5101,8 +5101,8 @@ L_56dc57:
                 goto L_578b34;
 L_56de10:
                 // Reached only from the adjacent-transport scan above.
-                best_dir = rad;
                 Vehs[veh_id].move_to_ai_type = 0x64;
+                best_dir = rad;
                 goto L_578b26;
             }
             {

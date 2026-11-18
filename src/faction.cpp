@@ -2421,8 +2421,8 @@ void __cdecl tech_analysis(int faction_id, int faction_id_with) {
                 v = (v + 1) / 2;
             }
             if (v >= DiploScratchFAA4) {
-                DiploScratchF7EC = DiploScratchFAA4;
                 DiploScratchF80C = DiploScratchF800;
+                DiploScratchF7EC = DiploScratchFAA4;
                 DiploScratchFA84 = DiploScratchFA6C;
                 DiploScratchFAA4 = v;
                 DiploScratchF800 = i;
@@ -2679,8 +2679,8 @@ void __cdecl diplomacy_check(int faction, int other, int update) {
         if ((!faction_vehicles && !faction_bases) || (!other_vehicles && !other_bases)) {
             continue;
         }
-        int faction_weapon = PlayersData[faction].best_weapon_value + 1;
         int other_weapon = PlayersData[other].best_weapon_value + 1;
+        int faction_weapon = PlayersData[faction].best_weapon_value + 1;
         int faction_force = PlayersData[faction].region_force_rating[region]
             * faction_morale / other_morale * faction_weapon / other_weapon;
         int other_force = PlayersData[other].region_force_rating[region]
@@ -2977,8 +2977,8 @@ void __cdecl diplomacy_check(int faction, int other, int update) {
             }
         } else {
             DiploScratchF808++;
-            int strength = PlayersData[other].mil_strength_1;
             int ally_strength = PlayersData[ally].mil_strength_1;
+            int strength = PlayersData[other].mil_strength_1;
             DiploScratchFA9C += (strength / 2 + ally_strength) * 2 / (strength + 1);
             uint32_t faction_treaty = PlayersData[faction].diplo_treaties[ally];
             if (FactionDiplomacyFlags[other] & 0x40) {
@@ -3013,7 +3013,7 @@ void __cdecl diplomacy_check(int faction, int other, int update) {
         DiploScratchFA9C--;
     }
     DiploScratchFA9C += -DiploScratchFA50 - (DiploScratchFA78 - 1) / 3 - fight;
-    if (PlayersData[other].tech_commerce_bonus > PlayersData[faction].tech_commerce_bonus && fight <= 0) {
+    if (PlayersData[faction].tech_commerce_bonus < PlayersData[other].tech_commerce_bonus && fight <= 0) {
         DiploScratchFA9C++;
     }
     if (!(GameDataStateStorage.fields_.game_rules_ & 0x800) && !PlayersData[other].se_alloc_labs) {
@@ -5984,7 +5984,7 @@ int __cdecl propose_treaty(int actor, int other)
             - PlayersData[actor].tech_commerce_bonus, 0, 99) * 50;
     }
     if (!strcmp(Players[other].filename, "MORGAN")
-        && treaty_score > PlayersData[actor].energy_reserves) {
+        && PlayersData[actor].energy_reserves < treaty_score) {
         if (DiploScratchFAA8 < 0) {
             treaty_score = PlayersData[actor].energy_reserves;
         } else {
@@ -8839,8 +8839,8 @@ if (DiploScratchF7D4 &&
         diplo_unlock();
     }
     DiploScratchFA8C = DiploScratchF7D4;
-    DiploScratchF7D4 = 0;
     DiploScratchF7E8 = 0;
+    DiploScratchF7D4 = 0;
     communicate_stack_20 = 1;
     DiploScratchFA4C = 0;
     communicate_stack_34 = 1;
@@ -8877,8 +8877,8 @@ if (DiploScratchFA38 && !has_treaty(faction_id, faction_id_with, 0x31) &&
     net_treaty_on(faction_id, DiploScratchFA38, 0x8000008, 0);
     diplo_unlock();
     DiploScratchFA8C = DiploScratchFA38;
-    DiploScratchFA38 = 0;
     DiploScratchF7E8 = 0;
+    DiploScratchFA38 = 0;
     communicate_stack_20 = 1;
     DiploScratchFA4C = 0;
     communicate_stack_34 = 1;

@@ -2485,8 +2485,8 @@ void SocialWin::init(int faction_id) {
     rect.left += 3;
     rect.right = rect.left + 0x14;
     rect.top += 3;
-    rect.bottom = rect.top + 0x14;
     tutRects1_[3] = rect;
+    rect.bottom = rect.top + 0x14;
     rect = tooltipEconomy_;
     rect.top += 3;
     rect.right -= 3;
@@ -2650,8 +2650,8 @@ void SocialWin::init(int faction_id) {
             strcat(StringTemp, StringTable.get(name));
             CharUpperA(StringTemp);
             int idx = col + row * 4;
-            RECT *cell = &modelRects_[idx];
             FlatButton *button = &flatButtons_[idx];
+            RECT *cell = &modelRects_[idx];
             static_cast<BaseButton *>(button)->init(StringTemp, idx,
                 cell->left, cell->top, cell->right - cell->left,
                 cell->bottom - cell->top, this, 0);

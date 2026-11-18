@@ -2217,8 +2217,8 @@ void NetWin::pick_map() {
                     continue;
                 }
 
-                faction_records_[player_slot].active_ = 1;
                 faction_records_[player_slot].owner_ = PlayersData[player_slot].unk_102;
+                faction_records_[player_slot].active_ = 1;
                 strcpy(faction_records_[player_slot].filename_, player.filename);
                 // Native 47D959/47D96A copies the leader name twice.
                 strcpy(faction_records_[player_slot].leader_name_, player.name_leader);

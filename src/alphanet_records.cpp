@@ -122,8 +122,8 @@ int AlphaNetStringStruct::add(int id) {
             ? new(entry_owner) AlphaNetLedgerEntry
             : new(this) AlphaNetLedgerEntry;
         if (head_ == 0) return 4;
-        head_->id_ = id;
         head_->next_ = head_;
+        head_->id_ = id;
         head_->previous_ = head_;
         head_->payload_ = allocator_ != 0
             ? new(allocator_) NetAllocationNode

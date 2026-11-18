@@ -2941,8 +2941,8 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
     }
 
     // 0x507964
-    att_proto = Vehs[veh_id].proto_id;
     def_proto = Vehs[def_id].proto_id;
+    att_proto = Vehs[veh_id].proto_id;
     if ((att_faction == ConsoleGlobal.faction_id_ || def_faction == ConsoleGlobal.faction_id_) &&
         !IsMultiplayerNet &&
         (Weapon[VehPrototypes[att_proto].weapon_id].offense_rating < 0 ||

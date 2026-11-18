@@ -322,8 +322,8 @@ void NewTechWin::exec(int technology_id, int other_faction_id) {
     strip.top = strip.bottom - 0x14;
     RECT *const button = &ok_button_rect_;
     *button = strip;
-    rect.bottom = strip.top - 7;
     main_rect_ = rect;
+    rect.bottom = strip.top - 7;
 
     RECT inner;
     newtechwin_inset_copy(&inner, &rect, 3);
@@ -334,11 +334,11 @@ void NewTechWin::exec(int technology_id, int other_faction_id) {
     category_rect_.bottom = category_rect_.top + 0xd9;
     label_rects_[0] = inner;
     label_rects_[0].top = category_rect_.bottom + 3;
-    label_rects_[0].bottom = label_rects_[0].top + 0x14;
     row_rects_[0] = inner;
+    label_rects_[0].bottom = label_rects_[0].top + 0x14;
     row_rects_[0].top = label_rects_[0].bottom + 3;
-    row_rects_[0].bottom = row_rects_[0].top + 0x4c;
     label_rects_[2] = inner;
+    row_rects_[0].bottom = row_rects_[0].top + 0x4c;
     label_rects_[2].top = row_rects_[0].bottom + 3;
     label_rects_[2].bottom = label_rects_[2].top + 0x14;
     row_rects_[2] = inner;
@@ -353,8 +353,8 @@ void NewTechWin::exec(int technology_id, int other_faction_id) {
                       (label_rects_[0].right - label_rects_[0].left + 3) / 2 - 3;
     label_rects_[0].right = split;
     const int split_right = split + 3;
-    label_rects_[1].left = split_right;
     row_rects_[1] = row_rects_[0];
+    label_rects_[1].left = split_right;
     row_rects_[0].right = split;
     row_rects_[1].left = split_right;
     label_rects_[3] = label_rects_[2];
@@ -370,8 +370,8 @@ void NewTechWin::exec(int technology_id, int other_faction_id) {
     rect = main_rect_;
     rect.right -= 6;
     rect.bottom -= 6;
-    rect.left = rect.right - 0x1c;
     rect.top = rect.bottom - 0x22;
+    rect.left = rect.right - 0x1c;
     *next_button = rect;
     offset_rect(&rect, -0x1f, 0);
     *prev_button = rect;

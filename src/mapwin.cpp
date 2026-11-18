@@ -1936,8 +1936,8 @@ void MapWin::draw_map(int draw_type) {
                       &current_pixel_x, &current_pixel_y);
         // Conversion may change the origin. Cache it only after that call,
         // then retain the same tile through all four altitude queries.
-        const int altitude_x = field_1DDA4_;
         const int altitude_y = field_1DDA8_;
+        const int altitude_x = field_1DDA4_;
         int altitude = get_alt(altitude_x, altitude_y, 4);
         altitude += get_alt(altitude_x, altitude_y, 3);
         altitude += get_alt(altitude_x, altitude_y, 2);
@@ -3886,8 +3886,8 @@ LAB_00463b55:
             }
         }
     }
-    a10 = a10 + local_78;
     a9 = a9 + local_78 * 2;
+    a10 = a10 + local_78;
 
     // THE WIREFRAME EXIT: a far-out zoom or an unexplored tile draws only
     // the tile's diamond outline. The image places this block at
@@ -4394,8 +4394,8 @@ LAB_0046441f:
             overlay_uv[1].x = 0x37;
             overlay_uv[2].x = 0x37;
             overlay_uv[2].y = 0x37;
-            overlay_uv[3].y = 0x37;
             overlay_uv[0].x = 0;
+            overlay_uv[3].y = 0x37;
             overlay_uv[0].y = 0;
             overlay_uv[1].y = 0;
             overlay_uv[3].x = 0;
@@ -4551,7 +4551,7 @@ LAB_0046441f:
             if ((MapIsFlat & 1) == 0) {
                 if (nx < 0) {
                     nx += MapLongitudeBounds;
-                } else if (MapLongitudeBounds <= nx) {
+                } else if (nx >= MapLongitudeBounds) {
                     nx -= MapLongitudeBounds;
                 }
             }
@@ -5086,8 +5086,8 @@ nexus_done:
         if ((a6 & 0x80000) != 0 && (map_tiles()[MapLongitude * a8 + local_14].val3 & 0x38) != 0) {
             text_rect.left = a9;
             text_rect.top = a10;
-            text_rect.right = a9 + local_78 * 4;
             text_rect.bottom = a10 + local_78 * 2;
+            text_rect.right = a9 + local_78 * 4;
             window->set_text_color(InfoFactionTextColors[(map_tiles()[MapLongitude * a8 + local_14].val3 >> 3) & 7], 0, 1, 1);
             window->set_font(&window->font_b_, 0, 0, 0);
             StringTemp[0] = 0;
@@ -5330,8 +5330,8 @@ void MapWin::draw_base_names() {
                 continue;
             }
 
-            const int tile_x = base.x;
             const int tile_y = base.y;
+            const int tile_x = base.x;
             // 0x00467EEC: tile_in_view(tile_x, tile_y, 0) expanded in place.
             if (!tile_in_view(tile_x, tile_y, 0)) {
                 continue;

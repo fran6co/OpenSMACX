@@ -1863,8 +1863,8 @@ void Console::destroy(int veh_id) {
         return;
     }
 
-    const int vy = Vehs[veh_id].y;
     const int faction = Vehs[veh_id].faction_id;
+    const int vy = Vehs[veh_id].y;
     const int vx = Vehs[veh_id].x;
     Map *const tile = map_loc(vx, vy);
     const int ocean = ::is_ocean(vx, vy);

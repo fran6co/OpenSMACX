@@ -505,8 +505,8 @@ void __cdecl base_yield() {
         growth = 0;
     } else {
         growth = PlayersData[faction].ai_growth;
-        tech = PlayersData[faction].ai_tech;
         wealth = PlayersData[faction].ai_wealth;
+        tech = PlayersData[faction].ai_tech;
         power = PlayersData[faction].ai_power;
         fight = PlayersData[faction].ai_fight;
     }
@@ -2785,8 +2785,8 @@ void __cdecl base_ecology() {
     world_climate();
     draw_map(1);
     clock_wait(1000);
-    PluralityDefault = 0;
     GenderDefault = Players[ConsoleGlobal.faction_id_].is_leader_female;
+    PluralityDefault = 0;
     parse_says(0, Players[ConsoleGlobal.faction_id_].title_leader, -1, -1);
     PluralityDefault = 0;
     GenderDefault = Players[ConsoleGlobal.faction_id_].is_leader_female;
@@ -6018,8 +6018,8 @@ void __cdecl base_terraform(int force_improve) {
     if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) {
         uint32_t governor = BaseCurrent->governor;
         power = 0;
-        wealth = 0;
         tech = 0;
+        wealth = 0;
         if (!(governor & GOV_PRIORITY_EXPLORE)) {
             if (governor & GOV_PRIORITY_DISCOVER) {
                 tech = 1;

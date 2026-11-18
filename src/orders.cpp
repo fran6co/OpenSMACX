@@ -437,8 +437,8 @@ int __cdecl order_veh(int veh_id, int direction, int mode) {
     else
         ConsoleGlobal.vehicle_order_ui_state() = 0;
     group_count_at_entry = GameDataStateStorage.fields_.vehicle_current_count_;
-    src_x = Vehs[veh_id].x;
     src_y = Vehs[veh_id].y;
+    src_x = Vehs[veh_id].x;
     faction = Vehs[veh_id].faction_id;
     if (direction < 0)
         direction = 8;
@@ -449,7 +449,7 @@ int __cdecl order_veh(int veh_id, int direction, int mode) {
     region = region_at(dest_x, dest_y);
     target_veh = stack_fix(veh_at(dest_x, dest_y));
     base_id = base_at(dest_x, dest_y);
-    if (base_id >= 0)
+    if (0 <= base_id)
         owner = Bases[base_id].faction_id_current;
     else if (target_veh >= 0)
         owner = Vehs[target_veh].faction_id;
@@ -1192,8 +1192,8 @@ L_59724d:
         goto done;
     case 1:
         veh_id = GameDataStateStorage.fields_.vehicle_selection_follow_limit_;
-        dest_x = src_x;
         dest_y = src_y;
+        dest_x = src_x;
         flag_74 = 1;
         goody = 0;
         goto L_598cb9;
@@ -1914,8 +1914,8 @@ L_599154:
         case 2:
             Bases[base_id].minerals_accumulated +=
                 VehPrototypes[Vehs[veh_id].proto_id].cost * 10 / 2;
-            Bases[base_id].minerals_accumulated_2 = Bases[base_id].minerals_accumulated;
             Bases[base_id].production_id_last = Bases[base_id].queue_production_id[0];
+            Bases[base_id].minerals_accumulated_2 = Bases[base_id].minerals_accumulated;
             kill(veh_id);
             TutWinBaseWindow.check_base(base_id);
             break;

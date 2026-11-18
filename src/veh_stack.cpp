@@ -628,7 +628,7 @@ void __cdecl spot_all(int veh_id, int toggle) {
         if ((tile->bit2 & 0x80002000) == 0x2000) {
             count++;
         }
-        if (i >= 9 && triad != TRIAD_AIR && is_ocean(x, y) != (triad == TRIAD_SEA)) {
+        if (9 <= i && triad != TRIAD_AIR && is_ocean(x, y) != (triad == TRIAD_SEA)) {
             continue;
         }
         if (faction_id == ConsoleGlobal.faction_id_

@@ -2232,8 +2232,8 @@ int __cdecl game_data(FILE *file, int write_mode) {
                 const GameDataLegacyVehRow &row = old_rows[vehicle_id];
                 Veh &vehicle = Vehs[vehicle_id];
                 vehicle.x = row.x;
-                vehicle.y = row.y;
                 vehicle.state = row.state;
+                vehicle.y = row.y;
                 vehicle.flags = row.flags;
                 vehicle.proto_id = row.proto_id;
                 vehicle.faction_id = row.faction_id;

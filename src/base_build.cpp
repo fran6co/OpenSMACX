@@ -471,8 +471,8 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
 
     // All bases: targets, production, facilities, distances and garrisons.
     l_15c = 24;
-    l_164 = 24;
     l_6c = 0;
+    l_164 = 24;
     l_d0 = 0;
     l_160 = 0;
     l_c4 = 0;
@@ -884,8 +884,8 @@ L_4f9c43:
                     && (l_a4 || PlayersData[l_8].current_num_bases < 3)
                     && !(BaseCurrent->state & 0x1000000)))) {
             l_28--;
-            l_9c = BaseCurrent->x;
             l_48 = BaseCurrent->y;
+            l_9c = BaseCurrent->x;
             for (i = 0; i < 121; i++) {
                 int x = wrap_map_x(RadiusOffsetX[i] + l_9c);
                 int y = RadiusOffsetY[i] + l_48;
@@ -1868,7 +1868,7 @@ L_4fbd3d:
                 }
             }
             if (PlayersData[target].best_weapon_value > PlayersData[l_8].best_weapon_value
-                || PlayersData[target].best_armor_value > PlayersData[l_8].best_armor_value) {
+                || PlayersData[l_8].best_armor_value < PlayersData[target].best_armor_value) {
                 w /= 2;
             }
         }
@@ -3501,7 +3501,8 @@ L_4ff11f:
                     }
                     if (s < a_114[j]) {
                         a_114[j] = s;
-                        a_130[j] = l_84 ? 5 : -l_d8;
+                        if (l_84) a_130[j] = 5;
+                        else a_130[j] = -l_d8;
                         l_9c = l_ac;
                     }
                 }
