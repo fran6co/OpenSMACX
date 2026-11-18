@@ -511,21 +511,21 @@ void SocialWin::on_iface_button_clicked(int button_id) {
     }
 
     currentAlloc_[index] += delta;
-    if (static_cast<int>(currentAlloc_[index]) < 0) currentAlloc_[index] = 0;
+    if (currentAlloc_[index] < 0) currentAlloc_[index] = 0;
     const int limit = energy_limit(factionID_);
-    if (static_cast<int>(currentAlloc_[index]) > limit) {
+    if (currentAlloc_[index] > limit) {
         field_2C5C_ = 1;
-        currentAlloc_[index] = static_cast<uint32_t>(energy_limit(factionID_));
+        currentAlloc_[index] = energy_limit(factionID_);
     }
 
-    allocate_energy(index, static_cast<int>(currentAlloc_[index]));
+    allocate_energy(index, currentAlloc_[index]);
 
     for (int allocation = 0; allocation < 3; ++allocation) {
         currentAlloc_[allocation] = pendingAlloc_[allocation];
     }
 
-    PlayersData[factionID_].se_alloc_psych = static_cast<int>(pendingAlloc_[1]);
-    PlayersData[factionID_].se_alloc_labs = static_cast<int>(pendingAlloc_[2]);
+    PlayersData[factionID_].se_alloc_psych = pendingAlloc_[1];
+    PlayersData[factionID_].se_alloc_labs = pendingAlloc_[2];
     social_set(factionID_);
 
     social_calc(&socCategory_, &socEffect_, factionID_, 0, 0);
@@ -1243,22 +1243,22 @@ void SocialWin::draw_faction_basal() {
 
 
 void SocialWin::allocate_energy(int a1, int a2) {
-    int limit = energy_limit(static_cast<int>(factionID_));
-    pendingAlloc_[a1] = static_cast<uint32_t>(a2);
+    int limit = energy_limit(factionID_);
+    pendingAlloc_[a1] = a2;
 
-    while (static_cast<int32_t>(pendingAlloc_[2] + pendingAlloc_[0] + pendingAlloc_[1]) < 10) {
+    while (pendingAlloc_[2] + pendingAlloc_[0] + pendingAlloc_[1] < 10) {
         for (int attempts = 0; attempts < 3; ++attempts) {
             int candidate = (a1 + attempts + 1) % 3;
             if (a1 == candidate ||
                 (energyLockButtons_[candidate].checked_ == 0 &&
-                 static_cast<int32_t>(pendingAlloc_[candidate]) < limit)) {
+                 pendingAlloc_[candidate] < limit)) {
                 ++pendingAlloc_[candidate];
                 break;
             }
         }
     }
 
-    while (static_cast<int32_t>(pendingAlloc_[2] + pendingAlloc_[0] + pendingAlloc_[1]) > 10) {
+    while (pendingAlloc_[2] + pendingAlloc_[0] + pendingAlloc_[1] > 10) {
         for (int attempts = 0; attempts < 3; ++attempts) {
             int candidate = (a1 + attempts + 1) % 3;
             if (a1 == candidate ||

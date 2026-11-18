@@ -365,7 +365,7 @@ class SocialWin : public GraphicWin, public SubInterface {
   uint32_t field_CE8_;  // 0xCE8
   uint32_t field_CEC_;  // 0xCEC
   uint32_t field_CF0_;  // 0xCF0
-  uint32_t factionID_;  // 0xCF4
+  int factionID_;  // 0xCF4
   SocialCategory socCategory_;  // 0xCF8
   SocialEffect socEffect_;  // 0xD08
   SocialEffect socEffectOrig_;  // 0xD34
@@ -414,9 +414,9 @@ class SocialWin : public GraphicWin, public SubInterface {
   // Historical economyAlloc3_/psychAlloc3_/labsAlloc3_ are indices0/1/2.
   // The descriptive name is not an original-name claim.
   // RECOVERY_MEMBER: v1 SocialWin currentAlloc_ 0x2C44 0x004B24C7
-  uint32_t currentAlloc_[3];  // 0x2C44..0x2C4F
+  int currentAlloc_[3];  // 0x2C44..0x2C4F
   // Indexed economy/psych/labs run in allocate_energy, original +0x2C50.
-  uint32_t pendingAlloc_[3];  // 0x2C50..0x2C5B
+  int pendingAlloc_[3];  // 0x2C50..0x2C5B
   uint32_t field_2C5C_;  // 0x2C5C
   Sprite socEngModifierNums_[0xA];   // 0x2C60, 0x2C * 0xA == 0x1B8
   Sprite effectIcons_[0x5A];         // 0x2E18, 0x2C * 0x5A == 0xF78
