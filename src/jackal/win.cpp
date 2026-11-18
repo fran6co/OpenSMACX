@@ -6938,7 +6938,19 @@ void Win::do_tracking(int x, int y) {
     } else {
         rectA = client_rect_;
         offset_rect(&rectA, -rectA.left, -rectA.top);
-        nonclient_to_screen(&rectA);
+        // WORKAROUND(noinline): this is nonclient_to_screen(&rectA). The
+        // image expands that RECT overload here and keeps its inner
+        // nonclient_to_screen(int *, int *) as a call (0x005F7798); /Ob2
+        // expands the inner one too at this site, at every probe count, so
+        // the overload's body is written out with the inner call made
+        // through a member-function pointer.
+        if (&rectA != 0) {
+            int sx = 0;
+            int sy = 0;
+            void (Win::*const to_screen)(int *, int *) = &Win::nonclient_to_screen;
+            (this->*to_screen)(&sx, &sy);
+            offset_rect(&rectA, sx, sy);
+        }
     }
 
     // WORKAROUND(inline): see do_tracking_budget_probe.
