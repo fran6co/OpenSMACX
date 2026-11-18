@@ -170,25 +170,9 @@ static inline int plan_horizontal_midpoint(int left, int right) {
     int distance = abs(right - left);
     if (!(MapIsFlat & 1) && distance > MapLongitudeBounds / 2) {
         distance -= MapLongitudeBounds / 2;
-        const int center = distance / 2 + max(left, right);
-        if (center < 0) {
-            return center + MapLongitudeBounds;
-        }
-        if (center >= MapLongitudeBounds) {
-            return center - MapLongitudeBounds;
-        }
-        return center;
+        return wrap_map_x(distance / 2 + max(left, right));
     }
-    const int center = distance / 2 + min(left, right);
-    if (!(MapIsFlat & 1)) {
-        if (center < 0) {
-            return center + MapLongitudeBounds;
-        }
-        if (center >= MapLongitudeBounds) {
-            return center - MapLongitudeBounds;
-        }
-    }
-    return center;
+    return wrap_map_x(distance / 2 + min(left, right));
 }
 
 // Center the view between two horizontal pairs and their vertical spans.
@@ -228,17 +212,9 @@ void PlanWin::opticenter(int x1, int y1, int x2, int y2, int force_redraw) {
         ++zoom_offset_;
         calculate_dimensions();
 
-        const int flat = MapIsFlat & 1;
         int index;
         for (index = 0; index < 25; ++index) {
-            int x = RadiusOffsetX[index] + x1;
-            if (!flat) {
-                if (x < 0) {
-                    x += MapLongitudeBounds;
-                } else if (x >= MapLongitudeBounds) {
-                    x -= MapLongitudeBounds;
-                }
-            }
+            int x = wrap_map_x(RadiusOffsetX[index] + x1);
             const int y = RadiusOffsetY[index] + y1;
             if (y < 0 || y >= MapLatitudeBounds ||
                 x < 0 || x >= MapLongitudeBounds) {
@@ -249,14 +225,7 @@ void PlanWin::opticenter(int x1, int y1, int x2, int y2, int force_redraw) {
             }
         }
         for (index = 0; index < 25; ++index) {
-            int x = RadiusOffsetX[index] + x2;
-            if (!flat) {
-                if (x < 0) {
-                    x += MapLongitudeBounds;
-                } else if (x >= MapLongitudeBounds) {
-                    x -= MapLongitudeBounds;
-                }
-            }
+            int x = wrap_map_x(RadiusOffsetX[index] + x2);
             const int y = RadiusOffsetY[index] + y2;
             if (y < 0 || y >= MapLatitudeBounds ||
                 x < 0 || x >= MapLongitudeBounds) {
@@ -293,17 +262,9 @@ void PlanWin::monocenter(int x, int y, int force_redraw) {
         ++zoom_offset_;
         calculate_dimensions();
 
-        const int flat = MapIsFlat & 1;
         bool tiles_fit = true;
         for (int index = 0; index < 81; ++index) {
-            int sample_x = RadiusOffsetX[index] + x;
-            if (!flat) {
-                if (sample_x < 0) {
-                    sample_x += MapLongitudeBounds;
-                } else if (sample_x >= MapLongitudeBounds) {
-                    sample_x -= MapLongitudeBounds;
-                }
-            }
+            int sample_x = wrap_map_x(RadiusOffsetX[index] + x);
             const int sample_y = RadiusOffsetY[index] + y;
             if (sample_y < 0 || sample_y >= MapLatitudeBounds ||
                 sample_x < 0 || sample_x >= MapLongitudeBounds) {
