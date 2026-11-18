@@ -255,7 +255,9 @@ class NetTextListBase : public virtual StringAllocationBase {
   typedef NetTextPayload Payload;
   virtual int on_insert(Payload *payload);
   virtual void on_remove(Payload *payload);
-  NetTextListBase();
+  // MEASURED keeps 0x00401B80's out-of-line copy emitted in
+  // alphanet_records.cpp, whose callers may all expand it.
+  MEASURED NetTextListBase();
   virtual ~NetTextListBase();
   void remove_all() {
     if (head_ != 0) {
@@ -353,6 +355,7 @@ class NetAllocationNode : public virtual StringAllocationBase {
   // The two contexts preserve primary receiver vs explicit Heap identities.
   static void *operator new(size_t size, Heap *owner) throw();
   static void *operator new(size_t size, AlphaNetStringStruct *list) throw();
+  static void *operator new(size_t size, StringAllocationBase *base) throw();
   static void operator delete(void *memory, Heap *owner);
   static void operator delete(void *memory, AlphaNetStringStruct *list);
   static void operator delete(void *memory);

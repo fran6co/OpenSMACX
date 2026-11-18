@@ -159,6 +159,13 @@ Status: Coverage transcription - unclaimed body; the two list hooks link
         through the continuity placeholders above, and the seed's
         instruction-#5 SEH-frame divergence stands.
 */
+// WORKAROUND(inline): frame-pointer stand-in. The image's functions in this
+// unit from the 0x00401xxx-0x00402xxx run (0x00401CE0, 0x00401D80,
+// 0x00402B40) and 0x004E3300/0x004E3350 keep an EBP frame, while the
+// 0x005D4xxx ones omit it; this TU's recipe (/Oy) only reproduces the latter.
+// add() is EH-framed in the image (push ebp; push -1; ...) and its cleanup
+// actions address the frame through EBP (0x006504E0).
+#pragma optimize("y", off)
 int AlphaNetStringStruct::add(int id) {
     // The cold actions at 0x006504E0 unwind a partially constructed heap
     // payload, including its virtual allocation base at +0x58. Keep typed
@@ -173,9 +180,8 @@ int AlphaNetStringStruct::add(int id) {
         head_->id_ = id;
         head_->next_ = head_;
         head_->previous_ = head_;
-        Heap *const payload_owner = allocator_;
-        head_->payload_ = payload_owner != 0
-            ? new(payload_owner) NetAllocationNode
+        head_->payload_ = allocator_ != 0
+            ? new(allocator_) NetAllocationNode
             : new(this) NetAllocationNode;
         if (head_->payload_ == 0) return 4;
         on_insert(head_->payload_);
@@ -191,10 +197,11 @@ int AlphaNetStringStruct::add(int id) {
         head_->previous_ = head_->previous_->next_;
         current_ = head_->previous_;
         current_->id_ = id;
-        Heap *const payload_owner = allocator_;
-        current_->payload_ = payload_owner != 0
-            ? new(payload_owner) NetAllocationNode
-            : new(this) NetAllocationNode;
+        if (allocator_ != 0) {
+            current_->payload_ = new(allocator_) NetAllocationNode;
+        } else {
+            current_->payload_ = new(static_cast<StringAllocationBase *>(this)) NetAllocationNode;
+        }
         if (current_->payload_ == 0) return 4;
         on_insert(current_->payload_);
     }
@@ -202,6 +209,7 @@ int AlphaNetStringStruct::add(int id) {
     ++entry_count_;
     return 0;
 }
+#pragma optimize("", on)
 
 
 /*
@@ -331,10 +339,35 @@ int AlphaNetStringStruct::compare_session_guid(const GUID *left,
 }
 
 void *AlphaNetLedgerEntry::operator new(size_t size, Heap *owner) throw() {
-    return allocate_net_node(size, owner);
+    void *memory;
+    if (owner != 0) {
+        memory = owner->get(size);
+        if (memory == 0) {
+            MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
+            exit(3);
+        }
+    } else {
+        memory = mem_get(size);
+        if (memory == 0) return 0;
+    }
+    StringAllocationHeap = owner;
+    return memory;
 }
 void *AlphaNetLedgerEntry::operator new(size_t size, AlphaNetStringStruct *list) throw() {
-    return allocate_net_node(size, list->allocation_owner_);
+    Heap *const owner = list->allocation_owner_;
+    void *memory;
+    if (owner != 0) {
+        memory = owner->get(size);
+        if (memory == 0) {
+            MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
+            exit(3);
+        }
+    } else {
+        memory = mem_get(size);
+        if (memory == 0) return 0;
+    }
+    StringAllocationHeap = owner;
+    return memory;
 }
 void AlphaNetLedgerEntry::operator delete(void *memory, Heap *) {
     cleanup_failed_net_construction(memory);
