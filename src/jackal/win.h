@@ -619,15 +619,18 @@ class Win : public AutoSound {
   // Win::close passes the exact Scroll* being removed. The default
   // original body returns that pointer unchanged (0x00404230, ret 4).
   // That shared body keeps its EBP frame, so it binds through a /Oy- table
-  // owner (Popup's constructor TU) rather than the frameless Win TU.
-  // RECOVERY_SHARED: v1 0x00404230 0x0040423A ?on_scroll_delete@Win@@UAEPAVScroll@@PAV2@@Z 0x004048A0
+  // owner rather than the frameless Win TU: the image's copy at 0x00404230
+  // lies in AlphaMovie's object (folded with AlphaMovie's own 0x00404230
+  // body), so AlphaMovie's constructor TU is the evidence owner. The game's
+  // link order must keep that object ahead of every frameless emitter.
+  // RECOVERY_SHARED: v1 0x00404230 0x0040423A ?on_scroll_delete@Win@@UAEPAVScroll@@PAV2@@Z 0x00404010
   virtual Scroll *on_scroll_delete(Scroll *scroll) {
     return scroll;
   }  // slot 7
   // RECOVERY_SHARED: v1 0x00406B30 0x00406B33 ?on_listbox_scroll_create@Win@@UAEPAVScroll@@XZ 0x005EB3D0
   virtual Scroll *on_listbox_scroll_create() { return 0; }  // slot 8
   // ListBox and Dialogs forward Scroll replacement through this parent slot.
-  // RECOVERY_SHARED: v1 0x00404230 0x0040423A ?on_listbox_scroll_delete@Win@@UAEPAVScroll@@PAV2@@Z 0x004048A0
+  // RECOVERY_SHARED: v1 0x00404230 0x0040423A ?on_listbox_scroll_delete@Win@@UAEPAVScroll@@PAV2@@Z 0x00404010
   virtual Scroll *on_listbox_scroll_delete(Scroll *value = 0) { return value; }  // slot 9
   // Parent background hooks: pinned derived tables override slots 10/11.
 // RECOVERY_SHARED: v1 0x00404250 0x00404255 ?on_dialog_back_draw@Win@@UAEHPAVGraphicWin@@@Z 0x005D4CF0
