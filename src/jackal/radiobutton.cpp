@@ -74,6 +74,7 @@ Status: Complete
  */
 // ORIGINAL: 0x00407030 ?on_key_down@thunk1_RadioButton@@QAEHH@Z 0x00407030-0x00407038 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor-installed class table cell binds 0x00407030 to the complete original thunk span.", "The retained terminal artifact set at build/recovery/builds/build-8b7ms_6y recorded the observed compiler symbol ?on_key_down@RadioButton@@$4PPPPPPPM@A@AEHH@Z in the class owner's physical COFF vftable relocation.", "That artifact set's MAP/PE cell selects the thunk and its PDB XFIXUP plus linked tail resolve to the mapped typed method.", "The original identity, spans, catalog purpose, source kind, claim state and formal lessons are retained; this binding is not a new byte claim."], "reason": "Bind the preserved original receiver-adjustor identity to the compiler-emitted class-view entry observed in the actual owner object and linked table."}
+// compile_context src/basewin.cpp
 // symbol    ?on_key_down@RadioButton@@$4PPPPPPPM@A@AEHH@Z
 // kind      game
 
@@ -104,6 +105,7 @@ Status: Complete
  */
 // ORIGINAL: 0x004070A0 ?on_redraw@thunk3_RadioButton@@QAEXXZ 0x004070A0-0x004070AE FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor-installed class table cell binds 0x004070A0 to the complete original thunk span.", "The retained terminal artifact set at build/recovery/builds/build-8b7ms_6y recorded the observed compiler symbol ?on_redraw@RadioButton@@$4PPPPPPPM@KBI@AEXXZ in the class owner's physical COFF vftable relocation.", "That artifact set's MAP/PE cell selects the thunk and its PDB XFIXUP plus linked tail resolve to the mapped typed method.", "The original identity, spans, catalog purpose, source kind, claim state and formal lessons are retained; this binding is not a new byte claim."], "reason": "Bind the preserved original receiver-adjustor identity to the compiler-emitted class-view entry observed in the actual owner object and linked table."}
+// compile_context src/basewin.cpp
 // symbol    ?on_redraw@RadioButton@@$4PPPPPPPM@KBI@AEXXZ
 // kind      game
 RadioButton::RadioButton() {
@@ -580,6 +582,7 @@ Purpose: Adjust the receiver from the thunk1 subobject back to RadioButton and
          RadioButton::on_dialog_focus overrides a virtual through a virtual
          base. There is no C++ here to get right, only a name to record.
 // ORIGINAL: 0x00407050 ?on_dialog_focus@thunk1_RadioButton@@QAEXH@Z 0x00407050-0x00407058 BYTE_EXACT
+// compile_context src/basewin.cpp
 // symbol    ?on_dialog_focus@RadioButton@@$4PPPPPPPM@A@AEXH@Z
 // size      8 bytes
 // prototype void (__thiscall ?on_dialog_focus@thunk1_RadioButton@@QAEXH@Z)(RadioButton* this, int)
@@ -617,6 +620,7 @@ Purpose: Adjust the receiver from the thunk1 subobject back to RadioButton and
          RadioButton::on_mouse_leave overrides a virtual reached through a virtual
          base. There is no C++ here to get right, only a name to record.
 // ORIGINAL: 0x00407010 ?on_mouse_leave@thunk1_RadioButton@@QAEXHH@Z 0x00407010-0x00407018 BYTE_EXACT
+// compile_context src/basewin.cpp
 // symbol    ?on_mouse_leave@RadioButton@@$4PPPPPPPM@A@AEXHH@Z
 // size      8 bytes
 // kind      game
@@ -668,6 +672,7 @@ Purpose: Adjust the receiver from the thunk1 subobject back to RadioButton and
          RadioButton::attach overrides a virtual reached through a virtual
          base. There is no C++ here to get right, only a name to record.
 // ORIGINAL: 0x00407090 ?attach@thunk1_RadioButton@@QAEHPAUGraphicWin@@HHH@Z 0x00407090-0x00407098 BYTE_EXACT
+// compile_context src/basewin.cpp
 // symbol    ?attach@RadioButton@@$4PPPPPPPM@A@AEHPAVGraphicWin@@HHH@Z
 // size      8 bytes
 // kind      game
@@ -813,6 +818,7 @@ Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
          RadioButton::on_redraw expects, then forward unchanged.
 // ORIGINAL: 0x00406FF0 ?on_redraw@thunk1_RadioButton@@QAEXXZ 0x00406FF0-0x00406FF8 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor ??0RadioButton@@QAE@H@Z at 0x0060D0E0 at 0x0060D138 installs table 0x00669A6C through the thunk1 vbtable-derived view installs table 0x00669A6C; the pinned slot at table+0x30 contains 0x00406FF0. Original thunk receiver adjustment and tail target were checked against the pinned image: sub ecx,[ecx-4]; jmp 0x0060E220.", "Current genuine owner is src/jackal/radiobutton.cpp; retained owner-object vftable ??_7RadioButton@@6BWin@@@ has an absolute relocation at +0x30 to ?on_redraw@RadioButton@@$4PPPPPPPM@A@AEXXZ, whose COMDAT preserves the pinned receiver-adjustment bytes and whose terminal relative relocation selects the source-owned ?on_redraw@RadioButton@@UAEXXZ method. This source binding records the measured generated owner identity; its physical relocation must be rechecked after source changes."], "reason": "Bind the full original identity and spans to the existing compiler-generated class-view adjustor selected by the constructor-installed original slot; retain its historical claims and lessons unchanged."}
+// compile_context src/basewin.cpp
 // symbol    ?on_redraw@RadioButton@@$4PPPPPPPM@A@AEXXZ
 // size      8 bytes
 // prototype void (__thiscall ?on_redraw@thunk1_RadioButton@@QAEXXZ)(RadioButton* this)
@@ -837,6 +843,7 @@ Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
          RadioButton::on_mouse_move expects, then forward unchanged.
 // ORIGINAL: 0x00407000 ?on_mouse_move@thunk1_RadioButton@@QAEXHH@Z 0x00407000-0x00407008 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor ??0RadioButton@@QAE@H@Z at 0x0060D0E0 at 0x0060D138 installs table 0x00669A6C through the thunk1 vbtable-derived view installs table 0x00669A6C; the pinned slot at table+0x44 contains 0x00407000. Original thunk receiver adjustment and tail target were checked against the pinned image: sub ecx,[ecx-4]; jmp 0x0060E320.", "Current genuine owner is src/jackal/radiobutton.cpp; retained owner-object vftable ??_7RadioButton@@6BWin@@@ has an absolute relocation at +0x44 to ?on_mouse_move@RadioButton@@$4PPPPPPPM@A@AEXHH@Z, whose COMDAT preserves the pinned receiver-adjustment bytes and whose terminal relative relocation selects the source-owned ?on_mouse_move@RadioButton@@UAEXHH@Z method. This source binding records the measured generated owner identity; its physical relocation must be rechecked after source changes."], "reason": "Bind the full original identity and spans to the existing compiler-generated class-view adjustor selected by the constructor-installed original slot; retain its historical claims and lessons unchanged."}
+// compile_context src/basewin.cpp
 // symbol    ?on_mouse_move@RadioButton@@$4PPPPPPPM@A@AEXHH@Z
 // size      8 bytes
 // prototype void (__thiscall ?on_mouse_move@thunk1_RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)
@@ -853,6 +860,7 @@ Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
          RadioButton::on_left_down expects, then forward unchanged.
 // ORIGINAL: 0x00407020 ?on_left_down@thunk1_RadioButton@@QAEXHH@Z 0x00407020-0x00407028 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor ??0RadioButton@@QAE@H@Z at 0x0060D0E0 at 0x0060D138 installs table 0x00669A6C through the thunk1 vbtable-derived view installs table 0x00669A6C; the pinned slot at table+0x50 contains 0x00407020. Original thunk receiver adjustment and tail target were checked against the pinned image: sub ecx,[ecx-4]; jmp 0x0060DE10.", "Current genuine owner is src/jackal/radiobutton.cpp; retained owner-object vftable ??_7RadioButton@@6BWin@@@ has an absolute relocation at +0x50 to ?on_left_down@RadioButton@@$4PPPPPPPM@A@AEXHH@Z, whose COMDAT preserves the pinned receiver-adjustment bytes and whose terminal relative relocation selects the source-owned ?on_left_down@RadioButton@@UAEXHH@Z method. This source binding records the measured generated owner identity; its physical relocation must be rechecked after source changes."], "reason": "Bind the full original identity and spans to the existing compiler-generated class-view adjustor selected by the constructor-installed original slot; retain its historical claims and lessons unchanged."}
+// compile_context src/basewin.cpp
 // symbol    ?on_left_down@RadioButton@@$4PPPPPPPM@A@AEXHH@Z
 // size      8 bytes
 // prototype void (__thiscall ?on_left_down@thunk1_RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)
@@ -869,6 +877,7 @@ Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
          RadioButton::on_left_double_click expects, then forward unchanged.
 // ORIGINAL: 0x00407040 ?on_left_double_click@thunk1_RadioButton@@QAEXHH@Z 0x00407040-0x00407048 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor ??0RadioButton@@QAE@H@Z at 0x0060D0E0 at 0x0060D138 installs table 0x00669A6C through the thunk1 vbtable-derived view installs table 0x00669A6C; the pinned slot at table+0x70 contains 0x00407040. Original thunk receiver adjustment and tail target were checked against the pinned image: sub ecx,[ecx-4]; jmp 0x0060E1E0.", "Current genuine owner is src/jackal/radiobutton.cpp; retained owner-object vftable ??_7RadioButton@@6BWin@@@ has an absolute relocation at +0x70 to ?on_left_double_click@RadioButton@@$4PPPPPPPM@A@AEXHH@Z, whose COMDAT preserves the pinned receiver-adjustment bytes and whose terminal relative relocation selects the source-owned ?on_left_double_click@RadioButton@@UAEXHH@Z method. This source binding records the measured generated owner identity; its physical relocation must be rechecked after source changes."], "reason": "Bind the full original identity and spans to the existing compiler-generated class-view adjustor selected by the constructor-installed original slot; retain its historical claims and lessons unchanged."}
+// compile_context src/basewin.cpp
 // symbol    ?on_left_double_click@RadioButton@@$4PPPPPPPM@A@AEXHH@Z
 // size      8 bytes
 // prototype void (__thiscall ?on_left_double_click@thunk1_RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)

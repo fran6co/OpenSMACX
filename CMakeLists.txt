@@ -149,6 +149,7 @@ target_include_directories(zlib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/vendor/z
 target_compile_options(zlib PRIVATE /W0 $<$<NOT:$<CONFIG:Debug>>:/Ob1>)
 
 set(OPENSMACX_SOURCES
+    src/checkbutton.cpp
     src/win.cpp
     src/stringbox.cpp
     src/basepop.cpp

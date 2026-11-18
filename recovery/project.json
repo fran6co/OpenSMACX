@@ -2238,6 +2238,24 @@
           "-c"
         ]
       },
+      "src/checkbutton.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/Og",
+          "/Oi",
+          "/Ot",
+          "/Oy",
+          "/Gs",
+          "/Gy",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "-c"
+        ]
+      },
       "src/reportif.cpp": {
         "flags": [
           "/nologo",
