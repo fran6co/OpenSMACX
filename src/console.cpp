@@ -39,7 +39,6 @@
 // ORIGINAL: 0x0050E9A0 sub_50e9a0 0x0050E9A0-0x0050E9AA FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x682624 selects startup 0x50e980..0x50e996 and registers cleanup 0x50e9a0..0x50e9aa. Complete root decode proves the exclusive RET/JMP endpoints.", "The source-owned object ?ConsoleTimer@@3VTime@@A is selected by physical COFF constructor/destructor relocations; current emitted finalizer is identified by the adjacent symbol fact. Original receiver 0x939e88 belongs to this real global; preserve its class lifetime and registration.", "Buffer relative declaration order is PCX, interface array, middle, vehicle, special-text owner, Sprite, shared Buffer. Generated helpers are compiler output, not hand-authored address callbacks. Selected same-owner order does not establish full CRT order, dependency provider, linked preservation or runtime/game acceptance. Guarded cleanup is a separate unfinished obligation."], "reason": "Bind original fini operation to the genuine C++ lifetime of ?ConsoleTimer@@3VTime@@A; retain original behavior and remaining matching obligations."}
 // symbol    _$E19
-#define NETDAEMON_RESET_INLINE  // stand-in: see NetDaemon::reset in netdaemon.h
 #define NETMSG_IS_ACTIVE_INLINE  // stand-in: see NetMsg::is_active in netmsg.h
 #include "stdafx.h"
 

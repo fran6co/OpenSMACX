@@ -20,7 +20,6 @@
 // thunks and holds the turn loop, its upkeep phases, the network turn
 // rendezvous and control_game, in image order. The boundary is inferred from
 // the CRT init table and subject change; council.cpp follows without a marker.
-#define NETDAEMON_RESET_INLINE  // stand-in: see NetDaemon::reset in netdaemon.h
 #define DIALOGS_DTOR_INLINE  // stand-in: see ~Dialogs in dialogs.h
 #include "stdafx.h"
 

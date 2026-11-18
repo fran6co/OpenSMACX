@@ -253,10 +253,6 @@ class NetDaemon : public AlphaNet {
   // and on_key_click, and keeps one out-of-line copy (0x0051DD00, inside
   // console.cpp's range) for menu_proc's two calls. MEASURED emits the copy
   // the netdaemon.cpp marker measures.
-  // WORKAROUND(decl): only TUs defining NETDAEMON_RESET_INLINE see the body.
-  // Making it visible to every includer flips register/scheduling ties in
-  // twelve unrelated functions (action_give, capture_base, setup_player, ...).
-#ifdef NETDAEMON_RESET_INLINE
   MEASURED void reset() {
     primary_state_.leading_words_[0] = 0;
     primary_state_.leading_words_[1] = 0;
@@ -310,9 +306,6 @@ class NetDaemon : public AlphaNet {
     locks_.clear();
     AlphaNet::close();
   }
-#else
-  void reset();
-#endif
   // 0x00530360, homed from 00530360.cpp - one pump turn of the daemon.
   void net_tasks();
   // 0x00531700, homed from 00531700.cpp - the "am I already holding it"
