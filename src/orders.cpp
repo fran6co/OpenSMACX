@@ -399,6 +399,7 @@ int break_treaty(int faction_id, int target_faction_id, int treaty);
 // symbol    ?order_veh@@YAHHHH@Z
 // kind      game
 int __cdecl order_veh(int veh_id, int direction, int mode) {
+    int x;
     int selector = 0;
     int flag_68 = 0;
     int flag_74 = 0;
@@ -741,7 +742,7 @@ L_595083:
         probed = 0;
         {
         for (int dir = 0; dir < 8; dir++) {
-            int x = wrap_map_x(dest_x + VehMoveDeltaX[dir]);
+            x = wrap_map_x(dest_x + VehMoveDeltaX[dir]);
             int y = dest_y + VehMoveDeltaY[dir];
             if (!on_map(x, y))
                 continue;

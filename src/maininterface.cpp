@@ -3131,6 +3131,7 @@ void __cdecl slide_show(GraphicWin *window, int mode) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:c0b358f0:src/recovered/units/0045d970.cpp original hot/cold spans and retained seed findings.", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x45d970 full native register, rectangle mutation, receiver, call and lifetime audit.", "source:src/console.h virtual GraphicWin base; src/maininterface.h existing Sprite arrays and interface-up member; src/buffer.h source-receiver copy, full bounds and DIB geometry.", "source:src/maininterface.cpp: the helper uses MainInterfaceGlobal-owned slide/scroll sprites, interface geometry and shared transition state; its Wave configuration belongs to MainInterface::init.", "pinned:Pinned cold unwind regions remain consecutive with MainInterface dtor/ctor/init/set_message: 0x6552C0-0x65552F, 0x655530-0x655723, 0x655730-0x655745, 0x655745-0x655757, followed by these four helper spans 0x655757-0x655777, 0x655777-0x6557A2, 0x6557A2-0x6557CD, and 0x6557CD-0x6557F8; no other mapped span intersects this detached range."], "reason": "Keep this free ?slide_hide UI transition helper with the MainInterface resource and lifetime provider while preserving its existing __cdecl signature and external window callers. This is an inferred source correspondence, not proof of an original filename or historical TU boundary."}
 // symbol    ?slide_hide@@YAXPAVGraphicWin@@H@Z
 void __cdecl slide_hide(GraphicWin *window, int mode) {
+    RECT flip_rect;
     Buffer window_frame;          // native F498, constructed first
     Buffer interface_background;  // native FA20, constructed second
     Buffer screen_restore;        // native EF10, constructed third
@@ -3187,7 +3188,7 @@ void __cdecl slide_hide(GraphicWin *window, int mode) {
             - right_inner.width()
             - right_outer.width() - 0x20;
         WinFlipClipped = 1;
-        RECT flip_rect = area;
+        flip_rect = area;
         const int right_outer_x = area.left + window_frame.pixel_width()
             - right_outer.width() - 0x20;
         int frame_y = area.top + frame_count;

@@ -152,6 +152,26 @@ def rule_stmtswap(t,mt,pos):
             yield (m.start(1),m.end(5)+1,l2+'\n'+l1,'stmtswap')
         p=m.start(4)-len(m.group(1))-1
 RULES['declswap']=rule_declswap; RULES['stmtswap']=rule_stmtswap
+def rule_declsplit(t,mt,pos):
+    # `T v = e;` inside a function  ->  `T v;` at the top of the function and `v = e;` in place
+    rx=re.compile(r'\n([ \t]+)((?:unsigned |signed )?[A-Za-z_][\w:]*(?: \*+| ))(\w+) = ([^;\n]+);(?=\n)')
+    p=pos
+    while True:
+        m=rx.search(mt,p)
+        if not m: return
+        p=m.end()
+        ty=m.group(2).strip(); name=m.group(3)
+        if ty in ('return','const','static','else','case','goto','delete','typedef') or ty.startswith('const') or len(m.group(1))<8: continue
+        # top of the enclosing function: last line before m that starts in column 0 and ends with '{'
+        tops=[x for x in re.finditer(r'\n[^\s/#][^\n]*\{[ \t]*(?=\n)',mt[:m.start()])]
+        if not tops: continue
+        top=tops[-1].end()
+        if '}' in [l[:1] for l in mt[top:m.start()].split('\n')]: continue   # a column-0 '}' in between: not inside that function
+        ind=m.group(1)
+        decl='\n    '+t[m.start(2):m.end(2)].rstrip()+(' ' if not t[m.start(2):m.end(2)].rstrip().endswith('*') else '')+name+';'
+        rep=t[top:m.start()]+'\n'+ind+name+' = '+t[m.start(4):m.end(4)]+';'
+        yield (top,m.end(),decl+rep,'declsplit',m.end())
+RULES['declsplit']=rule_declsplit
 def main():
     rule=RULES[sys.argv[1]]; unit=sys.argv[2]; unit=unit if unit.startswith('src/') else 'src/'+unit; pfx=sys.argv[3]
     path=R+'/'+unit; text=open(path,encoding='latin-1').read()
@@ -181,18 +201,19 @@ def main():
         for c in rule(cur,mt,pos):
             if any(a<=c[0]<b for a,b in sp): cand=c; break
         if cand is None: break
-        s,e,rep,label=cand
+        s,e,rep,label=cand[:4]; resume=cand[4] if len(cand)>4 else None
         new=cur[:s]+rep+cur[e:]
         tried+=1
         sc=score(new)
         # No ratchet on exact functions (AGENTS.md, 'Structure first'): a site is kept when it
         # breaks no structural match (frame, call count) and the unit's difference drops.
-        if sc and not (base[3]-sc[3]) and sc[1]<=base[1]-int(os.environ.get('RULE_MIN','3')):
+        # structure first: a site that gains a frame or call-count match is kept whatever the row count does
+        if sc and not (base[3]-sc[3]) and ((sc[3]-base[3]) or sc[1]<=base[1]-int(os.environ.get('RULE_MIN','3'))):
             line=cur.count('\n',0,s)+1
             ch=[('%08X'%a,base[2][a],sc[2][a]) for a in sc[2] if sc[2][a]!=base[2].get(a)]
             acc.append((line,label,ch,['%08X'%a for a in sc[0]-base[0]]))
-            cur=new; base=sc; pos=s+len(rep)
-        else: pos=s+1
+            cur=new; base=sc; pos=s+len(rep) if resume is None else resume+len(rep)-(e-s)
+        else: pos=s+1 if resume is None else resume
         if tried>int(os.environ.get('RULE_MAX','400')): break
     print(json.dumps(dict(unit=unit,tried=tried,accepted=acc,total=base[1],exact_lost=sorted('%08X'%a for a in base0_exact-base[0]))))
     if '--write' in sys.argv and acc: open(path,'w',encoding='latin-1').write(cur)
