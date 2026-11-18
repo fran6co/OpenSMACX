@@ -18,6 +18,7 @@
 #define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
 // on_selected expands StringStruct::current_entry (stringstruct.h gate).
 #define STRINGSTRUCT_CURRENT_ENTRY_INLINE
+#define DIALOG_LAYOUT_SETTERS2  // stand-in: Dialog::set_field_4C (dialog.h)
 #include "stdafx.h"
 #include "rectangle_operations.h"
 #include "interface_fonts.h"
@@ -124,11 +125,11 @@ void __cdecl slide_hide(GraphicWin *window, int mode);
 
 void AlphaSave::init() {
     Buffer scratch;
-    const int visible = ConsoleGlobal.is_visible();
-    const int top = !visible + 0x1A;
-    const int inset = visible ? 0x17 : 0;
-    const int x = (WinScreenWidth - 0x13C) / 2 - inset;
-    const int y = WinScreenHeight - MainInterfaceGlobal.panel_height() - top - 0x177;
+    int visible = ConsoleGlobal.is_visible();
+    int top = !visible + 0x1A;
+    int inset = visible ? 0x17 : 0;
+    int x = (WinScreenWidth - 0x13C) / 2 - inset;
+    int y = WinScreenHeight - MainInterfaceGlobal.panel_height() - top - 0x177;
     GraphicWin::init(x, y, visible ? 0x18A : 0x14E,
                      (visible ? 0 : -9) + top + 0x177, 0, 0x1001000,
                      visible ? &ConsoleGlobal : 0, 0, 0);
@@ -149,22 +150,26 @@ void AlphaSave::init() {
 
     FileWinConstruct layout;
     layout.field_00_ = visible ? 0 : 0x80020;
-    set_rectangle_dimensions(&layout.list_box_bounds_, inset + 5, top + 6, 0x131, 0x120);
-    set_rectangle_dimensions(&layout.edit_box_bounds_, inset + 8, top + 0x128, 0x12C, 0x14);
+    int lx = inset + 5;
+    layout.list_box_bounds_.left = lx;
+    layout.list_box_bounds_.right = lx + 0x131;
+    layout.list_box_bounds_.top = top + 6;
+    layout.list_box_bounds_.bottom = top + 6 + 0x120;
+    int ex = inset + 8;
+    layout.edit_box_bounds_.left = ex;
+    layout.edit_box_bounds_.right = ex + 0x12C;
+    layout.edit_box_bounds_.top = top + 0x128;
+    layout.edit_box_bounds_.bottom = top + 0x128 + 0x14;
     frame = layout.edit_box_bounds_;
-    frame.left += 2;
-    frame.right -= 2;
     frame.top = frame.bottom + 4;
     frame.bottom = frame.top + 0x14;
-    frame.top -= 1;
-    frame.bottom += 1;
+    expand_rect(&frame, -2, 1);
     offset_rect(&frame, 0, 3);
     layout.button2_bounds_ = frame;
     layout.button2_bounds_.right =
         frame.left + (layout.button2_bounds_.right - frame.left + 3) / 2 - 3;
     frame.left += layout.button2_bounds_.right - layout.button2_bounds_.left + 3;
     layout.button1_bounds_ = frame;
-    layout.field_44_ = inset + 8;
     if (!visible) {
         offset_rect(&layout.list_box_bounds_, 9, 9);
         offset_rect(&layout.edit_box_bounds_, 9, 9);
@@ -173,35 +178,35 @@ void AlphaSave::init() {
     }
     file_win_.init(0, this, &layout);
 
-    Dialog &list_dialog = file_win_.list_box_;
-    list_dialog.set_dialog_font(MainInterfaceGlobal.secondary_font(), 0, 0);
-    list_dialog.set_dialog_text_color(TextColourTable[0], TextColourTable[1], 1, 1);
-    file_win_.list_box().set_report_text_color(TextColourTable[2]);
-    list_dialog.field_48_ = 0x16;
-    list_dialog.field_4C_ = 1;
-    list_dialog.field_B4_ = 0;
-    file_win_.list_box().set_draw_callback(alpha_save_filebox_draw);
-    file_win_.list_box().reset_report_selection();
-    list_dialog.field_20_ &= ~4u;
-    list_dialog.on_redraw();
+    file_win_.list_box_.set_dialog_font(MainInterfaceGlobal.secondary_font(), 0, 0);
+    file_win_.list_box_.set_dialog_text_color(TextColourTable[0], TextColourTable[1], 1, 1);
+    file_win_.list_box_.set_report_text_color(TextColourTable[2]);
+    file_win_.list_box_.field_48_ = 0x16;
+    file_win_.list_box_.set_field_4C(1);
+    file_win_.list_box_.field_B4_ = 0;
+    file_win_.list_box_.set_draw_callback(alpha_save_filebox_draw);
+    file_win_.list_box_.reset_report_selection();
+    file_win_.list_box_.clear_style_bits(4);
+    file_win_.list_box_.redraw();
 
-    EditBox &edit = file_win_.edit_box();
-    edit.set_font(MainInterfaceGlobal.secondary_font(), 0, 0, 0);
-    edit.field_B1C_ = TextColourTable[10];
-    edit.set_text_color(TextColourTable[4], TextColourTable[5], 1, 1);
-    edit.field_B28_ = TextColourTable[8];
-    edit.field_B2C_ = TextColourTable[8];
-    edit.field_B20_ = TextColourTable[6];
-    edit.field_B24_ = TextColourTable[8];
-    edit.on_dialog_focus(1);
-    edit.redraw();
+    file_win_.edit_box_.set_font(MainInterfaceGlobal.secondary_font(), 0, 0, 0);
+    file_win_.edit_box_.field_B1C_ = TextColourTable[10];
+    file_win_.edit_box_.set_text_color(TextColourTable[4], TextColourTable[5], 1, 1);
+    file_win_.edit_box_.field_B28_ = TextColourTable[8];
+    file_win_.edit_box_.field_B2C_ = TextColourTable[8];
+    file_win_.edit_box_.field_B20_ = TextColourTable[6];
+    file_win_.edit_box_.field_B24_ = TextColourTable[8];
+    file_win_.edit_box_.on_dialog_focus(1);
+    file_win_.edit_box_.redraw();
 
-    file_win_.ok_button().set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
-    file_win_.ok_button().redraw();
-    file_win_.ok_button().redraw();
-    file_win_.cancel_button().set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
-    file_win_.cancel_button().redraw();
-    file_win_.cancel_button().redraw();
+    FlatButton &ok = file_win_.ok_button();
+    ok.set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
+    ok.redraw();
+    ok.redraw();
+    FlatButton &cancel = file_win_.cancel_button();
+    cancel.set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
+    cancel.redraw();
+    cancel.redraw();
 }
 
 // ORIGINAL: 0x00407350 ??0AlphaSave@@QAE@XZ 0x00407350-0x00407410;0x00650BF0-0x00650C60 BYTE_EXACT

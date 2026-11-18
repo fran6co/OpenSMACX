@@ -3,8 +3,10 @@
 #include <stdint.h>
 #include <windows.h>
 
-// The caller constructs 18 DWORDs. FileWin::init snapshots/consumes only the
-// first 17; the trailing caller word remains represented but unused here.
+// 17 DWORDs. AlphaSave::init's frame (0x00407410) holds the caller's copy
+// at [ebp-0x6c, ebp-0x28): the word at [ebp-0x28] that an earlier reading
+// took for an 18th field is a separate temporary (it first holds the
+// GraphicWin::init parent pointer and later the edit box's left edge).
 struct FileWinConstructPrefix {
   int32_t field_00_;
   RECT list_box_bounds_;
@@ -19,10 +21,9 @@ struct FileWinConstruct {
   RECT edit_box_bounds_;
   RECT button2_bounds_;
   RECT button1_bounds_;
-  int32_t field_44_;
 };
 
 static_assert(sizeof(FileWinConstructPrefix) == 0x44,
               "FileWin init snapshots exactly 17 dwords");
-static_assert(sizeof(FileWinConstruct) == 0x48,
-              "AlphaSave constructs 18 dwords for FileWin::init");
+static_assert(sizeof(FileWinConstruct) == 0x44,
+              "AlphaSave constructs the same 17 dwords for FileWin::init");

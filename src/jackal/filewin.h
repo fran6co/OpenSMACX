@@ -120,13 +120,14 @@ class FileWin {
   // FlatButton@0x660/0x11AC, EditBox@0x1CF8, ListBox@0x286C - each span
   // exactly matches that member type's own established sizeof, which is
   // what pins these offsets rather than the IDB alone).
+ public:
+  // (AlphaSave::init 0x00407410 addresses both buttons off its own this too.)
   FlatButton flat_button2_;  // 0x660, sizeof 0xB4C, ends 0x11AC
   FlatButton flat_button1_;  // 0x11AC, sizeof 0xB4C, ends 0x1CF8
   // PUBLIC: AlphaSave::on_selected (0x00407D90) addresses the list's Dialog
   // members straight off its own `this` (`[vbdisp + this + 0x3344]`), which
   // only a direct member chain compiles to; through an accessor's reference
   // VC6 materializes the control's address first. Access changes no offset.
- public:
   EditBox edit_box_;  // 0x1CF8, sizeof 0xB74, ends 0x286C
   ListBox list_box_;  // 0x286C, sizeof 0xB54, ends 0x33C0
  private:
