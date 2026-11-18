@@ -161,20 +161,14 @@ int __cdecl terraform_cost(int x, int y, int faction_id) {
     // call the image makes - `call_diff` reports FEWER.
     int base_id_prox = base_find(x, y, -1, -1, faction_id, -1);
     if (base_id >= 0) {
-        const int base_y = Bases[base_id].y;
-        const int base_x = Bases[base_id].x;
-        int cursor_distance = (x_dist(x, base_x) + abs(y - base_y)) >> 1;
+        int cursor_distance = map_range(x, y, Bases[base_id].x, Bases[base_id].y);
         cost *= range(cursor_distance, 1, 100);
         if (base_id_prox >= 0
             && (PlayersData[faction_id].diplo_treaties[
                     Bases[base_id_prox].faction_id_current] & DTREATY_PACT) == 0) {
-            const int numerator_y = Bases[base_id].y;
-            const int numerator_x = Bases[base_id].x;
-            int num_prox = (((x_dist(x, numerator_x) + abs(y - numerator_y)) >> 1)
+            int num_prox = (map_range(x, y, Bases[base_id].x, Bases[base_id].y)
                 * (Bases[base_id_prox].population_size + 2)) / 3;
-            const int denominator_y = Bases[base_id_prox].y;
-            const int denominator_x = Bases[base_id_prox].x;
-            int denom_prox = (((x_dist(x, denominator_x) + abs(y - denominator_y)) >> 1)
+            int denom_prox = (map_range(x, y, Bases[base_id_prox].x, Bases[base_id_prox].y)
                 * (Bases[base_id].population_size + 2)) / 3;
             if (denom_prox && num_prox && denom_prox < num_prox) {
                 cost = (cost * num_prox) / denom_prox; // increase cost based on proximity ratio

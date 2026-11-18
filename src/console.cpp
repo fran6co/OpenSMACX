@@ -2466,7 +2466,7 @@ int Console::ready_search(int veh_id) {
                 int vehX = vehicle.x;
                 int vehY = vehicle.y;
 
-                int score = vector_dist(x_dist(coordA, vehX), abs(coordB - vehY));
+                int score = map_dist(coordA, coordB, vehX, vehY);
 
                 if (score < bestScore) {
                     bestScore = score;
@@ -3452,10 +3452,7 @@ void Console::zoom_to_upkeep_base() {
         const Base &base = Bases[base_id];
         if (base.faction_id_current == ConsoleGlobal.faction_id_ &&
             (base.state & BSTATE_UNK_10) != 0) {
-            const int base_x = base.x;
-            const int base_y = base.y;
-            const int distance =
-                vector_dist(x_dist(camera_x, base_x), abs(camera_y - base_y));
+            const int distance = map_dist(camera_x, camera_y, base.x, base.y);
             if (distance <= best_distance) {
                 best_base = base_id;
                 best_distance = distance;

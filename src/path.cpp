@@ -1009,7 +1009,7 @@ int Path::move(int veh_id, int faction_id) {
         flags |= 0x10;
     }
     if (get_proto_triad(Vehs[veh_id].proto_id) != TRIAD_AIR
-        && ((x_dist(veh_x, x_waypoint) + abs(veh_y - y_waypoint)) & ~1) != 0) {
+        && map_range(veh_x, veh_y, x_waypoint, y_waypoint) != 0) {
         int dir = find(veh_x, veh_y, x_waypoint, y_waypoint, Vehs[veh_id].proto_id,
             faction_id, flags,
             (Vehs[veh_id].state & VSTATE_UNK_10000) ? Vehs[veh_id].facing : -1);
@@ -1032,7 +1032,7 @@ int Path::move(int veh_id, int faction_id) {
         if (!on_map(x_scan, y_scan)) {
             continue;
         }
-        int dist = (x_dist(x_scan, x_waypoint) + abs(y_scan - y_waypoint)) >> 1;
+        int dist = map_range(x_scan, y_scan, x_waypoint, y_waypoint);
         if (dist == 0) {
             return i; // already adjacent to the waypoint: take this step
         }
@@ -1051,7 +1051,7 @@ int Path::move(int veh_id, int faction_id) {
                 continue;
             }
             cost = dist * 32
-                + vector_dist(x_dist(x_scan, x_waypoint), abs(y_scan - y_waypoint));
+                + map_dist(x_scan, y_scan, x_waypoint, y_waypoint);
         } else {
             if (((tile->climate & ~0x1F) < ALT_BIT_SHORE_LINE) != (triad == TRIAD_SEA)) {
                 continue;

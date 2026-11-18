@@ -1583,10 +1583,7 @@ void __cdecl del_site(int faction_id, int type, int x, int y, int proximity) {
     Goal *sites = PlayersData[faction_id].sites;
     for (int i = 0; i < MaxSitesNum; i++, sites++) {
         if (sites->type == type) {
-            int site_y = sites->y;
-            int dx = x_dist(x, sites->x);
-            int dy = abs(y - site_y);
-            if (vector_dist(dx, dy) <= proximity) {
+            if (map_dist(x, y, sites->x, sites->y) <= proximity) {
                 sites->type = AI_GOAL_UNUSED;
                 sites->priority = 0;
                 Goal *goal_compare = PlayersData[faction_id].goals;

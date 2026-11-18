@@ -683,9 +683,7 @@ int __cdecl veh_find(int x, int y, int faction_id, int skip_veh_id) {
             if ((faction_id < 0 || Vehs[i].faction_id == (unsigned)faction_id) &&
                 i != skip_veh_id) {
                 // vector_dist(x, y, veh x, veh y), expanded inline.
-                const int veh_y = Vehs[i].y;
-                const int veh_x = Vehs[i].x;
-                const int dist = vector_dist(x_dist(x, veh_x), abs(y - veh_y));
+                const int dist = map_dist(x, y, Vehs[i].x, Vehs[i].y);
                 if (dist <= best_dist) {
                     best_dist = dist;
                     best_idx = i;

@@ -3012,9 +3012,7 @@ void Console::set_road_to(int veh_id, int x_coord, int y_coord, int order) {
         return;
     }
 
-    const int veh_y = Vehs[veh_id].y;
-    const int veh_x = Vehs[veh_id].x;
-    if (((x_dist(x_coord, veh_x) + abs(y_coord - veh_y)) & ~1) < 2) {
+    if (map_range(x_coord, y_coord, Vehs[veh_id].x, Vehs[veh_id].y) < 1) {
         return;
     }
 

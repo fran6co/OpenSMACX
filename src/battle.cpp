@@ -156,7 +156,7 @@ void __cdecl sub_500380(int faction_id, int x, int y) {
             && !(Vehs[i].state & VSTATE_MADE_AIRDROP) && !Vehs[i].moves_expended) {
             int veh_x = Vehs[i].x;
             int veh_y = Vehs[i].y;
-            if ((x_dist(x, veh_x) + abs(y - veh_y)) >> 1 <= threshold
+            if (map_range(x, y, veh_x, veh_y) <= threshold
                 && (base_who(veh_x, veh_y) >= 0 || bit_at(veh_x, veh_y) & BIT_AIRBASE)) {
                 return;
             }

@@ -2832,10 +2832,7 @@ void BaseWin::check_base(int base_id) {
 // RECOVERY_BINDING: v1 {"evidence": ["Original41A7F3 uses focusedBaseID_+40B0C and Bases stride134;41A80A/11 sign extend y/x before distance calculation. Win visibility gates every coordinate access. MapIsFlat bit0, MapLongitude half-width and MapLongitudeBounds width govern the wrapped x difference.", "Original41A81B..41A87D is x_dist followed by abs(y-base_y) and the two-distance vector_dist metric;41A882 accepts distance equal to radius. The refresh chain forces base_compute once, virtual this redraw, then direct main-interface GraphicWin redraw, without selecting another current base. Existing helpers retain the finite valid-coordinate domain; no new malformed-index or overflow policy is introduced."], "reason": "Recover the visible base screen proximity refresh using typed Base coordinates and existing cylindrical-map hex distance helpers."}
 void BaseWin::check_loc(int x, int y, int radius) {
     if (Win::is_visible()) {
-        const int base_y = Bases[focusedBaseID_].y;
-        const int base_x = Bases[focusedBaseID_].x;
-        const int dx = x_dist(x, base_x);
-        if (vector_dist(dx, abs(y - base_y)) <= radius) {
+        if (map_dist(x, y, Bases[focusedBaseID_].x, Bases[focusedBaseID_].y) <= radius) {
             base_compute(1);
             redraw();
             MainInterfaceGlobal.GraphicWin::redraw();
