@@ -2203,11 +2203,11 @@ reroll:
     }
     case 1: {
         if (is_sea) goto reroll;
-        if (map_loc(x, y)->bit & 0x80) goto reroll;
+        if (bit_at(x, y) & 0x80) goto reroll;
         for (int i = 0; i < 9; i++) {
             const int tx = wrap_map_x(x + RadiusOffsetX[i]);
             const int ty = y + RadiusOffsetY[i];
-            if (on_map(tx, ty) && (map_loc(tx, ty)->bit & 0x80 || is_ocean(tx, ty))) {
+            if (on_map(tx, ty) && (bit_at(tx, ty) & 0x80 || is_ocean(tx, ty))) {
                 goto reroll;
             }
         }
@@ -2227,7 +2227,7 @@ reroll:
                 const int ty = y + RadiusOffsetY[i];
                 if (on_map(tx, ty)
                     && (!is_sea || (is_ocean(tx, ty)
-                                    && map_loc(x, y)->region == map_loc(tx, ty)->region))) {
+                                    && region_at(x, y) == region_at(tx, ty)))) {
                     spot_loc(tx, ty, faction_id);
                 }
             }
@@ -2260,7 +2260,7 @@ reroll:
             const int tx = wrap_map_x(x + RadiusOffsetX[i]);
             const int ty = y + RadiusOffsetY[i];
             if (on_map(tx, ty)) {
-                if (map_loc(tx, ty)->bit & 4 && !(rand() % 3)) {
+                if (bit_at(tx, ty) & 4 && !(rand() % 3)) {
                     bit_set(tx, ty, 4, 0);
                     synch_bit(tx, ty, faction_id);
                 }
@@ -2297,7 +2297,7 @@ reroll:
             continue;
         }
         int attempts = 0;
-        const int region = map_loc(x, y)->region;
+        const int region = region_at(x, y);
         int radius;
         if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == TRIAD_LAND
             && VehPrototypes[Vehs[veh_id].proto_id].plan != 8) {
@@ -2319,7 +2319,7 @@ reroll:
                 tx++;
             }
             if (++attempts >= 1000) break;
-            if (is_ocean(tx, ty) == is_sea && map_loc(tx, ty)->region == region
+            if (is_ocean(tx, ty) == is_sea && region_at(tx, ty) == region
                 && anything_at(tx, ty) < 0 && !zoc_any(tx, ty, faction_id)
                 && !(PlayersData[faction_id].flags & 0x200)
                 && !(map_loc(tx, ty)->visibility & (1 << faction_id))
@@ -2499,7 +2499,7 @@ reroll:
             }
         }
         int odds = PlayersData[faction_id].proto_id_active[BSC_UNITY_FOIL] + 3;
-        if (Continents[map_loc(x, y)->region].tile_count <= 50) {
+        if (Continents[region_at(x, y)].tile_count <= 50) {
             odds--;
         }
         if (PlayersData[faction_id].proto_id_active[BSC_UNITY_FOIL] < 2
@@ -2509,7 +2509,7 @@ reroll:
                     const int tx = wrap_map_x(x + VehMoveDeltaX[i]);
                     const int ty = y + VehMoveDeltaY[i];
                     if (on_map(tx, ty) && is_ocean(tx, ty)
-                        && Continents[map_loc(tx, ty)->region].tile_count >= 80) {
+                        && Continents[region_at(tx, ty)].tile_count >= 80) {
                         x = tx;
                         y = ty;
                         unit_id = BSC_UNITY_FOIL;
@@ -2669,7 +2669,7 @@ reroll:
         return 0;
     }
     case 11: {
-        if (bad_reg(map_loc(x, y)->region)) goto reroll;
+        if (bad_reg(region_at(x, y))) goto reroll;
         if (!is_sea && (map_loc(x, y)->val3 & ~0x3F) > 0x40) goto reroll;
         if ((map_loc(x, y)->climate & ~0x1F) < 0x40) {
             kind = 12;
@@ -2690,7 +2690,7 @@ reroll:
             const int tx = wrap_map_x(x + RadiusOffsetX[i]);
             const int ty = y + RadiusOffsetY[i];
             if (!on_map(tx, ty)) continue;
-            if (i && map_loc(tx, ty)->bit & 0x100000) continue;
+            if (i && bit_at(tx, ty) & 0x100000) continue;
             if (!is_sea) {
                 if (is_ocean(tx, ty)) continue;
                 const int rocky = map_loc(tx, ty)->val3 & ~0x3F;
@@ -2771,7 +2771,7 @@ reroll:
         base_find(x, y);
         if (BaseFindDist <= 1) goto reroll;
         if (kind > 13) {
-            const int terrain = (map_loc(x, y)->bit & 0x20
+            const int terrain = (bit_at(x, y) & 0x20
                                  && (map_loc(x, y)->climate & ~0x1F) >= 0x40) ? 2 : 4;
             if ((GameDataStateStorage.fields_.game_state_ & 0x100000 ? 2 : 1) * own_dist
                 < (kind - 13) * terrain + (4 - MapNativeLifeForms) * 2) {
@@ -2898,7 +2898,7 @@ reroll:
             return 0;
         }
         if (is_sea && (map_loc(x, y)->climate & ~0x1F) < 0x40) goto reroll;
-        if (map_loc(x, y)->bit & 0x20 && (map_loc(x, y)->climate & ~0x1F) >= 0x40) goto reroll;
+        if (bit_at(x, y) & 0x20 && (map_loc(x, y)->climate & ~0x1F) >= 0x40) goto reroll;
         if (y <= 1) goto reroll;
         if (y >= MapLatitudeBounds - 2) goto reroll;
         if (GameDataStateStorage.fields_.game_rules_ & 0x10000) goto reroll;

@@ -1452,7 +1452,7 @@ void TutWin::tour() {
         y = cursor_y + VehMoveDeltaY[dir];
         if (on_map(x, y) && MapWinTable[0]->tile_in_view(x, y, 2) && !is_ocean(x, y)) {
             int score = 8;
-            if ((map_loc(x, y)->bit & BIT_FUNGUS) && (map_loc(x, y)->climate & ~0x1F) >= 0x40) {
+            if ((bit_at(x, y) & BIT_FUNGUS) && (map_loc(x, y)->climate & ~0x1F) >= 0x40) {
                 score = 4;
             }
             if (!VehMoveDeltaX[dir] || !VehMoveDeltaY[dir]) {
@@ -1572,7 +1572,7 @@ void TutWin::tour() {
             if (is_ocean(x, y)) {
                 // the ocean tile closest to land
                 int score;
-                if ((map_loc(x, y)->bit & BIT_FUNGUS) && (map_loc(x, y)->climate & ~0x1F) >= 0x40) {
+                if ((bit_at(x, y) & BIT_FUNGUS) && (map_loc(x, y)->climate & ~0x1F) >= 0x40) {
                     score = 1;
                 } else {
                     score = 2;
@@ -1584,7 +1584,7 @@ void TutWin::tour() {
                 }
                 continue;
             }
-            if ((map_loc(x, y)->bit & BIT_FUNGUS) && (map_loc(x, y)->climate & ~0x1F) >= 0x40) {
+            if ((bit_at(x, y) & BIT_FUNGUS) && (map_loc(x, y)->climate & ~0x1F) >= 0x40) {
                 // land fungus, preferring a tile that is not rocky
                 if (fungus_y >= 0 && fungus_y < MapLatitudeBounds && fungus_x >= 0
                     && fungus_x < MapLongitudeBounds && (map_loc(x, y)->val3 & ~0x3F) >= 0x80) {
@@ -1594,7 +1594,7 @@ void TutWin::tour() {
                 fungus_y = y;
                 continue;
             }
-            special = (goody_at(x, y) || bonus_at(x, y, 0) || (map_loc(x, y)->bit & 0x2000)) ? 1 : 0;
+            special = (goody_at(x, y) || bonus_at(x, y, 0) || (bit_at(x, y) & 0x2000)) ? 1 : 0;
             yield = crop_yield(ConsoleGlobal.faction_id_, -1, x, y, 0);
             tile = map_loc(x, y);
             bits = tile->bit;

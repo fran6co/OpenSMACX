@@ -1504,7 +1504,7 @@ void Console::terraform(int vehicle_id, int terraform_id) {
         return;
     }
     if (terraform_id == TERRA_SOIL_ENR) {
-        if (((map_loc(x, y)->bit) & BIT_FARM) == 0) {
+        if ((bit_at(x, y) & BIT_FARM) == 0) {
             return;
         }
     } else if (terraform_id == TERRA_MAGTUBE) {
@@ -1726,12 +1726,12 @@ void Console::terraform(int vehicle_id, int terraform_id) {
 
         int steps = 1;
         if (terraform_id == TERRA_RAISE_LAND) {
-            const int level = range((alt_at(x, y)) + 1, 0, 6);
+            const int level = range(alt_at(x, y) + 1, 0, 6);
             if (level > 3) {
                 steps = RadiusRange[level - 3];
             }
         } else {
-            const int level = range((alt_at(x, y)) - 1, 0, 6);
+            const int level = range(alt_at(x, y) - 1, 0, 6);
             if (level < 3) {
                 int depth = 3 - level;
                 if (depth < 0) {

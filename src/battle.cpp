@@ -3148,7 +3148,7 @@ L_50835D:
             if (get_triad(def_id) == TRIAD_AIR &&
                 !has_abil(Vehs[veh_id].proto_id, ABL_AIR_SUPERIORITY) &&
                 base_id < 0 &&
-                !(map_loc(target_x, target_y)->bit & BIT_AIRBASE)) {
+                !(bit_at(target_x, target_y) & BIT_AIRBASE)) {
                 continue;
             }
             // 0x5085CE
