@@ -185,3 +185,48 @@ static_assert(offsetof(MessageLandmarkRecord, payload_1C_) == 0x1C,
               "landmark fourth payload word");
 static_assert(offsetof(MessageLandmarkRecord, text_) == 0x20,
               "landmark optional text start");
+
+// The synchronization packet's serialized header prefix is 0x24 bytes. It is
+// a field map over borrowed bytes, not the type or extent of the allocated
+// packet. In particular, the sender leaves +2..+3 and +0x20..+0x23 unwritten,
+// so neither view constructs or copies a complete prefix object. The first
+// sixteen bytes are the header every message carries: send_message tests the
+// flag word and, for 0x4000 messages, stamps the clock at +8.
+struct SyncHeaderPrefix {
+    int16_t flags;
+    unsigned char unresolved_2[2];
+    uint32_t faction;
+    uint32_t timestamp;
+    uint32_t sequence;
+    int16_t opcode;
+    int16_t index;
+    int32_t argument_2;
+    int32_t argument_3;
+    int32_t argument_4;
+    unsigned char unresolved_20[4];
+};
+
+static_assert(sizeof(SyncHeaderPrefix) == 0x24,
+              "synchronization serialized header prefix width");
+static_assert(offsetof(SyncHeaderPrefix, flags) == 0x00,
+              "synchronization flags offset");
+static_assert(offsetof(SyncHeaderPrefix, unresolved_2) == 0x02,
+              "synchronization unwritten bytes 2..3 offset");
+static_assert(offsetof(SyncHeaderPrefix, faction) == 0x04,
+              "synchronization faction offset");
+static_assert(offsetof(SyncHeaderPrefix, timestamp) == 0x08,
+              "synchronization send-clock offset");
+static_assert(offsetof(SyncHeaderPrefix, sequence) == 0x0C,
+              "synchronization sequence offset");
+static_assert(offsetof(SyncHeaderPrefix, opcode) == 0x10,
+              "synchronization inner opcode offset");
+static_assert(offsetof(SyncHeaderPrefix, index) == 0x12,
+              "synchronization signed chunk index offset");
+static_assert(offsetof(SyncHeaderPrefix, argument_2) == 0x14,
+              "synchronization argument 2 offset");
+static_assert(offsetof(SyncHeaderPrefix, argument_3) == 0x18,
+              "synchronization argument 3 offset");
+static_assert(offsetof(SyncHeaderPrefix, argument_4) == 0x1C,
+              "synchronization argument 4 offset");
+static_assert(offsetof(SyncHeaderPrefix, unresolved_20) == 0x20,
+              "synchronization unwritten bytes 20..23 offset");

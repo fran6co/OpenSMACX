@@ -1762,9 +1762,10 @@ static_assert(offsetof(MessageEventPrefix, payload_10_) == 0x10,
 int NetDaemon::send_message(char *message, unsigned long length, int target) {
     int result = IsMultiplayerNet;
     if (result) {
-        const unsigned short flags = *reinterpret_cast<unsigned short *>(message);
+        SyncHeaderPrefix *const header = reinterpret_cast<SyncHeaderPrefix *>(message);
+        const unsigned short flags = header->flags;
         if (flags & 0x4000) {
-            *reinterpret_cast<uint32_t *>(message + 8) = timeGetTime();
+            header->timestamp = timeGetTime();
             return Net::send(message, length, 0, 1);
         }
         if (flags & 0x8000) {
@@ -2758,50 +2759,6 @@ static_assert(offsetof(EntityCommandPrefix, entity_id_) == 0x10,
               "entity command entity id offset");
 static_assert(sizeof(EntityCommandPrefix) == 0x14,
               "entity command prefix width through entity id");
-
-// The synchronization packet's serialized header prefix is 0x24 bytes. It is
-// a field map over borrowed bytes, not the type or extent of the allocated
-// packet. In particular, the sender leaves +2..+3, +8..+0xB, and +0x20..+0x23
-// unwritten, so neither view constructs or copies a complete prefix object.
-struct SyncHeaderPrefix {
-    int16_t flags;
-    unsigned char unresolved_2[2];
-    uint32_t faction;
-    unsigned char unresolved_8[4];
-    uint32_t sequence;
-    int16_t opcode;
-    int16_t index;
-    int32_t argument_2;
-    int32_t argument_3;
-    int32_t argument_4;
-    unsigned char unresolved_20[4];
-};
-
-static_assert(sizeof(SyncHeaderPrefix) == 0x24,
-              "synchronization serialized header prefix width");
-static_assert(offsetof(SyncHeaderPrefix, flags) == 0x00,
-              "synchronization flags offset");
-static_assert(offsetof(SyncHeaderPrefix, unresolved_2) == 0x02,
-              "synchronization unwritten bytes 2..3 offset");
-static_assert(offsetof(SyncHeaderPrefix, faction) == 0x04,
-              "synchronization faction offset");
-static_assert(offsetof(SyncHeaderPrefix, unresolved_8) == 0x08,
-              "synchronization unwritten bytes 8..B offset");
-static_assert(offsetof(SyncHeaderPrefix, sequence) == 0x0C,
-              "synchronization sequence offset");
-static_assert(offsetof(SyncHeaderPrefix, opcode) == 0x10,
-              "synchronization inner opcode offset");
-static_assert(offsetof(SyncHeaderPrefix, index) == 0x12,
-              "synchronization signed chunk index offset");
-static_assert(offsetof(SyncHeaderPrefix, argument_2) == 0x14,
-              "synchronization argument 2 offset");
-static_assert(offsetof(SyncHeaderPrefix, argument_3) == 0x18,
-              "synchronization argument 3 offset");
-static_assert(offsetof(SyncHeaderPrefix, argument_4) == 0x1C,
-              "synchronization argument 4 offset");
-static_assert(offsetof(SyncHeaderPrefix, unresolved_20) == 0x20,
-              "synchronization unwritten bytes 20..23 offset");
-
 
 // ORIGINAL: 0x00534330 ?fixup_message@NetDaemon@@QAEHPAD@Z 0x00534330-0x005343FC FILE BYTE_EXACT
 // A switch over the direct packet fields. 0x2403 is a separate (empty) label
@@ -3873,8 +3830,10 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
     case 0x4101: {
         unsigned int old_pending = field_1BBC_;
         field_1BBC_ = (1 << packet->faction_) | old_pending;
-        synch(*(short *)(message + 0x10), packet->payload_14_, packet->payload_18_,
-              packet->payload_1C_, message, 0, 0x2101);
+        // A synchronization request: the same header synch() builds and reads.
+        synch(reinterpret_cast<SyncHeaderPrefix *>(message)->opcode,
+              packet->payload_14_, packet->payload_18_, packet->payload_1C_,
+              message, 0, 0x2101);
         if (old_pending) {
             break;
         }
@@ -5310,12 +5269,12 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
         if (length) {
             if (opcode == 0x11) {
                 if (total == 1 &&
-                    (*reinterpret_cast<int16_t *>(payload) != *reinterpret_cast<int16_t *>(src) ||
-                     *reinterpret_cast<int16_t *>(payload + 2) != *reinterpret_cast<int16_t *>(src + 2))) {
-                    parse_num(0, *reinterpret_cast<int16_t *>(payload));
-                    parse_num(1, *reinterpret_cast<int16_t *>(payload + 2));
-                    parse_num(2, *reinterpret_cast<int16_t *>(src));
-                    parse_num(3, *reinterpret_cast<int16_t *>(src + 2));
+                    (reinterpret_cast<Veh *>(payload)->x != reinterpret_cast<Veh *>(src)->x ||
+                     reinterpret_cast<Veh *>(payload)->y != reinterpret_cast<Veh *>(src)->y)) {
+                    parse_num(0, reinterpret_cast<Veh *>(payload)->x);
+                    parse_num(1, reinterpret_cast<Veh *>(payload)->y);
+                    parse_num(2, reinterpret_cast<Veh *>(src)->x);
+                    parse_num(3, reinterpret_cast<Veh *>(src)->y);
                     parse_num(4, Vehs[a2].faction_id);
                     parse_num(5, Vehs[a2].proto_id);
                     parse_num(6, a2);
@@ -5346,12 +5305,12 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
                 }
             } else if (opcode == 0x13) {
                 if (total == 1 &&
-                    (*reinterpret_cast<int16_t *>(payload) != *reinterpret_cast<int16_t *>(src) ||
-                     *reinterpret_cast<int16_t *>(payload + 2) != *reinterpret_cast<int16_t *>(src + 2))) {
-                    parse_num(0, *reinterpret_cast<int16_t *>(payload));
-                    parse_num(1, *reinterpret_cast<int16_t *>(payload + 2));
-                    parse_num(2, *reinterpret_cast<int16_t *>(src));
-                    parse_num(3, *reinterpret_cast<int16_t *>(src + 2));
+                    (reinterpret_cast<Base *>(payload)->x != reinterpret_cast<Base *>(src)->x ||
+                     reinterpret_cast<Base *>(payload)->y != reinterpret_cast<Base *>(src)->y)) {
+                    parse_num(0, reinterpret_cast<Base *>(payload)->x);
+                    parse_num(1, reinterpret_cast<Base *>(payload)->y);
+                    parse_num(2, reinterpret_cast<Base *>(src)->x);
+                    parse_num(3, reinterpret_cast<Base *>(src)->y);
                     parse_num(4, a2);
                     parse_says(0, payload + 0x13, -1, -1);
                     parse_says(1, src + 0x13, -1, -1);
