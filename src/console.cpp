@@ -7236,8 +7236,12 @@ int Console::on_key_click(int a1, int a2) {
     }
     case 0x10051:
         retire_game();
-        // fall through: 0x20051 enters the confirmation at 0x51AA0D.
-    case 0x20051:
+        // 0x20051 enters the confirmation here (table entry 0x51AA0D), yet the
+        // 0x20047..0x2005A table node sits before 0x2005A's body (0x51AC23),
+        // not before this one: a case label here pulls the block down to its
+        // cluster and leaves retire_game with a jmp. A second quit_game()
+        // under its own label is only tail-merged (as 0x1B's copy is).
+    quit_confirm:
         quit_game();  // 0x514990 expanded
         break;
     case 0x1004E:
@@ -7264,6 +7268,8 @@ int Console::on_key_click(int a1, int a2) {
         }
         zoom(0x207, 0);
         goto map_keys;
+    case 0x20051:
+        goto quit_confirm;  // WORKAROUND(decl): see 0x10051; the original spelling is unknown
     case 0x20058:
         if (consumed != 0) {
             return 1;
@@ -7281,14 +7287,15 @@ int Console::on_key_click(int a1, int a2) {
         if (IsMultiplayerNet != 0 && (GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) == 0) {
             break;
         }
-        // fall through into 0x3004C's body at 0x51ACFB.
-    case 0x3004C:
         load_proc(0, 0);
         break;
     case 0x2004E: base_names(); break;          // 0x515600 expanded
     case 0x20047: toggle_grid(); break;         // 0x5156A0 expanded
     case 0x20073: show_version(); break;        // 0x517180 expanded
     case 0x30058: toggle_flatten(); break;      // 0x515640 expanded
+    case 0x3004C:   // cross-jumped into 0x2004C's identical call at 0x51ACFB
+        load_proc(0, 0);
+        break;
     case 0x30057:
         GameDataStateStorage.fields_.game_more_preferences_ ^= 1;
         ::draw_map(1);
