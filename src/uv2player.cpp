@@ -111,7 +111,7 @@ int UV2Player::write_timed(LPSTR text, int x, int y, int length) {
         while (timeGetTime() - started < write_delay_) {
         }
     }
-    buffer_.set_write_raw_callback(&uv2_player_writer_redirect);
+    buffer_.set_write_raw_callback(&writer_redirect);
     return x;
 }
 
@@ -145,8 +145,8 @@ Return Value: the x coordinate the last write left off at
 Status: Coverage transcription - unclaimed body
 */
 #pragma optimize("y", off)
-extern "C" int __cdecl uv2_player_writer_redirect(LPSTR text, int x_coord,
-                                                  int y_coord, int row_count) {
+int __cdecl UV2Player::writer_redirect(LPSTR text, int x_coord, int y_coord,
+                                       int row_count) {
     UV2Player *const instance = UV2PlayerActive;
     if (instance != 0) {
         instance->buffer_.set_write_raw_callback(0);
@@ -163,7 +163,7 @@ extern "C" int __cdecl uv2_player_writer_redirect(LPSTR text, int x_coord,
                 ++index;
             } while (index < row_count);
         }
-        instance->buffer_.set_write_raw_callback(&uv2_player_writer_redirect);
+        instance->buffer_.set_write_raw_callback(&writer_redirect);
         return x;
     }
     return 0;
@@ -418,7 +418,7 @@ void UV2Player::show_post_movie_text() {
             &help_lines, r.right - left, 0);
         top += (r.bottom - drawn_height - top) / 2;
 
-        buffer_.set_write_raw_callback(&uv2_player_writer_redirect);
+        buffer_.set_write_raw_callback(&writer_redirect);
         buffer_.write_strings(&help_lines, left, top, r.right - left, 0);
         buffer_.set_write_raw_callback(0);
 

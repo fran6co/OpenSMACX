@@ -37,6 +37,9 @@ class UV2Player {
   int UNK4();
   int __cdecl on_key();
   int write_timed(LPSTR text, int x, int y, int length);
+  // The embedded Buffer's raw-write hook: no receiver, the instance comes
+  // from UV2PlayerActive.
+  static int __cdecl writer_redirect(LPSTR text, int x, int y, int length);
   // Post-play MOVLIST text; exec invokes it only when playback was not quit.
   void show_post_movie_text();
 
@@ -72,5 +75,3 @@ static_assert(sizeof(UV2Player) == 0xE68,
 
 extern UV2Player *UV2PlayerActive;
 extern int UV2PlayerQuitRequested;
-extern "C" int __cdecl uv2_player_writer_redirect(LPSTR text, int x, int y,
-                                                  int length);
