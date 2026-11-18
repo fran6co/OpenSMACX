@@ -252,10 +252,10 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
             gendered ^= Armor[armor_id].defense_rating & 1;
             if (lower) {
                 strcat(output, table_text(Reactor[reactor_id - 1].name_short));
-                strcat(alternate, StringTable.get(Reactor[reactor_id - 1].name_short));
+                strcat(alternate, table_text(Reactor[reactor_id - 1].name_short));
             } else {
-                strcat(output, StringTable.get(Armor[armor_id].name_short));
-                strcat(alternate, StringTable.get(Armor[armor_id].name_short));
+                strcat(output, table_text(Armor[armor_id].name_short));
+                strcat(alternate, table_text(Armor[armor_id].name_short));
             }
         }
         strcat(output, BufferJoinSpace);
@@ -272,11 +272,11 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
                && Weapon[weapon_id].mode < 3 && Weapon[weapon_id].offense_rating >= 0) {
         if (!unique) {
             if (lower) {
-                strcat(output, StringTable.get(Reactor[reactor_id - 1].name_short));
-                strcat(alternate, StringTable.get(Reactor[reactor_id - 1].name_short));
+                strcat(output, table_text(Reactor[reactor_id - 1].name_short));
+                strcat(alternate, table_text(Reactor[reactor_id - 1].name_short));
             } else {
-                strcat(output, StringTable.get(Weapon[weapon_id].name_short));
-                strcat(alternate, StringTable.get(Weapon[weapon_id].name_short));
+                strcat(output, table_text(Weapon[weapon_id].name_short));
+                strcat(alternate, table_text(Weapon[weapon_id].name_short));
             }
         }
         strcat(output, BufferJoinSpace);
