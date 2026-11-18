@@ -816,7 +816,7 @@
       "name": "WinCore",
       "start": "0x005EB350",
       "end_exclusive": "0x005F862E",
-      "recovered_tu": "src/win.cpp",
+      "recovered_tu": "src/jackal/win.cpp",
       "reason": "Inferred compact Win-centered contribution candidate from all configured source mappings and pinned span/data accounting; it is not a proved historical object boundary or original filename.",
       "evidence": [
         "The complete configured-source census shows 191 identities in this primary band and every one is currently mapped in src/win.cpp. The band begins with the four Win drawing/screen Buffer lifetime callbacks and ends with Win scalar deleting entry 0x005F8610..0x005F862E.",

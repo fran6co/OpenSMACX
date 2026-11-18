@@ -24,15 +24,10 @@
 // - bit_count 0x0050BA30: battle-TU tail after bitmask (battle.cpp);
 // - checksum_file/checksum/checksum_password 0x00538FE0: netdaemon-TU tail;
 // - sub_5391a0 0x005391A0: inside the faction TU (faction.cpp);
-// - mem_get 0x005D4510: starts the object after the decoder's CC fill, before
-//   Heap; in heap.cpp VC6 inlines it into Heap::init, which the image calls;
-// - HSV_to_RGB 0x00628B70: beside RGB_to_HSV (jackal/palette.cpp);
-// - quick_root 0x006290E0, sub_62d390 0x0062D390, env_open 0x00634BB0:
-//   single functions between other owners, no boundary evidence.
+// The JACKAL.LIB pieces (mem_get, env_open, HSV_to_RGB, quick_root and
+// sound_header_version) moved to their library members in src/jackal.
 
 
-// Original mem_get at 0x005D4510 reports failure through this USER32 export; no function alias.
-// RECOVERY_IMPORT: v1 __imp__MessageBoxA@16 USER32.dll name:MessageBoxA
 #include "council.h"
 #include <math.h> // sin(double), lowered to the CRT's _sin
 #include <cstring>
@@ -86,67 +81,6 @@
 
 
 
-// RECOVERY_LITERAL: v1 0x00696A38 0x00696A44 $SG60323 0x005D4510
-// RECOVERY_LITERAL: v1 0x00696A44 0x00696B14 $SG60324 0x005D4510
-/*
-Purpose: Allocate memory with error checking.
-// ORIGINAL: 0x005D4510 ?mem_get@@YAPAXH@Z 0x005D4510-0x005D453C BYTE_EXACT
-// symbol    ?mem_get@@YAPAXH@Z
-// size      44 bytes
-// prototype void* (__cdecl ?mem_get@@YAPAXH@Z)(int size)
-// callers   88   call targets   2
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x00644DFF 0x006470A6
-// indirect  0x005D452E
-Return Value: Pointer to allocated memory
-Status: Complete. Historical note: an earlier DLL/CRT migration used two
-        malloc wrappers to avoid a reported SDK incompatibility; the recovered
-        callers now use the canonical pinned int-sized mem_get contract.
-*/
-LPVOID __cdecl mem_get(int size) {
-    LPVOID result = malloc(size);
-    if (!result) {
-        MessageBoxA(NULL,
-            "Windows has run out of virtual memory; the game will exit. "
-            "Recommendations: defragment your hard drive; use Control Panel "
-            "(System/Performance/Virtual Memory) to increase your virtual memory to at least 128MB",
-            "FATAL ERROR", MB_ICONWARNING);
-        exit(4);
-    }
-    return result;
-}
-/*
-Purpose: Check the source file path and attempt to open a handle to the file.
-// ORIGINAL: 0x00634BB0 ?env_open@@YAHPADPAD@Z 0x00634BB0-0x00634BD4 BYTE_EXACT
-// symbol    ?env_open@@YAPAU_iobuf@@PBD0@Z
-// size      36 bytes
-// prototype 
-// callers   18   call targets   2
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x006005D0 0x00645646
-Return Value: FILE pointer
-Status: Complete with two versions of fopen to prevent a crash. Incompatibility with newer SDK 
-        version of fopen/fopen_s. Revisit once more code is redirected to dll.
-*/
-FILE *__cdecl env_open_old(LPCSTR source, LPCSTR mode) {
-    LPCSTR src_check = filefind_get(source);
-    if (!src_check) {
-        src_check = source;
-    }
-    return fopen(src_check, mode);
-}
-
-FILE *__cdecl env_open(LPCSTR source, LPCSTR mode) {
-    LPCSTR src_check = filefind_get(source);
-    if (!src_check) {
-        src_check = source;
-    }
-    FILE *file_out;
-    fopen_s(&file_out, src_check, mode);
-    return file_out;
-}
 
 
 
@@ -205,30 +139,7 @@ int __cdecl bit_count(int bitfield) {
     return bitfield;
 }
 
-/*
-Purpose: Calculate the square root of the input.
-// ORIGINAL: 0x006290E0 ?quick_root@@YAHH@Z 0x006290E0-0x00629109 BYTE_EXACT
-// size      41 bytes
-// prototype 
-// callers   3   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: Square root
-Status: Complete
-*/
-int __cdecl quick_root(int input) {
-    int temp = input >> 1;
-    int sq_root;
-    if (input <= 1) {
-        return input;
-    }
-    do {
-        sq_root = temp;
-        temp = (temp + input / temp) >> 1;
-    } while (temp < sq_root);
-    return sq_root;
-}
+
 
 
 
@@ -309,33 +220,6 @@ uint32_t __cdecl checksum_password(LPCSTR password) {
 
 
 
-/*
-Purpose: The sound-header version the game was built with. The whole image
-         body is `mov eax,1 / ret` - the compiler folded the header's version
-         constant to the literal - and load_sound_dll compares its answer
-         against the sound DLL's own reported version and against 1, showing
-         the "check all sound.h and sound device.h versions" complaint when
-         they disagree. Recovered as the plain __cdecl function the image's
-         only caller calls through, replacing the generator's
-         field_accessor_0062d390_redirect: that adapter's two dead __fastcall
-         slots would have cost the call site the two register setups the
-         image does not have, and a redirect nothing calls is class debt. Was
-         a BYTE_EXACT claim in field_accessors.cpp under the redirect's
-         symbol; re-record here against the real name.
-// ORIGINAL: 0x0062D390 sub_62d390 0x0062D390-0x0062D396 BYTE_EXACT
-// symbol    _sound_header_version
-// size      6 bytes
-// prototype
-// callers   1   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: 1
-Status: Complete
-*/
-extern "C" int __cdecl sound_header_version() {
-    return 1;
-}
 
 // SDK imports, never raw IAT pointers.
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====
@@ -352,65 +236,6 @@ extern "C" int __cdecl sound_header_version() {
 
 
 
-// HSV_to_RGB's six double constants, read at its operands. 0.0, 360.0 and 1.0
-// are linker-folded with copies other units own (palette.cpp's hsv_zero and
-// hsv_hue_wrap_degrees, random.cpp's 1.0), so this unit declares them merged.
-// RECOVERY_LITERAL: v2 merged 0x0066D8D8 0x0066D8E0 __real@8@3fff8000000000000000 0x00628B70
-// RECOVERY_LITERAL: v2 merged 0x0066FA70 0x0066FA78 __real@8@00000000000000000000 0x00628B70
-// RECOVERY_LITERAL: v1 0x00670C20 0x00670C28 __real@8@40078000000000000000 0x00628B70
-// RECOVERY_LITERAL: v1 0x00670C28 0x00670C30 __real@8@3ff98888888888888800 0x00628B70
-// RECOVERY_LITERAL: v2 merged 0x00670C30 0x00670C38 __real@8@4007b400000000000000 0x00628B70
-// RECOVERY_LITERAL: v1 0x00670C38 0x00670C40 __real@8@bfff8000000000000000 0x00628B70
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x00628B70 0x00628D94 0x00628DAC 0x00628C65
-// ORIGINAL: 0x00628B70 ?HSV_to_RGB@@YAXPAUHSV@@PAUPALETTEENTRY@@@Z 0x00628B70-0x00628D92 FILE BYTE_EXACT
-// symbol    ?HSV_to_RGB@@YAXPAUHSV@@PAUtagPALETTEENTRY@@@Z
-// size      546 bytes
-// prototype
-// callers   0   call targets   2
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x006458C8 0x00647851
-// Purpose: Convert one HSV triplet (palette.h's 0x18-byte double record) into
-//          the palette entry the game stores. Parameters named from use:
-//          `hsv_in` is read only, `entry_out` is written only.
-// NOTE: the image's own mangled name spells the second parameter `PALETTEENTRY`;
-// this tree emits `tagPALETTEENTRY` because the type comes from the Windows
-// header rather than a local struct - see the `symbol` fact above.
-void __cdecl HSV_to_RGB(HSV *hsv_in, PALETTEENTRY *entry_out) {
-    if (hsv_in != 0 && entry_out != 0) {
-        HSV hsv = *hsv_in;
-        double r, g, b;
-
-        if (hsv.s == 0.0) {
-            if (hsv.h == -1.0) {
-                r = hsv.v;
-                g = hsv.v;
-                b = hsv.v;
-            }
-        } else {
-            if (hsv.h == 360.0)
-                hsv.h = 0.0;
-            hsv.h *= 0.016666666666666666;
-            int i = (int)floor(hsv.h);
-            double f = hsv.h - i;
-            double p = hsv.v * (1.0 - hsv.s);
-            double q = hsv.v * (1.0 - hsv.s * f);
-            double t = hsv.v * (1.0 - hsv.s * (1.0 - f));
-            switch (i) {
-            case 0: r = hsv.v; g = t; b = p; break;
-            case 1: r = q; g = hsv.v; b = p; break;
-            case 2: r = p; g = hsv.v; b = t; break;
-            case 3: r = p; g = q; b = hsv.v; break;
-            case 4: r = t; g = p; b = hsv.v; break;
-            case 5: r = hsv.v; g = p; b = q; break;
-            }
-        }
-
-        entry_out->peRed = (unsigned char)(r * 256.0);
-        entry_out->peGreen = (unsigned char)(g * 256.0);
-        entry_out->peBlue = (unsigned char)(b * 256.0);
-    }
-}
 
 
 // ORIGINAL: 0x00538FE0 ?checksum_file@@YAEPAD@Z 0x00538FE0-0x0053908F;0x0065E450-0x0065E462 FILE BYTE_EXACT

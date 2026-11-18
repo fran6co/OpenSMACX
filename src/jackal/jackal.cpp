@@ -35,6 +35,37 @@
 #include "strings.h"
 #include <cstring>
 
+// sound_header_version (0x0062D390) directly precedes jackal_init_real in the
+// image, with no int3 edge between them: the version checks that pair the game,
+// sound.dll and JACKAL.LIB headers belong to this member.
+/*
+Purpose: The sound-header version the game was built with. The whole image
+         body is `mov eax,1 / ret` - the compiler folded the header's version
+         constant to the literal - and load_sound_dll compares its answer
+         against the sound DLL's own reported version and against 1, showing
+         the "check all sound.h and sound device.h versions" complaint when
+         they disagree. Recovered as the plain __cdecl function the image's
+         only caller calls through, replacing the generator's
+         field_accessor_0062d390_redirect: that adapter's two dead __fastcall
+         slots would have cost the call site the two register setups the
+         image does not have, and a redirect nothing calls is class debt. Was
+         a BYTE_EXACT claim in field_accessors.cpp under the redirect's
+         symbol; re-record here against the real name.
+// ORIGINAL: 0x0062D390 sub_62d390 0x0062D390-0x0062D396 BYTE_EXACT
+// symbol    _sound_header_version
+// size      6 bytes
+// prototype
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: 1
+Status: Complete
+*/
+extern "C" int __cdecl sound_header_version() {
+    return 1;
+}
+
 // These three pinned lifecycle/version functions establish the current Jackal
 // boundary. Called subsystems remain separately owned; their archive membership
 // and the original translation-unit boundaries are not inferred from these calls.
@@ -42,9 +73,9 @@
 void __cdecl teardown_0060fd60();
 void __cdecl teardown_0060e5d0();
 
-// RECOVERY_LITERAL: v1 0x00697478 0x0069747E $SG44735 0x0062D570
-// RECOVERY_LITERAL: v1 0x00697480 0x006974AD $SG44736 0x0062D570
-// RECOVERY_LITERAL: v1 0x006974B0 0x00697547 $SG44737 0x0062D570
+// RECOVERY_LITERAL: v1 0x00697478 0x0069747E $SG44737 0x0062D570
+// RECOVERY_LITERAL: v1 0x00697480 0x006974AD $SG44738 0x0062D570
+// RECOVERY_LITERAL: v1 0x006974B0 0x00697547 $SG44739 0x0062D570
 /*
 Purpose: Checks to see if the JACKAL library version is up to date. Pretty pointless but might add
          an OpenSMACX check in the future.

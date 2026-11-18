@@ -286,7 +286,7 @@ void __cdecl do_all_non_input() {
 /*
 Purpose: Process draw related message.
 // ORIGINAL: 0x005FCB60 ?do_draw@@YAHXZ 0x005FCB60-0x005FCBAC BYTE_EXACT
-// body      src/win.cpp
+// body      src/jackal/win.cpp
 // size      76 bytes
 // prototype
 // callers   1   call targets   3
@@ -337,7 +337,7 @@ void __cdecl do_all_draws() {
 /*
 Purpose: Process keyboard related message.
 // ORIGINAL: 0x005FCC20 ?do_keyboard@@YAXXZ 0x005FCC20-0x005FCC6D BYTE_EXACT
-// body      src/win.cpp
+// body      src/jackal/win.cpp
 // symbol    ?do_keyboard@@YAHXZ
 // size      77 bytes
 // prototype

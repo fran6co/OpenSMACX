@@ -149,6 +149,7 @@ target_include_directories(zlib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/vendor/z
 target_compile_options(zlib PRIVATE /W0 $<$<NOT:$<CONFIG:Debug>>:/Ob1>)
 
 set(OPENSMACX_SOURCES
+    src/win.cpp
     src/stringbox.cpp
     src/basepop.cpp
     src/graphicwin.cpp
@@ -267,7 +268,6 @@ set(OPENSMACX_SOURCES
     src/veh_queries.cpp
     src/vehicle_storage.cpp
     src/vehicle_cost.cpp
-    src/win.cpp
     src/winnodelist.cpp
 )
 
@@ -564,10 +564,10 @@ set_property(SOURCE
     src/net_class.cpp
     src/terraforming_actions.cpp
     src/world.cpp
-    src/win.cpp
     src/datalink.cpp
     src/designwin.cpp
     src/diplowin.cpp
+    src/win.cpp
     src/general.cpp
     src/infowin.cpp
     src/messagewin.cpp

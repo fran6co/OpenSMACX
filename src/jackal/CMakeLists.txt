@@ -37,7 +37,11 @@ add_library(jackal STATIC
     scroll.cpp
     stringbox.cpp
     dialogs.cpp
-    basepop.cpp)
+    basepop.cpp
+    win.cpp
+    mem_get.cpp
+    env_open.cpp
+    hsv.cpp)
 target_include_directories(jackal PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 target_compile_definitions(jackal PRIVATE $<$<CONFIG:Debug>:BUILD_DEBUG>)
 target_compile_options(jackal PRIVATE /W4 "--repro-root=${PROJECT_SOURCE_DIR}")
@@ -49,7 +53,8 @@ target_link_libraries(jackal PRIVATE caviar)
 # Qualified /Z7 controls preserve their runtime code, data, EH and FPO content.
 set_property(SOURCE checkbox.cpp radiobutton.cpp filewin.cpp palette.cpp
     string_table.cpp buffer.cpp caviar.cpp log.cpp sprite.cpp texheap.cpp
-    ddinit.cpp filefind.cpp parse.cpp trig.cpp menu.cpp
+    ddinit.cpp filefind.cpp parse.cpp trig.cpp menu.cpp win.cpp mem_get.cpp
+    env_open.cpp hsv.cpp
     APPEND PROPERTY COMPILE_OPTIONS "/Z7")
 # Buffer's original hline5E1B94 and init5D77C3 call the CRT memset.
 # Keep memory-call selection at TU scope; this is an evidence-led build policy,
