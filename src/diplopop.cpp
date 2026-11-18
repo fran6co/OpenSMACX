@@ -136,16 +136,16 @@ void DiploPop::init() {
     layout_flic.close();
 
     rect = MainInterfaceGlobal.rect2();
+    int x = MainInterfaceGlobal.right_frame_rect().right - MainInterfaceGlobal.rect3().right + MainInterfaceGlobal.right_frame_rect().left;
     rect.right = rect.left - 3;
-    rect.left = MainInterfaceGlobal.right_frame_rect().right
-                - MainInterfaceGlobal.rect3().right
-                + MainInterfaceGlobal.right_frame_rect().left;
-    right_panel_button_rect_ = rect;
+    rect.left = x;
+    RECT *panel = &right_panel_button_rect_;
+    *panel = rect;
 
     rect = MainInterfaceGlobal.right_frame_rect();
     expand_rect(&rect, -4, -4);
-    frame_inset_rect_ = rect;
     rect.bottom = right_panel_button_rect_.top - 6;
+    frame_inset_rect_ = rect;
 
     content_rect_ = MainInterfaceGlobal.lower_frame_rect();
     expand_rect(&content_rect_, -4, -4);
@@ -164,15 +164,15 @@ void DiploPop::init() {
 
     rect = MainInterfaceGlobal.main_frame_rect();
     expand_rect(&rect, -4, -4);
-    set_rect(&portrait_text_rect_, rect.right - frame_width - 2, rect.top,
-             rect.right, rect.bottom);
+    rect.left = rect.right - frame_width - 2;
+    portrait_text_rect_ = rect;
 
     rect = MainInterfaceGlobal.main_frame_rect();
     expand_rect(&rect, -4, -4);
     rect.right = portrait_text_rect_.left - 3;
     bioscan_title_rect_ = rect;
-    bioscan_picture_rect_ = rect;
     bioscan_title_rect_.bottom = bioscan_title_rect_.top + 20;
+    bioscan_picture_rect_ = rect;
     bioscan_picture_rect_.top = bioscan_title_rect_.bottom + 2;
 
     register_iface(4);
@@ -207,10 +207,10 @@ void DiploPop::init() {
                          button_left_rect_.bottom - button_left_rect_.top,
                          &MainInterfaceGlobal, 0);
     flatButtons_[2].init(StringTable.get(Labels.strings_ptr[0xEAC / 4]), 2,
-                         right_panel_button_rect_.left,
+                         panel->left,
                          right_panel_button_rect_.top,
-                         right_panel_button_rect_.right - right_panel_button_rect_.left,
-                         right_panel_button_rect_.bottom - right_panel_button_rect_.top,
+                         panel->right - panel->left,
+                         panel->bottom - panel->top,
                          &MainInterfaceGlobal, 0);
 
     StringTemp[0] = '\0';
