@@ -7162,12 +7162,9 @@ void BaseWin::init() {
         const int half_old_height = rect_height(production) / 2;
         offset_rect(production, 0, rect_height(production) + 3);
         const int half_new_height = rect_height(production) / 2;
-        commerce_report_rect_.top += half_new_height;
-        commerce_report_rect_.bottom += half_new_height;
-        commerce_outer_rect_.top += half_old_height;
-        commerce_outer_rect_.bottom += half_old_height;
-        commerce_title_rect_.top += half_old_height;
-        commerce_title_rect_.bottom += half_old_height;
+        offset_rect(&commerce_report_rect_, 0, half_new_height);
+        offset_rect(&commerce_outer_rect_, 0, half_old_height);
+        offset_rect(&commerce_title_rect_, 0, half_old_height);
         commerce_report_rect_.bottom += half_old_height;
         commerce_outer_rect_.bottom += half_old_height;
         nutrient_content_rect_.bottom += half_old_height;
@@ -7330,18 +7327,20 @@ void BaseWin::init() {
     r.top += 3;
     r.right = r.left + sprites8_[6].width();
     r.bottom = r.top + sprites8_[6].height();
-    previous_button_rect_ = r;
-    flatButtons_[2].init(0, 2, previous_button_rect_.left, previous_button_rect_.top,
-        previous_button_rect_.right - previous_button_rect_.left, previous_button_rect_.bottom - previous_button_rect_.top, &MainInterfaceGlobal, 0);
+    RECT *prev = &previous_button_rect_;
+    *prev = r;
+    flatButtons_[2].init(0, 2, prev->left, prev->top,
+        prev->right - prev->left, prev->bottom - prev->top, &MainInterfaceGlobal, 0);
     flatButtons_[2].set_report_icons(&sprites8_[6], &sprites8_[7], &sprites8_[8]);
     flatButtons_[2].set_bubble_text(StringTemp);
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x104 / 4));
     r.right = info_title_rect_.right - 3;
     r.left = r.right - sprites8_[6].width();
-    next_button_rect_ = r;
-    flatButtons_[3].init(0, 3, next_button_rect_.left, next_button_rect_.top,
-        next_button_rect_.right - next_button_rect_.left, next_button_rect_.bottom - next_button_rect_.top, &MainInterfaceGlobal, 0);
+    RECT *next = &next_button_rect_;
+    *next = r;
+    flatButtons_[3].init(0, 3, next->left, next->top,
+        next->right - next->left, next->bottom - next->top, &MainInterfaceGlobal, 0);
     flatButtons_[3].set_report_icons(&sprites8_[9], &sprites8_[10], &sprites8_[11]);
     flatButtons_[3].set_field_A14(1);
     flatButtons_[3].set_bubble_text(StringTemp);
