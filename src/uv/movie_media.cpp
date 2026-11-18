@@ -2427,8 +2427,8 @@ static __forceinline void media_worker_loop(MediaDescriptor *self) {
 // symbol    _sub_5caab0
 // kind      game
 // TRIED: nullary extern "C" __cdecl per the contract head - IDA's own guess (void*) matches the disassembly's [esp+0x14] read, so landed as sub_5caab0(void *param); this is a _beginthread worker (GetCurrentThread/SetThreadPriority/InterlockedXxx/ Sleep/GetTickCount/_endthread). sub_5cXXXXX helpers retyped __fastcall(void*[, void*]) to match their ecx/edx-only call sites (no stack pushes); slots 9/12 are COM-style (explicit self push). The former mismatch at instruction 168 was caused by reading shared output_lock_word as non-volatile; its volatile field type now matches the original stack-slot reload sequence.
-// Every callee is a real call in the image, sub_5cae00 included.
-#pragma inline_depth(1)
+// Every callee is a real call in the image, sub_5cae00 included (through the
+// member pointer below).
 extern "C" void __cdecl sub_5caab0(void *argument) {
   // Same shape as MediaDescriptor::sub_5cb220: fields go through
   // r->descriptor, reloaded at each use.
@@ -2448,7 +2448,6 @@ extern "C" void __cdecl sub_5caab0(void *argument) {
   }
   if (background_flag != 0) _endthread();
 }
-#pragma inline_depth(8)
 
 // ORIGINAL: 0x005CD750 sub_5cd750 0x005CD750-0x005CD8C5 BYTE_EXACT
 // TRIED: `extern "C" int __cdecl sub_5cd750()` fallback head; the entry `mov esi,ecx / mov [ebp-4],edx` with no stack reads is __fastcall(int*, uint*), so the signature was changed.
