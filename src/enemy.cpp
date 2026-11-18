@@ -1988,14 +1988,12 @@ on the 0 and 1 the game stores there and disagree on everything else, and the
 difference is in the original rather than in the transcription.
 */
 static int terraform_xrange(int x) {
-    if (!(MapIsFlat & 1)) {
-        if (x < 0) {
-            x += MapLongitudeBounds;
-        } else if (x >= MapLongitudeBounds) {
-            x -= MapLongitudeBounds;
-        }
-    }
-    return x;
+    // The flat-first ternary, as map.h's shared wrap: with the if/else
+    // statement form the hoisted MapLongitudeBounds loses edi to MapLongitude
+    // in the census loop (0x005656E7 holds the bounds in edi).
+    return (MapIsFlat & 1) ? x
+        : x < 0 ? x + MapLongitudeBounds
+        : x >= MapLongitudeBounds ? x - MapLongitudeBounds : x;
 }
 
 /*
