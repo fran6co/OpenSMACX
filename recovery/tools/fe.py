@@ -114,7 +114,9 @@ def compile_unit(unit,srcpath,pfx):
     if not cmd: return None,'unit not in compile_commands'
     tag=hashlib.md5((srcpath+str(pfx)).encode()).hexdigest()[:8]
     obj=f'{SCR}/{tag}.obj'; out=[]
+    drop=set(os.environ.get('FE_DROP_FLAGS','').split()) if '/Og' in cmd and '/uv/' not in unit else set()  # hypothesis runs, e.g. FE_DROP_FLAGS=/Oi
     for t in cmd:
+        if t in drop: continue
         if t.startswith('/Fo'): t='/Fo'+obj
         elif t.startswith('/Fd') or t.startswith('--repro-root') or t=='/W4': continue
         elif t==R+'/'+unit: t=srcpath
