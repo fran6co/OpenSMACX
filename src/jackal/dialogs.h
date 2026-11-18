@@ -162,6 +162,12 @@ class Dialogs : public ListBox,
 
 };
 
+// WORKAROUND(decl): measured 2026-11-19, the image calls this destructor's
+// copy 0x00406910 from 88 sites in 30 units, including units that expand it
+// elsewhere (control_turn expands once and calls twice); with the body
+// visible to every unit StatusWin::on_right_click (45 -> 345) and
+// NetWin::pick_map (123 -> 236) expand it. A budget split, not yet
+// reproduced without the per-unit gate.
 #ifdef DIALOGS_DTOR_INLINE
 // The image's copy keeps an ebp frame: its emitting unit was /Oy- (the
 // marker is measured in basewin.cpp, compile_context).

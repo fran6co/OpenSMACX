@@ -351,6 +351,13 @@ static_assert(sizeof(StringStruct) == 0x24,
 // construction sequence contains these five stores inline. A TU that defines
 // STRINGSTRUCT_CTOR_OUT_OF_LINE sees only the declaration and calls the
 // out-of-line 0x00401000 (Datalink owns that copy).
+// WORKAROUND(decl): measured 2026-11-19, the image calls 0x00401000 from 12
+// functions (Datalink's six drawers, MonuWin/QuayleWin::on_redraw,
+// NetWin::draw_session_info, PickTech::draw_tech, ReportIf::draw_projects,
+// UV2Player 0x004BEF00), all through a StringList local; with the body
+// visible there they expand it (draw_reactor 154 rows, draw_tech 318 ->
+// 510, ...). A call at depth 2 (StringList's constructor expanded, its
+// base constructor refused) is a budget effect not yet reproduced.
 #ifndef STRINGSTRUCT_CTOR_OUT_OF_LINE
 inline StringStruct::StringStruct() {
     head_ = 0;
@@ -527,7 +534,11 @@ MEASURED inline void StringStruct::remove_all() {
 
 // WORKAROUND(decl): a TU that defines STRINGSTRUCT_NEXT_ENTRY_OUT_OF_LINE
 // sees only the declaration and calls 0x00402500 (StringBox::add_fixup at
-// 0x006296D3 makes the call).
+// 0x006296D3 makes the call). Measured 2026-11-19: with the body visible
+// everywhere POP2 (0x00405140, 7 -> 107 rows) and add_fixup (55 -> 77)
+// expand it where the image calls it (9 sites: POP2, POP3, AlphaNet
+// pick_service/join, both Buffer string writers, add_fixup, two Net
+// helpers): a budget split, not a declaration-count effect.
 #ifndef STRINGSTRUCT_NEXT_ENTRY_OUT_OF_LINE
 MEASURED inline StringStructPayload *StringStruct::next_entry() {
     if (!head_) {
@@ -550,10 +561,13 @@ MEASURED inline StringStructPayload *StringStruct::next_entry() {
 // buffer.cpp, which both expands it and calls it, can see this body; the
 // declaration is MEASURED so every unit with the body keeps its copy.
 // WORKAROUND(decl): the body is visible only in TUs that define
-// STRINGSTRUCT_CURRENT_ENTRY_INLINE. Plain visibility in every includer
-// re-ties register choices in 46 of 138 includers that never call it
-// (aggression, base, battle, game, ...; pattern 260), so the original
-// header's spelling is not yet reproduced.
+// STRINGSTRUCT_CURRENT_ENTRY_INLINE. Measured 2026-11-19: with the body
+// visible everywhere, ListBox::on_left_down (0x0060AA60, 49 rows),
+// RadioButton/CheckBox::draw_item (111 -> 131) and StringBox::add_fixup
+// expand it where the image calls 0x00402530 (19 call sites, 9 functions),
+// so the split is not a declaration-count effect; the original spelling
+// that gives it (budget, or a plain function in the 0x00401000 unit with
+// written-out expansions elsewhere) is not yet found.
 #ifdef STRINGSTRUCT_CURRENT_ENTRY_INLINE
 inline StringStructPayload *StringStruct::current_entry() {
     if (head_) {
