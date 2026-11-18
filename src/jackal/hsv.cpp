@@ -284,8 +284,8 @@ int __cdecl cd_check() {
         if (find_handle != INVALID_HANDLE_VALUE) {
             goto found;
         }
-        if (pop_caption_title(const_cast<char *>("jackal"),
-                              const_cast<char *>("FILEFIND_NOCD"), 0x10040,
+        if (pop_caption_title("jackal",
+                              "FILEFIND_NOCD", 0x10040,
                               nullptr) == (int)find_handle) {
             return 0;
         }
@@ -316,13 +316,13 @@ found:
     typedef int(__stdcall *setup_get_version_fn)(int *, int);
     if ((reinterpret_cast<setup_get_version_fn>(setup_get_version))(&version,
                                                                     0) == 0) {
-        response = pop_caption_title(const_cast<char *>("jackal"),
-                                     const_cast<char *>("DIRECTXNOVERSION"),
+        response = pop_caption_title("jackal",
+                                     "DIRECTXNOVERSION",
                                      0x40, nullptr);
     } else {
         parse_num(0, version & 0xffff);
-        response = pop_caption_title(const_cast<char *>("jackal"),
-                                     const_cast<char *>("DIRECTXVERSION"), 0x40,
+        response = pop_caption_title("jackal",
+                                     "DIRECTXVERSION", 0x40,
                                      nullptr);
     }
     if (response == -1) {

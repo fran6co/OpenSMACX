@@ -7627,11 +7627,11 @@ ProductionReportResume production_report_stage(
                 set_fac_announced(static_cast<uint32_t>(owner),
                                   static_cast<uint32_t>(facility_id), TRUE);
             }
-            popup.start(const_cast<char *>("BLURBS"), StringTemp, -1, 0,
+            popup.start("BLURBS", StringTemp, -1, 0,
                         0x80, 0);
-            popup.string(const_cast<char *>("^"));
-            popup.string(const_cast<char *>("^------"));
-            popup.string(const_cast<char *>("^"));
+            popup.string("^");
+            popup.string("^------");
+            popup.string("^");
         }
 
         StringTemp[0] = '\0';
@@ -7714,13 +7714,13 @@ static void production_report_foreign_stage_v3(
         StringTemp[0] = '\0';
         strcat(StringTemp, "PROJECT");
         say_num(project_id);
-        popup.start(const_cast<char *>("BLURBS"), StringTemp, -1, 0,
+        popup.start("BLURBS", StringTemp, -1, 0,
                     0x80, 0);
         if (WinScreenWidth != 800) {
-            popup.string(const_cast<char *>("^"));
+            popup.string("^");
         }
-        popup.string(const_cast<char *>("^------"));
-        popup.string(const_cast<char *>("^"));
+        popup.string("^------");
+        popup.string("^");
         popup.start(PopupStartCaption, "PRODUCE2", -1, 0, 0x80, 0);
 
         if ((GameDataStateStorage.fields_.game_state_ & 1u) == 0 || (GameDataStateStorage.fields_.game_state_ & 8u) != 0) {
@@ -7729,7 +7729,7 @@ static void production_report_foreign_stage_v3(
             if (Buffer::get_pcx_dimensions("secproj_sm.pcx", &width,
                                            &height) == 0
                 && popup.owned_picture().init(
-                       const_cast<char *>("secproj_sm.pcx"), width,
+                       "secproj_sm.pcx", width,
                        height) == 0) {
                 popup.select_owned_picture();
             }
@@ -8604,10 +8604,10 @@ production_again:
                         say_num(facility_id);
                         set_fac_announced(faction_id, facility_id, TRUE);
                     }
-                    popup.start(const_cast<char *>("BLURBS"), StringTemp, -1, 0, 0x80, 0);
-                    popup.string(const_cast<char *>("^"));
-                    popup.string(const_cast<char *>("^------"));
-                    popup.string(const_cast<char *>("^"));
+                    popup.start("BLURBS", StringTemp, -1, 0, 0x80, 0);
+                    popup.string("^");
+                    popup.string("^------");
+                    popup.string("^");
                 }
                 StringTemp[0] = '\0';
                 strcat(StringTemp, "voices\\fac");
@@ -8655,17 +8655,17 @@ production_again:
             StringTemp[0] = '\0';
             strcat(StringTemp, "PROJECT");
             say_num(project_id);
-            popup.start(const_cast<char *>("BLURBS"), StringTemp, -1, 0, 0x80, 0);
+            popup.start("BLURBS", StringTemp, -1, 0, 0x80, 0);
             if (WinScreenWidth != 800) {
-                popup.string(const_cast<char *>("^"));
+                popup.string("^");
             }
-            popup.string(const_cast<char *>("^------"));
-            popup.string(const_cast<char *>("^"));
+            popup.string("^------");
+            popup.string("^");
             popup.start(PopupStartCaption, "PRODUCE2", -1, 0, 0x80, 0);
             if (!(GameDataStateStorage.fields_.game_state_ & 1)
                 || GameDataStateStorage.fields_.game_state_ & 8) {
                 if (!Buffer::get_pcx_dimensions("secproj_sm.pcx", &width, &height)
-                    && !popup.owned_picture().init(const_cast<char *>("secproj_sm.pcx"),
+                    && !popup.owned_picture().init("secproj_sm.pcx",
                                                    width, height)) {
                     popup.select_owned_picture();
                 }

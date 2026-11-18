@@ -495,7 +495,7 @@ void DiploWin::on_redraw() {
   Buffer::set_font(find_font(14, 1), 0, 0, 0);
   Buffer::set_text_color(0x99, -1, 1, 1);
 
-  LPSTR title = Language == 0 ? const_cast<char *>("TRADE")
+  LPSTR title = Language == 0 ? "TRADE"
                               : &DiploLocalizedTradeTitle;
   Buffer::write_cent_l(title, &area);
 
@@ -508,7 +508,7 @@ void DiploWin::on_redraw() {
   area.right -= 3;
   area.top += 3;
   area.bottom -= 3;
-  title = Language == 0 ? const_cast<char *>("DIPLOMACY")
+  title = Language == 0 ? "DIPLOMACY"
                         : &DiploLocalizedDiplomacyTitle;
   Buffer::write_cent_l(title, &area);
 

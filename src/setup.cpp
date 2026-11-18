@@ -206,17 +206,17 @@ void __cdecl crash_landing(int faction_id) {
     ConsoleGlobal.update_data(0);
 
     if (GameDataStateStorage.fields_.game_preferences_ & 0x400) {
-        g_CRASH_LANDING_WAVE.init(const_cast<char *>("fx\\crash land.wav"), 4);
+        g_CRASH_LANDING_WAVE.init("fx\\crash land.wav", 4);
         g_CRASH_LANDING_WAVE.play();
     }
 
     pod_frame.init(0x15f, 0x197, 0, 0);
     smoke_frame.init(0x15f, 0x197, 0, 0);
     if (fungus) {
-        pod_animation.init(&pod_frame, const_cast<char *>("alien_pod.flc"), 0, 0, 0);
+        pod_animation.init(&pod_frame, "alien_pod.flc", 0, 0, 0);
     } else {
-        pod_animation.init(&pod_frame, const_cast<char *>("drop_pod.flc"), 0, 0, 0);
-        smoke_animation.init(&smoke_frame, const_cast<char *>("drop_smoke.flc"), 0, 0, 0);
+        pod_animation.init(&pod_frame, "drop_pod.flc", 0, 0, 0);
+        smoke_animation.init(&smoke_frame, "drop_smoke.flc", 0, 0, 0);
     }
 
     {

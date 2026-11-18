@@ -2929,7 +2929,7 @@ int __cdecl end_of_game(int check_victory) {
             _itoa(static_cast<int>(ScenarioSave.ending_mission_year), year_text, 10);
             strcat(StringTemp, year_text);
             parse_says(0, StringTemp, -1, -1);
-            X_pop(const_cast<char *>("SCENARIO"), "SCENARIOWARNING", 0);
+            X_pop("SCENARIO", "SCENARIOWARNING", 0);
         }
     }
 
@@ -2999,12 +2999,12 @@ int __cdecl end_of_game(int check_victory) {
                 }
                 parse_player_identity(best_faction);
                 if (best_faction == ConsoleGlobal.faction_id_) {
-                    X_pop(const_cast<char *>("SCENARIO"), "SCENTIMEWIN", 0);
+                    X_pop("SCENARIO", "SCENTIMEWIN", 0);
                 } else {
-                    X_pop(const_cast<char *>("SCENARIO"), "SCENTIMELOSS", 0);
+                    X_pop("SCENARIO", "SCENTIMELOSS", 0);
                 }
             } else {
-                X_pop(const_cast<char *>("SCENARIO"), "SCENTIMELIMIT", 0);
+                X_pop("SCENARIO", "SCENTIMELIMIT", 0);
             }
         } else {
             X_pop("TIMELIMIT", 0);
@@ -3042,9 +3042,9 @@ int __cdecl end_of_game(int check_victory) {
         // The sudden-death text names the selected faction, not the winner.
         parse_player_identity(selected_faction);
         if (selected_faction == ConsoleGlobal.faction_id_) {
-            X_pop(const_cast<char *>("SCENARIO"), "SUDDENDEATH0", 0);
+            X_pop("SCENARIO", "SUDDENDEATH0", 0);
         } else {
-            X_pop(const_cast<char *>("SCENARIO"), "SUDDENDEATH", 0);
+            X_pop("SCENARIO", "SUDDENDEATH", 0);
         }
         break;
     case EndgameReason16:

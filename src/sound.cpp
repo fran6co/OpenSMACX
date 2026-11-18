@@ -5245,7 +5245,7 @@ void __cdecl sound_version_warning(const char *text, const char *caption) {
     strcpy(message, text);
     char caption_buffer[0x100];
     strcpy(caption_buffer, caption);
-    const int started = popup.start(const_cast<char *>("jackal"),
+    const int started = popup.start("jackal",
                                     "VERSIONCHECK_SOUND_HEADER", -1, nullptr, 0,
                                     nullptr);
     if (started == 0) {

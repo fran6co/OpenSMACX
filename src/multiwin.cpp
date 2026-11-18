@@ -1043,7 +1043,7 @@ void MultiWin::init() {
     panel_open_ = 0;
     if (IsMultiplayerNet) Win::show(0);
 
-    g_MULTIWIN_WAVE.init(const_cast<char *>("fx\\mmenu.wav"), 4);
+    g_MULTIWIN_WAVE.init("fx\\mmenu.wav", 4);
     g_MULTIWIN_WAVE.set_pan(0x20);
     g_MULTIWIN_WAVE.set_volume(0x28);
 }

@@ -1124,7 +1124,7 @@ void CouncWin::on_button_clicked(int button_id) {
                 int picture_size[2];  // stand-in: one array keeps the image's frame slots
                 if (Buffer::get_pcx_dimensions("council_sm.pcx", &picture_size[1],
                                                &picture_size[0]) == 0
-                    && popup.owned_picture().init(const_cast<char *>("council_sm.pcx"),
+                    && popup.owned_picture().init("council_sm.pcx",
                                                   picture_size[1], picture_size[0]) == 0) {
                     popup.select_owned_picture();
                 }

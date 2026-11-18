@@ -232,7 +232,7 @@ int SetupWin::do_menu_rightside(char *filename, int flags) {
         || (filename == nullptr && menu_popup_ == nullptr)) {
         return -1;
     }
-    if (menu_popup_ == nullptr && X_text_open(const_cast<char *>("script.txt"), filename) != 0) {
+    if (menu_popup_ == nullptr && X_text_open("script.txt", filename) != 0) {
         return -1;
     }
 
@@ -302,7 +302,7 @@ int SetupWin::do_menu_rightside(char *filename, int flags) {
 
     spot_.init(static_cast<int>(row_count_) + 2);
     buffer2_.init(0x162, 0x4B, 0, nullptr);
-    flic.init(&buffer2_, const_cast<char *>("openitem.flc"), 0, 0, 0);
+    flic.init(&buffer2_, "openitem.flc", 0, 0, 0);
 
     // Native arithmetic carries DIB::biHeight (negative for this
     // top-down surface) and reloads it at every use.

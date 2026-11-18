@@ -426,7 +426,7 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
         _itoa(tech, number_buffer, 10);
         strcat(StringTemp, number_buffer);
         const int loaded = technology_notes.load(
-            const_cast<char *>("TECHSHORTS.TXT"), StringTemp, 1, 0);
+            "TECHSHORTS.TXT", StringTemp, 1, 0);
         if (loaded == 0) {
             page_pen_y_ = Buffer::write_strings(&technology_notes, page_x_ + 4,
                                                  page_pen_y_, page_width_ - 8, 0);

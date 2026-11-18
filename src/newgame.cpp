@@ -1520,7 +1520,7 @@ int __cdecl multiplayer_init(int startup_mode) {
             parse_num(1, ScenarioSave.objectives_sudden_death_victory);
             parse_num(2, num_objectives(ConsoleGlobal.faction_id_, GameDataStateStorage.fields_.game_rules_ & 0x1000u));
             parse_num(3, static_cast<int>(ScenarioSave.ending_mission_year));
-            X_pop(const_cast<char *>("SCENARIO"), "INTRO", 0);
+            X_pop("SCENARIO", "INTRO", 0);
         }
 
         result = ExitTurnLoop;
@@ -1568,7 +1568,7 @@ int __cdecl top_menu(int mode) {
     prefs_load(0);
     prefs_use();
     if (mode == 0 && (GameDataStateStorage.fields_.game_preferences_ & 0x800) != 0) {
-        g_TOP_MENU_WAVE.load(const_cast<char *>("fx\\opening menu.wav"), 2);
+        g_TOP_MENU_WAVE.load("fx\\opening menu.wav", 2);
         g_TOP_MENU_WAVE.play();
     }
     if (~AlphaIniPrefs.preferences & 0x20000000u)
@@ -1644,7 +1644,7 @@ int __cdecl top_menu(int mode) {
         case 2:
             if (mode == 0) {
                 edi = 1;
-                esi = setup.do_menu(const_cast<char *>("SCENARIOMENU"), edi, 0);
+                esi = setup.do_menu("SCENARIOMENU", edi, 0);
                 if (esi < 0) continue;
                 if (esi == edi) goto top_menu_new_game;
                 if (esi == 2) {
@@ -1700,7 +1700,7 @@ int __cdecl top_menu(int mode) {
                 parse_num(1, ScenarioSave.objectives_sudden_death_victory);
                 parse_num(2, num_objectives(ConsoleGlobal.faction_id_, GameDataStateStorage.fields_.game_rules_ & 0x1000));
                 parse_num(3, static_cast<int>(ScenarioSave.ending_mission_year));
-                X_pop(const_cast<char *>("SCENARIO"), "INTRO", 0);
+                X_pop("SCENARIO", "INTRO", 0);
                 ConsoleGlobal.set_move(1);
             }
             goto top_menu_normal_return;

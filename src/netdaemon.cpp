@@ -519,7 +519,7 @@ static inline int net_turn_is_local() {
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned52E160..52E364 and52E370..52E8FD; retained recovered seeds are hints, not mandatory C++.", "The not-found delete tail still runs and decrements count. Slot8 identity/status bytes belong to the real ledger; lobby prefix/name writes are byte views wholly inside the existing168-byte session object. Keep both session object lifetimes and their original bindings.", "PlayerLock::active return controls notification; process identity offsets are not doubled. Two label_get calls remain independent, and prefix writes depend on live phase below2.", "Source-owned NextTurnReady, NetUpkeepPhase and NetHostChangeSlot replace private address aliases. Upkeep producer remains unfinished; ledger-derived lock index domain remains unproven.", "recovery/tasks/netdaemon-player-lifecycle-recovery.json; actual-source host damage controls and native compilation required", "git:0e184947304cbb843b26264d5145e9b9b452cf16:src/recovered/units/0052e370.cpp", "Historical seed spelling ?on_player_deleted@NetDaemon@@QAEXPADK@Z; current source mapping ?on_player_deleted@NetDaemon@@UAEXPADK@Z; emitted symbol ?on_player_deleted@NetDaemon@@UAEXPADK@Z."], "reason": "Recover the complete derived network player lifecycle callback through actual AlphaNet records, PlayerLock behavior, NetWin storage and shared turn state. Preserve its original identity and useful seed findings; no exact, runtime or full acceptance claim is implied. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
 void NetDaemon::on_player_deleted(char *, unsigned long id) {
     int server_left = 0;
-    parse_says(0, const_cast<char *>("?"), -1, -1);
+    parse_says(0, "?", -1, -1);
     if (NetHostChangeSlot == id) {
         server_left = 1;
         NetDaemonNet.field_1BDC_ = 1;
@@ -3109,7 +3109,7 @@ int NetDaemon::send_files() {
             send_buffer->file_index = file_index;
 
             if (group_handle != 0) delete_group(group_handle);
-            group_handle = create_group(const_cast<char *>("temp"));
+            group_handle = create_group("temp");
             for (int member = 1; member < 8; ++member) {
                 if ((ready_flags & (1U << member)) != 0)
                     add_to_group(group_handle, process_slots_[member].pid_);

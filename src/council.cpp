@@ -1192,7 +1192,7 @@ void __cdecl call_council(int faction_id) {
     int picture_height;
     if (!Buffer::get_pcx_dimensions("council_sm.pcx", &picture_width,
                                     &picture_height)
-            && !popup.owned_picture().init(const_cast<char *>("council_sm.pcx"),
+            && !popup.owned_picture().init("council_sm.pcx",
                                            picture_width, picture_height)) {
         popup.select_owned_picture();
     }

@@ -8183,7 +8183,7 @@ L_57717f:
     // the final path-safety check.
 L_577720:
 L_577723:
-    score = rnd(6, const_cast<char *>("ENEMY3"));
+    score = rnd(6, "ENEMY3");
     if (near_hostile && !triad) {
         if (!(base_id >= 0 && has_abil(Vehs[veh_id].proto_id, 8))) {
             if (other_id < 0 || Vehs[other_id].faction_id != faction_id
@@ -8393,7 +8393,7 @@ L_577723:
             && base_id < 0) {
             if (!(PlayersData[faction_id].diplo_treaties[owner] & 0x20)
                 && whose_territory(faction_id, tx, ty, 0, 0) != faction_id
-                && !rnd(2, const_cast<char *>("ENEMYMISC")))
+                && !rnd(2, "ENEMYMISC"))
                 goto L_578ae1;
             fights = 1;
             score += 8;
@@ -8496,7 +8496,7 @@ L_577723:
                 if (!(PlayersData[faction_id].diplo_treaties[owner] & 0x20))
                     goto L_578ae1;
                 if ((PlayersData[faction_id].diplo_treaties[owner] & 2)
-                    && static_cast<int>(rnd(6, const_cast<char *>("ENEMY4")))
+                    && static_cast<int>(rnd(6, "ENEMY4"))
                            - PlayersData[faction_id].ai_fight
                        > reputation(owner, faction_id))
                     goto L_578ae1;

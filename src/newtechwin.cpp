@@ -520,7 +520,7 @@ void NewTechWin::on_group_clicked(int, int group) {
         _itoa(static_cast<int>(field_B24_), number, 10);
         strcat(StringTemp, number);
         stringBox2_.clear();
-        stringBox2_.strings().load(const_cast<char *>("techlongs"), StringTemp, 1, 0);
+        stringBox2_.strings().load("techlongs", StringTemp, 1, 0);
         break;
     default:
         return;

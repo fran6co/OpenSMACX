@@ -435,7 +435,7 @@ int NetSessionPickerWin::initialize(Net *network, char *caption,
   rect.top += button_height + margin_y;
   rect.bottom += button_height + margin_y;
   int create_height = rect.bottom - rect.top;
-  result = create_button_.init(const_cast<char *>("Create Session (Translate)"),
+  result = create_button_.init("Create Session (Translate)",
                                0, rect.left, rect.top, button_width,
                                create_height, this, 0);
   if (result != 0) return result;
@@ -520,7 +520,7 @@ int NetSessionPickerWin::connect_session() {
 
       BasePop *popup = PopupAllocHook();
       if (popup == 0) return 4;
-      popup->start(const_cast<char *>("jackal"), "NETCONNECT_MAX_PLAYERS",
+      popup->start("jackal", "NETCONNECT_MAX_PLAYERS",
                    -1, 0, 0x50, 0);
 
       int faction_count = tail_.rows_visible_;

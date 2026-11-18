@@ -200,7 +200,7 @@ int __cdecl filefind_init(LPCSTR file_check, BOOL is_complete) {
             return 0;
         }
         // send FILEFIND_NOCD message -> if doesn't exist (removed from jackal.txt) -> exit
-        const int response = popup->start(const_cast<LPSTR>("jackal"), "FILEFIND_NOCD", -1, 0, 0, 0);
+        const int response = popup->start("jackal", "FILEFIND_NOCD", -1, 0, 0, 0);
         if (response) {
             delete popup;
             return response;

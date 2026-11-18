@@ -464,7 +464,7 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
     spot_.kill_type(3);
     spot_.kill_type(10);
     spot_.kill_type(11);
-    font1_.width(const_cast<char *>("-"));
+    font1_.width("-");
     int line_y = 1;
     int row_pitch = font_line_advance(font1_);
     MainInterfaceGlobal.set_font(&font1_, &font3_, &font2_, 0);

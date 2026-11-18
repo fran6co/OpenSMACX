@@ -5072,7 +5072,7 @@ void __cdecl commlink_attempt(int target_faction) {
             NetMsgPrimary.pop("DIPLOCOMM", 5000, 0, NULL);
             return;
         }
-        log_say(const_cast<char *>("Commlink open channel"), local_faction, target_faction, 0);
+        log_say("Commlink open channel", local_faction, target_faction, 0);
         if (NetDaemonNet.open_channel(local_faction, target_faction)) {
             GenderDefault = Players[target_faction].is_leader_female;
             PluralityDefault = 0;

@@ -1036,8 +1036,8 @@ int Net::send_group_flagged(void *data, int size, long target,
             }
             strcat(StringTemp, ".");
             parse_says(0, StringTemp, -1, -1);
-            switch (pop_caption(const_cast<char *>("jackal"),
-                                const_cast<char *>("NET_SENDTIMEDOUT"), 0)) {
+            switch (pop_caption("jackal",
+                                "NET_SENDTIMEDOUT", 0)) {
             case 0:
                 continue;
             case 1:
@@ -1163,8 +1163,8 @@ int Net::drop_player(unsigned long key, int reason) {
             parse_says(0, get_player_name(players_[0].field_0_), -1, -1);
             parse_says(1, get_player_name(players_[1].field_0_), -1, -1);
             int answer = pop_caption_value_title(
-                const_cast<char *>("jackal"),
-                const_cast<char *>("NET_OKTODROPHOSTS"), 1, 0, 0);
+                "jackal",
+                "NET_OKTODROPHOSTS", 1, 0, 0);
             switch (answer) {
             case 0:
                 ExitTurnLoop = 1;
@@ -1172,8 +1172,8 @@ int Net::drop_player(unsigned long key, int reason) {
             case 1:
                 return 0;
             case 2:
-                switch (pop_caption(const_cast<char *>("jackal"),
-                                    const_cast<char *>("NET_ADJUSTTOLERANCE"), 0)) {
+                switch (pop_caption("jackal",
+                                    "NET_ADJUSTTOLERANCE", 0)) {
                 case 0:
                     poll_timeout_E0_ = 5000;
                     return 0;
@@ -1194,16 +1194,16 @@ int Net::drop_player(unsigned long key, int reason) {
         // Dropping the paired host or client: the caption names which side.
         parse_says(0, get_player_name(key), -1, -1);
         char *caption = local_player_id_ == host_player_id_
-            ? const_cast<char *>("NET_OKTODROPCLIENT")
-            : const_cast<char *>("NET_OKTODROPHOST");
+            ? "NET_OKTODROPCLIENT"
+            : "NET_OKTODROPHOST";
         int answer = pop_caption_value_title(
-            const_cast<char *>("jackal"), caption, 1, 0, 0);
+            "jackal", caption, 1, 0, 0);
         switch (answer) {
         case 1:
             return 0;
         case 2:
-            switch (pop_caption(const_cast<char *>("jackal"),
-                                const_cast<char *>("NET_ADJUSTTOLERANCE"), 0)) {
+            switch (pop_caption("jackal",
+                                "NET_ADJUSTTOLERANCE", 0)) {
             case 0:
                 poll_timeout_E0_ = 5000;
                 return 0;
@@ -1659,8 +1659,8 @@ int Net::send_group(void *data, int size, long group_id, int flags) {
             }
             strcat(StringTemp, ".");
             parse_says(0, StringTemp, -1, -1);
-            switch (pop_caption(const_cast<char *>("jackal"),
-                                const_cast<char *>("NET_SENDTIMEDOUT"), 0)) {
+            switch (pop_caption("jackal",
+                                "NET_SENDTIMEDOUT", 0)) {
             case 0:
                 continue;
             case 1:
@@ -2278,7 +2278,7 @@ int Net::choose_service() {
     // start's failure code both become the result.
     int result = poll_services(&providers);
     if (result == 0) {
-        result = popup->start(const_cast<char *>("jackal"), "SELECTSERVICE",
+        result = popup->start("jackal", "SELECTSERVICE",
                               -1, 0, 0x42, 0);
         if (result == 0) {
             providers.seek_pos(-1);
@@ -2607,8 +2607,8 @@ int Net::report_directplay_error(HRESULT error) {
     default: break;
     }
 
-    if (pop_caption_title(const_cast<char *>("jackal"),
-                          const_cast<char *>("DPLAYERROR"), 0x10040, 0) == -1) {
+    if (pop_caption_title("jackal",
+                          "DPLAYERROR", 0x10040, 0) == -1) {
         return 0;
     }
     return cd_check();
@@ -4265,8 +4265,8 @@ int Net::send_packet_type(void *data, int data_size, unsigned long target,
                     ? 0 : players_[name_index].name_and_tail_);
                 strcat(StringTemp, ".");
                 parse_says(0, StringTemp, -1, -1);
-                switch (pop_caption(const_cast<char *>("jackal"),
-                                    const_cast<char *>("NET_SENDTIMEDOUT"), 0)) {
+                switch (pop_caption("jackal",
+                                    "NET_SENDTIMEDOUT", 0)) {
                 case 0:
                     continue;
                 case 1:
@@ -4366,8 +4366,8 @@ int Net::send_packet_type(void *data, int data_size, unsigned long target,
             }
             strcat(StringTemp, ".");
             parse_says(0, StringTemp, -1, -1);
-            switch (pop_caption(const_cast<char *>("jackal"),
-                                const_cast<char *>("NET_SENDTIMEDOUT"), 0)) {
+            switch (pop_caption("jackal",
+                                "NET_SENDTIMEDOUT", 0)) {
             case 0:
                 continue;
             case 1:
@@ -4533,8 +4533,8 @@ int Net::send(void *data, int data_size, unsigned long target, int flags) {
                     ? 0 : players_[name_index].name_and_tail_);
                 strcat(StringTemp, ".");
                 parse_says(0, StringTemp, -1, -1);
-                switch (pop_caption(const_cast<char *>("jackal"),
-                                    const_cast<char *>("NET_SENDTIMEDOUT"), 0)) {
+                switch (pop_caption("jackal",
+                                    "NET_SENDTIMEDOUT", 0)) {
                 case 0:
                     continue;
                 case 1:
@@ -4641,8 +4641,8 @@ int Net::send(void *data, int data_size, unsigned long target, int flags) {
             }
             strcat(StringTemp, ".");
             parse_says(0, StringTemp, -1, -1);
-            switch (pop_caption(const_cast<char *>("jackal"),
-                                const_cast<char *>("NET_SENDTIMEDOUT"), 0)) {
+            switch (pop_caption("jackal",
+                                "NET_SENDTIMEDOUT", 0)) {
             case 0:
                 break;
             case 1:

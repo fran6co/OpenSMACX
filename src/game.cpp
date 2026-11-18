@@ -1323,7 +1323,7 @@ void __cdecl auto_save() {
                     "saves\\auto\\Alpha Centauri Autosave 30.SAV");
                 rename("saves\\auto\\Alpha Centauri Autosave 10.SAV",
                     "saves\\auto\\Alpha Centauri Autosave 20.SAV");
-                save_daemon(const_cast<char *>("saves\\auto\\Alpha Centauri Autosave 10"));
+                save_daemon("saves\\auto\\Alpha Centauri Autosave 10");
             }
             remove("saves\\auto\\Alpha Centauri Autosave 5.SAV");
             rename("saves\\auto\\Alpha Centauri Autosave 4.SAV",
@@ -1335,7 +1335,7 @@ void __cdecl auto_save() {
             rename("saves\\auto\\Alpha Centauri Autosave 1.SAV",
                 "saves\\auto\\Alpha Centauri Autosave 2.SAV");
         }
-        save_daemon(const_cast<char *>("saves\\auto\\Alpha Centauri Autosave 1"));
+        save_daemon("saves\\auto\\Alpha Centauri Autosave 1");
     }
 }
 
@@ -1480,7 +1480,7 @@ Status: Complete
 void __cdecl auto_save_debug() {
     if (GameDataStateStorage.fields_.turn_current_num_ == 1) {
         remove("saves\\auto\\Alpha Centauri Autosave Turn 1.SAV");
-        save_daemon(const_cast<char *>("saves\\auto\\Alpha Centauri Autosave Turn 1"));
+        save_daemon("saves\\auto\\Alpha Centauri Autosave Turn 1");
     }
     if (!(GameDataStateStorage.fields_.turn_current_num_ % 10)) {
         remove("saves\\auto\\Alpha Centauri Autosave 500.SAV");
@@ -1491,7 +1491,7 @@ void __cdecl auto_save_debug() {
             sprintf_s(save_path_new, 45, "saves\\auto\\Alpha Centauri Autosave %d.SAV", 500 - i);
             rename(save_path_old, save_path_new);
         }
-        save_daemon(const_cast<char *>("saves\\auto\\Alpha Centauri Autosave 10"));
+        save_daemon("saves\\auto\\Alpha Centauri Autosave 10");
     }
     remove("saves\\auto\\Alpha Centauri Autosave 5.SAV");
     rename("saves\\auto\\Alpha Centauri Autosave 4.SAV",
@@ -1502,7 +1502,7 @@ void __cdecl auto_save_debug() {
         "saves\\auto\\Alpha Centauri Autosave 3.SAV");
     rename("saves\\auto\\Alpha Centauri Autosave 1.SAV",
         "saves\\auto\\Alpha Centauri Autosave 2.SAV");
-    save_daemon(const_cast<char *>("saves\\auto\\Alpha Centauri Autosave 1"));
+    save_daemon("saves\\auto\\Alpha Centauri Autosave 1");
 }
 
 

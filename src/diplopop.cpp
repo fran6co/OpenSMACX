@@ -92,7 +92,7 @@ void DiploPop::start(int faction_id) {
         strcat(StringTemp, Players[faction_id].filename);
         strcat(StringTemp, ".flc");
         if (flic1_.init(static_cast<Buffer *>(&MainInterfaceGlobal), StringTemp, x, y, 0)) {
-            if (flic1_.init(static_cast<Buffer *>(&MainInterfaceGlobal), const_cast<char *>("faction.flc"), x, y, 0)) {
+            if (flic1_.init(static_cast<Buffer *>(&MainInterfaceGlobal), "faction.flc", x, y, 0)) {
                 return;
             }
         }
@@ -129,7 +129,7 @@ void DiploPop::init() {
     // its ordinary destructor closes the file and destroys Buffer/Palette.
     RECT rect;
     layout_flic.init(static_cast<Buffer *>(this),
-                     const_cast<char *>("faction.flc"), 0, 0, 0);
+                     "faction.flc", 0, 0, 0);
     int frame_width = 0x28;
     if (layout_flic.decoded_width() >= 0x28) {
         frame_width = layout_flic.decoded_width();

@@ -729,8 +729,8 @@ int DDInit::report_error(int hr) {
         break;
         break;
     }
-    if (pop_caption_title(const_cast<char *>("jackal"),
-                          const_cast<char *>("DDRAWERROR"), 0x10040,
+    if (pop_caption_title("jackal",
+                          "DDRAWERROR", 0x10040,
                           nullptr) == -1) {
         return 0;
     }

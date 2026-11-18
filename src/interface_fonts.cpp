@@ -656,7 +656,7 @@ void FactionProfileWin::initialize(int faction_id, int profile_mode) {
   }
 
   set_rectangle_dimensions(&bounds_, 5, 0x2D, width_, height_);
-  init(&bounds_, const_cast<char *>("..."), 0x1400000, OpeningWindow, 0,
+  init(&bounds_, "...", 0x1400000, OpeningWindow, 0,
        0);
   fill(9);
   show(0);
