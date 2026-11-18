@@ -2097,14 +2097,16 @@ BOOL __cdecl wants_prototype(int proto_id, int faction_id) {
                 continue;
             }
         } else {
-            // The image calls armor_val for the CANDIDATE first (its index is
-            // still in edx) and reloads proto_id from the frame for the second
-            // call. Both orderings of a bare `armor_val(...) < armor_val(...)`
-            // call proto_id first and keep it in edx across the loop; the
-            // candidate's value has to be named to come first (the image then
-            // spills it to [ebp-0xc], which this spelling keeps in ebx).
-            int armor_cmp = armor_val(proto_id_cmp, faction_id);
-            if (armor_cmp < armor_val(proto_id, faction_id)) {
+            // Bare comparison: the image keeps faction_id in ebx and spills
+            // the first call's result to a third frame slot ([ebp-0xc], frame
+            // 0xc); a named local for that result takes ebx and shrinks the
+            // frame to 8. Still open: the image calls the CANDIDATE first
+            // (its index is live in edx from the loop increment); every
+            // spelling of this comparison calls proto_id first. Writing the
+            // candidate index as an explicit second induction variable does
+            // give the image's call order, but derives the row pointer from
+            // it instead of from faction_id * 64.
+            if (armor_val(proto_id_cmp, faction_id) < armor_val(proto_id, faction_id)) {
                 continue;
             }
         }
