@@ -32,7 +32,6 @@
 #define STRINGSTRUCT_CURRENT_ENTRY_INLINE
 #define DIALOGS_DTOR_INLINE  // stand-in: see ~Dialogs in dialogs.h; on_button_clicked
 #define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h
-#define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
 #define SPOT_ADD_RECT_INLINE  // stand-in: see Spot::add(int, int, RECT *) in spot.h
 #define STRINGSTRUCT_CURRENT_ID_INLINE
 #include "stdafx.h"

@@ -32,7 +32,6 @@
 // symbol    _$E21
 // WORKAROUND(decl): implicit ~NewTechWin; see newtechwin.h.
 #define NEWTECHWIN_IMPLICIT_DTOR
-#define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "newtechwin.h"

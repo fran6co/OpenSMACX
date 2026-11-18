@@ -15,7 +15,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
-#define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
 #include "stdafx.h"
 #include "rectangle_operations.h"
 #include "sound.h"

@@ -37,7 +37,6 @@
 // 0x00612A70, not the out-of-line copy 0x00558FE0).
 #define DIALOGS_DTOR_INLINE  // stand-in: see ~Dialogs in dialogs.h
 #define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h
-#define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
 #define WIN_RECT_EXTENT_INLINE  // rect_width/rect_height (win.h)
 #include "stdafx.h"
 #include "font_metrics.h"

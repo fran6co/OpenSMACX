@@ -3386,18 +3386,6 @@ void Datalink::exec(unsigned int topic, int index) {
 }
 
 
-// WORKAROUND(inline): twin of win.h's gated expand_rect. Defining
-// WIN_EXPAND_RECT_INLINE in this unit flips set_cat_social (0x0042B630) to
-// MNEMONIC_ONLY, as defining WIN_RECT_EXTENT_INLINE does; init expands it
-// inline (0x00429537: the 3 held in eax for right/bottom, -3 immediates for
-// left/top).
-static inline RECT *datalink_expand_rect(RECT *rect, int horizontal, int vertical) {
-    rect->left -= horizontal;
-    rect->right += horizontal;
-    rect->top -= vertical;
-    rect->bottom += vertical;
-    return rect;
-}
 
 // ORIGINAL: 0x00429300 ?init@Datalink@@QAEXXZ 0x00429300-0x0042A012;0x00653579-0x0065358E
 // RECOVERY_BINDING: v1 {"evidence": ["task:datalink-initializer-owner", "Pinned429300..42A012 establishes18RECT rows, typed UI receivers and distinct box bounds/fonts;653579..65358E cleans the local Buffer.", "historical seed:src/unrecovered/00429300.cpp"], "reason": "Recover Datalink initialization through real UI members, panel geometry, renderer camera and local Buffer lifetime; native call arguments supersede the retained seed approximations. Original spans and historical findings are retained without a matching or runtime claim."}
@@ -3476,7 +3464,7 @@ void Datalink::init() {
     UnionRect(&entry_clip_rect_, &description_rect, &lower_description_rect);
     UnionRect(&entry_clip_rect_, &entry_clip_rect_, &title_rect_);
     entry_update_rect_ = entry_clip_rect_;
-    datalink_expand_rect(&entry_update_rect_, 3, 3);
+    expand_rect(&entry_update_rect_, 3, 3);
     RECT &entry_update_rect = entry_update_rect_;
     entry_clip_rect_ = panel_rect_;
     RECT &entry_frame_rect = entry_frame_rect_;

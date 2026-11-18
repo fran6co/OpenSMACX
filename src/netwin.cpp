@@ -29,7 +29,6 @@
 // StringStruct::StringStruct (0x00401000) out of line (0x00480956), giving
 // its three-state EH layout; see stringstruct.h.
 #define STRINGSTRUCT_CTOR_OUT_OF_LINE
-#define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
 #define SPOT_ADD_RECT_INLINE  // stand-in: see Spot::add(int, int, RECT *) in spot.h
 #define WIN_RECT_EXTENT_INLINE  // rect_width/rect_height (win.h)
 #include "stdafx.h"

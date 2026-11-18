@@ -48,7 +48,6 @@ extern char SocialWinCommaSpaceText[];/*
 #define BUFFER_WRITE_RIGHT_L3  // guarded Buffer::write_right_l(text, x, y)
 #define FLATBUTTON_SLICE_COLOURS_PUBLIC  // direct field_ABC_ stores in init
 #define WIN_RECT_EXTENT_INLINE  // stand-in: see rect_width in win.h
-#define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
 #include "stdafx.h"
 #include "font_metrics.h"
 #include "interface_fonts.h"

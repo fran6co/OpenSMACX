@@ -15,7 +15,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
-#define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
 #define STRINGSTRUCT_CURRENT_ID_INLINE
 #include "stdafx.h"
 // WORKAROUND(decl): calculate calls StringStruct::remove_all (0x00402970)

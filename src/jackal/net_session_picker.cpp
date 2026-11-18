@@ -1,6 +1,5 @@
 // The original TU calls StringStruct::remove_all out of line (0x0063C7C0).
 #define STRINGSTRUCT_REMOVE_ALL_OUT_OF_LINE
-#define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
 #include "stdafx.h"
 #include "net_session_picker.h"
 #include "alphanet_inline.h"

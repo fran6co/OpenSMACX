@@ -27,7 +27,6 @@
 // symbol    _$E14
 #define DIALOGS_DTOR_INLINE  // stand-in: see ~Dialogs in dialogs.h; on_button_clicked
 // expands ~Dialogs (close@Dialogs, then the member dtors) in its closing teardown.
-#define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
 #include "stdafx.h"
 #include "pickwin.h"
 #include "strings.h"

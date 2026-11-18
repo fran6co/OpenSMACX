@@ -15,7 +15,6 @@
 // (0x00402970) out of line (0x00485403) while its closing destructor walk
 // expands the same body inline (0x00485EB0); see stringstruct.h.
 #define STRINGSTRUCT_REMOVE_ALL_CALLED
-#define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
 #include "stdafx.h"
 #define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h
 #include "interface_fonts.h"

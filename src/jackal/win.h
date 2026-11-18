@@ -968,19 +968,13 @@ inline void __cdecl offset_rect(RECT *rect, int dx, int dy) {
 // (PullDown, FlatButton, PushButton, Datalink::init, control_turn, ...); only
 // scroll.cpp calls the out-of-line copy (0x00606F00, two sites in Scroll::init).
 // The `// ORIGINAL:` marker stays in scroll.cpp.
-// WORKAROUND(decl): gated to the units that use it. Merely making this body
-// visible flips buy_council_vote (faction.cpp, which never calls it) from
-// exact to a block-layout mismatch, at any position in this header and with
-// or without MEASURED; the original's declaration set here is not yet known.
-#ifdef WIN_EXPAND_RECT_INLINE
-MEASURED inline RECT *__cdecl expand_rect(RECT *rect, int horizontal, int vertical) {
+inline RECT *__cdecl expand_rect(RECT *rect, int horizontal, int vertical) {
     rect->left -= horizontal;
     rect->right += horizontal;
     rect->top -= vertical;
     rect->bottom += vertical;
     return rect;
 }
-#endif
 RECT *__cdecl make_rect(RECT *rect, int x, int y, int width, int height);
 // RECT extents through a pointer. Their expansions load right before left and
 // bottom before top (Demo::init 0x00524460, FameWin::init, QuayleWin::on_redraw,
