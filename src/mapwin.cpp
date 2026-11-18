@@ -2733,6 +2733,7 @@ static inline void gen_tile_expanded(MapWin *window, int x, int y, int a3, int a
 // RECOVERY_BINDING: v1 {"evidence": ["Original469190..469718; retired seed git:5605e9af:src/recovered/units/00469190.cpp records this identity and exact span.", "Original469333..469355 converts left/top then right/top, not the transposed seed arguments;4691FB fills via the genuine GraphicWin receiver. Radius-zero scan widening does not apply to the overlay scan."], "reason": "MapWin owns clipped terrain, vehicle and overlay generation. The original scan is asymmetric; top-left and top-right clip conversions determine terrain extension, while overlays later recompute from the left conversion."}
 void MapWin::gen_radius(int x, int y, int radius, int faction, int skip_terrain) {
     RECT clip;
+    int row;
     if (compute_clip(x, y, radius, &clip) == 0) {
         return;
     }
@@ -2743,37 +2744,17 @@ void MapWin::gen_radius(int x, int y, int radius, int faction, int skip_terrain)
         }
         {
             const int column_x = x - 1;
-            int tile_x;
-            if (MapIsFlat & 1) {
-                tile_x = column_x;
-            } else if (column_x < 0) {
-                tile_x = column_x + MapLongitudeBounds;
-            } else if (column_x >= MapLongitudeBounds) {
-                tile_x = column_x - MapLongitudeBounds;
-            } else {
-                tile_x = column_x;
-            }
+            const int tile_x = wrap_map_x(column_x);
             const int tile_y = y - 3;
-            if (tile_y >= 0 && tile_y < MapLatitudeBounds && tile_x >= 0 &&
-                tile_x < MapLongitudeBounds) {
+            if (on_map(tile_x, tile_y)) {
                 gen_tile_expanded(this, tile_x, tile_y, faction, 0);
             }
         }
         {
             const int column_x = x + 1;
-            int tile_x;
-            if (MapIsFlat & 1) {
-                tile_x = column_x;
-            } else if (column_x < 0) {
-                tile_x = column_x + MapLongitudeBounds;
-            } else if (column_x >= MapLongitudeBounds) {
-                tile_x = column_x - MapLongitudeBounds;
-            } else {
-                tile_x = column_x;
-            }
+            const int tile_x = wrap_map_x(column_x);
             const int tile_y = y - 3;
-            if (tile_y >= 0 && tile_y < MapLatitudeBounds && tile_x >= 0 &&
-                tile_x < MapLongitudeBounds) {
+            if (on_map(tile_x, tile_y)) {
                 gen_tile_expanded(this, tile_x, tile_y, faction, 0);
             }
         }
@@ -2791,7 +2772,7 @@ void MapWin::gen_radius(int x, int y, int radius, int faction, int skip_terrain)
     }
     span += 2;
     if (skip_terrain == 0) {
-        for (int row = -span; row <= span + 1; ++row) {
+        for (row = -span; row <= span + 1; ++row) {
             int half_width = span -
                 (row <= 0 ? (row >= 0 ? row : -row) : (row & 1));
             if (radius == 0) {
@@ -2800,18 +2781,8 @@ void MapWin::gen_radius(int x, int y, int radius, int faction, int skip_terrain)
             const int tile_y = y + row;
             for (int column = -half_width; column <= half_width; column += 2) {
                 const int column_x = x + column;
-                int tile_x;
-                if (MapIsFlat & 1) {
-                    tile_x = column_x;
-                } else if (column_x < 0) {
-                    tile_x = column_x + MapLongitudeBounds;
-                } else if (column_x >= MapLongitudeBounds) {
-                    tile_x = column_x - MapLongitudeBounds;
-                } else {
-                    tile_x = column_x;
-                }
-                if (tile_y >= 0 && tile_y < MapLatitudeBounds && tile_x >= 0 &&
-                    tile_x < MapLongitudeBounds) {
+                const int tile_x = wrap_map_x(column_x);
+                if (on_map(tile_x, tile_y)) {
                     if (tile_in_view(tile_x, tile_y, 0)) {
                         int pixel_x;
                         int pixel_y;
@@ -2831,37 +2802,17 @@ void MapWin::gen_radius(int x, int y, int radius, int faction, int skip_terrain)
         if (radius == 0) {
             {
                 const int column_x = x - 1;
-                int tile_x;
-                if (MapIsFlat & 1) {
-                    tile_x = column_x;
-                } else if (column_x < 0) {
-                    tile_x = column_x + MapLongitudeBounds;
-                } else if (column_x >= MapLongitudeBounds) {
-                    tile_x = column_x - MapLongitudeBounds;
-                } else {
-                    tile_x = column_x;
-                }
+                const int tile_x = wrap_map_x(column_x);
                 const int tile_y = y - 3;
-                if (tile_y >= 0 && tile_y < MapLatitudeBounds && tile_x >= 0 &&
-                    tile_x < MapLongitudeBounds) {
+                if (on_map(tile_x, tile_y)) {
                     gen_overlays(tile_x, tile_y);
                 }
             }
             {
                 const int column_x = x + 1;
-                int tile_x;
-                if (MapIsFlat & 1) {
-                    tile_x = column_x;
-                } else if (column_x < 0) {
-                    tile_x = column_x + MapLongitudeBounds;
-                } else if (column_x >= MapLongitudeBounds) {
-                    tile_x = column_x - MapLongitudeBounds;
-                } else {
-                    tile_x = column_x;
-                }
+                const int tile_x = wrap_map_x(column_x);
                 const int tile_y = y - 3;
-                if (tile_y >= 0 && tile_y < MapLatitudeBounds && tile_x >= 0 &&
-                    tile_x < MapLongitudeBounds) {
+                if (on_map(tile_x, tile_y)) {
                     gen_overlays(tile_x, tile_y);
                 }
             }
@@ -2873,27 +2824,16 @@ void MapWin::gen_radius(int x, int y, int radius, int faction, int skip_terrain)
             span += 2;
         }
         span += 2;
-        const int overlay_extent = span;
-        for (int row = -overlay_extent; row <= overlay_extent + 1; ++row) {
-            const int half_width = overlay_extent -
+        for (row = -span; row <= span + 1; ++row) {
+            const int half_width = span -
                 (row <= 0 ? (row >= 0 ? row : -row) : (row & 1));
             const int tile_y = y + row;
             for (int column = -half_width; column <= half_width; column += 2) {
                 const int column_x = x + column;
-                int tile_x;
-                if (MapIsFlat & 1) {
-                    tile_x = column_x;
-                } else if (column_x < 0) {
-                    tile_x = column_x + MapLongitudeBounds;
-                } else if (column_x >= MapLongitudeBounds) {
-                    tile_x = column_x - MapLongitudeBounds;
-                } else {
-                    tile_x = column_x;
-                }
+                const int tile_x = wrap_map_x(column_x);
                 // WORKAROUND(noinline): the image calls tile_in_view out of line
                 // here (0x4696A6); the original's /Ob2 budget refused it.
-                if (tile_y >= 0 && tile_y < MapLatitudeBounds && tile_x >= 0 &&
-                    tile_x < MapLongitudeBounds && (this->*&MapWin::tile_in_view)(tile_x, tile_y, 0)) {
+                if (on_map(tile_x, tile_y) && (this->*&MapWin::tile_in_view)(tile_x, tile_y, 0)) {
                     gen_overlays(tile_x, tile_y);
                 }
             }
