@@ -28,6 +28,8 @@ teardowns: `at(i)` before each return; an inline destructor calls `dm()`/`dm2()`
 | probe_position.py M n if1/if4 | dead probes after return site k: reservation for earlier sites only (4) |
 | real_popup.py M... | real `Popup` (popup.h, probe.cpp's command) at M returns (6) |
 | realdeck.py | `run(unit, addr, [(key, text)])`: whole-file variants of a real unit, call-count differences |
+| costknob.py TAG FILE OLD NEW --base B | tree-wide: which functions' decisions move when one callee's body gets a dead statement (2.8 "Callee costs") |
+| ../inlinetree.py [--all] | inlinemap over every function of every unit; per-callee E/c aggregate (baseline for costknob) |
 
 `deck.py` (`F`, `run`, `show`) and `ib.py` (`compile_asm`, `compile_in_unit`, `functions`, `sites`, `tails`)
 are the shared runner.

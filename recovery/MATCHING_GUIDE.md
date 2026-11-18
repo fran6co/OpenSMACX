@@ -1141,8 +1141,12 @@ we cannot see, so the numbers are fitted within about 0.3 unit.
    - Above the floor, B grows linearly with the caller's own statements,
      dead or alive. Each `g = K;` adds about 0.47 unit, each call statement
      about 0.7, and each `if (x == K) use(1);` about 1.9.
-   - No separate per-callee cap was found: a 128-if body expands in a caller
-     with 400 stores.
+   - No per-callee cap applies to *explicit* inlines (every probe callee
+     here is `inline` or in-class): a 128-if body expands in a caller with
+     400 stores. Auto-inlined plain functions do have a fixed size cap
+     (2.1, "Per-callee auto-inline size cap": 7 one-line ifs inline, 8 do
+     not). The two findings agree; the cap is the auto-inline gate, the
+     budget is the only limit on an explicit inline.
    - Filler added while B is still at the floor changes nothing.
      `dtor_nested_filler.py` is flat until about 66 stores and then shifts
      one site per two stores.
@@ -1253,6 +1257,78 @@ What the model does not predict (2026-11-19)
 - The units are approximate. Costs come from fitted counts, not node
   counts, so a prediction is good to about one expansion. Use it to choose
   the *kind* and *place* of a missing spend, then confirm with fe.
+
+Callee costs, tree-wide (2026-11-19, par-4)
+
+Question: do the image's teardown decisions say that the original's inline
+destructors (~Scroll, ~FlatButton, ~BasePop, ~Popup, ~Dialogs, ~StringList,
+~Sprite) cost more or less than our header definitions? Method:
+`recovery/tools/analysis/inlinetree.py --all` runs inlinemap on every
+function of every unit (about 20 s) and records each callee's E/c string,
+image against ours. `inline/costknob.py` adds a dead statement to one
+callee's body, which leaves every out-of-line copy byte-identical, reruns
+the tree and reports which functions' decisions moved toward or away from
+the image. Two knob sizes were used: `int k = 0;` (the smallest edit that
+moves anything) and `int k = 0; if (k == 12345) close();` (about one
+if-unit). Baseline disagreement is 662 site-units in 35 functions; every
+other function's decisions match the image.
+
+Disagreement per function under each knob (0 = matches the image; lower
+is better; the last rows count the whole tree):
+
+| function | base | ~Scroll +s | ~Scroll +1 | ~BasePop +1 | ~FlatButton +s | ~Popup +s | ~Popup +1 | ~Dialogs +1 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| PickTech::pick 486510 | 86 | 44 | **28** | 34 | 40 | 42 | 32 | 86 |
+| probe 59F120 | **55** | 67 | 89 | 55 | 55 | 55 | 79 | 55 |
+| Console::terraform 4D3470 | 42 | 37 | **10** | 44 | 44 | 44 | 45 | 42 |
+| Console::upgrade 4D06C0 | 20 | 20 | **14** | 22 | 16 | 20 | 34 | 32 |
+| save_game 5A9EB0 | 9 | 13 | **0** | 9 | 21 | 9 | 9 | 9 |
+| call_council 52C880 | 36 | 39 | 96 | 44 | 44 | 44 | **11** | 36 |
+| BaseWin::production 417040 | 2 | 4 | 45 | **0** | **0** | 4 | 45 | 2 |
+| BaseWin::queue_click 409200 | **11** | 15 | 21 | 33 | 15 | 15 | 16 | 11 |
+| BaseWin::base_editor_proj 41BBC0 | **14** | 14 | 30 | 29 | 14 | 14 | 14 | 14 |
+| tech_trade 541100 | **15** | 32 | 42 | 31 | 31 | 38 | 38 | 15 |
+| matching functions broken | | 16 | 45 | 24 | 14 | 12 | 40 | 2 |
+| tree disagreement | 662 | 789 | 1132 | 796 | 756 | 749 | 1065 | 686 |
+
+(+s = `int k = 0;`, +1 = one dead if.) The same `int k = 0;` in ~Sprite,
+~Dialogs and ~StringList moves nothing anywhere. `virtual ~Scroll()`,
+`Scroll::close();` and `this->close();` in place of `close();` (and the
+same three for ~FlatButton) compile to the same decisions as the current
+headers.
+
+Image-implied cost against ours, per callee:
+
+| callee | callers that want it dearer | callers that pin it at ours | verdict |
+| --- | --- | --- | --- |
+| ~Scroll | pick, terraform, upgrade, save_game (≈ +1 if-unit) | probe, call_council, queue_click, base_editor_proj, tech_trade and 16 matching functions even at +s | ours, within less than `int k = 0;` |
+| ~FlatButton | pick, upgrade, production (+s) | save_game and 14 matching functions at +s; +1 breaks 52 | ours |
+| ~BasePop | pick, production (+1) | queue_click, base_editor_proj and 24 matching functions | ours |
+| ~Popup | call_council, pick (+1) | probe, upgrade, production and 40 matching functions | ours |
+| ~Dialogs, ~StringList, ~Sprite | none | insensitive at +s; +1 breaks 2 (~Dialogs) and 3 (~StringList) matching functions and helps none | ours |
+
+Conclusions
+- Every one of these callees is pinned at our header's cost by functions
+  that already match. Each mismatching caller wants a *different* callee
+  made dearer, and some of the mismatching callers (probe, queue_click,
+  tech_trade) get worse under every knob. A single header spelling cannot
+  supply the image's decisions; no header change was made.
+- So the missing spend or the excess budget is in the callers. PickTech::
+  pick improves under every knob (86 → 28–44), which means its pass-2 room
+  is too large *whatever* takes it: its own body is longer than the
+  original's (B too high) or it lacks a pass-1 charge the original had.
+  terraform and save_game want ~Scroll-specific reservation (they improve
+  only under the ~Scroll knob), which points at extra Popup/Scroll-owning
+  objects or teardown sites in the original rather than at more statements.
+  call_council wants ~Popup reservation only: its own Popup's teardown, not
+  its size.
+- The knob is a screen for *which callee's reservation* a caller lacks.
+  Run `costknob.py` with the knob in each candidate callee; a caller that
+  improves under exactly one callee lacks an object or teardown site of
+  that class; a caller that improves under all of them has too much budget
+  (find the statements the original wrote as calls or inline helpers, 2.8
+  "Using it"). A matching-function count is the price of a real header
+  change, and these knobs are not real changes, so never commit one.
 
 ## 3. Symptom → first thing to check
 
