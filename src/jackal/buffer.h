@@ -426,18 +426,15 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
     }
     return write_l(text, rect, static_cast<int>(strlen(text)));
   }
-#ifdef BUFFER_WRITE_CENT_XY_INLINE
-  // WORKAROUND(decl): guarded full-length centred form. MapWin's callers
-  // (0x004680A1, 0x00468861) expand it: Buffer* first, then the text test,
-  // strlen and the four-argument write_cent_l (0x005DD250). Only units that
-  // define the guard see it until the header is reconciled.
+  // Guarded full-length centred form. MapWin's callers (0x004680A1,
+  // 0x00468861) expand it: Buffer* first, then the text test, strlen and
+  // the four-argument write_cent_l (0x005DD250).
   int write_cent_l(LPSTR text, int x_coord, int y_coord) {
     if (text == 0) {
       return 0;
     }
     return write_cent_l(text, x_coord, y_coord, static_cast<int>(strlen(text)));
   }
-#endif
   int write_cent_l(LPSTR text, int x_coord, int y_coord, int width, int len);
   int write_cent_l(LPSTR text, RECT *rect, int len);
   // 0x0047A720. Header inline: callers expand the null test before strlen;

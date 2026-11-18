@@ -414,9 +414,8 @@ class DiploWin : public GraphicWin, public SubInterface {
 // copies, so they are header inlines. Their expansion supplies the budget
 // that makes process_message's early ~Popup teardowns call ~FlatButton out of
 // line, as the image does; written out raw they spend nothing.
-// WORKAROUND(decl): only TUs defining DIPLOWIN_RECEIVE_INLINE see the bodies
-// (netdaemon.cpp, the only caller); the original header set is unknown.
-#ifdef DIPLOWIN_RECEIVE_INLINE
+void __cdecl message_data(int opcode, int target, int payload_10,
+                          int payload_14, int payload_18, int payload_1C);  // netdaemon.h
 inline void DiploWin::receive_clear_offer() {
     offer_count_[1] = 0;
     GraphicWin::redraw();
@@ -435,7 +434,6 @@ inline void DiploWin::receive_maybe_deal(const int &sender) {
     message_data(0x150C, sender, offer_state_[0], offer_state_[1], 0, 0);
   }
 }
-#endif
 
 void __cdecl clear_hotseat_chat();
 void __cdecl sub_441040(int a1, int a2);

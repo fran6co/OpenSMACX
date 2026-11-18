@@ -88,7 +88,6 @@
 // symbol    ?enumerate_session_callback@@YGHPBUDPSESSIONDESC2@@PAKKPAX@Z
 // WORKAROUND(decl): JackalVoiceRx::add_player node allocation (net_class.h).
 #define NET_CLASS_VOICE_NODE_NEW
-#define ALPHANET_CURRENT_ENTRY_DECL  // see alphanet.h
 #include "stdafx.h"
 #include <process.h>
 #include <mmsystem.h>

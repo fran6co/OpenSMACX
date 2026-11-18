@@ -15,7 +15,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
-#define VEH_BUNGLIST_VISIBLE  // stand-in: see BungList in veh.h
 #define DIALOG_LAYOUT_SETTERS  // stand-in: see Dialog::set_field_34/50 in dialog.h (design_workshop)
 #include "stdafx.h"
 #include "popup.h"

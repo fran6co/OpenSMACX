@@ -15,7 +15,6 @@
 // WORKAROUND(noinline): on_redraw's StringList local calls
 // StringStruct::StringStruct (0x00401000) out of line (0x00495723), giving
 // its three-state EH layout; see stringstruct.h.
-#define FONT_LINE_ADVANCE_INLINE
 #define STRINGSTRUCT_CTOR_OUT_OF_LINE
 #define SPOT_ADD_RECT_INLINE  // stand-in: see Spot::add(int, int, RECT *) in spot.h
 #include "stdafx.h"

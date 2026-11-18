@@ -42,9 +42,7 @@
 // initializer of NetDaemonSavedProcessSlots (defined below, after
 // NetDaemonNet), not a function.
 #define JACKALVOICERX_CLEAR_OUT_OF_LINE  // stand-in: see net_class.h
-#define VEH_BUNGLIST_VISIBLE  // WORKAROUND(decl): synch addresses BungList directly; see veh.h
 #define DIALOGS_DTOR_INLINE  // stand-in: see ~Dialogs in dialogs.h
-#define DIPLOWIN_RECEIVE_INLINE  // stand-in: see the receive steps in diplowin.h
 #include "stdafx.h"
 #include <mmsystem.h>
 #include "netdaemon.h"

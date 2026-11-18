@@ -50,14 +50,7 @@ class NetMsg : public Popup {
 #endif
   void close();
   // No out-of-line copy exists in the image; its callers expand it.
-  // WORKAROUND(decl): only TUs defining NETMSG_IS_ACTIVE_INLINE see the body.
-  // Making it visible to every includer flips register/scheduling ties in
-  // thirteen unrelated functions (action_give, capture_base, goody_box, ...).
-#ifdef NETMSG_IS_ACTIVE_INLINE
   bool is_active() const { return field_5384_ != 0; }
-#else
-  bool is_active() const;
-#endif
   void on_button_clicked(int button_id);
   // 0x0047A890: real receiver-owned popup implementation in netmsg.cpp.
   // Declared so the diplomacy bodies can name it: every one of them reaches

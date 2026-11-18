@@ -115,14 +115,9 @@ class AlphaNetStringStruct : public virtual StringAllocationBase {
   }
   int seek_pos(int position);
   NetAllocationNode *next_entry();
-#ifdef ALPHANET_CURRENT_ENTRY_DECL
   // Out of line: session_picker_dialog calls it (0x00631434); the linker
   // folds its copy into StringStruct::current_entry 0x00402530.
-  // WORKAROUND(decl): visible only where it is defined or called; one more
-  // member declaration in every includer re-ties battle_fight, enemy_move,
-  // setup_player and other canaries.
   NetAllocationNode *current_entry();
-#endif
   AlphaNetLedgerEntry *head_;     // +0x08 - the five the constructor zeroes
   AlphaNetLedgerEntry *current_;  // +0x0C
   int entry_count_;              // +0x10

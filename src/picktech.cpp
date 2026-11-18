@@ -9,7 +9,6 @@
 // WORKAROUND(noinline): draw_tech's StringList local calls
 // StringStruct::StringStruct (0x00401000) out of line (0x00485361), giving
 // its three-state EH layout; see stringstruct.h.
-#define FONT_LINE_ADVANCE_INLINE
 #define STRINGSTRUCT_CTOR_OUT_OF_LINE
 // WORKAROUND(noinline): draw_tech's explicit clear calls StringStruct::remove_all
 // (0x00402970) out of line (0x00485403) while its closing destructor walk

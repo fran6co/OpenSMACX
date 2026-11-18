@@ -17,7 +17,6 @@
  */
 // WORKAROUND(decl): same declaration context as src/jackal/net_class.cpp.
 #define NET_CLASS_VOICE_NODE_NEW
-#define ALPHANET_CURRENT_ENTRY_DECL  // see alphanet.h
 #include "stdafx.h"
 #include "alphanet.h"
 #include "stringstruct.h"

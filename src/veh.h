@@ -27,11 +27,6 @@ int __cdecl is_bunged(int faction_id, int chassis_id, int weapon_id,
                        int armor_id, int ability_flags, int reactor_id);
 void __cdecl clear_bunglist(int faction_id);
 void __cdecl proto_bung_put(int faction_id, int proto_id);
-// WORKAROUND(decl): a visible ProtoBung definition flips a register tie in
-// console_commands.cpp corner_the_market (0x004E2000, BYTE_EXACT -> MNEMONIC_ONLY)
-// in any position of this header; only its owner veh.cpp and game_data's
-// game.cpp define VEH_BUNGLIST_VISIBLE until the header context is known.
-#ifdef VEH_BUNGLIST_VISIBLE
 // The faction prototype-design list. 0x0094B558, eight factions x 64 entries x
 // 8 bytes - one entry is VehPrototype's ability_flags dword followed by its
 // chassis/weapon/armor/reactor bytes, which is exactly the 8 bytes
@@ -46,7 +41,6 @@ struct ProtoBung {
     uint8_t reactor_id;
 };
 extern ProtoBung BungList[8][64];
-#endif
 // Existing terraform announcement state, also transferred by game sync.
 extern uint32_t TerraformAnnouncedMask[2];
 extern uint32_t VehTerraformStingLatch;

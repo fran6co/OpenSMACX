@@ -31,7 +31,6 @@
 // ORIGINAL: 0x005D71F0 sub_5d71f0 0x005D71F0-0x005D720F FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned startup 0x005D71D0..0x005D71E6 constructs the Sprite at 0x009B3A50..0x009B3A7C and registers finalizer 0x005D71F0..0x005D720F. Cleanup publishes bit 2 of the same byte 0x009B37CC before Sprite::close at 0x005E3820; constructors do not reset the guard.", "Buffer::shared_sprite_ is ordinary class-static storage defined after the special-text array. Physical compiler output supplies the shared guard and registration edges; consumers access the actual typed Sprite directly.", "Original identities, full spans and historical claims remain unchanged. Static members add no instance fields. Current compiler symbols are binding facts, not historical debug names; complete original TU boundaries, linked storage placement and game fidelity remain unproved. Fresh strict measurement is required; this binding grants no claim."], "reason": "Bind the original lifetime to ordinary typed storage and its compiler-generated initialization/destruction, preserving guard, order and restoration obligations."}
 // symbol    _$E16
-#define FONT_LINE_ADVANCE_INLINE
 // WORKAROUND(decl): the string writers call next_entry (0x00402500) out of
 // line at every site.
 #define STRINGSTRUCT_NEXT_ENTRY_OUT_OF_LINE
