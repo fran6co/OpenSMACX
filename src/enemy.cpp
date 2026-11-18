@@ -3394,8 +3394,8 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                         && base_id < 0) {
                         continue;
                     }
-                    odds = compute_odds(battle_fight(veh_id, 0, Vehs[i].x, Vehs[i].y, 0, 0, 0),
-                                        faction_id, veh_id, i, -2);
+                    odds = battle_fight(veh_id, 0, Vehs[i].x, Vehs[i].y, 0, 0, 0);
+                    odds = compute_odds(odds, faction_id, veh_id, i, -2);
                     int weight;
                     if (base_id >= 0) {
                         if (!pods) {
@@ -3584,8 +3584,8 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                     && Vehs[veh_id].order_auto_type == ORDERA_ON_ALERT) {
                     continue;
                 }
-                odds = compute_odds(battle_fight(veh_id, 0, Vehs[i].x, Vehs[i].y, 0, 0, 0),
-                                    faction_id, veh_id, i, -2);
+                odds = battle_fight(veh_id, 0, Vehs[i].x, Vehs[i].y, 0, 0, 0);
+                odds = compute_odds(odds, faction_id, veh_id, i, -2);
                 if (base_who(Vehs[i].x, Vehs[i].y) >= 0) {
                     if (!VehPrototypes[Vehs[veh_id].proto_id].plan) {
                         continue;
@@ -3782,8 +3782,8 @@ base_attack:
                 continue;
             }
             if (!((Vehs[veh_id].state & 0x200) && Vehs[veh_id].order_auto_type == ORDERA_BOMBING_RUN)) {
-                odds = compute_odds(battle_fight(veh_id, 0, Vehs[target].x, Vehs[target].y, 0, 0, 0),
-                                    faction_id, veh_id, target, -2);
+                odds = battle_fight(veh_id, 0, Vehs[target].x, Vehs[target].y, 0, 0, 0);
+                odds = compute_odds(odds, faction_id, veh_id, target, -2);
                 if (base_who(Vehs[target].x, Vehs[target].y) < 0) {
                     odds /= 2;
                 } else {
