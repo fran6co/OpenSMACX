@@ -145,7 +145,7 @@ CvrRecord *__cdecl vox_load_record(int fd) {
     }
     int remaining = header.length - 8;
     CvrRecord *record;
-    if (vox_alloc_typed(sizeof(CvrRecord), &record) != 0) return 0;
+    if (vox_alloc_block(sizeof(CvrRecord), &record) != 0) return 0;
     memset(record, 0, sizeof(*record));
     while (remaining != 0) {
         if (vox_read_exact(fd, &header, sizeof(header)) != 0) return 0;
@@ -508,7 +508,7 @@ extern "C" int __cdecl vox_read_length_field(int fd, CvrRecord *record,
     // The slot lives at +0xc of the record the caller hands over - the same
     // field caviar_free_record releases first.
     char **slot = &base->description_;
-    if (vox_alloc_typed(length + 1, slot) != 0) {
+    if (vox_alloc_block(length + 1, slot) != 0) {
         return -1;
     }
     if (vox_read_exact(fd, (void *)*slot, length) != 0) {
@@ -569,7 +569,7 @@ extern "C" int __cdecl vox_read_chunks(int fd, CvrRecord *record, int size) {
         switch (header.tag) {
         case 0x1010000: {
             const int payload = header.length - 8;
-            if (vox_alloc_typed(payload + 1, &record->palette_name_) != 0) {
+            if (vox_alloc_block(payload + 1, &record->palette_name_) != 0) {
                 return -1;
             }
             if (vox_read_exact(fd, record->palette_name_, payload) != 0) {
@@ -581,14 +581,14 @@ extern "C" int __cdecl vox_read_chunks(int fd, CvrRecord *record, int size) {
         case 0x1020000: {
             const int payload = header.length - 8;
             if (!(record->version_ > vox_threshold_seven)) {
-                if (vox_alloc_typed(0x1b02, &record->palette_) != 0) {
+                if (vox_alloc_block(0x1b02, &record->palette_) != 0) {
                     return -1;
                 }
                 if (vox_expand_palette(fd, record->palette_) != 0) {
                     return -1;
                 }
             } else {
-                if (vox_alloc_typed(payload, &record->palette_) != 0) {
+                if (vox_alloc_block(payload, &record->palette_) != 0) {
                     return -1;
                 }
                 if (vox_read_exact(fd, record->palette_, payload) != 0) {
@@ -601,7 +601,7 @@ extern "C" int __cdecl vox_read_chunks(int fd, CvrRecord *record, int size) {
             // VC5 cross-jumps this arm's read call into the palette arm's
             // (0x6387BF) only with the cases in ascending order.
             const int payload = header.length - 8;
-            if (vox_alloc_typed(payload, &record->field_18_) != 0) {
+            if (vox_alloc_block(payload, &record->field_18_) != 0) {
                 return -1;
             }
             if (vox_read_exact(fd, record->field_18_, payload) != 0) {
@@ -640,7 +640,7 @@ int __cdecl vox_read_parts(int fd, CvrRecord *record, int size) {
         switch (header.tag) {
         case 0x04010000: {
             int payload = header.length - 8;
-            if (vox_alloc_typed((uint32_t)payload + 1u, &record->parts_name_) != 0) return -1;
+            if (vox_alloc_block((uint32_t)payload + 1u, &record->parts_name_) != 0) return -1;
             if (vox_read_exact(fd, record->parts_name_, payload) != 0) return -1;
             record->parts_name_[payload] = 0;
             break;
@@ -648,10 +648,10 @@ int __cdecl vox_read_parts(int fd, CvrRecord *record, int size) {
         case 0x04020000: {
             if (vox_read_exact(fd, &expected_count, sizeof(expected_count)) != 0) return -1;
             uint32_t names_bytes = (uint32_t)expected_count * sizeof(*record->slot_table_);
-            if (vox_alloc_typed(names_bytes, &record->slot_table_) != 0) return -1;
+            if (vox_alloc_block(names_bytes, &record->slot_table_) != 0) return -1;
             memset(record->slot_table_, 0, names_bytes);
             uint32_t parts_bytes = (uint32_t)expected_count * sizeof(*record->parts_);
-            if (vox_alloc_typed(parts_bytes, &record->parts_) != 0) return -1;
+            if (vox_alloc_block(parts_bytes, &record->parts_) != 0) return -1;
             memset(record->parts_, 0, parts_bytes);
             record->part_count_ = expected_count;
             index = 0;
@@ -698,7 +698,7 @@ int __cdecl vox_read_part(int fd, CvrRecord *record, int index, int size) {
         switch (header.tag) {
         case 0x04040100: {
             int payload = header.length - 8;
-            if (vox_alloc_typed((uint32_t)payload + 1u, &record->slot_table_[index]) != 0) return -1;
+            if (vox_alloc_block((uint32_t)payload + 1u, &record->slot_table_[index]) != 0) return -1;
             if (vox_read_exact(fd, record->slot_table_[index], payload) != 0) return -1;
             record->slot_table_[index][payload] = 0;
             break;
@@ -706,7 +706,7 @@ int __cdecl vox_read_part(int fd, CvrRecord *record, int index, int size) {
         case 0x04040200:
             if (record->steps_ == 0) {
                 uint32_t bytes = (uint32_t)record->part_count_ * sizeof(*record->steps_);
-                if (vox_alloc_typed(bytes, &record->steps_) != 0) return -1;
+                if (vox_alloc_block(bytes, &record->steps_) != 0) return -1;
                 memset(record->steps_, 0, bytes);
             }
             if (vox_read_colour_chunks(fd, &record->steps_[index], header.length) != 0) return -1;
@@ -785,11 +785,11 @@ extern "C" int __cdecl vox_read_colour_chunks(int fd, CvrStep *out, int size) {
         switch (header.tag) {
         case 0x4040201:
             if (out->lead_ != 0) {
-                if (vox_alloc_typed(out->lead_, &out->shape_) != 0) {
+                if (vox_alloc_block(out->lead_, &out->shape_) != 0) {
                     return -1;
                 }
             } else {
-                if (vox_alloc_typed(payload, &out->shape_) != 0) {
+                if (vox_alloc_block(payload, &out->shape_) != 0) {
                     return -1;
                 }
             }
@@ -860,7 +860,7 @@ extern "C" int __cdecl vox_read_geometry_chunks(int fd, CvrPart *slots, int size
         }
         switch (header.tag) {
         case 0x4040301:
-            if (vox_alloc_typed(count, &slots->colours_) != 0) {
+            if (vox_alloc_block(count, &slots->colours_) != 0) {
                 return -1;
             }
             if (vox_read_exact(fd, slots->colours_, count) != 0) {
@@ -868,7 +868,7 @@ extern "C" int __cdecl vox_read_geometry_chunks(int fd, CvrPart *slots, int size
             }
             break;
         case 0x4040302:
-            if (vox_alloc_typed(count * sizeof(VOX_Vect), &slots->vectors_) != 0) {
+            if (vox_alloc_block(count * sizeof(VOX_Vect), &slots->vectors_) != 0) {
                 return -1;
             }
             if (vox_read_exact(fd, slots->vectors_, count * sizeof(VOX_Vect)) != 0) {
@@ -876,7 +876,7 @@ extern "C" int __cdecl vox_read_geometry_chunks(int fd, CvrPart *slots, int size
             }
             break;
         case 0x4040303:
-            if (vox_alloc_typed(count * sizeof(VOX_Matrix), &slots->matrices_) != 0) {
+            if (vox_alloc_block(count * sizeof(VOX_Matrix), &slots->matrices_) != 0) {
                 return -1;
             }
             if (vox_read_exact(fd, slots->matrices_, count * sizeof(VOX_Matrix)) != 0) {
@@ -898,7 +898,7 @@ extern "C" int __cdecl vox_read_geometry_chunks(int fd, CvrPart *slots, int size
 // RECOVERY_BINDING: v1 {"evidence": ["Original 00638F30..00639086: preserve existing seed extent; pinned decode independently checks terminal return, dispatch callees and relevant field/callback behavior. Fresh VC6 output establishes current emitted symbol.", "Original638230 allocates44 bytes;638353 writes user_length at40. Palette storage is a pointer, parts/steps/shadows are typed allocations with callback-observable failure and release ordering.", "Patch639090 uses prefix+4 displacement,42-byte prefix and overlap-capable original6474E0 copy; standard memmove preserves the observed backward-copy behavior without undefined overlapping memcpy. Host controls are bounded and not full-game or malformed-file acceptance."], "reason": "Recover typed CVR record loading and nested chunk ownership in the genuine Caviar loader closure."}
 int __cdecl vox_read_shadow(int fd, CvrRecord *record, int index, int size) {
     if (record->shadows_ == 0) {
-        if (vox_alloc_typed((uint32_t)record->part_count_ * sizeof(*record->shadows_), &record->shadows_) != 0) return -1;
+        if (vox_alloc_block((uint32_t)record->part_count_ * sizeof(*record->shadows_), &record->shadows_) != 0) return -1;
         // Unlike the name/part/step arrays, the original does not clear this.
     }
     uint32_t remaining = (uint32_t)size - 8u;
@@ -917,11 +917,11 @@ int __cdecl vox_read_shadow(int fd, CvrRecord *record, int index, int size) {
             if (vox_read_exact(fd, entry, payload) != 0) return -1;
             break;
         case 0x04040402:
-            if (vox_alloc_typed(payload, &entry->field_4_) != 0) return -1;
+            if (vox_alloc_block(payload, &entry->field_4_) != 0) return -1;
             if (vox_read_exact(fd, entry->field_4_, payload) != 0) return -1;
             break;
         case 0x04040403:
-            if (vox_alloc_typed(payload, &entry->field_8_) != 0) return -1;
+            if (vox_alloc_block(payload, &entry->field_8_) != 0) return -1;
             if (vox_read_exact(fd, entry->field_8_, payload) != 0) return -1;
             break;
         default:
