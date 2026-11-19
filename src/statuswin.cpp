@@ -1763,7 +1763,7 @@ void __cdecl say_morale(int veh_id, int faction_id_vs_native) {
     say_morale(StringTemp, veh_id, faction_id_vs_native);
 }
 
-// ORIGINAL: 0x004B43E0 ?say_orders@@YAXPADH@Z 0x004B43E0-0x004B496D
+// ORIGINAL: 0x004B43E0 ?say_orders@@YAXPADH@Z 0x004B43E0-0x004B496D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:038351919772808e976813a96cd7a6d820dc1450:src/recovered/units/004b43e0.cpp: complete original identity/span and historical scaffolding measurement", "Pinned4B5C17 passes StatusWin::draw_active vehicle_id to4B43E0", "96C9B0 is Order[26].order[0]; original ORDERS parser populates this shared record", "Seed g_96c878x/stride12 is Order; g_94615cx/stride8 is Resource.name_plural; g_945d48x/stride4 is parsed Compass", "recovery/tasks/say-orders-owner-oct5.json", "recovery/tests/test_say_orders_actual_source.py"], "reason": "Recover complete vehicle order text builder through genuine vehicle, base, map and parsed rules owners; replace only the old executable forwarder. Native caller passes vehicle_id, not prototype_id. Preserve original branch, buffer and index behavior; parsed Compass/Resource pointer-shaped string IDs retain their current representation pending separate type cleanup."}
 // Historical seed observation: complete scaffold measured MISMATCH at3;
 // its obsolete tool instructions are retired, not a current body claim.

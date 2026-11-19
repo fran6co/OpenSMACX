@@ -123,7 +123,7 @@ PrefWin::PrefWin() : GraphicWin() {}
 // The compiler owns this implicit destructor. The pinned complete stage has
 // no PrefWin table stores before the embedded controls and GraphicWin teardown.
 
-// ORIGINAL: 0x0048D840 ?init@PrefWin@@QAEXXZ 0x0048D840-0x0048F9F5 FILE
+// ORIGINAL: 0x0048D840 ?init@PrefWin@@QAEXXZ 0x0048D840-0x0048F9F5 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0048d840.cpp", "recovery/tasks/prefwin-owner-coverage-wave.json", "Original control parent 8578D8; ctor/destructor member order, 800-pixel branch, checkbox text-context and callback order independently reviewed."], "reason": "Recover the complete PrefWin ownership group through a genuine GraphicWin base and compiler-owned embedded control lifetimes; preserve seed identity, original spans and unresolved discoveries without granting byte claims."}
 // The first button of each group is reached through a held control pointer:
 // set_font addresses the Buffer base as [edi+0x444] (0x48DA0A, 0x48F6E9,

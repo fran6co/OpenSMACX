@@ -49,7 +49,7 @@ BOOL PluralityDefault;   // 0x009BBFF0
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x00625880 0x00625DF8 0x00625E23 0x006258DD
 /*
 Purpose: This handles parsing the input string and storing it in the output.
-// ORIGINAL: 0x00625880 ?parse_string@@YAHPADPAD@Z 0x00625880-0x00625DDD
+// ORIGINAL: 0x00625880 ?parse_string@@YAHPADPAD@Z 0x00625880-0x00625DDD BYTE_EXACT
 // TRIED: 19/490 MISMATCH, mid-recovery - see the LEVER note just above
 //   the function definition below (outside this comment block, which is why
 //   a marker-position scan missed it before): the call graph is already
