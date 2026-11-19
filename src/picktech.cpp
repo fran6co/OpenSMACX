@@ -856,9 +856,10 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
                             says("+");
                         } else if (i < FacilitySPStart || base_project(i - FacilitySPStart) == -1) {
                             say_open_paren();
-                            strcat(StringTemp, StringTable.get(i >= FacilitySPStart
-                                ? Labels.strings_ptr[0x2CC / 4]
-                                : Labels.strings_ptr[0x26C / 4]));
+                            if (i >= FacilitySPStart)
+                                strcat(StringTemp, label_get(0x2CC / 4));
+                            else
+                                strcat(StringTemp, label_get(0x26C / 4));
                             noted = 1;
                             say_colon();
                             strcat(StringTemp, StringTable.get(Facility[i].name));
@@ -966,8 +967,10 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
         column_count_ = columns;
         const int rows = items / columns + (items % columns != 0);
         row_count_ = rows;
-        cell_width_ = items <= 8 ? WinScreenWidth / columns - 20
-                                 : (WinScreenWidth - 20) / columns;
+        if (items <= 8)
+            cell_width_ = WinScreenWidth / columns - 20;
+        else
+            cell_width_ = (WinScreenWidth - 20) / columns;
         int cell_width;
         const int third = WinScreenWidth / 3;
         cell_width = cell_width_;
