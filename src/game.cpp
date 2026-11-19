@@ -2035,10 +2035,10 @@ int __cdecl save_game(int mode) {
 
     StringTemp[0] = 0;
     if (mode != 0) {
-        strcat(StringTemp, "scenarios\\");
+        says("scenarios\\");
         parse_set(Players[ConsoleGlobal.faction_id_].is_leader_female, 0);
     } else {
-        strcat(StringTemp, "saves\\");
+        says("saves\\");
         parse_set(Players[ConsoleGlobal.faction_id_].is_leader_female, 0);
     }
 
