@@ -410,8 +410,8 @@ int __cdecl probe(int veh_id, int base_id, int veh_id_tgt, int mode) {
         && !has_abil(Vehs[veh_id].proto_id, ABL_AMPHIBIOUS)) {
         if (faction == ConsoleGlobal.faction_id_ && mode && is_human(faction)
             && (NetDaemonNet.action_mode_ & 1)) {
-            int ability = abil_index(ABL_AMPHIBIOUS);
-            parse_say(0, Ability[ability].name, -1, -1);
+            action = abil_index(ABL_AMPHIBIOUS);
+            parse_say(0, Ability[action].name, -1, -1);
             NetMsgPrimary.pop("PROBEABILAMPHIBIOUS2", 5000, 0, 0);
         }
         return 0;
@@ -956,7 +956,7 @@ L_59fb64:
                 }
                 int weap = weap_strat(VehPrototypes[Vehs[veh_id_tgt].proto_id].weapon_id, faction);
                 int arm = arm_strat(VehPrototypes[Vehs[veh_id_tgt].proto_id].armor_id, faction);
-                int speed = Chassis[VehPrototypes[Vehs[veh_id_tgt].proto_id].chassis_id].speed;
+                morale = Chassis[VehPrototypes[Vehs[veh_id_tgt].proto_id].chassis_id].speed;
                 int region = region_at(Vehs[veh_id_tgt].x, Vehs[veh_id_tgt].y);
                 if (PlayersData[faction].region_total_bases[region]) {
                     if (PlayersData[faction_tgt].region_force_rating[region]
@@ -975,7 +975,7 @@ L_59fb64:
                 if (arm > PlayersData[faction].best_armor_value) {
                     score /= 2;
                 }
-                if (speed > PlayersData[faction].best_land_speed) {
+                if (morale > PlayersData[faction].best_land_speed) {
                     score = score * 2 / 3;
                 }
                 if (PlayersData[faction].diplo_treaties[faction_tgt] & DTREATY_TREATY) {
@@ -1489,8 +1489,8 @@ L_5a2dcd:
         draw_tile(Bases[base_id].x, Bases[base_id].y, 2);
     } else if (action == 3) {
         int energy = steal_energy(base_id);
-        int share = morale_veh(veh_id, 1, 0) * energy / 6;
-        energy = range(share + (int)rnd(energy - share, "PROBEENERGY") / 2, 0,
+        morale = morale_veh(veh_id, 1, 0) * energy / 6;
+        energy = range(morale + (int)rnd(energy - morale, "PROBEENERGY") / 2, 0,
                        PlayersData[faction_tgt].energy_reserves);
         if (energy == 1) {
             energy = 0;
