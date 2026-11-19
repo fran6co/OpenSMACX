@@ -89,13 +89,6 @@
 #include <cstring>
 #include "replaywin.h"     // ReplayEventBytes: replay recorder's byte length
 
-// lock() uses a distinct same-text popup payload from maybe_lock(),
-// order_veh() and veh_drop(): the pinned pushes at 0x53066A target 0x68C21C,
-// while those three paths target 0x68C474. This writable 12-byte source
-// storage models that bounded original correspondence only; it does not assert
-// the original variable name, complete allocation extent, or lifetime.
-// RECOVERY_OBJECT: v2 0x0068C21C 0x0068C228 _NetDaemonLockMovePendingText 0x00530630
-static char NetDaemonLockMovePendingText[] = "MOVEPENDING";
 
 // do_checksums(4), original 51E760, copies 0x54 bytes from its calculated
 // vector; net_upkeep 5296E6..5296F4 sends the same 21 dwords.
@@ -170,6 +163,38 @@ extern int BaseAtDebugPopupFlag;  // 0x0093A94C, defined in base.cpp
 // window hierarchy just for this scalar declaration.
 extern int ConsoleControlTurnActive;
 
+
+
+// ORIGINAL: 0x0052DB70 sub_52db70 0x0052DB70-0x0052DB9C FILE BYTE_EXACT
+// symbol    ?sub_52db70@@YAHXZ
+// size      44 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// Shares the TU with current_server and hang_up, which both inline it.
+int __cdecl sub_52db70() {
+    if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) == 0) {
+        return 0;
+    }
+    if (ConsoleControlTurnActive != 0) {
+        return 0;
+    }
+    return GameDataStateStorage.fields_.net_turn_faction_ == ConsoleGlobal.faction_id_;
+}
+
+// ORIGINAL: 0x0052DBA0 ?current_server@@YAHXZ 0x0052DBA0-0x0052DBE6 BYTE_EXACT
+// The image inlines sub_52db70 here, hence the two spilled registers.
+int __cdecl current_server() {
+    if (sub_52db70()) {
+        return 1;
+    }
+    if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) != 0 && ConsoleControlTurnActive == 0) {
+        return 0;
+    }
+    return static_cast<int>(NetDaemonNet.primary_state_.leading_words_[0]);
+}
 // ORIGINAL: 0x0052DBF0 ?next_player_turn@@YAHXZ 0x0052DBF0-0x0052DC68 FILE BYTE_EXACT
 // TRIED: do-while loop over i=[NetTurnFaction+1, 8) with hi/lo byte reads hoisted before the loop, matching the Ghidra hypothesis closely; diverges at instr #14 (original 'lea' vs rebuilt 'inc'), a register/addressing-mode choice around the `+1`.
 // working copy - scaffold materialised by --work
@@ -237,14 +262,6 @@ BOOL __cdecl not_my_turn() {
     return GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_;
 }
 
-// The .rdata strings the deletion paths hand to log_say, read out of the
-// image beside the bindings the same family already carries in veh.cpp.
-// Original starts identify the read-only strings, not pointer cells or
-// enclosing allocations. log_say takes LPCSTR and borrows these bytes.
-// RECOVERY_OBJECT: v1 0x0068C134 _StrDeletingVehicle
-static const char StrDeletingVehicle[] = "Deleting vehicle";
-// RECOVERY_OBJECT: v1 0x0068C120 _StrDelConvertedIndex
-static const char StrDelConvertedIndex[] = "DelConverted index";
 
 /*
 Purpose: Initialize the 24 deletion records and the current owner. The image
@@ -370,7 +387,8 @@ int DeletionList::convert(int veh_id, int new_owner) {
         }
     }
     if (original_id != veh_id) {
-        log_say(StrDelConvertedIndex, original_id, veh_id, 0);
+// RECOVERY_LITERAL: v1 0x0068C120 0x0068C133 $SG63106 0x0052DDC0
+        log_say("DelConverted index", original_id, veh_id, 0);
     }
     return veh_id;
 }
@@ -385,7 +403,8 @@ Purpose: Queue one vehicle deletion against its owner's deletion record.
 Status: Coverage transcription - unclaimed body
 */
 int DeletionList::add_deletion(int veh_id) {
-    log_say(StrDeletingVehicle, veh_id, Vehs[veh_id].x, Vehs[veh_id].y);
+// RECOVERY_LITERAL: v1 0x0068C134 0x0068C145 $SG63111 0x0052DE70
+    log_say("Deleting vehicle", veh_id, Vehs[veh_id].x, Vehs[veh_id].y);
 
     int slot = find_owner_slot(current_owner_);
     if (slot < 0) {
@@ -402,33 +421,121 @@ int DeletionList::add_deletion(int veh_id) {
     return static_cast<int>(records_[slot].count_) - 1;
 }
 
+// ORIGINAL: 0x0052DF30 ?init@NetDaemon@@QAEHH@Z 0x0052DF30-0x0052E041
+// TRIED: `if (setup(option)==0) return 0; return 1;` and its `!=`/local-var/ if-else variants all boolean-normalize (neg/sbb or xor/setcc) at #51 where the original keeps two distinct epilogues (fall-through returns the call's own eax, the taken branch explicitly sets eax=1). Landing the closest form.
+// size      273 bytes
+// prototype int (__thiscall ?init@NetDaemon@@QAEHH@Z)(NetDaemon* this, int)
+// callers   1   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004E25B0 0x004E31E0 0x005900D0
 
-// ORIGINAL: 0x00530D50 ?lock_base@NetDaemon@@QAEHHHHH@Z 0x00530D50-0x00530E48 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x00530D50-0x00530E48"], "reason": "Recover the base-menu network guard through real Base records, shared turn state and NetDaemon lock-state members; original calls establish argument forwarding and log strings."}
-// Pinned arguments identify these NUL-terminated keys in the original;
-// the literal spans cover their text and terminators, not surrounding storage.
-// RECOVERY_LITERAL: v1 0x0068C2F4 0x0068C2FD $SG63034 0x00530D50
-// RECOVERY_LITERAL: v1 0x0068C300 0x0068C314 $SG63039 0x00530D50
-int NetDaemon::lock_base(int base_id, int target, int payload_1C, int payload_20) {
-    log_say("LockBase", UnkGlobal0093A934, ConsoleControlTurnActive,
-            BaseIDCurrentSelected);
-    if (!IsMultiplayerNet) {
-        return 0;
-    }
-    if (UnkGlobal0093A934) {
-        Bases[base_id].state |= BSTATE_NET_LOCKED;
-        message_data(0x4304, 0, 0, 0, 0, 0);
-        return 0;
-    }
-    if (ConsoleControlTurnActive) {
+
+int NetDaemon::init(int option) {
+
+    reset();
+
+    primary_state_.flags_ = 0;
+    primary_state_.leading_words_[2] = 0;
+
+    // The image's fall-through path leaves setup's own eax (zero) in place
+    // and has a second epilogue: the original fell off the end here.
+    if (AlphaNet::setup(option)) {
         return 1;
     }
-    if (primary_state_.leading_words_[2]) {
-        return 1;
+}
+
+// ORIGINAL: 0x0052E050 ?hang_up@NetDaemon@@QAEXXZ 0x0052E050-0x0052E151 FILE BYTE_EXACT
+// size      257 bytes
+// prototype void (__thiscall ?hang_up@NetDaemon@@QAEXXZ)(NetDaemon* this)
+// callers   9   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0047A7D0 0x0058FF70 0x00592EE0
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x0052E050
+// measured tier  MISMATCH
+// divergence     16
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/0052e050/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?hang_up@NetDaemon@@QAEXXZ  at 0x0052E050  (257 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+
+
+// 0x1B3C is lock_state_[0].dword_[4], 0x1580/0x1584 are the Lock's tail
+// dwords, 0x1B7C is lock_state_[1].dword_[5] and the four dwords at 0x1B80
+// are lock_state_[1].dword_[6..9] - one per faction.
+void NetDaemon::hang_up() {
+    // Native 0x52E05B/0x52E068 skip popup cleanup on these two guards.
+    if (primary_state_.flags_ != 0) return;
+    if (IsMultiplayerNet == 0) return;
+
+    primary_state_.flags_ = 1;
+    if (GameDataStateStorage.fields_.net_turn_flags_ & 0x10) {
+        const int in_transit = ConsoleControlTurnActive;
+        if (sub_52db70() || in_transit != 0) {
+            if (in_transit != 0 &&
+                NetDaemonNet.primary_state_.leading_words_[0] == 0) goto L145;
+            message_data(0x8301, 0, 0, 0, 0, 0);
+        }
     }
-    log_say("LockBase Needs Lock", base_id, Bases[base_id].x, Bases[base_id].y);
-    return lock(target | 4, Bases[base_id].x, Bases[base_id].y,
-                0, payload_1C, payload_20);
+    if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
+        locks_.records_[ConsoleGlobal.faction_id_].clear();
+        if (locks_.field_E0_ == ConsoleGlobal.faction_id_) {
+            locks_.field_E4_ = 0;
+            locks_.field_E0_ = 0;
+        }
+        field_1B7C_ &=
+            ~faction_masks_[ConsoleGlobal.faction_id_];
+        message_data(0x4b00, 0, 0, 0, 0, 0);
+    }
+L145:
+    NetMsgPrimary.close();
 }
 
 // MapLongitude is the source-owned half-width tile-row stride, already
@@ -635,355 +742,6 @@ player_found:
     primary_state_.leading_words_[2] = 0;
 }
 
-/*
-Purpose: Build a network daemon - its AlphaNet base, then its own eight
-         PlayerLocks and 0x18-entry lock table.
-// ORIGINAL: 0x005389F0 ??0NetDaemon@@QAE@XZ 0x005389F0-0x00538B58;0x0065DF50-0x0065DF62 BYTE_EXACT
-// size      360 bytes
-// prototype void (__thiscall ??0NetDaemon@@QAE@XZ)(NetDaemon* this)
-// callers   1   call targets   4
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x004E2490 0x0058FF70 0x005900D0 0x004E25B0
-Return Value: this
-
-NetDaemon has no virtual base anywhere in this chain, so a genuine
-constructor is safe (unlike MapWin/PlanWin/Console - see the note in
-`mapwin.h`), and the image's own SEH frame here is what a real constructor
-with a real destructible base earns. NetDaemon's own fields past AlphaNet
-are still opaque storage (see the class declaration), so the eight
-PlayerLocks and the 0x18-entry lock table reach their elements by raw
-offset rather than through invented array members.
-*/
-NetDaemon::NetDaemon() : AlphaNet() {
-    // Member construction does the first lock pass and the deletion table:
-    // locks_ (eight PlayerLock::clear calls, then Lock::clear) and
-    // deletion_list_ (DeletionList's constructor, inlined from this TU).
-
-    reset();
-}
-
-// The original closes transport before destroying Heap, ledger, then Net.
-// The members/base own those lifetimes; NetDaemon must not repeat them.
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00538B60 ??1AlphaNet@@QAE@XZ 0x00538B60-0x00538D0E;0x0065DF70-0x0065E005 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00538b60.cpp: existing identity and complete recorded spans", "Original AlphaNet destruction closes transport, then destroys Heap at +0x148C and ledger at +0x144C before Net; normal members now own this chain."], "reason": "Adopt the retained destructor seed identity for the real AlphaNet owner. Existing shared cleanup spans are preserved, not newly inferred or claimed exact; the native one-entry/new-binding route deliberately does not infer overlapping ownership."}
-AlphaNet::~AlphaNet() {
-    close();
-}
-
-
-/*
-Purpose: Tear down a network daemon through its lock members and the
-         AlphaNet/Net destructor chain.
-// ORIGINAL: 0x00538D10 ??1NetDaemon@@QAE@XZ 0x00538D10-0x00538EBE;0x0065E010-0x0065E0A5 BYTE_EXACT
-// TRIED: 15/97 with 62 compiled instructions, and the gap is the class, not
-//   the spelling. TWO things measured 2026-08-22. (1) call_diff says MORE: this
-//   tree makes 13 direct calls where the image makes 12, and the extra one is
-//   `??1Net@@QAE@XZ` - NOT written in this body. `NetDaemon : public AlphaNet :
-//   public Net`, so a REAL `~NetDaemon()` emits the implicit base-destructor
-//   chain; VC6 inlines `~AlphaNet` and calls `~Net` out of line, and the image
-//   calls neither, having open-coded both bases' teardown as the field clears
-//   and vtable resets this body writes by hand. Under /O1 the count is 14,
-//   the fourteenth being `__EH_prolog`. (2) The image's body is a genuine C++
-//   unwind state machine: `mov byte ptr [ebp - 4], N` steps through states
-//   2,1,3,0,9,0xa,8,7,6,5,4,-1 between the calls, and reserves `sub esp, 8`
-//   where this tree reserves `push ecx`. Those state writes come from member
-//   and base subobjects the compiler is destroying itself, one protected
-//   region per subobject - explicit `->~Shim()` calls on reinterpret_cast
-//   pointers, which is what this body has, create no unwind states at all, so
-//   no spelling of the current shim scaffolding can produce them. Reaching
-//   this needs Net/AlphaNet/NetDaemon modelled with the real members at 0x58,
-//   0xb0, 0xe8, 0x10c, 0x130, 0x72c, 0x748, 0x144c, 0x148c - the same layout
-//   job the class comment above says is still open - not another pass over the
-//   statements.
-// size      430 bytes
-// prototype void (__thiscall ??1NetDaemon@@QAE@XZ)(NetDaemon* this)
-// callers   0   call targets   9
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x00401BE0 0x00402970 0x00402DD0 0x004C8DB0 0x004E25B0 0x00538EC0 0x005D45B0 0x0062E010 0x006339E0
-Return Value: n/a
-
-The retained seed includes shared cleanup spans. Their ownership and exact
-matching remain unfinished; shared code is not grounds to exclude this body.
-The TRIED note above describes the former hand-staged candidate, not current
-measurements. Ordinary bases and members now own destruction; the remaining
-list-cleanup bridges live in those owners and still require recovery.
-*/
-NetDaemon::~NetDaemon() {
-    // AlphaNet owns transport close, Heap and ledger destruction; Net owns
-    // its remaining list, queue and voice cleanup. Do not repeat base lifetimes.
-}
-
-/*
-Purpose: Poll the network for one message; dispatch it when one arrives and
-         report whether it did. The message and its two parameters come back
-         from Net::get through out-parameters.
-// ORIGINAL: 0x00530320 ?receive@NetDaemon@@QAEHXZ 0x00530320-0x0053035E BYTE_EXACT
-// size      62 bytes
-// prototype int (__thiscall ?receive@NetDaemon@@QAEHXZ)(NetDaemon* this)
-// callers   9   call targets   2
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x00534400 0x00630A00
-Return Value: 1 when a message was received and dispatched, 0 when none was
-Status: Complete
-Verification note: the original leaves both out-params as uninitialized stack
-garbage for Net::get to fill and reads them only after a nonzero return, so
-leaving them uninitialized here is equivalent by construction - Net::get
-always sets both before this reads them on the taken path.
-*/
-int NetDaemon::receive() {
-    unsigned long first;
-    unsigned long second;
-    void *result = NetDaemonNet.Net::get(&first, &second);
-    if (result == 0) {
-        return 0;
-    }
-    process_message(static_cast<char *>(result), second, static_cast<int>(first));
-    return 1;
-}
-
-/*
-Purpose: Release the global diplomacy lock this client holds. In a net game,
-         say so on the log and broadcast event 0x2212, then clear the four
-         announce-side fields; out of one there is nothing to release and the
-         body does nothing at all.
-// ORIGINAL: 0x00530D00 ?unlock@NetDaemon@@QAEXXZ 0x00530D00-0x00530D4E BYTE_EXACT
-// size      54 bytes
-// prototype void (__thiscall ?unlock@NetDaemon@@QAEXXZ)(NetDaemon* this)
-// callers   10   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00592EE0 0x006262F0
-// Homed 2026-09-03 out of the recovered-units archive: faction.cpp's
-// diplo_unlock calls it, and a pending_bodies forwarder would have landmined
-// this address's archive claim.
-// RESIDUAL: the annotation's span is SHORT, and it is the only reason this is
-//        not BYTE_EXACT. 0x00530D00-0x00530D4E (54 bytes) stops after the
-//        third field store. The shipped bytes run
-//          89 be b0 1b 00 00 / 89 be ac 1b 00 00 / 89 be cc 1b 00 00
-//          89 be c8 1b 00 00 / 5f 5e c3
-//        from 0x00530D35, so the function really ends at 0x00530D3C - 28
-//        instructions, which is exactly what this tree compiles, and all 21
-//        the annotation carries agree. Demoted for the span, not the body.
-Status: Complete
-*/
-void NetDaemon::unlock() {
-    // The four announce-side fields sit inside lock_state_[2] - 0x1BAC, 0x1BB0,
-    // 0x1BC8 and 0x1BCC are that entry's dword_[2], dword_[3], dword_[9] and
-    // dword_[10]. Named through the declared member rather than a raw offset.
-    if (IsMultiplayerNet != 0) {
-        // RECOVERY_LITERAL: v1 0x0068C2DC 0x0068C2F2 $SG63155 0x00530D00
-        log_say("Client releasing lock", ConsoleGlobal.faction_id_, 0, 0);
-        message_data(0x2212, 0, 0, 0, 0, 0);
-        exec_pending_ = 0;
-        lock_held_ = 0;
-        move_requests_ = 0;
-        lock_word_1BC8_ = 0;
-    }
-}
-
-/*
-Purpose: Release the vehicle lock this client is holding. In a net game, tell
-         the log and the other players first - log_say names the faction that
-         is releasing and message_data broadcasts event 0x2212 - then clear the
-         four announce-side fields; in every game, clear the locked vehicle
-         record at 0x1B78 and the flag at 0x1BC4. Only the transport flag at
-         0x0093F660 gates the announce; any nonzero value is a net game.
-// ORIGINAL: 0x005310F0 ?unlock_veh@NetDaemon@@QAEXXZ 0x005310F0-0x0053114A BYTE_EXACT
-// size      90 bytes
-// prototype void (__thiscall ?unlock_veh@NetDaemon@@QAEXXZ)(NetDaemon* this)
-// callers   33   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00592EE0 0x006262F0
-// LEVER: the six raw `object[0x1B.. / 4]` stores came out and the named
-//        lock_state_ members went in - 0x1BAC/0x1BB0/0x1BC8/0x1BCC are
-//        lock_state_[2].dword_[2/3/9/10], 0x1B78 is lock_state_[1].dword_[4]
-//        and 0x1BC4 is lock_state_[2].dword_[8]. BYTE_EXACT held, so the
-//        member run is pinned by a body that was already exact, and the
-//        `reinterpret_cast<volatile uint32_t *>(this)` the raw spelling
-//        needed is gone with it.
-Return Value: None
-Status: Complete with temporary message_data original dependency
-*/
-void NetDaemon::unlock_veh() {
-    // The announce half is unlock(), expanded here: its literal is the one
-    // 0x0068C2DC every expansion in this unit pushes.
-    unlock();
-    // Shared tail: 0x1B78 is the vehicle record lock_veh (0x00531020) stores
-    // and 0x1BC4 its held flag.
-    locked_veh_ = 0;
-    veh_locked_ = 0;
-}
-
-
-// The daemon's Net, 0x0093CD90 in the image - see netdaemon.h. The image's
-// dynamic initializer at 0x0052DB10 constructs it at the fixed address
-// before WinMain; the recovered NetDaemon constructor here runs through this
-// build's own startup instead.
-// RECOVERY_OBJECT: v3 0x0093E8EC ?ConsoleFactionsWaitingMask@@3HA member ?NetDaemonNet@@3VNetDaemon@@A primary_state_.trailing_words_[6]
-// RECOVERY_OBJECT: v3 0x0093E964 0x0093E968 ?MessageWinNetworkMessageCount@@3HA 0x004713B0 member ?NetDaemonNet@@3VNetDaemon@@A field_1BD4_
-// RECOVERY_OBJECT: v3 0x0093D4F0 ?NetWinPlayerId@@3HA member ?NetDaemonNet@@3VNetDaemon@@A local_player_id_
-// RECOVERY_OBJECT: v3 0x0093D4F4 ?NetWinOtherPlayerId@@3HA member ?NetDaemonNet@@3VNetDaemon@@A host_player_id_
-// Bound: NetDaemon ends at +0x1BE8 (0x0093E978), where the separate saved process slot array begins (its own CRT initializer, 0x0052DB40).
-// RECOVERY_OBJECT: v2 0x0093CD90 0x0093E978 ?NetDaemonNet@@3VNetDaemon@@A 0x005A6CCB
-NetDaemon NetDaemonNet;  // 0x0093CD90
-
-// The saved copy of the eight process slots: its own global, constructed by
-// the initializer 0x0052DB40 (see netdaemon.h).
-// RECOVERY_OBJECT: v1 0x0093E978 ?NetDaemonSavedProcessSlots@@3PAUAlphaNetProcessSlot@@A
-AlphaNetProcessSlot NetDaemonSavedProcessSlots[8];
-
-
-
-/*
-Purpose: Tell the other clients this client is leaving the diplomacy channel.
-// ORIGINAL: 0x00530600 ?close_channel@NetDaemon@@QAEXXZ 0x00530600-0x0053062F BYTE_EXACT
-// size      47 bytes
-// prototype void (__thiscall ?close_channel@NetDaemon@@QAEXXZ)(NetDaemon* this)
-// callers   1   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00592EE0
-// Homed 2026-09-03 out of the recovered archive for the same reason.
-Status: Complete
-*/
-void NetDaemon::close_channel() {
-    if (IsMultiplayerNet != 0) {
-        message_data(0x8241, 0, 0, 0, 0, 0);
-        // 0x1BA0 is lock_state_[1].dword_[14].
-        field_1BA0_ = 0;
-    }
-}
-
-
-// ORIGINAL: 0x0052DB70 sub_52db70 0x0052DB70-0x0052DB9C FILE BYTE_EXACT
-// symbol    ?sub_52db70@@YAHXZ
-// size      44 bytes
-// prototype
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// Shares the TU with current_server and hang_up, which both inline it.
-int __cdecl sub_52db70() {
-    if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) == 0) {
-        return 0;
-    }
-    if (ConsoleControlTurnActive != 0) {
-        return 0;
-    }
-    return GameDataStateStorage.fields_.net_turn_faction_ == ConsoleGlobal.faction_id_;
-}
-
-// ORIGINAL: 0x0052DBA0 ?current_server@@YAHXZ 0x0052DBA0-0x0052DBE6 BYTE_EXACT
-// The image inlines sub_52db70 here, hence the two spilled registers.
-int __cdecl current_server() {
-    if (sub_52db70()) {
-        return 1;
-    }
-    if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) != 0 && ConsoleControlTurnActive == 0) {
-        return 0;
-    }
-    return static_cast<int>(NetDaemonNet.primary_state_.leading_words_[0]);
-}
-
-// ORIGINAL: 0x0052E050 ?hang_up@NetDaemon@@QAEXXZ 0x0052E050-0x0052E151 FILE BYTE_EXACT
-// size      257 bytes
-// prototype void (__thiscall ?hang_up@NetDaemon@@QAEXXZ)(NetDaemon* this)
-// callers   9   call targets   3
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x0047A7D0 0x0058FF70 0x00592EE0
-// PRESERVED UNIT - measured MISMATCH.
-//
-// Kept for COVERAGE. This directory IS on the ratchet: every file here
-// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
-// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
-// quarter of the project's total. It is still in no build; the earlier
-// header said "on no ratchet", which stopped being true when the map
-// moved into src/ and was still being written into new files.
-//
-// address        0x0052E050
-// measured tier  MISMATCH
-// divergence     16
-//
-// The WHOLE unit as measured, scaffolding included: for the units
-// that are byte-exact yet refuse extraction, the agent tuned the
-// emitted scaffolding and the body alone will not reproduce the
-// verdict. To resume, copy everything below back over
-//   build/byte-match/0052e050/unit.cpp
-// and score it with tools/agent_brief.py.
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?hang_up@NetDaemon@@QAEXXZ  at 0x0052E050  (257 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
-// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
-// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
-// and declaring `int i` twice in one function (VC6 leaks for-scope).
-// static_cast/reinterpret_cast are fine and are the right spelling.
-//
-// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
-// attempts to it. They are here rather than in a prompt so the next
-// agent does not rediscover them:
-//
-//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
-//    swapped; `if (x) {...}` gives `je`.
-//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
-//    two special cases branching FAR away, write them negated and
-//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
-//    sequential guard clauses, which inline each body instead.
-//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
-//    an indirect virtual call use the generated VCall shim below; for a
-//    thiscall function POINTER, take a member-function pointer of a
-//    dummy class instead of spelling the convention.
-//  * Loop form is visible: while / do-while / for lower differently,
-//    and so does counting up versus down.
-//  * If the original dedicates a callee-saved register to a constant
-//    across the whole body (an extra `push ebx`/`push edi` in the
-//    prologue), it had enough register pressure to do so. That is a
-//    hard case - the tool reports a similarity ratio so you can tell a
-//    near miss from a wrong body.
-
-
-// 0x1B3C is lock_state_[0].dword_[4], 0x1580/0x1584 are the Lock's tail
-// dwords, 0x1B7C is lock_state_[1].dword_[5] and the four dwords at 0x1B80
-// are lock_state_[1].dword_[6..9] - one per faction.
-void NetDaemon::hang_up() {
-    // Native 0x52E05B/0x52E068 skip popup cleanup on these two guards.
-    if (primary_state_.flags_ != 0) return;
-    if (IsMultiplayerNet == 0) return;
-
-    primary_state_.flags_ = 1;
-    if (GameDataStateStorage.fields_.net_turn_flags_ & 0x10) {
-        const int in_transit = ConsoleControlTurnActive;
-        if (sub_52db70() || in_transit != 0) {
-            if (in_transit != 0 &&
-                NetDaemonNet.primary_state_.leading_words_[0] == 0) goto L145;
-            message_data(0x8301, 0, 0, 0, 0, 0);
-        }
-    }
-    if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
-        locks_.records_[ConsoleGlobal.faction_id_].clear();
-        if (locks_.field_E0_ == ConsoleGlobal.faction_id_) {
-            locks_.field_E4_ = 0;
-            locks_.field_E0_ = 0;
-        }
-        field_1B7C_ &=
-            ~faction_masks_[ConsoleGlobal.faction_id_];
-        message_data(0x4b00, 0, 0, 0, 0, 0);
-    }
-L145:
-    NetMsgPrimary.close();
-}
-
 
 // ORIGINAL: 0x0052E900 ?send_game@NetDaemon@@QAEXXZ 0x0052E900-0x0052ED33 FILE BYTE_EXACT
 // size      1075 bytes
@@ -1135,6 +893,362 @@ void NetDaemon::send_game() {
     synch(0x15, 0, 0, 0, 0, 1, 0x2101);
     while (receive()) {
     }
+}
+
+// File-transfer protocol state and storage, shared by the sender and receiver.
+
+extern char NetDaemonFileTransferPath[0x104];
+
+
+struct NetDaemonFileIndexRecord {
+    uint16_t opcode;          // +0
+    uint16_t reserved_2;      // +2
+    int32_t source_player;    // +4
+    uint32_t ready_flags;     // +8
+    uint32_t chunk_count;     // +0xC
+    uint8_t file_index;       // +0x10
+    uint8_t checksum;         // +0x11
+    uint16_t reserved_12;     // +0x12
+    uint32_t file_size;       // +0x14
+    char filename[0x104];     // +0x18
+};
+static_assert(sizeof(NetDaemonFileIndexRecord) == 0x11C,
+              "native file-list message stride");
+static_assert(offsetof(NetDaemonFileIndexRecord, source_player) == 0x04,
+              "native file-list sender offset");
+static_assert(offsetof(NetDaemonFileIndexRecord, ready_flags) == 0x08,
+              "native file-list ready-mask offset");
+static_assert(offsetof(NetDaemonFileIndexRecord, chunk_count) == 0x0C,
+              "native file-list chunk-count offset");
+static_assert(offsetof(NetDaemonFileIndexRecord, file_index) == 0x10,
+              "native file-list file-index offset");
+static_assert(offsetof(NetDaemonFileIndexRecord, checksum) == 0x11,
+              "native file-list checksum offset");
+static_assert(offsetof(NetDaemonFileIndexRecord, file_size) == 0x14,
+              "native file-list file-size offset");
+static_assert(offsetof(NetDaemonFileIndexRecord, filename) == 0x18,
+              "native file-list filename offset");
+
+// Native F05 writes its path at +0x18 (0x52EE83..0x52EEAA).
+// Only opcode and path are populated; the intervening bytes stay untouched.
+struct NetDaemonFilePathPacket {
+    uint16_t opcode;
+    uint8_t reserved_2[0x16];
+    char path[0x104];
+};
+static_assert(offsetof(NetDaemonFilePathPacket, path) == 0x18,
+              "native transfer path offset");
+static_assert(sizeof(NetDaemonFilePathPacket) == 0x11C,
+              "native transfer path packet extent");
+
+// F0F writes source_player at +4; F07 writes state at +8, not at +2.
+// Each operation leaves all other payload/header bytes untouched.
+struct NetDaemonFileControlPacket {
+    uint16_t opcode;
+    uint16_t reserved_2;
+    int32_t source_player;
+    int32_t state;
+    uint8_t reserved_C[0x14];
+};
+static_assert(offsetof(NetDaemonFileControlPacket, source_player) == 4,
+              "native transfer acknowledgement player offset");
+static_assert(offsetof(NetDaemonFileControlPacket, state) == 8,
+              "native transfer completion state offset");
+static_assert(sizeof(NetDaemonFileControlPacket) == 0x20,
+              "native transfer control packet extent");
+
+struct NetDaemonFileChunkPacket {
+    uint16_t opcode;          // +0
+    uint16_t reserved_2;      // +2
+    uint32_t compressed_size; // +4
+    int32_t file_index;       // +8 (native sendBuf + 4, in uint16_t units)
+    uint32_t chunk_index;     // +0xC
+    uint8_t reserved_10[0x10];// +0x10
+    uint8_t payload[0x800];   // +0x20
+};
+static_assert(sizeof(NetDaemonFileChunkPacket) == 0x820,
+              "native file transfer packet extent");
+static_assert(offsetof(NetDaemonFileChunkPacket, compressed_size) == 0x04,
+              "native file transfer compressed-size offset");
+static_assert(offsetof(NetDaemonFileChunkPacket, file_index) == 0x08,
+              "native file transfer dword file-index offset");
+static_assert(offsetof(NetDaemonFileChunkPacket, chunk_index) == 0x0C,
+              "native file transfer chunk-index offset");
+static_assert(offsetof(NetDaemonFileChunkPacket, payload) == 0x20,
+              "native file transfer payload offset");
+
+static void netdaemon_set_file_index_records(NetDaemonFileIndexRecord *records) {
+    NetDaemonNet.file_index_records_ = records;
+}
+
+// RECOVERY_OBJECT: v1 0x0093F79C ?NetDaemonFileTransferMode@@3HA
+int NetDaemonFileTransferMode;
+// RECOVERY_OBJECT: v1 0x0093F7A0 ?NetDaemonFileTransferAckMask@@3IA
+uint32_t NetDaemonFileTransferAckMask;
+// RECOVERY_OBJECT: v1 0x0093F7A4 ?NetDaemonFileTransferCurrentFile@@3HA
+int NetDaemonFileTransferCurrentFile;
+// RECOVERY_OBJECT: v1 0x0093F7A8 ?NetDaemonFileTransferChunkCount@@3HA
+int NetDaemonFileTransferChunkCount;
+// RECOVERY_OBJECT: v1 0x0093F7AC ?NetDaemonFileTransferProgress@@3HA
+int NetDaemonFileTransferProgress;
+// RECOVERY_OBJECT: v1 0x0093F7B0 ?NetDaemonFileTransferReceiveBuffer@@3PAEA
+unsigned char *NetDaemonFileTransferReceiveBuffer;
+// Native534773/534890 reset this independent four-byte word to-1 in F05/F07.
+// The pinned image initializes it to-1. No native .text consumer is known;
+// this descriptive source name does not establish its original semantic domain.
+// RECOVERY_OBJECT: v1 0x0068C11C ?NetDaemonTransferResetWord@@3HA
+int NetDaemonTransferResetWord = -1;
+
+// ORIGINAL: 0x0052ED40 ?send_files@NetDaemon@@QAEHXZ 0x0052ED40-0x0052F517;0x0065E0B0-0x0065E0C2
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned52ED40..52F517 and cold65E0B0..65E0C2; retained git:06163ca7db005f89326ea0681a26af574b6ae2c3:src/unrecovered/0052ed40.cpp.", "Coupled F05..F0F receiver recovery and Net group methods are reviewed together under netdaemon-player-lifecycle-recovery; native protocol anomalies remain explicit."], "reason": "Recover the complete file-transfer producer on the genuine daemon, player, group and file-map owners; packet intervals retain the native protocol rather than fixed executable aliases."}
+// TRIED: automatic `Filemap fm;` local (real ctor/dtor, matching the draw_facilities Font precedent) for the compiler-generated SEH frame; retyped the scaffold's `_mkdir`/`sub_634280` externs (declared nullary) to the params the call sites need; IAT slots identified by matching Ghidra's WinAPI names to arg count/order: 0x669110 GetModuleFileNameA, 0x6690e4 GetCurrentDirectoryA, 0x669114 SetCurrentDirectoryA, 0x6690e0 FindFirstFileA, 0x669118 FindNextFileA, 0x66911c FindClose, 0x669130 GetFileSize, 0x669330 GetAsyncKeyState. Ghidra's local_50/uStack_4c/local_48 naming for the FILD operand looked offset from the real ebp deltas (same SEH-prolog quirk seen on other functions this batch); traced the real bytes instead and the fild reduces to plain (double)GetFileSize()*ratio. Not chased to byte-exact given size (2025 bytes, largest in batch).
+// Every lobby slot's transfer status has reached the given level.
+static inline int netdaemon_slots_reached(NetDaemon *daemon, uint8_t level) {
+    for (int slot = 0; slot < NetDaemonNet.player_count_; ++slot) {
+        if (daemon->process_slots_[slot + 1].state_.status_bytes_[0] < level) return 0;
+    }
+    return 1;
+}
+
+// Native 0x52F315/0x52F364 call CRT memcpy (0x645930) for both chunks.
+int NetDaemon::send_files() {
+    NetDaemonFileControlPacket control;
+    WIN32_FIND_DATAA found_file;
+    char path_copy[0x104];
+    NetDaemonFilePathPacket path_message;
+    int group_handle = 0;
+    Filemap filemap;
+    uint32_t send_mask = 0;
+    NetDaemonNet.field_1BDC_ = 0;
+    const int local_index = NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id_);
+    NetDaemonNet.file_index_records_ =
+        static_cast<NetDaemonFileIndexRecord *>(mem_get(0x11C00));
+
+    char executable_path[0x104];
+    GetModuleFileNameA(0, executable_path, sizeof executable_path);
+    char *last_separator = strrchr(executable_path, '\\');
+    if (last_separator != 0) last_separator[1] = '\0';
+
+    if (primary_state_.leading_words_[0] != 0 && NetDaemonNet.player_count_ > 0) {
+        for (int index = 0; index < NetDaemonNet.player_count_; ++index) {
+            if (local_index != index + 1) send_mask |= 1U << (index + 1);
+            process_slots_[index + 1].state_.status_bytes_[0] =
+                static_cast<uint8_t>(local_index == index + 1 ? 2 : 0);
+        }
+    }
+
+    if (primary_state_.leading_words_[0] != 0) {
+        path_copy[0] = '\0';
+        strcat(path_copy, SaveNameBuffer);
+        char *relative_path = path_copy;
+        if (path_copy[1] == ':') {
+            relative_path = path_copy + strlen(executable_path);
+        }
+        NetDaemonFileTransferPath[0] = '\0';
+        strcat(NetDaemonFileTransferPath, relative_path);
+        path_message.opcode = 0xF05;
+        path_message.path[0] = '\0';
+        strcat(path_message.path, NetDaemonFileTransferPath);
+        send_message(reinterpret_cast<char *>(&path_message), 0x11C, 0);
+        NetDaemonFileTransferAckMask = 0;
+        while (NetDaemonFileTransferAckMask != send_mask) {
+            unsigned long sender, channel;
+            void *packet = NetDaemonNet.Net::get(&sender, &channel);
+            if (packet != 0)
+                process_message(static_cast<char *>(packet), channel,
+                                static_cast<int>(sender));
+        }
+    } else {
+        while (NetDaemonFileTransferMode != 1) {
+            unsigned long sender, channel;
+            void *packet = NetDaemonNet.Net::get(&sender, &channel);
+            if (packet != 0)
+                process_message(static_cast<char *>(packet), channel,
+                                static_cast<int>(sender));
+        }
+        control.opcode = 0xF0F;
+        control.source_player = local_index;
+        Net::send(&control, 0x20,
+            static_cast<unsigned long>(host_player_id_), 1);
+        SaveNameBuffer[0] = '\0';
+        strcat(SaveNameBuffer, executable_path);
+        strcat(SaveNameBuffer, NetDaemonFileTransferPath);
+        filefind_set_alternative(SaveNameBuffer);
+    }
+
+    char previous_directory[0x104];
+    GetCurrentDirectoryA(sizeof previous_directory, previous_directory);
+    if (SetCurrentDirectoryA(SaveNameBuffer) == 0 && primary_state_.leading_words_[0] == 0
+        && _mkdir(SaveNameBuffer) == 0) {
+        SetCurrentDirectoryA(SaveNameBuffer);
+    }
+
+    int file_count = 0;
+    if (primary_state_.leading_words_[0] != 0) {
+        HANDLE find_handle = FindFirstFileA("*.*", &found_file);
+        if (find_handle != 0) {
+            do {
+                if ((found_file.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0) {
+                    NetDaemonNet.file_index_records_[file_count].opcode = 0xF06;
+                    NetDaemonNet.file_index_records_[file_count].source_player = local_index;
+                    NetDaemonNet.file_index_records_[file_count].ready_flags = 0;
+                    NetDaemonNet.file_index_records_[file_count].chunk_count =
+                        (found_file.nFileSizeLow + 0x800) >> 11;
+                    NetDaemonNet.file_index_records_[file_count].file_index =
+                        static_cast<uint8_t>(file_count);
+                    NetDaemonNet.file_index_records_[file_count].file_size =
+                        found_file.nFileSizeLow;
+                    NetDaemonNet.file_index_records_[file_count].checksum =
+                        checksum_file(found_file.cFileName);
+                    NetDaemonNet.file_index_records_[file_count].filename[0] = '\0';
+                    strcat(NetDaemonNet.file_index_records_[file_count].filename,
+                           found_file.cFileName);
+                    send_message(reinterpret_cast<char *>(
+                        &NetDaemonNet.file_index_records_[file_count]), 0x11C, 0);
+                    ++file_count;
+                }
+            } while (FindNextFileA(find_handle, &found_file) != 0);
+        }
+
+        control.opcode = 0xF07;
+        control.state = 2;
+        send_message(reinterpret_cast<char *>(&control), 0x20, 0);
+        FindClose(find_handle);
+
+        do {
+            do_draw();
+            unsigned long sender, channel;
+            void *packet = NetDaemonNet.Net::get(&sender, &channel);
+            if (packet != 0)
+                process_message(static_cast<char *>(packet), channel,
+                                static_cast<int>(sender));
+        } while (!netdaemon_slots_reached(this, 1));
+
+        int ready_count = 0;
+        for (int i = 0; i < file_count; ++i)
+            if (NetDaemonNet.file_index_records_[i].ready_flags != 0) ++ready_count;
+
+        NetDaemonFileChunkPacket *send_buffer =
+            static_cast<NetDaemonFileChunkPacket *>(mem_get(0x820));
+        send_buffer->opcode = 0xF0B;
+        for (int file_index = 0; file_index < file_count; ++file_index) {
+            if ((GetAsyncKeyState(VK_ESCAPE) & 0x8000) != 0) {
+                NetDaemonNet.field_1BDC_ = 1;
+                goto cleanup;
+            }
+            const uint32_t ready_flags =
+                NetDaemonNet.file_index_records_[file_index].ready_flags;
+            if (ready_flags == 0) continue;
+
+            parse_says(0, NetDaemonNet.file_index_records_[file_index].filename, -1, -1);
+            parse_num(0, ready_count--);
+            PopupModalState = 6;
+            pop_close();
+            x_pop_caption_flags(ScriptPopupFile, "MPSENDFILE", 0x214200, 0);
+            PopupModalState = 0;
+            send_buffer->file_index = file_index;
+
+            if (group_handle != 0) delete_group(group_handle);
+            group_handle = create_group("temp");
+            for (int member = 1; member < 8; ++member) {
+                if ((ready_flags & (1U << member)) != 0)
+                    add_to_group(group_handle, process_slots_[member].pid_);
+            }
+
+            if (filemap.open_read(
+                    NetDaemonNet.file_index_records_[file_index].filename, TRUE) != 0) {
+                unsigned long compressed_capacity = static_cast<unsigned long>(
+                    GetFileSize(filemap.get_handle(), 0) * 1.01f);
+                unsigned char *compressed =
+                    static_cast<unsigned char *>(mem_get(static_cast<int>(compressed_capacity)));
+                compress(compressed, &compressed_capacity,
+                         static_cast<unsigned char *>(filemap.get_view()),
+                         GetFileSize(filemap.get_handle(), 0));
+                send_buffer->compressed_size = compressed_capacity;
+
+                unsigned char *const end = compressed + compressed_capacity;
+                unsigned char *source = compressed;
+                int chunk_index = 0;
+                while (end - source >= 0x800) {
+                    do_draw();
+                    memcpy(send_buffer->payload, source, 0x800);
+                    send_buffer->chunk_index = chunk_index;
+                    source += 0x800;
+                    send_group(send_buffer, 0x820, group_handle, 1);
+                    ++chunk_index;
+                }
+                send_buffer->chunk_index = chunk_index;
+                if (end > source) {
+                    const int tail_length = end - source;
+                    memcpy(send_buffer->payload, source, tail_length);
+                    send_group(send_buffer, tail_length + 0x20, group_handle, 1);
+                }
+                filemap.close();
+                if (compressed != 0) free(compressed);
+            }
+        }
+        if (send_buffer != 0) free(send_buffer);
+
+        while (1) {
+            if ((GetAsyncKeyState(VK_ESCAPE) & 0x8000) != 0) break;
+            unsigned long sender, channel;
+            void *packet = NetDaemonNet.Net::get(&sender, &channel);
+            if (packet != 0)
+                process_message(static_cast<char *>(packet), channel,
+                                static_cast<int>(sender));
+            do_draw();
+            if (netdaemon_slots_reached(this, 2)) break;
+        }
+        control.opcode = 0xF07;
+        control.state = 3;
+        send_message(reinterpret_cast<char *>(&control), 0x20, 0);
+    } else {
+        while (NetDaemonFileTransferMode != 3
+               && NetDaemonNet.field_1BDC_ == 0) {
+            if ((GetAsyncKeyState(VK_ESCAPE) & 0x8000) != 0) {
+                NetDaemonNet.field_1BDC_ = 1;
+                pop_close();
+                break;
+            }
+            do_draw();
+            unsigned long sender, channel;
+            void *packet = NetDaemonNet.Net::get(&sender, &channel);
+            if (packet != 0)
+                process_message(static_cast<char *>(packet), channel,
+                                static_cast<int>(sender));
+        }
+    }
+
+cleanup:
+    pop_close();
+    do_all_draws();
+    SetCurrentDirectoryA(previous_directory);
+    if (NetDaemonNet.file_index_records_ != 0) free(NetDaemonNet.file_index_records_);
+    netdaemon_set_file_index_records(0);
+    NetDaemonFileTransferMode = 0;
+    return static_cast<int>(NetDaemonNet.field_1BDC_);
+}
+
+
+uint32_t __cdecl random(int min, int max);
+
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00534400 0x005388BC 0x005388E8 0x0053459B
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00534400 0x005388E8 0x00538908 0x00534E1C
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00534400 0x00538908 0x0053891C 0x00535811
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00534400 0x0053891C 0x00538930 0x00535A36
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00534400 0x00538930 0x00538944 0x00535D8F
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00534400 0x00538944 0x0053895C 0x0053640D
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00534400 0x0053895C 0x005389AC 0x00536958
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00534400 0x005389AC 0x005389E8 0x00536DC4
+// The image cross-jumps the three LOCK FAILED tails (0x1202/0x1203 into
+// 0x1204's copy) the way an inline body's expansions merge; the repeated
+// block was one inline helper. Name provisional.
+static inline void progress_backoff() {
+    if (!NetDaemonProgressLastTick) {
+        NetDaemonProgressLastTick = timeGetTime();
+    }
+    NetDaemonProgressInterval =
+        timeGetTime() - NetDaemonProgressLastTick > 5000 ? 5000 : 1000;
 }
 
 // ORIGINAL: 0x0052F520 ?send_rules@NetDaemon@@QAEXXZ 0x0052F520-0x0052F8D6 FILE BYTE_EXACT
@@ -1577,6 +1691,1258 @@ int NetDaemon::game_checksum(int *results) {
     return 0;
 }
 
+/*
+Purpose: Poll the network for one message; dispatch it when one arrives and
+         report whether it did. The message and its two parameters come back
+         from Net::get through out-parameters.
+// ORIGINAL: 0x00530320 ?receive@NetDaemon@@QAEHXZ 0x00530320-0x0053035E BYTE_EXACT
+// size      62 bytes
+// prototype int (__thiscall ?receive@NetDaemon@@QAEHXZ)(NetDaemon* this)
+// callers   9   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00534400 0x00630A00
+Return Value: 1 when a message was received and dispatched, 0 when none was
+Status: Complete
+Verification note: the original leaves both out-params as uninitialized stack
+garbage for Net::get to fill and reads them only after a nonzero return, so
+leaving them uninitialized here is equivalent by construction - Net::get
+always sets both before this reads them on the taken path.
+*/
+int NetDaemon::receive() {
+    unsigned long first;
+    unsigned long second;
+    void *result = NetDaemonNet.Net::get(&first, &second);
+    if (result == 0) {
+        return 0;
+    }
+    process_message(static_cast<char *>(result), second, static_cast<int>(first));
+    return 1;
+}
+
+// ORIGINAL: 0x00530360 ?net_tasks@NetDaemon@@QAEXXZ 0x00530360-0x005303A9 BYTE_EXACT
+// symbol    ?net_tasks@NetDaemon@@QAEXXZ
+// size      74 bytes
+// prototype void (__thiscall ?net_tasks@NetDaemon@@QAEXXZ)(NetDaemon* this)
+// callers   2   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// One pump turn: drain a message, run the lock check, run spock.
+void NetDaemon::net_tasks() {
+  wait_task();
+  unsigned long sender;
+  unsigned long channel;
+  void *result = NetDaemonNet.Net::get(&sender, &channel);
+  if (result != 0) {
+    process_message(static_cast<char *>(result), channel,
+                    static_cast<int>(sender));
+  }
+  locks_.check_global();
+  check_spock();
+}
+
+// Fixed-slot bindings carried from 005303b0.cpp
+
+// ORIGINAL: 0x005303B0 ?wait@NetDaemon@@QAEHPADPAHHH@Z 0x005303B0-0x00530493 FILE BYTE_EXACT
+// symbol    ?wait@NetDaemon@@QAEHPADPAIHH@Z
+// working copy - scaffold materialised by --work
+// size      227 bytes
+// prototype int (__thiscall ?wait@NetDaemon@@QAEHPADPAHHH@Z)(NetDaemon* this, int8*, int*, int, int)
+// callers   2   call targets   7
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0047A7D0 0x0047A890 0x0051F1B0 0x00534400 0x005901D0 0x005FC700 0x00630A00
+// indirect  0x005303CF 0x005303F9
+
+int NetDaemon::wait(char *message, uint32_t *state, int value, int timeout) {
+    int saved = NetDaemonNet.action_mode_;
+    ++NetBusyCount;
+    DWORD start = timeGetTime();
+    int shown = 0;
+    while (*state == value) {
+        if (ExitTurnLoop) break;
+        if (!shown && timeGetTime() - start > timeout) {
+            shown = 1;
+            NetMsgPrimary.pop(message, 0, 2, 0);
+        }
+        wait_task();
+        receive();
+        locks_.check_global();
+        check_spock();
+    }
+    if (shown) NetMsgPrimary.close();
+    NetDaemonNet.action_mode_ = saved;
+    --NetBusyCount;
+    return 0;
+}
+
+// Fixed-slot bindings carried from 005304a0.cpp
+
+// ORIGINAL: 0x005304A0 ?open_channel@NetDaemon@@QAEHHH@Z 0x005304A0-0x005305FF FILE BYTE_EXACT
+// TRIED: 0x00669368 is a function-pointer variable (timeGetTime's IAT slot), called indirectly rather than declared as a normal extern function - matches the disassembly's `call ebx` after `mov ebx,[0x669368]`. Net/NetMsg objects at 0x93cd90/0x805338 are fixed-address singletons. Landed at 0.85 mnemonic similarity.
+// working copy - scaffold materialised by --work
+// size      351 bytes
+// prototype int (__thiscall ?open_channel@NetDaemon@@QAEHHH@Z)(NetDaemon* this, int, int)
+// callers   ?   call targets   9
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0047A7D0 0x0047A890 0x0051F1B0 0x00534400 0x005901D0 0x00592EE0
+//           0x005FC700 0x006262F0 0x00630A00
+
+
+int NetDaemon::open_channel(int payload_10, int payload_14) {
+
+  if (IsMultiplayerNet != 0) {
+    if (field_1BA0_ != 0) {
+      return 1;
+    }
+
+    log_say("Client requesting Diplo Channel", ConsoleGlobal.faction_id_, 0, 0);
+    field_1BA0_ = 1;
+    field_1BA4_ = 0;
+
+    message_data(0x8240, 0, payload_10, payload_14, 0, 0);
+
+    DWORD (WINAPI *const timeGetTime_)() = timeGetTime;
+    int savedE904 = NetDaemonNet.action_mode_;
+    (NetBusyCount)++;
+    const DWORD start_time = timeGetTime_();
+
+    int sentAwait = 0;
+    while (field_1BA4_ == 0) {
+      if (ExitTurnLoop != 0) {
+        break;
+      }
+      if (!sentAwait) {
+        const DWORD elapsed = timeGetTime_() - start_time;
+        if (elapsed > 0x640) {
+          sentAwait = 1;
+          NetMsgPrimary.pop("AWAITCHANNEL", 0, 2, 0);
+        }
+      }
+      wait_task();
+
+      unsigned long sender, length;
+      void *gotten = NetDaemonNet.Net::get(&sender, &length);
+      if (gotten != 0) {
+        process_message(static_cast<char *>(gotten), length, static_cast<int>(sender));
+      }
+      locks_.check_global();
+      check_spock();
+    }
+    if (sentAwait) {
+      NetMsgPrimary.close();
+    }
+
+    NetDaemonNet.action_mode_ = savedE904;
+    (NetBusyCount)--;
+
+    if (field_1BA4_ >= 2) {
+      field_1BA0_ = 0;
+      return 1;
+    }
+  }
+  return 0;
+}
+
+
+// The daemon's Net, 0x0093CD90 in the image - see netdaemon.h. The image's
+// dynamic initializer at 0x0052DB10 constructs it at the fixed address
+// before WinMain; the recovered NetDaemon constructor here runs through this
+// build's own startup instead.
+// RECOVERY_OBJECT: v3 0x0093E8EC ?ConsoleFactionsWaitingMask@@3HA member ?NetDaemonNet@@3VNetDaemon@@A primary_state_.trailing_words_[6]
+// RECOVERY_OBJECT: v3 0x0093E964 0x0093E968 ?MessageWinNetworkMessageCount@@3HA 0x004713B0 member ?NetDaemonNet@@3VNetDaemon@@A field_1BD4_
+// RECOVERY_OBJECT: v3 0x0093D4F0 ?NetWinPlayerId@@3HA member ?NetDaemonNet@@3VNetDaemon@@A local_player_id_
+// RECOVERY_OBJECT: v3 0x0093D4F4 ?NetWinOtherPlayerId@@3HA member ?NetDaemonNet@@3VNetDaemon@@A host_player_id_
+// Bound: NetDaemon ends at +0x1BE8 (0x0093E978), where the separate saved process slot array begins (its own CRT initializer, 0x0052DB40).
+// RECOVERY_OBJECT: v2 0x0093CD90 0x0093E978 ?NetDaemonNet@@3VNetDaemon@@A 0x005A6CCB
+NetDaemon NetDaemonNet;  // 0x0093CD90
+
+// The saved copy of the eight process slots: its own global, constructed by
+// the initializer 0x0052DB40 (see netdaemon.h).
+// RECOVERY_OBJECT: v1 0x0093E978 ?NetDaemonSavedProcessSlots@@3PAUAlphaNetProcessSlot@@A
+AlphaNetProcessSlot NetDaemonSavedProcessSlots[8];
+
+
+
+/*
+Purpose: Tell the other clients this client is leaving the diplomacy channel.
+// ORIGINAL: 0x00530600 ?close_channel@NetDaemon@@QAEXXZ 0x00530600-0x0053062F BYTE_EXACT
+// size      47 bytes
+// prototype void (__thiscall ?close_channel@NetDaemon@@QAEXXZ)(NetDaemon* this)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00592EE0
+// Homed 2026-09-03 out of the recovered archive for the same reason.
+Status: Complete
+*/
+void NetDaemon::close_channel() {
+    if (IsMultiplayerNet != 0) {
+        message_data(0x8241, 0, 0, 0, 0, 0);
+        // 0x1BA0 is lock_state_[1].dword_[14].
+        field_1BA0_ = 0;
+    }
+}
+
+// Fixed-slot bindings carried from 00530630.cpp
+
+// ORIGINAL: 0x00530630 ?lock@NetDaemon@@QAEHHHHHHH@Z 0x00530630-0x0053091E FILE BYTE_EXACT
+// TRIED: MISMATCH #2 'push' vs 'mov' - prologue register-save order (ebx/esi/edi) differs from a straight `mov esi, ecx` first statement; did not chase further given function size (750B, 4 nested wait-loops). Body reproduces both wait-for-lock loops (do/while + break on the global abort flag), the target/scratch/x/y stack-slot reuse as scratch locals matching the disassembly's post-use reuse, and the merged final NOLOCK/NOLOCKGLOBAL warning-pop path.
+// working copy - scaffold materialised by --work
+// size      750 bytes
+// prototype int (__thiscall ?lock@NetDaemon@@QAEHHHHHHH@Z)(NetDaemon* this, int, int, int, int, int, int)
+// callers   4   call targets   9
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0047A7D0 0x0047A890 0x0051F1B0 0x00534400 0x005901D0 0x00593090 0x005FC700 0x006262F0 0x00630A00
+// indirect  0x005306EA 0x0053070F 0x005307E0 0x00530802
+
+int NetDaemon::lock(int target, int x, int y, int payload_18, int payload_1C, int scratch) {
+
+    if (IsMultiplayerNet == 0) {
+        return 0;
+    }
+    NetPlayerDropped = 0;
+
+    if (lock_held_ != 0) {
+        if (veh_locked_ != 0) {
+            return 1;
+        }
+// RECOVERY_LITERAL: v1 0x0068C21C 0x0068C228 $SG63904 0x00530630
+        NetMsgPrimary.pop("MOVEPENDING", 0, 2, (const char *)0);
+        return 1;
+    }
+
+    lock_held_ = 1;
+    field_1B70_ = 0;
+    locks_.field_E8_ = 0;
+
+    log_say((char *)"Client requesting lock", ConsoleGlobal.faction_id_, x, y);
+    message_lock(0x2210, target, x, y, payload_18, payload_1C, scratch, 0);
+
+    scratch = NetDaemonNet.action_mode_;
+    NetBusyCount = NetBusyCount + 1;
+    unsigned long t0 = timeGetTime();
+    int waited = 0;
+    while (field_1B70_ == 0) {
+        if (ExitTurnLoop != 0) {
+            break;
+        }
+        if (!waited) {
+            unsigned long now = timeGetTime();
+            if (now - t0 > 0x640) {
+                waited = 1;
+                NetMsgPrimary.pop((const char *)"AWAITLOCK", 0, 2, (const char *)0);
+            }
+        }
+        wait_task();
+        unsigned long sender, length;
+        void *got = NetDaemonNet.Net::get(&sender, &length);
+        if (got != 0) {
+            this->process_message(static_cast<char *>(got), length, static_cast<int>(sender));
+        }
+        locks_.check_global();
+        check_spock();
+    }
+    if (waited) {
+        NetMsgPrimary.close();
+    }
+
+    NetDaemonNet.action_mode_ = scratch;
+    NetBusyCount = NetBusyCount - 1;
+
+    if (field_1B70_ == 1) {
+        lock_word_1BC8_ = 0;
+        if ((unsigned char)target & 2) {
+            scratch = NetDaemonNet.action_mode_;
+            NetBusyCount = NetBusyCount + 1;
+            unsigned long t0b = timeGetTime();
+            target = (int)t0b;
+            int waited2 = 0;
+            while (locks_.field_E8_ == 0) {
+                if (ExitTurnLoop != 0) {
+                    break;
+                }
+                if (!waited2) {
+                    unsigned long now2 = timeGetTime();
+                    if (now2 - (unsigned long)target > 0x320) {
+                        waited2 = 1;
+                        NetMsgPrimary.pop((const char *)"AWAITGLOBALLOCK", 0, 2, (const char *)0);
+                    }
+                }
+                wait_task();
+                unsigned long sender, length;
+                void *got2 = NetDaemonNet.Net::get(&sender, &length);
+                if (got2 != 0) {
+                    this->process_message(static_cast<char *>(got2), length, static_cast<int>(sender));
+                }
+                locks_.check_global();
+                check_spock();
+            }
+            if (waited2) {
+                NetMsgPrimary.close();
+            }
+            NetDaemonNet.action_mode_ = scratch;
+            NetBusyCount = NetBusyCount - 1;
+        }
+        if (NetPlayerDropped == 0) {
+            return 0;
+        }
+        field_1B70_ = 2;
+    }
+
+    if (veh_locked_ == 0) {
+        // Native INC wraps, while its JG/JLE comparisons interpret signed bits.
+        if (++lock_word_1BC8_ > 0
+            || field_1B70_ > 2) {
+            const char *msg = (field_1B70_ == 2) ? (const char *)"NOLOCK" : (const char *)"NOLOCKGLOBAL";
+            NetMsgPrimary.pop(msg, 5000, 2, (const char *)0);
+            lock_word_1BC8_ = 0;
+        }
+    }
+
+    lock_held_ = 0;
+    return 1;
+}
+
+// Fixed-slot bindings carried from 00530920.cpp
+
+// ORIGINAL: 0x00530920 ?add_lock@NetDaemon@@QAEHHHH@Z 0x00530920-0x00530A91 FILE BYTE_EXACT
+// TRIED: reordering the initial `IsMultiplayerNet==0` / `field_1BAC_==0` guards; the mismatch (#5) is deeper, in how the two early returns and the ebx-lazy-save prologue are scheduled.
+// size      369 bytes
+// prototype int (__thiscall ?add_lock@NetDaemon@@QAEHHHH@Z)(NetDaemon* this, int, int, int)
+// callers   2   call targets   9
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0047A7D0 0x0047A890 0x0051F1B0 0x00534400 0x005901D0 0x00593090 0x005FC700 0x006262F0 0x00630A00
+// indirect  0x005309A6 0x005309C6
+
+int NetDaemon::add_lock(int target, int x, int y) {
+    if (IsMultiplayerNet == 0) {
+        return 0;
+    }
+    if (lock_held_ == 0) {
+        return 1;
+    }
+
+    log_say("Client requesting ADD LOCK", ConsoleGlobal.faction_id_, 0, 0);
+    field_1B70_ = 0;
+    message_lock(0x2215, target, x, y, 0, -1, -1, 0);
+
+    int savedVal = NetDaemonNet.action_mode_;
+    DWORD (WINAPI *const timeGetTimeFn)() = timeGetTime;
+    ++NetBusyCount;
+    y = timeGetTimeFn();
+
+    int popped = 0;
+    NetMsg *netMsg = &NetMsgPrimary;
+    Lock &lock = locks_;
+
+    while (field_1B70_ == 0) {
+        if (ExitTurnLoop != 0) {
+            break;
+        }
+        if (!popped) {
+            if (static_cast<unsigned int>(timeGetTimeFn() - y) > 0x640) {
+                popped = 1;
+                netMsg->pop("AWAITLOCK", 0, 2, 0);
+            }
+        }
+        wait_task();
+        unsigned long sender, length;
+        void *msgResult = NetDaemonNet.Net::get(&sender, &length);
+        if (msgResult != 0) {
+            process_message(static_cast<char *>(msgResult),
+                             length, static_cast<int>(sender));
+        }
+        lock.check_global();
+        check_spock();
+    }
+    if (popped) {
+        netMsg->close();
+    }
+
+    NetDaemonNet.action_mode_ = savedVal;
+    --NetBusyCount;
+    if (field_1B70_ != 1) {
+        netMsg->pop("NOLOCK", 5000, 2, 0);
+    }
+    return field_1B70_ != 1;
+}
+
+// Fixed-slot bindings carried from 00530aa0.cpp
+
+// ORIGINAL: 0x00530AA0 ?add_global@NetDaemon@@QAEHXZ 0x00530AA0-0x00530CFF FILE BYTE_EXACT
+// TRIED: translated the Ghidra hypothesis directly (two near-identical wait-for-global-lock phases, each: warn-once via NetMsg::pop after a timeGetTime() timeout, Net::get()/process_message() poll loop, Lock::check_global()+check_spock(), then NetMsg::close() if warned). MISMATCH #5 xor/mov - looks like register allocation for the ebx=0 constant, not a structural difference; body compiles and follows the disasm's two-phase shape and final NOLOCK/NOLOCKGLOBAL message selection exactly.
+// working copy - scaffold materialised by --work
+// size      607 bytes
+// prototype int (__thiscall ?add_global@NetDaemon@@QAEHXZ)(NetDaemon* this)
+// callers   12   call targets   8
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0047A7D0 0x0047A890 0x0051F1B0 0x00534400 0x005901D0 0x00592EE0 0x005FC700 0x00630A00
+// indirect  0x00530AF8 0x00530B1D 0x00530BC1 0x00530BE6
+
+int NetDaemon::add_global() {
+    if (IsMultiplayerNet == 0) {
+        return 0;
+    }
+    NetPlayerDropped = 0;
+    field_1B70_ = 0;
+    locks_.field_E8_ = 0;
+    message_data(0x2211, 0, 0, 0, 0, 0);
+    int saved_e904 = NetDaemonNet.action_mode_;
+    NetBusyCount = NetBusyCount + 1;
+    unsigned long start_time1 = timeGetTime();
+
+    int warned1 = 0;
+    while (field_1B70_ == 0) {
+        if (ExitTurnLoop != 0) break;
+        if (!warned1) {
+            unsigned long now = timeGetTime();
+            if (now - start_time1 > 0x640) {
+                warned1 = 1;
+                NetMsgPrimary.pop("AWAITGLOBALLOCK", 0, 2, 0);
+            }
+        }
+        wait_task();
+        unsigned long out_id, out_len;
+        void *result = NetDaemonNet.Net::get(&out_id, &out_len);
+        if (result != 0) {
+            process_message(static_cast<char *>(result), out_len, static_cast<int>(out_id));
+        }
+        locks_.check_global();
+        check_spock();
+    }
+    if (warned1) {
+        NetMsgPrimary.close();
+    }
+    NetDaemonNet.action_mode_ = saved_e904;
+    NetBusyCount = NetBusyCount - 1;
+
+    if (field_1B70_ == 1) {
+        NetBusyCount = NetBusyCount + 1;
+        unsigned long start_time2 = timeGetTime();
+        int warned2 = 0;
+        while (locks_.field_E8_ == 0) {
+            if (ExitTurnLoop != 0) break;
+            if (!warned2) {
+                unsigned long now = timeGetTime();
+                if (now - start_time2 > 800) {
+                    warned2 = 1;
+                    NetMsgPrimary.pop("AWAITGLOBALLOCK", 0, 2, 0);
+                }
+            }
+            wait_task();
+            unsigned long out_id2, out_len2;
+            void *result2 = NetDaemonNet.Net::get(&out_id2, &out_len2);
+            if (result2 != 0) {
+                process_message(static_cast<char *>(result2), out_len2, static_cast<int>(out_id2));
+            }
+            locks_.check_global();
+            check_spock();
+        }
+        if (warned2) {
+            NetMsgPrimary.close();
+        }
+        NetDaemonNet.action_mode_ = saved_e904;
+        NetBusyCount = NetBusyCount - 1;
+        if (NetPlayerDropped == 0) {
+            lock_word_1BC8_ = 0;
+            return 0;
+        }
+        field_1B70_ = 2;
+    }
+
+    if (veh_locked_ == 0) {
+        // Native INC wraps, while its JG/JLE comparisons interpret signed bits.
+        if (++lock_word_1BC8_ > 0
+            || field_1B70_ > 2) {
+            const char *msg = (field_1B70_ == 2) ? "NOLOCK" : "NOLOCKGLOBAL";
+            NetMsgPrimary.pop(msg, 5000, 2, 0);
+            lock_word_1BC8_ = 0;
+        }
+    }
+    lock_held_ = 0;
+    return 1;
+}
+
+/*
+Purpose: Release the global diplomacy lock this client holds. In a net game,
+         say so on the log and broadcast event 0x2212, then clear the four
+         announce-side fields; out of one there is nothing to release and the
+         body does nothing at all.
+// ORIGINAL: 0x00530D00 ?unlock@NetDaemon@@QAEXXZ 0x00530D00-0x00530D4E BYTE_EXACT
+// size      54 bytes
+// prototype void (__thiscall ?unlock@NetDaemon@@QAEXXZ)(NetDaemon* this)
+// callers   10   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00592EE0 0x006262F0
+// Homed 2026-09-03 out of the recovered-units archive: faction.cpp's
+// diplo_unlock calls it, and a pending_bodies forwarder would have landmined
+// this address's archive claim.
+// RESIDUAL: the annotation's span is SHORT, and it is the only reason this is
+//        not BYTE_EXACT. 0x00530D00-0x00530D4E (54 bytes) stops after the
+//        third field store. The shipped bytes run
+//          89 be b0 1b 00 00 / 89 be ac 1b 00 00 / 89 be cc 1b 00 00
+//          89 be c8 1b 00 00 / 5f 5e c3
+//        from 0x00530D35, so the function really ends at 0x00530D3C - 28
+//        instructions, which is exactly what this tree compiles, and all 21
+//        the annotation carries agree. Demoted for the span, not the body.
+Status: Complete
+*/
+void NetDaemon::unlock() {
+    // The four announce-side fields sit inside lock_state_[2] - 0x1BAC, 0x1BB0,
+    // 0x1BC8 and 0x1BCC are that entry's dword_[2], dword_[3], dword_[9] and
+    // dword_[10]. Named through the declared member rather than a raw offset.
+    if (IsMultiplayerNet != 0) {
+        // RECOVERY_LITERAL: v1 0x0068C2DC 0x0068C2F2 $SG64042 0x00530D00
+        log_say("Client releasing lock", ConsoleGlobal.faction_id_, 0, 0);
+        message_data(0x2212, 0, 0, 0, 0, 0);
+        exec_pending_ = 0;
+        lock_held_ = 0;
+        move_requests_ = 0;
+        lock_word_1BC8_ = 0;
+    }
+}
+
+
+// ORIGINAL: 0x00530D50 ?lock_base@NetDaemon@@QAEHHHHH@Z 0x00530D50-0x00530E48 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00530D50-0x00530E48"], "reason": "Recover the base-menu network guard through real Base records, shared turn state and NetDaemon lock-state members; original calls establish argument forwarding and log strings."}
+// Pinned arguments identify these NUL-terminated keys in the original;
+// the literal spans cover their text and terminators, not surrounding storage.
+// RECOVERY_LITERAL: v1 0x0068C2F4 0x0068C2FD $SG64050 0x00530D50
+// RECOVERY_LITERAL: v1 0x0068C300 0x0068C314 $SG64055 0x00530D50
+int NetDaemon::lock_base(int base_id, int target, int payload_1C, int payload_20) {
+    log_say("LockBase", UnkGlobal0093A934, ConsoleControlTurnActive,
+            BaseIDCurrentSelected);
+    if (!IsMultiplayerNet) {
+        return 0;
+    }
+    if (UnkGlobal0093A934) {
+        Bases[base_id].state |= BSTATE_NET_LOCKED;
+        message_data(0x4304, 0, 0, 0, 0, 0);
+        return 0;
+    }
+    if (ConsoleControlTurnActive) {
+        return 1;
+    }
+    if (primary_state_.leading_words_[2]) {
+        return 1;
+    }
+    log_say("LockBase Needs Lock", base_id, Bases[base_id].x, Bases[base_id].y);
+    return lock(target | 4, Bases[base_id].x, Bases[base_id].y,
+                0, payload_1C, payload_20);
+}
+
+// ORIGINAL: 0x00530E50 ?unlock_base@NetDaemon@@QAEXH@Z 0x00530E50-0x0053101F FILE BYTE_EXACT
+// size      463 bytes
+// prototype void (__thiscall ?unlock_base@NetDaemon@@QAEXH@Z)(NetDaemon* this, int)
+// callers   26   call targets   10
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0047A7D0 0x0047A890 0x0051F1B0 0x00534400 0x005901D0 0x00592EE0 0x00593250 0x005FC700 0x006262F0 0x00630A00
+// indirect  0x00530EED 0x00530F13
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x00530E50
+// measured tier  MISMATCH
+// divergence     88
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/00530e50/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?unlock_base@NetDaemon@@QAEXH@Z  at 0x00530E50  (463 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+void NetDaemon::unlock_base(int base_id) {
+    log_say("UnlockBase", NetDaemonNet.lock_held_, base_id, 0);
+    if (IsMultiplayerNet != 0 && NetDaemonNet.lock_held_ != 0) {
+        log_say("UnlockBase doing synch & unlock", 0, 0, 0);
+        synch_base(base_id);
+        await_synch();
+        unlock();
+    }
+}
+
+
+// ---------------------------------------------------------------------------
+// THE VEHICLE LOCK. 0x00531020 takes the vehicle by POINTER - the pointer is
+// what the daemon stores at lock_state_[1].dword_[4] (0x1B78) to remember
+// which unit this client holds - and everything else arrives as ints that go
+// straight through to NetDaemon::lock at the record offsets named below.
+// ---------------------------------------------------------------------------
+
+// ORIGINAL: 0x00531020 ?lock_veh@NetDaemon@@QAEHPAHHHHH@Z 0x00531020-0x005310EB BYTE_EXACT
+// size      203 bytes
+// prototype int (__thiscall ?lock_veh@NetDaemon@@QAEHPAHHHHH@Z)(NetDaemon* this, int*, int, int, int, int)
+// callers   32   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0047A890 0x00530630
+// 0x1B78 is lock_state_[1].dword_[4], 0x1BB0 lock_state_[2].dword_[3] and
+// 0x1BC0 lock_state_[2].dword_[7]. The is-alive word at 0x93E8EC is the
+// daemon's own lock_state_[0].dword_[12]. The unit's x and y come out of
+// Vehs[veh_id] - the image's `[0x952828 + id*0x34]` and `[0x95282a + ...]`.
+// LEVER: Vehs[*veh_id].x/.y through the modelled Veh record, not an extern
+// char[] base plus two short locals. The archive had this at MISMATCH #34;
+// naming the array is what lets VC6 fold the 0x34 stride into the two
+// `movsx reg, word ptr [id*0x34 + 0x952828/0x95282a]` the image emits, and
+// it took this body from 33 agreeing instructions to BYTE_EXACT 68/68
+// (2026-09-04).
+// Pinned arguments identify these NUL-terminated keys in the original;
+// the literal spans cover their text and terminators, not surrounding storage.
+// RECOVERY_LITERAL: v1 0x0068C340 0x0068C34C $SG64073 0x00531020
+int NetDaemon::lock_veh(int *veh_id, int target, int payload_1C,
+                        int payload_20, int payload_18) {
+    if (IsMultiplayerNet == 0) {
+        return 0;
+    }
+    if ((NetDaemonNet.primary_state_.trailing_words_[6] & (1 << ConsoleGlobal.faction_id_)) != 0 &&
+        (GameDataStateStorage.fields_.net_turn_flags_ & 0x10) == 0) {
+        NetMsgPrimary.pop("ALREADYDONE", 0, 2, 0);
+        return 1;
+    }
+
+    locked_veh_ = veh_id;
+    int result = lock(target, Vehs[*veh_id].x, Vehs[*veh_id].y, payload_18,
+                      payload_1C, payload_20);
+    if (result == 0 && *veh_id >= 0) {
+        exec_pending_ = 1;
+        field_1BC0_ = 0;
+        return 0;
+    }
+    locked_veh_ = 0;
+    return 1;
+}
+
+/*
+Purpose: Release the vehicle lock this client is holding. In a net game, tell
+         the log and the other players first - log_say names the faction that
+         is releasing and message_data broadcasts event 0x2212 - then clear the
+         four announce-side fields; in every game, clear the locked vehicle
+         record at 0x1B78 and the flag at 0x1BC4. Only the transport flag at
+         0x0093F660 gates the announce; any nonzero value is a net game.
+// ORIGINAL: 0x005310F0 ?unlock_veh@NetDaemon@@QAEXXZ 0x005310F0-0x0053114A BYTE_EXACT
+// size      90 bytes
+// prototype void (__thiscall ?unlock_veh@NetDaemon@@QAEXXZ)(NetDaemon* this)
+// callers   33   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00592EE0 0x006262F0
+// LEVER: the six raw `object[0x1B.. / 4]` stores came out and the named
+//        lock_state_ members went in - 0x1BAC/0x1BB0/0x1BC8/0x1BCC are
+//        lock_state_[2].dword_[2/3/9/10], 0x1B78 is lock_state_[1].dword_[4]
+//        and 0x1BC4 is lock_state_[2].dword_[8]. BYTE_EXACT held, so the
+//        member run is pinned by a body that was already exact, and the
+//        `reinterpret_cast<volatile uint32_t *>(this)` the raw spelling
+//        needed is gone with it.
+Return Value: None
+Status: Complete with temporary message_data original dependency
+*/
+void NetDaemon::unlock_veh() {
+    // The announce half is unlock(), expanded here: its literal is the one
+    // 0x0068C2DC every expansion in this unit pushes.
+    unlock();
+    // Shared tail: 0x1B78 is the vehicle record lock_veh (0x00531020) stores
+    // and 0x1BC4 its held flag.
+    locked_veh_ = 0;
+    veh_locked_ = 0;
+}
+
+// ORIGINAL: 0x00531150 ?automated_lock@NetDaemon@@QAEHPAHH@Z 0x00531150-0x005312F6 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00531150.cpp; image:0x00531150-0x005312F6", "Native5311A8 owns this+1BB4 in existing lock_state_[2].dword_[4]; warning5311EF uses initial time while polling531230 uses moving retry time."], "reason": "Recover automated vehicle locking through the genuine NetDaemon owner: native calls identify vehicle-ID pointer forwarding, separate initial-warning and retry timers, message pumping and balanced busy/state lifetimes."}
+// TRIED: MISMATCH #26 mov/add - NetDaemon has no known field layout, so the `locked` flag at this+0x1BB4 and the embedded Lock at this+0x14A0 are raw offsets rather than named members; close past instruction 26 but register allocation in the retry loop still differs.
+int NetDaemon::automated_lock(int *veh_id, int target) {
+    if (IsMultiplayerNet == 0) return 0;
+
+    log_say("Getting auto lock", *veh_id,
+            static_cast<int>(static_cast<int8_t>(Vehs[*veh_id].order)), 0);
+    ++NetBusyCount;
+    DWORD (WINAPI *const ticks)() = timeGetTime;
+    DWORD retry_time = ticks();
+    const DWORD initial_time = retry_time;
+    // This is the daemon's existing state entry at this+0x1BB4, not
+    // separate storage or an executable-address flag.
+    field_1BB4_ = 1;
+    // Native 0x5311BC and 0x531209 use a full dword warning flag.
+    int awaiting_orders = 0;
+    while (ExitTurnLoop == 0) {
+        if (lock_veh(veh_id, target, -1, -1, 0) == 0) break;
+        // The warning uses the initial time; retry pacing uses its own
+        // moving timestamp. Resetting both prevents the native warning.
+        if (!awaiting_orders && ticks() - initial_time > 500U) {
+            awaiting_orders = 1;
+            NetMsgPrimary.pop("AWAITORDERS", 0, 2, 0);
+        } else {
+            log_say("(Auto lock delay)", *veh_id, 0, 0);
+            while (ticks() - retry_time < 250U && ExitTurnLoop == 0) {
+                wait_task();
+                unsigned long first;
+                unsigned long second;
+                void *message = NetDaemonNet.Net::get(&first, &second);
+                if (message != 0) {
+                    process_message(static_cast<char *>(message),
+                                    second, static_cast<int>(first));
+                }
+                locks_.check_global();
+                check_spock();
+            }
+            retry_time = ticks();
+        }
+        check_spock();
+    }
+    if (awaiting_orders) NetMsgPrimary.close();
+    log_say("Got auto lock", *veh_id,
+            static_cast<int>(static_cast<int8_t>(Vehs[*veh_id].order)), 0);
+    field_1BB4_ = 0;
+    --NetBusyCount;
+    return ExitTurnLoop;
+}
+
+
+// Fixed-slot bindings carried from 00531300.cpp
+
+// ORIGINAL: 0x00531300 ?await_exec@NetDaemon@@QAEXH@Z 0x00531300-0x00531477 FILE BYTE_EXACT
+// size      375 bytes
+// prototype void (__thiscall ?await_exec@NetDaemon@@QAEXH@Z)(NetDaemon* this, int)
+// callers   17   call targets   9
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0047A7D0 0x0047A890 0x0051F1B0 0x00534400 0x005901D0 0x00592EE0 0x005FC700 0x006262F0 0x00630A00
+// indirect  0x00531345 0x0053136B
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x00531300
+// measured tier  MISMATCH
+// divergence     18
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/00531300/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?await_exec@NetDaemon@@QAEXH@Z  at 0x00531300  (375 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+
+void NetDaemon::await_exec(int opcode) {
+    if (IsMultiplayerNet != 0) {
+        log_say("Client waiting for acknowledgement", ConsoleGlobal.faction_id_, 0, 0);
+        NetDaemonWaitTicks += wait("AWAITEXEC", &exec_pending_, 1, 2000);
+        log_say("Client received acknowledgement", ConsoleGlobal.faction_id_, 0, 0);
+        if (opcode != 0) {
+            unlock_veh();
+        }
+        exec_pending_ = 0;
+    }
+}
+
+// ORIGINAL: 0x00531480 ?await_synch@NetDaemon@@QAEXXZ 0x00531480-0x005315B6 FILE BYTE_EXACT
+// size      310 bytes
+// prototype void (__thiscall ?await_synch@NetDaemon@@QAEXXZ)(NetDaemon* this)
+// callers   22   call targets   8
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0047A7D0 0x0047A890 0x0051F1B0 0x00534400 0x005901D0 0x005FC700 0x006262F0 0x00630A00
+// indirect  0x005314D0 0x005314F6
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x00531480
+// measured tier  MISMATCH
+// divergence     19
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/00531480/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?await_synch@NetDaemon@@QAEXXZ  at 0x00531480  (310 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+
+void NetDaemon::await_synch() {
+    if (IsMultiplayerNet != 0) {
+        synch_pending_ = 1;
+        log_say("Awaiting acknowledgement of SYNCH", ConsoleGlobal.faction_id_, 0, 0);
+        NetDaemonWaitTicks += wait("AWAITEXEC", &synch_pending_, 1, 2000);
+        if (synch_pending_ == 0) {
+            log_say("Received SYNCH acknowledgement", ConsoleGlobal.faction_id_, 0, 0);
+        }
+        synch_pending_ = 0;
+    }
+}
+
+// Fixed-slot bindings carried from 005315c0.cpp
+
+// ORIGINAL: 0x005315C0 ?await_diplo@NetDaemon@@QAEXH@Z 0x005315C0-0x005316F9 FILE BYTE_EXACT
+// size      313 bytes
+// prototype void (__thiscall ?await_diplo@NetDaemon@@QAEXH@Z)(NetDaemon* this, int)
+// callers   35   call targets   8
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0047A7D0 0x0047A890 0x0051F1B0 0x00534400 0x005901D0 0x005FC700 0x006262F0 0x00630A00
+// indirect  0x0053160E 0x00531634
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x005315C0
+// measured tier  MISMATCH
+// divergence     20
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/005315c0/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?await_diplo@NetDaemon@@QAEXH@Z  at 0x005315C0  (313 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+
+void NetDaemon::await_diplo(int opcode) {
+    if (IsMultiplayerNet != 0) {
+        field_1BA8_ = opcode;
+        log_say("Awaiting DIPLO event", ConsoleGlobal.faction_id_, 0, 0);
+        int32_t saved = NetDaemonNet.action_mode_;
+        (NetBusyCount)++;
+        unsigned int start_time = timeGetTime();
+        int timed_out = 0;
+        while (field_1BA8_ == opcode) {
+            if (ExitTurnLoop != 0) {
+                break;
+            }
+            if (!timed_out) {
+                unsigned int now = timeGetTime();
+                if (now - start_time > 0x7d0) {
+                    timed_out = 1;
+                    NetMsgPrimary.pop(
+                        "AWAITDIPLO", 0, 2, 0);
+                }
+            }
+            wait_task();
+            unsigned long v_at_4;
+            unsigned long v_at_8;
+            void *result = NetDaemonNet.Net::get(&v_at_4, &v_at_8);
+            if (result != 0) {
+                process_message(static_cast<char *>(result), v_at_8, v_at_4);
+            }
+            locks_.check_global();
+            check_spock();
+        }
+        if (timed_out) {
+            NetMsgPrimary.close();
+        }
+        NetDaemonNet.action_mode_ = saved;
+        (NetBusyCount)--;
+        if (field_1BA8_ == 0) {
+            log_say("Received DIPLO acknowledgement", ConsoleGlobal.faction_id_, 0, 0);
+        }
+        field_1BA8_ = 0;
+    }
+}
+
+// ORIGINAL: 0x00531700 ?maybe_lock@NetDaemon@@QAEHPAHHHHHH@Z 0x00531700-0x00531780 BYTE_EXACT
+// size      128 bytes
+// prototype int (__thiscall ?maybe_lock@NetDaemon@@QAEHPAHHHHHH@Z)(NetDaemon* this, int*, int, int, int, int, int)
+// callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// 0x1BAC is lock_state_[2].dword_[2] - the lock-held flag unlock() clears -
+// 0x1BC4 lock_state_[2].dword_[8] and 0x1BCC lock_state_[2].dword_[10], which
+// the archive never mapped. The repeat count compares SIGNED there (the
+// image's `jle`, not `jbe`), and that plus naming the field is what took this
+// off the archive's MISMATCH.
+int NetDaemon::maybe_lock(int *veh_id, int flag, int payload_1C, int payload_20,
+                          int payload_18, int extra) {
+  if (flag != 0) {
+    return 0;
+  }
+  if (lock_held_ != 0) {
+    if (veh_locked_ == 0) {
+      ++move_requests_;
+      // The image compares the count SIGNED here (`jle`), not unsigned.
+      if (1 < move_requests_) {
+        // RECOVERY_LITERAL: v1 0x0068C474 0x0068C480 $SG64168 0x00531700
+        NetMsgPrimary.pop("MOVEPENDING", 0, 2, 0);
+      }
+    }
+    return 1;
+  }
+  move_requests_ = 0;
+  return lock_veh(veh_id, payload_1C | 4, payload_20, payload_18, extra);
+}
+
+// WORKAROUND(inline): order_veh's stack walk exits straight to the loop end on a
+// negative id (0x532031 `jl 0x532048`), which VC6 threads only from a ternary
+// body; veh.h's if-form veh_next_stack_id stops at the loop test. Switching the
+// header measured a loss in probe (606 -> 572 matching), so the twin stays local.
+static inline int net_next_stack_id(int veh_id) {
+    return veh_id >= 0 ? Vehs[veh_id].next_veh_id_stack : veh_id;
+}
+
+// ORIGINAL: 0x00531780 ?order_veh@NetDaemon@@QAEHHHH@Z 0x00531780-0x00532135 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned531780..532135; retained git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00531780.cpp preserves the original identity and contradictory seed history.", "Native5318D6..5318E8 computes(otherFaction+2099*ownFaction)*4+96C9F8: PlayersData[ownFaction].diplo_treaties[otherFaction], stride20CC, not the seed20C8 transcription.", "Veh34/Base134/Map2C fields and existing coordinate arrays own the accessed state; signed speed and lock cleanup/callback ordering retain native obligations. Literal68C480 is GLOBALFAILED and68C490 is Sending MOVE VEH message; native synchronization and the full message dispatcher remain unfinished."], "reason": "Recover the complete network move request, feasibility, acknowledgement and release paths on the genuine daemon and game records. Preserve unresolved synch/process_message dependencies rather than forwarding this body to the original executable."}
+// TRIED: Ghidra pseudocode used as primary source with call-signature/arg-order fixes confirmed against raw disasm (base_at, veh_at, stack_check, stack_fix, order_veh [both the free function at 0x5947C0 and the recursive-looking unqualified call, which needed `::order_veh` to avoid binding to the member of the same name], message_veh, Net::get/process_message argument mapping). Factored the 3x near-identical "release lock" block into a file-scope #define/#undef macro rather than a helper function. One table access (DAT_0096c9f8 with a stride of 0x20c8 rather than the 0x20cc seen everywhere else in this codebase) is transcribed as Ghidra states it but NOT independently re-derived from raw disasm - flagging this as the weakest point if it mismatches. Compiles; first divergence at instr #34. Not chased to byte-exact given size (2485 bytes).
+int NetDaemon::order_veh(int veh_id, int direction, int mode) {
+    if (IsMultiplayerNet == 0) return ::order_veh(veh_id, direction, 3);
+
+    // maybe_lock expanded: the image pushes its 0x0068C474 literal.
+    if (maybe_lock(&veh_id, mode, 0, -1, -1, 0) != 0) return 0;
+
+    const int x = wrap_map_x(Vehs[veh_id].x + VehMoveDeltaX[direction]);
+    const int y = Vehs[veh_id].y + VehMoveDeltaY[direction];
+    const int faction = Vehs[veh_id].faction_id;
+    const int base_id = base_at(x, y);
+    int good_base = 0;
+    Vehs[veh_id].probe_action = 0;
+
+    if (base_id >= 0) {
+        const int base_faction = Bases[base_id].faction_id_current;
+        if (base_faction != faction &&
+            (PlayersData[faction].diplo_treaties[base_faction] & 1U) == 0) {
+            if (veh_who(x, y) < 0 || Bases[base_id].population_size <= 1) {
+                good_base = 1;
+            }
+        }
+    }
+
+    if (planet_buster(veh_id) != 0) {
+        const int fixed_vehicle = stack_fix(veh_at(x, y));
+        if (fixed_vehicle >= 0 && Vehs[fixed_vehicle].faction_id != faction &&
+            (PlayersData[faction]
+                 .diplo_treaties[Vehs[fixed_vehicle].faction_id] & 1U) == 0) {
+            good_base = 1;
+        }
+    }
+
+    if (good_base && add_global() != 0) {
+        if (veh_locked_ != 0) {
+            Vehs[veh_id].order = 0;
+            Vehs[veh_id].state &= 0xFCFFBDFFU;
+            synch_veh(veh_id);
+            await_synch();
+        }
+        unlock_veh();
+        return 0;
+    }
+
+    if (::order_veh(veh_id, direction, 1) != 0
+        && veh_moves(veh_id) != 0) {
+
+        if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_INFO_WARFARE &&
+            base_id >= 0 && faction != Bases[base_id].faction_id_current &&
+            stack_check(veh_at(x, y), 2, PLAN_INFO_WARFARE, -1, -1) == 0 &&
+            !good_base) {
+            if (add_global() != 0) {
+                if (veh_locked_ != 0) {
+                    Vehs[veh_id].order = 0;
+                    Vehs[veh_id].state &= 0xFCFFBDFFU;
+                    synch_veh(veh_id);
+                    await_synch();
+                }
+                unlock_veh();
+                NetMsgPrimary.pop("GLOBALFAILED", 5000, 0, nullptr);
+                return 0;
+            }
+        } else if (base_id >= 0 && Bases[base_id].population_size <= 1
+            && (Vehs[veh_id].state & 0x80000U) != 0 && !good_base && add_global() != 0) {
+            if (veh_locked_ != 0) {
+                Vehs[veh_id].order = 0;
+                Vehs[veh_id].state &= 0xFCFFBDFFU;
+                synch_veh(veh_id);
+                await_synch();
+            }
+            unlock_veh();
+            return 0;
+        }
+
+        {
+            log_say("Sending MOVE VEH message", veh_id, direction, 0);
+            message_veh(0x2401, veh_id, direction, 0);
+            if (mode == 0) {
+                await_exec(1);
+            }
+
+            int have_other_vehicle = 0;
+            int other_faction_found = 0;
+            for (int offset = 0; offset < 21; ++offset) {
+                const int adjacent_x = wrap_map_x(RadiusOffsetX[offset] + x);
+                const int adjacent_y = RadiusOffsetY[offset] + y;
+                if (on_map(adjacent_x, adjacent_y)) {
+                    const Map &tile = MapTiles[MapLongitude * adjacent_y + (adjacent_x >> 1)];
+                    if ((tile.bit & 3U) != 0) {
+                        const int other_faction = tile.val2 & 0x0F;
+                        if (other_faction < 8 && other_faction >= 0 && other_faction != ConsoleGlobal.faction_id_ &&
+                            (PlayersData[other_faction]
+                                 .diplo_treaties[ConsoleGlobal.faction_id_] & 0x10U) != 0 &&
+                            is_human(other_faction)) {
+                            // The image keeps this walk in the veh_id
+                            // parameter's frame slot ([ebp+8]).
+                            veh_id = veh_at(adjacent_x, adjacent_y);
+                            while (veh_id >= 0) {
+                                if (Vehs[veh_id].faction_id == other_faction) {
+                                    if (veh_moves(veh_id) != 0) {
+                                        have_other_vehicle = 1;
+                                        other_faction_found = other_faction;
+                                    }
+                                }
+                                veh_id = net_next_stack_id(veh_id);
+                            }
+                        }
+                    }
+                }
+            }
+            (void)other_faction_found;
+
+            if (have_other_vehicle) {
+                DWORD (WINAPI *get_time)() = timeGetTime;
+                DWORD start = get_time();
+                do {
+                    do_all_non_input();
+                    receive();
+                    locks_.check_global();
+                    if (ExitTurnLoop != 0) break;
+                } while (get_time() - start < 500);
+            }
+            return 1;
+        }
+    }
+
+    // Native 0x005320CF is the short failure tail used by a rejected order
+    // or exhausted movement. It does not clear/synchronize the vehicle.
+    unlock_veh();
+    return 0;
+}
+
+
+// Clear the real daemon lock entries, then close its AlphaNet base.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x0051DD00 sub_51dd00 0x0051DD00-0x0051DDE0 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0051dd00.cpp"], "reason": "Recover typed lock-entry reset, borrowed selection pointer clearing and ordered lock cleanup before qualified AlphaNet close."}
+// body src/netdaemon.h
+// symbol    ?reset@NetDaemon@@QAEXXZ
+// BODY IN netdaemon.h, as an in-class `MEASURED` inline member.
+
+// Vehicle wait paths update the shared counter defined above.
+
+// Original0x00532140 performs the network half of a vehicle drop. The
+// lock-state words are the existing typed entries documented above; the
+// non-network action is a separate real owner in veh.cpp.
+// ORIGINAL: 0x00532140 ?veh_drop@NetDaemon@@QAEHHHH@Z 0x00532140-0x00532563 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00532140.cpp retained signature/extents and complete seed; no historical claim copied", "Coordinator full pinned original instruction decode 00532140..00532563, typed source owner fields and corrected original call/branch evidence", "recovery/tests/test_airdrop_network.py actual-body directional treaty and network reentrancy controls; not linked/runtime/game acceptance"], "reason": "Recover the true network receiver, lock/ack state, global action-mode reentrancy and local execution result; preserve early return versus release paths and leave ExitTurnLoop read-only."}
+// TRIED: flat byte-offset fields on `this` (class deliberately opaque); goto-based control flow matching the two shared cleanup labels (LAB_00532357 reject path, LAB_0053254e release path); fixed two Ghidra-vs-raw-asm discrepancies (speed()/array index use a1 not a2 after the reassignment at 0x53236F; message_data arg order is a1,a2,a3). Diverges at #0 (thiscall prologue).
+int NetDaemon::veh_drop(int veh_id, int x, int y) {
+    if (IsMultiplayerNet == 0) {
+        return action_airdrop(veh_id, x, y, 3);
+    }
+
+    if (maybe_lock(&veh_id, 0, 0, x, y, 4) != 0) {
+        return 0;
+    }
+
+    int base_id = base_at(x, y);
+    if (base_id >= 0
+        && Bases[base_id].faction_id_current != Vehs[veh_id].faction_id
+        && (PlayersData[Vehs[veh_id].faction_id]
+                .diplo_treaties[Bases[base_id].faction_id_current] & 1U) == 0) {
+        if (veh_who(x, y) >= 0) {
+            goto airdrop;
+        }
+        if (add_global() != 0) {
+            if (veh_locked_ != 0) {
+                Vehs[veh_id].order = 0;
+                Vehs[veh_id].state &= 0xFCFFBDFFU;
+                synch_veh(veh_id);
+                await_synch();
+            }
+            unlock_veh();
+            return 0;
+        }
+    }
+
+airdrop:
+    if (action_airdrop(veh_id, x, y, 1) != 0
+        && veh_moves(veh_id) != 0) {
+        message_data(0x2403, 0, veh_id, x, y, 0);
+        // WORKAROUND(inline): the image expands await_exec(1) and its wait
+        // here (literals 0x0068C390/0x0068C3B4/0x0068C3C0) but keeps receive
+        // out of line and expands unlock_veh's unlock; no spelling of the
+        // helpers reproduces that split, so the expansion is written out.
+        if (IsMultiplayerNet != 0) {
+            log_say("Client waiting for acknowledgement",
+                    ConsoleGlobal.faction_id_, 0, 0);
+            // Native reuses the dead coordinate parameters for the saved
+            // action mode and the wait start time.
+            y = NetDaemonNet.action_mode_;
+            ++NetBusyCount;
+            x = timeGetTime();
+            int showed_wait_popup = 0;
+            while (exec_pending_ == 1) {
+                if (ExitTurnLoop != 0) break;
+                if (!showed_wait_popup && timeGetTime() - x > 2000) {
+                    showed_wait_popup = 1;
+                    NetMsgPrimary.pop("AWAITEXEC", 0, 2, nullptr);
+                }
+                wait_task();
+                // A constant member pointer keeps receive out of line here.
+                int (NetDaemon::*const receive_call)() = &NetDaemon::receive;
+                (this->*receive_call)();
+                locks_.check_global();
+                check_spock();
+            }
+            if (showed_wait_popup) NetMsgPrimary.close();
+            NetDaemonNet.action_mode_ = y;
+            --NetBusyCount;
+            log_say("Client received acknowledgement",
+                    ConsoleGlobal.faction_id_, 0, 0);
+            unlock_veh();
+            exec_pending_ = 0;
+        }
+        return 1;
+    }
+
+    unlock_veh();
+    return 0;
+}
+
+// ORIGINAL: 0x00532570 ?action@NetDaemon@@QAEHHH@Z 0x00532570-0x005328BA BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned532570..5328BA; retained git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00532570.cpp is a conflicting historical hint, not the product ABI.", "Entry signed order classification is distinct from the post-automated_lock vehicle/order reload. Absolute93E904 timing storage belongs to NetDaemonNet.lock_state_[1].dword_[3], while wait flags and Lock remain receiver-relative.", "Pinned NUL log/popup literals68C2DC,68C390,68C3B4,68C3C0,68C4AC,68C4C8,68C4F4,68C510,68C530,68C544,68C554; ExitTurnLoop is game owner9B2068."], "reason": "Recover the full multiplayer vehicle-order action through the real NetDaemon, vehicle and transport owners; retain its original seed identity and complete span without a matching or runtime claim."}
+// TRIED: g_00669368 is a cached stdcall function pointer (timeGetTime), called twice through the same loaded pointer - matches the two `// indirect` sites.
+// LEVER: the tail is a switch on the branch with the road case first and
+//        await last; branch is assigned only in the in-range arm, and the
+//        range test is `>= 0x18`.
+int NetDaemon::action(int veh_id, int mode) {
+    if (IsMultiplayerNet == 0) return ::action(veh_id);
+
+    const int8_t action_type = Vehs[veh_id].order;
+    int category;
+    enum Branch { await_branch, go_to, road_to };
+    Branch branch;
+
+    if (action_type < 4 || action_type >= 0x18) {
+        if (action_type == ORDER_MOVE_TO || action_type == ORDER_AI_MOVE_TO) {
+            category = 4;
+            branch = go_to;
+        } else if (action_type == ORDER_ROAD_TO || action_type == ORDER_MAGTUBE_TO) {
+            category = 4;
+            branch = road_to;
+        } else {
+            if (action_type != 0)
+                log_say("Falling out of action loop", veh_id, action_type, 0);
+            if (mode != 0) {
+                unlock_veh();
+            }
+            return 0;
+        }
+    } else {
+        branch = await_branch;
+        category = (action_type == 0x14 || action_type == 0x15) ? 0xC : 0;
+    }
+
+    veh_locked_ = 1;
+    if (mode == 0 && automated_lock(&veh_id, category) != 0) return 0;
+
+    switch (branch) {
+    case road_to:
+        log_say("Net.Action Road", 0, 0, 0);
+        action_road_to(veh_id);
+        break;
+    case go_to:
+        log_say("Net.Action Go to", veh_id, 0, 0);
+        action_go_to(veh_id);
+        break;
+    case await_branch:
+        log_say("Net.Action Sending ACTION message to server", veh_id,
+                Vehs[veh_id].order, 0);
+        message_veh(0x2404, veh_id, 0, 0);
+        log_say("Net.Action Awaiting EXEC", 0, 0, 0);
+        await_exec(1);
+        log_say("Net.Action Finished awaiting", 0, 0, 0);
+        break;
+    }
+    log_say("Falling out of Net.Action", 0, 0, 0);
+    return 1;
+}
+
+
 
 // ORIGINAL: 0x005328C0 ?end_of_event@NetDaemon@@QAEHHH@Z 0x005328C0-0x00532934 FILE BYTE_EXACT
 // symbol    ?end_of_event@NetDaemon@@QAEXHH@Z
@@ -1883,12 +3249,12 @@ void __cdecl rebuild_base_bits() {
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00532C30 0x00532DA4 0x00532DC0 0x00532C47
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x00532C30 0x00532DC0 0x00532DF1 0x00532C41
-// RECOVERY_LITERAL: v1 0x0068C594 0x0068C5A5 $SG63866 0x00532C30
-// RECOVERY_LITERAL: v1 0x0068C5C8 0x0068C5DA $SG63872 0x00532C30
-// RECOVERY_LITERAL: v1 0x0068C584 0x0068C592 $SG63864 0x00532C30
-// RECOVERY_LITERAL: v1 0x0068C5A8 0x0068C5B7 $SG63868 0x00532C30
-// RECOVERY_LITERAL: v1 0x0068C5B8 0x0068C5C7 $SG63870 0x00532C30
-// RECOVERY_LITERAL: v1 0x0068C5DC 0x0068C5EB $SG63874 0x00532C30
+// RECOVERY_LITERAL: v1 0x0068C594 0x0068C5A5 $SG64633 0x00532C30
+// RECOVERY_LITERAL: v1 0x0068C5C8 0x0068C5DA $SG64639 0x00532C30
+// RECOVERY_LITERAL: v1 0x0068C584 0x0068C592 $SG64631 0x00532C30
+// RECOVERY_LITERAL: v1 0x0068C5A8 0x0068C5B7 $SG64635 0x00532C30
+// RECOVERY_LITERAL: v1 0x0068C5B8 0x0068C5C7 $SG64637 0x00532C30
+// RECOVERY_LITERAL: v1 0x0068C5DC 0x0068C5EB $SG64641 0x00532C30
 // ORIGINAL: 0x00532C30 ?synch_display@@YAXHHHH@Z 0x00532C30-0x00532DA2 FILE BYTE_EXACT
 // size      370 bytes
 // prototype 
@@ -1972,760 +3338,804 @@ void __cdecl synch_display(int stage, int arg1, int arg2, int arg3) {
 }
 
 
-// ---------------------------------------------------------------------------
-// THE VEHICLE LOCK. 0x00531020 takes the vehicle by POINTER - the pointer is
-// what the daemon stores at lock_state_[1].dword_[4] (0x1B78) to remember
-// which unit this client holds - and everything else arrives as ints that go
-// straight through to NetDaemon::lock at the record offsets named below.
-// ---------------------------------------------------------------------------
 
-// ORIGINAL: 0x00531020 ?lock_veh@NetDaemon@@QAEHPAHHHHH@Z 0x00531020-0x005310EB BYTE_EXACT
-// size      203 bytes
-// prototype int (__thiscall ?lock_veh@NetDaemon@@QAEHPAHHHHH@Z)(NetDaemon* this, int*, int, int, int, int)
-// callers   32   call targets   2
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x0047A890 0x00530630
-// 0x1B78 is lock_state_[1].dword_[4], 0x1BB0 lock_state_[2].dword_[3] and
-// 0x1BC0 lock_state_[2].dword_[7]. The is-alive word at 0x93E8EC is the
-// daemon's own lock_state_[0].dword_[12]. The unit's x and y come out of
-// Vehs[veh_id] - the image's `[0x952828 + id*0x34]` and `[0x95282a + ...]`.
-// LEVER: Vehs[*veh_id].x/.y through the modelled Veh record, not an extern
-// char[] base plus two short locals. The archive had this at MISMATCH #34;
-// naming the array is what lets VC6 fold the 0x34 stride into the two
-// `movsx reg, word ptr [id*0x34 + 0x952828/0x95282a]` the image emits, and
-// it took this body from 33 agreeing instructions to BYTE_EXACT 68/68
-// (2026-09-04).
-// Pinned arguments identify these NUL-terminated keys in the original;
-// the literal spans cover their text and terminators, not surrounding storage.
-// RECOVERY_LITERAL: v1 0x0068C340 0x0068C34C $SG63885 0x00531020
-int NetDaemon::lock_veh(int *veh_id, int target, int payload_1C,
-                        int payload_20, int payload_18) {
-    if (IsMultiplayerNet == 0) {
-        return 0;
-    }
-    if ((NetDaemonNet.primary_state_.trailing_words_[6] & (1 << ConsoleGlobal.faction_id_)) != 0 &&
-        (GameDataStateStorage.fields_.net_turn_flags_ & 0x10) == 0) {
-        NetMsgPrimary.pop("ALREADYDONE", 0, 2, 0);
-        return 1;
-    }
 
-    locked_veh_ = veh_id;
-    int result = lock(target, Vehs[*veh_id].x, Vehs[*veh_id].y, payload_18,
-                      payload_1C, payload_20);
-    if (result == 0 && *veh_id >= 0) {
-        exec_pending_ = 1;
-        field_1BC0_ = 0;
-        return 0;
-    }
-    locked_veh_ = 0;
-    return 1;
-}
 
-// ORIGINAL: 0x00531150 ?automated_lock@NetDaemon@@QAEHPAHH@Z 0x00531150-0x005312F6 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00531150.cpp; image:0x00531150-0x005312F6", "Native5311A8 owns this+1BB4 in existing lock_state_[2].dword_[4]; warning5311EF uses initial time while polling531230 uses moving retry time."], "reason": "Recover automated vehicle locking through the genuine NetDaemon owner: native calls identify vehicle-ID pointer forwarding, separate initial-warning and retry timers, message pumping and balanced busy/state lifetimes."}
-// TRIED: MISMATCH #26 mov/add - NetDaemon has no known field layout, so the `locked` flag at this+0x1BB4 and the embedded Lock at this+0x14A0 are raw offsets rather than named members; close past instruction 26 but register allocation in the retry loop still differs.
-int NetDaemon::automated_lock(int *veh_id, int target) {
-    if (IsMultiplayerNet == 0) return 0;
+// Observed network path window at 0x0093AC88, shared with send_files.
+// Complete allocation extent and producer migration remain unproved.
+// RECOVERY_OBJECT: v1 0x0093AC88 ?NetDaemonFileTransferPath@@3PADA
+char NetDaemonFileTransferPath[0x104];
 
-    log_say("Getting auto lock", *veh_id,
-            static_cast<int>(static_cast<int8_t>(Vehs[*veh_id].order)), 0);
-    ++NetBusyCount;
-    DWORD (WINAPI *const ticks)() = timeGetTime;
-    DWORD retry_time = ticks();
-    const DWORD initial_time = retry_time;
-    // This is the daemon's existing state entry at this+0x1BB4, not
-    // separate storage or an executable-address flag.
-    field_1BB4_ = 1;
-    // Native 0x5311BC and 0x531209 use a full dword warning flag.
-    int awaiting_orders = 0;
-    while (ExitTurnLoop == 0) {
-        if (lock_veh(veh_id, target, -1, -1, 0) == 0) break;
-        // The warning uses the initial time; retry pacing uses its own
-        // moving timestamp. Resetting both prevents the native warning.
-        if (!awaiting_orders && ticks() - initial_time > 500U) {
-            awaiting_orders = 1;
-            NetMsgPrimary.pop("AWAITORDERS", 0, 2, 0);
-        } else {
-            log_say("(Auto lock delay)", *veh_id, 0, 0);
-            while (ticks() - retry_time < 250U && ExitTurnLoop == 0) {
-                wait_task();
-                unsigned long first;
-                unsigned long second;
-                void *message = NetDaemonNet.Net::get(&first, &second);
-                if (message != 0) {
-                    process_message(static_cast<char *>(message),
-                                    second, static_cast<int>(first));
-                }
-                locks_.check_global();
-                check_spock();
-            }
-            retry_time = ticks();
+
+// Persistent incoming-only staging shared by every rule transfer. The
+// observed required window is 0x1920; the image's complete allocation extent
+// remains unknown. This object is not cleared between calls.
+// RECOVERY_OBJECT: v1 0x0093AD8C _NetDaemonRulesSyncStaging
+// Each rule transfer stages one table here and the final chunk compacts it
+// into the live table, so the buffer is one union of the eleven tables.
+static union {
+    unsigned char bytes[0x1920];
+    RulesTechnology technology[MaxTechnologyNum];
+    RulesTerraforming terraforming[MaxTerrainNum];
+    RulesTimeControl time_control[MaxTimeControlNum];
+    RulesChassis chassis[MaxChassisNum];
+    RulesReactor reactor[MaxReactorNum];
+    RulesWeapon weapon[MaxWeaponNum];
+    RulesArmor armor[MaxArmorNum];
+    RulesAbility ability[MaxAbilityNum];
+    RulesFacility facility[MaxFacilityNum];
+    RulesCitizen citizen[MaxCitizenNum];
+    RulesSocialCategory social_category[MaxSocialCatNum];
+} NetDaemonRulesSyncStaging;
+
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00532E00 0x0053412C 0x005341D4 0x00532E4E
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00532E00 0x005341D4 0x0053420C 0x005331E5
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00532E00 0x0053420C 0x005342B4 0x0053344D
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00532E00 0x005342B4 0x005342EC 0x00533803
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00532E00 0x005342EC 0x00534324 0x00533CA4
+// ORIGINAL: 0x00532E00 ?synch@NetDaemon@@QAEXFHHHPADHF@Z 0x00532E00-0x00534129
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned532E00..534129; retained git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00532e00.cpp; independent jump-table and chunk/callback review.", "Opcode0 exact398-byte partition uses existing source objects and bounded fields; rule80..8D receive stages persist and compact into Alpha-owned fields only on the final chunk.", "Map destinations and diplomacy pair captured before callbacks; outgoing owners reread per chunk; changed base/vehicle notification suppresses scatter; sender mask is lock_state_[2].dword_[6].", "Path93AC88 send_files producer52ED40 remains pending. Stage93AD8C and game tail94B4D8 have observed window bounds only, not complete allocation extents.", "recovery/tasks/netdaemon-player-lifecycle-recovery.json; retained historical claims and prototype-history owner migration."], "reason": "Recover the complete synchronization protocol through genuine NetDaemon state and source-owned game, vehicle, faction, map and rule data. Wire serializers describe explicit member intervals, not an invented contiguous game object. Retain seed provenance and original identity; no matching or runtime acceptance is implied."}
+// TRIED: full transcription of both jump-table dispatches (size switch, address switch, tail array-compaction switch) and the chunk loop; MISMATCH #0 in the prologue (frame-size/local-order only), not in the dispatch logic - coverage is close to 100% of the original's ~4900 bytes, byte-exactness not chased further.
+// One switch sizes the transfer (and raises the receive-side progress
+// popups), the chunk loop selects each chunk's owner address in a second
+// switch, and a third switch compacts staged rule tables on the final chunk.
+// Opcodes without an address case use the chunk offset itself as the address,
+// exactly as the image does. Diplomacy (0x16) travels through a local tuple
+// that is scattered back after the loop.
+void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
+                      int outgoing, int16_t flags) {
+    int k;
+    int j;
+    int wire[18];
+    int faction1;
+    int faction2;
+    int map_rows;
+    int x;
+    int y;
+    int length;
+    int remainder;
+    int total;
+    int size;
+    char *src;
+    SyncHeaderPrefix *header;
+    int i;
+    int local_turn;
+
+    if (!IsMultiplayerNet) return;
+
+    header = reinterpret_cast<SyncHeaderPrefix *>(packet);
+    size = 8;
+    switch (opcode) {
+    case 0x00:
+        if (!outgoing && static_cast<int>(primary_state_.trailing_words_[1]) >= 0) {
+            NetMsgPrimary.pop("SYNCHINGGAME", 0, 1, 0);
+            do_all_draws();
+            primary_state_.trailing_words_[1] = 1;
         }
-        check_spock();
-    }
-    if (awaiting_orders) NetMsgPrimary.close();
-    log_say("Got auto lock", *veh_id,
-            static_cast<int>(static_cast<int8_t>(Vehs[*veh_id].order)), 0);
-    field_1BB4_ = 0;
-    --NetBusyCount;
-    return ExitTurnLoop;
-}
-
-// ORIGINAL: 0x0052DF30 ?init@NetDaemon@@QAEHH@Z 0x0052DF30-0x0052E041
-// TRIED: `if (setup(option)==0) return 0; return 1;` and its `!=`/local-var/ if-else variants all boolean-normalize (neg/sbb or xor/setcc) at #51 where the original keeps two distinct epilogues (fall-through returns the call's own eax, the taken branch explicitly sets eax=1). Landing the closest form.
-// size      273 bytes
-// prototype int (__thiscall ?init@NetDaemon@@QAEHH@Z)(NetDaemon* this, int)
-// callers   1   call targets   3
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x004E25B0 0x004E31E0 0x005900D0
-
-
-int NetDaemon::init(int option) {
-
-    reset();
-
-    primary_state_.flags_ = 0;
-    primary_state_.leading_words_[2] = 0;
-
-    // The image's fall-through path leaves setup's own eax (zero) in place
-    // and has a second epilogue: the original fell off the end here.
-    if (AlphaNet::setup(option)) {
-        return 1;
-    }
-}
-
-// Fixed-slot bindings carried from 005303b0.cpp
-
-// ORIGINAL: 0x005303B0 ?wait@NetDaemon@@QAEHPADPAHHH@Z 0x005303B0-0x00530493 FILE BYTE_EXACT
-// symbol    ?wait@NetDaemon@@QAEHPADPAIHH@Z
-// working copy - scaffold materialised by --work
-// size      227 bytes
-// prototype int (__thiscall ?wait@NetDaemon@@QAEHPADPAHHH@Z)(NetDaemon* this, int8*, int*, int, int)
-// callers   2   call targets   7
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x0047A7D0 0x0047A890 0x0051F1B0 0x00534400 0x005901D0 0x005FC700 0x00630A00
-// indirect  0x005303CF 0x005303F9
-
-int NetDaemon::wait(char *message, uint32_t *state, int value, int timeout) {
-    int saved = NetDaemonNet.action_mode_;
-    ++NetBusyCount;
-    DWORD start = timeGetTime();
-    int shown = 0;
-    while (*state == value) {
-        if (ExitTurnLoop) break;
-        if (!shown && timeGetTime() - start > timeout) {
-            shown = 1;
-            NetMsgPrimary.pop(message, 0, 2, 0);
-        }
-        wait_task();
-        receive();
-        locks_.check_global();
-        check_spock();
-    }
-    if (shown) NetMsgPrimary.close();
-    NetDaemonNet.action_mode_ = saved;
-    --NetBusyCount;
-    return 0;
-}
-
-// Fixed-slot bindings carried from 005304a0.cpp
-
-// ORIGINAL: 0x005304A0 ?open_channel@NetDaemon@@QAEHHH@Z 0x005304A0-0x005305FF FILE BYTE_EXACT
-// TRIED: 0x00669368 is a function-pointer variable (timeGetTime's IAT slot), called indirectly rather than declared as a normal extern function - matches the disassembly's `call ebx` after `mov ebx,[0x669368]`. Net/NetMsg objects at 0x93cd90/0x805338 are fixed-address singletons. Landed at 0.85 mnemonic similarity.
-// working copy - scaffold materialised by --work
-// size      351 bytes
-// prototype int (__thiscall ?open_channel@NetDaemon@@QAEHHH@Z)(NetDaemon* this, int, int)
-// callers   ?   call targets   9
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x0047A7D0 0x0047A890 0x0051F1B0 0x00534400 0x005901D0 0x00592EE0
-//           0x005FC700 0x006262F0 0x00630A00
-
-
-int NetDaemon::open_channel(int payload_10, int payload_14) {
-
-  if (IsMultiplayerNet != 0) {
-    if (field_1BA0_ != 0) {
-      return 1;
-    }
-
-    log_say("Client requesting Diplo Channel", ConsoleGlobal.faction_id_, 0, 0);
-    field_1BA0_ = 1;
-    field_1BA4_ = 0;
-
-    message_data(0x8240, 0, payload_10, payload_14, 0, 0);
-
-    DWORD (WINAPI *const timeGetTime_)() = timeGetTime;
-    int savedE904 = NetDaemonNet.action_mode_;
-    (NetBusyCount)++;
-    const DWORD start_time = timeGetTime_();
-
-    int sentAwait = 0;
-    while (field_1BA4_ == 0) {
-      if (ExitTurnLoop != 0) {
+        size = 0x398;
         break;
-      }
-      if (!sentAwait) {
-        const DWORD elapsed = timeGetTime_() - start_time;
-        if (elapsed > 0x640) {
-          sentAwait = 1;
-          NetMsgPrimary.pop("AWAITCHANNEL", 0, 2, 0);
-        }
-      }
-      wait_task();
-
-      unsigned long sender, length;
-      void *gotten = NetDaemonNet.Net::get(&sender, &length);
-      if (gotten != 0) {
-        process_message(static_cast<char *>(gotten), length, static_cast<int>(sender));
-      }
-      locks_.check_global();
-      check_spock();
-    }
-    if (sentAwait) {
-      NetMsgPrimary.close();
-    }
-
-    NetDaemonNet.action_mode_ = savedE904;
-    (NetBusyCount)--;
-
-    if (field_1BA4_ >= 2) {
-      field_1BA0_ = 0;
-      return 1;
-    }
-  }
-  return 0;
-}
-
-// Fixed-slot bindings carried from 00530630.cpp
-
-// ORIGINAL: 0x00530630 ?lock@NetDaemon@@QAEHHHHHHH@Z 0x00530630-0x0053091E FILE BYTE_EXACT
-// TRIED: MISMATCH #2 'push' vs 'mov' - prologue register-save order (ebx/esi/edi) differs from a straight `mov esi, ecx` first statement; did not chase further given function size (750B, 4 nested wait-loops). Body reproduces both wait-for-lock loops (do/while + break on the global abort flag), the target/scratch/x/y stack-slot reuse as scratch locals matching the disassembly's post-use reuse, and the merged final NOLOCK/NOLOCKGLOBAL warning-pop path.
-// working copy - scaffold materialised by --work
-// size      750 bytes
-// prototype int (__thiscall ?lock@NetDaemon@@QAEHHHHHHH@Z)(NetDaemon* this, int, int, int, int, int, int)
-// callers   4   call targets   9
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x0047A7D0 0x0047A890 0x0051F1B0 0x00534400 0x005901D0 0x00593090 0x005FC700 0x006262F0 0x00630A00
-// indirect  0x005306EA 0x0053070F 0x005307E0 0x00530802
-
-int NetDaemon::lock(int target, int x, int y, int payload_18, int payload_1C, int scratch) {
-
-    if (IsMultiplayerNet == 0) {
-        return 0;
-    }
-    NetPlayerDropped = 0;
-
-    if (lock_held_ != 0) {
-        if (veh_locked_ != 0) {
-            return 1;
-        }
-        NetMsgPrimary.pop(NetDaemonLockMovePendingText, 0, 2, (const char *)0);
-        return 1;
-    }
-
-    lock_held_ = 1;
-    field_1B70_ = 0;
-    locks_.field_E8_ = 0;
-
-    log_say((char *)"Client requesting lock", ConsoleGlobal.faction_id_, x, y);
-    message_lock(0x2210, target, x, y, payload_18, payload_1C, scratch, 0);
-
-    scratch = NetDaemonNet.action_mode_;
-    NetBusyCount = NetBusyCount + 1;
-    unsigned long t0 = timeGetTime();
-    int waited = 0;
-    while (field_1B70_ == 0) {
-        if (ExitTurnLoop != 0) {
-            break;
-        }
-        if (!waited) {
-            unsigned long now = timeGetTime();
-            if (now - t0 > 0x640) {
-                waited = 1;
-                NetMsgPrimary.pop((const char *)"AWAITLOCK", 0, 2, (const char *)0);
-            }
-        }
-        wait_task();
-        unsigned long sender, length;
-        void *got = NetDaemonNet.Net::get(&sender, &length);
-        if (got != 0) {
-            this->process_message(static_cast<char *>(got), length, static_cast<int>(sender));
-        }
-        locks_.check_global();
-        check_spock();
-    }
-    if (waited) {
-        NetMsgPrimary.close();
-    }
-
-    NetDaemonNet.action_mode_ = scratch;
-    NetBusyCount = NetBusyCount - 1;
-
-    if (field_1B70_ == 1) {
-        lock_word_1BC8_ = 0;
-        if ((unsigned char)target & 2) {
-            scratch = NetDaemonNet.action_mode_;
-            NetBusyCount = NetBusyCount + 1;
-            unsigned long t0b = timeGetTime();
-            target = (int)t0b;
-            int waited2 = 0;
-            while (locks_.field_E8_ == 0) {
-                if (ExitTurnLoop != 0) {
-                    break;
-                }
-                if (!waited2) {
-                    unsigned long now2 = timeGetTime();
-                    if (now2 - (unsigned long)target > 0x320) {
-                        waited2 = 1;
-                        NetMsgPrimary.pop((const char *)"AWAITGLOBALLOCK", 0, 2, (const char *)0);
-                    }
-                }
-                wait_task();
-                unsigned long sender, length;
-                void *got2 = NetDaemonNet.Net::get(&sender, &length);
-                if (got2 != 0) {
-                    this->process_message(static_cast<char *>(got2), length, static_cast<int>(sender));
-                }
-                locks_.check_global();
-                check_spock();
-            }
-            if (waited2) {
-                NetMsgPrimary.close();
-            }
-            NetDaemonNet.action_mode_ = scratch;
-            NetBusyCount = NetBusyCount - 1;
-        }
-        if (NetPlayerDropped == 0) {
-            return 0;
-        }
-        field_1B70_ = 2;
-    }
-
-    if (veh_locked_ == 0) {
-        // Native INC wraps, while its JG/JLE comparisons interpret signed bits.
-        if (++lock_word_1BC8_ > 0
-            || field_1B70_ > 2) {
-            const char *msg = (field_1B70_ == 2) ? (const char *)"NOLOCK" : (const char *)"NOLOCKGLOBAL";
-            NetMsgPrimary.pop(msg, 5000, 2, (const char *)0);
-            lock_word_1BC8_ = 0;
-        }
-    }
-
-    lock_held_ = 0;
-    return 1;
-}
-
-// Fixed-slot bindings carried from 00530920.cpp
-
-// ORIGINAL: 0x00530920 ?add_lock@NetDaemon@@QAEHHHH@Z 0x00530920-0x00530A91 FILE BYTE_EXACT
-// TRIED: reordering the initial `IsMultiplayerNet==0` / `field_1BAC_==0` guards; the mismatch (#5) is deeper, in how the two early returns and the ebx-lazy-save prologue are scheduled.
-// size      369 bytes
-// prototype int (__thiscall ?add_lock@NetDaemon@@QAEHHHH@Z)(NetDaemon* this, int, int, int)
-// callers   2   call targets   9
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x0047A7D0 0x0047A890 0x0051F1B0 0x00534400 0x005901D0 0x00593090 0x005FC700 0x006262F0 0x00630A00
-// indirect  0x005309A6 0x005309C6
-
-int NetDaemon::add_lock(int target, int x, int y) {
-    if (IsMultiplayerNet == 0) {
-        return 0;
-    }
-    if (lock_held_ == 0) {
-        return 1;
-    }
-
-    log_say("Client requesting ADD LOCK", ConsoleGlobal.faction_id_, 0, 0);
-    field_1B70_ = 0;
-    message_lock(0x2215, target, x, y, 0, -1, -1, 0);
-
-    int savedVal = NetDaemonNet.action_mode_;
-    DWORD (WINAPI *const timeGetTimeFn)() = timeGetTime;
-    ++NetBusyCount;
-    y = timeGetTimeFn();
-
-    int popped = 0;
-    NetMsg *netMsg = &NetMsgPrimary;
-    Lock &lock = locks_;
-
-    while (field_1B70_ == 0) {
-        if (ExitTurnLoop != 0) {
-            break;
-        }
-        if (!popped) {
-            if (static_cast<unsigned int>(timeGetTimeFn() - y) > 0x640) {
-                popped = 1;
-                netMsg->pop("AWAITLOCK", 0, 2, 0);
-            }
-        }
-        wait_task();
-        unsigned long sender, length;
-        void *msgResult = NetDaemonNet.Net::get(&sender, &length);
-        if (msgResult != 0) {
-            process_message(static_cast<char *>(msgResult),
-                             length, static_cast<int>(sender));
-        }
-        lock.check_global();
-        check_spock();
-    }
-    if (popped) {
-        netMsg->close();
-    }
-
-    NetDaemonNet.action_mode_ = savedVal;
-    --NetBusyCount;
-    if (field_1B70_ != 1) {
-        netMsg->pop("NOLOCK", 5000, 2, 0);
-    }
-    return field_1B70_ != 1;
-}
-
-// Fixed-slot bindings carried from 00530aa0.cpp
-
-// ORIGINAL: 0x00530AA0 ?add_global@NetDaemon@@QAEHXZ 0x00530AA0-0x00530CFF FILE BYTE_EXACT
-// TRIED: translated the Ghidra hypothesis directly (two near-identical wait-for-global-lock phases, each: warn-once via NetMsg::pop after a timeGetTime() timeout, Net::get()/process_message() poll loop, Lock::check_global()+check_spock(), then NetMsg::close() if warned). MISMATCH #5 xor/mov - looks like register allocation for the ebx=0 constant, not a structural difference; body compiles and follows the disasm's two-phase shape and final NOLOCK/NOLOCKGLOBAL message selection exactly.
-// working copy - scaffold materialised by --work
-// size      607 bytes
-// prototype int (__thiscall ?add_global@NetDaemon@@QAEHXZ)(NetDaemon* this)
-// callers   12   call targets   8
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x0047A7D0 0x0047A890 0x0051F1B0 0x00534400 0x005901D0 0x00592EE0 0x005FC700 0x00630A00
-// indirect  0x00530AF8 0x00530B1D 0x00530BC1 0x00530BE6
-
-int NetDaemon::add_global() {
-    if (IsMultiplayerNet == 0) {
-        return 0;
-    }
-    NetPlayerDropped = 0;
-    field_1B70_ = 0;
-    locks_.field_E8_ = 0;
-    message_data(0x2211, 0, 0, 0, 0, 0);
-    int saved_e904 = NetDaemonNet.action_mode_;
-    NetBusyCount = NetBusyCount + 1;
-    unsigned long start_time1 = timeGetTime();
-
-    int warned1 = 0;
-    while (field_1B70_ == 0) {
-        if (ExitTurnLoop != 0) break;
-        if (!warned1) {
-            unsigned long now = timeGetTime();
-            if (now - start_time1 > 0x640) {
-                warned1 = 1;
-                NetMsgPrimary.pop("AWAITGLOBALLOCK", 0, 2, 0);
-            }
-        }
-        wait_task();
-        unsigned long out_id, out_len;
-        void *result = NetDaemonNet.Net::get(&out_id, &out_len);
-        if (result != 0) {
-            process_message(static_cast<char *>(result), out_len, static_cast<int>(out_id));
-        }
-        locks_.check_global();
-        check_spock();
-    }
-    if (warned1) {
-        NetMsgPrimary.close();
-    }
-    NetDaemonNet.action_mode_ = saved_e904;
-    NetBusyCount = NetBusyCount - 1;
-
-    if (field_1B70_ == 1) {
-        NetBusyCount = NetBusyCount + 1;
-        unsigned long start_time2 = timeGetTime();
-        int warned2 = 0;
-        while (locks_.field_E8_ == 0) {
-            if (ExitTurnLoop != 0) break;
-            if (!warned2) {
-                unsigned long now = timeGetTime();
-                if (now - start_time2 > 800) {
-                    warned2 = 1;
-                    NetMsgPrimary.pop("AWAITGLOBALLOCK", 0, 2, 0);
-                }
-            }
-            wait_task();
-            unsigned long out_id2, out_len2;
-            void *result2 = NetDaemonNet.Net::get(&out_id2, &out_len2);
-            if (result2 != 0) {
-                process_message(static_cast<char *>(result2), out_len2, static_cast<int>(out_id2));
-            }
-            locks_.check_global();
-            check_spock();
-        }
-        if (warned2) {
+    case 0x24:
+        size = 0x98;
+        break;
+    case 0x15:
+        if (!outgoing) {
             NetMsgPrimary.close();
+            do_all_draws();
+            primary_state_.trailing_words_[1] = 8;
         }
-        NetDaemonNet.action_mode_ = saved_e904;
-        NetBusyCount = NetBusyCount - 1;
-        if (NetPlayerDropped == 0) {
-            lock_word_1BC8_ = 0;
-            return 0;
+        size = 4;
+        break;
+    case 0x0A:
+    case 0x0B:
+    case 0x17:
+    case 0x25:
+    case 0x26:
+        size = 4;
+        break;
+    case 0x04:
+        if (!outgoing && primary_state_.trailing_words_[1] == 1) {
+            NetMsgPrimary.pop("SYNCHINGWORLD", 0, 1, 0);
+            do_all_draws();
+            primary_state_.trailing_words_[1] = 2;
         }
-        field_1B70_ = 2;
+        size = MapArea * sizeof(Map);
+        break;
+    case 0x05:
+        if (!outgoing && primary_state_.trailing_words_[1] == 2) {
+            NetMsgPrimary.pop("SYNCHINGREGIONS", 0, 1, 0);
+            do_all_draws();
+            primary_state_.trailing_words_[1] = 3;
+        }
+        size = 0xE00;
+        break;
+    case 0x06:
+        if (!outgoing && primary_state_.trailing_words_[1] == 3) {
+            NetMsgPrimary.pop("SYNCHINGPLAYERS", 0, 1, 0);
+            do_all_draws();
+            primary_state_.trailing_words_[1] = 4;
+        }
+        size = sizeof(PlayerData);
+        break;
+    case 0x07:
+        size = sizeof(Player);
+        break;
+    case 0x0E:
+        size = sizeof(VehPrototype);
+        break;
+    case 0x0F:
+        size = a3 * sizeof(VehPrototype);
+        break;
+    case 0x01:
+    case 0x10:
+        size = 1;
+        break;
+    case 0x11:
+        if (outgoing) {
+            log_say("Sent SYNCH VEH", a2, Vehs[a2].x, Vehs[a2].y);
+        } else {
+            log_say("Received SYNCH VEH", a2, Vehs[a2].x, Vehs[a2].y);
+        }
+        size = 0x30;
+        break;
+    case 0x12:
+        if (!outgoing && primary_state_.trailing_words_[1] == 4) {
+            NetMsgPrimary.pop("SYNCHINGUNITS", 0, 1, 0);
+            do_all_draws();
+            primary_state_.trailing_words_[1] = 5;
+        }
+        if (!GameDataStateStorage.fields_.vehicle_current_count_) return;
+        size = GameDataStateStorage.fields_.vehicle_current_count_ * sizeof(Veh);
+        break;
+    case 0x13:
+        if (outgoing) {
+            log_say("Sending SYNCH_BASE", Bases[a2].name_string, a2, 0, 0);
+            size = sizeof(Base);
+        } else {
+            log_say("Received SYNCH_BASE", Bases[a2].name_string, a2, 0, 0);
+            size = sizeof(Base);
+        }
+        break;
+    case 0x14:
+        if (!GameDataStateStorage.fields_.base_current_count_) return;
+        size = GameDataStateStorage.fields_.base_current_count_ * sizeof(Base);
+        break;
+    case 0x08:
+    case 0x0D:
+    case 0x23:
+        size = 0x14;
+        break;
+    case 0x16:
+        size = sizeof(wire);
+        break;
+    case 0x18:
+        size = 0x224;
+        break;
+    case 0x19:
+        if (!outgoing && primary_state_.trailing_words_[1] == 5) {
+            NetMsgPrimary.pop("SYNCHINGPRESTIGE", 0, 1, 0);
+            do_all_draws();
+            primary_state_.trailing_words_[1] = 6;
+        }
+        size = 0x20;
+        break;
+    case 0x20:
+        size = GameDataStateStorage.fields_.turn_current_num_ << 4;
+        break;
+    case 0x21:
+        size = 4;
+        if (!outgoing && primary_state_.trailing_words_[1] == 6) {
+            NetMsgPrimary.pop("SYNCHINGREPLAY", 0, 1, 0);
+            do_all_draws();
+            primary_state_.trailing_words_[1] = 7;
+        }
+        break;
+    case 0x22:
+        size = ReplayEventBytes;
+        break;
+    case 0x28:
+        size = 0;
+        break;
+    case 0x27:
+        size = 0x104;
+        break;
+    case 0x29:
+        size = 0x1000;
+        break;
+    case 0x30:
+        map_rows = MapLatitudeBounds / 16;
+        size = map_rows;
+        if (a2 == 15) size = MapLatitudeBounds - map_rows * 15;
+        size = (MapLongitudeBounds >> 1) * size * sizeof(Map);
+        break;
+    case 0x80:
+        if (!outgoing && static_cast<int>(primary_state_.trailing_words_[2]) >= 0) {
+            NetMsgPrimary.pop("RULESYNCHTECH", 0, 1, 0);
+            do_all_draws();
+            primary_state_.trailing_words_[2] = 1;
+        }
+        size = 0xF4C;
+        break;
+    case 0x81:
+        size = 0x13C;
+        break;
+    case 0x82:
+        size = 0x7C;
+        break;
+    case 0x83:
+        if (!outgoing && primary_state_.trailing_words_[2] == 1) {
+            NetMsgPrimary.pop("RULESYNCHTERR", 0, 1, 0);
+            do_all_draws();
+            primary_state_.trailing_words_[2] = 2;
+        }
+        size = 0x280;
+        break;
+    case 0x84:
+        size = 0x90;
+        break;
+    case 0x85:
+        size = 0xC0;
+        break;
+    case 0x86:
+        if (!outgoing && primary_state_.trailing_words_[2] == 2) {
+            NetMsgPrimary.pop("RULESYNCHVEH", 0, 1, 0);
+            do_all_draws();
+            primary_state_.trailing_words_[2] = 3;
+        }
+        size = 0x510;
+        break;
+    case 0x87:
+        size = 0x30;
+        break;
+    case 0x88:
+        size = 0x1A0;
+        break;
+    case 0x89:
+        size = 0xE0;
+        break;
+    case 0x8A:
+        size = 0x32C;
+        break;
+    case 0x8B:
+        if (!outgoing && primary_state_.trailing_words_[2] == 3) {
+            NetMsgPrimary.pop("RULESYNCHFAC", 0, 1, 0);
+            do_all_draws();
+            primary_state_.trailing_words_[2] = 4;
+        }
+        size = 0x1920;
+        break;
+    case 0x8C:
+        size = 0x118;
+        break;
+    case 0x8D:
+        if (!outgoing && primary_state_.trailing_words_[2] == 4) {
+            NetMsgPrimary.close();
+            do_all_draws();
+            primary_state_.trailing_words_[2] = 5;
+        }
+        size = 0x350;
+        break;
+    case 0x02:
+    case 0x1002:
+        size = 0xA9C;
+        break;
+    default:
+        size = a2;
+        break;
+    case 0x09:
+    case 0x0C:
+        break;
     }
 
-    if (veh_locked_ == 0) {
-        // Native INC wraps, while its JG/JLE comparisons interpret signed bits.
-        if (++lock_word_1BC8_ > 0
-            || field_1B70_ > 2) {
-            const char *msg = (field_1B70_ == 2) ? "NOLOCK" : "NOLOCKGLOBAL";
-            NetMsgPrimary.pop(msg, 5000, 2, 0);
-            lock_word_1BC8_ = 0;
+    total = size / 0x800;
+    remainder = size - total * 0x800;
+    if (remainder) total++;
+
+    for (i = 0; i < total; i++) {
+        if (!outgoing) {
+            if (header->index == total - 1 && remainder) {
+                if (!(total == 1)) {
+                    src = reinterpret_cast<char *>(total * 0x800 - 0x800);
+                } else {
+                    src = 0;
+                }
+                length = remainder;
+            } else {
+                src = reinterpret_cast<char *>(header->index * 0x800);
+                length = 0x800;
+            }
+            if (header->index == total - 1) {
+                field_1BBC_ &= ~(1 << header->faction);
+            }
+            i = total - 1;
+        } else {
+            if (!(i == total - 1 && remainder)) {
+                src = reinterpret_cast<char *>(i * 0x800);
+                length = 0x800;
+            } else {
+                if (total == 1) {
+                    src = 0;
+                } else {
+                    src = reinterpret_cast<char *>(total * 0x800 - 0x800);
+                }
+                length = remainder;
+            }
         }
-    }
-    lock_held_ = 0;
-    return 1;
-}
 
-
-// Fixed-slot bindings carried from 00531300.cpp
-
-// ORIGINAL: 0x00531300 ?await_exec@NetDaemon@@QAEXH@Z 0x00531300-0x00531477 FILE BYTE_EXACT
-// size      375 bytes
-// prototype void (__thiscall ?await_exec@NetDaemon@@QAEXH@Z)(NetDaemon* this, int)
-// callers   17   call targets   9
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x0047A7D0 0x0047A890 0x0051F1B0 0x00534400 0x005901D0 0x00592EE0 0x005FC700 0x006262F0 0x00630A00
-// indirect  0x00531345 0x0053136B
-// PRESERVED UNIT - measured MISMATCH.
-//
-// Kept for COVERAGE. This directory IS on the ratchet: every file here
-// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
-// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
-// quarter of the project's total. It is still in no build; the earlier
-// header said "on no ratchet", which stopped being true when the map
-// moved into src/ and was still being written into new files.
-//
-// address        0x00531300
-// measured tier  MISMATCH
-// divergence     18
-//
-// The WHOLE unit as measured, scaffolding included: for the units
-// that are byte-exact yet refuse extraction, the agent tuned the
-// emitted scaffolding and the body alone will not reproduce the
-// verdict. To resume, copy everything below back over
-//   build/byte-match/00531300/unit.cpp
-// and score it with tools/agent_brief.py.
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?await_exec@NetDaemon@@QAEXH@Z  at 0x00531300  (375 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// The VC6 dialect limits and the source-form rules used to live here.
-// They are knowledge, not scaffolding, so they now live in the agent
-// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
-// where they can be edited without regenerating anything and are in
-// context from the first token rather than behind a file read. This
-// emitter computes declarations; it does not carry lessons.
-
-
-void NetDaemon::await_exec(int opcode) {
-    if (IsMultiplayerNet != 0) {
-        log_say("Client waiting for acknowledgement", ConsoleGlobal.faction_id_, 0, 0);
-        NetDaemonWaitTicks += wait("AWAITEXEC", &exec_pending_, 1, 2000);
-        log_say("Client received acknowledgement", ConsoleGlobal.faction_id_, 0, 0);
-        if (opcode != 0) {
-            unlock_veh();
+        switch (opcode) {
+        case 0x00:
+            src += reinterpret_cast<int>(&GameDataStateStorage);
+            break;
+        case 0x01:
+            src += reinterpret_cast<int>(&GameDataStateStorage.fields_.lock_masks_);
+            break;
+        case 0x15:
+            src += reinterpret_cast<int>(&ControlTurnPhase);
+            break;
+        case 0x24:
+            src += reinterpret_cast<int>(&ScenarioSave);
+            break;
+        case 0x04:
+            src += reinterpret_cast<int>(MapTiles);
+            break;
+        case 0x05:
+            src += reinterpret_cast<int>(Continents);
+            break;
+        case 0x07:
+            src += reinterpret_cast<int>(&Players[a2]);
+            break;
+        case 0x08:
+            src += reinterpret_cast<int>(&PlayersData[a2].ai_fight);
+            break;
+        case 0x09:
+            src += reinterpret_cast<int>(&PlayersData[a2].tech_accumulated);
+            break;
+        case 0x0A:
+            src += reinterpret_cast<int>(&PlayersData[a2].tech_id_researching);
+            break;
+        case 0x0B:
+            src += reinterpret_cast<int>(&PlayersData[a2].energy_reserves);
+            break;
+        case 0x0C:
+            src += reinterpret_cast<int>(&PlayersData[a2].se_alloc_psych);
+            break;
+        case 0x0D:
+            src += reinterpret_cast<int>(&PlayersData[a2].soc_category_pending);
+            break;
+        case 0x0E:
+            src += reinterpret_cast<int>(&VehPrototypes[a2]);
+            break;
+        case 0x0F:
+            src += reinterpret_cast<int>(&VehPrototypes[a2]);
+            break;
+        case 0x10:
+            src += reinterpret_cast<int>(&VehPrototypes[a2].obsolete_factions);
+            break;
+        case 0x11:
+            x = Vehs[a2].x;
+            y = Vehs[a2].y;
+            src += reinterpret_cast<int>(&Vehs[a2]);
+            break;
+        case 0x12:
+            src += reinterpret_cast<int>(Vehs);
+            break;
+        case 0x13:
+            x = Bases[a2].x;
+            y = Bases[a2].y;
+            src += reinterpret_cast<int>(&Bases[a2]);
+            break;
+        case 0x14:
+            src += reinterpret_cast<int>(Bases);
+            break;
+        case 0x23:
+            src += reinterpret_cast<int>(&Bases[a2].resource_sqr_radius);
+            break;
+        case 0x16:
+            faction1 = a2;
+            faction2 = a3;
+            src = reinterpret_cast<char *>(wire);
+            length = sizeof(wire);
+            if (outgoing) {
+                wire[0] = PlayersData[a2].diplo_patience[a3];
+                wire[1] = PlayersData[a3].diplo_patience[a2];
+                wire[2] = PlayersData[a2].diplo_friction[a3];
+                wire[3] = PlayersData[a3].diplo_friction[a2];
+                wire[4] = PlayersData[a2].global_reputation;
+                wire[5] = PlayersData[a3].global_reputation;
+                wire[6] = PlayersData[a2].diplo_unk1[a3];
+                wire[7] = PlayersData[a3].diplo_unk1[a2];
+                wire[8] = PlayersData[a2].diplo_wrongs[a3];
+                wire[9] = PlayersData[a3].diplo_wrongs[a2];
+                wire[10] = PlayersData[a2].diplo_spoke[a3];
+                wire[11] = PlayersData[a3].diplo_spoke[a2];
+                wire[12] = PlayersData[a2].diplo_treaties[a3];
+                wire[13] = PlayersData[a3].diplo_treaties[a2];
+                wire[14] = PlayersData[a2].diplo_agenda[a3];
+                wire[15] = PlayersData[a3].diplo_agenda[a2];
+                wire[16] = PlayersData[a2].diplo_merc[a3];
+                wire[17] = PlayersData[a3].diplo_merc[a2];
+            }
+            break;
+        case 0x06:
+        case 0x17:
+            src += reinterpret_cast<int>(&PlayersData[a2]);
+            break;
+        case 0x18:
+            src += reinterpret_cast<int>(&PlayersData[a2].unk_37);
+            break;
+        case 0x19:
+            src += reinterpret_cast<int>(FactionRankingsUnk);
+            break;
+        case 0x20:
+            src += reinterpret_cast<int>(FactionRankingHistory);
+            break;
+        case 0x21:
+            src = reinterpret_cast<char *>(&ReplayEventBytes);
+            break;
+        case 0x22:
+            src += reinterpret_cast<int>(ReplayEvents);
+            break;
+        case 0x25:
+            src = reinterpret_cast<char *>(&GameDataStateStorage.fields_.vehicle_current_count_);
+            break;
+        case 0x26:
+            src = reinterpret_cast<char *>(&GameDataStateStorage.fields_.base_current_count_);
+            break;
+        case 0x28:
+            src = StringTemp;
+            break;
+        case 0x27:
+            src = NetDaemonFileTransferPath;
+            break;
+        case 0x29:
+            src += reinterpret_cast<int>(BungList);
+            break;
+        case 0x30:
+            y = map_rows * a2;
+            src += reinterpret_cast<int>(&MapTiles[MapLongitude * y]);
+            break;
+        case 0x80:
+            if (outgoing) {
+                src += reinterpret_cast<int>(Technology);
+            } else {
+                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging.bytes);
+            }
+            break;
+        case 0x83:
+            if (outgoing) {
+                src += reinterpret_cast<int>(Terraforming);
+            } else {
+                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging.bytes);
+            }
+            break;
+        case 0x85:
+            if (outgoing) {
+                src += reinterpret_cast<int>(TimeControl);
+            } else {
+                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging.bytes);
+            }
+            break;
+        case 0x86:
+            if (outgoing) {
+                src += reinterpret_cast<int>(Chassis);
+            } else {
+                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging.bytes);
+            }
+            break;
+        case 0x87:
+            if (outgoing) {
+                src += reinterpret_cast<int>(Reactor);
+            } else {
+                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging.bytes);
+            }
+            break;
+        case 0x88:
+            if (outgoing) {
+                src += reinterpret_cast<int>(Weapon);
+            } else {
+                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging.bytes);
+            }
+            break;
+        case 0x89:
+            if (outgoing) {
+                src += reinterpret_cast<int>(Armor);
+            } else {
+                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging.bytes);
+            }
+            break;
+        case 0x8A:
+            if (outgoing) {
+                src += reinterpret_cast<int>(Ability);
+            } else {
+                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging.bytes);
+            }
+            break;
+        case 0x8B:
+            if (outgoing) {
+                src += reinterpret_cast<int>(Facility);
+            } else {
+                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging.bytes);
+            }
+            break;
+        case 0x8C:
+            if (outgoing) {
+                src += reinterpret_cast<int>(Citizen);
+            } else {
+                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging.bytes);
+            }
+            break;
+        case 0x8D:
+            if (outgoing) {
+                src += reinterpret_cast<int>(SocialCategories);
+            } else {
+                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging.bytes);
+            }
+            break;
+        case 0x81:
+            src = reinterpret_cast<char *>(&RulesStorage);
+            break;
+        case 0x82:
+            src = reinterpret_cast<char *>(&WorldBuilder);
+            break;
+        case 0x84:
+            src = reinterpret_cast<char *>(ResourceInfo);
+            break;
+        case 0x02:
+        case 0x1002:
+            src += reinterpret_cast<int>(&MapStorage.metadata_);
+            break;
         }
-        exec_pending_ = 0;
-    }
-}
 
-// ORIGINAL: 0x00531480 ?await_synch@NetDaemon@@QAEXXZ 0x00531480-0x005315B6 FILE BYTE_EXACT
-// size      310 bytes
-// prototype void (__thiscall ?await_synch@NetDaemon@@QAEXXZ)(NetDaemon* this)
-// callers   22   call targets   8
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x0047A7D0 0x0047A890 0x0051F1B0 0x00534400 0x005901D0 0x005FC700 0x006262F0 0x00630A00
-// indirect  0x005314D0 0x005314F6
-// PRESERVED UNIT - measured MISMATCH.
-//
-// Kept for COVERAGE. This directory IS on the ratchet: every file here
-// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
-// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
-// quarter of the project's total. It is still in no build; the earlier
-// header said "on no ratchet", which stopped being true when the map
-// moved into src/ and was still being written into new files.
-//
-// address        0x00531480
-// measured tier  MISMATCH
-// divergence     19
-//
-// The WHOLE unit as measured, scaffolding included: for the units
-// that are byte-exact yet refuse extraction, the agent tuned the
-// emitted scaffolding and the body alone will not reproduce the
-// verdict. To resume, copy everything below back over
-//   build/byte-match/00531480/unit.cpp
-// and score it with tools/agent_brief.py.
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?await_synch@NetDaemon@@QAEXXZ  at 0x00531480  (310 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// The VC6 dialect limits and the source-form rules used to live here.
-// They are knowledge, not scaffolding, so they now live in the agent
-// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
-// where they can be edited without regenerating anything and are in
-// context from the first token rather than behind a file read. This
-// emitter computes declarations; it does not carry lessons.
-
-
-void NetDaemon::await_synch() {
-    if (IsMultiplayerNet != 0) {
-        synch_pending_ = 1;
-        log_say("Awaiting acknowledgement of SYNCH", ConsoleGlobal.faction_id_, 0, 0);
-        NetDaemonWaitTicks += wait("AWAITEXEC", &synch_pending_, 1, 2000);
-        if (synch_pending_ == 0) {
-            log_say("Received SYNCH acknowledgement", ConsoleGlobal.faction_id_, 0, 0);
+        if (outgoing) {
+            const int packet_length = length + sizeof(SyncHeaderPrefix);
+            SyncHeaderPrefix *message =
+                static_cast<SyncHeaderPrefix *>(mem_get(packet_length));
+            message->flags = flags;
+            message->opcode = opcode;
+            message->faction = ConsoleGlobal.faction_id_;
+            message->sequence = deletion_list_.sequence_bits();
+            message->argument_4 = a4;
+            header = message;
+            message->argument_2 = a2;
+            message->argument_3 = a3;
+            message->index = static_cast<int16_t>(i);
+            if (length) memcpy(message + 1, src, length);
+            send_message(reinterpret_cast<char *>(message), packet_length, 0);
+            if (message) free(header);
+            continue;
         }
-        synch_pending_ = 0;
-    }
-}
 
-// ORIGINAL: 0x00530E50 ?unlock_base@NetDaemon@@QAEXH@Z 0x00530E50-0x0053101F FILE BYTE_EXACT
-// size      463 bytes
-// prototype void (__thiscall ?unlock_base@NetDaemon@@QAEXH@Z)(NetDaemon* this, int)
-// callers   26   call targets   10
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x0047A7D0 0x0047A890 0x0051F1B0 0x00534400 0x005901D0 0x00592EE0 0x00593250 0x005FC700 0x006262F0 0x00630A00
-// indirect  0x00530EED 0x00530F13
-// PRESERVED UNIT - measured MISMATCH.
-//
-// Kept for COVERAGE. This directory IS on the ratchet: every file here
-// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
-// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
-// quarter of the project's total. It is still in no build; the earlier
-// header said "on no ratchet", which stopped being true when the map
-// moved into src/ and was still being written into new files.
-//
-// address        0x00530E50
-// measured tier  MISMATCH
-// divergence     88
-//
-// The WHOLE unit as measured, scaffolding included: for the units
-// that are byte-exact yet refuse extraction, the agent tuned the
-// emitted scaffolding and the body alone will not reproduce the
-// verdict. To resume, copy everything below back over
-//   build/byte-match/00530e50/unit.cpp
-// and score it with tools/agent_brief.py.
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?unlock_base@NetDaemon@@QAEXH@Z  at 0x00530E50  (463 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// The VC6 dialect limits and the source-form rules used to live here.
-// They are knowledge, not scaffolding, so they now live in the agent
-// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
-// where they can be edited without regenerating anything and are in
-// context from the first token rather than behind a file read. This
-// emitter computes declarations; it does not carry lessons.
-void NetDaemon::unlock_base(int base_id) {
-    log_say("UnlockBase", NetDaemonNet.lock_held_, base_id, 0);
-    if (IsMultiplayerNet != 0 && NetDaemonNet.lock_held_ != 0) {
-        log_say("UnlockBase doing synch & unlock", 0, 0, 0);
-        synch_base(base_id);
-        await_synch();
-        unlock();
-    }
-}
-
-// Fixed-slot bindings carried from 005315c0.cpp
-
-// ORIGINAL: 0x005315C0 ?await_diplo@NetDaemon@@QAEXH@Z 0x005315C0-0x005316F9 FILE BYTE_EXACT
-// size      313 bytes
-// prototype void (__thiscall ?await_diplo@NetDaemon@@QAEXH@Z)(NetDaemon* this, int)
-// callers   35   call targets   8
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x0047A7D0 0x0047A890 0x0051F1B0 0x00534400 0x005901D0 0x005FC700 0x006262F0 0x00630A00
-// indirect  0x0053160E 0x00531634
-// PRESERVED UNIT - measured MISMATCH.
-//
-// Kept for COVERAGE. This directory IS on the ratchet: every file here
-// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
-// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
-// quarter of the project's total. It is still in no build; the earlier
-// header said "on no ratchet", which stopped being true when the map
-// moved into src/ and was still being written into new files.
-//
-// address        0x005315C0
-// measured tier  MISMATCH
-// divergence     20
-//
-// The WHOLE unit as measured, scaffolding included: for the units
-// that are byte-exact yet refuse extraction, the agent tuned the
-// emitted scaffolding and the body alone will not reproduce the
-// verdict. To resume, copy everything below back over
-//   build/byte-match/005315c0/unit.cpp
-// and score it with tools/agent_brief.py.
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?await_diplo@NetDaemon@@QAEXH@Z  at 0x005315C0  (313 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// The VC6 dialect limits and the source-form rules used to live here.
-// They are knowledge, not scaffolding, so they now live in the agent
-// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
-// where they can be edited without regenerating anything and are in
-// context from the first token rather than behind a file read. This
-// emitter computes declarations; it does not carry lessons.
-
-
-void NetDaemon::await_diplo(int opcode) {
-    if (IsMultiplayerNet != 0) {
-        field_1BA8_ = opcode;
-        log_say("Awaiting DIPLO event", ConsoleGlobal.faction_id_, 0, 0);
-        int32_t saved = NetDaemonNet.action_mode_;
-        (NetBusyCount)++;
-        unsigned int start_time = timeGetTime();
-        int timed_out = 0;
-        while (field_1BA8_ == opcode) {
-            if (ExitTurnLoop != 0) {
+        synch_display(opcode, header->index + 1, total, a2);
+        char *payload = packet + sizeof(SyncHeaderPrefix);
+        if (length) {
+            if (opcode == 0x11) {
+                if (total == 1 &&
+                    (reinterpret_cast<Veh *>(payload)->x != reinterpret_cast<Veh *>(src)->x ||
+                     reinterpret_cast<Veh *>(payload)->y != reinterpret_cast<Veh *>(src)->y)) {
+                    parse_num(0, reinterpret_cast<Veh *>(payload)->x);
+                    parse_num(1, reinterpret_cast<Veh *>(payload)->y);
+                    parse_num(2, reinterpret_cast<Veh *>(src)->x);
+                    parse_num(3, reinterpret_cast<Veh *>(src)->y);
+                    parse_num(4, Vehs[a2].faction_id);
+                    parse_num(5, Vehs[a2].proto_id);
+                    parse_num(6, a2);
+                    parse_says(0, VehPrototypes[Vehs[a2].proto_id].veh_name, -1, -1);
+                    log_say("Synch changed vehicle", ParseStrBuffer[0].str, a2, x, y);
+                    if (BaseAtDebugPopupFlag) {
+                        X_pop("VEHSYNCH", 0);
+                        if (!ConsoleGroupAction) GetAsyncKeyState(VK_CONTROL);
+                    }
+                    // The base branch below jumps into this branch's
+                    // notification and message blocks; VC6 places them after
+                    // that branch's gotos (image 0x533C14/0x533C20), where this
+                    // branch's sete and message exits reach them too.
+                    local_turn = 0;
+                    if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) && !ConsoleControlTurnActive) {
+                        local_turn = GameDataStateStorage.fields_.net_turn_faction_ == ConsoleGlobal.faction_id_;
+                    }
+                    if (local_turn
+                        || !((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) && !ConsoleControlTurnActive)
+                            && NetDaemonNet.primary_state_.leading_words_[0]) {
+                    notify_spock:
+                        SpockNotifyPending = 1;
+                    } else {
+                    notify_message:
+                        message_data(0x2308, 0, 0, 0, 0, 0);
+                    }
+                    goto chunk_done;
+                }
+            } else if (opcode == 0x13) {
+                if (total == 1 &&
+                    (reinterpret_cast<Base *>(payload)->x != reinterpret_cast<Base *>(src)->x ||
+                     reinterpret_cast<Base *>(payload)->y != reinterpret_cast<Base *>(src)->y)) {
+                    parse_num(0, reinterpret_cast<Base *>(payload)->x);
+                    parse_num(1, reinterpret_cast<Base *>(payload)->y);
+                    parse_num(2, reinterpret_cast<Base *>(src)->x);
+                    parse_num(3, reinterpret_cast<Base *>(src)->y);
+                    parse_num(4, a2);
+                    parse_says(0, payload + 0x13, -1, -1);
+                    parse_says(1, src + 0x13, -1, -1);
+                    log_say("Synch changed base", ParseStrBuffer[0].str, a2, x, y);
+                    if (BaseAtDebugPopupFlag) {
+                        X_pop("VEHSYNCH", 0);
+                        if (!ConsoleGroupAction) GetAsyncKeyState(VK_CONTROL);
+                    }
+                    local_turn = 0;
+                    if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) && !ConsoleControlTurnActive) {
+                        local_turn = GameDataStateStorage.fields_.net_turn_faction_ == ConsoleGlobal.faction_id_;
+                    }
+                    if (local_turn
+                        || !((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) && !ConsoleControlTurnActive)
+                            && NetDaemonNet.primary_state_.leading_words_[0]) {
+                        goto notify_spock;
+                    }
+                    goto notify_message;
+                }
+            }
+            memcpy(src, payload, length);
+        }
+        if (opcode == 0x12) {
+            if (header->index == total - 1) rebuild_vehicle_bits();
+        } else if (opcode == 0x14) {
+            if (header->index == total - 1) rebuild_base_bits();
+        }
+    chunk_done:
+        if (header->index == total - 1) {
+            switch (opcode) {
+            case 0x80: {
+                RulesTechnology *stage = NetDaemonRulesSyncStaging.technology;
+                for (k = 0; k < MaxTechnologyNum; k++, stage++) {
+                    Technology[k].flags = stage->flags;
+                    Technology[k].growth_value = stage->growth_value;
+                    Technology[k].tech_value = stage->tech_value;
+                    Technology[k].wealth_value = stage->wealth_value;
+                    Technology[k].power_value = stage->power_value;
+                    Technology[k].preq_tech_1 = stage->preq_tech_1;
+                    Technology[k].preq_tech_2 = stage->preq_tech_2;
+                }
                 break;
             }
-            if (!timed_out) {
-                unsigned int now = timeGetTime();
-                if (now - start_time > 0x7d0) {
-                    timed_out = 1;
-                    NetMsgPrimary.pop(
-                        "AWAITDIPLO", 0, 2, 0);
+            case 0x83: {
+                RulesTerraforming *stage = NetDaemonRulesSyncStaging.terraforming;
+                for (k = 0; k < MaxTerrainNum; k++, stage++) {
+                    for (j = 0; j < 2; j++) {
+                        Terraforming[k].prerequisite_tech[j] = stage->prerequisite_tech[j];
+                    }
+                    Terraforming[k].bit = stage->bit;
+                    Terraforming[k].bit_incompatible = stage->bit_incompatible;
+                    Terraforming[k].rate = stage->rate;
                 }
+                break;
             }
-            wait_task();
-            unsigned long v_at_4;
-            unsigned long v_at_8;
-            void *result = NetDaemonNet.Net::get(&v_at_4, &v_at_8);
-            if (result != 0) {
-                process_message(static_cast<char *>(result), v_at_8, v_at_4);
+            case 0x85: {
+                RulesTimeControl *stage = NetDaemonRulesSyncStaging.time_control;
+                for (k = 0; k < MaxTimeControlNum; k++, stage++) {
+                    LPSTR name = TimeControl[k].name;
+                    TimeControl[k] = *stage;
+                    TimeControl[k].name = name;
+                }
+                break;
             }
-            locks_.check_global();
-            check_spock();
+            case 0x86: {
+                RulesChassis *stage = NetDaemonRulesSyncStaging.chassis;
+                for (k = 0; k < MaxChassisNum; k++, stage++) {
+                    Chassis[k].speed = stage->speed;
+                    Chassis[k].triad = stage->triad;
+                    Chassis[k].range = stage->range;
+                    Chassis[k].missile = stage->missile;
+                    Chassis[k].cargo = stage->cargo;
+                    Chassis[k].cost = stage->cost;
+                    Chassis[k].preq_tech = stage->preq_tech;
+                }
+                break;
+            }
+            case 0x87: {
+                RulesReactor *stage = NetDaemonRulesSyncStaging.reactor;
+                for (k = 0; k < MaxReactorNum; k++, stage++) {
+                    Reactor[k].preq_tech = stage->preq_tech;
+                }
+                break;
+            }
+            case 0x88: {
+                RulesWeapon *stage = NetDaemonRulesSyncStaging.weapon;
+                for (k = 0; k < MaxWeaponNum; k++, stage++) {
+                    Weapon[k].offense_rating = stage->offense_rating;
+                    Weapon[k].icon = stage->icon;
+                    Weapon[k].mode = stage->mode;
+                    Weapon[k].cost = stage->cost;
+                    Weapon[k].preq_tech = stage->preq_tech;
+                }
+                break;
+            }
+            case 0x89: {
+                RulesArmor *stage = NetDaemonRulesSyncStaging.armor;
+                for (k = 0; k < MaxArmorNum; k++, stage++) {
+                    Armor[k].defense_rating = stage->defense_rating;
+                    Armor[k].mode = stage->mode;
+                    Armor[k].cost = stage->cost;
+                    Armor[k].preq_tech = stage->preq_tech;
+                }
+                break;
+            }
+            case 0x8A: {
+                RulesAbility *stage = NetDaemonRulesSyncStaging.ability;
+                for (k = 0; k < MaxAbilityNum; k++, stage++) {
+                    Ability[k].cost_factor = stage->cost_factor;
+                    Ability[k].unk_1 = stage->unk_1;
+                    Ability[k].flags = stage->flags;
+                    Ability[k].preq_tech = stage->preq_tech;
+                }
+                break;
+            }
+            case 0x8B: {
+                RulesFacility *stage = NetDaemonRulesSyncStaging.facility;
+                for (k = 0; k < MaxFacilityNum; k++, stage++) {
+                    LPSTR name = Facility[k].name;
+                    LPSTR effect = Facility[k].effect;
+                    Facility[k] = *stage;
+                    Facility[k].name = name;
+                    Facility[k].effect = effect;
+                }
+                break;
+            }
+            case 0x8C: {
+                RulesCitizen *stage = NetDaemonRulesSyncStaging.citizen;
+                for (k = 0; k < MaxCitizenNum; k++, stage++) {
+                    Citizen[k].preq_tech = stage->preq_tech;
+                    Citizen[k].obsol_tech = stage->obsol_tech;
+                    // The image copies the three bonuses with an unrolled
+                    // three-step loop (0x00533EB8).
+                    for (j = 0; j < 3; j++) {
+                        Citizen[k].bonus[j] = stage->bonus[j];
+                    }
+                }
+                break;
+            }
+            case 0x8D: {
+                for (k = 0; k < MaxSocialCatNum; k++) {
+                    for (j = 0; j < 4; j++) {
+                        SocialCategories[k].preq_tech[j] = NetDaemonRulesSyncStaging.social_category[k].preq_tech[j];
+                        SocialCategories[k].model_effect[j] = NetDaemonRulesSyncStaging.social_category[k].model_effect[j];
+                    }
+                }
+                break;
+            }
+            }
         }
-        if (timed_out) {
-            NetMsgPrimary.close();
+    }
+
+    if (opcode == 0) {
+        prefs_use();
+    } else if (opcode == 0x02) {
+        if (!primary_state_.leading_words_[0]) {
+            map_shutdown();
+            map_init();
+            Paths.init();
         }
-        NetDaemonNet.action_mode_ = saved;
-        (NetBusyCount)--;
-        if (field_1BA8_ == 0) {
-            log_say("Received DIPLO acknowledgement", ConsoleGlobal.faction_id_, 0, 0);
-        }
-        field_1BA8_ = 0;
+    } else if (opcode == 0x13) {
+        TutWinBaseWindow.check_base(a2);
+    } else if (opcode == 0x11) {
+        TutWinBaseWindow.check_veh(a2);
+    } else if (opcode == 0x16) {
+        PlayersData[faction1].diplo_patience[faction2] = static_cast<char>(wire[0]);
+        PlayersData[faction2].diplo_patience[faction1] = static_cast<char>(wire[1]);
+        PlayersData[faction1].diplo_friction[faction2] = wire[2];
+        PlayersData[faction2].diplo_friction[faction1] = wire[3];
+        PlayersData[faction1].global_reputation = wire[4];
+        PlayersData[faction2].global_reputation = wire[5];
+        PlayersData[faction1].diplo_unk1[faction2] = wire[6];
+        PlayersData[faction2].diplo_unk1[faction1] = wire[7];
+        PlayersData[faction1].diplo_wrongs[faction2] = wire[8];
+        PlayersData[faction2].diplo_wrongs[faction1] = wire[9];
+        PlayersData[faction1].diplo_spoke[faction2] = wire[10];
+        PlayersData[faction2].diplo_spoke[faction1] = wire[11];
+        PlayersData[faction1].diplo_treaties[faction2] = wire[12];
+        PlayersData[faction2].diplo_treaties[faction1] = wire[13];
+        PlayersData[faction1].diplo_agenda[faction2] = wire[14];
+        PlayersData[faction2].diplo_agenda[faction1] = wire[15];
+        PlayersData[faction1].diplo_merc[faction2] = wire[16];
+        PlayersData[faction2].diplo_merc[faction1] = wire[17];
+    } else if (opcode == 0x0D) {
+        social_set(a2);
     }
 }
 
@@ -2801,360 +4211,6 @@ int NetDaemon::fixup_message(char * message) {
     return 0;
 }
 
-// File-transfer protocol state and storage, shared by the sender and receiver.
-
-extern char NetDaemonFileTransferPath[0x104];
-
-
-struct NetDaemonFileIndexRecord {
-    uint16_t opcode;          // +0
-    uint16_t reserved_2;      // +2
-    int32_t source_player;    // +4
-    uint32_t ready_flags;     // +8
-    uint32_t chunk_count;     // +0xC
-    uint8_t file_index;       // +0x10
-    uint8_t checksum;         // +0x11
-    uint16_t reserved_12;     // +0x12
-    uint32_t file_size;       // +0x14
-    char filename[0x104];     // +0x18
-};
-static_assert(sizeof(NetDaemonFileIndexRecord) == 0x11C,
-              "native file-list message stride");
-static_assert(offsetof(NetDaemonFileIndexRecord, source_player) == 0x04,
-              "native file-list sender offset");
-static_assert(offsetof(NetDaemonFileIndexRecord, ready_flags) == 0x08,
-              "native file-list ready-mask offset");
-static_assert(offsetof(NetDaemonFileIndexRecord, chunk_count) == 0x0C,
-              "native file-list chunk-count offset");
-static_assert(offsetof(NetDaemonFileIndexRecord, file_index) == 0x10,
-              "native file-list file-index offset");
-static_assert(offsetof(NetDaemonFileIndexRecord, checksum) == 0x11,
-              "native file-list checksum offset");
-static_assert(offsetof(NetDaemonFileIndexRecord, file_size) == 0x14,
-              "native file-list file-size offset");
-static_assert(offsetof(NetDaemonFileIndexRecord, filename) == 0x18,
-              "native file-list filename offset");
-
-// Native F05 writes its path at +0x18 (0x52EE83..0x52EEAA).
-// Only opcode and path are populated; the intervening bytes stay untouched.
-struct NetDaemonFilePathPacket {
-    uint16_t opcode;
-    uint8_t reserved_2[0x16];
-    char path[0x104];
-};
-static_assert(offsetof(NetDaemonFilePathPacket, path) == 0x18,
-              "native transfer path offset");
-static_assert(sizeof(NetDaemonFilePathPacket) == 0x11C,
-              "native transfer path packet extent");
-
-// F0F writes source_player at +4; F07 writes state at +8, not at +2.
-// Each operation leaves all other payload/header bytes untouched.
-struct NetDaemonFileControlPacket {
-    uint16_t opcode;
-    uint16_t reserved_2;
-    int32_t source_player;
-    int32_t state;
-    uint8_t reserved_C[0x14];
-};
-static_assert(offsetof(NetDaemonFileControlPacket, source_player) == 4,
-              "native transfer acknowledgement player offset");
-static_assert(offsetof(NetDaemonFileControlPacket, state) == 8,
-              "native transfer completion state offset");
-static_assert(sizeof(NetDaemonFileControlPacket) == 0x20,
-              "native transfer control packet extent");
-
-struct NetDaemonFileChunkPacket {
-    uint16_t opcode;          // +0
-    uint16_t reserved_2;      // +2
-    uint32_t compressed_size; // +4
-    int32_t file_index;       // +8 (native sendBuf + 4, in uint16_t units)
-    uint32_t chunk_index;     // +0xC
-    uint8_t reserved_10[0x10];// +0x10
-    uint8_t payload[0x800];   // +0x20
-};
-static_assert(sizeof(NetDaemonFileChunkPacket) == 0x820,
-              "native file transfer packet extent");
-static_assert(offsetof(NetDaemonFileChunkPacket, compressed_size) == 0x04,
-              "native file transfer compressed-size offset");
-static_assert(offsetof(NetDaemonFileChunkPacket, file_index) == 0x08,
-              "native file transfer dword file-index offset");
-static_assert(offsetof(NetDaemonFileChunkPacket, chunk_index) == 0x0C,
-              "native file transfer chunk-index offset");
-static_assert(offsetof(NetDaemonFileChunkPacket, payload) == 0x20,
-              "native file transfer payload offset");
-
-static void netdaemon_set_file_index_records(NetDaemonFileIndexRecord *records) {
-    NetDaemonNet.file_index_records_ = records;
-}
-// RECOVERY_OBJECT: v1 0x0093F79C ?NetDaemonFileTransferMode@@3HA
-int NetDaemonFileTransferMode;
-// RECOVERY_OBJECT: v1 0x0093F7A0 ?NetDaemonFileTransferAckMask@@3IA
-uint32_t NetDaemonFileTransferAckMask;
-// RECOVERY_OBJECT: v1 0x0093F7A4 ?NetDaemonFileTransferCurrentFile@@3HA
-int NetDaemonFileTransferCurrentFile;
-// RECOVERY_OBJECT: v1 0x0093F7A8 ?NetDaemonFileTransferChunkCount@@3HA
-int NetDaemonFileTransferChunkCount;
-// RECOVERY_OBJECT: v1 0x0093F7AC ?NetDaemonFileTransferProgress@@3HA
-int NetDaemonFileTransferProgress;
-// RECOVERY_OBJECT: v1 0x0093F7B0 ?NetDaemonFileTransferReceiveBuffer@@3PAEA
-unsigned char *NetDaemonFileTransferReceiveBuffer;
-// Native534773/534890 reset this independent four-byte word to-1 in F05/F07.
-// The pinned image initializes it to-1. No native .text consumer is known;
-// this descriptive source name does not establish its original semantic domain.
-// RECOVERY_OBJECT: v1 0x0068C11C ?NetDaemonTransferResetWord@@3HA
-int NetDaemonTransferResetWord = -1;
-
-// ORIGINAL: 0x0052ED40 ?send_files@NetDaemon@@QAEHXZ 0x0052ED40-0x0052F517;0x0065E0B0-0x0065E0C2
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned52ED40..52F517 and cold65E0B0..65E0C2; retained git:06163ca7db005f89326ea0681a26af574b6ae2c3:src/unrecovered/0052ed40.cpp.", "Coupled F05..F0F receiver recovery and Net group methods are reviewed together under netdaemon-player-lifecycle-recovery; native protocol anomalies remain explicit."], "reason": "Recover the complete file-transfer producer on the genuine daemon, player, group and file-map owners; packet intervals retain the native protocol rather than fixed executable aliases."}
-// TRIED: automatic `Filemap fm;` local (real ctor/dtor, matching the draw_facilities Font precedent) for the compiler-generated SEH frame; retyped the scaffold's `_mkdir`/`sub_634280` externs (declared nullary) to the params the call sites need; IAT slots identified by matching Ghidra's WinAPI names to arg count/order: 0x669110 GetModuleFileNameA, 0x6690e4 GetCurrentDirectoryA, 0x669114 SetCurrentDirectoryA, 0x6690e0 FindFirstFileA, 0x669118 FindNextFileA, 0x66911c FindClose, 0x669130 GetFileSize, 0x669330 GetAsyncKeyState. Ghidra's local_50/uStack_4c/local_48 naming for the FILD operand looked offset from the real ebp deltas (same SEH-prolog quirk seen on other functions this batch); traced the real bytes instead and the fild reduces to plain (double)GetFileSize()*ratio. Not chased to byte-exact given size (2025 bytes, largest in batch).
-// Every lobby slot's transfer status has reached the given level.
-static inline int netdaemon_slots_reached(NetDaemon *daemon, uint8_t level) {
-    for (int slot = 0; slot < NetDaemonNet.player_count_; ++slot) {
-        if (daemon->process_slots_[slot + 1].state_.status_bytes_[0] < level) return 0;
-    }
-    return 1;
-}
-
-// Native 0x52F315/0x52F364 call CRT memcpy (0x645930) for both chunks.
-int NetDaemon::send_files() {
-    NetDaemonFileControlPacket control;
-    WIN32_FIND_DATAA found_file;
-    char path_copy[0x104];
-    NetDaemonFilePathPacket path_message;
-    int group_handle = 0;
-    Filemap filemap;
-    uint32_t send_mask = 0;
-    NetDaemonNet.field_1BDC_ = 0;
-    const int local_index = NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id_);
-    NetDaemonNet.file_index_records_ =
-        static_cast<NetDaemonFileIndexRecord *>(mem_get(0x11C00));
-
-    char executable_path[0x104];
-    GetModuleFileNameA(0, executable_path, sizeof executable_path);
-    char *last_separator = strrchr(executable_path, '\\');
-    if (last_separator != 0) last_separator[1] = '\0';
-
-    if (primary_state_.leading_words_[0] != 0 && NetDaemonNet.player_count_ > 0) {
-        for (int index = 0; index < NetDaemonNet.player_count_; ++index) {
-            if (local_index != index + 1) send_mask |= 1U << (index + 1);
-            process_slots_[index + 1].state_.status_bytes_[0] =
-                static_cast<uint8_t>(local_index == index + 1 ? 2 : 0);
-        }
-    }
-
-    if (primary_state_.leading_words_[0] != 0) {
-        path_copy[0] = '\0';
-        strcat(path_copy, SaveNameBuffer);
-        char *relative_path = path_copy;
-        if (path_copy[1] == ':') {
-            relative_path = path_copy + strlen(executable_path);
-        }
-        NetDaemonFileTransferPath[0] = '\0';
-        strcat(NetDaemonFileTransferPath, relative_path);
-        path_message.opcode = 0xF05;
-        path_message.path[0] = '\0';
-        strcat(path_message.path, NetDaemonFileTransferPath);
-        send_message(reinterpret_cast<char *>(&path_message), 0x11C, 0);
-        NetDaemonFileTransferAckMask = 0;
-        while (NetDaemonFileTransferAckMask != send_mask) {
-            unsigned long sender, channel;
-            void *packet = NetDaemonNet.Net::get(&sender, &channel);
-            if (packet != 0)
-                process_message(static_cast<char *>(packet), channel,
-                                static_cast<int>(sender));
-        }
-    } else {
-        while (NetDaemonFileTransferMode != 1) {
-            unsigned long sender, channel;
-            void *packet = NetDaemonNet.Net::get(&sender, &channel);
-            if (packet != 0)
-                process_message(static_cast<char *>(packet), channel,
-                                static_cast<int>(sender));
-        }
-        control.opcode = 0xF0F;
-        control.source_player = local_index;
-        Net::send(&control, 0x20,
-            static_cast<unsigned long>(host_player_id_), 1);
-        SaveNameBuffer[0] = '\0';
-        strcat(SaveNameBuffer, executable_path);
-        strcat(SaveNameBuffer, NetDaemonFileTransferPath);
-        filefind_set_alternative(SaveNameBuffer);
-    }
-
-    char previous_directory[0x104];
-    GetCurrentDirectoryA(sizeof previous_directory, previous_directory);
-    if (SetCurrentDirectoryA(SaveNameBuffer) == 0 && primary_state_.leading_words_[0] == 0
-        && _mkdir(SaveNameBuffer) == 0) {
-        SetCurrentDirectoryA(SaveNameBuffer);
-    }
-
-    int file_count = 0;
-    if (primary_state_.leading_words_[0] != 0) {
-        HANDLE find_handle = FindFirstFileA("*.*", &found_file);
-        if (find_handle != 0) {
-            do {
-                if ((found_file.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0) {
-                    NetDaemonNet.file_index_records_[file_count].opcode = 0xF06;
-                    NetDaemonNet.file_index_records_[file_count].source_player = local_index;
-                    NetDaemonNet.file_index_records_[file_count].ready_flags = 0;
-                    NetDaemonNet.file_index_records_[file_count].chunk_count =
-                        (found_file.nFileSizeLow + 0x800) >> 11;
-                    NetDaemonNet.file_index_records_[file_count].file_index =
-                        static_cast<uint8_t>(file_count);
-                    NetDaemonNet.file_index_records_[file_count].file_size =
-                        found_file.nFileSizeLow;
-                    NetDaemonNet.file_index_records_[file_count].checksum =
-                        checksum_file(found_file.cFileName);
-                    NetDaemonNet.file_index_records_[file_count].filename[0] = '\0';
-                    strcat(NetDaemonNet.file_index_records_[file_count].filename,
-                           found_file.cFileName);
-                    send_message(reinterpret_cast<char *>(
-                        &NetDaemonNet.file_index_records_[file_count]), 0x11C, 0);
-                    ++file_count;
-                }
-            } while (FindNextFileA(find_handle, &found_file) != 0);
-        }
-
-        control.opcode = 0xF07;
-        control.state = 2;
-        send_message(reinterpret_cast<char *>(&control), 0x20, 0);
-        FindClose(find_handle);
-
-        do {
-            do_draw();
-            unsigned long sender, channel;
-            void *packet = NetDaemonNet.Net::get(&sender, &channel);
-            if (packet != 0)
-                process_message(static_cast<char *>(packet), channel,
-                                static_cast<int>(sender));
-        } while (!netdaemon_slots_reached(this, 1));
-
-        int ready_count = 0;
-        for (int i = 0; i < file_count; ++i)
-            if (NetDaemonNet.file_index_records_[i].ready_flags != 0) ++ready_count;
-
-        NetDaemonFileChunkPacket *send_buffer =
-            static_cast<NetDaemonFileChunkPacket *>(mem_get(0x820));
-        send_buffer->opcode = 0xF0B;
-        for (int file_index = 0; file_index < file_count; ++file_index) {
-            if ((GetAsyncKeyState(VK_ESCAPE) & 0x8000) != 0) {
-                NetDaemonNet.field_1BDC_ = 1;
-                goto cleanup;
-            }
-            const uint32_t ready_flags =
-                NetDaemonNet.file_index_records_[file_index].ready_flags;
-            if (ready_flags == 0) continue;
-
-            parse_says(0, NetDaemonNet.file_index_records_[file_index].filename, -1, -1);
-            parse_num(0, ready_count--);
-            PopupModalState = 6;
-            pop_close();
-            x_pop_caption_flags(ScriptPopupFile, "MPSENDFILE", 0x214200, 0);
-            PopupModalState = 0;
-            send_buffer->file_index = file_index;
-
-            if (group_handle != 0) delete_group(group_handle);
-            group_handle = create_group("temp");
-            for (int member = 1; member < 8; ++member) {
-                if ((ready_flags & (1U << member)) != 0)
-                    add_to_group(group_handle, process_slots_[member].pid_);
-            }
-
-            if (filemap.open_read(
-                    NetDaemonNet.file_index_records_[file_index].filename, TRUE) != 0) {
-                unsigned long compressed_capacity = static_cast<unsigned long>(
-                    GetFileSize(filemap.get_handle(), 0) * 1.01f);
-                unsigned char *compressed =
-                    static_cast<unsigned char *>(mem_get(static_cast<int>(compressed_capacity)));
-                compress(compressed, &compressed_capacity,
-                         static_cast<unsigned char *>(filemap.get_view()),
-                         GetFileSize(filemap.get_handle(), 0));
-                send_buffer->compressed_size = compressed_capacity;
-
-                unsigned char *const end = compressed + compressed_capacity;
-                unsigned char *source = compressed;
-                int chunk_index = 0;
-                while (end - source >= 0x800) {
-                    do_draw();
-                    memcpy(send_buffer->payload, source, 0x800);
-                    send_buffer->chunk_index = chunk_index;
-                    source += 0x800;
-                    send_group(send_buffer, 0x820, group_handle, 1);
-                    ++chunk_index;
-                }
-                send_buffer->chunk_index = chunk_index;
-                if (end > source) {
-                    const int tail_length = end - source;
-                    memcpy(send_buffer->payload, source, tail_length);
-                    send_group(send_buffer, tail_length + 0x20, group_handle, 1);
-                }
-                filemap.close();
-                if (compressed != 0) free(compressed);
-            }
-        }
-        if (send_buffer != 0) free(send_buffer);
-
-        while (1) {
-            if ((GetAsyncKeyState(VK_ESCAPE) & 0x8000) != 0) break;
-            unsigned long sender, channel;
-            void *packet = NetDaemonNet.Net::get(&sender, &channel);
-            if (packet != 0)
-                process_message(static_cast<char *>(packet), channel,
-                                static_cast<int>(sender));
-            do_draw();
-            if (netdaemon_slots_reached(this, 2)) break;
-        }
-        control.opcode = 0xF07;
-        control.state = 3;
-        send_message(reinterpret_cast<char *>(&control), 0x20, 0);
-    } else {
-        while (NetDaemonFileTransferMode != 3
-               && NetDaemonNet.field_1BDC_ == 0) {
-            if ((GetAsyncKeyState(VK_ESCAPE) & 0x8000) != 0) {
-                NetDaemonNet.field_1BDC_ = 1;
-                pop_close();
-                break;
-            }
-            do_draw();
-            unsigned long sender, channel;
-            void *packet = NetDaemonNet.Net::get(&sender, &channel);
-            if (packet != 0)
-                process_message(static_cast<char *>(packet), channel,
-                                static_cast<int>(sender));
-        }
-    }
-
-cleanup:
-    pop_close();
-    do_all_draws();
-    SetCurrentDirectoryA(previous_directory);
-    if (NetDaemonNet.file_index_records_ != 0) free(NetDaemonNet.file_index_records_);
-    netdaemon_set_file_index_records(0);
-    NetDaemonFileTransferMode = 0;
-    return static_cast<int>(NetDaemonNet.field_1BDC_);
-}
-
-
-uint32_t __cdecl random(int min, int max);
-
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x00534400 0x005388BC 0x005388E8 0x0053459B
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x00534400 0x005388E8 0x00538908 0x00534E1C
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x00534400 0x00538908 0x0053891C 0x00535811
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x00534400 0x0053891C 0x00538930 0x00535A36
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x00534400 0x00538930 0x00538944 0x00535D8F
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x00534400 0x00538944 0x0053895C 0x0053640D
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x00534400 0x0053895C 0x005389AC 0x00536958
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x00534400 0x005389AC 0x005389E8 0x00536DC4
-// The image cross-jumps the three LOCK FAILED tails (0x1202/0x1203 into
-// 0x1204's copy) the way an inline body's expansions merge; the repeated
-// block was one inline helper. Name provisional.
-static inline void progress_backoff() {
-    if (!NetDaemonProgressLastTick) {
-        NetDaemonProgressLastTick = timeGetTime();
-    }
-    NetDaemonProgressInterval =
-        timeGetTime() - NetDaemonProgressLastTick > 5000 ? 5000 : 1000;
-}
 
 // ORIGINAL: 0x00534400 ?process_message@NetDaemon@@QAEXPADKH@Z 0x00534400-0x005388B9;0x0065E0C2-0x0065E442 FILE
 // Historical seed status: the following TRIED describes the superseded
@@ -4626,1148 +5682,83 @@ move_veh_ack:
     }
 }
 
-// ORIGINAL: 0x00530360 ?net_tasks@NetDaemon@@QAEXXZ 0x00530360-0x005303A9 BYTE_EXACT
-// symbol    ?net_tasks@NetDaemon@@QAEXXZ
-// size      74 bytes
-// prototype void (__thiscall ?net_tasks@NetDaemon@@QAEXXZ)(NetDaemon* this)
-// callers   2   call targets   4
+/*
+Purpose: Build a network daemon - its AlphaNet base, then its own eight
+         PlayerLocks and 0x18-entry lock table.
+// ORIGINAL: 0x005389F0 ??0NetDaemon@@QAE@XZ 0x005389F0-0x00538B58;0x0065DF50-0x0065DF62 BYTE_EXACT
+// size      360 bytes
+// prototype void (__thiscall ??0NetDaemon@@QAE@XZ)(NetDaemon* this)
+// callers   1   call targets   4
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E2490 0x0058FF70 0x005900D0 0x004E25B0
+Return Value: this
+
+NetDaemon has no virtual base anywhere in this chain, so a genuine
+constructor is safe (unlike MapWin/PlanWin/Console - see the note in
+`mapwin.h`), and the image's own SEH frame here is what a real constructor
+with a real destructible base earns. NetDaemon's own fields past AlphaNet
+are still opaque storage (see the class declaration), so the eight
+PlayerLocks and the 0x18-entry lock table reach their elements by raw
+offset rather than through invented array members.
+*/
+NetDaemon::NetDaemon() : AlphaNet() {
+    // Member construction does the first lock pass and the deletion table:
+    // locks_ (eight PlayerLock::clear calls, then Lock::clear) and
+    // deletion_list_ (DeletionList's constructor, inlined from this TU).
+
+    reset();
+}
+
+// The original closes transport before destroying Heap, ledger, then Net.
+// The members/base own those lifetimes; NetDaemon must not repeat them.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00538B60 ??1AlphaNet@@QAE@XZ 0x00538B60-0x00538D0E;0x0065DF70-0x0065E005 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00538b60.cpp: existing identity and complete recorded spans", "Original AlphaNet destruction closes transport, then destroys Heap at +0x148C and ledger at +0x144C before Net; normal members now own this chain."], "reason": "Adopt the retained destructor seed identity for the real AlphaNet owner. Existing shared cleanup spans are preserved, not newly inferred or claimed exact; the native one-entry/new-binding route deliberately does not infer overlapping ownership."}
+AlphaNet::~AlphaNet() {
+    close();
+}
+
+
+/*
+Purpose: Tear down a network daemon through its lock members and the
+         AlphaNet/Net destructor chain.
+// ORIGINAL: 0x00538D10 ??1NetDaemon@@QAE@XZ 0x00538D10-0x00538EBE;0x0065E010-0x0065E0A5 BYTE_EXACT
+// TRIED: 15/97 with 62 compiled instructions, and the gap is the class, not
+//   the spelling. TWO things measured 2026-08-22. (1) call_diff says MORE: this
+//   tree makes 13 direct calls where the image makes 12, and the extra one is
+//   `??1Net@@QAE@XZ` - NOT written in this body. `NetDaemon : public AlphaNet :
+//   public Net`, so a REAL `~NetDaemon()` emits the implicit base-destructor
+//   chain; VC6 inlines `~AlphaNet` and calls `~Net` out of line, and the image
+//   calls neither, having open-coded both bases' teardown as the field clears
+//   and vtable resets this body writes by hand. Under /O1 the count is 14,
+//   the fourteenth being `__EH_prolog`. (2) The image's body is a genuine C++
+//   unwind state machine: `mov byte ptr [ebp - 4], N` steps through states
+//   2,1,3,0,9,0xa,8,7,6,5,4,-1 between the calls, and reserves `sub esp, 8`
+//   where this tree reserves `push ecx`. Those state writes come from member
+//   and base subobjects the compiler is destroying itself, one protected
+//   region per subobject - explicit `->~Shim()` calls on reinterpret_cast
+//   pointers, which is what this body has, create no unwind states at all, so
+//   no spelling of the current shim scaffolding can produce them. Reaching
+//   this needs Net/AlphaNet/NetDaemon modelled with the real members at 0x58,
+//   0xb0, 0xe8, 0x10c, 0x130, 0x72c, 0x748, 0x144c, 0x148c - the same layout
+//   job the class comment above says is still open - not another pass over the
+//   statements.
+// size      430 bytes
+// prototype void (__thiscall ??1NetDaemon@@QAE@XZ)(NetDaemon* this)
+// callers   0   call targets   9
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
-// One pump turn: drain a message, run the lock check, run spock.
-void NetDaemon::net_tasks() {
-  wait_task();
-  unsigned long sender;
-  unsigned long channel;
-  void *result = NetDaemonNet.Net::get(&sender, &channel);
-  if (result != 0) {
-    process_message(static_cast<char *>(result), channel,
-                    static_cast<int>(sender));
-  }
-  locks_.check_global();
-  check_spock();
-}
+// calls     0x00401BE0 0x00402970 0x00402DD0 0x004C8DB0 0x004E25B0 0x00538EC0 0x005D45B0 0x0062E010 0x006339E0
+Return Value: n/a
 
-// ORIGINAL: 0x00531700 ?maybe_lock@NetDaemon@@QAEHPAHHHHHH@Z 0x00531700-0x00531780 BYTE_EXACT
-// size      128 bytes
-// prototype int (__thiscall ?maybe_lock@NetDaemon@@QAEHPAHHHHHH@Z)(NetDaemon* this, int*, int, int, int, int, int)
-// callers   1   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// 0x1BAC is lock_state_[2].dword_[2] - the lock-held flag unlock() clears -
-// 0x1BC4 lock_state_[2].dword_[8] and 0x1BCC lock_state_[2].dword_[10], which
-// the archive never mapped. The repeat count compares SIGNED there (the
-// image's `jle`, not `jbe`), and that plus naming the field is what took this
-// off the archive's MISMATCH.
-int NetDaemon::maybe_lock(int *veh_id, int flag, int payload_1C, int payload_20,
-                          int payload_18, int extra) {
-  if (flag != 0) {
-    return 0;
-  }
-  if (lock_held_ != 0) {
-    if (veh_locked_ == 0) {
-      ++move_requests_;
-      // The image compares the count SIGNED here (`jle`), not unsigned.
-      if (1 < move_requests_) {
-        // RECOVERY_LITERAL: v1 0x0068C474 0x0068C480 $SG65067 0x00531700
-        NetMsgPrimary.pop("MOVEPENDING", 0, 2, 0);
-      }
-    }
-    return 1;
-  }
-  move_requests_ = 0;
-  return lock_veh(veh_id, payload_1C | 4, payload_20, payload_18, extra);
-}
-
-
-
-
-
-// Observed network path window at 0x0093AC88, shared with send_files.
-// Complete allocation extent and producer migration remain unproved.
-// RECOVERY_OBJECT: v1 0x0093AC88 ?NetDaemonFileTransferPath@@3PADA
-char NetDaemonFileTransferPath[0x104];
-
-
-// Persistent incoming-only staging shared by every rule transfer. The
-// observed required window is 0x1920; the image's complete allocation extent
-// remains unknown. This object is not cleared between calls.
-// RECOVERY_OBJECT: v1 0x0093AD8C _NetDaemonRulesSyncStaging
-// Each rule transfer stages one table here and the final chunk compacts it
-// into the live table, so the buffer is one union of the eleven tables.
-static union {
-    unsigned char bytes[0x1920];
-    RulesTechnology technology[MaxTechnologyNum];
-    RulesTerraforming terraforming[MaxTerrainNum];
-    RulesTimeControl time_control[MaxTimeControlNum];
-    RulesChassis chassis[MaxChassisNum];
-    RulesReactor reactor[MaxReactorNum];
-    RulesWeapon weapon[MaxWeaponNum];
-    RulesArmor armor[MaxArmorNum];
-    RulesAbility ability[MaxAbilityNum];
-    RulesFacility facility[MaxFacilityNum];
-    RulesCitizen citizen[MaxCitizenNum];
-    RulesSocialCategory social_category[MaxSocialCatNum];
-} NetDaemonRulesSyncStaging;
-
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x00532E00 0x0053412C 0x005341D4 0x00532E4E
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x00532E00 0x005341D4 0x0053420C 0x005331E5
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x00532E00 0x0053420C 0x005342B4 0x0053344D
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x00532E00 0x005342B4 0x005342EC 0x00533803
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x00532E00 0x005342EC 0x00534324 0x00533CA4
-// ORIGINAL: 0x00532E00 ?synch@NetDaemon@@QAEXFHHHPADHF@Z 0x00532E00-0x00534129
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned532E00..534129; retained git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00532e00.cpp; independent jump-table and chunk/callback review.", "Opcode0 exact398-byte partition uses existing source objects and bounded fields; rule80..8D receive stages persist and compact into Alpha-owned fields only on the final chunk.", "Map destinations and diplomacy pair captured before callbacks; outgoing owners reread per chunk; changed base/vehicle notification suppresses scatter; sender mask is lock_state_[2].dword_[6].", "Path93AC88 send_files producer52ED40 remains pending. Stage93AD8C and game tail94B4D8 have observed window bounds only, not complete allocation extents.", "recovery/tasks/netdaemon-player-lifecycle-recovery.json; retained historical claims and prototype-history owner migration."], "reason": "Recover the complete synchronization protocol through genuine NetDaemon state and source-owned game, vehicle, faction, map and rule data. Wire serializers describe explicit member intervals, not an invented contiguous game object. Retain seed provenance and original identity; no matching or runtime acceptance is implied."}
-// TRIED: full transcription of both jump-table dispatches (size switch, address switch, tail array-compaction switch) and the chunk loop; MISMATCH #0 in the prologue (frame-size/local-order only), not in the dispatch logic - coverage is close to 100% of the original's ~4900 bytes, byte-exactness not chased further.
-// One switch sizes the transfer (and raises the receive-side progress
-// popups), the chunk loop selects each chunk's owner address in a second
-// switch, and a third switch compacts staged rule tables on the final chunk.
-// Opcodes without an address case use the chunk offset itself as the address,
-// exactly as the image does. Diplomacy (0x16) travels through a local tuple
-// that is scattered back after the loop.
-void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
-                      int outgoing, int16_t flags) {
-    int k;
-    int j;
-    int wire[18];
-    int faction1;
-    int faction2;
-    int map_rows;
-    int x;
-    int y;
-    int length;
-    int remainder;
-    int total;
-    int size;
-    char *src;
-    SyncHeaderPrefix *header;
-    int i;
-    int local_turn;
-
-    if (!IsMultiplayerNet) return;
-
-    header = reinterpret_cast<SyncHeaderPrefix *>(packet);
-    size = 8;
-    switch (opcode) {
-    case 0x00:
-        if (!outgoing && static_cast<int>(primary_state_.trailing_words_[1]) >= 0) {
-            NetMsgPrimary.pop("SYNCHINGGAME", 0, 1, 0);
-            do_all_draws();
-            primary_state_.trailing_words_[1] = 1;
-        }
-        size = 0x398;
-        break;
-    case 0x24:
-        size = 0x98;
-        break;
-    case 0x15:
-        if (!outgoing) {
-            NetMsgPrimary.close();
-            do_all_draws();
-            primary_state_.trailing_words_[1] = 8;
-        }
-        size = 4;
-        break;
-    case 0x0A:
-    case 0x0B:
-    case 0x17:
-    case 0x25:
-    case 0x26:
-        size = 4;
-        break;
-    case 0x04:
-        if (!outgoing && primary_state_.trailing_words_[1] == 1) {
-            NetMsgPrimary.pop("SYNCHINGWORLD", 0, 1, 0);
-            do_all_draws();
-            primary_state_.trailing_words_[1] = 2;
-        }
-        size = MapArea * sizeof(Map);
-        break;
-    case 0x05:
-        if (!outgoing && primary_state_.trailing_words_[1] == 2) {
-            NetMsgPrimary.pop("SYNCHINGREGIONS", 0, 1, 0);
-            do_all_draws();
-            primary_state_.trailing_words_[1] = 3;
-        }
-        size = 0xE00;
-        break;
-    case 0x06:
-        if (!outgoing && primary_state_.trailing_words_[1] == 3) {
-            NetMsgPrimary.pop("SYNCHINGPLAYERS", 0, 1, 0);
-            do_all_draws();
-            primary_state_.trailing_words_[1] = 4;
-        }
-        size = sizeof(PlayerData);
-        break;
-    case 0x07:
-        size = sizeof(Player);
-        break;
-    case 0x0E:
-        size = sizeof(VehPrototype);
-        break;
-    case 0x0F:
-        size = a3 * sizeof(VehPrototype);
-        break;
-    case 0x01:
-    case 0x10:
-        size = 1;
-        break;
-    case 0x11:
-        if (outgoing) {
-            log_say("Sent SYNCH VEH", a2, Vehs[a2].x, Vehs[a2].y);
-        } else {
-            log_say("Received SYNCH VEH", a2, Vehs[a2].x, Vehs[a2].y);
-        }
-        size = 0x30;
-        break;
-    case 0x12:
-        if (!outgoing && primary_state_.trailing_words_[1] == 4) {
-            NetMsgPrimary.pop("SYNCHINGUNITS", 0, 1, 0);
-            do_all_draws();
-            primary_state_.trailing_words_[1] = 5;
-        }
-        if (!GameDataStateStorage.fields_.vehicle_current_count_) return;
-        size = GameDataStateStorage.fields_.vehicle_current_count_ * sizeof(Veh);
-        break;
-    case 0x13:
-        if (outgoing) {
-            log_say("Sending SYNCH_BASE", Bases[a2].name_string, a2, 0, 0);
-            size = sizeof(Base);
-        } else {
-            log_say("Received SYNCH_BASE", Bases[a2].name_string, a2, 0, 0);
-            size = sizeof(Base);
-        }
-        break;
-    case 0x14:
-        if (!GameDataStateStorage.fields_.base_current_count_) return;
-        size = GameDataStateStorage.fields_.base_current_count_ * sizeof(Base);
-        break;
-    case 0x08:
-    case 0x0D:
-    case 0x23:
-        size = 0x14;
-        break;
-    case 0x16:
-        size = sizeof(wire);
-        break;
-    case 0x18:
-        size = 0x224;
-        break;
-    case 0x19:
-        if (!outgoing && primary_state_.trailing_words_[1] == 5) {
-            NetMsgPrimary.pop("SYNCHINGPRESTIGE", 0, 1, 0);
-            do_all_draws();
-            primary_state_.trailing_words_[1] = 6;
-        }
-        size = 0x20;
-        break;
-    case 0x20:
-        size = GameDataStateStorage.fields_.turn_current_num_ << 4;
-        break;
-    case 0x21:
-        size = 4;
-        if (!outgoing && primary_state_.trailing_words_[1] == 6) {
-            NetMsgPrimary.pop("SYNCHINGREPLAY", 0, 1, 0);
-            do_all_draws();
-            primary_state_.trailing_words_[1] = 7;
-        }
-        break;
-    case 0x22:
-        size = ReplayEventBytes;
-        break;
-    case 0x28:
-        size = 0;
-        break;
-    case 0x27:
-        size = 0x104;
-        break;
-    case 0x29:
-        size = 0x1000;
-        break;
-    case 0x30:
-        map_rows = MapLatitudeBounds / 16;
-        size = map_rows;
-        if (a2 == 15) size = MapLatitudeBounds - map_rows * 15;
-        size = (MapLongitudeBounds >> 1) * size * sizeof(Map);
-        break;
-    case 0x80:
-        if (!outgoing && static_cast<int>(primary_state_.trailing_words_[2]) >= 0) {
-            NetMsgPrimary.pop("RULESYNCHTECH", 0, 1, 0);
-            do_all_draws();
-            primary_state_.trailing_words_[2] = 1;
-        }
-        size = 0xF4C;
-        break;
-    case 0x81:
-        size = 0x13C;
-        break;
-    case 0x82:
-        size = 0x7C;
-        break;
-    case 0x83:
-        if (!outgoing && primary_state_.trailing_words_[2] == 1) {
-            NetMsgPrimary.pop("RULESYNCHTERR", 0, 1, 0);
-            do_all_draws();
-            primary_state_.trailing_words_[2] = 2;
-        }
-        size = 0x280;
-        break;
-    case 0x84:
-        size = 0x90;
-        break;
-    case 0x85:
-        size = 0xC0;
-        break;
-    case 0x86:
-        if (!outgoing && primary_state_.trailing_words_[2] == 2) {
-            NetMsgPrimary.pop("RULESYNCHVEH", 0, 1, 0);
-            do_all_draws();
-            primary_state_.trailing_words_[2] = 3;
-        }
-        size = 0x510;
-        break;
-    case 0x87:
-        size = 0x30;
-        break;
-    case 0x88:
-        size = 0x1A0;
-        break;
-    case 0x89:
-        size = 0xE0;
-        break;
-    case 0x8A:
-        size = 0x32C;
-        break;
-    case 0x8B:
-        if (!outgoing && primary_state_.trailing_words_[2] == 3) {
-            NetMsgPrimary.pop("RULESYNCHFAC", 0, 1, 0);
-            do_all_draws();
-            primary_state_.trailing_words_[2] = 4;
-        }
-        size = 0x1920;
-        break;
-    case 0x8C:
-        size = 0x118;
-        break;
-    case 0x8D:
-        if (!outgoing && primary_state_.trailing_words_[2] == 4) {
-            NetMsgPrimary.close();
-            do_all_draws();
-            primary_state_.trailing_words_[2] = 5;
-        }
-        size = 0x350;
-        break;
-    case 0x02:
-    case 0x1002:
-        size = 0xA9C;
-        break;
-    default:
-        size = a2;
-        break;
-    case 0x09:
-    case 0x0C:
-        break;
-    }
-
-    total = size / 0x800;
-    remainder = size - total * 0x800;
-    if (remainder) total++;
-
-    for (i = 0; i < total; i++) {
-        if (!outgoing) {
-            if (header->index == total - 1 && remainder) {
-                if (!(total == 1)) {
-                    src = reinterpret_cast<char *>(total * 0x800 - 0x800);
-                } else {
-                    src = 0;
-                }
-                length = remainder;
-            } else {
-                src = reinterpret_cast<char *>(header->index * 0x800);
-                length = 0x800;
-            }
-            if (header->index == total - 1) {
-                field_1BBC_ &= ~(1 << header->faction);
-            }
-            i = total - 1;
-        } else {
-            if (!(i == total - 1 && remainder)) {
-                src = reinterpret_cast<char *>(i * 0x800);
-                length = 0x800;
-            } else {
-                if (total == 1) {
-                    src = 0;
-                } else {
-                    src = reinterpret_cast<char *>(total * 0x800 - 0x800);
-                }
-                length = remainder;
-            }
-        }
-
-        switch (opcode) {
-        case 0x00:
-            src += reinterpret_cast<int>(&GameDataStateStorage);
-            break;
-        case 0x01:
-            src += reinterpret_cast<int>(&GameDataStateStorage.fields_.lock_masks_);
-            break;
-        case 0x15:
-            src += reinterpret_cast<int>(&ControlTurnPhase);
-            break;
-        case 0x24:
-            src += reinterpret_cast<int>(&ScenarioSave);
-            break;
-        case 0x04:
-            src += reinterpret_cast<int>(MapTiles);
-            break;
-        case 0x05:
-            src += reinterpret_cast<int>(Continents);
-            break;
-        case 0x07:
-            src += reinterpret_cast<int>(&Players[a2]);
-            break;
-        case 0x08:
-            src += reinterpret_cast<int>(&PlayersData[a2].ai_fight);
-            break;
-        case 0x09:
-            src += reinterpret_cast<int>(&PlayersData[a2].tech_accumulated);
-            break;
-        case 0x0A:
-            src += reinterpret_cast<int>(&PlayersData[a2].tech_id_researching);
-            break;
-        case 0x0B:
-            src += reinterpret_cast<int>(&PlayersData[a2].energy_reserves);
-            break;
-        case 0x0C:
-            src += reinterpret_cast<int>(&PlayersData[a2].se_alloc_psych);
-            break;
-        case 0x0D:
-            src += reinterpret_cast<int>(&PlayersData[a2].soc_category_pending);
-            break;
-        case 0x0E:
-            src += reinterpret_cast<int>(&VehPrototypes[a2]);
-            break;
-        case 0x0F:
-            src += reinterpret_cast<int>(&VehPrototypes[a2]);
-            break;
-        case 0x10:
-            src += reinterpret_cast<int>(&VehPrototypes[a2].obsolete_factions);
-            break;
-        case 0x11:
-            x = Vehs[a2].x;
-            y = Vehs[a2].y;
-            src += reinterpret_cast<int>(&Vehs[a2]);
-            break;
-        case 0x12:
-            src += reinterpret_cast<int>(Vehs);
-            break;
-        case 0x13:
-            x = Bases[a2].x;
-            y = Bases[a2].y;
-            src += reinterpret_cast<int>(&Bases[a2]);
-            break;
-        case 0x14:
-            src += reinterpret_cast<int>(Bases);
-            break;
-        case 0x23:
-            src += reinterpret_cast<int>(&Bases[a2].resource_sqr_radius);
-            break;
-        case 0x16:
-            faction1 = a2;
-            faction2 = a3;
-            src = reinterpret_cast<char *>(wire);
-            length = sizeof(wire);
-            if (outgoing) {
-                wire[0] = PlayersData[a2].diplo_patience[a3];
-                wire[1] = PlayersData[a3].diplo_patience[a2];
-                wire[2] = PlayersData[a2].diplo_friction[a3];
-                wire[3] = PlayersData[a3].diplo_friction[a2];
-                wire[4] = PlayersData[a2].global_reputation;
-                wire[5] = PlayersData[a3].global_reputation;
-                wire[6] = PlayersData[a2].diplo_unk1[a3];
-                wire[7] = PlayersData[a3].diplo_unk1[a2];
-                wire[8] = PlayersData[a2].diplo_wrongs[a3];
-                wire[9] = PlayersData[a3].diplo_wrongs[a2];
-                wire[10] = PlayersData[a2].diplo_spoke[a3];
-                wire[11] = PlayersData[a3].diplo_spoke[a2];
-                wire[12] = PlayersData[a2].diplo_treaties[a3];
-                wire[13] = PlayersData[a3].diplo_treaties[a2];
-                wire[14] = PlayersData[a2].diplo_agenda[a3];
-                wire[15] = PlayersData[a3].diplo_agenda[a2];
-                wire[16] = PlayersData[a2].diplo_merc[a3];
-                wire[17] = PlayersData[a3].diplo_merc[a2];
-            }
-            break;
-        case 0x06:
-        case 0x17:
-            src += reinterpret_cast<int>(&PlayersData[a2]);
-            break;
-        case 0x18:
-            src += reinterpret_cast<int>(&PlayersData[a2].unk_37);
-            break;
-        case 0x19:
-            src += reinterpret_cast<int>(FactionRankingsUnk);
-            break;
-        case 0x20:
-            src += reinterpret_cast<int>(FactionRankingHistory);
-            break;
-        case 0x21:
-            src = reinterpret_cast<char *>(&ReplayEventBytes);
-            break;
-        case 0x22:
-            src += reinterpret_cast<int>(ReplayEvents);
-            break;
-        case 0x25:
-            src = reinterpret_cast<char *>(&GameDataStateStorage.fields_.vehicle_current_count_);
-            break;
-        case 0x26:
-            src = reinterpret_cast<char *>(&GameDataStateStorage.fields_.base_current_count_);
-            break;
-        case 0x28:
-            src = StringTemp;
-            break;
-        case 0x27:
-            src = NetDaemonFileTransferPath;
-            break;
-        case 0x29:
-            src += reinterpret_cast<int>(BungList);
-            break;
-        case 0x30:
-            y = map_rows * a2;
-            src += reinterpret_cast<int>(&MapTiles[MapLongitude * y]);
-            break;
-        case 0x80:
-            if (outgoing) {
-                src += reinterpret_cast<int>(Technology);
-            } else {
-                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging.bytes);
-            }
-            break;
-        case 0x83:
-            if (outgoing) {
-                src += reinterpret_cast<int>(Terraforming);
-            } else {
-                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging.bytes);
-            }
-            break;
-        case 0x85:
-            if (outgoing) {
-                src += reinterpret_cast<int>(TimeControl);
-            } else {
-                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging.bytes);
-            }
-            break;
-        case 0x86:
-            if (outgoing) {
-                src += reinterpret_cast<int>(Chassis);
-            } else {
-                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging.bytes);
-            }
-            break;
-        case 0x87:
-            if (outgoing) {
-                src += reinterpret_cast<int>(Reactor);
-            } else {
-                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging.bytes);
-            }
-            break;
-        case 0x88:
-            if (outgoing) {
-                src += reinterpret_cast<int>(Weapon);
-            } else {
-                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging.bytes);
-            }
-            break;
-        case 0x89:
-            if (outgoing) {
-                src += reinterpret_cast<int>(Armor);
-            } else {
-                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging.bytes);
-            }
-            break;
-        case 0x8A:
-            if (outgoing) {
-                src += reinterpret_cast<int>(Ability);
-            } else {
-                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging.bytes);
-            }
-            break;
-        case 0x8B:
-            if (outgoing) {
-                src += reinterpret_cast<int>(Facility);
-            } else {
-                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging.bytes);
-            }
-            break;
-        case 0x8C:
-            if (outgoing) {
-                src += reinterpret_cast<int>(Citizen);
-            } else {
-                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging.bytes);
-            }
-            break;
-        case 0x8D:
-            if (outgoing) {
-                src += reinterpret_cast<int>(SocialCategories);
-            } else {
-                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging.bytes);
-            }
-            break;
-        case 0x81:
-            src = reinterpret_cast<char *>(&RulesStorage);
-            break;
-        case 0x82:
-            src = reinterpret_cast<char *>(&WorldBuilder);
-            break;
-        case 0x84:
-            src = reinterpret_cast<char *>(ResourceInfo);
-            break;
-        case 0x02:
-        case 0x1002:
-            src += reinterpret_cast<int>(&MapStorage.metadata_);
-            break;
-        }
-
-        if (outgoing) {
-            const int packet_length = length + sizeof(SyncHeaderPrefix);
-            SyncHeaderPrefix *message =
-                static_cast<SyncHeaderPrefix *>(mem_get(packet_length));
-            message->flags = flags;
-            message->opcode = opcode;
-            message->faction = ConsoleGlobal.faction_id_;
-            message->sequence = deletion_list_.sequence_bits();
-            message->argument_4 = a4;
-            header = message;
-            message->argument_2 = a2;
-            message->argument_3 = a3;
-            message->index = static_cast<int16_t>(i);
-            if (length) memcpy(message + 1, src, length);
-            send_message(reinterpret_cast<char *>(message), packet_length, 0);
-            if (message) free(header);
-            continue;
-        }
-
-        synch_display(opcode, header->index + 1, total, a2);
-        char *payload = packet + sizeof(SyncHeaderPrefix);
-        if (length) {
-            if (opcode == 0x11) {
-                if (total == 1 &&
-                    (reinterpret_cast<Veh *>(payload)->x != reinterpret_cast<Veh *>(src)->x ||
-                     reinterpret_cast<Veh *>(payload)->y != reinterpret_cast<Veh *>(src)->y)) {
-                    parse_num(0, reinterpret_cast<Veh *>(payload)->x);
-                    parse_num(1, reinterpret_cast<Veh *>(payload)->y);
-                    parse_num(2, reinterpret_cast<Veh *>(src)->x);
-                    parse_num(3, reinterpret_cast<Veh *>(src)->y);
-                    parse_num(4, Vehs[a2].faction_id);
-                    parse_num(5, Vehs[a2].proto_id);
-                    parse_num(6, a2);
-                    parse_says(0, VehPrototypes[Vehs[a2].proto_id].veh_name, -1, -1);
-                    log_say("Synch changed vehicle", ParseStrBuffer[0].str, a2, x, y);
-                    if (BaseAtDebugPopupFlag) {
-                        X_pop("VEHSYNCH", 0);
-                        if (!ConsoleGroupAction) GetAsyncKeyState(VK_CONTROL);
-                    }
-                    // The base branch below jumps into this branch's
-                    // notification and message blocks; VC6 places them after
-                    // that branch's gotos (image 0x533C14/0x533C20), where this
-                    // branch's sete and message exits reach them too.
-                    local_turn = 0;
-                    if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) && !ConsoleControlTurnActive) {
-                        local_turn = GameDataStateStorage.fields_.net_turn_faction_ == ConsoleGlobal.faction_id_;
-                    }
-                    if (local_turn
-                        || !((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) && !ConsoleControlTurnActive)
-                            && NetDaemonNet.primary_state_.leading_words_[0]) {
-                    notify_spock:
-                        SpockNotifyPending = 1;
-                    } else {
-                    notify_message:
-                        message_data(0x2308, 0, 0, 0, 0, 0);
-                    }
-                    goto chunk_done;
-                }
-            } else if (opcode == 0x13) {
-                if (total == 1 &&
-                    (reinterpret_cast<Base *>(payload)->x != reinterpret_cast<Base *>(src)->x ||
-                     reinterpret_cast<Base *>(payload)->y != reinterpret_cast<Base *>(src)->y)) {
-                    parse_num(0, reinterpret_cast<Base *>(payload)->x);
-                    parse_num(1, reinterpret_cast<Base *>(payload)->y);
-                    parse_num(2, reinterpret_cast<Base *>(src)->x);
-                    parse_num(3, reinterpret_cast<Base *>(src)->y);
-                    parse_num(4, a2);
-                    parse_says(0, payload + 0x13, -1, -1);
-                    parse_says(1, src + 0x13, -1, -1);
-                    log_say("Synch changed base", ParseStrBuffer[0].str, a2, x, y);
-                    if (BaseAtDebugPopupFlag) {
-                        X_pop("VEHSYNCH", 0);
-                        if (!ConsoleGroupAction) GetAsyncKeyState(VK_CONTROL);
-                    }
-                    local_turn = 0;
-                    if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) && !ConsoleControlTurnActive) {
-                        local_turn = GameDataStateStorage.fields_.net_turn_faction_ == ConsoleGlobal.faction_id_;
-                    }
-                    if (local_turn
-                        || !((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) && !ConsoleControlTurnActive)
-                            && NetDaemonNet.primary_state_.leading_words_[0]) {
-                        goto notify_spock;
-                    }
-                    goto notify_message;
-                }
-            }
-            memcpy(src, payload, length);
-        }
-        if (opcode == 0x12) {
-            if (header->index == total - 1) rebuild_vehicle_bits();
-        } else if (opcode == 0x14) {
-            if (header->index == total - 1) rebuild_base_bits();
-        }
-    chunk_done:
-        if (header->index == total - 1) {
-            switch (opcode) {
-            case 0x80: {
-                RulesTechnology *stage = NetDaemonRulesSyncStaging.technology;
-                for (k = 0; k < MaxTechnologyNum; k++, stage++) {
-                    Technology[k].flags = stage->flags;
-                    Technology[k].growth_value = stage->growth_value;
-                    Technology[k].tech_value = stage->tech_value;
-                    Technology[k].wealth_value = stage->wealth_value;
-                    Technology[k].power_value = stage->power_value;
-                    Technology[k].preq_tech_1 = stage->preq_tech_1;
-                    Technology[k].preq_tech_2 = stage->preq_tech_2;
-                }
-                break;
-            }
-            case 0x83: {
-                RulesTerraforming *stage = NetDaemonRulesSyncStaging.terraforming;
-                for (k = 0; k < MaxTerrainNum; k++, stage++) {
-                    for (j = 0; j < 2; j++) {
-                        Terraforming[k].prerequisite_tech[j] = stage->prerequisite_tech[j];
-                    }
-                    Terraforming[k].bit = stage->bit;
-                    Terraforming[k].bit_incompatible = stage->bit_incompatible;
-                    Terraforming[k].rate = stage->rate;
-                }
-                break;
-            }
-            case 0x85: {
-                RulesTimeControl *stage = NetDaemonRulesSyncStaging.time_control;
-                for (k = 0; k < MaxTimeControlNum; k++, stage++) {
-                    LPSTR name = TimeControl[k].name;
-                    TimeControl[k] = *stage;
-                    TimeControl[k].name = name;
-                }
-                break;
-            }
-            case 0x86: {
-                RulesChassis *stage = NetDaemonRulesSyncStaging.chassis;
-                for (k = 0; k < MaxChassisNum; k++, stage++) {
-                    Chassis[k].speed = stage->speed;
-                    Chassis[k].triad = stage->triad;
-                    Chassis[k].range = stage->range;
-                    Chassis[k].missile = stage->missile;
-                    Chassis[k].cargo = stage->cargo;
-                    Chassis[k].cost = stage->cost;
-                    Chassis[k].preq_tech = stage->preq_tech;
-                }
-                break;
-            }
-            case 0x87: {
-                RulesReactor *stage = NetDaemonRulesSyncStaging.reactor;
-                for (k = 0; k < MaxReactorNum; k++, stage++) {
-                    Reactor[k].preq_tech = stage->preq_tech;
-                }
-                break;
-            }
-            case 0x88: {
-                RulesWeapon *stage = NetDaemonRulesSyncStaging.weapon;
-                for (k = 0; k < MaxWeaponNum; k++, stage++) {
-                    Weapon[k].offense_rating = stage->offense_rating;
-                    Weapon[k].icon = stage->icon;
-                    Weapon[k].mode = stage->mode;
-                    Weapon[k].cost = stage->cost;
-                    Weapon[k].preq_tech = stage->preq_tech;
-                }
-                break;
-            }
-            case 0x89: {
-                RulesArmor *stage = NetDaemonRulesSyncStaging.armor;
-                for (k = 0; k < MaxArmorNum; k++, stage++) {
-                    Armor[k].defense_rating = stage->defense_rating;
-                    Armor[k].mode = stage->mode;
-                    Armor[k].cost = stage->cost;
-                    Armor[k].preq_tech = stage->preq_tech;
-                }
-                break;
-            }
-            case 0x8A: {
-                RulesAbility *stage = NetDaemonRulesSyncStaging.ability;
-                for (k = 0; k < MaxAbilityNum; k++, stage++) {
-                    Ability[k].cost_factor = stage->cost_factor;
-                    Ability[k].unk_1 = stage->unk_1;
-                    Ability[k].flags = stage->flags;
-                    Ability[k].preq_tech = stage->preq_tech;
-                }
-                break;
-            }
-            case 0x8B: {
-                RulesFacility *stage = NetDaemonRulesSyncStaging.facility;
-                for (k = 0; k < MaxFacilityNum; k++, stage++) {
-                    LPSTR name = Facility[k].name;
-                    LPSTR effect = Facility[k].effect;
-                    Facility[k] = *stage;
-                    Facility[k].name = name;
-                    Facility[k].effect = effect;
-                }
-                break;
-            }
-            case 0x8C: {
-                RulesCitizen *stage = NetDaemonRulesSyncStaging.citizen;
-                for (k = 0; k < MaxCitizenNum; k++, stage++) {
-                    Citizen[k].preq_tech = stage->preq_tech;
-                    Citizen[k].obsol_tech = stage->obsol_tech;
-                    // The image copies the three bonuses with an unrolled
-                    // three-step loop (0x00533EB8).
-                    for (j = 0; j < 3; j++) {
-                        Citizen[k].bonus[j] = stage->bonus[j];
-                    }
-                }
-                break;
-            }
-            case 0x8D: {
-                for (k = 0; k < MaxSocialCatNum; k++) {
-                    for (j = 0; j < 4; j++) {
-                        SocialCategories[k].preq_tech[j] = NetDaemonRulesSyncStaging.social_category[k].preq_tech[j];
-                        SocialCategories[k].model_effect[j] = NetDaemonRulesSyncStaging.social_category[k].model_effect[j];
-                    }
-                }
-                break;
-            }
-            }
-        }
-    }
-
-    if (opcode == 0) {
-        prefs_use();
-    } else if (opcode == 0x02) {
-        if (!primary_state_.leading_words_[0]) {
-            map_shutdown();
-            map_init();
-            Paths.init();
-        }
-    } else if (opcode == 0x13) {
-        TutWinBaseWindow.check_base(a2);
-    } else if (opcode == 0x11) {
-        TutWinBaseWindow.check_veh(a2);
-    } else if (opcode == 0x16) {
-        PlayersData[faction1].diplo_patience[faction2] = static_cast<char>(wire[0]);
-        PlayersData[faction2].diplo_patience[faction1] = static_cast<char>(wire[1]);
-        PlayersData[faction1].diplo_friction[faction2] = wire[2];
-        PlayersData[faction2].diplo_friction[faction1] = wire[3];
-        PlayersData[faction1].global_reputation = wire[4];
-        PlayersData[faction2].global_reputation = wire[5];
-        PlayersData[faction1].diplo_unk1[faction2] = wire[6];
-        PlayersData[faction2].diplo_unk1[faction1] = wire[7];
-        PlayersData[faction1].diplo_wrongs[faction2] = wire[8];
-        PlayersData[faction2].diplo_wrongs[faction1] = wire[9];
-        PlayersData[faction1].diplo_spoke[faction2] = wire[10];
-        PlayersData[faction2].diplo_spoke[faction1] = wire[11];
-        PlayersData[faction1].diplo_treaties[faction2] = wire[12];
-        PlayersData[faction2].diplo_treaties[faction1] = wire[13];
-        PlayersData[faction1].diplo_agenda[faction2] = wire[14];
-        PlayersData[faction2].diplo_agenda[faction1] = wire[15];
-        PlayersData[faction1].diplo_merc[faction2] = wire[16];
-        PlayersData[faction2].diplo_merc[faction1] = wire[17];
-    } else if (opcode == 0x0D) {
-        social_set(a2);
-    }
-}
-
-
-// Clear the real daemon lock entries, then close its AlphaNet base.
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0051DD00 sub_51dd00 0x0051DD00-0x0051DDE0 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0051dd00.cpp"], "reason": "Recover typed lock-entry reset, borrowed selection pointer clearing and ordered lock cleanup before qualified AlphaNet close."}
-// body src/netdaemon.h
-// symbol    ?reset@NetDaemon@@QAEXXZ
-// BODY IN netdaemon.h, as an in-class `MEASURED` inline member.
-
-// Vehicle wait paths update the shared counter defined above.
-
-// Original0x00532140 performs the network half of a vehicle drop. The
-// lock-state words are the existing typed entries documented above; the
-// non-network action is a separate real owner in veh.cpp.
-// ORIGINAL: 0x00532140 ?veh_drop@NetDaemon@@QAEHHHH@Z 0x00532140-0x00532563 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00532140.cpp retained signature/extents and complete seed; no historical claim copied", "Coordinator full pinned original instruction decode 00532140..00532563, typed source owner fields and corrected original call/branch evidence", "recovery/tests/test_airdrop_network.py actual-body directional treaty and network reentrancy controls; not linked/runtime/game acceptance"], "reason": "Recover the true network receiver, lock/ack state, global action-mode reentrancy and local execution result; preserve early return versus release paths and leave ExitTurnLoop read-only."}
-// TRIED: flat byte-offset fields on `this` (class deliberately opaque); goto-based control flow matching the two shared cleanup labels (LAB_00532357 reject path, LAB_0053254e release path); fixed two Ghidra-vs-raw-asm discrepancies (speed()/array index use a1 not a2 after the reassignment at 0x53236F; message_data arg order is a1,a2,a3). Diverges at #0 (thiscall prologue).
-int NetDaemon::veh_drop(int veh_id, int x, int y) {
-    if (IsMultiplayerNet == 0) {
-        return action_airdrop(veh_id, x, y, 3);
-    }
-
-    if (maybe_lock(&veh_id, 0, 0, x, y, 4) != 0) {
-        return 0;
-    }
-
-    int base_id = base_at(x, y);
-    if (base_id >= 0
-        && Bases[base_id].faction_id_current != Vehs[veh_id].faction_id
-        && (PlayersData[Vehs[veh_id].faction_id]
-                .diplo_treaties[Bases[base_id].faction_id_current] & 1U) == 0) {
-        if (veh_who(x, y) >= 0) {
-            goto airdrop;
-        }
-        if (add_global() != 0) {
-            if (veh_locked_ != 0) {
-                Vehs[veh_id].order = 0;
-                Vehs[veh_id].state &= 0xFCFFBDFFU;
-                synch_veh(veh_id);
-                await_synch();
-            }
-            unlock_veh();
-            return 0;
-        }
-    }
-
-airdrop:
-    if (action_airdrop(veh_id, x, y, 1) != 0
-        && veh_moves(veh_id) != 0) {
-        message_data(0x2403, 0, veh_id, x, y, 0);
-        // WORKAROUND(inline): the image expands await_exec(1) and its wait
-        // here (literals 0x0068C390/0x0068C3B4/0x0068C3C0) but keeps receive
-        // out of line and expands unlock_veh's unlock; no spelling of the
-        // helpers reproduces that split, so the expansion is written out.
-        if (IsMultiplayerNet != 0) {
-            log_say("Client waiting for acknowledgement",
-                    ConsoleGlobal.faction_id_, 0, 0);
-            // Native reuses the dead coordinate parameters for the saved
-            // action mode and the wait start time.
-            y = NetDaemonNet.action_mode_;
-            ++NetBusyCount;
-            x = timeGetTime();
-            int showed_wait_popup = 0;
-            while (exec_pending_ == 1) {
-                if (ExitTurnLoop != 0) break;
-                if (!showed_wait_popup && timeGetTime() - x > 2000) {
-                    showed_wait_popup = 1;
-                    NetMsgPrimary.pop("AWAITEXEC", 0, 2, nullptr);
-                }
-                wait_task();
-                // A constant member pointer keeps receive out of line here.
-                int (NetDaemon::*const receive_call)() = &NetDaemon::receive;
-                (this->*receive_call)();
-                locks_.check_global();
-                check_spock();
-            }
-            if (showed_wait_popup) NetMsgPrimary.close();
-            NetDaemonNet.action_mode_ = y;
-            --NetBusyCount;
-            log_say("Client received acknowledgement",
-                    ConsoleGlobal.faction_id_, 0, 0);
-            unlock_veh();
-            exec_pending_ = 0;
-        }
-        return 1;
-    }
-
-    unlock_veh();
-    return 0;
-}
-
-// ORIGINAL: 0x00532570 ?action@NetDaemon@@QAEHHH@Z 0x00532570-0x005328BA BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned532570..5328BA; retained git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00532570.cpp is a conflicting historical hint, not the product ABI.", "Entry signed order classification is distinct from the post-automated_lock vehicle/order reload. Absolute93E904 timing storage belongs to NetDaemonNet.lock_state_[1].dword_[3], while wait flags and Lock remain receiver-relative.", "Pinned NUL log/popup literals68C2DC,68C390,68C3B4,68C3C0,68C4AC,68C4C8,68C4F4,68C510,68C530,68C544,68C554; ExitTurnLoop is game owner9B2068."], "reason": "Recover the full multiplayer vehicle-order action through the real NetDaemon, vehicle and transport owners; retain its original seed identity and complete span without a matching or runtime claim."}
-// TRIED: g_00669368 is a cached stdcall function pointer (timeGetTime), called twice through the same loaded pointer - matches the two `// indirect` sites.
-// LEVER: the tail is a switch on the branch with the road case first and
-//        await last; branch is assigned only in the in-range arm, and the
-//        range test is `>= 0x18`.
-int NetDaemon::action(int veh_id, int mode) {
-    if (IsMultiplayerNet == 0) return ::action(veh_id);
-
-    const int8_t action_type = Vehs[veh_id].order;
-    int category;
-    enum Branch { await_branch, go_to, road_to };
-    Branch branch;
-
-    if (action_type < 4 || action_type >= 0x18) {
-        if (action_type == ORDER_MOVE_TO || action_type == ORDER_AI_MOVE_TO) {
-            category = 4;
-            branch = go_to;
-        } else if (action_type == ORDER_ROAD_TO || action_type == ORDER_MAGTUBE_TO) {
-            category = 4;
-            branch = road_to;
-        } else {
-            if (action_type != 0)
-                log_say("Falling out of action loop", veh_id, action_type, 0);
-            if (mode != 0) {
-                unlock_veh();
-            }
-            return 0;
-        }
-    } else {
-        branch = await_branch;
-        category = (action_type == 0x14 || action_type == 0x15) ? 0xC : 0;
-    }
-
-    veh_locked_ = 1;
-    if (mode == 0 && automated_lock(&veh_id, category) != 0) return 0;
-
-    switch (branch) {
-    case road_to:
-        log_say("Net.Action Road", 0, 0, 0);
-        action_road_to(veh_id);
-        break;
-    case go_to:
-        log_say("Net.Action Go to", veh_id, 0, 0);
-        action_go_to(veh_id);
-        break;
-    case await_branch:
-        log_say("Net.Action Sending ACTION message to server", veh_id,
-                Vehs[veh_id].order, 0);
-        message_veh(0x2404, veh_id, 0, 0);
-        log_say("Net.Action Awaiting EXEC", 0, 0, 0);
-        await_exec(1);
-        log_say("Net.Action Finished awaiting", 0, 0, 0);
-        break;
-    }
-    log_say("Falling out of Net.Action", 0, 0, 0);
-    return 1;
-}
-
-// WORKAROUND(inline): order_veh's stack walk exits straight to the loop end on a
-// negative id (0x532031 `jl 0x532048`), which VC6 threads only from a ternary
-// body; veh.h's if-form veh_next_stack_id stops at the loop test. Switching the
-// header measured a loss in probe (606 -> 572 matching), so the twin stays local.
-static inline int net_next_stack_id(int veh_id) {
-    return veh_id >= 0 ? Vehs[veh_id].next_veh_id_stack : veh_id;
-}
-
-// ORIGINAL: 0x00531780 ?order_veh@NetDaemon@@QAEHHHH@Z 0x00531780-0x00532135 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned531780..532135; retained git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00531780.cpp preserves the original identity and contradictory seed history.", "Native5318D6..5318E8 computes(otherFaction+2099*ownFaction)*4+96C9F8: PlayersData[ownFaction].diplo_treaties[otherFaction], stride20CC, not the seed20C8 transcription.", "Veh34/Base134/Map2C fields and existing coordinate arrays own the accessed state; signed speed and lock cleanup/callback ordering retain native obligations. Literal68C480 is GLOBALFAILED and68C490 is Sending MOVE VEH message; native synchronization and the full message dispatcher remain unfinished."], "reason": "Recover the complete network move request, feasibility, acknowledgement and release paths on the genuine daemon and game records. Preserve unresolved synch/process_message dependencies rather than forwarding this body to the original executable."}
-// TRIED: Ghidra pseudocode used as primary source with call-signature/arg-order fixes confirmed against raw disasm (base_at, veh_at, stack_check, stack_fix, order_veh [both the free function at 0x5947C0 and the recursive-looking unqualified call, which needed `::order_veh` to avoid binding to the member of the same name], message_veh, Net::get/process_message argument mapping). Factored the 3x near-identical "release lock" block into a file-scope #define/#undef macro rather than a helper function. One table access (DAT_0096c9f8 with a stride of 0x20c8 rather than the 0x20cc seen everywhere else in this codebase) is transcribed as Ghidra states it but NOT independently re-derived from raw disasm - flagging this as the weakest point if it mismatches. Compiles; first divergence at instr #34. Not chased to byte-exact given size (2485 bytes).
-int NetDaemon::order_veh(int veh_id, int direction, int mode) {
-    if (IsMultiplayerNet == 0) return ::order_veh(veh_id, direction, 3);
-
-    // maybe_lock expanded: the image pushes its 0x0068C474 literal.
-    if (maybe_lock(&veh_id, mode, 0, -1, -1, 0) != 0) return 0;
-
-    const int x = wrap_map_x(Vehs[veh_id].x + VehMoveDeltaX[direction]);
-    const int y = Vehs[veh_id].y + VehMoveDeltaY[direction];
-    const int faction = Vehs[veh_id].faction_id;
-    const int base_id = base_at(x, y);
-    int good_base = 0;
-    Vehs[veh_id].probe_action = 0;
-
-    if (base_id >= 0) {
-        const int base_faction = Bases[base_id].faction_id_current;
-        if (base_faction != faction &&
-            (PlayersData[faction].diplo_treaties[base_faction] & 1U) == 0) {
-            if (veh_who(x, y) < 0 || Bases[base_id].population_size <= 1) {
-                good_base = 1;
-            }
-        }
-    }
-
-    if (planet_buster(veh_id) != 0) {
-        const int fixed_vehicle = stack_fix(veh_at(x, y));
-        if (fixed_vehicle >= 0 && Vehs[fixed_vehicle].faction_id != faction &&
-            (PlayersData[faction]
-                 .diplo_treaties[Vehs[fixed_vehicle].faction_id] & 1U) == 0) {
-            good_base = 1;
-        }
-    }
-
-    if (good_base && add_global() != 0) {
-        if (veh_locked_ != 0) {
-            Vehs[veh_id].order = 0;
-            Vehs[veh_id].state &= 0xFCFFBDFFU;
-            synch_veh(veh_id);
-            await_synch();
-        }
-        unlock_veh();
-        return 0;
-    }
-
-    if (::order_veh(veh_id, direction, 1) != 0
-        && veh_moves(veh_id) != 0) {
-
-        if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_INFO_WARFARE &&
-            base_id >= 0 && faction != Bases[base_id].faction_id_current &&
-            stack_check(veh_at(x, y), 2, PLAN_INFO_WARFARE, -1, -1) == 0 &&
-            !good_base) {
-            if (add_global() != 0) {
-                if (veh_locked_ != 0) {
-                    Vehs[veh_id].order = 0;
-                    Vehs[veh_id].state &= 0xFCFFBDFFU;
-                    synch_veh(veh_id);
-                    await_synch();
-                }
-                unlock_veh();
-                NetMsgPrimary.pop("GLOBALFAILED", 5000, 0, nullptr);
-                return 0;
-            }
-        } else if (base_id >= 0 && Bases[base_id].population_size <= 1
-            && (Vehs[veh_id].state & 0x80000U) != 0 && !good_base && add_global() != 0) {
-            if (veh_locked_ != 0) {
-                Vehs[veh_id].order = 0;
-                Vehs[veh_id].state &= 0xFCFFBDFFU;
-                synch_veh(veh_id);
-                await_synch();
-            }
-            unlock_veh();
-            return 0;
-        }
-
-        {
-            log_say("Sending MOVE VEH message", veh_id, direction, 0);
-            message_veh(0x2401, veh_id, direction, 0);
-            if (mode == 0) {
-                await_exec(1);
-            }
-
-            int have_other_vehicle = 0;
-            int other_faction_found = 0;
-            for (int offset = 0; offset < 21; ++offset) {
-                const int adjacent_x = wrap_map_x(RadiusOffsetX[offset] + x);
-                const int adjacent_y = RadiusOffsetY[offset] + y;
-                if (on_map(adjacent_x, adjacent_y)) {
-                    const Map &tile = MapTiles[MapLongitude * adjacent_y + (adjacent_x >> 1)];
-                    if ((tile.bit & 3U) != 0) {
-                        const int other_faction = tile.val2 & 0x0F;
-                        if (other_faction < 8 && other_faction >= 0 && other_faction != ConsoleGlobal.faction_id_ &&
-                            (PlayersData[other_faction]
-                                 .diplo_treaties[ConsoleGlobal.faction_id_] & 0x10U) != 0 &&
-                            is_human(other_faction)) {
-                            // The image keeps this walk in the veh_id
-                            // parameter's frame slot ([ebp+8]).
-                            veh_id = veh_at(adjacent_x, adjacent_y);
-                            while (veh_id >= 0) {
-                                if (Vehs[veh_id].faction_id == other_faction) {
-                                    if (veh_moves(veh_id) != 0) {
-                                        have_other_vehicle = 1;
-                                        other_faction_found = other_faction;
-                                    }
-                                }
-                                veh_id = net_next_stack_id(veh_id);
-                            }
-                        }
-                    }
-                }
-            }
-            (void)other_faction_found;
-
-            if (have_other_vehicle) {
-                DWORD (WINAPI *get_time)() = timeGetTime;
-                DWORD start = get_time();
-                do {
-                    do_all_non_input();
-                    receive();
-                    locks_.check_global();
-                    if (ExitTurnLoop != 0) break;
-                } while (get_time() - start < 500);
-            }
-            return 1;
-        }
-    }
-
-    // Native 0x005320CF is the short failure tail used by a rejected order
-    // or exhausted movement. It does not clear/synchronize the vehicle.
-    unlock_veh();
-    return 0;
+The retained seed includes shared cleanup spans. Their ownership and exact
+matching remain unfinished; shared code is not grounds to exclude this body.
+The TRIED note above describes the former hand-staged candidate, not current
+measurements. Ordinary bases and members now own destruction; the remaining
+list-cleanup bridges live in those owners and still require recovery.
+*/
+NetDaemon::~NetDaemon() {
+    // AlphaNet owns transport close, Heap and ledger destruction; Net owns
+    // its remaining list, queue and voice cleanup. Do not repeat base lifetimes.
 }
