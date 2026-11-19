@@ -39,23 +39,6 @@ Purpose: Destruct the dialog's inline storage; there are no owned allocations.
 FileBox::~FileBox() {}
 
 /*
-Purpose: Reset the editable dialog buffers without reconstructing the object.
-// ORIGINAL: 0x00634F70 ?UNK2@FileBox@@QAEXXZ 0x00634F70-0x00634FA1 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"reason":"The unnamed member resets the inline filter cursor and all seven leading characters, so it belongs to FileBox rather than a raw-offset helper.","evidence":["Original 0x00634F70-0x00634FA1 writes +0x410, +0x30d, +0x30c, +0, +0x104, +0x208, +0x414 and +0x418 in that order.","The source-owned fields and offsets are declared in src/filebox.h; historical exact redirect: git:9a576662:src/field_accessors.cpp."]}
-// symbol    ?reset@FileBox@@QAEXXZ
-*/
-void FileBox::reset() {
-    filter_cursor_ = filter_;
-    filter_[1] = 0;
-    filter_[0] = 0;
-    file_[0] = 0;
-    def_name_[0] = 0;
-    field_208_[0] = 0;
-    def_ext_[0] = 0;
-    initial_dir_[0] = 0;
-}
-
-/*
 Purpose: Show the common save dialog over FileBox's own editable buffers.
 // ORIGINAL: 0x00634C30 ?save@FileBox@@QAEXXZ 0x00634C30-0x00634CEE FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"The dialog fields are FileBox's inline filename, title, filter, extension and initial-directory buffers, not an independent leaf redirect.","evidence":["Original 0x00634C30-0x00634CEE calls strcat and GetSaveFileNameA using offsets +0, +0x104, +0x30c, +0x414 and +0x418.","The prior compiling redirect and its observations are preserved at git:83344412:src/leaf_recoveries.cpp."]}
@@ -209,4 +192,21 @@ int FileBox::set_initial_dir(const char *directory) {
     initial_dir_[0] = 0;
     strcat(initial_dir_, directory);
     return 0;
+}
+
+/*
+Purpose: Reset the editable dialog buffers without reconstructing the object.
+// ORIGINAL: 0x00634F70 ?UNK2@FileBox@@QAEXXZ 0x00634F70-0x00634FA1 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"The unnamed member resets the inline filter cursor and all seven leading characters, so it belongs to FileBox rather than a raw-offset helper.","evidence":["Original 0x00634F70-0x00634FA1 writes +0x410, +0x30d, +0x30c, +0, +0x104, +0x208, +0x414 and +0x418 in that order.","The source-owned fields and offsets are declared in src/filebox.h; historical exact redirect: git:9a576662:src/field_accessors.cpp."]}
+// symbol    ?reset@FileBox@@QAEXXZ
+*/
+void FileBox::reset() {
+    filter_cursor_ = filter_;
+    filter_[1] = 0;
+    filter_[0] = 0;
+    file_[0] = 0;
+    def_name_[0] = 0;
+    field_208_[0] = 0;
+    def_ext_[0] = 0;
+    initial_dir_[0] = 0;
 }
