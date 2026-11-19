@@ -415,7 +415,11 @@ int __cdecl planet_busting(int veh_id, int x, int y) {
     boom(x, y, 0x20);
 
     for (offset = 0; offset < weapon_count; ++offset) {
-        const int blast_x = wrap_map_x(RadiusOffsetX[offset] + x);
+        // The offset column is a named value here: with the sum as the
+        // inline's anonymous argument the wrap's `lea` takes x as its base
+        // (image 0x00500F6F: `lea esi, [edx + eax]`, the bound first).
+        const int column = RadiusOffsetX[offset] + x;
+        const int blast_x = wrap_map_x(column);
         const int blast_y = RadiusOffsetY[offset] + y;
         if (!on_map(blast_x, blast_y)) continue;
 
