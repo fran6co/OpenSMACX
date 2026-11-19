@@ -4976,6 +4976,9 @@ int __cdecl propose_pact(int myFac, int otherFac) {
             DiploScratchF7E8 = 0;
             DiploScratchFA4C = 0;
         }
+    } else {
+        pact_of_brotherhood(myFac, otherFac);
+        return 1;
     }
     pact_of_brotherhood(myFac, otherFac);
     return 1;
