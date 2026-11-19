@@ -3970,6 +3970,69 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   ebx and `d` in esi in the image, ours gives ebx to `best_id` and esi to
   `faction_id` and spills the pointer (same family as the entry's `T`).
 
+- **One reused function-scope variable per image home** (par-6 2026-11-19,
+  air_power 0x005678C0, `analysis/imgmerge.py`). A body transcribed from a
+  decompiler declares one block-local per role (`unseen`, `pick`, `score`,
+  `nearest`, `close` ...); the original usually had a handful of
+  function-scope scratch variables that every block reused. VC6 gives one
+  home per name and ranks the home by the sum of the name's references, so
+  the image shows such a variable as ONE slot near the top of the frame that
+  many of our low-ranked block-locals pair with. air_power: image slot
+  [ebp-0x0C] (39 accesses, second in the frame, above `best` and `i`) is
+  stored by the unseen count, both base picks, the tectonic and fungal base
+  scores, the drop-pod weight and the bombing score; [ebp-0x24] by the explore
+  x, three nearest-base distances, the best cost, the escort x and the bombing
+  target x; [ebp-0x2C] by the explore pick, both `close` flags and `risky`.
+  Three function-scope variables for those (and `best` for the threshold and
+  two more distances) took the frame 0x44 -> 0x48 (the image's), 15 of 18
+  slots onto the image's variables and 955 -> 753 rows.
+  How to tell a reused name from VC6's own packing of separate block-locals:
+  - **The rank decides.** Packed block-locals sit in a slot whose offset is
+    that of its first, low-priority occupant; a reused name ranks by the sum.
+    order_veh 0x005947C0 keeps `attached`/`cost`/`tries`/`arty_count` in one
+    slot on both sides at the same rank (9th) WITHOUT a merge; merging them
+    moved the slot to rank 5 and the slot map away from the image (294 -> 306).
+    So merge when the image's slot outranks every single member, and leave a
+    slot that already sits at the image's rank.
+  - **Small helpers pack by themselves.** After the three merges above,
+    `half_range` went into `odds`' home and `explore_y` into `i`'s exactly as
+    in the image, with no rename. Merge the heavy slots first, re-read the
+    slot map, and only then look at what is left.
+  - **A parameter slot that hosts locals is packing, not reuse**, when the
+    parameter is still read beside them: probe 0x0059F120 keeps `bonus`,
+    `pop_loss` and `reloc_base` at [ebp+0xC] while `base_id` (the parameter)
+    is read from a register in the same statements (0x5A3EEA..0x5A4026); ours
+    packs all three there too, site for site.
+  `imgmerge.py --plan` prints, per image slot, our function-scope and
+  block-local variables whose aligned accesses use it; `--sites SLOT` prints
+  the slot's whole timeline (image address, our aligned instruction, variable
+  and source line: read it for the stores the alignment could not pair); the
+  default run applies each slot's merges alone, then the improving ones
+  cumulatively. Every rename is proved with reusesweep.py's kill probe (the
+  owner must be dead at the block-local's declaration), so a refused member
+  names a variable that is still live there in OUR source: either the image's
+  owner is another variable, or our source keeps a value alive that the
+  original did not.
+- **A scan whose candidate is stored to a function-scope pair every
+  iteration and never reloaded there is a block-local pair plus a copy**
+  (par-6 2026-11-19, battle_fight 0x00506AF0). The withdraw scan holds the
+  candidate tile in esi/edi for all 8 directions and only stores it to
+  `rx`/`ry`'s homes (0x509422, 0x50944D); with `rx`/`ry` used directly ours
+  kept `ry` in ebx with reloads, `rx` in memory and the result `best_dir` in
+  edi. `int x = ...; rx = x; int y = ...; ry = y;` with x/y in the tests gave
+  the image's registers, `ry` sharing `intercepted`'s home as in the image
+  and `best_dir` in memory (frame 0x130 -> 0x134 of 0x138, 2494 -> 1856
+  rows). This is the converse of the air_power explore scan above (stores to
+  a function-scope pair that stay live and ARE the working copy): there the
+  image reads the homes back, here it never does.
+- **`a = b = f()` stores b first, and reads of either name then use b's
+  home** until one of them is reassigned (copy propagation). The image's
+  store order therefore names the inner variable: battle_fight stores
+  best_defender() to [ebp-0x18] then [ebp-0x40] and its bombard walker
+  rewrites [ebp-0x18], so the statement was `stack_id = def_id = ...`; the
+  reverse order homed every later `def_id` read in `stack_id`'s slot and gave
+  the walker a third slot.
+
 ### 3.4 Arithmetic idioms
 - **Signedness of a field (movsx/movzx, jl/jb, idiv/div, sar/shr) is its
   declaration, not a cast.** Run `analysis/typescan.py` (about 2 min): it lists

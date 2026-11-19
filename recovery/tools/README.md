@@ -360,6 +360,18 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   (one of our names over several image slots). First pass: enemy_move (j/k/own_ground/n rank 7-13 places low, the
   spilled induction temporaries all in tile_owner's slot), battle_fight (image slots -0x74/-0x78 have no local of
   ours: the 8 missing frame bytes; stack_id spans -0x18 and -0x40), order_veh, probe, base_build.
+- `analysis/imgmerge.py <unit> <addr> [--plan] [--sites SLOT,..|all] [--out FILE | --write] [--only SLOT,..] [--all] [--skip NAME,..]`
+  image-slot variable merge (MATCHING_GUIDE 3.3 "One reused function-scope variable per image home"), the rewrite
+  step after varset.py. `--plan` lists, per image slot, our function-scope (f) and block-local (b@line) variables whose
+  aligned accesses use it; `--sites` prints a slot's timeline (image address and instruction, our aligned instruction,
+  variable, source line; `~L` = nearest aligned line for an unpaired image access). The default run takes every slot
+  with a function-scope owner (or hoists its first block-local), renames the other block-locals into the owner one at
+  a time (owner not named in the scope, no goto into it, reusesweep's kill probe compiled away), measures each slot
+  alone (frame difference, slot-map difference, rows) in FE_JOBS lanes and then applies the improving slots
+  cumulatively, best first. `--only`/`--all` apply the named/all slots without the screen. A marker followed by
+  inline helpers (enemy_strategy) is located by the function the marker's symbol names. First results: air_power
+  frame 0x44 -> 0x48 and 955 -> 753 rows (done by hand from `--sites`); order_veh: no slot improves (its shared
+  slot is VC6 packing at the image's rank already).
 - `analysis/padkinds.py <unit> <addr> <signature> <lo-hi> [kinds]` which declarations count for such a tie: k = 0..9 pads of
   ~40 kinds, rows inside the image window per k (period 8 = one frame symbol, 4 = two, one step = /Ob2 caller budget).
 - `analysis/sympad.py FEALL.json maxrows OUT.jsonl` the budget twin of locpad.py: block-scope `(void)&extern` pads, which grow
