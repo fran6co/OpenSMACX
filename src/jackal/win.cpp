@@ -27,7 +27,7 @@
 // ORIGINAL: 0x005EB3B0 sub_5eb3b0 0x005EB3B0-0x005EB3CF FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned Win::screen_buffer_ storage starts at 0x9B7490; startup 0x5EB390 constructs the complete Buffer and registers finalizer 0x5EB3B0. The finalizer tests and publishes mask 2 of shared byte0x009B6E30 before the complete Buffer destructor0x005D7410, preserving other bits and repeated-cleanup skip.", "Original CRT slots0x00682678/0x0068267C register drawing then screen; ordinary class-static definitions retain that order and compiler-owned reverse cleanup. No placement storage, manual guard, accessor call, or dynamic pointer/reference facade remains.", "Original0x009B74C0 is screen Buffer+0x30 rect2_, established by pinned0x005EFED9/0x005EFEDE/0x005EFEE3; rendering accesses the real member. The original complete allocation bound remains unproved.", "Current compiler names are carried by the function symbol and object-target facts, not treated as historical debug names. Static members add no instance fields. Fresh strict measurement remains required; this binding transports no claim."], "reason": "Bind the pinned lifetime to typed class-static storage and compiler-generated initialization/destruction. Preserve original identity, spans, historical claims and guard/order obligations. Original nominal declarations and complete historical TU boundaries, linked data placement and game behavior remain unproved."}
 // symbol    _$E20
-// RECOVERY_LITERAL: v1 0x00696DEC 0x00696DF8 $SG49959 0x005F04E0
+// RECOVERY_LITERAL: v1 0x00696DEC 0x00696DF8 $SG50249 0x005F04E0
 #include "stdafx.h"
 // Drawing imports resolve by SDK export identity in the pinned PE directory.
 // RECOVERY_IMPORT: v1 __imp__CreateSolidBrush@4 GDI32.dll name:CreateSolidBrush
@@ -625,7 +625,6 @@ int WinKeyModifiers;         // 0x009B7B18
 int WinViewOriginX;          // 0x009B7A70
 // RECOVERY_OBJECT: v1 0x009B7A74 ?WinViewOriginY@@3HA
 int WinViewOriginY;          // 0x009B7A74
-const char WinMdebugCode[] = "mdebug";                               // 0x00696DF8
 // RECOVERY_OBJECT: v2 0x009B7AA8 0x009B7AAC ?WinTrackingMode@@3HA 0x005F7580
 int WinTrackingMode;       // 0x009B7AA8
 // RECOVERY_OBJECT: v2 0x009B7AB0 0x009B7AB4 ?WinTrackingX@@3HA 0x005F7580
@@ -2253,129 +2252,251 @@ int __cdecl Win::set_display_mode(int width, int height, int depth, int tgl) {
     return WinDisplayInit.init(width, height, depth, tgl);
 }
 
+// ORIGINAL: 0x005EBD80 ?init@Win@@QAEHHHHHPADHPAVWin@@PAVMenu@@PAUBorderSizing@@@Z 0x005EBD80-0x005EC621;0x00662C80-0x00662CCC FILE
+// symbol    ?init@Win@@QAEHHHHHPADHPAV1@PAVMenu@@PAUBorderSizing@@@Z
+// provenance (retired seed): git:2bf26a9145f971d717f73fcc8193c827f8eec273^:src/unrecovered/005ebd80.cpp
+// Original spans restored from the mapping lost during homing.
+int Win::init(int x, int y, int width, int height, char * caption,
+              int flags, Win * parent, Menu * menu, BorderSizing * border) {
+    this->close();
 
-/*
-// ORIGINAL: 0x005F01F0 ?init_class@Win@@QAAHPAD@Z 0x005F01F0-0x005F04D4;0x00662CCC-0x00662CE1 BYTE_EXACT
-// symbol    ?init_class@Win@@SAHPAD@Z
-// size      761 bytes
-// prototype
-// callers   1   call targets   7
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x005D7210 0x005D7410 0x005D7670 0x005D7DE0 0x005DFB50 0x005DFF00 0x005EFD20
-// indirect  0x005F0236 0x005F0263 0x005F0273 0x005F028E 0x005F02D0 0x005F02D9 0x005F030A
-//           0x005F036F 0x005F0375 0x005F039A 0x005F03A9 0x005F03BD 0x005F03E3 0x005F03F5
-//           0x005F0498
-//
-// Promoted 2026-08-15 from src/unrecovered/005f01f0.cpp to retire its
-// pending_bodies forwarder.
-//
-// WRITTEN AGAINST THE REAL HEADERS. It used to reach every Win32 import
-// through a hand-written function-pointer typedef and its IAT slot address
-// - `(*(FnRegisterClassA *)g)(&wndclass)` - and every global
-// through `static int *const WinInstance = (int *)0x009B7B14`. That is what
-// a MEASUREMENT SCAFFOLD has to do, because a scaffold includes no
-// <windows.h> and declares no project header; this file is in the build and
-// has both. So the imports are called by name, `WNDCLASSA` is the real
-// struct, the surface is an `IDirectDrawSurface` whose `GetDC`/`ReleaseDC`
-// are the slots the offsets 0x44 and 0x68 were reaching, and the globals
-// are objects declared in win.h. Every one of those operands is relocated
-// and the comparison masks relocations, so none of it costs a byte.
-//
-// LEVER: the plain get_hdc()/release_hdc() calls (the hand-copied protocol
-// had both null tests the wrong way round), and the logo copy written with
-// Buffer::pixel_width()/pixel_height() at each use. The latter keeps the
-// logo width in esi, which is why the image saves esi in the prologue.
-// Restored: the image passes SYSPAL_STATIC (1), not SYSPAL_NOSTATIC.
-//
-// FIXED: the four `WinModalStack` stores now precede `GetModuleHandleA`,
-// which is where the image has them - it stores all four from a zeroed eax
-// and only then makes the call. Worth 0.882 -> 0.887, and it is what the
-// image does regardless of what it is worth.
-//
-// `call_diff.py` reports 10 calls here against the image's 9 and names
-// `??1Spot@@QAE@XZ`/`?close@Buffer@@QAEXXZ` as extras - a FALSE ALARM from
-// its own flag search, not this body. Its FLAG_SETS list `/Ob0 /Oy-` but
-// never plain `/Ob0` (no `/Oy-`); under the flags `osmx measure` actually
-// picks (`/c /O2 /Ob0 /Gy /GR- /GX`), the compiled object calls exactly the
-// same 9 symbols in the same order as the image: Buffer ctor once, Buffer
-// dtor 3 times (both early returns plus the normal exit), then init, fill,
-// load_pcx, copy, flip - confirmed by reading the object's own relocation
-// symbol table directly. So the call graph already agrees; the divergence
-// is purely the register-save order documented above.
-Status: Complete
-*/
-int __cdecl Win::init_class(LPSTR window_name) {
-    WNDCLASSA wndclass;
-
-    // The splash buffer. Its destructor is what puts this function in an EH
-    // frame: `push -1` at entry is the try level, and the `mov [level], 0`
-    // after the constructor is VC6 saying the object is now live.
-    Buffer logo;
-
-    // A MEMSET, NOT FOUR STORES, on the evidence of the register the zero
-    // lands in. The image materialises TWO zeros - `xor eax, eax` for these
-    // four global stores and `xor edi, edi` for everything after the
-    // GetModuleHandleA call that clobbers eax. Four separate assignments make
-    // VC6 reuse the one callee-saved zero it already has, and the whole body
-    // shifts; this reproduces the pair. 12 of 203 instructions to 16.
-    for (int i = 0; i < 4; i++) {
-        WinModalStack[i] = 0;
+    if (border != 0) {
+        this->caption_height_ = border->caption_height;
+        this->border_thickness_ = border->border_thickness;
+        this->bottom_border_thickness_ = border->bottom_border_thickness;
     }
-    WinInstance = GetModuleHandleA(nullptr);
+    this->field_1A0_ |= 2;
 
-    wndclass.style = CS_VREDRAW | CS_HREDRAW | CS_DBLCLKS | CS_OWNDC;  // 0x2B
-    wndclass.lpfnWndProc = &Win::window_proc;
-    wndclass.cbClsExtra = 0;
-    wndclass.cbWndExtra = 0;
-    wndclass.hInstance = WinInstance;
-    wndclass.hIcon = LoadIconA(nullptr, IDI_APPLICATION);
-    wndclass.hCursor = nullptr;
-    wndclass.hbrBackground = static_cast<HBRUSH>(GetStockObject(BLACK_BRUSH));
-    wndclass.lpszMenuName = nullptr;
-    // `JackalClass` is at 0x00696DC8 and again at 0x00696DD4: one per-site
-    // literal for the registration and one for the creation (unpooled).
-    // RECOVERY_LITERAL: v1 0x00696DC8 0x00696DD4 $SG49790 0x005F01F0
-    wndclass.lpszClassName = "JackalClass";
-
-    if (RegisterClassA(&wndclass) == 0) {
-        return 1;
+    // The original FuncInfo at 0x0067F8E8 maps construction states 0..3 to
+    // delete-on-unwind actions for these four scalar Buffer allocations. VC6's
+    // configured operator new may return null; keep each immediate null return.
+    {
+        this->buffer1_ = new Buffer();
+        if (this->buffer1_ == 0) return 4;
+    }
+    {
+        this->buffer2_ = new Buffer();
+        if (this->buffer2_ == 0) return 4;
+    }
+    {
+        this->buffer3_ = new Buffer();
+        if (this->buffer3_ == 0) return 4;
+    }
+    {
+        this->buffer4_ = new Buffer();
+        if (this->buffer4_ == 0) return 4;
     }
 
-    WinScreenWidth = GetSystemMetrics(SM_CXSCREEN);
-    WinScreenHeight = GetSystemMetrics(SM_CYSCREEN);
-    // RECOVERY_LITERAL: v1 0x00696DD4 0x00696DE0 $SG49793 0x005F01F0
-    HandleMain = CreateWindowExA(
-        WS_EX_APPWINDOW, "JackalClass", window_name, WS_POPUP,
-        0, 0, WinScreenWidth, WinScreenHeight,
-        nullptr, nullptr, WinInstance, nullptr);
-
-    if (HandleMain == nullptr) {
-        return 1;
+    if ((flags & 0xF0000000) != 0) {
+        if (this->get_graphic_win() == 0) {
+            return 3;
+        }
+    }
+    if ((flags & 0x80000) != 0) {
+        flags |= 0x20;
     }
 
-    // The shared device context, acquired and released around the palette
-    // set-up; /Ob2 inlines both helpers here, as the image has them.
-    get_hdc();
-    SetBkMode(WinSharedHdc, TRANSPARENT);
-    SetSystemPaletteUse(WinSharedHdc, SYSPAL_STATIC);
-    SelectPalette(WinSharedHdc, PaletteInitialized, FALSE);
-    release_hdc();
-
-    Win::screen_buffer_.init(WinScreenWidth, WinScreenHeight, 0, 0);
-    Win::screen_buffer_.fill(0);
-    if (logo.load_pcx("logo.pcx", PaletteActive, 10, 0xEC) == 0) {
-        logo.copy(&Win::screen_buffer_, 0, 0,
-                  (Win::screen_buffer_.pixel_width() - logo.pixel_width()) / 2,
-                  (Win::screen_buffer_.pixel_height() - logo.pixel_height()) / 2,
-                  logo.pixel_width(), logo.pixel_height());
+    if (x < 0) {
+        if (parent != 0) {
+            x += parent->outer_rect_.right - parent->outer_rect_.left - width;
+        } else {
+            x += WinScreenWidth - width;
+        }
+    }
+    if (y < 0) {
+        if (parent != 0) {
+            y += parent->outer_rect_.bottom - parent->outer_rect_.top - height;
+        } else {
+            y += WinScreenHeight - height;
+        }
     }
 
-    if ((JackalInitFlags & 4) == 0) {
-        ShowWindow(HandleMain, SW_SHOW);
-        Win::flip(0);
+    this->iFlags_ = flags;
+    this->menu_ = menu;
+    this->win_parent_ = parent;
+
+    if (caption != 0 && caption[0] != 0 && (flags & 0x400080) == 0) {
+        this->iFlags_ |= 0x10;
     }
 
+    if (parent != 0) {
+        // The original checks the freshly closed receiver, not its parent.
+        if (this->child_count_ == 150) {
+            this->close();
+            // Per-site literals in the image (the caption, pushed first,
+            // was allocated first): 0x00696D60 and 0x00696D80.
+            // RECOVERY_LITERAL: v1 0x00696D80 0x00696D92 $SG49878 0x005EBD80
+            // RECOVERY_LITERAL: v1 0x00696D60 0x00696D7E $SG49877 0x005EBD80
+            MessageBoxA(0, "Too many children", "Increase #define MAX_CHILDREN", 0);
+            // MEASURED at 0x005EBFC4: `push 4; call 0x644dff` - the CRT's exit with
+            // status 4, not a member call.
+            exit(4);
+        }
+        // Win::add_child (0x005F5200), expanded here by /Ob2: its null test
+        // of the child survives as the image's `test esi, esi` at 0x005EBFCB.
+        parent->add_child(this);
+    } else {
+        if (WinRootCount == 0x28) {
+            this->close();
+            // RECOVERY_LITERAL: v1 0x00696DB4 0x00696DC5 $SG49882 0x005EBD80
+            // RECOVERY_LITERAL: v1 0x00696D94 0x00696DB1 $SG49881 0x005EBD80
+            MessageBoxA(0, "Too many parents", "Increase #define MAX_PARENTS", 0);
+            exit(4);
+        }
+        // add_parent (0x005F5080), expanded here the same way.
+        add_parent(this);
+    }
+
+    if (((this->iFlags_ & 0x80) != 0) || ((this->iFlags_ & 0x1D) == 0)) {
+        this->iSomeFlag_ &= ~2u;
+        this->iFlags_ &= ~0x411u;
+    } else {
+        this->iSomeFlag_ |= 2;
+    }
+
+    if ((this->iFlags_ & 0x800) == 0 && (this->iSomeFlag_ & 2) != 0) {
+        make_rect(&this->client_rect_, x, y, width, height);
+        this->outer_rect_ = this->client_rect_;
+        this->nonclient_to_client(&this->outer_rect_);
+        offset_rect(&this->outer_rect_, -this->client_rect_.left, -this->client_rect_.top);
+    } else {
+        make_rect(&this->outer_rect_, x, y, width, height);
+        if ((this->iSomeFlag_ & 2) != 0) {
+            this->client_rect_ = this->outer_rect_;
+            this->client_to_nonclient(&this->client_rect_);
+            offset_rect(&this->outer_rect_, -this->client_rect_.left, -this->client_rect_.top);
+        }
+    }
+
+    this->cached_outer_rect_ = this->outer_rect_;
+
+    // Win::set_caption (0x005EDF50), expanded here by /Ob2: its early
+    // return on a failed allocation is the image's jump past on_nc_paint.
+    this->set_caption(caption);
+    this->set_rects();
+
+    if (menu != 0) {
+        int result = menu->init(this);
+        if (result != 0) {
+            this->close();
+            return result;
+        }
+    }
+
+    if ((this->iFlags_ & 0x10) != 0) {
+        this->field_16C_ = this->caption_height_;
+    } else if ((this->iFlags_ & 0x20) == 0) {
+        this->field_16C_ = this->border_thickness_;
+    }
+    if ((this->iFlags_ & 0x400) != 0) {
+        this->field_170_ = this->border_thickness_;
+    } else {
+        this->field_170_ = 0;
+    }
+
+    if ((this->iFlags_ & 4) != 0) {
+        if ((this->iFlags_ & 0x40) != 0) {
+            this->scroll_horz_ = this->on_scroll_create();
+        }
+        if (this->scroll_horz_ == 0) {
+            this->scroll_horz_ = new Scroll();
+            if (this->scroll_horz_ == 0) return 4;
+            Scroll *sc = this->scroll_horz_;
+            int nc = this->outer_rect_.bottom - ScrollDefaultThickness;
+            int arg2 = ((this->iFlags_ & 8) != 0)
+                           ? (this->outer_rect_.right - this->outer_rect_.left) - ScrollDefaultThickness
+                           : (this->outer_rect_.right - this->outer_rect_.left);
+            sc->init_horz_nc(0, nc, arg2, this, -2);
+            this->scroll_horz_->show(0);
+        }
+    }
+
+    if ((this->iFlags_ & 8) != 0) {
+        if ((this->iFlags_ & 0x40) != 0) {
+            this->scroll_vert_ = this->on_scroll_create();
+        }
+        if (this->scroll_vert_ == 0) {
+            this->scroll_vert_ = new Scroll();
+            if (this->scroll_vert_ == 0) return 4;
+            Scroll *sc = this->scroll_vert_;
+            int nc = this->outer_rect_.right - ScrollDefaultThickness;
+            int arg2 = ((this->iFlags_ & 4) != 0)
+                           ? (this->outer_rect_.bottom - this->outer_rect_.top) - ScrollDefaultThickness
+                           : (this->outer_rect_.bottom - this->outer_rect_.top);
+            sc->init_vert_nc(nc, 0, arg2, this, -1);
+            this->scroll_vert_->show(0);
+        }
+    }
+
+    this->do_caption_buttons();
+    WinCallbackWindow = this;
+
+    unsigned int fl = this->iFlags_;
+    bool skipMenuList = (fl & 0x100000) == 0 || (fl & 0x200000) != 0 ||
+                         (this->iSomeFlag_ & 8) != 0 ||
+                         ((fl & 0x1000) != 0 && parent == 0);
+
+    // Keep the unchecked saved-parent access and the partially linked failure
+    // paths. Allocation callbacks can change the list's allocator and cursor.
+    // Image order (0x005EC48D): the empty-list arm comes first, each payload
+    // allocation stores straight into the node, and every link is reread
+    // through head_.
+    if (!skipMenuList && (~parent->iFlags_ & 0x1000) != 0) {
+        if (parent->list_.count_ == 0) {
+            parent->list_.head_ = parent->list_.allocator_
+                ? static_cast<WinDialogNode *>(parent->list_.allocator_->get(0x1C))
+                : static_cast<WinDialogNode *>(mem_get(0x1C));
+            if (parent->list_.head_ == 0) {
+                goto init_registration_tail;
+            }
+            parent->list_.head_->focus_owner_ = this;
+            parent->list_.head_->next_ = parent->list_.head_;
+            parent->list_.head_->previous_ = parent->list_.head_;
+            if (parent->list_.allocator_ != 0) {
+                parent->list_.head_->allocation_ = parent->list_.allocator_->get(4);
+            } else {
+                parent->list_.head_->allocation_ = mem_get(4);
+            }
+            if (parent->list_.head_->allocation_ == 0) {
+                goto init_registration_tail;
+            }
+            parent->list_.current_ = parent->list_.head_;
+        } else {
+            parent->list_.head_->previous_->next_ = parent->list_.allocator_
+                ? static_cast<WinDialogNode *>(parent->list_.allocator_->get(0x1C))
+                : static_cast<WinDialogNode *>(mem_get(0x1C));
+            if (parent->list_.head_->previous_->next_ == 0) {
+                goto init_registration_tail;
+            }
+            parent->list_.head_->previous_->next_->previous_ = parent->list_.head_->previous_;
+            parent->list_.head_->previous_->next_->next_ = parent->list_.head_;
+            parent->list_.head_->previous_ = parent->list_.head_->previous_->next_;
+            parent->list_.current_ = parent->list_.head_->previous_;
+            parent->list_.current_->focus_owner_ = this;
+            if (parent->list_.allocator_ != 0) {
+                parent->list_.current_->allocation_ = parent->list_.allocator_->get(4);
+            } else {
+                parent->list_.current_->allocation_ = mem_get(4);
+            }
+            if (parent->list_.current_->allocation_ == 0) {
+                goto init_registration_tail;
+            }
+        }
+
+        parent->list_.tail_ = parent->list_.count_;
+        parent->list_.count_ = parent->list_.count_ + 1;
+
+init_registration_tail:
+        int cnt = parent->list_.count_ - 1;
+        if (cnt >= 0) {
+            WinDialogNode *head = parent->list_.head_;
+            parent->list_.tail_ = 0;
+            parent->list_.current_ = head;
+        }
+        win_parent_ = parent;
+    }
+
+    this->iSomeFlag_ |= 4;
     return 0;
 }
 
@@ -2816,28 +2937,129 @@ int __cdecl typed_keys_differ(char *code, int length) {
 }
 
 
-
 /*
-Purpose: Tear the process-wide window class down - destroy the main window,
-         close the screen buffer, and unregister the class.
-// ORIGINAL: 0x005F04E0 ?close_class@Win@@QAAXXZ 0x005F04E0-0x005F0520 BYTE_EXACT
-// LEVER: PROMOTED out of src/recovered/005f04e0.cpp, which reached every global through a raw `static T *const g_00xxxxxx` and both Win32 entry points through their import thunks. All five are named here: HandleMain (temp.cpp), ScreenBuffer (palette.h), WinInstance, and plain `DestroyWindow`/`UnregisterClass` calls, which compile to the image's own `call dword ptr [import]`.
-// LEVER: literal-not-shared the class name is written as `"JackalClass"` rather than reusing `WinClassName`. The image carries THREE copies of that string - 0x696DC8, 0x696DD4 and 0x696DEC - because VC6 does not pool string literals across use sites without /GF, so each site has its own.
-// symbol    ?close_class@Win@@SAXXZ
-// size      64 bytes
-// prototype void (__cdecl ?close_class@Win@@QAAXXZ)()
+// ORIGINAL: 0x005F01F0 ?init_class@Win@@QAAHPAD@Z 0x005F01F0-0x005F04D4;0x00662CCC-0x00662CE1 BYTE_EXACT
+// symbol    ?init_class@Win@@SAHPAD@Z
+// size      761 bytes
+// prototype
+// callers   1   call targets   7
 // kind      game
-Return Value: n/a
+// flags     sp_ready;purged_ok
+// calls     0x005D7210 0x005D7410 0x005D7670 0x005D7DE0 0x005DFB50 0x005DFF00 0x005EFD20
+// indirect  0x005F0236 0x005F0263 0x005F0273 0x005F028E 0x005F02D0 0x005F02D9 0x005F030A
+//           0x005F036F 0x005F0375 0x005F039A 0x005F03A9 0x005F03BD 0x005F03E3 0x005F03F5
+//           0x005F0498
+//
+// Promoted 2026-08-15 from src/unrecovered/005f01f0.cpp to retire its
+// pending_bodies forwarder.
+//
+// WRITTEN AGAINST THE REAL HEADERS. It used to reach every Win32 import
+// through a hand-written function-pointer typedef and its IAT slot address
+// - `(*(FnRegisterClassA *)g)(&wndclass)` - and every global
+// through `static int *const WinInstance = (int *)0x009B7B14`. That is what
+// a MEASUREMENT SCAFFOLD has to do, because a scaffold includes no
+// <windows.h> and declares no project header; this file is in the build and
+// has both. So the imports are called by name, `WNDCLASSA` is the real
+// struct, the surface is an `IDirectDrawSurface` whose `GetDC`/`ReleaseDC`
+// are the slots the offsets 0x44 and 0x68 were reaching, and the globals
+// are objects declared in win.h. Every one of those operands is relocated
+// and the comparison masks relocations, so none of it costs a byte.
+//
+// LEVER: the plain get_hdc()/release_hdc() calls (the hand-copied protocol
+// had both null tests the wrong way round), and the logo copy written with
+// Buffer::pixel_width()/pixel_height() at each use. The latter keeps the
+// logo width in esi, which is why the image saves esi in the prologue.
+// Restored: the image passes SYSPAL_STATIC (1), not SYSPAL_NOSTATIC.
+//
+// FIXED: the four `WinModalStack` stores now precede `GetModuleHandleA`,
+// which is where the image has them - it stores all four from a zeroed eax
+// and only then makes the call. Worth 0.882 -> 0.887, and it is what the
+// image does regardless of what it is worth.
+//
+// `call_diff.py` reports 10 calls here against the image's 9 and names
+// `??1Spot@@QAE@XZ`/`?close@Buffer@@QAEXXZ` as extras - a FALSE ALARM from
+// its own flag search, not this body. Its FLAG_SETS list `/Ob0 /Oy-` but
+// never plain `/Ob0` (no `/Oy-`); under the flags `osmx measure` actually
+// picks (`/c /O2 /Ob0 /Gy /GR- /GX`), the compiled object calls exactly the
+// same 9 symbols in the same order as the image: Buffer ctor once, Buffer
+// dtor 3 times (both early returns plus the normal exit), then init, fill,
+// load_pcx, copy, flip - confirmed by reading the object's own relocation
+// symbol table directly. So the call graph already agrees; the divergence
+// is purely the register-save order documented above.
 Status: Complete
 */
-void Win::close_class() {
-    if (HandleMain) {
-        DestroyWindow(HandleMain);
-        HandleMain = nullptr;
+int __cdecl Win::init_class(LPSTR window_name) {
+    WNDCLASSA wndclass;
+
+    // The splash buffer. Its destructor is what puts this function in an EH
+    // frame: `push -1` at entry is the try level, and the `mov [level], 0`
+    // after the constructor is VC6 saying the object is now live.
+    Buffer logo;
+
+    // A MEMSET, NOT FOUR STORES, on the evidence of the register the zero
+    // lands in. The image materialises TWO zeros - `xor eax, eax` for these
+    // four global stores and `xor edi, edi` for everything after the
+    // GetModuleHandleA call that clobbers eax. Four separate assignments make
+    // VC6 reuse the one callee-saved zero it already has, and the whole body
+    // shifts; this reproduces the pair. 12 of 203 instructions to 16.
+    for (int i = 0; i < 4; i++) {
+        WinModalStack[i] = 0;
     }
-    Win::screen_buffer_.close();
-    UnregisterClass("JackalClass", WinInstance);
-    WinInstance = nullptr;
+    WinInstance = GetModuleHandleA(nullptr);
+
+    wndclass.style = CS_VREDRAW | CS_HREDRAW | CS_DBLCLKS | CS_OWNDC;  // 0x2B
+    wndclass.lpfnWndProc = &Win::window_proc;
+    wndclass.cbClsExtra = 0;
+    wndclass.cbWndExtra = 0;
+    wndclass.hInstance = WinInstance;
+    wndclass.hIcon = LoadIconA(nullptr, IDI_APPLICATION);
+    wndclass.hCursor = nullptr;
+    wndclass.hbrBackground = static_cast<HBRUSH>(GetStockObject(BLACK_BRUSH));
+    wndclass.lpszMenuName = nullptr;
+    // `JackalClass` is at 0x00696DC8 and again at 0x00696DD4: one per-site
+    // literal for the registration and one for the creation (unpooled).
+    // RECOVERY_LITERAL: v1 0x00696DC8 0x00696DD4 $SG50113 0x005F01F0
+    wndclass.lpszClassName = "JackalClass";
+
+    if (RegisterClassA(&wndclass) == 0) {
+        return 1;
+    }
+
+    WinScreenWidth = GetSystemMetrics(SM_CXSCREEN);
+    WinScreenHeight = GetSystemMetrics(SM_CYSCREEN);
+    // RECOVERY_LITERAL: v1 0x00696DD4 0x00696DE0 $SG50116 0x005F01F0
+    HandleMain = CreateWindowExA(
+        WS_EX_APPWINDOW, "JackalClass", window_name, WS_POPUP,
+        0, 0, WinScreenWidth, WinScreenHeight,
+        nullptr, nullptr, WinInstance, nullptr);
+
+    if (HandleMain == nullptr) {
+        return 1;
+    }
+
+    // The shared device context, acquired and released around the palette
+    // set-up; /Ob2 inlines both helpers here, as the image has them.
+    get_hdc();
+    SetBkMode(WinSharedHdc, TRANSPARENT);
+    SetSystemPaletteUse(WinSharedHdc, SYSPAL_STATIC);
+    SelectPalette(WinSharedHdc, PaletteInitialized, FALSE);
+    release_hdc();
+
+    Win::screen_buffer_.init(WinScreenWidth, WinScreenHeight, 0, 0);
+    Win::screen_buffer_.fill(0);
+    if (logo.load_pcx("logo.pcx", PaletteActive, 10, 0xEC) == 0) {
+        logo.copy(&Win::screen_buffer_, 0, 0,
+                  (Win::screen_buffer_.pixel_width() - logo.pixel_width()) / 2,
+                  (Win::screen_buffer_.pixel_height() - logo.pixel_height()) / 2,
+                  logo.pixel_width(), logo.pixel_height());
+    }
+
+    if ((JackalInitFlags & 4) == 0) {
+        ShowWindow(HandleMain, SW_SHOW);
+        Win::flip(0);
+    }
+
+    return 0;
 }
 
 // Fixed-slot bindings carried from 005ec800.cpp
@@ -3389,117 +3611,29 @@ int Win::on_sys_key(unsigned int vkey, long is_down, int repeat_count,
     return DefWindowProcA(HandleMain, WM_SYSKEYUP, vkey, lParam);
 }
 
-// A one-character glyph `set_bubble_text` measures the width of to compute
-// each line's padding. The pinned bytes at 0x00696E00 are a space and NUL;
-// Font::width only reads them. Preserve its existing LPSTR interface and
-// original writable storage without a pointer into the old executable.
-// RECOVERY_OBJECT: v2 0x00696E00 0x00696E02 _WinBubblePrefixGlyph 0x005F83D0
-static char WinBubblePrefixGlyph[] = " ";
 
-// ORIGINAL: 0x005F83D0 ?set_bubble_text@Win@@QAEXPADPAURECT@@@Z 0x005F83D0-0x005F84FB FILE BYTE_EXACT
-// symbol    ?set_bubble_text@Win@@QAEXPADPAUtagRECT@@@Z
-// LEVER: `WinBubbleActive`/`WinBubbleCompanion`/`WinBubbleFont`/`WinBubbleRect`
-// (already declared, `WinBubbleCompanion` retyped `Win **` so `this` needs no
-// cast) and `WinScreenWidth`, in place of the eight `g_`-named bindings.
-// `strchr` called directly - the scaffold's function-pointer cast of it
-// serves no purpose `char *strchr(const char *, int)` does not already.
-// size      299 bytes
-// prototype void (__thiscall ?set_bubble_text@Win@@QAEXPADPAURECT@@@Z)(Win* this, int8*, RECT*)
-// callers   14   call targets   4
+
+/*
+Purpose: Tear the process-wide window class down - destroy the main window,
+         close the screen buffer, and unregister the class.
+// ORIGINAL: 0x005F04E0 ?close_class@Win@@QAAXXZ 0x005F04E0-0x005F0520 BYTE_EXACT
+// LEVER: PROMOTED out of src/recovered/005f04e0.cpp, which reached every global through a raw `static T *const g_00xxxxxx` and both Win32 entry points through their import thunks. All five are named here: HandleMain (temp.cpp), ScreenBuffer (palette.h), WinInstance, and plain `DestroyWindow`/`UnregisterClass` calls, which compile to the image's own `call dword ptr [import]`.
+// LEVER: literal-not-shared the class name is written as `"JackalClass"` rather than reusing `WinClassName`. The image carries THREE copies of that string - 0x696DC8, 0x696DD4 and 0x696DEC - because VC6 does not pool string literals across use sites without /GF, so each site has its own.
+// symbol    ?close_class@Win@@SAXXZ
+// size      64 bytes
+// prototype void (__cdecl ?close_class@Win@@QAAXXZ)()
 // kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005EFD20 0x005F7320 0x00619280 0x00645DD0
-// PRESERVED UNIT - measured MISMATCH.
-//
-// Kept for COVERAGE. This directory IS on the ratchet: every file here
-// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
-// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
-// quarter of the project's total. It is still in no build; the earlier
-// header said "on no ratchet", which stopped being true when the map
-// moved into src/ and was still being written into new files.
-//
-// address        0x005F83D0
-// measured tier  MISMATCH
-// divergence     0
-//
-// The WHOLE unit as measured, scaffolding included: for the units
-// that are byte-exact yet refuse extraction, the agent tuned the
-// emitted scaffolding and the body alone will not reproduce the
-// verdict. To resume, copy everything below back over
-//   build/byte-match/005f83d0/unit.cpp
-// and score it with tools/agent_brief.py.
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?set_bubble_text@Win@@QAEXPADPAURECT@@@Z  at 0x005F83D0  (299 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// The VC6 dialect limits and the source-form rules used to live here.
-// They are knowledge, not scaffolding, so they now live in the agent
-// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
-// where they can be edited without regenerating anything and are in
-// context from the first token rather than behind a file read. This
-// emitter computes declarations; it does not carry lessons.
-//
-// LEVER: the prefix width is an unnamed temporary (VC6 spills it), the loop
-// is a do/while on the caret, and the counter starts at zero.
-
-void Win::set_bubble_text(char * text, RECT * rect) {
-    if (text == 0 || rect == 0) {
-        return;
+Return Value: n/a
+Status: Complete
+*/
+void Win::close_class() {
+    if (HandleMain) {
+        DestroyWindow(HandleMain);
+        HandleMain = nullptr;
     }
-    if (WinBubbleActive != 0) {
-        WinBubbleCompanion = 0;
-        WinBubbleActive = 0;
-        update_screen(&WinBubbleRect, 0);
-        flip(&WinBubbleRect);
-    }
-    int line_count = 0;
-    char *str = text;
-    WinBubbleCompanion = this;
-    int max_width = 0;
-    char *caret;
-    do {
-        caret = strchr(str, '^');
-        if (caret != 0) {
-            *caret = 0;
-        }
-        int line_width = WinBubbleFont->width(str) +
-                         WinBubbleFont->width(WinBubblePrefixGlyph) * 2;
-        if (line_width > max_width) {
-            max_width = line_width;
-        }
-        if (caret != 0) {
-            *caret = '^';
-        }
-        line_count++;
-        str = caret + 1;
-    } while (caret != 0);
-    Font *const font = WinBubbleFont;
-    int line_height;
-    if (font->unk_1_ >= 0) {
-        line_height = font->height_ + font->unk_1_;
-    } else {
-        line_height = font->line_height_;
-    }
-    line_height = line_height * line_count;
-    int y = rect->top - line_height;
-    if (y < 0) {
-        y = rect->bottom;
-    }
-    int x = ((rect->right - max_width) + rect->left) / 2;
-    if (x < 0) {
-        x = 0;
-    } else if (x + max_width > WinScreenWidth) {
-        x = WinScreenWidth - max_width;
-    }
-    WinBubbleRect.left = x;
-    WinBubbleRect.top = y;
-    WinBubbleRect.right = x + max_width;
-    WinBubbleRect.bottom = y + line_height;
-    WinBubbleActive = text;
-    flip(&WinBubbleRect);
+    Win::screen_buffer_.close();
+    UnregisterClass("JackalClass", WinInstance);
+    WinInstance = nullptr;
 }
 
 // ORIGINAL: 0x005EE330 ?resize_event@Win@@QAEHHH@Z 0x005EE330-0x005EE454 BYTE_EXACT
@@ -5817,253 +5951,42 @@ void __cdecl add_parent(Win * window) {
     WinRootWindows[0] = window;
     WinRootCount = count + 1;
 }
+// ===== homed from src/unrecovered/005f5fb0.cpp =====
 
-// ORIGINAL: 0x005EBD80 ?init@Win@@QAEHHHHHPADHPAVWin@@PAVMenu@@PAUBorderSizing@@@Z 0x005EBD80-0x005EC621;0x00662C80-0x00662CCC FILE
-// symbol    ?init@Win@@QAEHHHHHPADHPAV1@PAVMenu@@PAUBorderSizing@@@Z
-// provenance (retired seed): git:2bf26a9145f971d717f73fcc8193c827f8eec273^:src/unrecovered/005ebd80.cpp
-// Original spans restored from the mapping lost during homing.
-int Win::init(int x, int y, int width, int height, char * caption,
-              int flags, Win * parent, Menu * menu, BorderSizing * border) {
-    this->close();
-
-    if (border != 0) {
-        this->caption_height_ = border->caption_height;
-        this->border_thickness_ = border->border_thickness;
-        this->bottom_border_thickness_ = border->bottom_border_thickness;
-    }
-    this->field_1A0_ |= 2;
-
-    // The original FuncInfo at 0x0067F8E8 maps construction states 0..3 to
-    // delete-on-unwind actions for these four scalar Buffer allocations. VC6's
-    // configured operator new may return null; keep each immediate null return.
-    {
-        this->buffer1_ = new Buffer();
-        if (this->buffer1_ == 0) return 4;
-    }
-    {
-        this->buffer2_ = new Buffer();
-        if (this->buffer2_ == 0) return 4;
-    }
-    {
-        this->buffer3_ = new Buffer();
-        if (this->buffer3_ == 0) return 4;
-    }
-    {
-        this->buffer4_ = new Buffer();
-        if (this->buffer4_ == 0) return 4;
-    }
-
-    if ((flags & 0xF0000000) != 0) {
-        if (this->get_graphic_win() == 0) {
-            return 3;
-        }
-    }
-    if ((flags & 0x80000) != 0) {
-        flags |= 0x20;
-    }
-
-    if (x < 0) {
-        if (parent != 0) {
-            x += parent->outer_rect_.right - parent->outer_rect_.left - width;
+// ORIGINAL: 0x005F5FB0 sub_5f5fb0 0x005F5FB0-0x005F622B BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:6fe9388940e78cd7cdf422d7f9e6d28790565108:src/unrecovered/005f5fb0.cpp", "Pinned original5F5FB0..5F622B; direct global accesses5F60DD..5F619C"], "reason": "Restore the lost homing identity for the existing Win keyboard handler; its receiver, scroll dispatch and two stack words identify this method, not the separate string matcher at5F5F60."}
+// symbol    ?on_char@Win@@UAEXDH@Z
+// TRIED: extern "C" __stdcall(int,int) free function per IDA's guess - the spilled ecx is read back later ([esp+0x10] resolves to the "push ecx" slot itself, not a caller stack arg) and used as a Win* (scroll_vert_/scroll_horz_/key_click_event), so this is landed as Win::sub_5f5fb0(char, int) __thiscall instead; the unused 2nd stack dword explains `ret 8` with only 1 real read.
+void Win::on_char(char param2, int param3) {
+    *WinKeyRingCursor = param2;
+    // typed_keys_differ is inlined (it reads the code backward from its end).
+// RECOVERY_LITERAL: v1 0x00696DF8 0x00696DFF $SG51062 0x005F5FB0
+    if (!typed_keys_differ("mdebug", 6)) {
+        // Toggle the debug window; hide() is inlined here.
+        if (WinBubbleWindow.is_visible()) {
+            WinBubbleWindow.hide();
         } else {
-            x += WinScreenWidth - width;
-        }
-    }
-    if (y < 0) {
-        if (parent != 0) {
-            y += parent->outer_rect_.bottom - parent->outer_rect_.top - height;
-        } else {
-            y += WinScreenHeight - height;
+            WinBubbleWindow.show(0);
         }
     }
 
-    this->iFlags_ = flags;
-    this->menu_ = menu;
-    this->win_parent_ = parent;
-
-    if (caption != 0 && caption[0] != 0 && (flags & 0x400080) == 0) {
-        this->iFlags_ |= 0x10;
+    ++WinKeyRingCursor;
+    if (WinKeyRingCursor >= WinKeyRing + 10) {
+        WinKeyRingCursor = WinKeyRing;
     }
 
-    if (parent != 0) {
-        // The original checks the freshly closed receiver, not its parent.
-        if (this->child_count_ == 150) {
-            this->close();
-            // Per-site literals in the image (the caption, pushed first,
-            // was allocated first): 0x00696D60 and 0x00696D80.
-            // RECOVERY_LITERAL: v1 0x00696D80 0x00696D92 $SG50965 0x005EBD80
-            // RECOVERY_LITERAL: v1 0x00696D60 0x00696D7E $SG50964 0x005EBD80
-            MessageBoxA(0, "Too many children", "Increase #define MAX_CHILDREN", 0);
-            // MEASURED at 0x005EBFC4: `push 4; call 0x644dff` - the CRT's exit with
-            // status 4, not a member call.
-            exit(4);
-        }
-        // Win::add_child (0x005F5200), expanded here by /Ob2: its null test
-        // of the child survives as the image's `test esi, esi` at 0x005EBFCB.
-        parent->add_child(this);
-    } else {
-        if (WinRootCount == 0x28) {
-            this->close();
-            // RECOVERY_LITERAL: v1 0x00696DB4 0x00696DC5 $SG50969 0x005EBD80
-            // RECOVERY_LITERAL: v1 0x00696D94 0x00696DB1 $SG50968 0x005EBD80
-            MessageBoxA(0, "Too many parents", "Increase #define MAX_PARENTS", 0);
-            exit(4);
-        }
-        // add_parent (0x005F5080), expanded here the same way.
-        add_parent(this);
+    bool handled = false;
+    if (scroll_vert_ != 0 &&
+        scroll_vert_->on_key_click((int)param2, WinKeyModifiers) != 0) {
+        handled = true;
     }
-
-    if (((this->iFlags_ & 0x80) != 0) || ((this->iFlags_ & 0x1D) == 0)) {
-        this->iSomeFlag_ &= ~2u;
-        this->iFlags_ &= ~0x411u;
-    } else {
-        this->iSomeFlag_ |= 2;
+    if (!handled && scroll_horz_ != 0 &&
+        scroll_horz_->on_key_click((int)param2, WinKeyModifiers) != 0) {
+        handled = true;
     }
-
-    if ((this->iFlags_ & 0x800) == 0 && (this->iSomeFlag_ & 2) != 0) {
-        make_rect(&this->client_rect_, x, y, width, height);
-        this->outer_rect_ = this->client_rect_;
-        this->nonclient_to_client(&this->outer_rect_);
-        offset_rect(&this->outer_rect_, -this->client_rect_.left, -this->client_rect_.top);
-    } else {
-        make_rect(&this->outer_rect_, x, y, width, height);
-        if ((this->iSomeFlag_ & 2) != 0) {
-            this->client_rect_ = this->outer_rect_;
-            this->client_to_nonclient(&this->client_rect_);
-            offset_rect(&this->outer_rect_, -this->client_rect_.left, -this->client_rect_.top);
-        }
+    if (!handled) {
+        key_click_event((int)param2, WinKeyModifiers);
     }
-
-    this->cached_outer_rect_ = this->outer_rect_;
-
-    // Win::set_caption (0x005EDF50), expanded here by /Ob2: its early
-    // return on a failed allocation is the image's jump past on_nc_paint.
-    this->set_caption(caption);
-    this->set_rects();
-
-    if (menu != 0) {
-        int result = menu->init(this);
-        if (result != 0) {
-            this->close();
-            return result;
-        }
-    }
-
-    if ((this->iFlags_ & 0x10) != 0) {
-        this->field_16C_ = this->caption_height_;
-    } else if ((this->iFlags_ & 0x20) == 0) {
-        this->field_16C_ = this->border_thickness_;
-    }
-    if ((this->iFlags_ & 0x400) != 0) {
-        this->field_170_ = this->border_thickness_;
-    } else {
-        this->field_170_ = 0;
-    }
-
-    if ((this->iFlags_ & 4) != 0) {
-        if ((this->iFlags_ & 0x40) != 0) {
-            this->scroll_horz_ = this->on_scroll_create();
-        }
-        if (this->scroll_horz_ == 0) {
-            this->scroll_horz_ = new Scroll();
-            if (this->scroll_horz_ == 0) return 4;
-            Scroll *sc = this->scroll_horz_;
-            int nc = this->outer_rect_.bottom - ScrollDefaultThickness;
-            int arg2 = ((this->iFlags_ & 8) != 0)
-                           ? (this->outer_rect_.right - this->outer_rect_.left) - ScrollDefaultThickness
-                           : (this->outer_rect_.right - this->outer_rect_.left);
-            sc->init_horz_nc(0, nc, arg2, this, -2);
-            this->scroll_horz_->show(0);
-        }
-    }
-
-    if ((this->iFlags_ & 8) != 0) {
-        if ((this->iFlags_ & 0x40) != 0) {
-            this->scroll_vert_ = this->on_scroll_create();
-        }
-        if (this->scroll_vert_ == 0) {
-            this->scroll_vert_ = new Scroll();
-            if (this->scroll_vert_ == 0) return 4;
-            Scroll *sc = this->scroll_vert_;
-            int nc = this->outer_rect_.right - ScrollDefaultThickness;
-            int arg2 = ((this->iFlags_ & 4) != 0)
-                           ? (this->outer_rect_.bottom - this->outer_rect_.top) - ScrollDefaultThickness
-                           : (this->outer_rect_.bottom - this->outer_rect_.top);
-            sc->init_vert_nc(nc, 0, arg2, this, -1);
-            this->scroll_vert_->show(0);
-        }
-    }
-
-    this->do_caption_buttons();
-    WinCallbackWindow = this;
-
-    unsigned int fl = this->iFlags_;
-    bool skipMenuList = (fl & 0x100000) == 0 || (fl & 0x200000) != 0 ||
-                         (this->iSomeFlag_ & 8) != 0 ||
-                         ((fl & 0x1000) != 0 && parent == 0);
-
-    // Keep the unchecked saved-parent access and the partially linked failure
-    // paths. Allocation callbacks can change the list's allocator and cursor.
-    // Image order (0x005EC48D): the empty-list arm comes first, each payload
-    // allocation stores straight into the node, and every link is reread
-    // through head_.
-    if (!skipMenuList && (~parent->iFlags_ & 0x1000) != 0) {
-        if (parent->list_.count_ == 0) {
-            parent->list_.head_ = parent->list_.allocator_
-                ? static_cast<WinDialogNode *>(parent->list_.allocator_->get(0x1C))
-                : static_cast<WinDialogNode *>(mem_get(0x1C));
-            if (parent->list_.head_ == 0) {
-                goto init_registration_tail;
-            }
-            parent->list_.head_->focus_owner_ = this;
-            parent->list_.head_->next_ = parent->list_.head_;
-            parent->list_.head_->previous_ = parent->list_.head_;
-            if (parent->list_.allocator_ != 0) {
-                parent->list_.head_->allocation_ = parent->list_.allocator_->get(4);
-            } else {
-                parent->list_.head_->allocation_ = mem_get(4);
-            }
-            if (parent->list_.head_->allocation_ == 0) {
-                goto init_registration_tail;
-            }
-            parent->list_.current_ = parent->list_.head_;
-        } else {
-            parent->list_.head_->previous_->next_ = parent->list_.allocator_
-                ? static_cast<WinDialogNode *>(parent->list_.allocator_->get(0x1C))
-                : static_cast<WinDialogNode *>(mem_get(0x1C));
-            if (parent->list_.head_->previous_->next_ == 0) {
-                goto init_registration_tail;
-            }
-            parent->list_.head_->previous_->next_->previous_ = parent->list_.head_->previous_;
-            parent->list_.head_->previous_->next_->next_ = parent->list_.head_;
-            parent->list_.head_->previous_ = parent->list_.head_->previous_->next_;
-            parent->list_.current_ = parent->list_.head_->previous_;
-            parent->list_.current_->focus_owner_ = this;
-            if (parent->list_.allocator_ != 0) {
-                parent->list_.current_->allocation_ = parent->list_.allocator_->get(4);
-            } else {
-                parent->list_.current_->allocation_ = mem_get(4);
-            }
-            if (parent->list_.current_->allocation_ == 0) {
-                goto init_registration_tail;
-            }
-        }
-
-        parent->list_.tail_ = parent->list_.count_;
-        parent->list_.count_ = parent->list_.count_ + 1;
-
-init_registration_tail:
-        int cnt = parent->list_.count_ - 1;
-        if (cnt >= 0) {
-            WinDialogNode *head = parent->list_.head_;
-            parent->list_.tail_ = 0;
-            parent->list_.current_ = head;
-        }
-        win_parent_ = parent;
-    }
-
-    this->iSomeFlag_ |= 4;
-    return 0;
 }
 
 // ===== homed from src/unrecovered/005f1820.cpp =====
@@ -10092,41 +10015,112 @@ void __cdecl Win::update_zorder() {
         } while (i < WinRootCount);
     }
 }
-// ===== homed from src/unrecovered/005f5fb0.cpp =====
 
-// ORIGINAL: 0x005F5FB0 sub_5f5fb0 0x005F5FB0-0x005F622B BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:6fe9388940e78cd7cdf422d7f9e6d28790565108:src/unrecovered/005f5fb0.cpp", "Pinned original5F5FB0..5F622B; direct global accesses5F60DD..5F619C"], "reason": "Restore the lost homing identity for the existing Win keyboard handler; its receiver, scroll dispatch and two stack words identify this method, not the separate string matcher at5F5F60."}
-// symbol    ?on_char@Win@@UAEXDH@Z
-// TRIED: extern "C" __stdcall(int,int) free function per IDA's guess - the spilled ecx is read back later ([esp+0x10] resolves to the "push ecx" slot itself, not a caller stack arg) and used as a Win* (scroll_vert_/scroll_horz_/key_click_event), so this is landed as Win::sub_5f5fb0(char, int) __thiscall instead; the unused 2nd stack dword explains `ret 8` with only 1 real read.
-void Win::on_char(char param2, int param3) {
-    *WinKeyRingCursor = param2;
-    // typed_keys_differ is inlined; WinMdebugCode is "mdebug".
-    if (!typed_keys_differ(const_cast<char *>(WinMdebugCode), 6)) {
-        // Toggle the debug window; hide() is inlined here.
-        if (WinBubbleWindow.is_visible()) {
-            WinBubbleWindow.hide();
-        } else {
-            WinBubbleWindow.show(0);
+// ORIGINAL: 0x005F83D0 ?set_bubble_text@Win@@QAEXPADPAURECT@@@Z 0x005F83D0-0x005F84FB FILE BYTE_EXACT
+// symbol    ?set_bubble_text@Win@@QAEXPADPAUtagRECT@@@Z
+// LEVER: `WinBubbleActive`/`WinBubbleCompanion`/`WinBubbleFont`/`WinBubbleRect`
+// (already declared, `WinBubbleCompanion` retyped `Win **` so `this` needs no
+// cast) and `WinScreenWidth`, in place of the eight `g_`-named bindings.
+// `strchr` called directly - the scaffold's function-pointer cast of it
+// serves no purpose `char *strchr(const char *, int)` does not already.
+// size      299 bytes
+// prototype void (__thiscall ?set_bubble_text@Win@@QAEXPADPAURECT@@@Z)(Win* this, int8*, RECT*)
+// callers   14   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005EFD20 0x005F7320 0x00619280 0x00645DD0
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x005F83D0
+// measured tier  MISMATCH
+// divergence     0
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/005f83d0/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?set_bubble_text@Win@@QAEXPADPAURECT@@@Z  at 0x005F83D0  (299 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+//
+// LEVER: the prefix width is an unnamed temporary (VC6 spills it), the loop
+// is a do/while on the caret, and the counter starts at zero.
+
+void Win::set_bubble_text(char * text, RECT * rect) {
+    if (text == 0 || rect == 0) {
+        return;
+    }
+    if (WinBubbleActive != 0) {
+        WinBubbleCompanion = 0;
+        WinBubbleActive = 0;
+        update_screen(&WinBubbleRect, 0);
+        flip(&WinBubbleRect);
+    }
+    int line_count = 0;
+    char *str = text;
+    WinBubbleCompanion = this;
+    int max_width = 0;
+    char *caret;
+    do {
+        caret = strchr(str, '^');
+        if (caret != 0) {
+            *caret = 0;
         }
+        int line_width = WinBubbleFont->width(str) +
+// RECOVERY_LITERAL: v1 0x00696E00 0x00696E02 $SG52630 0x005F83D0
+                         WinBubbleFont->width(" ") * 2;
+        if (line_width > max_width) {
+            max_width = line_width;
+        }
+        if (caret != 0) {
+            *caret = '^';
+        }
+        line_count++;
+        str = caret + 1;
+    } while (caret != 0);
+    Font *const font = WinBubbleFont;
+    int line_height;
+    if (font->unk_1_ >= 0) {
+        line_height = font->height_ + font->unk_1_;
+    } else {
+        line_height = font->line_height_;
     }
-
-    ++WinKeyRingCursor;
-    if (WinKeyRingCursor >= WinKeyRing + 10) {
-        WinKeyRingCursor = WinKeyRing;
+    line_height = line_height * line_count;
+    int y = rect->top - line_height;
+    if (y < 0) {
+        y = rect->bottom;
     }
-
-    bool handled = false;
-    if (scroll_vert_ != 0 &&
-        scroll_vert_->on_key_click((int)param2, WinKeyModifiers) != 0) {
-        handled = true;
+    int x = ((rect->right - max_width) + rect->left) / 2;
+    if (x < 0) {
+        x = 0;
+    } else if (x + max_width > WinScreenWidth) {
+        x = WinScreenWidth - max_width;
     }
-    if (!handled && scroll_horz_ != 0 &&
-        scroll_horz_->on_key_click((int)param2, WinKeyModifiers) != 0) {
-        handled = true;
-    }
-    if (!handled) {
-        key_click_event((int)param2, WinKeyModifiers);
-    }
+    WinBubbleRect.left = x;
+    WinBubbleRect.top = y;
+    WinBubbleRect.right = x + max_width;
+    WinBubbleRect.bottom = y + line_height;
+    WinBubbleActive = text;
+    flip(&WinBubbleRect);
 }
 
 // Window hierarchy queries share this Win relationship implementation.
