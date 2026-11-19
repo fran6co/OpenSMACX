@@ -14,7 +14,7 @@ def run_deck(unit,addr,deck,jobs=int(os.environ.get('FE_JOBS','14')),win=None):
         p=subprocess.Popen(cmd,cwd=R,stdin=subprocess.PIPE,stdout=subprocess.PIPE,text=True)
         out=[]
         for i in range(k,len(deck),jobs):
-            key,text=deck[i]; path='%s/l%d.cpp'%(d,k)
+            key,text=deck[i]; path='%s/l%d.cpp'%(d,int(os.environ.get('FE_PFX_BASE','21'))+k)  # per compiler prefix: concurrent decks never share a file
             open(path,'w',encoding='latin-1').write(text)
             p.stdin.write(path+'\n'); p.stdin.flush()
             o=p.stdout.readline().split()

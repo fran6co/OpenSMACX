@@ -40,6 +40,10 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   no `call` instruction while the callee is called elsewhere in the function (`MERGED`, with the identifiers of its
   arguments and the lines that kept a copy), and every `goto`. Register allocation runs before tail merging, so each
   merged copy still counts for its operands: compare with candset.py's disputed pairs.
+- `analysis/gotowo.py <unit> <addr>` rule (b) screen: writes each label's tail block (ending in a return or the
+  function end) out at subsets of its goto sites and fes every variant (`OUT=` keeps the best). Tree-wide over the
+  85 goto functions on 2026-11-19 it found stack_veh 0x005B8EE0 (67 -> 52); farm_click 0x0040A1D0 (269 -> 54) was
+  the same lever by hand. Long or mid-loop targets are skipped.
 - `analysis/regalloc/` the probe sources and runner behind MATCHING_GUIDE 2.7 (see its README).
 - `crtcalls.py OUT.json` compares, per function, the calls to memcpy/memmove/memset/strlen/strcpy/
   strcat/strcmp/memcmp in our objects with the image's (20 s). The game and Jackal have no

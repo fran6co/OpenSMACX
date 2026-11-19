@@ -1382,6 +1382,15 @@ statement:
   (fewer copies in the original) or of a goto target (more copies) is the
   lever. Inline expansions are not reported; repeated global-only statements
   (`strcat(StringTemp, ...)`) are listed but move nothing.
+- More cases (2026-11-19 par-2): BaseWin::farm_click 0x0040A1D0, the
+  `unchanged:` exit (recompute, unlock_base) written out in three of its five
+  rejections gives the image's `this` rank, 269 -> 54 (all 32 subsets
+  measured: writing it out everywhere is 59, so not every site was a copy);
+  stack_veh 0x005B8EE0, one of two `goto lift` written out, 67 -> 52;
+  MultiWin::draw_player 0x00478630, the `goto not_in_turn` replaced by one
+  else-if chain whose first arm is the empty "in turn and answered" case,
+  130 -> 57 (the chain, not a written-out copy: copies there cost layout).
+  `analysis/gotowo.py` screens the tail-block form tree-wide.
 
 ### 2.8 /Ob2 inlining model
 
