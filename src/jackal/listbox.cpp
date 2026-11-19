@@ -835,16 +835,16 @@ int ListBox::on_key_down(int key) {
     case VK_NUMPAD2:
         if (static_cast<int>(field_1C_) < count) {
             if (Dialog::column_count_ == 1) {
-                if (old_selected + 1 > field_18_ + Dialog::row_count_ - 1
+                if (old_selected + 1 > old_top + Dialog::row_count_ - 1
                     || old_selected == count - 1) {
-                    if (field_18_ < count - 1) {
-                        ++field_18_;
+                    if (old_top < count - 1) {
+                        field_18_ = old_top + 1;
                     }
                 }
             } else {
                 if (old_selected + 1 > last_visible
-                    && field_18_ + Dialog::row_count_ <= count - 1) {
-                    field_18_ += static_cast<uint32_t>(Dialog::row_count_);
+                    && old_top + Dialog::row_count_ <= count - 1) {
+                    field_18_ = old_top + Dialog::row_count_;
                 }
                 if (Dialog::selected_position_ == count - 1
                     && field_18_ < (columns_needed - 1) * Dialog::row_count_) {
