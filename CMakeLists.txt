@@ -677,11 +677,13 @@ add_custom_command(TARGET OpenSMACX POST_BUILD
 # the MAP, the sidecar, the link observation and the linked recovery checks
 # describe the linker's output, and the patcher itself must find the compiled
 # instructions (not an earlier run's nops) to verify what it replaces. The
-# source declarations are the only list; a patch whose built bytes are not
-# complete instructions covering its span is refused and no patched file is
-# left behind. A refusal fails the build only with
-# -DOPENSMACX_REQUIRE_IMAGE_PATCHES=ON, so reworking a patched function's body
-# never stops the application from building and linking.
+# source declarations are the only list. Patches are independent: a patch
+# whose built bytes are not complete instructions covering its span is refused
+# alone, the step prints the refused list, and the output holds the patches
+# that verified (it is removed only when none did). A refusal fails the build
+# only with -DOPENSMACX_REQUIRE_IMAGE_PATCHES=ON (exit 2: some refused, 1:
+# nothing written), so reworking a patched function's body never stops the
+# application from building and linking, nor withholds the other patches.
 option(OPENSMACX_REQUIRE_IMAGE_PATCHES
        "Fail the build when a declared post-link image patch cannot be applied" OFF)
 add_custom_command(TARGET OpenSMACX POST_BUILD

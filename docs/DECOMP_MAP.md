@@ -607,8 +607,15 @@ to complete instructions covering the span exactly (the comparer's rule), no
 base relocation field crosses a span edge, the bytes are not already the patch,
 and a `nop-jmp` destination is an instruction start inside the same function
 (the jump is relative, so it moves with the function). Relocation entries are
-left as they are, as the original patcher left them. Any refusal removes the
-patched output; it fails the build only with `-DOPENSMACX_REQUIRE_IMAGE_PATCHES=ON`.
+left as they are, as the original patcher left them. Patches are independent:
+each is verified and written on its own. The report's `result` is `pass` (every
+declared patch written, exit 0), `partial` (the output holds the patches under
+`patches` and lacks those under `refused`, each listed with its reason; exit 2)
+or `fail` (nothing could be written, the output is removed; exit 1). A
+`partial` output is not the reproduced image. `--warn-only`, the CMake default,
+prints the refused list and exits 0; any refusal fails the build only with
+`-DOPENSMACX_REQUIRE_IMAGE_PATCHES=ON`. The output is renamed into place from a
+temporary file, so an IO error never leaves a half-written one.
 The source declarations are the only list of patches.
 
 ## Shared original function bodies

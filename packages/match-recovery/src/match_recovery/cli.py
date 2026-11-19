@@ -33,14 +33,16 @@ def parser() -> argparse.ArgumentParser:
     debug.add_argument("--summary", action="store_true", help="Report diagnostic counts and bounded examples")
     patcher = commands.add_parser(
         "apply-image-patches",
-        help="Write a copy of a linked executable with every source-declared RECOVERY_IMAGE_PATCH applied")
+        help="Write a copy of a linked executable with every source-declared RECOVERY_IMAGE_PATCH that "
+             "verifies; exit 0 all applied, 2 some refused (output holds the rest), 1 nothing written")
     patcher.add_argument("--root", type=Path, default=Path.cwd())
     for option in ("exe", "map", "out"):
         patcher.add_argument("--" + option, type=Path, required=True)
     patcher.add_argument("--summary", action="store_true", help="Omit per-patch instruction listings")
     patcher.add_argument("--warn-only", action="store_true",
-                         help="Exit 0 on a refused patch (the output is still removed); for build steps "
-                              "that must not fail while a patched function is being reworked")
+                         help="Exit 0 on refused patches, after listing them on stderr (the output holds the "
+                              "patches that verified, or is removed when none did); for build steps that "
+                              "must not fail while a patched function is being reworked")
     agent = commands.add_parser("agent", help="Bridge a configured prompt-driven command to a recovery role protocol")
     agent.add_argument("role", choices=("worker", "reviewer", "coordinator", "planner"))
     agent.add_argument("--root", type=Path, default=Path.cwd())
@@ -191,7 +193,16 @@ def _dispatch(args) -> int:
                 for row in output["patches"]:
                     row.pop("replaced_instructions", None)
             print(json.dumps(output, indent=2, sort_keys=True))
-            return 0 if output["result"] == "pass" or args.warn_only else 1
+            if output["refused"]:
+                state = ("written WITHOUT them" if output["written"] else "NOT written")
+                print(f"apply-image-patches: {len(output['refused'])} declared patch(es) refused, "
+                      f"{len(output['patches'])} applied; {args.out.name} {state}:", file=sys.stderr)
+                for row in output["refused"]:
+                    where = " ".join(row[key] for key in ("function", "source", "declared") if key in row)
+                    print(f"  refused {where}: {row['reason']}".replace("refused :", "refused:"), file=sys.stderr)
+            if output["result"] == "pass" or args.warn_only:
+                return 0
+            return 2 if output["result"] == "partial" else 1
         elif args.command == "agent":
             from .agent_command import run_agent
             from .records import parse_json
