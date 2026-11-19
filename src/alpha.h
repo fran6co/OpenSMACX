@@ -822,7 +822,15 @@ MEASURED inline void __cdecl clear_faction(Player *player) {
 // BODY IN alpha.h: "Original Offset: n/a" - a helper the recovery added, not
 // a function the image has its own address for. `say_base` (base.cpp) needs
 // it to fold to `StringTable.get(...)` the way the image does.
-__forceinline LPSTR __cdecl label_get(int label_offset) {
+// Measured 2026-11-19 over all 5,574 markers: `inline` and `__forceinline`
+// compile identically, with or without the named local. The local is load-
+// bearing (the label offset is loaded before ecx is set, as through an LPSTR
+// parameter): the plain `return StringTable.get(Labels.strings_ptr[k]);`
+// body loses 66 exact functions and gains 4, with EH numbering worse in 15
+// functions and call counts worse in 12; a written-out macro is worse still.
+// Sites whose image evaluates the label at its own argument position
+// (interlude's CARETAKE parse_says) are written out instead.
+inline LPSTR __cdecl label_get(int label_offset) {
     LPSTR label_value = Labels.strings_ptr[label_offset];
     return StringTable.get(label_value);
 }
