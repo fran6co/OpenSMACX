@@ -740,7 +740,8 @@ int __cdecl world_site(int x, int y, BOOL is_ocean_site) {
     */
     Map *radius_tile;
     for (i = 0; i < 21; i++) {
-        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
+        const int column = x + RadiusOffsetX[i];
+        int x_radius = wrap_map_x(column);
         int y_radius = y + RadiusOffsetY[i];
         if (y_radius < 0 || y_radius >= MapLatitudeBounds || x_radius < 0
             || x_radius >= MapLongitudeBounds) {
