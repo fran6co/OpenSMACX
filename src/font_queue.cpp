@@ -236,8 +236,8 @@ int __cdecl veh_draw(Buffer * buffer, int veh_id, int screen_x, int screen_y, in
     if (Weapon[VehPrototypes[prototype].weapon_id].icon >= 0 && category == 0) {
         category = Weapon[VehPrototypes[prototype].weapon_id].icon + 9;
     }
-    if (VehPrototypes[prototype].icon_offset >= 0) {
-        category = VehPrototypes[prototype].icon_offset + 9;
+    if (VehPrototypes[Vehs[veh_id].proto_id].icon_offset >= 0) {
+        category = VehPrototypes[Vehs[veh_id].proto_id].icon_offset + 9;
     }
 
     int morale;
