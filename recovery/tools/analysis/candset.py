@@ -332,6 +332,9 @@ def role_of(code, w, names, lst, this_reg, srclines):
         return '#-1', 'const'
     if mn == 'mov' and re.fullmatch(r'-?(0x[0-9a-f]+|\d+)', src):
         return '#' + str(int(src, 0)), 'const'
+    if mn == 'mov' and src == '<r>' and all(code.ins[d][1] == t for d in w['defs']):
+        # an address constant (vtable, string, global address) materialised in a register
+        return '#<r>', 'const'
     if mn == 'lea':
         s = slot_name(src)
         if s:
@@ -431,6 +434,8 @@ def side_analysis(code, regs, names, lst, srclines, scratch=False):
         for w in webs:
             if w['kind'] != 'const':
                 continue
+            if not re.fullmatch(r'#-?\d+', w['role']):
+                continue
             v = int(w['role'][1:])
             pats = [r'(?<![\w+-])%s$' % re.escape(str(v)), r'(?<![\w+-])%s$' % re.escape(hex(v & 0xffffffff))]
             for i in w['live']:
@@ -459,11 +464,14 @@ def side_analysis(code, regs, names, lst, srclines, scratch=False):
 
 
 def better(a, b):
-    """does the model rank a above b (4c: exact tie -> later first block, then earlier first reference)"""
+    """does the model rank a above b (4c: exact tie -> later first block, then earlier first reference;
+    two constants in one block: the LATER first reference, MATCHING_GUIDE 2.7 4e)"""
     if a['score'] != b['score']:
         return a['score'] > b['score']
     if a['firstb'] != b['firstb']:
         return a['firstb'] > b['firstb']
+    if a.get('kind') == 'const' and b.get('kind') == 'const':
+        return a['first'] > b['first']
     return a['first'] < b['first']
 
 

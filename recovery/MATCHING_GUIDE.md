@@ -1440,6 +1440,39 @@ loop2d and armd were the "ties"). Rerun: `python3 ties.py ties.spec --n 1-30`.
    0x00524870 compares `cmp esi,[mem]` instead of loading `eax`, and drops
    a cached `ecx` reload (block layout and peephole, not register ranking).
    Pad sweeps cannot fix a callee-saved register swap.
+4e. **No allocation cursor for callee-saved registers** (high, 2026-11-19
+   par-1; probes `cur_*`, `after_*`, `two_before`, `ovl_a` beside g_split's
+   `disjoint3`). Each candidate takes the first of esi, edi, ebx that no
+   interfering, already served candidate holds; an earlier web that does not
+   interfere (disjoint, at any priority, before or after) shifts nothing, and
+   disjoint webs reuse esi. The scratch cursor of 3.2 S1 has no callee-saved
+   counterpart. The FlatButton vtable census that suggested one (90
+   functions with both stage constants 0x669754/0x66974c in registers:
+   esi/edi 62, edi/ebx 16, ebx/esi 3, edi/esi 3, ebx/edi 1) is first-free
+   plus 4f: the non-cyclic cases are a longer web of one constant that some
+   esi/edi holder interrupts while the other constant splits into short
+   pieces (DesignWin::on_button_clicked, draw_terraform). Our compiles give
+   the image's pair on 85 of the 90.
+4f. **Two constants that tie go to the LATER first reference** (high,
+   probes `hi_first`/`lo_first`, `small_first`/`big_first`, `afl`, `blkAB`,
+   `three`). The opposite of 4c's in-block order for variables, and
+   independent of the values, of the last reference and of the order the
+   constants first appear in the unit. Three tied constants: the last to
+   appear takes esi, the first ebx. In the ~FlatButton stage (`[obj] =
+   0x669754; [obj+K] = 0x66974c`) 0x66974c therefore wins. `candset.py`
+   uses it (exact functions with both constants: rank constraints its own
+   scores explain 275 -> 331 of 402; a random 120 exact functions 709 ->
+   717 of 869). Open: base_editor 0x0041C7A0's last 10 rows are this pair
+   ordered the other way in the image with identical code around it (candset
+   flags the image's `#<r>` as NOT EXPLAINED); `return` -> `break`, the
+   switch under `if (action >= 0)` and declaration order did not flip it.
+4g. **A constant reference weighs half a variable reference** (medium; probe
+   grid `t_cNN_kMM`: p and q hold esi/edi, a variable with c references
+   against one constant with k stores for ebx, one block). The constant
+   wins from k = 2c + 1 (c = 2..5: k = 5, 7, 9, 11); at k = 2c the variable
+   keeps it. Constant pushes (`f(100000)`) never formed a candidate. In
+   candset, `--opt constw=50` lowers the explained count (331 -> 314), so the
+   instruction-level count is not simply halved; keep constw=100 there.
 
 Using it (regprio.py uses 4b and 4c by default; `--model old` is rule 4 only):
 
@@ -4441,6 +4474,34 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   from inside the loop with the not-found code after it.
 - **Call pushes hoisted above `test eax; je`** mean an if/else whose arms
   make the same call with the same trailing arguments.
+- **A global load between the compare and the jcc (`cmp al,3; mov
+  eax,[Labels]; jae`) is a head merge** (high, 2026-11-19 par-1, probes
+  `a_both`/`e_cmp3`/`f_else_store`; say_weapon 0x005905C0 exact). It is the
+  same pass as the hoisted pushes: when the first instruction of both arms
+  is identical *including the register*, VC6 moves one copy into the
+  predecessor after the compare (a `mov` leaves the flags alone). Three
+  consequences:
+  - Both arms must begin, in source order, with the same read: an arm
+    whose first statement is something else (`g = 1;` before the label)
+    does not merge even when the scheduler later puts the label load first.
+  - Both copies must get the same scratch register. The else arm continues
+    the S1 cursor from the end of the then arm, so a then arm with one
+    register value more or fewer than the original gives the else arm
+    another register and no merge (a_both: `push esi` shrink-wrapped into
+    the then arm, ecx against eax). In draw_unit 0x0042C9C0 ours has eax in
+    the then arm and ecx in the else arm; the cursor track (schedscan)
+    first leaves the image in the then arm's `_itoa` branch (0x42CC31).
+  - The image's `mov al,[m]; cmp al,3` is a *consequence*: VC6 folds `mov
+    al,[m]; cmp al,K` into `cmp byte ptr [m],K` only when the next
+    instruction does not touch eax, and the merged `mov eax,[Labels]` does.
+    So a memory compare in ours against a register compare in the image
+    before a hoisted load is not a type or named-local question (a
+    `const uint8_t mode` local, int/unsigned/char, inline or cast forms all
+    gave `cmp byte ptr`; only a second use of the value loads it). Fix the
+    merge and the load follows.
+  battle_compute 0x005032A2 and custom_my_faction 0x004DD2F4 are not this
+  shape: their Labels load sits several instructions above a `test` in the
+  same block (ordinary scheduling of the next statement's load).
 - **An expanded inline re-reading its argument at each use** had a
   reference parameter (or was a macro); a virtual the image calls
   directly inside an inline was a qualified `Base::f()` call.

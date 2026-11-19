@@ -40,3 +40,5 @@ two definitions: a threshold that moves by one between them is an exact tie.
 | c_looppiece.spec | a memory-homed parameter read once per iteration of two loops: scratch read against per-iteration callee-saved load |
 | duel.py, m_*.spec | which removed references count: CSE, copy, dead code (no) against tail-merged copies (yes) (`python3 duel.py m_tail.spec`) |
 | tiescan.py | non-exact functions whose diff is a pure permutation of callee-saved registers (`uv run python tiescan.py feall.json`) |
+| p_consttie | callee-saved assignment has no cursor (4e), two constants that tie go to the later first reference (4f), a constant store weighs half a reference (4g) |
+| p_headmerge | head merge of the arms' identical first instruction above the jcc (Labels hoist) and when `mov al,[m]; cmp al,K` folds to a memory compare (MATCHING_GUIDE 3.2) |

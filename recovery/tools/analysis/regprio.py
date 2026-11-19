@@ -737,12 +737,14 @@ def main():
                     contrib[w][b] -= pen
                     holes[w].append((b, pen))
     first_ref = lambda w: min(webs[w]['refs'], key=lambda i: (F.blocks[refs[i]['block']]['start'], refs[i]['seq']))
+    tieseq = lambda w: -refs[first_ref(w)]['seq'] if webs[w]['key'].startswith('#') else refs[first_ref(w)]['seq']
     if a.model == 'old':
         order = sorted(cands, key=lambda w: (-prio[w], F.blocks[refs[webs[w]['refs'][0]]['block']]['start']))
     else:
-        # exact ties (rule 4c): the web starting in the later block first, then the earlier first reference
+        # exact ties (rule 4c): the web starting in the later block first, then the earlier first reference;
+        # two constants in one block: the later first reference (rule 4f)
         order = sorted(cands, key=lambda w: (-prio[w], -F.blocks[refs[first_ref(w)]['block']]['start'],
-                                             refs[first_ref(w)]['seq']))
+                                             tieseq(w)))
     pred = {}
     for w in order:
         taken = {pred[o] for o in pred if pred[o] != 'mem' and webs[o]['live'] & webs[w]['live']}
@@ -900,7 +902,7 @@ def main():
         fh, fl = first_ref(hi_), first_ref(lo_)
         bh, bl = refs[fh]['block'], refs[fl]['block']
         sh, sl = F.blocks[bh]['start'], F.blocks[bl]['start']
-        tie_hi = (-sh, refs[fh]['seq']) < (-sl, refs[fl]['seq'])
+        tie_hi = (-sh, tieseq(hi_)) < (-sl, tieseq(lo_))
         pen = lambda w: sum(p for b, p in holes[w])
         if d == 0:
             print('    TIE (delta 0): tie order (later start block, then earlier first reference) puts %s first: %s'
