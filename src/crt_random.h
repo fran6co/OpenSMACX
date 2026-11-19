@@ -31,5 +31,6 @@ MEASURED inline unsigned int __cdecl rnd(int bounds, char *input) {   // 0057977
     if (bounds - 1 <= 0) {
         return 0;
     }
-    return rand() % bounds;
+    int value = rand() % bounds;
+    return value;
 }
