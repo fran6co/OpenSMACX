@@ -1698,12 +1698,13 @@ void ListBox::UNK1(int direction) {
         row_height = static_cast<int>(Dialog::field_68_);
         height = (Dialog::row_count_ - 1) * row_height;
         columns = Dialog::column_count_ - 1;
+        span += columns * item_width;
     } else {
         row_height = static_cast<int>(Dialog::field_68_);
         height = Dialog::row_count_ * row_height;
         columns = Dialog::column_count_ - 2;
+        span += columns * item_width;
     }
-    span += columns * item_width;
     switch (direction) {
     case 0:
         Buffer::copy(this, inset, row_height, inset, 0, span - inset, height);
