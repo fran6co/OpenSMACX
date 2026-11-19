@@ -2140,7 +2140,7 @@ static void win_mouse_wheel(HWND hwnd, int x, int y, WPARAM keys) {
 // handlers (get_hdc/release_hdc in the WM_ACTIVATE and WM_PALETTECHANGED
 // arms at 0x005F073D/0x005F0D48, play_if_idle at 0x005F0946) while still
 // expanding OnQueryNewPalette; without this spend VC6 expands those three.
-// 11-30 calls after the switch all give the image's decisions; fewer leave
+// 9-30 calls after the switch (11-30 before 2026-11-19) give the image's decisions; fewer leave
 // play_if_idle inlined. The original spending is not identified.
 static int window_proc_budget_probe(int x) {
     if (x == 1) x = 2;
@@ -2200,9 +2200,6 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wParam,
     }
     }
     // WORKAROUND(inline): see window_proc_budget_probe.
-    window_proc_budget_probe(0);
-    window_proc_budget_probe(0);
-    window_proc_budget_probe(0);
     window_proc_budget_probe(0);
     window_proc_budget_probe(0);
     window_proc_budget_probe(0);
@@ -6801,7 +6798,7 @@ int Win::minimize() {
 // RECT conversions called the way the image shows, VC6 here still expands
 // one level deeper than the image in the first section and the "before"
 // rect (the image calls 0x005ED2D0 from screen_to_nonclient's body and
-// 0x005ED240/0x005ED3F0 from the rect helpers' bodies). 16-26 calls placed
+// 0x005ED240/0x005ED3F0 from the rect helpers' bodies). 15-26 calls placed
 // after the "before" rect give the image's decisions there; the original
 // spending is not identified.
 static int do_tracking_budget_probe(int x) {
@@ -6854,11 +6851,6 @@ void Win::do_tracking(int x, int y) {
     }
 
     // WORKAROUND(inline): see do_tracking_budget_probe.
-    do_tracking_budget_probe(0);
-    do_tracking_budget_probe(0);
-    do_tracking_budget_probe(0);
-    do_tracking_budget_probe(0);
-    do_tracking_budget_probe(0);
     do_tracking_budget_probe(0);
     do_tracking_budget_probe(0);
     do_tracking_budget_probe(0);
