@@ -580,6 +580,11 @@ an explicit `--pfx` is only needed to pick another lane.
   automatically after every tumap regroup. `NOT EMITTED` = the object's definition is not in the unit.
 - `feall.py --base` compares rows by address, so a marker moved to another unit is compared with its old row; fe/feall
   read a worktree's own `build/compile_commands.json` for units the main database lacks (a unit created by a split).
+- `analysis/packsim.py <unit> <addr> [--src ALT.cpp] [--why] [--sym NAME,..] [--fit last|first|smallest]` frame
+  packing model check (MATCHING_GUIDE 3.3 "Frame slots are packed last-fit"): rebuilds the memory units of our
+  compile (named, `$T`, one unit per anonymous temporary web), runs last-fit in raw-count order on our home
+  liveness and prints how many units land in our compiler's slot, the offset-order check (founder against
+  total) and, with `--why`, the deeper slots each temporary could not take and their blockers. ~15 s.
 - `analysis/varset.py <unit> <addr> [--src ALT.cpp] [--min K] [--sites]` variable-set reconciliation (MATCHING_GUIDE 3.3):
   the image's frame slots (accesses, immediate/callee-saved/scratch stores and loads, `mem` when never cached in a
   callee-saved register) against our locals, each access of ours named from its /FAsc operand (`name`, block-locals

@@ -5351,7 +5351,8 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   right variables.
 
 - **Frame offsets follow the packed slot's total, and spilled induction
-  temporaries join the first free slot** (par-4 2026-11-19, enemy_move
+  temporaries join a named variable's free slot** (par-4 2026-11-19; which
+  free slot is the next entry's last-fit rule, not the first free one), enemy_move
   0x0056B5B0, `analysis/varset.py`). The image's 49 scalar slots are in
   descending order of accesses (-4: 253 ... -0xC4: 4), counted per slot
   after packing. VC6's own spilled temporaries (strength-reduced table
@@ -5372,6 +5373,54 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   symptom: the drop-pod base loop (0x56E6D8) keeps its `Bases` pointer in
   ebx and `d` in esi in the image, ours gives ebx to `best_id` and esi to
   `faction_id` and spills the pointer (same family as the entry's `T`).
+
+- **Frame slots are packed last-fit in descending raw reference count; offsets
+  then follow each slot's total** (par-2 2026-11-19,
+  `analysis/probes/tempslot/` g2-g12, `analysis/packsim.py`, high). The model:
+  1. Every memory-resident symbol is one packing unit: a named local, a
+     front-end temporary (`$T..`), or ONE web of an optimizer temporary (a
+     spilled strength-reduced pointer/counter; the temporaries of two loops
+     are two units even when both loops count with the same variable, g12).
+  2. Units are taken in descending RAW reference count (frame accesses; loop
+     depth does not weigh: a depth-3 temporary with 4 accesses ranks exactly
+     like a depth-1 one against a named X, g6/g7/g9).
+  3. Each unit joins the MOST RECENTLY CREATED slot none of whose occupants
+     interferes with it, else opens a new slot. Not first-fit and not the
+     smallest slot: X(10) and Y(6) overlap, Z joins Y at count 2 and X at
+     count 8 (g3); Z joins Y's slot even when Y's slot total (13) exceeds
+     X's (11) (g4).
+  4. Frame offsets are then assigned by slot TOTAL (sum of occupants'
+     counts), largest nearest ebp. Address-taken locals keep creation order
+     (g8: X(17) above a 36-access group of block-locals).
+  5. Interference is liveness of the HOME, by flow: a value reloaded into a
+     callee-saved register for the rest of its range leaves its home dead
+     (p3 in g5 hosts a later block-local while p3 itself is still used from
+     ebx), a reassigned variable's dead stretch is free, a goto path keeps it
+     live, and an uninitialised read keeps the home live from entry.
+  On enemy_move 0x0056B5B0 the model reproduces our compiler's slot of 105 of
+  124 units (2025 of 2095 accesses; first-fit 69, smallest-total 91), and our
+  offsets have 12 order inversions against slot totals (946 pairs) against
+  118 against founder counts. Consequences:
+  - A light unit (most temporaries) lands in the slot of the LIGHTEST
+    compatible earlier variable, which then gains its accesses and climbs in
+    the frame: ours piles 64 temporary accesses into `tile_owner`'s slot
+    (founder 14 references, the last-created slot free over those loops) and
+    ranks it 9th; the image ranks it 23rd.
+  - Reading the image backwards: a temporary in slot S while a deeper slot D
+    is free over its whole web (check with `live.image` and the web's own
+    liveness, not the slot's linear range) means D was created before S, so
+    S's founder has FEWER references than D's. The image's j slot (-0x30)
+    takes the 0x56D9F9 radius temporary while -0x54 (m) and -0x60 are free
+    there: its occupants are light variables, not one 59-reference `j`.
+    Giving the automatic-terraformer flag (`j` over L6616-L7060) its own name
+    took enemy_move 5790 -> 5702 rows (slot-map difference 136 -> 134);
+    splitting every `j` role (5973), or other single roles with it (5711-5814),
+    lost.
+  - So a slot-rank difference is a reference-count question twice over:
+    which units are light enough to pack late, and which slot totals they
+    inflate. `packsim.py <unit> <addr> --why` prints the model's slots, the
+    offset-order check and, per temporary, the deeper slots and the
+    occupant that blocks each one in ours.
 
 - **A loop counter the image keeps in memory while a callee-saved register
   holds a per-iteration conversion** (par-2 2026-11-19, ReportWin::draw_ops
