@@ -113,7 +113,7 @@ class TutWin : public Popup {
   int32_t field_537C_;
   int32_t field_5380_;
   uint32_t field_5384_;  // 0x5384
-  uint32_t field_5388_;  // 0x5388
+  int field_5388_;  // 0x5388
   uint32_t field_538C_;  // 0x538C
   uint32_t field_5390_;  // 0x5390
   uint32_t field_5394_;  // 0x5394

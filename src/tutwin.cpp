@@ -364,7 +364,7 @@ int TutWin::tut_win(GraphicWin *owner, const char *text, int x, int y,
         y = screen_height - layout_height() - 8;
         field_5390_ = y;
     } else {
-        y = static_cast<int>(field_5388_) / 8;
+        y = field_5388_ / 8;
         field_5390_ = y + layout_height();
     }
 
