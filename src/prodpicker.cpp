@@ -1018,7 +1018,7 @@ void ProdPicker::on_right_click(int x, int y) {
     }
     if (!IsMultiplayerNet)
         menu.add_item(3, StringTable.get(Labels.strings_ptr[0x1140 / 4]));
-    menu.add_item(2, label_get(0x8FC / 4));
+    menu.add_item(2, StringTable.get(Labels.strings_ptr[0x8FC / 4]));
     menu.show(x, y, 0);
 
     const int selectedItem = menu.get_selected();
@@ -1031,9 +1031,8 @@ void ProdPicker::on_right_click(int x, int y) {
     switch (action - 1U) {
     case 0:
     {
-        const int faction = BaseCurrent->faction_id_current;
         VehPrototypes[productionId].obsolete_factions |=
-            static_cast<uint8_t>(1U << faction);
+            static_cast<uint8_t>(1U << BaseCurrent->faction_id_current);
         synch_proto(productionId);
         goto refresh;
     }
