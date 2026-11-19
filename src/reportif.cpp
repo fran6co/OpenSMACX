@@ -3531,7 +3531,9 @@ void ReportWin::draw_ops() {
             space();
             space();
             space();
-            if (BaseCurrent->mineral_surplus_final <= 0) {
+            // 0x0049E26D/0x0049E2F2 read Base+0xD4 (mineral_surplus), not
+            // mineral_surplus_final (+0x98).
+            if (BaseCurrent->mineral_surplus <= 0) {
                 strcat(StringTemp, label_get(0x10C / 4));
             } else {
                 strcat(StringTemp, label_get(0xC4 / 4));
@@ -3540,8 +3542,8 @@ void ReportWin::draw_ops() {
                 if (cost > BaseCurrent->minerals_accumulated) {
                     cost -= BaseCurrent->minerals_accumulated;
                     say_num(
-                        range((BaseCurrent->mineral_surplus_final + cost - 1)
-                            / range(BaseCurrent->mineral_surplus_final, 1, 99999), 0, 999999));
+                        range((BaseCurrent->mineral_surplus + cost - 1)
+                            / range(BaseCurrent->mineral_surplus, 1, 99999), 0, 999999));
                 } else {
                     say_num(0);
                 }
