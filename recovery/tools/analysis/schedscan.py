@@ -36,6 +36,9 @@ Read with MATCHING_GUIDE 3.2 "Scratch registers and scheduling" (rules S1..S6).
                parameters are not rewritten automatically: see S8.
      nvany     (opt-in) any operand read in the body, conditions and right-hand sides included.
    --try-rules picks a subset (comma list); --top N rows of the ranking.
+   --pairs K / --triples K (with --try, when no single site is exact): every pair / triple of the K
+   single sites that moved the rows at all, best first (a forward-substituted site leaves the rows
+   unchanged and is not worth combining). For functions whose cursor offset changes twice.
 Screen only: confirm a fix with fe.py."""
 import sys, os, re, argparse, difflib
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -128,6 +131,8 @@ def main():
     ap.add_argument('--try', dest='try_', action='store_true', help='single-site source sweep (nvarg, labelraw, labelget, unname, expand)')
     ap.add_argument('--try-rules', default='nvarg,labelraw,labelget,tableraw,tableget,unname,expand,contract')
     ap.add_argument('--top', type=int, default=12)
+    ap.add_argument('--pairs', type=int, default=0, metavar='K', help='after --try: every pair of the K single sites that moved the rows most favourably')
+    ap.add_argument('--triples', type=int, default=0, metavar='K', help='after --try: every triple of the best K moving single sites')
     a = ap.parse_args()
     unit = a.unit if a.unit.startswith('src/') else 'src/' + a.unit
     path = os.path.abspath(a.src) if a.src else fe.R + '/' + unit
@@ -207,7 +212,7 @@ def main():
         print('  %d of %d paired allocations are out of sync; offset 1 = ours one allocation ahead, 2 = one behind.'
               % (len(nz), len(pairs)))
     if a.try_:
-        try_sweep(unit, addr, text, res['diff'], a.try_rules.split(','), a.top)
+        try_sweep(unit, addr, text, res['diff'], a.try_rules.split(','), a.top, a.pairs, a.triples)
 
 
 KEYWORDS = {'if', 'while', 'for', 'switch', 'return', 'sizeof', 'static_cast', 'reinterpret_cast', 'const_cast',
@@ -298,7 +303,7 @@ ALL_RULES = ('labelraw', 'labelget', 'tableraw', 'tableget')
 OPERAND = re.compile(r'(?<![\w.>])[A-Za-z_]\w*(?:(?:\.|->)[A-Za-z_]\w*|\[[^\[\]]*\])*')
 
 
-def try_sweep(unit, addr, text, base_diff, rule_names, top):
+def try_sweep(unit, addr, text, base_diff, rule_names, top, pairs=0, triples=0):
     import rules
     import perm
     mt = rules.mask(text)
@@ -314,6 +319,7 @@ def try_sweep(unit, addr, text, base_diff, rule_names, top):
     inc = [m.end() for m in re.finditer(r'(?m)^#include[^\n]*\n', text[:lo])]
     inject = inc[-1] if inc else 0
     deck = []
+    site_of = {}
     for rn in rule_names:
         sites = []
         if rn == 'nvarg':
@@ -338,6 +344,7 @@ def try_sweep(unit, addr, text, base_diff, rule_names, top):
             line = text.count('\n', 0, s0) + 1
             sites.append((s0, e0, rep))
             deck.append(('%s L%d `%s` -> `%s`' % (label, line, ' '.join(text[s0:e0].split())[:50], ' '.join(rep.split())[:60]), v))
+            site_of[deck[-1][0]] = (s0, e0, rep, rn in ('nvarg', 'nvany'))
         if rn in ALL_RULES and len(sites) > 1:
             # every site of the rule at once (read_rules: three labels had to flip together)
             v, last = [], 0
@@ -356,6 +363,45 @@ def try_sweep(unit, addr, text, base_diff, rule_names, top):
     better = [r for r in res if r[1] < base_diff]
     print('  %d of %d improve on %d rows' % (len(better), len(res), base_diff))
     for w, d, ex, key in res[:top]:
+        print('  %4d%s %s' % (d, ' EXACT' if ex else '', key))
+    if not (pairs or triples) or any(r[2] for r in res):
+        return
+    # Pairs and triples (two named/anonymous disagreements: the cursor offset changes twice). A site that
+    # VC6 forward-substitutes leaves the rows where they were, so the sites worth combining are the ones
+    # that moved the rows at all, best first.
+    import itertools
+    moving, seen = [], set()
+    for w, d, ex, key in res:
+        if d == base_diff or d >= 9999 or key not in site_of or site_of[key][:2] in seen:
+            continue
+        seen.add(site_of[key][:2])  # nvarg and nvany can name one span
+        moving.append(key)
+
+    def combo(keys):
+        ss = sorted(site_of[k] for k in keys)
+        if any(a[1] > b[0] for a, b in zip(ss, ss[1:])):
+            return None
+        v, last = [], 0
+        for s0, e0, rep, _ in ss:
+            v += [text[last:s0], rep]
+            last = e0
+        v = ''.join(v + [text[last:]])
+        if any(s[3] for s in ss) and 'inline T nv(T v)' not in text:
+            v = v[:inject] + NV_TEMPLATE + v[inject:]
+        return v
+    deck2 = []
+    for n, k in ((2, pairs), (3, triples)):
+        for keys in itertools.combinations(moving[:k], n):
+            v = combo(keys)
+            if v is not None:
+                deck2.append((' + '.join(keys), v))
+    print('\n--pairs/--triples: %d moving single sites, %d combinations' % (len(moving), len(deck2)))
+    if not deck2:
+        return
+    res2 = perm.run_deck(unit, '0x%08X' % addr, deck2, jobs=int(os.environ.get('FE_JOBS', '5')))
+    best1 = min(r[1] for r in res)
+    print('  %d of %d improve on the best single site (%d rows; base %d)' % (len([r for r in res2 if r[1] < min(best1, base_diff)]), len(res2), best1, base_diff))
+    for w, d, ex, key in res2[:top]:
         print('  %4d%s %s' % (d, ' EXACT' if ex else '', key))
 
 
