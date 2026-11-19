@@ -4457,10 +4457,7 @@ L_56bf5f:
                         // BUG(original): `dist` is tested before this scan ever
                         // writes it (uninitialised on the first hit).
                         if (owner < 0 || (owner == faction_id && !dist)) {
-                            // stand-in: forces the image's out-of-line calls at this site.
-                            int (__cdecl *const x_dist_call)(int, int) = x_dist;
-                            int (__cdecl *const vector_dist_call)(int, int) = vector_dist;
-                            dist = vector_dist_call(x_dist_call(x, tx), abs(y - ty));
+                            dist = map_dist(x, y, tx, ty);
                             if (!zoc_move(tx, ty, faction_id) && dist < best_score) {
                                 best_score = dist;
                                 go_to(veh_id, 0x66, tx, ty);
@@ -8140,8 +8137,9 @@ L_57717f:
     // Tail of the nine-tile tactical scan (loop counter hint, tile index i,
     // candidate tile tx/ty), its post-scan, the shared order/waypoint tails and
     // the final path-safety check.
-L_577720:
-L_577723:
+    // 0x577720 / 0x577723: one source point. The image's 3-byte instruction at
+    // 0x577720 is the register reload of [ebp-0x50] for the paths that lost
+    // ebx; the jumps to 0x577723 arrive with it loaded.
     score = rnd(6, "ENEMY3");
     if (near_hostile && !triad) {
         if (!(base_id >= 0 && has_abil(Vehs[veh_id].proto_id, 8))) {
