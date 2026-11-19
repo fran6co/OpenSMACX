@@ -735,8 +735,8 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
         }
         StringTemp[0] = '\0';
         strcat(StringTemp, VehPrototypes[Vehs[veh_id].proto_id].veh_name);
-        strcat(StringTemp, BufferJoinSpace);
-        strcat(StringTemp, SocialWinOpenParenText);
+        strcat_space(StringTemp);
+        strcat_open_paren(StringTemp);
         say_stats_2(StringTemp, Vehs[veh_id].proto_id);
         if (VehPrototypes[Vehs[veh_id].proto_id].ability_flags) {
             strcat(StringTemp, BufferJoinSpace);
@@ -879,17 +879,17 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
             strcat(StringTemp, SocialWinOpenParenText);
             say_stats_2(StringTemp, proto_id);
             if (VehPrototypes[proto_id].ability_flags) {
-                strcat(StringTemp, BufferJoinSpace);
+                strcat_space(StringTemp);
                 for (int j = 0; j < MaxAbilityNum; j++) {
                     if (has_abil(proto_id, 1 << j)) {
                         strcat(StringTemp, table_text(Ability[j].abbreviation));
                     }
                 }
             }
-            strcat(StringTemp, SocialWinCloseParenText);
+            strcat_close_paren(StringTemp);
             strcat(StringTemp, "|");
             strcat(StringTemp, label_get(88));
-            strcat(StringTemp, SocialWinColonSpaceText);
+            strcat_colon(StringTemp);
             char cost_text[80];
             _itoa(choice, cost_text, 10);
             strcat(StringTemp, cost_text);
@@ -920,34 +920,34 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
 
     StringTemp[0] = '\0';
     strcat(StringTemp, VehPrototypes[Vehs[veh_id].proto_id].veh_name);
-    strcat(StringTemp, BufferJoinSpace);
-    strcat(StringTemp, SocialWinOpenParenText);
+    strcat_space(StringTemp);
+    strcat_open_paren(StringTemp);
     say_stats_2(StringTemp, Vehs[veh_id].proto_id);
     if (VehPrototypes[Vehs[veh_id].proto_id].ability_flags) {
-        strcat(StringTemp, BufferJoinSpace);
+        strcat_space(StringTemp);
         for (int i = 0; i < MaxAbilityNum; i++) {
             if (has_abil(Vehs[veh_id].proto_id, 1 << i)) {
                 strcat(StringTemp, table_text(Ability[i].abbreviation));
             }
         }
     }
-    strcat(StringTemp, SocialWinCloseParenText);
+    strcat_close_paren(StringTemp);
     parse_says(0, StringTemp, -1, -1);
 
     StringTemp[0] = '\0';
     strcat(StringTemp, VehPrototypes[choice].veh_name);
-    strcat(StringTemp, BufferJoinSpace);
-    strcat(StringTemp, SocialWinOpenParenText);
+    strcat_space(StringTemp);
+    strcat_open_paren(StringTemp);
     say_stats_2(StringTemp, choice);
     if (VehPrototypes[choice].ability_flags) {
-        strcat(StringTemp, BufferJoinSpace);
+        strcat_space(StringTemp);
         for (int i = 0; i < MaxAbilityNum; i++) {
             if (has_abil(choice, 1 << i)) {
                 strcat(StringTemp, table_text(Ability[i].abbreviation));
             }
         }
     }
-    strcat(StringTemp, SocialWinCloseParenText);
+    strcat_close_paren(StringTemp);
     parse_says(1, StringTemp, -1, -1);
 
     upgrade_reserve_probe(1000);  // WORKAROUND(inline)
