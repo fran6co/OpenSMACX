@@ -86,7 +86,7 @@ static const char alpha_tech_values_section[] = "TECHNOLOGY";
 // RECOVERY_OBJECT: v2 0x00691AFC 0x00691B00 ?AlphaxFileID@@3PBDB 0x0048207D
 // The initialiser's own literal: the image DWORD at 0x00691AFC holds
 // 0x00691B58, where the seven bytes "ALPHAX\0" sit.
-// RECOVERY_LITERAL: v1 0x00691B58 0x00691B5F $SG52209 0x0048207D
+// RECOVERY_LITERAL: v1 0x00691B58 0x00691B5F $SG52217 0x0048207D
 LPCSTR AlphaxFileID = "ALPHAX";
 // Alpha owns the parsed #COMPASS pointer IDs populated by read_rules.
 // RECOVERY_OBJECT: v1 0x00945D48 ?Compass@@3PAPADA
@@ -625,7 +625,7 @@ BOOL __cdecl read_basic_rules() {
     return false;
 }
 
-// RECOVERY_LITERAL: v1 0x0068F2FC 0x0068F30A $SG52307 0x00585E30
+// RECOVERY_LITERAL: v1 0x0068F2FC 0x0068F30A $SG52315 0x00585E30
 /*
 Purpose: Parse the #TECHNOLOGY section inside the alpha(x).txt with a duplicate entry check.
 // ORIGINAL: 0x00585E30 ?read_tech@@YAHXZ 0x00585E30-0x00585FDB BYTE_EXACT
