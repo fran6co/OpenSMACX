@@ -64,6 +64,54 @@ uint32_t SpriteBoxDefaultField8; // 0x009B8FC4, initially zero-filled
 // derives its IAT slot from the pinned image; no executable address is C++.
 // RECOVERY_IMPORT: v1 __imp__PostMessageA@16 USER32.dll name:PostMessageA
 
+
+// ORIGINAL: 0x005EB29F ?fill_entry@SpriteList@@QAEHPAUSpriteStruct@@@Z 0x005EB29F-0x005EB320 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:1240d9eead700ef28006f35018fca68d1123defd:src/unrecovered/005eb29f.cpp", "pinned:SpriteList tables6708A0/6708A4;6116E0 calls611730 with virtual-baseview+28", "pinned:SpriteListBase tables66943C/669438 and list fields +8..+18; StringStruct independently uses 6693A4/6693A0", "source:src/spritebox.h;source:src/stringstruct.h", "source:recovery/tests/test_spritelist_base_lifetime.py", "historical-source:recovery/tests/test_sprite_list_lifecycle_actual_source.py"], "reason": "Recover SpriteList's typed payload insertion on its own ring owner and distinct polymorphic string/sprite payload siblings. SpriteListBase is modeled as a sibling owner with the compatible ring layout and virtual allocation base; combined constructor and destructor table-stage evidence supports this model, while transient constructor-stage elision remains possible. Preserve original identities, spans and historical claims; the original 611730 walk and current lifecycle structure remain matching obligations. The historical kill_entry int-return contract remains unresolved for unknown indirect callers; the current void hook follows observed result-discarding callers without inventing a return."}
+// symbol    ?on_insert@SpriteList@@UAEHPAX@Z
+// Historical seed finding: int8 catalogue spelling means char, not signed char; PAD/PAC mangling distinction
+// Historical seed finding: generated verification scaffold is not product source
+// Historical seed finding: writes sprite at payload+4, label at +8, metadata at +C; null source writes zero label and metadata
+// Historical seed finding: allocator is list+0x18; allocation failure returns 4 after payload label pointer was stored
+// Historical seed finding: calls/callee evidence at 0x5D4510, 0x5D4680, 0x6453E0, 0x645470
+int SpriteList::on_insert(void *raw_payload) {
+    SpriteStruct *const payload = static_cast<SpriteStruct *>(raw_payload);
+    payload->sprite_ = pending_sprite_;
+    if (pending_label_ == 0) {
+        payload->label_ = 0;
+    } else {
+        char *copy;
+        if (allocator_ != 0) {
+            copy = static_cast<char *>(allocator_->get(strlen(pending_label_) + 1));
+        } else {
+            copy = static_cast<char *>(mem_get(strlen(pending_label_) + 1));
+        }
+        payload->label_ = copy;
+        if (copy == 0) return 4;
+        *copy = '\0';
+        strcat(payload->label_, pending_label_);
+    }
+    payload->field_C_ = field_24_;
+    return 0;
+}
+
+// ORIGINAL: 0x005EB32F ?kill_entry@SpriteList@@QAEHPAUSpriteStruct@@@Z 0x005EB32F-0x005EB34B FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:1240d9eead700ef28006f35018fca68d1123defd:src/recovered/units/005eb32f.cpp", "pinned:SpriteList tables6708A0/6708A4;6116E0 calls611730 with virtual-baseview+28", "pinned:SpriteListBase tables66943C/669438 and list fields +8..+18; StringStruct independently uses 6693A4/6693A0", "source:src/spritebox.h;source:src/stringstruct.h", "source:recovery/tests/test_spritelist_base_lifetime.py", "historical-source:recovery/tests/test_sprite_list_lifecycle_actual_source.py"], "reason": "Recover SpriteList's typed payload removal on its own ring owner and distinct polymorphic string/sprite payload siblings. SpriteListBase is modeled as a sibling owner with the compatible ring layout and virtual allocation base; combined constructor and destructor table-stage evidence supports this model, while transient constructor-stage elision remains possible. Preserve original identities, spans and historical claims. The historical kill_entry int-return contract remains unresolved for unknown indirect callers; the current void hook follows observed result-discarding callers without inventing a return."}
+// symbol    ?on_remove@SpriteList@@UAEXPAX@Z
+// Historical seed finding: historical body reads allocator at +0x18, payload label at +8, frees only when allocator is null
+// Historical seed finding: catalogue records one _free call at 0x644EF2
+// Historical seed finding: guard-vs-early-return source-form note: a second ret4 changed the matched shape
+// Historical seed finding: same-polarity guards, ternary lowering, loop lowering and dummy-member-pointer advice are seed lessons, not current behavior mandates
+// Historical seed finding: all observed mapped direct virtual callers discard EAX; indirect caller domain and original return contract remain unresolved
+// Historical seed finding: the old claim does not establish current source equivalence
+void SpriteList::on_remove(void *raw_payload) {
+    SpriteStruct *const payload = static_cast<SpriteStruct *>(raw_payload);
+    if (allocator_ == 0) {
+        if (payload->label_ != 0) {
+            free(payload->label_);
+        }
+    }
+}
+
 /*
 Purpose: Construct the GraphicWin and Dialog virtual bases when most-derived,
          then the owned Spot and item list in declaration order. Initialize
@@ -184,157 +232,66 @@ SpriteBox::~SpriteBox() {
     close();
 }
 
-/*
-Purpose: Unknown; the legacy implementation is a constant return that returns.
-// ORIGINAL: 0x00611040 ?on_mouse_move@SpriteBox@@QAEXHH@Z 0x00611040-0x00611043 BYTE_EXACT
-// symbol    ?on_mouse_move@SpriteBox@@UAEXHH@Z
-// size      3 bytes
-// prototype void (__thiscall ?on_mouse_move@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int, int)
-// callers   1   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void SpriteBox::on_mouse_move(int, int) {
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00610280 ?close@SpriteBox@@QAEXXZ 0x00610280-0x00610416 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00610280.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x610280 complete control/data-access review and src/spritebox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+// symbol    ?close@SpriteBox@@QAEXXZ
+void SpriteBox::close() {
+    GraphicWin::close();
+    Dialog::close();
+    field_4_ = 0;
+    field_1C_ = 1;
+    field_20_ = 1;
+    field_54_ = 0;
+    field_58_ = 0;
+    field_5C_ = 0;
+    field_60_ = 0;
+    redraw_callback_ = 0;
+    field_68_ = 0;
+    left_down_callback_ = 0;
+    left_up_callback_ = 0;
+    right_click_callback_ = 0;
+    right_down_callback_ = 0;
+    right_up_callback_ = 0;
+    double_click_callback_ = 0;
+    right_double_click_callback_ = 0;
+
+    list_.clear();
+
+    spots_.shutdown();
+    field_8_ = SpriteBoxDefaultField8;
+    Buffer::set_text_color(DialogDefaults[24], DialogDefaults[27],
+                           DialogDefaults[30], DialogDefaults[33]);
+    Buffer::set_text_color2(DialogDefaults[25], DialogDefaults[28],
+                            DialogDefaults[31], DialogDefaults[34]);
+    Buffer::set_text_color3(DialogDefaults[26], DialogDefaults[29],
+                            DialogDefaults[32], DialogDefaults[35]);
+    Buffer::set_font(DialogDefaultFonts[0], DialogDefaultFonts[1],
+                     DialogDefaultFonts[2], 0);
 }
 
 /*
-Purpose: Unknown; the legacy implementation is a constant return that returns.
-// ORIGINAL: 0x00611050 ?on_mouse_leave@SpriteBox@@QAEXHH@Z 0x00611050-0x00611053 BYTE_EXACT
-// symbol    ?on_mouse_leave@SpriteBox@@UAEXHH@Z
-// size      3 bytes
-// prototype void (__thiscall ?on_mouse_leave@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int, int)
-// callers   1   call targets   0
+// ORIGINAL: 0x00610420 ?init@SpriteBox@@QAEHH@Z 0x00610420-0x0061043D BYTE_EXACT
+// size      29 bytes
+// prototype int (__thiscall ?init@SpriteBox@@QAEHH@Z)(SpriteBox* this, int)
+// callers   1   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
+// calls     0x006095F0 0x00610280
 Status: Complete
 */
-void SpriteBox::on_mouse_leave(int, int) {
+int SpriteBox::init(int file_name) {
+    close();
+    // Original 0x610420 selects virtual Dialog via vbtable[2] and calls
+    // its integer overload at 0x6095F0 after close.
+    return Dialog::init(file_name);
 }
 
-/*
-Purpose: Adjust the receiver from the thunk1 subobject back to SpriteBox and
-         tail-jump to the override. THE COMPILER WRITES THIS BODY - the claim
-         names VC6's own vtordisp adjustor thunk, emitted because
-         SpriteBox::on_mouse_leave overrides a virtual reached through a virtual
-         base. There is no C++ here to get right, only a name to record.
-// ORIGINAL: 0x00611840 ?on_mouse_leave@thunk1_SpriteBox@@QAEXHH@Z 0x00611840-0x00611848 BYTE_EXACT
-// symbol    ?on_mouse_leave@SpriteBox@@$4PPPPPPPM@A@AEXHH@Z
-// size      8 bytes
-// kind      game
-Status: Complete
-*/
-
-
-
-/*
-Purpose: Walk the entry list for `id` and leave the cursor and position on the
-         match, or on the last entry examined when there is none.
-
-         Four fields, all raw because SpriteBox models none of them:
-             0x2C  head        0x30  cursor
-             0x34  count       0x38  position
-         and each entry carries its id at +4 and its successor at +0xC.
-
-         THE EMPTY-LIST PATH WRITES NOTHING. `cmp eax,edx / je done` leaves on
-         a null head before the two stores, so position keeps whatever it held;
-         it is only zeroed once a head exists. A body that reset position first
-         and then checked would agree on every non-empty list and differ on the
-         one case the branch exists for.
-
-         Both stores DO happen when the head is non-null, even for a
-         non-positive count: `mov [ecx+0x38],edx` and `mov [ecx+0x30],eax`
-         precede the `jle`, so an empty-but-headed list still clears position
-         and parks the cursor.
-
-         Declared uint32_t although the mangled name says void, for the reason
-         Dialogs::destroy is: the body loads [this+0x38] into EAX before
-         returning, and a void body cannot promise that. The return type does
-         not change the thiscall cleanup, so this is the residue and not a
-         different function.
-// ORIGINAL: 0x00611600 ?id_to_pos@SpriteBox@@QAEXH@Z 0x00611600-0x00611640 BYTE_EXACT
-// symbol    ?id_to_pos@SpriteBox@@QAEIH@Z
-// size      64 bytes
-// prototype void (__thiscall ?id_to_pos@SpriteBox@@QAEXH@Z)(SpriteBox* this, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the resulting position, which is also left at 0x38
-Status: Complete
-*/
-uint32_t SpriteBox::id_to_pos(int id) {
-    if (list_.head_ != 0) {
-        list_.current_position_ = 0;
-        list_.current_ = list_.head_;
-        for (int32_t examined = 0; examined < list_.entry_count_; ++examined) {
-            StringStructEntry *const entry = list_.current_;
-            if (entry->id == id) {
-                break;
-            }
-            list_.current_position_ = list_.current_position_ + 1;
-            list_.current_ = entry->next;
-        }
-    }
-    return static_cast<uint32_t>(list_.current_position_);
-}
-
-
-/*
-Purpose: Restore the list entry at an explicit position and return its item
-         ID.
-// ORIGINAL: 0x00611640 ?pos_to_id@SpriteBox@@QAEXH@Z 0x00611640-0x006116B6 BYTE_EXACT
-// symbol    ?pos_to_id@SpriteBox@@QAEHH@Z
-// size      118 bytes
-// prototype int (__thiscall ?pos_to_id@SpriteBox@@QAEXH@Z)(SpriteBox* this, int)
-// callers   1   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00644F3A
-// LEVER: the sibling walk. The body is Dialog::pos_to_id (0x00609B50) over
-//        the SpriteBoxList at 0x24 instead of Dialog's item_list_ at 0xBC:
-//        `position <= entry_count_ - 1` (a decremented compare, not
-//        `position < count`), the cursor loaded from head_ before the sign
-//        test, `abs()` CALLED TWICE with the count re-read between the two
-//        calls, one store for both arms, and a shared tail that reads the
-//        entry id only when head_ is non-null.
-// LEVER: `goto restore_done`, not an early return - the image's out-of-range
-//        exit lands on the SAME tail epilogue the success path falls into,
-//        and a `return 0` there emits a second `xor eax,eax` the image does
-//        not have.
-// LEVER: `int pos_to_id(int)`, returning the value, though the catalogue
-//        mangles it void - both exit paths load EAX before `ret 4`, and the
-//        return type does not change a thiscall's stack cleanup.
-// RESIDUAL: one register decision and its cascade, 10 of 51. The image hoists
-//        a copy of `position` into EAX at instruction 4 (`mov eax,edi`) that
-//        survives to the merged store at 0x61169a, keeps `entry_count_` in
-//        ECX, and walks the cursor in EDX; this build loads the count into
-//        EAX, never makes the copy, and decrements EDI in place in the
-//        positive arm. This is the SAME wall the sibling Dialog::pos_to_id
-//        (0x00609B50) documents on its own marker - the two siblings disagree
-//        with each other in the shipped binary, so only one of them can be
-//        reached from a shared spelling, and there Dialog is.
-// TRIED: one `int distance` declared above the sign test instead of one per
-//        arm - identical 4 of 51.
-// TRIED: hoisted `int new_position = position;` storing that after the
-//        if/else, the shape the image's surviving EAX copy implies - identical
-//        4 of 51; VC6 copy-propagates it away exactly as the Dialog note
-//        records.
-// TRIED: `const int count = list_.entry_count_;` cached over the whole body -
-//        5 of 51, one instruction better and one instruction longer (52), and
-//        it hides the image's re-read of the count between its two abs calls,
-//        which is the load-bearing detail. Left as the member read.
-Return Value: the item id at the requested position, or 0 when the list is
-              empty
-Status: Complete
-*/
-int SpriteBox::pos_to_id(int position) {
-    list_.seek_pos(position);
-    return list_.head_ ? list_.current_->id : 0;
+// ORIGINAL: 0x00610440 ?init@SpriteBox@@QAEHHHHHH@Z 0x00610440-0x00610471 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["Pinned image 0x00610440-0x00610471 calls SpriteBox::close at 0x00610280, then forwards all five integer arguments to Dialog::init through the virtual-base displacement in vbtable[2].","src/dialog.h declares Dialog::init(int,int,int,int,int)."],"reason":"Preserve the seed wrapper as a typed SpriteBox member; C++ performs the virtual Dialog base adjustment and the qualified base call forwards the original arguments."}
+int SpriteBox::init(int a1, int a2, int a3, int a4, int a5) {
+    close();
+    return Dialog::init(a1, a2, a3, a4, a5);
 }
 
 
@@ -357,24 +314,56 @@ int SpriteBox::init(RECT* group_id, int flags) {
 }
 
 /*
-Purpose: Repaint on dialog focus, through the enclosing object.
-// ORIGINAL: 0x006115E0 ?on_dialog_focus@SpriteBox@@QAEXH@Z 0x006115E0-0x00611600 BYTE_EXACT
-// symbol    ?on_dialog_focus@SpriteBox@@UAEXH@Z
-// size      32 bytes
-// prototype void (__thiscall ?on_dialog_focus@SpriteBox@@QAEXH@Z)(SpriteBox* this, int)
-// callers   1   call targets   0
+// ORIGINAL: 0x006104B0 ?init@SpriteBox@@QAEHPAUHeap@@@Z 0x006104B0-0x006104CD BYTE_EXACT
+// symbol    ?init@SpriteBox@@QAEHPAVHeap@@@Z
+// LEVER: already BYTE_EXACT 11/11 - re-measured 2026-08-22 at
+//        `/c /O2 /Gy /GR- /GX`, unchanged, no lever left to pull. The
+//        historical spelling used close() by name followed by a raw
+//        vbtable-relative Dialog::init tail call, reading `*this + 8`
+//        at the use rather than caching it. The current qualified base
+//        call preserves that relationship through real C++ inheritance;
+//        the historical claim remains a restoration obligation.
+// size      29 bytes
+// prototype int (__thiscall ?init@SpriteBox@@QAEHPAUHeap@@@Z)(SpriteBox* this, Heap*)
+// callers   1   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// indirect  0x006115F7
-Return Value: n/a
+// calls     0x006098D0 0x00610280
 Status: Complete
 */
-void SpriteBox::on_dialog_focus(int a1) {
-    // The repaint, as the plain virtual call it is (the redraw default).
-    // The compiler performs the out-of-subobject adjustment as part of the
-    // override's entry; `a1` is dead; `ret 4` still pops it.
-    redraw();
+int SpriteBox::init(Heap *file_name) {
+    close();
+    // Original 0x6104B0 calls Dialog::init(Heap*) at 0x6098D0 through
+    // virtual-base displacement vbtable[2], reloaded after close.
+    return Dialog::init(file_name);
+}
+
+
+
+/*
+// ORIGINAL: 0x006104D0 ?init@SpriteBox@@QAEHHHHHPAUHeap@@@Z 0x006104D0-0x00610501 BYTE_EXACT
+// symbol    ?init@SpriteBox@@QAEHHHHHPAVHeap@@@Z
+// size      49 bytes
+// prototype int (__thiscall ?init@SpriteBox@@QAEHHHHHPAUHeap@@@Z)(SpriteBox* this, int, int, int, int, Heap*)
+// callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00609730 0x00610280
+Status: Complete
+*/
+int SpriteBox::init(int a1, int a2, int a3, int a4, Heap * a5) {
+    close();
+    // Original 0x6104D0 forwards all five arguments to 0x609730 through
+    // the virtual Dialog base; close still precedes receiver adjustment.
+    return Dialog::init(a1, a2, a3, a4, a5);
+}
+
+// ORIGINAL: 0x00610510 ?init@SpriteBox@@QAEHPAUHeap@@PAUHeap@@@Z 0x00610510-0x00610532 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["Pinned image 0x00610510-0x00610532 calls SpriteBox::close at 0x00610280, then forwards stack arguments 1 and 2 unchanged to Dialog::init at 0x006097F0 through vbtable[2]; argument 1 is RECT*, despite the catalogue symbol's Heap* spelling.","src/dialog.h declares Dialog::init(RECT*,Heap*)."],"reason":"Preserve the exact seed identity with the observed RECT*/Heap* signature and a typed call through SpriteBox's virtual Dialog base."}
+// symbol    ?init@SpriteBox@@QAEHPAUtagRECT@@PAVHeap@@@Z
+int SpriteBox::init(RECT *rect, Heap *heap) {
+    close();
+    return Dialog::init(rect, heap);
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -440,6 +429,32 @@ int SpriteBox::attach(GraphicWin *parent, int x, int y, int flags) {
     set_text_color2(text_color_2a_, text_color_2b_, text_color_2c_, text_color_2d_);
     set_text_color3(text_color_3a_, text_color_3b_, text_color_3c_, text_color_3d_);
     set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
+    return 0;
+}
+
+// ORIGINAL: 0x006108E0 ?sprite@SpriteBox@@QAEHPAUSprite@@PADH@Z 0x006108E0-0x00610965 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:1240d9eead700ef28006f35018fca68d1123defd:src/leaf_recoveries.cpp", "pinned:SpriteList tables6708A0/6708A4;6116E0 calls611730 with virtual-baseview+28", "pinned:SpriteListBase tables66943C/669438 and ring fields +8..+18; StringStruct independently uses 6693A4/6693A0", "source:src/spritebox.h;source:src/stringstruct.h", "source:recovery/tests/test_sprite_list_producer_actual_source.py"], "reason": "Recover SpriteBox::sprite through the SpriteList sibling ring owner and distinct polymorphic string/sprite payload siblings, with compiler-owned virtual allocation-base lifetime. Combined constructor/destructor evidence supports the separate SpriteListBase owner model; transient constructor-stage elision remains possible. Historical identities, spans, claims and seed discoveries remain obligations. Producer partial-state behavior and null/error returns remain unchanged."}
+// symbol    ?sprite@SpriteBox@@QAEHPAVSprite@@PADH@Z
+// Historical seed finding: popup pops() invokes the original by name via rel32
+// Historical seed finding: sprite insertion at 0x402550 was an unhomed dependency/seam discovery
+// Historical seed finding: old body was only a forwarding seam, not product behavior
+// Historical seed finding: current implementation preserves partial state on add failures: pending sprite/label/metadata stores occur before add and no rollback occurs
+// Historical seed finding: null sprite returns 3; either list insertion failure returns 4
+// TRIED: popup.cpp's `pops()` calls it BY NAME so it emits the image's `call rel32`. The sprite-list insertion (0x00402550, SpriteStruct::add) is unhomed, so the call goes through the original's address; its receiver is the sprite list this class embeds at 0x24, which is why the member has to be real for the receiver to exist at all.
+int SpriteBox::sprite(Sprite *row_sprite, char *text, int id) {
+    if (row_sprite == 0) return 3;
+    SpriteList *const list = &list_;
+    list->pending_sprite_ = row_sprite;
+    list->pending_label_ = 0;
+    list->field_24_ = 0;
+    if (list->add(id) != 0) return 4;
+    if (text != 0) {
+        StringList &items = Dialog::item_list_;
+        items.pending_text_ = text;
+        items.field_20_ = 0;
+        items.field_24_ = 0;
+        if (items.add(id) != 0) return 4;
+    }
     return 0;
 }
 
@@ -620,6 +635,38 @@ void SpriteBox::draw_item(int position) {
     Buffer::write_l(current_list_text(Dialog::item_list_), &area);
 }
 
+/*
+Purpose: Unknown; the legacy implementation is a constant return that returns.
+// ORIGINAL: 0x00611040 ?on_mouse_move@SpriteBox@@QAEXHH@Z 0x00611040-0x00611043 BYTE_EXACT
+// symbol    ?on_mouse_move@SpriteBox@@UAEXHH@Z
+// size      3 bytes
+// prototype void (__thiscall ?on_mouse_move@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int, int)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void SpriteBox::on_mouse_move(int, int) {
+}
+
+/*
+Purpose: Unknown; the legacy implementation is a constant return that returns.
+// ORIGINAL: 0x00611050 ?on_mouse_leave@SpriteBox@@QAEXHH@Z 0x00611050-0x00611053 BYTE_EXACT
+// symbol    ?on_mouse_leave@SpriteBox@@UAEXHH@Z
+// size      3 bytes
+// prototype void (__thiscall ?on_mouse_leave@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int, int)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void SpriteBox::on_mouse_leave(int, int) {
+}
+
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // Historical seed observations (not fresh measurements or acceptance):
 // TRIED: `this` is offset by TWO different constants for two different base sub-objects (this-0x7c for Spot::check, this-0x8c for the SpriteBox proper, whose field_0_ IS *(this-0x8c)); modelled with raw char*-adjusted casts rather than real inheritance. `a2` is an in/out param aliased via `&a2` into check(). Gets to instruction 25 of ~90 before diverging on push/mov ordering around the `push ebp; push esi` callee-save point.
@@ -643,138 +690,44 @@ void SpriteBox::on_left_click(int x, int y) {
     }
 }
 
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x00611400 0x00611580 0x00611594 0x0061141D
-// RECOVERY_ASSOCIATED: v1 switch_selector 0x00611400 0x00611594 0x006115D8 0x00611417
-// ORIGINAL: 0x00611400 ?on_key_down@SpriteBox@@QAEHH@Z 0x00611400-0x00611580 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00611400.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x611400 complete control/data-access review and src/spritebox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
-// symbol    ?on_key_down@SpriteBox@@UAEHH@Z
-// TRIED: none confirmed byte-exact; MISMATCH #0 - the switch/jump-table data at 0x00611580/0x00611594 (byte remap + pointer table) is not in the given disassembly, so the a1==0x26/0x25/0x28/0x27/ 0x24/0x22 case values are a guess. The four handler BODIES (offsets -0x8c/-0x58/-0x38/-0x34/+0x60/+4/+8/+0xfc) are transcribed directly from the bytes.
-int SpriteBox::on_key_down(int key) {
-    switch (key) {
-    case VK_UP:
-    case VK_NUMPAD8:
-        if (Dialog::selected_position_ == 0) return 1;
-        Dialog::selected_position_--;
-        draw_item(Dialog::selected_position_ + 1);
-        break;
-    case VK_DOWN:
-    case VK_NUMPAD2:
-        if (Dialog::selected_position_ == list_.entry_count_ - 1) return 1;
-        Dialog::selected_position_++;
-        draw_item(Dialog::selected_position_ - 1);
-        break;
-    case VK_LEFT:
-    case VK_NUMPAD4:
-    {
-        if (Dialog::column_count_ == 1) return 1;
-        if (Dialog::selected_position_ < Dialog::row_count_) return 1;
-        const int previous = Dialog::selected_position_;
-        Dialog::selected_position_ = previous - Dialog::row_count_;
-        draw_item(previous);
-        break;
-    }
-    case VK_RIGHT:
-    case VK_NUMPAD6:
-    {
-        if (Dialog::column_count_ == 1) return 1;
-        if (Dialog::selected_position_ >=
-            (Dialog::column_count_ - 1) * Dialog::row_count_) return 1;
-        const int previous = Dialog::selected_position_;
-        Dialog::selected_position_ = previous + Dialog::row_count_;
-        if (Dialog::selected_position_ > list_.entry_count_ - 1) {
-            Dialog::selected_position_ = previous;
-            return 1;
-        }
-        draw_item(previous);
-        break;
-    }
-    default:
-        return 0;
-    }
-    draw_item(Dialog::selected_position_);
-    on_update();
-    return 1;
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00610280 ?close@SpriteBox@@QAEXXZ 0x00610280-0x00610416 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00610280.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x610280 complete control/data-access review and src/spritebox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
-// symbol    ?close@SpriteBox@@QAEXXZ
-void SpriteBox::close() {
-    GraphicWin::close();
-    Dialog::close();
-    field_4_ = 0;
-    field_1C_ = 1;
-    field_20_ = 1;
-    field_54_ = 0;
-    field_58_ = 0;
-    field_5C_ = 0;
-    field_60_ = 0;
-    redraw_callback_ = 0;
-    field_68_ = 0;
-    left_down_callback_ = 0;
-    left_up_callback_ = 0;
-    right_click_callback_ = 0;
-    right_down_callback_ = 0;
-    right_up_callback_ = 0;
-    double_click_callback_ = 0;
-    right_double_click_callback_ = 0;
-
-    list_.clear();
-
-    spots_.shutdown();
-    field_8_ = SpriteBoxDefaultField8;
-    Buffer::set_text_color(DialogDefaults[24], DialogDefaults[27],
-                           DialogDefaults[30], DialogDefaults[33]);
-    Buffer::set_text_color2(DialogDefaults[25], DialogDefaults[28],
-                            DialogDefaults[31], DialogDefaults[34]);
-    Buffer::set_text_color3(DialogDefaults[26], DialogDefaults[29],
-                            DialogDefaults[32], DialogDefaults[35]);
-    Buffer::set_font(DialogDefaultFonts[0], DialogDefaultFonts[1],
-                     DialogDefaultFonts[2], 0);
-}
+// ====================
+// Window-event handlers
+// ====================
 
 /*
-Purpose: Adjust the receiver from the thunk1 subobject back to SpriteBox and
-         tail-jump to the override. THE COMPILER WRITES THIS BODY - the claim
-         names VC6's own vtordisp adjustor thunk, emitted because
-         SpriteBox::on_dialog_focus overrides a virtual reached through a virtual
-         base. There is no C++ here to get right, only a name to record.
-// ORIGINAL: 0x006118E0 ?on_dialog_focus@thunk1_SpriteBox@@QAEXH@Z 0x006118E0-0x006118E8 BYTE_EXACT
-// symbol    ?on_dialog_focus@SpriteBox@@$4PPPPPPPM@A@AEXH@Z
-// size      8 bytes
-// kind      game
-Status: Complete
-*/
-
-/*
-Purpose: Check the click against the widget's spots; if one is hit and its
-         registered handler accepts it, notify the main window with a
-         synthetic Return keypress.
-// ORIGINAL: 0x00611240 ?on_right_down@SpriteBox@@QAEXHH@Z 0x00611240-0x00611290 BYTE_EXACT
-// symbol    ?on_right_down@SpriteBox@@UAEXHH@Z
+Purpose: A left press on a sprite box runs the hit test over its Spot table
+         and, when a spot took the hit, notifies the object's stored click
+         callback with the spot position; a true return then posts WM_KEYDOWN
+         (VK_RETURN) to the main window. Entered on the GraphicWin-subobject
+         adjusted pointer (the family's thunk convention), so the Spot table
+         sits 0x7C below `this` and the callback 0x20 below - the Spot is the
+         constructor's placement-new at the object's own +0x10.
+// ORIGINAL: 0x00611150 ?on_left_down@SpriteBox@@QAEXHH@Z 0x00611150-0x006111A0 BYTE_EXACT
+// symbol    ?on_left_down@SpriteBox@@UAEXHH@Z
 // size      80 bytes
-// prototype void (__thiscall ?on_right_down@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)
+// prototype void (__thiscall ?on_left_down@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)
 // callers   1   call targets   1
 // kind      game
-// flags     hidden;sp_ready;purged_ok
 // calls     0x005FAB00
-// indirect  0x0061126D 0x00611286
+// indirect  0x0061117D 0x00611196
+//
+// PROMOTED out of the archived verification unit for this address. The import thunk
+// 0x00669314 is PostMessageA (win.cpp: on_sys_key landed the same call by
+// name), and 0x009B7B28 is HandleMain; both compile to the same indirect
+// forms the image emits.
+// keeps it live in a register where the image re-reads [this-0x20] for the
+// call - the nested ifs and the two separate reads are the image's own.
 Return Value: n/a
 Status: Complete
 */
-void SpriteBox::on_right_down(int x_coord, int y_coord) {
-    if (spots_.check(x_coord, y_coord, &y_coord, 0) == -1) {
-        return;
+void SpriteBox::on_left_down(int x_coord, int y_coord) {
+    if (spots_.check(x_coord, y_coord, &y_coord, 0) != -1) {
+        if (left_down_callback_ != 0) {
+            if (left_down_callback_(y_coord) != 0) {
+                PostMessageA(HandleMain, 0x100, 0xd, 0);
+            }
+        }
     }
-    ClickCallback const handler = right_down_callback_;
-    if (!handler) {
-        return;
-    }
-    if (handler(y_coord) == 0) {
-        return;
-    }
-    PostMessageA(HandleMain, WM_KEYDOWN, VK_RETURN, 0);
 }
 
 /*
@@ -832,20 +785,123 @@ void SpriteBox::on_right_click(int x_coord, int y_coord) {
     }
 }
 
-// ORIGINAL: 0x00611850 ?on_left_click@thunk1_SpriteBox@@QAEXHH@Z 0x00611850-0x00611858 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: SpriteBox constructor 0x0060FF00 installs Win view 0x00670738; slot +0x4C points to original identity 0x00611850", "retained build/recovery/builds/build-rosw1myy: build/recovery/builds/build-rosw1myy/CMakeFiles/OpenSMACX.dir/src/spritebox.cpp.obj has matching source-input closure and physical table relocation to ?on_left_click@SpriteBox@@$4PPPPPPPM@A@AEXHH@Z", "retained COFF ?on_left_click@SpriteBox@@$4PPPPPPPM@A@AEXHH@Z has the 8-byte vtordisp subtraction shape and tail relocation to real method symbol ?on_left_click@SpriteBox@@UAEXHH@Z", "the exact legacy kind fact `game` is copied verbatim from the source envelope and parser-read back; it is existing catalogue classification, not a newly granted kind", "this evidence establishes a current owner-TU/compiler-thunk correspondence only; no fresh build, linked retained-table selection, body-byte match, or whole-game acceptance is claimed"], "reason": "The SpriteBox Win-view constructor-installed table selects this original receiver adjustor at byte offset 0x4C; the retained owner COFF physically emits the corresponding compiler vtordisp thunk and its relocation tails to SpriteBox::on_left_click. This FILE marker remains with the actual class owner TU; it does not prove final linked table selection or full acceptance."}
+/*
+Purpose: Check the click against the widget's spots; if one is hit and its
+         registered handler accepts it, notify the main window with a
+         synthetic Return keypress.
+// ORIGINAL: 0x00611240 ?on_right_down@SpriteBox@@QAEXHH@Z 0x00611240-0x00611290 BYTE_EXACT
+// symbol    ?on_right_down@SpriteBox@@UAEXHH@Z
+// size      80 bytes
+// prototype void (__thiscall ?on_right_down@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)
+// callers   1   call targets   1
 // kind      game
-// symbol    ?on_left_click@SpriteBox@@$4PPPPPPPM@A@AEXHH@Z
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FAB00
+// indirect  0x0061126D 0x00611286
+Return Value: n/a
+Status: Complete
+*/
+void SpriteBox::on_right_down(int x_coord, int y_coord) {
+    if (spots_.check(x_coord, y_coord, &y_coord, 0) == -1) {
+        return;
+    }
+    ClickCallback const handler = right_down_callback_;
+    if (!handler) {
+        return;
+    }
+    if (handler(y_coord) == 0) {
+        return;
+    }
+    PostMessageA(HandleMain, WM_KEYDOWN, VK_RETURN, 0);
+}
 
-// ORIGINAL: 0x00611880 ?on_right_click@thunk1_SpriteBox@@QAEXHH@Z 0x00611880-0x00611888 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: SpriteBox constructor 0x0060FF00 installs Win view 0x00670738; slot +0x58 points to original identity 0x00611880", "retained build/recovery/builds/build-rosw1myy: build/recovery/builds/build-rosw1myy/CMakeFiles/OpenSMACX.dir/src/spritebox.cpp.obj has matching source-input closure and physical table relocation to ?on_right_click@SpriteBox@@$4PPPPPPPM@A@AEXHH@Z", "retained COFF ?on_right_click@SpriteBox@@$4PPPPPPPM@A@AEXHH@Z has the 8-byte vtordisp subtraction shape and tail relocation to real method symbol ?on_right_click@SpriteBox@@UAEXHH@Z", "the exact legacy kind fact `game` is copied verbatim from the source envelope and parser-read back; it is existing catalogue classification, not a newly granted kind", "this evidence establishes a current owner-TU/compiler-thunk correspondence only; no fresh build, linked retained-table selection, body-byte match, or whole-game acceptance is claimed"], "reason": "The SpriteBox Win-view constructor-installed table selects this original receiver adjustor at byte offset 0x58; the retained owner COFF physically emits the corresponding compiler vtordisp thunk and its relocation tails to SpriteBox::on_right_click. This FILE marker remains with the actual class owner TU; it does not prove final linked table selection or full acceptance."}
+/*
+Purpose: Same check-then-notify shape, for the right-button-up spot handler
+         at this-0x10.
+// ORIGINAL: 0x00611290 ?on_right_up@SpriteBox@@QAEXHH@Z 0x00611290-0x006112E0 BYTE_EXACT
+// symbol    ?on_right_up@SpriteBox@@UAEXHH@Z
+// size      80 bytes
+// prototype void (__thiscall ?on_right_up@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)
+// callers   1   call targets   1
 // kind      game
-// symbol    ?on_right_click@SpriteBox@@$4PPPPPPPM@A@AEXHH@Z
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FAB00
+// indirect  0x006112BD 0x006112D6
+Return Value: n/a
+Status: Complete
+*/
+void SpriteBox::on_right_up(int x_coord, int y_coord) {
+    if (spots_.check(x_coord, y_coord, &y_coord, 0) != -1) {
+        ClickCallback const handler = right_up_callback_;
+        if (handler != 0) {
+            if (handler(y_coord) != 0) {
+                PostMessageA(HandleMain, WM_KEYDOWN, VK_RETURN, 0);
+            }
+        }
+    }
+}
 
-// ORIGINAL: 0x006118B0 ?on_key_down@thunk1_SpriteBox@@QAEHH@Z 0x006118B0-0x006118B8 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: SpriteBox constructor 0x0060FF00 installs Win view 0x00670738; slot +0x68 points to original identity 0x006118B0", "retained build/recovery/builds/build-rosw1myy: build/recovery/builds/build-rosw1myy/CMakeFiles/OpenSMACX.dir/src/spritebox.cpp.obj has matching source-input closure and physical table relocation to ?on_key_down@SpriteBox@@$4PPPPPPPM@A@AEHH@Z", "retained COFF ?on_key_down@SpriteBox@@$4PPPPPPPM@A@AEHH@Z has the 8-byte vtordisp subtraction shape and tail relocation to real method symbol ?on_key_down@SpriteBox@@UAEHH@Z", "the exact legacy kind fact `game` is copied verbatim from the source envelope and parser-read back; it is existing catalogue classification, not a newly granted kind", "this evidence establishes a current owner-TU/compiler-thunk correspondence only; no fresh build, linked retained-table selection, body-byte match, or whole-game acceptance is claimed"], "reason": "The SpriteBox Win-view constructor-installed table selects this original receiver adjustor at byte offset 0x68; the retained owner COFF physically emits the corresponding compiler vtordisp thunk and its relocation tails to SpriteBox::on_key_down. This FILE marker remains with the actual class owner TU; it does not prove final linked table selection or full acceptance."}
+// Historical generated-entry findings: byte flags parameter and +28 virtual-base receiver;
+// conditional free publishes captured Heap through StringAllocationHeap, then returns complete object.
+// Older whole-unit and PAD/PAC spelling experiments are provenance, not current ABI or workflow rules.
+// The retired overlapping claimless seed is not an extra original identity.
+
+/*
+Purpose: Hit-test the owned Spot member, notify the stored double-click
+         callback with the hit position, and post WM_KEYDOWN (VK_RETURN)
+         when it returns nonzero. The GraphicWin-relative Spot at -0x7C and
+         callback at -0xC are complete-object members +0x10 and +0x80;
+         the compiler supplies those adjustments for this virtual override.
+// ORIGINAL: 0x00611910 sub_611910 0x00611910-0x0061191E FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:15fe30a4cf2c220f100140385fe1275979abed0b:src/recovered/units/00611910.cpp; historical seed/source provenance (seed path is retired from the current working tree)", "pinned image vtable 0x00670724 entry zero selects original 0x00611910; the historical shared-tail span is now separately mapped as sub_6117e0", "physical COFF:spritebox.cpp.obj defines observed emitted symbol ??_ESpriteBox@@$4PPPPPPPM@KBI@AEPAXI@Z, and its table COMDAT selects that exact symbol", "physical COFF weak external tail alias resolves to ??_GSpriteBox@@UAEPAXI@Z; linked map confirms the owner row", "historically this identity repeated the shared 0x006117E0-0x0061181E tail; current ownership is the separate sub_6117e0 mapping, while this wrapper retains only its 0x00611910-0x0061191E entry span; fresh selected-object matching remains pending", "current-owner:src/spritebox.cpp:0x00611910; the live ORIGINAL marker retains only the independent wrapper span 0x00611910-0x0061191E; its historical shared-tail mapping is now assigned to sub_6117e0, historical byte claim retained=False, historical semantic claim retained=False, and the complete parsed LEVER/TRIED/UNRECOVERABLE/DEFERRED lesson set (0/0/0/0); current binding is source navigation/provenance only, not a new claim or match result"], "reason": "Retain the original Dialog virtual-base deleting adjustor entry; the shared primary scalar-deleting body is independently mapped once."}
+// symbol    ??_ESpriteBox@@$4PPPPPPPM@KBI@AEPAXI@Z
+// ORIGINAL: 0x006112E0 ?on_left_double_click@SpriteBox@@QAEXHH@Z 0x006112E0-0x00611330 BYTE_EXACT
+// symbol    ?on_left_double_click@SpriteBox@@UAEXHH@Z
+// size      80 bytes
+// prototype void (__thiscall ?on_left_double_click@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)
+// callers   1   call targets   1
 // kind      game
-// symbol    ?on_key_down@SpriteBox@@$4PPPPPPPM@A@AEHH@Z
+// calls     0x005FAB00
+// indirect  0x0061130D 0x00611326
+//
+// PROMOTED out of the archived verification unit for this address; same two bindings as
+// on_left_down above.
+Return Value: n/a
+Status: Complete
+*/
+void SpriteBox::on_left_double_click(int x_coord, int y_coord) {
+    if (spots_.check(x_coord, y_coord, &y_coord, 0) != -1) {
+        if (double_click_callback_ != 0 && double_click_callback_(y_coord) != 0) {
+            PostMessageA(HandleMain, 0x100, 0xd, 0);
+        }
+    }
+}
+
+/*
+Purpose: Same check-then-notify shape, for the right-double-click spot
+         handler at this-8.
+// ORIGINAL: 0x00611330 ?on_right_double_click@SpriteBox@@QAEXHH@Z 0x00611330-0x00611380 BYTE_EXACT
+// symbol    ?on_right_double_click@SpriteBox@@UAEXHH@Z
+// size      80 bytes
+// prototype void (__thiscall ?on_right_double_click@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FAB00
+// indirect  0x0061135D 0x00611376
+Return Value: n/a
+Status: Complete
+*/
+void SpriteBox::on_right_double_click(int x_coord, int y_coord) {
+    if (spots_.check(x_coord, y_coord, &y_coord, 0) != -1) {
+        ClickCallback const handler = right_double_click_callback_;
+        if (handler != 0) {
+            if (handler(y_coord) != 0) {
+                PostMessageA(HandleMain, WM_KEYDOWN, VK_RETURN, 0);
+            }
+        }
+    }
+}
 
 /*
 Purpose: When attached to a parent, repaint a sprite box by blitting its own
@@ -882,200 +938,188 @@ void SpriteBox::on_redraw() {
     }
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00611400 0x00611580 0x00611594 0x0061141D
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x00611400 0x00611594 0x006115D8 0x00611417
+// ORIGINAL: 0x00611400 ?on_key_down@SpriteBox@@QAEHH@Z 0x00611400-0x00611580 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00611400.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x611400 complete control/data-access review and src/spritebox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+// symbol    ?on_key_down@SpriteBox@@UAEHH@Z
+// TRIED: none confirmed byte-exact; MISMATCH #0 - the switch/jump-table data at 0x00611580/0x00611594 (byte remap + pointer table) is not in the given disassembly, so the a1==0x26/0x25/0x28/0x27/ 0x24/0x22 case values are a guess. The four handler BODIES (offsets -0x8c/-0x58/-0x38/-0x34/+0x60/+4/+8/+0xfc) are transcribed directly from the bytes.
+int SpriteBox::on_key_down(int key) {
+    switch (key) {
+    case VK_UP:
+    case VK_NUMPAD8:
+        if (Dialog::selected_position_ == 0) return 1;
+        Dialog::selected_position_--;
+        draw_item(Dialog::selected_position_ + 1);
+        break;
+    case VK_DOWN:
+    case VK_NUMPAD2:
+        if (Dialog::selected_position_ == list_.entry_count_ - 1) return 1;
+        Dialog::selected_position_++;
+        draw_item(Dialog::selected_position_ - 1);
+        break;
+    case VK_LEFT:
+    case VK_NUMPAD4:
+    {
+        if (Dialog::column_count_ == 1) return 1;
+        if (Dialog::selected_position_ < Dialog::row_count_) return 1;
+        const int previous = Dialog::selected_position_;
+        Dialog::selected_position_ = previous - Dialog::row_count_;
+        draw_item(previous);
+        break;
+    }
+    case VK_RIGHT:
+    case VK_NUMPAD6:
+    {
+        if (Dialog::column_count_ == 1) return 1;
+        if (Dialog::selected_position_ >=
+            (Dialog::column_count_ - 1) * Dialog::row_count_) return 1;
+        const int previous = Dialog::selected_position_;
+        Dialog::selected_position_ = previous + Dialog::row_count_;
+        if (Dialog::selected_position_ > list_.entry_count_ - 1) {
+            Dialog::selected_position_ = previous;
+            return 1;
+        }
+        draw_item(previous);
+        break;
+    }
+    default:
+        return 0;
+    }
+    draw_item(Dialog::selected_position_);
+    on_update();
+    return 1;
+}
+
 /*
-Purpose: Same check-then-notify shape, for the right-button-up spot handler
-         at this-0x10.
-// ORIGINAL: 0x00611290 ?on_right_up@SpriteBox@@QAEXHH@Z 0x00611290-0x006112E0 BYTE_EXACT
-// symbol    ?on_right_up@SpriteBox@@UAEXHH@Z
-// size      80 bytes
-// prototype void (__thiscall ?on_right_up@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)
-// callers   1   call targets   1
+Purpose: Repaint on dialog focus, through the enclosing object.
+// ORIGINAL: 0x006115E0 ?on_dialog_focus@SpriteBox@@QAEXH@Z 0x006115E0-0x00611600 BYTE_EXACT
+// symbol    ?on_dialog_focus@SpriteBox@@UAEXH@Z
+// size      32 bytes
+// prototype void (__thiscall ?on_dialog_focus@SpriteBox@@QAEXH@Z)(SpriteBox* this, int)
+// callers   1   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
-// calls     0x005FAB00
-// indirect  0x006112BD 0x006112D6
+// calls     (none)
+// indirect  0x006115F7
 Return Value: n/a
 Status: Complete
 */
-void SpriteBox::on_right_up(int x_coord, int y_coord) {
-    if (spots_.check(x_coord, y_coord, &y_coord, 0) != -1) {
-        ClickCallback const handler = right_up_callback_;
-        if (handler != 0) {
-            if (handler(y_coord) != 0) {
-                PostMessageA(HandleMain, WM_KEYDOWN, VK_RETURN, 0);
-            }
-        }
-    }
+void SpriteBox::on_dialog_focus(int a1) {
+    // The repaint, as the plain virtual call it is (the redraw default).
+    // The compiler performs the out-of-subobject adjustment as part of the
+    // override's entry; `a1` is dead; `ret 4` still pops it.
+    redraw();
 }
 
+
+
 /*
-Purpose: Same check-then-notify shape, for the right-double-click spot
-         handler at this-8.
-// ORIGINAL: 0x00611330 ?on_right_double_click@SpriteBox@@QAEXHH@Z 0x00611330-0x00611380 BYTE_EXACT
-// symbol    ?on_right_double_click@SpriteBox@@UAEXHH@Z
-// size      80 bytes
-// prototype void (__thiscall ?on_right_double_click@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)
+Purpose: Walk the entry list for `id` and leave the cursor and position on the
+         match, or on the last entry examined when there is none.
+
+         Four fields, all raw because SpriteBox models none of them:
+             0x2C  head        0x30  cursor
+             0x34  count       0x38  position
+         and each entry carries its id at +4 and its successor at +0xC.
+
+         THE EMPTY-LIST PATH WRITES NOTHING. `cmp eax,edx / je done` leaves on
+         a null head before the two stores, so position keeps whatever it held;
+         it is only zeroed once a head exists. A body that reset position first
+         and then checked would agree on every non-empty list and differ on the
+         one case the branch exists for.
+
+         Both stores DO happen when the head is non-null, even for a
+         non-positive count: `mov [ecx+0x38],edx` and `mov [ecx+0x30],eax`
+         precede the `jle`, so an empty-but-headed list still clears position
+         and parks the cursor.
+
+         Declared uint32_t although the mangled name says void, for the reason
+         Dialogs::destroy is: the body loads [this+0x38] into EAX before
+         returning, and a void body cannot promise that. The return type does
+         not change the thiscall cleanup, so this is the residue and not a
+         different function.
+// ORIGINAL: 0x00611600 ?id_to_pos@SpriteBox@@QAEXH@Z 0x00611600-0x00611640 BYTE_EXACT
+// symbol    ?id_to_pos@SpriteBox@@QAEIH@Z
+// size      64 bytes
+// prototype void (__thiscall ?id_to_pos@SpriteBox@@QAEXH@Z)(SpriteBox* this, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the resulting position, which is also left at 0x38
+Status: Complete
+*/
+uint32_t SpriteBox::id_to_pos(int id) {
+    if (list_.head_ != 0) {
+        list_.current_position_ = 0;
+        list_.current_ = list_.head_;
+        for (int32_t examined = 0; examined < list_.entry_count_; ++examined) {
+            StringStructEntry *const entry = list_.current_;
+            if (entry->id == id) {
+                break;
+            }
+            list_.current_position_ = list_.current_position_ + 1;
+            list_.current_ = entry->next;
+        }
+    }
+    return static_cast<uint32_t>(list_.current_position_);
+}
+
+
+/*
+Purpose: Restore the list entry at an explicit position and return its item
+         ID.
+// ORIGINAL: 0x00611640 ?pos_to_id@SpriteBox@@QAEXH@Z 0x00611640-0x006116B6 BYTE_EXACT
+// symbol    ?pos_to_id@SpriteBox@@QAEHH@Z
+// size      118 bytes
+// prototype int (__thiscall ?pos_to_id@SpriteBox@@QAEXH@Z)(SpriteBox* this, int)
 // callers   1   call targets   1
 // kind      game
 // flags     hidden;sp_ready;purged_ok
-// calls     0x005FAB00
-// indirect  0x0061135D 0x00611376
-Return Value: n/a
+// calls     0x00644F3A
+// LEVER: the sibling walk. The body is Dialog::pos_to_id (0x00609B50) over
+//        the SpriteBoxList at 0x24 instead of Dialog's item_list_ at 0xBC:
+//        `position <= entry_count_ - 1` (a decremented compare, not
+//        `position < count`), the cursor loaded from head_ before the sign
+//        test, `abs()` CALLED TWICE with the count re-read between the two
+//        calls, one store for both arms, and a shared tail that reads the
+//        entry id only when head_ is non-null.
+// LEVER: `goto restore_done`, not an early return - the image's out-of-range
+//        exit lands on the SAME tail epilogue the success path falls into,
+//        and a `return 0` there emits a second `xor eax,eax` the image does
+//        not have.
+// LEVER: `int pos_to_id(int)`, returning the value, though the catalogue
+//        mangles it void - both exit paths load EAX before `ret 4`, and the
+//        return type does not change a thiscall's stack cleanup.
+// RESIDUAL: one register decision and its cascade, 10 of 51. The image hoists
+//        a copy of `position` into EAX at instruction 4 (`mov eax,edi`) that
+//        survives to the merged store at 0x61169a, keeps `entry_count_` in
+//        ECX, and walks the cursor in EDX; this build loads the count into
+//        EAX, never makes the copy, and decrements EDI in place in the
+//        positive arm. This is the SAME wall the sibling Dialog::pos_to_id
+//        (0x00609B50) documents on its own marker - the two siblings disagree
+//        with each other in the shipped binary, so only one of them can be
+//        reached from a shared spelling, and there Dialog is.
+// TRIED: one `int distance` declared above the sign test instead of one per
+//        arm - identical 4 of 51.
+// TRIED: hoisted `int new_position = position;` storing that after the
+//        if/else, the shape the image's surviving EAX copy implies - identical
+//        4 of 51; VC6 copy-propagates it away exactly as the Dialog note
+//        records.
+// TRIED: `const int count = list_.entry_count_;` cached over the whole body -
+//        5 of 51, one instruction better and one instruction longer (52), and
+//        it hides the image's re-read of the count between its two abs calls,
+//        which is the load-bearing detail. Left as the member read.
+Return Value: the item id at the requested position, or 0 when the list is
+              empty
 Status: Complete
 */
-void SpriteBox::on_right_double_click(int x_coord, int y_coord) {
-    if (spots_.check(x_coord, y_coord, &y_coord, 0) != -1) {
-        ClickCallback const handler = right_double_click_callback_;
-        if (handler != 0) {
-            if (handler(y_coord) != 0) {
-                PostMessageA(HandleMain, WM_KEYDOWN, VK_RETURN, 0);
-            }
-        }
-    }
+int SpriteBox::pos_to_id(int position) {
+    list_.seek_pos(position);
+    return list_.head_ ? list_.current_->id : 0;
 }
 
-/*
-// ORIGINAL: 0x00610420 ?init@SpriteBox@@QAEHH@Z 0x00610420-0x0061043D BYTE_EXACT
-// size      29 bytes
-// prototype int (__thiscall ?init@SpriteBox@@QAEHH@Z)(SpriteBox* this, int)
-// callers   1   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x006095F0 0x00610280
-Status: Complete
-*/
-int SpriteBox::init(int file_name) {
-    close();
-    // Original 0x610420 selects virtual Dialog via vbtable[2] and calls
-    // its integer overload at 0x6095F0 after close.
-    return Dialog::init(file_name);
-}
-
-// ORIGINAL: 0x00610440 ?init@SpriteBox@@QAEHHHHHH@Z 0x00610440-0x00610471 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence":["Pinned image 0x00610440-0x00610471 calls SpriteBox::close at 0x00610280, then forwards all five integer arguments to Dialog::init through the virtual-base displacement in vbtable[2].","src/dialog.h declares Dialog::init(int,int,int,int,int)."],"reason":"Preserve the seed wrapper as a typed SpriteBox member; C++ performs the virtual Dialog base adjustment and the qualified base call forwards the original arguments."}
-int SpriteBox::init(int a1, int a2, int a3, int a4, int a5) {
-    close();
-    return Dialog::init(a1, a2, a3, a4, a5);
-}
-
-// ORIGINAL: 0x00610510 ?init@SpriteBox@@QAEHPAUHeap@@PAUHeap@@@Z 0x00610510-0x00610532 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence":["Pinned image 0x00610510-0x00610532 calls SpriteBox::close at 0x00610280, then forwards stack arguments 1 and 2 unchanged to Dialog::init at 0x006097F0 through vbtable[2]; argument 1 is RECT*, despite the catalogue symbol's Heap* spelling.","src/dialog.h declares Dialog::init(RECT*,Heap*)."],"reason":"Preserve the exact seed identity with the observed RECT*/Heap* signature and a typed call through SpriteBox's virtual Dialog base."}
-// symbol    ?init@SpriteBox@@QAEHPAUtagRECT@@PAVHeap@@@Z
-int SpriteBox::init(RECT *rect, Heap *heap) {
-    close();
-    return Dialog::init(rect, heap);
-}
-
-/*
-// ORIGINAL: 0x006104B0 ?init@SpriteBox@@QAEHPAUHeap@@@Z 0x006104B0-0x006104CD BYTE_EXACT
-// symbol    ?init@SpriteBox@@QAEHPAVHeap@@@Z
-// LEVER: already BYTE_EXACT 11/11 - re-measured 2026-08-22 at
-//        `/c /O2 /Gy /GR- /GX`, unchanged, no lever left to pull. The
-//        historical spelling used close() by name followed by a raw
-//        vbtable-relative Dialog::init tail call, reading `*this + 8`
-//        at the use rather than caching it. The current qualified base
-//        call preserves that relationship through real C++ inheritance;
-//        the historical claim remains a restoration obligation.
-// size      29 bytes
-// prototype int (__thiscall ?init@SpriteBox@@QAEHPAUHeap@@@Z)(SpriteBox* this, Heap*)
-// callers   1   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x006098D0 0x00610280
-Status: Complete
-*/
-int SpriteBox::init(Heap *file_name) {
-    close();
-    // Original 0x6104B0 calls Dialog::init(Heap*) at 0x6098D0 through
-    // virtual-base displacement vbtable[2], reloaded after close.
-    return Dialog::init(file_name);
-}
-
-
-
-/*
-// ORIGINAL: 0x006104D0 ?init@SpriteBox@@QAEHHHHHPAUHeap@@@Z 0x006104D0-0x00610501 BYTE_EXACT
-// symbol    ?init@SpriteBox@@QAEHHHHHPAVHeap@@@Z
-// size      49 bytes
-// prototype int (__thiscall ?init@SpriteBox@@QAEHHHHHPAUHeap@@@Z)(SpriteBox* this, int, int, int, int, Heap*)
-// callers   1   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00609730 0x00610280
-Status: Complete
-*/
-int SpriteBox::init(int a1, int a2, int a3, int a4, Heap * a5) {
-    close();
-    // Original 0x6104D0 forwards all five arguments to 0x609730 through
-    // the virtual Dialog base; close still precedes receiver adjustment.
-    return Dialog::init(a1, a2, a3, a4, a5);
-}
-
-/*
-Purpose: Adjust the receiver from the thunk1 subobject back to SpriteBox and
-         tail-jump to the override. THE COMPILER WRITES THIS BODY - the claim
-         names VC6's own vtordisp adjustor thunk, emitted because
-         SpriteBox::attach overrides a virtual reached through a virtual
-         base. There is no C++ here to get right, only a name to record.
-// ORIGINAL: 0x00611920 ?attach@thunk1_SpriteBox@@QAEHPAUGraphicWin@@HHH@Z 0x00611920-0x00611928 FILE BYTE_EXACT
-// symbol    ?attach@SpriteBox@@$4PPPPPPPM@A@AEHPAVGraphicWin@@HHH@Z
-// size      8 bytes
-// kind      game
-Status: Complete
-*/
-
-
-// WORKAROUND(inline): SpriteBox::SpriteBox (0x0060FF00) expands this empty
-// constructor, so this unit keeps an inline twin; the out-of-line
-// definition, which hosts 0x00402BB0, lives in stringstruct.cpp.
-inline SpriteList::SpriteList() {}
-
-// ORIGINAL: 0x005EB29F ?fill_entry@SpriteList@@QAEHPAUSpriteStruct@@@Z 0x005EB29F-0x005EB320 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:1240d9eead700ef28006f35018fca68d1123defd:src/unrecovered/005eb29f.cpp", "pinned:SpriteList tables6708A0/6708A4;6116E0 calls611730 with virtual-baseview+28", "pinned:SpriteListBase tables66943C/669438 and list fields +8..+18; StringStruct independently uses 6693A4/6693A0", "source:src/spritebox.h;source:src/stringstruct.h", "source:recovery/tests/test_spritelist_base_lifetime.py", "historical-source:recovery/tests/test_sprite_list_lifecycle_actual_source.py"], "reason": "Recover SpriteList's typed payload insertion on its own ring owner and distinct polymorphic string/sprite payload siblings. SpriteListBase is modeled as a sibling owner with the compatible ring layout and virtual allocation base; combined constructor and destructor table-stage evidence supports this model, while transient constructor-stage elision remains possible. Preserve original identities, spans and historical claims; the original 611730 walk and current lifecycle structure remain matching obligations. The historical kill_entry int-return contract remains unresolved for unknown indirect callers; the current void hook follows observed result-discarding callers without inventing a return."}
-// symbol    ?on_insert@SpriteList@@UAEHPAX@Z
-// Historical seed finding: int8 catalogue spelling means char, not signed char; PAD/PAC mangling distinction
-// Historical seed finding: generated verification scaffold is not product source
-// Historical seed finding: writes sprite at payload+4, label at +8, metadata at +C; null source writes zero label and metadata
-// Historical seed finding: allocator is list+0x18; allocation failure returns 4 after payload label pointer was stored
-// Historical seed finding: calls/callee evidence at 0x5D4510, 0x5D4680, 0x6453E0, 0x645470
-int SpriteList::on_insert(void *raw_payload) {
-    SpriteStruct *const payload = static_cast<SpriteStruct *>(raw_payload);
-    payload->sprite_ = pending_sprite_;
-    if (pending_label_ == 0) {
-        payload->label_ = 0;
-    } else {
-        char *copy;
-        if (allocator_ != 0) {
-            copy = static_cast<char *>(allocator_->get(strlen(pending_label_) + 1));
-        } else {
-            copy = static_cast<char *>(mem_get(strlen(pending_label_) + 1));
-        }
-        payload->label_ = copy;
-        if (copy == 0) return 4;
-        *copy = '\0';
-        strcat(payload->label_, pending_label_);
-    }
-    payload->field_C_ = field_24_;
-    return 0;
-}
-
-// ORIGINAL: 0x005EB32F ?kill_entry@SpriteList@@QAEHPAUSpriteStruct@@@Z 0x005EB32F-0x005EB34B FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:1240d9eead700ef28006f35018fca68d1123defd:src/recovered/units/005eb32f.cpp", "pinned:SpriteList tables6708A0/6708A4;6116E0 calls611730 with virtual-baseview+28", "pinned:SpriteListBase tables66943C/669438 and list fields +8..+18; StringStruct independently uses 6693A4/6693A0", "source:src/spritebox.h;source:src/stringstruct.h", "source:recovery/tests/test_spritelist_base_lifetime.py", "historical-source:recovery/tests/test_sprite_list_lifecycle_actual_source.py"], "reason": "Recover SpriteList's typed payload removal on its own ring owner and distinct polymorphic string/sprite payload siblings. SpriteListBase is modeled as a sibling owner with the compatible ring layout and virtual allocation base; combined constructor and destructor table-stage evidence supports this model, while transient constructor-stage elision remains possible. Preserve original identities, spans and historical claims. The historical kill_entry int-return contract remains unresolved for unknown indirect callers; the current void hook follows observed result-discarding callers without inventing a return."}
-// symbol    ?on_remove@SpriteList@@UAEXPAX@Z
-// Historical seed finding: historical body reads allocator at +0x18, payload label at +8, frees only when allocator is null
-// Historical seed finding: catalogue records one _free call at 0x644EF2
-// Historical seed finding: guard-vs-early-return source-form note: a second ret4 changed the matched shape
-// Historical seed finding: same-polarity guards, ternary lowering, loop lowering and dummy-member-pointer advice are seed lessons, not current behavior mandates
-// Historical seed finding: all observed mapped direct virtual callers discard EAX; indirect caller domain and original return contract remain unresolved
-// Historical seed finding: the old claim does not establish current source equivalence
-void SpriteList::on_remove(void *raw_payload) {
-    SpriteStruct *const payload = static_cast<SpriteStruct *>(raw_payload);
-    if (allocator_ == 0) {
-        if (payload->label_ != 0) {
-            free(payload->label_);
-        }
-    }
-}
 
 
 // SpriteListBase::seek_pos supplies the cursor contract on its own ring; it
@@ -1105,6 +1149,50 @@ void SpriteList::close() {
         current_position_ = 0;
     }
 }
+
+// ORIGINAL: 0x006118D0 ?on_right_double_click@thunk1_SpriteBox@@QAEXHH@Z 0x006118D0-0x006118D8 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: SpriteBox constructor span contains the store of table 0x00670738; the pinned dword at 0x006707AC is 0x006118D0.", "The original 8-byte receiver thunk at 0x006118D0 tail-jumps to 0x00611330, mapped as ?on_right_double_click@SpriteBox@@QAEXHH@Z in this class owner.", "The actual class owner is src/spritebox.cpp; its current owner object vftable relocation at byte offset 0x74 names the generated thunk, whose terminal relocation targets ?on_right_double_click@SpriteBox@@UAEXHH@Z.", "The source identity retains its exact historical kind fact `game`; its full original spans, claims, lessons, and findings are checked unchanged by the writer readback."], "reason": "The pinned SpriteBox constructor at 0x0060FF00 installs its Win view at 0x00670738; the original slot cell at +0x74 selects this full identity. The real SpriteBox virtual member and owner-TU vftable are already source-owned; current owner COFF evidence binds this FILE identity to the compiler-emitted receiver adjustor tailing to ?on_right_double_click@SpriteBox@@UAEXHH@Z."}
+// kind      game
+// symbol    ?on_right_double_click@SpriteBox@@$4PPPPPPPM@A@AEXHH@Z
+// ORIGINAL: 0x006116C0 sub_6116c0 0x006116C0-0x006116DB FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x006116C0..0x006116DA receives SpriteList in ECX, adjusts to its +0x28 virtual base, calls 0x00611730, restores vptr 0x006693AC and allocator owner 0x009B3374, then returns; trailing NOP at 0x006116DB is outside the mapped span", "pinned cleanup actions at 0x00662FE5 and 0x00663005 load the SpriteList member receiver into ECX and tail-jump to 0x006116C0; helper body does not read the caller frame", "src/spritebox.h declares SpriteBox::list_ as SpriteList at +0x24; SpriteList derives from SpriteListBase, which virtually derives from StringAllocationBase, whose base stage is at +0x28"], "reason": "Bind the pinned generated SpriteList virtual-base cleanup entry to the real SpriteList member and StringAllocationBase stage."}
+// kind game
+// symbol    ??_DSpriteList@@QAEXXZ
+// RECOVERY_GENERATED: v1 vbtable 0x006708B4 ? ??_8SpriteBox@@7B@ 0x0060FF00
+// RECOVERY_GENERATED: v1 vbtable 0x006708AC ? ??_8SpriteList@@7B@ 0x0060FF00
+// RECOVERY_GENERATED: v1 vtable 0x0066943C ? ??_7SpriteListBase@@6B0@@ 0x0060FF00
+// RECOVERY_GENERATED: v1 vtable 0x00669438 ? ??_7SpriteListBase@@6BStringAllocationBase@@@ 0x0060FF00
+// RECOVERY_GENERATED: v1 vtable 0x006708A4 ? ??_7SpriteList@@6BSpriteListBase@@@ 0x0060FF00
+// RECOVERY_GENERATED: v1 vtable 0x006708A0 ? ??_7SpriteList@@6BStringAllocationBase@@@ 0x0060FF00
+// RECOVERY_GENERATED: v1 vtable 0x00670738 ? ??_7SpriteBox@@6BWin@@@ 0x0060FF00
+// RECOVERY_GENERATED: v1 vtable 0x00670730 ? ??_7SpriteBox@@6BBuffer@@@ 0x0060FF00
+// RECOVERY_GENERATED: v1 vtable 0x00670724 ? ??_7SpriteBox@@6B@ 0x0060FF00
+
+// Compiler-generated SpriteList scalar deleting destructor; not a handwritten wrapper.
+// SpriteListBase::~SpriteListBase() is inline with its sibling ring owner in
+// spritebox.h; this source site retains the original FILE identity only.
+/*
+// ORIGINAL: 0x006117E0 sub_6117e0 0x006117E0-0x0061181E FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned terranx_original.exe sha256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: 0x006117E0-0x0061181E is the complete scalar-deleting body, including its conditional delete and complete-object return with ret 4.", "Pinned body calls SpriteBox destructor 0x00610120, Dialog destructor 0x00608E10 on complete+0xAA4, GraphicWin destructor 0x005D4DD0, and operator delete 0x0064557F conditionally on flags bit 0.", "The independently emitted primary scalar-deleting COMDAT ??_GSpriteBox@@UAEPAXI@Z has a 0x40-byte body: its 0x3E-byte code matches the pinned mapped span through ret 4, followed by two alignment NOP bytes outside that span.", "The three distinct compiler-emitted virtual-base adjustor COMDATs are ??_ESpriteBox@@$4PPPPPPPM@A@AEPAXI@Z, ??_ESpriteBox@@$4PPPPPLLI@EEE@AEPAXI@Z, and ??_ESpriteBox@@$4PPPPPPPM@KBI@AEPAXI@Z; each jumps through weak alias ??_ESpriteBox@@UAEPAXI@Z, which falls back to the independent ??_GSpriteBox@@UAEPAXI@Z body.", "The three former mappings carried the same shared primary span; moving that span to this identity preserves the complete original span union without claiming fresh byte equality."], "reason": "Bind the independent pinned SpriteBox scalar-deleting body to the qualified compiler-emitted primary body; the three virtual-view entries remain separate adjustor wrappers."}
+// symbol    ??_GSpriteBox@@UAEPAXI@Z
+// ORIGINAL: 0x006117D0 sub_6117d0 0x006117D0-0x006117D8 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned image sha256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; original 0x610120 receiver math is GraphicWin view this+0x8c minus 0x68 = complete-object+0x24, the SpriteBox::list_ member", "pinned list walk addresses head/current/count at list+0x08/+0x0c/+0x10 and payload at entry+0x08; source SpriteListBase/StringStructEntry declarations match those roles", "source lifecycle: SpriteBox::~ calls close; close performs the original ordered ring clear; reverse member destruction then runs one SpriteListBase ring-cleanup stage, virtual allocation-owner publication, and Spot destruction", "pinned:SpriteBox constructor at 0x0060FFDB installs Win-view table 0x00670738; slot zero selects the original 0x006117D0 adjustor", "physical ??_ESpriteBox@@$4PPPPPPPM@A@AEPAXI@Z is the compiler-generated slot-zero symbol in ??_7SpriteBox@@6BWin@@@; linked PE table word selects its exact linked entry", "the primary body 0x006117E0-0x0061181E is now separately mapped as sub_6117e0 to ??_GSpriteBox@@UAEPAXI@Z; this wrapper retains only 0x006117D0-0x006117D8 and no new matching claim is granted"], "reason": "Retain the original Win-view scalar-deleting adjustor entry; its independently emitted primary scalar-deleting body now has its own mapping."}
+// symbol    ??_ESpriteBox@@$4PPPPPPPM@A@AEPAXI@Z
+// TRIED: reproducing MSVC's own vtordisp adjustor thunk mechanism; wrote `raw - *(int*)(raw-4)` as explicit pointer arithmetic in a shim member instead - first instruction diverges (sub vs push)
+// Historical seed facts (verbatim; not new measurements):
+// size      70 bytes
+// prototype
+// callers   0   call targets   4
+// kind      game
+// flags     hidden
+// calls     0x005D4DD0 0x00608E10 0x00610120 0x0064557F
+// ORIGINAL: 0x006118F0 sub_6118f0 0x006118F0-0x00611901 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:15fe30a4cf2c220f100140385fe1275979abed0b:src/recovered/units/006118f0.cpp; historical seed/source provenance (seed path is retired from the current working tree)", "pinned image vtable 0x00670730 entry zero selects original 0x006118F0; the historical shared-tail span is now separately mapped as sub_6117e0", "physical COFF:spritebox.cpp.obj defines observed emitted symbol ??_ESpriteBox@@$4PPPPPLLI@EEE@AEPAXI@Z, and its table COMDAT selects that exact symbol", "physical COFF weak external tail alias resolves to ??_GSpriteBox@@UAEPAXI@Z; linked map confirms the owner row", "historically this identity repeated the shared 0x006117E0-0x0061181E tail; current ownership is the separate sub_6117e0 mapping, while this wrapper retains only its 0x006118F0-0x00611901 entry span; fresh selected-object matching remains pending", "current-owner:src/spritebox.cpp:0x006118F0; the live ORIGINAL marker retains only the independent wrapper span 0x006118F0-0x00611901; its historical shared-tail mapping is now assigned to sub_6117e0, historical byte claim retained=False, historical semantic claim retained=False, and the complete parsed LEVER/TRIED/UNRECOVERABLE/DEFERRED lesson set (0/0/0/0); current binding is source navigation/provenance only, not a new claim or match result"], "reason": "Retain the original Buffer/secondary-GraphicWin deleting adjustor entry; the shared primary scalar-deleting body is independently mapped once."}
+// symbol    ??_ESpriteBox@@$4PPPPPLLI@EEE@AEPAXI@Z
+// ORIGINAL: 0x006116E0 sub_6116e0 0x006116E0-0x00611728 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:1240d9eead700ef28006f35018fca68d1123defd:src/recovered/006116e0.cpp", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/006116e0.cpp", "pinned:6708A0 first virtual-base table slot6116E0;6116E0..611728 receiver/flags/delete/return", "source:src/spritebox.h:SpriteList"], "reason": "Map the compiler-generated scalar deleting destructor of the genuine SpriteList virtual-base owner. Preserve the canonical complete72-byte original span and historical exact claim; current physical64-byte COFF emission is a restoration obligation, not fresh matching or linked-selection proof. Original flags-byte, owner publication, conditional free and complete-object return remain generated lifetime evidence."}
+// symbol    ??_GSpriteList@@UAEPAXI@Z
+*/
 
 // Historical notes attached to the rehomed 0x611730 owner. Every item below
 // is retained as seed evidence, not as the current class/lifecycle conclusion.
@@ -1178,153 +1266,67 @@ void SpriteList::close() {
 // TRIED: PROMOTED out of src/unrecovered/00611730.cpp. Called by both ??0SpriteBox and ??1SpriteBox, so it is shared setup and teardown rather than one or the other.
 // TRIED: spelling the body AS `list->close_with_tables(0x0066943C, 0x00669438)` on the StringStruct at `this - 0x28`, which is the idiom dialog.cpp uses. It compiles to 5 instructions against the image's 63 - the inline folds to almost nothing at this offset - so the walk stays written out here.
 
-// ORIGINAL: 0x006108E0 ?sprite@SpriteBox@@QAEHPAUSprite@@PADH@Z 0x006108E0-0x00610965 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:1240d9eead700ef28006f35018fca68d1123defd:src/leaf_recoveries.cpp", "pinned:SpriteList tables6708A0/6708A4;6116E0 calls611730 with virtual-baseview+28", "pinned:SpriteListBase tables66943C/669438 and ring fields +8..+18; StringStruct independently uses 6693A4/6693A0", "source:src/spritebox.h;source:src/stringstruct.h", "source:recovery/tests/test_sprite_list_producer_actual_source.py"], "reason": "Recover SpriteBox::sprite through the SpriteList sibling ring owner and distinct polymorphic string/sprite payload siblings, with compiler-owned virtual allocation-base lifetime. Combined constructor/destructor evidence supports the separate SpriteListBase owner model; transient constructor-stage elision remains possible. Historical identities, spans, claims and seed discoveries remain obligations. Producer partial-state behavior and null/error returns remain unchanged."}
-// symbol    ?sprite@SpriteBox@@QAEHPAVSprite@@PADH@Z
-// Historical seed finding: popup pops() invokes the original by name via rel32
-// Historical seed finding: sprite insertion at 0x402550 was an unhomed dependency/seam discovery
-// Historical seed finding: old body was only a forwarding seam, not product behavior
-// Historical seed finding: current implementation preserves partial state on add failures: pending sprite/label/metadata stores occur before add and no rollback occurs
-// Historical seed finding: null sprite returns 3; either list insertion failure returns 4
-// TRIED: popup.cpp's `pops()` calls it BY NAME so it emits the image's `call rel32`. The sprite-list insertion (0x00402550, SpriteStruct::add) is unhomed, so the call goes through the original's address; its receiver is the sprite list this class embeds at 0x24, which is why the member has to be real for the receiver to exist at all.
-int SpriteBox::sprite(Sprite *row_sprite, char *text, int id) {
-    if (row_sprite == 0) return 3;
-    SpriteList *const list = &list_;
-    list->pending_sprite_ = row_sprite;
-    list->pending_label_ = 0;
-    list->field_24_ = 0;
-    if (list->add(id) != 0) return 4;
-    if (text != 0) {
-        StringList &items = Dialog::item_list_;
-        items.pending_text_ = text;
-        items.field_20_ = 0;
-        items.field_24_ = 0;
-        if (items.add(id) != 0) return 4;
-    }
-    return 0;
-}
-
-// ====================
-// Window-event handlers
-// ====================
-
 /*
-Purpose: A left press on a sprite box runs the hit test over its Spot table
-         and, when a spot took the hit, notifies the object's stored click
-         callback with the spot position; a true return then posts WM_KEYDOWN
-         (VK_RETURN) to the main window. Entered on the GraphicWin-subobject
-         adjusted pointer (the family's thunk convention), so the Spot table
-         sits 0x7C below `this` and the callback 0x20 below - the Spot is the
-         constructor's placement-new at the object's own +0x10.
-// ORIGINAL: 0x00611150 ?on_left_down@SpriteBox@@QAEXHH@Z 0x00611150-0x006111A0 BYTE_EXACT
-// symbol    ?on_left_down@SpriteBox@@UAEXHH@Z
-// size      80 bytes
-// prototype void (__thiscall ?on_left_down@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)
-// callers   1   call targets   1
+Purpose: Adjust the receiver from the thunk1 subobject back to SpriteBox and
+         tail-jump to the override. THE COMPILER WRITES THIS BODY - the claim
+         names VC6's own vtordisp adjustor thunk, emitted because
+         SpriteBox::on_mouse_leave overrides a virtual reached through a virtual
+         base. There is no C++ here to get right, only a name to record.
+// ORIGINAL: 0x00611840 ?on_mouse_leave@thunk1_SpriteBox@@QAEXHH@Z 0x00611840-0x00611848 BYTE_EXACT
+// symbol    ?on_mouse_leave@SpriteBox@@$4PPPPPPPM@A@AEXHH@Z
+// size      8 bytes
 // kind      game
-// calls     0x005FAB00
-// indirect  0x0061117D 0x00611196
-//
-// PROMOTED out of the archived verification unit for this address. The import thunk
-// 0x00669314 is PostMessageA (win.cpp: on_sys_key landed the same call by
-// name), and 0x009B7B28 is HandleMain; both compile to the same indirect
-// forms the image emits.
-// keeps it live in a register where the image re-reads [this-0x20] for the
-// call - the nested ifs and the two separate reads are the image's own.
-Return Value: n/a
 Status: Complete
 */
-void SpriteBox::on_left_down(int x_coord, int y_coord) {
-    if (spots_.check(x_coord, y_coord, &y_coord, 0) != -1) {
-        if (left_down_callback_ != 0) {
-            if (left_down_callback_(y_coord) != 0) {
-                PostMessageA(HandleMain, 0x100, 0xd, 0);
-            }
-        }
-    }
-}
 
-// Compiler-generated SpriteList scalar deleting destructor; not a handwritten wrapper.
-// SpriteListBase::~SpriteListBase() is inline with its sibling ring owner in
-// spritebox.h; this source site retains the original FILE identity only.
-/*
-// ORIGINAL: 0x006117E0 sub_6117e0 0x006117E0-0x0061181E FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned terranx_original.exe sha256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: 0x006117E0-0x0061181E is the complete scalar-deleting body, including its conditional delete and complete-object return with ret 4.", "Pinned body calls SpriteBox destructor 0x00610120, Dialog destructor 0x00608E10 on complete+0xAA4, GraphicWin destructor 0x005D4DD0, and operator delete 0x0064557F conditionally on flags bit 0.", "The independently emitted primary scalar-deleting COMDAT ??_GSpriteBox@@UAEPAXI@Z has a 0x40-byte body: its 0x3E-byte code matches the pinned mapped span through ret 4, followed by two alignment NOP bytes outside that span.", "The three distinct compiler-emitted virtual-base adjustor COMDATs are ??_ESpriteBox@@$4PPPPPPPM@A@AEPAXI@Z, ??_ESpriteBox@@$4PPPPPLLI@EEE@AEPAXI@Z, and ??_ESpriteBox@@$4PPPPPPPM@KBI@AEPAXI@Z; each jumps through weak alias ??_ESpriteBox@@UAEPAXI@Z, which falls back to the independent ??_GSpriteBox@@UAEPAXI@Z body.", "The three former mappings carried the same shared primary span; moving that span to this identity preserves the complete original span union without claiming fresh byte equality."], "reason": "Bind the independent pinned SpriteBox scalar-deleting body to the qualified compiler-emitted primary body; the three virtual-view entries remain separate adjustor wrappers."}
-// symbol    ??_GSpriteBox@@UAEPAXI@Z
-// ORIGINAL: 0x006117D0 sub_6117d0 0x006117D0-0x006117D8 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned image sha256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; original 0x610120 receiver math is GraphicWin view this+0x8c minus 0x68 = complete-object+0x24, the SpriteBox::list_ member", "pinned list walk addresses head/current/count at list+0x08/+0x0c/+0x10 and payload at entry+0x08; source SpriteListBase/StringStructEntry declarations match those roles", "source lifecycle: SpriteBox::~ calls close; close performs the original ordered ring clear; reverse member destruction then runs one SpriteListBase ring-cleanup stage, virtual allocation-owner publication, and Spot destruction", "pinned:SpriteBox constructor at 0x0060FFDB installs Win-view table 0x00670738; slot zero selects the original 0x006117D0 adjustor", "physical ??_ESpriteBox@@$4PPPPPPPM@A@AEPAXI@Z is the compiler-generated slot-zero symbol in ??_7SpriteBox@@6BWin@@@; linked PE table word selects its exact linked entry", "the primary body 0x006117E0-0x0061181E is now separately mapped as sub_6117e0 to ??_GSpriteBox@@UAEPAXI@Z; this wrapper retains only 0x006117D0-0x006117D8 and no new matching claim is granted"], "reason": "Retain the original Win-view scalar-deleting adjustor entry; its independently emitted primary scalar-deleting body now has its own mapping."}
-// symbol    ??_ESpriteBox@@$4PPPPPPPM@A@AEPAXI@Z
-// TRIED: reproducing MSVC's own vtordisp adjustor thunk mechanism; wrote `raw - *(int*)(raw-4)` as explicit pointer arithmetic in a shim member instead - first instruction diverges (sub vs push)
-// Historical seed facts (verbatim; not new measurements):
-// size      70 bytes
-// prototype
-// callers   0   call targets   4
+// ORIGINAL: 0x00611850 ?on_left_click@thunk1_SpriteBox@@QAEXHH@Z 0x00611850-0x00611858 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: SpriteBox constructor 0x0060FF00 installs Win view 0x00670738; slot +0x4C points to original identity 0x00611850", "retained build/recovery/builds/build-rosw1myy: build/recovery/builds/build-rosw1myy/CMakeFiles/OpenSMACX.dir/src/spritebox.cpp.obj has matching source-input closure and physical table relocation to ?on_left_click@SpriteBox@@$4PPPPPPPM@A@AEXHH@Z", "retained COFF ?on_left_click@SpriteBox@@$4PPPPPPPM@A@AEXHH@Z has the 8-byte vtordisp subtraction shape and tail relocation to real method symbol ?on_left_click@SpriteBox@@UAEXHH@Z", "the exact legacy kind fact `game` is copied verbatim from the source envelope and parser-read back; it is existing catalogue classification, not a newly granted kind", "this evidence establishes a current owner-TU/compiler-thunk correspondence only; no fresh build, linked retained-table selection, body-byte match, or whole-game acceptance is claimed"], "reason": "The SpriteBox Win-view constructor-installed table selects this original receiver adjustor at byte offset 0x4C; the retained owner COFF physically emits the corresponding compiler vtordisp thunk and its relocation tails to SpriteBox::on_left_click. This FILE marker remains with the actual class owner TU; it does not prove final linked table selection or full acceptance."}
 // kind      game
-// flags     hidden
-// calls     0x005D4DD0 0x00608E10 0x00610120 0x0064557F
-// ORIGINAL: 0x006118F0 sub_6118f0 0x006118F0-0x00611901 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:15fe30a4cf2c220f100140385fe1275979abed0b:src/recovered/units/006118f0.cpp; historical seed/source provenance (seed path is retired from the current working tree)", "pinned image vtable 0x00670730 entry zero selects original 0x006118F0; the historical shared-tail span is now separately mapped as sub_6117e0", "physical COFF:spritebox.cpp.obj defines observed emitted symbol ??_ESpriteBox@@$4PPPPPLLI@EEE@AEPAXI@Z, and its table COMDAT selects that exact symbol", "physical COFF weak external tail alias resolves to ??_GSpriteBox@@UAEPAXI@Z; linked map confirms the owner row", "historically this identity repeated the shared 0x006117E0-0x0061181E tail; current ownership is the separate sub_6117e0 mapping, while this wrapper retains only its 0x006118F0-0x00611901 entry span; fresh selected-object matching remains pending", "current-owner:src/spritebox.cpp:0x006118F0; the live ORIGINAL marker retains only the independent wrapper span 0x006118F0-0x00611901; its historical shared-tail mapping is now assigned to sub_6117e0, historical byte claim retained=False, historical semantic claim retained=False, and the complete parsed LEVER/TRIED/UNRECOVERABLE/DEFERRED lesson set (0/0/0/0); current binding is source navigation/provenance only, not a new claim or match result"], "reason": "Retain the original Buffer/secondary-GraphicWin deleting adjustor entry; the shared primary scalar-deleting body is independently mapped once."}
-// symbol    ??_ESpriteBox@@$4PPPPPLLI@EEE@AEPAXI@Z
-// ORIGINAL: 0x006116E0 sub_6116e0 0x006116E0-0x00611728 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:1240d9eead700ef28006f35018fca68d1123defd:src/recovered/006116e0.cpp", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/006116e0.cpp", "pinned:6708A0 first virtual-base table slot6116E0;6116E0..611728 receiver/flags/delete/return", "source:src/spritebox.h:SpriteList"], "reason": "Map the compiler-generated scalar deleting destructor of the genuine SpriteList virtual-base owner. Preserve the canonical complete72-byte original span and historical exact claim; current physical64-byte COFF emission is a restoration obligation, not fresh matching or linked-selection proof. Original flags-byte, owner publication, conditional free and complete-object return remain generated lifetime evidence."}
-// symbol    ??_GSpriteList@@UAEPAXI@Z
-*/
+// symbol    ?on_left_click@SpriteBox@@$4PPPPPPPM@A@AEXHH@Z
 
-// Historical generated-entry findings: byte flags parameter and +28 virtual-base receiver;
-// conditional free publishes captured Heap through StringAllocationHeap, then returns complete object.
-// Older whole-unit and PAD/PAC spelling experiments are provenance, not current ABI or workflow rules.
-// The retired overlapping claimless seed is not an extra original identity.
-
-/*
-Purpose: Hit-test the owned Spot member, notify the stored double-click
-         callback with the hit position, and post WM_KEYDOWN (VK_RETURN)
-         when it returns nonzero. The GraphicWin-relative Spot at -0x7C and
-         callback at -0xC are complete-object members +0x10 and +0x80;
-         the compiler supplies those adjustments for this virtual override.
-// ORIGINAL: 0x00611910 sub_611910 0x00611910-0x0061191E FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:15fe30a4cf2c220f100140385fe1275979abed0b:src/recovered/units/00611910.cpp; historical seed/source provenance (seed path is retired from the current working tree)", "pinned image vtable 0x00670724 entry zero selects original 0x00611910; the historical shared-tail span is now separately mapped as sub_6117e0", "physical COFF:spritebox.cpp.obj defines observed emitted symbol ??_ESpriteBox@@$4PPPPPPPM@KBI@AEPAXI@Z, and its table COMDAT selects that exact symbol", "physical COFF weak external tail alias resolves to ??_GSpriteBox@@UAEPAXI@Z; linked map confirms the owner row", "historically this identity repeated the shared 0x006117E0-0x0061181E tail; current ownership is the separate sub_6117e0 mapping, while this wrapper retains only its 0x00611910-0x0061191E entry span; fresh selected-object matching remains pending", "current-owner:src/spritebox.cpp:0x00611910; the live ORIGINAL marker retains only the independent wrapper span 0x00611910-0x0061191E; its historical shared-tail mapping is now assigned to sub_6117e0, historical byte claim retained=False, historical semantic claim retained=False, and the complete parsed LEVER/TRIED/UNRECOVERABLE/DEFERRED lesson set (0/0/0/0); current binding is source navigation/provenance only, not a new claim or match result"], "reason": "Retain the original Dialog virtual-base deleting adjustor entry; the shared primary scalar-deleting body is independently mapped once."}
-// symbol    ??_ESpriteBox@@$4PPPPPPPM@KBI@AEPAXI@Z
-// ORIGINAL: 0x006112E0 ?on_left_double_click@SpriteBox@@QAEXHH@Z 0x006112E0-0x00611330 BYTE_EXACT
-// symbol    ?on_left_double_click@SpriteBox@@UAEXHH@Z
-// size      80 bytes
-// prototype void (__thiscall ?on_left_double_click@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)
-// callers   1   call targets   1
+// ORIGINAL: 0x00611880 ?on_right_click@thunk1_SpriteBox@@QAEXHH@Z 0x00611880-0x00611888 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: SpriteBox constructor 0x0060FF00 installs Win view 0x00670738; slot +0x58 points to original identity 0x00611880", "retained build/recovery/builds/build-rosw1myy: build/recovery/builds/build-rosw1myy/CMakeFiles/OpenSMACX.dir/src/spritebox.cpp.obj has matching source-input closure and physical table relocation to ?on_right_click@SpriteBox@@$4PPPPPPPM@A@AEXHH@Z", "retained COFF ?on_right_click@SpriteBox@@$4PPPPPPPM@A@AEXHH@Z has the 8-byte vtordisp subtraction shape and tail relocation to real method symbol ?on_right_click@SpriteBox@@UAEXHH@Z", "the exact legacy kind fact `game` is copied verbatim from the source envelope and parser-read back; it is existing catalogue classification, not a newly granted kind", "this evidence establishes a current owner-TU/compiler-thunk correspondence only; no fresh build, linked retained-table selection, body-byte match, or whole-game acceptance is claimed"], "reason": "The SpriteBox Win-view constructor-installed table selects this original receiver adjustor at byte offset 0x58; the retained owner COFF physically emits the corresponding compiler vtordisp thunk and its relocation tails to SpriteBox::on_right_click. This FILE marker remains with the actual class owner TU; it does not prove final linked table selection or full acceptance."}
 // kind      game
-// calls     0x005FAB00
-// indirect  0x0061130D 0x00611326
-//
-// PROMOTED out of the archived verification unit for this address; same two bindings as
-// on_left_down above.
-Return Value: n/a
-Status: Complete
-*/
-void SpriteBox::on_left_double_click(int x_coord, int y_coord) {
-    if (spots_.check(x_coord, y_coord, &y_coord, 0) != -1) {
-        if (double_click_callback_ != 0 && double_click_callback_(y_coord) != 0) {
-            PostMessageA(HandleMain, 0x100, 0xd, 0);
-        }
-    }
-}
+// symbol    ?on_right_click@SpriteBox@@$4PPPPPPPM@A@AEXHH@Z
 
 // ORIGINAL: 0x006118A0 ?on_right_up@thunk1_SpriteBox@@QAEXHH@Z 0x006118A0-0x006118A8 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: SpriteBox constructor span contains the store of table 0x00670738; the pinned dword at 0x00670798 is 0x006118A0.", "The original 8-byte receiver thunk at 0x006118A0 tail-jumps to 0x00611290, mapped as ?on_right_up@SpriteBox@@QAEXHH@Z in this class owner.", "The actual class owner is src/spritebox.cpp; its current owner object vftable relocation at byte offset 0x60 names the generated thunk, whose terminal relocation targets ?on_right_up@SpriteBox@@UAEXHH@Z.", "The source identity retains its exact historical kind fact `game`; its full original spans, claims, lessons, and findings are checked unchanged by the writer readback."], "reason": "The pinned SpriteBox constructor at 0x0060FF00 installs its Win view at 0x00670738; the original slot cell at +0x60 selects this full identity; it is also the secondary address point 0x00670724 plus 0x74. The real SpriteBox virtual member and owner-TU vftable are already source-owned; current owner COFF evidence binds this FILE identity to the compiler-emitted receiver adjustor tailing to ?on_right_up@SpriteBox@@UAEXHH@Z."}
 // kind      game
 // symbol    ?on_right_up@SpriteBox@@$4PPPPPPPM@A@AEXHH@Z
 
-// ORIGINAL: 0x006118D0 ?on_right_double_click@thunk1_SpriteBox@@QAEXHH@Z 0x006118D0-0x006118D8 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: SpriteBox constructor span contains the store of table 0x00670738; the pinned dword at 0x006707AC is 0x006118D0.", "The original 8-byte receiver thunk at 0x006118D0 tail-jumps to 0x00611330, mapped as ?on_right_double_click@SpriteBox@@QAEXHH@Z in this class owner.", "The actual class owner is src/spritebox.cpp; its current owner object vftable relocation at byte offset 0x74 names the generated thunk, whose terminal relocation targets ?on_right_double_click@SpriteBox@@UAEXHH@Z.", "The source identity retains its exact historical kind fact `game`; its full original spans, claims, lessons, and findings are checked unchanged by the writer readback."], "reason": "The pinned SpriteBox constructor at 0x0060FF00 installs its Win view at 0x00670738; the original slot cell at +0x74 selects this full identity. The real SpriteBox virtual member and owner-TU vftable are already source-owned; current owner COFF evidence binds this FILE identity to the compiler-emitted receiver adjustor tailing to ?on_right_double_click@SpriteBox@@UAEXHH@Z."}
+// ORIGINAL: 0x006118B0 ?on_key_down@thunk1_SpriteBox@@QAEHH@Z 0x006118B0-0x006118B8 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: SpriteBox constructor 0x0060FF00 installs Win view 0x00670738; slot +0x68 points to original identity 0x006118B0", "retained build/recovery/builds/build-rosw1myy: build/recovery/builds/build-rosw1myy/CMakeFiles/OpenSMACX.dir/src/spritebox.cpp.obj has matching source-input closure and physical table relocation to ?on_key_down@SpriteBox@@$4PPPPPPPM@A@AEHH@Z", "retained COFF ?on_key_down@SpriteBox@@$4PPPPPPPM@A@AEHH@Z has the 8-byte vtordisp subtraction shape and tail relocation to real method symbol ?on_key_down@SpriteBox@@UAEHH@Z", "the exact legacy kind fact `game` is copied verbatim from the source envelope and parser-read back; it is existing catalogue classification, not a newly granted kind", "this evidence establishes a current owner-TU/compiler-thunk correspondence only; no fresh build, linked retained-table selection, body-byte match, or whole-game acceptance is claimed"], "reason": "The SpriteBox Win-view constructor-installed table selects this original receiver adjustor at byte offset 0x68; the retained owner COFF physically emits the corresponding compiler vtordisp thunk and its relocation tails to SpriteBox::on_key_down. This FILE marker remains with the actual class owner TU; it does not prove final linked table selection or full acceptance."}
 // kind      game
-// symbol    ?on_right_double_click@SpriteBox@@$4PPPPPPPM@A@AEXHH@Z
-// ORIGINAL: 0x006116C0 sub_6116c0 0x006116C0-0x006116DB FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x006116C0..0x006116DA receives SpriteList in ECX, adjusts to its +0x28 virtual base, calls 0x00611730, restores vptr 0x006693AC and allocator owner 0x009B3374, then returns; trailing NOP at 0x006116DB is outside the mapped span", "pinned cleanup actions at 0x00662FE5 and 0x00663005 load the SpriteList member receiver into ECX and tail-jump to 0x006116C0; helper body does not read the caller frame", "src/spritebox.h declares SpriteBox::list_ as SpriteList at +0x24; SpriteList derives from SpriteListBase, which virtually derives from StringAllocationBase, whose base stage is at +0x28"], "reason": "Bind the pinned generated SpriteList virtual-base cleanup entry to the real SpriteList member and StringAllocationBase stage."}
-// kind game
-// symbol    ??_DSpriteList@@QAEXXZ
-// RECOVERY_GENERATED: v1 vbtable 0x006708B4 ? ??_8SpriteBox@@7B@ 0x0060FF00
-// RECOVERY_GENERATED: v1 vbtable 0x006708AC ? ??_8SpriteList@@7B@ 0x0060FF00
-// RECOVERY_GENERATED: v1 vtable 0x0066943C ? ??_7SpriteListBase@@6B0@@ 0x0060FF00
-// RECOVERY_GENERATED: v1 vtable 0x00669438 ? ??_7SpriteListBase@@6BStringAllocationBase@@@ 0x0060FF00
-// RECOVERY_GENERATED: v1 vtable 0x006708A4 ? ??_7SpriteList@@6BSpriteListBase@@@ 0x0060FF00
-// RECOVERY_GENERATED: v1 vtable 0x006708A0 ? ??_7SpriteList@@6BStringAllocationBase@@@ 0x0060FF00
-// RECOVERY_GENERATED: v1 vtable 0x00670738 ? ??_7SpriteBox@@6BWin@@@ 0x0060FF00
-// RECOVERY_GENERATED: v1 vtable 0x00670730 ? ??_7SpriteBox@@6BBuffer@@@ 0x0060FF00
-// RECOVERY_GENERATED: v1 vtable 0x00670724 ? ??_7SpriteBox@@6B@ 0x0060FF00
+// symbol    ?on_key_down@SpriteBox@@$4PPPPPPPM@A@AEHH@Z
+
+/*
+Purpose: Adjust the receiver from the thunk1 subobject back to SpriteBox and
+         tail-jump to the override. THE COMPILER WRITES THIS BODY - the claim
+         names VC6's own vtordisp adjustor thunk, emitted because
+         SpriteBox::on_dialog_focus overrides a virtual reached through a virtual
+         base. There is no C++ here to get right, only a name to record.
+// ORIGINAL: 0x006118E0 ?on_dialog_focus@thunk1_SpriteBox@@QAEXH@Z 0x006118E0-0x006118E8 BYTE_EXACT
+// symbol    ?on_dialog_focus@SpriteBox@@$4PPPPPPPM@A@AEXH@Z
+// size      8 bytes
+// kind      game
+Status: Complete
+*/
+
+/*
+Purpose: Adjust the receiver from the thunk1 subobject back to SpriteBox and
+         tail-jump to the override. THE COMPILER WRITES THIS BODY - the claim
+         names VC6's own vtordisp adjustor thunk, emitted because
+         SpriteBox::attach overrides a virtual reached through a virtual
+         base. There is no C++ here to get right, only a name to record.
+// ORIGINAL: 0x00611920 ?attach@thunk1_SpriteBox@@QAEHPAUGraphicWin@@HHH@Z 0x00611920-0x00611928 FILE BYTE_EXACT
+// symbol    ?attach@SpriteBox@@$4PPPPPPPM@A@AEHPAVGraphicWin@@HHH@Z
+// size      8 bytes
+// kind      game
+Status: Complete
+*/
+
+
+// WORKAROUND(inline): SpriteBox::SpriteBox (0x0060FF00) expands this empty
+// constructor, so this unit keeps an inline twin; the out-of-line
+// definition, which hosts 0x00402BB0, lives in stringstruct.cpp.
+inline SpriteList::SpriteList() {}
