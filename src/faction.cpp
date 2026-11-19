@@ -4251,8 +4251,8 @@ void __cdecl make_gift(int giver, int receiver) {
         diplo_unlock();
         char &patience = PlayersData[receiver].diplo_patience[giver];
         patience = static_cast<char>(static_cast<unsigned char>(patience) + 0xFE - favored);
-        X_pops("BASEGIFT", 0x100000,
-                     FactionDiplomacyPortraits[receiver], pop_wait);
+        Sprite *portrait = FactionDiplomacyPortraits[receiver];
+        X_pops("BASEGIFT", 0x100000, portrait, pop_wait);
     }
 
 }
