@@ -3187,130 +3187,131 @@ void __cdecl base_support() {
     }
     for (int veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_;
          veh_id++) {
-        if (Vehs[veh_id].faction_id != faction_id) {
-            continue;
-        }
-        if (Vehs[veh_id].home_base_id != BaseIDCurrentSelected) {
-            // A convoy homed elsewhere standing on this base's tile counts one.
-            if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_SUPPLY_CONVOY
-                && Vehs[veh_id].x == BaseCurrent->x && Vehs[veh_id].y == BaseCurrent->y
-                && Vehs[veh_id].order == ORDER_CONVOY && Vehs[veh_id].home_base_id >= 0) {
-                BaseCurrentConvoyTo[Vehs[veh_id].order_auto_type]++;
-            }
-            continue;
-        }
-        if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_SUPPLY_CONVOY
-            && base_who(Vehs[veh_id].x, Vehs[veh_id].y) < 0
-            && Vehs[veh_id].order == ORDER_CONVOY) {
-            int convoyed;
-            switch (Vehs[veh_id].order_auto_type) {
-              case RSC_NUTRIENTS:
-                convoyed = crop_yield(faction_id, BaseIDCurrentSelected, Vehs[veh_id].x,
-                                      Vehs[veh_id].y, false);
-                break;
-              case RSC_MINERALS:
-                convoyed = mine_yield(faction_id, BaseIDCurrentSelected, Vehs[veh_id].x,
-                                      Vehs[veh_id].y, false);
-                break;
-              case RSC_ENERGY:
-                convoyed = energy_yield(faction_id, BaseIDCurrentSelected, Vehs[veh_id].x,
-                                        Vehs[veh_id].y, false);
-                break;
-              case RSC_PSI:
-                TileYieldRestricted = 0;
-                convoyed = 0;
-                break;
-              default:
-                convoyed = 0;
-                break;
-            }
-            BaseCurrentConvoyTo[Vehs[veh_id].order_auto_type] += convoyed;
-        }
-        // AI offensive strength tally; psi weapons count only on custom prototypes.
-        int8_t offense = Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating;
-        if (offense && (offense > 0 || Vehs[veh_id].proto_id >= MaxVehProtoFactionNum)) {
-            uint8_t tally_plan = VehPrototypes[Vehs[veh_id].proto_id].plan;
-            if (tally_plan != PLAN_RECONNAISANCE && tally_plan != PLAN_PLANET_BUSTER) {
-                PlayersData[faction_id].unk_48++;
-                if (tally_plan == PLAN_OFFENSIVE || tally_plan == PLAN_COMBAT) {
-                    PlayersData[faction_id].unk_48++;
+        // The faction test wraps the body (no `continue`): see MATCHING_GUIDE 2.7,
+        // "A global cached across a loop".
+        if (Vehs[veh_id].faction_id == faction_id) {
+            if (Vehs[veh_id].home_base_id != BaseIDCurrentSelected) {
+                // A convoy homed elsewhere standing on this base's tile counts one.
+                if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_SUPPLY_CONVOY
+                    && Vehs[veh_id].x == BaseCurrent->x && Vehs[veh_id].y == BaseCurrent->y
+                    && Vehs[veh_id].order == ORDER_CONVOY && Vehs[veh_id].home_base_id >= 0) {
+                    BaseCurrentConvoyTo[Vehs[veh_id].order_auto_type]++;
                 }
-            }
-        }
-        Vehs[veh_id].state &= ~(VSTATE_REQUIRES_SUPPORT | VSTATE_PACIFISM_DRONE
-                                | VSTATE_PACIFISM_FREE_SKIP);
-        uint8_t plan = VehPrototypes[Vehs[veh_id].proto_id].plan;
-        // A convoy of ours standing in any base is charged as consumption.
-        if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_SUPPLY_CONVOY
-            && Vehs[veh_id].order == ORDER_CONVOY
-            && base_who(Vehs[veh_id].x, Vehs[veh_id].y) >= 0) {
-            BaseCurrentConvoyFrom[Vehs[veh_id].order_auto_type]++;
-        }
-        if (plan > PLAN_TERRAFORMING) {
-            continue; // convoys and above are never supported
-        }
-        if (!has_abil(Vehs[veh_id].proto_id, ABL_CLEAN_REACTOR)) {
-            // Native life in fungus (psi weapon on a predefined prototype, or
-            // prototype 15, the Sea Lurk) is supported for free.
-            Map *tile;
-            if (Vehs[veh_id].proto_id >= MaxVehProtoFactionNum
-                || (Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating >= 0
-                    && Vehs[veh_id].proto_id != 15)
-                || !((tile = map_loc(Vehs[veh_id].x, Vehs[veh_id].y))->bit & BIT_FUNGUS)
-                || (tile->climate & ~0x1F) < ALT_BIT_OCEAN_SHELF) {
-                BaseCurrentForcesSupported++;
-                int support = PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::SUPPORT];
-                if (BaseCurrentForcesSupported > free_support[range(support + 4, 0, 7)]
-                    && !has_abil(Vehs[veh_id].proto_id, ABL_CLEAN_REACTOR)) {
-                    BaseCurrentForcesMaintCount++;
-                    BaseCurrentForcesMaintCost += (support <= -4) + 1;
-                    Vehs[veh_id].state |= VSTATE_REQUIRES_SUPPORT;
-                }
-            }
-            // Cost of this unit at each of the eight SUPPORT ratings, for social_ai.
-            if (BaseUpkeepStage == 1) {
-                for (int support = -4; support <= 3; support++) {
-                    if (BaseCurrentForcesSupported <= free_support[support + 4]) {
-                        continue;
-                    }
-                    int cost = has_abil(Vehs[veh_id].proto_id, ABL_CLEAN_REACTOR)
-                        ? 0 : (support <= -4) + 1;
-                    int minerals = BaseCurrent->intake_2[RSC_MINERALS];
-                    if (cost >= minerals) {
-                        cost += (cost - minerals / 2) * 2;
-                    } else if (cost > minerals / 2) {
-                        cost = cost * 2 - minerals / 2;
-                    }
-                    PlayersData[faction_id].unk_38[support + 4] += cost;
-                }
-            }
-        }
-        // Pacifism: armed units away from home; air units (except interceptors)
-        // count anywhere.
-        if (!Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating) {
-            continue;
-        }
-        if (base_who(Vehs[veh_id].x, Vehs[veh_id].y) >= 0
-            || whose_territory(faction_id, Vehs[veh_id].x, Vehs[veh_id].y, NULL, false)
-                == faction_id) {
-            if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad != TRIAD_AIR
-                || VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_AIR_SUPERIORITY) {
                 continue;
             }
-        }
-        BaseCurrentVehPacifismCount++;
-        // The original evaluates the police rating (with the Brood Pit bonus and
-        // its inlined bitmask()) twice: once per arm.
-        if (PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::POLICE]
-                + has_fac(FAC_BROOD_PIT, BaseIDCurrentSelected, 0) * 2 == -3) {
-            if (BaseCurrentVehPacifismCount == 1) {
-                Vehs[veh_id].state |= VSTATE_PACIFISM_FREE_SKIP;
-            } else {
+            if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_SUPPLY_CONVOY
+                && base_who(Vehs[veh_id].x, Vehs[veh_id].y) < 0
+                && Vehs[veh_id].order == ORDER_CONVOY) {
+                int convoyed;
+                switch (Vehs[veh_id].order_auto_type) {
+                  case RSC_NUTRIENTS:
+                    convoyed = crop_yield(faction_id, BaseIDCurrentSelected, Vehs[veh_id].x,
+                                          Vehs[veh_id].y, false);
+                    break;
+                  case RSC_MINERALS:
+                    convoyed = mine_yield(faction_id, BaseIDCurrentSelected, Vehs[veh_id].x,
+                                          Vehs[veh_id].y, false);
+                    break;
+                  case RSC_ENERGY:
+                    convoyed = energy_yield(faction_id, BaseIDCurrentSelected, Vehs[veh_id].x,
+                                            Vehs[veh_id].y, false);
+                    break;
+                  case RSC_PSI:
+                    TileYieldRestricted = 0;
+                    convoyed = 0;
+                    break;
+                  default:
+                    convoyed = 0;
+                    break;
+                }
+                BaseCurrentConvoyTo[Vehs[veh_id].order_auto_type] += convoyed;
+            }
+            // AI offensive strength tally; psi weapons count only on custom prototypes.
+            int8_t offense = Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating;
+            if (offense && (offense > 0 || Vehs[veh_id].proto_id >= MaxVehProtoFactionNum)) {
+                uint8_t tally_plan = VehPrototypes[Vehs[veh_id].proto_id].plan;
+                if (tally_plan != PLAN_RECONNAISANCE && tally_plan != PLAN_PLANET_BUSTER) {
+                    PlayersData[faction_id].unk_48++;
+                    if (tally_plan == PLAN_OFFENSIVE || tally_plan == PLAN_COMBAT) {
+                        PlayersData[faction_id].unk_48++;
+                    }
+                }
+            }
+            Vehs[veh_id].state &= ~(VSTATE_REQUIRES_SUPPORT | VSTATE_PACIFISM_DRONE
+                                    | VSTATE_PACIFISM_FREE_SKIP);
+            uint8_t plan = VehPrototypes[Vehs[veh_id].proto_id].plan;
+            // A convoy of ours standing in any base is charged as consumption.
+            if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_SUPPLY_CONVOY
+                && Vehs[veh_id].order == ORDER_CONVOY
+                && base_who(Vehs[veh_id].x, Vehs[veh_id].y) >= 0) {
+                BaseCurrentConvoyFrom[Vehs[veh_id].order_auto_type]++;
+            }
+            if (plan > PLAN_TERRAFORMING) {
+                continue; // convoys and above are never supported
+            }
+            if (!has_abil(Vehs[veh_id].proto_id, ABL_CLEAN_REACTOR)) {
+                // Native life in fungus (psi weapon on a predefined prototype, or
+                // prototype 15, the Sea Lurk) is supported for free.
+                Map *tile;
+                if (Vehs[veh_id].proto_id >= MaxVehProtoFactionNum
+                    || (Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating >= 0
+                        && Vehs[veh_id].proto_id != 15)
+                    || !((tile = map_loc(Vehs[veh_id].x, Vehs[veh_id].y))->bit & BIT_FUNGUS)
+                    || (tile->climate & ~0x1F) < ALT_BIT_OCEAN_SHELF) {
+                    BaseCurrentForcesSupported++;
+                    int support = PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::SUPPORT];
+                    if (BaseCurrentForcesSupported > free_support[range(support + 4, 0, 7)]
+                        && !has_abil(Vehs[veh_id].proto_id, ABL_CLEAN_REACTOR)) {
+                        BaseCurrentForcesMaintCost += (support <= -4) + 1;
+                        BaseCurrentForcesMaintCount++;
+                        Vehs[veh_id].state |= VSTATE_REQUIRES_SUPPORT;
+                    }
+                }
+                // Cost of this unit at each of the eight SUPPORT ratings, for social_ai.
+                if (BaseUpkeepStage == 1) {
+                    for (int support = -4; support <= 3; support++) {
+                        if (BaseCurrentForcesSupported <= free_support[support + 4]) {
+                            continue;
+                        }
+                        int cost = has_abil(Vehs[veh_id].proto_id, ABL_CLEAN_REACTOR)
+                            ? 0 : (support <= -4) + 1;
+                        int minerals = BaseCurrent->intake_2[RSC_MINERALS];
+                        if (cost >= minerals) {
+                            cost += (cost - minerals / 2) * 2;
+                        } else if (cost > minerals / 2) {
+                            cost = cost * 2 - minerals / 2;
+                        }
+                        PlayersData[faction_id].unk_38[support + 4] += cost;
+                    }
+                }
+            }
+            // Pacifism: armed units away from home; air units (except interceptors)
+            // count anywhere.
+            if (!Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating) {
+                continue;
+            }
+            if (base_who(Vehs[veh_id].x, Vehs[veh_id].y) >= 0
+                || whose_territory(faction_id, Vehs[veh_id].x, Vehs[veh_id].y, NULL, false)
+                    == faction_id) {
+                if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad != TRIAD_AIR
+                    || VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_AIR_SUPERIORITY) {
+                    continue;
+                }
+            }
+            BaseCurrentVehPacifismCount++;
+            // The original evaluates the police rating (with the Brood Pit bonus and
+            // its inlined bitmask()) twice: once per arm.
+            if (PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::POLICE]
+                    + has_fac(FAC_BROOD_PIT, BaseIDCurrentSelected, 0) * 2 == -3) {
+                if (BaseCurrentVehPacifismCount == 1) {
+                    Vehs[veh_id].state |= VSTATE_PACIFISM_FREE_SKIP;
+                } else {
+                    Vehs[veh_id].state |= VSTATE_PACIFISM_DRONE;
+                }
+            } else if (PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::POLICE]
+                           + has_fac(FAC_BROOD_PIT, BaseIDCurrentSelected, 0) * 2 < -3) {
                 Vehs[veh_id].state |= VSTATE_PACIFISM_DRONE;
             }
-        } else if (PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::POLICE]
-                       + has_fac(FAC_BROOD_PIT, BaseIDCurrentSelected, 0) * 2 < -3) {
-            Vehs[veh_id].state |= VSTATE_PACIFISM_DRONE;
         }
     }
 }
