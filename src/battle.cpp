@@ -1550,7 +1550,7 @@ LPSTR VehBattleDisplayTerrain;
 // get_basic_offense/get_basic_defense write the two side values; battle_report
 // reads the selected value at 0x004227DC.
 // Extent: compiled sizeof 0x8; next mapped object at 0x00912428.
-// RECOVERY_OBJECT: v2 0x00912420 0x00912428 ?VehBasicBattleMorale@@3PAIA 0x004227DC
+// RECOVERY_OBJECT: v2 0x00912420 0x00912428 ?VehBasicBattleMorale@@3PAHA 0x004227DC
 int VehBasicBattleMorale[2];  // 0x00912420
 // Original battle_init at 0x00501D32 clears the start; add_bat at 0x00501D5D/0x00501D70 indexes counters; no bounds claim.
 // Extent: compiled sizeof 0x8; next mapped object at 0x0091561C.

@@ -1491,11 +1491,11 @@ void __cdecl base_reset(int base_id, int force) {
 uint32_t UpgradePromptAnswered;  // 0x0090EA3C
 
 int BaseCurrentGrowthRate;  // 0x0090E918
-// RECOVERY_OBJECT: v2 0x0090E980 0x0090E984 ?BaseCurrentVehPacifismCount@@3IA 0x004E9550
+// RECOVERY_OBJECT: v2 0x0090E980 0x0090E984 ?BaseCurrentVehPacifismCount@@3HA 0x004E9550
 int BaseCurrentVehPacifismCount;  // 0x0090E980
-// RECOVERY_OBJECT: v2 0x0090E8FC 0x0090E900 ?BaseCurrentForcesSupported@@3IA 0x004E95AB
+// RECOVERY_OBJECT: v2 0x0090E8FC 0x0090E900 ?BaseCurrentForcesSupported@@3HA 0x004E95AB
 int BaseCurrentForcesSupported;  // 0x0090E8FC
-// RECOVERY_OBJECT: v2 0x0090E91C 0x0090E920 ?BaseCurrentForcesMaintCost@@3IA 0x0040A6A5
+// RECOVERY_OBJECT: v2 0x0090E91C 0x0090E920 ?BaseCurrentForcesMaintCost@@3HA 0x0040A6A5
 int BaseCurrentForcesMaintCost;  // 0x0090E91C
 
 /*

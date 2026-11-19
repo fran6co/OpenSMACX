@@ -330,7 +330,7 @@ int EndgameExitReason;
 
 // Logical faction0..7 indexing is independently observed; original
 // containing allocation bounds are not asserted.
-// RECOVERY_OBJECT: v1 0x00946138 ?TectonicDetonationCount@@3PAIA
+// RECOVERY_OBJECT: v1 0x00946138 ?TectonicDetonationCount@@3PAHA
 int TectonicDetonationCount[8];
 // Original691B0C contains pointer691B7C, whose file-backed text is SCRIPT.
 // This owns the observed text and shared pointer cell.
@@ -1330,7 +1330,7 @@ void __cdecl auto_save() {
 }
 
 // Original load_undo at 0x005ABE4E/0x005ABE59 updates this cursor; auto_undo at 0x005ABF37 resets 1; start only.
-// RECOVERY_OBJECT: v1 0x00690D7C ?ScenEditorUndoPosition@@3IA
+// RECOVERY_OBJECT: v1 0x00690D7C ?ScenEditorUndoPosition@@3HA
 int ScenEditorUndoPosition = 1; // 0x00690D7C
 
 /*

@@ -71,25 +71,25 @@ unsigned char AltBonusArid[113];
 extern const unsigned char AltTemplateArid[113] = {
 #include "terrain_landmark_arid.inc"
 };
-// RECOVERY_OBJECT: v1 0x007F65D0 ?AltBonusMoist@@3PAEA
+// RECOVERY_OBJECT: v1 0x007F65D0 ?AltBonusMoist@@3PADA
 char AltBonusMoist[113];
 // RECOVERY_OBJECT: v1 0x006857F0 ?AltTemplateMoist@@3QBEB
 extern const unsigned char AltTemplateMoist[113] = {
 #include "terrain_landmark_moist.inc"
 };
-// RECOVERY_OBJECT: v1 0x007F655C ?AltBonusRainy@@3PAEA
+// RECOVERY_OBJECT: v1 0x007F655C ?AltBonusRainy@@3PADA
 char AltBonusRainy[113];
 // RECOVERY_OBJECT: v1 0x0068593C ?AltTemplateRainy@@3QBEB
 extern const unsigned char AltTemplateRainy[113] = {
 #include "terrain_landmark_rainy.inc"
 };
-// RECOVERY_OBJECT: v1 0x007D3A78 ?AltBonusFlat@@3PAEA
+// RECOVERY_OBJECT: v1 0x007D3A78 ?AltBonusFlat@@3PADA
 char AltBonusFlat[113];
 // RECOVERY_OBJECT: v1 0x00685864 ?AltTemplateFlat@@3QBEB
 extern const unsigned char AltTemplateFlat[113] = {
 #include "terrain_landmark_flat.inc"
 };
-// RECOVERY_OBJECT: v1 0x007F64E8 ?AltBonusOcean@@3PAEA
+// RECOVERY_OBJECT: v1 0x007F64E8 ?AltBonusOcean@@3PADA
 char AltBonusOcean[113];
 // RECOVERY_OBJECT: v1 0x006859B0 ?AltTemplateOcean@@3QBEB
 extern const unsigned char AltTemplateOcean[113] = {
@@ -101,11 +101,11 @@ extern const unsigned char AltTemplateOcean[113] = {
 // adjacent original tables are separate real arrays, not pointers into an
 // old executable. Preserve the initial values in pinned ignored includes;
 // recovered callers read and mutate these source-owned objects only.
-// RECOVERY_OBJECT: v2 0x0068FAF4 0x0068FB20 ?AltNaturalDefault@@3PAIA 0x005C86E0
+// RECOVERY_OBJECT: v2 0x0068FAF4 0x0068FB20 ?AltNaturalDefault@@3PAHA 0x005C86E0
 int AltNaturalDefault[11] = {
 #include "terrain_altitude_default.inc"
 };
-// RECOVERY_OBJECT: v2 0x0068FB20 0x0068FB4C ?AltContour@@3PAIA 0x005C38B0
+// RECOVERY_OBJECT: v2 0x0068FB20 0x0068FB4C ?AltContour@@3PAHA 0x005C38B0
 int AltContour[11] = {
 #include "terrain_altitude_contour.inc"
 };
@@ -1574,7 +1574,7 @@ remove_landmark:
         MapLandmarkCount -= 1;
     }
 }
-// ORIGINAL: 0x005927D0 ?delete_landmark@@YAXHH@Z 0x005927D0-0x00592938
+// ORIGINAL: 0x005927D0 ?delete_landmark@@YAXHH@Z 0x005927D0-0x00592938 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:7e269a283e888ff1ee459699529fb7ce8c44b171:src/recovered/units/005927d0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json"], "reason": "Recover landmark clearing through real Map members, shared source-owned lookup arrays and MapWin callbacks. Preserve the duplicate Flat-table clear, numeric9,999,999 cache sentinel, store-before-clear order and native absence of extra window/bounds guards. Historical mappings and seed lessons are retained; no new byte/layout/runtime/linked-preservation claim."}
 void __cdecl delete_landmark(int x, int y) {
     // bit2_at then bit2_set(.., 0x80, 0), both expanded: the image keeps the

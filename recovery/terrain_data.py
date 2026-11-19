@@ -57,8 +57,8 @@ _LANDMARK_WINDOW_MEMBERS = (
 )
 
 _ALTITUDE_TABLES = {
-    'terrain_altitude_default.inc': '?AltNaturalDefault@@3PAIA',
-    'terrain_altitude_contour.inc': '?AltContour@@3PAIA',
+    'terrain_altitude_default.inc': '?AltNaturalDefault@@3PAHA',
+    'terrain_altitude_contour.inc': '?AltContour@@3PAHA',
     'terrain_altitude_natural.inc': '?AltNatural@@3PAHA',
 }
 
