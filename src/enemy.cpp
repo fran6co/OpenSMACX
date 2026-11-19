@@ -6564,14 +6564,16 @@ L_5725e2:
                     }
                 }
                 {
-                    int s = score;
+                    int s;
                     if (!Vehs[veh_id].moves_expended && (map_loc(x, y)->bit & BIT_ROAD)
                         && (map_loc(tx, ty)->bit & BIT_ROAD)) {
                         if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].speed > 1) {
-                            s += 0x100;
+                            s = score + 0x100;
                         } else {
-                            s += 8;
+                            s = score + 8;
                         }
+                    } else {
+                        s = score;
                     }
                     if ((map_loc(tx, ty)->bit & BIT_FUNGUS) && (map_loc(tx, ty)->climate & ~0x1F) >= 0x40) {
                         if (has_project(8, faction_id)
