@@ -6904,3 +6904,77 @@ the raw loop slightly too cheap.
   observation): order_veh's two has_fac expansions use (offset, mask) =
   (-0x64, -0x50) and (-0x50, -0x64); ours with three locals rotates the
   same way. Not probed.
+
+### 4.1 Stand-in debt (2026-11-19 par-1, `analysis/workarounds.py`)
+
+`uv run python recovery/tools/analysis/workarounds.py --feall F [--table]
+[--rules] [--json OUT]` (5 s; F from `feall.py --all --out F`) lists every
+stand-in with its file, line, kind, the functions it serves, its evidence
+comment and whether those functions are fe-exact now: `WORKAROUND(<k>)` tags
+(one item per comment block or trailing tag), budget-probe definitions and
+call lines (names with budget/probe/spend, and macros that expand to them),
+function-pointer locals (`range_call`, `project_call`, ...), `#pragma
+auto_inline/inline_depth/optimize` regions, CANARY-PADS/HEADER-PADS blocks,
+`volatile` casts/locals in marked bodies and `__forceinline`. `--rules`
+reads each evidence comment for the rule most likely to retire it. A
+`wide` item is a header/type stand-in whose identifier more than 25
+functions use.
+
+Counts at e62b283824 + this batch (all-exact = every served function
+fe-exact; the stand-in may be tuning debt or dead):
+
+| kind | items | all-exact | mixed | none-exact |
+|---|---|---|---|---|
+| probe-call lines (223 calls, 55 probe names, 62 functions, 27 exact) | 166 | 86 | 0 | 80 |
+| probe definitions | 57 | 26 | 12 | 17 |
+| function-pointer locals | 17 | 2 | 0 | 15 |
+| pragma regions | 23 | 20 | 0 | 1 |
+| `__forceinline` | 13 | 10 | 1 | 2 |
+| `volatile` (untagged casts/locals) | 31 | 28 | 0 | 3 |
+| WORKAROUND(inline) | 169 | 61 | 42 | 57 |
+| WORKAROUND(noinline) | 51 | 31 | 1 | 14 |
+| WORKAROUND(decl) | 146 | 48 | 38 | 30 |
+| WORKAROUND(type) | 28 | 11 | 4 | 13 |
+| WORKAROUND(volatile) | 3 | 1 | 1 | 1 |
+| pad blocks (known count stand-ins) | 15 | 11 | 1 | 1 |
+
+463 functions are served by a non-pad, non-wide stand-in (318 fe-exact).
+By likely retiring rule (`--rules`, keyword reading, a screen): probe /
+dead spend 263 items (2.8 owner or cost ladder), teardown depth 87 (2.3 and
+2.8; the missing level is often a constructor or an owner), call forcers
+92 (2.8 "called early, expanded late": one inline level deeper), registers
+and reloads 85 (2.7, Z1-Z6, named values), counter 30 (2.5), naming only
+28, narrow types 5; 127 need reading.
+
+Retirement pass (`analysis/retire.py WA.json [--write]`, one unit per lane,
+every marker of the unit measured with each mechanical stand-in removed
+alone: probe statements per function and per line, function-pointer
+locals spelled as the plain call, pragma regions, `__forceinline` ->
+`inline`, volatile casts dropped). 2026-11-19 result: 15 `__forceinline`
+dead (all in .cpp static helpers; each unit unchanged), 6 volatile casts
+dead and 2 better (Console::focus, draw_status's `alt`: 331 -> 319),
+top_menu's two probes and 15 slack probe calls elsewhere dead (window_proc
+12 -> 9, do_tracking 20 -> 15, order_veh, size_of_planet, base_editor_proj),
+the unused top_menu_spend definition removed. No pragma region and no
+function-pointer local is dead: every one moves its unit. Two cautions:
+- **fe masks relocation operands, so a load-order stand-in can read as
+  dead** (base_upkeep 0x004F79C0: the volatile turn read removed is fe-equal
+  but `recover measure` says SHAPE_EXACT, the two globals swap). Confirm
+  every retirement with `recover measure` of the served functions.
+- **A `volatile`-qualified cast type is a front-end symbol**: removing the
+  last `static_cast<const volatile MapWin *>` of a unit renumbers its `$SG`
+  literals (console.cpp, mapwin.cpp); run `rebind-literals` after.
+
+Shared separator texts (strings.h, 2026-11-19): of the seven functions that
+kept the named stand-ins, the literal form now holds in save_game (all 3
+sites), PickTech::draw_tech (23 sites, 303 -> 294) and 13 of
+Console::upgrade's 17 sites (147 -> 145), spelled `strcat_X(StringTemp)`;
+`say_X()` at the same sites moves them (save_game 19 named-callee distance,
+draw_tech 458). The difference is the parameter, not the budget: draw_tech's
+call multiset is the same under both. Still named: top_menu (its one " "
+site; with any helper the two init_opening expansions of the loop's
+if/else are cross-jumped into one, 0 -> 57 rows, a layout effect and not
+a call decision), Console::editor_edit_veh (all three sites; any one
+helper gives 4 -> 7 named-callee distance), StatusWin::draw_active (any
+site: 161 -> 395, calls unchanged: allocation), upgrade's four sites of
+its first label block, and DesignWin::select_special (par-2).

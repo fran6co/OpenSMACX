@@ -21,6 +21,9 @@ Items, one per source line:
                    declarations in headers and uv/ thread code are left out.
   forceinline      `__forceinline` on a definition.
 
+--rules adds counts per (kind, most likely retiring rule), a keyword reading of the evidence comment
+(counter, bool, narrow, teardown, probe, callforce, regs, name, other; see RULE_TEXT).
+
 Served functions are ORIGINAL markers; `x` = fe-exact now (from --feall, default
 recovery/tools/feall.json; run `feall.py --all --out F` first for a fresh one), `-` = not exact,
 `?` = not measured. Evidence = the comment block the item sits under (first 160 chars).
@@ -193,6 +196,46 @@ def next_code(lines, code, i):
     return j if j < len(lines) else None
 
 
+RULES = [  # (name, kinds it applies to or None, evidence pattern) - first match wins
+    ('counter', None, r'\btie\b|counter|\bpads?\b|header-position|declarations? precede|\$SG|canary'),
+    ('bool', ('wa:type',), r'\bbool\b|\bBOOL\b'),
+    ('narrow', ('wa:type',), r'int16|int8|\bchar\b|\bshort\b|byte|narrow|unsigned|signed|width'),
+    ('teardown', None, r'teardown|destructor|~\w|\bEH\b|unwind|\bstates?\b'),
+    ('probe', None, r'probe|\bspend|budget|dead /Ob2|reservation'),
+    ('callforce', None, r'function.pointer|member.function pointer|out of line|_call\b|forwarder|noinline|calls? \w+ (?:here|at)'),
+    ('regs', None, r'register|reload|\bslot|enregist|spill|frame|volatile|\b(?:eax|ebx|ecx|edx|esi|edi)\b|order'),
+    ('name', None, r'name|unknown|invented|not identified|identif'),
+]
+RULE_TEXT = {
+    'counter': '2.5 symbol counter: count canaries / header-position ties; retire with the original declaration set',
+    'bool': 'BOOL vs bool census (par-6): a dword setcc or test in the image is a BOOL',
+    'narrow': '3.4 narrow locals / signedness: retype the local or field',
+    'teardown': '2.3/2.8 teardown depth: the missing inline level is often a constructor or an owner',
+    'probe': '2.8 owner / cost ladder: find the owner that spends it (giantcallee, ownerscan, inlineclass) or a cheaper spelling elsewhere',
+    'callforce': '2.8 called early, expanded late: one inline level deeper (owner), or a header inline the giant refuses',
+    'regs': '2.7 named-value/rotation, stepped pointers, Z1-Z6 constant registers',
+    'name': 'naming only: identify the original helper/owner name',
+    'other': 'read the evidence',
+}
+
+
+def rule_of(x):
+    if x['kind'].startswith('pads'):
+        return 'counter'
+    if x['kind'] in ('volatile', 'wa:volatile'):
+        return 'regs'
+    for name, kinds, pat in RULES:
+        if kinds and x['kind'] not in kinds:
+            continue
+        if re.search(pat, x['evidence'] + ' ' + x['subject'], re.I):
+            return name
+    if x['kind'] in ('probe-call', 'probe-def'):
+        return 'probe'
+    if x['kind'] == 'fnptr':
+        return 'callforce'
+    return 'other'
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--feall', default=os.path.join(R, 'recovery/tools/feall.json'))
@@ -201,6 +244,7 @@ def main():
     ap.add_argument('--json')
     ap.add_argument('--table', action='store_true', help='print every item')
     ap.add_argument('--summary', action='store_true', help='counts only')
+    ap.add_argument('--rules', action='store_true', help='counts per (kind, most likely retiring rule)')
     ap.add_argument('--root', default=R)
     a = ap.parse_args()
     exact = {}
@@ -393,6 +437,8 @@ def main():
         e = [s['exact'] for s in x['served']]
         x['wide'] = x['how'] == 'scope' and len(x['served']) > 25
         x['status'] = 'none' if not e else 'all-exact' if all(v == 'x' for v in e) else 'none-exact' if all(v != 'x' for v in e) else 'mixed'
+    for x in items:
+        x['rule'] = rule_of(x)
     if a.json:
         json.dump(items, open(a.json, 'w'), indent=1)
 
@@ -412,14 +458,21 @@ def main():
                 sv += ' +%d' % (len(x['served']) - 4)
             if x['wide']:
                 sv = '(%d users, %d exact)' % (len(x['served']), sum(s['exact'] == 'x' for s in x['served']))
-            print('%s:%d\t%s\t%s\t[%s]\t%s\t| %s' % (x['file'], x['line'], x['kind'], x['subject'][:30],
-                                                     'wide' if x['wide'] else x['status'], sv, x['evidence'][:100]))
+            print('%s:%d\t%s\t%s\t[%s]\t%s\t%s\t| %s' % (x['file'], x['line'], x['kind'], x['subject'][:30],
+                                                         'wide' if x['wide'] else x['status'], x['rule'], sv, x['evidence'][:100]))
     cnt = collections.Counter(x['kind'] for x in items)
     st_ = collections.Counter((x['kind'], x['status']) for x in items)
     calls = sum(int(x['subject'].rsplit('x', 1)[1]) for x in items if x['kind'] == 'probe-call')
     print('%-18s %6s %9s %6s %10s %5s' % ('kind', 'items', 'all-exact', 'mixed', 'none-exact', 'none'))
     for k in sorted(cnt):
         print('%-18s %6d %9d %6d %10d %5d' % (k, cnt[k], st_[(k, 'all-exact')], st_[(k, 'mixed')], st_[(k, 'none-exact')], st_[(k, 'none')]))
+    if a.rules:
+        rc = collections.Counter((x['kind'], x['rule']) for x in items if not x['kind'].startswith('pragma-close'))
+        print('%-14s %-10s %5s %9s' % ('kind', 'rule', 'items', 'all-exact'))
+        for (k, r), n in sorted(rc.items()):
+            print('%-14s %-10s %5d %9d' % (k, r, n, sum(1 for x in items if x['kind'] == k and x['rule'] == r and x['status'] == 'all-exact')))
+        for r, t in RULE_TEXT.items():
+            print('  %-10s %s' % (r, t))
     print('probe names %d, probe call sites %d (lines %d); files %d' % (len(probes), calls, cnt['probe-call'],
                                                                        len({x['file'] for x in items})))
     print('wide items (a header/type stand-in whose identifier more than 25 functions use): %d' % sum(x['wide'] for x in items))
