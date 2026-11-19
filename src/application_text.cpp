@@ -24,14 +24,6 @@
 #include "faction.h"
 #include "console.h"
 #include <cstring>
-// ORIGINAL: 0x00584D30 sub_584d30 0x00584D30-0x00584D52 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:3f7fc8f78d783f09c46cddc646c31c2f5eb6d013:src/recovered/00584d30.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x584d30 complete original body; independent source-owner review.", "source:src/general.cpp and corresponding header own real receiver/dependencies; count-zero copy underflow is intentionally unchanged."], "reason": "Complete typed application helper; retain original call ordering, argument contract and historical obligation."}
-// symbol    ?sub_584d30@@YAPADPAD0I@Z
-char *__cdecl sub_584d30(char *dest, char *src, unsigned int count) {
-    char *result = strncpy(dest, src, count);
-    dest[count - 1] = 0;
-    return result;
-}
 /*
 Purpose: Set the global gender and plurality variables used by various parse functions.
 // ORIGINAL: 0x005A58E0 ?parse_set@@YAXHH@Z 0x005A58E0-0x005A58F6 BYTE_EXACT
