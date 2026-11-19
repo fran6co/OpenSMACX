@@ -6041,10 +6041,10 @@ void BaseWin::base_editor() {
     menu.add_item(1, StringTable.get(Labels.strings_ptr[0xD40 / 4]));
     menu.add_item(2, StringTable.get(Labels.strings_ptr[0xD44 / 4]));
     menu.add_separator(99);
-    menu.add_item(5, label_get(0xD58 / 4));
-    menu.add_item(10, label_get(0xE60 / 4));
+    menu.add_item(5, StringTable.get(Labels.strings_ptr[0xD58 / 4]));
+    menu.add_item(10, StringTable.get(Labels.strings_ptr[0xE60 / 4]));
     menu.add_item(6, StringTable.get(Labels.strings_ptr[0xD5C / 4]));
-    menu.add_item(7, label_get(0xD60 / 4));
+    menu.add_item(7, StringTable.get(Labels.strings_ptr[0xD60 / 4]));
     menu.add_separator(99);
     // 0x41C906..0x41C937: each arm pushes its own Labels slot and jumps into
     // the other's get/add_item tail (VC6 tail-merges the two calls).
@@ -6056,11 +6056,11 @@ void BaseWin::base_editor() {
     menu.add_item(3, StringTable.get(Labels.strings_ptr[0xD48 / 4]));
     menu.add_item(4, StringTable.get(Labels.strings_ptr[0xD4C / 4]));
     menu.add_separator(99);
-    menu.add_item(11, label_get(0xF58 / 4));
+    menu.add_item(11, StringTable.get(Labels.strings_ptr[0xF58 / 4]));
     menu.add_item(12, StringTable.get(Labels.strings_ptr[0xF5C / 4]));
     menu.add_separator(99);
-    menu.add_item(13, label_get(0x103C / 4));
-    menu.add_item(14, label_get(0x1040 / 4));
+    menu.add_item(13, StringTable.get(Labels.strings_ptr[0x103C / 4]));
+    menu.add_item(14, StringTable.get(Labels.strings_ptr[0x1040 / 4]));
     menu.add_item(9, StringTable.get(Labels.strings_ptr[0xE18 / 4]));
     menu.show(x, y, pop_expire);
     int action = menu.get_selected_id();
@@ -6148,7 +6148,7 @@ void BaseWin::base_editor() {
     case 14: {
         popup.start("CHANGEFORMER", 0x40);
         for (int item = 1; item < 8; ++item) {
-            StringTemp[0] = 0;
+            clear();
             parse_says(0, get_noun(item), -1, -1);
             popup.item(StringTemp, item);
         }
