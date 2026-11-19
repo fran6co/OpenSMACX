@@ -157,7 +157,7 @@ def main():
         ap.add_argument('--' + o, action='store_true')
     ap.add_argument('--unit'); ap.add_argument('--json'); ap.add_argument('--min', type=int, default=3)
     ap.add_argument('--merge', nargs='+'); ap.add_argument('--into'); ap.add_argument('--move'); ap.add_argument('--include', action='append')
-    ap.add_argument('--new-like'); ap.add_argument('--after')
+    ap.add_argument('--new-like'); ap.add_argument('--after'); ap.add_argument('--with', dest='with_names')
     a = ap.parse_args()
     if a.merge:
         import tumerge
@@ -166,7 +166,7 @@ def main():
         import tumerge
         ad = {int(x, 16) for x in a.move.split(',')}
         hosts = sorted({f[5] for f in load() if f[0] in ad})
-        return tumerge.merge(hosts, a.into, a.dry, addrs=ad, top=a.top, with_inc=a.include, new_like=a.new_like, after=a.after, deps=a.deps)
+        return tumerge.merge(hosts, a.into, a.dry, addrs=ad, top=a.top, with_inc=a.include, new_like=a.new_like, after=a.after, deps=a.deps, with_names=a.with_names.split(',') if a.with_names else None)
     fs = load()
     runs = text_runs(fs)
     lits = literal_owners(fs)

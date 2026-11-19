@@ -32,7 +32,7 @@ import fe  # noqa: E402
 import runscan  # noqa: E402
 
 R = fe.R
-MRE = re.compile(r'// ORIGINAL: 0x([0-9A-F]{8}) (\S+) 0x([0-9A-Fa-f]+)-0x([0-9A-Fa-f]+)([^\n]*)\n((?://[^\n]*\n)*)')
+MRE = re.compile(r'// ORIGINAL: 0x([0-9A-F]{8}) (\S+) 0x([0-9A-Fa-f]+)-0x([0-9A-Fa-f]+)([^\n]*)\n((?://(?! ORIGINAL:)[^\n]*\n)*)')
 PROBE_RE = re.compile(r'\b(\w*budget_probe\w*|dw_probe|click_probe|bb_probe|hof_probe|pick_service_probe|uv2_probe_flat)\s*\(')
 
 

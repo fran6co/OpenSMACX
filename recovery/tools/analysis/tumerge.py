@@ -22,6 +22,9 @@ project.json flag set duplicated (and L's entry in the worktree's build/compile_
 `--deps` also moves the host's unmarked top-level pieces (objects, helpers, #define blocks) that only the moved
 chunks name, to closure, each in front of the next moved chunk in file order; a declaration both sides use is
 copied; a definition both sides use stays and is reported as SHARED.
+A `$E` address (a static-initializer thunk) moves its marker blocks and the object definition (see extract_objects);
+`--with NAME,..` moves the named definitions as well. A host left with nothing but its prelude is removed from the
+tree and the build. After every regroup analysis/esym.py refreshes the `// symbol _$E<n>` lines of both sides.
 No body is edited. Warnings name what a person must check: unit-level #defines before the includes,
 preprocessor lines inside moved chunks, flag sets that differ."""
 import os, re, sys, json, subprocess
@@ -154,8 +157,9 @@ def chunks(t, start=0):
 LICENCE = re.compile(r'\A\s*/\*.*?GNU General Public.*?\*/\n?', re.S)
 
 
-def split_foreign(path):
-    t = open(path, encoding='latin-1').read()
+def split_foreign(path, t=None):
+    if t is None:
+        t = open(path, encoding='latin-1').read()
     pe = prelude_end(t)
     pre = t[:pe]
     incs = re.findall(r'^[ \t]*#[ \t]*include[^\n]*\n', pre, re.M)
@@ -457,13 +461,106 @@ def pull_deps(host_text, pe, moved_keys):
     return moved, keep, rep
 
 
+EMARK = re.compile(r'// ORIGINAL: 0x([0-9A-F]{8}) (\S+) 0x([0-9A-Fa-f]+)-0x([0-9A-Fa-f]+)[^\n]*\n((?://(?! ORIGINAL:)[^\n]*\n)*)')
+ENAME = re.compile(r'_?\$E\d+$')
+
+
+def extract_objects(ts, addrs, withnames=()):
+    """--move of static-initializer thunks: a `$E` marker is a comment block (the compiler writes the function), so
+    what moves is the marker block, the blocks of the `$E` functions its image code refers to (the atexit
+    callback, the constructor and registration halves) and the definition of the object it initializes: the
+    piece under the `// RECOVERY_OBJECT` comment whose address the thunk's image bytes hold (when exactly one
+    does; otherwise name the definitions with --with). One chunk per thunk, keyed by its address, the marker
+    blocks directly above the definition, so the destination keeps initializer order = thunk address order.
+    -> (host text without them, [[key, text]], report)"""
+    import struct
+    sys.path.insert(0, os.path.dirname(HERE))
+    import fe
+    ms = {int(m.group(1), 16): m for m in EMARK.finditer(ts)}
+    em = {a: m for a, m in ms.items() if ENAME.match(m.group(2))}
+    heads = sorted(a for a in addrs if a in em)
+    rep = []
+    if not heads and not withnames:
+        return ts, [], rep, set()
+    def refs(a):
+        m = em[a]; lo, hi = int(m.group(3), 16), int(m.group(4), 16)
+        b = fe.imgbytes(lo, hi); out = set()
+        for i in range(len(b) - 3):
+            v = struct.unpack_from('<I', b, i)[0]
+            out.add(v); out.add((lo + i + 4 + v) & 0xffffffff)
+        return out
+    objs = {int(m.group(1), 16): m.start() for m in re.finditer(r'// RECOVERY_OBJECT: v\d+ 0x([0-9A-F]{8}) ', ts)}
+    groups = []; taken = set()
+    for a in heads:
+        if a in taken:
+            continue
+        grp = [a]; todo = [a]; oaddr = set()
+        while todo:
+            x = todo.pop()
+            r = refs(x)
+            for y in em:
+                if y in r and y not in grp:
+                    grp.append(y); todo.append(y)
+            oaddr |= {o for o in objs if o in r}
+        taken |= set(grp)
+        groups.append((a, sorted(grp), sorted(oaddr)))
+    pe = prelude_end(ts)
+    # pieces of the body, to find object definitions
+    body = ts[pe:]
+    pcs = []
+    for k, s in chunks(ts, pe):
+        pcs += pieces(s)
+    assert ''.join(pcs) == body
+    kinds = [piece_names(pc) for pc in pcs]
+    pull = {}       # piece index -> group key
+    extra = [i for i, (kind, nm) in enumerate(kinds) if nm & set(withnames) and kind in ('object', 'function', 'define', 'decl', 'type')]
+    out = []
+    for a, grp, oaddr in groups:
+        idx = []
+        if len(oaddr) == 1:
+            line = '0x%08X ' % oaddr[0]
+            idx = [i for i, pc in enumerate(pcs) if re.search(r'// RECOVERY_OBJECT: v\d+ ' + line, pc) and kinds[i][0] == 'object']
+        if not idx and not (extra and len(groups) == 1):
+            rep.append('  WARN thunk 0x%08X: %s; its definition was not moved (name it with --with)' % (
+                a, 'no RECOVERY_OBJECT address in its code' if not oaddr else 'object addresses ' + ' '.join('0x%08X' % o for o in oaddr)))
+        for i in idx[:1]:
+            pull[i] = a
+        rep.append('  thunk 0x%08X: markers %s, object %s' % (a, ' '.join('0x%08X' % g for g in grp),
+                                                               ' '.join(sorted(kinds[i][1])[0] for i in idx[:1]) or '-'))
+    for i in extra:
+        if i not in pull:
+            pull[i] = groups[0][0] if groups else None
+            rep.append('  --with: %s %s' % (kinds[i][0], ' '.join(sorted(kinds[i][1]))))
+    res = []
+    gone_blocks = []
+    for a, grp, oaddr in groups:
+        txt = ''.join(em[g].group(0) for g in grp)
+        gone_blocks += [em[g].group(0) for g in grp]
+        defs = ''.join(pcs[i].lstrip('\n') for i in sorted(pull) if pull[i] == a)
+        res.append([a, '\n' + txt + defs])
+    if not groups and extra:
+        res.append([None, ''.join(pcs[i] for i in extra)])
+    keep_body = ''.join(pc for i, pc in enumerate(pcs) if i not in pull)
+    keep = ts[:pe] + keep_body
+    for blk in gone_blocks:
+        if blk in keep:
+            keep = keep.replace(blk, '', 1)
+        else:
+            rep.append('  WARN marker block not found again after the object pieces were removed')
+    moved_names = set()
+    for i in pull:
+        if kinds[i][0] == 'object':
+            moved_names |= kinds[i][1]
+    return keep, res, rep, moved_names
+
+
 def unit_flags(u):
     d = json.load(open(R + '/recovery/project.json'))['measurement']['unit_flag_sets']
     return sorted(set(d.get(u, {}).get('flags', [])) - {'/Z7'})
 
 
-def merge(srcs, into, dry=False, addrs=None, top=False, with_inc=None, new_like=None, after=None, deps=False):
-    skipped = []; deprep = []
+def merge(srcs, into, dry=False, addrs=None, top=False, with_inc=None, new_like=None, after=None, deps=False, with_names=None):
+    skipped = []; deprep = []; objnames = set()
     into = os.path.relpath(os.path.abspath(into), R) if os.path.isabs(into) else into
     made = []
     if not os.path.exists(R + '/' + into):
@@ -483,20 +580,25 @@ def merge(srcs, into, dry=False, addrs=None, top=False, with_inc=None, new_like=
         if unit_flags(s) != unit_flags(into):
             warn.append('flags differ: %s %s | %s %s' % (s, ' '.join(sorted(set(unit_flags(s)) - set(unit_flags(into)))) or '-',
                                                          into, ' '.join(sorted(set(unit_flags(into)) - set(unit_flags(s)))) or '-'))
-        incs, defs, cs = split_foreign(R + '/' + s)
+        ts = open(R + '/' + s, encoding='latin-1').read()
+        ocs = []
+        if addrs is not None:
+            ts, ocs, rep, onames = extract_objects(ts, addrs, with_names or ())
+            deprep += rep
+            objnames |= onames
+        incs, defs, cs = split_foreign(R + '/' + s, ts)
         if addrs is not None and deps:
-            ts = open(R + '/' + s, encoding='latin-1').read()
             cs, keep_src[s], rep = pull_deps(ts, prelude_end(ts), addrs)
             deprep += rep
+            cs = ocs + cs
         elif addrs is not None:
             mine = [c for c in cs if c[0] in addrs]
             # a moved function takes only its own item text: re-chunk without glue
-            ts = open(R + '/' + s, encoding='latin-1').read()
             keep = ts
             for c in mine:
                 keep = keep.replace(c[1], '', 1)
             keep_src[s] = keep
-            cs = mine
+            cs = ocs + mine
         elif defs:
             warn.append('%s: unit-level preprocessor lines before/among the includes: %s' % (s, '; '.join(d.strip() for d in defs)))
         for inc in incs:
@@ -517,14 +619,25 @@ def merge(srcs, into, dry=False, addrs=None, top=False, with_inc=None, new_like=
         for m in re.finditer(r'^[ \t]*#[ \t]*include[^\n]*\n', pre, re.M):
             last = m.end()
         pre = pre[:last] + ''.join(add_inc) + pre[last:]
-    out = pre + ''.join(c[1] for c in new)
+    body = ''.join(c[1] for c in new)
+    for nm in sorted(objnames):
+        # the destination's own `extern T name;` is redundant now, and after the definition it is harmful: VC6
+        # emits the dynamic initializer of a class object a second time at a later redeclaration
+        rx = re.compile(r'^[ \t]*extern\s+[^;{}()=]*\b' + re.escape(nm) + r'\b[^;{}()=]*;[^\n]*\n', re.M)
+        for m in list(rx.finditer(body))[::-1]:
+            deprep.append('  local declaration removed from %s: %s' % (into, m.group(0).strip()))
+            body = body[:m.start()] + body[m.end():]
+        for m in list(rx.finditer(pre))[::-1]:
+            deprep.append('  local declaration removed from %s: %s' % (into, m.group(0).strip()))
+            pre = pre[:m.start()] + pre[m.end():]
+    out = pre + body
     print('MERGE %s -> %s: %d chunks moved, %d includes added' % (' '.join(srcs), into, len(foreign), len(add_inc)))
     for k, s in foreign:
         print('  chunk %s %d lines' % ('0x%08X' % k if k else '-', s.count('\n')))
     if skipped:
         print('  includes of the source file NOT added (pass --include NAME for the ones the moved bodies need): ' + ' '.join(skipped))
     for w in deprep + warn:
-        print(w if w.startswith('  dep') else '  WARN ' + w)
+        print(w if w.startswith('  ') else '  WARN ' + w)
     notes = list(made)
     if addrs is None:
         notes += rewrite_build(srcs, into, dry)
@@ -549,6 +662,25 @@ def merge(srcs, into, dry=False, addrs=None, top=False, with_inc=None, new_like=
                         open(p, 'w', encoding='latin-1').write(t2)
                         print('  compile_context rewritten in ' + os.path.relpath(p, R))
     else:
+        empty = []
         for s, keep in keep_src.items():
-            open(R + '/' + s, 'w', encoding='latin-1').write(keep)
+            kp = prelude_end(keep)
+            if not ORIG.search(keep) and not strip_code(keep[kp:]).strip():
+                empty.append(s)         # nothing but the prelude is left: the file was not a unit
+            else:
+                open(R + '/' + s, 'w', encoding='latin-1').write(keep)
+        if empty:
+            for nt in rewrite_build(empty, into, dry):
+                print('  ' + nt)
+            for s in empty:
+                subprocess.run(['git', 'rm', '-q', '-f', s], cwd=R, check=True)
+                print('  %s is empty after the move: removed' % s)
+    # static-initializer symbol numbers follow the unit's counter: refresh them on both sides
+    import esym
+    pfx = int(os.environ.get('FE_PFX_BASE', '21'))
+    for u in [into] + [s for s in srcs if os.path.exists(R + '/' + s)]:
+        try:
+            esym.run([u], write=True, pfx=pfx, quiet=True)
+        except SystemExit as e:
+            print('  ESYM %s: %s' % (u, str(e)[:600]))
     return 0
