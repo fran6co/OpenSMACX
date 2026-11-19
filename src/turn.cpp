@@ -4938,6 +4938,28 @@ Purpose: Wait out the other factions' turns in a network game, skipping
 //         independent global stores.
 Status: Coverage transcription - unclaimed body
 */
+// WORKAROUND(inline): invented name. net_not_my_turn (0x00529E70) has no image
+// callers and net_control_turn expands it; with this skip test written in
+// place its own size is over VC6's per-callee auto-inline cap (a one-call
+// probe calls it), and as an inner inline it is under (an inner inline's
+// body does not count toward the outer callee's cap). Name and home unknown.
+static inline void net_skip_absent_turn() {
+    if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
+        const int level = GameDataStateStorage.fields_.net_turn_faction_;
+        if (level <= 0) {
+            next_player_turn();
+        } else {
+            const uint32_t bit = 1u << level;
+            const GameDataLockMaskBytes *const lock_bytes =
+                &GameDataStateStorage.fields_.lock_masks_.bytes_;
+            if ((lock_bytes->human_mask_ & bit) == 0) {
+                next_player_turn();
+            } else if ((lock_bytes->alive_mask_ & bit) == 0) {
+                next_player_turn();
+            }
+        }
+    }
+}
 void __cdecl net_not_my_turn() {
     ConsoleGlobal.field_23BE4_ = 0;
     ConsoleGlobal.field_23BE8_ = 1;
@@ -4949,21 +4971,7 @@ void __cdecl net_not_my_turn() {
            && GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) {
         ConsoleGlobal.field_23BE4_ = 1;
         NetDaemonNet.net_tasks();
-        if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
-            const int level = GameDataStateStorage.fields_.net_turn_faction_;
-            if (level <= 0) {
-                next_player_turn();
-            } else {
-                const uint32_t bit = 1u << level;
-                const GameDataLockMaskBytes *const lock_bytes =
-                    &GameDataStateStorage.fields_.lock_masks_.bytes_;
-                if ((lock_bytes->human_mask_ & bit) == 0) {
-                    next_player_turn();
-                } else if ((lock_bytes->alive_mask_ & bit) == 0) {
-                    next_player_turn();
-                }
-            }
-        }
+        net_skip_absent_turn();
     }
     ConsoleGlobal.field_23BE4_ = 0;
     ConsoleGlobal.field_23BE8_ = 0;
@@ -4990,7 +4998,7 @@ void __cdecl net_end_of_turn() {
         }
     }
 
-// RECOVERY_LITERAL: v1 0x0068BD9C 0x0068BDB8 $SG67460 0x00529F30
+// RECOVERY_LITERAL: v1 0x0068BD9C 0x0068BDB8 $SG67462 0x00529F30
     log_say("Entering 'end of turn' loop",
             static_cast<int>(NetDaemonNet.factions_waiting_mask()),
             NetDaemonNet.field_1B68_,
@@ -5031,7 +5039,7 @@ void __cdecl net_end_of_turn() {
             }
             if (sent_finishing == 0 &&
                 static_cast<DWORD>(timeGetTime() - start_time) > 0x3E8) {
-// RECOVERY_LITERAL: v1 0x0068BDB8 0x0068BDC6 $SG67480 0x00529F30
+// RECOVERY_LITERAL: v1 0x0068BDB8 0x0068BDC6 $SG67482 0x00529F30
                 NetMsgPrimary.pop("FINISHINGTURN", 0, 0, nullptr);
                 sent_finishing = 1;
             }
@@ -5044,7 +5052,7 @@ void __cdecl net_end_of_turn() {
 
     if ((GameDataStateStorage.fields_.game_state_ & 2u) != 0) {
         if (NetDaemonNet.primary_state_.leading_words_[0] == 0) {
-// RECOVERY_LITERAL: v1 0x0068BDC8 0x0068BDD9 $SG67485 0x00529F30
+// RECOVERY_LITERAL: v1 0x0068BDC8 0x0068BDD9 $SG67487 0x00529F30
             log_say("Ready to proceed",
                     static_cast<int>(NetDaemonNet.factions_waiting_mask()),
                     GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu, 0);
@@ -5087,7 +5095,7 @@ after_wait:
     }
 
 proceed_next_turn:
-// RECOVERY_LITERAL: v1 0x0068BDDC 0x0068BDFC $SG67506 0x00529F30
+// RECOVERY_LITERAL: v1 0x0068BDDC 0x0068BDFC $SG67508 0x00529F30
     log_say("--- Proceeding to next turn ---", 0, 0, 0);
     NetDaemonNet.primary_state_.trailing_words_[7] = 0;
     NetDaemonNet.field_1B6C_ = 0;
@@ -5104,18 +5112,18 @@ proceed_next_turn:
 
     if ((GameDataStateStorage.fields_.game_preferences_ & 2u) != 0 && BaseAtDebugPopupFlag != 0) {
         StringTemp[0] = 0;
-// RECOVERY_LITERAL: v1 0x0068BDFC 0x0068BE15 $SG67512 0x00529F30
+// RECOVERY_LITERAL: v1 0x0068BDFC 0x0068BE15 $SG67514 0x00529F30
         strcat(StringTemp, "k:\\breynolds\\multisaves\\");
-// RECOVERY_LITERAL: v1 0x0068BE18 0x0068BE1B $SG67513 0x00529F30
+// RECOVERY_LITERAL: v1 0x0068BE18 0x0068BE1B $SG67515 0x00529F30
         strcat(StringTemp, "AC");
         char number[80];
         _itoa(ConsoleGlobal.faction_id_, number, 10);
         strcat(StringTemp, number);
-// RECOVERY_LITERAL: v1 0x0068BE1C 0x0068BE20 $SG67515 0x00529F30
+// RECOVERY_LITERAL: v1 0x0068BE1C 0x0068BE20 $SG67517 0x00529F30
         strcat(StringTemp, "end");
         _itoa(GameDataStateStorage.fields_.turn_current_num_, number, 10);
         strcat(StringTemp, number);
-// RECOVERY_LITERAL: v1 0x0068BE20 0x0068BE32 $SG67516 0x00529F30
+// RECOVERY_LITERAL: v1 0x0068BE20 0x0068BE32 $SG67518 0x00529F30
         log_say("Writing save file", StringTemp, 0, 0, 0);
         save_daemon(StringTemp);
     }
@@ -5139,28 +5147,28 @@ void __cdecl net_control_turn() {
     ConsoleControlTurnActive = 1;
     MapBaseDisplayOverride = 1;
 
-// RECOVERY_LITERAL: v1 0x0068BE34 0x0068BE40 $SG67521 0x0052A2E0
+// RECOVERY_LITERAL: v1 0x0068BE34 0x0068BE40 $SG67523 0x0052A2E0
     if (prefs_get("Multi Debug", 0, 0) != 0 &&
-// RECOVERY_LITERAL: v1 0x0068BE40 0x0068BE4B $SG67522 0x0052A2E0
+// RECOVERY_LITERAL: v1 0x0068BE40 0x0068BE4B $SG67524 0x0052A2E0
         X_pop("MULTIDEBUG", 0) != 0) {
         StringTemp[0] = 0;
-// RECOVERY_LITERAL: v1 0x0068BE4C 0x0068BE5D $SG67523 0x0052A2E0
+// RECOVERY_LITERAL: v1 0x0068BE4C 0x0068BE5D $SG67525 0x0052A2E0
         strcat(StringTemp, "k:\\breynolds\\log");
         _itoa(ConsoleGlobal.faction_id_, log_path, 10);
         strcat(StringTemp, log_path);
-// RECOVERY_LITERAL: v1 0x0068BE60 0x0068BE65 $SG67524 0x0052A2E0
+// RECOVERY_LITERAL: v1 0x0068BE60 0x0068BE65 $SG67526 0x0052A2E0
         strcat(StringTemp, ".txt");
-// RECOVERY_LITERAL: v1 0x0068BE68 0x0068BE6B $SG67526 0x0052A2E0
+// RECOVERY_LITERAL: v1 0x0068BE68 0x0068BE6B $SG67528 0x0052A2E0
         FILE *file = fopen(StringTemp, "wt");
         if (file != 0) {
             fclose(file);
         } else {
             StringTemp[0] = 0;
-// RECOVERY_LITERAL: v1 0x0068BE6C 0x0068BE70 $SG67529 0x0052A2E0
+// RECOVERY_LITERAL: v1 0x0068BE6C 0x0068BE70 $SG67531 0x0052A2E0
             strcat(StringTemp, "log");
             _itoa(ConsoleGlobal.faction_id_, log_path, 10);
             strcat(StringTemp, log_path);
-// RECOVERY_LITERAL: v1 0x0068BE70 0x0068BE75 $SG67530 0x0052A2E0
+// RECOVERY_LITERAL: v1 0x0068BE70 0x0068BE75 $SG67532 0x0052A2E0
             strcat(StringTemp, ".txt");
         }
         Logging.init(StringTemp);
@@ -5177,7 +5185,7 @@ void __cdecl net_control_turn() {
     }
 
     for (;;) {
-// RECOVERY_LITERAL: v1 0x0068BE78 0x0068BE92 $SG67536 0x0052A2E0
+// RECOVERY_LITERAL: v1 0x0068BE78 0x0068BE92 $SG67538 0x0052A2E0
         log_say("(Clearing turn semaphore)",
                 NetDaemonNet.primary_state_.trailing_words_[6],
                 NetDaemonNet.field_1B68_, 0);
@@ -5253,26 +5261,7 @@ void __cdecl net_control_turn() {
                 if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0 &&
                     GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) {
                     ConsoleGlobal.set_view(0);
-                    ConsoleGlobal.field_23BE4_ = 0;
-                    ConsoleGlobal.field_23BE8_ = 1;
-                    ConsoleGlobal.set_view(0);
-                    MultiWindow.draw(0);
-                    NetDaemonNet.factions_waiting_mask() |= 1u << ConsoleGlobal.faction_id_;
-                    while (ExitTurnLoop == 0 && NextTurnReady == 0 &&
-                           GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) {
-                        ConsoleGlobal.field_23BE4_ = 1;
-                        NetDaemonNet.net_tasks();
-                        if (NetDaemonNet.primary_state_.leading_words_[0] != 0 &&
-                            (GameDataStateStorage.fields_.net_turn_faction_ <= 0 ||
-                             !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
-                               (1 << GameDataStateStorage.fields_.net_turn_faction_)) ||
-                             !(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &
-                               (1 << GameDataStateStorage.fields_.net_turn_faction_)))) {
-                            next_player_turn();
-                        }
-                    }
-                    ConsoleGlobal.field_23BE4_ = 0;
-                    ConsoleGlobal.field_23BE8_ = 0;
+                    net_not_my_turn();
                 } else {
                     if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) == 0 &&
                         (GameDataStateStorage.fields_.game_state_ & 0x800u) != 0) {
@@ -5430,9 +5419,9 @@ int __cdecl sub_52a980() {
 // in the current object. Both pinned bodies refer to these same original
 // starts; the bindings do not merge them with copies from other translation
 // units or claim linked retention.
-// RECOVERY_LITERAL: v1 0x0068BE94 0x0068BEDA $SG67608 0x0052A9B0
-// RECOVERY_LITERAL: v1 0x0068BEDC 0x0068BEE5 $SG67614 0x0052A9B0
-// RECOVERY_LITERAL: v1 0x0068BEE8 0x0068BEEC $SG67617 0x0052A9B0
+// RECOVERY_LITERAL: v1 0x0068BE94 0x0068BEDA $SG67605 0x0052A9B0
+// RECOVERY_LITERAL: v1 0x0068BEDC 0x0068BEE5 $SG67611 0x0052A9B0
+// RECOVERY_LITERAL: v1 0x0068BEE8 0x0068BEEC $SG67614 0x0052A9B0
 int __cdecl directplay_install_is_complete() {
     int result = 0;
     HKEY key;

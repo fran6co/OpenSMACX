@@ -6369,10 +6369,10 @@ int __cdecl proposal_menu(int faction_id, int faction_id_with) {
     for (i = 1; i < MaxPlayerNum; i++) {
         if (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << i)
             && i != faction_id && i != faction_id_with) {
-            if (has_treaty(faction_id, i, DTREATY_COMMLINK)) {
+            if ((PlayersData[faction_id].diplo_treaties[i] & DTREATY_COMMLINK)) {
                 contact_count++;
             }
-            if (!has_treaty(faction_id, i, DTREATY_COMMLINK)
+            if (!(PlayersData[faction_id].diplo_treaties[i] & DTREATY_COMMLINK)
                 && !has_project(SP_EMPATH_GUILD, faction_id)) {
                 commlink_count++;
             }
@@ -6400,14 +6400,14 @@ int __cdecl proposal_menu(int faction_id, int faction_id_with) {
     text_get();
     clear();
     parse_string(TextBufferGetPtr, StringTemp);
-    if (has_treaty(faction_id, faction_id_with, DTREATY_TREATY)
-        && !has_treaty(faction_id, faction_id_with, DTREATY_PACT)) {
+    if ((PlayersData[faction_id].diplo_treaties[faction_id_with] & DTREATY_TREATY)
+        && !(PlayersData[faction_id].diplo_treaties[faction_id_with] & DTREATY_PACT)) {
         popup.item(StringTemp, 2);
     }
     text_get();
     clear();
     parse_string(TextBufferGetPtr, StringTemp);
-    if (!has_treaty(faction_id, faction_id_with, DTREATY_TREATY)) {
+    if (!(PlayersData[faction_id].diplo_treaties[faction_id_with] & DTREATY_TREATY)) {
         popup.item(StringTemp, 3);
     }
     text_get();
@@ -6466,7 +6466,7 @@ int __cdecl proposal_menu(int faction_id, int faction_id_with) {
             for (i = 1; i < MaxPlayerNum; i++) {
                 if (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << i)
                     && i != faction_id && i != faction_id_with
-                    && (has_treaty(faction_id, i, DTREATY_COMMLINK)
+                    && ((PlayersData[faction_id].diplo_treaties[i] & DTREATY_COMMLINK)
                         || GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << i))) {
                     parse_says(0, get_title(i), -1, -1);
                     parse_says(1, get_name(i), -1, -1);
@@ -6480,7 +6480,7 @@ int __cdecl proposal_menu(int faction_id, int faction_id_with) {
             if (DiploScratchFA5C >= 0) {
                 // Image bug, kept: tests the exhausted loop index (8), not the
                 // selected target, reading diplo_agenda[0] through diplo_treaties[8].
-                if (!has_treaty(faction_id_with, i, DTREATY_VENDETTA)) {
+                if (!(PlayersData[faction_id_with].diplo_treaties[i] & DTREATY_VENDETTA)) {
                     goto commlink;
                 }
                 parse_says(0, get_title(DiploScratchFA5C), -1, -1);
@@ -6519,7 +6519,7 @@ commlink:
         if (DiploScratchFA5C < 0) {
             goto fail;
         }
-        if (!has_treaty(faction_id_with, DiploScratchFA5C, DTREATY_COMMLINK)
+        if (!(PlayersData[faction_id_with].diplo_treaties[DiploScratchFA5C] & DTREATY_COMMLINK)
             && !has_project(SP_EMPATH_GUILD, faction_id_with)) {
             // WORKAROUND(inline): the three getters written out (same bytes);
             // as get_title/get_name/get_noun they spend the budget the image's
@@ -6550,10 +6550,7 @@ commlink:
                 popup.item(StringTemp, i);
                 if (!commlink_count) {
                     commlink_count = 1;
-                    PlanWindow.clear_lines();
-                    PlanWindow.monocenter(Bases[i].x, Bases[i].y, 0);
-                    PlanWindow.add_line(i, i, 0);
-                    PlanWindow.on_redraw();
+                    sub_54dc90(i);
                 }
             }
         }
@@ -6613,13 +6610,13 @@ commlink:
     text_get();
     clear();
     parse_string(TextBufferGetPtr, StringTemp);
-    if (DiploScratchFA34 != 1 && !has_treaty(faction_id, faction_id_with, DTREATY_PACT)) {
+    if (DiploScratchFA34 != 1 && !(PlayersData[faction_id].diplo_treaties[faction_id_with] & DTREATY_PACT)) {
         popup.item(StringTemp, 3);
     }
     text_get();
     clear();
     parse_string(TextBufferGetPtr, StringTemp);
-    if (DiploScratchFA34 != 1 && has_treaty(faction_id, faction_id_with, DTREATY_PACT)) {
+    if (DiploScratchFA34 != 1 && (PlayersData[faction_id].diplo_treaties[faction_id_with] & DTREATY_PACT)) {
         popup.item(StringTemp, 3);
     }
     text_get();
@@ -6662,10 +6659,7 @@ commlink:
                 popup.item(StringTemp, i);
                 if (!commlink_count) {
                     commlink_count = 1;
-                    PlanWindow.clear_lines();
-                    PlanWindow.monocenter(Bases[i].x, Bases[i].y, 0);
-                    PlanWindow.add_line(i, i, 0);
-                    PlanWindow.on_redraw();
+                    sub_54dc90(i);
                 }
             }
         }

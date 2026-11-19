@@ -1849,39 +1849,31 @@ void Console::cursor_next(int x_coord, int y_coord) {
 // context from the first token rather than behind a file read. This
 
 
-void Console::prev_cursor() {
-    const int had_move = survey_mode_;
-    field_23BF8_ = 0;
-    if (had_move != 0) {
-        survey_mode_ = 0;
+// WORKAROUND(inline): invented name. on_key_click and menu_proc expand
+// prev_cursor (0x00510A60, no image callers); with this survey clear written
+// in place prev_cursor is just over VC6's per-callee auto-inline cap, and as
+// an inner inline it is under. The original helper is not identified.
+static inline void console_survey_off(Console *console) {
+    if (console->survey_mode_ != 0) {
+        console->survey_mode_ = 0;
         MapWinTable[0]->draw_map(1);
     }
+}
+
+void Console::prev_cursor() {
+    field_23BF8_ = 0;
+    console_survey_off(this);
     MapWinTable[0]->draw_cursor();
     if (ConsoleGlobal.cursor_active_ != 0) {
-        ambience(0x1E);
-        const int had_move_now = survey_mode_;
-        cursor_active_ = 0;
-        field_23BF8_ = 1;
-        field_23BFC_ = 1;
-        if (had_move_now != 0) {
-            survey_mode_ = 0;
-            MapWinTable[0]->draw_map(1);
-        }
-        ::draw_cursor();
-        ConsoleInfoWin.change(0);
-        ConsoleStatusWin.redraw();
-        MapWinTable[0]->main_caption();
-        alpha_menu_.check(selected_vehicle_);
+        reset_turn_view();
     }
-    const int cursor_timer = cursor_history_index_ - 1;
-    cursor_history_index_ = cursor_timer;
-    if (cursor_timer < 0) {
+    if (--cursor_history_index_ < 0) {
         cursor_history_index_ = 0x1F;
     }
-    const int slot = ConsoleGlobal.cursor_history_index_;
-    ConsoleStatusWin.set_loc(ConsoleGlobal.cursor_history_x_[slot], ConsoleGlobal.cursor_history_y_[slot]);
-    const int slot_now = ConsoleGlobal.cursor_history_index_;
-    MapWinTable[0]->focus(ConsoleGlobal.cursor_history_x_[slot_now], ConsoleGlobal.cursor_history_y_[slot_now]);
+    ConsoleStatusWin.set_loc(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                             ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_]);
+    MapWinTable[0]->focus(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                          ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_]);
 }
 
 // Historical seed finding: Native destruction order: Turn, Go, Line, Blink2, Blink.
@@ -3559,7 +3551,7 @@ void Console::move_cursor(int direction) {
 // ORIGINAL: 0x00514990 ?quit_game@Console@@QAEXXZ 0x00514990-0x00514B2C BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00514990.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
 void Console::quit_game() {
-// RECOVERY_LITERAL: v1 0x0068A7E4 0x0068A7EF $SG64016 0x00514990
+// RECOVERY_LITERAL: v1 0x0068A7E4 0x0068A7EF $SG64013 0x00514990
     if (!X_pop((IsMultiplayerNet || IsMultiplayerPBEM) &&
                bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 255) > 1
                    ? ConsoleReallyWimpOut : "REALLYQUIT", nullptr)) return;
@@ -3572,7 +3564,7 @@ void Console::quit_game() {
     if ((GameDataStateStorage.fields_.game_rules_ & 0x400) && !IsMultiplayerPBEM) auto_save();
     net_hang_up_if_net();
     ExitTurnLoop = 1;
-// RECOVERY_LITERAL: v1 0x0068A7F0 0x0068A818 $SG64020 0x00514990
+// RECOVERY_LITERAL: v1 0x0068A7F0 0x0068A818 $SG64017 0x00514990
     log_say("Quit***********************************", 0, 0, 0);
 }
 
@@ -3596,8 +3588,8 @@ void Console::retire_game() { // 0x00514B30
         (IsMultiplayerNet || IsMultiplayerPBEM) &&
         bit_count(static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) > 1) != 0;
     const char *const prompt = multiple_players ? retire_wimpout :
-// RECOVERY_LITERAL: v1 0x0068A828 0x0068A836 $SG64039 0x00514B30
-// RECOVERY_LITERAL: v1 0x0068A838 0x0068A845 $SG64040 0x00514B30
+// RECOVERY_LITERAL: v1 0x0068A828 0x0068A836 $SG64036 0x00514B30
+// RECOVERY_LITERAL: v1 0x0068A838 0x0068A845 $SG64037 0x00514B30
         (GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) ? "REALLYRETIRE2" : "REALLYRETIRE";
     if (!X_pop(prompt, nullptr)) {
         return;
@@ -3629,7 +3621,7 @@ void Console::retire_game() { // 0x00514B30
     }
     GameRestartQueued = !closed_network;
     ExitTurnLoop = 1;
-// RECOVERY_LITERAL: v1 0x0068A848 0x0068A86C $SG64048 0x00514B30
+// RECOVERY_LITERAL: v1 0x0068A848 0x0068A86C $SG64045 0x00514B30
     log_say("Retire*****************************", 0, 0, 0);
 }
 
@@ -4623,7 +4615,7 @@ void Console::erase_landmark(int x_coord, int y_coord) {
 
     const int landmark_id = find_landmark(x_coord, y_coord, 1);
     if (landmark_id < 0) {
-// RECOVERY_LITERAL: v1 0x0068A994 0x0068A9A1 $SG64337 0x00516490
+// RECOVERY_LITERAL: v1 0x0068A994 0x0068A9A1 $SG64334 0x00516490
         NetMsgPrimary.pop("LANDMARKNONE", 5000, 0, nullptr);
         return;
     }
@@ -4634,7 +4626,7 @@ void Console::erase_landmark(int x_coord, int y_coord) {
     }
 
     parse_says(0, MapLandmark[landmark_id].name, -1, -1);
-// RECOVERY_LITERAL: v1 0x0068A9B0 0x0068A9BD $SG64340 0x00516490
+// RECOVERY_LITERAL: v1 0x0068A9B0 0x0068A9BD $SG64337 0x00516490
     if (X_pop("LANDMARKKILL", nullptr) == 0) {
         return;
     }
@@ -5037,25 +5029,25 @@ void Console::use_time_bonus() {
     if (!IsMultiplayerNet) return;
     if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) &&
         GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) {
-// RECOVERY_LITERAL: v1 0x0068AA48 0x0068AA50 $SG64468 0x00517060
+// RECOVERY_LITERAL: v1 0x0068AA48 0x0068AA50 $SG64465 0x00517060
         NetMsgPrimary.pop("SIMULNO", 5000, 0, nullptr);
         return;
     }
     const int faction = ConsoleGlobal.faction_id_;
     if (PlayersData[faction].time_bonus_count <= 0) {
         parse_num(0, TimeControl[selection].refresh);
-// RECOVERY_LITERAL: v1 0x0068AA50 0x0068AA5E $SG64471 0x00517060
+// RECOVERY_LITERAL: v1 0x0068AA50 0x0068AA5E $SG64468 0x00517060
         NetMsgPrimary.pop("NOTIMEBONUSES", 5000, 0, nullptr);
         return;
     }
     if (GameDataStateStorage.fields_.game_state_ & 0x800) {
-// RECOVERY_LITERAL: v1 0x0068AA60 0x0068AA6D $SG64473 0x00517060
+// RECOVERY_LITERAL: v1 0x0068AA60 0x0068AA6D $SG64470 0x00517060
         NetMsgPrimary.pop("NOBONUSATEND", 5000, 0, nullptr);
         return;
     }
     if ((GameDataStateStorage.fields_.game_state_ & 2) &&
         ((1u << faction_id_) & NetDaemonNet.primary_state_.trailing_words_[6])) {
-// RECOVERY_LITERAL: v1 0x0068AA70 0x0068AA7C $SG64475 0x00517060
+// RECOVERY_LITERAL: v1 0x0068AA70 0x0068AA7C $SG64472 0x00517060
         NetMsgPrimary.pop("NOBONUSDONE", 5000, 0, nullptr);
         return;
     }
@@ -6307,24 +6299,7 @@ int Console::on_key_click(int a1, int a2) {
         if (consumed != 0) {
             return 1;
         }
-        // 0x51A6B7..0x51A7B4 is Console::prev_cursor (0x510A60) expanded.
-        // WORKAROUND(inline): written out; a prev_cursor() call stays out of line in this unit (menu_proc).
-        field_23BF8_ = 0;
-        if (survey_mode_ != 0) {
-            survey_mode_ = 0;
-            MapWinTable[0]->draw_map(1);
-        }
-        MapWinTable[0]->draw_cursor();
-        if (ConsoleGlobal.cursor_active_ != 0) {
-            reset_turn_view();
-        }
-        if (--cursor_history_index_ < 0) {
-            cursor_history_index_ = 0x1F;
-        }
-        ConsoleStatusWin.set_loc(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
-                                 ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_]);
-        MapWinTable[0]->focus(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
-                              ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_]);
+        prev_cursor();
         goto map_keys;
     case 0x70: DatalinkMain.exec(0x0E, 0); break;
     case 0x71: report_labs(); break;
@@ -6835,20 +6810,7 @@ void Console::menu_proc(int command) {
     case 0x215: toggle_patrol(); break;         // 0x515EF0 expanded
     case 0x213: go_to(-1, -2, 0); break;
     case 0x214: center(); break;                // 0x515400 expanded
-    // WORKAROUND(inline): prev_cursor (0x510A60) written out; a call stays out of line.
-    case 0x216:
-        field_23BF8_ = 0;
-        if (survey_mode_ != 0) { survey_mode_ = 0; MapWinTable[0]->draw_map(1); }
-        MapWinTable[0]->draw_cursor();
-        if (ConsoleGlobal.cursor_active_ != 0) reset_turn_view();
-        if (--cursor_history_index_ < 0) cursor_history_index_ = 0x1F;
-        ConsoleStatusWin.set_loc(
-            ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
-            ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_]);
-        MapWinTable[0]->focus(
-            ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
-            ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_]);
-        break;
+    case 0x216: prev_cursor(); break;
     case 0x217: next_cursor(); break;
     case 0x300:
     case 0x301:
