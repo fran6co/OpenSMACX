@@ -40,6 +40,44 @@ char SayWeaponModeStarText[] = "*";
 // RECOVERY_OBJECT: v2 0x0068FAEC 0x0068FAEE ?SayArmorModeStarText@@3PADA 0x005906F0
 char SayArmorModeStarText[] = "*";
 
+
+
+
+// Native startup wrapper590500 constructs this table at945A60.
+// Eleven entries is the minimum observed initialized region, not an exact
+// original-capacity claim; higher category indices remain unverified.
+// RECOVERY_OBJECT: v1 0x00945A60 ?DatalinkEntryCallbackTableGlobal@@3VDatalinkEntryCallbackTable@@A
+DatalinkEntryCallbackTable DatalinkEntryCallbackTableGlobal;
+
+// ORIGINAL: 0x00590500 sub_590500 0x00590500-0x0059050A FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:datalink-selection-queue-owner", "Pinned queue/record operations share four-byte records and count at0x200; typed callbacks dispatch on category/value. Constructor owns minimum11-entry callback table, with zero-filled pair0 and CRT registration; exact total capacity and original TU remain unknown. Combined historical spans retain both CRT wrapper590500 and constructor590C20; emitted constructor alone is not proof of the generated wrapper matching.", "historical seed:src/unrecovered/00590500.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x00590500 loads 0x00945A60 and tail-jumps to 0x00590C20; the wrapper ends at that jump.", "Historical previous-owner observation: coff:src/datalink.cpp: _$E11 loads DatalinkEntryCallbackTableGlobal, tail-jumps to ??0DatalinkEntryCallbackTable, and .CRT$XCU selects _$E11.", "source:src/datalink_entries.cpp owns DatalinkEntryCallbackTableGlobal and its out-of-line constructor; the current compiler-symbol override identifies its generated startup wrapper, not an authored callback."], "reason": "Bind the original startup wrapper to the compiler-generated initializer of DatalinkEntryCallbackTableGlobal in its entry-formatting/selection owner; preserve the original wrapper identity and former combined-span evidence."}
+// symbol    _$E12
+// ORIGINAL: 0x00590C20 sub_590c20 0x00590C20-0x00590CAF BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x00590500 tail-jumps to 0x00590C20; the 143-byte constructor body ends with RET at 0x00590CAE.", "Historical previous-owner observation: coff:src/datalink.cpp: separate ??0DatalinkEntryCallbackTable@@QAE@XZ function symbol owns the typed callback-table constructor stores.", "Historical previous-owner observation: source:src/datalink.cpp:DatalinkEntryCallbackTableGlobal and DatalinkEntryCallbackTable::DatalinkEntryCallbackTable are separate source-owned lifetime/storage entities.", "history:git:ea2980d36:src/unrecovered/00590500.cpp preserves the former two-span placeholder identity; its source spans are partitioned here without dropping either range.", "source:src/datalink_entries.cpp contains both the callback-table storage definition and its separate typed constructor; the shared declaration remains in datalink.h."], "reason": "Bind the separately bounded original constructor body to DatalinkEntryCallbackTable construction beside its installed formatters and selection consumers; original TU boundaries and exact table capacity remain unproved."}
+// symbol    ??0DatalinkEntryCallbackTable@@QAE@XZ
+DatalinkEntryCallbackTable::DatalinkEntryCallbackTable() {
+  entries[1].help = 0;
+  entries[1].append_text = say_reactor;
+  entries[2].help = help_weapon;
+  entries[2].append_text = say_weapon;
+  entries[3].help = help_armor;
+  entries[3].append_text = say_armor;
+  entries[4].help = help_chassis;
+  entries[4].append_text = say_chassis;
+  entries[5].help = help_facility;
+  entries[5].append_text = say_facility;
+  entries[6].help = help_social;
+  entries[6].append_text = say_society;
+  entries[7].help = help_abil;
+  entries[7].append_text = say_ability;
+  entries[8].help = help_tech;
+  entries[8].append_text = say_techs;
+  entries[9].help = help_veh;
+  entries[9].append_text = say_vehicles;
+  entries[10].help = help_project;
+  entries[10].append_text = say_project;
+}
+
 // The shared space is owned by BufferJoinSpace (buffer.cpp, 0x00682820).
 // The existing RECOVERY_LITERAL anchors are retained as historical
 // binding facts. This current source regrouping does not prove the
@@ -181,23 +219,6 @@ close_detail:
     }
 }
 
-// ORIGINAL: 0x00590B30 ?say_techs@@YAXPAXHH@Z 0x00590B30-0x00590B9A BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["original:0x00590B30-0x00590B9A;seed:src/recovered/units/00590b30.cpp;source:src/strings.h:StringTable;source:src/alpha.h:Labels", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/00590b30.cpp"], "reason": "This free formatter uses the established Technology records and shared Strings and Labels objects with the original name, call ABI, and bounded body. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
-// symbol    ?say_techs@@YAXPADHH@Z
-// kind      game
-void __cdecl say_techs(char *text, int tech_id, int with_detail) {
-    say_tech(text, tech_id, with_detail);
-    if (with_detail != 0) {
-        strcat(text, BufferJoinSpace);
-        strcat(text, SocialWinOpenParenText);
-        LPSTR *label_table = Labels.strings_ptr;
-        LPSTR label = label_table[0x274 / 4];
-        LPSTR detail = StringTable.get(label);
-        strcat(StringTemp, detail);
-        strcat(text, SocialWinCloseParenText);
-    }
-}
-
 /*
 Purpose: Append a facility's name to a scratch text: the facility label from
          base.h's Facility table (0x30-byte records, name first), and with
@@ -243,77 +264,6 @@ void __cdecl say_facility(char *text, int facility_id, int with_cost) {
     }
 }
 
-/*
-Purpose: Append an ability's name, and with the flag the " (" + detail +
-         ")" tail, reading the ability label from veh.h's Ability table
-         (0x1C-byte records, name first) and the detail label through
-         Labels.strings_ptr + 0x290.
-
-// ORIGINAL: 0x00590AA0 ?say_ability@@YAXPAXHH@Z 0x00590AA0-0x00590B22 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/strings.h declares say_ability; strings.cpp owns StringTable/StringTemp and includes veh.h for Ability.", "The pinned label word at byte offset 0x290 is dword index 0xA4; existing label_get(0xA4) performs the same LPSTR-table lookup.", "The one-space/open/close strings are emitted as source-owned literals in the original strcat order."], "reason": "Recover this formatter through the existing StringTable and typed application records beside the callback table that installs it; StringTable storage and implementation remain owned by strings.cpp. Preserve original effects and historical identity."}
-// symbol    ?say_ability@@YAXPADHH@Z
-// size      130 bytes
-// prototype void (__cdecl ?say_ability@@YAXPAXHH@Z)(int8* text, int32 abilityID, int32 withDetail)
-// callers   0   call targets   2
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x006169A0 0x00645470
-Return Value: n/a
-Status: Measured BYTE_EXACT here in place (wave 8 record-then-retire); the
-        seed src/unrecovered/00590aa0.cpp is retired and its claim lives on
-        the marker above. The Ability index is computed first and the
-        receiver materialized at the get, because the original needs ECX
-        for the 7-int scale and loads StringTable after it.
-*/
-void __cdecl say_ability(char *text, int ability_id, int with_detail) {
-    LPSTR ability_name = Ability[ability_id].name;
-    LPSTR s1 = StringTable.get(ability_name);
-    strcat(text, s1);
-    if (with_detail != 0) {
-        strcat(text, BufferJoinSpace);
-        strcat(text, SocialWinOpenParenText);
-        LPSTR *label_table = Labels.strings_ptr;
-        Strings *strings = &StringTable;
-        LPSTR label = label_table[0xA4];
-        LPSTR detail = strings->get(label);
-        strcat(StringTemp, detail);
-        strcat(text, SocialWinCloseParenText);
-    }
-}
-
-/*
-Purpose: Append a social category's name, and with the flag the " (" +
-         model + ")" tail, reading the category label from faction.h's
-         SocialCategories table (0xD4-byte records, type first) and the
-         model label through Labels.strings_ptr + 0x114.
-
-// ORIGINAL: 0x00590A10 ?say_society@@YAXPAXHH@Z 0x00590A10-0x00590A93 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/strings.h declares say_society; strings.cpp owns StringTable/StringTemp; src/faction.h declares SocialCategories.", "The pinned label word at byte offset 0x114 is dword index 0x45; existing label_get(0x45) performs the same LPSTR-table lookup.", "The one-space/open/close strings are emitted as source-owned literals in the original strcat order."], "reason": "Recover this formatter through the existing StringTable and typed application records beside the callback table that installs it; StringTable storage and implementation remain owned by strings.cpp. Preserve original effects and historical identity."}
-// symbol    ?say_society@@YAXPADHH@Z
-// size      131 bytes
-// prototype void (__cdecl ?say_society@@YAXPAXHH@Z)(int8* text, int32 societyID, int32 withModel)
-// callers   0   call targets   2
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x006169A0 0x00645470
-Return Value: n/a
-Status: Measured BYTE_EXACT here in place (wave 8 record-then-retire); the
-        seed src/unrecovered/00590a10.cpp is retired and its claim lives on
-        the marker above. Like say_ability the 0xD4 scale borrows ECX, so
-        the receiver materializes at the get despite the hoisted local.
-*/
-void __cdecl say_society(char *text, int society_id, int with_model) {
-    Strings *strings = &StringTable;
-    LPSTR type = SocialCategories[society_id].type;
-    strcat(text, strings->get(type));
-    if (with_model != 0) {
-        strcat(text, BufferJoinSpace);
-        strcat(text, SocialWinOpenParenText);
-        char *model = label_get(0x45);
-        strcat(StringTemp, model);
-        strcat(text, SocialWinCloseParenText);
-    }
-}
 // Source-level formatter-family grouping proposed for the current tree.
 // The original translation-unit homes of say_project and say_vehicles
 // are unknown; this move preserves their mapped identities and does not
@@ -363,6 +313,95 @@ void __cdecl say_project(char *output, int project_id, int with_cost) {
         LPSTR cost_label = Labels.strings_ptr[179];
         strcat(StringTemp, StringTable.get(cost_label));
         strcat(output, SocialWinCloseParenText);
+    }
+}
+
+/*
+Purpose: Append a social category's name, and with the flag the " (" +
+         model + ")" tail, reading the category label from faction.h's
+         SocialCategories table (0xD4-byte records, type first) and the
+         model label through Labels.strings_ptr + 0x114.
+
+// ORIGINAL: 0x00590A10 ?say_society@@YAXPAXHH@Z 0x00590A10-0x00590A93 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/strings.h declares say_society; strings.cpp owns StringTable/StringTemp; src/faction.h declares SocialCategories.", "The pinned label word at byte offset 0x114 is dword index 0x45; existing label_get(0x45) performs the same LPSTR-table lookup.", "The one-space/open/close strings are emitted as source-owned literals in the original strcat order."], "reason": "Recover this formatter through the existing StringTable and typed application records beside the callback table that installs it; StringTable storage and implementation remain owned by strings.cpp. Preserve original effects and historical identity."}
+// symbol    ?say_society@@YAXPADHH@Z
+// size      131 bytes
+// prototype void (__cdecl ?say_society@@YAXPAXHH@Z)(int8* text, int32 societyID, int32 withModel)
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x006169A0 0x00645470
+Return Value: n/a
+Status: Measured BYTE_EXACT here in place (wave 8 record-then-retire); the
+        seed src/unrecovered/00590a10.cpp is retired and its claim lives on
+        the marker above. Like say_ability the 0xD4 scale borrows ECX, so
+        the receiver materializes at the get despite the hoisted local.
+*/
+void __cdecl say_society(char *text, int society_id, int with_model) {
+    Strings *strings = &StringTable;
+    LPSTR type = SocialCategories[society_id].type;
+    strcat(text, strings->get(type));
+    if (with_model != 0) {
+        strcat(text, BufferJoinSpace);
+        strcat(text, SocialWinOpenParenText);
+        char *model = label_get(0x45);
+        strcat(StringTemp, model);
+        strcat(text, SocialWinCloseParenText);
+    }
+}
+
+/*
+Purpose: Append an ability's name, and with the flag the " (" + detail +
+         ")" tail, reading the ability label from veh.h's Ability table
+         (0x1C-byte records, name first) and the detail label through
+         Labels.strings_ptr + 0x290.
+
+// ORIGINAL: 0x00590AA0 ?say_ability@@YAXPAXHH@Z 0x00590AA0-0x00590B22 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/strings.h declares say_ability; strings.cpp owns StringTable/StringTemp and includes veh.h for Ability.", "The pinned label word at byte offset 0x290 is dword index 0xA4; existing label_get(0xA4) performs the same LPSTR-table lookup.", "The one-space/open/close strings are emitted as source-owned literals in the original strcat order."], "reason": "Recover this formatter through the existing StringTable and typed application records beside the callback table that installs it; StringTable storage and implementation remain owned by strings.cpp. Preserve original effects and historical identity."}
+// symbol    ?say_ability@@YAXPADHH@Z
+// size      130 bytes
+// prototype void (__cdecl ?say_ability@@YAXPAXHH@Z)(int8* text, int32 abilityID, int32 withDetail)
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x006169A0 0x00645470
+Return Value: n/a
+Status: Measured BYTE_EXACT here in place (wave 8 record-then-retire); the
+        seed src/unrecovered/00590aa0.cpp is retired and its claim lives on
+        the marker above. The Ability index is computed first and the
+        receiver materialized at the get, because the original needs ECX
+        for the 7-int scale and loads StringTable after it.
+*/
+void __cdecl say_ability(char *text, int ability_id, int with_detail) {
+    LPSTR ability_name = Ability[ability_id].name;
+    LPSTR s1 = StringTable.get(ability_name);
+    strcat(text, s1);
+    if (with_detail != 0) {
+        strcat(text, BufferJoinSpace);
+        strcat(text, SocialWinOpenParenText);
+        LPSTR *label_table = Labels.strings_ptr;
+        Strings *strings = &StringTable;
+        LPSTR label = label_table[0xA4];
+        LPSTR detail = strings->get(label);
+        strcat(StringTemp, detail);
+        strcat(text, SocialWinCloseParenText);
+    }
+}
+
+// ORIGINAL: 0x00590B30 ?say_techs@@YAXPAXHH@Z 0x00590B30-0x00590B9A BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["original:0x00590B30-0x00590B9A;seed:src/recovered/units/00590b30.cpp;source:src/strings.h:StringTable;source:src/alpha.h:Labels", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/00590b30.cpp"], "reason": "This free formatter uses the established Technology records and shared Strings and Labels objects with the original name, call ABI, and bounded body. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// symbol    ?say_techs@@YAXPADHH@Z
+// kind      game
+void __cdecl say_techs(char *text, int tech_id, int with_detail) {
+    say_tech(text, tech_id, with_detail);
+    if (with_detail != 0) {
+        strcat(text, BufferJoinSpace);
+        strcat(text, SocialWinOpenParenText);
+        LPSTR *label_table = Labels.strings_ptr;
+        LPSTR label = label_table[0x274 / 4];
+        LPSTR detail = StringTable.get(label);
+        strcat(StringTemp, detail);
+        strcat(text, SocialWinCloseParenText);
     }
 }
 
@@ -436,43 +475,6 @@ void __cdecl say_vehicles(char *text, int chassis_id, int with_height) {
         strcat(StringTemp, StringTable.get(label));
         strcat(text, SocialWinCloseParenText);
     }
-}
-
-
-
-// Native startup wrapper590500 constructs this table at945A60.
-// Eleven entries is the minimum observed initialized region, not an exact
-// original-capacity claim; higher category indices remain unverified.
-// RECOVERY_OBJECT: v1 0x00945A60 ?DatalinkEntryCallbackTableGlobal@@3VDatalinkEntryCallbackTable@@A
-DatalinkEntryCallbackTable DatalinkEntryCallbackTableGlobal;
-
-// ORIGINAL: 0x00590500 sub_590500 0x00590500-0x0059050A FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["task:datalink-selection-queue-owner", "Pinned queue/record operations share four-byte records and count at0x200; typed callbacks dispatch on category/value. Constructor owns minimum11-entry callback table, with zero-filled pair0 and CRT registration; exact total capacity and original TU remain unknown. Combined historical spans retain both CRT wrapper590500 and constructor590C20; emitted constructor alone is not proof of the generated wrapper matching.", "historical seed:src/unrecovered/00590500.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x00590500 loads 0x00945A60 and tail-jumps to 0x00590C20; the wrapper ends at that jump.", "Historical previous-owner observation: coff:src/datalink.cpp: _$E11 loads DatalinkEntryCallbackTableGlobal, tail-jumps to ??0DatalinkEntryCallbackTable, and .CRT$XCU selects _$E11.", "source:src/datalink_entries.cpp owns DatalinkEntryCallbackTableGlobal and its out-of-line constructor; the current compiler-symbol override identifies its generated startup wrapper, not an authored callback."], "reason": "Bind the original startup wrapper to the compiler-generated initializer of DatalinkEntryCallbackTableGlobal in its entry-formatting/selection owner; preserve the original wrapper identity and former combined-span evidence."}
-// symbol    _$E12
-// ORIGINAL: 0x00590C20 sub_590c20 0x00590C20-0x00590CAF BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x00590500 tail-jumps to 0x00590C20; the 143-byte constructor body ends with RET at 0x00590CAE.", "Historical previous-owner observation: coff:src/datalink.cpp: separate ??0DatalinkEntryCallbackTable@@QAE@XZ function symbol owns the typed callback-table constructor stores.", "Historical previous-owner observation: source:src/datalink.cpp:DatalinkEntryCallbackTableGlobal and DatalinkEntryCallbackTable::DatalinkEntryCallbackTable are separate source-owned lifetime/storage entities.", "history:git:ea2980d36:src/unrecovered/00590500.cpp preserves the former two-span placeholder identity; its source spans are partitioned here without dropping either range.", "source:src/datalink_entries.cpp contains both the callback-table storage definition and its separate typed constructor; the shared declaration remains in datalink.h."], "reason": "Bind the separately bounded original constructor body to DatalinkEntryCallbackTable construction beside its installed formatters and selection consumers; original TU boundaries and exact table capacity remain unproved."}
-// symbol    ??0DatalinkEntryCallbackTable@@QAE@XZ
-DatalinkEntryCallbackTable::DatalinkEntryCallbackTable() {
-  entries[1].help = 0;
-  entries[1].append_text = say_reactor;
-  entries[2].help = help_weapon;
-  entries[2].append_text = say_weapon;
-  entries[3].help = help_armor;
-  entries[3].append_text = say_armor;
-  entries[4].help = help_chassis;
-  entries[4].append_text = say_chassis;
-  entries[5].help = help_facility;
-  entries[5].append_text = say_facility;
-  entries[6].help = help_social;
-  entries[6].append_text = say_society;
-  entries[7].help = help_abil;
-  entries[7].append_text = say_ability;
-  entries[8].help = help_tech;
-  entries[8].append_text = say_techs;
-  entries[9].help = help_veh;
-  entries[9].append_text = say_vehicles;
-  entries[10].help = help_project;
-  entries[10].append_text = say_project;
 }
 
 
