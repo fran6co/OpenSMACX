@@ -30,6 +30,7 @@ extern const char BufferJoinSpace[];/*
     if (sizeof(int) == 3) close(); if (sizeof(int) == 3) close(); \
     if (sizeof(int) == 3) close(); if (sizeof(int) == 3) close(); \
     if (sizeof(int) == 3) close(); if (sizeof(int) == 3) close(); \
+    if (sizeof(int) == 3) close(); if (sizeof(int) == 3) close(); \
     if (sizeof(int) == 3) close(); if (sizeof(int) == 3) close();
 #include "stdafx.h"
 #include "caviar.h"
@@ -907,19 +908,38 @@ Purpose: Boot the CAVIAR voxel renderer. Hands the vx_* file-IO callbacks to
 //        neither; sites 5-6: ~BasePop called) are the "outer dearer than
 //        inner" prefix regime of MATCHING_GUIDE 2.8. No in-caller spend
 //        reaches it (probe sweeps: next_entry is refused before site 5 is);
-//        it needs ~BasePop itself to cost 4-10 `if` units more in this unit
-//        AND 22-40 free expansions before the first return site. Tree-wide
-//        the costlier ~BasePop is wrong (feall: 33-40 exact game functions
-//        lost), so both are WORKAROUND(inline) stand-ins local to this unit
+//        with the two Buffer::stride() expansions below it needs ~BasePop
+//        itself to cost 9-12 `if` units more in this unit AND 45-70 free
+//        expansions before the first return site (10 and 48 are the middle
+//        of the exact plateau). Tree-wide the costlier ~BasePop is wrong
+//        (feall: 33-40 exact game functions lost), so both are
+//        WORKAROUND(inline) stand-ins local to this unit
 //        (BASEPOP_DTOR_EXTRA, caviar_init_class_budget_probe); the original
 //        spelling that gives this unit that cost is not identified.
-// TRIED: the residual (14 rows outside the patched span) is instruction
-//        scheduling in two straight-line blocks: the descriptor stores
-//        (image: `[setup+4]=mem` and the A.stride load before the two
-//        pushes; ours after) and the record stores (image loads 0xFF just
-//        before its first use, ours two statements early). Store/load
-//        orders, hoisted locals for any subset of the five loads, chained
-//        assignments, a named 0xFF, 64 front-end counter pads: no change.
+// LEVER  2026-11-19: the two straight-line store blocks are one scratch-
+//        register cursor (MATCHING_GUIDE 3.2 S1/S7). The image's descriptor
+//        block holds the scene memory and both pitches in eax (lowest free)
+//        and the two pixel pointers in edx, ecx (cursor), which leaves the
+//        cursor at edx for the record stores (edx, eax, ecx, with 0xFF
+//        loaded when eax falls free). Both pitches read through an inline
+//        accessor (Buffer::stride()) and the pointers read directly give
+//        exactly that; named locals for the pointers, any order of locals
+//        or statements, and dead-local pads (0..15) do not.
+// TRIED: what makes ~BasePop dearer here (all measured, none explains it):
+//        this unit's flags are its exact library siblings' (/Og /Ot /Oy /Gs
+//        /Gy /Ob2; /Ob1, /Z7 off: same code; /O2, /Ox, /Oi, /Os, no /Oy:
+//        further away); select_direct_draw_device 0x0062C8E0, the library's
+//        only other BasePop local, is exact with the plain destructor and
+//        breaks with 4 or more extra units, so the cost is not a
+//        library-wide header difference; a holder struct or a derived class
+//        around the local (359-381 rows); ~FlatButton out of line in this
+//        unit (same teardown as before); one charged inline between the
+//        fourth and fifth return sites (32+ units give the 4/2 split and
+//        the three ??_DDialogs, but next_entry is refused and the
+//        StringList expansion lands at site 4 instead of site 1). The
+//        image's depths (site 1: Dialogs + first StringList; 2-3: Dialogs;
+//        4: none) need the reservation each unvisited site holds to be
+//        positive but below a StringList teardown's cost.
 // TRIED: int return on vox_init_callbacks tested `test eax, eax` against the
 //        image's `test al, al`; the forwarder now returns char and the test
 //        agrees (18 -> 19 of 392 at /O2 /GX).
@@ -940,7 +960,7 @@ Status: REWRITTEN under RAII; the notes above carry what the image proves
         and what measurement showed about the remaining divergence.
 */
 // WORKAROUND(inline): dead /Ob2 probe, not recovered code; the constant
-// argument folds it away. 32 expansions before the first return site give
+// argument folds it away. 48 expansions before the first return site give
 // init_class the pass-2 room the image shows (see the LEVER note above).
 static inline int caviar_init_class_budget_probe(int x) { if (x == 0) x = 1; return x; }
 #define CAVIAR_INIT_CLASS_PROBE8 \
@@ -967,6 +987,8 @@ int Caviar::init_class() {
         &Caviar::vx_write, &Caviar::vx_seek, &Caviar::vx_tell};
 
     CAVIAR_INIT_CLASS_PROBE8  // WORKAROUND(inline): see the probe above
+    CAVIAR_INIT_CLASS_PROBE8  // WORKAROUND(inline)
+    CAVIAR_INIT_CLASS_PROBE8  // WORKAROUND(inline)
     CAVIAR_INIT_CLASS_PROBE8  // WORKAROUND(inline)
     CAVIAR_INIT_CLASS_PROBE8  // WORKAROUND(inline)
     CAVIAR_INIT_CLASS_PROBE8  // WORKAROUND(inline)
@@ -1027,17 +1049,19 @@ int Caviar::init_class() {
     CaviarSceneBufferB.buffer().fill(0);
     vox_fill_colour_table(CaviarSceneMemory, 0xffff, 0x10000);
 
-    // The descriptor block, in the image's store order.
-    void *const bits_a = CaviarSceneBufferA.buffer().dib_bits_;
-    void *const bits_b = CaviarSceneBufferB.buffer().dib_bits_;
+    // The descriptor block, in the image's store order. The two pitches go
+    // through Buffer::stride(): as named values they take the lowest free
+    // register (eax, twice) and leave the scratch cursor where the image
+    // has it for the record stores below; the pixel pointers are read
+    // directly and take the cursor (edx, ecx).
     CaviarScene.setup_.depth_buffer_ = CaviarSceneMemory;
-    CaviarScene.setup_.colour_row_step_ = CaviarSceneBufferA.buffer().stride_;
-    CaviarScene.setup_.colour_buffer_ = bits_a;
+    CaviarScene.setup_.colour_row_step_ = CaviarSceneBufferA.buffer().stride();
+    CaviarScene.setup_.colour_buffer_ = CaviarSceneBufferA.buffer().dib_bits_;
     CaviarScene.setup_.colour_width_ = 0x100;
     CaviarScene.setup_.height_ = 0x100;
     CaviarScene.setup_.pixel_size_ = 1;
-    CaviarScene.setup_.shadow_buffer_ = bits_b;
-    CaviarScene.setup_.shadow_row_step_ = CaviarSceneBufferB.buffer().stride_;
+    CaviarScene.setup_.shadow_buffer_ = CaviarSceneBufferB.buffer().dib_bits_;
+    CaviarScene.setup_.shadow_row_step_ = CaviarSceneBufferB.buffer().stride();
     CaviarScene.setup_.depth_row_step_ = 0x100;
 
     CaviarScene.created_ = vox_create_record(

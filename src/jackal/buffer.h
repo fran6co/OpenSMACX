@@ -310,6 +310,12 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   void set_markup_enabled(int enabled) { markup_enabled_ = enabled; }
   // FileWin::populate_directory branches on the existing DIB pixel pointer.
   bool has_dib_bits() const { return dib_bits_ != nullptr; }
+  // The row pitch, read through an inline: Caviar::init_class 0x006185A0
+  // stores both scene surfaces' pitch into its descriptor as named values
+  // (the image gives each the lowest free scratch register and leaves the
+  // round-robin cursor alone, MATCHING_GUIDE 3.2 S7), which a direct
+  // `stride_` read does not do. The name is chosen; the image has no symbol.
+  uint32_t stride() const { return stride_; }
   bool has_locked_bits() const { return locked_bits_ != nullptr; }
   // 0x10, the wrap width every writer measures against: wrap_height and
   // wrap_height_flying seed their running width from it
