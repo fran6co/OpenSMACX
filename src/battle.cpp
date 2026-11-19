@@ -2400,26 +2400,26 @@ int __cdecl interceptor(int faction_id, int opposing_faction,
     }
     if (faction_id == ConsoleGlobal.faction_id_ || opposing_faction == ConsoleGlobal.faction_id_) {
         parse_says(0, Players[faction_id].adj_name_faction, -1, -1);
-        int x = Vehs[best_vehicle].x;
+        best_score = Vehs[best_vehicle].x;
         int y = Vehs[best_vehicle].y;
-        int base_id = base_find(x, y);
+        int base_id = base_find(best_score, y);
         parse_says(1, Bases[base_id].name_string, -1, -1);
-        ConsoleGlobal.focus(x, y, faction_id);
+        ConsoleGlobal.focus(best_score, y, faction_id);
         NetMsgPrimary.pop("AIRSCRAMBLE", 5000, 0, 0);
         // Animate the interceptor one step at a time toward the target.
-        while (map_range(x, y, target_x, target_y)) {
+        while (map_range(best_score, y, target_x, target_y)) {
             int best_direction = -1;
             int best_distance = 999;
             int next_x;
             int next_y;
-            for (int direction = 0; direction < 8; ++direction) {
-                const int x_step = wrap_map_x(VehMoveDeltaX[direction] + x);
-                const int y_step = VehMoveDeltaY[direction] + y;
+            for (faction_id = 0; faction_id < 8; ++faction_id) {
+                const int x_step = wrap_map_x(VehMoveDeltaX[faction_id] + best_score);
+                const int y_step = VehMoveDeltaY[faction_id] + y;
                 if (on_map(x_step, y_step)) {
                     const int distance = map_range(x_step, y_step, target_x, target_y);
                     if (distance < best_distance) {
                         best_distance = distance;
-                        best_direction = direction;
+                        best_direction = faction_id;
                         next_x = x_step;
                         next_y = y_step;
                     }
@@ -2428,8 +2428,8 @@ int __cdecl interceptor(int faction_id, int opposing_faction,
             if (best_direction < 0) {
                 break;
             }
-            veh_scoot(best_vehicle, x, y, best_direction, 0);
-            x = next_x;
+            veh_scoot(best_vehicle, best_score, y, best_direction, 0);
+            best_score = next_x;
             y = next_y;
         }
     }
