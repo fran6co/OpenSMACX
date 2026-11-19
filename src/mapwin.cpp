@@ -5091,7 +5091,8 @@ void MapWin::draw_base_names() {
     // every call (no null-checked Buffer* local), so call the members on this.
     // The guarded write helper binds its Buffer& before the text test and
     // spills it to [ebp-8] (0x004680B3, 0x00468233, 0x0046886D).
-    RECT saved_clip = current_clip();
+    const RECT &clip = current_clip();
+    RECT saved_clip = clip;
     restore_clip();
     draw_base_dest(0);
 
@@ -5129,8 +5130,8 @@ void MapWin::draw_base_names() {
                 Bases[base_id].faction_id_current == ConsoleGlobal.faction_id_) {
                 strcat(text, " (*)");
             }
-            set_text_color(InfoFactionTextColors[Bases[base_id].faction_id_current],
-                           InfoFactionShadowColors[Bases[base_id].faction_id_current], 1, 1);
+            set_text_color(ChatItemIdTable[Bases[base_id].faction_id_current],
+                           ChatShadowColors[Bases[base_id].faction_id_current], 1, 1);
             if ((GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) != 0 &&
                 ((GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0 ||
                  (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
