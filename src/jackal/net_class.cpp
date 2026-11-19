@@ -3329,7 +3329,7 @@ int __cdecl internal_receive(NetThreadInfo *thread_info) {
             SetEvent(thread_info->events_[1]);
             break;
         case 1:
-            if (static_cast<int32_t>(net->queue_10c_.count_) < 0xC8) {
+            if (net->queue_10c_.count_ < 0xC8) {
                 net->queue_10c_.add(bytes + 8, size, from, 0,
                                     static_cast<unsigned long>(-1));
                 SetEvent(thread_info->events_[4]);

@@ -51,6 +51,6 @@ class NetFifo {
 
   NetFifoNode *head_;        // +0x0
   NetFifoNode *tail_;        // +0x4
-  uint32_t count_;           // +0x8
+  int count_;                // +0x8
   CRITICAL_SECTION lock_;    // +0xC, extent +0x18
 };
