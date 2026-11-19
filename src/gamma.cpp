@@ -137,6 +137,9 @@ double Gamma::exec(Palette *target, float initial_gamma, int apply_only) {
     // function's symbol count (parameters + assigned locals) to be 5 mod 8: six more locals than the four the
     // code needs. A constant-valued local is code-neutral and counts, so the six layout constants are named;
     // which six constants the original named is not determined (any six give the image).
+    // Checked 2026-11-19: no other exact function in the tree names two or more constant-valued locals, the
+    // image homes none of them (a neutral local has no slot), and six unused `T *p = &member_;` locals in
+    // their place measure exact too. So the six symbols are real but their identity is not recoverable here.
     int width = 236;
     int height = 32;
     int gap = 3;

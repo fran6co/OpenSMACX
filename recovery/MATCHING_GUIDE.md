@@ -4012,6 +4012,15 @@ re-aligns their pad blocks (2.5). base_energy 0x004EB560 and give_a_base
 0x0054CF40 flip from header content, not from the counter.
 - **reportif.cpp:** `ReportIf::on_iface_button_clicked` 0x004A6330.
 - **turn.cpp:** `end_of_game` 0x00524870.
+- **Round of 2026-11-19 (after the EditBox setters; one pass, windows by
+  whole-unit fe sweep):** turn.cpp function pads 38 -> 50 (all exact at 1,
+  5-17, 21-23, 28, 30-35, 40, 42-63); faction.cpp 50 -> 31 (0-3, 5-6, 8-9,
+  12-13, 15-16, 18-19, 21-23, 26, 28-33, 35-36, 38-39, 41-42, 44, 46, 60,
+  62); terraforming_actions.cpp: no count of the extern block gives
+  action_give any more, a function-kind HEADER-PADS block before its marker
+  does (6, 25-28; set to 26, extern block stays 22). base_energy 0x004EB560
+  (one reload-order row) is exact at no count of function pads before its
+  marker (0..63) and at no count of dead locals (0..7): not a counter canary.
 - **console_commands.cpp:** `corner_the_market` 0x004E2000.
 - **Header vetting:** `action_give`, `capture_base`, `setup_player`,
   `base_production`, `battle_fight`, `enemy_move`, `game_data`,
@@ -4081,6 +4090,22 @@ re-aligns their pad blocks (2.5). base_energy 0x004EB560 and give_a_base
   where `scroll_.paging_ = 10` leaves it after them; a free inline helper
   taking the field by pointer or reference compiles like the direct store.
   Same family as S7 (the callee's `this` is the named value).
+  Tree screen `analysis/storesched.py` (2026-11-19, par-5): 117 non-exact
+  functions emit a store at another place than the image; once frame slots
+  are left out, only 8 functions have a store that moved across argument
+  pushes alone (`SETTER?`). Confirmed there: EditBox's B1C/B20/B24 (new
+  one-value setters; AlphaSave::init 0x0040786B, NetWin::exec, DiploWin::exec
+  0x00444720; EditGroup::attach 0x00611AF0 is exact with either spelling, so
+  a setter is neutral where the store is not next to a call). Not the setter
+  shape although they look like it: MonuWin::init 0x004722C4 (the image
+  stores LATER than a raw store does, and member helpers taking x/y or the
+  rect helpers make it worse), Console::activate 0x004D2FBD (`mov edx, ecx`
+  copy of `this` before the second store; a member setter on `this` is the
+  same value and changes nothing), BaseWin::init 0x0041F3C3 (one store and
+  one push swapped; the order StatusWin::init is exact with does not carry
+  over). The confirmed cases are all stores into a member OBJECT; the one
+  setter tried on the function's own `this` (Console::activate) compiled
+  like the raw store.
 
 ### 3.7 Rules from the 2026-11-18 parallel rounds
 

@@ -361,3 +361,7 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   the number of ways into it, image over ours; classes a (image up front, ours deferred), b (reverse), c (tail count), d (order),
   s (saved set). `--census` tabulates the exact functions' shape against the source guard spelling (7 s, no compile).
   `analysis/probes/prosave/run.py` is the probe family behind the rule (one edge from the register's region to the exit).
+- `analysis/storesched.py [unit ...] [--addr A,..] [--src ALT] [--max N] [--json F]` moved-store screen (MATCHING_GUIDE 3.6
+  "A member setter's parameter schedules the store early"; 60 s tree-wide): the `mov [reg + K], v` stores both sides emit at
+  different places of one differing stretch, rows earlier/later, base register `this` or another object; `SETTER?` = moved
+  only across argument pushes (try the class's inline setter, or a one-value setter when two functions need it).
