@@ -763,13 +763,13 @@ int Popup::on_link_clicked(int id, char *link) {
     if (link == 0) {
         return 1;
     }
-// RECOVERY_LITERAL: v1 0x006827B8 0x006827C1 $SG60083 0x004050A0
+// RECOVERY_LITERAL: v1 0x006827B8 0x006827C1 $SG60081 0x004050A0
     if (_stricmp(link, "homelink") == 0) {
         ExitTurnLoop = 1;
         fallout();
         ShowWindow(HandleMain, 0);
-// RECOVERY_LITERAL: v1 0x006827DC 0x006827E1 $SG60085 0x004050A0
-// RECOVERY_LITERAL: v1 0x006827C4 0x006827DB $SG60084 0x004050A0
+// RECOVERY_LITERAL: v1 0x006827DC 0x006827E1 $SG60083 0x004050A0
+// RECOVERY_LITERAL: v1 0x006827C4 0x006827DB $SG60082 0x004050A0
         ::ShellExecuteA(0, "open", "http:\\\\www.firaxis.com", 0, 0, 1);
         return 1;
     }
@@ -814,7 +814,7 @@ int Popup::on_link_clicked(int id, char *link) {
 int Popup::start(char *text_file, const char *text_label, int value,
                  char *override_text, int flags, GraphicWin *owner_window) {
     if (strcmp(text_file, ScriptPopupFile) != 0
-// RECOVERY_LITERAL: v1 0x006827E4 0x006827EF $SG60096 0x00406380
+// RECOVERY_LITERAL: v1 0x006827E4 0x006827EF $SG60094 0x00406380
         && strcmp(text_file, "SCRIPT.txt") != 0) {
         return BasePop::start(text_file, text_label, value, override_text, flags,
                               owner_window);
@@ -822,8 +822,8 @@ int Popup::start(char *text_file, const char *text_label, int value,
 
     if ((Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) != 0) {
         if (ExpansionEnabled == 0) goto fallback;
-// RECOVERY_LITERAL: v1 0x006827F4 0x00682805 $SG60103 0x00406380
-// RECOVERY_LITERAL: v1 0x006827F0 0x006827F3 $SG60102 0x00406380
+// RECOVERY_LITERAL: v1 0x006827F4 0x00682805 $SG60101 0x00406380
+// RECOVERY_LITERAL: v1 0x006827F0 0x006827F3 $SG60100 0x00406380
         FILE *const fp = fopen("alienIscript.txt", "rb");
         if (fp == 0) goto fallback;
         fclose(fp);
@@ -837,8 +837,8 @@ int Popup::start(char *text_file, const char *text_label, int value,
     if (PopupDialogFactionID <= 0 || PopupDialogFactionID >= 8) goto fallback;
     if ((Players[PopupDialogFactionID].rule_flags & RFLAG_ALIEN) == 0) goto fallback;
     {
-// RECOVERY_LITERAL: v1 0x0068280C 0x0068281D $SG60118 0x00406380
-// RECOVERY_LITERAL: v1 0x00682808 0x0068280B $SG60117 0x00406380
+// RECOVERY_LITERAL: v1 0x0068280C 0x0068281D $SG60116 0x00406380
+// RECOVERY_LITERAL: v1 0x00682808 0x0068280B $SG60115 0x00406380
         FILE *const fp = fopen("alienuscript.txt", "rb");
         if (fp == 0) goto fallback;
         fclose(fp);

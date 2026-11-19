@@ -1077,7 +1077,7 @@ Status: Complete
 int __cdecl popup_faction_datalinks(int faction_id) {
     // Native44CA90 uses this exact NUL-terminated label. Both comparison
     // profiles emit its independent ten-byte literal COMDAT in this TU.
-    // RECOVERY_LITERAL: v1 0x0068469C 0x006846A6 $SG54771 0x0044CA90
+    // RECOVERY_LITERAL: v1 0x0068469C 0x006846A6 $SG54769 0x0044CA90
     return X_pop(Players[faction_id].filename, "DATALINKS",
                                0);
 }
