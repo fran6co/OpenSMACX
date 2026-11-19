@@ -461,6 +461,15 @@ an explicit `--pfx` is only needed to pick another lane.
   the image before acting. 2026-11-19 first pass, four real ones: reset_territory RadiusOffsetX/Y against VehMoveDeltaX/Y
   (G), communicate's tech split at Technology[89] against [87] (an in-loop IV compare, G), process_message TimeControl
   `.extra` against `.event` (REF) and enemy_move `minerals_accumulated_2` against `unused_surplus` (REF).
+  Filters (2026-11-19 second pass): `SS_REF=winN` drops a REF row only when the swap balances within N instructions on
+  both sides (`SS_REF=block`: the same basic block) instead of anywhere in the function; `SS_CTX=k` keeps only rows inside
+  an agreeing run (k equal fe rows each side), which removes fe misalignment (most raw hits). `SS_CALLS=1` adds `CALL`:
+  fe-aligned direct calls whose targets differ (ours resolved through the bound marker addresses; an unbound callee is an
+  ICF alias such as `remove_all_walk`/`remove_all`). Globals the measurement targets lack are named from
+  `RECOVERY_OBJECT` lines and from `// 0xADDR` trailing comments on declarations. Controls: REF and CALL over every
+  BYTE_EXACT marker give 0 resolved mismatches. Second pass found InfoWin::setup_text `Might[].adj_start` (REF, win16 +
+  CTX=1); CALL with CTX=2 found no sibling-call typos, only inline-budget rows (select_special's 5-argument Popup::start,
+  MapWin::click's ::draw_map, probe/enemy_move's x_dist).
 - `analysis/slotflow.py <unit> <addr> [--src ALT.cpp] [--pfx N]` transcription-error screen (MATCHING_GUIDE 3.5): for every
   image instruction that reads a frame slot and is aligned with one of ours reading a named variable v, it takes the
   image's reaching definitions of that slot, maps each through the fe alignment to our instruction and the variable it

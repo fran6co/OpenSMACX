@@ -55,9 +55,39 @@ for _a, _b in (('ax', 'eax'), ('al', 'eax'), ('ah', 'eax'), ('bx', 'ebx'), ('bl'
     FULL[_a] = _b
 
 
+def source_objects():
+    """mangled name -> image address of every `// RECOVERY_OBJECT:` binding in src/ (objects the
+    measurement targets do not carry because no measured function references them by name)"""
+    out = {}
+    for path in pathlib.Path(R, 'src').rglob('*.cpp'):
+        for m in re.finditer(r'// RECOVERY_OBJECT: \S+ 0x([0-9A-Fa-f]{8})\s.*?(\?\S+)',
+                             path.read_text(encoding='latin-1')):
+            out.setdefault(m.group(2), int(m.group(1), 16))
+    # plain globals whose declaration or definition carries the address as a trailing comment
+    # (`extern RulesResourceinfo ResourceInfo[N];  // 0x00945F50`), keyed by the bare identifier
+    for path in list(pathlib.Path(R, 'src').rglob('*.h')) + list(pathlib.Path(R, 'src').rglob('*.cpp')):
+        for m in re.finditer(r'^\s*(?:extern\s+)?[\w:<>,\s\*]+?\b([A-Za-z_]\w*)\s*(?:\[[^\]]*\])*\s*;'
+                             r'\s*//\s*(?:@\s*)?0x([0-9A-Fa-f]{8})\b',
+                             path.read_text(encoding='latin-1'), re.M):
+            out.setdefault('=' + m.group(1), int(m.group(2), 16))
+    return out
+
+
+def object_address(name):
+    if name in OBJECTS:
+        return OBJECTS[name]
+    m = re.match(r'\?([A-Za-z_]\w*)@@3', name)
+    return OBJECTS.get('=' + m.group(1)) if m else None
+
+
+OBJECTS = source_objects()
+
+
 class Namer:
     def __init__(self, targets):
-        pairs = sorted(set((a, n) for n, a in targets.external.items() if IMGLO <= a < IMGHI))
+        known = dict(OBJECTS)
+        known.update(targets.external)
+        pairs = sorted(set((a, n) for n, a in known.items() if IMGLO <= a < IMGHI))
         self.addrs = [a for a, _ in pairs]
         self.names = [n for _, n in pairs]
 
@@ -280,6 +310,8 @@ def ours_code(c, sym, targets, host):
         addend = int.from_bytes(data[va:va + 4], 'little', signed=True)
         ref = CodeReference(va, False, tgt.name, tgt.storage, addend, None)
         a = targets.address(ref, host)
+        if a is None and not tgt.name.startswith(('$', '??_C@', '__real@')):
+            a = object_address(tgt.name)
         if a is None and tgt.name.startswith('__imp_'):
             nm = re.sub(r'@\d+$', '', tgt.name[6:]).lstrip('_')
             a = next((k for k, v in IMPORTS.items() if v == nm), None)
@@ -308,10 +340,65 @@ def ours_code(c, sym, targets, host):
         else:
             v = a + addend
         data[va:va + 4] = struct.pack('<I', v & 0xFFFFFFFF)
+    calls = {}
     for va, index, kind in sec.relocations:
         if kind == 0x0014:
+            tgt = c.symbols.get(index)
+            if tgt is not None and va >= 1 and data[va - 1] == 0xE8:
+                ref = CodeReference(va, True, tgt.name, tgt.storage, -4, None)
+                try:
+                    a = targets.address(ref, host)
+                except Exception:
+                    a = None
+                calls[va - 1] = (a, tgt.name)
             data[va:va + 4] = b'\0\0\0\0'
+    _TL.calls = calls
     return bytes(data), unbound
+
+
+def call_refs(rows, lo, namer):
+    """C: fe-aligned `call <ext>` rows whose direct targets differ (a sibling function with the same
+    signature, a wrong overload). Our target is the bound image address of the called symbol; an
+    unbound callee is compared by name against the image target's bound name."""
+    calls = getattr(_TL, 'calls', {})
+    ctx = int(os.environ.get('SS_CTX', '0'))
+    win = int(os.environ.get('SS_CALLWIN', '8'))
+    # per side, the targets of every direct call, in order, to drop a swap of two nearby calls
+    img_t, our_t = [], []
+    for flag, o, cc in rows:
+        if o is not None and o[1].startswith('call') and fe.imgbytes(lo + o[0], lo + o[0] + 1) == b'\xe8':
+            img_t.append(img_call(lo + o[0]))
+        else:
+            img_t.append(None)
+        our_t.append(calls.get(cc[0]) if cc is not None else None)
+    out = []
+    for n, (flag, o, cc) in enumerate(rows):
+        if o is None or cc is None or o[1] != cc[1] or not o[1].startswith('call') or '<ext>' not in o[1]:
+            continue
+        ti, to = img_t[n], our_t[n]
+        if ti is None or to is None:
+            continue
+        a, name = to
+        if a is not None and a == ti:
+            continue
+        ni = namer(ti)[0] if namer(ti)[1] == 0 else '0x%X' % ti
+        if a is None and (name == ni or name.lstrip('_').split('@')[0] == ni.lstrip('_?').split('@')[0]):
+            continue
+        if ctx and not all(0 <= m < len(rows) and rows[m][0] == '  '
+                           for m in list(range(n - ctx, n)) + list(range(n + 1, n + ctx + 1))):
+            continue
+        near = range(max(0, n - win), min(len(rows), n + win + 1))
+        if any(img_t[m] is not None and a is not None and img_t[m] == a for m in near) and \
+                any(our_t[m] is not None and our_t[m][0] == ti for m in near):
+            continue   # two nearby calls in swapped order
+        out.append(('%X' % (lo + o[0]), '%x' % cc[0], '0x%X %s' % (ti, ni[:50]),
+                    ('0x%X ' % a if a is not None else 'unbound ') + name[:50]))
+    return out
+
+
+def img_call(at):
+    rel = struct.unpack('<i', fe.imgbytes(at + 1, at + 5))[0]
+    return (at + 5 + rel) & 0xFFFFFFFF
 
 
 def addr_operands(code, org, at):
@@ -348,9 +435,22 @@ def aligned_refs(c, text, addr, lo, code, namer):
         if cc is not None:
             for v in addr_operands(code, 0, cc[0]):
                 allo[namer(v)] += 1
-    for flag, o, cc in r['rows']:
+    mode = os.environ.get('SS_REF', '')
+    block = mode == 'block' or mode.startswith('win')
+    if block:
+        img_end = max(lo + o[0] + o[2] for _, o, _c in r['rows'] if o is not None)
+        our_end = max(cc[0] + cc[2] for _, _o, cc in r['rows'] if cc is not None)
+        win = int(mode[3:] or 12) if mode.startswith('win') else None
+        bi = block_operands(fe.imgbytes(lo, img_end), lo, namer, win)
+        bo = block_operands(code[:our_end], 0, namer, win)
+    ctx = int(os.environ.get('SS_CTX', '0'))
+    rows = r['rows']
+    for n, (flag, o, cc) in enumerate(rows):
         if o is None or cc is None or o[1] != cc[1] or '<r>' not in o[1]:
             continue
+        if ctx and not all(0 <= m < len(rows) and rows[m][0] == '  '
+                           for m in list(range(n - ctx, n)) + list(range(n + 1, n + ctx + 1))):
+            continue   # SS_CTX=k: only rows inside an agreeing run (k equal rows each side), not misalignment
         vi = addr_operands(fe.imgbytes(lo + o[0], lo + o[0] + 16), lo + o[0], lo + o[0])
         vo = addr_operands(code, 0, cc[0])
         if len(vi) != len(vo):
@@ -359,9 +459,59 @@ def aligned_refs(c, text, addr, lo, code, namer):
             if b >= FAKE:
                 continue   # our side unbound: no address to compare
             na, nb = namer(a), namer(b)
-            if a != b and na != nb and not (os.environ.get('SS_ALLREF') is None
-                                            and alli[na] == allo[na] and alli[nb] == allo[nb]):
-                out.append(('%X' % (lo + o[0]), '%x' % cc[0], o[1], '%s%+#x' % na, '%s%+#x' % nb))
+            if a == b or na == nb:
+                continue
+            if block:
+                # a load-order swap: the image's block also touches our target and our block the image's
+                si, so = bi.get(lo + o[0], ()), bo.get(cc[0], ())
+                if nb in si and na in so:
+                    continue
+            elif os.environ.get('SS_ALLREF') is None and alli[na] == allo[na] and alli[nb] == allo[nb]:
+                continue
+            out.append(('%X' % (lo + o[0]), '%x' % cc[0], o[1], '%s%+#x' % na, '%s%+#x' % nb))
+    return out
+
+
+def block_operands(code, org, namer, win=None):
+    """instruction address -> set of named address operands of its basic block (split at jumps, rets and
+    local jump targets), or with `win` of the +-win instructions around it"""
+    ins = list(MD.disasm(code, org))
+    if win:
+        names = []
+        for i in ins:
+            cur = set()
+            for op in i.operands:
+                if op.type == x86.X86_OP_MEM:
+                    v = op.mem.disp & 0xFFFFFFFF
+                elif op.type == x86.X86_OP_IMM and i.mnemonic != 'call' and not i.mnemonic.startswith('j'):
+                    v = op.imm & 0xFFFFFFFF
+                else:
+                    continue
+                if is_addr(v):
+                    cur.add(namer(v))
+            names.append(cur)
+        return {i.address: set().union(*names[max(0, k - win):k + win + 1]) for k, i in enumerate(ins)}
+    starts = {org}
+    for i in ins:
+        if i.mnemonic.startswith('j') or i.mnemonic.startswith('ret'):
+            starts.add(i.address + i.size)
+            if i.operands and i.operands[0].type == x86.X86_OP_IMM:
+                starts.add(i.operands[0].imm & 0xFFFFFFFF)
+    out, cur = {}, None
+    members = []
+    for i in ins:
+        if i.address in starts or cur is None:
+            cur = set()
+        for op in i.operands:
+            if op.type == x86.X86_OP_MEM:
+                v = op.mem.disp & 0xFFFFFFFF
+            elif op.type == x86.X86_OP_IMM and i.mnemonic != 'call' and not i.mnemonic.startswith('j'):
+                v = op.imm & 0xFFFFFFFF
+            else:
+                continue
+            if is_addr(v):
+                cur.add(namer(v))
+        out[i.address] = cur
     return out
 
 
@@ -408,6 +558,9 @@ def scan_unit(unit, addrs, pfx, targets, namer, near):
         Fo, Go, Io = collect(code[:end], 0, namer)
         res = dict(unit=unit, addr='%08X' % addr, sym=sym, unbound=dict(unb))
         res['R'] = aligned_refs(cc_, text, addr, lo, code, namer)
+        if os.environ.get('SS_CALLS'):
+            r_ = fe.evaluate(cc_, text, addr)
+            res['C'] = call_refs(r_['rows'], lo, namer) if 'error' not in r_ else []
         fi, fo = diff_sets(Fi, Fo)
         # pairs of the same type
         pairs = []
@@ -480,11 +633,13 @@ def main():
         if 'error' in f:
             print('ERR', f['unit'], f['error'])
             continue
-        if not (f['R'] or f['pairs'] or f['F_img'] or f['G_img'] or f['I_img'] or f['F_ours'] or f['G_ours'] or f['I_ours']):
+        if not (f['R'] or f.get('C') or f['pairs'] or f['F_img'] or f['G_img'] or f['I_img'] or f['F_ours'] or f['G_ours'] or f['I_ours']):
             continue
         print('==', f['addr'], f['unit'], f['sym'][:60])
         for x in f['R']:
             print('   REF  img %s ours %s %-40s img %s ours %s' % (x[0], x[1], x[2][:40], x[3], x[4]))
+        for x in f.get('C', ()):
+            print('   CALL img %s ours %s img %s ours %s' % x)
         for p in f['pairs']:
             print('   PAIR %-28s img %+#x %s  ours %+#x %s' % (p[0][:28], p[1], ','.join(p[3]), p[2], ','.join(p[4])))
         for key in ('F_img', 'F_ours'):
