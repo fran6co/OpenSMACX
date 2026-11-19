@@ -2282,7 +2282,7 @@ int Win::init(int x, int y, int width, int height, char * caption,
 
     if (x < 0) {
         if (parent != 0) {
-            x += parent->outer_rect_.right - parent->outer_rect_.left - width;
+            x += rect_width(&parent->outer_rect_) - width;
         } else {
             x += WinScreenWidth - width;
         }
@@ -2390,8 +2390,8 @@ int Win::init(int x, int y, int width, int height, char * caption,
             Scroll *sc = this->scroll_horz_;
             int nc = this->outer_rect_.bottom - ScrollDefaultThickness;
             int arg2 = ((this->iFlags_ & 8) != 0)
-                           ? (this->outer_rect_.right - this->outer_rect_.left) - ScrollDefaultThickness
-                           : (this->outer_rect_.right - this->outer_rect_.left);
+                           ? rect_width(&this->outer_rect_) - ScrollDefaultThickness
+                           : rect_width(&this->outer_rect_);
             sc->init_horz_nc(0, nc, arg2, this, -2);
             this->scroll_horz_->show(0);
         }
