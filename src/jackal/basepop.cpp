@@ -1,6 +1,7 @@
 // WORKAROUND(decl): exec expands current_entry (0x006030B9 `mov ecx,[ecx+8];
 // mov eax,[ecx+4]` under its current_/head_ tests); see stringstruct.h.
 #define STRINGSTRUCT_CURRENT_ENTRY_INLINE
+#define DIALOG_SIZE_SETTERS  // stand-in: Dialog::set_field_2C/30 (dialog.h)
 /*
  * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.
  * Copyright (C) 2013-2021 Brendan Casey
@@ -591,9 +592,9 @@ void BasePop::set_width(int width) {
     // `list_box_.Dialog::field_20_ &= ~4` is the same form.
     if (external_window_ == 0 && (field_30A8_ & 0x400) == 0 &&
         WinScreenWidth >= 0x400) {
-        dialogs_.Dialog::field_2C_ = (width * 3) / 2;
+        dialogs_.set_field_2C((width * 3) / 2);
     } else {
-        dialogs_.Dialog::field_2C_ = width;
+        dialogs_.set_field_2C(width);
     }
 }
 
@@ -2828,9 +2829,9 @@ void BasePop::set_height(int height) {
     // gone. Measured BYTE_EXACT here.
     if (external_window_ == 0 && (field_30A8_ & 0x400) == 0 &&
         WinScreenWidth >= 0x400) {
-        dialogs_.Dialog::field_30_ = (height * 3) / 2;
+        dialogs_.set_field_30((height * 3) / 2);
     } else {
-        dialogs_.Dialog::field_30_ = height;
+        dialogs_.set_field_30(height);
     }
 }
 
