@@ -6460,6 +6460,54 @@ skeleton keeps only branches, `ret` and numbered `use(K)` markers)
   negated or nested, the block after the `break`, `for (;;)` with a break
   test, the arm with its own call and `break`) compile to our bytes or
   worse: VC6 normalizes them. The cause is not in the arm structure.
+- **Rung 4 class c, worked (par-6 2026-11-19; probes `gt_*`, `thr_*`,
+  `abs_*`, `ob_*` in `analysis/probes/blockorder/run.py`).** Read the first
+  `!!` conditional jump whose sense is inverted against ours, or the first
+  `!>` whose image target is a different *kind* of block (another return's
+  teardown, a block after a call), not the `first` block rungs.py names:
+  that is often a jump-target shift caused further down.
+  - *Inverted test, arms swapped:* the image `jne`s to an arm laid out
+    after the other one: write the arms in the image's order. Three of the
+    old `if (!(!x))` / `if (!(x))` spellings were tuned to the wrong layout
+    (action_terraform 0x004C9D60 `if (!do_it) {contribution} else {merge}`,
+    BattleWin::battle_report 0x00422671 and 0x0042225A). The "arm placed
+    after the join and jumped back" in action_terraform was this, not an
+    out-of-line form.
+  - *A constant arm threaded into the next test:* `v = c ? -1 : f(); if (v
+    < 0) { ...; return; }` compiles `c` to a jump straight into that
+    return's block (thr_tern = thr_if). An image `jne` from a guard into the
+    teardown of a later early return is this shape; an `if (!c) { v = f();
+    if (v < 0) return; ... }` wrapper sends it to the final return instead
+    (base_production 0x004F107F, 289 -> 243, rung 4 -> 5).
+  - *Two-arm abs:* `sub; js A; mov edx, ecx; jmp J; A: mov edx, esi; sub
+    edx, ebx; J:` is the ternary `d = x - y >= 0 ? x - y : y - x`; the
+    one-arm `d = x - y; if (d < 0) d = y - x;` is `sub; jns J; ...`
+    (abs_tern/abs_if; capture_base 0x0050DC1E has both forms, dx and dy).
+  - *`goto` polarity:* `if (d) goto F;` as the last statement of an arm can
+    compile to `je JOIN; jmp F` in a large function; the image's `jne F;
+    jmp JOIN` came from adding `goto JOIN;` with the label at the join
+    (shoot_it 0x004CDF47, rung 4 -> 5). In the small probe (gt_arm) both
+    spellings give `jne F; jmp J`, so the inversion is whole-function.
+    Writing the test inside each popup arm instead gives fewer rows (33)
+    but hosts the cross-jumped call/test in the first arm, the image in the
+    last: keep the layout-correct form.
+  - *A jump that skips a call ours always makes is behaviour:* battle_report
+    0x0042260D/0x00422618 `jl` past the wrap call at 0x00422795, so the
+    weapon line is wrapped only inside the odds test. It moved the function
+    to rung 2 (allocation change, lost cross-jump); kept.
+  - *Not found* (each tried with 3..5 spellings): base_yield 0x004E8930,
+    where range()'s two clamp arms sit after the NEXT range() expansion's
+    `jmp` (ob_inl_loop puts them right after the in-line arm); action_destroy
+    0x004CAF94, where the BOMBFAILED block (reached only from the
+    `is_assault` test, after a `goto`) is laid out after found_terra's first
+    `jmp`, ours at the end; time_warp 0x005AF155, where the first expanded
+    get_plan's two results share one store (`or eax,-1; mov [ebp-0x70],
+    eax`, the found path `je`s onto the store; ours stores -1 directly);
+    ReportWin::on_key_click 0x004983FC, where the shared set_modal tail is
+    hosted in the F-key chain copy (ours: the rotation switch's case 7);
+    Net::join_session 0x0062EA1F, where `return local_player_id_` is laid
+    out after close() and the return-0 teardown (the if/else spelling gets
+    that order but moves the return-0 host to an earlier site, 22 -> 42).
 - **Open: when identical epilogue copies are merged in a large function**
   (facility_avail, 16 `ret` in the image, 15 in ours; hand-over to the
   return-tail work). There every invertible `jncc over | copy` is turned into

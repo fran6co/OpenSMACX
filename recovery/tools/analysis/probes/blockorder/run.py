@@ -10,6 +10,7 @@ PFX = os.environ.get('FE_PFX_BASE', '21')
 HDR = '''#include "probe.h"
 int vis2(int);
 void call2(int *);
+inline int rng(int x, int lo, int hi) { if (x < lo || hi < lo) return lo; if (x > hi) return hi; return x; }
 '''
 BODY = 'int k = ga[a]; use(k); use(k + b); use(k); '
 BIG = ' int k = ga[a]; int m = ga[b]; int n = ga[c]; int loc[4]; loc[0] = k; call2(loc); use(k); use(k + m); use(n + loc[1]); use(m); use(n); use(k); '
@@ -96,6 +97,27 @@ V = {
  'lp_ie':       'for (int i = 0; i < a; i++) { if (ga[i] == b) { use(7); } else { use(2); use(3); } } use(6); return 1;',
  'lp_while':    'int i = 0; while (i < a) { if (ga[i] == b) { use(7); break; } use(2); i++; } use(6); return 1;',
  'lp_do':       'int i = 0; do { if (ga[i] == b) { use(7); break; } use(2); i++; } while (i < a); use(6); return 1;',
+ # --- par-6 2026-11-19: arms moved out of line with a jump back, goto polarity, constant threading
+ # an `if (b) goto F;` ending an arm whose join is reached by falling off the arm (shoot_it 0x004CDF47)
+ 'gt_arm':      'use(1); if (g) { if (c) { use(2); } else { use(4); if (b) goto F; } use(5); } else { F: use(7); } use(8); return 1;',
+ 'gt_arm_j':    'use(1); if (g) { if (c) { use(2); } else { use(4); if (b) goto F; goto J; } J: use(5); } else { F: use(7); } use(8); return 1;',
+ 'gt_tail':     'use(1); if (g) { use(4); if (b) goto F; } else { F: use(7); } use(8); return 1;',
+ 'gt_tail_j':   'use(1); if (g) { use(4); if (b) goto F; goto J; } else { F: use(7); } J: use(8); return 1;',
+ # a constant arm of a ternary feeding the next test (base_production 0x004F107F)
+ 'thr_tern':    'use(1); int v = a ? -1 : vis2(b); if (v < 0) { use(7); return 0; } use(2); return v;',
+ 'thr_if':      'use(1); int v = -1; if (!a) v = vis2(b); if (v < 0) { use(7); return 0; } use(2); return v;',
+ 'thr_wrap':    'use(1); if (!a) { int v = vis2(b); if (v < 0) { use(7); return 0; } use(2); return v; } return 0;',
+ # abs-like difference: two-arm ternary against the one-arm if (capture_base 0x0050DC1E)
+ 'abs_tern':    'int d = ga[a] - b >= 0 ? ga[a] - b : b - ga[a]; use(d); return 1;',
+ 'abs_if':      'int d = ga[a] - b; if (d < 0) d = b - ga[a]; use(d); return 1;',
+ # candidate sources of an arm placed later with a jump back
+ 'ob_dowhile':  'use(1); do { if (a) break; use(2); } while (0); use(3); return 1;',
+ 'ob_dw_body':  'use(1); do { if (a) { use(4); break; } use(2); } while (0); use(3); return 1;',
+ 'ob_inl':      'use(1); int r = rng(a, 0, b); use(r); use(3); return 1;',
+ 'ob_inl_add':  'use(1); int n = ga[a]; n += rng(n, 0, b); use(n * 2); return 1;',
+ 'ob_inl_two':  'use(1); int n = ga[a]; n += rng(n, 0, b); int m = rng(c, 1, 99); use(n * 2); use(m); return 1;',
+ 'ob_inl_loop': 'for (int i = 0; i < a; i++) { int n = ga[i]; if (n < b) { int f = c ? 8 : 2; if (f) n += rng(n, 0, f); } else g = 1; n *= 2; use(n); use(rng(n, 1, 99)); } return 1;',
+ 'ob_cont':     'for (int i = 0; i < a; i++) { use(1); if (ga[i]) { use(4); continue; } use(2); } return 1;',
  # --- if-chain against switch
  'chain':       'if (a == 1) { use(1); } else if (a == 2) { use(2); } else if (a == 3) { use(3); } else { use(4); } use(6); return 1;',
  'chain_ret':   'if (a == 1) { use(1); return 0; } if (a == 2) { use(2); return 0; } if (a == 3) { use(3); return 0; } use(4); use(6); return 1;',
