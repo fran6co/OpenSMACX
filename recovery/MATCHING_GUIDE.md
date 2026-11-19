@@ -609,6 +609,17 @@ raw field access where the original used inline accessors.
 
   Delete helpers a rewrite leaves unreferenced, avoid new helpers in canary
   units, and re-measure every claim in the TU.
+- **An uncalled static function still emits its literals** (measured
+  2026-11-19, par-1). VC6 drops the code of a `static` function nothing
+  calls, but its string literals stay in the unit's `.data` as `$SG`
+  objects, in source order, each taking a counter slot (a probe.cpp control:
+  `static void f() { g("X"); }` with no caller leaves `X` in the object and
+  no `f` symbol). A dead helper therefore still adds literals to the unit's
+  literal run (seen by `analysis/litgap.py` as strings the image lacks) and
+  still moves the counter for every later function, besides its own
+  declaration's slot. Leftover non-original helpers that nothing calls are
+  deleted, not kept as harmless; dead non-static helpers additionally emit
+  their code.
 - **Expansion count of a new helper.** In a canary unit, how many times a
   new file-local helper is *expanded* can flip a later function's tie while
   its definition alone is neutral (console_commands: 0-5 expansions kept
