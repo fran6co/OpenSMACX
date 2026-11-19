@@ -798,11 +798,7 @@ void __cdecl go_reset() {
 
     // Slot 0's cursor first, unconditionally.
     MapWin *const primary = MapWinTable[0];
-    if (primary->cursor_sprite_ != 0 || primary->cursor_resource_id_ != 0x7F00) {
-        primary->GraphicWin::set_cursor(0x7F00);
-        primary->cursor_resource_id_ = 0x7F00;
-        primary->cursor_sprite_ = 0;
-    }
+    primary->reset_cursor();
 
     if (MapWinSelectedSlot >= 0) {
         // The slot walks two registers in the image - the window loaded once
@@ -814,12 +810,9 @@ void __cdecl go_reset() {
         // The sprite tests read it through the table expression, so the
         // dead `!= 0` arm re-reads the field (0x0050F0A5) instead of CSE.
         Sprite *const cursor_sprite = MapWinTable[MapWinSelectedSlot]->cursor_sprite_;
-        if ((cursor_sprite == &g_CURSOR_SPRITES[1] ||
-             cursor_sprite == &g_CURSOR_SPRITES[9]) &&
-            (window->cursor_sprite_ != 0 || window->cursor_resource_id_ != 0x7F00)) {
-            window->GraphicWin::set_cursor(0x7F00);
-            window->cursor_resource_id_ = 0x7F00;
-            window->cursor_sprite_ = 0;
+        if (cursor_sprite == &g_CURSOR_SPRITES[1] ||
+            cursor_sprite == &g_CURSOR_SPRITES[9]) {
+            window->reset_cursor();
         }
         (*slot)->field_1DD88_ = 1;
         (*slot)->field_1DD80_ = 0;
@@ -1473,12 +1466,7 @@ void Console::cursor_off() {
     for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
         MapWin *const window = MapWinTable[slot];
         if (window != nullptr && (slot == 0 || window->view_active_ != 0)) {
-            if (window->cursor_sprite_ != nullptr ||
-                window->cursor_resource_id_ != 0x7f00) {
-                window->GraphicWin::set_cursor(0x7f00);
-                window->cursor_resource_id_ = 0x7f00;
-                window->cursor_sprite_ = nullptr;
-            }
+            window->reset_cursor();
             // Preserve the original post-callback reload (0x00510584),
             // while the two cursor stores above still use the old receiver.
             const uint32_t flags = MapWinTable[slot]->field_1DD70_;
@@ -1610,12 +1598,7 @@ int Console::selected() {
         for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
             MapWin *const window = MapWinTable[slot];
             if (window != nullptr && (slot == 0 || window->view_active_ != 0)) {
-                if (window->cursor_sprite_ != nullptr ||
-                    window->cursor_resource_id_ != 0x7f00) {
-                    window->GraphicWin::set_cursor(0x7f00);
-                    window->cursor_resource_id_ = 0x7f00;
-                    window->cursor_sprite_ = nullptr;
-                }
+                window->reset_cursor();
                 // Unlike cursor writeback, repaint state belongs to the
                 // live slot after the cursor callback (0x00510859).
                 const uint32_t flags = MapWinTable[slot]->field_1DD70_;
@@ -5536,11 +5519,7 @@ int Console::on_key_click(int a1, int a2) {
     for (cursor_slot = 0; cursor_slot < MapWinTableSlots; ++cursor_slot) {
         MapWin *const window = MapWinTable[cursor_slot];
         if (window != 0 && (cursor_slot == 0 || window->view_active_ != 0)) {
-            if (window->cursor_sprite_ != 0 || window->cursor_resource_id_ != 0x7F00) {
-                window->set_cursor(0x7F00);
-                window->cursor_resource_id_ = 0x7F00;
-                window->cursor_sprite_ = 0;
-            }
+            window->reset_cursor();
             const uint32_t flags = MapWinTable[cursor_slot]->field_1DD70_;
             if ((flags & 0x00C40000) != 0) {
                 MapWinTable[cursor_slot]->field_1DD70_ = flags & 0xFF3BFFFF;
@@ -6777,12 +6756,7 @@ void Console::menu_proc(int command) {
         if (window == nullptr || (slot != 0 && window->view_active_ == 0)) {
             continue;
         }
-        if (window->cursor_sprite_ != nullptr ||
-            window->cursor_resource_id_ != 0x7F00) {
-            window->set_cursor(0x7F00);
-            window->cursor_resource_id_ = 0x7F00;
-            window->cursor_sprite_ = nullptr;
-        }
+        window->reset_cursor();
         // cursor_off's post-callback reload through the table.
         const uint32_t dirty = MapWinTable[slot]->field_1DD70_;
         if ((dirty & 0x00C40000u) != 0) {

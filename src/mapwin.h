@@ -153,8 +153,10 @@ class MapWin : public virtual GraphicWin {
   // WORKAROUND(decl): invented name for a header inline the image expands at
   // 0x0046F614: on_mouse_move reads the cursor members through its adjusted
   // MapWin pointer (ebx + 0x1EF4C), as through an inlined `this` argument,
-  // not this-relative (esi - 0x2B20) as written in the body; Console's three
-  // copies of the same reset (console.cpp) are candidates for it too.
+  // not this-relative (esi - 0x2B20) as written in the body. Console's six
+  // copies (go_reset twice, cursor_off, selected, and cursor_off's two
+  // expansions in on_key_click and menu_proc) use it too; there the receiver
+  // is already a MapWin pointer and the code is the same either way.
   inline void reset_cursor() {
     if (cursor_sprite_ != 0 || cursor_resource_id_ != 0x7f00) {
       Win::set_cursor(0x7f00);
