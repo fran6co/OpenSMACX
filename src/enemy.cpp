@@ -16,7 +16,6 @@
 #include "xpops.h"
 #include "popup.h"
 #include "council.h"
-#include "enemy_pb_policy.h"
 #include "log.h"
 #include "netmsg.h"
 #include "crt_random.h"

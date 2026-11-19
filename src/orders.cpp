@@ -32,7 +32,6 @@
 #include "time.h"
 #include "win.h"
 #include "veh.h"
-#include "enemy_pb_policy.h"
 #include "council.h"
 #include "lock.h"  // map_tile_bytes() - the map-record table pointer
 #include "alpha.h"
