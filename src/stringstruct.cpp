@@ -550,7 +550,6 @@ Status: Complete
 // Buffer owns its shared surface Sprite at 0x009B3A50; this unit does not
 // access that object directly. Sprite owns the tech-wizard facility icons.
 extern Sprite g_TECH_ICON_SPRITES[89];  // 0x00759E28, sprite.cpp's definition
-extern char TechWizardPopupFileText[7];
 extern char *TechWizardPopupFile;
 
 

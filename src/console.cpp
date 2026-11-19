@@ -1480,8 +1480,6 @@ char ConsoleStrTechChange[] = "TECHCHANGE";  // 0x0068A8D4
 char ConsoleStrAcLogoSm[] = "ac_logo_sm.pcx";  // 0x0068AA7C
 // RECOVERY_OBJECT: v2 0x0068AA8C 0x0068AA9C ?ConsoleStrVersionControlX@@3PADA 0x00517180
 char ConsoleStrVersionControlX[] = "VERSIONCONTROLX";  // 0x0068AA8C
-extern char ConsoleVersionReleaseText[];
-extern char ConsoleVersionBuildDateText[];
 extern char *ConsoleVersionRelease;
 extern char *ConsoleVersionBuildDate;
 

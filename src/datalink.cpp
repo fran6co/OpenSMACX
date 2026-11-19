@@ -117,8 +117,6 @@ extern const char BufferJoinSpace[];
 extern char SocialWinColonSpaceText[];
 
 extern int MainInterfaceTileFlag;
-extern char DatalinkHelpFileText[];
-extern char DatalinkBlurbFileText[];
 extern char *DatalinkBlurbFile;
 
 // draw_terraform passes this writable empty string (0x004317B4). Only its

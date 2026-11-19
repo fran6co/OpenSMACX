@@ -359,7 +359,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 // Shared punctuation objects the image pushes instead of unit literals.
 extern char SocialWinCloseParenText[];
 extern char SocialWinOpenParenText[];
-extern char MenuScriptFileText[5];
 extern char *MenuScriptFile;
 
 // Console initializes its embedded AlphaMenu through this catalogue entry.

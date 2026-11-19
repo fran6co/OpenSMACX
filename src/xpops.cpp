@@ -107,19 +107,20 @@
 // technology's objects (..0x00945F44) and before veh_queries' (0x009B2278..),
 // is this unit's. TurnUpkeepPhase 0x00945F48 touches technology's last object
 // and could be either unit's (a unit's .bss is ordered by name, not by
-// definition). Definitions below are in image order, initialised first; a
-// text array stands in front of the pointer it initialises.
+// definition). Definitions below are in image order, initialised first.
 
-// The pinned .data cells were mutable char* slots initialized to these
-// distinct writable text arrays; callers share the pointer objects.
-// RECOVERY_OBJECT: v2 0x00691B40 0x00691B4C ?ConsoleVersionReleaseText@@3PADA 0x00517180
-char ConsoleVersionReleaseText[] = "RELEASE 2.0";
+// The unit's leading pointer globals are initialised with literals: the image
+// holds the pointer cells among the globals (0x00691870..0x00691B3C) and
+// their texts as one block behind the last global, in the same order
+// (0x00691B40..0x00691BF7), and nothing but its cell references a text. The
+// cell at 0x00691B10 (-> "EDITOR", 0x00691B84) has no reader in the image and
+// no definition here.
 // RECOVERY_OBJECT: v2 0x00691870 0x00691874 ?ConsoleVersionRelease@@3PADA 0x00517180
-char *ConsoleVersionRelease = ConsoleVersionReleaseText;
-// RECOVERY_OBJECT: v2 0x00691B4C 0x00691B58 ?ConsoleVersionBuildDateText@@3PADA 0x00517180
-char ConsoleVersionBuildDateText[] = "20-Dec-1999";
+// RECOVERY_LITERAL: v1 0x00691B40 0x00691B4C $SG65224 0x00517180
+char *ConsoleVersionRelease = "RELEASE 2.0";
 // RECOVERY_OBJECT: v2 0x00691874 0x00691878 ?ConsoleVersionBuildDate@@3PADA 0x00517180
-char *ConsoleVersionBuildDate = ConsoleVersionBuildDateText;
+// RECOVERY_LITERAL: v1 0x00691B4C 0x00691B58 $SG65226 0x00517180
+char *ConsoleVersionBuildDate = "20-Dec-1999";
 // RECOVERY_OBJECT: v2 0x00691878 0x00691AF8 ?Terraforming@@3PAURulesTerraforming@@A 0x005873C0
 // The historical map word identities are live rates in this mutable array.
 // 0x00691890 + row * 32 selects rate (+0x18), including road and magtube.
@@ -191,35 +192,29 @@ int WindowAnimationFrameDelay = 20;
 // 0x00691B58, where the seven bytes "ALPHAX\0" sit.
 // RECOVERY_LITERAL: v1 0x00691B58 0x00691B5F $SG65267 0x0048207D
 LPCSTR AlphaxFileID = "ALPHAX";
-// RECOVERY_OBJECT: v2 0x00691B60 0x00691B66 ?DatalinkHelpFileText@@3PADA 0x00430770
-char DatalinkHelpFileText[] = "HELPX";
 // RECOVERY_OBJECT: v2 0x00691B00 0x00691B04 ?DatalinkHelpFile@@3PADA 0x00430770
-char *DatalinkHelpFile = DatalinkHelpFileText;
-// RECOVERY_OBJECT: v2 0x00691B68 0x00691B70 ?DatalinkBlurbFileText@@3PADA 0x00430B30
-char DatalinkBlurbFileText[] = "BLURBSX";
+// RECOVERY_LITERAL: v1 0x00691B60 0x00691B66 $SG65229 0x00430770
+char *DatalinkHelpFile = "HELPX";
 // RECOVERY_OBJECT: v2 0x00691B04 0x00691B08 ?DatalinkBlurbFile@@3PADA 0x00430B30
-char *DatalinkBlurbFile = DatalinkBlurbFileText;
+// RECOVERY_LITERAL: v1 0x00691B68 0x00691B70 $SG65231 0x00430B30
+char *DatalinkBlurbFile = "BLURBSX";
 // Shared storage closure belongs to the coordinator's original owners.
 // The pointer cell selects this observed NUL-terminated text-file identifier.
 // The allocation extent of the pointed-to original string is unresolved.
-// RECOVERY_OBJECT: v1 0x00691B70 _InterludeTextName
-static char InterludeTextName[] = "INTERLUDEX";
 // RECOVERY_OBJECT: v1 0x00691B08 ?InterludeTextFile@@3PADA
-char *InterludeTextFile = InterludeTextName;
+// RECOVERY_LITERAL: v1 0x00691B70 0x00691B7B $SG65233 0x00459680
+char *InterludeTextFile = "INTERLUDEX";
 // Original691B0C contains pointer691B7C, whose file-backed text is SCRIPT.
-// This owns the observed text and shared pointer cell.
-// Bound: the original bytes are "SCRIPT" and its NUL; one zero pad byte precedes the next string, "EDITOR", at 0x00691B84.
-// RECOVERY_OBJECT: v2 0x00691B7C 0x00691B83 ?ScriptPopupFileText@@3PADA 0x00406384
-char ScriptPopupFileText[] = "SCRIPT";
+// The original bytes are "SCRIPT" and its NUL; one zero pad byte precedes the next string, "EDITOR", at 0x00691B84.
 // Bound: pointer cell; the next dword 0x00691B10 is a separate pointer (to "EDITOR" at 0x00691B84).
 // RECOVERY_OBJECT: v2 0x00691B0C 0x00691B10 ?ScriptPopupFile@@3PADA 0x00406384
-char *ScriptPopupFile = ScriptPopupFileText;
+// RECOVERY_LITERAL: v1 0x00691B7C 0x00691B83 $SG65234 0x00406384
+char *ScriptPopupFile = "SCRIPT";
 // Shared tutorial popup caption: the original pointer cell selects the
 // six-byte TUTOR string, not the adjacent WIZARD caption.
-// RECOVERY_OBJECT: v2 0x00691B8C 0x00691B92 ?TutorialPopupCaptionText@@3PADA 0x00511800
-char TutorialPopupCaptionText[6] = "TUTOR";
 // RECOVERY_OBJECT: v2 0x00691B14 0x00691B18 ?TutorialPopupCaption@@3PADA 0x00511800
-char *TutorialPopupCaption = TutorialPopupCaptionText;
+// RECOVERY_LITERAL: v1 0x00691B8C 0x00691B92 $SG65236 0x00511800
+char *TutorialPopupCaption = "TUTOR";
 // The published unit draw-state block: the words the surface sprite's
 // draw_dest_unk1 readers consume, 0x009B3A54..0x009B3A78.
 
@@ -236,30 +231,22 @@ char *TutorialPopupCaption = TutorialPopupCaptionText;
 
 
 // Original pointer cell 0x00691B18 selects the WIZARD text at 0x00691B94.
-// Keep that pointer/text relationship in source-owned storage. Names are
-// descriptive; bindings establish starts, not enclosing allocation bounds.
-// RECOVERY_OBJECT: v1 0x00691B94 ?TechWizardPopupFileText@@3PADA
-char TechWizardPopupFileText[7] = "WIZARD";
 // RECOVERY_OBJECT: v1 0x00691B18 ?TechWizardPopupFile@@3PADA
-char *TechWizardPopupFile = TechWizardPopupFileText;
+// RECOVERY_LITERAL: v1 0x00691B94 0x00691B9B $SG65238 0x005BDE20
+char *TechWizardPopupFile = "WIZARD";
 // Original pointer cell 0x00691B1C selects the MENU script name at
 // 0x00691B9C; menu_init passes the cell's value to every text_open.
-// RECOVERY_OBJECT: v1 0x00691B9C ?MenuScriptFileText@@3PADA
-char MenuScriptFileText[5] = "MENU";
 // RECOVERY_OBJECT: v1 0x00691B1C ?MenuScriptFile@@3PADA
-char *MenuScriptFile = MenuScriptFileText;
-// Start's mod-redirection data (popup.h has the role note). These current
-// mutable arrays cover only the observed NUL-terminated text. Original
-// allocation capacities, source mutability and literal provenance remain
-// unresolved; the start-argument bindings below claim no allocation spans.
-// The image's pointer slots select these NUL-terminated text identifiers.
-// Their allocation extents are unresolved; these arrays own the observed text.
-static char PopupAlienScriptName[] = "alienIscript";
-static char PopupAlienOtherScriptName[] = "alienuscript";
+// RECOVERY_LITERAL: v1 0x00691B9C 0x00691BA1 $SG65240 0x0045FB20
+char *MenuScriptFile = "MENU";
+// Start's mod-redirection data (popup.h has the role note): the image's
+// pointer slots select these NUL-terminated text identifiers.
 // RECOVERY_OBJECT: v1 0x00691B20 ?PopupStartAltFile1@@3PADA
-char *PopupStartAltFile1 = PopupAlienScriptName;    // 0x00691B20
+// RECOVERY_LITERAL: v1 0x00691BA4 0x00691BB1 $SG65241 0x00406380
+char *PopupStartAltFile1 = "alienIscript";    // 0x00691B20
 // RECOVERY_OBJECT: v1 0x00691B24 ?PopupStartAltFile2@@3PADA
-char *PopupStartAltFile2 = PopupAlienOtherScriptName;    // 0x00691B24
+// RECOVERY_LITERAL: v1 0x00691BB4 0x00691BC1 $SG65242 0x00406380
+char *PopupStartAltFile2 = "alienuscript";    // 0x00691B24
 // Application fonts, selected and initialized by config_popups and WinMain.
 // FontTable stays with find_font; the entrypoint's singleton is in main.cpp.
 // Original CRT order is singleton, FontQueue VAL2/VAL1, then FontTable.
@@ -267,28 +254,27 @@ char *PopupStartAltFile2 = PopupAlienOtherScriptName;    // 0x00691B24
 // Face pointer read only by Credits::exec (0x00428AE4); its literal sits
 // before "Arial" in this unit's data.
 // RECOVERY_OBJECT: v1 0x00691B28 ?CreditsFontFace@@3PBDB
+// RECOVERY_LITERAL: v1 0x00691BC4 0x00691BD3 $SG65244 0x004289F0
 LPCSTR CreditsFontFace = "Alpha Centauri";  // 0x00691B28 -> 0x00691BC4
 // RECOVERY_OBJECT: v2 0x00691B2C 0x00691B30 ?DefaultFontFace@@3PBDB 0x00408B8D
+// RECOVERY_LITERAL: v1 0x00691BD4 0x00691BDA $SG65246 0x00408B8D
 LPCSTR DefaultFontFace = "Arial";  // 0x00691B2C -> 0x00691BD4
 // RECOVERY_OBJECT: v1 0x00691B30 ?DefaultLargeFontFace@@3PBDB
+// RECOVERY_LITERAL: v1 0x00691BDC 0x00691BE9 $SG65248 0x00427230
 LPCSTR DefaultLargeFontFace = "Arial Narrow"; // 0x00691B30 -> 0x00691BDC
-// The original 0x691B34 pointer cell refers to the separate text at
-// 0x691BEC; keep the pointer and its four-byte NUL-terminated pointee distinct.
-// RECOVERY_OBJECT: v1 0x00691BEC ?SaveGameFileExtensionText@@3PADA
-char SaveGameFileExtensionText[4] = "SAV";
+// The original 0x691B34 pointer cell refers to the text at 0x691BEC.
 // RECOVERY_OBJECT: v1 0x00691B34 ?SaveGameFileExtension@@3PBDB
-LPCSTR SaveGameFileExtension = SaveGameFileExtensionText;
+// RECOVERY_LITERAL: v1 0x00691BEC 0x00691BF0 $SG65249 0x005A94F0
+LPCSTR SaveGameFileExtension = "SAV";
 // Native scenario save/load uses pointerB38 toSC; map save/load uses
-// pointerB3C toMP. These three-byte text views claim no neighboring extent.
-// RECOVERY_OBJECT: v1 0x00691BF0 ?ScenarioFileExtensionText@@3PADA
-char ScenarioFileExtensionText[3] = "SC";
+// pointerB3C toMP.
 // RECOVERY_OBJECT: v1 0x00691B38 ?ScenarioFileExtension@@3PBDB
-LPCSTR ScenarioFileExtension = ScenarioFileExtensionText;
-// RECOVERY_OBJECT: v1 0x00691BF4 ?MapFileExtensionText@@3PADA
-char MapFileExtensionText[3] = "MP";
+// RECOVERY_LITERAL: v1 0x00691BF0 0x00691BF3 $SG65250 0x005A9EB0
+LPCSTR ScenarioFileExtension = "SC";
 // Historical SC attribution of this cell was wrong; originalB3C points toMP.
 // RECOVERY_OBJECT: v1 0x00691B3C ?MapFileExtension@@3PBDB
-LPCSTR MapFileExtension = MapFileExtensionText;
+// RECOVERY_LITERAL: v1 0x00691BF4 0x00691BF7 $SG65251 0x00590ED0
+LPCSTR MapFileExtension = "MP";
 // net_upkeep5290D0/5292BD publish phases1/2; tech_advance5BE580 and
 // tech_research5BEB3A read this distinct shared dword. Original virtual-tail
 // storage is loader-zero; fresh compiler objects establish one int owner.
