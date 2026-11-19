@@ -216,12 +216,8 @@ class Dialog {
   // each arm (`lea ecx,[edx+esi+0x21D0]`) and share one `mov [ecx+0x2C],eax`
   // after the join: a Dialog member called on the virtual base, not a
   // qualified field store.
-  // Per-unit guard (basepop.cpp): declared everywhere they shift the front-end
-  // counter of 20 functions in other units (2026-11-19 screen).
-#ifdef DIALOG_SIZE_SETTERS
   void set_field_2C(int value) { field_2C_ = value; }
   void set_field_30(int value) { field_30_ = value; }
-#endif
   uint32_t field_34_;
   int field_38_;
   int field_3C_;

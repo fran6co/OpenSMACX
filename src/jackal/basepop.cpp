@@ -1,7 +1,6 @@
 // WORKAROUND(decl): exec expands current_entry (0x006030B9 `mov ecx,[ecx+8];
 // mov eax,[ecx+4]` under its current_/head_ tests); see stringstruct.h.
 #define STRINGSTRUCT_CURRENT_ENTRY_INLINE
-#define DIALOG_SIZE_SETTERS  // stand-in: Dialog::set_field_2C/30 (dialog.h)
 /*
  * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.
  * Copyright (C) 2013-2021 Brendan Casey

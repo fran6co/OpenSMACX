@@ -1983,9 +1983,10 @@ Member-address temporaries that live across calls (2026-11-19 par-6, round 11)
   set_width stays `mov [edx+ecx+0x21FC],eax` (exact), the copy expanded in
   exec forms `lea ecx,[edx+esi+0x21D0]` per arm and shares `mov
   [ecx+0x2C],eax` after the join, as the image. The qualified field store
-  (`dialogs_.Dialog::field_2C_ =`) folds at both levels. Declaring the two
-  setters in every unit moved 20 counter-sensitive functions; they are
-  guarded per unit (DIALOG_SIZE_SETTERS).
+  (`dialogs_.Dialog::field_2C_ =`) folds at both levels. The two setters
+  are declared for every includer, as an original header would; the
+  counter-sensitive functions that move with them are re-tuned in the pad
+  pass, not protected by a per-unit guard.
 
 ### 2.8 /Ob2 inlining model
 
