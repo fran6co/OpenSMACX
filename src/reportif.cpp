@@ -67,10 +67,52 @@
 // RulesOrder, RulesCitizen and Player ideology rows only 12 matches (1-11, 13,
 // 14 and 16 flip it); before those retypes the window was 6-8. spot.h's gated
 // Spot::add RECT inline moved it again. The tie-break is the front-end symbol counter modulo 64 (guide 2.5);
-// `recover canary src/reportif.cpp` computes the pad count (none after
-// pass 8; re-tune after the header batch).
+// `recover canary src/reportif.cpp` computes the pad count. Re-tuned
+// 2026-11-19 after the header batch (fe sweep 0-63): exact at 8, 19-23 and
+// 34-61; sat_attack 0x004A0260 (not exact) keeps its 15 rows only at 35-46
+// and 56-61 (17 at 8 and 19-23), so 40, mid-window.
 // CANARY: 0x004A6330 ?on_iface_button_clicked@ReportIf@@UAEXH@Z residues 0-27,38,49-53
 // CANARY-PADS: function ReportIfDeclFnPad
+void ReportIfDeclFnPad0();
+void ReportIfDeclFnPad1();
+void ReportIfDeclFnPad2();
+void ReportIfDeclFnPad3();
+void ReportIfDeclFnPad4();
+void ReportIfDeclFnPad5();
+void ReportIfDeclFnPad6();
+void ReportIfDeclFnPad7();
+void ReportIfDeclFnPad8();
+void ReportIfDeclFnPad9();
+void ReportIfDeclFnPad10();
+void ReportIfDeclFnPad11();
+void ReportIfDeclFnPad12();
+void ReportIfDeclFnPad13();
+void ReportIfDeclFnPad14();
+void ReportIfDeclFnPad15();
+void ReportIfDeclFnPad16();
+void ReportIfDeclFnPad17();
+void ReportIfDeclFnPad18();
+void ReportIfDeclFnPad19();
+void ReportIfDeclFnPad20();
+void ReportIfDeclFnPad21();
+void ReportIfDeclFnPad22();
+void ReportIfDeclFnPad23();
+void ReportIfDeclFnPad24();
+void ReportIfDeclFnPad25();
+void ReportIfDeclFnPad26();
+void ReportIfDeclFnPad27();
+void ReportIfDeclFnPad28();
+void ReportIfDeclFnPad29();
+void ReportIfDeclFnPad30();
+void ReportIfDeclFnPad31();
+void ReportIfDeclFnPad32();
+void ReportIfDeclFnPad33();
+void ReportIfDeclFnPad34();
+void ReportIfDeclFnPad35();
+void ReportIfDeclFnPad36();
+void ReportIfDeclFnPad37();
+void ReportIfDeclFnPad38();
+void ReportIfDeclFnPad39();
 
 // Shared punctuation objects the image pushes instead of unit literals.
 extern char SocialWinCloseParenText[];
