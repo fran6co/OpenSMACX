@@ -811,7 +811,15 @@ int __cdecl cost_factor(int faction_id, int rsc_type, int base_id) {
                 growth_factor += 2;
             }
         }
-        factor = (factor * (10 - range(growth_factor, -2, 5)) + 9) / 10;
+        // WORKAROUND(decl): the lower bound is a named local. With the literal the
+        // has_fac expansion above tests the facility bit in place; the image
+        // materializes it (neg/sbb/neg into [ebp+8]) and so does this spelling
+        // (either bound named gives it; a const local, a pad local or a named
+        // copy of growth_factor does not). The same change inside range()
+        // (`int lo = min;`) keeps 0x00422F00 exact and fixes this function but
+        // loses nine exact functions tree-wide.
+        int growth_min = -2;
+        factor = (factor * (10 - range(growth_factor, growth_min, 5)) + 9) / 10;
     } else if (rsc_type == RSC_MINERALS) {
         switch (PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::INDUSTRY]) {
           case -7:
