@@ -2221,12 +2221,26 @@ void DesignWin::on_button_clicked(int button_id) {
         NetDaemonNet.unlock();
 
         if (!match_count) {
+            // The image keeps an unreferenced "BADUPGRADE" + icon pair before
+            // each NOUPGRADE pair (0x683788-0x6837D8): a popp arm the compiler
+            // folded away. Its real condition is unknown; any test VC6 proves
+            // false here (match_count is 0) folds the same way.
             if (Players[factionID_].rule_flags & 0x80) {
-                popp(ScriptPopupFile, "NOUPGRADE", 0, "alunit_sm.pcx",
-                     pop_wait);
+                if (match_count) {
+                    popp(ScriptPopupFile, "BADUPGRADE", 0, "alunit_sm.pcx",
+                         pop_wait);
+                } else {
+                    popp(ScriptPopupFile, "NOUPGRADE", 0, "alunit_sm.pcx",
+                         pop_wait);
+                }
             } else {
-                popp(ScriptPopupFile, "NOUPGRADE", 0, "unit_sm.pcx",
-                     pop_wait);
+                if (match_count) {
+                    popp(ScriptPopupFile, "BADUPGRADE", 0, "unit_sm.pcx",
+                         pop_wait);
+                } else {
+                    popp(ScriptPopupFile, "NOUPGRADE", 0, "unit_sm.pcx",
+                         pop_wait);
+                }
             }
             break;
         }
