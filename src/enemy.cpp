@@ -19,7 +19,6 @@
 #include "log.h"
 #include "netmsg.h"
 #include "crt_random.h"
-#include "crt_random_inline.h"
 #include <stddef.h>
 #include <string.h>
 
@@ -3025,7 +3024,7 @@ int __cdecl alien_move(int veh_id) {
         if (GameDataStateStorage.fields_.diff_level_current_ > 2) {
             score += (bits & BIT_MONOLITH && !(Vehs[veh_id].state & VSTATE_MONOLITH_UPGRADED)) ? 8 : 0;
         }
-        score += rand() % 8;
+        score += rnd(8, "ENEMY1");
         int turn = ((move_dir ^ -4) - i) & 7;
         if (turn > 4) {
             turn = 8 - turn;
@@ -3058,11 +3057,11 @@ int __cdecl alien_move(int veh_id) {
         retreat *= 2;
     }
     if ((1 << Bases[base_id].faction_id_current) & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_
-        && retreat && rand() % 4 < ((best_score < 999) * retreat ? 2 : 1)
+        && retreat && (int)rnd(4, "ALIENACTION") < ((best_score < 999) * retreat ? 2 : 1)
         && veh_moves(veh_id) <= Rules.move_rate_roads && get_triad(veh_id) != TRIAD_AIR) {
         int level = (GameDataStateStorage.fields_.game_rules_ & RULES_INTENSE_RIVALRY)
             ? 5 : PlayersData[Bases[base_id].faction_id_current].diff_level;
-        if (bounded_crt_random(level + 1)) {
+        if (rnd(level + 1, "ALIENACTION2")) {
             if (map_loc(x, y)->bit & 0x80E88058) {
                 action_destroy(veh_id, 0, -1, -1);
                 return 0;
@@ -3073,7 +3072,7 @@ int __cdecl alien_move(int veh_id) {
         if (!(map_loc(x, y)->bit & BIT_FUNGUS) || (map_loc(x, y)->climate & ~0x1F) < ALT_BIT_OCEAN_SHELF) {
             retreat = (retreat + 1) / 2;
         }
-        if (bounded_crt_random(retreat + 1)) {
+        if (rnd(retreat + 1, "ALIENREPAIR")) {
             dir_selected = -1;
         }
     }
@@ -3192,7 +3191,7 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                 if (Bases[i].faction_id_current == faction_id) {
                     int dist = map_range(*a4, *a5, Bases[i].x, Bases[i].y);
                     if (dist <= return_range) {
-                        int value = bounded_crt_random(dist + 1);
+                        int value = rnd(dist + 1, "ENEMY2");
                         if (value > best) {
                             best = value;
                             pick = i;
