@@ -2797,6 +2797,10 @@ static void parse_player_identity(int faction_id) {
 // WORKAROUND(inline): generators(faction_id, NULL) as end_of_game expands it.
 // The image inlines generators here but keeps its has_fac call out of line
 // (0x00421670); calling generators() lets VC6 expand has_fac as well.
+// MEASURED 2026-11-19 (par-1): with generators() called directly, has_fac stays
+// expanded under 0-24 dead 4-if probes at the top of end_of_game and an
+// inline generator_win predicate owner; 32 probes refuse it only after
+// interlude/Lock::clear sites flip first (pass 1 binding). Kept.
 static inline int turn_generators(int faction_id, int *count_out) {
     BOOL (__cdecl *const has_facility)(int, int, int) = has_fac;
     if (count_out != 0) {

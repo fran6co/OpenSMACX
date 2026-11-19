@@ -2692,6 +2692,9 @@ static inline void gen_tile_expanded(MapWin *window, int x, int y, int a3, int a
     // WORKAROUND(noinline): the image calls on_map (0x004712A0) out of line
     // inside this expansion (0x469283, 0x46930F); the original's /Ob2
     // budget refused the nested inline.
+    // MEASURED 2026-11-19 (par-1): plain on_map expands at both gen_radius sites
+    // (5 -> 227) and breaks gen_map; 16 dead probes in gen_radius refuse it only
+    // after tile_in_view/wrap_map_x flip first. Kept.
     BOOL (__cdecl *const on_map_call)(int, int) = on_map;
     if (on_map_call(x, y) && a4 != 0) {
         window->draw_vehicles(x, y, pixel_x, pixel_y - window->field_1DDC0_, a3);

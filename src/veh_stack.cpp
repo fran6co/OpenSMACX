@@ -484,6 +484,14 @@ MEASURED inline int __cdecl veh_can_leave_stack(int veh_id) {
 // WORKAROUND(noinline): spot_stack as spot_all expands it at its first three
 // sites, where the image keeps spot_tile a real call (0x5B6E6E, 0x5B6FF5,
 // 0x5B730F) and inlines veh_top; the later sites inline spot_tile instead.
+// MEASURED 2026-11-19 (par-1), plain spot_stack at all three sites: spot_tile then
+// expands at every spot_stack site (synch_bit 12, veh_top 6 calls). Nesting
+// spot_tile's dirty-tile test into 3-4 ifs (exact out of line) or adding
+// 3-5 dead 4-if probes refuses it at S2/S3/S5 as in the image, but never
+// gives the image's S6 (0x5B74B9: spot_tile expanded, veh_top called):
+// ours always refuses S6 before S3, the reverse of guide 2.8 rule 4, so it
+// is not caller budget alone. K/B spellings, on_map for the raw bounds test
+// and veh_can_leave_stack plain were neutral or worse. Kept.
 inline void __cdecl spot_stack_tile_call(int veh_id, int faction_id) {
     void (__cdecl *const tile_fn)(int, int, int) = spot_tile;
     if (veh_id >= 0 && on_map(Vehs[veh_id].x, Vehs[veh_id].y)) {

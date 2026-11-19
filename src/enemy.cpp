@@ -1044,6 +1044,8 @@ void __cdecl enemy_strategy(int faction_id) {
                 || (PlayersData[faction_id].region_base_plan[region] == 8
                     && Continents[region].tile_count < 150))) {
             // stand-in: forces the image's out-of-line abstract_at calls.
+            // MEASURED 2026-11-19 (par-1): plain calls expand both (1905 -> 2043 rows); 1-16
+            // dead 4-if probes at the top refuse neither (owner, not budget). Kept.
             uint8_t (__cdecl *const abstract_at_call)(int, int) = abstract_at;
             int bridge_score = 0;
             int bridge_x;

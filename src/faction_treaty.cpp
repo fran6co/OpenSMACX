@@ -1143,6 +1143,12 @@ void __cdecl enemies_treaty(int faction_id, int faction_id_with,
     // WORKAROUND(noinline): the image calls get_noun (0x0050B930) and
     // has_project (0x004F80D0) out of line here while enemies_unpact and this
     // function's spying expansion inline; a const pointer keeps them calls.
+    // MEASURED 2026-11-19 (par-1): plain calls expand all six sites (53 -> 213 rows);
+    // up to 16 dead 4-if probes refuse none; writing the 11 hand-copied
+    // get_noun bodies as get_noun calls and the spying test as an inline
+    // predicate owner refuse none either. Declaring get_noun/has_project
+    // non-inline for the whole unit restores 53 here but breaks enemies_unpact
+    // (0 -> 78) and enemy_diplomacy (10 -> 48): the per-site arrangement is open.
     LPSTR (__cdecl *const noun_call)(int) = get_noun;
     BOOL (__cdecl *const project_call)(int, int) = has_project;
     if (check_technology) {

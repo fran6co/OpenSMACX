@@ -288,6 +288,8 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
     // stand-in: the image calls help_create_link out of line in the first
     // two sections and expands it in the rest; a local const pointer keeps
     // VC6 from inlining those two sites.
+    // MEASURED 2026-11-19 (par-1): plain calls expand both (80 -> 153 rows); 1-16 dead
+    // probes refuse neither (owner, not budget). Kept.
     void (__cdecl *const help_create_link_call)(char *, char *, char *) =
         help_create_link;
 

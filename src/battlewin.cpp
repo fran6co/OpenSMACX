@@ -677,6 +677,9 @@ again:
         // WORKAROUND(noinline): the image expands proto_power here but calls
         // both range() copies out of line (0x00422F00); the later written-out
         // sum expands them. The original spent more /Ob2 budget before this.
+        // MEASURED 2026-11-19 (par-1): !veh_health(id), a range(proto_power(id) - dmg) owner
+        // (battle.cpp veh_cur_hp) and the written-out form all expand both ranges
+        // (357 -> 493 rows); 1-16 dead probes refuse neither. Kept.
         int (__cdecl *const range_call)(int, int, int) = range;
         if (!range_call((VehPrototypes[Vehs[first_vehicle_id].proto_id].plan == PLAN_ALIEN_ARTIFACT
                              ? 1
