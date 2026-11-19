@@ -9,6 +9,8 @@ a=ap.parse_args()
 MAIN=os.environ.get('OPENSMACX_MAIN', R if os.path.exists(R+'/.opensmacx/game/terranx_original.exe') else '/home/fran6co/code/OpenSMACX')
 cc=json.load(open(MAIN+'/build/compile_commands.json'))
 units=[e['file'][len(MAIN)+1:] for e in cc if e['file'].startswith(MAIN+'/src/')]
+if R!=MAIN and os.path.exists(R+'/build/compile_commands.json'):  # units a regroup created in this worktree
+    units+=[e['file'][len(R)+1:] for e in json.load(open(R+'/build/compile_commands.json')) if e['file'].startswith(R+'/src/') and e['file'][len(R)+1:] not in units]
 if a.units: units=[u for u in units if u in a.units or os.path.basename(u) in a.units]
 work=[]
 for u in units:
@@ -36,7 +38,16 @@ with ThreadPoolExecutor(a.jobs) as ex:
 json.dump(res,open(a.out,'w'),indent=0)
 ok=[r for r in res if r['diff']>=0]
 if a.base:
-    b={(x['unit'],x['addr']):x for x in json.load(open(a.base))}
+    # keyed by address: a marker moved to another unit is compared with its old row (same unit preferred)
+    B={}
+    for x in json.load(open(a.base)): B.setdefault(x['addr'],[]).append(x)
+    b={}
+    for x in res:
+        c=B.get(x['addr'],[])
+        if c and x['addr']!='?': b[(x['unit'],x['addr'])]=next((y for y in c if y['unit']==x['unit']),c[0])
+    seen={x['addr'] for x in res}
+    gone=[y for k,c in B.items() if k not in seen and k!='?' for y in c]
+    if gone and not a.units: print('NOT MEASURED NOW',len(gone)); [print('  ?',y['addr'],y['unit'],y['sym'][:50]) for y in gone[:40]]
     lost=[x for x in res if (x['unit'],x['addr']) in b and b[(x['unit'],x['addr'])]['exact'] and not x['exact']]
     gained=[x for x in res if (x['unit'],x['addr']) in b and not b[(x['unit'],x['addr'])]['exact'] and x['exact']]
     moved=[(x,b[(x['unit'],x['addr'])]['diff']) for x in res if (x['unit'],x['addr']) in b and x['diff']!=b[(x['unit'],x['addr'])]['diff'] and not x['exact'] and not b[(x['unit'],x['addr'])]['exact']]

@@ -153,7 +153,7 @@ def lit_runs(lits):
 
 def main():
     ap = argparse.ArgumentParser()
-    for o in ('text', 'lits', 'units', 'cands', 'inside', 'dry', 'top', 'strong'):
+    for o in ('text', 'lits', 'units', 'cands', 'inside', 'dry', 'top', 'strong', 'deps'):
         ap.add_argument('--' + o, action='store_true')
     ap.add_argument('--unit'); ap.add_argument('--json'); ap.add_argument('--min', type=int, default=3)
     ap.add_argument('--merge', nargs='+'); ap.add_argument('--into'); ap.add_argument('--move'); ap.add_argument('--include', action='append')
@@ -166,7 +166,7 @@ def main():
         import tumerge
         ad = {int(x, 16) for x in a.move.split(',')}
         hosts = sorted({f[5] for f in load() if f[0] in ad})
-        return tumerge.merge(hosts, a.into, a.dry, addrs=ad, top=a.top, with_inc=a.include, new_like=a.new_like, after=a.after)
+        return tumerge.merge(hosts, a.into, a.dry, addrs=ad, top=a.top, with_inc=a.include, new_like=a.new_like, after=a.after, deps=a.deps)
     fs = load()
     runs = text_runs(fs)
     lits = literal_owners(fs)

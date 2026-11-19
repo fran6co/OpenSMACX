@@ -19,6 +19,9 @@ comment, #include lines) is dropped except for includes C lacks, which are added
 --include '"x.h"' are added). When C.cpp does not exist, `--new-like L.cpp [--after P.cpp]` creates it: the licence
 and #include lines of L, listed after P (default L) in OPENSMACX_SOURCES, L's per-source property commands and
 project.json flag set duplicated (and L's entry in the worktree's build/compile_commands.json, for fe).
+`--deps` also moves the host's unmarked top-level pieces (objects, helpers, #define blocks) that only the moved
+chunks name, to closure, each in front of the next moved chunk in file order; a declaration both sides use is
+copied; a definition both sides use stays and is reported as SHARED.
 No body is edited. Warnings name what a person must check: unit-level #defines before the includes,
 preprocessor lines inside moved chunks, flag sets that differ."""
 import os, re, sys, json, subprocess
@@ -134,10 +137,17 @@ def chunks(t, start=0):
             if ks:
                 out.append([min(ks), pend]); pend = ''
     if pend or tail:
-        if out:
-            out[-1][1] += pend + tail
-        else:
-            out.append([None, pend + tail])
+        # trailing marker-only comment blocks (bodies that live in a header) are chunks of their own
+        parts = split_orphans('// ORIGINAL: 0x00000000 \n' + pend + tail)
+        parts[0] = parts[0].split('\n', 1)[1]
+        for part in parts:
+            ks = [int(x, 16) for x in ORIG.findall(part)]
+            if ks:
+                out.append([min(ks), part])
+            elif out:
+                out[-1][1] += part
+            else:
+                out.append([None, part])
     return out
 
 
@@ -271,13 +281,189 @@ def create_unit(new, like, after, dry):
     return notes
 
 
+def strip_code(s):
+    """s with comments, string and character literals blanked"""
+    out = []; i = 0; n = len(s)
+    while i < n:
+        if s.startswith('//', i):
+            j = s.find('\n', i); j = n if j < 0 else j
+            i = j; continue
+        if s.startswith('/*', i):
+            j = s.find('*/', i + 2); i = n if j < 0 else j + 2; out.append(' '); continue
+        c = s[i]
+        if c == '"' or c == "'":
+            j = i + 1
+            while j < n and s[j] != c:
+                j += 2 if s[j] == '\\' else 1
+            i = j + 1; out.append('0'); continue
+        out.append(c); i += 1
+    return ''.join(out)
+
+
+DEFINE = re.compile(r'^[ \t]*#[ \t]*define[ \t]+(\w+)(?:[^\n]*\\\n)*[^\n]*\n', re.M)
+
+
+def pieces(s):
+    """a chunk cut into its top-level pieces: every item (with the comments before it) and every #define block
+    (with the comment lines directly above it); ''.join(pieces) == s"""
+    cuts = set(items(s))
+    for m in DEFINE.finditer(s):
+        b = m.start()
+        while b > 0:
+            pb = s.rfind('\n', 0, b - 1) + 1
+            if s[pb:b].lstrip().startswith('//'):
+                b = pb
+            else:
+                break
+        # only when the define is not inside an item (depth 0): its start must follow an item end or other pieces
+        cuts.add(m.end())
+        cuts.add(b)
+    cuts = sorted(c for c in cuts if 0 < c < len(s))
+    out = []; q = 0
+    for c in cuts:
+        out.append(s[q:c]); q = c
+    out.append(s[q:])
+    return [x for x in out if x]
+
+
+def piece_names(pc):
+    """(kind, {names}) of a piece: 'define', 'function' (has a body), 'object' (a definition), 'decl' (extern or
+    prototype), '' (nothing declared: comments, marker blocks)"""
+    m = DEFINE.search(pc)
+    code = strip_code(pc)
+    if m and not strip_code(pc[:m.start()] + pc[m.end():]).strip():
+        return 'define', {m.group(1)}
+    code = re.sub(r'^[ \t]*#[^\n]*(?:\\\n[^\n]*)*', '', code, flags=re.M)
+    if not code.strip():
+        return '', set()
+    depth = 0; cut = len(code)
+    for i, c in enumerate(code):
+        if c in '([':
+            if depth == 0 and c == '[':
+                cut = i; break
+            if depth == 0 and c == '(':
+                cut = i; break
+            depth += 1
+        elif c in ')]':
+            depth -= 1
+        elif depth == 0 and c in '=;{':
+            cut = i; break
+    head = code[:cut]
+    ids = re.findall(r'[A-Za-z_]\w*', head)
+    if not ids:
+        return '', set()
+    name = ids[-1]
+    first = ids[0]
+    if first in ('struct', 'class', 'union', 'enum', 'typedef', 'namespace') and code[cut:cut + 1] == '{' or first == 'typedef':
+        # a type: its tag, and the declarator after the closing brace
+        tail = re.findall(r'[A-Za-z_]\w*', code[code.rfind('}') + 1:]) if '}' in code else ids[-1:]
+        return 'type', set(ids[1:2]) | set(tail[-1:])
+    if code[cut:cut + 1] == '(':
+        # function: body or prototype
+        d = 0; j = cut
+        while j < len(code):
+            if code[j] == '(':
+                d += 1
+            elif code[j] == ')':
+                d -= 1
+                if d == 0:
+                    break
+            j += 1
+        rest = code[j + 1:].lstrip()
+        if rest.startswith('{') or rest.startswith(':') or re.match(r'(?:const\s*)?\{', rest):
+            return 'function', {name}
+        if rest.startswith(';') or rest.startswith('const') or rest.startswith('throw'):
+            return 'decl', {name}
+        return 'object', {name}      # `T name(args);` style object or a macro-wrapped definition
+    if first == 'extern' and '=' not in code[cut:cut + 1]:
+        return 'decl', {name}
+    return 'object', {name}
+
+
+def pull_deps(host_text, pe, moved_keys):
+    """--move --deps: the unmarked pieces of the host that only the moved chunks use travel with them.
+    -> (moved chunks with their pieces glued in file order, remaining host text, report lines)"""
+    cs = chunks(host_text, pe)
+    rep = []
+    P = []          # [chunk index, text, kind, names, marked, moved]
+    for ci, (k, s) in enumerate(cs):
+        if k in moved_keys:
+            P.append([ci, s, 'moved', set(), True, True]); continue
+        for pc in pieces(s):
+            kind, names = piece_names(pc)
+            ms = list(re.finditer(r'// ORIGINAL: 0x[0-9A-F]{8} (\S+)', pc))
+            if ms and kind == 'function' and not any(re.search(r'(?<![A-Za-z0-9_])' + re.escape(nm) + r'(?![A-Za-z0-9_])', m.group(1))
+                                                      or m.group(1).startswith('??') for m in ms for nm in names):
+                # the markers above this function name other functions (bodies that live in a header): the
+                # marker comments stay, the unmarked function is a piece of its own
+                q = ms[-1].start()
+                o = pc.rfind('/*', 0, q)
+                if o >= 0 and pc.find('*/', o, q) < 0:
+                    e = pc.find('*/', q); e = pc.find('\n', e) + 1
+                else:
+                    e = pc.find('\n', q) + 1
+                    while pc[e:].lstrip(' \t').startswith('//') and pc[e:e + 1] != '\n':
+                        e = pc.find('\n', e) + 1
+                P.append([ci, pc[:e], '', set(), True, False])
+                P.append([ci, pc[e:], kind, names, False, False])
+                continue
+            marked = bool(ms) and kind in ('function', '')
+            P.append([ci, pc, kind, names, marked, False])
+    def idents(s):
+        return set(re.findall(r'[A-Za-z_]\w*', strip_code(s)))
+    ID = [idents(p[1]) for p in P]
+    pre_ids = idents(host_text[:pe])
+    changed = True
+    copies = set()
+    while changed:
+        changed = False
+        used_moved = set().union(*[ID[i] for i, p in enumerate(P) if p[5]]) if any(p[5] for p in P) else set()
+        for i, p in enumerate(P):
+            if p[5] or p[4] or not p[3] or i in copies:
+                continue
+            if not (p[3] & used_moved):
+                continue
+            stay = pre_ids.union(*[ID[j] for j, q in enumerate(P) if not q[5] and j != i])
+            if p[3] & stay:
+                if p[2] == 'decl':
+                    copies.add(i); changed = True
+                    rep.append('  dep COPIED (declaration both sides use): ' + ' '.join(sorted(p[3])))
+                continue
+            p[5] = True; changed = True
+            rep.append('  dep moved: %s %s (%d lines)' % (p[2], ' '.join(sorted(p[3])), p[1].count('\n')))
+    used_moved = set().union(*[ID[i] for i, p in enumerate(P) if p[5]]) if any(p[5] for p in P) else set()
+    for i, p in enumerate(P):
+        if not p[5] and not p[4] and i not in copies and p[3] & used_moved:
+            rep.append('  dep SHARED, left in the host (%s %s; also used by code that stays)' % (p[2], ' '.join(sorted(p[3]))))
+    # glue: every pulled piece goes in front of the next moved chunk in file order (the last one when none follows)
+    order = [i for i, p in enumerate(P) if p[5] or i in copies]
+    mchunks = [i for i in order if P[i][2] == 'moved']
+    out = {i: '' for i in mchunks}
+    tailadd = ''
+    for i in order:
+        if P[i][2] == 'moved':
+            continue
+        nxt = next((j for j in mchunks if j > i), None)
+        txt = P[i][1] if P[i][1].startswith('\n') else '\n' + P[i][1]
+        if nxt is None:
+            tailadd += txt
+        else:
+            out[nxt] += txt
+    moved = []
+    for i in mchunks:
+        k = cs[P[i][0]][0]
+        moved.append([k, out[i] + P[i][1] + (tailadd if i == mchunks[-1] else '')])
+    keep = host_text[:pe] + ''.join(p[1] for i, p in enumerate(P) if not p[5])
+    return moved, keep, rep
+
+
 def unit_flags(u):
     d = json.load(open(R + '/recovery/project.json'))['measurement']['unit_flag_sets']
     return sorted(set(d.get(u, {}).get('flags', [])) - {'/Z7'})
 
 
-def merge(srcs, into, dry=False, addrs=None, top=False, with_inc=None, new_like=None, after=None):
-    skipped = []
+def merge(srcs, into, dry=False, addrs=None, top=False, with_inc=None, new_like=None, after=None, deps=False):
+    skipped = []; deprep = []
     into = os.path.relpath(os.path.abspath(into), R) if os.path.isabs(into) else into
     made = []
     if not os.path.exists(R + '/' + into):
@@ -298,7 +484,11 @@ def merge(srcs, into, dry=False, addrs=None, top=False, with_inc=None, new_like=
             warn.append('flags differ: %s %s | %s %s' % (s, ' '.join(sorted(set(unit_flags(s)) - set(unit_flags(into)))) or '-',
                                                          into, ' '.join(sorted(set(unit_flags(into)) - set(unit_flags(s)))) or '-'))
         incs, defs, cs = split_foreign(R + '/' + s)
-        if addrs is not None:
+        if addrs is not None and deps:
+            ts = open(R + '/' + s, encoding='latin-1').read()
+            cs, keep_src[s], rep = pull_deps(ts, prelude_end(ts), addrs)
+            deprep += rep
+        elif addrs is not None:
             mine = [c for c in cs if c[0] in addrs]
             # a moved function takes only its own item text: re-chunk without glue
             ts = open(R + '/' + s, encoding='latin-1').read()
@@ -333,8 +523,8 @@ def merge(srcs, into, dry=False, addrs=None, top=False, with_inc=None, new_like=
         print('  chunk %s %d lines' % ('0x%08X' % k if k else '-', s.count('\n')))
     if skipped:
         print('  includes of the source file NOT added (pass --include NAME for the ones the moved bodies need): ' + ' '.join(skipped))
-    for w in warn:
-        print('  WARN ' + w)
+    for w in deprep + warn:
+        print(w if w.startswith('  dep') else '  WARN ' + w)
     notes = list(made)
     if addrs is None:
         notes += rewrite_build(srcs, into, dry)
