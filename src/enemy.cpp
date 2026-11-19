@@ -4688,7 +4688,7 @@ L_56c9e1:
                 for (int d = 0; d < 8; d++) {
                     tx = xrange(x + VehMoveDeltaX[d]);
                     ty = y + VehMoveDeltaY[d];
-                    if (on_map(tx, ty) && !is_ocean(tx, ty)) {
+                    if (on_map(tx, ty) && is_ocean(tx, ty)) {
                         other_id = stack_fix(veh_at(tx, ty));
                         if (other_id >= 0 && Vehs[other_id].faction_id == faction_id
                             && stack_check(other_id, 8, -1, -1, -1) > 0) {
