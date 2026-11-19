@@ -93,12 +93,23 @@ def ehkey(f):
     return None if not isinstance(f, dict) else (f['ms'], tuple(f['par']), tuple(f['act']), f['nt'])
 
 
+def ehgroups(par):
+    """unwind parents -> states per root state (one root per teardown stage of a return site)"""
+    g = []
+    for v in par:
+        if v == -1 or not g:
+            g.append(1)
+        else:
+            g[-1] += 1
+    return g
+
+
 def ehfmt(f):
     if f is None:
         return '-'
     if not isinstance(f, dict):
         return str(f)
-    return 'ms=%d fn=%d try=%d' % (f['ms'], sum(f['act']), f['nt'])
+    return 'ms=%d fn=%d try=%d' % (f['ms'], sum(f['act']), f['nt'])  # fn < ms: states without an action (phantom teardown)
 
 
 def one(c, text, unit, addr):
@@ -211,7 +222,15 @@ def worker(unit, pfx):
 def detail(r):
     k = r['rung']
     if k == 1:
-        return 'img %s | ours %s' % (ehfmt(r['eh'][0]), ehfmt(r['eh'][1]))
+        s = 'img %s | ours %s' % (ehfmt(r['eh'][0]), ehfmt(r['eh'][1]))
+        if all(isinstance(f, dict) for f in r['eh']):
+            gi, go = ehgroups(r['eh'][0]['par']), ehgroups(r['eh'][1]['par'])
+            if len(gi) == len(go):  # same teardown sites: per-site depth (states under one root), ours against the image
+                s += '; sites %d: ours deeper %d, shallower %d' % (len(gi), sum(1 for a, b in zip(gi, go) if b > a),
+                                                                   sum(1 for a, b in zip(gi, go) if b < a))
+            else:
+                s += '; root states %d/%d' % (len(gi), len(go))
+        return s
     if k == 2:
         it = sorted(r['calls'].items(), key=lambda kv: -abs(kv[1][0] - kv[1][1]))
         return ' '.join('%s %d/%d' % (n[:38], a, b) for n, (a, b) in it[:4]) + (' +%d' % (len(it) - 4) if len(it) > 4 else '')

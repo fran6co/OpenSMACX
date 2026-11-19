@@ -5429,6 +5429,87 @@ skeleton keeps only branches, `ret` and numbered `use(K)` markers)
 
 ## 4. Measured and neutral (do not retry without new evidence)
 
+### 4.0 Rung-ladder census: the work list (2026-11-19, `analysis/rungs.py`)
+
+`uv run python recovery/tools/analysis/rungs.py` (75 s tree-wide with
+FE_JOBS=5; table in `build/recovery/rungs/rungs.txt`, records in
+`rungs.json`) gives every function that is not fe-exact its FIRST differing
+rung in the AGENTS.md order: 1 EH (FuncInfo states, parents, funclets, try
+blocks), 2 calls (named call multiset), 3 frame (size, ebp/esp, EH
+registration), 4 layout (block count, return tails, block-order signature,
+prologue-save class), 5 slots (frame-slot map), 6 regs (saved set, or rows
+that vanish with register names masked), 7 bytes (same registers: operand
+order, selection, schedule). Rerun it after a batch; the numbers below are
+head fbbf5b225e.
+
+Non-exact functions (347 functions, 59227 rows):
+
+| rung | functions | rows | largest |
+|---|---|---|---|
+| 1 EH | 16 | 6159 | order_veh 0x005947C0 (2133), probe 0x0059F120 (1292), PickTech::pick 0x00486510 (825), Console::go_to 0x004D61A0 (443), call_council 0x0052C880 (259), Console::terraform 0x004D3470 (250) |
+| 2 calls | 26 | 6215 | battle_fight 0x00506AF0 (1992), spot_all 0x005B6260 (1224), propose_pact 0x00543BC0 (388), tech_trade 0x00541100 (358), MapWin::draw_map 0x0046A550 (345), ReportWin::draw_score 0x004A1140 (303) |
+| 3 frame | 16 | 6035 | enemy_strategy 0x00561080 (1889), BaseWin::draw_expenses 0x00412AA0 (1024), NetDaemon::synch 0x00532E00 (432), custom_planet 0x0058C2A0 (404), ReportWin::draw_intel 0x004A2210 (333), NewTechWin::exec 0x00483F90 (331) |
+| 4 layout | 113 | 32705 | enemy_move 0x0056B5B0 (5690), base_build 0x004F81A0 (3640), gen_terrain_poly 0x004632D0 (1516), communicate 0x0054FFD0 (1513), air_power 0x005678C0 (1051), consider_designs 0x00581260 (958) |
+| 5 slots | 43 | 4480 | NetDaemon::process_message 0x00534400 (546), caviar_build_projection_tables 0x006404F0 (364), ReportWin::draw_ops 0x0049D540 (319), SocialWin::init 0x004B2740 (319), NetWin::exec 0x00482490 (231), base_ecology 0x004F67F0 (184) |
+| 6 regs | 106 | 3496 | name_proto 0x0057E040 (196), MapWin::right_menu 0x0046C0D0 (162), DipEdit::init 0x004DB080 (124), CheckBox::draw_item 0x0060F030 (111), RadioButton::draw_item 0x0060D750 (111), MonuWin::init 0x00472230 (110) |
+| 7 bytes | 27 | 137 | NetWin::draw_custom_rules 0x0047F960 (16), vox_load_scene_view 0x0063A280 (15), vox_draw_scene 0x00639E60 (10), TexHeap::configure 0x00635050 (9), base_hurry 0x004F3FE0 (8), time_controls_dialog 0x00589330 (8) |
+
+Count-sensitive canaries (4 functions, 30 rows):
+
+| rung | functions | rows | largest |
+|---|---|---|---|
+| 1 EH | 0 | 0 |  |
+| 2 calls | 0 | 0 |  |
+| 3 frame | 0 | 0 |  |
+| 4 layout | 2 | 19 | sat_attack 0x004A0260 (17), buy_council_vote 0x0053EB50 (2) |
+| 5 slots | 0 | 0 |  |
+| 6 regs | 0 | 0 |  |
+| 7 bytes | 2 | 11 | load_box_sprites 0x00453A70 (6), action_give 0x004CEDE0 (5) |
+
+Broken claims (4 functions, 42 rows):
+
+| rung | functions | rows | largest |
+|---|---|---|---|
+| 1 EH | 0 | 0 |  |
+| 2 calls | 2 | 29 | Caviar::init_class 0x006185A0 (20), filefind_init 0x00600400 (9) |
+| 3 frame | 0 | 0 |  |
+| 4 layout | 0 | 0 |  |
+| 5 slots | 0 | 0 |  |
+| 6 regs | 1 | 10 | ReportIf::draw_security 0x004AB600 (10) |
+| 7 bytes | 1 | 3 | Credits::unload 0x00428830 (3) |
+
+Reading rung 1 (all 16 looked at, 2026-11-19 par-2): none is a class or
+lifetime fact. Every image/our FuncInfo pair has the same teardown sites
+(same root-state sequence, same try count 0); they differ only in how deep
+one or more `~Popup`/`~PopMenu` teardowns expand, i.e. /Ob2 pass-2 room
+(2.8), which is rung 2 seen through the unwind map:
+- ours deeper at k sites, none shallower (too much pass-2 room; the original
+  caller spent or reserved more): order_veh 4 of 7, probe 9 of 39,
+  PickTech::pick 5 of 8, go_to 3 of 7, terraform 5 of 33, config_game 2 of
+  5, call_council (2 late sites at full depth 16 where the image has 6),
+  pick_player, base_editor_proj, save_game, POP2 (1 each);
+- ours shallower at one site (too little room there): Console::upgrade,
+  editor_edit_veh (the first full teardown lacks the image's two
+  ~StringList stage states);
+- same state count, one site swapped: queue_click (image `D s D D D`, ours
+  `s D D D D` with its three probes, `D D D D D` with fewer; a 48-variant
+  sweep of probe count x three positions only ever refuses a prefix of the
+  sites, never site 2 alone) and pick_pass (image `D D D s D s`, ours
+  `D D D D s s`). A refused site between two accepted ones is not reachable
+  with dead spend: the original's site 2 had less room than site 1 for a
+  reason inside the source between them (queue_click: the `!right` arm up to
+  the `lock_base` return).
+- popb 0x0048C650 is the one phantom (2.2): ours has 16 unreferenced states
+  (55 against 39) from the final if/else whose arms both return. Ending in a
+  top-level `return result;` removes them but the freed room makes the final
+  teardown full depth (49 states; image final teardown is 7 states, the
+  `return 0` before it 16), and a single shared return gives 36. The
+  phantom stands in for about one full `~Popup` of spend that the original
+  body had before its last return.
+POP2 with POP3's exact `popup_history_text` helper is refused one level too
+far (teardowns merge, 54 rows): the helper is too dear for POP2 as written,
+the raw loop slightly too cheap.
+
 - **String pooling.** The original is unpooled everywhere: identical literals stay
   separate within a function. Converting 117 units to an unpooled recipe
   (`/Og /Oi /Ot [/Oy] /Gs /Gy /Ob2`) gained 0 functions. Pooling is decisive

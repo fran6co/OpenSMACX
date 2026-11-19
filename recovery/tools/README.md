@@ -66,6 +66,14 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   (r) a field adjusted through a local copy, directly (`f = g(f)`) or through `T &r = f` (the double_cross clamp,
   MATCHING_GUIDE 3.7). The ranking key starts with the named callee difference (analysis/callees.py), so a
   variant that fixes which callee is called ranks above one that only fixes the call count.
+- `analysis/rungs.py [unit ...] [--addr A,..] [--out DIR] [--md] [--top K]` rung-ladder census (75 s tree-wide with
+  FE_JOBS=5): for every function that is not fe-exact, the first differing rung in the AGENTS.md order (1 EH FuncInfo,
+  2 named call multiset, 3 frame size/kind, 4 block count / return tails / block-order signature / prologue-save class,
+  5 frame-slot map, 6 registers, 7 bytes), composed from ehcensus, callees, framescan and prosave over one compile per
+  unit. Writes `build/recovery/rungs/rungs.txt` (counts per rung, the table sorted by rung then rows, then the same for
+  the count-sensitive canaries and the broken claims) and `rungs.json` (every rung's image/our values per function);
+  `--md` prints the summary kept in MATCHING_GUIDE 4.0. This table is the work list; use the per-rung tool on one
+  function for the detail.
 - `analysis/callees.py <unit> <addr> [--src ALT] [--pfx N]` named call multisets: image direct calls named
   through the ORIGINAL markers (plus a CRT table learned from aligned call sequences), `call [IAT]` through the
   image's import directory, ours through relocations; prints the callees on one side only.
