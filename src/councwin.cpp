@@ -639,11 +639,13 @@ void CouncWin::init(int proposal, int faction_id) {
     field_A28_ = GameDataStateStorage.fields_.governor_faction_;
     if (IsMultiplayerPBEM) {
         field_A44_ = 0xff;
+        CouncilDialogActive = 1;
+        field_A38_ = timeGetTime();
     } else {
         field_A44_ = ~(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff);
+        CouncilDialogActive = 1;
+        field_A38_ = timeGetTime();
     }
-    CouncilDialogActive = 1;
-    field_A38_ = timeGetTime();
     field_A40_ = 1;
     field_A3C_ = bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff) * 60000;
 
