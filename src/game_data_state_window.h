@@ -44,7 +44,7 @@ struct GameDataStateWindowFields {
     GameDataLockMaskView lock_masks_;            // +0x058
     uint32_t faction_rankings_[8];              // +0x05C
     int ranking_faction_id_unk1_;          // +0x07C
-    uint32_t ranking_faction_id_unk2_;          // +0x080
+    int ranking_faction_id_unk2_;          // +0x080
     BaseSecretProject secret_project_;          // +0x084, genuine nested owner
     int governor_faction_;                      // +0x184
     int council_resolution_count_[11];             // +0x188
