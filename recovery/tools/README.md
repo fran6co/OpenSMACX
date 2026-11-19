@@ -79,3 +79,10 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   function until it writes nothing (first pass: 9 functions, 2,429 -> 2,304 rows, none exact lost).
   sibling: one counter name declared by several non-nested `for (int i ...)` loops and unused outside them
   becomes one function-scope `int i;` (per name, and all names together).
+- `analysis/cdeck.py` (`cdeck.run(unit, addr, [(key, text), ...], focus=('on_map',))`) deck runner that prints, per
+  variant, rows, the callee counts that differ from the image, our offsets of focus calls and our frame size: the
+  quick screen for /Ob2 (MATCHING_GUIDE 2.8) experiments. `analysis/ccu.py <unit.cpp> ...` lists every function of
+  the units whose call multiset differs from the image's.
+- `analysis/runs.py DIFF.txt [min]` unpaired row runs (image-only = code we lack, ours-only = code we add) of a
+  saved `fe.py --all` diff; `analysis/slotmap.py DIFF.txt` pairs our `[ebp+-N]` slots with the image's and lists
+  our slots that serve several image slots (packed or shared locals).
