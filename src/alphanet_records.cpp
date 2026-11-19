@@ -97,6 +97,28 @@ Purpose: Build and link one selection node for the container this owns:
          handed to this's slot 0.
 
 // ORIGINAL: 0x00401D80 sub_401d80 0x00401D80-0x0040230F;0x006504E0-0x00650571 FILE
+// LEVER  2026-11-19: EH states. The image's unwind map has six states, three
+//        payload sites of two (placement delete, then the node's virtual
+//        base under its construction flag 4 / 8 / 0x40). State 2's delete
+//        pushes the spilled owner VALUE ([ebp-0x14], written at 0x00401F4A);
+//        `new(allocation_owner_)` there made the funclet re-read the owner
+//        through the virtual base (five instructions the image lacks, and a
+//        cleanup action `recover measure` refused to decode). With the
+//        first-branch fallback taking a block-scope copy the unwind region
+//        0x006504E0 is the image's.
+// TRIED: the residual is the second branch's shared tail. The image writes
+//        both payload arms and then ONE `if (current_->payload_ == 0) return
+//        4; on_insert(...)` (0x004021F8 `jmp 0x4022C7`); here each arm keeps
+//        its own copy. Written merged, the last payload site stops
+//        expanding NetUnk72C() and gains two EH states (8 against 6): the
+//        image is the suffix regime of MATCHING_GUIDE 2.8 (third payload
+//        site calls 0x00402D10, the fourth expands it), while every merged
+//        spelling here is either "neither expands" or, with a larger caller,
+//        the prefix regime (third expands, fourth calls). Tried merged:
+//        new(this) / ledger_owner(this) / a block-scope copy / the lvalue at
+//        either fallback, both ternary forms, the arms reversed, free and
+//        charged dead probes at every statement boundary. The duplicated
+//        tail is kept because it keeps the EH states right.
 // TRIED: reproducing the /GX SEH prologue (push -1/funclet/fs:[0] chain) by hand - the earlier lever (a real local object with a destructor makes the compiler emit its own matching frame) needs the ACTUAL class whose ctor/dtor this uses, which is not recoverable from this file alone; landed the full two-branch allocate-and-link body (both the 0x1c-node and 0x60-node paths, both empty/non-empty container cases) as plain control flow instead, diverging from instruction #5 (no SEH frame set up) but matching the field offsets and call order throughout.
 // size      1568 bytes
 // prototype
@@ -132,11 +154,13 @@ int AlphaNetStringStruct::add(int id) {
         head_->previous_ = head_;
         // If/else, as ServiceProviderList::add: the image tail-merges both
         // arms into one ??0NetUnk72C call (0x00401FCE).
-        // WORKAROUND(inline): the image spills this fallback's owner too
-        // (0x00401F4A), but ledger_owner() here costs the /Ob2 budget that
-        // lets the last payload site expand NetUnk72C() (0x00402270).
+        // The fallback's placement argument is a value: the image spills it
+        // at 0x00401F4A and the state-2 cleanup (0x0065050E) pushes that
+        // slot. A block-scope copy gives the value without ledger_owner()'s
+        // /Ob2 cost, which would stop the last payload site expanding
+        // NetUnk72C() (0x00402270).
         if (allocator_) head_->payload_ = new(allocator_) NetAllocationNode;
-        else head_->payload_ = new(allocation_owner_) NetAllocationNode;
+        else { Heap *const owner = allocation_owner_; head_->payload_ = new(owner) NetAllocationNode; }
         if (head_->payload_ == 0) return 4;
         on_insert(head_->payload_);
         current_ = head_;
