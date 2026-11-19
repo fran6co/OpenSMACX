@@ -259,7 +259,7 @@ void MultiWin::draw_player(int faction_id, int row, RECT *bounds) {
   }
 }
 
-// ORIGINAL: 0x00478BE0 ?draw_time@MultiWin@@QAEXPAURECT@@H@Z 0x00478BE0-0x00479269
+// ORIGINAL: 0x00478BE0 ?draw_time@MultiWin@@QAEXPAURECT@@H@Z 0x00478BE0-0x00479269 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical rationale retained verbatim: Recover the clock region's owned hotspot, font and visible turn-state label; the countdown value and timer side effects await binding of the original shared time-control globals. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations.", "pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: draw_time performs the timer, council, multiplayer-label, warning, timeout, wave and FX paths over 0x00478BE0..0x00479269.", "source owners: existing NetDaemonWaitTicks, TurnRedrawPending, CouncilWindow fields +0xA24/+0xA3C/+0xA54, NetDaemonProgressInterval, NetDaemonNet lock-state words, Console, GameDataStateStorage, NetMsg and FX APIs.", "the 0x007FFF78 and 0x007FFF7C source objects retain separate original dword spans; no larger allocation or semantic-name claim."], "reason": "Recover the original clock, turn-control, countdown and timeout paths through existing typed state plus the shared NetDaemonProgressInterval and two original-span MultiWin state words. This updates the superseded scaffold rationale only; it grants no BYTE_EXACT or SEMANTIC claim, matching/restoration result, native build result or whole-project acceptance."}
 // kind      game
 // TRIED: transcribed from Ghidra's decompilation (which resolved the dataflow cleanly) with member calls fixed up (Spot::add, Buffer::set_font/set_text_color/write_cent_l, Strings::get, AlphaNet::who_2_pid, Net::get_player_name, NetMsg::pop, FX::play, message_data, wave_it) and the two `(x<0)?0:x` clamp bit-tricks written as plain clamps rather than neg/sbb/and. Compiles; diverges at instruction #3 (prologue - local frame size/shape, not chased further).
@@ -904,7 +904,7 @@ void MultiWin::on_right_click(int x, int y) {
         parse_says(1, Players[faction].name_leader, -1, -1);
         parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
         parse_says(2, Players[faction].noun_faction, -1, -1);
-        // RECOVERY_LITERAL: v1 0x0068677C 0x00686787 $SG59056 0x00478150
+        // RECOVERY_LITERAL: v1 0x0068677C 0x00686787 $SG59055 0x00478150
         NetMsgPrimary.pop("ELIMINATED", 5000, 0, 0);
         return;
     }

@@ -462,7 +462,7 @@ search_menu_mnemonics:
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005FC290 ?on_redraw@Menu@@QAEXXZ 0x005FC290-0x005FC594
+// ORIGINAL: 0x005FC290 ?on_redraw@Menu@@QAEXXZ 0x005FC290-0x005FC594 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005fc290.cpp", "image:Menu6700B0/AlphaMenu66ED88/PullDown66FF40 constructor-selected primary tables; Buffer secondary subobject+444", "recovery/tasks/popup-font-configuration-owner-closure.json"], "reason": "Recover this complete operation in its genuine Menu/PullDown owner, using native constructor-selected virtual dispatch, real members and shared source-owned dependencies; preserve original identity, retained seed and historical restoration obligations."}
 // symbol    ?on_redraw@Menu@@UAEXXZ
 void Menu::on_redraw() {

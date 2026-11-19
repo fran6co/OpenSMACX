@@ -1533,7 +1533,7 @@ char VehLabelMADEAIRDROP2[] = "MADEAIRDROP";
 // Airdrop a vehicle, including range, interception, landing-site, diplomatic
 // and post-landing processing.  The four modes are the caller's network/local
 // context flags; mode 1 is the network execution path, mode 3 the local path.
-// ORIGINAL: 0x004CC360 ?action_airdrop@@YAHHHHH@Z 0x004CC360-0x004CD051 FILE
+// ORIGINAL: 0x004CC360 ?action_airdrop@@YAHHHHH@Z 0x004CC360-0x004CD051 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004cc360.cpp retained signature/extents and complete seed; no historical claim copied", "Coordinator full pinned original instruction decode 004CC360..004CD051, typed source owner fields and corrected original call/branch evidence", "recovery/tests/test_airdrop_network.py actual-body directional treaty and network reentrancy controls; not linked/runtime/game acceptance"], "reason": "Recover complete typed airdrop admission/interception, landing selection, stack movement, capture and post-drop updates. Preserve unsigned damage storage with integer thresholds and directional treaty evidence; referenced unfinished dependencies remain explicit, not game acceptance."}
 // TRIED: direct field-for-field transcription (validation chain of terrain/ZOC/treaty/AA checks, each guarding a NetMsg::pop error-return; airdrop-site scoring loop; base-capture tail) diverges at instr #7 (push vs xor), early register-allocation choice; not chased further given the 3313-byte scope.
 int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {

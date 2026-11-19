@@ -990,7 +990,7 @@ int __cdecl vox_read_shape_patches(int fd, CvrRecord *record, int size) {
 // Old CVR palettes contain sixteen 256-byte shade rows after a two-byte
 // prefix and RGB table. Expand them to twenty-four rows, in column-first
 // order; failed reads leave the already-read prefix intact and no new rows.
-// ORIGINAL: 0x006391F0 ?vox_expand_palette@@YAHHPAE@Z 0x006391F0-0x006392DC
+// ORIGINAL: 0x006391F0 ?vox_expand_palette@@YAHHPAE@Z 0x006391F0-0x006392DC BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original6391F0..6392DC reads 1,1,768,4096 bytes in order, returns -1 on each read failure and expands 24 shade rows from source row floor(2*row/3) in column-first order. Existing seed provides compatible bounds; fresh VC6 emits the declared symbol."], "reason": "Recover old-format CVR palette expansion as genuine C++ in its loader owner, replacing the original-address forwarder."}
 int __cdecl vox_expand_palette(int fd, uint8_t *palette) {
     uint8_t shades[0x1000];

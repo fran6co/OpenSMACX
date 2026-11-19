@@ -5335,9 +5335,9 @@ int __cdecl sub_52a980() {
 // in the current object. Both pinned bodies refer to these same original
 // starts; the bindings do not merge them with copies from other translation
 // units or claim linked retention.
-// RECOVERY_LITERAL: v1 0x0068BE94 0x0068BEDA $SG67701 0x0052A9B0
-// RECOVERY_LITERAL: v1 0x0068BEDC 0x0068BEE5 $SG67707 0x0052A9B0
-// RECOVERY_LITERAL: v1 0x0068BEE8 0x0068BEEC $SG67710 0x0052A9B0
+// RECOVERY_LITERAL: v1 0x0068BE94 0x0068BEDA $SG67700 0x0052A9B0
+// RECOVERY_LITERAL: v1 0x0068BEDC 0x0068BEE5 $SG67706 0x0052A9B0
+// RECOVERY_LITERAL: v1 0x0068BEE8 0x0068BEEC $SG67709 0x0052A9B0
 int __cdecl directplay_install_is_complete() {
     int result = 0;
     HKEY key;
