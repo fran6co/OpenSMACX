@@ -34,466 +34,7 @@
 // CRT API call rather than VC6's intrinsic expansion.
 
 
-/*
-Purpose: The most minimal pop() form - just a label and callback; shared
-         caption buffer, value -1, no override text, title 0, null sprite,
-         both flags fixed at 1.
-// ORIGINAL: 0x00627130 ?pop@@YAHPADP6AHXZ@Z 0x00627130-0x00627154 BYTE_EXACT
-// symbol    ?pop_label_cb@@YAHPADP6AHXZ@Z
-// size      36 bytes
-// prototype 
-// callers   0   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x006276A0
-Return Value: whatever the full form returns
-Status: Complete
-*/
-int __cdecl pop_label_cb(char *label, int (__cdecl *callback)()) {
-    return pops(PopupStartCaption, label, -1, nullptr, 0, nullptr,
-                            1, 1, callback);
-}
-/*
-Purpose: Like pop_label_cb but with a caller-supplied caption in place of the
-         shared buffer; value -1, no override text, title 0, null sprite,
-         both flags fixed at 1.
-// ORIGINAL: 0x00627160 ?pop@@YAHPADPADP6AHXZ@Z 0x00627160-0x00627184 BYTE_EXACT
-// symbol    ?pop_caption@@YAHPAD0P6AHXZ@Z
-// size      36 bytes
-// prototype 
-// callers   7   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x006276A0
-Return Value: whatever the full form returns
-Status: Complete
-*/
-int __cdecl pop_caption(char *caption, char *label,
-                        int (__cdecl *callback)()) {
-    return pops(caption, label, -1, nullptr, 0, nullptr, 1, 1,
-                            callback);
-}
-/*
-Purpose: Raise the caption-less, sprite-less popup with the shared caption
-         buffer and caller-supplied value and title; no override text, both
-         flags fixed at 1.
-// ORIGINAL: 0x006271D0 ?pop@@YAHPADHHP6AHXZ@Z 0x006271D0-0x006271FA BYTE_EXACT
-// symbol    ?pop_value_title@@YAHPADHHP6AHXZ@Z
-// size      42 bytes
-// prototype 
-// callers   0   call targets   1
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x006276A0
-Return Value: whatever the full form returns
-Status: Complete
-*/
-int __cdecl pop_value_title(char *label, int value, int title,
-                            int (__cdecl *callback)()) {
-    return pops(PopupStartCaption, label, value, nullptr, title,
-                            nullptr, 1, 1, callback);
-}
-/*
-Purpose: Like pop_value_title but with a caller-supplied caption instead of
-         the shared buffer; no override text, null sprite, both flags fixed
-         at 1.
-// ORIGINAL: 0x00627200 ?pop@@YAHPADPADHHP6AHXZ@Z 0x00627200-0x0062722A BYTE_EXACT
-// symbol    ?pop_caption_value_title@@YAHPAD0HHP6AHXZ@Z
-// size      42 bytes
-// prototype 
-// callers   4   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x006276A0
-Return Value: whatever the full form returns
-Status: Complete
-*/
-int __cdecl pop_caption_value_title(char *caption, char *label, int value,
-                                    int title, int (__cdecl *callback)()) {
-    return pops(caption, label, value, nullptr, title, nullptr, 1,
-                            1, callback);
-}
-/*
-Purpose: Raise the caption-less, sprite-less popup with the shared caption
-         buffer, value defaulted to -1 and only the title exposed; no
-         override text, both flags fixed at 1.
-// ORIGINAL: 0x00627230 ?pop@@YAHPADHP6AHXZ@Z 0x00627230-0x00627257 BYTE_EXACT
-// symbol    ?pop_title@@YAHPADHP6AHXZ@Z
-// size      39 bytes
-// prototype 
-// callers   0   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x006276A0
-Return Value: whatever the full form returns
-Status: Complete
-*/
-int __cdecl pop_title(char *label, int title, int (__cdecl *callback)()) {
-    return pops(PopupStartCaption, label, -1, nullptr, title,
-                            nullptr, 1, 1, callback);
-}
-/*
-Purpose: Like pop_title but with a caller-supplied caption instead of the
-         shared buffer; value -1, no override text, null sprite, both flags
-         fixed at 1.
-// ORIGINAL: 0x00627260 ?pop@@YAHPADPADHP6AHXZ@Z 0x00627260-0x00627287 BYTE_EXACT
-// symbol    ?pop_caption_title@@YAHPAD0HP6AHXZ@Z
-// size      39 bytes
-// prototype 
-// callers   4   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x006276A0
-Return Value: whatever the full form returns
-Status: Complete
-*/
-int __cdecl pop_caption_title(char *caption, char *label, int title,
-                              int (__cdecl *callback)()) {
-    return pops(caption, label, -1, nullptr, title, nullptr, 1, 1,
-                            callback);
-}
-/*
-Purpose: Raise the caption-less, sprite-less popup against the shared
-         caption buffer with value, override text and title all
-         caller-supplied; both flags fixed at 1.
-// ORIGINAL: 0x00627290 ?pop@@YAHPADHPADHP6AHXZ@Z 0x00627290-0x006272BD BYTE_EXACT
-// symbol    ?pop_value_text_title@@YAHPADH0HP6AHXZ@Z
-// size      45 bytes
-// prototype 
-// callers   0   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x006276A0
-Return Value: whatever the full form returns
-Status: Complete
-*/
-int __cdecl pop_value_text_title(char *label, int value, char *text,
-                                 int title, int (__cdecl *callback)()) {
-    return pops(PopupStartCaption, label, value, text, title,
-                            nullptr, 1, 1, callback);
-}
-/*
-Purpose: The full caption-less, sprite-less popup form - caption, value,
-         override text and title all caller-supplied; null sprite, both
-         flags fixed at 1.
-// ORIGINAL: 0x006272C0 ?pop@@YAHPADPADHPADHP6AHXZ@Z 0x006272C0-0x006272ED BYTE_EXACT
-// symbol    ?pop_full@@YAHPAD0H0HP6AHXZ@Z
-// size      45 bytes
-// prototype 
-// callers   1   call targets   1
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x006276A0
-Return Value: whatever the full form returns
-Status: Complete
-*/
-int __cdecl pop_full(char *caption, char *label, int value, char *text,
-                     int title, int (__cdecl *callback)()) {
-    return pops(caption, label, value, text, title, nullptr, 1, 1,
-                            callback);
-}
-/*
-Purpose: The most minimal pops() form - label, sprite and callback; shared
-         caption buffer, value -1, no override text, title 0, both flags
-         fixed at 1.
-// ORIGINAL: 0x00627310 ?pops@@YAHPADPAUSprite@@P6AHXZ@Z 0x00627310-0x00627337 BYTE_EXACT
-// symbol    ?pops_minimal@@YAHPADPAVSprite@@P6AHXZ@Z
-// size      39 bytes
-// prototype 
-// callers   0   call targets   1
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x006276A0
-Return Value: whatever the full form returns
-Status: Complete
-*/
-int __cdecl pops_minimal(char *label, Sprite *sprite,
-                         int (__cdecl *callback)()) {
-    return pops(PopupStartCaption, label, -1, nullptr, 0, sprite,
-                            1, 1, callback);
-}
-/*
-Purpose: Like pops_minimal but with both flags caller-supplied instead of
-         fixed at 1; shared caption buffer, value -1, no override text,
-         title 0.
-// ORIGINAL: 0x00627340 ?pops@@YAHPADPAUSprite@@HHP6AHXZ@Z 0x00627340-0x0062736D BYTE_EXACT
-// symbol    ?pops_flags@@YAHPADPAVSprite@@HHP6AHXZ@Z
-// size      45 bytes
-// prototype 
-// callers   0   call targets   1
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x006276A0
-Return Value: whatever the full form returns
-Status: Complete
-*/
-int __cdecl pops_flags(char *label, Sprite *sprite, int flag_a, int flag_b,
-                       int (__cdecl *callback)()) {
-    return pops(PopupStartCaption, label, -1, nullptr, 0, sprite,
-                            flag_a, flag_b, callback);
-}
-/*
-Purpose: Like pops_minimal but with a caller-supplied caption instead of the
-         shared buffer; value -1, no override text, title 0, both flags
-         fixed at 1.
-// ORIGINAL: 0x00627370 ?pops@@YAHPADPADPAUSprite@@P6AHXZ@Z 0x00627370-0x00627397 BYTE_EXACT
-// symbol    ?pops_caption@@YAHPAD0PAVSprite@@P6AHXZ@Z
-// size      39 bytes
-// prototype 
-// callers   0   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x006276A0
-Return Value: whatever the full form returns
-Status: Complete
-*/
-int __cdecl pops_caption(char *caption, char *label, Sprite *sprite,
-                         int (__cdecl *callback)()) {
-    return pops(caption, label, -1, nullptr, 0, sprite, 1, 1,
-                            callback);
-}
-/*
-Purpose: Like pops_flags but with a caller-supplied caption in place of the
-         shared buffer; value -1, no override text, title 0.
-// ORIGINAL: 0x006273A0 ?pops@@YAHPADPADPAUSprite@@HHP6AHXZ@Z 0x006273A0-0x006273CD BYTE_EXACT
-// symbol    ?pops_caption_flags@@YAHPAD0PAVSprite@@HHP6AHXZ@Z
-// size      45 bytes
-// prototype 
-// callers   0   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x006276A0
-Return Value: whatever the full form returns
-Status: Complete
-*/
-int __cdecl pops_caption_flags(char *caption, char *label, Sprite *sprite,
-                               int flag_a, int flag_b,
-                               int (__cdecl *callback)()) {
-    return pops(caption, label, -1, nullptr, 0, sprite, flag_a,
-                            flag_b, callback);
-}
-/*
-Purpose: Raise the full popup against the shared caption buffer with value
-         and title exposed and the sprite caller-supplied; no override
-         text, both flags fixed at 1.
-// ORIGINAL: 0x006273D0 ?pops@@YAHPADHHPAUSprite@@P6AHXZ@Z 0x006273D0-0x006273FD BYTE_EXACT
-// symbol    ?pops_value_title@@YAHPADHHPAVSprite@@P6AHXZ@Z
-// size      45 bytes
-// prototype 
-// callers   0   call targets   1
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x006276A0
-Return Value: whatever the full form returns
-Status: Complete
-*/
-int __cdecl pops_value_title(char *label, int value, int title,
-                             Sprite *sprite, int (__cdecl *callback)()) {
-    return pops(PopupStartCaption, label, value, nullptr, title,
-                            sprite, 1, 1, callback);
-}
-/*
-Purpose: Like pops_value_title but with both flags caller-supplied instead
-         of fixed at 1; shared caption buffer, no override text.
-// ORIGINAL: 0x00627400 ?pops@@YAHPADHHPAUSprite@@HHP6AHXZ@Z 0x00627400-0x00627433 BYTE_EXACT
-// symbol    ?pops_value_title_flags@@YAHPADHHPAVSprite@@HHP6AHXZ@Z
-// size      51 bytes
-// prototype 
-// callers   0   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x006276A0
-Return Value: whatever the full form returns
-Status: Complete
-*/
-int __cdecl pops_value_title_flags(char *label, int value, int title,
-                                   Sprite *sprite, int flag_a, int flag_b,
-                                   int (__cdecl *callback)()) {
-    return pops(PopupStartCaption, label, value, nullptr, title,
-                            sprite, flag_a, flag_b, callback);
-}
-/*
-Purpose: Like pops_value_title but with a caller-supplied caption instead of
-         the shared buffer; no override text, both flags fixed at 1.
-// ORIGINAL: 0x006274D0 ?pops@@YAHPADPADHHPAUSprite@@P6AHXZ@Z 0x006274D0-0x006274FD BYTE_EXACT
-// symbol    ?pops_caption_value_title@@YAHPAD0HHPAVSprite@@P6AHXZ@Z
-// size      45 bytes
-// prototype 
-// callers   0   call targets   1
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x006276A0
-Return Value: whatever the full form returns
-Status: Complete
-*/
-int __cdecl pops_caption_value_title(char *caption, char *label, int value,
-                                     int title, Sprite *sprite,
-                                     int (__cdecl *callback)()) {
-    return pops(caption, label, value, nullptr, title, sprite, 1,
-                            1, callback);
-}
-/*
-Purpose: Raise the full popup with everything but the override text
-         caller-supplied - caption, value, title, sprite and both flags.
-// ORIGINAL: 0x00627500 ?pops@@YAHPADPADHHPAUSprite@@HHP6AHXZ@Z 0x00627500-0x00627533 BYTE_EXACT
-// symbol    ?pops_no_text@@YAHPAD0HHPAVSprite@@HHP6AHXZ@Z
-// size      51 bytes
-// prototype 
-// callers   0   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x006276A0
-Return Value: whatever the full form returns
-Status: Complete
-*/
-int __cdecl pops_no_text(char *caption, char *label, int value, int title,
-                         Sprite *sprite, int flag_a, int flag_b,
-                         int (__cdecl *callback)()) {
-    return pops(caption, label, value, nullptr, title, sprite,
-                            flag_a, flag_b, callback);
-}
-/*
-Purpose: Raise the full popup against the shared caption buffer with value
-         defaulted to -1 and only the title and sprite exposed; no override
-         text, both flags fixed at 1.
-// ORIGINAL: 0x00627540 ?pops@@YAHPADHPAUSprite@@P6AHXZ@Z 0x00627540-0x0062756A BYTE_EXACT
-// symbol    ?pops_title@@YAHPADHPAVSprite@@P6AHXZ@Z
-// size      42 bytes
-// prototype 
-// callers   0   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x006276A0
-Return Value: whatever the full form returns
-Status: Complete
-*/
-int __cdecl pops_title(char *label, int title, Sprite *sprite,
-                       int (__cdecl *callback)()) {
-    return pops(PopupStartCaption, label, -1, nullptr, title,
-                            sprite, 1, 1, callback);
-}
-/*
-Purpose: Like pops_title but with both flags caller-supplied instead of
-         fixed at 1; shared caption buffer, value -1, no override text.
-// ORIGINAL: 0x00627570 ?pops@@YAHPADHPAUSprite@@HHP6AHXZ@Z 0x00627570-0x006275A0 BYTE_EXACT
-// symbol    ?pops_title_flags@@YAHPADHPAVSprite@@HHP6AHXZ@Z
-// size      48 bytes
-// prototype 
-// callers   0   call targets   1
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x006276A0
-Return Value: whatever the full form returns
-Status: Complete
-*/
-int __cdecl pops_title_flags(char *label, int title, Sprite *sprite,
-                             int flag_a, int flag_b,
-                             int (__cdecl *callback)()) {
-    return pops(PopupStartCaption, label, -1, nullptr, title,
-                            sprite, flag_a, flag_b, callback);
-}
-/*
-Purpose: Like pops_title but with a caller-supplied caption instead of the
-         shared buffer; value -1, no override text, both flags fixed at 1.
-// ORIGINAL: 0x006275A0 ?pops@@YAHPADPADHPAUSprite@@P6AHXZ@Z 0x006275A0-0x006275CA BYTE_EXACT
-// symbol    ?pops_caption_title@@YAHPAD0HPAVSprite@@P6AHXZ@Z
-// size      42 bytes
-// prototype 
-// callers   0   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x006276A0
-Return Value: whatever the full form returns
-Status: Complete
-*/
-int __cdecl pops_caption_title(char *caption, char *label, int title,
-                               Sprite *sprite, int (__cdecl *callback)()) {
-    return pops(caption, label, -1, nullptr, title, sprite, 1, 1,
-                            callback);
-}
-/*
-Purpose: Like pops_caption_title but with both flags caller-supplied instead
-         of fixed at 1; value -1, no override text.
-// ORIGINAL: 0x006275D0 ?pops@@YAHPADPADHPAUSprite@@HHP6AHXZ@Z 0x006275D0-0x00627600 BYTE_EXACT
-// symbol    ?pops_caption_title_flags@@YAHPAD0HPAVSprite@@HHP6AHXZ@Z
-// size      48 bytes
-// prototype 
-// callers   0   call targets   1
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x006276A0
-Return Value: whatever the full form returns
-Status: Complete
-*/
-int __cdecl pops_caption_title_flags(char *caption, char *label, int title,
-                                     Sprite *sprite, int flag_a, int flag_b,
-                                     int (__cdecl *callback)()) {
-    return pops(caption, label, -1, nullptr, title, sprite,
-                            flag_a, flag_b, callback);
-}
-/*
-Purpose: Raise the full popup against the shared caption buffer with value,
-         override text, title and sprite all caller-supplied; both flags
-         fixed at 1.
-// ORIGINAL: 0x00627600 ?pops@@YAHPADHPADHPAUSprite@@P6AHXZ@Z 0x00627600-0x00627630 BYTE_EXACT
-// symbol    ?pops_value_text_title@@YAHPADH0HPAVSprite@@P6AHXZ@Z
-// size      48 bytes
-// prototype 
-// callers   0   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x006276A0
-Return Value: whatever the full form returns
-Status: Complete
-*/
-int __cdecl pops_value_text_title(char *label, int value, char *text,
-                                  int title, Sprite *sprite,
-                                  int (__cdecl *callback)()) {
-    return pops(PopupStartCaption, label, value, text, title,
-                            sprite, 1, 1, callback);
-}
-/*
-Purpose: Like pops_value_text_title but with both flags caller-supplied
-         instead of fixed at 1; only the caption defaults to the shared
-         buffer.
-// ORIGINAL: 0x00627630 ?pops@@YAHPADHPADHPAUSprite@@HHP6AHXZ@Z 0x00627630-0x00627666 BYTE_EXACT
-// symbol    ?pops_default_caption@@YAHPADH0HPAVSprite@@HHP6AHXZ@Z
-// size      54 bytes
-// prototype 
-// callers   0   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x006276A0
-Return Value: whatever the full form returns
-Status: Complete
-*/
-int __cdecl pops_default_caption(char *label, int value, char *text,
-                                 int title, Sprite *sprite, int flag_a,
-                                 int flag_b, int (__cdecl *callback)()) {
-    return pops(PopupStartCaption, label, value, text, title,
-                            sprite, flag_a, flag_b, callback);
-}
-/*
-Purpose: Raise the full popup with everything but the flags caller-supplied
-         - caption, value, override text, title and sprite; both flags
-         fixed at 1.
-// ORIGINAL: 0x00627670 ?pops@@YAHPADPADHPADHPAUSprite@@P6AHXZ@Z 0x00627670-0x006276A0 BYTE_EXACT
-// symbol    ?pops_no_flags@@YAHPAD0H0HPAVSprite@@P6AHXZ@Z
-// size      48 bytes
-// prototype 
-// callers   0   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x006276A0
-Return Value: whatever the full form returns
-Status: Complete
-*/
-int __cdecl pops_no_flags(char *caption, char *label, int value, char *text,
-                          int title, Sprite *sprite,
-                          int (__cdecl *callback)()) {
-    return pops(caption, label, value, text, title, sprite, 1, 1,
-                            callback);
-}
+
 // WITHDRAWN 2026-08-22. This note used to say the runtime walk stops here
 // because "DirectDraw FAILS under wine", that the error path into
 // `report_error` -> `pops` was therefore faithful, and that no further source
@@ -534,6 +75,546 @@ static int PopupSavedLocY = 0x2000;  // 0x006973E0
 // close the rectangle. Inferred from the arithmetic pattern alone.
 // Zero-initialised .bss in the image at 0x009BC058..0x009BC064.
 static RECT PopupCloseRect;  // 0x009BC058
+
+// Original627110, alongside the saved-location objects in this API owner.
+// ORIGINAL: 0x00627110 sub_627110 0x00627110-0x00627124 BYTE_EXACT
+// symbol    ?set_popup_saved_location@@YAHHH@Z
+// kind      game
+int __cdecl set_popup_saved_location(int x, int y) {
+    PopupSavedLocX = x;
+    PopupSavedLocY = y;
+    return x;
+}
+
+/*
+Purpose: The most minimal pop() form - just a label and callback; shared
+         caption buffer, value -1, no override text, title 0, null sprite,
+         both flags fixed at 1.
+// ORIGINAL: 0x00627130 ?pop@@YAHPADP6AHXZ@Z 0x00627130-0x00627154 BYTE_EXACT
+// symbol    ?pop_label_cb@@YAHPADP6AHXZ@Z
+// size      36 bytes
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006276A0
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl pop_label_cb(char *label, int (__cdecl *callback)()) {
+    return pops(PopupStartCaption, label, -1, nullptr, 0, nullptr,
+                            1, 1, callback);
+}
+
+/*
+Purpose: Like pop_label_cb but with a caller-supplied caption in place of the
+         shared buffer; value -1, no override text, title 0, null sprite,
+         both flags fixed at 1.
+// ORIGINAL: 0x00627160 ?pop@@YAHPADPADP6AHXZ@Z 0x00627160-0x00627184 BYTE_EXACT
+// symbol    ?pop_caption@@YAHPAD0P6AHXZ@Z
+// size      36 bytes
+// prototype 
+// callers   7   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006276A0
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl pop_caption(char *caption, char *label,
+                        int (__cdecl *callback)()) {
+    return pops(caption, label, -1, nullptr, 0, nullptr, 1, 1,
+                            callback);
+}
+
+// ORIGINAL: 0x00627190 ?pop@@YAHPADPADPADHP6AHXZ@Z 0x00627190-0x006271CA BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["original:terranx_original.exe:0x00627190-0x006271CA", "source:src/popup_api.cpp:typed owner", "source:src/popup_api.h:nine-argument pops core", "source:src/popup_api.cpp:existing popup implementation", "seed:retained original source identity 0x00627190"], "reason": "The pop convenience wrapper preserves the original null-text result and forwards strlen plus the native default sprite and flags to the real popup builder."}
+// symbol    ?pop@@YAHPAD00HP6AHXZ@Z
+int __cdecl pop(char *caption, char *label, char *text, int value,
+                int (__cdecl *callback)()) {
+    if (text == 0) {
+        return -1;
+    }
+    const int text_length = static_cast<int>(strlen(text));
+    return pops(caption, label, text_length, text, value, 0, 1, 1,
+                callback);
+}
+
+/*
+Purpose: Raise the caption-less, sprite-less popup with the shared caption
+         buffer and caller-supplied value and title; no override text, both
+         flags fixed at 1.
+// ORIGINAL: 0x006271D0 ?pop@@YAHPADHHP6AHXZ@Z 0x006271D0-0x006271FA BYTE_EXACT
+// symbol    ?pop_value_title@@YAHPADHHP6AHXZ@Z
+// size      42 bytes
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x006276A0
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl pop_value_title(char *label, int value, int title,
+                            int (__cdecl *callback)()) {
+    return pops(PopupStartCaption, label, value, nullptr, title,
+                            nullptr, 1, 1, callback);
+}
+
+/*
+Purpose: Like pop_value_title but with a caller-supplied caption instead of
+         the shared buffer; no override text, null sprite, both flags fixed
+         at 1.
+// ORIGINAL: 0x00627200 ?pop@@YAHPADPADHHP6AHXZ@Z 0x00627200-0x0062722A BYTE_EXACT
+// symbol    ?pop_caption_value_title@@YAHPAD0HHP6AHXZ@Z
+// size      42 bytes
+// prototype 
+// callers   4   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006276A0
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl pop_caption_value_title(char *caption, char *label, int value,
+                                    int title, int (__cdecl *callback)()) {
+    return pops(caption, label, value, nullptr, title, nullptr, 1,
+                            1, callback);
+}
+
+/*
+Purpose: Raise the caption-less, sprite-less popup with the shared caption
+         buffer, value defaulted to -1 and only the title exposed; no
+         override text, both flags fixed at 1.
+// ORIGINAL: 0x00627230 ?pop@@YAHPADHP6AHXZ@Z 0x00627230-0x00627257 BYTE_EXACT
+// symbol    ?pop_title@@YAHPADHP6AHXZ@Z
+// size      39 bytes
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006276A0
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl pop_title(char *label, int title, int (__cdecl *callback)()) {
+    return pops(PopupStartCaption, label, -1, nullptr, title,
+                            nullptr, 1, 1, callback);
+}
+
+/*
+Purpose: Like pop_title but with a caller-supplied caption instead of the
+         shared buffer; value -1, no override text, null sprite, both flags
+         fixed at 1.
+// ORIGINAL: 0x00627260 ?pop@@YAHPADPADHP6AHXZ@Z 0x00627260-0x00627287 BYTE_EXACT
+// symbol    ?pop_caption_title@@YAHPAD0HP6AHXZ@Z
+// size      39 bytes
+// prototype 
+// callers   4   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006276A0
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl pop_caption_title(char *caption, char *label, int title,
+                              int (__cdecl *callback)()) {
+    return pops(caption, label, -1, nullptr, title, nullptr, 1, 1,
+                            callback);
+}
+
+/*
+Purpose: Raise the caption-less, sprite-less popup against the shared
+         caption buffer with value, override text and title all
+         caller-supplied; both flags fixed at 1.
+// ORIGINAL: 0x00627290 ?pop@@YAHPADHPADHP6AHXZ@Z 0x00627290-0x006272BD BYTE_EXACT
+// symbol    ?pop_value_text_title@@YAHPADH0HP6AHXZ@Z
+// size      45 bytes
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006276A0
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl pop_value_text_title(char *label, int value, char *text,
+                                 int title, int (__cdecl *callback)()) {
+    return pops(PopupStartCaption, label, value, text, title,
+                            nullptr, 1, 1, callback);
+}
+
+/*
+Purpose: The full caption-less, sprite-less popup form - caption, value,
+         override text and title all caller-supplied; null sprite, both
+         flags fixed at 1.
+// ORIGINAL: 0x006272C0 ?pop@@YAHPADPADHPADHP6AHXZ@Z 0x006272C0-0x006272ED BYTE_EXACT
+// symbol    ?pop_full@@YAHPAD0H0HP6AHXZ@Z
+// size      45 bytes
+// prototype 
+// callers   1   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x006276A0
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl pop_full(char *caption, char *label, int value, char *text,
+                     int title, int (__cdecl *callback)()) {
+    return pops(caption, label, value, text, title, nullptr, 1, 1,
+                            callback);
+}
+
+// ORIGINAL: 0x006272F0 ?pop_close@@YAXXZ 0x006272F0-0x00627306 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned6272F0..627306; retained git:06163ca7db005f89326ea0681a26af574b6ae2c3:src/recovered/006272f0.cpp historical byte obligation.", "PopupInstanceSlotA/B are the existing init_class-owned singleton pointer cells9BC074/78; BasePop derives through GraphicWin from the nonvirtual Win base."], "reason": "Close both source-owned singleton popups through the genuine BasePop receiver; retain the original sequential reload across the first close callback."}
+void __cdecl pop_close() {
+    PopupInstanceSlotA->close();
+    PopupInstanceSlotB->close();
+}
+
+/*
+Purpose: The most minimal pops() form - label, sprite and callback; shared
+         caption buffer, value -1, no override text, title 0, both flags
+         fixed at 1.
+// ORIGINAL: 0x00627310 ?pops@@YAHPADPAUSprite@@P6AHXZ@Z 0x00627310-0x00627337 BYTE_EXACT
+// symbol    ?pops_minimal@@YAHPADPAVSprite@@P6AHXZ@Z
+// size      39 bytes
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x006276A0
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl pops_minimal(char *label, Sprite *sprite,
+                         int (__cdecl *callback)()) {
+    return pops(PopupStartCaption, label, -1, nullptr, 0, sprite,
+                            1, 1, callback);
+}
+
+/*
+Purpose: Like pops_minimal but with both flags caller-supplied instead of
+         fixed at 1; shared caption buffer, value -1, no override text,
+         title 0.
+// ORIGINAL: 0x00627340 ?pops@@YAHPADPAUSprite@@HHP6AHXZ@Z 0x00627340-0x0062736D BYTE_EXACT
+// symbol    ?pops_flags@@YAHPADPAVSprite@@HHP6AHXZ@Z
+// size      45 bytes
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x006276A0
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl pops_flags(char *label, Sprite *sprite, int flag_a, int flag_b,
+                       int (__cdecl *callback)()) {
+    return pops(PopupStartCaption, label, -1, nullptr, 0, sprite,
+                            flag_a, flag_b, callback);
+}
+
+/*
+Purpose: Like pops_minimal but with a caller-supplied caption instead of the
+         shared buffer; value -1, no override text, title 0, both flags
+         fixed at 1.
+// ORIGINAL: 0x00627370 ?pops@@YAHPADPADPAUSprite@@P6AHXZ@Z 0x00627370-0x00627397 BYTE_EXACT
+// symbol    ?pops_caption@@YAHPAD0PAVSprite@@P6AHXZ@Z
+// size      39 bytes
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006276A0
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl pops_caption(char *caption, char *label, Sprite *sprite,
+                         int (__cdecl *callback)()) {
+    return pops(caption, label, -1, nullptr, 0, sprite, 1, 1,
+                            callback);
+}
+
+/*
+Purpose: Like pops_flags but with a caller-supplied caption in place of the
+         shared buffer; value -1, no override text, title 0.
+// ORIGINAL: 0x006273A0 ?pops@@YAHPADPADPAUSprite@@HHP6AHXZ@Z 0x006273A0-0x006273CD BYTE_EXACT
+// symbol    ?pops_caption_flags@@YAHPAD0PAVSprite@@HHP6AHXZ@Z
+// size      45 bytes
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006276A0
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl pops_caption_flags(char *caption, char *label, Sprite *sprite,
+                               int flag_a, int flag_b,
+                               int (__cdecl *callback)()) {
+    return pops(caption, label, -1, nullptr, 0, sprite, flag_a,
+                            flag_b, callback);
+}
+
+/*
+Purpose: Raise the full popup against the shared caption buffer with value
+         and title exposed and the sprite caller-supplied; no override
+         text, both flags fixed at 1.
+// ORIGINAL: 0x006273D0 ?pops@@YAHPADHHPAUSprite@@P6AHXZ@Z 0x006273D0-0x006273FD BYTE_EXACT
+// symbol    ?pops_value_title@@YAHPADHHPAVSprite@@P6AHXZ@Z
+// size      45 bytes
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x006276A0
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl pops_value_title(char *label, int value, int title,
+                             Sprite *sprite, int (__cdecl *callback)()) {
+    return pops(PopupStartCaption, label, value, nullptr, title,
+                            sprite, 1, 1, callback);
+}
+
+/*
+Purpose: Like pops_value_title but with both flags caller-supplied instead
+         of fixed at 1; shared caption buffer, no override text.
+// ORIGINAL: 0x00627400 ?pops@@YAHPADHHPAUSprite@@HHP6AHXZ@Z 0x00627400-0x00627433 BYTE_EXACT
+// symbol    ?pops_value_title_flags@@YAHPADHHPAVSprite@@HHP6AHXZ@Z
+// size      51 bytes
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006276A0
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl pops_value_title_flags(char *label, int value, int title,
+                                   Sprite *sprite, int flag_a, int flag_b,
+                                   int (__cdecl *callback)()) {
+    return pops(PopupStartCaption, label, value, nullptr, title,
+                            sprite, flag_a, flag_b, callback);
+}
+
+// ORIGINAL: 0x00627440 ?pops@@YAHPADPADPADHPAUSprite@@P6AHXZ@Z 0x00627440-0x0062747D BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["original:terranx_original.exe:0x00627440-0x0062747D", "source:src/popup_api.cpp:typed owner", "source:src/popup_api.h:nine-argument pops core", "source:src/popup_api.cpp:existing popup implementation", "seed:retained original source identity 0x00627440"], "reason": "The sprite-bearing text overload preserves the null-text return and forwards its measured length with the original default flag pair."}
+// symbol    ?pops@@YAHPAD00HPAVSprite@@P6AHXZ@Z
+int __cdecl pops(char *caption, char *label, char *text, int value,
+                 Sprite *sprite, int (__cdecl *callback)()) {
+    if (text == 0) {
+        return -1;
+    }
+    const int text_length = static_cast<int>(strlen(text));
+    return pops(caption, label, text_length, text, value, sprite, 1, 1,
+                callback);
+}
+
+// ORIGINAL: 0x00627480 ?pops@@YAHPADPADPADHPAUSprite@@HHP6AHXZ@Z 0x00627480-0x006274C3 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["original:terranx_original.exe:0x00627480-0x006274C3", "source:src/popup_api.cpp:typed owner", "source:src/popup_api.h:nine-argument pops core", "source:src/popup_api.cpp:existing popup implementation", "seed:retained original source identity 0x00627480"], "reason": "The sprite-and-flags text overload forwards the measured text length and both caller flags without changing callback or sprite ownership."}
+// symbol    ?pops@@YAHPAD00HPAVSprite@@HHP6AHXZ@Z
+int __cdecl pops(char *caption, char *label, char *text, int value,
+                 Sprite *sprite, int flag_a, int flag_b,
+                 int (__cdecl *callback)()) {
+    if (text == 0) {
+        return -1;
+    }
+    return pops(caption, label, static_cast<int>(strlen(text)), text, value, sprite,
+                flag_a, flag_b, callback);
+}
+
+/*
+Purpose: Like pops_value_title but with a caller-supplied caption instead of
+         the shared buffer; no override text, both flags fixed at 1.
+// ORIGINAL: 0x006274D0 ?pops@@YAHPADPADHHPAUSprite@@P6AHXZ@Z 0x006274D0-0x006274FD BYTE_EXACT
+// symbol    ?pops_caption_value_title@@YAHPAD0HHPAVSprite@@P6AHXZ@Z
+// size      45 bytes
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x006276A0
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl pops_caption_value_title(char *caption, char *label, int value,
+                                     int title, Sprite *sprite,
+                                     int (__cdecl *callback)()) {
+    return pops(caption, label, value, nullptr, title, sprite, 1,
+                            1, callback);
+}
+
+/*
+Purpose: Raise the full popup with everything but the override text
+         caller-supplied - caption, value, title, sprite and both flags.
+// ORIGINAL: 0x00627500 ?pops@@YAHPADPADHHPAUSprite@@HHP6AHXZ@Z 0x00627500-0x00627533 BYTE_EXACT
+// symbol    ?pops_no_text@@YAHPAD0HHPAVSprite@@HHP6AHXZ@Z
+// size      51 bytes
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006276A0
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl pops_no_text(char *caption, char *label, int value, int title,
+                         Sprite *sprite, int flag_a, int flag_b,
+                         int (__cdecl *callback)()) {
+    return pops(caption, label, value, nullptr, title, sprite,
+                            flag_a, flag_b, callback);
+}
+
+/*
+Purpose: Raise the full popup against the shared caption buffer with value
+         defaulted to -1 and only the title and sprite exposed; no override
+         text, both flags fixed at 1.
+// ORIGINAL: 0x00627540 ?pops@@YAHPADHPAUSprite@@P6AHXZ@Z 0x00627540-0x0062756A BYTE_EXACT
+// symbol    ?pops_title@@YAHPADHPAVSprite@@P6AHXZ@Z
+// size      42 bytes
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006276A0
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl pops_title(char *label, int title, Sprite *sprite,
+                       int (__cdecl *callback)()) {
+    return pops(PopupStartCaption, label, -1, nullptr, title,
+                            sprite, 1, 1, callback);
+}
+
+/*
+Purpose: Like pops_title but with both flags caller-supplied instead of
+         fixed at 1; shared caption buffer, value -1, no override text.
+// ORIGINAL: 0x00627570 ?pops@@YAHPADHPAUSprite@@HHP6AHXZ@Z 0x00627570-0x006275A0 BYTE_EXACT
+// symbol    ?pops_title_flags@@YAHPADHPAVSprite@@HHP6AHXZ@Z
+// size      48 bytes
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x006276A0
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl pops_title_flags(char *label, int title, Sprite *sprite,
+                             int flag_a, int flag_b,
+                             int (__cdecl *callback)()) {
+    return pops(PopupStartCaption, label, -1, nullptr, title,
+                            sprite, flag_a, flag_b, callback);
+}
+
+/*
+Purpose: Like pops_title but with a caller-supplied caption instead of the
+         shared buffer; value -1, no override text, both flags fixed at 1.
+// ORIGINAL: 0x006275A0 ?pops@@YAHPADPADHPAUSprite@@P6AHXZ@Z 0x006275A0-0x006275CA BYTE_EXACT
+// symbol    ?pops_caption_title@@YAHPAD0HPAVSprite@@P6AHXZ@Z
+// size      42 bytes
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006276A0
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl pops_caption_title(char *caption, char *label, int title,
+                               Sprite *sprite, int (__cdecl *callback)()) {
+    return pops(caption, label, -1, nullptr, title, sprite, 1, 1,
+                            callback);
+}
+
+/*
+Purpose: Like pops_caption_title but with both flags caller-supplied instead
+         of fixed at 1; value -1, no override text.
+// ORIGINAL: 0x006275D0 ?pops@@YAHPADPADHPAUSprite@@HHP6AHXZ@Z 0x006275D0-0x00627600 BYTE_EXACT
+// symbol    ?pops_caption_title_flags@@YAHPAD0HPAVSprite@@HHP6AHXZ@Z
+// size      48 bytes
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x006276A0
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl pops_caption_title_flags(char *caption, char *label, int title,
+                                     Sprite *sprite, int flag_a, int flag_b,
+                                     int (__cdecl *callback)()) {
+    return pops(caption, label, -1, nullptr, title, sprite,
+                            flag_a, flag_b, callback);
+}
+
+/*
+Purpose: Raise the full popup against the shared caption buffer with value,
+         override text, title and sprite all caller-supplied; both flags
+         fixed at 1.
+// ORIGINAL: 0x00627600 ?pops@@YAHPADHPADHPAUSprite@@P6AHXZ@Z 0x00627600-0x00627630 BYTE_EXACT
+// symbol    ?pops_value_text_title@@YAHPADH0HPAVSprite@@P6AHXZ@Z
+// size      48 bytes
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006276A0
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl pops_value_text_title(char *label, int value, char *text,
+                                  int title, Sprite *sprite,
+                                  int (__cdecl *callback)()) {
+    return pops(PopupStartCaption, label, value, text, title,
+                            sprite, 1, 1, callback);
+}
+
+/*
+Purpose: Like pops_value_text_title but with both flags caller-supplied
+         instead of fixed at 1; only the caption defaults to the shared
+         buffer.
+// ORIGINAL: 0x00627630 ?pops@@YAHPADHPADHPAUSprite@@HHP6AHXZ@Z 0x00627630-0x00627666 BYTE_EXACT
+// symbol    ?pops_default_caption@@YAHPADH0HPAVSprite@@HHP6AHXZ@Z
+// size      54 bytes
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006276A0
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl pops_default_caption(char *label, int value, char *text,
+                                 int title, Sprite *sprite, int flag_a,
+                                 int flag_b, int (__cdecl *callback)()) {
+    return pops(PopupStartCaption, label, value, text, title,
+                            sprite, flag_a, flag_b, callback);
+}
+
+/*
+Purpose: Raise the full popup with everything but the flags caller-supplied
+         - caption, value, override text, title and sprite; both flags
+         fixed at 1.
+// ORIGINAL: 0x00627670 ?pops@@YAHPADPADHPADHPAUSprite@@P6AHXZ@Z 0x00627670-0x006276A0 BYTE_EXACT
+// symbol    ?pops_no_flags@@YAHPAD0H0HPAVSprite@@P6AHXZ@Z
+// size      48 bytes
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006276A0
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl pops_no_flags(char *caption, char *label, int value, char *text,
+                          int title, Sprite *sprite,
+                          int (__cdecl *callback)()) {
+    return pops(caption, label, value, text, title, sprite, 1, 1,
+                            callback);
+}
+
 /*
 // ORIGINAL: 0x006276A0 ?pops@@YAHPADPADHPADHPAUSprite@@HHP6AHXZ@Z 0x006276A0-0x006277F9 BYTE_EXACT
 // TRIED: the pending_bodies scaffold this replaces had the two start()/sprite() success checks inverted (`== 0` where the image's `je` jumps to the CONTINUE label when the callee returns 0, i.e. success is 0 and only a nonzero result is an error), and folded read_check()'s return value into the *(self+0x3100) store instead of keeping them as the two separate globals (0x9BC06C and 0x9BC070) the image writes.
@@ -630,6 +711,71 @@ int __cdecl pops(char *caption, char *label, int value, char *override_text,
     return execResult;
 }
 
+// The short popup overloads supply the process-wide default text file and
+// delegate to the six-argument implementation above. Their original bodies
+// contain no popup lifetime of their own.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00627800 ?pop_ask@@YAHPADHPADP6AHXZH@Z 0x00627800-0x00627827 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/00627800.cpp; image:0x00627800-0x00627827; source:src/popup_api.cpp:pop_ask"], "reason": "Original forwarding wrapper passes the process-wide PopupStartCaption and all five input arguments unchanged to the six-argument pop_ask; this is the matching product overload."}
+// symbol    ?pop_ask@@YAHPADH0P6AHXZH@Z
+int __cdecl pop_ask(char *section, int value, char *override_text,
+                    int (__cdecl *callback)(), int flags) {
+    return pop_ask(PopupStartCaption, section, value, override_text,
+                   callback, flags);
+}
+
+// ORIGINAL: 0x00627830 ?pop_ask@@YAHPADPADHP6AHXZH@Z 0x00627830-0x00627854 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["the complete original body forwards arguments 1-3 and 4-5 unchanged and supplies null for the six-argument implementation's override-text slot", "src/popup_api.cpp owns the matching six-argument pop_ask implementation and the other convenience overloads", "no address call, base-slot change, or semantic normalization is required"], "reason": "Move the original five-argument pop_ask overload beside the existing six-argument implementation it forwards to, preserving the null override-text argument and return value."}
+// symbol    ?pop_ask@@YAHPAD0HP6AHXZH@Z
+// size      36 bytes
+// prototype int (__cdecl ?pop_ask@@YAHPADPADHP6AHXZH@Z)(int8* srcFileID, int8* sectionID, int, int (__cdecl *)(), int)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00627910
+// historical Status: Complete
+int __cdecl pop_ask(char *a1, char *a2, int a3, int (__cdecl *a4)(), int a5) {
+    return pop_ask(a1, a2, a3, 0, a4, a5);
+}
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00627860 ?pop_ask@@YAHPADHP6AHXZH@Z 0x00627860-0x00627884 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/00627860.cpp; image:0x00627860-0x00627884; source:src/popup_api.cpp:pop_ask"], "reason": "Original forwarding wrapper supplies PopupStartCaption and a null override-text argument to the six-argument pop_ask; this is the matching product overload."}
+int __cdecl pop_ask(char *section, int value,
+                    int (__cdecl *callback)(), int flags) {
+    return pop_ask(PopupStartCaption, section, value, nullptr,
+                   callback, flags);
+}
+
+// Text-taking overloads reject a null pointer before computing its length;
+// the shorter one supplies the same process-wide default text file.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00627890 ?pop_ask@@YAHPADPADPADP6AHXZH@Z 0x00627890-0x006278C4 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00627890.cpp; image:0x00627890-0x006278C4; source:src/popup_api.cpp:pop_ask"], "reason": "Original text-taking popup overload returns -1 on null text, otherwise passes strlen(text) and all caller arguments to the six-argument implementation."}
+// symbol    ?pop_ask@@YAHPAD00P6AHXZH@Z
+int __cdecl pop_ask(char *text_file, char *section, char *override_text,
+                    int (__cdecl *callback)(), int flags) {
+    if (override_text == nullptr) {
+        return -1;
+    }
+    return pop_ask(text_file, section, static_cast<int>(strlen(override_text)),
+                   override_text, callback, flags);
+}
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x006278D0 ?pop_ask@@YAHPADPADP6AHXZH@Z 0x006278D0-0x00627904 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/006278d0.cpp; image:0x006278D0-0x00627904; source:src/popup_api.cpp:pop_ask"], "reason": "Original short text-taking popup overload returns -1 on null text, otherwise supplies PopupStartCaption, strlen(text), and caller arguments to the six-argument implementation."}
+// symbol    ?pop_ask@@YAHPAD0P6AHXZH@Z
+int __cdecl pop_ask(char *section, char *override_text,
+                    int (__cdecl *callback)(), int flags) {
+    if (override_text == nullptr) {
+        return -1;
+    }
+    return pop_ask(PopupStartCaption, section,
+                   static_cast<int>(strlen(override_text)), override_text,
+                   callback, flags);
+}
+
 // ORIGINAL: 0x00627910 ?pop_ask@@YAHPADPADHPADP6AHXZH@Z 0x00627910-0x006279B7 FILE BYTE_EXACT
 // symbol    ?pop_ask@@YAHPAD0H0P6AHXZH@Z
 // working copy - scaffold materialised by --work
@@ -678,71 +824,6 @@ int __cdecl pop_ask(char *text_file, char *text_label, int value,
     return execResult;
 }
 
-// ORIGINAL: 0x00627830 ?pop_ask@@YAHPADPADHP6AHXZH@Z 0x00627830-0x00627854 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["the complete original body forwards arguments 1-3 and 4-5 unchanged and supplies null for the six-argument implementation's override-text slot", "src/popup_api.cpp owns the matching six-argument pop_ask implementation and the other convenience overloads", "no address call, base-slot change, or semantic normalization is required"], "reason": "Move the original five-argument pop_ask overload beside the existing six-argument implementation it forwards to, preserving the null override-text argument and return value."}
-// symbol    ?pop_ask@@YAHPAD0HP6AHXZH@Z
-// size      36 bytes
-// prototype int (__cdecl ?pop_ask@@YAHPADPADHP6AHXZH@Z)(int8* srcFileID, int8* sectionID, int, int (__cdecl *)(), int)
-// callers   0   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00627910
-// historical Status: Complete
-int __cdecl pop_ask(char *a1, char *a2, int a3, int (__cdecl *a4)(), int a5) {
-    return pop_ask(a1, a2, a3, 0, a4, a5);
-}
-
-// The short popup overloads supply the process-wide default text file and
-// delegate to the six-argument implementation above. Their original bodies
-// contain no popup lifetime of their own.
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00627800 ?pop_ask@@YAHPADHPADP6AHXZH@Z 0x00627800-0x00627827 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/00627800.cpp; image:0x00627800-0x00627827; source:src/popup_api.cpp:pop_ask"], "reason": "Original forwarding wrapper passes the process-wide PopupStartCaption and all five input arguments unchanged to the six-argument pop_ask; this is the matching product overload."}
-// symbol    ?pop_ask@@YAHPADH0P6AHXZH@Z
-int __cdecl pop_ask(char *section, int value, char *override_text,
-                    int (__cdecl *callback)(), int flags) {
-    return pop_ask(PopupStartCaption, section, value, override_text,
-                   callback, flags);
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00627860 ?pop_ask@@YAHPADHP6AHXZH@Z 0x00627860-0x00627884 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/00627860.cpp; image:0x00627860-0x00627884; source:src/popup_api.cpp:pop_ask"], "reason": "Original forwarding wrapper supplies PopupStartCaption and a null override-text argument to the six-argument pop_ask; this is the matching product overload."}
-int __cdecl pop_ask(char *section, int value,
-                    int (__cdecl *callback)(), int flags) {
-    return pop_ask(PopupStartCaption, section, value, nullptr,
-                   callback, flags);
-}
-
-// Text-taking overloads reject a null pointer before computing its length;
-// the shorter one supplies the same process-wide default text file.
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00627890 ?pop_ask@@YAHPADPADPADP6AHXZH@Z 0x00627890-0x006278C4 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00627890.cpp; image:0x00627890-0x006278C4; source:src/popup_api.cpp:pop_ask"], "reason": "Original text-taking popup overload returns -1 on null text, otherwise passes strlen(text) and all caller arguments to the six-argument implementation."}
-// symbol    ?pop_ask@@YAHPAD00P6AHXZH@Z
-int __cdecl pop_ask(char *text_file, char *section, char *override_text,
-                    int (__cdecl *callback)(), int flags) {
-    if (override_text == nullptr) {
-        return -1;
-    }
-    return pop_ask(text_file, section, static_cast<int>(strlen(override_text)),
-                   override_text, callback, flags);
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x006278D0 ?pop_ask@@YAHPADPADP6AHXZH@Z 0x006278D0-0x00627904 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/006278d0.cpp; image:0x006278D0-0x00627904; source:src/popup_api.cpp:pop_ask"], "reason": "Original short text-taking popup overload returns -1 on null text, otherwise supplies PopupStartCaption, strlen(text), and caller arguments to the six-argument implementation."}
-// symbol    ?pop_ask@@YAHPAD0P6AHXZH@Z
-int __cdecl pop_ask(char *section, char *override_text,
-                    int (__cdecl *callback)(), int flags) {
-    if (override_text == nullptr) {
-        return -1;
-    }
-    return pop_ask(PopupStartCaption, section,
-                   static_cast<int>(strlen(override_text)), override_text,
-                   callback, flags);
-}
-
 // ORIGINAL: 0x006279C0 ?pop_ask_number@@YAHPADHP6AHXZ@Z 0x006279C0-0x00627A8B FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
 // size      203 bytes
@@ -785,13 +866,10 @@ int __cdecl pop_ask_number(char *label, int initial, int (__cdecl *callback)()) 
     return execResult;
 }
 
-// Caption-and-label numeric prompt. The other numeric forms intentionally keep
-// their own original identities; this body uses the caller's caption rather
-// than the shared default and retains the same popup state/lifetime path.
-// ORIGINAL: 0x00627C30 ?pop_ask_number@@YAHPADPADHP6AHXZ@Z 0x00627C30-0x00627CFC BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:8f04e84382e6d278311ffe49ba2305afaea25ed7:src/unrecovered/00627c30.cpp"], "reason": "Home the original caption-and-label numeric popup in its typed popup owner; the X_pop_ask_number routing requires both arguments and this independent original span is established by the retained seed."}
-// symbol    ?pop_ask_number@@YAHPAD0HP6AHXZ@Z
-int __cdecl pop_ask_number(char *caption, char *label, int initial,
+// ORIGINAL: 0x00627A90 ?pop_ask_number@@YAHPADPADP6AHXZ@Z 0x00627A90-0x00627B58 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["original:terranx_original.exe:0x00627A90-0x00627B58", "source:src/basepop.h:BasePop hierarchy and popup instance slots", "source:src/popup_api.cpp:existing numeric popup lifecycle", "seed:retained original source identity 0x00627A90"], "reason": "Recover the complete zero-default numeric prompt through the real BasePop owner, preserving window selection, startup failure, callback execution, conditional redraw, parsed result and close order."}
+// symbol    ?pop_ask_number@@YAHPAD0P6AHXZ@Z
+int __cdecl pop_ask_number(char *caption, char *label,
                            int (__cdecl *callback)()) {
     char number_text[80];
     const BOOL winVisible = PopupInstanceSlotA->is_visible();
@@ -801,13 +879,12 @@ int __cdecl pop_ask_number(char *caption, char *label, int initial,
     }
 
     StringTemp[0] = 0;
-    _itoa(initial, number_text, 10);
+    _itoa(0, number_text, 10);
     strcat(StringTemp, number_text);
 
     if (pop->start(caption, label, 9, StringTemp, 0x44, 0)) {
         return -1;
     }
-
     pop->write_check(PopupWriteCheckState);
     int execResult = pop->exec(0, callback);
     if (pop->external_window_ == 0) {
@@ -863,56 +940,13 @@ int __cdecl pop_ask_number(char *label, int (__cdecl *callback)()) {
     return execResult;
 }
 
-// ORIGINAL: 0x006272F0 ?pop_close@@YAXXZ 0x006272F0-0x00627306 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned6272F0..627306; retained git:06163ca7db005f89326ea0681a26af574b6ae2c3:src/recovered/006272f0.cpp historical byte obligation.", "PopupInstanceSlotA/B are the existing init_class-owned singleton pointer cells9BC074/78; BasePop derives through GraphicWin from the nonvirtual Win base."], "reason": "Close both source-owned singleton popups through the genuine BasePop receiver; retain the original sequential reload across the first close callback."}
-void __cdecl pop_close() {
-    PopupInstanceSlotA->close();
-    PopupInstanceSlotB->close();
-}
-
-// ORIGINAL: 0x00627190 ?pop@@YAHPADPADPADHP6AHXZ@Z 0x00627190-0x006271CA BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["original:terranx_original.exe:0x00627190-0x006271CA", "source:src/popup_api.cpp:typed owner", "source:src/popup_api.h:nine-argument pops core", "source:src/popup_api.cpp:existing popup implementation", "seed:retained original source identity 0x00627190"], "reason": "The pop convenience wrapper preserves the original null-text result and forwards strlen plus the native default sprite and flags to the real popup builder."}
-// symbol    ?pop@@YAHPAD00HP6AHXZ@Z
-int __cdecl pop(char *caption, char *label, char *text, int value,
-                int (__cdecl *callback)()) {
-    if (text == 0) {
-        return -1;
-    }
-    const int text_length = static_cast<int>(strlen(text));
-    return pops(caption, label, text_length, text, value, 0, 1, 1,
-                callback);
-}
-
-// ORIGINAL: 0x00627440 ?pops@@YAHPADPADPADHPAUSprite@@P6AHXZ@Z 0x00627440-0x0062747D BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["original:terranx_original.exe:0x00627440-0x0062747D", "source:src/popup_api.cpp:typed owner", "source:src/popup_api.h:nine-argument pops core", "source:src/popup_api.cpp:existing popup implementation", "seed:retained original source identity 0x00627440"], "reason": "The sprite-bearing text overload preserves the null-text return and forwards its measured length with the original default flag pair."}
-// symbol    ?pops@@YAHPAD00HPAVSprite@@P6AHXZ@Z
-int __cdecl pops(char *caption, char *label, char *text, int value,
-                 Sprite *sprite, int (__cdecl *callback)()) {
-    if (text == 0) {
-        return -1;
-    }
-    const int text_length = static_cast<int>(strlen(text));
-    return pops(caption, label, text_length, text, value, sprite, 1, 1,
-                callback);
-}
-
-// ORIGINAL: 0x00627480 ?pops@@YAHPADPADPADHPAUSprite@@HHP6AHXZ@Z 0x00627480-0x006274C3 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["original:terranx_original.exe:0x00627480-0x006274C3", "source:src/popup_api.cpp:typed owner", "source:src/popup_api.h:nine-argument pops core", "source:src/popup_api.cpp:existing popup implementation", "seed:retained original source identity 0x00627480"], "reason": "The sprite-and-flags text overload forwards the measured text length and both caller flags without changing callback or sprite ownership."}
-// symbol    ?pops@@YAHPAD00HPAVSprite@@HHP6AHXZ@Z
-int __cdecl pops(char *caption, char *label, char *text, int value,
-                 Sprite *sprite, int flag_a, int flag_b,
-                 int (__cdecl *callback)()) {
-    if (text == 0) {
-        return -1;
-    }
-    return pops(caption, label, static_cast<int>(strlen(text)), text, value, sprite,
-                flag_a, flag_b, callback);
-}
-
-// ORIGINAL: 0x00627A90 ?pop_ask_number@@YAHPADPADP6AHXZ@Z 0x00627A90-0x00627B58 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["original:terranx_original.exe:0x00627A90-0x00627B58", "source:src/basepop.h:BasePop hierarchy and popup instance slots", "source:src/popup_api.cpp:existing numeric popup lifecycle", "seed:retained original source identity 0x00627A90"], "reason": "Recover the complete zero-default numeric prompt through the real BasePop owner, preserving window selection, startup failure, callback execution, conditional redraw, parsed result and close order."}
-// symbol    ?pop_ask_number@@YAHPAD0P6AHXZ@Z
-int __cdecl pop_ask_number(char *caption, char *label,
+// Caption-and-label numeric prompt. The other numeric forms intentionally keep
+// their own original identities; this body uses the caller's caption rather
+// than the shared default and retains the same popup state/lifetime path.
+// ORIGINAL: 0x00627C30 ?pop_ask_number@@YAHPADPADHP6AHXZ@Z 0x00627C30-0x00627CFC BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:8f04e84382e6d278311ffe49ba2305afaea25ed7:src/unrecovered/00627c30.cpp"], "reason": "Home the original caption-and-label numeric popup in its typed popup owner; the X_pop_ask_number routing requires both arguments and this independent original span is established by the retained seed."}
+// symbol    ?pop_ask_number@@YAHPAD0HP6AHXZ@Z
+int __cdecl pop_ask_number(char *caption, char *label, int initial,
                            int (__cdecl *callback)()) {
     char number_text[80];
     const BOOL winVisible = PopupInstanceSlotA->is_visible();
@@ -922,12 +956,13 @@ int __cdecl pop_ask_number(char *caption, char *label,
     }
 
     StringTemp[0] = 0;
-    _itoa(0, number_text, 10);
+    _itoa(initial, number_text, 10);
     strcat(StringTemp, number_text);
 
     if (pop->start(caption, label, 9, StringTemp, 0x44, 0)) {
         return -1;
     }
+
     pop->write_check(PopupWriteCheckState);
     int execResult = pop->exec(0, callback);
     if (pop->external_window_ == 0) {
@@ -937,16 +972,6 @@ int __cdecl pop_ask_number(char *caption, char *label,
     ParseNumTable[0] = atoi(ParseStrBuffer[0].str);
     pop->close();
     return execResult;
-}
-
-// Original627110, alongside the saved-location objects in this API owner.
-// ORIGINAL: 0x00627110 sub_627110 0x00627110-0x00627124 BYTE_EXACT
-// symbol    ?set_popup_saved_location@@YAHHH@Z
-// kind      game
-int __cdecl set_popup_saved_location(int x, int y) {
-    PopupSavedLocX = x;
-    PopupSavedLocY = y;
-    return x;
 }
 
 // Popup API's .bss, 0x009BC06C..0x009BC07B: after GraphicsLanguage's
