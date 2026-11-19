@@ -1172,15 +1172,15 @@ int __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, int
                 }
                 // Raw label pointers: StringTable.get runs once, at the add_bat.
                 LPSTR display_def = 0; // only one is displayed
-                int def_multi = 2;
+                is_bombard = 2;
                 if (bit_at(x_def, y_def) & BIT_BUNKER && (veh_id_atk < 0
                     || get_triad(veh_id_atk) != TRIAD_AIR)) {
-                    def_multi = 3;
+                    is_bombard = 3;
                     display_def = Labels.strings_ptr[358]; // "Bunker"
                 }
                 if (base_id_def >= 0) {
                     display_def = Labels.strings_ptr[332]; // "Base"
-                    def_multi = 2;
+                    is_bombard = 2;
                     int fac_modifier = 2;
                     if (veh_id_atk >= 0) {
                         switch (get_triad(veh_id_atk)) {
@@ -1221,13 +1221,13 @@ int __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, int
                         display_def = Labels.strings_ptr[357]; // "Tachyon"
                     }
                     if (fac_modifier >= 2) {
-                        def_multi = fac_modifier;
+                        is_bombard = fac_modifier;
                     }
                     // 0x00503517: `jne` on the flags of `cmp fac_modifier, 2`
                     // after `def_multi = fac_modifier`, and the `jl` arm (def_multi
                     // still 2) threads straight in: the test is on def_multi,
                     // which is always >= 2 here.
-                    if (def_multi == 2
+                    if (is_bombard == 2
                         && (veh_id_atk < 0
                             || !has_abil(Vehs[veh_id_atk].proto_id, ABL_BLINK_DISPLACER))
                         && Rules.combat_pct_base_def) {
@@ -1236,8 +1236,8 @@ int __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, int
                     }
                 }
                 if (veh_id_atk >= 0 && has_abil(Vehs[veh_id_atk].proto_id, ABL_BLINK_DISPLACER)) {
-                    if (def_multi > 2) {
-                        def_multi = 2;
+                    if (is_bombard > 2) {
+                        is_bombard = 2;
                     }
                     display_def = Labels.strings_ptr[428]; // "Base vs. Blink"
                     StringTable.get(display_def); // result unused
@@ -1258,17 +1258,17 @@ int __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, int
                 }
                 // 0x00503747: one tile address, int compares
                 // (`and ecx, ~0x3f; cmp 0x80; jge`, `and edx, ~0x1f; cmp 0x40; jge`).
-                if (is_artillery && def_multi <= 2 && base_id_def < 0
+                if (is_artillery && is_bombard <= 2 && base_id_def < 0
                     && (map_loc(x_def, y_def)->val3 & ~0x3F) < TERRAIN_BIT_ROCKY
                     && !(bit_at(x_def, y_def) & BIT_FOREST)
                     && (!(bit_at(x_def, y_def) & BIT_FUNGUS)
                         || (map_loc(x_def, y_def)->climate & ~0x1F) < ALT_BIT_OCEAN_SHELF)) {
-                    def_multi = 3;
+                    is_bombard = 3;
                     display_def = Labels.strings_ptr[525]; // "Open Ground"
                 }
-                defense *= def_multi;
-                if (def_multi > 2) {
-                    add_bat(1, 10 * (5 * def_multi - 10), StringTable.get(display_def));
+                defense *= is_bombard;
+                if (is_bombard > 2) {
+                    add_bat(1, 10 * (5 * is_bombard - 10), StringTable.get(display_def));
                 }
             } else {
                 if (base_id_def >= 0 && Rules.combat_pct_base_def) {
@@ -3712,9 +3712,9 @@ L_509980:
                     Vehs[v].dmg_incurred += veh_cur_hp(v);
                 } else if (v != def_id) {
                     // 0x50AA4C
-                    int plan = VehPrototypes[v_proto].plan;
-                    if (plan == PLAN_ALIEN_ARTIFACT || plan == PLAN_COLONIZATION
-                        || plan == PLAN_INFO_WARFARE || plan == PLAN_SUPPLY_CONVOY) {
+                    stack_id = VehPrototypes[v_proto].plan;
+                    if (stack_id == PLAN_ALIEN_ARTIFACT || stack_id == PLAN_COLONIZATION
+                        || stack_id == PLAN_INFO_WARFARE || stack_id == PLAN_SUPPLY_CONVOY) {
                         continue;   // 0x50AACD
                     }
                 }
