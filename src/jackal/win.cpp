@@ -2338,7 +2338,9 @@ int Win::init(int x, int y, int width, int height, char * caption,
         make_rect(&this->client_rect_, x, y, width, height);
         this->outer_rect_ = this->client_rect_;
         this->nonclient_to_client(&this->outer_rect_);
-        offset_rect(&this->outer_rect_, -this->client_rect_.left, -this->client_rect_.top);
+        int left = this->client_rect_.left;
+        int top = this->client_rect_.top;
+        offset_rect(&this->outer_rect_, -left, -top);
     } else {
         make_rect(&this->outer_rect_, x, y, width, height);
         if ((this->iSomeFlag_ & 2) != 0) {
