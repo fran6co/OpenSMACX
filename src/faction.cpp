@@ -6806,11 +6806,12 @@ commlink:
             if (DiploScratchFA7C < 0) {
                 DiploScratchFA34 = 0;
             }
+            PlanWindow.close();
         } else {
             DiploScratchFA7C = -1;
             DiploScratchFA34 = 0;
+            PlanWindow.close();
         }
-        PlanWindow.close();
     }
     if (!DiploScratchFA34 || DiploScratchFA34 == 7 || DiploScratchFA34 == 10
         || DiploScratchFA34 == 11 || DiploScratchFA34 == 5
