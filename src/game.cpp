@@ -2036,17 +2036,23 @@ int __cdecl save_game(int mode) {
     StringTemp[0] = 0;
     if (mode != 0) {
         says("scenarios\\");
-        parse_set(Players[ConsoleGlobal.faction_id_].is_leader_female, 0);
     } else {
         says("saves\\");
-        parse_set(Players[ConsoleGlobal.faction_id_].is_leader_female, 0);
     }
-
-    strcat(StringTemp, Players[ConsoleGlobal.faction_id_].name_leader);
+    {
+        int f = ConsoleGlobal.faction_id_;
+        PluralityDefault = 0;
+        GenderDefault = Players[f].is_leader_female;
+        strcat(StringTemp, Players[f].name_leader);
+    }
     strcat_space(StringTemp);
-    strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x2D0 / 4]));
+    strcat(StringTemp, label_get(0x2D0 / 4));
     strcat_space(StringTemp);
-    strcat(StringTemp, get_noun(ConsoleGlobal.faction_id_));
+    {
+        const int faction = ConsoleGlobal.faction_id_;
+        parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
+        strcat(StringTemp, Players[faction].noun_faction);
+    }
     strcat_comma(StringTemp);
     say_year(StringTemp);
 
