@@ -151,7 +151,8 @@ int __cdecl mind_control(int base_id, int faction_id, BOOL is_corner_market) {
     if (Bases[base_id].nerve_staple_turns_left) {
         cost = mc_half(cost);
     }
-    int veh_id = stack_fix(veh_at(Bases[base_id].x, Bases[base_id].y));
+    short y = Bases[base_id].y;
+    int veh_id = stack_fix(veh_at(Bases[base_id].x, y));
     cost = ((stack_check(veh_id, 2, PLAN_COMBAT, -1, -1)
         + stack_check(veh_id, 2, PLAN_OFFENSIVE, -1, -1))
         * (stack_check(veh_id, 6, ABL_POLY_ENCRYPTION, -1, -1) + 1)
