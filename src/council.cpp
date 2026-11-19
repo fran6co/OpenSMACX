@@ -913,22 +913,22 @@ proposal values themselves match CouncilProposals.
 // ORIGINAL: 0x0052BF60 ?council_action@@YAXHH@Z 0x0052BF60-0x0052C650 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0052bf60.cpp", "src/council.h", "src/game.cpp", "recovery/tests/test_council_action_behavior.py"], "reason": "Recovered complete proposal dispatch in its Council owner with genuine shared resolution arrays, Player and PlayerData members, Console lifetime references and shared climate state; preserves callback-sensitive faction reloads. Existing seed retains original extent/provenance."}
 // TRIED: literal Ghidra transcription of the switch(a1){1,2,5,6,7} body, using the already-declared g_ADDR globals with pointer arithmetic scaled to match each DAT_ symbol's Ghidra-inferred width (uint*/byte* casts per site) compiles and preserves the case order and every call, but several popp() call sites show 4 explicit pushes in the raw disassembly against a 5-arg cdecl cleanup (`add esp,0x14`) - trusted Ghidra's resolved 5-arg call form over the raw push count, which is an unreconciled discrepancy. Diverges from the framed-prologue build around #2.
-// RECOVERY_LITERAL: v1 0x0068BF44 0x0068BF52 $SG58023 0x0052BF60
-// RECOVERY_LITERAL: v1 0x0068BF54 0x0068BF62 $SG58024 0x0052BF60
-// RECOVERY_LITERAL: v1 0x0068BF64 0x0068BF72 $SG58025 0x0052BF60
-// RECOVERY_LITERAL: v1 0x0068BF74 0x0068BF7D $SG58026 0x0052BF60
-// RECOVERY_LITERAL: v1 0x0068BF80 0x0068BF8E $SG58031 0x0052BF60
-// RECOVERY_LITERAL: v1 0x0068BF90 0x0068BF9E $SG58032 0x0052BF60
-// RECOVERY_LITERAL: v1 0x0068BFA0 0x0068BFAE $SG58033 0x0052BF60
-// RECOVERY_LITERAL: v1 0x0068BFB0 0x0068BFB9 $SG58034 0x0052BF60
-// RECOVERY_LITERAL: v1 0x0068BFBC 0x0068BFCA $SG58046 0x0052BF60
-// RECOVERY_LITERAL: v1 0x0068BFCC 0x0068BFD3 $SG58047 0x0052BF60
-// RECOVERY_LITERAL: v1 0x0068C008 0x0068C017 $SG58067 0x0052BF60
-// RECOVERY_LITERAL: v1 0x0068C018 0x0068C01D $SG58068 0x0052BF60
-// RECOVERY_LITERAL: v1 0x0068BFD4 0x0068BFE2 $SG58058 0x0052BF60
-// RECOVERY_LITERAL: v1 0x0068BFE4 0x0068BFEF $SG58059 0x0052BF60
-// RECOVERY_LITERAL: v1 0x0068BFF0 0x0068BFFE $SG58063 0x0052BF60
-// RECOVERY_LITERAL: v1 0x0068C000 0x0068C007 $SG58064 0x0052BF60
+// RECOVERY_LITERAL: v1 0x0068BF44 0x0068BF52 $SG58009 0x0052BF60
+// RECOVERY_LITERAL: v1 0x0068BF54 0x0068BF62 $SG58010 0x0052BF60
+// RECOVERY_LITERAL: v1 0x0068BF64 0x0068BF72 $SG58011 0x0052BF60
+// RECOVERY_LITERAL: v1 0x0068BF74 0x0068BF7D $SG58012 0x0052BF60
+// RECOVERY_LITERAL: v1 0x0068BF80 0x0068BF8E $SG58017 0x0052BF60
+// RECOVERY_LITERAL: v1 0x0068BF90 0x0068BF9E $SG58018 0x0052BF60
+// RECOVERY_LITERAL: v1 0x0068BFA0 0x0068BFAE $SG58019 0x0052BF60
+// RECOVERY_LITERAL: v1 0x0068BFB0 0x0068BFB9 $SG58020 0x0052BF60
+// RECOVERY_LITERAL: v1 0x0068BFBC 0x0068BFCA $SG58032 0x0052BF60
+// RECOVERY_LITERAL: v1 0x0068BFCC 0x0068BFD3 $SG58033 0x0052BF60
+// RECOVERY_LITERAL: v1 0x0068C008 0x0068C017 $SG58053 0x0052BF60
+// RECOVERY_LITERAL: v1 0x0068C018 0x0068C01D $SG58054 0x0052BF60
+// RECOVERY_LITERAL: v1 0x0068BFD4 0x0068BFE2 $SG58044 0x0052BF60
+// RECOVERY_LITERAL: v1 0x0068BFE4 0x0068BFEF $SG58045 0x0052BF60
+// RECOVERY_LITERAL: v1 0x0068BFF0 0x0068BFFE $SG58049 0x0052BF60
+// RECOVERY_LITERAL: v1 0x0068C000 0x0068C007 $SG58050 0x0052BF60
 void __cdecl council_action(int proposal, int faction_id) {
     // Preserve the native proposal index before dispatch. Unsupported proposal
     // values still update their in-range resolution records, then fall through.
