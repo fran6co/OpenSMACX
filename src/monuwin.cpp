@@ -871,8 +871,7 @@ void MonuWin::on_redraw() {
       int last = count - 1;
       scratch_rect_ = icon_rects_[last / 2 * 2];
       sprites_3244_[last / 2 * 2].draw(this, scratch_rect_.left, scratch_rect_.top);
-      count = last;
-      if (count) {
+      if (--count) {
         scratch_rect_ = icon_rects_[(count - 1) / 2 * 2 + 1];
         sprites_3244_[(count - 1) / 2 * 2 + 1].draw(this, scratch_rect_.left, scratch_rect_.top);
       }
