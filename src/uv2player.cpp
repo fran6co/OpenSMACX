@@ -34,7 +34,7 @@
 #include "wave_device.h"
 // WORKAROUND(inline): show_post_movie_text's early-return teardown calls
 // ~StringStruct out of line (0x004BEFD2) while the final teardown expands
-// it. That depth needs four more small /Ob2 expansions after the early
+// it. That depth needs two more small /Ob2 expansions after the early
 // return than the written-out body spends; their original spelling (list
 // clear helper, member getters) is unknown, so an empty inline stands in.
 static inline void uv2_probe_flat(int) {}
@@ -387,8 +387,6 @@ void UV2Player::show_post_movie_text() {
         }
         text_close();
         // WORKAROUND(inline): four expansions, see uv2_probe_flat.
-        uv2_probe_flat(0);
-        uv2_probe_flat(0);
         uv2_probe_flat(0);
         uv2_probe_flat(0);
 
