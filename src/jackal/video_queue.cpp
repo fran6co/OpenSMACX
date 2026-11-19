@@ -9,6 +9,7 @@
 // ORIGINAL: 0x0063E520 sub_63e520 0x0063E520-0x0063E534 BYTE_EXACT
 // symbol    ??0VideoFrameQueue@@QAE@XZ
 VideoFrameQueue::VideoFrameQueue() : head_(0), tail_(0), count_(0), limit_(-1) {}
+
 // ORIGINAL: 0x0063E540 sub_63e540 0x0063E540-0x0063E58F FILE BYTE_EXACT
 // symbol    ?set_limit@VideoFrameQueue@@QAEXH@Z
 void VideoFrameQueue::set_limit(int limit) {
@@ -26,6 +27,57 @@ void VideoFrameQueue::set_limit(int limit) {
     tail_ = 0;
     count_ = 0;
     limit_ = limit;
+}
+
+// ORIGINAL: 0x0063E590 sub_63e590 0x0063E590-0x0063E5DF FILE BYTE_EXACT
+// symbol    ?clear@VideoFrameQueue@@QAEXXZ
+void VideoFrameQueue::clear() {
+    while (head_ != 0) {
+        VideoFrameNode *const next = head_->next;
+        if (head_->bytes != 0) {
+            free(head_->bytes);
+            head_->bytes = 0;
+        }
+        // Native reloads head_ after freeing bytes and keeps its redundant
+        // null test instead of freeing the cached node pointer directly.
+        if (head_ != 0) {
+            free(head_);
+        }
+        head_ = next;
+    }
+    tail_ = 0;
+    count_ = 0;
+}
+
+// ORIGINAL: 0x0063E5E0 sub_63e5e0 0x0063E5E0-0x0063E6DD FILE BYTE_EXACT
+// symbol    ?append@VideoFrameQueue@@QAEHPBEHHI@Z
+// TRIED: real `__thiscall` member (C0063e5e0::fill(int,int,int,int)) - `this[2]==this[3]` full-guard, mem_get(0x14) in BOTH the empty-list and grow-list arms matching the ASM exactly, a linked-list node {id,val,buf,buflen,next} appended at `this[1]`, and the alloc-failure path unwinding the node it just linked (free buf, unlink, free node, count--). Reproduces the whole body; MISMATCH #3 is the same "no ebp frame" prologue wall seen across this batch (0x005D4890, 0x005DEA20) plus a `cmp [mem],reg` vs `mov reg,[mem]; cmp reg,reg` operand-form choice neither a named local nor inlining changed.
+int VideoFrameQueue::append(const unsigned char *source, int byte_count,
+                            int frame_id, unsigned int frame_flags) {
+    if (count_ == limit_) return 0x14;
+    if (head_ == 0) {
+        head_ = static_cast<VideoFrameNode *>(mem_get(sizeof(VideoFrameNode)));
+        if (head_ == 0) return 4;
+        tail_ = head_;
+    } else {
+        tail_->next = static_cast<VideoFrameNode *>(mem_get(sizeof(VideoFrameNode)));
+        if (tail_->next == 0) return 4;
+        tail_ = tail_->next;
+    }
+    tail_->next = 0;
+    tail_->frame_flags = frame_flags;
+    tail_->frame_id = frame_id;
+    if (byte_count != 0) {
+        tail_->bytes = static_cast<unsigned char *>(mem_get(byte_count));
+        if (tail_->bytes == 0) {
+            discard_head();
+            return 4;
+        }
+        if (source != 0) memcpy(tail_->bytes, source, byte_count);
+        tail_->byte_count = static_cast<unsigned int>(byte_count);
+    }
+    ++count_;
+    return 0;
 }
 
 // ORIGINAL: 0x0063E6E0 sub_63e6e0 0x0063E6E0-0x0063E7EE FILE BYTE_EXACT
@@ -64,37 +116,6 @@ int VideoFrameQueue::allocate(unsigned char **payload_out, int byte_count,
     return 0;
 }
 
-// ORIGINAL: 0x0063E5E0 sub_63e5e0 0x0063E5E0-0x0063E6DD FILE BYTE_EXACT
-// symbol    ?append@VideoFrameQueue@@QAEHPBEHHI@Z
-// TRIED: real `__thiscall` member (C0063e5e0::fill(int,int,int,int)) - `this[2]==this[3]` full-guard, mem_get(0x14) in BOTH the empty-list and grow-list arms matching the ASM exactly, a linked-list node {id,val,buf,buflen,next} appended at `this[1]`, and the alloc-failure path unwinding the node it just linked (free buf, unlink, free node, count--). Reproduces the whole body; MISMATCH #3 is the same "no ebp frame" prologue wall seen across this batch (0x005D4890, 0x005DEA20) plus a `cmp [mem],reg` vs `mov reg,[mem]; cmp reg,reg` operand-form choice neither a named local nor inlining changed.
-int VideoFrameQueue::append(const unsigned char *source, int byte_count,
-                            int frame_id, unsigned int frame_flags) {
-    if (count_ == limit_) return 0x14;
-    if (head_ == 0) {
-        head_ = static_cast<VideoFrameNode *>(mem_get(sizeof(VideoFrameNode)));
-        if (head_ == 0) return 4;
-        tail_ = head_;
-    } else {
-        tail_->next = static_cast<VideoFrameNode *>(mem_get(sizeof(VideoFrameNode)));
-        if (tail_->next == 0) return 4;
-        tail_ = tail_->next;
-    }
-    tail_->next = 0;
-    tail_->frame_flags = frame_flags;
-    tail_->frame_id = frame_id;
-    if (byte_count != 0) {
-        tail_->bytes = static_cast<unsigned char *>(mem_get(byte_count));
-        if (tail_->bytes == 0) {
-            discard_head();
-            return 4;
-        }
-        if (source != 0) memcpy(tail_->bytes, source, byte_count);
-        tail_->byte_count = static_cast<unsigned int>(byte_count);
-    }
-    ++count_;
-    return 0;
-}
-
 // ORIGINAL: 0x0063E7F0 sub_63e7f0 0x0063E7F0-0x0063E81C BYTE_EXACT
 // symbol    ?peek@VideoFrameQueue@@QBEPAEPAHPAI@Z
 // TRIED: plateaus at MNEMONIC_ONLY 11/18 - eax/edx swap on the `first` branch (image keeps `first` in eax, node-reload in edx; this tree does the opposite). Caching the loaded front value in a named local, and `!=nullptr` vs bare pointer truthiness, both measured with no change - register allocation, not source shape.
@@ -119,26 +140,6 @@ void VideoFrameQueue::discard_head() {
         if (node != 0) free(node);
         --count_;
     }
-}
-
-// ORIGINAL: 0x0063E590 sub_63e590 0x0063E590-0x0063E5DF FILE BYTE_EXACT
-// symbol    ?clear@VideoFrameQueue@@QAEXXZ
-void VideoFrameQueue::clear() {
-    while (head_ != 0) {
-        VideoFrameNode *const next = head_->next;
-        if (head_->bytes != 0) {
-            free(head_->bytes);
-            head_->bytes = 0;
-        }
-        // Native reloads head_ after freeing bytes and keeps its redundant
-        // null test instead of freeing the cached node pointer directly.
-        if (head_ != 0) {
-            free(head_);
-        }
-        head_ = next;
-    }
-    tail_ = 0;
-    count_ = 0;
 }
 
 
