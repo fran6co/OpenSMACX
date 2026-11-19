@@ -21,12 +21,14 @@
 #include "win.h"
 #include "stringstruct.h"
 
-// ORIGINAL: 0x00609970 ?UNK1@Dialog@@QAEXHH@Z 0x00609970-0x0060998A FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["The retained 0x00609970 seed body passes its first argument unchanged into Dialog virtual slot 1, then supplies Dialog fields at +0x24 and +0x28, then its second argument; it does not read or write those fields itself.", "src/dialog.h declares Dialog slot 1 as attach(GraphicWin*, int, int, int), and the Dialog-part vtable evidence recorded there identifies slot 1 as attach. Existing callers of the corresponding attach slot use GraphicWin* for its first parameter."], "reason": "Bind the seed-only two-argument Dialog helper to the real typed virtual attach operation and Dialog members, preserving its historical mapping and claim."}
-// symbol    ?attach_at_stored_position@Dialog@@QAEXPAVGraphicWin@@H@Z
-void Dialog::attach_at_stored_position(GraphicWin *window, int flags) {
-    attach(window, window_x_, window_y_, flags);
-}
+
+// Compiler-generated StringList deletion; no handwritten adjustor.
+/*
+// ORIGINAL: 0x00406670 sub_406670 0x00406670-0x004066BB FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:30611dd8dcac1d36c7ad6321170c4bf4cc359561:src/recovered/00406670.cpp", "pinned:terranx_original:0x406670", "source:src/dialog.cpp"], "reason": "Original receives the complete StringList virtual allocation-base view at+28, runs complete StringList teardown, restores allocation owner and conditionally releases complete storage for flag bit0. Real StringList hierarchy supplies this scalar deleting entry; compile_context identifies its current natural application provider; linked selection remains unverified. Preserve all original spans, names, claims and seed discoveries; no new byte grant."}
+// compile_context src/alphanet.cpp
+// symbol    ??_GStringList@@UAEPAXI@Z
+*/
 
 /*
 Purpose: Compiler-generated complete StringList destructor. Dialog owns a
@@ -76,95 +78,291 @@ vbase tail after its call; ours folds it into the chain. The EAX residue
 survives as the republished global.
 */
 
-// abs is a real call throughout the image (0x00644F3A, called from
-// get_selected_id and pos_to_id twice each); stdafx.h's project-wide
-// `#pragma function(..., abs, ...)` line is what keeps it one - this file
-// carried a local `#pragma function(abs)` before the line was extended.
+// The zero-init .bss slots the Dialog constructor reads its field defaults
+// from (0x009B8EB4..0x009B8ED8): rebindable, same idiom as
+// ListBoxCloseDynamicDefault.
+// RECOVERY_OBJECT: v1 0x009B8EB4 ?DialogField30Default@@3IA
+uint32_t DialogField30Default;  // 0x009B8EB4
+// RECOVERY_OBJECT: v1 0x009B8EB8 ?DialogField34Default@@3IA
+uint32_t DialogField34Default;  // 0x009B8EB8
+// RECOVERY_OBJECT: v1 0x009B8EBC ?DialogField40Default@@3IA
+uint32_t DialogField40Default;  // 0x009B8EBC
+// RECOVERY_OBJECT: v1 0x009B8ECC ?DialogFieldACDefault@@3IA
+uint32_t DialogFieldACDefault;  // 0x009B8ECC
+// RECOVERY_OBJECT: v1 0x009B8ED0 ?DialogFieldB0Default@@3IA
+uint32_t DialogFieldB0Default;  // 0x009B8ED0
+// RECOVERY_OBJECT: v1 0x009B8ED4 ?DialogFieldB4Default@@3IA
+uint32_t DialogFieldB4Default;  // 0x009B8ED4
+// RECOVERY_OBJECT: v1 0x009B8ED8 ?DialogFieldB8Default@@3IA
+uint32_t DialogFieldB8Default;  // 0x009B8ED8
 
 /*
-Purpose: Set the three fonts used by the dialog.
-// ORIGINAL: 0x00609C60 ?set_dialog_font@Dialog@@QAEHPAUFont@@PAUFont@@PAUFont@@@Z 0x00609C60-0x00609C8D BYTE_EXACT
-// symbol    ?set_dialog_font@Dialog@@QAEHPAVFont@@00@Z
-// size      45 bytes
-// prototype int (__thiscall ?set_dialog_font@Dialog@@QAEHPAUFont@@PAUFont@@PAUFont@@@Z)(Dialog* this, Font*, Font*, Font*)
-// callers   11   call targets   0
+Purpose: Construct a Dialog: construct the embedded Heap and the item list,
+         then load every color/font/field default from the process tables.
+// ORIGINAL: 0x00608C10 ??0Dialog@@QAE@XZ 0x00608C10-0x00608E09 BYTE_EXACT
+// LEVER (2026-09-03, 99 of 103 -> 103 of 103): the last two assignments are
+//        the other way round from the order a reader would expect -
+//        `text_color_3d_ = DialogDefaults[35]` comes BEFORE
+//        `field_1C_ = -1`. That is what puts the image's
+//        `mov edx,[0x6970d8]` (the 3d default load) above the
+//        `mov [esi+0x1c],eax` (the field_1C_ store): VC6 knows the two
+//        distinct member offsets of the same object do not alias, so it is
+//        free to hoist the load into the store's shadow, and the textual
+//        order is what decides whether it does. The old RESIDUAL note's
+//        "named local to pin the load" attempt failed because a local is
+//        copy-propagated away here; the statement ORDER is the lever.
+// size      509 bytes
+// prototype void (__thiscall ??0Dialog@@QAE@XZ)(Dialog* this)
+// callers   0   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005D4560
+Return Value: this
+*/
+Dialog::Dialog() {
+    // The store order is the image's, including its interleaving of
+    // selected_position_/field_F0_ after field_30_, field_34_ between
+    // field_44_ and field_48_, and field_1C_ near the end. The three -1
+    // stores are the image's one `or eax,-1` reused.
+    field_20_ = dialog_default_style();
+    window_x_ = 0;
+    window_y_ = 0;
+    field_2C_ = DialogDefaults[19];
+    field_30_ = DialogField30Default;
+    selected_position_ = 0;
+    field_F0_ = -1;
+    field_38_ = 0;
+    field_3C_ = 0;
+    field_40_ = DialogField40Default;
+    field_44_ = DialogDefaults[20];
+    field_34_ = DialogField34Default;
+    field_48_ = -1;
+    field_4C_ = DialogDefaults[21];
+    field_50_ = DialogDefaults[22];
+    column_count_ = 0;
+    row_count_ = 0;
+    field_5C_ = 0;
+    field_60_ = 0;
+    field_64_ = 0;
+    field_68_ = 0;
+    field_6C_ = DialogDefaults[23];
+    field_AC_ = DialogFieldACDefault;
+    field_B0_ = DialogFieldB0Default;
+    field_B4_ = DialogFieldB4Default;
+    field_B8_ = DialogFieldB8Default;
+    font1_ = DialogDefaultFonts[0];
+    text_color_a_ = DialogDefaults[24];
+    text_color_b_ = DialogDefaults[27];
+    text_color_c_ = DialogDefaults[30];
+    text_color_d_ = DialogDefaults[33];
+    font2_ = DialogDefaultFonts[1];
+    text_color_2a_ = DialogDefaults[25];
+    text_color_2b_ = DialogDefaults[28];
+    text_color_2c_ = DialogDefaults[31];
+    text_color_2d_ = DialogDefaults[34];
+    font3_ = DialogDefaultFonts[2];
+    text_color_3a_ = DialogDefaults[26];
+    text_color_3b_ = DialogDefaults[29];
+    text_color_3c_ = DialogDefaults[32];
+    // THIS ORDER, 3d_ BEFORE field_1C_: it is what hoists the image's
+    // `mov edx,[0x6970d8]` above the `mov [esi+0x1c],eax` store. See the
+    // LEVER note on the marker above.
+    text_color_3d_ = DialogDefaults[35];
+    field_1C_ = -1;
+    field_1C_ = -1;
+}
+
+// The four list-stage constants (DialogListDerived/VirtualBase and
+// DialogList/VirtualBaseVtable) are gone: destroy()'s two hand
+// close_with_tables calls folded into the one compiler-owned
+// item_list_ destructor chain, which stages the same tables from the
+// StringList declarations. DialogVirtualBaseFinalVtable and
+// DialogPublishedGlobal left in the batch before.
+
+
+/*
+Purpose: Close the Dialog, then destroy its list and heap members in reverse
+         construction order. The compiler owns table staging and EH cleanup.
+         Historical observations below also discuss the retired destroy helper.
+// ORIGINAL: 0x00608E10 ??1Dialog@@QAE@XZ 0x00608E10-0x00608F41;0x00662EC0-0x00662EEE BYTE_EXACT
+// LEVER (2026-09-03): this address is the DESTRUCTOR, and the subject was
+//        repointed from the destroy() helper to what the compiler actually
+//        emits for `~Dialog` - which now carries the body. Three measured
+//        facts, 0 of 94 (13 compiled) -> 7 of 94 (37 compiled, 0.504
+//        similar) with no other edit:
+//        (1) `~Dialog` was `{ ; }`, so the compiler-generated destructor ran
+//            close() never and the 116 derived destructors that the image
+//            sends here tore their Dialog base down without closing it. It
+//            now reads `close();` and the compiler adds the vptr install,
+//            the SEH unwind frame under /GX, and the item_list_/heap_
+//            teardowns - the image's own three opening blocks, in its order.
+//        (2) The image calls close() DIRECTLY (`call 0x608f50`), so the
+//            body says `close()`, the declared member - not the
+//            DialogOriginalClose pointer seam destroy() still uses, which
+//            compiles `call dword ptr [global]`.
+//        (3) The `symbol` fact is `??1Dialog@@UAE@XZ`, U not the image's Q,
+//            because this tree declares the destructor `virtual` (that
+//            declaration is what earns the vfptr the class needs; see
+//            dialog.h). A U-named destructor is the one ABI consequence.
+// TRIED: the remaining 87 instructions are the gap the old note named, and
+//            it stands: the image INLINES the whole StringStruct teardown
+//            (derived stage, base stage, entry walk, virtual-base publish)
+//            where this tree calls ~StringList, and it has no SEH-frame
+//            equivalent to lose. Inlining ~StringList into this site means
+//            moving its body into stringstruct.h - a file this pass does not
+//            own - and the brief documents that a forwarder does not fix an
+//            inlined-here/called-there split.
+// symbol    ??1Dialog@@UAE@XZ
+// size      351 bytes
+// prototype void (__thiscall ??1Dialog@@QAE@XZ)(Dialog* this)
+// callers   116   call targets   3
 // kind      game
 // flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// notes     Runtime redirect installed by DllMain after byte-signature validation
-Return Value: No errors (0); invalid primary font (3)
-Status: Complete
+// calls     0x00402970 0x005D45B0 0x00608F50
+// indirect  0x00608EB5 0x00608ECA 0x00608EE9
+Return Value: n/a (the original leaves Heap::shutdown's EAX residue; the
+              scalar deleting destructor overwrites it and the 116 direct
+              callers ignore it, so void is faithful)
+The source close is reusable; member lifetimes end only in this destructor.
+Original normal cleanup at 608F2A and unwind tail at 662EC6 both target
+5D45B0. Its relationship to Heap's catalogued destructor remains a reference
+interpretation to verify, not permission to omit compiler-owned member cleanup.
 */
-int Dialog::set_dialog_font(Font *font1, Font *font2, Font *font3) {
-    if (!font1) {
-        return 3;
+Dialog::~Dialog() {
+    close();
+}
+
+// Reset a live dialog, keeping its list and heap objects alive for reuse.
+// Entry hooks run before releasing their backing heap. Empty-head cleanup
+// still resets position but deliberately does not clear current_ or count.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00608F50 ?close@Dialog@@QAEXXZ 0x00608F50-0x00609143 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original608F50-609143 clears entries using the current list hooks, unconditionally resets position, calls5D4580 at608FDB, then writes heap_ptr/default/font/color fields and field1C=-1 at60913C. current_ is not cleared. Retained seed preserves extent but explicit member destruction is not used in the live C++ reset.", "Existing DialogDefaults and DialogDefaultFonts own the original settings; list removal and allocator-aware node destruction are recovered in stringstruct.cpp. Heap::reset has a separate source shared-code interpretation for the original5D4580 cleanup entry. No byte or full-lifetime acceptance is claimed."], "reason": "Recover reusable dialog cleanup through real list members and a non-destructive heap reset, preserving original cleanup-before-defaults order."}
+void Dialog::close() {
+    StringList *list = &item_list_;
+    list->remove_all();
+    list->current_position_ = 0;
+    heap_.reset();
+    heap_ptr_ = 0;
+    field_20_ = dialog_default_style();
+    window_x_ = 0;
+    window_y_ = 0;
+    field_2C_ = DialogDefaults[19];
+    field_30_ = DialogField30Default;
+    selected_position_ = 0;
+    field_F0_ = -1;
+    field_38_ = 0;
+    field_3C_ = 0;
+    field_40_ = DialogField40Default;
+    field_44_ = DialogDefaults[20];
+    field_48_ = -1;
+    field_34_ = DialogField34Default;
+    field_4C_ = DialogDefaults[21];
+    field_50_ = DialogDefaults[22];
+    column_count_ = 0;
+    row_count_ = 0;
+    field_5C_ = 0;
+    field_60_ = 0;
+    field_64_ = 0;
+    field_68_ = 0;
+    field_6C_ = DialogDefaults[23];
+    field_AC_ = DialogFieldACDefault;
+    field_B0_ = DialogFieldB0Default;
+    field_B4_ = DialogFieldB4Default;
+    field_B8_ = DialogFieldB8Default;
+    font1_ = DialogDefaultFonts[0];
+    text_color_a_ = DialogDefaults[24];
+    text_color_b_ = DialogDefaults[27];
+    text_color_c_ = DialogDefaults[30];
+    text_color_d_ = DialogDefaults[33];
+    font2_ = DialogDefaultFonts[1];
+    text_color_2a_ = DialogDefaults[25];
+    text_color_2b_ = DialogDefaults[28];
+    text_color_2c_ = DialogDefaults[31];
+    text_color_2d_ = DialogDefaults[34];
+    font3_ = DialogDefaultFonts[2];
+    text_color_3a_ = DialogDefaults[26];
+    text_color_3b_ = DialogDefaults[29];
+    text_color_3c_ = DialogDefaults[32];
+    text_color_3d_ = DialogDefaults[35];
+    field_1C_ = -1;
+}
+
+// Initialize using the already requested size; unlike init(int), the negative
+// size path returns before clearing entries or closing the dialog.
+// ORIGINAL: 0x00609150 ?init@Dialog@@QAEHXZ 0x00609150-0x006092FB BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned original decorated identity is ?init@Dialog@@QAEHXZ, with requested size at Dialog+0x1c, Heap at +0x4 and StringList at +0xbc", "src/dialog.h already declares those typed Dialog members; src/dialog.cpp owns the sibling overloads", "the recovered body has only StringList on_remove/deleting-destructor dispatches and Heap::init; no Win callback slot is involved", "the historical emitted redirect spelling ?dialog_init_redirect@@YIHPAX0@Z is retained only in this packet's audit history, not as the moved owner's symbol"], "reason": "Home the zero-argument initializer on Dialog and use its declared field_1C_, heap_, and item_list_ members. Preserve the original negative-size check, three explicit teardown sites, heap-init timing, returns, and allocator writes; do not substitute the non-equivalent init(int) overload."}
+//            redefined dispatch shim for the notify/destroy virtual calls;
+//            stack frame layout differs from instruction 1 on.
+// size      427 bytes
+// prototype int (__thiscall ?init@Dialog@@QAEHXZ)(Dialog* this)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4620
+// indirect  0x00609197 0x006091A9 0x006091C5 0x0060922D 0x00609241 0x0060925C 0x006092A6 0x006092B8 0x006092D4
+// historical Return Value: 0 on success, 1 when the requested size is negative, 4 when
+// historical Status: Complete
+// TRIED: the three inlined entry-list clears written out with a locally redefined dispatch shim for the notify/destroy virtual calls; stack frame layout differs from instruction 1 on.
+int Dialog::init() {
+    if (field_1C_ < 0) {
+        return 1;
     }
-    if (font1->is_initialized()) {
-        font1_ = font1;
+    StringList *list = &item_list_;
+    list->remove_all();
+    list->current_position_ = 0;
+    if (field_1C_ != 0) {
+        Heap *heap = &heap_;
+        if (heap->init(static_cast<size_t>(field_1C_))) {
+            return 4;
+        }
+        list->remove_all();
+        list->allocator_ = heap;
+        list->current_position_ = 0;
+        return 0;
     }
-    font2_ = font2;
-    font3_ = font3;
+    list->remove_all();
+    list->current_position_ = 0;
+    list->allocator_ = 0;
     return 0;
 }
 
 /*
-Purpose: Set the primary text colors for the four dialog color slots.
-// ORIGINAL: 0x00609C90 ?set_dialog_text_color@Dialog@@QAEXHHHH@Z 0x00609C90-0x00609CB8 BYTE_EXACT
-// size      40 bytes
-// prototype void (__thiscall ?set_dialog_text_color@Dialog@@QAEXHHHH@Z)(Dialog* this, int, int, int, int)
-// callers   9   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// notes     Runtime redirect installed by DllMain after byte-signature validation
-Return Value: n/a
-Status: Complete
+Purpose: Initialize the dialog's absolute geometry and optional embedded
+         item-list heap. A failed Heap::init returns 4; success reconnects the
+         list allocator to Dialog's own Heap, while a zero size clears it.
 */
-void Dialog::set_dialog_text_color(int color1, int color2, int color3, int color4) {
-    text_color_a_ = color1;
-    text_color_b_ = color2;
-    text_color_c_ = color3;
-    text_color_d_ = color4;
-}
 
-/*
-Purpose: Set the secondary text colors for the four dialog color slots.
-// ORIGINAL: 0x00609CC0 ?set_dialog_text_color2@Dialog@@QAEXHHHH@Z 0x00609CC0-0x00609CEB BYTE_EXACT
-// size      43 bytes
-// prototype void (__thiscall ?set_dialog_text_color2@Dialog@@QAEXHHHH@Z)(Dialog* this, int, int, int, int)
-// callers   7   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// notes     Runtime redirect installed by DllMain after byte-signature validation
-Return Value: n/a
-Status: Complete
-*/
-void Dialog::set_dialog_text_color2(int color1, int color2, int color3, int color4) {
-    text_color_2a_ = color1;
-    text_color_2b_ = color2;
-    text_color_2c_ = color3;
-    text_color_2d_ = color4;
-}
+// ORIGINAL: 0x00609300 ?init@Dialog@@QAEHHHHHH@Z 0x00609300-0x00609465 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned recover inspect 0x00609300: calls Dialog::close before writing left/top/right/bottom at +0x24/+0x28/+0x2c/+0x30, ORs style bits 3, stores heap_size at +0x1c, then calls Heap::init on this+4 only for nonzero size. The test at 0x00609350 branches to success on zero; nonzero returns 4.", "Pinned recover inspect 0x00609360-0x006093e1 confirms successful nonzero setup clears the item list, stores the embedded Heap pointer to StringList::allocator_, resets current_position_, and returns 0; the zero-size branch also clears the list and allocator."], "reason": "Recover the five-integer Dialog initializer as a typed member using the real embedded Heap and StringList. The image reuses a stack slot as EDI only when the list teardown loop runs, yielding the original left argument as allocator; close() already empties this list before the repeated clear, so preserve the owning &heap_ reference rather than the stale-register artifact."}
+// TRIED: the two branches each inline the SAME list-teardown loop; the field at list+0x18 is set to `a1` in the `a5 != 0` branch (matching Ghidra) since the stale-register case is not expressible from source. 0.89 mnemonic similarity.
+// Historical redirect emitted symbol: ?dialog_init_six_redirect@@YIHPAX0HHHHH@Z
+int Dialog::init(int left, int top, int right, int bottom, int heap_size) {
+    close();
 
-/*
-Purpose: Set the tertiary text colors for the four dialog color slots.
-// ORIGINAL: 0x00609CF0 ?set_dialog_text_color3@Dialog@@QAEXHHHH@Z 0x00609CF0-0x00609D1B BYTE_EXACT
-// size      43 bytes
-// prototype void (__thiscall ?set_dialog_text_color3@Dialog@@QAEXHHHH@Z)(Dialog* this, int, int, int, int)
-// callers   6   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// notes     Runtime redirect installed by DllMain after byte-signature validation
-Return Value: n/a
-Status: Complete
-*/
-void Dialog::set_dialog_text_color3(int color1, int color2, int color3, int color4) {
-    text_color_3a_ = color1;
-    text_color_3b_ = color2;
-    text_color_3c_ = color3;
-    text_color_3d_ = color4;
+    window_x_ = left;
+    window_y_ = top;
+    field_2C_ = right;
+    field_30_ = bottom;
+    field_20_ |= 3U;
+    field_1C_ = heap_size;
+
+    if (heap_size != 0) {
+        Heap *heap = &heap_;
+        if (heap->init(static_cast<size_t>(heap_size))) {
+            return 4;
+        }
+        StringList *list = &item_list_;
+        list->remove_all();
+        list->current_position_ = 0;
+        list->allocator_ = heap;
+        return 0;
+    }
+    StringList *list = &item_list_;
+    list->remove_all();
+    list->current_position_ = 0;
+    list->allocator_ = 0;
+    return 0;
 }
 
 /*
@@ -175,6 +373,7 @@ Purpose: Initialize the dialog geometry and optional item-list heap.
 //   clears that allocator on the zero-size path.
 Status: Genuine C++ recovery; strict reference and behavioral acceptance remain pending.
 */
+
 // ORIGINAL: 0x00609470 ?init@Dialog@@QAEHPAURECT@@H@Z 0x00609470-0x006095EE
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned image inspect 0x00609470 decodes exactly 382 bytes. It snapshots all RECT fields before direct Dialog::close, calls Heap::init at 0x006094D5, returns 4 immediately on allocation error, and uses the saved this+4 heap pointer for StringList::allocator_ only on success; the zero-size branch clears that allocator. The retained 0x00609470 seed carried the alternative heap/stack-slot interpretation, resolved by the pinned stores at 0x0060955F and 0x006095DF."], "reason": "Recover the original Dialog RECT initializer in dialog.cpp using the real Dialog, Heap, and StringList members; its pointer validation, saved rectangle coordinates, close, geometry setup, and allocator ownership follow the pinned body."}
 // symbol    ?init@Dialog@@QAEHPAUtagRECT@@H@Z
@@ -227,24 +426,29 @@ int Dialog::init(RECT *rect, int heap_size) {
 }
 
 /*
-Purpose: Initialize the dialog's absolute geometry and optional embedded
-         item-list heap. A failed Heap::init returns 4; success reconnects the
-         list allocator to Dialog's own Heap, while a zero size clears it.
+Purpose: Dialog's one-int init: reset the live dialog through close(), store
+         the requested heap size at 0x1c, and hand the embedded item list the
+         Dialog's own Heap as its allocator (or clear the allocator when no
+         size is given). The entry-list teardown between the decisions is the
+         same walk StringStruct::remove_all performs, inlined the way the
+         image inlines it (see StringStruct::remove_all in stringstruct.h and the
+         sibling Dialog::init overloads above).
+
+// ORIGINAL: 0x006095F0 ?init@Dialog@@QAEHH@Z 0x006095F0-0x00609730 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["src/dialog.h declares this original Dialog overload and dialog.cpp owns the sibling init/close methods.","The body uses actual Dialog/Heap/StringStruct members; its explicit list-entry teardown and branch order are retained unchanged."],"reason":"Move the complete existing Dialog member body and original annotation to its declared owner. This records source ownership only; its historical span/claim and explicit list lifecycle remain obligations."}
+// TRIED: the scaffold-provided nullary `VCall` shim's slots could not be re-parameterised from the body, so the seed declared its own shim class for the two per-entry virtual calls; the real C++ spelling below reaches the same dispatches through the list's on_remove hook and the entries' deleting destructors. Testing heap_size == 0 first vs the non-zero branch first scored the latter higher in the seed.
+// size      320 bytes
+// prototype int (__thiscall ?init@Dialog@@QAEHH@Z)(Dialog* this, int)
+// callers   2   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4620 0x00608F50
+// indirect  0x00609655 0x00609667 0x00609683 0x006096D9 0x006096ED 0x00609708
+Status: Coverage transcription - unclaimed body
 */
-// ORIGINAL: 0x00609300 ?init@Dialog@@QAEHHHHHH@Z 0x00609300-0x00609465 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned recover inspect 0x00609300: calls Dialog::close before writing left/top/right/bottom at +0x24/+0x28/+0x2c/+0x30, ORs style bits 3, stores heap_size at +0x1c, then calls Heap::init on this+4 only for nonzero size. The test at 0x00609350 branches to success on zero; nonzero returns 4.", "Pinned recover inspect 0x00609360-0x006093e1 confirms successful nonzero setup clears the item list, stores the embedded Heap pointer to StringList::allocator_, resets current_position_, and returns 0; the zero-size branch also clears the list and allocator."], "reason": "Recover the five-integer Dialog initializer as a typed member using the real embedded Heap and StringList. The image reuses a stack slot as EDI only when the list teardown loop runs, yielding the original left argument as allocator; close() already empties this list before the repeated clear, so preserve the owning &heap_ reference rather than the stale-register artifact."}
-// TRIED: the two branches each inline the SAME list-teardown loop; the field at list+0x18 is set to `a1` in the `a5 != 0` branch (matching Ghidra) since the stale-register case is not expressible from source. 0.89 mnemonic similarity.
-// Historical redirect emitted symbol: ?dialog_init_six_redirect@@YIHPAX0HHHHH@Z
-int Dialog::init(int left, int top, int right, int bottom, int heap_size) {
+int Dialog::init(int heap_size) {
     close();
-
-    window_x_ = left;
-    window_y_ = top;
-    field_2C_ = right;
-    field_30_ = bottom;
-    field_20_ |= 3U;
     field_1C_ = heap_size;
-
     if (heap_size != 0) {
         Heap *heap = &heap_;
         if (heap->init(static_cast<size_t>(heap_size))) {
@@ -264,9 +468,71 @@ int Dialog::init(int left, int top, int right, int bottom, int heap_size) {
 }
 
 /*
+Purpose: Dialog's five-int init: reset through close(), store the geometry
+         and the two style bits, park the caller's Heap in the dialog's heap
+         pointer, and after the entry teardown hand the same Heap to the
+         embedded item list as its allocator.
+
+         Same store shape as the six-int init at 0x00609300, except the Heap
+         lands at +0x18 (the pointer slot) instead of the size slot, and no
+         Heap::init runs.
+
+// ORIGINAL: 0x00609730 ?init@Dialog@@QAEHHHHHPAUHeap@@@Z 0x00609730-0x006097EE FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["src/dialog.h declares this original Dialog overload; dialog.cpp owns the sibling init/close methods.","The body uses existing Dialog members and preserves its independent geometry, style and list teardown sequence."],"reason":"Move the existing typed overload to Dialog's owner without folding it into a sibling or altering its writes and cleanup."}
+// symbol    ?init@Dialog@@QAEHHHHHPAVHeap@@@Z
+// TRIED: MISMATCH, closest at 187/190 bytes (mnemonic_similarity 0.97). Same embedded-manager close-and-relink shape as SetupWin::close (0x004AD9C0): a single mutated `char *p` (starts as `this`, then `p += 0xbc` to become the manager) reproduces the whole prologue, field stores AND the loop body byte-for-byte - matching original's single-register reuse (esi: this, then mgr) instead of a separate named `mgr` local, which cost an extra register/push. The two vtable-adjustment "deleting dtor" calls (vtbl[1] read as a byte displacement, this-adjusted, then that pointer's own vtbl[0] called with arg 1) still diverge by a few instructions each - same register-allocator nuance as 0x004AD9C0's second call site, not chased further.
+// TRIED: SpriteBox::init(int,int,int,int,Heap*) tail-forwards here through the embedded Dialog base.
+// size      190 bytes
+// prototype int (__thiscall ?init@Dialog@@QAEHHHHHPAUHeap@@@Z)(Dialog* this, int, int, int, int, Heap*)
+// callers   2   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00608F50
+// indirect  0x00609793 0x006097A7 0x006097C2
+Status: Coverage transcription - unclaimed body
+*/
+int Dialog::init(int left, int top, int right, int bottom, Heap *heap) {
+    close();
+    window_x_ = left;
+    window_y_ = top;
+    field_20_ |= 3;
+    field_2C_ = right;
+    field_30_ = bottom;
+    heap_ptr_ = heap;
+    StringList &list = item_list_;
+    if (list.head_ != 0) {
+        int index = 0;
+        if (0 < list.entry_count_) {
+            do {
+                list.current_ = list.head_->next;
+                StringStructPayload *const payload = list.head_->string_payload();
+                list.on_remove(payload);
+                if (payload != 0) {
+                    delete payload;
+                }
+                list.head_->payload = 0;
+                StringStructEntry *const head = list.head_;
+                if (head != 0) {
+                    delete head;
+                }
+                ++index;
+                list.head_ = list.current_;
+            } while (index < list.entry_count_);
+        }
+        list.head_ = 0;
+        list.current_position_ = 0;
+        list.entry_count_ = 0;
+    }
+    list.current_position_ = 0;
+    list.allocator_ = heap;
+    return 0;
+}
+
+/*
 Purpose: Initialize a dialog from an absolute rectangle and caller-owned
          heap, copying the rectangle before close() resets dialog state.
 */
+
 // ORIGINAL: 0x006097F0 ?init@Dialog@@QAEHPAURECT@@PAUHeap@@@Z 0x006097F0-0x006098C8 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned recover inspect 0x006097F0 rejects a null RECT with 3, snapshots left/top/right/bottom before calling Dialog::close, computes width=right-left and height=bottom-top, then stores left/top/width/height at +0x24/+0x28/+0x2c/+0x30 and the supplied Heap* at +0x18.", "Pinned recover inspect 0x00609841-0x006098c5 confirms item-list removal, current_position_ reset, allocator_ set to the supplied heap, and return 0."], "reason": "Recover the rectangle-and-heap overload on Dialog using its typed geometry, heap pointer, and embedded StringList members."}
 // symbol    ?init@Dialog@@QAEHPAUtagRECT@@PAVHeap@@@Z
@@ -298,42 +564,95 @@ int Dialog::init(RECT *rect, Heap *heap) {
 }
 
 /*
-Purpose: Find an item ID's bounded position in the dialog string list. Inline-placement notes below are historical; this is now an ordinary cpp API.
-// ORIGINAL: 0x00609AF0 ?id_to_pos@Dialog@@QAEHH@Z 0x00609AF0-0x00609B4B BYTE_EXACT
-// body      src/jackal/dialog.cpp
-// MEASURED inline: the body lives at the end of dialog.h. The image keeps
-//        this out-of-line copy at 0x00609AF0 AND inlines the same walk into
-//        set_selected_id (0x006099D0); the `inline` keyword is what makes
-//        that site expand (VC6 will not auto-inline a loop body) and
-//        MEASURED/__declspec(dllexport) is what keeps this COMDAT emitted
-//        for its own claim.
-// size      91 bytes
-// prototype int (__thiscall ?id_to_pos@Dialog@@QAEHH@Z)(Dialog* this, int)
-// callers   1   call targets   0
+Purpose: Dialog's Heap* init: reset the live dialog through close(), park
+         -1 in the size slot, store the caller's Heap as the dialog's heap
+         pointer, and hand that same Heap to the embedded item list as its
+         allocator after the entry teardown.
+
+// ORIGINAL: 0x006098D0 ?init@Dialog@@QAEHPAUHeap@@@Z 0x006098D0-0x0060996F FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["src/dialog.h declares this original Dialog overload; dialog.cpp owns the sibling init/close methods.","The embedded list, heap pointer and allocator are existing Dialog members; SpriteBox's documented forwarder targets this overload."],"reason":"Move the existing typed overload to Dialog's owner without changing heap assignment, teardown order or return behavior."}
+// symbol    ?init@Dialog@@QAEHPAVHeap@@@Z
+// TRIED: SpriteBox::init(Heap*) tail-forwards here through the embedded Dialog base.
+// size      159 bytes
+// prototype int (__thiscall ?init@Dialog@@QAEHPAUHeap@@@Z)(Dialog* this, Heap*)
+// callers   2   call targets   1
 // kind      game
 // flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// notes     Runtime redirect installed by DllMain after byte-signature validation
-Return Value: Matching position, or the configured entry count on a miss
+// calls     0x00608F50
+// indirect  0x00609915 0x00609927 0x00609943
+Status: Coverage transcription - unclaimed body
+*/
+int Dialog::init(Heap *heap) {
+    close();
+    field_1C_ = -1;
+    heap_ptr_ = heap;
+    StringList &list = item_list_;
+    if (list.head_ != 0) {
+        int index = 0;
+        if (0 < list.entry_count_) {
+            do {
+                list.current_ = list.head_->next;
+                StringStructPayload *const payload = list.head_->string_payload();
+                list.on_remove(payload);
+                if (payload != 0) {
+                    delete payload;
+                }
+                list.head_->payload = 0;
+                StringStructEntry *const head = list.head_;
+                if (head != 0) {
+                    delete head;
+                }
+                ++index;
+                list.head_ = list.current_;
+            } while (index < list.entry_count_);
+        }
+        list.head_ = 0;
+        list.current_position_ = 0;
+        list.entry_count_ = 0;
+    }
+    list.current_position_ = 0;
+    list.allocator_ = heap;
+    return 0;
+}
+
+// ORIGINAL: 0x00609970 ?UNK1@Dialog@@QAEXHH@Z 0x00609970-0x0060998A FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["The retained 0x00609970 seed body passes its first argument unchanged into Dialog virtual slot 1, then supplies Dialog fields at +0x24 and +0x28, then its second argument; it does not read or write those fields itself.", "src/dialog.h declares Dialog slot 1 as attach(GraphicWin*, int, int, int), and the Dialog-part vtable evidence recorded there identifies slot 1 as attach. Existing callers of the corresponding attach slot use GraphicWin* for its first parameter."], "reason": "Bind the seed-only two-argument Dialog helper to the real typed virtual attach operation and Dialog members, preserving its historical mapping and claim."}
+// symbol    ?attach_at_stored_position@Dialog@@QAEXPAVGraphicWin@@H@Z
+void Dialog::attach_at_stored_position(GraphicWin *window, int flags) {
+    attach(window, window_x_, window_y_, flags);
+}
+
+/*
+Purpose: Add an item to the dialog's string list, keyed by its id, if a
+         non-null string is given.
+// ORIGINAL: 0x00609990 ?item@Dialog@@QAEHPADH@Z 0x00609990-0x006099C4 BYTE_EXACT
+// symbol    ?item@Dialog@@QAEHPADH@Z
+// size      52 bytes
+// prototype int (__thiscall ?item@Dialog@@QAEHPADH@Z)(Dialog* this, int8*, int)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00401100
+Return Value: 3 when text is null; otherwise StringStruct::add's result
 Status: Complete
 */
-
-int Dialog::id_to_pos(int id) {
-    if (item_list_.head_) {
-        int count = item_list_.entry_count_;
-        item_list_.current_position_ = 0;
-        item_list_.current_ = item_list_.head_;
-        for (int traversed = 0; traversed < count; traversed++) {
-            StringStructEntry *entry = item_list_.current_;
-            if (entry->id == id) {
-                goto found;
-            }
-            item_list_.current_position_++;
-            item_list_.current_ = entry->next;
-        }
+int Dialog::item(char *text, int index) {
+    if (!text) {
+        return 3;
     }
-found:
-    return item_list_.current_position_;
+    // The list at this+0xBC, the subobject ~Dialog destroys. Its
+    // OWN pending_text_/field_20_/field_24_ (StringList-relative) are set
+    // through the LIST, not Dialog's absolute offsets: the image advances
+    // ecx to this+0xBC first (`add ecx, 0xbc`) and addresses 0x1C/0x20/0x24
+    // off of that, which is what keeps the small displacements instead of
+    // Dialog's own 0xD8 etc. The `list` local is that advanced receiver -
+    // spelled through the member; TRIED: direct `item_list_.field_1C_`
+    // selects made VC6 drop the `add` and store at [ecx+0xd8..e0], 7 of 13.
+    StringList *const list = &item_list_;
+    list->pending_text_ = text;
+    list->field_20_ = 0;
+    list->field_24_ = 1;
+    return list->add(index);
 }
 
 /*
@@ -451,6 +770,45 @@ restore_done:
 }
 
 /*
+Purpose: Find an item ID's bounded position in the dialog string list. Inline-placement notes below are historical; this is now an ordinary cpp API.
+// ORIGINAL: 0x00609AF0 ?id_to_pos@Dialog@@QAEHH@Z 0x00609AF0-0x00609B4B BYTE_EXACT
+// body      src/jackal/dialog.cpp
+// MEASURED inline: the body lives at the end of dialog.h. The image keeps
+//        this out-of-line copy at 0x00609AF0 AND inlines the same walk into
+//        set_selected_id (0x006099D0); the `inline` keyword is what makes
+//        that site expand (VC6 will not auto-inline a loop body) and
+//        MEASURED/__declspec(dllexport) is what keeps this COMDAT emitted
+//        for its own claim.
+// size      91 bytes
+// prototype int (__thiscall ?id_to_pos@Dialog@@QAEHH@Z)(Dialog* this, int)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
+Return Value: Matching position, or the configured entry count on a miss
+Status: Complete
+*/
+
+int Dialog::id_to_pos(int id) {
+    if (item_list_.head_) {
+        int count = item_list_.entry_count_;
+        item_list_.current_position_ = 0;
+        item_list_.current_ = item_list_.head_;
+        for (int traversed = 0; traversed < count; traversed++) {
+            StringStructEntry *entry = item_list_.current_;
+            if (entry->id == id) {
+                goto found;
+            }
+            item_list_.current_position_++;
+            item_list_.current_ = entry->next;
+        }
+    }
+found:
+    return item_list_.current_position_;
+}
+
+/*
 Purpose: Restore an explicit list position and return its item ID.
 // ORIGINAL: 0x00609B50 ?pos_to_id@Dialog@@QAEHH@Z 0x00609B50-0x00609BEA BYTE_EXACT
 // LEVER: dropped a dead `int count = entry_count_;` first line (unused,
@@ -506,37 +864,131 @@ int Dialog::pos_to_id(int position) {
     return item_list_.head_ ? item_list_.current_->id : 0;
 }
 
+// Emitted by Dialog's real virtual destructor and table, not a handwritten
+// fastcall model. The original scalar entry and historical claim stay here.
+
+
+
+
+
 /*
-Purpose: Add an item to the dialog's string list, keyed by its id, if a
-         non-null string is given.
-// ORIGINAL: 0x00609990 ?item@Dialog@@QAEHPADH@Z 0x00609990-0x006099C4 BYTE_EXACT
-// symbol    ?item@Dialog@@QAEHPADH@Z
-// size      52 bytes
-// prototype int (__thiscall ?item@Dialog@@QAEHPADH@Z)(Dialog* this, int8*, int)
-// callers   1   call targets   1
+ * The five-argument init, on the same terms as the three above: a forwarder,
+ * not a recovery. The recovered SpriteBox::init (0x006104D0) tail-forwards to
+ * it, so the DLL cannot link without a definition.
+ */
+
+// ORIGINAL: 0x00609BF0 ?UNK2@Dialog@@QAEXHHHH@Z 0x00609BF0-0x00609C60 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"Recover the complete body in its genuine C++ owner, with real embedded members, shared virtual bases, lifecycle and parent operations. Compiler-generated overrides/adjustors replace executable-address or vbtable stand-ins; no current matching claim is granted.","evidence":["git:391d42a9:src/recovered/units/00609bf0.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/ui-eight-owner-coverage.json","Original entry 0x00609bf0; physical VC6 COFF emitted symbol ?UNK2@Dialog@@QAEXHHHH@Z."]}
+// symbol    ?UNK2@Dialog@@QAEHHHHH@Z
+int Dialog::UNK2(int window, int message, int wparam, int lparam) {
+    HWND hwnd = reinterpret_cast<HWND>(static_cast<LONG_PTR>(window));
+    if (static_cast<UINT>(message) >= WM_SETFOCUS &&
+        static_cast<UINT>(message) <= WM_KILLFOCUS) {
+        if (!IsChild(hwnd,
+                     reinterpret_cast<HWND>(static_cast<LONG_PTR>(wparam)))) {
+            Win *owner = reinterpret_cast<Win *>(
+                GetWindowLongA(hwnd, GWL_USERDATA));
+            // WNDPROC-style LRESULT: the early zero reuses eax (owner == 0).
+            if (owner == 0) return 0;
+            if (!owner->has_dialog_focus_flag() && HandleMain != 0) {
+                owner->redraw();
+            }
+        }
+    }
+    return CallWindowProcA(&PrevWndFunc, hwnd, message,
+                           static_cast<WPARAM>(wparam),
+                           static_cast<LPARAM>(lparam));
+}
+
+// abs is a real call throughout the image (0x00644F3A, called from
+// get_selected_id and pos_to_id twice each); stdafx.h's project-wide
+// `#pragma function(..., abs, ...)` line is what keeps it one - this file
+// carried a local `#pragma function(abs)` before the line was extended.
+
+/*
+Purpose: Set the three fonts used by the dialog.
+// ORIGINAL: 0x00609C60 ?set_dialog_font@Dialog@@QAEHPAUFont@@PAUFont@@PAUFont@@@Z 0x00609C60-0x00609C8D BYTE_EXACT
+// symbol    ?set_dialog_font@Dialog@@QAEHPAVFont@@00@Z
+// size      45 bytes
+// prototype int (__thiscall ?set_dialog_font@Dialog@@QAEHPAUFont@@PAUFont@@PAUFont@@@Z)(Dialog* this, Font*, Font*, Font*)
+// callers   11   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
-// calls     0x00401100
-Return Value: 3 when text is null; otherwise StringStruct::add's result
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
+Return Value: No errors (0); invalid primary font (3)
 Status: Complete
 */
-int Dialog::item(char *text, int index) {
-    if (!text) {
+int Dialog::set_dialog_font(Font *font1, Font *font2, Font *font3) {
+    if (!font1) {
         return 3;
     }
-    // The list at this+0xBC, the subobject ~Dialog destroys. Its
-    // OWN pending_text_/field_20_/field_24_ (StringList-relative) are set
-    // through the LIST, not Dialog's absolute offsets: the image advances
-    // ecx to this+0xBC first (`add ecx, 0xbc`) and addresses 0x1C/0x20/0x24
-    // off of that, which is what keeps the small displacements instead of
-    // Dialog's own 0xD8 etc. The `list` local is that advanced receiver -
-    // spelled through the member; TRIED: direct `item_list_.field_1C_`
-    // selects made VC6 drop the `add` and store at [ecx+0xd8..e0], 7 of 13.
-    StringList *const list = &item_list_;
-    list->pending_text_ = text;
-    list->field_20_ = 0;
-    list->field_24_ = 1;
-    return list->add(index);
+    if (font1->is_initialized()) {
+        font1_ = font1;
+    }
+    font2_ = font2;
+    font3_ = font3;
+    return 0;
+}
+
+/*
+Purpose: Set the primary text colors for the four dialog color slots.
+// ORIGINAL: 0x00609C90 ?set_dialog_text_color@Dialog@@QAEXHHHH@Z 0x00609C90-0x00609CB8 BYTE_EXACT
+// size      40 bytes
+// prototype void (__thiscall ?set_dialog_text_color@Dialog@@QAEXHHHH@Z)(Dialog* this, int, int, int, int)
+// callers   9   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
+Return Value: n/a
+Status: Complete
+*/
+void Dialog::set_dialog_text_color(int color1, int color2, int color3, int color4) {
+    text_color_a_ = color1;
+    text_color_b_ = color2;
+    text_color_c_ = color3;
+    text_color_d_ = color4;
+}
+
+/*
+Purpose: Set the secondary text colors for the four dialog color slots.
+// ORIGINAL: 0x00609CC0 ?set_dialog_text_color2@Dialog@@QAEXHHHH@Z 0x00609CC0-0x00609CEB BYTE_EXACT
+// size      43 bytes
+// prototype void (__thiscall ?set_dialog_text_color2@Dialog@@QAEXHHHH@Z)(Dialog* this, int, int, int, int)
+// callers   7   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
+Return Value: n/a
+Status: Complete
+*/
+void Dialog::set_dialog_text_color2(int color1, int color2, int color3, int color4) {
+    text_color_2a_ = color1;
+    text_color_2b_ = color2;
+    text_color_2c_ = color3;
+    text_color_2d_ = color4;
+}
+
+/*
+Purpose: Set the tertiary text colors for the four dialog color slots.
+// ORIGINAL: 0x00609CF0 ?set_dialog_text_color3@Dialog@@QAEXHHHH@Z 0x00609CF0-0x00609D1B BYTE_EXACT
+// size      43 bytes
+// prototype void (__thiscall ?set_dialog_text_color3@Dialog@@QAEXHHHH@Z)(Dialog* this, int, int, int, int)
+// callers   6   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
+Return Value: n/a
+Status: Complete
+*/
+void Dialog::set_dialog_text_color3(int color1, int color2, int color3, int color4) {
+    text_color_3a_ = color1;
+    text_color_3b_ = color2;
+    text_color_3c_ = color3;
+    text_color_3d_ = color4;
 }
 
 
@@ -651,216 +1103,6 @@ void __cdecl Dialog::set_def_dialog_text_color(
     DialogDefaults[33 + slot] = color_d;
 }
 
-// The zero-init .bss slots the Dialog constructor reads its field defaults
-// from (0x009B8EB4..0x009B8ED8): rebindable, same idiom as
-// ListBoxCloseDynamicDefault.
-// RECOVERY_OBJECT: v1 0x009B8EB4 ?DialogField30Default@@3IA
-uint32_t DialogField30Default;  // 0x009B8EB4
-// RECOVERY_OBJECT: v1 0x009B8EB8 ?DialogField34Default@@3IA
-uint32_t DialogField34Default;  // 0x009B8EB8
-// RECOVERY_OBJECT: v1 0x009B8EBC ?DialogField40Default@@3IA
-uint32_t DialogField40Default;  // 0x009B8EBC
-// RECOVERY_OBJECT: v1 0x009B8ECC ?DialogFieldACDefault@@3IA
-uint32_t DialogFieldACDefault;  // 0x009B8ECC
-// RECOVERY_OBJECT: v1 0x009B8ED0 ?DialogFieldB0Default@@3IA
-uint32_t DialogFieldB0Default;  // 0x009B8ED0
-// RECOVERY_OBJECT: v1 0x009B8ED4 ?DialogFieldB4Default@@3IA
-uint32_t DialogFieldB4Default;  // 0x009B8ED4
-// RECOVERY_OBJECT: v1 0x009B8ED8 ?DialogFieldB8Default@@3IA
-uint32_t DialogFieldB8Default;  // 0x009B8ED8
-
-/*
-Purpose: Construct a Dialog: construct the embedded Heap and the item list,
-         then load every color/font/field default from the process tables.
-// ORIGINAL: 0x00608C10 ??0Dialog@@QAE@XZ 0x00608C10-0x00608E09 BYTE_EXACT
-// LEVER (2026-09-03, 99 of 103 -> 103 of 103): the last two assignments are
-//        the other way round from the order a reader would expect -
-//        `text_color_3d_ = DialogDefaults[35]` comes BEFORE
-//        `field_1C_ = -1`. That is what puts the image's
-//        `mov edx,[0x6970d8]` (the 3d default load) above the
-//        `mov [esi+0x1c],eax` (the field_1C_ store): VC6 knows the two
-//        distinct member offsets of the same object do not alias, so it is
-//        free to hoist the load into the store's shadow, and the textual
-//        order is what decides whether it does. The old RESIDUAL note's
-//        "named local to pin the load" attempt failed because a local is
-//        copy-propagated away here; the statement ORDER is the lever.
-// size      509 bytes
-// prototype void (__thiscall ??0Dialog@@QAE@XZ)(Dialog* this)
-// callers   0   call targets   2
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x005D4560
-Return Value: this
-*/
-Dialog::Dialog() {
-    // The store order is the image's, including its interleaving of
-    // selected_position_/field_F0_ after field_30_, field_34_ between
-    // field_44_ and field_48_, and field_1C_ near the end. The three -1
-    // stores are the image's one `or eax,-1` reused.
-    field_20_ = dialog_default_style();
-    window_x_ = 0;
-    window_y_ = 0;
-    field_2C_ = DialogDefaults[19];
-    field_30_ = DialogField30Default;
-    selected_position_ = 0;
-    field_F0_ = -1;
-    field_38_ = 0;
-    field_3C_ = 0;
-    field_40_ = DialogField40Default;
-    field_44_ = DialogDefaults[20];
-    field_34_ = DialogField34Default;
-    field_48_ = -1;
-    field_4C_ = DialogDefaults[21];
-    field_50_ = DialogDefaults[22];
-    column_count_ = 0;
-    row_count_ = 0;
-    field_5C_ = 0;
-    field_60_ = 0;
-    field_64_ = 0;
-    field_68_ = 0;
-    field_6C_ = DialogDefaults[23];
-    field_AC_ = DialogFieldACDefault;
-    field_B0_ = DialogFieldB0Default;
-    field_B4_ = DialogFieldB4Default;
-    field_B8_ = DialogFieldB8Default;
-    font1_ = DialogDefaultFonts[0];
-    text_color_a_ = DialogDefaults[24];
-    text_color_b_ = DialogDefaults[27];
-    text_color_c_ = DialogDefaults[30];
-    text_color_d_ = DialogDefaults[33];
-    font2_ = DialogDefaultFonts[1];
-    text_color_2a_ = DialogDefaults[25];
-    text_color_2b_ = DialogDefaults[28];
-    text_color_2c_ = DialogDefaults[31];
-    text_color_2d_ = DialogDefaults[34];
-    font3_ = DialogDefaultFonts[2];
-    text_color_3a_ = DialogDefaults[26];
-    text_color_3b_ = DialogDefaults[29];
-    text_color_3c_ = DialogDefaults[32];
-    // THIS ORDER, 3d_ BEFORE field_1C_: it is what hoists the image's
-    // `mov edx,[0x6970d8]` above the `mov [esi+0x1c],eax` store. See the
-    // LEVER note on the marker above.
-    text_color_3d_ = DialogDefaults[35];
-    field_1C_ = -1;
-    field_1C_ = -1;
-}
-
-// Reset a live dialog, keeping its list and heap objects alive for reuse.
-// Entry hooks run before releasing their backing heap. Empty-head cleanup
-// still resets position but deliberately does not clear current_ or count.
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00608F50 ?close@Dialog@@QAEXXZ 0x00608F50-0x00609143 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned original608F50-609143 clears entries using the current list hooks, unconditionally resets position, calls5D4580 at608FDB, then writes heap_ptr/default/font/color fields and field1C=-1 at60913C. current_ is not cleared. Retained seed preserves extent but explicit member destruction is not used in the live C++ reset.", "Existing DialogDefaults and DialogDefaultFonts own the original settings; list removal and allocator-aware node destruction are recovered in stringstruct.cpp. Heap::reset has a separate source shared-code interpretation for the original5D4580 cleanup entry. No byte or full-lifetime acceptance is claimed."], "reason": "Recover reusable dialog cleanup through real list members and a non-destructive heap reset, preserving original cleanup-before-defaults order."}
-void Dialog::close() {
-    StringList *list = &item_list_;
-    list->remove_all();
-    list->current_position_ = 0;
-    heap_.reset();
-    heap_ptr_ = 0;
-    field_20_ = dialog_default_style();
-    window_x_ = 0;
-    window_y_ = 0;
-    field_2C_ = DialogDefaults[19];
-    field_30_ = DialogField30Default;
-    selected_position_ = 0;
-    field_F0_ = -1;
-    field_38_ = 0;
-    field_3C_ = 0;
-    field_40_ = DialogField40Default;
-    field_44_ = DialogDefaults[20];
-    field_48_ = -1;
-    field_34_ = DialogField34Default;
-    field_4C_ = DialogDefaults[21];
-    field_50_ = DialogDefaults[22];
-    column_count_ = 0;
-    row_count_ = 0;
-    field_5C_ = 0;
-    field_60_ = 0;
-    field_64_ = 0;
-    field_68_ = 0;
-    field_6C_ = DialogDefaults[23];
-    field_AC_ = DialogFieldACDefault;
-    field_B0_ = DialogFieldB0Default;
-    field_B4_ = DialogFieldB4Default;
-    field_B8_ = DialogFieldB8Default;
-    font1_ = DialogDefaultFonts[0];
-    text_color_a_ = DialogDefaults[24];
-    text_color_b_ = DialogDefaults[27];
-    text_color_c_ = DialogDefaults[30];
-    text_color_d_ = DialogDefaults[33];
-    font2_ = DialogDefaultFonts[1];
-    text_color_2a_ = DialogDefaults[25];
-    text_color_2b_ = DialogDefaults[28];
-    text_color_2c_ = DialogDefaults[31];
-    text_color_2d_ = DialogDefaults[34];
-    font3_ = DialogDefaultFonts[2];
-    text_color_3a_ = DialogDefaults[26];
-    text_color_3b_ = DialogDefaults[29];
-    text_color_3c_ = DialogDefaults[32];
-    text_color_3d_ = DialogDefaults[35];
-    field_1C_ = -1;
-}
-
-// The four list-stage constants (DialogListDerived/VirtualBase and
-// DialogList/VirtualBaseVtable) are gone: destroy()'s two hand
-// close_with_tables calls folded into the one compiler-owned
-// item_list_ destructor chain, which stages the same tables from the
-// StringList declarations. DialogVirtualBaseFinalVtable and
-// DialogPublishedGlobal left in the batch before.
-
-
-/*
-Purpose: Close the Dialog, then destroy its list and heap members in reverse
-         construction order. The compiler owns table staging and EH cleanup.
-         Historical observations below also discuss the retired destroy helper.
-// ORIGINAL: 0x00608E10 ??1Dialog@@QAE@XZ 0x00608E10-0x00608F41;0x00662EC0-0x00662EEE BYTE_EXACT
-// LEVER (2026-09-03): this address is the DESTRUCTOR, and the subject was
-//        repointed from the destroy() helper to what the compiler actually
-//        emits for `~Dialog` - which now carries the body. Three measured
-//        facts, 0 of 94 (13 compiled) -> 7 of 94 (37 compiled, 0.504
-//        similar) with no other edit:
-//        (1) `~Dialog` was `{ ; }`, so the compiler-generated destructor ran
-//            close() never and the 116 derived destructors that the image
-//            sends here tore their Dialog base down without closing it. It
-//            now reads `close();` and the compiler adds the vptr install,
-//            the SEH unwind frame under /GX, and the item_list_/heap_
-//            teardowns - the image's own three opening blocks, in its order.
-//        (2) The image calls close() DIRECTLY (`call 0x608f50`), so the
-//            body says `close()`, the declared member - not the
-//            DialogOriginalClose pointer seam destroy() still uses, which
-//            compiles `call dword ptr [global]`.
-//        (3) The `symbol` fact is `??1Dialog@@UAE@XZ`, U not the image's Q,
-//            because this tree declares the destructor `virtual` (that
-//            declaration is what earns the vfptr the class needs; see
-//            dialog.h). A U-named destructor is the one ABI consequence.
-// TRIED: the remaining 87 instructions are the gap the old note named, and
-//            it stands: the image INLINES the whole StringStruct teardown
-//            (derived stage, base stage, entry walk, virtual-base publish)
-//            where this tree calls ~StringList, and it has no SEH-frame
-//            equivalent to lose. Inlining ~StringList into this site means
-//            moving its body into stringstruct.h - a file this pass does not
-//            own - and the brief documents that a forwarder does not fix an
-//            inlined-here/called-there split.
-// symbol    ??1Dialog@@UAE@XZ
-// size      351 bytes
-// prototype void (__thiscall ??1Dialog@@QAE@XZ)(Dialog* this)
-// callers   116   call targets   3
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00402970 0x005D45B0 0x00608F50
-// indirect  0x00608EB5 0x00608ECA 0x00608EE9
-Return Value: n/a (the original leaves Heap::shutdown's EAX residue; the
-              scalar deleting destructor overwrites it and the 116 direct
-              callers ignore it, so void is faithful)
-The source close is reusable; member lifetimes end only in this destructor.
-Original normal cleanup at 608F2A and unwind tail at 662EC6 both target
-5D45B0. Its relationship to Heap's catalogued destructor remains a reference
-interpretation to verify, not permission to omit compiler-owned member cleanup.
-*/
-Dialog::~Dialog() {
-    close();
-}
-
 /*
 Purpose: The compiler-generated scalar deleting destructor: run the complete
          destructor and free the storage through the executable's operator
@@ -876,241 +1118,5 @@ Purpose: The compiler-generated scalar deleting destructor: run the complete
 Return Value: the object
 Status: Complete
 */
-// Emitted by Dialog's real virtual destructor and table, not a handwritten
-// fastcall model. The original scalar entry and historical claim stay here.
 
-
-
-
-
-/*
- * The five-argument init, on the same terms as the three above: a forwarder,
- * not a recovery. The recovered SpriteBox::init (0x006104D0) tail-forwards to
- * it, so the DLL cannot link without a definition.
- */
-
-// ORIGINAL: 0x00609BF0 ?UNK2@Dialog@@QAEXHHHH@Z 0x00609BF0-0x00609C60 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"reason":"Recover the complete body in its genuine C++ owner, with real embedded members, shared virtual bases, lifecycle and parent operations. Compiler-generated overrides/adjustors replace executable-address or vbtable stand-ins; no current matching claim is granted.","evidence":["git:391d42a9:src/recovered/units/00609bf0.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/ui-eight-owner-coverage.json","Original entry 0x00609bf0; physical VC6 COFF emitted symbol ?UNK2@Dialog@@QAEXHHHH@Z."]}
-// symbol    ?UNK2@Dialog@@QAEHHHHH@Z
-int Dialog::UNK2(int window, int message, int wparam, int lparam) {
-    HWND hwnd = reinterpret_cast<HWND>(static_cast<LONG_PTR>(window));
-    if (static_cast<UINT>(message) >= WM_SETFOCUS &&
-        static_cast<UINT>(message) <= WM_KILLFOCUS) {
-        if (!IsChild(hwnd,
-                     reinterpret_cast<HWND>(static_cast<LONG_PTR>(wparam)))) {
-            Win *owner = reinterpret_cast<Win *>(
-                GetWindowLongA(hwnd, GWL_USERDATA));
-            // WNDPROC-style LRESULT: the early zero reuses eax (owner == 0).
-            if (owner == 0) return 0;
-            if (!owner->has_dialog_focus_flag() && HandleMain != 0) {
-                owner->redraw();
-            }
-        }
-    }
-    return CallWindowProcA(&PrevWndFunc, hwnd, message,
-                           static_cast<WPARAM>(wparam),
-                           static_cast<LPARAM>(lparam));
-}
-
-// Compiler-generated StringList deletion; no handwritten adjustor.
-/*
-// ORIGINAL: 0x00406670 sub_406670 0x00406670-0x004066BB FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:30611dd8dcac1d36c7ad6321170c4bf4cc359561:src/recovered/00406670.cpp", "pinned:terranx_original:0x406670", "source:src/dialog.cpp"], "reason": "Original receives the complete StringList virtual allocation-base view at+28, runs complete StringList teardown, restores allocation owner and conditionally releases complete storage for flag bit0. Real StringList hierarchy supplies this scalar deleting entry; compile_context identifies its current natural application provider; linked selection remains unverified. Preserve all original spans, names, claims and seed discoveries; no new byte grant."}
-// compile_context src/alphanet.cpp
-// symbol    ??_GStringList@@UAEPAXI@Z
-*/
-
-// Initialize using the already requested size; unlike init(int), the negative
-// size path returns before clearing entries or closing the dialog.
-// ORIGINAL: 0x00609150 ?init@Dialog@@QAEHXZ 0x00609150-0x006092FB BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned original decorated identity is ?init@Dialog@@QAEHXZ, with requested size at Dialog+0x1c, Heap at +0x4 and StringList at +0xbc", "src/dialog.h already declares those typed Dialog members; src/dialog.cpp owns the sibling overloads", "the recovered body has only StringList on_remove/deleting-destructor dispatches and Heap::init; no Win callback slot is involved", "the historical emitted redirect spelling ?dialog_init_redirect@@YIHPAX0@Z is retained only in this packet's audit history, not as the moved owner's symbol"], "reason": "Home the zero-argument initializer on Dialog and use its declared field_1C_, heap_, and item_list_ members. Preserve the original negative-size check, three explicit teardown sites, heap-init timing, returns, and allocator writes; do not substitute the non-equivalent init(int) overload."}
-//            redefined dispatch shim for the notify/destroy virtual calls;
-//            stack frame layout differs from instruction 1 on.
-// size      427 bytes
-// prototype int (__thiscall ?init@Dialog@@QAEHXZ)(Dialog* this)
-// callers   0   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005D4620
-// indirect  0x00609197 0x006091A9 0x006091C5 0x0060922D 0x00609241 0x0060925C 0x006092A6 0x006092B8 0x006092D4
-// historical Return Value: 0 on success, 1 when the requested size is negative, 4 when
-// historical Status: Complete
-// TRIED: the three inlined entry-list clears written out with a locally redefined dispatch shim for the notify/destroy virtual calls; stack frame layout differs from instruction 1 on.
-int Dialog::init() {
-    if (field_1C_ < 0) {
-        return 1;
-    }
-    StringList *list = &item_list_;
-    list->remove_all();
-    list->current_position_ = 0;
-    if (field_1C_ != 0) {
-        Heap *heap = &heap_;
-        if (heap->init(static_cast<size_t>(field_1C_))) {
-            return 4;
-        }
-        list->remove_all();
-        list->allocator_ = heap;
-        list->current_position_ = 0;
-        return 0;
-    }
-    list->remove_all();
-    list->current_position_ = 0;
-    list->allocator_ = 0;
-    return 0;
-}
-
-/*
-Purpose: Dialog's one-int init: reset the live dialog through close(), store
-         the requested heap size at 0x1c, and hand the embedded item list the
-         Dialog's own Heap as its allocator (or clear the allocator when no
-         size is given). The entry-list teardown between the decisions is the
-         same walk StringStruct::remove_all performs, inlined the way the
-         image inlines it (see StringStruct::remove_all in stringstruct.h and the
-         sibling Dialog::init overloads above).
-
-// ORIGINAL: 0x006095F0 ?init@Dialog@@QAEHH@Z 0x006095F0-0x00609730 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence":["src/dialog.h declares this original Dialog overload and dialog.cpp owns the sibling init/close methods.","The body uses actual Dialog/Heap/StringStruct members; its explicit list-entry teardown and branch order are retained unchanged."],"reason":"Move the complete existing Dialog member body and original annotation to its declared owner. This records source ownership only; its historical span/claim and explicit list lifecycle remain obligations."}
-// TRIED: the scaffold-provided nullary `VCall` shim's slots could not be re-parameterised from the body, so the seed declared its own shim class for the two per-entry virtual calls; the real C++ spelling below reaches the same dispatches through the list's on_remove hook and the entries' deleting destructors. Testing heap_size == 0 first vs the non-zero branch first scored the latter higher in the seed.
-// size      320 bytes
-// prototype int (__thiscall ?init@Dialog@@QAEHH@Z)(Dialog* this, int)
-// callers   2   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005D4620 0x00608F50
-// indirect  0x00609655 0x00609667 0x00609683 0x006096D9 0x006096ED 0x00609708
-Status: Coverage transcription - unclaimed body
-*/
-int Dialog::init(int heap_size) {
-    close();
-    field_1C_ = heap_size;
-    if (heap_size != 0) {
-        Heap *heap = &heap_;
-        if (heap->init(static_cast<size_t>(heap_size))) {
-            return 4;
-        }
-        StringList *list = &item_list_;
-        list->remove_all();
-        list->current_position_ = 0;
-        list->allocator_ = heap;
-        return 0;
-    }
-    StringList *list = &item_list_;
-    list->remove_all();
-    list->current_position_ = 0;
-    list->allocator_ = 0;
-    return 0;
-}
-
-/*
-Purpose: Dialog's Heap* init: reset the live dialog through close(), park
-         -1 in the size slot, store the caller's Heap as the dialog's heap
-         pointer, and hand that same Heap to the embedded item list as its
-         allocator after the entry teardown.
-
-// ORIGINAL: 0x006098D0 ?init@Dialog@@QAEHPAUHeap@@@Z 0x006098D0-0x0060996F FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence":["src/dialog.h declares this original Dialog overload; dialog.cpp owns the sibling init/close methods.","The embedded list, heap pointer and allocator are existing Dialog members; SpriteBox's documented forwarder targets this overload."],"reason":"Move the existing typed overload to Dialog's owner without changing heap assignment, teardown order or return behavior."}
-// symbol    ?init@Dialog@@QAEHPAVHeap@@@Z
-// TRIED: SpriteBox::init(Heap*) tail-forwards here through the embedded Dialog base.
-// size      159 bytes
-// prototype int (__thiscall ?init@Dialog@@QAEHPAUHeap@@@Z)(Dialog* this, Heap*)
-// callers   2   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00608F50
-// indirect  0x00609915 0x00609927 0x00609943
-Status: Coverage transcription - unclaimed body
-*/
-int Dialog::init(Heap *heap) {
-    close();
-    field_1C_ = -1;
-    heap_ptr_ = heap;
-    StringList &list = item_list_;
-    if (list.head_ != 0) {
-        int index = 0;
-        if (0 < list.entry_count_) {
-            do {
-                list.current_ = list.head_->next;
-                StringStructPayload *const payload = list.head_->string_payload();
-                list.on_remove(payload);
-                if (payload != 0) {
-                    delete payload;
-                }
-                list.head_->payload = 0;
-                StringStructEntry *const head = list.head_;
-                if (head != 0) {
-                    delete head;
-                }
-                ++index;
-                list.head_ = list.current_;
-            } while (index < list.entry_count_);
-        }
-        list.head_ = 0;
-        list.current_position_ = 0;
-        list.entry_count_ = 0;
-    }
-    list.current_position_ = 0;
-    list.allocator_ = heap;
-    return 0;
-}
-
-/*
-Purpose: Dialog's five-int init: reset through close(), store the geometry
-         and the two style bits, park the caller's Heap in the dialog's heap
-         pointer, and after the entry teardown hand the same Heap to the
-         embedded item list as its allocator.
-
-         Same store shape as the six-int init at 0x00609300, except the Heap
-         lands at +0x18 (the pointer slot) instead of the size slot, and no
-         Heap::init runs.
-
-// ORIGINAL: 0x00609730 ?init@Dialog@@QAEHHHHHPAUHeap@@@Z 0x00609730-0x006097EE FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence":["src/dialog.h declares this original Dialog overload; dialog.cpp owns the sibling init/close methods.","The body uses existing Dialog members and preserves its independent geometry, style and list teardown sequence."],"reason":"Move the existing typed overload to Dialog's owner without folding it into a sibling or altering its writes and cleanup."}
-// symbol    ?init@Dialog@@QAEHHHHHPAVHeap@@@Z
-// TRIED: MISMATCH, closest at 187/190 bytes (mnemonic_similarity 0.97). Same embedded-manager close-and-relink shape as SetupWin::close (0x004AD9C0): a single mutated `char *p` (starts as `this`, then `p += 0xbc` to become the manager) reproduces the whole prologue, field stores AND the loop body byte-for-byte - matching original's single-register reuse (esi: this, then mgr) instead of a separate named `mgr` local, which cost an extra register/push. The two vtable-adjustment "deleting dtor" calls (vtbl[1] read as a byte displacement, this-adjusted, then that pointer's own vtbl[0] called with arg 1) still diverge by a few instructions each - same register-allocator nuance as 0x004AD9C0's second call site, not chased further.
-// TRIED: SpriteBox::init(int,int,int,int,Heap*) tail-forwards here through the embedded Dialog base.
-// size      190 bytes
-// prototype int (__thiscall ?init@Dialog@@QAEHHHHHPAUHeap@@@Z)(Dialog* this, int, int, int, int, Heap*)
-// callers   2   call targets   1
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x00608F50
-// indirect  0x00609793 0x006097A7 0x006097C2
-Status: Coverage transcription - unclaimed body
-*/
-int Dialog::init(int left, int top, int right, int bottom, Heap *heap) {
-    close();
-    window_x_ = left;
-    window_y_ = top;
-    field_20_ |= 3;
-    field_2C_ = right;
-    field_30_ = bottom;
-    heap_ptr_ = heap;
-    StringList &list = item_list_;
-    if (list.head_ != 0) {
-        int index = 0;
-        if (0 < list.entry_count_) {
-            do {
-                list.current_ = list.head_->next;
-                StringStructPayload *const payload = list.head_->string_payload();
-                list.on_remove(payload);
-                if (payload != 0) {
-                    delete payload;
-                }
-                list.head_->payload = 0;
-                StringStructEntry *const head = list.head_;
-                if (head != 0) {
-                    delete head;
-                }
-                ++index;
-                list.head_ = list.current_;
-            } while (index < list.entry_count_);
-        }
-        list.head_ = 0;
-        list.current_position_ = 0;
-        list.entry_count_ = 0;
-    }
-    list.current_position_ = 0;
-    list.allocator_ = heap;
-    return 0;
-}
 // RECOVERY_GENERATED: v1 vtable 0x006703FC ? ??_7Dialog@@6B@ 0x00608C10
