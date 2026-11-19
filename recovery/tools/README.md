@@ -85,6 +85,15 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   expanded (E) or called (c), image row over ours, with the addresses that disagree. Read with
   MATCHING_GUIDE 2.8. `--sig` supplies a signature for a copy whose own calls are all expanded
   (`??1StringList=?remove_all@StringStruct,??1StringStruct`).
+- `analysis/inlineclass.py [--out F] [--base F] [--fe FEALL.json] [--callee NAME] [--any] [-v] [unit ...]` header-inline
+  cost-class census (55 s tree-wide): per callee with a body in a header, the functions whose image call count
+  differs from ours (`E+` ours expands where the image calls, `c+` the reverse), exact functions marked `x`;
+  `--base` lists the site-units a header hypothesis moved closer to or further from the image. Counts are taken
+  after tail merging and an expanded destructor shows as its inner `close` calls, so read one function's sites
+  with callseq.py / inlinemap.py. MATCHING_GUIDE 2.8 "Header-inline cost classes".
+- `analysis/probesweep.py [--write] [--each] [unit ...]` dead budget-probe retirement screen (2.5 min tree-wide):
+  each probe-carrying function without its `*_budget_probe*` call lines, by (named call difference, rows) and the
+  unit's exact markers it breaks; `--write` applies removals that keep all three.
 - `analysis/inline/` the probe families and runner behind MATCHING_GUIDE 2.8 (see its README);
   `realdeck.run(unit, addr, deck)` evaluates whole-file variants and reports the call-count differences.
 - `analysis/framescan.py [unit ...] [--addr A,..] [--from FEALL.json] [--all] [--slots] [--json F]` frame-size scan

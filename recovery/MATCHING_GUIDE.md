@@ -2091,6 +2091,88 @@ enemy_move 0x0056B5B0, call multiset (2026-11-19 par-4)
   first go_to (0x56BF4E, called; the second site at 0x56C21E is expanded)
   sat inside an inline owner; none found yet, its stand-in stays.
 
+Header-inline cost classes, tree census (2026-11-19 par-4, round 6)
+
+Tools: `analysis/inlineclass.py` (per callee, the functions whose image call
+count differs from ours; `--base` for a header hypothesis),
+`analysis/probesweep.py` (each probe-carrying function without its probes).
+Baseline: 34 header-inline callees differ somewhere, 134 site-units, almost
+all in ten giants and in the Popup teardown chain; every other function's
+counts equal the image's. So a wrong cost class shows only where a giant's
+pass 1 ends, and the test of a body spelling is: copy exact, that giant's
+call multiset, then the tree.
+
+- **What a body costs, by spelling** (high; each measured with the copy
+  byte-exact). Cheapest first:
+  - one return expression, ternaries included (`return c ? a : b;`,
+    proto_power);
+  - one condition with an assignment inside it (`if (a && (v = e) < K) return
+    v; return -1;`);
+  - a guard clause plus a final ternary (`if (!a) return -1; int v = e;
+    return v >= K ? -1 : v;`, veh_who);
+  - two guard clauses or nested ifs with a named local (base_who,
+    anything_at); a named result (`int value = ...; return value;`, rnd) or
+    even an expression statement naming a parameter (`input;`) takes a
+    one-line body out of the free class;
+  - every further named local (`int index = b; A[index]...; index = a;`).
+  Each step is about one small expansion in a giant's pass 1: it moves the
+  last expanded site by one (enemy_move: veh_who at 0x56CA61 against on_map
+  at 0x56CC83).
+- **Named index locals in small writers are stand-ins** (high;
+  faction_treaty.cpp). treaty_off/treaty_on/agenda_on/agenda_off were tuned
+  alone with `int index = faction_id_with; ...[index]...; index =
+  faction_id;` pairs. Written as `PlayersData[a].diplo_x[b]` at each use all
+  four copies stay byte-exact and treaty_off is cheap enough for
+  enemies_war 0x0055C840 to expand it twice and refuse the last set_treaty,
+  as the image does under the charged rnd. When a caller refuses a small
+  same-unit function the image expands, strip the callee's named locals
+  first and check its copy.
+- **The same body can show one or two `-1` stores** (medium). Of the image's
+  expansions of base_who / veh_who / anything_at whose result is kept, 2 / 2
+  / 2 store -1 in two separate copies (Console::hold, enemy_strategy;
+  Path::find twice; enemy_move 0x56BB35, 0x56C194) and 7 / 9 / 5 in one. A
+  body with one `return -1` can never give two, so all three have two
+  returns; whether VC6 cross-jumps the two stores depends on the caller
+  (enemy_move's pair at 0x56BB3B/0x56BB4F is separate with veh_who's
+  one-condition body and merged again with its two-return body, though
+  veh_who is not expanded there). Do not read a single store as evidence
+  for the nested-if body.
+- **Stand-ins are budget compensation: change bodies together** (high).
+  anything_at's two guard clauses alone keep enemy_move's multiset; veh_who's
+  two returns alone keep it; both together refuse veh_who at 0x56CA61 again.
+  The pair needs one cheaper body before that site (proto_power as one
+  return expression, or veh_top without its named local: both copies exact,
+  the first also moves battle_fight closer). Test header spellings as a set
+  against the giant, one deck row per combination.
+- **Tested and rejected** (do not retry without new evidence):
+  - range 0x00422F00 dearer (`int result`, assigned parameter, three guard
+    clauses; copy exact): fixes base_build (46/45) and StatusWin::draw_active
+    without their stand-ins, but 38-70 exact functions lose their expansion
+    shape and battle_fight calls range 6 times too often. The image's
+    expansions are the current guard-clause body.
+  - has_fac 0x00421670: base_psych calls it at its first five sites and
+    expands the last four (image `C C C C C b b b b`): called early, expanded
+    late is an owner (2.8 "Missing owner"), not a class. The function-pointer
+    stand-ins in base_psych, staple_the_bastards, end_of_game and
+    base_editor_fac stay until the owner is found; dropping the `queued`
+    local makes base_doctors and mind_control expand one site too many.
+  - go_to 0x00560AD0 dearer (pointer or reference local: copy loses 12 rows;
+    proto_id local, dead local: copy exact): enemy_move's first site still
+    expands without its stand-in. Owner, not class.
+  - `int knob = 0;` in BasePop::exec/item/set_value/dialogs(), Popup::start,
+    clear, says, get_noun, parse_set, map_loc, on_map, wrap_map_x, measured
+    on the tree with every dead probe call removed: only BasePop::item moves
+    more than one function (5 probe functions better by 20 site-units, 12
+    other functions worse by 54). No tiny forwarder is a class candidate;
+    the 39 probe-carrying functions do not share one under-charged callee.
+  - pact_attacks through get_title/get_name (copy exact): enemies_war then
+    expands one get_noun more than the image in pass 2.
+- **Probe sweep** (`probesweep.py`, 39 functions): with the current headers
+  no function keeps its call multiset and rows without its probes; the
+  callees that flip are the teardown chain (~Scroll, ~FlatButton, ~BasePop,
+  ~Sprite expanded where the image calls them) in 14 functions. The probes
+  stand for spend in the callers, not for a header class.
+
 
 ## 3. Symptom → first thing to check
 
