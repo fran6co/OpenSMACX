@@ -2684,11 +2684,28 @@ size or the order of its decisions:
   guard (2.3).
 
 What the model does not predict (2026-11-19)
-- **MapWin::click 0x0046D5D0.** The image calls `::draw_map` in the first
-  editor arm (0x46D977) and expands it in the second. Moving the first site
-  into a free helper, which makes it a pass-2 site, still expands it. Free
-  probes before or after it change the ~Popup teardowns (FlatButton 39 →
-  41) before draw_map flips. No natural spelling was found.
+- **MapWin::click 0x0046D5D0** (solved 2026-11-19 par-6). The image calls
+  `::draw_map` in the first editor arm (0x46D977) and expands it in the
+  second. The block is MapWin::UNK4 (0x0046C020, no callers in the image,
+  same instructions): `UNK4(tile_x, tile_y); return;` expands UNK4 at pass 1
+  and decides its two draw_map sites at pass 2, first called, second
+  expanded. Screen for this elsewhere: a plain same-unit function with no
+  image callers whose body equals a block another function writes out is
+  an auto-inlined owner (2.8 "Missing owner").
+- **Popup::start, five arguments (0x0043EF70), editor_who copies**
+  (2026-11-19 par-6, screen only). With editor_diplomacy calling the plain
+  `editor_who` (auto-inlined, as in the image) instead of the
+  editor_who_inline stand-in, a dead charge of 12 one-line ifs in the
+  five-argument body makes editor_diplomacy fe-exact (0: 58 rows, 8: 51,
+  10: 62, 12 and 16: 0): the image's refused nested start is a charged
+  inline refused at pass 2, and the room it frees deepens the later
+  teardowns as the image shows. Not landable: no natural forwarder spelling
+  is that dear (`this->`, a `(GraphicWin *)0` cast and a named null owner
+  local are free or change codegen), popp 0x0048C0A0 refuses the charged
+  start from 10 ifs on (the image expands it there) and standalone
+  editor_who loses a teardown expansion. select_special and diplomacy_menu
+  call it at first-level sites that no charge up to 32 ifs refuses, so
+  those two sites still need an owner or another declaration.
 - **probe 0x0059F120.** Free probes after the 9th teardown site do not
   refuse ~Scroll at sites 1–9: up to 24 change only the last two teardowns.
   Spelling every human test as is_human does not refuse them either. With
