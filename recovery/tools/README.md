@@ -212,3 +212,14 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   proves the move is code-neutral (reader records equal, object code sections and relocation targets equal); see its
   docstring for the block rules, the repairs it applies and what it does not check (`_$E<n>` symbol facts,
   RECOVERY_LITERAL numbers). 73 of the src/a-l, src/jackal and src/caviar units were ordered with it.
+- `analysis/varslot.py <unit> <addr> <name-prefix|''>` named-local home screen (MATCHING_GUIDE 3.3 "Split only on image
+  evidence"): for every source line that assigns exactly one named local, the frame slot our store uses and the slot of the
+  image's aligned store. A local whose image stores land in another local's home is a candidate original reuse; `none` =
+  no image store there. Misaligned regions give false hits. Prefix FE_PFX_BASE.
+- `analysis/varmerge.py <unit> <addr> <start-text> v>w [...]` fes the function with local v merged into w, one variant per
+  pair (text rewrite between <start-text> and the next marker; check live ranges by hand).
+- `analysis/sitedeck.py <unit> <addr> lraw,lget,traw,tget [--min N] [--write]` greedy per-site toggles of the label/table
+  lookup spellings (`label_get(i)` <-> `StringTable.get(Labels.strings_ptr[i])`, `table_text(x)` <-> `StringTable.get(x)`)
+  inside one function; sites that share a cross-jumped tail must be flipped together (MATCHING_GUIDE 3.7).
+- `analysis/offline.py <unit> <addr> [src]` offset -> source line map of our function from /FAsc.
+- `analysis/info.sh <unit> <addr> <src>...` one line per whole-file variant: rows, frame, `this` register, ebx uses.

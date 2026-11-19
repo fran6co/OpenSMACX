@@ -476,6 +476,22 @@ raw field access where the original used inline accessors.
   world_rainfall 311 -> 271, eight more).
 - `cmp reg, K; jl` is `i < K`; `i <= K - 1` gives `cmp reg, K-1; jle`
   (ProdPicker::calculate).
+- **Counter subscripts `A[p][k++]` leave the inner product unfolded** (par-5
+  2026-11-19, InfoWin::setup_text 0x00456300). A table filled row by row with
+  a running counter (`strcpy(rows[pane][k++], ...)`) is lowered to
+  `(pane*12 + k)*80` while `k` is still a variable; constant propagation then
+  replaces `k` by 0, 1, 2.. per site, but `pane*12` survives as a common
+  subexpression. Image signature: `lea r,[r+r*2]; shl r,2` held in a
+  callee-saved register through the block, then the outer multiply per site
+  (`lea t,[r+r*4]; shl t,4` for x80, with the folded `k*80` in the
+  displacement), and a late `mov [k],N` INSIDE the last call's argument
+  evaluation (the post-increment's store, 0x45696A). Literal row numbers
+  (`rows[pane][3]`) fold the whole subscript to `pane*960 + K` and cache
+  `this + pane*960` instead: other frame, a function-wide zero register the
+  image lacks, `this` spilled. The fix was the counter at every row
+  (2013 -> 1309 rows, frame 0x508 -> 0x504 = image); resets of the counter
+  between sections (`k = 2;` after an optional row) are visible as immediate
+  stores to its home. `analysis/findpat.py` finds the pair tree-wide.
 - `recovery/tools/analysis/loopscan.py` lists the loop tests of both sides and
   the source loops with these shapes; `loopsweep.py --rule rebind|sibling|
   derive|basic` tries each rewrite site by site.
@@ -3271,13 +3287,17 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
 - **Canonicalised forms (not levers).** `f(a) < f(b)` and its mirrored or
   negated forms give the same call order; `a * b` vs `b * a` compile
   identically.
-- **Global register equilibrium in very large members.** If the image keeps
-  only `this` in a callee-saved register and every named local in memory (no
-  zero register), compare the prologue assignments (`mov esi, ecx`,
-  `xor ebx, ebx`) first. Ours can settle in the other equilibrium (zero
-  register, a hot local enregistered, `this` spilled); once spilled,
-  `this + base + i*K` becomes one shared expression and `this` loses its uses.
-  Index spellings fold identically, so they don't move it (setup_text).
+- **Global register equilibrium in very large members is a symptom, not a
+  rule.** If the image keeps only `this` in a callee-saved register and every
+  named local in memory (no zero register) while ours settles the other way
+  (zero register, a hot local enregistered, `this` spilled and
+  `this + base + i*K` shared), look for a subscript the source folds and the
+  original did not. InfoWin::setup_text 0x00456300 (corrected 2026-11-19): the
+  cause was literal row indices where the original wrote `row_text_[pane][k++]`
+  (2.4, counter subscripts); with the counter `this` returned to esi, the
+  zero register (88 uses) disappeared and the frame matched. The earlier
+  note here ("index spellings fold identically, so they do not move it") was
+  wrong: it had only compared spellings with constant indices.
 - **Number-normalising diff filters hide wrong field offsets.** Compare
   relocation symbol plus displacement against the image address (an
   `assistant_city` vs `insult_leader` read only showed up that way).
@@ -3340,11 +3360,20 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   written back and reloaded as one variable, and the second value's slot
   sits where the first's did. Decompiler-style sources reuse locals freely
   (iVar/local_ renamed, reuse kept); the original often had a separate
-  name. InfoWin::setup_text 0x00456300 reused the viewing `faction` as the
-  land-census loop counter: a separate `owner` counter cut the frame by 8
-  (0x50C -> 0x508, image 0x504) and 2071 -> 2013 rows; BaseWin::draw_expenses
-  0x00412AA0 parked `line.left` in the screen-width flag `wide`: a separate
-  `left` moved our slots onto the image's one-to-one (1212 -> 1078 rows).
+  name. BaseWin::draw_expenses 0x00412AA0 parked `line.left` in the
+  screen-width flag `wide`: a separate `left` moved our slots onto the
+  image's one-to-one (1212 -> 1078 rows).
+  **Split only on image evidence** (par-5 2026-11-19): a store of the second
+  value to a home the image uses for nothing else is a separate variable; a
+  loop counter written to ANOTHER variable's home is an original reuse and
+  must stay. InfoWin::setup_text 0x00456300 stores its land-census counter in
+  the viewing `faction`'s home (prologue store at 0x456312, `mov [ebp-0x7C],1`
+  at 0x457691): the `owner` split cited here before (frame 0x50C -> 0x508)
+  was a frame gain inside the wrong register equilibrium; restoring the reuse
+  once the rows were counted with `k++` gave 1309 -> 934 rows, because the
+  reassignment is what keeps `faction` memory-homed. `analysis/varslot.py
+  <unit> <addr> ''` lists, per named local, the image slots its aligned
+  stores use; `analysis/varmerge.py` fes `v>w` merges.
   Not every reuse matters: draw_expenses' reused count variable was
   neutral, so judge each split by frame and slot map. The converse is the
   use_ability rule in 2.7 (Console::use_ability 0x004D7F60): sometimes the
@@ -3410,6 +3439,20 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   `l_34` (the supply-convoy counter that shares `w`'s slot by live-range
   packing) where the image read `w` at 0x4FC356; reading `w` restored its
   weight and the slot map (4821 -> 3657 rows).
+
+- **A dead-looking store to a frame home in a small inner loop is a
+  function-scope scratch variable** (par-5 2026-11-19, air_power 0x005678C0).
+  The explore scan stores the wrapped neighbour x/y of its 9-tile loop to the
+  homes of `target_x`/`target_y` (0x567C6B, 0x567C70) and never reloads them
+  there: the scan used the function-scope pair as scratch, so the stores stay
+  live (the variables are read later on other paths). Block-local `x_k`/`y_k`
+  live in registers only (1059 -> 1023 rows).
+- **Declaration order of function-scope scalars does not set frame offsets**
+  (par-5 2026-11-19, setup_text: mode/pane at -0x10 against a pointer temp at
+  -0x14, row_pitch/width/base among -0x88..-0x90; declaration order, block
+  scope and merges tried, none moves them). Offsets follow weighted priority
+  (previous entry); leave a pure slot permutation once the homes hold the
+  right variables.
 
 ### 3.4 Arithmetic idioms
 - **Signedness of a field (movsx/movzx, jl/jb, idiv/div, sar/shr) is its
@@ -4084,6 +4127,28 @@ Arithmetic, prologue and arm order (par-2 2026-11-19)
   is `if (a < b) {that} else {other}`; the negated test with the arms
   exchanged emits the inverse jump and swaps the blocks (base_build
   0x004F81A0, two sites: `l_e0 < unk_28 / 2`, `l_20 == FAC_COMMAND_CENTER`).
+
+Large-function region pass (par-5 2026-11-19)
+- **Sites sharing a cross-jumped tail flip together.** Three lookups whose
+  calls the image merges into one tail (setup_text's three Natural brush
+  names) must all use the same spelling (`table_text(x)` vs
+  `StringTable.get(x)`): toggling one site alone un-merges the tail and reads
+  as a loss. Toggle them as a group (`analysis/sitedeck.py` does single
+  sites; a site that loses alone next to siblings in one tail is retried
+  together by hand).
+- **An un-threaded second test of a just-tested register means the
+  subexpression was written at each test.** air_power 0x005678C0 re-tests
+  `eax = state & 0x200` at 0x567AF6 and 0x567B28 without jump threading and
+  re-reads `order_auto_type` from memory each time: the source repeats
+  `(Vehs[veh_id].state & 0x200)` in each condition. A bool local (`automated`)
+  is threaded by VC6 (the second test disappears) or kept in a register.
+- **One division tail joined by several arms is one statement after the
+  if-chain**, not a copy per arm (air_power's two `/ Rules.move_rate_roads`
+  at 0x567A65, entered with different eax): arms assign the operands, the
+  division follows the chain (1195 -> 1059 rows with the previous rule).
+- **A lookup whose offset is loaded into a register and pushed is a named
+  inline parameter** (`table_text(Mood[get_mood(...)])`), not a local plus
+  `StringTable.get` (setup_text 0x456E04).
 
 ## 4. Measured and neutral (do not retry without new evidence)
 
