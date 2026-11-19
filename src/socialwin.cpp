@@ -2387,11 +2387,13 @@ void SocialWin::init(int faction_id) {
 
     // 0x4B2FB0: the screen-width test survives as a dead `test` before the
     // first Font::init; both arms are the same size.
-    // WORKAROUND(decl): a literal `wide_screen ? 0xe : 0xe` folds in the
-    // front end and drops the 0x4B2806 setne; a non-literal arm survives to
-    // the optimiser, whose merged arms leave the dead test.
-    int font_size = 0xe;
-    font1_.init(DefaultFontFace, wide_screen ? font_size : 0xe, 1);
+    // WORKAROUND(decl): a literal `wide_screen ? 0xe : 0xe` size folds in the
+    // front end and drops the 0x4B2806 setne; a size ternary on a constant
+    // local keeps the setne but loses the test, so wide_screen dies at once
+    // and lands in faction_id's dead slot. A ternary on the receiver keeps
+    // the test right before the call (0x4B2FB0) and wide_screen in its own
+    // home [ebp-0x2C] until there, as in the image.
+    (wide_screen ? font1_ : font1_).init(DefaultFontFace, 0xe, 1);
     font2_.init(DefaultFontFace, 0xe, 1);
     font3_.init(DefaultLargeFontFace, 0xe, 1);
     font4_.init(DefaultLargeFontFace, 0xe, 1);
