@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
+
 // ORIGINAL: 0x006127E0 sub_6127e0 0x006127E0-0x006127F1 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:15fe30a4cf2c220f100140385fe1275979abed0b:src/recovered/006127e0.cpp; historical seed/source provenance (seed path is retired from the current working tree)", "pinned image vtable 0x006708CC entry zero selects original 0x006127E0; all original spans retained", "physical COFF:editgroup.cpp.obj defines observed emitted symbol ??_EEditGroup@@$4PPPPPLLI@EEE@AEPAXI@Z, and its table COMDAT selects that exact symbol", "physical COFF weak external tail alias resolves to ??_GEditGroup@@UAEPAXI@Z; linked map confirms the owner row", "strict native binary comparator readback covers the independent primary span; SpriteBox shared tail remains a separate full-span obligation", "current-owner:src/editgroup.cpp:0x006127E0; the live ORIGINAL marker retains name sub_6127e0, complete spans 0x006127E0-0x006127F1, historical byte claim retained=True, historical semantic claim retained=False, and the complete parsed LEVER/TRIED/UNRECOVERABLE/DEFERRED lesson set (0/0/0/0); current binding is source navigation/provenance only, not a new claim or match result"], "reason": "17-byte Buffer/secondary-GraphicWin view; weak external deleting entry resolves to the class deleting destructor."}
 // symbol    ??_EEditGroup@@$4PPPPPLLI@EEE@AEPAXI@Z
@@ -116,153 +117,6 @@ EditGroup::~EditGroup() {
 }
 
 /*
-Purpose: Apply one length limit to all ten edit boxes in the group.
-// ORIGINAL: 0x006120B0 ?set_text_limits@EditGroup@@QAEXH@Z 0x006120B0-0x006120C3 BYTE_EXACT
-// size      19 bytes
-// prototype void (__thiscall ?set_text_limits@EditGroup@@QAEXH@Z)(EditGroup* this, int)
-// callers   1   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void EditGroup::set_text_limits(int limit) {
-    for (size_t index = 0; index < ARRAYSIZE(limits_); ++index) {
-        limits_[index] = static_cast<uint32_t>(limit);
-    }
-}
-
-/*
-Purpose: Return one box's text buffer, or nothing when that box is absent.
-// ORIGINAL: 0x00612060 ?get_text@EditGroup@@QAEPADH@Z 0x00612060-0x00612079 BYTE_EXACT
-// LEVER: branch polarity. The guard-clause form `if (!box) return nullptr;` lets VC6 prove eax is already zero and MERGE both returns onto one `ret 4` (5 of 8, `je` to the shared ret). The image keeps a separate `xor eax, eax; ret 4` tail, which is what `if (box) return ...; return nullptr;` produces - 8 of 8, BYTE_EXACT. A ternary and `return 0` score the same 8 of 8; re-reading `boxes_[index]` instead of caching it stays at 5 of 8.
-// size      25 bytes
-// prototype int8* (__thiscall ?get_text@EditGroup@@QAEPADH@Z)(EditGroup* this, int)
-// callers   1   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: pointer to the box's text, null when there is no box
-Status: Complete
-*/
-char *EditGroup::get_text(int index) {
-    EditBox *const box = boxes_[index];
-    if (box) {
-        return box->text_;
-    }
-    return nullptr;
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00612080 ?append_text@EditGroup@@QAEXPADH@Z 0x00612080-0x006120AA BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00612080.cpp retains the exact seed", "src/editgroup.h boxes_[10] are EditBox owners at offset 0x4", "src/editbox.h EditBox::text_ starts at offset 0xA14"], "reason": "Copy the selected editor's text through its real EditBox member instead of indexing receiver bytes."}
-// symbol    ?append_text@EditGroup@@QAEXPADH@Z
-void EditGroup::append_text(char *text, int index) {
-    EditBox *const box = boxes_[index];
-    if (box != 0 && text != 0) {
-        text[0] = 0;
-        strcat(text, box->text_);
-    }
-}
-
-/*
-Purpose: Set one box's text, doing nothing when that box is absent.
-// ORIGINAL: 0x00612040 ?set_text@EditGroup@@QAEXPADH@Z 0x00612040-0x00612059 BYTE_EXACT
-// size      25 bytes
-// prototype void (__thiscall ?set_text@EditGroup@@QAEXPADH@Z)(EditGroup* this, int8*, int)
-// callers   0   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x006151E0
-Return Value: n/a
-Status: Complete
-*/
-void EditGroup::set_text(char *text, int index) {
-    EditBox *const box = boxes_[index];
-    if (box) {
-        // A NAMED METHOD, not the seam: the image emits `call rel32` here.
-        box->EditBox::set_text(text);
-    }
-}
-
-
-
-
-/*
-Purpose: Adjust the receiver from the thunk1 subobject back to EditGroup and
-         tail-jump to the override. THE COMPILER WRITES THIS BODY - the claim
-         names VC6's own vtordisp adjustor thunk, emitted because
-         EditGroup::attach overrides a virtual reached through a virtual
-         base. There is no C++ here to get right, only a name to record.
-// ORIGINAL: 0x00612810 ?attach@thunk1_EditGroup@@QAEHPAUGraphicWin@@HHH@Z 0x00612810-0x00612818 BYTE_EXACT
-// symbol    ?attach@EditGroup@@$4PPPPPPPM@A@AEHPAVGraphicWin@@HHH@Z
-// size      8 bytes
-// kind      game
-Status: Complete
-*/
-
-/*
-Purpose: Adjust the receiver from the thunk1 subobject back to EditGroup and
-         tail-jump to the override. THE COMPILER WRITES THIS BODY - the claim
-         names VC6's own vtordisp adjustor thunk, emitted because
-         EditGroup::on_dialog_focus overrides a virtual reached through a virtual
-         base. There is no C++ here to get right, only a name to record.
-// ORIGINAL: 0x006127C0 ?on_dialog_focus@thunk1_EditGroup@@QAEXH@Z 0x006127C0-0x006127C8 BYTE_EXACT
-// symbol    ?on_dialog_focus@EditGroup@@$4PPPPPPPM@A@AEXH@Z
-// size      8 bytes
-// kind      game
-Status: Complete
-*/
-
-/*
-Purpose: Adjust the receiver from the Win/GraphicWin-path thunk1 subobject
-         back to EditGroup and tail-jump to the override. THE COMPILER WRITES
-         THIS BODY - the claim names VC6's own vtordisp adjustor thunk, emitted
-         because the single EditGroup::on_redraw declaration overrides Win
-         slot12 through the virtual GraphicWin base as well as Dialog slot2.
-         There is no C++ here to get right, only a name to record.
-// ORIGINAL: 0x006127B0 ?on_redraw@thunk1_EditGroup@@QAEXXZ 0x006127B0-0x006127B8 BYTE_EXACT
-// symbol    ?on_redraw@EditGroup@@$4PPPPPPPM@A@AEXXZ
-// size      8 bytes
-// kind      game
-// TRIED 2026-09-26 (EditGroup adjustor retirement batch): a handwritten walk
-//            carried this claim until the rename; it walked
-//            `object - vtordisp - 0xAA8` (1/3, stale pre-hierarchy Dialog
-//            offset), then the repaired `- 0xAA4` fold cancellation, and after
-//            the tree-wide Win slot-12 on_redraw rename `- 0x8C` (the
-//            GraphicWin fold), all measured BYTE_EXACT from
-//            src/adjustor_thunks.cpp. The generated thunk measures the same
-//            span (`2b 49 fc e9 <rel32>`); the marker moved here when the
-//            handwritten body was retired.
-Status: Complete
-*/
-
-/*
-Purpose: Adjust the receiver from the Dialog-path thunk3 subobject back to
-         EditGroup and tail-jump to the override. THE COMPILER WRITES THIS
-         BODY - the claim names VC6's own two-step vtordisp adjustor thunk,
-         emitted because the single EditGroup::on_redraw declaration overrides
-         Dialog slot2 (table6708C0 at complete+0xAA4) as well as Win slot12;
-         only a function overriding both virtual bases carries the static
-         0xA18 Dialog-to-GraphicWin delta.
-         There is no C++ here to get right, only a name to record.
-// ORIGINAL: 0x00612820 ?on_redraw@thunk3_EditGroup@@QAEXXZ 0x00612820-0x0061282E BYTE_EXACT
-// symbol    ?on_redraw@EditGroup@@$4PPPPPPPM@KBI@AEXXZ
-// size      14 bytes
-// kind      game
-// TRIED 2026-09-26 (EditGroup adjustor retirement batch): a handwritten walk
-//            carried this claim until the rename; it walked
-//            `object - vtordisp - 2584 - 0xAA8` (2/3, wrong 0xa1c immediate),
-//            then the repaired `- 2584 - 0xAA4`, and after the rename
-//            `- 0xAA4` alone, all measured BYTE_EXACT from
-//            src/adjustor_thunks.cpp. The generated thunk measures the same
-//            span (`2b 49 fc 81 e9 18 0a 00 00 e9 <rel32>`); the marker moved
-//            here when the handwritten body was retired.
-Status: Complete
-*/
-
-/*
 Purpose: Tear down all ten controls - close each one, free its heap text - then
          republish the default and delegate to the Dialog base.
 // ORIGINAL: 0x00611A90 ?close@EditGroup@@QAEXXZ 0x00611A90-0x00611AF0 FILE BYTE_EXACT
@@ -298,55 +152,74 @@ void EditGroup::close() {
     Dialog::close();
 }
 
-// ====================
-// Window-event handlers
-// ====================
+// ORIGINAL: 0x00611AF0 ?attach@EditGroup@@QAEHPAUGraphicWin@@HHH@Z 0x00611AF0-0x00611F79;0x00663047-0x0066305C FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00611af0.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x611af0 complete control/data-access review and src/editgroup.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+// TRIED: no source-level trick reproduced the SEH frame (the trigger here is a heap `new EditBox` + placement ctor, not a local by-value object of non-trivial type, so LEVER #1 does not apply); the two virtual-base displacements (vtable[4], vtable[8], read fresh per the disassembly's own re-fetch pattern) were kept as raw offset arithmetic rather than named fields, matching the "class deliberately empty" note; VCall extended to slot062 (used on the freshly built EditBox) purely by declaration-order padding. The row/column geometry (x0/cellRight/halfStore/y0) is a best-effort re-derivation from the register shuffle and likely has the least fidelity of the eight; the call ORDER and TARGETS (calculate_dimensions, GraphicWin::init, three set_text_color + set_font pairs, the delete-old/new/ctor/init/set_text sequence per cell) are transcribed directly from the disassembly. Diverges at #0.
+// symbol    ?attach@EditGroup@@UAEHPAVGraphicWin@@HHH@Z
+int EditGroup::attach(GraphicWin *parent, int x, int y, int flags) {
+    if (parent == 0) return 3;
+    calculate_dimensions();
+    Dialog::window_x_ = x;
+    Dialog::window_y_ = y;
+    if ((parent->iFlags_ & 0x1000) == 0) flags |= 0x100000;
+    const int result = GraphicWin::init(x, y, Dialog::field_5C_,
+                                        Dialog::field_60_, flags, parent);
+    if (result != 0) return result;
 
-/*
-Purpose: Hand dialog focus to the group's edit boxes: with a nonzero value,
-         to the first box only; with zero, to each of the ten in turn, each
-         through its own vtable slot 51 and only when installed. Entered on
-         the GraphicWin-subobject adjusted pointer (the family's thunk
-         convention), so the box-pointer array sits 0x88 below `this`.
-// ORIGINAL: 0x00612670 ?on_dialog_focus@EditGroup@@QAEXH@Z 0x00612670-0x006126B6 BYTE_EXACT
-// symbol    ?on_dialog_focus@EditGroup@@UAEXH@Z
-// size      70 bytes
-// prototype void (__thiscall ?on_dialog_focus@EditGroup@@QAEXH@Z)(EditGroup* this, int)
-// callers   1   call targets   0
-// kind      game
-// indirect  0x00612685 0x006126A5
-//
-// PROMOTED out of the archived verification unit for this address, which proved the body
-// against the same shim shape under its own name.
-// TRIED (measured 2x at -0x118 vs the image's -0x88, SHAPE_EXACT 24/26):
-// spelling the body as a GraphicWin override - the header had inherited the
-// virtual - makes VC6 enter it 0x90 high (vtordisp-adjusted) and fold that
-// into every displacement; inline casts vs a named `self` local made no
-// difference to it.
-// Original table6708D4 slot51 selects this body through thunk6127C0.
-// The old long overload matched a raw-offset body but left actual virtual
-// dispatch empty. Correct EditGroup ownership puts GraphicWin at8C, so the
-// compiler's real override can express the original member displacements.
-Return Value: n/a
-Status: Complete
-*/
-void EditGroup::on_dialog_focus(int focus_id) {
-    if (focus_id != 0) {
-        EditBox *box = boxes_[0];
-        if (box != 0) {
-            box->on_dialog_focus(focus_id);
+    Buffer::set_text_color(Dialog::text_color_a_, Dialog::text_color_b_,
+                           Dialog::text_color_c_, Dialog::text_color_d_);
+    Buffer::set_text_color2(Dialog::text_color_2a_, Dialog::text_color_2b_,
+                            Dialog::text_color_2c_, Dialog::text_color_2d_);
+    Buffer::set_text_color3(Dialog::text_color_3a_, Dialog::text_color_3b_,
+                            Dialog::text_color_3c_, Dialog::text_color_3d_);
+    Buffer::set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
+
+    int index = 0;
+    const int margin = Dialog::field_44_;
+    const int cell_height = static_cast<int>(Dialog::field_68_) - margin;
+    const int box_width = static_cast<int>(Dialog::field_64_) - margin * 2 - label_width_;
+    const int base_top = margin >> 1;
+    const int base_left = static_cast<int>(Dialog::field_34_) + margin * 2 + label_width_;
+    RECT base;
+    base.left = base_left;
+    base.right = box_width + base_left;
+    base.top = base_top;
+    base.bottom = cell_height + base_top;
+    for (int column = 0; column < Dialog::column_count_; ++column) {
+        RECT cell = base;
+        offset_rect(&cell, static_cast<int>(Dialog::field_64_) * column, 0);
+        for (int row = 0; row < Dialog::row_count_; ++row) {
+            if (boxes_[index] != 0) {
+                delete boxes_[index];
+            }
+            boxes_[index] = new EditBox();
+            if (boxes_[index] == 0) return 4;
+
+            const int box_result = boxes_[index]->init(&cell, this, 1);
+            if (box_result != 0) return box_result;
+
+            // Original 0x611DD2 tests AH bit 0x10 of Dialog::field_20_.
+            if ((Dialog::field_20_ & 0x1000) != 0) {
+                boxes_[index]->field_B3C_ |= 2;
+            }
+            boxes_[index]->set_text_color(Dialog::text_color_a_, Dialog::text_color_b_,
+                                          Dialog::text_color_c_, Dialog::text_color_d_);
+            boxes_[index]->set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
+            boxes_[index]->field_B14_ = limits_[index];
+            boxes_[index]->set_text(text_buffers_[index]);
+            boxes_[index]->field_B1C_ = Dialog::field_6C_;
+            boxes_[index]->field_B28_ = field_AC_;
+            boxes_[index]->field_B2C_ = field_B0_;
+            boxes_[index]->field_B30_ = field_B4_;
+            boxes_[index]->field_B34_ = Dialog::field_40_;
+            boxes_[index]->select_all();
+            boxes_[index]->show(0);
+
+            offset_rect(&cell, 0, static_cast<int>(Dialog::field_68_));
+            ++index;
         }
-        return;
     }
-    EditBox **slot = boxes_;
-    int count = 10;
-    do {
-        EditBox *box = *slot;
-        if (box != 0) {
-            box->on_dialog_focus(0);
-        }
-        ++slot;
-    } while (--count);
+    return 0;
 }
 
 /*
@@ -395,6 +268,77 @@ int EditGroup::edit(char *label_text, char *initial_text, int limit_value) {
     }
     limits_[index] = limit_value;
     return 0;
+}
+
+/*
+Purpose: Set one box's text, doing nothing when that box is absent.
+// ORIGINAL: 0x00612040 ?set_text@EditGroup@@QAEXPADH@Z 0x00612040-0x00612059 BYTE_EXACT
+// size      25 bytes
+// prototype void (__thiscall ?set_text@EditGroup@@QAEXPADH@Z)(EditGroup* this, int8*, int)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006151E0
+Return Value: n/a
+Status: Complete
+*/
+void EditGroup::set_text(char *text, int index) {
+    EditBox *const box = boxes_[index];
+    if (box) {
+        // A NAMED METHOD, not the seam: the image emits `call rel32` here.
+        box->EditBox::set_text(text);
+    }
+}
+
+/*
+Purpose: Return one box's text buffer, or nothing when that box is absent.
+// ORIGINAL: 0x00612060 ?get_text@EditGroup@@QAEPADH@Z 0x00612060-0x00612079 BYTE_EXACT
+// LEVER: branch polarity. The guard-clause form `if (!box) return nullptr;` lets VC6 prove eax is already zero and MERGE both returns onto one `ret 4` (5 of 8, `je` to the shared ret). The image keeps a separate `xor eax, eax; ret 4` tail, which is what `if (box) return ...; return nullptr;` produces - 8 of 8, BYTE_EXACT. A ternary and `return 0` score the same 8 of 8; re-reading `boxes_[index]` instead of caching it stays at 5 of 8.
+// size      25 bytes
+// prototype int8* (__thiscall ?get_text@EditGroup@@QAEPADH@Z)(EditGroup* this, int)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: pointer to the box's text, null when there is no box
+Status: Complete
+*/
+char *EditGroup::get_text(int index) {
+    EditBox *const box = boxes_[index];
+    if (box) {
+        return box->text_;
+    }
+    return nullptr;
+}
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00612080 ?append_text@EditGroup@@QAEXPADH@Z 0x00612080-0x006120AA BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00612080.cpp retains the exact seed", "src/editgroup.h boxes_[10] are EditBox owners at offset 0x4", "src/editbox.h EditBox::text_ starts at offset 0xA14"], "reason": "Copy the selected editor's text through its real EditBox member instead of indexing receiver bytes."}
+// symbol    ?append_text@EditGroup@@QAEXPADH@Z
+void EditGroup::append_text(char *text, int index) {
+    EditBox *const box = boxes_[index];
+    if (box != 0 && text != 0) {
+        text[0] = 0;
+        strcat(text, box->text_);
+    }
+}
+
+/*
+Purpose: Apply one length limit to all ten edit boxes in the group.
+// ORIGINAL: 0x006120B0 ?set_text_limits@EditGroup@@QAEXH@Z 0x006120B0-0x006120C3 BYTE_EXACT
+// size      19 bytes
+// prototype void (__thiscall ?set_text_limits@EditGroup@@QAEXH@Z)(EditGroup* this, int)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void EditGroup::set_text_limits(int limit) {
+    for (size_t index = 0; index < ARRAYSIZE(limits_); ++index) {
+        limits_[index] = static_cast<uint32_t>(limit);
+    }
 }
 
 /*
@@ -485,76 +429,6 @@ int EditGroup::calculate_dimensions() {
     return 0;
 }
 
-// ORIGINAL: 0x00611AF0 ?attach@EditGroup@@QAEHPAUGraphicWin@@HHH@Z 0x00611AF0-0x00611F79;0x00663047-0x0066305C FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00611af0.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x611af0 complete control/data-access review and src/editgroup.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
-// TRIED: no source-level trick reproduced the SEH frame (the trigger here is a heap `new EditBox` + placement ctor, not a local by-value object of non-trivial type, so LEVER #1 does not apply); the two virtual-base displacements (vtable[4], vtable[8], read fresh per the disassembly's own re-fetch pattern) were kept as raw offset arithmetic rather than named fields, matching the "class deliberately empty" note; VCall extended to slot062 (used on the freshly built EditBox) purely by declaration-order padding. The row/column geometry (x0/cellRight/halfStore/y0) is a best-effort re-derivation from the register shuffle and likely has the least fidelity of the eight; the call ORDER and TARGETS (calculate_dimensions, GraphicWin::init, three set_text_color + set_font pairs, the delete-old/new/ctor/init/set_text sequence per cell) are transcribed directly from the disassembly. Diverges at #0.
-// symbol    ?attach@EditGroup@@UAEHPAVGraphicWin@@HHH@Z
-int EditGroup::attach(GraphicWin *parent, int x, int y, int flags) {
-    if (parent == 0) return 3;
-    calculate_dimensions();
-    Dialog::window_x_ = x;
-    Dialog::window_y_ = y;
-    if ((parent->iFlags_ & 0x1000) == 0) flags |= 0x100000;
-    const int result = GraphicWin::init(x, y, Dialog::field_5C_,
-                                        Dialog::field_60_, flags, parent);
-    if (result != 0) return result;
-
-    Buffer::set_text_color(Dialog::text_color_a_, Dialog::text_color_b_,
-                           Dialog::text_color_c_, Dialog::text_color_d_);
-    Buffer::set_text_color2(Dialog::text_color_2a_, Dialog::text_color_2b_,
-                            Dialog::text_color_2c_, Dialog::text_color_2d_);
-    Buffer::set_text_color3(Dialog::text_color_3a_, Dialog::text_color_3b_,
-                            Dialog::text_color_3c_, Dialog::text_color_3d_);
-    Buffer::set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
-
-    int index = 0;
-    const int margin = Dialog::field_44_;
-    const int cell_height = static_cast<int>(Dialog::field_68_) - margin;
-    const int box_width = static_cast<int>(Dialog::field_64_) - margin * 2 - label_width_;
-    const int base_top = margin >> 1;
-    const int base_left = static_cast<int>(Dialog::field_34_) + margin * 2 + label_width_;
-    RECT base;
-    base.left = base_left;
-    base.right = box_width + base_left;
-    base.top = base_top;
-    base.bottom = cell_height + base_top;
-    for (int column = 0; column < Dialog::column_count_; ++column) {
-        RECT cell = base;
-        offset_rect(&cell, static_cast<int>(Dialog::field_64_) * column, 0);
-        for (int row = 0; row < Dialog::row_count_; ++row) {
-            if (boxes_[index] != 0) {
-                delete boxes_[index];
-            }
-            boxes_[index] = new EditBox();
-            if (boxes_[index] == 0) return 4;
-
-            const int box_result = boxes_[index]->init(&cell, this, 1);
-            if (box_result != 0) return box_result;
-
-            // Original 0x611DD2 tests AH bit 0x10 of Dialog::field_20_.
-            if ((Dialog::field_20_ & 0x1000) != 0) {
-                boxes_[index]->field_B3C_ |= 2;
-            }
-            boxes_[index]->set_text_color(Dialog::text_color_a_, Dialog::text_color_b_,
-                                          Dialog::text_color_c_, Dialog::text_color_d_);
-            boxes_[index]->set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
-            boxes_[index]->field_B14_ = limits_[index];
-            boxes_[index]->set_text(text_buffers_[index]);
-            boxes_[index]->field_B1C_ = Dialog::field_6C_;
-            boxes_[index]->field_B28_ = field_AC_;
-            boxes_[index]->field_B2C_ = field_B0_;
-            boxes_[index]->field_B30_ = field_B4_;
-            boxes_[index]->field_B34_ = Dialog::field_40_;
-            boxes_[index]->select_all();
-            boxes_[index]->show(0);
-
-            offset_rect(&cell, 0, static_cast<int>(Dialog::field_68_));
-            ++index;
-        }
-    }
-    return 0;
-}
-
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00612450 ?on_redraw@EditGroup@@QAEXXZ 0x00612450-0x00612669 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00612450.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x612450 complete control/data-access review and src/editgroup.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
@@ -598,6 +472,57 @@ void EditGroup::on_redraw() {
     }
 }
 
+// ====================
+// Window-event handlers
+// ====================
+
+/*
+Purpose: Hand dialog focus to the group's edit boxes: with a nonzero value,
+         to the first box only; with zero, to each of the ten in turn, each
+         through its own vtable slot 51 and only when installed. Entered on
+         the GraphicWin-subobject adjusted pointer (the family's thunk
+         convention), so the box-pointer array sits 0x88 below `this`.
+// ORIGINAL: 0x00612670 ?on_dialog_focus@EditGroup@@QAEXH@Z 0x00612670-0x006126B6 BYTE_EXACT
+// symbol    ?on_dialog_focus@EditGroup@@UAEXH@Z
+// size      70 bytes
+// prototype void (__thiscall ?on_dialog_focus@EditGroup@@QAEXH@Z)(EditGroup* this, int)
+// callers   1   call targets   0
+// kind      game
+// indirect  0x00612685 0x006126A5
+//
+// PROMOTED out of the archived verification unit for this address, which proved the body
+// against the same shim shape under its own name.
+// TRIED (measured 2x at -0x118 vs the image's -0x88, SHAPE_EXACT 24/26):
+// spelling the body as a GraphicWin override - the header had inherited the
+// virtual - makes VC6 enter it 0x90 high (vtordisp-adjusted) and fold that
+// into every displacement; inline casts vs a named `self` local made no
+// difference to it.
+// Original table6708D4 slot51 selects this body through thunk6127C0.
+// The old long overload matched a raw-offset body but left actual virtual
+// dispatch empty. Correct EditGroup ownership puts GraphicWin at8C, so the
+// compiler's real override can express the original member displacements.
+Return Value: n/a
+Status: Complete
+*/
+void EditGroup::on_dialog_focus(int focus_id) {
+    if (focus_id != 0) {
+        EditBox *box = boxes_[0];
+        if (box != 0) {
+            box->on_dialog_focus(focus_id);
+        }
+        return;
+    }
+    EditBox **slot = boxes_;
+    int count = 10;
+    do {
+        EditBox *box = *slot;
+        if (box != 0) {
+            box->on_dialog_focus(0);
+        }
+        ++slot;
+    } while (--count);
+}
+
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x006126C0 ?pass_dialog_focus@EditGroup@@QAEXXZ 0x006126C0-0x006126F8 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/006126c0.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x6126c0 complete control/data-access review and src/editgroup.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
@@ -613,6 +538,42 @@ void EditGroup::pass_dialog_focus() {
     Win::pass_dialog_focus();
 }
 
+/*
+Purpose: Adjust the receiver from the Win/GraphicWin-path thunk1 subobject
+         back to EditGroup and tail-jump to the override. THE COMPILER WRITES
+         THIS BODY - the claim names VC6's own vtordisp adjustor thunk, emitted
+         because the single EditGroup::on_redraw declaration overrides Win
+         slot12 through the virtual GraphicWin base as well as Dialog slot2.
+         There is no C++ here to get right, only a name to record.
+// ORIGINAL: 0x006127B0 ?on_redraw@thunk1_EditGroup@@QAEXXZ 0x006127B0-0x006127B8 BYTE_EXACT
+// symbol    ?on_redraw@EditGroup@@$4PPPPPPPM@A@AEXXZ
+// size      8 bytes
+// kind      game
+// TRIED 2026-09-26 (EditGroup adjustor retirement batch): a handwritten walk
+//            carried this claim until the rename; it walked
+//            `object - vtordisp - 0xAA8` (1/3, stale pre-hierarchy Dialog
+//            offset), then the repaired `- 0xAA4` fold cancellation, and after
+//            the tree-wide Win slot-12 on_redraw rename `- 0x8C` (the
+//            GraphicWin fold), all measured BYTE_EXACT from
+//            src/adjustor_thunks.cpp. The generated thunk measures the same
+//            span (`2b 49 fc e9 <rel32>`); the marker moved here when the
+//            handwritten body was retired.
+Status: Complete
+*/
+
+/*
+Purpose: Adjust the receiver from the thunk1 subobject back to EditGroup and
+         tail-jump to the override. THE COMPILER WRITES THIS BODY - the claim
+         names VC6's own vtordisp adjustor thunk, emitted because
+         EditGroup::on_dialog_focus overrides a virtual reached through a virtual
+         base. There is no C++ here to get right, only a name to record.
+// ORIGINAL: 0x006127C0 ?on_dialog_focus@thunk1_EditGroup@@QAEXH@Z 0x006127C0-0x006127C8 BYTE_EXACT
+// symbol    ?on_dialog_focus@EditGroup@@$4PPPPPPPM@A@AEXH@Z
+// size      8 bytes
+// kind      game
+Status: Complete
+*/
+
 // ORIGINAL: 0x006127D0 ?pass_dialog_focus@thunk1_EditGroup@@QAEXXZ 0x006127D0-0x006127D8 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: EditGroup constructor 0x00611940 installs Win view 0x006708D4; slot +0x100 points to original identity 0x006127D0", "retained build/recovery/builds/build-rosw1myy: build/recovery/builds/build-rosw1myy/CMakeFiles/OpenSMACX.dir/src/editgroup.cpp.obj has matching source-input closure and physical table relocation to ?pass_dialog_focus@EditGroup@@$4PPPPPPPM@A@AEXXZ", "retained COFF ?pass_dialog_focus@EditGroup@@$4PPPPPPPM@A@AEXXZ has the 8-byte vtordisp subtraction shape and tail relocation to real method symbol ?pass_dialog_focus@EditGroup@@UAEXXZ", "the exact legacy kind fact `game` is copied verbatim from the source envelope and parser-read back; it is existing catalogue classification, not a newly granted kind", "this evidence establishes a current owner-TU/compiler-thunk correspondence only; no fresh build, linked retained-table selection, body-byte match, or whole-game acceptance is claimed"], "reason": "The EditGroup Win-view constructor-installed table selects this original receiver adjustor at byte offset 0x100; the retained owner COFF physically emits the corresponding compiler vtordisp thunk and its relocation tails to EditGroup::pass_dialog_focus. This FILE marker remains with the actual class owner TU; it does not prove final linked table selection or full acceptance."}
 // kind      game
@@ -621,3 +582,43 @@ void EditGroup::pass_dialog_focus() {
 // RECOVERY_GENERATED: v1 vtable 0x006708CC ? ??_7EditGroup@@6BBuffer@@@ 0x00611940
 // RECOVERY_GENERATED: v1 vtable 0x006708D4 ? ??_7EditGroup@@6BWin@@@ 0x00611940
 // RECOVERY_GENERATED: v1 vbtable 0x00670A3C 0x00670A48 ??_8EditGroup@@7B@ 0x00611940
+
+
+
+
+/*
+Purpose: Adjust the receiver from the thunk1 subobject back to EditGroup and
+         tail-jump to the override. THE COMPILER WRITES THIS BODY - the claim
+         names VC6's own vtordisp adjustor thunk, emitted because
+         EditGroup::attach overrides a virtual reached through a virtual
+         base. There is no C++ here to get right, only a name to record.
+// ORIGINAL: 0x00612810 ?attach@thunk1_EditGroup@@QAEHPAUGraphicWin@@HHH@Z 0x00612810-0x00612818 BYTE_EXACT
+// symbol    ?attach@EditGroup@@$4PPPPPPPM@A@AEHPAVGraphicWin@@HHH@Z
+// size      8 bytes
+// kind      game
+Status: Complete
+*/
+
+/*
+Purpose: Adjust the receiver from the Dialog-path thunk3 subobject back to
+         EditGroup and tail-jump to the override. THE COMPILER WRITES THIS
+         BODY - the claim names VC6's own two-step vtordisp adjustor thunk,
+         emitted because the single EditGroup::on_redraw declaration overrides
+         Dialog slot2 (table6708C0 at complete+0xAA4) as well as Win slot12;
+         only a function overriding both virtual bases carries the static
+         0xA18 Dialog-to-GraphicWin delta.
+         There is no C++ here to get right, only a name to record.
+// ORIGINAL: 0x00612820 ?on_redraw@thunk3_EditGroup@@QAEXXZ 0x00612820-0x0061282E BYTE_EXACT
+// symbol    ?on_redraw@EditGroup@@$4PPPPPPPM@KBI@AEXXZ
+// size      14 bytes
+// kind      game
+// TRIED 2026-09-26 (EditGroup adjustor retirement batch): a handwritten walk
+//            carried this claim until the rename; it walked
+//            `object - vtordisp - 2584 - 0xAA8` (2/3, wrong 0xa1c immediate),
+//            then the repaired `- 2584 - 0xAA4`, and after the rename
+//            `- 0xAA4` alone, all measured BYTE_EXACT from
+//            src/adjustor_thunks.cpp. The generated thunk measures the same
+//            span (`2b 49 fc 81 e9 18 0a 00 00 e9 <rel32>`); the marker moved
+//            here when the handwritten body was retired.
+Status: Complete
+*/
