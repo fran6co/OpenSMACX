@@ -3523,8 +3523,10 @@ void ReportWin::draw_ops() {
             Buffer::write_right_l(StringTemp, text.right - 4, text_y);
         } else if (mode == 0x8B4) {
             // UNSURE: `<= 1` from cmp reg,1 / jg (the 34 arm falls through).
-            const int spacing = BaseCurrent->population_size <= 1 ? 34    // edi
-                : range((text.right - text.left - 226) / (BaseCurrent->population_size - 1), 1, 34);
+            // 0x0049E3AF: `movsx edx, byte; cmp edx, 1 .. lea edi, [edx - 1]` - the population is an int local.
+            const int population = BaseCurrent->population_size;
+            const int spacing = population <= 1 ? 34    // edi
+                : range((text.right - text.left - 226) / (population - 1), 1, 34);
             rect1_.left = text.right + spacing - 32;
             rect1_.top = text.bottom - pitch / 2 - 18;
             if (is_alien_faction(faction)) {
