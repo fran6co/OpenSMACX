@@ -7844,6 +7844,15 @@ static int communicate_budget_probe(int x) {
     if (x == 15) x = 16;
     return x;
 }
+// stand-in: a four-test budget probe for the finer step communicate needs
+// (see the probes before its INTRODUCEENEMY net_treaty_on).
+static int communicate_budget_probe4(int x) {
+    if (x == 1) x = 2;
+    if (x == 3) x = 4;
+    if (x == 5) x = 6;
+    if (x == 7) x = 8;
+    return x;
+}
 // make_a_proposal's string operands, each read from the image's push operand
 // and checked against the literal text in the body (unpooled, one copy each).
 // RECOVERY_LITERAL: v1 0x0068DF20 0x0068DF2B $SG65633 0x0054F420
@@ -8629,9 +8638,12 @@ if (DiploScratchF7D4 &&
         // WORKAROUND(inline): spend the rest of the /Ob2 budget, so the image's
         // first out-of-line calls (net_treaty_on, diplo_unlock at 0x5524D8)
         // follow; nine probes all expand (eight leave both inline; fourteen
-        // emit five probe calls). The natural spend before this point is
-        // still unknown.
-        communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0);
+        // emit five probe calls). Six eight-test probes leave this
+        // net_treaty_on expanded and a seventh is itself refused; five plus
+        // two four-test probes refuse it with no probe call, which gives the
+        // image's call multiset (net_treaty_on 23, treaty_on 7). The natural
+        // spend before this point is still unknown.
+        communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe4(0); communicate_budget_probe4(0);
         net_treaty_on(faction_id, DiploScratchF7D4, 0x8000008, 0);
         diplo_unlock();
         DiploScratchFA8C = DiploScratchF7D4;
