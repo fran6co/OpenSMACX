@@ -174,12 +174,6 @@ static inline void base_draw_shrink_rect(RECT *rect, int dx, int dy) {
 // override when one is active, otherwise by the zoom step out of 16. The image
 // evaluates the value once before the scale test (0x55983A, 0x559874), which a
 // macro repeating it in both arms would not do.
-// WORKAROUND(decl): file-local stand-in for the original's zoom-scale helper/macro (name unknown).
-// mapwin.h's zoom_scale (the ?: spelling) fits boom and is code-neutral in base_draw, but costs
-// veh_draw six rows (153 -> 159); this `if` spelling costs boom three (180 -> 183).
-static inline int veh_draw_scale(int value, int zoom) {
-    if (MapWinCaptionScale > 0) { return value * MapWinCaptionScale / MapWinCaptionDivisor; } return (zoom + 16) * value / 16;
-}
 
 // ORIGINAL: 0x005594F0 ?veh_draw@@YAHPAUBuffer@@HHHHHH@Z 0x005594F0-0x0055A14E
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned5594F0..55A14E retains raw screen coordinates for vehicle bodies, applies metric offsets only to overlays, and re-reads shared caption scale after callbacks. Health foreground reuses the rectangle passed to black fill. Independent original review corrects seed receiver offsets and preserves cached faction versus fresh Console reads.", "Original559F40 forms the four-byte label scratch at[ebp-4] and calls strcpy645460 with the complete StringTable label. Original559FEC/559FF0 subsequently clear bytes2/1;55A075 reads byte0 and55A082 may duplicate a bracket into byte1. Preserve the unchecked full copy, including malformed-label overflow; the native effects on adjacent stack storage remain unverified. Prior deliberate first-character-only safety interpretation is retained in git:e8d406295528953809aa8bf5d2cb929e7fb6659f, not the faithful milestone implementation.", "Preserve existing seed identity and complete original spans. Source binding is not a measured matching or runtime claim."], "reason": "Recover vehicle bodies and overlays using actual sprites, chassis metrics, faction palettes and font storage."}
@@ -207,9 +201,9 @@ int __cdecl veh_draw(Buffer * buffer, int veh_id, int screen_x, int screen_y, in
             return 0;
         }
         set_rectangle_dimensions(&rect, screen_x, screen_y,
-                                 veh_draw_scale(100, zoom), veh_draw_scale(50, zoom));
+                                 zoom_scale(100, zoom), zoom_scale(50, zoom));
         if (!(flags & 0x200)) {
-            base_draw_shrink_rect(&rect, veh_draw_scale(8, zoom), veh_draw_scale(8, zoom));
+            base_draw_shrink_rect(&rect, zoom_scale(8, zoom), zoom_scale(8, zoom));
         } else {
             base_draw_shrink_rect(&rect, -2, -2);
         }
@@ -273,8 +267,8 @@ int __cdecl veh_draw(Buffer * buffer, int veh_id, int screen_x, int screen_y, in
     int x;
     int y;
     if (!(flags & 0x1000)) {
-        x = screen_x + veh_draw_scale(Chassis[category].sprite_flag_x_off[variation], zoom);
-        y = screen_y + veh_draw_scale(Chassis[category].sprite_flag_y_off[variation], zoom);
+        x = screen_x + zoom_scale(Chassis[category].sprite_flag_x_off[variation], zoom);
+        y = screen_y + zoom_scale(Chassis[category].sprite_flag_y_off[variation], zoom);
     } else {
         x = screen_x;
         y = screen_y;
@@ -329,18 +323,18 @@ int __cdecl veh_draw(Buffer * buffer, int veh_id, int screen_x, int screen_y, in
 
         if ((flags & 2) && stack_check(veh_id, 1, -1, -1, -1) > 1) {
             if (Chassis[category].sprite_flag_x_off[variation] > 50) {
-                x -= veh_draw_scale(6, zoom);
+                x -= zoom_scale(6, zoom);
             }
             Sprite *stack_flag = &g_FLAGS_VEH_SPRITES[(faction * 7 + morale) * 2 + exhausted];
             stack_flag->draw_mono(buffer, stack_flag->cTransparentIndex_, x, y,
                                   InfoFactionShadowColors[faction]);
-            x += veh_draw_scale(6, zoom);
+            x += zoom_scale(6, zoom);
         }
         Sprite *flag = &g_FLAGS_VEH_SPRITES[(faction * 7 + morale) * 2 + exhausted];
         flag->draw(buffer, flag->cTransparentIndex_, x, y);
 
-        set_rectangle_dimensions(&rect, x + veh_draw_scale(6, zoom), y + veh_draw_scale(6, zoom),
-                                 veh_draw_scale(2, zoom), veh_draw_scale(21, zoom));
+        set_rectangle_dimensions(&rect, x + zoom_scale(6, zoom), y + zoom_scale(6, zoom),
+                                 zoom_scale(2, zoom), zoom_scale(21, zoom));
         buffer->fill(&rect, 0);
 
         // Health is re-expanded at every use (five proto_power copies,
@@ -365,8 +359,8 @@ int __cdecl veh_draw(Buffer * buffer, int veh_id, int screen_x, int screen_y, in
         buffer->set_text_color(strcmp(Players[faction].search_key, "SPARTANS") == 0 ? 44 : 0, -1, 1, 1);
 
         const int order = range(Vehs[veh_id].order, 0, 29);
-        set_rectangle_dimensions(&rect, x + veh_draw_scale(10, zoom), y + veh_draw_scale(5, zoom),
-                                 veh_draw_scale(11, zoom), veh_draw_scale(14, zoom));
+        set_rectangle_dimensions(&rect, x + zoom_scale(10, zoom), y + zoom_scale(5, zoom),
+                                 zoom_scale(11, zoom), zoom_scale(14, zoom));
 
         // Original 559F40 copies the complete label before the later byte
         // clears. Preserve its unchecked four-byte scratch, not a safe prefix
