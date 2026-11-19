@@ -349,10 +349,12 @@ static inline DWORD probe_time() { return timeGetTime(); }
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x0059F120 0x005A5850 0x005A5860 0x005A178F
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0059F120 0x005A5860 0x005A5878 0x005A23A7
 // The image tests the human/alive mask bytes in place at every site.
-// WORKAROUND(inline): the first five human tests spell faction.h's is_human
-// (same bytes); its expansions are the /Ob2 spend that leaves the FRAME
-// list's get_name a call (0x005A3047), as in the image. Every site as
-// is_human over-spends (two more ~Scroll stages refused, 0.958).
+// WORKAROUND(inline): the first human test spells faction.h's is_human (same
+// bytes); its expansion is the /Ob2 spend that leaves the FRAME list's
+// parse_set/get_name calls (0x005A302B, 0x005A3047) as in the image. Since
+// the 2026-11-19 header batch, two or more is_human sites over-spend: the
+// FRAME popup's start(label) and first item (0x005A2F2B, 0x005A2FBE) are
+// refused where the image expands them.
 #define HUMAN_BIT(f) (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << (f)))
 #define ALIVE_BIT(f) (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << (f)))
 
@@ -406,7 +408,7 @@ int __cdecl probe(int veh_id, int base_id, int veh_id_tgt, int mode) {
          || base_id >= 0 && is_ocean(Bases[base_id].x, Bases[base_id].y))
         && !is_ocean(Vehs[veh_id].x, Vehs[veh_id].y)
         && !has_abil(Vehs[veh_id].proto_id, ABL_AMPHIBIOUS)) {
-        if (faction == ConsoleGlobal.faction_id_ && mode && is_human(faction)
+        if (faction == ConsoleGlobal.faction_id_ && mode && HUMAN_BIT(faction)
             && (NetDaemonNet.action_mode_ & 1)) {
             action = abil_index(ABL_AMPHIBIOUS);
             parse_say(0, Ability[action].name, -1, -1);
@@ -420,7 +422,7 @@ int __cdecl probe(int veh_id, int base_id, int veh_id_tgt, int mode) {
     if (has_abil(Vehs[veh_id].proto_id, ABL_ALGO_ENHANCEMENT)) {
         ProbeHasAlgoEnhancement = 1;
         if (has_project(SP_HUNTER_SEEKER_ALGO, faction_tgt)) {
-            if (!mode && is_human(faction)) {
+            if (!mode && HUMAN_BIT(faction)) {
                 return 0;
             }
             if ((NetDaemonNet.action_mode_ & 2) && mode) {
@@ -430,7 +432,7 @@ int __cdecl probe(int veh_id, int base_id, int veh_id_tgt, int mode) {
             }
         }
     } else if (has_project(SP_HUNTER_SEEKER_ALGO, faction_tgt)) {
-        if (!mode && is_human(faction)) {
+        if (!mode && HUMAN_BIT(faction)) {
             return 0;
         }
         if ((NetDaemonNet.action_mode_ & 2) && mode) {
@@ -463,7 +465,7 @@ int __cdecl probe(int veh_id, int base_id, int veh_id_tgt, int mode) {
     }
 
     if (base_id >= 0) {
-        if (faction == ConsoleGlobal.faction_id_ && is_human(faction)
+        if (faction == ConsoleGlobal.faction_id_ && HUMAN_BIT(faction)
             && (NetDaemonNet.action_mode_ & 1)) {
             parse_says(1, Players[faction_tgt].adj_name_faction, -1, -1);
             popup.start("PROBE", 0x40);
