@@ -303,7 +303,7 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
   // `mov [esi+0x20], eax`, 0x0042A3C1..0x0042A3C6), with no ListBox call in
   // between, so the stores have to be spelled from outside the class. Access
   // is compile-time only; the static_assert pins the layout.
-  uint32_t field_18_;             // 0x18
+  int field_18_;                  // 0x18
  private:
   uint32_t field_1C_;             // 0x1C
  public:
