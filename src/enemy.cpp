@@ -5538,8 +5538,7 @@ L_56ef2f:
                 continue;
             }
             {
-                // The target's value is kept in garrison, as in the site census.
-                garrison = (stack_check(other_id, 2, 6, -1, -1)
+                int val = (stack_check(other_id, 2, 6, -1, -1)
                     + stack_check(other_id, 6, 0x8000, -1, -1)) * 8;
                 if (triad == TRIAD_SEA) {
                     if (is_ocean(tx, ty) && base_who(tx, ty) >= 0) {
@@ -5557,14 +5556,14 @@ L_56ef2f:
                     }
                 }
                 if (!zoc_owner || i < 9) {
-                    garrison += stack_check(other_id, 4, -1, -1, -1);
+                    val += stack_check(other_id, 4, -1, -1, -1);
                 }
                 // slot -0x60 written with x here (spill, see above).
-                if (map_range(x, y, tx, ty) > Rules.artillery_max_rng && garrison > 1) {
-                    garrison = 1;
+                if (map_range(x, y, tx, ty) > Rules.artillery_max_rng && val > 1) {
+                    val = 1;
                 }
-                if (garrison > best_score) {
-                    best_score = garrison;
+                if (val > best_score) {
+                    best_score = val;
                     best_id = i;
                 }
             }
