@@ -1824,9 +1824,12 @@ void ReportWin::draw_labs() {
         int right = bar.right;
         // The range() store of max into bar.right itself is elided by VC6,
         // matching the image's missing store on the `jg` path at 0x4991EF.
-        bar.right = range(bar.left
-                              + (bar.right - bar.left) * accumulated / rate,
-                          bar.left, bar.right);
+        {
+            long adj34 = bar.right;
+            bar.right = range(bar.left
+                    + (adj34 - bar.left) * accumulated / rate,
+                    bar.left, adj34);
+        }
         Buffer::set_clip(&bar);
         {
             // UNSURE: the image swaps bar.right with the saved right edge
@@ -1852,7 +1855,10 @@ void ReportWin::draw_labs() {
             // one (0x499272/0x499275), so the width term is formed first.
             int next = (right - bar.left) * EnergyLabsTotal / 100 / rate;
             bar.left = bar.right;
-            bar.right = range(bar.right + next, bar.right, right);
+            {
+                long adj42 = bar.right;
+                bar.right = range(adj42 + next, adj42, right);
+            }
         }
         Buffer::set_clip(&bar);
         inflate_frame(&bar, 7, 7);
