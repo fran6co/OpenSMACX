@@ -58,6 +58,17 @@ void Vector::close() {
     z_ = 0.0f;
 }
 
+// Component-wise sum, with a separate returned value.
+// ORIGINAL: 0x006343E0 ??HVector@@QAE?AV0@AAV0@@Z 0x006343E0-0x0063442B BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x006343EF-0x00634417 adds right components to receiver components, rounds three float results before copying them through the separate result pointer, returns that pointer in EAX and ends with ret8 at0x00634428. Complete span agrees with src/recovered/units/006343e0.cpp.", "Vector constructor0x006343C0 and veh_scoot array construction0x0055A197-0x0055A1D9 establish the same12-byte class and destructor; its established arithmetic return convention is independently used by veh_scoot at0x0055A82F.", "git:0e184947304cbb843b26264d5145e9b9b452cf16:src/recovered/units/006343e0.cpp", "Historical seed spelling sub_6343e0; current source mapping ??HVector@@QAE?AV0@AAV0@@Z; emitted symbol ??HVector@@QAE?AV0@AAV0@@Z."], "reason": "Vector addition returns a separate three-float value; the first stack argument is the hidden class-result pointer, not a source output parameter. Product ownership replaces the seed scaffold with historical provenance retained in Git. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
+Vector Vector::operator+(Vector &right) {
+    Vector result;
+    result.x_ = right.x_ + x_;
+    result.y_ = right.y_ + y_;
+    result.z_ = right.z_ + z_;
+    return result;
+}
+
 /*
 Purpose: Subtract another vector into a separate output vector.
 Note:    `output` is the hidden return-object slot of `Vector operator-`, not
@@ -83,50 +94,6 @@ Vector Vector::operator-(Vector &right) {
     result.x_ = x_ - right.x_;
     result.y_ = y_ - right.y_;
     result.z_ = z_ - right.z_;
-    return result;
-}
-
-// Component-wise sum, with a separate returned value.
-// ORIGINAL: 0x006343E0 ??HVector@@QAE?AV0@AAV0@@Z 0x006343E0-0x0063442B BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x006343EF-0x00634417 adds right components to receiver components, rounds three float results before copying them through the separate result pointer, returns that pointer in EAX and ends with ret8 at0x00634428. Complete span agrees with src/recovered/units/006343e0.cpp.", "Vector constructor0x006343C0 and veh_scoot array construction0x0055A197-0x0055A1D9 establish the same12-byte class and destructor; its established arithmetic return convention is independently used by veh_scoot at0x0055A82F.", "git:0e184947304cbb843b26264d5145e9b9b452cf16:src/recovered/units/006343e0.cpp", "Historical seed spelling sub_6343e0; current source mapping ??HVector@@QAE?AV0@AAV0@@Z; emitted symbol ??HVector@@QAE?AV0@AAV0@@Z."], "reason": "Vector addition returns a separate three-float value; the first stack argument is the hidden class-result pointer, not a source output parameter. Product ownership replaces the seed scaffold with historical provenance retained in Git. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
-Vector Vector::operator+(Vector &right) {
-    Vector result;
-    result.x_ = right.x_ + x_;
-    result.y_ = right.y_ + y_;
-    result.z_ = right.z_ + z_;
-    return result;
-}
-
-// Cross product this x right; preserve the original floating-point operand order.
-// ORIGINAL: 0x006345E0 ?cross@Vector@@QAE?AV1@AAV1@@Z 0x006345E0-0x00634641 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned original0x006345EF-0x0063462D computes y*right.z-right.y*z, right.x*z-x*right.z, right.y*x-y*right.x using float receiver and argument loads. All input reads precede output copying; EAX receives the result pointer and ret8 ends at0x00634641. Span agrees with src/unrecovered/006345e0.cpp.", "The same Vector constructor/destructor and12-byte array stride are paired in veh_scoot0x0055A197-0x0055A1D9. The neighboring addition and subtraction share its receiver and hidden class-result ABI; the seed synthetic Vec3 output-parameter wrapper is not product design."], "reason": "Vector cross product returns a separate three-float value without mutating either input. Preserve the original multiplication/subtraction operand order and each component rounding; the catalogue output pointer is a hidden class-result slot."}
-Vector Vector::cross(Vector &right) {
-    Vector result;
-    result.x_ = y_ * right.z_ - right.y_ * z_;
-    result.y_ = right.x_ * z_ - x_ * right.z_;
-    result.z_ = right.y_ * x_ - y_ * right.x_;
-    return result;
-}
-
-// Return a normalized value without modifying the receiver. The original
-// comparison copies the input for either unit length or an unordered length;
-// it has no zero-length guard. The original retains the length and reciprocal
-// in x87 registers, rounding the sum for sqrt's double argument and the
-// resulting components for their float storage.
-// ORIGINAL: 0x00634520 ?normalize@Vector@@QAE?AV1@XZ 0x00634520-0x006345DD BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned original0x00634531-0x00634567 computes (x*x+y*y)+z*z with no intermediate float stores, passes a double to sqrt0x00646544, and0x0063456F-0x0063457D tests x87 C3 so equal and unordered lengths copy the input. The other path has no zero guard, multiplies x/y/z by the reciprocal and rounds each result to float. Both returns supply the result pointer in EAX. Complete span agrees with src/unrecovered/00634520.cpp; its synthetic output-parameter body is seed evidence only."], "reason": "The original computes a separate normalized three-float Vector using sqrt and a reciprocal, never mutating its receiver. Normalize is an operation-derived name, not an original debug symbol; the stack result pointer and ret4 indicate a hidden class-value result."}
-// Deleted seed provenance: git:da8a4b7fe3bc3271a694c1c5144e3a52d24ad845:src/unrecovered/00634520.cpp
-Vector Vector::normalize() {
-    Vector result;
-    float sq = x_ * x_ + y_ * y_ + z_ * z_;
-    float length = sqrt(sq);
-    if (length == 1.0f) {
-        return *this;
-    }
-    float reciprocal = 1.0f / length;
-    result.x_ = reciprocal * x_;
-    result.y_ = reciprocal * y_;
-    result.z_ = reciprocal * z_;
     return result;
 }
 
@@ -181,6 +148,67 @@ Vector &Vector::operator-=(Vector &right) {
     return *this;
 }
 
+// ORIGINAL: 0x006344E0 sub_6344e0 0x006344E0-0x00634513 BYTE_EXACT
+// symbol    ??8Vector@@QBE_NABV0@@Z
+// kind      game
+// Original x87 comparisons test C3 only: each component may be equal or
+// unordered, but any ordered mismatch fails. Preserve x/y/z short-circuiting.
+// Explicit self-comparisons retain that relation with other C++ compilers too.
+bool Vector::operator==(const Vector &right) const {
+    if (!(x_ == right.x_ || x_ != x_ || right.x_ != right.x_)) goto unequal;
+    if (!(y_ == right.y_ || y_ != y_ || right.y_ != right.y_)) goto unequal;
+    if (z_ != z_ || right.z_ != right.z_) return true;
+    if (z_ == right.z_) return true;
+unequal:
+    return false;
+}
+
+// Return a normalized value without modifying the receiver. The original
+// comparison copies the input for either unit length or an unordered length;
+// it has no zero-length guard. The original retains the length and reciprocal
+// in x87 registers, rounding the sum for sqrt's double argument and the
+// resulting components for their float storage.
+// ORIGINAL: 0x00634520 ?normalize@Vector@@QAE?AV1@XZ 0x00634520-0x006345DD BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original0x00634531-0x00634567 computes (x*x+y*y)+z*z with no intermediate float stores, passes a double to sqrt0x00646544, and0x0063456F-0x0063457D tests x87 C3 so equal and unordered lengths copy the input. The other path has no zero guard, multiplies x/y/z by the reciprocal and rounds each result to float. Both returns supply the result pointer in EAX. Complete span agrees with src/unrecovered/00634520.cpp; its synthetic output-parameter body is seed evidence only."], "reason": "The original computes a separate normalized three-float Vector using sqrt and a reciprocal, never mutating its receiver. Normalize is an operation-derived name, not an original debug symbol; the stack result pointer and ret4 indicate a hidden class-value result."}
+// Deleted seed provenance: git:da8a4b7fe3bc3271a694c1c5144e3a52d24ad845:src/unrecovered/00634520.cpp
+Vector Vector::normalize() {
+    Vector result;
+    float sq = x_ * x_ + y_ * y_ + z_ * z_;
+    float length = sqrt(sq);
+    if (length == 1.0f) {
+        return *this;
+    }
+    float reciprocal = 1.0f / length;
+    result.x_ = reciprocal * x_;
+    result.y_ = reciprocal * y_;
+    result.z_ = reciprocal * z_;
+    return result;
+}
+
+// Cross product this x right; preserve the original floating-point operand order.
+// ORIGINAL: 0x006345E0 ?cross@Vector@@QAE?AV1@AAV1@@Z 0x006345E0-0x00634641 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original0x006345EF-0x0063462D computes y*right.z-right.y*z, right.x*z-x*right.z, right.y*x-y*right.x using float receiver and argument loads. All input reads precede output copying; EAX receives the result pointer and ret8 ends at0x00634641. Span agrees with src/unrecovered/006345e0.cpp.", "The same Vector constructor/destructor and12-byte array stride are paired in veh_scoot0x0055A197-0x0055A1D9. The neighboring addition and subtraction share its receiver and hidden class-result ABI; the seed synthetic Vec3 output-parameter wrapper is not product design."], "reason": "Vector cross product returns a separate three-float value without mutating either input. Preserve the original multiplication/subtraction operand order and each component rounding; the catalogue output pointer is a hidden class-result slot."}
+Vector Vector::cross(Vector &right) {
+    Vector result;
+    result.x_ = y_ * right.z_ - right.y_ * z_;
+    result.y_ = right.x_ * z_ - x_ * right.z_;
+    result.z_ = right.y_ * x_ - y_ * right.x_;
+    return result;
+}
+
+
+// ORIGINAL: 0x00634650 sub_634650 0x00634650-0x0063466B BYTE_EXACT
+// symbol    ?dot@Vector@@QBEMABV1@@Z
+// kind      game
+// The original accumulates z, then y, then x without intermediate stores.
+// dot and const qualification describe observed behavior, not debug symbols.
+float Vector::dot(const Vector &right) const {
+    const float rz = right.z_;
+    const float ry = right.y_;
+    const float rx = right.x_;
+    return (rz * z_ + ry * y_) + rx * x_;
+}
+
 /*
 Purpose: Scale this vector and copy the updated components into an output
          vector.
@@ -206,34 +234,6 @@ Vector Vector::scale(float scalar) {
     y_ *= scalar;
     z_ *= scalar;
     return *this;
-}
-
-
-// ORIGINAL: 0x00634650 sub_634650 0x00634650-0x0063466B BYTE_EXACT
-// symbol    ?dot@Vector@@QBEMABV1@@Z
-// kind      game
-// The original accumulates z, then y, then x without intermediate stores.
-// dot and const qualification describe observed behavior, not debug symbols.
-float Vector::dot(const Vector &right) const {
-    const float rz = right.z_;
-    const float ry = right.y_;
-    const float rx = right.x_;
-    return (rz * z_ + ry * y_) + rx * x_;
-}
-
-// ORIGINAL: 0x006344E0 sub_6344e0 0x006344E0-0x00634513 BYTE_EXACT
-// symbol    ??8Vector@@QBE_NABV0@@Z
-// kind      game
-// Original x87 comparisons test C3 only: each component may be equal or
-// unordered, but any ordered mismatch fails. Preserve x/y/z short-circuiting.
-// Explicit self-comparisons retain that relation with other C++ compilers too.
-bool Vector::operator==(const Vector &right) const {
-    if (!(x_ == right.x_ || x_ != x_ || right.x_ != right.x_)) goto unequal;
-    if (!(y_ == right.y_ || y_ != y_ || right.y_ != right.y_)) goto unequal;
-    if (z_ != z_ || right.z_ != right.z_) return true;
-    if (z_ == right.z_) return true;
-unequal:
-    return false;
 }
 
 // The 3x3 numerical members follow in the same original object: the image
@@ -497,39 +497,35 @@ Matrix3 &Matrix3::subtract_assign(const Matrix3 *other) {
 }
 
 /*
-Historical explanation of the prior untyped field-accessor scaffold follows; it does not establish the original class owner or this chosen source representation.
-Purpose: Set 9 field(s) to constants.
-         Emitted by tools/generate_field_accessors.py from
-
-             mov eax, ecx / mov edx, 0x3f800000 / xor ecx, ecx / mov dword ptr [eax], edx / mov dword ptr [eax + 4], ecx / mov dword ptr [eax + 8], ecx / mov dword ptr [eax + 0xc], ecx / mov dword ptr [eax + 0x10], edx / mov dword ptr [eax + 0x14], ecx / mov dword ptr [eax + 0x18], ecx / mov dword ptr [eax + 0x1c], ecx / mov dword ptr [eax + 0x20], edx / ret
-
-         The name is the ADDRESS, not an invention, and `self` is a void
-         pointer because this body needs `this` to be nothing more than a
-         pointer and an offset - the class it belongs to is not established.
-         The adapter declares 0 stack dword(s) so it
-         cleans 0 bytes, taken from the body's own `ret` -
-         the only statement of this function's arity that exists, since it has
-         no mangled name. Declaring fewer would leave them on the caller's
-         stack.
-// Structural debt: observed cells[0..8] only; original class, complete extent,
-// containing owner, lifecycle, callers, TU, and x87 precision remain unknown.
+// Structural debt: exact nine-float receiver window only; no original class,
+// full extent, lifetime, or x87 equivalence asserted.
 // RECOVERY_ROLE: SCAFFOLD Bounded numerical receiver view only; shared original object ownership, containing class, full extent, callers and lifetime remain unproved. Source consolidation and complete arithmetic bodies do not resolve this structural obligation.
-// ORIGINAL: 0x00634B70 sub_634b70 0x00634B70-0x00634B94 BYTE_EXACT
-// symbol    ?write_identity@Matrix3@@QAEPAU1@XZ
-// size      36 bytes
-// prototype
-// callers   0   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-Return Value: the value described above
+// ORIGINAL: 0x00634920 sub_634920 0x00634920-0x00634975 BYTE_EXACT
+// Historical source symbol hypothesis: ?equals@Mat3@@QAE_NPBM@Z
+// symbol    ?equals@Matrix3@@QAE_NPBM@Z
+// LEVER: two indexed reads, not a hoisted difference. The image keeps `this`
+// and `other` apart and re-derives their difference inside the outer
+// loop (`sub edi, ebp` at 0x634939, one per row); spelling that
+// difference out as a local lets /O2 prove it loop-invariant and hoist
+// it past the loop it belongs to, which is 69 bytes against 85.
+Return Value: true when all cell pairs compare equal under the native predicate.
+The pinned VC6/x87 lowering accepts unordered NaN pairs; ordinary host C++ !=
+rejects them, so host and native NaN behavior is characterized separately.
 Status: Complete
 */
-Matrix3 *Matrix3::write_identity() {
-    cells[0] = 1.0f; cells[1] = 0.0f; cells[2] = 0.0f;
-    cells[3] = 0.0f; cells[4] = 1.0f; cells[5] = 0.0f;
-    cells[6] = 0.0f; cells[7] = 0.0f; cells[8] = 1.0f;
-    return this;
+bool Matrix3::equals(const float *other) {
+    const float *mine = cells;
+    for (int row = 0; row < 3; row++) {
+        for (int col = 0; col < 3; col++) {
+            // The pinned VC6 FCOMP lowering accepts unordered NaN pairs with
+            // masked exceptions. Standard host C++ != rejects them instead.
+            // Signaling-NaN, unmasked exceptions and x87 status remain unknown.
+            if (mine[row * 3 + col] != other[row * 3 + col]) {
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 /*
@@ -570,38 +566,6 @@ Matrix3 Matrix3::multiply(const Matrix3 *other) {
         }
     }
     return result;
-}
-
-/*
-// Structural debt: exact nine-float receiver window only; no original class,
-// full extent, lifetime, or x87 equivalence asserted.
-// RECOVERY_ROLE: SCAFFOLD Bounded numerical receiver view only; shared original object ownership, containing class, full extent, callers and lifetime remain unproved. Source consolidation and complete arithmetic bodies do not resolve this structural obligation.
-// ORIGINAL: 0x00634920 sub_634920 0x00634920-0x00634975 BYTE_EXACT
-// Historical source symbol hypothesis: ?equals@Mat3@@QAE_NPBM@Z
-// symbol    ?equals@Matrix3@@QAE_NPBM@Z
-// LEVER: two indexed reads, not a hoisted difference. The image keeps `this`
-// and `other` apart and re-derives their difference inside the outer
-// loop (`sub edi, ebp` at 0x634939, one per row); spelling that
-// difference out as a local lets /O2 prove it loop-invariant and hoist
-// it past the loop it belongs to, which is 69 bytes against 85.
-Return Value: true when all cell pairs compare equal under the native predicate.
-The pinned VC6/x87 lowering accepts unordered NaN pairs; ordinary host C++ !=
-rejects them, so host and native NaN behavior is characterized separately.
-Status: Complete
-*/
-bool Matrix3::equals(const float *other) {
-    const float *mine = cells;
-    for (int row = 0; row < 3; row++) {
-        for (int col = 0; col < 3; col++) {
-            // The pinned VC6 FCOMP lowering accepts unordered NaN pairs with
-            // masked exceptions. Standard host C++ != rejects them instead.
-            // Signaling-NaN, unmasked exceptions and x87 status remain unknown.
-            if (mine[row * 3 + col] != other[row * 3 + col]) {
-                return false;
-            }
-        }
-    }
-    return true;
 }
 
 /*
@@ -662,4 +626,40 @@ Matrix3 Matrix3::scaled(float scale) {
         }
     }
     return result;
+}
+
+/*
+Historical explanation of the prior untyped field-accessor scaffold follows; it does not establish the original class owner or this chosen source representation.
+Purpose: Set 9 field(s) to constants.
+         Emitted by tools/generate_field_accessors.py from
+
+             mov eax, ecx / mov edx, 0x3f800000 / xor ecx, ecx / mov dword ptr [eax], edx / mov dword ptr [eax + 4], ecx / mov dword ptr [eax + 8], ecx / mov dword ptr [eax + 0xc], ecx / mov dword ptr [eax + 0x10], edx / mov dword ptr [eax + 0x14], ecx / mov dword ptr [eax + 0x18], ecx / mov dword ptr [eax + 0x1c], ecx / mov dword ptr [eax + 0x20], edx / ret
+
+         The name is the ADDRESS, not an invention, and `self` is a void
+         pointer because this body needs `this` to be nothing more than a
+         pointer and an offset - the class it belongs to is not established.
+         The adapter declares 0 stack dword(s) so it
+         cleans 0 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
+// Structural debt: observed cells[0..8] only; original class, complete extent,
+// containing owner, lifecycle, callers, TU, and x87 precision remain unknown.
+// RECOVERY_ROLE: SCAFFOLD Bounded numerical receiver view only; shared original object ownership, containing class, full extent, callers and lifetime remain unproved. Source consolidation and complete arithmetic bodies do not resolve this structural obligation.
+// ORIGINAL: 0x00634B70 sub_634b70 0x00634B70-0x00634B94 BYTE_EXACT
+// symbol    ?write_identity@Matrix3@@QAEPAU1@XZ
+// size      36 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+Return Value: the value described above
+Status: Complete
+*/
+Matrix3 *Matrix3::write_identity() {
+    cells[0] = 1.0f; cells[1] = 0.0f; cells[2] = 0.0f;
+    cells[3] = 0.0f; cells[4] = 1.0f; cells[5] = 0.0f;
+    cells[6] = 0.0f; cells[7] = 0.0f; cells[8] = 1.0f;
+    return this;
 }
