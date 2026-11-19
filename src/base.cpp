@@ -729,7 +729,7 @@ void __cdecl base_mark(int base_id) {
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x004E4430 0x004E46C4 0x004E46F4 0x004E45DF
 /*
 Purpose: Calculate the cost factor for the specified faction and resource type. Optional base param.
-// ORIGINAL: 0x004E4430 ?cost_factor@@YAHHHH@Z 0x004E4430-0x004E46C2
+// ORIGINAL: 0x004E4430 ?cost_factor@@YAHHHH@Z 0x004E4430-0x004E46C2 BYTE_EXACT
 // TRIED: call count already agrees (call_diff: 0 disagree, both call
 // bitmask and 0x539c00 through has_fac_built_call/great_satan), so the
 // 9/251 MISMATCH is not a call-shape defect. The image's `is_human(faction_id)`
