@@ -1952,20 +1952,6 @@ int __cdecl pop_expire() {
 // Original 0x005398F5/0x00539904 and 0x00539942/0x00539951 bracket wait_loop with 1/0; start only.
 // RECOVERY_OBJECT: v1 0x0093FAC4 ?PopupWaitActive@@3HA
 int PopupWaitActive;  // 0x0093FAC4
-
-
-// Shared diplomacy evaluation state. Neutral names retain independently
-// observed original slots until their meanings can be named conclusively.
-// Original faction-indexed reads establish the known eight game slots;
-// complete physical allocation is unresolved, hence a start-only binding.
-// RECOVERY_OBJECT: v1 0x0093F678 ?FactionDiplomacyFlags@@3PAIA
-uint32_t FactionDiplomacyFlags[MaxPlayerNum];
-// setup_game clears exactly 64 DWORDs; DiploWin::exec sets a pair flag at
-// faction_id_with_ * 8 + faction_id_. net_control releases one current-faction
-// row. Keep the two faction indices distinct; this is shared state, not a
-// member of whichever dialogue happened to discover the pair.
-// RECOVERY_OBJECT: v2 0x0093F698 0x0093F798 ?PendingDiplomacyFlags@@3PAY07IA 0x005B3920
-uint32_t PendingDiplomacyFlags[MaxPlayerNum][MaxPlayerNum];
 // Original region walk clears indices1..127, deliberately retaining index0.
 // RECOVERY_OBJECT: v1 0x0093F818 ?DiplomacyRegionMask@@3PAIA
 uint32_t DiplomacyRegionMask[128];

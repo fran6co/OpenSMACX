@@ -24,6 +24,28 @@
 #include <string.h>
 #include "caviar_projection_state.h"
 
+// 0x009BE6BC. The render record's colour table, copied to where the helpers
+// read it. 0x639EB2 stores it; every _SELFMOD patcher entry (0x6646FC,
+// 0x664D52, ...) loads it first.
+// RECOVERY_OBJECT: v1 0x009BE6BC ?vox_active_colour_table_@@3PAXA
+void *vox_active_colour_table_ = 0;  // 0x009BE6BC
+// 0x009BE6C0: the record's shadow table, copied where the shadow kernels read
+// it (image 0x63F0B4 `mov eax,[ebx+0x54]; mov [0x9be6c0],eax`). Its only
+// in-image reference outside _SELFMOD is this store. Defined beside its only
+// C writer until its owner is settled (vox_active_colour_table_ 0x9BE6BC
+// lives in caviar.cpp).
+// RECOVERY_OBJECT: v1 0x009BE6C0 ?vox_active_shadow_table_@@3PAXA
+void *vox_active_shadow_table_ = 0;  // 0x009BE6C0
+// THE SELF-MODIFYING RENDERERS' SHARED STATE. The `_SELFMOD` MASM modules
+// (src/caviar_part_*.asm, src/caviar_shadow_*.asm) read and patch through
+// these, so they have external linkage: an assembler cannot name a symbol in
+// an anonymous namespace.
+
+// The draw currently accesses the 24-byte x86 window at 0x009BE6A4
+// (CaviarDrawSetupPointerStorageCandidate, src/caviar/vox_engine.h).
+// RECOVERY_OBJECT: v1 0x009BE6A4 ?vox_setup_copy_@@3UCaviarDrawSetupPointerStorageCandidate@@A
+CaviarDrawSetupPointerStorageCandidate vox_setup_copy_;
+
 
 // These three contiguous dword slots form a useful typed source grouping.
 // All four blitters share the destination cursor. Only the transparent and

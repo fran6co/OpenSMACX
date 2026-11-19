@@ -127,6 +127,42 @@ int __cdecl veh_init(int prototype, int faction, int x, int y);
 #include <cstdlib>
 #include <cstring>
 
+// THE IFACE.PCX COLOUR TABLE. load_interface samples pixel column 0x3A3 of
+// iface.pcx every eleven rows into ten consecutive ints at 0x0068A5A0; its
+// walk is one pointer with a signed `cmp reg, 0x68a5c8; jl` end test, i.e. an
+// int-indexed int[10]. The .data initializers are the defaults before the
+// file loads. Popup theme, MessageWin and diplomacy names are its elements
+// (game.h, messagewin.h, diplowin.h); [5] has no reader in the image.
+// RECOVERY_OBJECT: v2 0x0068A5A0 0x0068A5C8 ?IfaceColorTable@@3PAHA 0x00455610
+// RECOVERY_OBJECT: v3 0x0068A5A0 ?PopupThemeWindowColor@@3HA member ?IfaceColorTable@@3PAHA [0]
+// RECOVERY_OBJECT: v3 0x0068A5A4 0x0068A5A8 ?MessageWinTextColor@@3HA 0x00471FD0 member ?IfaceColorTable@@3PAHA [1]
+// RECOVERY_OBJECT: v3 0x0068A5A8 ?PopupThemeButtonColor@@3HA member ?IfaceColorTable@@3PAHA [2]
+// RECOVERY_OBJECT: v3 0x0068A5AC ?PopupThemeTextShadow@@3HA member ?IfaceColorTable@@3PAHA [3]
+// RECOVERY_OBJECT: v3 0x0068A5B0 0x0068A5B4 ?MessageWinTextBackground@@3HA 0x00471FD0 member ?IfaceColorTable@@3PAHA [4]
+// RECOVERY_OBJECT: v3 0x0068A5B4 ?PopupThemeColorB4@@3HA member ?IfaceColorTable@@3PAHA [5]
+// RECOVERY_OBJECT: v3 0x0068A5B8 ?PopupThemeSurfaceColor@@3HA member ?IfaceColorTable@@3PAHA [6]
+// RECOVERY_OBJECT: v3 0x0068A5BC ?PopupThemeBevelUpper@@3HA member ?IfaceColorTable@@3PAHA [7]
+// RECOVERY_OBJECT: v3 0x0068A5C0 ?PopupThemeBevelLower@@3HA member ?IfaceColorTable@@3PAHA [8]
+// RECOVERY_OBJECT: v3 0x0068A5C4 0x0068A5C8 ?DiploKnownTechColor@@3HA 0x00443170 member ?IfaceColorTable@@3PAHA [9]
+int IfaceColorTable[10] = {0x62, 0xE7, 0xE8, 0xE9, 0x91, 0x94, 0x24, 0x1E, 0x56, 50};
+// RECOVERY_OBJECT: v2 0x00939EDC 0x00939EE0 ?MapPanelDirtyMask@@3IA 0x0046FA20
+uint32_t MapPanelDirtyMask;
+// Shared information-panel extent, immediately preceding WorldMapBounds in
+// the original zero-filled layout block. The four stores at 0x00458D8A-DA9
+// establish RECT field order, and InfoWin::init consumes the same extent.
+// RECOVERY_OBJECT: v2 0x00939EF8 0x00939F08 ?InfoPanelBounds@@3UtagRECT@@A 0x00458D60
+RECT InfoPanelBounds;
+// Four consecutive original dwords at 0x00939F08..14 are written by
+// WorldWin::UNK1 and read as one RECT by MapWin::init. This interval lies in
+// the pinned image's zero-fill data tail; the original starts all zero.
+// RECOVERY_OBJECT: v2 0x00939F08 0x00939F18 ?WorldMapBounds@@3UtagRECT@@A 0x004C3A70
+
+RECT WorldMapBounds;
+// The original layout writer MapWin_UNK5 and mode-zero initializer share
+// these two 16-byte records and their accumulated dirty bits.
+// RECOVERY_OBJECT: v2 0x00939F48 0x00939F68 ?MapPanelRects@@3PAUtagRECT@@A 0x0046FA20
+RECT MapPanelRects[2];
+
 // RECOVERY_OBJECT: v1 0x00915650 ?GoToSourceY@@3HA
 int GoToSourceY = 0;
 // Original go_to stores source X/Y at 4D6E01/4D6E0D; goto_routine
@@ -5262,12 +5298,7 @@ int ConsoleInterludeSelection = 0;
 // Key-cycle dword read/written at 0x5185CE-0x518674, initially -2 in the pinned PE. Adjacent DiploKnownTechColor is independent; full allocation and lifetime remain unverified.
 // RECOVERY_OBJECT: v1 0x0068A5C8 ?ConsoleKeyCycleState@@3HA
 int ConsoleKeyCycleState = -2;
-
-
-// Shared no-map interruption state observed in menu/key input and FLIC timer.
-// Start-only binding: original allocation extent and lifetime remain unverified.
-// RECOVERY_OBJECT: v1 0x0093A944 ?ConsoleNoMapOverrideLatch@@3HA
-int ConsoleNoMapOverrideLatch;
+extern int ConsoleNoMapOverrideLatch;
 
 extern int ConsoleNoMapOverrideLatch;
 extern int __cdecl pop_wait();

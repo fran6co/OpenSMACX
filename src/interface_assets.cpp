@@ -202,24 +202,6 @@ static void extract_interface_box_sprite(Sprite &sprite, int x, int y, int width
 // selected cohort order agrees with the pinned receiver sequence; full
 // linked retention, array effects and runtime acceptance remain separate.
 extern float PrefWinGammaCorrection; // prefwin.cpp owns original6846A8
-// THE IFACE.PCX COLOUR TABLE. load_interface samples pixel column 0x3A3 of
-// iface.pcx every eleven rows into ten consecutive ints at 0x0068A5A0; its
-// walk is one pointer with a signed `cmp reg, 0x68a5c8; jl` end test, i.e. an
-// int-indexed int[10]. The .data initializers are the defaults before the
-// file loads. Popup theme, MessageWin and diplomacy names are its elements
-// (game.h, messagewin.h, diplowin.h); [5] has no reader in the image.
-// RECOVERY_OBJECT: v2 0x0068A5A0 0x0068A5C8 ?IfaceColorTable@@3PAHA 0x00455610
-// RECOVERY_OBJECT: v3 0x0068A5A0 ?PopupThemeWindowColor@@3HA member ?IfaceColorTable@@3PAHA [0]
-// RECOVERY_OBJECT: v3 0x0068A5A4 0x0068A5A8 ?MessageWinTextColor@@3HA 0x00471FD0 member ?IfaceColorTable@@3PAHA [1]
-// RECOVERY_OBJECT: v3 0x0068A5A8 ?PopupThemeButtonColor@@3HA member ?IfaceColorTable@@3PAHA [2]
-// RECOVERY_OBJECT: v3 0x0068A5AC ?PopupThemeTextShadow@@3HA member ?IfaceColorTable@@3PAHA [3]
-// RECOVERY_OBJECT: v3 0x0068A5B0 0x0068A5B4 ?MessageWinTextBackground@@3HA 0x00471FD0 member ?IfaceColorTable@@3PAHA [4]
-// RECOVERY_OBJECT: v3 0x0068A5B4 ?PopupThemeColorB4@@3HA member ?IfaceColorTable@@3PAHA [5]
-// RECOVERY_OBJECT: v3 0x0068A5B8 ?PopupThemeSurfaceColor@@3HA member ?IfaceColorTable@@3PAHA [6]
-// RECOVERY_OBJECT: v3 0x0068A5BC ?PopupThemeBevelUpper@@3HA member ?IfaceColorTable@@3PAHA [7]
-// RECOVERY_OBJECT: v3 0x0068A5C0 ?PopupThemeBevelLower@@3HA member ?IfaceColorTable@@3PAHA [8]
-// RECOVERY_OBJECT: v3 0x0068A5C4 0x0068A5C8 ?DiploKnownTechColor@@3HA 0x00443170 member ?IfaceColorTable@@3PAHA [9]
-int IfaceColorTable[10] = {0x62, 0xE7, 0xE8, 0xE9, 0x91, 0x94, 0x24, 0x1E, 0x56, 50};
 
 // Typed asset storage follows its pinned CRT receiver order. This is
 // source correspondence, not proof of historical filenames or full-link order.
@@ -2347,6 +2329,74 @@ extern int DiploScratchFA98;  // Diplomacy producer storage defined below.
 // symbol    _$E708
 #include "stdafx.h"
 #include "texture.h"
+
+// 0x00684730 - the 53-entry coast-mask table draw_coast's remap comes from
+// (stride 8, one row per corner code). Values above 1 select bytes at
+// TerrainCoastPalette[value + 2]; code 7 repeats palette[7..4] three times.
+// load_terrain publishes this shared twelve-byte owner. The deep-radar walk
+// uses the existing Chassis[].triad member, not a separate character table.
+// 465379 selects a column using the three-bit coast mask, then advances
+// eight bytes for each of 53 remap entries. Values above 1 select the
+// separately mutable coast palette; this table does not own that palette.
+// The table lies in this unit's .data run (after TerrainCoastRemapSource
+// 0x006846F8, both neighbours are this unit's) and in .data, not .rdata, while
+// its only reader is mapwin.cpp's draw_coast: an external, non-const object.
+// RECOVERY_OBJECT: v4 0x00684730 0x006848D8 _CoastMaskTable 0x004632D0 target ?CoastMaskTable@@3PAY07EA
+unsigned char CoastMaskTable[53][8] = {
+    {0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 1, 0, 1, 0, 1, 0, 1},
+    {0, 1, 0, 1, 0, 1, 1, 1},
+    {0, 0, 0, 0, 1, 1, 1, 1},
+    {0, 0, 0, 1, 1, 1, 1, 1},
+    {0, 0, 0, 0, 0, 0, 0, 1},
+    {0, 5, 0, 5, 0, 5, 0, 5},
+    {0, 4, 0, 4, 0, 4, 0, 4},
+    {0, 3, 0, 3, 0, 3, 0, 3},
+    {0, 2, 0, 1, 0, 2, 0, 2},
+    {0, 0, 0, 0, 5, 5, 5, 5},
+    {0, 0, 0, 0, 4, 4, 4, 4},
+    {0, 0, 0, 0, 3, 3, 3, 3},
+    {0, 0, 0, 0, 2, 2, 2, 2},
+    {0, 0, 0, 0, 0, 0, 0, 5},
+    {0, 0, 0, 0, 0, 0, 0, 4},
+    {0, 0, 0, 0, 0, 0, 0, 3},
+    {0, 0, 0, 0, 0, 0, 0, 2},
+    {0, 5, 0, 5, 0, 5, 0, 1},
+    {0, 4, 0, 4, 0, 4, 0, 1},
+    {0, 3, 0, 3, 0, 3, 0, 1},
+    {0, 2, 0, 2, 0, 2, 0, 1},
+    {0, 0, 0, 0, 5, 5, 5, 1},
+    {0, 0, 0, 0, 4, 4, 4, 1},
+    {0, 0, 0, 0, 3, 3, 3, 1},
+    {0, 0, 0, 0, 2, 2, 2, 1},
+    {0, 0, 0, 5, 0, 0, 5, 1},
+    {0, 0, 0, 4, 0, 0, 4, 1},
+    {0, 0, 0, 3, 0, 0, 3, 1},
+    {0, 0, 0, 2, 0, 0, 2, 1},
+    {0, 1, 0, 1, 0, 1, 5, 1},
+    {0, 1, 0, 1, 0, 1, 4, 1},
+    {0, 1, 0, 1, 0, 1, 3, 1},
+    {0, 1, 0, 1, 0, 1, 2, 1},
+    {0, 0, 0, 5, 1, 1, 1, 1},
+    {0, 0, 0, 4, 1, 1, 1, 1},
+    {0, 0, 0, 3, 1, 1, 1, 1},
+    {0, 0, 0, 2, 1, 1, 1, 1},
+    {0, 5, 0, 1, 0, 5, 1, 1},
+    {0, 4, 0, 1, 0, 4, 1, 1},
+    {0, 3, 0, 1, 0, 3, 1, 1},
+    {0, 2, 0, 1, 0, 2, 1, 1},
+    {0, 0, 0, 1, 5, 5, 1, 1},
+    {0, 0, 0, 1, 4, 4, 1, 1},
+    {0, 0, 0, 1, 3, 3, 1, 1},
+    {0, 0, 0, 1, 2, 2, 1, 1},
+    {0, 5, 0, 1, 2, 0, 1, 1},
+    {0, 4, 0, 1, 3, 0, 1, 1},
+    {0, 3, 0, 1, 4, 0, 1, 1},
+    {0, 5, 5, 1, 5, 0, 1, 1},
+    {0, 4, 4, 1, 4, 0, 1, 1},
+    {0, 2, 0, 1, 0, 3, 1, 1},
+    {0, 0, 0, 1, 5, 3, 1, 1},
+};
 
 // Mutable preference state begins at 1.0; the 100.0 factor converts the
 // stored gamma scalar to the integer value written to the preferences file.

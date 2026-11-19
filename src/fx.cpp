@@ -40,6 +40,10 @@
 #include "map.h"
 #include "mapwin.h"
 
+// The diplomacy flag word at 0x0074DA9C.
+// RECOVERY_OBJECT: v2 0x0074DA9C 0x0074DAA0 ?DiploRedrawFlag@@3HA 0x0055B870
+int DiploRedrawFlag;  // 0x0074DA9C
+
 // This method belongs to the same Sound compiler context. Its original
 // out-of-line call boundaries remain matching obligations; current source
 // placement does not establish an original object-module boundary.

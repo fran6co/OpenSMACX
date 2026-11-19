@@ -1091,6 +1091,17 @@ void vox_engine_close() {
 #include "caviar.h"
 #include <string.h>
 
+// This mutable global starts with native rows (1,0,.1),(0,1,.1),(0,0,0).
+// The builder changes cells [0][2] and [2][2], leaving [1][2] untouched.
+// RECOVERY_OBJECT: v1 0x00698A78 ?CaviarProjectionShadowBasis@@3UVOX_Matrix@@A
+VOX_Matrix CaviarProjectionShadowBasis = {
+  {
+    {1.0f, 0.0f, 0.1f},
+    {0.0f, 1.0f, 0.1f},
+    {0.0f, 0.0f, 0.0f}
+  }
+}; // 0x00698A78
+
 // Shared Caviar message service. Its callers retain a real call boundary;
 // the grouping and filename do not establish an original translation unit.
 

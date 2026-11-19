@@ -47,11 +47,6 @@ void FactionTreatyHeaderPad11();
 void __cdecl interlude(int id, char *filename, int arg3, int arg4);
 
 
-// The diplomacy flag word at 0x0074DA9C.
-// RECOVERY_OBJECT: v2 0x0074DA9C 0x0074DAA0 ?DiploRedrawFlag@@3HA 0x0055B870
-int DiploRedrawFlag;  // 0x0074DA9C
-
-
 /*
 Purpose: Clear `treaty` in the diplomatic status word between two factions, both
          directions of the pair, and take the side effects the clear implies:

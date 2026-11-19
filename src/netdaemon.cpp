@@ -2957,6 +2957,24 @@ void NetDaemon::end_of_event(int faction_id, int turn_value) {
 
 #include "netdaemon_message_record.h"
 
+// Shared diplomacy evaluation state. Neutral names retain independently
+// observed original slots until their meanings can be named conclusively.
+// Original faction-indexed reads establish the known eight game slots;
+// complete physical allocation is unresolved, hence a start-only binding.
+// RECOVERY_OBJECT: v1 0x0093F678 ?FactionDiplomacyFlags@@3PAIA
+uint32_t FactionDiplomacyFlags[MaxPlayerNum];
+// setup_game clears exactly 64 DWORDs; DiploWin::exec sets a pair flag at
+// faction_id_with_ * 8 + faction_id_. net_control releases one current-faction
+// row. Keep the two faction indices distinct; this is shared state, not a
+// member of whichever dialogue happened to discover the pair.
+// RECOVERY_OBJECT: v2 0x0093F698 0x0093F798 ?PendingDiplomacyFlags@@3PAY07IA 0x005B3920
+uint32_t PendingDiplomacyFlags[MaxPlayerNum][MaxPlayerNum];
+// save_daemon clears this word on its rules/PBEM paths, or copies NetDaemon's
+// player count on its network path before game_data transfers its four bytes.
+// It begins after PendingDiplomacyFlags, not inside that matrix or NetDaemon.
+// RECOVERY_OBJECT: v2 0x0093F798 0x0093F79C ?GameDataPlayerCountSnapshot@@3HA 0x005A94F0
+int GameDataPlayerCountSnapshot;
+
 // The file-backed palette defaults (0x0068A5A0..C0) are elements of
 // interface_assets.cpp's IfaceColorTable; their identities moved there.
 

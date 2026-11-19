@@ -40,6 +40,31 @@ uint32_t BaseButtonA98Default;  // 0x009B8E30
 #include <new>
 #include "win_pointer.h"
 
+// THE DIALOG DEFAULTS TABLE, the image's .data run 0x0069704C..0x006970DC,
+// defined with the shipped values: BaseButton's bevel color set (0x4C..0x5C,
+// which its ctor reads into color_/bevel_upper_/bevel_lower_/
+// bevel_thickness_), the dimmed "..." text color pair (0x90/0x94), the
+// twelve text-color slots (0x9C..0xD8 region - CheckBox/RadioButton/
+// SpriteBox/Dialog read these for their text_color_ members), and the
+// geometry/flag defaults (0x98 and 0xA0..0xDC). Index = (address -
+// 0x0069704C) / 4; slot 36 also supplies the default Dialog style word.
+//
+// WRITABLE, and the const it used to carry was a modelling lie: the image's
+// set_def_dialog_text_color (0x00609D50, homed just below) STORES the twelve
+// text-color slots 24..35 at runtime. Reads elsewhere are unchanged by the
+// missing const; the ctor's BYTE_EXACT claim re-measured clean on it.
+// RECOVERY_OBJECT: v2 0x0069704C 0x006970E0 ?DialogDefaults@@3PAIA 0x0058E360
+uint32_t DialogDefaults[37] = {
+    247, 7, 248, 2, 125, 0,
+    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+    1, 1, 1, 1, 1, 1,
+    0x002E2E2E, 0x002E2E2E,
+    320, 6, 1, 12, 255, 0,
+    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+    1, 1, 1, 1, 1, 1,
+    3,
+};
+
 // The pinned constructor stores these starts at 0x00606F77/7D; its matching COFF relocations at +0x49/+0x53 name the Win/Buffer tables.
 // RECOVERY_GENERATED: v1 vtable 0x00670290 0x006703FC ??_7BaseButton@@6BWin@@@ 0x00606F30
 // RECOVERY_GENERATED: v1 vtable 0x00670288 ? ??_7BaseButton@@6BBuffer@@@ 0x00606F30

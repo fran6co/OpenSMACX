@@ -164,6 +164,11 @@ void TurnDeclFnPad47();
 void TurnDeclFnPad48();
 void TurnDeclFnPad49();
 
+// Shared no-map interruption state observed in menu/key input and FLIC timer.
+// Start-only binding: original allocation extent and lifetime remain unverified.
+// RECOVERY_OBJECT: v1 0x0093A944 ?ConsoleNoMapOverrideLatch@@3HA
+int ConsoleNoMapOverrideLatch;
+
 // do_checksums(4), original 51E760, copies 0x54 bytes from its calculated
 // vector; net_upkeep 5296E6..5296F4 sends the same 21 dwords.
 // Initial image storage is zero. The producer remains unfinished.

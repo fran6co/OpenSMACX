@@ -669,12 +669,7 @@ void InfoWin::setup_text() {
         }
     }
 }
-
-// Shared information-panel extent, immediately preceding WorldMapBounds in
-// the original zero-filled layout block. The four stores at 0x00458D8A-DA9
-// establish RECT field order, and InfoWin::init consumes the same extent.
-// RECOVERY_OBJECT: v2 0x00939EF8 0x00939F08 ?InfoPanelBounds@@3UtagRECT@@A 0x00458D60
-RECT InfoPanelBounds;
+extern RECT InfoPanelBounds;
 
 // The original compares the cached interface width at 0x00939E5C, not the
 // live Win screen width, and reads the GraphicWin virtual base's DIB height

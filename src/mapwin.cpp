@@ -211,13 +211,6 @@ MapWinSlots MapWinTable;
 // RECOVERY_OBJECT: v2 0x007D3C60 0x007D4060 ?MapWinStartupWords@@3PAHA 0x00471030
 int MapWinStartupWords[256];
 
-// The original layout writer MapWin_UNK5 and mode-zero initializer share
-// these two 16-byte records and their accumulated dirty bits.
-// RECOVERY_OBJECT: v2 0x00939F48 0x00939F68 ?MapPanelRects@@3PAUtagRECT@@A 0x0046FA20
-RECT MapPanelRects[2];
-// RECOVERY_OBJECT: v2 0x00939EDC 0x00939EE0 ?MapPanelDirtyMask@@3IA 0x0046FA20
-uint32_t MapPanelDirtyMask;
-
 // 0x007D3C28..0x007D3C38 - rectangle published by calculate_dimensions for
 // the primary window: west/north/east/south map-view bounds, also consumed by
 // MapWin::focus's base-window hit test.
@@ -3236,76 +3229,13 @@ static Vert LandCornerUVs[12] = {
 // displacement 6860E8, so the first vertex is 6860F0, not land vertex 11.
 // The offset terminates at 0x80 (464012): exactly sixteen vertices.
 // RECOVERY_OBJECT: v2 0x006860F0 0x00686170 _EdgeMidUVs 0x004632D0
+// The coast-mask table (0x00684730) is defined by interface_assets.cpp.
+extern unsigned char CoastMaskTable[53][8];
 static const Vert EdgeMidUVs[16] = {
     {27, 27}, {0, 27}, {0, 0}, {27, 0},
     {28, 27}, {28, 0}, {55, 0}, {55, 27},
     {28, 28}, {55, 28}, {55, 55}, {28, 55},
     {27, 28}, {27, 55}, {0, 55}, {0, 28},
-};
-
-// 0x00684730 - the 53-entry coast-mask table draw_coast's remap comes from
-// (stride 8, one row per corner code). Values above 1 select bytes at
-// TerrainCoastPalette[value + 2]; code 7 repeats palette[7..4] three times.
-// load_terrain publishes this shared twelve-byte owner. The deep-radar walk
-// uses the existing Chassis[].triad member, not a separate character table.
-// 465379 selects a column using the three-bit coast mask, then advances
-// eight bytes for each of 53 remap entries. Values above 1 select the
-// separately mutable coast palette; this table does not own that palette.
-// RECOVERY_OBJECT: v2 0x00684730 0x006848D8 _CoastMaskTable 0x004632D0
-static const unsigned char CoastMaskTable[53][8] = {
-    {0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 1, 0, 1, 0, 1, 0, 1},
-    {0, 1, 0, 1, 0, 1, 1, 1},
-    {0, 0, 0, 0, 1, 1, 1, 1},
-    {0, 0, 0, 1, 1, 1, 1, 1},
-    {0, 0, 0, 0, 0, 0, 0, 1},
-    {0, 5, 0, 5, 0, 5, 0, 5},
-    {0, 4, 0, 4, 0, 4, 0, 4},
-    {0, 3, 0, 3, 0, 3, 0, 3},
-    {0, 2, 0, 1, 0, 2, 0, 2},
-    {0, 0, 0, 0, 5, 5, 5, 5},
-    {0, 0, 0, 0, 4, 4, 4, 4},
-    {0, 0, 0, 0, 3, 3, 3, 3},
-    {0, 0, 0, 0, 2, 2, 2, 2},
-    {0, 0, 0, 0, 0, 0, 0, 5},
-    {0, 0, 0, 0, 0, 0, 0, 4},
-    {0, 0, 0, 0, 0, 0, 0, 3},
-    {0, 0, 0, 0, 0, 0, 0, 2},
-    {0, 5, 0, 5, 0, 5, 0, 1},
-    {0, 4, 0, 4, 0, 4, 0, 1},
-    {0, 3, 0, 3, 0, 3, 0, 1},
-    {0, 2, 0, 2, 0, 2, 0, 1},
-    {0, 0, 0, 0, 5, 5, 5, 1},
-    {0, 0, 0, 0, 4, 4, 4, 1},
-    {0, 0, 0, 0, 3, 3, 3, 1},
-    {0, 0, 0, 0, 2, 2, 2, 1},
-    {0, 0, 0, 5, 0, 0, 5, 1},
-    {0, 0, 0, 4, 0, 0, 4, 1},
-    {0, 0, 0, 3, 0, 0, 3, 1},
-    {0, 0, 0, 2, 0, 0, 2, 1},
-    {0, 1, 0, 1, 0, 1, 5, 1},
-    {0, 1, 0, 1, 0, 1, 4, 1},
-    {0, 1, 0, 1, 0, 1, 3, 1},
-    {0, 1, 0, 1, 0, 1, 2, 1},
-    {0, 0, 0, 5, 1, 1, 1, 1},
-    {0, 0, 0, 4, 1, 1, 1, 1},
-    {0, 0, 0, 3, 1, 1, 1, 1},
-    {0, 0, 0, 2, 1, 1, 1, 1},
-    {0, 5, 0, 1, 0, 5, 1, 1},
-    {0, 4, 0, 1, 0, 4, 1, 1},
-    {0, 3, 0, 1, 0, 3, 1, 1},
-    {0, 2, 0, 1, 0, 2, 1, 1},
-    {0, 0, 0, 1, 5, 5, 1, 1},
-    {0, 0, 0, 1, 4, 4, 1, 1},
-    {0, 0, 0, 1, 3, 3, 1, 1},
-    {0, 0, 0, 1, 2, 2, 1, 1},
-    {0, 5, 0, 1, 2, 0, 1, 1},
-    {0, 4, 0, 1, 3, 0, 1, 1},
-    {0, 3, 0, 1, 4, 0, 1, 1},
-    {0, 5, 5, 1, 5, 0, 1, 1},
-    {0, 4, 4, 1, 4, 0, 1, 1},
-    {0, 2, 0, 1, 0, 3, 1, 1},
-    {0, 0, 0, 1, 5, 3, 1, 1},
 };
 
 // Four triangles around the tile centre: left/top, top/right,

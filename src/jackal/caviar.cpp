@@ -216,17 +216,6 @@ const float CaviarProjectionNearNegativeEpsilon = -1.0e-6f; // 0x00671008
 // RECOVERY_OBJECT: v1 0x0067100C ?CaviarProjectionNearPositiveEpsilon@@3MB
 const float CaviarProjectionNearPositiveEpsilon = 1.0e-6f;  // 0x0067100C
 
-// This mutable global starts with native rows (1,0,.1),(0,1,.1),(0,0,0).
-// The builder changes cells [0][2] and [2][2], leaving [1][2] untouched.
-// RECOVERY_OBJECT: v1 0x00698A78 ?CaviarProjectionShadowBasis@@3UVOX_Matrix@@A
-VOX_Matrix CaviarProjectionShadowBasis = {
-  {
-    {1.0f, 0.0f, 0.1f},
-    {0.0f, 1.0f, 0.1f},
-    {0.0f, 0.0f, 0.0f}
-  }
-}; // 0x00698A78
-
 // Engine lifetime API; the definition is owned by caviar_loader.cpp.
 void vox_engine_close();
 
@@ -779,22 +768,6 @@ uint8_t CaviarColourSource[0x1800];
 
 
 } // namespace
-
-// THE SELF-MODIFYING RENDERERS' SHARED STATE. The `_SELFMOD` MASM modules
-// (src/caviar_part_*.asm, src/caviar_shadow_*.asm) read and patch through
-// these, so they have external linkage: an assembler cannot name a symbol in
-// an anonymous namespace.
-
-// The draw currently accesses the 24-byte x86 window at 0x009BE6A4
-// (CaviarDrawSetupPointerStorageCandidate, src/caviar/vox_engine.h).
-// RECOVERY_OBJECT: v1 0x009BE6A4 ?vox_setup_copy_@@3UCaviarDrawSetupPointerStorageCandidate@@A
-CaviarDrawSetupPointerStorageCandidate vox_setup_copy_;
-
-// 0x009BE6BC. The render record's colour table, copied to where the helpers
-// read it. 0x639EB2 stores it; every _SELFMOD patcher entry (0x6646FC,
-// 0x664D52, ...) loads it first.
-// RECOVERY_OBJECT: v1 0x009BE6BC ?vox_active_colour_table_@@3PAXA
-void *vox_active_colour_table_ = 0;  // 0x009BE6BC
 
 // 0x009C09F8. setup_block[0] minus setup_block[4] - the same two dwords the
 // clip rectangle the draw starts from is built out of.

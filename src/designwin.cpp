@@ -4149,9 +4149,7 @@ void DesignWin::construct_reactor() {
 // original object or a DesignWin member from the candidate's sizeof.
 // RECOVERY_OBJECT: v1 0x0073396C ?DesignTutorState@@3HA
 int DesignTutorState;
-// The initializer's 14-entry grid uses process-wide scratch storage.
-// RECOVERY_OBJECT: v1 0x009B7B10 ?DesignGridButtonIndex@@3HA
-int DesignGridButtonIndex;
+extern int DesignGridButtonIndex;
 // exec stores its receiver here before starting time_; shutdown clears it.
 // RECOVERY_OBJECT: v2 0x00733970 0x00733974 ?DesignWindowSelf@@3PAVDesignWin@@A 0x0043C170
 DesignWin *DesignWindowSelf;

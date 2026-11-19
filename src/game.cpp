@@ -2697,9 +2697,3 @@ void __cdecl auto_undo() {
     save_daemon(previous);
 }
 
-// save_daemon clears this word on its rules/PBEM paths, or copies NetDaemon's
-// player count on its network path before game_data transfers its four bytes.
-// It begins after PendingDiplomacyFlags, not inside that matrix or NetDaemon.
-// RECOVERY_OBJECT: v2 0x0093F798 0x0093F79C ?GameDataPlayerCountSnapshot@@3HA 0x005A94F0
-int GameDataPlayerCountSnapshot;
-

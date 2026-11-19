@@ -216,16 +216,7 @@ void __cdecl vox_draw_part(
         }
     }
 }
-
-
-
-// 0x009BE6C0: the record's shadow table, copied where the shadow kernels read
-// it (image 0x63F0B4 `mov eax,[ebx+0x54]; mov [0x9be6c0],eax`). Its only
-// in-image reference outside _SELFMOD is this store. Defined beside its only
-// C writer until its owner is settled (vox_active_colour_table_ 0x9BE6BC
-// lives in caviar.cpp).
-// RECOVERY_OBJECT: v1 0x009BE6C0 ?vox_active_shadow_table_@@3PAXA
-void *vox_active_shadow_table_ = 0;  // 0x009BE6C0
+extern void *vox_active_shadow_table_;
 
 // Scale a projected coordinate by 256 and round half away from zero
 // (image 0x63F1CF..0x63F200 and each sibling: fmul 671038, fcom 67103C,
