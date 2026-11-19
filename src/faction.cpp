@@ -8410,7 +8410,6 @@ goto communicate_tech_greeting_done;
     net_treaty_on(faction_id, faction_id_with, 0x800000, 0);
     net_treaty_off(faction_id, faction_id_with, 0x1000000, 0);
     DiploScratchF7B8 = DiploScratchF7E8;
-    diplomacy_caption(faction_id, faction_id_with);
     goto communicate_tech_greeting_done;
 }
 }
