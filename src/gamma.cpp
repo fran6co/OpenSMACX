@@ -133,37 +133,47 @@ double Gamma::exec(Palette *target, float initial_gamma, int apply_only) {
         return initial_gamma;
     }
 
+    // WORKAROUND(decl): the image's operand orders (0x005C8EDD `height - bottom + top`, 0x005C8F7E) need the
+    // function's symbol count (parameters + assigned locals) to be 5 mod 8: six more locals than the four the
+    // code needs. A constant-valued local is code-neutral and counts, so the six layout constants are named;
+    // which six constants the original named is not determined (any six give the image).
+    int width = 236;
+    int height = 32;
+    int gap = 3;
+    int inset = 4;
+    int button_height = 20;
+    int font_height = 14;
     const int screen_height = WinScreenHeight;
     const int screen_width = WinScreenWidth;
-    set_rectangle_dimensions(&rect1_, 0, 0, 236, 32);
+    set_rectangle_dimensions(&rect1_, 0, 0, width, height);
     offset_rect(&rect1_, (screen_width - rect_width(&rect1_)) / 2,
                 (screen_height - rect_height(&rect1_)) / 2);
     rect2_ = rect1_;
-    offset_rect(&rect2_, 0, rect_height(&rect2_) + 3);
+    offset_rect(&rect2_, 0, rect_height(&rect2_) + gap);
     rect3_ = rect1_;
-    offset_rect(&rect3_, 0, rect_height(&rect1_) + 3);
-    gamma_inset(&rect3_, 0, 4);
+    offset_rect(&rect3_, 0, rect_height(&rect1_) + gap);
+    gamma_inset(&rect3_, 0, inset);
     rect4_ = rect3_;
-    offset_rect(&rect4_, 0, rect_height(&rect4_) + 3);
+    offset_rect(&rect4_, 0, rect_height(&rect4_) + gap);
     rect4_.right = rect4_.left + (rect_width(&rect4_) + 3) / 2 - 3;
-    rect4_.bottom = rect4_.top + 20;
+    rect4_.bottom = rect4_.top + button_height;
     rect5_ = rect4_;
     offset_rect(&rect5_, rect_width(&rect5_) + 3, 0);
 
-    font_.init("Arial", 14, 1);
+    font_.init("Arial", font_height, 1);
     GraphicWin::init(0, 0, screen_width, screen_height, 0,
                      0);
     GraphicWin::fill(0xF8);
 
     scroll_.init(&rect3_, this, 0, 0);
     scroll_.set_border_color(0);
-    scroll_.field_A64_ = 0xF8;
+    scroll_.set_field_A64(0xF8);
     scroll_.field_A48_ = 7;
     scroll_.set_button_color(7);
     scroll_.set_bevel_thickness(2);
     scroll_.set_bevel_upper(7);
     scroll_.set_bevel_lower(0);
-    scroll_.paging_ = 10;
+    scroll_.set_paging(10);
     scroll_.thumb_sprite_ = nullptr;
     scroll_.set_sprite_left(0, 0, 0);
     scroll_.set_sprite_right(0, 0, 0);
@@ -176,7 +186,7 @@ double Gamma::exec(Palette *target, float initial_gamma, int apply_only) {
     ok->set_font_redraw(&font_);
     ok->set_text_color(0, -1, 1, 1);
     pushButton1_.color_ = 0xF8;
-    pushButton1_.bevel_upper_ = 7;
+    pushButton1_.set_bevel_upper(7);
     pushButton1_.bevel_lower_ = 0;
     pushButton1_.bevel_thickness_ = 2;
     ok->field_AC8_ = 0;
@@ -192,7 +202,7 @@ double Gamma::exec(Palette *target, float initial_gamma, int apply_only) {
     cancel->set_font_redraw(&font_);
     cancel->set_text_color(0, -1, 1, 1);
     pushButton2_.color_ = 0xF8;
-    pushButton2_.bevel_upper_ = 7;
+    pushButton2_.set_bevel_upper(7);
     pushButton2_.bevel_lower_ = 0;
     pushButton2_.bevel_thickness_ = 2;
     cancel->field_AC8_ = 0;

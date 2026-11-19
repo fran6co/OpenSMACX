@@ -166,6 +166,9 @@ class BaseButton : public GraphicWin {
   // DialogDefaults[0..3] and the two BaseButtonA94/A98 defaults. Access is
   // compile-time only: the members keep their declaration order and offsets,
   // which is what pins the layout.
+  // Gamma::exec 0x005C922E: the colour store precedes the zero register load when the upper bevel goes
+  // through a setter parameter (a named value).
+  void set_bevel_upper(int value) { bevel_upper_ = value; }
   // RECOVERY_MEMBER: v1 BaseButton color_ 0xA84 0x006253D0
   uint32_t color_;
   // RECOVERY_MEMBER: v1 BaseButton bevel_upper_ 0xA88 0x006253D0

@@ -62,6 +62,8 @@ class Scroll : public GraphicWin {
   int paging() const { return paging_; }
   void set_paging(int value) { paging_ = value; }
   void set_field_A30(int value) { field_A30_ = static_cast<uint32_t>(value); }
+  // Gamma::exec 0x005C9086 stores this word before the next call's pushes: a named setter parameter.
+  void set_field_A64(int value) { field_A64_ = value; }
   void compute_thumb_rect(RECT *rect);
   void set_thumb_rect();
 
