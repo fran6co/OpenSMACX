@@ -191,6 +191,13 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   earlier or later), `OTHER`. Then a cursor track (rule S1): every paired allocation's offset (ours - image,
   mod 3) and where it changes; the first change bounds the source window where ours creates one register
   value more or fewer than the original.
+  `--try` sweeps single-site rewrites (nvarg/nvop/nvany identity-inline probes, label/table flips, unname,
+  expand/contract); `--pairs K --triples K` combine the single sites that moved the rows; `--write SUBSTR` keeps
+  the best non-probe candidate whose key contains SUBSTR. A probe hit is a pointer: see MATCHING_GUIDE 3.2 S7,
+  "Whole-set pass", for how to turn it into source (typed local, accessor) and when to reject it.
+- `analysis/labelsubsets.py <unit> <addr> [--max N] [--write]` all 2^n subsets of a function's label_get /
+  table_text sites flipped against the written-out form (S7): finds the pairs no single flip reaches
+  (draw_projects 51 -> 9, ProdPicker::exec 62 -> 29, draw_commerce 60 -> 40).
 - `analysis/sched/` the probe families and runner behind those rules (see its README).
 - `analysis/webscan.py [unit ...] [--addr A,..] [--from FEALL.json] [--sweep] [-v] [--json F]` one name vs one value
   (MATCHING_GUIDE 3.3, 2.7 use_ability): per non-exact function, named locals/parameters with 2+ disjoint def-use

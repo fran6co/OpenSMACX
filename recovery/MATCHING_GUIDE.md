@@ -2303,6 +2303,67 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   (2^n forms), then replace the hits by the class's accessor. Each
   expansion is a free inline for the /Ob2 budget (2.8), so re-check the
   teardown depths of an EH function afterwards.
+  Whole-set pass (par-2 2026-11-19, second round; 347 non-exact functions,
+  every rule plus nvany on those of at most 150 rows or 700 instructions):
+  how to read a `--try` hit.
+  - *Type of the named local.* `nv()` is a template, so it names the value
+    with the operand's own type. The local must have that type: mind_control
+    0x0059EA80 is exact with `short y = Bases[base_id].y;` in front of
+    `veh_at(Bases[base_id].x, y)`, an `int y` is 37 rows and naming x as
+    well 153 (MessageWin::on_selected's set_cursor is the same `short y`).
+  - *An accessor is a named value.* EditBox::on_redraw 0x00615270 read
+    `text_parameters_[0][0]` raw; Buffer::foreground_color() at the three
+    reads took 87 rows to 3 (then exact with the background as one ternary).
+    `contract` misses accessors whose body carries a cast, so check the
+    class for one whenever nv() hits a member read.
+  - *A hit must fix its own site.* Keep a hit when the differing image rows
+    it removes include the site and it adds none (make_gift's portrait,
+    control_turn's proposal name, veh_scoot's `my`, PickWin::init's `x`,
+    Win::init's `left`/`top`, the `_itoa` operands of draw_tech and
+    draw_commerce: 5 to 140 rows each). When several unrelated sites give
+    the same row count (process_message: three `packet->payload_14_` sites,
+    all 550 -> 460; drone_riot's veh_name argument, 332 -> 157 while its own
+    site gets worse; draw_pie's `BYTE red`; slide_show, where the best
+    "local" was an `unsigned char` that only moves frame slots) the probe
+    moved the callee-saved or frame allocation of the whole function: it
+    says a register or slot priority is wrong, not that this operand was a
+    local. MonuWin::init, MonuWin::on_redraw and BasePop::exec are cursor
+    cases of the same kind: any one of several sites flips the rotation, so
+    the missing allocation is earlier (on_redraw: at the switch join
+    0x00475E50).
+  - *Inline budget.* label_get, table_text and `contract` spend /Ob2 budget,
+    a plain local does not. spot_all 0x005B6260 read 1359 -> 1183 rows with
+    four has_treaty contractions, but each became an out-of-line has_treaty
+    call the image has not got (reverted); base_editor_fac 0x0041B790 needs
+    three named strings and is 7 rows with `char *` locals, while the same
+    three through table_text/label_get drop its later inline has_fac
+    (235 instructions for 263). Compare callees.py before and after.
+  - *More than one site.* `--pairs K --triples K` combine the K single sites
+    that moved the rows at all (base_editor_fac was a triple; of 64
+    functions with two or more cursor changes and at most 40 rows it was
+    the only one that combinations moved). For label/table sites every
+    subset matters (read_rules): `analysis/labelsubsets.py <unit> <addr>`
+    compiles all 2^n subsets of a function's label_get / table_text sites.
+    Over the 52 non-exact functions with 2 to 10 such sites it found three
+    pairs no single flip reaches: ReportIf::draw_projects 0x004AA0B0
+    (51 -> 9), ProdPicker::exec 0x00494700 (62 -> 29), BaseWin::
+    draw_commerce 0x00410870 (60 -> 40), each with equal instruction counts
+    and call multisets. When two or three subsets tie within a few rows
+    (MessageWin::on_selected: 25, 27, 28 for any one written-out site of
+    three) only the rotation parity is fixed, not the sites: read the image
+    (receiver set before or after the push) before choosing.
+  - *Bookkeeping.* A local added or removed renumbers the unit's later `$SG`
+    labels (PickWin::init's `int x` moved on_button_clicked's ten literals
+    by one): run `recover rebind-literals` on every unit touched this way.
+  Yield of the pass: 2 functions exact by fe (mind_control, EditBox::
+  on_redraw; PickWin::on_button_clicked's literals bound), 21 more moved,
+  65,802 -> 64,634 differing rows tree-wide, none lost (name_proto
+  396 -> 196, make_gift 341 -> 177, control_turn 313 -> 173, Win::init
+  187 -> 57, draw_projects 51 -> 9, use_ability 27 -> 6, base_editor_fac
+  20 -> 7, CouncWin::on_button_clicked 38 -> 14 and smaller ones). About
+  nine in ten functions have no single-site S7 hit: for the 1 to 10 row
+  near-misses the remaining rotation is not a named/anonymous choice that
+  nv() can reach from inside the function.
 - **S8. Constant folding and subtraction order in a chain are canonical**
   (par-2 2026-11-19, p22, p23; high). `a - b - c` with b a field and c a
   named local compiles to `a - b - c` for every spelling tried: the
