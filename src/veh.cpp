@@ -662,11 +662,7 @@ void __cdecl monolith(int veh_id) {
             bit_set(x, y, 0x2000, 0);
             synch_bit(x, y, faction);
         } else {
-            for (int site_id = 1; site_id < MaxPlayerNum; site_id++) {
-                if (map_loc(x, y)->bit_visible[site_id - 1] & 0x2000u) {
-                    add_site(site_id, 0, 2, x, y);
-                }
-            }
+            veh_site_scan(x, y);
         }
         draw_tile(x, y, 2);
         if (faction == ConsoleGlobal.faction_id_) {
