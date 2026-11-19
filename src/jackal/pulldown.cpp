@@ -25,6 +25,10 @@
 #include <stdlib.h>
 #include <ctype.h>
 
+// RECOVERY_OBJECT: v2 0x009B7B6C 0x009B7B70 ?MenuPullDownInputOrigin@@3HA 0x005F9640
+// Shared state written by Menu and PullDown keyboard navigation paths.
+int MenuPullDownInputOrigin;
+
 // RECOVERY_IMPORT: v1 __imp__PtInRect@12 USER32.dll name:PtInRect
 
 

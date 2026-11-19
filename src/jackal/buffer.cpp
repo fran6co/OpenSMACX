@@ -10143,6 +10143,10 @@ int Buffer::gouraud(Vert *vertices, int *lights, int count, int mode,
 #include "buffer.h"
 #include "sprite.h"
 
+// Bound: scalar; every original access is a dword at the start, never indexed, and the following bytes are never referenced.
+// RECOVERY_OBJECT: v2 0x009B3AB0 0x009B3AB4 ?WinHdcRefCount@@3HA 0x005EC690
+int WinHdcRefCount;        // 0x009B3AB0
+
 // Existing original5D8C20..5D8D00: ECX is the actual Buffer receiver; +54
 // is dib_bits_, +58 DirectDraw surface, +6C surface lock count, +80/+84
 // DIB dimensions and +4A8 stride. The apparent "state block" is the real

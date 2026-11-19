@@ -25,6 +25,18 @@
 #include "popup.h"
 #include "win.h"
 
+// 0x009BC2D0. The rectangle a clipped flip intersects against.
+// RECOVERY_OBJECT: v1 0x009BC2D0 ?DirectDrawClipRect@@3UtagRECT@@A
+RECT DirectDrawClipRect;
+// RECOVERY_OBJECT: v2 0x009BC498 0x009BC49C ?DirectDrawSurface@@3PAUIDirectDrawSurface2@@A 0x0062CD50
+IDirectDrawSurface2 *DirectDrawSurface;  // 0x009BC498
+// 0x009BC49C. The surface `DirectDrawSurface` is blitted FROM - the back
+// buffer to its front.
+// RECOVERY_OBJECT: v2 0x009BC49C 0x009BC4A0 ?DirectDrawBackBuffer@@3PAUIDirectDrawSurface2@@A 0x0062CD50
+IDirectDrawSurface2 *DirectDrawBackBuffer;
+// RECOVERY_OBJECT: v1 0x009BC4A0 ?DirectDrawPalette@@3PAUIDirectDrawPalette@@A
+IDirectDrawPalette *DirectDrawPalette;  // 0x009BC4A0
+
 // Shared IntersectRect import identity is owned by graphicwin.cpp.
 // RECOVERY_IMPORT: v1 __imp__EqualRect@8 USER32.dll name:EqualRect
 // RECOVERY_IMPORT: v1 __imp__DirectDrawEnumerateA@8 DDRAW.dll name:DirectDrawEnumerateA

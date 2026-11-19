@@ -84,10 +84,6 @@ typedef signed char int8;  // a scaffold spelling the artifacts use
 #include <ddraw.h>  // IDirectDrawSurface::GetDC / ReleaseDC in the hdc pair
 #include <windowsx.h>  // HANDLE_MSG, the crackers window_proc dispatches through
 
-// RECOVERY_OBJECT: v2 0x009B7B6C 0x009B7B70 ?MenuPullDownInputOrigin@@3HA 0x005F9640
-// Shared state written by Menu and PullDown keyboard navigation paths.
-int MenuPullDownInputOrigin;
-
 // The Win message-status word shares the owner of its message-pump consumers.
 // Original dword: task setup clears it and flush_timer ORs in message flags.
 // RECOVERY_OBJECT: v2 0x009B7B9C 0x009B7BA0 ?MsgStatus@@3IA 0x005F0CC0
@@ -538,15 +534,8 @@ int Win::is_dialog_focus() {
     }
     return 0;
 }
-
-
-// Bound: scalar; every original access is a dword at the start, never indexed, and the following bytes are never referenced.
-// RECOVERY_OBJECT: v2 0x009B3AB0 0x009B3AB4 ?WinHdcRefCount@@3HA 0x005EC690
-int WinHdcRefCount;        // 0x009B3AB0
 // RECOVERY_OBJECT: v2 0x009B7B2C 0x009B7B30 ?WinSharedHdc@@3PAUHDC__@@A 0x005EB9A0
 HDC WinSharedHdc;          // 0x009B7B2C
-// RECOVERY_OBJECT: v2 0x009BC498 0x009BC49C ?DirectDrawSurface@@3PAUIDirectDrawSurface2@@A 0x0062CD50
-IDirectDrawSurface2 *DirectDrawSurface;  // 0x009BC498
 // Original: set_modal writes the indexed receiver at 5EE1B2; release_modal compacts/clears it. Start only, not original capacity.
 // RECOVERY_OBJECT: v1 0x009B6EF8 ?WinModalStack@@3PAPAVWin@@A
 Win *WinModalStack[4];     // 0x009B6EF8
@@ -633,8 +622,6 @@ int WinTrackingX;          // 0x009B7AB0
 int WinTrackingY;          // 0x009B7AB4
 // RECOVERY_OBJECT: v1 0x009B7A68 ?WinBackBuffer@@3PAVBuffer@@A
 Buffer *WinBackBuffer;         // 0x009B7A68
-// RECOVERY_OBJECT: v2 0x009B8D7C 0x009B8D80 ?WinModalFocus@@3PAVWin@@A 0x0043F293
-Win *WinModalFocus;         // 0x009B8D7C
 // Native pass_dialog_focus publishes this focus pointer at 0x005ECD51.
 // RECOVERY_OBJECT: v1 0x009B7B38 ?WinPendingFocus@@3PAVWin@@A
 Win *WinPendingFocus;       // 0x009B7B38
@@ -992,13 +979,6 @@ int WinFlipSpriteY;                    // 0x009B7A34
 // its source-owned start, not original allocation bounds or lifetime.
 // RECOVERY_OBJECT: v2 0x009B7AD8 0x009B7ADC ?WinFlipClipped@@3HA 0x0040375C
 int WinFlipClipped;
-// 0x009BC49C. The surface `DirectDrawSurface` is blitted FROM - the back
-// buffer to its front.
-// RECOVERY_OBJECT: v2 0x009BC49C 0x009BC4A0 ?DirectDrawBackBuffer@@3PAUIDirectDrawSurface2@@A 0x0062CD50
-IDirectDrawSurface2 *DirectDrawBackBuffer;
-// 0x009BC2D0. The rectangle a clipped flip intersects against.
-// RECOVERY_OBJECT: v1 0x009BC2D0 ?DirectDrawClipRect@@3UtagRECT@@A
-RECT DirectDrawClipRect;
 
 /*
 Purpose: Present the screen buffer: draw the bubble text over it, flip or

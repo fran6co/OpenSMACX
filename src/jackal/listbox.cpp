@@ -310,15 +310,6 @@ void ListBox::set_selected_pos(int position, int notify) {
     redraw();
 }
 
-// Scroll owns the shared thickness at 0x009B8DD4. List layout and item
-// measurement use that source-owned default, not the old executable's data.
-// 0x009B8DDC is the shared ListBox/Scroll notification gate.
-// ORIGINAL storage binding: Scroll input methods clear the gate before
-// notifying their parent; the ListBox scrolled path reads it before changing
-// selection.
-// RECOVERY_OBJECT: v1 0x009B8DDC ?ListBoxGlobalDDC@@3HA
-int ListBoxGlobalDDC;
-
 /*
 Purpose: Recompute the list's layout metrics from the Dialog entry list: the
          widest entry text sets the width, the entry height and column count

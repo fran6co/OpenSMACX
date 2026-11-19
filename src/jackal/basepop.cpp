@@ -33,6 +33,9 @@
 #include "text.h"  // text_open / text_get / text_close - start's script reader
 #include <cstring>
 
+// RECOVERY_OBJECT: v2 0x009B8D7C 0x009B8D80 ?WinModalFocus@@3PAVWin@@A 0x0043F293
+Win *WinModalFocus;         // 0x009B8D7C
+
 extern uint32_t BasePopDrawnBottom;
 extern uint32_t BasePopDrawnRight;
 

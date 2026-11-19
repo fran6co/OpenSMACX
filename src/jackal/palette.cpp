@@ -36,8 +36,6 @@ int PaletteUsesSystemColours;  // 0x009B8188
 Palette *PaletteActive;                 // 0x009B8180
 // RECOVERY_OBJECT: v1 0x009B8184 ?PaletteSeedCache@@3HA
 int PaletteSeedCache;                   // 0x009B8184
-// RECOVERY_OBJECT: v1 0x009BC4A0 ?DirectDrawPalette@@3PAUIDirectDrawPalette@@A
-IDirectDrawPalette *DirectDrawPalette;  // 0x009BC4A0
 
 // Direct qword operands establish the mapped constant starts below.
 // Their exclusive original allocations are not established by read width.
