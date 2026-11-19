@@ -93,7 +93,7 @@ class Scroll : public GraphicWin {
   int range_maximum_;
   uint32_t range_reversed_;
   int position_;
-  uint32_t field_A30_;
+  int field_A30_;
   uint32_t field_A34_;
   uint32_t field_A38_;
   uint32_t field_A3C_;

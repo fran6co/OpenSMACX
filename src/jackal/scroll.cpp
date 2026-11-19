@@ -1450,7 +1450,7 @@ void Scroll::on_mouse_move(int x, int y) {
         position_ = max(range_minimum_, min(range_maximum_, position_));
     } else {
         const int elapsed = timeGetTime() - field_A38_;
-        if (field_A38_ != 0 && elapsed < static_cast<int>(field_A30_ * 2)) {
+        if (field_A38_ != 0 && elapsed < field_A30_ * 2) {
             if (get_lbutton_state() == 0) {
                 return;
             }
@@ -1790,7 +1790,7 @@ int Scroll::on_button_pressed(int button_id) {
         const DWORD start_time = timeGetTime();
         if (field_A38_ == 0 ||
             static_cast<int>(timeGetTime() - static_cast<DWORD>(field_A38_)) >=
-                static_cast<int>(field_A30_)) {
+                field_A30_) {
             if (field_A38_ == 0) {
                 field_A38_ = static_cast<int>(timeGetTime());
             }
