@@ -69,357 +69,6 @@ UV2Player::UV2Player() {
     direct_draw2_ = 0;
 }
 
-// The movie input loop and timed writer share these original four-byte slots.
-// RECOVERY_OBJECT: v2 0x008CC250 0x008CC254 ?UV2PlayerQuitRequested@@3HA 0x004BF390
-int UV2PlayerQuitRequested;
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004BF390 ?on_key@UV2Player@@QAAHXZ 0x004BF390-0x004BF3FE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004bf390.cpp", "image:terranx_original.exe:0x004BF390", "4BF3AA/BE reject only zero message results; Return/Escape/Space and either mouse-down set quit8CC250. Timed text disarms Buffer+8, writes individual bytes, reloads delayE64 after each timeGetTime and re-arms the cdecl callback even for nonpositive length.", "recovery/tasks/uv2player-complete-owner-recovery.json; bounded complete-owner scope, preserved historical baseline/claims, no matching or runtime acceptance."], "reason": "Recover the movie input/timed text owner using SDK messages and real Buffer callback, active instance and unsigned delay storage, preserving native input and callback order."}
-// symbol    ?on_key@UV2Player@@QAAHXZ
-int __cdecl UV2Player::on_key() {
-    MSG message;
-    if (PeekMessageA(&message, 0, 0, 0, 0)) {
-        if (GetMessageA(&message, 0, 0, 0)) {
-            if (message.message == WM_KEYDOWN) {
-                if (message.wParam == VK_RETURN || message.wParam == VK_ESCAPE ||
-                    message.wParam == VK_SPACE) {
-                    UV2PlayerQuitRequested = 1;
-                    return 1;
-                }
-            } else if (message.message == WM_LBUTTONDOWN ||
-                       message.message == WM_RBUTTONDOWN) {
-                UV2PlayerQuitRequested = 1;
-                return 1;
-            }
-        }
-    }
-    return 0;
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// Historical seed observations (not fresh measurements or acceptance):
-// LEVER: literal thiscall member with a guarded do/while (a4>0) around the cached timeGetTime slot; nested guarded do/while for the busy-wait.
-// ORIGINAL: 0x004BEDC0 ?UNK1@UV2Player@@QAEHHHHH@Z 0x004BEDC0-0x004BEE5A BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004bedc0.cpp", "image:terranx_original.exe:0x004BEDC0", "4BF3AA/BE reject only zero message results; Return/Escape/Space and either mouse-down set quit8CC250. Timed text disarms Buffer+8, writes individual bytes, reloads delayE64 after each timeGetTime and re-arms the cdecl callback even for nonpositive length.", "recovery/tasks/uv2player-complete-owner-recovery.json; bounded complete-owner scope, preserved historical baseline/claims, no matching or runtime acceptance."], "reason": "Recover the movie input/timed text owner using SDK messages and real Buffer callback, active instance and unsigned delay storage, preserving native input and callback order."}
-// symbol    ?write_timed@UV2Player@@QAEHPADHHH@Z
-int UV2Player::write_timed(LPSTR text, int x, int y, int length) {
-    buffer_.set_write_raw_callback(0);
-    for (int index = 0; index < length; ++index) {
-        const DWORD started = timeGetTime();
-        x = buffer_.write_raw_l(text + index, x, y, 1);
-        while (timeGetTime() - started < write_delay_) {
-        }
-    }
-    buffer_.set_write_raw_callback(&writer_redirect);
-    return x;
-}
-
-// The one player instance the movie writer serves: 0x008CC254 holds the
-// UV2Player whose embedded Buffer the __cdecl writer below walks when it is
-// invoked as the buffer's output hook - the writer member's QAA convention
-// passes no receiver, so the image routes the object through this slot.
-// Modelled as real storage beside its only recovered reader, the
-// WorldClimateWorldWin idiom.
-// RECOVERY_OBJECT: v2 0x008CC254 0x008CC258 ?UV2PlayerActive@@3PAVUV2Player@@A 0x004BF400
-UV2Player *UV2PlayerActive;  // 0x008CC254
-
-/*
-Purpose: The buffered writer's re-entry half, run as the embedded Buffer's
-         output hook: take the player instance from the active-player slot,
-         disarm the hook (so the writes below land raw), then rewrite the
-         caller's rows one character at a time through Buffer::write_raw_l
-         with the same busy-wait the timed writer uses, and re-arm the hook
-         with this function before returning.
-
-// ORIGINAL: 0x004BEE60 ?UNK2@UV2Player@@QAAHHHHH@Z 0x004BEE60-0x004BEEFD FILE BYTE_EXACT
-// symbol   ?writer_redirect@UV2Player@@SAHPADHHH@Z
-// size      157 bytes
-// prototype
-// callers   0   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x005DBD00
-// indirect  0x004BEE93 0x004BEEB8 0x004BEEC6
-Return Value: the x coordinate the last write left off at
-Status: Coverage transcription - unclaimed body
-*/
-int __cdecl UV2Player::writer_redirect(LPSTR text, int x_coord, int y_coord,
-                                       int row_count) {
-    UV2Player *const instance = UV2PlayerActive;
-    if (instance != 0) {
-        instance->buffer_.set_write_raw_callback(0);
-        int x = x_coord;
-        int index = 0;
-        if (row_count > 0) {
-            DWORD(WINAPI *const get_time)() = timeGetTime;
-            do {
-                const unsigned int started = get_time();
-                x = instance->buffer_.write_raw_l(text + index, x,
-                                                  y_coord, 1);
-                while (get_time() - started < instance->write_delay_) {
-                }
-                ++index;
-            } while (index < row_count);
-        }
-        instance->buffer_.set_write_raw_callback(&writer_redirect);
-        return x;
-    }
-    return 0;
-}
-
-
-/*
-Purpose: Unknown; the legacy implementation is a constant return that returns 0.
-// ORIGINAL: 0x004BF380 ?UNK4@UV2Player@@QAEHXZ 0x004BF380-0x004BF383 BYTE_EXACT
-// size      3 bytes
-// prototype int (__thiscall ?UNK4@UV2Player@@QAEHXZ)(UV2Player* this)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: 0
-Status: Complete
-*/
-int UV2Player::UNK4() {
-    return 0;
-}
-
-
-// ORIGINAL: 0x004BF400 ?close@UV2Player@@QAEXXZ 0x004BF400-0x004BF4A2 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned4BF400..4BF4A2 releases primary Surface2 and Draw2 only; it does not release back buffer or clipper. Clears active8CC254 before COM calls, then applies DirectDraw preference and 800x600/1024x768 restoration.", "Play4BF4B0 creates DirectDraw then queries IID_IDirectDraw2=b3a6f3e0-2b43-11cf-a2de-00aa00b93356 at66FC38; surfaces query IID_IDirectDrawSurface2=57805885-6eec-11cf-9441-a82303c10e27 at66FC28. Pinned SDK DDRAW.H establishes method ABI.", "recovery/tasks/uv2player-complete-owner-recovery.json; retain exact constructor/destructor/timed-writer obligations and source-owned original play mapping. No full structure or runtime acceptance is asserted."], "reason": "Recover movie display teardown with genuine SDK interfaces, source-owned active player, shared preferences/display helpers and native live pointer reloads."}
-// TRIED: COM-style vtable (ecx=vtbl, self pushed explicit, callee-pop) via a raw VFn* vtable array rather than the scaffold's thiscall VCall; set_display_mode called through a differently-named free extern since it is QAA/cdecl-static, not the scaffold's non-static member. MISMATCH #29, well past the vtable teardown into the display-mode branch.
-void UV2Player::close() {
-    UV2PlayerActive = nullptr;
-    if (direct_draw2_ != nullptr) {
-        direct_draw2_->RestoreDisplayMode();
-        primary_surface_->Release();
-        primary_surface_ = nullptr;
-        direct_draw2_->Release();
-        direct_draw2_ = nullptr;
-
-        // Pinned 4BF43D passes the NUL-terminated preference key at 687AC8
-        // to prefs_get. Its eleven literal bytes match the independent COFF
-        // literal; this does not describe the surrounding allocation.
-        // RECOVERY_LITERAL: v1 0x00687AC8 0x00687AD3 $SG51472 0x004BF400
-        if (prefs_get("DirectDraw", 1, 0) != 0) {
-            if (WinScreenWidth >= 0x400) {
-                Win::set_display_mode(0x400, 0x300, 8, 0);
-            } else {
-                Win::set_display_mode(0x320, 0x258, 8, 0);
-            }
-        }
-    }
-    direct_draw_ = nullptr;
-    back_buffer_surface_ = nullptr;
-    field_11C_ = 0;
-    field_120_ = 0;
-    media_session_ = 0;
-}
-
-/*
-Purpose: Bring up the movie player's DirectDraw chain: clear and flip the
-         screen buffer, create the DirectDraw object, take the cooperative
-         level on the main window, try the display mode at four bit depths,
-         create the primary flipping surface with its back buffer and
-         clipper, and clear both surfaces through two Blt calls.
-
-// ORIGINAL: 0x004BF4B0 ?play@UV2Player@@QAEHHH@Z 0x004BF4B0-0x004BF6D1 FILE BYTE_EXACT
-// TRIED: plain member access vs a `UV2Player *self = this;` local before the first field_10C_ read - both leave the prologue's `this` spill (`mov [ebp-4],edi`) placed differently than the original (MISMATCH #4 'push' vs 'mov', 84% mnemonic similarity); not chased further. The 21-slot COM vtable dispatch (QueryInterface/ Release/SetCooperativeLevel/SetDisplayMode retry chain/ CreateSurface/GetAttachedSurface/CreateClipper/Blt) and the DDSURFACEDESC/DDBLTFX field offsets are a faithful transcription off the raw disassembly.
-// size      545 bytes
-// prototype int (__thiscall ?play@UV2Player@@QAEHHH@Z)(UV2Player* this, int, int)
-// callers   1   call targets   5
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x004BF400 0x005D44FC 0x005DFB50 0x005EFD20 0x006465F0
-// notes     Seed provenance (TRIED): the 21-slot COM vtable dispatch
-//           (QueryInterface/Release/SetCooperativeLevel/SetDisplayMode
-//           retry chain/CreateSurface/GetAttachedSurface/CreateClipper/Blt)
-//           and the DDSURFACEDESC/DDBLTFX field offsets are a faithful
-//           transcription off the raw disassembly; the prologue's this-spill
-//           placement differs (MISMATCH #4 push vs mov). Not measured exact.
-Return Value: 0 after surface clearing; 1 for early/attached-surface failure;
-              18 for failed display modes or clipper creation.
-Status: Coverage transcription - unclaimed body, seed
-        git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004bf4b0.cpp retained.
-*/
-int UV2Player::play(int width, int height) {
-    // Native ESI points to the member slot (+0x10C), not a cached interface.
-    // Reload across mode retries and surface callbacks: COM calls may rebind it.
-    if (direct_draw2_ != nullptr) {
-        return 1;
-    }
-
-    Win::screen_buffer_.fill(0);
-    Win::flip(nullptr);
-
-    if (DirectDrawCreate(nullptr, &direct_draw_, nullptr) != DD_OK) {
-        return 1;
-    }
-    // 0x004BF519 loads the window handle through ECX before the vtable
-    // (EDX), as a named value does; passed directly the two swap and the
-    // later Release keeps its pointer in EAX instead of EDI.
-    HWND window = HandleMain;
-    if (direct_draw_->SetCooperativeLevel(window,
-            DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE) != DD_OK) {
-        return 1;
-    }
-
-    // The native code does not branch on QueryInterface's result, or on the
-    // Release result. Keep that partial-initialization path unchanged.
-    direct_draw_->QueryInterface(IID_IDirectDraw2,
-        reinterpret_cast<void **>(&direct_draw2_));
-    direct_draw_->Release();
-
-    if (direct_draw2_->SetDisplayMode(width, height, 0x10, 0, 0) != DD_OK &&
-        direct_draw2_->SetDisplayMode(width, height, 0x18, 0, 0) != DD_OK &&
-        direct_draw2_->SetDisplayMode(width, height, 0x20, 0, 0) != DD_OK &&
-        direct_draw2_->SetDisplayMode(width, height, 8, 0, 0) != DD_OK) {
-        close();
-        return 0x12;
-    }
-
-    DDSURFACEDESC description;
-    memset(&description, 0, 0x6C);
-    description.dwSize = 0x6C;
-    description.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
-    description.dwBackBufferCount = 1;
-    description.ddsCaps.dwCaps =
-        DDSCAPS_COMPLEX | DDSCAPS_FLIP | DDSCAPS_PRIMARYSURFACE;
-
-    // These are output slots in the native frame. Do not initialize them or
-    // add a CreateSurface failure check absent from the original path.
-    LPDIRECTDRAWSURFACE primary_surface;
-    direct_draw2_->CreateSurface(&description, &primary_surface, nullptr);
-
-    DDSCAPS attached_caps;
-    attached_caps.dwCaps = DDSCAPS_BACKBUFFER;
-    LPDIRECTDRAWSURFACE back_buffer_surface;
-    if (primary_surface->GetAttachedSurface(&attached_caps,
-                                             &back_buffer_surface) != DD_OK) {
-        close();
-        return 1;
-    }
-
-    primary_surface->QueryInterface(IID_IDirectDrawSurface2,
-        reinterpret_cast<void **>(&primary_surface_));
-    back_buffer_surface->QueryInterface(IID_IDirectDrawSurface2,
-        reinterpret_cast<void **>(&back_buffer_surface_));
-
-    if (direct_draw2_->CreateClipper(0, &clipper_, nullptr) != DD_OK) {
-        return 0x12;
-    }
-
-    DDBLTFX effects;
-    effects.dwSize = 0x64;
-    effects.dwFillColor = 0;
-    back_buffer_surface_->Blt(nullptr, nullptr, nullptr,
-                              DDBLT_WAIT | DDBLT_COLORFILL, &effects);
-    primary_surface_->Blt(nullptr, nullptr, nullptr,
-                          DDBLT_WAIT | DDBLT_COLORFILL, &effects);
-    return 0;
-}
-
-// ORIGINAL: 0x004BEF00 ?UNK3@UV2Player@@QAEXXZ 0x004BEF00-0x004BF380;0x00659D00-0x00659D55 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["task:uv2player-complete-owner-recovery", "Pinned4BEF00-4BF380 and659D00-659D55; exec4BED47 calls this only when quit8CC250 is clear", "4BEF42-4BEF71 captures allocation owner before StringList construction; native cleanup restores it after derived/base list teardown", "4BF07B-4BF0AE parses left,top,width,height;4BF1C8-4BF20F centers text vertically with signed division", "4BF11D-4BF147 borrows primary surface and clipper via stack ExtDirectDraw;4BF1F0/4BF21A install/clear cdecl writer callback", "Literal687AC0 is movlist; help pointer691B00 is source-owned DatalinkHelpFile", "historical seed:src/recovered/units/004bef00.cpp"], "reason": "Recover the post-play MOVLIST presentation as a real UV2Player member, using Font array lifetime, genuine StringList and outer allocation-base lifetime, source-owned help-file storage and Buffer callback. Preserve original main and cleanup spans; no matching or game acceptance claim is granted."}
-// symbol    ?show_post_movie_text@UV2Player@@QAEXXZ
-void UV2Player::show_post_movie_text() {
-    Font fonts[3];
-    char font_names[3][0x80];
-    int font_styles[3];
-    int font_heights[3];
-    int color_first[3];
-    int color_second[3];
-    int color_third[3];
-    int color_fourth[3];
-
-    StringList help_lines;
-
-    if (text_open("movlist", movie_name_) != 0) {
-        return;
-    }
-    {
-        for (int index = 0; index < 3; ++index) {
-            font_names[index][0] = '\0';
-            text_get();
-            strcat(font_names[index], text_item());
-
-            font_styles[index] = text_item_number();
-            font_heights[index] = text_item_number();
-
-            text_get();
-            color_first[index] = text_item_number() + 0xA;
-            color_second[index] = text_item_number() + 0xA;
-            color_third[index] = text_item_number();
-            color_fourth[index] = text_item_number();
-
-            // The original pushes style, then height, then the font-name
-            // pointer. Font::init takes (name, height, style).
-            fonts[index].init(font_names[index], font_heights[index],
-                              font_styles[index]);
-        }
-
-        text_get();
-        // 4BF09B/4BF0A8 store right and bottom in the last two fields of a
-        // RECT at EBP-0x90 that overlays the dead height array; left and
-        // top are plain scalars (EBP-0x10/-0x14).
-        RECT r;
-        const int left = text_item_number();
-        int top = text_item_number();
-        r.right = text_item_number() + left;
-        r.bottom = text_item_number() + top;
-
-        text_get();
-        write_delay_ = text_item_number();
-        const int timeout = text_item_number();
-
-        text_get();
-        LPSTR help_line = text_get();
-
-        help_lines.reset();
-        while (help_line != 0 && help_line[0] != '\0') {
-            if (help_line[0] == '@') {
-                help_lines.load(DatalinkHelpFile, help_line + 1, 0, 0);
-            } else {
-                help_lines.add_special(help_line);
-            }
-            help_line = text_get();
-        }
-        text_close();
-        // WORKAROUND(inline): four expansions, see uv2_probe_flat.
-        uv2_probe_flat(0);
-        uv2_probe_flat(0);
-
-        ExtDirectDraw display;
-        // Original4BF11D..4BF147 borrows the existing Surface2 pointer
-        // unchanged; QueryInterface would change reference-count/failure behavior.
-        display.surface = primary_surface_;
-        display.clipper = clipper_;
-        buffer_.init(0x280, 0x1E0, 4, &display);
-        buffer_.set_font(&fonts[0], &fonts[1], &fonts[2], &fonts[0]);
-        buffer_.set_text_color(color_first[0], color_second[0],
-                               color_third[0], color_fourth[0]);
-        buffer_.set_text_color2(color_first[1], color_second[1],
-                                color_third[1], color_fourth[1]);
-        buffer_.set_text_color3(color_first[2], color_second[2],
-                                color_third[2], color_fourth[2]);
-        buffer_.set_text_color_hyper(color_first[0], color_second[0],
-                                     color_third[0], color_fourth[0]);
-
-        const int drawn_height = buffer_.write_strings_height(
-            &help_lines, r.right - left, 0);
-        top += (r.bottom - drawn_height - top) / 2;
-
-        buffer_.set_write_raw_callback(&writer_redirect);
-        buffer_.write_strings(&help_lines, left, top, r.right - left, 0);
-        buffer_.set_write_raw_callback(0);
-
-        const DWORD start = timeGetTime();
-        while (timeGetTime() - start < static_cast<DWORD>(timeout)) {
-        }
-    }
-}
-
 // ORIGINAL: 0x004BEA50 ?exec@UV2Player@@QAEHPADHHH@Z 0x004BEA50-0x004BEDB5 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:terranx_original.exe:0x004BEA50-0x004BEDB5", "image:terranx_original.exe:0x00403BE0 caller passes a found .wve path, 640x480, flags 0xC", "image:terranx_original.exe:0x004BF390 is ?on_key@UV2Player@@QAAHXZ", "image:terranx_original.exe:0x005CB220 and 0x005CAAB0 consume MediaDescriptor+0xAC only under flags&0x40000", "image:terranx_original.exe:0x005CB6C0 reads and 0x005CD750 writes MediaDescriptor palette bytes at +0xB0", "source:src/uv2player.h:UV2Player exact 0xE68 layout, media_ and Buffer ownership", "source:src/movie_media.h:MediaDescriptor exact 0x7B4 storage view", "source:src/wave_device.h:WaveDeviceGlobal", "source:src/alphamovie.cpp:amovie_project .wve caller"], "reason": "Recover the .wve controller on UV2Player using its real descriptor, sound device, movie lifecycle and caller, preserving the pinned message/audio/cursor order and early-return behavior."}
 // TRIED: direct transcription off Ghidra + raw disasm, `this` used as the char* name buffer at offset 0, indirect calls through the fixed import-table slots (ShowCursor/PeekMessage/GetMessage/ TranslateMessage/DispatchMessage/Sleep/CharUpperA); matches through instr #26, diverges in the strrchr/inc-vs-lea shape
@@ -539,6 +188,357 @@ int UV2Player::exec(char *movie_file, int width, int height, int flags) {
     } else {
         WaveDeviceGlobal.enable();
     }
+    return 0;
+}
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// LEVER: literal thiscall member with a guarded do/while (a4>0) around the cached timeGetTime slot; nested guarded do/while for the busy-wait.
+// ORIGINAL: 0x004BEDC0 ?UNK1@UV2Player@@QAEHHHHH@Z 0x004BEDC0-0x004BEE5A BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004bedc0.cpp", "image:terranx_original.exe:0x004BEDC0", "4BF3AA/BE reject only zero message results; Return/Escape/Space and either mouse-down set quit8CC250. Timed text disarms Buffer+8, writes individual bytes, reloads delayE64 after each timeGetTime and re-arms the cdecl callback even for nonpositive length.", "recovery/tasks/uv2player-complete-owner-recovery.json; bounded complete-owner scope, preserved historical baseline/claims, no matching or runtime acceptance."], "reason": "Recover the movie input/timed text owner using SDK messages and real Buffer callback, active instance and unsigned delay storage, preserving native input and callback order."}
+// symbol    ?write_timed@UV2Player@@QAEHPADHHH@Z
+int UV2Player::write_timed(LPSTR text, int x, int y, int length) {
+    buffer_.set_write_raw_callback(0);
+    for (int index = 0; index < length; ++index) {
+        const DWORD started = timeGetTime();
+        x = buffer_.write_raw_l(text + index, x, y, 1);
+        while (timeGetTime() - started < write_delay_) {
+        }
+    }
+    buffer_.set_write_raw_callback(&writer_redirect);
+    return x;
+}
+
+// The one player instance the movie writer serves: 0x008CC254 holds the
+// UV2Player whose embedded Buffer the __cdecl writer below walks when it is
+// invoked as the buffer's output hook - the writer member's QAA convention
+// passes no receiver, so the image routes the object through this slot.
+// Modelled as real storage beside its only recovered reader, the
+// WorldClimateWorldWin idiom.
+// RECOVERY_OBJECT: v2 0x008CC254 0x008CC258 ?UV2PlayerActive@@3PAVUV2Player@@A 0x004BF400
+UV2Player *UV2PlayerActive;  // 0x008CC254
+
+/*
+Purpose: The buffered writer's re-entry half, run as the embedded Buffer's
+         output hook: take the player instance from the active-player slot,
+         disarm the hook (so the writes below land raw), then rewrite the
+         caller's rows one character at a time through Buffer::write_raw_l
+         with the same busy-wait the timed writer uses, and re-arm the hook
+         with this function before returning.
+
+// ORIGINAL: 0x004BEE60 ?UNK2@UV2Player@@QAAHHHHH@Z 0x004BEE60-0x004BEEFD FILE BYTE_EXACT
+// symbol   ?writer_redirect@UV2Player@@SAHPADHHH@Z
+// size      157 bytes
+// prototype
+// callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005DBD00
+// indirect  0x004BEE93 0x004BEEB8 0x004BEEC6
+Return Value: the x coordinate the last write left off at
+Status: Coverage transcription - unclaimed body
+*/
+int __cdecl UV2Player::writer_redirect(LPSTR text, int x_coord, int y_coord,
+                                       int row_count) {
+    UV2Player *const instance = UV2PlayerActive;
+    if (instance != 0) {
+        instance->buffer_.set_write_raw_callback(0);
+        int x = x_coord;
+        int index = 0;
+        if (row_count > 0) {
+            DWORD(WINAPI *const get_time)() = timeGetTime;
+            do {
+                const unsigned int started = get_time();
+                x = instance->buffer_.write_raw_l(text + index, x,
+                                                  y_coord, 1);
+                while (get_time() - started < instance->write_delay_) {
+                }
+                ++index;
+            } while (index < row_count);
+        }
+        instance->buffer_.set_write_raw_callback(&writer_redirect);
+        return x;
+    }
+    return 0;
+}
+
+// ORIGINAL: 0x004BEF00 ?UNK3@UV2Player@@QAEXXZ 0x004BEF00-0x004BF380;0x00659D00-0x00659D55 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:uv2player-complete-owner-recovery", "Pinned4BEF00-4BF380 and659D00-659D55; exec4BED47 calls this only when quit8CC250 is clear", "4BEF42-4BEF71 captures allocation owner before StringList construction; native cleanup restores it after derived/base list teardown", "4BF07B-4BF0AE parses left,top,width,height;4BF1C8-4BF20F centers text vertically with signed division", "4BF11D-4BF147 borrows primary surface and clipper via stack ExtDirectDraw;4BF1F0/4BF21A install/clear cdecl writer callback", "Literal687AC0 is movlist; help pointer691B00 is source-owned DatalinkHelpFile", "historical seed:src/recovered/units/004bef00.cpp"], "reason": "Recover the post-play MOVLIST presentation as a real UV2Player member, using Font array lifetime, genuine StringList and outer allocation-base lifetime, source-owned help-file storage and Buffer callback. Preserve original main and cleanup spans; no matching or game acceptance claim is granted."}
+// symbol    ?show_post_movie_text@UV2Player@@QAEXXZ
+void UV2Player::show_post_movie_text() {
+    Font fonts[3];
+    char font_names[3][0x80];
+    int font_styles[3];
+    int font_heights[3];
+    int color_first[3];
+    int color_second[3];
+    int color_third[3];
+    int color_fourth[3];
+
+    StringList help_lines;
+
+    if (text_open("movlist", movie_name_) != 0) {
+        return;
+    }
+    {
+        for (int index = 0; index < 3; ++index) {
+            font_names[index][0] = '\0';
+            text_get();
+            strcat(font_names[index], text_item());
+
+            font_styles[index] = text_item_number();
+            font_heights[index] = text_item_number();
+
+            text_get();
+            color_first[index] = text_item_number() + 0xA;
+            color_second[index] = text_item_number() + 0xA;
+            color_third[index] = text_item_number();
+            color_fourth[index] = text_item_number();
+
+            // The original pushes style, then height, then the font-name
+            // pointer. Font::init takes (name, height, style).
+            fonts[index].init(font_names[index], font_heights[index],
+                              font_styles[index]);
+        }
+
+        text_get();
+        // 4BF09B/4BF0A8 store right and bottom in the last two fields of a
+        // RECT at EBP-0x90 that overlays the dead height array; left and
+        // top are plain scalars (EBP-0x10/-0x14).
+        RECT r;
+        const int left = text_item_number();
+        int top = text_item_number();
+        r.right = text_item_number() + left;
+        r.bottom = text_item_number() + top;
+
+        text_get();
+        write_delay_ = text_item_number();
+        const int timeout = text_item_number();
+
+        text_get();
+        LPSTR help_line = text_get();
+
+        help_lines.reset();
+        while (help_line != 0 && help_line[0] != '\0') {
+            if (help_line[0] == '@') {
+                help_lines.load(DatalinkHelpFile, help_line + 1, 0, 0);
+            } else {
+                help_lines.add_special(help_line);
+            }
+            help_line = text_get();
+        }
+        text_close();
+        // WORKAROUND(inline): four expansions, see uv2_probe_flat.
+        uv2_probe_flat(0);
+        uv2_probe_flat(0);
+
+        ExtDirectDraw display;
+        // Original4BF11D..4BF147 borrows the existing Surface2 pointer
+        // unchanged; QueryInterface would change reference-count/failure behavior.
+        display.surface = primary_surface_;
+        display.clipper = clipper_;
+        buffer_.init(0x280, 0x1E0, 4, &display);
+        buffer_.set_font(&fonts[0], &fonts[1], &fonts[2], &fonts[0]);
+        buffer_.set_text_color(color_first[0], color_second[0],
+                               color_third[0], color_fourth[0]);
+        buffer_.set_text_color2(color_first[1], color_second[1],
+                                color_third[1], color_fourth[1]);
+        buffer_.set_text_color3(color_first[2], color_second[2],
+                                color_third[2], color_fourth[2]);
+        buffer_.set_text_color_hyper(color_first[0], color_second[0],
+                                     color_third[0], color_fourth[0]);
+
+        const int drawn_height = buffer_.write_strings_height(
+            &help_lines, r.right - left, 0);
+        top += (r.bottom - drawn_height - top) / 2;
+
+        buffer_.set_write_raw_callback(&writer_redirect);
+        buffer_.write_strings(&help_lines, left, top, r.right - left, 0);
+        buffer_.set_write_raw_callback(0);
+
+        const DWORD start = timeGetTime();
+        while (timeGetTime() - start < static_cast<DWORD>(timeout)) {
+        }
+    }
+}
+
+
+/*
+Purpose: Unknown; the legacy implementation is a constant return that returns 0.
+// ORIGINAL: 0x004BF380 ?UNK4@UV2Player@@QAEHXZ 0x004BF380-0x004BF383 BYTE_EXACT
+// size      3 bytes
+// prototype int (__thiscall ?UNK4@UV2Player@@QAEHXZ)(UV2Player* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: 0
+Status: Complete
+*/
+int UV2Player::UNK4() {
+    return 0;
+}
+
+// The movie input loop and timed writer share these original four-byte slots.
+// RECOVERY_OBJECT: v2 0x008CC250 0x008CC254 ?UV2PlayerQuitRequested@@3HA 0x004BF390
+int UV2PlayerQuitRequested;
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x004BF390 ?on_key@UV2Player@@QAAHXZ 0x004BF390-0x004BF3FE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004bf390.cpp", "image:terranx_original.exe:0x004BF390", "4BF3AA/BE reject only zero message results; Return/Escape/Space and either mouse-down set quit8CC250. Timed text disarms Buffer+8, writes individual bytes, reloads delayE64 after each timeGetTime and re-arms the cdecl callback even for nonpositive length.", "recovery/tasks/uv2player-complete-owner-recovery.json; bounded complete-owner scope, preserved historical baseline/claims, no matching or runtime acceptance."], "reason": "Recover the movie input/timed text owner using SDK messages and real Buffer callback, active instance and unsigned delay storage, preserving native input and callback order."}
+// symbol    ?on_key@UV2Player@@QAAHXZ
+int __cdecl UV2Player::on_key() {
+    MSG message;
+    if (PeekMessageA(&message, 0, 0, 0, 0)) {
+        if (GetMessageA(&message, 0, 0, 0)) {
+            if (message.message == WM_KEYDOWN) {
+                if (message.wParam == VK_RETURN || message.wParam == VK_ESCAPE ||
+                    message.wParam == VK_SPACE) {
+                    UV2PlayerQuitRequested = 1;
+                    return 1;
+                }
+            } else if (message.message == WM_LBUTTONDOWN ||
+                       message.message == WM_RBUTTONDOWN) {
+                UV2PlayerQuitRequested = 1;
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+
+// ORIGINAL: 0x004BF400 ?close@UV2Player@@QAEXXZ 0x004BF400-0x004BF4A2 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned4BF400..4BF4A2 releases primary Surface2 and Draw2 only; it does not release back buffer or clipper. Clears active8CC254 before COM calls, then applies DirectDraw preference and 800x600/1024x768 restoration.", "Play4BF4B0 creates DirectDraw then queries IID_IDirectDraw2=b3a6f3e0-2b43-11cf-a2de-00aa00b93356 at66FC38; surfaces query IID_IDirectDrawSurface2=57805885-6eec-11cf-9441-a82303c10e27 at66FC28. Pinned SDK DDRAW.H establishes method ABI.", "recovery/tasks/uv2player-complete-owner-recovery.json; retain exact constructor/destructor/timed-writer obligations and source-owned original play mapping. No full structure or runtime acceptance is asserted."], "reason": "Recover movie display teardown with genuine SDK interfaces, source-owned active player, shared preferences/display helpers and native live pointer reloads."}
+// TRIED: COM-style vtable (ecx=vtbl, self pushed explicit, callee-pop) via a raw VFn* vtable array rather than the scaffold's thiscall VCall; set_display_mode called through a differently-named free extern since it is QAA/cdecl-static, not the scaffold's non-static member. MISMATCH #29, well past the vtable teardown into the display-mode branch.
+void UV2Player::close() {
+    UV2PlayerActive = nullptr;
+    if (direct_draw2_ != nullptr) {
+        direct_draw2_->RestoreDisplayMode();
+        primary_surface_->Release();
+        primary_surface_ = nullptr;
+        direct_draw2_->Release();
+        direct_draw2_ = nullptr;
+
+        // Pinned 4BF43D passes the NUL-terminated preference key at 687AC8
+        // to prefs_get. Its eleven literal bytes match the independent COFF
+        // literal; this does not describe the surrounding allocation.
+        // RECOVERY_LITERAL: v1 0x00687AC8 0x00687AD3 $SG51633 0x004BF400
+        if (prefs_get("DirectDraw", 1, 0) != 0) {
+            if (WinScreenWidth >= 0x400) {
+                Win::set_display_mode(0x400, 0x300, 8, 0);
+            } else {
+                Win::set_display_mode(0x320, 0x258, 8, 0);
+            }
+        }
+    }
+    direct_draw_ = nullptr;
+    back_buffer_surface_ = nullptr;
+    field_11C_ = 0;
+    field_120_ = 0;
+    media_session_ = 0;
+}
+
+/*
+Purpose: Bring up the movie player's DirectDraw chain: clear and flip the
+         screen buffer, create the DirectDraw object, take the cooperative
+         level on the main window, try the display mode at four bit depths,
+         create the primary flipping surface with its back buffer and
+         clipper, and clear both surfaces through two Blt calls.
+
+// ORIGINAL: 0x004BF4B0 ?play@UV2Player@@QAEHHH@Z 0x004BF4B0-0x004BF6D1 FILE BYTE_EXACT
+// TRIED: plain member access vs a `UV2Player *self = this;` local before the first field_10C_ read - both leave the prologue's `this` spill (`mov [ebp-4],edi`) placed differently than the original (MISMATCH #4 'push' vs 'mov', 84% mnemonic similarity); not chased further. The 21-slot COM vtable dispatch (QueryInterface/ Release/SetCooperativeLevel/SetDisplayMode retry chain/ CreateSurface/GetAttachedSurface/CreateClipper/Blt) and the DDSURFACEDESC/DDBLTFX field offsets are a faithful transcription off the raw disassembly.
+// size      545 bytes
+// prototype int (__thiscall ?play@UV2Player@@QAEHHH@Z)(UV2Player* this, int, int)
+// callers   1   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004BF400 0x005D44FC 0x005DFB50 0x005EFD20 0x006465F0
+// notes     Seed provenance (TRIED): the 21-slot COM vtable dispatch
+//           (QueryInterface/Release/SetCooperativeLevel/SetDisplayMode
+//           retry chain/CreateSurface/GetAttachedSurface/CreateClipper/Blt)
+//           and the DDSURFACEDESC/DDBLTFX field offsets are a faithful
+//           transcription off the raw disassembly; the prologue's this-spill
+//           placement differs (MISMATCH #4 push vs mov). Not measured exact.
+Return Value: 0 after surface clearing; 1 for early/attached-surface failure;
+              18 for failed display modes or clipper creation.
+Status: Coverage transcription - unclaimed body, seed
+        git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004bf4b0.cpp retained.
+*/
+int UV2Player::play(int width, int height) {
+    // Native ESI points to the member slot (+0x10C), not a cached interface.
+    // Reload across mode retries and surface callbacks: COM calls may rebind it.
+    if (direct_draw2_ != nullptr) {
+        return 1;
+    }
+
+    Win::screen_buffer_.fill(0);
+    Win::flip(nullptr);
+
+    if (DirectDrawCreate(nullptr, &direct_draw_, nullptr) != DD_OK) {
+        return 1;
+    }
+    // 0x004BF519 loads the window handle through ECX before the vtable
+    // (EDX), as a named value does; passed directly the two swap and the
+    // later Release keeps its pointer in EAX instead of EDI.
+    HWND window = HandleMain;
+    if (direct_draw_->SetCooperativeLevel(window,
+            DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE) != DD_OK) {
+        return 1;
+    }
+
+    // The native code does not branch on QueryInterface's result, or on the
+    // Release result. Keep that partial-initialization path unchanged.
+    direct_draw_->QueryInterface(IID_IDirectDraw2,
+        reinterpret_cast<void **>(&direct_draw2_));
+    direct_draw_->Release();
+
+    if (direct_draw2_->SetDisplayMode(width, height, 0x10, 0, 0) != DD_OK &&
+        direct_draw2_->SetDisplayMode(width, height, 0x18, 0, 0) != DD_OK &&
+        direct_draw2_->SetDisplayMode(width, height, 0x20, 0, 0) != DD_OK &&
+        direct_draw2_->SetDisplayMode(width, height, 8, 0, 0) != DD_OK) {
+        close();
+        return 0x12;
+    }
+
+    DDSURFACEDESC description;
+    memset(&description, 0, 0x6C);
+    description.dwSize = 0x6C;
+    description.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
+    description.dwBackBufferCount = 1;
+    description.ddsCaps.dwCaps =
+        DDSCAPS_COMPLEX | DDSCAPS_FLIP | DDSCAPS_PRIMARYSURFACE;
+
+    // These are output slots in the native frame. Do not initialize them or
+    // add a CreateSurface failure check absent from the original path.
+    LPDIRECTDRAWSURFACE primary_surface;
+    direct_draw2_->CreateSurface(&description, &primary_surface, nullptr);
+
+    DDSCAPS attached_caps;
+    attached_caps.dwCaps = DDSCAPS_BACKBUFFER;
+    LPDIRECTDRAWSURFACE back_buffer_surface;
+    if (primary_surface->GetAttachedSurface(&attached_caps,
+                                             &back_buffer_surface) != DD_OK) {
+        close();
+        return 1;
+    }
+
+    primary_surface->QueryInterface(IID_IDirectDrawSurface2,
+        reinterpret_cast<void **>(&primary_surface_));
+    back_buffer_surface->QueryInterface(IID_IDirectDrawSurface2,
+        reinterpret_cast<void **>(&back_buffer_surface_));
+
+    if (direct_draw2_->CreateClipper(0, &clipper_, nullptr) != DD_OK) {
+        return 0x12;
+    }
+
+    DDBLTFX effects;
+    effects.dwSize = 0x64;
+    effects.dwFillColor = 0;
+    back_buffer_surface_->Blt(nullptr, nullptr, nullptr,
+                              DDBLT_WAIT | DDBLT_COLORFILL, &effects);
+    primary_surface_->Blt(nullptr, nullptr, nullptr,
+                          DDBLT_WAIT | DDBLT_COLORFILL, &effects);
     return 0;
 }
 
