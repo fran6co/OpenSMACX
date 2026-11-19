@@ -6598,17 +6598,23 @@ L_572922:
     if (Vehs[veh_id].order != ORDER_MOVE_TO) {
         if (!j && home_base >= 0) {
             base_id = home_base;
+            if (Vehs[veh_id].home_base_id >= 0 && base_id != Vehs[veh_id].home_base_id) {
+                if (base_id < 0) goto L_572d66;
+                if (map_dist(x, y, Bases[Vehs[veh_id].home_base_id].x, Bases[Vehs[veh_id].home_base_id].y) < home_dist * 2) {
+                    base_id = Vehs[veh_id].home_base_id;
+                }
+            }
         } else {
             base_id = Vehs[veh_id].home_base_id;
             if (j) {
                 if (base_id < 0) base_id = home_base;
                 goto L_572a5c;
             }
-        }
-        if (Vehs[veh_id].home_base_id >= 0 && base_id != Vehs[veh_id].home_base_id) {
-            if (base_id < 0) goto L_572d66;
-            if (map_dist(x, y, Bases[Vehs[veh_id].home_base_id].x, Bases[Vehs[veh_id].home_base_id].y) < home_dist * 2) {
-                base_id = Vehs[veh_id].home_base_id;
+            if (Vehs[veh_id].home_base_id >= 0 && base_id != Vehs[veh_id].home_base_id) {
+                if (base_id < 0) goto L_572d66;
+                if (map_dist(x, y, Bases[Vehs[veh_id].home_base_id].x, Bases[Vehs[veh_id].home_base_id].y) < home_dist * 2) {
+                    base_id = Vehs[veh_id].home_base_id;
+                }
             }
         }
 L_572a5c:
