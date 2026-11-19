@@ -441,7 +441,7 @@ void PrefWin::init() {
   text_get();
   text_get();
   audioVisPrefCheckBox_.init(PrefWinGeometryValue_8578C8, PrefWinGeometryValue_8578C4, PrefWinGeometryValue_8578A0,
-      PrefWinGeometryValue_8578A4 - PrefWinGeometryConstant_686B78 - PrefWinGeometryValue_8577E0 - frame_adjustment, 0);
+      PrefWinGeometryValue_8578A4 - PrefWinGeometryValue_8577E0 - PrefWinGeometryConstant_686B78 - frame_adjustment, 0);
   audioVisPrefCheckBox_.set_sprites(&g_IFACE_CLOSE_X_SPRITES[1], &g_IFACE_CLOSE_X_SPRITES[2]);
   StringTemp[0] = 0;
   text_get();
@@ -493,7 +493,7 @@ void PrefWin::init() {
   text_get();
   text_get();
   warnPrefCheckBox_.init(PrefWinGeometryValue_8578C8, PrefWinGeometryValue_8578C4, PrefWinGeometryValue_8578A0,
-      PrefWinGeometryValue_8578A4 - PrefWinGeometryConstant_686B78 - PrefWinGeometryValue_8577E0 + 0x28, 0);
+      PrefWinGeometryValue_8578A4 - PrefWinGeometryValue_8577E0 - PrefWinGeometryConstant_686B78 + 0x28, 0);
   warnPrefCheckBox_.set_sprites(&g_IFACE_CLOSE_X_SPRITES[1], &g_IFACE_CLOSE_X_SPRITES[2]);
   StringTemp[0] = 0;
   text_get();
@@ -564,7 +564,7 @@ void PrefWin::init() {
   // No text_close/X_text_open: the continuation reads on in BASEWARNINGS, and
   // takes no leading text_get() before its init (0x48EE85).
   warnContPrefCheckBox_.init(PrefWinGeometryValue_8578C8, PrefWinGeometryValue_8578C4, PrefWinGeometryValue_8578A0,
-      PrefWinGeometryValue_8578A4 - PrefWinGeometryConstant_686B78 - PrefWinGeometryValue_8577E0, 0);
+      PrefWinGeometryValue_8578A4 - PrefWinGeometryValue_8577E0 - PrefWinGeometryConstant_686B78, 0);
   warnContPrefCheckBox_.set_sprites(&g_IFACE_CLOSE_X_SPRITES[1], &g_IFACE_CLOSE_X_SPRITES[2]);
   StringTemp[0] = 0;
   text_get();
@@ -710,17 +710,17 @@ void PrefWin::init() {
 
   // 0x48F7B9: restore takes the raw string; OK and Cancel go through StringTemp.
   restoreDefaultButton_.init(StringTable.get(Labels.strings_ptr[0x10DC / 4]), 0x5A, PrefWinGeometryValue_85788C,
-      PrefWinGeometryValue_8578C0 - PrefWinNarrowDisplayVerticalOffset + PrefWinGeometryValue_857884 - 0x45,  // ? 0x48F7E6 lea [eax+ecx-0x45]
+      PrefWinGeometryValue_857884 - PrefWinNarrowDisplayVerticalOffset + PrefWinGeometryValue_8578C0 - 0x45,  // ? 0x48F7E6 lea [eax+ecx-0x45]
       PrefWinGeometryValue_857894, PrefWinTitleButtonHeight, preference_window(), 0);
   StringTemp[0] = 0;
   strcat(StringTemp, label_get(0x194 / 4));
   okButton_.init(StringTemp, 0x5C, PrefWinGeometryValue_85788C,
-      PrefWinGeometryValue_8578C0 - PrefWinNarrowDisplayVerticalOffset + PrefWinGeometryValue_857884 - 0x2E,
+      PrefWinGeometryValue_857884 - PrefWinNarrowDisplayVerticalOffset + PrefWinGeometryValue_8578C0 - 0x2E,
       PrefWinGeometryValue_857894, PrefWinTitleButtonHeight, preference_window(), 0);
   StringTemp[0] = 0;
   strcat(StringTemp, label_get(0x198 / 4));
   cancelButton_.init(StringTemp, 0x5B, PrefWinGeometryValue_85788C,
-      PrefWinGeometryValue_8578C0 - PrefWinNarrowDisplayVerticalOffset + PrefWinGeometryValue_857884 - 0x17,
+      PrefWinGeometryValue_857884 - PrefWinNarrowDisplayVerticalOffset + PrefWinGeometryValue_8578C0 - 0x17,
       PrefWinGeometryValue_857894, PrefWinTitleButtonHeight, preference_window(), 0);
   restoreDefaultButton_.set_font_redraw(&TutWinBaseWindow.font1_);
   okButton_.set_font_redraw(&TutWinBaseWindow.font1_);
