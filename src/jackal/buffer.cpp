@@ -5181,11 +5181,11 @@ int __stdcall Buffer::load_tga(const char * a1, Palette * a2, int a3, int a4) {
         goto has_ext;
     }
     switch (Language) {
-// RECOVERY_LITERAL: v1 0x00696C58 0x00696C5D $SG44415 0x005D7B40
+// RECOVERY_LITERAL: v1 0x00696C58 0x00696C5D $SG44402 0x005D7B40
         case 1: strcat(path, ".tgf"); break;
-// RECOVERY_LITERAL: v1 0x00696C60 0x00696C65 $SG44417 0x005D7B40
+// RECOVERY_LITERAL: v1 0x00696C60 0x00696C65 $SG44404 0x005D7B40
         case 2: strcat(path, ".tgg"); break;
-// RECOVERY_LITERAL: v1 0x00696C68 0x00696C6D $SG44419 0x005D7B40
+// RECOVERY_LITERAL: v1 0x00696C68 0x00696C6D $SG44406 0x005D7B40
         default: strcat(path, ".tga"); break;
     }
   has_ext:
@@ -7738,11 +7738,11 @@ int __stdcall Buffer::load_bmp(const char * a1, Palette * a2, int a3, int a4) {
         goto has_ext;
     }
     switch (Language) {
-// RECOVERY_LITERAL: v1 0x00696C70 0x00696C75 $SG45334 0x005D7CA0
+// RECOVERY_LITERAL: v1 0x00696C70 0x00696C75 $SG45321 0x005D7CA0
         case 1: strcat(path, ".bmf"); break;
-// RECOVERY_LITERAL: v1 0x00696C78 0x00696C7D $SG45336 0x005D7CA0
+// RECOVERY_LITERAL: v1 0x00696C78 0x00696C7D $SG45323 0x005D7CA0
         case 2: strcat(path, ".bmg"); break;
-// RECOVERY_LITERAL: v1 0x00696C80 0x00696C85 $SG45338 0x005D7CA0
+// RECOVERY_LITERAL: v1 0x00696C80 0x00696C85 $SG45325 0x005D7CA0
         default: strcat(path, ".bmp"); break;
     }
   has_ext:
