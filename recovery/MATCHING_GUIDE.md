@@ -3437,20 +3437,24 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   are dropped, so the tool under-reports rather than clobbers.
   Second pass after the rebase (2026-11-19, every non-exact function of 40+
   rows except other workers' and enemy_move): 189 functions, 86 with no
-  pair, 11 with no dead target, 74 neutral or worse, 18 kept, no exact
-  function lost. Of 115 functions of 100+ rows 15 were kept: random_events
-  327 -> 92 (slot difference 65 -> 8, one rename `tx` -> `mode` on top of
-  the first pass), battle_compute 131 -> 90, base_terraform 953 -> 922,
-  battle_plans 119 -> 101, CouncWin::init 251 -> 237, editor_natural
-  128 -> 116, battle_fight 2147 -> 2134 (frame 12 -> 8 bytes off),
-  setup_player slot difference 30 -> 16 at 591 -> 592 rows, and five of
-  1 to 7 rows. Of 74 functions of 40-99 rows 3 were kept (interceptor
-  80 -> 73, draw_active 96 -> 93, veh_scoot 89 -> 87). Two kept renames
-  trade rows for the slot map (base_ecology 174 -> 184, slot difference
-  45 -> 41; Buffer::write_multi_font_raw_l 104 -> 110, 8 -> 7): the tool
-  ranks the slot map above the candidate set and the rows, so read those two
-  as open. The yield falls with size because a small function has few
-  function-scope variables that are dead where a block-local lives.
+  pair, 11 with no dead target, 76 neutral or worse, 16 kept, no exact
+  function lost (rows as measured on the wip of that day). Of 115 functions
+  of 100+ rows 14 were kept: random_events 328 -> 92 (slot difference
+  65 -> 8, one rename `tx` -> `mode` on top of the first pass),
+  battle_compute 131 -> 90, base_terraform 953 -> 922, CouncWin::init
+  251 -> 237, editor_natural 128 -> 116, battle_fight 2147 -> 2138 (frame
+  12 -> 8 bytes off), battle_plans 118 -> 113, setup_player slot difference
+  30 -> 16 at equal rows, and four of 1 to 7 rows. Of 74 functions of 40-99
+  rows 2 were kept (interceptor 80 -> 77, draw_active 96 -> 93). Two kept
+  renames trade rows for the slot map (base_ecology 174 -> 184, slot
+  difference 45 -> 41; Buffer::write_multi_font_raw_l 104 -> 110, 8 -> 7):
+  the tool ranks the slot map above the candidate set and the rows, so read
+  those two as open. Two more (veh_scoot, diplomacy_check; one or two rows
+  at an unchanged slot map) stopped improving when the tree moved under
+  them and were undone: a rename kept on rows alone is only as good as the
+  base it was measured on. The yield falls with size because a small
+  function has few function-scope variables that are dead where a
+  block-local lives.
 - **Frame-size differences: run `analysis/framescan.py` first** (13 s tree-wide);
   `--addr A` prints both slot maps with widths, `&` and our /Fa names. A frame
   that differs is a declaration problem, never a register tie.
