@@ -1953,6 +1953,40 @@ a four-argument rectangle inline (modified parameters, two levels, returned
 pointer, pointer copy, reference, `__stdcall`, non-static) all fold to
 immediate stores.
 
+Member-address temporaries that live across calls (2026-11-19 par-6, round 11)
+
+- **Field reads end the web; address uses extend it** (high, DiploWin::exec
+  0x00443F10). The image held `lea ebx,[esi+0xF3C]` (formed for the struct
+  copy into rect_F3C_) across GraphicWin::init, fill and box_sprite and read
+  `[ebx+0xC]-[ebx+4]`, `[ebx+8]-[ebx]`; ours folded those reads to
+  `[esi+K]` and ended the web at the copy. `rect_width(&rect_F3C_)` /
+  `rect_height(&rect_F3C_)` (the win.h inlines, a pointer argument) give the
+  image's web; `rect_F3C_.left + 3` then reads `[ebx]` (same value number as
+  the temporary) and `.top + 3` `[esi+0xF40]`, both as in the image. A
+  `[ebx+K]` read after calls where ours has `[esi+base+K]` is the screen.
+- **A pointer local's later reads fold when it loses the register** (high,
+  CouncWin::init 0x00427230). `bottom_row = &leader_rects_[19]` stays a
+  pointer (`[ebx+K]`) through the vote loops in the image; ours keeps the
+  piece only up to `*bottom_row = rect` and re-forms the rest as
+  `[esi+0xD08]`, while `first` (same kind) keeps edi. rect_width/rect_height
+  on the pointer changes nothing (it is already an address); this is a
+  ranking question. Count lever confirmed: writing the `buttons_[5]` block
+  in both arms of `if (!field_A1C_)` (more source copies of bottom_row) keeps
+  bottom_row and first both live across the loops as in the image, but with
+  the names swapped (bottom_row edi, first ebx) and arm1 not cross-jumped as
+  the image (the image's arm1 merges only the final `call`): right
+  direction, too much weight, not the original statement. The vote loops'
+  counter is homed in [ebp+8] in the image: the loops count in `proposal`.
+- **A Dialog member setter called on a virtual base keeps the full pointer
+  two inline levels down and folds at one** (high, BasePop::exec
+  0x00602600). `dialogs_.set_field_2C(v)` inside set_width: the standalone
+  set_width stays `mov [edx+ecx+0x21FC],eax` (exact), the copy expanded in
+  exec forms `lea ecx,[edx+esi+0x21D0]` per arm and shares `mov
+  [ecx+0x2C],eax` after the join, as the image. The qualified field store
+  (`dialogs_.Dialog::field_2C_ =`) folds at both levels. Declaring the two
+  setters in every unit moved 20 counter-sensitive functions; they are
+  guarded per unit (DIALOG_SIZE_SETTERS).
+
 ### 2.8 /Ob2 inlining model
 
 Measured 2026-11-19 (par-4) with generated probe families in
