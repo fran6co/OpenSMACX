@@ -6939,9 +6939,7 @@ production_again:
                 }
             }
             interlude(13, 0, 1, 0);
-            PluralityDefault = FALSE;
-            GenderDefault = Players[faction_id].is_leader_female;
-            parse_says(5, Players[faction_id].name_leader, -1, -1);
+            parse_says(5, get_name(faction_id), -1, -1);
             CharUpperA(ParseStrBuffer[5].str);
             interlude(14, 0, 0, 0);
         }
@@ -6964,9 +6962,7 @@ production_again:
                 EndgameExitReason = 1;
             } else {
                 EndgameExitReason = 3;
-                PluralityDefault = FALSE;
-                GenderDefault = Players[faction_id].is_leader_female;
-                parse_says(5, Players[faction_id].name_leader, -1, -1);
+                parse_says(5, get_name(faction_id), -1, -1);
                 parse_num(2, game_year(GameDataStateStorage.fields_.turn_current_num_ + 100));
                 parse_num(3, (GameDataStateStorage.fields_.turn_current_num_ + 100) / 100);
                 if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
