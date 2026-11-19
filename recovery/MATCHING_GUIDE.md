@@ -2852,6 +2852,53 @@ Layout
   source statement).
 - Tail merging follows the closing teardown depth and the per-site scratch
   register, so which copy survives can follow a register tie.
+- **Both arms end with their own tail and goto** (communicate 0x0054FFD0,
+  1925 -> 1538 rows): when the image ends an else arm with a jump back into
+  the then arm's tail, the original wrote the tail and its goto in both arms
+  and VC6 cross-jumped them; one shared tail after the if/else puts the join
+  after the second arm. It does not extend to tails with a loop: save_game's
+  scenario arm with `state |= 0x10; for (...)` written in both arms keeps two
+  full copies (49 -> 106 rows).
+- **Cross-jump target (measured, `analysis/tailmerge/tm.py`, 2026-11-19).**
+  A jumping tail is cross-jumped into the block that falls through into the
+  common target, greedily, at any length (one `add esp,4` counts). Tails that
+  are identical to each other but not to that block stay separate: six switch
+  cases ending `push reg; call f; add esp,8; call g` (reg differs) merge only
+  with the case laid out last. Jumper-into-jumper merges happen when the tail
+  carries one deferred stack pop over two argument-pushing calls
+  (`push 0; call f; push 1; call g; add esp,8`, tm3.py T1/T3/T14); then the
+  instructions before the merged point are copied into each predecessor arm,
+  so a store after an inline's if/else appears in both arms. One pushing call
+  (`push; call f; add esp,4; call g`, T2/T4/T9/T15) stays unmerged.
+- **The join's head block follows its most-shared tail.** VC6 moves the
+  first block of a join (probe 0x5A36EE: the prb_defense ternary's test and
+  has_fac arm, ending `jmp` to the merge at 0x5A42CC) after the predecessor
+  whose tail the most other predecessors share, and merges them into it. Ours
+  puts it after action 3's GOTENERGY NetMsg::pop and merges six pop tails;
+  making the pop tails unmergeable (a distinct store after each) puts it after
+  action 2's draw_tile as in the image, where action 7's popp `add esp,0xc`
+  merges into draw_tile's (1881 -> 1783 rows even with the stores). The image
+  keeps all seven pop tails, so they were not mergeable in the original: not
+  explained by a non-inline callee (an extern twin merges too), by distinct
+  callees (their shared `add esp,8` still pulls the join), or by the
+  ternary's spelling (`(a && b) ? 2 : 0` gives 1825 rows, same placement).
+- **Jumper-into-jumper merges in ours are a mismatch signal.**
+  `analysis/tailmerge/jjcensus.py` (heuristic: a `jmp` into the middle of a
+  statement whose block then ends with `jmp`) finds them in 33 of 110
+  non-exact functions but 15 of 626 exact ones in ten large units. The
+  original compiler makes them (garrison_click, new_base are exact with
+  them), but menu_proc's toggle tails (prefs_save/draw_map, 0x51C4AD..),
+  use_ability's first lock-return teardown (0x4D842A), interlude,
+  on_key_click and propose_attack merge in ours only. Respelling the site has
+  not changed one: the cause is elsewhere in the function ("Tail
+  cross-jumping depends on the whole function", 3.2); menu_proc stays merged
+  with its three written-out inline stand-ins replaced by calls.
+- **Cross-jump direction is not a source-order choice for if/else.** VC6
+  gives identical code for `if (c) A else B`, the inverted test, a ternary
+  statement, a two-arm switch and goto blocks written after the final
+  return (save_game 0x005A9EB0: the image hosts strcpy in the then arm and
+  holds the else arm, `push default; jmp back`, after the next unconditional
+  jmp; ours hosts it in the else arm; all five spellings measure 49 rows).
 
 Types
 - Wrong declarations hide as casts: a member cast at each use, a byte buffer
