@@ -40,7 +40,7 @@ def copies(asm, name, sym='?use@@YAXH@Z'):
     return None
 
 
-def run(variants, pfx='21'):
+def run(variants, pfx=os.environ.get('FE_PFX_BASE', '21')):
     src = HDR + ''.join(v for _, v in variants)
     asm, out = ib.compile_asm(None, pfx, text=src)
     res = []

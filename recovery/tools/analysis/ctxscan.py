@@ -8,7 +8,7 @@ reports whether they emit the symbol and whether fe reads it exact there:  `-> c
 import sys,os,re,argparse,collections
 sys.path.insert(0,'recovery/tools'); sys.path.insert(0,'recovery/tools/analysis')
 import fe,tumap
-ap=argparse.ArgumentParser(); ap.add_argument('--pfx',default='6'); ap.add_argument('--max-run',type=int,default=2); ap.add_argument('--lo',default='0'); ap.add_argument('--hi',default='ffffffff')
+ap=argparse.ArgumentParser(); ap.add_argument('--pfx',default=os.environ.get('FE_PFX_BASE','6')); ap.add_argument('--max-run',type=int,default=2); ap.add_argument('--lo',default='0'); ap.add_argument('--hi',default='ffffffff')
 a=ap.parse_args()
 mk=tumap.load()  # lo,hi,unit,name,exact,path
 runs=[]

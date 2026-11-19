@@ -4,7 +4,7 @@ import sys, os, re, subprocess, shutil
 sys.path.insert(0, 'recovery/tools')
 import fe
 unit, src, func, addr = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
-pfx = sys.argv[5] if len(sys.argv) > 5 else '2'
+pfx = sys.argv[5] if len(sys.argv) > 5 else os.environ.get('FE_PFX_BASE', '2')
 cmd = fe.compile_cmd(unit)
 out = []
 asm = fe.SCR + '/ro_%d.cod' % os.getpid()

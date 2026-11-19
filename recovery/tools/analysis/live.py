@@ -182,7 +182,7 @@ def image(lo, hi):
     return _build(data, lo, code_end, tables)
 
 
-def ours(unit, src, addr, pfx='2'):
+def ours(unit, src, addr, pfx=os.environ.get('FE_PFX_BASE', '2')):
     c, err = fe.compile_unit(unit, os.path.abspath(src), pfx)
     if c is None:
         raise SystemExit('compile fail ' + str(err))

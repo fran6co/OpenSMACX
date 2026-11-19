@@ -4,7 +4,7 @@
 'image calls, ours does not' = something we wrote out by hand; the reverse = a call the image has inline."""
 import sys,os,re,json,struct,glob,collections
 S=os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0,S); import fe
-R=fe.R; pfx=sys.argv[1] if len(sys.argv)>1 else '20'
+R=fe.R; pfx=sys.argv[1] if len(sys.argv)>1 else fe.PFX
 addr2sym={}
 for p in glob.glob(R+'/src/**/*.cpp',recursive=True):
     t=open(p,encoding='latin-1').read()

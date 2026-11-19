@@ -2,7 +2,7 @@
 import sys,os,struct,re,argparse
 R='.'
 sys.path.insert(0,R+'/recovery/tools'); import fe
-ap=argparse.ArgumentParser(); ap.add_argument('unit'); ap.add_argument('addr'); ap.add_argument('--src'); ap.add_argument('--pfx',default='14'); a=ap.parse_args()
+ap=argparse.ArgumentParser(); ap.add_argument('unit'); ap.add_argument('addr'); ap.add_argument('--src'); ap.add_argument('--pfx',default=os.environ.get('FE_PFX_BASE','14')); a=ap.parse_args()
 text=open(a.src or R+'/'+a.unit,encoding='latin-1').read()
 sym,lo,hi=fe.ident(text,int(a.addr,16))
 def rd(va,n): return fe.imgbytes(va,va+n)

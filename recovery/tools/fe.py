@@ -9,6 +9,8 @@ import sys, os, re, json, subprocess, struct, difflib, argparse, hashlib
 R=os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 MAIN=os.environ.get('OPENSMACX_MAIN', R if os.path.exists(R+'/.opensmacx/game/terranx_original.exe') else '/home/fran6co/code/OpenSMACX')
 SCR=os.environ.get('FE_SCRATCH', R+'/build/recovery/fe')
+# default wine prefix lane: FE_PFX_BASE when set (every tool that compiles through fe honours it)
+PFX=os.environ.get('FE_PFX_BASE','21')
 sys.path.insert(0, R+'/packages/match-recovery/src')
 from match_recovery.pe_coff import Coff
 import capstone
@@ -204,7 +206,7 @@ def show(res,all_=False,ctx=1):
         last=i
 def main():
     ap=argparse.ArgumentParser(); ap.add_argument('unit'); ap.add_argument('addr'); ap.add_argument('--src'); ap.add_argument('--all',action='store_true')
-    ap.add_argument('--ctx',type=int,default=1); ap.add_argument('--pfx',default='21'); ap.add_argument('--quiet',action='store_true'); ap.add_argument('--win',default=''); ap.add_argument('--batch',action='store_true')
+    ap.add_argument('--ctx',type=int,default=1); ap.add_argument('--pfx',default=PFX); ap.add_argument('--quiet',action='store_true'); ap.add_argument('--win',default=''); ap.add_argument('--batch',action='store_true')
     a=ap.parse_args()
     unit=a.unit if a.unit.startswith('src/') else 'src/'+a.unit
     addrs=[int(x,16) for x in a.addr.split(',')]

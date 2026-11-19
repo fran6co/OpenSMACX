@@ -4,6 +4,10 @@ Screens only; confirm with `uv run recover measure` and bank with `uv run recove
 Run from the repo root with `uv run python .opensmacx/tools/<tool>`. They use wine prefixes
 worker-21..34 (the queue uses 20) and never touch the worktree's build.
 
+Lanes: every tool takes its default wine prefix from `FE_PFX_BASE` (fe.py's `--pfx` included; the
+parallel tools use `FE_PFX_BASE..FE_PFX_BASE+FE_JOBS-1`). Export `FE_PFX_BASE` and `FE_JOBS` once per worker and
+an explicit `--pfx` is only needed to pick another lane.
+
 - `fe.py <unit> <addr[,addr]> [--src ALT.cpp] [--all] [--ctx N] [--win lo-hi,...] [--quiet]`
   Raw-compiles one unit (0.3-2 s), diffs the function's COMDAT against the image span with
   relocations masked. `!!` = differing row, `!>` = same instruction, different local jump target.

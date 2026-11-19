@@ -40,7 +40,7 @@ def classify(r):
 
 if __name__ == '__main__':
     data = json.load(open(sys.argv[1]))
-    pfx = sys.argv[sys.argv.index('--pfx') + 1] if '--pfx' in sys.argv else '8'
+    pfx = sys.argv[sys.argv.index('--pfx') + 1] if '--pfx' in sys.argv else os.environ.get('FE_PFX_BASE', '8')
     byunit = collections.defaultdict(list)
     for d in data:
         if not d.get('exact') and d.get('diff', -1) > 0 and d['img'] == d['ours']:
