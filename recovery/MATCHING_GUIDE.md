@@ -5643,6 +5643,36 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
     count packs it before the loop temporaries (ReportIf::draw_ops: the
     vehicle and facility `count`s, 2 + 4 references, slot-map difference
     8 -> 0).
+  - **A spilled temporary interferes over its reload tail; boom's residue is
+    two light temporaries, not a third tie key** (par-2 2026-11-20, boom
+    0x00504AA0, screen only, no probe yet). The &pixel_y[slot] address CSE
+    is reloaded into eax and stored through after the new pixel_y value was
+    homed, and the two never share a slot: interference of an optimizer
+    temporary is its VALUE's liveness (home live range plus the scratch
+    register stretch after each reload), named variables keep home liveness.
+    packsim/packrev now model it (`live.Func.reload_tail`, `--no-tail`
+    restores the old model): boom 18 -> 20 of 27 units, enemy_move,
+    draw_ops, setup_text, base_ecology unchanged. With it, boom's remaining
+    misses are all explained (24 of 24 scalar units) if two units pack
+    after every count-2 unit: the inlined zoom_scale ?: result homed at the
+    join (T-0x8@4f2, 2 accesses, one a memory operand `sub ebx,[ebp-8]`)
+    and the frame loop's strength-reduced &rects[slot] pointer (T-0x8@e0b,
+    4 accesses: init store, reload, `mov/add 0x10/mov` step). No first-,
+    last-, span- or IL-reference-count order reproduces both arms (arm 1
+    needs the outer value temp created first, arms 2/3 the inner one); a
+    probe should test whether a ?: join result and an IV pointer count as
+    lighter than their frame accesses.
+  - **One variable for two exclusive-arm roles packs as one heavy unit**
+    (par-2 2026-11-20, Console::go_to 0x004D61A0, verdict for par-4).
+    Image -0x18 holds base_id (order == -1 arm, 3 accesses), max_range
+    (order == 128 arm, 2) and has_fac's mask (-3 arm, 2); centre_x/centre_y
+    get their own slots. Separate names make base_id a light count-3 unit
+    that exclusive-arm packing (g13) drops into centre_x's slot, as ours
+    does. Spelling max_range as base_id (one function-scope variable for
+    both roles) puts both at -0x18 like the image: slot-map difference
+    8 -> 6, rows 118 -> 119, packrev 32 of 33 units. The merged unit (5)
+    is created before the count-3 centres, and centre_x/centre_y interfere
+    with its max_range role in the 128 arm, so they open their own slots.
 
 - **A loop counter the image keeps in memory while a callee-saved register
   holds a per-iteration conversion** (par-2 2026-11-19, ReportWin::draw_ops
