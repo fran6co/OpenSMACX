@@ -1012,13 +1012,13 @@ void __cdecl enemies_trade_tech(int faction_id, int faction_id_with) {
          & DTREATY_PACT) == 0 ||
         !great_satan(GameDataStateStorage.fields_.faction_rankings_[MaxPlayerNum - 1], 0)) return;
     if (best_tech_to_faction >= 0) {
-        const int leader = static_cast<int>(GameDataStateStorage.fields_.ranking_faction_id_unk1_);
+        const int leader = GameDataStateStorage.fields_.ranking_faction_id_unk1_;
         if (PlayersData[leader].tech_ranking >=
             PlayersData[faction_id_with].tech_ranking)
             tech_achieved(faction_id, best_tech_to_faction, faction_id_with, 0);
     }
     if (best_tech_to_partner >= 0) {
-        const int leader = static_cast<int>(GameDataStateStorage.fields_.ranking_faction_id_unk1_);
+        const int leader = GameDataStateStorage.fields_.ranking_faction_id_unk1_;
         if (PlayersData[leader].tech_ranking >= PlayersData[faction_id].tech_ranking)
             tech_achieved(faction_id_with, best_tech_to_partner, faction_id, 0);
     }

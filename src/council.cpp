@@ -319,10 +319,10 @@ int __cdecl wants_prop(int faction, int proposal, int option) {
                             int humans = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF;  // [ebp-0x14]
                             if (humans & option_bit) {
                                 if (IsMultiplayerNet != 0 &&
-                                    option == static_cast<int>(GameDataStateStorage.fields_.ranking_faction_id_unk1_) &&
+                                    option == GameDataStateStorage.fields_.ranking_faction_id_unk1_ &&
                                     PlayersData[option].ranking >= 5) {
                                     score--;
-                                } else if (option != static_cast<int>(GameDataStateStorage.fields_.ranking_faction_id_unk1_) ||
+                                } else if (option != GameDataStateStorage.fields_.ranking_faction_id_unk1_ ||
                                            PlayersData[option].diff_level < 2) {
                                     score++;
                                 }

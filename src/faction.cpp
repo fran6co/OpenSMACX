@@ -2206,7 +2206,7 @@ void __cdecl tech_analysis(int faction_id, int faction_id_with) {
                     }
                     if (((PlayersData[faction_id].diff_level >= 5 &&
                           (!IsMultiplayerNet || faction_id != static_cast<int>(GameDataStateStorage.fields_.ranking_faction_id_unk2_))) ||
-                         (IsMultiplayerNet && faction_id == static_cast<int>(GameDataStateStorage.fields_.ranking_faction_id_unk1_))) &&
+                         (IsMultiplayerNet && faction_id == GameDataStateStorage.fields_.ranking_faction_id_unk1_)) &&
                         DiploScratchF7F4 == -1) {
                         DiploScratchF7F4 = matched = -2 - project;
                     }
