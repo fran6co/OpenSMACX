@@ -34,6 +34,7 @@
 #include <stddef.h>
 #include <mmsystem.h>
 #include "win.h"
+#include "rectangle_operations.h"
 #include "xpops.h"  // X_pop
 #include "popup.h"  // Existing POP2 owner interface.
 #include "ambience.h"  // load_music, the startup faction ambience owner.
@@ -2683,14 +2684,6 @@ class Demo : public GraphicWin { public:
 // RECOVERY_OBJECT: v1 0x00939FF8 ?DemoFourthHotspot@@3UtagRECT@@A
 RECT DemoFourthHotspot;
 
-static void set_demo_rect(RECT &rect, long left, long top, long right,
-                          long bottom) {
-    rect.left = left;
-    rect.top = top;
-    rect.right = right;
-    rect.bottom = bottom;
-}
-
 // ORIGINAL: 0x005242C0 sub_5242c0 0x005242C0-0x00524317 BYTE_EXACT
 // symbol    ?redraw@Demo@@UAEXXZ
 // kind      game
@@ -2826,17 +2819,17 @@ int Demo::init() {
 
     char *foreground;
     if (large_layout) {
-        set_demo_rect(splash_rects_[0], 0x2B, 0x268, 0x18B, 0x2A3);
-        set_demo_rect(splash_rects_[1], 0x2DA, 0x28E, 0x36E, 0x2C2);
-        set_demo_rect(splash_rects_[2], 0x1A7, 0x1EF, 0x259, 0x2C5);
+        set_rect(&splash_rects_[0], 0x2B, 0x268, 0x18B, 0x2A3);
+        set_rect(&splash_rects_[1], 0x2DA, 0x28E, 0x36E, 0x2C2);
+        set_rect(&splash_rects_[2], 0x1A7, 0x1EF, 0x259, 0x2C5);
         // The original global RECT transposes its first two coordinates.
-        set_demo_rect(DemoFourthHotspot, 0x243, 0x2DA, 0x30C, 0x2F1);
+        set_rect(&DemoFourthHotspot, 0x243, 0x2DA, 0x30C, 0x2F1);
         foreground = "demosplash1024_2.pcx";
     } else {
-        set_demo_rect(splash_rects_[0], 0x21, 0x1E1, 0x135, 0x210);
-        set_demo_rect(splash_rects_[1], 0x23A, 0x1FF, 0x2AE, 0x228);
-        set_demo_rect(splash_rects_[2], 0x14A, 0x182, 0x1D6, 0x22A);
-        set_demo_rect(DemoFourthHotspot, 0x1C5, 0x23A, 0x262, 0x24E);
+        set_rect(&splash_rects_[0], 0x21, 0x1E1, 0x135, 0x210);
+        set_rect(&splash_rects_[1], 0x23A, 0x1FF, 0x2AE, 0x228);
+        set_rect(&splash_rects_[2], 0x14A, 0x182, 0x1D6, 0x22A);
+        set_rect(&DemoFourthHotspot, 0x1C5, 0x23A, 0x262, 0x24E);
         foreground = "demosplash800_2.pcx";
     }
     local_buffer.load_pcx(foreground, 0, 10, 0xEC);
@@ -3425,18 +3418,6 @@ void __cdecl turn_upkeep() {
     do_all_non_input();
 }
 
-// veh_top (0x00579920) as the image expands it here, guard included.
-static inline int repair_veh_top(int veh_id) {
-    int top_veh_id = veh_id;
-    if (veh_id < 0) {
-        return -1;
-    }
-    while (Vehs[top_veh_id].prev_veh_id_stack >= 0) {
-        top_veh_id = Vehs[top_veh_id].prev_veh_id_stack;
-    }
-    return top_veh_id;
-}
-
 /*
 Purpose: Run the repair phase for the specified faction: reset the per-turn unit state, heal every
          damaged unit by its reactor-weighted repair rate, and redraw the tiles the units stand on.
@@ -3654,7 +3635,8 @@ void __cdecl repair_phase(int faction_id) {
             && veh_cargo(veh_id)
             && (Vehs[veh_id].order == ORDER_SENTRY_BOARD
                 || is_ocean(x, y))) {
-            for (int stack_id = repair_veh_top(veh_id); stack_id >= 0;
+            // veh_top (0x00579920) expands here, guard included.
+            for (int stack_id = veh_top(veh_id); stack_id >= 0;
                 stack_id = Vehs[stack_id].next_veh_id_stack) {
                 if (stack_id != veh_id && has_abil(Vehs[stack_id].proto_id, ABL_REPAIR)) {
                     has_repair_bay = true;
