@@ -4351,7 +4351,7 @@ int DesignWin::init() {
     // Two columns of seven automatic-design buttons (ids 9..22).
     X_text_open(ScriptPopupFile, "DESIGNAUTO");
     int column_x = field_A7C_rect_.left;
-    int grid_width = (field_A7C_rect_.right - column_x + 3) / 2 - 3;
+    int grid_width = (rect_width(&field_A7C_rect_) + 3) / 2 - 3;
     DesignGridButtonIndex = 0;
     int row;
     int column;
