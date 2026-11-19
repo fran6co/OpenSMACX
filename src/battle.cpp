@@ -2808,8 +2808,8 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
 
     // 0x5074F4
     {
-        uint32_t &adj1 = Vehs[veh_id].state;
-        adj1 = (adj1 & ~VSTATE_UNK_1000) | VSTATE_UNK_4;
+        uint32_t &attacker_state = Vehs[veh_id].state;
+        attacker_state = (attacker_state & ~VSTATE_UNK_1000) | VSTATE_UNK_4;
     }
     Vehs[def_id].state |= VSTATE_UNK_4;
     if (!(NetDaemonNet.action_mode_ & 2)) {

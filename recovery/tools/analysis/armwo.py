@@ -754,7 +754,9 @@ def gen_r(body, root):
             if not lv_ok(lv) or re.match(r'(%s)\s' % SIMPLE_T, lv):
                 continue
             k += 1
-            v = 'adj%d' % k
+            v = re.findall(r'\w+', lv)[-1]
+            if re.search(r'\b%s\b' % v, re.sub(r'(\.|->)\s*%s\b' % v, '', body)):
+                v = 'adj%d' % k
             r_ref, cnt = sub_lv(rhs, lv, v)
             if not cnt:
                 continue
