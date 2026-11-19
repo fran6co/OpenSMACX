@@ -1302,7 +1302,8 @@ void BaseWin::draw_supported(int update_mode) {
     int y = content.top + (content.bottom - rows * vehicle_height - content.top) / 2;
     const int start_x = horizontal_offset + content.left;
     int x = start_x;
-    int ordinal = -1, drawn = 0, drawn_rows = 0;
+    int ordinal = -1, drawn_rows = 0;
+    count = 0;
     // Native EBP-50 first reads40CF5B/40D023 precede the sole write40D05C.
     // Retain that uninitialized first use and previous-row pitch thereafter;
     // initialization would be a separately reviewed behavior change.
@@ -1324,9 +1325,9 @@ void BaseWin::draw_supported(int update_mode) {
         const int icon_y = y - icon_offset + vehicle_height;
         int support, total = 0, convoy_yield; // native yield only read in convoy arm
         if (Vehs[vehicle_id].state & 0x10u) {
-            support = PlayersData[faction].soc_effect_pending.values_[SocialEffect::SUPPORT];
+            const int level = PlayersData[faction].soc_effect_pending.values_[SocialEffect::SUPPORT];
             support = has_abil(Vehs[vehicle_id].proto_id, 0x10000)
-                ? 0 : 1 + (support <= -4);
+                ? 0 : 1 + (level <= -4);
             total = support;
         } else {
             support = 0;
@@ -1381,7 +1382,7 @@ void BaseWin::draw_supported(int update_mode) {
         }
         spot1_.add(vehicle_id, 7, x, y, vehicle_width, vehicle_height);
         x += vehicle_width;
-        if (++drawn % columns == 0) {
+        if (++count % columns == 0) {
             x = start_x; y += vehicle_height;
             if (++drawn_rows >= rows) break;
         }
