@@ -26,6 +26,48 @@
 // its three-state EH layout; see stringstruct.h.
 #define STRINGSTRUCT_CTOR_OUT_OF_LINE
 #include "stdafx.h"
+// WORKAROUND(decl): on_iface_button_clicked 0x004A6330 counter alignment (guide 2.5, 3.6; history above the
+// old position after help_link.h).
+// Whole-unit fe sweep of this block (after par-2's draw_ops/draw_sat edits): exact at 12-21, 27-46, 48-55 and 58;
+// sat_attack 0x004A0260 keeps 15 rows and draw_sat 0x004AA970 55 at 36, so 36.
+// CANARY: 0x004A6330 ?on_iface_button_clicked@ReportIf@@UAEXH@Z residues 0-27,38,49-53
+// CANARY-PADS: function ReportIfDeclFnPad
+void ReportIfDeclFnPad0();
+void ReportIfDeclFnPad1();
+void ReportIfDeclFnPad2();
+void ReportIfDeclFnPad3();
+void ReportIfDeclFnPad4();
+void ReportIfDeclFnPad5();
+void ReportIfDeclFnPad6();
+void ReportIfDeclFnPad7();
+void ReportIfDeclFnPad8();
+void ReportIfDeclFnPad9();
+void ReportIfDeclFnPad10();
+void ReportIfDeclFnPad11();
+void ReportIfDeclFnPad12();
+void ReportIfDeclFnPad13();
+void ReportIfDeclFnPad14();
+void ReportIfDeclFnPad15();
+void ReportIfDeclFnPad16();
+void ReportIfDeclFnPad17();
+void ReportIfDeclFnPad18();
+void ReportIfDeclFnPad19();
+void ReportIfDeclFnPad20();
+void ReportIfDeclFnPad21();
+void ReportIfDeclFnPad22();
+void ReportIfDeclFnPad23();
+void ReportIfDeclFnPad24();
+void ReportIfDeclFnPad25();
+void ReportIfDeclFnPad26();
+void ReportIfDeclFnPad27();
+void ReportIfDeclFnPad28();
+void ReportIfDeclFnPad29();
+void ReportIfDeclFnPad30();
+void ReportIfDeclFnPad31();
+void ReportIfDeclFnPad32();
+void ReportIfDeclFnPad33();
+void ReportIfDeclFnPad34();
+void ReportIfDeclFnPad35();
 #include "interface_fonts.h"
 #include "reportif.h"
 #include "base.h"    // BaseCurrentCount bounds the report's fixed sort workspace
@@ -81,8 +123,8 @@
 // sat_attack keeps 15 rows and draw_sat 54 only at 35, so 35.
 // After Scroll::set_field_A64 and BaseButton::set_bevel_upper (Gamma::exec), whole-unit fe sweep: on_iface_button_clicked
 // exact at 0-18, 29, 40-44, 55-63; sat_attack 15 and draw_sat 54 at 0-3, 29, 43, 55-58, 60-63, so 0: no pads.
-// CANARY: 0x004A6330 ?on_iface_button_clicked@ReportIf@@UAEXH@Z residues 0-27,38,49-53
-// CANARY-PADS: function ReportIfDeclFnPad
+// Re-tuned 2026-11-19 against the sprite.h/popup.h headers: pads here are exact only at 11-12, 49-50 and 60-61,
+// pads right behind stdafx.h (moved there, see below) have a wide window.
 
 // Shared punctuation objects the image pushes instead of unit literals.
 extern char SocialWinCloseParenText[];
@@ -5913,9 +5955,9 @@ int ReportIf::on_iface_dialog_item_back_draw(::GraphicWin *, int, int, RECT *) {
 // The three log_say texts are this handler's own copies in the pinned image
 // (0x687280, 0x687298, 0x6872B8; on_left_click keeps a separate EDBC copy at
 // 0x686F04). The image's advanced-governor text ends in "set".
-// RECOVERY_LITERAL: v1 0x00687280 0x00687295 $SG63466 0x004A6330
-// RECOVERY_LITERAL: v1 0x00687298 0x006872B5 $SG63481 0x004A6330
-// RECOVERY_LITERAL: v1 0x006872B8 0x006872CC $SG63492 0x004A6330
+// RECOVERY_LITERAL: v1 0x00687280 0x00687295 $SG63502 0x004A6330
+// RECOVERY_LITERAL: v1 0x00687298 0x006872B5 $SG63517 0x004A6330
+// RECOVERY_LITERAL: v1 0x006872B8 0x006872CC $SG63528 0x004A6330
 // symbol    ?on_iface_button_clicked@ReportIf@@UAEXH@Z
 void ReportIf::on_iface_button_clicked(int button) {
     int row;
@@ -6155,27 +6197,27 @@ void ReportIf::on_iface_group_clicked(int group, int, int item) {
 // TRIED: MISMATCH #0, sim ~0.58 (best of /O1 framed). Full structural transcription (all branches, both list modes, all 4 category bars). Approximated: the ListBox virtual-base (GraphicWin) adjustment at self+0xa384/+0x24/+0x28 uses the flattened `virtual_base_` member instead of the runtime vtable+8 lookup the original performs, so that handful of instructions differ in shape though not in intent.
 // The 21 one-character marker literals ("|", "[", "]", "+", ".", "%") are this function's own unpooled
 // copies in the pinned image, 0x6872CC..0x68731E in source order.
-// RECOVERY_LITERAL: v1 0x006872CC 0x006872CE $SG63607 0x004A7000
-// RECOVERY_LITERAL: v1 0x006872D0 0x006872D2 $SG63608 0x004A7000
-// RECOVERY_LITERAL: v1 0x006872D4 0x006872D6 $SG63609 0x004A7000
-// RECOVERY_LITERAL: v1 0x006872D8 0x006872DA $SG63618 0x004A7000
-// RECOVERY_LITERAL: v1 0x006872DC 0x006872DE $SG63619 0x004A7000
-// RECOVERY_LITERAL: v1 0x006872E0 0x006872E2 $SG63622 0x004A7000
-// RECOVERY_LITERAL: v1 0x006872E4 0x006872E6 $SG63631 0x004A7000
-// RECOVERY_LITERAL: v1 0x006872E8 0x006872EA $SG63632 0x004A7000
-// RECOVERY_LITERAL: v1 0x006872EC 0x006872EE $SG63635 0x004A7000
-// RECOVERY_LITERAL: v1 0x006872F0 0x006872F2 $SG63663 0x004A7000
-// RECOVERY_LITERAL: v1 0x006872F4 0x006872F6 $SG63664 0x004A7000
-// RECOVERY_LITERAL: v1 0x006872F8 0x006872FA $SG63665 0x004A7000
-// RECOVERY_LITERAL: v1 0x006872FC 0x006872FE $SG63668 0x004A7000
-// RECOVERY_LITERAL: v1 0x00687300 0x00687302 $SG63669 0x004A7000
-// RECOVERY_LITERAL: v1 0x00687304 0x00687306 $SG63670 0x004A7000
-// RECOVERY_LITERAL: v1 0x00687308 0x0068730A $SG63673 0x004A7000
-// RECOVERY_LITERAL: v1 0x0068730C 0x0068730E $SG63674 0x004A7000
-// RECOVERY_LITERAL: v1 0x00687310 0x00687312 $SG63675 0x004A7000
-// RECOVERY_LITERAL: v1 0x00687314 0x00687316 $SG63678 0x004A7000
-// RECOVERY_LITERAL: v1 0x00687318 0x0068731A $SG63679 0x004A7000
-// RECOVERY_LITERAL: v1 0x0068731C 0x0068731E $SG63680 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872CC 0x006872CE $SG63643 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872D0 0x006872D2 $SG63644 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872D4 0x006872D6 $SG63645 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872D8 0x006872DA $SG63654 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872DC 0x006872DE $SG63655 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872E0 0x006872E2 $SG63658 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872E4 0x006872E6 $SG63667 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872E8 0x006872EA $SG63668 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872EC 0x006872EE $SG63671 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872F0 0x006872F2 $SG63699 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872F4 0x006872F6 $SG63700 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872F8 0x006872FA $SG63701 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872FC 0x006872FE $SG63704 0x004A7000
+// RECOVERY_LITERAL: v1 0x00687300 0x00687302 $SG63705 0x004A7000
+// RECOVERY_LITERAL: v1 0x00687304 0x00687306 $SG63706 0x004A7000
+// RECOVERY_LITERAL: v1 0x00687308 0x0068730A $SG63709 0x004A7000
+// RECOVERY_LITERAL: v1 0x0068730C 0x0068730E $SG63710 0x004A7000
+// RECOVERY_LITERAL: v1 0x00687310 0x00687312 $SG63711 0x004A7000
+// RECOVERY_LITERAL: v1 0x00687314 0x00687316 $SG63714 0x004A7000
+// RECOVERY_LITERAL: v1 0x00687318 0x0068731A $SG63715 0x004A7000
+// RECOVERY_LITERAL: v1 0x0068731C 0x0068731E $SG63716 0x004A7000
 void ReportIf::draw_labs() {
     char lab_text[80];   // [ebp-0xC8]
     char text[80];       // [ebp-0x78]
