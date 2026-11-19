@@ -65,20 +65,52 @@ static int listbox_frame_edge_count(uint32_t stored_count) {
     return static_cast<int>(stored_count);
 }
 
+
+
+// Pinned 0x00609DB0 stores 0x0067041C/14/08 at 0x00609E08/14/24; matching COFF relocations at +0x5B/6B/77 identify these starts.
+// RECOVERY_GENERATED: v1 vtable 0x0067041C ? ??_7ListBox@@6BWin@@@ 0x00609DB0
+// RECOVERY_GENERATED: v1 vtable 0x00670414 ? ??_7ListBox@@6BBuffer@@@ 0x00609DB0
+// RECOVERY_GENERATED: v1 vtable 0x00670408 ? ??_7ListBox@@6B@ 0x00609DB0
+// ORIGINAL: 0x00609DB0 ??0ListBox@@QAE@H@Z 0x00609DB0-0x00609EB7;0x00662EF0-0x00662F14 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["promoted historical seed src/recovered/units/00609db0.cpp", "Original constructor/destructor direct-call receivers and unwind stages"], "reason": "609DB0 calls GraphicWin and Dialog constructors only for the hidden most-derived ABI flag, then stores own defaults. Genuine virtual bases synthesize this flag; it is not an explicit int source parameter."}
+// symbol    ??0ListBox@@QAE@XZ
+ListBox::ListBox() {
+    field_4_ = 0;
+    field_8_ = 0;
+    field_10_ = ListBoxDefault10;
+    field_14_ = ListBoxDefault14;
+    field_18_ = 0;
+    field_1C_ = 0;
+    field_20_ = 0;
+    field_24_ = ListBoxDefault24;
+    field_28_ = ListBoxCloseDynamicDefault;
+    field_2C_ = ListBoxDefault2C;
+    draw_callback_ = 0;
+    write_callback_ = 0;
+    fill_callback_ = 0;
+    selection_callback_ = 0;
+    double_click_callback_ = 0;
+    field_B4_ = 1;
+    field_C_ = 0;
+}
+
 /*
-Purpose: Unknown; the legacy implementation is a constant return that returns.
-// ORIGINAL: 0x0060C7C0 ?on_dialog_focus@ListBox@@QAEXH@Z 0x0060C7C0-0x0060C7C3 BYTE_EXACT
-// symbol    ?on_dialog_focus@ListBox@@UAEXH@Z
-// size      3 bytes
-// prototype void (__thiscall ?on_dialog_focus@ListBox@@QAEXH@Z)(ListBox* this, int)
-// callers   1   call targets   0
+Purpose: The ListBox derived destructor stage. VC6 enters this method on the
+         GraphicWin controlling virtual base, recovers the class receiver,
+         stages its tables and vtordisps, and calls close. The complete-object
+         caller additionally destroys the virtual bases in reverse order.
+// ORIGINAL: 0x00609EC0 ??1ListBox@@QAE@XZ 0x00609EC0-0x00609F13 BYTE_EXACT
+// symbol    ??1ListBox@@UAE@XZ
+// size      83 bytes
+// prototype void (__thiscall ??1ListBox@@QAE@XZ)(ListBox* this)
+// callers   35   call targets   1
 // kind      game
 // flags     hidden;sp_ready;purged_ok
-// calls     (none)
+// calls     0x00609F20
 Return Value: n/a
-Status: Complete
 */
-void ListBox::on_dialog_focus(int) {
+ListBox::~ListBox() {
+    close();
 }
 
 
@@ -165,153 +197,46 @@ void ListBox::close() {
     field_C_ = 0;
 }
 
-// Original 609DB0 conditionally constructs GraphicWin and Dialog using the
-// compiler's most-derived flag, then initializes the ListBox-owned fields.
-// Superseded seed deleted; seed paths below are historical Git provenance.
 /*
-Purpose: Return the Win parent's slot-8 value when the original Win flag and
-         parent-link guards are set.
-*/
-// ORIGINAL: 0x0060CED0 sub_60ced0 0x0060CED0-0x0060CED8 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned image SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "ListBox constructor at 0x00609DB0 installs Win-view table address point 0x0067041C; slots 6/7 at +0x18/+0x1C select 0x0060CED0/0x0060CF10", "the adjustor thunk resolves the GraphicWin virtual base via vbtable {0,0x48,0xA60}; the callback then reads Win-relative +0x98 (iFlags_) and +0xC4 (win_parent_), testing bit 0x40 before the parent and calling its slot 8", "original 0x005EB640 close body pushes scroll_vert_ before the slot-7 call and pushes scroll_horz_ before the matching horizontal call; both return paths are ret 4", "Boundary refinement retains the historical catalogue envelope 0x0060CED0-0x0060CF01 (49 bytes) as a thunk/padding/primary cluster, not one current function.", "Pinned 0x0060CED0-0x0060CED8 is the two-instruction vtordisp thunk; 0x0060CED8-0x0060CEE0 is exactly eight INT3 alignment bytes; 0x0060CEE0-0x0060CF01 is its separate ordinary primary body.", "Original origin, catalogue name, emitted thunk symbol, prior binding evidence and historical claims are retained."], "reason": "Move the pinned ListBox Win-view callback into a genuine owner method; retain the original Win-member guard order and delegated slot behavior. Compiler-generated receiver adjustment and exact COFF target still require fresh native verification."}
-// body src/jackal/listbox.h
-// symbol    ?on_scroll_create@ListBox@@$4PPPPPPPM@A@AEPAVScroll@@XZ
-// ORIGINAL: 0x0060CEE0 sub_60CEE0 0x0060CEE0-0x0060CF01 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned direct JMP at 0x0060CED3 targets 0x0060CEE0.", "Pinned primary span 0x0060CEE0-0x0060CF01 corresponds to ordinary emitted C++ member ?on_scroll_create@ListBox@@UAEPAVScroll@@XZ, independently callable from its preceding vtordisp thunk."], "reason": "Bind the separately callable primary ListBox scroll body, not its preceding vtordisp thunk."}
-// body src/jackal/listbox.h
-// symbol    ?on_scroll_create@ListBox@@UAEPAVScroll@@XZ
+Purpose: Land the list selection on the row whose id matches: reset the
+         Dialog entry list to its head, walk forward comparing ids, and
+         select the position the walk reached - or position -1 when the id
+         is absent or the list is empty.
 
-
-/*
-Purpose: Forward the exact Scroll being removed through recipient slot 9
-         under the original guards, otherwise return the argument.
-*/
-// ORIGINAL: 0x0060CF10 sub_60cf10 0x0060CF10-0x0060CF18 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned image SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "ListBox constructor at 0x00609DB0 installs Win-view table address point 0x0067041C; slots 6/7 at +0x18/+0x1C select 0x0060CED0/0x0060CF10", "the adjustor thunk resolves the GraphicWin virtual base via vbtable {0,0x48,0xA60}; the callback then reads Win-relative +0x98 (iFlags_) and +0xC4 (win_parent_), testing bit 0x40 before the parent and calling its slot 9 with the Scroll argument", "original 0x005EB640 close body pushes scroll_vert_ before the slot-7 call and pushes scroll_horz_ before the matching horizontal call; both return paths are ret 4", "Boundary refinement retains the historical catalogue envelope 0x0060CF10-0x0060CF4D (61 bytes) as a thunk/padding/primary cluster, not one current function.", "Pinned 0x0060CF10-0x0060CF18 is the two-instruction vtordisp thunk; 0x0060CF18-0x0060CF20 is exactly eight INT3 alignment bytes; 0x0060CF20-0x0060CF4D is its separate ordinary primary body.", "Original origin, catalogue name, emitted thunk symbol, prior binding evidence and historical claims are retained."], "reason": "Move the pinned ListBox Win-view callback into a genuine owner method; retain the original Win-member guard order and delegated slot behavior. Compiler-generated receiver adjustment and exact COFF target still require fresh native verification."}
-// body src/jackal/listbox.h
-// symbol    ?on_scroll_delete@ListBox@@$4PPPPPPPM@A@AEPAVScroll@@PAV2@@Z
-// ORIGINAL: 0x0060CF20 sub_60CF20 0x0060CF20-0x0060CF4D BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned direct JMP at 0x0060CF13 targets 0x0060CF20.", "Pinned primary span 0x0060CF20-0x0060CF4D corresponds to ordinary emitted C++ member ?on_scroll_delete@ListBox@@UAEPAVScroll@@PAV2@@Z, independently callable from its preceding vtordisp thunk."], "reason": "Bind the separately callable primary ListBox scroll body, not its preceding vtordisp thunk."}
-// body src/jackal/listbox.h
-// symbol    ?on_scroll_delete@ListBox@@UAEPAVScroll@@PAV2@@Z
-
-
-// Pinned 0x00609DB0 stores 0x0067041C/14/08 at 0x00609E08/14/24; matching COFF relocations at +0x5B/6B/77 identify these starts.
-// RECOVERY_GENERATED: v1 vtable 0x0067041C ? ??_7ListBox@@6BWin@@@ 0x00609DB0
-// RECOVERY_GENERATED: v1 vtable 0x00670414 ? ??_7ListBox@@6BBuffer@@@ 0x00609DB0
-// RECOVERY_GENERATED: v1 vtable 0x00670408 ? ??_7ListBox@@6B@ 0x00609DB0
-// ORIGINAL: 0x00609DB0 ??0ListBox@@QAE@H@Z 0x00609DB0-0x00609EB7;0x00662EF0-0x00662F14 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["promoted historical seed src/recovered/units/00609db0.cpp", "Original constructor/destructor direct-call receivers and unwind stages"], "reason": "609DB0 calls GraphicWin and Dialog constructors only for the hidden most-derived ABI flag, then stores own defaults. Genuine virtual bases synthesize this flag; it is not an explicit int source parameter."}
-// symbol    ??0ListBox@@QAE@XZ
-ListBox::ListBox() {
-    field_4_ = 0;
-    field_8_ = 0;
-    field_10_ = ListBoxDefault10;
-    field_14_ = ListBoxDefault14;
-    field_18_ = 0;
-    field_1C_ = 0;
-    field_20_ = 0;
-    field_24_ = ListBoxDefault24;
-    field_28_ = ListBoxCloseDynamicDefault;
-    field_2C_ = ListBoxDefault2C;
-    draw_callback_ = 0;
-    write_callback_ = 0;
-    fill_callback_ = 0;
-    selection_callback_ = 0;
-    double_click_callback_ = 0;
-    field_B4_ = 1;
-    field_C_ = 0;
-}
-
-/*
-Purpose: Adjust the receiver from the thunk1 subobject back to ListBox and
-         tail-jump to the override. THE COMPILER WRITES THIS BODY - the claim
-         names VC6's own vtordisp adjustor thunk, emitted because
-         ListBox::on_dialog_focus overrides a virtual reached through a virtual
-         base. There is no C++ here to get right, only a name to record.
-         MOVED HERE from filewin.cpp 2026-09-03, with ListBox's constructor
-         going declaration-only above: these COMDATs are emitted in every TU
-         that CONSTRUCTS the object, and this file now is one - the three
-         markers had already predicted the move ("NOT IN listbox.cpp, which
-         defines no ListBox constructor"), which stopped being true.
-// ORIGINAL: 0x0060D000 ?on_dialog_focus@thunk1_ListBox@@QAEXH@Z 0x0060D000-0x0060D008 BYTE_EXACT
-// symbol    ?on_dialog_focus@ListBox@@$4PPPPPPPM@A@AEXH@Z
-// size      8 bytes
-// kind      game
-Status: Complete
-*/
-
-/*
-Purpose: Adjust the receiver from the thunk1 subobject back to ListBox and
-         tail-jump to the override. THE COMPILER WRITES THIS BODY - the claim
-         names VC6's own vtordisp adjustor thunk, emitted because
-         ListBox::on_mouse_leave overrides a virtual reached through a virtual
-         base. There is no C++ here to get right, only a name to record.
-         MOVED HERE from filewin.cpp 2026-09-03, for the same reason as
-         on_dialog_focus's marker directly above.
-// ORIGINAL: 0x0060CF80 ?on_mouse_leave@thunk1_ListBox@@QAEXHH@Z 0x0060CF80-0x0060CF88 BYTE_EXACT
-// symbol    ?on_mouse_leave@ListBox@@$4PPPPPPPM@A@AEXHH@Z
-// size      8 bytes
-// kind      game
-Status: Complete
-*/
-
-/*
-Purpose: Adjust the receiver from the thunk1 subobject back to ListBox and
-         tail-jump to the override. THE COMPILER WRITES THIS BODY - the claim
-         names VC6's own vtordisp adjustor thunk, emitted because
-         ListBox::attach overrides a virtual reached through a virtual
-         base. There is no C++ here to get right, only a name to record.
-         MOVED HERE from filewin.cpp 2026-09-03, for the same reason as
-         on_dialog_focus's marker directly above.
-// ORIGINAL: 0x0060D040 ?attach@thunk1_ListBox@@QAEHPAUGraphicWin@@HHH@Z 0x0060D040-0x0060D048 BYTE_EXACT
-// symbol    ?attach@ListBox@@$4PPPPPPPM@A@AEHPAVGraphicWin@@HHH@Z
-// size      8 bytes
-// kind      game
-Status: Complete
-*/
-
-/*
-Purpose: The ListBox derived destructor stage. VC6 enters this method on the
-         GraphicWin controlling virtual base, recovers the class receiver,
-         stages its tables and vtordisps, and calls close. The complete-object
-         caller additionally destroys the virtual bases in reverse order.
-// ORIGINAL: 0x00609EC0 ??1ListBox@@QAE@XZ 0x00609EC0-0x00609F13 BYTE_EXACT
-// symbol    ??1ListBox@@UAE@XZ
-// size      83 bytes
-// prototype void (__thiscall ??1ListBox@@QAE@XZ)(ListBox* this)
-// callers   35   call targets   1
+// ORIGINAL: 0x00609FA0 ?set_selected_id@ListBox@@QAEXH@Z 0x00609FA0-0x0060A013 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["The pinned body at 0x609FAB forms the Dialog virtual-base list at Dialog+0xBC; loads/stores at +0xC4/+0xC8/+0xCC/+0xD0 correspond to declared StringList head/current/count/position fields.", "Pinned branches 0x609FBB/0x609FC8 and 0x609FD4/0x609FE8 preserve the empty-list, count-bounded ID walk, selection-on-hit and -1 selection-on-miss paths; the successful call is 0x60A020.", "ListBox already declares set_selected_id; src/listbox.cpp owns its sibling set_selected_pos and src/listbox.h owns the real virtual Dialog inheritance. No guessed class or layout is introduced."], "reason": "Transfer the existing ListBox method into its class implementation TU and retain its complete list walk and set_selected_pos calls. This source binding records owner placement and field provenance, not a byte-exact or linked-selection verdict."}
+// size      115 bytes
+// prototype void (__thiscall ?set_selected_id@ListBox@@QAEXH@Z)(ListBox* this, int)
+// callers   17   call targets   1
 // kind      game
 // flags     hidden;sp_ready;purged_ok
-// calls     0x00609F20
-Return Value: n/a
+// calls     0x0060A020
+// Homed from src/recovered/units/00609fa0.cpp. The image resets
+// item_list_.current_ to head_ through the Dialog virtual base and selects
+// through Dialog::item_list_.current_position_ (the seed's Dialog+0xBC
+// list and +0xD0 position), tail-falling into set_selected_pos(-1, 1).
+Status: Coverage transcription - unclaimed body
 */
-ListBox::~ListBox() {
-    close();
-}
+void ListBox::set_selected_id(int id) {
+    StringList &items = Dialog::item_list_;
+    if (items.head_ != 0) {
+        const int count = items.entry_count_;
+        items.current_position_ = 0;
+        items.current_ = items.head_;
+        for (int index = 0; index < count; index++) {
+            StringStructEntry *entry = items.current_;
+            if (entry->id == id) {
+                goto found;
+            }
+            items.current_position_++;
+            items.current_ = entry->next;
+        }
+    }
+    set_selected_pos(-1, 1);
+    return;
 
-
-/*
-Purpose: Clear the hover index and repaint, through the enclosing object.
-// ORIGINAL: 0x0060CE10 ?on_mouse_leave@ListBox@@QAEXHH@Z 0x0060CE10-0x0060CE38 BYTE_EXACT
-// symbol    ?on_mouse_leave@ListBox@@UAEXHH@Z
-// size      40 bytes
-// prototype void (__thiscall ?on_mouse_leave@ListBox@@QAEXHH@Z)(ListBox* this, int, int)
-// callers   1   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// indirect  0x0060CE2F
-Return Value: n/a
-Status: Complete
-*/
-void ListBox::on_mouse_leave(int a1, int a2) {
-    // Clear the hover index (Dialog::field_F0_, through the virtual base)
-    // and repaint (the redraw virtual) - plain member forms; the
-    // compiler's virtual-base machinery does the walking the old hand
-    // chains spelled. Both parameters are dead; `ret 8` still pops them.
-    field_F0_ = -1;
-    redraw();
+found:
+    set_selected_pos(Dialog::item_list_.current_position_, 1);
 }
 
 // The retained seed at 0x0060A020 also supplies the notify-gated calls: the
@@ -383,490 +308,6 @@ void ListBox::set_selected_pos(int position, int notify) {
     }
 
     redraw();
-}
-
-/*
-Purpose: Report a right press: raise the click guard, forward (a1, a2) through
-         GraphicWin vtable slot 20, drop the guard.
-
-/*
-Purpose: Report a right press: raise the click guard, forward (a1, a2) through
-         GraphicWin vtable slot 20, drop the guard.
-// ORIGINAL: 0x0060AA20 ?on_right_down@ListBox@@QAEXHH@Z 0x0060AA20-0x0060AA52 BYTE_EXACT
-// symbol    ?on_right_down@ListBox@@UAEXHH@Z
-// TRIED 2026-09-03: re-dumped the divergence. The 3 instructions the image
-// has and this tree does not are entirely the entered-receiver walk
-// (`mov eax,[ecx-0x48]` / `mov eax,[edx+ecx-0x48]` / `lea ecx,[edx+ecx-0x48]`
-// against this tree's `mov eax,[ecx]` / `mov eax,[ecx+edx]` /
-// `add ecx,edx`) - the front walk through the vbtable that VC6 emits only
-// for a U-spelled virtual override entered on the GraphicWin virtual base.
-// No body spelling reaches it while the receiver enters adjusted; it needs
-// the ListBox/GraphicWin declaration (on_right_down virtual in GraphicWin),
-// which is batch 9's entered-receiver work and regresses the six
-// window-event families whose image symbols spell Q. Same wall on
-// on_scrolled and on_right_double_click below.
-// TRIED: byte-exact on promotion from the 0060aa20 archive unit. The
-//   Q spelling enters with `this` on the GraphicWin virtual base, so the
-//   ListBox front is walked back with the same explicit -0x48 the image folds
-// TRIED: byte-exact on promotion from the 0060aa20 archive unit. The
-//   Q spelling enters with `this` on the GraphicWin virtual base, so the
-//   ListBox front is walked back with the same explicit -0x48 the image folds
-//   (`mov eax, [ecx - 0x48]`, receiver `lea ecx, [edx + ecx - 0x48]`) - the
-//   on_left_click idiom in mapwin.cpp, not on_mouse_leave's virtual-entry
-//   walk, which VC6 only generates for a U-spelled override. The vbtable read
-//   stays INSIDE the receiver expression: naming it a local lets VC6
-//   materialize the front pointer the image keeps folded away.
-// size      50 bytes
-// prototype void (__thiscall ?on_right_down@ListBox@@QAEXHH@Z)(ListBox* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// indirect  0x0060AA42
-Return Value: n/a
-Status: Complete
-DEMOTED from BYTE_EXACT by direction (idiomatic-first): the forward is the
-plain virtual call it always was - win-table slot 20, on_left_down - dispatched
-on the entered receiver, which already points at the GraphicWin subobject
-whose vftable the old hand walk re-derived through the front. The image
-walks back to the ListBox front and re-walks out to that same table
-(`mov eax,[ecx-0x48]`, 9 of 12, 0.917 similar); reproducing that addressing
-is the entered-receiver relationship work (batch 9). The dispatch target is
-identical either way.
-*/
-void ListBox::on_right_down(int a1, int a2) {
-    ListBoxClickGuard = 1;
-    on_left_down(a1, a2);
-    ListBoxClickGuard = 0;
-}
-
-/*
-Purpose: Forward a vertical-scroll (code, pos) through GraphicWin vtable
-         slot 49.
-// ORIGINAL: 0x0060C6A0 ?on_scrolled@ListBox@@QAEXHH@Z 0x0060C6A0-0x0060C6C1 BYTE_EXACT
-// symbol    ?on_scrolled@ListBox@@UAEXHH@Z
-// TRIED: byte-exact on promotion, same entered-adjusted receiver as
-//   on_right_down above; no guard on this one.
-// size      33 bytes
-// prototype void (__thiscall ?on_scrolled@ListBox@@QAEXHH@Z)(ListBox* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// indirect  0x0060C6B8
-Return Value: n/a
-Status: Complete
-DEMOTED from BYTE_EXACT by direction (idiomatic-first): vslot_49 is the
-plain virtual call; the image's front-walk addressing is the entered-
-receiver relationship work (see on_right_down's note).
-*/
-void ListBox::on_scrolled(int code, int pos) {
-    on_scrolling(code, pos);
-}
-
-/*
-Purpose: Report a right double click: raise the click guard, forward (a1, a2)
-         through GraphicWin vtable slot 28, drop the guard.
-// ORIGINAL: 0x0060C6D0 ?on_right_double_click@ListBox@@QAEXHH@Z 0x0060C6D0-0x0060C702 BYTE_EXACT
-// symbol    ?on_right_double_click@ListBox@@UAEXHH@Z
-// TRIED: byte-exact on promotion, same entered-adjusted receiver as
-//   on_right_down above.
-// size      50 bytes
-// prototype void (__thiscall ?on_right_double_click@ListBox@@QAEXHH@Z)(ListBox* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// indirect  0x0060C6F2
-Return Value: n/a
-Status: Complete
-DEMOTED from BYTE_EXACT by direction (idiomatic-first): on_left_double_click is the
-plain virtual call; the image's front-walk addressing is the entered-
-receiver relationship work (see on_right_down's note).
-*/
-void ListBox::on_right_double_click(int a1, int a2) {
-    ListBoxClickGuard = 1;
-    on_left_double_click(a1, a2);
-    ListBoxClickGuard = 0;
-}
-
-/*
-Purpose: Apply one WM_VSCROLL step to the list: publish the parent window
-         as the callback window, keep the old top-entry position, apply the
-         code (SB_THUMBTRACK sets the position directly, SB_LINEUP/DOWN
-         scale the delta by the Dialog's row stride), re-select through
-         set_selected_pos when the notify global is armed, and repaint -
-         redraw the window when the scroll position moved; otherwise refresh
-         the old and new selected rows only if selection changed, then always
-         request a soft surface update.
-
-// ORIGINAL: 0x0060C5D0 ?on_scrolling@ListBox@@QAEXHH@Z 0x0060C5D0-0x0060C691 BYTE_EXACT
-// symbol    ?on_scrolling@ListBox@@UAEXHH@Z
-// size      193 bytes
-// prototype void (__thiscall ?on_scrolling@ListBox@@QAEXHH@Z)(ListBox* this, int, int)
-// callers   2   call targets   3
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005D5890 0x0060A020 0x0060B530
-// indirect  0x0060C645
-// TRIED (seed): the entered receiver is the GraphicWin virtual base
-//         (dialogs.cpp dispatches by kind through the Win table), so every
-//         access folds the walk back to the front - the same idiom the
-//         homed on_left_double_click (listbox.cpp) spells. The seed's
-//         displacements are image-exact: the scroll-position slot is
-//         `esi - 0x30` at all five sites (disp8 0xD0 sign-extended - the
-//         ListBox's field_18_ at front+0x18, the slot ListBox::close
-//         resets), the row stride Dialog+0x10 and the top-entry index
-//         Dialog+0xA4 through the vbtable walks, and the redraw/soft_update
-//         dispatches anchor on the entered receiver, spelled as raw
-//         GraphicWin * casts here exactly as on_left_double_click does.
-Status: Typed ListBox scroll handler; exactness and runtime acceptance remain unmeasured.
-*/
-void ListBox::on_scrolling(int a, int b) {
-    WinCallbackWindow = parent_window();
-
-    const int top_entry = Dialog::selected_position_;
-    const int old_position = static_cast<int>(field_18_);
-    if (a != -2) {
-        if (a == -1) {
-            field_18_ = static_cast<uint32_t>(b);
-        }
-    } else {
-        field_18_ = static_cast<uint32_t>(Dialog::row_count_)
-                         * static_cast<uint32_t>(b);
-    }
-
-    if (ListBoxGlobalDDC != 0) {
-        set_selected_pos(static_cast<int>(field_18_), 1);
-    }
-
-    if (static_cast<int>(field_18_) != old_position) {
-        redraw();
-    } else {
-        if (top_entry != Dialog::selected_position_) {
-            draw_item(top_entry);
-            draw_item(Dialog::selected_position_);
-        }
-        soft_update();
-    }
-}
-// The current payload, or null when the list head is null.
-static inline StringStructPayload *listbox_current_payload(StringStruct *list) {
-    return list->head_ != 0 ? list->current_->string_payload() : 0;
-}
-
-// WORKAROUND(decl): StringStruct::current_entry's body (0x00402530); a
-// visible header body (STRINGSTRUCT_CURRENT_ENTRY_INLINE) also expands it in
-// on_left_down, which the image calls out of line.
-static inline StringStructPayload *listbox_current_entry(StringStruct *list) {
-    if (list->head_) {
-        return list->current_->string_payload();
-    }
-    return 0;
-}
-
-// The current entry's line count, or zero when the list head is null.
-static inline int listbox_current_lines(StringStruct *list) {
-    if (list->head_) {
-        return static_cast<int32_t>(listbox_current_entry(list)->field_C_);
-    }
-    return 0;
-}
-
-// The current entry's text, or null when the list head is null.
-static inline char *listbox_current_text(StringStruct *list) {
-    if (list->head_) {
-        return listbox_current_entry(list)->text;
-    }
-    return 0;
-}
-
-/*
-Purpose: Draw one list row: the highlighted/normal text-draw tails over the
-         style-descriptor fields, reached by on_scrolling for the row the
-         scroll left and the row it landed on.
-
-// ORIGINAL: 0x0060B530 ?draw_item@ListBox@@QAEXH@Z 0x0060B530-0x0060C1D8
-// RECOVERY_BINDING: v1 {"evidence": ["retired seed git:077d6845^:src/unrecovered/0060b530.cpp preserves the 3240-byte raw-offset transcription and VC6 prologue mismatch", "ListBox::on_scrolling at 0x0060C5D0 calls this row renderer twice by name; source draw callbacks at 0x004072D0 and 0x00614C50 need its draw-context write"], "reason": "Replace the empty linked placeholder with typed ListBox/Dialog/StringList row rendering while preserving historical restoration evidence."}
-// size      3240 bytes
-// prototype void (__thiscall ?draw_item@ListBox@@QAEXH@Z)(ListBox* this, int)
-// callers   4   call targets   17
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005D5250 0x005D5350 0x005D8000 0x005DAC70 0x005DACB0 0x005DACE0 0x005DAD10 0x005DCF40 0x005DD450 0x005DD530 0x005DFF00 0x005E3203 0x005F2CA0 0x00609B50 0x00644F3A 0x006453E0 0x00645DD0
-// indirect  0x0060B857 0x0060BB58 0x0060BCDF 0x0060BD2D
-Status: Source-owned typed row renderer. The body follows the pinned
-        parent callback, parent-to-child surface copy, and circular StringList
-        cursor branches; exactness and runtime acceptance remain unmeasured.
-*/
-void ListBox::draw_item(int index) {
-    if (index < 0) {
-        return;
-    }
-
-    // 0x0060B547..0x0060B597: the base row (0, 0, field_64, field_68) offset
-    // by (field_40, field_38); the offset arguments share the frame slots
-    // the callback result and selection flag reuse later.
-    RECT row;
-    set_rectangle_dimensions(&row, 0, 0, Dialog::field_64_, Dialog::field_68_);
-    offset_rect(&row, Dialog::field_40_, Dialog::field_38_);
-    row.right -= Dialog::field_40_ * 2;
-
-    if (Dialog::field_4C_ == 1) {
-        int occupied = 0;
-        this->Dialog::item_list_.seek_pos(static_cast<int>(field_18_) - 1);
-        const int steps = index - static_cast<int>(field_18_);
-        for (int i = 0; i < steps; ++i) {
-            StringList *const list = &this->Dialog::item_list_;
-            StringStructEntry *const head = list->head_;
-            if (head != 0) {
-                list->current_ = list->current_->next;
-                if (++list->current_position_ == list->entry_count_)
-                    list->current_position_ = 0;
-            }
-            occupied += list->current_ != 0
-                ? static_cast<int>((head != 0 ? list->current_->string_payload() : 0)->field_C_)
-                : 0;
-        }
-        const int offset = (static_cast<int>(Dialog::field_68_)
-                            + Dialog::field_44_) * occupied;
-        row.top += offset;
-        row.bottom += offset;
-        StringList *const list = &this->Dialog::item_list_;
-        StringStructEntry *const head = list->head_;
-        if (head != 0) {
-            StringStructEntry *const next = list->current_->next;
-            const int count = list->entry_count_;
-            list->current_ = next;
-            if (++list->current_position_ == count)
-                list->current_position_ = 0;
-        }
-        const int span = list->current_ != 0
-            ? static_cast<int>((head != 0 ? list->current_->string_payload() : 0)->field_C_)
-            : 0;
-        row.bottom = (static_cast<int>(Dialog::field_68_) + Dialog::field_44_) * span
-            - Dialog::field_44_ + row.top;
-    } else {
-        // 0x0060B71C..0x0060B775 applies the column offset before it divides
-        // again for the row offset.
-        const int relative = index - static_cast<int>(field_18_);
-        const int along = (static_cast<int>(Dialog::field_64_)
-                           + Dialog::field_44_)
-            * (relative / Dialog::row_count_);
-        row.right += along;
-        row.left += along;
-        const int across = (static_cast<int>(Dialog::field_68_)
-                            + Dialog::field_44_)
-            * (relative % Dialog::row_count_);
-        row.top += across;
-        row.bottom += across;
-    }
-
-    if (index >= Dialog::item_list_.entry_count_) {
-        return;
-    }
-
-    int selected;
-    if (field_4_ == 0) {
-        selected = Dialog::selected_position_ == index;
-    } else {
-        this->Dialog::item_list_.seek_pos(index);
-        selected = static_cast<int>(listbox_current_payload(&this->Dialog::item_list_)->field_8_);
-    }
-
-    Buffer::set_clip(&row);
-    int callback_result = 0;
-    if (fill_callback_ != 0) {
-        callback_result = fill_callback_(this, Dialog::pos_to_id(index),
-            static_cast<int>(field_18_) + ListBoxDrawOffset, &row);
-    }
-
-    Buffer::set_text_color(Dialog::text_color_a_, Dialog::text_color_b_,
-                           Dialog::text_color_c_, Dialog::text_color_d_);
-    Buffer::set_text_color2(Dialog::text_color_2a_, Dialog::text_color_2b_,
-                            Dialog::text_color_2c_, Dialog::text_color_2d_);
-    Buffer::set_text_color3(Dialog::text_color_3a_, Dialog::text_color_3b_,
-                            Dialog::text_color_3c_, Dialog::text_color_3d_);
-    Buffer::set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
-
-    if (selected == 0) {
-        Buffer::set_text_color(Dialog::text_color_a_, Dialog::text_color_b_,
-                               Dialog::text_color_c_, Dialog::text_color_d_);
-        Buffer::set_text_color2(Dialog::text_color_2a_, Dialog::text_color_2b_,
-                                Dialog::text_color_2c_, Dialog::text_color_2d_);
-        Buffer::set_text_color3(Dialog::text_color_3a_, Dialog::text_color_3b_,
-                                Dialog::text_color_3c_, Dialog::text_color_3d_);
-    } else {
-        Buffer::set_clip(&row);
-        // 60B9C7..60BAEB keeps the explicit/default emphasis arms distinct.
-        if (field_10_ != static_cast<uint32_t>(-1)) {
-            Buffer::set_text_color(static_cast<int>(field_10_), Dialog::text_color_b_,
-                                   Dialog::text_color_c_, Dialog::text_color_d_);
-            Buffer::set_text_color2(static_cast<int>(field_10_), Dialog::text_color_2b_,
-                                    Dialog::text_color_2c_, Dialog::text_color_2d_);
-            Buffer::set_text_color3(static_cast<int>(field_10_), Dialog::text_color_3b_,
-                                    Dialog::text_color_3c_, Dialog::text_color_3d_);
-        } else {
-            Buffer::set_text_color(static_cast<int>(Dialog::field_6C_), Dialog::text_color_b_,
-                                   Dialog::text_color_c_, Dialog::text_color_d_);
-            Buffer::set_text_color2(static_cast<int>(Dialog::field_6C_), Dialog::text_color_2b_,
-                                    Dialog::text_color_2c_, Dialog::text_color_2d_);
-            Buffer::set_text_color3(static_cast<int>(Dialog::field_6C_), Dialog::text_color_3b_,
-                                    Dialog::text_color_3c_, Dialog::text_color_3d_);
-        }
-    }
-
-    // 60BAFC resolves the row ID before parent callbacks and retains it.
-    const int item_id = Dialog::pos_to_id(index);
-    if (callback_result == 0) {
-        Win *const parent = Win::parent_window();
-        if (parent != 0) {
-            int state;
-            if (selected != 0) {
-                state = 2;
-            } else {
-                state = Dialog::field_F0_ == static_cast<uint32_t>(index);
-            }
-            callback_result = parent->on_dialog_item_back_draw(this, item_id, state, &row);
-            // 0x0060BB61: a parent that drew the background also skips the
-            // Dialog border below.
-            if (callback_result != 0) {
-                goto frame_done;
-            }
-            GraphicWin *live_parent;
-            if ((iFlags_ & 0x80000) != 0
-                && (live_parent = static_cast<GraphicWin *>(Win::parent_window())) != 0) {
-                live_parent->copy(this, Dialog::window_x_, Dialog::window_y_, 0, 0,
-                                  Buffer::pixel_width(), Buffer::pixel_height());
-            } else {
-                GraphicWin::fill(static_cast<int>(Dialog::field_6C_));
-            }
-        }
-
-        {
-            RECT border = *GraphicWin::buffer_working_rect();
-            for (int edge = 0; edge < static_cast<int>(Dialog::field_B4_); ++edge) {
-                Buffer::box(&border, static_cast<int>(Dialog::field_AC_),
-                            static_cast<int>(Dialog::field_B0_));
-                ++border.left;
-                --border.right;
-                ++border.top;
-                --border.bottom;
-            }
-        }
-    }
-frame_done:
-
-    // The original rechecks the live count after frame callbacks. If a
-    // callback removed this row, it leaves the current cursor untouched.
-    this->Dialog::item_list_.seek_pos(index);
-
-    if (draw_callback_ != 0) {
-        CurrentListBoxDraw = this;
-        draw_callback_(this, item_id,
-                       static_cast<int>(field_18_) + ListBoxDrawOffset,
-                       row.left, row.top, row.bottom - row.top);
-    }
-
-    if (write_callback_ != 0) {
-        if (write_callback_(this, Dialog::pos_to_id(index), index, &row,
-                            listbox_current_text(&this->Dialog::item_list_)) != 0) {
-            return;
-        }
-    }
-
-    // 60BD3B splits two exclusive complete text paths. The unselected
-    // path returns at 60BF3B; the selected path continues to its border.
-    if (selected == 0) {
-        {
-            const int pad = static_cast<int>(field_2C_) + 1;
-            row.left += static_cast<int>(Dialog::field_34_) + pad;
-            row.right -= pad;
-        }
-        Buffer::set_clip(&row);
-
-        char *separator = strchr(listbox_current_text(&this->Dialog::item_list_), '|');
-        if (separator == 0) {
-            if (listbox_current_lines(&this->Dialog::item_list_) > 1) {
-                Buffer::wrap(listbox_current_text(&this->Dialog::item_list_), &row);
-            } else {
-                Buffer::write_l(listbox_current_text(&this->Dialog::item_list_), &row);
-            }
-        } else {
-            *separator = 0;
-            if (listbox_current_lines(&this->Dialog::item_list_) > 1) {
-                Buffer::wrap(listbox_current_text(&this->Dialog::item_list_), &row);
-            } else {
-                Buffer::write_l(listbox_current_text(&this->Dialog::item_list_), &row);
-            }
-            *separator = '|';
-            ++separator;
-            Buffer::write_right_l(separator, &row);
-        }
-
-        // Both original text arms restore the inset before the final clip.
-        {
-            const int pad = static_cast<int>(field_2C_) + 1;
-            row.left -= pad;
-            row.right += pad;
-        }
-        row.left -= static_cast<int>(Dialog::field_34_);
-        Buffer::set_clip(&row);
-        return;
-    } else {
-        if (callback_result == 0
-            && Win::is_dialog_focus() != 0) {
-            Buffer::set_clip(&row);
-            if (field_14_ != static_cast<uint32_t>(-1)) {
-                GraphicWin::fill(&row, static_cast<int>(field_14_));
-            }
-        }
-
-        {
-            const int pad = static_cast<int>(field_2C_) + 1;
-            row.left += static_cast<int>(Dialog::field_34_) + pad;
-            row.right -= pad;
-        }
-        Buffer::set_clip(&row);
-
-        char *separator = strchr(listbox_current_text(&this->Dialog::item_list_), '|');
-        if (separator == 0) {
-            if (listbox_current_lines(&this->Dialog::item_list_) > 1) {
-                Buffer::wrap(listbox_current_text(&this->Dialog::item_list_), &row);
-            } else {
-                Buffer::write_l(listbox_current_text(&this->Dialog::item_list_), &row);
-            }
-        } else {
-            *separator = 0;
-            if (listbox_current_lines(&this->Dialog::item_list_) > 1) {
-                Buffer::wrap(listbox_current_text(&this->Dialog::item_list_), &row);
-            } else {
-                Buffer::write_l(listbox_current_text(&this->Dialog::item_list_), &row);
-            }
-            *separator = '|';
-            ++separator;
-            Buffer::write_right_l(separator, &row);
-        }
-
-        // Both original text arms restore the inset before the final clip.
-        {
-            const int pad = static_cast<int>(field_2C_) + 1;
-            row.left -= pad;
-            row.right += pad;
-        }
-        row.left -= static_cast<int>(Dialog::field_34_);
-        Buffer::set_clip(&row);
-        if (callback_result == 0) {
-            for (int edge = 0; edge < static_cast<int>(field_2C_); ++edge) {
-                Buffer::box(&row, static_cast<int>(field_24_),
-                            static_cast<int>(field_28_));
-                ++row.left;
-                --row.right;
-                ++row.top;
-                --row.bottom;
-            }
-        }
-    }
 }
 
 // Scroll owns the shared thickness at 0x009B8DD4. List layout and item
@@ -1168,176 +609,91 @@ int ListBox::attach(GraphicWin *a1, int a2, int a3, int a4) {
 }
 
 /*
-Purpose: Run the double-click notification: remember the hovered window,
-         fire the installed callback with the selected id, then walk the
-         ListBox's Win-parent notification chain (slots 56 and 55, then the
-         parent's child-object 23/7 pair), preserving the original null exit
-         and subsequent parent reloads.
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0060C710 ?on_left_double_click@ListBox@@QAEXHH@Z 0x0060C710-0x0060C7BB BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0060c710.cpp", "source:src/listbox.h", "source:src/autosound.h", "source:src/win.h", "pinned 0x0060C710 resolves the GraphicWin virtual base through vbtable {0,0x48,0xA60}; repeated vbtable adjustment reads Win-relative +0xC4 (win_parent_) for slots 56/55 and +0x94 on that parent for Sound slots 23/7", "pinned 0x0060C74B tests the reloaded parent and branches to the epilogue at 0x0060C7B6 when null; later callback paths reload the parent"], "reason": "Recover ListBox double-click callbacks through typed GraphicWin and Dialog owners, using the actual Win parent and preserving the original parent-null exit, reload positions, and call order."}
-// symbol    ?on_left_double_click@ListBox@@UAEXHH@Z
-// size      171 bytes
-// prototype void (__thiscall ?on_left_double_click@ListBox@@QAEXHH@Z)(ListBox* this, int, int)
-// calls     0x00609A50
-// indirect  0x0060C73B 0x0060C761 0x0060C789 0x0060C7A8 0x0060C7B3
-*/
-void ListBox::on_left_double_click(int, int) {
-    Win *target = parent_window();
-    WinCallbackWindow = target;
-
-    if (double_click_callback_ != 0) {
-        double_click_callback_(Dialog::get_selected_id());
-    }
-
-    target = parent_window();
-    if (target == 0) return;
-    target->on_double_clicked(Dialog::get_selected_id());
-
-    target = parent_window();
-    target->on_double_clicked(Dialog::get_selected_id(), ListBoxClickGuard);
-
-    target = parent_window();
-    Sound *child = target->legacy_sound_37();
-    if (child != 0) {
-        if (child->is_playing() == 0) {
-            child->play();
-        }
-    }
-}
+Purpose: Report a right press: raise the click guard, forward (a1, a2) through
+         GraphicWin vtable slot 20, drop the guard.
 
 /*
-Purpose: Add one entry: measure the string at the current width, grow the
-         list height, remember the string in the entry table and append the
-         id. Returns whatever the entry append reports.
-// ORIGINAL: 0x0060C920 ?item@ListBox@@QAEHPADH@Z 0x0060C920-0x0060C9A9 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0060c920.cpp", "source:src/listbox.h", "source:src/buffer.h", "source:src/stringstruct.h", "source:src/scroll.cpp:ScrollDefaultThickness", "Pinned 0x0060C920..0x0060C9A9 measures positive available width, reads Buffer +0x18, updates ListBox +0x20, then publishes StringList text/metadata before add."], "reason": "Recover item insertion through the real Dialog list and GraphicWin Buffer base, including the shared Scroll thickness. The measured height is Buffer state, not wrap_height's return or ListBox's same-offset scroll state; preserve modulo-word accumulation and insertion result."}
-// size      137 bytes
-// prototype int (__thiscall ?item@ListBox@@QAEHPADH@Z)(ListBox* this, int8* lpString, int)
-// calls     0x00401100 0x005DC360
+Purpose: Report a right press: raise the click guard, forward (a1, a2) through
+         GraphicWin vtable slot 20, drop the guard.
+// ORIGINAL: 0x0060AA20 ?on_right_down@ListBox@@QAEXHH@Z 0x0060AA20-0x0060AA52 BYTE_EXACT
+// symbol    ?on_right_down@ListBox@@UAEXHH@Z
+// TRIED 2026-09-03: re-dumped the divergence. The 3 instructions the image
+// has and this tree does not are entirely the entered-receiver walk
+// (`mov eax,[ecx-0x48]` / `mov eax,[edx+ecx-0x48]` / `lea ecx,[edx+ecx-0x48]`
+// against this tree's `mov eax,[ecx]` / `mov eax,[ecx+edx]` /
+// `add ecx,edx`) - the front walk through the vbtable that VC6 emits only
+// for a U-spelled virtual override entered on the GraphicWin virtual base.
+// No body spelling reaches it while the receiver enters adjusted; it needs
+// the ListBox/GraphicWin declaration (on_right_down virtual in GraphicWin),
+// which is batch 9's entered-receiver work and regresses the six
+// window-event families whose image symbols spell Q. Same wall on
+// on_scrolled and on_right_double_click below.
+// TRIED: byte-exact on promotion from the 0060aa20 archive unit. The
+//   Q spelling enters with `this` on the GraphicWin virtual base, so the
+//   ListBox front is walked back with the same explicit -0x48 the image folds
+// TRIED: byte-exact on promotion from the 0060aa20 archive unit. The
+//   Q spelling enters with `this` on the GraphicWin virtual base, so the
+//   ListBox front is walked back with the same explicit -0x48 the image folds
+//   (`mov eax, [ecx - 0x48]`, receiver `lea ecx, [edx + ecx - 0x48]`) - the
+//   on_left_click idiom in mapwin.cpp, not on_mouse_leave's virtual-entry
+//   walk, which VC6 only generates for a U-spelled override. The vbtable read
+//   stays INSIDE the receiver expression: naming it a local lets VC6
+//   materialize the front pointer the image keeps folded away.
+// size      50 bytes
+// prototype void (__thiscall ?on_right_down@ListBox@@QAEXHH@Z)(ListBox* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x0060AA42
+Return Value: n/a
+Status: Complete
+DEMOTED from BYTE_EXACT by direction (idiomatic-first): the forward is the
+plain virtual call it always was - win-table slot 20, on_left_down - dispatched
+on the entered receiver, which already points at the GraphicWin subobject
+whose vftable the old hand walk re-derived through the front. The image
+walks back to the ListBox front and re-walks out to that same table
+(`mov eax,[ecx-0x48]`, 9 of 12, 0.917 similar); reproducing that addressing
+is the entered-receiver relationship work (batch 9). The dispatch target is
+identical either way.
 */
-int ListBox::item(char *text, int id) {
-    if (text == 0) {
-        return 3;
-    }
-
-    int count = static_cast<int32_t>(
-        Dialog::field_2C_ - static_cast<uint32_t>(ScrollDefaultThickness));
-
-    if (count > 0) {
-        Buffer::wrap_height(text, count);
-    }
-
-    int height;
-    if (count != 0) {
-        height = static_cast<int32_t>(Buffer::field_18_);
-    } else {
-        height = 1;
-    }
-
-    field_20_ += height;
-
-    StringList &entries = Dialog::item_list_;
-    entries.pending_text_ = text;
-    entries.field_20_ = 0;
-    entries.field_24_ = static_cast<uint32_t>(height);
-    return entries.add(id);
+void ListBox::on_right_down(int a1, int a2) {
+    ListBoxClickGuard = 1;
+    on_left_down(a1, a2);
+    ListBoxClickGuard = 0;
 }
 
-/*
-Purpose: Refresh the list after its entries changed: run the layout pass and
-         re-select when only the selection moved, rebuild the whole window
-         (attach) when entries were added or removed, re-arm the scroll
-         ranges from the new metrics, then fire the callback and the
-         notification slots. Returns 7 when there is no main window, or the
-         attach result on failure.
-// ORIGINAL: 0x0060C9B0 ?update_changes@ListBox@@QAEHXZ 0x0060C9B0-0x0060CB63 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/listbox.h", "source:src/dialog.h", "source:src/win.h", "source:src/autosound.h", "Pinned 0x0060CA20..0x0060CA2B directly calls ListBox::attach; subsequent notifications reload the parent after callbacks."], "reason": "Recover refresh through real virtual bases, list state, callback and parent members, retaining the concrete attach target and original notification ordering. The AutoSound child storage is identified, but its nullary slot-23/slot-7 dynamic receiver type remains unresolved."}
-// size      435 bytes
-// prototype int (__thiscall ?update_changes@ListBox@@QAEHXZ)(ListBox* this)
-// calls     0x005ED9D0 0x005EE0B0 0x005EE0D0 0x005EE0F0 0x005EE110 0x005F7E90 0x00609A50 0x0060A020 0x0060A1E0 0x0060A670
-// indirect  0x0060CA47 0x0060CAF0 0x0060CB15 0x0060CB39 0x0060CB44 0x0060CB56
-*/
-int ListBox::update_changes() {
-    if (HandleMain == 0) {
-        return 7;
+
+// The current payload, or null when the list head is null.
+static inline StringStructPayload *listbox_current_payload(StringStruct *list) {
+    return list->head_ != 0 ? list->current_->string_payload() : 0;
+}
+
+// WORKAROUND(decl): StringStruct::current_entry's body (0x00402530); a
+// visible header body (STRINGSTRUCT_CURRENT_ENTRY_INLINE) also expands it in
+// on_left_down, which the image calls out of line.
+static inline StringStructPayload *listbox_current_entry(StringStruct *list) {
+    if (list->head_) {
+        return list->current_->string_payload();
     }
-
-    // Every base access converts `this` directly; hoisted base pointers
-    // would add null-checked conversions the image does not have.
-    int was_visible = is_visible();
-
-    Dialog::get_selected_id();
-
-    int old_child_count = field_C_;
-    int old_selected = Dialog::selected_position_;
-    calculate_dimensions();
-
-    if (old_child_count != field_C_) {
-        int flags = static_cast<int>(iFlags_);
-        GraphicWin *parent = static_cast<GraphicWin *>(parent_window());
-        int result = this->ListBox::attach(
-            parent, Dialog::window_x_, Dialog::window_y_, flags);
-        if (result != 0) {
-            return result;
-        }
-        if (old_selected == -1) {
-            set_selected_pos(-1, 1);
-        } else {
-            set_selected_pos(0, 1);
-        }
-        ::ReleaseCapture();
-        if (was_visible != 0) {
-            Win::show(0);
-        }
-    } else {
-        set_selected_pos(old_selected, 1);
-    }
-
-    {
-        unsigned int win_flags = iFlags_;
-        if (win_flags & 8) {
-            set_vert_range(0, Dialog::item_list_.entry_count_ - 1);
-            set_vert_paging(Dialog::row_count_ - 1);
-        } else if (win_flags & 4) {
-            set_horz_range(0,
-                Dialog::item_list_.entry_count_ / Dialog::row_count_ - 1);
-            set_horz_paging(Dialog::column_count_);
-        }
-    }
-
-    if (selection_callback_ != 0) {
-        selection_callback_(Dialog::get_selected_id());
-    }
-
-    {
-        Win *target = parent_window();
-        if (target != 0) {
-            target->on_selected(Dialog::get_selected_id());
-        }
-    }
-
-    {
-        Win *target = parent_window();
-        if (target != 0) {
-            // The pinned child sequence is Sound slots 23/7 at AutoSound
-            // offset 0x90; Win slot 23 has a different coordinate signature.
-            Sound *child = target->legacy_sound_36();
-            if (child != 0) {
-                if (child->is_playing() == 0) {
-                    child->play();
-                }
-            }
-        }
-    }
-
-    if (was_visible != 0) {
-        redraw();
-    }
-
     return 0;
 }
 
+// The current entry's line count, or zero when the list head is null.
+static inline int listbox_current_lines(StringStruct *list) {
+    if (list->head_) {
+        return static_cast<int32_t>(listbox_current_entry(list)->field_C_);
+    }
+    return 0;
+}
+
+// The current entry's text, or null when the list head is null.
+static inline char *listbox_current_text(StringStruct *list) {
+    if (list->head_) {
+        return listbox_current_entry(list)->text;
+    }
+    return 0;
+}
 
 // Instruction/caller provenance retained in Git history of the deleted seed
 // src/recovered/units/0060aa60.cpp (span 0x0060AA60..0x0060AF84): publish the
@@ -1436,71 +792,6 @@ void ListBox::on_left_down(int x, int y) {
     if ((Dialog::field_20_ & 4) != 0 && parent_window() != 0) {
         parent_window()->on_button_clicked(-1);
     }
-}
-
-// The retained 0x0060CBC0 seed derives a hovered list position from the same
-// row metrics as the click handler, then updates Dialog::field_F0_ and redraws
-// the changed hover state. Its live list traversal also updates the cursor
-// when the eventual hovered position is outside the list.
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0060CBC0 ?on_mouse_move@ListBox@@QAEXHH@Z 0x0060CBC0-0x0060CE0B BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060cbc0.cpp"], "reason": "Rehome seed catalogue identity and original extents into compiled owning class; native-emitted symbol is separate and no new byte claim granted."}
-// symbol    ?on_mouse_move@ListBox@@UAEXHH@Z
-void ListBox::on_mouse_move(int x, int y) {
-    int position;
-    if (Dialog::item_list_.entry_count_ == 0) return;
-    const int previous_hover = static_cast<int>(Dialog::field_F0_);
-    y -= Dialog::field_38_;
-    if (y < 0) return;
-
-    if (Dialog::column_count_ != 1) {
-        position = (x - Dialog::field_40_)
-                       / (Dialog::field_64_ + Dialog::field_44_)
-                       * Dialog::row_count_
-                   + y / (Dialog::field_68_ + Dialog::field_44_);
-    } else {
-        this->Dialog::item_list_.seek_pos(static_cast<int>(field_18_) - 1);
-        position = 0;
-        for (int rows = Dialog::item_list_.entry_count_; rows > 0 && y >= 0; --rows) {
-            ++position;
-            StringList *const list = &this->Dialog::item_list_;
-            StringStructEntry *const head = list->head_;
-            if (head != 0) {
-                list->current_ = list->current_->next;
-                if (++list->current_position_ == list->entry_count_)
-                    list->current_position_ = 0;
-            }
-            // The original retains a null payload read when a cursor
-            // survives after the list head has been cleared.
-            const int span = list->current_ != 0
-                ? static_cast<int>((head != 0 ? list->current_->string_payload() : 0)->field_C_)
-                : 0;
-            y -= (Dialog::field_68_ + Dialog::field_44_) * span;
-        }
-        if (position == 0) return;
-        --position;
-    }
-
-    const int hovered = static_cast<int>(field_18_) + position;
-    if (hovered >= Dialog::item_list_.entry_count_) return;
-    if (hovered == Dialog::selected_position_) {
-        if (static_cast<int>(Dialog::field_F0_) == -1) return;
-        Dialog::field_F0_ = static_cast<uint32_t>(-1);
-        ListBoxDrawOffset = previous_hover - static_cast<int>(field_18_);
-        draw_item(previous_hover);
-    } else {
-        Dialog::field_F0_ = static_cast<uint32_t>(hovered);
-        if (static_cast<int>(Dialog::field_F0_) == previous_hover) return;
-        if (previous_hover != -1) {
-            ListBoxDrawOffset = previous_hover - static_cast<int>(field_18_);
-            draw_item(previous_hover);
-        }
-        ListBoxDrawOffset = static_cast<int>(Dialog::field_F0_) - static_cast<int>(field_18_);
-        draw_item(static_cast<int>(Dialog::field_F0_));
-        GraphicWin::soft_update();
-        return;
-    }
-    GraphicWin::soft_update();
 }
 
 // 0x0060AF90's table at 0x60B4EC maps VK_LEFT/UP/RIGHT/DOWN to four
@@ -1674,6 +965,294 @@ int ListBox::on_key_down(int key) {
     return 1;
 }
 
+/*
+Purpose: Draw one list row: the highlighted/normal text-draw tails over the
+         style-descriptor fields, reached by on_scrolling for the row the
+         scroll left and the row it landed on.
+
+// ORIGINAL: 0x0060B530 ?draw_item@ListBox@@QAEXH@Z 0x0060B530-0x0060C1D8
+// RECOVERY_BINDING: v1 {"evidence": ["retired seed git:077d6845^:src/unrecovered/0060b530.cpp preserves the 3240-byte raw-offset transcription and VC6 prologue mismatch", "ListBox::on_scrolling at 0x0060C5D0 calls this row renderer twice by name; source draw callbacks at 0x004072D0 and 0x00614C50 need its draw-context write"], "reason": "Replace the empty linked placeholder with typed ListBox/Dialog/StringList row rendering while preserving historical restoration evidence."}
+// size      3240 bytes
+// prototype void (__thiscall ?draw_item@ListBox@@QAEXH@Z)(ListBox* this, int)
+// callers   4   call targets   17
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D5250 0x005D5350 0x005D8000 0x005DAC70 0x005DACB0 0x005DACE0 0x005DAD10 0x005DCF40 0x005DD450 0x005DD530 0x005DFF00 0x005E3203 0x005F2CA0 0x00609B50 0x00644F3A 0x006453E0 0x00645DD0
+// indirect  0x0060B857 0x0060BB58 0x0060BCDF 0x0060BD2D
+Status: Source-owned typed row renderer. The body follows the pinned
+        parent callback, parent-to-child surface copy, and circular StringList
+        cursor branches; exactness and runtime acceptance remain unmeasured.
+*/
+void ListBox::draw_item(int index) {
+    if (index < 0) {
+        return;
+    }
+
+    // 0x0060B547..0x0060B597: the base row (0, 0, field_64, field_68) offset
+    // by (field_40, field_38); the offset arguments share the frame slots
+    // the callback result and selection flag reuse later.
+    RECT row;
+    set_rectangle_dimensions(&row, 0, 0, Dialog::field_64_, Dialog::field_68_);
+    offset_rect(&row, Dialog::field_40_, Dialog::field_38_);
+    row.right -= Dialog::field_40_ * 2;
+
+    if (Dialog::field_4C_ == 1) {
+        int occupied = 0;
+        this->Dialog::item_list_.seek_pos(static_cast<int>(field_18_) - 1);
+        const int steps = index - static_cast<int>(field_18_);
+        for (int i = 0; i < steps; ++i) {
+            StringList *const list = &this->Dialog::item_list_;
+            StringStructEntry *const head = list->head_;
+            if (head != 0) {
+                list->current_ = list->current_->next;
+                if (++list->current_position_ == list->entry_count_)
+                    list->current_position_ = 0;
+            }
+            occupied += list->current_ != 0
+                ? static_cast<int>((head != 0 ? list->current_->string_payload() : 0)->field_C_)
+                : 0;
+        }
+        const int offset = (static_cast<int>(Dialog::field_68_)
+                            + Dialog::field_44_) * occupied;
+        row.top += offset;
+        row.bottom += offset;
+        StringList *const list = &this->Dialog::item_list_;
+        StringStructEntry *const head = list->head_;
+        if (head != 0) {
+            StringStructEntry *const next = list->current_->next;
+            const int count = list->entry_count_;
+            list->current_ = next;
+            if (++list->current_position_ == count)
+                list->current_position_ = 0;
+        }
+        const int span = list->current_ != 0
+            ? static_cast<int>((head != 0 ? list->current_->string_payload() : 0)->field_C_)
+            : 0;
+        row.bottom = (static_cast<int>(Dialog::field_68_) + Dialog::field_44_) * span
+            - Dialog::field_44_ + row.top;
+    } else {
+        // 0x0060B71C..0x0060B775 applies the column offset before it divides
+        // again for the row offset.
+        const int relative = index - static_cast<int>(field_18_);
+        const int along = (static_cast<int>(Dialog::field_64_)
+                           + Dialog::field_44_)
+            * (relative / Dialog::row_count_);
+        row.right += along;
+        row.left += along;
+        const int across = (static_cast<int>(Dialog::field_68_)
+                            + Dialog::field_44_)
+            * (relative % Dialog::row_count_);
+        row.top += across;
+        row.bottom += across;
+    }
+
+    if (index >= Dialog::item_list_.entry_count_) {
+        return;
+    }
+
+    int selected;
+    if (field_4_ == 0) {
+        selected = Dialog::selected_position_ == index;
+    } else {
+        this->Dialog::item_list_.seek_pos(index);
+        selected = static_cast<int>(listbox_current_payload(&this->Dialog::item_list_)->field_8_);
+    }
+
+    Buffer::set_clip(&row);
+    int callback_result = 0;
+    if (fill_callback_ != 0) {
+        callback_result = fill_callback_(this, Dialog::pos_to_id(index),
+            static_cast<int>(field_18_) + ListBoxDrawOffset, &row);
+    }
+
+    Buffer::set_text_color(Dialog::text_color_a_, Dialog::text_color_b_,
+                           Dialog::text_color_c_, Dialog::text_color_d_);
+    Buffer::set_text_color2(Dialog::text_color_2a_, Dialog::text_color_2b_,
+                            Dialog::text_color_2c_, Dialog::text_color_2d_);
+    Buffer::set_text_color3(Dialog::text_color_3a_, Dialog::text_color_3b_,
+                            Dialog::text_color_3c_, Dialog::text_color_3d_);
+    Buffer::set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
+
+    if (selected == 0) {
+        Buffer::set_text_color(Dialog::text_color_a_, Dialog::text_color_b_,
+                               Dialog::text_color_c_, Dialog::text_color_d_);
+        Buffer::set_text_color2(Dialog::text_color_2a_, Dialog::text_color_2b_,
+                                Dialog::text_color_2c_, Dialog::text_color_2d_);
+        Buffer::set_text_color3(Dialog::text_color_3a_, Dialog::text_color_3b_,
+                                Dialog::text_color_3c_, Dialog::text_color_3d_);
+    } else {
+        Buffer::set_clip(&row);
+        // 60B9C7..60BAEB keeps the explicit/default emphasis arms distinct.
+        if (field_10_ != static_cast<uint32_t>(-1)) {
+            Buffer::set_text_color(static_cast<int>(field_10_), Dialog::text_color_b_,
+                                   Dialog::text_color_c_, Dialog::text_color_d_);
+            Buffer::set_text_color2(static_cast<int>(field_10_), Dialog::text_color_2b_,
+                                    Dialog::text_color_2c_, Dialog::text_color_2d_);
+            Buffer::set_text_color3(static_cast<int>(field_10_), Dialog::text_color_3b_,
+                                    Dialog::text_color_3c_, Dialog::text_color_3d_);
+        } else {
+            Buffer::set_text_color(static_cast<int>(Dialog::field_6C_), Dialog::text_color_b_,
+                                   Dialog::text_color_c_, Dialog::text_color_d_);
+            Buffer::set_text_color2(static_cast<int>(Dialog::field_6C_), Dialog::text_color_2b_,
+                                    Dialog::text_color_2c_, Dialog::text_color_2d_);
+            Buffer::set_text_color3(static_cast<int>(Dialog::field_6C_), Dialog::text_color_3b_,
+                                    Dialog::text_color_3c_, Dialog::text_color_3d_);
+        }
+    }
+
+    // 60BAFC resolves the row ID before parent callbacks and retains it.
+    const int item_id = Dialog::pos_to_id(index);
+    if (callback_result == 0) {
+        Win *const parent = Win::parent_window();
+        if (parent != 0) {
+            int state;
+            if (selected != 0) {
+                state = 2;
+            } else {
+                state = Dialog::field_F0_ == static_cast<uint32_t>(index);
+            }
+            callback_result = parent->on_dialog_item_back_draw(this, item_id, state, &row);
+            // 0x0060BB61: a parent that drew the background also skips the
+            // Dialog border below.
+            if (callback_result != 0) {
+                goto frame_done;
+            }
+            GraphicWin *live_parent;
+            if ((iFlags_ & 0x80000) != 0
+                && (live_parent = static_cast<GraphicWin *>(Win::parent_window())) != 0) {
+                live_parent->copy(this, Dialog::window_x_, Dialog::window_y_, 0, 0,
+                                  Buffer::pixel_width(), Buffer::pixel_height());
+            } else {
+                GraphicWin::fill(static_cast<int>(Dialog::field_6C_));
+            }
+        }
+
+        {
+            RECT border = *GraphicWin::buffer_working_rect();
+            for (int edge = 0; edge < static_cast<int>(Dialog::field_B4_); ++edge) {
+                Buffer::box(&border, static_cast<int>(Dialog::field_AC_),
+                            static_cast<int>(Dialog::field_B0_));
+                ++border.left;
+                --border.right;
+                ++border.top;
+                --border.bottom;
+            }
+        }
+    }
+frame_done:
+
+    // The original rechecks the live count after frame callbacks. If a
+    // callback removed this row, it leaves the current cursor untouched.
+    this->Dialog::item_list_.seek_pos(index);
+
+    if (draw_callback_ != 0) {
+        CurrentListBoxDraw = this;
+        draw_callback_(this, item_id,
+                       static_cast<int>(field_18_) + ListBoxDrawOffset,
+                       row.left, row.top, row.bottom - row.top);
+    }
+
+    if (write_callback_ != 0) {
+        if (write_callback_(this, Dialog::pos_to_id(index), index, &row,
+                            listbox_current_text(&this->Dialog::item_list_)) != 0) {
+            return;
+        }
+    }
+
+    // 60BD3B splits two exclusive complete text paths. The unselected
+    // path returns at 60BF3B; the selected path continues to its border.
+    if (selected == 0) {
+        {
+            const int pad = static_cast<int>(field_2C_) + 1;
+            row.left += static_cast<int>(Dialog::field_34_) + pad;
+            row.right -= pad;
+        }
+        Buffer::set_clip(&row);
+
+        char *separator = strchr(listbox_current_text(&this->Dialog::item_list_), '|');
+        if (separator == 0) {
+            if (listbox_current_lines(&this->Dialog::item_list_) > 1) {
+                Buffer::wrap(listbox_current_text(&this->Dialog::item_list_), &row);
+            } else {
+                Buffer::write_l(listbox_current_text(&this->Dialog::item_list_), &row);
+            }
+        } else {
+            *separator = 0;
+            if (listbox_current_lines(&this->Dialog::item_list_) > 1) {
+                Buffer::wrap(listbox_current_text(&this->Dialog::item_list_), &row);
+            } else {
+                Buffer::write_l(listbox_current_text(&this->Dialog::item_list_), &row);
+            }
+            *separator = '|';
+            ++separator;
+            Buffer::write_right_l(separator, &row);
+        }
+
+        // Both original text arms restore the inset before the final clip.
+        {
+            const int pad = static_cast<int>(field_2C_) + 1;
+            row.left -= pad;
+            row.right += pad;
+        }
+        row.left -= static_cast<int>(Dialog::field_34_);
+        Buffer::set_clip(&row);
+        return;
+    } else {
+        if (callback_result == 0
+            && Win::is_dialog_focus() != 0) {
+            Buffer::set_clip(&row);
+            if (field_14_ != static_cast<uint32_t>(-1)) {
+                GraphicWin::fill(&row, static_cast<int>(field_14_));
+            }
+        }
+
+        {
+            const int pad = static_cast<int>(field_2C_) + 1;
+            row.left += static_cast<int>(Dialog::field_34_) + pad;
+            row.right -= pad;
+        }
+        Buffer::set_clip(&row);
+
+        char *separator = strchr(listbox_current_text(&this->Dialog::item_list_), '|');
+        if (separator == 0) {
+            if (listbox_current_lines(&this->Dialog::item_list_) > 1) {
+                Buffer::wrap(listbox_current_text(&this->Dialog::item_list_), &row);
+            } else {
+                Buffer::write_l(listbox_current_text(&this->Dialog::item_list_), &row);
+            }
+        } else {
+            *separator = 0;
+            if (listbox_current_lines(&this->Dialog::item_list_) > 1) {
+                Buffer::wrap(listbox_current_text(&this->Dialog::item_list_), &row);
+            } else {
+                Buffer::write_l(listbox_current_text(&this->Dialog::item_list_), &row);
+            }
+            *separator = '|';
+            ++separator;
+            Buffer::write_right_l(separator, &row);
+        }
+
+        // Both original text arms restore the inset before the final clip.
+        {
+            const int pad = static_cast<int>(field_2C_) + 1;
+            row.left -= pad;
+            row.right += pad;
+        }
+        row.left -= static_cast<int>(Dialog::field_34_);
+        Buffer::set_clip(&row);
+        if (callback_result == 0) {
+            for (int edge = 0; edge < static_cast<int>(field_2C_); ++edge) {
+                Buffer::box(&row, static_cast<int>(field_24_),
+                            static_cast<int>(field_28_));
+                ++row.left;
+                --row.right;
+                ++row.top;
+                --row.bottom;
+            }
+        }
+    }
+}
+
 // Seed identity 0x0060C1E0, retained span 0x0060C1E0..0x0060C33F, has no
 // direct callers in the image and calls only Buffer::set_clip/Buffer::copy.
 // Directions 0..3 shift the list surface one row or column while preserving
@@ -1772,97 +1351,170 @@ void ListBox::on_redraw() {
     }
 }
 
-// ORIGINAL: 0x0060CF60 ?on_mousewheel@thunk1_ListBox@@QAEXH@Z 0x0060CF60-0x0060CF68 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: ListBox constructor 0x00609DB0 installs Win view 0x0067041C; slot +0x3C points to original identity 0x0060CF60", "retained build/recovery/builds/build-rosw1myy: build/recovery/builds/build-rosw1myy/CMakeFiles/OpenSMACX.dir/src/listbox.cpp.obj has matching source-input closure and physical table relocation to ?on_mousewheel@ListBox@@$4PPPPPPPM@A@AEXH@Z", "retained COFF ?on_mousewheel@ListBox@@$4PPPPPPPM@A@AEXH@Z has the 8-byte vtordisp subtraction shape and tail relocation to real method symbol ?on_mousewheel@ListBox@@UAEXH@Z", "the exact legacy kind fact `game` is copied verbatim from the source envelope and parser-read back; it is existing catalogue classification, not a newly granted kind", "this evidence establishes a current owner-TU/compiler-thunk correspondence only; no fresh build, linked retained-table selection, body-byte match, or whole-game acceptance is claimed"], "reason": "The ListBox Win-view constructor-installed table selects this original receiver adjustor at byte offset 0x3C; the retained owner COFF physically emits the corresponding compiler vtordisp thunk and its relocation tails to ListBox::on_mousewheel. This FILE marker remains with the actual class owner TU; it does not prove final linked table selection or full acceptance."}
-// kind      game
-// symbol    ?on_mousewheel@ListBox@@$4PPPPPPPM@A@AEXH@Z
-
-// ORIGINAL: 0x0060CFB0 ?on_key_down@thunk1_ListBox@@QAEXH@Z 0x0060CFB0-0x0060CFB8 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: ListBox constructor 0x00609DB0 installs Win view 0x0067041C; slot +0x68 points to original identity 0x0060CFB0", "retained build/recovery/builds/build-rosw1myy: build/recovery/builds/build-rosw1myy/CMakeFiles/OpenSMACX.dir/src/listbox.cpp.obj has matching source-input closure and physical table relocation to ?on_key_down@ListBox@@$4PPPPPPPM@A@AEHH@Z", "retained COFF ?on_key_down@ListBox@@$4PPPPPPPM@A@AEHH@Z has the 8-byte vtordisp subtraction shape and tail relocation to real method symbol ?on_key_down@ListBox@@UAEHH@Z", "the exact legacy kind fact `game` is copied verbatim from the source envelope and parser-read back; it is existing catalogue classification, not a newly granted kind", "this evidence establishes a current owner-TU/compiler-thunk correspondence only; no fresh build, linked retained-table selection, body-byte match, or whole-game acceptance is claimed"], "reason": "The ListBox Win-view constructor-installed table selects this original receiver adjustor at byte offset 0x68; the retained owner COFF physically emits the corresponding compiler vtordisp thunk and its relocation tails to ListBox::on_key_down. This FILE marker remains with the actual class owner TU; it does not prove final linked table selection or full acceptance."}
-// kind      game
-// symbol    ?on_key_down@ListBox@@$4PPPPPPPM@A@AEHH@Z
-
 /*
-Purpose: Land the list selection on the row whose id matches: reset the
-         Dialog entry list to its head, walk forward comparing ids, and
-         select the position the walk reached - or position -1 when the id
-         is absent or the list is empty.
+Purpose: Apply one WM_VSCROLL step to the list: publish the parent window
+         as the callback window, keep the old top-entry position, apply the
+         code (SB_THUMBTRACK sets the position directly, SB_LINEUP/DOWN
+         scale the delta by the Dialog's row stride), re-select through
+         set_selected_pos when the notify global is armed, and repaint -
+         redraw the window when the scroll position moved; otherwise refresh
+         the old and new selected rows only if selection changed, then always
+         request a soft surface update.
 
-// ORIGINAL: 0x00609FA0 ?set_selected_id@ListBox@@QAEXH@Z 0x00609FA0-0x0060A013 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["The pinned body at 0x609FAB forms the Dialog virtual-base list at Dialog+0xBC; loads/stores at +0xC4/+0xC8/+0xCC/+0xD0 correspond to declared StringList head/current/count/position fields.", "Pinned branches 0x609FBB/0x609FC8 and 0x609FD4/0x609FE8 preserve the empty-list, count-bounded ID walk, selection-on-hit and -1 selection-on-miss paths; the successful call is 0x60A020.", "ListBox already declares set_selected_id; src/listbox.cpp owns its sibling set_selected_pos and src/listbox.h owns the real virtual Dialog inheritance. No guessed class or layout is introduced."], "reason": "Transfer the existing ListBox method into its class implementation TU and retain its complete list walk and set_selected_pos calls. This source binding records owner placement and field provenance, not a byte-exact or linked-selection verdict."}
-// size      115 bytes
-// prototype void (__thiscall ?set_selected_id@ListBox@@QAEXH@Z)(ListBox* this, int)
-// callers   17   call targets   1
+// ORIGINAL: 0x0060C5D0 ?on_scrolling@ListBox@@QAEXHH@Z 0x0060C5D0-0x0060C691 BYTE_EXACT
+// symbol    ?on_scrolling@ListBox@@UAEXHH@Z
+// size      193 bytes
+// prototype void (__thiscall ?on_scrolling@ListBox@@QAEXHH@Z)(ListBox* this, int, int)
+// callers   2   call targets   3
 // kind      game
 // flags     hidden;sp_ready;purged_ok
-// calls     0x0060A020
-// Homed from src/recovered/units/00609fa0.cpp. The image resets
-// item_list_.current_ to head_ through the Dialog virtual base and selects
-// through Dialog::item_list_.current_position_ (the seed's Dialog+0xBC
-// list and +0xD0 position), tail-falling into set_selected_pos(-1, 1).
-Status: Coverage transcription - unclaimed body
+// calls     0x005D5890 0x0060A020 0x0060B530
+// indirect  0x0060C645
+// TRIED (seed): the entered receiver is the GraphicWin virtual base
+//         (dialogs.cpp dispatches by kind through the Win table), so every
+//         access folds the walk back to the front - the same idiom the
+//         homed on_left_double_click (listbox.cpp) spells. The seed's
+//         displacements are image-exact: the scroll-position slot is
+//         `esi - 0x30` at all five sites (disp8 0xD0 sign-extended - the
+//         ListBox's field_18_ at front+0x18, the slot ListBox::close
+//         resets), the row stride Dialog+0x10 and the top-entry index
+//         Dialog+0xA4 through the vbtable walks, and the redraw/soft_update
+//         dispatches anchor on the entered receiver, spelled as raw
+//         GraphicWin * casts here exactly as on_left_double_click does.
+Status: Typed ListBox scroll handler; exactness and runtime acceptance remain unmeasured.
 */
-void ListBox::set_selected_id(int id) {
-    StringList &items = Dialog::item_list_;
-    if (items.head_ != 0) {
-        const int count = items.entry_count_;
-        items.current_position_ = 0;
-        items.current_ = items.head_;
-        for (int index = 0; index < count; index++) {
-            StringStructEntry *entry = items.current_;
-            if (entry->id == id) {
-                goto found;
-            }
-            items.current_position_++;
-            items.current_ = entry->next;
-        }
-    }
-    set_selected_pos(-1, 1);
-    return;
+void ListBox::on_scrolling(int a, int b) {
+    WinCallbackWindow = parent_window();
 
-found:
-    set_selected_pos(Dialog::item_list_.current_position_, 1);
+    const int top_entry = Dialog::selected_position_;
+    const int old_position = static_cast<int>(field_18_);
+    if (a != -2) {
+        if (a == -1) {
+            field_18_ = static_cast<uint32_t>(b);
+        }
+    } else {
+        field_18_ = static_cast<uint32_t>(Dialog::row_count_)
+                         * static_cast<uint32_t>(b);
+    }
+
+    if (ListBoxGlobalDDC != 0) {
+        set_selected_pos(static_cast<int>(field_18_), 1);
+    }
+
+    if (static_cast<int>(field_18_) != old_position) {
+        redraw();
+    } else {
+        if (top_entry != Dialog::selected_position_) {
+            draw_item(top_entry);
+            draw_item(Dialog::selected_position_);
+        }
+        soft_update();
+    }
 }
 
 /*
-Purpose: Turn a mouse-wheel step count into that many scroll clicks: the
-         negative direction fires the vertical scrollbar's wheel-down, the
-         non-negative its wheel-up, once per notch, on the Win virtual
-         base the list's vbtable names.
-
-// ORIGINAL: 0x0060CB70 ?on_mousewheel@ListBox@@QAEXH@Z 0x0060CB70-0x0060CBBA FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x60CB84..0x60CB98 repeats Win::on_mousewheel_down(1) once per negated notch; 0x60CBA1..0x60CBB3 repeats Win::on_mousewheel_up(1) for nonnegative input.", "The original obtains the Win receiver by following ListBox's GraphicWin virtual-base vbtable adjustment (-0x48 plus vbtable[1]); ListBox genuinely inherits GraphicWin and GraphicWin genuinely derives from Win.", "ListBox::on_mousewheel is already declared override in src/listbox.h; the projected qualified Win member calls let the declared C++ base conversion supply that receiver without raw-vtable dispatch."], "reason": "Transfer the declared ListBox override into its class implementation TU. Preserve the original notch loops and route through the genuine Win base methods; no manual slot or receiver adapter is introduced."}
-// symbol    ?on_mousewheel@ListBox@@UAEXH@Z
-// size      74 bytes
-// prototype void (__thiscall ?on_mousewheel@ListBox@@QAEXH@Z)(ListBox* this, int)
-// callers   1   call targets   2
+Purpose: Forward a vertical-scroll (code, pos) through GraphicWin vtable
+         slot 49.
+// ORIGINAL: 0x0060C6A0 ?on_scrolled@ListBox@@QAEXHH@Z 0x0060C6A0-0x0060C6C1 BYTE_EXACT
+// symbol    ?on_scrolled@ListBox@@UAEXHH@Z
+// TRIED: byte-exact on promotion, same entered-adjusted receiver as
+//   on_right_down above; no guard on this one.
+// size      33 bytes
+// prototype void (__thiscall ?on_scrolled@ListBox@@QAEXHH@Z)(ListBox* this, int, int)
+// callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
-// calls     0x005F85B0 0x005F85E0
-// Homed from src/recovered/units/0060cb70.cpp, displacements re-taken from
-// the image (the seed's own note records its register-allocation wall; the
-// two callees are Win::on_mousewheel_down / Win::on_mousewheel_up, reached
-// on the Win virtual base through the front's vbtable).
-Status: Coverage transcription - unclaimed body
+// calls     (none)
+// indirect  0x0060C6B8
+Return Value: n/a
+Status: Complete
+DEMOTED from BYTE_EXACT by direction (idiomatic-first): vslot_49 is the
+plain virtual call; the image's front-walk addressing is the entered-
+receiver relationship work (see on_right_down's note).
 */
-void ListBox::on_mousewheel(int delta) {
-    if (delta < 0) {
-        int magnitude = -delta;
-        if (magnitude > 0) {
-            int count = magnitude;
-            do {
-                Win::on_mousewheel_down(1);
-            } while (--count);
-        }
-    } else {
-        int magnitude = delta;
-        if (magnitude > 0) {
-            int count = magnitude;
-            do {
-                Win::on_mousewheel_up(1);
-            } while (--count);
+void ListBox::on_scrolled(int code, int pos) {
+    on_scrolling(code, pos);
+}
+
+/*
+Purpose: Report a right double click: raise the click guard, forward (a1, a2)
+         through GraphicWin vtable slot 28, drop the guard.
+// ORIGINAL: 0x0060C6D0 ?on_right_double_click@ListBox@@QAEXHH@Z 0x0060C6D0-0x0060C702 BYTE_EXACT
+// symbol    ?on_right_double_click@ListBox@@UAEXHH@Z
+// TRIED: byte-exact on promotion, same entered-adjusted receiver as
+//   on_right_down above.
+// size      50 bytes
+// prototype void (__thiscall ?on_right_double_click@ListBox@@QAEXHH@Z)(ListBox* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x0060C6F2
+Return Value: n/a
+Status: Complete
+DEMOTED from BYTE_EXACT by direction (idiomatic-first): on_left_double_click is the
+plain virtual call; the image's front-walk addressing is the entered-
+receiver relationship work (see on_right_down's note).
+*/
+void ListBox::on_right_double_click(int a1, int a2) {
+    ListBoxClickGuard = 1;
+    on_left_double_click(a1, a2);
+    ListBoxClickGuard = 0;
+}
+
+/*
+Purpose: Run the double-click notification: remember the hovered window,
+         fire the installed callback with the selected id, then walk the
+         ListBox's Win-parent notification chain (slots 56 and 55, then the
+         parent's child-object 23/7 pair), preserving the original null exit
+         and subsequent parent reloads.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x0060C710 ?on_left_double_click@ListBox@@QAEXHH@Z 0x0060C710-0x0060C7BB BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0060c710.cpp", "source:src/listbox.h", "source:src/autosound.h", "source:src/win.h", "pinned 0x0060C710 resolves the GraphicWin virtual base through vbtable {0,0x48,0xA60}; repeated vbtable adjustment reads Win-relative +0xC4 (win_parent_) for slots 56/55 and +0x94 on that parent for Sound slots 23/7", "pinned 0x0060C74B tests the reloaded parent and branches to the epilogue at 0x0060C7B6 when null; later callback paths reload the parent"], "reason": "Recover ListBox double-click callbacks through typed GraphicWin and Dialog owners, using the actual Win parent and preserving the original parent-null exit, reload positions, and call order."}
+// symbol    ?on_left_double_click@ListBox@@UAEXHH@Z
+// size      171 bytes
+// prototype void (__thiscall ?on_left_double_click@ListBox@@QAEXHH@Z)(ListBox* this, int, int)
+// calls     0x00609A50
+// indirect  0x0060C73B 0x0060C761 0x0060C789 0x0060C7A8 0x0060C7B3
+*/
+void ListBox::on_left_double_click(int, int) {
+    Win *target = parent_window();
+    WinCallbackWindow = target;
+
+    if (double_click_callback_ != 0) {
+        double_click_callback_(Dialog::get_selected_id());
+    }
+
+    target = parent_window();
+    if (target == 0) return;
+    target->on_double_clicked(Dialog::get_selected_id());
+
+    target = parent_window();
+    target->on_double_clicked(Dialog::get_selected_id(), ListBoxClickGuard);
+
+    target = parent_window();
+    Sound *child = target->legacy_sound_37();
+    if (child != 0) {
+        if (child->is_playing() == 0) {
+            child->play();
         }
     }
+}
+
+/*
+Purpose: Unknown; the legacy implementation is a constant return that returns.
+// ORIGINAL: 0x0060C7C0 ?on_dialog_focus@ListBox@@QAEXH@Z 0x0060C7C0-0x0060C7C3 BYTE_EXACT
+// symbol    ?on_dialog_focus@ListBox@@UAEXH@Z
+// size      3 bytes
+// prototype void (__thiscall ?on_dialog_focus@ListBox@@QAEXH@Z)(ListBox* this, int)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void ListBox::on_dialog_focus(int) {
 }
 
 /*
@@ -1918,6 +1570,325 @@ int ListBox::UNK2(char *text) {
     return result;
 }
 
+/*
+Purpose: Add one entry: measure the string at the current width, grow the
+         list height, remember the string in the entry table and append the
+         id. Returns whatever the entry append reports.
+// ORIGINAL: 0x0060C920 ?item@ListBox@@QAEHPADH@Z 0x0060C920-0x0060C9A9 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0060c920.cpp", "source:src/listbox.h", "source:src/buffer.h", "source:src/stringstruct.h", "source:src/scroll.cpp:ScrollDefaultThickness", "Pinned 0x0060C920..0x0060C9A9 measures positive available width, reads Buffer +0x18, updates ListBox +0x20, then publishes StringList text/metadata before add."], "reason": "Recover item insertion through the real Dialog list and GraphicWin Buffer base, including the shared Scroll thickness. The measured height is Buffer state, not wrap_height's return or ListBox's same-offset scroll state; preserve modulo-word accumulation and insertion result."}
+// size      137 bytes
+// prototype int (__thiscall ?item@ListBox@@QAEHPADH@Z)(ListBox* this, int8* lpString, int)
+// calls     0x00401100 0x005DC360
+*/
+int ListBox::item(char *text, int id) {
+    if (text == 0) {
+        return 3;
+    }
+
+    int count = static_cast<int32_t>(
+        Dialog::field_2C_ - static_cast<uint32_t>(ScrollDefaultThickness));
+
+    if (count > 0) {
+        Buffer::wrap_height(text, count);
+    }
+
+    int height;
+    if (count != 0) {
+        height = static_cast<int32_t>(Buffer::field_18_);
+    } else {
+        height = 1;
+    }
+
+    field_20_ += height;
+
+    StringList &entries = Dialog::item_list_;
+    entries.pending_text_ = text;
+    entries.field_20_ = 0;
+    entries.field_24_ = static_cast<uint32_t>(height);
+    return entries.add(id);
+}
+
+/*
+Purpose: Refresh the list after its entries changed: run the layout pass and
+         re-select when only the selection moved, rebuild the whole window
+         (attach) when entries were added or removed, re-arm the scroll
+         ranges from the new metrics, then fire the callback and the
+         notification slots. Returns 7 when there is no main window, or the
+         attach result on failure.
+// ORIGINAL: 0x0060C9B0 ?update_changes@ListBox@@QAEHXZ 0x0060C9B0-0x0060CB63 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/listbox.h", "source:src/dialog.h", "source:src/win.h", "source:src/autosound.h", "Pinned 0x0060CA20..0x0060CA2B directly calls ListBox::attach; subsequent notifications reload the parent after callbacks."], "reason": "Recover refresh through real virtual bases, list state, callback and parent members, retaining the concrete attach target and original notification ordering. The AutoSound child storage is identified, but its nullary slot-23/slot-7 dynamic receiver type remains unresolved."}
+// size      435 bytes
+// prototype int (__thiscall ?update_changes@ListBox@@QAEHXZ)(ListBox* this)
+// calls     0x005ED9D0 0x005EE0B0 0x005EE0D0 0x005EE0F0 0x005EE110 0x005F7E90 0x00609A50 0x0060A020 0x0060A1E0 0x0060A670
+// indirect  0x0060CA47 0x0060CAF0 0x0060CB15 0x0060CB39 0x0060CB44 0x0060CB56
+*/
+int ListBox::update_changes() {
+    if (HandleMain == 0) {
+        return 7;
+    }
+
+    // Every base access converts `this` directly; hoisted base pointers
+    // would add null-checked conversions the image does not have.
+    int was_visible = is_visible();
+
+    Dialog::get_selected_id();
+
+    int old_child_count = field_C_;
+    int old_selected = Dialog::selected_position_;
+    calculate_dimensions();
+
+    if (old_child_count != field_C_) {
+        int flags = static_cast<int>(iFlags_);
+        GraphicWin *parent = static_cast<GraphicWin *>(parent_window());
+        int result = this->ListBox::attach(
+            parent, Dialog::window_x_, Dialog::window_y_, flags);
+        if (result != 0) {
+            return result;
+        }
+        if (old_selected == -1) {
+            set_selected_pos(-1, 1);
+        } else {
+            set_selected_pos(0, 1);
+        }
+        ::ReleaseCapture();
+        if (was_visible != 0) {
+            Win::show(0);
+        }
+    } else {
+        set_selected_pos(old_selected, 1);
+    }
+
+    {
+        unsigned int win_flags = iFlags_;
+        if (win_flags & 8) {
+            set_vert_range(0, Dialog::item_list_.entry_count_ - 1);
+            set_vert_paging(Dialog::row_count_ - 1);
+        } else if (win_flags & 4) {
+            set_horz_range(0,
+                Dialog::item_list_.entry_count_ / Dialog::row_count_ - 1);
+            set_horz_paging(Dialog::column_count_);
+        }
+    }
+
+    if (selection_callback_ != 0) {
+        selection_callback_(Dialog::get_selected_id());
+    }
+
+    {
+        Win *target = parent_window();
+        if (target != 0) {
+            target->on_selected(Dialog::get_selected_id());
+        }
+    }
+
+    {
+        Win *target = parent_window();
+        if (target != 0) {
+            // The pinned child sequence is Sound slots 23/7 at AutoSound
+            // offset 0x90; Win slot 23 has a different coordinate signature.
+            Sound *child = target->legacy_sound_36();
+            if (child != 0) {
+                if (child->is_playing() == 0) {
+                    child->play();
+                }
+            }
+        }
+    }
+
+    if (was_visible != 0) {
+        redraw();
+    }
+
+    return 0;
+}
+
+/*
+Purpose: Turn a mouse-wheel step count into that many scroll clicks: the
+         negative direction fires the vertical scrollbar's wheel-down, the
+         non-negative its wheel-up, once per notch, on the Win virtual
+         base the list's vbtable names.
+
+// ORIGINAL: 0x0060CB70 ?on_mousewheel@ListBox@@QAEXH@Z 0x0060CB70-0x0060CBBA FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x60CB84..0x60CB98 repeats Win::on_mousewheel_down(1) once per negated notch; 0x60CBA1..0x60CBB3 repeats Win::on_mousewheel_up(1) for nonnegative input.", "The original obtains the Win receiver by following ListBox's GraphicWin virtual-base vbtable adjustment (-0x48 plus vbtable[1]); ListBox genuinely inherits GraphicWin and GraphicWin genuinely derives from Win.", "ListBox::on_mousewheel is already declared override in src/listbox.h; the projected qualified Win member calls let the declared C++ base conversion supply that receiver without raw-vtable dispatch."], "reason": "Transfer the declared ListBox override into its class implementation TU. Preserve the original notch loops and route through the genuine Win base methods; no manual slot or receiver adapter is introduced."}
+// symbol    ?on_mousewheel@ListBox@@UAEXH@Z
+// size      74 bytes
+// prototype void (__thiscall ?on_mousewheel@ListBox@@QAEXH@Z)(ListBox* this, int)
+// callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F85B0 0x005F85E0
+// Homed from src/recovered/units/0060cb70.cpp, displacements re-taken from
+// the image (the seed's own note records its register-allocation wall; the
+// two callees are Win::on_mousewheel_down / Win::on_mousewheel_up, reached
+// on the Win virtual base through the front's vbtable).
+Status: Coverage transcription - unclaimed body
+*/
+void ListBox::on_mousewheel(int delta) {
+    if (delta < 0) {
+        int magnitude = -delta;
+        if (magnitude > 0) {
+            int count = magnitude;
+            do {
+                Win::on_mousewheel_down(1);
+            } while (--count);
+        }
+    } else {
+        int magnitude = delta;
+        if (magnitude > 0) {
+            int count = magnitude;
+            do {
+                Win::on_mousewheel_up(1);
+            } while (--count);
+        }
+    }
+}
+
+// The retained 0x0060CBC0 seed derives a hovered list position from the same
+// row metrics as the click handler, then updates Dialog::field_F0_ and redraws
+// the changed hover state. Its live list traversal also updates the cursor
+// when the eventual hovered position is outside the list.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x0060CBC0 ?on_mouse_move@ListBox@@QAEXHH@Z 0x0060CBC0-0x0060CE0B BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060cbc0.cpp"], "reason": "Rehome seed catalogue identity and original extents into compiled owning class; native-emitted symbol is separate and no new byte claim granted."}
+// symbol    ?on_mouse_move@ListBox@@UAEXHH@Z
+void ListBox::on_mouse_move(int x, int y) {
+    int position;
+    if (Dialog::item_list_.entry_count_ == 0) return;
+    const int previous_hover = static_cast<int>(Dialog::field_F0_);
+    y -= Dialog::field_38_;
+    if (y < 0) return;
+
+    if (Dialog::column_count_ != 1) {
+        position = (x - Dialog::field_40_)
+                       / (Dialog::field_64_ + Dialog::field_44_)
+                       * Dialog::row_count_
+                   + y / (Dialog::field_68_ + Dialog::field_44_);
+    } else {
+        this->Dialog::item_list_.seek_pos(static_cast<int>(field_18_) - 1);
+        position = 0;
+        for (int rows = Dialog::item_list_.entry_count_; rows > 0 && y >= 0; --rows) {
+            ++position;
+            StringList *const list = &this->Dialog::item_list_;
+            StringStructEntry *const head = list->head_;
+            if (head != 0) {
+                list->current_ = list->current_->next;
+                if (++list->current_position_ == list->entry_count_)
+                    list->current_position_ = 0;
+            }
+            // The original retains a null payload read when a cursor
+            // survives after the list head has been cleared.
+            const int span = list->current_ != 0
+                ? static_cast<int>((head != 0 ? list->current_->string_payload() : 0)->field_C_)
+                : 0;
+            y -= (Dialog::field_68_ + Dialog::field_44_) * span;
+        }
+        if (position == 0) return;
+        --position;
+    }
+
+    const int hovered = static_cast<int>(field_18_) + position;
+    if (hovered >= Dialog::item_list_.entry_count_) return;
+    if (hovered == Dialog::selected_position_) {
+        if (static_cast<int>(Dialog::field_F0_) == -1) return;
+        Dialog::field_F0_ = static_cast<uint32_t>(-1);
+        ListBoxDrawOffset = previous_hover - static_cast<int>(field_18_);
+        draw_item(previous_hover);
+    } else {
+        Dialog::field_F0_ = static_cast<uint32_t>(hovered);
+        if (static_cast<int>(Dialog::field_F0_) == previous_hover) return;
+        if (previous_hover != -1) {
+            ListBoxDrawOffset = previous_hover - static_cast<int>(field_18_);
+            draw_item(previous_hover);
+        }
+        ListBoxDrawOffset = static_cast<int>(Dialog::field_F0_) - static_cast<int>(field_18_);
+        draw_item(static_cast<int>(Dialog::field_F0_));
+        GraphicWin::soft_update();
+        return;
+    }
+    GraphicWin::soft_update();
+}
+
+
+/*
+Purpose: Clear the hover index and repaint, through the enclosing object.
+// ORIGINAL: 0x0060CE10 ?on_mouse_leave@ListBox@@QAEXHH@Z 0x0060CE10-0x0060CE38 BYTE_EXACT
+// symbol    ?on_mouse_leave@ListBox@@UAEXHH@Z
+// size      40 bytes
+// prototype void (__thiscall ?on_mouse_leave@ListBox@@QAEXHH@Z)(ListBox* this, int, int)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x0060CE2F
+Return Value: n/a
+Status: Complete
+*/
+void ListBox::on_mouse_leave(int a1, int a2) {
+    // Clear the hover index (Dialog::field_F0_, through the virtual base)
+    // and repaint (the redraw virtual) - plain member forms; the
+    // compiler's virtual-base machinery does the walking the old hand
+    // chains spelled. Both parameters are dead; `ret 8` still pops them.
+    field_F0_ = -1;
+    redraw();
+}
+
+// Original 609DB0 conditionally constructs GraphicWin and Dialog using the
+// compiler's most-derived flag, then initializes the ListBox-owned fields.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+/*
+Purpose: Return the Win parent's slot-8 value when the original Win flag and
+         parent-link guards are set.
+*/
+
+
+/*
+Purpose: Forward the exact Scroll being removed through recipient slot 9
+         under the original guards, otherwise return the argument.
+*/
+
+// ORIGINAL: 0x0060CED0 sub_60ced0 0x0060CED0-0x0060CED8 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned image SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "ListBox constructor at 0x00609DB0 installs Win-view table address point 0x0067041C; slots 6/7 at +0x18/+0x1C select 0x0060CED0/0x0060CF10", "the adjustor thunk resolves the GraphicWin virtual base via vbtable {0,0x48,0xA60}; the callback then reads Win-relative +0x98 (iFlags_) and +0xC4 (win_parent_), testing bit 0x40 before the parent and calling its slot 8", "original 0x005EB640 close body pushes scroll_vert_ before the slot-7 call and pushes scroll_horz_ before the matching horizontal call; both return paths are ret 4", "Boundary refinement retains the historical catalogue envelope 0x0060CED0-0x0060CF01 (49 bytes) as a thunk/padding/primary cluster, not one current function.", "Pinned 0x0060CED0-0x0060CED8 is the two-instruction vtordisp thunk; 0x0060CED8-0x0060CEE0 is exactly eight INT3 alignment bytes; 0x0060CEE0-0x0060CF01 is its separate ordinary primary body.", "Original origin, catalogue name, emitted thunk symbol, prior binding evidence and historical claims are retained."], "reason": "Move the pinned ListBox Win-view callback into a genuine owner method; retain the original Win-member guard order and delegated slot behavior. Compiler-generated receiver adjustment and exact COFF target still require fresh native verification."}
+// body src/jackal/listbox.h
+// symbol    ?on_scroll_create@ListBox@@$4PPPPPPPM@A@AEPAVScroll@@XZ
+// ORIGINAL: 0x0060CEE0 sub_60CEE0 0x0060CEE0-0x0060CF01 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned direct JMP at 0x0060CED3 targets 0x0060CEE0.", "Pinned primary span 0x0060CEE0-0x0060CF01 corresponds to ordinary emitted C++ member ?on_scroll_create@ListBox@@UAEPAVScroll@@XZ, independently callable from its preceding vtordisp thunk."], "reason": "Bind the separately callable primary ListBox scroll body, not its preceding vtordisp thunk."}
+// body src/jackal/listbox.h
+// symbol    ?on_scroll_create@ListBox@@UAEPAVScroll@@XZ
+
+// ORIGINAL: 0x0060CF10 sub_60cf10 0x0060CF10-0x0060CF18 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned image SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "ListBox constructor at 0x00609DB0 installs Win-view table address point 0x0067041C; slots 6/7 at +0x18/+0x1C select 0x0060CED0/0x0060CF10", "the adjustor thunk resolves the GraphicWin virtual base via vbtable {0,0x48,0xA60}; the callback then reads Win-relative +0x98 (iFlags_) and +0xC4 (win_parent_), testing bit 0x40 before the parent and calling its slot 9 with the Scroll argument", "original 0x005EB640 close body pushes scroll_vert_ before the slot-7 call and pushes scroll_horz_ before the matching horizontal call; both return paths are ret 4", "Boundary refinement retains the historical catalogue envelope 0x0060CF10-0x0060CF4D (61 bytes) as a thunk/padding/primary cluster, not one current function.", "Pinned 0x0060CF10-0x0060CF18 is the two-instruction vtordisp thunk; 0x0060CF18-0x0060CF20 is exactly eight INT3 alignment bytes; 0x0060CF20-0x0060CF4D is its separate ordinary primary body.", "Original origin, catalogue name, emitted thunk symbol, prior binding evidence and historical claims are retained."], "reason": "Move the pinned ListBox Win-view callback into a genuine owner method; retain the original Win-member guard order and delegated slot behavior. Compiler-generated receiver adjustment and exact COFF target still require fresh native verification."}
+// body src/jackal/listbox.h
+// symbol    ?on_scroll_delete@ListBox@@$4PPPPPPPM@A@AEPAVScroll@@PAV2@@Z
+// ORIGINAL: 0x0060CF20 sub_60CF20 0x0060CF20-0x0060CF4D BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned direct JMP at 0x0060CF13 targets 0x0060CF20.", "Pinned primary span 0x0060CF20-0x0060CF4D corresponds to ordinary emitted C++ member ?on_scroll_delete@ListBox@@UAEPAVScroll@@PAV2@@Z, independently callable from its preceding vtordisp thunk."], "reason": "Bind the separately callable primary ListBox scroll body, not its preceding vtordisp thunk."}
+// body src/jackal/listbox.h
+// symbol    ?on_scroll_delete@ListBox@@UAEPAVScroll@@PAV2@@Z
+
+// ORIGINAL: 0x0060CF60 ?on_mousewheel@thunk1_ListBox@@QAEXH@Z 0x0060CF60-0x0060CF68 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: ListBox constructor 0x00609DB0 installs Win view 0x0067041C; slot +0x3C points to original identity 0x0060CF60", "retained build/recovery/builds/build-rosw1myy: build/recovery/builds/build-rosw1myy/CMakeFiles/OpenSMACX.dir/src/listbox.cpp.obj has matching source-input closure and physical table relocation to ?on_mousewheel@ListBox@@$4PPPPPPPM@A@AEXH@Z", "retained COFF ?on_mousewheel@ListBox@@$4PPPPPPPM@A@AEXH@Z has the 8-byte vtordisp subtraction shape and tail relocation to real method symbol ?on_mousewheel@ListBox@@UAEXH@Z", "the exact legacy kind fact `game` is copied verbatim from the source envelope and parser-read back; it is existing catalogue classification, not a newly granted kind", "this evidence establishes a current owner-TU/compiler-thunk correspondence only; no fresh build, linked retained-table selection, body-byte match, or whole-game acceptance is claimed"], "reason": "The ListBox Win-view constructor-installed table selects this original receiver adjustor at byte offset 0x3C; the retained owner COFF physically emits the corresponding compiler vtordisp thunk and its relocation tails to ListBox::on_mousewheel. This FILE marker remains with the actual class owner TU; it does not prove final linked table selection or full acceptance."}
+// kind      game
+// symbol    ?on_mousewheel@ListBox@@$4PPPPPPPM@A@AEXH@Z
+
+/*
+Purpose: Adjust the receiver from the thunk1 subobject back to ListBox and
+         tail-jump to the override. THE COMPILER WRITES THIS BODY - the claim
+         names VC6's own vtordisp adjustor thunk, emitted because
+         ListBox::on_mouse_leave overrides a virtual reached through a virtual
+         base. There is no C++ here to get right, only a name to record.
+         MOVED HERE from filewin.cpp 2026-09-03, for the same reason as
+         on_dialog_focus's marker directly above.
+// ORIGINAL: 0x0060CF80 ?on_mouse_leave@thunk1_ListBox@@QAEXHH@Z 0x0060CF80-0x0060CF88 BYTE_EXACT
+// symbol    ?on_mouse_leave@ListBox@@$4PPPPPPPM@A@AEXHH@Z
+// size      8 bytes
+// kind      game
+Status: Complete
+*/
+
+// ORIGINAL: 0x0060CFB0 ?on_key_down@thunk1_ListBox@@QAEXH@Z 0x0060CFB0-0x0060CFB8 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: ListBox constructor 0x00609DB0 installs Win view 0x0067041C; slot +0x68 points to original identity 0x0060CFB0", "retained build/recovery/builds/build-rosw1myy: build/recovery/builds/build-rosw1myy/CMakeFiles/OpenSMACX.dir/src/listbox.cpp.obj has matching source-input closure and physical table relocation to ?on_key_down@ListBox@@$4PPPPPPPM@A@AEHH@Z", "retained COFF ?on_key_down@ListBox@@$4PPPPPPPM@A@AEHH@Z has the 8-byte vtordisp subtraction shape and tail relocation to real method symbol ?on_key_down@ListBox@@UAEHH@Z", "the exact legacy kind fact `game` is copied verbatim from the source envelope and parser-read back; it is existing catalogue classification, not a newly granted kind", "this evidence establishes a current owner-TU/compiler-thunk correspondence only; no fresh build, linked retained-table selection, body-byte match, or whole-game acceptance is claimed"], "reason": "The ListBox Win-view constructor-installed table selects this original receiver adjustor at byte offset 0x68; the retained owner COFF physically emits the corresponding compiler vtordisp thunk and its relocation tails to ListBox::on_key_down. This FILE marker remains with the actual class owner TU; it does not prove final linked table selection or full acceptance."}
+// kind      game
+// symbol    ?on_key_down@ListBox@@$4PPPPPPPM@A@AEHH@Z
+
 // ORIGINAL: 0x0060CFD0 ?on_right_double_click@thunk1_ListBox@@QAEXHH@Z 0x0060CFD0-0x0060CFD8 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: ListBox constructor span contains the store of table 0x0067041C; the pinned dword at 0x00670490 is 0x0060CFD0.", "The original 8-byte receiver thunk at 0x0060CFD0 tail-jumps to 0x0060C6D0, mapped as ?on_right_double_click@ListBox@@QAEXHH@Z in this class owner.", "The actual class owner is src/listbox.cpp; its current owner object vftable relocation at byte offset 0x74 names the generated thunk, whose terminal relocation targets ?on_right_double_click@ListBox@@UAEXHH@Z.", "The source identity retains its exact historical kind fact `game`; its full original spans, claims, lessons, and findings are checked unchanged by the writer readback."], "reason": "The pinned ListBox constructor at 0x00609DB0 installs its Win view at 0x0067041C; the original slot cell at +0x74 selects this full identity. The real ListBox virtual member and owner-TU vftable are already source-owned; current owner COFF evidence binds this FILE identity to the compiler-emitted receiver adjustor tailing to ?on_right_double_click@ListBox@@UAEXHH@Z."}
 // kind      game
@@ -1933,3 +1904,36 @@ int ListBox::UNK2(char *text) {
 // kind      game
 // symbol    ?on_scrolling@ListBox@@$4PPPPPPPM@A@AEXHH@Z
 // RECOVERY_GENERATED: v1 vbtable 0x00670584 0x00670590 ??_8ListBox@@7B@ 0x00609DB0
+
+/*
+Purpose: Adjust the receiver from the thunk1 subobject back to ListBox and
+         tail-jump to the override. THE COMPILER WRITES THIS BODY - the claim
+         names VC6's own vtordisp adjustor thunk, emitted because
+         ListBox::on_dialog_focus overrides a virtual reached through a virtual
+         base. There is no C++ here to get right, only a name to record.
+         MOVED HERE from filewin.cpp 2026-09-03, with ListBox's constructor
+         going declaration-only above: these COMDATs are emitted in every TU
+         that CONSTRUCTS the object, and this file now is one - the three
+         markers had already predicted the move ("NOT IN listbox.cpp, which
+         defines no ListBox constructor"), which stopped being true.
+// ORIGINAL: 0x0060D000 ?on_dialog_focus@thunk1_ListBox@@QAEXH@Z 0x0060D000-0x0060D008 BYTE_EXACT
+// symbol    ?on_dialog_focus@ListBox@@$4PPPPPPPM@A@AEXH@Z
+// size      8 bytes
+// kind      game
+Status: Complete
+*/
+
+/*
+Purpose: Adjust the receiver from the thunk1 subobject back to ListBox and
+         tail-jump to the override. THE COMPILER WRITES THIS BODY - the claim
+         names VC6's own vtordisp adjustor thunk, emitted because
+         ListBox::attach overrides a virtual reached through a virtual
+         base. There is no C++ here to get right, only a name to record.
+         MOVED HERE from filewin.cpp 2026-09-03, for the same reason as
+         on_dialog_focus's marker directly above.
+// ORIGINAL: 0x0060D040 ?attach@thunk1_ListBox@@QAEHPAUGraphicWin@@HHH@Z 0x0060D040-0x0060D048 BYTE_EXACT
+// symbol    ?attach@ListBox@@$4PPPPPPPM@A@AEHPAVGraphicWin@@HHH@Z
+// size      8 bytes
+// kind      game
+Status: Complete
+*/
