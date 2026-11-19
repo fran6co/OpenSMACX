@@ -222,6 +222,7 @@ int Dialog::init(RECT *rect, int heap_size) {
         list->current_position_ = 0;
         list->allocator_ = 0;
         result = 0;
+        return result;
     }
     return result;
 }
