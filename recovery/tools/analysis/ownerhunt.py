@@ -35,6 +35,7 @@ sys.path.insert(0, os.path.dirname(HERE))
 import fe  # noqa: E402
 import inlinemap as im  # noqa: E402
 import ehcensus as eh  # noqa: E402
+import framescan as fs  # noqa: E402
 
 R = fe.R
 KW = set('if else for while do switch return break continue goto case default sizeof new delete '
@@ -230,7 +231,8 @@ def find_function(text, m, addr):
 
 
 DECL = re.compile(r'\s*((?:(?:const|unsigned|signed|struct|class|enum|static|register|volatile)\s+)*)'
-                  r'([A-Za-z_]\w*(?:::[A-Za-z_]\w*)*)\s*((?:[\*&]\s*|const\s+)*)([A-Za-z_]\w*)\s*(\[|=|;|,|\()')
+                  r'([A-Za-z_]\w*(?:::[A-Za-z_]\w*)*(?:<[^;<>]*>)?)(?=[\s\*&])\s*((?:[\*&]\s*|const\s+)*)'
+                  r'([A-Za-z_]\w*)\b\s*(\[|=|;|,|\()')
 
 
 def split_top(s, sep=','):
@@ -374,9 +376,22 @@ def make_variant(text, m, fstart, sig_a, cand, cls, kind, members=()):
     if cls and (re.search(r'\bthis\b', m[a:b]) or members):
         seg = re.sub(r'\bthis\b', 'self', seg)
         for x in members:
-            seg = re.sub(r'(?<![\w\.>:])\b%s\b' % re.escape(x), 'self->' + x, seg)
+            if '::' in x:  # C2352 'A::f': qualified or plain call of a member function
+                q, f = x.rsplit('::', 1)
+                seg = re.sub(r'(?<![\w\.>:])(?:%s::)?%s\s*\(' % (re.escape(q), re.escape(f)),
+                             lambda mm: 'self->' + mm.group(0), seg)
+            else:
+                seg = re.sub(r'(?<![\w\.>:])\b%s\b' % re.escape(x), 'self->' + x, seg)
         args = [('this', '%s *self' % cls)] + args
-    kw = {'inline': 'static inline void', 'static': 'static void', 'force': 'static __forceinline void'}[kind]
+    if kind == 'value':  # read-only scalars by value: the inline's parameter homes
+        ro = []
+        for n, ty in args:
+            assigned = re.search(r'(?<![\w\.>])%s\s*(?:[-+*/%%&|^]|<<|>>)?=(?!=)|(?:\+\+|--)\s*%s\b|\b%s\s*(?:\+\+|--)|&\s*%s\b'
+                                 % ((re.escape(n),) * 4), m[a:b])
+            ro.append((n, ty if assigned or '(&' in ty or n == 'this' else ty.replace('&' + n, n)))
+        args = ro
+    kw = {'inline': 'static inline void', 'value': 'static inline void', 'static': 'static void',
+          'force': 'static __forceinline void'}[kind]
     helper = '%s oh_owner(%s)\n{\n    %s\n}\n\n' % (kw, ', '.join(t for _, t in args), seg)
     call = 'oh_owner(%s);' % ', '.join(n for n, _ in args)
     return text[:fstart] + helper + text[fstart:a] + call + text[b:], len(helper)
@@ -425,13 +440,30 @@ def measure(c, text, addr):
         vec[n] = (ri, ro)
         dec += sum(1 for x, y in zip(ri, ro) if x != y)
     I, O = eh.img_fi(lo), eh.our_fi(c, sym)
-    return dict(eh=eh_dist(I, O), runs=(eh_runs(I), eh_runs(O)), calls=calls, dec=dec, rows=r.get('diff', 9999),
+    fi_, fo_ = framedist(c, sym, lo, hi)
+    return dict(frame=fi_, slots=fo_, eh=eh_dist(I, O), runs=(eh_runs(I), eh_runs(O)), calls=calls, dec=dec, rows=r.get('diff', 9999),
                 exact=r.get('exact'), vec=vec,
                 cdiff=sorted((n, ci[n], co[n]) for n in set(ci) | set(co) if ci[n] != co[n]))
 
 
+def framedist(c, sym, lo, hi):
+    """-> (|frame size difference|, frame slots on one side only): the frame rung and the
+    parameter-home evidence (an owner's by-value parameters get fresh slots at its entry)"""
+    try:
+        s = c.function(sym)
+        sec = c.sections[s.section - 1]
+        I = fs.insns(fe.imgbytes(lo, hi), lo)
+        O = fs.insns(sec.data, 0)
+        a, b = fs.frame(I), fs.frame(O)
+        si = set(fs.slots(I, a[0], a[2], a[3]))
+        so = set(fs.slots(O, b[0], b[2], b[3]))
+        return abs(a[0] - b[0]), len(si ^ so)
+    except Exception:  # noqa: BLE001
+        return 0, 0
+
+
 def score(x):
-    return (x['eh'], x['calls'], x['dec'], x['rows'])
+    return (x['eh'], x['calls'], x['dec'], x['frame'], x['slots'], x['rows'])
 
 
 def run_one(unit, addr, text, m, fstart, sig_a, cand, cls, kind, pfx, scr):
@@ -448,6 +480,8 @@ def run_one(unit, addr, text, m, fstart, sig_a, cand, cls, kind, pfx, scr):
                 return dict(error='measure: %s' % e), vt
         und = re.findall(r"error C2065: '(\w+)' : undeclared identifier", err or '')
         und += re.findall(r"error C3861: '(\w+)'", err or '')
+        und += re.findall(r"error C2352: '(\w+::\w+)'", err or '')
+        und += re.findall(r"error C2597: illegal reference to (?:data )?member '\w+::(\w+)'", err or '')
         new = [u for u in und if u not in members]
         if not cls or not new:
             return dict(error=(err or '')[:200]), vt
@@ -518,8 +552,8 @@ def main():
     if c0 is None:
         raise SystemExit(err)
     base = measure(c0, text, addr)
-    print('%s  base: eh %d calls %d dec %d rows %d   EH runs image %s ours %s' % (
-        a.addr, base['eh'], base['calls'], base['dec'], base['rows'], base['runs'][0], base['runs'][1]))
+    print('%s  base: eh %d calls %d dec %d frame %d slots %d rows %d   EH runs image %s ours %s' % (
+        a.addr, base['eh'], base['calls'], base['dec'], base['frame'], base['slots'], base['rows'], base['runs'][0], base['runs'][1]))
     for n, (ri, ro) in base['vec'].items():
         if ri != ro:
             print('   %-28s image %s\n   %-28s ours  %s' % (n[:28], ri, '', ro))
@@ -557,8 +591,8 @@ def main():
     for rank, (cand, kind, r, vt) in enumerate(ok[:a.top]):
         seg = ' '.join(text[cand['a']:cand['b']].split())
         mark = '<' if score(r) < bs else ('=' if score(r) == bs else ' ')
-        print('%2d %s eh %3d calls %3d dec %3d rows %5d  L%d-%d d%d %-5s %s  %s' % (
-            rank, mark, r['eh'], r['calls'], r['dec'], r['rows'], cand['la'], cand['lb'], cand['depth'], cand['kind'], kind,
+        print('%2d %s eh %3d calls %3d dec %3d frame %3d slots %3d rows %5d  L%d-%d d%d %-5s %s  %s' % (
+            rank, mark, r['eh'], r['calls'], r['dec'], r['frame'], r['slots'], r['rows'], cand['la'], cand['lb'], cand['depth'], cand['kind'], kind,
             seg[:110]))
         if a.vec:
             print('     EH runs ours', r['runs'][1], ' call diff', r['cdiff'][:8])
