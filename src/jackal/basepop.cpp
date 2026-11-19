@@ -834,8 +834,8 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
             // this twelve-byte handoff at offsets 0, 4 and 8.
             BorderSizing sizing = {caption_height_, border_thickness_,
                                    bottom_border_thickness_};
-            result = GraphicWin::init(0, 0, static_cast<int>(field_30BC_),
-                                      static_cast<int>(field_30C0_), owned_text_,
+            result = GraphicWin::init(0, 0, field_30BC_,
+                                      field_30C0_, owned_text_,
                                       style | 0x800, parent,
                                       static_cast<Menu *>(0), &sizing);
             if (result != 0) {
@@ -919,22 +919,22 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
             if (loc_a_ == 0x1000) {
                 field_30B4_ = (static_cast<int>(
                                    owner_window_->pixel_width()) -
-                               static_cast<int>(field_30BC_)) >> 1;
+                               field_30BC_) >> 1;
             } else if (static_cast<int>(loc_a_) < 0) {
                 field_30B4_ =
                     owner_window_->pixel_width() -
-                    static_cast<int>(field_30BC_) + static_cast<int>(loc_a_);
+                    field_30BC_ + static_cast<int>(loc_a_);
             } else {
                 field_30B4_ = loc_a_;
             }
             if (loc_b_ == 0x1000) {
                 field_30B8_ = (static_cast<int>(
                                    owner_window_->pixel_height()) -
-                               static_cast<int>(field_30C0_)) >> 1;
+                               field_30C0_) >> 1;
             } else if (static_cast<int>(loc_b_) < 0) {
                 field_30B8_ =
                     owner_window_->pixel_height() -
-                    static_cast<int>(field_30C0_) + static_cast<int>(loc_b_);
+                    field_30C0_ + static_cast<int>(loc_b_);
             } else {
                 field_30B8_ = loc_b_;
             }
@@ -967,8 +967,8 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
 
         // THE ROW ORIGIN. The provider adjusts X, Y and style. Buttons advance
         // horizontally from its X; its Y remains the shared baseline.
-        y = static_cast<int>(field_30C0_) - static_cast<int>(field_30EC_) -
-                       static_cast<int>(field_30E0_) - static_cast<int>(field_30D0_);
+        y = field_30C0_ - static_cast<int>(field_30EC_) -
+                       field_30E0_ - static_cast<int>(field_30D0_);
         x = -static_cast<int>(field_30F4_);
         int row_style = 0;
         on_adjust_button_placement(&x, &y, &row_style);
@@ -980,10 +980,10 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
             if ((field_30A8_ & 0x10000) == 0) {
                 if ((field_30A8_ & 0x40) != 0) {
                     if (flags < 0) {
-                        x = flags - (static_cast<int>(field_30E4_) +
+                        x = flags - (field_30E4_ +
                                                static_cast<int>(field_30CC_));
                     } else {
-                        x = flags + (static_cast<int>(field_30E4_) +
+                        x = flags + (field_30E4_ +
                                                static_cast<int>(field_30CC_)) *
                                                   static_cast<int>(field_20F4_);
                     }
@@ -1031,7 +1031,7 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
             x = flags;
             if (flags < 0) {
                 x = flags -
-                    (static_cast<int>(field_30E4_) + static_cast<int>(field_30CC_)) *
+                    (field_30E4_ + static_cast<int>(field_30CC_)) *
                     (static_cast<int>(field_30B0_) - 1);
             }
 
@@ -1069,7 +1069,7 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
                 item_buttons_[index]->field_A94_ = field_31B0_;
                 item_buttons_[index]->field_A98_ = field_31B4_;
                 item_buttons_[index]->show(0);
-                x += static_cast<int>(field_30E4_) +
+                x += field_30E4_ +
                             static_cast<int>(field_30CC_);
             }
 
@@ -1077,7 +1077,7 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
                 x = flags;
                 if (flags >= 0) {
                     x = flags +
-                        (static_cast<int>(field_30E4_) + static_cast<int>(field_30CC_)) *
+                        (field_30E4_ + static_cast<int>(field_30CC_)) *
                         (static_cast<int>(field_30B0_) - 1);
                 }
 
@@ -1109,7 +1109,7 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
                 basepop_set_tiles(&flat_button2_, 6, default_block_[18], default_block_[19], default_block_[20]);
                 basepop_set_tiles(&flat_button2_, 7, default_block_[21], default_block_[22], default_block_[23]);
                 basepop_set_tiles(&flat_button2_, 8, default_block_[24], default_block_[25], default_block_[26]);
-                x -= static_cast<int>(field_30E4_) + static_cast<int>(field_30CC_);
+                x -= field_30E4_ + static_cast<int>(field_30CC_);
                 basepop_button_font(&flat_button2_, button_font1_, button_font2_, button_font3_);
                 flat_button2_.set_text_color(button_color_a_, button_color_b_,
                                              button_color_c_, button_color_d_);
@@ -3603,8 +3603,8 @@ int BasePop::calculate_dimensions() {
     } else if ((field_30A8_ & 0x400) == 0 && WinScreenWidth >= 0x400) {
         // SIGNED: the image's `cdq / sub eax,edx / sar eax,1` is the signed
         // divide, and the fields are the unsigned dwords they are stored in.
-        field_30E0_ = (static_cast<int>(field_21C0_) * 3) / 2;
-        field_30E4_ = (static_cast<int>(field_21C4_) * 3) / 2;
+        field_30E0_ = (field_21C0_ * 3) / 2;
+        field_30E4_ = (field_21C4_ * 3) / 2;
     } else {
         field_30E0_ = field_21C0_;
         field_30E4_ = field_21C4_;
@@ -3677,9 +3677,9 @@ int BasePop::calculate_dimensions() {
         // (the windef max macro: the edge expression is evaluated twice),
         // and field_21CC_ offsets it when it is set at all.
         if (field_21CC_ == -1) {
-            field_30BC_ = max(static_cast<int>(dialogs_.Dialog::laid_out_width()), static_cast<int>(field_30D8_)) + field_30E0_ * 2;
+            field_30BC_ = max(static_cast<int>(dialogs_.Dialog::laid_out_width()), field_30D8_) + field_30E0_ * 2;
         } else {
-            field_30BC_ = field_21CC_ + field_30E0_ + max(static_cast<int>(dialogs_.Dialog::laid_out_width()), static_cast<int>(field_30D8_));
+            field_30BC_ = field_21CC_ + field_30E0_ + max(static_cast<int>(dialogs_.Dialog::laid_out_width()), field_30D8_);
         }
     }
     field_30C4_ = dialogs_.Dialog::field_60_;
@@ -3802,9 +3802,9 @@ int BasePop::calculate_dimensions() {
         // SIGNED: the image divides with `cdq / idiv`, and the fields are
         // stored as unsigned dwords, so every operand is widened here.
         field_30CC_ =
-            (static_cast<int>(field_30BC_) - static_cast<int>(field_30E0_) * 2 -
+            (field_30BC_ - field_30E0_ * 2 -
              (static_cast<int>(field_30B0_) - 1) *
-                 static_cast<int>(field_30E4_)) /
+                 field_30E4_) /
             static_cast<int>(field_30B0_);
     } else {
         field_30D0_ = 0;
@@ -3831,8 +3831,8 @@ int BasePop::calculate_dimensions() {
     if (external_window_ != 0) {
         dialogs_.Dialog::field_2C_ =
             dialog_width_ - field_30E0_ * 2 - field_30F4_ - field_30F0_;
-        int top = static_cast<int>(field_30D4_) > static_cast<int>(field_30DC_)
-                     ? static_cast<int>(field_30D4_)
+        int top = field_30D4_ > static_cast<int>(field_30DC_)
+                     ? field_30D4_
                      : static_cast<int>(field_30DC_);
         int height = dialog_height_ - (field_30B0_ != 0 ? field_30D0_ : 0) -
                      top - field_30EC_ - field_30E8_;
@@ -3852,8 +3852,8 @@ int BasePop::calculate_dimensions() {
             }
         }
     } else {
-        int top = static_cast<int>(field_30D4_) > static_cast<int>(field_30DC_)
-                     ? static_cast<int>(field_30D4_)
+        int top = field_30D4_ > static_cast<int>(field_30DC_)
+                     ? field_30D4_
                      : static_cast<int>(field_30DC_);
         int inner = field_30C4_ + field_30E0_ * 2 + top + field_30D0_;
         if (field_30C4_ != 0) {

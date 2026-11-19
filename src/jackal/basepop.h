@@ -517,8 +517,8 @@ class BasePop : public GraphicWin {
   uint32_t field_21B4_;
   uint32_t field_21B8_;
   uint32_t field_21BC_;
-  uint32_t field_21C0_;
-  uint32_t field_21C4_;
+  int field_21C0_;
+  int field_21C4_;
   int field_21C8_;
   // Signed optional X coordinate; -1 is the original unset sentinel (+0x21CC).
   int32_t field_21CC_;
@@ -638,17 +638,17 @@ class BasePop : public GraphicWin {
   uint32_t field_30B0_;
   uint32_t field_30B4_;
   uint32_t field_30B8_;
-  uint32_t field_30BC_;
-  uint32_t field_30C0_;
+  int field_30BC_;
+  int field_30C0_;
   uint32_t field_30C4_;
   uint32_t field_30C8_;
   uint32_t field_30CC_;
   uint32_t field_30D0_;
-  uint32_t field_30D4_;
-  uint32_t field_30D8_;
+  int field_30D4_;
+  int field_30D8_;
   int field_30DC_;
-  uint32_t field_30E0_;
-  uint32_t field_30E4_;
+  int field_30E0_;
+  int field_30E4_;
   uint32_t field_30E8_;
   uint32_t field_30EC_;
   uint32_t field_30F0_;
@@ -656,8 +656,8 @@ class BasePop : public GraphicWin {
   uint32_t loc_a_;
   uint32_t loc_b_;
   uint32_t field_3100_;
-  uint32_t field_3104_;
-  uint32_t field_3108_;
+  int field_3104_;
+  int field_3108_;
   uint32_t field_310C_;
   // THE FOUR STRING FONTS, 0x3110 + 4*n: close() and init() seed them from
   // BasePopDefaultStringFonts[n] and set_string_font installs a caller's four.

@@ -1058,8 +1058,8 @@ int Popup::calculate_dimensions() {
             }
         } else {
             const int width = caller_sprite_->width()
-                * static_cast<int>(field_3104_) / static_cast<int>(field_3108_)
-                + static_cast<int>(field_30E0_);
+                * field_3104_ / field_3108_
+                + field_30E0_;
             int extra_width = dialogs_.Dialog::field_5C_;
             if (extra_width == 0) extra_width = dialogs_.Dialog::field_2C_;
             extra_width += width;
@@ -1153,7 +1153,7 @@ int Popup::calculate_dimensions() {
 
     if (external_window_ == nullptr && MainInterfaceGlobal.Win::is_visible() != 0
         && (mode == 0 || mode == 5)) {
-        const int current_height = static_cast<int>(field_30C0_);
+        const int current_height = field_30C0_;
         if (current_height < 300) {
             const int delta = 300 - current_height;
             field_30C0_ = 300;
