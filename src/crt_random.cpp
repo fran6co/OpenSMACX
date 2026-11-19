@@ -35,7 +35,7 @@ Status: Complete
 */
 // Pinned arguments identify these NUL-terminated keys in the original;
 // the literal spans cover their text and terminators, not surrounding storage.
-// RECOVERY_LITERAL: v1 0x0068D430 0x0068D43A $SG18139 0x00538FB0
+// RECOVERY_LITERAL: v1 0x0068D430 0x0068D43A $SG18098 0x00538FB0
 void __cdecl my_srand(int reseed) {
     // ONE `srand`, not two. The image's `add esp, 0x14` accounts for exactly
     // log_say's four arguments and one seed; ours was `add esp, 0x18`, four

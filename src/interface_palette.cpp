@@ -49,7 +49,7 @@ Palette g_PALETTE2;  // 0x009523A0, the preferences gamma working palette
 // RECOVERY_OBJECT: v5 0x008C6BB4 0x008C6BD4 ?InfoTextColors@@3PAY01HA 0x00458420 member ?TextColourTable@@3PAHA [22:30]
 int TextColourTable[195];
 
-// RECOVERY_LITERAL: v1 0x00687504 0x0068750D $SG48861 0x004BA220
+// RECOVERY_LITERAL: v1 0x00687504 0x0068750D $SG48793 0x004BA220
 /*
 Purpose: Build the interface's text colours: load text.pcx into a scratch
          buffer, publish its palette as the process palette, then sample the
