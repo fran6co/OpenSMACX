@@ -6214,6 +6214,13 @@ L_57138d:
             ((PlayersData[faction_id].diplo_treaties[owner] & 0x40000) ||
              PlayersData[owner].integrity_blemishes > 5 ||
              PlayersData[faction_id].diplo_betrayed[owner] > 3 - PlayersData[faction_id].ai_fight * 2)) {
+            // The image keeps the literal "Enemy doing OBLIT (ai)" (0x0068EA58) between
+            // DESTROY's and this one, with no instruction referencing it: a log line
+            // in code the compiler removed. Its statement shape is unknown.
+            // WORKAROUND(decl): dead statement that only carries the literal.
+            if (0) {
+                log_say("Enemy doing OBLIT (ai)", veh_id, x, y);
+            }
             log_say("Enemy doing OBLIT", veh_id, x, y);
             action_oblit(veh_id, home_base);
             return 1;
