@@ -1618,8 +1618,100 @@ Conclusions
   inline helper modelled on the existing ones.
 
 ### 3.2 Registers and order
-- **Operand order of commutatives.** For `a + b` of globals, VC6 loads `b` first.
-  For `f(a) OP f(b)` it calls the right side first. It canonicalises
+Scratch registers and scheduling (2026-11-19 par-5; probes in
+`recovery/tools/analysis/sched/`, see its README; diagnosis with
+`recovery/tools/analysis/schedscan.py <unit> <0xADDR>`). Measured with
+single-factor probe families under the game flags; every family gave one
+result over 64 symbol-counter pads, so none of these is a counter canary.
+
+- **S1. Scratch registers are handed out round-robin** (high in straight-line
+  probes; p05, p06, p07). VC6 keeps one cursor per function and gives each new
+  register-held value the next register of eax -> ecx -> edx after the one it
+  handed out last, continuing across calls and statements. One more such value
+  anywhere earlier in the function rotates every later choice by one step:
+  `f1(ga + 1);` added in front turns `a18 eax, a14 ecx, wfc edx, lea eax`
+  into `ecx, edx, eax, ecx`, a second one into `edx, eax, ecx, edx` (p05).
+  Counted (one step each): a load into a register, a `lea`, an arithmetic
+  result, a byte extension (`xor r,r; mov r8,[m]`), an index register
+  (`garr[ga]` is two), a compare that loads one side (`ga > gb`). Not counted:
+  immediate stores and pushes, `cmp [m], 0`, call results (eax), the thiscall
+  receiver in ecx, `this` copies to callee-saved registers. A register still
+  busy is skipped. Call arguments allocate right to left (`f3(a+1, b+2, c+3)`
+  gives c eax, b ecx, a edx).
+  Reading a diff: when one run of the image and ours differs only by the
+  rotation eax->ecx->edx (or its inverse) and the rows before it are in step,
+  our source creates one register value more (ours = image rotated by one) or
+  one fewer than the original somewhere *before* that run, often far earlier
+  and in code that is itself exact. Typical one-value differences: a named
+  temporary against a re-read, `p++->f()` (the old pointer is a temporary)
+  against `p->f(); ++p`, a byte global read once or per use, an accessor
+  inline against the field, an address formed with `lea` against folded into
+  the operand. schedscan.py's cursor track prints the offset (ours - image,
+  mod 3) of every paired allocation and where it changes. In real functions
+  a replay of the rule over the image listings of the BYTE_EXACT functions of
+  five units predicts 73% of allocations, no better than "lowest free
+  register" (75%): the scheduler reorders instructions after allocation and
+  liveness read from a listing is approximate. Use the rule to locate the
+  window where the count diverges, not to predict a single row.
+- **S2. Evaluation order sets allocation order.** Call arguments are
+  evaluated right to left, and the receiver temporary of `p++->f(...)` is
+  created before the arguments that follow it in the push order (p08): the
+  image's `push a; xor eax,eax; push b; mov al,[g]` reuse of eax means its
+  byte argument was allocated after the earlier arguments had been pushed.
+- **S3. Order of independent loads and stores is the scheduler's**, with
+  dependences and the source's tuple order as tie-break. Statement order of
+  two unrelated stores does not move them when the scheduler has a reason to
+  reorder (Win::update_screen's RECT stores: 24 orders tried). A final
+  `xor eax,eax` goes before a store of a value loaded through a pointer
+  (`ga = *p; return 0;`) and after a store of a frame-local field
+  (`ga = buf[2]; return 0;`) (p10). Unresolved: MediaRuntime::setup_sound_device
+  (image `xor eax,eax` before a store from a local DSBCAPS: if/else, goto and
+  named-result forms compile identically), DesignWin::on_iface_right_click
+  (thiscall receiver hoisted above two address-taken local stores: statement
+  order and label_get forms do not move it).
+- **S4. Which operand a two-operand expression allocates first follows the
+  order the operands were first referenced, not the spelling** (high for
+  members, locals and fields; p03, p04, p04c, p01_fieldorder). For `x + y`,
+  `x * y`, `x & y` the operand referenced *later* in the function is loaded
+  first and becomes the destination; the one referenced earlier is the source
+  (`f1(x); f1(y); ... x + y` gives `mov eax,[y]; add eax,[x]`; swap the two
+  earlier calls and it becomes `mov eax,[x]`). Spelling `y + x`, regrouping,
+  casts and a named sum compile identically (this replaces the older
+  "a + b of globals loads b first"). With no earlier reference: members and
+  locals take the right-hand operand as destination, globals the left-hand
+  one. Declaration order does not count. Non-commutative operators keep their
+  operand order (`x - y`, `cmp x, y`), but which of the two gets eax and which
+  ecx follows the same reference order: in SocialWin::draw_*_alloc the
+  `title.left < title.right` block loads left into eax only when title.right
+  is referenced (directly) before title.left earlier in the function.
+  References made inside an inline helper's body do not count as direct
+  references of the caller's struct fields: `expand_rect(&title, -0x17, 0)`
+  instead of `title.left += 0x17; title.right -= 0x17;` gave the image's
+  order without touching the earlier code, and made all three draw_*_alloc
+  functions exact (p01_inline_helper). References in an `if` arm are
+  unreliable (p04b: some count, some do not). Lever: when the image swaps the
+  two registers of a pair of member/field loads and the instruction order is
+  otherwise yours, look for the pair's *first* references earlier in the
+  function: a statement order, or an inline helper (expand_rect, offset_rect,
+  rect_width) the original used for one of them.
+- **S5. Post-increment around a call.** `p++->f(args)` copies p to a
+  temporary (ecx) and adds before the call; `p->f(args); ++p;`,
+  `for (...; ++p)` and `int r = p->f(); ++p;` add after the call. The forms
+  differ by one allocation (S1), so fixing the add's position rotates the
+  registers of everything after it; FameWin::init 0x00448400 is such a case
+  (the image adds after the call but is in step with the `p++->` form
+  downstream: the original saves the allocation somewhere else, not found).
+- **S6. Two struct copies from one source** (p09): writing the members
+  directly (`ctx.shadow = d; ctx.light = d;`) interleaves the stores field by
+  field (`[edi],[esi],[edi+4],[esi+4]...`) with the second address formed
+  first; through reference-returning accessor inlines
+  (`shadow_vector() = d; light_vector() = d;`, or named references) VC6
+  emits one whole copy, then the other. StatusWin::init became exact with the
+  direct members (Caviar friend stand-in).
+
+- **Operand order of commutatives.** See S4 above: the destination is the
+  operand referenced later in the function. For `f(a) OP f(b)` it calls the
+  right side first. It canonicalises
   `(a + b) / 2`.
 - **Which of two member loads comes first** in `a + b` is not set by the
   spelling (`a + b` and `b + a` compile alike) but by which operand the

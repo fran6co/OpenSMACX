@@ -118,3 +118,11 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   vector constructor iterator expansion), `mulorder` (index multiply operand order, MapLongitude's type; `scan.py`
   tree screen), `aggreg` (4-byte aggregates in registers), `switchtail` (switch tail-merge direction), `slotshare`
   (frame slot sharing with inlined callees' locals). Rules in MATCHING_GUIDE 2.6, 3.3, 3.4, 3.7.
+- `analysis/schedscan.py <unit> <addr> [--src ALT.cpp] [--gap N] [--rows]` scheduling / scratch-register
+  diagnosis (MATCHING_GUIDE 3.2, rules S1..S6). Merges differing runs into windows and classifies each with
+  eax/ecx/edx abstracted: `REGS` (same instructions, other scratch names; `rot+k` when one eax->ecx->edx
+  rotation maps ours onto the image), `SCHED` (same instructions, other order; lists what the image places
+  earlier or later), `OTHER`. Then a cursor track (rule S1): every paired allocation's offset (ours - image,
+  mod 3) and where it changes; the first change bounds the source window where ours creates one register
+  value more or fewer than the original.
+- `analysis/sched/` the probe families and runner behind those rules (see its README).
