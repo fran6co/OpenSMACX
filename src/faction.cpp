@@ -11145,6 +11145,7 @@ communicate_popup_destructor: // cold span 0x65FF4F..0x65FF64
 // Let the single lexical Popup in the eventual whole body run its destructor.
 
 ; // The automatic Popup generates both normal and exceptional destruction.
+
 }
 
 
