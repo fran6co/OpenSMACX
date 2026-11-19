@@ -6659,9 +6659,13 @@ L_572a5c:
                                     goto L_572c77;
                                 }
                             }
-                            go_to(veh_id, 0x67, PlayersData[faction_id].goals[k].x,
-                                PlayersData[faction_id].goals[k].y);
-                            break;
+                            // The exit re-test is threaded by VC6 (image 0x572C52 jge
+                            // straight to the go_to); without it the scan is not rotated.
+                            if (other_id >= GameDataStateStorage.fields_.vehicle_current_count_) {
+                                go_to(veh_id, 0x67, PlayersData[faction_id].goals[k].x,
+                                    PlayersData[faction_id].goals[k].y);
+                                break;
+                            }
                         }
                     }
                 }
