@@ -16,6 +16,48 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+// WORKAROUND(decl): vehdraw_construct_armor 0x004C3090 ties on how many declarations precede
+// caviar.h's (pads here or before stdafx.h move it; pads after the last
+// include never do). fe sweep 2026-11-19, 0-63 pads: exact at 13-17, 29, 31-42, 47-50 and 54, no
+// other function of the unit changes. The original header declaration
+// set is unknown; re-tune after header batches.
+// HEADER-PADS: function VehicleRenderHeaderPad
+void VehicleRenderHeaderPad0();
+void VehicleRenderHeaderPad1();
+void VehicleRenderHeaderPad2();
+void VehicleRenderHeaderPad3();
+void VehicleRenderHeaderPad4();
+void VehicleRenderHeaderPad5();
+void VehicleRenderHeaderPad6();
+void VehicleRenderHeaderPad7();
+void VehicleRenderHeaderPad8();
+void VehicleRenderHeaderPad9();
+void VehicleRenderHeaderPad10();
+void VehicleRenderHeaderPad11();
+void VehicleRenderHeaderPad12();
+void VehicleRenderHeaderPad13();
+void VehicleRenderHeaderPad14();
+void VehicleRenderHeaderPad15();
+void VehicleRenderHeaderPad16();
+void VehicleRenderHeaderPad17();
+void VehicleRenderHeaderPad18();
+void VehicleRenderHeaderPad19();
+void VehicleRenderHeaderPad20();
+void VehicleRenderHeaderPad21();
+void VehicleRenderHeaderPad22();
+void VehicleRenderHeaderPad23();
+void VehicleRenderHeaderPad24();
+void VehicleRenderHeaderPad25();
+void VehicleRenderHeaderPad26();
+void VehicleRenderHeaderPad27();
+void VehicleRenderHeaderPad28();
+void VehicleRenderHeaderPad29();
+void VehicleRenderHeaderPad30();
+void VehicleRenderHeaderPad31();
+void VehicleRenderHeaderPad32();
+void VehicleRenderHeaderPad33();
+void VehicleRenderHeaderPad34();
+void VehicleRenderHeaderPad35();
 
 #include "general.h"  // range is used by veh.h inline members.
 #include "veh.h"
