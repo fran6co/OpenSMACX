@@ -439,6 +439,19 @@ void PickWin::init(void (__cdecl *callback)(int), int mode, int faction) {
 // ORIGINAL: 0x00489BA0 ?on_button_clicked@PickWin@@QAEXH@Z 0x00489BA0-0x0048A798;0x00657F85-0x006581C9 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00489ba0.cpp"], "reason": "Recover genuine typed PickWin owner behavior and automatic subobject lifetime from pinned native flow and preserved seed; historical identity and restoration obligations retained, no exactness claim."}
 // TRIED: automatic C++ RAII destruction for Popup/PullDown's ~20 embedded subobjects (Dialogs, EditGroup, SpriteBox, CheckBox, ListBox, Dialog, Sprite, StringStruct x2, FlatButton x2, Heap, nested GraphicWin) - the scaffold's classes represent several of these as raw byte/uint32 padding, so auto-generated dtors would skip real cleanup the original calls explicitly. Used mechanical EBP(x)-buffer-offset transcription (verified against pickwin.h's `Popup popup_` size comment == sizeof(BasePop)+sizeof(Scroll), and cross-checked field offsets against pickwin.h directly) instead, matching each explicit close()/dtor call site.
+// on_button_clicked's string operands, each read from the image's operand at
+// the relocation offset of our body and checked against the literal text; the
+// repeated "JENN282" and "|" are separate unpooled copies at distinct addresses.
+// RECOVERY_LITERAL: v1 0x00686AD0 0x00686AD9 $SG51233 0x00489BA0
+// RECOVERY_LITERAL: v1 0x00686ADC 0x00686AE8 $SG51237 0x00489BA0
+// RECOVERY_LITERAL: v1 0x00686AE8 0x00686AF0 $SG51247 0x00489BA0
+// RECOVERY_LITERAL: v1 0x00686AF0 0x00686AF8 $SG51248 0x00489BA0
+// RECOVERY_LITERAL: v1 0x00686AF8 0x00686B00 $SG51256 0x00489BA0
+// RECOVERY_LITERAL: v1 0x00686B00 0x00686B02 $SG51257 0x00489BA0
+// RECOVERY_LITERAL: v1 0x00686B04 0x00686B0C $SG51288 0x00489BA0
+// RECOVERY_LITERAL: v1 0x00686B0C 0x00686B14 $SG51289 0x00489BA0
+// RECOVERY_LITERAL: v1 0x00686B14 0x00686B1C $SG51298 0x00489BA0
+// RECOVERY_LITERAL: v1 0x00686B1C 0x00686B1E $SG51299 0x00489BA0
 // symbol    ?on_button_clicked@PickWin@@UAEXH@Z
 void PickWin::on_button_clicked(int button) {
   PopMenu menu;
