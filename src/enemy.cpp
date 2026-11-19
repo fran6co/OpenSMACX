@@ -1050,7 +1050,7 @@ void __cdecl enemy_strategy(int faction_id) {
             int bridge_y;
             int site_x;
             int site_y;
-            for (int ay = 0; ay < (int)MapAbstractLatBounds; ay++) {
+            for (int ay = 0; ay < MapAbstractLatBounds; ay++) {
                 for (int ax = ay & 1; ax < MapAbstractLongBounds; ax += 2) {
                     if (abstract_at_call(ax, ay) != region) {
                         continue;
@@ -1067,7 +1067,7 @@ void __cdecl enemy_strategy(int faction_id) {
                             }
                         }
                         int ny = ay + VehMoveDeltaY[dir];
-                        if (nx < 0 || nx >= MapAbstractLongBounds || ny < 0 || ny >= (int)MapAbstractLatBounds) {
+                        if (nx < 0 || nx >= MapAbstractLongBounds || ny < 0 || ny >= MapAbstractLatBounds) {
                             continue;
                         }
                         int other_region = abstract_at_call(nx, ny);

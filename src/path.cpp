@@ -1095,10 +1095,9 @@ int Path::move(int veh_id, int faction_id) {
 // HISTORICAL LEVER (superseded): `abstract_set_call` restored an apparent
 //   call and frame shape when abstract_set was still header-inline. The real
 //   mapped owner now provides the original call boundary directly.
-// LEVER: the two abstract cursors are SIGNED, and the bounds are read as
-//   `(int)`. `uint32_t` against `uint32_t MapAbstractLatBounds` gives `jbe`
-//   where the image closes the loop `jle`; `MapAbstractLongBounds` is already
-//   `int`, so only the cast on the y bound is load-bearing. 0.843 -> 0.879.
+// LEVER: the two abstract cursors are SIGNED, like both abstract bounds;
+//   an unsigned cursor or bound gives `jbe` where the image closes the loop
+//   `jle`. 0.843 -> 0.879.
 // TRIED: everything past that. The remaining gap is the register schedule of
 //   the inlined `xrange`/`on_map`: the image hoists MapIsFlat,
 //   MapLongitudeBounds and MapLongitude into ebx/esi/ecx at 0x0059C2A0-0x0059C2AC
@@ -1119,7 +1118,7 @@ int Path::move(int veh_id, int faction_id) {
  Status: Complete
 */
 void Path::make_abstract() {
-    for (int y = 0; y < (int)MapAbstractLatBounds; y++) {
+    for (int y = 0; y < MapAbstractLatBounds; y++) {
         for (int x = y & 1; x < (int)MapAbstractLongBounds; x += 2) {
             int region = 0;
             for (int i = 0; i < 9; i++) { // RadiusRange[1], a literal bound in the image

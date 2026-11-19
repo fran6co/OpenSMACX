@@ -319,7 +319,7 @@ struct MapMetadataFields {
     Landmark landmarks_[MaxLandmarkNum];       // +0x024, 64 * 40 bytes
     // abstract_at uses SAR for this width (59121B).
     int abstract_long_bounds_;                // +0xA24
-    uint32_t abstract_lat_bounds_;             // +0xA28
+    int abstract_lat_bounds_;                  // +0xA28
     uint32_t abstract_area_;                   // +0xA2C
     // world_build5C870C..5C872E walks seven signed dwords, testing each
     // against zero before rand()%3; size/ocean/land/erosion/orbit/clouds/life.
