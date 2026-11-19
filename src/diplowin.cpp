@@ -1813,9 +1813,8 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
                   rect_F3C_.right - rect_F3C_.left - 6,
                   rect_F3C_.bottom - rect_F3C_.top - 6,
                   static_cast<Win *>(&MainInterfaceGlobal), 0, -1);
-  Buffer &string_canvas = static_cast<Buffer &>(stringBox_);
-  string_canvas.set_write_strings_callback(&DiploWin::string_callback);
-  string_canvas.set_text_color(0xFF, -1, 1, 1);
+  stringBox_.set_write_strings_callback(&DiploWin::string_callback);
+  stringBox_.set_text_color(0xFF, -1, 1, 1);
   stringBox_.set_visible_rows(100);
 
   editBox_.init(&rect_F2C_,
@@ -1823,9 +1822,8 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
   editBox_.add_window_flags(0x01000000);
   editBox_.field_B1C_ = 9;
   editBox_.field_B30_ = 0;
-  Buffer &edit_canvas = static_cast<Buffer &>(editBox_);
-  edit_canvas.set_text_color(ChatItemIdTable[faction_id_],
-                             ChatShadowColors[faction_id_], 1, 1);
+  editBox_.set_text_color(ChatItemIdTable[faction_id_],
+                          ChatShadowColors[faction_id_], 1, 1);
   editBox_.set_field_B20(0x41);
   editBox_.field_B24_ = ChatItemIdTable[faction_id_];
   editBox_.field_B14_ = 0x80;
