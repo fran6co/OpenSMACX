@@ -724,8 +724,8 @@ void FileWin::UNK4() {
                 strcat(message, current_directory_);
                 strcat(message, "\\");
                 strcat(message, "jackal");
-                if (pop_caption_title(message, "FILEWIN_SAVEEXISTS", 0x200040, 0) != 0) {
-                    break;
+                if (pop_caption_title(message, "FILEWIN_SAVEEXISTS", 0x200040, 0) == 0) {
+                    modal_window_->release_modal();
                 }
             } else if (strcspn(selected_basename_, "\\\"/[]:;=") !=
                        strlen(selected_basename_)) {
@@ -734,9 +734,9 @@ void FileWin::UNK4() {
                 strcat(message, "\\");
                 strcat(message, "jackal");
                 pop_caption_title(message, "FILEWIN_ILLEGALCHAR", 0x200040, 0);
-                break;
+            } else {
+                modal_window_->release_modal();
             }
-            modal_window_->release_modal();
         }
         break;
     }
