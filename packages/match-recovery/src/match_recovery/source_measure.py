@@ -187,6 +187,10 @@ def measure_source(root: Path, targets, *, image: Path, in_file=None, jobs=1, li
             row.update(result="unknown", verdict="UNRESOLVED", diagnostic=value)
         elif isinstance(value, AsmComparison):
             row.update(asdict(value))
+            if not row.get("image_patches"):
+                # Present only on a comparison that applied a declared
+                # post-link image patch; such a pass is never a plain one.
+                row.pop("image_patches", None)
             if row.get("diagnostic_comparison") is None:
                 row.pop("diagnostic_comparison", None)
             elif row["diagnostic_comparison"].get("available"):

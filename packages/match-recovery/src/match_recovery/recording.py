@@ -180,13 +180,17 @@ def record(root: Path, targets, *, image: Path, in_file: str | None = None,
                 "line": row.line, "symbol": row.symbol or row.name}
     measured = [{**location(row), "verdict": result.verdict.value, "flags": result.flags,
                  "matching_instructions": result.matching_instructions,
-                 "original_instructions": result.original_instructions}
+                 "original_instructions": result.original_instructions,
+                 # A claim that holds only outside declared post-link image
+                 # patch spans says so; the source keeps the declaration.
+                 **({"image_patches": list(result.image_patches)} if result.image_patches else {})}
                 for row, result in publication.measured]
     return publication.exit_code, {
         "schema_version": 1, "operation": "record", "exit_code": publication.exit_code,
         "result": "pass" if publication.exit_code == 0 else "fail" if publication.exit_code == 1 else "unknown",
         "verification": "historical_masked_bytes_only", "ready_for_collection": False,
         "selected": len(selected), "measured": measured,
+        "image_patched": [row["address"] for row in measured if row.get("image_patches")],
         "unresolved": [{**location(row), "diagnostic": why} for row, why in publication.unresolved],
         "regressed": [location(row) for row, _ in publication.regressed],
         "updated": [location(row) for row in publication.updated],

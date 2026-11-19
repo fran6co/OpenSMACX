@@ -88,6 +88,9 @@ def _observation(root, record, observed, *, built, source):
                    compiled_instructions=observed.compiled_instructions,
                    mnemonic_similarity=observed.mnemonic_similarity,
                    allocation_only=observed.allocation_only == "")
+        if observed.image_patches:
+            # Exact only outside declared post-link image patch spans.
+            row["image_patches"] = list(observed.image_patches)
         # A weaker shape claim cannot satisfy a simultaneous byte obligation.
         held = observed.verdict == Tier.BYTE_EXACT or (
             not record.byte_exact and record.semantic and observed.allocation_only == "")
@@ -310,6 +313,10 @@ def check_matches(root: Path, image: Path, *, jobs: int = 1, units=None, scope=N
         "claims": len(claims), "counts": dict(counts),
         "verified": sum(row["result"] == "pass" and row["verdict"] == "BYTE_EXACT" for row in claims),
         "semantic": sum(row["result"] == "pass" and row["verdict"] != "BYTE_EXACT" for row in claims),
+        # Included in "verified" or "free": exact only outside declared
+        # post-link image patch spans (RECOVERY_IMAGE_PATCH).
+        "image_patched": [row["address"] for row in rows
+                          if row.get("image_patches") and row.get("verdict") == "BYTE_EXACT"],
         "regressed": [row for row in claims if row["result"] == "fail"],
         "unverifiable": [row for row in claims if row["result"] == "unknown"] + [
             row for row in unbound

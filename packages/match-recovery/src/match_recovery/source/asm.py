@@ -32,6 +32,7 @@ from ..pe_coff import Coff, CoffRecords, PeImage
 from ..source_inventory import image_pin
 from .eh_regions import bind_eh_regions, eh_action_semantic_difference, original_eh_action_count
 from .grammar import is_assembler_source
+from .image_patch import PREFIX as IMAGE_PATCH_PREFIX, parse_image_patches, patches_for_spans
 from .model import (DecompilationState, FRAGMENT_EH_CLEANUP, FRAGMENT_TERMINAL, Mode, Tier,
                     fragment_fact_kind)
 
@@ -1187,6 +1188,146 @@ class AsmComparison:
     # span(s) could be obtained. It never changes `verdict`, is never
     # claimable, and recording never requests it. See `diagnostic_comparison`.
     diagnostic_comparison: dict | None = None
+    # DECLARED POST-LINK IMAGE PATCHES that this comparison applied: one dict
+    # per `RECOVERY_IMAGE_PATCH` span (see `apply_image_patches`). Never empty
+    # silently: a BYTE_EXACT verdict with entries here means "exact outside
+    # the declared spans, image bytes inside them exactly the declared patch
+    # form"; the compiled bytes each entry lists were NOT compared with the
+    # image, because the image no longer holds what the compiler emitted.
+    image_patches: tuple = ()
+
+
+# ------------------------------------------------- declared image patches
+
+IMAGE_PATCH_NOTE = ("exact outside declared post-link image patch span(s) {spans}; the image holds "
+                    "exactly the declared patch bytes there and the compiled instructions they "
+                    "replaced are not verified against the image")
+
+
+def record_image_patches(record: DecompilationState) -> tuple:
+    """The `RECOVERY_IMAGE_PATCH` declarations inside `record`'s mapped spans.
+
+    Read from the marker host, never from a candidate source: a variant deck
+    cannot add, move or drop a declaration. A malformed declaration anywhere
+    in the host, or one that crosses this record's span boundary, refuses.
+    """
+    try:
+        raw = record.path.read_bytes()
+    except OSError:
+        return ()
+    if IMAGE_PATCH_PREFIX.encode() not in raw:
+        return ()
+    try:
+        return patches_for_spans(parse_image_patches(raw.decode("utf-8", errors="replace")),
+                                 record.image_spans)
+    except ValueError as error:
+        raise SpanComparisonRefused(f"declared image patch refused: {error}") from error
+
+
+def apply_image_patches(patches, original: Listing, compiled: Listing) -> tuple[Listing, tuple, tuple]:
+    """`compiled` as the declared post-link patches would have left it.
+
+    A patch is admitted for this pair only when it lies wholly inside the
+    original listing's instruction bytes. Three things are then checked:
+
+    - THE IMAGE holds exactly the declared bytes over the span. Anything
+      else refuses the comparison: the declaration does not describe the
+      pinned image.
+    - THE COMPILED BODY decodes to complete instructions that begin at the
+      span's first byte and end at its last, so the patch replaces whole
+      instructions and nothing straddles an edge, and its absolute (DIR32)
+      fields inside the span sit exactly where the image's relocation table
+      still has entries for the span (see below). If not, the patch is NOT
+      applied and the comparison runs on the compiled bytes as they are -
+      which cannot be exact, since the image holds the patch there.
+    - Everything outside the span is compared as usual by the caller.
+
+    Applying writes the declared bytes over the compiled span and drops the
+    relocations and references inside it, which is what patching the linked
+    file did. Returns the listing, one report dict per applied patch, and a
+    note per declared patch that could not be applied.
+    """
+    applied, notes = [], []
+    low, high = original.base, original.base + original.instruction_bytes
+    for patch in patches:
+        if not (low <= patch.start and patch.end <= high):
+            continue
+        if compiled.base != original.base:
+            raise SpanComparisonRefused("declared image patch requires listings at one base address")
+        start, end = patch.start - low, patch.end - low
+        if original.code[start:end] != patch.expected:
+            raise SpanComparisonRefused(
+                f"declared image patch {patch.describe()} does not describe the image: it holds "
+                f"{original.code[start:end].hex()} there, the declaration states {patch.expected.hex()}")
+        if end > compiled.instruction_bytes:
+            notes.append(f"declared image patch {patch.describe()} not applied: the compiled body "
+                         "ends before the span does")
+            continue
+        inside = [instruction for instruction in compiled.instructions
+                  if start <= instruction.address - compiled.base < end]
+        starts = {instruction.address - compiled.base for instruction in compiled.instructions}
+        ends = {instruction.address - compiled.base + instruction.size
+                for instruction in compiled.instructions}
+        if (start not in starts or end not in ends or not inside
+                or sum(instruction.size for instruction in inside) != end - start
+                or any(instruction.address - compiled.base + instruction.size > end
+                       for instruction in inside)):
+            notes.append(f"declared image patch {patch.describe()} not applied: no run of complete "
+                         "compiled instructions covers exactly that span")
+            continue
+        if any(offset < start < offset + 4 or offset < end < offset + 4
+               for offset in (reference.offset for reference in compiled.references)):
+            notes.append(f"declared image patch {patch.describe()} not applied: a compiled "
+                         "relocation field crosses the span edge")
+            continue
+        # STALE BASE RELOCATIONS ARE EVIDENCE. Patching the linked file leaves
+        # the image's relocation table alone, so an absolute field the
+        # overwritten code held still has its HIGHLOW entry. The compiled
+        # span must put a DIR32 field at exactly those places and nowhere
+        # else: the one part of the replaced code the image still records.
+        stale = frozenset(offset for offset in original.mask if start <= offset < end)
+        absolute = frozenset(reference.offset + byte for reference in compiled.references
+                             if not reference.relative and start <= reference.offset < end
+                             for byte in range(4))
+        if stale != absolute:
+            notes.append(
+                f"declared image patch {patch.describe()} not applied: the image keeps base "
+                "relocations for bytes "
+                + (", ".join(f"0x{low + offset:08X}" for offset in sorted(stale)) or "none")
+                + " of the span and the compiled span has absolute fields at "
+                + (", ".join(f"0x{low + offset:08X}" for offset in sorted(absolute)) or "none"))
+            continue
+        applied.append({
+            "start": f"0x{patch.start:08X}", "end": f"0x{patch.end:08X}", "form": patch.form,
+            **({"jmp_address": f"0x{patch.jmp_address:08X}", "jmp_target": f"0x{patch.jmp_target:08X}"}
+               if patch.jmp_address is not None else {}),
+            "declaration_line": patch.line,
+            "image_bytes": patch.expected.hex(),
+            "image_stale_base_relocation_bytes": [f"0x{low + offset:08X}" for offset in sorted(stale)],
+            "compiled_bytes_not_compared": compiled.code[start:end].hex(),
+            "compiled_instructions_not_compared": [_render(instruction) for instruction in inside],
+            "compiled_relocations_not_compared": sorted(
+                reference.symbol for reference in compiled.references
+                if start <= reference.offset < end)})
+        compiled = replace(
+            compiled,
+            code=compiled.code[:start] + patch.expected + compiled.code[end:],
+            mask=frozenset(offset for offset in compiled.mask if not start <= offset < end),
+            references=tuple(reference for reference in compiled.references
+                             if not start <= reference.offset < end))
+    return compiled, tuple(applied), tuple(notes)
+
+
+def _with_image_patches(result: AsmComparison, applied: tuple, notes: tuple) -> AsmComparison:
+    """Attach the applied patches and any unapplied-declaration notes."""
+    if not applied and not notes:
+        return result
+    parts = [result.diagnostic] if result.diagnostic else []
+    if applied and result.verdict is Tier.BYTE_EXACT:
+        parts.append(IMAGE_PATCH_NOTE.format(
+            spans=", ".join(f"{item['start']}-{item['end']}" for item in applied)))
+    parts.extend(notes)
+    return replace(result, image_patches=tuple(applied), diagnostic="; ".join(parts))
 
 
 def _discounted(instruction, mask: frozenset[int], base: int) -> bytes:
@@ -1682,8 +1823,21 @@ def compare_subject(record: DecompilationState, exe: Path | str,
                         structural_diagnostic = diagnostic
                         break
             pairs = eh_region_listings(compiled, bound, image)
-            comparison = compare_regions(
-                tuple(pairs), alignments=tuple(region.alignment for region in bound))
+            patches, patch_applied, patch_notes = record_image_patches(record), [], []
+            if patches:
+                patched_pairs = []
+                for original, candidate in pairs:
+                    candidate, applied, notes = apply_image_patches(patches, original, candidate)
+                    patched_pairs.append((original, candidate))
+                    patch_applied.extend(applied)
+                    patch_notes.extend(notes)
+                pairs = patched_pairs
+                if len(patch_applied) + len(patch_notes) != len(patches):
+                    raise SpanComparisonRefused(
+                        "declared image patch lies in no compared original region")
+            comparison = _with_image_patches(
+                compare_regions(tuple(pairs), alignments=tuple(region.alignment for region in bound)),
+                tuple(patch_applied), tuple(patch_notes))
             if structural_diagnostic is not None:
                 return replace(comparison, verdict=Tier.MISMATCH, flags=compiled.flags,
                                diagnostic=(structural_diagnostic + "; raw region comparison: "
@@ -1718,7 +1872,11 @@ def compare_subject(record: DecompilationState, exe: Path | str,
             # copy of it to compare against. The comparison stays what it
             # was, and the extra instructions read as the mismatch they are.
             pass
-    result = compare_asm(original, compiled)
+    patches = record_image_patches(record)
+    compiled, patch_applied, patch_notes = apply_image_patches(patches, original, compiled)
+    if len(patch_applied) + len(patch_notes) != len(patches):
+        raise SpanComparisonRefused("declared image patch lies outside the compared original span")
+    result = _with_image_patches(compare_asm(original, compiled), patch_applied, patch_notes)
     if result.verdict is Tier.BYTE_EXACT:
         wrong = reference_mismatches(original, compiled, targets, record.path, image_reader(exe))
         if wrong:

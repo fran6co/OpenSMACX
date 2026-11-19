@@ -266,6 +266,8 @@ def _comparison_rows(result):
             row.update(asdict(value))
             if row.get("diagnostic_comparison") is None:
                 row.pop("diagnostic_comparison", None)
+            if not row.get("image_patches"):
+                row.pop("image_patches", None)
             row["verdict"] = value.verdict.value
             row["result"] = ("pass" if value.verdict.value == "BYTE_EXACT" else
                              "unknown" if value.verdict.value in ("NO_COMPILE", "REFUSED", "SHARED_TAIL")

@@ -540,6 +540,61 @@ literal stays exclusive, and partial overlaps, generated tables, same-unit
 objects and differing extents still refuse. The literal resolves first in its
 own unit; it never borrows the object's target.
 
+## Declared post-link image patches
+
+`// RECOVERY_IMAGE_PATCH: v1 <start> <exclusive-end> nop`
+`// RECOVERY_IMAGE_PATCH: v1 <start> <exclusive-end> nop-jmp <jmp-address> <jmp-target>`
+
+declares that the pinned image's bytes in `[start, end)` were overwritten in the
+linked file after the build, so no source spelling can produce them. The source
+keeps the code as it was compiled; the patch is a property of the shipped image.
+Addresses are eight-digit `0x` image addresses. `nop` states that every byte of
+the span is `0x90`. `nop-jmp` states `0x90` bytes around one five-byte `E9 rel32`
+at `jmp-address` whose destination is `jmp-target`. Put the line in the marker
+host of the function whose mapped span contains it, beside its `ORIGINAL` line,
+and explain in adjacent prose why the span is a patch and what the replaced
+statement was (a nop run is not VC6 output; its length; what the surrounding code
+still reads or tests; stale relocation entries; the same patch in a sibling build).
+
+The declaration belongs to the one function whose `ORIGINAL` span contains it;
+it is read from the marker host, so a candidate source or variant deck cannot
+add, move or remove it. A malformed line, overlapping declarations, or a span
+that crosses a mapped span's boundary refuse every measurement of that record.
+
+The masked comparer (`recover measure`, `check-matches`, `record`) then checks:
+
+- the image holds exactly the declared bytes over the span (for `nop-jmp` this
+  verifies the jump's place and destination); anything else is `REFUSED`;
+- the compiled body decodes to complete instructions that start at the span's
+  first byte and end at its last, with no instruction or relocation field
+  crossing either edge;
+- the compiled span has an absolute (`DIR32`) field exactly where the image's
+  base-relocation table still has an entry inside the span, and nowhere else.
+  Patching a linked file leaves that table alone, so stale entries are the one
+  record the image keeps of the replaced code;
+- every byte outside the span, and every bound reference outside it, as usual.
+
+When the compiled side fails its conditions the patch is not applied and the
+comparison runs on the unmodified bytes, which cannot be exact. When they hold,
+the declared bytes replace the compiled span (with its relocations) and the
+ordinary comparison decides. The result is never a plain pass: the comparison
+carries `image_patches` (one entry per applied span, listing the compiled bytes,
+instructions and relocation targets that were NOT compared with the image, and
+the stale relocation bytes), its diagnostic says "exact outside declared
+post-link image patch span(s)", and `check-matches` and `record` list such
+addresses under `image_patched`. No new claim token exists: `record` writes the
+ordinary `BYTE_EXACT` token, and the claim is qualified by the declaration that
+must stay beside it. Removing the declaration makes the claim fail like any
+other regression.
+
+Limits. The instructions inside the span are not compared with anything except
+through their length, their edges and their absolute-field positions, so the
+replaced statement rests on the source evidence, not on the verdict. Only the
+masked comparer applies declarations: the strict associated-data route
+(`RECOVERY_ASSOCIATED` owners), linked-image comparison, `recover permute` and
+the fast screens in `recovery/tools/` do not, and report such a function as not
+exact. Function fragments are not supported.
+
 ## Shared original function bodies
 
 `// RECOVERY_SHARED: v1 <start> <end> <emitted-symbol> <evidence-address>`
