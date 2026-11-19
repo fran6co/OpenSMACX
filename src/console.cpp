@@ -4727,13 +4727,9 @@ void Console::cursor_key(int, int character, int) {
             return;
         }
         break;
-    case 'b': {
-        const int i = ConsoleGlobal.cursor_history_index_;
-        const int base = base_find(ConsoleGlobal.cursor_history_x_[i],
-            ConsoleGlobal.cursor_history_y_[i], ConsoleGlobal.faction_id_);
-        if (base >= 0) TutWinBaseWindow.zoom(base, 0);
+    case 'b':
+        base_me();
         break;
-    }
     case 'g':
         if (!ConsoleControlTurnActive && !NetDaemonNet.field_1BB4_) {
             const int i = ConsoleGlobal.cursor_history_index_;
@@ -4742,23 +4738,9 @@ void Console::cursor_key(int, int character, int) {
             if (base >= 0) go_to(base, -1, 0);
         }
         break;
-    case 'p': {
-        const unsigned int shown = MapWinTable[0]->field_1DD70_ & 0x400000;
-        // The walk re-reads the window through its slot after each store; an
-        // int index, which VC6 strength-reduces to the slot pointer with the
-        // image's signed bound compare (jl).
-        for (int i = 0; i < MapWinTableSlots; i++) {
-            if (!MapWinTable[i] || (i != 0 && !MapWinTable[i]->view_active_)) continue;
-            if (!shown) {
-                MapWinTable[i]->field_1DD70_ |= 0x400000;
-                MapWinTable[i]->draw_base_dest(1);
-            } else {
-                MapWinTable[i]->field_1DD70_ &= ~0x400000u;
-                MapWinTable[i]->draw_map(1);
-            }
-        }
+    case 'p':
+        toggle_patrol();
         break;
-    }
     }
 }
 
@@ -5197,21 +5179,7 @@ void Console::veh_key(int key, int character, int command) {
     case 'L': automate(selected_vehicle_, 11); break;
     case 'l': sentry(selected_vehicle_, 0); break;
     case 'p': set_patrol(selected_vehicle_); break;
-    case 'P': {
-        const uint32_t destination_flag = MapWinTable[0]->field_1DD70_ & 0x400000u;
-        for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
-            if (MapWinTable[slot] != 0 && (slot == 0 || MapWinTable[slot]->view_active_ != 0)) {
-                if (destination_flag == 0) {
-                    MapWinTable[slot]->field_1DD70_ |= 0x400000u;
-                    MapWinTable[slot]->draw_base_dest(1);
-                } else {
-                    MapWinTable[slot]->field_1DD70_ &= 0xffbfffffu;
-                    MapWinTable[slot]->draw_map(1);
-                }
-            }
-        }
-        break;
-    }
+    case 'P': toggle_patrol(); break;
     case 'U': unload(selected_vehicle_); break;
     case 'r': terraform(selected_vehicle_, 5); break;
     }
