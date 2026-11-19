@@ -1788,13 +1788,17 @@ void __cdecl say_orders(char *text, int veh_id) {
                 parse_string(prefix, suffix);
                 ::strcat(text, suffix);
             }
-        } else if (Vehs[veh_id].order_auto_type == 11) {
-            ::strcat(text, table_text(Labels.strings_ptr[0x6F4 / 4]));
-        } else if (VehPrototypes[Vehs[veh_id].proto_id].plan == 9
-                   && Vehs[veh_id].order_auto_type != 0) {
-            ::strcat(text, label_get(0x62C / 4 + Vehs[veh_id].order_auto_type));
         } else {
-            ::strcat(text, label_get(0x62C / 4));
+            char *label;
+            if (Vehs[veh_id].order_auto_type == 11) {
+                label = table_text(Labels.strings_ptr[0x6F4 / 4]);
+            } else if (VehPrototypes[Vehs[veh_id].proto_id].plan == 9
+                       && Vehs[veh_id].order_auto_type != 0) {
+                label = label_get(0x62C / 4 + Vehs[veh_id].order_auto_type);
+            } else {
+                label = label_get(0x62C / 4);
+            }
+            ::strcat(text, label);
         }
         ::strcat(text, SocialWinCloseParenText);
         ::strcat(text, BufferJoinSpace);
