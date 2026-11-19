@@ -4545,10 +4545,11 @@ int Buffer::tile(Buffer *source, int src_x, int src_y, int x, int y, int w,
         tilesY++;
     }
 
-    int startX = x - src_x % tileWidth;
+    x -= src_x % tileWidth;
+    int startX = x;
     y -= src_y % tileHeight;
 
-    if (tilesX * tileWidth + startX < rectRight) {
+    if (tilesX * tileWidth + x < rectRight) {
         tilesX++;
     }
     if (tilesY * tileHeight + y < rectBottom) {
@@ -4863,10 +4864,11 @@ int Buffer::tile_mask(Buffer *mask, int src_x, int src_y, int x, int y, int w,
         tilesY++;
     }
 
-    const int startX = x - src_x % tileWidth;
+    x -= src_x % tileWidth;
+    const int startX = x;
     y -= src_y % tileHeight;
 
-    if (tilesX * tileWidth + startX < rectRight) {
+    if (tilesX * tileWidth + x < rectRight) {
         tilesX++;
     }
     if (tilesY * tileHeight + y < rectBottom) {
