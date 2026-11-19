@@ -1757,7 +1757,7 @@ void DesignWin::draw_special_1(int redraw) {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x228 / 4));
     strcat(StringTemp, BufferJoinSpace);
-// RECOVERY_LITERAL: v1 0x00683554 0x00683556 $SG61668 0x00435B30
+// RECOVERY_LITERAL: v1 0x00683554 0x00683556 $SG61613 0x00435B30
     strcat(StringTemp, "1"); // Original first special-ability title numeral.
     CharUpperA(StringTemp);
     Buffer::set_text_color(TextColourTable[156], TextColourTable[157], 1, 1);
@@ -1803,7 +1803,7 @@ void DesignWin::draw_special_2(int redraw) {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x228 / 4));
     strcat(StringTemp, BufferJoinSpace);
-// RECOVERY_LITERAL: v1 0x00683560 0x00683562 $SG61681 0x00435DE0
+// RECOVERY_LITERAL: v1 0x00683560 0x00683562 $SG61626 0x00435DE0
     strcat(StringTemp, "2"); // Original second special-ability title numeral.
     CharUpperA(StringTemp);
     Buffer::set_text_color(TextColourTable[156], TextColourTable[157], 1, 1);
@@ -3868,7 +3868,7 @@ void DesignWin::select_name() {
     // The original prompt token at 0x006838F4 is DESIGNNAME.
 // The retained prototype-name prompt identifies DESIGNNAME independently of measurement.
 // Bounds cover the literal payload, not surrounding allocation or lifetime.
-// RECOVERY_LITERAL: v1 0x006838F4 0x006838FF $SG62498 0x0043BE30
+// RECOVERY_LITERAL: v1 0x006838F4 0x006838FF $SG62442 0x0043BE30
     if (X_pop_ask("DESIGNNAME", 31, name, 0, 0) == 0) {
         if (strlen(ParseStrBuffer[0].str) == 0) {
             prototype_name_[0] = 0;

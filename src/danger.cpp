@@ -49,7 +49,7 @@ void __cdecl danger(LPCSTR msg1, LPCSTR msg2, int num1, int num2, int num3) {
     log_say(msg1, msg2, num1, num2, num3);
     // The original immediates at 0x00538F90 and 0x00538F97 point to the
     // independently bounded DANGER and hasty_sm.pcx literals below.
-// RECOVERY_LITERAL: v1 0x0068D428 0x0068D42F $SG49023 0x00538F30
-// RECOVERY_LITERAL: v1 0x0068D418 0x0068D425 $SG49022 0x00538F30
+// RECOVERY_LITERAL: v1 0x0068D428 0x0068D42F $SG48971 0x00538F30
+// RECOVERY_LITERAL: v1 0x0068D418 0x0068D425 $SG48970 0x00538F30
     popp(ScriptPopupFile, "DANGER", 0, "hasty_sm.pcx", 0);
 }
