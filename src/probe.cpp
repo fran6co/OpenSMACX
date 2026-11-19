@@ -157,8 +157,8 @@ int __cdecl mind_control(int base_id, int faction_id, BOOL is_corner_market) {
         + stack_check(veh_id, 2, PLAN_OFFENSIVE, -1, -1))
         * (stack_check(veh_id, 6, ABL_POLY_ENCRYPTION, -1, -1) + 1)
         + (int)PlayersData[faction_id].mind_control_total / 4 + Bases[base_id].population_size)
-        * ((PlayersData[target_faction_id].corner_market_active
-            + PlayersData[target_faction_id].energy_reserves + 1200) / (cost + 4));
+        * ((PlayersData[target_faction_id].energy_reserves
+            + PlayersData[target_faction_id].corner_market_active + 1200) / (cost + 4));
     int human_mask = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF;
     if (!(human_mask & (1 << faction_id)) && (human_mask & (1 << target_faction_id))) {
         int diff = PlayersData[target_faction_id].diff_level;
