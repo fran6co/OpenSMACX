@@ -4331,6 +4331,35 @@ Accessors, folded helpers and unit order (par-1 2026-11-19)
   in address order in the image argue against the function being in such a
   region at all.
 
+- **/Ob1 (or /Ob0) with /Gy puts a function's string literals in a COMDAT
+  .data section; /Ob2 keeps them in the unit's ordinary .data** (par-1
+  2026-11-19, danger.cpp). The unit's /Ob1 recipe compiled danger 0x00538F30
+  exact but its two literals left the ordinary section, so
+  `recover rebind-literals` found no `$SG` label with ordinary storage ("no
+  fresh $SG label holds exactly the original bytes": the bytes were right).
+  The image has them in ordinary order between netdaemon's literals and
+  my_srand's, so the unit is /Ob2. Check a per-unit /Ob exception against the
+  literal run before keeping it.
+- **A binding-order refusal after an address-order move is not a source
+  fact.** `rebind-literals` keeps the relative label order of a unit's
+  existing bindings; moving definitions (reorder.py) changes that order, and
+  one crossing pair refuses every binding of the unit ("no assignment keeps
+  the TU's existing binding order": basewin, console, datalink, designwin,
+  27 bindings). When each binding has one content-equal candidate (duplicates
+  narrowed by `context_relocation`), set the symbols from the candidates and
+  re-run with `--unit`: all valid.
+- **A pair of prompts with one test after them is one call in the image.**
+  shoot_it 0x004CDAF0: `if (c) r = popp(A); else r = popp(B); if (r) goto
+  fail;` lets VC6 cross-jump the two calls (one arm pushes and jumps into the
+  other's call). The test written inside each arm keeps two calls, because the
+  then-arm copy ends `jne fail; jmp next` and the else-arm copy `je next; jmp
+  fail`: different tails, no merge.
+- **A sum passed to an inline as an anonymous argument and as a named local
+  can differ in the `lea` operand order of the expansion** (planet_busting
+  0x00500B60: `wrap_map_x(RadiusOffsetX[i] + x)` gave `lea esi, [eax + edx]`,
+  `const int column = RadiusOffsetX[i] + x; wrap_map_x(column)` the image's
+  `[edx + eax]`, exact for 59 of 64 counter pads). Per site: the same
+  expression in the function's first loop is exact unnamed.
 - **A helper's own getters decide whether pass 1 expands it** (par-1
   2026-11-19, enemies_treaty 0x0055D760). pact_truce with its leader and noun
   fields written out (`GenderDefault = ..; PluralityDefault = ..;

@@ -1169,6 +1169,22 @@ evaluate_existing_state:
     // the treaty arm hold enough pass-2 reservation to refuse them (two give
     // three of the four calls); which three reads of the original were
     // accessors is not known, so they are spent here as dead tests.
+    // Measured 2026-11-19: any 3 to 8 further free expression inlines after
+    // the treaty arm give the image's calls (an accessor for the candidate's
+    // ranking at its four loop reads, or for every ranking read of the loop,
+    // replaces all three dead tests with the same code; diff_level's one read
+    // does not). Nothing in the image tells which reads were accessors: the
+    // loop's code is the same with them or without.
+    // The candidate loop itself (53 rows) differs in one way: the image keeps
+    // its three strength-reduced pointers in the dead parameter slots
+    // ([ebp+8] ranking, [ebp+0xC] faction_id's treaty row, [ebp+0x10]
+    // faction_id_with's) and reloads them at every use, stepping both rows
+    // through one `mov eax, 4`; ours keeps the second-tested row's pointer in
+    // a register across the back edge and gives it [ebp+0xC]. Testing
+    // faction_id_with first in the first condition gives the image's slots and
+    // preheader but the wrong evaluation order. Neutral for the loop: raw or
+    // has_treaty reads per row, one merged condition, the positive nesting,
+    // split id tests, compare operand orders, the earlier tests' order.
     has_treaty(faction_id, faction_id_with, 1);
     has_treaty(faction_id, faction_id_with, 1);
     has_treaty(faction_id, faction_id_with, 1);
