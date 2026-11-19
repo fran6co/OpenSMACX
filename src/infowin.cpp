@@ -89,6 +89,7 @@ void InfoWin::setup_text() {
     int value;
     int i;
     int j;
+    int owner;
 
     if (font_.unk_1_ >= 0) {
         row_pitch = font_.pixel_height() + font_.unk_1_;
@@ -411,17 +412,17 @@ void InfoWin::setup_text() {
             value = 0;
             k = ConsoleGlobal.faction_id_;
             i = GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
-            for (faction = 1; faction < MaxPlayerNum; faction++) {
-                if (i & (1 << faction)) {
+            for (owner = 1; owner < MaxPlayerNum; owner++) {
+                if (i & (1 << owner)) {
                     int sum = 0;
                     for (j = 1; j < 64; j++) {
                         if (!bad_reg(j)) {
-                            sum += PlayersData[faction].unk_78[j];
+                            sum += PlayersData[owner].unk_78[j];
                         }
                     }
                     if (sum >= value) {
                         value = sum;
-                        k = faction;
+                        k = owner;
                     }
                 }
             }
