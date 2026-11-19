@@ -10238,8 +10238,7 @@ if (has_treaty(faction_id, faction_id_with, 2) == 0 &&
     }
     if (great_satan(faction_id, 0) == 0) {
         const int actor_rank = PlayersData[faction_id].ranking;
-        const int peer_rank = PlayersData[faction_id_with].ranking;
-        if (actor_rank <= 4 || peer_rank <= 4) {
+        if (actor_rank <= 4 || PlayersData[faction_id_with].ranking <= 4) {
             communicate_late_offer_amount = (communicate_late_offer_amount + 1);
             if (DiploScratchF7FC == 0) {
                 communicate_late_offer_amount = (communicate_late_offer_amount + 1);
