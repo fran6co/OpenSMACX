@@ -2166,6 +2166,7 @@ int __cdecl is_bunged(int faction_id, int chassis_id, int weapon_id,
     }
     return false;
 }
+#pragma auto_inline(on)
 // Compose a readable prototype name from the already-loaded design rules.
 // Rule-string fields retain pointer-bit values validated by the loaded rules.
 static const char *prototype_rule_name(LPSTR string_id) {
@@ -2459,7 +2460,6 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
         strcpy(output, alternate);
     }
 }
-#pragma auto_inline(on)
 
 
 

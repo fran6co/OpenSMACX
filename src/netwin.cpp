@@ -1255,7 +1255,6 @@ void NetWin::pick_map() {
 static void pick_send_state() {
     send_session_packet(NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id()), 0);
 }
-#pragma inline_depth()
 
 /*
 Purpose: The player-count picker: entries numbered max(2, lobby count) to 7,
@@ -3169,6 +3168,7 @@ int NetWin::exec() {
     }
     return field_7614_;
 }
+#pragma inline_depth()
 
 // Private recovered body for the native 0x00482D90 roster finalizer.
 // Superseded seed deleted; seed paths below are historical Git provenance.
