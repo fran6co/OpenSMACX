@@ -1803,7 +1803,15 @@ int __cdecl boom(int x, int y, int flags) {
 
         // [C2] 0x505053: `test al,0x60; je 0x5054B9` on the animation path only.
         if (sprite_explosion || (flags & 0x60)) {
-            if (!(flags & 2) || (flags & 0x20)) {
+            if ((!(flags & 2) || (flags & 0x20)) && !(flags & 0x40)) {
+                original_screen_snapshots[slot].init(
+                    rects[slot].right - rects[slot].left,
+                    rects[slot].bottom - rects[slot].top, 0, nullptr);
+                MapWinTable[slot]->copy(&original_screen_snapshots[slot],
+                    pixel_x[slot], pixel_y[slot], 0, 0,
+                    original_screen_snapshots[slot].pixel_width(),
+                    original_screen_snapshots[slot].pixel_height());
+            } else {
                 if (!(flags & 0x40)) {
                     original_screen_snapshots[slot].init(
                         rects[slot].right - rects[slot].left,
@@ -1812,35 +1820,26 @@ int __cdecl boom(int x, int y, int flags) {
                         pixel_x[slot], pixel_y[slot], 0, 0,
                         original_screen_snapshots[slot].pixel_width(),
                         original_screen_snapshots[slot].pixel_height());
-                    continue;
+                    if (flags & 8) {
+                        VehDrawSuppressedVehicle = VehDrawSelection689F2C;
+                    } else {
+                        VehDrawSuppressedVehicle = VehDrawSelection689F28;
+                    }
+                    MapWinTable[slot]->draw_tile(x, y, 0);
+                    VehDrawSuppressedVehicle = -1;
                 }
-            } else if (!(flags & 0x40)) {
-                original_screen_snapshots[slot].init(
+                redrawn_map_snapshots[slot].init(
                     rects[slot].right - rects[slot].left,
                     rects[slot].bottom - rects[slot].top, 0, nullptr);
-                MapWinTable[slot]->copy(&original_screen_snapshots[slot],
+                MapWinTable[slot]->copy(&redrawn_map_snapshots[slot],
                     pixel_x[slot], pixel_y[slot], 0, 0,
+                    redrawn_map_snapshots[slot].pixel_width(),
+                    redrawn_map_snapshots[slot].pixel_height());
+                original_screen_snapshots[slot].copy(MapWinTable[slot], 0, 0,
+                    pixel_x[slot], pixel_y[slot],
                     original_screen_snapshots[slot].pixel_width(),
                     original_screen_snapshots[slot].pixel_height());
-                if (flags & 8) {
-                    VehDrawSuppressedVehicle = VehDrawSelection689F2C;
-                } else {
-                    VehDrawSuppressedVehicle = VehDrawSelection689F28;
-                }
-                MapWinTable[slot]->draw_tile(x, y, 0);
-                VehDrawSuppressedVehicle = -1;
             }
-            redrawn_map_snapshots[slot].init(
-                rects[slot].right - rects[slot].left,
-                rects[slot].bottom - rects[slot].top, 0, nullptr);
-            MapWinTable[slot]->copy(&redrawn_map_snapshots[slot],
-                pixel_x[slot], pixel_y[slot], 0, 0,
-                redrawn_map_snapshots[slot].pixel_width(),
-                redrawn_map_snapshots[slot].pixel_height());
-            original_screen_snapshots[slot].copy(MapWinTable[slot], 0, 0,
-                pixel_x[slot], pixel_y[slot],
-                original_screen_snapshots[slot].pixel_width(),
-                original_screen_snapshots[slot].pixel_height());
         }
     }
 
