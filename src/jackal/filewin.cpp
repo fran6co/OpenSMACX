@@ -1,3 +1,5 @@
+
+
 /*
  * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.
  * Copyright (C) 2013-2021 Brendan Casey
@@ -67,250 +69,203 @@ FileWinConstructPrefix FileWinInitSharedParameters;
 // loader-zero byte and its first-byte use are established; no larger capacity
 // or neighboring extent is claimed.
 // RECOVERY_OBJECT: v1 0x009B90B0 ?FileWinListWindowTitle@@3PADA
-char FileWinListWindowTitle[1] = {0};
 
 /*
-Purpose: Append one default extension to FileWin's four-slot extension
-         table at 0x518: five bytes per slot, the count at 0x514.
-
-// ORIGINAL: 0x00614140 ?add_def_ext@FileWin@@QAEHPAD@Z 0x00614140-0x006141BC BYTE_EXACT
-// symbol   ?add_def_ext@FileWin@@QAEHPAD@Z
-// size      124 bytes
-// prototype int (__thiscall ?add_def_ext@FileWin@@QAEHPAD@Z)(FileWin* this, int8*)
-// callers   3   call targets   2
+Purpose: Compose a FileWin from four member subobjects (two FlatButtons, an
+         EditBox, a most-derived ListBox), then clear the window's own
+         name-buffer/selection fields and append one text-table entry.
+// ORIGINAL: 0x00613850 ??0FileWin@@QAE@XZ 0x00613850-0x006138F9;0x006630E0-0x00663114 BYTE_EXACT
+// size      221 bytes
+// prototype void (__thiscall ??0FileWin@@QAE@XZ)(FileWin* this)
+// callers   1   call targets   4
 // kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x006453E0 0x00645470
-Return Value: 0 on success, 1 when the table is full, 0x10 for a null
-              extension, 3 when it is longer than four characters
+// flags     sp_ready;purged_ok
+// calls     0x00607CF0 0x00609DB0 0x00614E50 0x00645470
+// TRIED: MEASURED 8/42 agreeing - the SEH prologue itself matches
+//            (`push -1/handler; mov eax,fs:[0]; push eax; mov fs:[0],esp`,
+//            instructions 0-6 all agree), so this is NOT the CheckBox/
+//            EditGroup family's esp-vs-ebp divergence. The first mismatch is
+//            register allocation for the four member pointers (`push
+//            esi/mov esi,ecx` vs this body's extra `push ebp`), which
+//            plain member declarations (relying on FlatButton's own real
+//            ctor for implicit construction) did not converge on.
+Return Value: n/a
 Status: Complete
 */
-int FileWin::add_def_ext(char *extension) {
-    if (extension_count_ == 4) {
-        return 1;
-    }
-    if (extension == 0) {
-        return 0x10;
-    }
-    extension_filters_[extension_count_][0] = '\0';
-    if (strlen(extension) > 4) {
-        return 3;
-    }
-    strcat(extension_filters_[extension_count_], extension);
-    ++extension_count_;
-    return 0;
+FileWin::FileWin() {
+    // The declared members construct once, in declaration order. ListBox's
+    // most-derived flag is a compiler ABI argument, not a second construction.
+    selected_path_[0] = 0;
+    selected_basename_[0] = 0;
+    file_name_[0] = 0;
+    extension_count_ = 0;
+    directory_[0] = 0;
+// RECOVERY_LITERAL: v1 0x00697118 0x0069711A $SG45478 0x00613850
+    strcat(directory_, ".");
+    modal_window_ = 0;
+    directory_list_handle_ = 0;
 }
 
-// ORIGINAL: 0x006141C0 ?set_def_name@FileWin@@QAEHPAD@Z 0x006141C0-0x006142C9 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:d25c813727ff7494bc54517047f8b504bb476af2:src/leaf_recoveries.cpp", "recovery/tasks/game-save-load-owner-coverage.json", "pinned image sha256:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_filewin_default_name_behavior.py"], "reason": "Home the default-name split to the actual FileWin buffers and preserve null, overlength, root, drive, and original boundary behavior."}
-// TRIED: plain strlen/strcat declarations get inlined by /O2, which the original does not do at this call site; the function-pointer cast idiom forces a real call and got the prologue and the backslash-search loop byte-exact. Still MISMATCH on the drive-letter append block's fall-through layout.
-int FileWin::set_def_name(char *name) {
-    if (name == 0) {
-        file_name_[0] = '\0';
-        return 0;
-    }
-    if (strlen(name) > 0x104) return 3;
 
-    char working[0x104];
-    working[0] = '\0';
-    strcat(working, name);
-    char *scan = working + strlen(working);
-    char *tail;
-    char *head;
-    while (scan != working) {
-        if (*scan == '\\') {
-            if (scan == working) break;
-            tail = scan + 1;
-            *scan = '\0';
-            head = working;
-            goto have_name;
-        }
-        --scan;
-    }
-    tail = scan;
-    head = 0;
 
-have_name:
-    file_name_[0] = '\0';
-    strcat(file_name_, tail);
-    if (head != 0 && head[1] == ':') strcat(head, "\\");
-    if (head == 0) {
-        directory_[0] = '\0';
-        return 0;
+
+/*
+Purpose: Close the file dialog: close the two button strips, the edit box
+         and the list (each a virtual or member close on its subobject),
+         reset the window's own name/selection fields and append the text
+         table's second '.' entry, close the dialog's three fixed sprites,
+         drop the selection word, and destroy the dialog's own window
+         handle if one was created.
+
+// ORIGINAL: 0x00613900 ?close@FileWin@@QAEXXZ 0x00613900-0x006139AC FILE BYTE_EXACT
+// size      172 bytes
+// prototype void (__thiscall ?close@FileWin@@QAEXXZ)(FileWin* this)
+// callers   5   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005E3820 0x00609F20 0x00614F30 0x00645470
+// indirect  0x00613910 0x00613922 0x0061399D
+// TRIED (seed): DestroyWindowFn via *g_0066930c (established lever from
+//         00635750.cpp/00635450.cpp) compiles clean; mnemonic sim 0.95,
+//         one pop/pop vs add-esp reorder right after the strcat call (#23)
+//         not chased further. The two indirect sites are the FlatButton
+//         slot-90 closes (BaseButton's virtual close, basebutton.h); the
+//         third is user32!DestroyWindow through its import slot.
+Status: Coverage transcription - unclaimed body
+*/
+void FileWin::close() {
+    flat_button2_.close();
+    flat_button1_.close();
+    edit_box_.close();
+    list_box_.close();
+    selected_path_[0] = 0;
+    selected_basename_[0] = 0;
+    file_name_[0] = 0;
+    extension_count_ = 0;
+    directory_[0] = 0;
+// RECOVERY_LITERAL: v1 0x0069711C 0x0069711E $SG45482 0x00613900
+    strcat(directory_, ".");
+    shared_sprite1_.close();
+    shared_sprite0_.close();
+    shared_sprite2_.close();
+    modal_window_ = 0;
+    if (directory_list_handle_ != 0) {
+        DestroyWindow(directory_list_handle_);
+        directory_list_handle_ = 0;
     }
-    if (strlen(head) <= 0x104) {
-        directory_[0] = '\0';
-        strcat(directory_, head);
-    }
-    return 0;
 }
 
-// ORIGINAL: 0x00614B90 ?on_button_clicked@FileWin@@QAEXH@Z 0x00614B90-0x00614C40 BYTE_EXACT
-// Historical seed evidence: a nested -2/-1/3 decision, with the -1 arm
-// rewinding the modal WinNodeList before UNK4. Compiler branch ordering in
-// the old standalone scaffold was inconclusive and is not a structural rule.
-void FileWin::on_button_clicked(int button_id) {
-    if (button_id != -2) {
-        if (button_id != -1) {
-            if (button_id == 3) {
-                SetCurrentDirectoryA("..");
-                populate_directory(".");
-            }
-            return;
-        }
-        if (WinPendingFocus == static_cast<Win *>(&edit_box_)) {
-            WinNodeList &focus = modal_window_->list_;
-            if (focus.head_ != 0) {
-                focus.tail_ = 0;
-                focus.current_ = focus.head_;
-                for (int index = 0; index < focus.count_; ++index) {
-                    WinDialogNode *node = focus.current_;
-                    if (node->focus_owner_ == static_cast<Win *>(&edit_box_)) {
-                        break;
-                    }
-                    ++focus.tail_;
-                    focus.current_ = node->next_;
-                }
-            }
-        }
-        UNK4();
-        return;
-    }
-    field_638_ = 0x12C;
-    modal_window_->release_modal();
-}
+char FileWinListWindowTitle[1] = {0};
 
-// Confirmation builds the full selected path and its basename in FileWin
-// storage, then releases or refocuses the modal owner through its real controls.
-// Focus is captured before changing the editor selection.
+
+
+
+
+// Shared FileWin sprites. The original CRT constructs Sprite1, Sprite0,
+// Sprite2, and close() uses that same order; registered cleanup runs in reverse.
+// Ordinary class-static Sprite members let VC6 own both construction and the
+// shared set-bit-before-close guard. No placement storage or authored destructor
+// substitutes are needed. Member names remain descriptive interpretations.
+
+// RECOVERY_OBJECT: v4 0x009B9014 ?FileWinSpritesCleanupGuard@@3EA target _$S18
+// RECOVERY_OBJECT: v4 0x009B9048 _FileWinSprite1 target ?shared_sprite1_@FileWin@@0VSprite@@A
+Sprite FileWin::shared_sprite1_;
+// RECOVERY_OBJECT: v4 0x009B9018 _FileWinSprite0 target ?shared_sprite0_@FileWin@@0VSprite@@A
+Sprite FileWin::shared_sprite0_;
+// RECOVERY_OBJECT: v4 0x009B9078 _FileWinSprite2 target ?shared_sprite2_@FileWin@@0VSprite@@A
+Sprite FileWin::shared_sprite2_;
+
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x006146A0 ?UNK4@FileWin@@QAEXXZ 0x006146A0-0x00614B59
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/006146a0.cpp", "recovery/tasks/game-save-load-owner-coverage.json", "pinned image sha256:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_filewin_unk4_full_branches.py", "recovery/tests/test_filewin_load_contract_behavior.py"], "reason": "Recover the complete FileWin confirmation path through its real selected-path buffers, EditBox/ListBox, modal owner, and focus-list lifecycle."}
-void FileWin::UNK4() {
-    WinNodeList &focus_list = modal_window_->list_;
-    Win *entry_focus = focus_list.head_ != 0
-        ? focus_list.current_->focus_owner_ : 0;
-    const int edit_focused = entry_focus == static_cast<Win *>(&edit_box_);
-    char *const typed_name = edit_box_.text_;
+// ORIGINAL: 0x006139B0 ?init@FileWin@@QAEHPADPAUGraphicWin@@PAUFileWinConstruct@@@Z 0x006139B0-0x00613B97
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/006139b0.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover FileWin control initialization through genuine embedded controls, typed caller geometry, shared 17-DWORD parameter prefix and Windows list lifecycle. Retain the historical seed and obligations; no matching or game acceptance claim."}
+// symbol    ?init@FileWin@@QAEHPADPAVGraphicWin@@PAUFileWinConstruct@@@Z
+int FileWin::init(char *, GraphicWin *parent, FileWinConstruct *parameters) {
+  if (parameters == 0 || parent == 0) {
+    return 0x10;
+  }
 
-    edit_box_.select_all();
-    purge_spaces(typed_name);
+  // WORKAROUND(type): a structure assignment of the leading prefix (rep
+  // movsd); the parameter is declared as the larger FileWinConstruct.
+  FileWinInitSharedParameters =
+      *reinterpret_cast<const FileWinConstructPrefix *>(parameters);
 
-    char name_buffer[260];
-    WIN32_FIND_DATAA found;
-    int status;
-    if (strcmp(typed_name, "..") == 0) {
-        status = 2;
+  modal_window_ = parent;
+  SpriteScaleNumerator = 1;
+  SpriteScaleDenominator = 1;
+
+  int result = prepare_sprites();
+  if (result != 0) {
+    return result;
+  }
+
+  edit_box_bounds_ = parameters->edit_box_bounds_;
+  list_box_bounds_ = parameters->list_box_bounds_;
+
+  edit_box_.init(&edit_box_bounds_, static_cast<Win *>(parent), 0);
+  edit_box_.field_B14_ = 0x104;
+  // The image forms the receiver (lea ecx) before reading its vtable through
+  // ecx: show is called through a pointer to the box.
+  EditBox *const edit = &edit_box_;
+  edit->show(0);
+
+  result = flat_button2_.init(BasePopDefaultOkText, -1,
+                       &parameters->button2_bounds_, static_cast<Win *>(parent), 0);
+  if (result != 0) {
+    return result;
+  }
+
+  result = flat_button1_.init(BasePopDefaultCancelText, -2,
+                       &parameters->button1_bounds_, static_cast<Win *>(parent), 0);
+  if (result != 0) {
+    return result;
+  }
+
+  // Dialog::init's virtual-base adjustment adds the list pointer held in esi
+  // (add ecx, esi): close and init are called through a pointer to the list.
+  ListBox *const list = &list_box_;
+  list->close();
+  result = list->Dialog::init(&list_box_bounds_, 0);
+  if (result != 0) {
+    return result;
+  }
+
+  list_box_.field_8_ = 1;
+  list_box_.field_34_ =
+      (shared_sprite0_.width() * 3) / 2;
+  list_box_.set_draw_callback(&FileWin::filebox_draw);
+
+  directory_list_handle_ = CreateWindowExA(
+      0, "LISTBOX", FileWinListWindowTitle, 0x40000040,
+      0, 0, CW_USEDEFAULT, CW_USEDEFAULT, HandleMain,
+      reinterpret_cast<HMENU>(1), WinInstance, 0);
+  return directory_list_handle_ == 0 ? 1 : 0;
+}
+
+// ORIGINAL: 0x00613BA0 ?prepare_sprites@FileWin@@QAEHXZ 0x00613BA0-0x00613D47;0x00663114-0x00663129 BYTE_EXACT
+// FileWin::prepare_sprites builds the three independent dialog sprites from
+// the PCX sheet, or creates blank substitutes when the sheet cannot load.
+// The original has a separate cold unwind span; the source-owned Buffer
+// lifetime lets C++ generate that cleanup without encoding its old address.
+int FileWin::prepare_sprites() {
+    Buffer sheet;
+    int result;
+// RECOVERY_LITERAL: v1 0x00697128 0x00697133 $SG45550 0x00613BA0
+    if (sheet.load_pcx("jackal.pcx", 0, 10, 0xEC) != 0) {
+        result = shared_sprite1_.create_blank(0x10, 0x10, 9);
+        if (result != 0) return result;
+        result = shared_sprite0_.create_blank(0x10, 0x10, 9);
+        if (result != 0) return result;
+        result = shared_sprite2_.create_blank(0x10, 0x10, 9);
+        if (result != 0) return result;
     } else {
-        name_buffer[0] = 0;
-        strcat(name_buffer, typed_name);
-        // Native 0x614755/0x6147AC call memrchr (0x628AF0), not strrchr.
-        char *const suffix = const_cast<char *>(
-            memrchr(name_buffer, name_buffer + strlen(name_buffer), '.'));
-        status = 0;
-        if (suffix != name_buffer) {
-            for (int extension_index = 0;
-                 extension_index < extension_count_; ++extension_index) {
-                if (suffix == 0) {
-                    char *const appended_suffix = const_cast<char *>(
-                        memrchr(name_buffer, name_buffer + strlen(name_buffer), '.'));
-                    if (appended_suffix != 0) *appended_suffix = 0;
-                    strcat(name_buffer, extension_filters_[extension_index]);
-                }
-                const HANDLE handle = FindFirstFileA(name_buffer, &found);
-                if (handle != INVALID_HANDLE_VALUE) {
-                    status = 1;
-                    FindClose(handle);
-                    break;
-                }
-                FindClose(handle);
-            }
-        }
+        result = shared_sprite1_.extract(&sheet, 9, 1, 1, 0x10, 0x10, 0);
+        if (result != 0) return result;
+        result = shared_sprite0_.extract(&sheet, 9, 0x12, 1, 0x10, 0x10, 0);
+        if (result != 0) return result;
+        result = shared_sprite2_.extract(&sheet, 9, 0x23, 1, 0x10, 0x10, 0);
+        if (result != 0) return result;
     }
-
-    switch (status) {
-    case 0:
-        if (populate_directory(typed_name) != 0) break;
-        // Falls into the confirmation path.
-    case 1: {
-        selected_path_[0] = 0;
-        selected_basename_[0] = 0;
-        if (strchr(name_buffer, '\\') != 0) {
-            if (name_buffer[1] != ':') {
-                GetCurrentDirectoryA(0x104, selected_path_);
-                if (name_buffer[0] != '\\') strcat(selected_path_, "\\");
-            }
-            strcat(selected_path_, name_buffer);
-            char *separator = selected_path_ + strlen(selected_path_);
-            while (separator != 0 && *separator != '\\') --separator;
-            strcat(selected_basename_, separator + 1);
-        } else {
-            GetCurrentDirectoryA(0x104, selected_path_);
-            if (name_buffer[0] != '\\') {
-                char *const last = selected_path_ + strlen(selected_path_) - 1;
-                if (*last != '\\') strcat(selected_path_, "\\");
-            }
-            strcat(selected_path_, name_buffer);
-            selected_basename_[0] = 0;
-            strcat(selected_basename_, name_buffer);
-        }
-
-        const HANDLE selected_handle = FindFirstFileA(name_buffer, &found);
-        int selected_exists;
-        if (selected_handle != INVALID_HANDLE_VALUE) {
-            selected_exists = 1;
-            FindClose(selected_handle);
-        } else {
-            selected_exists = 0;
-        }
-
-        char message[260];
-        if (field_638_ == 0xC8) {
-            if (!selected_exists) {
-                parse_says(0, name_buffer, -1, -1);
-                message[0] = 0;
-                strcat(message, current_directory_);
-                strcat(message, "\\");
-                strcat(message, "jackal");
-                pop_caption_title(message, "FILEWIN_LOAD", 0x200000, 0);
-            } else {
-                modal_window_->release_modal();
-            }
-        } else if (field_638_ == 0x64) {
-            if (selected_exists) {
-                parse_says(0, name_buffer, -1, -1);
-                message[0] = 0;
-                strcat(message, current_directory_);
-                strcat(message, "\\");
-                strcat(message, "jackal");
-                if (pop_caption_title(message, "FILEWIN_SAVEEXISTS", 0x200040, 0) != 0) {
-                    break;
-                }
-            } else if (strcspn(selected_basename_, "\\\"/[]:;=") !=
-                       strlen(selected_basename_)) {
-                message[0] = 0;
-                strcat(message, current_directory_);
-                strcat(message, "\\");
-                strcat(message, "jackal");
-                pop_caption_title(message, "FILEWIN_ILLEGALCHAR", 0x200040, 0);
-                break;
-            }
-            modal_window_->release_modal();
-        }
-        break;
-    }
-    case 2:
-        name_buffer[0] = 0;
-        strcat(name_buffer, "..");
-        populate_directory(name_buffer);
-        break;
-    }
-
-    if (edit_focused) {
-        modal_window_->set_dialog_focus(&edit_box_);
-    } else {
-        modal_window_->set_dialog_focus(&list_box_);
-    }
+    return 0;
 }
 
 // ORIGINAL: 0x00613D50 ?save@FileWin@@QAEXXZ 0x00613D50-0x00613F5C BYTE_EXACT
@@ -446,6 +401,136 @@ static inline int filewin_attach_list(ListBox *list, GraphicWin *parent,
                                  flags);
 }
 
+/*
+Purpose: Append one default extension to FileWin's four-slot extension
+         table at 0x518: five bytes per slot, the count at 0x514.
+
+// ORIGINAL: 0x00614140 ?add_def_ext@FileWin@@QAEHPAD@Z 0x00614140-0x006141BC BYTE_EXACT
+// symbol   ?add_def_ext@FileWin@@QAEHPAD@Z
+// size      124 bytes
+// prototype int (__thiscall ?add_def_ext@FileWin@@QAEHPAD@Z)(FileWin* this, int8*)
+// callers   3   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006453E0 0x00645470
+Return Value: 0 on success, 1 when the table is full, 0x10 for a null
+              extension, 3 when it is longer than four characters
+Status: Complete
+*/
+int FileWin::add_def_ext(char *extension) {
+    if (extension_count_ == 4) {
+        return 1;
+    }
+    if (extension == 0) {
+        return 0x10;
+    }
+    extension_filters_[extension_count_][0] = '\0';
+    if (strlen(extension) > 4) {
+        return 3;
+    }
+    strcat(extension_filters_[extension_count_], extension);
+    ++extension_count_;
+    return 0;
+}
+
+// ORIGINAL: 0x006141C0 ?set_def_name@FileWin@@QAEHPAD@Z 0x006141C0-0x006142C9 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:d25c813727ff7494bc54517047f8b504bb476af2:src/leaf_recoveries.cpp", "recovery/tasks/game-save-load-owner-coverage.json", "pinned image sha256:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_filewin_default_name_behavior.py"], "reason": "Home the default-name split to the actual FileWin buffers and preserve null, overlength, root, drive, and original boundary behavior."}
+// TRIED: plain strlen/strcat declarations get inlined by /O2, which the original does not do at this call site; the function-pointer cast idiom forces a real call and got the prologue and the backslash-search loop byte-exact. Still MISMATCH on the drive-letter append block's fall-through layout.
+int FileWin::set_def_name(char *name) {
+    if (name == 0) {
+        file_name_[0] = '\0';
+        return 0;
+    }
+    if (strlen(name) > 0x104) return 3;
+
+    char working[0x104];
+    working[0] = '\0';
+    strcat(working, name);
+    char *scan = working + strlen(working);
+    char *tail;
+    char *head;
+    while (scan != working) {
+        if (*scan == '\\') {
+            if (scan == working) break;
+            tail = scan + 1;
+            *scan = '\0';
+            head = working;
+            goto have_name;
+        }
+        --scan;
+    }
+    tail = scan;
+    head = 0;
+
+have_name:
+    file_name_[0] = '\0';
+    strcat(file_name_, tail);
+    if (head != 0 && head[1] == ':') strcat(head, "\\");
+    if (head == 0) {
+        directory_[0] = '\0';
+        return 0;
+    }
+    if (strlen(head) <= 0x104) {
+        directory_[0] = '\0';
+        strcat(directory_, head);
+    }
+    return 0;
+}
+
+// Copy a caller-supplied path into FileWin's own directory storage. A null
+// path clears it; an overlong path leaves the previous value intact.
+// ORIGINAL: 0x006142D0 ?set_directory@FileWin@@QAEHPAD@Z 0x006142D0-0x0061431E BYTE_EXACT
+int FileWin::set_directory(char *directory) {
+    if (directory == 0) {
+        directory_[0] = 0;
+        return 0;
+    }
+    if (strlen(directory) > 0x104) {
+        return 3;
+    }
+    directory_[0] = 0;
+    strcat(directory_, directory);
+    return 0;
+}
+
+
+/*
+Purpose: Clear the file window's three name buffers, its selection index and
+         one trailing flag.
+// ORIGINAL: 0x00614320 ?UNK1@FileWin@@QAEXXZ 0x00614320-0x00614341 BYTE_EXACT
+// size      33 bytes
+// prototype void (__thiscall ?UNK1@FileWin@@QAEXXZ)(FileWin* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void FileWin::UNK1() {
+    selected_path_[0] = 0;
+    selected_basename_[0] = 0;
+    file_name_[0] = 0;
+    directory_[0] = 0;
+    extension_count_ = 0;
+}
+
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+// ORIGINAL: 0x00614350 ?UNK2@FileWin@@QAEXH@Z 0x00614350-0x00614353 BYTE_EXACT
+// size      3 bytes
+// prototype void (__thiscall ?UNK2@FileWin@@QAEXH@Z)(FileWin* this, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void FileWin::UNK2(int) {
+}
+
 // ORIGINAL: 0x00614360 ?UNK3@FileWin@@QAEHPAD@Z 0x00614360-0x00614694 BYTE_EXACT
 // TRIED: MISMATCH #0 'sub' vs 'push' - original is FPO'd (no ebp frame, ebp free as a GP register); the rebuilt body gets a standard ebp frame instead. Not chased (820B, heaviest Win32-API surface in this batch: GetCurrentDirectoryA/ SetCurrentDirectoryA/DlgDirListA/FindFirstFileA/FindClose/ SendMessageA/GetLastError all called indirectly through the IAT-slot globals, matching the disasm's `call dword ptr [addr]` sites). `edi` = self+0x286c (the embedded ListBox) is constant for the whole function body past its one `lea`; the two vbtable-adjusted calls (remove_all, final slot001) go through a `StringStructThunk`/`VCall` shim built from the raw `*(int*)(*(int*)lb+N)` displacement, not from a modelled virtual-base layout.
 // symbol    ?populate_directory@FileWin@@QAEHPAD@Z
@@ -537,108 +622,210 @@ int FileWin::populate_directory(char *directory) {
     return return_value;
 }
 
-// The default file-name suffix appended to field_531_ at construction - REAL
-// STORAGE seeded from the image's own .data bytes (image_data.py, 0x00697118:
-// 2e 00 00 00 - a "." entry in the dword-slotted text table that continues
-// with the second ".", "LISTBOX" and "jackal.pcx" further on). It was
-// `static char *const FileWinTextTableDefault = (char *)0x00697118`, pointing
-// at the image's mapped-in data; the array carries the bytes instead. strcat
-// reads up to the first NUL either way, and the `push offset` folds to the
-// same instruction, the displacement relocated.
-// Original 0x6138B2 selects this object start, 0x697118; allocation bounds remain unproved.
-// RECOVERY_OBJECT: v1 0x00697118 _FileWinTextTableDefault
-static const char FileWinTextTableDefault[4] = {'.', 0, 0, 0};  // 0x00697118
-
-// The table's NEXT entry (0x0069711C), also "." in the shipped image:
-// close() resets the name buffer to it, exactly as the constructor resets
-// the buffer to the first. Same real-storage argument as above.
-// RECOVERY_OBJECT: v1 0x0069711C _FileWinTextTableDefaultNext
-static const char FileWinTextTableDefaultNext[4] = {'.', 0, 0, 0};  // 0x0069711C
-
-// Original .data at 0x00697128 contains "jackal.pcx"; the filename is an
-// ordinary source literal, not a pointer into the shipped executable.
-// Original 0x613BCE selects this object start, 0x697128; allocation bounds remain unproved.
-// RECOVERY_OBJECT: v1 0x00697128 _FileWinSpriteSheet
-static const char FileWinSpriteSheet[] = "jackal.pcx";
-
-// Shared FileWin sprites. The original CRT constructs Sprite1, Sprite0,
-// Sprite2, and close() uses that same order; registered cleanup runs in reverse.
-// Ordinary class-static Sprite members let VC6 own both construction and the
-// shared set-bit-before-close guard. No placement storage or authored destructor
-// substitutes are needed. Member names remain descriptive interpretations.
-
-// RECOVERY_OBJECT: v4 0x009B9014 ?FileWinSpritesCleanupGuard@@3EA target _$S18
-// RECOVERY_OBJECT: v4 0x009B9048 _FileWinSprite1 target ?shared_sprite1_@FileWin@@0VSprite@@A
-Sprite FileWin::shared_sprite1_;
-// RECOVERY_OBJECT: v4 0x009B9018 _FileWinSprite0 target ?shared_sprite0_@FileWin@@0VSprite@@A
-Sprite FileWin::shared_sprite0_;
-// RECOVERY_OBJECT: v4 0x009B9078 _FileWinSprite2 target ?shared_sprite2_@FileWin@@0VSprite@@A
-Sprite FileWin::shared_sprite2_;
-
+// Confirmation builds the full selected path and its basename in FileWin
+// storage, then releases or refocuses the modal owner through its real controls.
+// Focus is captured before changing the editor selection.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x006139B0 ?init@FileWin@@QAEHPADPAUGraphicWin@@PAUFileWinConstruct@@@Z 0x006139B0-0x00613B97
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/006139b0.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover FileWin control initialization through genuine embedded controls, typed caller geometry, shared 17-DWORD parameter prefix and Windows list lifecycle. Retain the historical seed and obligations; no matching or game acceptance claim."}
-// symbol    ?init@FileWin@@QAEHPADPAVGraphicWin@@PAUFileWinConstruct@@@Z
-int FileWin::init(char *, GraphicWin *parent, FileWinConstruct *parameters) {
-  if (parameters == 0 || parent == 0) {
-    return 0x10;
-  }
+// ORIGINAL: 0x006146A0 ?UNK4@FileWin@@QAEXXZ 0x006146A0-0x00614B59
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/006146a0.cpp", "recovery/tasks/game-save-load-owner-coverage.json", "pinned image sha256:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_filewin_unk4_full_branches.py", "recovery/tests/test_filewin_load_contract_behavior.py"], "reason": "Recover the complete FileWin confirmation path through its real selected-path buffers, EditBox/ListBox, modal owner, and focus-list lifecycle."}
+void FileWin::UNK4() {
+    WinNodeList &focus_list = modal_window_->list_;
+    Win *entry_focus = focus_list.head_ != 0
+        ? focus_list.current_->focus_owner_ : 0;
+    const int edit_focused = entry_focus == static_cast<Win *>(&edit_box_);
+    char *const typed_name = edit_box_.text_;
 
-  // WORKAROUND(type): a structure assignment of the leading prefix (rep
-  // movsd); the parameter is declared as the larger FileWinConstruct.
-  FileWinInitSharedParameters =
-      *reinterpret_cast<const FileWinConstructPrefix *>(parameters);
+    edit_box_.select_all();
+    purge_spaces(typed_name);
 
-  modal_window_ = parent;
-  SpriteScaleNumerator = 1;
-  SpriteScaleDenominator = 1;
+    char name_buffer[260];
+    WIN32_FIND_DATAA found;
+    int status;
+    if (strcmp(typed_name, "..") == 0) {
+        status = 2;
+    } else {
+        name_buffer[0] = 0;
+        strcat(name_buffer, typed_name);
+        // Native 0x614755/0x6147AC call memrchr (0x628AF0), not strrchr.
+        char *const suffix = const_cast<char *>(
+            memrchr(name_buffer, name_buffer + strlen(name_buffer), '.'));
+        status = 0;
+        if (suffix != name_buffer) {
+            for (int extension_index = 0;
+                 extension_index < extension_count_; ++extension_index) {
+                if (suffix == 0) {
+                    char *const appended_suffix = const_cast<char *>(
+                        memrchr(name_buffer, name_buffer + strlen(name_buffer), '.'));
+                    if (appended_suffix != 0) *appended_suffix = 0;
+                    strcat(name_buffer, extension_filters_[extension_index]);
+                }
+                const HANDLE handle = FindFirstFileA(name_buffer, &found);
+                if (handle != INVALID_HANDLE_VALUE) {
+                    status = 1;
+                    FindClose(handle);
+                    break;
+                }
+                FindClose(handle);
+            }
+        }
+    }
 
-  int result = prepare_sprites();
-  if (result != 0) {
-    return result;
-  }
+    switch (status) {
+    case 0:
+        if (populate_directory(typed_name) != 0) break;
+        // Falls into the confirmation path.
+    case 1: {
+        selected_path_[0] = 0;
+        selected_basename_[0] = 0;
+        if (strchr(name_buffer, '\\') != 0) {
+            if (name_buffer[1] != ':') {
+                GetCurrentDirectoryA(0x104, selected_path_);
+                if (name_buffer[0] != '\\') strcat(selected_path_, "\\");
+            }
+            strcat(selected_path_, name_buffer);
+            char *separator = selected_path_ + strlen(selected_path_);
+            while (separator != 0 && *separator != '\\') --separator;
+            strcat(selected_basename_, separator + 1);
+        } else {
+            GetCurrentDirectoryA(0x104, selected_path_);
+            if (name_buffer[0] != '\\') {
+                char *const last = selected_path_ + strlen(selected_path_) - 1;
+                if (*last != '\\') strcat(selected_path_, "\\");
+            }
+            strcat(selected_path_, name_buffer);
+            selected_basename_[0] = 0;
+            strcat(selected_basename_, name_buffer);
+        }
 
-  edit_box_bounds_ = parameters->edit_box_bounds_;
-  list_box_bounds_ = parameters->list_box_bounds_;
+        const HANDLE selected_handle = FindFirstFileA(name_buffer, &found);
+        int selected_exists;
+        if (selected_handle != INVALID_HANDLE_VALUE) {
+            selected_exists = 1;
+            FindClose(selected_handle);
+        } else {
+            selected_exists = 0;
+        }
 
-  edit_box_.init(&edit_box_bounds_, static_cast<Win *>(parent), 0);
-  edit_box_.field_B14_ = 0x104;
-  // The image forms the receiver (lea ecx) before reading its vtable through
-  // ecx: show is called through a pointer to the box.
-  EditBox *const edit = &edit_box_;
-  edit->show(0);
+        char message[260];
+        if (field_638_ == 0xC8) {
+            if (!selected_exists) {
+                parse_says(0, name_buffer, -1, -1);
+                message[0] = 0;
+                strcat(message, current_directory_);
+                strcat(message, "\\");
+                strcat(message, "jackal");
+                pop_caption_title(message, "FILEWIN_LOAD", 0x200000, 0);
+            } else {
+                modal_window_->release_modal();
+            }
+        } else if (field_638_ == 0x64) {
+            if (selected_exists) {
+                parse_says(0, name_buffer, -1, -1);
+                message[0] = 0;
+                strcat(message, current_directory_);
+                strcat(message, "\\");
+                strcat(message, "jackal");
+                if (pop_caption_title(message, "FILEWIN_SAVEEXISTS", 0x200040, 0) != 0) {
+                    break;
+                }
+            } else if (strcspn(selected_basename_, "\\\"/[]:;=") !=
+                       strlen(selected_basename_)) {
+                message[0] = 0;
+                strcat(message, current_directory_);
+                strcat(message, "\\");
+                strcat(message, "jackal");
+                pop_caption_title(message, "FILEWIN_ILLEGALCHAR", 0x200040, 0);
+                break;
+            }
+            modal_window_->release_modal();
+        }
+        break;
+    }
+    case 2:
+        name_buffer[0] = 0;
+        strcat(name_buffer, "..");
+        populate_directory(name_buffer);
+        break;
+    }
 
-  result = flat_button2_.init(BasePopDefaultOkText, -1,
-                       &parameters->button2_bounds_, static_cast<Win *>(parent), 0);
-  if (result != 0) {
-    return result;
-  }
+    if (edit_focused) {
+        modal_window_->set_dialog_focus(&edit_box_);
+    } else {
+        modal_window_->set_dialog_focus(&list_box_);
+    }
+}
 
-  result = flat_button1_.init(BasePopDefaultCancelText, -2,
-                       &parameters->button1_bounds_, static_cast<Win *>(parent), 0);
-  if (result != 0) {
-    return result;
-  }
+// This was a fabricated slot-58 shim in the exact seed. Win establishes
+// slot 58 as release_modal, and field +0x63C holds that Win receiver.
+// ORIGINAL: 0x00614B60 ?UNK5@FileWin@@QAEXXZ 0x00614B60-0x00614B78 BYTE_EXACT
+void FileWin::UNK5() {
+    field_638_ = 0x12c;
+    modal_window_->release_modal();
+}
 
-  // Dialog::init's virtual-base adjustment adds the list pointer held in esi
-  // (add ecx, esi): close and init are called through a pointer to the list.
-  ListBox *const list = &list_box_;
-  list->close();
-  result = list->Dialog::init(&list_box_bounds_, 0);
-  if (result != 0) {
-    return result;
-  }
+/*
+Purpose: Unknown; the legacy implementation is a bare return with no body.
+// ORIGINAL: 0x00614B80 ?UNK6@FileWin@@QAEXXZ 0x00614B80-0x00614B81 BYTE_EXACT
+// size      1 bytes
+// prototype void (__thiscall ?UNK6@FileWin@@QAEXXZ)(FileWin* this)
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void FileWin::UNK6() {
+}
 
-  list_box_.field_8_ = 1;
-  list_box_.field_34_ =
-      (shared_sprite0_.width() * 3) / 2;
-  list_box_.set_draw_callback(&FileWin::filebox_draw);
+// ORIGINAL: 0x00614B90 ?on_button_clicked@FileWin@@QAEXH@Z 0x00614B90-0x00614C40 BYTE_EXACT
+// Historical seed evidence: a nested -2/-1/3 decision, with the -1 arm
+// rewinding the modal WinNodeList before UNK4. Compiler branch ordering in
+// the old standalone scaffold was inconclusive and is not a structural rule.
+void FileWin::on_button_clicked(int button_id) {
+    if (button_id != -2) {
+        if (button_id != -1) {
+            if (button_id == 3) {
+                SetCurrentDirectoryA("..");
+                populate_directory(".");
+            }
+            return;
+        }
+        if (WinPendingFocus == static_cast<Win *>(&edit_box_)) {
+            WinNodeList &focus = modal_window_->list_;
+            if (focus.head_ != 0) {
+                focus.tail_ = 0;
+                focus.current_ = focus.head_;
+                for (int index = 0; index < focus.count_; ++index) {
+                    WinDialogNode *node = focus.current_;
+                    if (node->focus_owner_ == static_cast<Win *>(&edit_box_)) {
+                        break;
+                    }
+                    ++focus.tail_;
+                    focus.current_ = node->next_;
+                }
+            }
+        }
+        UNK4();
+        return;
+    }
+    field_638_ = 0x12C;
+    modal_window_->release_modal();
+}
 
-  directory_list_handle_ = CreateWindowExA(
-      0, "LISTBOX", FileWinListWindowTitle, 0x40000040,
-      0, 0, CW_USEDEFAULT, CW_USEDEFAULT, HandleMain,
-      reinterpret_cast<HMENU>(1), WinInstance, 0);
-  return directory_list_handle_ == 0 ? 1 : 0;
+
+/*
+// ORIGINAL: 0x00614C40 ?on_double_clicked@FileWin@@QAEXH@Z 0x00614C40-0x00614C48 BYTE_EXACT
+// size      8 bytes
+// prototype void (__thiscall ?on_double_clicked@FileWin@@QAEXH@Z)(FileWin* this, int)
+// callers   1   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x006146A0
+Status: Complete
+*/
+void FileWin::on_double_clicked(int a1) {
+    UNK4();
 }
 
 // ORIGINAL: 0x00614C50 ?filebox_draw@FileWin@@QAAXPAUGraphicWin@@HHHHH@Z 0x00614C50-0x00614D84 BYTE_EXACT
@@ -677,205 +864,6 @@ void __cdecl FileWin::filebox_draw(GraphicWin *window, int item_kind, int,
     }
 }
 
-/*
-Purpose: Compose a FileWin from four member subobjects (two FlatButtons, an
-         EditBox, a most-derived ListBox), then clear the window's own
-         name-buffer/selection fields and append one text-table entry.
-// ORIGINAL: 0x00613850 ??0FileWin@@QAE@XZ 0x00613850-0x006138F9;0x006630E0-0x00663114 BYTE_EXACT
-// size      221 bytes
-// prototype void (__thiscall ??0FileWin@@QAE@XZ)(FileWin* this)
-// callers   1   call targets   4
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x00607CF0 0x00609DB0 0x00614E50 0x00645470
-// TRIED: MEASURED 8/42 agreeing - the SEH prologue itself matches
-//            (`push -1/handler; mov eax,fs:[0]; push eax; mov fs:[0],esp`,
-//            instructions 0-6 all agree), so this is NOT the CheckBox/
-//            EditGroup family's esp-vs-ebp divergence. The first mismatch is
-//            register allocation for the four member pointers (`push
-//            esi/mov esi,ecx` vs this body's extra `push ebp`), which
-//            plain member declarations (relying on FlatButton's own real
-//            ctor for implicit construction) did not converge on.
-Return Value: n/a
-Status: Complete
-*/
-FileWin::FileWin() {
-    // The declared members construct once, in declaration order. ListBox's
-    // most-derived flag is a compiler ABI argument, not a second construction.
-    selected_path_[0] = 0;
-    selected_basename_[0] = 0;
-    file_name_[0] = 0;
-    extension_count_ = 0;
-    directory_[0] = 0;
-    strcat(directory_, FileWinTextTableDefault);
-    modal_window_ = 0;
-    directory_list_handle_ = 0;
-}
-
-
-/*
-Purpose: Close the file dialog: close the two button strips, the edit box
-         and the list (each a virtual or member close on its subobject),
-         reset the window's own name/selection fields and append the text
-         table's second '.' entry, close the dialog's three fixed sprites,
-         drop the selection word, and destroy the dialog's own window
-         handle if one was created.
-
-// ORIGINAL: 0x00613900 ?close@FileWin@@QAEXXZ 0x00613900-0x006139AC FILE BYTE_EXACT
-// size      172 bytes
-// prototype void (__thiscall ?close@FileWin@@QAEXXZ)(FileWin* this)
-// callers   5   call targets   4
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005E3820 0x00609F20 0x00614F30 0x00645470
-// indirect  0x00613910 0x00613922 0x0061399D
-// TRIED (seed): DestroyWindowFn via *g_0066930c (established lever from
-//         00635750.cpp/00635450.cpp) compiles clean; mnemonic sim 0.95,
-//         one pop/pop vs add-esp reorder right after the strcat call (#23)
-//         not chased further. The two indirect sites are the FlatButton
-//         slot-90 closes (BaseButton's virtual close, basebutton.h); the
-//         third is user32!DestroyWindow through its import slot.
-Status: Coverage transcription - unclaimed body
-*/
-void FileWin::close() {
-    flat_button2_.close();
-    flat_button1_.close();
-    edit_box_.close();
-    list_box_.close();
-    selected_path_[0] = 0;
-    selected_basename_[0] = 0;
-    file_name_[0] = 0;
-    extension_count_ = 0;
-    directory_[0] = 0;
-    strcat(directory_, FileWinTextTableDefaultNext);
-    shared_sprite1_.close();
-    shared_sprite0_.close();
-    shared_sprite2_.close();
-    modal_window_ = 0;
-    if (directory_list_handle_ != 0) {
-        DestroyWindow(directory_list_handle_);
-        directory_list_handle_ = 0;
-    }
-}
-
-// ORIGINAL: 0x00613BA0 ?prepare_sprites@FileWin@@QAEHXZ 0x00613BA0-0x00613D47;0x00663114-0x00663129 BYTE_EXACT
-// FileWin::prepare_sprites builds the three independent dialog sprites from
-// the PCX sheet, or creates blank substitutes when the sheet cannot load.
-// The original has a separate cold unwind span; the source-owned Buffer
-// lifetime lets C++ generate that cleanup without encoding its old address.
-int FileWin::prepare_sprites() {
-    Buffer sheet;
-    int result;
-    if (sheet.load_pcx(FileWinSpriteSheet, 0, 10, 0xEC) != 0) {
-        result = shared_sprite1_.create_blank(0x10, 0x10, 9);
-        if (result != 0) return result;
-        result = shared_sprite0_.create_blank(0x10, 0x10, 9);
-        if (result != 0) return result;
-        result = shared_sprite2_.create_blank(0x10, 0x10, 9);
-        if (result != 0) return result;
-    } else {
-        result = shared_sprite1_.extract(&sheet, 9, 1, 1, 0x10, 0x10, 0);
-        if (result != 0) return result;
-        result = shared_sprite0_.extract(&sheet, 9, 0x12, 1, 0x10, 0x10, 0);
-        if (result != 0) return result;
-        result = shared_sprite2_.extract(&sheet, 9, 0x23, 1, 0x10, 0x10, 0);
-        if (result != 0) return result;
-    }
-    return 0;
-}
-
-/*
-Purpose: Unknown; the legacy implementation is a bare return with no body.
-// ORIGINAL: 0x00614B80 ?UNK6@FileWin@@QAEXXZ 0x00614B80-0x00614B81 BYTE_EXACT
-// size      1 bytes
-// prototype void (__thiscall ?UNK6@FileWin@@QAEXXZ)(FileWin* this)
-// callers   0   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void FileWin::UNK6() {
-}
-
-
-/*
-Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-// ORIGINAL: 0x00614350 ?UNK2@FileWin@@QAEXH@Z 0x00614350-0x00614353 BYTE_EXACT
-// size      3 bytes
-// prototype void (__thiscall ?UNK2@FileWin@@QAEXH@Z)(FileWin* this, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void FileWin::UNK2(int) {
-}
-
-
-/*
-Purpose: Clear the file window's three name buffers, its selection index and
-         one trailing flag.
-// ORIGINAL: 0x00614320 ?UNK1@FileWin@@QAEXXZ 0x00614320-0x00614341 BYTE_EXACT
-// size      33 bytes
-// prototype void (__thiscall ?UNK1@FileWin@@QAEXXZ)(FileWin* this)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void FileWin::UNK1() {
-    selected_path_[0] = 0;
-    selected_basename_[0] = 0;
-    file_name_[0] = 0;
-    directory_[0] = 0;
-    extension_count_ = 0;
-}
-
-// Copy a caller-supplied path into FileWin's own directory storage. A null
-// path clears it; an overlong path leaves the previous value intact.
-// ORIGINAL: 0x006142D0 ?set_directory@FileWin@@QAEHPAD@Z 0x006142D0-0x0061431E BYTE_EXACT
-int FileWin::set_directory(char *directory) {
-    if (directory == 0) {
-        directory_[0] = 0;
-        return 0;
-    }
-    if (strlen(directory) > 0x104) {
-        return 3;
-    }
-    directory_[0] = 0;
-    strcat(directory_, directory);
-    return 0;
-}
-
-// This was a fabricated slot-58 shim in the exact seed. Win establishes
-// slot 58 as release_modal, and field +0x63C holds that Win receiver.
-// ORIGINAL: 0x00614B60 ?UNK5@FileWin@@QAEXXZ 0x00614B60-0x00614B78 BYTE_EXACT
-void FileWin::UNK5() {
-    field_638_ = 0x12c;
-    modal_window_->release_modal();
-}
-
-
-/*
-// ORIGINAL: 0x00614C40 ?on_double_clicked@FileWin@@QAEXH@Z 0x00614C40-0x00614C48 BYTE_EXACT
-// size      8 bytes
-// prototype void (__thiscall ?on_double_clicked@FileWin@@QAEXH@Z)(FileWin* this, int)
-// callers   1   call targets   1
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x006146A0
-Status: Complete
-*/
-void FileWin::on_double_clicked(int a1) {
-    UNK4();
-}
-
 
 
 /*
@@ -897,14 +885,6 @@ void FileWin::on_double_clicked(int a1) {
 // the calls real where the image has real calls (string_routine_pragma).
 Status: Complete
 */
-// 0x006971CC and 0x006971D4 - the image stores both names INLINE in .rdata
-// ("FILEWIN", then "jackal"), so the tree stores them inline too. The raw
-// fixed-address bindings read unmapped memory in the standalone build, which
-// is where the boot's `return 6` out of jackal_init_real came from.
-// RECOVERY_OBJECT: v1 0x006971CC _kFileWinSection
-static const char kFileWinSection[] = "FILEWIN";  // 0x006971CC
-// RECOVERY_OBJECT: v1 0x006971D4 _kFileWinTextName
-static const char kFileWinTextName[] = "jackal";  // 0x006971D4
 // 0x009B90A8 - the loaded file's text buffer: init_class stages text_get()'s
 // string into it through mem_get, and close_class frees it once. THE OBJECT,
 // not the `static int *const s_filewin_text_ptr = (int *)0x009B90A8` binding:
@@ -919,7 +899,9 @@ int __cdecl FileWin::init_class() {
         free(s_filewin_text_ptr);
         s_filewin_text_ptr = nullptr;
     }
-    if (text_open(kFileWinTextName, kFileWinSection) != 0) {
+// RECOVERY_LITERAL: v1 0x006971CC 0x006971D4 $SG45830 0x00614D90
+// RECOVERY_LITERAL: v1 0x006971D4 0x006971DB $SG45831 0x00614D90
+    if (text_open("jackal", "FILEWIN") != 0) {
         return 6;
     }
     char *str = text_get();
