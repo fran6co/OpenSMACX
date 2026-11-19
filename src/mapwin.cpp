@@ -3943,54 +3943,54 @@ LAB_0046441f:
     // indexed [corner * 4 + sub] (one shared byte offset in the image,
     // 0x46456D..0x4645E7).
     if ((a6 & 0x2000000) == 0) {
-        for (int corner = 0; corner < 4; corner++) {
-            if (local_18 != 0 || coastal_mask[corner] != 0) {
+        for (iVar5 = 0; iVar5 < 4; iVar5++) {
+            if (local_18 != 0 || coastal_mask[iVar5] != 0) {
                 for (int sub = 0; sub < 4; sub++) {
-                    OceanCornerShades[corner * 4 + sub] = 0;
-                    const int direction = (sub + corner - 2) & 3;
-                    OceanCornerVerts[corner * 4 + sub].x =
-                        CornerOffsetX[corner][direction] * local_78 + a9;
-                    OceanCornerVerts[corner * 4 + sub].y =
-                        CornerOffsetY[corner][direction] * local_98 + a10;
+                    OceanCornerShades[iVar5 * 4 + sub] = 0;
+                    const int direction = (sub + iVar5 - 2) & 3;
+                    OceanCornerVerts[iVar5 * 4 + sub].x =
+                        CornerOffsetX[iVar5][direction] * local_78 + a9;
+                    OceanCornerVerts[iVar5 * 4 + sub].y =
+                        CornerOffsetY[iVar5][direction] * local_98 + a10;
                     // 0x4645BD reads the shade before 0x4645C4/CA read the
                     // UV pair: the UV copy follows the call.
-                    OceanCornerShades[corner * 4 + sub] =
-                        OceanDetailShade[alt_get_ocean_detail(a7, a8, corner,
+                    OceanCornerShades[iVar5 * 4 + sub] =
+                        OceanDetailShade[alt_get_ocean_detail(a7, a8, iVar5,
                                                               sub)];
-                    ocean_uv[corner * 4 + sub].x =
+                    ocean_uv[iVar5 * 4 + sub].x =
                         TerrainLandmarkStorageWindowData
-                            .ocean_corner_uvs[corner * 4 + sub].x;
-                    ocean_uv[corner * 4 + sub].y =
+                            .ocean_corner_uvs[iVar5 * 4 + sub].x;
+                    ocean_uv[iVar5 * 4 + sub].y =
                         TerrainLandmarkStorageWindowData
-                            .ocean_corner_uvs[corner * 4 + sub].y;
+                            .ocean_corner_uvs[iVar5 * 4 + sub].y;
                 }
                 if (local_18 != 0 && local_20 == 0) {
                     // 0x46460C: jge against 0x10, then four separate
                     // subtractions of the same register (no loop).
-                    if (OceanCornerShades[corner * 4 + 0] >= 0x10 ||
-                        OceanCornerShades[corner * 4 + 1] >= 0x10 ||
-                        OceanCornerShades[corner * 4 + 2] >= 0x10 ||
-                        OceanCornerShades[corner * 4 + 3] >= 0x10) {
-                        ocean_zvals[0] = OceanCornerShades[corner * 4 + 0] - 0x10;
-                        ocean_zvals[1] = OceanCornerShades[corner * 4 + 1] - 0x10;
-                        ocean_zvals[2] = OceanCornerShades[corner * 4 + 2] - 0x10;
-                        ocean_zvals[3] = OceanCornerShades[corner * 4 + 3] - 0x10;
+                    if (OceanCornerShades[iVar5 * 4 + 0] >= 0x10 ||
+                        OceanCornerShades[iVar5 * 4 + 1] >= 0x10 ||
+                        OceanCornerShades[iVar5 * 4 + 2] >= 0x10 ||
+                        OceanCornerShades[iVar5 * 4 + 3] >= 0x10) {
+                        ocean_zvals[0] = OceanCornerShades[iVar5 * 4 + 0] - 0x10;
+                        ocean_zvals[1] = OceanCornerShades[iVar5 * 4 + 1] - 0x10;
+                        ocean_zvals[2] = OceanCornerShades[iVar5 * 4 + 2] - 0x10;
+                        ocean_zvals[3] = OceanCornerShades[iVar5 * 4 + 3] - 0x10;
                         // 0x46468B pushes the literal 0x41: no shade select
                         // on this path.
                         if (local_1c != 0) {
                             g_OCEAN_TEXTURES[1].draw(
-                                buffer, OceanCornerVerts + corner * 4,
-                                ocean_zvals, 4, ocean_uv + corner * 4);
+                                buffer, OceanCornerVerts + iVar5 * 4,
+                                ocean_zvals, 4, ocean_uv + iVar5 * 4);
                         } else {
                             g_OCEAN_TEXTURES[1].draw(
-                                buffer, OceanCornerVerts + corner * 4,
-                                ocean_zvals, 4, ocean_uv + corner * 4, 0x41);
+                                buffer, OceanCornerVerts + iVar5 * 4,
+                                ocean_zvals, 4, ocean_uv + iVar5 * 4, 0x41);
                         }
                     }
                     g_OCEAN_TEXTURES[0].draw2(
-                        buffer, OceanCornerVerts + corner * 4,
-                        OceanCornerShades + corner * 4, 4,
-                        ocean_uv + corner * 4, 0x10,
+                        buffer, OceanCornerVerts + iVar5 * 4,
+                        OceanCornerShades + iVar5 * 4, 4,
+                        ocean_uv + iVar5 * 4, 0x10,
                         local_1c != 0 ? -1 : 0x41);
                 }
             }
@@ -4275,9 +4275,9 @@ LAB_0046441f:
             // Original 0x0046517B/0x004651B2 reload the map width/base
             // after whose_territory, then cache the center's region (+3).
             local_c0 = map_tiles()[MapLongitude * a8 + local_14].region;
-            for (int k = 0; k < 8; k++) {
-                iVar5 = wrap_map_x(VehMoveDeltaX[k] + a7);
-                iVar19 = VehMoveDeltaY[k] + a8;
+            for (local_94 = 0; local_94 < 8; local_94++) {
+                iVar5 = wrap_map_x(VehMoveDeltaX[local_94] + a7);
+                iVar19 = VehMoveDeltaY[local_94] + a8;
                 if (iVar19 >= 0 && iVar19 < MapLatitudeBounds && iVar5 >= 0 &&
                     iVar5 < MapLongitudeBounds &&
                     ((map_tiles()[MapLongitude * iVar19 + (iVar5 >> 1)]
@@ -4292,16 +4292,16 @@ LAB_0046441f:
                     if (territory_faction != uVar12) {
                         local_44 = 1;
                         cVar4 = (char)territory_faction;
-                        if (((uint32_t)k & 1) == 0) {
-                            if (k == 0) {
+                        if (((uint32_t)local_94 & 1) == 0) {
+                            if (local_94 == 0) {
                                 territory_mask[8] = cVar4 + 1;
                                 territory_mask[2] = cVar4 + 1;
                             } else {
-                                territory_mask[k] = cVar4 + 1;
-                                territory_mask[k + 2] = cVar4 + 1;
+                                territory_mask[local_94] = cVar4 + 1;
+                                territory_mask[local_94 + 2] = cVar4 + 1;
                             }
                         }
-                        territory_mask[k + 1] = cVar4 + 1;
+                        territory_mask[local_94 + 1] = cVar4 + 1;
                     }
                 }
             }
