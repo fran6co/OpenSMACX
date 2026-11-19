@@ -370,7 +370,14 @@ class BasePop : public GraphicWin {
   // member declarations below, the same way ??1DipEdit is generated from
   // dipedit.h. An empty body produces the identical chain; the one call the
   // member list cannot produce is the image's opening `call ?close`.
+#ifdef BASEPOP_DTOR_EXTRA
+  // WORKAROUND(inline): a unit may append dead statements (they fold to no
+  // code) to raise this body's /Ob2 cost. Only jackal/caviar.cpp defines the
+  // macro, for Caviar::init_class 0x006185A0; see the LEVER note there.
+  ~BasePop() { close(); BASEPOP_DTOR_EXTRA }
+#else
   ~BasePop() { close(); }
+#endif
   void set_loc(int x, int y);
   // NetMsg preserves the original local-popup auto-hide value at +0x30AC.
   void set_auto_hide_value(uint32_t value) { field_30AC_ = value; }

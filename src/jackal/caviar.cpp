@@ -22,6 +22,15 @@ extern const char BufferJoinSpace[];/*
 // ORIGINAL: 0x00616B00 sub_616b00 0x00616B00-0x00616B1F FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned complete decode establishes this exclusive span and paired startup/atexit cleanup. Original receivers 9B9108 and 9B96B0 share guard byte9B9104 with independent masks1 and2; cleanup sets its bit before direct complete Buffer destruction.", "Private lifetime storage contains one Buffer at offset zero. The lifetime wrapper is a chosen implementation, not a recovered original class name or evidence for a larger combined allocation. A then B startup implies B then A atexit cleanup; explicit Caviar close retains A then B ordering.", "Physical COFF startup and registered-cleanup references identify the corresponding source-owned Buffer storage. The adjacent symbol fact identifies this operation; the stored object has Buffer type, while CaviarSceneBufferLifetime is a chosen lifetime wrapper, not an original class-name claim. Explicit Buffer-qualified destruction avoids virtual deleting dispatch. Startup byte restoration and full linked/runtime fidelity remain obligations; this binding banks no claim."], "reason": "Bind the original Caviar scene Buffer fini to its source-owned guarded C++ lifetime."}
 // symbol    _$E19
+// WORKAROUND(inline): see Caviar::init_class. Dead statements appended to
+// ~BasePop's in-class body for this unit only (they fold to no code); they
+// raise the destructor's /Ob2 cost so init_class expands it at four return
+// sites and calls it at the last two, as the image does.
+#define BASEPOP_DTOR_EXTRA \
+    if (sizeof(int) == 3) close(); if (sizeof(int) == 3) close(); \
+    if (sizeof(int) == 3) close(); if (sizeof(int) == 3) close(); \
+    if (sizeof(int) == 3) close(); if (sizeof(int) == 3) close(); \
+    if (sizeof(int) == 3) close(); if (sizeof(int) == 3) close();
 #include "stdafx.h"
 #include "caviar.h"
 #include "caviar_io.h"
@@ -847,23 +856,70 @@ Purpose: Boot the CAVIAR voxel renderer. Hands the vx_* file-IO callbacks to
 //           (static member: WinMain's `call 0x6185a0` sets up no ecx, so a
 //           plain member would C2352 - the same rule as palette.h's
 //           set_active_window, which is why the emitted name spells S not Q)
-// TRIED: explicit __try/__except(EXCEPTION_EXECUTE_HANDLER) returning 0x17
-//        around the post-construction body - C2712, VC6 refuses __try in a
-//        function that requires object unwinding, and pop needs it. Measured
-//        2026-08-29; reverted. The image's own shape is out of C++ reach: a
-//        byte scan of .text and SELFMOD finds exactly ONE executable branch
-//        into the teardown block at 0x618763 (the `jmp 0x618873` tail of the
-//        block above it), so that block is referenced ONLY by the scope
-//        table at 0x6632e7 - it IS an __except handler - and the image's
-//        per-path teardown chains (state variable [esp+0x325c] walking
-//        9..1, 0x12..0xa, 0x1b..0x13, 0x24..0x1c) are its unwind actions.
-//        Those chains destroy pop's MEMBERS directly - 0x406820 (StringStruct
-//        dtor) at +0x2150/+0x2180, 0x4066c0 on the second one's virtual base
-//        at +0x21a8, 0x406910+0x608e10+0x5d4dd0 on the Dialogs slab at
-//        +0x21d0 - where the out-of-line ??1BasePop (0x4064D0) spells the
-//        same teardown as remove_all (0x402970) calls. This body's returns
-//        all run ??1BasePop instead, which is the same work at runtime and
-//        not reproducible from any C++ spelling that also links.
+// The shipped image has the end of the CAVIAR_INVALIDCPU arm overwritten after
+// the link: 0x0061874B..0x00618762 is eighteen nops, `jmp 0x618873` at
+// 0x0061875D and one more nop. A nop run is not VC6 output, and the two
+// loads that feed it survive just above it (`mov ecx,[pop+0xA48]` the
+// popup's caption at 0x0061873E, `mov edx,[HandleMain]` at 0x00618745), read
+// by nothing. What the 24 bytes held, and how far each part is proven:
+//   - PROVEN by layout: the image's base-relocation table still carries two
+//     entries inside the run, 0x0061874F and 0x00618756 (the same two, at the
+//     same offsets, in SMAC's terran.exe copy at 0x0063288B). An absolute
+//     field at +4 and one at +11 with ecx and edx pending is
+//     `push imm8; push ecx; push offset32; push edx; call [import]`
+//     (2+1+5+1+6 bytes): a four-argument stdcall import taking (edx, a
+//     static address, ecx, a small constant) = (HandleMain, text, caption,
+//     flags). Every other fatal-message site of the library is this idiom
+//     on MessageBoxA with StringTemp as the text (0x005D47B0..0x005D47BE:
+//     `push 0; push caption; push offset StringTemp; push 0; call
+//     [MessageBoxA]`; 0x005D452E and 0x005D77A5 with `push 0x30`), and
+//     StringTemp is what the loop above has just built.
+//   - PROVEN by layout: the remaining nine bytes 0x0061875A..0x00618762
+//     carry no relocation and end exactly where the patch's `jmp` ends; the
+//     jmp sits at 0x0061875D, three bytes into them, and its target
+//     0x00618873 (the code after the arm) is 0x110 past 0x00618763. A
+//     three-byte `cmp eax, imm8` and a six-byte `je/jne near` to 0x00618873
+//     is the only VC6 statement of that shape: the patch turned the `0F 8x
+//     rel32` into `E9 rel32+1; nop` in place and blanked the call. The
+//     fall-through at 0x00618763 is the arm's own `return 0x17` (teardown
+//     states 9..1, then `mov eax, 0x17`): it is NOT an __except handler, as
+//     an earlier note here claimed - the scope table at 0x0067FE40 has 37
+//     unwind states and no try block, and the block was reached by falling
+//     out of the patched span.
+//   - NOT PROVEN (masked by the declaration, chosen as the plain reading of
+//     jackal.txt's `#caption CPU NOT SUPPORTED` / `#button PLAY ANYWAY`
+//     entry): the import slot (the stale field's value is gone; MessageBoxA
+//     by the sibling idiom), the flags byte (MB_OKCANCEL |
+//     MB_ICONEXCLAMATION here; it is nonzero, since zero would be the live
+//     `push ebx`), the compared button id (IDOK) and the branch sense.
+// RECOVERY_IMAGE_PATCH: v1 0x0061874B 0x00618763 nop-jmp 0x0061875D 0x00618873
+// LEVER  2026-11-19: structure from the image. EH: 37 states = four expanded
+//        ~BasePop teardowns of nine states each (the invalid-CPU `return
+//        0x17`, three `return 4`), while the last two returns CALL ??1BasePop
+//        0x004064D0; the unwind funclets 0x00663150 measure BYTE_EXACT. Call
+//        multiset equal (callseq): the list walk is `seek_pos(-1)` and
+//        `next_text()` expanded (next_entry inline, current_entry called);
+//        the record is addressed through CaviarScene.created_ at every store
+//        and in the ramp loop (reloaded each iteration, no local), with the
+//        ramp offset a second induction variable. Frame 0x3248.
+//        The teardown depths (site 1: ??_DDialogs and unit_ids_'s
+//        ??_DStringList expanded; sites 2-3: ??_DDialogs expanded; site 4:
+//        neither; sites 5-6: ~BasePop called) are the "outer dearer than
+//        inner" prefix regime of MATCHING_GUIDE 2.8. No in-caller spend
+//        reaches it (probe sweeps: next_entry is refused before site 5 is);
+//        it needs ~BasePop itself to cost 4-10 `if` units more in this unit
+//        AND 22-40 free expansions before the first return site. Tree-wide
+//        the costlier ~BasePop is wrong (feall: 33-40 exact game functions
+//        lost), so both are WORKAROUND(inline) stand-ins local to this unit
+//        (BASEPOP_DTOR_EXTRA, caviar_init_class_budget_probe); the original
+//        spelling that gives this unit that cost is not identified.
+// TRIED: the residual (14 rows outside the patched span) is instruction
+//        scheduling in two straight-line blocks: the descriptor stores
+//        (image: `[setup+4]=mem` and the A.stride load before the two
+//        pushes; ours after) and the record stores (image loads 0xFF just
+//        before its first use, ours two statements early). Store/load
+//        orders, hoisted locals for any subset of the five loads, chained
+//        assignments, a named 0xFF, 64 front-end counter pads: no change.
 // TRIED: int return on vox_init_callbacks tested `test eax, eax` against the
 //        image's `test al, al`; the forwarder now returns char and the test
 //        agrees (18 -> 19 of 392 at /O2 /GX).
@@ -877,21 +933,21 @@ Purpose: Boot the CAVIAR voxel renderer. Hands the vx_* file-IO callbacks to
 //        image's own `76 08` byte-for-byte at 0x00618625/0x00618626, one byte
 //        of alignment earlier. vox_init_callbacks (0x6392E0) carries the same
 //        check spelled the same way.
-// TRIED: holding the popup StringList in a named local versus re-deriving
-//        `&pop + 0x2180` at every use - identical scores (19/392, 195
-//        compiled). The image's prologue pushes one register fewer than
-//        either spelling; kept the named local for readability.
-// TRIED: the image INLINES seek_pos(-1), next_entry and current_entry of the
-//        popup's StringList at +0x2180 (~60 of the ~200 remaining divergent
-//        instructions); those are BYTE_EXACT out-of-line members in
-//        stringstruct.cpp, so __forceinline-ing them for this one site would
-//        regress their own claims and every other call site. Ceiling noted,
-//        not chased.
 Return Value: 0 on success, 4 when a scene surface or the colour table could
-              not be created, 0x17 when the render record could not.
-Status: REWRITTEN under RAII - the body is faithful; the notes above carry
-        what measurement showed about the remaining divergence.
+              not be created, 0x17 when the render record could not or the
+              unsupported-CPU box was not confirmed.
+Status: REWRITTEN under RAII; the notes above carry what the image proves
+        and what measurement showed about the remaining divergence.
 */
+// WORKAROUND(inline): dead /Ob2 probe, not recovered code; the constant
+// argument folds it away. 32 expansions before the first return site give
+// init_class the pass-2 room the image shows (see the LEVER note above).
+static inline int caviar_init_class_budget_probe(int x) { if (x == 0) x = 1; return x; }
+#define CAVIAR_INIT_CLASS_PROBE8 \
+    caviar_init_class_budget_probe(5); caviar_init_class_budget_probe(5); \
+    caviar_init_class_budget_probe(5); caviar_init_class_budget_probe(5); \
+    caviar_init_class_budget_probe(5); caviar_init_class_budget_probe(5); \
+    caviar_init_class_budget_probe(5); caviar_init_class_budget_probe(5);
 int Caviar::init_class() {
     // The popup infrastructure, its heap, buttons and sprite. Its real
     // constructor (0x00600860, in basepop.cpp) builds every subobject the
@@ -910,6 +966,10 @@ int Caviar::init_class() {
         &Caviar::vx_malloc, &Caviar::vx_free, &Caviar::vx_read,
         &Caviar::vx_write, &Caviar::vx_seek, &Caviar::vx_tell};
 
+    CAVIAR_INIT_CLASS_PROBE8  // WORKAROUND(inline): see the probe above
+    CAVIAR_INIT_CLASS_PROBE8  // WORKAROUND(inline)
+    CAVIAR_INIT_CLASS_PROBE8  // WORKAROUND(inline)
+    CAVIAR_INIT_CLASS_PROBE8  // WORKAROUND(inline)
     if (vox_init_callbacks(&vx_callbacks, 1) != 0) {
         // The engine sized up this machine's CPU. Without a stored
         // preference - or with one above the known range - tell the player
@@ -929,14 +989,16 @@ int Caviar::init_class() {
             StringTemp[0] = 0;
             unit_ids.seek_pos(-1);
             for (int i = 0; i < unit_ids.entry_count_; ++i) {
-                unit_ids.next_entry();
-                const char *entry_text = 0;
-                if (unit_ids.current_ != 0) {
-                    // The payload node's second word is the display name.
-                    entry_text = unit_ids.current_entry()->text;
-                }
-                strcat(StringTemp, entry_text);
+                strcat(StringTemp, unit_ids.next_text());
                 strcat(StringTemp, BufferJoinSpace);
+            }
+            // The shipped image has this statement patched out (see the
+            // RECOVERY_IMAGE_PATCH note above): the caption and window loads
+            // survive at 0x0061873E/0x00618745, the rest is the nop run.
+            // WORKAROUND(decl): flags and button id are not recoverable.
+            if (MessageBoxA(HandleMain, StringTemp, pop.caption_text(),
+                            MB_OKCANCEL | MB_ICONEXCLAMATION) != IDOK) {
+                return 0x17;
             }
         }
     }
@@ -966,13 +1028,15 @@ int Caviar::init_class() {
     vox_fill_colour_table(CaviarSceneMemory, 0xffff, 0x10000);
 
     // The descriptor block, in the image's store order.
+    void *const bits_a = CaviarSceneBufferA.buffer().dib_bits_;
+    void *const bits_b = CaviarSceneBufferB.buffer().dib_bits_;
     CaviarScene.setup_.depth_buffer_ = CaviarSceneMemory;
     CaviarScene.setup_.colour_row_step_ = CaviarSceneBufferA.buffer().stride_;
-    CaviarScene.setup_.colour_buffer_ = CaviarSceneBufferA.buffer().dib_bits_;
+    CaviarScene.setup_.colour_buffer_ = bits_a;
     CaviarScene.setup_.colour_width_ = 0x100;
     CaviarScene.setup_.height_ = 0x100;
     CaviarScene.setup_.pixel_size_ = 1;
-    CaviarScene.setup_.shadow_buffer_ = CaviarSceneBufferB.buffer().dib_bits_;
+    CaviarScene.setup_.shadow_buffer_ = bits_b;
     CaviarScene.setup_.shadow_row_step_ = CaviarSceneBufferB.buffer().stride_;
     CaviarScene.setup_.depth_row_step_ = 0x100;
 
@@ -983,14 +1047,13 @@ int Caviar::init_class() {
         return 0x17;
     }
 
-    VoxRenderRecord *const record = CaviarScene.created_;
-    record->draw_.left_ = 0;
-    record->draw_.top_ = 0;
-    record->draw_.right_ = 0xff;
-    record->draw_.bottom_ = 0xff;
-    record->draw_.width_ = 0x100;
-    record->draw_.height_ = 0x100;
-    record->object_start_callback_ = &Caviar::object_start;
+    CaviarScene.created_->object_start_callback_ = &Caviar::object_start;
+    CaviarScene.created_->draw_.left_ = 0;
+    CaviarScene.created_->draw_.top_ = 0;
+    CaviarScene.created_->draw_.right_ = 0xff;
+    CaviarScene.created_->draw_.bottom_ = 0xff;
+    CaviarScene.created_->draw_.width_ = 0x100;
+    CaviarScene.created_->draw_.height_ = 0x100;
 
     // The record's two 256-entry ramp tables. Table A's entries are the
     // addresses of successive 0x100-byte shade rows of the colour table;
@@ -1000,13 +1063,13 @@ int Caviar::init_class() {
     // of the scene memory - half a scene row per shade level, the engine's
     // own ramp granularity. Table B holds the same rows ADDRESSED FROM
     // ZERO; the engine adds the scene base when it renders.
-    uint16_t **const ramp_a = record->ramp_a_ptr_;
-    int32_t *const ramp_b = record->ramp_b_ptr_;
+    int row_offset = 0;
     uint16_t *shade_row = CaviarSceneMemory;
     for (int index = 0; index < 0x100; ++index) {
-        ramp_a[index] = shade_row;
+        CaviarScene.created_->ramp_a_ptr_[index] = shade_row;
         shade_row += 0x80;
-        ramp_b[index] = index * 0x100;
+        CaviarScene.created_->ramp_b_ptr_[index] = row_offset;
+        row_offset += 0x100;
     }
 
     CaviarViewportState.left = 0;
