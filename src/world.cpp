@@ -1255,12 +1255,6 @@ void __cdecl world_shorelines() {
     }
 }
 
-// Pinned NUL-terminated log text at 0x00691E2C and 0x00691E4C. The
-// following alignment bytes are not part of either string's source extent.
-// RECOVERY_OBJECT: v2 0x00691E2C 0x00691E4A _WorldClimateStartLog 0x005C5A30
-static char WorldClimateStartLog[] = "-- ADJUSTING WORLD CLIMATE --";
-// RECOVERY_OBJECT: v2 0x00691E4C 0x00691E69 _WorldClimateCompleteLog 0x005C5A30
-static char WorldClimateCompleteLog[] = "-- WORLD CLIMATE COMPLETE --";
 
 /*
 Purpose: Regenerate the world's climate: shorelines, temperature, rivers,
@@ -1282,7 +1276,8 @@ Status: Complete
 */
 void __cdecl world_climate() {
     do_checksums(2);
-    log_say(WorldClimateStartLog, 0, 0, 0);
+// RECOVERY_LITERAL: v1 0x00691E2C 0x00691E4A $SG58646 0x005C5A30
+    log_say("-- ADJUSTING WORLD CLIMATE --", 0, 0, 0);
     world_shorelines();
     world_temperature();
     world_rivers();
@@ -1305,7 +1300,8 @@ void __cdecl world_climate() {
         WorldClimateWorldWin.clear_terrain();
     }
 
-    log_say(WorldClimateCompleteLog, 0, 0, 0);
+// RECOVERY_LITERAL: v1 0x00691E4C 0x00691E69 $SG58655 0x005C5A30
+    log_say("-- WORLD CLIMATE COMPLETE --", 0, 0, 0);
     do_checksums(3);
 }
 
