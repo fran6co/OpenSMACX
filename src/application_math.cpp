@@ -188,24 +188,3 @@ void __cdecl sort(int count, int *id, int *value) {
         }
     } while (swapped != 0);
 }
-
-/*
-Purpose: For the count, sort both id and value arrays by the greatest to least value (descending).
-Original Offset: n/a
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl sort_descending(uint32_t count, int *id, int *value) {
-    int bounds = count - 1;
-    BOOL has_swapped;
-    do {
-        has_swapped = false;
-        for (int i = 0; i < bounds; i++) {
-            if (value[i] < value[i + 1]) {
-                has_swapped = true;
-                swap(&value[i], &value[i + 1]);
-                swap(&id[i], &id[i + 1]);
-            }
-        }
-    } while (has_swapped);
-}

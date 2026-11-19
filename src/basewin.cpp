@@ -109,17 +109,6 @@ void __cdecl slide_show(GraphicWin *window, int mode);
 void __cdecl slide_hide(GraphicWin *window, int mode);
 
 
-static int psych_display_signed(uint32_t value) {
-    return value <= 0x7FFFFFFFu ? static_cast<int>(value)
-        : -1 - static_cast<int>(0xFFFFFFFFu - value);
-}
-static int psych_display_add(int left, int right) {
-    return psych_display_signed(static_cast<uint32_t>(left) + static_cast<uint32_t>(right));
-}
-static int psych_display_sub(int left, int right) {
-    return psych_display_signed(static_cast<uint32_t>(left) - static_cast<uint32_t>(right));
-}
-
 
 // Recompute can change the worked-square allocation. Network notification is
 // conditional on that live state changing, not simply on invoking the screen.
@@ -137,9 +126,6 @@ void BaseWin::compute_selected_base() {
 static inline int specialist_type(int i) {
     return i >= 16 ? best_specialist()
         : (BaseCurrent->spec[i >> 3] >> ((i & 7) * 4)) & 15;
-}
-static int specialist_at(const Base &base, int position) {
-    return (base.spec[position >> 3] >> ((position & 7) * 4)) & 15;
 }
 
 // farm_click, pop_click, base_editor and garrison_click expand this body

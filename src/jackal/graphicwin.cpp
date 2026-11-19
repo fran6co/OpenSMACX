@@ -425,11 +425,6 @@ Verification note: the calling convention of the 0xA10 paint hook is inferred,
          ABI-identical here, so either spelling works and neither is a
          callee-pop fact.
 */
-uint32_t GraphicWin::field_A0C_value() const {
-    uint32_t value = 0;
-    memcpy(&value, &field_A0C_, sizeof(value));
-    return value;
-}
 
 // ORIGINAL: 0x005D63F0 ?on_redraw_nc@GraphicWin@@QAEXPAURECT@@H@Z 0x005D63F0-0x005D68B7 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Recover the complete non-client frame painter in GraphicWin using its real Win/Buffer/member ownership.","evidence":["Pinned GraphicWin table 0x66FC50 slot 67 selects 0x5D63F0.","Win::on_redraw_nc calls slot 60 with each live border Buffer and quadrant; the owned caption and frame members are source-typed.","The old recovered-unit seed retains its complete ORIGINAL span and call-list evidence in Git history; no byte claim or old frame-layout typo is converted into an acceptance claim."]}

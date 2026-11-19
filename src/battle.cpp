@@ -2504,17 +2504,6 @@ static inline int veh_cur_hp(int veh_id) {
 
 // ---------------------------------------------------------------------------
 
-// 0x50A863 / 0x50AC0D: the stack's combat units, the same call order at both
-// sites: (2,12), (1), (2,8), (2,11), (2,10).
-static inline int stack_combat_units(int veh_id) {
-    int c12 = stack_check(veh_id, 2, PLAN_ALIEN_ARTIFACT, -1, -1);
-    int n = stack_check(veh_id, 1, -1, -1, -1) - c12;
-    n -= stack_check(veh_id, 2, PLAN_COLONIZATION, -1, -1);
-    n -= stack_check(veh_id, 2, PLAN_INFO_WARFARE, -1, -1);
-    n -= stack_check(veh_id, 2, PLAN_SUPPLY_CONVOY, -1, -1);
-    return n;
-}
-
 // WORKAROUND(inline): the population-loss test of battle_fight's base
 // consequences (0x50ACB1..0x50AD8C) as an inline predicate. battle_fight's
 // /Ob2 pass-1 budget is never the limit (dead spend at its top refuses only

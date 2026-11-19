@@ -34,17 +34,8 @@ Purpose: Check the source file path and attempt to open a handle to the file.
 // flags     sp_ready;purged_ok
 // calls     0x006005D0 0x00645646
 Return Value: FILE pointer
-Status: Complete with two versions of fopen to prevent a crash. Incompatibility with newer SDK 
-        version of fopen/fopen_s. Revisit once more code is redirected to dll.
+Status: Complete
 */
-FILE *__cdecl env_open_old(LPCSTR source, LPCSTR mode) {
-    LPCSTR src_check = filefind_get(source);
-    if (!src_check) {
-        src_check = source;
-    }
-    return fopen(src_check, mode);
-}
-
 FILE *__cdecl env_open(LPCSTR source, LPCSTR mode) {
     LPCSTR src_check = filefind_get(source);
     if (!src_check) {

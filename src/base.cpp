@@ -5378,24 +5378,6 @@ Status: Complete
 
 
 
-/*
-Purpose: To assist with locating a facility based on a name rather than using hardcoded offsets.
-Original Offset: n/a
-Return Value: Offset value otherwise -1 if not found
-Status: Complete
-*/
-int __cdecl facility_offset(LPCSTR facil_search) {
-    int offset = -1;
-    for (uint32_t i = 0; i < MaxFacilityNum; i++) {
-        LPSTR fac_name = Facility[i].name;
-        if (fac_name && !_stricmp(facil_search, fac_name)) {
-            offset = i;
-            break;
-        }
-    }
-    return offset;
-}
-
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x004E7DC0 0x004E7E34 0x004E7E44 0x004E7DCB
 // ORIGINAL: 0x004E7DC0 ?resource_yield@@YAHHHHHH@Z 0x004E7DC0-0x004E7E34 FILE BYTE_EXACT
 // LEVER: TileYieldRestricted (0x0090E998, already declared in base.h) replaces

@@ -413,20 +413,6 @@ void __cdecl kill_lf(LPSTR str) {
 }
 
 /*
-Purpose: Remove newline (Windows: CR LF). This fixes a bug with TextIndex having CR at the end of 
-         "HEADER\r" breaking the compare. This is because it uses Filemap vs fopen(x, "rt").
-Original Offset: n/a
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl kill_nl(LPSTR str) {
-    LPSTR newline_loc = strstr(str, "\r\n");
-    if (newline_loc) {
-        *newline_loc = 0;
-    }
-}
-
-/*
 Purpose: Add a line feed (LF) to the end of a string. This assumes the buffer has an extra byte and 
          doesn't take into account a carriage return (CR).
 // ORIGINAL: 0x00600840 ?add_lf@@YAXPAD@Z 0x00600840-0x00600859 BYTE_EXACT

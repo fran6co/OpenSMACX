@@ -134,9 +134,6 @@ int MainInterfaceEndTurnAnimation = 1;
 // Retain the historical receiver-slot identity without claiming a new extent.
 // RECOVERY_OBJECT: v3 0x007AE818 ?BattleWinInitReceiver@@3PAVBattleWin@@A member ?InterfaceRegistry@@3PAPAVSubInterface@@A [10]
 SubInterface *InterfaceRegistry[12];
-void register_iface_mode(int slot, SubInterface *interface_entry) {
-    InterfaceRegistry[slot] = interface_entry;
-}
 
 // The image appends the shared ": " (0x00682E94) and " " (0x00682820) strings
 // at every use in draw_edit_pane; this unit's own literals stay separate
@@ -1573,10 +1570,6 @@ void MainInterface::timer_callback_daemon(int a1) {
 int IfaceIdToSlotStorage[30];
 // RECOVERY_OBJECT: v2 0x007D392C 0x007D3930 ?ActiveIfaceIdStorage@@3HA 0x00404BE8
 int ActiveIfaceIdStorage;
-
-bool __cdecl active_interface_slot_occupied() {
-    return IfaceIdToSlotStorage[ActiveIfaceIdStorage] != 0;
-}
 
 // The MessageWin the interface events are delivered to is now the real global
 // InterfaceMessageWin (messagewin.h / messagewin.cpp) - game.cpp's system_init

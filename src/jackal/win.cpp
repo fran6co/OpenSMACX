@@ -272,18 +272,6 @@ static uint32_t midpoint(uint32_t near_edge, uint32_t far_edge) {
     return near_edge + half;
 }
 
-static void move_rect(RECT &rect, int x, int y) {
-    // PLAIN ARITHMETIC. The bit-cast chain made this too big for VC6 to
-    // inline, and `Win::move` at 0x005ED7D0 has it written out in BOTH arms
-    // of its ternary - 43 instructions where a call is 14.
-    const int dx = x - rect.left;
-    const int dy = y - rect.top;
-    rect.left += dx;
-    rect.top += dy;
-    rect.right += dx;
-    rect.bottom += dy;
-}
-
 
 /*
 Purpose: Move the active window rectangle while preserving its dimensions.

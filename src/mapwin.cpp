@@ -151,9 +151,6 @@ void __cdecl help_any();
 void __cdecl action_arty(int vehicle_id, int x, int y);
 void __cdecl action_patrol(int vehicle_id, int x, int y);
 
-static int mapwin_dest_add(int left, int right);
-static int mapwin_dest_sub(int left, int right);
-static int mapwin_dest_mul(int left, int right);
 
 /*
 Purpose: Shore-edge detail for one corner of a tile whose scan found the coast.
@@ -709,16 +706,6 @@ int MapDestinationCost;
 int MapEditorPaintId;
 // RECOVERY_OBJECT: v2 0x00945AE4 0x00945AE8 ?MapEditorBrushId@@3HA 0x0046B510
 int MapEditorBrushId;
-
-uint32_t map_editor_paint_mask(int tool_id) {
-    return tool_id >= 6 && tool_id < 26
-        ? Terraforming[tool_id - 6].bit : 0;
-}
-
-uint32_t map_editor_erase_mask(int tool_id) {
-    return tool_id >= 6 && tool_id < 26
-        ? Terraforming[tool_id - 6].bit_incompatible : 0;
-}
 
 // Original46B510's retained seed supplies the control flow and tool cases.
 // The tile and redraw receivers now use their source-owned C++ objects.
@@ -2054,42 +2041,6 @@ void MapWin::draw_map(int draw_type) {
     }
 }
 
-static int mapwin_dest_add(int left, int right);
-static int mapwin_dest_sub(int left, int right);
-static int mapwin_dest_mul(int left, int right);
-
-static int map_dest_signed(uint32_t value) {
-    return value <= 0x7fffffffU ? static_cast<int>(value)
-                              : -1 - static_cast<int>(0xffffffffU - value);
-}
-
-static int mapwin_dest_add(int left, int right) {
-    return map_dest_signed(static_cast<uint32_t>(left) + static_cast<uint32_t>(right));
-}
-
-static int mapwin_dest_sub(int left, int right) {
-    return map_dest_signed(static_cast<uint32_t>(left) - static_cast<uint32_t>(right));
-}
-
-static int mapwin_dest_mul(int left, int right) {
-    return map_dest_signed(static_cast<uint32_t>(left) * static_cast<uint32_t>(right));
-}
-
-static int map_dest_abs(int value) {
-    return abs(value);
-}
-
-static int map_dest_half(int value) {
-    return value >> 1;
-}
-
-static int map_dest_distance(int x1, int y1, int x2, int y2) {
-    int dx = map_dest_abs(mapwin_dest_sub(x1, x2));
-    if ((MapIsFlat & 1) == 0 && dx > MapLongitude) {
-        dx = mapwin_dest_sub(MapLongitudeBounds, dx);
-    }
-    return mapwin_dest_add(dx, map_dest_abs(mapwin_dest_sub(y1, y2)));
-}
 
 
 // ORIGINAL: 0x004672C0 ?direct_dest_line@MapWin@@QAEXHHHHHHHH@Z 0x004672C0-0x0046742C BYTE_EXACT
@@ -2439,18 +2390,6 @@ void MapWin::on_mouse_move(int pixel_x, int pixel_y) {
             cursor_sprite_ = 0;
         }
     }
-}
-
-static bool map_radius_valid(int x, int y) {
-    return y >= 0 && y < MapLatitudeBounds &&
-           x >= 0 && x < MapLongitudeBounds;
-}
-
-static int map_radius_half_width(int extent, int row) {
-    // This is intentionally NOT a symmetric diamond. Original4693A4..3BB
-    // narrows negative rows by their distance, but positive rows by parity.
-    const int inset = row < 0 ? mapwin_dest_sub(0, row) : row & 1;
-    return mapwin_dest_sub(extent, inset);
 }
 
 // Original4216F0..42180C: genuine MapWin thiscall, not the seed's stdcall.

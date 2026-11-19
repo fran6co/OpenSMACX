@@ -852,10 +852,6 @@ static int map_data_block(FILE *file, void *buffer, unsigned int size) {
     return map_data_plain_block(file, buffer, size);
 }
 
-int __cdecl game_data_transfer_block(FILE *file, void *buffer, unsigned int size) {
-    return map_data_block(file, buffer, size);
-}
-
 int __cdecl game_data_plain_transfer(FILE *file, void *buffer, unsigned int byte_count, int write_mode) {
     if (write_mode != 0) return static_cast<int>(fwrite(buffer, byte_count, 1, file));
     return static_cast<int>(fread(buffer, byte_count, 1, file));

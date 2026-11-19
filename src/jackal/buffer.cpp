@@ -3257,22 +3257,6 @@ done:
 
 
 
-// RECT edges wrap as raw 32-bit values, exactly as the original's inc/dec
-// instructions do. Unsigned arithmetic keeps the wrap defined; the final
-// signed conversion follows the pinned VC6 32-bit integer representation.
-static uint32_t edge_bits(LONG value) {
-    static_assert(sizeof(uint32_t) == sizeof(value),
-                  "Buffer geometry requires 32-bit RECT fields");
-    return static_cast<uint32_t>(value);
-}
-
-static int edge_int(uint32_t bits) {
-    static_assert(sizeof(int) == sizeof(bits),
-                  "Buffer geometry requires 32-bit int");
-    // VC6's pinned 32-bit signed conversion preserves the low word's bits.
-    return static_cast<int>(bits);
-}
-
 
 /*
 Purpose: Fill one horizontal run of pixels, clipped to the buffer's rectangle.

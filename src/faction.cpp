@@ -1607,143 +1607,6 @@ void __cdecl del_site(int faction_id, int type, int x, int y, int proximity) {
 }
 
 
-void __cdecl enemy_capabilities_t(uint32_t faction_id) {
-    // * PSI could potentially be best weapon?
-    // * PSI should always be last Weapon
-    // * faction order will affect initial run through
-    // > potential fix would be to calculate all factions at once before enemy best compares
-
-    //BOOL has_worms = veh_avail(BSC_MIND_WORMS, faction_id, -1);
-    //PlayersData[faction_id].bestPsiAtkVal = has_worms ? weap_strat(WPN_PSI_ATTACK, faction_id) : 0;
-    PlayersData[faction_id].best_weapon_value = 1;
-    for (int i = 0; i < MaxWeaponNum; i++) {
-        if (has_tech(Weapon[i].preq_tech, faction_id) && Weapon[i].offense_rating < 99) {
-            int weap_val = weap_strat(i, faction_id);
-            //if (Weapon[i].offense_rating < 0 && weap_val > PlayersData[faction_id].bestPsiAtkVal) {
-            //    PlayersData[faction_id].bestPsiAtkVal = weap_val;
-            //}
-            if (Weapon[i].offense_rating >= 0 && weap_val
-                > PlayersData[faction_id].best_weapon_value) {
-                PlayersData[faction_id].best_weapon_value = weap_val;
-            }
-        }
-    }
-    //PlayersData[faction_id].bestPsiDefVal = has_worms ? arm_strat(ARM_PSI_DEFENSE, faction_id) : 0;
-    PlayersData[faction_id].best_armor_value = 1;
-    for (i = 0; i < MaxArmorNum; i++) {
-        if (has_tech(Armor[i].preq_tech, faction_id)) {
-            int arm_val = arm_strat(i, faction_id);
-            //if (Armor[i].defense_rating < 0 && arm_val > PlayersData[faction_id].bestPsiDefVal) {
-            //    PlayersData[faction_id].bestPsiDefVal = arm_val;
-            //}
-            if (Armor[i].defense_rating >= 0
-                && arm_val > PlayersData[faction_id].best_armor_value) {
-                PlayersData[faction_id].best_armor_value = arm_val;
-            }
-        }
-    }
-    PlayersData[faction_id].best_land_speed = 1;
-    for (i = 0; i < MaxChassisNum; i++) {
-        if (has_tech(Chassis[i].preq_tech, faction_id) && Chassis[i].triad == TRIAD_LAND) {
-            if (Chassis[i].speed > PlayersData[faction_id].best_land_speed) {
-                PlayersData[faction_id].best_land_speed = Chassis[i].speed;
-            }
-        }
-    }
-    PlayersData[faction_id].enemy_best_weapon_value = 0;
-    PlayersData[faction_id].enemy_best_armor_value = 0;
-    PlayersData[faction_id].enemy_best_land_speed = 0;
-    //PlayersData[faction_id].enemyBestPsiAtkVal = 0;
-    //PlayersData[faction_id].enemyBestPsiDefVal = 0;
-    for (i = 0; i < 4 && !PlayersData[faction_id].enemy_best_weapon_value; i++) {
-        // 1st pass: vendetta, no treaty, has commlink
-        // 2nd pass: no treaty, has commlink
-        // 3rd pass: has commlink
-        // 4th pass: any non-pact faction
-        for (uint32_t j = 1, treaties; j < MaxPlayerNum; j++) {
-            if (j != faction_id
-                && (treaties = PlayersData[i].diplo_treaties[j], !(treaties & DTREATY_PACT))
-                && ((!i && treaties & DTREATY_VENDETTA && !(treaties & DTREATY_TREATY)
-                    && treaties & DTREATY_COMMLINK)
-                    || (i == 1 && !(treaties & DTREATY_TREATY) && treaties & DTREATY_COMMLINK)
-                    || (i == 2 && treaties & DTREATY_COMMLINK) || (i == 3))) {
-                if (PlayersData[faction_id].enemy_best_weapon_value
-                    < PlayersData[j].best_weapon_value) {
-                    PlayersData[faction_id].enemy_best_weapon_value
-                        = PlayersData[j].best_weapon_value;
-                }
-                if (PlayersData[faction_id].enemy_best_armor_value
-                    < PlayersData[j].best_armor_value) {
-                    PlayersData[faction_id].enemy_best_armor_value
-                        = PlayersData[j].best_armor_value;
-                }
-                if (PlayersData[faction_id].enemy_best_land_speed
-                    < PlayersData[j].best_land_speed) {
-                    PlayersData[faction_id].enemy_best_land_speed = PlayersData[j].best_land_speed;
-                }
-                /*
-                if (PlayersData[faction_id].enemyBestPsiAtkVal < PlayersData[j].bestPsiAtkVal) {
-                    PlayersData[faction_id].enemyBestPsiAtkVal = PlayersData[j].bestPsiAtkVal;
-                }
-                if (PlayersData[faction_id].enemyBestPsiDefVal < PlayersData[j].bestPsiDefVal) {
-                    PlayersData[faction_id].enemyBestPsiDefVal = PlayersData[j].bestPsiDefVal;
-                }
-                */
-            }
-        }
-    }
-    // PSI
-    BOOL has_worms = veh_avail(BSC_MIND_WORMS, faction_id, -1);
-    PlayersData[faction_id].best_psi_offense = has_worms
-        ? weap_strat(WPN_PSI_ATTACK, faction_id) : 0;
-    for (i = 0; i < MaxWeaponNum; i++) {
-        if (has_tech(Weapon[i].preq_tech, faction_id) && Weapon[i].offense_rating < 99) {
-            int weap_val = weap_strat(i, faction_id);
-            if (Weapon[i].offense_rating < 0 && weap_val
-                > PlayersData[faction_id].best_psi_offense) {
-                PlayersData[faction_id].best_psi_offense = weap_val;
-            }
-        }
-    }
-    PlayersData[faction_id].best_psi_defense = has_worms
-        ? arm_strat(ARM_PSI_DEFENSE, faction_id) : 0;
-    for (i = 0; i < MaxArmorNum; i++) {
-        if (has_tech(Armor[i].preq_tech, faction_id)) {
-            int arm_val = arm_strat(i, faction_id);
-            if (Armor[i].defense_rating < 0 && arm_val > PlayersData[faction_id].best_psi_defense) {
-                PlayersData[faction_id].best_psi_defense = arm_val;
-            }
-        }
-    }
-    PlayersData[faction_id].enemy_best_psi_offense = 0;
-    PlayersData[faction_id].enemy_best_psi_defense = 0;
-    for (i = 0; i < 4 && !PlayersData[faction_id].enemy_best_psi_offense; i++) {
-        // 1st pass: vendetta, no treaty, has commlink
-        // 2nd pass: no treaty, has commlink
-        // 3rd pass: has commlink
-        // 4th pass: any non-pact faction
-        for (uint32_t j = 1, treaties; j < MaxPlayerNum; j++) {
-            if (j != faction_id
-                && (treaties = PlayersData[i].diplo_treaties[j], !(treaties & DTREATY_PACT))
-                && ((!i && treaties & DTREATY_VENDETTA && !(treaties & DTREATY_TREATY)
-                    && treaties & DTREATY_COMMLINK)
-                    || (i == 1 && !(treaties & DTREATY_TREATY) && treaties & DTREATY_COMMLINK)
-                    || (i == 2 && treaties & DTREATY_COMMLINK) || (i == 3))) {
-                if (PlayersData[faction_id].enemy_best_psi_offense
-                    < PlayersData[j].best_psi_offense) {
-                    PlayersData[faction_id].enemy_best_psi_offense
-                        = PlayersData[j].best_psi_offense;
-                }
-                if (PlayersData[faction_id].enemy_best_psi_defense
-                    < PlayersData[j].best_psi_defense) {
-                    PlayersData[faction_id].enemy_best_psi_defense
-                        = PlayersData[j].best_psi_defense;
-                }
-            }
-        }
-    }
-}
-
 
 /*
 Purpose: Apply a treaty between two factions, or - in a network game - log
@@ -2471,18 +2334,6 @@ void __cdecl tech_analysis(int faction_id, int faction_id_with) {
     }
 }
 
-static int pending_social_model(const SocialCategory &selection, int category) {
-    return static_cast<int>(selection.models_[category]);
-}
-
-static int diplo_clamp(int value, int low, int high) {
-    return value < low ? low : value > high ? high : value;
-}
-static uint32_t diplo_bit(int faction) { return 1u << (faction & 31); }
-static Map &diplo_tile(int x, int y) { return map_tiles()[MapLongitude * y + (x >> 1)]; }
-static int diplo_tile_owner(const Map &tile) {
-    return !(tile.bit & 2) || (tile.val2 & 15) > 7 ? -1 : tile.val2 & 15;
-}
 
 // ORIGINAL: 0x0053A980 ?diplomacy_check@@YAXHHH@Z 0x0053A980-0x0053C36E
 // RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/unrecovered/0053a980.cpp", "source:src/faction.h", "image:0x0053A980-0x0053C36E complete instructions and independently inspected scratch uses"], "reason": "Recover the complete faction diplomacy evaluation through genuine social-category arrays, faction/base/vehicle records and source-owned shared evaluation state. Original signed divisions, retained region0 state, unchecked malformed indices and final agenda paths remain explicit; new start-only storage bindings retain allocation uncertainty."}
@@ -3181,25 +3032,6 @@ void __cdecl diplomacy_caption(int faction_id, int faction_id_with) {
 
     parse_says(7, caption, -1, -1);
     sub_539970();
-}
-
-static void contact_dialog_arguments(int other_faction_id) {
-    GenderDefault = Players[other_faction_id].is_leader_female;
-    PluralityDefault = 0;
-    parse_says(0, Players[other_faction_id].title_leader, -1, -1);
-    GenderDefault = Players[other_faction_id].is_leader_female;
-    PluralityDefault = 0;
-    parse_says(1, Players[other_faction_id].name_leader, -1, -1);
-    GenderDefault = Players[other_faction_id].noun_gender;
-    PluralityDefault = Players[other_faction_id].is_noun_plural;
-    parse_says(2, Players[other_faction_id].noun_faction, -1, -1);
-    parse_num(0, random(0, 10) + 1);
-    parse_says(3, get_him_her(other_faction_id, 0), -1, -1);
-}
-// This preserves its single implementation while giving NetDaemon a genuine
-// source API for the original 1501 prompt preparation.
-void __cdecl prepare_contact_dialog_arguments(int faction_id) {
-    contact_dialog_arguments(faction_id);
 }
 
 

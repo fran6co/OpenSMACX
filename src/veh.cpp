@@ -125,28 +125,6 @@ static const char *prototype_rule_name(LPSTR string_id) {
     return StringTable.get(string_id);
 }
 
-// Bump a trailing digit of the last duplicate suffix, or append " <suffix>2".
-static inline void name_proto_suffix(char *name, int &exhausted) {
-    char *found = 0;
-    do {
-        found = strstr(found ? found + 1 : name, label_get(0xE5C / 4));
-    } while (found && strstr(found + 1, label_get(0xE5C / 4)));
-    if (found && strlen(found) <= strlen(label_get(0xE5C / 4)) + 1) {
-        char *last = &name[strlen(name) - 1];
-        if (*last >= '2' && *last < '9') {
-            (*last)++;
-        } else {
-            exhausted = 1;
-        }
-    } else {
-        char number[80];
-        strcat(name, " ");
-        strcat(name, label_get(0xE5C / 4));
-        _itoa(2, number, 10);
-        strcat(name, number);
-    }
-}
-
 // ORIGINAL: 0x0057E040 ?name_proto@@YAXPADHHHHHHH@Z 0x0057E040-0x0057EF95
 // RECOVERY_BINDING: v1 {"evidence": ["git:ac10bd60dec2a76c1be67a8532d76f2d7dda30e0:src/unrecovered/0057e040.cpp;image:0x0057E040-0x0057EF95", "pinned image:0x0057EE10 or esi,-1;0x0057EE13 test edi,edi;0x0057EE1B..0x0057EE35 builds VehPrototypes[-1].veh_name and calls strcmp", "pinned image:0x0057EF67..0x0057EF71 resets ESI after a matched alternate suffix and increments/restarts at zero", "Owned accidental storage:Ability base0x009AB538,stride0x1C,abbreviation+8 =>0x009AB834 = VehPrototypes base0x009AB868-0x34;source:src/veh.h RulesAbility;source:src/alpha.cpp ability loader", "git:ac10bd60dec2a76c1be67a8532d76f2d7dda30e0:src/unrecovered/0057e040.cpp"], "reason": "Complete the original duplicate-name candidate loop, including its unconditional primary-collision restart before the differing-form alternate compare and its alternate-collision restart. The -1 candidate name view points to the source-owned object representation of Ability[27].abbreviation, preserving the native pointer-field-byte comparison instead of resolving the pointed-to rule string. The original unbounded strcmp read extent beyond that member remains unresolved; preserve its unsafe read/overflow behavior as an obligation. Full span and prior source/history remain intact; no byte-exact or runtime acceptance is claimed."}
 
@@ -4287,19 +4265,6 @@ skip_empath4:
 // RECOVERY_BINDING: v1 {"evidence": ["Retired exact seed git:b99127a8:src/recovered/00583cb0.cpp preserves the23byte original wrapper and direct43E9A0 exec call; designwin.cpp owns the actual71F2B0 singleton and corresponding exec identity."], "reason": "Dispatch the two original design arguments through the genuine source-owned TutWinDesWindow singleton and its DesignWin::exec method, not an original-address receiver."}
 void __cdecl design_new_veh(int faction_id, int prototype_id) {
     TutWinDesWindow.exec(faction_id, prototype_id);
-}
-
-static int workshop_signed_bits(unsigned int bits) {
-    return bits <= 0x7fffffffu ? static_cast<int>(bits)
-        : -1 - static_cast<int>(0xffffffffu - bits);
-}
-
-static int workshop_scaled_dimension(int dimension, int numerator,
-                                     int denominator) {
-    const int product = workshop_signed_bits(
-        static_cast<unsigned int>(dimension) *
-        static_cast<unsigned int>(numerator));
-    return product / denominator;
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.

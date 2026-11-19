@@ -29,17 +29,6 @@
 // rather than restated per body: every rasteriser in the family advances its
 // EdgeScan the same way and packs its texels the same way, and the archive
 // carried a private copy of each into every unit it emitted.
-static void edge_step(EdgeScan &e) {
-    e.accumA += e.deltaA;
-    e.accumB += e.deltaB;
-    e.accumC += e.deltaC;
-    e.fracAccum += e.fracDelta;
-    if (e.fracAccum > 0) {
-        e.accumC += e.extraDeltaC;
-        e.fracAccum -= e.fracSub;
-    }
-    e.accumD += e.deltaD;
-}
 
 // The three plain textured scan converters advance only U, V, X and the
 // fractional X accumulator. Their pinned update blocks do not touch the
@@ -61,35 +50,6 @@ static void texture_uv_edge_step(EdgeScan &edge) {
     }
 }
 
-// Pinned 61C304-341/366-3AC keyed rows use DWORD ADDs in this field order,
-// including the conditional C correction. Retain their 32-bit wrap locally
-// instead of using rasterizers' signed-add helper.
-static void texture_draw_gouraud_edge_step(EdgeScan &edge) {
-    edge.accumA = static_cast<int>(
-        static_cast<unsigned int>(edge.accumA) +
-        static_cast<unsigned int>(edge.deltaA));
-    edge.accumB = static_cast<int>(
-        static_cast<unsigned int>(edge.accumB) +
-        static_cast<unsigned int>(edge.deltaB));
-    edge.accumC = static_cast<int>(
-        static_cast<unsigned int>(edge.accumC) +
-        static_cast<unsigned int>(edge.deltaC));
-    edge.fracAccum = static_cast<int>(
-        static_cast<unsigned int>(edge.fracAccum) +
-        static_cast<unsigned int>(edge.fracDelta));
-    if (edge.fracAccum > 0) {
-        edge.accumC = static_cast<int>(
-            static_cast<unsigned int>(edge.accumC) +
-            static_cast<unsigned int>(edge.extraDeltaC));
-        edge.fracAccum = static_cast<int>(
-            static_cast<unsigned int>(edge.fracAccum) -
-            static_cast<unsigned int>(edge.fracSub));
-    }
-    edge.accumD = static_cast<int>(
-        static_cast<unsigned int>(edge.accumD) +
-        static_cast<unsigned int>(edge.deltaD));
-}
-
 // The lit spans' row blocks (0x0061AEBD, 0x0061AF1F) step D before the
 // fractional X accumulator.
 static void texture_lit_edge_step(EdgeScan &edge) {
@@ -104,27 +64,6 @@ static void texture_lit_edge_step(EdgeScan &edge) {
     }
 }
 
-static unsigned int concat22(unsigned short hi, unsigned short lo) {
-    return ((unsigned int)hi << 16) | lo;
-}
-static unsigned short concat11(unsigned char hi, unsigned char lo) {
-    return (unsigned short)(((unsigned short)hi << 8) | lo);
-}
-static unsigned int concat31(unsigned int hi24, unsigned char lo) {
-    return (hi24 << 8) | lo;
-}
-static unsigned int concat21(unsigned short hi16, unsigned char lo8) {
-    return (static_cast<unsigned int>(hi16) << 8) | lo8;
-}
-static int carry4(unsigned int a, unsigned int b) {
-    return (a + b) < a;
-}
-static int carry2(unsigned short a, unsigned short b) {
-    return ((unsigned int)a + (unsigned int)b) > 0xFFFFu;
-}
-static unsigned char byte_at(int value, int index) {
-    return reinterpret_cast<unsigned char *>(&value)[index];
-}
 // The gouraud rasteriser's light gradient spans two channels at once, which
 // the original computes as one 64-bit product and halves. The two names are
 // what MSVC calls its own 64-bit types in that era's diagnostics.
@@ -133,21 +72,6 @@ typedef __int64 longlong;
 typedef unsigned char byte;
 typedef unsigned short ushort;
 typedef unsigned int uint;
-static ulonglong CONCAT44(uint32_t hi, uint32_t lo) {
-    return (((ulonglong)hi) << 32) | (uint32_t)lo;
-}
-static uint32_t CONCAT31(uint32_t hi24, byte lo8) {
-    return ((uint32_t)hi24 << 8) | lo8;
-}
-static uint32_t CONCAT22(ushort hi, ushort lo) {
-    return ((uint32_t)hi << 16) | (ushort)lo;
-}
-static bool CARRY1(byte a, byte b) {
-    return (uint)a + (uint)b > 0xFFu;
-}
-static bool CARRY4(uint32_t a, uint32_t b) {
-    return ((ulonglong)a + (ulonglong)b) > 0xFFFFFFFFu;
-}
 
 // Plain polygon edges use only the first thirteen EdgeScan words. Gouraud's
 // extra channel is not initialized by the original setup at 0x00624D80.
@@ -160,233 +84,11 @@ static int texture_difference(int a, int b) {
                             static_cast<unsigned int>(b));
 }
 
-// 0x0061A3DF clears the x87 precision bits (AND AX,FCFF), then 0x0061A3E3
-// selects truncation (OR AX,0C00): arithmetic has a 24-bit significand, not
-// FNINIT's 64. Reproduce FDIVR at 0x0061A421 and FMUL at 0x0061A530 with
-// integer significand/exponent arithmetic, independently truncating both.
-// FILD loads the signed delta exactly; scaling the rounded product by 65536
-// is an exact exponent adjustment before FISTP. The widest product is 55 bits.
-static int texture_span_step(int delta, int width) {
-    const uint64_t denominator = static_cast<uint64_t>(width) << 16;
-    uint64_t upper_power = 1;
-    int reciprocal_shift = 23;
-    while (upper_power < denominator) {
-        upper_power <<= 1;
-        ++reciprocal_shift;
-    }
-    const uint64_t significand = (static_cast<uint64_t>(1) << reciprocal_shift) / denominator;
-    const uint64_t magnitude = delta < 0 ? -static_cast<int64_t>(delta) : delta;
-    uint64_t product = significand * magnitude;
-    int exponent = 16 - reciprocal_shift;
-    while (product >= (static_cast<uint64_t>(1) << 24)) {
-        product >>= 1;
-        ++exponent;
-    }
-    const uint64_t rounded = exponent >= 0 ? product << exponent : product >> -exponent;
-    return delta < 0 ? static_cast<int>(-static_cast<int64_t>(rounded)) : static_cast<int>(rounded);
-}
-
-static unsigned short texture_light_step(int delta, int width);
-// The three keyed span kernels (0x0061A240/0x0061A760/0x006239E0) count
-// pixels with one packed register pair: DEC; SHL,16; MOV CX,u_fraction
-// builds a signed high-word countdown over an unsigned U fraction, the body
-// always runs once before the first test, and ADD SP,du_fraction cannot
-// carry into the counter, so the U fraction stays a pure 16-bit accumulator.
-// SUB ESP,0x10000/JNS ends on the first negative high word: a span already
-// admitted by the raw end>start test runs uint16(end-start) pixels for
-// 1..32769 and exactly one pixel for every other value - including the zero
-// and inverted spans that clipping can leave behind.
-static unsigned int texture_span_pixels(int difference) {
-    const unsigned int pixels = static_cast<unsigned int>(difference) & 0xffff;
-    return pixels - 1u < 0x8001u ? pixels : 1u;
-}
-
 // Shared C++ translations of the original packed-coordinate pixel loops.
 static int texture_gouraud_edge(EdgeScan &, int, const Vert *, const Vert *,
                                 const int *, int, int);
 static int texture_advance_gouraud_edge(EdgeScan &, const Vert *, const Vert *,
                                         const int *, int, int);
-static unsigned short texture_light_step(int, int);
-
-static unsigned int texture_draw_source_step(int du, int dv, int width) {
-    const int dv_integer = dv >= 0 ? dv / 0x10000
-        : static_cast<int>(-((-(static_cast<int64_t>(dv)) + 0xffff) / 0x10000));
-    const int du_integer = du >= 0 ? du / 0x10000
-        : static_cast<int>(-((-(static_cast<int64_t>(du)) + 0xffff) / 0x10000));
-    return static_cast<unsigned int>(dv_integer) *
-               static_cast<unsigned int>(width) +
-           static_cast<unsigned int>(du_integer);
-}
-
-static unsigned int texture_draw_source_index(int width, int u, int v) {
-    const unsigned int u_integer = static_cast<unsigned short>(
-        static_cast<unsigned int>(u) >> 16);
-    const unsigned int v_integer = static_cast<unsigned short>(
-        static_cast<unsigned int>(v) >> 16);
-    return v_integer * static_cast<unsigned int>(width) + u_integer;
-}
-
-static unsigned int texture_draw_next_source_index(
-    unsigned int source_offset, unsigned int &v_fraction_and_du_fraction,
-    unsigned short &u_fraction, unsigned int dv_fraction,
-    unsigned short du_fraction, unsigned int source_step, int width) {
-    const unsigned int previous_v_fraction = v_fraction_and_du_fraction;
-    v_fraction_and_du_fraction += dv_fraction;
-    const bool v_carry = v_fraction_and_du_fraction < previous_v_fraction;
-    const unsigned int next_u_fraction =
-        static_cast<unsigned int>(u_fraction) + du_fraction;
-    const bool u_carry = next_u_fraction > 0xffffu;
-    u_fraction = static_cast<unsigned short>(next_u_fraction);
-    source_offset += source_step + (v_carry ? static_cast<unsigned int>(width) : 0u);
-    source_offset += u_carry ? 1u : 0u;
-    return source_offset;
-}
-
-static void texture_draw_lit_span_mode(unsigned char *destination,
-                                       const unsigned char *pixels, int width,
-                                       int u, int v, int du, int dv,
-                                       int light, unsigned short light_step,
-                                       int pixel_count, bool keyed,
-                                       unsigned char key) {
-    unsigned int source_offset = texture_draw_source_index(width, u, v);
-    unsigned short u_fraction = static_cast<unsigned short>(u);
-    unsigned int v_fraction_and_du_fraction =
-        (static_cast<unsigned int>(static_cast<unsigned short>(v)) << 16) |
-        static_cast<unsigned short>(du);
-    const unsigned int dv_fraction =
-        static_cast<unsigned int>(static_cast<unsigned short>(dv)) << 16;
-    const unsigned int source_step = texture_draw_source_step(du, dv, width);
-    unsigned short light_accumulator = static_cast<unsigned short>(
-        static_cast<unsigned int>(light) >> 8);
-    const unsigned short du_fraction = static_cast<unsigned short>(du);
-    const volatile unsigned char *source = pixels;
-    unsigned char source_texel = source[source_offset];
-
-    for (int pixel = 0; pixel < pixel_count; ++pixel) {
-        const unsigned int shade = (light_accumulator >> 8) & 0xffu;
-        if (!keyed || source_texel != key) {
-            destination[0] = static_cast<unsigned char>(
-                static_cast<unsigned int>(source_texel) + shade);
-        }
-        light_accumulator = static_cast<unsigned short>(
-            light_accumulator + light_step);
-        source_offset = texture_draw_next_source_index(
-            source_offset, v_fraction_and_du_fraction, u_fraction,
-            dv_fraction, du_fraction, source_step, width);
-        ++destination;
-        source_texel = source[source_offset];
-    }
-}
-
-static void texture_draw_lit_span(unsigned char *destination,
-                                  const unsigned char *pixels, int width,
-                                  int u, int v, int du, int dv,
-                                  int light, unsigned short light_step,
-                                  int pixel_count) {
-    unsigned int source_offset = texture_draw_source_index(width, u, v);
-    unsigned short u_fraction = static_cast<unsigned short>(u);
-    unsigned int v_fraction_and_du_fraction =
-        (static_cast<unsigned int>(static_cast<unsigned short>(v)) << 16) |
-        static_cast<unsigned short>(du);
-    const unsigned int dv_fraction =
-        static_cast<unsigned int>(static_cast<unsigned short>(dv)) << 16;
-    const unsigned int source_step = texture_draw_source_step(du, dv, width);
-    unsigned short light_accumulator = static_cast<unsigned short>(
-        static_cast<unsigned int>(light) >> 8);
-    const unsigned short du_fraction = static_cast<unsigned short>(du);
-    const volatile unsigned char *source = pixels;
-    unsigned char source_texel = source[source_offset];
-
-    // 623921 outputs the initial texel, then 62393E rereads the current
-    // source before 623941/944 advances the address. Later outputs therefore
-    // use the preceding iteration's source byte (S0, S0, S1, ...).
-    for (int pixel = 0; pixel < pixel_count; ++pixel) {
-        const unsigned int shade = (light_accumulator >> 8) & 0xffu;
-        destination[0] = static_cast<unsigned char>(
-            static_cast<unsigned int>(source_texel) + shade);
-        light_accumulator = static_cast<unsigned short>(
-            light_accumulator + light_step);
-        source_texel = source[source_offset];
-        source_offset = texture_draw_next_source_index(
-            source_offset, v_fraction_and_du_fraction, u_fraction,
-            dv_fraction, du_fraction, source_step, width);
-        ++destination;
-    }
-}
-
-// The opaque 61B1F0 loop preloads its first texel, then loads the next source
-// byte after every destination store, including after the final output. Keep
-// that trailing read local to this owner: it can fault and can observe a
-// source/destination alias after the preceding store.
-static void texture_draw_opaque_lit_span(unsigned char *destination,
-                                         const unsigned char *pixels, int width,
-                                         int u, int v, int du, int dv,
-                                         int light, unsigned short light_step,
-                                         int pixel_count) {
-    unsigned int source_offset = texture_draw_source_index(width, u, v);
-    unsigned short u_fraction = static_cast<unsigned short>(u);
-    unsigned int v_fraction_and_du_fraction =
-        (static_cast<unsigned int>(static_cast<unsigned short>(v)) << 16) |
-        static_cast<unsigned short>(du);
-    const unsigned int dv_fraction =
-        static_cast<unsigned int>(static_cast<unsigned short>(dv)) << 16;
-    const unsigned int source_step = texture_draw_source_step(du, dv, width);
-    unsigned short light_accumulator = static_cast<unsigned short>(
-        static_cast<unsigned int>(light) >> 8);
-    const unsigned short du_fraction = static_cast<unsigned short>(du);
-    const volatile unsigned char *source = pixels;
-    unsigned char source_texel = source[source_offset];
-
-    for (int pixel = 0; pixel < pixel_count; ++pixel) {
-        const unsigned int shade = (light_accumulator >> 8) & 0xffu;
-        destination[0] = static_cast<unsigned char>(
-            static_cast<unsigned int>(source_texel) + shade);
-        light_accumulator = static_cast<unsigned short>(
-            light_accumulator + light_step);
-        source_offset = texture_draw_next_source_index(
-            source_offset, v_fraction_and_du_fraction, u_fraction,
-            dv_fraction, du_fraction, source_step, width);
-        ++destination;
-        source_texel = source[source_offset];
-    }
-}
-
-static void texture_draw_keyed_lit_span(unsigned char *destination,
-                                        const unsigned char *pixels, int width,
-                                        int u, int v, int du, int dv,
-                                        int light, unsigned short light_step,
-                                        int pixel_count, unsigned char key) {
-    texture_draw_lit_span_mode(destination, pixels, width, u, v, du, dv,
-                               light, light_step, pixel_count, true, key);
-}
-
-// 62333F..623367 uses UV stepping and a keyed constant fill on even rows.
-// Its next-source preload occurs after every output, including the last.
-static void texture_draw_keyed_fill_span(unsigned char *destination,
-                                         const unsigned char *pixels, int width,
-                                         int u, int v, int du, int dv,
-                                         int pixel_count, unsigned char key,
-                                         unsigned char fill) {
-    unsigned int source_offset = texture_draw_source_index(width, u, v);
-    unsigned short u_fraction = static_cast<unsigned short>(u);
-    unsigned int v_fraction_and_du_fraction =
-        (static_cast<unsigned int>(static_cast<unsigned short>(v)) << 16) |
-        static_cast<unsigned short>(du);
-    const unsigned int dv_fraction =
-        static_cast<unsigned int>(static_cast<unsigned short>(dv)) << 16;
-    const unsigned int source_step = texture_draw_source_step(du, dv, width);
-    const unsigned short du_fraction = static_cast<unsigned short>(du);
-    const volatile unsigned char *source = pixels;
-    unsigned char source_texel = source[source_offset];
-    for (int pixel = 0; pixel < pixel_count; ++pixel) {
-        if (source_texel != key) destination[0] = fill;
-        source_offset = texture_draw_next_source_index(
-            source_offset, v_fraction_and_du_fraction, u_fraction,
-            dv_fraction, du_fraction, source_step, width);
-        ++destination;
-        source_texel = source[source_offset];
-    }
-}
 
 struct TextureDrawSpanResult {
     bool has_pixel;
@@ -400,116 +102,6 @@ struct TextureDrawSpanResult {
     volatile const unsigned char *preload_pixels;
     unsigned char prefetched_source;
 };
-
-static void texture_draw_coast_span(unsigned char *destination,
-                                    const unsigned char *pixels,
-                                    const unsigned char *coast_pixels,
-                                    const unsigned char *remap, int width,
-                                    int u, int v, int du, int dv,
-                                    int light, unsigned short light_step,
-                                    int pixel_count,
-                                    TextureDrawSpanResult *result = 0) {
-    unsigned int source_offset = texture_draw_source_index(width, u, v);
-    unsigned short u_fraction = static_cast<unsigned short>(u);
-    unsigned int v_fraction_and_du_fraction =
-        (static_cast<unsigned int>(static_cast<unsigned short>(v)) << 16) |
-        static_cast<unsigned short>(du);
-    const unsigned int dv_fraction =
-        static_cast<unsigned int>(static_cast<unsigned short>(dv)) << 16;
-    const unsigned int source_step = texture_draw_source_step(du, dv, width);
-    unsigned short light_accumulator = static_cast<unsigned short>(
-        static_cast<unsigned int>(light) >> 8);
-    const unsigned short du_fraction = static_cast<unsigned short>(du);
-
-    if (result != 0) result->has_pixel = false;
-    for (int pixel = 0; pixel < pixel_count; ++pixel) {
-        if (result != 0) {
-            result->has_pixel = true;
-            result->last_source_offset = source_offset;
-            result->last_packed_uv = v_fraction_and_du_fraction;
-            result->last_light = light_accumulator;
-            if (result->packed_uv_sink != 0)
-                *result->packed_uv_sink =
-                    static_cast<int>(v_fraction_and_du_fraction);
-        }
-        const unsigned char base_texel = result != 0
-            ? result->prefetched_source : pixels[source_offset];
-        const unsigned char mapped = remap[coast_pixels[source_offset]];
-        if (mapped != 0) {
-            if (mapped == 1) {
-                const unsigned int shade = (light_accumulator >> 8) & 0xffu;
-                destination[0] = static_cast<unsigned char>(
-                    static_cast<unsigned int>(base_texel) + shade);
-            } else {
-                destination[0] = mapped;
-            }
-        }
-        source_offset = texture_draw_next_source_index(
-            source_offset, v_fraction_and_du_fraction, u_fraction,
-            dv_fraction, du_fraction, source_step, width);
-        light_accumulator = static_cast<unsigned short>(
-            light_accumulator + light_step);
-        if (result != 0) {
-            result->next_source_offset = source_offset;
-            result->next_packed_uv = v_fraction_and_du_fraction;
-            result->next_light = light_accumulator;
-        }
-        ++destination;
-        if (result != 0 && result->preload_pixels != 0)
-            result->prefetched_source = result->preload_pixels[source_offset];
-    }
-}
-
-static void texture_draw_keyed_coast_fill_span(
-    unsigned char *destination, const unsigned char *coast_pixels,
-    const unsigned char *remap, int width, int u, int v, int du, int dv,
-    unsigned char fill_color, int pixel_count,
-    TextureDrawSpanResult *result = 0) {
-    unsigned int source_offset = texture_draw_source_index(width, u, v);
-    unsigned short u_fraction = static_cast<unsigned short>(u);
-    unsigned int v_fraction_and_du_fraction =
-        (static_cast<unsigned int>(static_cast<unsigned short>(v)) << 16) |
-        static_cast<unsigned short>(du);
-    const unsigned int dv_fraction =
-        static_cast<unsigned int>(static_cast<unsigned short>(dv)) << 16;
-    const unsigned int source_step = texture_draw_source_step(du, dv, width);
-    const unsigned short du_fraction = static_cast<unsigned short>(du);
-
-    if (result != 0) result->has_pixel = false;
-    for (int pixel = 0; pixel < pixel_count; ++pixel) {
-        if (result != 0) {
-            result->has_pixel = true;
-            result->last_source_offset = source_offset;
-            result->last_packed_uv = v_fraction_and_du_fraction;
-            result->last_light = 0;
-            if (result->packed_uv_sink != 0)
-                *result->packed_uv_sink =
-                    static_cast<int>(v_fraction_and_du_fraction);
-        }
-        if (remap[coast_pixels[source_offset]] != 0)
-            destination[0] = fill_color;
-        source_offset = texture_draw_next_source_index(
-            source_offset, v_fraction_and_du_fraction, u_fraction,
-            dv_fraction, du_fraction, source_step, width);
-        if (result != 0) {
-            result->next_source_offset = source_offset;
-            result->next_packed_uv = v_fraction_and_du_fraction;
-            result->next_light = 0;
-        }
-        ++destination;
-        if (result != 0 && result->preload_pixels != 0)
-            result->prefetched_source = result->preload_pixels[source_offset];
-    }
-}
-
-static void texture_reset_fpu() {
-    // FNINIT at entry/exit resets, rather than restores, the caller's state.
-    // VC6 _fpreset defaults to 53-bit precision, so explicitly select the
-    // original 64-bit significand and all exception masks afterward.
-    _fpreset();
-    _control87(_MCW_EM | _PC_64 | _RC_NEAR | _IC_PROJECTIVE,
-               _MCW_EM | _MCW_PC | _MCW_RC | _MCW_IC);
-}
 
 /*
 Purpose: Start an empty texture - no pixels, no descriptors, not borrowed.
@@ -953,39 +545,6 @@ static uintptr_t texture_pointer_address(const void *pointer) {
     return reinterpret_cast<uintptr_t>(pointer);
 }
 
-static uintptr_t texture_pointer_offset(const void *base, uint32_t offset) {
-    // Preserve the target's 32-bit ADD wrap while allowing host fixtures to
-    // use real allocations above 4 GiB. A wrapped high-bit offset is the same
-    // signed displacement the x86 pointer ADD applies.
-    return texture_pointer_address(base) +
-        static_cast<intptr_t>(static_cast<int32_t>(offset));
-}
-
-static void *texture_pointer_from_address(uintptr_t address) {
-    return reinterpret_cast<void *>(address);
-}
-
-// Direct raster-global accesses remove private alias cells; preserve the key's
-// former signed-int view as representation bits here.
-static int texture_raster_key_signed_bits() {
-    return static_cast<int>(TextureRasterKey);
-}
-
-
-static int texture_coast_advance_edge(EdgeScan &edge) {
-    if (--edge.counter == 0)
-        return Texture::setup_edge_gouraud(&edge, edge.id);
-    edge.accumA = static_cast<int>(static_cast<unsigned int>(edge.accumA) + edge.deltaA);
-    edge.accumB = static_cast<int>(static_cast<unsigned int>(edge.accumB) + edge.deltaB);
-    edge.accumC = static_cast<int>(static_cast<unsigned int>(edge.accumC) + edge.deltaC);
-    edge.accumD = static_cast<int>(static_cast<unsigned int>(edge.accumD) + edge.deltaD);
-    edge.fracAccum = static_cast<int>(static_cast<unsigned int>(edge.fracAccum) + edge.fracDelta);
-    if (edge.fracAccum > 0) {
-        edge.accumC = static_cast<int>(static_cast<unsigned int>(edge.accumC) + edge.extraDeltaC);
-        edge.fracAccum = texture_difference(edge.fracAccum, edge.fracSub);
-    }
-    return 1;
-}
 
 // ORIGINAL: 0x0061EAD0 ?draw_coast@Texture@@QAEXPAUBuffer@@PAUVert@@PAHPAUTexture@@PAEH1@Z 0x0061EAD0-0x0061F0C6 FILE BYTE_EXACT
 // symbol    ?draw_coast@Texture@@QAEXPAVBuffer@@PAUVert@@PAHPAV1@PAEH1@Z
@@ -4348,79 +3907,6 @@ void Texture::draw_trans_3(Buffer *buffer, Vert *vertices, int *zvals, int count
     return;
 }
 
-// Cached counterpart of the Gouraud edge setup. Only six channels in a
-// selected record are initialized; flags independently invalidate geometry
-// (bit 2) and lighting (bit 1). Empty/descending edges do not consume records.
-static int texture_cached_edge(EdgeScan &edge, int index,
-                               const Vert *vertices, const Vert *uv,
-                               const int *light, int count, int bottom,
-                               TextureStore &cache) {
-    if (index == bottom) return 0;
-    for (;;) {
-        int next = index + edge.f0;
-        if (next >= count) next = 0;
-        else if (next < 0) next = count - 1;
-        edge.counter = texture_difference(vertices[next].y, vertices[index].y);
-        if (edge.counter != 0) {
-            if (edge.counter < 0) return 0;
-            EdgeScan &record = *cache.sub_6252c0();
-            edge.id = next;
-            edge.accumA = static_cast<int>(
-                static_cast<unsigned int>(texture_fixed(uv[index].x)) + 0x8000u);
-            edge.accumB = static_cast<int>(
-                static_cast<unsigned int>(texture_fixed(uv[index].y)) + 0x8000u);
-            const int height = texture_fixed(edge.counter);
-            if (cache.flags_ & 2) {
-                record.deltaA = static_cast<int>(static_cast<int64_t>(
-                    texture_difference(texture_fixed(uv[next].x), edge.accumA)) * 65536 / height);
-                record.deltaB = static_cast<int>(static_cast<int64_t>(
-                    texture_difference(texture_fixed(uv[next].y), edge.accumB)) * 65536 / height);
-            }
-            edge.deltaA = record.deltaA;
-            edge.deltaB = record.deltaB;
-            edge.accumC = vertices[index].x;
-            const int dx = texture_difference(vertices[next].x, vertices[index].x);
-            if (cache.flags_ & 2) {
-                record.deltaC = dx / edge.counter;
-                const int magnitude = dx < 0 ? texture_difference(0, dx) : dx;
-                record.fracDelta = magnitude % edge.counter;
-            }
-            edge.deltaC = record.deltaC;
-            edge.extraDeltaC = dx < 0 ? -1 : 1;
-            edge.fracAccum = dx < 0 ? 1 - edge.counter : 0;
-            edge.fracDelta = record.fracDelta;
-            edge.fracSub = edge.counter;
-            if (cache.flags_ & 1) {
-                record.accumD = texture_fixed(light[index]);
-                record.deltaD = static_cast<int>(static_cast<int64_t>(
-                    texture_difference(texture_fixed(light[next]), record.accumD)) * 65536 / height);
-            }
-            edge.accumD = record.accumD;
-            edge.deltaD = record.deltaD;
-            return 1;
-        }
-        index = next;
-        if (index == bottom) return 0;
-    }
-}
-
-static int texture_advance_cached_edge(EdgeScan &edge, const Vert *vertices,
-                                       const Vert *uv, const int *light,
-                                       int count, int bottom, TextureStore &cache) {
-    if (--edge.counter == 0)
-        return texture_cached_edge(edge, edge.id, vertices, uv, light, count, bottom, cache);
-    edge.accumA = static_cast<int>(static_cast<unsigned int>(edge.accumA) + edge.deltaA);
-    edge.accumB = static_cast<int>(static_cast<unsigned int>(edge.accumB) + edge.deltaB);
-    edge.accumC = static_cast<int>(static_cast<unsigned int>(edge.accumC) + edge.deltaC);
-    edge.accumD = static_cast<int>(static_cast<unsigned int>(edge.accumD) + edge.deltaD);
-    edge.fracAccum = static_cast<int>(static_cast<unsigned int>(edge.fracAccum) + edge.fracDelta);
-    if (edge.fracAccum > 0) {
-        edge.accumC = static_cast<int>(static_cast<unsigned int>(edge.accumC) + edge.extraDeltaC);
-        edge.fracAccum = texture_difference(edge.fracAccum, edge.fracSub);
-    }
-    return 1;
-}
-
 // ORIGINAL: 0x00625080 sub_625080 0x00625080-0x00625294 FILE BYTE_EXACT
 // symbol    ?sub_625080@@YAHPAUEdgeScan@@HPAVTextureStore@@@Z
 // TRIED: verbatim zero-param head - disasm reads [esp+0x10]/[esp+0x14]/ [esp+0x1c] as three stack args before any push (IDA's 3-int guess confirmed by field roles: int*, int, byte*), so the head was widened to those 3 params; prologue order still diverges from the original's odd 2-push-then-arg2 pattern.
@@ -4771,19 +4257,6 @@ int __cdecl sub_624eb0(EdgeScan *edge, int index, TextureStore *cache) {
 
 // Fixed-slot bindings carried from 0061df60.cpp
 
-static int texture_raster_gradient_span_admitted(int span);
-static unsigned char *texture_sub61df60_page_address(void *base,
-                                                       int u, int v) {
-    const uintptr_t base_bits = reinterpret_cast<uintptr_t>(base);
-    const unsigned int x =
-        static_cast<unsigned char>(static_cast<unsigned int>(base_bits) +
-                                   (static_cast<unsigned int>(u) >> 16));
-    const unsigned int y = static_cast<unsigned char>(
-        static_cast<unsigned int>(v) >> 16);
-    const uintptr_t offset = (static_cast<uintptr_t>(y) << 8) | x;
-    return reinterpret_cast<unsigned char *>(
-        (base_bits & ~static_cast<uintptr_t>(0xffffu)) | offset);
-}
 
 // ORIGINAL: 0x0061DF60 sub_61df60 0x0061DF60-0x0061E538 FILE BYTE_EXACT
 // symbol    ?sub_61df60@Texture@@QAEXPAVBuffer@@PAUVert@@PAHPAV1@PAEH1H4@Z
@@ -5091,7 +4564,6 @@ static int texture_gouraud_edge(EdgeScan &edge, int index,
 static int texture_advance_gouraud_edge(EdgeScan &edge, const Vert *vertices,
                                        const Vert *uv, const int *light,
                                        int count, int bottom);
-static unsigned short texture_light_step(int delta, int width);
 
 // The cutoff rasterizer uses draw2's shaded sampling kernel on every row.
 // The full signed cutoff first rejects polygons whose vertices are all at
@@ -6533,73 +6005,6 @@ void Texture::sub_61c630(Buffer *buffer, Vert *vertices, Texture *shade,
 // Original 0x61DE5A..0x61DF1D pixel path: the base texel is read from the
 // receiver Texture, the second Texture is addressed by the low 16-bit source
 // offset and supplies a shade selector, and the byte table maps that selector.
-static int texture_raster_step_gouraud(EdgeScan &edge, Texture *texture);
-
-static int texture_raster_gradient_span_admitted(int span) {
-    const int scaled = static_cast<int>(
-        static_cast<unsigned int>(span) << 16);
-    return scaled > 0;
-}
-
-static void texture_draw_shade_span(unsigned char *destination,
-                                    const unsigned char *pixels,
-                                    const unsigned char *shade_pixels,
-                                    const unsigned char *remap, int width,
-                                    int u, int v, int du, int dv,
-                                    int light, unsigned short light_step,
-                                    int pixel_count) {
-    (void)width;
-    uintptr_t source_base = reinterpret_cast<uintptr_t>(pixels);
-    uintptr_t shade_base = reinterpret_cast<uintptr_t>(shade_pixels);
-    unsigned char source_u = static_cast<unsigned char>(
-        (source_base + static_cast<unsigned int>(u) / 0x10000u) & 0xffu);
-    unsigned char source_v = static_cast<unsigned char>(
-        (static_cast<unsigned int>(v) >> 16) & 0xffu);
-    unsigned int packed_uv =
-        (static_cast<unsigned int>(u) << 16) |
-        (((static_cast<unsigned int>(dv) >> 16) & 0xffu) << 8) |
-        ((static_cast<unsigned int>(du) >> 16) & 0xffu);
-    const unsigned int packed_u_step = static_cast<unsigned int>(du) << 16;
-    unsigned int packed_v = static_cast<unsigned int>(v) << 16;
-    const unsigned int packed_v_step = static_cast<unsigned int>(dv) << 16;
-    unsigned short light_accumulator = static_cast<unsigned short>(
-        static_cast<unsigned int>(light) >> 8);
-    const unsigned int count = texture_span_pixels(pixel_count);
-    for (unsigned int pixel = 0; pixel < count; ++pixel) {
-        const uintptr_t source_address =
-            (source_base & ~static_cast<uintptr_t>(0xffffu)) |
-            (static_cast<uintptr_t>(source_v) << 8) | source_u;
-        const uintptr_t shade_address =
-            (shade_base & ~static_cast<uintptr_t>(0xffffu)) |
-            (source_address & 0xffffu);
-        const unsigned char base = *reinterpret_cast<const unsigned char *>(
-            source_address);
-        const unsigned char selector = *reinterpret_cast<const unsigned char *>(
-            shade_address);
-        const unsigned char mapped = remap[selector];
-        if (selector >= 5) {
-            destination[0] = mapped;
-        } else {
-            destination[0] = static_cast<unsigned char>(
-                static_cast<unsigned int>(base) +
-                static_cast<unsigned int>(light_accumulator >> 8) +
-                static_cast<unsigned int>(mapped));
-        }
-        const unsigned int old_packed_uv = packed_uv;
-        packed_uv += packed_u_step;
-        source_u = static_cast<unsigned char>(source_u +
-            static_cast<unsigned char>(packed_uv) +
-            static_cast<unsigned int>(packed_uv < old_packed_uv));
-        const unsigned int old_packed_v = packed_v;
-        packed_v += packed_v_step;
-        source_v = static_cast<unsigned char>(source_v +
-            static_cast<unsigned char>(packed_uv >> 8) +
-            static_cast<unsigned int>(packed_v < old_packed_v));
-        light_accumulator = static_cast<unsigned short>(
-            light_accumulator + light_step);
-        ++destination;
-    }
-}
 
 // ORIGINAL: 0x0061D990 sub_61d990 0x0061D990-0x0061DF5C FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Recover the shaded rasterizer's geometry as Vert pointers while keeping its separate per-vertex int light array.","evidence":["Pinned61D990 publishes geometry to9BB4F4, scans x/y at offsets0/+4 with eight-byte stride, and separately publishes the light pointer to9BB4FC. Existing typed edge consumers distinguish these channels.","Seed-generated decorated symbols are not original type evidence; guards, release order and unknown external producer contracts remain unchanged."]}
@@ -6894,20 +6299,6 @@ void Texture::sub_61d990(Buffer *buffer, Vert *vertices, int *zvals,
 
 
 // Fixed-slot bindings carried from 0061b780.cpp
-
-static int texture_raster_step_gouraud(EdgeScan &edge, Texture *texture) {
-    if (--edge.counter == 0) return texture->setup_edge_gouraud(&edge, edge.id);
-    edge.accumA = static_cast<int>(static_cast<unsigned int>(edge.accumA) + edge.deltaA);
-    edge.accumB = static_cast<int>(static_cast<unsigned int>(edge.accumB) + edge.deltaB);
-    edge.accumC = static_cast<int>(static_cast<unsigned int>(edge.accumC) + edge.deltaC);
-    edge.accumD = static_cast<int>(static_cast<unsigned int>(edge.accumD) + edge.deltaD);
-    edge.fracAccum = static_cast<int>(static_cast<unsigned int>(edge.fracAccum) + edge.fracDelta);
-    if (edge.fracAccum > 0) {
-        edge.accumC = static_cast<int>(static_cast<unsigned int>(edge.accumC) + edge.extraDeltaC);
-        edge.fracAccum = texture_difference(edge.fracAccum, edge.fracSub);
-    }
-    return 1;
-}
 
 // ORIGINAL: 0x0061B780 sub_61b780 0x0061B780-0x0061C08E FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Recover separate Vert geometry and int light-array pointer contracts in the Gouraud rasterizer.","evidence":["Pinned61B780 publishes arguments to geometry cell9BB4F4 and light cell9BB4FC; coordinate traversal has eight-byte x/y stride, whereas the light edge consumer indexes independent int values.","No upstream source producer is established. These are use-derived contracts, not original source spelling; existing row/pixel traversal and restoration obligations are retained."]}
@@ -8448,18 +7839,6 @@ int __cdecl sub_61f790(EdgeScan *edge) {
     return 1;
 }
 
-static unsigned int texture_keyed_shift_product(int slope, int pixel_offset) {
-    const int scaled_offset = static_cast<int>(
-        static_cast<unsigned int>(pixel_offset) << 16);
-    const int64_t product = static_cast<int64_t>(slope) *
-                            static_cast<int64_t>(scaled_offset);
-    return static_cast<unsigned int>(static_cast<uint64_t>(product) >> 16);
-}
-
-static int texture_keyed_wrap_add(int value, unsigned int delta) {
-    return static_cast<int>(static_cast<unsigned int>(value) + delta);
-}
-
 // ORIGINAL: 0x0061F800 sub_61f800 0x0061F800-0x0061FA24 FILE BYTE_EXACT
 // symbol    ?sub_61f800@@YAXPAUEdgeScan@@0@Z
 // TRIED: the catalogued 1158-byte span is really TWO machine-code functions back to back, each with its OWN complete "push ebp; mov ebp,esp; sub esp,0x24; push ebx/esi/edi" prologue and its own "ret" - a single C++ function cannot emit two prologues, so only the FIRST (0x61F800-0x61FA23, plain per-pixel copy, no colour key) is reproduced; the second (0x61FA30 on, adds a *blit_light_threshold colour-key skip and writes *blit_slot_51c) is a distinct unnamed function the catalogue's size measurement folded into this one.
@@ -8698,122 +8077,6 @@ struct TextureKeyedEdgeSpanState {
     int *packed_step_slot;
     int *colour_step_slot;
 };
-
-// The original shifts the signed pixel span left before IDIV. Keep its
-// 32-bit wrap instead of dividing by the unshifted width.
-static int texture_keyed_span_quotient(int delta, int pixel_span) {
-    const unsigned int divisor_bits =
-        static_cast<unsigned int>(pixel_span) << 16;
-    const int divisor = static_cast<int>(divisor_bits);
-    const int64_t numerator = static_cast<int64_t>(delta) * 0x10000;
-    return static_cast<int>(numerator / divisor);
-}
-
-static unsigned int texture_keyed_initial_source_index(int pitch, int u, int v) {
-    const unsigned short v_integer = static_cast<unsigned short>(
-        static_cast<unsigned int>(v) >> 16);
-    const unsigned short u_integer = static_cast<unsigned short>(
-        static_cast<unsigned int>(u) >> 16);
-    const unsigned short pitch_word = static_cast<unsigned short>(pitch);
-    const unsigned short row_product = static_cast<unsigned short>(
-        static_cast<unsigned int>(v_integer) * pitch_word);
-    return static_cast<unsigned int>(row_product) + u_integer;
-}
-
-static void texture_draw_keyed_edge_span(EdgeScan *left, EdgeScan *right,
-                                         TextureKeyedEdgeSpanState &state) {
-    const int left_x = left->accumC;
-    const int right_x = right->accumC;
-    const int span = texture_difference(right_x, left_x);
-    if (right_x <= state.clip_left || left_x >= state.clip_right ||
-        span <= 0) {
-        return;
-    }
-
-    const int raw_du = texture_keyed_span_quotient(
-        texture_difference(right->accumA, left->accumA), span);
-    const int raw_dv = texture_keyed_span_quotient(
-        texture_difference(right->accumB, left->accumB), span);
-    const int u_direction = raw_du < 0 ? -1 : 1;
-    int du = raw_du;
-    if (du < 0 && (static_cast<unsigned int>(du) & 0xffffu) != 0)
-        du = texture_difference(du, -0x10000);
-    int dv = raw_dv;
-    if (dv < 0 && (static_cast<unsigned int>(dv) & 0xffffu) != 0)
-        dv = texture_difference(dv, -0x10000);
-
-    int u = texture_keyed_wrap_add(left->accumA,
-        static_cast<unsigned int>(du >> 1) + 0x8000u);
-    int v = texture_keyed_wrap_add(left->accumB,
-        static_cast<unsigned int>(dv >> 1) + 0x8000u);
-
-    *state.signed_pitch_slot = raw_dv < 0 ? -state.pitch : state.pitch;
-    const int source_row_step = static_cast<int>(
-        static_cast<unsigned int>(du >> 16) +
-        static_cast<unsigned int>(dv >> 16) *
-            static_cast<unsigned int>(state.pitch));
-
-    int clipped_left = left_x;
-    int clipped_right = right_x;
-    if (clipped_right > state.clip_right) clipped_right = state.clip_right;
-    if (clipped_left < state.clip_left) {
-        const int skipped = texture_difference(state.clip_left, clipped_left);
-        u = texture_keyed_wrap_add(u, texture_keyed_shift_product(raw_du, skipped));
-        v = texture_keyed_wrap_add(v, texture_keyed_shift_product(raw_dv, skipped));
-        clipped_left = state.clip_left;
-    }
-
-    unsigned char *destination = state.destination_row + clipped_left;
-    unsigned int source_offset = texture_keyed_initial_source_index(
-        state.pitch, u, v);
-    const bool reverse_v = raw_dv < 0;
-    unsigned short raw_v_fraction = static_cast<unsigned short>(raw_dv);
-    unsigned short v_fraction = static_cast<unsigned short>(v);
-    if (*state.signed_pitch_slot < 0) {
-        raw_v_fraction = static_cast<unsigned short>(
-            0u - static_cast<unsigned int>(raw_v_fraction));
-        v_fraction = static_cast<unsigned short>(~v_fraction);
-    }
-    const unsigned short dv_fraction_15 = static_cast<unsigned short>(
-        raw_v_fraction >> 1);
-    const unsigned int packed_u = u_direction < 0
-        ? static_cast<unsigned int>(~u) : static_cast<unsigned int>(u);
-    unsigned int packed_uv = packed_u << 16;
-    packed_uv |= u_direction < 0 ? v_fraction
-        : static_cast<unsigned short>(v_fraction >> 1);
-    const unsigned int packed_uv_step =
-        (static_cast<unsigned int>(u_direction < 0
-            ? texture_difference(0, raw_du) : raw_du) << 16) |
-        dv_fraction_15;
-    *state.packed_step_slot = static_cast<int>(
-        packed_uv_step);
-    *state.colour_step_slot = u_direction < 0
-        ? texture_difference(0, source_row_step) : source_row_step;
-    const int v_wrap_pitch = reverse_v ? -state.pitch : state.pitch;
-
-    // The original DEC/JNZ loop consumes the unsigned 32-bit span count. Do
-    // not turn a zero/wrapped count after clipping into an empty-span return.
-    unsigned int remaining = static_cast<unsigned int>(
-        texture_difference(clipped_right, clipped_left));
-    do {
-        const unsigned char texel = state.pixels[source_offset];
-        if (texel != state.key) destination[0] = texel;
-        const unsigned int previous_packed_uv = packed_uv;
-        packed_uv += packed_uv_step;
-        const bool packed_carry = packed_uv < previous_packed_uv;
-        source_offset = static_cast<unsigned int>(source_offset +
-            static_cast<unsigned int>(u_direction < 0
-                ? source_row_step - static_cast<int>(packed_carry)
-                : source_row_step + static_cast<int>(packed_carry)));
-        if ((packed_uv & 0x8000u) != 0) {
-            source_offset = static_cast<unsigned int>(source_offset +
-                static_cast<unsigned int>(v_wrap_pitch));
-            packed_uv &= ~0x8000u;
-        }
-        ++destination;
-        --remaining;
-    } while (remaining != 0);
-}
 
 // The offset-derived name does not invent a caller or a Texture receiver:
 // the entry takes two stack EdgeScan pointers and reads shared raster slots.
@@ -11179,32 +10442,6 @@ static int texture_advance_gouraud_edge(EdgeScan &edge, const Vert *vertices,
         edge.fracAccum = texture_difference(edge.fracAccum, edge.fracSub);
     }
     return 1;
-}
-
-// PC24/chop reciprocal and product, as in texture_span_step, but the
-// final power-of-two scale is 256 and FISTP stores a signed WORD. Masked
-// conversion overflow produces the x87 integer-indefinite word 0x8000.
-// The resulting bits are reproduced; x87 exception status is not.
-static unsigned short texture_light_step(int delta, int width) {
-    const uint64_t denominator = static_cast<uint64_t>(width) << 16;
-    uint64_t upper_power = 1;
-    int reciprocal_shift = 23;
-    while (upper_power < denominator) {
-        upper_power <<= 1;
-        ++reciprocal_shift;
-    }
-    const uint64_t significand = (static_cast<uint64_t>(1) << reciprocal_shift) / denominator;
-    const uint64_t magnitude = delta < 0 ? -static_cast<int64_t>(delta) : delta;
-    uint64_t product = significand * magnitude;
-    int exponent = 8 - reciprocal_shift;
-    while (product >= (static_cast<uint64_t>(1) << 24)) {
-        product >>= 1;
-        ++exponent;
-    }
-    const uint64_t rounded = exponent >= 0 ? product << exponent : product >> -exponent;
-    if (rounded > (delta < 0 ? 32768u : 32767u)) return 0x8000u;
-    return static_cast<unsigned short>(
-        delta < 0 ? -static_cast<int64_t>(rounded) : static_cast<int64_t>(rounded));
 }
 
 // 0x00624670 alternates opaque fill rows with depth-tested, lit texture

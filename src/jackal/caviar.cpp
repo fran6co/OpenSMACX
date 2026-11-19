@@ -369,10 +369,6 @@ void Caviar::set_scaling(float scaling) {
     camera_view_.camera_.scaling = scaling;
 }
 
-void Caviar::set_scaling_bits(uint32_t scaling_bits) {
-    *reinterpret_cast<uint32_t *>(&camera_view_.camera_.scaling) = scaling_bits;
-}
-
 /*
 Purpose: Read the Caviar renderer scaling factor.
 // ORIGINAL: 0x006183C0 ?get_scaling@Caviar@@QAEMXZ 0x006183C0-0x006183C7 BYTE_EXACT
@@ -837,16 +833,6 @@ CaviarSceneRecord CaviarScene;
 
 
 } // namespace
-
-// Narrow Caviar-owned reads preserve the original live Buffer field
-// value without acquiring/releasing pixels or exposing Buffer layout.
-void *Caviar::render_color_dib_bits() {
-    return CaviarSceneBufferA.buffer().dib_bits_;
-}
-
-void *Caviar::render_shadow_dib_bits() {
-    return CaviarSceneBufferB.buffer().dib_bits_;
-}
 
 /*
 Purpose: Boot the CAVIAR voxel renderer. Hands the vx_* file-IO callbacks to

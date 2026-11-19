@@ -761,7 +761,6 @@ static inline void social_write_l_at(char *text, int x, int y) {
 // indirect  0x004AF409
 
 
-static int social_effect_value(const SocialEffect &effect, int index);
 
 void SocialWin::draw_social(int a1) {
     RECT *header = &categoryHeaders_[a1];
@@ -1407,29 +1406,6 @@ void __cdecl energy_compute(int faction_id, int recompute_bases) {
     }
 }
 
-
-static int social_category_value(const SocialCategory &category, int index) {
-    switch (index) {
-    case 0: return static_cast<int>(category.models_[SocialCategory::POLITICS]);
-    case 1: return static_cast<int>(category.models_[SocialCategory::ECONOMICS]);
-    case 2: return static_cast<int>(category.models_[SocialCategory::VALUES]);
-    default: return static_cast<int>(category.models_[SocialCategory::FUTURE]);
-    }
-}
-
-static void set_social_category_value(SocialCategory &category, int index,
-                                      int value) {
-    switch (index) {
-    case 0: category.models_[SocialCategory::POLITICS] = value; break;
-    case 1: category.models_[SocialCategory::ECONOMICS] = value; break;
-    case 2: category.models_[SocialCategory::VALUES] = value; break;
-    default: category.models_[SocialCategory::FUTURE] = value; break;
-    }
-}
-
-static int social_effect_value(const SocialEffect &effect, int index) {
-    return effect.values_[index];
-}
 
 /*
  * Purpose: Recompute the social model for one category. Stores the chosen

@@ -1668,15 +1668,6 @@ void NetWin::draw_factions() {
 }
 
 
-// The shared tail of the eight scalar pickers runs even on cancellation:
-// only the option-byte write is conditional. Native 47E137/47E426 and their
-// sibling joins resolve the local slot before copying the live options.
-// A separate inline level: it spends the inline budget the image's PopMenu
-// teardown shows as spent (the trailing FlatButton destructors stay calls).
-static void pick_send_packet(NetWinSessionOptionsPacket *packet) {
-    NetDaemonNet.send(packet, sizeof(*packet), NetDaemonNet.host_player_id_, 1);
-}
-
 static void pick_send_state() {
     send_session_packet(NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id()), 0);
 }
@@ -1702,14 +1693,6 @@ static int pick_answer_at(NetWin &self, PopMenu &pop_menu, int *x, int *y) {
     self.get_mouse_pos(x, y);
     self.client_to_screen(x, y);
     return pop_menu.exec(*x, *y, NetWin::modal_callback_daemon);
-}
-
-static int pick_answer(NetWin &self, PopMenu &pop_menu) {
-    int x;
-    int y;
-    self.get_mouse_pos(&x, &y);
-    self.client_to_screen(&x, &y);
-    return pop_menu.exec(x, y, NetWin::modal_callback_daemon);
 }
 
 /*

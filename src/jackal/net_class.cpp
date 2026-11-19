@@ -146,29 +146,6 @@ BOOL __stdcall enumerate_session_callback(LPCDPSESSIONDESC2, LPDWORD, DWORD, LPV
 // sharing source does not prove the original compiler folded any particular pair.
 
 
-template<class List> inline int seek_owned_list(List *list, int position) {
-    AbsFnT abs_fn = &abs;
-    if (position > list->entry_count_ - 1) return 0;
-    list->current_ = list->head_;
-    if (position < 0) {
-        if (abs_fn(position) > list->entry_count_) return 0;
-        int remaining = abs_fn(position);
-        while (remaining > 0) {
-            --remaining;
-            list->current_ = list->current_->previous_;
-        }
-        list->current_position_ = list->entry_count_ + position;
-    } else {
-        int remaining = position;
-        while (remaining > 0) {
-            --remaining;
-            list->current_ = list->current_->next_;
-        }
-        list->current_position_ = position;
-    }
-    return 1;
-}
-
 template<class List> inline typename List::Payload *next_owned_list(List *list) {
     if (list->head_ == 0) return 0;
     typename List::Entry *next = list->current_->next_;

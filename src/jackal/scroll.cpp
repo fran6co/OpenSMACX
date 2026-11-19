@@ -126,14 +126,6 @@ static __forceinline void set_sprite_triplet(Scroll *object, Sprite *primary[3],
     }
 }
 
-static uint32_t arithmetic_shift_right_one(uint32_t value) {
-    return (value >> 1U) | (value & 0x80000000U);
-}
-
-static uint32_t signed_min(uint32_t left, uint32_t right) {
-    return long_from_bits(left) < long_from_bits(right) ? left : right;
-}
-
 
 
 /*
