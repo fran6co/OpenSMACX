@@ -49,6 +49,12 @@
 #include "interlude.h"
 #include "worldwin.h"
 #include "crt_random_inline.h"
+#include "alphamovie.h"
+#include "strings.h"
+#include "wave.h"
+#include "win.h"
+#include <string.h>
+#include <stdlib.h>
 
 // Shared punctuation objects the image pushes instead of unit literals.
 extern char SocialWinCloseParenText[];
@@ -142,1459 +148,6 @@ static int base_yield_add(int left, int right) {
 
 
 
-/*
-Purpose: Reset every base of one faction: the faction's bases are visited in
-         table order and each is handed to base_reset when the caller's
-         context allows it - the faction is not locked out by the human/alive
-         status bytes, the base optionally lies in the requested region, and
-         with the occupancy flag the tile must be free of vehicles or without
-         a current owner.
-
-// ORIGINAL: 0x004E6300 ?bases_reset@@YAXHHH@Z 0x004E6300-0x004E63FC FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence":["src/base.h declares bases_reset and owns the actual Base array and BaseCurrent; its Base members x/y/faction_id_current/state have RECOVERY_MEMBER evidence.","The pinned map-record stride is 0x2C; src/map.h's Map is size 0x2C with climate/contour/val2/region at +0..+3 and bit at +8. Typed indexing preserves the original field reads.","The body keeps both live enable-mask reads, the original short-circuit order, the base_reset callback, and the post-callback MapTiles/MapLongitude reload. No alias or manual table is introduced."],"reason":"Move the existing reset loop into the Base owner and express its already-established Base/Map storage through actual members while preserving branch, callback, reload, and unsafe-input behavior."}
-// TRIED: single AND-chained `if` (faction==a2 && (a1<0||idx_byte==a1) && (a3==0||bits check) && (mask flag||special)) reproduces the loop body; `int mask`/`unsigned char mask` both leave the divergence at MISMATCH #2 (original reserves the one local with `push ecx` right after `mov ebp,esp`; every C form tried here gets `sub esp,4` instead) - same prologue-reservation wall as the mon_* family (0x00477840).
-// size      252 bytes
-// callers   4   call targets   1
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x004E5FE0
-// notes     Seed provenance (TRIED): the single AND-chained `if` reproduces
-//           the loop body; the residual divergence is the prologue local
-//           reservation - the original reserves its one local with `push ecx`
-//           right after `mov ebp,esp`, and every C form tried reaches for
-//           `sub esp,4` (the mon_* family wall at 0x00477840).
-Return Value: n/a
-Status: Coverage transcription - unclaimed body; the seed
-        git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004e6300.cpp is retained until this product
-        definition measures fresh BYTE_EXACT.
-*/
-void __cdecl bases_reset(int region_id, int faction_id, int skip_occupied) {
-    if (is_human(faction_id)) {
-        return;
-    }
-    for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
-        if (Bases[i].faction_id_current == faction_id
-            && (region_id < 0 || MapTiles[(Bases[i].x >> 1) + Bases[i].y * MapLongitude].region == region_id)
-            && (!skip_occupied || veh_who(Bases[i].x, Bases[i].y) < 0)
-            && (!is_human(faction_id) || !(BaseCurrent->state & 0x80000000))) {
-            base_reset(i, 0);
-        }
-    }
-}
-
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x004E7E50 0x004E7F64 0x004E7F74 0x004E7EF7
-/*
-Purpose: Sum one base's terrain yields into the selected Base's intake_2
-         slots: walk the base's centre plus its radius offsets, wrap the x
-         edge on a flat map, latch the 0x8000 out-of-bounds state bit when
-         the tile is non-fungal rock, and add each of the four yield
-         passes' result into BaseCurrent's nutrient/mineral/energy/unused
-         intake_2 word, returning the sum.
-
-// ORIGINAL: 0x004E7E50 sub_4e7e50 0x004E7E50-0x004E7F64 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence":["The body reads the existing BaseCurrent/Bases layout (x, y, faction, state and contiguous intake_2 words), Map records, map bounds, and declared crop_yield/mine_yield/energy_yield APIs.","The function's fourth pass deliberately clears TileYieldRestricted; the body and original pass order are carried unchanged.","The identity remains the unmangled global sub_4e7e50; no original class name is inferred from its Base dataflow."],"reason":"Place the complete existing base-radius yield routine beside its genuine Base/Map dependencies without renaming it, changing pass order, or normalizing the original state updates."}
-// symbol    ?sub_4e7e50@@YAHH@Z
-// TRIED: various expression orderings for the x/y base+offset sums and the wrap-around guard placement all keep the divergence at the first instructions (register allocation for edx/ecx/a1 differs from the original's push-ebx/push-esi-before-movsx order).
-// size      276 bytes
-// prototype
-// callers   0   call targets   3
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x004E6E50 0x004E7310 0x004E7750
-Return Value: the four-pass yield sum
-Status: Coverage transcription - unclaimed body
-*/
-// stand-in: base_yield expands this body inline while the image still emits
-// it standalone (callers 0); VC6 will not auto-inline the extern function
-// there, so the body lives in an inline helper both use.
-static inline int radius_yield_add(int radius_index) {
-    Base *base = BaseCurrent;
-    int x = wrap_map_x(base->x + RadiusOffsetX[radius_index]);
-    int y = base->y + RadiusOffsetY[radius_index];
-    if (!on_map(x, y)) {
-        return 0;
-    }
-    if ((map_loc(x, y)->climate & ~0x1F) < 0x60) {
-        base->state |= 0x8000;
-    }
-    int sum = 0;
-    for (int rsc = 0; rsc < 4; ++rsc) {
-        int value = resource_yield(rsc, BaseCurrent->faction_id_current, BaseIDCurrentSelected, x, y);
-        BaseCurrent->intake_2[rsc] += value;
-        sum += value;
-    }
-    return sum;
-}
-
-int __cdecl sub_4e7e50(int radius_index) {
-    return radius_yield_add(radius_index);
-}
-
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x004E7F80 0x004E8094 0x004E80A4 0x004E8027
-/*
-Purpose: The sibling pass of sub_4e7e50: identical walk and tile gating,
-         but each pass's yield is SUBTRACTED from the matching intake_2
-         word while the same value still accumulates into the sum.
-
-// ORIGINAL: 0x004E7F80 sub_4e7f80 0x004E7F80-0x004E8094 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence":["The body reads the existing BaseCurrent/Bases layout, Map records, map bounds, and declared crop_yield/mine_yield/energy_yield APIs.","This is the subtracting sibling of 0x004E7E50; the original sum still accumulates positive yield values while intake_2 is decremented.","The identity remains the unmangled global sub_4e7f80; no original class name is inferred from its Base dataflow."],"reason":"Place the complete subtracting base-radius yield routine beside its genuine Base/Map dependencies, preserving its distinct subtraction and positive return-sum behavior."}
-// symbol    ?sub_4e7f80@@YAHH@Z
-// TRIED: the same prologue register-allocation divergence as its 0x004E7E50 sibling.
-// size      276 bytes
-// prototype
-// callers   0   call targets   3
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x004E6E50 0x004E7310 0x004E7750
-Return Value: the negated-form four-pass yield sum
-Status: Coverage transcription - unclaimed body
-*/
-// stand-in: base_yield expands this body inline while the image still emits
-// it standalone (callers 0); VC6 will not auto-inline the extern function
-// there, so the body lives in an inline helper both use.
-static inline int radius_yield_sub(int radius_index) {
-    Base *base = BaseCurrent;
-    int x = wrap_map_x(base->x + RadiusOffsetX[radius_index]);
-    int y = base->y + RadiusOffsetY[radius_index];
-    if (!on_map(x, y)) {
-        return 0;
-    }
-    if ((map_loc(x, y)->climate & ~0x1F) < 0x60) {
-        base->state |= 0x8000;
-    }
-    int sum = 0;
-    for (int rsc = 0; rsc < 4; ++rsc) {
-        int value = resource_yield(rsc, BaseCurrent->faction_id_current, BaseIDCurrentSelected, x, y);
-        BaseCurrent->intake_2[rsc] -= value;
-        sum += value;
-    }
-    return sum;
-}
-
-int __cdecl sub_4e7f80(int radius_index) {
-    return radius_yield_sub(radius_index);
-}
-
-// Recovery names (original names unknown): the packed specialist nibbles of
-// the selected base. Slots past the sixteen stored nibbles report
-// best_specialist(); writes past them are dropped. base_yield expands both
-// inline; best_specialist stays a real call inside the getter's copies.
-static inline int base_specialist_type(int index) {
-    if (index >= 16) {
-        return best_specialist();
-    }
-    return (BaseCurrent->spec[index >> 3] >> ((index & 7) * 4)) & 0xF;
-}
-
-static inline void base_specialist_set(int index, int type) {
-    if (index < 16) {
-        int word = index >> 3;
-        BaseCurrent->spec[word] &= ~(0xF << ((index & 7) * 4));
-        BaseCurrent->spec[word] |= type << ((index & 7) * 4);
-    }
-}
-// WORKAROUND(inline): dead /Ob2 budget probe, not recovered code; a constant
-// argument folds it away. base_yield spends this much more budget in the image:
-// without it the radius_yield_add for best_position in the reassignment loop expands
-// resource_yield, where the image keeps all seven resource_yield calls out of
-// line (0x004E7DC0 has exactly seven callers, all in base_yield). The
-// original's spend is not identified.
-static inline int base_yield_budget_probe(int x) {
-    if (x == 0) x = 1;
-    if (x == 1) x = 4;
-    if (x == 2) x = 7;
-    if (x == 3) x = 10;
-    if (x == 4) x = 13;
-    if (x == 5) x = 16;
-    if (x == 6) x = 19;
-    if (x == 7) x = 22;
-    if (x == 8) x = 25;
-    if (x == 9) x = 28;
-    if (x == 10) x = 31;
-    if (x == 11) x = 34;
-    if (x == 12) x = 37;
-    if (x == 13) x = 40;
-    if (x == 14) x = 43;
-    if (x == 15) x = 46;
-    return x;
-}
-
-
-// ORIGINAL: 0x004E80B0 ?base_yield@@YAXXZ 0x004E80B0-0x004E954B
-// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004e80b0.cpp", "source:src/base.h", "image:0x004E80CC-0x004E80D9 signed population plus one publishes90E938;0x004E86D9 resets90E900 only on allocation, whereas0x004E8456 jumps to0x004E923D and retains it.", "image:0x004E83D9-0x004E8426 four resource calls per admitted tile;0x004E8E0C-0x004E923D performs one replacement with fresh-call undo;0x004E930C-0x004E954B publishes mask/specialists/intakes and accounts for all21valid radius positions."], "reason": "Recover the complete selected-base worker and specialist allocation pass with typed resource fields, real shared counters, original selection and replacement behavior, and final ecology accounting. Retain its seed identity and evidence; the former link-only placeholder is replaced, not accepted by a source binding."}
-// TRIED: literal register-machine transliteration (pseudo-regs eax..edi + stack slots v04..v58, goto per basic block); covers ~100% of instructions (5804 rebuilt vs 5275 original bytes). cdq/sub/sar-1 divide-by-2 idioms folded to `/2`; neg/sbb/not boolean tricks folded to ternaries; magic-const /3 folded to `/3`. Divergence is from stack/local layout (more temporaries than the original's register allocation), not from control flow or field offsets.
-void __cdecl base_yield() {
-    base_yield_budget_probe(2);  // WORKAROUND(inline): see base_yield_budget_probe
-    farm_compute();
-    int faction = BaseCurrent->faction_id_current;
-    BasePopulationUnassigned = BaseCurrent->population_size + 1;
-    BOOL automatic = !is_human(faction)
-        || ((BaseCurrent->governor & GOV_MANAGES_CITIZENS_SPECS) && (BaseCurrent->governor & GOV_ACTIVE));
-    uint32_t worked = 0;
-    BaseCurrent->state &= ~BSTATE_UNK_8000;
-    BaseCurrent->specialist_unk_1 = 0;
-    BaseCurrent->resource_sqr_radius &= ~FarmUnavailableMask | 1;
-
-    // VC6 for-scope: this `i` lives to the end of the function. The image
-    // keeps it in one slot ([ebp-4]) for this loop, both specialist loops,
-    // the radius scan and the tail loops; only the worked-square reuse loop
-    // has its own counter.
-    for (int i = 0; i < 4; i++) {
-        if (i < 3) {
-            BaseCurrent->intake_2[i] = PlayersData[faction].satellites_[i];
-            if (!has_fac(FAC_AEROSPACE_COMPLEX, BaseIDCurrentSelected, 0)
-                && !has_project(SP_SPACE_ELEVATOR, faction)
-                && !has_project(SP_CLOUDBASE_ACADEMY, faction)) {
-                BaseCurrent->intake_2[i] = (BaseCurrent->intake_2[i] + 1) / 2;
-            }
-            BaseCurrent->intake_2[i] = (BaseCurrent->population_size < BaseCurrent->intake_2[i])
-                ? BaseCurrent->population_size : BaseCurrent->intake_2[i];
-        } else {
-            BaseCurrent->intake_2[i] = 0;
-        }
-    }
-
-    // Reuse the base's previous worked squares when every one of them can be staffed.
-    if (!automatic || !UnkGlobal0093A934) {
-        if (automatic) {
-            for (i = 0; i < BaseCurrent->specialist_total; i++) {
-                if (!Citizen[base_specialist_type(i)].bonus[1]) {
-                    BaseCurrent->specialist_unk_1++;
-                }
-            }
-            BaseCurrent->specialist_total -= BaseCurrent->specialist_unk_1;
-        }
-        if (BasePopulationUnassigned >= bit_count(BaseCurrent->resource_sqr_radius)) {
-            for (int i = 0; i < 21; i++) {
-                if (!i || (BaseCurrent->resource_sqr_radius & (1 << i))) {
-                    worked |= 1 << i;
-                    radius_yield_add(i);
-                    if (!--BasePopulationUnassigned) {
-                        break;
-                    }
-                }
-            }
-            // BaseNutrientAdequate deliberately keeps its previous value on this path.
-            if (BasePopulationUnassigned
-                == BaseCurrent->specialist_unk_1 + BaseCurrent->specialist_total) {
-                goto assign_specialists;
-            }
-        }
-    }
-
-    // Automatic bases release every specialist without a psych bonus.
-    // The compaction shifts through the old end slot and then advances the
-    // outer index without re-testing the slot that moved into it.
-    if (automatic && BaseCurrent->specialist_total) {
-        for (i = 0; i < BaseCurrent->specialist_unk_1 + BaseCurrent->specialist_total; i++) {
-            if (!Citizen[base_specialist_type(i)].bonus[1]) {
-                for (int j = i; j < BaseCurrent->specialist_unk_1 + BaseCurrent->specialist_total; j++) {
-                    base_specialist_set(j, base_specialist_type(j + 1));
-                }
-                if (BaseCurrent->specialist_unk_1) {
-                    BaseCurrent->specialist_unk_1--;
-                }
-            }
-        }
-    }
-    if (!(worked & 1)) {
-        radius_yield_add(0);
-        worked |= 1;
-        BasePopulationUnassigned--;
-    }
-
-    BaseNutrientAdequate = 0;
-    int fight;
-    int growth;
-    int tech;
-    int wealth;
-    int power;
-    if (is_human(faction) && (BaseCurrent->governor & GOV_ACTIVE)) {
-        growth = (BaseCurrent->governor >> 24) & 1;
-        tech = (BaseCurrent->governor >> 24) & 2;
-        wealth = (BaseCurrent->governor >> 25) & 2;
-        power = (BaseCurrent->governor >> 26) & 2;
-        if (power) {
-            fight = 2;
-        } else if (!growth && !wealth) {
-            fight = tech ? -2 : PlayersData[faction].ai_fight;
-        } else {
-            fight = 0;
-        }
-    } else if (is_human(faction)) {
-        fight = 0;
-        power = 0;
-        wealth = 0;
-        tech = 0;
-        growth = 0;
-    } else {
-        growth = PlayersData[faction].ai_growth;
-        wealth = PlayersData[faction].ai_wealth;
-        tech = PlayersData[faction].ai_tech;
-        power = PlayersData[faction].ai_power;
-        fight = PlayersData[faction].ai_fight;
-    }
-
-    for (;;) {
-        BOOL replacing = BasePopulationUnassigned
-            <= BaseCurrent->specialist_unk_1 + BaseCurrent->specialist_total;
-        int best_position = 0;
-        int best_score = 0;
-        int max_nutrients = 0;
-        int worst_score = 9999;
-        int worst_position = -1;
-        uint32_t excluded = replacing ? 0 : worked;
-        for (i = 1; i < 21; i++) {
-            uint32_t bit = 1 << i;
-            if (bit & (excluded | FarmUnavailableMask)) {
-                continue;
-            }
-            int x = wrap_map_x(BaseCurrent->x + RadiusOffsetX[i]);
-            int y = BaseCurrent->y + RadiusOffsetY[i];
-            if (!on_map(x, y)) {
-                continue;
-            }
-            int nutrients = crop_yield(BaseCurrent->faction_id_current, BaseIDCurrentSelected, x, y, 0);
-            int minerals = mine_yield(BaseCurrent->faction_id_current, BaseIDCurrentSelected, x, y, 0);
-            int energy = energy_yield(BaseCurrent->faction_id_current, BaseIDCurrentSelected, x, y, 0);
-            if (nutrients > max_nutrients) {
-                max_nutrients = nutrients;
-            }
-            int food_bonus = 0;
-            int needed = BaseCurrent->population_size * Rules.nutrient_req_citizen;
-            if (BasePopulationUnassigned / Rules.nutrient_req_citizen + BaseCurrent->intake_2[0] < needed) {
-                food_bonus = (BaseCurrent->intake_2[0] + BasePopulationUnassigned >= needed) ? 2 : 8;
-                if (food_bonus) {
-                    nutrients += range(nutrients, 0, food_bonus);
-                }
-            } else {
-                BaseNutrientAdequate = 1;
-            }
-            nutrients *= 2;
-            minerals *= 2;
-            energy *= 2;
-            if (BaseCurrent->intake_2[0] <= BaseCurrent->population_size + needed && !nutrients) {
-                minerals /= 2;
-                energy /= 2;
-            }
-            if (!minerals && !food_bonus) {
-                nutrients /= 2;
-            }
-            int score = (growth + 4) * nutrients * 256
-                / range((BaseCurrent->intake_2[0] - BaseCurrent->population_size / 3 - needed
-                         + BasePopulationUnassigned) * 2 - 2, 1, 99);
-            int mineral_weight = (BaseCurrent->queue_production_id[0] < -70) ? 2 : -tech;
-            int mineral_divisor = range((BaseCurrent->intake_2[1]
-                - BaseCurrentForcesMaintCost + 1) / 2, 1, 99);
-            score += (fight + mineral_weight + power + wealth + 6)
-                * BaseCurrent->population_size * minerals * 64 / mineral_divisor;
-            score += (wealth + tech * 2 + 1) * range(BaseCurrent->population_size - power, 1, 99)
-                * energy * 64 / range(BaseCurrent->intake_2[2], 1, 99);
-            if (worked & bit) {
-                if (score < worst_score) {
-                    worst_score = score;
-                    worst_position = i;
-                }
-            } else if (score > best_score) {
-                best_score = score;
-                best_position = i;
-            }
-        }
-
-        // Large, well-fed automatic bases late in the game also weigh specialists.
-        if (automatic && BaseCurrent->population_size >= 5
-            && (BaseCurrent->intake_2[0] > BaseCurrent->population_size * Rules.nutrient_req_citizen
-                || !max_nutrients)
-            && GameDataStateStorage.fields_.turn_current_num_ > 100) {
-            for (int s = 0; s < MaxSpecialistNum; s++) {
-                if (has_tech(Citizen[s].preq_tech, faction) && !has_tech(Citizen[s].obsol_tech, faction)) {
-                    // Dead in the original: only an empty walk over factions 1..7 survives.
-                    int ranking_total = 0;
-                    for (int other = 1; other < MaxPlayerNum; other++) {
-                        ranking_total += PlayersData[other].tech_ranking;
-                    }
-                    int score = Citizen[s].bonus[1] * 64
-                        + (wealth + 2) * BaseCurrent->population_size * Citizen[s].bonus[0] * 64
-                            / range(BaseCurrent->specialist_unk_1 + BaseCurrent->intake_2[2], 1, 99)
-                        + (tech + 2) * BaseCurrent->population_size * Citizen[s].bonus[2] * 64
-                            / range(BaseCurrent->specialist_unk_1 + BaseCurrent->intake_2[2], 1, 99);
-                    if (score > best_score) {
-                        best_score = score;
-                        best_position = -s - 1;
-                    }
-                }
-            }
-        }
-
-        if (!replacing) {
-            if (best_position < 0) {
-                base_specialist_set(BaseCurrent->specialist_unk_1, -best_position - 1);
-                BaseCurrent->specialist_unk_1++;
-            } else if (best_position > 0) {
-                worked |= 1 << best_position;
-                radius_yield_add(best_position);
-                BasePopulationUnassigned--;
-            } else {
-                break;
-            }
-            if (BasePopulationUnassigned <= BaseCurrent->specialist_unk_1 + BaseCurrent->specialist_total
-                && BaseCurrent->intake_2[0] >= BaseCurrent->population_size * Rules.nutrient_req_citizen) {
-                break;
-            }
-        } else {
-            // Every worker is placed: try one swap of the worst worked square
-            // for the best free one, undone if the base would stop growing.
-            if (best_position > 0 && best_score > worst_score && worst_position > 0) {
-                uint32_t worst_bit = 1 << worst_position;
-                uint32_t best_bit = 1 << best_position;
-                worked = (worked & ~worst_bit) | best_bit;
-                radius_yield_sub(worst_position);
-                radius_yield_add(best_position);
-                if (BaseCurrent->intake_2[0]
-                    < (BaseCurrent->population_size + 1) * Rules.nutrient_req_citizen) {
-                    worked = (worked & ~best_bit) | worst_bit;
-                    radius_yield_sub(best_position);
-                    radius_yield_add(worst_position);
-                }
-            }
-            break;
-        }
-    }
-
-assign_specialists:
-    for (i = BaseCurrent->specialist_total; i < BasePopulationUnassigned; i++) {
-        base_specialist_set(i, best_specialist());
-    }
-    BaseCurrent->resource_sqr_radius = worked;
-    BaseCurrent->specialist_total = BasePopulationUnassigned;
-    BaseCurrent->state &= ~BSTATE_UNK_100;
-    for (i = 0; i < 4; i++) {
-        BaseCurrent->intake_1[i] = BaseCurrent->intake_2[i];
-    }
-
-    BaseCurrent->eco_damage = 0;
-    for (i = 0; i < 21; i++) {
-        int x = wrap_map_x(BaseCurrent->x + RadiusOffsetX[i]);
-        int y = BaseCurrent->y + RadiusOffsetY[i];
-        if (!on_map(x, y)) {
-            continue;
-        }
-        uint32_t bits = map_loc(x, y)->bit;
-        int is_worked = BaseCurrent->resource_sqr_radius & (1 << i);
-        int damage = bit_count(bits & 0x1C8805C);
-        if (is_worked) {
-            damage *= 2;
-        }
-        if (bits & BIT_THERMAL_BORE) {
-            damage += 8;
-        }
-        if (bits & BIT_ECH_MIRROR) {
-            damage += 6;
-        }
-        if (bits & BIT_CONDENSER) {
-            damage += 4;
-        }
-        if (bits & BIT_FOREST) {
-            damage--;
-        }
-        if (has_fac(FAC_TREE_FARM, BaseIDCurrentSelected, 0)
-            && has_fac(FAC_HYBRID_FOREST, BaseIDCurrentSelected, 0)) {
-            damage = 0;
-        }
-        if (has_fac(FAC_TREE_FARM, BaseIDCurrentSelected, 0)
-            || has_fac(FAC_HYBRID_FOREST, BaseIDCurrentSelected, 0)) {
-            damage /= 2;
-        }
-        BaseCurrent->eco_damage += damage;
-    }
-}
-
-// The selected-base energy pass owns convoy/commerce accounting, upkeep-stage
-// reserve transfer, allocation and specialist yields, facility/project multipliers,
-// faction efficiency adjustment, Network Backbone research credits and the final
-// energy-production special case. Historical byte and restoration obligations
-// remain attached to the complete original span.
-// Recovery name: candidate specialist yields at least the old one's
-// ops/psych/research bonuses.
-static inline BOOL citizen_covers(int candidate, int specialist) {
-    for (int k = 0; k < 3; k++) {
-        if (Citizen[candidate].bonus[k] < Citizen[specialist].bonus[k]) {
-            return FALSE;
-        }
-    }
-    return TRUE;
-}
-
-// ORIGINAL: 0x004EB560 ?base_energy@@YAXXZ 0x004EB560-0x004EC3A6 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/unrecovered/004eb560.cpp", "image:0x004EB560-0x004EC3A6 ranks the selected base and publishes seven commerce pairs at 0x0090EA10/0x0090E964; its commerce base doubles when 0x009A6628 is below 0x009A6624", "source:src/base.h", "source:src/faction.h"], "reason": "Recover the selected-base energy pass through typed Base, PlayerData, Player, Citizen, secret-project and shared-ledger owners, including trade, upkeep, specialist, facility, research-efficiency and final production stages. This source mapping makes no exactness claim; preserve historical claims and seed findings as restoration obligations."}
-// kind      game
-// Historical scaffold-era TRIED note follows; it records the earlier offset-transliteration attempt, not this typed owner body.
-// TRIED: void return confirmed - the function's only exit is the fall- through after `call base_psych` (itself void, ?base_psych@@YAXXZ) with no eax write in between, so it is a real `ret`, not a status. The 6/40/80/99999 constants the audit flagged are all clamp bounds (min/max against a computed value that is then stored into a per-base or per-faction field) or array strides, never delivered to the caller. Body is a direct, offset-checked transcription of the Ghidra decompilation with DAT_ globals replaced by explicit fixed-address casts (BASE macro re-reads [0x90ea30] at each use rather than caching it, matching the repeated `mov eax,[0x90ea30]` in the disassembly) and callee names resolved to the scaffold's declared black_market/ base_rank/best_specialist/has_tech/bitmask/base_psych. Compiles and preserves every branch, loop and goto (LAB_004ebbde, LAB_004ec1f6, LAB_004ebddd); did not chase the early-prologue register-scheduling divergence given the size already spent.
-void __cdecl base_energy() {
-    int faction = BaseCurrent->faction_id_current;
-    // BUG(original): one stack local carries the commerce base, the selected
-    // base's own receipt and the alien facility subtotal. Only a partner that
-    // reaches base_rank writes it, so the alien pass and the Network Backbone
-    // alien credit read whatever the stack held when no partner qualified.
-    int value;
-    // BUG(original): assigned only when the scan meets BaseCurrent.
-    int base_index;
-    BaseCurrent->intake_2[RSC_ENERGY] += BaseCurrentConvoyTo[RSC_ENERGY];
-    BaseCurrent->energy_consumption = BaseCurrentConvoyFrom[RSC_ENERGY];
-    BaseCurrent->energy_inefficiency =
-        black_market(BaseCurrent->intake_2[RSC_ENERGY] - BaseCurrent->energy_consumption);
-    BaseCurrent->energy_surplus = BaseCurrent->intake_2[RSC_ENERGY]
-        - BaseCurrent->energy_consumption - BaseCurrent->energy_inefficiency;
-
-    int rank = 0;
-    for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
-        if (Bases[i].faction_id_current == faction) {
-            if ((Bases[i].intake_1[RSC_ENERGY] << 9) + i
-                > (BaseCurrent->intake_1[RSC_ENERGY] << 9) + BaseIDCurrentSelected) {
-                rank++;
-            }
-            if (&Bases[i] == BaseCurrent) {
-                base_index = i;
-            }
-        }
-    }
-    for (int partner = 1; partner < MaxPlayerNum; partner++) {
-        BaseCommerceReceipts[partner - 1] = 0;
-        BaseCommercePartnerReceipts[partner - 1] = 0;
-        if (partner == faction) {
-            continue;
-        }
-        if (!(PlayersData[faction].diplo_treaties[partner] & DTREATY_TREATY)
-            && !(PlayersData[partner].diplo_treaties[faction] & DTREATY_TREATY)) {
-            continue;
-        }
-        if (!PlayersData[partner].current_num_bases) {
-            continue;
-        }
-        int partner_base = base_rank(partner, rank);
-        if (partner_base < 0) {
-            continue;
-        }
-        value = (Bases[partner_base].intake_1[RSC_ENERGY]
-                 + BaseCurrent->intake_1[RSC_ENERGY] + 7) / 8;
-        if (GameDataStateStorage.fields_.council_resolution_count_[PROP_GLOBAL_TRADE_PACT]
-            > GameDataStateStorage.fields_.council_resolution_count_[PROP_REPEAL_GLOBAL_TRADE_PACT]) {
-            value *= 2;
-        }
-        int divisor = TechCommerceCount + 1;
-        int partner_receipt =
-            ((PlayersData[partner].tech_commerce_bonus + 1) * value + divisor / 2) / divisor;
-        value = ((PlayersData[faction].tech_commerce_bonus + 1) * value + divisor / 2) / divisor;
-        if (!(PlayersData[faction].diplo_treaties[partner] & DTREATY_PACT)) {
-            value /= 2;
-            partner_receipt /= 2;
-        }
-        if (GameDataStateStorage.fields_.governor_faction_ == faction) {
-            value++;
-        }
-        if (GameDataStateStorage.fields_.governor_faction_ == partner) {
-            partner_receipt++;
-        }
-        if (PlayersData[faction].sanction_turns || PlayersData[partner].sanction_turns
-            || (Players[faction].rule_flags & RFLAG_ALIEN)
-            || (Players[partner].rule_flags & RFLAG_ALIEN)) {
-            partner_receipt = 0;
-            value = 0;
-        }
-        BaseCommerceReceipts[partner - 1] = value;
-        BaseCommercePartnerReceipts[partner - 1] = partner_receipt;
-        BaseCurrent->intake_2[RSC_ENERGY] += value;
-    }
-    if (is_alien_faction(faction)) {
-        for (int fac = 0; fac < 70; fac++) {
-            if (BaseCurrent->facilities_built[fac / 8] & (1 << (fac % 8))) {
-                value++;
-            }
-        }
-        for (int project = 0; project < 64; project++) {
-            if (GameDataStateStorage.fields_.secret_project_.project_base[project] == base_index) {
-                value += 5;
-            }
-        }
-        value /= 2;
-        if (PlayersData[faction].sanction_turns) {
-            value = 0;
-        }
-        BaseCurrent->intake_2[RSC_ENERGY] += value;
-    }
-    if (BaseUpkeepStage == 1) {
-        PlayersData[faction].unk_13 += range(BaseCurrent->energy_surplus, 0, 99999);
-    }
-    BaseCurrent->energy_inefficiency =
-        black_market(BaseCurrent->intake_2[RSC_ENERGY] - BaseCurrent->energy_consumption);
-    BaseCurrent->energy_surplus = BaseCurrent->intake_2[RSC_ENERGY]
-        - BaseCurrent->energy_consumption - BaseCurrent->energy_inefficiency;
-
-    int energy = range(BaseCurrent->energy_surplus, 0, 9999);
-    BaseCurrent->psych_total =
-        range((PlayersData[faction].se_alloc_psych * energy + 4) / 10, 0, energy);
-    BaseCurrent->economy_total = range(
-        ((10 - PlayersData[faction].se_alloc_labs - PlayersData[faction].se_alloc_psych)
-         * energy + 4) / 10,
-        0, energy - BaseCurrent->psych_total);
-    BaseCurrent->labs_total =
-        energy - BaseCurrent->psych_total - BaseCurrent->economy_total;
-    BaseCurrent->unk_10 = range(
-        ((9 - PlayersData[faction].se_alloc_labs - PlayersData[faction].se_alloc_psych)
-         * energy + 4) / 10,
-        0, energy - BaseCurrent->psych_total);
-
-    // The original indexes Citizen[].bonus[] and
-    // Base::economy/psych/labs_total as three-element arrays.
-    for (int citizen = 0; citizen < BaseCurrent->specialist_total; citizen++) {
-        int specialist = range(base_specialist_type(citizen), 0, 6);
-        if (has_tech(Citizen[specialist].obsol_tech, faction)) {
-            for (int candidate = 0; candidate < 7; candidate++) {
-                if (has_tech(Citizen[candidate].preq_tech, faction)
-                    && !has_tech(Citizen[candidate].obsol_tech, faction)) {
-                    if (citizen_covers(candidate, specialist)) {
-                        specialist = candidate;
-                        base_specialist_set(citizen, specialist);
-                        break;
-                    }
-                }
-            }
-        }
-        for (int k = 0; k < 3; k++) {
-            (&BaseCurrent->economy_total)[k] += Citizen[specialist].bonus[k];
-        }
-    }
-    BaseCurrent->labs_total += Players[faction].rule_research;
-    if (has_fac(FAC_BIOLOGY_LAB, BaseIDCurrentSelected, 0)) {
-        BaseCurrent->labs_total += 2;
-    }
-
-    int labs_mult = 4;
-    int economy_mult = 4;
-    int psych_mult = 4;
-    if (has_fac(FAC_ENERGY_BANK, BaseIDCurrentSelected, 0)
-        || has_project(SP_PLANETARY_ENERGY_GRID, faction)) {
-        economy_mult = 6;
-    }
-    if (has_fac(FAC_NETWORK_NODE, BaseIDCurrentSelected, 0)) {
-        labs_mult = 6;
-    }
-    if (has_fac(FAC_HOLOGRAM_THEATRE, BaseIDCurrentSelected, 0)
-        || (has_fac(FAC_NETWORK_NODE, BaseIDCurrentSelected, 0)
-            && has_project(SP_VIRTUAL_WORLD, faction))) {
-        psych_mult = 6;
-    }
-    if (has_fac(FAC_RESEARCH_HOSPITAL, BaseIDCurrentSelected, 0)) {
-        psych_mult++;
-        labs_mult += 2;
-    }
-    if (has_fac(FAC_NANOHOSPITAL, BaseIDCurrentSelected, 0)) {
-        psych_mult++;
-        labs_mult += 2;
-    }
-    if (has_fac(FAC_TREE_FARM, BaseIDCurrentSelected, 0)) {
-        psych_mult += 2;
-        economy_mult += 2;
-    }
-    if (has_fac(FAC_HYBRID_FOREST, BaseIDCurrentSelected, 0)) {
-        psych_mult += 2;
-        economy_mult += 2;
-    }
-    if (has_fac(FAC_FUSION_LAB, BaseIDCurrentSelected, 0)) {
-        economy_mult += 2;
-        labs_mult += 2;
-    }
-    if (has_fac(FAC_QUANTUM_LAB, BaseIDCurrentSelected, 0)) {
-        economy_mult += 2;
-        labs_mult += 2;
-    }
-    BaseCurrent->psych_total = (BaseCurrent->psych_total * psych_mult + 3) / 4;
-    BaseCurrent->labs_total = (BaseCurrent->labs_total * labs_mult + 3) / 4;
-    if (GameDataStateStorage.fields_.secret_project_[SP_SUPERCOLLIDER] == BaseIDCurrentSelected) {
-        BaseCurrent->labs_total *= 2;
-    }
-    if (GameDataStateStorage.fields_.secret_project_[SP_THEORY_OF_EVERYTHING] == BaseIDCurrentSelected) {
-        BaseCurrent->labs_total *= 2;
-    }
-    BaseCurrent->economy_total = (BaseCurrent->economy_total * economy_mult + 3) / 4;
-    if (GameDataStateStorage.fields_.secret_project_[SP_SPACE_ELEVATOR] == BaseIDCurrentSelected) {
-        BaseCurrent->economy_total *= 2;
-    }
-    if (GameDataStateStorage.fields_.secret_project_[SP_LONGEVITY_VACCINE] == BaseIDCurrentSelected
-        && PlayersData[faction].soc_category_pending.models_[SocialCategory::ECONOMICS] == 1) {
-        BaseCurrent->economy_total += BaseCurrent->economy_total / 2;
-    }
-    BaseCurrent->unk_10 = (BaseCurrent->unk_10 * economy_mult + 3) / 4;
-
-    if (GameDataStateStorage.fields_.secret_project_[SP_NETWORK_BACKBONE] == BaseIDCurrentSelected) {
-        for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
-            if (has_fac(FAC_NETWORK_NODE, i, 0)) {
-                BaseCurrent->labs_total++;
-            }
-        }
-        if (Players[faction].rule_flags & RFLAG_ALIEN) {
-            BaseCurrent->labs_total += value;
-        }
-        for (int partner = 0; partner < MaxPlayerNum - 1; partner++) {
-            if (!PlayersData[faction].sanction_turns && !PlayersData[partner + 1].sanction_turns
-                && !(Players[faction].rule_flags & RFLAG_ALIEN)
-                && !(Players[partner + 1].rule_flags & RFLAG_ALIEN)) {
-                BaseCurrent->labs_total += BaseCommerceReceipts[partner];
-            }
-        }
-    }
-
-    int labs_share = PlayersData[faction].se_alloc_labs;
-    int psych_share = PlayersData[faction].se_alloc_psych;
-    int imbalance = psych_share + labs_share * 2 - 10;
-    if (imbalance < 0) {
-        imbalance = (5 - labs_share) * 2 - psych_share;
-    }
-    imbalance /= 2;
-    int efficiency = PlayersData[faction].soc_effect_pending.values_[SocialEffect::EFFICIENCY];
-    // The image evaluates the clamp three times (an abs()-style expansion).
-    int penalty = (range(efficiency, -4, 4) - 4 >= 0
-                   ? range(efficiency, -4, 4) - 4
-                   : 4 - range(efficiency, -4, 4)) * 2;
-    if (imbalance && penalty) {
-        if (labs_share > 10 - PlayersData[faction].se_alloc_labs - PlayersData[faction].se_alloc_psych) {
-            BaseCurrent->labs_total =
-                ((100 - range(penalty * imbalance, 0, 40)) * BaseCurrent->labs_total + 50) / 100;
-            BaseCurrent->economy_total =
-                ((100 - range(penalty * imbalance * 2, 0, 80)) * BaseCurrent->economy_total + 50) / 100;
-        } else {
-            BaseCurrent->labs_total =
-                ((100 - range(penalty * imbalance * 2, 0, 80)) * BaseCurrent->labs_total + 50) / 100;
-            BaseCurrent->economy_total =
-                ((100 - range(penalty * imbalance, 0, 40)) * BaseCurrent->economy_total + 50) / 100;
-        }
-    }
-    if (BaseCurrent->queue_production_id[0] == -FAC_STOCKPILE_ENERGY
-        && BaseCurrent->mineral_surplus > 0
-        && BaseCurrent->production_id_last == -FAC_STOCKPILE_ENERGY) {
-        BaseCurrent->economy_total +=
-            has_project(SP_PLANETARY_ENERGY_GRID, BaseCurrent->faction_id_current)
-            ? ((BaseCurrent->mineral_surplus + 1) / 2 * 5 + 3) / 4
-            : (BaseCurrent->mineral_surplus + 1) / 2;
-    }
-    base_psych();
-}
-
-// The cached path has no result contract: its EAX is the selected id, while
-// recomputation leaves the last resource pass's register residue. Callers use
-// the published base fields, not a returned integer.
-// ORIGINAL: 0x004EC3B0 ?base_compute@@YAHH@Z 0x004EC3B0-0x004EC3E7 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x004EC3B0-0x004EC3E7"], "reason": "Recover the original base-selection/cache operation with source-owned state and typed fields. The archived seed remains an obligation until this product definition is freshly remeasured."}
-// symbol    ?base_compute@@YAXH@Z
-void __cdecl base_compute(int force) {
-    if (force || BaseComputedID != BaseIDCurrentSelected) {
-        BaseComputedID = BaseIDCurrentSelected;
-        base_support();
-        base_yield();
-        base_nutrient();
-        base_minerals();
-        base_energy();
-    }
-}
-
-// ORIGINAL: 0x004E4B80 ?base_init@@YAHHHH@Z 0x004E4B80-0x004E5250 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004e4b80.cpp: canonical identity, original spans and retained seed history", "source:src/base.h: real Base storage and lifecycle contracts", "source:recovery/tasks/base-lifecycle-owner-closure.json: bounded coordinator authorization"], "reason": "The original base creation operation owns initialization of Bases records and faction base counts; source expresses real Base/PlayerData fields, facility bitmaps, technology and named UI/replay dependencies."}
-// TRIED: `>= 0x200` guard (matches original cmp/jl) over `> 0x1ff` moved divergence #4->#12; raw byte-offset arithmetic on the fixed 0x97dXXX/0x96XXXX globals (record stride 0x134, per-faction stride 0x20cc) rather than the Base struct - field order in src/base.h is only size-checked, not per-field, and several 0x97d0cc-family writes index past their nominal field width (a genuine original OOB-write reproduced faithfully). Not chased to byte-exact given size (1744 bytes / ~330 asm lines).
-int __cdecl base_init(int faction_id, int x, int y) {
-    if (GameDataStateStorage.fields_.base_current_count_ >= 512) {
-        return -1;
-    }
-    int region = map_loc(x, y)->region;
-    bit_set(x, y, BIT_BASE_IN_TILE, TRUE);
-    owner_set(x, y, faction_id);
-    synch_bit(x, y, faction_id);
-    int base_id = GameDataStateStorage.fields_.base_current_count_++;
-    PlayersData[faction_id].current_num_bases++;
-    PlayersData[faction_id].region_total_bases[region]++;
-    replay_base(0, x, y, faction_id);
-    Bases[base_id].x = static_cast<int16_t>(x);
-    Bases[base_id].y = static_cast<int16_t>(y);
-    Bases[base_id].faction_id_current = Bases[base_id].faction_id_former
-        = static_cast<uint8_t>(faction_id);
-    Bases[base_id].nerve_staple_turns_left = 0;
-    Bases[base_id].assimilation_turns_left = 0;
-    Bases[base_id].unk_1 = 0;
-    Bases[base_id].population_size
-        = has_project(SP_PLANETARY_TRANS_SYS, faction_id) ? 3 : 1;
-    Bases[base_id].visibility
-        = static_cast<uint8_t>(map_loc(x, y)->visibility | (1 << faction_id));
-    Bases[base_id].name_string[0] = 0;
-    name_base(faction_id, Bases[base_id].name_string, TRUE, is_ocean(x, y));
-    Bases[base_id].state = 0;
-    Bases[base_id].event = 0;
-    Bases[base_id].governor = PlayersData[faction_id].base_governor_adv;
-    Bases[base_id].minerals_accumulated = 0;
-    Bases[base_id].nutrients_accumulated = 0;
-    Bases[base_id].nerve_staple_count = 0;
-    for (int slot = 0; slot < Base::AutoForwardSlotCount; slot++) {
-        Bases[base_id].auto_forward_slots[slot] = -1;
-    }
-    Bases[base_id].queue_size = 0;
-    base_first(base_id);
-    if (!GameDataStateStorage.fields_.turn_current_num_) {
-        int production = has_tech(VehPrototypes[1].preq_tech, faction_id)
-            ? 1 : (PlayersData[faction_id].diff_level <= 1 ? 0 : 2);
-        Bases[base_id].queue_production_id[0] = production;
-        Bases[base_id].minerals_accumulated
-            = cost_factor(faction_id, 1, -1) * VehPrototypes[production].cost / 2;
-    } else {
-        Bases[base_id].minerals_accumulated
-            = PlayersData[faction_id].soc_effect_active.values_[SocialEffect::SUPPORT] < -1
-            ? 0 : Rules.retool_exemption;
-    }
-    Bases[base_id].resource_sqr_radius = 0;
-    Bases[base_id].specialist_total = 0;
-    Bases[base_id].specialist_unk_1 = 0;
-    Bases[base_id].eco_damage = 0;
-    Bases[base_id].unk_x = Bases[base_id].unk_y = -1;
-    // The original clears only nine facility bytes, not the entire recycled
-    // Base record. Fields it does not initialize deliberately retain their state.
-    for (int fac = 0; fac < 9; fac++) {
-        Bases[base_id].facilities_built[fac] = 0;
-    }
-    // BUG(original): nerve_staple_count is cleared a second time here.
-    // WORKAROUND(type): the image clears 0x124..0x133 with one fresh zero
-    // register in ascending order (0x004E4E20..0x004E4E3A), the unrolled form
-    // of a four-int array clear; base.h models these as four scalar fields.
-    for (int k = 0; k < 4; k++) {
-        (&Bases[base_id].random_event_turns)[k] = 0;
-    }
-    if (PlayersData[faction_id].current_num_bases == 1) {
-        set_fac(FAC_HEADQUARTERS, base_id, TRUE);
-        if (IsMultiplayerNet) {
-            Bases[base_id].population_size = 3;
-            if (Players[faction_id].rule_talent
-                || PlayersData[faction_id].soc_effect_base.values_[SocialEffect::PLANET] > 0) {
-                Bases[base_id].population_size = 4;
-            }
-            if (Players[faction_id].rule_drone || Players[faction_id].rule_population) {
-                Bases[base_id].population_size--;
-            }
-            set_fac(FAC_RECYCLING_TANKS, base_id, TRUE);
-            if (GameDataStateStorage.fields_.diff_level_current_ >= 3) {
-                set_fac(FAC_RECREATION_COMMONS, base_id, TRUE);
-            }
-            if (PlayersData[faction_id].soc_effect_base.values_[SocialEffect::ECONOMY] > 0) {
-                set_fac(FAC_ENERGY_BANK, base_id, TRUE);
-            }
-        } else {
-            Bases[base_id].population_size = static_cast<int8_t>(
-                range((GameDataStateStorage.fields_.turn_current_num_ + 49) / 50, 1, 5));
-            if (GameDataStateStorage.fields_.turn_current_num_ >= 75) {
-                set_fac(FAC_RECYCLING_TANKS, base_id, TRUE);
-            }
-            if (GameDataStateStorage.fields_.turn_current_num_ >= 100) {
-                set_fac(FAC_RECREATION_COMMONS, base_id, TRUE);
-            }
-            if (GameDataStateStorage.fields_.turn_current_num_ >= 150) {
-                set_fac(FAC_ENERGY_BANK, base_id, TRUE);
-            }
-        }
-    }
-    if (is_ocean(x, y)) {
-        set_fac(FAC_PRESSURE_DOME, base_id, TRUE);
-    }
-    for (int i = 0; i < 8; i++) {
-        // Nested ?: - the image loads population_size once per true arm.
-        Bases[base_id].faction_pop_size_intel[i] = i == faction_id
-            ? Bases[base_id].population_size
-            : ((Bases[base_id].visibility & (1 << i)) ? Bases[base_id].population_size : 0);
-    }
-    int j;
-    for (j = 0; j < Players[faction_id].faction_bonus_count; j++) {
-        if (Players[faction_id].faction_bonus_id[j] == 2) {
-            set_fac(range(Players[faction_id].faction_bonus_val1[j], 1, 69), base_id, TRUE);
-        }
-    }
-    for (j = 0; j < Players[faction_id].faction_bonus_count; j++) {
-        // BUG(original): the facility prerequisite is looked up with the
-        // unclamped bonus value; only the set_fac index is clamped.
-        if (Players[faction_id].faction_bonus_id[j] == 12
-            && has_tech(Facility[Players[faction_id].faction_bonus_val1[j]].preq_tech,
-                faction_id)) {
-            set_fac(range(Players[faction_id].faction_bonus_val1[j], 1, 69), base_id, TRUE);
-        }
-    }
-    for (j = 1; j < 70; j++) {
-        if (has_tech(Facility[j].free_tech, faction_id)) {
-            set_fac(j, base_id, TRUE);
-        }
-    }
-    Bases[base_id].production_id_last = Bases[base_id].queue_production_id[0];
-    Bases[base_id].minerals_accumulated_2 = Bases[base_id].minerals_accumulated;
-    Bases[base_id].mineral_surplus_final = 0;
-    base_mark(base_id);
-    reset_territory();
-    BaseIDCurrentSelected = base_id;
-    BaseCurrent = &Bases[base_id];
-    base_compute(1);
-    WorldClimateWorldWin.field_239BC_ |= 2;
-    return base_id;
-}
-
-// base_find(x, y, faction_id) as base_kill inlines it; the out-of-line body
-// (below) is kept auto_inline(off) for its other callers.
-static inline int base_kill_find(int x, int y, int faction_id) {
-    int proximity = 9999;
-    int base_id = -1;
-    for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
-        if (Bases[i].faction_id_current == faction_id) {
-            int dist = vector_dist(x, y, Bases[i].x, Bases[i].y);
-            if (dist <= proximity) {
-                proximity = dist;
-                base_id = i;
-            }
-        }
-    }
-    if (base_id >= 0) {
-        BaseFindDist = proximity;
-    }
-    return base_id;
-}
-
-// ORIGINAL: 0x004E5250 ?base_kill@@YAXH@Z 0x004E5250-0x004E5A58
-// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004e5250.cpp: canonical identity, original spans and retained seed history", "source:src/base.h: real Base storage and lifecycle contracts", "source:recovery/tasks/base-lifecycle-owner-closure.json: bounded coordinator authorization"], "reason": "The original base destruction operation belongs to the Base owner and repairs real faction/project/base/vehicle references and count/selection state rather than forwarding into the original executable."}
-// TRIED: full line-by-line transcription landed (MISMATCH #3, prologue push/mov divergence); stack-slot reuse across phases not replicated (used per-phase named locals instead), and the two adjustor-thunk virtual calls (vtable[1] read as delta, then slot0 on the adjusted `this`) route through VCall with a manually computed adjusted receiver rather than the shim alone.
-// The image calls the CRT memcpy for the record compaction.
-void __cdecl base_kill(int base_id) {
-    int veh_id;
-    int x = Bases[base_id].x;
-    int y = Bases[base_id].y;
-    int faction_id = Bases[base_id].faction_id_current;
-    if (has_fac(FAC_HEADQUARTERS, base_id, 0)
-        && PlayersData[faction_id].corner_market_turn > GameDataStateStorage.fields_.turn_current_num_
-        && PlayersData[faction_id].corner_market_active) {
-        PlayersData[faction_id].corner_market_turn = 0;
-        PlayersData[faction_id].corner_market_active = 0;
-        if (faction_id == ConsoleGlobal.faction_id_) {
-            popp(ScriptPopupFile, "CORNERFOILED", 0, "econwin_sm.pcx", 0);
-        } else {
-            parse_says(0, Players[faction_id].adj_name_faction, -1, -1);
-            popp(ScriptPopupFile, "CORNERTHEMFOILED", 0, "econwin_sm.pcx", 0);
-        }
-    }
-    if (Bases[base_id].population_size < 0) {
-        Bases[base_id].population_size = 0;
-    }
-    replay_base(2, x, y, faction_id);
-    PlayersData[faction_id].current_num_bases--;
-    PlayersData[faction_id].region_total_bases[region_at(x, y)]--;
-    for (veh_id = GameDataStateStorage.fields_.vehicle_current_count_ - 1; veh_id >= 0; veh_id--) {
-        if (veh_id < GameDataStateStorage.fields_.vehicle_current_count_
-            && Vehs[veh_id].home_base_id == base_id) {
-            if (Vehs[veh_id].faction_id != faction_id) {
-                Vehs[veh_id].home_base_id = -1;
-            } else {
-                // Hide the dying base from the search for a new home.
-                Bases[base_id].faction_id_current = 0xFF;
-                int home_id = base_kill_find(x, y, faction_id);
-                Bases[base_id].faction_id_current = static_cast<uint8_t>(faction_id);
-                if (home_id >= 0) {
-                    Vehs[veh_id].home_base_id = static_cast<int16_t>(home_id);
-                } else {
-                    kill(veh_id);
-                }
-            }
-        }
-    }
-    bit_set(x, y, BIT_BASE_IN_TILE, 0);
-    // This overlapping copy is memcpy in the original, not memmove.
-    if (base_id < GameDataStateStorage.fields_.base_current_count_ - 1) {
-        memcpy(&Bases[base_id], &Bases[base_id + 1],
-            (GameDataStateStorage.fields_.base_current_count_ - base_id - 1) * sizeof(Base));
-    }
-    GameDataStateStorage.fields_.base_current_count_--;
-    if (base_id == BaseComputedID) {
-        BaseComputedID = -1;
-    }
-    for (veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; veh_id++) {
-        if (Vehs[veh_id].home_base_id > base_id) {
-            Vehs[veh_id].home_base_id--;
-        }
-    }
-    int i;
-    for (i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
-        for (int j = 0; j < 3; j++) {
-            if (Bases[i].auto_forward_slots[j] == base_id) {
-                Bases[i].auto_forward_slots[j] = -1;
-            } else if (Bases[i].auto_forward_slots[j] > base_id) {
-                Bases[i].auto_forward_slots[j]--;
-            }
-        }
-    }
-    StringList &messages = InterfaceMessageWin.listBox_.item_list_;
-    const int message_id = base_id | 0x40000000;
-    if (messages.head_) {
-        for (int index = 0; index < messages.entry_count_; ++index) {
-            StringStructEntry *entry = messages.current_;
-            if (entry->id == message_id) {
-                entry->next->previous = entry->previous;
-                entry->previous->next = entry->next;
-                if (entry == messages.head_) messages.head_ = entry->next;
-                messages.current_ = entry->next;
-                messages.on_remove(entry->string_payload());
-                delete entry->string_payload();
-                entry->payload = 0;
-                delete entry;
-                --messages.entry_count_;
-                --index;
-            } else {
-                if (entry->id > message_id) --entry->id;
-                messages.current_ = entry->next;
-            }
-        }
-        if (!messages.entry_count_) messages.head_ = 0;
-        messages.current_position_ = messages.entry_count_ - 1;
-    }
-    InterfaceMessageWin.listBox_.update_changes();
-    for (i = 0; i < MaxSecretProjectNum; i++) {
-        if (GameDataStateStorage.fields_.secret_project_.project_base[i] == base_id) {
-            GameDataStateStorage.fields_.secret_project_.project_base[i] = -2;
-        } else if (GameDataStateStorage.fields_.secret_project_.project_base[i] > base_id) {
-            GameDataStateStorage.fields_.secret_project_.project_base[i]--;
-        }
-    }
-    for (i = 1; i < MaxPlayerNum; i++) {
-        if (PlayersData[i].base_id_atk_target == base_id) {
-            PlayersData[i].base_id_atk_target = -1;
-        } else if (PlayersData[i].base_id_atk_target > base_id) {
-            PlayersData[i].base_id_atk_target--;
-        }
-    }
-    for (i = 0; i < 49; i++) {
-        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
-        int y_radius = y + RadiusOffsetY[i];
-        if (y_radius >= 0 && y_radius < MapLatitudeBounds
-            && x_radius >= 0 && x_radius < MapLongitudeBounds) {
-            site_set(x_radius, y_radius, 0);
-            if (i < 21) {
-                bit_set(x_radius, y_radius, BIT_BASE_RADIUS, 0);
-                if ((map_loc(x_radius, y_radius)->val3 & 7) == faction_id) {
-                    using_set(x_radius, y_radius, 0);
-                }
-            }
-        }
-    }
-    if (is_ocean(x, y)) {
-        for (veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; veh_id++) {
-            if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_NAVAL_TRANSPORT
-                && !map_range(Vehs[veh_id].x, Vehs[veh_id].y, x, y)) {
-                stack_veh(veh_id, 0);
-            }
-        }
-        // Original terrain cleanup begins at the one-past active vehicle slot.
-        // Do not silently repair that stale-slot/error-path read with a new guard.
-        for (veh_id = GameDataStateStorage.fields_.vehicle_current_count_; veh_id >= 0; veh_id--) {
-            if (get_triad(veh_id) == TRIAD_LAND
-                && !map_range(Vehs[veh_id].x, Vehs[veh_id].y, x, y)
-                && (Vehs[veh_id].order != ORDER_SENTRY_BOARD || Vehs[veh_id].waypoint_x[0] < 0)) {
-                kill(veh_id);
-            }
-        }
-        TutWinBaseWindow.base_killed(base_id);
-    } else {
-        for (veh_id = GameDataStateStorage.fields_.vehicle_current_count_; veh_id >= 0; veh_id--) {
-            if (get_triad(veh_id) == TRIAD_SEA
-                && !map_range(Vehs[veh_id].x, Vehs[veh_id].y, x, y)) {
-                kill(veh_id);
-            }
-        }
-        TutWinBaseWindow.base_killed(base_id);
-    }
-    for (i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
-        base_mark(i);
-    }
-    reset_territory();
-    WorldClimateWorldWin.field_239BC_ |= 2;
-}
-
-
-
-
-
-
-
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004E5A60 ?base_change@@YAXHH@Z 0x004E5A60-0x004E5FDC BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004e5a60.cpp", "source:src/base.cpp:base_reset", "source:src/base.cpp:base_lose_minerals"], "reason": "Recover production selection, retool mineral adjustment and radius redraw through the typed Base and Rules. Project announcement and faction production counts remain unresolved; this is not a byte or behavioral claim."}
-void __cdecl base_change(int base_id, int production_id) {
-    if (production_id == 99999) return;
-
-    const int previous = Bases[base_id].queue_production_id[0];
-    Bases[base_id].queue_production_id[0] = production_id;
-    if (production_id == previous) return;
-    const int faction = Bases[base_id].faction_id_current;
-    if (previous >= 0) --PlayersData[faction].proto_id_queue[previous];
-    if (production_id >= 0) ++PlayersData[faction].proto_id_queue[production_id];
-
-    // Switching production applies the rule's retool penalty to the stored
-    // minerals, while keeping the unpenalized turn total for later accounting.
-    int loss;
-    if (Rules.retool_pct_pen_prod_chg
-        && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction))
-        && base_making(Bases[base_id].queue_production_id[0], base_id)
-            != base_making(Bases[base_id].production_id_last, base_id)
-        && Bases[base_id].minerals_accumulated_2 > static_cast<int>(Rules.retool_exemption)) {
-        loss = Bases[base_id].minerals_accumulated_2
-             - (Bases[base_id].minerals_accumulated_2 - static_cast<int>(Rules.retool_exemption))
-                   * (100 - static_cast<int>(Rules.retool_pct_pen_prod_chg)) / 100
-             - static_cast<int>(Rules.retool_exemption);
-    } else {
-        loss = 0;
-    }
-    Bases[base_id].minerals_accumulated = Bases[base_id].minerals_accumulated_2 - loss;
-    draw_radius(Bases[base_id].x, Bases[base_id].y, 2, 2);
-    if (faction == ConsoleGlobal.faction_id_ || AiResearchBatchActive) return;
-
-    const int next = Bases[base_id].queue_production_id[0];
-    int new_unbuilt;
-    if (next <= -70 && base_project(-next - 70) == -1) {
-        new_unbuilt = 1;
-    } else {
-        new_unbuilt = 0;
-    }
-    int old_relevant;
-    if (previous <= -70 && (new_unbuilt || base_project(-previous - 70) == -1)) {
-        old_relevant = 1;
-    } else {
-        old_relevant = 0;
-    }
-    if (old_relevant && has_project((previous < 0 ? -previous : previous) - 70, faction)) old_relevant = 0;
-    if (!new_unbuilt && !old_relevant) return;
-    if ((GameDataStateStorage.fields_.game_state_ & 1) && !(GameDataStateStorage.fields_.game_state_ & 8)) return;
-    const int facility = (next < 0 ? -next : next);
-    const int project = facility - 70;
-    int word, mask;
-    if (new_unbuilt) {
-        bitmask(project, &word, &mask);
-    } else {
-        bitmask((previous < 0 ? -previous : previous) - 70, &word, &mask);
-    }
-    int old_count = 0, new_count = 0;
-    int other;
-    for (other = 0; other < GameDataStateStorage.fields_.base_current_count_; ++other) {
-        if (Bases[other].faction_id_current == Bases[base_id].faction_id_current && other != base_id) {
-            if (Bases[other].queue_production_id[0] == previous) ++old_count;
-            if (Bases[other].queue_production_id[0] == Bases[base_id].queue_production_id[0]) ++new_count;
-        }
-    }
-    if (!new_unbuilt || new_count) return;
-    // Literal order (BEGINPROJECT before CHANGEPROJECT) puts the new-project
-    // arm first in the source; VC6 lays the change arm out first.
-    if (!old_relevant || (old_count && base_project(-previous - 70) == -1)) {
-        if (!(PlayersData[faction].secret_project_intel[word] & mask)) {
-            if (GameDataStateStorage.fields_.sunspot_duration_ > 0 && project != 31) return;
-            parse_set(Players[faction].is_leader_female, 0);
-            parse_says(0, Players[faction].title_leader, -1, -1);
-            parse_set(Players[faction].is_leader_female, 0);
-            parse_says(1, Players[faction].name_leader, -1, -1);
-            parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
-            parse_says(2, Players[faction].noun_faction, -1, -1);
-            parse_say(3, Facility[facility].name, -1, -1);
-            if (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction] & 1) {
-                wave_it(36);
-            } else {
-                wave_it(38);
-            }
-            popp(ScriptPopupFile, "BEGINPROJECT", 0, "secproj_sm.pcx", 0);
-            PlayersData[faction].secret_project_intel[word] |= mask;
-        }
-        if (project == 31) {
-            interlude(11, 0, 1, 0);
-            GameDataStateStorage.fields_.game_interlude_flags_ |= 0x400;
-        }
-    } else {
-        for (other = 0; other < GameDataStateStorage.fields_.base_current_count_; ++other)
-            if (Bases[other].faction_id_current == faction
-                && Bases[other].queue_production_id[0] == previous)
-                Bases[other].queue_production_id[0] = Bases[base_id].queue_production_id[0];
-        if (GameDataStateStorage.fields_.sunspot_duration_ > 0) return;
-        parse_says(0, Players[faction].adj_name_faction, -1, -1);
-        // RulesFacility's existing name field is already an LPSTR.
-        parse_say(1, Facility[(previous < 0 ? -previous : previous)].name, -1, -1);
-        parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
-        parse_says(2, Players[faction].noun_faction, -1, -1);
-        parse_say(3, Facility[facility].name, -1, -1);
-        popp(ScriptPopupFile, "CHANGEPROJECT", 0, "secproj_sm.pcx", 0);
-        PlayersData[faction].secret_project_intel[word] |= mask;
-        bitmask((previous < 0 ? -previous : previous) - 70, &word, &mask);
-        PlayersData[faction].secret_project_intel[word] &= ~mask;
-    }
-}
-
-// ORIGINAL: 0x004E5FE0 ?base_reset@@YAXHH@Z 0x004E5FE0-0x004E62FB BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004e5fe0.cpp", "source:src/base.h", "source:src/base.cpp:BaseSiteClaimX/BaseSiteClaimY are the four 0x0090EA44/54 site-output arrays", "source:src/base.h:Base.location is the 0x130 field read as 0x0097D090 + base_id*0x134", "pinned image:0x00689484 contains secproj_sm.pcx;0x00689494 contains GOVPROJECT"], "reason": "Recover the base reset/site selection operation using the typed Base and faction state, four source-owned site claims, and source-owned popup text. Preserve the existing seed and mismatch obligation; base_build/base_change remain explicit link-only dependencies."}
-// The governor prompt's result is popp's return (the image keeps it in esi
-// across the help loop), not parse_say's.
-void __cdecl base_reset(int base_id, int force) {
-    int loop_count = 0;
-    int faction = Bases[base_id].faction_id_current;
-    if (((1 << faction) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)
-        && (Bases[base_id].governor & GOV_ACTIVE) && force) {
-        uint32_t governor = Bases[base_id].governor;
-        for (int site = 0; site < 4; ++site) {
-            BaseSiteClaimY[site] = 999999;
-            BaseSiteClaimX[site] = 0;
-        }
-        if (governor & 0x0F000000u) {
-            for (;;) {
-                Bases[base_id].governor = (Bases[base_id].governor & 0xF1FFFFFFu) | GOV_PRIORITY_EXPLORE;
-                BaseSiteClaimX[0] = base_build(base_id, 0, 0, &BaseSiteClaimY[0]);
-                Bases[base_id].governor = (Bases[base_id].governor & 0xF2FFFFFFu) | GOV_PRIORITY_DISCOVER;
-                BaseSiteClaimX[1] = base_build(base_id, 0, 0, &BaseSiteClaimY[1]);
-                if (BaseSiteClaimX[0] == BaseSiteClaimX[1] && ++loop_count < 8) {
-                    continue;
-                }
-                Bases[base_id].governor = (Bases[base_id].governor & 0xF4FFFFFFu) | GOV_PRIORITY_BUILD;
-                BaseSiteClaimX[2] = base_build(base_id, 0, 0, &BaseSiteClaimY[2]);
-                if ((BaseSiteClaimX[0] == BaseSiteClaimX[2] || BaseSiteClaimX[1] == BaseSiteClaimX[2])
-                    && ++loop_count < 8) {
-                    continue;
-                }
-                Bases[base_id].governor = (Bases[base_id].governor & 0xF8FFFFFFu) | GOV_PRIORITY_CONQUER;
-                BaseSiteClaimX[3] = base_build(base_id, 0, 0, &BaseSiteClaimY[3]);
-                if ((BaseSiteClaimX[0] == BaseSiteClaimX[3] || BaseSiteClaimX[1] == BaseSiteClaimX[3]
-                     || BaseSiteClaimX[2] == BaseSiteClaimX[3])
-                    && ++loop_count < 8) {
-                    continue;
-                }
-                break;
-            }
-            Bases[base_id].governor = governor;
-        }
-        base_change(base_id, base_build(base_id, 0, 0, &loop_count));
-        return;
-    }
-    int location = Bases[base_id].queue_production_id[0];
-    base_change(base_id, base_build(base_id, 0, 0, 0));
-    if (!((1 << faction) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)) return;
-    if (!(Bases[base_id].governor & GOV_ACTIVE)) return;
-    if (location <= -70) return;
-    if (Bases[base_id].queue_production_id[0] > -70) return;
-    if (IsMultiplayerNet) return;
-    if (GameDataStateStorage.fields_.game_state_ & STATE_UNK_1) return;
-    if (Bases[base_id].queue_production_id[0] >= 0) {
-        location = Bases[base_id].queue_production_id[0];
-    } else {
-        location = -Bases[base_id].queue_production_id[0];
-    }
-    int choice = 3;
-    while (choice == 3) {
-        parse_says(0, Bases[base_id].name_string, -1, -1);
-        parse_say(1, Facility[location].name, -1, -1);
-        choice = popp(ScriptPopupFile, "GOVPROJECT", 0, "secproj_sm.pcx", 0);
-        if (choice == 3) {
-            help_topic(0x0B, location);
-        }
-    }
-    if (!choice) return;
-    base_change(base_id, base_build(-1 - base_id, 0, 0, 0));
-    if (choice <= 1) return;
-    BaseCurrent->governor &= ~0x00040000u;
-    PlayersData[faction].base_governor_adv &= ~0x00040000u;
-}
-
-/*
- * THE PER-FACTION PROTOTYPE-STATUS BYTE RUN, as the image addresses it:
- * PlayersData (0x0096C9E0) + 0x858, indexed faction * 0x20CC + prototype id.
- * veh.cpp names the same address FactionProtoSeenCount (it decrements it when
- * a vehicle of that prototype dies); upgrade_prototypes reads it as the gate
- * on whether the faction may still upgrade that prototype at all, which is
- * the same fact read from the other end. Both are internal-linkage
- * definitions of one address because base.h's PlayerData puts its
- * proto_id_active / proto_id_queue arrays at different offsets from this (the
- * struct's middle and tail are where the image's own layout disagrees), so
- * neither file can reach the byte through a field name.
- */
-// Current layout evidence supersedes that seed conclusion: 0x0096D238 is
-// PlayersData[0].proto_id_active[0] (PlayerData +0x858), with a 0x20CC row stride.
-
-/*
- * "Don't ask again" latch for the prototype-upgrade confirmation. The automatic
- * upgrade sweep (0x004F0650) clears it, upgrade_prototype (0x004EFE80) shows
- * the confirm popup only while it is zero and sets it when the caller answers
- * "yes to all" (popup result > 1); 0x00583E30, 0x005BB000, 0x005290A0 and
- * 0x00438460 clear it at the top of their own upgrade passes.
- */
-// RECOVERY_OBJECT: v2 0x0090EA3C 0x0090EA40 ?UpgradePromptAnswered@@3IA 0x00438B19
-uint32_t UpgradePromptAnswered;  // 0x0090EA3C
-
-int BaseCurrentGrowthRate;  // 0x0090E918
-// RECOVERY_OBJECT: v2 0x0090E980 0x0090E984 ?BaseCurrentVehPacifismCount@@3HA 0x004E9550
-int BaseCurrentVehPacifismCount;  // 0x0090E980
-// RECOVERY_OBJECT: v2 0x0090E8FC 0x0090E900 ?BaseCurrentForcesSupported@@3HA 0x004E95AB
-int BaseCurrentForcesSupported;  // 0x0090E8FC
-// RECOVERY_OBJECT: v2 0x0090E91C 0x0090E920 ?BaseCurrentForcesMaintCost@@3HA 0x0040A6A5
-int BaseCurrentForcesMaintCost;  // 0x0090E91C
-
-/*
- * How many of the base's supported units are past its free allowance, counted
- * alongside BaseCurrentForcesMaintCost. base_support() (0x004E9550) is the only
- * function in the executable that touches this address at all - it zeroes it,
- * reads it back and stores the increment, and nothing ever reads the total - so
- * the count is written and then dropped. Kept because it is observable state.
- */
-// Bound: scalar; every original access is a dword at the start, never indexed, and the following bytes are never referenced.
-// RECOVERY_OBJECT: v2 0x0090EA08 0x0090EA0C ?BaseCurrentForcesMaintCount@@3IA 0x004E95A5
-uint32_t BaseCurrentForcesMaintCount;  // 0x0090EA08
-
-// Tile base owner, as the yield functions inline it (yield_tile_owner).
-static __forceinline int tile_base_owner(const Map *tile) {
-    if (!(tile->bit & BIT_BASE_IN_TILE)) {
-        return -1;
-    }
-    int owner = tile->val2 & 0xF;
-    return (owner < MaxPlayerNum) ? owner : -1;
-}
-
-static inline int farm_stack_top(int veh_id) {
-    while (Vehs[veh_id].prev_veh_id_stack >= 0) {
-        veh_id = Vehs[veh_id].prev_veh_id_stack;
-    }
-    return veh_id;
-}
-
-static inline BOOL farm_veh_visible(int veh_id, int faction) {
-    if (Vehs[veh_id].faction_id == faction && (Vehs[veh_id].flags & 0x440) != 0x440) {
-        return true;
-    }
-    if (Vehs[veh_id].visibility & (1 << faction)) {
-        return true;
-    }
-    return false;
-}
-
-/*
- * Out-parameter of the three terrain yield functions: how much of a resource
- * the square lost to the "three per square needs a technology" restriction, and
- * to mine_yield's roadless-mine mineral limit. Callers zero it, ask for a
- * yield, then read it back - BaseWin::draw_farm (0x0040F0F0) does exactly that
- * for each of the three resources, and resource_yield zeroes it for RSC_PSI.
- * The executable's two clear paths identify this start; purpose comes from callers.
- */
-// Independent crop_yield accesses at 0x004E72C2/0x004E72D0 read/write a DWORD;
-// farm_compute uses separate DWORD storage at 0x0090E99C. This bounds the slot,
-// without establishing the original signedness or source-level identifier.
-// RECOVERY_OBJECT: v2 0x0090E998 0x0090E99C ?TileYieldRestricted@@3HA 0x004E6E50
-int TileYieldRestricted;  // 0x0090E998
-// farm_compute publishes 25 status words, including four excluded outer
-// positions. The separate mask covers only the first 21 workable positions.
-// Both objects are initially zero in the image; their producer, not that
-// initial state, determines availability for the current base.
-// Status bits: 1 excluded outer position, 2 off-map/unrevealed, 4 base tile,
-// 8 stack-check or visible non-allied vehicle, 0x10 another base's worked
-// square, 0x20 the foreign-territory rule below. These describe the observed
-// tests, not recovered historical names. The recovered base_yield reads the
-// mask; the farm_click/draw_farm word consumers remain unfinished obligations.
-// RECOVERY_OBJECT: v2 0x0090E99C 0x0090EA00 ?FarmStatus@@3PAIA 0x004E68B0
-uint32_t FarmStatus[25];
-// RECOVERY_OBJECT: v2 0x0090EA00 0x0090EA04 ?FarmUnavailableMask@@3IA 0x004E68B0
-uint32_t FarmUnavailableMask;
-
-// Requires the original game's valid faction, base, tile and vehicle indices
-// and well-formed vehicle chains. Keep the entry coordinates/faction separate
-// from the later BaseCurrent reload used to select nearby competing bases.
-// ORIGINAL: 0x004E68B0 ?farm_compute@@YAXXZ 0x004E68B0-0x004E6E4E BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["4E68B6 loads BaseCurrent pointer before signedshort x/y and unsignedbyte faction.4E68E3/4E6BA5 establish25 DWORD outputs, with final4 set1;4E6E23..43 reduce onlyfirst21 into90EA00.4E6C7A tests Base+78 worked mask, not seed+3C.", "4E6966/4E69C4/4E6B99 reload row stride after calls; map-pointer loads4E697C/4E6A0A/4E6A46 must remain live.4E6B38 exhausts vehicle iterator before territory check4E6B7C.4E6BE7 reloads BaseCurrent for neighbor admission, while inner radius matching retains entry coordinates."], "reason": "This no-argument resource pass computes shared per-radius availability from the selected Base, typed map/vehicle/diplomacy state and neighboring worked squares; it owns25 status words and a separate21-position mask."}
-void __cdecl farm_compute() {
-    int base_x = BaseCurrent->x;
-    int base_y = BaseCurrent->y;
-    int faction = BaseCurrent->faction_id_current;
-    int position;
-    for (position = 0; position < 25; position++) {
-        if (position >= 21) {
-            FarmStatus[position] = 1;
-            continue;
-        }
-        int x = wrap_map_x(base_x + RadiusOffsetX[position]);
-        int y = base_y + RadiusOffsetY[position];
-        if (!on_map(x, y)) {
-            FarmStatus[position] = 2;
-            continue;
-        }
-        if (position < 21 && BaseUpkeepStage == 1 && goody_at(x, y)
-            && (map_tiles()[y * (int)MapLongitude + (x >> 1)].climate & ~0x1F) >= 0x60) {
-            add_goal(faction, 3, 1, x, y, -1);
-            add_goal(faction, 2, 1, x, y, -1);
-            add_goal(faction, 0, 1, x, y, -1);
-        }
-        if (!(PlayersData[faction].flags & 0x200)
-            && !(map_tiles()[y * (int)MapLongitude + (x >> 1)].visibility & (1 << faction))) {
-            FarmStatus[position] = 2;
-            continue;
-        }
-        FarmStatus[position] = 0;
-        if (tile_base_owner(&map_tiles()[y * (int)MapLongitude + (x >> 1)]) >= 0) {
-            FarmStatus[position] = 4;
-        }
-        int veh_id = stack_fix(veh_at(x, y));
-        if (veh_id >= 0) {
-            if (stack_check(veh_id, 9, 3, -1, -1)) {
-                FarmStatus[position] |= 8;
-            }
-            veh_id = farm_stack_top(veh_id);
-            for (; veh_id >= 0; veh_id = Vehs[veh_id].next_veh_id_stack) {
-                int owner = Vehs[veh_id].faction_id;
-                if (owner >= 0 && owner != faction && farm_veh_visible(veh_id, faction)
-                    && !(PlayersData[faction].diplo_treaties[owner] & 3)) {
-                    FarmStatus[position] |= 8;
-                }
-            }
-        }
-        // The original uses the exhausted iterator here, not the saved stack
-        // head. Do not turn this into a new friendly-occupant exemption.
-        int territory = whose_territory(faction, x, y, 0, 0);
-        if (territory >= 0 && territory != faction
-            && ((PlayersData[faction].diplo_treaties[territory] & 3)
-                || veh_id < 0 || Vehs[veh_id].faction_id != faction)) {
-            FarmStatus[position] |= 0x20;
-        }
-    }
-    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
-        if (base_id == BaseIDCurrentSelected) {
-            continue;
-        }
-        Base *other = &Bases[base_id];
-        if (vector_dist(BaseCurrent->x, BaseCurrent->y, other->x, other->y) > 5) {
-            continue;
-        }
-        for (int worked = 0; worked < 21; worked++) {
-            if (worked && !(other->resource_sqr_radius & (1 << worked))) {
-                continue;
-            }
-            int x = wrap_map_x(other->x + RadiusOffsetX[worked]);
-            int y = other->y + RadiusOffsetY[worked];
-            if (!on_map(x, y)) {
-                continue;
-            }
-            if (other->faction_id_current != faction
-                && (map_tiles()[y * (int)MapLongitude + (x >> 1)].climate & ~0x1F) >= 0x60) {
-                continue;
-            }
-            if (vector_dist(base_x, base_y, x, y) > 2) {
-                continue;
-            }
-            for (int square = 0; square < 21; square++) {
-                if (wrap_map_x(base_x + RadiusOffsetX[square]) == x
-                    && base_y + RadiusOffsetY[square] == y) {
-                    FarmStatus[square] |= 0x10;
-                }
-            }
-        }
-    }
-    FarmUnavailableMask = 0;
-    for (position = 0; position < 21; position++) {
-        if (FarmStatus[position]) {
-            FarmUnavailableMask |= 1 << position;
-        }
-    }
-}
 
 /*
  * Integer swap has a real out-of-line owner in general.cpp so this mapped
@@ -1672,6 +225,7 @@ Purpose: Check if the base already has a particular facility built or if it's in
 Return Value: Does base already have or planning on building facility? true/false
 Status: Complete
 */
+
 // BODY IN base.h, as `MEASURED inline`: callers write has_fac(id, base_id, 0)
 // out in place, and the image keeps an out-of-line copy here for the rest.
 
@@ -2369,674 +923,6 @@ int __cdecl base_lose_minerals(int base_id, int UNUSED(production_id)) {
     return 0;
 }
 
-
-// POP2 is implemented by the owning Popup API in popup.cpp and declared in
-// popup.h.
-int __cdecl POP2(const char *caption, const char *image, int base_id);
-
-// The superseded partial scaffold was deleted after full owner recovery.
-// Its seed path below is historical Git provenance, not a source dependency.
-// ORIGINAL: 0x004F67F0 ?base_ecology@@YAXXZ 0x004F67F0-0x004F79B3
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004f67f0.cpp; recovery/tasks/base-colony-economy-coverage-wave.json; recovery/tests/test_base_colony_production.py", "Pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf, full original span 4F67F0..4F79B3.", "Native 4F6C73 reads faction difficulty, not ranking; 4F739B reads population total and 4F73B9 independently reloads ecology.", "Native callbacks are followed by live ecology reloads at 4F6E94/4F6EC2 (including the current viewer), 4F7024, 4F70C7, 4F715B, 4F73B9, 4F74A2/4F7512, 4F75B8 and 4F76EE; signed 32-bit climate arithmetic retains native wrapping.", "Native reuses the spread cursor for the 19-row terraforming scan; preserve that original cursor behavior rather than silently changing the event."], "reason": "Recover the complete ecology event owner using real Base, faction, map, terraforming, Vehicle and climate storage. Retain original seed and obligations; this is no new byte or game acceptance claim."}
-// symbol    ?base_ecology@@YAXXZ
-// TRIED: heavily time-boxed given batch budget - only the leading probability gate (faction-table accumulator update, a rand()%100 roll against a base-stat threshold, and the two disabling-flag checks) is transcribed; the ecology event itself, most of the function, is a deliberate stub. MISMATCH #0, prologue only.
-void __cdecl base_ecology() {
-    int faction = BaseCurrent->faction_id_current;
-    int divisor = range(4 - PlayersData[faction].soc_effect_pending.values_[SocialEffect::PLANET], 1, 99);
-    PlayersData[faction].unk_49 += BaseCurrent->eco_damage * 4 / divisor;
-    if ((int)rnd(100, "BASEECOLOGY") >= BaseCurrent->eco_damage
-            / ((GameDataStateStorage.fields_.game_state_ & 0x100000) ? 2 : 1)) {
-        return;
-    }
-    if (GameDataStateStorage.fields_.game_rules_ & 0x200000) {
-        return;
-    }
-    if ((GameDataStateStorage.fields_.game_state_ & 1)
-            && !(GameDataStateStorage.fields_.game_state_ & 8)) {
-        return;
-    }
-    // Pick the tile that grows fungus: next to land fungus, around this base.
-    int best_roll = 0;
-    int best_index = -1;
-    int i;
-    for (i = 1; i < 49; i++) {
-        int x = wrap_map_x(BaseCurrent->x + RadiusOffsetX[i]);
-        int y = BaseCurrent->y + RadiusOffsetY[i];
-        if (!on_map(x, y)) {
-            continue;
-        }
-        Map *tile = map_loc(x, y);
-        if ((tile->bit & BIT_FUNGUS) && (tile->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF) {
-            continue;
-        }
-        if (base_who(x, y) >= 0) {
-            continue;
-        }
-        int prob = 0;
-        if (i >= 25) {
-            // Outer ring: only while nothing was found yet, and only tiles
-            // whose nearest base is this one.
-            if (best_roll) {
-                continue;
-            }
-            if (base_find(x, y) != BaseIDCurrentSelected) {
-                continue;
-            }
-            prob = 1;
-        }
-        for (int j = 0; j < 4; j++) {
-            int x2 = wrap_map_x(x + RiverStepX[j]);
-            int y2 = y + RiverStepY[j];
-            if (on_map(x2, y2)) {
-                Map *neighbor = map_loc(x2, y2);
-                if ((neighbor->bit & BIT_FUNGUS)
-                        && (neighbor->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF) {
-                    prob += 2;
-                }
-            }
-        }
-        if (prob) {
-            if (prob > 1) {
-                prob += bit_count(bit_at(x, y) & MapTileFlagClearMask);
-                if (i < 9) {
-                    prob++;
-                }
-            }
-            if (is_ocean(x, y)) {
-                prob = (prob + 1) / 2;
-            }
-            prob *= 10;
-            int roll = rnd(prob, "BASEECOLOGY2");
-            if (roll > best_roll) {
-                best_roll = roll;
-                best_index = i;
-            }
-        }
-    }
-    if (best_index <= 0) {
-        return;
-    }
-    BOOL shown = false;
-    int report_terraform = -1;
-    int ecology = ++PlayersData[faction].planet_ecology;
-    int event_x = wrap_map_x(BaseCurrent->x + RadiusOffsetX[best_index]);
-    int event_y = BaseCurrent->y + RadiusOffsetY[best_index];
-    int spread = 1;
-    if (is_ocean(event_x, event_y) && ecology >= 4) {
-        int chance = 10 - ecology / 8 - PlayersData[faction].diff_level;
-        if (!rnd(chance, "SEASPREAD")) {
-            spread = 9;
-        }
-    }
-    for (i = 0; i < spread; i++) {
-        int x = wrap_map_x(event_x + RadiusOffsetX[i]);
-        int y = event_y + RadiusOffsetY[i];
-        if (!on_map(x, y)) {
-            continue;
-        }
-        if (i && !is_ocean(x, y)) {
-            continue;
-        }
-        Map *tile = map_loc(x, y);
-        uint32_t bit = tile->bit;
-        if ((bit & BIT_FUNGUS) && (tile->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF) {
-            continue;
-        }
-        if (base_who(x, y) >= 0) {
-            continue;
-        }
-        if ((tile->bit2 & 0x80000002) == 2) {
-            continue;
-        }
-        if (report_terraform < 0) {
-            // BUG(original): the improvement scan reuses the spread loop's
-            // counter, so after it runs (i == 19) the spread loop ends.
-            for (i = 0; i < 19; i++) {
-                if (Terraforming[i].bit & MapTileFlagClearMask & bit) {
-                    report_terraform = i;
-                }
-            }
-        }
-        bit_set(x, y, BIT_FUNGUS, true);
-        bit_set(x, y, MapTileFlagClearMask, false);
-        if ((map_loc(x, y)->climate >> 5) < ALT_OCEAN_SHELF) {
-            world_alt_set(x, y, ALT_OCEAN_SHELF, false);
-        }
-        if (is_known(x, y, ConsoleGlobal.faction_id_)
-                || (GameDataStateStorage.fields_.game_state_ & 0x80)) {
-            shown = true;
-            if (faction == ConsoleGlobal.faction_id_) {
-                ConsoleGlobal.focus(x, y, faction);
-                if (PlayersData[faction].planet_ecology < 2) {
-                    interlude(3, nullptr, 1, 0);
-                }
-                boom(x, y, 0x80);
-            }
-            synch_bit(x, y, ConsoleGlobal.faction_id_);
-            draw_tile(x, y, 2);
-        }
-    }
-    if (shown) {
-        if (!HIBYTE(GetAsyncKeyState(VK_SHIFT)) && !IsMultiplayerNet) {
-            clock_wait(20);
-        }
-        if (faction == ConsoleGlobal.faction_id_
-                || veh_who(event_x, event_y) == ConsoleGlobal.faction_id_) {
-            MapWinTable[0]->set_center(event_x, event_y, 1);
-            ConsoleGlobal.focus(event_x, event_y, faction);
-            parse_says(0, BaseCurrent->name_string, -1, -1);
-            if (report_terraform >= 0 && faction == ConsoleGlobal.faction_id_) {
-                // name and name_sea are read as a two-entry run.
-                parse_say(1, Terraforming[report_terraform].name[is_ocean(event_x, event_y)],
-                          -1, -1);
-                POP2("FUNGUSGROWS2", "fung_sm.pcx", BaseIDCurrentSelected);
-            } else {
-                POP2("FUNGUSGROWS", "fung_sm.pcx", -1);
-            }
-        }
-        if (faction == ConsoleGlobal.faction_id_ && PlayersData[faction].planet_ecology >= 2) {
-            interlude(5, BaseCurrent->name_string, 1, 0);
-        }
-    }
-    if (!is_human(faction) && !rnd(2, "LEADERPLANET1")) {
-        int odds = GameDataStateStorage.fields_.diff_level_current_ + 1;
-        if (rnd(odds, "LEADERPLANET2")) {
-            PlayersData[faction].planet_ecology--;
-            return;
-        }
-    }
-    if (PlayersData[faction].flags & 0x4000) {
-        PlayersData[faction].flags &= ~0x4000u;
-        return;
-    }
-    if (PlayersData[faction].planet_ecology < 7
-            || base_project(SP_VOICE_OF_PLANET) != SP_Unbuilt) {
-        return;
-    }
-    // Planet strikes back: native life rises from the new fungus.
-    if (faction == ConsoleGlobal.faction_id_) {
-        interlude(8, nullptr, 1, 0);
-    }
-    if (!(rand() % 4) && ExpansionEnabled && !is_ocean(event_x, event_y)) {
-        veh_init(BSC_FUNGAL_TOWER, 0, event_x, event_y);
-    }
-    int gated_spawns = 0;
-    int created = 0;
-    for (i = 0; i < (PlayersData[faction].planet_ecology < 9
-                     ? PlayersData[faction].planet_ecology : 9); i++) {
-        int x = wrap_map_x(event_x + RadiusOffsetX[i]);
-        int y = event_y + RadiusOffsetY[i];
-        if (!on_map(x, y)) {
-            continue;
-        }
-        Map *tile = map_loc(x, y);
-        if (!(tile->bit & BIT_FUNGUS) || (tile->climate & ~0x1F) < ALT_BIT_OCEAN_SHELF) {
-            continue;
-        }
-        int base_id = base_find(x, y);
-        if (base_id < 0 || Bases[base_id].faction_id_current != faction) {
-            continue;
-        }
-        if (veh_who(x, y) > 0 || base_who(x, y) > 0) {
-            continue;
-        }
-        int region = region_at(x, y);
-        int unit_id;
-        if (region >= 0x40) {
-            unit_id = (gated_spawns % 3) ? BSC_ISLE_OF_THE_DEEP : BSC_LOCUSTS_OF_CHIRON;
-        } else {
-            unit_id = PlayersData[faction].region_total_bases[region]
-                ? BSC_MIND_WORMS : BSC_LOCUSTS_OF_CHIRON;
-        }
-        if (unit_id != BSC_MIND_WORMS) {
-            // The image reads current_num_bases (+0x105C) here.
-            gated_spawns++;
-            if (gated_spawns >= PlayersData[faction].current_num_bases * 2 / 3
-                    || gated_spawns >= PlayersData[faction].planet_ecology / 3) {
-                continue;
-            }
-        }
-        created++;
-        if (unit_id == BSC_MIND_WORMS && !(rand() % 5) && ExpansionEnabled) {
-            unit_id = BSC_SPORE_LAUNCHER;
-        }
-        int veh_id = veh_init(unit_id, 0, x, y);
-        if (veh_id >= 0) {
-            Vehs[veh_id].order_auto_type = static_cast<uint8_t>(faction);
-        }
-        draw_tile(x, y, 2);
-    }
-    if (anything_at(event_x, event_y) <= 0) {
-        int region = region_at(event_x, event_y);
-        int unit_id = PlayersData[faction].region_total_bases[region]
-            ? (region >= 0x40 ? BSC_ISLE_OF_THE_DEEP : BSC_MIND_WORMS)
-            : BSC_LOCUSTS_OF_CHIRON;
-        while (created < PlayersData[faction].planet_ecology / 3
-                && created < BaseCurrent->population_size) {
-            if (unit_id == BSC_MIND_WORMS && !(rand() % 5) && ExpansionEnabled) {
-                unit_id = BSC_SPORE_LAUNCHER;
-            }
-            veh_init(unit_id, 0, event_x, event_y);
-            created++;
-            if (unit_id == BSC_SPORE_LAUNCHER) {
-                unit_id = BSC_MIND_WORMS;
-            }
-        }
-    }
-    if (is_human(faction) || GameDataStateStorage.fields_.diff_level_current_ >= 4) {
-        // Global warming.
-        GameDataStateStorage.fields_.ecology_event_accumulator_++;
-        int sea_level = range(MapSeaLevel, 0, 100);
-        int rises = WorldBuilder.sea_level_rises;
-        int rise_divisor = range(rises, 1, 99);
-        if (Rules.freq_global_warming_num * GameDataStateStorage.fields_.ecology_event_accumulator_
-                / Rules.freq_global_warming_denom >= sea_level * 3 / rise_divisor + 6) {
-            GameDataStateStorage.fields_.ecology_event_accumulator_ = 0;
-            int increase = range(PlayersData[faction].planet_ecology / 6 - 1, 1, 3);
-            MapSeaLevelCouncil += increase;
-            GameDataStateStorage.fields_.climate_sea_level_delta_ += rises * increase / 3;
-            GameDataStateStorage.fields_.climate_rise_step_ =
-                GameDataStateStorage.fields_.climate_sea_level_delta_ < 0
-                    ? -GameDataStateStorage.fields_.climate_sea_level_delta_
-                    : GameDataStateStorage.fields_.climate_sea_level_delta_;
-            GameDataStateStorage.fields_.climate_rise_limit_ = 20;
-            GameDataStateStorage.fields_.climate_rise_accum_ = 0;
-            parse_num(0, 20);
-            int change = GameDataStateStorage.fields_.climate_sea_level_delta_ < 0
-                ? -GameDataStateStorage.fields_.climate_sea_level_delta_
-                : GameDataStateStorage.fields_.climate_sea_level_delta_;
-            parse_num(1, change * 1000 / 15);
-            if (faction == ConsoleGlobal.faction_id_) {
-                popp(ScriptPopupFile, "TRIGGERWARMING", 0, "searis_sm.pcx", nullptr);
-                return;
-            }
-            parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
-            parse_says(0, Players[faction].noun_faction, -1, -1);
-            popp(ScriptPopupFile, "TRIGGERWARMING2", 0, "searis_sm.pcx", nullptr);
-            return;
-        }
-    }
-    if (PlayersData[faction].planet_ecology < 10
-            || (GameDataStateStorage.fields_.game_state_ & 0x20000)) {
-        return;
-    }
-    // Volcano at a random ocean tile with nobody around.
-    int rand_x = rnd(MapLongitudeBounds, "VOLCa");
-    int volcano_y = rnd(MapLatitudeBounds, "VOLCb");
-    int volcano_x = rand_x;
-    if (rand_x & 1) {
-        volcano_x = rand_x - 1;
-    }
-    if (volcano_y & 1) {
-        volcano_x++;
-    }
-    if (!on_map(volcano_x, volcano_y)) {
-        return;
-    }
-    Map *volcano_tile = map_loc(volcano_x, volcano_y);
-    if ((volcano_tile->climate & ~0x1F) >= ALT_BIT_SHORE_LINE) {
-        return;
-    }
-    for (i = 0; i < 49; i++) {
-        int x = wrap_map_x(volcano_x + RadiusOffsetX[i]);
-        int y = volcano_y + RadiusOffsetY[i];
-        if (on_map(x, y) && anything_at(x, y) >= 0) {
-            break;
-        }
-    }
-    if (i != 49) {
-        return;
-    }
-    if ((PlayersData[ConsoleGlobal.faction_id_].flags & PFLAG_MAP_REVEALED)
-            || (volcano_tile->visibility & (1 << ConsoleGlobal.faction_id_))) {
-        ConsoleGlobal.focus(volcano_x, volcano_y, ConsoleGlobal.faction_id_);
-    }
-    GameDataStateStorage.fields_.game_state_ |= 0x20000;
-    world_volcano(volcano_x, volcano_y, 1);
-    world_climate();
-    draw_map(1);
-    clock_wait(1000);
-    GenderDefault = Players[ConsoleGlobal.faction_id_].is_leader_female;
-    PluralityDefault = 0;
-    parse_says(0, Players[ConsoleGlobal.faction_id_].title_leader, -1, -1);
-    PluralityDefault = 0;
-    GenderDefault = Players[ConsoleGlobal.faction_id_].is_leader_female;
-    parse_says(1, Players[ConsoleGlobal.faction_id_].name_leader, -1, -1);
-    if (is_known(volcano_x, volcano_y, ConsoleGlobal.faction_id_)) {
-        popp(ScriptPopupFile, "VOLCANO", 0, "volc_sm.pcx", nullptr);
-    }
-}
-
-// ORIGINAL: 0x004F3FE0 ?base_hurry@@YAXXZ 0x004F3FE0-0x004F4826
-// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004f3fe0.cpp; recovery/tasks/base-colony-economy-coverage-wave.json; recovery/tests/test_base_colony_economy.py", "Pinned01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf full4F3FE0..4F4826 instruction review and measured VC6 PlayerData/SocialEffect/Base/prototype owners.", "Native4F4365 reads pending.police(+260), not morale;4F4390 biases the wrapped reserve product before SAR2; facilities4/5/33/projects use /50, not /100.", "NativeVoice45F8..464E halves hurry budget;46C4 reads current queue;46D7 preserves explicit zero-factor branch;4702/474C reread lock mask and479D/47CF reread popup faction."], "reason": "Recover complete colony hurry budgets, mineral purchases and project notification using real Base/faction/prototype/facility owners and explicit native 32-bit wrapping. Preserve seed/history and original behavior; no new byte, linked-preservation or runtime acceptance claim."}
-// symbol    ?base_hurry@@YAXXZ
-// TRIED: full register-transliteration from raw disasm (not Ghidra, whose DAT_0090ea30 offsets are all mis-scaled x2 - it typed that global short*, and its 4th arg to at_goal() is wrong too, using DAT_0090ea30[1] where raw disasm shows edi/cost). Division-by-constant idioms (magic-multiply+shift) written as plain C `/` and trusted to re-lower; verified against Ghidra's own reconstructed divisors (10, 25,50,100,250) rather than reverse-engineering each magic constant by hand. Compiles; frameless prologue vs original's framed - not chased given size.
-void __cdecl base_hurry() {
-    int faction = BaseCurrent->faction_id_current;
-    if (is_human(faction)
-        && (!(BaseCurrent->governor & GOV_MAY_HURRY_PRODUCTION)
-            | !(BaseCurrent->governor & GOV_ACTIVE))) {
-        return;
-    }
-    if (!BaseCurrent->minerals_accumulated) {
-        return;
-    }
-    int production_id = BaseCurrent->queue_production_id[0];
-    int facility_index = production_id < 0 ? -production_id : 0;
-    int hurry = 0;
-    int cost = facility_index
-        ? Facility[facility_index].cost
-        : veh_cost(production_id, BaseIDCurrentSelected, nullptr);
-    int scaled_cost = cost_factor(faction, 1, -1) * cost;
-    int y = BaseCurrent->y;
-    int x = BaseCurrent->x;
-    int region = map_loc(x, y)->region;
-
-    if (production_id >= 0) {
-        if (VehPrototypes[production_id].plan == PLAN_COLONIZATION
-            && BaseCurrent->population_size < 2) {
-            return;
-        }
-        if (veh_who(x, y) >= 0
-            && !(BaseCurrent->state & BSTATE_COMBAT_LOSS_LAST_TURN)
-            && !at_goal(faction, 0x10, x, y)) {
-            if (production_id >= 0x40
-                && !(VehPrototypes[production_id].flags & PROTO_TYPED_COMPLETE)) {
-                hurry = PlayersData[faction].energy_reserves
-                    / ((PlayersData[faction].ai_wealth + 2) * 10);
-            } else {
-                uint8_t regional_plan = PlayersData[faction].region_base_plan[region];
-                if (regional_plan == VehPrototypes[production_id].plan
-                    || (VehPrototypes[production_id].plan == PLAN_TERRAFORMING
-                        && regional_plan == PLAN_COLONIZATION)
-                    || (VehPrototypes[production_id].plan == PLAN_COMBAT
-                        && regional_plan <= 2)) {
-                    hurry = PlayersData[faction].energy_reserves
-                        / ((PlayersData[faction].ai_wealth + 2) * 25
-                           - PlayersData[faction].ai_power * 10);
-                    if (regional_plan == PLAN_COLONIZATION) {
-                        hurry = (PlayersData[faction].ai_growth + 5) * hurry / 4;
-                        if (PlayersData[faction].energy_reserves
-                                > GameDataStateStorage.fields_.turn_current_num_) {
-                            hurry *= 2;
-                        }
-                    }
-                }
-            }
-        } else {
-            hurry = PlayersData[faction].energy_reserves / 10;
-        }
-        if (planet_buster2(production_id) && !PlayersData[faction].planet_busters) {
-            for (int i = 1; i < MaxPlayerNum; i++) {
-                if (i != faction
-                    && (PlayersData[faction].diplo_treaties[i] & DTREATY_VENDETTA)
-                    && PlayersData[i].major_atrocities
-                    && PlayersData[faction].major_atrocities
-                        <= PlayersData[i].major_atrocities) {
-                    hurry = PlayersData[faction].energy_reserves / 10;
-                }
-            }
-        }
-    } else if ((BaseCurrent->state & BSTATE_DRONE_RIOTS_ACTIVE) && facility_index) {
-        hurry = PlayersData[faction].energy_reserves
-            / ((PlayersData[faction].ai_power + PlayersData[faction].ai_wealth + 1) * 5);
-        if (BaseCurrent->drone_total > BaseCurrent->talent_total
-            && PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE]
-                   + 2 * has_fac(FAC_BROOD_PIT, BaseIDCurrentSelected, 0) <= -2
-            && facility_index < FacilitySPStart) {
-            // BUG(original): the remaining cost is multiplied by 2 for a human
-            // faction and by 0 for an AI one, so AI bases never hurry here.
-            hurry = range((scaled_cost - BaseCurrent->minerals_accumulated)
-                              * (is_human(faction) ? 2 : 0),
-                          0, PlayersData[faction].energy_reserves * 3 / 4);
-        }
-    } else if (facility_index == FAC_HEADQUARTERS) {
-        hurry = PlayersData[faction].energy_reserves / 10;
-    } else if (facility_index == FAC_PERIMETER_DEFENSE
-               || facility_index == FAC_TACHYON_FIELD) {
-        hurry = PlayersData[faction].energy_reserves / 50;
-        for (int i = 1; i < MaxPlayerNum; i++) {
-            if (i != faction
-                && (PlayersData[faction].diplo_treaties[i]
-                    & (DTREATY_VENDETTA | DTREATY_WANT_REVENGE | DTREATY_ATROCITY_VICTIM))
-                // BUG(original): indexes faction i's region_total_bases by the
-                // faction number i, not by a region.
-                && (PlayersData[i].region_total_bases[i] || is_human(i))) {
-                hurry = PlayersData[faction].energy_reserves / 10;
-            }
-        }
-    } else if (facility_index >= FacilitySPStart) {
-        hurry = PlayersData[faction].energy_reserves / 50;
-        if (PlayersData[faction].energy_reserves >= 2000) {
-            hurry *= 4;
-        }
-        if (facility_index == FAC_ASCENT_TO_TRANSCENDENCE) {
-            hurry *= 4;
-        }
-    } else if (facility_index == FAC_PSI_GATE) {
-        hurry = PlayersData[faction].energy_reserves / 50;
-        if (at_climax(faction)) {
-            hurry *= 2;
-        }
-    }
-
-    if (PlayersData[faction].energy_reserves >= 4800) {
-        hurry += PlayersData[faction].energy_reserves / 25;
-    } else if (PlayersData[faction].energy_reserves > 3200) {
-        hurry += PlayersData[faction].energy_reserves / 100;
-    } else if (PlayersData[faction].energy_reserves > 2000) {
-        hurry += PlayersData[faction].energy_reserves / 250;
-    }
-    hurry = range(hurry, 0, PlayersData[faction].energy_reserves);
-    hurry = range(hurry, 0, scaled_cost - BaseCurrent->minerals_accumulated);
-    if (hurry) {
-        if (GameDataStateStorage.fields_.secret_project_.voice_of_planet() >= 0) {
-            hurry /= 2;
-        } else if (!strcmp(Players[faction].filename, "MORGAN")) {
-            hurry = hurry * 2 / 3;
-        } else if (!strcmp(Players[faction].filename, "PEACE")) {
-            hurry = hurry * 3 / 2;
-        }
-        int rule_hurry = Players[faction].rule_hurry;
-        if (rule_hurry != 100 && hurry < PlayersData[faction].energy_reserves / 10) {
-            hurry = hurry * 100 / rule_hurry;
-        }
-        int minerals = BaseCurrent->minerals_accumulated;
-        int remaining = scaled_cost - minerals;
-        int price = remaining * remaining / 20 + remaining * 2;
-        if (BaseCurrent->queue_production_id[0] <= -FacilitySPStart) {
-            price *= 2;
-        }
-        if (GameDataStateStorage.fields_.secret_project_.voice_of_planet() >= 0) {
-            price *= 2;
-        }
-        int bought = price ? remaining * hurry / price : 0;
-        BaseCurrent->minerals_accumulated = bought * 100 / rule_hurry + minerals;
-        int refund = is_human(faction)
-            ? 0
-            : GameDataStateStorage.fields_.diff_level_current_ * hurry
-                / ((8 - PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk1_]
-                        .ranking) * 10);
-        PlayersData[faction].energy_reserves += refund - hurry;
-    }
-
-    if (is_human(faction)
-        || facility_index < FacilitySPStart
-        || base_project(facility_index - FacilitySPStart) != SP_Unbuilt
-        || GameDataStateStorage.fields_.sunspot_duration_ > 0
-        || (GameDataStateStorage.fields_.game_state_ & STATE_UNK_1)) {
-        return;
-    }
-    if (BaseCurrent->mineral_surplus + BaseCurrent->minerals_accumulated
-            < cost_factor(BaseCurrent->faction_id_current, 1, -1) * Facility[facility_index].cost) {
-        return;
-    }
-    parse_says(0, Players[BaseCurrent->faction_id_current].adj_name_faction, -1, -1);
-    parse_say(1, Facility[facility_index].name, -1, -1);
-    popp(ScriptPopupFile, "DONEPROJECT", 0, "secproj_sm.pcx", nullptr);
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004F4830 ?base_check_support@@YAXXZ 0x004F4830-0x004F4DBB
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004f4830.cpp", "recovery/tasks/base-colony-economy-coverage-wave.json", "recovery/tests/test_base_colony_economy.py", "Pinned original 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; complete original extent reviewed against native instructions and measured VC6 owner layouts.", "Native facility35 uses selected-base record; riot score reads prototype.cost(+29), not carry_capacity(+28); first distance scan reapplies abs after wrap, second does not."], "reason": "Recover the complete support deficit and pacifism selection through typed Base/Vehicle/faction owners, preserving original AI double-decrement and selected-base facility semantics. Seed retained; no new byte or runtime claim."}
-// symbol    ?base_check_support@@YAXXZ
-void __cdecl base_check_support() {
-    int faction = BaseCurrent->faction_id_current;
-    int best_score;
-    int veh_id;
-    int best_veh;
-    while (BaseCurrentForcesMaintCost > BaseCurrent->intake_2[RSC_MINERALS]) {
-        best_score = -1;
-        best_veh = -1;
-        for (veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; veh_id++) {
-            if (Vehs[veh_id].faction_id != BaseCurrent->faction_id_current
-                || Vehs[veh_id].home_base_id != BaseIDCurrentSelected) {
-                continue;
-            }
-            int score;
-            uint8_t plan = VehPrototypes[Vehs[veh_id].proto_id].plan;
-            if (plan == PLAN_SUPPLY_CONVOY) {
-                if (Vehs[veh_id].order != ORDER_CONVOY
-                    || Vehs[veh_id].order_auto_type != ORDERA_TERRA_AUTO_ROAD
-                    || base_who(Vehs[veh_id].x, Vehs[veh_id].y) < 0) {
-                    continue;
-                }
-                score = 99999;
-            } else {
-                if (!(Vehs[veh_id].state & VSTATE_REQUIRES_SUPPORT) || plan > 9) {
-                    continue;
-                }
-                score = vector_dist(Vehs[veh_id].x, Vehs[veh_id].y,
-                                    BaseCurrent->x, BaseCurrent->y);
-            }
-            if (score > best_score) {
-                best_score = score;
-                best_veh = veh_id;
-            }
-        }
-        if (best_score < 0) {
-            break;
-        }
-        uint8_t plan = VehPrototypes[Vehs[best_veh].proto_id].plan;
-        if (plan == PLAN_SUPPLY_CONVOY) {
-            Vehs[best_veh].order = ORDER_NONE;
-            BaseCurrentForcesMaintCost--;
-            continue;
-        }
-        if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction)) {
-            parse_says(1, VehPrototypes[Vehs[best_veh].proto_id].veh_name, -1, -1);
-            popb("NOSUPPORT", 0x8000, 0xD, "genwarning_sm.pcx", 0);
-        } else if (plan == PLAN_COLONIZATION) {
-            Vehs[best_veh].state &= ~VSTATE_REQUIRES_SUPPORT;
-            int support = PlayersData[faction].soc_effect_pending.values_[SocialEffect::SUPPORT];
-            BaseCurrentForcesMaintCost -= has_abil(Vehs[best_veh].proto_id, ABL_CLEAN_REACTOR)
-                ? 0 : (support <= -4 ? 2 : 1);
-        }
-        int support = PlayersData[faction].soc_effect_pending.values_[SocialEffect::SUPPORT];
-        if (has_abil(Vehs[best_veh].proto_id, ABL_CLEAN_REACTOR)) {
-            break;
-        }
-        BaseCurrentForcesMaintCost -= support <= -4 ? 2 : 1;
-        kill(best_veh);
-    }
-    int faction_bit = 1 << faction;
-    if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) {
-        if (!(BaseCurrent->governor & GOV_MANAGES_CITIZENS_SPECS)) {
-            return;
-        }
-        if (!(BaseCurrent->governor & GOV_ACTIVE)) {
-            return;
-        }
-    }
-    if (!(BaseCurrent->state & BSTATE_DRONE_RIOTS_ACTIVE)) {
-        return;
-    }
-    // The image reads POLICE (+0x260) here, as base_doctors does.
-    if (PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE]
-            + 2 * has_fac(0x23, BaseIDCurrentSelected, 0) > -3) {
-        return;
-    }
-    if (BaseCurrent->drone_total <= BaseCurrent->talent_total
-        && BaseCurrent->nutrient_surplus >= 0) {
-        return;
-    }
-    best_score = -1;
-    best_veh = -1;
-    for (veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; veh_id++) {
-        if (Vehs[veh_id].faction_id != faction
-            || Vehs[veh_id].home_base_id != BaseIDCurrentSelected) {
-            continue;
-        }
-        if (!(Vehs[veh_id].state & VSTATE_PACIFISM_DRONE)) {
-            continue;
-        }
-        if (faction_bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) {
-            if (!(Vehs[veh_id].state & VSTATE_UNK_200)
-                || (Vehs[veh_id].state & 0x1000200) == 0x1000200
-                || ((Vehs[veh_id].state & 0x2000200) == 0x2000200
-                    && Vehs[veh_id].patrol_current_point < Vehs[veh_id].waypoint_count)
-                || Vehs[veh_id].order_auto_type == ORDERA_ON_ALERT
-                || Vehs[veh_id].order_auto_type == ORDERA_BOMBING_RUN
-                || Vehs[veh_id].order_auto_type) {
-                continue;
-            }
-        }
-        int divisor = PlayersData[faction].ai_fight + 2;
-        if (rnd(divisor, "BASECHECKSUPPORT")) {
-            continue;
-        }
-        int score = map_range(Vehs[veh_id].x, Vehs[veh_id].y, BaseCurrent->x, BaseCurrent->y) * 100
-            / range(VehPrototypes[Vehs[veh_id].proto_id].cost, 1, 99);
-        if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_DEFENSIVE) {
-            score += score;
-        }
-        if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_COMBAT) {
-            score /= 2;
-        }
-        if (score > best_score) {
-            best_score = score;
-            best_veh = veh_id;
-        }
-    }
-    if (best_veh >= 0) {
-        kill(best_veh);
-        BaseCurrent->state &= ~BSTATE_DRONE_RIOTS_ACTIVE;
-    }
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004F4E80 ?base_research@@YAXXZ 0x004F4E80-0x004F4FAB BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004f4e80.cpp", "recovery/tasks/base-colony-economy-coverage-wave.json", "recovery/tests/test_base_colony_economy.py", "Pinned original 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; complete original extent reviewed against native instructions and measured VC6 owner layouts.", "Superseded interpretation, retained verbatim: Original4F4E80..4F4FAB reads Base.labs_total(+108), PlayerData.soc_effect_pending.research and net_random_event; faction-indexed Base bitset and signed remainder are intentional retained behavior.", "Superseded reason, retained verbatim: Recover the complete base laboratory contribution, scenario/early-turn gates and signed fractional research dispatch with native 32-bit wrap. Preserve original Bases[faction_id] facility lookup rather than silently correcting its behavior. Seed retained; no matching or game claim.", "Pinned 4F4E9F loads the faction into EBX; 4F4EA2 independently loads selected base index 689370 into ESI, used by 4F4EBE..4F4ED7 for Bases facilities. set_base 4E39D0..4E39F3 stores its base_id at 689370 and publishes Bases[base_id] as BaseCurrent. The prior faction-index interpretation is disproved.", "Pinned 4F4ED9..4F4EDF materializes the has_fac_built boolean before halving labs; 4F4F3D..4F4F55 uses the existing signed range operation with bounds -5 and 5."], "reason": "Recover the complete base laboratory contribution, scenario/early-turn gates and signed fractional research dispatch with native 32-bit wrap. The facility test uses BaseIDCurrentSelected, independently of the faction used for PlayerData; retain the existing facility boolean operation and signed range clamp. No game acceptance claim."}
-// symbol    ?base_research@@YAXXZ
-void __cdecl base_research() {
-    if ((GameDataStateStorage.fields_.game_rules_ & RULES_SCN_NO_TECH_ADVANCES) != 0) {
-        return;
-    }
-
-    const int faction_id = BaseCurrent->faction_id_current;
-    int points = BaseCurrent->labs_total;
-    if (has_fac(FAC_PUNISHMENT_SPHERE, BaseIDCurrentSelected, 0)) {
-        points /= 2;
-    }
-    if (GameDataStateStorage.fields_.turn_current_num_
-        < -5 * PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::RESEARCH]) {
-        points = 0;
-    }
-    if (GameDataStateStorage.fields_.turn_current_num_ < 5 && PlayersData[faction_id].diff_level < 2) {
-        points = 0;
-    }
-    PlayersData[faction_id].labs_total += points;
-
-    int scaled = (range(PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::RESEARCH],
-                        -5, 5) + 10) * points * 10;
-    PlayersData[faction_id].net_random_event += scaled % 100;
-    if (PlayersData[faction_id].net_random_event >= 100) {
-        PlayersData[faction_id].net_random_event -= 100;
-        scaled += 100;
-    }
-    tech_research(faction_id, scaled / 100);
-}
-
 /*
 Purpose: Set or unset the specified base's facility.
 // ORIGINAL: 0x004E48B0 ?set_fac@@YAXHHH@Z 0x004E48B0-0x004E48FA BYTE_EXACT
@@ -3216,6 +1102,549 @@ void __cdecl base_first(int base_id) {
     Bases[base_id].queue_production_id[0] = proto_id;
 }
 
+// ORIGINAL: 0x004E4B80 ?base_init@@YAHHHH@Z 0x004E4B80-0x004E5250 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004e4b80.cpp: canonical identity, original spans and retained seed history", "source:src/base.h: real Base storage and lifecycle contracts", "source:recovery/tasks/base-lifecycle-owner-closure.json: bounded coordinator authorization"], "reason": "The original base creation operation owns initialization of Bases records and faction base counts; source expresses real Base/PlayerData fields, facility bitmaps, technology and named UI/replay dependencies."}
+// TRIED: `>= 0x200` guard (matches original cmp/jl) over `> 0x1ff` moved divergence #4->#12; raw byte-offset arithmetic on the fixed 0x97dXXX/0x96XXXX globals (record stride 0x134, per-faction stride 0x20cc) rather than the Base struct - field order in src/base.h is only size-checked, not per-field, and several 0x97d0cc-family writes index past their nominal field width (a genuine original OOB-write reproduced faithfully). Not chased to byte-exact given size (1744 bytes / ~330 asm lines).
+int __cdecl base_init(int faction_id, int x, int y) {
+    if (GameDataStateStorage.fields_.base_current_count_ >= 512) {
+        return -1;
+    }
+    int region = map_loc(x, y)->region;
+    bit_set(x, y, BIT_BASE_IN_TILE, TRUE);
+    owner_set(x, y, faction_id);
+    synch_bit(x, y, faction_id);
+    int base_id = GameDataStateStorage.fields_.base_current_count_++;
+    PlayersData[faction_id].current_num_bases++;
+    PlayersData[faction_id].region_total_bases[region]++;
+    replay_base(0, x, y, faction_id);
+    Bases[base_id].x = static_cast<int16_t>(x);
+    Bases[base_id].y = static_cast<int16_t>(y);
+    Bases[base_id].faction_id_current = Bases[base_id].faction_id_former
+        = static_cast<uint8_t>(faction_id);
+    Bases[base_id].nerve_staple_turns_left = 0;
+    Bases[base_id].assimilation_turns_left = 0;
+    Bases[base_id].unk_1 = 0;
+    Bases[base_id].population_size
+        = has_project(SP_PLANETARY_TRANS_SYS, faction_id) ? 3 : 1;
+    Bases[base_id].visibility
+        = static_cast<uint8_t>(map_loc(x, y)->visibility | (1 << faction_id));
+    Bases[base_id].name_string[0] = 0;
+    name_base(faction_id, Bases[base_id].name_string, TRUE, is_ocean(x, y));
+    Bases[base_id].state = 0;
+    Bases[base_id].event = 0;
+    Bases[base_id].governor = PlayersData[faction_id].base_governor_adv;
+    Bases[base_id].minerals_accumulated = 0;
+    Bases[base_id].nutrients_accumulated = 0;
+    Bases[base_id].nerve_staple_count = 0;
+    for (int slot = 0; slot < Base::AutoForwardSlotCount; slot++) {
+        Bases[base_id].auto_forward_slots[slot] = -1;
+    }
+    Bases[base_id].queue_size = 0;
+    base_first(base_id);
+    if (!GameDataStateStorage.fields_.turn_current_num_) {
+        int production = has_tech(VehPrototypes[1].preq_tech, faction_id)
+            ? 1 : (PlayersData[faction_id].diff_level <= 1 ? 0 : 2);
+        Bases[base_id].queue_production_id[0] = production;
+        Bases[base_id].minerals_accumulated
+            = cost_factor(faction_id, 1, -1) * VehPrototypes[production].cost / 2;
+    } else {
+        Bases[base_id].minerals_accumulated
+            = PlayersData[faction_id].soc_effect_active.values_[SocialEffect::SUPPORT] < -1
+            ? 0 : Rules.retool_exemption;
+    }
+    Bases[base_id].resource_sqr_radius = 0;
+    Bases[base_id].specialist_total = 0;
+    Bases[base_id].specialist_unk_1 = 0;
+    Bases[base_id].eco_damage = 0;
+    Bases[base_id].unk_x = Bases[base_id].unk_y = -1;
+    // The original clears only nine facility bytes, not the entire recycled
+    // Base record. Fields it does not initialize deliberately retain their state.
+    for (int fac = 0; fac < 9; fac++) {
+        Bases[base_id].facilities_built[fac] = 0;
+    }
+    // BUG(original): nerve_staple_count is cleared a second time here.
+    // WORKAROUND(type): the image clears 0x124..0x133 with one fresh zero
+    // register in ascending order (0x004E4E20..0x004E4E3A), the unrolled form
+    // of a four-int array clear; base.h models these as four scalar fields.
+    for (int k = 0; k < 4; k++) {
+        (&Bases[base_id].random_event_turns)[k] = 0;
+    }
+    if (PlayersData[faction_id].current_num_bases == 1) {
+        set_fac(FAC_HEADQUARTERS, base_id, TRUE);
+        if (IsMultiplayerNet) {
+            Bases[base_id].population_size = 3;
+            if (Players[faction_id].rule_talent
+                || PlayersData[faction_id].soc_effect_base.values_[SocialEffect::PLANET] > 0) {
+                Bases[base_id].population_size = 4;
+            }
+            if (Players[faction_id].rule_drone || Players[faction_id].rule_population) {
+                Bases[base_id].population_size--;
+            }
+            set_fac(FAC_RECYCLING_TANKS, base_id, TRUE);
+            if (GameDataStateStorage.fields_.diff_level_current_ >= 3) {
+                set_fac(FAC_RECREATION_COMMONS, base_id, TRUE);
+            }
+            if (PlayersData[faction_id].soc_effect_base.values_[SocialEffect::ECONOMY] > 0) {
+                set_fac(FAC_ENERGY_BANK, base_id, TRUE);
+            }
+        } else {
+            Bases[base_id].population_size = static_cast<int8_t>(
+                range((GameDataStateStorage.fields_.turn_current_num_ + 49) / 50, 1, 5));
+            if (GameDataStateStorage.fields_.turn_current_num_ >= 75) {
+                set_fac(FAC_RECYCLING_TANKS, base_id, TRUE);
+            }
+            if (GameDataStateStorage.fields_.turn_current_num_ >= 100) {
+                set_fac(FAC_RECREATION_COMMONS, base_id, TRUE);
+            }
+            if (GameDataStateStorage.fields_.turn_current_num_ >= 150) {
+                set_fac(FAC_ENERGY_BANK, base_id, TRUE);
+            }
+        }
+    }
+    if (is_ocean(x, y)) {
+        set_fac(FAC_PRESSURE_DOME, base_id, TRUE);
+    }
+    for (int i = 0; i < 8; i++) {
+        // Nested ?: - the image loads population_size once per true arm.
+        Bases[base_id].faction_pop_size_intel[i] = i == faction_id
+            ? Bases[base_id].population_size
+            : ((Bases[base_id].visibility & (1 << i)) ? Bases[base_id].population_size : 0);
+    }
+    int j;
+    for (j = 0; j < Players[faction_id].faction_bonus_count; j++) {
+        if (Players[faction_id].faction_bonus_id[j] == 2) {
+            set_fac(range(Players[faction_id].faction_bonus_val1[j], 1, 69), base_id, TRUE);
+        }
+    }
+    for (j = 0; j < Players[faction_id].faction_bonus_count; j++) {
+        // BUG(original): the facility prerequisite is looked up with the
+        // unclamped bonus value; only the set_fac index is clamped.
+        if (Players[faction_id].faction_bonus_id[j] == 12
+            && has_tech(Facility[Players[faction_id].faction_bonus_val1[j]].preq_tech,
+                faction_id)) {
+            set_fac(range(Players[faction_id].faction_bonus_val1[j], 1, 69), base_id, TRUE);
+        }
+    }
+    for (j = 1; j < 70; j++) {
+        if (has_tech(Facility[j].free_tech, faction_id)) {
+            set_fac(j, base_id, TRUE);
+        }
+    }
+    Bases[base_id].production_id_last = Bases[base_id].queue_production_id[0];
+    Bases[base_id].minerals_accumulated_2 = Bases[base_id].minerals_accumulated;
+    Bases[base_id].mineral_surplus_final = 0;
+    base_mark(base_id);
+    reset_territory();
+    BaseIDCurrentSelected = base_id;
+    BaseCurrent = &Bases[base_id];
+    base_compute(1);
+    WorldClimateWorldWin.field_239BC_ |= 2;
+    return base_id;
+}
+
+// base_find(x, y, faction_id) as base_kill inlines it; the out-of-line body
+// (below) is kept auto_inline(off) for its other callers.
+static inline int base_kill_find(int x, int y, int faction_id) {
+    int proximity = 9999;
+    int base_id = -1;
+    for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
+        if (Bases[i].faction_id_current == faction_id) {
+            int dist = vector_dist(x, y, Bases[i].x, Bases[i].y);
+            if (dist <= proximity) {
+                proximity = dist;
+                base_id = i;
+            }
+        }
+    }
+    if (base_id >= 0) {
+        BaseFindDist = proximity;
+    }
+    return base_id;
+}
+
+// ORIGINAL: 0x004E5250 ?base_kill@@YAXH@Z 0x004E5250-0x004E5A58
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004e5250.cpp: canonical identity, original spans and retained seed history", "source:src/base.h: real Base storage and lifecycle contracts", "source:recovery/tasks/base-lifecycle-owner-closure.json: bounded coordinator authorization"], "reason": "The original base destruction operation belongs to the Base owner and repairs real faction/project/base/vehicle references and count/selection state rather than forwarding into the original executable."}
+// TRIED: full line-by-line transcription landed (MISMATCH #3, prologue push/mov divergence); stack-slot reuse across phases not replicated (used per-phase named locals instead), and the two adjustor-thunk virtual calls (vtable[1] read as delta, then slot0 on the adjusted `this`) route through VCall with a manually computed adjusted receiver rather than the shim alone.
+// The image calls the CRT memcpy for the record compaction.
+void __cdecl base_kill(int base_id) {
+    int veh_id;
+    int x = Bases[base_id].x;
+    int y = Bases[base_id].y;
+    int faction_id = Bases[base_id].faction_id_current;
+    if (has_fac(FAC_HEADQUARTERS, base_id, 0)
+        && PlayersData[faction_id].corner_market_turn > GameDataStateStorage.fields_.turn_current_num_
+        && PlayersData[faction_id].corner_market_active) {
+        PlayersData[faction_id].corner_market_turn = 0;
+        PlayersData[faction_id].corner_market_active = 0;
+        if (faction_id == ConsoleGlobal.faction_id_) {
+            popp(ScriptPopupFile, "CORNERFOILED", 0, "econwin_sm.pcx", 0);
+        } else {
+            parse_says(0, Players[faction_id].adj_name_faction, -1, -1);
+            popp(ScriptPopupFile, "CORNERTHEMFOILED", 0, "econwin_sm.pcx", 0);
+        }
+    }
+    if (Bases[base_id].population_size < 0) {
+        Bases[base_id].population_size = 0;
+    }
+    replay_base(2, x, y, faction_id);
+    PlayersData[faction_id].current_num_bases--;
+    PlayersData[faction_id].region_total_bases[region_at(x, y)]--;
+    for (veh_id = GameDataStateStorage.fields_.vehicle_current_count_ - 1; veh_id >= 0; veh_id--) {
+        if (veh_id < GameDataStateStorage.fields_.vehicle_current_count_
+            && Vehs[veh_id].home_base_id == base_id) {
+            if (Vehs[veh_id].faction_id != faction_id) {
+                Vehs[veh_id].home_base_id = -1;
+            } else {
+                // Hide the dying base from the search for a new home.
+                Bases[base_id].faction_id_current = 0xFF;
+                int home_id = base_kill_find(x, y, faction_id);
+                Bases[base_id].faction_id_current = static_cast<uint8_t>(faction_id);
+                if (home_id >= 0) {
+                    Vehs[veh_id].home_base_id = static_cast<int16_t>(home_id);
+                } else {
+                    kill(veh_id);
+                }
+            }
+        }
+    }
+    bit_set(x, y, BIT_BASE_IN_TILE, 0);
+    // This overlapping copy is memcpy in the original, not memmove.
+    if (base_id < GameDataStateStorage.fields_.base_current_count_ - 1) {
+        memcpy(&Bases[base_id], &Bases[base_id + 1],
+            (GameDataStateStorage.fields_.base_current_count_ - base_id - 1) * sizeof(Base));
+    }
+    GameDataStateStorage.fields_.base_current_count_--;
+    if (base_id == BaseComputedID) {
+        BaseComputedID = -1;
+    }
+    for (veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; veh_id++) {
+        if (Vehs[veh_id].home_base_id > base_id) {
+            Vehs[veh_id].home_base_id--;
+        }
+    }
+    int i;
+    for (i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
+        for (int j = 0; j < 3; j++) {
+            if (Bases[i].auto_forward_slots[j] == base_id) {
+                Bases[i].auto_forward_slots[j] = -1;
+            } else if (Bases[i].auto_forward_slots[j] > base_id) {
+                Bases[i].auto_forward_slots[j]--;
+            }
+        }
+    }
+    StringList &messages = InterfaceMessageWin.listBox_.item_list_;
+    const int message_id = base_id | 0x40000000;
+    if (messages.head_) {
+        for (int index = 0; index < messages.entry_count_; ++index) {
+            StringStructEntry *entry = messages.current_;
+            if (entry->id == message_id) {
+                entry->next->previous = entry->previous;
+                entry->previous->next = entry->next;
+                if (entry == messages.head_) messages.head_ = entry->next;
+                messages.current_ = entry->next;
+                messages.on_remove(entry->string_payload());
+                delete entry->string_payload();
+                entry->payload = 0;
+                delete entry;
+                --messages.entry_count_;
+                --index;
+            } else {
+                if (entry->id > message_id) --entry->id;
+                messages.current_ = entry->next;
+            }
+        }
+        if (!messages.entry_count_) messages.head_ = 0;
+        messages.current_position_ = messages.entry_count_ - 1;
+    }
+    InterfaceMessageWin.listBox_.update_changes();
+    for (i = 0; i < MaxSecretProjectNum; i++) {
+        if (GameDataStateStorage.fields_.secret_project_.project_base[i] == base_id) {
+            GameDataStateStorage.fields_.secret_project_.project_base[i] = -2;
+        } else if (GameDataStateStorage.fields_.secret_project_.project_base[i] > base_id) {
+            GameDataStateStorage.fields_.secret_project_.project_base[i]--;
+        }
+    }
+    for (i = 1; i < MaxPlayerNum; i++) {
+        if (PlayersData[i].base_id_atk_target == base_id) {
+            PlayersData[i].base_id_atk_target = -1;
+        } else if (PlayersData[i].base_id_atk_target > base_id) {
+            PlayersData[i].base_id_atk_target--;
+        }
+    }
+    for (i = 0; i < 49; i++) {
+        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
+        int y_radius = y + RadiusOffsetY[i];
+        if (y_radius >= 0 && y_radius < MapLatitudeBounds
+            && x_radius >= 0 && x_radius < MapLongitudeBounds) {
+            site_set(x_radius, y_radius, 0);
+            if (i < 21) {
+                bit_set(x_radius, y_radius, BIT_BASE_RADIUS, 0);
+                if ((map_loc(x_radius, y_radius)->val3 & 7) == faction_id) {
+                    using_set(x_radius, y_radius, 0);
+                }
+            }
+        }
+    }
+    if (is_ocean(x, y)) {
+        for (veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; veh_id++) {
+            if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_NAVAL_TRANSPORT
+                && !map_range(Vehs[veh_id].x, Vehs[veh_id].y, x, y)) {
+                stack_veh(veh_id, 0);
+            }
+        }
+        // Original terrain cleanup begins at the one-past active vehicle slot.
+        // Do not silently repair that stale-slot/error-path read with a new guard.
+        for (veh_id = GameDataStateStorage.fields_.vehicle_current_count_; veh_id >= 0; veh_id--) {
+            if (get_triad(veh_id) == TRIAD_LAND
+                && !map_range(Vehs[veh_id].x, Vehs[veh_id].y, x, y)
+                && (Vehs[veh_id].order != ORDER_SENTRY_BOARD || Vehs[veh_id].waypoint_x[0] < 0)) {
+                kill(veh_id);
+            }
+        }
+        TutWinBaseWindow.base_killed(base_id);
+    } else {
+        for (veh_id = GameDataStateStorage.fields_.vehicle_current_count_; veh_id >= 0; veh_id--) {
+            if (get_triad(veh_id) == TRIAD_SEA
+                && !map_range(Vehs[veh_id].x, Vehs[veh_id].y, x, y)) {
+                kill(veh_id);
+            }
+        }
+        TutWinBaseWindow.base_killed(base_id);
+    }
+    for (i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
+        base_mark(i);
+    }
+    reset_territory();
+    WorldClimateWorldWin.field_239BC_ |= 2;
+}
+
+
+
+
+
+
+
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x004E5A60 ?base_change@@YAXHH@Z 0x004E5A60-0x004E5FDC BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004e5a60.cpp", "source:src/base.cpp:base_reset", "source:src/base.cpp:base_lose_minerals"], "reason": "Recover production selection, retool mineral adjustment and radius redraw through the typed Base and Rules. Project announcement and faction production counts remain unresolved; this is not a byte or behavioral claim."}
+void __cdecl base_change(int base_id, int production_id) {
+    if (production_id == 99999) return;
+
+    const int previous = Bases[base_id].queue_production_id[0];
+    Bases[base_id].queue_production_id[0] = production_id;
+    if (production_id == previous) return;
+    const int faction = Bases[base_id].faction_id_current;
+    if (previous >= 0) --PlayersData[faction].proto_id_queue[previous];
+    if (production_id >= 0) ++PlayersData[faction].proto_id_queue[production_id];
+
+    // Switching production applies the rule's retool penalty to the stored
+    // minerals, while keeping the unpenalized turn total for later accounting.
+    int loss;
+    if (Rules.retool_pct_pen_prod_chg
+        && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction))
+        && base_making(Bases[base_id].queue_production_id[0], base_id)
+            != base_making(Bases[base_id].production_id_last, base_id)
+        && Bases[base_id].minerals_accumulated_2 > static_cast<int>(Rules.retool_exemption)) {
+        loss = Bases[base_id].minerals_accumulated_2
+             - (Bases[base_id].minerals_accumulated_2 - static_cast<int>(Rules.retool_exemption))
+                   * (100 - static_cast<int>(Rules.retool_pct_pen_prod_chg)) / 100
+             - static_cast<int>(Rules.retool_exemption);
+    } else {
+        loss = 0;
+    }
+    Bases[base_id].minerals_accumulated = Bases[base_id].minerals_accumulated_2 - loss;
+    draw_radius(Bases[base_id].x, Bases[base_id].y, 2, 2);
+    if (faction == ConsoleGlobal.faction_id_ || AiResearchBatchActive) return;
+
+    const int next = Bases[base_id].queue_production_id[0];
+    int new_unbuilt;
+    if (next <= -70 && base_project(-next - 70) == -1) {
+        new_unbuilt = 1;
+    } else {
+        new_unbuilt = 0;
+    }
+    int old_relevant;
+    if (previous <= -70 && (new_unbuilt || base_project(-previous - 70) == -1)) {
+        old_relevant = 1;
+    } else {
+        old_relevant = 0;
+    }
+    if (old_relevant && has_project((previous < 0 ? -previous : previous) - 70, faction)) old_relevant = 0;
+    if (!new_unbuilt && !old_relevant) return;
+    if ((GameDataStateStorage.fields_.game_state_ & 1) && !(GameDataStateStorage.fields_.game_state_ & 8)) return;
+    const int facility = (next < 0 ? -next : next);
+    const int project = facility - 70;
+    int word, mask;
+    if (new_unbuilt) {
+        bitmask(project, &word, &mask);
+    } else {
+        bitmask((previous < 0 ? -previous : previous) - 70, &word, &mask);
+    }
+    int old_count = 0, new_count = 0;
+    int other;
+    for (other = 0; other < GameDataStateStorage.fields_.base_current_count_; ++other) {
+        if (Bases[other].faction_id_current == Bases[base_id].faction_id_current && other != base_id) {
+            if (Bases[other].queue_production_id[0] == previous) ++old_count;
+            if (Bases[other].queue_production_id[0] == Bases[base_id].queue_production_id[0]) ++new_count;
+        }
+    }
+    if (!new_unbuilt || new_count) return;
+    // Literal order (BEGINPROJECT before CHANGEPROJECT) puts the new-project
+    // arm first in the source; VC6 lays the change arm out first.
+    if (!old_relevant || (old_count && base_project(-previous - 70) == -1)) {
+        if (!(PlayersData[faction].secret_project_intel[word] & mask)) {
+            if (GameDataStateStorage.fields_.sunspot_duration_ > 0 && project != 31) return;
+            parse_set(Players[faction].is_leader_female, 0);
+            parse_says(0, Players[faction].title_leader, -1, -1);
+            parse_set(Players[faction].is_leader_female, 0);
+            parse_says(1, Players[faction].name_leader, -1, -1);
+            parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
+            parse_says(2, Players[faction].noun_faction, -1, -1);
+            parse_say(3, Facility[facility].name, -1, -1);
+            if (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction] & 1) {
+                wave_it(36);
+            } else {
+                wave_it(38);
+            }
+            popp(ScriptPopupFile, "BEGINPROJECT", 0, "secproj_sm.pcx", 0);
+            PlayersData[faction].secret_project_intel[word] |= mask;
+        }
+        if (project == 31) {
+            interlude(11, 0, 1, 0);
+            GameDataStateStorage.fields_.game_interlude_flags_ |= 0x400;
+        }
+    } else {
+        for (other = 0; other < GameDataStateStorage.fields_.base_current_count_; ++other)
+            if (Bases[other].faction_id_current == faction
+                && Bases[other].queue_production_id[0] == previous)
+                Bases[other].queue_production_id[0] = Bases[base_id].queue_production_id[0];
+        if (GameDataStateStorage.fields_.sunspot_duration_ > 0) return;
+        parse_says(0, Players[faction].adj_name_faction, -1, -1);
+        // RulesFacility's existing name field is already an LPSTR.
+        parse_say(1, Facility[(previous < 0 ? -previous : previous)].name, -1, -1);
+        parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
+        parse_says(2, Players[faction].noun_faction, -1, -1);
+        parse_say(3, Facility[facility].name, -1, -1);
+        popp(ScriptPopupFile, "CHANGEPROJECT", 0, "secproj_sm.pcx", 0);
+        PlayersData[faction].secret_project_intel[word] |= mask;
+        bitmask((previous < 0 ? -previous : previous) - 70, &word, &mask);
+        PlayersData[faction].secret_project_intel[word] &= ~mask;
+    }
+}
+
+// ORIGINAL: 0x004E5FE0 ?base_reset@@YAXHH@Z 0x004E5FE0-0x004E62FB BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004e5fe0.cpp", "source:src/base.h", "source:src/base.cpp:BaseSiteClaimX/BaseSiteClaimY are the four 0x0090EA44/54 site-output arrays", "source:src/base.h:Base.location is the 0x130 field read as 0x0097D090 + base_id*0x134", "pinned image:0x00689484 contains secproj_sm.pcx;0x00689494 contains GOVPROJECT"], "reason": "Recover the base reset/site selection operation using the typed Base and faction state, four source-owned site claims, and source-owned popup text. Preserve the existing seed and mismatch obligation; base_build/base_change remain explicit link-only dependencies."}
+// The governor prompt's result is popp's return (the image keeps it in esi
+// across the help loop), not parse_say's.
+void __cdecl base_reset(int base_id, int force) {
+    int loop_count = 0;
+    int faction = Bases[base_id].faction_id_current;
+    if (((1 << faction) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)
+        && (Bases[base_id].governor & GOV_ACTIVE) && force) {
+        uint32_t governor = Bases[base_id].governor;
+        for (int site = 0; site < 4; ++site) {
+            BaseSiteClaimY[site] = 999999;
+            BaseSiteClaimX[site] = 0;
+        }
+        if (governor & 0x0F000000u) {
+            for (;;) {
+                Bases[base_id].governor = (Bases[base_id].governor & 0xF1FFFFFFu) | GOV_PRIORITY_EXPLORE;
+                BaseSiteClaimX[0] = base_build(base_id, 0, 0, &BaseSiteClaimY[0]);
+                Bases[base_id].governor = (Bases[base_id].governor & 0xF2FFFFFFu) | GOV_PRIORITY_DISCOVER;
+                BaseSiteClaimX[1] = base_build(base_id, 0, 0, &BaseSiteClaimY[1]);
+                if (BaseSiteClaimX[0] == BaseSiteClaimX[1] && ++loop_count < 8) {
+                    continue;
+                }
+                Bases[base_id].governor = (Bases[base_id].governor & 0xF4FFFFFFu) | GOV_PRIORITY_BUILD;
+                BaseSiteClaimX[2] = base_build(base_id, 0, 0, &BaseSiteClaimY[2]);
+                if ((BaseSiteClaimX[0] == BaseSiteClaimX[2] || BaseSiteClaimX[1] == BaseSiteClaimX[2])
+                    && ++loop_count < 8) {
+                    continue;
+                }
+                Bases[base_id].governor = (Bases[base_id].governor & 0xF8FFFFFFu) | GOV_PRIORITY_CONQUER;
+                BaseSiteClaimX[3] = base_build(base_id, 0, 0, &BaseSiteClaimY[3]);
+                if ((BaseSiteClaimX[0] == BaseSiteClaimX[3] || BaseSiteClaimX[1] == BaseSiteClaimX[3]
+                     || BaseSiteClaimX[2] == BaseSiteClaimX[3])
+                    && ++loop_count < 8) {
+                    continue;
+                }
+                break;
+            }
+            Bases[base_id].governor = governor;
+        }
+        base_change(base_id, base_build(base_id, 0, 0, &loop_count));
+        return;
+    }
+    int location = Bases[base_id].queue_production_id[0];
+    base_change(base_id, base_build(base_id, 0, 0, 0));
+    if (!((1 << faction) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)) return;
+    if (!(Bases[base_id].governor & GOV_ACTIVE)) return;
+    if (location <= -70) return;
+    if (Bases[base_id].queue_production_id[0] > -70) return;
+    if (IsMultiplayerNet) return;
+    if (GameDataStateStorage.fields_.game_state_ & STATE_UNK_1) return;
+    if (Bases[base_id].queue_production_id[0] >= 0) {
+        location = Bases[base_id].queue_production_id[0];
+    } else {
+        location = -Bases[base_id].queue_production_id[0];
+    }
+    int choice = 3;
+    while (choice == 3) {
+        parse_says(0, Bases[base_id].name_string, -1, -1);
+        parse_say(1, Facility[location].name, -1, -1);
+        choice = popp(ScriptPopupFile, "GOVPROJECT", 0, "secproj_sm.pcx", 0);
+        if (choice == 3) {
+            help_topic(0x0B, location);
+        }
+    }
+    if (!choice) return;
+    base_change(base_id, base_build(-1 - base_id, 0, 0, 0));
+    if (choice <= 1) return;
+    BaseCurrent->governor &= ~0x00040000u;
+    PlayersData[faction].base_governor_adv &= ~0x00040000u;
+}
+
+/*
+Purpose: Reset every base of one faction: the faction's bases are visited in
+         table order and each is handed to base_reset when the caller's
+         context allows it - the faction is not locked out by the human/alive
+         status bytes, the base optionally lies in the requested region, and
+         with the occupancy flag the tile must be free of vehicles or without
+         a current owner.
+
+// ORIGINAL: 0x004E6300 ?bases_reset@@YAXHHH@Z 0x004E6300-0x004E63FC FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["src/base.h declares bases_reset and owns the actual Base array and BaseCurrent; its Base members x/y/faction_id_current/state have RECOVERY_MEMBER evidence.","The pinned map-record stride is 0x2C; src/map.h's Map is size 0x2C with climate/contour/val2/region at +0..+3 and bit at +8. Typed indexing preserves the original field reads.","The body keeps both live enable-mask reads, the original short-circuit order, the base_reset callback, and the post-callback MapTiles/MapLongitude reload. No alias or manual table is introduced."],"reason":"Move the existing reset loop into the Base owner and express its already-established Base/Map storage through actual members while preserving branch, callback, reload, and unsafe-input behavior."}
+// TRIED: single AND-chained `if` (faction==a2 && (a1<0||idx_byte==a1) && (a3==0||bits check) && (mask flag||special)) reproduces the loop body; `int mask`/`unsigned char mask` both leave the divergence at MISMATCH #2 (original reserves the one local with `push ecx` right after `mov ebp,esp`; every C form tried here gets `sub esp,4` instead) - same prologue-reservation wall as the mon_* family (0x00477840).
+// size      252 bytes
+// callers   4   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E5FE0
+// notes     Seed provenance (TRIED): the single AND-chained `if` reproduces
+//           the loop body; the residual divergence is the prologue local
+//           reservation - the original reserves its one local with `push ecx`
+//           right after `mov ebp,esp`, and every C form tried reaches for
+//           `sub esp,4` (the mon_* family wall at 0x00477840).
+Return Value: n/a
+Status: Coverage transcription - unclaimed body; the seed
+        git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004e6300.cpp is retained until this product
+        definition measures fresh BYTE_EXACT.
+*/
+void __cdecl bases_reset(int region_id, int faction_id, int skip_occupied) {
+    if (is_human(faction_id)) {
+        return;
+    }
+    for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
+        if (Bases[i].faction_id_current == faction_id
+            && (region_id < 0 || MapTiles[(Bases[i].x >> 1) + Bases[i].y * MapLongitude].region == region_id)
+            && (!skip_occupied || veh_who(Bases[i].x, Bases[i].y) < 0)
+            && (!is_human(faction_id) || !(BaseCurrent->state & 0x80000000))) {
+            base_reset(i, 0);
+        }
+    }
+}
+
 /*
 Purpose: Calculate the new unit morale bonus modifier provided by the base and faction for a triad.
 // ORIGINAL: 0x004E6400 ?morale_mod@@YAHHHH@Z 0x004E6400-0x004E65B1 BYTE_EXACT
@@ -3370,6 +1799,202 @@ int __cdecl worm_mod(int base_id, int faction_id) {
         worm_modifier_count++;
     }
     return worm_modifier_count;
+}
+
+/*
+ * THE PER-FACTION PROTOTYPE-STATUS BYTE RUN, as the image addresses it:
+ * PlayersData (0x0096C9E0) + 0x858, indexed faction * 0x20CC + prototype id.
+ * veh.cpp names the same address FactionProtoSeenCount (it decrements it when
+ * a vehicle of that prototype dies); upgrade_prototypes reads it as the gate
+ * on whether the faction may still upgrade that prototype at all, which is
+ * the same fact read from the other end. Both are internal-linkage
+ * definitions of one address because base.h's PlayerData puts its
+ * proto_id_active / proto_id_queue arrays at different offsets from this (the
+ * struct's middle and tail are where the image's own layout disagrees), so
+ * neither file can reach the byte through a field name.
+ */
+// Current layout evidence supersedes that seed conclusion: 0x0096D238 is
+// PlayersData[0].proto_id_active[0] (PlayerData +0x858), with a 0x20CC row stride.
+
+/*
+ * "Don't ask again" latch for the prototype-upgrade confirmation. The automatic
+ * upgrade sweep (0x004F0650) clears it, upgrade_prototype (0x004EFE80) shows
+ * the confirm popup only while it is zero and sets it when the caller answers
+ * "yes to all" (popup result > 1); 0x00583E30, 0x005BB000, 0x005290A0 and
+ * 0x00438460 clear it at the top of their own upgrade passes.
+ */
+// RECOVERY_OBJECT: v2 0x0090EA3C 0x0090EA40 ?UpgradePromptAnswered@@3IA 0x00438B19
+uint32_t UpgradePromptAnswered;  // 0x0090EA3C
+
+int BaseCurrentGrowthRate;  // 0x0090E918
+// RECOVERY_OBJECT: v2 0x0090E980 0x0090E984 ?BaseCurrentVehPacifismCount@@3HA 0x004E9550
+int BaseCurrentVehPacifismCount;  // 0x0090E980
+// RECOVERY_OBJECT: v2 0x0090E8FC 0x0090E900 ?BaseCurrentForcesSupported@@3HA 0x004E95AB
+int BaseCurrentForcesSupported;  // 0x0090E8FC
+// RECOVERY_OBJECT: v2 0x0090E91C 0x0090E920 ?BaseCurrentForcesMaintCost@@3HA 0x0040A6A5
+int BaseCurrentForcesMaintCost;  // 0x0090E91C
+
+/*
+ * How many of the base's supported units are past its free allowance, counted
+ * alongside BaseCurrentForcesMaintCost. base_support() (0x004E9550) is the only
+ * function in the executable that touches this address at all - it zeroes it,
+ * reads it back and stores the increment, and nothing ever reads the total - so
+ * the count is written and then dropped. Kept because it is observable state.
+ */
+// Bound: scalar; every original access is a dword at the start, never indexed, and the following bytes are never referenced.
+// RECOVERY_OBJECT: v2 0x0090EA08 0x0090EA0C ?BaseCurrentForcesMaintCount@@3IA 0x004E95A5
+uint32_t BaseCurrentForcesMaintCount;  // 0x0090EA08
+
+// Tile base owner, as the yield functions inline it (yield_tile_owner).
+static __forceinline int tile_base_owner(const Map *tile) {
+    if (!(tile->bit & BIT_BASE_IN_TILE)) {
+        return -1;
+    }
+    int owner = tile->val2 & 0xF;
+    return (owner < MaxPlayerNum) ? owner : -1;
+}
+
+static inline int farm_stack_top(int veh_id) {
+    while (Vehs[veh_id].prev_veh_id_stack >= 0) {
+        veh_id = Vehs[veh_id].prev_veh_id_stack;
+    }
+    return veh_id;
+}
+
+static inline BOOL farm_veh_visible(int veh_id, int faction) {
+    if (Vehs[veh_id].faction_id == faction && (Vehs[veh_id].flags & 0x440) != 0x440) {
+        return true;
+    }
+    if (Vehs[veh_id].visibility & (1 << faction)) {
+        return true;
+    }
+    return false;
+}
+
+/*
+ * Out-parameter of the three terrain yield functions: how much of a resource
+ * the square lost to the "three per square needs a technology" restriction, and
+ * to mine_yield's roadless-mine mineral limit. Callers zero it, ask for a
+ * yield, then read it back - BaseWin::draw_farm (0x0040F0F0) does exactly that
+ * for each of the three resources, and resource_yield zeroes it for RSC_PSI.
+ * The executable's two clear paths identify this start; purpose comes from callers.
+ */
+// Independent crop_yield accesses at 0x004E72C2/0x004E72D0 read/write a DWORD;
+// farm_compute uses separate DWORD storage at 0x0090E99C. This bounds the slot,
+// without establishing the original signedness or source-level identifier.
+// RECOVERY_OBJECT: v2 0x0090E998 0x0090E99C ?TileYieldRestricted@@3HA 0x004E6E50
+int TileYieldRestricted;  // 0x0090E998
+// farm_compute publishes 25 status words, including four excluded outer
+// positions. The separate mask covers only the first 21 workable positions.
+// Both objects are initially zero in the image; their producer, not that
+// initial state, determines availability for the current base.
+// Status bits: 1 excluded outer position, 2 off-map/unrevealed, 4 base tile,
+// 8 stack-check or visible non-allied vehicle, 0x10 another base's worked
+// square, 0x20 the foreign-territory rule below. These describe the observed
+// tests, not recovered historical names. The recovered base_yield reads the
+// mask; the farm_click/draw_farm word consumers remain unfinished obligations.
+// RECOVERY_OBJECT: v2 0x0090E99C 0x0090EA00 ?FarmStatus@@3PAIA 0x004E68B0
+uint32_t FarmStatus[25];
+// RECOVERY_OBJECT: v2 0x0090EA00 0x0090EA04 ?FarmUnavailableMask@@3IA 0x004E68B0
+uint32_t FarmUnavailableMask;
+
+// Requires the original game's valid faction, base, tile and vehicle indices
+// and well-formed vehicle chains. Keep the entry coordinates/faction separate
+// from the later BaseCurrent reload used to select nearby competing bases.
+// ORIGINAL: 0x004E68B0 ?farm_compute@@YAXXZ 0x004E68B0-0x004E6E4E BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["4E68B6 loads BaseCurrent pointer before signedshort x/y and unsignedbyte faction.4E68E3/4E6BA5 establish25 DWORD outputs, with final4 set1;4E6E23..43 reduce onlyfirst21 into90EA00.4E6C7A tests Base+78 worked mask, not seed+3C.", "4E6966/4E69C4/4E6B99 reload row stride after calls; map-pointer loads4E697C/4E6A0A/4E6A46 must remain live.4E6B38 exhausts vehicle iterator before territory check4E6B7C.4E6BE7 reloads BaseCurrent for neighbor admission, while inner radius matching retains entry coordinates."], "reason": "This no-argument resource pass computes shared per-radius availability from the selected Base, typed map/vehicle/diplomacy state and neighboring worked squares; it owns25 status words and a separate21-position mask."}
+void __cdecl farm_compute() {
+    int base_x = BaseCurrent->x;
+    int base_y = BaseCurrent->y;
+    int faction = BaseCurrent->faction_id_current;
+    int position;
+    for (position = 0; position < 25; position++) {
+        if (position >= 21) {
+            FarmStatus[position] = 1;
+            continue;
+        }
+        int x = wrap_map_x(base_x + RadiusOffsetX[position]);
+        int y = base_y + RadiusOffsetY[position];
+        if (!on_map(x, y)) {
+            FarmStatus[position] = 2;
+            continue;
+        }
+        if (position < 21 && BaseUpkeepStage == 1 && goody_at(x, y)
+            && (map_tiles()[y * (int)MapLongitude + (x >> 1)].climate & ~0x1F) >= 0x60) {
+            add_goal(faction, 3, 1, x, y, -1);
+            add_goal(faction, 2, 1, x, y, -1);
+            add_goal(faction, 0, 1, x, y, -1);
+        }
+        if (!(PlayersData[faction].flags & 0x200)
+            && !(map_tiles()[y * (int)MapLongitude + (x >> 1)].visibility & (1 << faction))) {
+            FarmStatus[position] = 2;
+            continue;
+        }
+        FarmStatus[position] = 0;
+        if (tile_base_owner(&map_tiles()[y * (int)MapLongitude + (x >> 1)]) >= 0) {
+            FarmStatus[position] = 4;
+        }
+        int veh_id = stack_fix(veh_at(x, y));
+        if (veh_id >= 0) {
+            if (stack_check(veh_id, 9, 3, -1, -1)) {
+                FarmStatus[position] |= 8;
+            }
+            veh_id = farm_stack_top(veh_id);
+            for (; veh_id >= 0; veh_id = Vehs[veh_id].next_veh_id_stack) {
+                int owner = Vehs[veh_id].faction_id;
+                if (owner >= 0 && owner != faction && farm_veh_visible(veh_id, faction)
+                    && !(PlayersData[faction].diplo_treaties[owner] & 3)) {
+                    FarmStatus[position] |= 8;
+                }
+            }
+        }
+        // The original uses the exhausted iterator here, not the saved stack
+        // head. Do not turn this into a new friendly-occupant exemption.
+        int territory = whose_territory(faction, x, y, 0, 0);
+        if (territory >= 0 && territory != faction
+            && ((PlayersData[faction].diplo_treaties[territory] & 3)
+                || veh_id < 0 || Vehs[veh_id].faction_id != faction)) {
+            FarmStatus[position] |= 0x20;
+        }
+    }
+    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
+        if (base_id == BaseIDCurrentSelected) {
+            continue;
+        }
+        Base *other = &Bases[base_id];
+        if (vector_dist(BaseCurrent->x, BaseCurrent->y, other->x, other->y) > 5) {
+            continue;
+        }
+        for (int worked = 0; worked < 21; worked++) {
+            if (worked && !(other->resource_sqr_radius & (1 << worked))) {
+                continue;
+            }
+            int x = wrap_map_x(other->x + RadiusOffsetX[worked]);
+            int y = other->y + RadiusOffsetY[worked];
+            if (!on_map(x, y)) {
+                continue;
+            }
+            if (other->faction_id_current != faction
+                && (map_tiles()[y * (int)MapLongitude + (x >> 1)].climate & ~0x1F) >= 0x60) {
+                continue;
+            }
+            if (vector_dist(base_x, base_y, x, y) > 2) {
+                continue;
+            }
+            for (int square = 0; square < 21; square++) {
+                if (wrap_map_x(base_x + RadiusOffsetX[square]) == x
+                    && base_y + RadiusOffsetY[square] == y) {
+                    FarmStatus[square] |= 0x10;
+                }
+            }
+        }
+    }
+    FarmUnavailableMask = 0;
+    for (position = 0; position < 21; position++) {
+        if (FarmStatus[position]) {
+            FarmUnavailableMask |= 1 << position;
+        }
+    }
 }
 
 
@@ -3993,6 +2618,500 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
     int event_active = UnkGlobal0093A934 ? (GameDataStateStorage.fields_.global_energy_event_state_ & 2)
                                           : (GameDataStateStorage.fields_.global_energy_event_state_ & 1);
     return event_active ? energy * 3 : energy;
+}
+
+/*
+// ORIGINAL: 0x004E7DB0 sub_4e7db0 0x004E7DB0-0x004E7DBD BYTE_EXACT
+// symbol    ?sub_4e7db0@@YAHXZ
+// size      13 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: zero
+Status: Complete
+*/
+int __cdecl sub_4e7db0() {
+    TileYieldRestricted = 0;
+    return 0;
+}
+
+// BODY IN base.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
+
+
+/*
+Purpose: Check if the base already has a particular facility built.
+Original Offset: n/a
+Return Value: Does base have facility built? true/false
+Status: Complete
+*/
+// BODY IN base.h: eleven bodies call it where the image calls nothing -
+// `call_diff` names it - so VC6 has to be able to inline it.
+
+
+
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x004E7DC0 0x004E7E34 0x004E7E44 0x004E7DCB
+// ORIGINAL: 0x004E7DC0 ?resource_yield@@YAHHHHHH@Z 0x004E7DC0-0x004E7E34 FILE BYTE_EXACT
+// LEVER: TileYieldRestricted (0x0090E998, already declared in base.h) replaces
+//        the carried `g_0090e998` binding; the scaffold's `g_004e7e34` was the
+//        function's own end address, referenced by nothing, and is dropped.
+// size      116 bytes
+// prototype int (__cdecl ?resource_yield@@YAHHHHHH@Z)(int type, int factionID, int baseID, int xCoord, int yCoord)
+// callers   7   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E6E50 0x004E7310 0x004E7750
+// Purpose: Dispatch one of the three terrain yields for the base's current
+//          square, or - for RSC_PSI (3), which has no per-square yield -
+//          clear TileYieldRestricted and return 0.
+// Status:  transcription homed from src/unrecovered/004e7dc0.cpp
+
+int __cdecl resource_yield(int rsc_type, int faction_id, int base_id, int x,
+                           int y) {
+    switch (rsc_type) {
+        case 0:
+            return crop_yield(faction_id, base_id, x, y, 0);
+        case 1:
+            return mine_yield(faction_id, base_id, x, y, 0);
+        case 2:
+            return energy_yield(faction_id, base_id, x, y, 0);
+        case 3:
+            TileYieldRestricted = 0;
+            return 0;
+    }
+    return 0;
+}
+
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x004E7E50 0x004E7F64 0x004E7F74 0x004E7EF7
+/*
+Purpose: Sum one base's terrain yields into the selected Base's intake_2
+         slots: walk the base's centre plus its radius offsets, wrap the x
+         edge on a flat map, latch the 0x8000 out-of-bounds state bit when
+         the tile is non-fungal rock, and add each of the four yield
+         passes' result into BaseCurrent's nutrient/mineral/energy/unused
+         intake_2 word, returning the sum.
+
+// ORIGINAL: 0x004E7E50 sub_4e7e50 0x004E7E50-0x004E7F64 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["The body reads the existing BaseCurrent/Bases layout (x, y, faction, state and contiguous intake_2 words), Map records, map bounds, and declared crop_yield/mine_yield/energy_yield APIs.","The function's fourth pass deliberately clears TileYieldRestricted; the body and original pass order are carried unchanged.","The identity remains the unmangled global sub_4e7e50; no original class name is inferred from its Base dataflow."],"reason":"Place the complete existing base-radius yield routine beside its genuine Base/Map dependencies without renaming it, changing pass order, or normalizing the original state updates."}
+// symbol    ?sub_4e7e50@@YAHH@Z
+// TRIED: various expression orderings for the x/y base+offset sums and the wrap-around guard placement all keep the divergence at the first instructions (register allocation for edx/ecx/a1 differs from the original's push-ebx/push-esi-before-movsx order).
+// size      276 bytes
+// prototype
+// callers   0   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004E6E50 0x004E7310 0x004E7750
+Return Value: the four-pass yield sum
+Status: Coverage transcription - unclaimed body
+*/
+// stand-in: base_yield expands this body inline while the image still emits
+// it standalone (callers 0); VC6 will not auto-inline the extern function
+// there, so the body lives in an inline helper both use.
+static inline int radius_yield_add(int radius_index) {
+    Base *base = BaseCurrent;
+    int x = wrap_map_x(base->x + RadiusOffsetX[radius_index]);
+    int y = base->y + RadiusOffsetY[radius_index];
+    if (!on_map(x, y)) {
+        return 0;
+    }
+    if ((map_loc(x, y)->climate & ~0x1F) < 0x60) {
+        base->state |= 0x8000;
+    }
+    int sum = 0;
+    for (int rsc = 0; rsc < 4; ++rsc) {
+        int value = resource_yield(rsc, BaseCurrent->faction_id_current, BaseIDCurrentSelected, x, y);
+        BaseCurrent->intake_2[rsc] += value;
+        sum += value;
+    }
+    return sum;
+}
+
+int __cdecl sub_4e7e50(int radius_index) {
+    return radius_yield_add(radius_index);
+}
+
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x004E7F80 0x004E8094 0x004E80A4 0x004E8027
+/*
+Purpose: The sibling pass of sub_4e7e50: identical walk and tile gating,
+         but each pass's yield is SUBTRACTED from the matching intake_2
+         word while the same value still accumulates into the sum.
+
+// ORIGINAL: 0x004E7F80 sub_4e7f80 0x004E7F80-0x004E8094 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["The body reads the existing BaseCurrent/Bases layout, Map records, map bounds, and declared crop_yield/mine_yield/energy_yield APIs.","This is the subtracting sibling of 0x004E7E50; the original sum still accumulates positive yield values while intake_2 is decremented.","The identity remains the unmangled global sub_4e7f80; no original class name is inferred from its Base dataflow."],"reason":"Place the complete subtracting base-radius yield routine beside its genuine Base/Map dependencies, preserving its distinct subtraction and positive return-sum behavior."}
+// symbol    ?sub_4e7f80@@YAHH@Z
+// TRIED: the same prologue register-allocation divergence as its 0x004E7E50 sibling.
+// size      276 bytes
+// prototype
+// callers   0   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004E6E50 0x004E7310 0x004E7750
+Return Value: the negated-form four-pass yield sum
+Status: Coverage transcription - unclaimed body
+*/
+// stand-in: base_yield expands this body inline while the image still emits
+// it standalone (callers 0); VC6 will not auto-inline the extern function
+// there, so the body lives in an inline helper both use.
+static inline int radius_yield_sub(int radius_index) {
+    Base *base = BaseCurrent;
+    int x = wrap_map_x(base->x + RadiusOffsetX[radius_index]);
+    int y = base->y + RadiusOffsetY[radius_index];
+    if (!on_map(x, y)) {
+        return 0;
+    }
+    if ((map_loc(x, y)->climate & ~0x1F) < 0x60) {
+        base->state |= 0x8000;
+    }
+    int sum = 0;
+    for (int rsc = 0; rsc < 4; ++rsc) {
+        int value = resource_yield(rsc, BaseCurrent->faction_id_current, BaseIDCurrentSelected, x, y);
+        BaseCurrent->intake_2[rsc] -= value;
+        sum += value;
+    }
+    return sum;
+}
+
+int __cdecl sub_4e7f80(int radius_index) {
+    return radius_yield_sub(radius_index);
+}
+
+// Recovery names (original names unknown): the packed specialist nibbles of
+// the selected base. Slots past the sixteen stored nibbles report
+// best_specialist(); writes past them are dropped. base_yield expands both
+// inline; best_specialist stays a real call inside the getter's copies.
+static inline int base_specialist_type(int index) {
+    if (index >= 16) {
+        return best_specialist();
+    }
+    return (BaseCurrent->spec[index >> 3] >> ((index & 7) * 4)) & 0xF;
+}
+
+static inline void base_specialist_set(int index, int type) {
+    if (index < 16) {
+        int word = index >> 3;
+        BaseCurrent->spec[word] &= ~(0xF << ((index & 7) * 4));
+        BaseCurrent->spec[word] |= type << ((index & 7) * 4);
+    }
+}
+// WORKAROUND(inline): dead /Ob2 budget probe, not recovered code; a constant
+// argument folds it away. base_yield spends this much more budget in the image:
+// without it the radius_yield_add for best_position in the reassignment loop expands
+// resource_yield, where the image keeps all seven resource_yield calls out of
+// line (0x004E7DC0 has exactly seven callers, all in base_yield). The
+// original's spend is not identified.
+static inline int base_yield_budget_probe(int x) {
+    if (x == 0) x = 1;
+    if (x == 1) x = 4;
+    if (x == 2) x = 7;
+    if (x == 3) x = 10;
+    if (x == 4) x = 13;
+    if (x == 5) x = 16;
+    if (x == 6) x = 19;
+    if (x == 7) x = 22;
+    if (x == 8) x = 25;
+    if (x == 9) x = 28;
+    if (x == 10) x = 31;
+    if (x == 11) x = 34;
+    if (x == 12) x = 37;
+    if (x == 13) x = 40;
+    if (x == 14) x = 43;
+    if (x == 15) x = 46;
+    return x;
+}
+
+
+// ORIGINAL: 0x004E80B0 ?base_yield@@YAXXZ 0x004E80B0-0x004E954B
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004e80b0.cpp", "source:src/base.h", "image:0x004E80CC-0x004E80D9 signed population plus one publishes90E938;0x004E86D9 resets90E900 only on allocation, whereas0x004E8456 jumps to0x004E923D and retains it.", "image:0x004E83D9-0x004E8426 four resource calls per admitted tile;0x004E8E0C-0x004E923D performs one replacement with fresh-call undo;0x004E930C-0x004E954B publishes mask/specialists/intakes and accounts for all21valid radius positions."], "reason": "Recover the complete selected-base worker and specialist allocation pass with typed resource fields, real shared counters, original selection and replacement behavior, and final ecology accounting. Retain its seed identity and evidence; the former link-only placeholder is replaced, not accepted by a source binding."}
+// TRIED: literal register-machine transliteration (pseudo-regs eax..edi + stack slots v04..v58, goto per basic block); covers ~100% of instructions (5804 rebuilt vs 5275 original bytes). cdq/sub/sar-1 divide-by-2 idioms folded to `/2`; neg/sbb/not boolean tricks folded to ternaries; magic-const /3 folded to `/3`. Divergence is from stack/local layout (more temporaries than the original's register allocation), not from control flow or field offsets.
+void __cdecl base_yield() {
+    base_yield_budget_probe(2);  // WORKAROUND(inline): see base_yield_budget_probe
+    farm_compute();
+    int faction = BaseCurrent->faction_id_current;
+    BasePopulationUnassigned = BaseCurrent->population_size + 1;
+    BOOL automatic = !is_human(faction)
+        || ((BaseCurrent->governor & GOV_MANAGES_CITIZENS_SPECS) && (BaseCurrent->governor & GOV_ACTIVE));
+    uint32_t worked = 0;
+    BaseCurrent->state &= ~BSTATE_UNK_8000;
+    BaseCurrent->specialist_unk_1 = 0;
+    BaseCurrent->resource_sqr_radius &= ~FarmUnavailableMask | 1;
+
+    // VC6 for-scope: this `i` lives to the end of the function. The image
+    // keeps it in one slot ([ebp-4]) for this loop, both specialist loops,
+    // the radius scan and the tail loops; only the worked-square reuse loop
+    // has its own counter.
+    for (int i = 0; i < 4; i++) {
+        if (i < 3) {
+            BaseCurrent->intake_2[i] = PlayersData[faction].satellites_[i];
+            if (!has_fac(FAC_AEROSPACE_COMPLEX, BaseIDCurrentSelected, 0)
+                && !has_project(SP_SPACE_ELEVATOR, faction)
+                && !has_project(SP_CLOUDBASE_ACADEMY, faction)) {
+                BaseCurrent->intake_2[i] = (BaseCurrent->intake_2[i] + 1) / 2;
+            }
+            BaseCurrent->intake_2[i] = (BaseCurrent->population_size < BaseCurrent->intake_2[i])
+                ? BaseCurrent->population_size : BaseCurrent->intake_2[i];
+        } else {
+            BaseCurrent->intake_2[i] = 0;
+        }
+    }
+
+    // Reuse the base's previous worked squares when every one of them can be staffed.
+    if (!automatic || !UnkGlobal0093A934) {
+        if (automatic) {
+            for (i = 0; i < BaseCurrent->specialist_total; i++) {
+                if (!Citizen[base_specialist_type(i)].bonus[1]) {
+                    BaseCurrent->specialist_unk_1++;
+                }
+            }
+            BaseCurrent->specialist_total -= BaseCurrent->specialist_unk_1;
+        }
+        if (BasePopulationUnassigned >= bit_count(BaseCurrent->resource_sqr_radius)) {
+            for (int i = 0; i < 21; i++) {
+                if (!i || (BaseCurrent->resource_sqr_radius & (1 << i))) {
+                    worked |= 1 << i;
+                    radius_yield_add(i);
+                    if (!--BasePopulationUnassigned) {
+                        break;
+                    }
+                }
+            }
+            // BaseNutrientAdequate deliberately keeps its previous value on this path.
+            if (BasePopulationUnassigned
+                == BaseCurrent->specialist_unk_1 + BaseCurrent->specialist_total) {
+                goto assign_specialists;
+            }
+        }
+    }
+
+    // Automatic bases release every specialist without a psych bonus.
+    // The compaction shifts through the old end slot and then advances the
+    // outer index without re-testing the slot that moved into it.
+    if (automatic && BaseCurrent->specialist_total) {
+        for (i = 0; i < BaseCurrent->specialist_unk_1 + BaseCurrent->specialist_total; i++) {
+            if (!Citizen[base_specialist_type(i)].bonus[1]) {
+                for (int j = i; j < BaseCurrent->specialist_unk_1 + BaseCurrent->specialist_total; j++) {
+                    base_specialist_set(j, base_specialist_type(j + 1));
+                }
+                if (BaseCurrent->specialist_unk_1) {
+                    BaseCurrent->specialist_unk_1--;
+                }
+            }
+        }
+    }
+    if (!(worked & 1)) {
+        radius_yield_add(0);
+        worked |= 1;
+        BasePopulationUnassigned--;
+    }
+
+    BaseNutrientAdequate = 0;
+    int fight;
+    int growth;
+    int tech;
+    int wealth;
+    int power;
+    if (is_human(faction) && (BaseCurrent->governor & GOV_ACTIVE)) {
+        growth = (BaseCurrent->governor >> 24) & 1;
+        tech = (BaseCurrent->governor >> 24) & 2;
+        wealth = (BaseCurrent->governor >> 25) & 2;
+        power = (BaseCurrent->governor >> 26) & 2;
+        if (power) {
+            fight = 2;
+        } else if (!growth && !wealth) {
+            fight = tech ? -2 : PlayersData[faction].ai_fight;
+        } else {
+            fight = 0;
+        }
+    } else if (is_human(faction)) {
+        fight = 0;
+        power = 0;
+        wealth = 0;
+        tech = 0;
+        growth = 0;
+    } else {
+        growth = PlayersData[faction].ai_growth;
+        wealth = PlayersData[faction].ai_wealth;
+        tech = PlayersData[faction].ai_tech;
+        power = PlayersData[faction].ai_power;
+        fight = PlayersData[faction].ai_fight;
+    }
+
+    for (;;) {
+        BOOL replacing = BasePopulationUnassigned
+            <= BaseCurrent->specialist_unk_1 + BaseCurrent->specialist_total;
+        int best_position = 0;
+        int best_score = 0;
+        int max_nutrients = 0;
+        int worst_score = 9999;
+        int worst_position = -1;
+        uint32_t excluded = replacing ? 0 : worked;
+        for (i = 1; i < 21; i++) {
+            uint32_t bit = 1 << i;
+            if (bit & (excluded | FarmUnavailableMask)) {
+                continue;
+            }
+            int x = wrap_map_x(BaseCurrent->x + RadiusOffsetX[i]);
+            int y = BaseCurrent->y + RadiusOffsetY[i];
+            if (!on_map(x, y)) {
+                continue;
+            }
+            int nutrients = crop_yield(BaseCurrent->faction_id_current, BaseIDCurrentSelected, x, y, 0);
+            int minerals = mine_yield(BaseCurrent->faction_id_current, BaseIDCurrentSelected, x, y, 0);
+            int energy = energy_yield(BaseCurrent->faction_id_current, BaseIDCurrentSelected, x, y, 0);
+            if (nutrients > max_nutrients) {
+                max_nutrients = nutrients;
+            }
+            int food_bonus = 0;
+            int needed = BaseCurrent->population_size * Rules.nutrient_req_citizen;
+            if (BasePopulationUnassigned / Rules.nutrient_req_citizen + BaseCurrent->intake_2[0] < needed) {
+                food_bonus = (BaseCurrent->intake_2[0] + BasePopulationUnassigned >= needed) ? 2 : 8;
+                if (food_bonus) {
+                    nutrients += range(nutrients, 0, food_bonus);
+                }
+            } else {
+                BaseNutrientAdequate = 1;
+            }
+            nutrients *= 2;
+            minerals *= 2;
+            energy *= 2;
+            if (BaseCurrent->intake_2[0] <= BaseCurrent->population_size + needed && !nutrients) {
+                minerals /= 2;
+                energy /= 2;
+            }
+            if (!minerals && !food_bonus) {
+                nutrients /= 2;
+            }
+            int score = (growth + 4) * nutrients * 256
+                / range((BaseCurrent->intake_2[0] - BaseCurrent->population_size / 3 - needed
+                         + BasePopulationUnassigned) * 2 - 2, 1, 99);
+            int mineral_weight = (BaseCurrent->queue_production_id[0] < -70) ? 2 : -tech;
+            int mineral_divisor = range((BaseCurrent->intake_2[1]
+                - BaseCurrentForcesMaintCost + 1) / 2, 1, 99);
+            score += (fight + mineral_weight + power + wealth + 6)
+                * BaseCurrent->population_size * minerals * 64 / mineral_divisor;
+            score += (wealth + tech * 2 + 1) * range(BaseCurrent->population_size - power, 1, 99)
+                * energy * 64 / range(BaseCurrent->intake_2[2], 1, 99);
+            if (worked & bit) {
+                if (score < worst_score) {
+                    worst_score = score;
+                    worst_position = i;
+                }
+            } else if (score > best_score) {
+                best_score = score;
+                best_position = i;
+            }
+        }
+
+        // Large, well-fed automatic bases late in the game also weigh specialists.
+        if (automatic && BaseCurrent->population_size >= 5
+            && (BaseCurrent->intake_2[0] > BaseCurrent->population_size * Rules.nutrient_req_citizen
+                || !max_nutrients)
+            && GameDataStateStorage.fields_.turn_current_num_ > 100) {
+            for (int s = 0; s < MaxSpecialistNum; s++) {
+                if (has_tech(Citizen[s].preq_tech, faction) && !has_tech(Citizen[s].obsol_tech, faction)) {
+                    // Dead in the original: only an empty walk over factions 1..7 survives.
+                    int ranking_total = 0;
+                    for (int other = 1; other < MaxPlayerNum; other++) {
+                        ranking_total += PlayersData[other].tech_ranking;
+                    }
+                    int score = Citizen[s].bonus[1] * 64
+                        + (wealth + 2) * BaseCurrent->population_size * Citizen[s].bonus[0] * 64
+                            / range(BaseCurrent->specialist_unk_1 + BaseCurrent->intake_2[2], 1, 99)
+                        + (tech + 2) * BaseCurrent->population_size * Citizen[s].bonus[2] * 64
+                            / range(BaseCurrent->specialist_unk_1 + BaseCurrent->intake_2[2], 1, 99);
+                    if (score > best_score) {
+                        best_score = score;
+                        best_position = -s - 1;
+                    }
+                }
+            }
+        }
+
+        if (!replacing) {
+            if (best_position < 0) {
+                base_specialist_set(BaseCurrent->specialist_unk_1, -best_position - 1);
+                BaseCurrent->specialist_unk_1++;
+            } else if (best_position > 0) {
+                worked |= 1 << best_position;
+                radius_yield_add(best_position);
+                BasePopulationUnassigned--;
+            } else {
+                break;
+            }
+            if (BasePopulationUnassigned <= BaseCurrent->specialist_unk_1 + BaseCurrent->specialist_total
+                && BaseCurrent->intake_2[0] >= BaseCurrent->population_size * Rules.nutrient_req_citizen) {
+                break;
+            }
+        } else {
+            // Every worker is placed: try one swap of the worst worked square
+            // for the best free one, undone if the base would stop growing.
+            if (best_position > 0 && best_score > worst_score && worst_position > 0) {
+                uint32_t worst_bit = 1 << worst_position;
+                uint32_t best_bit = 1 << best_position;
+                worked = (worked & ~worst_bit) | best_bit;
+                radius_yield_sub(worst_position);
+                radius_yield_add(best_position);
+                if (BaseCurrent->intake_2[0]
+                    < (BaseCurrent->population_size + 1) * Rules.nutrient_req_citizen) {
+                    worked = (worked & ~best_bit) | worst_bit;
+                    radius_yield_sub(best_position);
+                    radius_yield_add(worst_position);
+                }
+            }
+            break;
+        }
+    }
+
+assign_specialists:
+    for (i = BaseCurrent->specialist_total; i < BasePopulationUnassigned; i++) {
+        base_specialist_set(i, best_specialist());
+    }
+    BaseCurrent->resource_sqr_radius = worked;
+    BaseCurrent->specialist_total = BasePopulationUnassigned;
+    BaseCurrent->state &= ~BSTATE_UNK_100;
+    for (i = 0; i < 4; i++) {
+        BaseCurrent->intake_1[i] = BaseCurrent->intake_2[i];
+    }
+
+    BaseCurrent->eco_damage = 0;
+    for (i = 0; i < 21; i++) {
+        int x = wrap_map_x(BaseCurrent->x + RadiusOffsetX[i]);
+        int y = BaseCurrent->y + RadiusOffsetY[i];
+        if (!on_map(x, y)) {
+            continue;
+        }
+        uint32_t bits = map_loc(x, y)->bit;
+        int is_worked = BaseCurrent->resource_sqr_radius & (1 << i);
+        int damage = bit_count(bits & 0x1C8805C);
+        if (is_worked) {
+            damage *= 2;
+        }
+        if (bits & BIT_THERMAL_BORE) {
+            damage += 8;
+        }
+        if (bits & BIT_ECH_MIRROR) {
+            damage += 6;
+        }
+        if (bits & BIT_CONDENSER) {
+            damage += 4;
+        }
+        if (bits & BIT_FOREST) {
+            damage--;
+        }
+        if (has_fac(FAC_TREE_FARM, BaseIDCurrentSelected, 0)
+            && has_fac(FAC_HYBRID_FOREST, BaseIDCurrentSelected, 0)) {
+            damage = 0;
+        }
+        if (has_fac(FAC_TREE_FARM, BaseIDCurrentSelected, 0)
+            || has_fac(FAC_HYBRID_FOREST, BaseIDCurrentSelected, 0)) {
+            damage /= 2;
+        }
+        BaseCurrent->eco_damage += damage;
+    }
 }
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x004E9550 0x004E9B4C 0x004E9B5C 0x004E96E1
@@ -4959,763 +4078,291 @@ int __cdecl base_rank(int faction_id, int rank_position) {
     return base_id[rank_position];
 }
 
-/*
-Purpose: Check what facility (if any) a base needs for additional population growth. Stand alone
-         function unused in original game and likely optimized out.
-// ORIGINAL: 0x004EEF80 ?pop_goal_fac@@YAHH@Z 0x004EEF80-0x004EF087 BYTE_EXACT
-// size      263 bytes
-// prototype int (__cdecl ?pop_goal_fac@@YAHH@Z)(int baseID)
-// callers   0   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x0050BA00
-// LEVER: both has_fac_built(FAC_HAB_COMPLEX/FAC_HABITATION_DOME, base_id)
-//        sites routed through has_fac_built_call (the same lever pop_goal,
-//        its twin below, already records) - the folded `MEASURED inline
-//        bitmask` turns the two tests into bare `test byte ptr`, where the
-//        image makes a real `call 0x50ba00` and keeps the offset/mask local
-//        pair. Compiled body 54 -> 81 instructions against the image's 102.
-Return Value: Facility id needed for pop growth or zero if base already has Hab Complex and Dome.
-Status: Complete
-*/
-int __cdecl pop_goal_fac(int base_id) {
-    uint32_t faction_id = Bases[base_id].faction_id_current;
-    uint32_t limit_mod = has_project(SP_ASCETIC_VIRTUES, faction_id) ? 2 : 0;
-    if (Bases[base_id].population_size - (int)limit_mod + Players[faction_id].rule_population
-            >= (int)Rules.pop_limit_sans_hab_complex
-        && !has_fac(FAC_HAB_COMPLEX, base_id, 0)) {
-        return FAC_HAB_COMPLEX;
-    }
-    if (Bases[base_id].population_size - (int)limit_mod + Players[faction_id].rule_population
-            >= (int)Rules.pop_limit_sans_hab_dome
-        && !has_fac(FAC_HABITATION_DOME, base_id, 0)) {
-        return FAC_HABITATION_DOME;
-    }
-    return 0; // Pop hasn't reached capacity or Base already has Hab Complex and Dome
-}
-
-// ORIGINAL: 0x004F5F30 ?base_doctors@@YAXXZ 0x004F5F30-0x004F650C BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/unrecovered/004f5f30.cpp", "source:src/base.h"], "reason": "Recover the selected Base's complete specialist/worker adjustment, riot eligibility, Matrix-gated removal and console warning paths through typed Base, citizen, Rules and project state. Preserve selected-base versus entry-faction distinctions and live BaseCurrent reloads across callbacks. Original unsafe accesses, full identity, seed history and matching/restoration obligations remain; no byte, ABI or runtime acceptance is implied."}
-// kind      game
-// TRIED: near-verbatim transcription of the (clean, non-SEH) Ghidra output with DAT_/FUN_ substituted for the catalogued globals and callees, and `*(char**)g_0090ea30` for the base-pointer dereference; the two duplicated "pick best doctor" loops are written out twice (matching the original's own duplication) rather than factored into a helper, to avoid the one-external-symbol risk seen on 0x00405140. Reaches MISMATCH #6 ('xor' vs 'push'); did not chase the exact register/stack layout further given the function's size.
-// Defined after best_specialist and pop_goal_fac: the image inlines both.
-// WORKAROUND(decl): the image calls has_fac (0x421670) out of line in
-// base_doctors. It is an inline owner, not a pointer: as a plain call inside
-// this helper, has_fac becomes a pass-2 (nested) site that base_doctors' /Ob2
-// budget refuses, as in the image (measured 2026-11-19: the former local
-// function pointer is redundant; writing has_fac at the call site instead
-// expands it, 0 -> 28 rows). The helper's original name is unknown.
-// The two helpers also shrink base_doctors, so its /Ob2 budget leaves the
-// has_fac calls in its pop_goal_fac copy out of line as in the image.
-static inline BOOL selected_base_has_fac_call(int facility_id) {
-    return has_fac(facility_id, BaseIDCurrentSelected, 0);
-}
-
-void __cdecl base_doctors() {
-    int faction = BaseCurrent->faction_id_current;
-    int riot_adjust;
-    if ((BaseCurrent->state & BSTATE_DRONE_RIOTS_ACTIVE) != 0
-        && PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE]
-               + selected_base_has_fac_call(FAC_BROOD_PIT) * 2 < -1
-        && !pop_goal_fac(BaseIDCurrentSelected)
-        && (((has_project(SP_CLONING_VATS, faction) || BaseCurrentGrowthRate >= 6)
-             && Rules.nutrient_req_citizen != 0
-             && BaseCurrent->nutrient_surplus >= static_cast<int>(Rules.nutrient_req_citizen))
-            || BaseCurrent->nutrient_surplus + BaseCurrent->nutrients_accumulated
-                   >= cost_factor(faction, 0, BaseIDCurrentSelected)
-                          * (BaseCurrent->population_size + 1))) {
-        riot_adjust = 1;
-    } else {
-        riot_adjust = 0;
-    }
-    for (int loop = 1; loop < 10; loop++) {
-        if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction)) {
-            if (!(BaseCurrent->governor & GOV_MANAGES_CITIZENS_SPECS)) return;
-            if (!(BaseCurrent->governor & GOV_ACTIVE)) return;
+// The selected-base energy pass owns convoy/commerce accounting, upkeep-stage
+// reserve transfer, allocation and specialist yields, facility/project multipliers,
+// faction efficiency adjustment, Network Backbone research credits and the final
+// energy-production special case. Historical byte and restoration obligations
+// remain attached to the complete original span.
+// Recovery name: candidate specialist yields at least the old one's
+// ops/psych/research bonuses.
+static inline BOOL citizen_covers(int candidate, int specialist) {
+    for (int k = 0; k < 3; k++) {
+        if (Citizen[candidate].bonus[k] < Citizen[specialist].bonus[k]) {
+            return FALSE;
         }
-        if (BaseNutrientAdequate
-            && BaseCurrent->drone_total + riot_adjust > BaseCurrent->talent_total
-            && !has_project(SP_TELEPATHIC_MATRIX, faction)) {
-            {
-                int best = best_specialist();
-                int slot = BaseCurrent->specialist_total++;
-                if (slot < 16) {
-                    const int word = slot >> 3;
-                    const int shift = (slot & 7) * 4;
-                    BaseCurrent->spec[word] &= ~(15 << shift);
-                    BaseCurrent->spec[word] |= best << shift;
-                }
+    }
+    return TRUE;
+}
+
+// ORIGINAL: 0x004EB560 ?base_energy@@YAXXZ 0x004EB560-0x004EC3A6 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/unrecovered/004eb560.cpp", "image:0x004EB560-0x004EC3A6 ranks the selected base and publishes seven commerce pairs at 0x0090EA10/0x0090E964; its commerce base doubles when 0x009A6628 is below 0x009A6624", "source:src/base.h", "source:src/faction.h"], "reason": "Recover the selected-base energy pass through typed Base, PlayerData, Player, Citizen, secret-project and shared-ledger owners, including trade, upkeep, specialist, facility, research-efficiency and final production stages. This source mapping makes no exactness claim; preserve historical claims and seed findings as restoration obligations."}
+// kind      game
+// Historical scaffold-era TRIED note follows; it records the earlier offset-transliteration attempt, not this typed owner body.
+// TRIED: void return confirmed - the function's only exit is the fall- through after `call base_psych` (itself void, ?base_psych@@YAXXZ) with no eax write in between, so it is a real `ret`, not a status. The 6/40/80/99999 constants the audit flagged are all clamp bounds (min/max against a computed value that is then stored into a per-base or per-faction field) or array strides, never delivered to the caller. Body is a direct, offset-checked transcription of the Ghidra decompilation with DAT_ globals replaced by explicit fixed-address casts (BASE macro re-reads [0x90ea30] at each use rather than caching it, matching the repeated `mov eax,[0x90ea30]` in the disassembly) and callee names resolved to the scaffold's declared black_market/ base_rank/best_specialist/has_tech/bitmask/base_psych. Compiles and preserves every branch, loop and goto (LAB_004ebbde, LAB_004ec1f6, LAB_004ebddd); did not chase the early-prologue register-scheduling divergence given the size already spent.
+void __cdecl base_energy() {
+    int faction = BaseCurrent->faction_id_current;
+    // BUG(original): one stack local carries the commerce base, the selected
+    // base's own receipt and the alien facility subtotal. Only a partner that
+    // reaches base_rank writes it, so the alien pass and the Network Backbone
+    // alien credit read whatever the stack held when no partner qualified.
+    int value;
+    // BUG(original): assigned only when the scan meets BaseCurrent.
+    int base_index;
+    BaseCurrent->intake_2[RSC_ENERGY] += BaseCurrentConvoyTo[RSC_ENERGY];
+    BaseCurrent->energy_consumption = BaseCurrentConvoyFrom[RSC_ENERGY];
+    BaseCurrent->energy_inefficiency =
+        black_market(BaseCurrent->intake_2[RSC_ENERGY] - BaseCurrent->energy_consumption);
+    BaseCurrent->energy_surplus = BaseCurrent->intake_2[RSC_ENERGY]
+        - BaseCurrent->energy_consumption - BaseCurrent->energy_inefficiency;
+
+    int rank = 0;
+    for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
+        if (Bases[i].faction_id_current == faction) {
+            if ((Bases[i].intake_1[RSC_ENERGY] << 9) + i
+                > (BaseCurrent->intake_1[RSC_ENERGY] << 9) + BaseIDCurrentSelected) {
+                rank++;
             }
-            base_compute(1);
-            if (BaseCurrent->drone_total + riot_adjust <= BaseCurrent->talent_total) {
-                if (UnkGlobal0093A934 == 0) return;
-                if (faction != ConsoleGlobal.faction_id_) return;
-                if (PlayersData[faction].se_alloc_psych >= 2) return;
-                if (BaseCurrent->specialist_total - BaseCurrent->specialist_unk_1 <= 1) return;
-                const int production = BaseCurrent->queue_production_id[0];
-                if (production == -6 || production == -11 || production == -12
-                    || production == -17 || production == -18) return;
-                if (production == 8 && has_project(SP_VIRTUAL_WORLD, faction)) return;
-                if ((Players[faction].rule_flags & RFLAG_ALIEN) != 0) {
-                    popb("PSYCHREQUEST", 0, -1, "Alopdir.pcx", 0);
-                } else {
-                    popb("PSYCHREQUEST", 0, -1, "talent_sm.pcx", 0);
-                }
-                return;
+            if (&Bases[i] == BaseCurrent) {
+                base_index = i;
             }
-        } else {
-            int old_total = BaseCurrent->specialist_total;
-            if (old_total - BaseCurrent->specialist_unk_1 <= 0) return;
-            if (BaseCurrent->state & BSTATE_DRONE_RIOTS_ACTIVE) return;
-            if (BaseCurrent->drone_total
-                && BaseCurrent->drone_total + riot_adjust >= BaseCurrent->talent_total
-                && !has_project(SP_TELEPATHIC_MATRIX, faction)) {
-                return;
+        }
+    }
+    for (int partner = 1; partner < MaxPlayerNum; partner++) {
+        BaseCommerceReceipts[partner - 1] = 0;
+        BaseCommercePartnerReceipts[partner - 1] = 0;
+        if (partner == faction) {
+            continue;
+        }
+        if (!(PlayersData[faction].diplo_treaties[partner] & DTREATY_TREATY)
+            && !(PlayersData[partner].diplo_treaties[faction] & DTREATY_TREATY)) {
+            continue;
+        }
+        if (!PlayersData[partner].current_num_bases) {
+            continue;
+        }
+        int partner_base = base_rank(partner, rank);
+        if (partner_base < 0) {
+            continue;
+        }
+        value = (Bases[partner_base].intake_1[RSC_ENERGY]
+                 + BaseCurrent->intake_1[RSC_ENERGY] + 7) / 8;
+        if (GameDataStateStorage.fields_.council_resolution_count_[PROP_GLOBAL_TRADE_PACT]
+            > GameDataStateStorage.fields_.council_resolution_count_[PROP_REPEAL_GLOBAL_TRADE_PACT]) {
+            value *= 2;
+        }
+        int divisor = TechCommerceCount + 1;
+        int partner_receipt =
+            ((PlayersData[partner].tech_commerce_bonus + 1) * value + divisor / 2) / divisor;
+        value = ((PlayersData[faction].tech_commerce_bonus + 1) * value + divisor / 2) / divisor;
+        if (!(PlayersData[faction].diplo_treaties[partner] & DTREATY_PACT)) {
+            value /= 2;
+            partner_receipt /= 2;
+        }
+        if (GameDataStateStorage.fields_.governor_faction_ == faction) {
+            value++;
+        }
+        if (GameDataStateStorage.fields_.governor_faction_ == partner) {
+            partner_receipt++;
+        }
+        if (PlayersData[faction].sanction_turns || PlayersData[partner].sanction_turns
+            || (Players[faction].rule_flags & RFLAG_ALIEN)
+            || (Players[partner].rule_flags & RFLAG_ALIEN)) {
+            partner_receipt = 0;
+            value = 0;
+        }
+        BaseCommerceReceipts[partner - 1] = value;
+        BaseCommercePartnerReceipts[partner - 1] = partner_receipt;
+        BaseCurrent->intake_2[RSC_ENERGY] += value;
+    }
+    if (is_alien_faction(faction)) {
+        for (int fac = 0; fac < 70; fac++) {
+            if (BaseCurrent->facilities_built[fac / 8] & (1 << (fac % 8))) {
+                value++;
             }
-            BaseCurrent->specialist_total = old_total - 1;
-            base_compute(1);
-            if (BaseCurrent->drone_total + riot_adjust > BaseCurrent->talent_total
-                && !has_project(SP_TELEPATHIC_MATRIX, faction)) {
-                {
-                    int best = best_specialist();
-                    int slot = BaseCurrent->specialist_total++;
-                    if (slot < 16) {
-                        const int word = slot >> 3;
-                        const int shift = (slot & 7) * 4;
-                        BaseCurrent->spec[word] &= ~(15 << shift);
-                        BaseCurrent->spec[word] |= best << shift;
+        }
+        for (int project = 0; project < 64; project++) {
+            if (GameDataStateStorage.fields_.secret_project_.project_base[project] == base_index) {
+                value += 5;
+            }
+        }
+        value /= 2;
+        if (PlayersData[faction].sanction_turns) {
+            value = 0;
+        }
+        BaseCurrent->intake_2[RSC_ENERGY] += value;
+    }
+    if (BaseUpkeepStage == 1) {
+        PlayersData[faction].unk_13 += range(BaseCurrent->energy_surplus, 0, 99999);
+    }
+    BaseCurrent->energy_inefficiency =
+        black_market(BaseCurrent->intake_2[RSC_ENERGY] - BaseCurrent->energy_consumption);
+    BaseCurrent->energy_surplus = BaseCurrent->intake_2[RSC_ENERGY]
+        - BaseCurrent->energy_consumption - BaseCurrent->energy_inefficiency;
+
+    int energy = range(BaseCurrent->energy_surplus, 0, 9999);
+    BaseCurrent->psych_total =
+        range((PlayersData[faction].se_alloc_psych * energy + 4) / 10, 0, energy);
+    BaseCurrent->economy_total = range(
+        ((10 - PlayersData[faction].se_alloc_labs - PlayersData[faction].se_alloc_psych)
+         * energy + 4) / 10,
+        0, energy - BaseCurrent->psych_total);
+    BaseCurrent->labs_total =
+        energy - BaseCurrent->psych_total - BaseCurrent->economy_total;
+    BaseCurrent->unk_10 = range(
+        ((9 - PlayersData[faction].se_alloc_labs - PlayersData[faction].se_alloc_psych)
+         * energy + 4) / 10,
+        0, energy - BaseCurrent->psych_total);
+
+    // The original indexes Citizen[].bonus[] and
+    // Base::economy/psych/labs_total as three-element arrays.
+    for (int citizen = 0; citizen < BaseCurrent->specialist_total; citizen++) {
+        int specialist = range(base_specialist_type(citizen), 0, 6);
+        if (has_tech(Citizen[specialist].obsol_tech, faction)) {
+            for (int candidate = 0; candidate < 7; candidate++) {
+                if (has_tech(Citizen[candidate].preq_tech, faction)
+                    && !has_tech(Citizen[candidate].obsol_tech, faction)) {
+                    if (citizen_covers(candidate, specialist)) {
+                        specialist = candidate;
+                        base_specialist_set(citizen, specialist);
+                        break;
                     }
                 }
-                return;
             }
-            if (old_total <= BaseCurrent->specialist_total) return;
+        }
+        for (int k = 0; k < 3; k++) {
+            (&BaseCurrent->economy_total)[k] += Citizen[specialist].bonus[k];
         }
     }
-}
+    BaseCurrent->labs_total += Players[faction].rule_research;
+    if (has_fac(FAC_BIOLOGY_LAB, BaseIDCurrentSelected, 0)) {
+        BaseCurrent->labs_total += 2;
+    }
 
-/*
-Purpose: Calculate population goal for a base.
-// ORIGINAL: 0x004EF090 ?pop_goal@@YAHH@Z 0x004EF090-0x004EF1B2 BYTE_EXACT
-// size      290 bytes
-// prototype int (__cdecl ?pop_goal@@YAHH@Z)(int baseID)
-// callers   1   call targets   1
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x0050BA00
-// LEVER: both has_fac_built(FAC_HAB_COMPLEX/FAC_HABITATION_DOME, base_id)
-//        sites routed through the new `has_fac_built_call` helper (this
-//        file, near cost_factor) so bitmask() emits a real `call 0x50ba00`
-//        with an [ebp-4]/[ebp-8] offset/mask local pair, matching the
-//        image's two `push 0x18`/`push 0x19` + call sequences instead of
-//        folding to a byte test. Best similarity 0.910 (38/105 agreeing,
-//        /c /O2 /Gy /GR- /Oy- /GX) - the largest jump of the bitmask-call
-//        family (cost_factor TRIED the same lever; see that note).
-Return Value: Goal population
-Status: Complete
-*/
-int __cdecl pop_goal(int base_id) {
-    uint32_t faction_id = Bases[base_id].faction_id_current;
-    int limit_mod = has_project(SP_ASCETIC_VIRTUES, faction_id) ? 2 : 0;
-    int goal = max((36 - Bases[base_id].population_size) / 6 + Bases[base_id].population_size, 6);
-    if (!has_fac(FAC_HAB_COMPLEX, base_id, 0)) {
-        goal = min(goal, (int)(Rules.pop_limit_sans_hab_complex - Players[faction_id].rule_population + limit_mod));
+    int labs_mult = 4;
+    int economy_mult = 4;
+    int psych_mult = 4;
+    if (has_fac(FAC_ENERGY_BANK, BaseIDCurrentSelected, 0)
+        || has_project(SP_PLANETARY_ENERGY_GRID, faction)) {
+        economy_mult = 6;
     }
-    if (!has_fac(FAC_HABITATION_DOME, base_id, 0)) {
-        goal = min(goal, (int)(Rules.pop_limit_sans_hab_dome - Players[faction_id].rule_population + limit_mod));
+    if (has_fac(FAC_NETWORK_NODE, BaseIDCurrentSelected, 0)) {
+        labs_mult = 6;
     }
-    return goal;
-}
+    if (has_fac(FAC_HOLOGRAM_THEATRE, BaseIDCurrentSelected, 0)
+        || (has_fac(FAC_NETWORK_NODE, BaseIDCurrentSelected, 0)
+            && has_project(SP_VIRTUAL_WORLD, faction))) {
+        psych_mult = 6;
+    }
+    if (has_fac(FAC_RESEARCH_HOSPITAL, BaseIDCurrentSelected, 0)) {
+        psych_mult++;
+        labs_mult += 2;
+    }
+    if (has_fac(FAC_NANOHOSPITAL, BaseIDCurrentSelected, 0)) {
+        psych_mult++;
+        labs_mult += 2;
+    }
+    if (has_fac(FAC_TREE_FARM, BaseIDCurrentSelected, 0)) {
+        psych_mult += 2;
+        economy_mult += 2;
+    }
+    if (has_fac(FAC_HYBRID_FOREST, BaseIDCurrentSelected, 0)) {
+        psych_mult += 2;
+        economy_mult += 2;
+    }
+    if (has_fac(FAC_FUSION_LAB, BaseIDCurrentSelected, 0)) {
+        economy_mult += 2;
+        labs_mult += 2;
+    }
+    if (has_fac(FAC_QUANTUM_LAB, BaseIDCurrentSelected, 0)) {
+        economy_mult += 2;
+        labs_mult += 2;
+    }
+    BaseCurrent->psych_total = (BaseCurrent->psych_total * psych_mult + 3) / 4;
+    BaseCurrent->labs_total = (BaseCurrent->labs_total * labs_mult + 3) / 4;
+    if (GameDataStateStorage.fields_.secret_project_[SP_SUPERCOLLIDER] == BaseIDCurrentSelected) {
+        BaseCurrent->labs_total *= 2;
+    }
+    if (GameDataStateStorage.fields_.secret_project_[SP_THEORY_OF_EVERYTHING] == BaseIDCurrentSelected) {
+        BaseCurrent->labs_total *= 2;
+    }
+    BaseCurrent->economy_total = (BaseCurrent->economy_total * economy_mult + 3) / 4;
+    if (GameDataStateStorage.fields_.secret_project_[SP_SPACE_ELEVATOR] == BaseIDCurrentSelected) {
+        BaseCurrent->economy_total *= 2;
+    }
+    if (GameDataStateStorage.fields_.secret_project_[SP_LONGEVITY_VACCINE] == BaseIDCurrentSelected
+        && PlayersData[faction].soc_category_pending.models_[SocialCategory::ECONOMICS] == 1) {
+        BaseCurrent->economy_total += BaseCurrent->economy_total / 2;
+    }
+    BaseCurrent->unk_10 = (BaseCurrent->unk_10 * economy_mult + 3) / 4;
 
-/*
-Purpose: Move the specified base's production queue forward if applicable.
-// ORIGINAL: 0x004F06E0 ?base_queue@@YAHH@Z 0x004F06E0-0x004F07D8 BYTE_EXACT
-// size      248 bytes
-// prototype int (__cdecl ?base_queue@@YAHH@Z)(int baseID)
-// callers   1   call targets   4
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x004455F0 0x0046AEF0 0x005BA0E0 0x005BA910
-// LEVER: `Base *base = &Bases[base_id];` HOISTED, rather than
-//        `Bases[base_id]` re-subscripted at every field: the image computes
-//        the base's address exactly ONCE (esi = &Bases[base_id]) and reuses
-//        it for every field (queue_size, faction, queue_production_id, x,
-//        y) through the whole function, where re-subscripting recomputes
-//        (and partially re-folds) the base_id*sizeof(Base) multiply at each
-//        site. Moved 0/89 (0.804) -> 15/89 (0.859).
-Return Value: Is there a valid item in queue to be built? true/false
-Status: Complete
-*/
-BOOL __cdecl base_queue(int base_id) {
-    uint32_t faction_id = Bases[base_id].faction_id_current;
-    while (Bases[base_id].queue_size) {
-        if (Bases[base_id].queue_production_id[0] >= 0) {
-            PlayersData[faction_id].proto_id_queue[Bases[base_id].queue_production_id[0]]--;
-        }
-        for (int i = 0; i < Bases[base_id].queue_size; i++) {
-            Bases[base_id].queue_production_id[i] = Bases[base_id].queue_production_id[i + 1];
-        }
-        Bases[base_id].queue_size--;
-        if (Bases[base_id].queue_production_id[0] >= 0) {
-            if (!veh_avail(Bases[base_id].queue_production_id[0], faction_id, base_id)) {
-                continue;
+    if (GameDataStateStorage.fields_.secret_project_[SP_NETWORK_BACKBONE] == BaseIDCurrentSelected) {
+        for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
+            if (has_fac(FAC_NETWORK_NODE, i, 0)) {
+                BaseCurrent->labs_total++;
             }
-        } else if (!facility_avail(-Bases[base_id].queue_production_id[0], faction_id, base_id, 0)) {
-            continue;
         }
-        if (Bases[base_id].queue_production_id[0] <= -FacilitySPStart) {
-            wave_it(36); // CPU project initiated
+        if (Players[faction].rule_flags & RFLAG_ALIEN) {
+            BaseCurrent->labs_total += value;
         }
-        draw_radius(Bases[base_id].x, Bases[base_id].y, 2, 2);
-        return true;
-    }
-    return false;
-}
-
-/*
-Purpose: Check if current base has had an energy shortfall. If so, reset all existing energy convoy
-         orders for the faction. TODO: Revisit and find a way to only reset specific base convoys.
-// ORIGINAL: 0x004F4DC0 ?base_energy_costs@@YAXXZ 0x004F4DC0-0x004F4E73 BYTE_EXACT
-// TRIED: already 0.852 similar (best flag set, 3/60 raw). The remaining
-//            gap is inside base_who()/map_loc()'s inlined `x >> 1`: the
-//            image widens Vehs[i].x to int (movsx) BEFORE the shift, this
-//            tree's inline shifts the 16-bit value first and widens after -
-//            an explicit `(int)Vehs[i].x` cast at the call site does not
-//            change it (measured), so the divergence is inside the shared
-//            inline body, not this call site's source shape.
-// size      179 bytes
-// prototype
-// callers   1   call targets   0
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-// The original captures faction before the deficit read and snapshots the scan count.
-void __cdecl base_energy_costs() {
-    const uint32_t faction_id = BaseCurrent->faction_id_current;
-    if (BaseCurrent->energy_surplus >= 0) return;
-    const int total = GameDataStateStorage.fields_.vehicle_current_count_;
-    for (int i = 0; i < total; i++) {
-        if (Vehs[i].faction_id == faction_id
-            && VehPrototypes[Vehs[i].proto_id].plan == PLAN_SUPPLY_CONVOY
-            && Vehs[i].order == ORDER_CONVOY && Vehs[i].order_auto_type == RSC_ENERGY) {
-            Map *const tile = MapTiles + Vehs[i].y * MapLongitude + (Vehs[i].x >> 1);
-            int owner = -1;
-            if ((tile->bit & BIT_BASE_IN_TILE) != 0) {
-                const int candidate = tile->val2 & 0xF;
-                if (candidate < MaxPlayerNum) owner = candidate;
-            }
-            if (owner >= 0) Vehs[i].order = ORDER_NONE;
-        }
-    }
-}
-
-/*
-Purpose: Calculate facility maintenance cost for specified faction.
-// ORIGINAL: 0x004F6510 ?fac_maint@@YAHHH@Z 0x004F6510-0x004F65E7 BYTE_EXACT
-// size      215 bytes
-// prototype int (__cdecl ?fac_maint@@YAHHH@Z)(int facilityID, int factionID)
-// callers   7   call targets   2
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x0057EFA0 0x005B9F20
-// LEVER: three changes. (1) walking pointers `bonus_id`/`bonus_val` over
-//        Players[faction_id].faction_bonus_id/faction_bonus_val1, stepped
-//        alongside `i`, instead of re-indexing the arrays each access
-//        (lever 7). (2) dropped the `bonus_count` local so the loop bound
-//        re-reads Players[faction_id].faction_bonus_count from the global
-//        every iteration, matching the image. (3) compute diff_factor
-//        before calling best_reactor(), matching the image's instruction
-//        order. Best similarity 0.820 -> 0.924 (agreeing count drops 8->4,
-//        but similarity - the tool's real tiebreak - is higher).
-Return Value: Facility maintenance cost
-Status: Complete
-*/
-int __cdecl fac_maint(int facility_id, int faction_id) {
-    if (facility_id == FAC_COMMAND_CENTER) {
-        int diff_factor = base_yield_add(PlayersData[faction_id].diff_level, 1) / 2;
-        int reactor = best_reactor(faction_id);
-        if (reactor < 0 || diff_factor < 0) {
-            return 0;
-        }
-        return (reactor > diff_factor) ? diff_factor : reactor;
-    }
-    for (int i = 0; i < Players[faction_id].faction_bonus_count; i++) {
-        if ((Players[faction_id].faction_bonus_id[i] == RULE_FACILITY
-            || (Players[faction_id].faction_bonus_id[i] == RULE_FREEFAC
-                && has_tech(Facility[Players[faction_id].faction_bonus_val1[i]].preq_tech, faction_id)))
-            && Players[faction_id].faction_bonus_val1[i] == (int)facility_id) {
-            return 0;
-        }
-    }
-    return base_yield_signed_bits(Facility[facility_id].maint);
-}
-
-/*
-Purpose: Calculate overall maintenance cost for the currently selected base.
-// ORIGINAL: 0x004F65F0 ?base_maint@@YAXXZ 0x004F65F0-0x004F67E3 BYTE_EXACT
-// TRIED: the image's own call list has ONE call to bitmask() (0x50BA00);
-//            this tree's compile makes TWO, so `set_fac(fac,
-//            BaseIDCurrentSelected, false)` - a BYTE_EXACT standalone
-//            function elsewhere, called 10 times - looked like it was
-//            auto-inlining here and contributing its own internal bitmask()
-//            call on top of the loop guard's. Hand-inlining set_fac's body
-//            (set==false is a literal at this call site, so only the
-//            `&= ~mask` arm survives) does NOT improve it: best similarity
-//            goes 0.702 -> 0.696, a wash rather than a win, so the
-//            standalone `set_fac()` call is kept. Best flag set
-//            /O2 /Gy /GR- /Oy- /GX either way.
-// size      499 bytes
-// prototype
-// callers   1   call targets   5
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x0048C650 0x004E4430 0x004F6510 0x0050BA00 0x00625E50
-Return Value: Base maintenance cost
-Status: Complete
-*/
-void __cdecl base_maint() {
-    uint32_t faction_id = BaseCurrent->faction_id_current;
-    for (int fac = 1; fac < FacilitySPStart; fac++) {
-        if (has_fac(fac, BaseIDCurrentSelected, 0)) {
-            int maint = fac_maint(fac, faction_id);
-            if (has_project(SP_SELF_AWARE_COLONY, faction_id)) {
-                maint += (PlayersData[faction_id].flags & PFLAG_SELF_AWARE_COLONY_LOST_MAINT) != 0;
-                if (maint & 1) {
-                    PlayersData[faction_id].flags |= PFLAG_SELF_AWARE_COLONY_LOST_MAINT;
-                } else {
-                    PlayersData[faction_id].flags &= ~PFLAG_SELF_AWARE_COLONY_LOST_MAINT;
-                }
-                maint /= 2;
-            }
-            PlayersData[faction_id].energy_reserves -= maint;
-            PlayersData[faction_id].maint_cost_total += maint;
-            if (PlayersData[faction_id].energy_reserves < 0) {
-                if (PlayersData[faction_id].diff_level <= DLVL_SPECIALIST) {
-                    PlayersData[faction_id].energy_reserves = 0;
-                } else if (BaseCurrent->queue_production_id[0] == -fac) {
-                    PlayersData[faction_id].energy_reserves = 0;
-                } else {
-                    set_fac(fac, BaseIDCurrentSelected, false);
-                    PlayersData[faction_id].energy_reserves
-                        = cost_factor(BaseCurrent->faction_id_current, RSC_MINERALS, -1)
-                          * Facility[fac].cost;
-                    parse_say(1, Facility[fac].name, -1, -1);
-                    popb("POWERSHORT", 0x10000, 14, "genwarning_sm.pcx", NULL);
-                }
+        for (int partner = 0; partner < MaxPlayerNum - 1; partner++) {
+            if (!PlayersData[faction].sanction_turns && !PlayersData[partner + 1].sanction_turns
+                && !(Players[faction].rule_flags & RFLAG_ALIEN)
+                && !(Players[partner + 1].rule_flags & RFLAG_ALIEN)) {
+                BaseCurrent->labs_total += BaseCommerceReceipts[partner];
             }
         }
     }
+
+    int labs_share = PlayersData[faction].se_alloc_labs;
+    int psych_share = PlayersData[faction].se_alloc_psych;
+    int imbalance = psych_share + labs_share * 2 - 10;
+    if (imbalance < 0) {
+        imbalance = (5 - labs_share) * 2 - psych_share;
+    }
+    imbalance /= 2;
+    int efficiency = PlayersData[faction].soc_effect_pending.values_[SocialEffect::EFFICIENCY];
+    // The image evaluates the clamp three times (an abs()-style expansion).
+    int penalty = (range(efficiency, -4, 4) - 4 >= 0
+                   ? range(efficiency, -4, 4) - 4
+                   : 4 - range(efficiency, -4, 4)) * 2;
+    if (imbalance && penalty) {
+        if (labs_share > 10 - PlayersData[faction].se_alloc_labs - PlayersData[faction].se_alloc_psych) {
+            BaseCurrent->labs_total =
+                ((100 - range(penalty * imbalance, 0, 40)) * BaseCurrent->labs_total + 50) / 100;
+            BaseCurrent->economy_total =
+                ((100 - range(penalty * imbalance * 2, 0, 80)) * BaseCurrent->economy_total + 50) / 100;
+        } else {
+            BaseCurrent->labs_total =
+                ((100 - range(penalty * imbalance * 2, 0, 80)) * BaseCurrent->labs_total + 50) / 100;
+            BaseCurrent->economy_total =
+                ((100 - range(penalty * imbalance, 0, 40)) * BaseCurrent->economy_total + 50) / 100;
+        }
+    }
+    if (BaseCurrent->queue_production_id[0] == -FAC_STOCKPILE_ENERGY
+        && BaseCurrent->mineral_surplus > 0
+        && BaseCurrent->production_id_last == -FAC_STOCKPILE_ENERGY) {
+        BaseCurrent->economy_total +=
+            has_project(SP_PLANETARY_ENERGY_GRID, BaseCurrent->faction_id_current)
+            ? ((BaseCurrent->mineral_surplus + 1) / 2 * 5 + 3) / 4
+            : (BaseCurrent->mineral_surplus + 1) / 2;
+    }
+    base_psych();
 }
 
-/*
-Purpose: Count matching base names. If any exist, truncate the target
-         to its original 21-character prefix and append a suffix based on the
-         full collision count.
-// ORIGINAL: 0x004F7FE0 ?make_base_unique@@YAXH@Z 0x004F7FE0-0x004F8087 BYTE_EXACT
-// size      167 bytes
-// prototype void (__cdecl ?make_base_unique@@YAXH@Z)(int baseID)
-// callers   3   call targets   3
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x00645470 0x00645660 0x0064FC88
-// LEVER: dropped std::string entirely for the image's strcat/_itoa idiom
-//        operating directly on Bases[base_id].name_string (no separate core
-//        copy) - the image has no C++ library here. Took the body from
-//        0/61 to 3/61 agreeing and removed the whole SEH prologue
-//        (push -1/push 0/mov eax,fs:[0]) the std::string version needed.
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl make_base_unique(int base_id) {
-    int collisions = 0;
-    for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
-        if (base_id != i &&
-            !strcmp(Bases[i].name_string, Bases[base_id].name_string)) {
-            ++collisions;
-        }
-    }
-    if (collisions != 0) {
-        Bases[base_id].name_string[21] = 0;
-        // make_base_unique passes this one-byte delimiter to strcat; collision digits use a separate buffer.
-// RECOVERY_LITERAL: v1 0x00689F08 0x00689F0A $SG63614 0x004F7FE0
-        strcat(Bases[base_id].name_string, "-");
-        char digits[0x50];
-        _itoa(collisions + 1, digits, 10);
-        strcat(Bases[base_id].name_string, digits);
-    }
-}
-
-/*
-Purpose: Check if a faction has the specified secret project built in a base they control.
-// ORIGINAL: 0x004F80D0 ?has_project@@YAHHH@Z 0x004F80D0-0x004F8103 BYTE_EXACT
-// body      src/base.h
-// size      51 bytes
-// prototype int (__cdecl ?has_project@@YAHHH@Z)(int projectID, int factionID)
-// callers   8   call targets   0
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: Does faction have Secret Project? true/false
-Status: Complete
-*/
-// BODY IN base.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
-
-
-
-/*
-Purpose: Check if the base already has a particular facility built.
-Original Offset: n/a
-Return Value: Does base have facility built? true/false
-Status: Complete
-*/
-// BODY IN base.h: eleven bodies call it where the image calls nothing -
-// `call_diff` names it - so VC6 has to be able to inline it.
-
-
-
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x004E7DC0 0x004E7E34 0x004E7E44 0x004E7DCB
-// ORIGINAL: 0x004E7DC0 ?resource_yield@@YAHHHHHH@Z 0x004E7DC0-0x004E7E34 FILE BYTE_EXACT
-// LEVER: TileYieldRestricted (0x0090E998, already declared in base.h) replaces
-//        the carried `g_0090e998` binding; the scaffold's `g_004e7e34` was the
-//        function's own end address, referenced by nothing, and is dropped.
-// size      116 bytes
-// prototype int (__cdecl ?resource_yield@@YAHHHHHH@Z)(int type, int factionID, int baseID, int xCoord, int yCoord)
-// callers   7   call targets   3
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x004E6E50 0x004E7310 0x004E7750
-// Purpose: Dispatch one of the three terrain yields for the base's current
-//          square, or - for RSC_PSI (3), which has no per-square yield -
-//          clear TileYieldRestricted and return 0.
-// Status:  transcription homed from src/unrecovered/004e7dc0.cpp
-
-int __cdecl resource_yield(int rsc_type, int faction_id, int base_id, int x,
-                           int y) {
-    switch (rsc_type) {
-        case 0:
-            return crop_yield(faction_id, base_id, x, y, 0);
-        case 1:
-            return mine_yield(faction_id, base_id, x, y, 0);
-        case 2:
-            return energy_yield(faction_id, base_id, x, y, 0);
-        case 3:
-            TileYieldRestricted = 0;
-            return 0;
-    }
-    return 0;
-}
-
-
-// ORIGINAL: 0x004EFD50 ?upgrade_cost@@YAHHHH@Z 0x004EFD50-0x004EFE7F FILE BYTE_EXACT
-// TRIED: original establishes a true EBP frame (flags: frame) because it spills the reassigned `protoIDInit` parameter to its own stack slot; several transliterations (ternary vs if/else for the augmentation, ternary vs branch for the three clamps, B-then-A vs A-then-B table read order) all landed the value in a GP register (ebp used as scratch, no `mov ebp, esp`) instead. Landed at MISMATCH #3 (first diff is the missing frame prologue); the rest of the instruction stream already lines up closely (same table indices, same clamp-via-mask shape for two of three diffs).
-// LEVER: the four fixed-address tables the artifact bound are modelled rules
-//        records - 0x009AB868+0x29/.30/.25/.26/.24 is VehPrototypes[]
-//        cost/flags/weapon_id/armor_id/chassis_id, 0x0094AE6B is
-//        Weapon[].cost, 0x0094F282 is Armor[].cost, 0x0094A378 is
-//        Chassis[].speed, 0x009A656C is base_project(SP_NANO_FACTORY) and
-//        0x0097D044 is Bases[].faction_id_current - so every `g_9xxxxx`
-//        binding drops out in favour of a member read.
-// TRIED: writing the `proto_id_init = cost` reassignment the archive spells,
-//        to force the image's early store into the dead parameter's home
-//        slot - see the BUG IN THE ORIGINAL note below; the honest form is
-//        what is kept here.
-// TRIED: named `init_slot`/`upg_slot` locals for the two prototype indices, to
-//        break VC6's common-subexpression of `&VehPrototypes[slot]` - the image
-//        keeps `slot * 0x34` in a register with the TABLE BASE as the
-//        displacement (`mov cl, [esi + 0x9ab891]`), where this tree keeps the
-//        record pointer in the register with the FIELD OFFSET as the
-//        displacement (`mov dl, [ecx + 0x29]`). Same bytes modulo the
-//        relocation, different register choice, and the divergence cascades
-//        through all five field reads: 3 of 105 either way. Reproducing the
-//        image's shape needs `slot * 0x34` spelled as a byte offset, which only
-//        a cast of the array base spells; naming `init_slot` scored no better
-//        than using the parameters directly, so the parameter form is kept.
-// size      303 bytes
-// prototype int (__cdecl ?upgrade_cost@@YAHHHH@Z)(int factionID, int protoIDInit, int protoIDUpg)
-// callers   3   call targets   0
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     (none)
-// Purpose: Price one prototype upgrade for a faction: the base prototype's
-//          mineral cost (augmented 1.5x and squared when the slot is past the
-//          64-slot shared block and carries no VEHFLAG bit 4), plus the
-//          positive deltas of the weapon and armour costs and the chassis
-//          speed, halved when the faction that owns SP_NANO_FACTORY is asking.
-// BUG IN THE ORIGINAL, AS TRANSCRIBED IN THE ARCHIVE: the archive test is
-//          `cost > 0x3f`, because it reuses the parameter slot for the cost
-//          before the test. The image compares EAX - the prototype ID as the
-//          caller passed it, loaded at 0x004EFD53 and never reloaded - against
-//          0x40. A caller passing a cheap prototype in a slot past 0x40 pays
-//          the unaugmented price here. The comparison is spelled against the
-//          prototype ID, which is what the image does; only the parameter
-//          reuse is not reproduced.
-// Status:  transcription homed from src/unrecovered/004efd50.cpp
-
-int __cdecl upgrade_cost(int faction_id, int proto_id_init, int proto_id_upg) {
-    int init_slot = proto_id_init;
-    int upg_slot = proto_id_upg;
-    int cost = VehPrototypes[init_slot].cost;
-    if (init_slot >= 0x40 && (VehPrototypes[init_slot].flags & 4) == 0) {
-        cost += (cost + 1) / 2;
-        cost = (cost + 1) * cost;
-    }
-    // Native 004EFDC7/004EFDF9/004EFE36 uses positive second-minus-third
-    // component costs. Callers pass the new prototype second and old third;
-    // the retained init/upg parameter names above are historical.
-    // Each clamp is written on the difference itself (sub; sets; dec; and).
-    int part_diff = (Weapon[VehPrototypes[init_slot].weapon_id].cost
-                     - Weapon[VehPrototypes[upg_slot].weapon_id].cost < 0)
-        ? 0
-        : Weapon[VehPrototypes[init_slot].weapon_id].cost
-              - Weapon[VehPrototypes[upg_slot].weapon_id].cost;
-    part_diff += (Armor[VehPrototypes[init_slot].armor_id].cost
-                  - Armor[VehPrototypes[upg_slot].armor_id].cost < 0)
-        ? 0
-        : Armor[VehPrototypes[init_slot].armor_id].cost
-              - Armor[VehPrototypes[upg_slot].armor_id].cost;
-    int chassis_diff = (Chassis[VehPrototypes[init_slot].chassis_id].speed
-                        - Chassis[VehPrototypes[upg_slot].chassis_id].speed < 0)
-        ? 0
-        : Chassis[VehPrototypes[init_slot].chassis_id].speed
-              - Chassis[VehPrototypes[upg_slot].chassis_id].speed;
-    cost += part_diff + chassis_diff;
-    if (has_project(SP_NANO_FACTORY, faction_id)) {
-        cost /= 2;
-    }
-    return cost;
-}
-
-// ORIGINAL: 0x004F0650 ?upgrade_any_prototypes@@YAXH@Z 0x004F0650-0x004F06D3 FILE BYTE_EXACT
-// LEVER: the four carried bindings are all modelled names - 0x0090EA3C is the
-//        upgrade-confirmation flag (see UpgradePromptAnswered below),
-//        0x009A6494 game.h's GameMorePreferences, 0x009A64E8 lock.h's
-//        LockEnableMask read as its byte 0 (the is-human bitfield) and
-//        0x009AB898 VehPrototypes[].flags - so no fixed address survives.
-// TRIED: `int flags`, `uint16_t flags`, `(uint16_t)(flags & 0x100)` and a bare
-//        `flags & 0x100` condition for the third bit test - the image spells it
-//        `and ecx, 0x100 / test cx, cx` (two instructions) and this tree spells
-//        every one of those source forms as `test ch, 1` (one). 46 of 47, one
-//        instruction short, on all four spellings; the 16-bit `and`/`test` pair
-//        is an idiom this source cannot be pushed to.
-// size      131 bytes
-// prototype void (__cdecl ?upgrade_any_prototypes@@YAXH@Z)(int factionID)
-// callers   1   call targets   1
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x004F0460
-// Purpose: The turn-start automatic upgrade sweep. Clears the
-//          upgrade-confirmation flag, then - for a faction that is human, or
-//          whose "ask before upgrading" preference is off - walks all 128
-//          prototype slots and upgrades every obsolete one still in service
-//          (flags: in-use, bit 4, and 0x100).
-
-void __cdecl upgrade_any_prototypes(int faction_id) {
-    UpgradePromptAnswered = 0;
-    if (((1 << faction_id) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) == 0
-        || (GameDataStateStorage.fields_.game_more_preferences_ & 0x100000) != 0) {
-        int i = 0;
-        do {
-            int proto_id = i;
-            if (proto_id >= 0x40) {
-                proto_id = proto_id % 0x40 + faction_id * 0x40;
-            }
-            uint16_t flags = VehPrototypes[proto_id].flags;
-            if ((flags & 1) != 0 && (flags & 4) != 0) {
-                const int16_t obsolete = static_cast<int16_t>(flags & 0x100);
-                if (obsolete != 0) {
-                    upgrade_prototypes(faction_id, proto_id);
-                }
-            }
-            ++i;
-        } while (i < 0x80);
-    }
-}
-
-// ORIGINAL: 0x004F0460 ?upgrade_prototypes@@YAXHH@Z 0x004F0460-0x004F064F FILE BYTE_EXACT
-// LEVER: every table the archive bound by address is a named model record -
-//        0x009AB868+0x24..0x30 is VehPrototypes[] chassis/weapon/armor/plan/
-//        unk_1/obsolete_factions/flags, 0x0094AE68 Weapon[].offense_rating,
-//        0x0094F280 Armor[].defense_rating, 0x0094A378/.9 Chassis[]
-//        .speed/.triad - and 0x0096D238 is veh.cpp's FactionProtoSeenCount.
-// TRIED: spelling the `has_abil` argument as the five ABL_ bits the image's
-//        0x408418 literal is the OR of (POLICE_2X | ARTILLERY | ANTIGRAV_STRUTS
-//        | DROP_POD | AMPHIBIOUS); kept as the explicit OR of the enum.
-// LEVER: the weapon guard is `!= 0` with the rating test INLINE and the
-//        `== 0` weapon-id test as the ELSE arm - the image's `je` jumps
-//        forward over the rating compare to the weapon-id compare. Spelling it
-//        the archive's way (`== 0` first, else the rating test) inverted the
-//        branch and cost four instructions. Swapping the two has_abil calls
-//        (proto_id first, then the slot) fixed the last operand-order
-//        divergence: 130/141 -> SHAPE_EXACT 140/141.
-// TRIED: `flags &= ~0x100` as a word write - the image narrows it to a single
-//        `and byte ptr [.. + 0x9ab899], 0xfe` (the flags field's HIGH byte
-//        only); this tree keeps `and word ptr [.. + 0x30], 0xfeff`. That is
-//        the one instruction between this and BYTE_EXACT, and reaching it
-//        needs a byte-typed view of the field's second byte.
-// size      495 bytes
-// prototype void (__cdecl ?upgrade_prototypes@@YAXHH@Z)(int factionID, int protoID)
-// callers   1   call targets   3
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x004EFE80 0x004F0460 0x00625E50
-// Purpose: Upgrade one prototype to its current-era replacement: clear the
-//          prototype's 0x100 "obsolete" marker, then walk the faction's 128
-//          prototype slots for a same-plan, same-chassis successor that is no
-//          worse in weapon, armour, speed or triad, and upgrade every unit of
-//          the old design to it.
-// The current declaration and recovered callee have four native arguments;
-// five H tokens in ?upgrade_prototype@@YAHHHHH@Z include the int return type.
-// The earlier interpretation below is superseded, not a live ABI workaround:
-// BUG IN THE ORIGINAL (historical interpretation): the image calls the five-parameter
-//          ?upgrade_prototype@@YAHHHHH@Z here with four pushes (add esp, 0x10
-//          at 0x004F0620), so the callee's fifth parameter is read off the
-//          caller's stack. Reproduced as a four-parameter call; see
-//          pending_bodies.cpp for the forwarder that spells it the same way.
-
-void __cdecl upgrade_prototypes(int faction_id, int proto_id) {
-    int self_offset = proto_id * 0x34;
-    // Signed 16-bit flags: VC6 narrows this to `and byte ptr [+0x31], 0xfe`.
-    VehPrototypes[proto_id].flags &= ~0x100;
-    for (int i = 0; i < 0x80; i++) {
-        int other = i;
-        if (other >= 0x40) {
-            other = other % 0x40 + faction_id * 0x40;
-        }
-        if (other == proto_id) {
-            continue;
-        }
-        if ((VehPrototypes[other].flags & 1) == 0) {
-            continue;
-        }
-        if ((VehPrototypes[other].obsolete_factions & (1 << faction_id)) == 0) {
-            continue;
-        }
-        if (VehPrototypes[other].plan != VehPrototypes[proto_id].plan) {
-            continue;
-        }
-        if (VehPrototypes[other].unk_1 != VehPrototypes[proto_id].unk_1) {
-            continue;
-        }
-        if (Chassis[VehPrototypes[other].chassis_id].triad
-            != Chassis[VehPrototypes[proto_id].chassis_id].triad) {
-            continue;
-        }
-        if (PlayersData[faction_id].proto_id_active[other] == 0) {
-            continue;
-        }
-        int8_t self_weapon = Weapon[VehPrototypes[proto_id].weapon_id].offense_rating;
-        if (self_weapon != 0) {
-            if (self_weapon > Weapon[VehPrototypes[other].weapon_id].offense_rating) {
-                continue;
-            }
-        } else if (VehPrototypes[proto_id].weapon_id != VehPrototypes[other].weapon_id) {
-            continue;
-        }
-        if (has_abil(proto_id, ABL_POLICE_2X | ABL_ARTILLERY | ABL_ANTIGRAV_STRUTS
-                                  | ABL_DROP_POD | ABL_AMPHIBIOUS)
-            != has_abil(other, ABL_POLICE_2X | ABL_ARTILLERY | ABL_ANTIGRAV_STRUTS
-                             | ABL_DROP_POD | ABL_AMPHIBIOUS)) {
-            continue;
-        }
-        if (Armor[VehPrototypes[proto_id].armor_id].defense_rating
-            > Armor[VehPrototypes[other].armor_id].defense_rating) {
-            continue;
-        }
-        if (Chassis[VehPrototypes[proto_id].chassis_id].speed
-            > Chassis[VehPrototypes[other].chassis_id].speed) {
-            continue;
-        }
-        if (VehPrototypes[proto_id].chassis_id != VehPrototypes[other].chassis_id) {
-            continue;
-        }
-        upgrade_prototype(faction_id, proto_id, other, 1);
-    }
-}
-
-
-// ORIGINAL: 0x004EFB50 ?do_upgrade@@YAXHHH@Z 0x004EFB50-0x004EFD4A FILE BYTE_EXACT
-// LEVER: every fixed address the archive bound is a named model member -
-//        0x0096D238 is veh.cpp's FactionProtoSeenCount, 0x0096CC00 is
-//        faction.h's PlayersData[].energy_reserves, 0x009A64C8 is console.h's
-//        ConsoleGroupCount, 0x0095284C/.+0x0A/.+0x0E/.+0x24 are Vehs[]
-//        proto_id/faction_id/morale read through the record, 0x0097D08C/.-0x48
-//        are Bases[] queue_size/faction_id_current, 0x009AB898 is
-//        VehPrototypes[].flags, 0x009A64E8 is lock.h's LockEnableMask,
-//        0x00939284 is game.h's LocalFaction and 0x009156B0 is console.h's
-//        ConsoleGlobal. Nothing new declared but draw_map below.
-// size      634 bytes
-// prototype void (__cdecl ?do_upgrade@@YAXHHH@Z)(int factionID, int protoIDNew, int protoIDOld)
-// callers   1   call targets   3
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x004EFD50 0x005BF1F0 0x0064601D
-// Purpose: Retire one prototype across the faction: pay energy_reerves for the
-//          upgrade, re-equip every vehicle of the old design (and its entries
-//          in every base's production queue), adjust morale for the Trained
-//          ability moving either way, mark the new design in service and the
-//          old one obsolete, then repaint if a human is watching.
-// TRIED: hoisting the vehicle-loop counter into a named local `count` and
-//        reading ConsoleGroupCount once; the image re-reads [0x9a64c8] at both
-//        the test and the loop latch, so the local cost a second stack slot
-//        (`sub esp, 8` against the image's single `push ecx`) and 80 agreeing
-//        instructions. Reading it at both sites and reordering the prologue to
-//        faction_offset, upgrade_cost, then the tally moved 3/169 -> 101/169.
-// TRIED: reusing the `proto_id_new` parameter slot as the vehicle-loop counter
-//        the way the image does (`mov dword ptr [ebp + 0xc], 0` at instruction
-//        23 zeroes it, so the parameter is the counter and its original value
-//        lives in a register) - the archive spells this as `a2_saved`, and
-//        spelling it here is what is left between this body and the image.
-// BUG IN THE ORIGINAL: the production-queue sweep tests queue_production_id
-//          [0 .. queue_size] INCLUSIVE - one entry past the queue's own count
-//          - because the loop condition is `k <= *countp`. Reproduced
-//          deliberately; see has_fac's note at the top of this file for the
-//          same defect in a different body.
-// ?draw_map@@YAXH@Z (mapwin.h) - declared here rather than included, so this
-// file's include graph and every claim that depends on it stay untouched.
-void __cdecl draw_map(int draw_type);
-
-void __cdecl do_upgrade(int faction_id, int proto_id_new, int proto_id_old) {
-    int cost = upgrade_cost(faction_id, proto_id_new, proto_id_old)
-        * PlayersData[faction_id].proto_id_active[proto_id_old] * 10;
-    PlayersData[faction_id].energy_reserves -= cost;
-    for (int i = 0; i < GameDataStateStorage.fields_.vehicle_current_count_; i++) {
-        if (Vehs[i].faction_id == faction_id && Vehs[i].proto_id == proto_id_old) {
-            PlayersData[faction_id].proto_id_active[proto_id_old]--;
-            PlayersData[faction_id].proto_id_active[proto_id_new]++;
-            Vehs[i].proto_id = (int16_t)proto_id_new;
-            if (has_abil(proto_id_new, ABL_TRAINED) && !has_abil(proto_id_old, ABL_TRAINED)) {
-                Vehs[i].morale = (uint8_t)range(Vehs[i].morale + 1, 0, 6);
-            }
-            if (!has_abil(proto_id_new, ABL_TRAINED) && has_abil(proto_id_old, ABL_TRAINED)) {
-                Vehs[i].morale = (uint8_t)range(Vehs[i].morale - 1, 0, 6);
-            }
-        }
-    }
-    for (int j = 0; j < GameDataStateStorage.fields_.base_current_count_; j++) {
-        if (Bases[j].faction_id_current == faction_id) {
-            for (int k = 0; k <= Bases[j].queue_size; k++) {
-                if (Bases[j].queue_production_id[k] == proto_id_old) {
-                    Bases[j].queue_production_id[k] = proto_id_new;
-                }
-            }
-        }
-    }
-    if (proto_id_new >= MaxVehProtoFactionNum && cost) {
-        VehPrototypes[proto_id_new].flags |= 4;
-    }
-    if (proto_id_old >= MaxVehProtoFactionNum) {
-        VehPrototypes[proto_id_old].flags &= ~PROTO_ACTIVE;
-    }
-    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction_id)) != 0) {
-        draw_map(1);
-    }
-    if (faction_id == ConsoleGlobal.faction_id_) {
-        ConsoleGlobal.update_data(0);
+// The cached path has no result contract: its EAX is the selected id, while
+// recomputation leaves the last resource pass's register residue. Callers use
+// the published base fields, not a returned integer.
+// ORIGINAL: 0x004EC3B0 ?base_compute@@YAHH@Z 0x004EC3B0-0x004EC3E7 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x004EC3B0-0x004EC3E7"], "reason": "Recover the original base-selection/cache operation with source-owned state and typed fields. The archived seed remains an obligation until this product definition is freshly remeasured."}
+// symbol    ?base_compute@@YAXH@Z
+void __cdecl base_compute(int force) {
+    if (force || BaseComputedID != BaseIDCurrentSelected) {
+        BaseComputedID = BaseIDCurrentSelected;
+        base_support();
+        base_yield();
+        base_nutrient();
+        base_minerals();
+        base_energy();
     }
 }
 
@@ -6727,6 +5374,74 @@ relocate:
     }
 }
 
+/*
+Purpose: Check what facility (if any) a base needs for additional population growth. Stand alone
+         function unused in original game and likely optimized out.
+// ORIGINAL: 0x004EEF80 ?pop_goal_fac@@YAHH@Z 0x004EEF80-0x004EF087 BYTE_EXACT
+// size      263 bytes
+// prototype int (__cdecl ?pop_goal_fac@@YAHH@Z)(int baseID)
+// callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0050BA00
+// LEVER: both has_fac_built(FAC_HAB_COMPLEX/FAC_HABITATION_DOME, base_id)
+//        sites routed through has_fac_built_call (the same lever pop_goal,
+//        its twin below, already records) - the folded `MEASURED inline
+//        bitmask` turns the two tests into bare `test byte ptr`, where the
+//        image makes a real `call 0x50ba00` and keeps the offset/mask local
+//        pair. Compiled body 54 -> 81 instructions against the image's 102.
+Return Value: Facility id needed for pop growth or zero if base already has Hab Complex and Dome.
+Status: Complete
+*/
+int __cdecl pop_goal_fac(int base_id) {
+    uint32_t faction_id = Bases[base_id].faction_id_current;
+    uint32_t limit_mod = has_project(SP_ASCETIC_VIRTUES, faction_id) ? 2 : 0;
+    if (Bases[base_id].population_size - (int)limit_mod + Players[faction_id].rule_population
+            >= (int)Rules.pop_limit_sans_hab_complex
+        && !has_fac(FAC_HAB_COMPLEX, base_id, 0)) {
+        return FAC_HAB_COMPLEX;
+    }
+    if (Bases[base_id].population_size - (int)limit_mod + Players[faction_id].rule_population
+            >= (int)Rules.pop_limit_sans_hab_dome
+        && !has_fac(FAC_HABITATION_DOME, base_id, 0)) {
+        return FAC_HABITATION_DOME;
+    }
+    return 0; // Pop hasn't reached capacity or Base already has Hab Complex and Dome
+}
+
+/*
+Purpose: Calculate population goal for a base.
+// ORIGINAL: 0x004EF090 ?pop_goal@@YAHH@Z 0x004EF090-0x004EF1B2 BYTE_EXACT
+// size      290 bytes
+// prototype int (__cdecl ?pop_goal@@YAHH@Z)(int baseID)
+// callers   1   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0050BA00
+// LEVER: both has_fac_built(FAC_HAB_COMPLEX/FAC_HABITATION_DOME, base_id)
+//        sites routed through the new `has_fac_built_call` helper (this
+//        file, near cost_factor) so bitmask() emits a real `call 0x50ba00`
+//        with an [ebp-4]/[ebp-8] offset/mask local pair, matching the
+//        image's two `push 0x18`/`push 0x19` + call sequences instead of
+//        folding to a byte test. Best similarity 0.910 (38/105 agreeing,
+//        /c /O2 /Gy /GR- /Oy- /GX) - the largest jump of the bitmask-call
+//        family (cost_factor TRIED the same lever; see that note).
+Return Value: Goal population
+Status: Complete
+*/
+int __cdecl pop_goal(int base_id) {
+    uint32_t faction_id = Bases[base_id].faction_id_current;
+    int limit_mod = has_project(SP_ASCETIC_VIRTUES, faction_id) ? 2 : 0;
+    int goal = max((36 - Bases[base_id].population_size) / 6 + Bases[base_id].population_size, 6);
+    if (!has_fac(FAC_HAB_COMPLEX, base_id, 0)) {
+        goal = min(goal, (int)(Rules.pop_limit_sans_hab_complex - Players[faction_id].rule_population + limit_mod));
+    }
+    if (!has_fac(FAC_HABITATION_DOME, base_id, 0)) {
+        goal = min(goal, (int)(Rules.pop_limit_sans_hab_dome - Players[faction_id].rule_population + limit_mod));
+    }
+    return goal;
+}
+
 // WORKAROUND(inline): dead budget probe (folds to no code). base_growth's two
 // pop_goal_fac expansions call 0x00421670 for all four inner has_fac tests in
 // the image (has_fac x4, then the TREE_FARM test expanded); with base.h's
@@ -6938,6 +5653,168 @@ int __cdecl base_growth() {
     return 0;
 }
 
+
+// ORIGINAL: 0x004EFB50 ?do_upgrade@@YAXHHH@Z 0x004EFB50-0x004EFD4A FILE BYTE_EXACT
+// LEVER: every fixed address the archive bound is a named model member -
+//        0x0096D238 is veh.cpp's FactionProtoSeenCount, 0x0096CC00 is
+//        faction.h's PlayersData[].energy_reserves, 0x009A64C8 is console.h's
+//        ConsoleGroupCount, 0x0095284C/.+0x0A/.+0x0E/.+0x24 are Vehs[]
+//        proto_id/faction_id/morale read through the record, 0x0097D08C/.-0x48
+//        are Bases[] queue_size/faction_id_current, 0x009AB898 is
+//        VehPrototypes[].flags, 0x009A64E8 is lock.h's LockEnableMask,
+//        0x00939284 is game.h's LocalFaction and 0x009156B0 is console.h's
+//        ConsoleGlobal. Nothing new declared but draw_map below.
+// size      634 bytes
+// prototype void (__cdecl ?do_upgrade@@YAXHHH@Z)(int factionID, int protoIDNew, int protoIDOld)
+// callers   1   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004EFD50 0x005BF1F0 0x0064601D
+// Purpose: Retire one prototype across the faction: pay energy_reerves for the
+//          upgrade, re-equip every vehicle of the old design (and its entries
+//          in every base's production queue), adjust morale for the Trained
+//          ability moving either way, mark the new design in service and the
+//          old one obsolete, then repaint if a human is watching.
+// TRIED: hoisting the vehicle-loop counter into a named local `count` and
+//        reading ConsoleGroupCount once; the image re-reads [0x9a64c8] at both
+//        the test and the loop latch, so the local cost a second stack slot
+//        (`sub esp, 8` against the image's single `push ecx`) and 80 agreeing
+//        instructions. Reading it at both sites and reordering the prologue to
+//        faction_offset, upgrade_cost, then the tally moved 3/169 -> 101/169.
+// TRIED: reusing the `proto_id_new` parameter slot as the vehicle-loop counter
+//        the way the image does (`mov dword ptr [ebp + 0xc], 0` at instruction
+//        23 zeroes it, so the parameter is the counter and its original value
+//        lives in a register) - the archive spells this as `a2_saved`, and
+//        spelling it here is what is left between this body and the image.
+// BUG IN THE ORIGINAL: the production-queue sweep tests queue_production_id
+//          [0 .. queue_size] INCLUSIVE - one entry past the queue's own count
+//          - because the loop condition is `k <= *countp`. Reproduced
+//          deliberately; see has_fac's note at the top of this file for the
+//          same defect in a different body.
+// ?draw_map@@YAXH@Z (mapwin.h) - declared here rather than included, so this
+// file's include graph and every claim that depends on it stay untouched.
+void __cdecl draw_map(int draw_type);
+
+void __cdecl do_upgrade(int faction_id, int proto_id_new, int proto_id_old) {
+    int cost = upgrade_cost(faction_id, proto_id_new, proto_id_old)
+        * PlayersData[faction_id].proto_id_active[proto_id_old] * 10;
+    PlayersData[faction_id].energy_reserves -= cost;
+    for (int i = 0; i < GameDataStateStorage.fields_.vehicle_current_count_; i++) {
+        if (Vehs[i].faction_id == faction_id && Vehs[i].proto_id == proto_id_old) {
+            PlayersData[faction_id].proto_id_active[proto_id_old]--;
+            PlayersData[faction_id].proto_id_active[proto_id_new]++;
+            Vehs[i].proto_id = (int16_t)proto_id_new;
+            if (has_abil(proto_id_new, ABL_TRAINED) && !has_abil(proto_id_old, ABL_TRAINED)) {
+                Vehs[i].morale = (uint8_t)range(Vehs[i].morale + 1, 0, 6);
+            }
+            if (!has_abil(proto_id_new, ABL_TRAINED) && has_abil(proto_id_old, ABL_TRAINED)) {
+                Vehs[i].morale = (uint8_t)range(Vehs[i].morale - 1, 0, 6);
+            }
+        }
+    }
+    for (int j = 0; j < GameDataStateStorage.fields_.base_current_count_; j++) {
+        if (Bases[j].faction_id_current == faction_id) {
+            for (int k = 0; k <= Bases[j].queue_size; k++) {
+                if (Bases[j].queue_production_id[k] == proto_id_old) {
+                    Bases[j].queue_production_id[k] = proto_id_new;
+                }
+            }
+        }
+    }
+    if (proto_id_new >= MaxVehProtoFactionNum && cost) {
+        VehPrototypes[proto_id_new].flags |= 4;
+    }
+    if (proto_id_old >= MaxVehProtoFactionNum) {
+        VehPrototypes[proto_id_old].flags &= ~PROTO_ACTIVE;
+    }
+    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction_id)) != 0) {
+        draw_map(1);
+    }
+    if (faction_id == ConsoleGlobal.faction_id_) {
+        ConsoleGlobal.update_data(0);
+    }
+}
+
+
+// ORIGINAL: 0x004EFD50 ?upgrade_cost@@YAHHHH@Z 0x004EFD50-0x004EFE7F FILE BYTE_EXACT
+// TRIED: original establishes a true EBP frame (flags: frame) because it spills the reassigned `protoIDInit` parameter to its own stack slot; several transliterations (ternary vs if/else for the augmentation, ternary vs branch for the three clamps, B-then-A vs A-then-B table read order) all landed the value in a GP register (ebp used as scratch, no `mov ebp, esp`) instead. Landed at MISMATCH #3 (first diff is the missing frame prologue); the rest of the instruction stream already lines up closely (same table indices, same clamp-via-mask shape for two of three diffs).
+// LEVER: the four fixed-address tables the artifact bound are modelled rules
+//        records - 0x009AB868+0x29/.30/.25/.26/.24 is VehPrototypes[]
+//        cost/flags/weapon_id/armor_id/chassis_id, 0x0094AE6B is
+//        Weapon[].cost, 0x0094F282 is Armor[].cost, 0x0094A378 is
+//        Chassis[].speed, 0x009A656C is base_project(SP_NANO_FACTORY) and
+//        0x0097D044 is Bases[].faction_id_current - so every `g_9xxxxx`
+//        binding drops out in favour of a member read.
+// TRIED: writing the `proto_id_init = cost` reassignment the archive spells,
+//        to force the image's early store into the dead parameter's home
+//        slot - see the BUG IN THE ORIGINAL note below; the honest form is
+//        what is kept here.
+// TRIED: named `init_slot`/`upg_slot` locals for the two prototype indices, to
+//        break VC6's common-subexpression of `&VehPrototypes[slot]` - the image
+//        keeps `slot * 0x34` in a register with the TABLE BASE as the
+//        displacement (`mov cl, [esi + 0x9ab891]`), where this tree keeps the
+//        record pointer in the register with the FIELD OFFSET as the
+//        displacement (`mov dl, [ecx + 0x29]`). Same bytes modulo the
+//        relocation, different register choice, and the divergence cascades
+//        through all five field reads: 3 of 105 either way. Reproducing the
+//        image's shape needs `slot * 0x34` spelled as a byte offset, which only
+//        a cast of the array base spells; naming `init_slot` scored no better
+//        than using the parameters directly, so the parameter form is kept.
+// size      303 bytes
+// prototype int (__cdecl ?upgrade_cost@@YAHHHH@Z)(int factionID, int protoIDInit, int protoIDUpg)
+// callers   3   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+// Purpose: Price one prototype upgrade for a faction: the base prototype's
+//          mineral cost (augmented 1.5x and squared when the slot is past the
+//          64-slot shared block and carries no VEHFLAG bit 4), plus the
+//          positive deltas of the weapon and armour costs and the chassis
+//          speed, halved when the faction that owns SP_NANO_FACTORY is asking.
+// BUG IN THE ORIGINAL, AS TRANSCRIBED IN THE ARCHIVE: the archive test is
+//          `cost > 0x3f`, because it reuses the parameter slot for the cost
+//          before the test. The image compares EAX - the prototype ID as the
+//          caller passed it, loaded at 0x004EFD53 and never reloaded - against
+//          0x40. A caller passing a cheap prototype in a slot past 0x40 pays
+//          the unaugmented price here. The comparison is spelled against the
+//          prototype ID, which is what the image does; only the parameter
+//          reuse is not reproduced.
+// Status:  transcription homed from src/unrecovered/004efd50.cpp
+
+int __cdecl upgrade_cost(int faction_id, int proto_id_init, int proto_id_upg) {
+    int init_slot = proto_id_init;
+    int upg_slot = proto_id_upg;
+    int cost = VehPrototypes[init_slot].cost;
+    if (init_slot >= 0x40 && (VehPrototypes[init_slot].flags & 4) == 0) {
+        cost += (cost + 1) / 2;
+        cost = (cost + 1) * cost;
+    }
+    // Native 004EFDC7/004EFDF9/004EFE36 uses positive second-minus-third
+    // component costs. Callers pass the new prototype second and old third;
+    // the retained init/upg parameter names above are historical.
+    // Each clamp is written on the difference itself (sub; sets; dec; and).
+    int part_diff = (Weapon[VehPrototypes[init_slot].weapon_id].cost
+                     - Weapon[VehPrototypes[upg_slot].weapon_id].cost < 0)
+        ? 0
+        : Weapon[VehPrototypes[init_slot].weapon_id].cost
+              - Weapon[VehPrototypes[upg_slot].weapon_id].cost;
+    part_diff += (Armor[VehPrototypes[init_slot].armor_id].cost
+                  - Armor[VehPrototypes[upg_slot].armor_id].cost < 0)
+        ? 0
+        : Armor[VehPrototypes[init_slot].armor_id].cost
+              - Armor[VehPrototypes[upg_slot].armor_id].cost;
+    int chassis_diff = (Chassis[VehPrototypes[init_slot].chassis_id].speed
+                        - Chassis[VehPrototypes[upg_slot].chassis_id].speed < 0)
+        ? 0
+        : Chassis[VehPrototypes[init_slot].chassis_id].speed
+              - Chassis[VehPrototypes[upg_slot].chassis_id].speed;
+    cost += part_diff + chassis_diff;
+    if (has_project(SP_NANO_FACTORY, faction_id)) {
+        cost /= 2;
+    }
+    return cost;
+}
+
 // ORIGINAL: 0x004EFE80 ?upgrade_prototype@@YAHHHHH@Z 0x004EFE80-0x004F045B
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004efe80.cpp", "recovery/tasks/base-colony-economy-coverage-wave.json", "Pinned original01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; complete original function extent reviewed against native instructions and VC6 CodeView owners.", "recovery/tests/test_base_colony_production.py", "Native4EFE8E..94 rejects statebit1 set with bit8 clear; 4F03A8/4F0414 choose UPGRADEPROTOCOST2 when prototypeflag4 is clear. Ability iterator9AB540 reads abbreviation(+8)."], "reason": "Recover complete prototype-upgrade decision, naming/prompt and network dispatch through typed owners. Four arguments follow the native caller and body; five H tokens include the int return. Replace central executable-address forwarder, preserve seed and historical obligations, no new byte claim."}
 // symbol    ?upgrade_prototype@@YAHHHHH@Z
@@ -7088,27 +5965,199 @@ no_energy:
     return 1;
 }
 
-#include "stdafx.h"
-#include "base.h"
-#include "alphamovie.h"
-#include "buffer.h"
-#include "console.h"
-#include "faction.h"
-#include "game.h"
-#include "general.h"
-#include "interlude.h"
-#include "map.h"
-#include "mapwin.h"
-#include "popup.h"
-#include "strings.h"
+// ORIGINAL: 0x004F0460 ?upgrade_prototypes@@YAXHH@Z 0x004F0460-0x004F064F FILE BYTE_EXACT
+// LEVER: every table the archive bound by address is a named model record -
+//        0x009AB868+0x24..0x30 is VehPrototypes[] chassis/weapon/armor/plan/
+//        unk_1/obsolete_factions/flags, 0x0094AE68 Weapon[].offense_rating,
+//        0x0094F280 Armor[].defense_rating, 0x0094A378/.9 Chassis[]
+//        .speed/.triad - and 0x0096D238 is veh.cpp's FactionProtoSeenCount.
+// TRIED: spelling the `has_abil` argument as the five ABL_ bits the image's
+//        0x408418 literal is the OR of (POLICE_2X | ARTILLERY | ANTIGRAV_STRUTS
+//        | DROP_POD | AMPHIBIOUS); kept as the explicit OR of the enum.
+// LEVER: the weapon guard is `!= 0` with the rating test INLINE and the
+//        `== 0` weapon-id test as the ELSE arm - the image's `je` jumps
+//        forward over the rating compare to the weapon-id compare. Spelling it
+//        the archive's way (`== 0` first, else the rating test) inverted the
+//        branch and cost four instructions. Swapping the two has_abil calls
+//        (proto_id first, then the slot) fixed the last operand-order
+//        divergence: 130/141 -> SHAPE_EXACT 140/141.
+// TRIED: `flags &= ~0x100` as a word write - the image narrows it to a single
+//        `and byte ptr [.. + 0x9ab899], 0xfe` (the flags field's HIGH byte
+//        only); this tree keeps `and word ptr [.. + 0x30], 0xfeff`. That is
+//        the one instruction between this and BYTE_EXACT, and reaching it
+//        needs a byte-typed view of the field's second byte.
+// size      495 bytes
+// prototype void (__cdecl ?upgrade_prototypes@@YAXHH@Z)(int factionID, int protoID)
+// callers   1   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004EFE80 0x004F0460 0x00625E50
+// Purpose: Upgrade one prototype to its current-era replacement: clear the
+//          prototype's 0x100 "obsolete" marker, then walk the faction's 128
+//          prototype slots for a same-plan, same-chassis successor that is no
+//          worse in weapon, armour, speed or triad, and upgrade every unit of
+//          the old design to it.
+// The current declaration and recovered callee have four native arguments;
+// five H tokens in ?upgrade_prototype@@YAHHHHH@Z include the int return type.
+// The earlier interpretation below is superseded, not a live ABI workaround:
+// BUG IN THE ORIGINAL (historical interpretation): the image calls the five-parameter
+//          ?upgrade_prototype@@YAHHHHH@Z here with four pushes (add esp, 0x10
+//          at 0x004F0620), so the callee's fifth parameter is read off the
+//          caller's stack. Reproduced as a four-parameter call; see
+//          pending_bodies.cpp for the forwarder that spells it the same way.
 
-#include "technology.h"
-#include "veh.h"
-#include "wave.h"
-#include "win.h"
-#include "worldwin.h"
-#include <string.h>
-#include <stdlib.h>
+void __cdecl upgrade_prototypes(int faction_id, int proto_id) {
+    int self_offset = proto_id * 0x34;
+    // Signed 16-bit flags: VC6 narrows this to `and byte ptr [+0x31], 0xfe`.
+    VehPrototypes[proto_id].flags &= ~0x100;
+    for (int i = 0; i < 0x80; i++) {
+        int other = i;
+        if (other >= 0x40) {
+            other = other % 0x40 + faction_id * 0x40;
+        }
+        if (other == proto_id) {
+            continue;
+        }
+        if ((VehPrototypes[other].flags & 1) == 0) {
+            continue;
+        }
+        if ((VehPrototypes[other].obsolete_factions & (1 << faction_id)) == 0) {
+            continue;
+        }
+        if (VehPrototypes[other].plan != VehPrototypes[proto_id].plan) {
+            continue;
+        }
+        if (VehPrototypes[other].unk_1 != VehPrototypes[proto_id].unk_1) {
+            continue;
+        }
+        if (Chassis[VehPrototypes[other].chassis_id].triad
+            != Chassis[VehPrototypes[proto_id].chassis_id].triad) {
+            continue;
+        }
+        if (PlayersData[faction_id].proto_id_active[other] == 0) {
+            continue;
+        }
+        int8_t self_weapon = Weapon[VehPrototypes[proto_id].weapon_id].offense_rating;
+        if (self_weapon != 0) {
+            if (self_weapon > Weapon[VehPrototypes[other].weapon_id].offense_rating) {
+                continue;
+            }
+        } else if (VehPrototypes[proto_id].weapon_id != VehPrototypes[other].weapon_id) {
+            continue;
+        }
+        if (has_abil(proto_id, ABL_POLICE_2X | ABL_ARTILLERY | ABL_ANTIGRAV_STRUTS
+                                  | ABL_DROP_POD | ABL_AMPHIBIOUS)
+            != has_abil(other, ABL_POLICE_2X | ABL_ARTILLERY | ABL_ANTIGRAV_STRUTS
+                             | ABL_DROP_POD | ABL_AMPHIBIOUS)) {
+            continue;
+        }
+        if (Armor[VehPrototypes[proto_id].armor_id].defense_rating
+            > Armor[VehPrototypes[other].armor_id].defense_rating) {
+            continue;
+        }
+        if (Chassis[VehPrototypes[proto_id].chassis_id].speed
+            > Chassis[VehPrototypes[other].chassis_id].speed) {
+            continue;
+        }
+        if (VehPrototypes[proto_id].chassis_id != VehPrototypes[other].chassis_id) {
+            continue;
+        }
+        upgrade_prototype(faction_id, proto_id, other, 1);
+    }
+}
+
+// ORIGINAL: 0x004F0650 ?upgrade_any_prototypes@@YAXH@Z 0x004F0650-0x004F06D3 FILE BYTE_EXACT
+// LEVER: the four carried bindings are all modelled names - 0x0090EA3C is the
+//        upgrade-confirmation flag (see UpgradePromptAnswered below),
+//        0x009A6494 game.h's GameMorePreferences, 0x009A64E8 lock.h's
+//        LockEnableMask read as its byte 0 (the is-human bitfield) and
+//        0x009AB898 VehPrototypes[].flags - so no fixed address survives.
+// TRIED: `int flags`, `uint16_t flags`, `(uint16_t)(flags & 0x100)` and a bare
+//        `flags & 0x100` condition for the third bit test - the image spells it
+//        `and ecx, 0x100 / test cx, cx` (two instructions) and this tree spells
+//        every one of those source forms as `test ch, 1` (one). 46 of 47, one
+//        instruction short, on all four spellings; the 16-bit `and`/`test` pair
+//        is an idiom this source cannot be pushed to.
+// size      131 bytes
+// prototype void (__cdecl ?upgrade_any_prototypes@@YAXH@Z)(int factionID)
+// callers   1   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004F0460
+// Purpose: The turn-start automatic upgrade sweep. Clears the
+//          upgrade-confirmation flag, then - for a faction that is human, or
+//          whose "ask before upgrading" preference is off - walks all 128
+//          prototype slots and upgrades every obsolete one still in service
+//          (flags: in-use, bit 4, and 0x100).
+
+void __cdecl upgrade_any_prototypes(int faction_id) {
+    UpgradePromptAnswered = 0;
+    if (((1 << faction_id) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) == 0
+        || (GameDataStateStorage.fields_.game_more_preferences_ & 0x100000) != 0) {
+        int i = 0;
+        do {
+            int proto_id = i;
+            if (proto_id >= 0x40) {
+                proto_id = proto_id % 0x40 + faction_id * 0x40;
+            }
+            uint16_t flags = VehPrototypes[proto_id].flags;
+            if ((flags & 1) != 0 && (flags & 4) != 0) {
+                const int16_t obsolete = static_cast<int16_t>(flags & 0x100);
+                if (obsolete != 0) {
+                    upgrade_prototypes(faction_id, proto_id);
+                }
+            }
+            ++i;
+        } while (i < 0x80);
+    }
+}
+
+/*
+Purpose: Move the specified base's production queue forward if applicable.
+// ORIGINAL: 0x004F06E0 ?base_queue@@YAHH@Z 0x004F06E0-0x004F07D8 BYTE_EXACT
+// size      248 bytes
+// prototype int (__cdecl ?base_queue@@YAHH@Z)(int baseID)
+// callers   1   call targets   4
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004455F0 0x0046AEF0 0x005BA0E0 0x005BA910
+// LEVER: `Base *base = &Bases[base_id];` HOISTED, rather than
+//        `Bases[base_id]` re-subscripted at every field: the image computes
+//        the base's address exactly ONCE (esi = &Bases[base_id]) and reuses
+//        it for every field (queue_size, faction, queue_production_id, x,
+//        y) through the whole function, where re-subscripting recomputes
+//        (and partially re-folds) the base_id*sizeof(Base) multiply at each
+//        site. Moved 0/89 (0.804) -> 15/89 (0.859).
+Return Value: Is there a valid item in queue to be built? true/false
+Status: Complete
+*/
+BOOL __cdecl base_queue(int base_id) {
+    uint32_t faction_id = Bases[base_id].faction_id_current;
+    while (Bases[base_id].queue_size) {
+        if (Bases[base_id].queue_production_id[0] >= 0) {
+            PlayersData[faction_id].proto_id_queue[Bases[base_id].queue_production_id[0]]--;
+        }
+        for (int i = 0; i < Bases[base_id].queue_size; i++) {
+            Bases[base_id].queue_production_id[i] = Bases[base_id].queue_production_id[i + 1];
+        }
+        Bases[base_id].queue_size--;
+        if (Bases[base_id].queue_production_id[0] >= 0) {
+            if (!veh_avail(Bases[base_id].queue_production_id[0], faction_id, base_id)) {
+                continue;
+            }
+        } else if (!facility_avail(-Bases[base_id].queue_production_id[0], faction_id, base_id, 0)) {
+            continue;
+        }
+        if (Bases[base_id].queue_production_id[0] <= -FacilitySPStart) {
+            wave_it(36); // CPU project initiated
+        }
+        draw_radius(Bases[base_id].x, Bases[base_id].y, 2, 2);
+        return true;
+    }
+    return false;
+}
+
+
 
 // Shared separator objects the image pushes instead of unit literals.
 extern const char BufferJoinSpace[];
@@ -8004,243 +7053,374 @@ production_again:
     return;
 }
 
-// Production sets this request for the subsequent upkeep zoom. Four-byte
-// loader-zero initial storage; the original identity is not a runtime address.
-// RECOVERY_OBJECT: v2 0x0090E934 0x0090E938 ?BaseProductionZoomRequested@@3HA 0x004F07E0
-int BaseProductionZoomRequested = 0;
-// Nonzero skips unit creation before veh_init. The indirect producer remains
-// unverified; do not infer a permanently false flag from loader-zero storage.
-// RECOVERY_OBJECT: v2 0x0090EA40 0x0090EA44 ?BaseProductionUnitCreationDisabled@@3HA 0x004F07E0
-int BaseProductionUnitCreationDisabled = 0;
-
-// ORIGINAL: 0x004F79C0 ?base_upkeep@@YAHH@Z 0x004F79C0-0x004F7FDA BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence":["original:0x004F79C0-0x004F7FDA:pinned Base upkeep span","original:0x004F7D9E,0x004F7DDC,0x004F7E1D:BaseCurrent is reloaded at the native parser/climate callback boundaries","original:0x004F7BF6-0x004F7C01:actor and partner rule-flags use distinct faction indexes","source:src/base.h:Base, Bases, BaseCurrent, and the canonical Base-upkeep call surface","source:src/faction.h:Player and PlayerData arrays distinguish actor, partner, loans, energy and sanctions"],"reason":"Recover Base upkeep with native callback reloads and independently indexed actor/partner commerce state through the existing Base, Player and PlayerData owners."}
-// LEVER: set_base-like prologue with a local &Bases[base_id] (reused when
-//        BaseCurrent is restored), plain int accumulation, signed /8 %8 bit
-//        test, project walk through a local project_base pointer, and the
-//        focus/rename visibility tests written inline. Remaining gap: the
-//        commerce loop's three pointer inductions take different registers.
-int __cdecl base_upkeep(int base_id) {
-    // Native event/log text remains inline: "al_col_sm.pcx" 0x689EA4..0x689EB2, "RENAMEBASE" 0x689EB4..0x689EBF and 0x689ED0..0x689EDB, "colfoun_sm.pcx" 0x689EC0..0x689ECF, "UPKEEP zoom-to-base" 0x689EDC..0x689EF0, and "FINISHED zoom-to-base" 0x689EF0..0x689F06.
-
-    BaseIDCurrentSelected = base_id;
-    Base *base = &Bases[base_id];
-    BaseCurrent = base;
-    const int faction_id = BaseCurrent->faction_id_current;
-    BaseProductionZoomRequested = 0;
-    Bases[base_id].state &= 0xDFFFFDFFu;
-    base_compute(1);
-    base_production();
-    base_hurry();
-
-    BaseCurrent->minerals_accumulated_2 = BaseCurrent->minerals_accumulated;
-    BaseCurrent->production_id_last = BaseCurrent->queue_production_id[0];
-    if (base_growth() != 0) return 1;
-    if (GameDataStateStorage.fields_.turn_current_num_ > 1) base_check_support();
-
-    BaseUpkeepStage = 1;
-    base_compute(1);
-
-    int tile_weight;
-    int region = region_at(BaseCurrent->x, BaseCurrent->y);
-    if (PlayersData[faction_id].region_base_plan[region] == 7
-        && PlayersData[faction_id].ai_fight <= 0) {
-        tile_weight = 4;
-    } else {
-        tile_weight = (PlayersData[faction_id].region_base_plan[region] != 2) + 1;
-    }
-    PlayersData[faction_id].unk_47 += bit_count(BaseCurrent->resource_sqr_radius) * tile_weight;
-
-    BaseUpkeepStage = 2;
-    if (GameDataStateStorage.fields_.turn_current_num_ > 1) {
-        base_drones();
-        base_doctors();
-        if (BaseCurrent->faction_id_current != faction_id) return 1;
-        base_energy_costs();
-        if (GameDataStateStorage.fields_.turn_current_num_ > 5 || IsMultiplayerNet != 0 ||
-            (GameDataStateStorage.fields_.game_preferences_ & 0x20u) == 0) {
-            base_research();
-        }
-    }
-
-    BaseIDCurrentSelected = base_id;
-    BaseCurrent = base;
-    base_compute(0);
-    base_ecology();
-    PlayersData[faction_id].energy_reserves += BaseCurrent->economy_total;
-
-    // Actor and partner rule flags use distinct faction indexes.
-    // A walked receipts pointer orders the loop's three pointer inductions.
-    int *receipts = BaseCommerceReceipts;
-    for (int other_faction = 1; other_faction < MaxPlayerNum; ++other_faction, ++receipts) {
-        if (other_faction != faction_id && !(Players[faction_id].rule_flags & 0x80)
-            && !(Players[other_faction].rule_flags & 0x80)) {
-            PlayersData[faction_id].turn_commerce_income +=
-                (PlayersData[faction_id].sanction_turns == 0
-                 && PlayersData[other_faction].sanction_turns == 0)
-                ? *receipts : 0;
-        }
-    }
-
-    if ((Players[faction_id].rule_flags & 0x80) != 0) {
-        int count = 0;
-        for (int facility_id = 0; facility_id < 0x46; ++facility_id) {
-            if (BaseCurrent->facilities_built[facility_id / 8] & (1 << (facility_id % 8))) {
-                ++count;
-            }
-        }
-        const int *projects = GameDataStateStorage.fields_.secret_project_.project_base;
-        for (int project = 0; project < MaxSecretProjectNum; ++project) {
-            if (projects[project] == base_id) count += 5;
-        }
-        int alien_commerce = count / 2;
-        if (PlayersData[faction_id].sanction_turns != 0) alien_commerce = 0;
-        PlayersData[faction_id].turn_commerce_income += alien_commerce;
-    }
-
-    if (GameDataStateStorage.fields_.turn_current_num_ > 1) base_maint();
-    base_terraform(0);
-    if ((BaseCurrent->state & 0x10000u) != 0 && rnd(3, "BASE1") == 0 &&
-        (GameDataStateStorage.fields_.game_state_ & STATE_UNK_1) == 0) {
-        if (Bases[BaseIDCurrentSelected].faction_id_current == ConsoleGlobal.faction_id_
-            || ((1 << ConsoleGlobal.faction_id_) & Bases[BaseIDCurrentSelected].visibility)) {
-            if (!ConsoleGlobal.focus(BaseCurrent->x, BaseCurrent->y, ConsoleGlobal.faction_id_)) {
-                draw_tiles(BaseCurrent->x, BaseCurrent->y, 2);
-            }
-        }
-        // 0x4F7D9E reloads after focus/draw callbacks before this phrase.
-        parse_says(1, BaseCurrent->name_string, -1, -1);
-        GenderDefault = Players[faction_id].noun_gender;
-        PluralityDefault = Players[faction_id].is_noun_plural;
-        parse_says(0, Players[faction_id].noun_faction, -1, -1);
-        // 0x4F7DDC reloads after parse_says(0); use that same live Base for
-        // the climate tile and name_base's name pointer.
-        Base &climate_base = *BaseCurrent;
-        const int event_tile = static_cast<int>(climate_base.y) *
-            static_cast<int>(MapLongitude) + (static_cast<int>(climate_base.x) >> 1);
-        const int final_name = (MapTiles[event_tile].climate & ~0x1F) < 0x60;
-        name_base(faction_id, climate_base.name_string, 1, final_name);
-        // 0x4F7E1D reloads after name_base before parsing the renamed phrase.
-        parse_says(2, BaseCurrent->name_string, -1, -1);
-        if (Bases[BaseIDCurrentSelected].faction_id_current == ConsoleGlobal.faction_id_
-            || ((1 << ConsoleGlobal.faction_id_) & Bases[BaseIDCurrentSelected].visibility)) {
-            draw_map(1);
-            if (Players[faction_id].rule_flags & 0x80) {
-                popp(ScriptPopupFile, "RENAMEBASE", 0, "al_col_sm.pcx", 0);
-            } else {
-                popp(ScriptPopupFile, "RENAMEBASE", 0, "colfoun_sm.pcx", 0);
-            }
-        }
-        BaseCurrent->state &= ~0x10000u;
-        BaseCurrent->state |= 0x80u;
-    }
-
-    BaseComputedID = -1;
-    if (BaseIDCurrentSelected == TutWinBaseWindow.focused_base_id()) {
-        TutWinBaseWindow.on_redraw();
-    }
-    if (BaseProductionZoomRequested != 0) {
-        // stand-in: the low-byte read VC6 narrows to without the volatile below.
-        const uint8_t state_for_zoom = static_cast<uint8_t>(GameDataStateStorage.fields_.game_state_);
-        if ((state_for_zoom & 1u) == 0 || (state_for_zoom & 8u) != 0) {
-            log_say("UPKEEP zoom-to-base", base_id, 0, 0);
-            TutWinBaseWindow.zoom(base_id, 1);
-            log_say("FINISHED zoom-to-base", base_id, 0, 0);
-        }
-    }
-
-    BaseUpkeepStage = 0;
-    if (BaseCurrent->assimilation_turns_left != 0) {
-        --BaseCurrent->assimilation_turns_left;
-        if (BaseCurrent->faction_id_former == BaseCurrent->faction_id_current &&
-            BaseCurrent->assimilation_turns_left != 0) {
-            --BaseCurrent->assimilation_turns_left;
-        }
-        if (BaseCurrent->assimilation_turns_left == 0) {
-            BaseCurrent->faction_id_former = BaseCurrent->faction_id_current;
-        }
-    }
-    if (BaseCurrent->nerve_staple_turns_left != 0) --BaseCurrent->nerve_staple_turns_left;
-    BaseCurrent->state &= 0xFFDFFFF7u;
-    // stand-in: a volatile read forces the image's turn-then-base load order;
-    // every plain spelling of the sum loads BaseIDCurrentSelected first.
-    const int turn = *(volatile int *)&GameDataStateStorage.fields_.turn_current_num_;
-    const int selected = BaseIDCurrentSelected;
-    if (((selected + turn) & 7) == 0) {
-        BaseCurrent->state &= 0xFFEFFFFFu;
-    }
-    return 0;
-}
-// Native 0x009A658C is SecretProject.telepathic_matrix (SP_TELEPATHIC_MATRIX).
-// The native call enters the mapped drone_riot body below.
-
-// The image keeps a separate label cell per popb site (alien GOLDENAGE
-// 0x00689C84, GOLDENAGEOVER 0x00689CB8, DRONERIOTSOVER 0x00689D10 beside
-// the human arms' own copies). Pooled literals let VC6 cross-jump the arms.
-static const char BaseDronesAlienGoldenAgeLabel[] = "GOLDENAGE";
-static const char BaseDronesAlienGoldenAgeOverLabel[] = "GOLDENAGEOVER";
-static const char BaseDronesAlienRiotsOverLabel[] = "DRONERIOTSOVER";
-
-// ORIGINAL: 0x004F5CE0 ?base_drones@@YAXXZ 0x004F5CE0-0x004F5F25 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence":["original:0x004F5CE0-0x004F5F25:pinned base drone/riot lifecycle body","original:0x009A658C:SecretProject index 30 owns the telepathic-matrix faction id","source:src/alpha.h:SecretProject and SP_TELEPATHIC_MATRIX provide the typed project owner","source:src/base.h:BaseCurrent and Base-owned drone, talent, governor and state members","source:src/faction.h:Players owns faction rule_flags; LockEnableMask owns human-faction bits"],"reason":"Recover base drone state transitions using the existing Base, SecretProject, Player, and lock owners; retain native callback reloads and the separate drone-riot call."}
-void __cdecl base_drones() {
-    // Native popup literals remain ordinary C++ literals: "Alopdir.pcx" occurs at 0x689C78..0x689C84, 0x689CAC..0x689CB8, 0x689CE8..0x689CF4 and 0x689D04..0x689D10; the "GOLDENAGE", "GOLDENAGEOVER", "DRONERIOTSOVER" and "DRONERIOTSOVER2" keys and "talent_sm.pcx" have separate pinned call-site extents.
-    if (!BaseCurrent->drone_total && BaseCurrent->population_size > 2
-        && BaseCurrent->talent_total >= (BaseCurrent->population_size + 1) / 2) {
-        if (!(BaseCurrent->state & BSTATE_GOLDEN_AGE_ACTIVE)) {
-            if (Players[BaseCurrent->faction_id_current].rule_flags & RFLAG_ALIEN) {
-                popb(BaseDronesAlienGoldenAgeLabel, 0x20, -1, "Alopdir.pcx", 0);
-            } else {
-                popb("GOLDENAGE", 0x20, -1, "talent_sm.pcx", 0);
-            }
-        }
-        BaseCurrent->state |= BSTATE_GOLDEN_AGE_ACTIVE;
-    } else if (BaseCurrent->state & BSTATE_GOLDEN_AGE_ACTIVE) {
-        BaseCurrent->state &= ~BSTATE_GOLDEN_AGE_ACTIVE;
-        if (BaseCurrent->drone_total <= BaseCurrent->talent_total) {
-            if (Players[BaseCurrent->faction_id_current].rule_flags & RFLAG_ALIEN) {
-                popb(BaseDronesAlienGoldenAgeOverLabel, 0x40, -1, "Alopdir.pcx", 0);
-            } else {
-                popb("GOLDENAGEOVER", 0x40, -1, "talent_sm.pcx", 0);
-            }
-        }
-    }
-    if (BaseCurrent->drone_total > BaseCurrent->talent_total
-        && !has_project(SP_TELEPATHIC_MATRIX, BaseCurrent->faction_id_current)
-        && !BaseCurrent->nerve_staple_turns_left) {
-        drone_riot();
+// ORIGINAL: 0x004F3FE0 ?base_hurry@@YAXXZ 0x004F3FE0-0x004F4826
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004f3fe0.cpp; recovery/tasks/base-colony-economy-coverage-wave.json; recovery/tests/test_base_colony_economy.py", "Pinned01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf full4F3FE0..4F4826 instruction review and measured VC6 PlayerData/SocialEffect/Base/prototype owners.", "Native4F4365 reads pending.police(+260), not morale;4F4390 biases the wrapped reserve product before SAR2; facilities4/5/33/projects use /50, not /100.", "NativeVoice45F8..464E halves hurry budget;46C4 reads current queue;46D7 preserves explicit zero-factor branch;4702/474C reread lock mask and479D/47CF reread popup faction."], "reason": "Recover complete colony hurry budgets, mineral purchases and project notification using real Base/faction/prototype/facility owners and explicit native 32-bit wrapping. Preserve seed/history and original behavior; no new byte, linked-preservation or runtime acceptance claim."}
+// symbol    ?base_hurry@@YAXXZ
+// TRIED: full register-transliteration from raw disasm (not Ghidra, whose DAT_0090ea30 offsets are all mis-scaled x2 - it typed that global short*, and its 4th arg to at_goal() is wrong too, using DAT_0090ea30[1] where raw disasm shows edi/cost). Division-by-constant idioms (magic-multiply+shift) written as plain C `/` and trusted to re-lower; verified against Ghidra's own reconstructed divisors (10, 25,50,100,250) rather than reverse-engineering each magic constant by hand. Compiles; frameless prologue vs original's framed - not chased given size.
+void __cdecl base_hurry() {
+    int faction = BaseCurrent->faction_id_current;
+    if (is_human(faction)
+        && (!(BaseCurrent->governor & GOV_MAY_HURRY_PRODUCTION)
+            | !(BaseCurrent->governor & GOV_ACTIVE))) {
         return;
     }
-    if (BaseCurrent->state & BSTATE_DRONE_RIOTS_ACTIVE) {
-        BaseCurrent->state &= ~BSTATE_DRONE_RIOTS_ACTIVE;
-        Base *base = BaseCurrent;
-        if (!(base->state & BSTATE_GOLDEN_AGE_ACTIVE)) {
-            int faction_id = base->faction_id_current;
-            if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
-                if (base->governor & GOV_MANAGES_CITIZENS_SPECS && base->governor & GOV_ACTIVE) {
-                    popb("DRONERIOTSOVER2", 0, 0x33, "Alopdir.pcx", 0);
-                } else {
-                    popb(BaseDronesAlienRiotsOverLabel,
-                        (base->governor & GOV_MANAGES_CITIZENS_SPECS && base->governor & GOV_ACTIVE) ? 0 : 0x10, 0x33,
-                        "Alopdir.pcx", 0);
-                }
+    if (!BaseCurrent->minerals_accumulated) {
+        return;
+    }
+    int production_id = BaseCurrent->queue_production_id[0];
+    int facility_index = production_id < 0 ? -production_id : 0;
+    int hurry = 0;
+    int cost = facility_index
+        ? Facility[facility_index].cost
+        : veh_cost(production_id, BaseIDCurrentSelected, nullptr);
+    int scaled_cost = cost_factor(faction, 1, -1) * cost;
+    int y = BaseCurrent->y;
+    int x = BaseCurrent->x;
+    int region = map_loc(x, y)->region;
+
+    if (production_id >= 0) {
+        if (VehPrototypes[production_id].plan == PLAN_COLONIZATION
+            && BaseCurrent->population_size < 2) {
+            return;
+        }
+        if (veh_who(x, y) >= 0
+            && !(BaseCurrent->state & BSTATE_COMBAT_LOSS_LAST_TURN)
+            && !at_goal(faction, 0x10, x, y)) {
+            if (production_id >= 0x40
+                && !(VehPrototypes[production_id].flags & PROTO_TYPED_COMPLETE)) {
+                hurry = PlayersData[faction].energy_reserves
+                    / ((PlayersData[faction].ai_wealth + 2) * 10);
             } else {
-                if (base->governor & GOV_MANAGES_CITIZENS_SPECS && base->governor & GOV_ACTIVE) {
-                    popb("DRONERIOTSOVER2", 0, 0x33, "talent_sm.pcx", 0);
-                } else {
-                    popb("DRONERIOTSOVER",
-                        (base->governor & GOV_MANAGES_CITIZENS_SPECS && base->governor & GOV_ACTIVE) ? 0 : 0x10, 0x33,
-                        "talent_sm.pcx", 0);
+                uint8_t regional_plan = PlayersData[faction].region_base_plan[region];
+                if (regional_plan == VehPrototypes[production_id].plan
+                    || (VehPrototypes[production_id].plan == PLAN_TERRAFORMING
+                        && regional_plan == PLAN_COLONIZATION)
+                    || (VehPrototypes[production_id].plan == PLAN_COMBAT
+                        && regional_plan <= 2)) {
+                    hurry = PlayersData[faction].energy_reserves
+                        / ((PlayersData[faction].ai_wealth + 2) * 25
+                           - PlayersData[faction].ai_power * 10);
+                    if (regional_plan == PLAN_COLONIZATION) {
+                        hurry = (PlayersData[faction].ai_growth + 5) * hurry / 4;
+                        if (PlayersData[faction].energy_reserves
+                                > GameDataStateStorage.fields_.turn_current_num_) {
+                            hurry *= 2;
+                        }
+                    }
                 }
             }
-            base = BaseCurrent;
+        } else {
+            hurry = PlayersData[faction].energy_reserves / 10;
         }
-        if (!is_human(base->faction_id_current)) {
-            base_reset(BaseIDCurrentSelected, 0);
-            base = BaseCurrent;
+        if (planet_buster2(production_id) && !PlayersData[faction].planet_busters) {
+            for (int i = 1; i < MaxPlayerNum; i++) {
+                if (i != faction
+                    && (PlayersData[faction].diplo_treaties[i] & DTREATY_VENDETTA)
+                    && PlayersData[i].major_atrocities
+                    && PlayersData[faction].major_atrocities
+                        <= PlayersData[i].major_atrocities) {
+                    hurry = PlayersData[faction].energy_reserves / 10;
+                }
+            }
         }
-        draw_tile(base->x, base->y, 2);
+    } else if ((BaseCurrent->state & BSTATE_DRONE_RIOTS_ACTIVE) && facility_index) {
+        hurry = PlayersData[faction].energy_reserves
+            / ((PlayersData[faction].ai_power + PlayersData[faction].ai_wealth + 1) * 5);
+        if (BaseCurrent->drone_total > BaseCurrent->talent_total
+            && PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE]
+                   + 2 * has_fac(FAC_BROOD_PIT, BaseIDCurrentSelected, 0) <= -2
+            && facility_index < FacilitySPStart) {
+            // BUG(original): the remaining cost is multiplied by 2 for a human
+            // faction and by 0 for an AI one, so AI bases never hurry here.
+            hurry = range((scaled_cost - BaseCurrent->minerals_accumulated)
+                              * (is_human(faction) ? 2 : 0),
+                          0, PlayersData[faction].energy_reserves * 3 / 4);
+        }
+    } else if (facility_index == FAC_HEADQUARTERS) {
+        hurry = PlayersData[faction].energy_reserves / 10;
+    } else if (facility_index == FAC_PERIMETER_DEFENSE
+               || facility_index == FAC_TACHYON_FIELD) {
+        hurry = PlayersData[faction].energy_reserves / 50;
+        for (int i = 1; i < MaxPlayerNum; i++) {
+            if (i != faction
+                && (PlayersData[faction].diplo_treaties[i]
+                    & (DTREATY_VENDETTA | DTREATY_WANT_REVENGE | DTREATY_ATROCITY_VICTIM))
+                // BUG(original): indexes faction i's region_total_bases by the
+                // faction number i, not by a region.
+                && (PlayersData[i].region_total_bases[i] || is_human(i))) {
+                hurry = PlayersData[faction].energy_reserves / 10;
+            }
+        }
+    } else if (facility_index >= FacilitySPStart) {
+        hurry = PlayersData[faction].energy_reserves / 50;
+        if (PlayersData[faction].energy_reserves >= 2000) {
+            hurry *= 4;
+        }
+        if (facility_index == FAC_ASCENT_TO_TRANSCENDENCE) {
+            hurry *= 4;
+        }
+    } else if (facility_index == FAC_PSI_GATE) {
+        hurry = PlayersData[faction].energy_reserves / 50;
+        if (at_climax(faction)) {
+            hurry *= 2;
+        }
     }
+
+    if (PlayersData[faction].energy_reserves >= 4800) {
+        hurry += PlayersData[faction].energy_reserves / 25;
+    } else if (PlayersData[faction].energy_reserves > 3200) {
+        hurry += PlayersData[faction].energy_reserves / 100;
+    } else if (PlayersData[faction].energy_reserves > 2000) {
+        hurry += PlayersData[faction].energy_reserves / 250;
+    }
+    hurry = range(hurry, 0, PlayersData[faction].energy_reserves);
+    hurry = range(hurry, 0, scaled_cost - BaseCurrent->minerals_accumulated);
+    if (hurry) {
+        if (GameDataStateStorage.fields_.secret_project_.voice_of_planet() >= 0) {
+            hurry /= 2;
+        } else if (!strcmp(Players[faction].filename, "MORGAN")) {
+            hurry = hurry * 2 / 3;
+        } else if (!strcmp(Players[faction].filename, "PEACE")) {
+            hurry = hurry * 3 / 2;
+        }
+        int rule_hurry = Players[faction].rule_hurry;
+        if (rule_hurry != 100 && hurry < PlayersData[faction].energy_reserves / 10) {
+            hurry = hurry * 100 / rule_hurry;
+        }
+        int minerals = BaseCurrent->minerals_accumulated;
+        int remaining = scaled_cost - minerals;
+        int price = remaining * remaining / 20 + remaining * 2;
+        if (BaseCurrent->queue_production_id[0] <= -FacilitySPStart) {
+            price *= 2;
+        }
+        if (GameDataStateStorage.fields_.secret_project_.voice_of_planet() >= 0) {
+            price *= 2;
+        }
+        int bought = price ? remaining * hurry / price : 0;
+        BaseCurrent->minerals_accumulated = bought * 100 / rule_hurry + minerals;
+        int refund = is_human(faction)
+            ? 0
+            : GameDataStateStorage.fields_.diff_level_current_ * hurry
+                / ((8 - PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk1_]
+                        .ranking) * 10);
+        PlayersData[faction].energy_reserves += refund - hurry;
+    }
+
+    if (is_human(faction)
+        || facility_index < FacilitySPStart
+        || base_project(facility_index - FacilitySPStart) != SP_Unbuilt
+        || GameDataStateStorage.fields_.sunspot_duration_ > 0
+        || (GameDataStateStorage.fields_.game_state_ & STATE_UNK_1)) {
+        return;
+    }
+    if (BaseCurrent->mineral_surplus + BaseCurrent->minerals_accumulated
+            < cost_factor(BaseCurrent->faction_id_current, 1, -1) * Facility[facility_index].cost) {
+        return;
+    }
+    parse_says(0, Players[BaseCurrent->faction_id_current].adj_name_faction, -1, -1);
+    parse_say(1, Facility[facility_index].name, -1, -1);
+    popp(ScriptPopupFile, "DONEPROJECT", 0, "secproj_sm.pcx", nullptr);
+}
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x004F4830 ?base_check_support@@YAXXZ 0x004F4830-0x004F4DBB
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004f4830.cpp", "recovery/tasks/base-colony-economy-coverage-wave.json", "recovery/tests/test_base_colony_economy.py", "Pinned original 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; complete original extent reviewed against native instructions and measured VC6 owner layouts.", "Native facility35 uses selected-base record; riot score reads prototype.cost(+29), not carry_capacity(+28); first distance scan reapplies abs after wrap, second does not."], "reason": "Recover the complete support deficit and pacifism selection through typed Base/Vehicle/faction owners, preserving original AI double-decrement and selected-base facility semantics. Seed retained; no new byte or runtime claim."}
+// symbol    ?base_check_support@@YAXXZ
+void __cdecl base_check_support() {
+    int faction = BaseCurrent->faction_id_current;
+    int best_score;
+    int veh_id;
+    int best_veh;
+    while (BaseCurrentForcesMaintCost > BaseCurrent->intake_2[RSC_MINERALS]) {
+        best_score = -1;
+        best_veh = -1;
+        for (veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; veh_id++) {
+            if (Vehs[veh_id].faction_id != BaseCurrent->faction_id_current
+                || Vehs[veh_id].home_base_id != BaseIDCurrentSelected) {
+                continue;
+            }
+            int score;
+            uint8_t plan = VehPrototypes[Vehs[veh_id].proto_id].plan;
+            if (plan == PLAN_SUPPLY_CONVOY) {
+                if (Vehs[veh_id].order != ORDER_CONVOY
+                    || Vehs[veh_id].order_auto_type != ORDERA_TERRA_AUTO_ROAD
+                    || base_who(Vehs[veh_id].x, Vehs[veh_id].y) < 0) {
+                    continue;
+                }
+                score = 99999;
+            } else {
+                if (!(Vehs[veh_id].state & VSTATE_REQUIRES_SUPPORT) || plan > 9) {
+                    continue;
+                }
+                score = vector_dist(Vehs[veh_id].x, Vehs[veh_id].y,
+                                    BaseCurrent->x, BaseCurrent->y);
+            }
+            if (score > best_score) {
+                best_score = score;
+                best_veh = veh_id;
+            }
+        }
+        if (best_score < 0) {
+            break;
+        }
+        uint8_t plan = VehPrototypes[Vehs[best_veh].proto_id].plan;
+        if (plan == PLAN_SUPPLY_CONVOY) {
+            Vehs[best_veh].order = ORDER_NONE;
+            BaseCurrentForcesMaintCost--;
+            continue;
+        }
+        if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction)) {
+            parse_says(1, VehPrototypes[Vehs[best_veh].proto_id].veh_name, -1, -1);
+            popb("NOSUPPORT", 0x8000, 0xD, "genwarning_sm.pcx", 0);
+        } else if (plan == PLAN_COLONIZATION) {
+            Vehs[best_veh].state &= ~VSTATE_REQUIRES_SUPPORT;
+            int support = PlayersData[faction].soc_effect_pending.values_[SocialEffect::SUPPORT];
+            BaseCurrentForcesMaintCost -= has_abil(Vehs[best_veh].proto_id, ABL_CLEAN_REACTOR)
+                ? 0 : (support <= -4 ? 2 : 1);
+        }
+        int support = PlayersData[faction].soc_effect_pending.values_[SocialEffect::SUPPORT];
+        if (has_abil(Vehs[best_veh].proto_id, ABL_CLEAN_REACTOR)) {
+            break;
+        }
+        BaseCurrentForcesMaintCost -= support <= -4 ? 2 : 1;
+        kill(best_veh);
+    }
+    int faction_bit = 1 << faction;
+    if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) {
+        if (!(BaseCurrent->governor & GOV_MANAGES_CITIZENS_SPECS)) {
+            return;
+        }
+        if (!(BaseCurrent->governor & GOV_ACTIVE)) {
+            return;
+        }
+    }
+    if (!(BaseCurrent->state & BSTATE_DRONE_RIOTS_ACTIVE)) {
+        return;
+    }
+    // The image reads POLICE (+0x260) here, as base_doctors does.
+    if (PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE]
+            + 2 * has_fac(0x23, BaseIDCurrentSelected, 0) > -3) {
+        return;
+    }
+    if (BaseCurrent->drone_total <= BaseCurrent->talent_total
+        && BaseCurrent->nutrient_surplus >= 0) {
+        return;
+    }
+    best_score = -1;
+    best_veh = -1;
+    for (veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; veh_id++) {
+        if (Vehs[veh_id].faction_id != faction
+            || Vehs[veh_id].home_base_id != BaseIDCurrentSelected) {
+            continue;
+        }
+        if (!(Vehs[veh_id].state & VSTATE_PACIFISM_DRONE)) {
+            continue;
+        }
+        if (faction_bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) {
+            if (!(Vehs[veh_id].state & VSTATE_UNK_200)
+                || (Vehs[veh_id].state & 0x1000200) == 0x1000200
+                || ((Vehs[veh_id].state & 0x2000200) == 0x2000200
+                    && Vehs[veh_id].patrol_current_point < Vehs[veh_id].waypoint_count)
+                || Vehs[veh_id].order_auto_type == ORDERA_ON_ALERT
+                || Vehs[veh_id].order_auto_type == ORDERA_BOMBING_RUN
+                || Vehs[veh_id].order_auto_type) {
+                continue;
+            }
+        }
+        int divisor = PlayersData[faction].ai_fight + 2;
+        if (rnd(divisor, "BASECHECKSUPPORT")) {
+            continue;
+        }
+        int score = map_range(Vehs[veh_id].x, Vehs[veh_id].y, BaseCurrent->x, BaseCurrent->y) * 100
+            / range(VehPrototypes[Vehs[veh_id].proto_id].cost, 1, 99);
+        if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_DEFENSIVE) {
+            score += score;
+        }
+        if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_COMBAT) {
+            score /= 2;
+        }
+        if (score > best_score) {
+            best_score = score;
+            best_veh = veh_id;
+        }
+    }
+    if (best_veh >= 0) {
+        kill(best_veh);
+        BaseCurrent->state &= ~BSTATE_DRONE_RIOTS_ACTIVE;
+    }
+}
+
+/*
+Purpose: Check if current base has had an energy shortfall. If so, reset all existing energy convoy
+         orders for the faction. TODO: Revisit and find a way to only reset specific base convoys.
+// ORIGINAL: 0x004F4DC0 ?base_energy_costs@@YAXXZ 0x004F4DC0-0x004F4E73 BYTE_EXACT
+// TRIED: already 0.852 similar (best flag set, 3/60 raw). The remaining
+//            gap is inside base_who()/map_loc()'s inlined `x >> 1`: the
+//            image widens Vehs[i].x to int (movsx) BEFORE the shift, this
+//            tree's inline shifts the 16-bit value first and widens after -
+//            an explicit `(int)Vehs[i].x` cast at the call site does not
+//            change it (measured), so the divergence is inside the shared
+//            inline body, not this call site's source shape.
+// size      179 bytes
+// prototype
+// callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+// The original captures faction before the deficit read and snapshots the scan count.
+void __cdecl base_energy_costs() {
+    const uint32_t faction_id = BaseCurrent->faction_id_current;
+    if (BaseCurrent->energy_surplus >= 0) return;
+    const int total = GameDataStateStorage.fields_.vehicle_current_count_;
+    for (int i = 0; i < total; i++) {
+        if (Vehs[i].faction_id == faction_id
+            && VehPrototypes[Vehs[i].proto_id].plan == PLAN_SUPPLY_CONVOY
+            && Vehs[i].order == ORDER_CONVOY && Vehs[i].order_auto_type == RSC_ENERGY) {
+            Map *const tile = MapTiles + Vehs[i].y * MapLongitude + (Vehs[i].x >> 1);
+            int owner = -1;
+            if ((tile->bit & BIT_BASE_IN_TILE) != 0) {
+                const int candidate = tile->val2 & 0xF;
+                if (candidate < MaxPlayerNum) owner = candidate;
+            }
+            if (owner >= 0) Vehs[i].order = ORDER_NONE;
+        }
+    }
+}
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x004F4E80 ?base_research@@YAXXZ 0x004F4E80-0x004F4FAB BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004f4e80.cpp", "recovery/tasks/base-colony-economy-coverage-wave.json", "recovery/tests/test_base_colony_economy.py", "Pinned original 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; complete original extent reviewed against native instructions and measured VC6 owner layouts.", "Superseded interpretation, retained verbatim: Original4F4E80..4F4FAB reads Base.labs_total(+108), PlayerData.soc_effect_pending.research and net_random_event; faction-indexed Base bitset and signed remainder are intentional retained behavior.", "Superseded reason, retained verbatim: Recover the complete base laboratory contribution, scenario/early-turn gates and signed fractional research dispatch with native 32-bit wrap. Preserve original Bases[faction_id] facility lookup rather than silently correcting its behavior. Seed retained; no matching or game claim.", "Pinned 4F4E9F loads the faction into EBX; 4F4EA2 independently loads selected base index 689370 into ESI, used by 4F4EBE..4F4ED7 for Bases facilities. set_base 4E39D0..4E39F3 stores its base_id at 689370 and publishes Bases[base_id] as BaseCurrent. The prior faction-index interpretation is disproved.", "Pinned 4F4ED9..4F4EDF materializes the has_fac_built boolean before halving labs; 4F4F3D..4F4F55 uses the existing signed range operation with bounds -5 and 5."], "reason": "Recover the complete base laboratory contribution, scenario/early-turn gates and signed fractional research dispatch with native 32-bit wrap. The facility test uses BaseIDCurrentSelected, independently of the faction used for PlayerData; retain the existing facility boolean operation and signed range clamp. No game acceptance claim."}
+// symbol    ?base_research@@YAXXZ
+void __cdecl base_research() {
+    if ((GameDataStateStorage.fields_.game_rules_ & RULES_SCN_NO_TECH_ADVANCES) != 0) {
+        return;
+    }
+
+    const int faction_id = BaseCurrent->faction_id_current;
+    int points = BaseCurrent->labs_total;
+    if (has_fac(FAC_PUNISHMENT_SPHERE, BaseIDCurrentSelected, 0)) {
+        points /= 2;
+    }
+    if (GameDataStateStorage.fields_.turn_current_num_
+        < -5 * PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::RESEARCH]) {
+        points = 0;
+    }
+    if (GameDataStateStorage.fields_.turn_current_num_ < 5 && PlayersData[faction_id].diff_level < 2) {
+        points = 0;
+    }
+    PlayersData[faction_id].labs_total += points;
+
+    int scaled = (range(PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::RESEARCH],
+                        -5, 5) + 10) * points * 10;
+    PlayersData[faction_id].net_random_event += scaled % 100;
+    if (PlayersData[faction_id].net_random_event >= 100) {
+        PlayersData[faction_id].net_random_event -= 100;
+        scaled += 100;
+    }
+    tech_research(faction_id, scaled / 100);
 }
 
 // Facility indexing follows Base.facilities_built byte and bit indices.
@@ -8551,19 +7731,829 @@ void __cdecl drone_riot() {
     }
 }
 
-/*
-// ORIGINAL: 0x004E7DB0 sub_4e7db0 0x004E7DB0-0x004E7DBD BYTE_EXACT
-// symbol    ?sub_4e7db0@@YAHXZ
-// size      13 bytes
-// prototype
-// callers   0   call targets   0
+// Native 0x009A658C is SecretProject.telepathic_matrix (SP_TELEPATHIC_MATRIX).
+// The native call enters the mapped drone_riot body below.
+
+// The image keeps a separate label cell per popb site (alien GOLDENAGE
+// 0x00689C84, GOLDENAGEOVER 0x00689CB8, DRONERIOTSOVER 0x00689D10 beside
+// the human arms' own copies). Pooled literals let VC6 cross-jump the arms.
+static const char BaseDronesAlienGoldenAgeLabel[] = "GOLDENAGE";
+static const char BaseDronesAlienGoldenAgeOverLabel[] = "GOLDENAGEOVER";
+static const char BaseDronesAlienRiotsOverLabel[] = "DRONERIOTSOVER";
+
+// ORIGINAL: 0x004F5CE0 ?base_drones@@YAXXZ 0x004F5CE0-0x004F5F25 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["original:0x004F5CE0-0x004F5F25:pinned base drone/riot lifecycle body","original:0x009A658C:SecretProject index 30 owns the telepathic-matrix faction id","source:src/alpha.h:SecretProject and SP_TELEPATHIC_MATRIX provide the typed project owner","source:src/base.h:BaseCurrent and Base-owned drone, talent, governor and state members","source:src/faction.h:Players owns faction rule_flags; LockEnableMask owns human-faction bits"],"reason":"Recover base drone state transitions using the existing Base, SecretProject, Player, and lock owners; retain native callback reloads and the separate drone-riot call."}
+void __cdecl base_drones() {
+    // Native popup literals remain ordinary C++ literals: "Alopdir.pcx" occurs at 0x689C78..0x689C84, 0x689CAC..0x689CB8, 0x689CE8..0x689CF4 and 0x689D04..0x689D10; the "GOLDENAGE", "GOLDENAGEOVER", "DRONERIOTSOVER" and "DRONERIOTSOVER2" keys and "talent_sm.pcx" have separate pinned call-site extents.
+    if (!BaseCurrent->drone_total && BaseCurrent->population_size > 2
+        && BaseCurrent->talent_total >= (BaseCurrent->population_size + 1) / 2) {
+        if (!(BaseCurrent->state & BSTATE_GOLDEN_AGE_ACTIVE)) {
+            if (Players[BaseCurrent->faction_id_current].rule_flags & RFLAG_ALIEN) {
+                popb(BaseDronesAlienGoldenAgeLabel, 0x20, -1, "Alopdir.pcx", 0);
+            } else {
+                popb("GOLDENAGE", 0x20, -1, "talent_sm.pcx", 0);
+            }
+        }
+        BaseCurrent->state |= BSTATE_GOLDEN_AGE_ACTIVE;
+    } else if (BaseCurrent->state & BSTATE_GOLDEN_AGE_ACTIVE) {
+        BaseCurrent->state &= ~BSTATE_GOLDEN_AGE_ACTIVE;
+        if (BaseCurrent->drone_total <= BaseCurrent->talent_total) {
+            if (Players[BaseCurrent->faction_id_current].rule_flags & RFLAG_ALIEN) {
+                popb(BaseDronesAlienGoldenAgeOverLabel, 0x40, -1, "Alopdir.pcx", 0);
+            } else {
+                popb("GOLDENAGEOVER", 0x40, -1, "talent_sm.pcx", 0);
+            }
+        }
+    }
+    if (BaseCurrent->drone_total > BaseCurrent->talent_total
+        && !has_project(SP_TELEPATHIC_MATRIX, BaseCurrent->faction_id_current)
+        && !BaseCurrent->nerve_staple_turns_left) {
+        drone_riot();
+        return;
+    }
+    if (BaseCurrent->state & BSTATE_DRONE_RIOTS_ACTIVE) {
+        BaseCurrent->state &= ~BSTATE_DRONE_RIOTS_ACTIVE;
+        Base *base = BaseCurrent;
+        if (!(base->state & BSTATE_GOLDEN_AGE_ACTIVE)) {
+            int faction_id = base->faction_id_current;
+            if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
+                if (base->governor & GOV_MANAGES_CITIZENS_SPECS && base->governor & GOV_ACTIVE) {
+                    popb("DRONERIOTSOVER2", 0, 0x33, "Alopdir.pcx", 0);
+                } else {
+                    popb(BaseDronesAlienRiotsOverLabel,
+                        (base->governor & GOV_MANAGES_CITIZENS_SPECS && base->governor & GOV_ACTIVE) ? 0 : 0x10, 0x33,
+                        "Alopdir.pcx", 0);
+                }
+            } else {
+                if (base->governor & GOV_MANAGES_CITIZENS_SPECS && base->governor & GOV_ACTIVE) {
+                    popb("DRONERIOTSOVER2", 0, 0x33, "talent_sm.pcx", 0);
+                } else {
+                    popb("DRONERIOTSOVER",
+                        (base->governor & GOV_MANAGES_CITIZENS_SPECS && base->governor & GOV_ACTIVE) ? 0 : 0x10, 0x33,
+                        "talent_sm.pcx", 0);
+                }
+            }
+            base = BaseCurrent;
+        }
+        if (!is_human(base->faction_id_current)) {
+            base_reset(BaseIDCurrentSelected, 0);
+            base = BaseCurrent;
+        }
+        draw_tile(base->x, base->y, 2);
+    }
+}
+
+// ORIGINAL: 0x004F5F30 ?base_doctors@@YAXXZ 0x004F5F30-0x004F650C BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/unrecovered/004f5f30.cpp", "source:src/base.h"], "reason": "Recover the selected Base's complete specialist/worker adjustment, riot eligibility, Matrix-gated removal and console warning paths through typed Base, citizen, Rules and project state. Preserve selected-base versus entry-faction distinctions and live BaseCurrent reloads across callbacks. Original unsafe accesses, full identity, seed history and matching/restoration obligations remain; no byte, ABI or runtime acceptance is implied."}
 // kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: zero
+// TRIED: near-verbatim transcription of the (clean, non-SEH) Ghidra output with DAT_/FUN_ substituted for the catalogued globals and callees, and `*(char**)g_0090ea30` for the base-pointer dereference; the two duplicated "pick best doctor" loops are written out twice (matching the original's own duplication) rather than factored into a helper, to avoid the one-external-symbol risk seen on 0x00405140. Reaches MISMATCH #6 ('xor' vs 'push'); did not chase the exact register/stack layout further given the function's size.
+// Defined after best_specialist and pop_goal_fac: the image inlines both.
+// WORKAROUND(decl): the image calls has_fac (0x421670) out of line in
+// base_doctors. It is an inline owner, not a pointer: as a plain call inside
+// this helper, has_fac becomes a pass-2 (nested) site that base_doctors' /Ob2
+// budget refuses, as in the image (measured 2026-11-19: the former local
+// function pointer is redundant; writing has_fac at the call site instead
+// expands it, 0 -> 28 rows). The helper's original name is unknown.
+// The two helpers also shrink base_doctors, so its /Ob2 budget leaves the
+// has_fac calls in its pop_goal_fac copy out of line as in the image.
+static inline BOOL selected_base_has_fac_call(int facility_id) {
+    return has_fac(facility_id, BaseIDCurrentSelected, 0);
+}
+
+void __cdecl base_doctors() {
+    int faction = BaseCurrent->faction_id_current;
+    int riot_adjust;
+    if ((BaseCurrent->state & BSTATE_DRONE_RIOTS_ACTIVE) != 0
+        && PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE]
+               + selected_base_has_fac_call(FAC_BROOD_PIT) * 2 < -1
+        && !pop_goal_fac(BaseIDCurrentSelected)
+        && (((has_project(SP_CLONING_VATS, faction) || BaseCurrentGrowthRate >= 6)
+             && Rules.nutrient_req_citizen != 0
+             && BaseCurrent->nutrient_surplus >= static_cast<int>(Rules.nutrient_req_citizen))
+            || BaseCurrent->nutrient_surplus + BaseCurrent->nutrients_accumulated
+                   >= cost_factor(faction, 0, BaseIDCurrentSelected)
+                          * (BaseCurrent->population_size + 1))) {
+        riot_adjust = 1;
+    } else {
+        riot_adjust = 0;
+    }
+    for (int loop = 1; loop < 10; loop++) {
+        if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction)) {
+            if (!(BaseCurrent->governor & GOV_MANAGES_CITIZENS_SPECS)) return;
+            if (!(BaseCurrent->governor & GOV_ACTIVE)) return;
+        }
+        if (BaseNutrientAdequate
+            && BaseCurrent->drone_total + riot_adjust > BaseCurrent->talent_total
+            && !has_project(SP_TELEPATHIC_MATRIX, faction)) {
+            {
+                int best = best_specialist();
+                int slot = BaseCurrent->specialist_total++;
+                if (slot < 16) {
+                    const int word = slot >> 3;
+                    const int shift = (slot & 7) * 4;
+                    BaseCurrent->spec[word] &= ~(15 << shift);
+                    BaseCurrent->spec[word] |= best << shift;
+                }
+            }
+            base_compute(1);
+            if (BaseCurrent->drone_total + riot_adjust <= BaseCurrent->talent_total) {
+                if (UnkGlobal0093A934 == 0) return;
+                if (faction != ConsoleGlobal.faction_id_) return;
+                if (PlayersData[faction].se_alloc_psych >= 2) return;
+                if (BaseCurrent->specialist_total - BaseCurrent->specialist_unk_1 <= 1) return;
+                const int production = BaseCurrent->queue_production_id[0];
+                if (production == -6 || production == -11 || production == -12
+                    || production == -17 || production == -18) return;
+                if (production == 8 && has_project(SP_VIRTUAL_WORLD, faction)) return;
+                if ((Players[faction].rule_flags & RFLAG_ALIEN) != 0) {
+                    popb("PSYCHREQUEST", 0, -1, "Alopdir.pcx", 0);
+                } else {
+                    popb("PSYCHREQUEST", 0, -1, "talent_sm.pcx", 0);
+                }
+                return;
+            }
+        } else {
+            int old_total = BaseCurrent->specialist_total;
+            if (old_total - BaseCurrent->specialist_unk_1 <= 0) return;
+            if (BaseCurrent->state & BSTATE_DRONE_RIOTS_ACTIVE) return;
+            if (BaseCurrent->drone_total
+                && BaseCurrent->drone_total + riot_adjust >= BaseCurrent->talent_total
+                && !has_project(SP_TELEPATHIC_MATRIX, faction)) {
+                return;
+            }
+            BaseCurrent->specialist_total = old_total - 1;
+            base_compute(1);
+            if (BaseCurrent->drone_total + riot_adjust > BaseCurrent->talent_total
+                && !has_project(SP_TELEPATHIC_MATRIX, faction)) {
+                {
+                    int best = best_specialist();
+                    int slot = BaseCurrent->specialist_total++;
+                    if (slot < 16) {
+                        const int word = slot >> 3;
+                        const int shift = (slot & 7) * 4;
+                        BaseCurrent->spec[word] &= ~(15 << shift);
+                        BaseCurrent->spec[word] |= best << shift;
+                    }
+                }
+                return;
+            }
+            if (old_total <= BaseCurrent->specialist_total) return;
+        }
+    }
+}
+
+/*
+Purpose: Calculate facility maintenance cost for specified faction.
+// ORIGINAL: 0x004F6510 ?fac_maint@@YAHHH@Z 0x004F6510-0x004F65E7 BYTE_EXACT
+// size      215 bytes
+// prototype int (__cdecl ?fac_maint@@YAHHH@Z)(int facilityID, int factionID)
+// callers   7   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0057EFA0 0x005B9F20
+// LEVER: three changes. (1) walking pointers `bonus_id`/`bonus_val` over
+//        Players[faction_id].faction_bonus_id/faction_bonus_val1, stepped
+//        alongside `i`, instead of re-indexing the arrays each access
+//        (lever 7). (2) dropped the `bonus_count` local so the loop bound
+//        re-reads Players[faction_id].faction_bonus_count from the global
+//        every iteration, matching the image. (3) compute diff_factor
+//        before calling best_reactor(), matching the image's instruction
+//        order. Best similarity 0.820 -> 0.924 (agreeing count drops 8->4,
+//        but similarity - the tool's real tiebreak - is higher).
+Return Value: Facility maintenance cost
 Status: Complete
 */
-int __cdecl sub_4e7db0() {
-    TileYieldRestricted = 0;
+int __cdecl fac_maint(int facility_id, int faction_id) {
+    if (facility_id == FAC_COMMAND_CENTER) {
+        int diff_factor = base_yield_add(PlayersData[faction_id].diff_level, 1) / 2;
+        int reactor = best_reactor(faction_id);
+        if (reactor < 0 || diff_factor < 0) {
+            return 0;
+        }
+        return (reactor > diff_factor) ? diff_factor : reactor;
+    }
+    for (int i = 0; i < Players[faction_id].faction_bonus_count; i++) {
+        if ((Players[faction_id].faction_bonus_id[i] == RULE_FACILITY
+            || (Players[faction_id].faction_bonus_id[i] == RULE_FREEFAC
+                && has_tech(Facility[Players[faction_id].faction_bonus_val1[i]].preq_tech, faction_id)))
+            && Players[faction_id].faction_bonus_val1[i] == (int)facility_id) {
+            return 0;
+        }
+    }
+    return base_yield_signed_bits(Facility[facility_id].maint);
+}
+
+/*
+Purpose: Calculate overall maintenance cost for the currently selected base.
+// ORIGINAL: 0x004F65F0 ?base_maint@@YAXXZ 0x004F65F0-0x004F67E3 BYTE_EXACT
+// TRIED: the image's own call list has ONE call to bitmask() (0x50BA00);
+//            this tree's compile makes TWO, so `set_fac(fac,
+//            BaseIDCurrentSelected, false)` - a BYTE_EXACT standalone
+//            function elsewhere, called 10 times - looked like it was
+//            auto-inlining here and contributing its own internal bitmask()
+//            call on top of the loop guard's. Hand-inlining set_fac's body
+//            (set==false is a literal at this call site, so only the
+//            `&= ~mask` arm survives) does NOT improve it: best similarity
+//            goes 0.702 -> 0.696, a wash rather than a win, so the
+//            standalone `set_fac()` call is kept. Best flag set
+//            /O2 /Gy /GR- /Oy- /GX either way.
+// size      499 bytes
+// prototype
+// callers   1   call targets   5
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0048C650 0x004E4430 0x004F6510 0x0050BA00 0x00625E50
+Return Value: Base maintenance cost
+Status: Complete
+*/
+void __cdecl base_maint() {
+    uint32_t faction_id = BaseCurrent->faction_id_current;
+    for (int fac = 1; fac < FacilitySPStart; fac++) {
+        if (has_fac(fac, BaseIDCurrentSelected, 0)) {
+            int maint = fac_maint(fac, faction_id);
+            if (has_project(SP_SELF_AWARE_COLONY, faction_id)) {
+                maint += (PlayersData[faction_id].flags & PFLAG_SELF_AWARE_COLONY_LOST_MAINT) != 0;
+                if (maint & 1) {
+                    PlayersData[faction_id].flags |= PFLAG_SELF_AWARE_COLONY_LOST_MAINT;
+                } else {
+                    PlayersData[faction_id].flags &= ~PFLAG_SELF_AWARE_COLONY_LOST_MAINT;
+                }
+                maint /= 2;
+            }
+            PlayersData[faction_id].energy_reserves -= maint;
+            PlayersData[faction_id].maint_cost_total += maint;
+            if (PlayersData[faction_id].energy_reserves < 0) {
+                if (PlayersData[faction_id].diff_level <= DLVL_SPECIALIST) {
+                    PlayersData[faction_id].energy_reserves = 0;
+                } else if (BaseCurrent->queue_production_id[0] == -fac) {
+                    PlayersData[faction_id].energy_reserves = 0;
+                } else {
+                    set_fac(fac, BaseIDCurrentSelected, false);
+                    PlayersData[faction_id].energy_reserves
+                        = cost_factor(BaseCurrent->faction_id_current, RSC_MINERALS, -1)
+                          * Facility[fac].cost;
+                    parse_say(1, Facility[fac].name, -1, -1);
+                    popb("POWERSHORT", 0x10000, 14, "genwarning_sm.pcx", NULL);
+                }
+            }
+        }
+    }
+}
+
+
+// POP2 is implemented by the owning Popup API in popup.cpp and declared in
+// popup.h.
+int __cdecl POP2(const char *caption, const char *image, int base_id);
+
+// The superseded partial scaffold was deleted after full owner recovery.
+// Its seed path below is historical Git provenance, not a source dependency.
+// ORIGINAL: 0x004F67F0 ?base_ecology@@YAXXZ 0x004F67F0-0x004F79B3
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004f67f0.cpp; recovery/tasks/base-colony-economy-coverage-wave.json; recovery/tests/test_base_colony_production.py", "Pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf, full original span 4F67F0..4F79B3.", "Native 4F6C73 reads faction difficulty, not ranking; 4F739B reads population total and 4F73B9 independently reloads ecology.", "Native callbacks are followed by live ecology reloads at 4F6E94/4F6EC2 (including the current viewer), 4F7024, 4F70C7, 4F715B, 4F73B9, 4F74A2/4F7512, 4F75B8 and 4F76EE; signed 32-bit climate arithmetic retains native wrapping.", "Native reuses the spread cursor for the 19-row terraforming scan; preserve that original cursor behavior rather than silently changing the event."], "reason": "Recover the complete ecology event owner using real Base, faction, map, terraforming, Vehicle and climate storage. Retain original seed and obligations; this is no new byte or game acceptance claim."}
+// symbol    ?base_ecology@@YAXXZ
+// TRIED: heavily time-boxed given batch budget - only the leading probability gate (faction-table accumulator update, a rand()%100 roll against a base-stat threshold, and the two disabling-flag checks) is transcribed; the ecology event itself, most of the function, is a deliberate stub. MISMATCH #0, prologue only.
+void __cdecl base_ecology() {
+    int faction = BaseCurrent->faction_id_current;
+    int divisor = range(4 - PlayersData[faction].soc_effect_pending.values_[SocialEffect::PLANET], 1, 99);
+    PlayersData[faction].unk_49 += BaseCurrent->eco_damage * 4 / divisor;
+    if ((int)rnd(100, "BASEECOLOGY") >= BaseCurrent->eco_damage
+            / ((GameDataStateStorage.fields_.game_state_ & 0x100000) ? 2 : 1)) {
+        return;
+    }
+    if (GameDataStateStorage.fields_.game_rules_ & 0x200000) {
+        return;
+    }
+    if ((GameDataStateStorage.fields_.game_state_ & 1)
+            && !(GameDataStateStorage.fields_.game_state_ & 8)) {
+        return;
+    }
+    // Pick the tile that grows fungus: next to land fungus, around this base.
+    int best_roll = 0;
+    int best_index = -1;
+    int i;
+    for (i = 1; i < 49; i++) {
+        int x = wrap_map_x(BaseCurrent->x + RadiusOffsetX[i]);
+        int y = BaseCurrent->y + RadiusOffsetY[i];
+        if (!on_map(x, y)) {
+            continue;
+        }
+        Map *tile = map_loc(x, y);
+        if ((tile->bit & BIT_FUNGUS) && (tile->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF) {
+            continue;
+        }
+        if (base_who(x, y) >= 0) {
+            continue;
+        }
+        int prob = 0;
+        if (i >= 25) {
+            // Outer ring: only while nothing was found yet, and only tiles
+            // whose nearest base is this one.
+            if (best_roll) {
+                continue;
+            }
+            if (base_find(x, y) != BaseIDCurrentSelected) {
+                continue;
+            }
+            prob = 1;
+        }
+        for (int j = 0; j < 4; j++) {
+            int x2 = wrap_map_x(x + RiverStepX[j]);
+            int y2 = y + RiverStepY[j];
+            if (on_map(x2, y2)) {
+                Map *neighbor = map_loc(x2, y2);
+                if ((neighbor->bit & BIT_FUNGUS)
+                        && (neighbor->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF) {
+                    prob += 2;
+                }
+            }
+        }
+        if (prob) {
+            if (prob > 1) {
+                prob += bit_count(bit_at(x, y) & MapTileFlagClearMask);
+                if (i < 9) {
+                    prob++;
+                }
+            }
+            if (is_ocean(x, y)) {
+                prob = (prob + 1) / 2;
+            }
+            prob *= 10;
+            int roll = rnd(prob, "BASEECOLOGY2");
+            if (roll > best_roll) {
+                best_roll = roll;
+                best_index = i;
+            }
+        }
+    }
+    if (best_index <= 0) {
+        return;
+    }
+    BOOL shown = false;
+    int report_terraform = -1;
+    int ecology = ++PlayersData[faction].planet_ecology;
+    int event_x = wrap_map_x(BaseCurrent->x + RadiusOffsetX[best_index]);
+    int event_y = BaseCurrent->y + RadiusOffsetY[best_index];
+    int spread = 1;
+    if (is_ocean(event_x, event_y) && ecology >= 4) {
+        int chance = 10 - ecology / 8 - PlayersData[faction].diff_level;
+        if (!rnd(chance, "SEASPREAD")) {
+            spread = 9;
+        }
+    }
+    for (i = 0; i < spread; i++) {
+        int x = wrap_map_x(event_x + RadiusOffsetX[i]);
+        int y = event_y + RadiusOffsetY[i];
+        if (!on_map(x, y)) {
+            continue;
+        }
+        if (i && !is_ocean(x, y)) {
+            continue;
+        }
+        Map *tile = map_loc(x, y);
+        uint32_t bit = tile->bit;
+        if ((bit & BIT_FUNGUS) && (tile->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF) {
+            continue;
+        }
+        if (base_who(x, y) >= 0) {
+            continue;
+        }
+        if ((tile->bit2 & 0x80000002) == 2) {
+            continue;
+        }
+        if (report_terraform < 0) {
+            // BUG(original): the improvement scan reuses the spread loop's
+            // counter, so after it runs (i == 19) the spread loop ends.
+            for (i = 0; i < 19; i++) {
+                if (Terraforming[i].bit & MapTileFlagClearMask & bit) {
+                    report_terraform = i;
+                }
+            }
+        }
+        bit_set(x, y, BIT_FUNGUS, true);
+        bit_set(x, y, MapTileFlagClearMask, false);
+        if ((map_loc(x, y)->climate >> 5) < ALT_OCEAN_SHELF) {
+            world_alt_set(x, y, ALT_OCEAN_SHELF, false);
+        }
+        if (is_known(x, y, ConsoleGlobal.faction_id_)
+                || (GameDataStateStorage.fields_.game_state_ & 0x80)) {
+            shown = true;
+            if (faction == ConsoleGlobal.faction_id_) {
+                ConsoleGlobal.focus(x, y, faction);
+                if (PlayersData[faction].planet_ecology < 2) {
+                    interlude(3, nullptr, 1, 0);
+                }
+                boom(x, y, 0x80);
+            }
+            synch_bit(x, y, ConsoleGlobal.faction_id_);
+            draw_tile(x, y, 2);
+        }
+    }
+    if (shown) {
+        if (!HIBYTE(GetAsyncKeyState(VK_SHIFT)) && !IsMultiplayerNet) {
+            clock_wait(20);
+        }
+        if (faction == ConsoleGlobal.faction_id_
+                || veh_who(event_x, event_y) == ConsoleGlobal.faction_id_) {
+            MapWinTable[0]->set_center(event_x, event_y, 1);
+            ConsoleGlobal.focus(event_x, event_y, faction);
+            parse_says(0, BaseCurrent->name_string, -1, -1);
+            if (report_terraform >= 0 && faction == ConsoleGlobal.faction_id_) {
+                // name and name_sea are read as a two-entry run.
+                parse_say(1, Terraforming[report_terraform].name[is_ocean(event_x, event_y)],
+                          -1, -1);
+                POP2("FUNGUSGROWS2", "fung_sm.pcx", BaseIDCurrentSelected);
+            } else {
+                POP2("FUNGUSGROWS", "fung_sm.pcx", -1);
+            }
+        }
+        if (faction == ConsoleGlobal.faction_id_ && PlayersData[faction].planet_ecology >= 2) {
+            interlude(5, BaseCurrent->name_string, 1, 0);
+        }
+    }
+    if (!is_human(faction) && !rnd(2, "LEADERPLANET1")) {
+        int odds = GameDataStateStorage.fields_.diff_level_current_ + 1;
+        if (rnd(odds, "LEADERPLANET2")) {
+            PlayersData[faction].planet_ecology--;
+            return;
+        }
+    }
+    if (PlayersData[faction].flags & 0x4000) {
+        PlayersData[faction].flags &= ~0x4000u;
+        return;
+    }
+    if (PlayersData[faction].planet_ecology < 7
+            || base_project(SP_VOICE_OF_PLANET) != SP_Unbuilt) {
+        return;
+    }
+    // Planet strikes back: native life rises from the new fungus.
+    if (faction == ConsoleGlobal.faction_id_) {
+        interlude(8, nullptr, 1, 0);
+    }
+    if (!(rand() % 4) && ExpansionEnabled && !is_ocean(event_x, event_y)) {
+        veh_init(BSC_FUNGAL_TOWER, 0, event_x, event_y);
+    }
+    int gated_spawns = 0;
+    int created = 0;
+    for (i = 0; i < (PlayersData[faction].planet_ecology < 9
+                     ? PlayersData[faction].planet_ecology : 9); i++) {
+        int x = wrap_map_x(event_x + RadiusOffsetX[i]);
+        int y = event_y + RadiusOffsetY[i];
+        if (!on_map(x, y)) {
+            continue;
+        }
+        Map *tile = map_loc(x, y);
+        if (!(tile->bit & BIT_FUNGUS) || (tile->climate & ~0x1F) < ALT_BIT_OCEAN_SHELF) {
+            continue;
+        }
+        int base_id = base_find(x, y);
+        if (base_id < 0 || Bases[base_id].faction_id_current != faction) {
+            continue;
+        }
+        if (veh_who(x, y) > 0 || base_who(x, y) > 0) {
+            continue;
+        }
+        int region = region_at(x, y);
+        int unit_id;
+        if (region >= 0x40) {
+            unit_id = (gated_spawns % 3) ? BSC_ISLE_OF_THE_DEEP : BSC_LOCUSTS_OF_CHIRON;
+        } else {
+            unit_id = PlayersData[faction].region_total_bases[region]
+                ? BSC_MIND_WORMS : BSC_LOCUSTS_OF_CHIRON;
+        }
+        if (unit_id != BSC_MIND_WORMS) {
+            // The image reads current_num_bases (+0x105C) here.
+            gated_spawns++;
+            if (gated_spawns >= PlayersData[faction].current_num_bases * 2 / 3
+                    || gated_spawns >= PlayersData[faction].planet_ecology / 3) {
+                continue;
+            }
+        }
+        created++;
+        if (unit_id == BSC_MIND_WORMS && !(rand() % 5) && ExpansionEnabled) {
+            unit_id = BSC_SPORE_LAUNCHER;
+        }
+        int veh_id = veh_init(unit_id, 0, x, y);
+        if (veh_id >= 0) {
+            Vehs[veh_id].order_auto_type = static_cast<uint8_t>(faction);
+        }
+        draw_tile(x, y, 2);
+    }
+    if (anything_at(event_x, event_y) <= 0) {
+        int region = region_at(event_x, event_y);
+        int unit_id = PlayersData[faction].region_total_bases[region]
+            ? (region >= 0x40 ? BSC_ISLE_OF_THE_DEEP : BSC_MIND_WORMS)
+            : BSC_LOCUSTS_OF_CHIRON;
+        while (created < PlayersData[faction].planet_ecology / 3
+                && created < BaseCurrent->population_size) {
+            if (unit_id == BSC_MIND_WORMS && !(rand() % 5) && ExpansionEnabled) {
+                unit_id = BSC_SPORE_LAUNCHER;
+            }
+            veh_init(unit_id, 0, event_x, event_y);
+            created++;
+            if (unit_id == BSC_SPORE_LAUNCHER) {
+                unit_id = BSC_MIND_WORMS;
+            }
+        }
+    }
+    if (is_human(faction) || GameDataStateStorage.fields_.diff_level_current_ >= 4) {
+        // Global warming.
+        GameDataStateStorage.fields_.ecology_event_accumulator_++;
+        int sea_level = range(MapSeaLevel, 0, 100);
+        int rises = WorldBuilder.sea_level_rises;
+        int rise_divisor = range(rises, 1, 99);
+        if (Rules.freq_global_warming_num * GameDataStateStorage.fields_.ecology_event_accumulator_
+                / Rules.freq_global_warming_denom >= sea_level * 3 / rise_divisor + 6) {
+            GameDataStateStorage.fields_.ecology_event_accumulator_ = 0;
+            int increase = range(PlayersData[faction].planet_ecology / 6 - 1, 1, 3);
+            MapSeaLevelCouncil += increase;
+            GameDataStateStorage.fields_.climate_sea_level_delta_ += rises * increase / 3;
+            GameDataStateStorage.fields_.climate_rise_step_ =
+                GameDataStateStorage.fields_.climate_sea_level_delta_ < 0
+                    ? -GameDataStateStorage.fields_.climate_sea_level_delta_
+                    : GameDataStateStorage.fields_.climate_sea_level_delta_;
+            GameDataStateStorage.fields_.climate_rise_limit_ = 20;
+            GameDataStateStorage.fields_.climate_rise_accum_ = 0;
+            parse_num(0, 20);
+            int change = GameDataStateStorage.fields_.climate_sea_level_delta_ < 0
+                ? -GameDataStateStorage.fields_.climate_sea_level_delta_
+                : GameDataStateStorage.fields_.climate_sea_level_delta_;
+            parse_num(1, change * 1000 / 15);
+            if (faction == ConsoleGlobal.faction_id_) {
+                popp(ScriptPopupFile, "TRIGGERWARMING", 0, "searis_sm.pcx", nullptr);
+                return;
+            }
+            parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
+            parse_says(0, Players[faction].noun_faction, -1, -1);
+            popp(ScriptPopupFile, "TRIGGERWARMING2", 0, "searis_sm.pcx", nullptr);
+            return;
+        }
+    }
+    if (PlayersData[faction].planet_ecology < 10
+            || (GameDataStateStorage.fields_.game_state_ & 0x20000)) {
+        return;
+    }
+    // Volcano at a random ocean tile with nobody around.
+    int rand_x = rnd(MapLongitudeBounds, "VOLCa");
+    int volcano_y = rnd(MapLatitudeBounds, "VOLCb");
+    int volcano_x = rand_x;
+    if (rand_x & 1) {
+        volcano_x = rand_x - 1;
+    }
+    if (volcano_y & 1) {
+        volcano_x++;
+    }
+    if (!on_map(volcano_x, volcano_y)) {
+        return;
+    }
+    Map *volcano_tile = map_loc(volcano_x, volcano_y);
+    if ((volcano_tile->climate & ~0x1F) >= ALT_BIT_SHORE_LINE) {
+        return;
+    }
+    for (i = 0; i < 49; i++) {
+        int x = wrap_map_x(volcano_x + RadiusOffsetX[i]);
+        int y = volcano_y + RadiusOffsetY[i];
+        if (on_map(x, y) && anything_at(x, y) >= 0) {
+            break;
+        }
+    }
+    if (i != 49) {
+        return;
+    }
+    if ((PlayersData[ConsoleGlobal.faction_id_].flags & PFLAG_MAP_REVEALED)
+            || (volcano_tile->visibility & (1 << ConsoleGlobal.faction_id_))) {
+        ConsoleGlobal.focus(volcano_x, volcano_y, ConsoleGlobal.faction_id_);
+    }
+    GameDataStateStorage.fields_.game_state_ |= 0x20000;
+    world_volcano(volcano_x, volcano_y, 1);
+    world_climate();
+    draw_map(1);
+    clock_wait(1000);
+    GenderDefault = Players[ConsoleGlobal.faction_id_].is_leader_female;
+    PluralityDefault = 0;
+    parse_says(0, Players[ConsoleGlobal.faction_id_].title_leader, -1, -1);
+    PluralityDefault = 0;
+    GenderDefault = Players[ConsoleGlobal.faction_id_].is_leader_female;
+    parse_says(1, Players[ConsoleGlobal.faction_id_].name_leader, -1, -1);
+    if (is_known(volcano_x, volcano_y, ConsoleGlobal.faction_id_)) {
+        popp(ScriptPopupFile, "VOLCANO", 0, "volc_sm.pcx", nullptr);
+    }
+}
+
+// Production sets this request for the subsequent upkeep zoom. Four-byte
+// loader-zero initial storage; the original identity is not a runtime address.
+// RECOVERY_OBJECT: v2 0x0090E934 0x0090E938 ?BaseProductionZoomRequested@@3HA 0x004F07E0
+int BaseProductionZoomRequested = 0;
+// Nonzero skips unit creation before veh_init. The indirect producer remains
+// unverified; do not infer a permanently false flag from loader-zero storage.
+// RECOVERY_OBJECT: v2 0x0090EA40 0x0090EA44 ?BaseProductionUnitCreationDisabled@@3HA 0x004F07E0
+int BaseProductionUnitCreationDisabled = 0;
+
+// ORIGINAL: 0x004F79C0 ?base_upkeep@@YAHH@Z 0x004F79C0-0x004F7FDA BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["original:0x004F79C0-0x004F7FDA:pinned Base upkeep span","original:0x004F7D9E,0x004F7DDC,0x004F7E1D:BaseCurrent is reloaded at the native parser/climate callback boundaries","original:0x004F7BF6-0x004F7C01:actor and partner rule-flags use distinct faction indexes","source:src/base.h:Base, Bases, BaseCurrent, and the canonical Base-upkeep call surface","source:src/faction.h:Player and PlayerData arrays distinguish actor, partner, loans, energy and sanctions"],"reason":"Recover Base upkeep with native callback reloads and independently indexed actor/partner commerce state through the existing Base, Player and PlayerData owners."}
+// LEVER: set_base-like prologue with a local &Bases[base_id] (reused when
+//        BaseCurrent is restored), plain int accumulation, signed /8 %8 bit
+//        test, project walk through a local project_base pointer, and the
+//        focus/rename visibility tests written inline. Remaining gap: the
+//        commerce loop's three pointer inductions take different registers.
+int __cdecl base_upkeep(int base_id) {
+    // Native event/log text remains inline: "al_col_sm.pcx" 0x689EA4..0x689EB2, "RENAMEBASE" 0x689EB4..0x689EBF and 0x689ED0..0x689EDB, "colfoun_sm.pcx" 0x689EC0..0x689ECF, "UPKEEP zoom-to-base" 0x689EDC..0x689EF0, and "FINISHED zoom-to-base" 0x689EF0..0x689F06.
+
+    BaseIDCurrentSelected = base_id;
+    Base *base = &Bases[base_id];
+    BaseCurrent = base;
+    const int faction_id = BaseCurrent->faction_id_current;
+    BaseProductionZoomRequested = 0;
+    Bases[base_id].state &= 0xDFFFFDFFu;
+    base_compute(1);
+    base_production();
+    base_hurry();
+
+    BaseCurrent->minerals_accumulated_2 = BaseCurrent->minerals_accumulated;
+    BaseCurrent->production_id_last = BaseCurrent->queue_production_id[0];
+    if (base_growth() != 0) return 1;
+    if (GameDataStateStorage.fields_.turn_current_num_ > 1) base_check_support();
+
+    BaseUpkeepStage = 1;
+    base_compute(1);
+
+    int tile_weight;
+    int region = region_at(BaseCurrent->x, BaseCurrent->y);
+    if (PlayersData[faction_id].region_base_plan[region] == 7
+        && PlayersData[faction_id].ai_fight <= 0) {
+        tile_weight = 4;
+    } else {
+        tile_weight = (PlayersData[faction_id].region_base_plan[region] != 2) + 1;
+    }
+    PlayersData[faction_id].unk_47 += bit_count(BaseCurrent->resource_sqr_radius) * tile_weight;
+
+    BaseUpkeepStage = 2;
+    if (GameDataStateStorage.fields_.turn_current_num_ > 1) {
+        base_drones();
+        base_doctors();
+        if (BaseCurrent->faction_id_current != faction_id) return 1;
+        base_energy_costs();
+        if (GameDataStateStorage.fields_.turn_current_num_ > 5 || IsMultiplayerNet != 0 ||
+            (GameDataStateStorage.fields_.game_preferences_ & 0x20u) == 0) {
+            base_research();
+        }
+    }
+
+    BaseIDCurrentSelected = base_id;
+    BaseCurrent = base;
+    base_compute(0);
+    base_ecology();
+    PlayersData[faction_id].energy_reserves += BaseCurrent->economy_total;
+
+    // Actor and partner rule flags use distinct faction indexes.
+    // A walked receipts pointer orders the loop's three pointer inductions.
+    int *receipts = BaseCommerceReceipts;
+    for (int other_faction = 1; other_faction < MaxPlayerNum; ++other_faction, ++receipts) {
+        if (other_faction != faction_id && !(Players[faction_id].rule_flags & 0x80)
+            && !(Players[other_faction].rule_flags & 0x80)) {
+            PlayersData[faction_id].turn_commerce_income +=
+                (PlayersData[faction_id].sanction_turns == 0
+                 && PlayersData[other_faction].sanction_turns == 0)
+                ? *receipts : 0;
+        }
+    }
+
+    if ((Players[faction_id].rule_flags & 0x80) != 0) {
+        int count = 0;
+        for (int facility_id = 0; facility_id < 0x46; ++facility_id) {
+            if (BaseCurrent->facilities_built[facility_id / 8] & (1 << (facility_id % 8))) {
+                ++count;
+            }
+        }
+        const int *projects = GameDataStateStorage.fields_.secret_project_.project_base;
+        for (int project = 0; project < MaxSecretProjectNum; ++project) {
+            if (projects[project] == base_id) count += 5;
+        }
+        int alien_commerce = count / 2;
+        if (PlayersData[faction_id].sanction_turns != 0) alien_commerce = 0;
+        PlayersData[faction_id].turn_commerce_income += alien_commerce;
+    }
+
+    if (GameDataStateStorage.fields_.turn_current_num_ > 1) base_maint();
+    base_terraform(0);
+    if ((BaseCurrent->state & 0x10000u) != 0 && rnd(3, "BASE1") == 0 &&
+        (GameDataStateStorage.fields_.game_state_ & STATE_UNK_1) == 0) {
+        if (Bases[BaseIDCurrentSelected].faction_id_current == ConsoleGlobal.faction_id_
+            || ((1 << ConsoleGlobal.faction_id_) & Bases[BaseIDCurrentSelected].visibility)) {
+            if (!ConsoleGlobal.focus(BaseCurrent->x, BaseCurrent->y, ConsoleGlobal.faction_id_)) {
+                draw_tiles(BaseCurrent->x, BaseCurrent->y, 2);
+            }
+        }
+        // 0x4F7D9E reloads after focus/draw callbacks before this phrase.
+        parse_says(1, BaseCurrent->name_string, -1, -1);
+        GenderDefault = Players[faction_id].noun_gender;
+        PluralityDefault = Players[faction_id].is_noun_plural;
+        parse_says(0, Players[faction_id].noun_faction, -1, -1);
+        // 0x4F7DDC reloads after parse_says(0); use that same live Base for
+        // the climate tile and name_base's name pointer.
+        Base &climate_base = *BaseCurrent;
+        const int event_tile = static_cast<int>(climate_base.y) *
+            static_cast<int>(MapLongitude) + (static_cast<int>(climate_base.x) >> 1);
+        const int final_name = (MapTiles[event_tile].climate & ~0x1F) < 0x60;
+        name_base(faction_id, climate_base.name_string, 1, final_name);
+        // 0x4F7E1D reloads after name_base before parsing the renamed phrase.
+        parse_says(2, BaseCurrent->name_string, -1, -1);
+        if (Bases[BaseIDCurrentSelected].faction_id_current == ConsoleGlobal.faction_id_
+            || ((1 << ConsoleGlobal.faction_id_) & Bases[BaseIDCurrentSelected].visibility)) {
+            draw_map(1);
+            if (Players[faction_id].rule_flags & 0x80) {
+                popp(ScriptPopupFile, "RENAMEBASE", 0, "al_col_sm.pcx", 0);
+            } else {
+                popp(ScriptPopupFile, "RENAMEBASE", 0, "colfoun_sm.pcx", 0);
+            }
+        }
+        BaseCurrent->state &= ~0x10000u;
+        BaseCurrent->state |= 0x80u;
+    }
+
+    BaseComputedID = -1;
+    if (BaseIDCurrentSelected == TutWinBaseWindow.focused_base_id()) {
+        TutWinBaseWindow.on_redraw();
+    }
+    if (BaseProductionZoomRequested != 0) {
+        // stand-in: the low-byte read VC6 narrows to without the volatile below.
+        const uint8_t state_for_zoom = static_cast<uint8_t>(GameDataStateStorage.fields_.game_state_);
+        if ((state_for_zoom & 1u) == 0 || (state_for_zoom & 8u) != 0) {
+            log_say("UPKEEP zoom-to-base", base_id, 0, 0);
+            TutWinBaseWindow.zoom(base_id, 1);
+            log_say("FINISHED zoom-to-base", base_id, 0, 0);
+        }
+    }
+
+    BaseUpkeepStage = 0;
+    if (BaseCurrent->assimilation_turns_left != 0) {
+        --BaseCurrent->assimilation_turns_left;
+        if (BaseCurrent->faction_id_former == BaseCurrent->faction_id_current &&
+            BaseCurrent->assimilation_turns_left != 0) {
+            --BaseCurrent->assimilation_turns_left;
+        }
+        if (BaseCurrent->assimilation_turns_left == 0) {
+            BaseCurrent->faction_id_former = BaseCurrent->faction_id_current;
+        }
+    }
+    if (BaseCurrent->nerve_staple_turns_left != 0) --BaseCurrent->nerve_staple_turns_left;
+    BaseCurrent->state &= 0xFFDFFFF7u;
+    // stand-in: a volatile read forces the image's turn-then-base load order;
+    // every plain spelling of the sum loads BaseIDCurrentSelected first.
+    const int turn = *(volatile int *)&GameDataStateStorage.fields_.turn_current_num_;
+    const int selected = BaseIDCurrentSelected;
+    if (((selected + turn) & 7) == 0) {
+        BaseCurrent->state &= 0xFFEFFFFFu;
+    }
     return 0;
 }
+
+/*
+Purpose: Count matching base names. If any exist, truncate the target
+         to its original 21-character prefix and append a suffix based on the
+         full collision count.
+// ORIGINAL: 0x004F7FE0 ?make_base_unique@@YAXH@Z 0x004F7FE0-0x004F8087 BYTE_EXACT
+// size      167 bytes
+// prototype void (__cdecl ?make_base_unique@@YAXH@Z)(int baseID)
+// callers   3   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00645470 0x00645660 0x0064FC88
+// LEVER: dropped std::string entirely for the image's strcat/_itoa idiom
+//        operating directly on Bases[base_id].name_string (no separate core
+//        copy) - the image has no C++ library here. Took the body from
+//        0/61 to 3/61 agreeing and removed the whole SEH prologue
+//        (push -1/push 0/mov eax,fs:[0]) the std::string version needed.
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl make_base_unique(int base_id) {
+    int collisions = 0;
+    for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
+        if (base_id != i &&
+            !strcmp(Bases[i].name_string, Bases[base_id].name_string)) {
+            ++collisions;
+        }
+    }
+    if (collisions != 0) {
+        Bases[base_id].name_string[21] = 0;
+        // make_base_unique passes this one-byte delimiter to strcat; collision digits use a separate buffer.
+// RECOVERY_LITERAL: v1 0x00689F08 0x00689F0A $SG63614 0x004F7FE0
+        strcat(Bases[base_id].name_string, "-");
+        char digits[0x50];
+        _itoa(collisions + 1, digits, 10);
+        strcat(Bases[base_id].name_string, digits);
+    }
+}
+
+/*
+Purpose: Check if a faction has the specified secret project built in a base they control.
+// ORIGINAL: 0x004F80D0 ?has_project@@YAHHH@Z 0x004F80D0-0x004F8103 BYTE_EXACT
+// body      src/base.h
+// size      51 bytes
+// prototype int (__cdecl ?has_project@@YAHHH@Z)(int projectID, int factionID)
+// callers   8   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: Does faction have Secret Project? true/false
+Status: Complete
+*/
