@@ -609,15 +609,15 @@ int __cdecl pops(char *caption, char *label, int value, char *override_text,
         int h = pop->field_30C0_;
         int w = pop->field_30BC_;
         int y = pop->field_30B8_;
-        int x = pop->field_30B4_;
+        pair_value_a = pop->field_30B4_;
         // NAMED SUMS IN THE IMAGE'S COMPUTE ORDER: the image adds w+x
         // (0x006277B4, into w's register) BEFORE y+h, and only then does it
         // store Left, Bottom, and finally Right - sunk past the pops. The
         // mutate-in-place spelling computed w+x last and commuted the add
         // into x's register.
         PopupCloseRect.top = y;
-        PopupCloseRect.right = x + w;
-        PopupCloseRect.left = x;
+        PopupCloseRect.right = pair_value_a + w;
+        PopupCloseRect.left = pair_value_a;
         PopupCloseRect.bottom = y + h;
         return execResult;
     }
