@@ -131,6 +131,7 @@ def main():
     ap.add_argument('--try', dest='try_', action='store_true', help='single-site source sweep (nvarg, labelraw, labelget, unname, expand)')
     ap.add_argument('--try-rules', default='nvarg,labelraw,labelget,tableraw,tableget,unname,expand,contract')
     ap.add_argument('--top', type=int, default=12)
+    ap.add_argument('--write', metavar='SUBSTR', help='with --try: write the best single-site candidate whose key contains SUBSTR (e.g. "unname L387") when it improves; nv() probes are never written')
     ap.add_argument('--pairs', type=int, default=0, metavar='K', help='after --try: every pair of the K single sites that moved the rows most favourably')
     ap.add_argument('--triples', type=int, default=0, metavar='K', help='after --try: every triple of the best K moving single sites')
     a = ap.parse_args()
@@ -212,7 +213,7 @@ def main():
         print('  %d of %d paired allocations are out of sync; offset 1 = ours one allocation ahead, 2 = one behind.'
               % (len(nz), len(pairs)))
     if a.try_:
-        try_sweep(unit, addr, text, res['diff'], a.try_rules.split(','), a.top, a.pairs, a.triples)
+        try_sweep(unit, addr, text, res['diff'], a.try_rules.split(','), a.top, a.pairs, a.triples, a.write, path)
 
 
 KEYWORDS = {'if', 'while', 'for', 'switch', 'return', 'sizeof', 'static_cast', 'reinterpret_cast', 'const_cast',
@@ -303,7 +304,7 @@ ALL_RULES = ('labelraw', 'labelget', 'tableraw', 'tableget')
 OPERAND = re.compile(r'(?<![\w.>])[A-Za-z_]\w*(?:(?:\.|->)[A-Za-z_]\w*|\[[^\[\]]*\])*')
 
 
-def try_sweep(unit, addr, text, base_diff, rule_names, top, pairs=0, triples=0):
+def try_sweep(unit, addr, text, base_diff, rule_names, top, pairs=0, triples=0, write=None, path=None):
     import rules
     import perm
     mt = rules.mask(text)
@@ -364,6 +365,16 @@ def try_sweep(unit, addr, text, base_diff, rule_names, top, pairs=0, triples=0):
     print('  %d of %d improve on %d rows' % (len(better), len(res), base_diff))
     for w, d, ex, key in res[:top]:
         print('  %4d%s %s' % (d, ' EXACT' if ex else '', key))
+    if write:
+        vs = dict(deck)
+        for w, d, ex, key in res:
+            if write in key and d < base_diff and not key.startswith('nv'):
+                open(path, 'w', encoding='latin-1').write(vs[key])
+                print('  WROTE %s (%d -> %d)' % (key, base_diff, d))
+                break
+        else:
+            print('  nothing written for %r' % write)
+        return
     if not (pairs or triples) or any(r[2] for r in res):
         return
     # Pairs and triples (two named/anonymous disagreements: the cursor offset changes twice). A site that
