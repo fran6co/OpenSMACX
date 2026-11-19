@@ -4780,24 +4780,23 @@ void ReportWin::draw_intel() {
                        rect1_.top + shown * field_E268_);
     }
     for (int faction = 1; faction < 8; ++faction) {
-        const unsigned int flags = PlayersData[subject].diplo_treaties[faction];
-        if (faction == subject || !(flags & 8) ||
+        if (faction == subject || !(PlayersData[subject].diplo_treaties[faction] & 8) ||
             !(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << faction)) ||
             (!informed && faction != viewer && !(PlayersData[viewer].diplo_treaties[faction] & 1))) continue;
         StringTemp[0] = 0;
-        if (flags & 0x10) {
+        if (PlayersData[subject].diplo_treaties[faction] & 0x10) {
             strcat(StringTemp, label_get(0x358 / 4)); strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, label_get(0x5C8 / 4));
-        } else if (flags & 1) {
+        } else if (PlayersData[subject].diplo_treaties[faction] & 1) {
             strcat(StringTemp, get_pact(subject)); strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, label_get(0x43C / 4));
         } else {
-            if (flags & 2) {
+            if (PlayersData[subject].diplo_treaties[faction] & 2) {
                 strcat(StringTemp, label_get(0x350 / 4));
                 strcat(StringTemp, BufferJoinSpace);
             }
             else {
-                if (flags & 0x10000) { strcat(StringTemp, label_get(0x5D0 / 4)); strcat(StringTemp, BufferJoinSpace); }
+                if (PlayersData[subject].diplo_treaties[faction] & 0x10000) { strcat(StringTemp, label_get(0x5D0 / 4)); strcat(StringTemp, BufferJoinSpace); }
                 strcat(StringTemp, label_get(0x354 / 4));
                 strcat(StringTemp, BufferJoinSpace);
             }
