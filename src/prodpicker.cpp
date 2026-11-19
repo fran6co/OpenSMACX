@@ -600,11 +600,13 @@ void ProdPicker::calculate() {
                             * (100 - static_cast<int>(Rules.retool_pct_pen_prod_chg)) / 100
                             + static_cast<int>(Rules.retool_exemption);
                     }
+                    cost -= minerals;
+                    proto_cost -= minerals;
                 } else {
                     minerals = BaseCurrent->minerals_accumulated_2;
+                    cost -= minerals;
+                    proto_cost -= minerals;
                 }
-                cost -= minerals;
-                proto_cost -= minerals;
             }
             char turns[80];
             _itoa(range((BaseCurrent->mineral_surplus + proto_cost - 1)
