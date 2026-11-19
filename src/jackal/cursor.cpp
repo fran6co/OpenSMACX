@@ -263,7 +263,9 @@ int Cursor::init(Sprite *sprite, int hotspot_x, int hotspot_y) {
         sprite->copy(owned_sprite_);
         hotspot_x_ = hotspot_x;
         hotspot_y_ = hotspot_y;
+        return 0;
+    } else {
+        return 0;
     }
-    return 0;
 }
 
