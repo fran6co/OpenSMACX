@@ -7855,11 +7855,11 @@ static int communicate_budget_probe4(int x) {
 }
 // make_a_proposal's string operands, each read from the image's push operand
 // and checked against the literal text in the body (unpooled, one copy each).
-// RECOVERY_LITERAL: v1 0x0068DF20 0x0068DF2B $SG65633 0x0054F420
-// RECOVERY_LITERAL: v1 0x0068DF2C 0x0068DF3A $SG65635 0x0054F420
-// RECOVERY_LITERAL: v1 0x0068DF3C 0x0068DF3E $SG65664 0x0054F420
-// RECOVERY_LITERAL: v1 0x0068DF40 0x0068DF4C $SG65669 0x0054F420
-// RECOVERY_LITERAL: v1 0x0068DF4C 0x0068DF5B $SG65673 0x0054F420
+// RECOVERY_LITERAL: v1 0x0068DF20 0x0068DF2B $SG65640 0x0054F420
+// RECOVERY_LITERAL: v1 0x0068DF2C 0x0068DF3A $SG65642 0x0054F420
+// RECOVERY_LITERAL: v1 0x0068DF3C 0x0068DF3E $SG65671 0x0054F420
+// RECOVERY_LITERAL: v1 0x0068DF40 0x0068DF4C $SG65676 0x0054F420
+// RECOVERY_LITERAL: v1 0x0068DF4C 0x0068DF5B $SG65680 0x0054F420
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0054F420 0x0054FFAC 0x0054FFD0 0x0054FA67
 // ORIGINAL: 0x0054F420 ?make_a_proposal@@YAXHHH@Z 0x0054F420-0x0054FFAB;0x0065FD5F-0x0065FF4F BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:diplomacy-actions-owner-coverage", "Pinned54F420-54FFAB and65FD5F-65FF4F; entryFAB0 counteroffer selector andFA34 proposal identity", "Native54F95F rereads multiplayer mode after repayment callback;54F9B6 rereads live Council selector", "Physical54FFAC nine-entry jump table establishes Council cases1-9;54FBEC vote count=-1-reply", "Native54FCDF governor default usesPopup.set_value; no raw modal storage or manual destruction", "historical seed:src/unrecovered/0054f420.cpp"], "reason": "Recover the proposal dispatcher, repayment and Council dialogs in their faction owner using a lexical Popup, source-owned selectors and directed loan/player state. Preserve original primary and generated cleanup spans and all seed findings; no byte or game acceptance claim is granted."}
