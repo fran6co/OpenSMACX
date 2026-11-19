@@ -1302,7 +1302,7 @@ void BaseWin::draw_supported(int update_mode) {
         scroll_rect.left = content.right - 12;
         scroll_small();
         scroll2_.init(&scroll_rect, &MainInterfaceGlobal, 2, 0);
-        scroll2_.set_range(0, rows - 1); scroll2_.set_pos(static_cast<int>(field_40B14_));
+        scroll2_.set_range(0, rows - 1); scroll2_.set_pos(field_40B14_);
         scroll2_.set_paging((columns - 1) * rows); scroll2_.show(0); scroll_normal();
         field_40B20_ = 1;
     } else {
@@ -1321,8 +1321,8 @@ void BaseWin::draw_supported(int update_mode) {
         if (Vehs[vehicle_id].faction_id != BaseCurrent->faction_id_current
             || Vehs[vehicle_id].home_base_id != BaseIDCurrentSelected) continue;
         ++ordinal;
-        if (field_40B20_ && (ordinal < static_cast<int>(field_40B14_) * columns
-            || ordinal >= (static_cast<int>(field_40B14_) + rows) * columns)) continue;
+        if (field_40B20_ && (ordinal < field_40B14_ * columns
+            || ordinal >= (field_40B14_ + rows) * columns)) continue;
         veh_draw(&MainInterfaceGlobal, vehicle_id, x, y, -6, 72, 0);
         if (MapWinCaptionScale > 0) {
             SpriteScaleNumerator = MapWinCaptionScale;

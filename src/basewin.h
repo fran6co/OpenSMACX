@@ -510,7 +510,7 @@ class BaseWin : public GraphicWin, public SubInterface {
   uint32_t field_40B08_;  // 0x40B08
   uint32_t focusedBaseID_;  // 0x40B0C
   uint32_t field_40B10_;  // 0x40B10
-  uint32_t field_40B14_;  // 0x40B14
+  int field_40B14_;  // 0x40B14
   uint32_t field_40B18_;  // 0x40B18
   uint32_t field_40B1C_;  // 0x40B1C
   uint32_t field_40B20_;  // 0x40B20
