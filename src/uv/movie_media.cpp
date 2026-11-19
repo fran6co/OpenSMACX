@@ -2329,7 +2329,7 @@ extern "C" int __cdecl sub_5cb660(MediaDescriptor *d) {
   return 0;
 }
 
-static __forceinline void media_worker_loop(MediaDescriptor *self) {
+static inline void media_worker_loop(MediaDescriptor *self) {
   MediaRuntime *r = self->runtime;
   int (MediaRuntime::*const start_output)() = &MediaRuntime::sub_5ce2b0;
   int (MediaRuntime::*const stop_output)() = &MediaRuntime::sub_5ce2f0;
