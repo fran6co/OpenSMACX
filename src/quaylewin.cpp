@@ -242,7 +242,10 @@ void QuayleWin::on_redraw() {
     } else {
       temporary[0] = 0;
       strcat(temporary, "BOOKLIST");
-      _itoa(field_2144_, number, 10);
+      // WORKAROUND(inline): the image loads the chapter into eax outside the
+      // round-robin cursor (a named value; the original's spelling is unknown).
+      const int chapter = field_2144_;
+      _itoa(chapter, number, 10);
       strcat(temporary, number);
       parse_says(0, get_title(faction), Players[faction].is_leader_female, -1);
       parse_says(1, get_name(faction), Players[faction].is_leader_female, -1);

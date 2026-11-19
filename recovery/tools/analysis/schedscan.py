@@ -22,11 +22,23 @@ Read with MATCHING_GUIDE 3.2 "Scratch registers and scheduling" (rules S1..S6).
    (ours - image) mod 3. The track prints where the offset changes: the first change is where
    our source allocates one register more (offset 1) or one fewer (offset 2) than the
    original, somewhere in the code generated since the previous allocation in sync.
+3. --try: single-site source sweep for the window's cause (MATCHING_GUIDE 3.2 S7..S9). Every
+   candidate is one rewrite inside the function, compiled and ranked by fe rows:
+     nvarg     one call argument passed through an identity inline (`nv(x)`): the argument becomes a
+               named value, allocated outside the round-robin cursor (S7). A hit means the original
+               read it into a named local or passed it through an inline helper's parameter.
+     labelraw / labelget   label_get(k) <-> StringTable.get(Labels.strings_ptr[k]) (S7).
+     unname    a `T v = simple;` local read inline at its uses (S7, S8).
+     expand / contract     one-return inline helpers written out or contracted (S1).
+     forbound  `p = p + K; if (p > 0) { i = p; do .. --i; while (i != 0) }`-style reassigned
+               parameters are not rewritten automatically: see S8.
+   --try-rules picks a subset (comma list); --top N rows of the ranking.
 Screen only: confirm a fix with fe.py."""
 import sys, os, re, argparse, difflib
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(HERE))
 import fe
+NV_TEMPLATE = 'template <class T> inline T nv(T v) { return v; }  // schedscan --try probe\n'
 
 SCR = ('eax', 'ecx', 'edx')
 PARTS = {'eax': ('eax', 'ax', 'al', 'ah'), 'ecx': ('ecx', 'cx', 'cl', 'ch'), 'edx': ('edx', 'dx', 'dl', 'dh')}
@@ -110,6 +122,9 @@ def main():
     ap.add_argument('--pfx', default=os.environ.get('FE_PFX_BASE', '27'))
     ap.add_argument('--gap', type=int, default=4, help='merge differing runs separated by at most this many equal rows')
     ap.add_argument('--rows', action='store_true', help='print the rows of every window')
+    ap.add_argument('--try', dest='try_', action='store_true', help='single-site source sweep (nvarg, labelraw, labelget, unname, expand)')
+    ap.add_argument('--try-rules', default='nvarg,labelraw,labelget,unname,expand,contract')
+    ap.add_argument('--top', type=int, default=12)
     a = ap.parse_args()
     unit = a.unit if a.unit.startswith('src/') else 'src/' + a.unit
     path = os.path.abspath(a.src) if a.src else fe.R + '/' + unit
@@ -188,6 +203,87 @@ def main():
     else:
         print('  %d of %d paired allocations are out of sync; offset 1 = ours one allocation ahead, 2 = one behind.'
               % (len(nz), len(pairs)))
+    if a.try_:
+        try_sweep(unit, addr, text, res['diff'], a.try_rules.split(','), a.top)
+
+
+KEYWORDS = {'if', 'while', 'for', 'switch', 'return', 'sizeof', 'static_cast', 'reinterpret_cast', 'const_cast',
+            'catch', 'delete', 'new', 'defined', 'nv', 'operator'}
+
+
+def rule_nvarg(t, mt, pos, end):
+    """wrap one call argument in nv(...)"""
+    import rules
+    for m in re.finditer(r'(?<![\w])([A-Za-z_]\w*)\s*\(', mt[pos:end]):
+        name = m.group(1)
+        if name in KEYWORDS:
+            continue
+        o = pos + m.end() - 1
+        # skip declarations and definitions: `T name(` at statement start followed by a type list is rare
+        # inside a body; casts like (int)(x) have no identifier before the paren.
+        c = rules.match(mt, o, '(', ')')
+        if c < 0 or c > end:
+            continue
+        args, d, last = [], 0, o + 1
+        for k in range(o + 1, c):
+            ch = mt[k]
+            if ch in '([{':
+                d += 1
+            elif ch in ')]}':
+                d -= 1
+            elif ch == ',' and d == 0:
+                args.append((last, k))
+                last = k + 1
+        args.append((last, c))
+        for a0, a1 in args:
+            raw = t[a0:a1]
+            a = raw.strip()
+            if not a or re.fullmatch(r"-?(0x[0-9A-Fa-f]+|\d+)[uUlL]*|'.*'|\".*\"|this|NULL|true|false", a, re.S):
+                continue
+            if re.fullmatch(r'[A-Z_][A-Z0-9_]*', a):
+                continue  # enum constant / macro
+            lead = len(raw) - len(raw.lstrip())
+            s0 = a0 + lead
+            yield (s0, s0 + len(a), 'nv(' + a + ')', 'nvarg')
+
+
+def try_sweep(unit, addr, text, base_diff, rule_names, top):
+    import rules
+    import perm
+    mt = rules.mask(text)
+    marks = [(int(m.group(1), 16), m.start()) for m in rules.MARK.finditer(text)]
+    starts = [p for a, p in marks]
+    me = [p for a, p in marks if a == addr]
+    if not me:
+        print('no marker for %08X' % addr)
+        return
+    lo = me[0]
+    hi = min([p for p in starts if p > lo] + [len(text)])
+    deck = []
+    for rn in rule_names:
+        if rn == 'nvarg':
+            cands = rule_nvarg(text, mt, lo, hi)
+        else:
+            cands = rules.RULES[rn](text, mt, lo)
+        for cand in cands:
+            s0, e0, rep, label = cand[:4]
+            if s0 < lo or e0 > hi:
+                if s0 >= hi:
+                    break
+                continue
+            v = text[:s0] + rep + text[e0:]
+            if rn == 'nvarg' and 'inline T nv(T v)' not in text:
+                v = v[:lo] + NV_TEMPLATE + v[lo:]
+            line = text.count('\n', 0, s0) + 1
+            deck.append(('%s L%d `%s` -> `%s`' % (label, line, ' '.join(text[s0:e0].split())[:50], ' '.join(rep.split())[:60]), v))
+    print('\n--try: %d single-site candidates (%s)' % (len(deck), ','.join(rule_names)))
+    if not deck:
+        return
+    res = perm.run_deck(unit, '0x%08X' % addr, deck, jobs=int(os.environ.get('FE_JOBS', '5')))
+    better = [r for r in res if r[1] < base_diff]
+    print('  %d of %d improve on %d rows' % (len(better), len(res), base_diff))
+    for w, d, ex, key in res[:top]:
+        print('  %4d%s %s' % (d, ' EXACT' if ex else '', key))
 
 
 if __name__ == '__main__':
