@@ -2514,8 +2514,8 @@ void __cdecl reset_territory() {
             }
             if (is_ocean_tile) {
                 for (int i = 0; i < 9; i++) {
-                    int x_adj = wrap_map_x(x + VehMoveDeltaX[i]);
-                    int y_adj = y + VehMoveDeltaY[i];
+                    int x_adj = wrap_map_x(x + RadiusOffsetX[i]);
+                    int y_adj = y + RadiusOffsetY[i];
                     if (!on_map(x_adj, y_adj)) {
                         continue;
                     }
