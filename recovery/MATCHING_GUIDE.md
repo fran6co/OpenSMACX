@@ -208,6 +208,63 @@ without `/Oy-`).
   not the cap. When an explicit inline is refused by a budget, its
   out-of-line COMDAT copy is emitted right after the first function that
   calls it (see "Out-of-line copies of explicit inlines" below).
+- **Giant callers: the budget falls with caller size (2026-11-19 par-2).**
+  Probe (scratch `g2.py`/`forms.py` pattern: M stores `g3 = K;`, then N
+  calls of an inline 2-if or 4-if callee, count the expansions): with 600
+  4-if sites the count rises with M (29 at M=0, 128 at 1000, 286 at 2000),
+  then falls by one 4-if expansion per ~20 stores (240 at 3000, 141 at
+  5000, 42 at 7000) down to the B0 floor (12 at 7500 and beyond). So
+  B ≈ min(k·S, L − S') with a floor: past the peak every node the caller
+  writes removes room, live or dead, wherever it sits. battle_fight
+  (19.9 KB) and the other giants are on the falling side; that is 2.8's
+  "In a giant, caller size takes room away".
+- **What a statement costs (the caller-size side, 2026-11-19 par-2).**
+  Measured on the falling side (M=4000, N=900 2-if sites, 200-400 copies
+  of each form; resolution about 0.05 store), in units of one
+  `g3 = K;` store. The steps come in quarters, so a quarter is about one
+  front-end node. Forms that compile to the same code can still cost
+  different amounts, and in a giant each difference moves late sites:
+  | form | cost | cheaper equivalent | cost |
+  | --- | --- | --- | --- |
+  | `;` / declaration without initializer | 0 | | |
+  | `{}` / `{ int t; }` | 0.5 | | |
+  | `g = K;` | 1.0 | | |
+  | `g = g2;` | 1.25 | | |
+  | `use(K);` / `g = f();` / `g = -x;` | 1.5 | | |
+  | `use(g2);` / `use(((g2)))` (parentheses are free) | 1.75 | | |
+  | `use((int)g2)` (int to int) | 2.0 | `use(g2)` | 1.75 |
+  | `use((int)gs)` (short) | 2.0 | `use(gs)`: the implicit conversion costs the same | 2.0 |
+  | `use((short)g2)` | 2.25 | | |
+  | `t = g2; use(t);` (local copy) | 3.0 | `use(g2);` | 1.75 |
+  | `{ int t = g2; use(t); }` | 3.5 | `use(g2);` | 1.75 |
+  | `g6 = g6 + 1;` | 1.75 | `g6 += 1;` / `g6++;` / `++g6;` | 1.0 |
+  | `if (g4 != 0) use(K);` / `if (g4 == 0) ...` | 4.0 | `if (g4)` / `if (!g4)` (`!` is free) | 3.5 |
+  | `if (f() != 0) use(K);` | 4.2 | `if (f())` | 3.7 |
+  | `if (c) { use(1); }` | 4.5 | `if (c) use(1);` | 4.0 |
+  | `if (c) { use(1); } else { use(2); }` | ≥7.9 | `if (c) use(1); else use(2);` | 6.5 |
+  | `if (a) if (b) use(1);` | 6.5 | `if (a && b) use(1);` | 5.25 |
+  | `if (a) use(1); else if (b) use(1);` | 8.85 | `if (a \|\| b) use(1);` | 5.4 |
+  | `if (c) g3 = 1; else g3 = 2;` | 5.5 | `g3 = c ? 1 : 2;` | 2.75 |
+  | `if (c) { use(1); return; }` | 4.75 | (`if (c) return;` alone 2.75) | |
+  | `t = a * b; g3 = t + K; g7 = t + 2;` | 5.5 | the product written twice | 5.0 |
+  | `g3 = s.x;` (one `.` or `->`) | 1.75 | `g3 = g2;` | 1.25 |
+  | `g3 = a.b.c.d.x;` (four levels; a union member costs the same) | 3.2 | | |
+  | `if (a.b.c.d.x & (1 << k)) use(K);` | 6.65 | the same on a plain global | 4.7 |
+  | `g3 = ga[K];` / `ga[g2]` / `ga[g2 + 1]` / `ga[g2 * 4 + 1]` | 1.75 / 2.5 / 3.0 / 3.5 | | |
+  | `g3 = gv[g2].a;` | 3.0 | | |
+  | `p = &gv[g2]; g3 = p->a;` | 4.2 | `g3 = gv[g2].a;` | 3.0 |
+  | `p = &gv[g2]; g3 = p->a + p->b;` | 5.65 | `gv[g2].a + gv[g2].b` | 5.4 |
+  | `g3 = g5 + g6;` / `+ g7` / `g5 << 2` / `g5 * 4` | 2.0 / 2.75 / 1.75 / 1.75 | | |
+  So a decompiler-shaped body is dearer than a hand-written one: named
+  copies (+1.25 each), split `if`s (+1.25), if/else assignments instead of
+  `?:` (+2.75), `!= 0` (+0.5), `x = x + 1` (+0.75), braces (+0.5 per arm)
+  and pointer locals that are used once or twice. Each member level costs
+  0.5, so a long `a.b.c.d` chain is expensive. Screened 2026-11-19: making
+  every `GameDataStateStorage.fields_.X` a separate plain global, tree-wide,
+  loses 25 fe-exact functions and gains none (15 lost with the lock masks
+  kept in the union). The codegen changes too: at_climax's
+  `test byte ptr [human_mask], al` becomes a load into a register. The
+  struct spelling is image-supported; do not retry it as a budget lever.
 - **Depth before position.** Depth-1 sites expand before depth-2 sites. Every
   invented forwarding layer in a recovered helper (`write_cent` →
   `write_cent_text`) pushes the real body one level deeper and moves the
@@ -2274,6 +2331,26 @@ Using it
   statements our source has and the original did not, or that the
   original spelled with fewer nodes. Writing repeated chassis/triad reads
   as the veh.h getters (is_missile, get_triad) charges more than it saves.
+  Follow-up (2026-11-19 par-2): fewer nodes alone cannot reach the image's
+  decision vector in battle_fight. Call multiset now: ours calls map_loc,
+  veh_health x2 and veh_top at 0x50AAE0..0x50AB9B, and the range call
+  sits at our 0x251C instead of the image's 0x50AB85. Two node-only
+  screens, both codegen-neutral: (a) dropping the braces of up to 44
+  single-statement ifs (0.5 store each), (b) spelling the battle_fight
+  uses of `GameDataStateStorage.fields_.*`, `NetDaemonNet.action_mode_` and
+  `ConsoleGlobal.faction_id_` as plain globals (a compile-only screen).
+  (b) expands every late pass-1 site as the image does. But then range is
+  called at three sites in the combat rounds (our 0x251D/0x25FB/0x2659)
+  that the image expands: the new late first-level expansions reserve
+  pass-2 room. Adding up to 35 brace strips on top fixes one of them. At
+  36 the pass-1 tail breaks: has_fac and is_ocean at 0x50ACB1.. expand,
+  and the image calls them. The image therefore has more pass-2 room for
+  range relative to its pass-1 tail than any uniform shrink of ours. The
+  remaining difference is how the round-region veh_health sites are
+  owned or spelled (or what range costs inside veh_health), not the size
+  of the caller. Rewriting the round loop as
+  `while (veh_health(veh_id) && veh_health(def_id))` with merged
+  `continue` guards has no effect on the calls.
 - **When to stop.** Dead probes that change other teardowns before they move
   the target mean that pass 1 is the binding limit, not pass 2. Look for a
   structural difference: which object owns the teardown, or a per-TU header
