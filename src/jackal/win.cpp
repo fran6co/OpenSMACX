@@ -2366,10 +2366,17 @@ int Win::init(int x, int y, int width, int height, char * caption,
         }
     }
 
-    if ((this->iFlags_ & 0x10) != 0) {
-        this->field_16C_ = this->caption_height_;
-    } else if ((this->iFlags_ & 0x20) == 0) {
-        this->field_16C_ = this->border_thickness_;
+    {
+        int top;
+        if ((this->iFlags_ & 0x10) != 0) {
+            top = this->caption_height_;
+        } else if ((this->iFlags_ & 0x20) != 0) {
+            goto no_top;
+        } else {
+            top = this->border_thickness_;
+        }
+        this->field_16C_ = top;
+    no_top:;
     }
     if ((this->iFlags_ & 0x400) != 0) {
         this->field_170_ = this->border_thickness_;
