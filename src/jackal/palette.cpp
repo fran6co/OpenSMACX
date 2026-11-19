@@ -84,51 +84,347 @@ const uint8_t SystemColours[80] = {
 // init spells. PaletteActive below carries the matching V-keyed binding.
 Palette *PaletteCurrent;  // 0x009B8174
 
+
+
+// ---------------------------------------------------------------------------
+// LIFECYCLE, CLAIMED HERE.
+//
+// The constructor and the destructor are both defined out of line in this
+// unit, beside their markers. They were first written in-class so the
+// image's own inlining would reproduce, and the markers lived here because
+// a marker cannot live in a header: the source reader globs `*.cpp` and
+// `*.c`, and a comparison compiles a TRANSLATION UNIT, so a marker in a
+// header could be neither read nor measured. While the bodies sat in the
+// header, VC6 emitted each of them into this unit's object as its own
+// COMDAT anyway, which is what the comparison pulled out, and a `body`
+// fact said where to go to edit one. ~Palette then moved out of line
+// (2026-09-16): /O2's /Ob1 was expanding the in-class body into every
+// embedding class's implicit teardown - see the LEVER on its marker below.
+//
+// The ratchet still covers the header: this unit includes it, so breaking a
+// declaration here fails the claims below. Measured, not assumed.
+// ---------------------------------------------------------------------------
+
 /*
-Purpose: Take the palette's colours from a decoded DIB and give it a fresh
-         generation tag.
-// ORIGINAL: 0x005FE650 ?set_from_dib@Palette@@QAEHPAUDib@@@Z 0x005FE650-0x005FE6C7 BYTE_EXACT
-// size      120 bytes
-// prototype int (__thiscall ?set_from_dib@Palette@@QAEHPAUDib@@@Z)(Palette* this, Dib*)
-// callers   1   call targets   1
+// ORIGINAL: 0x005FE2A0 ??0Palette@@QAE@XZ 0x005FE2A0-0x005FE2D9 BYTE_EXACT
+// size      57 bytes
+// prototype void (__thiscall ??0Palette@@QAE@XZ)(Palette* this)
+// callers   8   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005FE330
+*/
+
+Palette::Palette() {
+    seed_ = 0;
+    for (int i = 0; i < 5; ++i) {
+        internal_[i].key = -1;
+        internal_[i].time = nullptr;
+        internal_[i].first = 0;
+        internal_[i].count = 0;
+        internal_[i].colours = nullptr;
+    }
+    init();
+}
+
+
+/*
+// ORIGINAL: 0x005FE2E0 ??1Palette@@QAE@XZ 0x005FE2E0-0x005FE2E5 BYTE_EXACT
+// body      src/jackal/palette.cpp
+// size      5 bytes
+// prototype void (__thiscall ??1Palette@@QAE@XZ)(Palette* this)
+// callers   18   call targets   0
+// kind      thunk
+// flags     hidden;thunk;sp_ready;purged_ok
+// calls     (none)
+// LEVER: OUT OF LINE (2026-09-16, was `MEASURED ~Palette() { close(); }` in
+//   palette.h). The in-class definition let /O2's /Ob1 expand the teardown
+//   into every embedding class's compiler-generated member destruction:
+//   Flic's ??1Flic (0x004327A0) emitted `call ?close@Palette@@QAEXXZ`
+//   (0x005FE500) where the image calls this thunk, one of its 18
+//   catalogued sites. Same body either way - the difference is which call
+//   sites the compiler is willing to build it in; same measured lever as
+//   buffer.h's ~Buffer (2026-09-03). The five bytes cannot be written by
+//   hand: they are the tail-jump compile of `{ close(); }`.
+*/
+
+// The whole destructor: close() is the last thing it does, so /O2 compiles
+// the call as the tail jump the marker names.
+Palette::~Palette() { close(); }
+
+// ORIGINAL: 0x005FE2F0 ?__as@Palette@@QAEHQAUPalette@@@Z 0x005FE2F0-0x005FE32F FILE BYTE_EXACT
+// symbol    ?copy_from@Palette@@QAEAAV1@PAV1@@Z
+// copy_from is a semantic name; the original method/operator spelling is
+//   unproved. The image copies only entries_ (0x400 bytes), leaves the five
+//   animation slots untouched, rerolls seed_ and returns the receiver.
+//   These effects alone do not distinguish a method from operator=.
+//   Neither caller destroys the destination immediately beforehand:
+//   load_palette copies at 0x00451A9C and cleans up its local Palette later
+//   at 0x00451C10; PrefWin copies at 0x00491466. The old destroy-then-refill
+//   naming rationale was unsupported; the analyzer's __as tag is not proof.
+// size      63 bytes
+// prototype int (__thiscall ?__as@Palette@@QAEHQAUPalette@@@Z)(Palette* this, Palette*)
+// callers   2   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
-// calls     0x00625810
-Return Value: 3 for a null DIB, 7 while the palette is unavailable, or 0
+// calls     0x00625810 0x00645930
+// PRESERVED UNIT - measured BYTE_EXACT.
+// TRIED 2026-09-03 (pair /O2 and /O2 /Oy- only): the body is RIGHT and the
+//   gap is the /Oi axis, which no spelling in this tree reaches. The image
+//   makes a real `call _memcpy` with a CONSTANT `push 0x400`; both allowed
+//   sets imply /Oi, and /Oi turns a constant-size `memcpy` into
+//   `mov ecx,0x100; rep movsd` - compiled 24 instructions against the image's
+//   19, agreeing 0. Twelve source shapes measured dead in isolation probes
+//   under the shipped flags: `sizeof(entries_)`, literal `0x400`, whole
+//   object, `void *`/`char *` casts, `CopyMemory`, a `const int` local, a
+//   file-scope `const int`, an `enum`, a `#define`, a non-constant `int`
+//   (which folds anyway), a `size_t` expression, and a member-function
+//   receiver - every one still emitted `rep movsd`. Measured directly that
+//   `/c /O2 /Oi- /Gy /GR- /GX` on this exact body gives the image's own
+//   prologue byte for byte (`mov eax,[esp+4]` BEFORE `push esi` included), so
+//   it is the intrinsic axis and nothing else. Corroboration: the image holds
+//   130 real `_memcpy` call sites and only THREE `mov ecx,imm32; rep movsd`
+//   in all of .text (counts 6, 11 and 70 dwords), while this tree's
+//   `make_blend_table` and `fade_to` park on the same constant-size-memcpy
+//   wall. Adding `memcpy` to stdafx.h's `#pragma function(...)` list is the
+//   in-policy source-side fix but is a shared-file edit that would move every
+//   other constant-size memcpy in the tree, so it is recorded here rather
+//   than made. [RESOLVED 2026-09-03: it was made, measured, and reverted -
+//   33 verified claims whose small constant copies inline flipped, because
+//   the image's memcpy is MIXED like memset. The called minority routes
+//   through `memcpy_call` below, the memset_call idiom.]
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x005FE2F0
+// measured tier  BYTE_EXACT
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/005fe2f0/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?__as@Palette@@QAEHQAUPalette@@@Z  at 0x005FE2F0  (63 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+
+
+// The copy below is a real `call _memcpy` (0x00645930, constant 0x400): the
+// units have no intrinsics (stdafx.h).
+Palette &Palette::copy_from(Palette *src) {
+    memcpy(entries_, src->entries_, sizeof(entries_));
+
+    seed_ = 0;
+    while (seed_ == 0) {
+        seed_ = random(0, 0xffff);
+    }
+
+    return *this;
+}
+
+/*
+// ORIGINAL: 0x005FE330 ?init@Palette@@QAEXXZ 0x005FE330-0x005FE45F BYTE_EXACT
+// symbol    ?init@Palette@@QAEHXZ
+// size      303 bytes
+// prototype void (__thiscall ?init@Palette@@QAEXXZ)(Palette* this)
+// callers   5   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FE500 0x00625810
+//
+// Promoted 2026-08-15 from src/recovered/units/005fe330.cpp and rewritten
+// from raw self_addr pointer arithmetic into ordinary member access. Reloads
+// the 256 entries - from the system palette when PaletteUsesSystemColours is
+// set, otherwise from the built-in SystemColours plus a grey ramp - then
+// picks a fresh non-zero seed.
 Status: Complete
-
-THE 236 IN THE MIDDLE IS THE WHOLE POINT. `esi = 0xec` counts entries 10
-through 245, which is every colour EXCEPT the twenty Windows reserves - the
-first ten and the last ten, the same split `SystemColours` describes. A DIB
-decoded from a PCX brings 256 colours; only the middle 236 are the
-palette's to take.
-
-The loop is the RGBQUAD-to-PALETTEENTRY swizzle: `bmiColors` is blue, green,
-red, reserved and `entries_` is red, green, blue, flags, so the two ends run
-in opposite directions and `peFlags` is left alone.
-
-The tail is `Palette::init`'s seed loop, written out again: zero, then
-random until non-zero. That is what makes zero mean "no palette cached" for
-every reader of `Buffer::palette_seed_`, and it is why this function is what
-`Buffer::load_pcx` calls before syncing.
 */
-int Palette::set_from_dib(Dib *dib) {
-    if (dib == nullptr) {
-        return 3;
+int Palette::init() {
+    close();
+    if (PaletteUsesSystemColours) {
+        HDC screen = GetDC(0);
+        GetSystemPaletteEntries(screen, 0, 256, entries_);
+        ReleaseDC(0, screen);
+    } else {
+        // The twenty static colours, RGBQUAD (blue, green, red) on the way in
+        // and PALETTEENTRY (red, green, blue) on the way out - hence the
+        // reversal. Entries 0-9 and 246-255 are the range GDI reserves.
+        for (int i = 0; i < 10; ++i) {
+            entries_[i].peRed = SystemColours[i * 4 + 2];
+            entries_[i].peGreen = SystemColours[i * 4 + 1];
+            entries_[i].peBlue = SystemColours[i * 4];
+            entries_[i].peFlags = 4;
+            entries_[i + 246].peRed = SystemColours[i * 4 + 42];
+            entries_[i + 246].peGreen = SystemColours[i * 4 + 41];
+            entries_[i + 246].peBlue = SystemColours[i * 4 + 40];
+            entries_[i + 246].peFlags = 4;
+        }
+        // Everything between the two reserved runs is ours to animate; the
+        // original fills it with a grey ramp. VC6 leaks a for-loop's declared
+        // variable into the enclosing scope, so this loop must not redeclare
+        // the `i` the colour loop above already declared.
+        for (int grey = 10; grey < 246; ++grey) {
+            entries_[grey].peRed = (uint8_t)grey;
+            entries_[grey].peGreen = (uint8_t)grey;
+            entries_[grey].peBlue = (uint8_t)grey;
+            entries_[grey].peFlags = 5;  // PC_RESERVED | PC_NOCOLLAPSE
+        }
+        // Four entries are handed back to the system by INDEX: PC_EXPLICIT
+        // means peRed holds a system palette slot rather than an intensity.
+        for (int pair = 0; pair < 2; ++pair) {
+            entries_[8 + pair].peRed = (uint8_t)(8 + pair);
+            entries_[8 + pair].peGreen = 0;
+            entries_[8 + pair].peBlue = 0;
+            entries_[8 + pair].peFlags = 2;  // PC_EXPLICIT
+            // BUG IN THE ORIGINAL: entry 246 is given system index 245 and
+            // entry 247 index 246, one below each entry's own slot.
+            entries_[246 + pair].peRed = (uint8_t)(pair - 11);
+            entries_[246 + pair].peGreen = 0;
+            entries_[246 + pair].peBlue = 0;
+            entries_[246 + pair].peFlags = 2;  // PC_EXPLICIT
+        }
     }
-    if (PaletteInitialized == 0) {
-        return 7;
-    }
-    for (int entry = 10; entry < 246; ++entry) {
-        entries_[entry].peRed = dib->bmiColors[entry].rgbRed;
-        entries_[entry].peGreen = dib->bmiColors[entry].rgbGreen;
-        entries_[entry].peBlue = dib->bmiColors[entry].rgbBlue;
-    }
+
+    // Pick a non-zero generation seed; Buffer caches it to skip republishing
+    // an unchanged palette.
     seed_ = 0;
     do {
         seed_ = random(0, 0xffff);
     } while (seed_ == 0);
     return 0;
+}
+
+/*
+// ORIGINAL: 0x005FE460 ?set@Palette@@QAEHXZ 0x005FE460-0x005FE4EB BYTE_EXACT
+// size      139 bytes
+// prototype int (__thiscall ?set@Palette@@QAEHXZ)(Palette* this)
+// callers   12   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DE8F0
+//
+// Promoted 2026-08-15 from src/unrecovered/005fe460.cpp to retire its
+// pending_bodies forwarder, then rewritten from raw self_addr/g_ pointer
+// arithmetic into ordinary member and global access: the DirectDraw branch
+// publishes through the surface vtable's slot 6, the GDI branch syncs the
+// screen buffer and animates the ramp entries when the seed changed.
+Status: Complete
+*/
+int Palette::set() {
+    if (BufferDirectDraw) {
+        // DirectDraw owns the screen, so the palette is published through
+        // IDirectDrawPalette::SetEntries rather than GDI.
+        if (DirectDrawPalette) {
+            DirectDrawPalette->SetEntries(0, 0, 256, entries_);
+        }
+        return 0;
+    }
+    if (PaletteInitialized == 0) {
+        return 7;
+    }
+    PaletteActive = this;
+    Win::screen_buffer_.sync_to_palette(this);
+    if (PaletteUsesSystemColours == 0) {
+        // Animate only when the seed changed; entries 10-245 are the ramp.
+        if (PaletteSeedCache != seed_) {
+            AnimatePalette(PaletteInitialized, 10, 236, &entries_[10]);
+            PaletteSeedCache = seed_;
+        }
+    }
+    return 0;
+}
+
+/*
+Purpose: Record the window the palette applies to.
+// ORIGINAL: 0x005FE4F0 ?set_active_window@Palette@@QAAXPAVWin@@@Z 0x005FE4F0-0x005FE4F1 BYTE_EXACT
+// symbol    ?set_active_window@Palette@@SAXPAVWin@@@Z
+// size      1 bytes
+// prototype 
+// callers   8   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Status: Complete
+Verification note: the original body is a single ret - it accepts the window
+and does nothing with it. There is no state to observe and no statement to
+perturb, so the mutation harness reports no mutants for this function; the
+ABI gate covers its calling convention and the smoke gate covers its callers.
+*/
+void Palette::set_active_window(Win *) {
+}
+
+/*
+// ORIGINAL: 0x005FE500 ?close@Palette@@QAEXXZ 0x005FE500-0x005FE554 BYTE_EXACT
+// size      84 bytes
+// prototype void (__thiscall ?close@Palette@@QAEXXZ)(Palette* this)
+// callers   5   call targets   3
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00616200 0x00644EF2 0x0064557F
+//
+// Promoted 2026-08-15 from src/recovered/units/005fe500.cpp. Tears down the
+// five animation entries at this+0x408 (each a Time*, a flag byte pair and a
+// heap pointer). Dependency of init() below.
+Status: Complete
+*/
+void Palette::close() {
+    // SYMMETRY IS WHAT MAKES THIS EXACT. Reading `time` into a local and
+    // nulling the field touches it twice while `colours` - tested, freed and
+    // nulled - is touched three times, and VC6 bases the loop on the
+    // busier field: every displacement then lands eight bytes off the
+    // image's, which reads as SHAPE_EXACT with the right registers and the
+    // wrong constants. Treat the two the same way and the base lands where
+    // the image puts it, at `this + 0x408`.
+    for (int i = 0; i < 5; ++i) {
+        internal_[i].key = -1;
+        if (internal_[i].time) {
+            delete internal_[i].time;
+            internal_[i].time = nullptr;
+        }
+        if (internal_[i].colours) {
+            free(internal_[i].colours);
+            internal_[i].colours = nullptr;
+        }
+        internal_[i].first = 0;
+        internal_[i].count = 0;
+    }
 }
 
 /*
@@ -178,23 +474,333 @@ int Palette::get_rgbquad(RGBQUAD *output, int start, int count) {
     return 0;
 }
 
-/*
-Purpose: Record the window the palette applies to.
-// ORIGINAL: 0x005FE4F0 ?set_active_window@Palette@@QAAXPAVWin@@@Z 0x005FE4F0-0x005FE4F1 BYTE_EXACT
-// symbol    ?set_active_window@Palette@@SAXPAVWin@@@Z
-// size      1 bytes
-// prototype 
-// callers   8   call targets   0
+// ORIGINAL: 0x005FE5C0 ?UNK1@Palette@@QAEHHHH@Z 0x005FE5C0-0x005FE646 FILE BYTE_EXACT
+// TRIED: 2026-09-03, the /G6 flag sets added to the ladder after the 2026-08-24 pass give the best INSTRUCTION count here (13/47, 0.860 similar) but score below the plain /c /O2 /Gy /GR- /GX set (11/47, 0.946 similar); the image is not /G6 in this body.
+// symbol    ?set_rgbquad@Palette@@QAEHPBUtagRGBQUAD@@HH@Z
+// working copy - scaffold materialised by --work
+// size      134 bytes
+// prototype int (__thiscall ?UNK1@Palette@@QAEHHHH@Z)(Palette* this, int, int, int)
+// callers   2   call targets   1
 // kind      game
 // flags     hidden;sp_ready;purged_ok
-// calls     (none)
+// calls     0x00625810
+// TRIED: 2026-08-24, the get_rgbquad "INDEX, DO NOT WALK" lesson does NOT
+//   transfer here. Rewriting the blend loop as `entries_[start+i].peRed =
+//   src[i].rgbRed;` etc. (a single ascending index `i` compared against
+//   `count`) raises raw instruction agreement 11/47 -> 17/47 but LOWERS
+//   bytes similarity 0.946 -> 0.878 (best of all ten flag sets, both ways) -
+//   the image's loop keeps ONE descending counter (`dec esi; jne`, doubling
+//   as progress and termination) and TWO independently walking pointers
+//   (dst biased +2 onto .peBlue, src biased +1 onto .rgbGreen, each `add
+//   reg,4` once per iteration); an ascending index needs the ORIGINAL bound
+//   (`count`) AND the index both live for the `<` comparison, which is a
+//   register more than the image's single counter costs. Left as the
+//   pointer-walk form, which is the higher-similarity of the two measured.
+// 2026-11-06: exact as a plain `for (i = 0; i < count; i++)` indexing
+//   entries_[start + i] and src[i]; VC6 derives the counter/pointer walk.
+
+int Palette::set_rgbquad(const RGBQUAD *src, int start, int count) {
+    if (src == 0) {
+        return 3;
+    }
+    if (PaletteInitialized == nullptr) {
+        return 7;
+    }
+    for (int i = 0; i < count; i++) {
+        entries_[start + i].peRed = src[i].rgbRed;
+        entries_[start + i].peGreen = src[i].rgbGreen;
+        entries_[start + i].peBlue = src[i].rgbBlue;
+        entries_[start + i].peFlags = 5;
+    }
+    seed_ = 0;
+    int result;
+    do {
+        result = random(0, 0xffff);
+        seed_ = result;
+    } while (result == 0);
+    return 0;
+}
+
+/*
+Purpose: Take the palette's colours from a decoded DIB and give it a fresh
+         generation tag.
+// ORIGINAL: 0x005FE650 ?set_from_dib@Palette@@QAEHPAUDib@@@Z 0x005FE650-0x005FE6C7 BYTE_EXACT
+// size      120 bytes
+// prototype int (__thiscall ?set_from_dib@Palette@@QAEHPAUDib@@@Z)(Palette* this, Dib*)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00625810
+Return Value: 3 for a null DIB, 7 while the palette is unavailable, or 0
 Status: Complete
-Verification note: the original body is a single ret - it accepts the window
-and does nothing with it. There is no state to observe and no statement to
-perturb, so the mutation harness reports no mutants for this function; the
-ABI gate covers its calling convention and the smoke gate covers its callers.
+
+THE 236 IN THE MIDDLE IS THE WHOLE POINT. `esi = 0xec` counts entries 10
+through 245, which is every colour EXCEPT the twenty Windows reserves - the
+first ten and the last ten, the same split `SystemColours` describes. A DIB
+decoded from a PCX brings 256 colours; only the middle 236 are the
+palette's to take.
+
+The loop is the RGBQUAD-to-PALETTEENTRY swizzle: `bmiColors` is blue, green,
+red, reserved and `entries_` is red, green, blue, flags, so the two ends run
+in opposite directions and `peFlags` is left alone.
+
+The tail is `Palette::init`'s seed loop, written out again: zero, then
+random until non-zero. That is what makes zero mean "no palette cached" for
+every reader of `Buffer::palette_seed_`, and it is why this function is what
+`Buffer::load_pcx` calls before syncing.
 */
-void Palette::set_active_window(Win *) {
+int Palette::set_from_dib(Dib *dib) {
+    if (dib == nullptr) {
+        return 3;
+    }
+    if (PaletteInitialized == 0) {
+        return 7;
+    }
+    for (int entry = 10; entry < 246; ++entry) {
+        entries_[entry].peRed = dib->bmiColors[entry].rgbRed;
+        entries_[entry].peGreen = dib->bmiColors[entry].rgbGreen;
+        entries_[entry].peBlue = dib->bmiColors[entry].rgbBlue;
+    }
+    seed_ = 0;
+    do {
+        seed_ = random(0, 0xffff);
+    } while (seed_ == 0);
+    return 0;
+}
+
+// ORIGINAL: 0x005FE6D0 ?reseed@Palette@@QAEXXZ 0x005FE6D0-0x005FE6F8 BYTE_EXACT
+// size      40 bytes
+// prototype void (__thiscall ?reseed@Palette@@QAEXXZ)(Palette* this)
+// callers   3   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00625810
+// 0x005FE6D0  ?reseed@Palette@@QAEXXZ  ->  ?reseed@Palette@@QAEXXZ
+//
+// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
+// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
+// and rewriting it in the tree's own style is a later phase. See README.md
+// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
+
+
+void Palette::reseed() {
+    seed_ = 0;
+    while (seed_ == 0) {
+        seed_ = random(0, 0xffff);
+    }
+}
+
+// ORIGINAL: 0x005FE700 ?init_cycle@Palette@@QAEHHHHK@Z 0x005FE700-0x005FE8AC;0x00662D60-0x00662D75 FILE BYTE_EXACT
+// TRIED: plain 'new Time()'/'operator delete'/'free' expressions relying on VC6's own SEH codegen instead of hand-written __try/__finally; diverges at #1, prologue register order
+// size      449 bytes
+// prototype int (__thiscall ?init_cycle@Palette@@QAEHHHHK@Z)(Palette* this, int, int, int, unsigned int)
+// callers   1   call targets   8
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005D4510 0x006161D0 0x00616200 0x006162D0 0x00644EF2 0x0064557F 0x0064558A 0x00645930
+// TRIED: 2026-08-24, re-measured: 6/129, 0.863 similar (best of all ten flag
+//   sets, `/O2 /Oi- /Gy /GR-` - /Oi- alone is worth 0.049 here, `/O2 /GX`
+//   plain only reaches 0.814). `osmx calls --all` confirms the eight targets
+//   above are exactly what this body calls, in the same relative order
+//   (~Time, operator delete, free, mem_get, memcpy, operator new, Time::Time,
+//   Time::init) - the call graph is not the defect. Same whole-function
+//   register-pressure wall as the other large bodies in this file; not
+//   re-derived given the size (449 bytes) and the existing TRIED line's
+//   verdict.
+
+
+// The third argument is the colour count (5FE73E, 5FE7FF, 5FE805);
+// the fourth is only the timer interval (5FE87C). They are independent:
+// a slow timer must not allocate or copy more palette entries.
+int Palette::init_cycle(int key, int first, int count, unsigned long interval) {
+    // The image masks the colour index in place (5FE71A..5FE727) and
+    // compares it signed; the slot is then addressed by index, not pointer.
+    first &= 0xFF;
+    if (first < 10) {
+        return 3;
+    }
+    if (count > 0xF6 - first) {
+        return 3;
+    }
+    if (key == -1) {
+        return 3;
+    }
+    if (PaletteInitialized == nullptr) {
+        return 7;
+    }
+
+    int slot = 0;
+    const PaletteInternal *entry = internal_;
+    while (slot < 5) {
+        const int held = static_cast<int>(entry->key);
+        if (key == held) {
+            break;
+        }
+        if (held == -1) {
+            break;
+        }
+        ++slot;
+        ++entry;
+    }
+
+    if (static_cast<int>(internal_[slot].key) == key) {
+        if (internal_[slot].time != 0) {
+            delete internal_[slot].time;
+            internal_[slot].time = 0;
+        }
+        if (internal_[slot].colours != 0) {
+            free(internal_[slot].colours);
+            internal_[slot].colours = 0;
+        }
+    }
+
+    internal_[slot].key = key;
+    internal_[slot].count = (uint8_t)count;
+    internal_[slot].first = (uint8_t)first;
+    internal_[slot].colours = static_cast<PALETTEENTRY *>(mem_get(count * 4));
+    if (internal_[slot].colours == 0) {
+        return 4;
+    }
+    memcpy(internal_[slot].colours, &entries_[first], count * 4);
+    internal_[slot].time = new Time();
+    if (internal_[slot].time == 0) {
+        return 4;
+    }
+    internal_[slot].time->init(Palette::timer_callback, key, this,
+                               static_cast<uint32_t>(interval), 5);
+    return 0;
+}
+
+/*
+Purpose: Restart the timer of the colour-cycling slot that owns `key`.
+// ORIGINAL: 0x005FE8B0 ?start_cycle@Palette@@QAEHH@Z 0x005FE8B0-0x005FE8FB BYTE_EXACT
+// LEVER: two separate early-exit `if`s, not one chained `key==held || held==-1` - a single OR condition made VC6 peel the loop's first read outside it and rotate the test to the bottom (30 compiled instructions against the image's 27). Two `if`s with the SAME break target reproduces the image's two distinct `je`s off one `mov edx,[esi]`. Also needed a `while (slot < 5)` in place of `do { ... } while (slot < 5)` - the do-while form still peeled even with the two-if split - and `slot` declared BEFORE `entry` (not after): the image's `xor eax,eax` precedes its `lea esi,[ecx+0x404]`, and declaration order is store order here.
+// size      75 bytes
+// prototype int (__thiscall ?start_cycle@Palette@@QAEHH@Z)(Palette* this, int)
+// callers   1   call targets   1
+// kind      game
+// calls     0x00616650
+Return Value: No errors (0); no slot holds that key (0xB)
+Status: Complete
+
+PROMOTED FROM src/recovered/units/005fe8b0.cpp, which reached the slots
+through `reinterpret_cast<CycleEntry *>(self + 0x404)`.
+
+THE SCAN CAN RUN OFF THE END. Five slots, and the loop leaves `slot` at 5
+when none of them matched - the image's `cmp eax, 5; jl` exits with eax == 5
+and then reads `[eax*16 + 0x404]`, which is 0x454: one dword past the object.
+It compares that against the key and returns 0xB when it differs, which it
+almost always will. Reproduced rather than fixed; a bounds check here is a
+different program.
+*/
+int Palette::start_cycle(int key) {
+    // A WALKING POINTER AND AN INDEX, both live. The image steps `esi` by
+    // 0x10 through the slots and counts in `eax`, then recomputes the
+    // address from the INDEX afterwards - `shl eax, 4; add eax, ecx`.
+    // Indexing in the loop lets VC6 peel the first iteration and rotate the
+    // test to the bottom, which is a different shape entirely.
+    int slot = 0;
+    const PaletteInternal *entry = internal_;
+    while (slot < 5) {
+        // Read once, compared twice: `mov edx, [esi]` then two `cmp`s
+        // against the register, not two memory compares. TWO SEPARATE
+        // `if`s, not one chained `||` - the image jumps to the same target
+        // from two distinct `je`s, which is what two early-exit `if`s
+        // produce; a single OR condition made VC6 peel the first read
+        // outside the loop and rotate the test to the bottom instead.
+        const int held = static_cast<int>(entry->key);
+        if (key == held) {
+            break;
+        }
+        if (held == -1) {
+            break;
+        }
+        ++slot;
+        ++entry;
+    }
+    if (static_cast<int>(internal_[slot].key) != key) {
+        return 0xB;
+    }
+    internal_[slot].time->start();
+    return 0;
+}
+
+// ORIGINAL: 0x005FE900 ?UNK2@Palette@@QAEXH@Z 0x005FE900-0x005FE941 FILE BYTE_EXACT
+// symbol    ?stop_animation@Palette@@QAEXH@Z
+// size      65 bytes
+// prototype void (__thiscall ?UNK2@Palette@@QAEXH@Z)(Palette* this, int)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00616730
+// PRESERVED UNIT - measured BYTE_EXACT.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x005FE900
+// measured tier  BYTE_EXACT
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/005fe900/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?UNK2@Palette@@QAEXH@Z  at 0x005FE900  (65 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+
+
+void Palette::stop_animation(int key) {
+    int i;
+    for (i = 0; i < 5; i++) {
+        int v = internal_[i].key;
+        if (key == v || v == -1) {
+            break;
+        }
+    }
+    // BUG IN THE ORIGINAL, reproduced: when no slot matches and none is
+    // free, i is 5 and the read below is internal_[5].key - the first four
+    // bytes PAST the object. The image does exactly this.
+    if ((int)internal_[i].key == key) {
+        internal_[i].time->stop();
+    }
 }
 
 /*
@@ -273,108 +879,75 @@ void Palette::remove_animation(int key) {
     }
 }
 
-/*
-Purpose: Find the palette entry nearest the given colour.
-// ORIGINAL: 0x005FF280 ?UNK7@Palette@@QAEHHHHHHH@Z 0x005FF280-0x005FF46B BYTE_EXACT
-// symbol    ?closest@Palette@@QAEHEEEHHH@Z
-// size      491 bytes
-// prototype int (__thiscall)(Palette* this, int, int, int, int, int, int)
-// kind      game
-
-The distance is summed green^2 + red^2 + blue^2 in that order, and
-`skip_animated` selects a pass that first marks every entry an active slot
-reserves. The earlier "push placement wall" was source shape: one `end`
-local assigned in each arm and one shared `return` after the if/else let
-VC6 save only esi before the PaletteInitialized guard (5FF28B) and defer
-ebx/ebp/edi past it, as get_nearest_palette_index does.
-
-The name is an inference from behaviour, which is why the catalogue's
-`UNK7` stays on the marker and `symbol` carries what this tree emits.
-Return Value: the nearest entry's index, or 7 if there is no palette
-Status: Complete
-*/
-int Palette::closest(uint8_t red, uint8_t green, uint8_t blue, int start, int count,
-                     int skip_animated) {
-    int best = 200000;
-    // Original leaves the result uninitialized when no eligible entry improves best.
-    int best_index;
-    int end;
-    if (!PaletteInitialized) {
-        return 7;
-    }
-    if (!skip_animated) {
-        end = start + count;
-        for (int index = start; index < end; ++index) {
-            const int distance =
-                (entries_[index].peGreen - green) * (entries_[index].peGreen - green)
-                + (entries_[index].peRed - red) * (entries_[index].peRed - red)
-                + (entries_[index].peBlue - blue) * (entries_[index].peBlue - blue);
-            if (distance < best) {
-                best = distance;
-                best_index = index;
-            }
-        }
-    } else {
-        // EVERY ENTRY AN ACTIVE SLOT OWNS IS OFF LIMITS. A slot is active
-        // when its key is not -1, and it reserves `count` entries from `first`.
-        int reserved[256];
-        for (int k = 0; k < 256; ++k) {
-            reserved[k] = 0;
-        }
-        for (int slot = 0; slot < 5; ++slot) {
-            if (internal_[slot].key != 0xFFFFFFFFu) {
-                const int stop = internal_[slot].first + internal_[slot].count;
-                for (int entry = internal_[slot].first; entry < stop; ++entry) {
-                    reserved[entry] = 1;
-                }
-            }
-        }
-        end = start + count;
-        for (int index = start; index < end; ++index) {
-            if (reserved[index]) {
-                continue;
-            }
-            const int distance =
-                (entries_[index].peGreen - green) * (entries_[index].peGreen - green)
-                + (entries_[index].peRed - red) * (entries_[index].peRed - red)
-                + (entries_[index].peBlue - blue) * (entries_[index].peBlue - blue);
-            if (distance < best) {
-                best = distance;
-                best_index = index;
-            }
-        }
-    }
-    return best_index;
-}
-
-/*
-Purpose: Find the slot for a value in the five-entry internal table, returning
-         the index of the matching entry or the first empty one, and 5 when the
-         table is full without a match.
-// ORIGINAL: 0x005FED10 ?get_pos@Palette@@QAEHH@Z 0x005FED10-0x005FED35 BYTE_EXACT
-// size      37 bytes
-// prototype int (__thiscall ?get_pos@Palette@@QAEHH@Z)(Palette* this, int)
+// ORIGINAL: 0x005FEAD0 ?timer_callback@Palette@@QAAXHH@Z 0x005FEAD0-0x005FEBA8 FILE BYTE_EXACT
+// symbol    ?timer_callback@Palette@@SAXHPAX@Z
+// TRIED: 228 vs 216 bytes; the extra named locals (idx/found/entries/ iStartIndex/cEntries/i) push more callee-saved registers before the first `mov ebp,a2`, where the original loads a2 into ebp before any other push. Did not try collapsing to fewer locals given budget.
+// TRIED: 2026-08-24, collapsing WAS tried and it is not the lever - it makes
+//   things worse. Re-measured: current body 2/72, 0.886 similar (best of all
+//   ten flag sets). Dropping `iStartIndex`/`cEntries` and reading
+//   `self->internal_[idx].first`/`.count` directly at each use (instead of
+//   once into named locals) regresses to 0.715 similar, MORE total
+//   instructions (79 vs 77), and pushes an extra register (`edi`) the
+//   baseline does not. The image's very first divergent instruction in
+//   EITHER form is `push ecx` at the top of this tree's compiled body,
+//   before the first guard even runs - one register of pressure this
+//   function needs that the image does not, for a reason source-form edits
+//   here have not isolated. Left as the named-locals form, which is the
+//   higher-similarity of the two measured.
+// working copy - scaffold materialised by --work
+// size      216 bytes
+// prototype 
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
-Return Value: the slot index, 0 to 5
-Status: Complete
-*/
-int Palette::get_pos(int value) {
-    // THE COUNTER IS THE ANSWER. Falling out of the loop leaves `index` at
-    // 5, which is the not-found result, so the image returns it rather than
-    // loading the constant: no `mov eax, 5` before the epilogue.
-    int index = 0;
-    for (; index < 5; ++index) {
-        const int slot = static_cast<int>(internal_[index].key);
-        // `value == slot`, not `slot == value`: the image compares in that
-        // order and the two spell `cmp esi, ecx` and `cmp ecx, esi`.
-        if (value == slot || slot == -1) {
+// indirect  0x005FEB91
+
+
+// 2026-11-06: exact with the first-entry save as a PALETTEENTRY local
+//   (packs into the dead context slot), count read before first, for+break.
+void __cdecl Palette::timer_callback(int key, void *context) {
+    if (context == nullptr || PaletteUsesSystemColours != 0) {
+        return;
+    }
+
+    Palette *self = static_cast<Palette *>(context);
+    int idx = 0;
+    for (; idx < 5; ++idx) {
+        const int slot_key = static_cast<int>(self->internal_[idx].key);
+        if (key == slot_key || slot_key == -1) {
             break;
         }
     }
-    return index;
+
+    if ((int)self->internal_[idx].key != key) {
+        return;
+    }
+
+    int cEntries = self->internal_[idx].count;
+    unsigned int iStartIndex = self->internal_[idx].first;
+
+    PALETTEENTRY *entries = &self->entries_[iStartIndex];
+    PALETTEENTRY last;
+    last.peRed = entries[0].peRed;
+    last.peGreen = entries[0].peGreen;
+    last.peBlue = entries[0].peBlue;
+
+    int i;
+    for (i = 0; i < cEntries - 1; i++) {
+        entries[i].peRed = entries[i + 1].peRed;
+        entries[i].peGreen = entries[i + 1].peGreen;
+        entries[i].peBlue = entries[i + 1].peBlue;
+    }
+
+    entries[cEntries - 1].peRed = last.peRed;
+    entries[cEntries - 1].peGreen = last.peGreen;
+    entries[cEntries - 1].peBlue = last.peBlue;
+
+    AnimatePalette(
+        PaletteInitialized, iStartIndex, cEntries, entries);
+
+    PaletteSeedCache = (int)self->seed_;
 }
 
 /*
@@ -484,276 +1057,6 @@ void Palette::init_palette_class(int use_system_colours) {
 }
 
 /*
-// ORIGINAL: 0x005FE460 ?set@Palette@@QAEHXZ 0x005FE460-0x005FE4EB BYTE_EXACT
-// size      139 bytes
-// prototype int (__thiscall ?set@Palette@@QAEHXZ)(Palette* this)
-// callers   12   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005DE8F0
-//
-// Promoted 2026-08-15 from src/unrecovered/005fe460.cpp to retire its
-// pending_bodies forwarder, then rewritten from raw self_addr/g_ pointer
-// arithmetic into ordinary member and global access: the DirectDraw branch
-// publishes through the surface vtable's slot 6, the GDI branch syncs the
-// screen buffer and animates the ramp entries when the seed changed.
-Status: Complete
-*/
-int Palette::set() {
-    if (BufferDirectDraw) {
-        // DirectDraw owns the screen, so the palette is published through
-        // IDirectDrawPalette::SetEntries rather than GDI.
-        if (DirectDrawPalette) {
-            DirectDrawPalette->SetEntries(0, 0, 256, entries_);
-        }
-        return 0;
-    }
-    if (PaletteInitialized == 0) {
-        return 7;
-    }
-    PaletteActive = this;
-    Win::screen_buffer_.sync_to_palette(this);
-    if (PaletteUsesSystemColours == 0) {
-        // Animate only when the seed changed; entries 10-245 are the ramp.
-        if (PaletteSeedCache != seed_) {
-            AnimatePalette(PaletteInitialized, 10, 236, &entries_[10]);
-            PaletteSeedCache = seed_;
-        }
-    }
-    return 0;
-}
-
-/*
-// ORIGINAL: 0x005FE500 ?close@Palette@@QAEXXZ 0x005FE500-0x005FE554 BYTE_EXACT
-// size      84 bytes
-// prototype void (__thiscall ?close@Palette@@QAEXXZ)(Palette* this)
-// callers   5   call targets   3
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x00616200 0x00644EF2 0x0064557F
-//
-// Promoted 2026-08-15 from src/recovered/units/005fe500.cpp. Tears down the
-// five animation entries at this+0x408 (each a Time*, a flag byte pair and a
-// heap pointer). Dependency of init() below.
-Status: Complete
-*/
-void Palette::close() {
-    // SYMMETRY IS WHAT MAKES THIS EXACT. Reading `time` into a local and
-    // nulling the field touches it twice while `colours` - tested, freed and
-    // nulled - is touched three times, and VC6 bases the loop on the
-    // busier field: every displacement then lands eight bytes off the
-    // image's, which reads as SHAPE_EXACT with the right registers and the
-    // wrong constants. Treat the two the same way and the base lands where
-    // the image puts it, at `this + 0x408`.
-    for (int i = 0; i < 5; ++i) {
-        internal_[i].key = -1;
-        if (internal_[i].time) {
-            delete internal_[i].time;
-            internal_[i].time = nullptr;
-        }
-        if (internal_[i].colours) {
-            free(internal_[i].colours);
-            internal_[i].colours = nullptr;
-        }
-        internal_[i].first = 0;
-        internal_[i].count = 0;
-    }
-}
-
-/*
-// ORIGINAL: 0x005FE330 ?init@Palette@@QAEXXZ 0x005FE330-0x005FE45F BYTE_EXACT
-// symbol    ?init@Palette@@QAEHXZ
-// size      303 bytes
-// prototype void (__thiscall ?init@Palette@@QAEXXZ)(Palette* this)
-// callers   5   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005FE500 0x00625810
-//
-// Promoted 2026-08-15 from src/recovered/units/005fe330.cpp and rewritten
-// from raw self_addr pointer arithmetic into ordinary member access. Reloads
-// the 256 entries - from the system palette when PaletteUsesSystemColours is
-// set, otherwise from the built-in SystemColours plus a grey ramp - then
-// picks a fresh non-zero seed.
-Status: Complete
-*/
-int Palette::init() {
-    close();
-    if (PaletteUsesSystemColours) {
-        HDC screen = GetDC(0);
-        GetSystemPaletteEntries(screen, 0, 256, entries_);
-        ReleaseDC(0, screen);
-    } else {
-        // The twenty static colours, RGBQUAD (blue, green, red) on the way in
-        // and PALETTEENTRY (red, green, blue) on the way out - hence the
-        // reversal. Entries 0-9 and 246-255 are the range GDI reserves.
-        for (int i = 0; i < 10; ++i) {
-            entries_[i].peRed = SystemColours[i * 4 + 2];
-            entries_[i].peGreen = SystemColours[i * 4 + 1];
-            entries_[i].peBlue = SystemColours[i * 4];
-            entries_[i].peFlags = 4;
-            entries_[i + 246].peRed = SystemColours[i * 4 + 42];
-            entries_[i + 246].peGreen = SystemColours[i * 4 + 41];
-            entries_[i + 246].peBlue = SystemColours[i * 4 + 40];
-            entries_[i + 246].peFlags = 4;
-        }
-        // Everything between the two reserved runs is ours to animate; the
-        // original fills it with a grey ramp. VC6 leaks a for-loop's declared
-        // variable into the enclosing scope, so this loop must not redeclare
-        // the `i` the colour loop above already declared.
-        for (int grey = 10; grey < 246; ++grey) {
-            entries_[grey].peRed = (uint8_t)grey;
-            entries_[grey].peGreen = (uint8_t)grey;
-            entries_[grey].peBlue = (uint8_t)grey;
-            entries_[grey].peFlags = 5;  // PC_RESERVED | PC_NOCOLLAPSE
-        }
-        // Four entries are handed back to the system by INDEX: PC_EXPLICIT
-        // means peRed holds a system palette slot rather than an intensity.
-        for (int pair = 0; pair < 2; ++pair) {
-            entries_[8 + pair].peRed = (uint8_t)(8 + pair);
-            entries_[8 + pair].peGreen = 0;
-            entries_[8 + pair].peBlue = 0;
-            entries_[8 + pair].peFlags = 2;  // PC_EXPLICIT
-            // BUG IN THE ORIGINAL: entry 246 is given system index 245 and
-            // entry 247 index 246, one below each entry's own slot.
-            entries_[246 + pair].peRed = (uint8_t)(pair - 11);
-            entries_[246 + pair].peGreen = 0;
-            entries_[246 + pair].peBlue = 0;
-            entries_[246 + pair].peFlags = 2;  // PC_EXPLICIT
-        }
-    }
-
-    // Pick a non-zero generation seed; Buffer caches it to skip republishing
-    // an unchanged palette.
-    seed_ = 0;
-    do {
-        seed_ = random(0, 0xffff);
-    } while (seed_ == 0);
-    return 0;
-}
-
-
-// ---------------------------------------------------------------------------
-// LIFECYCLE, CLAIMED HERE.
-//
-// The constructor and the destructor are both defined out of line in this
-// unit, beside their markers. They were first written in-class so the
-// image's own inlining would reproduce, and the markers lived here because
-// a marker cannot live in a header: the source reader globs `*.cpp` and
-// `*.c`, and a comparison compiles a TRANSLATION UNIT, so a marker in a
-// header could be neither read nor measured. While the bodies sat in the
-// header, VC6 emitted each of them into this unit's object as its own
-// COMDAT anyway, which is what the comparison pulled out, and a `body`
-// fact said where to go to edit one. ~Palette then moved out of line
-// (2026-09-16): /O2's /Ob1 was expanding the in-class body into every
-// embedding class's implicit teardown - see the LEVER on its marker below.
-//
-// The ratchet still covers the header: this unit includes it, so breaking a
-// declaration here fails the claims below. Measured, not assumed.
-// ---------------------------------------------------------------------------
-
-/*
-// ORIGINAL: 0x005FE2A0 ??0Palette@@QAE@XZ 0x005FE2A0-0x005FE2D9 BYTE_EXACT
-// size      57 bytes
-// prototype void (__thiscall ??0Palette@@QAE@XZ)(Palette* this)
-// callers   8   call targets   1
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x005FE330
-*/
-
-Palette::Palette() {
-    seed_ = 0;
-    for (int i = 0; i < 5; ++i) {
-        internal_[i].key = -1;
-        internal_[i].time = nullptr;
-        internal_[i].first = 0;
-        internal_[i].count = 0;
-        internal_[i].colours = nullptr;
-    }
-    init();
-}
-
-
-/*
-// ORIGINAL: 0x005FE2E0 ??1Palette@@QAE@XZ 0x005FE2E0-0x005FE2E5 BYTE_EXACT
-// body      src/jackal/palette.cpp
-// size      5 bytes
-// prototype void (__thiscall ??1Palette@@QAE@XZ)(Palette* this)
-// callers   18   call targets   0
-// kind      thunk
-// flags     hidden;thunk;sp_ready;purged_ok
-// calls     (none)
-// LEVER: OUT OF LINE (2026-09-16, was `MEASURED ~Palette() { close(); }` in
-//   palette.h). The in-class definition let /O2's /Ob1 expand the teardown
-//   into every embedding class's compiler-generated member destruction:
-//   Flic's ??1Flic (0x004327A0) emitted `call ?close@Palette@@QAEXXZ`
-//   (0x005FE500) where the image calls this thunk, one of its 18
-//   catalogued sites. Same body either way - the difference is which call
-//   sites the compiler is willing to build it in; same measured lever as
-//   buffer.h's ~Buffer (2026-09-03). The five bytes cannot be written by
-//   hand: they are the tail-jump compile of `{ close(); }`.
-*/
-
-// The whole destructor: close() is the last thing it does, so /O2 compiles
-// the call as the tail jump the marker names.
-Palette::~Palette() { close(); }
-
-/*
-Purpose: Restart the timer of the colour-cycling slot that owns `key`.
-// ORIGINAL: 0x005FE8B0 ?start_cycle@Palette@@QAEHH@Z 0x005FE8B0-0x005FE8FB BYTE_EXACT
-// LEVER: two separate early-exit `if`s, not one chained `key==held || held==-1` - a single OR condition made VC6 peel the loop's first read outside it and rotate the test to the bottom (30 compiled instructions against the image's 27). Two `if`s with the SAME break target reproduces the image's two distinct `je`s off one `mov edx,[esi]`. Also needed a `while (slot < 5)` in place of `do { ... } while (slot < 5)` - the do-while form still peeled even with the two-if split - and `slot` declared BEFORE `entry` (not after): the image's `xor eax,eax` precedes its `lea esi,[ecx+0x404]`, and declaration order is store order here.
-// size      75 bytes
-// prototype int (__thiscall ?start_cycle@Palette@@QAEHH@Z)(Palette* this, int)
-// callers   1   call targets   1
-// kind      game
-// calls     0x00616650
-Return Value: No errors (0); no slot holds that key (0xB)
-Status: Complete
-
-PROMOTED FROM src/recovered/units/005fe8b0.cpp, which reached the slots
-through `reinterpret_cast<CycleEntry *>(self + 0x404)`.
-
-THE SCAN CAN RUN OFF THE END. Five slots, and the loop leaves `slot` at 5
-when none of them matched - the image's `cmp eax, 5; jl` exits with eax == 5
-and then reads `[eax*16 + 0x404]`, which is 0x454: one dword past the object.
-It compares that against the key and returns 0xB when it differs, which it
-almost always will. Reproduced rather than fixed; a bounds check here is a
-different program.
-*/
-int Palette::start_cycle(int key) {
-    // A WALKING POINTER AND AN INDEX, both live. The image steps `esi` by
-    // 0x10 through the slots and counts in `eax`, then recomputes the
-    // address from the INDEX afterwards - `shl eax, 4; add eax, ecx`.
-    // Indexing in the loop lets VC6 peel the first iteration and rotate the
-    // test to the bottom, which is a different shape entirely.
-    int slot = 0;
-    const PaletteInternal *entry = internal_;
-    while (slot < 5) {
-        // Read once, compared twice: `mov edx, [esi]` then two `cmp`s
-        // against the register, not two memory compares. TWO SEPARATE
-        // `if`s, not one chained `||` - the image jumps to the same target
-        // from two distinct `je`s, which is what two early-exit `if`s
-        // produce; a single OR condition made VC6 peel the first read
-        // outside the loop and rotate the test to the bottom instead.
-        const int held = static_cast<int>(entry->key);
-        if (key == held) {
-            break;
-        }
-        if (held == -1) {
-            break;
-        }
-        ++slot;
-        ++entry;
-    }
-    if (static_cast<int>(internal_[slot].key) != key) {
-        return 0xB;
-    }
-    internal_[slot].time->start();
-    return 0;
-}
-
-/*
 Purpose: Release the process-wide HPALETTE and clear it, so "initialised" and
          "non-null" stay the same question.
 // ORIGINAL: 0x005FECF0 ?close_palette_class@Palette@@QAAXXZ 0x005FECF0-0x005FED0B BYTE_EXACT
@@ -772,199 +1075,93 @@ void Palette::close_palette_class() {
     }
 }
 
-// ORIGINAL: 0x005FF470 ?get_nearest_palette_index@Palette@@QAEHEEEH@Z 0x005FF470-0x005FF627 FILE BYTE_EXACT
-// TRIED: 2026-09-03, the /G6 flag sets added to the ladder after the 2026-08-24 pass give the best INSTRUCTION count here (4/136, 0.794 similar) but score below the plain /c /O2 /Gy /GR- /GX set (3/136, 0.852 similar); the image is not /G6 in this body.
-// TRIED: separate loops for the a4==0 (linear scan) and a4!=0 (group-reserved scan) paths with a stack reserved[0x100] array; diverges at #1, stack layout order
-// BUG IN THE ORIGINAL SOURCE MODEL, now fixed: this body was missing the
-//   `if (PaletteInitialized == 0) return 7;` guard entirely - the image's
-//   `mov eax,[0x9b8178]; push esi; test eax,eax; ...; jne` at the very top,
-//   returning 7 (`pop esi` only - ONE register saved) when the palette is not
-//   yet realised, is exactly the same guard `get_rgbquad`, `set`, `closest`
-//   and this class's other accessors all carry. This tree computed a wrong
-//   answer instead of 7 on an unrealised palette. Also fixed the distance sum
-//   order to `dg*dg + dr*dr + db*db` (green, red, blue), matching both the
-//   image's `imul`/`add` chain here and `closest()`'s own documented order -
-//   it was `dr*dr + dg*dg + db*db` (red first).
-// RESOLVED 2026-11-12: the deferred ebx/ebp/edi saves come from one shared
-//   `return best_index` after an if/else; a return inside the first arm put
-//   all four pushes in the prologue.
-// size      439 bytes
-// prototype int (__thiscall ?get_nearest_palette_index@Palette@@QAEHEEEH@Z)(Palette* this, unsigned int8, unsigned int8, unsigned int8, int)
-// callers   5   call targets   0
+/*
+Purpose: Find the slot for a value in the five-entry internal table, returning
+         the index of the matching entry or the first empty one, and 5 when the
+         table is full without a match.
+// ORIGINAL: 0x005FED10 ?get_pos@Palette@@QAEHH@Z 0x005FED10-0x005FED35 BYTE_EXACT
+// size      37 bytes
+// prototype int (__thiscall ?get_pos@Palette@@QAEHH@Z)(Palette* this, int)
+// callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+Return Value: the slot index, 0 to 5
+Status: Complete
+*/
+int Palette::get_pos(int value) {
+    // THE COUNTER IS THE ANSWER. Falling out of the loop leaves `index` at
+    // 5, which is the not-found result, so the image returns it rather than
+    // loading the constant: no `mov eax, 5` before the epilogue.
+    int index = 0;
+    for (; index < 5; ++index) {
+        const int slot = static_cast<int>(internal_[index].key);
+        // `value == slot`, not `slot == value`: the image compares in that
+        // order and the two spell `cmp esi, ecx` and `cmp ecx, esi`.
+        if (value == slot || slot == -1) {
+            break;
+        }
+    }
+    return index;
+}
 
+// ORIGINAL: 0x005FED40 ?create_table@Palette@@QAEHPAEHHH@Z 0x005FED40-0x005FEE78 BYTE_EXACT
+// size      312 bytes
+// prototype int (__thiscall ?create_table@Palette@@QAEHPAEHHH@Z)(Palette* this, unsigned int8*, int, int, int)
+// callers   1   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FF630 0x00628DB0 0x00645550
+// LEVER: 2026-09-03, BYTE_EXACT on ONE source change - the v-multiply is TWO
+//   statements, not one. `local1.v = (double)(brightness_boost + 100) *
+//   local1.v * hsv_percent_scale;` let VC6 commute the two fmul operands, so
+//   the compiled body emitted `fld A; fmul [scale]; rep movsd; fmul [local1.v]`
+//   where the image has `fld A; rep movsd; fmul [local1.v]; fmul [scale]` - the
+//   scale multiply was hoisted above the struct copy because it does not depend
+//   on it, which also reorders the rounding. Splitting it into
+//   `double scaled = (double)(brightness_boost + 100) * local1.v;`
+//   `local1.v = scaled * hsv_percent_scale;` makes the second multiply depend
+//   on the first, and the whole body went 80/93 -> 93/93 at /c /O2 /Gy /GR- /GX
+//   with no other edit. `scaled` costs no stack slot: it lives on the x87
+//   stack, which is why the image has exactly one fstp.
 
-int Palette::get_nearest_palette_index(unsigned char red, unsigned char green,
-                                       unsigned char blue, int skip_animated) {
-    int best_dist = 200000;
-    // Original leaves the result uninitialized when no eligible entry improves best.
-    int best_index;
+int Palette::create_table(unsigned char *table, int start, int count,
+                          int brightness_boost) {
+    HSV hsv[256];
+    HSV local1;
+    HSV *ref0;
+    int i;
+    int upper;
+
     if (PaletteInitialized == nullptr) {
         return 7;
     }
-    // One shared return after the if/else: that single exit is what lets
-    // VC6 defer the ebx/ebp/edi saves past the guard (5FF4A0).
-    if (skip_animated == 0) {
-        for (int i = 0; i < 0x100; ++i) {
-            int dist = (entries_[i].peGreen - green) * (entries_[i].peGreen - green)
-                     + (entries_[i].peRed - red) * (entries_[i].peRed - red)
-                     + (entries_[i].peBlue - blue) * (entries_[i].peBlue - blue);
-            if (dist < best_dist) {
-                best_dist = dist;
-                best_index = i;
-            }
-        }
-    } else {
-        int reserved[0x100];
-        for (int k = 0; k < 0x100; ++k) {
-            reserved[k] = 0;
-        }
-        for (int g = 0; g < 5; ++g) {
-            if (internal_[g].key != -1) {
-                int end = internal_[g].first + internal_[g].count;
-                for (int k = internal_[g].first; k < end; ++k) {
-                    reserved[k] = 1;
-                }
-            }
-        }
-        for (int i = 10; i < 0xf6; ++i) {
-            if (reserved[i] != 0) {
-                continue;
-            }
-            int dist = (entries_[i].peGreen - green) * (entries_[i].peGreen - green)
-                     + (entries_[i].peRed - red) * (entries_[i].peRed - red)
-                     + (entries_[i].peBlue - blue) * (entries_[i].peBlue - blue);
-            if (dist < best_dist) {
-                best_dist = dist;
-                best_index = i;
-            }
-        }
-    }
-    return best_index;
-}
-
-// ORIGINAL: 0x005FF1A0 ?UNK5@Palette@@QAEHHHHH@Z 0x005FF1A0-0x005FF21C FILE BYTE_EXACT
-// symbol    ?make_remap_table@Palette@@QAEHPAV1@PAEHH@Z
-// working copy - scaffold materialised by --work
-// size      124 bytes
-// prototype int (__thiscall ?UNK5@Palette@@QAEHHHHH@Z)(Palette* this, int, int, int, int)
-// callers   0   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005FF470
-// TRIED: 2026-08-24, best is the body as it stands: 1/53 instructions, 0.937
-//   similar (the whole image is 53 instructions but this tree needs 58, so
-//   the raw count undersells the match). Two levers that paid off elsewhere
-//   in this file did NOT here, each isolated and re-measured separately:
-//   splitting `if (source==0 || table==0) return 0x10;` into two `if`s (the
-//   image's two `je`s DO share one target at 0x5ff213, so it is genuinely
-//   one merged epilogue, not the two-inline-epilogues shape the lever
-//   expects) regressed hard, to 0/53 and 0.835 similar; switching the
-//   blend-loop's walking `const PALETTEENTRY *p = &entries_[start]` to
-//   indexed `entries_[idx].peRed` (the `get_rgbquad` lesson) was neutral,
-//   0.935 similar, 1/53 with one fewer instruction (54 against 58) - not
-//   worse, not a win either. Left as the pointer-walk plus chained `||`,
-//   which is the higher-scoring of the three shapes measured.
-// LEVER: 2026-09-03, the first parameter is the palette the remap TARGETS, not
-//   an int. The image loads it into ecx as the receiver of
-//   get_nearest_palette_index (`mov ecx,[esp+0x1c]` at 0x005FF1F4, which is
-//   this function's first stack argument once the loop's pushes are counted),
-//   so the call is `source->get_nearest_palette_index(...)` and the parameter
-//   is `Palette *source`. Retyping it took this body 1/53 -> 46/53 (0.937 ->
-//   0.995 similar, best flag set /c /O2 /Gy /GR- /GX): the whole front half -
-//   the `push ecx` spill, the `mov eax,[esp+4]`-before-`push ebp` ordering the
-//   2026-08-24 note chases, and every store in the two identity-fill loops -
-//   was downstream of the tree passing its own `this` where the image passes
-//   the parameter. The shipped mangled name still says `H` for the parameter,
-//   so `symbol` records what this tree emits.
-// TRIED: 2026-09-03, the remaining 7 instructions are ONE register-assignment
-//   choice: the image seeds the second identity-fill loop's counter into eax
-//   (`mov eax,ebx; cmp eax,0x100`), this tree keeps it in ebx coalesced with
-//   `end` (`cmp ebx,0x100; mov eax,ebx`). Giving the loop its own counter
-//   (`for (int fill = end; ...)`) compiles BYTE-IDENTICAL to reusing `i`, and
-//   /G6 - which reorders that mov/cmp pair on general.cpp's add_lf - regresses
-//   to 24/53 here. Not source-reachable; left at 46/53.
-// 2026-11-06: exact once the second loop starts at `start + count` and
-//   `end` is named only after it.
-
-// `source` is the palette the remap TARGETS, not an int: the image loads it
-// into ecx as the receiver of get_nearest_palette_index at 0x005FF1F4
-// (`mov ecx, [esp+0x1c]`, which is this function's first stack argument), so
-// the call is source->get_nearest_palette_index(...). The shipped mangled name
-// still says `H` for it, so `symbol` carries what this tree emits.
-int Palette::make_remap_table(Palette *source, unsigned char *table, int start,
-                              int count) {
-    if (source == 0 || table == 0) {
+    if (table == 0) {
         return 0x10;
     }
-    int i = 0;
-    if (0 < start) {
-        do {
-            table[i] = (char)i;
-            i = i + 1;
-        } while (i < start);
-    }
-    for (i = start + count; i < 0x100; i = i + 1) {
-        table[i] = (char)i;
-    }
-    int end = start + count;
-    if (start < end) {
-        int idx = start;
-        do {
-            table[idx] = (char)source->get_nearest_palette_index(
-                entries_[idx].peRed, entries_[idx].peGreen, entries_[idx].peBlue, 1);
-            idx = idx + 1;
-        } while (idx < end);
-    }
-    return 0;
-}
-
-// ORIGINAL: 0x005FE5C0 ?UNK1@Palette@@QAEHHHH@Z 0x005FE5C0-0x005FE646 FILE BYTE_EXACT
-// TRIED: 2026-09-03, the /G6 flag sets added to the ladder after the 2026-08-24 pass give the best INSTRUCTION count here (13/47, 0.860 similar) but score below the plain /c /O2 /Gy /GR- /GX set (11/47, 0.946 similar); the image is not /G6 in this body.
-// symbol    ?set_rgbquad@Palette@@QAEHPBUtagRGBQUAD@@HH@Z
-// working copy - scaffold materialised by --work
-// size      134 bytes
-// prototype int (__thiscall ?UNK1@Palette@@QAEHHHH@Z)(Palette* this, int, int, int)
-// callers   2   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00625810
-// TRIED: 2026-08-24, the get_rgbquad "INDEX, DO NOT WALK" lesson does NOT
-//   transfer here. Rewriting the blend loop as `entries_[start+i].peRed =
-//   src[i].rgbRed;` etc. (a single ascending index `i` compared against
-//   `count`) raises raw instruction agreement 11/47 -> 17/47 but LOWERS
-//   bytes similarity 0.946 -> 0.878 (best of all ten flag sets, both ways) -
-//   the image's loop keeps ONE descending counter (`dec esi; jne`, doubling
-//   as progress and termination) and TWO independently walking pointers
-//   (dst biased +2 onto .peBlue, src biased +1 onto .rgbGreen, each `add
-//   reg,4` once per iteration); an ascending index needs the ORIGINAL bound
-//   (`count`) AND the index both live for the `<` comparison, which is a
-//   register more than the image's single counter costs. Left as the
-//   pointer-walk form, which is the higher-similarity of the two measured.
-// 2026-11-06: exact as a plain `for (i = 0; i < count; i++)` indexing
-//   entries_[start + i] and src[i]; VC6 derives the counter/pointer walk.
-
-int Palette::set_rgbquad(const RGBQUAD *src, int start, int count) {
-    if (src == 0) {
+    if (brightness_boost < -100 || brightness_boost > 100) {
         return 3;
     }
-    if (PaletteInitialized == nullptr) {
-        return 7;
+    for (i = 0; i < start; i++) {
+        table[i] = (unsigned char)i;
     }
-    for (int i = 0; i < count; i++) {
-        entries_[start + i].peRed = src[i].rgbRed;
-        entries_[start + i].peGreen = src[i].rgbGreen;
-        entries_[start + i].peBlue = src[i].rgbBlue;
-        entries_[start + i].peFlags = 5;
+    upper = start + count;
+    for (i = upper; i < 0x100; i++) {
+        table[i] = (unsigned char)i;
     }
-    seed_ = 0;
-    int result;
-    do {
-        result = random(0, 0xffff);
-        seed_ = result;
-    } while (result == 0);
+    for (i = 0; i < 0x100; i++) {
+        RGB_to_HSV(&entries_[i], &hsv[i]);
+    }
+    ref0 = &hsv[0];
+    for (i = start; i < upper; i++) {
+        local1 = hsv[i];
+        // Two statements, not one: the image multiplies the brightness factor
+        // into local1.v FIRST and the percent scale in second, and folding all
+        // three into one expression lets VC6 commute the two fmul operands.
+        double scaled = (double)(brightness_boost + 100) * local1.v;
+        local1.v = scaled * hsv_percent_scale;
+        table[i] = (unsigned char)get_nearest_palette_index(&local1, ref0, 1);
+    }
     return 0;
 }
 
@@ -1137,6 +1334,82 @@ int Palette::create_table_from_color(int colour_index, unsigned char *table,
     return 0;
 }
 
+// ORIGINAL: 0x005FF1A0 ?UNK5@Palette@@QAEHHHHH@Z 0x005FF1A0-0x005FF21C FILE BYTE_EXACT
+// symbol    ?make_remap_table@Palette@@QAEHPAV1@PAEHH@Z
+// working copy - scaffold materialised by --work
+// size      124 bytes
+// prototype int (__thiscall ?UNK5@Palette@@QAEHHHHH@Z)(Palette* this, int, int, int, int)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FF470
+// TRIED: 2026-08-24, best is the body as it stands: 1/53 instructions, 0.937
+//   similar (the whole image is 53 instructions but this tree needs 58, so
+//   the raw count undersells the match). Two levers that paid off elsewhere
+//   in this file did NOT here, each isolated and re-measured separately:
+//   splitting `if (source==0 || table==0) return 0x10;` into two `if`s (the
+//   image's two `je`s DO share one target at 0x5ff213, so it is genuinely
+//   one merged epilogue, not the two-inline-epilogues shape the lever
+//   expects) regressed hard, to 0/53 and 0.835 similar; switching the
+//   blend-loop's walking `const PALETTEENTRY *p = &entries_[start]` to
+//   indexed `entries_[idx].peRed` (the `get_rgbquad` lesson) was neutral,
+//   0.935 similar, 1/53 with one fewer instruction (54 against 58) - not
+//   worse, not a win either. Left as the pointer-walk plus chained `||`,
+//   which is the higher-scoring of the three shapes measured.
+// LEVER: 2026-09-03, the first parameter is the palette the remap TARGETS, not
+//   an int. The image loads it into ecx as the receiver of
+//   get_nearest_palette_index (`mov ecx,[esp+0x1c]` at 0x005FF1F4, which is
+//   this function's first stack argument once the loop's pushes are counted),
+//   so the call is `source->get_nearest_palette_index(...)` and the parameter
+//   is `Palette *source`. Retyping it took this body 1/53 -> 46/53 (0.937 ->
+//   0.995 similar, best flag set /c /O2 /Gy /GR- /GX): the whole front half -
+//   the `push ecx` spill, the `mov eax,[esp+4]`-before-`push ebp` ordering the
+//   2026-08-24 note chases, and every store in the two identity-fill loops -
+//   was downstream of the tree passing its own `this` where the image passes
+//   the parameter. The shipped mangled name still says `H` for the parameter,
+//   so `symbol` records what this tree emits.
+// TRIED: 2026-09-03, the remaining 7 instructions are ONE register-assignment
+//   choice: the image seeds the second identity-fill loop's counter into eax
+//   (`mov eax,ebx; cmp eax,0x100`), this tree keeps it in ebx coalesced with
+//   `end` (`cmp ebx,0x100; mov eax,ebx`). Giving the loop its own counter
+//   (`for (int fill = end; ...)`) compiles BYTE-IDENTICAL to reusing `i`, and
+//   /G6 - which reorders that mov/cmp pair on general.cpp's add_lf - regresses
+//   to 24/53 here. Not source-reachable; left at 46/53.
+// 2026-11-06: exact once the second loop starts at `start + count` and
+//   `end` is named only after it.
+
+// `source` is the palette the remap TARGETS, not an int: the image loads it
+// into ecx as the receiver of get_nearest_palette_index at 0x005FF1F4
+// (`mov ecx, [esp+0x1c]`, which is this function's first stack argument), so
+// the call is source->get_nearest_palette_index(...). The shipped mangled name
+// still says `H` for it, so `symbol` carries what this tree emits.
+int Palette::make_remap_table(Palette *source, unsigned char *table, int start,
+                              int count) {
+    if (source == 0 || table == 0) {
+        return 0x10;
+    }
+    int i = 0;
+    if (0 < start) {
+        do {
+            table[i] = (char)i;
+            i = i + 1;
+        } while (i < start);
+    }
+    for (i = start + count; i < 0x100; i = i + 1) {
+        table[i] = (char)i;
+    }
+    int end = start + count;
+    if (start < end) {
+        int idx = start;
+        do {
+            table[idx] = (char)source->get_nearest_palette_index(
+                entries_[idx].peRed, entries_[idx].peGreen, entries_[idx].peBlue, 1);
+            idx = idx + 1;
+        } while (idx < end);
+    }
+    return 0;
+}
+
 // ORIGINAL: 0x005FF220 ?UNK6@Palette@@QAEHHHH@Z 0x005FF220-0x005FF277 FILE BYTE_EXACT
 // symbol    ?map_to_palette@Palette@@QAEHPAV1@HH@Z
 // size      87 bytes
@@ -1228,315 +1501,151 @@ int Palette::map_to_palette(Palette *dest, int start, int count) {
     return 0;
 }
 
-// ORIGINAL: 0x005FEAD0 ?timer_callback@Palette@@QAAXHH@Z 0x005FEAD0-0x005FEBA8 FILE BYTE_EXACT
-// symbol    ?timer_callback@Palette@@SAXHPAX@Z
-// TRIED: 228 vs 216 bytes; the extra named locals (idx/found/entries/ iStartIndex/cEntries/i) push more callee-saved registers before the first `mov ebp,a2`, where the original loads a2 into ebp before any other push. Did not try collapsing to fewer locals given budget.
-// TRIED: 2026-08-24, collapsing WAS tried and it is not the lever - it makes
-//   things worse. Re-measured: current body 2/72, 0.886 similar (best of all
-//   ten flag sets). Dropping `iStartIndex`/`cEntries` and reading
-//   `self->internal_[idx].first`/`.count` directly at each use (instead of
-//   once into named locals) regresses to 0.715 similar, MORE total
-//   instructions (79 vs 77), and pushes an extra register (`edi`) the
-//   baseline does not. The image's very first divergent instruction in
-//   EITHER form is `push ecx` at the top of this tree's compiled body,
-//   before the first guard even runs - one register of pressure this
-//   function needs that the image does not, for a reason source-form edits
-//   here have not isolated. Left as the named-locals form, which is the
-//   higher-similarity of the two measured.
-// working copy - scaffold materialised by --work
-// size      216 bytes
-// prototype 
-// callers   0   call targets   0
+/*
+Purpose: Find the palette entry nearest the given colour.
+// ORIGINAL: 0x005FF280 ?UNK7@Palette@@QAEHHHHHHH@Z 0x005FF280-0x005FF46B BYTE_EXACT
+// symbol    ?closest@Palette@@QAEHEEEHHH@Z
+// size      491 bytes
+// prototype int (__thiscall)(Palette* this, int, int, int, int, int, int)
+// kind      game
+
+The distance is summed green^2 + red^2 + blue^2 in that order, and
+`skip_animated` selects a pass that first marks every entry an active slot
+reserves. The earlier "push placement wall" was source shape: one `end`
+local assigned in each arm and one shared `return` after the if/else let
+VC6 save only esi before the PaletteInitialized guard (5FF28B) and defer
+ebx/ebp/edi past it, as get_nearest_palette_index does.
+
+The name is an inference from behaviour, which is why the catalogue's
+`UNK7` stays on the marker and `symbol` carries what this tree emits.
+Return Value: the nearest entry's index, or 7 if there is no palette
+Status: Complete
+*/
+int Palette::closest(uint8_t red, uint8_t green, uint8_t blue, int start, int count,
+                     int skip_animated) {
+    int best = 200000;
+    // Original leaves the result uninitialized when no eligible entry improves best.
+    int best_index;
+    int end;
+    if (!PaletteInitialized) {
+        return 7;
+    }
+    if (!skip_animated) {
+        end = start + count;
+        for (int index = start; index < end; ++index) {
+            const int distance =
+                (entries_[index].peGreen - green) * (entries_[index].peGreen - green)
+                + (entries_[index].peRed - red) * (entries_[index].peRed - red)
+                + (entries_[index].peBlue - blue) * (entries_[index].peBlue - blue);
+            if (distance < best) {
+                best = distance;
+                best_index = index;
+            }
+        }
+    } else {
+        // EVERY ENTRY AN ACTIVE SLOT OWNS IS OFF LIMITS. A slot is active
+        // when its key is not -1, and it reserves `count` entries from `first`.
+        int reserved[256];
+        for (int k = 0; k < 256; ++k) {
+            reserved[k] = 0;
+        }
+        for (int slot = 0; slot < 5; ++slot) {
+            if (internal_[slot].key != 0xFFFFFFFFu) {
+                const int stop = internal_[slot].first + internal_[slot].count;
+                for (int entry = internal_[slot].first; entry < stop; ++entry) {
+                    reserved[entry] = 1;
+                }
+            }
+        }
+        end = start + count;
+        for (int index = start; index < end; ++index) {
+            if (reserved[index]) {
+                continue;
+            }
+            const int distance =
+                (entries_[index].peGreen - green) * (entries_[index].peGreen - green)
+                + (entries_[index].peRed - red) * (entries_[index].peRed - red)
+                + (entries_[index].peBlue - blue) * (entries_[index].peBlue - blue);
+            if (distance < best) {
+                best = distance;
+                best_index = index;
+            }
+        }
+    }
+    return best_index;
+}
+
+// ORIGINAL: 0x005FF470 ?get_nearest_palette_index@Palette@@QAEHEEEH@Z 0x005FF470-0x005FF627 FILE BYTE_EXACT
+// TRIED: 2026-09-03, the /G6 flag sets added to the ladder after the 2026-08-24 pass give the best INSTRUCTION count here (4/136, 0.794 similar) but score below the plain /c /O2 /Gy /GR- /GX set (3/136, 0.852 similar); the image is not /G6 in this body.
+// TRIED: separate loops for the a4==0 (linear scan) and a4!=0 (group-reserved scan) paths with a stack reserved[0x100] array; diverges at #1, stack layout order
+// BUG IN THE ORIGINAL SOURCE MODEL, now fixed: this body was missing the
+//   `if (PaletteInitialized == 0) return 7;` guard entirely - the image's
+//   `mov eax,[0x9b8178]; push esi; test eax,eax; ...; jne` at the very top,
+//   returning 7 (`pop esi` only - ONE register saved) when the palette is not
+//   yet realised, is exactly the same guard `get_rgbquad`, `set`, `closest`
+//   and this class's other accessors all carry. This tree computed a wrong
+//   answer instead of 7 on an unrealised palette. Also fixed the distance sum
+//   order to `dg*dg + dr*dr + db*db` (green, red, blue), matching both the
+//   image's `imul`/`add` chain here and `closest()`'s own documented order -
+//   it was `dr*dr + dg*dg + db*db` (red first).
+// RESOLVED 2026-11-12: the deferred ebx/ebp/edi saves come from one shared
+//   `return best_index` after an if/else; a return inside the first arm put
+//   all four pushes in the prologue.
+// size      439 bytes
+// prototype int (__thiscall ?get_nearest_palette_index@Palette@@QAEHEEEH@Z)(Palette* this, unsigned int8, unsigned int8, unsigned int8, int)
+// callers   5   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
-// indirect  0x005FEB91
 
 
-// 2026-11-06: exact with the first-entry save as a PALETTEENTRY local
-//   (packs into the dead context slot), count read before first, for+break.
-void __cdecl Palette::timer_callback(int key, void *context) {
-    if (context == nullptr || PaletteUsesSystemColours != 0) {
-        return;
-    }
-
-    Palette *self = static_cast<Palette *>(context);
-    int idx = 0;
-    for (; idx < 5; ++idx) {
-        const int slot_key = static_cast<int>(self->internal_[idx].key);
-        if (key == slot_key || slot_key == -1) {
-            break;
-        }
-    }
-
-    if ((int)self->internal_[idx].key != key) {
-        return;
-    }
-
-    int cEntries = self->internal_[idx].count;
-    unsigned int iStartIndex = self->internal_[idx].first;
-
-    PALETTEENTRY *entries = &self->entries_[iStartIndex];
-    PALETTEENTRY last;
-    last.peRed = entries[0].peRed;
-    last.peGreen = entries[0].peGreen;
-    last.peBlue = entries[0].peBlue;
-
-    int i;
-    for (i = 0; i < cEntries - 1; i++) {
-        entries[i].peRed = entries[i + 1].peRed;
-        entries[i].peGreen = entries[i + 1].peGreen;
-        entries[i].peBlue = entries[i + 1].peBlue;
-    }
-
-    entries[cEntries - 1].peRed = last.peRed;
-    entries[cEntries - 1].peGreen = last.peGreen;
-    entries[cEntries - 1].peBlue = last.peBlue;
-
-    AnimatePalette(
-        PaletteInitialized, iStartIndex, cEntries, entries);
-
-    PaletteSeedCache = (int)self->seed_;
-}
-
-// ORIGINAL: 0x005FF930 ?UNK8@Palette@@QAEHHHHHH@Z 0x005FF930-0x005FFB0B
-// symbol    ?fade_to@Palette@@QAEHPAV1@HHHH@Z
-// TRIED: the third RGB channel is written through a pair of pointers precomputed once before the loop (`stackA_adj`/`stackB_adj` plus the destination pointer) rather than a fresh `k*4+2` index each iteration; kept as a direct index into the two 1024-byte stack copies, which is semantically the same value. `seed_` at offset 0x400 (right after `field_3FC_`) matches the reseed loop exactly. Landing the closest control-flow- faithful form (divergence starts at instruction #2, on the `this`-copy prologue).
-// size      475 bytes
-// prototype int (__thiscall ?UNK8@Palette@@QAEHHHHHH@Z)(Palette* this, void*, UINT iStartIndex, UINT cEntries, int, int)
-// callers   0   call targets   2
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x00625810 0x00645930
-// indirect  0x005FF9D2 0x005FFA94 0x005FFA9A 0x005FFAB1
-// TRIED: 2026-08-24, re-measured: 20/141, 0.823 similar (best of all ten
-//   flag sets, `/O2 /Oi- /Gy /GR-`). The three-guard order (PaletteUsesSystem
-//   Colours, PaletteInitialized, other==0) already matches the image's own
-//   read order exactly. The image SPILLS `this` to `[esp+8]` right after
-//   loading it into `esi` (`mov [esp+8], esi`), rather than keeping it in a
-//   register through all three guards - the same shape as
-//   `make_blend_table`'s finding. Not chased further given the size of the
-//   function (475 bytes) and that three siblings already measured this exact
-//   wall unmovable by guard reordering.
-
-
-
-// 2026-11-06: the image writes the blend into this->entries_ and animates
-//   &entries_[start] (memcpy #1 copies this, the loop base is the spilled
-//   this); the old body wrote into other. Left: two blue-channel delta slots
-//   swap ([esp+0x1c]/[esp+0x20]).
-int Palette::fade_to(Palette *other, int start, int count, int steps,
-                     int min_frame_ms) {
-  if (PaletteUsesSystemColours != 0) {
-    return 0;
-  }
-  if (PaletteInitialized == nullptr) {
-    return 7;
-  }
-  if (other == 0) {
-    return 0x10;
-  }
-
-  PALETTEENTRY selfCopy[256];
-  PALETTEENTRY otherCopy[256];
-  memcpy(selfCopy, entries_, sizeof(selfCopy));
-  memcpy(otherCopy, other->entries_, sizeof(otherCopy));
-
-  
-
-  int frame = 0;
-  if (frame < steps + 1) {
-    int weight = steps;
-    do {
-      DWORD t0 = timeGetTime();
-      int k = start;
-      if (k < start + count) {
-        do {
-          entries_[k].peRed = static_cast<char>(
-              (selfCopy[k].peRed * weight +
-               otherCopy[k].peRed * frame) /
-              steps);
-          entries_[k].peGreen = static_cast<char>(
-              (selfCopy[k].peGreen * weight +
-               otherCopy[k].peGreen * frame) /
-              steps);
-          entries_[k].peBlue = static_cast<char>(
-              (selfCopy[k].peBlue * weight +
-               otherCopy[k].peBlue * frame) /
-              steps);
-          ++k;
-        } while (k < start + count);
-      }
-
-      AnimatePalette(PaletteInitialized, start, count,
-                     &entries_[start]);
-
-      while (timeGetTime() - t0 < static_cast<unsigned int>(min_frame_ms)) {
-      }
-
-      ++frame;
-      --weight;
-    } while (frame < steps + 1);
-  }
-
-  seed_ = 0;
-  int r;
-  do {
-    r = random(0, 0xffff);
-    seed_ = r;
-  } while (r == 0);
-
-  return 0;
-}
-
-// ORIGINAL: 0x005FE700 ?init_cycle@Palette@@QAEHHHHK@Z 0x005FE700-0x005FE8AC;0x00662D60-0x00662D75 FILE BYTE_EXACT
-// TRIED: plain 'new Time()'/'operator delete'/'free' expressions relying on VC6's own SEH codegen instead of hand-written __try/__finally; diverges at #1, prologue register order
-// size      449 bytes
-// prototype int (__thiscall ?init_cycle@Palette@@QAEHHHHK@Z)(Palette* this, int, int, int, unsigned int)
-// callers   1   call targets   8
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x005D4510 0x006161D0 0x00616200 0x006162D0 0x00644EF2 0x0064557F 0x0064558A 0x00645930
-// TRIED: 2026-08-24, re-measured: 6/129, 0.863 similar (best of all ten flag
-//   sets, `/O2 /Oi- /Gy /GR-` - /Oi- alone is worth 0.049 here, `/O2 /GX`
-//   plain only reaches 0.814). `osmx calls --all` confirms the eight targets
-//   above are exactly what this body calls, in the same relative order
-//   (~Time, operator delete, free, mem_get, memcpy, operator new, Time::Time,
-//   Time::init) - the call graph is not the defect. Same whole-function
-//   register-pressure wall as the other large bodies in this file; not
-//   re-derived given the size (449 bytes) and the existing TRIED line's
-//   verdict.
-
-
-// The third argument is the colour count (5FE73E, 5FE7FF, 5FE805);
-// the fourth is only the timer interval (5FE87C). They are independent:
-// a slow timer must not allocate or copy more palette entries.
-int Palette::init_cycle(int key, int first, int count, unsigned long interval) {
-    // The image masks the colour index in place (5FE71A..5FE727) and
-    // compares it signed; the slot is then addressed by index, not pointer.
-    first &= 0xFF;
-    if (first < 10) {
-        return 3;
-    }
-    if (count > 0xF6 - first) {
-        return 3;
-    }
-    if (key == -1) {
-        return 3;
-    }
+int Palette::get_nearest_palette_index(unsigned char red, unsigned char green,
+                                       unsigned char blue, int skip_animated) {
+    int best_dist = 200000;
+    // Original leaves the result uninitialized when no eligible entry improves best.
+    int best_index;
     if (PaletteInitialized == nullptr) {
         return 7;
     }
-
-    int slot = 0;
-    const PaletteInternal *entry = internal_;
-    while (slot < 5) {
-        const int held = static_cast<int>(entry->key);
-        if (key == held) {
-            break;
-        }
-        if (held == -1) {
-            break;
-        }
-        ++slot;
-        ++entry;
-    }
-
-    if (static_cast<int>(internal_[slot].key) == key) {
-        if (internal_[slot].time != 0) {
-            delete internal_[slot].time;
-            internal_[slot].time = 0;
-        }
-        if (internal_[slot].colours != 0) {
-            free(internal_[slot].colours);
-            internal_[slot].colours = 0;
-        }
-    }
-
-    internal_[slot].key = key;
-    internal_[slot].count = (uint8_t)count;
-    internal_[slot].first = (uint8_t)first;
-    internal_[slot].colours = static_cast<PALETTEENTRY *>(mem_get(count * 4));
-    if (internal_[slot].colours == 0) {
-        return 4;
-    }
-    memcpy(internal_[slot].colours, &entries_[first], count * 4);
-    internal_[slot].time = new Time();
-    if (internal_[slot].time == 0) {
-        return 4;
-    }
-    internal_[slot].time->init(Palette::timer_callback, key, this,
-                               static_cast<uint32_t>(interval), 5);
-    return 0;
-}
-
-// ORIGINAL: 0x005FFB10 ?UNK9@Palette@@QAEHHHHHH@Z 0x005FFB10-0x005FFD7F FILE BYTE_EXACT
-// symbol    ?fade_to_entry@Palette@@QAEHHHHHH@Z
-// TRIED: flipping the outer if/else polarity to test BufferDirectDraw != nullptr first (matching the disasm's fall-through order literally) moved the divergence from #13 (a lone je/jne polarity swap) to #0 (a different prologue entirely - no `sub esp,0x428`), so the `== 0`-first form below is the better body. Full control flow, field offsets and the interpolation formula (backup*stepsRemaining + target*progressCounter)/a4 were hand-traced from the raw disasm stack-offset arithmetic, not from Ghidra's decompile, which mis-simplifies the backup-buffer pointer trick.
-// working copy - scaffold materialised by --work
-// size      623 bytes
-// prototype int (__thiscall ?UNK9@Palette@@QAEHHHHHH@Z)(Palette* this, UINT, UINT iStartIndex, UINT cEntries, int, int)
-// callers   0   call targets   3
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005DE8F0 0x00625810 0x00645930
-// TRIED: 2026-08-24, re-measured: 15/180, 0.773 similar (best of all ten flag
-//   sets, `/O2 /Oi- /Gy /GR-`). `osmx calls --all` confirms the call graph
-//   already matches the image exactly (memcpy, `Buffer::sync_to_palette`,
-//   two `AnimatePalette`s, `random`, and four vtable/import calls through a
-//   register - the two `SetEntries`/`timeGetTime`x3 sites this body's shape
-//   predicts). The remaining gap is the now-familiar whole-function
-//   register-pressure wall (frame 0x428 vs this tree's 0x430, one register
-//   short at the very first guard) shared with `fade_to`/`closest`/
-//   `get_nearest_palette_index` above - not re-derived here.
-// indirect  0x005FFB82 0x005FFBCC 0x005FFC18 0x005FFD05 0x005FFD0B 0x005FFD1A
-
-// 2026-11-06: the DirectDraw/GDI block is the inlined set(); body follows
-//   fade_to. Left: start/this/timeGetTime load scheduling at the loop head.
-int Palette::fade_to_entry(int colour_index, int start, int count, int steps,
-                           int min_frame_ms) {
-    if (PaletteInitialized == nullptr) {
-        return 7;
-    }
-    if (PaletteUsesSystemColours != 0) {
-        return 0;
-    }
-
-    const PALETTEENTRY target = entries_[colour_index];
-    PALETTEENTRY backup[256];
-    memcpy(backup, entries_, sizeof(backup));
-    set();
-
-    int frame = 0;
-    if (frame < steps + 1) {
-        int end = start + count;
-        int weight = steps;
-        do {
-            DWORD t0 = timeGetTime();
-            for (int k = start; k < end; ++k) {
-                    entries_[k].peRed = static_cast<unsigned char>(
-                        (backup[k].peRed * weight + target.peRed * frame) / steps);
-                    entries_[k].peGreen = static_cast<unsigned char>(
-                        (backup[k].peGreen * weight + target.peGreen * frame) / steps);
-                    entries_[k].peBlue = static_cast<unsigned char>(
-                        (backup[k].peBlue * weight + target.peBlue * frame) / steps);
+    // One shared return after the if/else: that single exit is what lets
+    // VC6 defer the ebx/ebp/edi saves past the guard (5FF4A0).
+    if (skip_animated == 0) {
+        for (int i = 0; i < 0x100; ++i) {
+            int dist = (entries_[i].peGreen - green) * (entries_[i].peGreen - green)
+                     + (entries_[i].peRed - red) * (entries_[i].peRed - red)
+                     + (entries_[i].peBlue - blue) * (entries_[i].peBlue - blue);
+            if (dist < best_dist) {
+                best_dist = dist;
+                best_index = i;
             }
-            AnimatePalette(PaletteInitialized, start, count, &entries_[start]);
-            while (timeGetTime() - t0 < static_cast<unsigned int>(min_frame_ms)) {
+        }
+    } else {
+        int reserved[0x100];
+        for (int k = 0; k < 0x100; ++k) {
+            reserved[k] = 0;
+        }
+        for (int g = 0; g < 5; ++g) {
+            if (internal_[g].key != -1) {
+                int end = internal_[g].first + internal_[g].count;
+                for (int k = internal_[g].first; k < end; ++k) {
+                    reserved[k] = 1;
+                }
             }
-            ++frame;
-            --weight;
-        } while (frame < steps + 1);
+        }
+        for (int i = 10; i < 0xf6; ++i) {
+            if (reserved[i] != 0) {
+                continue;
+            }
+            int dist = (entries_[i].peGreen - green) * (entries_[i].peGreen - green)
+                     + (entries_[i].peRed - red) * (entries_[i].peRed - red)
+                     + (entries_[i].peBlue - blue) * (entries_[i].peBlue - blue);
+            if (dist < best_dist) {
+                best_dist = dist;
+                best_index = i;
+            }
+        }
     }
-
-    seed_ = 0;
-    int newSeed;
-    do {
-        newSeed = (int)random(0, 0xffff);
-        seed_ = newSeed;
-    } while (newSeed == 0);
-
-    return 0;
+    return best_index;
 }
 
 // ORIGINAL: 0x005FF630 ?get_nearest_palette_index@Palette@@QAEHPAUHSV@@0H@Z 0x005FF630-0x005FF92D FILE
@@ -1632,269 +1741,161 @@ int Palette::get_nearest_palette_index(const HSV *query, const HSV *hsv_block,
     return best_index;
 }
 
-// ORIGINAL: 0x005FED40 ?create_table@Palette@@QAEHPAEHHH@Z 0x005FED40-0x005FEE78 BYTE_EXACT
-// size      312 bytes
-// prototype int (__thiscall ?create_table@Palette@@QAEHPAEHHH@Z)(Palette* this, unsigned int8*, int, int, int)
-// callers   1   call targets   3
+// ORIGINAL: 0x005FF930 ?UNK8@Palette@@QAEHHHHHH@Z 0x005FF930-0x005FFB0B
+// symbol    ?fade_to@Palette@@QAEHPAV1@HHHH@Z
+// TRIED: the third RGB channel is written through a pair of pointers precomputed once before the loop (`stackA_adj`/`stackB_adj` plus the destination pointer) rather than a fresh `k*4+2` index each iteration; kept as a direct index into the two 1024-byte stack copies, which is semantically the same value. `seed_` at offset 0x400 (right after `field_3FC_`) matches the reseed loop exactly. Landing the closest control-flow- faithful form (divergence starts at instruction #2, on the `this`-copy prologue).
+// size      475 bytes
+// prototype int (__thiscall ?UNK8@Palette@@QAEHHHHHH@Z)(Palette* this, void*, UINT iStartIndex, UINT cEntries, int, int)
+// callers   0   call targets   2
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00625810 0x00645930
+// indirect  0x005FF9D2 0x005FFA94 0x005FFA9A 0x005FFAB1
+// TRIED: 2026-08-24, re-measured: 20/141, 0.823 similar (best of all ten
+//   flag sets, `/O2 /Oi- /Gy /GR-`). The three-guard order (PaletteUsesSystem
+//   Colours, PaletteInitialized, other==0) already matches the image's own
+//   read order exactly. The image SPILLS `this` to `[esp+8]` right after
+//   loading it into `esi` (`mov [esp+8], esi`), rather than keeping it in a
+//   register through all three guards - the same shape as
+//   `make_blend_table`'s finding. Not chased further given the size of the
+//   function (475 bytes) and that three siblings already measured this exact
+//   wall unmovable by guard reordering.
+
+
+
+// 2026-11-06: the image writes the blend into this->entries_ and animates
+//   &entries_[start] (memcpy #1 copies this, the loop base is the spilled
+//   this); the old body wrote into other. Left: two blue-channel delta slots
+//   swap ([esp+0x1c]/[esp+0x20]).
+int Palette::fade_to(Palette *other, int start, int count, int steps,
+                     int min_frame_ms) {
+  if (PaletteUsesSystemColours != 0) {
+    return 0;
+  }
+  if (PaletteInitialized == nullptr) {
+    return 7;
+  }
+  if (other == 0) {
+    return 0x10;
+  }
+
+  PALETTEENTRY selfCopy[256];
+  PALETTEENTRY otherCopy[256];
+  memcpy(selfCopy, entries_, sizeof(selfCopy));
+  memcpy(otherCopy, other->entries_, sizeof(otherCopy));
+
+  
+
+  int frame = 0;
+  if (frame < steps + 1) {
+    int weight = steps;
+    do {
+      DWORD t0 = timeGetTime();
+      int k = start;
+      if (k < start + count) {
+        do {
+          entries_[k].peRed = static_cast<char>(
+              (selfCopy[k].peRed * weight +
+               otherCopy[k].peRed * frame) /
+              steps);
+          entries_[k].peGreen = static_cast<char>(
+              (selfCopy[k].peGreen * weight +
+               otherCopy[k].peGreen * frame) /
+              steps);
+          entries_[k].peBlue = static_cast<char>(
+              (selfCopy[k].peBlue * weight +
+               otherCopy[k].peBlue * frame) /
+              steps);
+          ++k;
+        } while (k < start + count);
+      }
+
+      AnimatePalette(PaletteInitialized, start, count,
+                     &entries_[start]);
+
+      while (timeGetTime() - t0 < static_cast<unsigned int>(min_frame_ms)) {
+      }
+
+      ++frame;
+      --weight;
+    } while (frame < steps + 1);
+  }
+
+  seed_ = 0;
+  int r;
+  do {
+    r = random(0, 0xffff);
+    seed_ = r;
+  } while (r == 0);
+
+  return 0;
+}
+
+// ORIGINAL: 0x005FFB10 ?UNK9@Palette@@QAEHHHHHH@Z 0x005FFB10-0x005FFD7F FILE BYTE_EXACT
+// symbol    ?fade_to_entry@Palette@@QAEHHHHHH@Z
+// TRIED: flipping the outer if/else polarity to test BufferDirectDraw != nullptr first (matching the disasm's fall-through order literally) moved the divergence from #13 (a lone je/jne polarity swap) to #0 (a different prologue entirely - no `sub esp,0x428`), so the `== 0`-first form below is the better body. Full control flow, field offsets and the interpolation formula (backup*stepsRemaining + target*progressCounter)/a4 were hand-traced from the raw disasm stack-offset arithmetic, not from Ghidra's decompile, which mis-simplifies the backup-buffer pointer trick.
+// working copy - scaffold materialised by --work
+// size      623 bytes
+// prototype int (__thiscall ?UNK9@Palette@@QAEHHHHHH@Z)(Palette* this, UINT, UINT iStartIndex, UINT cEntries, int, int)
+// callers   0   call targets   3
 // kind      game
 // flags     hidden;sp_ready;purged_ok
-// calls     0x005FF630 0x00628DB0 0x00645550
-// LEVER: 2026-09-03, BYTE_EXACT on ONE source change - the v-multiply is TWO
-//   statements, not one. `local1.v = (double)(brightness_boost + 100) *
-//   local1.v * hsv_percent_scale;` let VC6 commute the two fmul operands, so
-//   the compiled body emitted `fld A; fmul [scale]; rep movsd; fmul [local1.v]`
-//   where the image has `fld A; rep movsd; fmul [local1.v]; fmul [scale]` - the
-//   scale multiply was hoisted above the struct copy because it does not depend
-//   on it, which also reorders the rounding. Splitting it into
-//   `double scaled = (double)(brightness_boost + 100) * local1.v;`
-//   `local1.v = scaled * hsv_percent_scale;` makes the second multiply depend
-//   on the first, and the whole body went 80/93 -> 93/93 at /c /O2 /Gy /GR- /GX
-//   with no other edit. `scaled` costs no stack slot: it lives on the x87
-//   stack, which is why the image has exactly one fstp.
+// calls     0x005DE8F0 0x00625810 0x00645930
+// TRIED: 2026-08-24, re-measured: 15/180, 0.773 similar (best of all ten flag
+//   sets, `/O2 /Oi- /Gy /GR-`). `osmx calls --all` confirms the call graph
+//   already matches the image exactly (memcpy, `Buffer::sync_to_palette`,
+//   two `AnimatePalette`s, `random`, and four vtable/import calls through a
+//   register - the two `SetEntries`/`timeGetTime`x3 sites this body's shape
+//   predicts). The remaining gap is the now-familiar whole-function
+//   register-pressure wall (frame 0x428 vs this tree's 0x430, one register
+//   short at the very first guard) shared with `fade_to`/`closest`/
+//   `get_nearest_palette_index` above - not re-derived here.
+// indirect  0x005FFB82 0x005FFBCC 0x005FFC18 0x005FFD05 0x005FFD0B 0x005FFD1A
 
-int Palette::create_table(unsigned char *table, int start, int count,
-                          int brightness_boost) {
-    HSV hsv[256];
-    HSV local1;
-    HSV *ref0;
-    int i;
-    int upper;
-
+// 2026-11-06: the DirectDraw/GDI block is the inlined set(); body follows
+//   fade_to. Left: start/this/timeGetTime load scheduling at the loop head.
+int Palette::fade_to_entry(int colour_index, int start, int count, int steps,
+                           int min_frame_ms) {
     if (PaletteInitialized == nullptr) {
         return 7;
     }
-    if (table == 0) {
-        return 0x10;
+    if (PaletteUsesSystemColours != 0) {
+        return 0;
     }
-    if (brightness_boost < -100 || brightness_boost > 100) {
-        return 3;
+
+    const PALETTEENTRY target = entries_[colour_index];
+    PALETTEENTRY backup[256];
+    memcpy(backup, entries_, sizeof(backup));
+    set();
+
+    int frame = 0;
+    if (frame < steps + 1) {
+        int end = start + count;
+        int weight = steps;
+        do {
+            DWORD t0 = timeGetTime();
+            for (int k = start; k < end; ++k) {
+                    entries_[k].peRed = static_cast<unsigned char>(
+                        (backup[k].peRed * weight + target.peRed * frame) / steps);
+                    entries_[k].peGreen = static_cast<unsigned char>(
+                        (backup[k].peGreen * weight + target.peGreen * frame) / steps);
+                    entries_[k].peBlue = static_cast<unsigned char>(
+                        (backup[k].peBlue * weight + target.peBlue * frame) / steps);
+            }
+            AnimatePalette(PaletteInitialized, start, count, &entries_[start]);
+            while (timeGetTime() - t0 < static_cast<unsigned int>(min_frame_ms)) {
+            }
+            ++frame;
+            --weight;
+        } while (frame < steps + 1);
     }
-    for (i = 0; i < start; i++) {
-        table[i] = (unsigned char)i;
-    }
-    upper = start + count;
-    for (i = upper; i < 0x100; i++) {
-        table[i] = (unsigned char)i;
-    }
-    for (i = 0; i < 0x100; i++) {
-        RGB_to_HSV(&entries_[i], &hsv[i]);
-    }
-    ref0 = &hsv[0];
-    for (i = start; i < upper; i++) {
-        local1 = hsv[i];
-        // Two statements, not one: the image multiplies the brightness factor
-        // into local1.v FIRST and the percent scale in second, and folding all
-        // three into one expression lets VC6 commute the two fmul operands.
-        double scaled = (double)(brightness_boost + 100) * local1.v;
-        local1.v = scaled * hsv_percent_scale;
-        table[i] = (unsigned char)get_nearest_palette_index(&local1, ref0, 1);
-    }
+
+    seed_ = 0;
+    int newSeed;
+    do {
+        newSeed = (int)random(0, 0xffff);
+        seed_ = newSeed;
+    } while (newSeed == 0);
+
     return 0;
-}
-
-// ORIGINAL: 0x005FE6D0 ?reseed@Palette@@QAEXXZ 0x005FE6D0-0x005FE6F8 BYTE_EXACT
-// size      40 bytes
-// prototype void (__thiscall ?reseed@Palette@@QAEXXZ)(Palette* this)
-// callers   3   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00625810
-// 0x005FE6D0  ?reseed@Palette@@QAEXXZ  ->  ?reseed@Palette@@QAEXXZ
-//
-// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
-// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
-// and rewriting it in the tree's own style is a later phase. See README.md
-// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
-
-
-void Palette::reseed() {
-    seed_ = 0;
-    while (seed_ == 0) {
-        seed_ = random(0, 0xffff);
-    }
-}
-
-// ORIGINAL: 0x005FE900 ?UNK2@Palette@@QAEXH@Z 0x005FE900-0x005FE941 FILE BYTE_EXACT
-// symbol    ?stop_animation@Palette@@QAEXH@Z
-// size      65 bytes
-// prototype void (__thiscall ?UNK2@Palette@@QAEXH@Z)(Palette* this, int)
-// callers   0   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00616730
-// PRESERVED UNIT - measured BYTE_EXACT.
-//
-// Kept for COVERAGE. This directory IS on the ratchet: every file here
-// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
-// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
-// quarter of the project's total. It is still in no build; the earlier
-// header said "on no ratchet", which stopped being true when the map
-// moved into src/ and was still being written into new files.
-//
-// address        0x005FE900
-// measured tier  BYTE_EXACT
-//
-// The WHOLE unit as measured, scaffolding included: for the units
-// that are byte-exact yet refuse extraction, the agent tuned the
-// emitted scaffolding and the body alone will not reproduce the
-// verdict. To resume, copy everything below back over
-//   build/byte-match/005fe900/unit.cpp
-// and score it with tools/agent_brief.py.
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?UNK2@Palette@@QAEXH@Z  at 0x005FE900  (65 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
-// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
-// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
-// and declaring `int i` twice in one function (VC6 leaks for-scope).
-// static_cast/reinterpret_cast are fine and are the right spelling.
-//
-// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
-// attempts to it. They are here rather than in a prompt so the next
-// agent does not rediscover them:
-//
-//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
-//    swapped; `if (x) {...}` gives `je`.
-//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
-//    two special cases branching FAR away, write them negated and
-//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
-//    sequential guard clauses, which inline each body instead.
-//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
-//    an indirect virtual call use the generated VCall shim below; for a
-//    thiscall function POINTER, take a member-function pointer of a
-//    dummy class instead of spelling the convention.
-//  * Loop form is visible: while / do-while / for lower differently,
-//    and so does counting up versus down.
-//  * If the original dedicates a callee-saved register to a constant
-//    across the whole body (an extra `push ebx`/`push edi` in the
-//    prologue), it had enough register pressure to do so. That is a
-//    hard case - the tool reports a similarity ratio so you can tell a
-//    near miss from a wrong body.
-
-
-void Palette::stop_animation(int key) {
-    int i;
-    for (i = 0; i < 5; i++) {
-        int v = internal_[i].key;
-        if (key == v || v == -1) {
-            break;
-        }
-    }
-    // BUG IN THE ORIGINAL, reproduced: when no slot matches and none is
-    // free, i is 5 and the read below is internal_[5].key - the first four
-    // bytes PAST the object. The image does exactly this.
-    if ((int)internal_[i].key == key) {
-        internal_[i].time->stop();
-    }
-}
-
-// ORIGINAL: 0x005FE2F0 ?__as@Palette@@QAEHQAUPalette@@@Z 0x005FE2F0-0x005FE32F FILE BYTE_EXACT
-// symbol    ?copy_from@Palette@@QAEAAV1@PAV1@@Z
-// copy_from is a semantic name; the original method/operator spelling is
-//   unproved. The image copies only entries_ (0x400 bytes), leaves the five
-//   animation slots untouched, rerolls seed_ and returns the receiver.
-//   These effects alone do not distinguish a method from operator=.
-//   Neither caller destroys the destination immediately beforehand:
-//   load_palette copies at 0x00451A9C and cleans up its local Palette later
-//   at 0x00451C10; PrefWin copies at 0x00491466. The old destroy-then-refill
-//   naming rationale was unsupported; the analyzer's __as tag is not proof.
-// size      63 bytes
-// prototype int (__thiscall ?__as@Palette@@QAEHQAUPalette@@@Z)(Palette* this, Palette*)
-// callers   2   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00625810 0x00645930
-// PRESERVED UNIT - measured BYTE_EXACT.
-// TRIED 2026-09-03 (pair /O2 and /O2 /Oy- only): the body is RIGHT and the
-//   gap is the /Oi axis, which no spelling in this tree reaches. The image
-//   makes a real `call _memcpy` with a CONSTANT `push 0x400`; both allowed
-//   sets imply /Oi, and /Oi turns a constant-size `memcpy` into
-//   `mov ecx,0x100; rep movsd` - compiled 24 instructions against the image's
-//   19, agreeing 0. Twelve source shapes measured dead in isolation probes
-//   under the shipped flags: `sizeof(entries_)`, literal `0x400`, whole
-//   object, `void *`/`char *` casts, `CopyMemory`, a `const int` local, a
-//   file-scope `const int`, an `enum`, a `#define`, a non-constant `int`
-//   (which folds anyway), a `size_t` expression, and a member-function
-//   receiver - every one still emitted `rep movsd`. Measured directly that
-//   `/c /O2 /Oi- /Gy /GR- /GX` on this exact body gives the image's own
-//   prologue byte for byte (`mov eax,[esp+4]` BEFORE `push esi` included), so
-//   it is the intrinsic axis and nothing else. Corroboration: the image holds
-//   130 real `_memcpy` call sites and only THREE `mov ecx,imm32; rep movsd`
-//   in all of .text (counts 6, 11 and 70 dwords), while this tree's
-//   `make_blend_table` and `fade_to` park on the same constant-size-memcpy
-//   wall. Adding `memcpy` to stdafx.h's `#pragma function(...)` list is the
-//   in-policy source-side fix but is a shared-file edit that would move every
-//   other constant-size memcpy in the tree, so it is recorded here rather
-//   than made. [RESOLVED 2026-09-03: it was made, measured, and reverted -
-//   33 verified claims whose small constant copies inline flipped, because
-//   the image's memcpy is MIXED like memset. The called minority routes
-//   through `memcpy_call` below, the memset_call idiom.]
-//
-// Kept for COVERAGE. This directory IS on the ratchet: every file here
-// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
-// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
-// quarter of the project's total. It is still in no build; the earlier
-// header said "on no ratchet", which stopped being true when the map
-// moved into src/ and was still being written into new files.
-//
-// address        0x005FE2F0
-// measured tier  BYTE_EXACT
-//
-// The WHOLE unit as measured, scaffolding included: for the units
-// that are byte-exact yet refuse extraction, the agent tuned the
-// emitted scaffolding and the body alone will not reproduce the
-// verdict. To resume, copy everything below back over
-//   build/byte-match/005fe2f0/unit.cpp
-// and score it with tools/agent_brief.py.
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?__as@Palette@@QAEHQAUPalette@@@Z  at 0x005FE2F0  (63 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
-// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
-// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
-// and declaring `int i` twice in one function (VC6 leaks for-scope).
-// static_cast/reinterpret_cast are fine and are the right spelling.
-//
-// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
-// attempts to it. They are here rather than in a prompt so the next
-// agent does not rediscover them:
-//
-//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
-//    swapped; `if (x) {...}` gives `je`.
-//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
-//    two special cases branching FAR away, write them negated and
-//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
-//    sequential guard clauses, which inline each body instead.
-//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
-//    an indirect virtual call use the generated VCall shim below; for a
-//    thiscall function POINTER, take a member-function pointer of a
-//    dummy class instead of spelling the convention.
-//  * Loop form is visible: while / do-while / for lower differently,
-//    and so does counting up versus down.
-//  * If the original dedicates a callee-saved register to a constant
-//    across the whole body (an extra `push ebx`/`push edi` in the
-//    prologue), it had enough register pressure to do so. That is a
-//    hard case - the tool reports a similarity ratio so you can tell a
-//    near miss from a wrong body.
-
-
-// The copy below is a real `call _memcpy` (0x00645930, constant 0x400): the
-// units have no intrinsics (stdafx.h).
-Palette &Palette::copy_from(Palette *src) {
-    memcpy(entries_, src->entries_, sizeof(entries_));
-
-    seed_ = 0;
-    while (seed_ == 0) {
-        seed_ = random(0, 0xffff);
-    }
-
-    return *this;
 }
