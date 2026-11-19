@@ -15,10 +15,12 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
+
 // ORIGINAL: 0x005D7140 ??_GGraphicWin@@UAEPAXI@Z 0x005D7140-0x005D715E FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical deleting-thunk source src/deleting_thunks.cpp; original full spans retained: 0x005D7140-0x005D715E", "Pinned class constructor ??0GraphicWin@@QAE@XZ at 0x005D4CF0 stores original class/view table VA 0x66fc50 at 0x005D4D2B (mov dword ptr [esi], 0x66fc50); the current genuine owner vftable ??_7GraphicWin@@6BWin@@@ selects generated ??_GGraphicWin@@UAEPAXI@Z in slot 0 (+0x0) through weak entry ??_EGraphicWin@@UAEPAXI@Z (mode 2).", "Pinned ??_GGraphicWin@@UAEPAXI@Z at 0x005D7140 calls the source-mapped ??1GraphicWin@@QAE@XZ at 0x005D4DD0, then tests byte ptr [esp + 8], 1; je 0x5d7158 bypasses scalar delete when bit 0 is clear, while bit 0 set calls 0x0064557F; it save original this; call destructor; delete only when flags bit 0 is set; return saved this with ret 4.", "The real class lifetime is owned by src/graphicwin.cpp; its compiler-emitted deleting symbol and vftable slot carry this original identity. Hand-written adapter bodies with live adjustor callers remain until those callers are independently qualified and transferred. The linked weak/COMDAT copy is not used to choose source ownership.", "the source writer preserves the historical mapping's exactness state (no byte-exact claim existed); current compiler extent is not asserted equal to the original span"], "reason": "Bind the original GraphicWin scalar deleting-destructor identity to the actual compiler-emitted class deleting destructor in its genuine owner translation unit. The original constructor's pinned vptr store and the current owner's physical table slot identify this class/view; no callback/thunk body is hand-authored here."}
 // symbol    ??_GGraphicWin@@UAEPAXI@Z
 // kind      game
+
 #include "stdafx.h"
 
 // GraphicWin constructor-installed Win branch: capture slot4, update slot63.
@@ -55,16 +57,13 @@ GraphicWinCaptionDraw GraphicWinFieldA0CDefault;  // 0x009B33C0
 // RECOVERY_OBJECT: v1 0x009B3394 ?GraphicWinInitDefaults@@3UGraphicWinFrameDefaults@@A
 GraphicWinFrameDefaults GraphicWinInitDefaults;
 
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005D5500 ?load_pcx@GraphicWin@@QAEHPADPAUPalette@@HH@Z 0x005D5500-0x005D5536 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005d5500.cpp", "image:terranx_original.exe:0x005D5500", "Original instructions establish owner, bounded body and callback/state order; SocialWin reloads faction after social_upheaval and every later stateful call. GraphicWin dispatches through the real Buffer base.", "recovery/tasks/interface-contract-report-closure.json; bounded UI-five scope preserves original baseline"], "reason": "Recover the original in its genuine UI owner using actual members, globals and base/virtual calls. Retain seed evidence and historical obligations; this binding does not grant a current matching or runtime claim."}
-// symbol    ?load_pcx@GraphicWin@@QAEHPADPAVPalette@@HH@Z
-int GraphicWin::load_pcx(char *path, Palette *palette, int flags, int transparency) {
-    if ((iFlags_ & 0x800000) != 0) {
-        return 1;
-    }
-    return Buffer::load_pcx(path, palette, flags, transparency);
-}
+
+// ORIGINAL: 0x00404420 sub_404420 0x00404420-0x0040442B FILE BYTE_EXACT
+// compile_context src/popup.cpp
+// symbol    ?get_graphic_win@GraphicWin@@WEEE@AEPAV1@XZ
+// Compiler-owned secondary-base entry: Buffer lies at GraphicWin +0x444.
+// Original Buffer-side slot 1 at 0x00670C5C points here; this entry forwards
+// to the self-query at 0x004042B0. There is no handwritten C++ thunk body.
 
 // Process-lifetime borrowed colour-map pointer, originally a zero-filled DWORD
 // at 0x009B3390. The pinned image has only the two fill loads: no direct writer
@@ -132,6 +131,29 @@ GraphicWin::GraphicWin() {
 
 
 /*
+Purpose: Destroy a GraphicWin by installing the original virtual tables,
+         clearing the trailing field, and destroying the Buffer subobject
+         before the Win base.
+// ORIGINAL: 0x005D4DD0 ??1GraphicWin@@QAE@XZ 0x005D4DD0-0x005D4E37;0x00662B22-0x00662B34 BYTE_EXACT
+// symbol    ??1GraphicWin@@UAE@XZ
+// size      121 bytes
+// prototype void (__thiscall ??1GraphicWin@@QAE@XZ)(GraphicWin* this)
+// callers   185   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D7410 0x005EBC90
+// notes     Runtime redirect installed by DllMain after byte-signature validation
+Status: Complete; compiler-generated Buffer and Win base destruction.
+*/
+// A REAL DESTRUCTOR. Its own TRIED lesson named the precondition - Buffer
+// and Win as a real base - and both are, so VC6 generates the SEH unwind
+// chain and the base destructor calls itself.
+GraphicWin::~GraphicWin() {
+    field_A10_ = 0;
+}
+
+
+/*
 Purpose: Close a GraphicWin by closing its Win base and Buffer subobject,
          resetting its window-specific state, and deleting the trailing
          owned interface when present.
@@ -191,545 +213,6 @@ void GraphicWin::close() {
     // no change, still `eax` where the image has `edx` for this one slot.
     delete release_target;
     owned_buffer_ = 0;
-}
-
-
-/*
-Purpose: Destroy a GraphicWin by installing the original virtual tables,
-         clearing the trailing field, and destroying the Buffer subobject
-         before the Win base.
-// ORIGINAL: 0x005D4DD0 ??1GraphicWin@@QAE@XZ 0x005D4DD0-0x005D4E37;0x00662B22-0x00662B34 BYTE_EXACT
-// symbol    ??1GraphicWin@@UAE@XZ
-// size      121 bytes
-// prototype void (__thiscall ??1GraphicWin@@QAE@XZ)(GraphicWin* this)
-// callers   185   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005D7410 0x005EBC90
-// notes     Runtime redirect installed by DllMain after byte-signature validation
-Status: Complete; compiler-generated Buffer and Win base destruction.
-*/
-// A REAL DESTRUCTOR. Its own TRIED lesson named the precondition - Buffer
-// and Win as a real base - and both are, so VC6 generates the SEH unwind
-// chain and the base destructor calls itself.
-GraphicWin::~GraphicWin() {
-    field_A10_ = 0;
-}
-
-
-/*
-Purpose: Fill a rectangle in the window's own buffer.
-// ORIGINAL: 0x005D5440 ?fill@GraphicWin@@QAEHHHHHH@Z 0x005D5440-0x005D5467 BYTE_EXACT
-// size      39 bytes
-// prototype int (__thiscall ?fill@GraphicWin@@QAEHHHHHH@Z)(GraphicWin* this, int xLeft, int yTop, int length, int width, int)
-// callers   6   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005D8240
-Return Value: whatever Buffer::fill returns
-Status: Complete
-*/
-
-int GraphicWin::fill(int x1, int y1, int x2, int y2, int color) {
-    // The surface subobject: Buffer is a real base at 0x444, so the qualified
-    // call names it directly instead of casting the offset by hand.
-    return Buffer::fill(x1, y1, x2, y2, color);
-}
-
-
-// USER32!InvalidateRect - called directly (see GraphicWin::redraw below).
-// image address 0x00669304 is that call's own IAT slot; it is not read as
-// a raw address anywhere here, so there is nothing hardcoded to fault on
-// in a host test executable with a different layout.
-
-/*
-Purpose: Paint the window's surface in one colour. A window that is marked
-         transparent and whose parent agrees copies the parent's pixels in
-         instead, then remaps them through the process colour table.
-// ORIGINAL: 0x005D5250 ?fill@GraphicWin@@QAEXH@Z 0x005D5250-0x005D5346 BYTE_EXACT
-// LEVER: `vtable_slot<parent_query_fn>(parent, 0xF4)(parent)` in place of
-//        the pointer-to-member `original_method<...>(vtable[0xF4/4])`
-//        spelling for the slot-0xF4 query - the image's own call is ONE
-//        `call dword ptr [eax+0xf4]`, where the pointer-to-member form
-//        loads the slot into a register first (two instructions).
-// TRIED: not chased to completion - still a big structural gap beyond
-//            that one call (80 image instructions, largely a different
-//            register plan for `flags_`/`parent` starting at the very first
-//            branch). This is a large function (246 bytes); the vtable-slot
-//            fix is banked, the rest is not at this budget.
-// LEVER: the member-form rewrite of 2026-08-27 (iFlags_/win_parent_/the two
-//        RECTs/dib_ named instead of memcpy walks off raw offsets) scored
-//        11/80 where the raw-offset form scored 1/80 - the honest spelling
-//        is the close one, and the remaining gap stays a register-plan
-//        divergence from the first branch on.
-// READ OFF THE IMAGE (2026-08-27): the redundant test at 0x005D52BC is a
-//        CONDITIONAL SELECT feeding copy's source argument -
-//        `test esi,esi / je +8 / lea edi,[esi+0x444] / jmp / xor edi,edi` -
-//        it computes the surface INSIDE the true arm from `this`, it does
-//        not branch around the call, and it sits between the argument
-//        spills. Three source shapes tried and all score BELOW the plain
-//        body: ternary selecting the existing `surface` local (5/80), a
-//        null test on a `Buffer *` copy with a two-arm call (1/80), the
-//        select computed in the call argument from a `self` local (2/80).
-//        The select is real but no spelling tried yet makes VC6 schedule
-//        it where the image has it; the dominant gap is elsewhere.
-// TRIED: 2026-08-28, `measure --dir`, seven more spellings of the two
-//        remaining structural differences, against the tree's 11/80 (0.649).
-//        (a) the query result held as a `void *` instead of `bool`, so the
-//        guard is `test eax,eax / je` rather than `setne al / test al,al /
-//        jne`: 1/80. (b) the whole transparent path nested INSIDE the two
-//        guards (`if (flags && parent) { if (query) { ... } }`), which puts
-//        the parent upcast where `win_parent_` is provably non-null and so
-//        drops the parent select the tree emits: 3/80, similarity 0.728 -
-//        the only spelling that scores ABOVE the tree on similarity while
-//        agreeing with FEWER instructions, so the tier metric and the
-//        agreement count disagree here. (c) (b) plus the parent's own
-//        `Buffer *` upcast hoisted out of the inner test: 4/80. (d) (a) with
-//        `surface` dropped and both Buffer calls qualified (`Buffer::fill` /
-//        `Buffer::map_colors`): 11/80, no change. (e) the image's dead RECT
-//        pair transcribed as four plain stores into two locals - the
-//        compiler deletes them and the listing is byte-identical to the
-//        tree's: 11/80. (f) the same pair `volatile`, which does keep the
-//        stores: 7/80. (g) (e) with the first local's address taken: 11/80,
-//        still deleted. The image's `sub esp,0x10` frame and its 10 dead
-//        instructions are what no spelling reaches; the wall stands.
-// TRIED: 2026-08-28 confirming sweep, one re-measure of the tree's own body
-//        after the neighbourhood moved (basewin.cpp / basebutton.cpp edited
-//        today): still 11/80 at /c /O2 /Gy /GR- /GX, 71 compiled. No new
-//        lever attempted - nine refutations are on this marker already.
-// size      246 bytes
-// prototype void (__thiscall ?fill@GraphicWin@@QAEXH@Z)(GraphicWin* this, int)
-// callers   58   call targets   3
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005DA330 0x005DFB50 0x005DFF00
-// indirect  0x005D5277
-Return Value: n/a
-Status: Complete
-Verification note: three loads the original performs are deliberately absent.
-         It copies a RECT at 0x14C into stack scratch and then overwrites that
-         scratch with the one at 0x13C before either is read, so the first
-         pair (0x154, 0x158) is dead; only the two sums that reach the blit
-         survive here. It also emits `test esi, esi` at 0x005D52BC and passes
-         a null source buffer on the false arm - unreachable, because `this`
-         cannot be null on a thiscall, so that arm is not transcribed. A
-         reader diffing against the disassembly will see both differences.
-*/
-void GraphicWin::fill(int color) {
-    // The window's Buffer subobject at +0x444, typed so its methods can be
-    // called by NAME - through a pointer-to-member the call sites emitted
-    // `call [ptr]` where the image has `call rel32`. Buffer is a real base,
-    // so the upcast is the language's own +0x444.
-    // Bit 19 alone does not make the window transparent: the parent has to
-    // exist and expose a GraphicWin through Win's slot 0xF4. A plain Win
-    // returns null; GraphicWin returns itself.
-    if ((iFlags_ & 0x80000) != 0 && win_parent_ != nullptr &&
-        win_parent_->get_graphic_win() != nullptr) {
-    // The blit origin is where the window sits in its parent (outer_rect_)
-    // plus where the draw area sits in the window (client_rect_).
-    RECT scratch = client_rect_;
-    int origin_x = scratch.left;
-    int origin_y = scratch.top;
-    scratch = outer_rect_;
-    origin_x += scratch.left;
-    GraphicWin *const parent = static_cast<GraphicWin *>(win_parent_);
-    origin_y += scratch.top;
-    Buffer *const surface = this;
-    // The DIB's own dimensions: biHeight is stored negative (top-down), so
-    // the vertical passes negate it back.
-    int width = static_cast<int>(dib_.bmiHeader.biWidth);
-    int height = static_cast<int>(dib_.bmiHeader.biHeight);
-    parent->Buffer::copy(
-        surface, origin_x, origin_y, 0, 0, width, -height);
-    unsigned char *const table = GraphicWinColorMapTable;
-    if (table == nullptr) {
-        return;
-    }
-    // Re-read, do NOT hoist onto the pair above: the original reloads both at
-    // 0x005D5302 and 0x005D5308, so a blit that resized the surface is seen
-    // by the remap. map_colors uses exclusive bounds, but the original caller
-    // still subtracts one: its remap omits the final row and column.
-    width = static_cast<int>(dib_.bmiHeader.biWidth);
-    height = static_cast<int>(dib_.bmiHeader.biHeight);
-    Buffer::map_colors(0, 0, width - 1, -1 - height, table);
-    } else {
-        Buffer::fill(color);
-    }
-}
-
-// Rectangle counterpart of fill(int). The parent query is only an admission
-// test: the original copies from the reloaded parent's Buffer base, not from
-// the object returned by the query. As in the original, the transparent path
-// requires a live rectangle and a parent that remains a GraphicWin.
-// ORIGINAL: 0x005D5350 ?fill@GraphicWin@@QAEHPAURECT@@H@Z 0x005D5350-0x005D543E FILE
-// RECOVERY_BINDING: v1 {"evidence": ["5D5373 queries Win slotF4;5D53D2 reloads parent before5D53E6 Buffer copy;5D53EB loads the shared table and5D53F5..5417 reread RECT and remap right/bottom-minus-one. Transparent exit returns0, opaque5D5435 returns Buffer fill result, both ret8."], "reason": "This rectangle fill uses the real Win hierarchy and Buffer base. Transparent admission queries the parent, but the reloaded actual parent supplies the copied pixels; opaque fill delegates and returns its result."}
-// symbol    ?fill@GraphicWin@@QAEHPAUtagRECT@@H@Z
-int GraphicWin::fill(RECT *area, int color) {
-    if ((iFlags_ & 0x80000) == 0 ||
-        win_parent_ == nullptr ||
-        win_parent_->get_graphic_win() == nullptr) {
-        return Buffer::fill(area, color);
-    }
-
-    const int origin_x = client_rect_.left + outer_rect_.left;
-    const int origin_y = client_rect_.top + outer_rect_.top;
-    Buffer *const surface = this;
-    const int top = area->top;
-    const int left = area->left;
-    const int width = area->right - left;
-    const int height = area->bottom - top;
-    static_cast<GraphicWin *>(win_parent_)->Buffer::copy(
-        surface, left + origin_x, top + origin_y, left, top, width, height);
-
-    // Copy can invoke surface callbacks. Load the table and rectangle again
-    // afterwards; neither the incoming bounds nor the table may be cached
-    // across that call. The original ignores both drawing return codes.
-    unsigned char *const table = GraphicWinColorMapTable;
-    if (table != nullptr) {
-        const int top = area->top;
-        const int height = area->bottom - top;
-        const int left = area->left;
-        const int width = area->right - left;
-        Buffer::map_colors(left, top, left + width - 1, top + height - 1, table);
-    }
-    return 0;
-}
-
-
-/*
-Purpose: Repaint the window and invalidate the screen area it occupies. A
-         window already inside a redraw is skipped, so a paint hook that
-         redraws again cannot recurse.
-// ORIGINAL: 0x005D5A70 ?redraw@GraphicWin@@QAEXXZ 0x005D5A70-0x005D5B64 BYTE_EXACT
-// symbol    ?redraw@GraphicWin@@UAEXXZ
-// LEVER: `InvalidateRect(...)` called directly instead of through a
-//        manually lazily-resolved function pointer read from a hardcoded
-//        IAT address - the image just calls `dword ptr [0x669304]`
-//        unconditionally, which is what an ordinary imported-function call
-//        already compiles to. Dropped the now-dead
-//        `GraphicWinInvalidateRect`/`GraphicWinInvalidateRectImport`
-//        globals with it. 45/69 -> 69/69.
-// size      244 bytes
-// prototype void (__thiscall ?redraw@GraphicWin@@QAEXXZ)(GraphicWin* this)
-// callers   42   call targets   3
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005D6AC0 0x005ED240 0x005F7E90
-// indirect  0x005D5AA9 0x005D5AAF 0x005D5B59
-Return Value: n/a
-Status: Complete
-Verification note: the calling convention of the 0xA10 paint hook is inferred,
-         not decoded. It is reached by a bare `call eax` at 0x005D5AA9 with
-         nothing pushed and ECX not set, which rules out __thiscall but leaves
-         zero-argument __cdecl and __stdcall indistinguishable - they are
-         ABI-identical here, so either spelling works and neither is a
-         callee-pop fact.
-*/
-
-// ORIGINAL: 0x005D63F0 ?on_redraw_nc@GraphicWin@@QAEXPAURECT@@H@Z 0x005D63F0-0x005D68B7 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"reason":"Recover the complete non-client frame painter in GraphicWin using its real Win/Buffer/member ownership.","evidence":["Pinned GraphicWin table 0x66FC50 slot 67 selects 0x5D63F0.","Win::on_redraw_nc calls slot 60 with each live border Buffer and quadrant; the owned caption and frame members are source-typed.","The old recovered-unit seed retains its complete ORIGINAL span and call-list evidence in Git history; no byte claim or old frame-layout typo is converted into an acceptance claim."]}
-// kind      game
-// symbol    ?on_redraw_nc@GraphicWin@@UAEXPAUtagRECT@@H@Z
-void GraphicWin::on_redraw_nc(RECT *area, int side) {
-    if ((iSomeFlag_ & 2) == 0) {
-        return;
-    }
-
-    if (area != 0) {
-        side = -1;
-    }
-
-    int top_inset;
-    Sprite *top_left;
-    Sprite *top_edge;
-    Sprite *top_right;
-    if ((iFlags_ & 0x10) != 0 && (iFlags_ & 0x400000) == 0) {
-        top_inset = caption_height_;
-        top_left = frame_top_left_;
-        top_edge = frame_top_;
-        top_right = frame_top_right_;
-    } else {
-        top_inset = border_thickness_;
-        top_left = frame_noncaption_left_;
-        top_edge = frame_noncaption_middle_;
-        top_right = frame_noncaption_right_;
-    }
-
-    const int bottom_inset = bottom_border_thickness_ == -1
-                                 ? border_thickness_ : bottom_border_thickness_;
-    if ((iFlags_ & 0x10000000) != 0) {
-        // Quadrant 0: top caption/non-caption strip.
-        if (buffer1_ != 0 && (side == -1 || side == 0)) {
-            buffer1_->fill(WinFillColour);
-            if (top_left != 0) {
-                top_left->draw(buffer1_, top_left->transparent_index(), 0, 0, 1, 1);
-            }
-            if (top_right != 0) {
-                top_right->draw(buffer1_, top_right->transparent_index(),
-                                buffer1_->pixel_width() - top_right->width(), 0, 1, 1);
-            }
-            if (top_edge != 0 && top_right != 0 && top_left != 0) {
-                buffer1_->tile(top_edge, 0, 0, top_left->width(), 0,
-                             (client_rect_.right - client_rect_.left) -
-                                 top_right->width() - top_left->width(),
-                             buffer1_->pixel_height());
-            }
-            if (field_E0_ != 0 && (iFlags_ & 0x10) != 0) {
-                if (field_A0C_ != 0) {
-                    field_A0C_(this, field_E0_, buffer1_);
-                }
-                on_draw_caption(field_E0_, buffer1_);
-            }
-            on_post_redraw_nc_buffer(buffer1_, 0);
-        }
-
-        // Quadrant 2: bottom strip.
-        if (buffer4_ != 0 && (side == -1 || side == 2)) {
-            buffer4_->fill(WinFillColour);
-            if (frame_bottom_left_ != 0) {
-                frame_bottom_left_->draw(
-                    buffer4_, frame_bottom_left_->transparent_index(), 0,
-                    buffer4_->pixel_height() - frame_bottom_left_->height(), 1, 1);
-            }
-            if (frame_bottom_right_ != 0) {
-                frame_bottom_right_->draw(
-                    buffer4_, frame_bottom_right_->transparent_index(),
-                    buffer4_->pixel_width() - frame_bottom_right_->width(),
-                    buffer4_->pixel_height() - frame_bottom_right_->height(), 1, 1);
-            }
-            if (frame_bottom_ != 0 && frame_bottom_left_ != 0 &&
-                frame_bottom_right_ != 0) {
-                buffer4_->tile(
-                    frame_bottom_, 0, 0, frame_bottom_left_->width(),
-                    buffer4_->pixel_height() - frame_bottom_->height(),
-                    (buffer4_->pixel_width() - frame_bottom_right_->width()) -
-                        frame_bottom_left_->width(),
-                    frame_bottom_->height());
-            }
-            on_post_redraw_nc_buffer(buffer4_, 2);
-        }
-
-        // Quadrant 3: right strip.
-        if (buffer3_ != 0 && (side == -1 || side == 3)) {
-            buffer3_->fill(WinFillColour);
-            if (top_left != 0) {
-                top_left->draw(buffer3_, top_left->transparent_index(),
-                               0, -top_inset, 1, 1);
-            }
-            if (frame_bottom_left_ != 0) {
-                frame_bottom_left_->draw(
-                    buffer3_, frame_bottom_left_->transparent_index(), 0,
-                    (bottom_inset + buffer3_->pixel_height()) -
-                        frame_bottom_left_->height(), 1, 1);
-            }
-            if (frame_left_ != 0 && top_left != 0 &&
-                frame_bottom_left_ != 0) {
-                buffer3_->tile(
-                    frame_left_, 0, 0, 0,
-                    top_left->height() - top_inset,
-                    border_thickness_,
-                    (((bottom_inset + buffer3_->pixel_height()) -
-                      frame_bottom_left_->height()) - top_left->height()) +
-                        top_inset);
-            }
-            on_post_redraw_nc_buffer(buffer3_, 3);
-        }
-
-        // Quadrant 1: left strip.
-        if (buffer2_ != 0 && (side == -1 || side == 1)) {
-            buffer2_->fill(WinFillColour);
-            if (top_right != 0) {
-                top_right->draw(buffer2_, top_right->transparent_index(),
-                                buffer2_->pixel_width() - top_right->width(),
-                                -top_inset, 1, 1);
-            }
-            if (frame_bottom_right_ != 0) {
-                frame_bottom_right_->draw(
-                    buffer2_, frame_bottom_right_->transparent_index(),
-                    buffer2_->pixel_width() - frame_bottom_right_->width(),
-                    (bottom_inset + buffer2_->pixel_height()) -
-                        frame_bottom_right_->height(), 1, 1);
-            }
-            if (frame_right_ != 0 && top_right != 0 &&
-                frame_bottom_right_ != 0) {
-                buffer2_->tile(
-                    frame_right_, 0, 0,
-                    buffer2_->pixel_width() - frame_right_->width(),
-                    top_right->height() - top_inset,
-                    frame_right_->width(),
-                    (((bottom_inset + buffer2_->pixel_height()) -
-                      frame_bottom_right_->height()) - top_right->height()) +
-                        top_inset);
-            }
-            on_post_redraw_nc_buffer(buffer2_, 1);
-        }
-    } else {
-        Win::on_redraw_nc(area, side);
-    }
-}
-
-void GraphicWin::redraw() {
-    if (HandleMain == nullptr) {
-        return;
-    }
-    // Win's own re-entrancy latch, named now that the base's fields are
-    // protected.
-    uint32_t state = field_1A0_;
-    if ((state & 1) != 0) {
-        return;
-    }
-    state |= 1;
-    field_1A0_ = state;
-    WinCallbackWindow = this;
-
-    // The paint hook, called before the paint itself.
-    if (field_A10_ != nullptr) {
-        field_A10_();
-    }
-    // The window's own paint, vtable slot 12: the image reaches it the way
-    // any virtual call is reached, so the call is spelled as one.
-    on_redraw();
-    this->overlay_nonclient(nullptr);
-
-    // Re-read, do NOT reuse the latched value: the original reloads at
-    // 0x005D5ABB before clearing bit 0, so any bit the paint hook or the
-    // virtual paint set on 0x1A0 survives this clear.
-    state = field_1A0_;
-    state &= 0xFFFFFFFEU;
-    field_1A0_ = state;
-
-    if (!static_cast<Win *>(this)->is_visible()) {
-        return;
-    }
-    // The surface RECT inside the Buffer subobject - the same field
-    // update() reads below.
-    RECT area = rect2_;
-    int x_offset = 0;
-    int y_offset = 0;
-    static_cast<Win *>(this)->client_to_screen(&x_offset, &y_offset);
-    area.left += x_offset;
-    area.right += x_offset;
-    area.top += y_offset;
-    area.bottom += y_offset;
-    // The window handle is read again here rather than reused from the guard
-    // above, matching the original's second load at 0x005D5B43. THE REAL
-    // API, not a lazily-resolved pointer: the image just calls
-    // `dword ptr [0x669304]` unconditionally - that address IS
-    // `InvalidateRect`'s own IAT slot, which the compiler already produces
-    // an indirect call through for an ordinary imported function.
-    InvalidateRect(HandleMain, &area, FALSE);
-}
-
-
-
-
-/*
-Purpose: When visible, tell the window to update and flip a rect the size of
-         the RECT at this+0x474 (the same field redraw() reads), positioned
-         at the origin.
-// ORIGINAL: 0x005D56B0 ?update@GraphicWin@@QAEXPAUGraphicWin@@@Z 0x005D56B0-0x005D571D BYTE_EXACT
-// symbol    ?update@GraphicWin@@QAEXPAV1@@Z
-// size      109 bytes
-// prototype void (__thiscall ?update@GraphicWin@@QAEXPAUGraphicWin@@@Z)(GraphicWin* this, GraphicWin*)
-// callers   8   call targets   4
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005ECFE0 0x005EFD20 0x005F74A0 0x005F7E90
-Return Value: n/a
-Status: Complete
-*/
-void GraphicWin::update(GraphicWin *) {
-    // Four separate field reads of the surface RECT, not a copied RECT: the
-    // latter compiles a real `call memcpy` here (unlike redraw()'s own read
-    // of the same field, which VC6 happens to inline), where the image loads
-    // each of the four dwords directly.
-    int height = rect2_.bottom - rect2_.top;
-    int width = rect2_.right - rect2_.left;
-
-    if (static_cast<Win *>(this)->is_visible()) {
-        RECT rect;
-        rect.left = 0;
-        rect.top = 0;
-        rect.right = width;
-        rect.bottom = height;
-        static_cast<Win *>(this)->update_window(&rect);
-        static_cast<Win *>(this)->client_to_screen(&rect);
-        Win::flip(&rect);
-    }
-}
-
-// ORIGINAL: 0x005D5630 ?update@GraphicWin@@QAEXPAURECT@@PAUGraphicWin@@@Z 0x005D5630-0x005D56AA BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x005D5630-0x005D56AA"], "reason": "Rectangle update through real Buffer/Win bases; original returns zero and ignores its second explicit argument."}
-// symbol    ?update@GraphicWin@@QAEHPAUtagRECT@@PAV1@@Z
-int GraphicWin::update(RECT *area, GraphicWin *source) {
-    if (!area) area = &rect2_;
-    update(area->left, area->top, area->right - area->left,
-           area->bottom - area->top, source);
-    return 0;
-}
-
-// Invalidate the Buffer bounds in screen coordinates without repainting now.
-// ORIGINAL: 0x005D5890 ?soft_update@GraphicWin@@QAEXXZ 0x005D5890-0x005D592D BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original 0x005D58A3 reads the Buffer rectangle at GraphicWin+0x474; 0x005D58E0 calls Win::client_to_screen on a zero origin and 0x005D5922 calls USER32 InvalidateRect with HandleMain and erase=false. Complete span retained from src/unrecovered/005d5890.cpp."], "reason": "Invalidate the visible GraphicWin Buffer bounds through its real Win base and the SDK import, without copying pixels or calling the original executable."}
-void GraphicWin::soft_update() {
-    if (!Win::is_visible()) return;
-
-    int x = 0, y = 0;
-    RECT local = rect2_;
-    Win::client_to_screen(&x, &y);
-    local.left += x;
-    local.right += x;
-    local.top += y;
-    local.bottom += y;
-    InvalidateRect(HandleMain, &local, FALSE);
-}
-
-// Clip a borrowed client rectangle, then invalidate its screen projection.
-// A null argument takes the full-buffer path, including its visibility check.
-// ORIGINAL: 0x005D5930 ?soft_update@GraphicWin@@QAEXPAUtagRECT@@@Z 0x005D5930-0x005D5A6E BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original 0x005D5937 checks visibility and null path repeats it at 0x005D5954. 0x005D59D5 copies caller coordinates; 0x005D5A01 intersects the local copy with Buffer bounds, 0x005D5A1F converts the zero origin, and 0x005D5A60 invalidates HandleMain without erasing. Complete span retained from src/recovered/units/005d5930.cpp.", "git:0e184947304cbb843b26264d5145e9b9b452cf16:src/recovered/units/005d5930.cpp", "Historical seed spelling ?soft_update@GraphicWin@@QAEXPAURECT@@@Z; current source mapping ?soft_update@GraphicWin@@QAEXPAUtagRECT@@@Z; emitted symbol ?soft_update@GraphicWin@@QAEXPAUtagRECT@@@Z."], "reason": "Invalidate a clipped, translated copy of a borrowed client rectangle; null takes the full Buffer path with the original repeated visibility check. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
-void GraphicWin::soft_update(RECT *area) {
-    if (!Win::is_visible()) return;
-    if (!area) {
-        soft_update();
-        return;
-    }
-
-    RECT local = *area;
-    if (!IntersectRect(&local, &local, &rect2_)) return;
-
-    int x = 0, y = 0;
-    Win::client_to_screen(&x, &y);
-    local.left += x;
-    local.right += x;
-    local.top += y;
-    local.bottom += y;
-    InvalidateRect(HandleMain, &local, FALSE);
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005D5720 ?soft_update@GraphicWin@@QAEXHHHH@Z 0x005D5720-0x005D588C BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence":["source:src/recovered/units/005d5720.cpp","source:src/graphicwin.cpp:GraphicWin::soft_update","Pinned5D5739/5D573E form coordinate extents before visibility;5D57FA selects GraphicWin+474 (Buffer::rect2_) for IntersectRect5D581B, then5D583B converts the zero origin and5D587C invalidates HandleMain with eraseFALSE. The duplicated null/full-buffer branch matches the existing rectangle overload's source behavior; delegation is a source reconstruction, not a byte claim."],"reason":"Own the coordinate invalidation path through the existing typed rectangle overload: clip against Buffer working bounds, not the unrelated Win client rectangle, translate to screen, and invalidate without erasing."}
-void GraphicWin::soft_update(int x, int y, int width, int height) {
-    RECT local = {x, y, x + width, y + height};
-    soft_update(&local);
-}
-
-// Frame minima below use real Sprite dimensions. Window creation, client-size
-// conversion and surface allocation remain separate recovery dependencies;
-// tests of this orchestration do not establish their complete behavior.
-
-
-// ORIGINAL: 0x005D50A0 ?init@GraphicWin@@QAEHPAURECT@@PADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z 0x005D50A0-0x005D50E8 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:9a42cdd31299b3c5e87986205ba49b55ab29af72:src/recovered/005d50a0.cpp retains the historical 72-byte seed; the pinned original 0x005D50A0-0x005D50E8 returns 0x10 for null bounds and forwards nonnull rectangle coordinates to 0x005D4EF0."], "reason": "Home the byte-exact rectangle initializer in GraphicWin so MapWin and other owners use its real null behavior and base lifetime."}
-// symbol    ?init@GraphicWin@@QAEHPAUtagRECT@@PADHPAVWin@@PAVMenu@@PAUBorderSizing@@@Z
-int GraphicWin::init(RECT *bounds, char *caption, int flags, Win *parent,
-                     Menu *menu, BorderSizing *border) {
-    if (bounds == 0) return 0x10;
-    return init(bounds->left, bounds->top,
-                bounds->right - bounds->left,
-                bounds->bottom - bounds->top,
-                caption, flags, parent, menu, border);
 }
 
 /*
@@ -897,6 +380,23 @@ int GraphicWin::init(int x, int y, int width, int height, LPSTR title,
     return 0;
 }
 
+// Frame minima below use real Sprite dimensions. Window creation, client-size
+// conversion and surface allocation remain separate recovery dependencies;
+// tests of this orchestration do not establish their complete behavior.
+
+
+// ORIGINAL: 0x005D50A0 ?init@GraphicWin@@QAEHPAURECT@@PADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z 0x005D50A0-0x005D50E8 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:9a42cdd31299b3c5e87986205ba49b55ab29af72:src/recovered/005d50a0.cpp retains the historical 72-byte seed; the pinned original 0x005D50A0-0x005D50E8 returns 0x10 for null bounds and forwards nonnull rectangle coordinates to 0x005D4EF0."], "reason": "Home the byte-exact rectangle initializer in GraphicWin so MapWin and other owners use its real null behavior and base lifetime."}
+// symbol    ?init@GraphicWin@@QAEHPAUtagRECT@@PADHPAVWin@@PAVMenu@@PAUBorderSizing@@@Z
+int GraphicWin::init(RECT *bounds, char *caption, int flags, Win *parent,
+                     Menu *menu, BorderSizing *border) {
+    if (bounds == 0) return 0x10;
+    return init(bounds->left, bounds->top,
+                bounds->right - bounds->left,
+                bounds->bottom - bounds->top,
+                caption, flags, parent, menu, border);
+}
+
 // ORIGINAL: 0x005D50F0 sub_5d50f0 0x005D50F0-0x005D5235 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original5D50F0..5D5235; retired seed git:da8a4b7f:src/unrecovered/005d50f0.cpp records the same identity and spans with its receiver PROPOSAL/TRIED notes kept below.", "Pinned image SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: 0x5D50F2 saves ECX as the GraphicWin receiver; the routine reads its sixth explicit value from the stack, pushes all nine explicit integer values to Win::UNK1, and ends with ret 0x24. EDX is not consumed as an argument. This is a thiscall member ABI, not the current free __fastcall adapter ABI.", "Pinned 0x5D50F4 calls GraphicWin::close; 0x5D51B4 calls the mapped Win::UNK1 nine-integer body at 0x5EC680, whose complete original and current source body return zero without reading arguments. Keep this call and do not invent a replacement body or conflate it with Win::init.", "Pinned object accesses are already owned: GraphicWin frame sprites at +0x9CC..+0x9F4, Win iFlags_ at +0x98, Buffer base at +0x444 and poOwner_ at Buffer+4. GraphicWin already owns close, compute_min_size, the frame-default record, Win::nonclient_to_client, Buffer::init and Buffer::sync_to_palette.", "Pinned behavior: close first; conditional eleven frame-default assignments when flags & 0x30000000; propagate Win::UNK1 result; on zero set Buffer owner to this, compute minimum size, either convert width/height through Win::nonclient_to_client or add ScrollDefaultThickness according to iFlags_ bits 3/2 when flags & 0x800; propagate Buffer::init result; ignore sync_to_palette result and return zero after success.", "All nine explicit values remain int parameters because the original forwards their stack words unchanged to the proven int-parameter Win::UNK1 interface; only width, height and flags are named for their directly observed uses. No meanings are assigned to a1, a2, a5, a7, a8 or a9."], "reason": "Move the distinct original in-place GraphicWin reinitialization entry into its real class owner. Preserve the pinned ECX receiver plus nine-stack-integer thiscall boundary, existing Win::UNK1 no-op call, frame/default and Buffer sequencing, and return/error paths; do not alter GraphicWin::init."}
 // symbol    ?reinitialize@GraphicWin@@QAEHHHHHHHHHH@Z
@@ -955,57 +455,211 @@ void __cdecl nullsub_224() {
 }
 
 
+// USER32!InvalidateRect - called directly (see GraphicWin::redraw below).
+// image address 0x00669304 is that call's own IAT slot; it is not read as
+// a raw address anywhere here, so there is nothing hardcoded to fault on
+// in a host test executable with a different layout.
 
 /*
-// ORIGINAL: 0x005D6310 ?on_mouse_move@GraphicWin@@QAEXHHIH@Z 0x005D6310-0x005D632C BYTE_EXACT
-// symbol    ?on_mouse_move@GraphicWin@@UAEXHHIH@Z
-// size      28 bytes
-// prototype void (__thiscall ?on_mouse_move@GraphicWin@@QAEXHHIH@Z)(GraphicWin* this, int, int, unsigned int, int)
-// callers   0   call targets   1
+Purpose: Paint the window's surface in one colour. A window that is marked
+         transparent and whose parent agrees copies the parent's pixels in
+         instead, then remaps them through the process colour table.
+// ORIGINAL: 0x005D5250 ?fill@GraphicWin@@QAEXH@Z 0x005D5250-0x005D5346 BYTE_EXACT
+// LEVER: `vtable_slot<parent_query_fn>(parent, 0xF4)(parent)` in place of
+//        the pointer-to-member `original_method<...>(vtable[0xF4/4])`
+//        spelling for the slot-0xF4 query - the image's own call is ONE
+//        `call dword ptr [eax+0xf4]`, where the pointer-to-member form
+//        loads the slot into a register first (two instructions).
+// TRIED: not chased to completion - still a big structural gap beyond
+//            that one call (80 image instructions, largely a different
+//            register plan for `flags_`/`parent` starting at the very first
+//            branch). This is a large function (246 bytes); the vtable-slot
+//            fix is banked, the rest is not at this budget.
+// LEVER: the member-form rewrite of 2026-08-27 (iFlags_/win_parent_/the two
+//        RECTs/dib_ named instead of memcpy walks off raw offsets) scored
+//        11/80 where the raw-offset form scored 1/80 - the honest spelling
+//        is the close one, and the remaining gap stays a register-plan
+//        divergence from the first branch on.
+// READ OFF THE IMAGE (2026-08-27): the redundant test at 0x005D52BC is a
+//        CONDITIONAL SELECT feeding copy's source argument -
+//        `test esi,esi / je +8 / lea edi,[esi+0x444] / jmp / xor edi,edi` -
+//        it computes the surface INSIDE the true arm from `this`, it does
+//        not branch around the call, and it sits between the argument
+//        spills. Three source shapes tried and all score BELOW the plain
+//        body: ternary selecting the existing `surface` local (5/80), a
+//        null test on a `Buffer *` copy with a two-arm call (1/80), the
+//        select computed in the call argument from a `self` local (2/80).
+//        The select is real but no spelling tried yet makes VC6 schedule
+//        it where the image has it; the dominant gap is elsewhere.
+// TRIED: 2026-08-28, `measure --dir`, seven more spellings of the two
+//        remaining structural differences, against the tree's 11/80 (0.649).
+//        (a) the query result held as a `void *` instead of `bool`, so the
+//        guard is `test eax,eax / je` rather than `setne al / test al,al /
+//        jne`: 1/80. (b) the whole transparent path nested INSIDE the two
+//        guards (`if (flags && parent) { if (query) { ... } }`), which puts
+//        the parent upcast where `win_parent_` is provably non-null and so
+//        drops the parent select the tree emits: 3/80, similarity 0.728 -
+//        the only spelling that scores ABOVE the tree on similarity while
+//        agreeing with FEWER instructions, so the tier metric and the
+//        agreement count disagree here. (c) (b) plus the parent's own
+//        `Buffer *` upcast hoisted out of the inner test: 4/80. (d) (a) with
+//        `surface` dropped and both Buffer calls qualified (`Buffer::fill` /
+//        `Buffer::map_colors`): 11/80, no change. (e) the image's dead RECT
+//        pair transcribed as four plain stores into two locals - the
+//        compiler deletes them and the listing is byte-identical to the
+//        tree's: 11/80. (f) the same pair `volatile`, which does keep the
+//        stores: 7/80. (g) (e) with the first local's address taken: 11/80,
+//        still deleted. The image's `sub esp,0x10` frame and its 10 dead
+//        instructions are what no spelling reaches; the wall stands.
+// TRIED: 2026-08-28 confirming sweep, one re-measure of the tree's own body
+//        after the neighbourhood moved (basewin.cpp / basebutton.cpp edited
+//        today): still 11/80 at /c /O2 /Gy /GR- /GX, 71 compiled. No new
+//        lever attempted - nine refutations are on this marker already.
+// size      246 bytes
+// prototype void (__thiscall ?fill@GraphicWin@@QAEXH@Z)(GraphicWin* this, int)
+// callers   58   call targets   3
 // kind      game
 // flags     hidden;sp_ready;purged_ok
-// calls     0x005F6320
+// calls     0x005DA330 0x005DFB50 0x005DFF00
+// indirect  0x005D5277
+Return Value: n/a
 Status: Complete
+Verification note: three loads the original performs are deliberately absent.
+         It copies a RECT at 0x14C into stack scratch and then overwrites that
+         scratch with the one at 0x13C before either is read, so the first
+         pair (0x154, 0x158) is dead; only the two sums that reach the blit
+         survive here. It also emits `test esi, esi` at 0x005D52BC and passes
+         a null source buffer on the false arm - unreachable, because `this`
+         cannot be null on a thiscall, so that arm is not transcribed. A
+         reader diffing against the disassembly will see both differences.
 */
-void GraphicWin::on_mouse_move(int x, int y, unsigned int keys, int from_parent) {
-    // QUALIFIED, not a cast. Win is a non-virtual base at offset 0, so the
-    // reinterpret_cast this body used to carry named no adjustment at all -
-    // and once Win::on_mouse_move took vtable slot 16 the unqualified call
-    // through it compiled to `mov eax,[ecx]` + an indirect dispatch. The
-    // image calls 0x005F6320 directly (`calls` fact above): 10 of 11
-    // instructions disagreed on that one load. Qualifying restores it.
-    Win::on_mouse_move(x, y, keys, from_parent);
+void GraphicWin::fill(int color) {
+    // The window's Buffer subobject at +0x444, typed so its methods can be
+    // called by NAME - through a pointer-to-member the call sites emitted
+    // `call [ptr]` where the image has `call rel32`. Buffer is a real base,
+    // so the upcast is the language's own +0x444.
+    // Bit 19 alone does not make the window transparent: the parent has to
+    // exist and expose a GraphicWin through Win's slot 0xF4. A plain Win
+    // returns null; GraphicWin returns itself.
+    if ((iFlags_ & 0x80000) != 0 && win_parent_ != nullptr &&
+        win_parent_->get_graphic_win() != nullptr) {
+    // The blit origin is where the window sits in its parent (outer_rect_)
+    // plus where the draw area sits in the window (client_rect_).
+    RECT scratch = client_rect_;
+    int origin_x = scratch.left;
+    int origin_y = scratch.top;
+    scratch = outer_rect_;
+    origin_x += scratch.left;
+    GraphicWin *const parent = static_cast<GraphicWin *>(win_parent_);
+    origin_y += scratch.top;
+    Buffer *const surface = this;
+    // The DIB's own dimensions: biHeight is stored negative (top-down), so
+    // the vertical passes negate it back.
+    int width = static_cast<int>(dib_.bmiHeader.biWidth);
+    int height = static_cast<int>(dib_.bmiHeader.biHeight);
+    parent->Buffer::copy(
+        surface, origin_x, origin_y, 0, 0, width, -height);
+    unsigned char *const table = GraphicWinColorMapTable;
+    if (table == nullptr) {
+        return;
+    }
+    // Re-read, do NOT hoist onto the pair above: the original reloads both at
+    // 0x005D5302 and 0x005D5308, so a blit that resized the surface is seen
+    // by the remap. map_colors uses exclusive bounds, but the original caller
+    // still subtracts one: its remap omits the final row and column.
+    width = static_cast<int>(dib_.bmiHeader.biWidth);
+    height = static_cast<int>(dib_.bmiHeader.biHeight);
+    Buffer::map_colors(0, 0, width - 1, -1 - height, table);
+    } else {
+        Buffer::fill(color);
+    }
+}
+
+// Rectangle counterpart of fill(int). The parent query is only an admission
+// test: the original copies from the reloaded parent's Buffer base, not from
+// the object returned by the query. As in the original, the transparent path
+// requires a live rectangle and a parent that remains a GraphicWin.
+// ORIGINAL: 0x005D5350 ?fill@GraphicWin@@QAEHPAURECT@@H@Z 0x005D5350-0x005D543E FILE
+// RECOVERY_BINDING: v1 {"evidence": ["5D5373 queries Win slotF4;5D53D2 reloads parent before5D53E6 Buffer copy;5D53EB loads the shared table and5D53F5..5417 reread RECT and remap right/bottom-minus-one. Transparent exit returns0, opaque5D5435 returns Buffer fill result, both ret8."], "reason": "This rectangle fill uses the real Win hierarchy and Buffer base. Transparent admission queries the parent, but the reloaded actual parent supplies the copied pixels; opaque fill delegates and returns its result."}
+// symbol    ?fill@GraphicWin@@QAEHPAUtagRECT@@H@Z
+int GraphicWin::fill(RECT *area, int color) {
+    if ((iFlags_ & 0x80000) == 0 ||
+        win_parent_ == nullptr ||
+        win_parent_->get_graphic_win() == nullptr) {
+        return Buffer::fill(area, color);
+    }
+
+    const int origin_x = client_rect_.left + outer_rect_.left;
+    const int origin_y = client_rect_.top + outer_rect_.top;
+    Buffer *const surface = this;
+    const int top = area->top;
+    const int left = area->left;
+    const int width = area->right - left;
+    const int height = area->bottom - top;
+    static_cast<GraphicWin *>(win_parent_)->Buffer::copy(
+        surface, left + origin_x, top + origin_y, left, top, width, height);
+
+    // Copy can invoke surface callbacks. Load the table and rectangle again
+    // afterwards; neither the incoming bounds nor the table may be cached
+    // across that call. The original ignores both drawing return codes.
+    unsigned char *const table = GraphicWinColorMapTable;
+    if (table != nullptr) {
+        const int top = area->top;
+        const int height = area->bottom - top;
+        const int left = area->left;
+        const int width = area->right - left;
+        Buffer::map_colors(left, top, left + width - 1, top + height - 1, table);
+    }
+    return 0;
 }
 
 
-
-
 /*
-Purpose: Step the receiver back to the subobject ??_GGraphicWin@@UAEPAXI@Z
-         expects, then forward unchanged.
-// ORIGINAL: 0x005D7160 ??_GGraphicWin@@WEEE@AEPAXI@Z 0x005D7160-0x005D716B FILE BYTE_EXACT
-// symbol    ??_EGraphicWin@@WEEE@AEPAXI@Z
-// CORRECTED from ??3GraphicWin@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x005D7140` into
-//   ??_GGraphicWin@@UAEPAXI@Z, which executes `ret 4`; no stack access
-//   and the receiver stays in ECX. `WEEE@` re-demangles to
-//   adjustor{1092} and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
+Purpose: Fill a rectangle in the window's own buffer.
+// ORIGINAL: 0x005D5440 ?fill@GraphicWin@@QAEHHHHHH@Z 0x005D5440-0x005D5467 BYTE_EXACT
+// size      39 bytes
+// prototype int (__thiscall ?fill@GraphicWin@@QAEHHHHHH@Z)(GraphicWin* this, int xLeft, int yTop, int length, int width, int)
+// callers   6   call targets   1
 // kind      game
 // flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
+// calls     0x005D8240
+Return Value: whatever Buffer::fill returns
 Status: Complete
 */
 
-// ORIGINAL: 0x00404420 sub_404420 0x00404420-0x0040442B FILE BYTE_EXACT
-// compile_context src/popup.cpp
-// symbol    ?get_graphic_win@GraphicWin@@WEEE@AEPAV1@XZ
-// Compiler-owned secondary-base entry: Buffer lies at GraphicWin +0x444.
-// Original Buffer-side slot 1 at 0x00670C5C points here; this entry forwards
-// to the self-query at 0x004042B0. There is no handwritten C++ thunk body.
+int GraphicWin::fill(int x1, int y1, int x2, int y2, int color) {
+    // The surface subobject: Buffer is a real base at 0x444, so the qualified
+    // call names it directly instead of casting the offset by hand.
+    return Buffer::fill(x1, y1, x2, y2, color);
+}
+
+// ORIGINAL: 0x005D54A0 sub_5d54a0 0x005D54A0-0x005D54C2 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:graphicwin-buffer-input-owner", "pinned:5D54A0/5D54D0 adjust GraphicWin receiver to Buffer at +444; 5D7AE0 forwards unchanged receiver to load_pcx.", "pinned:5D5590 virtual Win resize slot3, failure return, then move and Buffer palette synchronization in that order.", "pinned:5D7AE0 input fields +C/+10 only; PcxInputView is an accessed-prefix description, not a proven complete allocation or original name.", "historical seed:src/recovered/005d54a0.cpp; original mappings and parsed findings preserved."], "reason": "Rehome the original operation into genuine GraphicWin/Buffer inheritance and methods, preserving historical identity, spans, claims and findings."}
+// symbol    ?probe_image_file@GraphicWin@@QAEHPBDPAVPalette@@HH@Z
+int GraphicWin::probe_image_file(const char *filename, Palette *palette,
+                                 int color_base, int color_count) {
+  return Buffer::probe_image_file(filename, palette, color_base, color_count);
+}
+
+// ORIGINAL: 0x005D54D0 sub_5d54d0 0x005D54D0-0x005D54F2 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:graphicwin-buffer-input-owner", "pinned:5D54A0/5D54D0 adjust GraphicWin receiver to Buffer at +444; 5D7AE0 forwards unchanged receiver to load_pcx.", "pinned:5D5590 virtual Win resize slot3, failure return, then move and Buffer palette synchronization in that order.", "pinned:5D7AE0 input fields +C/+10 only; PcxInputView is an accessed-prefix description, not a proven complete allocation or original name.", "historical seed:src/recovered/005d54d0.cpp; original mappings and parsed findings preserved."], "reason": "Rehome the original operation into genuine GraphicWin/Buffer inheritance and methods, preserving historical identity, spans, claims and findings."}
+// symbol    ?load_pcx_from_source@GraphicWin@@QAEHPAUPcxInputView@@PAVPalette@@HH@Z
+int GraphicWin::load_pcx_from_source(PcxInputView *source, Palette *palette,
+                                     int color_base, int color_count) {
+  return Buffer::load_pcx_from_source(source, palette, color_base,
+                                      color_count);
+}
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x005D5500 ?load_pcx@GraphicWin@@QAEHPADPAUPalette@@HH@Z 0x005D5500-0x005D5536 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005d5500.cpp", "image:terranx_original.exe:0x005D5500", "Original instructions establish owner, bounded body and callback/state order; SocialWin reloads faction after social_upheaval and every later stateful call. GraphicWin dispatches through the real Buffer base.", "recovery/tasks/interface-contract-report-closure.json; bounded UI-five scope preserves original baseline"], "reason": "Recover the original in its genuine UI owner using actual members, globals and base/virtual calls. Retain seed evidence and historical obligations; this binding does not grant a current matching or runtime claim."}
+// symbol    ?load_pcx@GraphicWin@@QAEHPADPAVPalette@@HH@Z
+int GraphicWin::load_pcx(char *path, Palette *palette, int flags, int transparency) {
+    if ((iFlags_ & 0x800000) != 0) {
+        return 1;
+    }
+    return Buffer::load_pcx(path, palette, flags, transparency);
+}
 
 // ORIGINAL: 0x005D5540 ?resize@GraphicWin@@QAEXHHH@Z 0x005D5540-0x005D5590 FILE BYTE_EXACT
 // symbol    ?resize@GraphicWin@@UAEHHHH@Z
@@ -1023,271 +677,196 @@ int GraphicWin::resize(int width, int height, int client_size) {
     return result;
 }
 
-// ORIGINAL: 0x005D6330 ?on_set_cursor@GraphicWin@@QAEHPAXII@Z 0x005D6330-0x005D6350 FILE BYTE_EXACT
-// symbol    ?on_set_cursor@GraphicWin@@UAEHPAXII@Z
-// provenance (retired seed): git:9b523ffb:src/recovered/units/005d6330.cpp
-// Win-side virtual slot 85 forwards to the static cursor hook using the
-// real main-window handle. The catalogued nonvirtual spelling is provisional.
-// calls     0x005F2670
-int GraphicWin::on_set_cursor(void *window, unsigned int hit, unsigned int message) {
-    return Win::OnSetCursor(HandleMain, window, hit, message);
+// ORIGINAL: 0x005D5590 sub_5d5590 0x005D5590-0x005D55CC BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:graphicwin-buffer-input-owner", "pinned:5D54A0/5D54D0 adjust GraphicWin receiver to Buffer at +444; 5D7AE0 forwards unchanged receiver to load_pcx.", "pinned:5D5590 virtual Win resize slot3, failure return, then move and Buffer palette synchronization in that order.", "pinned:5D7AE0 input fields +C/+10 only; PcxInputView is an accessed-prefix description, not a proven complete allocation or original name.", "historical seed:src/recovered/005d5590.cpp; original mappings and parsed findings preserved."], "reason": "Rehome the original operation into genuine GraphicWin/Buffer inheritance and methods, preserving historical identity, spans, claims and findings."}
+// symbol    ?resize_screen_and_sync_palette@GraphicWin@@QAEHXZ
+int GraphicWin::resize_screen_and_sync_palette() {
+  const int result = resize(WinScreenWidth, WinScreenHeight, 0);
+  if (result != 0) {
+    return result;
+  }
+  Win::move(0, 0);
+  Buffer::sync_to_palette(PaletteActive);
+  return 0;
 }
 
-// ORIGINAL: 0x005D6210 ?on_size@GraphicWin@@QAEXIHH@Z 0x005D6210-0x005D6308 FILE BYTE_EXACT
-// symbol    ?on_size@GraphicWin@@UAEXIHH@Z
-// provenance (retired seed): git:4a64ad64:src/unrecovered/005d6210.cpp
-// The drawing surface is our Buffer base; the optional owned buffer is a
-// separate allocation. PaletteActive is a pointer value, not its storage.
-// calls     0x005D7670 0x005D79C0 0x005DE8F0 0x005EE330 0x005F7E90
-void GraphicWin::on_size(unsigned int flags, int width, int height) {
-    if (flags != 1) {
-        int client_width = width;
-        int client_height;
-        if (client_width != 0 && height != 0) {
-            client_height = height;
-        } else {
-            client_width = dib_.bmiHeader.biWidth;
-            client_height = -dib_.bmiHeader.biHeight;
-        }
-        const uint32_t &window_flags = iFlags_;
-        const int &thickness = ScrollDefaultThickness;
-        if ((window_flags & 8) != 0) {
-            client_width -= thickness;
-        }
-        if ((window_flags & 4) != 0) {
-            client_height -= thickness;
-        }
-        Buffer::init(client_width, client_height, init_flags_, nullptr);
-        Buffer::sync_to_palette(PaletteActive);
-        if ((iFlags_ & 0x40000000) != 0 && owned_buffer_ != nullptr) {
-            owned_buffer_->resize(client_width, client_height);
-            owned_buffer_->sync_to_palette(PaletteActive);
-        }
-        set_rects();
-        on_nc_paint(nullptr, -1);
-        resize_event(rect2_.right - rect2_.left, rect2_.bottom - rect2_.top);
-        if (Win::is_visible()) {
-            redraw();
-        }
-    }
+// ORIGINAL: 0x005D5630 ?update@GraphicWin@@QAEXPAURECT@@PAUGraphicWin@@@Z 0x005D5630-0x005D56AA BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x005D5630-0x005D56AA"], "reason": "Rectangle update through real Buffer/Win bases; original returns zero and ignores its second explicit argument."}
+// symbol    ?update@GraphicWin@@QAEHPAUtagRECT@@PAV1@@Z
+int GraphicWin::update(RECT *area, GraphicWin *source) {
+    if (!area) area = &rect2_;
+    update(area->left, area->top, area->right - area->left,
+           area->bottom - area->top, source);
+    return 0;
 }
 
-// The original derived entry delegates non-client rectangle setup to Win.
-// ORIGINAL: 0x005D63E0 ?set_rects@GraphicWin@@QAEXXZ 0x005D63E0-0x005D63E5 FILE BYTE_EXACT
-// symbol    ?set_rects@GraphicWin@@UAEXXZ
-// provenance (retired seed): git:fd97ca5d:src/unrecovered/005d63e0.cpp
-void GraphicWin::set_rects() {
-    Win::set_rects();
+void GraphicWin::redraw() {
+    if (HandleMain == nullptr) {
+        return;
+    }
+    // Win's own re-entrancy latch, named now that the base's fields are
+    // protected.
+    uint32_t state = field_1A0_;
+    if ((state & 1) != 0) {
+        return;
+    }
+    state |= 1;
+    field_1A0_ = state;
+    WinCallbackWindow = this;
+
+    // The paint hook, called before the paint itself.
+    if (field_A10_ != nullptr) {
+        field_A10_();
+    }
+    // The window's own paint, vtable slot 12: the image reaches it the way
+    // any virtual call is reached, so the call is spelled as one.
+    on_redraw();
+    this->overlay_nonclient(nullptr);
+
+    // Re-read, do NOT reuse the latched value: the original reloads at
+    // 0x005D5ABB before clearing bit 0, so any bit the paint hook or the
+    // virtual paint set on 0x1A0 survives this clear.
+    state = field_1A0_;
+    state &= 0xFFFFFFFEU;
+    field_1A0_ = state;
+
+    if (!static_cast<Win *>(this)->is_visible()) {
+        return;
+    }
+    // The surface RECT inside the Buffer subobject - the same field
+    // update() reads below.
+    RECT area = rect2_;
+    int x_offset = 0;
+    int y_offset = 0;
+    static_cast<Win *>(this)->client_to_screen(&x_offset, &y_offset);
+    area.left += x_offset;
+    area.right += x_offset;
+    area.top += y_offset;
+    area.bottom += y_offset;
+    // The window handle is read again here rather than reused from the guard
+    // above, matching the original's second load at 0x005D5B43. THE REAL
+    // API, not a lazily-resolved pointer: the image just calls
+    // `dword ptr [0x669304]` unconditionally - that address IS
+    // `InvalidateRect`'s own IAT slot, which the compiler already produces
+    // an indirect call through for an ordinary imported function.
+    InvalidateRect(HandleMain, &area, FALSE);
 }
 
-// ORIGINAL: 0x005D6AC0 ?overlay_nonclient@GraphicWin@@QAEXPAURECT@@@Z 0x005D6AC0-0x005D6EB7 FILE BYTE_EXACT
-// symbol    ?overlay_nonclient@GraphicWin@@QAEXPAUtagRECT@@@Z
-// Frame placement evidence: 0x005D6BB7-0x005D6D00 chooses the corner
-// sprites and draws them; 0x005D6D15-0x005D6E65 tiles the edge sprites.
-// The import at 0x006692A8 is GetWindowRect, not the seed's GetClientRect.
-// The supplied area is in screen coordinates; the Buffer clip is local.
-void GraphicWin::overlay_nonclient(RECT *area) {
-    RECT saved = Buffer::rect1_;
-    if (area != nullptr) {
-        RECT window_rect;
-        GetWindowRect(HandleMain, &window_rect);
-        RECT clip;
-        if (!IntersectRect(&clip, &window_rect, area)) {
-            return;
-        }
-        const int dy = -window_rect.top;
-        const int dx = -window_rect.left;
-        clip.left += dx;
-        clip.right += dx;
-        clip.top += dy;
-        clip.bottom += dy;
-        Buffer::set_clip(&clip);
-    } else {
-        Buffer::restore_clip();
-    }
 
-    int top_inset = ((iFlags_ & 0x10) && !(iFlags_ & 0x400000))
-                        ? caption_height_ : border_thickness_;
-    const int configured_bottom_inset = bottom_border_thickness_;
-    int bottom_inset = configured_bottom_inset == -1
-                           ? border_thickness_ : configured_bottom_inset;
 
-    Sprite *top_left;
-    Sprite *top_right;
-    Sprite *bottom_left;
-    Sprite *bottom_right;
-    if (iFlags_ & 0x60000000) {
-        top_left = overlay_top_left_ ? overlay_top_left_ : frame_top_left_;
-        top_right = overlay_top_right_ ? overlay_top_right_ : frame_top_right_;
-        bottom_left = overlay_bottom_left_ ? overlay_bottom_left_ : frame_bottom_left_;
-        bottom_right = overlay_bottom_right_ ? overlay_bottom_right_ : frame_bottom_right_;
-    } else {
-        top_left = frame_top_left_;
-        bottom_left = frame_bottom_left_;
-        top_right = frame_top_right_;
-        bottom_right = frame_bottom_right_;
-    }
-    if (iFlags_ & 0x60000000) {
-        if (top_left) {
-            top_left->draw(this, top_left->cTransparentIndex_,
-                           -border_thickness_, -top_inset, 1, 1);
-        }
-        if (top_right) {
-            top_right->draw(this, top_right->cTransparentIndex_,
-                            dib_.bmiHeader.biWidth - top_right->iWidth_ + border_thickness_,
-                            -top_inset, 1, 1);
-        }
-        if (bottom_left) {
-            bottom_left->draw(this, bottom_left->cTransparentIndex_,
-                              -border_thickness_,
-                              bottom_inset - dib_.bmiHeader.biHeight - bottom_left->iHeight_, 1, 1);
-        }
-        if (bottom_right) {
-            bottom_right->draw(this, bottom_right->cTransparentIndex_,
-                               dib_.bmiHeader.biWidth - bottom_right->iWidth_ + border_thickness_,
-                               bottom_inset - dib_.bmiHeader.biHeight - bottom_right->iHeight_, 1, 1);
-        }
 
-        if (!(iFlags_ & 0x40000000)) {
-            // Reload frame geometry for each call, as the image does.
-            // These callees can observe or change the window's drawing state.
-            if (frame_top_) {
-                Buffer::tile(frame_top_, 0, 0,
-                    frame_top_left_->iWidth_ - border_thickness_, -top_inset,
-                    client_rect_.right - client_rect_.left
-                        - frame_top_right_->iWidth_ - frame_top_left_->iWidth_,
-                    frame_top_->iHeight_);
-            }
-            if (frame_bottom_) {
-                Buffer::tile(frame_bottom_, 0, 0,
-                    frame_bottom_left_->iWidth_ - border_thickness_,
-                    bottom_inset - dib_.bmiHeader.biHeight - frame_bottom_->iHeight_,
-                    client_rect_.right - client_rect_.left
-                        - frame_bottom_right_->iWidth_ - frame_bottom_left_->iWidth_,
-                    frame_bottom_->iHeight_);
-            }
-            if (frame_left_) {
-                Buffer::tile(frame_left_, 0, 0, -border_thickness_,
-                    frame_top_left_->iHeight_ - top_inset, frame_left_->iWidth_,
-                    client_rect_.bottom - client_rect_.top
-                        - frame_bottom_left_->iHeight_ - frame_top_left_->iHeight_);
-            }
-            if (frame_right_) {
-                // The original uses the top-left height for this origin too.
-                Buffer::tile(frame_right_, 0, 0,
-                    dib_.bmiHeader.biWidth + border_thickness_ - frame_right_->iWidth_,
-                    frame_top_left_->iHeight_ - top_inset, frame_right_->iWidth_,
-                    client_rect_.bottom - client_rect_.top
-                        - frame_bottom_right_->iHeight_ - frame_top_right_->iHeight_);
-            }
-        } else if (owned_buffer_) {
-            owned_buffer_->copy_mask(this, 0, 0, 0, 0,
-                                    dib_.bmiHeader.biWidth, -dib_.bmiHeader.biHeight, 0x108);
-        }
-    }
-    Buffer::set_clip(&saved);
-}
+/*
+Purpose: When visible, tell the window to update and flip a rect the size of
+         the RECT at this+0x474 (the same field redraw() reads), positioned
+         at the origin.
+// ORIGINAL: 0x005D56B0 ?update@GraphicWin@@QAEXPAUGraphicWin@@@Z 0x005D56B0-0x005D571D BYTE_EXACT
+// symbol    ?update@GraphicWin@@QAEXPAV1@@Z
+// size      109 bytes
+// prototype void (__thiscall ?update@GraphicWin@@QAEXPAUGraphicWin@@@Z)(GraphicWin* this, GraphicWin*)
+// callers   8   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005ECFE0 0x005EFD20 0x005F74A0 0x005F7E90
+Return Value: n/a
+Status: Complete
+*/
+void GraphicWin::update(GraphicWin *) {
+    // Four separate field reads of the surface RECT, not a copied RECT: the
+    // latter compiles a real `call memcpy` here (unlike redraw()'s own read
+    // of the same field, which VC6 happens to inline), where the image loads
+    // each of the four dwords directly.
+    int height = rect2_.bottom - rect2_.top;
+    int width = rect2_.right - rect2_.left;
 
-// ORIGINAL: 0x005D6A50 ?set_def_nc_sprites@GraphicWin@@QAAXPAUNCSprites@@@Z 0x005D6A50-0x005D6ABA FILE BYTE_EXACT
-// symbol    ?set_def_nc_sprites@GraphicWin@@SAXPAUNCSprites@@@Z
-// The input's top-right/bottom-left and edge order differ from the shared
-// defaults. Preserve each named field, not a byte copy of the input record.
-// Original caller 0x004559F5 supplies one pointer and no implicit receiver;
-// static class ownership follows the catalogue, not its QAA decoration.
-void __cdecl GraphicWin::set_def_nc_sprites(NCSprites *sprites) {
-    if (sprites != nullptr) {
-        GraphicWinInitDefaults.top_left = sprites->top_left;
-        GraphicWinInitDefaults.top_right = sprites->top_right;
-        GraphicWinInitDefaults.bottom_left = sprites->bottom_left;
-        GraphicWinInitDefaults.bottom_right = sprites->bottom_right;
-        GraphicWinInitDefaults.top = sprites->top;
-        GraphicWinInitDefaults.left = sprites->left;
-        GraphicWinInitDefaults.right = sprites->right;
-        GraphicWinInitDefaults.bottom = sprites->bottom;
-        GraphicWinInitDefaults.noncaption_left = sprites->noncaption_left;
-        GraphicWinInitDefaults.noncaption_right = sprites->noncaption_right;
-        GraphicWinInitDefaults.noncaption_middle = sprites->noncaption_middle;
+    if (static_cast<Win *>(this)->is_visible()) {
+        RECT rect;
+        rect.left = 0;
+        rect.top = 0;
+        rect.right = width;
+        rect.bottom = height;
+        static_cast<Win *>(this)->update_window(&rect);
+        static_cast<Win *>(this)->client_to_screen(&rect);
+        Win::flip(&rect);
     }
 }
-
-// ORIGINAL: 0x005D6EC0 sub_5d6ec0 0x005D6EC0-0x005D6F4B FILE BYTE_EXACT
-// symbol    ?load_nc_sprites_from_defs@GraphicWin@@QAEXXZ
-// Refresh an existing styled window from the current process defaults.
-// This receiver's fields and the init copy use the same data interpretation.
-void GraphicWin::load_nc_sprites_from_defs() {
-    if (iFlags_ & 0x30000000) {
-        frame_top_left_ = GraphicWinInitDefaults.top_left;
-        frame_top_right_ = GraphicWinInitDefaults.top_right;
-        frame_bottom_left_ = GraphicWinInitDefaults.bottom_left;
-        frame_bottom_right_ = GraphicWinInitDefaults.bottom_right;
-        frame_top_ = GraphicWinInitDefaults.top;
-        frame_bottom_ = GraphicWinInitDefaults.bottom;
-        frame_left_ = GraphicWinInitDefaults.left;
-        frame_right_ = GraphicWinInitDefaults.right;
-        frame_noncaption_left_ = GraphicWinInitDefaults.noncaption_left;
-        frame_noncaption_right_ = GraphicWinInitDefaults.noncaption_right;
-        frame_noncaption_middle_ = GraphicWinInitDefaults.noncaption_middle;
-    }
-}
-
-// The query is a predicate, not the receiver for the update. A callback may
-// replace the current registry entry or change the live registry count.
-// load_interface calls this class-wide operation without a receiver.
-// ORIGINAL: 0x005D6F50 ?load_all_nc_sprites_from_defs@GraphicWin@@QAEXXZ 0x005D6F50-0x005D7022 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original4559FD calls5D6F50 without setting a receiver. The complete body iterates existing WinZOrderArray9B6630 with signed live WinZOrderCount9B7B30; slot61 get_graphic_win is only a predicate and the array receiver is reloaded after its callback.", "The existing real eleven-Sprite-pointer GraphicWinInitDefaults9B3394 record and load_nc_sprites_from_defs5D6EC0 implement the identical flags30000000 guarded copy. Preserve seed history/exact obligation and observe the emitted static function symbol."], "reason": "Recover genuine GraphicWin frame behavior required by the interface asset loader, retaining its original seed identity."}
-// symbol    ?load_all_nc_sprites_from_defs@GraphicWin@@SAXXZ
-void GraphicWin::load_all_nc_sprites_from_defs() {
-    int index = 0;
-    if (0 < WinZOrderCount) {
-        Win **cursor = WinZOrderArray;
-        do {
-            if ((*cursor)->get_graphic_win() != nullptr) {
-                Win *window = *cursor;
-                // A callback can replace the entry with a plain unstyled Win.
-                // Test the base flags before assuming a GraphicWin receiver.
-                if (window->iFlags_ & 0x30000000) {
-                    GraphicWin *graphic = static_cast<GraphicWin *>(window);
-                    graphic->frame_top_left_ = GraphicWinInitDefaults.top_left;
-                    graphic->frame_top_right_ = GraphicWinInitDefaults.top_right;
-                    graphic->frame_bottom_left_ = GraphicWinInitDefaults.bottom_left;
-                    graphic->frame_bottom_right_ = GraphicWinInitDefaults.bottom_right;
-                    graphic->frame_top_ = GraphicWinInitDefaults.top;
-                    graphic->frame_bottom_ = GraphicWinInitDefaults.bottom;
-                    graphic->frame_left_ = GraphicWinInitDefaults.left;
-                    graphic->frame_right_ = GraphicWinInitDefaults.right;
-                    graphic->frame_noncaption_left_ = GraphicWinInitDefaults.noncaption_left;
-                    graphic->frame_noncaption_right_ = GraphicWinInitDefaults.noncaption_right;
-                    graphic->frame_noncaption_middle_ = GraphicWinInitDefaults.noncaption_middle;
-                }
-            }
-            ++index;
-            ++cursor;
-        } while (index < WinZOrderCount);
-    }
-}
-
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005D7030 ?compute_min_size@GraphicWin@@QAEXXZ 0x005D7030-0x005D7140 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Complete original5D7030..5D7140 has no callees. Flag0x10 selects caption or noncaption top corners; bottom corners are shared. Every selected pointer must exist before either previous minimum changes.", "OriginalSprite displayed width18/height1C accesses and signed greater-than branches establish independent horizontal and vertical corner-sum maxima. Preserve low32-bit addition before signed comparison, real Sprite accessors and existing Win minimum members. Seed Buffer receiver casts are incorrect; remove the product pending forwarder without changing the historical unclaimed identity."], "reason": "Recover genuine GraphicWin frame behavior required by the interface asset loader, retaining its original seed identity."}
-// symbol    ?compute_min_size@GraphicWin@@QAEXXZ
-void GraphicWin::compute_min_size() {
-    if ((iFlags_ & 0x10) != 0) {
-        if (!frame_top_left_ || !frame_top_right_ || !frame_bottom_left_
-            || !frame_bottom_right_) return;
-        field_134_ = frame_top_left_->width() + frame_top_right_->width();
-        field_134_ = max((int)field_134_, frame_bottom_right_->width() + frame_bottom_left_->width());
-        field_138_ = frame_top_left_->height() + frame_bottom_left_->height();
-        field_138_ = max((int)field_138_, frame_bottom_right_->height() + frame_top_right_->height());
-    } else {
-        if (!frame_noncaption_left_ || !frame_noncaption_right_ || !frame_bottom_left_
-            || !frame_bottom_right_) return;
-        field_134_ = frame_noncaption_left_->width() + frame_noncaption_right_->width();
-        field_134_ = max((int)field_134_, frame_bottom_right_->width() + frame_bottom_left_->width());
-        field_138_ = frame_noncaption_left_->height() + frame_bottom_left_->height();
-        field_138_ = max((int)field_138_, frame_bottom_right_->height() + frame_noncaption_right_->height());
-    }
+// ORIGINAL: 0x005D5720 ?soft_update@GraphicWin@@QAEXHHHH@Z 0x005D5720-0x005D588C BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["source:src/recovered/units/005d5720.cpp","source:src/graphicwin.cpp:GraphicWin::soft_update","Pinned5D5739/5D573E form coordinate extents before visibility;5D57FA selects GraphicWin+474 (Buffer::rect2_) for IntersectRect5D581B, then5D583B converts the zero origin and5D587C invalidates HandleMain with eraseFALSE. The duplicated null/full-buffer branch matches the existing rectangle overload's source behavior; delegation is a source reconstruction, not a byte claim."],"reason":"Own the coordinate invalidation path through the existing typed rectangle overload: clip against Buffer working bounds, not the unrelated Win client rectangle, translate to screen, and invalidate without erasing."}
+void GraphicWin::soft_update(int x, int y, int width, int height) {
+    RECT local = {x, y, x + width, y + height};
+    soft_update(&local);
 }
+
+// Invalidate the Buffer bounds in screen coordinates without repainting now.
+// ORIGINAL: 0x005D5890 ?soft_update@GraphicWin@@QAEXXZ 0x005D5890-0x005D592D BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Original 0x005D58A3 reads the Buffer rectangle at GraphicWin+0x474; 0x005D58E0 calls Win::client_to_screen on a zero origin and 0x005D5922 calls USER32 InvalidateRect with HandleMain and erase=false. Complete span retained from src/unrecovered/005d5890.cpp."], "reason": "Invalidate the visible GraphicWin Buffer bounds through its real Win base and the SDK import, without copying pixels or calling the original executable."}
+void GraphicWin::soft_update() {
+    if (!Win::is_visible()) return;
+
+    int x = 0, y = 0;
+    RECT local = rect2_;
+    Win::client_to_screen(&x, &y);
+    local.left += x;
+    local.right += x;
+    local.top += y;
+    local.bottom += y;
+    InvalidateRect(HandleMain, &local, FALSE);
+}
+
+// Clip a borrowed client rectangle, then invalidate its screen projection.
+// A null argument takes the full-buffer path, including its visibility check.
+// ORIGINAL: 0x005D5930 ?soft_update@GraphicWin@@QAEXPAUtagRECT@@@Z 0x005D5930-0x005D5A6E BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Original 0x005D5937 checks visibility and null path repeats it at 0x005D5954. 0x005D59D5 copies caller coordinates; 0x005D5A01 intersects the local copy with Buffer bounds, 0x005D5A1F converts the zero origin, and 0x005D5A60 invalidates HandleMain without erasing. Complete span retained from src/recovered/units/005d5930.cpp.", "git:0e184947304cbb843b26264d5145e9b9b452cf16:src/recovered/units/005d5930.cpp", "Historical seed spelling ?soft_update@GraphicWin@@QAEXPAURECT@@@Z; current source mapping ?soft_update@GraphicWin@@QAEXPAUtagRECT@@@Z; emitted symbol ?soft_update@GraphicWin@@QAEXPAUtagRECT@@@Z."], "reason": "Invalidate a clipped, translated copy of a borrowed client rectangle; null takes the full Buffer path with the original repeated visibility check. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
+void GraphicWin::soft_update(RECT *area) {
+    if (!Win::is_visible()) return;
+    if (!area) {
+        soft_update();
+        return;
+    }
+
+    RECT local = *area;
+    if (!IntersectRect(&local, &local, &rect2_)) return;
+
+    int x = 0, y = 0;
+    Win::client_to_screen(&x, &y);
+    local.left += x;
+    local.right += x;
+    local.top += y;
+    local.bottom += y;
+    InvalidateRect(HandleMain, &local, FALSE);
+}
+
+
+/*
+Purpose: Repaint the window and invalidate the screen area it occupies. A
+         window already inside a redraw is skipped, so a paint hook that
+         redraws again cannot recurse.
+// ORIGINAL: 0x005D5A70 ?redraw@GraphicWin@@QAEXXZ 0x005D5A70-0x005D5B64 BYTE_EXACT
+// symbol    ?redraw@GraphicWin@@UAEXXZ
+// LEVER: `InvalidateRect(...)` called directly instead of through a
+//        manually lazily-resolved function pointer read from a hardcoded
+//        IAT address - the image just calls `dword ptr [0x669304]`
+//        unconditionally, which is what an ordinary imported-function call
+//        already compiles to. Dropped the now-dead
+//        `GraphicWinInvalidateRect`/`GraphicWinInvalidateRectImport`
+//        globals with it. 45/69 -> 69/69.
+// size      244 bytes
+// prototype void (__thiscall ?redraw@GraphicWin@@QAEXXZ)(GraphicWin* this)
+// callers   42   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D6AC0 0x005ED240 0x005F7E90
+// indirect  0x005D5AA9 0x005D5AAF 0x005D5B59
+Return Value: n/a
+Status: Complete
+Verification note: the calling convention of the 0xA10 paint hook is inferred,
+         not decoded. It is reached by a bare `call eax` at 0x005D5AA9 with
+         nothing pushed and ECX not set, which rules out __thiscall but leaves
+         zero-argument __cdecl and __stdcall indistinguishable - they are
+         ABI-identical here, so either spelling works and neither is a
+         callee-pop fact.
+*/
 
 // ORIGINAL: 0x005D5CF0 ?on_paint@GraphicWin@@QAEHPAURECT@@@Z 0x005D5CF0-0x005D620A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["GraphicWin table66FC50 slot73 and EditBox table66A038 slot73 both select5D5CF0, with an unadjusted Win receiver and Buffer base at444. The original caller ignores a return; use the existing Win void paint signature.", "Original5D5E04 and5D5E56 establish destination clipping;5D61D4 rereads WinBackBuffer before restoring its clip.5D61CF passes width then height to Buffer copy. Real surface Blt and software drawing own separate branches."], "reason": "Recover the inherited GraphicWin paint override selected by the original tables; keep the seed and its original span."}
@@ -1442,6 +1021,228 @@ void GraphicWin::on_paint(RECT *area) {
     }
 }
 
+// ORIGINAL: 0x005D6210 ?on_size@GraphicWin@@QAEXIHH@Z 0x005D6210-0x005D6308 FILE BYTE_EXACT
+// symbol    ?on_size@GraphicWin@@UAEXIHH@Z
+// provenance (retired seed): git:4a64ad64:src/unrecovered/005d6210.cpp
+// The drawing surface is our Buffer base; the optional owned buffer is a
+// separate allocation. PaletteActive is a pointer value, not its storage.
+// calls     0x005D7670 0x005D79C0 0x005DE8F0 0x005EE330 0x005F7E90
+void GraphicWin::on_size(unsigned int flags, int width, int height) {
+    if (flags != 1) {
+        int client_width = width;
+        int client_height;
+        if (client_width != 0 && height != 0) {
+            client_height = height;
+        } else {
+            client_width = dib_.bmiHeader.biWidth;
+            client_height = -dib_.bmiHeader.biHeight;
+        }
+        const uint32_t &window_flags = iFlags_;
+        const int &thickness = ScrollDefaultThickness;
+        if ((window_flags & 8) != 0) {
+            client_width -= thickness;
+        }
+        if ((window_flags & 4) != 0) {
+            client_height -= thickness;
+        }
+        Buffer::init(client_width, client_height, init_flags_, nullptr);
+        Buffer::sync_to_palette(PaletteActive);
+        if ((iFlags_ & 0x40000000) != 0 && owned_buffer_ != nullptr) {
+            owned_buffer_->resize(client_width, client_height);
+            owned_buffer_->sync_to_palette(PaletteActive);
+        }
+        set_rects();
+        on_nc_paint(nullptr, -1);
+        resize_event(rect2_.right - rect2_.left, rect2_.bottom - rect2_.top);
+        if (Win::is_visible()) {
+            redraw();
+        }
+    }
+}
+
+
+
+/*
+// ORIGINAL: 0x005D6310 ?on_mouse_move@GraphicWin@@QAEXHHIH@Z 0x005D6310-0x005D632C BYTE_EXACT
+// symbol    ?on_mouse_move@GraphicWin@@UAEXHHIH@Z
+// size      28 bytes
+// prototype void (__thiscall ?on_mouse_move@GraphicWin@@QAEXHHIH@Z)(GraphicWin* this, int, int, unsigned int, int)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F6320
+Status: Complete
+*/
+void GraphicWin::on_mouse_move(int x, int y, unsigned int keys, int from_parent) {
+    // QUALIFIED, not a cast. Win is a non-virtual base at offset 0, so the
+    // reinterpret_cast this body used to carry named no adjustment at all -
+    // and once Win::on_mouse_move took vtable slot 16 the unqualified call
+    // through it compiled to `mov eax,[ecx]` + an indirect dispatch. The
+    // image calls 0x005F6320 directly (`calls` fact above): 10 of 11
+    // instructions disagreed on that one load. Qualifying restores it.
+    Win::on_mouse_move(x, y, keys, from_parent);
+}
+
+// ORIGINAL: 0x005D6330 ?on_set_cursor@GraphicWin@@QAEHPAXII@Z 0x005D6330-0x005D6350 FILE BYTE_EXACT
+// symbol    ?on_set_cursor@GraphicWin@@UAEHPAXII@Z
+// provenance (retired seed): git:9b523ffb:src/recovered/units/005d6330.cpp
+// Win-side virtual slot 85 forwards to the static cursor hook using the
+// real main-window handle. The catalogued nonvirtual spelling is provisional.
+// calls     0x005F2670
+int GraphicWin::on_set_cursor(void *window, unsigned int hit, unsigned int message) {
+    return Win::OnSetCursor(HandleMain, window, hit, message);
+}
+
+// The original derived entry delegates non-client rectangle setup to Win.
+// ORIGINAL: 0x005D63E0 ?set_rects@GraphicWin@@QAEXXZ 0x005D63E0-0x005D63E5 FILE BYTE_EXACT
+// symbol    ?set_rects@GraphicWin@@UAEXXZ
+// provenance (retired seed): git:fd97ca5d:src/unrecovered/005d63e0.cpp
+void GraphicWin::set_rects() {
+    Win::set_rects();
+}
+
+// ORIGINAL: 0x005D63F0 ?on_redraw_nc@GraphicWin@@QAEXPAURECT@@H@Z 0x005D63F0-0x005D68B7 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"Recover the complete non-client frame painter in GraphicWin using its real Win/Buffer/member ownership.","evidence":["Pinned GraphicWin table 0x66FC50 slot 67 selects 0x5D63F0.","Win::on_redraw_nc calls slot 60 with each live border Buffer and quadrant; the owned caption and frame members are source-typed.","The old recovered-unit seed retains its complete ORIGINAL span and call-list evidence in Git history; no byte claim or old frame-layout typo is converted into an acceptance claim."]}
+// kind      game
+// symbol    ?on_redraw_nc@GraphicWin@@UAEXPAUtagRECT@@H@Z
+void GraphicWin::on_redraw_nc(RECT *area, int side) {
+    if ((iSomeFlag_ & 2) == 0) {
+        return;
+    }
+
+    if (area != 0) {
+        side = -1;
+    }
+
+    int top_inset;
+    Sprite *top_left;
+    Sprite *top_edge;
+    Sprite *top_right;
+    if ((iFlags_ & 0x10) != 0 && (iFlags_ & 0x400000) == 0) {
+        top_inset = caption_height_;
+        top_left = frame_top_left_;
+        top_edge = frame_top_;
+        top_right = frame_top_right_;
+    } else {
+        top_inset = border_thickness_;
+        top_left = frame_noncaption_left_;
+        top_edge = frame_noncaption_middle_;
+        top_right = frame_noncaption_right_;
+    }
+
+    const int bottom_inset = bottom_border_thickness_ == -1
+                                 ? border_thickness_ : bottom_border_thickness_;
+    if ((iFlags_ & 0x10000000) != 0) {
+        // Quadrant 0: top caption/non-caption strip.
+        if (buffer1_ != 0 && (side == -1 || side == 0)) {
+            buffer1_->fill(WinFillColour);
+            if (top_left != 0) {
+                top_left->draw(buffer1_, top_left->transparent_index(), 0, 0, 1, 1);
+            }
+            if (top_right != 0) {
+                top_right->draw(buffer1_, top_right->transparent_index(),
+                                buffer1_->pixel_width() - top_right->width(), 0, 1, 1);
+            }
+            if (top_edge != 0 && top_right != 0 && top_left != 0) {
+                buffer1_->tile(top_edge, 0, 0, top_left->width(), 0,
+                             (client_rect_.right - client_rect_.left) -
+                                 top_right->width() - top_left->width(),
+                             buffer1_->pixel_height());
+            }
+            if (field_E0_ != 0 && (iFlags_ & 0x10) != 0) {
+                if (field_A0C_ != 0) {
+                    field_A0C_(this, field_E0_, buffer1_);
+                }
+                on_draw_caption(field_E0_, buffer1_);
+            }
+            on_post_redraw_nc_buffer(buffer1_, 0);
+        }
+
+        // Quadrant 2: bottom strip.
+        if (buffer4_ != 0 && (side == -1 || side == 2)) {
+            buffer4_->fill(WinFillColour);
+            if (frame_bottom_left_ != 0) {
+                frame_bottom_left_->draw(
+                    buffer4_, frame_bottom_left_->transparent_index(), 0,
+                    buffer4_->pixel_height() - frame_bottom_left_->height(), 1, 1);
+            }
+            if (frame_bottom_right_ != 0) {
+                frame_bottom_right_->draw(
+                    buffer4_, frame_bottom_right_->transparent_index(),
+                    buffer4_->pixel_width() - frame_bottom_right_->width(),
+                    buffer4_->pixel_height() - frame_bottom_right_->height(), 1, 1);
+            }
+            if (frame_bottom_ != 0 && frame_bottom_left_ != 0 &&
+                frame_bottom_right_ != 0) {
+                buffer4_->tile(
+                    frame_bottom_, 0, 0, frame_bottom_left_->width(),
+                    buffer4_->pixel_height() - frame_bottom_->height(),
+                    (buffer4_->pixel_width() - frame_bottom_right_->width()) -
+                        frame_bottom_left_->width(),
+                    frame_bottom_->height());
+            }
+            on_post_redraw_nc_buffer(buffer4_, 2);
+        }
+
+        // Quadrant 3: right strip.
+        if (buffer3_ != 0 && (side == -1 || side == 3)) {
+            buffer3_->fill(WinFillColour);
+            if (top_left != 0) {
+                top_left->draw(buffer3_, top_left->transparent_index(),
+                               0, -top_inset, 1, 1);
+            }
+            if (frame_bottom_left_ != 0) {
+                frame_bottom_left_->draw(
+                    buffer3_, frame_bottom_left_->transparent_index(), 0,
+                    (bottom_inset + buffer3_->pixel_height()) -
+                        frame_bottom_left_->height(), 1, 1);
+            }
+            if (frame_left_ != 0 && top_left != 0 &&
+                frame_bottom_left_ != 0) {
+                buffer3_->tile(
+                    frame_left_, 0, 0, 0,
+                    top_left->height() - top_inset,
+                    border_thickness_,
+                    (((bottom_inset + buffer3_->pixel_height()) -
+                      frame_bottom_left_->height()) - top_left->height()) +
+                        top_inset);
+            }
+            on_post_redraw_nc_buffer(buffer3_, 3);
+        }
+
+        // Quadrant 1: left strip.
+        if (buffer2_ != 0 && (side == -1 || side == 1)) {
+            buffer2_->fill(WinFillColour);
+            if (top_right != 0) {
+                top_right->draw(buffer2_, top_right->transparent_index(),
+                                buffer2_->pixel_width() - top_right->width(),
+                                -top_inset, 1, 1);
+            }
+            if (frame_bottom_right_ != 0) {
+                frame_bottom_right_->draw(
+                    buffer2_, frame_bottom_right_->transparent_index(),
+                    buffer2_->pixel_width() - frame_bottom_right_->width(),
+                    (bottom_inset + buffer2_->pixel_height()) -
+                        frame_bottom_right_->height(), 1, 1);
+            }
+            if (frame_right_ != 0 && top_right != 0 &&
+                frame_bottom_right_ != 0) {
+                buffer2_->tile(
+                    frame_right_, 0, 0,
+                    buffer2_->pixel_width() - frame_right_->width(),
+                    top_right->height() - top_inset,
+                    frame_right_->width(),
+                    (((bottom_inset + buffer2_->pixel_height()) -
+                      frame_bottom_right_->height()) - top_right->height()) +
+                        top_inset);
+            }
+            on_post_redraw_nc_buffer(buffer2_, 1);
+        }
+    } else {
+        Win::on_redraw_nc(area, side);
+    }
+}
+
 
 // Superseded seed deleted; binding references retain historical provenance.
 // ORIGINAL: 0x005D68C0 sub_5d68c0 0x005D68C0-0x005D6A42 BYTE_EXACT
@@ -1485,35 +1286,237 @@ void GraphicWin::apply_frame_sprites(const NCSprites *sprites) {
     }
 }
 
-// ORIGINAL: 0x005D54A0 sub_5d54a0 0x005D54A0-0x005D54C2 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["task:graphicwin-buffer-input-owner", "pinned:5D54A0/5D54D0 adjust GraphicWin receiver to Buffer at +444; 5D7AE0 forwards unchanged receiver to load_pcx.", "pinned:5D5590 virtual Win resize slot3, failure return, then move and Buffer palette synchronization in that order.", "pinned:5D7AE0 input fields +C/+10 only; PcxInputView is an accessed-prefix description, not a proven complete allocation or original name.", "historical seed:src/recovered/005d54a0.cpp; original mappings and parsed findings preserved."], "reason": "Rehome the original operation into genuine GraphicWin/Buffer inheritance and methods, preserving historical identity, spans, claims and findings."}
-// symbol    ?probe_image_file@GraphicWin@@QAEHPBDPAVPalette@@HH@Z
-int GraphicWin::probe_image_file(const char *filename, Palette *palette,
-                                 int color_base, int color_count) {
-  return Buffer::probe_image_file(filename, palette, color_base, color_count);
+// ORIGINAL: 0x005D6A50 ?set_def_nc_sprites@GraphicWin@@QAAXPAUNCSprites@@@Z 0x005D6A50-0x005D6ABA FILE BYTE_EXACT
+// symbol    ?set_def_nc_sprites@GraphicWin@@SAXPAUNCSprites@@@Z
+// The input's top-right/bottom-left and edge order differ from the shared
+// defaults. Preserve each named field, not a byte copy of the input record.
+// Original caller 0x004559F5 supplies one pointer and no implicit receiver;
+// static class ownership follows the catalogue, not its QAA decoration.
+void __cdecl GraphicWin::set_def_nc_sprites(NCSprites *sprites) {
+    if (sprites != nullptr) {
+        GraphicWinInitDefaults.top_left = sprites->top_left;
+        GraphicWinInitDefaults.top_right = sprites->top_right;
+        GraphicWinInitDefaults.bottom_left = sprites->bottom_left;
+        GraphicWinInitDefaults.bottom_right = sprites->bottom_right;
+        GraphicWinInitDefaults.top = sprites->top;
+        GraphicWinInitDefaults.left = sprites->left;
+        GraphicWinInitDefaults.right = sprites->right;
+        GraphicWinInitDefaults.bottom = sprites->bottom;
+        GraphicWinInitDefaults.noncaption_left = sprites->noncaption_left;
+        GraphicWinInitDefaults.noncaption_right = sprites->noncaption_right;
+        GraphicWinInitDefaults.noncaption_middle = sprites->noncaption_middle;
+    }
 }
 
-// ORIGINAL: 0x005D54D0 sub_5d54d0 0x005D54D0-0x005D54F2 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["task:graphicwin-buffer-input-owner", "pinned:5D54A0/5D54D0 adjust GraphicWin receiver to Buffer at +444; 5D7AE0 forwards unchanged receiver to load_pcx.", "pinned:5D5590 virtual Win resize slot3, failure return, then move and Buffer palette synchronization in that order.", "pinned:5D7AE0 input fields +C/+10 only; PcxInputView is an accessed-prefix description, not a proven complete allocation or original name.", "historical seed:src/recovered/005d54d0.cpp; original mappings and parsed findings preserved."], "reason": "Rehome the original operation into genuine GraphicWin/Buffer inheritance and methods, preserving historical identity, spans, claims and findings."}
-// symbol    ?load_pcx_from_source@GraphicWin@@QAEHPAUPcxInputView@@PAVPalette@@HH@Z
-int GraphicWin::load_pcx_from_source(PcxInputView *source, Palette *palette,
-                                     int color_base, int color_count) {
-  return Buffer::load_pcx_from_source(source, palette, color_base,
-                                      color_count);
+// ORIGINAL: 0x005D6AC0 ?overlay_nonclient@GraphicWin@@QAEXPAURECT@@@Z 0x005D6AC0-0x005D6EB7 FILE BYTE_EXACT
+// symbol    ?overlay_nonclient@GraphicWin@@QAEXPAUtagRECT@@@Z
+// Frame placement evidence: 0x005D6BB7-0x005D6D00 chooses the corner
+// sprites and draws them; 0x005D6D15-0x005D6E65 tiles the edge sprites.
+// The import at 0x006692A8 is GetWindowRect, not the seed's GetClientRect.
+// The supplied area is in screen coordinates; the Buffer clip is local.
+void GraphicWin::overlay_nonclient(RECT *area) {
+    RECT saved = Buffer::rect1_;
+    if (area != nullptr) {
+        RECT window_rect;
+        GetWindowRect(HandleMain, &window_rect);
+        RECT clip;
+        if (!IntersectRect(&clip, &window_rect, area)) {
+            return;
+        }
+        const int dy = -window_rect.top;
+        const int dx = -window_rect.left;
+        clip.left += dx;
+        clip.right += dx;
+        clip.top += dy;
+        clip.bottom += dy;
+        Buffer::set_clip(&clip);
+    } else {
+        Buffer::restore_clip();
+    }
+
+    int top_inset = ((iFlags_ & 0x10) && !(iFlags_ & 0x400000))
+                        ? caption_height_ : border_thickness_;
+    const int configured_bottom_inset = bottom_border_thickness_;
+    int bottom_inset = configured_bottom_inset == -1
+                           ? border_thickness_ : configured_bottom_inset;
+
+    Sprite *top_left;
+    Sprite *top_right;
+    Sprite *bottom_left;
+    Sprite *bottom_right;
+    if (iFlags_ & 0x60000000) {
+        top_left = overlay_top_left_ ? overlay_top_left_ : frame_top_left_;
+        top_right = overlay_top_right_ ? overlay_top_right_ : frame_top_right_;
+        bottom_left = overlay_bottom_left_ ? overlay_bottom_left_ : frame_bottom_left_;
+        bottom_right = overlay_bottom_right_ ? overlay_bottom_right_ : frame_bottom_right_;
+    } else {
+        top_left = frame_top_left_;
+        bottom_left = frame_bottom_left_;
+        top_right = frame_top_right_;
+        bottom_right = frame_bottom_right_;
+    }
+    if (iFlags_ & 0x60000000) {
+        if (top_left) {
+            top_left->draw(this, top_left->cTransparentIndex_,
+                           -border_thickness_, -top_inset, 1, 1);
+        }
+        if (top_right) {
+            top_right->draw(this, top_right->cTransparentIndex_,
+                            dib_.bmiHeader.biWidth - top_right->iWidth_ + border_thickness_,
+                            -top_inset, 1, 1);
+        }
+        if (bottom_left) {
+            bottom_left->draw(this, bottom_left->cTransparentIndex_,
+                              -border_thickness_,
+                              bottom_inset - dib_.bmiHeader.biHeight - bottom_left->iHeight_, 1, 1);
+        }
+        if (bottom_right) {
+            bottom_right->draw(this, bottom_right->cTransparentIndex_,
+                               dib_.bmiHeader.biWidth - bottom_right->iWidth_ + border_thickness_,
+                               bottom_inset - dib_.bmiHeader.biHeight - bottom_right->iHeight_, 1, 1);
+        }
+
+        if (!(iFlags_ & 0x40000000)) {
+            // Reload frame geometry for each call, as the image does.
+            // These callees can observe or change the window's drawing state.
+            if (frame_top_) {
+                Buffer::tile(frame_top_, 0, 0,
+                    frame_top_left_->iWidth_ - border_thickness_, -top_inset,
+                    client_rect_.right - client_rect_.left
+                        - frame_top_right_->iWidth_ - frame_top_left_->iWidth_,
+                    frame_top_->iHeight_);
+            }
+            if (frame_bottom_) {
+                Buffer::tile(frame_bottom_, 0, 0,
+                    frame_bottom_left_->iWidth_ - border_thickness_,
+                    bottom_inset - dib_.bmiHeader.biHeight - frame_bottom_->iHeight_,
+                    client_rect_.right - client_rect_.left
+                        - frame_bottom_right_->iWidth_ - frame_bottom_left_->iWidth_,
+                    frame_bottom_->iHeight_);
+            }
+            if (frame_left_) {
+                Buffer::tile(frame_left_, 0, 0, -border_thickness_,
+                    frame_top_left_->iHeight_ - top_inset, frame_left_->iWidth_,
+                    client_rect_.bottom - client_rect_.top
+                        - frame_bottom_left_->iHeight_ - frame_top_left_->iHeight_);
+            }
+            if (frame_right_) {
+                // The original uses the top-left height for this origin too.
+                Buffer::tile(frame_right_, 0, 0,
+                    dib_.bmiHeader.biWidth + border_thickness_ - frame_right_->iWidth_,
+                    frame_top_left_->iHeight_ - top_inset, frame_right_->iWidth_,
+                    client_rect_.bottom - client_rect_.top
+                        - frame_bottom_right_->iHeight_ - frame_top_right_->iHeight_);
+            }
+        } else if (owned_buffer_) {
+            owned_buffer_->copy_mask(this, 0, 0, 0, 0,
+                                    dib_.bmiHeader.biWidth, -dib_.bmiHeader.biHeight, 0x108);
+        }
+    }
+    Buffer::set_clip(&saved);
 }
 
-// ORIGINAL: 0x005D5590 sub_5d5590 0x005D5590-0x005D55CC BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["task:graphicwin-buffer-input-owner", "pinned:5D54A0/5D54D0 adjust GraphicWin receiver to Buffer at +444; 5D7AE0 forwards unchanged receiver to load_pcx.", "pinned:5D5590 virtual Win resize slot3, failure return, then move and Buffer palette synchronization in that order.", "pinned:5D7AE0 input fields +C/+10 only; PcxInputView is an accessed-prefix description, not a proven complete allocation or original name.", "historical seed:src/recovered/005d5590.cpp; original mappings and parsed findings preserved."], "reason": "Rehome the original operation into genuine GraphicWin/Buffer inheritance and methods, preserving historical identity, spans, claims and findings."}
-// symbol    ?resize_screen_and_sync_palette@GraphicWin@@QAEHXZ
-int GraphicWin::resize_screen_and_sync_palette() {
-  const int result = resize(WinScreenWidth, WinScreenHeight, 0);
-  if (result != 0) {
-    return result;
-  }
-  Win::move(0, 0);
-  Buffer::sync_to_palette(PaletteActive);
-  return 0;
+// ORIGINAL: 0x005D6EC0 sub_5d6ec0 0x005D6EC0-0x005D6F4B FILE BYTE_EXACT
+// symbol    ?load_nc_sprites_from_defs@GraphicWin@@QAEXXZ
+// Refresh an existing styled window from the current process defaults.
+// This receiver's fields and the init copy use the same data interpretation.
+void GraphicWin::load_nc_sprites_from_defs() {
+    if (iFlags_ & 0x30000000) {
+        frame_top_left_ = GraphicWinInitDefaults.top_left;
+        frame_top_right_ = GraphicWinInitDefaults.top_right;
+        frame_bottom_left_ = GraphicWinInitDefaults.bottom_left;
+        frame_bottom_right_ = GraphicWinInitDefaults.bottom_right;
+        frame_top_ = GraphicWinInitDefaults.top;
+        frame_bottom_ = GraphicWinInitDefaults.bottom;
+        frame_left_ = GraphicWinInitDefaults.left;
+        frame_right_ = GraphicWinInitDefaults.right;
+        frame_noncaption_left_ = GraphicWinInitDefaults.noncaption_left;
+        frame_noncaption_right_ = GraphicWinInitDefaults.noncaption_right;
+        frame_noncaption_middle_ = GraphicWinInitDefaults.noncaption_middle;
+    }
 }
+
+// The query is a predicate, not the receiver for the update. A callback may
+// replace the current registry entry or change the live registry count.
+// load_interface calls this class-wide operation without a receiver.
+// ORIGINAL: 0x005D6F50 ?load_all_nc_sprites_from_defs@GraphicWin@@QAEXXZ 0x005D6F50-0x005D7022 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Original4559FD calls5D6F50 without setting a receiver. The complete body iterates existing WinZOrderArray9B6630 with signed live WinZOrderCount9B7B30; slot61 get_graphic_win is only a predicate and the array receiver is reloaded after its callback.", "The existing real eleven-Sprite-pointer GraphicWinInitDefaults9B3394 record and load_nc_sprites_from_defs5D6EC0 implement the identical flags30000000 guarded copy. Preserve seed history/exact obligation and observe the emitted static function symbol."], "reason": "Recover genuine GraphicWin frame behavior required by the interface asset loader, retaining its original seed identity."}
+// symbol    ?load_all_nc_sprites_from_defs@GraphicWin@@SAXXZ
+void GraphicWin::load_all_nc_sprites_from_defs() {
+    int index = 0;
+    if (0 < WinZOrderCount) {
+        Win **cursor = WinZOrderArray;
+        do {
+            if ((*cursor)->get_graphic_win() != nullptr) {
+                Win *window = *cursor;
+                // A callback can replace the entry with a plain unstyled Win.
+                // Test the base flags before assuming a GraphicWin receiver.
+                if (window->iFlags_ & 0x30000000) {
+                    GraphicWin *graphic = static_cast<GraphicWin *>(window);
+                    graphic->frame_top_left_ = GraphicWinInitDefaults.top_left;
+                    graphic->frame_top_right_ = GraphicWinInitDefaults.top_right;
+                    graphic->frame_bottom_left_ = GraphicWinInitDefaults.bottom_left;
+                    graphic->frame_bottom_right_ = GraphicWinInitDefaults.bottom_right;
+                    graphic->frame_top_ = GraphicWinInitDefaults.top;
+                    graphic->frame_bottom_ = GraphicWinInitDefaults.bottom;
+                    graphic->frame_left_ = GraphicWinInitDefaults.left;
+                    graphic->frame_right_ = GraphicWinInitDefaults.right;
+                    graphic->frame_noncaption_left_ = GraphicWinInitDefaults.noncaption_left;
+                    graphic->frame_noncaption_right_ = GraphicWinInitDefaults.noncaption_right;
+                    graphic->frame_noncaption_middle_ = GraphicWinInitDefaults.noncaption_middle;
+                }
+            }
+            ++index;
+            ++cursor;
+        } while (index < WinZOrderCount);
+    }
+}
+
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x005D7030 ?compute_min_size@GraphicWin@@QAEXXZ 0x005D7030-0x005D7140 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Complete original5D7030..5D7140 has no callees. Flag0x10 selects caption or noncaption top corners; bottom corners are shared. Every selected pointer must exist before either previous minimum changes.", "OriginalSprite displayed width18/height1C accesses and signed greater-than branches establish independent horizontal and vertical corner-sum maxima. Preserve low32-bit addition before signed comparison, real Sprite accessors and existing Win minimum members. Seed Buffer receiver casts are incorrect; remove the product pending forwarder without changing the historical unclaimed identity."], "reason": "Recover genuine GraphicWin frame behavior required by the interface asset loader, retaining its original seed identity."}
+// symbol    ?compute_min_size@GraphicWin@@QAEXXZ
+void GraphicWin::compute_min_size() {
+    if ((iFlags_ & 0x10) != 0) {
+        if (!frame_top_left_ || !frame_top_right_ || !frame_bottom_left_
+            || !frame_bottom_right_) return;
+        field_134_ = frame_top_left_->width() + frame_top_right_->width();
+        field_134_ = max((int)field_134_, frame_bottom_right_->width() + frame_bottom_left_->width());
+        field_138_ = frame_top_left_->height() + frame_bottom_left_->height();
+        field_138_ = max((int)field_138_, frame_bottom_right_->height() + frame_top_right_->height());
+    } else {
+        if (!frame_noncaption_left_ || !frame_noncaption_right_ || !frame_bottom_left_
+            || !frame_bottom_right_) return;
+        field_134_ = frame_noncaption_left_->width() + frame_noncaption_right_->width();
+        field_134_ = max((int)field_134_, frame_bottom_right_->width() + frame_bottom_left_->width());
+        field_138_ = frame_noncaption_left_->height() + frame_bottom_left_->height();
+        field_138_ = max((int)field_138_, frame_bottom_right_->height() + frame_noncaption_right_->height());
+    }
+}
+
+
+
+
+/*
+Purpose: Step the receiver back to the subobject ??_GGraphicWin@@UAEPAXI@Z
+         expects, then forward unchanged.
+// ORIGINAL: 0x005D7160 ??_GGraphicWin@@WEEE@AEPAXI@Z 0x005D7160-0x005D716B FILE BYTE_EXACT
+// symbol    ??_EGraphicWin@@WEEE@AEPAXI@Z
+// CORRECTED from ??3GraphicWin@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x005D7140` into
+//   ??_GGraphicWin@@UAEPAXI@Z, which executes `ret 4`; no stack access
+//   and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/
 
 // The source declares the 33-word accessed window required by the pinned reads;
 // neither the original allocation's upper bound nor its former owner is proven.
@@ -1521,6 +1524,92 @@ int GraphicWin::resize_screen_and_sync_palette() {
 unsigned int GraphicWinBlitPolynomialWords[33] = {
 #include "graphicwin_palette_polynomials.inc"
 };
+
+
+// Historical adapter reasoning is retained below. The recovered method
+// now expresses the genuine Buffer-base call rather than dropping its receiver.
+/*
+Purpose: Forward all four arguments to 005D7A10.
+
+             mov eax,[esp+0x10] / mov edx,[esp+0xc] / push eax
+             mov eax,[esp+0xc] / push edx / mov edx,[esp+0xc]
+             push eax / push edx / add ecx,0x444 / call 005D7A10 / ret 0x10
+
+         The interleaved reads and pushes look like a shuffle and are not: each
+         `[esp+0xc]` is read AFTER a push has moved ESP, so they walk backwards
+         through the arguments and re-push them in the same order.
+
+         `add ecx,0x444` computes a subobject pointer that 005D7A10 never
+         reads - it takes everything from the stack. The adjustment is
+         therefore unobservable, and reproducing it would be copying a leftover
+         rather than the function. That is a claim about the callee, and it is
+         checked: see its recovery above, which reads `[esp+4]` and nothing
+         else.
+
+// ORIGINAL: 0x005D5470 sub_5d5470 0x005D5470-0x005D5492 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"Recover the status helper and its paired forwarding method in the existing genuine Buffer/GraphicWin owners; retain original results, stack arguments, mappings and historical obligations.","evidence":["Pinned 5D5470 preserves four stack arguments, adjusts ECX by +0x444 and directly calls 5D7A10.","The existing 5D54A0/5D54D0 GraphicWin wrapper family uses the same secondary Buffer base and four-word stack shape.","Buffer's mapped 5D7AE0 loader independently observes PcxInputView data at +0x0C; 5D7A10 tests only that field.","Source names are provisional descriptions; the three unused trailing machine words remain opaque int parameters, not inferred Palette or color semantics."]}
+// Historical project symbol: ?leaf_005d5470_redirect@@YIHPAX0PBXHHH@Z
+// symbol    ?check_pcx_input_data@GraphicWin@@QAEHPAUPcxInputView@@HHH@Z
+// size      34 bytes
+// prototype
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D7A10
+Return Value: whatever 005D7A10 returns
+Status: Complete
+*/
+int GraphicWin::check_pcx_input_data(PcxInputView *source,
+                                    int second, int third, int fourth) {
+    return Buffer::check_pcx_input_data(source, second, third, fourth);
+}
+
+/*
+Purpose: Update a screen rectangle of this window: build the client
+         rectangle from the four arguments, hand it to update_window,
+         convert it to screen coordinates and flip exactly that region to
+         the display - the synchronous variant soft_update is the deferred
+         counterpart of.
+
+// ORIGINAL: 0x005D55D0 ?update@GraphicWin@@QAEXHHHHPAUGraphicWin@@@Z 0x005D55D0-0x005D562F FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["graphicwin.h declares the exact five-argument member; graphicwin.cpp already owns the adjacent update overloads.","The fifth source parameter remains intentionally unused; this move does not change any address-based callers."],"reason":"Move the existing overload to GraphicWin's actual implementation TU, retaining the unused fifth argument and original full body."}
+// symbol    ?update@GraphicWin@@QAEXHHHHPAV1@@Z
+// size      95 bytes
+// prototype void (__thiscall ?update@GraphicWin@@QAEXHHHHPAUGraphicWin@@@Z)(GraphicWin* this, int, int, int, int, GraphicWin*)
+// callers   2   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005ECFE0 0x005EFD20 0x005F74A0 0x005F7E90
+// Homed from src/recovered/units/005d55d0.cpp. The fifth argument is part
+// of the symbol and dead in the body: the image's 95 bytes are the
+// is_visible guard, the rectangle arithmetic (right = x + width,
+// bottom = y + height) and the three Win calls (update_window at
+// 0x005F74A0, client_to_screen(RECT *) at 0x005ECFE0 and the static
+// __cdecl flip at 0x005EFD20, caller-cleaned), nothing else.
+Status: Coverage transcription - unclaimed body
+*/
+void GraphicWin::update(int x, int y, int width, int height,
+                        GraphicWin *source) {
+    if (is_visible()) {
+        RECT rect;
+        rect.left = x;
+        rect.top = y;
+        rect.right = x + width;
+        rect.bottom = y + height;
+        update_window(&rect);
+        client_to_screen(&rect);
+        flip(&rect);
+    }
+}
+
+// ORIGINAL: 0x005D5B70 sub_5d5b70 0x005D5B70-0x005D5B75 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["Pinned5D5B70 is one E9 direct tail jump to5D5B80 and preserves ECX and stack.","No original C++ method name, direct caller or sampled virtual slot is proven; source forwarding member is provisional pending compiler output."],"reason":"Retain the full original forwarding identity in the genuine GraphicWin owner without an executable-address alias or hand-written jump."}
+// symbol    ?blit_palette_pattern_rows_entry@GraphicWin@@QAEXXZ
+// kind thunk
+// LEVER: plain tailcall to a declared nullary callee; last-statement return
+void GraphicWin::blit_palette_pattern_rows_entry() {
+    blit_palette_pattern_rows();
+}
 
 // ORIGINAL: 0x005D5B80 sub_5d5b80 0x005D5B80-0x005D5C4E BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["Pinned5D5B80 uses ECX as the same receiver for Win calls and passes GraphicWin+444 as Buffer receiver.","GraphicWin's existing Win,Buffer bases and Buffer DIB width/height fields account for all observed object reads.","Source uses existing PaletteActive, Buffer methods, Win methods, bit_count_signed and BitBlt import; no code-address dependency.","This source-owned 33-word window is initialized from a pinned-data generated include; only the indexed window is asserted, not the original allocation upper bound or former owner."],"reason":"Provisional descriptive GraphicWin owner for the complete palette-synchronized LFSR row blit; preserve the native branches, lock cleanup and row recurrence."}
@@ -1565,91 +1654,6 @@ void GraphicWin::blit_palette_pattern_rows() {
 
     Win::release_hdc();
     Buffer::release_hdc(static_cast<int>(y));
-}
-
-// ORIGINAL: 0x005D5B70 sub_5d5b70 0x005D5B70-0x005D5B75 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence":["Pinned5D5B70 is one E9 direct tail jump to5D5B80 and preserves ECX and stack.","No original C++ method name, direct caller or sampled virtual slot is proven; source forwarding member is provisional pending compiler output."],"reason":"Retain the full original forwarding identity in the genuine GraphicWin owner without an executable-address alias or hand-written jump."}
-// symbol    ?blit_palette_pattern_rows_entry@GraphicWin@@QAEXXZ
-// kind thunk
-// LEVER: plain tailcall to a declared nullary callee; last-statement return
-void GraphicWin::blit_palette_pattern_rows_entry() {
-    blit_palette_pattern_rows();
-}
-
-/*
-Purpose: Update a screen rectangle of this window: build the client
-         rectangle from the four arguments, hand it to update_window,
-         convert it to screen coordinates and flip exactly that region to
-         the display - the synchronous variant soft_update is the deferred
-         counterpart of.
-
-// ORIGINAL: 0x005D55D0 ?update@GraphicWin@@QAEXHHHHPAUGraphicWin@@@Z 0x005D55D0-0x005D562F FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence":["graphicwin.h declares the exact five-argument member; graphicwin.cpp already owns the adjacent update overloads.","The fifth source parameter remains intentionally unused; this move does not change any address-based callers."],"reason":"Move the existing overload to GraphicWin's actual implementation TU, retaining the unused fifth argument and original full body."}
-// symbol    ?update@GraphicWin@@QAEXHHHHPAV1@@Z
-// size      95 bytes
-// prototype void (__thiscall ?update@GraphicWin@@QAEXHHHHPAUGraphicWin@@@Z)(GraphicWin* this, int, int, int, int, GraphicWin*)
-// callers   2   call targets   4
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005ECFE0 0x005EFD20 0x005F74A0 0x005F7E90
-// Homed from src/recovered/units/005d55d0.cpp. The fifth argument is part
-// of the symbol and dead in the body: the image's 95 bytes are the
-// is_visible guard, the rectangle arithmetic (right = x + width,
-// bottom = y + height) and the three Win calls (update_window at
-// 0x005F74A0, client_to_screen(RECT *) at 0x005ECFE0 and the static
-// __cdecl flip at 0x005EFD20, caller-cleaned), nothing else.
-Status: Coverage transcription - unclaimed body
-*/
-void GraphicWin::update(int x, int y, int width, int height,
-                        GraphicWin *source) {
-    if (is_visible()) {
-        RECT rect;
-        rect.left = x;
-        rect.top = y;
-        rect.right = x + width;
-        rect.bottom = y + height;
-        update_window(&rect);
-        client_to_screen(&rect);
-        flip(&rect);
-    }
-}
-
-// Historical adapter reasoning is retained below. The recovered method
-// now expresses the genuine Buffer-base call rather than dropping its receiver.
-/*
-Purpose: Forward all four arguments to 005D7A10.
-
-             mov eax,[esp+0x10] / mov edx,[esp+0xc] / push eax
-             mov eax,[esp+0xc] / push edx / mov edx,[esp+0xc]
-             push eax / push edx / add ecx,0x444 / call 005D7A10 / ret 0x10
-
-         The interleaved reads and pushes look like a shuffle and are not: each
-         `[esp+0xc]` is read AFTER a push has moved ESP, so they walk backwards
-         through the arguments and re-push them in the same order.
-
-         `add ecx,0x444` computes a subobject pointer that 005D7A10 never
-         reads - it takes everything from the stack. The adjustment is
-         therefore unobservable, and reproducing it would be copying a leftover
-         rather than the function. That is a claim about the callee, and it is
-         checked: see its recovery above, which reads `[esp+4]` and nothing
-         else.
-
-// ORIGINAL: 0x005D5470 sub_5d5470 0x005D5470-0x005D5492 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"reason":"Recover the status helper and its paired forwarding method in the existing genuine Buffer/GraphicWin owners; retain original results, stack arguments, mappings and historical obligations.","evidence":["Pinned 5D5470 preserves four stack arguments, adjusts ECX by +0x444 and directly calls 5D7A10.","The existing 5D54A0/5D54D0 GraphicWin wrapper family uses the same secondary Buffer base and four-word stack shape.","Buffer's mapped 5D7AE0 loader independently observes PcxInputView data at +0x0C; 5D7A10 tests only that field.","Source names are provisional descriptions; the three unused trailing machine words remain opaque int parameters, not inferred Palette or color semantics."]}
-// Historical project symbol: ?leaf_005d5470_redirect@@YIHPAX0PBXHHH@Z
-// symbol    ?check_pcx_input_data@GraphicWin@@QAEHPAUPcxInputView@@HHH@Z
-// size      34 bytes
-// prototype
-// callers   0   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005D7A10
-Return Value: whatever 005D7A10 returns
-Status: Complete
-*/
-int GraphicWin::check_pcx_input_data(PcxInputView *source,
-                                    int second, int third, int fourth) {
-    return Buffer::check_pcx_input_data(source, second, third, fourth);
 }
 
 // RECOVERY_IMPORT: v1 __imp__CallWindowProcA@20 USER32.dll name:CallWindowProcA
