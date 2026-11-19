@@ -874,7 +874,7 @@ int ProdPicker::exec(Base *base, int factionId, GraphicWin *owner, int modal) {
         footer.right = y + x;
 
         StringTemp[0] = 0;
-        strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x198 / 4]));
+        strcat(StringTemp, label_get(0x198 / 4));
         if (Language != 2) CharUpperA(StringTemp);
         flatButtons_[0].init(StringTemp, -2, x, yFixed,
                              static_cast<int>(field_B70_), 0x14, this, 0);
@@ -896,7 +896,7 @@ int ProdPicker::exec(Base *base, int factionId, GraphicWin *owner, int modal) {
                                  this, 0);
             x += -3 - static_cast<int>(field_B70_);
             StringTemp[0] = 0;
-            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0xFE8 / 4]));
+            strcat(StringTemp, label_get(0xFE8 / 4));
             CharUpperA(StringTemp);
             flatButtons_[1].init(StringTemp, 7, x, yFixed,
                                  static_cast<int>(field_B70_), 0x14,
