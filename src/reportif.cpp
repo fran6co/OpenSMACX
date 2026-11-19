@@ -77,6 +77,8 @@
 // 35-43 and 50-58; sat_attack 0x004A0260 (not exact) keeps 15 rows and draw_sat 0x004AA970 54 at 32, 36, 51, 55, 57-58, so 36.
 // After sat_attack's function-scope attack_target, whole-unit fe sweep: on_iface_button_clicked exact at 26-34, 37-45, 52-60;
 // sat_attack keeps 15 rows and draw_sat 54 at 34, 37, 55, 56, 58, 60, so 37.
+// After the in-place field reads (63095921b1), whole-unit fe sweep: on_iface_button_clicked exact at 27-35, 38-46, 53-61;
+// sat_attack keeps 15 rows and draw_sat 54 only at 35, so 35.
 // CANARY: 0x004A6330 ?on_iface_button_clicked@ReportIf@@UAEXH@Z residues 0-27,38,49-53
 // CANARY-PADS: function ReportIfDeclFnPad
 void ReportIfDeclFnPad0();
@@ -114,8 +116,6 @@ void ReportIfDeclFnPad31();
 void ReportIfDeclFnPad32();
 void ReportIfDeclFnPad33();
 void ReportIfDeclFnPad34();
-void ReportIfDeclFnPad35();
-void ReportIfDeclFnPad36();
 
 // Shared punctuation objects the image pushes instead of unit literals.
 extern char SocialWinCloseParenText[];
@@ -5928,9 +5928,9 @@ int ReportIf::on_iface_dialog_item_back_draw(::GraphicWin *, int, int, RECT *) {
 // The three log_say texts are this handler's own copies in the pinned image
 // (0x687280, 0x687298, 0x6872B8; on_left_click keeps a separate EDBC copy at
 // 0x686F04). The image's advanced-governor text ends in "set".
-// RECOVERY_LITERAL: v1 0x00687280 0x00687295 $SG63530 0x004A6330
-// RECOVERY_LITERAL: v1 0x00687298 0x006872B5 $SG63545 0x004A6330
-// RECOVERY_LITERAL: v1 0x006872B8 0x006872CC $SG63556 0x004A6330
+// RECOVERY_LITERAL: v1 0x00687280 0x00687295 $SG63524 0x004A6330
+// RECOVERY_LITERAL: v1 0x00687298 0x006872B5 $SG63539 0x004A6330
+// RECOVERY_LITERAL: v1 0x006872B8 0x006872CC $SG63550 0x004A6330
 // symbol    ?on_iface_button_clicked@ReportIf@@UAEXH@Z
 void ReportIf::on_iface_button_clicked(int button) {
     int row;
@@ -6168,6 +6168,29 @@ void ReportIf::on_iface_group_clicked(int group, int, int item) {
 // ORIGINAL: 0x004A7000 ?draw_labs@ReportIf@@QAEXXZ 0x004A7000-0x004A842F
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004a7000.cpp", "source:src/reportif.h", "source:src/base.h", "source:src/tech.h"], "reason": "Original panel identity and accesses identify ReportIf's laboratory renderer, using its lists and selection state, source-owned base rows and technology records; preserve the seed's row IDs and technology sentinel rather than substitute a different panel."}
 // TRIED: MISMATCH #0, sim ~0.58 (best of /O1 framed). Full structural transcription (all branches, both list modes, all 4 category bars). Approximated: the ListBox virtual-base (GraphicWin) adjustment at self+0xa384/+0x24/+0x28 uses the flattened `virtual_base_` member instead of the runtime vtable+8 lookup the original performs, so that handful of instructions differ in shape though not in intent.
+// The 21 one-character marker literals ("|", "[", "]", "+", ".", "%") are this function's own unpooled
+// copies in the pinned image, 0x6872CC..0x68731E in source order.
+// RECOVERY_LITERAL: v1 0x006872CC 0x006872CE $SG63665 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872D0 0x006872D2 $SG63666 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872D4 0x006872D6 $SG63667 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872D8 0x006872DA $SG63676 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872DC 0x006872DE $SG63677 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872E0 0x006872E2 $SG63680 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872E4 0x006872E6 $SG63689 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872E8 0x006872EA $SG63690 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872EC 0x006872EE $SG63693 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872F0 0x006872F2 $SG63721 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872F4 0x006872F6 $SG63722 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872F8 0x006872FA $SG63723 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872FC 0x006872FE $SG63726 0x004A7000
+// RECOVERY_LITERAL: v1 0x00687300 0x00687302 $SG63727 0x004A7000
+// RECOVERY_LITERAL: v1 0x00687304 0x00687306 $SG63728 0x004A7000
+// RECOVERY_LITERAL: v1 0x00687308 0x0068730A $SG63731 0x004A7000
+// RECOVERY_LITERAL: v1 0x0068730C 0x0068730E $SG63732 0x004A7000
+// RECOVERY_LITERAL: v1 0x00687310 0x00687312 $SG63733 0x004A7000
+// RECOVERY_LITERAL: v1 0x00687314 0x00687316 $SG63736 0x004A7000
+// RECOVERY_LITERAL: v1 0x00687318 0x0068731A $SG63737 0x004A7000
+// RECOVERY_LITERAL: v1 0x0068731C 0x0068731E $SG63738 0x004A7000
 void ReportIf::draw_labs() {
     char lab_text[80];   // [ebp-0xC8]
     char text[80];       // [ebp-0x78]
