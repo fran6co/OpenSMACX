@@ -1210,6 +1210,105 @@ What the model does not predict
   member-pointer call standing in for a budget-refused inline (MapWin::gen_radius
   0x00469190, see 2.1).
 
+Candidate set (2026-11-19 par-2; `analysis/candset.py`, `regalloc/cand.py` with `c_*.spec`)
+
+The order rules above are right on probes; real functions miss because the
+*candidate set* differs from the source variables. `candset.py <unit>
+<0xADDR>` (or `regprio.py ... --candset`) reads it from the code of both
+sides: every callee-saved register web (reaching definitions over the CFG, so
+a loop variable redefined at the bottom is one web), named by what its first
+definition loads (`this`, `lea:this+K`, `lea:[R+R*k]`, `[slot]{name}`,
+`wb[slot]`, `#K`, `init#K`, `ret@line`), scored by rule 4/4b at instruction
+level, then checked: does each web's own side explain its register (every
+lower register held by an interfering web that scores higher)? It prints the
+roles present on one side only and the pairs the two sides order differently.
+
+- **Instruction-level rule 4 explains 86% of the exact functions' rank
+  constraints** (611 of 707 on the 90-function set; 663 of 903 interfering
+  pairs). Two register-class constraints are part of it (high, every
+  instance): a byte value (`bl`/`bh` operand) can only take ebx, and a value
+  live across a `rep movs`/`stos` (struct copy) cannot take esi/edi
+  (Caviar::add_object keeps `this` in ebx under eight lower-scored pieces).
+  Constants weighed up or down, immediates counted as references and scratch
+  webs in `n_b` all lowered the count; the residue is mostly cached
+  memory loads (`mov r,[base+K]` kept for two uses), `this` and scaled
+  addresses.
+- **Reading a non-exact function.** If the image's allocation is explained by
+  its own instruction-level scores and ours is not, the code has the image's
+  candidates and our *source* weighs one of them differently (say_orders: the
+  `&Vehs[veh_id]` temporary 90 against `text` 88, image explained, ours not;
+  Win::flip: the `WinBubbleRect.left` load 18 against `split` 16, same). If the
+  image is *not* explained by its own code (draw_garrison: `this` 19 in esi
+  above the `this+0x40c2c` temporary 84 and two frame_rect pieces 30; popp:
+  the `caption` piece 1 above the `label`/`flags` pieces 10), the original
+  source references the winner in ways that leave no instruction: look for
+  references removed by CSE, tail merging (popp's three `start(caption, ...)`
+  sites merge into one `push esi`) or dead stores.
+
+How VC6 forms each kind (probes in `regalloc/c_*.spec`, `python3 cand.py c_X.spec`):
+
+(a) **Address temporaries of a member** (high, c_cse, c_duel). `&member` used
+    twice, or a struct copy of the member used twice, forms one `lea
+    r,[this+K]` web at every offset tried (0x10 to 0x40000); field reads
+    (`f[0]`, `g.l`) never do: they stay `[this+K]` and reload after calls.
+    Once formed, the temporary takes every use of the member and `this` keeps
+    only its prologue copy, the `lea` and its other uses (with no other
+    use `this` is not a candidate at all). Score: def + uses for address uses
+    (M uses of `&g` against K member calls: `this` = K+3 wins from K = M-2,
+    ties to `this`, the earlier first reference). Struct copies are not
+    additive and depend on order: `&g` first then a copy scores 6, a copy
+    first then `&g` at most 4, two copies alone 6, two copies then two `&g`
+    5; two adjacent copies (`R a = g; R b = g;`) form no temporary. So a copy
+    statement moved before or after the first `&member` changes the
+    temporary's rank without changing its code shape much.
+(b) **Strength-reduced loop pointers** (medium, c_iv). `for (i = 0; i < 10;
+    i++) use(garr[i])` becomes a pointer web compared with the end address
+    (no counter). Against a variable referenced only outside the loop it
+    weighs about 20 (it beats `d` with 18 references, loses to 22), far more
+    than its three loop references; against a variable referenced in the
+    same loop body it weighs its references (d wins with 3 uses per
+    iteration). An index used besides the subscript stays a counter web (`i`
+    used twice more takes esi above the pointer).
+(c) **Memory-homed variables** are rule 7 losers; their pieces (rule 8) are
+    webs of their own and appear as `[slot]{name}` roles. A parameter's whole
+    web also starts with a slot load, so `[slot]` alone does not mean memory
+    home: it is a piece when the same slot has several webs or is written
+    back (`wb`).
+(d) **`this`**: prologue copy + every use not routed through an address
+    temporary (a). A named copy (`Buffer *const canvas = this;`) coalesces
+    and moves nothing (MultiWin::draw_player).
+(e) **Constants**: see "Constant candidates" above; `init#K` (a variable that
+    starts as a constant and is redefined) is a variable, not a constant.
+    A loser constant can get a frame home: MultiWin::draw_player parks the 1 of
+    `1 << faction_id` in the dead `bounds` slot (`mov ecx,1; mov
+    [ebp+0x10],ecx`) where the image recomputes `mov edx,1` per site; the
+    signedness of the 1 (`1u <<`, per site or all) does not separate it.
+(f) **Kept call results** are ordinary webs (`ret@line`); a call result
+    copied into a named local coalesces with it.
+
+regprio.py now builds its temporaries from these webs (`T:expr` takes every
+instruction of its web, not only its address-ordered tenure; `--tenure-refs`
+is the old count) and drops an index used only as `table[i]` when a temporary
+replaces it (rule 10; `--keep-index`). It also stopped reading the EH unwind
+funclets (`text$x`, offsets restarting at 0) as part of the CFG and building
+a self loop's body from the whole function (both gave entry blocks loop depth
+3). Pair accuracy on the 90-function set: 260 of 412 before, 263 of 410 with
+the CFG fixes, 269 of 419 with web references.
+
+Tried on the candidate-set functions, nothing moved (each a deck of natural
+spellings, registers unchanged): draw_garrison 0x004103B0 (pointer, reference
+or accessor for `garrison_rect_`, `this->`, assignment instead of
+initialisation, `expand_rect`, end-of-function arms; field-by-field
+`frame_rect` gives the image's `this`/temp order but reads `[esi+K]` per field,
+12 rows); Win::flip 0x005EFD20 (loop forms, split declared inside, named
+`left`, `rect_width`, `y` update as if/else, named delta, operand order);
+say_orders 0x004B43E0 (named `Veh *` pointer, inlined `prefix_state`, rereading
+`state`); popp 0x0048C0A0 (`!= 0` forms, `!strcmp`, a duplicated start
+instead of `goto plain`, a named caption); MultiWin::draw_player 0x00478630
+(no `canvas` copy, unsigned shift constants); compute_score 0x005ACBE0
+(`*total = *total + ...`, `total[0]`, the difference written to `items[5]`,
+`other` loop forms).
+
 ### 2.8 /Ob2 inlining model
 
 Measured 2026-11-19 (par-4) with generated probe families in

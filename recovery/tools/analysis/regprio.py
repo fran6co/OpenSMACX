@@ -82,6 +82,7 @@ def cod_listing(unit, src, pfx, sym):
         frame[m.group(1)] = int(m.group(3))
     items = []
     pend = None
+    lastoff = -1
     for l in t[i:e].split('\n'):
         m = re.match(r'; (\d+)\s+:', l)
         if m:
@@ -105,6 +106,9 @@ def cod_listing(unit, src, pfx, sym):
             if m and pend is not None:
                 off, ins, pend = pend, m.group(1), None
         if ins:
+            if off < lastoff:
+                break  # EH unwind funclets and the handler thunk restart at offset 0 (text$x)
+            lastoff = off
             ins = re.sub(r'\s+', ' ', ins.split(';')[0]).strip()
             m = re.match(r'DD (\$L\d+)$', ins)
             items.append(('dd', m.group(1)) if m else ('ins', off, ins))
@@ -192,7 +196,7 @@ class Func:
             for h in self.succ[u]:
                 if h in dom[u]:
                     body = {h, u}
-                    st = [u]
+                    st = [u] if u != h else []  # a self loop is its own body
                     while st:
                         x = st.pop()
                         for p in self.pred[x]:
@@ -470,6 +474,13 @@ def main():
     ap.add_argument('--min', type=float, default=0, help='hide webs below this priority in the table')
     ap.add_argument('--pairs', type=int, default=25, help='disagreeing pairs shown')
     ap.add_argument('--quiet', action='store_true', help='summary lines only (validation runs)')
+    ap.add_argument('--tenure-refs', dest='webrefs', action='store_false',
+                    help='old behaviour: a temporary counts only the instructions of its address-ordered tenure')
+    ap.add_argument('--keep-index', dest='dropidx', action='store_false',
+                    help='keep an index used only as table[i] as a candidate (rule 10 off)')
+    ap.add_argument('--candset', action='store_true',
+                    help='append candset.py: the candidates VC6 formed on each side (ground truth from the code), '
+                         'those on one side only, and the instruction-level rule-4 check of both allocations')
     ap.add_argument('--model', default='new', choices=('new', 'old'),
                     help='new: rule 4 minus the live-through penalty, rule-4c tie order (2026-11-19); old: rule 4 only')
     a = ap.parse_args()
@@ -484,6 +495,11 @@ def main():
     if 'error' in r:
         raise SystemExit(r['error'])
     items, frame = cod_listing(unit, src, a.pfx, r['sym'])
+    if a.candset:
+        import atexit
+        import candset
+        atexit.register(lambda: (print('=== candset (ground truth from the compiled code of both sides)'),
+                                 candset.report(r, text, items, addr, sections=('only', 'order', 'unexplained'))))
     F = Func(items)
     first, flines = func_source(text, addr)
     last = first + len(flines) - 1
@@ -634,6 +650,18 @@ def main():
             kind = 'd' if textof[off].startswith('mov DWORD PTR ' + m.group(1)) else 'u'
             refs.append(dict(key='T:' + lab, kind=kind, block=F.block_of(off), line=lineof[off], seq=off))
             pseudo[lab].append(len(refs) - 1)
+    # a temporary's references come from its whole web in our code (reaching definitions over the CFG,
+    # candset.Code), not from the address-ordered tenure: a loop-carried or re-entered temporary is one web
+    import candset
+    webins = {}
+    if a.webrefs:
+        cins = [(x[0], x[1], x[3]) for k, o, x in r['rows'] if x is not None]
+        cc = candset.Code(cins, {})
+        for rg in regs:
+            for w in cc.webs(rg):
+                for d in w['defs']:
+                    webins[(rg, cc.ins[d][0])] = sorted(cc.ins[i][0] for i in w['refs'])
+    seenweb = set()
     for t in ten:
         if not t['name'].startswith('expr@') or t['uses'] < 2:
             continue
@@ -645,14 +673,34 @@ def main():
         if lab is None:
             lab = '%s:%s' % (t['name'], t['reg'])
         t['pseudo'] = 'T:' + lab
+        wr = webins.get((t['reg'], t['start']))
+        if wr is not None:
+            if tuple(wr) in seenweb:
+                continue
+            seenweb.add(tuple(wr))
         for off in offs:
-            if t['start'] <= off <= t['end'] and (off == t['start'] or regmap.uses_reg(textof[off], t['reg'])):
+            if (wr is not None and off in wr) or (wr is None and t['start'] <= off <= t['end'] and (off == t['start'] or regmap.uses_reg(textof[off], t['reg']))):
                 if off == t['start'] and m:
                     continue  # the slot read is already a reference
                 refs.append(dict(key='T:' + lab, kind='d' if off == t['start'] and not m else 'u', block=F.block_of(off), line=lineof[off], seq=off))
                 pseudo[lab].append(len(refs) - 1)
     for lab, idxs in pseudo.items():
         webs[('T:' + lab, 0)] = dict(key='T:' + lab, refs=idxs, live=liveness(F, refs, idxs))
+    # rule 10 (cse_addr): an index used only as `table[i]...` is replaced by the address temporary our code
+    # keeps (a `lea r, [a+b*k]` web); the index stops competing
+    if a.webrefs and a.dropidx and pseudo:
+        body_txt = '\n'.join(stripped[1:])
+        drop = set()
+        for v in params + names:
+            if v not in names_set:
+                continue
+            tot = len(re.findall(r'\b%s\b' % re.escape(v), body_txt))
+            inside = len(re.findall(r'\w\[\s*%s\s*\]' % re.escape(v), body_txt))
+            if tot and inside == tot and any(('T:' + lab).startswith('T:expr') for lab in pseudo):
+                drop.add(v)
+        if drop:
+            for wid in [w for w in webs if webs[w]['key'] in drop]:
+                del webs[wid]
     nweb = collections.Counter(w['key'] for w in webs.values())
     for wid, w in webs.items():
         ln = min(refs[i]['line'] for i in w['refs'])

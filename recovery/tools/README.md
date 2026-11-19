@@ -30,6 +30,11 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   CSE'd values) as candidates, since those are usually the candidate a source-only count misses. Screen only:
   on 50 exact functions it orders 64% of interfering register pairs right (strength-reduced loop counters,
   address CSEs that replace an index, and constant pieces are the misses).
+- `analysis/candset.py <unit> <addr> [--src ALT.cpp] [--min N] [--quiet]` the register candidates VC6 actually
+  formed, read from the code of both sides: every callee-saved web (reaching definitions over the CFG) named by
+  its role (`this`, `lea:this+K`, `[slot]{name}` piece, `#K`, `ret@line`), scored by rule 4/4b at instruction
+  level and checked against its own side's registers; prints the roles on one side only and the pairs the sides
+  order differently (MATCHING_GUIDE 2.7 "Candidate set"). `regprio.py ... --candset` appends the same report.
 - `analysis/regalloc/` the probe sources and runner behind MATCHING_GUIDE 2.7 (see its README).
 - `crtcalls.py OUT.json` compares, per function, the calls to memcpy/memmove/memset/strlen/strcpy/
   strcat/strcmp/memcmp in our objects with the image's (20 s). The game and Jackal have no
