@@ -234,8 +234,7 @@ int NetSessionPickerWin::initialize(Net *network, char *caption,
   result = action_button_.init(BasePopDefaultOkText, -1, rect.left, rect.top,
                                button_width, button_height, this, 0);
   if (result != 0) return result;
-  action_button_.set_font(font, 0, 0, 0);
-  action_button_.redraw();
+  action_button_.set_font_redraw(font);
 
   offset_rect(&rect, 0, button_height + margin_y);
   button_height = rect.bottom - rect.top;
@@ -243,8 +242,7 @@ int NetSessionPickerWin::initialize(Net *network, char *caption,
                                0, rect.left, rect.top, button_width,
                                button_height, this, 0);
   if (result != 0) return result;
-  create_button_.set_font(font, 0, 0, 0);
-  create_button_.redraw();
+  create_button_.set_font_redraw(font);
 
   offset_rect(&rect, 0, button_height + margin_y);
   // 0x0063C138: the width pushed is button_width, reloaded from its home
@@ -255,8 +253,7 @@ int NetSessionPickerWin::initialize(Net *network, char *caption,
                                rect.top, button_width, rect.bottom - rect.top,
                                this, 0);
   if (result != 0) return result;
-  cancel_button_.set_font(font, 0, 0, 0);
-  cancel_button_.redraw();
+  cancel_button_.set_font_redraw(font);
 
   tail_.first_label_rect_.top = margin_y;
   tail_.first_label_rect_.left = margin_x;
