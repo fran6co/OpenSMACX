@@ -533,6 +533,24 @@ raw field access where the original used inline accessors.
   `// HEADER-PADS:` block right after `#include "stdafx.h"`, tagged
   `WORKAROUND(decl)`, swept over 0-63 against every function of the unit;
   re-tune after header batches like the counter canaries.
+  Follow the block down the include chain and then line by line inside the
+  header (a mirrored tree with the pads written into the header copy): the
+  boundary lands on the `extern` of a global the function references
+  (set_cat_social: `InterfaceBoxStyles` in buffer.h, via game.h, console.h,
+  mapwin.h, graphicwin.h; draw_armor: the colour tables in game.h;
+  wants_to_attack: the `Players`/`PlayersData` block in faction.h). Only the
+  count matters: `void f();`, `extern int x;` and other names give the same
+  windows, one extra declaration never flips it, and reordering same-kind
+  externs among themselves (93 `CaviarData` externs by address, definition
+  order or name) changes nothing. Moving that one `extern` is the natural
+  fix when it lands somewhere sensible: `InterfaceBoxStyles` beside
+  `g_IFACE_BOX_SPRITE_BUFFERS` restores set_cat_social with no pads and moves
+  no other function tree-wide. When several referenced globals are involved
+  (vehdraw_construct_armor) the windows are irregular and only pads work.
+  The tree screen (2026-11-19, 84 units, pads 0-63 after stdafx.h against
+  after the last include) found these ties only in already-exact functions
+  that sit on one (the list to re-check after header batches is in the
+  commit message); none of the non-exact functions under 60 rows flips.
 - **Re-tune by sweeping against the image.** Each canary unit has one pad
   block, and the last measured set lives beside it:
 
