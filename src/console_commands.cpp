@@ -712,6 +712,21 @@ void Console::unload(int veh_id) {
 extern char SocialWinCloseParenText[];
 extern char SocialWinOpenParenText[];
 
+// WORKAROUND(inline): dead /Ob2 reservation probes for Console::upgrade (fold
+// to no code). Returns 7-9 (!is_human, !count, choice < 0) expanded one
+// ~FlatButton more than the image (EH runs 6,6,6 against 5,5,5) and the
+// image's ~FlatButton call multiset needs pass-2 room held past them. A free
+// outer inline around a one-test inner, seven times after return 9, gives the
+// image's depths at returns 1-9; flat one-test probes refuse only two. The
+// original's reservation-holding inlines in that stretch are not identified
+// (probes/upgrade_eh); the return-1 teardown still calls ~StringList where
+// the image expands it.
+static inline int upgrade_reserve_probe_in(int x) {
+    if (x == 1) x = 3;
+    return x;
+}
+static inline int upgrade_reserve_probe(int x) { return upgrade_reserve_probe_in(x); }
+
 // ORIGINAL: 0x004D06C0 ?upgrade@Console@@QAEHH@Z 0x004D06C0-0x004D2218;0x0065A090-0x0065A559
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004d06c0.cpp", "image:0x004D06C0-0x004D2218 and 0x0065A090-0x0065A559"], "reason": "Recover Console vehicle upgrade through real Popup lifetime, loaded design tables, faction-local candidate selection and live human/AI transaction state. Preserve the original seed and complete ordinary/unwind spans; native locks, callbacks, picture selection and completion publication identify the owner and argument roles."}
 // TRIED: mismatch #0 - Popup/BasePop declared as real C++ locals (Popup ctor + explicit close()) rather than the original's staggered same-slot vtable pokes; the 0x40-entry candidate scan uses Vehs[]/VehPrototypes[] (0x952828/0x9AB868, stride 0x34) by raw offset, and the "single auto-selected candidate" fast path is approximated (falls through rather than tracking which slot was picked) - faithful call order and eligibility conditions, not byte fidelity.
@@ -961,6 +976,13 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
     strcat(StringTemp, SocialWinCloseParenText);
     parse_says(1, StringTemp, -1, -1);
 
+    upgrade_reserve_probe(1000);  // WORKAROUND(inline)
+    upgrade_reserve_probe(1001);  // WORKAROUND(inline)
+    upgrade_reserve_probe(1002);  // WORKAROUND(inline)
+    upgrade_reserve_probe(1003);  // WORKAROUND(inline)
+    upgrade_reserve_probe(1004);  // WORKAROUND(inline)
+    upgrade_reserve_probe(1005);  // WORKAROUND(inline)
+    upgrade_reserve_probe(1006);  // WORKAROUND(inline)
     int cost = upgrade_cost(faction_id, choice, Vehs[veh_id].proto_id) * 10;
     parse_num(0, cost);
     parse_num(1, PlayersData[faction_id].energy_reserves);
