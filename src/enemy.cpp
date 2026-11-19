@@ -6982,35 +6982,36 @@ L_573f3c:
             if (Vehs[veh_id].order == ORDER_MOVE_TO) goto L_57707f;
         }
         // 0x573f61
-        if (own_ground) goto L_57408e;
-        if ((faction_bit & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)
-            && !(GameDataStateStorage.fields_.game_more_preferences_ & 0x20)) {
-            goto L_57408e;
-        }
-        tx = x;
-        ty = y;
-        if (Paths.sensors(faction_id, &tx, &ty)) goto L_57408e;
-        if (tx == x && ty == y) {
-            Vehs[veh_id].order = 0xD;
-            goto L_578f46;
-        }
-        // falls through into chunk 5 at 0x573fd0
-        // ---- chunk 5: 0x573fd0-0x575b27 ----
+        if (!own_ground) {
+            if (!((faction_bit & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)
+                    && !(GameDataStateStorage.fields_.game_more_preferences_ & 0x20))) {
+                tx = x;
+                ty = y;
+                if (!Paths.sensors(faction_id, &tx, &ty)) {
+                    if (tx == x && ty == y) {
+                        Vehs[veh_id].order = 0xD;
+                        goto L_578f46;
+                    }
+                    // falls through into chunk 5 at 0x573fd0
+                    // ---- chunk 5: 0x573fd0-0x575b27 ----
 L_573fd0:
-        if (!j || map_dist(x, y, tx, ty) <= 2) {
-            for (other_id = 0; other_id < GameDataStateStorage.fields_.vehicle_current_count_; other_id++) {
-                if (Vehs[other_id].faction_id == faction_id
-                    && VehPrototypes[Vehs[other_id].proto_id].plan == PLAN_TERRAFORMING
-                    && other_id != veh_id
-                    && ((Vehs[other_id].x == tx && Vehs[other_id].y == ty)
-                        || (Vehs[other_id].order == ORDER_MOVE_TO
-                            && Vehs[other_id].waypoint_x[0] == tx
-                            && Vehs[other_id].waypoint_y[0] == ty))) {
-                    goto L_57408e;  // another former already has this tile
+                    if (!j || map_dist(x, y, tx, ty) <= 2) {
+                        for (other_id = 0; other_id < GameDataStateStorage.fields_.vehicle_current_count_; other_id++) {
+                            if (Vehs[other_id].faction_id == faction_id
+                                && VehPrototypes[Vehs[other_id].proto_id].plan == PLAN_TERRAFORMING
+                                && other_id != veh_id
+                                && ((Vehs[other_id].x == tx && Vehs[other_id].y == ty)
+                                    || (Vehs[other_id].order == ORDER_MOVE_TO
+                                        && Vehs[other_id].waypoint_x[0] == tx
+                                        && Vehs[other_id].waypoint_y[0] == ty))) {
+                                goto L_57408e;  // another former already has this tile
+                            }
+                        }
+                        go_to(veh_id, 's', tx, ty);
+                        goto L_57707f;
+                    }
                 }
             }
-            go_to(veh_id, 's', tx, ty);
-            goto L_57707f;
         }
 L_57408e:
         if (home_dist && !at_sea && PlayersData[faction_id].region_total_bases[region]) {
