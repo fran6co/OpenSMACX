@@ -1189,20 +1189,20 @@ void TutWin::tour() {
     cursor_x = ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
     cursor_y = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
     for (step = 0; step < 8; step++) {
-        int dir = (step + start) % 8;
-        x = wrap_map_x(cursor_x + VehMoveDeltaX[dir]);
-        y = cursor_y + VehMoveDeltaY[dir];
+        lower = (step + start) % 8;
+        x = wrap_map_x(cursor_x + VehMoveDeltaX[lower]);
+        y = cursor_y + VehMoveDeltaY[lower];
         if (on_map(x, y) && MapWinTable[0]->tile_in_view(x, y, 2) && !is_ocean(x, y)) {
             int score = 8;
             if ((bit_at(x, y) & BIT_FUNGUS) && (map_loc(x, y)->climate & ~0x1F) >= 0x40) {
                 score = 4;
             }
-            if (!VehMoveDeltaX[dir] || !VehMoveDeltaY[dir]) {
+            if (!VehMoveDeltaX[lower] || !VehMoveDeltaY[lower]) {
                 score++;
             }
             if (score >= best_score) {
                 best_score = score;
-                best_dir = dir;
+                best_dir = lower;
             }
         }
     }
