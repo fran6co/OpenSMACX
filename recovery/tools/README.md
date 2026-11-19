@@ -54,6 +54,16 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   its role (`this`, `lea:this+K`, `[slot]{name}` piece, `#K`, `ret@line`), scored by rule 4/4b at instruction
   level and checked against its own side's registers; prints the roles on one side only and the pairs the sides
   order differently (MATCHING_GUIDE 2.7 "Candidate set"). `regprio.py ... --candset` appends the same report.
+- `analysis/rotscan.py <unit> <addr[,..]> [--src ALT] [--track] | --tree [unit ..] [--from FEALL.json] [--all] [--json F]`
+  scratch-rotation scan (MATCHING_GUIDE 3.2 S1/S7, 3.7 "Cross-jumping ground truth"; 40 s tree-wide with FE_JOBS=5):
+  aligns both listings with eax/ecx/edx abstracted, pairs every scratch load (return-value `mov eax, K` excluded) and
+  reports per function the FIRST statement where the phase (ours - image, mod 3) leaves 0 and stays off (DIVERGE, with
+  image address, our /FAsc line, the window since the last in-sync load and the loads present on one side only), or
+  EQUAL. `first disagreement earlier` is the first load the sides disagree on at all (a reuse such as `mov eax,[eax+8]`
+  against a fresh register). Each `jmp` on one side only is printed with the rotation between the copy and its host
+  on the side without the merge (`rot+k`, loads apart). Validated: no BYTE_EXACT function diverges. Aim
+  `schedscan.py <unit> <addr> --try --near A-B` at the window it names (2026-11-19: drone_riot 317 -> 119,
+  veh_draw 165 -> 59, name_proto 196 -> 162, time_warp 675 -> 660, DesignWin::init 107 -> 84).
 - `analysis/mergescan.py <unit> <addr[,addr]> [--src ALT.cpp] | --from FEALL.json [--json F]` tail-merged statements
   (MATCHING_GUIDE 2.7 "Tail-merged references count"; 50 s tree-wide with FE_JOBS=5): our source lines whose call left
   no `call` instruction while the callee is called elsewhere in the function (`MERGED`, with the identifiers of its

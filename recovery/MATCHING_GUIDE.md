@@ -2884,6 +2884,26 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   nine in ten functions have no single-site S7 hit: for the 1 to 10 row
   near-misses the remaining rotation is not a named/anonymous choice that
   nv() can reach from inside the function.
+- **Locating the one-load difference** (par-2 2026-11-19, `analysis/rotscan.py`). Tree pass on 347
+  non-exact functions: 150 phase-divergent, 197 phase-equal (the remaining difference is not a cursor
+  count: callee-saved choice, order, layout). For a divergent function the window between the last
+  in-sync load and the first off one is where the extra/missing scratch load sits; `schedscan.py --try
+  --near A-B` restricted to that window is fast enough for functions of 300+ rows, which the whole-set S7
+  pass skipped. Hits of the first round: a named copy of a 16-bit id for one argument (drone_riot 0x004F4FB0,
+  317 -> 119, phase-equal afterwards; the image holds the id as a word in cx), an inline helper written
+  out at one site of two (veh_draw 0x005594F0 zoom_scale for x only, 165 -> 59; the image reads the x
+  table entry once per arm), a table_text written out (name_proto 0x0057E040), a named `int16_t y` for
+  map_range (time_warp 0x005AEDE0), rect_width for a re-read edge (DesignWin::init 0x0043C270). When
+  several unrelated window sites give the same small gain (BasePop::exec: eleven nv() sites, 303 -> 258..266;
+  NetDaemon::synch, 432 -> 430) it is a priority shift, not the cause (S7 caution above).
+  Callee-saved cases are not rotation: ReportWin::labs_line keeps `half` in a frame slot [ebp-8] and the
+  host's Buffer view in ebx (`lea ebx,[eax+0x444]` once, the null-checked `neg/sbb/and eax,ebx` at every
+  Sprite::draw), ours gives ebx to half and spills the view to [ebp+0x14]: a priority question for 2.7.
+  BasePop::exec's set_width/set_height arms form a full Dialog pointer (`lea ecx,[vb+esi+0x21d0]`, then
+  `mov [ecx+0x2c],eax`): the shape of an inline Dialog member call on `dialogs_` (receiver conversion,
+  no null test); the standalone BasePop::set_width (exact) folds the conversion into the store, so exec's
+  arms do not expand that body. A free inline taking `Dialog &` adds a null test (322..341 rows); the
+  Dialog member setter needs a dialog.h change (header hypothesis, not tried).
 - **S8. Constant folding and subtraction order in a chain are canonical**
   (par-2 2026-11-19, p22, p23; high). `a - b - c` with b a field and c a
   named local compiles to `a - b - c` for every spelling tried: the
