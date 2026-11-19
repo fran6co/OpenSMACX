@@ -3607,7 +3607,6 @@ void __cdecl consider_designs(int faction_id) {
                 continue;
             }
             int weapon;
-            int armor;
             switch (VehPrototypes[proto_id].plan) {
             case PLAN_OFFENSIVE:
             case PLAN_AIR_SUPERIORITY:
@@ -3620,7 +3619,7 @@ void __cdecl consider_designs(int faction_id) {
                 break;
             case PLAN_COMBAT:
                 if (new_weapon >= 0) {
-                    armor = VehPrototypes[proto_id].armor_id;
+                    weapon_id = VehPrototypes[proto_id].armor_id;
                     if (new_armor >= 0) {
                         scratch = (reactor == 1) ? 2 : 1;
                         int offense = Weapon[new_weapon].offense_rating;
@@ -3631,10 +3630,10 @@ void __cdecl consider_designs(int faction_id) {
                             limit = offense;
                         }
                         if (Armor[new_armor].defense_rating <= limit) {
-                            armor = new_armor;
+                            weapon_id = new_armor;
                         }
                     }
-                    propose_proto(faction_id, chassis_id, new_weapon, armor,
+                    propose_proto(faction_id, chassis_id, new_weapon, weapon_id,
                                   VehPrototypes[proto_id].ability_flags, reactor,
                                   VehPrototypes[proto_id].unk_1, 0);
                 } else {
@@ -3663,14 +3662,14 @@ void __cdecl consider_designs(int faction_id) {
                 }
                 break;
             case PLAN_NAVAL_SUPERIORITY:
-                armor = VehPrototypes[proto_id].armor_id;
+                weapon_id = VehPrototypes[proto_id].armor_id;
                 weapon = VehPrototypes[proto_id].weapon_id;
                 if (new_weapon >= 0) {
                     int margin = 5;
                     if (reactor * reactor >= 5) {
                         margin = reactor * reactor;
                     }
-                    if (proto_cost(chassis_id, new_weapon, armor,
+                    if (proto_cost(chassis_id, new_weapon, weapon_id,
                                    VehPrototypes[proto_id].ability_flags, reactor)
                         <= PlayersData[faction_id].ai_growth
                            + PlayersData[faction_id].ai_power + margin) {
@@ -3692,12 +3691,12 @@ void __cdecl consider_designs(int faction_id) {
                         }
                     }
                     if (upgrade) {
-                        armor = new_armor;
-                    } else if (armor != new_armor && weapon != new_weapon) {
+                        weapon_id = new_armor;
+                    } else if (weapon_id != new_armor && weapon != new_weapon) {
                         break;
                     }
                 }
-                propose_proto(faction_id, chassis_id, weapon, armor,
+                propose_proto(faction_id, chassis_id, weapon, weapon_id,
                               VehPrototypes[proto_id].ability_flags, reactor,
                               VehPrototypes[proto_id].unk_1, 0);
                 break;
@@ -3763,8 +3762,8 @@ void __cdecl consider_designs(int faction_id) {
             if (next == weapon) {
                 break;
             }
-            int weapon_cost = proto_cost(chassis, weapon, armor, ability, reactor);
-            if (proto_cost(chassis, next, armor, ability, reactor) > weapon_cost) {
+            new_armor = proto_cost(chassis, weapon, armor, ability, reactor);
+            if (proto_cost(chassis, next, armor, ability, reactor) > new_armor) {
                 break;
             }
             weapon = next;
@@ -4082,20 +4081,20 @@ skip_empath4:
                     upgraded = true;
                 }
             }
-            int next_armor = armor;
-            for (int step = 1; step < 4 && next_armor == armor; step++) {
-                next_armor = armor_budget(faction_id, Armor[armor].defense_rating + step);
+            new_armor = armor;
+            for (int step = 1; step < 4 && new_armor == armor; step++) {
+                new_armor = armor_budget(faction_id, Armor[armor].defense_rating + step);
             }
-            if (next_armor != armor
-                && Armor[next_armor].defense_rating > Armor[armor].defense_rating) {
+            if (new_armor != armor
+                && Armor[new_armor].defense_rating > Armor[armor].defense_rating) {
                 int margin = 5;
                 if (reactor * 2 - reactor / 2 >= 5) {
                     margin = reactor * 2 - reactor / 2;
                 }
-                if (proto_cost(chassis, weapon, next_armor, ability, reactor)
+                if (proto_cost(chassis, weapon, new_armor, ability, reactor)
                     <= PlayersData[faction_id].ai_power + PlayersData[faction_id].ai_growth
                        + margin) {
-                    armor = next_armor;
+                    armor = new_armor;
                     continue;
                 }
             }
