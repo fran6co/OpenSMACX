@@ -9283,7 +9283,15 @@ if (DiploScratchFA88 > 0 &&
     }
     communicate_bribe_result = X_pops(StringTemp, 0x100000,
                                       FactionDiplomacyPortraits[faction_id_with], pop_wait);
-    if (communicate_bribe_result == 2) {
+    // The image lays the half-pay store straight into the pay code (its host
+    // join) and cross-jumps the non-bribe test into WEASELOUT's copy, so the
+    // pay code follows the bribe arm in source, and the refusal is reached
+    // only through its gotos.
+    if (communicate_bribe_result != 2) {
+        if (!communicate_bribe_result) {
+            goto communicate_bribe_refuse;
+        }
+    } else {
         if (communicate_stack_c == 6) {
             if (!random(0, 2) ||
                 !(DiploScratchFA60 || (DiploScratchFA64 && DiploScratchFA90) ||
@@ -9317,10 +9325,9 @@ if (DiploScratchFA88 > 0 &&
                    FactionDiplomacyPortraits[faction_id_with], pop_wait);
 communicate_bribe_half_pay:
             DiploScratchFA88 = communicate_bribe_half;
-            goto communicate_bribe_pay;
         }
     }
-    if (communicate_bribe_result) {
+    {
 communicate_bribe_pay:
         communicate_stack_20 = 1;
         if (communicate_stack_c == 10 && PlayersData[faction_id].diplo_unk1[faction_id_with]) {
@@ -9334,7 +9341,8 @@ communicate_bribe_pay:
         if (communicate_stack_50) {
             net_treaty_on(faction_id_with, faction_id, 4, 1);
         }
-    } else {
+    }
+    if (0) {
 communicate_bribe_refuse:
         net_treaty_off(faction_id_with, faction_id, 0x1000000, 0);
         communicate_stack_38 = 1;
