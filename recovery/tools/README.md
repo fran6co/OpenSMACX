@@ -414,9 +414,20 @@ an explicit `--pfx` is only needed to pick another lane.
   distance, then fe alignment; one line per differing predicate: `INVERT` (same test, other arm), `CONST`, `OP` (`<` against `<=`,
   signed against unsigned), `IMG-ONLY` / `OURS-ONLY` (a test one side's site depends on), `COUNT` (missing/extra named call), and
   `TEST-K` / `TEST-J` (aligned cmp with another immediate, jcc with another relation inside fe's differing stretches). `tested at`
-  names the jccs. Control: 0 hits on 155 exact functions of 8 units. Tail merging (one call copy per arm on one side), arm order
-  that fe aligns crosswise, and constant registers held in scratch still read as hits: read every one against the image.
-  First pass 2026-11-19: 97 strong hits in 99 functions; the battle_report wrap call (pre-fix source) reads `IMG-ONLY [!lt 0]`.
+  names the jccs. Precision (second pass, 2026-11-19): every predicate carries what it compares (`@G:obj+off` global, `@F+d`
+  field, `@R:callee` return value, `@S:off` frame slot, unknown operands kept apart per jcc), so `eq 0` on different
+  variables no longer merges; register constants come from constant propagation over the CFG (`mov r,[__imp_X]; call r`
+  names X); `lea r,[x+K]`/`inc`/`dec`/`sub K` before the test, switch `dec` chains, `neg`, and `test ah,K` read as the
+  same value; our relocation symbols map to the image's marker object by address; vtable calls are `<indirect+0xNN>`.
+  `COUNT tail` = the surplus copies of a callee share their continuation (cross-jumping; weight 0.25, their one-side
+  guards dropped); `INVERT?`/`CONST?`/`OP?` = one operand unresolved (weak); CONST is dropped when both constants are tested
+  on both sides; one-side guards weigh more with the number of calls they govern. `BS_DEBUG=<img addr,..>` prints both
+  guard sets of a paired site. Control: 0 hits on 616 exact functions of 10 units. Tree pass over 344 functions: strong
+  INVERT/CONST/OP 12 -> 1 (+8 weak), KREG 16 -> 2, COUNT 98 -> 75 (+22 tail); one-side hits 89 -> 209 (they were hidden
+  by the `eq 0` merge). Still layout, read and skip: jump-threading re-tests, induction variables chosen differently,
+  one-side inline expansions, teardown arms, ICF class twins (MATCHING_GUIDE 3.7). Confirmed transcription errors:
+  battle_report wrap call (`IMG-ONLY [!lt 0]`), communicate pact-renewal arm, game_data 0x005A8651 flag block
+  (`IMG-ONLY [!bit 32]` on 126 sites).
 - `analysis/slotflow.py <unit> <addr> [--src ALT.cpp] [--pfx N]` transcription-error screen (MATCHING_GUIDE 3.5): for every
   image instruction that reads a frame slot and is aligned with one of ours reading a named variable v, it takes the
   image's reaching definitions of that slot, maps each through the fe alignment to our instruction and the variable it

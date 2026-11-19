@@ -20,6 +20,10 @@ merging, register choice) must not show, so nothing here compares positions or r
   tests   in fe's differing stretches, the rows aligned by register-free skeleton: cmp/test with another
           immediate, a jcc with another relation (truth ignored: an inverted jcc is layout)
 
+Each predicate also names its operand (global/field/callee return/frame slot; unknown operands stay apart per
+jcc), register constants come from constant propagation, and `x+K == 0` / switch `dec` chains / `neg` / `test ah`
+compare the underlying value. `COUNT tail` marks surplus call copies that share their continuation (cross-jumping);
+a trailing `?` on INVERT/CONST/OP means one operand was unresolved. BS_DEBUG=<img addr,..> prints a site's guards.
 The score ranks INVERT, CONST and OP above one-side predicates, and calls above stores. Loops and switch
 lowering add noise (a guard plus bottom test, subtract chains): read every hit against the image."""
 import sys, os, re, json, struct, collections, argparse, subprocess, difflib
@@ -40,6 +44,14 @@ JALIAS = {'jz': 'je', 'jnz': 'jne', 'jc': 'jb', 'jnc': 'jae', 'jnae': 'jb', 'jnb
 NORET = {'_exit', 'exit', '_abort', 'abort', '__CxxThrowException@8', 'ExitProcess', '__amsg_exit'}
 FRAME = re.compile(r'\[(?:ebp|esp)\b')
 REGS = r'\b(?:e?[abcd]x|[abcd][lh]|e?si|e?di|e?bp|esp)\b'
+STORES = ('mov', 'add', 'sub', 'inc', 'dec', 'or', 'and', 'xor', 'fstp', 'fst', 'fistp', 'neg', 'shl', 'sar', 'shr')
+R32 = {}
+for _r in 'abcd':
+    for _f in ('e%sx', '%sx', '%sl', '%sh'):
+        R32[_f % _r] = 'e%sx' % _r
+for _r in ('si', 'di', 'bp', 'sp'):
+    R32[_r] = R32['e' + _r] = 'e' + _r
+GPR = ('eax', 'ebx', 'ecx', 'edx', 'esi', 'edi', 'ebp')
 
 
 def jcond(m):
@@ -56,11 +68,11 @@ def imm(s):
 
 
 class Ins:
-    __slots__ = ('off', 'm', 'op', 'size', 'tgt', 'callee', 'store', 'txt', 'table', 'ka')
+    __slots__ = ('off', 'm', 'op', 'size', 'tgt', 'callee', 'store', 'txt', 'table', 'ka', 'mk', 'ld')
 
     def __init__(s, off, m, op, size):
         s.off, s.m, s.op, s.size = off, m, op, size
-        s.tgt = s.callee = s.store = s.table = s.ka = None
+        s.tgt = s.callee = s.store = s.table = s.ka = s.mk = s.ld = None
         s.txt = m + ' ' + op
 
 
@@ -80,13 +92,43 @@ def _objects():
     return _objects.cache
 
 
+def obj_addr():
+    if not hasattr(obj_addr, 'cache'):
+        obj_addr.cache = {}
+        for a, e, n in _objects():
+            obj_addr.cache.setdefault(n, a)
+    return obj_addr.cache
+
+
 def img_global(a):
     import bisect
     objs = _objects()
     i = bisect.bisect_right(objs, (a, 1 << 40, '')) - 1
     if i >= 0 and objs[i][0] <= a < max(objs[i][1], objs[i][0] + 1):
         return '%s+%d' % (objs[i][2], a - objs[i][0])
-    return 'g_%x' % a
+    return '~g_%x+0' % a
+
+
+FRAMES = {True: FRAME, False: re.compile(r'\[esp\b')}
+
+
+def has_fp(code):
+    """the function sets up ebp as a frame pointer (else `[ebp + K]` is a field of the object held in ebp)"""
+    for k, ins in enumerate(fe.md.disasm(code[:32], 0)):
+        if ins.mnemonic == 'mov' and ins.op_str == 'ebp, esp':
+            return True
+        if k > 6:
+            break
+    return False
+
+
+_FP = {'cur': True}
+
+
+def bare(name):
+    """'?NetWinSessionData@@3UNetWinSessionBlock@@A' -> 'NetWinSessionData' (the type part differs between markers)"""
+    m = re.match(r'\?([^@?]+)@@', name)
+    return m.group(1) if m else name.lstrip('_')
 
 
 def mem_store_key(op, glob_of):
@@ -95,21 +137,31 @@ def mem_store_key(op, glob_of):
     if not m:
         return None
     inner = m.group(1)
-    if FRAME.search('[' + inner) or 'esp' in inner:
+    if FRAMES[_FP['cur']].search('[' + inner) or 'esp' in inner:
         return None
     g = glob_of(inner)
     if g is not None:
-        return g
+        m = re.match(r'(.*?)(\+-?\d+(?:\[\])?)?$', g)
+        return bare(m.group(1)) + (m.group(2) or '')
     d = re.search(r'([+-]) (0x[0-9a-f]+|\d+)$', inner)
     disp = (int(d.group(2), 0) * (-1 if d.group(1) == '-' else 1)) if d else 0
     w = op.split()[0]
     return 'f%s+%d' % (w[0], disp)
 
 
+def indirect(op):
+    """an indirect call named by its vtable slot (`call [reg + 0x80]` -> '<indirect+0x80>')"""
+    m = re.fullmatch(r'dword ptr \[(?:e[a-ds][xip]|e[sd]i|ebp)(?: \+ (0x[0-9a-f]+|\d+))?\]', op.strip())
+    if m:
+        return '<indirect+%#x>' % int(m.group(1) or '0', 0)
+    return '<indirect>'
+
+
 def listing_image(lo, hi):
     a2s, imp = CL.addr2sym(), CL.iat()
     out = []
     data = fe.imgbytes(lo, hi)
+    _FP['cur'] = has_fp(data)
     for ins in fe.md.disasm(data, lo):
         x = Ins(ins.address - lo, ins.mnemonic, ins.op_str, ins.size)
         b = ins.bytes
@@ -125,7 +177,7 @@ def listing_image(lo, hi):
                 slot = struct.unpack_from('<I', b, 2)[0]
                 x.callee = imp.get(slot, a2s.get(slot, CL._OBJ.get(slot, 'iat_%x' % slot)))
             else:
-                x.callee = '<indirect>'
+                x.callee = indirect(ins.op_str)
         elif ins.mnemonic.startswith('j') or ins.mnemonic.startswith('loop'):
             if re.fullmatch(r'0x[0-9a-f]+', ins.op_str):
                 t = int(ins.op_str, 16)
@@ -147,7 +199,7 @@ def listing_image(lo, hi):
                     x.table = tl
                     if lo <= ta < hi:
                         hi = min(hi, ta)
-        elif ins.mnemonic in ('mov', 'add', 'sub', 'inc', 'dec', 'or', 'and', 'xor', 'fstp', 'fst', 'fistp', 'mov', 'neg', 'shl', 'sar', 'shr') and ' ptr ' in ins.op_str.split(',')[0]:
+        if ' ptr ' in ins.op_str and x.callee is None:
             def gl(inner):
                 m = re.fullmatch(r'(0x[0-9a-f]{6,})', inner.strip())
                 if m:
@@ -156,12 +208,21 @@ def listing_image(lo, hi):
                 if m and int(m.group(2), 16) >= 0x400000:
                     return img_global(int(m.group(2), 16)) + '[]'
                 return None
-            x.store = mem_store_key(ins.op_str.split(',')[0], gl)
+            ops = [o.strip() for o in ins.op_str.split(',')]
+            mo = next((o for o in ops if ' ptr ' in o), None)
+            x.mk = mem_store_key(mo, gl) if mo else None
+            if ' ptr ' in ops[0] and ins.mnemonic in STORES:
+                x.store = x.mk
+            m = re.fullmatch(r'(e[a-ds][xip]|e[sd]i|ebp) ?, ?dword ptr \[(0x[0-9a-f]+)\]', ins.op_str)
+            if ins.mnemonic == 'mov' and m and int(m.group(2), 16) in imp:
+                x.ld = imp[int(m.group(2), 16)]
         out.append(x)
         if x.off >= hi - lo:
             break
     out = [x for x in out if x.off < hi - lo]
-    return trim(out)
+    out = trim(out)
+    _FP[id(out)] = _FP['cur']
+    return out
 
 
 def trim(out):
@@ -180,6 +241,7 @@ def listing_ours(c, sym):
     body = fe.dis(sec.data, 0, sec.relocations, selfsec=s.section, syms=c.symbols)
     end = body[-1][0] + body[-1][2] if body else len(sec.data)
     out = []
+    _FP['cur'] = has_fp(sec.data)
 
     def rsym(at):
         r = rm.get(at)
@@ -203,7 +265,7 @@ def listing_ours(c, sym):
             elif b[0] == 0xE8:
                 x.callee = None
             else:
-                x.callee = '<indirect>'
+                x.callee = indirect(ins.op_str)
         elif ins.mnemonic.startswith('j') or ins.mnemonic.startswith('loop'):
             if re.fullmatch(r'0x[0-9a-f]+', ins.op_str) and not relo:
                 x.tgt = int(ins.op_str, 16)
@@ -218,7 +280,7 @@ def listing_ours(c, sym):
                         tl.append(sy2.value + add2)
                         k += 1
                 x.table = tl
-        elif ' ptr ' in ins.op_str.split(',')[0] and ins.mnemonic in ('mov', 'add', 'sub', 'inc', 'dec', 'or', 'and', 'xor', 'fstp', 'fst', 'fistp', 'neg', 'shl', 'sar', 'shr'):
+        if ' ptr ' in ins.op_str and x.callee is None:
             def gl(inner, ins=ins, relo=relo):
                 if not relo:
                     return None
@@ -226,15 +288,28 @@ def listing_ours(c, sym):
                 if sy is None:
                     return None
                 nm = sy.name
-                # name it the way the image side does: object symbol + offset
-                d = re.search(r'([+-]) (0x[0-9a-f]+|\d+)$', inner)
+                a0 = obj_addr().get(nm)
                 regpart = re.sub(r'0x5a5a5a5a|0x[0-9a-f]{6,}', '', inner)
-                if re.search(REGS, regpart):
-                    return '%s+%d[]' % (nm, add)
-                return '%s+%d' % (nm, add)
-            x.store = mem_store_key(ins.op_str.split(',')[0], gl)
+                ix = '[]' if re.search(REGS, regpart) else ''
+                if a0 is not None:
+                    # the image's object at that address (overlapping markers, indexed bases outside the object)
+                    return img_global((a0 + add) & 0xffffffff) + ix
+                if add >= 1 << 31:
+                    add -= 1 << 32
+                return '~%s+%d%s' % (nm, add, ix)   # no marker: not comparable by name
+            ops = [o.strip() for o in ins.op_str.split(',')]
+            mo = next((o for o in ops if ' ptr ' in o), None)
+            x.mk = mem_store_key(mo, gl) if mo else None
+            if ' ptr ' in ops[0] and ins.mnemonic in STORES:
+                x.store = x.mk
+            if ins.mnemonic == 'mov' and relo and re.fullmatch(r'e\w\w ?, ?dword ptr \[(?:0x[0-9a-f]+|\d+)\]', ins.op_str):
+                sy, _ = rsym(relo[0])
+                if sy is not None and sy.name.startswith('__imp_'):
+                    x.ld = CL.shared_name(CL.norm_ours(sy.name))
         out.append(x)
-    return trim(out)
+    out = trim(out)
+    _FP[id(out)] = _FP['cur']
+    return out
 
 
 def unify_globals(img, ours):
@@ -323,29 +398,166 @@ def postdom(nb, succ):
     return pd, ipd
 
 
+def writes(x):
+    """32-bit registers an instruction writes"""
+    m = x.m
+    ops = [o.strip() for o in x.op.split(',')] if x.op else []
+    w = set()
+    if m == 'call':
+        return {'eax', 'ecx', 'edx'}
+    if m in ('cmp', 'test', 'push', 'ret', 'nop', 'int3', 'leave') or m.startswith('j') or m.startswith('f') and m not in ('fnstsw',):
+        return {'ebp', 'esp'} & set() if m != 'leave' else {'ebp'}
+    if m in ('cdq',):
+        return {'edx'}
+    if m in ('mul', 'imul', 'div', 'idiv') and len(ops) == 1:
+        return {'eax', 'edx'}
+    if m.startswith(('rep', 'movs', 'stos', 'lods', 'scas', 'cmps')):
+        return {'ecx', 'esi', 'edi', 'eax'}
+    if m == 'xchg':
+        w |= {R32[o] for o in ops if o in R32}
+        return w
+    if m == 'fnstsw' or m == 'sahf':
+        return {'eax'}
+    if ops and ops[0] in R32:
+        w.add(R32[ops[0]])
+    return w
+
+
+def constprop(L, blocks, succ):
+    """forward constant propagation over the CFG: before each instruction, the 32-bit registers that hold one
+    constant on every path (int), or an imported function pointer ('sym', name)"""
+    nb = len(blocks)
+    preds = collections.defaultdict(list)
+    for a, ss in succ.items():
+        for _, t in ss:
+            preds[t].append(a)
+    out = {}
+    TOP = object()
+
+    def meet(states):
+        states = [x for x in states if x is not TOP]
+        if not states:
+            return {} if states == [] and False else None
+        r = dict(states[0])
+        for st in states[1:]:
+            for k in list(r):
+                if st.get(k) != r[k]:
+                    del r[k]
+        return r
+
+    def transfer(st, x):
+        st = dict(st)
+        ops = [o.strip() for o in x.op.split(',')] if x.op else []
+        w = writes(x)
+        val = None
+        if len(ops) == 2 and ops[0] in R32 and R32[ops[0]] == ops[0]:
+            r = ops[0]
+            if x.m in ('xor', 'sub') and ops[1] == r:
+                val = 0
+            elif x.m == 'mov' and imm(ops[1]) is not None and not x.ka:
+                val = imm(ops[1])
+            elif x.m == 'mov' and ops[1] in GPR:
+                val = st.get(ops[1])
+            elif x.m == 'or' and imm(ops[1]) == -1:
+                val = -1
+            elif x.m == 'mov' and x.ld:
+                val = ('sym', x.ld)
+        for r in w:
+            st.pop(r, None)
+        if val is not None:
+            st[ops[0]] = val
+        return st
+    bin_ = [TOP] * nb
+    bout = [TOP] * nb
+    bin_[0] = {}
+    work = list(range(nb))
+    guard = 0
+    while work and guard < 200000:
+        guard += 1
+        b = work.pop(0)
+        if b == 0:
+            st = {}
+        else:
+            m = meet([bout[p] for p in preds[b]])
+            if m is None:
+                continue
+            st = m
+        bin_[b] = st
+        s, e = blocks[b]
+        for i in range(s, e):
+            out[i] = st
+            st = transfer(st, L[i])
+        if bout[b] is TOP or bout[b] != st:
+            bout[b] = st
+            for _, t in succ.get(b, []):
+                if t not in work:
+                    work.append(t)
+    return out
+
+
+_CP = {}
+_CTX = {}
+
+
 def constreg(L, i, r):
-    """a callee-saved register holding a constant at L[i] (last write before it in listing order)"""
-    scratch = r in ('eax', 'ecx', 'edx')
-    if r not in ('esi', 'edi', 'ebx') and not scratch:
-        return None
-    for k in range(i - 1, max(-1, i - (8 if scratch else 400)), -1):
-        x = L[k]
-        ops = [o.strip() for o in x.op.split(',')]
-        if x.m in ('call',) or x.m.startswith('j'):
-            if scratch:
-                return None
+    """a register holding one constant at L[i] on every path (constant propagation over the CFG)"""
+    v = _CP.get(id(L), {}).get(i, {}).get(r)
+    return v if isinstance(v, int) else None
+
+
+def opnd(L, i, op, s, depth=0):
+    """what a compared operand is, comparable between the sides: a global or field ('G:..', 'F+disp'), the
+    return value of a named call ('R:callee'), a frame slot ('S:off', matches any other side's slot) or '?'"""
+    if ' ptr ' in op:
+        x = L[i]
+        if FRAMES[_FP.get(id(L), True)].search(op):
+            m = re.search(r'\[(?:ebp|esp)\s*([+-])?\s*(0x[0-9a-f]+|\d+)?', op)
+            return 'S:%s%s' % ((m.group(1) or ''), (m.group(2) or '0')) if m else 'S:?'
+        k = x.mk
+        if k is None:
+            return '?'
+        m = re.match(r'f[a-z]\+(-?\d+)$', k)
+        if m:
+            return 'F%+d' % (int(m.group(1)) & ~3)
+        if k.startswith('~'):
+            return 'G?:' + k
+        m = re.match(r'(.*)\+(-?\d+)(\[\])?$', k)
+        if m:
+            return 'G:%s+%d%s' % (bare(m.group(1)), int(m.group(2)) & ~3, m.group(3) or '')
+        return 'G:' + bare(k)
+    r = R32.get(op)
+    if r is None or depth > 4:
+        return '?'
+    ctx = _CTX.get(id(L))
+    k = i
+    hops = 0
+    while True:
+        k -= 1
+        if k < s:
+            # continue into the only predecessor block (block boundaries differ between the sides)
+            if ctx is None or hops > 6:
+                return '?'
+            blocks, bl, preds = ctx
+            pb = preds.get(bl.get(s), [])
+            if len(pb) != 1:
+                return '?'
+            s, e = blocks[pb[0]]
+            k = e
+            hops += 1
             continue
-        if ops and ops[0] == r and x.m not in ('cmp', 'test', 'push'):
-            if x.m == 'xor' and len(ops) == 2 and ops[1] == r:
-                return 0
-            if x.m == 'mov' and len(ops) == 2 and imm(ops[1]) is not None and not x.ka:
-                return imm(ops[1])
-            if x.m == 'or' and len(ops) == 2 and imm(ops[1]) == -1:
-                return -1
-            return None
-        if x.m == 'pop' and ops[0] == r:
-            return None
-    return None
+        x = L[k]
+        if r not in writes(x):
+            continue
+        ops = [o.strip() for o in x.op.split(',')]
+        if x.m == 'call':
+            return 'R:%s' % x.callee if x.callee and not x.callee.startswith('<indirect') else '?'
+        if x.m in ('mov', 'movsx', 'movzx') and len(ops) == 2:
+            if ' ptr ' in ops[1]:
+                return opnd(L, k, ops[1], s, depth + 1)
+            if ops[1] in R32:
+                return opnd(L, k, ops[1], s, depth + 1)
+        return '?'
+    return '?'
 
 
 def predicate(L, blocks, b):
@@ -357,11 +569,13 @@ def predicate(L, blocks, b):
     rel, truth = CANON[cc]
     K = None
     kind = '?'
+    od = '?'
     for i in range(e - 2, s - 1, -1):
         x = L[i]
         if x.m in ('cmp', 'test', 'and', 'or', 'sub', 'add', 'inc', 'dec', 'xor', 'sar', 'shl', 'shr', 'neg', 'sbb', 'adc'):
             ops = [o.strip() for o in x.op.split(',')]
             kind = x.m
+            od = opnd(L, i, ops[0], s)
             if x.m == 'cmp' and len(ops) == 2 and x.ka:
                 K = x.ka
             elif x.m == 'cmp' and len(ops) == 2:
@@ -373,6 +587,7 @@ def predicate(L, blocks, b):
                     elif k0 is not None:
                         # `cmp K, y`: K rel y -> y against K with the relation mirrored
                         K = k0
+                        od = opnd(L, i, ops[1], s)
                         if rel in ('lt', 'ltu'):
                             rel, K, truth = rel, K + 1, not truth
                         elif rel in ('le', 'leu'):
@@ -386,19 +601,59 @@ def predicate(L, blocks, b):
             elif x.m == 'test' and len(ops) == 2:
                 if ops[0] == ops[1]:
                     K = 0
+                    # `lea r, [y + K]; test r, r`: y == -K
+                    if rel == 'eq' and ops[0] in R32:
+                        for k in range(i - 1, s - 1, -1):
+                            y = L[k]
+                            if R32[ops[0]] in writes(y):
+                                m = re.fullmatch(r'(\w+), \[(\w+) ([+-]) (0x[0-9a-f]+|\d+)\]', y.op) if y.m == 'lea' else None
+                                yo = [o.strip() for o in y.op.split(',')]
+                                if m and m.group(1) == ops[0] and m.group(2) in R32:
+                                    K = -int(m.group(4), 0) * (1 if m.group(3) == '+' else -1)
+                                    od = opnd(L, k, m.group(2), s)
+                                elif y.m in ('inc', 'dec') and yo[0] == ops[0]:
+                                    K = -1 if y.m == 'inc' else 1
+                                    od = opnd(L, k, ops[0], s)
+                                elif y.m in ('add', 'sub') and yo[0] == ops[0] and len(yo) == 2 and imm(yo[1]) is not None:
+                                    K = imm(yo[1]) * (1 if y.m == 'sub' else -1)
+                                    od = opnd(L, k, ops[0], s)
+                                break
                 else:
                     v = imm(ops[1])
                     if v is not None:
                         rel = 'bit' if rel == 'eq' else rel
                         K = v & 0xffffffff
+                        # `test ah, 4` = `test eax, 0x400`
+                        if ops[0] in ('ah', 'bh', 'ch', 'dh'):
+                            K <<= 8
+                        elif re.match(r'byte ptr .*\+ (0x[1-3]|[1-3])\]$', ops[0]) and od.startswith(('F', 'G')):
+                            K <<= 8 * int(re.search(r'\+ (0x[1-3]|[1-3])\]$', ops[0]).group(1), 0)
                     else:
                         K = 'tx'
-            elif x.m == 'inc':
-                K = -1 if rel == 'eq' else 'inc'
-            elif x.m == 'dec':
-                K = 1 if rel == 'eq' else 'dec'
+            elif x.m in ('inc', 'dec', 'sub', 'add') and rel == 'eq' and ops[0] in R32:
+                # a switch chain `sub eax, K; je; dec eax; je ...`: the running offset from the switched value
+                off, k = 0, i
+                while k >= s or k >= 0:
+                    y = L[k]
+                    yo = [o.strip() for o in y.op.split(',')]
+                    if y.m == 'inc' and yo[0] == ops[0]:
+                        off -= 1
+                    elif y.m == 'dec' and yo[0] == ops[0]:
+                        off += 1
+                    elif y.m in ('sub', 'add') and yo[0] == ops[0] and len(yo) == 2 and imm(yo[1]) is not None:
+                        off += imm(yo[1]) * (1 if y.m == 'sub' else -1)
+                    elif jcond(y.m) in ('e', 'ne') and k != i:
+                        pass
+                    else:
+                        od = opnd(L, k + 1, ops[0], max(0, k - 12)) if k + 1 < len(L) else '?'
+                        break
+                    k -= 1
+                K = off
             else:
                 K = x.m
+            # `neg y; cmp y, K`: y against -K
+            if isinstance(K, int) and x.m == 'cmp' and ops[0] in R32 and i > s and L[i - 1].m == 'neg' and L[i - 1].op.strip() == ops[0] and rel == 'eq':
+                K = -K
             break
         if x.m in ('call',):
             break
@@ -406,7 +661,9 @@ def predicate(L, blocks, b):
         K = '?'
     if isinstance(K, int) and rel in ('le', 'leu'):
         rel, K = ('lt' if rel == 'le' else 'ltu'), K + 1
-    return (rel, K, truth, kind)
+    if od == '?':
+        od = '?@%x' % j.off   # unknown operands of different tests stay apart
+    return (rel, K, truth, kind, od)
 
 
 def guards(L):
@@ -415,6 +672,20 @@ def guards(L):
     if not nb:
         return {}, blocks
     pd, ipd = postdom(nb, succ)
+    _CP.clear()
+    _CP[id(L)] = constprop(L, blocks, succ)
+    pr = collections.defaultdict(list)
+    for a_, ss_ in succ.items():
+        for _, t_ in ss_:
+            pr[t_].append(a_)
+    _CTX.clear()
+    _CTX[id(L)] = (blocks, {s_: k_ for k_, (s_, e_) in enumerate(blocks)}, pr)
+    # `mov r, [__imp_X]; call r`: the call names X
+    for i, x in enumerate(L):
+        if x.m == 'call' and str(x.callee).startswith('<indirect') and x.op.strip() in GPR:
+            v = _CP[id(L)].get(i, {}).get(x.op.strip())
+            if isinstance(v, tuple):
+                x.callee = v[1]
     cd = collections.defaultdict(set)   # block -> {(pred-block, label)}
     for a in range(nb):
         for lab, bb in succ.get(a, []):
@@ -448,8 +719,8 @@ def guards(L):
             for a, lab in cd.get(y, ()):
                 p = preds.get(a)
                 if p:
-                    rel, K, truth, kind = p
-                    out.add((rel, K, truth if lab == 'T' else not truth))
+                    rel, K, truth, kind, od = p
+                    out.add((rel, K, truth if lab == 'T' else not truth, od))
                 if a not in seen:
                     seen.add(a)
                     stack.append(a)
@@ -470,7 +741,11 @@ def guards(L):
 def clean(g, common):
     """drop predicates held with both truths (loop tests reached around the back edge) and predicates the other
     side never tests anywhere (another loop or compare form: not comparable site by site)"""
-    return frozenset(p for p in g if (p[0], p[1], not p[2]) not in g and (p[0], p[1]) in common)
+    by = collections.defaultdict(list)
+    for p in g:
+        by[(p[0], p[1], p[2])].append(p[3])
+    return frozenset(p for p in g if (p[0], p[1]) in common
+                     and not any(compat(p[3], o, True) for o in by.get((p[0], p[1], not p[2]), ())))
 
 
 def sites(L, G):
@@ -487,8 +762,31 @@ def bitshift(a, b):
     return any(a == b << s or b == a << s for s in (8, 16, 24))
 
 
-def classify(gi, go, common=None):
+def compat(a, b, same_side=False):
+    """two operand descriptors that may name the same value ('?' is unknown; frame slots, unmarked globals and
+    unnamed callees are only comparable within one side)"""
+    if a == b or a.startswith('?') or b.startswith('?'):
+        return True
+    if same_side:
+        return False
+    return ((a.startswith('S:') and b.startswith('S:'))
+            or (a.startswith('G?:') and b.startswith('G')) or (b.startswith('G?:') and a.startswith('G'))
+            or (a.startswith('R:') and b.startswith('R:') and (a.startswith('R:sub_') or b.startswith('R:sub_'))))
+
+
+def weak(a, b):
+    """a test difference read through an unresolved operand on either side may pair two different tests"""
+    return '?' if a.startswith('?') or b.startswith('?') else ''
+
+
+def classify(gi, go, common=None, invi=None, invo=None):
     a, b = set(gi - go), set(go - gi)
+    # the same test where one side's operand is unresolved
+    for p in sorted(a, key=str):
+        q = next((q for q in sorted(b, key=str) if q[:3] == p[:3] and compat(p[3], q[3])), None)
+        if q:
+            a.discard(p)
+            b.discard(q)
     for p in list(a):
         # `test ah, 4` against `test dword, 0x400`: one bit seen through another byte
         q = next((q for q in b if p[0] == q[0] == 'bit' and p[2] == q[2] and isinstance(p[1], int) and isinstance(q[1], int) and bitshift(p[1], q[1])), None)
@@ -497,22 +795,27 @@ def classify(gi, go, common=None):
             b.discard(q)
     hits = []
     for p in sorted(a, key=str):
-        rel, K, t = p
-        if (rel, K, not t) in b:
-            hits.append(('INVERT', p, (rel, K, not t)))
-            b.discard((rel, K, not t))
-            continue
-        q = next((q for q in b if q[0] == rel and q[2] == t and isinstance(K, int) and isinstance(q[1], int)), None)
+        rel, K, t, od = p
+        q = next((q for q in b if q[:3] == (rel, K, not t) and compat(od, q[3])), None)
         if q:
-            hits.append(('CONST', p, q))
+            hits.append(('INVERT' + weak(od, q[3]), p, q))
             b.discard(q)
             continue
-        q = next((q for q in b if q[1] == K and q[2] == t and q[0] != rel and isinstance(K, int)), None)
+        q = next((q for q in b if q[0] == rel and q[2] == t and isinstance(K, int) and isinstance(q[1], int) and compat(od, q[3])), None)
         if q:
-            hits.append(('OP', p, q))
+            # both constants tested on both sides: the sites pair across arms, the tests themselves agree
+            if invi is not None and (rel, q[1]) in invi and (rel, K) in invo:
+                b.discard(q)
+                continue
+            hits.append(('CONST' + weak(od, q[3]), p, q))
             b.discard(q)
             continue
-        q = next((q for q in b if q[0] == rel and q[2] == t and (q[1] == 'x') != (K == 'x')), None)
+        q = next((q for q in b if q[1] == K and q[2] == t and q[0] != rel and isinstance(K, int) and compat(od, q[3])), None)
+        if q:
+            hits.append(('OP' + weak(od, q[3]), p, q))
+            b.discard(q)
+            continue
+        q = next((q for q in b if q[0] == rel and q[2] == t and (q[1] == 'x') != (K == 'x') and compat(od, q[3])), None)
         if q:
             # a compare against a register on one side and a constant on the other: a constant register
             hits.append(('KREG', p, q))
@@ -526,7 +829,7 @@ def classify(gi, go, common=None):
     return hits
 
 
-W = {'INVERT': 8, 'CONST': 6, 'OP': 6, 'IMG-ONLY': 2, 'OURS-ONLY': 2, 'KREG': 0.25, 'IMG-ONLY?': 0.5, 'OURS-ONLY?': 0.5}
+W = {'INVERT': 8, 'CONST': 6, 'OP': 6, 'INVERT?': 1.5, 'CONST?': 1.5, 'OP?': 1.5, 'IMG-ONLY': 2, 'OURS-ONLY': 2, 'KREG': 0.25, 'IMG-ONLY?': 0.5, 'OURS-ONLY?': 0.5}
 
 
 def site_weight(key):
@@ -537,11 +840,26 @@ def site_weight(key):
     return 0.25 if re.match(r'f[a-z]\+0$', str(n)) else 0.5
 
 
+def gdist(gi, go):
+    """guard difference with unknown operands matching any operand"""
+    if gi == go:
+        return 0
+    a, b = gi - go, set(go - gi)
+    n = 0
+    for p in a:
+        q = next((q for q in b if q[:3] == p[:3] and compat(p[3], q[3])), None)
+        if q is None:
+            n += 1
+        else:
+            b.discard(q)
+    return n + len(b)
+
+
 def pair(ai, ao, amap=None):
     """pair two site lists: sites fe aligns row to row first, the rest by minimum symmetric guard difference"""
     amap = amap or {}
     # guard distance first (arms laid out in the other order align crosswise), fe alignment breaks ties
-    cand = sorted(((len(gi ^ go), amap.get(oi) != oo, i, j) for i, (oi, gi) in enumerate(ai) for j, (oo, go) in enumerate(ao)))
+    cand = sorted(((gdist(gi, go), amap.get(oi) != oo, i, j) for i, (oi, gi) in enumerate(ai) for j, (oo, go) in enumerate(ao)))
     ui, uo, out = set(), set(), []
     for d, _, i, j in cand:
         if i in ui or j in uo:
@@ -550,6 +868,30 @@ def pair(ai, ao, amap=None):
         uo.add(j)
         out.append((ai[i], ao[j]))
     return out, [ai[i] for i in range(len(ai)) if i not in ui], [ao[j] for j in range(len(ao)) if j not in uo]
+
+
+def window(L, off, after=3):
+    """register- and frame-masked text of a call and the instructions after it, unconditional jumps followed
+    (tail-copy test: cross-jumping merges identical suffixes, so the arguments before the call may differ)"""
+    idx = {x.off: k for k, x in enumerate(L)}
+    i = idx.get(off)
+    if i is None:
+        return None
+    out = []
+    seen = set()
+    while i is not None and i < len(L) and len(out) <= after and i not in seen:
+        seen.add(i)
+        x = L[i]
+        if x.m == 'jmp' and x.tgt is not None:
+            i = idx.get(x.tgt)
+            continue
+        t = re.sub(r'\[(?:ebp|esp)[^\]]*\]', '[S]', x.txt)
+        t = re.sub(REGS, 'R', t)
+        if x.tgt is not None or x.callee:
+            t = x.m + ' L'
+        out.append(t + '|' + str(x.ka or '') + '|' + str(x.callee or '') + '|' + str(x.mk or ''))
+        i += 1
+    return tuple(out)
 
 
 def skel(t):
@@ -674,28 +1016,47 @@ def analyse(c, text, addr):
     # an unmarked image callee (sub_X: a CRT routine without a name) pairs with our one-side callee of equal count
     ion = {k: len(v) for k, v in si.items() if k[0] == 'C' and k not in so and str(k[1]).startswith('sub_')}
     oon = {k: len(v) for k, v in so.items() if k[0] == 'C' and k not in si}
-    for k, n in ion.items():
+    nli, nlo = max(1, len(LI)), max(1, len(LO))
+    for k, n in sorted(ion.items(), key=lambda t: si[t[0]][0][0]):
         m = [q for q, c in oon.items() if c == n]
-        if len(m) == 1:
-            so[k] = so.pop(m[0])
-            del oon[m[0]]
+        if m:
+            # several candidates: the one whose first call sits at the nearest relative position
+            q = min(m, key=lambda q: abs(si[k][0][0] / float(LI[-1].off or 1) - so[q][0][0] / float(LO[-1].off or 1)))
+            so[k] = so.pop(q)
+            del oon[q]
+    tails = set()
     for key in sorted(set(si) | set(so), key=str):
         ai, ao = si.get(key, []), so.get(key, [])
         pr, ri, ro = pair(ai, ao, amap)
         if key[0] == 'C' and len(ai) != len(ao):
             counted.add(key)
-            hits.append(dict(kind='COUNT', key=key, img=len(ai), ours=len(ao),
-                             img_at=['%x' % (lo + o) for o, _ in ri], ours_at=['%x' % o for o, _ in ro], score=5 * abs(len(ai) - len(ao))))
+            # a tail copy: every surplus call site's code is identical to another site of the same callee on its side
+            # (counted per side: copies with one continuation beyond those the other side has as well)
+            (more, Lm), (fewer, Lf) = sorted([(ai, LI), (ao, LO)], key=lambda t: -len(t[0]))
+            dups = lambda ss, L: len(ss) - len({window(L, o) for o, _ in ss})
+            tail = dups(more, Lm) - dups(fewer, Lf) >= len(more) - len(fewer)
+            w = 0.25 if tail else (1 if site_weight(key) < 1 else 5)
+            if tail:
+                tails.add(key)
+            hits.append(dict(kind='COUNT tail' if tail else 'COUNT', key=key, img=len(ai), ours=len(ao),
+                             img_at=['%x' % (lo + o) for o, _ in ri], ours_at=['%x' % o for o, _ in ro], score=w * abs(len(ai) - len(ao))))
         for (oi, gi), (oo, go) in pr:
             if gi == go:
                 continue
-            for h in classify(gi, go, common):
+            if os.environ.get('BS_DEBUG') and ('%x' % (lo + oi)) in os.environ['BS_DEBUG'].split(','):
+                print('DEBUG', key, '%x' % (lo + oi), '%x' % oo, '\n  img ', sorted(map(str, gi)), '\n  ours', sorted(map(str, go)))
+            for h in classify(gi, go, common, invi, invo):
                 g = groups.setdefault((h[0], h[1], h[2]), [])
                 g.append((key, '%x' % (lo + oi), '%x' % oo))
     # one hit per predicate difference: a test placed elsewhere moves every site below it
     for (kind, pi, po), ss in groups.items():
         nc = sum(1 for k, _, _ in ss if k[0] == 'C')
         w = W[kind] * max(site_weight(k) for k, _, _ in ss)
+        if kind.startswith(('IMG-ONLY', 'OURS-ONLY')):
+            if all(k in tails for k, _, _ in ss):
+                continue   # the guard of a tail copy kept in one arm
+            # a test that one side applies to many calls is a whole block under another condition
+            w *= min(4, 1 + nc / 8.0)
         if kind.startswith(('IMG-ONLY', 'OURS-ONLY')) and all(k in counted for k, _, _ in ss):
             kind += ' tail?'   # the key's call count differs too: usually one side keeps a tail copy per arm
             w *= 0.3
@@ -719,8 +1080,8 @@ def analyse(c, text, addr):
 def fmtp(p):
     if p is None:
         return '-'
-    rel, K, t = p
-    return '%s%s %s' % ('' if t else '!', rel, K)
+    rel, K, t, od = p
+    return '%s%s %s%s' % ('' if t else '!', rel, K, '' if od.startswith('?') else ' @' + od)
 
 
 def report(r, verbose=False, top=40):

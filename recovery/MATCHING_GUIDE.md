@@ -6788,6 +6788,29 @@ skeleton keeps only branches, `ret` and numbered `use(K)` markers)
     0x0042260D/0x00422618 `jl` past the wrap call at 0x00422795, so the
     weapon line is wrapped only inside the odds test. It moved the function
     to rung 2 (allocation change, lost cross-jump); kept.
+  - *A test that guards a whole run of statements, transcribed as guarding
+    the first one:* game_data 0x005A8651 `test [net_turn_flags_], 0x20; je
+    0x005A91B2` jumps over every transfer from OfferResetCells through
+    TamperDialogValue to the screen-size block; the source tested the flag
+    in the first `&&` only. behavscan showed it as one IMG-ONLY predicate
+    on 126 sites; rows 218 -> 147 once the block was braced.
+  - *Behaviour screen precision (behavscan, 2026-11-19):* a hit is a lead,
+    not a verdict; read it against the image. Not behaviour, and now
+    filtered or marked: cross-jumped call copies (`COUNT tail`: the surplus
+    copies share their continuation, jumps followed), a test read through
+    an operand one side cannot resolve (`INVERT?`/`CONST?`/`OP?`), two
+    constants both sides test (`CONST` dropped: the sites pair across
+    arms), the same value compared another way (`lea r,[x+1]; test r,r`,
+    `inc`/`dec`/`sub K` chains, `neg`, `test ah,K` = `test eax,K<<8`,
+    `setge; dec; and 0x19; add 0x19` against `setl; dec; and 0xe7; add
+    0x32`). Still read as hits, all layout: a re-test after jump threading
+    (draw_labs `a == -1` lands on the `a >= 0 && b >= 0` re-test), an
+    induction variable chosen differently (load_vehicles counts `row`, ours
+    `chassis`: `lea eax,[edx+9]; cmp eax,9` against `cmp ecx,2` on the
+    derived source_y), an inline expanded on one side only (MapWin::click
+    draw_map, DesignWin::select_special's five-argument Popup::start),
+    teardown arms (destructor INVERT/COUNT: EH layout), ICF class twins
+    (`AlphaNetStringStruct` against `StringStruct`).
   - *Not found* (each tried with 3..5 spellings): base_yield 0x004E8930,
     where range()'s two clamp arms sit after the NEXT range() expansion's
     `jmp` (ob_inl_loop puts them right after the in-line arm); action_destroy
