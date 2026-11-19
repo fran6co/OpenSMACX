@@ -479,38 +479,8 @@ int VehLiftX;  // 0x009B2278
 int VehLiftY;  // 0x009B2284
 BOOL VehBitError;  // 0x009B228C
 int VehMoraleModifierCount; // only used by say_morale(), optimize to local var?
-
-// ===== MANAGED GLOBALS - the veh.h tables, homed here =====
-// Zero initialisation IS the image's initialisation: every base below reads
-// ZERO at run time (`image_data.py`, all past the file-backed end of .data),
-// and the alpha.txt / x.txt loaders fill them before use.
-// The table ends where the next mapped object, ExitTurnLoop at 0x009B2068,
-// begins: 0x009AB868 + 512 * 0x34 = 0x009B2068.
-// RECOVERY_OBJECT: v2 0x009AB868 0x009B2068 ?VehPrototypes@@3PAUVehPrototype@@A 0x00493AF0
-VehPrototype VehPrototypes[MaxVehProtoNum];  // 0x009AB868
-// The rules loader fills entries0..8; original load_vehicles45446C..4546B4
-// additionally populates sprite metrics in entries9..18 at the same0x90 stride.
-// The full table ends at Natural's independent start0x0094ADE0.
-// RECOVERY_OBJECT: v2 0x0094A330 0x0094ADE0 ?Chassis@@3PAURulesChassis@@A 0x00454270
-RulesChassis Chassis[ChassisStorageCount];  // 0x0094A330
-// Bound: 26 x 0x10 records; loop ends at `cmp esi, 0x94b000` (0x0044BE13), SocialCategories' start.
-// RECOVERY_OBJECT: v2 0x0094AE60 0x0094B000 ?Weapon@@3PAURulesWeapon@@A 0x0044BE13
-RulesWeapon Weapon[MaxWeaponNum];  // 0x0094AE60
-// Bound: 14 x 0x10 records; loop ends at `cmp esi, 0x94f358` (0x0044BFE0), Technology's start.
-// RECOVERY_OBJECT: v2 0x0094F278 0x0094F358 ?Armor@@3PAURulesArmor@@A 0x0044BFE0
-RulesArmor Armor[MaxArmorNum];  // 0x0094F278
-// Ability-model assembly reads the signed prerequisite at record +0x18;
-// the original indexes these existing rules with a 0x1C-byte stride.
-// Bound: 29 x 0x1C records; loops end at `cmp edi, 0x9ab864` (0x00485641).
-// RECOVERY_OBJECT: v2 0x009AB538 0x009AB864 ?Ability@@3PAURulesAbility@@A 0x00485641
-RulesAbility Ability[MaxAbilityNum];  // 0x009AB538
-// RECOVERY_OBJECT: v1 0x00952328 ?Morale@@3PAURulesMorale@@A
-RulesMorale Morale[MaxMoraleNum];  // 0x00952328
 RulesCombatMode DefenseModes[MaxDefenseModeNum];  // 0x00946A00
 RulesCombatMode OffenseModes[MaxOffenseModeNum];  // 0x00946178
-// 30 x 0xC records; PlayersData begins at the bound. 0x004316FD reads Order[4].order.
-// RECOVERY_OBJECT: v2 0x0096C878 0x0096C9E0 ?Order@@3PAURulesOrder@@A 0x004316FD
-RulesOrder Order[MaxOrderNum];  // 0x0096C878
 LPSTR PlansShortName[MaxPlanNum];  // 0x00945FE0
 LPSTR PlansFullName[MaxPlanNum];  // 0x00952360
 LPSTR Triad[MaxTriadNum];  // 0x0094F1A8
@@ -2334,13 +2304,6 @@ void __cdecl fill_eight_bytes_ff(void *target) {
 static_assert(sizeof(ProtoBung) == 8, "Prototype history record stride");
 static_assert(offsetof(ProtoBung, chassis_id) == 4,
               "Prototype history component offset");
-
-// The faction prototype-design list (ProtoBung, declared in veh.h). Eight
-// faction histories, 64 records each. Initial loaded storage is zero.
-// Native clear57DF00 uses base94B558+5 then stores at -5..+2; the former
-// address alias started five bytes too early and corrupted the preceding data.
-// RECOVERY_OBJECT: v2 0x0094B558 0x0094C558 _BungList 0x0057DF00
-ProtoBung BungList[8][64];
 
 /*
 Purpose: Empty one faction's prototype-design run.

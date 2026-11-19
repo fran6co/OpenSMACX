@@ -140,6 +140,15 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
 - `analysis/datarun.py [--all] [--lo A --hi B]` data-order evidence (MATCHING_GUIDE 2.5): ranks every bound object by
   its owner file's link position and lists the objects outside the longest non-decreasing run of each data section
   (definitions that sit in another unit's .data/.bss contribution), with the units bounding them.
+- `analysis/datawho.py [--cmds]` names the unit that defines each out-of-order object of datarun.py (H thunk interval,
+  D `.data` neighbours, S `.bss` neighbours plus a reference, N the one referencing unit between differing neighbours,
+  ? undecided) and lists in-order objects that sit inside another unit's thunk interval; `--cmds` prints the objmove.py
+  commands.
+- `analysis/objmove.py --into DEST.cpp (--range LO-HI[,..] | --addr A,B) [--skip A] [--dry]` moves the bound object
+  definitions (RECOVERY_OBJECT) in an address range to the unit whose data run holds them: cuts each definition piece from
+  its host (an `extern` stays when no header declares the name), puts them after DEST's includes, initialised objects
+  first, in image order, and drops DEST's local externs of the moved names. No body is edited; check with feall on
+  both sides, `recover check-claims` and `recover rebind-literals --unit` (a moved `char *p = "lit"` renumbers).
 - `analysis/initorder.py` the hard form of that evidence (2 s, no compile): the objects built by the CRT table's
   initializer thunks, per unit in `.text` order; a unit whose objects start below an earlier unit's maximum shares a
   unit with it (alpha + interface_fonts + newgame, the only violation in the image).

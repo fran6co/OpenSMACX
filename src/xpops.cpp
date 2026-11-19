@@ -97,6 +97,490 @@
 #include "font.h"
 #include "font_queue.h"
 
+// The game state is defined by this unit (MATCHING_GUIDE 2.5, data order).
+// .data: the initialised globals 0x00691870-0x00691B3C and the texts of their
+// initialisers 0x00691B40-0x00691BF7 lie after technology's last function
+// literal (0x0069185C) and run straight into this unit's first function
+// literal (0x00691BF8, do_unity_crash): a unit's globals precede its function
+// literals. .bss: this unit's two initializer thunks build g_PALETTE1
+// 0x0094C590 and g_PALETTE2 0x009523A0, so the run around them, after
+// technology's objects (..0x00945F44) and before veh_queries' (0x009B2278..),
+// is this unit's. TurnUpkeepPhase 0x00945F48 touches technology's last object
+// and could be either unit's (a unit's .bss is ordered by name, not by
+// definition). Definitions below are in image order, initialised first; a
+// text array stands in front of the pointer it initialises.
+
+// The pinned .data cells were mutable char* slots initialized to these
+// distinct writable text arrays; callers share the pointer objects.
+// RECOVERY_OBJECT: v2 0x00691B40 0x00691B4C ?ConsoleVersionReleaseText@@3PADA 0x00517180
+char ConsoleVersionReleaseText[] = "RELEASE 2.0";
+// RECOVERY_OBJECT: v2 0x00691870 0x00691874 ?ConsoleVersionRelease@@3PADA 0x00517180
+char *ConsoleVersionRelease = ConsoleVersionReleaseText;
+// RECOVERY_OBJECT: v2 0x00691B4C 0x00691B58 ?ConsoleVersionBuildDateText@@3PADA 0x00517180
+char ConsoleVersionBuildDateText[] = "20-Dec-1999";
+// RECOVERY_OBJECT: v2 0x00691874 0x00691878 ?ConsoleVersionBuildDate@@3PADA 0x00517180
+char *ConsoleVersionBuildDate = ConsoleVersionBuildDateText;
+// RECOVERY_OBJECT: v2 0x00691878 0x00691AF8 ?Terraforming@@3PAURulesTerraforming@@A 0x005873C0
+// The historical map word identities are live rates in this mutable array.
+// 0x00691890 + row * 32 selects rate (+0x18), including road and magtube.
+// RECOVERY_OBJECT: v3 0x00691930 ?MapTerrainBonusYieldRow5FirstWord@@3HB member ?Terraforming@@3PAURulesTerraforming@@A [5].rate
+// RECOVERY_OBJECT: v3 0x00691950 ?MapTerrainBonusYieldRow6FirstWord@@3HB member ?Terraforming@@3PAURulesTerraforming@@A [6].rate
+RulesTerraforming Terraforming[MaxTerrainNum] = {
+    { 0, 0, {0, 0}, BIT_FARM,          BIT_FOREST, 0, 0 },
+    { 0, 0, {0, 0}, BIT_SOIL_ENRICHER, BIT_FOREST, 0, 0 },
+    { 0, 0, {0, 0}, BIT_MINE,
+      BIT_MINE | BIT_SOLAR_TIDAL | BIT_FOREST | BIT_CONDENSER | BIT_ECH_MIRROR
+          | BIT_THERMAL_BORE | BIT_SENSOR_ARRAY, 0, 0 },
+    { 0, 0, {0, 0}, BIT_SOLAR_TIDAL,
+      BIT_MINE | BIT_SOLAR_TIDAL | BIT_FOREST | BIT_CONDENSER | BIT_ECH_MIRROR
+          | BIT_THERMAL_BORE | BIT_SENSOR_ARRAY, 0, 0 },
+    { 0, 0, {0, 0}, BIT_FOREST,
+      BIT_MINE | BIT_FUNGUS | BIT_SOLAR_TIDAL | BIT_FARM | BIT_SOIL_ENRICHER
+          | BIT_FOREST | BIT_CONDENSER | BIT_ECH_MIRROR | BIT_THERMAL_BORE, 0, 0 },
+    { 0, 0, {0, 0}, BIT_ROAD, 0, 0, 0 },
+    { 0, 0, {0, 0}, BIT_MAGTUBE, 0, 0, 0 },
+    { 0, 0, {0, 0}, BIT_BUNKER, BIT_AIRBASE, 0, 0 },
+    { 0, 0, {0, 0}, BIT_AIRBASE, BIT_BUNKER, 0, 0 },
+    { 0, 0, {0, 0}, BIT_SENSOR_ARRAY,
+      BIT_MINE | BIT_SOLAR_TIDAL | BIT_CONDENSER | BIT_ECH_MIRROR
+          | BIT_THERMAL_BORE, 0, 0 },
+    { 0, 0, {0, 0}, 0, BIT_FUNGUS, 0, 0 },
+    { 0, 0, {0, 0}, BIT_FUNGUS,
+      BIT_MINE | BIT_SOLAR_TIDAL | BIT_FARM | BIT_SOIL_ENRICHER | BIT_FOREST, 0, 0 },
+    { 0, 0, {0, 0}, BIT_CONDENSER,
+      BIT_MINE | BIT_SOLAR_TIDAL | BIT_FOREST | BIT_CONDENSER | BIT_ECH_MIRROR
+          | BIT_THERMAL_BORE | BIT_SENSOR_ARRAY, 0, 0 },
+    { 0, 0, {0, 0}, BIT_ECH_MIRROR,
+      BIT_MINE | BIT_SOLAR_TIDAL | BIT_FOREST | BIT_CONDENSER | BIT_ECH_MIRROR
+          | BIT_THERMAL_BORE | BIT_SENSOR_ARRAY, 0, 0 },
+    { 0, 0, {0, 0}, BIT_THERMAL_BORE,
+      BIT_MINE | BIT_SOLAR_TIDAL | BIT_FARM | BIT_FOREST | BIT_CONDENSER
+          | BIT_ECH_MIRROR | BIT_THERMAL_BORE | BIT_SENSOR_ARRAY, 0, 0 },
+    { 0, 0, {0, 0}, 0, 0, 0, 0 },
+    { 0, 0, {0, 0}, 0, 0, 0, 0 },
+    { 0, 0, {0, 0}, 0, 0, 0, 0 },
+    { 0, 0, {0, 0}, 0, 0, 0, 0 },
+    { 0, 0, {0, 0}, BIT_MONOLITH,
+      BIT_SUPPLY_POD | BIT_NUTRIENT_RSC | BIT_RSC_BONUS, 0, 0 },
+}; // 0x00691878
+// The tile-flag mask the fungus pass clears off the Map record it has just
+// given bit 0x20 to: world_fungus does `tile->bit &= ~MapTileFlagClearMask`
+// (0x005C35EB, `not edx` then `and [ecx + eax*4 + 8], edx`), and the same
+// dword is the value argument at four more sites that set tiles through
+// 0x00591D60 (0x004CE6D5 is one). Eight readers in the whole image, all of
+// them reads, and the shipped .data holds 0x00288050 - the same constant the
+// 0x004CE6C9 call site pushes as a literal plus 0xc. No image symbol and no
+// name anywhere in the tree before this.
+// Start binding only: the original DWORD reads establish the accessed value,
+// not an enclosing allocation or the absence of indirect writers.
+// RECOVERY_OBJECT: v1 0x006919EC ?MapTileFlagClearMask@@3IA
+uint32_t MapTileFlagClearMask = 0x00288050;
+// The original show/hide pair publishes its visible state in
+// MainInterfaceGlobal.multiwin_visibility_state_ (0x007CFF04). Its historical
+// object identity is retained beside MainInterfaceGlobal in maininterface.cpp.
+
+// Shared animation frame interval (20 ms in the pinned image). Other window
+// animations also read this original data object.
+// RECOVERY_OBJECT: v2 0x00691AF8 0x00691AFC ?WindowAnimationFrameDelay@@3HA 0x00479C00
+int WindowAnimationFrameDelay = 20;
+// read_tech's prologue loads the pointer variable (`mov eax, dword ptr
+// [0x691AFC]` at 0x00585E34) ahead of text_open; the DWORD there points at
+// the "ALPHAX" literal at 0x00691B58.
+// RECOVERY_OBJECT: v2 0x00691AFC 0x00691B00 ?AlphaxFileID@@3PBDB 0x0048207D
+// The initialiser's own literal: the image DWORD at 0x00691AFC holds
+// 0x00691B58, where the seven bytes "ALPHAX\0" sit.
+// RECOVERY_LITERAL: v1 0x00691B58 0x00691B5F $SG65266 0x0048207D
+LPCSTR AlphaxFileID = "ALPHAX";
+// RECOVERY_OBJECT: v2 0x00691B60 0x00691B66 ?DatalinkHelpFileText@@3PADA 0x00430770
+char DatalinkHelpFileText[] = "HELPX";
+// RECOVERY_OBJECT: v2 0x00691B00 0x00691B04 ?DatalinkHelpFile@@3PADA 0x00430770
+char *DatalinkHelpFile = DatalinkHelpFileText;
+// RECOVERY_OBJECT: v2 0x00691B68 0x00691B70 ?DatalinkBlurbFileText@@3PADA 0x00430B30
+char DatalinkBlurbFileText[] = "BLURBSX";
+// RECOVERY_OBJECT: v2 0x00691B04 0x00691B08 ?DatalinkBlurbFile@@3PADA 0x00430B30
+char *DatalinkBlurbFile = DatalinkBlurbFileText;
+// Shared storage closure belongs to the coordinator's original owners.
+// The pointer cell selects this observed NUL-terminated text-file identifier.
+// The allocation extent of the pointed-to original string is unresolved.
+// RECOVERY_OBJECT: v1 0x00691B70 _InterludeTextName
+static char InterludeTextName[] = "INTERLUDEX";
+// RECOVERY_OBJECT: v1 0x00691B08 ?InterludeTextFile@@3PADA
+char *InterludeTextFile = InterludeTextName;
+// Original691B0C contains pointer691B7C, whose file-backed text is SCRIPT.
+// This owns the observed text and shared pointer cell.
+// Bound: the original bytes are "SCRIPT" and its NUL; one zero pad byte precedes the next string, "EDITOR", at 0x00691B84.
+// RECOVERY_OBJECT: v2 0x00691B7C 0x00691B83 ?ScriptPopupFileText@@3PADA 0x00406384
+char ScriptPopupFileText[] = "SCRIPT";
+// Bound: pointer cell; the next dword 0x00691B10 is a separate pointer (to "EDITOR" at 0x00691B84).
+// RECOVERY_OBJECT: v2 0x00691B0C 0x00691B10 ?ScriptPopupFile@@3PADA 0x00406384
+char *ScriptPopupFile = ScriptPopupFileText;
+// Shared tutorial popup caption: the original pointer cell selects the
+// six-byte TUTOR string, not the adjacent WIZARD caption.
+// RECOVERY_OBJECT: v2 0x00691B8C 0x00691B92 ?TutorialPopupCaptionText@@3PADA 0x00511800
+char TutorialPopupCaptionText[6] = "TUTOR";
+// RECOVERY_OBJECT: v2 0x00691B14 0x00691B18 ?TutorialPopupCaption@@3PADA 0x00511800
+char *TutorialPopupCaption = TutorialPopupCaptionText;
+// The published unit draw-state block: the words the surface sprite's
+// draw_dest_unk1 readers consume, 0x009B3A54..0x009B3A78.
+
+
+// ---------------------------------------------------------------------------
+// FX::play, 0x00446A00. The bank's sound trigger: gate on the sound bit of
+// GamePreferences, re-arm the popup wave owner for the first three effect
+// kinds, then release/restart the effect record. fx.h declares the member;
+// its forwarder retires from pending_bodies.cpp in this change.
+
+// Interlude members and compiler-generated lifetime code are owned by interlude.cpp.
+
+// Media overlay update is owned by MediaRuntime in movie_media.cpp.
+
+
+// Original pointer cell 0x00691B18 selects the WIZARD text at 0x00691B94.
+// Keep that pointer/text relationship in source-owned storage. Names are
+// descriptive; bindings establish starts, not enclosing allocation bounds.
+// RECOVERY_OBJECT: v1 0x00691B94 ?TechWizardPopupFileText@@3PADA
+char TechWizardPopupFileText[7] = "WIZARD";
+// RECOVERY_OBJECT: v1 0x00691B18 ?TechWizardPopupFile@@3PADA
+char *TechWizardPopupFile = TechWizardPopupFileText;
+// Original pointer cell 0x00691B1C selects the MENU script name at
+// 0x00691B9C; menu_init passes the cell's value to every text_open.
+// RECOVERY_OBJECT: v1 0x00691B9C ?MenuScriptFileText@@3PADA
+char MenuScriptFileText[5] = "MENU";
+// RECOVERY_OBJECT: v1 0x00691B1C ?MenuScriptFile@@3PADA
+char *MenuScriptFile = MenuScriptFileText;
+// Start's mod-redirection data (popup.h has the role note). These current
+// mutable arrays cover only the observed NUL-terminated text. Original
+// allocation capacities, source mutability and literal provenance remain
+// unresolved; the start-argument bindings below claim no allocation spans.
+// The image's pointer slots select these NUL-terminated text identifiers.
+// Their allocation extents are unresolved; these arrays own the observed text.
+static char PopupAlienScriptName[] = "alienIscript";
+static char PopupAlienOtherScriptName[] = "alienuscript";
+// RECOVERY_OBJECT: v1 0x00691B20 ?PopupStartAltFile1@@3PADA
+char *PopupStartAltFile1 = PopupAlienScriptName;    // 0x00691B20
+// RECOVERY_OBJECT: v1 0x00691B24 ?PopupStartAltFile2@@3PADA
+char *PopupStartAltFile2 = PopupAlienOtherScriptName;    // 0x00691B24
+// Application fonts, selected and initialized by config_popups and WinMain.
+// FontTable stays with find_font; the entrypoint's singleton is in main.cpp.
+// Original CRT order is singleton, FontQueue VAL2/VAL1, then FontTable.
+
+// Face pointer read only by Credits::exec (0x00428AE4); its literal sits
+// before "Arial" in this unit's data.
+// RECOVERY_OBJECT: v1 0x00691B28 ?CreditsFontFace@@3PBDB
+LPCSTR CreditsFontFace = "Alpha Centauri";  // 0x00691B28 -> 0x00691BC4
+// RECOVERY_OBJECT: v2 0x00691B2C 0x00691B30 ?DefaultFontFace@@3PBDB 0x00408B8D
+LPCSTR DefaultFontFace = "Arial";  // 0x00691B2C -> 0x00691BD4
+// RECOVERY_OBJECT: v1 0x00691B30 ?DefaultLargeFontFace@@3PBDB
+LPCSTR DefaultLargeFontFace = "Arial Narrow"; // 0x00691B30 -> 0x00691BDC
+// The original 0x691B34 pointer cell refers to the separate text at
+// 0x691BEC; keep the pointer and its four-byte NUL-terminated pointee distinct.
+// RECOVERY_OBJECT: v1 0x00691BEC ?SaveGameFileExtensionText@@3PADA
+char SaveGameFileExtensionText[4] = "SAV";
+// RECOVERY_OBJECT: v1 0x00691B34 ?SaveGameFileExtension@@3PBDB
+LPCSTR SaveGameFileExtension = SaveGameFileExtensionText;
+// Native scenario save/load uses pointerB38 toSC; map save/load uses
+// pointerB3C toMP. These three-byte text views claim no neighboring extent.
+// RECOVERY_OBJECT: v1 0x00691BF0 ?ScenarioFileExtensionText@@3PADA
+char ScenarioFileExtensionText[3] = "SC";
+// RECOVERY_OBJECT: v1 0x00691B38 ?ScenarioFileExtension@@3PBDB
+LPCSTR ScenarioFileExtension = ScenarioFileExtensionText;
+// RECOVERY_OBJECT: v1 0x00691BF4 ?MapFileExtensionText@@3PADA
+char MapFileExtensionText[3] = "MP";
+// Historical SC attribution of this cell was wrong; originalB3C points toMP.
+// RECOVERY_OBJECT: v1 0x00691B3C ?MapFileExtension@@3PBDB
+LPCSTR MapFileExtension = MapFileExtensionText;
+// net_upkeep5290D0/5292BD publish phases1/2; tech_advance5BE580 and
+// tech_research5BEB3A read this distinct shared dword. Original virtual-tail
+// storage is loader-zero; fresh compiler objects establish one int owner.
+// Remaining net_upkeep recovery must publish to this owner, not an old address.
+// RECOVERY_OBJECT: v2 0x00945F48 0x00945F4C ?TurnUpkeepPhase@@3HA 0x005BE940
+int TurnUpkeepPhase = 0;
+// RECOVERY_OBJECT: v2 0x00946020 0x00946138 ?Citizen@@3PAURulesCitizen@@A 0x005873C0
+RulesCitizen Citizen[MaxCitizenNum];                // 0x00946020
+// Original interlude reads/writes this complete story-mask word.
+// Historical object identity moved to GameDataStateStorage; see the transport manifest.
+
+// Wire0 and game_data transfer these exact independent byte intervals.
+// No direct semantic use or original allocation boundary is proved; they are
+// retained state, never padding or zero-producing packet filler. Keep the
+// filename tail separate from the exactly bounded legacy 256-byte copy.
+// Historical object identity moved to GameDataStateStorage; see the transport manifest.
+
+// Historical object identity moved to GameDataStateStorage; see the transport manifest.
+
+// Native game_data5A6BA3..5A6BB9 copies exactly256 bytes; setup_game
+// clears only byte0. NUL-scanning consumers do not prove loaded termination.
+// Historical object identity moved to GameDataStateStorage; see the transport manifest.
+
+// Historical object identity moved to GameDataStateStorage; see the transport manifest.
+
+// Logical faction0..7 indexing is independently observed; original
+// containing allocation bounds are not asserted.
+// RECOVERY_OBJECT: v1 0x00946138 ?TectonicDetonationCount@@3PAHA
+int TectonicDetonationCount[8];
+// Convoy 004D907E/004D90EF and the rules parser independently identify this
+// existing resource-table start; lifetime remains open.
+// Bound: the loader fills 4 x 8-byte records from +4 to `cmp esi, 0x94617c` (0x00587D75).
+// RECOVERY_OBJECT: v2 0x00946158 0x00946178 ?Resource@@3PAURulesResource@@A 0x00587D75
+RulesResource Resource[MaxResourceNum];             // 0x00946158
+// RECOVERY_OBJECT: v1 0x00946580 ?SocialEffects@@3PAURulesSocialEffect@@A
+RulesSocialEffect SocialEffects[MaxSocialEffectNum];        // 0x00946580
+// RECOVERY_OBJECT: v2 0x009469F8 0x009469FC ?ReplayEventBytes@@3HA 0x005ADE80
+int ReplayEventBytes;
+// RECOVERY_OBJECT: v1 0x009469FC ?PopupModalActive@@3HA
+int PopupModalActive;  // 0x009469FC
+// read_faction(int) (0x00586050) computes its Player* argument as
+// `lea ecx, [eax*4 + 0x946A50]` (stride 1436); faction.h repeats the base
+// beside its extern declaration.
+// Bound: 8 x 0x59C records; loops end at `cmp esi, 0x949730` (0x00424A96), RulesStorage's start.
+// RECOVERY_OBJECT: v2 0x00946A50 0x00949730 ?Players@@3PAUPlayer@@A 0x00424A96
+Player Players[MaxPlayerNum];                               // 0x00946A50
+// NetDaemon::synch sizes opcode 0x81, this whole window, as 0x13C bytes
+// (`mov esi, 0x13c` at 0x00533226; `mov esi, 0x949730` at 0x00533A5C).
+// RECOVERY_OBJECT: v2 0x00949730 0x0094986C ?RulesStorage@@3URulesStorageWindow@@A 0x00533226
+// RECOVERY_OBJECT: v3 0x00949738 ?Rules@@3URulesBasic@@A member ?RulesStorage@@3URulesStorageWindow@@A rules_
+// RECOVERY_OBJECT: v3 0x00949730 ?TechValidCount@@3HA member ?RulesStorage@@3URulesStorageWindow@@A tech_valid_count_
+// RECOVERY_OBJECT: v3 0x00949734 ?TechCommerceCount@@3HA member ?RulesStorage@@3URulesStorageWindow@@A tech_commerce_count_
+RulesStorageWindow RulesStorage;
+// Metadata scalars formerly lived here; landmarks_ and file_path_ formerly
+// lived in alpha.cpp. All had static zero initialization. Their exact native
+// address/offset relationship is now declared in map.h in one real allocation.
+// MapLongitude (68FAF0) remains an independently initialized row-stride object.
+// map_read/map_write transfer this writable zero-fill window as 0xAA4 bytes.
+// This records the observed serialized region, not a claim about original type,
+// complete allocation, or lifetime.
+// RECOVERY_OBJECT: v2 0x00949870 0x0094A314 ?MapStorage@@3UMapStorageWindow@@A 0x005910B0
+// RECOVERY_OBJECT: v3 0x0094A30C ?MapTiles@@3PAUMap@@A member ?MapStorage@@3UMapStorageWindow@@A tiles_
+// RECOVERY_OBJECT: v3 0x0094A310 ?MapAbstractTiles@@3PAEA member ?MapStorage@@3UMapStorageWindow@@A abstract_tiles_
+// RECOVERY_OBJECT: v3 0x00949870 ?MapLongitudeBounds@@3HA member ?MapStorage@@3UMapStorageWindow@@A metadata_.longitude_bounds_
+// RECOVERY_OBJECT: v3 0x00949874 ?MapLatitudeBounds@@3HA member ?MapStorage@@3UMapStorageWindow@@A metadata_.latitude_bounds_
+// RECOVERY_OBJECT: v3 0x00949884 ?MapArea@@3IA member ?MapStorage@@3UMapStorageWindow@@A metadata_.area_
+// RECOVERY_OBJECT: v3 0x0094988C ?MapIsFlat@@3HA member ?MapStorage@@3UMapStorageWindow@@A metadata_.is_flat_
+MapStorageWindow MapStorage;
+// The rules loader fills entries0..8; original load_vehicles45446C..4546B4
+// additionally populates sprite metrics in entries9..18 at the same0x90 stride.
+// The full table ends at Natural's independent start0x0094ADE0.
+// RECOVERY_OBJECT: v2 0x0094A330 0x0094ADE0 ?Chassis@@3PAURulesChassis@@A 0x00454270
+RulesChassis Chassis[ChassisStorageCount];  // 0x0094A330
+// The original loader at 0x5881AB starts at 0x94ADE4 and fills name/name_short
+// at offsets -4/0 with stride8. Terrain consumers read those same pointer slots.
+// Lifetime remains open.
+// Bound: 16 x 8-byte records; loop ends at `cmp esi, 0x94ae60` (0x004E155B), Weapon's start.
+// RECOVERY_OBJECT: v2 0x0094ADE0 0x0094AE60 ?Natural@@3PAURulesNatural@@A 0x004E155B
+RulesNatural Natural[MaxNaturalNum];                        // 0x0094ADE0
+// Bound: 26 x 0x10 records; loop ends at `cmp esi, 0x94b000` (0x0044BE13), SocialCategories' start.
+// RECOVERY_OBJECT: v2 0x0094AE60 0x0094B000 ?Weapon@@3PAURulesWeapon@@A 0x0044BE13
+RulesWeapon Weapon[MaxWeaponNum];  // 0x0094AE60
+// THE FACTION/MAP RULES STORAGE (faction.h / map.h) - real zero-initialised
+// objects; the image's copies are uninitialised .data the rules walkers fill.
+// Original say_society at 0x00590A21 reads the category-row start at stride 0xD4; no full layout/extent claim.
+// RECOVERY_OBJECT: v1 0x0094B000 ?SocialCategories@@3PAURulesSocialCategory@@A
+RulesSocialCategory SocialCategories[MaxSocialCatNum];      // 0x0094B000
+// Extent: compiled sizeof 0x14; its last field top_menu (0x0094B360) is
+// stored by prefs_load at 0x0059DE8E and read by map_menu/top_menu.
+// RECOVERY_OBJECT: v2 0x0094B350 0x0094B364 ?DefaultPrefs@@3UDefaultPref@@A 0x0059DE8E
+DefaultPref DefaultPrefs;                           // 0x0094B350
+// prefs_load (0x0059DCF0) stores every field in place - `mov dword ptr
+// [0x94B464], eax` for preferences through custom_world at 0x0094B480
+// (bounded by the `cmp esi, 0x94B49C` loop tail at 0x0059E4D9).
+// Extent: compiled sizeof 0x38; prefs_load loop ends at `cmp esi, 0x94B49C` (0x0059E4D9).
+// RECOVERY_OBJECT: v2 0x0094B464 0x0094B49C ?AlphaIniPrefs@@3UAlphaIniPref@@A 0x0047D4A4
+AlphaIniPref AlphaIniPrefs;                         // 0x0094B464
+// RECOVERY_OBJECT: v2 0x0094B4A0 0x0094B4C0 ?Mandate@@3PAURulesMandate@@A 0x005873C0
+RulesMandate Mandate[MaxMandateNum];                // 0x0094B4A0
+// 0x009A6494
+// 0x009A6498
+// 0x009A649C
+// 0x009A64C0
+// 0x009A64C4
+// 0x009A64D4
+// setup_game clears this independent DWORD after BaseCurrentCount. No
+// additional semantic use is established; it is not part of the base count.
+// Historical object identity moved to GameDataStateStorage; see the transport manifest.
+
+// set_time_controls publishes its selected seconds multiplied by 1000.
+// net_control_turn copies the duration to the distinct live wait accumulator.
+// Historical object identity moved to GameDataStateStorage; see the transport manifest.
+
+// game_data transfers 0x98 bytes from 0x0094B4C0 (5A8337); Mandate ends at its
+// start and the next referenced storage is 0x0094B558.
+// RECOVERY_OBJECT: v2 0x0094B4C0 0x0094B558 ?ScenarioSave@@3UScenarioSaveState@@A 0x005A6AC0
+// RECOVERY_OBJECT: v3 0x0094B4D8 0x0094B558 ?GameWireOpaque_94B4D8@@3PAEA 0x005A6AC0 member ?ScenarioSave@@3UScenarioSaveState@@A wire_opaque_94b4d8
+ScenarioSaveState ScenarioSave;
+// The faction prototype-design list (ProtoBung, declared in veh.h). Eight
+// faction histories, 64 records each. Initial loaded storage is zero.
+// Native clear57DF00 uses base94B558+5 then stores at -5..+2; the former
+// address alias started five bytes too early and corrupted the preceding data.
+// RECOVERY_OBJECT: v2 0x0094B558 0x0094C558 _BungList 0x0057DF00
+ProtoBung BungList[8][64];
+// Eight faction blocks begin at94CA08, with21records at38 stride and
+// latest-type at+498. Founding/secrets/victory consumers establish the
+// natural container; reset's previous94CA18 view began inside record0.
+// RECOVERY_OBJECT: v2 0x0094CA08 0x0094F1A8 ?FactionMonuments@@3PAUMonumentFaction@@A 0x00476DA0
+MonumentFaction FactionMonuments[MaxPlayerNum];
+// RECOVERY_OBJECT: v1 0x0094F1B8 ?TimeControl@@3PAURulesTimeControl@@A
+RulesTimeControl TimeControl[MaxTimeControlNum];    // 0x0094F1B8
+// Bound: 14 x 0x10 records; loop ends at `cmp esi, 0x94f358` (0x0044BFE0), Technology's start.
+// RECOVERY_OBJECT: v2 0x0094F278 0x0094F358 ?Armor@@3PAURulesArmor@@A 0x0044BFE0
+RulesArmor Armor[MaxArmorNum];  // 0x0094F278
+// MapFilePath at 0x0094A2BC is MapStorage.metadata_.file_path_ (map.cpp).
+// read_tech walks the array from `mov esi, 0x94F360` (&Technology[0].id,
+// base+8 over flags/name) with the 0x2C stride declared in technology.h.
+// Bound: 89 x 0x2C records; loops end at `cmp esi, 0x9502a4` (0x0059F7C0).
+// RECOVERY_OBJECT: v2 0x0094F358 0x009502A4 ?Technology@@3PAURulesTechnology@@A 0x0059F7C0
+RulesTechnology Technology[MaxTechnologyNum];       // 0x0094F358
+// The parser walks the five ratio words at +0x64..+0x74. NetDaemon::synch
+// opcode 0x82 transfers 0x7C bytes from this start (0x00533230/0x00533A63).
+// That transfer size bounds the object; ReplayEvents starts at its end.
+// RECOVERY_OBJECT: v2 0x009502A8 0x00950324 ?WorldBuilder@@3URulesWorldbuilder@@A 0x00533230
+RulesWorldbuilder WorldBuilder;
+// setup_game clears 0x800 dwords at 0x00950324 and timer_callback reads
+// eight-byte records from the same interval. The counter advances in bytes.
+// RECOVERY_OBJECT: v2 0x00950324 0x00952324 ?ReplayEvents@@3PADA 0x005ADE80
+char ReplayEvents[0x2000];
+// RECOVERY_OBJECT: v1 0x00952328 ?Morale@@3PAURulesMorale@@A
+RulesMorale Morale[MaxMoraleNum];  // 0x00952328
+// The original four 0xC-byte reactor records directly precede the 0x34-byte
+// vehicle table. Keep these independent, zero-initialized arrays together;
+// their original translation-unit name and any shared class remain unknown.
+// The rules loader supplies reactor fields before use; vehicles are populated
+// by their existing construction and game-loading owners.
+// Original 0x0042A910 selects the record base; best_reactor walks prerequisite fields.
+// Bound: 4 x 0xC records; loop ends at `cmp esi, 0x952828` (0x0044BAD6), Vehs' start.
+// RECOVERY_OBJECT: v2 0x009527F8 0x00952828 ?Reactor@@3PAURulesReactor@@A 0x0044BAD6
+RulesReactor Reactor[MaxReactorNum];  // 0x009527F8
+// 2049 0x34-byte slots (veh_fake uses id 2048) end at 0x0096C85C, which the
+// image indexes as a separate table base (`[edx*4+0x96c85c]` at 0x00449978).
+// RECOVERY_OBJECT: v2 0x00952828 0x0096C85C ?Vehs@@3PAUVeh@@A 0x005C1D50
+Veh Vehs[2049];  // 0x00952828
+// 30 x 0xC records; PlayersData begins at the bound. 0x004316FD reads Order[4].order.
+// RECOVERY_OBJECT: v2 0x0096C878 0x0096C9E0 ?Order@@3PAURulesOrder@@A 0x004316FD
+RulesOrder Order[MaxOrderNum];  // 0x0096C878
+// Eight 0x20CC-byte records end where Bases begins at 0x0097D040.
+// RECOVERY_OBJECT: v2 0x0096C9E0 0x0097D040 ?PlayersData@@3PAUPlayerData@@A 0x00458DC0
+PlayerData PlayersData[MaxPlayerNum];                       // 0x0096C9E0
+// The pinned add-base path rejects when BaseCurrentCount reaches 512
+// (0x004E4B80); Base is 0x134 bytes, so the bounded array ends at 0x009A3840.
+// RECOVERY_OBJECT: v2 0x0097D040 0x009A3840 ?Bases@@3PAUBase@@A 0x004E4B80
+Base Bases[MaxBaseNum];                             // 0x0097D040
+// hof_save/hof_load transfer this complete zero-initialized 0x1324-byte
+// block, and FameWin indexes it in 0x8C-byte records. The original address
+// is evidence of identity, not a pointer used by the product build.
+// RECOVERY_OBJECT: v2 0x009A3840 0x009A4B64 ?HallOfFameRecords@@3PAUHallOfFameRecord@@A 0x0044AF70
+HallOfFameRecord HallOfFameRecords[HallOfFameRecordCount];  // 0x009A3840
+// Secret projects are the final 64 records, beginning at Facility[70]
+// (original 0x009A5888). The parser and consumers share this real array;
+// there is no separately allocated secret-project table.
+// Bound: 134 x 0x30 records; loops end at `cmp edi, 0x9a6488` (0x0048553E).
+// RECOVERY_OBJECT: v2 0x009A4B68 0x009A6488 ?Facility@@3PAURulesFacility@@A 0x0048553E
+RulesFacility Facility[MaxFacilityNum];             // 0x009A4B68
+// The rainfall loader publishes three rows of four colors, one byte after
+// each get_pixel. The coast renderer consumes row 1 forward or backward.
+
+// Original 452258 walks exactly 53 palette indices. No writer or pointer
+// escape was observed; const is that bounded interpretation, not a claim
+// about arbitrary computed addresses. Irregular image data stays in the
+// pinned, ignored configure-time include, never a second source ledger.
+
+
+// Mutable panel styles: load_box_sprites fills three columns by seventeen
+// rows. The records borrow the actual Sprite and Buffer objects below.
+// Original 0x78D528..0x78DD20 is initially zero; it is not a static address table.
+// The original loader advances 0x28 per record and stops after 51 buffers.
+
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Each row maps every palette index to its row number (original 0x007A81A0).
+
+// Original 0x006861F0..0x00686330: mutable palette offsets selected by
+// alt_get_ocean_detail's 0..79 result. Configuration replaces only the
+// accepted prefix, so these startup values and later untouched entries
+// persist across missing, partial and repeated load_cycling calls.
+
+// The temporary model retains the fourth record until scope exit, including
+// unwinding. A valid record with a different step count leaves its offset alone.
+
+
+
+// Bound: scalar; every original access is a dword at the start, never indexed, and the following bytes are never referenced.
+// RECOVERY_OBJECT: v2 0x009A6488 0x009A648C ?ExpansionEnabled@@3HA 0x004063FB
+BOOL ExpansionEnabled;  // 0x009A6488
+// RECOVERY_OBJECT: v3 0x009A64EC 0x009A650C ?FactionRankings@@3PAIA 0x005AC690 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.faction_rankings_
+// RECOVERY_OBJECT: v3 0x009A6514 0x009A6614 ?SecretProject@@3UBaseSecretProject@@A 0x005002E0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.secret_project_
+// RECOVERY_OBJECT: v3 0x009A64CC 0x009A64D0 ?BaseCurrentCount@@3HA 0x004E68B0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.base_current_count_
+// RECOVERY_OBJECT: v3 0x009A6614 0x009A6618 ?GovernorFaction@@3HA 0x00424410 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.governor_faction_
+// RECOVERY_OBJECT: v3 0x009A67DC 0x009A67E0 ?TranscendenceScoreBonus@@3HA 0x005ACBE0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.transcendence_score_bonus_
+// RECOVERY_OBJECT: v3 0x009A67E0 0x009A6800 ?TranscendenceScoreWeights@@3PAHA 0x005ACBE0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.transcendence_score_weights_
+// RECOVERY_OBJECT: v3 0x009A64E0 ?TimeControlsSelection@@3HA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.time_controls_selection_
+// RECOVERY_OBJECT: v3 0x009A6618 0x009A6644 ?CouncilResolutionCount@@3PAHA 0x005B3920 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.council_resolution_count_
+// RECOVERY_OBJECT: v3 0x009A6644 0x009A6670 ?CouncilLastResolutionTurn@@3PAHA 0x005B3920 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.council_last_resolution_turn_
+// RECOVERY_OBJECT: v3 0x009A64D0 0x009A64D4 ?GameSetupResetWord@@3HA 0x005B3920 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_setup_reset_word_
+// RECOVERY_OBJECT: v3 0x009A64E4 0x009A64E8 ?TurnControlDurationMilliseconds@@3HA 0x00523C60 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.turn_control_duration_milliseconds_
+// RECOVERY_OBJECT: v3 0x009A6810 0x009A6814 ?SaveDaemonStateWord@@3HA 0x005A94F0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.save_daemon_state_word_
+// RECOVERY_OBJECT: v3 0x009A6824 0x009A6828 ?EcologyEventAccumulator@@3HA 0x004F67F0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.ecology_event_accumulator_
+// RECOVERY_OBJECT: v3 0x009A64A4 ?GameInterludeFlags@@3IA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_interlude_flags_
+// RECOVERY_OBJECT: v3 0x009A64A0 0x009A64A4 ?GameWireOpaque_9A64A0@@3PAEA 0x00532E00 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_wire_opaque_9a64a0_
+// RECOVERY_OBJECT: v3 0x009A64A8 0x009A64AC ?GameWireOpaque_9A64A8@@3PAEA 0x00532E00 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_wire_opaque_9a64a8_
+// RECOVERY_OBJECT: v3 0x009A66C9 0x009A67C9 ?LegacyGameSaveName@@3PADA 0x005A6AC0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.legacy_game_save_name_
+// RECOVERY_OBJECT: v3 0x009A67C9 0x009A67CC ?GameWireOpaque_9A67C9@@3PAEA 0x00532E00 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_wire_opaque_9a67c9_
+// RECOVERY_OBJECT: v3 0x009A67CC 0x009A67D0 ?ClimateRiseStep@@3HA 0x00524210 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.climate_rise_step_
+// RECOVERY_OBJECT: v3 0x009A67D0 0x009A67D4 ?ClimateRiseLimit@@3HA 0x00524210 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.climate_rise_limit_
+// RECOVERY_OBJECT: v3 0x009A67D4 0x009A67D8 ?ClimateRiseAccum@@3HA 0x00524210 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.climate_rise_accum_
+// RECOVERY_OBJECT: v3 0x009A67D8 0x009A67DC ?ClimateSeaLevelDelta@@3HA 0x00524210 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.climate_sea_level_delta_
+// RECOVERY_OBJECT: v3 0x009A6670 0x009A66C9 ?GameTechAchieved@@3PAEA 0x004DFAD0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_tech_achieved_
+// RECOVERY_OBJECT: v3 0x009A64BC ?TutWinFlags9A64BC@@3HA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.tutwin_flags_9a64bc_
+// RECOVERY_OBJECT: v3 0x009A64DC 0x009A64E0 ?VehSelectionFollowLimit@@3HA 0x005C08C0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.vehicle_selection_follow_limit_
+// game_data transfers exactly 0x398 bytes from 0x009A6490 (0x005A6C24..
+// 0x005A6C9A), ending where the separately bounded Proposal table begins.
+// RECOVERY_OBJECT: v2 0x009A6490 0x009A6828 ?GameDataStateStorage@@3UGameDataStateWindow@@A 0x005A6AC0
+GameDataStateWindow GameDataStateStorage;
+// The council proposal table, 0x009A6828 in the shipped image - MaxProposalNum
+// entries of 0xc bytes. Was `RulesProposal *const Proposal =
+// (RulesProposal *)0x009A6828` in council.h, naming terranx.exe data that is
+// unmapped in a standalone build; see council.h. Zero at load there, as here:
+// alpha.cpp's PROPOSALS text load fills it before anything reads it.
+// RECOVERY_OBJECT: v2 0x009A6828 0x009A68AC ?Proposal@@3PAURulesProposal@@A 0x005873C0
+RulesProposal Proposal[MaxProposalNum];  // 0x009A6828, 0xc stride
+// MapLandmark at 0x00949894 is MapStorage.metadata_.landmarks_ (map.cpp).
+// Bound: 128 x 0x1C records; reset loop walks +4 to `cmp eax, 0x9ab534` (0x005C55D4).
+// RECOVERY_OBJECT: v2 0x009AA730 0x009AB530 ?Continents@@3PAUContinent@@A 0x005C55D4
+Continent Continents[MaxContinentNum];                      // 0x009AA730
+// Ability-model assembly reads the signed prerequisite at record +0x18;
+// the original indexes these existing rules with a 0x1C-byte stride.
+// Bound: 29 x 0x1C records; loops end at `cmp edi, 0x9ab864` (0x00485641).
+// RECOVERY_OBJECT: v2 0x009AB538 0x009AB864 ?Ability@@3PAURulesAbility@@A 0x00485641
+RulesAbility Ability[MaxAbilityNum];  // 0x009AB538
+// ===== MANAGED GLOBALS - the veh.h tables, homed here =====
+// Zero initialisation IS the image's initialisation: every base below reads
+// ZERO at run time (`image_data.py`, all past the file-backed end of .data),
+// and the alpha.txt / x.txt loaders fill them before use.
+// The table ends where the next mapped object, ExitTurnLoop at 0x009B2068,
+// begins: 0x009AB868 + 512 * 0x34 = 0x009B2068.
+// RECOVERY_OBJECT: v2 0x009AB868 0x009B2068 ?VehPrototypes@@3PAUVehPrototype@@A 0x00493AF0
+VehPrototype VehPrototypes[MaxVehProtoNum];  // 0x009AB868
+// Original dword stop-loop flag, set by system-close and read by wait paths.
+// RECOVERY_OBJECT: v2 0x009B2068 0x009B206C ?ExitTurnLoop@@3HA 0x004050C7
+int ExitTurnLoop;       // 0x009B2068
+// Earlier recovery interpreted 0x009A6504/0x009A6508 as independent
+// EndgameFactionSelectorA/B scalars. They are FactionRankings[6]/[7],
+// owned in alpha.cpp: rankings writes all eight slots, and setup_player
+// reads these slots at 0x005B231F/0x005B2300. Keep the historical
+// interpretation here; separate globals would sever producer/consumer state.
+// RECOVERY_OBJECT: v2 0x009B206C 0x009B2070 ?EndgameExitReason@@3HA 0x004F2FFE
+int EndgameExitReason;
+// human_turn514263 writes this independent dword; draw_bases4671B5 reads it.
+// Loader-zero storage ends before the separately owned GameSessionActive.
+// RECOVERY_OBJECT: v2 0x009B2070 0x009B2074 ?ControlTurnPhase@@3HA 0x00514050
+int ControlTurnPhase;
+// Session lifecycle flag read by Console::load_proc and the new-game menu.
+// RECOVERY_OBJECT: v2 0x009B2074 0x009B2078 ?GameSessionActive@@3HA 0x0058E360
+int GameSessionActive;
+// Original serializer transfers two adjacent, independent256-byte records.
+// RECOVERY_OBJECT: v2 0x009B2078 0x009B2178 ?SaveNameBuffer@@3PADA 0x005A6AC0
+char SaveNameBuffer[256];
+// RECOVERY_OBJECT: v2 0x009B2178 0x009B2278 ?ScenarioSaveNameBuffer@@3PADA 0x005A6AC0
+char ScenarioSaveNameBuffer[256];
+
 // ORIGINAL: 0x005BEC40 _$E21 0x005BEC40-0x005BEC56 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682660 selects initializer0x5bec40..0x5bec56, registering exit0x5bec60..0x5bec6a. Root independent complete decode confirms exclusive RET/JMP bounds; original/source-owned storage is0x94c590 bound to?g_PALETTE1@@3VPalette@@A.", "Original startup instruction evidence: [[\"0x5bec40\", \"mov\", \"ecx, 0x94c590\"], [\"0x5bec45\", \"call\", \"0x5fe2a0\"], [\"0x5bec4a\", \"push\", \"0x5bec60\"], [\"0x5bec4f\", \"call\", \"0x645398\"], [\"0x5bec54\", \"pop\", \"ecx\"], [\"0x5bec55\", \"ret\", \"\"]]. Original exit instruction evidence: [[\"0x5bec60\", \"mov\", \"ecx, 0x94c590\"], [\"0x5bec65\", \"jmp\", \"0x5fe2e0\"]]. Preserve constructor arguments, array counts/strides, registration and reverse destruction without authored callback stand-ins.", "Fresh complete build-iveupb5l physical src/interface_palette.cpp COFF selects _$E21 via .CRT$XCU, registering _$E19. Startup relocation targets: [\"?g_PALETTE1@@3VPalette@@A\", \"??0Palette@@QAE@XZ\", \"_$E19\", \"_atexit\"]; exit targets: [\"?g_PALETTE1@@3VPalette@@A\", \"??1Palette@@QAE@XZ\"]. Actual linked helper occurs once at CRT slot0x63f53c; selected same-owner order agrees with the pinned order.", "BaseWin/DesignWin definitions now precede their Wave globals as pinned. Existing DesignWin Wave mappings retain original names/spans and current helper overrides after fresh emission proof. Scalar constructor effects and array construction/cleanup belong to genuine source globals, classes and compiler-generated lifetime machinery.", "Current local labels are emission interpretations, not original debug names or recovered historical TU boundaries. Start bindings grant no allocation extent. Selected same-owner linked order is not full CRT/global-order, retained-selection, reference-target, dependency-provider, runtime or full-game acceptance. Guarded callbacks excluded; no claim grant or bug fix."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned ?g_PALETTE1@@3VPalette@@A; preserve complete original identity and remaining restoration/structure obligations."}
 // symbol    _$E20
@@ -147,15 +631,15 @@ int __cdecl X_text_open(char *src_file_id, const char *section_id) {
 // NOTE: code bytes match the image with relocations masked; recover measure
 //       refuses it while ConsoleInfoWin/WorldClimateWorldWin lack bounded
 //       object spans. The image keeps two "unitfound_sm.pcx" literals (unpooled).
-// RECOVERY_LITERAL: v1 0x00691BF8 0x00691C09 $SG65310 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C0C 0x00691C19 $SG65311 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C1C 0x00691C2D $SG65314 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C30 0x00691C3B $SG65315 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C3C 0x00691C4C $SG65318 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C4C 0x00691C58 $SG65319 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C58 0x00691C60 $SG65326 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C60 0x00691C72 $SG65328 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C74 0x00691C7F $SG65329 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691BF8 0x00691C09 $SG65335 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C0C 0x00691C19 $SG65336 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C1C 0x00691C2D $SG65339 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C30 0x00691C3B $SG65340 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C3C 0x00691C4C $SG65343 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C4C 0x00691C58 $SG65344 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C58 0x00691C60 $SG65351 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C60 0x00691C72 $SG65353 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C74 0x00691C7F $SG65354 0x005BED20
 int __cdecl do_unity_crash(int x, int y, int faction_id) {
     const uint32_t event = MapTiles[static_cast<int>(MapLongitude) * y + (x >> 1)].bit2;
     if ((event & 0x80004000u) != 0x4000u) {
@@ -901,12 +1385,12 @@ int __cdecl X_pop(char *caption, const char *label, int a3, char *a4, int a5,
     // alienuscript.txt: only an expansion alien faction redirects these
     // two captions.
     if (strcmp(caption, XPopModCheckString1()) == 0 ||
-// RECOVERY_LITERAL: v1 0x00691C80 0x00691C8B $SG65577 0x005BF480
+// RECOVERY_LITERAL: v1 0x00691C80 0x00691C8B $SG65602 0x005BF480
         strcmp(caption, "SCRIPT.txt") == 0) {
         if ((Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) != 0) {
             if (ExpansionEnabled != 0) {
-// RECOVERY_LITERAL: v1 0x00691C90 0x00691CA1 $SG65582 0x005BF480
-// RECOVERY_LITERAL: v1 0x00691C8C 0x00691C8F $SG65581 0x005BF480
+// RECOVERY_LITERAL: v1 0x00691C90 0x00691CA1 $SG65607 0x005BF480
+// RECOVERY_LITERAL: v1 0x00691C8C 0x00691C8F $SG65606 0x005BF480
                 FILE *const fp = fopen("alienIscript.txt", "rb");
                 if (fp != nullptr) {
                     fclose(fp);
@@ -920,8 +1404,8 @@ int __cdecl X_pop(char *caption, const char *label, int a3, char *a4, int a5,
                   PopupDialogFactionID < 8 &&
                   (Players[PopupDialogFactionID].rule_flags &
                    RFLAG_ALIEN) != 0) {
-// RECOVERY_LITERAL: v1 0x00691CA8 0x00691CB9 $SG65591 0x005BF480
-// RECOVERY_LITERAL: v1 0x00691CA4 0x00691CA7 $SG65590 0x005BF480
+// RECOVERY_LITERAL: v1 0x00691CA8 0x00691CB9 $SG65616 0x005BF480
+// RECOVERY_LITERAL: v1 0x00691CA4 0x00691CA7 $SG65615 0x005BF480
             FILE *const fp = fopen("alienuscript.txt", "rb");
             if (fp != nullptr) {
                 fclose(fp);
@@ -1000,16 +1484,16 @@ int __cdecl X_pop_ask(char *caption, const char *label, int value,
 
     char *const section = const_cast<char *>(label);
     if (strcmp(caption, XPopModCheckString1()) != 0 &&
-// RECOVERY_LITERAL: v1 0x00691CF8 0x00691D03 $SG65643 0x005BFBC0
+// RECOVERY_LITERAL: v1 0x00691CF8 0x00691D03 $SG65668 0x005BFBC0
         strcmp(caption, "SCRIPT.txt") != 0) {
         return pop_ask(caption, section, value, text, callback, flags);
     }
 
     if ((Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) != 0) {
         if (ExpansionEnabled != 0) {
-// RECOVERY_LITERAL: v1 0x00691D08 0x00691D19 $SG65648 0x005BFBC0
+// RECOVERY_LITERAL: v1 0x00691D08 0x00691D19 $SG65673 0x005BFBC0
             FILE *const file = fopen("alienIscript.txt",
-// RECOVERY_LITERAL: v1 0x00691D04 0x00691D07 $SG65647 0x005BFBC0
+// RECOVERY_LITERAL: v1 0x00691D04 0x00691D07 $SG65672 0x005BFBC0
                                           "rb");
             if (file != nullptr) {
                 fclose(file);
@@ -1021,9 +1505,9 @@ int __cdecl X_pop_ask(char *caption, const char *label, int value,
     } else if (ExpansionEnabled != 0 && PopupDialogFactionID > 0 &&
                PopupDialogFactionID < 8 &&
                (Players[PopupDialogFactionID].rule_flags & RFLAG_ALIEN) != 0) {
-// RECOVERY_LITERAL: v1 0x00691D20 0x00691D31 $SG65656 0x005BFBC0
+// RECOVERY_LITERAL: v1 0x00691D20 0x00691D31 $SG65681 0x005BFBC0
         FILE *const file = fopen("alienuscript.txt",
-// RECOVERY_LITERAL: v1 0x00691D1C 0x00691D1F $SG65655 0x005BFBC0
+// RECOVERY_LITERAL: v1 0x00691D1C 0x00691D1F $SG65680 0x005BFBC0
                                       "rb");
         if (file != nullptr) {
             fclose(file);
@@ -1088,16 +1572,16 @@ int __cdecl X_pop_ask_number(char *caption, const char *label, int value,
 
     char *const section = const_cast<char *>(label);
     if (strcmp(caption, XPopModCheckString1()) != 0 &&
-// RECOVERY_LITERAL: v1 0x00691D34 0x00691D3F $SG65683 0x005BFD70
+// RECOVERY_LITERAL: v1 0x00691D34 0x00691D3F $SG65708 0x005BFD70
         strcmp(caption, "SCRIPT.txt") != 0) {
         return pop_ask_number(caption, section, value, callback);
     }
 
     if ((Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) != 0) {
         if (ExpansionEnabled != 0) {
-// RECOVERY_LITERAL: v1 0x00691D44 0x00691D55 $SG65688 0x005BFD70
+// RECOVERY_LITERAL: v1 0x00691D44 0x00691D55 $SG65713 0x005BFD70
             FILE *const file = fopen("alienIscript.txt",
-// RECOVERY_LITERAL: v1 0x00691D40 0x00691D43 $SG65687 0x005BFD70
+// RECOVERY_LITERAL: v1 0x00691D40 0x00691D43 $SG65712 0x005BFD70
                                           "rb");
             if (file != nullptr) {
                 fclose(file);
@@ -1109,9 +1593,9 @@ int __cdecl X_pop_ask_number(char *caption, const char *label, int value,
     } else if (ExpansionEnabled != 0 && PopupDialogFactionID > 0 &&
                PopupDialogFactionID < 8 &&
                (Players[PopupDialogFactionID].rule_flags & RFLAG_ALIEN) != 0) {
-// RECOVERY_LITERAL: v1 0x00691D5C 0x00691D6D $SG65696 0x005BFD70
+// RECOVERY_LITERAL: v1 0x00691D5C 0x00691D6D $SG65721 0x005BFD70
         FILE *const file = fopen("alienuscript.txt",
-// RECOVERY_LITERAL: v1 0x00691D58 0x00691D5B $SG65695 0x005BFD70
+// RECOVERY_LITERAL: v1 0x00691D58 0x00691D5B $SG65720 0x005BFD70
                                       "rb");
         if (file != nullptr) {
             fclose(file);
@@ -1156,7 +1640,7 @@ int __cdecl X_pops(char *caption, const char *label, int text_length,
 
     char *const mutable_label = const_cast<char *>(label);
     if (strcmp(caption, XPopModCheckString1()) != 0 &&
-// RECOVERY_LITERAL: v1 0x00691CBC 0x00691CC7 $SG65730 0x005BF930
+// RECOVERY_LITERAL: v1 0x00691CBC 0x00691CC7 $SG65755 0x005BF930
         strcmp(caption, "SCRIPT.txt") != 0) {
         return pops(caption, mutable_label, text_length, text, value,
                     sprite, flag_a, flag_b, callback);
@@ -1164,9 +1648,9 @@ int __cdecl X_pops(char *caption, const char *label, int text_length,
 
     if ((Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) != 0) {
         if (ExpansionEnabled != 0) {
-// RECOVERY_LITERAL: v1 0x00691CCC 0x00691CDD $SG65735 0x005BF930
+// RECOVERY_LITERAL: v1 0x00691CCC 0x00691CDD $SG65760 0x005BF930
             FILE *const file = fopen("alienIscript.txt",
-// RECOVERY_LITERAL: v1 0x00691CC8 0x00691CCB $SG65734 0x005BF930
+// RECOVERY_LITERAL: v1 0x00691CC8 0x00691CCB $SG65759 0x005BF930
                                           "rb");
             if (file != 0) {
                 fclose(file);
@@ -1181,9 +1665,9 @@ int __cdecl X_pops(char *caption, const char *label, int text_length,
     } else if (ExpansionEnabled != 0 && PopupDialogFactionID > 0 &&
                PopupDialogFactionID < 8 &&
                (Players[PopupDialogFactionID].rule_flags & RFLAG_ALIEN) != 0) {
-// RECOVERY_LITERAL: v1 0x00691CE4 0x00691CF5 $SG65744 0x005BF930
+// RECOVERY_LITERAL: v1 0x00691CE4 0x00691CF5 $SG65769 0x005BF930
         FILE *const file = fopen("alienuscript.txt",
-// RECOVERY_LITERAL: v1 0x00691CE0 0x00691CE3 $SG65743 0x005BF930
+// RECOVERY_LITERAL: v1 0x00691CE0 0x00691CE3 $SG65768 0x005BF930
                                       "rb");
         if (file != 0) {
             fclose(file);

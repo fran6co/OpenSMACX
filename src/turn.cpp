@@ -2184,10 +2184,6 @@ MEASURED inline void __cdecl ascent() {
     popp(ScriptPopupFile, "ASCENT", 0, "asctran_sm.pcx", 0);
 }
 
-// Session lifecycle flag read by Console::load_proc and the new-game menu.
-// RECOVERY_OBJECT: v2 0x009B2074 0x009B2078 ?GameSessionActive@@3HA 0x0058E360
-int GameSessionActive;
-
 // ORIGINAL: 0x00523C60 ?set_time_controls@@YAXXZ 0x00523C60-0x00523DC9
 // RECOVERY_BINDING: v1 {"evidence": ["task:time-control-calculation-and-dialog", "historical seed:src/recovered/units/00523c60.cpp", "Pinned original native instructions and existing typed source layout; seed aliases independently reconciled."], "reason": "Recover complete turn-duration calculation through typed rules, faction and vehicle records and actual NetDaemon state; preserve the native bonus-update order and state predicates."}
 void __cdecl set_time_controls() {

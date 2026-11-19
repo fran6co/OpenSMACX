@@ -550,29 +550,8 @@ Status: Complete
 // Buffer owns its shared surface Sprite at 0x009B3A50; this unit does not
 // access that object directly. Sprite owns the tech-wizard facility icons.
 extern Sprite g_TECH_ICON_SPRITES[89];  // 0x00759E28, sprite.cpp's definition
-
-// The published unit draw-state block: the words the surface sprite's
-// draw_dest_unk1 readers consume, 0x009B3A54..0x009B3A78.
-
-
-// ---------------------------------------------------------------------------
-// FX::play, 0x00446A00. The bank's sound trigger: gate on the sound bit of
-// GamePreferences, re-arm the popup wave owner for the first three effect
-// kinds, then release/restart the effect record. fx.h declares the member;
-// its forwarder retires from pending_bodies.cpp in this change.
-
-// Interlude members and compiler-generated lifetime code are owned by interlude.cpp.
-
-// Media overlay update is owned by MediaRuntime in movie_media.cpp.
-
-
-// Original pointer cell 0x00691B18 selects the WIZARD text at 0x00691B94.
-// Keep that pointer/text relationship in source-owned storage. Names are
-// descriptive; bindings establish starts, not enclosing allocation bounds.
-// RECOVERY_OBJECT: v1 0x00691B94 ?TechWizardPopupFileText@@3PADA
-char TechWizardPopupFileText[7] = "WIZARD";
-// RECOVERY_OBJECT: v1 0x00691B18 ?TechWizardPopupFile@@3PADA
-char *TechWizardPopupFile = TechWizardPopupFileText;
+extern char TechWizardPopupFileText[7];
+extern char *TechWizardPopupFile;
 
 
 // The old 447D20 binding in this file was a settings-checkbox/repaint seed

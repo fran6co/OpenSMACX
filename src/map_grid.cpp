@@ -138,22 +138,6 @@ Map *MapResamplePreviousTiles;
 int MapResamplePreviousWidth;
 // RECOVERY_OBJECT: v1 0x00945AD8 ?MapResamplePreviousHeight@@3HA
 int MapResamplePreviousHeight;
-
-// Metadata scalars formerly lived here; landmarks_ and file_path_ formerly
-// lived in alpha.cpp. All had static zero initialization. Their exact native
-// address/offset relationship is now declared in map.h in one real allocation.
-// MapLongitude (68FAF0) remains an independently initialized row-stride object.
-// map_read/map_write transfer this writable zero-fill window as 0xAA4 bytes.
-// This records the observed serialized region, not a claim about original type,
-// complete allocation, or lifetime.
-// RECOVERY_OBJECT: v2 0x00949870 0x0094A314 ?MapStorage@@3UMapStorageWindow@@A 0x005910B0
-// RECOVERY_OBJECT: v3 0x0094A30C ?MapTiles@@3PAUMap@@A member ?MapStorage@@3UMapStorageWindow@@A tiles_
-// RECOVERY_OBJECT: v3 0x0094A310 ?MapAbstractTiles@@3PAEA member ?MapStorage@@3UMapStorageWindow@@A abstract_tiles_
-// RECOVERY_OBJECT: v3 0x00949870 ?MapLongitudeBounds@@3HA member ?MapStorage@@3UMapStorageWindow@@A metadata_.longitude_bounds_
-// RECOVERY_OBJECT: v3 0x00949874 ?MapLatitudeBounds@@3HA member ?MapStorage@@3UMapStorageWindow@@A metadata_.latitude_bounds_
-// RECOVERY_OBJECT: v3 0x00949884 ?MapArea@@3IA member ?MapStorage@@3UMapStorageWindow@@A metadata_.area_
-// RECOVERY_OBJECT: v3 0x0094988C ?MapIsFlat@@3HA member ?MapStorage@@3UMapStorageWindow@@A metadata_.is_flat_
-MapStorageWindow MapStorage;
 // RECOVERY_OBJECT: v4 0x0068FAF0 0x0068FAF4 ?MapLongitude@@3IA 0x004E7E50 target ?MapLongitude@@3HA
 int MapLongitude = 1;  // half-width tile-row stride; original default is 1
 LPCSTR MapExtension = "MP";

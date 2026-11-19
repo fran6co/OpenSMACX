@@ -163,15 +163,6 @@ char *__cdecl sub_584d30(char *dest, char *src, unsigned int count) {
 static const char alpha_tech_identifiers_section[] = "TECHNOLOGY";
 // RECOVERY_OBJECT: v1 0x0068F30C _alpha_tech_values_section
 static const char alpha_tech_values_section[] = "TECHNOLOGY";
-
-// read_tech's prologue loads the pointer variable (`mov eax, dword ptr
-// [0x691AFC]` at 0x00585E34) ahead of text_open; the DWORD there points at
-// the "ALPHAX" literal at 0x00691B58.
-// RECOVERY_OBJECT: v2 0x00691AFC 0x00691B00 ?AlphaxFileID@@3PBDB 0x0048207D
-// The initialiser's own literal: the image DWORD at 0x00691AFC holds
-// 0x00691B58, where the seven bytes "ALPHAX\0" sit.
-// RECOVERY_LITERAL: v1 0x00691B58 0x00691B5F $SG64436 0x0048207D
-LPCSTR AlphaxFileID = "ALPHAX";
 // Alpha owns the parsed #COMPASS pointer IDs populated by read_rules.
 // RECOVERY_OBJECT: v1 0x00945D48 ?Compass@@3PAPADA
 LPSTR Compass[MaxCompassNum];      // 0x00945D48
@@ -186,57 +177,11 @@ LPSTR Difficulty[MaxDiffNum];      // 0x0096C85C
 // converted to the objects themselves; the folded absolute addressing of
 // every use site is unchanged, the immediate now a relocation.
 RulesResourceinfo ResourceInfo[MaxResourceInfoNum]; // 0x00945F50
-// RECOVERY_OBJECT: v1 0x0094F1B8 ?TimeControl@@3PAURulesTimeControl@@A
-RulesTimeControl TimeControl[MaxTimeControlNum];    // 0x0094F1B8
-// Convoy 004D907E/004D90EF and the rules parser independently identify this
-// existing resource-table start; lifetime remains open.
-// Bound: the loader fills 4 x 8-byte records from +4 to `cmp esi, 0x94617c` (0x00587D75).
-// RECOVERY_OBJECT: v2 0x00946158 0x00946178 ?Resource@@3PAURulesResource@@A 0x00587D75
-RulesResource Resource[MaxResourceNum];             // 0x00946158
 RulesEnergy Energy[MaxEnergyNum];                   // 0x0094A318
-// NetDaemon::synch sizes opcode 0x81, this whole window, as 0x13C bytes
-// (`mov esi, 0x13c` at 0x00533226; `mov esi, 0x949730` at 0x00533A5C).
-// RECOVERY_OBJECT: v2 0x00949730 0x0094986C ?RulesStorage@@3URulesStorageWindow@@A 0x00533226
-// RECOVERY_OBJECT: v3 0x00949738 ?Rules@@3URulesBasic@@A member ?RulesStorage@@3URulesStorageWindow@@A rules_
-// RECOVERY_OBJECT: v3 0x00949730 ?TechValidCount@@3HA member ?RulesStorage@@3URulesStorageWindow@@A tech_valid_count_
-// RECOVERY_OBJECT: v3 0x00949734 ?TechCommerceCount@@3HA member ?RulesStorage@@3URulesStorageWindow@@A tech_commerce_count_
-RulesStorageWindow RulesStorage;
-// The parser walks the five ratio words at +0x64..+0x74. NetDaemon::synch
-// opcode 0x82 transfers 0x7C bytes from this start (0x00533230/0x00533A63).
-// That transfer size bounds the object; ReplayEvents starts at its end.
-// RECOVERY_OBJECT: v2 0x009502A8 0x00950324 ?WorldBuilder@@3URulesWorldbuilder@@A 0x00533230
-RulesWorldbuilder WorldBuilder;
-
-// THE FACTION/MAP RULES STORAGE (faction.h / map.h) - real zero-initialised
-// objects; the image's copies are uninitialised .data the rules walkers fill.
-// Original say_society at 0x00590A21 reads the category-row start at stride 0xD4; no full layout/extent claim.
-// RECOVERY_OBJECT: v1 0x0094B000 ?SocialCategories@@3PAURulesSocialCategory@@A
-RulesSocialCategory SocialCategories[MaxSocialCatNum];      // 0x0094B000
-// RECOVERY_OBJECT: v1 0x00946580 ?SocialEffects@@3PAURulesSocialEffect@@A
-RulesSocialEffect SocialEffects[MaxSocialEffectNum];        // 0x00946580
 LPSTR Mood[MaxMoodNum];                                     // 0x0094C9E4
 LPSTR Repute[MaxReputeNum];                                 // 0x00946A30
 RulesMight Might[MaxMightNum];                              // 0x0094C558
 RulesBonusName BonusName[MaxBonusNameNum];                  // 0x009461A8
-// read_faction(int) (0x00586050) computes its Player* argument as
-// `lea ecx, [eax*4 + 0x946A50]` (stride 1436); faction.h repeats the base
-// beside its extern declaration.
-// Bound: 8 x 0x59C records; loops end at `cmp esi, 0x949730` (0x00424A96), RulesStorage's start.
-// RECOVERY_OBJECT: v2 0x00946A50 0x00949730 ?Players@@3PAUPlayer@@A 0x00424A96
-Player Players[MaxPlayerNum];                               // 0x00946A50
-// Eight 0x20CC-byte records end where Bases begins at 0x0097D040.
-// RECOVERY_OBJECT: v2 0x0096C9E0 0x0097D040 ?PlayersData@@3PAUPlayerData@@A 0x00458DC0
-PlayerData PlayersData[MaxPlayerNum];                       // 0x0096C9E0
-// The original loader at 0x5881AB starts at 0x94ADE4 and fills name/name_short
-// at offsets -4/0 with stride8. Terrain consumers read those same pointer slots.
-// Lifetime remains open.
-// Bound: 16 x 8-byte records; loop ends at `cmp esi, 0x94ae60` (0x004E155B), Weapon's start.
-// RECOVERY_OBJECT: v2 0x0094ADE0 0x0094AE60 ?Natural@@3PAURulesNatural@@A 0x004E155B
-RulesNatural Natural[MaxNaturalNum];                        // 0x0094ADE0
-// MapLandmark at 0x00949894 is MapStorage.metadata_.landmarks_ (map.cpp).
-// Bound: 128 x 0x1C records; reset loop walks +4 to `cmp eax, 0x9ab534` (0x005C55D4).
-// RECOVERY_OBJECT: v2 0x009AA730 0x009AB530 ?Continents@@3PAUContinent@@A 0x005C55D4
-Continent Continents[MaxContinentNum];                      // 0x009AA730
 // rankings (0x005AC690) writes the eight native dwords at
 // [0x009A64EC,0x009A650C). setup_player's apparent endgame selector
 // cells 0x009A6504/0x009A6508 are entries 6/7 of this same allocation;
@@ -244,76 +189,8 @@ Continent Continents[MaxContinentNum];                      // 0x009AA730
 // Historical object identity moved to GameDataStateStorage; see the transport manifest.
 // 0x009A64EC
 uint16_t FactionRankingHistory[MaxPlayerNum * MaxRankingHistoryTurns];  // 0x009A68AC
-// hof_save/hof_load transfer this complete zero-initialized 0x1324-byte
-// block, and FameWin indexes it in 0x8C-byte records. The original address
-// is evidence of identity, not a pointer used by the product build.
-// RECOVERY_OBJECT: v2 0x009A3840 0x009A4B64 ?HallOfFameRecords@@3PAUHallOfFameRecord@@A 0x0044AF70
-HallOfFameRecord HallOfFameRecords[HallOfFameRecordCount];  // 0x009A3840
 // RECOVERY_OBJECT: v2 0x00759194 0x00759198 ?HallOfFameIOMode@@3HA 0x0044AF90
 int HallOfFameIOMode;  // 0x00759194
-// MapFilePath at 0x0094A2BC is MapStorage.metadata_.file_path_ (map.cpp).
-// read_tech walks the array from `mov esi, 0x94F360` (&Technology[0].id,
-// base+8 over flags/name) with the 0x2C stride declared in technology.h.
-// Bound: 89 x 0x2C records; loops end at `cmp esi, 0x9502a4` (0x0059F7C0).
-// RECOVERY_OBJECT: v2 0x0094F358 0x009502A4 ?Technology@@3PAURulesTechnology@@A 0x0059F7C0
-RulesTechnology Technology[MaxTechnologyNum];       // 0x0094F358
-// RECOVERY_OBJECT: v2 0x0094B4A0 0x0094B4C0 ?Mandate@@3PAURulesMandate@@A 0x005873C0
-RulesMandate Mandate[MaxMandateNum];                // 0x0094B4A0
-// RECOVERY_OBJECT: v2 0x00691878 0x00691AF8 ?Terraforming@@3PAURulesTerraforming@@A 0x005873C0
-// The historical map word identities are live rates in this mutable array.
-// 0x00691890 + row * 32 selects rate (+0x18), including road and magtube.
-// RECOVERY_OBJECT: v3 0x00691930 ?MapTerrainBonusYieldRow5FirstWord@@3HB member ?Terraforming@@3PAURulesTerraforming@@A [5].rate
-// RECOVERY_OBJECT: v3 0x00691950 ?MapTerrainBonusYieldRow6FirstWord@@3HB member ?Terraforming@@3PAURulesTerraforming@@A [6].rate
-RulesTerraforming Terraforming[MaxTerrainNum] = {
-    { 0, 0, {0, 0}, BIT_FARM,          BIT_FOREST, 0, 0 },
-    { 0, 0, {0, 0}, BIT_SOIL_ENRICHER, BIT_FOREST, 0, 0 },
-    { 0, 0, {0, 0}, BIT_MINE,
-      BIT_MINE | BIT_SOLAR_TIDAL | BIT_FOREST | BIT_CONDENSER | BIT_ECH_MIRROR
-          | BIT_THERMAL_BORE | BIT_SENSOR_ARRAY, 0, 0 },
-    { 0, 0, {0, 0}, BIT_SOLAR_TIDAL,
-      BIT_MINE | BIT_SOLAR_TIDAL | BIT_FOREST | BIT_CONDENSER | BIT_ECH_MIRROR
-          | BIT_THERMAL_BORE | BIT_SENSOR_ARRAY, 0, 0 },
-    { 0, 0, {0, 0}, BIT_FOREST,
-      BIT_MINE | BIT_FUNGUS | BIT_SOLAR_TIDAL | BIT_FARM | BIT_SOIL_ENRICHER
-          | BIT_FOREST | BIT_CONDENSER | BIT_ECH_MIRROR | BIT_THERMAL_BORE, 0, 0 },
-    { 0, 0, {0, 0}, BIT_ROAD, 0, 0, 0 },
-    { 0, 0, {0, 0}, BIT_MAGTUBE, 0, 0, 0 },
-    { 0, 0, {0, 0}, BIT_BUNKER, BIT_AIRBASE, 0, 0 },
-    { 0, 0, {0, 0}, BIT_AIRBASE, BIT_BUNKER, 0, 0 },
-    { 0, 0, {0, 0}, BIT_SENSOR_ARRAY,
-      BIT_MINE | BIT_SOLAR_TIDAL | BIT_CONDENSER | BIT_ECH_MIRROR
-          | BIT_THERMAL_BORE, 0, 0 },
-    { 0, 0, {0, 0}, 0, BIT_FUNGUS, 0, 0 },
-    { 0, 0, {0, 0}, BIT_FUNGUS,
-      BIT_MINE | BIT_SOLAR_TIDAL | BIT_FARM | BIT_SOIL_ENRICHER | BIT_FOREST, 0, 0 },
-    { 0, 0, {0, 0}, BIT_CONDENSER,
-      BIT_MINE | BIT_SOLAR_TIDAL | BIT_FOREST | BIT_CONDENSER | BIT_ECH_MIRROR
-          | BIT_THERMAL_BORE | BIT_SENSOR_ARRAY, 0, 0 },
-    { 0, 0, {0, 0}, BIT_ECH_MIRROR,
-      BIT_MINE | BIT_SOLAR_TIDAL | BIT_FOREST | BIT_CONDENSER | BIT_ECH_MIRROR
-          | BIT_THERMAL_BORE | BIT_SENSOR_ARRAY, 0, 0 },
-    { 0, 0, {0, 0}, BIT_THERMAL_BORE,
-      BIT_MINE | BIT_SOLAR_TIDAL | BIT_FARM | BIT_FOREST | BIT_CONDENSER
-          | BIT_ECH_MIRROR | BIT_THERMAL_BORE | BIT_SENSOR_ARRAY, 0, 0 },
-    { 0, 0, {0, 0}, 0, 0, 0, 0 },
-    { 0, 0, {0, 0}, 0, 0, 0, 0 },
-    { 0, 0, {0, 0}, 0, 0, 0, 0 },
-    { 0, 0, {0, 0}, 0, 0, 0, 0 },
-    { 0, 0, {0, 0}, BIT_MONOLITH,
-      BIT_SUPPLY_POD | BIT_NUTRIENT_RSC | BIT_RSC_BONUS, 0, 0 },
-}; // 0x00691878
-// Secret projects are the final 64 records, beginning at Facility[70]
-// (original 0x009A5888). The parser and consumers share this real array;
-// there is no separately allocated secret-project table.
-// Bound: 134 x 0x30 records; loops end at `cmp edi, 0x9a6488` (0x0048553E).
-// RECOVERY_OBJECT: v2 0x009A4B68 0x009A6488 ?Facility@@3PAURulesFacility@@A 0x0048553E
-RulesFacility Facility[MaxFacilityNum];             // 0x009A4B68
-// RECOVERY_OBJECT: v2 0x00946020 0x00946138 ?Citizen@@3PAURulesCitizen@@A 0x005873C0
-RulesCitizen Citizen[MaxCitizenNum];                // 0x00946020
-// The pinned add-base path rejects when BaseCurrentCount reaches 512
-// (0x004E4B80); Base is 0x134 bytes, so the bounded array ends at 0x009A3840.
-// RECOVERY_OBJECT: v2 0x0097D040 0x009A3840 ?Bases@@3PAUBase@@A 0x004E4B80
-Base Bases[MaxBaseNum];                             // 0x0097D040
 // ORIGINAL: 0x00584D00 _$E56 0x00584D00-0x00584D16 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT dispatcher 0x00644DEC-0x00644DFB supplies [0x00682000,0x006826CC) to 0x00644ED8, which calls each non-null dword. Slot 0x00682644 selects init 0x00584D00, which registers exit callback 0x00584D20.", "Original init span 0x00584D00-0x00584D16 and exit span 0x00584D20-0x00584D2A are independently disassembled; both identify receiver 0x00945780 and Wave constructor/destructor 0x004C66E0/0x004C67C0.", "Historical earlier wave.cpp physical COFF selected local STATIC init _$E56 via .CRT$XCU, relocating to g_TOP_MENU_WAVE, Wave construction, paired local fini _$E54 and atexit; fini relocates to the same object and Wave destruction. Native comparator can select these physical local function symbols.", "Independent pin/COFF/source review supports individual lifetime ownership. These mappings do not establish complete global initialization order, linked retained selection, full data layout, original debug names or runtime acceptance."], "reason": "Bind the original startup operation to the genuine compiler-emitted lifetime of source-owned g_TOP_MENU_WAVE. The local symbol identifies current emitted code, not an original debug name; no callback body is authored."}
 // symbol    _$E16
@@ -709,7 +586,7 @@ BOOL __cdecl read_basic_rules() {
     return false;
 }
 
-// RECOVERY_LITERAL: v1 0x0068F2FC 0x0068F30A $SG64534 0x00585E30
+// RECOVERY_LITERAL: v1 0x0068F2FC 0x0068F30A $SG64533 0x00585E30
 /*
 Purpose: Parse the #TECHNOLOGY section inside the alpha(x).txt with a duplicate entry check.
 // ORIGINAL: 0x00585E30 ?read_tech@@YAHXZ 0x00585E30-0x00585FDB BYTE_EXACT
@@ -1910,20 +1787,7 @@ extern uint32_t EditBoxDefaultB20;
 extern uint32_t EditBoxDefaultB24;
 extern uint32_t EditBoxDefaultB28;
 extern uint32_t EditBoxDefaultB2C;
-
-
-// Application fonts, selected and initialized by config_popups and WinMain.
-// FontTable stays with find_font; the entrypoint's singleton is in main.cpp.
-// Original CRT order is singleton, FontQueue VAL2/VAL1, then FontTable.
-
-// Face pointer read only by Credits::exec (0x00428AE4); its literal sits
-// before "Arial" in this unit's data.
-// RECOVERY_OBJECT: v1 0x00691B28 ?CreditsFontFace@@3PBDB
-LPCSTR CreditsFontFace = "Alpha Centauri";  // 0x00691B28 -> 0x00691BC4
-// RECOVERY_OBJECT: v2 0x00691B2C 0x00691B30 ?DefaultFontFace@@3PBDB 0x00408B8D
-LPCSTR DefaultFontFace = "Arial";  // 0x00691B2C -> 0x00691BD4
-// RECOVERY_OBJECT: v1 0x00691B30 ?DefaultLargeFontFace@@3PBDB
-LPCSTR DefaultLargeFontFace = "Arial Narrow"; // 0x00691B30 -> 0x00691BDC
+extern LPCSTR CreditsFontFace;
 
 /*
 Purpose: Select the Font whose point size is closest to the requested one,
@@ -2617,13 +2481,13 @@ char ConfigRandomLeaderInitial[4];
 
 // ORIGINAL: 0x005898A0 ?thumb_routine@@YAXH@Z 0x005898A0-0x00589A24 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/units/005898a0.cpp", "pinned:5898A0..589A24; preview9403E0; detail945818; diplomacy art78EE48 with65C faction stride", "source:Popup537C and PickWin redraw/ListBox cdecl(int) callback contract; allocation/lifetime selection still requires native qualification"], "reason": "Typed shared faction preview callback with real Popup/SpriteBox/FactionArt owners and genuine global storage; no executable-address aliases or manual vtables."}
-// RECOVERY_LITERAL: v1 0x0068F5C0 0x0068F5CB $SG65272 0x005898A0
-// RECOVERY_LITERAL: v1 0x0068F5CC 0x0068F5D2 $SG65274 0x005898A0
-// RECOVERY_LITERAL: v1 0x0068F5D4 0x0068F5DF $SG65276 0x005898A0
+// RECOVERY_LITERAL: v1 0x0068F5C0 0x0068F5CB $SG65268 0x005898A0
+// RECOVERY_LITERAL: v1 0x0068F5CC 0x0068F5D2 $SG65270 0x005898A0
+// RECOVERY_LITERAL: v1 0x0068F5D4 0x0068F5DF $SG65272 0x005898A0
 void __cdecl thumb_routine(int faction) {
     if (ExpansionEnabled) {
         PickWinGlobal.GraphicWin::redraw();
-// RECOVERY_LITERAL: v1 0x0068F5B8 0x0068F5C0 $SG65270 0x005898A0
+// RECOVERY_LITERAL: v1 0x0068F5B8 0x0068F5C0 $SG65266 0x005898A0
         if (strcmp(Players[faction].filename, "JENN282") == 0) {
             ConfigFactionPreview.close();
             return;
@@ -3775,9 +3639,9 @@ static inline void map_menu_budget_probe(int x) {
 // map_menu's string operands, each read from the image's push operand at
 // 0x0058D710 ("MAPMENU"), 0x0058D840 ("maps\\xplanet.mp") and 0x0058D847
 // ("maps\\xplanetx.mp") and checked against the literal text in the body.
-// RECOVERY_LITERAL: v1 0x0068F8A0 0x0068F8A8 $SG65847 0x0058D6B0
-// RECOVERY_LITERAL: v1 0x0068F8A8 0x0068F8B8 $SG65865 0x0058D6B0
-// RECOVERY_LITERAL: v1 0x0068F8B8 0x0068F8C9 $SG65868 0x0058D6B0
+// RECOVERY_LITERAL: v1 0x0068F8A0 0x0068F8A8 $SG65843 0x0058D6B0
+// RECOVERY_LITERAL: v1 0x0068F8A8 0x0068F8B8 $SG65861 0x0058D6B0
+// RECOVERY_LITERAL: v1 0x0068F8B8 0x0068F8C9 $SG65864 0x0058D6B0
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0058D6B0 0x0058DB18 0x0058DB2C 0x0058D778
 // ORIGINAL: 0x0058D6B0 ?map_menu@@YAHH@Z 0x0058D6B0-0x0058DB17;0x00660989-0x00660A96 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:newgame-menu-owner", "historical seed:src/unrecovered/0058d6b0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete mapped native control flow", "source:existing SetupWin/Popup/Buffer/NetDaemon owner declarations; provisional bounded945820 and9B2074 objects, not raw image aliases"], "reason": "Source-owned new-game/menu family preserving complete original identity, auxiliary spans and historical seed findings; existing genuine object lifetimes and typed member owners. Unfinished bodies remain explicit, not implementation coverage."}
@@ -4025,20 +3889,20 @@ do_cleanup:
 // top_menu's string operands, each read from the image's push operand and
 // checked against the literal text in the body; the repeated file names are
 // separate unpooled copies at distinct addresses.
-// RECOVERY_LITERAL: v1 0x0068F8F4 0x0068F908 $SG65959 0x0058E360
-// RECOVERY_LITERAL: v1 0x0068F908 0x0068F916 $SG65963 0x0058E360
-// RECOVERY_LITERAL: v1 0x0068F918 0x0068F926 $SG65964 0x0058E360
-// RECOVERY_LITERAL: v1 0x0068F928 0x0068F935 $SG65966 0x0058E360
-// RECOVERY_LITERAL: v1 0x0068F938 0x0068F945 $SG65967 0x0058E360
-// RECOVERY_LITERAL: v1 0x0068F948 0x0068F956 $SG65972 0x0058E360
-// RECOVERY_LITERAL: v1 0x0068F958 0x0068F966 $SG65973 0x0058E360
-// RECOVERY_LITERAL: v1 0x0068F968 0x0068F975 $SG65975 0x0058E360
-// RECOVERY_LITERAL: v1 0x0068F978 0x0068F985 $SG65976 0x0058E360
-// RECOVERY_LITERAL: v1 0x0068F988 0x0068F990 $SG65977 0x0058E360
-// RECOVERY_LITERAL: v1 0x0068F990 0x0068F998 $SG65978 0x0058E360
-// RECOVERY_LITERAL: v1 0x0068F998 0x0068F9A5 $SG66003 0x0058E360
-// RECOVERY_LITERAL: v1 0x0068F9A8 0x0068F9AE $SG66021 0x0058E360
-// RECOVERY_LITERAL: v1 0x0068F9B0 0x0068F9B9 $SG66022 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F8F4 0x0068F908 $SG65955 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F908 0x0068F916 $SG65959 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F918 0x0068F926 $SG65960 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F928 0x0068F935 $SG65962 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F938 0x0068F945 $SG65963 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F948 0x0068F956 $SG65968 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F958 0x0068F966 $SG65969 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F968 0x0068F975 $SG65971 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F978 0x0068F985 $SG65972 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F988 0x0068F990 $SG65973 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F990 0x0068F998 $SG65974 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F998 0x0068F9A5 $SG65999 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F9A8 0x0068F9AE $SG66017 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F9B0 0x0068F9B9 $SG66018 0x0058E360
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0058E360 0x0058EE34 0x0058EE4C 0x0058E758
 // WORKAROUND(inline): dead /Ob2 spend for top_menu, not recovered code (a
 // constant argument folds it away). The image expands one more member
@@ -4663,42 +4527,42 @@ char * __cdecl sub_58f4f0(char *output, int faction_id, int plurality, int gende
         gender = GenderDefault;
     }
     buffer[0] = 0;
-// RECOVERY_LITERAL: v1 0x0068FA70 0x0068FA73 $SG66111 0x0058F4F0
+// RECOVERY_LITERAL: v1 0x0068FA70 0x0068FA73 $SG66107 0x0058F4F0
     strcat(buffer, "$<");
     if (gender == 0) {
-// RECOVERY_LITERAL: v1 0x0068FA74 0x0068FA76 $SG66113 0x0058F4F0
+// RECOVERY_LITERAL: v1 0x0068FA74 0x0068FA76 $SG66109 0x0058F4F0
         strcat(buffer, "M");
     } else if (gender == 1) {
-// RECOVERY_LITERAL: v1 0x0068FA78 0x0068FA7A $SG66116 0x0058F4F0
+// RECOVERY_LITERAL: v1 0x0068FA78 0x0068FA7A $SG66112 0x0058F4F0
         strcat(buffer, "F");
     } else if (gender == 2) {
-// RECOVERY_LITERAL: v1 0x0068FA7C 0x0068FA7E $SG66119 0x0058F4F0
+// RECOVERY_LITERAL: v1 0x0068FA7C 0x0068FA7E $SG66115 0x0058F4F0
         strcat(buffer, "N");
     }
     if (plurality == 0) {
-// RECOVERY_LITERAL: v1 0x0068FA80 0x0068FA82 $SG66121 0x0058F4F0
+// RECOVERY_LITERAL: v1 0x0068FA80 0x0068FA82 $SG66117 0x0058F4F0
         strcat(buffer, "1");
     } else if (plurality == 1) {
-// RECOVERY_LITERAL: v1 0x0068FA84 0x0068FA86 $SG66124 0x0058F4F0
+// RECOVERY_LITERAL: v1 0x0068FA84 0x0068FA86 $SG66120 0x0058F4F0
         strcat(buffer, "2");
     }
-// RECOVERY_LITERAL: v1 0x0068FA88 0x0068FA8A $SG66125 0x0058F4F0
+// RECOVERY_LITERAL: v1 0x0068FA88 0x0068FA8A $SG66121 0x0058F4F0
     strcat(buffer, ":");
     strcat(buffer, Players[faction_id].adj_name_faction);
-// RECOVERY_LITERAL: v1 0x0068FA8C 0x0068FA8E $SG66126 0x0058F4F0
+// RECOVERY_LITERAL: v1 0x0068FA8C 0x0068FA8E $SG66122 0x0058F4F0
     strcat(buffer, ">");
     parse_string(buffer, parsed);
     return strcat(output, parsed);
 }
 
 
-// RECOVERY_LITERAL: v1 0x0068FAAC 0x0068FAAE $SG66151 0x0058F610
-// RECOVERY_LITERAL: v1 0x0068FAA0 0x0068FAA2 $SG66146 0x0058F610
-// RECOVERY_LITERAL: v1 0x0068FA98 0x0068FA9A $SG66140 0x0058F610
-// RECOVERY_LITERAL: v1 0x0068FA9C 0x0068FA9E $SG66143 0x0058F610
-// RECOVERY_LITERAL: v1 0x0068FA94 0x0068FA96 $SG66137 0x0058F610
-// RECOVERY_LITERAL: v1 0x0068FAA8 0x0068FAAA $SG66150 0x0058F610
-// RECOVERY_LITERAL: v1 0x0068FA90 0x0068FA93 $SG66135 0x0058F610
+// RECOVERY_LITERAL: v1 0x0068FAAC 0x0068FAAE $SG66147 0x0058F610
+// RECOVERY_LITERAL: v1 0x0068FAA0 0x0068FAA2 $SG66142 0x0058F610
+// RECOVERY_LITERAL: v1 0x0068FA98 0x0068FA9A $SG66136 0x0058F610
+// RECOVERY_LITERAL: v1 0x0068FA9C 0x0068FA9E $SG66139 0x0058F610
+// RECOVERY_LITERAL: v1 0x0068FA94 0x0068FA96 $SG66133 0x0058F610
+// RECOVERY_LITERAL: v1 0x0068FAA8 0x0068FAAA $SG66146 0x0058F610
+// RECOVERY_LITERAL: v1 0x0068FA90 0x0068FA93 $SG66131 0x0058F610
 // ORIGINAL: 0x0058F610 ?say_special@@YAXPADPADH@Z 0x0058F610-0x0058F6F6 BYTE_EXACT
 // LEVER: the eight fixed-address bindings are .rdata STRING LITERALS, read
 //         out of the image with image_data.py and spelled as the text, the
@@ -4803,32 +4667,32 @@ void __cdecl say_fac_special(char *output, char *text, int faction_id) {
     int gender = Players[faction_id].noun_gender;
 
     buffer[0] = 0;
-// RECOVERY_LITERAL: v1 0x0068FAB0 0x0068FAB3 $SG66161 0x0058F700
+// RECOVERY_LITERAL: v1 0x0068FAB0 0x0068FAB3 $SG66157 0x0058F700
     strcat(buffer, "$<");
 
     if (gender == 0) {
-// RECOVERY_LITERAL: v1 0x0068FAB4 0x0068FAB6 $SG66163 0x0058F700
+// RECOVERY_LITERAL: v1 0x0068FAB4 0x0068FAB6 $SG66159 0x0058F700
         strcat(buffer, "M");
     } else if (gender == 1) {
-// RECOVERY_LITERAL: v1 0x0068FAB8 0x0068FABA $SG66166 0x0058F700
+// RECOVERY_LITERAL: v1 0x0068FAB8 0x0068FABA $SG66162 0x0058F700
         strcat(buffer, "F");
     } else if (gender == 2) {
-// RECOVERY_LITERAL: v1 0x0068FABC 0x0068FABE $SG66169 0x0058F700
+// RECOVERY_LITERAL: v1 0x0068FABC 0x0068FABE $SG66165 0x0058F700
         strcat(buffer, "N");
     }
 
     if (plurality == 0) {
-// RECOVERY_LITERAL: v1 0x0068FAC0 0x0068FAC2 $SG66171 0x0058F700
+// RECOVERY_LITERAL: v1 0x0068FAC0 0x0068FAC2 $SG66167 0x0058F700
         strcat(buffer, "1");
     } else if (plurality == 1) {
-// RECOVERY_LITERAL: v1 0x0068FAC4 0x0068FAC6 $SG66174 0x0058F700
+// RECOVERY_LITERAL: v1 0x0068FAC4 0x0068FAC6 $SG66170 0x0058F700
         strcat(buffer, "2");
     }
 
-// RECOVERY_LITERAL: v1 0x0068FAC8 0x0068FACA $SG66175 0x0058F700
+// RECOVERY_LITERAL: v1 0x0068FAC8 0x0068FACA $SG66171 0x0058F700
     strcat(buffer, ":");
     strcat(buffer, text);
-// RECOVERY_LITERAL: v1 0x0068FACC 0x0068FACE $SG66176 0x0058F700
+// RECOVERY_LITERAL: v1 0x0068FACC 0x0068FACE $SG66172 0x0058F700
     strcat(buffer, ">");
 
     parse_string(buffer, parsed);
@@ -4856,7 +4720,7 @@ char *__cdecl get_phrase(int faction_id, int phrase_id) {
         if (ok != 0) {
             parse_says(0, search_key, -1, -1);
             parse_says(1, filename, -1, -1);
-// RECOVERY_LITERAL: v1 0x0068FAD0 0x0068FADB $SG66186 0x0058F810
+// RECOVERY_LITERAL: v1 0x0068FAD0 0x0068FADB $SG66182 0x0058F810
             X_pop("PLAYERFILE", 0);
             return StringTable.get(0);
         }
@@ -4899,7 +4763,7 @@ char *__cdecl get_noun_phrase(int faction_id, int phrase_id) {
         && (text_open(filename, filename) != 0)) {
         parse_says(0, search_key, -1, -1);
         parse_says(1, filename, -1, -1);
-// RECOVERY_LITERAL: v1 0x0068FADC 0x0068FAE7 $SG66199 0x0058F8B0
+// RECOVERY_LITERAL: v1 0x0068FADC 0x0068FAE7 $SG66195 0x0058F8B0
         X_pop("PLAYERFILE", 0);
         return StringTable.get(0);
     }

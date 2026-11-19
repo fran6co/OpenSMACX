@@ -248,7 +248,6 @@ set(OPENSMACX_SOURCES
     src/technology.cpp
     src/xpops.cpp
     src/veh_queries.cpp
-    src/vehicle_storage.cpp
     src/world.cpp
     src/game_calendar.cpp
     src/map.cpp
@@ -512,7 +511,6 @@ set_property(SOURCE
     src/reportif.cpp
     src/console.cpp
     src/statuswin.cpp
-    src/vehicle_storage.cpp
     src/credits.cpp
     src/game.cpp
     src/turn.cpp

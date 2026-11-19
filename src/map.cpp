@@ -124,20 +124,6 @@ uint32_t world_ridge_offset_val[13] = { 47, 44, 24, 20, 8, 7, 0, 5, 4, 17, 23, 3
 // this permutation; it is independent data, not a callable/address alias.
 // RECOVERY_OBJECT: v2 0x0066EF98 0x0066EFBC ?MapDirectionPermutation@@3QBHB 0x0046F8C0
 const int MapDirectionPermutation[9] = { 9, 6, 3, 2, 1, 4, 7, 8, 5 };
-
-
-// The tile-flag mask the fungus pass clears off the Map record it has just
-// given bit 0x20 to: world_fungus does `tile->bit &= ~MapTileFlagClearMask`
-// (0x005C35EB, `not edx` then `and [ecx + eax*4 + 8], edx`), and the same
-// dword is the value argument at four more sites that set tiles through
-// 0x00591D60 (0x004CE6D5 is one). Eight readers in the whole image, all of
-// them reads, and the shipped .data holds 0x00288050 - the same constant the
-// 0x004CE6C9 call site pushes as a literal plus 0xc. No image symbol and no
-// name anywhere in the tree before this.
-// Start binding only: the original DWORD reads establish the accessed value,
-// not an enclosing allocation or the absence of indirect writers.
-// RECOVERY_OBJECT: v1 0x006919EC ?MapTileFlagClearMask@@3IA
-uint32_t MapTileFlagClearMask = 0x00288050;
 // EIGHT OF THEM, one per player: the two sites below clear
 // `sizeof(int) * MaxPlayerNum` bytes, which is what the extent is.
 // world_alt_set (0x005C2033/0x005C2038) clears eight DWORDs here;

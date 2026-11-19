@@ -108,13 +108,6 @@ void __cdecl base_kill(int base_id);
 int __cdecl wants_to_speak(int faction_id, int other_faction_id);
 extern int ConsoleGroupAction;
 
-// Shared tutorial popup caption: the original pointer cell selects the
-// six-byte TUTOR string, not the adjacent WIZARD caption.
-// RECOVERY_OBJECT: v2 0x00691B8C 0x00691B92 ?TutorialPopupCaptionText@@3PADA 0x00511800
-char TutorialPopupCaptionText[6] = "TUTOR";
-// RECOVERY_OBJECT: v2 0x00691B14 0x00691B18 ?TutorialPopupCaption@@3PADA 0x00511800
-char *TutorialPopupCaption = TutorialPopupCaptionText;
-
 // assemble uses Popup's shared checkbox result word for Vehicle Groups;
 // do not duplicate the source-owned storage in popup.cpp.
 extern int PopupWriteCheckState;
@@ -1469,16 +1462,10 @@ char ConsoleStrTechChange[] = "TECHCHANGE";  // 0x0068A8D4
 char ConsoleStrAcLogoSm[] = "ac_logo_sm.pcx";  // 0x0068AA7C
 // RECOVERY_OBJECT: v2 0x0068AA8C 0x0068AA9C ?ConsoleStrVersionControlX@@3PADA 0x00517180
 char ConsoleStrVersionControlX[] = "VERSIONCONTROLX";  // 0x0068AA8C
-// The pinned .data cells were mutable char* slots initialized to these
-// distinct writable text arrays; callers share the pointer objects.
-// RECOVERY_OBJECT: v2 0x00691B40 0x00691B4C ?ConsoleVersionReleaseText@@3PADA 0x00517180
-char ConsoleVersionReleaseText[] = "RELEASE 2.0";
-// RECOVERY_OBJECT: v2 0x00691B4C 0x00691B58 ?ConsoleVersionBuildDateText@@3PADA 0x00517180
-char ConsoleVersionBuildDateText[] = "20-Dec-1999";
-// RECOVERY_OBJECT: v2 0x00691870 0x00691874 ?ConsoleVersionRelease@@3PADA 0x00517180
-char *ConsoleVersionRelease = ConsoleVersionReleaseText;
-// RECOVERY_OBJECT: v2 0x00691874 0x00691878 ?ConsoleVersionBuildDate@@3PADA 0x00517180
-char *ConsoleVersionBuildDate = ConsoleVersionBuildDateText;
+extern char ConsoleVersionReleaseText[];
+extern char ConsoleVersionBuildDateText[];
+extern char *ConsoleVersionRelease;
+extern char *ConsoleVersionBuildDate;
 
 
 // RECOVERY_OBJECT: v2 0x0068A8C8 0x0068A8D3 ?ConsoleStrTechRandom@@3PADA 0x00514F50

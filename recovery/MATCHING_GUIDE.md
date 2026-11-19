@@ -595,27 +595,51 @@ raw field access where the original used inline accessors.
     alone). A thunk is a definition point, not a unit start: only the first
     thunk of a *unit* starts one. The merge changes no function, which the
     inline test could not have decided.
-  - *Soft form, `analysis/datarun.py`:* ranked by the link position of the
-    file that defines them, the 1,291 bound `.bss` objects are in order for
-    1,111 (`.data`: 371 of 475). The 293 outside the longest ordered run are
-    definitions that sit in another unit's contribution: the popup and
-    interlude font pointers 0x0094575C-0x00945810, `FastUnitAnim` and
-    `TutWinClimateGate945830` lie among that same alpha/newgame unit's
-    objects (0x0093FC58-0x00945834), not at popup.cpp's, veh.cpp's or
-    tutwin.cpp's position; `MapEditorPaintId` and `MapEditorBrushId`
-    between map_grid's objects and `StoredScaleAdjustment` (not mapwin.cpp);
-    `Compass` between vehicle_cost's and game's. The game state proper
-    (0x00945F48-0x009B22EC: the rules tables, MapStorage, Players, Bases,
-    Vehs, world's counters) lies after technology's thunk object 0x00945ED0
-    and before multidebug's 0x009B22F0, and xpops' two thunk objects
-    (`g_PALETTE1` 0x0094C590, `g_PALETTE2` 0x009523A0) lie inside it: at
-    least 0x0094C590-0x009523A0 (FactionMonuments, TimeControl, Armor,
-    Technology, WorldBuilder, ReplayEvents, Morale) is defined by the unit
-    we call xpops.cpp, and the rest by it or the units up to gamma, not by
-    alpha.cpp, game.cpp and veh.cpp where the tree defines them.
+  - *Soft form, `analysis/datarun.py`, `analysis/datawho.py`:* ranked by
+    the link position of the file that defines them, the bound objects of
+    each data section must not fall. In `.data` the string literals that
+    one unit's functions reference are anchors as well: 4,686 of them, 11
+    out of order, so a unit's `.data` contribution is one run, its
+    initialised globals and function literals in source order (globals
+    defined above the first function come first; an object between two
+    function literals was defined between those functions). The first
+    units' `.bss` lies inside the raw data of the section (it starts at
+    0x006A708C, after the last non-zero byte).
+    `datawho.py` names the defining unit of every out-of-order object:
+    `H` inside the interval of the objects that unit's initializer thunks
+    build (a grouped declaration `Time a, b, c;` is one thunk with several
+    `mov ecx, obj`), `D` both `.data` neighbours are that unit's, `S` both
+    `.bss` neighbours are and the unit references the object, `N` the
+    neighbours differ and exactly one unit between them references it.
+    `analysis/objmove.py` moves the definitions (2026-11-19: 289 out of
+    order -> about 85, mostly Caviar and undecided pairs).
+  - *The game state is one unit's.* The unit we call xpops.cpp (X_pop,
+    do_unity_crash, 0x005BEC40-0x005BFE8E) is the original file of global
+    definitions: its `.data` head 0x00691870-0x00691BF7 is a list of
+    `char *name = "text";` globals (version, date, `ALPHAX`, `HELPX`,
+    `SCRIPT`, font faces, `SAV`/`SC`/`MP`) with `Terraforming[]` between
+    them, directly in front of its first function literal, and its `.bss`
+    run 0x00945F48-0x009B2277 (around its two thunk objects `g_PALETTE1`
+    and `g_PALETTE2`) holds the rules tables, MapStorage, Players,
+    PlayersData, Bases, Vehs, VehPrototypes and the save window. Other
+    measured cases: the popup and interlude font pointers, `FastUnitAnim`
+    and `TutWinClimateGate945830` are the alpha unit's; map_grid's
+    altitude templates and `AltBonus` arrays lie in mapwin's `.data` and
+    `.bss`; colortables' tint tables and vehicle_render's hover offsets
+    lie inside interface_assets' thunk interval; fifteen turn-state words
+    (0x0093A008-0x0093A98C) are turn.cpp's.
+  - *Left undecided (adjacent units, neither names the object):*
+    `MapEditorPaintId/BrushId` (map_grid or scale_adjustment), `Compass`
+    (vehicle_cost or game), `TurnUpkeepPhase` (technology or xpops; moved
+    to xpops with a note), the popup theme colours 0x0068A5A0 (aggression
+    or console), `MapWinCaptionScale/Divisor` 0x00691E6C (world to gamma),
+    the shared punctuation texts 0x00682E90 (popup to battlewin), and in
+    Jackal the 19 sprite raster globals inside buffer.cpp's thunk interval
+    (buffer.cpp and sprite.cpp's main run may be one unit).
   Where an object is defined does not change code (every reference is
-  absolute), so the soft form is a structural record, not a matching lever;
-  moving a definition can still shift a unit's symbol counter.
+  absolute): 180 definitions moved without one function changing, although
+  mapwin's symbol counter moved by 13, console's by 2 and popup's by -2.
+  It is a structural record, not a matching lever.
 - **The emitting unit of an inline copy (`analysis/ctxscan.py`).** For a
   marker in a short run between two other units, compile both neighbours:
   the one that emits the symbol and reads exact is the `compile_context`

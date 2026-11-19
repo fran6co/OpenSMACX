@@ -18,14 +18,7 @@
 #include "xpops.h"
 #include "font.h"
 #include "popup_fonts.h"
-
-// Shared storage closure belongs to the coordinator's original owners.
-// The pointer cell selects this observed NUL-terminated text-file identifier.
-// The allocation extent of the pointed-to original string is unresolved.
-// RECOVERY_OBJECT: v1 0x00691B70 _InterludeTextName
-static char InterludeTextName[] = "INTERLUDEX";
-// RECOVERY_OBJECT: v1 0x00691B08 ?InterludeTextFile@@3PADA
-char *InterludeTextFile = InterludeTextName;
+extern char *InterludeTextFile;
 int __cdecl X_pop(char *caption, const char *label,
                                 int (__cdecl *callback)());
 

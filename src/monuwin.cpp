@@ -1039,12 +1039,6 @@ void __cdecl monument(int from_load) {
     do_all_draws();
 }
 
-// Eight faction blocks begin at94CA08, with21records at38 stride and
-// latest-type at+498. Founding/secrets/victory consumers establish the
-// natural container; reset's previous94CA18 view began inside record0.
-// RECOVERY_OBJECT: v2 0x0094CA08 0x0094F1A8 ?FactionMonuments@@3PAUMonumentFaction@@A 0x00476DA0
-MonumentFaction FactionMonuments[MaxPlayerNum];
-
 // ORIGINAL: 0x00476B30 ?clear_monuments@@YAXXZ 0x00476B30-0x00476B61 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned476B30 starts its writes at94CA18 with38stride in8faction rows4F4apart; founding476B70 and secrets476DA0 establish containing-record base94CA08", "recovery/tests/test_setup_dependencies_behavior.py checks everybyte against the exact original22word mutation footprint", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/00476b30.cpp"], "reason": "Reset the shared natural monument container: clear21achieved words atrecord+10 andlatest_type atrow+498, preserving all other bytes. Historical reset-only shifted interpretation remains in Git/task history; original seed and restoration obligations are intact. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // kind      game

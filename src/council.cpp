@@ -807,14 +807,6 @@ int __cdecl council_get_vote(int faction, int proposal, int target_faction) {
     return result;
 }
 
-// The council proposal table, 0x009A6828 in the shipped image - MaxProposalNum
-// entries of 0xc bytes. Was `RulesProposal *const Proposal =
-// (RulesProposal *)0x009A6828` in council.h, naming terranx.exe data that is
-// unmapped in a standalone build; see council.h. Zero at load there, as here:
-// alpha.cpp's PROPOSALS text load fills it before anything reads it.
-// RECOVERY_OBJECT: v2 0x009A6828 0x009A68AC ?Proposal@@3PAURulesProposal@@A 0x005873C0
-RulesProposal Proposal[MaxProposalNum];  // 0x009A6828, 0xc stride
-
 // The dialog parser's negative gender/plurality arguments consume these
 // defaults. Keep the leader and faction forms in the same order the native
 // council announcement prepares them.

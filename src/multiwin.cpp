@@ -98,15 +98,7 @@ static const char CaretSeparator[] = "^";  // original string at 0x006867C0
 // same object.
 // RECOVERY_OBJECT: v2 0x006867E0 0x006867E3 ?MultiWinDotSpaceText@@3PADA 0x00478630
 char MultiWinDotSpaceText[] = ". ";               // 0x006867E0
-
-// The original show/hide pair publishes its visible state in
-// MainInterfaceGlobal.multiwin_visibility_state_ (0x007CFF04). Its historical
-// object identity is retained beside MainInterfaceGlobal in maininterface.cpp.
-
-// Shared animation frame interval (20 ms in the pinned image). Other window
-// animations also read this original data object.
-// RECOVERY_OBJECT: v2 0x00691AF8 0x00691AFC ?WindowAnimationFrameDelay@@3HA 0x00479C00
-int WindowAnimationFrameDelay = 20;
+extern int WindowAnimationFrameDelay;
 
 // The original draw suppresses its soft update while show calls the redraw callback.
 // The original show writes this dword on both sides of that callback;

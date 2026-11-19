@@ -131,8 +131,6 @@ Font g_JACKAL_FONT;
  */
 
 char CommandLineText[0x108];  // 0x007D3970
-// RECOVERY_OBJECT: v1 0x009469FC ?PopupModalActive@@3HA
-int PopupModalActive;  // 0x009469FC
 
 // WinMain's version check and engine bring-up are one inline wrapper around
 // jackal_init_real: its "10.10" literal (0x00685418) follows every WinMain
@@ -361,12 +359,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 // Shared punctuation objects the image pushes instead of unit literals.
 extern char SocialWinCloseParenText[];
 extern char SocialWinOpenParenText[];
-// Original pointer cell 0x00691B1C selects the MENU script name at
-// 0x00691B9C; menu_init passes the cell's value to every text_open.
-// RECOVERY_OBJECT: v1 0x00691B9C ?MenuScriptFileText@@3PADA
-char MenuScriptFileText[5] = "MENU";
-// RECOVERY_OBJECT: v1 0x00691B1C ?MenuScriptFile@@3PADA
-char *MenuScriptFile = MenuScriptFileText;
+extern char MenuScriptFileText[5];
+extern char *MenuScriptFile;
 
 // Console initializes its embedded AlphaMenu through this catalogue entry.
 // Population uses the existing rules and StringTable owners; x86 pool keys

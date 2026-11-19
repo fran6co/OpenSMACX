@@ -96,68 +96,6 @@ extern char SocialWinCommaSpaceText[];
 extern Wave g_CRASH_LANDING_WAVE;
 extern int ConsoleNoMapOverrideLatch;
 
-
-// The rainfall loader publishes three rows of four colors, one byte after
-// each get_pixel. The coast renderer consumes row 1 forward or backward.
-
-// Original 452258 walks exactly 53 palette indices. No writer or pointer
-// escape was observed; const is that bounded interpretation, not a claim
-// about arbitrary computed addresses. Irregular image data stays in the
-// pinned, ignored configure-time include, never a second source ledger.
-
-
-// Mutable panel styles: load_box_sprites fills three columns by seventeen
-// rows. The records borrow the actual Sprite and Buffer objects below.
-// Original 0x78D528..0x78DD20 is initially zero; it is not a static address table.
-// The original loader advances 0x28 per record and stops after 51 buffers.
-
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// Each row maps every palette index to its row number (original 0x007A81A0).
-
-// Original 0x006861F0..0x00686330: mutable palette offsets selected by
-// alt_get_ocean_detail's 0..79 result. Configuration replaces only the
-// accepted prefix, so these startup values and later untouched entries
-// persist across missing, partial and repeated load_cycling calls.
-
-// The temporary model retains the fourth record until scope exit, including
-// unwinding. A valid record with a different step count leaves its offset alone.
-
-
-
-// Bound: scalar; every original access is a dword at the start, never indexed, and the following bytes are never referenced.
-// RECOVERY_OBJECT: v2 0x009A6488 0x009A648C ?ExpansionEnabled@@3HA 0x004063FB
-BOOL ExpansionEnabled;  // 0x009A6488
-// RECOVERY_OBJECT: v3 0x009A64EC 0x009A650C ?FactionRankings@@3PAIA 0x005AC690 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.faction_rankings_
-// RECOVERY_OBJECT: v3 0x009A6514 0x009A6614 ?SecretProject@@3UBaseSecretProject@@A 0x005002E0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.secret_project_
-// RECOVERY_OBJECT: v3 0x009A64CC 0x009A64D0 ?BaseCurrentCount@@3HA 0x004E68B0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.base_current_count_
-// RECOVERY_OBJECT: v3 0x009A6614 0x009A6618 ?GovernorFaction@@3HA 0x00424410 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.governor_faction_
-// RECOVERY_OBJECT: v3 0x009A67DC 0x009A67E0 ?TranscendenceScoreBonus@@3HA 0x005ACBE0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.transcendence_score_bonus_
-// RECOVERY_OBJECT: v3 0x009A67E0 0x009A6800 ?TranscendenceScoreWeights@@3PAHA 0x005ACBE0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.transcendence_score_weights_
-// RECOVERY_OBJECT: v3 0x009A64E0 ?TimeControlsSelection@@3HA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.time_controls_selection_
-// RECOVERY_OBJECT: v3 0x009A6618 0x009A6644 ?CouncilResolutionCount@@3PAHA 0x005B3920 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.council_resolution_count_
-// RECOVERY_OBJECT: v3 0x009A6644 0x009A6670 ?CouncilLastResolutionTurn@@3PAHA 0x005B3920 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.council_last_resolution_turn_
-// RECOVERY_OBJECT: v3 0x009A64D0 0x009A64D4 ?GameSetupResetWord@@3HA 0x005B3920 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_setup_reset_word_
-// RECOVERY_OBJECT: v3 0x009A64E4 0x009A64E8 ?TurnControlDurationMilliseconds@@3HA 0x00523C60 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.turn_control_duration_milliseconds_
-// RECOVERY_OBJECT: v3 0x009A6810 0x009A6814 ?SaveDaemonStateWord@@3HA 0x005A94F0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.save_daemon_state_word_
-// RECOVERY_OBJECT: v3 0x009A6824 0x009A6828 ?EcologyEventAccumulator@@3HA 0x004F67F0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.ecology_event_accumulator_
-// RECOVERY_OBJECT: v3 0x009A64A4 ?GameInterludeFlags@@3IA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_interlude_flags_
-// RECOVERY_OBJECT: v3 0x009A64A0 0x009A64A4 ?GameWireOpaque_9A64A0@@3PAEA 0x00532E00 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_wire_opaque_9a64a0_
-// RECOVERY_OBJECT: v3 0x009A64A8 0x009A64AC ?GameWireOpaque_9A64A8@@3PAEA 0x00532E00 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_wire_opaque_9a64a8_
-// RECOVERY_OBJECT: v3 0x009A66C9 0x009A67C9 ?LegacyGameSaveName@@3PADA 0x005A6AC0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.legacy_game_save_name_
-// RECOVERY_OBJECT: v3 0x009A67C9 0x009A67CC ?GameWireOpaque_9A67C9@@3PAEA 0x00532E00 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_wire_opaque_9a67c9_
-// RECOVERY_OBJECT: v3 0x009A67CC 0x009A67D0 ?ClimateRiseStep@@3HA 0x00524210 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.climate_rise_step_
-// RECOVERY_OBJECT: v3 0x009A67D0 0x009A67D4 ?ClimateRiseLimit@@3HA 0x00524210 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.climate_rise_limit_
-// RECOVERY_OBJECT: v3 0x009A67D4 0x009A67D8 ?ClimateRiseAccum@@3HA 0x00524210 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.climate_rise_accum_
-// RECOVERY_OBJECT: v3 0x009A67D8 0x009A67DC ?ClimateSeaLevelDelta@@3HA 0x00524210 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.climate_sea_level_delta_
-// RECOVERY_OBJECT: v3 0x009A6670 0x009A66C9 ?GameTechAchieved@@3PAEA 0x004DFAD0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_tech_achieved_
-// RECOVERY_OBJECT: v3 0x009A64BC ?TutWinFlags9A64BC@@3HA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.tutwin_flags_9a64bc_
-// RECOVERY_OBJECT: v3 0x009A64DC 0x009A64E0 ?VehSelectionFollowLimit@@3HA 0x005C08C0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.vehicle_selection_follow_limit_
-// game_data transfers exactly 0x398 bytes from 0x009A6490 (0x005A6C24..
-// 0x005A6C9A), ending where the separately bounded Proposal table begins.
-// RECOVERY_OBJECT: v2 0x009A6490 0x009A6828 ?GameDataStateStorage@@3UGameDataStateWindow@@A 0x005A6AC0
-GameDataStateWindow GameDataStateStorage;
-
 uint32_t SystemInterfaceFlags;  // 0x00933420
 
 
@@ -199,26 +137,6 @@ void __cdecl clear_all_offers() {
         }
     }
 }
-
-// 0x009A6494
-// 0x009A6498
-// 0x009A649C
-// 0x009A64C0
-// 0x009A64C4
-// 0x009A64D4
-// setup_game clears this independent DWORD after BaseCurrentCount. No
-// additional semantic use is established; it is not part of the base count.
-// Historical object identity moved to GameDataStateStorage; see the transport manifest.
-
-// set_time_controls publishes its selected seconds multiplied by 1000.
-// net_control_turn copies the duration to the distinct live wait accumulator.
-// Historical object identity moved to GameDataStateStorage; see the transport manifest.
-
-// game_data transfers 0x98 bytes from 0x0094B4C0 (5A8337); Mandate ends at its
-// start and the next referenced storage is 0x0094B558.
-// RECOVERY_OBJECT: v2 0x0094B4C0 0x0094B558 ?ScenarioSave@@3UScenarioSaveState@@A 0x005A6AC0
-// RECOVERY_OBJECT: v3 0x0094B4D8 0x0094B558 ?GameWireOpaque_94B4D8@@3PAEA 0x005A6AC0 member ?ScenarioSave@@3UScenarioSaveState@@A wire_opaque_94b4d8
-ScenarioSaveState ScenarioSave;
 typedef char ScenarioSaveStateHasNativeExtent[
     sizeof(ScenarioSaveState) == 0x98 ? 1 : -1];
 typedef char ScenarioSaveReqOffset[offsetof(ScenarioSaveState, objective_req_victory) == 0x00 ? 1 : -1];
@@ -279,63 +197,9 @@ int NetUpkeepPhase;
 // game.h next to each declaration.
 // RECOVERY_OBJECT: v1 0x0093A948 ?GameRestartQueued@@3HA
 int GameRestartQueued;  // 0x0093A948
-// Original dword stop-loop flag, set by system-close and read by wait paths.
-// RECOVERY_OBJECT: v2 0x009B2068 0x009B206C ?ExitTurnLoop@@3HA 0x004050C7
-int ExitTurnLoop;       // 0x009B2068
-// Earlier recovery interpreted 0x009A6504/0x009A6508 as independent
-// EndgameFactionSelectorA/B scalars. They are FactionRankings[6]/[7],
-// owned in alpha.cpp: rankings writes all eight slots, and setup_player
-// reads these slots at 0x005B231F/0x005B2300. Keep the historical
-// interpretation here; separate globals would sever producer/consumer state.
-// RECOVERY_OBJECT: v2 0x009B206C 0x009B2070 ?EndgameExitReason@@3HA 0x004F2FFE
-int EndgameExitReason;
-// Original interlude reads/writes this complete story-mask word.
-// Historical object identity moved to GameDataStateStorage; see the transport manifest.
-
-// Wire0 and game_data transfer these exact independent byte intervals.
-// No direct semantic use or original allocation boundary is proved; they are
-// retained state, never padding or zero-producing packet filler. Keep the
-// filename tail separate from the exactly bounded legacy 256-byte copy.
-// Historical object identity moved to GameDataStateStorage; see the transport manifest.
-
-// Historical object identity moved to GameDataStateStorage; see the transport manifest.
-
-// Native game_data5A6BA3..5A6BB9 copies exactly256 bytes; setup_game
-// clears only byte0. NUL-scanning consumers do not prove loaded termination.
-// Historical object identity moved to GameDataStateStorage; see the transport manifest.
-
-// Historical object identity moved to GameDataStateStorage; see the transport manifest.
-
-// Logical faction0..7 indexing is independently observed; original
-// containing allocation bounds are not asserted.
-// RECOVERY_OBJECT: v1 0x00946138 ?TectonicDetonationCount@@3PAHA
-int TectonicDetonationCount[8];
-// Original691B0C contains pointer691B7C, whose file-backed text is SCRIPT.
-// This owns the observed text and shared pointer cell.
-// Bound: the original bytes are "SCRIPT" and its NUL; one zero pad byte precedes the next string, "EDITOR", at 0x00691B84.
-// RECOVERY_OBJECT: v2 0x00691B7C 0x00691B83 ?ScriptPopupFileText@@3PADA 0x00406384
-char ScriptPopupFileText[] = "SCRIPT";
-// Bound: pointer cell; the next dword 0x00691B10 is a separate pointer (to "EDITOR" at 0x00691B84).
-// RECOVERY_OBJECT: v2 0x00691B0C 0x00691B10 ?ScriptPopupFile@@3PADA 0x00406384
-char *ScriptPopupFile = ScriptPopupFileText;
-// human_turn514263 writes this independent dword; draw_bases4671B5 reads it.
-// Loader-zero storage ends before the separately owned GameSessionActive.
-// RECOVERY_OBJECT: v2 0x009B2070 0x009B2074 ?ControlTurnPhase@@3HA 0x00514050
-int ControlTurnPhase;
-// net_upkeep5290D0/5292BD publish phases1/2; tech_advance5BE580 and
-// tech_research5BEB3A read this distinct shared dword. Original virtual-tail
-// storage is loader-zero; fresh compiler objects establish one int owner.
-// Remaining net_upkeep recovery must publish to this owner, not an old address.
-// RECOVERY_OBJECT: v2 0x00945F48 0x00945F4C ?TurnUpkeepPhase@@3HA 0x005BE940
-int TurnUpkeepPhase = 0;
 // Native control_game reads only this pinned NUL-terminated source string;
 // one byte is the observed lower bound, not its complete original capacity.
 char SaveGameFileName[1];  // 0x0093AA0C
-// Original serializer transfers two adjacent, independent256-byte records.
-// RECOVERY_OBJECT: v2 0x009B2078 0x009B2178 ?SaveNameBuffer@@3PADA 0x005A6AC0
-char SaveNameBuffer[256];
-// RECOVERY_OBJECT: v2 0x009B2178 0x009B2278 ?ScenarioSaveNameBuffer@@3PADA 0x005A6AC0
-char ScenarioSaveNameBuffer[256];
 
 
 
@@ -428,24 +292,6 @@ static const char LatestMapPreference[] = "Latest Map";
 // These role names do not claim original source names or allocation bounds.
 // RECOVERY_OBJECT: v1 0x00690F64 _InitialAutoSaveDeletePath
 static char InitialAutoSaveDeletePath[] = "saves\\auto\\Alpha Centauri Autosave 1.SAV";
-
-// The original 0x691B34 pointer cell refers to the separate text at
-// 0x691BEC; keep the pointer and its four-byte NUL-terminated pointee distinct.
-// RECOVERY_OBJECT: v1 0x00691BEC ?SaveGameFileExtensionText@@3PADA
-char SaveGameFileExtensionText[4] = "SAV";
-// RECOVERY_OBJECT: v1 0x00691B34 ?SaveGameFileExtension@@3PBDB
-LPCSTR SaveGameFileExtension = SaveGameFileExtensionText;
-// Native scenario save/load uses pointerB38 toSC; map save/load uses
-// pointerB3C toMP. These three-byte text views claim no neighboring extent.
-// RECOVERY_OBJECT: v1 0x00691BF0 ?ScenarioFileExtensionText@@3PADA
-char ScenarioFileExtensionText[3] = "SC";
-// RECOVERY_OBJECT: v1 0x00691B38 ?ScenarioFileExtension@@3PBDB
-LPCSTR ScenarioFileExtension = ScenarioFileExtensionText;
-// RECOVERY_OBJECT: v1 0x00691BF4 ?MapFileExtensionText@@3PADA
-char MapFileExtensionText[3] = "MP";
-// Historical SC attribution of this cell was wrong; originalB3C points toMP.
-// RECOVERY_OBJECT: v1 0x00691B3C ?MapFileExtension@@3PBDB
-LPCSTR MapFileExtension = MapFileExtensionText;
 // RECOVERY_OBJECT: v1 0x00690D9C ?GameSaveMultiplayerMarker@@3PADA
 char GameSaveMultiplayerMarker[] = "multi";  // native string starts at 0x00690D9C
 

@@ -2120,24 +2120,6 @@
           "-c"
         ]
       },
-      "src/vehicle_storage.cpp": {
-        "flags": [
-          "/nologo",
-          "/TP",
-          "/Zm200",
-          "/GX",
-          "/Og",
-          "/Ot",
-          "/Oy",
-          "/Gs",
-          "/Gy",
-          "/Ob2",
-          "-MT",
-          "/W4",
-          "/Z7",
-          "-c"
-        ]
-      },
       "src/jackal/text.cpp": {
         "flags": [
           "/nologo",

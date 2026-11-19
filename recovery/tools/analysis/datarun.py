@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""datarun.py [--all] [--lo A --hi B]
+"""datarun.py [--all] [--nolits] [--lo A --hi B]
 Data-order evidence for unit membership: a unit's .data and .bss contributions are contiguous and the units
 follow link order (the .text order of their main runs). Every bound object (RECOVERY_OBJECT) is ranked by its
 owner file's link position; within one section the ranks must not fall. Objects outside the longest
@@ -9,7 +9,7 @@ import sys,os,re,struct,bisect,argparse
 HERE=os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0,'recovery/tools'); sys.path.insert(0,'recovery/tools/analysis')
 import fe,tumap
-ap=argparse.ArgumentParser(); ap.add_argument('--all',action='store_true'); ap.add_argument('--lo',default='0'); ap.add_argument('--hi',default='ffffffff')
+ap=argparse.ArgumentParser(); ap.add_argument('--all',action='store_true'); ap.add_argument('--nolits',action='store_true'); ap.add_argument('--lo',default='0'); ap.add_argument('--hi',default='ffffffff')
 a=ap.parse_args()
 runs={}
 for lo,hi,unit,name,exact,path in tumap.load():
@@ -33,6 +33,15 @@ for root,_,fs in os.walk('src'):
         for l in open(p,encoding='latin-1'):
             m=re.match(r'\s*// RECOVERY_OBJECT: v\d (0x[0-9A-F]{8}) (?:(0x[0-9A-F]{8}) )?(\S+)',l)
             if m and p in rank: objs.append((int(m.group(1),16),p,m.group(3)))
+# string literals referenced by the functions of exactly one unit are anchors too (a unit's function literals
+# are one run of its .data, after its initialised globals); they are not listed or counted
+fs_=tumap.load()
+have={o[0] for o in objs}
+nlit=0
+for a_,s_,us_,ns_ in tumap.literal_owners(fs_):
+    us_=[u for u in us_ if not u.endswith('.h')]
+    if len(us_)==1 and us_[0] in rank and a_ not in have and not a.nolits:
+        objs.append((a_,us_[0],'"lit"')); nlit+=1
 objs.sort()
 import struct as S_
 img=fe._img; pe=fe._pe; nsec=S_.unpack_from('<H',img,pe+6)[0]; opt=S_.unpack_from('<H',img,pe+20)[0]; base=S_.unpack_from('<I',img,pe+52)[0]
@@ -43,6 +52,10 @@ for i in range(nsec):
 parts=[]
 for nm,va,mid,end in secs:
     if nm in ('.rdata','.data'):
+        if nm=='.data':
+            # the first units' .bss lies inside the raw data (zero-filled up to the file alignment): the
+            # initialised part ends at the last non-zero byte
+            raw=fe.imgbytes(va,mid); k=len(raw.rstrip(b'\0')); mid=va+((k+3)&~3)
         parts.append((nm+' init',va,mid)); 
         if end>mid: parts.append((nm+' bss',mid,end))
 lo_,hi_=int(a.lo,16),int(a.hi,16)
@@ -59,10 +72,12 @@ for nm,p0,p1 in parts:
         prev[i]=idx[k-1] if k else -1
     keep=set(); i=idx[-1]
     while i>=0: keep.add(i); i=prev[i]
-    print('== %s %08X-%08X objects=%d in-order=%d out-of-order=%d'%(nm,p0,p1,len(xs),len(keep),len(xs)-len(keep)))
+    no=sum(1 for o in xs if o[2]!='"lit"'); nk=sum(1 for i in keep if xs[i][2]!='"lit"')
+    print('== %s %08X-%08X objects=%d in-order=%d out-of-order=%d (literal anchors %d, %d of them out of order)'%(nm,p0,p1,no,nk,no-nk,len(xs)-no,(len(xs)-no)-(len(keep)-nk)))
     ks=sorted(keep)
     for i,o in enumerate(xs):
         if i in keep and not a.all: continue
+        if o[2]=='"lit"': continue
         if not (lo_<=o[0]<hi_): continue
         j=bisect.bisect_left(ks,i)
         before=xs[ks[j-1]] if j>0 else None; after=xs[ks[j]] if j<len(ks) else None

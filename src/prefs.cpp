@@ -82,18 +82,6 @@ const char *PrefsFile = ".\\Alpha Centauri.Ini";   // 0x006900CC
 // RECOVERY_OBJECT: v1 0x006900D0 ?PrefsSection@@3PBDB
 const char *PrefsSection = "Alpha Centauri";       // 0x006900D0
 
-// prefs_load (0x0059DCF0) stores every field in place - `mov dword ptr
-// [0x94B464], eax` for preferences through custom_world at 0x0094B480
-// (bounded by the `cmp esi, 0x94B49C` loop tail at 0x0059E4D9).
-// Extent: compiled sizeof 0x38; prefs_load loop ends at `cmp esi, 0x94B49C` (0x0059E4D9).
-// RECOVERY_OBJECT: v2 0x0094B464 0x0094B49C ?AlphaIniPrefs@@3UAlphaIniPref@@A 0x0047D4A4
-AlphaIniPref AlphaIniPrefs;                         // 0x0094B464
-
-// Extent: compiled sizeof 0x14; its last field top_menu (0x0094B360) is
-// stored by prefs_load at 0x0059DE8E and read by map_menu/top_menu.
-// RECOVERY_OBJECT: v2 0x0094B350 0x0094B364 ?DefaultPrefs@@3UDefaultPref@@A 0x0059DE8E
-DefaultPref DefaultPrefs;                           // 0x0094B350
-
 // WORKAROUND(noinline): expanded twin of prefs_get(LPCSTR, int, BOOL); see
 // the out-of-line definition below.
 inline int __cdecl prefs_get_inline(LPCSTR key_name, int default_value, BOOL use_default) {

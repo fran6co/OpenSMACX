@@ -117,14 +117,9 @@ extern const char BufferJoinSpace[];
 extern char SocialWinColonSpaceText[];
 
 extern int MainInterfaceTileFlag;
-// RECOVERY_OBJECT: v2 0x00691B60 0x00691B66 ?DatalinkHelpFileText@@3PADA 0x00430770
-char DatalinkHelpFileText[] = "HELPX";
-// RECOVERY_OBJECT: v2 0x00691B68 0x00691B70 ?DatalinkBlurbFileText@@3PADA 0x00430B30
-char DatalinkBlurbFileText[] = "BLURBSX";
-// RECOVERY_OBJECT: v2 0x00691B00 0x00691B04 ?DatalinkHelpFile@@3PADA 0x00430770
-char *DatalinkHelpFile = DatalinkHelpFileText;
-// RECOVERY_OBJECT: v2 0x00691B04 0x00691B08 ?DatalinkBlurbFile@@3PADA 0x00430B30
-char *DatalinkBlurbFile = DatalinkBlurbFileText;
+extern char DatalinkHelpFileText[];
+extern char DatalinkBlurbFileText[];
+extern char *DatalinkBlurbFile;
 
 // draw_terraform passes this writable empty string (0x004317B4). Only its
 // initial NUL is established: the bound below is that one byte, a lower
