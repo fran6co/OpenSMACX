@@ -273,6 +273,17 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   callee and other functions with the same 2-3 statement window (windows found in more than 4 places are idioms and
   are dropped). `--swaps` adds per-site E/c rows for callees with equal counts (slow on large functions). The probe
   `probe calls` column counts refused probes (pass-1 budget already spent, the probe measures nothing there).
+- `analysis/ownerhunt.py <unit> <addr> [--lines A-B] [--maxlen N] [--limit N] [--moved] [--vec] [--fast] [--repeat]
+  [--write K]` missing inline OWNER search (MATCHING_GUIDE 2.8 "Missing owner"): parses the function body into
+  statements, wraps every liftable contiguous sibling range (a loop, an if-arm, a run of statements; no return/goto/
+  label, break/continue only inside their loop, no local that outlives the range) into a file-local `static inline
+  void oh_owner(...)` (used locals/parameters by reference, `this` -> `self`, implicit members rewritten from the
+  compiler's C2065 errors), compiles each on the FE_PFX_BASE/FE_JOBS lanes and ranks by (EH root-run distance, named
+  call multiset distance, inlinemap decision distance, fe rows). `--moved` lists only ranges that move a decision,
+  `--fast` skips inlinemap's per-site parse (giants), `--repeat` greps the tree for the range's first two statements.
+  First pass 2026-11-19 (par-4): POP2 0x00405140 exact with its picture block as an owner (shared with popp:
+  `popup_load_picture`, popup.h); no single-range owner found for PickTech::pick, call_council, config_game,
+  NetWin::pick_player, base_editor_proj or enemy_move's entry.
 - `analysis/probes/<topic>/` standalone VC6 probe families with a README each (2026-11-19, par-3): `vecctor` (`??_H`
   vector constructor iterator expansion), `mulorder` (index multiply operand order, MapLongitude's type; `scan.py`
   tree screen), `aggreg` (4-byte aggregates in registers), `switchtail` (switch tail-merge direction), `slotshare`

@@ -1034,15 +1034,7 @@ int __cdecl POP2(const char *a1, const char *a2, int a3) {
     }
 
     if (a2 != 0) {
-        int size[2];
-        if (Buffer::get_pcx_dimensions(a2, &size[1], &size[0]) ==
-            0) {
-            // These are the owned picture and caller-picture roles of the real Popup.
-            Sprite &sprite = pop.owned_picture();
-            if (sprite.init(const_cast<char *>(a2), size[1], size[0]) == 0) {
-                pop.set_caller_picture(&sprite);
-            }
-        }
+        popup_load_picture(pop, a2);
     }
     return pop.exec();
 }

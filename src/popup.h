@@ -124,6 +124,27 @@ class Popup : public BasePop {
   Scroll scroll_;
 };
 
+// An inline owner the popup wrappers share: load a picture file into the
+// popup's owned sprite and show it (0x0040550A in POP2, 0x0048C2B5 in popp).
+// Both write the same block on a picture-file PARAMETER with an `int size[2]`
+// whose height lands below the width. Written out, POP2 expands its last
+// ~FlatButton teardown where the image calls it and popp needed ten dead
+// budget probes; with the block as an inline owner POP2 is byte-exact and
+// popp needs six. The literal-file sites (sat_attack, supply_options, probe,
+// call_council...) are written out: the image pushes two separate copies of
+// the file name there (0x687150 / 0x687160 in sat_attack), so no one-parameter
+// owner. NetMsg::pop and popb keep the block written out: with this owner
+// NetMsg::pop expands one ~StringList the image calls (24 rows), popb moves
+// from 23 to 83 rows; their owners are not found yet.
+// WORKAROUND(decl): the helper's name and its exact signature are ours.
+inline void popup_load_picture(Popup &popup, const char *file) {
+  int size[2];
+  if (Buffer::get_pcx_dimensions(file, &size[1], &size[0]) == 0
+      && popup.owned_picture().init(const_cast<char *>(file), size[1], size[0]) == 0) {
+    popup.select_owned_picture();
+  }
+}
+
 // Where the object ends IS established, by the class that derives from it.
 // ??0TutWin@@QAE@XZ at 0x004BA6B0 builds this Popup on an unadjusted `this`
 // and then writes TutWin's own fields; the lowest of those is 0x537C
