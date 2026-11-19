@@ -584,7 +584,7 @@ int DiploFocusY = -1;
 // is why suggest_plan writes it unconditionally rather than only on the paths
 // that go on to show one.
 // Original 0x0053CB09/0x0053E4CD publish the faction id consumed at 0x005BFA11/0x005BFC89; start only.
-// RECOVERY_OBJECT: v1 0x0093F7CC ?PopupDialogFactionID@@3HA
+// RECOVERY_OBJECT: v2 0x0093F7CC 0x0093F7D0 ?PopupDialogFactionID@@3HA 0x0054F420
 int PopupDialogFactionID;  // 0x0093F7CC
 
 /*
@@ -3481,9 +3481,9 @@ void __cdecl trade_maps(int faction_id, int other_faction_id) {
 int DiploScratchF7DC;
 // RECOVERY_OBJECT: v1 0x0093FA94 ?DiploScratchFA94@@3HA
 int DiploScratchFA94;
-// RECOVERY_OBJECT: v1 0x0093FAD0 ?DiploScratchFAD0@@3HA
+// RECOVERY_OBJECT: v2 0x0093FAD0 0x0093FAD4 ?DiploScratchFAD0@@3HA 0x0054F420
 int DiploScratchFAD0;
-// RECOVERY_OBJECT: v1 0x0093FAD4 ?DiploScratchFAD4@@3HA
+// RECOVERY_OBJECT: v2 0x0093FAD4 0x0093FAD8 ?DiploScratchFAD4@@3HA 0x0054F420
 int DiploScratchFAD4;
 // Original54DD57 resets this selector;54E3F9/54E6FD store modal faction
 // choices, subsequently used to select Player records and by buy_tech mode13.
