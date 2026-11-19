@@ -74,6 +74,35 @@
 // pass 8; re-tune after the header batch).
 // CANARY: 0x0053EB50 ?buy_council_vote@@YAXHHHH@Z residues 0-2,4,6,9,16-18,21-29,31-32,36,38,40-44,48,50-53,55,57-63
 // CANARY-PADS: function FactionDeclFnPad
+void FactionDeclFnPad0();
+void FactionDeclFnPad1();
+void FactionDeclFnPad2();
+void FactionDeclFnPad3();
+void FactionDeclFnPad4();
+void FactionDeclFnPad5();
+void FactionDeclFnPad6();
+void FactionDeclFnPad7();
+void FactionDeclFnPad8();
+void FactionDeclFnPad9();
+void FactionDeclFnPad10();
+void FactionDeclFnPad11();
+void FactionDeclFnPad12();
+void FactionDeclFnPad13();
+void FactionDeclFnPad14();
+void FactionDeclFnPad15();
+void FactionDeclFnPad16();
+void FactionDeclFnPad17();
+void FactionDeclFnPad18();
+void FactionDeclFnPad19();
+void FactionDeclFnPad20();
+void FactionDeclFnPad21();
+void FactionDeclFnPad22();
+void FactionDeclFnPad23();
+void FactionDeclFnPad24();
+void FactionDeclFnPad25();
+void FactionDeclFnPad26();
+void FactionDeclFnPad27();
+void FactionDeclFnPad28();
 
 // Shared separator objects the image pushes instead of unit literals.
 extern const char BufferJoinSpace[];
