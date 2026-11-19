@@ -3950,8 +3950,16 @@ int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3, int a4,
         int fill;
         if (local_18 != 0) {
             fill = 0xa1;
+            buffer->poly(MapCornerScratch, 4, fill);
+            TextureLightFloor = 0xffffff00;
+            TextureLightCeiling = 0x100;
+            return 1;
         } else if (territory_faction == 0xffffffff) {
             fill = 0x11;
+            buffer->poly(MapCornerScratch, 4, fill);
+            TextureLightFloor = 0xffffff00;
+            TextureLightCeiling = 0x100;
+            return 1;
         } else {
 LAB_0046441f:
             fill = InfoFactionTextColors[territory_faction];
