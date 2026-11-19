@@ -343,7 +343,6 @@ int __cdecl success_rates(int id, int morale, int diff_modifier, int base_id) {
 // the two early random_reseed sites (import-slot calls in the image) and
 // calls the copy at the four late `& 1` coin flips (0x5A31B8, 0x5A3231,
 // 0x5A4434, 0x5A4466). Its original name and header are unknown.
-// ORIGINAL: 0x005A58D0 ?probe_time@@YAKXZ 0x005A58D0-0x005A58D6
 static inline DWORD probe_time() { return timeGetTime(); }
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0059F120 0x005A5838 0x005A5850 0x005A1795
