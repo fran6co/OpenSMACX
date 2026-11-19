@@ -52,16 +52,12 @@ extern int BreakthroughTurnsGlobal;
 extern int NetIncomeGlobal;
 extern uint32_t Language;
 
-// Shared punctuation objects: the image pushes each address from many
-// functions and units, so they are named globals, not literals.
-// RECOVERY_OBJECT: v2 0x00682E90 0x00682E93 ?SocialWinCommaSpaceText@@3PADA 0x004AFB60
-char SocialWinCommaSpaceText[] = ", ";             // 0x00682E90
-// RECOVERY_OBJECT: v2 0x00682E94 0x00682E97 ?SocialWinColonSpaceText@@3PADA 0x004AFB60
-char SocialWinColonSpaceText[] = ": ";             // 0x00682E94
-// RECOVERY_OBJECT: v2 0x00682E98 0x00682E9A ?SocialWinCloseParenText@@3PADA 0x00590B88
-char SocialWinCloseParenText[] = ")";              // 0x00682E98
-// RECOVERY_OBJECT: v2 0x00682E9C 0x00682E9E ?SocialWinOpenParenText@@3PADA 0x00590B58
-char SocialWinOpenParenText[] = "(";               // 0x00682E9C
+// Shared punctuation objects (0x00682E90..0x00682EA2): defined at the end of
+// basewin.cpp, where the image's .data order puts them.
+extern char SocialWinCommaSpaceText[];
+extern char SocialWinColonSpaceText[];
+extern char SocialWinCloseParenText[];
+extern char SocialWinOpenParenText[];
 
 // ORIGINAL: 0x004AEF10 ?exit@SocialWin@@QAEXXZ 0x004AEF10-0x004AF10C BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/004aef10.cpp", "image:terranx_original.exe:0x004AEF10", "Original instructions establish owner, bounded body and callback/state order; SocialWin reloads faction after social_upheaval and every later stateful call. GraphicWin dispatches through the real Buffer base.", "recovery/tasks/interface-contract-report-closure.json; bounded UI-five scope preserves original baseline"], "reason": "Recover the original in its genuine UI owner using actual members, globals and base/virtual calls. Retain seed evidence and historical obligations; this binding does not grant a current matching or runtime claim. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
@@ -857,11 +853,7 @@ void SocialWin::draw_social(int a1) {
     do_sound();
 }
 
-// The pinned text at 0x00682EA0 is the percent character and its terminator,
-// the last of the shared punctuation run; BaseWin, InfoWin and ProdPicker
-// renderers push the same object.
-// RECOVERY_OBJECT: v4 0x00682EA0 0x00682EA2 _PercentText 0x004B08A0 target ?PercentText@@3PADA
-char PercentText[] = "%";
+extern char PercentText[];  // shared "%" (0x00682EA0), defined in basewin.cpp
 
 
 typedef void (__cdecl *SoundHookFn)(char *);

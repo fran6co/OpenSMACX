@@ -7540,3 +7540,25 @@ Status: Complete
 // RECOVERY_GENERATED: v1 vtable 0x0066A40C ? ??_7BaseWin@@6BWin@@@ 0x00408490
 // RECOVERY_GENERATED: v1 vtable 0x0066A404 ? ??_7BaseWin@@6BBuffer@@@ 0x00408490
 
+// The shared punctuation run closes this unit's .data contribution: the five
+// texts follow BaseWin::init's last literal ("interface.pcx", 0x00682E80) and
+// precede battlewin.cpp's first (0x00682EA4). basewin.cpp references all
+// five and is the first unit in link order that does; battlewin.cpp does not
+// reference ", " or "%", so they are not that unit's leading globals. This is
+// the position of COMDAT strings (the ??_C literals of header inlines, as
+// help_create_link's "$LINK<" at the end of datalink.cpp's data), which LINK
+// keeps from the first object that carries them; the named objects are the
+// tree's stand-ins for those literals.
+// RECOVERY_OBJECT: v2 0x00682E90 0x00682E93 ?SocialWinCommaSpaceText@@3PADA 0x004AFB60
+char SocialWinCommaSpaceText[] = ", ";             // 0x00682E90
+// RECOVERY_OBJECT: v2 0x00682E94 0x00682E97 ?SocialWinColonSpaceText@@3PADA 0x004AFB60
+char SocialWinColonSpaceText[] = ": ";             // 0x00682E94
+// RECOVERY_OBJECT: v2 0x00682E98 0x00682E9A ?SocialWinCloseParenText@@3PADA 0x00590B88
+char SocialWinCloseParenText[] = ")";              // 0x00682E98
+// RECOVERY_OBJECT: v2 0x00682E9C 0x00682E9E ?SocialWinOpenParenText@@3PADA 0x00590B58
+char SocialWinOpenParenText[] = "(";               // 0x00682E9C
+// The pinned text at 0x00682EA0 is the percent character and its terminator,
+// the last of the shared punctuation run; BaseWin, InfoWin and ProdPicker
+// renderers push the same object.
+// RECOVERY_OBJECT: v4 0x00682EA0 0x00682EA2 _PercentText 0x004B08A0 target ?PercentText@@3PADA
+char PercentText[] = "%";

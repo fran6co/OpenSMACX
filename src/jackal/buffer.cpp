@@ -2131,7 +2131,7 @@ int Buffer::load_pcx(const char *filename, Palette *palette, int tgl, int height
         --scan;
     }
     if (scan == path) {
-// RECOVERY_LITERAL: v1 0x00696C88 0x00696C8D $SG43327 0x005D7DE0
+// RECOVERY_LITERAL: v1 0x00696C88 0x00696C8D $SG43289 0x005D7DE0
         strcat(path, ".pcx");
     }
 
@@ -5242,11 +5242,11 @@ int __stdcall Buffer::load_tga(const char * a1, Palette * a2, int a3, int a4) {
         goto has_ext;
     }
     switch (Language) {
-// RECOVERY_LITERAL: v1 0x00696C58 0x00696C5D $SG44333 0x005D7B40
+// RECOVERY_LITERAL: v1 0x00696C58 0x00696C5D $SG44295 0x005D7B40
         case 1: strcat(path, ".tgf"); break;
-// RECOVERY_LITERAL: v1 0x00696C60 0x00696C65 $SG44335 0x005D7B40
+// RECOVERY_LITERAL: v1 0x00696C60 0x00696C65 $SG44297 0x005D7B40
         case 2: strcat(path, ".tgg"); break;
-// RECOVERY_LITERAL: v1 0x00696C68 0x00696C6D $SG44337 0x005D7B40
+// RECOVERY_LITERAL: v1 0x00696C68 0x00696C6D $SG44299 0x005D7B40
         default: strcat(path, ".tga"); break;
     }
   has_ext:
@@ -7799,11 +7799,11 @@ int __stdcall Buffer::load_bmp(const char * a1, Palette * a2, int a3, int a4) {
         goto has_ext;
     }
     switch (Language) {
-// RECOVERY_LITERAL: v1 0x00696C70 0x00696C75 $SG45252 0x005D7CA0
+// RECOVERY_LITERAL: v1 0x00696C70 0x00696C75 $SG45214 0x005D7CA0
         case 1: strcat(path, ".bmf"); break;
-// RECOVERY_LITERAL: v1 0x00696C78 0x00696C7D $SG45254 0x005D7CA0
+// RECOVERY_LITERAL: v1 0x00696C78 0x00696C7D $SG45216 0x005D7CA0
         case 2: strcat(path, ".bmg"); break;
-// RECOVERY_LITERAL: v1 0x00696C80 0x00696C85 $SG45256 0x005D7CA0
+// RECOVERY_LITERAL: v1 0x00696C80 0x00696C85 $SG45218 0x005D7CA0
         default: strcat(path, ".bmp"); break;
     }
   has_ext:
@@ -8694,9 +8694,7 @@ int BufferFlyingWidth;
 // establish allocation extent, initialization or lifetime.
 // RECOVERY_OBJECT: v1 0x009B3A9C ?BufferStrHeight@@3HA
 int BufferStrHeight;  // 0x009B3A9C
-// Extent: compiled sizeof 0x2; next mapped object 0x00682824, gap unreferenced.
-// RECOVERY_OBJECT: v2 0x00682820 0x00682822 ?BufferJoinSpace@@3QBDB 0x00405223
-extern const char BufferJoinSpace[] = " ";
+// BufferJoinSpace (0x00682820) is kept by popup.cpp, the first unit that references it.
 // RECOVERY_OBJECT: v1 0x00696CD8 ?BufferMeasureSpace@@3QBDB
 extern const char BufferMeasureSpace[] = " ";
 // RECOVERY_OBJECT: v1 0x00696CDC ?BufferWriteSpace@@3QBDB

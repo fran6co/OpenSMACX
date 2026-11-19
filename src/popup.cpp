@@ -1554,3 +1554,16 @@ int Popup::on_dialog_item_back_draw(GraphicWin *a1, int, int a3, RECT *a4) {
 // at a compiler table size; strict content checks then cover every slot.
 // RECOVERY_GENERATED: v1 vtable 0x006695C8 0x0066974C ??_7Popup@@6BWin@@@ 0x004048A0
 // RECOVERY_GENERATED: v1 vtable 0x006695C0 0x006695C8 ??_7Popup@@6BBuffer@@@ 0x004048A0
+
+// The shared " " closes this unit's .data contribution (after start's last
+// literal 0x0068280C, before basewin.cpp's first 0x00682824). 43 units
+// reference it, Jackal members among them (buffer.cpp, caviar.cpp,
+// net_class.cpp), and popup.cpp is the first of them in link order: the
+// position of a COMDAT string (the ??_C literal of a header inline, as
+// help_create_link's "$LINK<" at the end of datalink.cpp's data), which LINK
+// keeps from the first object that carries it. The named object is the
+// tree's stand-in for that literal; it is const here although the image
+// keeps it in .data.
+// Extent: compiled sizeof 0x2; next mapped object 0x00682824, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x00682820 0x00682822 ?BufferJoinSpace@@3QBDB 0x00405223
+extern const char BufferJoinSpace[] = " ";
