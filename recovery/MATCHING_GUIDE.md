@@ -1726,6 +1726,28 @@ Conclusions
   that type; a helper that restores the call multiset with the wrong reload
   shape is not the original (2858bb1c47 reverted fd3923ed2a).
 
+Header inlines behind dead probes (2026-11-19, par-1; clear/says/space/
+say_label/say_tech batch, 86cc2f1fd4..39c52fa497, 89 probe calls retired)
+- **A small helper whose out-of-line copy is called only by budget-exhausted
+  giants, and whose copy sits next to their code, is a header inline** (high).
+  The giants (base_build, battle_fight, communicate, probe, ...) refuse it for
+  lack of budget; every other unit expanded it, and the out-of-line copy is
+  the one a giant's object contributed. The hand-written body of that helper
+  at other call sites is what the dead `*_budget_probe` calls stood in for:
+  write the call, make the helper a `MEASURED inline` in its header (the
+  ORIGINAL marker stays in its .cpp with a `// body <header>` pointer, as
+  clear/says do), and the probes become unnecessary. Screen:
+  `analysis/giantcallee.py`.
+- **Judge a probe removal by inline decisions, not rows** (high). Keep the
+  removal when `inlinemap.py`'s E/c strings and the call multiset stay equal
+  to (or closer to) the image and the unit's exact set holds; fe rows can
+  stay equal while a decision moves, and move while none does.
+- **Deleting an unused probe definition shifts the unit's front-end counter**
+  (high). A probe's definition is a declaration like any other: removing the
+  last call and its definition flips the unit's count canaries (2.5, 3.6) and
+  header-position ties (custom_planet 11 -> 379 from one strings.h
+  declaration). Re-tune the canaries once, after the batch.
+
 ## 3. Symptom → first thing to check
 
 ### 3.1 Calls and inlining
