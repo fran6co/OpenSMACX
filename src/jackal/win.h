@@ -507,8 +507,8 @@ class Win : public AutoSound {
   Buffer *buffer5_;
   // 0x130. Non-zero selects `on_paint`'s edge-fill path over the tiling loop.
   uint32_t field_130_;
-  uint32_t field_134_;
-  uint32_t field_138_;
+  int field_134_;
+  int field_138_;
   RECT outer_rect_;
   RECT client_rect_;
   RECT cached_outer_rect_;

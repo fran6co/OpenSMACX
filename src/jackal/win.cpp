@@ -6924,8 +6924,8 @@ void Win::do_tracking(int x, int y) {
     if (dx == 0 && dy == 0) return;
 
     // ---- 0x005F7673-0x005F76E9: min-size threshold, transformed to nonclient space ----
-    int minW = static_cast<int>(field_134_);
-    int minH = static_cast<int>(field_138_);
+    int minW = field_134_;
+    int minH = field_138_;
     client_to_nonclient(&minW, &minH);
 
     // ---- 0x005F7698-0x005F77CD: build an absolute-screen "before" rect ----
