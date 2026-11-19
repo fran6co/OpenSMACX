@@ -355,7 +355,7 @@ difficulty_menu:
         {
             for (int i = 0; i < 6; ++i) {
                 StringTemp[0] = 0;
-                strcat(StringTemp, table_text(Difficulty[i]));
+                strcat(StringTemp, StringTable.get(Difficulty[i]));
                 if (i == 0) {
                     strcat(StringTemp, BufferJoinSpace);
                     strcat(StringTemp, SocialWinOpenParenText);
