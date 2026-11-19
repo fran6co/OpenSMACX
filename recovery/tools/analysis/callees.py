@@ -6,7 +6,11 @@ ours through the object's relocations. Prints the callees on one side only (name
 `named_diff(c, text, addr)` returns that symmetric difference as one number (armwo's call key);
 indirect calls through a register or member pointer count under one name, `<indirect>`.
 Image calls to a function without a marker keep a `sub_<addr>` name, so they never match our side: they
-add a constant to every variant of a function and do not change the ranking."""
+add a constant to every variant of a function and do not change the ranking.
+ICF-folded twins (one original body, several of our symbols) count as one callee: a `RECOVERY_SHARED` symbol
+takes the name of the `ORIGINAL` marker at its start address, and an our-only method without any marker pairs
+with an image-only method of the same name in another class (AlphaNetStringStruct::next_entry against
+StringStruct::next_entry: the linker folded the twin into the marked copy), count for count."""
 import sys, os, re, glob, struct, collections, argparse
 H = os.path.dirname(os.path.abspath(__file__))
 T = os.path.dirname(H)
@@ -29,20 +33,65 @@ ALIAS = {'__strcmpi': '__stricmp'}
 
 _A2S = None
 _IAT = None
+_SHARED = None   # RECOVERY_SHARED emitted symbol -> start address
+_OBJ = {}        # RECOVERY_OBJECT start address -> symbol
+_MARKED = None   # every symbol named by an ORIGINAL marker (marker name and `// symbol`)
 
 
 def addr2sym():
-    global _A2S
+    global _A2S, _SHARED, _MARKED
     if _A2S is None:
-        _A2S = {}
+        _A2S, _SHARED, _MARKED = {}, {}, set()
         for p in glob.glob(fe.R + '/src/**/*.cpp', recursive=True) + glob.glob(fe.R + '/src/**/*.h', recursive=True):
             t = open(p, encoding='latin-1').read()
             for m in re.finditer(r'// ORIGINAL: 0x([0-9A-F]{8}) (\S+) 0x[0-9A-Fa-f]+-0x[0-9A-Fa-f]+[^\n]*\n((?://(?! ORIGINAL:)[^\n]*\n)*)', t):
                 m2 = re.search(r'// symbol\s+(\S+)', m.group(3))
                 _A2S[int(m.group(1), 16)] = m2.group(1) if m2 else m.group(2)
+                _MARKED.add(m.group(2))
+                if m2:
+                    _MARKED.add(m2.group(1))
+            for m in re.finditer(r'RECOVERY_SHARED: v1 0x([0-9A-Fa-f]+) 0x[0-9A-Fa-f]+ (\S+)', t):
+                _SHARED[m.group(2)] = int(m.group(1), 16)
+            # data objects called through (`call [PopupAllocHook]`): the image's `call [abs]` names the slot
+            for m in re.finditer(r'RECOVERY_OBJECT: v\d+ 0x([0-9A-Fa-f]+) (?:0x[0-9A-Fa-f]+ )?(\S+)', t):
+                _OBJ.setdefault(int(m.group(1), 16), m.group(2))
         for a, n in CRT.items():
             _A2S.setdefault(a, n)
     return _A2S
+
+
+def shared_name(name):
+    """our symbol -> the image's name for its body (RECOVERY_SHARED twins), else the symbol"""
+    a2s = addr2sym()
+    a = _SHARED.get(name)
+    return a2s.get(a, name) if a is not None else name
+
+
+def method(name):
+    """'?next_entry@StringStruct@@QAE...' -> ('next_entry', 'StringStruct'); None for non-members"""
+    m = re.match(r'\?([A-Za-z_]\w*)@([A-Za-z_]\w*)@@', name)
+    return (m.group(1), m.group(2)) if m else None
+
+
+def fold_twins(ci, co):
+    """pair our-only unmarked methods with image-only methods of the same name in another class (ICF twins)"""
+    addr2sym()
+    for n in sorted(co):
+        if n in _MARKED or co[n] <= ci[n]:
+            continue
+        mn = method(n)
+        if not mn:
+            continue
+        for k in sorted(ci):
+            mk = method(k)
+            if not mk or mk[0] != mn[0] or mk[1] == mn[1] or ci[k] <= co[k]:
+                continue
+            q = min(co[n] - ci[n], ci[k] - co[k])
+            co[n] -= q
+            co[k] += q
+            if co[n] <= ci[n]:
+                break
+    return +co
 
 
 def iat():
@@ -105,7 +154,7 @@ def image_calls(lo, hi):
             out[a2s.get(t, 'sub_%x' % t)] += 1
         elif b[0] == 0xFF and b[1] == 0x15:
             slot = struct.unpack_from('<I', b, 2)[0]
-            out[imp.get(slot, a2s.get(slot, 'iat_%x' % slot))] += 1
+            out[imp.get(slot, a2s.get(slot, _OBJ.get(slot, 'iat_%x' % slot)))] += 1
         else:
             out['<indirect>'] += 1
     return out
@@ -128,7 +177,7 @@ def our_calls(c, sym):
             sy = c.symbols.get(rm[at][1])
             if sy and sy.name == sym:
                 continue  # a recursive call: image_calls skips calls into the span too
-            out[norm_ours(sy.name) if sy else '?'] += 1
+            out[shared_name(norm_ours(sy.name)) if sy else '?'] += 1
         elif b[0] == 0xE8:
             continue  # a local call
         else:
@@ -146,7 +195,7 @@ def diff(c, text, addr):
     except Exception:
         return None
     ci = image_calls(lo, hi)
-    return ci, co
+    return ci, fold_twins(ci, co)
 
 
 def named_diff(c, text, addr):
