@@ -1810,8 +1810,8 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
   Buffer::box_sprite(&rect_EDC_, &InterfaceBoxStyles[9]);
 
   stringBox_.init(rect_F3C_.left + 3, rect_F3C_.top + 3,
-                  rect_F3C_.right - rect_F3C_.left - 6,
-                  rect_F3C_.bottom - rect_F3C_.top - 6,
+                  rect_width(&rect_F3C_) - 6,
+                  rect_height(&rect_F3C_) - 6,
                   static_cast<Win *>(&MainInterfaceGlobal), 0, -1);
   stringBox_.set_write_strings_callback(&DiploWin::string_callback);
   stringBox_.set_text_color(0xFF, -1, 1, 1);

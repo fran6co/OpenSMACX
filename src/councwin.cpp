@@ -742,25 +742,24 @@ void CouncWin::init(int proposal, int faction_id) {
         CouncilDialogActive = 1;
         field_A38_ = timeGetTime();
     }
-    field_A40_ = 1;
     field_A3C_ = bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff) * 60000;
+    field_A40_ = 1;
 
-    int i;
     if (!IsMultiplayerPBEM || !CouncilPbemGate) {
         field_A24_ = 0;
-        for (i = 0; i < MaxPlayerNum; i++) {
-            leader_tech_[i] = council_votes(i);
+        for (proposal = 0; proposal < MaxPlayerNum; proposal++) {
+            leader_tech_[proposal] = council_votes(proposal);
         }
         for (int round = 0; round < 3; round++) {
-            for (i = 0; i < MaxPlayerNum; i++) {
-                if (!is_human(i)
-                    || (i != ConsoleGlobal.faction_id_ && !IsMultiplayerNet && !IsMultiplayerPBEM)) {
-                    leader_label_kind_[i] = council_get_vote(i, field_A1C_, faction_id);
+            for (proposal = 0; proposal < MaxPlayerNum; proposal++) {
+                if (!is_human(proposal)
+                    || (proposal != ConsoleGlobal.faction_id_ && !IsMultiplayerNet && !IsMultiplayerPBEM)) {
+                    leader_label_kind_[proposal] = council_get_vote(proposal, field_A1C_, faction_id);
                 } else {
-                    leader_label_kind_[i] = 0;
+                    leader_label_kind_[proposal] = 0;
                 }
-                if (!is_alive(i)) {
-                    leader_label_kind_[i] = static_cast<uint32_t>(-5);
+                if (!is_alive(proposal)) {
+                    leader_label_kind_[proposal] = static_cast<uint32_t>(-5);
                 }
             }
         }
@@ -769,6 +768,7 @@ void CouncWin::init(int proposal, int faction_id) {
         }
     }
 
+    int i;
     for (i = 0; i < MaxPlayerNum; i++) {
         leader_backing_[i][0] = &FactionsArt[i].council_logo[0];
         leader_backing_[i][1] = &FactionsArt[i].council_logo[1];
