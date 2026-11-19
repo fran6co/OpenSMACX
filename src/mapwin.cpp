@@ -4893,18 +4893,17 @@ LAB_wireframe:
                 land_vertices[step].x = LandCornerXStep[step] * local_78 + a9;
                 land_vertices[step].y = LandCornerYStep[step] * local_98 + a10;
                 if (window != 0) {
-                    // 0x466B28 loads the corner id before the bounds
-                    // test; the cache byte is signed (movsx).
-                    const int corner_id = LandCornerId[step];
+                    // The corner id is read in place at both uses (no
+                    // home in the image); the cache byte is signed (movsx).
                     int delta;
                     if (a8 >= MapLatitudeBounds || a7 >= MapLongitudeBounds) {
                         delta = 0;
                     } else {
-                        window->get_alt(a7, a8, corner_id);
+                        window->get_alt(a7, a8, LandCornerId[step]);
                         delta = (signed char)(window->owned_ == 0
                             ? 0
                             : window->owned_[(MapLongitudeBounds >> 1) * a8 + local_14]
-                                  .altitude[corner_id]);
+                                  .altitude[LandCornerId[step]]);
                     }
                     land_vertices[step].y -= delta;
                 }
