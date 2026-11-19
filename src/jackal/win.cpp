@@ -6573,11 +6573,13 @@ void Win::on_redraw_nc(RECT * area, int flags) {
             this->buffer3_->set_clip(&clip);
             if (this->field_FC_ != 0) {
                 this->buffer3_->tile((Buffer *)this->field_FC_, 0, capHeight, 0, 0, clientW, clientH);
+                make_rect(&r, 0, 0, clientW, clientH);
+                offset_rect(&r, 0, -capHeight);
             } else {
                 this->buffer3_->fill(this->field_100_);
+                make_rect(&r, 0, 0, clientW, clientH);
+                offset_rect(&r, 0, -capHeight);
             }
-            make_rect(&r, 0, 0, clientW, clientH);
-            offset_rect(&r, 0, -capHeight);
             for (i = 0; i < (int)this->field_128_; i++) {
                 this->buffer3_->box(&r, this->field_120_, this->field_124_);
                 r.left++; r.right--; r.top++; r.bottom--;
