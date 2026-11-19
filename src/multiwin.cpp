@@ -541,7 +541,7 @@ void MultiWin::draw_time(RECT *bounds, int draw_type) {
         after_tick.bits = static_cast<uint32_t>(NetDaemonWaitTicks) - 500u;
         NetDaemonWaitTicks = after_tick.value < 0 ? 0 : after_tick.value;
       } else {
-        const int council_time = static_cast<int32_t>(CouncilWindow.field_A3C_);
+        const int council_time = CouncilWindow.field_A3C_;
         local_10 = council_time > 0 ? 1u : 0u;
         local_14 = 0;
         union SignedDword {
@@ -562,7 +562,7 @@ void MultiWin::draw_time(RECT *bounds, int draw_type) {
 
   int signed_time = NetDaemonWaitTicks < 0 ? 0 : NetDaemonWaitTicks;
   if (council != 0) {
-    const int council_time = static_cast<int32_t>(CouncilWindow.field_A3C_);
+    const int council_time = CouncilWindow.field_A3C_;
     signed_time = council_time < 0 ? 0 : council_time;
   }
   countdown_ms = static_cast<uint32_t>(signed_time);

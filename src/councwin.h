@@ -153,7 +153,7 @@ class CouncWin : public GraphicWin, public SubInterface {
   // 165 member(s) from the IDA database, 13 named; it starts a member at 0xA38, which is where src/ ends.
 
   uint32_t field_A38_;  // 0xA38
-  uint32_t field_A3C_;  // 0xA3C
+  int field_A3C_;  // 0xA3C
   uint32_t field_A40_;  // 0xA40
   uint32_t field_A44_;  // 0xA44
   Spot spot_;  // 0xA48
