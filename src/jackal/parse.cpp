@@ -97,7 +97,7 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
     char num_text[80];
     char hex_text[80];
     while (1) {
-        // RECOVERY_LITERAL: v1 0x0069734C 0x0069734E $SG18202 0x00625880
+        // RECOVERY_LITERAL: v1 0x0069734C 0x0069734E $SG18204 0x00625880
         var = strstr(input, "$");
         if (!var) {
             break;
@@ -105,7 +105,7 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
         LPSTR next = var + 1;
         switch (*next) {
           case 'N':
-            // RECOVERY_LITERAL: v1 0x00697350 0x00697358 $SG18211 0x00625880
+            // RECOVERY_LITERAL: v1 0x00697350 0x00697358 $SG18213 0x00625880
             if (!strncmp(var, "$NUMBER", 7)) {
                 number = var[7] - '0';
                 if (number > 9) {
@@ -120,7 +120,7 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
                 strcat(output, number_text);
                 output += strlen(output);
                 continue;
-            // RECOVERY_LITERAL: v1 0x00697358 0x0069735D $SG18215 0x00625880
+            // RECOVERY_LITERAL: v1 0x00697358 0x0069735D $SG18217 0x00625880
             } else if (!strncmp(var, "$NUM", 4)) {
                 number = var[4] - '0';
                 if (number > 9) {
@@ -156,7 +156,7 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
             break;
 
           case 'H':
-            // RECOVERY_LITERAL: v1 0x00697360 0x00697365 $SG18222 0x00625880
+            // RECOVERY_LITERAL: v1 0x00697360 0x00697365 $SG18224 0x00625880
             if (!strncmp(var, "$HEX", 4)) {
                 // The image formats $HEX in decimal, like $NUM.
                 number = var[4] - '0';
@@ -206,7 +206,7 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
             memcpy(output, input, len);
             output += len;
             *output = 0;
-            // RECOVERY_LITERAL: v1 0x00697368 0x0069736A $SG18230 0x00625880
+            // RECOVERY_LITERAL: v1 0x00697368 0x0069736A $SG18232 0x00625880
             LPSTR end_bracket = strstr(var, ">");
             if (!end_bracket) {
                 input = next;
@@ -293,7 +293,7 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
           }
 
           case 'L':
-            // RECOVERY_LITERAL: v1 0x0069736C 0x00697373 $SG18285 0x00625880
+            // RECOVERY_LITERAL: v1 0x0069736C 0x00697373 $SG18287 0x00625880
             if (!strncmp(var, "$LINK<", 6)) {
                 len = var - input;
                 memcpy(output, input, len + 1);

@@ -199,8 +199,8 @@ int __stdcall Video_unk7(int, int) {
 // ORIGINAL: 0x00637870 ?decode_frame_process@Video@@QAEXXZ 0x00637870-0x006378B0 FILE BYTE_EXACT
 // symbol    ?decode_frame_process@Video@@QAEHXZ
 int Video::decode_frame_process() {
-  // RECOVERY_LITERAL: v1 0x00698870 0x00698879 $SG47732 0x00637870
-  // RECOVERY_LITERAL: v1 0x0069887C 0x00698891 $SG47733 0x00637870
+  // RECOVERY_LITERAL: v1 0x00698870 0x00698879 $SG47734 0x00637870
+  // RECOVERY_LITERAL: v1 0x0069887C 0x00698891 $SG47735 0x00637870
   log_say("decode_frame_process", "Entering",
           static_cast<int>(timeGetTime()), 0, 0);
   if ((static_cast<unsigned char>(flags_) & 0x10) != 0) return 0;
@@ -211,8 +211,8 @@ int Video::decode_frame_process() {
 // ORIGINAL: 0x006378B0 ?read_frame_process@Video@@QAEXXZ 0x006378B0-0x00637906 FILE BYTE_EXACT
 // symbol    ?read_frame_process@Video@@QAEXXZ
 void Video::read_frame_process() {
-  // RECOVERY_LITERAL: v1 0x00698894 0x0069889D $SG47740 0x006378B0
-  // RECOVERY_LITERAL: v1 0x006988A0 0x006988B3 $SG47741 0x006378B0
+  // RECOVERY_LITERAL: v1 0x00698894 0x0069889D $SG47742 0x006378B0
+  // RECOVERY_LITERAL: v1 0x006988A0 0x006988B3 $SG47743 0x006378B0
   log_say("read_frame_process", "Entering",
           static_cast<int>(timeGetTime()), 0, 0);
   if ((static_cast<unsigned char>(flags_) & 0x10) == 0) {
@@ -416,7 +416,7 @@ int Video::decode_frame(int destination_index) {
   return 1;
 }
 
-// RECOVERY_LITERAL: v1 0x00698978 0x00698981 $SG47885 0x00637D70
+// RECOVERY_LITERAL: v1 0x00698978 0x00698981 $SG47887 0x00637D70
 // ORIGINAL: 0x00637D70 ?play_frame@Video@@QAEHXZ 0x00637D70-0x0063808D FILE BYTE_EXACT
 // symbol    ?play_frame@Video@@QAEHXZ
 // TRIED: prologue register order (large 797-byte function, many branches); landed as a structural transcription rather than chasing every register-allocation choice. Div-by-1000 modelled as plain unsigned int/1000 (VC6's own reciprocal-multiply idiom), not the 64-bit division Ghidra's decompile implied.
