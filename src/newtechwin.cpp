@@ -120,11 +120,9 @@ void NewTechWin::on_redraw() {
 
     this->box_sprite(&main_rect_, &InterfaceBoxStyles[3]);
 
-    RECT *rect = &ok_button_rect_;
-    scratch.left = rect->left - 3;
-    scratch.top = rect->top - 3;
-    scratch.right = rect->right + 3;
-    scratch.bottom = rect->bottom + 3;
+    RECT *rect;
+    scratch = ok_button_rect_;
+    expand_rect(&scratch, 3, 3);
     this->box_sprite(&scratch, &InterfaceBoxStyles[3]);
 
     this->set_font(find_font(0x10, 1), 0, 0, 0);
