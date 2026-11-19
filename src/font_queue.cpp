@@ -567,15 +567,14 @@ void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int fl
         int previous_time = timeGetTime();
         int now;
         int move_now;
-        int frame;
-        for (frame = 0; frame < turn_frames; ++frame) {
+        for (tile_y = 0; tile_y < turn_frames; ++tile_y) {
             for (i = 0; i < 8; ++i) {
                 if (active[i]) {
                     set_rectangle_dimensions(&tile_rect, start_x[i], start_y[i],
                         rect_width(&area[i]), rect_height(&area[i]));
                     if (IntersectRect(&intersection, &tile_rect, &area[i])) {
                         veh_draw(MapWinTable[i], veh_id, start_x[i], start_y[i],
-                            MapWinTable[i]->zoom_offset_, 0x12, frame);
+                            MapWinTable[i]->zoom_offset_, 0x12, tile_y);
                         MapWinTable[i]->update(&area[i], 0);
                         saved[i].copy(MapWinTable[i],
                             start_x[i] - margin_x[i] - area[i].left,
@@ -594,7 +593,7 @@ void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int fl
         // Original55ABCD jumps straight to the global-coordinate cleanup.
         if (flags & 1) goto finish;
         vehdraw_scoot_start(veh_id, direction, move_frames, 2);
-        for (frame = 0; frame < move_frames; ++frame) {
+        for (tile_y = 0; tile_y < move_frames; ++tile_y) {
             for (i = 0; i < 8; ++i) {
                 if (active[i]) {
                     set_rectangle_dimensions(&tile_rect,
@@ -603,7 +602,7 @@ void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int fl
                     if (IntersectRect(&intersection, &tile_rect, &area[i])) {
                         veh_draw(MapWinTable[i], veh_id,
                             static_cast<int>(position[i].x_), static_cast<int>(position[i].y_),
-                            MapWinTable[i]->zoom_offset_, 0x22, frame);
+                            MapWinTable[i]->zoom_offset_, 0x22, tile_y);
                         MapWinTable[i]->update(&area[i], 0);
                         saved[i].copy(MapWinTable[i],
                             static_cast<int>(position[i].x_) - margin_x[i] - area[i].left,
