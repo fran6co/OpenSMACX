@@ -299,6 +299,8 @@ def compile_cod(unit, src, pfx):
         elif t == fe.R + '/' + unit:
             t = os.path.abspath(src)
         out.append(t)
+    if '/Z7' not in out and '/Zi' not in out:
+        out.insert(-1, '/Z7')  # Jackal units build without debug types; the layouts come from CodeView
     out.insert(-1, '/FAsc')
     out.insert(-1, '/Fa' + cod)
     env = dict(os.environ, VC6_PREFIX='%s/.opensmacx/wine/worker-%s' % (fe.MAIN, pfx))
@@ -462,6 +464,9 @@ def jcc_after(stream, k):
         if mn in SIGNED_J:
             return 'S'
         if mn in UNSIGNED_J:
+            # a switch's range check (cmp; ja default; jmp [reg*4+table]) is unsigned whatever the type
+            if any(re.match(r'jmp dword ptr \[\w+\*4', stream[j2][1]) for j2 in range(j + 1, min(len(stream), j + 3))):
+                return None
             return 'U'
         if mn in ('mov', 'lea', 'push', 'pop'):
             continue
@@ -676,7 +681,8 @@ def main():
         contra = cnt[(False, opp)] + cnt[(True, opp)]
         agree = cnt[(False, decl[1])] + cnt[(True, decl[1])]
         wid = sum(v for (e, s), v in cnt.items() if s.startswith('W'))
-        if a.field or contra >= a.min and contra > agree or wid >= a.min:
+        paired = sum(1 for u in us if u['img_text'])
+        if a.field or contra >= a.min and contra > agree or wid >= max(2, a.min) and wid * 10 >= paired:
             nonex = sum(1 for u in us if not u['exact'])
             rows.append((key, decl, cnt, contra, agree, wid, nonex, us))
     rows.sort(key=lambda r: (-(r[3] - r[4]), -r[5], -r[6]))
