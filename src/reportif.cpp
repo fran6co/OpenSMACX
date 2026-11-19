@@ -2811,6 +2811,7 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
         inflate_frame(&report_work_rect_, 7, 0);
         report_work_rect_.bottom += 7;
         host->Buffer::box_sprite(&report_work_rect_, &InterfaceBoxStyles[5]);
+        host->Buffer::restore_clip();
     } else {
         report_work_rect_.right = first_id + 7;
         report_work_rect_.bottom = line_height + 20;
@@ -2820,8 +2821,8 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
         inflate_frame(&report_work_rect_, 7, 0);
         report_work_rect_.bottom += 7;
         host->Buffer::box_sprite(&report_work_rect_, &InterfaceBoxStyles[3]);
+        host->Buffer::restore_clip();
     }
-    host->Buffer::restore_clip();
 }
 
 /*
