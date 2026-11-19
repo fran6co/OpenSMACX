@@ -305,7 +305,7 @@ void InfoWin::setup_text() {
             strcat(text, label_get(0xDE));
             strcat(text, SocialWinColonSpaceText);
             strcat(text, "{");
-            say_special(text, StringTable.get(
+            say_special(text, table_text(
                 Repute[range(PlayersData[faction].integrity_blemishes, 0, 7)]), faction);
             strcat(text, "}");
             strcpy(row_text_[pane][k++], text);
@@ -313,7 +313,7 @@ void InfoWin::setup_text() {
             strcat(text, label_get(0xDF));
             strcat(text, SocialWinColonSpaceText);
             strcat(text, "{");
-            say_special(text, StringTable.get(
+            say_special(text, table_text(
                 Might[7 - range(PlayersData[faction].ranking, 1, 7)].adj), faction);
             strcat(text, "}");
             strcpy(row_text_[pane][k++], text);
@@ -508,13 +508,13 @@ void InfoWin::setup_text() {
             line_height = 0;
             MainInterfaceGlobal.set_clip(&rect);
             text[0] = 0;
-            if (!((ScenarioSave.objective_req_victory < 9000
+            if ((ScenarioSave.objective_req_victory < 9000
                  || ScenarioSave.objectives_sudden_death_victory < 9000)
-                && !ScenarioSave.objective_achieve_points)) {
-                strcat(text, label_get(0x1B8));
-            } else {
+                && !ScenarioSave.objective_achieve_points) {
                 strcat(text, label_get(899));
                 CharUpperA(text);
+            } else {
+                strcat(text, label_get(0x1B8));
             }
             strcpy(row_text_[pane][k++], text);
             {
@@ -614,16 +614,16 @@ void InfoWin::setup_text() {
                 strcat(text, label_get(0xED0 / 4));
                 break;
             case 26:
-                strcat(text, StringTable.get(Natural[2].name_short));
+                strcat(text, table_text(Natural[2].name_short));
                 break;
             case 27:
-                strcat(text, StringTable.get(Natural[6].name_short));
+                strcat(text, table_text(Natural[6].name_short));
                 break;
             case 28:
                 strcat(text, table_text(Natural[3].name_short));
                 break;
             case 29:
-                strcat(text, StringTable.get(Natural[10].name_short));
+                strcat(text, table_text(Natural[10].name_short));
                 break;
             default:
                 strcat(text, StringTable.get(Terraforming[MapEditorPaintId - 6].name[0]));
