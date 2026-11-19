@@ -388,6 +388,17 @@ extern int __cdecl probe(int veh_id, int target_veh_id,
 int break_treaty(int faction_id, int target_faction_id, int treaty);
 
 
+// WORKAROUND(decl): name and home ours. order_veh's "synch_veh; await_synch"
+// pairs (seven sites) through one inline owner: written out, the frame is 4
+// bytes larger than the image's 0x5414 and 12 frame slots differ; through the
+// owner the frame is the image's and one slot differs (rungs.py). The pair
+// recurs across the tree (44 sites), so the original is likely a header
+// inline; no out-of-line copy in the image.
+static inline void order_veh_synch(int veh_id) {
+    synch_veh(veh_id);
+    NetDaemonNet.await_synch();
+}
+
 // Vehicle movement: moves veh_id one step in `direction` (8 = in place),
 // resolving probes, native capture, artifacts, supply, ZOC, combat, fuel and
 // the move itself. `mode` is stored as NetDaemonNet's order flags word and
@@ -547,8 +558,7 @@ L_5949b3:
                     if (rows > 1 && faction == ConsoleGlobal.faction_id_
                         && (faction_bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)) {
                         Vehs[veh_id].terraforming_turns = popup.exec(0, NULL);
-                        synch_veh(veh_id);
-                        NetDaemonNet.await_synch();
+                        order_veh_synch(veh_id);
                     }
                 }
             }
@@ -577,8 +587,7 @@ L_5949b3:
                 action_home(veh_id, 0);
                 if (Vehs[veh_id].order == ORDER_MOVE_TO) {
                     if (IsMultiplayerNet && !ConsoleControlTurnActive) {
-                        synch_veh(veh_id);
-                        NetDaemonNet.await_synch();
+                        order_veh_synch(veh_id);
                     }
                     return 0;   // 5964cf
                 }
@@ -634,8 +643,7 @@ L_5949b3:
             if (probe(veh_id, base_id, -1, 1) && IsMultiplayerNet && !ConsoleControlTurnActive
                     && (NetDaemonNet.action_mode_ & 1) != 0
                     && (NetDaemonNet.action_mode_ & 2) == 0) {
-                synch_veh(veh_id);
-                NetDaemonNet.await_synch();
+                order_veh_synch(veh_id);
                 return 1;   // 596667
             }
             goto done;
@@ -648,8 +656,7 @@ L_5949b3:
                 && !ConsoleControlTurnActive
                 && (NetDaemonNet.action_mode_ & 1)
                 && !(NetDaemonNet.action_mode_ & 2)) {
-                synch_veh(veh_id);
-                NetDaemonNet.await_synch();
+                order_veh_synch(veh_id);
                 return 1;   // 5966f6
             }
             if (GameDataStateStorage.fields_.vehicle_current_count_ != group_count_at_entry)
@@ -767,8 +774,7 @@ L_595083:
             if (!shown)
                 goto done;
             if (IsMultiplayerNet && !ConsoleControlTurnActive) {
-                synch_veh(veh_id);
-                NetDaemonNet.await_synch();
+                order_veh_synch(veh_id);
                 return 1;   // 596b32
             }
         } else {
@@ -1412,8 +1418,7 @@ L_597350:
                     Vehs[veh_id].state |= 0x8000;
                     if ((NetDaemonNet.action_mode_ & 1)
                             && IsMultiplayerNet && !ConsoleControlTurnActive) {
-                        synch_veh(veh_id);
-                        NetDaemonNet.await_synch();
+                        order_veh_synch(veh_id);
                     }
                     selector = 1;
                     goto done;
@@ -2017,8 +2022,7 @@ L_599b2a:
         }
         if ((NetDaemonNet.action_mode_ & 2) == 0 && IsMultiplayerNet &&
                 !ConsoleControlTurnActive) {
-            synch_veh(veh_id);
-            NetDaemonNet.await_synch();
+            order_veh_synch(veh_id);
         }
     } else if ((NetDaemonNet.action_mode_ & 2) != 0) {
         if (direction >= 0 && direction < 8 && (Vehs[veh_id].state & 8) != 0 &&
