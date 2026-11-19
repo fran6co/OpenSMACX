@@ -3972,30 +3972,21 @@ do_cleanup:
 // top_menu's string operands, each read from the image's push operand and
 // checked against the literal text in the body; the repeated file names are
 // separate unpooled copies at distinct addresses.
-// RECOVERY_LITERAL: v1 0x0068F8F4 0x0068F908 $SG65999 0x0058E360
-// RECOVERY_LITERAL: v1 0x0068F908 0x0068F916 $SG66003 0x0058E360
-// RECOVERY_LITERAL: v1 0x0068F918 0x0068F926 $SG66004 0x0058E360
-// RECOVERY_LITERAL: v1 0x0068F928 0x0068F935 $SG66006 0x0058E360
-// RECOVERY_LITERAL: v1 0x0068F938 0x0068F945 $SG66007 0x0058E360
-// RECOVERY_LITERAL: v1 0x0068F948 0x0068F956 $SG66012 0x0058E360
-// RECOVERY_LITERAL: v1 0x0068F958 0x0068F966 $SG66013 0x0058E360
-// RECOVERY_LITERAL: v1 0x0068F968 0x0068F975 $SG66015 0x0058E360
-// RECOVERY_LITERAL: v1 0x0068F978 0x0068F985 $SG66016 0x0058E360
-// RECOVERY_LITERAL: v1 0x0068F988 0x0068F990 $SG66017 0x0058E360
-// RECOVERY_LITERAL: v1 0x0068F990 0x0068F998 $SG66018 0x0058E360
-// RECOVERY_LITERAL: v1 0x0068F998 0x0068F9A5 $SG66043 0x0058E360
-// RECOVERY_LITERAL: v1 0x0068F9A8 0x0068F9AE $SG66061 0x0058E360
-// RECOVERY_LITERAL: v1 0x0068F9B0 0x0068F9B9 $SG66062 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F8F4 0x0068F908 $SG65995 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F908 0x0068F916 $SG65999 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F918 0x0068F926 $SG66000 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F928 0x0068F935 $SG66002 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F938 0x0068F945 $SG66003 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F948 0x0068F956 $SG66008 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F958 0x0068F966 $SG66009 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F968 0x0068F975 $SG66011 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F978 0x0068F985 $SG66012 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F988 0x0068F990 $SG66013 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F990 0x0068F998 $SG66014 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F998 0x0068F9A5 $SG66039 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F9A8 0x0068F9AE $SG66057 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F9B0 0x0068F9B9 $SG66058 0x0058E360
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0058E360 0x0058EE34 0x0058EE4C 0x0058E758
-// WORKAROUND(inline): dead /Ob2 spend for top_menu, not recovered code (a
-// constant argument folds it away). The image expands one more member
-// destructor at the menu loop's `return 1` teardown (0x0058EC75) than the
-// body alone pays for; two flat units anywhere before the loop's last
-// init_opening expansion reproduce it, one or three do not, and spend after
-// that point goes to the wrong site. Tried as real spellings without effect:
-// Popup::start(label), opening_window(), a ternary helper for the file name,
-// a helper layer over init_opening, a style-flag helper.
-static inline int top_menu_spend(int x) { if (x == 0) x = 1; return x; }
 
 // ORIGINAL: 0x0058E360 ?top_menu@@YAHH@Z 0x0058E360-0x0058EE31;0x00660A96-0x00660BD7 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:newgame-menu-owner", "historical seed:src/unrecovered/0058e360.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete mapped native control flow", "source:existing SetupWin/Popup/Buffer/NetDaemon owner declarations; provisional bounded945820 and9B2074 objects, not raw image aliases"], "reason": "Source-owned new-game/menu family preserving complete original identity, auxiliary spans and historical seed findings; existing genuine object lifetimes and typed member owners. Unfinished bodies remain explicit, not implementation coverage."}
@@ -4608,42 +4599,42 @@ char * __cdecl sub_58f4f0(char *output, int faction_id, int plurality, int gende
         gender = GenderDefault;
     }
     buffer[0] = 0;
-// RECOVERY_LITERAL: v1 0x0068FA70 0x0068FA73 $SG66151 0x0058F4F0
+// RECOVERY_LITERAL: v1 0x0068FA70 0x0068FA73 $SG66147 0x0058F4F0
     strcat(buffer, "$<");
     if (gender == 0) {
-// RECOVERY_LITERAL: v1 0x0068FA74 0x0068FA76 $SG66153 0x0058F4F0
+// RECOVERY_LITERAL: v1 0x0068FA74 0x0068FA76 $SG66149 0x0058F4F0
         strcat(buffer, "M");
     } else if (gender == 1) {
-// RECOVERY_LITERAL: v1 0x0068FA78 0x0068FA7A $SG66156 0x0058F4F0
+// RECOVERY_LITERAL: v1 0x0068FA78 0x0068FA7A $SG66152 0x0058F4F0
         strcat(buffer, "F");
     } else if (gender == 2) {
-// RECOVERY_LITERAL: v1 0x0068FA7C 0x0068FA7E $SG66159 0x0058F4F0
+// RECOVERY_LITERAL: v1 0x0068FA7C 0x0068FA7E $SG66155 0x0058F4F0
         strcat(buffer, "N");
     }
     if (plurality == 0) {
-// RECOVERY_LITERAL: v1 0x0068FA80 0x0068FA82 $SG66161 0x0058F4F0
+// RECOVERY_LITERAL: v1 0x0068FA80 0x0068FA82 $SG66157 0x0058F4F0
         strcat(buffer, "1");
     } else if (plurality == 1) {
-// RECOVERY_LITERAL: v1 0x0068FA84 0x0068FA86 $SG66164 0x0058F4F0
+// RECOVERY_LITERAL: v1 0x0068FA84 0x0068FA86 $SG66160 0x0058F4F0
         strcat(buffer, "2");
     }
-// RECOVERY_LITERAL: v1 0x0068FA88 0x0068FA8A $SG66165 0x0058F4F0
+// RECOVERY_LITERAL: v1 0x0068FA88 0x0068FA8A $SG66161 0x0058F4F0
     strcat(buffer, ":");
     strcat(buffer, Players[faction_id].adj_name_faction);
-// RECOVERY_LITERAL: v1 0x0068FA8C 0x0068FA8E $SG66166 0x0058F4F0
+// RECOVERY_LITERAL: v1 0x0068FA8C 0x0068FA8E $SG66162 0x0058F4F0
     strcat(buffer, ">");
     parse_string(buffer, parsed);
     return strcat(output, parsed);
 }
 
 
-// RECOVERY_LITERAL: v1 0x0068FAAC 0x0068FAAE $SG66191 0x0058F610
-// RECOVERY_LITERAL: v1 0x0068FAA0 0x0068FAA2 $SG66186 0x0058F610
-// RECOVERY_LITERAL: v1 0x0068FA98 0x0068FA9A $SG66180 0x0058F610
-// RECOVERY_LITERAL: v1 0x0068FA9C 0x0068FA9E $SG66183 0x0058F610
-// RECOVERY_LITERAL: v1 0x0068FA94 0x0068FA96 $SG66177 0x0058F610
-// RECOVERY_LITERAL: v1 0x0068FAA8 0x0068FAAA $SG66190 0x0058F610
-// RECOVERY_LITERAL: v1 0x0068FA90 0x0068FA93 $SG66175 0x0058F610
+// RECOVERY_LITERAL: v1 0x0068FAAC 0x0068FAAE $SG66187 0x0058F610
+// RECOVERY_LITERAL: v1 0x0068FAA0 0x0068FAA2 $SG66182 0x0058F610
+// RECOVERY_LITERAL: v1 0x0068FA98 0x0068FA9A $SG66176 0x0058F610
+// RECOVERY_LITERAL: v1 0x0068FA9C 0x0068FA9E $SG66179 0x0058F610
+// RECOVERY_LITERAL: v1 0x0068FA94 0x0068FA96 $SG66173 0x0058F610
+// RECOVERY_LITERAL: v1 0x0068FAA8 0x0068FAAA $SG66186 0x0058F610
+// RECOVERY_LITERAL: v1 0x0068FA90 0x0068FA93 $SG66171 0x0058F610
 // ORIGINAL: 0x0058F610 ?say_special@@YAXPADPADH@Z 0x0058F610-0x0058F6F6 BYTE_EXACT
 // LEVER: the eight fixed-address bindings are .rdata STRING LITERALS, read
 //         out of the image with image_data.py and spelled as the text, the
@@ -4748,32 +4739,32 @@ void __cdecl say_fac_special(char *output, char *text, int faction_id) {
     int gender = Players[faction_id].noun_gender;
 
     buffer[0] = 0;
-// RECOVERY_LITERAL: v1 0x0068FAB0 0x0068FAB3 $SG66201 0x0058F700
+// RECOVERY_LITERAL: v1 0x0068FAB0 0x0068FAB3 $SG66197 0x0058F700
     strcat(buffer, "$<");
 
     if (gender == 0) {
-// RECOVERY_LITERAL: v1 0x0068FAB4 0x0068FAB6 $SG66203 0x0058F700
+// RECOVERY_LITERAL: v1 0x0068FAB4 0x0068FAB6 $SG66199 0x0058F700
         strcat(buffer, "M");
     } else if (gender == 1) {
-// RECOVERY_LITERAL: v1 0x0068FAB8 0x0068FABA $SG66206 0x0058F700
+// RECOVERY_LITERAL: v1 0x0068FAB8 0x0068FABA $SG66202 0x0058F700
         strcat(buffer, "F");
     } else if (gender == 2) {
-// RECOVERY_LITERAL: v1 0x0068FABC 0x0068FABE $SG66209 0x0058F700
+// RECOVERY_LITERAL: v1 0x0068FABC 0x0068FABE $SG66205 0x0058F700
         strcat(buffer, "N");
     }
 
     if (plurality == 0) {
-// RECOVERY_LITERAL: v1 0x0068FAC0 0x0068FAC2 $SG66211 0x0058F700
+// RECOVERY_LITERAL: v1 0x0068FAC0 0x0068FAC2 $SG66207 0x0058F700
         strcat(buffer, "1");
     } else if (plurality == 1) {
-// RECOVERY_LITERAL: v1 0x0068FAC4 0x0068FAC6 $SG66214 0x0058F700
+// RECOVERY_LITERAL: v1 0x0068FAC4 0x0068FAC6 $SG66210 0x0058F700
         strcat(buffer, "2");
     }
 
-// RECOVERY_LITERAL: v1 0x0068FAC8 0x0068FACA $SG66215 0x0058F700
+// RECOVERY_LITERAL: v1 0x0068FAC8 0x0068FACA $SG66211 0x0058F700
     strcat(buffer, ":");
     strcat(buffer, text);
-// RECOVERY_LITERAL: v1 0x0068FACC 0x0068FACE $SG66216 0x0058F700
+// RECOVERY_LITERAL: v1 0x0068FACC 0x0068FACE $SG66212 0x0058F700
     strcat(buffer, ">");
 
     parse_string(buffer, parsed);
@@ -4801,7 +4792,7 @@ char *__cdecl get_phrase(int faction_id, int phrase_id) {
         if (ok != 0) {
             parse_says(0, search_key, -1, -1);
             parse_says(1, filename, -1, -1);
-// RECOVERY_LITERAL: v1 0x0068FAD0 0x0068FADB $SG66226 0x0058F810
+// RECOVERY_LITERAL: v1 0x0068FAD0 0x0068FADB $SG66222 0x0058F810
             X_pop("PLAYERFILE", 0);
             return StringTable.get(0);
         }
@@ -4844,7 +4835,7 @@ char *__cdecl get_noun_phrase(int faction_id, int phrase_id) {
         && (text_open(filename, filename) != 0)) {
         parse_says(0, search_key, -1, -1);
         parse_says(1, filename, -1, -1);
-// RECOVERY_LITERAL: v1 0x0068FADC 0x0068FAE7 $SG66239 0x0058F8B0
+// RECOVERY_LITERAL: v1 0x0068FADC 0x0068FAE7 $SG66235 0x0058F8B0
         X_pop("PLAYERFILE", 0);
         return StringTable.get(0);
     }
