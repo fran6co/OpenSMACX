@@ -747,7 +747,7 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
                 strcat(StringTemp, "|");
                 int noted = 0;
                 if (tech_id == Rules.tech_three_nutrients_sqr) {
-                    if (noted) {
+                    if (noted != 0) {
                         says("+");
                     } else {
                         noted = 1;
@@ -757,7 +757,7 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
                     }
                 }
                 if (tech_id == Rules.tech_three_minerals_sqr) {
-                    if (noted) {
+                    if (noted != 0) {
                         says("+");
                     } else {
                         noted = 1;
@@ -767,7 +767,7 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
                     }
                 }
                 if (tech_id == Rules.tech_three_energy_sqr) {
-                    if (noted) {
+                    if (noted != 0) {
                         says("+");
                     } else {
                         noted = 1;
@@ -779,7 +779,7 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
                 for (i = 0; i < MaxVehProtoFactionNum; ++i) {
                     if ((VehPrototypes[i].flags & 1u) != 0 &&
                         VehPrototypes[i].preq_tech == tech_id) {
-                        if (noted) {
+                        if (noted != 0) {
                             says("+");
                         } else {
                             say_open_paren();
@@ -793,7 +793,7 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
                 }
                 for (i = 0; i < MaxReactorNum; ++i) {
                     if (Reactor[i].preq_tech == tech_id) {
-                        if (noted) {
+                        if (noted != 0) {
                             says("+");
                         } else {
                             say_open_paren();
@@ -807,7 +807,7 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
                 }
                 for (i = 0; i < MaxWeaponNum; ++i) {
                     if (Weapon[i].preq_tech == tech_id) {
-                        if (noted) {
+                        if (noted != 0) {
                             says("+");
                         } else {
                             noted = 1;
@@ -817,28 +817,28 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
                             // expansions (same bytes per site; which two is unknown).
                             strcat(StringTemp, label_get(0x80 + (Weapon[i].offense_rating != 0)));
                             say_colon();
-                            strcat(StringTemp, StringTable.get(Weapon[i].name));
+                            strcat(StringTemp, table_text(Weapon[i].name));
                             say_close_paren();
                         }
                     }
                 }
                 for (i = 0; i < MaxArmorNum; ++i) {
                     if (Armor[i].preq_tech == tech_id) {
-                        if (noted) {
+                        if (noted != 0) {
                             says("+");
                         } else {
                             noted = 1;
                             say_open_paren();
-                            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x154 / 4]));
+                            strcat(StringTemp, label_get(0x154 / 4));
                             say_colon();
-                            strcat(StringTemp, StringTable.get(Armor[i].name));
+                            strcat(StringTemp, table_text(Armor[i].name));
                             say_close_paren();
                         }
                     }
                 }
                 for (i = 0; i < MaxChassisNum; ++i) {
                     if (Chassis[i].preq_tech == tech_id) {
-                        if (noted) {
+                        if (noted != 0) {
                             says("+");
                         } else {
                             noted = 1;
@@ -852,7 +852,7 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
                 }
                 for (i = 1; i < MaxFacilityNum; ++i) {
                     if (Facility[i].preq_tech == tech_id) {
-                        if (noted) {
+                        if (noted != 0) {
                             says("+");
                         } else if (i < FacilitySPStart || base_project(i - FacilitySPStart) == -1) {
                             say_open_paren();
@@ -862,7 +862,7 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
                                 strcat(StringTemp, label_get(0x26C / 4));
                             noted = 1;
                             say_colon();
-                            strcat(StringTemp, StringTable.get(Facility[i].name));
+                            strcat(StringTemp, table_text(Facility[i].name));
                             say_close_paren();
                         }
                     }
@@ -872,7 +872,7 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
                         if (tech_id == Terraforming[i].prerequisite_tech[sea] &&
                             (sea != 1 || Terraforming[i].prerequisite_tech[0] !=
                                          Terraforming[i].prerequisite_tech[1])) {
-                            if (noted) {
+                            if (noted != 0) {
                                 says("+");
                             } else {
                                 noted = 1;
@@ -885,28 +885,28 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
                 }
                 for (i = 0; i < MaxAbilityNum; ++i) {
                     if (Ability[i].preq_tech == tech_id) {
-                        if (noted) {
+                        if (noted != 0) {
                             says("+");
                         } else {
                             noted = 1;
                             say_open_paren();
                             say_label(0x270 / 4);
                             say_colon();
-                            strcat(StringTemp, StringTable.get(Ability[i].name));
+                            strcat(StringTemp, table_text(Ability[i].name));
                             say_close_paren();
                         }
                     }
                 }
                 for (i = 0; i < 7; ++i) {
                     if (Citizen[i].preq_tech == tech_id) {
-                        if (noted) {
+                        if (noted != 0) {
                             says("+");
                         } else {
                             noted = 1;
                             say_open_paren();
                             say_label(0x4D0 / 4);
                             say_colon();
-                            strcat(StringTemp, StringTable.get(Citizen[i].singular_name));
+                            strcat(StringTemp, table_text(Citizen[i].singular_name));
                             say_close_paren();
                         }
                     }
@@ -918,7 +918,7 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
                         say_open_paren();
                         strcat(StringTemp, label_get(0x274 / 4));
                         say_colon();
-                        strcat(StringTemp, StringTable.get(Technology[i].name));
+                        strcat(StringTemp, table_text(Technology[i].name));
                         say_close_paren();
                     }
                 }
@@ -965,8 +965,8 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
         const int items = item_count_;
         const int columns = columns_by_count[items];
         column_count_ = columns;
-        const int rows = items / columns + (items % columns != 0);
-        row_count_ = rows;
+        row_count_ = items / columns + (items % columns != 0);
+        const int rows = row_count_;
         if (items <= 8)
             cell_width_ = WinScreenWidth / columns - 20;
         else
@@ -983,8 +983,8 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
             cell_height_ = items <= 8 ? WinScreenHeight / rows - 40
                                       : (WinScreenHeight - 69) / rows;
         row_pitch_ = 10;
-        GraphicWin::init(0, 0, (cell_width + 1) * columns + 1,
-            (cell_height_ + 1) * rows + 30, 0x05000800, 0);
+        const int width = (cell_width + 1) * columns + 1;
+        GraphicWin::init(0, 0, width, (cell_height_ + 1) * rows + 30, 0x05000800, 0);
         Win::center();
         field_16C_ = 29;
         RECT frame = Buffer::clip_rect();
@@ -1002,7 +1002,7 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
         selected_index_ = 0;
         selection_active_ = 0;
         for (i = 0; i < item_count_; ++i)
-            draw_item(i, i == selected_index_);
+            draw_item(i, selected_index_ == i);
         show(0);
         grab_pointer();
         set_modal(1, 0, 0);
