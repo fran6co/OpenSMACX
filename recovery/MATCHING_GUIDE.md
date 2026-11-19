@@ -3350,6 +3350,10 @@ Registers and scratch choice
   (Vector::normalize 0x00634520).
 - `inc eax; je` after a call is `f() + 1 == 0`; `== -1` gives `cmp eax,-1`.
 - A `v = 0` before a large switch can become a function-wide zero register.
+- A field clamp written through a reference, `int &x = field; x = x - 1 < 0
+  ? 0 : x - 1;`, is one load, `lea`, `test`+`setl`, one store. A local copy
+  `int v = field - 1; field = v < 0 ? 0 : v;` uses `dec`'s flags and can
+  spill the value (double_cross 0x0050BFCA, 0x0050C0F1).
 
 Frame and slots
 - Slots of scalar locals are ordered by reference count, most used nearest
