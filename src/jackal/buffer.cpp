@@ -39,11 +39,6 @@
 #define STRINGSTRUCT_CURRENT_ENTRY_INLINE
 #include "stdafx.h"
 
-// Distinct writable string cells observed at the original call sites.
-// These role names do not claim original source names or allocation bounds.
-// RECOVERY_OBJECT: v1 0x00696C88 _BufferPcxLoadSuffix
-static char BufferPcxLoadSuffix[] = ".pcx";
-
 #include "buffer.h"
 #include "graphicwin.h"
 #include "filemap.h"
@@ -2137,7 +2132,8 @@ int Buffer::load_pcx(const char *filename, Palette *palette, int tgl, int height
         --scan;
     }
     if (scan == path) {
-        strcat(path, BufferPcxLoadSuffix);
+// RECOVERY_LITERAL: v1 0x00696C88 0x00696C8D $SG45409 0x005D7DE0
+        strcat(path, ".pcx");
     }
 
     if (map.open_read(path, TRUE) == nullptr) {
@@ -5217,21 +5213,6 @@ BufferSpecialText Buffer::special_texts_[10];
 // RECOVERY_OBJECT: v4 0x009B3A50 0x009B3A7C ?g_BUFFER_SPRITE@@3VSprite@@A 0x005D8290 target ?shared_sprite_@Buffer@@0VSprite@@A
 Sprite Buffer::shared_sprite_;
 
-// See the declaration in buffer.h. Copied verbatim out of the image's .rdata,
-// four characters plus a NUL each, so the loader families append exactly what
-// the shipped build appends.
-// RECOVERY_OBJECT: v1 0x00696C58 ?BufferExtTgf@@3QBDB
-const char BufferExtTgf[] = ".tgf";
-// RECOVERY_OBJECT: v1 0x00696C60 ?BufferExtTgg@@3QBDB
-const char BufferExtTgg[] = ".tgg";
-// RECOVERY_OBJECT: v1 0x00696C68 ?BufferExtTga@@3QBDB
-const char BufferExtTga[] = ".tga";
-// RECOVERY_OBJECT: v1 0x00696C70 ?BufferExtBmf@@3QBDB
-const char BufferExtBmf[] = ".bmf";
-// RECOVERY_OBJECT: v1 0x00696C78 ?BufferExtBmg@@3QBDB
-const char BufferExtBmg[] = ".bmg";
-// RECOVERY_OBJECT: v1 0x00696C80 ?BufferExtBmp@@3QBDB
-const char BufferExtBmp[] = ".bmp";
 
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====
 // In the shipped image these live at fixed data addresses and are
@@ -5277,9 +5258,12 @@ int __stdcall Buffer::load_tga(const char * a1, Palette * a2, int a3, int a4) {
         goto has_ext;
     }
     switch (Language) {
-        case 1: strcat(path, BufferExtTgf); break;
-        case 2: strcat(path, BufferExtTgg); break;
-        default: strcat(path, BufferExtTga); break;
+// RECOVERY_LITERAL: v1 0x00696C58 0x00696C5D $SG44422 0x005D7B40
+        case 1: strcat(path, ".tgf"); break;
+// RECOVERY_LITERAL: v1 0x00696C60 0x00696C65 $SG44424 0x005D7B40
+        case 2: strcat(path, ".tgg"); break;
+// RECOVERY_LITERAL: v1 0x00696C68 0x00696C6D $SG44426 0x005D7B40
+        default: strcat(path, ".tga"); break;
     }
   has_ext:
     if (fm.open_read(path, 1) == 0) {
@@ -5621,9 +5605,6 @@ int Buffer::write_right_l(Font *font, char *text, int x_coord, int y_coord,
 // using wrap's separate return as the vertical endpoint. Preserve those quirks.
 // RECOVERY_OBJECT: v1 0x009B39D8 ?BufferLastWrapWriteResult@@3HA
 int BufferLastWrapWriteResult;
-// Original .data token at 0x00696C90, compared for its six visible bytes.
-// RECOVERY_OBJECT: v2 0x00696C90 0x00696C97 ?BufferMarkupLinkToken@@3PADA 0x005DC410
-char BufferMarkupLinkToken[] = "$LINK<";
 
 // ORIGINAL: 0x005DD250 ?write_cent_l@Buffer@@QAEHPADHHH@Z 0x005DD250-0x005DD2F3 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
@@ -7110,7 +7091,8 @@ char *Buffer::find_line_break_l(char * a1, int * a2, int a3) {
                 markup_pending_ = 2;
                 break;
             case '$':
-                if (strncmp(cursor, BufferMarkupLinkToken, 6) == 0) {
+// RECOVERY_LITERAL: v1 0x00696C90 0x00696C97 $SG? 0x005DC410
+                if (strncmp(cursor, "$LINK<", 6) == 0) {
                     markup_pending_ = 1;
                     next_slot = 3;
                     goto chosen;
@@ -7833,9 +7815,12 @@ int __stdcall Buffer::load_bmp(const char * a1, Palette * a2, int a3, int a4) {
         goto has_ext;
     }
     switch (Language) {
-        case 1: strcat(path, BufferExtBmf); break;
-        case 2: strcat(path, BufferExtBmg); break;
-        default: strcat(path, BufferExtBmp); break;
+// RECOVERY_LITERAL: v1 0x00696C70 0x00696C75 $SG45345 0x005D7CA0
+        case 1: strcat(path, ".bmf"); break;
+// RECOVERY_LITERAL: v1 0x00696C78 0x00696C7D $SG45347 0x005D7CA0
+        case 2: strcat(path, ".bmg"); break;
+// RECOVERY_LITERAL: v1 0x00696C80 0x00696C85 $SG45349 0x005D7CA0
+        default: strcat(path, ".bmp"); break;
     }
   has_ext:
     if (fm.open_read(path, 1) == 0) {
