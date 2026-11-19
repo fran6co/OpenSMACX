@@ -1755,6 +1755,8 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
             && !IsMultiplayerNet) {
             clock_wait(is_shown && !ConsoleGlobal.field_23BF0_ ? 200 : 50);
         }
+    } else {
+        return 1;
     }
     return 1;
 }
