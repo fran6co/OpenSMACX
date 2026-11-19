@@ -90,27 +90,35 @@ int __cdecl popp(LPCSTR caption, LPCSTR label, int flags, LPCSTR picture,
         char *alternative;
         FILE *file;
         if (Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) {
-            if (!ExpansionEnabled) {
-                goto plain;
-            }
-            file = fopen("alienIscript.txt", "rb");
-            if (!file) {
-                goto missing;
-            }
-            fclose(file);
-            alternative = PopupStartAltFile1;
-        } else {
-            if (!ExpansionEnabled || PopupDialogFactionID <= 0
-                || PopupDialogFactionID >= 8
-                || !(Players[PopupDialogFactionID].rule_flags & RFLAG_ALIEN)) {
-                goto plain;
-            }
-            file = fopen("alienuscript.txt", "rb");
-            if (file) {
-                fclose(file);
-                alternative = PopupStartAltFile2;
+            if (ExpansionEnabled) {
+                file = fopen("alienIscript.txt", "rb");
+                if (file) {
+                    fclose(file);
+                    alternative = PopupStartAltFile1;
+                } else {
+                    popup.start(const_cast<char *>(caption), label, -1,
+                                nullptr, flags);
+                    goto shown;
+                }
             } else {
-missing:
+                popup.start(const_cast<char *>(caption), label, -1, nullptr,
+                            flags);
+                goto shown;
+            }
+        } else {
+            if (ExpansionEnabled && PopupDialogFactionID > 0
+                && PopupDialogFactionID < 8
+                && (Players[PopupDialogFactionID].rule_flags & RFLAG_ALIEN)) {
+                file = fopen("alienuscript.txt", "rb");
+                if (file) {
+                    fclose(file);
+                    alternative = PopupStartAltFile2;
+                } else {
+                    popup.start(const_cast<char *>(caption), label, -1,
+                                nullptr, flags);
+                    goto shown;
+                }
+            } else {
                 popup.start(const_cast<char *>(caption), label, -1, nullptr,
                             flags);
                 goto shown;
@@ -121,7 +129,6 @@ missing:
                         flags);
         }
     } else {
-plain:
         popup.start(const_cast<char *>(caption), label, -1, nullptr,
                     flags);
     }
