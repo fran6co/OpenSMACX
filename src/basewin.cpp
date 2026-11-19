@@ -4975,6 +4975,7 @@ void BaseWin::draw_expenses(int update_mode) {
     int v;
     int eq_x;
     int i;
+    int left;
 
     wide = WinScreenWidth != 800;
     deficit = 0;
@@ -5232,7 +5233,7 @@ void BaseWin::draw_expenses(int update_mode) {
     line.left = Buffer::write_l(StringTemp, &line);
     StringTemp[0] = 0;
     strcat(StringTemp, " - ");
-    wide = line.left;
+    left = line.left;
     line.left = Buffer::write_l(StringTemp, &line);
     StringTemp[0] = 0;
     v = mineral_cost;
@@ -5516,8 +5517,8 @@ void BaseWin::draw_expenses(int update_mode) {
     }
     Buffer::write_l(StringTemp, &line);
     Buffer::set_text_color(TextColourTable[84], TextColourTable[85], 1, 1);
-    line.left = wide;
-    line.right = wide;
+    line.left = left;
+    line.right = left;
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(655));
     CharUpperA(StringTemp);
