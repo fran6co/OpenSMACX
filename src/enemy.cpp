@@ -5425,7 +5425,7 @@ L_56ef2f:
                                : map_loc(tx, ty)->region == region)
                 && base_who(tx, ty) < 0) {
                 for (other_id = stack_fix(veh_at(tx, ty)); other_id >= 0;
-                     other_id = Vehs[other_id].next_veh_id_stack) {
+                     other_id = veh_next_stack_id(other_id)) {
                     if (Chassis[VehPrototypes[Vehs[other_id].proto_id].chassis_id].triad
                         == TRIAD_SEA) {
                         break;
@@ -7749,7 +7749,7 @@ L_575b27:
                     }
                     m = 1;
                     for (other_id = veh_top(veh_id); other_id >= 0;
-                         other_id = other_id >= 0 ? Vehs[other_id].next_veh_id_stack : -1) {
+                         other_id = veh_next_stack_id(other_id)) {
                         if (Vehs[other_id].home_base_id >= 0
                             && map_loc(Bases[Vehs[other_id].home_base_id].x,
                                        Bases[Vehs[other_id].home_base_id].y)->region == r) {
