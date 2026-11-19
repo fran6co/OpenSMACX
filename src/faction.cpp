@@ -6924,17 +6924,16 @@ commlink:
 // ORIGINAL: 0x00545E80 ?propose_attack@@YAHHH@Z 0x00545E80-0x00547C08;0x0065F1B4-0x0065F4C4
 // RECOVERY_BINDING: v1 {"evidence": ["task:diplomacy-actions-owner-coverage", "Pinned545E80-547C08 body and65F1B4-65F4C4 cleanup", "Native546B5E jumps546B9C: PEACE cutoffs reuse updated total; 5466BE offline547397 vs network54739F", "Native54755C outcome actor-to-target;5475A4 friction target-to-actor;54741D setter other-to-actor", "Fresh COFF Player59C andPlayerData20CC; pair members12C/14C; region_total_bases117C", "historical seed:src/unrecovered/00545e80.cpp"], "reason": "Recover the complete incitement negotiation in its faction owner with a lexical Popup, typed regional and diplomatic state, technology and credit offers, and original lock/transfer/treaty/result ordering. Preserve original primary and generated cleanup spans and seed identity. This is compiling recovery, not byte matching or game acceptance."}
 // symbol    ?propose_attack@@YAHHH@Z
-// WORKAROUND(inline): dead /Ob2 budget probes, not recovered code; constant
-// arguments fold them away. They spend the budget the image spends before
-// this function's Popup teardowns (found by a probe hill-climb scored on the
-// image diff); the original's spend is not identified.
-static inline int propose_attack_budget_probe1(int x) { if (x == 0) x = 1; return x; }
-static inline int propose_attack_budget_probe4(int x) {
-    if (x == 0) x = 1;
-    if (x == 1) x = 4;
-    if (x == 2) x = 7;
-    if (x == 3) x = 10;
-    return x;
+// WORKAROUND(decl): the two incitement outcomes' "friction unless networked,
+// then announce" runs as one inline helper (no out-of-line copy in the
+// image; name and home unknown). Its /Ob2 cost replaces the dead
+// propose_attack_budget_probe4 call this function carried before its TECH
+// offer (runscan --try: same fe rows, same teardown decisions).
+static inline void incite_friction(int target, int actor, const char *message) {
+    if (!IsMultiplayerNet) {
+        cause_friction(target, actor, 4);
+    }
+    X_pop(message, pop_wait);
 }
 int __cdecl propose_attack(int actor, int other) {
     int policy_class = 0;  // [ebp-0x28], stored before the Popup constructor
@@ -7132,7 +7131,6 @@ int __cdecl propose_attack(int actor, int other) {
                 && (PlayersData[other].energy_reserves > PlayersData[actor].energy_reserves
                     || total >= threshold * 3 / 2)))) {
         parse_says(0, get_noun(target), -1, -1);
-        propose_attack_budget_probe4(5);  // WORKAROUND(inline): see propose_attack_budget_probe1
         parse_says(1, get_title(target), -1, -1);
         parse_says(2, get_name(target), -1, -1);
         clear();
@@ -7243,18 +7241,12 @@ incited:
     parse_says(4, get_adjective(target), -1, -1);
     if (has_treaty(actor, target, DTREATY_PACT)) {
         if (PlayersData[actor].diff_level > 1 && !random(0, 2)) {
-            if (!IsMultiplayerNet) {
-                cause_friction(target, actor, 4);
-            }
-            X_pop("INCITEDPACT", pop_wait);
+            incite_friction(target, actor, "INCITEDPACT");
             net_pact_ends(actor, target, 1);
         }
     } else if (has_treaty(actor, target, DTREATY_TREATY) && PlayersData[actor].diff_level > 1
                && !random(0, 2)) {
-        if (!IsMultiplayerNet) {
-            cause_friction(target, actor, 4);
-        }
-        X_pop("INCITEDTREATY", pop_wait);
+        incite_friction(target, actor, "INCITEDTREATY");
         net_treaty_on(actor, target, 0x10, 0);
         net_set_treaty(target, actor, 0x20, 1, 1);
     }
