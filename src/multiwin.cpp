@@ -193,18 +193,18 @@ void MultiWin::draw_player(int faction_id, int row, RECT *bounds) {
       uint32_t faction_bit = 1 << faction_id;
       int local_faction = ConsoleGlobal.faction_id_;
       uint32_t in_turn = faction_bit & selected_turn_word;
-      if (in_turn) {
-        if (!ConsoleControlTurnActive) {
-          if (!(GameDataStateStorage.fields_.game_state_ & 0x80) &&
-              !(selected_turn_word & (1 << local_faction))) {
-            goto not_in_turn;
-          }
-        } else {
-          strcat(StringTemp, label_get(0x42C / 4));
-          strcat(StringTemp, BufferJoinSpace);
-          _itoa(NetUpkeepPhase, number, 10);
-          strcat(StringTemp, number);
-        }
+      // One else-if chain, no goto into the waiting arm: the image ranks
+      // faction_id (edi) and faction_bit (ebx) above `this` and
+      // selected_turn_word, which the goto form did not.
+      if (in_turn && !ConsoleControlTurnActive &&
+          ((GameDataStateStorage.fields_.game_state_ & 0x80) ||
+           (selected_turn_word & (1 << local_faction)))) {
+        // In turn and already answered: no suffix.
+      } else if (in_turn && ConsoleControlTurnActive) {
+        strcat(StringTemp, label_get(0x42C / 4));
+        strcat(StringTemp, BufferJoinSpace);
+        _itoa(NetUpkeepPhase, number, 10);
+        strcat(StringTemp, number);
       } else if (ConsoleControlTurnActive) {
         strcat(StringTemp, "*");
         strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x42C / 4]));
@@ -212,7 +212,6 @@ void MultiWin::draw_player(int faction_id, int row, RECT *bounds) {
         _itoa(NetUpkeepPhase, number, 10);
         strcat(StringTemp, number);
       } else {
-      not_in_turn:
         if (turn_flags) {
           int net_turn_faction = GameDataStateStorage.fields_.net_turn_faction_;
           if (net_turn_faction == faction_id) {
