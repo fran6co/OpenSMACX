@@ -3736,10 +3736,9 @@ int BasePop::calculate_dimensions() {
     const int text_left =
         field_30BC_ - field_30D8_ - field_21C8_ - field_30E0_ * 2;
 
-    int wrap_kind = 0;
-    if (unit_ids_.head_ != 0) {
-        wrap_kind = unit_ids_.current_->string_payload()->field_8_;
-    }
+    int wrap_kind = unit_ids_.head_ != 0
+                        ? unit_ids_.current_->string_payload()->field_8_
+                        : 0;
     field_30D4_ = 0;
     if (wrap_kind == 3) {
         field_30D4_ += owner_window_->text_line_height();
@@ -3786,13 +3785,13 @@ int BasePop::calculate_dimensions() {
                                                   text_left);
             } else {
                 owner_window_->wrap_height_flying(
-                    unit_ids_.head_ != 0 ? unit_ids_.current_entry()->text
+                    unit_ids_.head_ != 0 ? unit_ids_.current_->string_payload()->text
                                          : static_cast<char *>(0),
                     text_left);
             }
         } else {
             owner_window_->wrap_height_flying(
-                unit_ids_.head_ != 0 ? unit_ids_.current_entry()->text
+                unit_ids_.head_ != 0 ? unit_ids_.current_->string_payload()->text
                                      : static_cast<char *>(0));
         }
     }
@@ -3859,14 +3858,14 @@ int BasePop::calculate_dimensions() {
         int top = field_30D4_ > static_cast<int>(field_30DC_)
                      ? field_30D4_
                      : static_cast<int>(field_30DC_);
-        int inner = field_30C4_ + field_30E0_ * 2 + top + field_30D0_;
+        field_30C0_ = field_30C4_ + field_30E0_ * 2 + top + field_30D0_;
         if (field_30C4_ != 0) {
-            inner += field_30E4_;
+            field_30C0_ += field_30E4_;
         }
         if (field_30D0_ != 0) {
-            inner += field_30E4_;
+            field_30C0_ += field_30E4_;
         }
-        field_30C0_ = inner + field_30EC_ + field_30E8_;
+        field_30C0_ += field_30EC_ + field_30E8_;
         field_30BC_ += field_30F4_ + field_30F0_;
     }
 
