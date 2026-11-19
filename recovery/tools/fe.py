@@ -47,7 +47,11 @@ def dis(data,org,relocs=(),lo=None,hi=None,selfsec=None,syms=None):
         if selfsec is not None:
             for r in mine:
                 _,si,ty=rmap[r]; sy=syms.get(si)
-                if ty==6 and sy is not None and sy.section==selfsec and sy.value>off: end=min(end,sy.value)
+                # A same-section DIR32 target past this point is a switch table
+                # ($L<n>) that starts the data after the code. Inline-assembly code
+                # labels (`lea edx, label` in the hand-written blitters) are
+                # emitted as $<label>$<n> and stay inside the code.
+                if ty==6 and sy is not None and sy.section==selfsec and sy.value>off and not re.fullmatch(r'\$[^$]+\$\d+',sy.name): end=min(end,sy.value)
         op=ins.op_str; tgt=None
         if ins.mnemonic=='call' or ins.mnemonic.startswith('j') or ins.mnemonic.startswith('loop'):
             if re.fullmatch(num,op):
@@ -132,10 +136,24 @@ def evaluate(c,text,addr,wins=()):
     idn=ident(text,addr)
     if not idn: return dict(error='no ORIGINAL marker')
     sym,lo,hi=idn
+    O=imgdis(lo,hi)
     try: s=c.function(sym)
-    except Exception as e: return dict(error='nosymbol '+sym,sym=sym)
-    sec=c.sections[s.section-1]
-    O=imgdis(lo,hi); C=dis(sec.data,0,sec.relocations,selfsec=s.section,syms=c.symbols)
+    except Exception as e:
+        # A RECOVERY_FRAGMENT marker (a terminal ret reached by fallthrough)
+        # has no symbol of its own: recover measure compares it as the bytes of
+        # its parent's compiled body at the same offset.
+        f=re.search(r'// ORIGINAL: 0x%08X [^\n]*\n// RECOVERY_FRAGMENT: [^\n]*"parent_address":"0x([0-9A-F]{8})","parent_symbol":"([^"]+)"'%addr,text)
+        pid=f and ident(text,int(f.group(1),16))
+        if not pid: return dict(error='nosymbol '+sym,sym=sym)
+        try: s=c.function(pid[0])
+        except Exception: return dict(error='nosymbol '+pid[0],sym=sym)
+        sec=c.sections[s.section-1]; off=lo-pid[1]
+        rel=[(r[0]-off,)+tuple(r[1:]) for r in sec.relocations if off<=r[0]<off+(hi-lo)]
+        C=dis(sec.data[off:off+(hi-lo)],0,rel)
+        O=dis(imgbytes(lo,hi),lo,(),lo,hi)
+    else:
+        sec=c.sections[s.section-1]
+        C=dis(sec.data,0,sec.relocations,selfsec=s.section,syms=c.symbols)
     A=[x[1] for x in O]; B=[x[1] for x in C]
     ops=align(A,B); eq=sum(i2-i1 for t,i1,i2,j1,j2 in ops if t=='equal')
     nd=0; rows=[]
