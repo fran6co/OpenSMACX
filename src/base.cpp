@@ -6351,8 +6351,8 @@ production_again:
                 max(0, min(Rules.retool_exemption, BaseCurrent->mineral_surplus));
         }
         BaseCurrent->minerals_accumulated_2 = BaseCurrent->minerals_accumulated;
-        if (!BaseProductionUnitCreationDisabled) {
-        int veh_id = veh_init(proto_id, faction_id, BaseCurrent->x, BaseCurrent->y);
+        int veh_id = BaseProductionUnitCreationDisabled ? -1
+            : veh_init(proto_id, faction_id, BaseCurrent->x, BaseCurrent->y);
         if (veh_id < 0) {
             return;
         }
@@ -6542,7 +6542,6 @@ production_again:
             if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_AIR) {
                 mon_air_unit_built(faction_id);
             }
-        }
         }
         return;
     }
