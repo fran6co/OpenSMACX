@@ -11,6 +11,7 @@
 #include "listbox.h"
 #include "net_class.h"
 #include "pushbutton.h"
+#include "sprite.h"
 #include "time.h"
 
 // Descriptive, provisional name: the original class name is not established.
@@ -104,6 +105,13 @@ class NetSessionPickerWin : public GraphicWin {
   // Separate nullary thiscall identity at 0x63C390; no virtual slot has been
   // established, so keep this as an ordinary member pending dispatch proof.
   void refresh_if_focused();
+
+  // The class-shared blank cell (jackal.pcx's 16x16 cell, 0x009BEAE8): a
+  // class static whose initializer 0x0063BAE0 starts this unit's .text run
+  // and whose guarded exit callback 0x0063BB00 the compiler generates. The
+  // owning class is inferred from the unit (every reference is in
+  // net_session_picker.cpp); the member name is descriptive.
+  static Sprite blank_sprite_;
 
   // Source members in the order independently fixed by constructor offsets.
   // RECOVERY_MEMBER: v2 NetSessionPickerWin refresh_timer_ Time 0xA14 0x0063BB20

@@ -19,6 +19,21 @@
 #include "win.h"
 #include "xpops.h"
 
+// The blank cell's exit callback tests and sets bit 0 of the byte at
+// 0x009BEAE0 before Sprite::~Sprite; the byte is the compiler's cleanup guard
+// of the class static below (the same form as Buffer's statics, 0x009B37CC).
+// RECOVERY_OBJECT: v4 0x009BEAE0 ?BlankSpriteCleanupGuard@@3EA target _$S16
+// ORIGINAL: 0x0063BAE0 sub_63bae0 0x0063BAE0-0x0063BAF6 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["Historical seed src/recovered/units/0063bae0.cpp retains the complete original span and BYTE_EXACT obligation; its TRIED finding is retained by the source marker writer.","The seed finding’s explanation is retained: the earlier general.cpp prototype measured 5/6 because its atexit argument cleanup used add esp,4 where the pinned startup uses pop ecx.","Pinned startup 0x0063BAE0 constructs the Sprite at 0x009BEAE8 and registers cleanup callback 0x0063BB00 with _atexit.","The compiler-generated initializer references this owner, its constructor, the generated exit callback and _atexit, and is selected through .CRT$XCU. The owner embeds a 44-byte rawstorage_.bytes member at offset zero, qualified through the directly bound standalone CodeView definition; this is storage/lifetime evidence, not an exact linked allocation claim."],"reason":"Bind the original startup identity to the genuine compiler-generated initializer for the source-owned blank Sprite lifetime."}
+// symbol    _$E18
+// TRIED: same finding as 0x00589870 - homed into general.cpp it measures 5 of 6
+// Historical TRIED continuation: the earlier atexit argument cleanup used add esp,4 where the pinned startup uses pop ecx.
+// ORIGINAL: 0x0063BB00 sub_63bb00 0x0063BB00-0x0063BB1F FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["Pinned 0x0063BB00-0x0063BB1F tests and sets bit 0 at 0x009BEAE0 before calling Sprite::~Sprite on 0x009BEAE8; the set-bit branch returns without a second teardown.","The source-owned generated exit callback tests and sets the separate cleanup guard, then destroys the Sprite in rawstorage_.bytes. Its physical COFF references select this guard, this owner storage and Sprite::close; no unconditional second destruction is introduced.","docs/recovery/ida9-functions.csv retains the complete catalogued callback extent. This new identity has no matching claim."],"reason":"Bind the generated exit callback to the real owner’s guarded Sprite teardown; preserve bit-set-before-destruction and avoid an implicit second dtor."}
+// symbol    _$E15
+// RECOVERY_OBJECT: v4 0x009BEAE8 ?g_BLANK_SPRITE@@3VSprite@@A target ?blank_sprite_@NetSessionPickerWin@@2VSprite@@A
+Sprite NetSessionPickerWin::blank_sprite_;
+
 // The pinned 0x63C510 parse_says input is the zero-initialized byte at
 // 0x009BEB18. It has no other immediate-address reference in the image and
 // its only observed use is as an empty-string input. Extent is one accessed
@@ -289,7 +304,7 @@ int NetSessionPickerWin::initialize(Net *network, char *caption,
   sessions_view_.Dialog::set_dialog_text_color(tail_.field_3714_, -1, 1, 1);
   sessions_view_.Dialog::set_dialog_text_color2(tail_.field_3718_, -1, 1, 1);
   sessions_view_.Dialog::set_dialog_font(fonts_[0], 0, 0);
-  sessions_view_.Dialog::field_34_ = blank_sprite().width();
+  sessions_view_.Dialog::field_34_ = NetSessionPickerWin::blank_sprite_.width();
   return 0;
 }
 
@@ -701,11 +716,11 @@ Status: Complete
 */
 // Historical note: the earlier recovery draft described 0x009BEAE8 using
 // guarded_teardowns.h's TeardownObject009BEAE8 scaffold name. The current
-// source owner is BlankSpriteStorageOwner and its blank_sprite() accessor;
+// source owner was BlankSpriteStorageOwner and its blank_sprite() accessor (until 2026-11-19, now the class static);
 // retain that older interpretation here as provenance, not as a current owner.
 
 // ORIGINAL: 0x0063CDC0 sub_63cdc0 0x0063CDC0-0x0063CE17 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned image span 0x0063CDC0-0x0063CE17: early argument-2/null and dword-at-+8 checks; argument-1 selects null or +0x444 Buffer; final call targets Sprite::draw at 0x005E4B9A.", "Current GraphicWin multiply-inherits Buffer after Win; sizeof(Win)==0x444. Typed GraphicWin-to-Buffer conversion replaces the observed +0x444 destination adjustment.", "The absolute reads 0x009BEAF0 and 0x009BEB04 are the blank Sprite's cTransparentIndex_ (+8) and iHeight_ (+0x1c) in source-owned storage at 0x009BEAE8; access them through blank_sprite().", "The retired seed recorded the same identity/span and historical BYTE_EXACT claim; the claim remains an obligation, not fresh proof.", "Argument 2 remains opaque: only the original dword-at-+8 nonzero test is recovered; no caller edge or enclosing type is established in the current mapped-source closure."], "reason": "Draw the source-owned shared blank Sprite through blank_sprite() and a typed GraphicWin/Buffer destination while preserving the unknown gate context's original dword test, centering and ignored draw result."}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned image span 0x0063CDC0-0x0063CE17: early argument-2/null and dword-at-+8 checks; argument-1 selects null or +0x444 Buffer; final call targets Sprite::draw at 0x005E4B9A.", "Current GraphicWin multiply-inherits Buffer after Win; sizeof(Win)==0x444. Typed GraphicWin-to-Buffer conversion replaces the observed +0x444 destination adjustment.", "The absolute reads 0x009BEAF0 and 0x009BEB04 are the blank Sprite's cTransparentIndex_ (+8) and iHeight_ (+0x1c) in source-owned storage at 0x009BEAE8; access them through NetSessionPickerWin::blank_sprite_.", "The retired seed recorded the same identity/span and historical BYTE_EXACT claim; the claim remains an obligation, not fresh proof.", "Argument 2 remains opaque: only the original dword-at-+8 nonzero test is recovered; no caller edge or enclosing type is established in the current mapped-source closure."], "reason": "Draw the source-owned shared blank Sprite through NetSessionPickerWin::blank_sprite_ and a typed GraphicWin/Buffer destination while preserving the unknown gate context's original dword test, centering and ignored draw result."}
 // symbol    ?sub_63cdc0@@YAXPAVGraphicWin@@PAXHHHH@Z
 // Purpose: conditionally draw the shared blank sprite centered in a window buffer.
 // No caller is inferred: mapped-span inspection reports call target 0x005E4B9A,
@@ -724,8 +739,8 @@ void __cdecl sub_63cdc0(GraphicWin *window, void *gate_context, int unused,
     } else {
       destination = 0;
     }
-    const int y = top + (region_height - blank_sprite().height()) / 2;
-    blank_sprite().draw(destination, blank_sprite().transparent_index(), x, y);
+    const int y = top + (region_height - NetSessionPickerWin::blank_sprite_.height()) / 2;
+    NetSessionPickerWin::blank_sprite_.draw(destination, NetSessionPickerWin::blank_sprite_.transparent_index(), x, y);
   }
 }
 
@@ -737,9 +752,9 @@ int Sprite::init_class() {
     int result;
 // RECOVERY_LITERAL: v1 0x00698CAC 0x00698CB7 $SG49905 0x0063CE20
     if (buf.load_pcx("jackal.pcx", 0, 10, 0xec) != 0) {
-        result = blank_sprite().create_blank(0x10, 0x10, 9);
+        result = NetSessionPickerWin::blank_sprite_.create_blank(0x10, 0x10, 9);
     } else {
-        result = blank_sprite().extract(&buf, 9, 1, 0x12, 0x10, 0x10, 0);
+        result = NetSessionPickerWin::blank_sprite_.extract(&buf, 9, 1, 0x12, 0x10, 0x10, 0);
     }
     // TWO RETURNS, not one: the image does not share the Buffer destructor
     // between the two exits, so a single `return result` costs nine
@@ -771,5 +786,5 @@ Return Value: n/a
 Status: Complete
 */
 void Sprite::close_class() {
-    blank_sprite().close();
+    NetSessionPickerWin::blank_sprite_.close();
 }
