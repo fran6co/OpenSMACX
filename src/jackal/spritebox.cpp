@@ -490,11 +490,11 @@ int SpriteBox::calculate_dimensions() {
         char *const label = Dialog::item_list_.next_text();
         int width = sprite->width() * static_cast<int>(field_1C_)
                     / static_cast<int>(field_20_);
-        if (static_cast<int>(field_54_) > width) width = field_54_;
+        if (field_54_ > width) width = field_54_;
         field_54_ = width;
         int height = sprite->height() * static_cast<int>(field_1C_)
                      / static_cast<int>(field_20_);
-        if (static_cast<int>(field_58_) > height) height = field_58_;
+        if (field_58_ > height) height = field_58_;
         field_58_ = height;
         int label_width = text_width(label);
         if (static_cast<int>(field_5C_) > label_width) label_width = field_5C_;
@@ -577,7 +577,7 @@ void SpriteBox::draw_item(int position) {
     area.right = width + x;
     area.bottom = height + y;
     area.top = y;
-    area.left = static_cast<int>(field_54_) + x + 4;
+    area.left = field_54_ + x + 4;
 
     static_cast<Buffer *>(static_cast<GraphicWin *>(parent))->copy(
         static_cast<Buffer *>(this),
@@ -587,7 +587,7 @@ void SpriteBox::draw_item(int position) {
 
     y += (static_cast<int>(Dialog::field_68_) -
           current_list_sprite(list_)->height() * static_cast<int>(field_1C_) / static_cast<int>(field_20_)) / 2;
-    x += (static_cast<int>(field_54_) -
+    x += (field_54_ -
           // This one read goes through the guarded entry helper (the head
           // test twice, as StringStruct::current_entry has it), which keeps
           // every link of the chase in eax (0x00610E1B).

@@ -288,8 +288,8 @@ class SpriteBox : public virtual GraphicWin, public virtual Dialog {
   // RECOVERY_MEMBER: v2 SpriteBox list_ SpriteList 0x24 0x006108E0
   SpriteList list_;  // 0x24
  private:
-  uint32_t field_54_;  // 0x54
-  uint32_t field_58_;  // 0x58
+  int field_54_;  // 0x54
+  int field_58_;  // 0x58
   uint32_t field_5C_;  // 0x5C
   uint32_t field_60_;  // 0x60
  public:
