@@ -3470,6 +3470,13 @@ void __cdecl world_rainfall() {
                         && rain_carry) {
                         rain_carry--;
                     }
+                    if (tile->bit & BIT_RIVER) {
+                        if ((x >> 1) % 3 && adjustment < 0) {
+                            adjustment = 0;
+                        }
+                        rain_carry = 1;
+                        cloud_count = 0;
+                    }
                 } else {
                     // One shared decay block (image 0x5C4C6B/0x5C4C72): the
                     // altitude-3 arms thread into it.
@@ -3492,13 +3499,13 @@ void __cdecl world_rainfall() {
                         rain_carry = 0;
                         cloud_count = 0;
                     }
-                }
-                if (tile->bit & BIT_RIVER) {
-                    if ((x >> 1) % 3 && adjustment < 0) {
-                        adjustment = 0;
+                    if (tile->bit & BIT_RIVER) {
+                        if ((x >> 1) % 3 && adjustment < 0) {
+                            adjustment = 0;
+                        }
+                        rain_carry = 1;
+                        cloud_count = 0;
                     }
-                    rain_carry = 1;
-                    cloud_count = 0;
                 }
                 if (scratch & 0x02) {
                     rainfall_class--;
