@@ -2278,7 +2278,7 @@ void __cdecl promote(int veh_id) {
     }
 
     if (morale_veh(veh_id, 1, 0) > 2) {
-        if (rand() % 2 != 0) {
+        if (rnd(2, "PROMOTE") != 0) {
             return;
         }
     }
@@ -3178,7 +3178,7 @@ L_50835D:
             battle_compute(veh_id, def_id, &att_strength, &def_strength, 1);
             int denom = range(Rules.artillery_dmg_denom * def_strength, 1, 9999999);   // ecx
             int dmg_max = range(Rules.artillery_dmg_num * att_strength / denom + 1, 1, 999);   // esi
-            int dmg = bounded_crt_random(dmg_max);   // edi, then ebx
+            int dmg = rnd(dmg_max, "BATTLEDAMAGE");   // edi, then ebx
             // 0x50864B .. 0x50876A: never take the unit below `keep`
             int keep;   // esi
             if (!(base_id < 0 && !(map_loc(target_x, target_y)->bit & BIT_BUNKER))) {
@@ -3362,8 +3362,8 @@ L_50835D:
         if (veh_cur_hp(def_id) == 0) break;
 
         // 0x5091A5: the attacker draws first; the compare is signed
-        int roll_atk = bounded_crt_random(att_strength);   // edi
-        int roll_def = bounded_crt_random(def_strength);   // edx
+        int roll_atk = rnd(att_strength, "BATTLE1");   // edi
+        int roll_def = rnd(def_strength, "BATTLE2");   // edx
 
         if (roll_atk > roll_def) {
             // 0x5091DB: the defender takes def_step
@@ -3387,7 +3387,7 @@ L_50835D:
             if (marine &&
                 veh_cur_hp(def_id) != 0) {
                 marine -= def_step;
-                if (marine <= 0 && rand() % 100 < 50) goto L_50973a;
+                if (marine <= 0 && (int)rnd(100, "DETACHMENT") < 50) goto L_50973a;
             }
             // 0x50936C: withdrawal (the defender's HP, [ebp-0x08])
             if (move_charge == 0) continue;
@@ -3611,7 +3611,7 @@ L_509980:
         if (VehPrototypes[Vehs[def_id].proto_id].plan != PLAN_ALIEN_ARTIFACT) {
             // 0x50A29E (rand at 0x64601D; signed compare)
             if (morale_veh(veh_id, 1, 0) <= 1
-                || static_cast<int>(bounded_crt_random(att_strength + def_strength)) <= def_strength) {
+                || static_cast<int>(rnd(att_strength + def_strength, "BATTLE5")) <= def_strength) {
                 promote(veh_id);
             }
         }
@@ -3630,7 +3630,7 @@ L_509980:
         if (VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_ALIEN_ARTIFACT) {
             // 0x50A3DA
             if (morale_veh(def_id, 1, 0) <= 1
-                || static_cast<int>(bounded_crt_random(att_strength + def_strength)) <= att_strength
+                || static_cast<int>(rnd(att_strength + def_strength, "BATTLE6")) <= att_strength
                 || (base_id >= 0 && morale_veh(def_id, 1, 0) < 4)) {
                 promote(def_id);
             }
