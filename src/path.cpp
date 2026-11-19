@@ -760,8 +760,8 @@ reconstruct:
             if (x_next == x_dst && y_next == y_dst) {
                 return i; // the destination is one step away
             }
-            x_cur = map_table_[((int)MapLongitudeBounds >> 1) * y_next + (x_next >> 1)];
-            if (!x_cur) {
+            cur_cost = map_table_[((int)MapLongitudeBounds >> 1) * y_next + (x_next >> 1)];
+            if (!cur_cost) {
                 continue;
             }
             if (!(unk1 & 0x1)) {
@@ -769,14 +769,14 @@ reconstruct:
                 if (unk1 & 0x8) {
                     hex = max(hex, Rules.move_rate_roads - 1);
                 }
-                x_cur += hex * 16;
+                cur_cost += hex * 16;
                 if (!is_sea
                     && (map_loc(x_next, y_next)->climate & ~0x1F)
                         >= (map_loc(x_src, y_src)->climate & ~0x1F)) {
-                    x_cur = range(x_cur - 1, 0, 999999);
+                    cur_cost = range(cur_cost - 1, 0, 999999);
                 }
                 if (goody_at(x_next, y_next)) {
-                    x_cur += Rules.move_rate_roads;
+                    cur_cost += Rules.move_rate_roads;
                 }
             }
             if (faction_id >= 0 && !(unk1 & 0x200)) {
@@ -788,9 +788,9 @@ reconstruct:
                 if ((unk1 & 0x40) && faction_id > 0
                     && (zoc || territory_dist(x_next, y_next, x_dst, y_dst) > 2)
                     && owner_next < 0 && zoc_path(x_next, y_next, faction_id)) {
-                    x_cur += 1000;
+                    cur_cost += 1000;
                     if (zoc) {
-                        x_cur += 2000;
+                        cur_cost += 2000;
                     }
                 }
                 // Unlike the search pass, 0x0059B7D7 does not exclude occupied tiles.
@@ -810,18 +810,18 @@ reconstruct:
                                 if (dst_threat_mode == 1) {
                                     continue;
                                 }
-                                x_cur += 2500; // the enemy holds the tile itself
+                                cur_cost += 2500; // the enemy holds the tile itself
                                 break;
                             }
                             if (j & 1) {
                                 if (cur_threat_mode == 1 || dst_threat_mode) {
                                     continue;
                                 }
-                                x_cur += 500; // one cardinal step from the enemy
+                                cur_cost += 500; // one cardinal step from the enemy
                                 break;
                             }
                             if (!cur_threat_mode && !dst_threat_mode) {
-                                x_cur += 100; // diagonal step
+                                cur_cost += 100; // diagonal step
                             }
                             break;
                         }
@@ -860,7 +860,7 @@ reconstruct:
                                     }
                                 }
                             }
-                            x_cur += penalty;
+                            cur_cost += penalty;
                         }
                     }
                     if (get_proto_triad(proto_id) == TRIAD_SEA
@@ -879,7 +879,7 @@ reconstruct:
                                         && has_treaty(faction_id, Vehs[veh_arty].faction_id,
                                             DTREATY_VENDETTA)
                                         && can_arty(Vehs[veh_arty].proto_id, TRUE)) {
-                                        x_cur += 100;
+                                        cur_cost += 100;
                                     }
                                 }
                             }
@@ -888,9 +888,9 @@ reconstruct:
                 }
             }
             if (unk2 >= 0 && unk2 < 8 && i == (unk2 ^ 4)) {
-                x_cur += Rules.move_rate_roads * 20; // do not double back
+                cur_cost += Rules.move_rate_roads * 20; // do not double back
             }
-            int score = x_cur * 2 + (i & 1); // prefer cardinal steps on ties
+            int score = cur_cost * 2 + (i & 1); // prefer cardinal steps on ties
             if (score <= best_score) {
                 best_score = score;
                 best_dir = i;
