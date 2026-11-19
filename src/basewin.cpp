@@ -1727,7 +1727,10 @@ void BaseWin::draw_production(int update_mode) {
     const int center_x = (content.left + content.right) / 2;
     const int text_y = content.top + 0x28;
     int current_minerals;
-    int turn_cost;
+    // The cost factor seeds the column search and is then the column count
+    // (image: one variable, edi from 0x40EB31, homed at [ebp-0x28] with the
+    // vehicle arm's display).
+    int columns;
     int item_cost;
     if (vehicle_id >= 0) {
         const int render_width = ((content.right - content.left) * 3) / 4;
@@ -1786,7 +1789,7 @@ void BaseWin::draw_production(int update_mode) {
         content.bottom -= 2;
         content.bottom -= 2 * font_line_advance(unit_font);
         current_minerals = BaseCurrent->minerals_accumulated;
-        turn_cost = cost_factor(BaseCurrent->faction_id_current, 1, -1);
+        columns = cost_factor(BaseCurrent->faction_id_current, 1, -1);
         item_cost = veh_cost(vehicle_id, BaseIDCurrentSelected, &has_proto_cost);
     } else {
         if (facility_id < 0x46) {
@@ -1814,12 +1817,12 @@ void BaseWin::draw_production(int update_mode) {
         content.bottom -= 2;
         content.bottom -= 2 * font_line_advance(unit_font);
         current_minerals = BaseCurrent->minerals_accumulated;
-        turn_cost = cost_factor(BaseCurrent->faction_id_current, 1, -1);
+        columns = cost_factor(BaseCurrent->faction_id_current, 1, -1);
         item_cost = Facility[facility_id].cost;
     }
 
     // A zero total skips both the cell grid and the status line.
-    const int gross_cost = item_cost * turn_cost;
+    const int gross_cost = item_cost * columns;
     if (gross_cost != 0) {
         const int mineral_surplus = BaseCurrent->mineral_surplus;
         int max_cell_index;
@@ -1834,7 +1837,6 @@ void BaseWin::draw_production(int update_mode) {
         // The native dimension search and row-major cell walk keep their
         // unguarded integer divisions and signed limits.
         const int available_width = content.right - content.left;
-        int columns = turn_cost;
         if (2 * columns < available_width) {
             const int available_height = content.bottom - content.top;
             while ((max_cell_index / columns) * 2 > available_height) {
