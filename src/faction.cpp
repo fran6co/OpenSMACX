@@ -10678,13 +10678,16 @@ if (has_treaty(faction_id, faction_id_with, 1) != 0 &&
                 tech_avail(tech_id, faction_id) == 0) {
                 continue;
             }
-            // 0x55825D..0x55827F is signed IDIV by 3. For IDs below 87,
-            // the image rejects remainder zero; for IDs 87 and 88 it rejects
-            // nonzero remainder. Keep the native 32-bit wrapped numerator.
+            // 0x55825D..0x55827F is signed IDIV by 3. The image's split is
+            // at MaxTechnologyNum (0x0055826B cmp [ebp-0x14], 0x009502CC:
+            // the &Technology[id].preq_tech_2 cursor that starts at
+            // 0x0094F380 against Technology[89]), so inside the loop it
+            // always rejects remainder zero. Keep the native 32-bit wrapped
+            // numerator.
             const int alignment = (((tech_id - PlayersData[faction_id].tech_ranking) + faction_id) + 2);
             const int alignment_remainder = alignment % 3;
-            if ((tech_id < 87 && alignment_remainder == 0) ||
-                (tech_id >= 87 && alignment_remainder != 0)) {
+            if (tech_id < MaxTechnologyNum ? alignment_remainder == 0
+                                           : alignment_remainder) {
                 continue;
             }
             if (has_tech(candidate.preq_tech_1, faction_id) == 0 ||
