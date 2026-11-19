@@ -4201,6 +4201,31 @@ Accessors, folded helpers and unit order (par-1 2026-11-19)
   in address order in the image argue against the function being in such a
   region at all.
 
+- **A helper's own getters decide whether pass 1 expands it** (par-1
+  2026-11-19, enemies_treaty 0x0055D760). pact_truce with its leader and noun
+  fields written out (`GenderDefault = ..; PluralityDefault = ..;
+  parse_says(.., Players[f].title_leader, ..)`) is too dear for pass 1 and
+  stays a call at both sites; written `parse_says(0, get_title(f), ..)`,
+  `get_name`, `get_noun` it expands, its out-of-line copy is still
+  byte-exact, and the last get_noun of each copy is the image's call. Respell
+  the helper before the caller.
+- **Expression inlines before a nested site grow the budget; after it they
+  reserve.** In enemies_treaty three dead `has_treaty` tests anywhere after
+  the treaty arm refuse has_project in the truce arm's spying copies; the
+  same three before the truce arm expand one more site.
+- **has_treaty is inline only in faction.cpp, faction_treaty.cpp and
+  console_commands.cpp.** Respelling raw `diplo_treaties[..] & K` reads as
+  has_treaty elsewhere adds calls the image has not got (accessor sweep over
+  the 362 non-exact functions, 2026-11-19: every such case raised the call
+  distance; a row drop there, action_terraform 90 -> 48, is an accident of
+  the call). The hand-expanded get_name/get_title/get_noun respelling gained
+  only base_production (335 -> 301) and broke teardown decisions in
+  control_turn; it is neutral in propose_pact.
+- **Two-way treaty/agenda writes equal the writer folded on a constant** in
+  the writers' own unit: `treaty_off(f, i, 0x200)` and the hand-written pair
+  compile to the same code (enemy_diplomacy, eight sites; enemies_unpact's
+  0x01100001 clear is `treaty_off(f, w, DTREATY_PACT)`).
+
 ## 4. Measured and neutral (do not retry without new evidence)
 
 - **String pooling.** The original is unpooled everywhere: identical literals stay
