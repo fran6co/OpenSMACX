@@ -2196,7 +2196,12 @@ Purpose: Resolve a stack's worth of chaff deaths after a battle.
 Return Value: n/a
 Status: MISMATCH.
 */
-void __cdecl battle_kill_chaff(int veh_id, int *attacker_out,
+// WORKAROUND(inline): battle_fight (0x00506AF0) expands this body at
+// 0x50AAE0 (no callers in the image; orphanowner.py). A plain call there is
+// refused by battle_fight's /Ob2 ceiling (2436 rows, battle_kill_chaff called);
+// __forceinline expands it (2409 -> 2344 rows, named call distance 2 -> 1) and
+// MEASURED keeps the out-of-line copy the image has.
+MEASURED __forceinline void __cdecl battle_kill_chaff(int veh_id, int *attacker_out,
                                int *defender_out, int *odds_out, int killer_id,
                                int credit_faction) {
     if (veh_id < 0) {
@@ -2570,7 +2575,7 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
     //                        (0x5071DE), the pact-sweep tile (0x50781C) and display
     //                        (0x5083F2..), plus compiler spills (0x507A4B, 0x507BD2).
     // [ebp+0x20] odds_out    odds-only path only. Reused as rx (0x509422) and
-    //                        atk_id_adj (0x50AAE8). half_x (0x50A129) is a CSE.
+    //                        the expanded battle_kill_chaff's killer_id (0x50AAE8). half_x (0x50A129) is a CSE.
     int pact_report = 0;    // [ebp-0x44] 1 VENDETTAREPORT, 2 PACTATTACKED, 3 PACTATTACKING
     int disengaged = 0;     // [ebp-0x64] defender withdrew (0x509979)
     int local_base = 0;     // [ebp-0x84] alien hit a LOCAL base -> interlude at the end
@@ -2618,7 +2623,6 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
     uint32_t nerve_state;   // [ebp+0x1c] attacker state & ~VSTATE_USED_NERVE_GAS
     int display;            // [ebp+0x1c] show this battle on screen
     int rx;                 // [ebp+0x20] withdraw candidate x
-    int atk_id_adj;         // [ebp+0x20] veh_id adjusted for battle_kill compaction
     int old_def_faction;    // [ebp+0x0c] defender faction before the capture
     int atk_left;           // [ebp+0x0c] attacker HP after the rounds (0..9999)
     int bombard_boomed;     // [ebp+0x18] bombard display drew the boom
@@ -3716,30 +3720,8 @@ L_509980:
             }
 
             // 0x50AAE0: remove the stack's dead units
-            atk_id_adj = veh_id;
-            if (def_id >= 0) {
-                // veh_top(def_id) inlined again (first link via [ebp-0x08])
-                int v = veh_top(def_id);
-                while (v >= 0) {
-                    // 0x50AB1E
-                    int next = Vehs[v].next_veh_id_stack;
-                    // the outer range() is CALLED here (0x422F00); proto_power stays inlined
-                    if (veh_health(v) <= 0
-                        || Vehs[v].faction_id == 0) {
-                        // 0x50AB9B
-                        if (battle_kill(v, &kill_count, &booty_count, &husk_energy,
-                                        atk_id_adj, att_faction)) {
-                            if (atk_id_adj > v) {
-                                atk_id_adj--;
-                            }
-                            if (next > v) {
-                                next--;
-                            }
-                        }
-                    }
-                    v = next;   // 0x50ABC9
-                }
-            }
+            battle_kill_chaff(def_id, &kill_count, &booty_count, &husk_energy,
+                              veh_id, att_faction);
             // 0x50ABD3 (sets/dec/and idiom)
             {
                 // 0x50ABD9: kill is loaded first, then `booty + kill` is one add
