@@ -1074,23 +1074,23 @@ void __cdecl random_events(int mode) {
         }
         seen = 0;
         for (int i = 0; i < 21; i++) {
-            int tx = wrap_map_x(base.x + RadiusOffsetX[i]);
+            mode = wrap_map_x(base.x + RadiusOffsetX[i]);
             int ty = base.y + RadiusOffsetY[i];
-            if (!on_map(tx, ty)) {
+            if (!on_map(mode, ty)) {
                 continue;
             }
-            if (!(map_loc(tx, ty)->bit & BIT_SOLAR_TIDAL)) {
+            if (!(map_loc(mode, ty)->bit & BIT_SOLAR_TIDAL)) {
                 continue;
             }
             if (!(PlayersData[faction].flags & PFLAG_MAP_REVEALED)
-                && !(map_loc(tx, ty)->visibility & (1 << faction))) {
+                && !(map_loc(mode, ty)->visibility & (1 << faction))) {
                 continue;
             }
-            int owner = whose_territory(faction, tx, ty, 0, 0);
+            int owner = whose_territory(faction, mode, ty, 0, 0);
             if (owner >= 0 && owner != faction) {
                 continue;
             }
-            if (is_ocean(tx, ty)) {
+            if (is_ocean(mode, ty)) {
                 continue;
             }
             if (IsMultiplayerPBEM) {
@@ -1106,13 +1106,13 @@ void __cdecl random_events(int mode) {
                 }
                 seen |= (faction == ConsoleGlobal.faction_id_) + 1;
             }
-            bit_set(tx, ty, BIT_SOLAR_TIDAL, 0);
-            synch_bit(tx, ty, faction);
+            bit_set(mode, ty, BIT_SOLAR_TIDAL, 0);
+            synch_bit(mode, ty, faction);
             for (j = 1; j < 8; j++) {
-                map_loc(tx, ty)->bit_visible[j - 1] &= ~BIT_SOLAR_TIDAL;
+                map_loc(mode, ty)->bit_visible[j - 1] &= ~BIT_SOLAR_TIDAL;
             }
             if (seen) {
-                draw_tile(tx, ty, 2);
+                draw_tile(mode, ty, 2);
                 if (!HIBYTE(GetAsyncKeyState(VK_SHIFT)) && !IsMultiplayerNet && !IsMultiplayerPBEM) {
                     clock_wait(50);
                 }
