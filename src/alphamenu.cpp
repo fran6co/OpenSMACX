@@ -54,15 +54,6 @@ static void wait_for_animation_frame(DWORD started) {
 }
 
 
-// The compiler destroys sprites_[2..0], sprite1_, buffer_, then the Menu
-// base in the order observed at 0x0051DC10. Keep this as C++ ownership,
-// not a manual walk over the object bytes.
-// ORIGINAL: 0x0051DC10 ??1AlphaMenu@@QAE@XZ 0x0051DC10-0x0051DC86;0x0065D220-0x0065D24E FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0051dc10.cpp"], "reason": "C++ AlphaMenu owns Menu, Buffer and Sprite members whose reverse lifetime order follows the original destructor and exception-unwind trace."}
-// compile_context src/console.cpp
-// TRIED: computed that AlphaMenu : public Menu (Menu ends at exactly 0xB64, where Buffer buffer_ starts, which ends at exactly 0x10EC, where Sprite sprite_ starts, ending at 0x1118 where Sprite sprites_[3] starts) - a real member layout that would let the SEH prologue emerge automatically, but AlphaMenu is the fixed scaffold class and cannot carry real members here. Explicit dtor calls at the right offsets/order compile and are structurally faithful; the SEH frame (push -1/handler, unwind funclets) is not reproduced - same open item as 0x00629D60 (Flic::Flic) and 0047acf0.cpp.
-// symbol    ??1AlphaMenu@@UAE@XZ
-// kind game
 
 // The initialization loads the screen-size-specific menu sheet into a
 // temporary Buffer, extracts the button sprites, then initializes the real
@@ -131,27 +122,6 @@ int AlphaMenu::init(Win *parent) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004032A0 ?adjust@AlphaMenu@@QAEXXZ 0x004032A0-0x00403335 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Retired seed provenance: src/unrecovered/00402f40.cpp,004032a0.cpp,00403af0.cpp and src/recovered/units/00403340.cpp,00403680.cpp,00403830.cpp; pinned original callback style27/29, positive hide height, branch-only clip restoration and actual caller dispatch audited by coordinator."], "reason": "Recover AlphaMenu owner behavior through existing Menu/GraphicWin/Buffer inheritance and owned Sprite lifetimes; historical seed identity and extents remain obligations, not measurement claims."}
-// symbol    ?adjust@AlphaMenu@@UAEXXZ
-void AlphaMenu::adjust() {
-  const int height = sprites_[0].height() * count_ + sprite1_.height();
-  resize(sprite1_.width(), height, 0);
-  const int screen_width = WinScreenWidth;
-  const RECT &bounds = MainInterfaceGlobal.window_bounds_;
-  if (screen_width == 0x320) {
-    const int y = bounds.top - bounds.bottom - height;
-    Win::move(0, y + WinScreenHeight);
-  } else {
-    const int y = bounds.top - bounds.bottom - height;
-    const int x = (screen_width - 0x400) / 2;
-    Win::move(x, y + WinScreenHeight);
-  }
-  compute();
-  redraw();
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004031A0 ?compute@AlphaMenu@@QAEXXZ 0x004031A0-0x00403292 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004031a0.cpp", "git:896fc7fa:src/leaf_recoveries.cpp:AlphaMenu_compute", "image:AlphaMenu66ED88 slot92 selects4031A0;4031FC/403208 walk bytes at+A40 with14 stride, matching Menu entries+A38 plus flags+8", "recovery/tasks/popup-font-configuration-owner-closure.json"], "reason": "Recover the real AlphaMenu compute override through owned sprites, inherited Spot and MenuEntry flags. The retired raw facade's byte-zero wording described the flags cursor, not the entry base; preserve its seed's frame-layout lesson without retaining raw offsets or a duplicate source identity."}
 // symbol    ?compute@AlphaMenu@@UAEXXZ
@@ -183,58 +153,25 @@ void AlphaMenu::compute() {
   }
 }
 
-/*
-Purpose: Unknown; the legacy implementation is a constant return that returns 0.
-// ORIGINAL: 0x00403610 ?requested_height@AlphaMenu@@QAEHXZ 0x00403610-0x00403613 BYTE_EXACT
-// symbol    ?requested_height@AlphaMenu@@UAEHXZ
-// size      3 bytes
-// prototype int (__thiscall ?requested_height@AlphaMenu@@QAEHXZ)(AlphaMenu* this)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: 0
-Status: Complete
-*/
-int AlphaMenu::requested_height() {
-    return 0;
-}
-
-// ORIGINAL: 0x00403620 ?on_adjust_pulldown_pos@AlphaMenu@@QAEXPAHPAH@Z 0x00403620-0x00403677 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned image 0x00403620 reads Menu field_A24_ and SpotInternal[index].rect at stride 0x18; Win outer_rect_ is at 0x13c and border_thickness_ is at 0x118 (caption_height_ is at 0x114).", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/00403620.cpp"], "reason": "Recover AlphaMenu pull-down placement through its inherited Menu, Spot and Win state. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
-// kind      game
-// symbol    ?on_adjust_pulldown_pos@AlphaMenu@@UAEXPAH0@Z
-void AlphaMenu::on_adjust_pulldown_pos(int *x, int *y) {
-    if (field_A24_ != -1) {
-        const RECT outer_rect_snapshot = outer_rect_;
-        *x = outer_rect_snapshot.right;
-        *y = spot_.get_rect_at(field_A24_).top + border_thickness_
-            + outer_rect_snapshot.top;
-    }
-}
-
-// ORIGINAL: 0x00403B70 ?backfill_func@AlphaMenu@@QAAHPAUGraphicWin@@@Z 0x00403B70-0x00403B94 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned image 0x00403B70 calls Buffer::box_sprite at 0x005E2DD3 with the target Buffer::rect2_ at target+0x474 and style record 0x0078D960, which is InterfaceBoxStyles[27]."], "reason": "Recover AlphaMenu static backfill callback using the supplied GraphicWin and its typed Buffer subobject."}
-// symbol    ?backfill_func@AlphaMenu@@SAHPAVGraphicWin@@@Z
-int AlphaMenu::backfill_func(GraphicWin *target) {
-    target->Buffer::box_sprite(target->buffer_working_rect(), &InterfaceBoxStyles[27]);
-    return 1;
-}
-
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00403AF0 ?fill_func@AlphaMenu@@QAAHPAUGraphicWin@@HPAURECT@@@Z 0x00403AF0-0x00403B70 FILE BYTE_EXACT
+// ORIGINAL: 0x004032A0 ?adjust@AlphaMenu@@QAEXXZ 0x004032A0-0x00403335 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Retired seed provenance: src/unrecovered/00402f40.cpp,004032a0.cpp,00403af0.cpp and src/recovered/units/00403340.cpp,00403680.cpp,00403830.cpp; pinned original callback style27/29, positive hide height, branch-only clip restoration and actual caller dispatch audited by coordinator."], "reason": "Recover AlphaMenu owner behavior through existing Menu/GraphicWin/Buffer inheritance and owned Sprite lifetimes; historical seed identity and extents remain obligations, not measurement claims."}
-// symbol    ?fill_func@AlphaMenu@@SAHPAVGraphicWin@@HPAUtagRECT@@@Z
-int __cdecl AlphaMenu::fill_func(GraphicWin *target, int mode, RECT *clip) {
-  RECT draw_clip = *clip;
-  draw_clip.left = 1;
-  draw_clip.right = target->buffer_working_rect()->right - 1;
-  target->Buffer::set_clip(&draw_clip);
-  BoxSpriteParams *styles = &InterfaceBoxStyles[27];
-  target->Buffer::box_sprite(target->buffer_working_rect(),
-                             styles + (mode != 0 ? 2 : 0));
-  target->Buffer::restore_clip();
-  return 1;
+// symbol    ?adjust@AlphaMenu@@UAEXXZ
+void AlphaMenu::adjust() {
+  const int height = sprites_[0].height() * count_ + sprite1_.height();
+  resize(sprite1_.width(), height, 0);
+  const int screen_width = WinScreenWidth;
+  const RECT &bounds = MainInterfaceGlobal.window_bounds_;
+  if (screen_width == 0x320) {
+    const int y = bounds.top - bounds.bottom - height;
+    Win::move(0, y + WinScreenHeight);
+  } else {
+    const int y = bounds.top - bounds.bottom - height;
+    const int x = (screen_width - 0x400) / 2;
+    Win::move(x, y + WinScreenHeight);
+  }
+  compute();
+  redraw();
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -287,6 +224,74 @@ void AlphaMenu::on_redraw() {
       Buffer::write_l(label, &row, strlen(label));
     }
   }
+}
+
+// The image's on_mouse_move identity is Win slot 17: it tracks the
+// highlighted Spot and releases capture when the pointer leaves the menu.
+// Unlike the old seed scaffold, this uses Menu's actual Spot and Win's
+// source-owned capture globals and virtual callbacks.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// TRIED: if/else polarity flipped to match layout (jne first, matches); remaining MISMATCH is the compiler omitting the EBP frame that the original allocates (esp-relative &a2 suffices here), not reproduced by reordering statements
+// ORIGINAL: 0x00403550 ?on_mouse_move@AlphaMenu@@QAEXHH@Z 0x00403550-0x0040360F BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00403550.cpp"], "reason": "The original menu mouse body updates Menu spot selection and Win pointer capture through the inherited slot-17 callback, whose product spelling is on_mouse_move."}
+// symbol    ?on_mouse_move@AlphaMenu@@UAEXHH@Z
+void AlphaMenu::on_mouse_move(int x, int y) {
+    if (field_A24_ != -1) {
+        Menu::on_mouse_move(x, y);
+    } else {
+        grab_pointer();
+    }
+
+    // Spot writes the position on every hit; the miss path never reads it.
+    int position;
+    const int hit = spot_.check(x, y, &position, 0);
+    if (hit == -1) {
+        MenuSelection = -1;
+        redraw();
+        on_update();
+        if (WinPointerOwner3 == this) {
+            WinPointerOwner3 = 0;
+            on_lose_mouse_capture();
+        }
+        if (WinPointerOwner4 == this) {
+            WinPointerOwner4 = 0;
+        }
+    } else {
+        MenuSelection = position;
+        redraw();
+        on_update();
+    }
+}
+
+/*
+Purpose: Unknown; the legacy implementation is a constant return that returns 0.
+// ORIGINAL: 0x00403610 ?requested_height@AlphaMenu@@QAEHXZ 0x00403610-0x00403613 BYTE_EXACT
+// symbol    ?requested_height@AlphaMenu@@UAEHXZ
+// size      3 bytes
+// prototype int (__thiscall ?requested_height@AlphaMenu@@QAEHXZ)(AlphaMenu* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: 0
+Status: Complete
+*/
+int AlphaMenu::requested_height() {
+    return 0;
+}
+
+// ORIGINAL: 0x00403620 ?on_adjust_pulldown_pos@AlphaMenu@@QAEXPAHPAH@Z 0x00403620-0x00403677 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned image 0x00403620 reads Menu field_A24_ and SpotInternal[index].rect at stride 0x18; Win outer_rect_ is at 0x13c and border_thickness_ is at 0x118 (caption_height_ is at 0x114).", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/00403620.cpp"], "reason": "Recover AlphaMenu pull-down placement through its inherited Menu, Spot and Win state. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
+// symbol    ?on_adjust_pulldown_pos@AlphaMenu@@UAEXPAH0@Z
+void AlphaMenu::on_adjust_pulldown_pos(int *x, int *y) {
+    if (field_A24_ != -1) {
+        const RECT outer_rect_snapshot = outer_rect_;
+        *x = outer_rect_snapshot.right;
+        *y = spot_.get_rect_at(field_A24_).top + border_thickness_
+            + outer_rect_snapshot.top;
+    }
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -392,43 +397,39 @@ void AlphaMenu::hide() {
   MainInterfaceGlobal.flat_button_[3].redraw();
 }
 
-// The image's on_mouse_move identity is Win slot 17: it tracks the
-// highlighted Spot and releases capture when the pointer leaves the menu.
-// Unlike the old seed scaffold, this uses Menu's actual Spot and Win's
-// source-owned capture globals and virtual callbacks.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// Historical seed observations (not fresh measurements or acceptance):
-// TRIED: if/else polarity flipped to match layout (jne first, matches); remaining MISMATCH is the compiler omitting the EBP frame that the original allocates (esp-relative &a2 suffices here), not reproduced by reordering statements
-// ORIGINAL: 0x00403550 ?on_mouse_move@AlphaMenu@@QAEXHH@Z 0x00403550-0x0040360F BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00403550.cpp"], "reason": "The original menu mouse body updates Menu spot selection and Win pointer capture through the inherited slot-17 callback, whose product spelling is on_mouse_move."}
-// symbol    ?on_mouse_move@AlphaMenu@@UAEXHH@Z
-void AlphaMenu::on_mouse_move(int x, int y) {
-    if (field_A24_ != -1) {
-        Menu::on_mouse_move(x, y);
-    } else {
-        grab_pointer();
-    }
-
-    // Spot writes the position on every hit; the miss path never reads it.
-    int position;
-    const int hit = spot_.check(x, y, &position, 0);
-    if (hit == -1) {
-        MenuSelection = -1;
-        redraw();
-        on_update();
-        if (WinPointerOwner3 == this) {
-            WinPointerOwner3 = 0;
-            on_lose_mouse_capture();
-        }
-        if (WinPointerOwner4 == this) {
-            WinPointerOwner4 = 0;
-        }
-    } else {
-        MenuSelection = position;
-        redraw();
-        on_update();
-    }
+// ORIGINAL: 0x00403AF0 ?fill_func@AlphaMenu@@QAAHPAUGraphicWin@@HPAURECT@@@Z 0x00403AF0-0x00403B70 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Retired seed provenance: src/unrecovered/00402f40.cpp,004032a0.cpp,00403af0.cpp and src/recovered/units/00403340.cpp,00403680.cpp,00403830.cpp; pinned original callback style27/29, positive hide height, branch-only clip restoration and actual caller dispatch audited by coordinator."], "reason": "Recover AlphaMenu owner behavior through existing Menu/GraphicWin/Buffer inheritance and owned Sprite lifetimes; historical seed identity and extents remain obligations, not measurement claims."}
+// symbol    ?fill_func@AlphaMenu@@SAHPAVGraphicWin@@HPAUtagRECT@@@Z
+int __cdecl AlphaMenu::fill_func(GraphicWin *target, int mode, RECT *clip) {
+  RECT draw_clip = *clip;
+  draw_clip.left = 1;
+  draw_clip.right = target->buffer_working_rect()->right - 1;
+  target->Buffer::set_clip(&draw_clip);
+  BoxSpriteParams *styles = &InterfaceBoxStyles[27];
+  target->Buffer::box_sprite(target->buffer_working_rect(),
+                             styles + (mode != 0 ? 2 : 0));
+  target->Buffer::restore_clip();
+  return 1;
 }
+
+// ORIGINAL: 0x00403B70 ?backfill_func@AlphaMenu@@QAAHPAUGraphicWin@@@Z 0x00403B70-0x00403B94 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned image 0x00403B70 calls Buffer::box_sprite at 0x005E2DD3 with the target Buffer::rect2_ at target+0x474 and style record 0x0078D960, which is InterfaceBoxStyles[27]."], "reason": "Recover AlphaMenu static backfill callback using the supplied GraphicWin and its typed Buffer subobject."}
+// symbol    ?backfill_func@AlphaMenu@@SAHPAVGraphicWin@@@Z
+int AlphaMenu::backfill_func(GraphicWin *target) {
+    target->Buffer::box_sprite(target->buffer_working_rect(), &InterfaceBoxStyles[27]);
+    return 1;
+}
+
+// The compiler destroys sprites_[2..0], sprite1_, buffer_, then the Menu
+// base in the order observed at 0x0051DC10. Keep this as C++ ownership,
+// not a manual walk over the object bytes.
+// ORIGINAL: 0x0051DC10 ??1AlphaMenu@@QAE@XZ 0x0051DC10-0x0051DC86;0x0065D220-0x0065D24E FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0051dc10.cpp"], "reason": "C++ AlphaMenu owns Menu, Buffer and Sprite members whose reverse lifetime order follows the original destructor and exception-unwind trace."}
+// compile_context src/console.cpp
+// TRIED: computed that AlphaMenu : public Menu (Menu ends at exactly 0xB64, where Buffer buffer_ starts, which ends at exactly 0x10EC, where Sprite sprite_ starts, ending at 0x1118 where Sprite sprites_[3] starts) - a real member layout that would let the SEH prologue emerge automatically, but AlphaMenu is the fixed scaffold class and cannot carry real members here. Explicit dtor calls at the right offsets/order compile and are structurally faithful; the SEH frame (push -1/handler, unwind funclets) is not reproduced - same open item as 0x00629D60 (Flic::Flic) and 0047acf0.cpp.
+// symbol    ??1AlphaMenu@@UAE@XZ
+// kind game
 
 
 // ORIGINAL: 0x0051DC90 ??_GAlphaMenu@@UAEPAXI@Z 0x0051DC90-0x0051DCB1 FILE BYTE_EXACT
