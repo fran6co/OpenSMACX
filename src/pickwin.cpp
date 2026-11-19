@@ -533,7 +533,10 @@ void PickWin::on_button_clicked(int button) {
       }
       StringTemp[0] = '\0';
       say_label(0x462);
-      menu.dialogs().item(StringTemp, static_cast<int>(field_5DB0_) + 14);
+      // WORKAROUND(inline): the image reads the row count as a named value
+      // (eax, outside the round-robin cursor), as through an inline accessor.
+      const int rows = static_cast<int>(field_5DB0_);
+      menu.dialogs().item(StringTemp, rows + 14);
       const int chosen = menu.exec(x, y, 0);
       flatButtons10_[button - 0x3039].field_A74_ = 0;
       flatButtons10_[button - 0x3039].redraw();
