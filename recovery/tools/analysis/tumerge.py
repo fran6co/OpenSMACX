@@ -304,6 +304,27 @@ def strip_code(s):
     return ''.join(out)
 
 
+def open_comment(s):
+    """True when s ends inside a /* comment"""
+    i = 0; n = len(s)
+    while i < n:
+        if s.startswith('//', i):
+            j = s.find('\n', i); i = n if j < 0 else j; continue
+        if s.startswith('/*', i):
+            j = s.find('*/', i + 2)
+            if j < 0:
+                return True
+            i = j + 2; continue
+        c = s[i]
+        if c == '"' or c == "'":
+            j = i + 1
+            while j < n and s[j] != c and s[j] != '\n':
+                j += 2 if s[j] == '\\' else 1
+            i = j + 1; continue
+        i += 1
+    return False
+
+
 DEFINE = re.compile(r'^[ \t]*#[ \t]*define[ \t]+(\w+)(?:[^\n]*\\\n)*[^\n]*\n', re.M)
 
 
@@ -609,6 +630,10 @@ def merge(srcs, into, dry=False, addrs=None, top=False, with_inc=None, new_like=
             if name not in have:
                 have.add(name); add_inc.append(inc if inc.endswith('\n') else inc + '\n')
         for c in cs:
+            if open_comment(c[1]):
+                # a marker block whose comment was only closed by the next block's `*/`
+                c[1] = c[1].rstrip('\n') + '\n*/\n'
+                warn.append('%s chunk %s: unterminated /* comment closed' % (s, '0x%08X' % c[0] if c[0] else '-'))
             if re.search(r'^[ \t]*#[ \t]*(?!include)\w+', c[1], re.M):
                 warn.append('%s chunk %s holds preprocessor lines' % (s, '0x%08X' % c[0] if c[0] else '-'))
             foreign.append(c)
