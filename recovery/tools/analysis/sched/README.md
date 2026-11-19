@@ -27,3 +27,5 @@ counter) and prints the distinct results: every family here gave one result.
 | p02_fieldorder_neutral | control: with one operand clearly more used, the order of earlier references does not matter | S4 |
 | p09_twocopies, p09_accessor_copies | two struct copies of one source: member access interleaves the stores field by field, reference-returning accessor inlines copy one struct after the other (StatusWin::init) | S6 |
 | p10_sched | small scheduling cases: `xor eax,eax` before or after a final store, store order of two loaded values, a thiscall receiver against local stores | S3 |
+| p11_byteonce | Console::set_ai's "byte loaded once, movsx per use": char/signed char globals and locals, casts, `!= 0`, shifts all give one `movsx` and `shr/and` pieces here; the image form is not reproduced | open |
+| p12_leaadd | CouncWin::set_vote's `lea ecx,[ebx+K]` for a last virtual call on a member array element: every probe spelling gives the image's `lea`; the real function's `add ebx,K; mov ecx,ebx` comes from its context, not the call's spelling | open |
