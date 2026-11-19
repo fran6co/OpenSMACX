@@ -169,8 +169,8 @@ void __cdecl double_cross(int faction_id, int partner_id, int victim_id) {
     }
     if (PlayersData[faction_id].diplo_treaties[partner_id] & 1) {
         if (!(PlayersData[faction_id].diplo_agenda[partner_id] & 0x20)) {
-            int reputation = PlayersData[faction_id].global_reputation - 1;
-            PlayersData[faction_id].global_reputation = reputation < 0 ? 0 : reputation;
+            int &reputation = PlayersData[faction_id].global_reputation;
+            reputation = reputation - 1 < 0 ? 0 : reputation - 1;
             if (PlayersData[faction_id].diff_level && !treaty_active && !friction_flag) {
                 PlayersData[faction_id].integrity_blemishes++;
                 PlayersData[partner_id].diplo_betrayed[faction_id]++;
@@ -201,8 +201,8 @@ void __cdecl double_cross(int faction_id, int partner_id, int victim_id) {
     if (!(PlayersData[faction_id].diplo_agenda[partner_id] & 0x20)) {
         if (PlayersData[faction_id].diplo_treaties[partner_id] & 6) {
             if (!(PlayersData[faction_id].diplo_treaties[partner_id] & 0x10000)) {
-                int reputation = PlayersData[faction_id].global_reputation - 1;
-                PlayersData[faction_id].global_reputation = reputation < 0 ? 0 : reputation;
+                int &reputation = PlayersData[faction_id].global_reputation;
+                reputation = reputation - 1 < 0 ? 0 : reputation - 1;
                 if ((great_satan(faction_id, 0)
                         || (PlayersData[faction_id].ranking >= 6
                             && PlayersData[partner_id].ranking <= 4))
