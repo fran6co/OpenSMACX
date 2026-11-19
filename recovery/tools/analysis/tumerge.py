@@ -72,7 +72,7 @@ def items(t):
                 j = i + 1
                 while j < n and t[j] in ' \t': j += 1
                 if j < n and t[j] == ';':
-                    i = j
+                    i = j; c = ';'      # `};` ends the item at the semicolon
                 else:
                     # `} name = {..};` / `} var;` continue the same item
                     k = j
@@ -411,33 +411,41 @@ def pull_deps(host_text, pe, moved_keys, deps=True):
     cs = chunks(host_text, pe)
     rep = []
     P = []          # [chunk index, text, kind, names, marked, moved]
+    def split_marked(pc):
+        """[(text, kind, names, has_marker)]: a marker comment block is cut from the item under it when that item
+        is not the marker's function (an object or macro, or a function of another name: the marker's body lives
+        in a header, or further down behind object definitions)"""
+        kind, names = piece_names(pc)
+        ms = list(re.finditer(r'// ORIGINAL: 0x[0-9A-F]{8} (\S+)', pc))
+        if not ms or kind == '':
+            return [(pc, kind, names, bool(ms))]
+        if kind == 'function' and any(re.search(r'(?<![A-Za-z0-9_])' + re.escape(nm) + r'(?![A-Za-z0-9_])', m.group(1))
+                                      or m.group(1).startswith('??') for m in ms for nm in names):
+            return [(pc, kind, names, True)]
+        q = ms[-1].start()
+        o = pc.rfind('/*', 0, q)
+        if o >= 0 and pc.find('*/', o, q) < 0:
+            e = pc.find('*/', q)
+            if e < 0:
+                return [(pc, kind, names, True)]
+            e = pc.find('\n', e) + 1
+        else:
+            e = pc.find('\n', q) + 1
+            while pc[e:].lstrip(' \t').startswith('//') and pc[e:e + 1] != '\n':
+                e = pc.find('\n', e) + 1
+        if not strip_code(pc[e:]).strip():
+            return [(pc, kind, names, True)]
+        return [(pc[:e], '', set(), True), (pc[e:], kind, names, False)]
+
     for ci, (k, s) in enumerate(cs):
         mv = k in moved_keys
-        pl = pieces(s)
-        for pi, pc in enumerate(pl):
-            has = [bool(ORIG.search(x)) and ('// ORIGINAL: 0x%08X ' % k) in x for x in pl] if mv else []
+        pl = [x for pc in pieces(s) for x in split_marked(pc)]
+        has = [h and ('// ORIGINAL: 0x%08X ' % k) in x for x, kind, names, h in pl] if mv else []
+        for pi, (pc, kind, names, h) in enumerate(pl):
             if mv and (has[pi] or (not any(has) and pi == len(pl) - 1)):
                 # the marked piece itself; the unmarked pieces glued in front of it are ordinary candidates
                 P.append([ci, pc, 'moved', set(), True, True]); continue
-            kind, names = piece_names(pc)
-            ms = list(re.finditer(r'// ORIGINAL: 0x[0-9A-F]{8} (\S+)', pc))
-            if ms and kind == 'function' and not any(re.search(r'(?<![A-Za-z0-9_])' + re.escape(nm) + r'(?![A-Za-z0-9_])', m.group(1))
-                                                      or m.group(1).startswith('??') for m in ms for nm in names):
-                # the markers above this function name other functions (bodies that live in a header): the
-                # marker comments stay, the unmarked function is a piece of its own
-                q = ms[-1].start()
-                o = pc.rfind('/*', 0, q)
-                if o >= 0 and pc.find('*/', o, q) < 0:
-                    e = pc.find('*/', q); e = pc.find('\n', e) + 1
-                else:
-                    e = pc.find('\n', q) + 1
-                    while pc[e:].lstrip(' \t').startswith('//') and pc[e:e + 1] != '\n':
-                        e = pc.find('\n', e) + 1
-                P.append([ci, pc[:e], '', set(), True, False])
-                P.append([ci, pc[e:], kind, names, False, False])
-                continue
-            marked = bool(ms) and kind in ('function', '')
-            P.append([ci, pc, kind, names, marked, False])
+            P.append([ci, pc, kind, names, h, False])
     # a moved marker block that stands apart from its body (an object definition between them): the unmarked
     # function of the marker's name, when the marker does not point at a header body, is that body
     want = set()
