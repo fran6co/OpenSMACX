@@ -901,14 +901,6 @@ int BaseWin::on_iface_dialog_item_back_draw(GraphicWin *, int, int, RECT *) {
 
 
 
-static int base_native_clamp(int value, int lower, int upper) {
-    // Both limits and their order are explicit in the original branches.
-    if (value < lower || upper < lower) return lower;
-    return value > upper ? upper : value;
-}
-static void base_panel_sprite(Sprite &sprite, Buffer *canvas, int x, int y) {
-    sprite.draw(canvas, sprite.transparent_index(), x, y);
-}
 
 // 0040B140..0040BFE3, EH cleanup 00651A78..00651A8D.
 // The fourth argument is the right-button selector; the middle pair is x/y.
@@ -1283,8 +1275,8 @@ void BaseWin::draw_supported(int update_mode) {
     for (int i = 0; i < GameDataStateStorage.fields_.vehicle_current_count_; ++i)
         if (Vehs[i].faction_id == BaseCurrent->faction_id_current
             && Vehs[i].home_base_id == BaseIDCurrentSelected) ++count;
-    const int columns = base_native_clamp((content.right - content.left - 12) / vehicle_width, 1, 3);
-    const int rows = base_native_clamp((columns + count - 1) / columns, 1, 3);
+    const int columns = range((content.right - content.left - 12) / vehicle_width, 1, 3);
+    const int rows = range((columns + count - 1) / columns, 1, 3);
     int horizontal_offset;
     if (count > columns * rows) {
         horizontal_offset = (content.right - content.left - min(count, columns) * vehicle_width - 12) / 2;
@@ -1349,7 +1341,7 @@ void BaseWin::draw_supported(int update_mode) {
         if (total != 0) {
             int icon_x = x;
             if (Vehs[vehicle_id].state & 0x400000u) {
-                base_panel_sprite(g_PEACE_SIGN_SPRITES[0], &MainInterfaceGlobal, icon_x, icon_y);
+                g_PEACE_SIGN_SPRITES[0].draw(&MainInterfaceGlobal, icon_x, icon_y);
                 icon_x += icon_pitch;
             } else if (Vehs[vehicle_id].state & 0x200000u) {
                 // The original recomputes this live helper and police value
@@ -1358,24 +1350,24 @@ void BaseWin::draw_supported(int update_mode) {
                 while (1) {
                     if (i >= 1 + (PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE]
                          + 2 * has_fac(35, BaseIDCurrentSelected, 0) <= -5)) break;
-                    base_panel_sprite(g_PEACE_SIGN_SPRITES[1], &MainInterfaceGlobal, icon_x, icon_y);
+                    g_PEACE_SIGN_SPRITES[1].draw(&MainInterfaceGlobal, icon_x, icon_y);
                     icon_x += icon_pitch;
                     ++i;
                 }
             }
             icon_pitch = total <= 1 ? icon_width
-                : base_native_clamp((vehicle_width - icon_width) / (total - 1), 1, icon_width);
+                : range((vehicle_width - icon_width) / (total - 1), 1, icon_width);
             for (int i = support; i > 0; --i) {
-                base_panel_sprite(g_ICONS_GENERAL_SPRITES[5], &MainInterfaceGlobal, icon_x, icon_y);
+                g_ICONS_GENERAL_SPRITES[5].draw(&MainInterfaceGlobal, icon_x, icon_y);
                 icon_x += icon_pitch;
             }
             if (VehPrototypes[Vehs[vehicle_id].proto_id].plan == 10 && Vehs[vehicle_id].order == 3) {
                 if (base_who(Vehs[vehicle_id].x, Vehs[vehicle_id].y) >= 0) {
-                    base_panel_sprite(g_ICONS_GENERAL_SPRITES[1 + 4 * Vehs[vehicle_id].order_auto_type],
-                                      &MainInterfaceGlobal, icon_x, icon_y);
+                    g_ICONS_GENERAL_SPRITES[1 + 4 * Vehs[vehicle_id].order_auto_type].draw(
+                        &MainInterfaceGlobal, icon_x, icon_y);
                 } else for (int i = convoy_yield; i > 0; --i) {
-                    base_panel_sprite(g_ICONS_GENERAL_SPRITES[2 + 4 * Vehs[vehicle_id].order_auto_type],
-                                      &MainInterfaceGlobal, icon_x, icon_y);
+                    g_ICONS_GENERAL_SPRITES[2 + 4 * Vehs[vehicle_id].order_auto_type].draw(
+                        &MainInterfaceGlobal, icon_x, icon_y);
                     icon_x += icon_pitch;
                 }
             }
