@@ -2233,7 +2233,7 @@ void Datalink::draw_unit() {
         strcat(StringTemp, "}");
         description.pending_text_ = StringTemp;
     } else {
-        strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x200 / 4]));
+        strcat(StringTemp, label_get(0x200 / 4));
         say_colon();
         space();
         if (Weapon[VehPrototypes[id].weapon_id].mode >= 7
@@ -2246,11 +2246,11 @@ void Datalink::draw_unit() {
             say_colon();
             space();
             strcat(StringTemp, "{");
-            if (!(Weapon[VehPrototypes[id].weapon_id].offense_rating < 0)) {
+            if (Weapon[VehPrototypes[id].weapon_id].offense_rating < 0) {
+                strcat(StringTemp, label_get(0x310 / 4));
+            } else {
                 _itoa(Weapon[VehPrototypes[id].weapon_id].offense_rating, number, 10);
                 strcat(StringTemp, number);
-            } else {
-                strcat(StringTemp, label_get(0x310 / 4));
             }
             strcat(StringTemp, "}");
         }
@@ -2314,7 +2314,7 @@ void Datalink::draw_unit() {
         strcat(StringTemp, number);
         space();
         if (Chassis[VehPrototypes[id].chassis_id].range == 1) {
-            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0xC0 / 4]));
+            strcat(StringTemp, label_get(0xC0 / 4));
         } else {
             strcat(StringTemp, label_get(0xC4 / 4));
         }
