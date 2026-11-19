@@ -1473,6 +1473,38 @@ loop2d and armd were the "ties"). Rerun: `python3 ties.py ties.spec --n 1-30`.
    keeps it. Constant pushes (`f(100000)`) never formed a candidate. In
    candset, `--opt constw=50` lowers the explained count (331 -> 314), so the
    instruction-level count is not simply halved; keep constw=100 there.
+4h. **`__asm` blocks do not touch the ranking; they only remove ebp** (high,
+   2026-11-20 par-5, probes `pr1`-`pr3`: member stores through `this` (T)
+   against an int parameter `p` with 8 references, a/b on esi/edi). The
+   crossover is T = 8 (tie to `this`) with no asm, an `__asm { nop }` at the
+   top, one inside an `if` arm, `p` assigned before or after it in the arm,
+   and `p` read or written by name inside it. The only effect is the ebp
+   frame: the loser goes to ebp without asm and to memory with it (this
+   spilled: `mov [ebp-4],ecx`, reloaded through scratch registers).
+4i. **Two whole-function webs can swap with the register count** (high on
+   the real function, 2026-11-20 par-5, Buffer::line 0x005E09D0). Same C
+   (asm swap written as C): with ebp free, `y1` takes ebx (31 of the image's
+   34 ebx reads aligned) and `this` takes ebp; with ebp taken by a frame
+   (`__asm { nop }` at the top, or an `_alloca` in a dead arm) `this` takes
+   ebx for the whole function and `y1` goes to memory. With served-in-order
+   greedy that is impossible (this would take ebx at k = 4 too), so for long
+   webs the serving order depends on how many registers there are (as in a
+   simplify/spill colouring); rule 4 still decides the short probes.
+   Consequences: (a) a "regprio prio 1.5" whole-function web such as
+   `y1` is not dead weight: the 4b penalty over-charges webs that span
+   everything; read it as "competes for the last register", not "loses".
+   (b) The image's Buffer::line (k = 3: y1 ebx, `this` spilled to [ebp-4],
+   `along` packed into y1's dead home [ebp+0xC]) is the outcome our source
+   gives only at k = 4, so the original weighs `this` less, or `y1` more,
+   than ours at k = 3. Measured single-reference probes on our source: the
+   loop `stride_` reads moved off `this` spill `this` exactly like the image,
+   but ebx then goes to `x1` pieces; dropping any one non-loop `this` use
+   (the closing free_data, the rect1_ copy, acquire_pixels, a pixel base)
+   also loses ebx for `this`, to `x1`/`y2`. So `this` sits on the threshold
+   and `y1` is below `x1`/`y2` there; the missing weight is on `y1`'s side.
+   Whole-function member counts are equal (0x4a8 11/11, +0x50 10/10, +0x6c
+   11/11), so look for y1 reads the original had (clip tests, the pixel
+   bases) rather than for `this` differences.
 
 Using it (regprio.py uses 4b and 4c by default; `--model old` is rule 4 only):
 
