@@ -1561,6 +1561,14 @@ Conclusions
   (find the statements the original wrote as calls or inline helpers, 2.8
   "Using it"). A matching-function count is the price of a real header
   change, and these knobs are not real changes, so never commit one.
+- **Destructor chain pinned by its own copies** (2026-11-19, par-1). When
+  the out-of-line `??1X` copies of a class are byte-exact and their unwind
+  maps equal the image's, declaration-level variants of the class
+  (`virtual`, qualified `close()`, member order of trivially destructible
+  fields, in-class against out-of-class inline definitions) leave every
+  inline decision unchanged. Do not search the class further: look at the
+  callers (missing inline helpers or wrappers, hand-copied helper bodies,
+  teardown-site order, block layout).
 
 ## 3. Symptom → first thing to check
 
