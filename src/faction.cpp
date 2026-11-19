@@ -8787,10 +8787,6 @@ if (DiploScratchF7D4 &&
         DiploScratchFA8C = DiploScratchF7D4;
         DiploScratchF7E8 = 0;
         DiploScratchF7D4 = 0;
-        communicate_stack_20 = 1;
-        DiploScratchFA4C = 0;
-        communicate_stack_34 = 1;
-        goto communicate_menu_continuation;
     } else {
         if (!X_pops("INTRODUCEENEMY", 0x100000,
                     FactionDiplomacyPortraits[faction_id_with], pop_wait)) {
@@ -8813,11 +8809,11 @@ if (DiploScratchF7D4 &&
         DiploScratchFA8C = DiploScratchF7D4;
         DiploScratchF7E8 = 0;
         DiploScratchF7D4 = 0;
-        communicate_stack_20 = 1;
-        DiploScratchFA4C = 0;
-        communicate_stack_34 = 1;
-        goto communicate_menu_continuation;
     }
+    communicate_stack_20 = 1;
+    DiploScratchFA4C = 0;
+    communicate_stack_34 = 1;
+    goto communicate_menu_continuation;
 }
 
 if (DiploScratchFA38 && !has_treaty(faction_id, faction_id_with, 0x31) &&
@@ -11145,7 +11141,6 @@ communicate_popup_destructor: // cold span 0x65FF4F..0x65FF64
 // Let the single lexical Popup in the eventual whole body run its destructor.
 
 ; // The automatic Popup generates both normal and exceptional destruction.
-
 }
 
 
