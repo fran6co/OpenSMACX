@@ -2338,7 +2338,7 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
                 } else if (plan == PLAN_COLONIZATION) {
                     colony_regions++;
                 }
-                if (plan <= PLAN_DEFENSIVE) {
+                if (PlayersData[faction_id].region_base_plan[region] <= PLAN_DEFENSIVE) {
                     for (int f = 1; f < MaxPlayerNum; f++) {
                         if (f != faction_id
                             && has_treaty(faction_id, f, DTREATY_VENDETTA | DTREATY_WANT_REVENGE)
