@@ -35,6 +35,11 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   its role (`this`, `lea:this+K`, `[slot]{name}` piece, `#K`, `ret@line`), scored by rule 4/4b at instruction
   level and checked against its own side's registers; prints the roles on one side only and the pairs the sides
   order differently (MATCHING_GUIDE 2.7 "Candidate set"). `regprio.py ... --candset` appends the same report.
+- `analysis/mergescan.py <unit> <addr[,addr]> [--src ALT.cpp] | --from FEALL.json [--json F]` tail-merged statements
+  (MATCHING_GUIDE 2.7 "Tail-merged references count"; 50 s tree-wide with FE_JOBS=5): our source lines whose call left
+  no `call` instruction while the callee is called elsewhere in the function (`MERGED`, with the identifiers of its
+  arguments and the lines that kept a copy), and every `goto`. Register allocation runs before tail merging, so each
+  merged copy still counts for its operands: compare with candset.py's disputed pairs.
 - `analysis/regalloc/` the probe sources and runner behind MATCHING_GUIDE 2.7 (see its README).
 - `crtcalls.py OUT.json` compares, per function, the calls to memcpy/memmove/memset/strlen/strcpy/
   strcat/strcmp/memcmp in our objects with the image's (20 s). The game and Jackal have no

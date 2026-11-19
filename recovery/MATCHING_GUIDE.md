@@ -1255,9 +1255,9 @@ roles present on one side only and the pairs the two sides order differently.
   image is *not* explained by its own code (draw_garrison: `this` 19 in esi
   above the `this+0x40c2c` temporary 84 and two frame_rect pieces 30; popp:
   the `caption` piece 1 above the `label`/`flags` pieces 10), the original
-  source references the winner in ways that leave no instruction: look for
-  references removed by CSE, tail merging (popp's three `start(caption, ...)`
-  sites merge into one `push esi`) or dead stores.
+  source references the winner in ways that leave no instruction. Of those,
+  only tail-merged copies count (CSE and dead code do not): see "Tail-merged
+  references count" below. Both popp and say_orders became exact that way.
 
 How VC6 forms each kind (probes in `regalloc/c_*.spec`, `python3 cand.py c_X.spec`):
 
@@ -1316,12 +1316,72 @@ initialisation, `expand_rect`, end-of-function arms; field-by-field
 `frame_rect` gives the image's `this`/temp order but reads `[esi+K]` per field,
 12 rows); Win::flip 0x005EFD20 (loop forms, split declared inside, named
 `left`, `rect_width`, `y` update as if/else, named delta, operand order);
-say_orders 0x004B43E0 (named `Veh *` pointer, inlined `prefix_state`, rereading
-`state`); popp 0x0048C0A0 (`!= 0` forms, `!strcmp`, a duplicated start
-instead of `goto plain`, a named caption); MultiWin::draw_player 0x00478630
+say_orders 0x004B43E0 and popp 0x0048C0A0 (both now exact through their merged
+statements, below); MultiWin::draw_player 0x00478630
 (no `canvas` copy, unsigned shift constants); compute_score 0x005ACBE0
 (`*total = *total + ...`, `total[0]`, the difference written to `items[5]`,
 `other` loop forms).
+
+Tail-merged references count; CSE'd ones do not (2026-11-19 par-2, high;
+`regalloc/duel.py` with `m_*.spec`, mergescan.py)
+
+Measured with duels (two candidates, the threshold N of uses of `c` at which
+`c` outranks `d`; one reference in the shared block moves N by one) with an
+extra statement added for `d` or for `this`:
+
+| extra source (for d / for this) | instructions left | counts |
+| --- | --- | --- |
+| `(void)d;`, `{ int z = d; }`, `d = d;`, `if (0) use(d);` | none | 0 |
+| `sink_a = d; sink_a = d;` (dead global store) | one store | 1 |
+| `sink_a = d*3; sink_b = d*3;` against `d*3`, `d*5` | `d*3` once | as one `d*3` (+2 against +4) |
+| `int e = d; use(e); use(e);` against `use(d); use(d);` | same | same (+2): a copy coalesces, no split |
+| `if (f0 > 0) use(f0);` against `int v = f0; if (v > 0) use(v);` | one load | 1 each: the CSE'd reread of a member is free |
+| `f0 = x; use(f0);` against `f0 = x; use(x);` | same | same: the reread after a store is free |
+| `if (c) { call(); use(d); } else { use(d); }` (merged to one `push d; call`) against `use_a`/`use_b` arms (not merged) | 1 against 2 copies | same threshold: both copies count |
+| three `use(d)` per arm, merged / not merged | 3 against 6 | same (+4 both) |
+| three switch cases ending `use_a(d); break;` (one copy left) | 1 against 3 | same |
+
+So the order of VC6's work is: CSE, copy propagation and dead-code removal
+**before** register allocation (their removed references count nothing; a
+named local copied from another candidate adds nothing and takes nothing),
+tail merging and cross-jumping **after** it (every written-out copy of a
+statement that the image shows once counts in full for each candidate it
+references, in its own block's `n_b`). Caching a member or array read in a
+local therefore changes the ranking only where it changes the code (a reload
+after a call); the decompiler-style cached locals of this tree are not a
+hidden weight. The hidden weight is the number of source copies of a merged
+statement:
+
+- **Ours writes a statement in several arms and VC6 merges them; the image
+  ranks an operand of it lower than ours** -> the original wrote it once after
+  the join, choosing the differing part in the arms. say_orders 0x004B43E0:
+  `strcat(text, ...)` in the order_auto_type 11 / plan 9 / default arms (one
+  `push text; call strcat` after merging) gave `text` three references and
+  esi above the `&Vehs[veh_id]` temporary; `char *label; ... label =
+  label_get(...); strcat(text, label);` (or a ternary, or the LPSTR id with
+  one `table_text`) is exact, 90 -> 0. The code is the same; only the source
+  count changed.
+- **Ours reaches a statement through `goto` or a shared join; the image ranks
+  an operand of it higher than ours** -> the original wrote the statement in
+  each arm and VC6 merged the copies. popp 0x0048C0A0: `goto plain` / `goto
+  missing` to one `start(caption, label, -1, 0, flags)` left `caption` at score
+  1 below the `label`/`flags` pieces; a `start(caption, ...)` in every failing
+  arm of a nested if/else (one `goto shown` each) is exact, 13 -> 0; the
+  extra copies cross-jump into the image's two kept copies. A copy that
+  does not merge in full changes the layout (a `goto` replaced by the whole
+  target block costs rows when the block is not cross-jumped whole:
+  MultiWin::draw_player's `goto not_in_turn` written out gives the image's
+  `this` = ebx and faction_id above it, but 130 -> 180 rows; the original's
+  arm structure there is still open).
+- Screen: `recovery/tools/analysis/mergescan.py <unit> <addr>` (or `--from
+  FEALL.json`, 50 s tree-wide) lists our source lines whose call left no
+  `call` instruction although the callee is called elsewhere in the function
+  (`MERGED`: a tail merged into another copy) with the identifiers of its
+  arguments, and every `goto`. Read it beside candset.py's "register order the
+  sides disagree on": a disputed role that is an argument of MERGED lines
+  (fewer copies in the original) or of a goto target (more copies) is the
+  lever. Inline expansions are not reported; repeated global-only statements
+  (`strcat(StringTemp, ...)`) are listed but move nothing.
 
 ### 2.8 /Ob2 inlining model
 
