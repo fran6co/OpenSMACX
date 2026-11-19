@@ -287,3 +287,6 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   functions (ours = image there): home of the copy (callee-saved register, frame slot, neither) by use count and by
   whether a call lies between the copy and its last use. 4 minutes tree-wide on one prefix.
 - `analysis/regalloc/c_field.spec` (`python3 cand.py c_field.spec`) the probes behind that guide section.
+- `analysis/locpad.py FEALL.json [maxrows] [minrows]` function-local tie screen (MATCHING_GUIDE 3.6, "the number of named
+  locals mod 8"): 0..7 dead referenced locals before each near-miss function's closing brace; lists the functions whose rows
+  move (2026-11-19: ReportIf::draw_labs exact at 7, Gamma::exec 21 -> 6 rows at 6). Fix by naming, never keep the pads.

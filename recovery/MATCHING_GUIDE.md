@@ -3777,6 +3777,24 @@ re-aligns their pad blocks (2.5). base_energy 0x004EB560 and give_a_base
 - **Header vetting:** `action_give`, `capture_base`, `setup_player`,
   `base_production`, `battle_fight`, `enemy_move`, `game_data`,
   `load_interface`, `SocialWin::init`, `tech_achieved`.
+- **Function-local ties: the number of named locals mod 8** (2026-11-19;
+  ReportIf::draw_intel 0x004AC140, draw_labs 0x004A7000). An operand-order
+  tie (`a - b - c` emitted as `a - c - b`, a swapped `sub` pair) that no unit
+  pad moves (function, extern, data or literal pads before the marker, 0..69)
+  can follow the function's own symbols instead:
+  - referenced locals, period 8: dead `{ int q = 0; }` pads before the closing
+    brace made draw_intel exact at 5, 13, 21, 29, 37. An unreferenced local,
+    a second store to the same local and identifier names do not count; an
+    array counts two; block or function scope is the same.
+  - the function's distinct data symbols (literals, externs): draw_intel was
+    exact with 4 literal symbols and not with 5..132, which is why /GF (pooled
+    duplicates) hid the tie until the units went unpooled.
+  Screen: sweep 0..7 dead locals; when one count is exact, the original had
+  that many more locals mod 8, or 8 minus that many fewer. Fix it by naming:
+  reuse a function-scope loop index or pointer, drop a local that only names
+  a repeated expression (each change must be code-neutral alone). Do not keep
+  the pads. draw_security 0x004AB600 has the same block and a second tie (the
+  `inset + left` add order) that these pads do not move.
 
 ### 3.7 Rules from the 2026-11-18 parallel rounds
 
