@@ -2321,10 +2321,13 @@ void Console::go_to(int subject, int order, int grouped) {
                 goto finish;
             }
         } else if (order == 128) {
-            if (!(Chassis[VehPrototypes[Vehs[subject].proto_id].chassis_id].range == 1)) {
-                max_range = speed(subject, 0);
-            } else {
+            switch (Chassis[VehPrototypes[Vehs[subject].proto_id].chassis_id].range) {
+            case 1:
                 max_range = speed(subject, 0) / 2;
+                break;
+            default:
+                max_range = speed(subject, 0);
+                break;
             }
             if (base_who(source_x, source_y) >= 0) {
                 centre_x = source_x;
