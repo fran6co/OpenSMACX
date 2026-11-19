@@ -235,7 +235,7 @@ int __cdecl shoot(int atk_factionID, int def_factionID, int xDest, int yDest) {
         - PlayersData[def_factionID].sat_odp_deployed);
     for (int round = 0; round < bonus_rounds; ++round) {
         ++PlayersData[def_factionID].sat_odp_deployed;
-        if (rand() % 100 >= 50) {
+        if ((int)rnd(100, "BUSTER") >= 50) {
             bonus_hit = 1;
             break;
         }
@@ -252,7 +252,7 @@ int __cdecl shoot(int atk_factionID, int def_factionID, int xDest, int yDest) {
             const int base_id = base_at(x, y);
             if (base_id >= 0 && Bases[base_id].faction_id_current != atk_factionID
                 && has_fac(FAC_FLECHETTE_DEFENSE_SYS, base_id, 0)
-                && rand() % 100 < 50) {
+                && (int)rnd(100, "FLECHETTEBUSTER") < 50) {
                 parse_says(0, Bases[base_id].name_string, -1, -1);
                 if (def_factionID == ConsoleGlobal.faction_id_) {
                     parse_says(1, get_adjective(atk_factionID), -1, -1);
