@@ -5544,8 +5544,8 @@ L_56ef2f:
                     // slot -0x60 (tile_owner) is written with tx here: VC6 spill of the
                     // CSE'd tx across the abs call, not a source assignment.
                     if (is_ocean(tx, ty)
-                        && map_range(x, y, tx, ty)
-                            <= veh_moves(veh_id) / Rules.move_rate_roads) {
+                        && veh_moves(veh_id) / Rules.move_rate_roads
+                            >= map_range(x, y, tx, ty)) {
                         goto L_56f83a;
                     }
                     if (Vehs[veh_id].order == ORDER_MOVE_TO) {
