@@ -209,13 +209,13 @@ void RadioButton::draw_item(int position, int state) {
         }
     }
 
-    const int x = (Dialog::field_64_ + static_cast<int>(Dialog::field_44_)) *
+    const int x = (Dialog::field_64_ + Dialog::field_44_) *
                       (position / Dialog::row_count_) +
                   Dialog::field_40_;
-    const int y = (static_cast<int>(Dialog::field_44_) >> 1) +
+    const int y = (Dialog::field_44_ >> 1) +
                   (extra_height +
                    (position - position / Dialog::row_count_ * Dialog::row_count_) *
-                       (Dialog::field_68_ + static_cast<int>(Dialog::field_44_)));
+                       (Dialog::field_68_ + Dialog::field_44_));
     if (!Dialog::item_list_.seek_pos(position)) {
         return;
     }
@@ -484,12 +484,12 @@ void RadioButton::on_left_down(int x, int y) {
             lines = 0;
         }
         int item_height = Buffer::text_line_height() * lines;
-        if (static_cast<int>(Dialog::field_44_ + Dialog::field_68_) > item_height) {
+        if ((Dialog::field_44_ + Dialog::field_68_) > item_height) {
             item_height = Dialog::field_44_ + Dialog::field_68_;
         }
         y -= item_height;
     }
-    const int position = (x / static_cast<int>(Dialog::field_64_ + Dialog::field_44_)) *
+    const int position = (x / (Dialog::field_64_ + Dialog::field_44_)) *
                          Dialog::row_count_ +
                          Dialog::item_list_.current_position_;
 
@@ -541,12 +541,12 @@ void RadioButton::on_mouse_move(int x, int y) {
             lines = 0;
         }
         int item_height = Buffer::text_line_height() * lines;
-        if (static_cast<int>(Dialog::field_44_ + Dialog::field_68_) > item_height) {
+        if ((Dialog::field_44_ + Dialog::field_68_) > item_height) {
             item_height = Dialog::field_44_ + Dialog::field_68_;
         }
         y -= item_height;
     }
-    int position = (x / static_cast<int>(Dialog::field_64_ + Dialog::field_44_)) *
+    int position = (x / (Dialog::field_64_ + Dialog::field_44_)) *
                          Dialog::row_count_ +
                          Dialog::item_list_.current_position_;
     if (position == Dialog::selected_position_) {

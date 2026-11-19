@@ -520,7 +520,7 @@ int SpriteBox::calculate_dimensions() {
     } else {
         Dialog::column_count_ =
             (Dialog::row_count_ + list_.entry_count_ - 1) / Dialog::row_count_;
-        int height = (Dialog::field_64_ + static_cast<int>(Dialog::field_44_))
+        int height = (Dialog::field_64_ + Dialog::field_44_)
                      * Dialog::column_count_ - Dialog::field_44_;
         if (Dialog::field_2C_ > height) height = Dialog::field_2C_;
         Dialog::field_5C_ = height;
@@ -561,8 +561,8 @@ void SpriteBox::draw_item(int position) {
     Win *const parent = win_parent_;
     if (parent == 0) return;
     const int column = position / Dialog::row_count_;
-    int x = (static_cast<int>(Dialog::field_64_) + static_cast<int>(Dialog::field_44_)) * column;
-    int y = (position - Dialog::row_count_ * column) * static_cast<int>(Dialog::field_68_) + (static_cast<int>(Dialog::field_44_) >> 1);
+    int x = (static_cast<int>(Dialog::field_64_) + Dialog::field_44_) * column;
+    int y = (position - Dialog::row_count_ * column) * static_cast<int>(Dialog::field_68_) + (Dialog::field_44_ >> 1);
 
     if (!list_.seek_pos(position)) return;
     if (!Dialog::item_list_.seek_pos(position)) return;

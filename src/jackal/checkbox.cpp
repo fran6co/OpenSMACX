@@ -258,13 +258,13 @@ void CheckBox::draw_item(int position, int state, int) {
         }
     }
 
-    const int x = (Dialog::field_64_ + static_cast<int>(Dialog::field_44_)) *
+    const int x = (Dialog::field_64_ + Dialog::field_44_) *
                       (position / Dialog::row_count_) +
                   Dialog::field_40_;
-    const int y = (static_cast<int>(Dialog::field_44_) >> 1) +
+    const int y = (Dialog::field_44_ >> 1) +
                   (extra_height +
                    (position - position / Dialog::row_count_ * Dialog::row_count_) *
-                       (Dialog::field_68_ + static_cast<int>(Dialog::field_44_)));
+                       (Dialog::field_68_ + Dialog::field_44_));
     if (!Dialog::item_list_.seek_pos(position)) {
         return;
     }
@@ -1065,9 +1065,9 @@ Purpose: A check box mouse move: locate the row under the cursor from the
 Status: Source-owned member body; behavior retained, exactness not measured
 */
 void CheckBox::on_mouse_move(int x_coord, int y_coord) {
-    const int cell_width = static_cast<int>(Dialog::field_64_ +
+    const int cell_width = (Dialog::field_64_ +
                                             Dialog::field_44_);
-    const int cell_height = static_cast<int>(Dialog::field_68_ +
+    const int cell_height = (Dialog::field_68_ +
                                              Dialog::field_44_);
     // Native60FBD3..60FBE7 divides each coordinate first, then multiplies
     // the x quotient by the row count. IMUL/ADD retain 32-bit wrapping.

@@ -629,7 +629,7 @@ void ListBox::draw_item(int index) {
                 : 0;
         }
         const int offset = (static_cast<int>(Dialog::field_68_)
-                            + static_cast<int>(Dialog::field_44_)) * occupied;
+                            + Dialog::field_44_) * occupied;
         row.top += offset;
         row.bottom += offset;
         StringList *const list = &this->Dialog::item_list_;
@@ -644,19 +644,19 @@ void ListBox::draw_item(int index) {
         const int span = list->current_ != 0
             ? static_cast<int>((head != 0 ? list->current_->string_payload() : 0)->field_C_)
             : 0;
-        row.bottom = (static_cast<int>(Dialog::field_68_) + static_cast<int>(Dialog::field_44_)) * span
-            - static_cast<int>(Dialog::field_44_) + row.top;
+        row.bottom = (static_cast<int>(Dialog::field_68_) + Dialog::field_44_) * span
+            - Dialog::field_44_ + row.top;
     } else {
         // 0x0060B71C..0x0060B775 applies the column offset before it divides
         // again for the row offset.
         const int relative = index - static_cast<int>(field_18_);
         const int along = (static_cast<int>(Dialog::field_64_)
-                           + static_cast<int>(Dialog::field_44_))
+                           + Dialog::field_44_)
             * (relative / Dialog::row_count_);
         row.right += along;
         row.left += along;
         const int across = (static_cast<int>(Dialog::field_68_)
-                            + static_cast<int>(Dialog::field_44_))
+                            + Dialog::field_44_)
             * (relative % Dialog::row_count_);
         row.top += across;
         row.bottom += across;
@@ -1010,7 +1010,7 @@ int ListBox::calculate_dimensions() {
     }
 
     Dialog::field_68_ -= Dialog::field_44_;
-    int margin = static_cast<int32_t>(Dialog::field_44_);
+    int margin = Dialog::field_44_;
     uint32_t height_numerator = Dialog::field_60_ - Dialog::field_3C_
                               - Dialog::field_38_ + Dialog::field_44_;
     uint32_t height_denominator = Dialog::field_68_ + Dialog::field_44_;
@@ -1354,15 +1354,15 @@ int ListBox::update_changes() {
 void ListBox::on_left_down(int x, int y) {
     WinCallbackWindow = parent_window();
     if (Dialog::item_list_.entry_count_ == 0) return;
-    y -= static_cast<int>(Dialog::field_38_);
+    y -= Dialog::field_38_;
     if (y < 0) return;
 
     int position;
     if (Dialog::column_count_ != 1) {
         position = (x - Dialog::field_40_)
-                       / (Dialog::field_64_ + static_cast<int>(Dialog::field_44_))
+                       / (Dialog::field_64_ + Dialog::field_44_)
                        * Dialog::row_count_
-                   + y / (Dialog::field_68_ + static_cast<int>(Dialog::field_44_));
+                   + y / (Dialog::field_68_ + Dialog::field_44_);
     } else {
         this->Dialog::item_list_.seek_pos(static_cast<int>(field_18_) - 1);
         position = 0;
@@ -1376,7 +1376,7 @@ void ListBox::on_left_down(int x, int y) {
             }
             const int span = list->current_ != 0
                 ? static_cast<int>(list->current_entry()->field_C_) : 0;
-            y -= (Dialog::field_68_ + static_cast<int>(Dialog::field_44_)) * span;
+            y -= (Dialog::field_68_ + Dialog::field_44_) * span;
         }
         if (position == 0) return;
         --position;
@@ -1450,14 +1450,14 @@ void ListBox::on_mouse_move(int x, int y) {
     int position;
     if (Dialog::item_list_.entry_count_ == 0) return;
     const int previous_hover = static_cast<int>(Dialog::field_F0_);
-    y -= static_cast<int>(Dialog::field_38_);
+    y -= Dialog::field_38_;
     if (y < 0) return;
 
     if (Dialog::column_count_ != 1) {
         position = (x - Dialog::field_40_)
-                       / (Dialog::field_64_ + static_cast<int>(Dialog::field_44_))
+                       / (Dialog::field_64_ + Dialog::field_44_)
                        * Dialog::row_count_
-                   + y / (Dialog::field_68_ + static_cast<int>(Dialog::field_44_));
+                   + y / (Dialog::field_68_ + Dialog::field_44_);
     } else {
         this->Dialog::item_list_.seek_pos(static_cast<int>(field_18_) - 1);
         position = 0;
@@ -1475,7 +1475,7 @@ void ListBox::on_mouse_move(int x, int y) {
             const int span = list->current_ != 0
                 ? static_cast<int>((head != 0 ? list->current_->string_payload() : 0)->field_C_)
                 : 0;
-            y -= (Dialog::field_68_ + static_cast<int>(Dialog::field_44_)) * span;
+            y -= (Dialog::field_68_ + Dialog::field_44_) * span;
         }
         if (position == 0) return;
         --position;

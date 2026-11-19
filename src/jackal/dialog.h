@@ -207,14 +207,15 @@ class Dialog {
   int window_y_;
   // These shared dimensions and spacing/count operands are signed in the
   // recovered control arithmetic. The original SpriteBox and RadioButton
-  // sizing bodies use signed IDIV with +0x2c/+0x30/+0x40/+0x4c/+0x64/+0x68.
+  // sizing bodies use signed IDIV with +0x2c/+0x30/+0x40/+0x4c/+0x64/+0x68;
+  // ListBox subtracts +0x38/+0x3c/+0x44 into signed quotients as well.
   int field_2C_;
   int field_30_;
   uint32_t field_34_;
-  uint32_t field_38_;
-  uint32_t field_3C_;
+  int field_38_;
+  int field_3C_;
   int field_40_;
-  uint32_t field_44_;
+  int field_44_;
   uint32_t field_48_;
   int field_4C_;
   int field_50_;

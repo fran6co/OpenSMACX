@@ -508,7 +508,7 @@ int EditGroup::attach(GraphicWin *parent, int x, int y, int flags) {
     Buffer::set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
 
     int index = 0;
-    const int margin = static_cast<int>(Dialog::field_44_);
+    const int margin = Dialog::field_44_;
     const int cell_height = static_cast<int>(Dialog::field_68_) - margin;
     const int box_width = static_cast<int>(Dialog::field_64_) - margin * 2 - label_width_;
     const int base_top = margin >> 1;
@@ -571,13 +571,13 @@ void EditGroup::on_redraw() {
 
     const int base_left = static_cast<int>(Dialog::field_34_) +
                           static_cast<int>(Dialog::field_40_);
-    const int base_top = static_cast<int>(Dialog::field_44_) >> 1;
+    const int base_top = Dialog::field_44_ >> 1;
     RECT base;
     base.left = base_left;
     base.right = base.left + static_cast<int>(Dialog::field_64_);
     base.top = base_top;
     base.bottom = static_cast<int>(Dialog::field_68_) -
-                  static_cast<int>(Dialog::field_44_) + base_top;
+                  Dialog::field_44_ + base_top;
 
     item_list_.seek_pos(-1);
 
