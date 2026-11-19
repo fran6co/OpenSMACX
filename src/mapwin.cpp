@@ -239,7 +239,7 @@ The four tables hold only two distinct values between them, 57 at 00462684 and
 collapse to one rule: coast above the corner reads 67, coast below it reads 57.
 That is the same 60 +7 / -3 shading the corner arm applies arithmetically.
 */
-__forceinline static int alt_shore_detail(int corner, int west, int north, int east, int south) {
+static inline int alt_shore_detail(int corner, int west, int north, int east, int south) {
     int detail = 60;
     switch (corner) {
       case 0:
@@ -1514,7 +1514,7 @@ void __cdecl draw_tile(int x_coord, int y_coord, int draw_type) {
         // exempt from the activity gate.
         if (slot != 0) {
             const uint32_t active =
-                static_cast<const volatile MapWin *>(window)->view_active_;
+                window->view_active_;
             if (active == 0) {
                 continue;
             }
@@ -2872,7 +2872,7 @@ void __cdecl draw_map(int draw_type) {
         MapWin *const window = MapWinTable[slot];
         if (window != nullptr) {
             if (slot == 0 ||
-                static_cast<const volatile MapWin *>(window)->view_active_ != 0) {
+                window->view_active_ != 0) {
                 window->draw_map(draw_type);
             }
         }
@@ -7011,7 +7011,7 @@ void MapWin::clear(int index) {
 // four corners. get_brighting walks it, so the helper is spelled once here and
 // expanded at every site - the image computes the address inline at each of
 // them, and a plain .cpp function would cost a `call` the image does not make.
-static __forceinline TerrainCacheEntry *brighting_tile(
+static inline TerrainCacheEntry *brighting_tile(
     TerrainCacheEntry *owned, int row, int col_half) {
     return owned + ((MapLongitudeBounds >> 1) * row + col_half);
 }
