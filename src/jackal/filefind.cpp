@@ -91,7 +91,7 @@ Purpose: Initialize the Filefind global along with a CD check if there isn't a c
 // remains in the image, and SMAC's terran.exe has the same nine nops at the
 // same point of its separately compiled copy.
 // RECOVERY_IMAGE_PATCH: v1 0x00600545 0x0060054E nop
-// ORIGINAL: 0x00600400 ?filefind_init@@YAHPADH@Z 0x00600400-0x006005C5
+// ORIGINAL: 0x00600400 ?filefind_init@@YAHPADH@Z 0x00600400-0x006005C5 BYTE_EXACT
 // LEVER: `strcat`/plain `[0]=0` clears in place of the bounded
 //        `strcpy_s`/`strcat_s` forms, matching the sibling
 //        `filefind_get`'s own documented idiom - mechanical, does not
