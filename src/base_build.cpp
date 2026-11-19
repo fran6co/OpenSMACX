@@ -1868,7 +1868,7 @@ L_4fbd3d:
                       - l_bc - l_8c - l_b8 - l_54
                       + a_4bc[l_20 + l_2c * 3] + bit_count(has_treaty(l_8, target, 7)) + 13,
                   1, 16)
-            * l_34 * 3 / (l_58 - l_60 + 3);
+            * w * 3 / (l_58 - l_60 + 3);
         bb_probe(0);
         bb_probe(0);
         bb_probe(0);
