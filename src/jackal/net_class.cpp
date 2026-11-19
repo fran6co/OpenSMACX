@@ -3907,13 +3907,13 @@ int Net::drop_player(unsigned long key, int reason) {
                                     "NET_ADJUSTTOLERANCE", 0)) {
                 case 0:
                     poll_timeout_E0_ = 5000;
-                    return 0;
+                    break;
                 case 1:
                     poll_timeout_E0_ = 10000;
-                    return 0;
+                    break;
                 case 2:
                     poll_timeout_E0_ = 20000;
-                    return 0;
+                    break;
                 case 3:
                     poll_timeout_E0_ = 30000;
                     break;
@@ -3937,13 +3937,13 @@ int Net::drop_player(unsigned long key, int reason) {
                                 "NET_ADJUSTTOLERANCE", 0)) {
             case 0:
                 poll_timeout_E0_ = 5000;
-                return 0;
+                break;
             case 1:
                 poll_timeout_E0_ = 10000;
-                return 0;
+                break;
             case 2:
                 poll_timeout_E0_ = 20000;
-                return 0;
+                break;
             case 3:
                 poll_timeout_E0_ = 30000;
                 break;
