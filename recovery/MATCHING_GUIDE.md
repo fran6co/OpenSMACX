@@ -3398,6 +3398,23 @@ Layout
   into a join shared with other predecessors (go_to, vehdraw). It is
   normalized for two plain arms (enemy_diplomacy's `attack_type = 3` arm:
   identical code both ways; save_game above).
+- **Rule 0 refinements** (2026-11-19, par-1):
+  - No `continue` on an arm the image lays out as the fallthrough. A then-arm
+    ending in `continue` is held back and the else-arm laid first; the image's
+    fallthrough arm ending in `jmp` to the loop end was one `&&`/`||`
+    condition with the rest in the else (boom 0x00504AA0, 178 -> 127).
+  - Arms that jump to a test instead of threading past it mean the original
+    tested a different symbol there (a field reread, not the local the chain
+    just assigned), so VC6 had no known value to thread (social_ai
+    0x005B4790: `region_base_plan[...]` instead of the chain's `plan`).
+  - `board = a && b == K` compiles as branches and threads both outcomes into
+    the next test; the image's `sete` arm joining the shared test is
+    `if (a) board = b == K; else board = FALSE;` (a ternary or a preset FALSE
+    measure the same; stack_veh 0x005B8EE0, 67 -> 63).
+  - `!(x <= 0) ? A : B` is not normalised to `if (x <= 0) B else A` when the
+    arms meet at a join shared with other predecessors: the last-written arm
+    hosts. Write the arm order the image's `jg`/`jle` shows (battle_fight
+    0x00506AF0: kill arm first, spot_base last falling into the join).
 
 Types
 - Wrong declarations hide as casts: a member cast at each use, a byte buffer
