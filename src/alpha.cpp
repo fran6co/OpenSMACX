@@ -1917,7 +1917,7 @@ Font *__cdecl find_font(int size, int style) {
 // triplets. These are source-owned sprite pointers, not addresses in the old
 // executable. Index 14 is an untouched gap; index 16 is another process
 // default that neither setter changes.
-static __forceinline void set_scroll_icon_defaults(Sprite *arrows,
+static inline void set_scroll_icon_defaults(Sprite *arrows,
                                                     Sprite *filler,
                                                     int thickness) {
     ScrollDefaultSpriteUp[0] = &arrows[0];
@@ -3548,7 +3548,7 @@ int __cdecl custom_planet(int show_preview, int use_saved_choices) {
 // failure and success returns but expand them at the custom-map returns
 // (0x0058D072, 0x0058D248, 0x0058D3F7, 0x0058D5BB); sixteen two-test
 // expansions at entry reproduce that EH topology exactly (a single 32-test
-// chain did too); ten do with size_of_planet_number below. The original
+// chain did too); eight do with size_of_planet_number below. The original
 // spent the same budget on inline calls not yet
 // identified.
 static inline int size_of_planet_budget_probe(int x)
@@ -3575,7 +3575,6 @@ static inline void size_of_planet_number(int value, char *number) {
 // RECOVERY_BINDING: v1 {"evidence": ["task:newgame-menu-owner", "historical seed:src/unrecovered/0058ced0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete mapped native control flow", "source:existing SetupWin/Popup/Buffer/NetDaemon owner declarations; provisional bounded945820 and9B2074 objects, not raw image aliases"], "reason": "Source-owned new-game/menu family preserving complete original identity, auxiliary spans and historical seed findings; existing genuine object lifetimes and typed member owners. Unfinished bodies remain explicit, not implementation coverage."}
 // TRIED: real Popup/SetupWin RAII locals with Popup::start()'s six args re-derived from push order (p1 is the fixed 0x9b8aa8 char* buffer, not the GraphicWin* - this is backwards from what an earlier sibling function assumed), plus text_open/text_get/text_item/EditGroup::edit/ prefs_get/X_pop/Path::init argument order verified against raw disasm; compiles, MISMATCH #24 (past the prologue and into the item-list loop - likely the itemNum2/itemCount stack array layout or the loop bound).
 int __cdecl size_of_planet(int mode) {
-    size_of_planet_budget_probe(1000);  // WORKAROUND(inline): see above
     size_of_planet_budget_probe(1001);  // WORKAROUND(inline)
     size_of_planet_budget_probe(1002);  // WORKAROUND(inline)
     size_of_planet_budget_probe(1003);  // WORKAROUND(inline)
@@ -4022,8 +4021,6 @@ int __cdecl top_menu(int mode) {
     else
         DialogDefaults[36] &= ~4u;
 
-    top_menu_spend(5);  // WORKAROUND(inline): see top_menu_spend
-    top_menu_spend(5);  // WORKAROUND(inline): see top_menu_spend
     if (ExpansionEnabled != 0) {
         init_opening(WinScreenWidth == 0x320
             ? "xopeningb.pcx" : "xopeninga.pcx");
