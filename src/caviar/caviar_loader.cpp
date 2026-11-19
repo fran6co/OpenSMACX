@@ -999,14 +999,9 @@ int __cdecl vox_expand_palette(int fd, uint8_t *palette) {
     if (vox_read_exact(fd, palette + 2, 0x300) != 0) return -1;
     if (vox_read_exact(fd, shades, sizeof(shades)) != 0) return -1;
 
-    int column = 0;
-    uint8_t *column_out = palette + 0x302;
-    for (; column < 0x100; ++column) {
-        int shade = 0;
-        uint8_t *out = column_out++;
-        for (; shade < 0x30; shade += 2) {
-            *out = shades[(shade / 3) * 0x100 + column];
-            out += 0x100;
+    for (int column = 0; column < 0x100; ++column) {
+        for (int row = 0; row < 0x18; ++row) {
+            palette[0x302 + row * 0x100 + column] = shades[(row * 2 / 3) * 0x100 + column];
         }
     }
     return 0;
