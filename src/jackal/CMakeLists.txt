@@ -14,36 +14,27 @@
 # This build keeps them as their own targets (src/caviar, zlib) by decision;
 # grouping does not change per-function bytes.
 #
+# The member list is in image order (each unit's main .text run, tumap.py);
+# LINK takes archive members by need, so the order records the evidence and
+# does not reproduce the layout.
+#
 # Where a member's header-inline copies landed in game objects, the copies stay
 # measured in game units: a compile_context fact, or a small src/ residual for
 # bodies that are still out of line.
 add_library(jackal STATIC
-    jackal.cpp palette.cpp font.cpp graphics_language.cpp heap.cpp
-    time.cpp
-    checkbutton.cpp radiobutton.cpp checkbox.cpp filewin.cpp
-    autosound.cpp buffer.cpp buttongroup.cpp caviar.cpp cursor.cpp
-    ddinit.cpp directdraw.cpp editbox.cpp editgroup.cpp filebox.cpp
-    filefind.cpp filemap.cpp imagebutton.cpp listbox.cpp log.cpp
-    mci_video.cpp menu.cpp net_fifo.cpp net_session_picker.cpp
-    number_parsing.cpp parse.cpp polygon.cpp popup_api.cpp pulldown.cpp
-    pushbutton.cpp random.cpp spot.cpp sprite.cpp spritebox.cpp
-    string_table.cpp text.cpp texheap.cpp texture.cpp timer_messages.cpp
-    trig.cpp vector.cpp video.cpp video_queue.cpp win_coordinates.cpp
-    win_input.cpp
-    dialog.cpp
-    dialog_style.cpp
-    stringlist.cpp flic.cpp basebutton.cpp graphicwin.cpp
-    flatbutton.cpp
-    scroll.cpp
-    stringbox.cpp
-    dialogs.cpp
-    basepop.cpp
-    win.cpp
-    mem_get.cpp
-    env_open.cpp
-    hsv.cpp
-    net_class.cpp
-    net_lists.cpp)
+    mem_get.cpp heap.cpp net_lists.cpp graphicwin.cpp buffer.cpp sprite.cpp
+    win.cpp pulldown.cpp win_coordinates.cpp spot.cpp menu.cpp win_input.cpp
+    timer_messages.cpp text.cpp palette.cpp mci_video.cpp filefind.cpp
+    basepop.cpp dialog_style.cpp scroll.cpp basebutton.cpp flatbutton.cpp
+    stringlist.cpp dialog.cpp listbox.cpp radiobutton.cpp checkbox.cpp
+    spritebox.cpp editgroup.cpp dialogs.cpp filewin.cpp editbox.cpp time.cpp
+    string_table.cpp caviar.cpp font.cpp texture.cpp imagebutton.cpp
+    random.cpp parse.cpp log.cpp polygon.cpp graphics_language.cpp
+    popup_api.cpp filemap.cpp number_parsing.cpp hsv.cpp stringbox.cpp
+    flic.cpp buttongroup.cpp autosound.cpp pushbutton.cpp directdraw.cpp
+    jackal.cpp net_class.cpp checkbutton.cpp net_fifo.cpp vector.cpp
+    env_open.cpp filebox.cpp texheap.cpp ddinit.cpp video.cpp cursor.cpp
+    trig.cpp net_session_picker.cpp video_queue.cpp)
 target_include_directories(jackal PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 target_compile_definitions(jackal PRIVATE $<$<CONFIG:Debug>:BUILD_DEBUG>)
 target_compile_options(jackal PRIVATE /W4 "--repro-root=${PROJECT_SOURCE_DIR}")
