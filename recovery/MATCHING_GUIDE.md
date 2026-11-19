@@ -5179,6 +5179,23 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   scenario_setup's `movsx eax,byte [is_flat]; and eax,1; shl eax,2` is the
   same: every char spelling tried (casts, char local, char inline return or
   parameter, volatile) gives a narrow load without the movsx.
+  **bool census (par-6 2026-11-19): exhausted.** Every `bool` in src/ (59
+  groups: locals, invented inline helpers, header accessors, virtual and
+  free signatures with their `// symbol` lines) retyped to `BOOL` and fed
+  tree-wide: no non-exact function moves except basepop.h
+  `picture_enabled` (proposal_menu 86 -> 85, which does not call it), and every exact user
+  breaks (is_trackset_playing loses ten ambience functions, is_3d, is_eax,
+  is_group_disabled, sub_4c7fa0, Vector::operator==, Matrix3::equals,
+  vox_part_behind, BAmbience::general's `playing`): those are real bools.
+  The marker names (`QAEHXZ` vs `_N`) are IDA catalogue names of a stripped
+  image, not evidence. The reverse sweeps (48 `BOOL` locals to `bool`, 190
+  int locals read from narrow fields to the field's type) give row drops
+  that the image refutes: enemy_strategy's `ocean` is `setl bl; cmp
+  ebx,ecx` (int), action_terraform's and air_power's x/y are `movsx` at
+  the load (int). The one image-backed case was enemy_strategy's
+  `goal_triad` (`mov al,[triad]; cmp al,2; ... cmp al,1`, uint8_t).
+  `or al,K` / `and al,K` rows on dword fields are register choice (al
+  free), not a type.
 - **`rand() & 0x80000001; jns; dec; or -2; inc`** is `rand() % 2`.
 - **A magic divide then multiply-subtract** is `x - x/C*C`, not `%`.
 - **Ternary setcc forms.** `c ? K : 0` gives `set!c; dec; and K`;
