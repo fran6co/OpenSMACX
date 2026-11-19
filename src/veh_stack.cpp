@@ -517,6 +517,8 @@ inline void __cdecl spot_stack_tile_call(int veh_id, int faction_id) {
 // TRIED: mechanical register/stack-slot goto transliteration (234 labels, 5638-line body): compiles, MISMATCH sim up to 0.73 on /O2 frameless. Superseded by the 2026-11-12 block-order transcription.
 // TRIED: spot_tile spellings (if-block, mask temp, no tile local) and writing the coordinate wrap out instead of wrap_map_x: none matches the image's per-site inline pattern; the hand-written wrap doubled the diff.
 void __cdecl spot_all(int veh_id, int toggle) {
+    // [ebp-0x2c] (imgmerge.py, par-6): both tile passes keep stack_fix(veh_at()) in one home
+    int stack_id;
     // [ebp-0x30] (imgmerge.py, par-6): the image keeps the sensor match flag and both base ids in one home
     int v_30;
     int count = 0;
@@ -799,7 +801,7 @@ void __cdecl spot_all(int veh_id, int toggle) {
             continue;
         }
         // 0x5B7435
-        int stack_id = stack_fix(veh_at(x, y)); // [ebp-0x2c]
+        stack_id = stack_fix(veh_at(x, y)); // [ebp-0x2c]
         if (stack_id < 0) {
             continue;
         }
@@ -934,7 +936,7 @@ void __cdecl spot_all(int veh_id, int toggle) {
         if (occupant == faction_id) {                       // 5B7FB7
             continue;
         }
-        int spotted_veh_id = stack_fix(veh_at(x, y));       // [ebp-0x2c]
+        stack_id = stack_fix(veh_at(x, y));       // [ebp-0x2c]
         v_30 = base_at(x, y);                        // [ebp-0x30] (ebx)
         // 5B7FDB..5B802B (sensor false -> 5B8400, terrain miss -> 5B8403)
         if (sensor && (triad == TRIAD_AIR
@@ -953,14 +955,14 @@ void __cdecl spot_all(int veh_id, int toggle) {
             }
             // ? 5B8183/5B818E: separate `if`, not `else`: the base arm falls
             // into the veh test and veh < 0 jumps straight to 5B86A6.
-            if (spotted_veh_id >= 0 && v_30 < 0) {
-                if (!veh_can_leave_stack(spotted_veh_id)) { // 5B8196..5B8233 inlined
+            if (stack_id >= 0 && v_30 < 0) {
+                if (!veh_can_leave_stack(stack_id)) { // 5B8196..5B8233 inlined
                     if (faction_id == ConsoleGlobal.faction_id_
                         && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
                         && !(Vehs[veh_id].visibility & faction_mask)) {   // source unit, not spotted
                         radius_tier = max(radius_tier, 2);  // 5B825C
                     }
-                    spot_stack(spotted_veh_id, faction_id); // 5B826B..5B8394 inlined
+                    spot_stack(stack_id, faction_id); // 5B826B..5B8394 inlined
                     if (is_ocean(x, y) && occupant
                         && !(PlayersData[faction_id].diplo_treaties[occupant] & DTREATY_TREATY)) {
                         add_goal(faction_id, AI_GOAL_UNK_1, 2, x, y, -1);   // 5B83F5
@@ -969,14 +971,14 @@ void __cdecl spot_all(int veh_id, int toggle) {
             }
         }
         // 5B8403: a deep-radar stack sees the moving unit.
-        if (spotted_veh_id >= 0 && !leave
-            && has_abil(Vehs[spotted_veh_id].proto_id, ABL_DEEP_RADAR)
+        if (stack_id >= 0 && !leave
+            && has_abil(Vehs[stack_id].proto_id, ABL_DEEP_RADAR)
             // ? 5B843D: one triad load kept in al; two get_triad() calls CSE'd
-            && (get_triad(spotted_veh_id) == TRIAD_AIR
-                || low_terrain == (get_triad(spotted_veh_id) == TRIAD_SEA))) {
+            && (get_triad(stack_id) == TRIAD_AIR
+                || low_terrain == (get_triad(stack_id) == TRIAD_SEA))) {
             if (!(PlayersData[faction_id].diplo_treaties[occupant] & DTREATY_PACT)
                 && toggle) {
-                wake_stack(spotted_veh_id);                 // 5B84A0 (call)
+                wake_stack(stack_id);                 // 5B84A0 (call)
             }
             if (base_who(x0, y0) < 0) {                     // 5B84A8 ([ebp-0x54] = x0 >> 1)
                 spot_stack(veh_id, occupant);               // 5B84DE..5B863D inlined
