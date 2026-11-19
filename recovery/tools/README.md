@@ -200,3 +200,15 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   site (VC6 reports one per variable; the tool inserts `V = 0;` at each reported statement in a throw-away copy and recompiles
   until no new site appears), with the function's fe rows or EXACT. A read whose only defs sit in an exclusive branch while a
   sibling local set on that path shares the image slot is the base_build `l_34`/`w` shape. Sites in exact functions are original.
+- `analysis/unitlits.py <unit> [--src ALT.cpp] [-q] | --who LABEL|0xVA [-n N]` a unit's literal run against the image's
+  (2026-11-19, par-1): the image strings referenced from the unit's functions in address order, with the unreferenced
+  ones between them (`U`: rnd labels and other ignored inline arguments), against the object's `$SG` order; prints the
+  differing stretches and `LITS ... differing D`. Unlike litgap.py it anchors by owning function, so spread units
+  (base.cpp) read cleanly once they are in address order. An insert/delete pair of the same strings inside one
+  function is a source-order fact (base_growth, base_production, encounter: arm order / negated test, code-neutral);
+  an unreferenced image string names a missing ignored argument. `--who` prints the image's run around one label with
+  the functions referencing each neighbour.
+- `analysis/reorder.py <unit> [--hoist] [--write] [--force]` puts a unit's annotation blocks in image address order and
+  proves the move is code-neutral (reader records equal, object code sections and relocation targets equal); see its
+  docstring for the block rules, the repairs it applies and what it does not check (`_$E<n>` symbol facts,
+  RECOVERY_LITERAL numbers). 73 of the src/a-l, src/jackal and src/caviar units were ordered with it.
