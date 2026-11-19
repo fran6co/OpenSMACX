@@ -1714,7 +1714,7 @@ void BaseWin::draw_production(int update_mode) {
         vehicle_id = -1;
     }
     const int center_x = (content.left + content.right) / 2;
-    const int text_y = content.top + 0x28;
+    int text_y = content.top + 0x28;
     int current_minerals;
     // The cost factor seeds the column search and is then the column count
     // (image: one variable, edi from 0x40EB31, homed at [ebp-0x28] with the
@@ -1811,16 +1811,17 @@ void BaseWin::draw_production(int update_mode) {
     }
 
     // A zero total skips both the cell grid and the status line.
-    const int gross_cost = item_cost * columns;
-    if (gross_cost != 0) {
+    // The gross cost reuses text_y's variable (image [ebp-0x20]: packrev).
+    text_y = item_cost * columns;
+    if (text_y != 0) {
         const int mineral_surplus = BaseCurrent->mineral_surplus;
         int max_cell_index;
         int progress_boundary;
-        if (gross_cost < current_minerals) {
+        if (text_y < current_minerals) {
             max_cell_index = current_minerals;
-            progress_boundary = gross_cost;
+            progress_boundary = text_y;
         } else {
-            max_cell_index = gross_cost;
+            max_cell_index = text_y;
             progress_boundary = current_minerals;
         }
         // The native dimension search and row-major cell walk keep their
@@ -1833,7 +1834,7 @@ void BaseWin::draw_production(int update_mode) {
             }
         } else {
             columns = 0;
-            while (columns * columns < gross_cost) ++columns;
+            while (columns * columns < text_y) ++columns;
             columns += 2;
         }
         int rows = max_cell_index / columns;
@@ -1871,8 +1872,8 @@ void BaseWin::draw_production(int update_mode) {
                     }
                 } else if (cell_height < 8) {
                     MainInterfaceGlobal.fill(&cell,
-                        current_minerals < gross_cost ? 0xDF : 0x6C);
-                } else if (current_minerals < gross_cost) {
+                        current_minerals < text_y ? 0xDF : 0x6C);
+                } else if (current_minerals < text_y) {
                     MainInterfaceGlobal.tile(&sprites2_[0], cell.left,
                         cell.top, cell.left, cell.top,
                         cell.right - cell.left, cell.bottom - cell.top);
@@ -1881,7 +1882,7 @@ void BaseWin::draw_production(int update_mode) {
                         cell.top, cell.left, cell.top,
                         cell.right - cell.left, cell.bottom - cell.top);
                 }
-                if (current_minerals < gross_cost) {
+                if (current_minerals < text_y) {
                     if (mineral_surplus < 0) {
                         if (cell_index >= progress_boundary + mineral_surplus &&
                             cell_index < progress_boundary) {
@@ -1921,8 +1922,8 @@ void BaseWin::draw_production(int update_mode) {
                 // ": " then the join space - two spaces (0x0040EF26).
                 say_colon();
                 space();
-                if (gross_cost > current_minerals) {
-                    const int remaining = gross_cost - current_minerals;
+                if (text_y > current_minerals) {
+                    const int remaining = text_y - current_minerals;
                     _itoa(range((BaseCurrent->mineral_surplus + remaining - 1)
                                     / range(BaseCurrent->mineral_surplus, 1, 0x1869F),
                                 0, 0xF423F),
