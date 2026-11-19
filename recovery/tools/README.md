@@ -44,6 +44,15 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   function end) out at subsets of its goto sites and fes every variant (`OUT=` keeps the best). Tree-wide over the
   85 goto functions on 2026-11-19 it found stack_veh 0x005B8EE0 (67 -> 52); farm_click 0x0040A1D0 (269 -> 54) was
   the same lever by hand. Long or mid-loop targets are skipped.
+- `analysis/armwo.py <unit> <addr> [--write] [--show KEY] [--only d,t,c]` arm-structure screen, the successor of gotowo.py:
+  parses the body into statements and fes four spellings: (d) `if (c) goto L; S; L:` as a negated block or an empty first
+  arm per site (adjacent sites joined with `&&`), (t) a shared tail (after a label, or a list suffix ending in a return or the
+  function end) written out at subsets of its predecessors (goto sites and the fallthrough arms of the preceding chain,
+  implicit else included), (c) statements repeated at the end of every arm collapsed after the join, (s) the statements after
+  a chain sunk into every arm. Top variants by rows are fingerprinted (call-count diff, frame diff, candset one-side roles +
+  disputed pairs) and ranked calls, frame, candset, rows; `--write` keeps the best when it beats the base. Tree pass of
+  2026-11-19 (par-2, about 200 functions >= 60 rows): 29 functions moved, 70,754 -> 69,009 rows, none lost; the sink (s)
+  was the most frequent winner (ReportIf::draw_sat 197 -> 57, base_production 515 -> 335, ListBox::on_mouse_move exact).
 - `analysis/regalloc/` the probe sources and runner behind MATCHING_GUIDE 2.7 (see its README).
 - `crtcalls.py OUT.json` compares, per function, the calls to memcpy/memmove/memset/strlen/strcpy/
   strcat/strcmp/memcmp in our objects with the image's (20 s). The game and Jackal have no
