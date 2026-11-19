@@ -2778,11 +2778,12 @@ int __cdecl save_game(int mode) {
     StringTemp[0] = 0;
     if (mode != 0) {
         strcat(StringTemp, "scenarios\\");
+        parse_set(Players[ConsoleGlobal.faction_id_].is_leader_female, 0);
     } else {
         strcat(StringTemp, "saves\\");
+        parse_set(Players[ConsoleGlobal.faction_id_].is_leader_female, 0);
     }
 
-    parse_set(Players[ConsoleGlobal.faction_id_].is_leader_female, 0);
     strcat(StringTemp, Players[ConsoleGlobal.faction_id_].name_leader);
     strcat(StringTemp, BufferJoinSpace);
     strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x2D0 / 4]));
