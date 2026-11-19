@@ -73,7 +73,7 @@ static inline int mc_half(int value) {
 /*
 Purpose: Calculate the cost for the faction to be able to mind control the specified base. The 3rd
          parameter determines if this cost is for cornering the market (true) or via probe (false).
-// ORIGINAL: 0x0059EA80 ?mind_control@@YAHHHH@Z 0x0059EA80-0x0059EE42
+// ORIGINAL: 0x0059EA80 ?mind_control@@YAHHHH@Z 0x0059EA80-0x0059EE42 BYTE_EXACT
 // Historical LEVER: a local forwarder once forced an out-of-line
 //   `vector_dist` call here while the helper remained inline in map.h. The
 //   canonical definition now lives in map.cpp and this caller uses it directly.

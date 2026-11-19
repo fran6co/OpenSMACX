@@ -261,7 +261,7 @@ void EditBox::set_text(char *text) {
 // it at each branch. Rendering is intentionally inherited virtual redraw(),
 // whose eventual slot-12 callback reaches this handler.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00615270 ?on_redraw@EditBox@@QAEXXZ 0x00615270-0x00615627
+// ORIGINAL: 0x00615270 ?on_redraw@EditBox@@QAEXXZ 0x00615270-0x00615627 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00615270.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
 // symbol    ?on_redraw@EditBox@@UAEXXZ
 

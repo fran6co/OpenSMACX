@@ -5078,7 +5078,7 @@ void MapWin::gen_overlays(int x, int y) {
 
 // Original0x00467DE0 draws base labels and map landmarks in the visible map
 // rectangle. Both data collections use their source-owned records and counts.
-// ORIGINAL: 0x00467DE0 ?draw_base_names@MapWin@@QAEXXZ 0x00467DE0-0x004688E0 FILE
+// ORIGINAL: 0x00467DE0 ?draw_base_names@MapWin@@QAEXXZ 0x00467DE0-0x004688E0 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00467de0.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
 // TRIED: Ghidra transcription with `this` restored on every Buffer/ Strings call Ghidra dropped (set_clip/set_font/set_text_color/ write_cent_l via a virtual-base offset `*(int*)(*(int*)this+4)`, Strings::get via fixed g_009b90d8); diverges at insn #6 (mov vs push), i.e. within the vtable/vbase-offset prologue read.
 void MapWin::draw_base_names() {
