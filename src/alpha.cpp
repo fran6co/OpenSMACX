@@ -2417,10 +2417,8 @@ Purpose: Get the label string and concatenate it to the stringTemp buffer.
 Return Value: n/a
 Status: Complete
 */
-void __cdecl say_label(int label_offset) {
-    LPSTR label_value = Labels.strings_ptr[label_offset];
-    strcat(StringTemp, StringTable.get(label_value));
-}
+// body src/alpha.h
+// BODY IN alpha.h, as `MEASURED inline`.
 
 /*
 Purpose: Get the label string from a label offset. Created to reduce code complexity.

@@ -781,7 +781,6 @@ inline LPSTR table_text(LPSTR offset) {
     return StringTable.get(offset);
 }
 
-void __cdecl say_label(int label_offset);
 LPSTR __cdecl label_get(int label_offset);
 
 int __cdecl default_warn();
@@ -826,6 +825,14 @@ MEASURED inline void __cdecl clear_faction(Player *player) {
 __forceinline LPSTR __cdecl label_get(int label_offset) {
     LPSTR label_value = Labels.strings_ptr[label_offset];
     return StringTable.get(label_value);
+}
+
+// say_label is a header inline like says and space: the image calls it out
+// of line only from probe (one site), whose object contributes the copy just
+// after probe (0x005A5880, beside space's), and expands it elsewhere.
+MEASURED inline void __cdecl say_label(int label_offset) {   // 005A5880
+    LPSTR label_value = Labels.strings_ptr[label_offset];
+    strcat(StringTemp, StringTable.get(label_value));
 }
 
 
