@@ -7,6 +7,7 @@
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  */
+
 // ORIGINAL: 0x004E29E0 ?do_join_or_create@AlphaNet@@QAEHXZ 0x004E29E0-0x004E2A2F FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/004e29e0.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed.", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/004e29e0.cpp"], "reason": "Existing real xpops4args wrapper drives whole create/join operation. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // kind      game
@@ -80,6 +81,58 @@ char AlphaNetSessionsScript[7] = "jackal";
 // Superseded seed deleted; seed paths below are historical Git provenance.
 
 
+
+
+
+
+
+
+
+/*
+Purpose: Clear every player's process slot and hand off to the network close.
+// size      40 bytes
+// prototype void (__thiscall ?close@AlphaNet@@QAEXXZ)(AlphaNet* this)
+// callers   14   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Status: Complete with a temporary dependency on the network close
+*/
+
+
+/*
+Purpose: Build an AlphaNet: the Net base (implicit), the eight process
+         slots' {FF,0,0,FF,2} patterns, the ledger, and the trailing Heap -
+         all through its typed members.
+// ORIGINAL: 0x004E2490 ??0AlphaNet@@QAE@XZ 0x004E2490-0x004E25A5;0x0065C610-0x0065C630 BYTE_EXACT
+// symbol    ??0AlphaNet@@QAE@XZ
+// size      277 bytes
+// kind      game
+// Player record construction owns the five initial identity/status bytes.
+// The ledger and Heap now construct/destruct as ordinary members. The
+// image's final [this]=0x66EACC store is now emitted from AlphaNet's real
+// overrides. The constructor's remaining source and lifetime remain unfinished.
+Return Value: n/a
+*/
+AlphaNet::AlphaNet() {
+    for (int j = 0; j < 8; ++j) {
+        process_slots_[j].pid_ = 0;
+    }
+    player_count_ = 0;
+}
+
+// ORIGINAL: 0x004E25B0 ?close@AlphaNet@@QAEXXZ 0x004E25B0-0x004E25D8 BYTE_EXACT
+// kind      game
+void AlphaNet::close() {
+    // Eight process-ID slots at 0x78C, one per player, stride 0x19C.
+    for (size_t slot = 0; slot < 8; ++slot) {
+        process_slots_[slot].pid_ = 0;
+    }
+    player_count_ = 0;
+    // The legacy body tail-jumps here with this unchanged, so the network
+    // close runs against the same object.
+    Net::close();
+}
 
 /*
 Purpose: Convert a multiplayer process ID to its one-based player index.
@@ -172,75 +225,6 @@ int AlphaNet::who_2_idx(int identity) {
     return 0;
 }
 
-
-
-
-
-
-/*
-Purpose: Clear every player's process slot and hand off to the network close.
-// size      40 bytes
-// prototype void (__thiscall ?close@AlphaNet@@QAEXXZ)(AlphaNet* this)
-// callers   14   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Status: Complete with a temporary dependency on the network close
-*/
-
-
-/*
-Purpose: Build an AlphaNet: the Net base (implicit), the eight process
-         slots' {FF,0,0,FF,2} patterns, the ledger, and the trailing Heap -
-         all through its typed members.
-// ORIGINAL: 0x004E2490 ??0AlphaNet@@QAE@XZ 0x004E2490-0x004E25A5;0x0065C610-0x0065C630 BYTE_EXACT
-// symbol    ??0AlphaNet@@QAE@XZ
-// size      277 bytes
-// kind      game
-// Player record construction owns the five initial identity/status bytes.
-// The ledger and Heap now construct/destruct as ordinary members. The
-// image's final [this]=0x66EACC store is now emitted from AlphaNet's real
-// overrides. The constructor's remaining source and lifetime remain unfinished.
-Return Value: n/a
-*/
-AlphaNet::AlphaNet() {
-    for (int j = 0; j < 8; ++j) {
-        process_slots_[j].pid_ = 0;
-    }
-    player_count_ = 0;
-}
-
-// Intentional no-op overrides, independently present in AlphaNet's original
-// table. The preserved original identities belong to these methods, not
-// free fastcall functions with invented receiver arguments.
-// ORIGINAL: 0x004E32F0 nullsub_20 0x004E32F0-0x004E32F3 BYTE_EXACT
-// symbol    ?on_net_event_0@AlphaNet@@UAEXHH@Z
-void AlphaNet::on_net_event_0(int, int) { }
-
-// ORIGINAL: 0x004E32C0 nullsub_164 0x004E32C0-0x004E32C3 BYTE_EXACT
-// symbol    ?on_player_name_changed@AlphaNet@@UAEXPADK@Z
-void AlphaNet::on_player_name_changed(char *, unsigned long) { }
-
-// ORIGINAL: 0x004E32D0 nullsub_165 0x004E32D0-0x004E32D1 BYTE_EXACT
-// symbol    ?on_session_lost@AlphaNet@@UAEXXZ
-void AlphaNet::on_session_lost() { }
-
-// ORIGINAL: 0x004E32E0 nullsub_166 0x004E32E0-0x004E32E1 BYTE_EXACT
-// symbol    ?on_host_changed@AlphaNet@@UAEXXZ
-void AlphaNet::on_host_changed() { }
-
-// ORIGINAL: 0x004E25B0 ?close@AlphaNet@@QAEXXZ 0x004E25B0-0x004E25D8 BYTE_EXACT
-// kind      game
-void AlphaNet::close() {
-    // Eight process-ID slots at 0x78C, one per player, stride 0x19C.
-    for (size_t slot = 0; slot < 8; ++slot) {
-        process_slots_[slot].pid_ = 0;
-    }
-    player_count_ = 0;
-    // The legacy body tail-jumps here with this unchanged, so the network
-    // close runs against the same object.
-    Net::close();
-}
 // ALPHANET_CLOSE_END
 
 // WORKAROUND(inline): dead budget probe (folds away) standing in for the rest
@@ -301,6 +285,25 @@ int AlphaNet::pick_service(int *allow_pbem) {
     pick_service_probe(0);
     return result;
 }
+
+// ORIGINAL: 0x004E32C0 nullsub_164 0x004E32C0-0x004E32C3 BYTE_EXACT
+// symbol    ?on_player_name_changed@AlphaNet@@UAEXPADK@Z
+void AlphaNet::on_player_name_changed(char *, unsigned long) { }
+
+// ORIGINAL: 0x004E32D0 nullsub_165 0x004E32D0-0x004E32D1 BYTE_EXACT
+// symbol    ?on_session_lost@AlphaNet@@UAEXXZ
+void AlphaNet::on_session_lost() { }
+
+// ORIGINAL: 0x004E32E0 nullsub_166 0x004E32E0-0x004E32E1 BYTE_EXACT
+// symbol    ?on_host_changed@AlphaNet@@UAEXXZ
+void AlphaNet::on_host_changed() { }
+
+// Intentional no-op overrides, independently present in AlphaNet's original
+// table. The preserved original identities belong to these methods, not
+// free fastcall functions with invented receiver arguments.
+// ORIGINAL: 0x004E32F0 nullsub_20 0x004E32F0-0x004E32F3 BYTE_EXACT
+// symbol    ?on_net_event_0@AlphaNet@@UAEXHH@Z
+void AlphaNet::on_net_event_0(int, int) { }
 
 int AlphaNet::do_join_or_create() {
     // The pinned do_join_or_create and setup calls both reference bytes
