@@ -125,7 +125,7 @@ class ReportIf : public SubInterface {
   // 0x00885F38 == 8, and the retained report unit re-reads the same dword as
   // `self + 8`), so it is spelled public for those cross-class sites like
   // the rest of the layout block.
-  uint32_t field_8_;  // 0x8
+  int field_8_;  // 0x8
 
  private:
   // ??0ReportIf@@QAE@XZ installs the SubInterface vftable 0x0066A6E4 into
