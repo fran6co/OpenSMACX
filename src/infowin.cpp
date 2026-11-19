@@ -306,7 +306,7 @@ void InfoWin::setup_text() {
             strcat_colon(text);
             strcat(text, "{");
             say_special(text, table_text(
-                Might[7 - range(PlayersData[faction].ranking, 1, 7)].adj), faction);
+                Might[7 - range(PlayersData[faction].ranking, 1, 7)].adj_start), faction);
             strcat(text, "}");
             strcpy(row_text_[pane][k++], text);
             text[0] = 0;
