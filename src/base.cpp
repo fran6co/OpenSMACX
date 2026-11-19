@@ -4533,24 +4533,6 @@ int __cdecl crappy(int x, int y) {
     return poor_quality;
 }
 
-// Inlined twice into base_terraform (0x004EEA85 and 0x004EEBC4): how poorly
-// suited a square is to farming (no rainfall, rocky, or flat and arid).
-static inline int terraform_arid_count(int x, int y) {
-    Map *sq = map_loc(x, y);
-    int count = 0;
-    uint8_t rain = sq->climate & 0x18;
-    if (!rain) {
-        count = 1;
-    }
-    int rocky = sq->val3 & 0xC0;
-    if (rocky == 0x80) {
-        count++;
-    }
-    if (!rocky && rain < 0x10) {
-        count++;
-    }
-    return count;
-}
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x004ECBF0 0x004EEF64 0x004EEF78 0x004EE82B
 // ORIGINAL: 0x004ECBF0 ?base_terraform@@YAXH@Z 0x004ECBF0-0x004EEF61
@@ -5326,7 +5308,7 @@ void __cdecl base_terraform(int force_improve) {
     } else {
         no_raise = FALSE;
         if (!bore_seen && bore_score > 0 && !BaseCurrent->eco_damage
-            && terraform_arid_count(bore_x, bore_y) >= 1
+            && crappy(bore_x, bore_y) >= 1
             && (pop >= 8 || energy_need > 1
                 || has_tech(Ability[abil_index(1)].preq_tech, faction)
                 || GameDataStateStorage.fields_.turn_current_num_ > 200)
@@ -5342,7 +5324,7 @@ void __cdecl base_terraform(int force_improve) {
             && (!wet
                 || (wet < 2 && !specials
                     && (food_need
-                        || (terraform_arid_count(cond_x, cond_y) >= 1
+                        || (crappy(cond_x, cond_y) >= 1
                             && (has_tech(Ability[abil_index(1)].preq_tech, faction)
                                 || GameDataStateStorage.fields_.turn_current_num_ > 200)))))
             && terrain_avail(TERRA_CONDENSER, FALSE, faction)
