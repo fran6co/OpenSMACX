@@ -300,8 +300,9 @@ Return Value: Integer value of the binary item
 Status: Complete
 */
 int Text::item_binary() {
-    int(__cdecl *const btoi_fn)(LPCSTR) = btoi;
-    return btoi_fn(text_item_source(this));
+    // btoi is an out-of-line function in general.h (no longer a header
+    // inline), so the former local function-pointer stand-in is gone.
+    return btoi(text_item_source(this));
 }
 
 /*
@@ -320,8 +321,9 @@ Return Value: Integer value of the hex item
 Status: Complete
 */
 int Text::item_hex() {
-    int(__cdecl *const htoi_fn)(LPCSTR) = htoi;
-    return htoi_fn(text_item_source(this));
+    // htoi is an out-of-line function in general.h (no longer a header
+    // inline), so the former local function-pointer stand-in is gone.
+    return htoi(text_item_source(this));
 }
 
 Text::Text(int size) {
@@ -491,8 +493,9 @@ int __cdecl text_item_number() { return text_item_number_source(&Txt); }
 // `call 0x6288d0` the image has, while `text_item_source` still inlines -
 // 30/30.
 int __cdecl text_item_binary() {
-    int(__cdecl *const btoi_fn)(LPCSTR) = btoi;
-    return btoi_fn(text_item_source(&Txt));
+    // btoi is an out-of-line function in general.h (no longer a header
+    // inline), so the former local function-pointer stand-in is gone.
+    return btoi(text_item_source(&Txt));
 }
 
 // ORIGINAL: 0x005FD800 ?text_item_hex@@YAHXZ 0x005FD800-0x005FD85D BYTE_EXACT
@@ -505,8 +508,9 @@ int __cdecl text_item_binary() {
 // calls     0x006007B0 0x006288F0
 // notes     Staged hybrid export redirect calls the source-owned wrapper
 int __cdecl text_item_hex() {
-    int(__cdecl *const htoi_fn)(LPCSTR) = htoi;
-    return htoi_fn(text_item_source(&Txt));
+    // htoi is an out-of-line function in general.h (no longer a header
+    // inline), so the former local function-pointer stand-in is gone.
+    return htoi(text_item_source(&Txt));
 }
 
 
