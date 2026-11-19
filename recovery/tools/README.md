@@ -86,3 +86,6 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
 - `analysis/runs.py DIFF.txt [min]` unpaired row runs (image-only = code we lack, ours-only = code we add) of a
   saved `fe.py --all` diff; `analysis/slotmap.py DIFF.txt` pairs our `[ebp+-N]` slots with the image's and lists
   our slots that serve several image slots (packed or shared locals).
+- `analysis/unitexact.py <unit.cpp> [ALT.cpp ...]` fe rows of every marker of a unit for the unit and each
+  whole-file variant side by side; prints the exact count per column and only the functions that moved (what a
+  variant breaks elsewhere in its unit).

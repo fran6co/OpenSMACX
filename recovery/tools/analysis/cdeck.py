@@ -49,7 +49,7 @@ def run(unit,addr,deck,focus=(),base=int(os.environ.get('FE_PFX_BASE','2')),jobs
             r=fe.evaluate(c,text,addr); sym,lo,hi=fe.ident(text,addr)
             A=collections.Counter(n for a,n in calls_img(lo,hi)); B=collections.Counter(n for a,n in calls_ours(c,r['sym']))
             A=collections.Counter({CRT.get(k_,k_):v for k_,v in A.items()}); d={k_:(A[k_],B[k_]) for k_ in set(A)|set(B) if A[k_]!=B[k_]}
-            pos=[ '%x'%a for a,n in calls_ours(c,r['sym']) if any(f in n for f in focus)]
+            pos=[ '%x:%s'%(a,n.lstrip('?').split('@')[0]) for a,n in calls_ours(c,r['sym']) if any(f in n for f in focus)]
             res.append((key,r,d,pos+['F'+frame(c.sections[c.function(r['sym']).section-1].data)]))
         return res
     fe.compile_cmd(unit); out=[]

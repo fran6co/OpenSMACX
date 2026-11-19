@@ -2519,6 +2519,30 @@ static inline int stack_combat_units(int veh_id) {
     return n;
 }
 
+// WORKAROUND(inline): the population-loss test of battle_fight's base
+// consequences (0x50ACB1..0x50AD8C) as an inline predicate. battle_fight's
+// /Ob2 pass-1 budget is never the limit (dead spend at its top refuses only
+// nested sites), yet the image CALLS is_ocean, has_fac x2, has_project and
+// veh_who here while expanding them elsewhere: the original's sites were
+// pass-2 sites, inside something battle_fight expanded. A predicate is the
+// smallest such owner; its real name and extent are unknown. With it,
+// has_project and veh_who are called as in the image; is_ocean and has_fac
+// still expand until about 28 if-units more pass-1 spend (not found).
+inline BOOL battle_pop_loss(int base_id, int src_x, int src_y, int def_faction,
+                            int stack_id, int att_faction, int target_x, int target_y) {
+    return !is_ocean(src_x, src_y)
+        && (!is_objective(base_id) || Bases[base_id].population_size > 1)
+        && !has_fac(FAC_PERIMETER_DEFENSE, base_id, 0)
+        && !has_fac(FAC_TACHYON_FIELD, base_id, 0)
+        && !has_project(SP_CITIZENS_DEFENSE_FORCE, def_faction)
+        // unguarded: stack_id may be -1 here
+        && Weapon[VehPrototypes[Vehs[stack_id].proto_id].weapon_id].offense_rating != 0
+        && att_faction != 0
+        && veh_who(target_x, target_y) < 0
+        && (PlayersData[def_faction].diff_level != 0
+            || !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << def_faction)));
+}
+
 // ORIGINAL: 0x00506AF0 ?battle_fight@@YAHHHHHHHPAH@Z 0x00506AF0-0x0050B893 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x00506AF0-0x0050B893", "git:381415a98537c8acbe53e72fba10d84633651b2e:src/unrecovered/00506af0.cpp original identity/span and complete seed history", "source:src/veh.cpp existing five-argument wrapper, seven-argument callers and typed combat ownership", "native:507D83,507EC7,50888F,508C32 write the real ConsoleStatusWin member at +0x15D4", "source:src/statuswin.h existing field_15D4_ and narrow source-owned setter", "source:src/game.h IsMultiplayerPBEM existing 0x0093A95C owner", "native:50AAF1-50AB18 keeps the last valid stack predecessor before the negative sentinel"], "reason": "Recover complete combat resolution in the existing vehicle owner using real vehicle, faction, base, map, network and UI objects. Preserve original branch/callback order, unsafe paths, full span and historical seed lessons. The native -0x138 string scratch capacity and malformed-name frame corruption effects remain unresolved restoration obligations; the provisional 0xA0 local is not an exact source-array claim."}
 // symbol    ?battle_fight@@YAHHHHHHHPAH@Z
@@ -3759,17 +3783,8 @@ L_509980:
         // 0x50AC8B: base consequences (EDI = stack_id on both entries)
         if (base_id >= 0) {
             Bases[base_id].state |= BSTATE_COMBAT_LOSS_LAST_TURN;
-            if (!is_ocean(src_x, src_y)
-                && (!is_objective(base_id) || Bases[base_id].population_size > 1)
-                && !has_fac(FAC_PERIMETER_DEFENSE, base_id, 0)       // called (0x421670)
-                && !has_fac(FAC_TACHYON_FIELD, base_id, 0)
-                && !has_project(SP_CITIZENS_DEFENSE_FORCE, def_faction)   // called
-                // unguarded: stack_id may be -1 here
-                && Weapon[VehPrototypes[Vehs[stack_id].proto_id].weapon_id].offense_rating != 0
-                && att_faction != 0
-                && veh_who(target_x, target_y) < 0                   // called (0x500250)
-                && (PlayersData[def_faction].diff_level != 0
-                    || !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << def_faction)))) {
+            if (battle_pop_loss(base_id, src_x, src_y, def_faction, stack_id, att_faction,
+                                target_x, target_y)) {
                 // 0x50AD8E
                 if (--Bases[base_id].population_size <= 0) {
                     nerve_gas = 0;
