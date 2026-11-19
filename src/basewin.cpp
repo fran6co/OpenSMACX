@@ -519,7 +519,7 @@ void BaseWin::queue_click(int row, int x, int y, int right) {
                 NetDaemonNet.unlock_base(BaseIDCurrentSelected);
             }
         } else if (!prodPicker_.is_visible()) {
-            const bool empty = position > BaseCurrent->queue_size;
+            const BOOL empty = position > BaseCurrent->queue_size;
             if (!empty) {
                 const int entry = BaseCurrent->queue_production_id[position];
                 if (entry >= 0) parse_says(0, VehPrototypes[entry].veh_name, -1, -1);
