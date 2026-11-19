@@ -4636,12 +4636,9 @@ void Console::give_hints() {
                     continue;
                 }
 
-                // Signed coordinates and one MapWinTable[0] read (0x5129FD);
-                // the altitude test is guarded by its own on_map.
-                const int y = Bases[base_id].y;
-                int x = Bases[base_id].x;
-                MapWin *map_window = MapWinTable[0];
-                if (!map_window->tile_in_view(x, y, 2)) {
+                // 0x5129FD reads both coordinates from the base record again
+                // and MapWinTable[0] once; no x/y/map_window locals.
+                if (!MapWinTable[0]->tile_in_view(Bases[base_id].x, Bases[base_id].y, 2)) {
                     continue;
                 }
                 if (tut_check2(0x100) != 0 ||
