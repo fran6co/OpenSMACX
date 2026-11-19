@@ -134,16 +134,6 @@ PrefWin::PrefWin() : GraphicWin() {}
 // FlatButton* local assigned at those three sites reproduces it. The check
 // boxes take their sprites through CheckBox::set_sprites.
 void PrefWin::init() {
-  // Original preference reads use four distinct static key starts.
-  // Keep function-local storage so init and destroy do not pool identical keys.
-  // RECOVERY_OBJECT: v1 0x00686D00 _?MainVolumeInitKey@?1??init@PrefWin@@QAEXXZ@4QBDB
-  static const char MainVolumeInitKey[] = "Main Volume";
-  // RECOVERY_OBJECT: v1 0x00686D0C _?VoiceVolumeInitKey@?1??init@PrefWin@@QAEXXZ@4QBDB
-  static const char VoiceVolumeInitKey[] = "Voice Volume";
-  // RECOVERY_OBJECT: v1 0x00686D1C _?SFXVolumeInitKey@?1??init@PrefWin@@QAEXXZ@4QBDB
-  static const char SFXVolumeInitKey[] = "SFX Volume";
-  // RECOVERY_OBJECT: v1 0x00686D28 _?MusicVolumeInitKey@?1??init@PrefWin@@QAEXXZ@4QBDB
-  static const char MusicVolumeInitKey[] = "Music Volume";
   int frame_adjustment = 0;                                   // 48D84D [ebp-4]=ebx
   field_A14_ = 0;
   field_A18_ = 0;
@@ -655,14 +645,18 @@ void PrefWin::init() {
   volumeMusicScroll_.set_range(0, 0x7F);
 
   // 0x48F3DD: set_pos and its on_scrolling (virtual, vtable +0xC4) interleaved.
-  volumeMainScroll_.set_pos(prefs_get(MainVolumeInitKey, 0x7F, 0));    // 0x686D00 "Main Volume"
+// RECOVERY_LITERAL: v1 0x00686D00 0x00686D0C $SG55872 0x0048D840
+  volumeMainScroll_.set_pos(prefs_get("Main Volume", 0x7F, 0));    // 0x686D00 "Main Volume"
   on_scrolling(0x50, volumeMainScroll_.position());                     // [esi+0xB1B8]
-  volumeVoiceScroll_.set_pos(prefs_get(VoiceVolumeInitKey, 0x55, 0));  // 0x686D0C "Voice Volume"
+// RECOVERY_LITERAL: v1 0x00686D0C 0x00686D19 $SG55873 0x0048D840
+  volumeVoiceScroll_.set_pos(prefs_get("Voice Volume", 0x55, 0));  // 0x686D0C "Voice Volume"
   on_scrolling(0x51, volumeVoiceScroll_.position());
-  volumeSFXScroll_.set_pos(prefs_get(SFXVolumeInitKey, 0x5F, 0));      // 0x686D1C "SFX Volume"
+// RECOVERY_LITERAL: v1 0x00686D1C 0x00686D27 $SG55874 0x0048D840
+  volumeSFXScroll_.set_pos(prefs_get("SFX Volume", 0x5F, 0));      // 0x686D1C "SFX Volume"
   on_scrolling(0x52, volumeSFXScroll_.position());
   if (FactionMusic) {  // 0x74DAA0; the shared `push 0` precedes the cmp
-    volumeMusicScroll_.set_pos(prefs_get(MusicVolumeInitKey, 0x3F, 0));  // 0x686D28 "Music Volume"
+// RECOVERY_LITERAL: v1 0x00686D28 0x00686D35 $SG55876 0x0048D840
+    volumeMusicScroll_.set_pos(prefs_get("Music Volume", 0x3F, 0));  // 0x686D28 "Music Volume"
     on_scrolling(0x53, volumeMusicScroll_.position());
   } else {
     volumeMusicScroll_.set_pos(0);
@@ -806,20 +800,6 @@ void PrefWin::display(int page) {
 // ORIGINAL: 0x0048FDD0 ?destroy@PrefWin@@QAEXXZ 0x0048FDD0-0x0048FF51 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0048fdd0.cpp", "recovery/tasks/prefwin-owner-coverage-wave.json", "Original control parent 8578D8; ctor/destructor member order, 800-pixel branch, checkbox text-context and callback order independently reviewed."], "reason": "Recover the complete PrefWin ownership group through a genuine GraphicWin base and compiler-owned embedded control lifetimes; preserve seed identity, original spans and unresolved discoveries without granting byte claims."}
 void PrefWin::destroy() {
-  // The save path has its own original key storage, distinct from init's.
-  // Original payloads including NUL: Main [686D38,686D44), Voice
-  // [686D44,686D51), Music [686D54,686D61), SFX [686D64,686D6F).
-  // These replace pooled-literal interpretations; enclosing allocations
-  // remain unproved.
-  // RECOVERY_OBJECT: v1 0x00686D38 _?MainVolumeDestroyKey@?1??destroy@PrefWin@@QAEXXZ@4QBDB
-  static const char MainVolumeDestroyKey[] = "Main Volume";
-  // RECOVERY_OBJECT: v1 0x00686D44 _?VoiceVolumeDestroyKey@?1??destroy@PrefWin@@QAEXXZ@4QBDB
-  static const char VoiceVolumeDestroyKey[] = "Voice Volume";
-  // RECOVERY_OBJECT: v1 0x00686D54 _?MusicVolumeDestroyKey@?1??destroy@PrefWin@@QAEXXZ@4QBDB
-  static const char MusicVolumeDestroyKey[] = "Music Volume";
-  // RECOVERY_OBJECT: v1 0x00686D64 _?SFXVolumeDestroyKey@?1??destroy@PrefWin@@QAEXXZ@4QBDB
-  static const char SFXVolumeDestroyKey[] = "SFX Volume";
-
   if (field_A5C_) {
     set_preferences();
     warningsFinal_ |= warningsPending_;
@@ -832,10 +812,14 @@ void PrefWin::destroy() {
     AlphaIniPrefs.announce = warningsFinal_;
     prefs_use();
     prefs_save(0);
-    prefs_put(MainVolumeDestroyKey, volumeMainScroll_.position(), 0);
-    prefs_put(VoiceVolumeDestroyKey, volumeVoiceScroll_.position(), 0);
-    prefs_put(MusicVolumeDestroyKey, volumeMusicScroll_.position(), 0);
-    prefs_put(SFXVolumeDestroyKey, volumeSFXScroll_.position(), 0);
+// RECOVERY_LITERAL: v1 0x00686D38 0x00686D44 $SG55895 0x0048FDD0
+    prefs_put("Main Volume", volumeMainScroll_.position(), 0);
+// RECOVERY_LITERAL: v1 0x00686D44 0x00686D51 $SG55896 0x0048FDD0
+    prefs_put("Voice Volume", volumeVoiceScroll_.position(), 0);
+// RECOVERY_LITERAL: v1 0x00686D54 0x00686D61 $SG55897 0x0048FDD0
+    prefs_put("Music Volume", volumeMusicScroll_.position(), 0);
+// RECOVERY_LITERAL: v1 0x00686D64 0x00686D6F $SG55898 0x0048FDD0
+    prefs_put("SFX Volume", volumeSFXScroll_.position(), 0);
     field_A5C_ = 0;
   }
   draw_map(1);
