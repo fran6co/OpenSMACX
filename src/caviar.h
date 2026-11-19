@@ -283,8 +283,10 @@ struct CaviarData;
 // Renderer-owned destinations, not loaded CVR models. Caviar::init allocates
 // 1/12/36 bytes per entry; Caviar::close releases all three. The renderer's
 // destructor tails close without a second array-destructor traversal.
+// No constructor: Caviar::Caviar (0x00616DA0) clears slots_ with a written
+// loop over the three members (the image's induction pointer is biased to
+// +4, the indexed form; an expanded vector constructor walks from +0).
 struct VoxInstance {
-  VoxInstance();
   uint8_t *instance_colour_;
   // RECOVERY_MEMBER: v3 VoxInstance instance_vector_ VOX_Vect* 0x4 0x00616DE0
   VOX_Vect *instance_vector_;

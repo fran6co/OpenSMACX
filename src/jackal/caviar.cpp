@@ -244,11 +244,21 @@ uint32_t load_scaling_bits(const void *source) {
 
 // ORIGINAL: 0x00616B20 sub_616b20 0x00616B20-0x00616B2D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:0x00616B20-0x00616B2D returns ECX in EAX after zeroing dwords +0/+4/+8", "source:src/caviar.h VoxInstance is exactly 0xC with three pointer members and RECOVERY_MEMBER anchors at +4/+8", "pinned:0x00616DA0 initializes 200 twelve-byte slot records inline at Caviar+0x74C; it does not directly call 0x00616B20"], "reason": "Own the three pointer-zeroing stores on the existing 0xC VoxInstance type. Moving its inline constructor out of the header exposes this source definition but changes the Caviar array-construction code shape; constructor return-register/ABI and all callers remain native-review obligations."}
-// symbol    ??0VoxInstance@@QAE@XZ
+// symbol    ??0VoxTriple616B20@@QAE@XZ
 // kind      game
-VoxInstance::VoxInstance()
-    : instance_colour_(0), instance_vector_(0),
-      instance_matrix_(0) {
+// WORKAROUND(decl): an unreferenced out-of-line constructor of a 12-byte,
+// three-dword class. It is not VoxInstance's: with a same-unit constructor
+// Caviar::Caviar would construct slots_ through the expanded vector iterator
+// (pointer at +0), and the image clears them with a written indexed loop.
+// The owning class is unknown; this stand-in keeps the bytes.
+struct VoxTriple616B20 {
+    VoxTriple616B20();
+    void *field_0_;
+    void *field_4_;
+    void *field_8_;
+};
+VoxTriple616B20::VoxTriple616B20()
+    : field_0_(0), field_4_(0), field_8_(0) {
 }
 
 // Unreferenced in the pinned image (no call, jump or data reference).
@@ -323,6 +333,11 @@ Return Value: n/a
 Status: Complete
 */
 Caviar::Caviar() {
+    for (int i = 0; i < 200; i++) {
+        slots_[i].instance_colour_ = 0;
+        slots_[i].instance_vector_ = 0;
+        slots_[i].instance_matrix_ = 0;
+    }
     field_108_ = 0x461C4000;
     field_13CC_ = 0;
     scene_scale_ = 0.6666667f;
