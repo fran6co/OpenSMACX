@@ -225,8 +225,6 @@ set(OPENSMACX_SOURCES
     src/turn.cpp
     src/council.cpp
     src/netdaemon.cpp
-    src/danger.cpp
-    src/crt_random.cpp
     src/general.cpp
     src/faction.cpp
     src/technology_queries.cpp
@@ -496,9 +494,6 @@ set_source_files_properties(
 # Preserve Alpha's measured frame-based application context.
 # Shared graphics language state and its setter have a separate library owner.
 set_source_files_properties(src/alpha.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
-# The original diagnostic wrapper retains EBP-based parameter accesses.
-# Keep its calls out of line through a separate owner, with the existing frame profile.
-set_source_files_properties(src/danger.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve the measured frame-based AlphaNet controller context. Its record
 # and lifecycle owner remains on the default application profile.
 set_source_files_properties(src/alphanet.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
@@ -584,10 +579,6 @@ set_source_files_properties(
 # Application timer integration retains the pinned argument frame. The generic
 # Time implementation is compiled separately in Jackal with its existing profile.
 set_source_files_properties(src/time.cpp
-    PROPERTIES COMPILE_OPTIONS "/Oy-")
-# Preserve the measured frame-based contexts of the shared stream wrappers.
-# General's unrelated helpers retain their independently measured default recipe.
-set_source_files_properties(src/crt_random.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Application arithmetic and text utilities use the established frame profile.
 # The remaining General helpers retain their existing source recipe.

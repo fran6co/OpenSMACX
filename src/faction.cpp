@@ -64,6 +64,8 @@
 #include "replaywin.h"
 #include "datalink.h"
 #include "faction_inline.h"  // has_treaty/has_agenda and the shared diplomacy helpers
+#include "filemap.h" // Filemap::open_read
+#include "crt_random.h"
 // WORKAROUND(decl): counter coupling. buy_council_vote (0x0053EB50) lays its
 // post-loop margin store out as the image does (`mov eax, esi; jmp`) only with
 // extra distinct declarations in the unit: with base.h's one-level has_fac,
@@ -127,6 +129,230 @@ void FactionDeclFnPad46();
 void FactionDeclFnPad47();
 void FactionDeclFnPad48();
 void FactionDeclFnPad49();
+
+// From src/danger.cpp (unit prelude):
+// The pinned diagnostic wrapper calls the parsing helpers out of line.
+// This separate recovery owner preserves that boundary; its historical TU name is unknown.
+// Its two literals sit in ordinary .data between netdaemon's and my_srand's
+// ("Reseed to", 0x0068D430), followed by the diplomacy unit's: under /Ob2 VC6
+// keeps them in the unit's ordinary .data, under /Ob1 it moves them into a
+// COMDAT .data section, so the unit is compiled /Ob2 like its neighbours.
+
+/*
+Purpose: Create a debug error pop-up then write all the parameters to the log file.
+// ORIGINAL: 0x00538F30 ?danger@@YAXPADPADHHH@Z 0x00538F30-0x00538FAA BYTE_EXACT
+// symbol    ?danger@@YAXPBD0HHH@Z
+// size      122 bytes
+// prototype 
+// callers   3   call targets   4
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0048C0A0 0x00625E30 0x00625EC0 0x00626250
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl danger(LPCSTR msg1, LPCSTR msg2, int num1, int num2, int num3) {
+    parse_says(0, msg1, -1, -1);
+    parse_says(1, msg2, -1, -1);
+    parse_num(0, num1);
+    parse_num(1, num2);
+    parse_num(2, num3);
+    log_say(msg1, msg2, num1, num2, num3);
+    // The original immediates at 0x00538F90 and 0x00538F97 point to the
+    // independently bounded DANGER and hasty_sm.pcx literals below.
+// RECOVERY_LITERAL: v1 0x0068D428 0x0068D42F $SG48953 0x00538F30
+// RECOVERY_LITERAL: v1 0x0068D418 0x0068D425 $SG48952 0x00538F30
+    popp(ScriptPopupFile, "DANGER", 0, "hasty_sm.pcx", 0);
+}
+
+/*
+Purpose: Initialize the pseudo-random number generator.
+// ORIGINAL: 0x00538FB0 ?my_srand@@YAHH@Z 0x00538FB0-0x00538FD2 BYTE_EXACT
+// symbol    ?my_srand@@YAXH@Z
+// size      34 bytes
+// prototype int (__cdecl ?my_srand@@YAHH@Z)(int reseed)
+// callers   6   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x006262F0 0x00646010
+Return Value: n/a
+Status: Complete
+*/
+// Pinned arguments identify these NUL-terminated keys in the original;
+// the literal spans cover their text and terminators, not surrounding storage.
+// RECOVERY_LITERAL: v1 0x0068D430 0x0068D43A $SG18098 0x00538FB0
+void __cdecl my_srand(int reseed) {
+    // ONE `srand`, not two. The image's `add esp, 0x14` accounts for exactly
+    // log_say's four arguments and one seed; ours was `add esp, 0x18`, four
+    // bytes and one `push`/`call` more. Seeding twice with the same value is
+    // the same as seeding once, so nothing about the game changes.
+    log_say("Reseed to", reseed, 0, 0);
+    srand(reseed);
+}
+
+
+
+
+
+
+
+
+// SDK imports, never raw IAT pointers.
+// ===== MANAGED GLOBALS - real objects, homed to their domain =====
+// In the shipped image these live at fixed data addresses and are
+// constructed before WinMain by the CRT's dynamic-initializer walk
+// (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
+// Here the same recovered constructors run through this build's own
+// startup, and the matching destructors close them at exit.
+// Faction artwork is owned by the genuine FactionArt array in faction.cpp;
+// its Sprite members now participate in C++ construction and destruction.
+
+
+
+
+
+
+
+
+// ORIGINAL: 0x00538FE0 ?checksum_file@@YAEPAD@Z 0x00538FE0-0x0053908F;0x0065E450-0x0065E462 FILE BYTE_EXACT
+// working copy - scaffold materialised by --work
+// size      193 bytes
+// prototype 
+// callers   2   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00628380 0x006283E0 0x00628430 0x006287C0
+// indirect  0x0053904A
+
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?checksum_file@@YAEPAD@Z  at 0x00538FE0  (193 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+unsigned char __cdecl checksum_file(char *file_path) {
+    Filemap fm;
+    unsigned char sum = 0;
+    char *data = (char *)fm.open_read(file_path, 1);
+    if (data == 0) {
+        return 0;
+    }
+    unsigned int file_size = GetFileSize(fm.get_handle(), 0);
+    // Hand-written assembly: lodsb/xor ah,al/loop XOR scan with explicit esi save.
+    __asm {
+        push esi
+        mov esi, data
+        mov ecx, file_size
+        mov ah, sum
+    sum_loop:
+        lodsb
+        xor ah, al
+        loop sum_loop
+        mov sum, ah
+        pop esi
+    }
+    fm.close();
+    return sum;
+}
+
+
+
+
+
+/*
+Purpose: Calculate a basic XOR checksum for the data buffer.
+// The pinned body uses forward LODSB and a 32-bit ECX LOOP counter.
+// Investigated VC6 C++ recipes emit a different loop; matching remains open.
+// Preserve the original traversal/count semantics in ordinary C++, without
+// inline assembly or source changes made solely to imitate instruction length.
+// ORIGINAL: 0x00539090 ?checksum@@YAEPADHE@Z 0x00539090-0x005390B4 BYTE_EXACT
+// size      36 bytes
+// prototype
+// callers   2   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+// TRIED: byte-exact is unreachable (hand-written `loop`/`lodsb`, above);
+//   ceiling here is semantic equivalence, currently MISMATCH 4/19.
+Return Value: the XOR checksum of the buffer, seeded
+Status: Complete
+*/
+// Hand-written assembly: lodsb/xor ah,al/loop XOR scan with explicit esi save.
+uint8_t __cdecl checksum(char *buffer, int buffer_size, uint8_t seed) {
+    if (!buffer_size) {
+        return seed;
+    }
+    __asm {
+        push esi
+        mov esi, buffer
+        mov ecx, buffer_size
+        mov ah, seed
+    sum_loop:
+        lodsb
+        xor ah, al
+        loop sum_loop
+        mov seed, ah
+        pop esi
+    }
+    return seed;
+}
+
+/*
+Purpose: Calculate a basic XOR checksum for a password string.
+// The pinned body uses forward LODSB and a 32-bit ECX LOOP counter.
+// Investigated VC6 C++ recipes emit a different loop; matching remains open.
+// Preserve the original traversal/count semantics in ordinary C++, without
+// inline assembly or source changes made solely to imitate instruction length.
+// ORIGINAL: 0x005390C0 ?checksum_password@@YAHPAD@Z 0x005390C0-0x00539157 BYTE_EXACT
+// symbol    ?checksum_password@@YAIPBD@Z
+// size      151 bytes
+// prototype
+// callers   2   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x006453E0 0x00645460
+// indirect  0x005390F6
+// TRIED: byte-exact is unreachable (hand-written `loop`/`lodsb` inside
+//   the `checksum` call it makes, above); ceiling here is semantic
+//   equivalence, currently MISMATCH 22/58.
+Return Value: Checksum
+Status: Complete
+*/
+// The image calls strcpy out of line here.
+uint32_t __cdecl checksum_password(LPCSTR password) {
+    if (!strlen(password)) {
+        return 0;
+    }
+    char buffer[256];
+    strcpy(buffer, password);
+    CharUpper(buffer); // incorrect results for Turkish/Azerbaijani 'i'
+    uint8_t chksum = checksum(buffer, strlen(buffer), 0);
+    return chksum + 1;
+}
+
+
+
+
+
+
+// ORIGINAL: 0x005391A0 sub_5391a0 0x005391A0-0x005391C0 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:a1347e25:src/recovered/005391a0.cpp complete original identity/spans and historical claims/findings.", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x5391a0 full native body review.", "source:src/general.cpp existing real state owners; no executable-address alias or synthetic receiver."], "reason": "Recover the complete short helper through established source-owned diplomacy, vehicle, text or window state; preserve signed sentinel behavior, original receiver/argument order and conditional callbacks."}
+// symbol    ?read_and_parse_text_line@@YAXXZ
+void __cdecl read_and_parse_text_line() {
+  text_get();
+  char *input = TextBufferGetPtr;
+  StringTemp[0] = 0;
+  parse_string(input, StringTemp);
+}
+
 
 // Shared separator objects the image pushes instead of unit literals.
 extern const char BufferJoinSpace[];

@@ -1810,23 +1810,6 @@
           "-c"
         ]
       },
-      "src/danger.cpp": {
-        "flags": [
-          "/nologo",
-          "/TP",
-          "/Zm200",
-          "/GX",
-          "/Og",
-          "/Ot",
-          "/Gs",
-          "/Gy",
-          "/Ob2",
-          "-MT",
-          "/W4",
-          "/Oy-",
-          "-c"
-        ]
-      },
       "src/jackal/log.cpp": {
         "flags": [
           "/nologo",
@@ -2895,23 +2878,6 @@
           "/W4",
           "/O2",
           "/Ob2",
-          "-c"
-        ]
-      },
-      "src/crt_random.cpp": {
-        "flags": [
-          "/nologo",
-          "/TP",
-          "/Zm200",
-          "/GX",
-          "-MT",
-          "/W4",
-          "/Og",
-          "/Ot",
-          "/Gs",
-          "/Gy",
-          "/Ob2",
-          "/Oy-",
           "-c"
         ]
       },
