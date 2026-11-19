@@ -3435,6 +3435,22 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   map with no worse candset. The screen and the probe disagree in a few
   pairs (enemy_move: 16 of 450 screen-dead pairs kept their store), and those
   are dropped, so the tool under-reports rather than clobbers.
+  Second pass after the rebase (2026-11-19, every non-exact function of 40+
+  rows except other workers' and enemy_move): 189 functions, 86 with no
+  pair, 11 with no dead target, 74 neutral or worse, 18 kept, no exact
+  function lost. Of 115 functions of 100+ rows 15 were kept: random_events
+  327 -> 92 (slot difference 65 -> 8, one rename `tx` -> `mode` on top of
+  the first pass), battle_compute 131 -> 90, base_terraform 953 -> 922,
+  battle_plans 119 -> 101, CouncWin::init 251 -> 237, editor_natural
+  128 -> 116, battle_fight 2147 -> 2134 (frame 12 -> 8 bytes off),
+  setup_player slot difference 30 -> 16 at 591 -> 592 rows, and five of
+  1 to 7 rows. Of 74 functions of 40-99 rows 3 were kept (interceptor
+  80 -> 73, draw_active 96 -> 93, veh_scoot 89 -> 87). Two kept renames
+  trade rows for the slot map (base_ecology 174 -> 184, slot difference
+  45 -> 41; Buffer::write_multi_font_raw_l 104 -> 110, 8 -> 7): the tool
+  ranks the slot map above the candidate set and the rows, so read those two
+  as open. The yield falls with size because a small function has few
+  function-scope variables that are dead where a block-local lives.
 - **Frame-size differences: run `analysis/framescan.py` first** (13 s tree-wide);
   `--addr A` prints both slot maps with widths, `&` and our /Fa names. A frame
   that differs is a declaration problem, never a register tie.
@@ -3723,7 +3739,50 @@ Layout
   that `jmp`; without it the arms land much later (enemy_move passenger loop:
   a no-op else after `if (!hint)` moves the group to the image's place,
   5383 -> 4960 rows, so the image's jmp comes from a register cache, not a
-  source statement).
+  source statement). The no-op else is a dead-store stand-in and is not
+  allowed. What the image has (par-4 2026-11-19): after the loop the
+  `Vehs[veh_id]` offset temporary ([ebp-0x10]) is cached in **ecx**, loaded
+  in the `!hint` arm (0x574CA7) and again on the other edge (0x574E4D), and
+  the arm jumps past that reload (`jmp 0x574E50`); `i` is in edx. Ours caches
+  the temporary in **esi**, loaded once above the test, so no jmp exists and
+  the held-back arms land 230 rows later. The image has no callee-saved
+  register for it there because the block's registers went to `plan` (esi,
+  0x574A88-0x574AAC, `push esi` for del_site where ours folds `push 6`) and
+  `veh_id` (edi from 0x574AC7, through the loop); ours gives neither a
+  register. And that follows from the label's register state: in the image
+  the five `goto L_574a88` sites jump straight to 0x574A88 and the loads
+  follow the label; in ours they pass through a compensation block
+  (`mov edi,[dist]; mov esi,[temp]; jmp` into the label's middle), because
+  upstream the temporary sits in edi/esi where the image has it in
+  eax/esi. So the passenger loop cannot be fixed locally: enemy_move's
+  register pieces (2.7 rule 8) have to be put right from the top down.
+- **enemy_move's first divergence is at its top** (par-4 2026-11-19). In the
+  image the `Vehs[veh_id]` offset temporary takes ebx for the whole entry
+  region (0x56B642-0x56B83A, nine reads), `proto_id` ([ebp-0xAC]) is never in
+  a callee-saved register (all twelve uses in the function are frame reads;
+  the three `== 0x10/0x11/0x12` compares share one `mov eax,[ebp-0xAC]`),
+  the constant 1 is in ecx and `remote_own` is stored straight from ecx/edi
+  (`mov [m],ecx` between the two tests, `mov [m],edi` on the failing edge).
+  Ours gives ebx to `proto_id` from its definition to the three compares,
+  so the temporary falls back to scratch reloads, `remote_own` is
+  materialised in ebx and the entry stores differ. Probe (not the source):
+  reading `Vehs[veh_id].proto_id` at the three compares reproduces the
+  image's entry region (differing rows 37+111 -> 17+49 in 0x56B5B0-0x56B900)
+  while the function total rises (5948 -> 6038), since everything below was
+  tuned around the wrong pieces. Neutral there: `remote_own` as if/else,
+  `?:` or pre-set and cleared; a `switch` for the three compares;
+  `VehPrototypes[proto_id]` for plan/triad; x/y statement order;
+  `has_abil(proto_id, ...)` (moves proto_id to edi). Open question: what
+  ranks the temporary's piece above `proto_id`'s in the image.
+  Slot side of the same function: pairing each aligned frame access shows
+  the image spilling compiler temporaries (the `abs()` kept across x_dist in
+  map_range, a `Bases[i].x` copy, a faction byte) into the slots of
+  `own_ground` (-0x4C) and `tile_owner` (-0x60) where ours uses `alt`'s and
+  `no_moves`' slots, at about 60 rows. Splitting the reused `own_ground`
+  into one name per role (tile bits, pact flag, goal flag, sensor flag, turn
+  counter, ray x) leaves the frame at 0x2C4 and moves no temporary (slot
+  difference 163-169 against 164), so the temporaries' slots follow the
+  packing order, not the names.
 - Tail merging follows the closing teardown depth and the per-site scratch
   register, so which copy survives can follow a register tie.
 - **Both arms end with their own tail and goto** (communicate 0x0054FFD0,

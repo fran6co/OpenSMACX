@@ -195,6 +195,11 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   image's reaching definitions of that slot, maps each through the fe alignment to our instruction and the variable it
   writes, and prints `READ v image value written as w` when none of them is v (our source may read the wrong variable of a
   packed slot). Misaligned regions give false hits; read each one against the source.
+- `analysis/pairscan.py <unit> <addr> [--src ALT] [--pfx N] [--sites]` frame-slot pairing by source variable: for every
+  aligned row where both sides access a frame slot with the same instruction shape, the variable our /FAsc listing
+  names at our slot on that line and the image slot it pairs with (`?a/b` = a temporary or packed block-local, `T-0xN`
+  = unnamed slot). `--sites` lists the source lines and image addresses of each minority pairing: the places where
+  the frames pack differently. Complements `slotmap.py` (slots only) and feeds reusesweep's rename candidates.
 - `analysis/reusesweep.py <unit> <addr> [--write] [--iter N] | --from FEALL.json [--min 100] [--skip A,..] [--write]`
   reused function-scope variable screen (MATCHING_GUIDE 3.3 "A block-local that the image keeps in a function-scope
   variable's slot"): renames each block-local int/BOOL into each depth-1 int/BOOL (or int parameter) that is DEAD over
