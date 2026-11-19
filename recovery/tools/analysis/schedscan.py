@@ -28,6 +28,8 @@ Read with MATCHING_GUIDE 3.2 "Scratch registers and scheduling" (rules S1..S6).
                named value, allocated outside the round-robin cursor (S7). A hit means the original
                read it into a named local or passed it through an inline helper's parameter.
      labelraw / labelget   label_get(k) <-> StringTable.get(Labels.strings_ptr[k]) (S7).
+     tableraw / tableget   table_text(x) <-> StringTable.get(x) (S7). These four also get one
+               candidate with every site of the function flipped at once.
      unname    a `T v = simple;` local read inline at its uses (S7, S8).
      expand / contract     one-return inline helpers written out or contracted (S1).
      forbound  `p = p + K; if (p > 0) { i = p; do .. --i; while (i != 0) }`-style reassigned
@@ -124,7 +126,7 @@ def main():
     ap.add_argument('--gap', type=int, default=4, help='merge differing runs separated by at most this many equal rows')
     ap.add_argument('--rows', action='store_true', help='print the rows of every window')
     ap.add_argument('--try', dest='try_', action='store_true', help='single-site source sweep (nvarg, labelraw, labelget, unname, expand)')
-    ap.add_argument('--try-rules', default='nvarg,labelraw,labelget,unname,expand,contract')
+    ap.add_argument('--try-rules', default='nvarg,labelraw,labelget,tableraw,tableget,unname,expand,contract')
     ap.add_argument('--top', type=int, default=12)
     a = ap.parse_args()
     unit = a.unit if a.unit.startswith('src/') else 'src/' + a.unit
@@ -272,6 +274,27 @@ def rule_nvany(t, mt, pos, end):
         yield (o0, o1, 'nv(' + t[o0:o1] + ')', 'nvany')
 
 
+def rule_tableraw(t, mt, pos, end):
+    import rules
+    for m in re.finditer(r'\btable_text\(', mt[pos:end]):
+        o = pos + m.end() - 1
+        c = rules.match(mt, o, '(', ')')
+        if 0 < c <= end:
+            yield (pos + m.start(), c + 1, 'StringTable.get(' + t[o + 1:c] + ')', 'tableraw')
+
+
+def rule_tableget(t, mt, pos, end):
+    import rules
+    for m in re.finditer(r'\bStringTable\.get\(', mt[pos:end]):
+        o = pos + m.end() - 1
+        c = rules.match(mt, o, '(', ')')
+        if 0 < c <= end:
+            yield (pos + m.start(), c + 1, 'table_text(' + t[o + 1:c] + ')', 'tableget')
+
+
+ALL_RULES = ('labelraw', 'labelget', 'tableraw', 'tableget')
+
+
 OPERAND = re.compile(r'(?<![\w.>])[A-Za-z_]\w*(?:(?:\.|->)[A-Za-z_]\w*|\[[^\[\]]*\])*')
 
 
@@ -287,12 +310,20 @@ def try_sweep(unit, addr, text, base_diff, rule_names, top):
         return
     lo = me[0]
     hi = min([p for p in starts if p > lo] + [len(text)])
+    # the identity inline goes after the last top-level #include (a marker can sit inside a comment block)
+    inc = [m.end() for m in re.finditer(r'(?m)^#include[^\n]*\n', text[:lo])]
+    inject = inc[-1] if inc else 0
     deck = []
     for rn in rule_names:
+        sites = []
         if rn == 'nvarg':
             cands = rule_nvarg(text, mt, lo, hi)
         elif rn == 'nvany':
             cands = rule_nvany(text, mt, lo, hi)
+        elif rn == 'tableraw':
+            cands = rule_tableraw(text, mt, lo, hi)
+        elif rn == 'tableget':
+            cands = rule_tableget(text, mt, lo, hi)
         else:
             cands = rules.RULES[rn](text, mt, lo)
         for cand in cands:
@@ -303,9 +334,21 @@ def try_sweep(unit, addr, text, base_diff, rule_names, top):
                 continue
             v = text[:s0] + rep + text[e0:]
             if rn in ('nvarg', 'nvany') and 'inline T nv(T v)' not in text:
-                v = v[:lo] + NV_TEMPLATE + v[lo:]
+                v = v[:inject] + NV_TEMPLATE + v[inject:]
             line = text.count('\n', 0, s0) + 1
+            sites.append((s0, e0, rep))
             deck.append(('%s L%d `%s` -> `%s`' % (label, line, ' '.join(text[s0:e0].split())[:50], ' '.join(rep.split())[:60]), v))
+        if rn in ALL_RULES and len(sites) > 1:
+            # every site of the rule at once (read_rules: three labels had to flip together)
+            v, last = [], 0
+            for s0, e0, rep in sorted(sites):
+                if s0 < last:
+                    continue
+                v.append(text[last:s0])
+                v.append(rep)
+                last = e0
+            v.append(text[last:])
+            deck.append(('%s ALL %d sites' % (rn, len(sites)), ''.join(v)))
     print('\n--try: %d single-site candidates (%s)' % (len(deck), ','.join(rule_names)))
     if not deck:
         return
