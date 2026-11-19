@@ -1221,7 +1221,7 @@ int __cdecl size_of_planet(int mode) {
             }
             size_of_planet_number(pref_y, number);
             {
-                LPSTR label = label_get(0x110C / 4);
+                LPSTR label = StringTable.get(Labels.strings_ptr[0x110C / 4]);
                 popup.dialogs().edit(label, StringTemp, 8);
             }
 
