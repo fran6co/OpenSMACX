@@ -7625,9 +7625,7 @@ L_574a88:
                 }
             }
             Vehs[veh_id].move_to_ai_type = 'u';
-            if (no_moves) {
-                return 0;
-            }
+            if (no_moves) goto L_5791ff;  // image 0x575B1C jne to the final return
             goto L_578b26;
         }
     }
