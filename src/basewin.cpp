@@ -164,6 +164,11 @@ void BaseWin::farm_click(int x, int y, int) {
     log_say("Farm Click", BaseCurrent->name_string, position, 0, 0);
     if (BaseCurrent->governor & 0x40u) BaseCurrent->governor &= ~0x40u;
     unsigned bit;
+    // The unchanged exit (recompute, unlock) is written out in the three
+    // middle rejections and reached by goto from the first and last: the
+    // image ranks `this` above the specialist temporaries only with the
+    // written-out copies, which cross-jumping folds into one (MATCHING_GUIDE
+    // 2.7, tail-merged references).
     if (field_40B4C_ == 1) {
         bit = 1u << position;
         if (BaseCurrent->resource_sqr_radius & bit) goto unchanged;
@@ -180,8 +185,16 @@ void BaseWin::farm_click(int x, int y, int) {
         if (BaseCurrent->specialist_total) --BaseCurrent->specialist_total;
     } else if (previous > 0) {
         const unsigned old_bit = 1u << previous;
-        if (!(BaseCurrent->resource_sqr_radius & old_bit)) goto unchanged;
-        if (BaseCurrent->resource_sqr_radius & (1u << position)) goto unchanged;
+        if (!(BaseCurrent->resource_sqr_radius & old_bit)) {
+            recompute(0);
+            NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+            return;
+        }
+        if (BaseCurrent->resource_sqr_radius & (1u << position)) {
+            recompute(0);
+            NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+            return;
+        }
         BaseCurrent->resource_sqr_radius &= ~old_bit;
         BaseCurrent->resource_sqr_radius |= 1u << position;
     } else if (position == 0) {
@@ -200,7 +213,11 @@ void BaseWin::farm_click(int x, int y, int) {
             }
             ++BaseCurrent->specialist_total;
         } else {
-            if (FarmStatus[position]) goto unchanged;
+            if (FarmStatus[position]) {
+                recompute(0);
+                NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+                return;
+            }
             if (BaseCurrent->specialist_total == 0) {
                 int fight, growth, tech, wealth, power;
                 if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1u << faction))
