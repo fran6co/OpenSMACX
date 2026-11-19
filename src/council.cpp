@@ -70,192 +70,168 @@ int CouncilNotifyPluralSlots[8];
 int CouncilPendingMessageArgs[3] = {-1, -1, -1};
 
 
-/*
-Purpose: Say whether a faction may call the planetary council this turn:
-         alien factions never, the scenario flag pair (GameState's two
-         council bits) gates, an active sunspot blocks, the PBEM pair
-         blocks, the currently-spying base's owner is always admitted, and
-         otherwise some other live non-alien faction must share a
-         treaty-or-vendetta status bit with the caller.
 
-// ORIGINAL: 0x0052C670 ?can_call_council@@YAHHH@Z 0x0052C670-0x0052C87D BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned 0x52C670..0x52C87D council caller and message paths", "source:src/council.h already declares can_call_council and src/council.cpp owns CouncilPbemGate", "0x009A64E9 is byte 1 of GameDataStateStorage.fields_.lock_masks_.enable_mask_; use its named alive_mask_ view", "0x00939284 is ConsoleGlobal.faction_id_ at member offset 0x23BD4", "pinned PE .data bounded literals including NUL: 0x68C020 solar_sm.pcx through 0x68C02D; 0x68C030 SUNSPOTSNO2 through 0x68C03B; 0x68C03C COUNCILHOT through 0x68C046; 0x68C048 council_sm.pcx through 0x68C056; 0x68C058 COUNCILNEEDALL through 0x68C066. No emitted C++ data symbol is asserted before root's fresh physical-symbol observation."], "reason": "council admission query in the existing council owner"}
-// TRIED: MISMATCH #41 'mov' vs 'and', not chased further. The loop's triple early-exit (0x93f660==0 / two bit-mask misses) is a `goto blocked;` out of the for-loop rather than a `continue`, matching that all three targets jump clean out of the scan (not to its per-iteration increment).
-// size      525 bytes
-// prototype int (__cdecl ?can_call_council@@YAHHH@Z)(int32 factionID, int32 announce)
-// callers   3   call targets   1
+// ORIGINAL: 0x004243D0 ?clear_council_notify@@YAXH@Z 0x004243D0-0x004243E8 BYTE_EXACT
+// size      24 bytes
+// prototype 
+// callers   1   call targets   0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
-// calls     0x005D9610
-// notes     Seed provenance (TRIED): MISMATCH #41 'mov' vs 'and' was not
-//           chased further; the scan's triple early-exit is a goto out of
-//           the faction walk, whose exit test stays an address compare
-//           against Players[8].rule_flags - not measured exact.
-Return Value: 1 the council may be called, 0 not
-Status: Coverage transcription - unclaimed body, seed
-        git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0052c670.cpp retained.
-*/
-int __cdecl can_call_council(int faction_id, int announce) {
-    if ((Players[faction_id].rule_flags & 0x80) != 0) {
-        return 0;
-    }
+// calls     (none)
+// 0x004243D0  ?clear_council_notify@@YAXH@Z  ->  ?clear_council_notify@@YAXH@Z
+//
+// Historical byte-match context: this overload was first recorded before it
+// had a compiled source owner. Its implementation and BYTE_EXACT record are
+// now retained here in the Council owner.
 
-    if ((static_cast<unsigned char>(GameDataStateStorage.fields_.net_turn_flags_) & 4) != 0) {
-        const unsigned char state =
-            static_cast<unsigned char>(GameDataStateStorage.fields_.game_state_);
-        if ((state & 0x40) == 0 || (state & 0x80) == 0) {
-            return 0;
-        }
-    }
 
-    if (GameDataStateStorage.fields_.sunspot_duration_ > 0) {
-        if (announce != 0 && faction_id == ConsoleGlobal.faction_id_ &&
-            ((1 << faction_id) &
-             GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) != 0) {
-            NetMsgPrimary.pop("SUNSPOTSNO2", "solar_sm.pcx");
-        }
-        return 0;
-    }
+void __cdecl clear_council_notify(int a1) {
+    CouncilNotifyFormSlots[a1] = 0;
+    CouncilNotifyPluralSlots[a1] = 0;
+}
 
-    if (IsMultiplayerPBEM != 0 && CouncilPbemGate != 0) {
-        if (announce != 0 && faction_id == ConsoleGlobal.faction_id_ &&
-            ((1 << faction_id) &
-             GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) != 0) {
-            NetMsgPrimary.pop("COUNCILHOT", static_cast<const char *>(0));
-        }
-        return 0;
-    }
+// ORIGINAL: 0x004243F0 ?clear_council_notify@@YAXXZ 0x004243F0-0x0042440D FILE BYTE_EXACT
+// size      29 bytes
+// prototype 
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// PRESERVED UNIT - measured BYTE_EXACT.
+//
+// Historical context: the source-form observations below came from earlier
+// compiler-matching work on this preserved unit. They describe useful
+// compiler-sensitive forms, not instructions to regenerate a translation
+// unit or verification artifact.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
 
-    const int spy_index = GameDataStateStorage.fields_.secret_project_.empath_guild();
-    int has_empath = 0;
-    if (spy_index >= 0) {
-        has_empath = (Bases[spy_index].faction_id_current == faction_id);
-    }
-    if (has_empath) {
-        return 1;
-    }
-
-    {
-        for (int i = 1; i < 8; ++i) {
-            if ((Players[i].rule_flags & 0x80) == 0) {
-                if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &
-                     (1 << i)) != 0 &&
-                    i != faction_id) {
-                    if ((PlayersData[faction_id].diplo_treaties[i] & 0x8000008) == 0) {
-                        bool check_more = true;
-                        if ((static_cast<unsigned char>(GameDataStateStorage.fields_.game_state_) & 0x80) !=
-                            0) {
-                            const unsigned int bit_a1 = 1u << faction_id;
-                            if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
-                                 bit_a1) != 0) {
-                                if (faction_id == ConsoleGlobal.faction_id_) {
-                                    check_more = false;
-                                }
-                            }
-                        }
-                        if (check_more) {
-                            if (IsMultiplayerNet == 0) {
-                                goto blocked;
-                            }
-                            const unsigned int mask =
-                                GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF;
-                            const unsigned int bit_a1b =
-                                1u << faction_id;
-                            if ((mask & bit_a1b) == 0) {
-                                goto blocked;
-                            }
-                            if ((mask & (1 << i)) == 0) {
-                                goto blocked;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return 1;
-    blocked:
-        if (announce != 0 && faction_id == ConsoleGlobal.faction_id_ &&
-            (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
-             (1 << faction_id)) != 0) {
-            NetMsgPrimary.pop("COUNCILNEEDALL", "council_sm.pcx");
-        }
-        return 0;
+void __cdecl clear_council_notify() {
+    for (int i = 0; i < 8; i++) {
+        CouncilNotifyFormSlots[i] = 0;
+        CouncilNotifyPluralSlots[i] = 0;
     }
 }
 
-/*
-Purpose: Score one council proposal for a faction: proposal 0 (propose
-         anything) picks the option the faction wants most via wants_prop
-         and keeps it unless the council's vote row is empty or the target
-         faction's treaty word flags an obstruction; a numbered proposal
-         adjusts wants_prop's base by the target faction's treaty bits and
-         falls back to the seated vote row, a against/for verdict, or a
-         deterministic turn-based abstention.
 
-// ORIGINAL: 0x0052BE60 ?council_get_vote@@YAHHHH@Z 0x0052BE60-0x0052BF58
-// RECOVERY_BINDING: v1 {"evidence": ["pinned 0x52BE60..0x52BF58 and callers from call_council/CouncWin/faction vote paths", "source:src/council.h already declares council_get_vote", "source:PlayerData exposes the three original vote/treaty rows; typed lookup already preserves the 0x833 index relation"], "reason": "council vote query in the existing council owner"}
-// TRIED: `result < votes` for the loop-max compare (jle/jge polarity flip at #18) - flipped to `votes > result` to match, fixed. The surviving gap is a shared-epilogue layout choice, not semantics: the original falls through to `return a3` and jumps away to the shared tail for `return TableC[idx]`; every source order tried (plain if, inverted if, goto to a shared label) makes VC6 pick the opposite layout. Best reached is 96.3% mnemonic similarity (#32 je vs jne). 0x0096C9F8/0x0096CDE0/0x0096CE0C are indexed by `faction*2099+idx` (0x833 = 2099, matching spying_recovery.h's SpyingStatusTable stride at the same 0x0096C9F8 base) so they are `extern T name[]`, not the scaffold's folded `static T *const`, per the indexed-table-base lever.
-// size      248 bytes
-// callers   5   call targets   1
+
+/*
+Purpose: Calculate faction's vote count. Used for Planetary Governor and Supreme Leader.
+// ORIGINAL: 0x0052AD30 ?council_votes@@YAHH@Z 0x0052AD30-0x0052AE19 BYTE_EXACT
+// LEVER: `Base *base = Bases; ...; base++` (walk, not index) for the
+// population sum - `Bases[i]` plateaus. `votes` is a signed `int`, not
+// `uint32_t` - the +50% arm needs the image's `cdq/sub/sar` signed-divide
+// fixup, which an unsigned local turns into a plain `shr`. Each
+// `has_project(...)` result is stored to a named `BOOL` before the `if`,
+// matching the image's `sete`/`test`/`je` rather than a folded `cmp`/`jne`.
+// The bonus loop walks `faction_bonus_val1` and reads
+// `faction_bonus_id[i]` as `bonus_val1[-8]` (8 ints back, same registers
+// the image keeps) rather than indexing both arrays separately. And that
+// pointer is computed inside `if (bonus_count > 0) { ... }`, not
+// unconditionally before the loop - without the guard VC6 schedules the
+// `lea` ahead of the image's own `test`/`jle`.
+// size      233 bytes
+// prototype int (__cdecl ?council_votes@@YAHH@Z)(int factionID)
+// callers   9   call targets   0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
-// calls     0x0052AEB0
-// notes     Seed provenance (TRIED): `votes > result` (not `result < votes`)
-//           for the loop-max compare, and the surviving gap is the shared
-//           epilogue layout (je vs jne at #32, 96.3% similarity) - the
-//           original falls through to `return a3` and jumps away for the
-//           row read; every source order tried picks the opposite layout.
-Return Value: the voting faction id (or -3 for none), -1 against, -2 for,
-              or the seated vote row's faction
-Status: Coverage transcription - unclaimed body; the seed
-        git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0052be60.cpp is retained until this product
-        definition measures fresh BYTE_EXACT.
+// calls     (none)
+Return Value: Faction vote count
+Status: Complete
 */
-int __cdecl council_get_vote(int faction, int proposal, int target_faction) {
-    int result;
-
-    if (proposal == 0) {
-        result = 0;
-        target_faction = -3;
-        int i = 1;
-        do {
-            int votes = wants_prop(faction, 0, i);
-            if (votes > result) {
-                result = votes;
-                target_faction = i;
-            }
-            ++i;
-        } while (i < 8);
-
-        if (PlayersData[faction].unk_29[proposal] == 0 ||
-            (PlayersData[faction].diplo_treaties[result = PlayersData[faction].unk_30[proposal]] & 0x40c30) != 0) {
-            return target_faction;
-        }
-    } else {
-        result = wants_prop(faction, proposal, target_faction);
-        unsigned int status = PlayersData[faction].diplo_treaties[target_faction];
-        if ((status & 0x10) != 0) {
-            --result;
-        }
-        if ((status & 0x20) != 0) {
-            --result;
-        }
-        if ((status & 1) != 0) {
-            ++result;
-        }
-        int direct = PlayersData[faction].unk_29[proposal];
-        if (direct != 0) {
-            return direct;
-        }
-        if (result > 0) {
-            return -1;
-        }
-        if (result < 0) {
-            return -2;
-        }
-        result = -1 - (GameDataStateStorage.fields_.turn_current_num_ + faction) % 3;
+int __cdecl council_votes(int faction_id) {
+    if (is_alien_faction(faction_id)) {
+        return 0;
     }
-    return result;
+    int votes = 0;
+    Base *base = Bases;
+    for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++, base++) {
+        if (base->faction_id_current == faction_id) {
+            votes += base->population_size;
+        }
+    }
+    BOOL has_empath_guild = has_project(SP_EMPATH_GUILD, faction_id);
+    if (has_empath_guild) {
+        votes += votes / 2; // +50% votes
+    }
+    BOOL has_clinical_immortality = has_project(SP_CLINICAL_IMMORTALITY, faction_id);
+    if (has_clinical_immortality) {
+        votes *= 2; // Doubles votes
+    }
+    int bonus_count = Players[faction_id].faction_bonus_count;
+    if (bonus_count > 0) {
+        int *bonus_val1 = Players[faction_id].faction_bonus_val1;
+        for (i = 0; i < bonus_count; i++, bonus_val1++) {
+            if (bonus_val1[-8] == RULE_VOTES) { // faction_bonus_id[i], 8 ints back
+                int votes_bonus = *bonus_val1;
+                if (votes_bonus >= 0) {
+                    votes *= votes_bonus; // Peacekeeper bonus
+                }
+            }
+        }
+    }
+    return votes;
+}
+
+/*
+Purpose: Check whether a faction's leader is eligible to be a Planetary Governor candidate.
+// ORIGINAL: 0x0052AE20 ?eligible@@YAHH@Z 0x0052AE20-0x0052AEA4 BYTE_EXACT
+// LEVER: `faction_count` declared and zeroed BEFORE the `is_alien_faction`
+// guard (the image's `mov [ebp-4],0` runs ahead of the alien test even
+// though only the non-alien path reads it). `int`, not `uint32_t`, for
+// `faction_count`/`votes`/the loop `i` - the image's `jle`/`jl`/`setl`
+// tail is signed, an unsigned local turns it into `jbe`/`jb`/`sbb;neg`.
+// TRIED: reordering is_alive's `FactionsStatus[1] & (1 << faction_id)` -
+// no effect. Residual (53/54, SEMANTIC): `is_alive`'s inlined `test`
+// encodes its two operands in the image's order (`test dl, al`) vs ours
+// (`test al, dl`) - same flags, different byte, not chased further.
+// size      132 bytes
+// prototype 
+// callers   6   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0052AD30
+Return Value: Is the leader eligible (top two vote totals)? true/false
+Status: Complete
+*/
+BOOL __cdecl eligible(int faction_id) {
+    int faction_count = 0;
+    if (is_alien_faction(faction_id)) {
+        return false;
+    }
+    int votes = council_votes(faction_id);
+    for (int i = 1; i < MaxPlayerNum; i++) {
+        if (faction_id != i && is_alive(i) && council_votes(i) > votes) {
+            faction_count++;
+        }
+    }
+    return faction_count < 2;
 }
 
 // The leader proposals share this opening: a living, non-alien option that
@@ -830,99 +806,79 @@ int __cdecl wants_prop(int faction, int proposal, int option) {
     return score;
 }
 
-
-
 /*
-Purpose: Calculate faction's vote count. Used for Planetary Governor and Supreme Leader.
-// ORIGINAL: 0x0052AD30 ?council_votes@@YAHH@Z 0x0052AD30-0x0052AE19 BYTE_EXACT
-// LEVER: `Base *base = Bases; ...; base++` (walk, not index) for the
-// population sum - `Bases[i]` plateaus. `votes` is a signed `int`, not
-// `uint32_t` - the +50% arm needs the image's `cdq/sub/sar` signed-divide
-// fixup, which an unsigned local turns into a plain `shr`. Each
-// `has_project(...)` result is stored to a named `BOOL` before the `if`,
-// matching the image's `sete`/`test`/`je` rather than a folded `cmp`/`jne`.
-// The bonus loop walks `faction_bonus_val1` and reads
-// `faction_bonus_id[i]` as `bonus_val1[-8]` (8 ints back, same registers
-// the image keeps) rather than indexing both arrays separately. And that
-// pointer is computed inside `if (bonus_count > 0) { ... }`, not
-// unconditionally before the loop - without the guard VC6 schedules the
-// `lea` ahead of the image's own `test`/`jle`.
-// size      233 bytes
-// prototype int (__cdecl ?council_votes@@YAHH@Z)(int factionID)
-// callers   9   call targets   0
+Purpose: Score one council proposal for a faction: proposal 0 (propose
+         anything) picks the option the faction wants most via wants_prop
+         and keeps it unless the council's vote row is empty or the target
+         faction's treaty word flags an obstruction; a numbered proposal
+         adjusts wants_prop's base by the target faction's treaty bits and
+         falls back to the seated vote row, a against/for verdict, or a
+         deterministic turn-based abstention.
+
+// ORIGINAL: 0x0052BE60 ?council_get_vote@@YAHHHH@Z 0x0052BE60-0x0052BF58
+// RECOVERY_BINDING: v1 {"evidence": ["pinned 0x52BE60..0x52BF58 and callers from call_council/CouncWin/faction vote paths", "source:src/council.h already declares council_get_vote", "source:PlayerData exposes the three original vote/treaty rows; typed lookup already preserves the 0x833 index relation"], "reason": "council vote query in the existing council owner"}
+// TRIED: `result < votes` for the loop-max compare (jle/jge polarity flip at #18) - flipped to `votes > result` to match, fixed. The surviving gap is a shared-epilogue layout choice, not semantics: the original falls through to `return a3` and jumps away to the shared tail for `return TableC[idx]`; every source order tried (plain if, inverted if, goto to a shared label) makes VC6 pick the opposite layout. Best reached is 96.3% mnemonic similarity (#32 je vs jne). 0x0096C9F8/0x0096CDE0/0x0096CE0C are indexed by `faction*2099+idx` (0x833 = 2099, matching spying_recovery.h's SpyingStatusTable stride at the same 0x0096C9F8 base) so they are `extern T name[]`, not the scaffold's folded `static T *const`, per the indexed-table-base lever.
+// size      248 bytes
+// callers   5   call targets   1
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: Faction vote count
-Status: Complete
+// calls     0x0052AEB0
+// notes     Seed provenance (TRIED): `votes > result` (not `result < votes`)
+//           for the loop-max compare, and the surviving gap is the shared
+//           epilogue layout (je vs jne at #32, 96.3% similarity) - the
+//           original falls through to `return a3` and jumps away for the
+//           row read; every source order tried picks the opposite layout.
+Return Value: the voting faction id (or -3 for none), -1 against, -2 for,
+              or the seated vote row's faction
+Status: Coverage transcription - unclaimed body; the seed
+        git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0052be60.cpp is retained until this product
+        definition measures fresh BYTE_EXACT.
 */
-int __cdecl council_votes(int faction_id) {
-    if (is_alien_faction(faction_id)) {
-        return 0;
-    }
-    int votes = 0;
-    Base *base = Bases;
-    for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++, base++) {
-        if (base->faction_id_current == faction_id) {
-            votes += base->population_size;
-        }
-    }
-    BOOL has_empath_guild = has_project(SP_EMPATH_GUILD, faction_id);
-    if (has_empath_guild) {
-        votes += votes / 2; // +50% votes
-    }
-    BOOL has_clinical_immortality = has_project(SP_CLINICAL_IMMORTALITY, faction_id);
-    if (has_clinical_immortality) {
-        votes *= 2; // Doubles votes
-    }
-    int bonus_count = Players[faction_id].faction_bonus_count;
-    if (bonus_count > 0) {
-        int *bonus_val1 = Players[faction_id].faction_bonus_val1;
-        for (i = 0; i < bonus_count; i++, bonus_val1++) {
-            if (bonus_val1[-8] == RULE_VOTES) { // faction_bonus_id[i], 8 ints back
-                int votes_bonus = *bonus_val1;
-                if (votes_bonus >= 0) {
-                    votes *= votes_bonus; // Peacekeeper bonus
-                }
+int __cdecl council_get_vote(int faction, int proposal, int target_faction) {
+    int result;
+
+    if (proposal == 0) {
+        result = 0;
+        target_faction = -3;
+        int i = 1;
+        do {
+            int votes = wants_prop(faction, 0, i);
+            if (votes > result) {
+                result = votes;
+                target_faction = i;
             }
-        }
-    }
-    return votes;
-}
+            ++i;
+        } while (i < 8);
 
-/*
-Purpose: Check whether a faction's leader is eligible to be a Planetary Governor candidate.
-// ORIGINAL: 0x0052AE20 ?eligible@@YAHH@Z 0x0052AE20-0x0052AEA4 BYTE_EXACT
-// LEVER: `faction_count` declared and zeroed BEFORE the `is_alien_faction`
-// guard (the image's `mov [ebp-4],0` runs ahead of the alien test even
-// though only the non-alien path reads it). `int`, not `uint32_t`, for
-// `faction_count`/`votes`/the loop `i` - the image's `jle`/`jl`/`setl`
-// tail is signed, an unsigned local turns it into `jbe`/`jb`/`sbb;neg`.
-// TRIED: reordering is_alive's `FactionsStatus[1] & (1 << faction_id)` -
-// no effect. Residual (53/54, SEMANTIC): `is_alive`'s inlined `test`
-// encodes its two operands in the image's order (`test dl, al`) vs ours
-// (`test al, dl`) - same flags, different byte, not chased further.
-// size      132 bytes
-// prototype 
-// callers   6   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x0052AD30
-Return Value: Is the leader eligible (top two vote totals)? true/false
-Status: Complete
-*/
-BOOL __cdecl eligible(int faction_id) {
-    int faction_count = 0;
-    if (is_alien_faction(faction_id)) {
-        return false;
-    }
-    int votes = council_votes(faction_id);
-    for (int i = 1; i < MaxPlayerNum; i++) {
-        if (faction_id != i && is_alive(i) && council_votes(i) > votes) {
-            faction_count++;
+        if (PlayersData[faction].unk_29[proposal] == 0 ||
+            (PlayersData[faction].diplo_treaties[result = PlayersData[faction].unk_30[proposal]] & 0x40c30) != 0) {
+            return target_faction;
         }
+    } else {
+        result = wants_prop(faction, proposal, target_faction);
+        unsigned int status = PlayersData[faction].diplo_treaties[target_faction];
+        if ((status & 0x10) != 0) {
+            --result;
+        }
+        if ((status & 0x20) != 0) {
+            --result;
+        }
+        if ((status & 1) != 0) {
+            ++result;
+        }
+        int direct = PlayersData[faction].unk_29[proposal];
+        if (direct != 0) {
+            return direct;
+        }
+        if (result > 0) {
+            return -1;
+        }
+        if (result < 0) {
+            return -2;
+        }
+        result = -1 - (GameDataStateStorage.fields_.turn_current_num_ + faction) % 3;
     }
-    return faction_count < 2;
+    return result;
 }
 
 // The council proposal table, 0x009A6828 in the shipped image - MaxProposalNum
@@ -952,6 +908,7 @@ Purpose: Apply a selected council proposal to faction and world state.
 The native dispatch's subtraction is only a dense jump-table bound check; the
 proposal values themselves match CouncilProposals.
 */
+
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0052BF60 0x0052C650 0x0052C66C 0x0052BF90
 // ORIGINAL: 0x0052BF60 ?council_action@@YAXHH@Z 0x0052BF60-0x0052C650 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0052bf60.cpp", "src/council.h", "src/game.cpp", "recovery/tests/test_council_action_behavior.py"], "reason": "Recovered complete proposal dispatch in its Council owner with genuine shared resolution arrays, Player and PlayerData members, Console lifetime references and shared climate state; preserves callback-sensitive faction reloads. Existing seed retains original extent/provenance."}
@@ -1128,6 +1085,119 @@ void __cdecl council_action(int proposal, int faction_id) {
         }
         return;
     }
+    }
+}
+
+/*
+Purpose: Say whether a faction may call the planetary council this turn:
+         alien factions never, the scenario flag pair (GameState's two
+         council bits) gates, an active sunspot blocks, the PBEM pair
+         blocks, the currently-spying base's owner is always admitted, and
+         otherwise some other live non-alien faction must share a
+         treaty-or-vendetta status bit with the caller.
+
+// ORIGINAL: 0x0052C670 ?can_call_council@@YAHHH@Z 0x0052C670-0x0052C87D BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned 0x52C670..0x52C87D council caller and message paths", "source:src/council.h already declares can_call_council and src/council.cpp owns CouncilPbemGate", "0x009A64E9 is byte 1 of GameDataStateStorage.fields_.lock_masks_.enable_mask_; use its named alive_mask_ view", "0x00939284 is ConsoleGlobal.faction_id_ at member offset 0x23BD4", "pinned PE .data bounded literals including NUL: 0x68C020 solar_sm.pcx through 0x68C02D; 0x68C030 SUNSPOTSNO2 through 0x68C03B; 0x68C03C COUNCILHOT through 0x68C046; 0x68C048 council_sm.pcx through 0x68C056; 0x68C058 COUNCILNEEDALL through 0x68C066. No emitted C++ data symbol is asserted before root's fresh physical-symbol observation."], "reason": "council admission query in the existing council owner"}
+// TRIED: MISMATCH #41 'mov' vs 'and', not chased further. The loop's triple early-exit (0x93f660==0 / two bit-mask misses) is a `goto blocked;` out of the for-loop rather than a `continue`, matching that all three targets jump clean out of the scan (not to its per-iteration increment).
+// size      525 bytes
+// prototype int (__cdecl ?can_call_council@@YAHHH@Z)(int32 factionID, int32 announce)
+// callers   3   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D9610
+// notes     Seed provenance (TRIED): MISMATCH #41 'mov' vs 'and' was not
+//           chased further; the scan's triple early-exit is a goto out of
+//           the faction walk, whose exit test stays an address compare
+//           against Players[8].rule_flags - not measured exact.
+Return Value: 1 the council may be called, 0 not
+Status: Coverage transcription - unclaimed body, seed
+        git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0052c670.cpp retained.
+*/
+int __cdecl can_call_council(int faction_id, int announce) {
+    if ((Players[faction_id].rule_flags & 0x80) != 0) {
+        return 0;
+    }
+
+    if ((static_cast<unsigned char>(GameDataStateStorage.fields_.net_turn_flags_) & 4) != 0) {
+        const unsigned char state =
+            static_cast<unsigned char>(GameDataStateStorage.fields_.game_state_);
+        if ((state & 0x40) == 0 || (state & 0x80) == 0) {
+            return 0;
+        }
+    }
+
+    if (GameDataStateStorage.fields_.sunspot_duration_ > 0) {
+        if (announce != 0 && faction_id == ConsoleGlobal.faction_id_ &&
+            ((1 << faction_id) &
+             GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) != 0) {
+            NetMsgPrimary.pop("SUNSPOTSNO2", "solar_sm.pcx");
+        }
+        return 0;
+    }
+
+    if (IsMultiplayerPBEM != 0 && CouncilPbemGate != 0) {
+        if (announce != 0 && faction_id == ConsoleGlobal.faction_id_ &&
+            ((1 << faction_id) &
+             GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) != 0) {
+            NetMsgPrimary.pop("COUNCILHOT", static_cast<const char *>(0));
+        }
+        return 0;
+    }
+
+    const int spy_index = GameDataStateStorage.fields_.secret_project_.empath_guild();
+    int has_empath = 0;
+    if (spy_index >= 0) {
+        has_empath = (Bases[spy_index].faction_id_current == faction_id);
+    }
+    if (has_empath) {
+        return 1;
+    }
+
+    {
+        for (int i = 1; i < 8; ++i) {
+            if ((Players[i].rule_flags & 0x80) == 0) {
+                if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &
+                     (1 << i)) != 0 &&
+                    i != faction_id) {
+                    if ((PlayersData[faction_id].diplo_treaties[i] & 0x8000008) == 0) {
+                        bool check_more = true;
+                        if ((static_cast<unsigned char>(GameDataStateStorage.fields_.game_state_) & 0x80) !=
+                            0) {
+                            const unsigned int bit_a1 = 1u << faction_id;
+                            if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
+                                 bit_a1) != 0) {
+                                if (faction_id == ConsoleGlobal.faction_id_) {
+                                    check_more = false;
+                                }
+                            }
+                        }
+                        if (check_more) {
+                            if (IsMultiplayerNet == 0) {
+                                goto blocked;
+                            }
+                            const unsigned int mask =
+                                GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF;
+                            const unsigned int bit_a1b =
+                                1u << faction_id;
+                            if ((mask & bit_a1b) == 0) {
+                                goto blocked;
+                            }
+                            if ((mask & (1 << i)) == 0) {
+                                goto blocked;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return 1;
+    blocked:
+        if (announce != 0 && faction_id == ConsoleGlobal.faction_id_ &&
+            (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
+             (1 << faction_id)) != 0) {
+            NetMsgPrimary.pop("COUNCILNEEDALL", "council_sm.pcx");
+        }
+        return 0;
     }
 }
 
@@ -1412,74 +1482,6 @@ void __cdecl call_council(int faction_id) {
         diplo_unlock();
     } else {
         council(faction_id, selection, selected_faction);
-    }
-}
-
-// ORIGINAL: 0x004243D0 ?clear_council_notify@@YAXH@Z 0x004243D0-0x004243E8 BYTE_EXACT
-// size      24 bytes
-// prototype 
-// callers   1   call targets   0
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     (none)
-// 0x004243D0  ?clear_council_notify@@YAXH@Z  ->  ?clear_council_notify@@YAXH@Z
-//
-// Historical byte-match context: this overload was first recorded before it
-// had a compiled source owner. Its implementation and BYTE_EXACT record are
-// now retained here in the Council owner.
-
-
-void __cdecl clear_council_notify(int a1) {
-    CouncilNotifyFormSlots[a1] = 0;
-    CouncilNotifyPluralSlots[a1] = 0;
-}
-
-// ORIGINAL: 0x004243F0 ?clear_council_notify@@YAXXZ 0x004243F0-0x0042440D FILE BYTE_EXACT
-// size      29 bytes
-// prototype 
-// callers   1   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// PRESERVED UNIT - measured BYTE_EXACT.
-//
-// Historical context: the source-form observations below came from earlier
-// compiler-matching work on this preserved unit. They describe useful
-// compiler-sensitive forms, not instructions to regenerate a translation
-// unit or verification artifact.
-//
-// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
-// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
-// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
-// and declaring `int i` twice in one function (VC6 leaks for-scope).
-// static_cast/reinterpret_cast are fine and are the right spelling.
-//
-// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
-// attempts to it. They are here rather than in a prompt so the next
-// agent does not rediscover them:
-//
-//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
-//    swapped; `if (x) {...}` gives `je`.
-//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
-//    two special cases branching FAR away, write them negated and
-//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
-//    sequential guard clauses, which inline each body instead.
-//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
-//    an indirect virtual call use the generated VCall shim below; for a
-//    thiscall function POINTER, take a member-function pointer of a
-//    dummy class instead of spelling the convention.
-//  * Loop form is visible: while / do-while / for lower differently,
-//    and so does counting up versus down.
-//  * If the original dedicates a callee-saved register to a constant
-//    across the whole body (an extra `push ebx`/`push edi` in the
-//    prologue), it had enough register pressure to do so. That is a
-//    hard case - the tool reports a similarity ratio so you can tell a
-//    near miss from a wrong body.
-
-void __cdecl clear_council_notify() {
-    for (int i = 0; i < 8; i++) {
-        CouncilNotifyFormSlots[i] = 0;
-        CouncilNotifyPluralSlots[i] = 0;
     }
 }
 
