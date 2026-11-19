@@ -289,7 +289,8 @@ def reindent(old, new):
         st = ln.strip()
         lab = bool(re.match(r'^[A-Za-z_]\w*:\s*$', st)) and not st.startswith('default')
         if not st:
-            if (out and not out[-1].strip()) or (j not in src and j not in (0, len(nl) - 1)):
+            # a blank line of old stays; whitespace left behind by a removed statement goes
+            if j not in src and j not in (0, len(nl) - 1) and (ln or (out and not out[-1].strip())):
                 continue
             out.append(ln if j in (0, len(nl) - 1) else '')
             continue
@@ -319,6 +320,24 @@ def locate(t, addr):
     if not m:
         raise SystemExit('no marker')
     j = t.find('\n', m.end()) + 1
+    # a marker written inside a block comment: continue after its close
+    q, inblock = 0, False
+    while q < m.start():
+        if inblock:
+            e = t.find('*/', q)
+            if e < 0 or e >= m.start():
+                break
+            q, inblock = e + 2, False
+        else:
+            a1, a2 = t.find('//', q, m.start()), t.find('/*', q, m.start())
+            if a2 < 0:
+                break
+            if 0 <= a1 < a2:
+                q = t.find('\n', a1) + 1
+            else:
+                q, inblock = a2 + 2, True
+    if inblock:
+        j = t.find('*/', m.start()) + 2
     # skip comment lines after the marker, then the signature up to the first '{' at depth 0
     p = j
     while True:
@@ -327,12 +346,21 @@ def locate(t, addr):
         if ln.lstrip().startswith('//') or not ln.strip():
             p = nl + 1
             continue
+        if ln.lstrip().startswith('/*'):
+            p = t.find('*/', p) + 2
+            continue
         break
     sig_start = p
     d = 0
     q = p
     while True:
         c = t[q]
+        if t.startswith('//', q):
+            q = t.find('\n', q)
+            continue
+        if t.startswith('/*', q):
+            q = t.find('*/', q) + 2
+            continue
         if c == '(':
             d += 1
         elif c == ')':
@@ -340,7 +368,7 @@ def locate(t, addr):
         elif c == '{' and d == 0:
             break
         elif c == ';' and d == 0:
-            raise SystemExit('declaration, not a definition')
+            sig_start = q + 1  # a declaration between the marker and the definition
         q += 1
     bs = q
     d = 0
@@ -360,7 +388,7 @@ def locate(t, addr):
         elif t.startswith('//', q):
             q = t.find('\n', q) - 1
         q += 1
-    sig = t[sig_start:bs]
+    sig = re.sub(r'/\*.*?\*/|//[^\n]*', '', t[sig_start:bs], flags=re.S).strip()
     isvoid = bool(re.match(r'\s*(static\s+|inline\s+|__inline\s+)*void\b', sig)) or (
         not re.search(r'\w[\w\s\*&:<>,]*\s[\*&]*[\w:~]+\s*\(', sig.split('(')[0] + '(') and '::' in sig)
     return bs, q + 1, isvoid
