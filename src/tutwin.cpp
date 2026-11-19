@@ -1092,7 +1092,6 @@ void TutWin::tour() {
     int x;
     int y;
     Map *tile;
-    int special;
     int index;
     int site_x;
     int site_y;
@@ -1328,7 +1327,7 @@ void TutWin::tour() {
                 fungus_y = y;
                 continue;
             }
-            special = (goody_at(x, y) || bonus_at(x, y, 0) || (bit_at(x, y) & 0x2000)) ? 1 : 0;
+            step = (goody_at(x, y) || bonus_at(x, y, 0) || (bit_at(x, y) & 0x2000)) ? 1 : 0;
             yield = crop_yield(ConsoleGlobal.faction_id_, -1, x, y, 0);
             tile = map_loc(x, y);
             bits = tile->bit;
@@ -1369,10 +1368,10 @@ void TutWin::tour() {
                 }
             }
             int score = higher && !lower;
-            score -= (fungus + special) * 3;
+            score -= (fungus + step) * 3;
             score -= elevated;
             score += (8 - lower) * 2;
-            if (!special) {
+            if (!step) {
                 int rocks = tile->val3 & ~0x3F;
                 if (!rocks) {
                     if (score > flat_score) {
@@ -1398,7 +1397,7 @@ void TutWin::tour() {
             int level = tile->climate >> 5;
             if (level == 3) {
                 score = yield
-                        + ((((4 - lower) * 2 - fungus - special) * 2 - higher) - elevated) * 8;
+                        + ((((4 - lower) * 2 - fungus - step) * 2 - higher) - elevated) * 8;
                 if ((tile->val3 & ~0x3F) > 0x40) {
                     score = 0;
                 }
@@ -1416,7 +1415,7 @@ void TutWin::tour() {
             int temperature = tile->climate & 7;
             int rainfall = (tile->climate >> 3) & 3;
             int ridge = higher && !lower;
-            score = ridge - (fungus + special) * 3 - (tile->val3 >> 6) - elevated
+            score = ridge - (fungus + step) * 3 - (tile->val3 >> 6) - elevated
                     + (8 - lower) * 2;
             if (score > temp_score[temperature]) {
                 temp_x[temperature] = x;
@@ -1449,7 +1448,7 @@ void TutWin::tour() {
                 || (temperature == coldest && score >= temp_score[temperature])) {
                 coldest = temperature;
             }
-            if (!special && !(bits & 0xA000)) {
+            if (!step && !(bits & 0xA000)) {
                 if (yield == 1) {
                     if (score > yield1_score) {
                         yield1_score = score;

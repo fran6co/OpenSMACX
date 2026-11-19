@@ -1773,6 +1773,7 @@ char LatestSaveCleared[4];
 char LatestScenarioCleared[4];
 
 void __cdecl setup_game(int reload) {
+    int rejected;
     GameDataStateStorage.fields_.legacy_game_save_name_[0] = 0;
 
     prefs_put("Latest Save", LatestSaveCleared);
@@ -1852,7 +1853,7 @@ void __cdecl setup_game(int reload) {
             seen_social_models[clear] = 0;
         }
         for (int social_faction = 1; social_faction < MaxPlayerNum; social_faction++) {
-            int rejected = 0;
+            rejected = 0;
             int category;
             int model;
             Players[social_faction].soc_ideology_category[0] = -1;
@@ -1932,7 +1933,7 @@ void __cdecl setup_game(int reload) {
         // Factions with rule flag 0x1000 ask for a second pair.
         for (int extra_faction = 1; extra_faction < MaxPlayerNum; extra_faction++) {
             if (setup_results[extra_faction] <= 1 && (Players[extra_faction].rule_flags & 0x1000)) {
-                int tries = 0;
+                rejected = 0;
                 int other;
                 do {
                     do {
@@ -1940,7 +1941,7 @@ void __cdecl setup_game(int reload) {
                     } while (other == extra_faction);
                 } while (((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1 << extra_faction)) &&
                          ((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1 << other)) &&
-                         ++tries < 200);
+                         ++rejected < 200);
                 setup_results[extra_faction]++;
                 setup_results[other]++;
             }
