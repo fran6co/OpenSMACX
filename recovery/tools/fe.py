@@ -73,7 +73,11 @@ def dis(data,org,relocs=(),lo=None,hi=None,selfsec=None,syms=None):
         op=op.replace('fs:[<r>]','fs:[0]')
         res.append((off,ins.mnemonic+' '+op,ins.size,tgt))
     res=[x for x in res if x[0]<end]
-    while res and not res[-1][1].startswith(('ret','jmp')): res.pop()
+    # Trailing rows after the last ret/jmp are padding or table bytes, except a
+    # noreturn tail: a body whose last instruction, padding aside, is a call (Heap::get 0x005D4680 ends in `call exit`).
+    while res and res[-1][1].strip() in ('nop','int3'): res.pop()   # COMDAT alignment padding
+    if not (res and res[-1][1].startswith('call')):
+        while res and not res[-1][1].startswith(('ret','jmp')): res.pop()
     return res
 def align(A,B):
     n,m=len(A),len(B)
