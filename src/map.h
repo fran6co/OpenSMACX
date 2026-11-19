@@ -396,6 +396,8 @@ static_assert(sizeof(void *) != 4 || sizeof(MapStorageWindow) == 0xAA4,
 // applying it. Image .data holds 0x00288050. See map.cpp, which defines it
 // beside the evidence.
 extern uint32_t MapTileFlagClearMask;          // 0x006919EC
+// WORKAROUND(inline): invented reference accessors of MapTiles and
+// MapAbstractTiles; budget only, decided per function (see is_human, faction.h)
 inline Map *&map_tiles() { return MapTiles; }
 inline uint8_t *&MapAbstract() { return MapAbstractTiles; }
 void __cdecl map_resample(int width, int height);

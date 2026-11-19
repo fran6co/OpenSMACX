@@ -1055,15 +1055,20 @@ MEASURED inline char *__cdecl get_insult_leader(int faction_id) {   // 00559160
 }
 
 // INLINE: the image has no is_human - it open-codes what this names.
+// WORKAROUND(inline): invented name; it only spends or reserves /Ob2 budget
+// (the 2026-11-19 macro screen moved functions both ways), so each site is
+// decided per function by call multiset, raw mask test or this helper.
 inline BOOL __cdecl is_human(uint32_t faction_id) {
     return GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1u << faction_id);
 }
 
 // INLINE: the image has no is_alive - it open-codes what this names.
+// WORKAROUND(inline): invented name, budget only; see is_human
 inline BOOL __cdecl is_alive(uint32_t faction_id) {
     return GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1u << faction_id);
 }
 
+// WORKAROUND(inline): invented name, budget only; see is_human
 inline BOOL __cdecl is_alien_faction(uint32_t faction_id) {
     return ExpansionEnabled && (Players[faction_id].rule_flags & RFLAG_ALIEN);
 }

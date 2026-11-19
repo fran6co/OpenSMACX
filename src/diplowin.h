@@ -416,17 +416,22 @@ class DiploWin : public GraphicWin, public SubInterface {
 // line, as the image does; written out raw they spend nothing.
 void __cdecl message_data(int opcode, int target, int payload_10,
                           int payload_14, int payload_18, int payload_1C);  // netdaemon.h
+// WORKAROUND(inline): invented names; the image only shows the expanded
+// bodies in process_message. Kept as inlines for the /Ob2 budget they spend
+// there (the ~FlatButton teardown calls), not as recovered declarations.
 inline void DiploWin::receive_clear_offer() {
     offer_count_[1] = 0;
     GraphicWin::redraw();
 }
 
+// WORKAROUND(inline): see receive_clear_offer
 inline void DiploWin::receive_channel_status(int status) {
     offer_state_[1] = status;
     check_done();
     GraphicWin::redraw();
 }
 
+// WORKAROUND(inline): see receive_clear_offer
 inline void DiploWin::receive_maybe_deal(const int &sender) {
   if (offer_state_[0] == 1 && offer_state_[1] == 1) {
     message_data(0x150B, sender, 0, 0, 0, 0);

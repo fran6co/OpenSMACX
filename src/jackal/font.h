@@ -71,28 +71,6 @@ class Font {
  public:
   void close(); // 00619230
   int width(LPSTR input);
-  // Source-only bounded-width helper used at both line-break sites. Its
-  // private name is not an original mapped identity; Font::width remains
-  // the public mapped operation defined in font.cpp.
- private:
-  int measure_bounded_width(LPSTR input, int max_len) {
-    if (!input) {
-      return 0;
-    }
-    // `strlen` TWICE, and SIGNED. The clamp is a min MACRO that re-evaluates
-    // its argument - `call strlen; cmp ebx, eax; jl; call strlen` - so the
-    // macro form (which evaluates `b` once for the test and once for the
-    // value) is what produces the image's two calls. `jl`, not `jbe`, because
-    // both operands are int there; a `size_t` comparison emits the unsigned
-    // branch.
-    int len = FONT_MIN(max_len, static_cast<int>(strlen(input)));
-    SelectObject(FontHDC, font_obj_);
-    SIZE size;
-    GetTextExtentPoint32A(FontHDC, input, len, &size);
-    SelectObject(FontHDC, GetStockObject(SYSTEM_FONT));
-    return size.cx;
-  }
- public:
   int width(LPSTR input, int max_len); // 006192F0
   LPSTR find_line_break_l(LPSTR input, int *break_len, int len);
   bool is_initialized() const { return font_obj_ != NULL; }
