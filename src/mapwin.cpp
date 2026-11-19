@@ -3574,8 +3574,8 @@ int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3, int a4,
             territory_faction = (uint32_t)ConsoleGlobal.faction_id_;
         }
     }
-    local_84 = (map_tiles()[MapLongitude * a8 + local_14].climate >> 3) & 3;
     local_8c = (uint32_t)(map_tiles()[MapLongitude * a8 + local_14].climate >> 5);
+    local_84 = (map_tiles()[MapLongitude * a8 + local_14].climate >> 3) & 3;
     local_38 = (uint32_t)(map_tiles()[MapLongitude * a8 + local_14].val3 >> 6);
     if (a4 >= 0 && (PlayersData[a4].flags & 0x200) == 0) {
         // 0x463529 indexes `+0xC + 4 * a4` with no faction-zero branch:
