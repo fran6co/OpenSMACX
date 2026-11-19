@@ -670,6 +670,7 @@ def analyse(c, text, addr):
         if o_ is not None and c_ is not None and k_ != '!!':
             amap[o_[0]] = c_[0]
     groups = {}
+    counted = set()
     # an unmarked image callee (sub_X: a CRT routine without a name) pairs with our one-side callee of equal count
     ion = {k: len(v) for k, v in si.items() if k[0] == 'C' and k not in so and str(k[1]).startswith('sub_')}
     oon = {k: len(v) for k, v in so.items() if k[0] == 'C' and k not in si}
@@ -682,6 +683,7 @@ def analyse(c, text, addr):
         ai, ao = si.get(key, []), so.get(key, [])
         pr, ri, ro = pair(ai, ao, amap)
         if key[0] == 'C' and len(ai) != len(ao):
+            counted.add(key)
             hits.append(dict(kind='COUNT', key=key, img=len(ai), ours=len(ao),
                              img_at=['%x' % (lo + o) for o, _ in ri], ours_at=['%x' % o for o, _ in ro], score=5 * abs(len(ai) - len(ao))))
         for (oi, gi), (oo, go) in pr:
@@ -694,6 +696,9 @@ def analyse(c, text, addr):
     for (kind, pi, po), ss in groups.items():
         nc = sum(1 for k, _, _ in ss if k[0] == 'C')
         w = W[kind] * max(site_weight(k) for k, _, _ in ss)
+        if kind.startswith(('IMG-ONLY', 'OURS-ONLY')) and all(k in counted for k, _, _ in ss):
+            kind += ' tail?'   # the key's call count differs too: usually one side keeps a tail copy per arm
+            w *= 0.3
         ss.sort(key=lambda s: (s[0][0] != 'C', int(s[1], 16)))
         k0, ia, oa = ss[0]
         jw = lambda w, p, base: ','.join('%x' % (base + o) for o in w.get((p[0], p[1]), [])[:6]) if p else ''
