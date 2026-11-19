@@ -4941,6 +4941,26 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
     more after the last section. Slot map one-to-one with the image, 137 ->
     79 rows. A per-section `row = bottom` copy in ours where the image
     keeps writing one home is this chain.
+  - *A value homed until a dead `test` is live until that test.*
+    SocialWin::init 0x004B2740: the image stores the screen-width flag to
+    its own home ([ebp-0x2C], 0x4B281B) and reloads it for a branchless
+    `test eax,eax` right before the first Font::init call (0x4B2FB0). Ours
+    (a size ternary on a constant local) kept the `setne` but lost the
+    test, so the flag died at once, took faction_id's dead parameter slot,
+    and pushed a loop counter into memory. A ternary on the receiver,
+    `(wide ? font1_ : font1_).init(...)`, keeps the test where the image
+    has it (both arms merge after the pushes, the branch goes, the test
+    stays) and the flag in its home: 319 -> 268 rows. An if/else of two
+    identical calls keeps the home but not the merge (372).
+  Not every rank difference is structure. ProdPicker::draw_item 0x004927C0
+  (id/color/veh_id ranked color > veh_id > id in the image, id > color >
+  veh_id in ours): the image spills `item - first` and the row's y into
+  color's and veh_id's homes at entry (0x4927F7, 0x49280F) because ebx holds
+  column_count there and `item` is reloaded into ebx only after set_clip
+  (0x492864); ours gives ebx to `item` from the prologue and spills
+  nothing. Spellings of the rectangle (inline args, named w/h, field
+  stores, an inline helper with the bounds test) all compile alike; the
+  cause is the register decision for `item` (2.7), not the declarations.
 - **A RECT packs with a later address-taken array** (par-5 2026-11-19,
   `analysis/probes/rectpack/run.py`). A RECT local whose address is never
   taken out of line shares its frame slot with a later `char[16]` whose
