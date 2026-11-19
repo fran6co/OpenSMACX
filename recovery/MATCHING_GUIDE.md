@@ -4233,3 +4233,45 @@ Large-function region pass (par-5 2026-11-19)
     (base_growth).
   - **Reversed spill reloads:** spill reloads in exactly reversed order at loop
     boundaries.
+
+- **Counter-subscript signature: no other site** (par-5 2026-11-19).
+  `findpat.py ctrsub` and `latectr` over all 5,574 marker spans hit only
+  InfoWin::setup_text; do not look for `A[p][k++]` tables elsewhere.
+- **Merging two names whose disjoint values already share a packed slot is
+  neutral** (par-5 2026-11-19): time_warp 0x005AEDE0 `smallest_pop` into
+  `best_score` (733 = 733 rows, same code), setup_text `mode` into `pane`
+  (60 = 60), give_hints' sibling 8-direction counters into one `i` (570,
+  575 or 581). VC6 allocates registers per web and packs block- and
+  function-scope scalars by live range, so a reuse only shows where the
+  second value keeps the FIRST one's memory home alive (setup_text's
+  `faction` census counter, 3.3). `varslot.py` hits of that kind are noise.
+- **Large-function equilibria not moved by local spellings** (par-5
+  2026-11-19; image facts for the next attempt, none a one-line fix):
+  enemy_strategy 0x00561080 keeps `sites` in bl through the settle block
+  (ours spills it: the frame's +4), `path`/`reach` memory-homed with
+  their_combat in ebx, `region` reloaded at the loop top with the latch in
+  edi (loop header, bad_reg written out, old_plan type, reach/path scope and
+  seven `full |=` spellings: 1911 rows each or worse). base_build 0x004F81A0
+  at 0x4FC2E6 spills the `PlayersData[target]` product to -0x48 and keeps
+  the tech divisor in ebx (ours spills the divisor and holds the product in
+  edi across the Reactor loop, whose pointer then lives in memory; a
+  block-local divisor and six Reactor-loop spellings are neutral). time_warp
+  caches faction_id in edi from 0x5AF8EF through the base-founding arm, so
+  the inlined get_plan counters and `smallest_pop` stay in memory (-0x1c).
+  order_veh 0x005947C0: four statement orders of the opening assignments
+  out of 24 are within 33 rows, the present one is best. repair_phase
+  0x00526030 (16 rows, frame 0x28 against 0x24): the image multiplies
+  `reactor_id` by repair_rate from memory and gives reactor_id the slot of
+  has_fac's `is_built` (-0x24); seven spellings of the product and four
+  positions of `has_repair_bay` do not move it (initialising has_repair_bay
+  early gives the frame and 60 rows: the image's store is at 0x526439, the
+  present position). ListBox::on_key_down 0x0060AF90 (frame 0x14 against
+  0x10): the image evicts `count` to [esp+0x10] and holds the saved top in
+  edi, the switch index in ebx; writing the DOWN/RIGHT arms on the saved top
+  costs rows (165 -> 172..181) and one mixed spelling gives the frame at
+  174, with no image evidence that separates the local from the CSE'd
+  member, so nothing was kept.
+- **Inline-local slots look last-freed-first-reused** (hypothesis, one
+  observation): order_veh's two has_fac expansions use (offset, mask) =
+  (-0x64, -0x50) and (-0x50, -0x64); ours with three locals rotates the
+  same way. Not probed.

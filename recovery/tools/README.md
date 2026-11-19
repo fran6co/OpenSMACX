@@ -223,3 +223,7 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   inside one function; sites that share a cross-jumped tail must be flipped together (MATCHING_GUIDE 3.7).
 - `analysis/offline.py <unit> <addr> [src]` offset -> source line map of our function from /FAsc.
 - `analysis/info.sh <unit> <addr> <src>...` one line per whole-file variant: rows, frame, `this` register, ebx uses.
+- `analysis/findpat.py ctrsub|latectr [--nonexact]` (with addsub, bytecse, negcopy) image-side signature scans over every
+  marker span: `ctrsub` = the unfolded inner product of a counter subscript `A[p][k++]` (MATCHING_GUIDE 2.4), `latectr` =
+  rising `mov [slot],K` stores between the pushes of calls (the post-increment's store). 2026-11-19: both hit only
+  InfoWin::setup_text, tree-wide, exact functions included.
