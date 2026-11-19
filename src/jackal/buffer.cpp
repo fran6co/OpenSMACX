@@ -107,7 +107,6 @@ static int BufferCopyRemainder;
 // the image diff); the original's spend is not identified. What remains is
 // block sharing: the image keeps one surface-release tail for all five arms
 // after the last arm and a separate no-surface copy in arms 1 to 3.
-static inline int buffer_copy_budget_probe1(int x) { if (x == 0) x = 1; return x; }
 static inline int buffer_copy_budget_probe4(int x) {
     if (x == 0) x = 1;
     if (x == 1) x = 4;
@@ -312,8 +311,8 @@ int Buffer::copy(Buffer *buffer, int xCoord, int yCoord, int wx, int wy,
         if (destination == 0) {
             return 3;
         }
-        buffer_copy_budget_probe4(5);  // WORKAROUND(inline): see buffer_copy_budget_probe1
-        buffer_copy_budget_probe4(5);  // WORKAROUND(inline): see buffer_copy_budget_probe1
+        buffer_copy_budget_probe4(5);  // WORKAROUND(inline): see buffer_copy_budget_probe4
+        buffer_copy_budget_probe4(5);  // WORKAROUND(inline): see buffer_copy_budget_probe4
         if (source == 0) {
             buffer->free_data(1);
             return 3;
