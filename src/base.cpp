@@ -4842,11 +4842,13 @@ void __cdecl base_terraform(int force_improve) {
         }
         int zoc = zoc_move(x, y, faction);
         if (zoc >= 0) {
-            if (zoc == 1) {
+            // The image decrements zoc once (0x004ED6FA dec eax; je) and indexes with it.
+            zoc--;
+            if (!zoc) {
                 continue;
             }
             // BUG(original): zoc 0 reads diplo_treaties[-1] (0x004ED6FA).
-            if (PlayersData[faction].diplo_treaties[zoc - 1] & 0xC30) {
+            if (PlayersData[faction].diplo_treaties[zoc] & 0xC30) {
                 continue;
             }
             if (anything_at(x, y) >= 0) {
