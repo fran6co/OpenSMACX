@@ -126,10 +126,11 @@ def main():
 
     # 1. windows
     rs, i = [], 0
+    differs = lambda r: r[0] == '!!'  # '!>' rows (same text, other jump target) are layout, not scheduling
     while i < len(rows):
-        if rows[i][0] != '  ':
+        if differs(rows[i]):
             j = i
-            while j < len(rows) and rows[j][0] != '  ':
+            while j < len(rows) and differs(rows[j]):
                 j += 1
             rs.append((i, j))
             i = j

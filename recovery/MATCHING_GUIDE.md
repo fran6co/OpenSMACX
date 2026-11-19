@@ -1668,7 +1668,13 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   (image `xor eax,eax` before a store from a local DSBCAPS: if/else, goto and
   named-result forms compile identically), DesignWin::on_iface_right_click
   (thiscall receiver hoisted above two address-taken local stores: statement
-  order and label_get forms do not move it).
+  order and label_get forms do not move it). The uV library unit
+  (src/uv/movie_media.cpp) has a family of these: the image sets the return
+  value (`xor eax,eax`) between the epilogue pops (`pop edi; pop esi; pop
+  ebp; xor eax,eax; pop ebx`) where VC6 sets it before them (sub_5cae80,
+  setup_sound_device); /G4-/G6, /Oy-, /Oi, /Ob2, /Os, /Oa, /Ow, /Op are no
+  closer for the unit. Its compiler identity is open (VC5 needs the unit's
+  forced-include header adapted before it can be tried).
 - **S4. Which operand a two-operand expression allocates first follows the
   order the operands were first referenced, not the spelling** (high for
   members, locals and fields; p03, p04, p04c, p01_fieldorder). For `x + y`,
