@@ -241,7 +241,7 @@ without `/Oy-`).
   auto-inlined (C4711), and reordering compiled identically; always check
   C4711. An explicit `inline` *member* defined later still inlines.
   `__forceinline` and `inline` compile identically for `label_get` across
-  all 48 using files.
+  all 5,574 markers; its named LPSTR local, not the keyword, is load-bearing.
 - **Seeing decisions.** Compile with the unit's production command from
   `build/compile_commands.json` plus `/W4`, then grep `C4711`. That lists every
   automatic inline in order; explicit `inline` functions are not listed. Treat
@@ -2072,8 +2072,12 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   `t = f() * y; z += t;` keeps `imul eax, edx` and schedules the next call's
   push before the stores (supply_options).
 - **Nested label_get in an argument list.** When the image calls get after the
-  outer call's other pushes, write `StringTable.get(Labels.strings_ptr[k])`;
-  the forceinline label_get hoists the call ahead of them (PrefWin::init).
+  outer call's other pushes, write `StringTable.get(Labels.strings_ptr[k])`
+  at that site: written out, the later arguments are pushed before the label
+  load (PrefWin::init, interlude's CARETAKE parse_says). The `inline` vs
+  `__forceinline` keyword is irrelevant (identical over all 5,574 markers);
+  the named `LPSTR label_value` local inside label_get carries its shape
+  (label offset loaded before ecx is set, as through an LPSTR parameter).
 - **The comparison literal survives.** `x >= 4` gives `cmp 4; jge`, `x > 3`
   gives `cmp 3; jg`; an off-by-one constant with a different jcc in an
   aligned diff names the original spelling (fixed 9 sites in base_terraform).
