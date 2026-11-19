@@ -8042,7 +8042,7 @@ void __cdecl make_a_proposal(int faction_id, int other_faction_id,
     // loan and council paths expand deeper than the image's (0, 2, 4 and 6
     // probes give 862, 808, 804 and 729 instructions against 808, with the
     // propose_trade_maps call expanded).
-    communicate_budget_probe(0); communicate_budget_probe(0);
+    communicate_budget_probe(0);
 
 
     if (selection_ready == 0 && proposal_menu(faction_id, other_faction_id) == 0) {
@@ -8186,9 +8186,9 @@ void __cdecl make_a_proposal(int faction_id, int other_faction_id,
                 break;
             }
             clear();
-            strcat(StringTemp, table_text(Proposal[proposal].name));
-            strcat(StringTemp, "|");
-            strcat(StringTemp, table_text(Proposal[proposal].description));
+            says(table_text(Proposal[proposal].name));
+            says("|");
+            says(table_text(Proposal[proposal].description));
             popup.item(StringTemp, proposal);
         }
 
@@ -8209,10 +8209,10 @@ void __cdecl make_a_proposal(int faction_id, int other_faction_id,
             for (int candidate = 1; candidate < MaxPlayerNum; ++candidate) {
                 if (is_alive(candidate) && eligible(candidate)) {
                     clear();
-                    strcat(StringTemp, get_title(candidate));
+                    says(get_title(candidate));
                     // The image appends BufferJoinSpace (0x00682820) here (0x0054FC9A).
-                    strcat(StringTemp, BufferJoinSpace);
-                    strcat(StringTemp, get_name(candidate));
+                    space();
+                    says(get_name(candidate));
                     popup.item(StringTemp, candidate);
                     if (candidate == faction_id) {
                         popup.set_value(candidate);
