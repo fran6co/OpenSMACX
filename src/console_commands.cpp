@@ -91,11 +91,43 @@ inline int __cdecl has_treaty(int faction_id, int faction_id_with, int treaty) {
 // push ecx` (image) against `add edx, ecx; push edx` is a tie-break on the
 // front-end symbol counter modulo 64 (guide 2.5); `recover canary
 // src/console_commands.cpp` computes the pad count.
+// Re-tuned 2026-11-19 against the sprite.h/popup.h headers (whole-unit fe sweep of this block): exact at 62-2, 5-10,
+// 17-20 and 24-43, so 33 (Console::upgrade 147 rows).
 // CANARY: 0x004E2000 ?corner_the_market@Console@@QAEXXZ residues 6,15-45
 // CANARY-PADS: function ConsoleCommandsDeclFnPad
 void ConsoleCommandsDeclFnPad0();
 void ConsoleCommandsDeclFnPad1();
 void ConsoleCommandsDeclFnPad2();
+void ConsoleCommandsDeclFnPad3();
+void ConsoleCommandsDeclFnPad4();
+void ConsoleCommandsDeclFnPad5();
+void ConsoleCommandsDeclFnPad6();
+void ConsoleCommandsDeclFnPad7();
+void ConsoleCommandsDeclFnPad8();
+void ConsoleCommandsDeclFnPad9();
+void ConsoleCommandsDeclFnPad10();
+void ConsoleCommandsDeclFnPad11();
+void ConsoleCommandsDeclFnPad12();
+void ConsoleCommandsDeclFnPad13();
+void ConsoleCommandsDeclFnPad14();
+void ConsoleCommandsDeclFnPad15();
+void ConsoleCommandsDeclFnPad16();
+void ConsoleCommandsDeclFnPad17();
+void ConsoleCommandsDeclFnPad18();
+void ConsoleCommandsDeclFnPad19();
+void ConsoleCommandsDeclFnPad20();
+void ConsoleCommandsDeclFnPad21();
+void ConsoleCommandsDeclFnPad22();
+void ConsoleCommandsDeclFnPad23();
+void ConsoleCommandsDeclFnPad24();
+void ConsoleCommandsDeclFnPad25();
+void ConsoleCommandsDeclFnPad26();
+void ConsoleCommandsDeclFnPad27();
+void ConsoleCommandsDeclFnPad28();
+void ConsoleCommandsDeclFnPad29();
+void ConsoleCommandsDeclFnPad30();
+void ConsoleCommandsDeclFnPad31();
+void ConsoleCommandsDeclFnPad32();
 
 // Shared separator objects the image pushes instead of unit literals.
 extern const char BufferJoinSpace[];
@@ -3061,8 +3093,8 @@ void Console::explore(int veh_id) {
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004d8fa0.cpp", "source:src/alpha.h", "pinned:0x004D8FF4 dword value 3 store before supply_options at 0x004D8FFE", "source:src/netdaemon.h:flat member action_mode_ at NetDaemon+0x1B74", "source:src/console.cpp:supply_options reads the same source-owned action flags"], "reason": "Seed 004d8fa0 identifies the Console convoy order and lock lifecycle; typed Veh, Base and RulesResource records replace receiver and table offsets. The resource label run at 0x0094615C is Resource[0].name_plural, with the singular member selected for a yield of one. The original pre-panel dword value 3 write at 0x004D8FF4 targets the already-owned NetDaemonNet.action_mode_, whose singleton-relative offset 0x1B74 identifies 0x0093E904. Preserve that write before supply_options without adding duplicate storage or claiming full matching/acceptance."}
 // Original convoy pushes at 004D9057/004D911D select distinct writable strings.
 // Current NUL-terminated literals have separate complete COMDATs, not lifetime proof.
-// RECOVERY_LITERAL: v1 0x00688ED4 0x00688EDF $SG64097 0x004D8FA0
-// RECOVERY_LITERAL: v1 0x00688EE0 0x00688EEE $SG64105 0x004D8FA0
+// RECOVERY_LITERAL: v1 0x00688ED4 0x00688EDF $SG64127 0x004D8FA0
+// RECOVERY_LITERAL: v1 0x00688EE0 0x00688EEE $SG64135 0x004D8FA0
 void Console::convoy(int veh_id) {
     if (NetDaemonNet.lock_veh(&veh_id, 0, -1, -1, 0) != 0) {
         return;
@@ -3316,10 +3348,10 @@ void Console::assemble() { // 0x004D95F0
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004D9970 ?editor_on@Console@@QAEXXZ 0x004D9970-0x004D9AC5 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004d9970.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
-// RECOVERY_LITERAL: v1 0x00688F3C 0x00688F46 $SG64234 0x004D999D
-// RECOVERY_LITERAL: v1 0x00688F48 0x00688F53 $SG64236 0x004D99B4
-// RECOVERY_LITERAL: v1 0x00688F54 0x00688F5D $SG64239 0x004D99F9
-// RECOVERY_LITERAL: v1 0x00688F60 0x00688F6A $SG64241 0x004D9A11
+// RECOVERY_LITERAL: v1 0x00688F3C 0x00688F46 $SG64264 0x004D999D
+// RECOVERY_LITERAL: v1 0x00688F48 0x00688F53 $SG64266 0x004D99B4
+// RECOVERY_LITERAL: v1 0x00688F54 0x00688F5D $SG64269 0x004D99F9
+// RECOVERY_LITERAL: v1 0x00688F60 0x00688F6A $SG64271 0x004D9A11
 void Console::editor_on() {
     if ((IsMultiplayerNet || IsMultiplayerPBEM) &&
         !(GameDataStateStorage.fields_.game_state_ & 0x61) &&
