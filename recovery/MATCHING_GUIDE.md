@@ -4249,6 +4249,153 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   follows live ranges"), so one extra or one missing memory value shifts
   every later low-priority local by a slot; fix the register decision and the
   slot map follows.
+  Second list (par-6 2026-11-19, the rest of the framescan list; `d` = ours
+  minus image). Each line names the value and the image addresses, for the
+  register work:
+  - custom_planet 0x0058C2A0 (-8): `&AlphaIniPrefs.custom_world[slot]` homed at
+    [ebp-0x1C] (0x58C381, reload 0x58C765) and `&planet_rules_[slot]` at
+    [ebp-0x14] (0x58C390, 0x58C79A); `slot` dies at the switch (`dec esi`,
+    0x58C3BF). Ours keeps `slot` reloadable through the slots walker and
+    re-forms both addresses, also when they are written as pointer locals.
+  - Buffer::write_pcx 0x005DF590 (+4): the output cursor stays in esi from
+    0x5DF6E2 to the end, `this` is in ebp, the pixel row in ebx (home
+    [esp+0x10]), the column in edi. Ours has `this` in esi, the cursor in ebp
+    AND homed at [esp+0x18] (ours +0x244, +0x2D3).
+  - ListBox::on_key_down 0x0060AF90 (-4): `count` homed at [esp+0x10]
+    (0x60AFBA) and reloaded per case (0x60B052, 0x60B08A, 0x60B17C, 0x60B1DE)
+    with old_top in edi, old_selected in ecx and the Dialog base in edx across
+    the switch jump; ours keeps `count` in ebx for the whole function.
+  - BaseWin::init 0x0041E8D0 (-4): two address temporaries are homed,
+    `&font1_` at [ebp-0x2C] (0x41F291, reloads 0x4209B8, 0x4209F1) and
+    `&flatButtons_[0]` at [ebp-0x28] (0x41FBBD, reload 0x4209A9 into esi),
+    because `this` dies at 0x420990 (`add esi,0xcaa8` in place) and the redraw
+    loop takes esi for the walker and edi for the down-counter. Ours keeps
+    `this` in esi to the end and homes the counter instead; a named
+    `Font *font = &font1_` is folded back into `lea`.
+  - MapWin::draw_map 0x0046A550 (-4): `dy` is homed at [ebp-0x28] (0x46A8BA)
+    and reloaded after the horizontal fill (0x46AA0B); `x1` is spilled to the
+    home that later takes `current_pixel_y` (0x46A6A0/0x46A6B9, reload
+    0x46A6D7). Ours keeps both in registers (ebx, ecx).
+  - ReportWin::draw_intel 0x004A2210 (-4): `subject` is in ebx (two stores,
+    two loads at [ebp-0x1C]) and the `Players[subject]` byte offset is the
+    spilled value ([ebp-0x10], stored 0x4A2456, reloaded 0x4A2485, 0x4A24F1,
+    0x4A2F44; `shown` and `faction` reuse that home later). Ours gives ebx to
+    the offset and keeps `subject` in memory (12 accesses), so `shown` packs
+    with `priorities` and `faction` with has_fac's mask. This replaces the
+    "mask live range" reading in the slot-sharing entry above.
+  - social_ai 0x005B4790 (+4): ours forms the `PlayersData[faction_id]` offset
+    temporary at its first use (ours +0x38C, [ebp-0x34]) and reloads it at
+    +0x82A and +0xBEE; the image recomputes it at 0x5B4FAB and homes it only
+    from there, in the home `j`/`effic_val`/`f` share ([ebp-0x18], reload
+    0x5B5361).
+  - NetDaemon::synch 0x00532E00 (-4): a loop-form difference (2.4), not a
+    variable: the social category case (0x533EE7..0x533F64) keeps three
+    induction temporaries in homes, the staging row pointer [ebp-0x28]
+    (+0xD4), the destination prerequisite pointer [ebp-0x20] (+4) and the
+    source effect pointer [ebp-0x24] (+0x2C), with the destination byte offset
+    in [ebp+0xC] (`cmp ecx,0x350`) and the inner offset in eax
+    (`cmp eax,0xB0`); ours runs the inner loop on one down-counter. A
+    `stage` pointer walked like the neighbouring cases gave frame +4.
+  - BaseWin::draw_expenses 0x00412AA0 (-4): one more temporary home in the
+    image, [ebp-0x3C], shared by the `&production_outer_rect_` address
+    temporary (0x412B23, reload 0x412E48), a never-reloaded copy of tile.top
+    (0x413297, 0x413B2F, 0x4143FA) and the three sections' loop counters
+    (0x4132CA, 0x413B62, 0x41442D); ours spreads the same temporaries over
+    the homes of `left`, `mineral_cost` and `energy_cost`. `wide` and `left`
+    share [ebp-0x8C] in the image by packing; merging the names in the source
+    is worse (1024 -> 1301 rows).
+  - caviar_apply_rotation 0x00627D00 (+4, VC5 x87): the shared `cz * sy`
+    product stays on the FPU stack from 0x627D8A to the closing
+    `fstp st(0)` (0x627E13); ours spills it. `sz * sy` IS a float variable
+    in both (rounded through [esp+0x10]).
+  - NewTechWin::exec 0x00483F90 (-12): `number[16]` sits alone at [ebp-0x74]
+    and the two RECT scratch areas at [ebp-0x24] and [ebp-0x14]; ours packs
+    `number` with `strip`/`inner` and keeps a spill at [ebp-4]. Changing which
+    rectangle `inset_rect` writes, the array size or the declaration scope
+    does not separate them (the packing takes any dead 16-byte area).
+  - NetSessionPickerWin::initialize 0x0063BF10 (-12): `rect` is a RECT in
+    memory ([esp+0x14], left/right stored at 0x63C06A/0x63C064, top in ebx,
+    bottom in edi) and margin_y is in ebp; ours scalarises the RECT, also when
+    its address goes through offset_rect.
+- **An allocated slot that nothing reads or writes, between homes of one
+  type, is an array element** (par-6 2026-11-19, slide_show 0x0045D440).
+  The image keeps the four sprite x positions at [ebp-0x38], [ebp-0x34],
+  (nothing at [ebp-0x30]) and [ebp-0x2C]: the third value lives in ebx and
+  never reaches memory, but its slot is still allocated. VC6 enregisters
+  single elements of a small local array (or struct) and keeps the whole
+  object's frame space; four separate scalars would have been packed without
+  the gap and in priority order. `int frame_x[4]` gave the image's frame
+  (0xB5C -> 0xB60) and 145 -> 105 rows. Read `framescan.py --addr` for holes
+  inside a run of same-width homes before looking for a missing variable.
+- **A scratch struct copied into several destinations with ONE store per
+  field and a running value in a register was mutated between the copies**
+  (par-6 2026-11-19, NewTechWin::exec 0x00483F90). `dst = scratch;
+  dst.top = v;` stores top twice (the copy's store, then the patch; the image
+  shows that form once, at category_rect_). `scratch.top = v; dst = scratch;`
+  stores it once and keeps `v` in the register that carries the cursor from
+  one rectangle to the next (`add edi,3; mov [ebx+4],edi`, then the member is
+  read back because the store went through a pointer). 331 -> 297 rows.
+- **A pointer formed once per iteration and homed, with the index dead after
+  it, was a named pointer or an address temporary our allocation does not
+  form** (custom_planet above). Writing the pointers lowers the rows
+  (404 -> 369) without changing the frame when the index stays reloadable;
+  the remaining lever is what keeps the index alive in ours.
+- **One height, reassigned** (NetSessionPickerWin::initialize): a store of a
+  second value to the home of an earlier variable, followed by reads of that
+  home where our source names the first variable, is one reassigned variable
+  (`button_height = rect.bottom - rect.top` twice, 0x63C086 and 0x63C0EF).
+  Track pending pushes when reading esp-relative homes: the third init's
+  width argument is the home of button_width (0x63C138), which an earlier
+  reading had taken for the create button's height.
+- **One name over two image homes is two variables** (par-6 2026-11-19,
+  `analysis/splitaudit.py`, the reverse of the imgmerge screen). When the
+  stores of one of our names land in home A over one line range and in home
+  B over a later, disjoint range, the image had two variables: VC6 keeps one
+  home per name. Three sources of such names, all found by the tree pass:
+  - *a decompiler reuse.* battle_compute 0x00501DA0 kept is_bombard at
+    [ebp-0x1C] and wrote the bunker/base/open-ground multiplier to
+    [ebp+0xC], the home the terrain multiplier used just before: the second
+    multiplier is the terrain multiplier reassigned, not is_bombard
+    (90 -> 35 rows, every named home on the image's slot).
+    consider_designs 0x00581260: weapon_id was the first loop's counter
+    (image: weapon's home) and the upgrade arm's armour (a block-local's
+    home).
+  - *a reusesweep rename the image contradicts.* The sweep proves the target
+    dead, not that the image uses it: base_ecology's scan tile in
+    shown/report_terraform, base_terraform's special flag in rain_sum and its
+    height step in best_region, CouncWin::init's done flag in proposal,
+    gen_terrain_poly's direction counter in local_94. Undoing them lowered
+    the rows in each (184 -> 174, 922 -> 945 and 893 with the altitude in
+    rain_sum, 237 -> 258 and 227 with the next scan counting in proposal,
+    1516 -> 1508).
+  - *the right value in the wrong home.* The other occupants of home B name
+    the variable: Path::find 0x0059A530 had the trace-back step cost in
+    x_cur; the image's home also holds cur_cost, dead after the search loop,
+    and the rename into cur_cost reads 876 -> 858.
+  The slot-map difference of `imgmerge.py --plan` can go UP when a correct
+  split is applied (consider_designs 70 -> 78, base_ecology 41 -> 45): the
+  freed block-local is packed by first fit into another slot than the
+  image's, and every access of it counts. Read the two homes' timelines
+  (`imgmerge.py --sites A,B`) for the fact; use the metric and the rows to
+  choose between spellings. Where both get worse the rename stays although
+  the image has two homes (TutWin::tour's `dir` in `lower` 273 -> 299,
+  capture_base 253 -> 281, probe's speed in morale 1292 -> 1811 with the
+  frame off, setup_player's ring scan 16 -> 28): the home the image gives
+  the value is then some OTHER variable's, not found yet.
+- **imgmerge `--fscope` tree pass** (par-6 2026-11-19, 214 non-exact
+  functions of 30+ rows, 69 shared homes tried). Function-scope pairs are
+  rare and mostly already packed: kept air_power (region scratch / stack
+  owner, slot map 83 -> 71, rows 1051 -> 1078), communicate (the
+  [ebp-0x48] scratch, 46 -> 36, rows 1513 -> 1553), TutWin::tour (step /
+  special flag, 273 -> 261 at an equal slot map) and setup_game (the two
+  retry counters, 157 -> 151, slot map exact). load_vehicles' source_y /
+  border_y already share the image's home without a merge (the merge reads
+  97 -> 110). Refusals are register findings, the image holds one of the
+  pair in a register where our source keeps both alive: BaseWin::production
+  i/sel (sel live at L4467), colortables_init palette_changed/i, load_vehicles
+  x/y (x live at L4737), InfoWin::setup_text k/best, base_build w/l_34,
+  communicate's loan_factor, report_rival, tech_price and loan_amount against
+  the other owner of their home.
 
 ### 3.4 Arithmetic idioms
 - **Signedness of a field (movsx/movzx, jl/jb, idiv/div, sar/shr) is its

@@ -445,3 +445,11 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   (Net::drop_player 0x00632350: both inner switches A -> exact).
 - `analysis/probes/rettail/run.py [name ...]` probe family for return-tail copies (guards, switch arms, loops, the
   drop_player, veh_init and NetDaemon::init shapes); prints each `ret` copy's value and how it is entered.
+- `analysis/splitaudit.py <unit> <addr> [--min K] | --from FEALL.json [--rows N] [--keep DIR]` split screen, the reverse
+  of imgmerge.py (MATCHING_GUIDE 3.3 "One name over two image homes"; one compile per function, about 8 s): our named
+  locals whose paired accesses fall into two or more image homes over disjoint source line ranges, with the first image
+  address of each range. Tree pass of 2026-11-19 over 214 non-exact functions of 30+ rows: 12 functions flagged; kept
+  battle_compute (90 -> 35, is_bombard also served the bunker/base multiplier), consider_designs (958 -> 950), CouncWin::init
+  (237 -> 227), base_ecology (184 -> 174), base_terraform (922 -> 893), gen_terrain_poly (1516 -> 1508), Path::find
+  (876 -> 858, the value belonged to another variable's home); TutWin::tour, capture_base, probe and setup_player read
+  best as they are. Seven of the twelve were reusesweep renames. Judge a candidate with `imgmerge.py --plan` and rows.
