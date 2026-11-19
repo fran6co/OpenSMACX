@@ -61,7 +61,12 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   image address, our /FAsc line, the window since the last in-sync load and the loads present on one side only), or
   EQUAL. `first disagreement earlier` is the first load the sides disagree on at all (a reuse such as `mov eax,[eax+8]`
   against a fresh register). Each `jmp` on one side only is printed with the rotation between the copy and its host
-  on the side without the merge (`rot+k`, loads apart). Validated: no BYTE_EXACT function diverges. Aim
+  on the side without the merge (`rot+k`, loads apart). `callee-saved:` (every function) aligns with callee-saved
+  registers and frame slots abstracted to one token and pairs their whole-operand occupants: the first place image and
+  ours hold one value in different callee-saved registers or one in a register and the other in a frame slot (`slot`),
+  with the instruction that set each side's register, the occupant map (image>ours counts) and the next regions. Tree
+  pass 2026-11-19: 70 of the 199 phase-equal functions differ here first; aim `schedscan --try --near` at that line
+  (named values move rule-4 priorities too) or read regmap.py/candset.py there. Validated: no BYTE_EXACT function diverges. Aim
   `schedscan.py <unit> <addr> --try --near A-B` at the window it names (2026-11-19: drone_riot 317 -> 119,
   veh_draw 165 -> 59, name_proto 196 -> 162, time_warp 675 -> 660, DesignWin::init 107 -> 84).
 - `analysis/mergescan.py <unit> <addr[,addr]> [--src ALT.cpp] | --from FEALL.json [--json F]` tail-merged statements

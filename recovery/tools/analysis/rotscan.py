@@ -205,6 +205,111 @@ def merge_phases(rows, I, O, lmap, ops):
     return out
 
 
+CS = ('ebx', 'esi', 'edi', 'ebp')
+CSX = re.compile(r'\b(ebx|esi|edi|ebp|bx|si|di|bl|bh)\b')
+FRAME = re.compile(r'(?:byte|word|dword|qword) ptr \[(?:ebp - 0x[0-9a-f]+|ebp \+ 0x[0-9a-f]+|esp \+ 0x[0-9a-f]+|esp)\]')
+CS8 = {'bx': 'ebx', 'bl': 'ebx', 'bh': 'ebx', 'si': 'esi', 'di': 'edi'}
+
+
+def operands(ins):
+    m = re.match(r'(\S+)\s*(.*)', ins)
+    ops, d, cur = [], 0, ''
+    for ch in (m.group(2) if m else ''):
+        if ch == '[':
+            d += 1
+        elif ch == ']':
+            d -= 1
+        if ch == ',' and d == 0:
+            ops.append(cur.strip())
+            cur = ''
+        else:
+            cur += ch
+    if cur.strip():
+        ops.append(cur.strip())
+    return (m.group(1) if m else ''), ops
+
+
+def vabs(op, ebp_frame):
+    """an operand that is a whole callee-saved register or a frame slot -> 'V'; scratch registers -> R;
+    callee-saved registers inside an address -> C"""
+    if op in CS and not (op == 'ebp' and ebp_frame) or FRAME.fullmatch(op):
+        return 'V'
+    if op in CS8:
+        return 'V8'
+    return CSX.sub('C', abstract(op))
+
+
+def vkey(op, ebp_frame):
+    if FRAME.fullmatch(op):
+        return 'slot'
+    return CS8.get(op, op)
+
+
+def csave_walk(I, O, lmap, lo, maxreg=12):
+    """first callee-saved occupant divergence: align with callee-saved registers and frame slots abstracted
+    to one token, pair the whole-operand occupants, report where image and ours put a value in different
+    callee-saved registers, or one side in a register and the other in a frame slot (a spill)."""
+    ebp_i = any(x[1] == 'mov ebp, esp' for x in I[:4])
+    ebp_o = any(x[1] == 'mov ebp, esp' for x in O[:4])
+
+    def ab(x, f):
+        mn, ops = operands(x)
+        return mn + ' ' + ','.join(vabs(o, f) for o in ops)
+    ops = fe.align([ab(x[1], ebp_i) for x in I], [ab(x[1], ebp_o) for x in O])
+    pairs = []
+    for t, a1, a2, b1, b2 in ops:
+        if t != 'equal':
+            continue
+        for k in range(a2 - a1):
+            ii, oo = I[a1 + k], O[b1 + k]
+            _, oi = operands(ii[1])
+            _, ou = operands(oo[1])
+            for n, (x, y) in enumerate(zip(oi, ou)):
+                if vabs(x, ebp_i).startswith('V'):
+                    kx, ky = vkey(x, ebp_i), vkey(y, ebp_o)
+                    pairs.append((ii[0], oo[0], kx, ky, n == 0 and not ii[1].startswith(('cmp', 'test', 'push')), ii[1], oo[1]))
+    pairs.sort(key=lambda p: p[1])
+    bad = [p for p in pairs if p[2] != p[3]]
+    res = dict(npairs=len(pairs), nbad=len(bad))
+    if not bad:
+        return res
+    f = bad[0]
+
+    def defsite(seq, off, reg):
+        """nearest earlier instruction of seq (address order) that writes reg"""
+        if reg == 'slot':
+            return None
+        best = None
+        for x in seq:
+            if x[0] >= off:
+                break
+            mn, o = operands(x[1])
+            if o and CS8.get(o[0], o[0]) == reg and mn not in ('cmp', 'test', 'push'):
+                best = x
+            elif mn == 'pop' and o and o[0] == reg:
+                best = x
+        return best
+    di, do = defsite(I, f[0], f[2]), defsite(O, f[1], f[3])
+    res['first'] = dict(img=lo + f[0], ours=f[1], line=lmap.get(f[1], '?'), img_occ=f[2], our_occ=f[3],
+                        img_ins=f[5], our_ins=f[6],
+                        img_def=('%x `%s`' % (lo + di[0], di[1])) if di else '-',
+                        our_def=('%x %s `%s`' % (do[0], lmap.get(do[0], '?'), do[1])) if do else '-')
+    # regions: runs of one (image occupant -> our occupant) disagreement
+    regs, last = [], None
+    for p in bad:
+        k = (p[2], p[3])
+        if k != last:
+            regs.append([lo + p[0], p[1], lmap.get(p[1], '?'), p[2], p[3], 1])
+            last = k
+        else:
+            regs[-1][5] += 1
+    import collections
+    res['map'] = collections.Counter('%s>%s' % (p[2], p[3]) for p in bad).most_common(5)
+    res['regions'] = regs[:maxreg]
+    res['nregions'] = len(regs)
+    return res
+
+
 def scan(unit, addr, text, c, cod, persist=5):
     res = fe.evaluate(c, text, addr)
     if 'error' in res:
@@ -238,6 +343,7 @@ def scan(unit, addr, text, c, cod, persist=5):
         out['first'] = dict(kind=e[1], img=(lo + e[2]) if e[2] is not None else None, ours=e[3],
                             line=lmap.get(e[3], '?'), ins=e[4])
     out['merges'] = merge_phases(rows, I, O, lmap, ops)
+    out['cs'] = csave_walk(I, O, lmap, lo)
     return out
 
 
@@ -263,6 +369,15 @@ def report(r, track=False):
         L.append(head + '  EQUAL')
     else:
         L.append(head + '  NOPAIRS')
+    cs = r.get('cs') or {}
+    if cs.get('first'):
+        f = cs['first']
+        L.append('    callee-saved: %d of %d occupant pairs differ; first %x %s image %s ours %s  (image `%s` | ours `%s`)' % (
+            cs['nbad'], cs['npairs'], f['img'], f['line'], f['img_occ'], f['our_occ'], f['img_ins'], f['our_ins']))
+        L.append('      image %s set by %s; ours %s set by %s' % (f['img_occ'], f['img_def'], f['our_occ'], f['our_def']))
+        L.append('      occupant map (image>ours): %s' % ', '.join('%s x%d' % kv for kv in cs['map']))
+        for g in cs['regions'][1:6]:
+            L.append('      then %x %-8s image %s ours %s (%d)' % (g[0], g[2], g[3], g[4], g[5]))
     for m in r.get('merges', []):
         if m['kind'] == 'target':
             L.append('    jmp-target  img %x->%x  ours %x(%s)->%x(%s) image target is ours %s' % (
@@ -361,6 +476,7 @@ def main():
             for l in report(x, a.track):
                 print(l)
         n = lambda f: sum(1 for x in allr if 'error' not in x and f(x))
+        print('callee-saved divergent %d of %d' % (n(lambda x: (x.get('cs') or {}).get('first')), len(allr)))
         print('functions %d: phase-divergent %d, phase-equal %d, no paired loads %d, errors %d; with a one-side merge %d' % (
             len(allr), n(lambda x: 'div' in x), n(lambda x: 'div' not in x and x['npairs']),
             n(lambda x: not x['npairs'] and 'div' not in x), sum(1 for x in allr if 'error' in x), n(lambda x: x['merges'])))
