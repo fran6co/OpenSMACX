@@ -2444,13 +2444,8 @@ char *__cdecl get_noun_phrase(int faction_id, int phrase_id) {
         return StringTable.get(0);
     }
 
-    phrase_id = phrase_id + 9;
-    if (phrase_id > 0) {
-        int i = phrase_id;
-        do {
-            text_get();
-            --i;
-        } while (i != 0);
+    for (int i = 0; i < phrase_id + 9; i++) {
+        text_get();
     }
     strcpy(buffer, text_item());
     char *item = text_item();
