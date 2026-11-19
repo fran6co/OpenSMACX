@@ -2816,7 +2816,7 @@ void SocialWin::init(int faction_id) {
             // 0x4B3C0B: test; jne to the vbase adjustment, null arm first.
             GraphicWin *graphics = window == 0
                 ? 0 : static_cast<GraphicWin *>(window);
-// RECOVERY_LITERAL: v1 0x006874BC 0x006874C3 $SG59785 0x004B2740
+// RECOVERY_LITERAL: v1 0x006874BC 0x006874C3 $SG59783 0x004B2740
             TutorialWindow.tut_win(graphics, "SOCWIN", out_a, out_b,
                 0, 1, -1, -1);
         }
