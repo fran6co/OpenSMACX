@@ -45,277 +45,49 @@ char ReplayLocalizedPrefix[8];
 // The short localized replay title at 0x00945DFC is a distinct four-byte
 // writable object, immediately before ReplayLocalizedPrefix.
 // RECOVERY_OBJECT: v2 0x00945DFC 0x00945E00 ?ReplayLocalizedTitle@@3PADA 0x005AD720
-char ReplayLocalizedTitle[4];
 
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005AD720 ?init@ReplayWin@@QAEXXZ 0x005AD720-0x005AD99A
-// RECOVERY_BINDING: v1 {"evidence": ["git:823b6fba:src/recovered/units/005ad720.cpp", "src/replaywin.h owns GraphicWin, MapWin, FlatButton and Time at the original offsets", "src/console.h ConsoleGlobal cursor history occupies 0x009392B8/0x009392C0/0x00939340"], "reason": "Initialize the real replay window and its owned controls, using Console cursor history and typed shared styles instead of fixed addresses and vtable arithmetic; retain the seed for byte restoration."}
-// symbol    ?init@ReplayWin@@QAEXXZ
-void ReplayWin::init() {
-    field_A14_ = 0;
-    reset_base_sites();
-
-    RECT rect = {0, 0, 0x320, 0x258};
-    GraphicWin::init(&rect, 0, 0x1000000, 0, 0, 0);
-    Win::center();
-
-    const int zoom_x = (((rect.right - rect.left) * 2) /
-                        MapLongitudeBounds << 4) / 100 - 0x10;
-    const int zoom_y = (((rect.bottom - rect.top) * 2) /
-                        MapLatitudeBounds << 4) / 50 - 0x10;
-    const int zoom = zoom_x < zoom_y ? zoom_x : zoom_y;
-
-    year_label_[0] = 0;
-    // The initial title is "Replay"; the timer later prefixes the year with "Replay: ".
-    strcat(year_label_, Language == 0 ? "Replay" : ReplayLocalizedTitle);
-
-    rect.top += 0x17;
-    rect.bottom -= 0x17;
-    rect.left += 3;
-    rect.right -= 3;
-    rect.top += 3;
-    rect.bottom -= 3;
-    map_win_.init(&rect, 0, 0x20);
-    map_win_.GraphicWin::init(&rect, 0, 0x200020, this, 0, 0);
-    map_win_.zoom_offset_ = zoom;
-    map_win_.field_1DD70_ = 0x85010080;
-    map_win_.center_x_ =
-        ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
-    map_win_.center_y_ =
-        ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
-
-    rect.top = rect.bottom + 3;
-    rect.bottom = rect.top + 0x14;
-    flat_button_.BaseButton::init(label_get(0xDB), -1, rect.left, rect.top,
-                                  rect.right - rect.left,
-                                  rect.bottom - rect.top, this, 0);
-    flat_button_.set_text_color(0x41, -1, 1, 1);
-    flat_button_.set_border_styles(&InterfaceBoxStyles[27],
-                                    &InterfaceBoxStyles[29],
-                                    &InterfaceBoxStyles[29]);
-    FlatButton *button = &flat_button_;
-    button->Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
-    button->redraw();
-    map_win_.show(0);
-    map_win_.field_1DD70_ |= 0x2000000;
-
-    replay_turn_ = 0;
-    event_offset_ = 0;
-    timer_.set_modal();
-    timer_.start(&ReplayWin::timer_callback_daemon,
-                 reinterpret_cast<int>(this), 0x64, 5);
-    set_modal(0, 0, 0);
-    timer_.release_modal();
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005AD9A0 ?close@ReplayWin@@QAEXXZ 0x005AD9A0-0x005AD9E0 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/005ad9a0.cpp retains the original exact close seed", "src/replaywin.h owns the GraphicWin base and embedded MapWin", "src/mapwin.cpp MapWin::close releases owned_ and clears it"], "reason": "Close both real window subobjects through their owners, then preserve the original post-close safety check on the typed map cache pointer."}
-// symbol    ?close@ReplayWin@@QAEXXZ
-void ReplayWin::close() {
-    GraphicWin::close();
-    map_win_.close();
-    if (map_win_.owned_ != 0) {
-        free(map_win_.owned_);
-        map_win_.owned_ = 0;
-    }
-}
-
-// The original calls save_daemon with the bare autosave name, then reloads
-// its .SAV path after the replay window closes. Both image strings are at
-// 0x00691408 and 0x00691424 respectively: ordinary .data literals of this
-// unit, following its "Replay: " text, not read-only named objects.
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005ADBF0 ?show_replay@@YAXXZ 0x005ADBF0-0x005ADE7B;0x00662240-0x00662355 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005adbf0.cpp retains the SHARED_TAIL seed and construction sequence", "image strings at 0x00691408 and 0x00691424 name the save and reload paths", "src/map.cpp owns WorldClimateSkipTerrainClear at 0x0068F21C", "src/game.cpp owns GameState at 0x009A64C0", "src/replaywin.h models the GraphicWin, MapWin, FlatButton and Time subobjects"], "reason": "Run the replay through a real local ReplayWin lifetime and typed game/climate state instead of a manually patched vtable and fixed executable addresses; retain the seed's unmodeled temporary objects as restoration work."}
-// symbol    ?show_replay@@YAXXZ
-void __cdecl show_replay() {
-    ReplayWin replay;
-    WorldClimateSkipTerrainClear = 2;
-    save_daemon("Alpha Centauri Autosave 1");
-    GameDataStateStorage.fields_.game_state_ |= 0x80;
-
-    replay.init();
-    replay.close();
-
-    do_all_draws();
-    load_daemon("Alpha Centauri Autosave 1.SAV", 0);
-    flush_input();
-    WorldClimateSkipTerrainClear = 0;
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005ADF10 ??1ReplayWin@@QAE@XZ 0x005ADF10-0x005AE0A8;0x00662360-0x0066244C BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x005ADBF0 constructs GraphicWin, MapWin, FlatButton and Time at offsets 0, 0x2320, 0x247A0 and 0x252EC", "image:0x005ADF32 destructs Time at 0x252EC before FlatButton at 0x247A0", "git:8b63d843:src/recovered/units/005adf10.cpp", "src/replaywin.h declares all three complete subobjects"], "reason": "Let C++ destroy ReplayWin's real members in reverse construction order instead of forwarding the complete destructor to original image code."}
-// symbol    ??1ReplayWin@@UAE@XZ
-// The implicit virtual destructor follows the typed member/base lifetime.
-
-// ORIGINAL: 0x005AD610 ?on_redraw@ReplayWin@@QAEXXZ 0x005AD610-0x005AD71F BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:8b63d843:src/recovered/units/005ad610.cpp", "image:0x005AD610-0x005AD71F", "src/replaywin.h map_win_ and year_label_", "src/buffer.h InterfaceBoxStyles[9] and [6]", "src/maininterface.h MainInterfaceGlobal.font1_ at original 0x007CFE8C", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/005ad610.cpp"], "reason": "Paint the replay title through real GraphicWin/Buffer bases, shared style and font owners, then dispatch the embedded MapWin's virtual redraw; retain the exact seed for byte restoration. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+/*
+Purpose: ?on_left_click@ReplayWin@@QAEXHH@Z - dispatch to slot 0xe8 of this object's OWN
+         vtable with NO arguments: the original pushes nothing between the
+         vtable load and the call, so the parameters this function declares are
+         discarded and only the `ret` cleans them up.
+// ORIGINAL: 0x005AD3B0 ?on_left_click@ReplayWin@@QAEXHH@Z 0x005AD3B0-0x005AD3BB BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned original own table 0x0066F8F0, pointer word at +0x4C, identifies original entry 0x005AD3B0", "Prior native snapshot: ?on_left_click_event@ReplayWin@@UAEXHH@Z was emitted for this slot before the source rename. The candidate now names the same Win slot-19 override on_left_click; its current emitted symbol still requires fresh COFF observation."], "reason": "The original own Win table binds this entry as virtual slot 19. Use genuine member dispatch, not an opaque redirect; retain the catalogued original spelling as historical evidence."}
+// symbol    ?on_left_click@ReplayWin@@UAEXHH@Z
+// size      11 bytes
+// prototype void (__thiscall ?on_left_click@ReplayWin@@QAEXHH@Z)(ReplayWin* this, int, int)
+// callers   0   call targets   0
 // kind      game
-// symbol    ?on_redraw@ReplayWin@@UAEXXZ
-void ReplayWin::on_redraw() {
-    GraphicWin::fill(9);
-    RECT title = *buffer_working_rect();
-    Buffer::box_sprite(&title, &InterfaceBoxStyles[9]);
-
-    title.left += 4;
-    title.right -= 4;
-    title.top += 4;
-    title.bottom = title.top + 0x14;
-    Buffer::box_sprite(&title, &InterfaceBoxStyles[6]);
-
-    title.left += 3;
-    title.right -= 3;
-    title.top += 3;
-    title.bottom -= 3;
-    Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
-    Buffer::set_text_color(TextColourTable[180], TextColourTable[181], 1, 1);
-    char *const title_text = year_label_;
-    if (title_text) {
-        Buffer::write_cent_l(title_text, &title, strlen(title_text));
-    }
-
-    make_bases();
-    map_win_.on_redraw();
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005AD3B2
+Return Value: n/a
+Status: Complete
+*/
+void ReplayWin::on_left_click(int, int) {
+  release_modal();
 }
 
-// ORIGINAL: 0x005AD470 sub_5ad470 0x005AD470-0x005AD4C0 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:bb13ae85:src/recovered/units/005ad470.cpp", "src/replaywin.h ReplayWin base_sites_ at 0xA20", "0x005AD560 make_bases consumes the same 512 records", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/005ad470.cpp"], "reason": "Own insertion in ReplayWin rather than an isolated raw-offset table class; retain the byte-exact seed for restoration. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+/*
+Purpose: ?on_right_click@ReplayWin@@QAEXHH@Z - dispatch to slot 0xe8 of this object's OWN
+         vtable with NO arguments: the original pushes nothing between the
+         vtable load and the call, so the parameters this function declares are
+         discarded and only the `ret` cleans them up.
+// ORIGINAL: 0x005AD3C0 ?on_right_click@ReplayWin@@QAEXHH@Z 0x005AD3C0-0x005AD3CB BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned original own table 0x0066F8F0, pointer word at +0x58, identifies original entry 0x005AD3C0", "Prior native snapshot: ?vslot_22@ReplayWin@@UAEXHH@Z was emitted for this slot before the source rename. The candidate now names the same Win slot-22 override on_right_click; its current emitted symbol still requires fresh COFF observation."], "reason": "The original own Win table binds this entry as virtual slot 22. Use genuine member dispatch, not an opaque redirect; retain the catalogued original spelling as historical evidence."}
+// symbol    ?on_right_click@ReplayWin@@UAEXHH@Z
+// size      11 bytes
+// prototype void (__thiscall ?on_right_click@ReplayWin@@QAEXHH@Z)(ReplayWin* this, int, int)
+// callers   0   call targets   0
 // kind      game
-// symbol    ?add_base_site@ReplayWin@@QAEXHHH@Z
-void ReplayWin::add_base_site(int x, int y, int faction_id) {
-    for (int index = 0; index < 512; ++index) {
-        if (base_sites_[index].x < 0) {
-            base_sites_[index].x = x;
-            base_sites_[index].y = y;
-            base_sites_[index].faction_id = faction_id;
-            return;
-        }
-    }
-}
-
-// ORIGINAL: 0x005AD4C0 sub_5ad4c0 0x005AD4C0-0x005AD500 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:bb13ae85:src/leaf_recoveries.cpp", "src/replaywin.h ReplayWin base_sites_ at 0xA20", "Superseded interpretation retained for history: prior binding treated standalone EAX scan/address residue as a three-times-slot result and512 miss sentinel. No observed consumer establishes that result contract.", "Pinned5ADACF..5ADB03 inlines the update operation: EAX scans512 sites, ECX becomes3*slot only for the faction-store address, and5ADB47 overwritesEAX with event_offset before any result use. Source timer_callback is the sole current caller and discards the operation result.", "Pinned standalone5AD4C0..5AD500 returns with residual scan/addressEAX and performs the same first-match mutation/no-match no-op. Use a genuine void member operation; original nominal return type is unproved."], "reason": "Recover the keyed site update as a void ReplayWin operation; preserve the observed first-match mutation and no-match no-op without manufacturing an independently consumed result from address/index residue. Retain original identity/spans/claims and the superseded result interpretation as history."}
-// symbol    ?update_base_site@ReplayWin@@QAEXHHH@Z
-void ReplayWin::update_base_site(int x, int y, int faction_id) {
-    for (int index = 0; index < 512; ++index) {
-        if (base_sites_[index].x == x && base_sites_[index].y == y) {
-            base_sites_[index].faction_id = faction_id;
-            return;
-        }
-    }
-}
-
-// ORIGINAL: 0x005AD500 sub_5ad500 0x005AD500-0x005AD560 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:bb13ae85:src/unrecovered/005ad500.cpp", "src/replaywin.h ReplayWin base_sites_ at 0xA20", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/unrecovered/005ad500.cpp"], "reason": "Recover keyed site invalidation on the real ReplayWin owner rather than a raw-offset table stand-in; retain the exact seed as restoration evidence. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
-// kind      game
-// symbol    ?remove_base_site@ReplayWin@@QAEXHHH@Z
-void ReplayWin::remove_base_site(int x, int y, int) {
-    for (int index = 0; index < 512; ++index) {
-        if (base_sites_[index].x == x && base_sites_[index].y == y) {
-            base_sites_[index].faction_id = -1;
-            base_sites_[index].y = -1;
-            base_sites_[index].x = -1;
-            return;
-        }
-    }
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005AD9E0 ?timer_callback@ReplayWin@@QAEXXZ 0x005AD9E0-0x005ADBCC BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:a98446ad:src/recovered/units/005ad9e0.cpp", "image:0x005AD9E0-0x005ADBCC", "src/replaywin.h replay_turn_, event_offset_, year_label_ and base_sites_", "src/win.h release_modal slot58 and redraw slot62"], "reason": "Consume typed replay events and update the ReplayWin-owned site table; replace the original-image forwarder without raw self-offsets or vtable shims. The retained seed remains a restoration input, not a product body."}
-void ReplayWin::timer_callback() {
-    if (replay_turn_ >= GameDataStateStorage.fields_.turn_current_num_) {
-        if (replay_turn_ >= GameDataStateStorage.fields_.turn_current_num_ + 50) {
-            release_modal();
-        }
-        return;
-    }
-
-    int next_turn = replay_turn_ + 1;
-    while (event_offset_ < ReplayEventBytes) {
-        ReplayEventRecord event;
-        memcpy(&event, ReplayEvents + event_offset_, sizeof(event));
-        if (event.turn > replay_turn_) {
-            next_turn = event.turn;
-            break;
-        }
-        event_offset_ += sizeof(ReplayEventRecord);
-        if (event.turn == replay_turn_) {
-            switch (static_cast<int8_t>(event.type)) {
-            case 0:
-                add_base_site(event.x, event.y,
-                              static_cast<int8_t>(event.faction_id));
-                break;
-            case 1:
-                update_base_site(event.x, event.y,
-                                 static_cast<int8_t>(event.faction_id));
-                break;
-            case 2:
-                remove_base_site(event.x, event.y, 0);
-                break;
-            }
-        }
-    }
-
-    year_label_[0] = 0;
-// RECOVERY_LITERAL: v1 0x006913FC 0x00691405 $SG49709 0x005AD9E0
-    strcat(year_label_, Language == 0 ? "Replay: " : ReplayLocalizedPrefix);
-    char year[80];
-    _itoa_s(game_year(replay_turn_), year, sizeof(year), 10);
-    strcat(year_label_, year);
-
-    make_bases();
-    redraw();
-    replay_turn_ = next_turn;
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005ADE80 ?replay_base@@YAXHHHH@Z 0x005ADE80-0x005ADF03 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x005ADE80-0x005ADF03 logs Replay Base and Replay Base Info, packs four arguments and TurnCurrentNum into eight bytes at 0x00950324 plus the byte counter at 0x009469F8, then adds eight", "git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/005b3920.cpp clears 0x800 dwords of that buffer; ReplayWin timer_callback reads the same eight-byte records"], "reason": "Own replay-event storage and byte-length accounting in the replay subsystem, replacing fixed-address writes with a typed event record."}
-void __cdecl replay_base(int type, int x, int y, int faction_id) {
-// RECOVERY_LITERAL: v1 0x00691444 0x00691450 $SG49717 0x005ADE80
-    log_say("Replay Base", x, y, faction_id);
-// RECOVERY_LITERAL: v1 0x00691450 0x00691461 $SG49718 0x005ADE80
-    log_say("Replay Base Info", GameDataStateStorage.fields_.turn_current_num_, type, ReplayEventBytes);
-    ReplayEventRecord event;
-    event.turn = static_cast<int16_t>(GameDataStateStorage.fields_.turn_current_num_);
-    event.type = static_cast<uint8_t>(type);
-    event.x = static_cast<int16_t>(x);
-    event.y = static_cast<int16_t>(y);
-    event.faction_id = static_cast<uint8_t>(faction_id);
-    memcpy(ReplayEvents + ReplayEventBytes, &event, sizeof(event));
-    ReplayEventBytes += sizeof(ReplayEventRecord);
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005AD560 ?make_bases@ReplayWin@@QAEXXZ 0x005AD560-0x005AD607 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x005AD560-0x005AD607 clears Map::bit bit zero over MapArea, then walks 512 twelve-byte records at ReplayWin+0xA20", "The original writes Bases with 0x134 stride, storing x/y/faction/population before bit_set, owner_set and reset_territory; src/unrecovered/005ad560.cpp preserves the seed"], "reason": "Rebuild bases from typed replay-owned records into the real Base array and map, without self-offset arithmetic or fixed executable addresses."}
-void ReplayWin::make_bases() {
-    GameDataStateStorage.fields_.base_current_count_ = 0;
-    Map *tile = map_tiles();
-    for (int tile_id = 0; tile_id < MapArea; ++tile_id, ++tile) {
-        tile->bit &= ~1u;
-    }
-    // The original advances this cursor independently of the global count.
-    Base *next_base = Bases;
-    for (int site_id = 0; site_id < 512; ++site_id) {
-        const ReplayBaseSite &site = base_sites_[site_id];
-        if (site.x < 0) continue;
-        next_base->x = static_cast<int16_t>(site.x);
-        next_base->y = static_cast<int16_t>(site.y);
-        next_base->population_size = 1;
-        next_base->faction_id_current = static_cast<uint8_t>(site.faction_id);
-        // volatile: stand-in for the image's reload of the stored y at
-        // 0x005AD5C2; no plain spelling found.
-        bit_set(next_base->x, *(volatile int16_t *)&next_base->y, 1, 1);
-        owner_set(next_base->x, next_base->y, next_base->faction_id_current);
-        ++next_base;
-        ++GameDataStateStorage.fields_.base_current_count_;
-    }
-    reset_territory();
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005AD3C2
+Return Value: n/a
+Status: Complete
+*/
+void ReplayWin::on_right_click(int, int) {
+  release_modal();
 }
 
 /*
@@ -414,75 +186,6 @@ Status: Complete
 void ReplayWin::on_left_up(int, int) {
 }
 
-
-
-
-
-
-
-/*
-// ORIGINAL: 0x005ADBD0 ?timer_callback_daemon@ReplayWin@@QAAXH@Z 0x005ADBD0-0x005ADBE1 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"reason":"Own the replay timer bridge as a directly type-compatible static cdecl callback; its integer payload carries the borrowed ReplayWin receiver, without calling through an incompatible function-pointer type.","evidence":["pinned:5AD970..5AD97C registers callback5ADBD0 and ESI receiver with Time::start616350, using embedded Time at receiver+252EC","pinned:5ADBD0..5ADBE1 loads its sole stack word into ECX, null-tests it, calls ReplayWin::timer_callback5AD9E0 and returns with plain RET; the catalogue Q spelling is not an entry thiscall receiver","source:Time::start stores cdecl(int) callback1_ and int cb_param1_; Win::window_proc invokes that exact contract; MultiDebug uses the same typed static-owner bridge"]}
-// symbol    ?timer_callback_daemon@ReplayWin@@SAXH@Z
-// size      17 bytes
-// prototype 
-// callers   0   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x005AD9E0
-Status: Complete
-*/
-void __cdecl ReplayWin::timer_callback_daemon(int context) {
-    ReplayWin *const window = reinterpret_cast<ReplayWin *>(context);
-    if (window) {
-        window->timer_callback();
-    }
-}
-
-/*
-Purpose: ?on_left_click@ReplayWin@@QAEXHH@Z - dispatch to slot 0xe8 of this object's OWN
-         vtable with NO arguments: the original pushes nothing between the
-         vtable load and the call, so the parameters this function declares are
-         discarded and only the `ret` cleans them up.
-// ORIGINAL: 0x005AD3B0 ?on_left_click@ReplayWin@@QAEXHH@Z 0x005AD3B0-0x005AD3BB BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned original own table 0x0066F8F0, pointer word at +0x4C, identifies original entry 0x005AD3B0", "Prior native snapshot: ?on_left_click_event@ReplayWin@@UAEXHH@Z was emitted for this slot before the source rename. The candidate now names the same Win slot-19 override on_left_click; its current emitted symbol still requires fresh COFF observation."], "reason": "The original own Win table binds this entry as virtual slot 19. Use genuine member dispatch, not an opaque redirect; retain the catalogued original spelling as historical evidence."}
-// symbol    ?on_left_click@ReplayWin@@UAEXHH@Z
-// size      11 bytes
-// prototype void (__thiscall ?on_left_click@ReplayWin@@QAEXHH@Z)(ReplayWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// indirect  0x005AD3B2
-Return Value: n/a
-Status: Complete
-*/
-void ReplayWin::on_left_click(int, int) {
-  release_modal();
-}
-
-/*
-Purpose: ?on_right_click@ReplayWin@@QAEXHH@Z - dispatch to slot 0xe8 of this object's OWN
-         vtable with NO arguments: the original pushes nothing between the
-         vtable load and the call, so the parameters this function declares are
-         discarded and only the `ret` cleans them up.
-// ORIGINAL: 0x005AD3C0 ?on_right_click@ReplayWin@@QAEXHH@Z 0x005AD3C0-0x005AD3CB BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned original own table 0x0066F8F0, pointer word at +0x58, identifies original entry 0x005AD3C0", "Prior native snapshot: ?vslot_22@ReplayWin@@UAEXHH@Z was emitted for this slot before the source rename. The candidate now names the same Win slot-22 override on_right_click; its current emitted symbol still requires fresh COFF observation."], "reason": "The original own Win table binds this entry as virtual slot 22. Use genuine member dispatch, not an opaque redirect; retain the catalogued original spelling as historical evidence."}
-// symbol    ?on_right_click@ReplayWin@@UAEXHH@Z
-// size      11 bytes
-// prototype void (__thiscall ?on_right_click@ReplayWin@@QAEXHH@Z)(ReplayWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// indirect  0x005AD3C2
-Return Value: n/a
-Status: Complete
-*/
-void ReplayWin::on_right_click(int, int) {
-  release_modal();
-}
-
 /*
 Purpose: ?on_button_clicked@ReplayWin@@QAEXH@Z - dispatch to slot 0xe8 of this object's OWN
          vtable with NO arguments: the original pushes nothing between the
@@ -567,4 +270,301 @@ void ReplayWin::reset_base_sites() {
         base_sites_[index].y = -1;
         base_sites_[index].faction_id = -1;
     }
+}
+
+// ORIGINAL: 0x005AD470 sub_5ad470 0x005AD470-0x005AD4C0 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:bb13ae85:src/recovered/units/005ad470.cpp", "src/replaywin.h ReplayWin base_sites_ at 0xA20", "0x005AD560 make_bases consumes the same 512 records", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/005ad470.cpp"], "reason": "Own insertion in ReplayWin rather than an isolated raw-offset table class; retain the byte-exact seed for restoration. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
+// symbol    ?add_base_site@ReplayWin@@QAEXHHH@Z
+void ReplayWin::add_base_site(int x, int y, int faction_id) {
+    for (int index = 0; index < 512; ++index) {
+        if (base_sites_[index].x < 0) {
+            base_sites_[index].x = x;
+            base_sites_[index].y = y;
+            base_sites_[index].faction_id = faction_id;
+            return;
+        }
+    }
+}
+
+// ORIGINAL: 0x005AD4C0 sub_5ad4c0 0x005AD4C0-0x005AD500 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:bb13ae85:src/leaf_recoveries.cpp", "src/replaywin.h ReplayWin base_sites_ at 0xA20", "Superseded interpretation retained for history: prior binding treated standalone EAX scan/address residue as a three-times-slot result and512 miss sentinel. No observed consumer establishes that result contract.", "Pinned5ADACF..5ADB03 inlines the update operation: EAX scans512 sites, ECX becomes3*slot only for the faction-store address, and5ADB47 overwritesEAX with event_offset before any result use. Source timer_callback is the sole current caller and discards the operation result.", "Pinned standalone5AD4C0..5AD500 returns with residual scan/addressEAX and performs the same first-match mutation/no-match no-op. Use a genuine void member operation; original nominal return type is unproved."], "reason": "Recover the keyed site update as a void ReplayWin operation; preserve the observed first-match mutation and no-match no-op without manufacturing an independently consumed result from address/index residue. Retain original identity/spans/claims and the superseded result interpretation as history."}
+// symbol    ?update_base_site@ReplayWin@@QAEXHHH@Z
+void ReplayWin::update_base_site(int x, int y, int faction_id) {
+    for (int index = 0; index < 512; ++index) {
+        if (base_sites_[index].x == x && base_sites_[index].y == y) {
+            base_sites_[index].faction_id = faction_id;
+            return;
+        }
+    }
+}
+
+// ORIGINAL: 0x005AD500 sub_5ad500 0x005AD500-0x005AD560 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:bb13ae85:src/unrecovered/005ad500.cpp", "src/replaywin.h ReplayWin base_sites_ at 0xA20", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/unrecovered/005ad500.cpp"], "reason": "Recover keyed site invalidation on the real ReplayWin owner rather than a raw-offset table stand-in; retain the exact seed as restoration evidence. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
+// symbol    ?remove_base_site@ReplayWin@@QAEXHHH@Z
+void ReplayWin::remove_base_site(int x, int y, int) {
+    for (int index = 0; index < 512; ++index) {
+        if (base_sites_[index].x == x && base_sites_[index].y == y) {
+            base_sites_[index].faction_id = -1;
+            base_sites_[index].y = -1;
+            base_sites_[index].x = -1;
+            return;
+        }
+    }
+}
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x005AD560 ?make_bases@ReplayWin@@QAEXXZ 0x005AD560-0x005AD607 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x005AD560-0x005AD607 clears Map::bit bit zero over MapArea, then walks 512 twelve-byte records at ReplayWin+0xA20", "The original writes Bases with 0x134 stride, storing x/y/faction/population before bit_set, owner_set and reset_territory; src/unrecovered/005ad560.cpp preserves the seed"], "reason": "Rebuild bases from typed replay-owned records into the real Base array and map, without self-offset arithmetic or fixed executable addresses."}
+void ReplayWin::make_bases() {
+    GameDataStateStorage.fields_.base_current_count_ = 0;
+    Map *tile = map_tiles();
+    for (int tile_id = 0; tile_id < MapArea; ++tile_id, ++tile) {
+        tile->bit &= ~1u;
+    }
+    // The original advances this cursor independently of the global count.
+    Base *next_base = Bases;
+    for (int site_id = 0; site_id < 512; ++site_id) {
+        const ReplayBaseSite &site = base_sites_[site_id];
+        if (site.x < 0) continue;
+        next_base->x = static_cast<int16_t>(site.x);
+        next_base->y = static_cast<int16_t>(site.y);
+        next_base->population_size = 1;
+        next_base->faction_id_current = static_cast<uint8_t>(site.faction_id);
+        // volatile: stand-in for the image's reload of the stored y at
+        // 0x005AD5C2; no plain spelling found.
+        bit_set(next_base->x, *(volatile int16_t *)&next_base->y, 1, 1);
+        owner_set(next_base->x, next_base->y, next_base->faction_id_current);
+        ++next_base;
+        ++GameDataStateStorage.fields_.base_current_count_;
+    }
+    reset_territory();
+}
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x005ADF10 ??1ReplayWin@@QAE@XZ 0x005ADF10-0x005AE0A8;0x00662360-0x0066244C BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x005ADBF0 constructs GraphicWin, MapWin, FlatButton and Time at offsets 0, 0x2320, 0x247A0 and 0x252EC", "image:0x005ADF32 destructs Time at 0x252EC before FlatButton at 0x247A0", "git:8b63d843:src/recovered/units/005adf10.cpp", "src/replaywin.h declares all three complete subobjects"], "reason": "Let C++ destroy ReplayWin's real members in reverse construction order instead of forwarding the complete destructor to original image code."}
+// symbol    ??1ReplayWin@@UAE@XZ
+// The implicit virtual destructor follows the typed member/base lifetime.
+
+// ORIGINAL: 0x005AD610 ?on_redraw@ReplayWin@@QAEXXZ 0x005AD610-0x005AD71F BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:8b63d843:src/recovered/units/005ad610.cpp", "image:0x005AD610-0x005AD71F", "src/replaywin.h map_win_ and year_label_", "src/buffer.h InterfaceBoxStyles[9] and [6]", "src/maininterface.h MainInterfaceGlobal.font1_ at original 0x007CFE8C", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/005ad610.cpp"], "reason": "Paint the replay title through real GraphicWin/Buffer bases, shared style and font owners, then dispatch the embedded MapWin's virtual redraw; retain the exact seed for byte restoration. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
+// symbol    ?on_redraw@ReplayWin@@UAEXXZ
+void ReplayWin::on_redraw() {
+    GraphicWin::fill(9);
+    RECT title = *buffer_working_rect();
+    Buffer::box_sprite(&title, &InterfaceBoxStyles[9]);
+
+    title.left += 4;
+    title.right -= 4;
+    title.top += 4;
+    title.bottom = title.top + 0x14;
+    Buffer::box_sprite(&title, &InterfaceBoxStyles[6]);
+
+    title.left += 3;
+    title.right -= 3;
+    title.top += 3;
+    title.bottom -= 3;
+    Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
+    Buffer::set_text_color(TextColourTable[180], TextColourTable[181], 1, 1);
+    char *const title_text = year_label_;
+    if (title_text) {
+        Buffer::write_cent_l(title_text, &title, strlen(title_text));
+    }
+
+    make_bases();
+    map_win_.on_redraw();
+}
+char ReplayLocalizedTitle[4];
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x005AD720 ?init@ReplayWin@@QAEXXZ 0x005AD720-0x005AD99A
+// RECOVERY_BINDING: v1 {"evidence": ["git:823b6fba:src/recovered/units/005ad720.cpp", "src/replaywin.h owns GraphicWin, MapWin, FlatButton and Time at the original offsets", "src/console.h ConsoleGlobal cursor history occupies 0x009392B8/0x009392C0/0x00939340"], "reason": "Initialize the real replay window and its owned controls, using Console cursor history and typed shared styles instead of fixed addresses and vtable arithmetic; retain the seed for byte restoration."}
+// symbol    ?init@ReplayWin@@QAEXXZ
+void ReplayWin::init() {
+    field_A14_ = 0;
+    reset_base_sites();
+
+    RECT rect = {0, 0, 0x320, 0x258};
+    GraphicWin::init(&rect, 0, 0x1000000, 0, 0, 0);
+    Win::center();
+
+    const int zoom_x = (((rect.right - rect.left) * 2) /
+                        MapLongitudeBounds << 4) / 100 - 0x10;
+    const int zoom_y = (((rect.bottom - rect.top) * 2) /
+                        MapLatitudeBounds << 4) / 50 - 0x10;
+    const int zoom = zoom_x < zoom_y ? zoom_x : zoom_y;
+
+    year_label_[0] = 0;
+    // The initial title is "Replay"; the timer later prefixes the year with "Replay: ".
+    strcat(year_label_, Language == 0 ? "Replay" : ReplayLocalizedTitle);
+
+    rect.top += 0x17;
+    rect.bottom -= 0x17;
+    rect.left += 3;
+    rect.right -= 3;
+    rect.top += 3;
+    rect.bottom -= 3;
+    map_win_.init(&rect, 0, 0x20);
+    map_win_.GraphicWin::init(&rect, 0, 0x200020, this, 0, 0);
+    map_win_.zoom_offset_ = zoom;
+    map_win_.field_1DD70_ = 0x85010080;
+    map_win_.center_x_ =
+        ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
+    map_win_.center_y_ =
+        ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
+
+    rect.top = rect.bottom + 3;
+    rect.bottom = rect.top + 0x14;
+    flat_button_.BaseButton::init(label_get(0xDB), -1, rect.left, rect.top,
+                                  rect.right - rect.left,
+                                  rect.bottom - rect.top, this, 0);
+    flat_button_.set_text_color(0x41, -1, 1, 1);
+    flat_button_.set_border_styles(&InterfaceBoxStyles[27],
+                                    &InterfaceBoxStyles[29],
+                                    &InterfaceBoxStyles[29]);
+    FlatButton *button = &flat_button_;
+    button->Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
+    button->redraw();
+    map_win_.show(0);
+    map_win_.field_1DD70_ |= 0x2000000;
+
+    replay_turn_ = 0;
+    event_offset_ = 0;
+    timer_.set_modal();
+    timer_.start(&ReplayWin::timer_callback_daemon,
+                 reinterpret_cast<int>(this), 0x64, 5);
+    set_modal(0, 0, 0);
+    timer_.release_modal();
+}
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x005AD9A0 ?close@ReplayWin@@QAEXXZ 0x005AD9A0-0x005AD9E0 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/005ad9a0.cpp retains the original exact close seed", "src/replaywin.h owns the GraphicWin base and embedded MapWin", "src/mapwin.cpp MapWin::close releases owned_ and clears it"], "reason": "Close both real window subobjects through their owners, then preserve the original post-close safety check on the typed map cache pointer."}
+// symbol    ?close@ReplayWin@@QAEXXZ
+void ReplayWin::close() {
+    GraphicWin::close();
+    map_win_.close();
+    if (map_win_.owned_ != 0) {
+        free(map_win_.owned_);
+        map_win_.owned_ = 0;
+    }
+}
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x005AD9E0 ?timer_callback@ReplayWin@@QAEXXZ 0x005AD9E0-0x005ADBCC BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:a98446ad:src/recovered/units/005ad9e0.cpp", "image:0x005AD9E0-0x005ADBCC", "src/replaywin.h replay_turn_, event_offset_, year_label_ and base_sites_", "src/win.h release_modal slot58 and redraw slot62"], "reason": "Consume typed replay events and update the ReplayWin-owned site table; replace the original-image forwarder without raw self-offsets or vtable shims. The retained seed remains a restoration input, not a product body."}
+void ReplayWin::timer_callback() {
+    if (replay_turn_ >= GameDataStateStorage.fields_.turn_current_num_) {
+        if (replay_turn_ >= GameDataStateStorage.fields_.turn_current_num_ + 50) {
+            release_modal();
+        }
+        return;
+    }
+
+    int next_turn = replay_turn_ + 1;
+    while (event_offset_ < ReplayEventBytes) {
+        ReplayEventRecord event;
+        memcpy(&event, ReplayEvents + event_offset_, sizeof(event));
+        if (event.turn > replay_turn_) {
+            next_turn = event.turn;
+            break;
+        }
+        event_offset_ += sizeof(ReplayEventRecord);
+        if (event.turn == replay_turn_) {
+            switch (static_cast<int8_t>(event.type)) {
+            case 0:
+                add_base_site(event.x, event.y,
+                              static_cast<int8_t>(event.faction_id));
+                break;
+            case 1:
+                update_base_site(event.x, event.y,
+                                 static_cast<int8_t>(event.faction_id));
+                break;
+            case 2:
+                remove_base_site(event.x, event.y, 0);
+                break;
+            }
+        }
+    }
+
+    year_label_[0] = 0;
+// RECOVERY_LITERAL: v1 0x006913FC 0x00691405 $SG49848 0x005AD9E0
+    strcat(year_label_, Language == 0 ? "Replay: " : ReplayLocalizedPrefix);
+    char year[80];
+    _itoa_s(game_year(replay_turn_), year, sizeof(year), 10);
+    strcat(year_label_, year);
+
+    make_bases();
+    redraw();
+    replay_turn_ = next_turn;
+}
+
+
+
+
+
+
+
+/*
+// ORIGINAL: 0x005ADBD0 ?timer_callback_daemon@ReplayWin@@QAAXH@Z 0x005ADBD0-0x005ADBE1 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"Own the replay timer bridge as a directly type-compatible static cdecl callback; its integer payload carries the borrowed ReplayWin receiver, without calling through an incompatible function-pointer type.","evidence":["pinned:5AD970..5AD97C registers callback5ADBD0 and ESI receiver with Time::start616350, using embedded Time at receiver+252EC","pinned:5ADBD0..5ADBE1 loads its sole stack word into ECX, null-tests it, calls ReplayWin::timer_callback5AD9E0 and returns with plain RET; the catalogue Q spelling is not an entry thiscall receiver","source:Time::start stores cdecl(int) callback1_ and int cb_param1_; Win::window_proc invokes that exact contract; MultiDebug uses the same typed static-owner bridge"]}
+// symbol    ?timer_callback_daemon@ReplayWin@@SAXH@Z
+// size      17 bytes
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005AD9E0
+Status: Complete
+*/
+void __cdecl ReplayWin::timer_callback_daemon(int context) {
+    ReplayWin *const window = reinterpret_cast<ReplayWin *>(context);
+    if (window) {
+        window->timer_callback();
+    }
+}
+
+// The original calls save_daemon with the bare autosave name, then reloads
+// its .SAV path after the replay window closes. Both image strings are at
+// 0x00691408 and 0x00691424 respectively: ordinary .data literals of this
+// unit, following its "Replay: " text, not read-only named objects.
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x005ADBF0 ?show_replay@@YAXXZ 0x005ADBF0-0x005ADE7B;0x00662240-0x00662355 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005adbf0.cpp retains the SHARED_TAIL seed and construction sequence", "image strings at 0x00691408 and 0x00691424 name the save and reload paths", "src/map.cpp owns WorldClimateSkipTerrainClear at 0x0068F21C", "src/game.cpp owns GameState at 0x009A64C0", "src/replaywin.h models the GraphicWin, MapWin, FlatButton and Time subobjects"], "reason": "Run the replay through a real local ReplayWin lifetime and typed game/climate state instead of a manually patched vtable and fixed executable addresses; retain the seed's unmodeled temporary objects as restoration work."}
+// symbol    ?show_replay@@YAXXZ
+void __cdecl show_replay() {
+    ReplayWin replay;
+    WorldClimateSkipTerrainClear = 2;
+    save_daemon("Alpha Centauri Autosave 1");
+    GameDataStateStorage.fields_.game_state_ |= 0x80;
+
+    replay.init();
+    replay.close();
+
+    do_all_draws();
+    load_daemon("Alpha Centauri Autosave 1.SAV", 0);
+    flush_input();
+    WorldClimateSkipTerrainClear = 0;
+}
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x005ADE80 ?replay_base@@YAXHHHH@Z 0x005ADE80-0x005ADF03 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x005ADE80-0x005ADF03 logs Replay Base and Replay Base Info, packs four arguments and TurnCurrentNum into eight bytes at 0x00950324 plus the byte counter at 0x009469F8, then adds eight", "git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/005b3920.cpp clears 0x800 dwords of that buffer; ReplayWin timer_callback reads the same eight-byte records"], "reason": "Own replay-event storage and byte-length accounting in the replay subsystem, replacing fixed-address writes with a typed event record."}
+void __cdecl replay_base(int type, int x, int y, int faction_id) {
+// RECOVERY_LITERAL: v1 0x00691444 0x00691450 $SG49867 0x005ADE80
+    log_say("Replay Base", x, y, faction_id);
+// RECOVERY_LITERAL: v1 0x00691450 0x00691461 $SG49868 0x005ADE80
+    log_say("Replay Base Info", GameDataStateStorage.fields_.turn_current_num_, type, ReplayEventBytes);
+    ReplayEventRecord event;
+    event.turn = static_cast<int16_t>(GameDataStateStorage.fields_.turn_current_num_);
+    event.type = static_cast<uint8_t>(type);
+    event.x = static_cast<int16_t>(x);
+    event.y = static_cast<int16_t>(y);
+    event.faction_id = static_cast<uint8_t>(faction_id);
+    memcpy(ReplayEvents + ReplayEventBytes, &event, sizeof(event));
+    ReplayEventBytes += sizeof(ReplayEventRecord);
 }
