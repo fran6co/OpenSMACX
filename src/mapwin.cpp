@@ -3473,13 +3473,13 @@ int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3, int a4,
         return 0;
     }
     local_14 = a7 >> 1;
-    int *const tile_bit2_ptr = &map_tiles()[MapLongitude * a8 + local_14].bit2;
+    int *const tile_bit2_ptr = &MapTiles[MapLongitude * a8 + local_14].bit2;
     local_34 = *tile_bit2_ptr;
     if (window != 0 && window == &WorldClimateWorldWin.mapWin_ &&
         (a6 & 0x80000000) == 0 && (local_34 & 0x400000) == 0) {
         return 1;
     }
-    local_rand.reseed(static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&map_tiles()[MapLongitude * a8 + local_14])));
+    local_rand.reseed(static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&MapTiles[MapLongitude * a8 + local_14])));
     local_18 = is_ocean(a7, a8);
     if (local_18 == 0) {
         TextureLightFloor = 0xfffffffc;
@@ -3488,7 +3488,7 @@ int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3, int a4,
     // No else: [ebp-0x90] is stored only here (0x4633F0); the shipped code
     // reads it uninitialized for tiles without a landmark code.
     if ((local_34 & 0x103) != 0) {
-        local_94 = map_tiles()[MapLongitude * a8 + local_14].bit2 >> 24;
+        local_94 = MapTiles[MapLongitude * a8 + local_14].bit2 >> 24;
     }
     iVar5 = zoom_scale(50, a3);
     local_98 = (iVar5 + 1) / 4;
@@ -3502,20 +3502,20 @@ int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3, int a4,
     a10 = a10 + (int)local_44;
     territory_faction = (uint32_t)a4;
     if (a4 < 0) {
-        territory_faction = map_tiles()[MapLongitude * a8 + local_14].val3 & 7;
+        territory_faction = MapTiles[MapLongitude * a8 + local_14].val3 & 7;
         if ((int)territory_faction <= 0) {
             territory_faction = (uint32_t)ConsoleGlobal.faction_id_;
         }
     }
-    local_8c = (uint32_t)(map_tiles()[MapLongitude * a8 + local_14].climate >> 5);
-    local_84 = (map_tiles()[MapLongitude * a8 + local_14].climate >> 3) & 3;
-    local_38 = (uint32_t)(map_tiles()[MapLongitude * a8 + local_14].val3 >> 6);
+    local_8c = (uint32_t)(MapTiles[MapLongitude * a8 + local_14].climate >> 5);
+    local_84 = (MapTiles[MapLongitude * a8 + local_14].climate >> 3) & 3;
+    local_38 = (uint32_t)(MapTiles[MapLongitude * a8 + local_14].val3 >> 6);
     if (a4 >= 0 && (PlayersData[a4].flags & 0x200) == 0) {
         // 0x463529 indexes `+0xC + 4 * a4` with no faction-zero branch:
         // bit_visible[-1] is bit2 in the original layout.
-        local_24 = map_tiles()[MapLongitude * a8 + local_14].bit_visible[a4 - 1];
+        local_24 = MapTiles[MapLongitude * a8 + local_14].bit_visible[a4 - 1];
     } else {
-        local_24 = map_tiles()[MapLongitude * a8 + local_14].bit;
+        local_24 = MapTiles[MapLongitude * a8 + local_14].bit;
     }
     if (a3 >= -6 && (a6 & 0x80000000) == 0) {
         local_90 = 0;
@@ -3535,7 +3535,7 @@ int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3, int a4,
                // 0x4635C4: no observer guard; a4 == -1 reads the byte
                // before PlayersData[0] like the shipped code.
                (PlayersData[a4].flags & 0x200) == 0 &&
-               (map_tiles()[MapLongitude * a8 + local_14].visibility &
+               (MapTiles[MapLongitude * a8 + local_14].visibility &
                 (1 << a4)) == 0) {
         local_84 = 0;
         local_38 = 0;
@@ -3729,7 +3729,7 @@ int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3, int a4,
     if (0x15 < a5 ||
         ((GameDataStateStorage.fields_.game_rules_ & 0x100) == 0 && a4 >= 0 &&
          (PlayersData[a4].flags & 0x200) == 0 &&
-         (map_tiles()[MapLongitude * a8 + local_14].visibility & (1 << a4)) == 0)) {
+         (MapTiles[MapLongitude * a8 + local_14].visibility & (1 << a4)) == 0)) {
         goto LAB_wireframe;
     }
 
@@ -3786,7 +3786,7 @@ int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3, int a4,
     local_c0 = a6 & 0x10000;
     if (local_c0 != 0 &&
         ((PlayersData[ConsoleGlobal.faction_id_].flags & 0x200) != 0 ||
-         (map_tiles()[MapLongitude * a8 + local_14].visibility &
+         (MapTiles[MapLongitude * a8 + local_14].visibility &
           (1 << ConsoleGlobal.faction_id_)) != 0 ||
          (GameDataStateStorage.fields_.game_state_ & 0x80) != 0) &&
         local_20 != 0) {
@@ -3906,7 +3906,7 @@ LAB_0046441f:
         if (local_20 != 0) {
             int fill;
             if ((a6 & 0x10) != 0) {
-                fill = ((map_tiles()[MapLongitude * a8 + local_14].climate >> 3) & 3) *
+                fill = ((MapTiles[MapLongitude * a8 + local_14].climate >> 3) & 3) *
                            2 + 0x95;
             } else {
                 fill = (0xe - (int)local_8c) * 2;
@@ -4110,7 +4110,7 @@ LAB_0046441f:
     if ((((GameDataStateStorage.fields_.game_preferences_ & 0x100) != 0 &&
           local_20 == 0) ||
          (a6 & 0x4000000) != 0) &&
-        ((map_tiles()[MapLongitude * a8 + local_14].climate & ~0x1F) >= 0x60 ||
+        ((MapTiles[MapLongitude * a8 + local_14].climate & ~0x1F) >= 0x60 ||
          local_20 != 0 ||
          (GameDataStateStorage.fields_.game_more_preferences_ & 0x800000) != 0)) {
         iVar5 = wrap_map_x(a7 - 1);
@@ -4119,7 +4119,7 @@ LAB_0046441f:
             if (iVar19 >= 0 && iVar19 < MapLatitudeBounds && iVar5 >= 0 &&
                 iVar5 < MapLongitudeBounds) {
                 const int altitude =
-                    map_tiles()[MapLongitude * iVar19 + (iVar5 >> 1)].climate &
+                    MapTiles[MapLongitude * iVar19 + (iVar5 >> 1)].climate &
                     ~0x1F;
                 if (altitude >= 0x60 || local_20 != 0 ||
                     (GameDataStateStorage.fields_.game_more_preferences_ &
@@ -4127,7 +4127,7 @@ LAB_0046441f:
                     // 0x464C62 re-tests the neighbour before the centre.
                     uVar15 = 0x25;
                     if (altitude < 0x60 ||
-                        (map_tiles()[MapLongitude * a8 + local_14].climate &
+                        (MapTiles[MapLongitude * a8 + local_14].climate &
                          ~0x1F) < 0x60) {
                         uVar15 = 0xbe;
                     }
@@ -4161,7 +4161,7 @@ LAB_0046441f:
 
     // THE LANDMARK RESOURCE SPRITE (site 21).
     if ((a6 & 0x200) != 0 && local_70 == 0) {
-        uVar12 = map_tiles()[MapLongitude * a8 + local_14].bit2;
+        uVar12 = MapTiles[MapLongitude * a8 + local_14].bit2;
         if ((uVar12 & 0x80000008) == 8) {
             g_TER1_LANDMARK_RESOURCE_SPRITES[4].draw(
                 buffer, a9, a10);
@@ -4182,7 +4182,7 @@ LAB_0046441f:
             const int ny = RiverStepY[k] + a8;
             if (ny >= 0 && ny < MapLatitudeBounds && nx >= 0 &&
                 nx < MapLongitudeBounds) {
-                Map *const ntile = &map_tiles()[MapLongitude * ny + (nx >> 1)];
+                Map *const ntile = &MapTiles[MapLongitude * ny + (nx >> 1)];
                 if ((ntile->bit2 & 0x80000004) == 4 &&
                     (ntile->climate & ~0x1F) >= 0x60) {
                     a5 |= 1 << k;
@@ -4213,7 +4213,7 @@ LAB_0046441f:
                 const int ny = RiverStepY[k] + a8;
                 if (ny >= 0 && ny < MapLatitudeBounds && nx >= 0 &&
                     nx < MapLongitudeBounds &&
-                    (map_tiles()[MapLongitude * ny + (nx >> 1)].bit &
+                    (MapTiles[MapLongitude * ny + (nx >> 1)].bit &
                      0x200000) != 0) {
                     uVar12 |= 1u << k;
                 }
@@ -4253,7 +4253,7 @@ LAB_0046441f:
     // 8-neighbour walk collected, remapped through the shared table.
     if (local_c0 != 0 &&
         ((PlayersData[ConsoleGlobal.faction_id_].flags & 0x200) != 0 ||
-         (map_tiles()[MapLongitude * a8 + local_14].visibility &
+         (MapTiles[MapLongitude * a8 + local_14].visibility &
           (1 << ConsoleGlobal.faction_id_)) != 0 ||
          (GameDataStateStorage.fields_.game_state_ & 0x80) != 0) &&
         local_20 == 0) {
@@ -4274,18 +4274,18 @@ LAB_0046441f:
             local_44 = 0;
             // Original 0x0046517B/0x004651B2 reload the map width/base
             // after whose_territory, then cache the center's region (+3).
-            local_c0 = map_tiles()[MapLongitude * a8 + local_14].region;
+            local_c0 = MapTiles[MapLongitude * a8 + local_14].region;
             for (local_94 = 0; local_94 < 8; local_94++) {
                 iVar5 = wrap_map_x(VehMoveDeltaX[local_94] + a7);
                 iVar19 = VehMoveDeltaY[local_94] + a8;
                 if (iVar19 >= 0 && iVar19 < MapLatitudeBounds && iVar5 >= 0 &&
                     iVar5 < MapLongitudeBounds &&
-                    ((map_tiles()[MapLongitude * iVar19 + (iVar5 >> 1)]
+                    ((MapTiles[MapLongitude * iVar19 + (iVar5 >> 1)]
                           .climate &
                       ~0x1F) < 0x60) ==
-                        ((map_tiles()[MapLongitude * a8 + local_14].climate &
+                        ((MapTiles[MapLongitude * a8 + local_14].climate &
                           ~0x1F) < 0x60) &&
-                    map_tiles()[MapLongitude * iVar19 + (iVar5 >> 1)].region ==
+                    MapTiles[MapLongitude * iVar19 + (iVar5 >> 1)].region ==
                         local_c0) {
                     uVar12 = whose_territory(ConsoleGlobal.faction_id_, iVar5,
                                              iVar19, 0, 0);
@@ -4371,7 +4371,7 @@ LAB_0046441f:
     // THE RIVER OVERLAYS (sites 16/17): the corner river mask the
     // diagonal walk collects selects the receiver row.
     if ((a6 & 0x400) != 0 &&
-        (map_tiles()[MapLongitude * a8 + local_14].bit & 0x80) != 0 &&
+        (MapTiles[MapLongitude * a8 + local_14].bit & 0x80) != 0 &&
         local_18 == 0) {
         uVar12 = 0;  // ebx in the image
         for (int k = 0; k < 4; k++) {
@@ -4379,7 +4379,7 @@ LAB_0046441f:
             const int ny = RiverStepY[k] + a8;
             if (ny >= 0 && ny < MapLatitudeBounds && nx >= 0 &&
                 nx < MapLongitudeBounds &&
-                (map_tiles()[MapLongitude * ny + (nx >> 1)].bit & 0x80) != 0) {
+                (MapTiles[MapLongitude * ny + (nx >> 1)].bit & 0x80) != 0) {
                 uVar12 |= 1u << k;
             }
         }
@@ -4395,7 +4395,7 @@ LAB_0046441f:
         g_RIVER_TEXTURES[uVar12].draw_trans_3(buffer, MapCornerScratch,
                                               local_b8, 4, overlay_uv,
                                               local_1c != 0 ? -1 : 0x41);
-        if ((map_tiles()[MapLongitude * a8 + local_14].bit & 0x200) != 0) {
+        if ((MapTiles[MapLongitude * a8 + local_14].bit & 0x200) != 0) {
             g_RIVER_TEXTURES[0].draw_trans_3(buffer, MapCornerScratch,
                                              local_b8, 4, overlay_uv,
                                              local_1c != 0 ? -1 : 0x41);
@@ -4417,12 +4417,12 @@ LAB_00465605:;
     }
     if ((local_20 != 0 && skip_terrain == 0) ||
         (a4 >= 0 && (PlayersData[a4].flags & 0x200) == 0 &&
-         (map_tiles()[MapLongitude * a8 + local_14].visibility &
+         (MapTiles[MapLongitude * a8 + local_14].visibility &
           (1 << a4)) == 0)) {
         goto LAB_00466c32;
     }
     if ((GameDataStateStorage.fields_.game_preferences_ & 0x200) != 0 && local_20 == 0) {
-        uVar12 = map_tiles()[MapLongitude * a8 + local_14].val3 & 7;
+        uVar12 = MapTiles[MapLongitude * a8 + local_14].val3 & 7;
         // 0x4656D5: the image keeps the dead `< 0` clamp on the masked
         // owner (`and ebx, 7; jge`).
         if ((int)uVar12 < 0) {
@@ -4447,7 +4447,7 @@ LAB_00465605:;
             iVar5 = wrap_map_x(RiverStepX[local_30b - 1] + a7);
             local_34b = RiverStepY[local_30b - 1] + a8;
             if (on_map(iVar5, (int)local_34b)) {
-                uVar17 = map_tiles()[MapLongitude * (int)local_34b + (iVar5 >> 1)].val3 & 7;
+                uVar17 = MapTiles[MapLongitude * (int)local_34b + (iVar5 >> 1)].val3 & 7;
                 if ((int)uVar17 < 0) {
                     uVar17 = 0;
                 }
@@ -4505,7 +4505,7 @@ LAB_00465605:;
                     local_34b = VehMoveDeltaY[k] + a8;
                     if (on_map(iVar5, (int)local_34b)) {
                         iVar19 = MapLongitude * (int)local_34b + (iVar5 >> 1);
-                        road_neighbor = &map_tiles()[iVar19];
+                        road_neighbor = &MapTiles[iVar19];
                         if ((road_neighbor->climate & ~0x1F) >= 0x60) {
                             // 0x465BD8: the signed `% 8` edge index is
                             // formed before the tile bits are read.
@@ -4513,7 +4513,7 @@ LAB_00465605:;
                             // 0x465BFF: one [+0xC + 4*a4] read; faction 0
                             // reads bit2 through bit_visible[-1].
                             if (a4 >= 0) {
-                                local_44 = map_tiles()[iVar19].bit_visible[a4 - 1];
+                                local_44 = MapTiles[iVar19].bit_visible[a4 - 1];
                             } else {
                                 local_44 = road_neighbor->bit;
                             }
@@ -4673,7 +4673,7 @@ LAB_00465605:;
                 buffer, a9, a10);
         }
         if ((local_24 & 0x1000000) != 0 && -8 < a3) {
-            if ((map_tiles()[MapLongitude * a8 + local_14].bit2 & 0x80001000) ==
+            if ((MapTiles[MapLongitude * a8 + local_14].bit2 & 0x80001000) ==
                 0x1000) {
                 g_TER1_BOREHOLE_CLUSTER_SPRITE.draw(
                     buffer, a9, a10);
@@ -4688,7 +4688,7 @@ LAB_00465605:;
             g_TER1_SOIL_ENRICHER_SPRITES[0].draw(
                 buffer, a9, a10);
         }
-        uVar12 = map_tiles()[MapLongitude * a8 + local_14].bit2;
+        uVar12 = MapTiles[MapLongitude * a8 + local_14].bit2;
         if ((uVar12 & 0x80002000) == 0x2000) {
             // 0x466179: each arm shifts the code byte itself.
             if ((int)(uVar12 & 0xff000000) < 0x2000000) {
@@ -4704,7 +4704,7 @@ LAB_00465605:;
 nexus_done:
         // 0x4661F8-0x4663CA: every arm draws its own constant receiver
         // (tail-merged calls), not one through a selected pointer.
-        uVar12 = map_tiles()[MapLongitude * a8 + local_14].bit2;
+        uVar12 = MapTiles[MapLongitude * a8 + local_14].bit2;
         if ((uVar12 & 0x80004000) == 0x4000 && ExpansionEnabled != 0) {
             uVar16b = uVar12 & 0xff000000;
             if (uVar16b == 0) {
@@ -4769,7 +4769,7 @@ nexus_done:
                     a9, a10);
             }
         }
-        uVar12 = map_tiles()[MapLongitude * a8 + local_14].bit2;
+        uVar12 = MapTiles[MapLongitude * a8 + local_14].bit2;
         if ((uVar12 & 0x80008000) == 0x8000 && ExpansionEnabled != 0 &&
             (int)(uVar12 & 0xff000000) < 0x6000000) {
             g_FOSSIL_FIELD_RIDGE_SPRITES[(int)uVar12 >> 0x18].draw(
@@ -4780,7 +4780,7 @@ nexus_done:
     // THE POD/MONOLITH/GRID OVERLAYS (sites 38-41).
     if (local_a8 != 0 && -8 < a3) {
         if (goody_at(a7, a8) != 0) {
-            uVar12 = map_tiles()[MapLongitude * a8 + local_14].bit2;
+            uVar12 = MapTiles[MapLongitude * a8 + local_14].bit2;
             if ((uVar12 & 0x80004000) != 0x4000 ||
                 ((uVar12 = uVar12 & 0xff000000, uVar12 != 0 &&
                   uVar12 != 0x8000000) &&
@@ -4790,7 +4790,7 @@ nexus_done:
                         .draw(buffer, a9, a10);
             }
         }
-        if ((map_tiles()[MapLongitude * a8 + local_14].bit & 0x2000) != 0) {
+        if ((MapTiles[MapLongitude * a8 + local_14].bit & 0x2000) != 0) {
             g_TER1_MONOLITH_SPRITE.draw_dest(
                 buffer, sprite_transparent(g_TER1_MONOLITH_SPRITE), a9,
                 a10, ShadowColorTable);
@@ -4801,12 +4801,12 @@ nexus_done:
         local_a4 = a6 & 8;
         if (local_a4 != 0) {
             g_TER1_WHITE_ORG_YEL_TILE_SPRITES
-                [local_90 + (map_tiles()[MapLongitude * a8 + local_14].climate & 7) * 2]
+                [local_90 + (MapTiles[MapLongitude * a8 + local_14].climate & 7) * 2]
                     .draw(buffer, a9, a10);
         }
         if (local_20 == 0 && (a6 & 0x10) != 0) {
             // 0x4665BA: the rainfall bits are read before local_90 moves.
-            iVar5 = (map_tiles()[MapLongitude * a8 + local_14].climate >> 3) & 3;
+            iVar5 = (MapTiles[MapLongitude * a8 + local_14].climate >> 3) & 3;
             if (local_90 != 0 && local_a4 != 0) {
                 local_90 = local_90 + 1;
             }
@@ -4856,27 +4856,27 @@ nexus_done:
         }
         // THE LOCK-FACTION READOUT, written out twice in the image (both
         // blocks identical, 0x466870 and 0x46699C - kept faithfully).
-        if ((a6 & 0x80000) != 0 && (map_tiles()[MapLongitude * a8 + local_14].val3 & 0x38) != 0) {
+        if ((a6 & 0x80000) != 0 && (MapTiles[MapLongitude * a8 + local_14].val3 & 0x38) != 0) {
             text_rect.left = a9;
             text_rect.top = a10;
             text_rect.right = a9 + local_78 * 4;
             text_rect.bottom = a10 + local_78 * 2;
-            window->set_text_color(InfoFactionTextColors[(map_tiles()[MapLongitude * a8 + local_14].val3 >> 3) & 7], 0, 1, 1);
+            window->set_text_color(InfoFactionTextColors[(MapTiles[MapLongitude * a8 + local_14].val3 >> 3) & 7], 0, 1, 1);
             window->set_font(&window->font_b_, 0, 0, 0);
             StringTemp[0] = 0;
-            _itoa((map_tiles()[MapLongitude * a8 + local_14].val3 >> 3) & 7, numbuf, 10);
+            _itoa((MapTiles[MapLongitude * a8 + local_14].val3 >> 3) & 7, numbuf, 10);
             strcat(StringTemp, numbuf);
             window->write_cent_l(StringTemp, &text_rect);
         }
-        if ((a6 & 0x80000) != 0 && (map_tiles()[MapLongitude * a8 + local_14].val3 & 0x38) != 0) {
+        if ((a6 & 0x80000) != 0 && (MapTiles[MapLongitude * a8 + local_14].val3 & 0x38) != 0) {
             text_rect.left = a9;
             text_rect.top = a10;
             text_rect.bottom = a10 + local_78 * 2;
             text_rect.right = a9 + local_78 * 4;
-            window->set_text_color(InfoFactionTextColors[(map_tiles()[MapLongitude * a8 + local_14].val3 >> 3) & 7], 0, 1, 1);
+            window->set_text_color(InfoFactionTextColors[(MapTiles[MapLongitude * a8 + local_14].val3 >> 3) & 7], 0, 1, 1);
             window->set_font(&window->font_b_, 0, 0, 0);
             StringTemp[0] = 0;
-            _itoa((map_tiles()[MapLongitude * a8 + local_14].val3 >> 3) & 7, numbuf, 10);
+            _itoa((MapTiles[MapLongitude * a8 + local_14].val3 >> 3) & 7, numbuf, 10);
             strcat(StringTemp, numbuf);
             window->write_cent_l(StringTemp, &text_rect);
         }
