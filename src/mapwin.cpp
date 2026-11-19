@@ -2436,11 +2436,7 @@ void MapWin::on_mouse_move(int pixel_x, int pixel_y) {
         }
         ConsoleGlobal.cover_window_.soft_update();
     } else {
-        if (cursor_sprite_ != 0 || cursor_resource_id_ != 0x7f00) {
-            Win::set_cursor(0x7f00);
-            cursor_resource_id_ = 0x7f00;
-            cursor_sprite_ = 0;
-        }
+        reset_cursor();
     }
 }
 
