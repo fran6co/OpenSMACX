@@ -39,20 +39,7 @@ Sprite *RadioButtonDefault1 = &RadioButton::shared_sprite1_;
 // RECOVERY_OBJECT: v2 0x006970F4 0x006970F8 ?RadioButtonDefault2@@3PAVSprite@@A 0x0060D0E0
 Sprite *RadioButtonDefault2 = &RadioButton::shared_sprite2_;
 
-/*
-Purpose: Construct the virtual bases through VC6's hidden most-derived flag,
-         clear this control's state, and install its default sprite pointers.
-// ORIGINAL: 0x0060D0E0 ??0RadioButton@@QAE@H@Z 0x0060D0E0-0x0060D1A2;0x00662F20-0x00662F44 BYTE_EXACT
-// symbol    ??0RadioButton@@QAE@XZ
-// size      230 bytes
-// prototype void (__thiscall ??0RadioButton@@QAE@H@Z)(RadioButton* this, int)
-// callers   1   call targets   3
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x005D4CF0 0x00608C10
-Return Value: n/a
-Status: Complete
-*/
+
 
 /*
  * RECOVERY_HISTORY: v1 address=0x00407030 source_sha256=5d8f8a1d88dea99894d068cf22393a1686f86c8deab34d7b504349c1d2069549 envelope_sha256=127bea19bd51d4ffaa256021e528250fd06478161070b5cf17c94a0e518b0262
@@ -72,11 +59,6 @@ Status: Complete
  * [ARCHIVE] Status: Complete
  * [ARCHIVE] * /
  */
-// ORIGINAL: 0x00407030 ?on_key_down@thunk1_RadioButton@@QAEHH@Z 0x00407030-0x00407038 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned original image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor-installed class table cell binds 0x00407030 to the complete original thunk span.", "The retained terminal artifact set at build/recovery/builds/build-8b7ms_6y recorded the observed compiler symbol ?on_key_down@RadioButton@@$4PPPPPPPM@A@AEHH@Z in the class owner's physical COFF vftable relocation.", "That artifact set's MAP/PE cell selects the thunk and its PDB XFIXUP plus linked tail resolve to the mapped typed method.", "The original identity, spans, catalog purpose, source kind, claim state and formal lessons are retained; this binding is not a new byte claim."], "reason": "Bind the preserved original receiver-adjustor identity to the compiler-emitted class-view entry observed in the actual owner object and linked table."}
-// compile_context src/basewin.cpp
-// symbol    ?on_key_down@RadioButton@@$4PPPPPPPM@A@AEHH@Z
-// kind      game
 
 /*
  * RECOVERY_HISTORY: v1 address=0x004070A0 source_sha256=5d8f8a1d88dea99894d068cf22393a1686f86c8deab34d7b504349c1d2069549 envelope_sha256=a916e3f64f8676db3c9c3fb87acda341ac5bc95a463b2c4f7c26778110b7d2b3
@@ -103,6 +85,132 @@ Status: Complete
  * [ARCHIVE] Status: Complete
  * [ARCHIVE] * /
  */
+
+/*
+Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
+         RadioButton::on_redraw expects, then forward unchanged.
+// ORIGINAL: 0x00406FF0 ?on_redraw@thunk1_RadioButton@@QAEXXZ 0x00406FF0-0x00406FF8 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor ??0RadioButton@@QAE@H@Z at 0x0060D0E0 at 0x0060D138 installs table 0x00669A6C through the thunk1 vbtable-derived view installs table 0x00669A6C; the pinned slot at table+0x30 contains 0x00406FF0. Original thunk receiver adjustment and tail target were checked against the pinned image: sub ecx,[ecx-4]; jmp 0x0060E220.", "Current genuine owner is src/jackal/radiobutton.cpp; retained owner-object vftable ??_7RadioButton@@6BWin@@@ has an absolute relocation at +0x30 to ?on_redraw@RadioButton@@$4PPPPPPPM@A@AEXXZ, whose COMDAT preserves the pinned receiver-adjustment bytes and whose terminal relative relocation selects the source-owned ?on_redraw@RadioButton@@UAEXXZ method. This source binding records the measured generated owner identity; its physical relocation must be rechecked after source changes."], "reason": "Bind the full original identity and spans to the existing compiler-generated class-view adjustor selected by the constructor-installed original slot; retain its historical claims and lessons unchanged."}
+// compile_context src/basewin.cpp
+// symbol    ?on_redraw@RadioButton@@$4PPPPPPPM@A@AEXXZ
+// size      8 bytes
+// prototype void (__thiscall ?on_redraw@thunk1_RadioButton@@QAEXXZ)(RadioButton* this)
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+// TRIED 2026-09-26 (Win slot-12 on_redraw rename batch): with Win slot12 renamed
+//            on_redraw, RadioButton::on_redraw overrides that slot through GraphicWin as
+//            well as Dialog slot2, so the qualified call's receiver fold moved from
+//            the Dialog offset 0xA30 to the GraphicWin offset 0x18. The walk now
+//            pre-subtracts 0x18 to cancel it, leaving the image's bare vtordisp thunk;
+//            the old 0xA30 walk emitted an extra `sub ecx, 0xa18` here. The compiler
+//            now emits its own vtordisp thunk for this slot; this handwritten walk
+//            stays the claim host pending coordinated retirement onto it.
+Return Value: n/a
+Status: Complete
+*/
+
+/*
+Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
+         RadioButton::on_mouse_move expects, then forward unchanged.
+// ORIGINAL: 0x00407000 ?on_mouse_move@thunk1_RadioButton@@QAEXHH@Z 0x00407000-0x00407008 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor ??0RadioButton@@QAE@H@Z at 0x0060D0E0 at 0x0060D138 installs table 0x00669A6C through the thunk1 vbtable-derived view installs table 0x00669A6C; the pinned slot at table+0x44 contains 0x00407000. Original thunk receiver adjustment and tail target were checked against the pinned image: sub ecx,[ecx-4]; jmp 0x0060E320.", "Current genuine owner is src/jackal/radiobutton.cpp; retained owner-object vftable ??_7RadioButton@@6BWin@@@ has an absolute relocation at +0x44 to ?on_mouse_move@RadioButton@@$4PPPPPPPM@A@AEXHH@Z, whose COMDAT preserves the pinned receiver-adjustment bytes and whose terminal relative relocation selects the source-owned ?on_mouse_move@RadioButton@@UAEXHH@Z method. This source binding records the measured generated owner identity; its physical relocation must be rechecked after source changes."], "reason": "Bind the full original identity and spans to the existing compiler-generated class-view adjustor selected by the constructor-installed original slot; retain its historical claims and lessons unchanged."}
+// compile_context src/basewin.cpp
+// symbol    ?on_mouse_move@RadioButton@@$4PPPPPPPM@A@AEXHH@Z
+// size      8 bytes
+// prototype void (__thiscall ?on_mouse_move@thunk1_RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+
+/*
+Purpose: Adjust the receiver from the thunk1 subobject back to RadioButton and
+         tail-jump to the override. THE COMPILER WRITES THIS BODY - the claim
+         names VC6's own vtordisp adjustor thunk, emitted because
+         RadioButton::on_mouse_leave overrides a virtual reached through a virtual
+         base. There is no C++ here to get right, only a name to record.
+// ORIGINAL: 0x00407010 ?on_mouse_leave@thunk1_RadioButton@@QAEXHH@Z 0x00407010-0x00407018 BYTE_EXACT
+// compile_context src/basewin.cpp
+// symbol    ?on_mouse_leave@RadioButton@@$4PPPPPPPM@A@AEXHH@Z
+// size      8 bytes
+// kind      game
+Status: Complete
+*/
+
+/*
+Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
+         RadioButton::on_left_down expects, then forward unchanged.
+// ORIGINAL: 0x00407020 ?on_left_down@thunk1_RadioButton@@QAEXHH@Z 0x00407020-0x00407028 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor ??0RadioButton@@QAE@H@Z at 0x0060D0E0 at 0x0060D138 installs table 0x00669A6C through the thunk1 vbtable-derived view installs table 0x00669A6C; the pinned slot at table+0x50 contains 0x00407020. Original thunk receiver adjustment and tail target were checked against the pinned image: sub ecx,[ecx-4]; jmp 0x0060DE10.", "Current genuine owner is src/jackal/radiobutton.cpp; retained owner-object vftable ??_7RadioButton@@6BWin@@@ has an absolute relocation at +0x50 to ?on_left_down@RadioButton@@$4PPPPPPPM@A@AEXHH@Z, whose COMDAT preserves the pinned receiver-adjustment bytes and whose terminal relative relocation selects the source-owned ?on_left_down@RadioButton@@UAEXHH@Z method. This source binding records the measured generated owner identity; its physical relocation must be rechecked after source changes."], "reason": "Bind the full original identity and spans to the existing compiler-generated class-view adjustor selected by the constructor-installed original slot; retain its historical claims and lessons unchanged."}
+// compile_context src/basewin.cpp
+// symbol    ?on_left_down@RadioButton@@$4PPPPPPPM@A@AEXHH@Z
+// size      8 bytes
+// prototype void (__thiscall ?on_left_down@thunk1_RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+
+// ORIGINAL: 0x00407030 ?on_key_down@thunk1_RadioButton@@QAEHH@Z 0x00407030-0x00407038 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor-installed class table cell binds 0x00407030 to the complete original thunk span.", "The retained terminal artifact set at build/recovery/builds/build-8b7ms_6y recorded the observed compiler symbol ?on_key_down@RadioButton@@$4PPPPPPPM@A@AEHH@Z in the class owner's physical COFF vftable relocation.", "That artifact set's MAP/PE cell selects the thunk and its PDB XFIXUP plus linked tail resolve to the mapped typed method.", "The original identity, spans, catalog purpose, source kind, claim state and formal lessons are retained; this binding is not a new byte claim."], "reason": "Bind the preserved original receiver-adjustor identity to the compiler-emitted class-view entry observed in the actual owner object and linked table."}
+// compile_context src/basewin.cpp
+// symbol    ?on_key_down@RadioButton@@$4PPPPPPPM@A@AEHH@Z
+// kind      game
+
+/*
+Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
+         RadioButton::on_left_double_click expects, then forward unchanged.
+// ORIGINAL: 0x00407040 ?on_left_double_click@thunk1_RadioButton@@QAEXHH@Z 0x00407040-0x00407048 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor ??0RadioButton@@QAE@H@Z at 0x0060D0E0 at 0x0060D138 installs table 0x00669A6C through the thunk1 vbtable-derived view installs table 0x00669A6C; the pinned slot at table+0x70 contains 0x00407040. Original thunk receiver adjustment and tail target were checked against the pinned image: sub ecx,[ecx-4]; jmp 0x0060E1E0.", "Current genuine owner is src/jackal/radiobutton.cpp; retained owner-object vftable ??_7RadioButton@@6BWin@@@ has an absolute relocation at +0x70 to ?on_left_double_click@RadioButton@@$4PPPPPPPM@A@AEXHH@Z, whose COMDAT preserves the pinned receiver-adjustment bytes and whose terminal relative relocation selects the source-owned ?on_left_double_click@RadioButton@@UAEXHH@Z method. This source binding records the measured generated owner identity; its physical relocation must be rechecked after source changes."], "reason": "Bind the full original identity and spans to the existing compiler-generated class-view adjustor selected by the constructor-installed original slot; retain its historical claims and lessons unchanged."}
+// compile_context src/basewin.cpp
+// symbol    ?on_left_double_click@RadioButton@@$4PPPPPPPM@A@AEXHH@Z
+// size      8 bytes
+// prototype void (__thiscall ?on_left_double_click@thunk1_RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+
+/*
+Purpose: Adjust the receiver from the thunk1 subobject back to RadioButton and
+         tail-jump to the override. THE COMPILER WRITES THIS BODY - the claim
+         names VC6's own vtordisp adjustor thunk, emitted because
+         RadioButton::on_dialog_focus overrides a virtual through a virtual
+         base. There is no C++ here to get right, only a name to record.
+// ORIGINAL: 0x00407050 ?on_dialog_focus@thunk1_RadioButton@@QAEXH@Z 0x00407050-0x00407058 BYTE_EXACT
+// compile_context src/basewin.cpp
+// symbol    ?on_dialog_focus@RadioButton@@$4PPPPPPPM@A@AEXH@Z
+// size      8 bytes
+// prototype void (__thiscall ?on_dialog_focus@thunk1_RadioButton@@QAEXH@Z)(RadioButton* this, int)
+// kind      game
+Status: Complete
+*/
+
+/*
+Purpose: Adjust the receiver from the thunk1 subobject back to RadioButton and
+         tail-jump to the override. THE COMPILER WRITES THIS BODY - the claim
+         names VC6's own vtordisp adjustor thunk, emitted because
+         RadioButton::attach overrides a virtual reached through a virtual
+         base. There is no C++ here to get right, only a name to record.
+// ORIGINAL: 0x00407090 ?attach@thunk1_RadioButton@@QAEHPAUGraphicWin@@HHH@Z 0x00407090-0x00407098 BYTE_EXACT
+// compile_context src/basewin.cpp
+// symbol    ?attach@RadioButton@@$4PPPPPPPM@A@AEHPAVGraphicWin@@HHH@Z
+// size      8 bytes
+// kind      game
+Status: Complete
+*/
+
 // ORIGINAL: 0x004070A0 ?on_redraw@thunk3_RadioButton@@QAEXXZ 0x004070A0-0x004070AE FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor-installed class table cell binds 0x004070A0 to the complete original thunk span.", "The retained terminal artifact set at build/recovery/builds/build-8b7ms_6y recorded the observed compiler symbol ?on_redraw@RadioButton@@$4PPPPPPPM@KBI@AEXXZ in the class owner's physical COFF vftable relocation.", "That artifact set's MAP/PE cell selects the thunk and its PDB XFIXUP plus linked tail resolve to the mapped typed method.", "The original identity, spans, catalog purpose, source kind, claim state and formal lessons are retained; this binding is not a new byte claim."], "reason": "Bind the preserved original receiver-adjustor identity to the compiler-emitted class-view entry observed in the actual owner object and linked table."}
 // compile_context src/basewin.cpp
@@ -117,6 +225,21 @@ RadioButton::RadioButton() {
     checked_sprite_ = RadioButtonDefault2;
     unchecked_sprite_ = RadioButtonDefault1;
 }
+
+/*
+Purpose: Construct the virtual bases through VC6's hidden most-derived flag,
+         clear this control's state, and install its default sprite pointers.
+// ORIGINAL: 0x0060D0E0 ??0RadioButton@@QAE@H@Z 0x0060D0E0-0x0060D1A2;0x00662F20-0x00662F44 BYTE_EXACT
+// symbol    ??0RadioButton@@QAE@XZ
+// size      230 bytes
+// prototype void (__thiscall ??0RadioButton@@QAE@H@Z)(RadioButton* this, int)
+// callers   1   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005D4CF0 0x00608C10
+Return Value: n/a
+Status: Complete
+*/
 
 // Historical non-deleting phase annotation; the former out-of-line model's
 // virtual-base table staging was compiler-owned in the recovered hierarchy.
@@ -163,6 +286,129 @@ void RadioButton::close() {
     unchecked_sprite_ = RadioButtonDefault1;
     Dialog::close();
     GraphicWin::close();
+}
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// TRIED: none confirmed byte-exact; MISMATCH #26 'push' vs 'mov', same vtable-array-double-read shape as the sibling CheckBox::attach (0x0060E800). GraphicWin::init's scaffold return type is void (the mangled name spells X), so the caller cannot propagate its failure code the way the CheckBox::attach byte pattern implies it should - RadioButton::attach DOES check calculate_dimensions()'s return here, unlike CheckBox's.
+// ORIGINAL: 0x0060D1F0 ?attach@RadioButton@@QAEHPAUGraphicWin@@HHH@Z 0x0060D1F0-0x0060D377 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0060d1f0.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60d1f0 complete control/data-access review and src/jackal/radiobutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+// symbol    ?attach@RadioButton@@UAEHPAVGraphicWin@@HHH@Z
+int RadioButton::attach(GraphicWin *parent, int x, int y, int flags) {
+    if (parent == 0) return 3;
+    if (HandleMain == 0) return 7;
+    const int dimensions = calculate_dimensions();
+    if (dimensions != 0) return dimensions;
+    Dialog::window_x_ = x;
+    Dialog::window_y_ = y;
+    if ((parent->iFlags_ & 0x1000) == 0) flags |= 0x100000;
+    const int init_result = GraphicWin::init(
+        x, y, Dialog::field_5C_, Dialog::field_60_, flags, parent);
+    if (init_result != 0) return init_result;
+    Buffer::set_text_color(text_color_a_, text_color_b_, text_color_c_, text_color_d_);
+    Buffer::set_text_color2(text_color_2a_, text_color_2b_, text_color_2c_, text_color_2d_);
+    Buffer::set_text_color3(text_color_3a_, text_color_3b_, text_color_3c_, text_color_3d_);
+    Buffer::set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
+    return 0;
+}
+
+// 0x0060D380. The dialog list cursor is intentionally advanced in place, as
+// in the original: each entry caches the number of wrapped text lines in its
+// payload while the row/column dimensions are calculated.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// TRIED: full Ghidra-derived arithmetic transliteration (vtbl[1]/vtbl[2] base offsets, Buffer receiver fixed up) compiles and matches logic; MISMATCH #1 is prologue register-save order, not chased.
+// ORIGINAL: 0x0060D380 ?calculate_dimensions@RadioButton@@QAEHXZ 0x0060D380-0x0060D745 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0060d380.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60d380 complete control/data-access review and src/jackal/radiobutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+int RadioButton::calculate_dimensions() {
+    if (Dialog::item_list_.entry_count_ == 0) {
+        return 7;
+    }
+
+    Buffer::set_text_color(text_color_a_, text_color_b_, text_color_c_, text_color_d_);
+    Buffer::set_text_color2(text_color_2a_, text_color_2b_, text_color_2c_, text_color_2d_);
+    Buffer::set_text_color3(text_color_3a_, text_color_3b_, text_color_3c_, text_color_3d_);
+    Buffer::set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
+
+    if (Dialog::field_34_ == 0 && unchecked_sprite_ != 0 && checked_sprite_ != 0) {
+        Dialog::field_34_ = max(unchecked_sprite_->width(), checked_sprite_->width());
+    }
+    if (Dialog::field_48_ == -1) {
+        if (unchecked_sprite_ != 0 && checked_sprite_ != 0) {
+            Dialog::field_68_ = max(unchecked_sprite_->height(), checked_sprite_->height());
+        } else {
+            Dialog::field_68_ = 0;
+        }
+    } else {
+        Dialog::field_68_ = Dialog::field_48_;
+    }
+
+    Dialog::row_count_ = min(Dialog::item_list_.entry_count_,
+                             Dialog::field_50_);
+    if (Dialog::row_count_ < Dialog::item_list_.entry_count_) {
+        Dialog::field_4C_ = Dialog::item_list_.entry_count_ / Dialog::row_count_ + 1;
+        Dialog::row_count_ = Dialog::item_list_.entry_count_ / Dialog::field_4C_;
+        if (Dialog::field_4C_ * Dialog::row_count_ < Dialog::item_list_.entry_count_) {
+            ++Dialog::row_count_;
+        }
+    }
+
+    int max_wrap_width;
+    if ((Dialog::field_20_ & 2) != 0 && Dialog::field_2C_ != 0) {
+        max_wrap_width = Dialog::field_2C_ / Dialog::field_4C_
+                       - Dialog::field_40_ * 2 - Dialog::field_34_;
+    } else {
+        max_wrap_width = 100000;
+    }
+    int max_text_width = 0;
+    for (int i = 0; i < Dialog::item_list_.entry_count_; ++i) {
+        StringStruct &items = Dialog::item_list_;
+        if (items.head_ != 0) {
+            items.current_ = items.current_->next;
+            ++items.current_position_;
+            if (items.current_position_ == items.entry_count_) {
+                items.current_position_ = 0;
+            }
+        }
+        char *text;
+        if (items.current_ != 0) {
+            StringStructPayload *const payload = items.head_ != 0
+                ? items.current_->string_payload() : 0;
+            text = payload->text;
+        } else {
+            text = 0;
+        }
+        const int width = Buffer::text_width(text);
+        if (width > max_text_width) {
+            max_text_width = width;
+        }
+        StringStruct &list = Dialog::item_list_;
+        StringStructPayload *const payload = list.head_ != 0
+            ? list.current_->string_payload() : 0;
+        payload->field_8_ = width / max_wrap_width + 1;
+    }
+    Dialog::field_64_ = Dialog::field_44_ + Dialog::field_34_ + max_text_width;
+    Dialog::field_68_ = max(Dialog::field_68_, Buffer::text_height());
+
+    if ((Dialog::field_20_ & 2) != 0 && Dialog::field_2C_ != 0) {
+        Dialog::field_5C_ = Dialog::field_2C_;
+        Dialog::field_64_ = (Dialog::field_2C_ - Dialog::field_40_ * 2) / Dialog::field_4C_
+                          - Dialog::field_44_;
+    } else {
+        Dialog::field_5C_ = max(Dialog::field_2C_ + Dialog::field_40_ * 2,
+                                Dialog::field_64_ * Dialog::field_4C_ + Dialog::field_40_ * 2);
+        Dialog::field_64_ = (Dialog::field_5C_ - Dialog::field_40_ * 2)
+                          / Dialog::field_4C_ - Dialog::field_44_;
+        Dialog::field_5C_ -= Dialog::field_44_;
+    }
+    Dialog::column_count_ = Dialog::field_4C_;
+    if ((Dialog::field_20_ & 1) != 0 && Dialog::field_30_ != 0) {
+        Dialog::field_60_ = Dialog::field_30_;
+        Dialog::row_count_ = Dialog::field_30_ / Dialog::field_68_;
+    } else {
+        Dialog::field_60_ = (Dialog::field_68_ + Dialog::field_44_) * Dialog::row_count_;
+    }
+    return 0;
 }
 
 // WORKAROUND(decl): draw_item (0x60D750) spills this count to a temporary
@@ -294,165 +540,6 @@ void RadioButton::draw_item(int position, int state) {
     }
 }
 
-// 0x0060D380. The dialog list cursor is intentionally advanced in place, as
-// in the original: each entry caches the number of wrapped text lines in its
-// payload while the row/column dimensions are calculated.
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// Historical seed observations (not fresh measurements or acceptance):
-// TRIED: full Ghidra-derived arithmetic transliteration (vtbl[1]/vtbl[2] base offsets, Buffer receiver fixed up) compiles and matches logic; MISMATCH #1 is prologue register-save order, not chased.
-// ORIGINAL: 0x0060D380 ?calculate_dimensions@RadioButton@@QAEHXZ 0x0060D380-0x0060D745 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0060d380.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60d380 complete control/data-access review and src/jackal/radiobutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
-int RadioButton::calculate_dimensions() {
-    if (Dialog::item_list_.entry_count_ == 0) {
-        return 7;
-    }
-
-    Buffer::set_text_color(text_color_a_, text_color_b_, text_color_c_, text_color_d_);
-    Buffer::set_text_color2(text_color_2a_, text_color_2b_, text_color_2c_, text_color_2d_);
-    Buffer::set_text_color3(text_color_3a_, text_color_3b_, text_color_3c_, text_color_3d_);
-    Buffer::set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
-
-    if (Dialog::field_34_ == 0 && unchecked_sprite_ != 0 && checked_sprite_ != 0) {
-        Dialog::field_34_ = max(unchecked_sprite_->width(), checked_sprite_->width());
-    }
-    if (Dialog::field_48_ == -1) {
-        if (unchecked_sprite_ != 0 && checked_sprite_ != 0) {
-            Dialog::field_68_ = max(unchecked_sprite_->height(), checked_sprite_->height());
-        } else {
-            Dialog::field_68_ = 0;
-        }
-    } else {
-        Dialog::field_68_ = Dialog::field_48_;
-    }
-
-    Dialog::row_count_ = min(Dialog::item_list_.entry_count_,
-                             Dialog::field_50_);
-    if (Dialog::row_count_ < Dialog::item_list_.entry_count_) {
-        Dialog::field_4C_ = Dialog::item_list_.entry_count_ / Dialog::row_count_ + 1;
-        Dialog::row_count_ = Dialog::item_list_.entry_count_ / Dialog::field_4C_;
-        if (Dialog::field_4C_ * Dialog::row_count_ < Dialog::item_list_.entry_count_) {
-            ++Dialog::row_count_;
-        }
-    }
-
-    int max_wrap_width;
-    if ((Dialog::field_20_ & 2) != 0 && Dialog::field_2C_ != 0) {
-        max_wrap_width = Dialog::field_2C_ / Dialog::field_4C_
-                       - Dialog::field_40_ * 2 - Dialog::field_34_;
-    } else {
-        max_wrap_width = 100000;
-    }
-    int max_text_width = 0;
-    for (int i = 0; i < Dialog::item_list_.entry_count_; ++i) {
-        StringStruct &items = Dialog::item_list_;
-        if (items.head_ != 0) {
-            items.current_ = items.current_->next;
-            ++items.current_position_;
-            if (items.current_position_ == items.entry_count_) {
-                items.current_position_ = 0;
-            }
-        }
-        char *text;
-        if (items.current_ != 0) {
-            StringStructPayload *const payload = items.head_ != 0
-                ? items.current_->string_payload() : 0;
-            text = payload->text;
-        } else {
-            text = 0;
-        }
-        const int width = Buffer::text_width(text);
-        if (width > max_text_width) {
-            max_text_width = width;
-        }
-        StringStruct &list = Dialog::item_list_;
-        StringStructPayload *const payload = list.head_ != 0
-            ? list.current_->string_payload() : 0;
-        payload->field_8_ = width / max_wrap_width + 1;
-    }
-    Dialog::field_64_ = Dialog::field_44_ + Dialog::field_34_ + max_text_width;
-    Dialog::field_68_ = max(Dialog::field_68_, Buffer::text_height());
-
-    if ((Dialog::field_20_ & 2) != 0 && Dialog::field_2C_ != 0) {
-        Dialog::field_5C_ = Dialog::field_2C_;
-        Dialog::field_64_ = (Dialog::field_2C_ - Dialog::field_40_ * 2) / Dialog::field_4C_
-                          - Dialog::field_44_;
-    } else {
-        Dialog::field_5C_ = max(Dialog::field_2C_ + Dialog::field_40_ * 2,
-                                Dialog::field_64_ * Dialog::field_4C_ + Dialog::field_40_ * 2);
-        Dialog::field_64_ = (Dialog::field_5C_ - Dialog::field_40_ * 2)
-                          / Dialog::field_4C_ - Dialog::field_44_;
-        Dialog::field_5C_ -= Dialog::field_44_;
-    }
-    Dialog::column_count_ = Dialog::field_4C_;
-    if ((Dialog::field_20_ & 1) != 0 && Dialog::field_30_ != 0) {
-        Dialog::field_60_ = Dialog::field_30_;
-        Dialog::row_count_ = Dialog::field_30_ / Dialog::field_68_;
-    } else {
-        Dialog::field_60_ = (Dialog::field_68_ + Dialog::field_44_) * Dialog::row_count_;
-    }
-    return 0;
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// Historical seed observations (not fresh measurements or acceptance):
-// TRIED: none confirmed byte-exact; MISMATCH #26 'push' vs 'mov', same vtable-array-double-read shape as the sibling CheckBox::attach (0x0060E800). GraphicWin::init's scaffold return type is void (the mangled name spells X), so the caller cannot propagate its failure code the way the CheckBox::attach byte pattern implies it should - RadioButton::attach DOES check calculate_dimensions()'s return here, unlike CheckBox's.
-// ORIGINAL: 0x0060D1F0 ?attach@RadioButton@@QAEHPAUGraphicWin@@HHH@Z 0x0060D1F0-0x0060D377 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0060d1f0.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60d1f0 complete control/data-access review and src/jackal/radiobutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
-// symbol    ?attach@RadioButton@@UAEHPAVGraphicWin@@HHH@Z
-int RadioButton::attach(GraphicWin *parent, int x, int y, int flags) {
-    if (parent == 0) return 3;
-    if (HandleMain == 0) return 7;
-    const int dimensions = calculate_dimensions();
-    if (dimensions != 0) return dimensions;
-    Dialog::window_x_ = x;
-    Dialog::window_y_ = y;
-    if ((parent->iFlags_ & 0x1000) == 0) flags |= 0x100000;
-    const int init_result = GraphicWin::init(
-        x, y, Dialog::field_5C_, Dialog::field_60_, flags, parent);
-    if (init_result != 0) return init_result;
-    Buffer::set_text_color(text_color_a_, text_color_b_, text_color_c_, text_color_d_);
-    Buffer::set_text_color2(text_color_2a_, text_color_2b_, text_color_2c_, text_color_2d_);
-    Buffer::set_text_color3(text_color_3a_, text_color_3b_, text_color_3c_, text_color_3d_);
-    Buffer::set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
-    return 0;
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// Historical seed observations (not fresh measurements or acceptance):
-// TRIED: 200 vs 222 bytes; the many named int locals (offsets, args) push an extra callee-saved register before the first field read, where the original moves `this` into edi first. Did not try collapsing to fewer locals given budget.
-// `[edi-0x18]` at entry (edi=ecx=`this`) is a virtual-base recovery: this
-// class is entered with `this` already adjusted, and `this-0x18` is the
-// real object start whose OWN vtable+4 gives a further byte offset used
-// to reach members past that. The pattern repeats at vtbl+8 for a second
-// virtual base. slot010 needs its own shim (int argument, int return);
-// the emitted VCall's slots are void().
-// Deleted seed provenance: git:5ab1f8ce:src/unrecovered/0060e220.cpp
-// ORIGINAL: 0x0060E220 ?on_redraw@RadioButton@@QAEXXZ 0x0060E220-0x0060E2FE FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0060e220.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60e220 complete control/data-access review and src/jackal/radiobutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
-// symbol    ?on_redraw@RadioButton@@UAEXXZ
-void RadioButton::on_redraw() {
-    // Native60E220 retains this parent across back-draw and fallback copying.
-    Win *const parent = win_parent_;
-    WinCallbackWindow = parent;
-    if (parent == 0) return;
-    const int handled = parent->on_dialog_back_draw(
-        static_cast<GraphicWin *>(this));
-    if (handled == 0) {
-        static_cast<GraphicWin *>(parent)->copy(
-            this, Dialog::window_x_, Dialog::window_y_, 0, 0,
-            static_cast<int>(dib_.bmiHeader.biWidth),
-            -static_cast<int>(dib_.bmiHeader.biHeight));
-    }
-    for (int position = 0; position < Dialog::item_list_.entry_count_; ++position) {
-        if (Dialog::selected_position_ == position) {
-            draw_item(position, 1);
-        } else {
-            draw_item(position, 0);
-        }
-    }
-    soft_update();
-}
-
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0060DE10 ?on_left_down@RadioButton@@QAEXHH@Z 0x0060DE10-0x0060E01B FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060de10.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60de10 complete control/data-access review and src/jackal/radiobutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
@@ -508,238 +595,6 @@ void RadioButton::on_left_down(int x, int y) {
     soft_update();
     if ((Dialog::field_20_ & 4) != 0 && win_parent_ != 0) {
         win_parent_->on_button_clicked(-1);
-    }
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0060E320 ?on_mouse_move@RadioButton@@QAEXHH@Z 0x0060E320-0x0060E494 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060e320.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60e320 complete control/data-access review and src/jackal/radiobutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
-// symbol    ?on_mouse_move@RadioButton@@UAEXHH@Z
-void RadioButton::on_mouse_move(int x, int y) {
-    int first = 1;
-    Dialog::item_list_.seek_pos(-1);
-    while (y > 0) {
-        if (!first && Dialog::item_list_.current_position_ ==
-                          Dialog::item_list_.entry_count_ - 1) {
-            return;
-        }
-        first = 0;
-        StringStruct &items = Dialog::item_list_;
-        if (items.head_ != 0) {
-            StringStructEntry *const next = items.current_->next;
-            const int count = items.entry_count_;
-            items.current_ = next;
-            ++items.current_position_;
-            if (items.current_position_ == count) items.current_position_ = 0;
-        }
-        int lines;
-        if (items.current_ != 0) {
-            StringStructPayload *const payload = items.head_ != 0
-                ? items.current_->string_payload() : 0;
-            lines = static_cast<int>(payload->field_8_);
-        } else {
-            lines = 0;
-        }
-        int item_height = Buffer::text_line_height() * lines;
-        if ((Dialog::field_44_ + Dialog::field_68_) > item_height) {
-            item_height = Dialog::field_44_ + Dialog::field_68_;
-        }
-        y -= item_height;
-    }
-    int position = (x / (Dialog::field_64_ + Dialog::field_44_)) *
-                         Dialog::row_count_ +
-                         Dialog::item_list_.current_position_;
-    if (position == Dialog::selected_position_) {
-        const uint32_t previous_hover = Dialog::field_F0_;
-        position = -1;
-        if (previous_hover == static_cast<uint32_t>(position)) return;
-    }
-    Dialog::field_F0_ = static_cast<uint32_t>(position);
-    redraw();
-}
-
-
-/*
-// ORIGINAL: 0x0060E300 ?on_dialog_focus@RadioButton@@QAEXH@Z 0x0060E300-0x0060E317 BYTE_EXACT
-// symbol    ?on_dialog_focus@RadioButton@@UAEXH@Z
-// size      23 bytes
-// prototype void (__thiscall ?on_dialog_focus@RadioButton@@QAEXH@Z)(RadioButton* this, int)
-// callers   1   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// indirect  0x0060E30E
-Status: Complete
-*/
-void RadioButton::on_dialog_focus(int a1) {
-    redraw();
-}
-
-/*
-Purpose: Adjust the receiver from the thunk1 subobject back to RadioButton and
-         tail-jump to the override. THE COMPILER WRITES THIS BODY - the claim
-         names VC6's own vtordisp adjustor thunk, emitted because
-         RadioButton::on_dialog_focus overrides a virtual through a virtual
-         base. There is no C++ here to get right, only a name to record.
-// ORIGINAL: 0x00407050 ?on_dialog_focus@thunk1_RadioButton@@QAEXH@Z 0x00407050-0x00407058 BYTE_EXACT
-// compile_context src/basewin.cpp
-// symbol    ?on_dialog_focus@RadioButton@@$4PPPPPPPM@A@AEXH@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_dialog_focus@thunk1_RadioButton@@QAEXH@Z)(RadioButton* this, int)
-// kind      game
-Status: Complete
-*/
-
-/*
-Purpose: Clear the hover index and repaint, through the enclosing object.
-// ORIGINAL: 0x0060E4A0 ?on_mouse_leave@RadioButton@@QAEXHH@Z 0x0060E4A0-0x0060E4C8 BYTE_EXACT
-// symbol    ?on_mouse_leave@RadioButton@@UAEXHH@Z
-// size      40 bytes
-// prototype void (__thiscall ?on_mouse_leave@RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)
-// callers   1   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// indirect  0x0060E4BF
-Return Value: n/a
-Status: Complete
-*/
-void RadioButton::on_mouse_leave(int a1, int a2) {
-    // Clear the hover index (Dialog::field_F0_, through the virtual base)
-    // and repaint (the redraw virtual) - plain member forms; the
-    // compiler's virtual-base machinery does the walking the old hand
-    // chains spelled. Both parameters are dead; `ret 8` still pops them.
-    field_F0_ = -1;
-    redraw();
-}
-
-/*
-Purpose: Adjust the receiver from the thunk1 subobject back to RadioButton and
-         tail-jump to the override. THE COMPILER WRITES THIS BODY - the claim
-         names VC6's own vtordisp adjustor thunk, emitted because
-         RadioButton::on_mouse_leave overrides a virtual reached through a virtual
-         base. There is no C++ here to get right, only a name to record.
-// ORIGINAL: 0x00407010 ?on_mouse_leave@thunk1_RadioButton@@QAEXHH@Z 0x00407010-0x00407018 BYTE_EXACT
-// compile_context src/basewin.cpp
-// symbol    ?on_mouse_leave@RadioButton@@$4PPPPPPPM@A@AEXHH@Z
-// size      8 bytes
-// kind      game
-Status: Complete
-*/
-
-/*
-// ORIGINAL: 0x0060E4D0 ?init_class@RadioButton@@QAAHXZ 0x0060E4D0-0x0060E5C2;0x00662F44-0x00662F59 BYTE_EXACT
-// symbol    ?init_class@RadioButton@@SAHXZ
-// size      263 bytes
-// prototype int (__cdecl ?init_class@RadioButton@@QAAHXZ)()
-// callers   1   call targets   5
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x005D7210 0x005D7410 0x005D7670 0x005D7DE0 0x005E39A0
-//
-// Promoted 2026-08-15 from src/unrecovered/0060e4d0.cpp to retire its
-// pending_bodies forwarder. Sibling of CheckBox::init_class; same
-// placement-new Buffer shape and the same SEH-funclet gap (see that body's
-// TRIED).
-// LEVER: ~Buffer out of line, as in CheckBox::init_class above - 24/63 ->
-//   63/63 on moving the definition from buffer.h into buffer.cpp, and the
-//   same collapse of the EBP frame into the image's frameless EH form.
-Status: Complete
-*/
-int __cdecl RadioButton::init_class() {
-    // A REAL LOCAL. The note that stood here kept the placement-new form to
-    // preserve the image's SEH frame, and that reasoning was right about the
-    // frame and wrong about what produces it: a plain `Buffer buf;` is a real
-    // local with a non-trivial destructor too, so VC6 emits the same frame -
-    // and it also gets `sub esp, 0x588`, sizeof(Buffer) exactly, where the
-    // char array costs four more bytes. The CheckBox sibling this note called
-    // "the same ceiling" is BYTE_EXACT with this spelling.
-    Buffer buf;
-    buf.init(0x20, 0x20, 0, 0);
-    int result = buf.load_pcx("jackal.pcx", 0, 10, 0xec);
-    if (result != 0) {
-        return result;
-    }
-    RadioButton::shared_sprite1_.extract(&buf, 0x109, 1, 0x23, 0x20, 0x20, 0);
-    RadioButton::shared_sprite2_.extract(&buf, 0x109, 0x22, 0x23, 0x20, 0x20, 0);
-    return 0;
-}
-
-/*
-Purpose: Adjust the receiver from the thunk1 subobject back to RadioButton and
-         tail-jump to the override. THE COMPILER WRITES THIS BODY - the claim
-         names VC6's own vtordisp adjustor thunk, emitted because
-         RadioButton::attach overrides a virtual reached through a virtual
-         base. There is no C++ here to get right, only a name to record.
-// ORIGINAL: 0x00407090 ?attach@thunk1_RadioButton@@QAEHPAUGraphicWin@@HHH@Z 0x00407090-0x00407098 BYTE_EXACT
-// compile_context src/basewin.cpp
-// symbol    ?attach@RadioButton@@$4PPPPPPPM@A@AEHPAVGraphicWin@@HHH@Z
-// size      8 bytes
-// kind      game
-Status: Complete
-*/
-
-// ====================
-// Original receivers of Sprite::extract at 0x0060E56E / 0x0060E58C.
-// Compiler-generated class-static lifetime guard replaces this former manual byte.
-// RECOVERY_OBJECT: v4 0x009B8EF0 ?RadioButtonSpritesCleanupGuard@@3EA target _$S13
-// RECOVERY_OBJECT: v4 0x009B8EF8 ?g_RADIOBUTTON_SPRITE_1@@3VSprite@@A target ?shared_sprite1_@RadioButton@@2VSprite@@A
-Sprite RadioButton::shared_sprite1_;
-// RECOVERY_OBJECT: v4 0x009B8F28 ?g_RADIOBUTTON_SPRITE_2@@3VSprite@@A target ?shared_sprite2_@RadioButton@@2VSprite@@A
-Sprite RadioButton::shared_sprite2_;
-
-// ===== close_class: once-only teardown of the managed sprites =====
-
-/*
-Purpose: ?close_class@RadioButton@@QAAXXZ - run 2 (ORIGINAL(s)->*teardown)() on fixed globals,
-         unguarded. The last is a tail jump in the original, so its
-         return goes straight to this function's caller.
-// ORIGINAL: 0x0060E5D0 ?close_class@RadioButton@@QAAXXZ 0x0060E5D0-0x0060E5E4 BYTE_EXACT
-// symbol    ?teardown_0060e5d0@@YAXXZ
-// size      20 bytes
-// prototype 
-// callers   1   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005E3820
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl teardown_0060e5d0() {
-    RadioButton::shared_sprite2_.close();
-    RadioButton::shared_sprite1_.close();
-}
-
-// ====================
-// Window-event handlers
-// ====================
-
-/*
-Purpose: A double click selects the parent window as the callback window and
-         notifies the stored callback with the group's selected id. The image
-         enters through the GraphicWin virtual-base receiver: its -0x18
-         vbtable access reaches Win::win_parent_ and the virtual Dialog base;
-         its -8 access is RadioButton's own callback at complete offset 0x10.
-         The real virtual override lets the compiler supply these adjustments.
-// ORIGINAL: 0x0060E1E0 ?on_left_double_click@RadioButton@@QAEXHH@Z 0x0060E1E0-0x0060E217 BYTE_EXACT
-// symbol    ?on_left_double_click@RadioButton@@UAEXHH@Z
-// size      55 bytes
-// prototype void (__thiscall ?on_left_double_click@RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)
-// callers   1   call targets   1
-// kind      game
-// calls     0x00609A50
-// indirect  0x0060E20D
-//
-// The notification is reloaded after get_selected_id, unlike CheckBox's
-// cached callback. Both the null test and call use the declared callback
-// member; the original virtual-base adjustment is compiler-owned.
-Return Value: n/a
-Status: Complete
-*/
-void RadioButton::on_left_double_click(int x_coord, int y_coord) {
-    WinCallbackWindow = win_parent_;
-    if (double_click_callback_ != 0) {
-        double_click_callback_(Dialog::get_selected_id());
     }
 }
 
@@ -813,81 +668,230 @@ int RadioButton::on_key_down(int key) {
     return 1;
 }
 
+// ====================
+// Window-event handlers
+// ====================
+
 /*
-Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
-         RadioButton::on_redraw expects, then forward unchanged.
-// ORIGINAL: 0x00406FF0 ?on_redraw@thunk1_RadioButton@@QAEXXZ 0x00406FF0-0x00406FF8 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor ??0RadioButton@@QAE@H@Z at 0x0060D0E0 at 0x0060D138 installs table 0x00669A6C through the thunk1 vbtable-derived view installs table 0x00669A6C; the pinned slot at table+0x30 contains 0x00406FF0. Original thunk receiver adjustment and tail target were checked against the pinned image: sub ecx,[ecx-4]; jmp 0x0060E220.", "Current genuine owner is src/jackal/radiobutton.cpp; retained owner-object vftable ??_7RadioButton@@6BWin@@@ has an absolute relocation at +0x30 to ?on_redraw@RadioButton@@$4PPPPPPPM@A@AEXXZ, whose COMDAT preserves the pinned receiver-adjustment bytes and whose terminal relative relocation selects the source-owned ?on_redraw@RadioButton@@UAEXXZ method. This source binding records the measured generated owner identity; its physical relocation must be rechecked after source changes."], "reason": "Bind the full original identity and spans to the existing compiler-generated class-view adjustor selected by the constructor-installed original slot; retain its historical claims and lessons unchanged."}
-// compile_context src/basewin.cpp
-// symbol    ?on_redraw@RadioButton@@$4PPPPPPPM@A@AEXXZ
-// size      8 bytes
-// prototype void (__thiscall ?on_redraw@thunk1_RadioButton@@QAEXXZ)(RadioButton* this)
-// callers   0   call targets   0
+Purpose: A double click selects the parent window as the callback window and
+         notifies the stored callback with the group's selected id. The image
+         enters through the GraphicWin virtual-base receiver: its -0x18
+         vbtable access reaches Win::win_parent_ and the virtual Dialog base;
+         its -8 access is RadioButton's own callback at complete offset 0x10.
+         The real virtual override lets the compiler supply these adjustments.
+// ORIGINAL: 0x0060E1E0 ?on_left_double_click@RadioButton@@QAEXHH@Z 0x0060E1E0-0x0060E217 BYTE_EXACT
+// symbol    ?on_left_double_click@RadioButton@@UAEXHH@Z
+// size      55 bytes
+// prototype void (__thiscall ?on_left_double_click@RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)
+// callers   1   call targets   1
 // kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-// TRIED 2026-09-26 (Win slot-12 on_redraw rename batch): with Win slot12 renamed
-//            on_redraw, RadioButton::on_redraw overrides that slot through GraphicWin as
-//            well as Dialog slot2, so the qualified call's receiver fold moved from
-//            the Dialog offset 0xA30 to the GraphicWin offset 0x18. The walk now
-//            pre-subtracts 0x18 to cancel it, leaving the image's bare vtordisp thunk;
-//            the old 0xA30 walk emitted an extra `sub ecx, 0xa18` here. The compiler
-//            now emits its own vtordisp thunk for this slot; this handwritten walk
-//            stays the claim host pending coordinated retirement onto it.
+// calls     0x00609A50
+// indirect  0x0060E20D
+//
+// The notification is reloaded after get_selected_id, unlike CheckBox's
+// cached callback. Both the null test and call use the declared callback
+// member; the original virtual-base adjustment is compiler-owned.
 Return Value: n/a
 Status: Complete
 */
+void RadioButton::on_left_double_click(int x_coord, int y_coord) {
+    WinCallbackWindow = win_parent_;
+    if (double_click_callback_ != 0) {
+        double_click_callback_(Dialog::get_selected_id());
+    }
+}
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// TRIED: 200 vs 222 bytes; the many named int locals (offsets, args) push an extra callee-saved register before the first field read, where the original moves `this` into edi first. Did not try collapsing to fewer locals given budget.
+// `[edi-0x18]` at entry (edi=ecx=`this`) is a virtual-base recovery: this
+// class is entered with `this` already adjusted, and `this-0x18` is the
+// real object start whose OWN vtable+4 gives a further byte offset used
+// to reach members past that. The pattern repeats at vtbl+8 for a second
+// virtual base. slot010 needs its own shim (int argument, int return);
+// the emitted VCall's slots are void().
+// Deleted seed provenance: git:5ab1f8ce:src/unrecovered/0060e220.cpp
+// ORIGINAL: 0x0060E220 ?on_redraw@RadioButton@@QAEXXZ 0x0060E220-0x0060E2FE FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0060e220.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60e220 complete control/data-access review and src/jackal/radiobutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+// symbol    ?on_redraw@RadioButton@@UAEXXZ
+void RadioButton::on_redraw() {
+    // Native60E220 retains this parent across back-draw and fallback copying.
+    Win *const parent = win_parent_;
+    WinCallbackWindow = parent;
+    if (parent == 0) return;
+    const int handled = parent->on_dialog_back_draw(
+        static_cast<GraphicWin *>(this));
+    if (handled == 0) {
+        static_cast<GraphicWin *>(parent)->copy(
+            this, Dialog::window_x_, Dialog::window_y_, 0, 0,
+            static_cast<int>(dib_.bmiHeader.biWidth),
+            -static_cast<int>(dib_.bmiHeader.biHeight));
+    }
+    for (int position = 0; position < Dialog::item_list_.entry_count_; ++position) {
+        if (Dialog::selected_position_ == position) {
+            draw_item(position, 1);
+        } else {
+            draw_item(position, 0);
+        }
+    }
+    soft_update();
+}
+
 
 /*
-Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
-         RadioButton::on_mouse_move expects, then forward unchanged.
-// ORIGINAL: 0x00407000 ?on_mouse_move@thunk1_RadioButton@@QAEXHH@Z 0x00407000-0x00407008 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor ??0RadioButton@@QAE@H@Z at 0x0060D0E0 at 0x0060D138 installs table 0x00669A6C through the thunk1 vbtable-derived view installs table 0x00669A6C; the pinned slot at table+0x44 contains 0x00407000. Original thunk receiver adjustment and tail target were checked against the pinned image: sub ecx,[ecx-4]; jmp 0x0060E320.", "Current genuine owner is src/jackal/radiobutton.cpp; retained owner-object vftable ??_7RadioButton@@6BWin@@@ has an absolute relocation at +0x44 to ?on_mouse_move@RadioButton@@$4PPPPPPPM@A@AEXHH@Z, whose COMDAT preserves the pinned receiver-adjustment bytes and whose terminal relative relocation selects the source-owned ?on_mouse_move@RadioButton@@UAEXHH@Z method. This source binding records the measured generated owner identity; its physical relocation must be rechecked after source changes."], "reason": "Bind the full original identity and spans to the existing compiler-generated class-view adjustor selected by the constructor-installed original slot; retain its historical claims and lessons unchanged."}
-// compile_context src/basewin.cpp
-// symbol    ?on_mouse_move@RadioButton@@$4PPPPPPPM@A@AEXHH@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_mouse_move@thunk1_RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)
-// callers   0   call targets   0
+// ORIGINAL: 0x0060E300 ?on_dialog_focus@RadioButton@@QAEXH@Z 0x0060E300-0x0060E317 BYTE_EXACT
+// symbol    ?on_dialog_focus@RadioButton@@UAEXH@Z
+// size      23 bytes
+// prototype void (__thiscall ?on_dialog_focus@RadioButton@@QAEXH@Z)(RadioButton* this, int)
+// callers   1   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
-Return Value: n/a
+// indirect  0x0060E30E
 Status: Complete
 */
+void RadioButton::on_dialog_focus(int a1) {
+    redraw();
+}
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x0060E320 ?on_mouse_move@RadioButton@@QAEXHH@Z 0x0060E320-0x0060E494 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060e320.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60e320 complete control/data-access review and src/jackal/radiobutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+// symbol    ?on_mouse_move@RadioButton@@UAEXHH@Z
+void RadioButton::on_mouse_move(int x, int y) {
+    int first = 1;
+    Dialog::item_list_.seek_pos(-1);
+    while (y > 0) {
+        if (!first && Dialog::item_list_.current_position_ ==
+                          Dialog::item_list_.entry_count_ - 1) {
+            return;
+        }
+        first = 0;
+        StringStruct &items = Dialog::item_list_;
+        if (items.head_ != 0) {
+            StringStructEntry *const next = items.current_->next;
+            const int count = items.entry_count_;
+            items.current_ = next;
+            ++items.current_position_;
+            if (items.current_position_ == count) items.current_position_ = 0;
+        }
+        int lines;
+        if (items.current_ != 0) {
+            StringStructPayload *const payload = items.head_ != 0
+                ? items.current_->string_payload() : 0;
+            lines = static_cast<int>(payload->field_8_);
+        } else {
+            lines = 0;
+        }
+        int item_height = Buffer::text_line_height() * lines;
+        if ((Dialog::field_44_ + Dialog::field_68_) > item_height) {
+            item_height = Dialog::field_44_ + Dialog::field_68_;
+        }
+        y -= item_height;
+    }
+    int position = (x / (Dialog::field_64_ + Dialog::field_44_)) *
+                         Dialog::row_count_ +
+                         Dialog::item_list_.current_position_;
+    if (position == Dialog::selected_position_) {
+        const uint32_t previous_hover = Dialog::field_F0_;
+        position = -1;
+        if (previous_hover == static_cast<uint32_t>(position)) return;
+    }
+    Dialog::field_F0_ = static_cast<uint32_t>(position);
+    redraw();
+}
 
 /*
-Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
-         RadioButton::on_left_down expects, then forward unchanged.
-// ORIGINAL: 0x00407020 ?on_left_down@thunk1_RadioButton@@QAEXHH@Z 0x00407020-0x00407028 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor ??0RadioButton@@QAE@H@Z at 0x0060D0E0 at 0x0060D138 installs table 0x00669A6C through the thunk1 vbtable-derived view installs table 0x00669A6C; the pinned slot at table+0x50 contains 0x00407020. Original thunk receiver adjustment and tail target were checked against the pinned image: sub ecx,[ecx-4]; jmp 0x0060DE10.", "Current genuine owner is src/jackal/radiobutton.cpp; retained owner-object vftable ??_7RadioButton@@6BWin@@@ has an absolute relocation at +0x50 to ?on_left_down@RadioButton@@$4PPPPPPPM@A@AEXHH@Z, whose COMDAT preserves the pinned receiver-adjustment bytes and whose terminal relative relocation selects the source-owned ?on_left_down@RadioButton@@UAEXHH@Z method. This source binding records the measured generated owner identity; its physical relocation must be rechecked after source changes."], "reason": "Bind the full original identity and spans to the existing compiler-generated class-view adjustor selected by the constructor-installed original slot; retain its historical claims and lessons unchanged."}
-// compile_context src/basewin.cpp
-// symbol    ?on_left_down@RadioButton@@$4PPPPPPPM@A@AEXHH@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_left_down@thunk1_RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)
-// callers   0   call targets   0
+Purpose: Clear the hover index and repaint, through the enclosing object.
+// ORIGINAL: 0x0060E4A0 ?on_mouse_leave@RadioButton@@QAEXHH@Z 0x0060E4A0-0x0060E4C8 BYTE_EXACT
+// symbol    ?on_mouse_leave@RadioButton@@UAEXHH@Z
+// size      40 bytes
+// prototype void (__thiscall ?on_mouse_leave@RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)
+// callers   1   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x0060E4BF
 Return Value: n/a
 Status: Complete
 */
+void RadioButton::on_mouse_leave(int a1, int a2) {
+    // Clear the hover index (Dialog::field_F0_, through the virtual base)
+    // and repaint (the redraw virtual) - plain member forms; the
+    // compiler's virtual-base machinery does the walking the old hand
+    // chains spelled. Both parameters are dead; `ret 8` still pops them.
+    field_F0_ = -1;
+    redraw();
+}
 
 /*
-Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
-         RadioButton::on_left_double_click expects, then forward unchanged.
-// ORIGINAL: 0x00407040 ?on_left_double_click@thunk1_RadioButton@@QAEXHH@Z 0x00407040-0x00407048 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor ??0RadioButton@@QAE@H@Z at 0x0060D0E0 at 0x0060D138 installs table 0x00669A6C through the thunk1 vbtable-derived view installs table 0x00669A6C; the pinned slot at table+0x70 contains 0x00407040. Original thunk receiver adjustment and tail target were checked against the pinned image: sub ecx,[ecx-4]; jmp 0x0060E1E0.", "Current genuine owner is src/jackal/radiobutton.cpp; retained owner-object vftable ??_7RadioButton@@6BWin@@@ has an absolute relocation at +0x70 to ?on_left_double_click@RadioButton@@$4PPPPPPPM@A@AEXHH@Z, whose COMDAT preserves the pinned receiver-adjustment bytes and whose terminal relative relocation selects the source-owned ?on_left_double_click@RadioButton@@UAEXHH@Z method. This source binding records the measured generated owner identity; its physical relocation must be rechecked after source changes."], "reason": "Bind the full original identity and spans to the existing compiler-generated class-view adjustor selected by the constructor-installed original slot; retain its historical claims and lessons unchanged."}
-// compile_context src/basewin.cpp
-// symbol    ?on_left_double_click@RadioButton@@$4PPPPPPPM@A@AEXHH@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_left_double_click@thunk1_RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)
-// callers   0   call targets   0
+// ORIGINAL: 0x0060E4D0 ?init_class@RadioButton@@QAAHXZ 0x0060E4D0-0x0060E5C2;0x00662F44-0x00662F59 BYTE_EXACT
+// symbol    ?init_class@RadioButton@@SAHXZ
+// size      263 bytes
+// prototype int (__cdecl ?init_class@RadioButton@@QAAHXZ)()
+// callers   1   call targets   5
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005D7210 0x005D7410 0x005D7670 0x005D7DE0 0x005E39A0
+//
+// Promoted 2026-08-15 from src/unrecovered/0060e4d0.cpp to retire its
+// pending_bodies forwarder. Sibling of CheckBox::init_class; same
+// placement-new Buffer shape and the same SEH-funclet gap (see that body's
+// TRIED).
+// LEVER: ~Buffer out of line, as in CheckBox::init_class above - 24/63 ->
+//   63/63 on moving the definition from buffer.h into buffer.cpp, and the
+//   same collapse of the EBP frame into the image's frameless EH form.
+Status: Complete
+*/
+int __cdecl RadioButton::init_class() {
+    // A REAL LOCAL. The note that stood here kept the placement-new form to
+    // preserve the image's SEH frame, and that reasoning was right about the
+    // frame and wrong about what produces it: a plain `Buffer buf;` is a real
+    // local with a non-trivial destructor too, so VC6 emits the same frame -
+    // and it also gets `sub esp, 0x588`, sizeof(Buffer) exactly, where the
+    // char array costs four more bytes. The CheckBox sibling this note called
+    // "the same ceiling" is BYTE_EXACT with this spelling.
+    Buffer buf;
+    buf.init(0x20, 0x20, 0, 0);
+    int result = buf.load_pcx("jackal.pcx", 0, 10, 0xec);
+    if (result != 0) {
+        return result;
+    }
+    RadioButton::shared_sprite1_.extract(&buf, 0x109, 1, 0x23, 0x20, 0x20, 0);
+    RadioButton::shared_sprite2_.extract(&buf, 0x109, 0x22, 0x23, 0x20, 0x20, 0);
+    return 0;
+}
+
+// ====================
+// Original receivers of Sprite::extract at 0x0060E56E / 0x0060E58C.
+// Compiler-generated class-static lifetime guard replaces this former manual byte.
+// RECOVERY_OBJECT: v4 0x009B8EF0 ?RadioButtonSpritesCleanupGuard@@3EA target _$S13
+// RECOVERY_OBJECT: v4 0x009B8EF8 ?g_RADIOBUTTON_SPRITE_1@@3VSprite@@A target ?shared_sprite1_@RadioButton@@2VSprite@@A
+Sprite RadioButton::shared_sprite1_;
+// RECOVERY_OBJECT: v4 0x009B8F28 ?g_RADIOBUTTON_SPRITE_2@@3VSprite@@A target ?shared_sprite2_@RadioButton@@2VSprite@@A
+Sprite RadioButton::shared_sprite2_;
+
+// ===== close_class: once-only teardown of the managed sprites =====
+
+/*
+Purpose: ?close_class@RadioButton@@QAAXXZ - run 2 (ORIGINAL(s)->*teardown)() on fixed globals,
+         unguarded. The last is a tail jump in the original, so its
+         return goes straight to this function's caller.
+// ORIGINAL: 0x0060E5D0 ?close_class@RadioButton@@QAAXXZ 0x0060E5D0-0x0060E5E4 BYTE_EXACT
+// symbol    ?teardown_0060e5d0@@YAXXZ
+// size      20 bytes
+// prototype 
+// callers   1   call targets   1
 // kind      game
 // flags     hidden;sp_ready;purged_ok
-// calls     (none)
+// calls     0x005E3820
 Return Value: n/a
 Status: Complete
 */
+void __cdecl teardown_0060e5d0() {
+    RadioButton::shared_sprite2_.close();
+    RadioButton::shared_sprite1_.close();
+}
 
 // The constructor at 0x0060D0E0 installs this compiler-owned vbtable
 // at 0x0060D111; its two virtual-base entries locate GraphicWin at
