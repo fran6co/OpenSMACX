@@ -662,9 +662,8 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
     faction_id_ = faction;
 
     // One flag first marks automated research, then counts the candidates.
-    int flag;
-    if ((GameDataStateStorage.fields_.game_rules_ & 0x200u) != 0 && count <= 0) {
-        flag = 1;
+    int flag = (GameDataStateStorage.fields_.game_rules_ & 0x200u) && count <= 0;
+    if (flag) {
         if (faction == ConsoleGlobal.faction_id_ && IsMultiplayerNet == 0 &&
             (((PlayersData[faction].tech_ranking >> 1) % 5) == 1 ||
              GameDataStateStorage.fields_.turn_current_num_ <= 11) && TechAchievedGate == 0) {
@@ -672,8 +671,6 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
                 popt(TutorialPopupCaption, "TECHNOLOGY", -1, 0, 0);
             ConsoleGlobal.set_ai(faction);
         }
-    } else {
-        flag = 0;
     }
     if (mode == 0 &&
         (GameDataStateStorage.fields_.turn_current_num_ == 0 ||
@@ -815,7 +812,10 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
                         } else {
                             noted = 1;
                             say_open_paren();
-                            say_label(0x80 + (Weapon[i].offense_rating != 0));
+                            // WORKAROUND(inline): label_get here and at the Technology note, say_label at
+                            // the other eight: any two of the ten give the image's last-teardown ~FlatButton
+                            // expansions (same bytes per site; which two is unknown).
+                            strcat(StringTemp, label_get(0x80 + (Weapon[i].offense_rating != 0)));
                             say_colon();
                             strcat(StringTemp, StringTable.get(Weapon[i].name));
                             say_close_paren();
@@ -915,7 +915,7 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
                          Technology[i].preq_tech_2 == tech_id) && !noted) {
                         noted = 1;
                         say_open_paren();
-                        say_label(0x274 / 4);
+                        strcat(StringTemp, label_get(0x274 / 4));
                         say_colon();
                         strcat(StringTemp, StringTable.get(Technology[i].name));
                         say_close_paren();
@@ -968,7 +968,10 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
         row_count_ = rows;
         cell_width_ = items <= 8 ? WinScreenWidth / columns - 20
                                  : (WinScreenWidth - 20) / columns;
-        const int cell_width = min(cell_width_, WinScreenWidth / 3);
+        int cell_width;
+        const int third = WinScreenWidth / 3;
+        cell_width = cell_width_;
+        if (cell_width >= third) cell_width = third;
         cell_width_ = cell_width;
         const int cell_height = (3 * cell_width) / 2;
         cell_height_ = cell_height;
@@ -987,8 +990,8 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
         frame.bottom = frame.top + 23;
         Buffer::box_sprite(&frame, &InterfaceBoxStyles[6]);
         expand_rect(&frame, -3, -3);
-        StringTemp[0] = '\0';
-        strcat(StringTemp, popup.caption_text());
+        ::clear();
+        says(popup.caption_text());
         CharUpperA(StringTemp);
         Buffer::set_text_color(0x9F, -1, 1, 1);
         Buffer::set_font(find_font(18, 1), 0, 0, 0);
