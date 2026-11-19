@@ -8699,7 +8699,7 @@ production_again:
                 int x;
                 int y;
                 do {
-                    int offset = rand() % 288;
+                    int offset = rnd(288, "BIGCROD");
                     x = wrap_map_x(Bases[base_id].x + RadiusOffsetX[offset + 1]);
                     y = Bases[base_id].y + RadiusOffsetY[offset + 1];
                     if (++tries >= 1000) {
