@@ -27,7 +27,8 @@ differs with equal tails (`b:sw` jump-table count, `b:jcc` conditional-branch co
 duplicates, `b:jmp` unconditional jumps = a merged / duplicated tail, `b:mix` both, `b:tgt` same branches but
 a jump lands inside a block = a tail cross-jumped at another depth); c = equal counts, the order
 signature differs (which arm falls through); p = prologue-save class only; `+d` = the loop set differs (headers,
-back edges, `jmp`-closed back edges = unrotated `for (;;)`, loops entered by a jump to their test).  `first` is
+back edges, `jmp`-closed back edges = unrotated loop, loops entered by a jump to their test); `+r` = only the
+number of loop-head reloads the entry jumps over differs (fifth loop number: an allocation fact, not a loop form).  `first` is
 the first block where the two block sequences (terminator kind and call count per block) stop aligning: image
 address, our offset and our source line (/FAsc, one more compile for units with a rung-4 function).
 Image callees without a marker are named `sub_<addr>` and never pair with ours; when the only call difference
@@ -108,10 +109,12 @@ def blockrows(L):
     cur = None
     for k, r in enumerate(L):
         if r[0] in lead:
-            cur = dict(off=r[0], kind='fall', tgt=None, calls=0, jt=False, n=0)
+            cur = dict(off=r[0], kind='fall', tgt=None, calls=0, jt=False, n=0, mov=True)
             out.append(cur)
         mn = r[1].split(' ', 1)[0]
         cur['n'] += 1
+        if mn not in ('mov', 'lea', 'movsx', 'movzx', 'xor', 'jmp'):
+            cur['mov'] = False
         if mn == 'call':
             cur['calls'] += 1
         last = k + 1 == len(L) or L[k + 1][0] in lead
@@ -173,11 +176,18 @@ def loopset(B):
     for i, h in back:
         heads[h] = max(heads.get(h, h), i)
     jb = sum(1 for i, h in back if B[i]['kind'] == 'jmp')
-    ent = 0
+    ent = rel = 0
     for h, latch in heads.items():
-        if mid(h, latch):
-            ent += 1
-    return [len(heads), len(back), jb, ent]
+        for a, t in fwd:
+            if a < h < t <= latch and a >= h - 2:
+                # the skipped blocks only load registers: a loop-head reload the entry already holds (allocation,
+                # not loop form); otherwise the entry jumps to the loop's test
+                if all(B[k]['mov'] and B[k]['kind'] == 'fall' for k in range(h, t)):
+                    rel += 1
+                else:
+                    ent += 1
+                break
+    return [len(heads), len(back), jb, ent, rel]
 
 
 def layout_split(LI, LO, tails):
@@ -213,8 +223,10 @@ def layout_split(LI, LO, tails):
         sub = 'c'
     else:
         sub = 'p'
-    if li != lo_:
+    if li[:4] != lo_[:4]:
         sub += '+d'
+    elif li[4] != lo_[4]:
+        sub += '+r'
     return dict(sub=sub, first=first, loops=[li, lo_], jcc=[ci[0], co[0]], jmp=[ci[1], co[1]], sw=[ci[2], co[2]])
 
 
