@@ -42,6 +42,95 @@ HDC Font::FontHDC;
 // RECOVERY_OBJECT: v2 0x009BB48C 0x009BB490 ?FontInitCount@Font@@2HA 0x006195B0
 int Font::FontInitCount;
 
+
+#undef FONT_MIN
+
+
+// global
+
+// ---------------------------------------------------------------------------
+// Merged from the retired src/font_recovery.cpp on 2026-08-20, following
+// src/text_recovery.cpp, which went into text.cpp on 2026-08-15. A class's
+// bodies in two translation units is not a neutral choice: which unit a
+// piece compiles in decides what can be inlined into it.
+// ---------------------------------------------------------------------------
+
+/*
+// ORIGINAL: 0x00618EA0 ??0Font@@QAE@XZ 0x00618EA0-0x00618EC0 BYTE_EXACT
+// size      32 bytes
+// prototype void (__thiscall ??0Font@@QAE@XZ)(Font* this)
+// callers   41   call targets   0
+// kind      
+// flags     
+// calls     (none)
+// notes     Staged hybrid export redirect calls the source-owned constructor
+*/
+Font::Font() {
+    // IMAGE ORDER. An initialiser list runs in DECLARATION order,
+    // and the image does not write the fields in that order.
+    unk_1_ = -1;
+    is_fot_set_ = 0;
+    font_obj_ = nullptr;
+    height_ = 0;
+    line_height_ = 0;
+    ascent_ = 0;
+    descent_ = 0;
+    fot_file_name_ = nullptr;
+}
+
+/*
+// ORIGINAL: 0x00618EC0 ??0Font@@QAE@PADHH@Z 0x00618EC0-0x00618EDF BYTE_EXACT
+// size      31 bytes
+// prototype void (__thiscall ??0Font@@QAE@PADHH@Z)(Font* this, LPSTR fontName, int height, int style)
+// callers   0   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00618F40
+// notes     Staged hybrid export redirect calls the source-owned constructor
+*/
+Font::Font(LPSTR font_name, int height, int style) {
+    init(font_name, height, static_cast<uint32_t>(style));
+}
+
+/*
+// ORIGINAL: 0x00618EE0 ??1Font@@QAE@XZ 0x00618EE0-0x00618F2D BYTE_EXACT
+// size      77 bytes
+// prototype void (__thiscall ??1Font@@QAE@XZ)(Font* this)
+// callers   53   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00644EF2
+// indirect  0x00618F00 0x00618F11
+// notes     Staged hybrid export redirect calls the source-owned destructor
+*/
+Font::~Font() {
+    release_resources();
+}
+
+// 0x009BB484. The process default font: `Font::init_font_class` sets it,
+// `close_font_class` clears it, and Buffer, Menu and PullDown fall back to
+// it - 42 references. Past `.data`'s stored bytes, so there is no
+// initialiser to preserve and a real object is the whole of it.
+// RECOVERY_OBJECT: v2 0x009BB484 0x009BB488 ?FontDefault@@3PAVFont@@A 0x006195B0
+Font *FontDefault;
+
+
+/*
+Purpose: Legacy stub; the original body returns 1 without reading its
+         arguments.
+// ORIGINAL: 0x00618F30 ?UNK1@Font@@QAEHHHHH@Z 0x00618F30-0x00618F38 BYTE_EXACT
+// size      8 bytes
+// prototype int (__thiscall ?UNK1@Font@@QAEHHHHH@Z)(Font* this, int, int, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Status: Complete
+*/
+int Font::UNK1(int, int, int, int) {
+    return 1;
+}
+
 /*
 Purpose: Initialize the class using the font name, height and style.
 // ORIGINAL: 0x00618F40 ?init@Font@@QAEHPADHH@Z 0x00618F40-0x006190C6 BYTE_EXACT
@@ -357,94 +446,6 @@ int Font::width(LPSTR input, int max_len) {   // 006192F0
     SelectObject(FontHDC, GetStockObject(SYSTEM_FONT));
     return size.cx;
   }
-
-#undef FONT_MIN
-
-
-// global
-
-// ---------------------------------------------------------------------------
-// Merged from the retired src/font_recovery.cpp on 2026-08-20, following
-// src/text_recovery.cpp, which went into text.cpp on 2026-08-15. A class's
-// bodies in two translation units is not a neutral choice: which unit a
-// piece compiles in decides what can be inlined into it.
-// ---------------------------------------------------------------------------
-
-/*
-// ORIGINAL: 0x00618EA0 ??0Font@@QAE@XZ 0x00618EA0-0x00618EC0 BYTE_EXACT
-// size      32 bytes
-// prototype void (__thiscall ??0Font@@QAE@XZ)(Font* this)
-// callers   41   call targets   0
-// kind      
-// flags     
-// calls     (none)
-// notes     Staged hybrid export redirect calls the source-owned constructor
-*/
-Font::Font() {
-    // IMAGE ORDER. An initialiser list runs in DECLARATION order,
-    // and the image does not write the fields in that order.
-    unk_1_ = -1;
-    is_fot_set_ = 0;
-    font_obj_ = nullptr;
-    height_ = 0;
-    line_height_ = 0;
-    ascent_ = 0;
-    descent_ = 0;
-    fot_file_name_ = nullptr;
-}
-
-/*
-// ORIGINAL: 0x00618EC0 ??0Font@@QAE@PADHH@Z 0x00618EC0-0x00618EDF BYTE_EXACT
-// size      31 bytes
-// prototype void (__thiscall ??0Font@@QAE@PADHH@Z)(Font* this, LPSTR fontName, int height, int style)
-// callers   0   call targets   1
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x00618F40
-// notes     Staged hybrid export redirect calls the source-owned constructor
-*/
-Font::Font(LPSTR font_name, int height, int style) {
-    init(font_name, height, static_cast<uint32_t>(style));
-}
-
-/*
-// ORIGINAL: 0x00618EE0 ??1Font@@QAE@XZ 0x00618EE0-0x00618F2D BYTE_EXACT
-// size      77 bytes
-// prototype void (__thiscall ??1Font@@QAE@XZ)(Font* this)
-// callers   53   call targets   1
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x00644EF2
-// indirect  0x00618F00 0x00618F11
-// notes     Staged hybrid export redirect calls the source-owned destructor
-*/
-Font::~Font() {
-    release_resources();
-}
-
-// 0x009BB484. The process default font: `Font::init_font_class` sets it,
-// `close_font_class` clears it, and Buffer, Menu and PullDown fall back to
-// it - 42 references. Past `.data`'s stored bytes, so there is no
-// initialiser to preserve and a real object is the whole of it.
-// RECOVERY_OBJECT: v2 0x009BB484 0x009BB488 ?FontDefault@@3PAVFont@@A 0x006195B0
-Font *FontDefault;
-
-
-/*
-Purpose: Legacy stub; the original body returns 1 without reading its
-         arguments.
-// ORIGINAL: 0x00618F30 ?UNK1@Font@@QAEHHHHH@Z 0x00618F30-0x00618F38 BYTE_EXACT
-// size      8 bytes
-// prototype int (__thiscall ?UNK1@Font@@QAEHHHHH@Z)(Font* this, int, int, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Status: Complete
-*/
-int Font::UNK1(int, int, int, int) {
-    return 1;
-}
 
 /*
 Purpose: Find a space in the input string that can be used as a natural line break.
