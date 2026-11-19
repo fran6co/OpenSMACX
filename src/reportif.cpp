@@ -7115,7 +7115,7 @@ void ReportIf::draw_projects() {
     strcat(StringTemp, Players[report_faction_id_].adj_name_faction);
     CharUpperA(StringTemp);
     strcat(StringTemp, BufferJoinSpace);
-    strcat(StringTemp, label_get(0x2B4));
+    strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x2B4]));
     if (field_1E230_) {
         strcat(StringTemp, SocialWinCommaSpaceText);
         strcat(StringTemp, BufferJoinSpace);
@@ -7143,7 +7143,7 @@ void ReportIf::draw_projects() {
     MainInterfaceGlobal.Buffer::set_font(field_1E190_, field_1E194_, field_1E198_, nullptr);
     StringTemp[0] = 0;
     strcat(StringTemp, "[");
-    strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x3C3]));
+    strcat(StringTemp, label_get(0x3C3));
     strcat(StringTemp, "]");
     MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_ + 4, field_14_);
     MainInterfaceGlobal.Buffer::set_clip(MainInterfaceGlobal.buffer_working_rect());
