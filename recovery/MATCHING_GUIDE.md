@@ -1221,6 +1221,12 @@ Using it
 - **A callee is called at an early pass-1 site and expanded at a later one.**
   Pass 1 cannot do that with equal costs, so the called site was a pass-2
   site in the original, inside an inline helper.
+  In a small function this usually means the early sites sit inside the
+  unit's own inline helpers that our source hand-copied: find the
+  hand-copied helper bodies (a callee's first level written out at the
+  call site) and rewrite them as calls, so /Ob2 expands the helper and
+  leaves its inner call out of line as the image does (par-3, 2026-11-19;
+  the `Win::is_visible`/`screen_to_client` pattern in AGENTS.md).
 - **When to stop.** Dead probes that change other teardowns before they move
   the target mean that pass 1 is the binding limit, not pass 2. Look for a
   structural difference: which object owns the teardown, or a per-TU header
