@@ -183,15 +183,10 @@ void __cdecl crash_landing(int faction_id) {
     crash_landing_budget_probe(3);
     crash_landing_budget_probe(4);
     crash_landing_budget_probe(5);
-    crash_landing_budget_probe(6);
-    crash_landing_budget_probe(7);
-    crash_landing_budget_probe(8);
-    crash_landing_budget_probe(9);
-    crash_landing_budget_probe(10);
 
-    StringTemp[0] = '\0';
+    clear();
     const int fungus = (Players[ConsoleGlobal.faction_id_].rule_flags >> 7) & 1;
-    strcat(StringTemp, Players[ConsoleGlobal.faction_id_].filename);
+    says(Players[ConsoleGlobal.faction_id_].filename);
     CharUpperA(StringTemp);
 
     if (!IsMultiplayerNet) {
