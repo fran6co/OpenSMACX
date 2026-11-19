@@ -4467,7 +4467,7 @@ Purpose: Tile a source buffer across a rectangle of this one, stepping the
          tiles are clipped to; the source dimensions come out of the DIB
          header, and the vertical step is the NEGATED height because a DIB's
          biHeight is stored negative (see `Buffer::init`).
-// ORIGINAL: 0x005DA860 ?tile@Buffer@@QAEHPAVBuffer@@HHHHHH@Z 0x005DA860-0x005DA9EC
+// ORIGINAL: 0x005DA860 ?tile@Buffer@@QAEHPAVBuffer@@HHHHHH@Z 0x005DA860-0x005DA9EC BYTE_EXACT
 // symbol    ?tile@Buffer@@QAEHPAV1@HHHHHH@Z
 // size      396 bytes
 // prototype int (__thiscall ?tile@Buffer@@QAEHPAVBuffer@@HHHHHH@Z)(Buffer* this, Buffer*, int, int, int, int, int, int)
@@ -4811,7 +4811,7 @@ Purpose: The same tiling pass with a mask colour: every frame element is
          HOMED from src/unrecovered/005da6c0.cpp. One argument more than
          `tile(Buffer *)` and one call different - `copy_mask` for `copy` -
          everything else is the same walk.
-// ORIGINAL: 0x005DA6C0 ?tile_mask@Buffer@@QAEHPAVBuffer@@HHHHHHH@Z 0x005DA6C0-0x005DA851
+// ORIGINAL: 0x005DA6C0 ?tile_mask@Buffer@@QAEHPAVBuffer@@HHHHHHH@Z 0x005DA6C0-0x005DA851 BYTE_EXACT
 // symbol    ?tile_mask@Buffer@@QAEHPAV1@HHHHHHH@Z
 // size      401 bytes
 // prototype int (__thiscall ?tile_mask@Buffer@@QAEHPAVBuffer@@HHHHHHH@Z)(Buffer* this, Buffer*, int, int, int, int, int, int, int)
