@@ -85,6 +85,7 @@ def project(tmp_path, raw=None, *, start=0x401000, size=53,
     binding = (f'// RECOVERY_OBJECT: v2 0x{start:08X} '
                f'0x{start + size:08X} {symbol} 0x00401000\n') if bounded else (
                f'// RECOVERY_OBJECT: v1 0x{start:08X} {symbol}\n')
+    (root / 'src' / unit).parent.mkdir(parents=True, exist_ok=True)
     (root / 'src' / unit).write_text(
         binding + 'static const unsigned char TerrainCoastRemapSource[53] = {};\n')
     output = root / 'build/recovery/preparation/generated/terrain_coast_remap.inc'
@@ -489,7 +490,7 @@ def test_graphicwin_palette_initializer_projects_only_start_bound_window(tmp_pat
     payload = bytes((index * 29 + 7) % 256 for index in range(132))
     root, original, unused = project(
         tmp_path, data_image(payload + b"neighbor"), start=0x401000, size=132,
-        symbol='?GraphicWinBlitPolynomialWords@@3PAIA', unit="graphicwin.cpp", bounded=False)
+        symbol='?GraphicWinBlitPolynomialWords@@3PAIA', unit="jackal/graphicwin.cpp", bounded=False)
     output = unused.with_name("graphicwin_palette_polynomials.inc")
     hook.graphicwin_palette_initializer(root, original, output)
     values = [int(value) for value in
@@ -507,7 +508,7 @@ def test_graphicwin_palette_initializer_refuses_a_bounded_extent(tmp_path, hook)
     payload = bytes((index * 29 + 7) % 256 for index in range(132))
     root, original, unused = project(
         tmp_path, data_image(payload + b"neighbor"), start=0x401000, size=132,
-        symbol='?GraphicWinBlitPolynomialWords@@3PAIA', unit="graphicwin.cpp", bounded=True)
+        symbol='?GraphicWinBlitPolynomialWords@@3PAIA', unit="jackal/graphicwin.cpp", bounded=True)
     output = unused.with_name("graphicwin_palette_polynomials.inc")
     with pytest.raises(ValueError, match="start-only"):
         hook.graphicwin_palette_initializer(root, original, output)
