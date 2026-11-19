@@ -1445,50 +1445,46 @@ void __cdecl encounter(int faction_id, int faction_id_with, int x, int y,
         // The console player hears the other faction's noun; the message
         // depends on whether the console player is itself alien.
         if (faction_id == ConsoleGlobal.faction_id_) {
-            GenderDefault = Players[faction_id_with].noun_gender;
-            PluralityDefault = Players[faction_id_with].is_noun_plural;
-            parse_says(0, Players[faction_id_with].noun_faction, -1, -1);
+            parse_says(0, get_noun(faction_id_with), -1, -1);
             if ((Players[faction_id].rule_flags & RFLAG_ALIEN) == 0) {
-                if (!has_tech(0x4E, faction_id) && !has_tech(4, faction_id_with)) {
+                if (has_tech(0x4E, faction_id) || has_tech(4, faction_id_with)) {
                     if (tut_check2(0x8000)) {
-                        TutorialWindow.tut_map("GUYMEETSALNOPSYCH", x, y, -1, nullptr, 0, -1, -1);
+                        TutorialWindow.tut_map("GUYMEETSAL", x, y, -1, nullptr, 0, -1, -1);
                     }
                 } else if (tut_check2(0x8000)) {
-                    TutorialWindow.tut_map("GUYMEETSAL", x, y, -1, nullptr, 0, -1, -1);
+                    TutorialWindow.tut_map("GUYMEETSALNOPSYCH", x, y, -1, nullptr, 0, -1, -1);
                 }
             } else if ((Players[faction_id_with].rule_flags & RFLAG_ALIEN) != 0) {
                 if (tut_check2(0x10000)) {
                     TutorialWindow.tut_map("ALMEETSAL", x, y, -1, nullptr, 0, -1, -1);
                 }
-            } else if (!has_tech(4, faction_id) && !has_tech(0x4E, faction_id_with)) {
+            } else if (has_tech(4, faction_id) || has_tech(0x4E, faction_id_with)) {
                 if (tut_check2(0x4000)) {
-                    TutorialWindow.tut_map("ALMEETSGUYNOPSYCH", x, y, -1, nullptr, 0, -1, -1);
+                    TutorialWindow.tut_map("ALMEETSGUY", x, y, -1, nullptr, 0, -1, -1);
                 }
             } else if (tut_check2(0x4000)) {
-                TutorialWindow.tut_map("ALMEETSGUY", x, y, -1, nullptr, 0, -1, -1);
+                TutorialWindow.tut_map("ALMEETSGUYNOPSYCH", x, y, -1, nullptr, 0, -1, -1);
             }
         } else if (faction_id_with == ConsoleGlobal.faction_id_) {
-            GenderDefault = Players[faction_id].noun_gender;
-            PluralityDefault = Players[faction_id].is_noun_plural;
-            parse_says(0, Players[faction_id].noun_faction, -1, -1);
+            parse_says(0, get_noun(faction_id), -1, -1);
             if ((Players[faction_id_with].rule_flags & RFLAG_ALIEN) == 0) {
-                if (!has_tech(0x4E, faction_id_with) && !has_tech(4, faction_id)) {
+                if (has_tech(0x4E, faction_id_with) || has_tech(4, faction_id)) {
                     if (tut_check2(0x8000)) {
-                        TutorialWindow.tut_map("GUYMEETSALNOPSYCH", x, y, -1, nullptr, 0, -1, -1);
+                        TutorialWindow.tut_map("GUYMEETSAL", x, y, -1, nullptr, 0, -1, -1);
                     }
                 } else if (tut_check2(0x8000)) {
-                    TutorialWindow.tut_map("GUYMEETSAL", x, y, -1, nullptr, 0, -1, -1);
+                    TutorialWindow.tut_map("GUYMEETSALNOPSYCH", x, y, -1, nullptr, 0, -1, -1);
                 }
             } else if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0) {
                 if (tut_check2(0x10000)) {
                     TutorialWindow.tut_map("ALMEETSAL", x, y, -1, nullptr, 0, -1, -1);
                 }
-            } else if (!has_tech(4, faction_id_with) && !has_tech(0x4E, faction_id)) {
+            } else if (has_tech(4, faction_id_with) || has_tech(0x4E, faction_id)) {
                 if (tut_check2(0x4000)) {
-                    TutorialWindow.tut_map("ALMEETSGUYNOPSYCH", x, y, -1, nullptr, 0, -1, -1);
+                    TutorialWindow.tut_map("ALMEETSGUY", x, y, -1, nullptr, 0, -1, -1);
                 }
             } else if (tut_check2(0x4000)) {
-                TutorialWindow.tut_map("ALMEETSGUY", x, y, -1, nullptr, 0, -1, -1);
+                TutorialWindow.tut_map("ALMEETSGUYNOPSYCH", x, y, -1, nullptr, 0, -1, -1);
             }
         }
     }
