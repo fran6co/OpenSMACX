@@ -305,6 +305,8 @@ def code_map(c):
             nm = t.name
             if nm.startswith('$SG') and t.section > 0: nm = lit(t)
             elif re.match(r'\$[LT]\d+|__ehfuncinfo|__unwind|_\$', nm) or nm.startswith('$'): nm = re.sub(r'\d+', 'N', nm)
+            # an anonymous-namespace name carries a hash of the compiled file's path: the variant is another path
+            nm = re.sub(r'(\?%[^@]*?)\d+@@', r'\1N@@', nm)
             rel.append((off, nm, ty))
         out[re.sub(r'(\?%[^@]*?)\d+@@', r'\1N@@', sy.name)] = (sec.data, tuple(rel))
     return out
