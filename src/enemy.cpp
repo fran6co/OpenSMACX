@@ -3121,16 +3121,12 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
     if (!Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range) {
         return_range = speed(veh_id, 0) * 6;
         strike_range = return_range;
-        strike_range /= Rules.move_rate_roads;
-        return_range /= Rules.move_rate_roads;
     } else if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range == 1) {
         return_range = (range(speed(veh_id, false) - Vehs[veh_id].moves_expended, 0, 999));
         strike_range = return_range;
         if (!Vehs[veh_id].dmg_incurred) {
             strike_range = speed(veh_id, 0) + return_range;
         }
-        strike_range /= Rules.move_rate_roads;
-        return_range /= Rules.move_rate_roads;
     } else {
         int moves = veh_moves(veh_id);
         return_range = speed(veh_id, 0)
@@ -3138,9 +3134,9 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                - Vehs[veh_id].terraforming_turns - 1)
             + moves;
         strike_range = return_range;
-        strike_range /= Rules.move_rate_roads;
-        return_range /= Rules.move_rate_roads;
     }
+    strike_range /= Rules.move_rate_roads;
+    return_range /= Rules.move_rate_roads;
     if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range
         && Vehs[veh_id].terraforming_turns) {
         action_home(veh_id, 4);
@@ -3148,15 +3144,15 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
             return -2;
         }
     }
+    uint32_t automated;
     uint32_t state = Vehs[veh_id].state;
-    uint32_t automated = state & 0x200;
-    if ((automated && Vehs[veh_id].order_auto_type == ORDERA_ON_ALERT)
-        || (automated && Vehs[veh_id].order_auto_type == ORDERA_AUTOMATE_AIR_DEFENSE)) {
+    if (((state & 0x200) && Vehs[veh_id].order_auto_type == ORDERA_ON_ALERT)
+        || ((state & 0x200) && Vehs[veh_id].order_auto_type == ORDERA_AUTOMATE_AIR_DEFENSE)) {
         if (Vehs[veh_id].dmg_incurred) {
             action_home(veh_id, 0);
             return -2;
         }
-    } else if (automated && Vehs[veh_id].order_auto_type == ORDERA_BOMBING_RUN) {
+    } else if ((state & 0x200) && Vehs[veh_id].order_auto_type == ORDERA_BOMBING_RUN) {
         goto base_attack;
     } else {
         // Explore: the reach point with the most unseen tiles, else a random own base.
@@ -3534,7 +3530,7 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
     }
     // Interception and escort.
     if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_AIR_SUPERIORITY
-        || ((state & 0x200) && Vehs[veh_id].order_auto_type == ORDERA_AUTOMATE_AIR_DEFENSE)
+        || ((Vehs[veh_id].state & 0x200) && Vehs[veh_id].order_auto_type == ORDERA_AUTOMATE_AIR_DEFENSE)
         || !VehPrototypes[Vehs[veh_id].proto_id].plan) {
         int best_dist = 9999;
         int best_cost = 9999;
