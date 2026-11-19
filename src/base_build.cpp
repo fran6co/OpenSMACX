@@ -105,29 +105,18 @@ int __cdecl base_claimed(int x, int y, int site1_free, int site2_free,
     return 0;
 }
 
-// WORKAROUND(inline): dead budget probe (folds to no code). Calls ahead of
-// the probe-team tech checks spend what the image spent before its late refusals:
-// range at the weapon/armour and morale clamps, base_lose_minerals and base_claimed
-// stay calls as in the image. Counted with base_compute, is_coast and worm_mod as
-// plain calls in this unit and base.h's one-level has_fac. Since the game units
-// dropped /Oi (2026-11-18) ten were too many: seven stayed out-of-line calls of
-// this probe. Five: the range at 0x4FD528 is a call as in the image and one
-// probe still is (four: no probe call, but that range expands); the frame
-// (0x1F6C) matches at every count from 4 to 10. Branchy probes plus pure-store
-// probes (bb_probe_store, cheaper than a branch) spend the amount in between: no
-// probe call and the image's call multiset. 2026-11-19: three + two; after the
-// 2026-11-19 integration the range at 0x4FD528 expanded again,
-// and four + one (or five + none) is the window again.
-static inline int bb_probe(int x) {
-    if (x == 1) {
-        x = 2;
+// WORKAROUND(inline): the probe team's five "the target has the tech and we
+// do not" tests as one inline helper (no out-of-line copy in the image). As a
+// helper its expansions take the /Ob2 room that four branchy and one store
+// dead budget probe stood in for (range at 0x4FD528 and base_lose_minerals /
+// base_claimed stay calls as in the image). The if/return spelling is needed:
+// a single `return a && !b` spends less and one range site expands. The
+// original helper's name and home are unknown.
+static int tech_behind(int tech_id, int faction_id, int rival_id) {
+    if (has_tech(tech_id, rival_id) && !has_tech(tech_id, faction_id)) {
+        return 1;
     }
-    return x;
-}
-
-// WORKAROUND(inline): pure-store budget probe; see bb_probe.
-static inline void bb_probe_store(int *p) {
-    *p = 0;
+    return 0;
 }
 
 // Complete base_build was moved here from its retired seed:
@@ -1869,29 +1858,21 @@ L_4fbd3d:
                       + a_4bc[l_20 + l_2c * 3] + bit_count(has_treaty(l_8, target, 7)) + 13,
                   1, 16)
             * w * 3 / (l_58 - l_60 + 3);
-        bb_probe(0);
-        bb_probe(0);
-        bb_probe(0);
-        bb_probe(0);
-        {
-            int probe_;
-            bb_probe_store(&probe_);
-        }
         if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)) {
-            if (has_tech(Chassis[5].preq_tech, target) && !has_tech(Chassis[5].preq_tech, l_8)) {
+            if (tech_behind(Chassis[5].preq_tech, l_8, target)) {
                 w /= 2;
             }
-            if (has_tech(Chassis[8].preq_tech, target) && !has_tech(Chassis[8].preq_tech, l_8)) {
+            if (tech_behind(Chassis[8].preq_tech, l_8, target)) {
                 w /= 2;
             }
-            if (has_tech(Weapon[16].preq_tech, target) && !has_tech(Weapon[16].preq_tech, l_8)) {
+            if (tech_behind(Weapon[16].preq_tech, l_8, target)) {
                 w /= 2;
             }
-            if (has_tech(Facility[102].preq_tech, target) && !has_tech(Facility[102].preq_tech, l_8)) {
+            if (tech_behind(Facility[102].preq_tech, l_8, target)) {
                 w /= 2;
             }
             for (j = 1; j <= 3; j++) {
-                if (has_tech(Reactor[j].preq_tech, target) && !has_tech(Reactor[j].preq_tech, l_8)) {
+                if (tech_behind(Reactor[j].preq_tech, l_8, target)) {
                     w /= 2;
                 }
             }
