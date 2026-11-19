@@ -878,15 +878,14 @@ void __cdecl add_bat(int type, int modifier, LPCSTR display_str) {
     }
     // A signed count tested in place (`jge`), then post-incremented: inlined
     // into battle_compute the loaded count is copied (`mov edx, esi; inc
-    // esi`) and the copy indexes the rows. One shared row index measures
-    // closer in battle_compute than separate subscripts (1602 against 1620
-    // differing rows), although separate subscripts fold a constant type's
-    // row offset into the display base (`add ecx, 0x90f694`) as the image
-    // does; add_bat itself is exact either way.
+    // esi`) and the copy indexes the rows. Two written subscripts: inlined
+    // with a constant type, each folds that type's row offset into its base
+    // (`lea ecx, [ecx + ecx*4]; shl ecx, 4; add ecx, 0x90f694`), where one
+    // shared `index` local computes `(offset + 4) * 80` (`lea ecx, [ecx +
+    // ecx*4 + 0x14]`); add_bat itself is exact either way.
     int offset = VehBattleModCount[type]++;
-    int index = type * 4 + offset;
-    VehBattleModifier[index] = modifier;
-    strcpy(VehBattleDisplay[index], display_str);
+    VehBattleModifier[type * 4 + offset] = modifier;
+    strcpy(VehBattleDisplay[type * 4 + offset], display_str);
 }
 
 /*
