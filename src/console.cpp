@@ -1035,6 +1035,319 @@ void Console::clear_group() {
     }
 }
 
+
+
+
+
+
+
+
+
+
+// The splitter distances use a textual abs: its operand is expanded twice.
+#define SPLIT_ABS(v) ((v) >= 0 ? (v) : -(v))
+
+// True while any of the four splitter slots is armed (-1) for a drag. The
+// image keeps each caller's `return 1` epilogue separate, which only an
+// inline boundary around this test reproduces.
+static inline int pair_armed(int a, int b) {
+    return a == -1 || b == -1;
+}
+
+static inline int splitter_armed(int a, int b, int c, int d) {
+    return a == -1 || b == -1 || c == -1 || d == -1;
+}
+
+// ORIGINAL: 0x0050F680 ?on_nc_hittest@Console@@QAEXHH@Z 0x0050F680-0x0050F951 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["The original 0x0050F680..0x0050F951 disassembly exits return EAX values 1 or 0; its retired transcription is preserved in Git history."], "reason": "Translate the Console non-client hit-test into its existing virtual method; the disassembly exits return EAX values 1 or 0, correcting the seed-only void prototype."}
+// symbol    ?on_nc_hittest@Console@@UAEHHH@Z
+int Console::on_nc_hittest(int x_coord, int y_coord) {
+    // EAX=1 while a split line is armed, else 1 only over a caption box or a
+    // splitter handle.
+    // WORKAROUND(type): the four slots are read through a pointer, not by
+    // name. Naming field_23D88_ here makes VC6 reorder the later
+    // `... + field_23D88_ + caption_height_` sums (0x0050F7E9, 0x0050F827:
+    // caption before the slot). An int[4] member does not reproduce the
+    // image either; the original form of the arming test is unknown.
+    const int *const slots = &field_23D80_;
+    if (splitter_armed(slots[0], slots[1], slots[2], slots[3])) {
+        return 1;
+    }
+
+    RECT caption_box = {0, 0xE, 0x26, 0x1F};
+    caption_box.left = client_width() - 0x5b;
+    caption_box.right = caption_box.left + 0x26;
+    if (in_box(x_coord, y_coord, &caption_box)) {
+        return 1;
+    }
+    if (x_coord > client_width() - border_thickness_) {
+        if (y_coord >= track_height() - bottom_border() + caption_height_ &&
+            y_coord <= client_height() - bottom_border()) {
+            const int handle_height = sprite_b_.height();
+            if ((y_coord >= track_height() - bottom_border() - handle_height +
+                     field_23D88_ + caption_height_ &&
+                 y_coord <= track_height() - bottom_border() + field_23D88_ +
+                     caption_height_ + handle_height) ||
+                (y_coord >= track_height() - bottom_border() - handle_height +
+                     field_23D8C_ + caption_height_ &&
+                 y_coord <= track_height() - bottom_border() + field_23D8C_ +
+                     caption_height_ + handle_height)) {
+                return 1;
+            }
+        }
+    } else if (y_coord > client_height() - bottom_border() &&
+               x_coord >= border_thickness_ &&
+               x_coord <= client_width() - border_thickness_) {
+        const int handle_width = sprite_a_.width();
+        if ((x_coord >= field_23D80_ - handle_width + border_thickness_ &&
+             x_coord <= field_23D80_ + border_thickness_ + handle_width) ||
+            (x_coord >= field_23D84_ - handle_width + border_thickness_ &&
+             x_coord <= field_23D84_ + border_thickness_ + handle_width)) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+// ORIGINAL: 0x0050F960 ?on_post_redraw_nc_buffer@Console@@QAEXPAUBuffer@@H@Z 0x0050F960-0x0050FB08 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["The original 0x0050F960..0x0050FB08 draws two splitter handles per orientation; its retired transcription remains in Git history."], "reason": "Render the two Console non-client splitter handles with their owned Sprite members and the Window client/outer geometry; the archived scaffold confirms two handles per orientation and the image buffer dimensions."}
+// symbol    ?on_post_redraw_nc_buffer@Console@@UAEXPAVBuffer@@H@Z
+void Console::on_post_redraw_nc_buffer(Buffer *buffer, int which) {
+    if (buffer == nullptr) {
+        return;
+    }
+    // The image recomputes the border and track geometry for every handle.
+    if (which == 1) {
+        Sprite *const handle = &sprite_b_;
+        handle->draw(buffer, handle->transparent_index(),
+                     buffer->dib_.bmiHeader.biWidth - handle->width(),
+                     // stand-in: negated half-height first; the plain order loads
+                     // the virtual-base pointer into eax instead of ecx.
+                     -(sprite_b_.height() / 2) + track_height() + field_23D88_ -
+                         bottom_border(),
+                     1, 1);
+        handle->draw(buffer, handle->transparent_index(),
+                     buffer->dib_.bmiHeader.biWidth - handle->width(),
+                     track_height() - handle->height() / 2 + field_23D8C_ -
+                         bottom_border(),
+                     1, 1);
+    } else if (which == 2) {
+        Sprite *const handle = &sprite_a_;
+        handle->draw(buffer, handle->transparent_index(),
+                     field_23D80_ - sprite_a_.width() / 2 + border_thickness_,
+                     -(buffer->dib_.bmiHeader.biHeight + handle->height()), 1, 1);
+        handle->draw(buffer, handle->transparent_index(),
+                     field_23D84_ - handle->width() / 2 + border_thickness_,
+                     -(buffer->dib_.bmiHeader.biHeight + handle->height()), 1, 1);
+    }
+}
+
+/*
+Purpose: A non-client left press on the console frame: the minimize and
+         maximize caption boxes, then the right-edge splitter (choosing the
+         nearer of its two drag slots) and the bottom-edge splitter, each
+         claiming the shared input-focus pair when nothing owns it yet.
+
+// ORIGINAL: 0x0050FB10 ?on_nc_left_down@Console@@QAEXHH@Z 0x0050FB10-0x0050FE69 FILE
+// symbol    ?on_nc_left_down@Console@@UAEXHH@Z
+// size      857 bytes
+// prototype void (__thiscall ?on_nc_left_down@Console@@QAEXHH@Z)(Console* this, int, int)
+// callers   0   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005EDE60 0x005EDEB0 0x005FA7E0
+// TRIED (seed): minimize/maximize hit-tests then two edge-distance blocks
+//         (right vs left/right splitter, sign-tested via a discarded add
+//         whose flags a later `js` reuses) reusing the same client_rect_/
+//         outer_rect_/caption_height_/border_thickness_ offsets confirmed on
+//         0x00510110. The seed's raw -0x23cXX reads are the runtime vbtable
+//         walk (the body is entered on the GraphicWin subobject, the virtual
+//         base at Console+0x23d94); the real virtual entry lets the compiler
+//         own that walk, and the four drag slots are the fields at
+//         Console+0x23d80..0x23d8c.
+Status: Coverage transcription - unclaimed body
+*/
+void Console::on_nc_left_down(int x_coord, int y_coord) {
+    RECT box;
+    box.left = 0;
+    box.top = 0xE;
+    box.right = 0x11;
+    box.bottom = 0x1F;
+
+    box.left = client_width() - 0x5b;
+    box.right = box.left + 0x11;
+    if (in_box(x_coord, y_coord, &box)) {
+        minimize();
+        return;
+    }
+
+    box.left += 0x15;
+    box.right += 0x15;
+    if (in_box(x_coord, y_coord, &box)) {
+        maximize();
+        return;
+    }
+
+    // The nearer slot wins; each distance expands its operand twice.
+    if (x_coord > client_width() - border_thickness_) {
+        if (SPLIT_ABS(y_coord - (track_height() - bottom_border() + caption_height_ +
+                                 field_23D88_)) <
+            SPLIT_ABS(y_coord - (track_height() - bottom_border() + caption_height_ +
+                                 field_23D8C_))) {
+            field_23D88_ = -1;
+        } else {
+            field_23D8C_ = -1;
+        }
+        if (WinPointerOwner4 == 0) {
+            take_pointer();
+        }
+    }
+
+    if (y_coord > client_height() - bottom_border()) {
+        if (SPLIT_ABS(x_coord - border_thickness_ - field_23D80_) <
+            SPLIT_ABS(x_coord - border_thickness_ - field_23D84_)) {
+            field_23D80_ = -1;
+        } else {
+            field_23D84_ = -1;
+        }
+        if (WinPointerOwner4 == 0) {
+            take_pointer();
+        }
+    }
+}
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x0050FE70 ?on_nc_left_up@Console@@QAEXHH@Z 0x0050FE70-0x0051010A BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0050fe70.cpp: retained complete original identity/spans and seed evidence", "recovery/tasks/console-scenario-owner-wave.json; native scope expansions through sequence27", "Source owner interpretation preserves mapped original accesses, lifetime calls and branch roles; source-bound members and globals replace the seed offsets/address aliases. Historical seeds and claims remain independent restoration obligations."], "reason": "Recover splitter release into the genuine Console owner using source Win capture owners, real Win inheritance, embedded Sprite geometry and named splitter members. Preserve signed sentinel ordering and the original update operations; no fixed executable calls or self-offset access."}
+// symbol    ?on_nc_left_up@Console@@UAEXHH@Z
+void Console::on_nc_left_up(int x, int y) {
+    release_pointer();
+
+    // Each clamp re-reads the geometry: the stores go through `target`.
+    if (field_23D80_ != -1 && field_23D84_ != -1) {
+        if (field_23D88_ == -1 || field_23D8C_ == -1) {
+            int *const target = field_23D88_ == -1 ? &field_23D88_ : &field_23D8C_;
+            *target = y - (track_height() - bottom_border() + caption_height_);
+            if (*target < sprite_b_.height() / 2) {
+                *target = sprite_b_.height() / 2;
+            }
+            if (*target > client_height() - caption_height_ - bottom_border() -
+                              sprite_b_.height() / 2) {
+                *target = client_height() - caption_height_ - bottom_border() -
+                          sprite_b_.height() / 2;
+            }
+            update(0, ConsoleDragLineY, dib_.bmiHeader.biWidth, 1, nullptr);
+            update(ConsoleDragLineX, 0, 1, -static_cast<int>(dib_.bmiHeader.biHeight), nullptr);
+        }
+    } else {
+        int *const target = field_23D80_ == -1 ? &field_23D80_ : &field_23D84_;
+        *target = x - border_thickness_;
+        if (*target < sprite_a_.width() / 2) {
+            *target = sprite_a_.width() / 2;
+        }
+        if (*target > client_width() - border_thickness_ * 2 -
+                          sprite_a_.width() / 2) {
+            *target = client_width() - border_thickness_ * 2 -
+                      sprite_a_.width() / 2;
+        }
+        update(0, ConsoleDragLineY, dib_.bmiHeader.biWidth, 1, nullptr);
+        update(ConsoleDragLineX, 0, 1, -static_cast<int>(dib_.bmiHeader.biHeight), nullptr);
+    }
+
+    if (field_23D88_ > field_23D8C_) {
+        swap(&field_23D88_, &field_23D8C_);
+    }
+    if (field_23D80_ > field_23D84_) {
+        swap(&field_23D80_, &field_23D84_);
+    }
+}
+
+/*
+Purpose: A non-client mouse move while a splitter drag is armed: whichever of
+         the four drag slots holds a live position follows the cursor between
+         its half-track clamp bounds, the dragged edge repaints without the
+         line, and the crossing drag line is drawn at the new position.
+
+// ORIGINAL: 0x00510110 ?on_nc_mouse_move@Console@@QAEXHH@Z 0x00510110-0x005103FF FILE BYTE_EXACT
+// symbol    ?on_nc_mouse_move@Console@@UAEXHH@Z
+// size      751 bytes
+// prototype void (__thiscall ?on_nc_mouse_move@Console@@QAEXHH@Z)(Console* this, int, int)
+// callers   0   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D55D0 0x005F2AC0 0x005F4C30 0x005F4CA0
+// TRIED (seed): two near-duplicate splitter-drag blocks (vertical/horizontal),
+//         each a 3-way slot-select then clamp-to-half then
+//         redraw_nc_buffer/update_nc_buffer, sharing one last-value pair
+//         threaded into a final draw section. The five-argument
+//         GraphicWin::update (0x005D55D0, BYTE_EXACT in the retained unit) is
+//         not declared on the class, so the final section's two invalidation
+//         calls go through the original's address.
+Status: Coverage transcription - unclaimed body
+*/
+void Console::on_nc_mouse_move(int x_coord, int y_coord) {
+    int line_x;
+    int line_y;
+    int *target;
+
+    // The clamps match on_nc_left_up; the dragged slot is redrawn without
+    // its line, then the crossing drag line moves to the new position.
+    if (pair_armed(field_23D80_, field_23D84_)) {
+        target = field_23D80_ == -1 ? &field_23D80_ : &field_23D84_;
+        *target = x_coord - border_thickness_;
+        if (*target < sprite_a_.width() / 2) {
+            *target = sprite_a_.width() / 2;
+        }
+        if (*target > client_width() - border_thickness_ * 2 -
+                          sprite_a_.width() / 2) {
+            *target = client_width() - border_thickness_ * 2 -
+                      sprite_a_.width() / 2;
+        }
+        line_x = *target;
+        line_y = field_23D88_;
+        redraw_nc_buffer(2);
+        *target = -1;
+        update_nc_buffer(2);
+    } else {
+        // Both coordinates take x here, as in the image.
+        line_x = x_coord;
+        // WORKAROUND(volatile): the image reloads x_coord from its stack slot
+        // for line_y (0x005101EA) where every plain spelling copies edi.
+        line_y = *(volatile int *)&x_coord;
+    }
+
+    if (pair_armed(field_23D88_, field_23D8C_)) {
+        target = field_23D88_ == -1 ? &field_23D88_ : &field_23D8C_;
+        *target = y_coord - (track_height() - bottom_border() + caption_height_);
+        if (*target < sprite_b_.height() / 2) {
+            *target = sprite_b_.height() / 2;
+        }
+        if (*target > client_height() - caption_height_ - bottom_border() -
+                          sprite_b_.height() / 2) {
+            *target = client_height() - caption_height_ - bottom_border() -
+                      sprite_b_.height() / 2;
+        }
+        line_x = field_23D80_;
+        line_y = *target;
+        redraw_nc_buffer(1);
+        *target = -1;
+        update_nc_buffer(1);
+    }
+
+    if (splitter_armed(field_23D80_, field_23D84_, field_23D88_, field_23D8C_)) {
+        GraphicWin::update(0, ConsoleDragLineY,
+                           static_cast<int>(dib_.bmiHeader.biWidth), 1, nullptr);
+        GraphicWin::update(ConsoleDragLineX, 0, 1,
+                           -static_cast<int>(dib_.bmiHeader.biHeight), nullptr);
+        window_line_raw(static_cast<int>(dib_.bmiHeader.biWidth), line_y,
+                        0, line_y, 0, 1, 0);
+        window_line_raw(line_x, -static_cast<int>(dib_.bmiHeader.biHeight),
+                        line_x, 0, 0, 1, 0);
+        ConsoleDragLineX = line_x;
+        ConsoleDragLineY = line_y;
+    }
+}
+
 // ORIGINAL: 0x00510400 ?cursor_on@Console@@QAEXH@Z 0x00510400-0x00510490 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
 // size      144 bytes
@@ -1726,6 +2039,95 @@ searchDone:
     return result;
 }
 
+extern int IfaceIdToSlotStorage[30];
+extern int ActiveIfaceIdStorage;
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00510F50 ?ready@Console@@QAEXXZ 0x00510F50-0x00511471 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00510f50.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
+void Console::ready() {
+    field_23BF8_ = 0;
+    ::draw_cursor();
+    selected_vehicle_ = ready_search(field_23D18_ ? -1 : selected_vehicle_);
+    field_23D18_ = 0;
+    if (selected_vehicle_ < 0 || !ConsoleGlobal.cursor_active_) return;
+    if (!Vehs[selected_vehicle_].order || Vehs[selected_vehicle_].order >= 24) {
+        const int y = Vehs[selected_vehicle_].y;
+        const int x = Vehs[selected_vehicle_].x;
+        field_23BF8_ = 0;
+        if (survey_mode_) {
+            survey_mode_ = 0;
+            MapWinTable[0]->draw_map(1);
+        }
+        MapWinTable[0]->draw_cursor();
+        cursor_next(x, y);
+        ConsoleInfoWin.change(0);
+        ConsoleStatusWin.redraw();
+        MapWinTable[0]->main_caption();
+        if (!(GameDataStateStorage.fields_.game_preferences_ & 0x80000) ||
+            (!Vehs[selected_vehicle_].order && !(Vehs[selected_vehicle_].state & 0x200) &&
+             (Vehs[selected_vehicle_].state & 0x1000200) != 0x1000200)) {
+            if (!focus(Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y,
+                       Vehs[selected_vehicle_].faction_id)) {
+                if (!tile_in_view(Vehs[selected_vehicle_].x,
+                                  Vehs[selected_vehicle_].y, 3)) {
+                    set_center(Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y, 1);
+                }
+            }
+        }
+        alpha_menu_.check(selected_vehicle_);
+        flush_input();
+        Vehs[selected_vehicle_].unk_6 = 0;
+    }
+    const int base = base_at(Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y);
+    if (!Vehs[selected_vehicle_].order && !(Vehs[selected_vehicle_].state & 0x200) &&
+        (Vehs[selected_vehicle_].state & 0x1000200) != 0x1000200 &&
+        !(Vehs[selected_vehicle_].state & 0x4000) && base >= 0) {
+        const int16_t destination = Bases[base].auto_forward_slots[
+            Chassis[VehPrototypes[Vehs[selected_vehicle_].proto_id].chassis_id].triad];
+        if (destination >= 0 && destination != base) {
+            Vehs[selected_vehicle_].order = 24;
+            Vehs[selected_vehicle_].waypoint_x[0] = Bases[destination].x;
+            Vehs[selected_vehicle_].waypoint_y[0] = Bases[destination].y;
+        }
+    }
+    if (Vehs[selected_vehicle_].faction_id == ConsoleGlobal.faction_id_ &&
+        (Vehs[selected_vehicle_].flags & 0x1000) && !Vehs[selected_vehicle_].order &&
+        !(Vehs[selected_vehicle_].state & 0x200)) {
+        Vehs[selected_vehicle_].flags &= ~0x1000;
+        const int prototype = Vehs[selected_vehicle_].proto_id;
+        switch (Chassis[VehPrototypes[prototype].chassis_id].triad) {
+        case 0:
+            if (VehPrototypes[prototype].chassis_id == 0 && Weapon[VehPrototypes[prototype].weapon_id].offense_rating != 0) {
+                g_FX.play(0x40, Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y);
+            } else if (Weapon[VehPrototypes[prototype].weapon_id].offense_rating != 0) {
+                g_FX.play(0x41, Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y);
+            } else {
+                g_FX.play(0x42, Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y);
+            }
+            break;
+        case 1:
+            if (Weapon[VehPrototypes[prototype].weapon_id].offense_rating != 0) {
+                g_FX.play(0x45, Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y);
+            } else {
+                g_FX.play(0x46, Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y);
+            }
+            break;
+        case 2:
+            if (!Chassis[VehPrototypes[prototype].chassis_id].range) {
+                g_FX.play(0x43, Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y);
+            } else if (Chassis[VehPrototypes[prototype].chassis_id].range == 1) {
+                g_FX.play(0x44, Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y);
+            } else {
+                g_FX.play(0x47, Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y);
+            }
+            break;
+        }
+    }
+    ambience_veh(selected_vehicle_);
+    flush_input();
+}
+
 // ORIGINAL: 0x00511480 ?set_view@Console@@QAEXH@Z 0x00511480-0x00511518 FILE BYTE_EXACT
 // size      152 bytes
 // prototype void (__thiscall ?set_view@Console@@QAEXH@Z)(Console* this, int)
@@ -1952,6 +2354,837 @@ void Console::turn_hints() { // 0x00511800
     }
 }
 
+// ORIGINAL: 0x00511BB0 ?give_hints@Console@@QAEXXZ 0x00511BB0-0x00513B85
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned511BB0..513B85; retained git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00511bb0.cpp; original vehicle-turn caller513BD5", "Initial state2000 branch511C37 encloses early cards and colonist scan; clearstate enters51222C. Tutorial stage511E71 is TutorialWindow+53C0 via set_tour_stage, not separate DesignTutorState73396C. Colonist tail uses ConsoleGlobal faction and always returns; scan ownership uses faction snapshot across whose_territory.", "Native51318A..197 evaluates unowned or own-faction candidate sites, skips hostile-owned ones. Enemy-base scan exhaustion5136AE..B7 continues enemyvehicle/territory hints, never explorationchecker. Matchingpod513596 enters5135E6; valid six-sprite index uses captured triad and bounded coordinates. Historical intermediate source added a defensive bounds check under an earlier permission; faithful-milestone recovery supersedes that deviation and restores the unchecked original dispatch.", "Shared terra epilogue5134E1..F5 calls tut_map then GameState|400; farm writes before its call. All33 distinct original caption literals independently read bounded from pinned data. Actual Sprite sizeof2C and existing banks govern indices; no fixed executable data/function aliases.", "recovery/tasks/console-scenario-owner-wave.json; complete-owner expansion and corrected native-flow history retained; actual-source host controls required", "Pinned 0x5134xx..0x5135E6 predecessor walks the eight RadiusBase offsets, wraps longitude on round maps, rejects y outside [0,MapLatitudeBounds) and x outside [0,MapLongitudeBounds), requires goody_at, and retains the first candidate whose terrain triad matches the selected vehicle.", "Pinned 0x5135E6 calls tut_check(0x2000) before any Unity sprite-index arithmetic; rejection returns immediately. On acceptance, 0x5135FB..0x513623 computes (5*y+7*x) / 3 with signed idiv and forms the captured sea/land discriminator plus 2*remainder; 0x513628..0x513639 performs the indexed table-address calculation and draw call with no intervening range branch.", "Current source's matching-pod inputs are captured only after give_hints_in_map accepts bounded coordinates; selected_is_sea is the captured sea/land discriminator and the native modulo result selects one of the six existing g_TER1_UNITY_POD_SPRITES. Preserve callback/checker ordering and the unchecked native indexed dispatch; do not add an invalid-index runtime scenario."], "reason": "Recover the complete Console tutorial-hint owner using typed vehicle/design/rules/map/faction storage, real tutorial windows and source-owned sprite banks. Preserve original identity, seed and historical obligations; no matching or runtime acceptance is implied. Restore the original unchecked Unity-pod dispatch after the checker; earlier behavior-fix permission is superseded by the faithful milestone."}
+// TRIED: literal per-instruction register simulation (eax/ebx/ecx/edx/esi/edi as locals) with goto-labeled control flow matching every branch target; not tried: reconstructing idiomatic per-block source (member/local variable reuse) that would let the compiler's CSE match the original's code size - rebuilt is 4555 bytes against 8149 original, same first divergence at the prologue (push vs sub), so the whole body likely needs restructuring, not a single-instruction fix.
+void Console::give_hints() {
+    // 0x511BBE tests the selected vehicle's state before any other work.
+    const int entry_vehicle = selected_vehicle_;
+    if ((Vehs[entry_vehicle].state & 0x4200u) != 0 || IsMultiplayerNet != 0 ||
+        TutWinBaseWindow.is_visible() != 0 ||
+        TutWinSocWindow.is_visible() != 0) {
+        return;
+    }
+
+    // The image reloads the selected vehicle after the visibility calls, then
+    // keeps these signed coordinates through the whole function.
+    const int cursor_x = Vehs[selected_vehicle_].x;
+    const int cursor_y = Vehs[selected_vehicle_].y;
+    int proto_id;
+    if ((Vehs[selected_vehicle_].state & 0x2000u) != 0) {
+        proto_id = Vehs[selected_vehicle_].proto_id;
+        if (VehPrototypes[proto_id].plan <= PLAN_RECONNAISANCE &&
+            Vehs[selected_vehicle_].home_base_id >= 0 &&
+            tut_check(8) != 0 && GameDataStateStorage.fields_.turn_current_num_ < 0x19) {
+            ::clear();
+            say_base(StringTemp, Vehs[selected_vehicle_].home_base_id);
+            parse_says(0, StringTemp, -1, -1);
+            proto_id = Vehs[selected_vehicle_].proto_id;
+            parse_says(1, VehPrototypes[proto_id].veh_name, -1, -1);
+            TutorialWindow.tut_map("NEWUNIT", cursor_x, cursor_y,
+                                   selected_vehicle_, 0, 0, -1, -1);
+            return;
+        }
+
+        // 0x511D12 is reached both when the first card is ineligible and
+        // when tut_check(8)/the turn gate rejects it. The checker side effect
+        // therefore remains even when the turn is already 25 or later.
+        proto_id = Vehs[selected_vehicle_].proto_id;
+        if (VehPrototypes[proto_id].plan <= PLAN_RECONNAISANCE &&
+            tut_check(0x10) != 0 && GameDataStateStorage.fields_.turn_current_num_ >= 0x28) {
+            TutorialWindow.tut_map("NEWUNITS", cursor_x, cursor_y,
+                                   selected_vehicle_, 0, 0, -1, -1);
+            return;
+        }
+
+        // 0x511D74, including the active-count == 1 condition and its
+        // sea-triad exclusion (triad value 1). The message and caption inputs
+        // are rebuilt from the then-current selection after the checker.
+        proto_id = Vehs[selected_vehicle_].proto_id;
+        if (VehPrototypes[proto_id].plan == PLAN_TERRAFORMING &&
+            PlayersData[faction_id_].proto_id_active[proto_id] == 1 &&
+            tut_check(0x10000) != 0) {
+            proto_id = Vehs[selected_vehicle_].proto_id;
+            const int chassis_id = VehPrototypes[proto_id].chassis_id;
+            if (Chassis[chassis_id].triad != TRIAD_SEA) {
+                ::clear();
+                say_base(StringTemp, Vehs[selected_vehicle_].home_base_id);
+                parse_says(0, StringTemp, -1, -1);
+                proto_id = Vehs[selected_vehicle_].proto_id;
+                parse_says(1, VehPrototypes[proto_id].veh_name, -1, -1);
+                TutorialWindow.set_tour_stage(2);
+                TutorialWindow.tut_map("NEWTERRAFORMER", cursor_x, cursor_y,
+                                       selected_vehicle_, 0, 0x100,
+                                       -1, -1);
+                goto terra_shown;
+            }
+        }
+        // 0x511E99: the one-time colonization map scan is restricted to the
+        // plan-8/land/flag combination. The 240 iterations index the existing
+        // 289-entry RadiusOffset tables beginning at element 49.
+        proto_id = Vehs[selected_vehicle_].proto_id;
+        const int chassis_id = VehPrototypes[proto_id].chassis_id;
+        if (VehPrototypes[proto_id].plan == PLAN_COLONIZATION &&
+            Chassis[chassis_id].triad == TRIAD_LAND &&
+            (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x1000000u) == 0) {
+            int best_site = 0;
+            int best_x = -1;
+            int best_y = -1;
+            ConsoleGlobal.focus(cursor_x, cursor_y, ConsoleGlobal.faction_id_);
+            for (int radius = 0; radius < 240; ++radius) {
+                // The image keeps `MapIsFlat & 1` in a frame local and lays
+                // the flat (unwrapped) arm first, before the wrapping arm.
+                const int x = wrap_map_x(cursor_x + RadiusOffsetX[49 + radius]);
+                const int y = cursor_y + RadiusOffsetY[49 + radius];
+                if (!on_map(x, y)) {
+                    continue;
+                }
+
+                if (!MapWinTable[0]->tile_in_view(x, y, 2)) {
+                    continue;
+                }
+                // Both region bytes are read after the viewport checks.
+                if (map_loc(x, y)->region != map_loc(cursor_x, cursor_y)->region) {
+                    continue;
+                }
+                // The faction is read once before whose_territory and kept
+                // across the call (0x5120B1).
+                const int faction = faction_id_;
+                if (whose_territory(faction, x, y, 0, 0) != faction) {
+                    continue;
+                }
+                if ((PlayersData[faction].flags & 0x200u) == 0 &&
+                    (map_loc(x, y)->visibility & (1 << faction)) == 0) {
+                    continue;
+                }
+                if ((map_loc(x, y)->bit & 0x20u) != 0 &&
+                    (map_loc(x, y)->climate & ~0x1F) >= 0x40) {
+                    continue;
+                }
+                if ((map_loc(x, y)->val3 & ~0x3F) > 0x40) {
+                    continue;
+                }
+
+                int site = site_at(x, y, 0);
+                if (site >= best_site) {
+                    best_site = site;
+                    best_x = x;
+                    best_y = y;
+                }
+            }
+
+            ::clear();
+            say_base(StringTemp, Vehs[selected_vehicle_].home_base_id);
+            parse_says(0, StringTemp, -1, -1);
+            if ((Players[ConsoleGlobal.faction_id_].rule_flags & 0x100u) == 0) {
+                TutorialWindow.tut_map("NEWCOLONIST", cursor_x, cursor_y,
+                                       selected_vehicle_, 0, 0x1000000,
+                                       best_x, best_y);
+            }
+            return;
+        }
+    }
+
+    // 0x51222C first checks the tutorial window's persistent stop flag, then
+    // snapshots whether the selected prototype is a sea-triad unit into an
+    // int frame local (sete into a dword).
+    if (TutorialWindow.tutorial_blocked()) {
+        return;
+    }
+    proto_id = Vehs[selected_vehicle_].proto_id;
+    int selected_is_sea;
+    selected_is_sea =
+        Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_SEA;
+
+    if (Vehs[selected_vehicle_].dmg_incurred != 0 && tut_check(0x200000) != 0) {
+        TutorialWindow.tut_map("DAMAGED", cursor_x, cursor_y, selected_vehicle_,
+                               0, 0, -1, -1);
+        return;
+    }
+
+    // 0x5122A9: these checks apply only to land chassis on a land cursor tile.
+    // The sea and air cards below are therefore nested in the land test, as
+    // the image's branch to 0x512B8A has it.
+    proto_id = Vehs[selected_vehicle_].proto_id;
+    if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_LAND &&
+        !is_ocean(cursor_x, cursor_y)) {
+        // The image compares the neighbour's prototype ID itself with 8.
+        for (int worm_i = 0; worm_i < 8; ++worm_i) {
+            const int x = wrap_map_x(cursor_x + VehMoveDeltaX[worm_i]);
+            const int y = cursor_y + VehMoveDeltaY[worm_i];
+            if (!on_map(x, y)) {
+                continue;
+            }
+            const int nearby = veh_at(x, y);
+            if (nearby < 0 || Vehs[nearby].faction_id != 0 ||
+                Vehs[nearby].proto_id != 8) {
+                continue;
+            }
+            if (tut_check(0x4000000) != 0) {
+                TutorialWindow.tut_map("MINDWORMS", x, y, nearby, 0,
+                                       0, -1, -1);
+                return;
+            }
+        }
+
+        // 0x5123BE fast-unit card: the current chassis must be land triad,
+        // speed exactly 2, the weapon must have nonzero offense, and the
+        // tutorial bit must be newly accepted.
+        proto_id = Vehs[selected_vehicle_].proto_id;
+        if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_LAND &&
+            Chassis[VehPrototypes[proto_id].chassis_id].speed == 2 &&
+            Weapon[VehPrototypes[proto_id].weapon_id].offense_rating != 0 &&
+            tut_check(0x2000000) != 0) {
+            StringTemp[0] = '\0';
+            say_stats_3(StringTemp, Vehs[selected_vehicle_].proto_id);
+            parse_says(1, StringTemp, -1, -1);
+            proto_id = Vehs[selected_vehicle_].proto_id;
+            parse_says(0, VehPrototypes[proto_id].veh_name, -1, -1);
+            TutorialWindow.tut_map("FASTUNIT", cursor_x, cursor_y, selected_vehicle_,
+                                   0, 0, -1, -1);
+            return;
+        }
+
+        // 0x5124E9: speed-1 land unit with signed offense > 1 that cannot
+        // bombard. The image shows the BIGUNIT caption here (0x5125EC).
+        proto_id = Vehs[selected_vehicle_].proto_id;
+        if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_LAND &&
+            Chassis[VehPrototypes[proto_id].chassis_id].speed == 1 &&
+            Weapon[VehPrototypes[proto_id].weapon_id].offense_rating > 1 &&
+            can_arty(proto_id, 1) == 0 && tut_check(0x40000000) != 0) {
+            StringTemp[0] = '\0';
+            say_stats_3(StringTemp, Vehs[selected_vehicle_].proto_id);
+            parse_says(1, StringTemp, -1, -1);
+            proto_id = Vehs[selected_vehicle_].proto_id;
+            parse_says(0, VehPrototypes[proto_id].veh_name, -1, -1);
+            TutorialWindow.tut_map("BIGUNIT", cursor_x, cursor_y, selected_vehicle_,
+                                   0, 0, -1, -1);
+            return;
+        }
+
+        // 0x512602: the can_arty case shows ARTYUNIT; StringTemp is cleared
+        // before the name parse.
+        proto_id = Vehs[selected_vehicle_].proto_id;
+        if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_LAND &&
+            can_arty(proto_id, 1) != 0 && tut_check(0x80000000u) != 0) {
+            StringTemp[0] = '\0';
+            proto_id = Vehs[selected_vehicle_].proto_id;
+            parse_says(0, VehPrototypes[proto_id].veh_name, -1, -1);
+            TutorialWindow.tut_map("ARTYUNIT", cursor_x, cursor_y, selected_vehicle_,
+                                   0, 0, -1, -1);
+            return;
+        }
+
+        // 0x5126BD/0x512739: the shown flags are distinct from
+        // TutWinFlags9A64BC. Already-shown bits are ORed again, then flow
+        // continues.
+        proto_id = Vehs[selected_vehicle_].proto_id;
+        if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_SEA) {
+            if ((GameDataStateStorage.fields_.tutorial_flags_ & 0x20) == 0) {
+                TutorialWindow.tut_map("NEWSHIP", cursor_x, cursor_y, selected_vehicle_,
+                                       0, 0, -1, -1);
+                GameDataStateStorage.fields_.tutorial_flags_ |= 0x20;
+                return;
+            }
+            GameDataStateStorage.fields_.tutorial_flags_ |= 0x20;
+        }
+        proto_id = Vehs[selected_vehicle_].proto_id;
+        if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_AIR) {
+            if ((GameDataStateStorage.fields_.tutorial_flags_ & 0x40) == 0) {
+                TutorialWindow.tut_map("NEWAIR", cursor_x, cursor_y, selected_vehicle_,
+                                       0, 0, -1, -1);
+                GameDataStateStorage.fields_.tutorial_flags_ |= 0x40;
+                return;
+            }
+            GameDataStateStorage.fields_.tutorial_flags_ |= 0x40;
+        }
+
+        // 0x5127B5 base-defense card. enemy_move receives -1 - selection
+        // (`or eax,-1; sub eax,ecx`).
+        const int cursor_base = base_at(cursor_x, cursor_y);
+        if (cursor_base >= 0 &&
+            Bases[cursor_base].faction_id_current == faction_id_) {
+            const int current_proto = Vehs[selected_vehicle_].proto_id;
+            const Base &base = Bases[cursor_base];
+            if (base.population_size > 2 ||
+                PlayersData[faction_id_].total_mil_veh > 3 ||
+                PlayersData[faction_id_].proto_id_active[current_proto] > 1) {
+                if (enemy_move(-1 - selected_vehicle_) != 0 &&
+                    (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x800000u) == 0) {
+                    StringTemp[0] = '\0';
+                    say_stats_3(StringTemp, Vehs[selected_vehicle_].proto_id);
+                    parse_says(2, StringTemp, -1, -1);
+                    parse_says(0, base.name_string, -1, -1);
+                    proto_id = Vehs[selected_vehicle_].proto_id;
+                    parse_says(1, VehPrototypes[proto_id].veh_name, -1, -1);
+
+                    // 0x5128F7: defensive plan whose armor beats its weapon,
+                    // and whose weapon offense is exactly 1.
+                    proto_id = Vehs[selected_vehicle_].proto_id;
+                    const VehPrototype &prototype = VehPrototypes[proto_id];
+                    TutorialWindow.tut_map(
+                        prototype.plan == PLAN_DEFENSIVE &&
+                                Armor[prototype.armor_id].defense_rating >
+                                    Weapon[prototype.weapon_id].offense_rating &&
+                                Weapon[prototype.weapon_id].offense_rating == 1
+                            ? "DEFENDIT2"
+                            : "DEFENDIT",
+                        cursor_x, cursor_y, selected_vehicle_, 0,
+                        0x800000, -1, -1);
+                    return;
+                }
+            }
+        }
+
+        // 0x512959 empty-base scan. The image checks the current weapon before
+        // iterating and calls tut_check2 before the every-20-turn fallback.
+        // A shown card leaves the loop and continues at 0x512B87; it does not
+        // return.
+        proto_id = Vehs[selected_vehicle_].proto_id;
+        if (GameDataStateStorage.fields_.turn_current_num_ >= 0x14 &&
+            (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x4000000u) == 0 &&
+            Weapon[VehPrototypes[proto_id].weapon_id].offense_rating != 0) {
+            for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_;
+                 ++base_id) {
+                if (Bases[base_id].faction_id_current != faction_id_ ||
+                    veh_at(Bases[base_id].x, Bases[base_id].y) >= 0 ||
+                    Bases[base_id].population_size == 1) {
+                    continue;
+                }
+
+                // 0x5129FD reads both coordinates from the base record again
+                // and MapWinTable[0] once; no x/y/map_window locals.
+                if (!MapWinTable[0]->tile_in_view(Bases[base_id].x, Bases[base_id].y, 2)) {
+                    continue;
+                }
+                if (tut_check2(0x100) != 0 ||
+                    GameDataStateStorage.fields_.turn_current_num_ % 20 == 0) {
+                    parse_says(0, Bases[base_id].name_string, -1, -1);
+                    TutorialWindow.tut_map("EMPTYBASE", Bases[base_id].x,
+                                           Bases[base_id].y, -1, 0,
+                                           0x4000000, -1, -1);
+                    break;
+                }
+            }
+        }
+    }
+
+    // 0x512B90 cursor-tile filter: the inline base_who owner test (the image
+    // tests the base bit, 1, at 0x00512BB6).
+    if (base_who(cursor_x, cursor_y) >= 0) {
+        return;
+    }
+
+    // 0x512BCE artifact card; tut_check's bit is recorded before map display.
+    proto_id = Vehs[selected_vehicle_].proto_id;
+    if (VehPrototypes[proto_id].plan == PLAN_ALIEN_ARTIFACT &&
+        tut_check(0x1000000) != 0) {
+        TutorialWindow.tut_map("ARTIFACT", cursor_x, cursor_y, selected_vehicle_,
+                               0, 0, -1, -1);
+        return;
+    }
+
+    // tut_check2 runs before the prototype test, so its flag side effect
+    // remains when the current design is not one of the three Ogre IDs. The
+    // image compares the 16-bit prototype field directly.
+    if (tut_check2(0x20000) != 0 &&
+        (Vehs[selected_vehicle_].proto_id == 0x10 ||
+         Vehs[selected_vehicle_].proto_id == 0x11 ||
+         Vehs[selected_vehicle_].proto_id == 0x12)) {
+        TutorialWindow.tut_map("GETOGRE", cursor_x, cursor_y, selected_vehicle_,
+                               0, 0, -1, -1);
+        return;
+    }
+
+    // 0x512C82 nearby native-unit hints. A rejected spore-launcher checker
+    // still falls through to the sealurk prototype test.
+    int native_i;
+    for (native_i = 0; native_i < 8; ++native_i) {
+        const int x = wrap_map_x(cursor_x + VehMoveDeltaX[native_i]);
+        const int y = cursor_y + VehMoveDeltaY[native_i];
+        if (!on_map(x, y)) {
+            continue;
+        }
+        const int nearby = veh_at(x, y);
+        if (nearby < 0 || Vehs[nearby].faction_id != 0) {
+            continue;
+        }
+        if (Vehs[nearby].proto_id == 0x0F && tut_check2(0x80000) != 0) {
+            TutorialWindow.tut_map("SPORELAUNCHER", x, y, nearby, 0,
+                                   0, -1, -1);
+            return;
+        }
+        if (Vehs[nearby].proto_id == 0x0E && tut_check2(0x40000) != 0) {
+            TutorialWindow.tut_map("SEALURK", x, y, nearby, 0, 0, -1, -1);
+            return;
+        }
+    }
+
+    // 0x512D4E resource scan: occupied tiles (inline anything_at), tile
+    // exclusions, goody suppression, then a switch on bonus_at. The card
+    // re-reads bonus_at inside the tut_map argument list.
+    int bonus_i;
+    for (bonus_i = 0; bonus_i < 8; ++bonus_i) {
+        const int x = wrap_map_x(cursor_x + VehMoveDeltaX[bonus_i]);
+        const int y = cursor_y + VehMoveDeltaY[bonus_i];
+        if (!on_map(x, y)) {
+            continue;
+        }
+        if (anything_at(x, y) >= 0) {
+            continue;
+        }
+        if ((map_loc(x, y)->bit & 0x81E02850u) != 0) {
+            continue;
+        }
+        if (goody_at(x, y) != 0) {
+            continue;
+        }
+        switch (bonus_at(x, y, 0)) {
+        case 1:
+            if (tut_check(0x20000) != 0) {
+                TutorialWindow.tut_map("BONUSNUTRIENT", x, y, -1,
+                    &g_TER1_SEA_LAND_RESOURCE_SPRITES[
+                        (selected_is_sea + bonus_at(x, y, 0) * 2 - 2) * 2],
+                    0, -1, -1);
+                return;
+            }
+            break;
+        case 2:
+            if (tut_check(0x40000) != 0) {
+                TutorialWindow.tut_map("BONUSMINERALS", x, y, -1,
+                    &g_TER1_SEA_LAND_RESOURCE_SPRITES[
+                        (selected_is_sea + bonus_at(x, y, 0) * 2 - 2) * 2],
+                    0, -1, -1);
+                return;
+            }
+            break;
+        case 3:
+            if (tut_check(0x80000) != 0) {
+                TutorialWindow.tut_map("BONUSENERGY", x, y, -1,
+                    &g_TER1_SEA_LAND_RESOURCE_SPRITES[
+                        (selected_is_sea + bonus_at(x, y, 0) * 2 - 2) * 2],
+                    0, -1, -1);
+                return;
+            }
+            break;
+        }
+    }
+
+    // 0x512EA9: the cursor tile's fungus cards. The altitude band is an int
+    // local (`and al,0E0h` then dword compares); the land arm comes first.
+    if ((map_loc(cursor_x, cursor_y)->bit & 0x20u) != 0) {
+        const int altitude = map_loc(cursor_x, cursor_y)->climate & 0xE0;
+        if (altitude >= 0x40) {
+            if (altitude >= 0x60) {
+                if (tut_check(0x100) != 0) {
+                    TutorialWindow.tut_map("FUNGUSAMUNGUS", cursor_x, cursor_y, -1,
+                                           0, 0, -1, -1);
+                    return;
+                }
+            } else if (tut_check(0x8000) != 0) {
+                TutorialWindow.tut_map("FUNGUSSEA", cursor_x, cursor_y, -1,
+                                       0, 0, -1, -1);
+                return;
+            }
+        }
+    }
+
+    // 0x513022: tutorial-state gate; colonization-site advice. A tile with
+    // bit 0x1000 scores 0 without calling world_site.
+    if ((GameDataStateStorage.fields_.game_state_ & 0x400u) != 0) {
+        return;
+    }
+    proto_id = Vehs[selected_vehicle_].proto_id;
+    if (VehPrototypes[proto_id].plan == PLAN_COLONIZATION &&
+        (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x10000u) == 0) {
+        int site = site_at(cursor_x, cursor_y, 0);
+        if (!(site < 4 &&
+            site < PlayersData[faction_id_].unk_82[map_loc(cursor_x, cursor_y)->region])) {
+        for (int site_i = 0; site_i < 21; ++site_i) {
+            const int x = wrap_map_x(cursor_x + RadiusOffsetX[site_i]);
+            const int y = cursor_y + RadiusOffsetY[site_i];
+            if (!on_map(x, y)) {
+                continue;
+            }
+            const int owner = whose_territory(faction_id_, x, y, 0, 0);
+            if (owner >= 0 && owner != faction_id_) {
+                continue;
+            }
+            int candidate_site = site_at(x, y, 0);
+            if (candidate_site > site) {
+                return;
+            }
+        }
+        TutorialWindow.tut_map("BUILDHERE", cursor_x, cursor_y, selected_vehicle_, 0,
+                               0x10000, -1, -1);
+        return;
+    }
+            return;
+}
+
+    // 0x51323A terraforming chain, only for plan 9 when the captured sea flag
+    // is false. BaseFindDist and BaseCurrent are written/read by base_find.
+    // The improvement tests form one else-if chain: a rejected flag/tile test
+    // skips straight to the sensor card (0x513433).
+    proto_id = Vehs[selected_vehicle_].proto_id;
+    if (VehPrototypes[proto_id].plan == PLAN_TERRAFORMING && !selected_is_sea) {
+        int base_id;
+        base_id = base_find(cursor_x, cursor_y, faction_id_);
+        if (base_id < 0) {
+            return;
+        }
+        if (BaseFindDist <= 2) {
+            if (at_goal(faction_id_, 0x29, cursor_x, cursor_y) != 0 &&
+                (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x200000u) == 0) {
+                parse_says(0, BaseCurrent->name_string, -1, -1);
+                if ((map_loc(cursor_x, cursor_y)->bit & 0x40u) != 0) {
+                    TutorialWindow.tut_map("TERRARAISE", cursor_x, cursor_y, -1, 0,
+                                           0x200000, -1, -1);
+                }
+                goto terra_shown;
+            }
+
+            int improve;
+            improve = can_terraform(faction_id_, cursor_x, cursor_y,
+                                              0, base_id);
+            if (improve == 4) {
+                // 0x513344 tests tile bit 0x8000 (`test dh,80h`).
+                if ((GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x100000u) == 0 &&
+                    (map_loc(cursor_x, cursor_y)->bit & 0x8000u) == 0) {
+                    GameDataStateStorage.fields_.game_state_ |= 0x400u;
+                    parse_says(0, Bases[base_id].name_string, -1, -1);
+                    TutorialWindow.tut_map("TERRAFARM", cursor_x, cursor_y, -1,
+                                           &g_TER1_FARM_SPRITES[3], 0x100000, -1, -1);
+                    return;
+                }
+            } else if (improve == 6) {
+                if ((GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x40000u) == 0) {
+                    TutorialWindow.tut_map("TERRAMINE", cursor_x, cursor_y, -1,
+                                           &g_TER1_MINE_SPRITE, 0x40000, -1, -1);
+                    goto terra_shown;
+                }
+            } else if (improve == 7) {
+                if ((GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x20000u) == 0) {
+                    TutorialWindow.tut_map("TERRASOLAR", cursor_x, cursor_y, -1,
+                                           &g_TER1_SOLAR_COLLECTOR_SPRITE, 0x20000, -1, -1);
+                    goto terra_shown;
+                }
+            } else if (improve == 8) {
+                if ((GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x400000u) == 0) {
+                    TutorialWindow.tut_map("TERRAFOREST", cursor_x, cursor_y, -1, 0,
+                                           0x400000, -1, -1);
+                    goto terra_shown;
+                }
+            }
+
+            if ((at_goal(faction_id_, 0x79, cursor_x, cursor_y) != 0 ||
+                 good_sensor(ConsoleGlobal.faction_id_, cursor_x, cursor_y) != 0) &&
+                (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x2000000u) == 0) {
+                TutorialWindow.tut_map("TERRASENSOR", cursor_x, cursor_y, -1, 0,
+                                       0x2000000, -1, -1);
+                goto terra_shown;
+            }
+            uint32_t tile_flags;
+            tile_flags = map_loc(cursor_x, cursor_y)->bit;
+            if ((tile_flags & 4u) == 0 &&
+                (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x80000u) == 0 &&
+                ((tile_flags & 0x10u) != 0 ||
+                 at_goal(faction_id_, 9, cursor_x, cursor_y) != 0)) {
+                TutorialWindow.tut_map("TERRAROAD", cursor_x, cursor_y, -1, 0,
+                                       0x80000, -1, -1);
+            terra_shown:
+                GameDataStateStorage.fields_.game_state_ |= 0x400u;
+                return;
+            }
+        }
+    }
+
+    // 0x513505 exploration scan: the first goody whose ocean-ness equals the
+    // captured sea flag shows the card directly from inside the loop.
+    if ((GameDataStateStorage.fields_.tutorial_flags_ & 0x2000) == 0) {
+        for (int pod_i = 0; pod_i < 8; ++pod_i) {
+            const int x = wrap_map_x(cursor_x + VehMoveDeltaX[pod_i]);
+            const int y = cursor_y + VehMoveDeltaY[pod_i];
+            if (!on_map(x, y)) {
+                continue;
+            }
+            if (goody_at(x, y) == 0) {
+                continue;
+            }
+            if (is_ocean(x, y) == selected_is_sea) {
+                if (tut_check(0x2000) == 0) {
+                    return;
+                }
+                TutorialWindow.tut_map("EXPLORATION", x, y, -1,
+                    &g_TER1_UNITY_POD_SPRITES[selected_is_sea +
+                                              ((x * 7 + y * 5) % 3) * 2],
+                    0, -1, -1);
+                return;
+            }
+        }
+    }
+
+    // 0x5135AD enemy-base scan. Its exhaustion proceeds to 0x5136B7. The
+    // owner byte is re-read from the base record for each leader/noun parse.
+    if ((GameDataStateStorage.fields_.tutorial_flags_ & 0x8000000) == 0) {
+        for (int enemy_base_i = 0; enemy_base_i < 8; ++enemy_base_i) {
+            const int x = wrap_map_x(cursor_x + VehMoveDeltaX[enemy_base_i]);
+            const int y = cursor_y + VehMoveDeltaY[enemy_base_i];
+            if (!on_map(x, y)) {
+                continue;
+            }
+            const int base_id = base_at(x, y);
+            if (base_id < 0) {
+                continue;
+            }
+            if (Bases[base_id].faction_id_current == faction_id_) {
+                continue;
+            }
+            if (tut_check(0x8000000) == 0) {
+                return;
+            }
+            parse_says(0, Bases[base_id].name_string, -1, -1);
+            GenderDefault = Players[Bases[base_id].faction_id_current].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(1, Players[Bases[base_id].faction_id_current].title_leader, -1, -1);
+            GenderDefault = Players[Bases[base_id].faction_id_current].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(2, Players[Bases[base_id].faction_id_current].name_leader, -1, -1);
+            GenderDefault = Players[Bases[base_id].faction_id_current].noun_gender;
+            PluralityDefault = Players[Bases[base_id].faction_id_current].is_noun_plural;
+            parse_says(3, Players[Bases[base_id].faction_id_current].noun_faction, -1, -1);
+            TutorialWindow.tut_map("ENEMYBASE", x, y, -1, 0, 0, -1, -1);
+            return;
+        }
+    }
+
+    // 0x5136B7 enemy-vehicle scan; skips tiles the inline base_who reports as
+    // owned (the image tests the base bit, 1, at 0x0051384E), and re-reads the
+    // vehicle's faction byte for each parse.
+    if ((GameDataStateStorage.fields_.tutorial_flags_ & 0x10000000) == 0) {
+        for (int enemy_veh_i = 0; enemy_veh_i < 8; ++enemy_veh_i) {
+            const int x = wrap_map_x(cursor_x + VehMoveDeltaX[enemy_veh_i]);
+            const int y = cursor_y + VehMoveDeltaY[enemy_veh_i];
+            if (!on_map(x, y)) {
+                continue;
+            }
+            if (base_who(x, y) >= 0) {
+                continue;
+            }
+            const int vehicle = veh_at(x, y);
+            if (vehicle < 0) {
+                continue;
+            }
+            if (Vehs[vehicle].faction_id == faction_id_ || Vehs[vehicle].faction_id == 0) {
+                continue;
+            }
+            if (tut_check(0x10000000) == 0) {
+                return;
+            }
+            GenderDefault = Players[Vehs[vehicle].faction_id].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(1, Players[Vehs[vehicle].faction_id].title_leader, -1, -1);
+            GenderDefault = Players[Vehs[vehicle].faction_id].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(2, Players[Vehs[vehicle].faction_id].name_leader, -1, -1);
+            GenderDefault = Players[Vehs[vehicle].faction_id].noun_gender;
+            PluralityDefault = Players[Vehs[vehicle].faction_id].is_noun_plural;
+            parse_says(3, Players[Vehs[vehicle].faction_id].noun_faction, -1, -1);
+            TutorialWindow.tut_map("ENEMYVEH", x, y, vehicle, 0, 0, -1, -1);
+            return;
+        }
+    }
+
+    // 0x5138B3 territory edge scan. The candidate owner is tested against
+    // this faction before its sign, then against the cursor tile's owner.
+    if ((GameDataStateStorage.fields_.tutorial_flags_ & 0x20000000) == 0) {
+        for (int terr_i = 0; terr_i < 8; ++terr_i) {
+            const int x = wrap_map_x(cursor_x + VehMoveDeltaX[terr_i]);
+            const int y = cursor_y + VehMoveDeltaY[terr_i];
+            if (!on_map(x, y)) {
+                continue;
+            }
+            if (anything_at(x, y) >= 0) {
+                continue;
+            }
+            const int owner = whose_territory(faction_id_, x, y, 0, 0);
+            if (owner == faction_id_ || owner < 0) {
+                continue;
+            }
+            if (whose_territory(faction_id_, cursor_x, cursor_y, 0, 0) == owner) {
+                continue;
+            }
+            if (tut_check(0x20000000) == 0) {
+                return;
+            }
+            GenderDefault = Players[owner].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(1, Players[owner].title_leader, -1, -1);
+            GenderDefault = Players[owner].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(2, Players[owner].name_leader, -1, -1);
+            GenderDefault = Players[owner].noun_gender;
+            PluralityDefault = Players[owner].is_noun_plural;
+            parse_says(3, Players[owner].noun_faction, -1, -1);
+            TutorialWindow.tut_map("ENEMYTERR", x, y, -1, 0, 0, -1, -1);
+            return;
+        }
+    }
+}
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00513B90 ?veh_turn@Console@@QAEHXZ 0x00513B90-0x00513FB9 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00513b90.cpp; image:0x00513B90-0x00513FB9", "Native513EA3 identifies pointer-preserving NetDaemon::automated_lock; native513F85 clears selected ID only before turn-loop entry."], "reason": "Recover selected-vehicle turn scheduling through real Console state, NetDaemon locking and UI owners. Native branches distinguish cursor activity, readiness and ordered actions, retaining selection after an entered turn loop and clearing it on early refusal; no raw receiver accesses or executable callbacks."}
+int Console::veh_turn() { // 0x00513B90
+    int result = 0;
+    int flag10 = 0;
+    int n = 0;
+    field_23BE4_ = 1;
+
+    if ((GameDataStateStorage.fields_.game_preferences_ & 0x20u) != 0 &&
+        Vehs[selected_vehicle_].order == 0) {
+        give_hints();
+    }
+
+    const int first_ready = veh_ready(selected_vehicle_);
+    for (;;) {
+        if (!veh_selectable(selected_vehicle_) ||
+            veh_ready(selected_vehicle_) != first_ready ||
+            (first_ready == 0 && Vehs[selected_vehicle_].order != 0)) {
+            if (ConsoleGlobal.cursor_active_ != 0) {
+                goto finish_turn;
+            }
+        }
+
+        if (field_23BE4_ == 0 && field_23BF0_ != 2) {
+            goto finish_turn;
+        }
+        if (field_23BE8_ == 0 || ExitTurnLoop != 0 ||
+            end_of_game(0) != 0 ||
+            (IsMultiplayerNet != 0 && (GameDataStateStorage.fields_.game_state_ & 0x800u) != 0)) {
+            goto finish_turn;
+        }
+
+        flag10 = 1;
+        if (field_23BF0_ == 2) {
+            field_23BE4_ = Vehs[selected_vehicle_].order == 0x18;
+            field_23BF0_ = 0;
+        }
+
+        // Native reads 0x0093E8E0 here: NetDaemon + 0x1B50, the already
+        // typed lock_state_[0].dword_[9]. Its wider semantic role is unknown.
+        if (NetDaemonNet.primary_state_.trailing_words_[3] != 0) {
+            if (ConsoleGlobal.cursor_active_ != 0) {
+                ambience(0x1E);
+                cursor_active_ = 0;
+                field_23BF8_ = 1;
+                field_23BFC_ = 1;
+                if (survey_mode_ != 0) {
+                    survey_mode_ = 0;
+                    MapWinTable[0]->draw_map(1);
+                }
+                ::draw_cursor();
+                ConsoleInfoWin.change(0);
+                ConsoleStatusWin.redraw();
+                MapWinTable[0]->main_caption();
+                alpha_menu_.check(selected_vehicle_);
+                continue;
+            }
+            result = 1;
+            wait_loop();
+            continue;
+        }
+
+        if (field_23D24_ != 0 &&
+            (Vehs[selected_vehicle_].state & 0x200u) == 0 &&
+            (Vehs[selected_vehicle_].state & 0x01000200u) != 0x01000200u &&
+            (Vehs[selected_vehicle_].state & 0x4000u) == 0 &&
+            Vehs[selected_vehicle_].order == 0) {
+            goto clear_auto_order;
+        }
+
+        if (ConsoleGlobal.cursor_active_ != 0) {
+            if (veh_ready(selected_vehicle_) != 0) {
+                if (TutWinBaseWindow.is_visible() == 0 &&
+                    ReportWinGlobal.is_visible() == 0) {
+                    if ((Vehs[selected_vehicle_].state & 0x4200u) == 0) {
+                        const uint8_t order = Vehs[selected_vehicle_].order;
+                        if (order == 0) {
+                            n = 0;
+                        } else if (++n > (order == 0x18 ? 100 : 20)) {
+                            if (order == 0x18) {
+                                Vehs[selected_vehicle_].order = 0;
+                            } else {
+                                veh_skip(selected_vehicle_);
+                            }
+                            if (IsMultiplayerNet != 0) {
+                                synch_veh(selected_vehicle_);
+                                NetDaemonNet.await_synch();
+                                NetDaemonNet.unlock_veh();
+                            }
+                            continue;
+                        }
+                        if (NetDaemonNet.action(selected_vehicle_, 0) != 0) {
+                            continue;
+                        }
+                        Vehs[selected_vehicle_].state |= 0x04000000u;
+                    } else {
+                        // Native target 0x00531150 is NetDaemon::automated_lock(int *, int).
+                        if (NetDaemonNet.automated_lock(&selected_vehicle_, 4) != 0) {
+                            goto finish_turn;
+                        }
+                        ++NetBusyCount;
+                        if (++n > 20) {
+                            veh_skip(selected_vehicle_);
+                            if (IsMultiplayerNet != 0) {
+                                synch_veh(selected_vehicle_);
+                                NetDaemonNet.await_synch();
+                                NetDaemonNet.unlock_veh();
+                            }
+                            --NetBusyCount;
+                            continue;
+                        }
+                        if (enemy_veh(selected_vehicle_) != 0) {
+                            goto enemy_vehicle_found;
+                        }
+                        --NetBusyCount;
+                        continue;
+                    }
+                }
+            } else if (Vehs[selected_vehicle_].order != 0 ||
+                       (Vehs[selected_vehicle_].state & 0x4200u) != 0) {
+                goto selected_vehicle_unavailable;
+            }
+        }
+
+        result = 1;
+        wait_loop();
+        if (TutWinTourPending != 0) {
+            TutWinTourPending = 0;
+            TutorialWindow.tour();
+        }
+    }
+
+clear_auto_order:
+    field_23D24_ = 0;
+selected_vehicle_unavailable:
+    selected_vehicle_ = -1;
+finish_turn:
+    field_23BE4_ = 0;
+    if (flag10 == 0) {
+        selected_vehicle_ = -1;
+    }
+    return result;
+
+enemy_vehicle_found:
+    if (IsMultiplayerNet != 0) {
+        NetDaemonNet.unlock_veh();
+        selected_vehicle_ = -1;
+    }
+    --NetBusyCount;
+    goto finish_turn;
+}
+
 /*
 Purpose: Play out the turn boundary until the game says to stop: drive
          end_of_game, wait out the loop's queued work, and launch the tutorial
@@ -1985,6 +3218,236 @@ void Console::end_of_turn() {
     }
 
     field_23BE4_ = 0;
+}
+
+// ORIGINAL: 0x00514050 ?human_turn@Console@@QAEXXZ 0x00514050-0x005147DA FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:terranx_original.exe:0x00514050-0x005147DA", "git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00514050.cpp", "FX bank749CF8 plus57 times6C identifies74B504 as existing Effect57; original dispatch uses Wave virtual operations.", "Native5140DC/5143B4/51467E/514694 establish cursor polarity, selection reload and branch-specific flag/audio order."], "reason": "Recover player-turn orchestration in its genuine Console owner, preserving callback-driven selection/faction reloads, cursor guards, turn flags and real UI/audio lifetimes."}
+// TRIED: direct transcription using Console's already-declared field_23BDC_ etc members (no raw casts needed, no embedded objects here - simple frameless prologue); cross-checked against raw asm for the neg/sbb/inc bool-negate idiom, the xor-swapped focus() arg orders, and the veh_ready/veh_selectable branch. Compiles, sim 0.55 frameless; not retried given size (1930 bytes).
+void Console::human_turn() {
+    unsigned int flush_cache = 0;
+    int previous_vehicle_count = -1;
+
+    WorldClimateWorldWin.viewport_outline_enabled_ = 0;
+    WorldClimateWorldWin.set_world_map();
+    GameDataStateStorage.fields_.game_state_ &= ~static_cast<uint32_t>(STATE_UNK_400);
+    MapBaseDisplayOverride = 1;
+    field_23D1C_ = 0;
+
+    for (int vehicle = 0; vehicle < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle) {
+        Vehs[vehicle].state &= ~static_cast<uint32_t>(VSTATE_UNK_8000000);
+    }
+
+    if (ControlTurnPhase == 0) {
+        selected_vehicle_ = -1;
+        set_move(0);
+    } else if (ConsoleGlobal.cursor_active_ != 0) {
+        set_move(1);
+    } else {
+        ambience(0x1E);
+        cursor_active_ = 0;
+        field_23BF8_ = 1;
+        field_23BFC_ = 1;
+        if (survey_mode_ != 0) {
+            survey_mode_ = 0;
+            MapWinTable[0]->draw_map(1);
+        }
+        ::draw_cursor();
+        ConsoleInfoWin.change(0);
+        ConsoleStatusWin.redraw();
+        MapWinTable[0]->main_caption();
+        alpha_menu_.check(selected_vehicle_);
+    }
+
+    alpha_menu_.check(selected_vehicle_);
+    ConsoleStatusWin.reset();
+    ConsoleInfoWin.reset();
+    field_23BE8_ = 1;
+    field_23D24_ = 0;
+
+    if (ControlTurnPhase != 0) {
+        const int selected = selected_vehicle_;
+        bool refresh = selected < 0 || veh_ready(selected) == 0;
+        if (!refresh) {
+            // Native reloads selected_vehicle_ after veh_ready returns.
+            const int current_selected = selected_vehicle_;
+            refresh = (Vehs[current_selected].state & 0x4200u) != 0 ||
+                      Vehs[current_selected].order != 0;
+        }
+        if (refresh && ConsoleGlobal.cursor_active_ != 0) {
+            ambience(0x1E);
+            field_23BF8_ = 1;
+            field_23BFC_ = 1;
+            cursor_active_ = 0;
+            if (survey_mode_ != 0) {
+                survey_mode_ = 0;
+                MapWinTable[0]->draw_map(1);
+            }
+            ::draw_cursor();
+            ConsoleInfoWin.change(0);
+            ConsoleStatusWin.redraw();
+            MapWinTable[0]->main_caption();
+            alpha_menu_.check(selected_vehicle_);
+        }
+    }
+
+    if (IsMultiplayerNet != 0) {
+        g_FX.play(0x21);
+    }
+    ControlTurnPhase = 0;
+
+    for (;;) {
+        if ((GameDataStateStorage.fields_.game_state_ & 0x2000u) != 0 && (GameDataStateStorage.fields_.game_state_ & 1u) == 0 &&
+            (GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_CONQUEST) != 0) {
+            GenderDefault = Players[ConsoleGlobal.faction_id_].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(0, Players[ConsoleGlobal.faction_id_].title_leader, -1, -1);
+            GenderDefault = Players[ConsoleGlobal.faction_id_].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(1, Players[ConsoleGlobal.faction_id_].name_leader, -1, -1);
+            GenderDefault = Players[ConsoleGlobal.faction_id_].noun_gender;
+            PluralityDefault = Players[ConsoleGlobal.faction_id_].is_noun_plural;
+            parse_says(2, Players[ConsoleGlobal.faction_id_].noun_faction, -1, -1);
+            X_pop("CONQUERPLANET", nullptr);
+            GameDataStateStorage.fields_.game_state_ |= 1u;
+        }
+
+        if (ConsoleGlobal.cursor_active_ != 0) {
+            if (selected_vehicle_ < 0 ||
+                GameDataStateStorage.fields_.vehicle_current_count_ != previous_vehicle_count ||
+                (field_23BEC_ ? !veh_selectable(selected_vehicle_) : !veh_ready(selected_vehicle_))) {
+                ready();
+            } else if (field_23BF4_ == 0) {
+                // The helper can run callbacks; native reloads the selection
+                // after the eligibility callback and before reading its tile.
+                const int y = Vehs[selected_vehicle_].y;
+                const int x = Vehs[selected_vehicle_].x;
+                field_23BF8_ = 0;
+                if (survey_mode_ != 0) {
+                    survey_mode_ = 0;
+                    MapWinTable[0]->draw_map(1);
+                }
+                MapWinTable[0]->draw_cursor();
+                cursor_next(x, y);
+                // cursor_next may dispatch callbacks that change the live
+                // selection; native reloads selected_vehicle_ afterward.
+                if (field_23BF0_ == 0 || Vehs[selected_vehicle_].order != 0x18) {
+                    focus(Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y,
+                          Vehs[selected_vehicle_].faction_id);
+                    ConsoleInfoWin.change(0);
+                    ConsoleStatusWin.redraw();
+                    MapWinTable[0]->main_caption();
+                    alpha_menu_.check(selected_vehicle_);
+                }
+            }
+        } else if (selected_vehicle_ < 0 ||
+                   GameDataStateStorage.fields_.vehicle_current_count_ != previous_vehicle_count ||
+                   (field_23BEC_ ? !veh_selectable(selected_vehicle_) : !veh_ready(selected_vehicle_))) {
+            ready();
+        }
+
+        previous_vehicle_count = GameDataStateStorage.fields_.vehicle_current_count_;
+        field_23BF4_ = 0;
+        field_23BF0_ = 0;
+        field_23BEC_ = 0;
+
+        if (selected_vehicle_ < 0) {
+            GameDataStateStorage.fields_.game_state_ |= 2u;
+            if (TutWinBaseWindow.is_visible() || ReportWinGlobal.is_visible()) {
+                GameDataStateStorage.fields_.game_state_ |= 4u;
+            }
+            field_23BE8_ = 1;
+            const int lock_result = edit_lock();
+            if (lock_result == 0) {
+                const bool manual_stop =
+                    (GameDataStateStorage.fields_.game_preferences_ & PREF_BSC_PAUSE_END_TURN) == 0 &&
+                    IsMultiplayerNet == 0 && IsMultiplayerPBEM == 0 &&
+                    flush_cache != 0 && (GameDataStateStorage.fields_.game_state_ & 4u) == 0;
+                if (manual_stop) {
+                    field_23BE8_ = 0;
+                } else if ((GameDataStateStorage.fields_.game_preferences_ & PREF_BSC_PAUSE_END_TURN) == 0 ||
+                           IsMultiplayerNet != 0) {
+                    parse_num(0, static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_)));
+                    NetMsgPrimary.pop(flush_cache == 0 ? "ENDOFTURN1" : "ENDOFTURN",
+                                     0x1388, 0, nullptr);
+                }
+            }
+            if (field_23BE8_ == 0) {
+                goto finish_turn;
+            }
+
+            ambience(0x1E);
+            cursor_active_ = 0;
+            field_23BF8_ = 1;
+            field_23BFC_ = 1;
+            if (survey_mode_ != 0) {
+                survey_mode_ = 0;
+                MapWinTable[0]->draw_map(1);
+            }
+            ::draw_cursor();
+            ConsoleInfoWin.change(0);
+            ConsoleStatusWin.redraw();
+            MapWinTable[0]->main_caption();
+            alpha_menu_.check(selected_vehicle_);
+            focus(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                  ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_],
+                  faction_id_);
+        }
+
+        turn_hints();
+        GameDataStateStorage.fields_.game_state_ &= ~4u;
+
+        if (selected_vehicle_ >= 0) {
+            GameDataStateStorage.fields_.game_state_ &= ~2u;
+            flush_cache |= static_cast<unsigned int>(veh_turn());
+        } else {
+            // 0x0074B504 is g_FX.effects_[57] (g_FX + 57 * 0x6C).
+            // Native reaches it only on the negative-selection wait branch,
+            // after turn_hints and the nonnegative-selection dispatch. Keep
+            // these calls virtual on the typed Effect/Wave receiver.
+            Effect &cpu_turn_complete = g_FX.effect(57);
+            if (!cpu_turn_complete.is_playing()) {
+                cpu_turn_complete.load();
+                cpu_turn_complete.set_reverb_mix(0.0f);
+                cpu_turn_complete.play();
+            }
+            ambience(0xCB);
+            field_23BE4_ = 1;
+            const int saved_vehicle_count = GameDataStateStorage.fields_.vehicle_current_count_;
+            while (ConsoleGlobal.cursor_active_ == 0 && field_23BE4_ != 0 &&
+                   field_23BE8_ != 0 && ExitTurnLoop == 0 &&
+                   end_of_game(0) == 0 &&
+                   saved_vehicle_count == GameDataStateStorage.fields_.vehicle_current_count_ &&
+                   (IsMultiplayerNet == 0 || (GameDataStateStorage.fields_.game_state_ & 0x800u) == 0)) {
+                wait_loop();
+                if (TutWinTourPending != 0) {
+                    TutWinTourPending = 0;
+                    TutorialWindow.tour();
+                }
+            }
+            field_23BE4_ = 0;
+        }
+
+        if (ExitTurnLoop != 0) {
+            return;
+        }
+        if ((GameDataStateStorage.fields_.game_state_ & 4u) != 0) {
+            flush_cache = 0;
+        }
+        if (field_23BF8_ != 0) {
+            ::draw_cursor();
+        }
+        if (field_23BE8_ == 0 || ExitTurnLoop != 0 ||
+            (IsMultiplayerNet != 0 && (GameDataStateStorage.fields_.game_state_ & 0x800u) != 0) ||
+            end_of_game(0) != 0) {
+            goto finish_turn;
+        }
+    }
+
+finish_turn:
+    ambience(0x1E);
+    flush_input();
+    field_23BE8_ = 0;
+    go_reset();
 }
 
 // ORIGINAL: 0x005147E0 ?set_cursor@Console@@QAEXHH@Z 0x005147E0-0x0051487D FILE BYTE_EXACT
@@ -2111,6 +3574,97 @@ void Console::move_cursor(int direction) {
     if (set_cursor(new_x, new_y) == 0) {
         console_map_win()->focus(new_x, new_y);
     }
+}
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00514990 ?quit_game@Console@@QAEXXZ 0x00514990-0x00514B2C BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00514990.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
+void Console::quit_game() {
+// RECOVERY_LITERAL: v1 0x0068A7E4 0x0068A7EF $SG64053 0x00514990
+    if (!X_pop((IsMultiplayerNet || IsMultiplayerPBEM) &&
+               bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 255) > 1
+                   ? ConsoleReallyWimpOut : "REALLYQUIT", nullptr)) return;
+    if (IsMultiplayerPBEM) {
+        // The original modifies only the human-faction byte of this word.
+        GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &=
+            static_cast<unsigned char>(~(1u << ConsoleGlobal.faction_id_));
+        save_game(0);
+    }
+    if ((GameDataStateStorage.fields_.game_rules_ & 0x400) && !IsMultiplayerPBEM) auto_save();
+    if (IsMultiplayerNet) {
+        NetDaemonNet.hang_up();
+        NetDaemonNet.reset();
+        IsMultiplayerNet = 0;
+    }
+    ExitTurnLoop = 1;
+// RECOVERY_LITERAL: v1 0x0068A7F0 0x0068A818 $SG64058 0x00514990
+    log_say("Quit***********************************", 0, 0, 0);
+}
+
+int __cdecl popv(char *caption, const char *label, int vehicle, int flags);
+void __cdecl action_gate(int vehicle_id, int base_id);
+
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00514B30 ?retire_game@Console@@QAEXXZ 0x00514B30-0x00514D2B BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original 00514B30; retained seed src/recovered/units/00514b30.cpp", "Native514B55..64 passes the low-byte greater-than-one boolean into bit_count. Native514D10 writes closed-network==0 to93A948 GameRestartQueued,514D16 sets9B2068 ExitTurnLoop. Existing typed close-network helper reproduces lock clear/transport close; scenario, PBEM, ironman and replay branches remain distinct.", "recovery/tasks/console-scenario-owner-wave.json; native scope decisions preserve the original baseline"], "reason": "Recover the complete Console command in its genuine owner, retaining original spans and seed evidence. Typed state and lifecycle/network APIs replace seed address arithmetic; this source binding is not byte, reference, structure or runtime acceptance."}
+void Console::retire_game() { // 0x00514B30
+    // This function owns a separate static string for the distinct retirement pointer.
+// RECOVERY_OBJECT: v1 0x0068A818 _?retire_wimpout@?1??retire_game@Console@@QAEXXZ@4QBDB
+    static const char retire_wimpout[] = "REALLYWIMPOUT";
+    int closed_network = 0;
+    if (GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) {
+        auto_save();
+    }
+
+    const bool multiple_players =
+        (IsMultiplayerNet || IsMultiplayerPBEM) &&
+        bit_count(static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) > 1) != 0;
+    const char *const prompt = multiple_players ? retire_wimpout :
+// RECOVERY_LITERAL: v1 0x0068A828 0x0068A836 $SG64142 0x00514B30
+// RECOVERY_LITERAL: v1 0x0068A838 0x0068A845 $SG64143 0x00514B30
+        (GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) ? "REALLYRETIRE2" : "REALLYRETIRE";
+    if (!X_pop(prompt, nullptr)) {
+        return;
+    }
+
+    if (IsMultiplayerPBEM) {
+        GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &=
+            static_cast<unsigned char>(~(1u << ConsoleGlobal.faction_id_));
+        save_game(0);
+    }
+
+    if (IsMultiplayerNet) {
+        NetDaemonNet.hang_up();
+        NetDaemonNet.reset();
+        IsMultiplayerNet = 0;
+        closed_network = 1;
+    }
+
+    if (GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) {
+        kill_auto_save();
+    }
+    report_score(1);
+    if ((GameDataStateStorage.fields_.game_state_ & STATE_IS_SCENARIO) == 0) {
+        quayle(ConsoleGlobal.faction_id_);
+        hall_of_fame(1);
+    }
+    if (!closed_network) {
+        show_replay();
+    }
+    GameRestartQueued = !closed_network;
+    ExitTurnLoop = 1;
+// RECOVERY_LITERAL: v1 0x0068A848 0x0068A86C $SG64151 0x00514B30
+    log_say("Retire*****************************", 0, 0, 0);
+}
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00514D30 ?new_game@Console@@QAEXXZ 0x00514D30-0x00514EE2 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00514d30.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
+void Console::new_game() {
+    if (IsMultiplayerNet) return;
+    quit_game();
+    if (ExitTurnLoop) GameRestartQueued = 1;
 }
 
 // WORKAROUND(inline): the image keeps one unreferenced label per preference
@@ -2991,6 +4545,92 @@ void Console::toggle_patrol() {
     }
 }
 
+// WORKAROUND(inline): dead /Ob2 budget probe for show_movies (folds away,
+// spends budget). With the loop's `break` exit the image's EH map (20
+// states) matches, but its return-site Popup teardown calls ~StringList
+// (0x004066C0) out of line where this unit's budget still expands it; two
+// chained ifs here starve that expansion exactly. The original spent this
+// budget on something not yet identified.
+static int show_movies_budget_probe(int x) {
+    if (x == 0) x = 1;
+    if (x == 1) x = 4;
+    return x;
+}
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00515F70 ?show_movies@Console@@QAEXXZ 0x00515F70-0x00516291;0x0065D3F3-0x0065D4D0 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Native515FA5..516035 rebuilds64 FacilitySPStart rows through StringTable and owned Dialogs, sorts the virtual-base StringList and dispatches403BA0 until exec returns negative; Popup lifetime is compiler-managed.", "src/recovered/units/00515f70.cpp", "Root-only console-movie-wrapper-20261001 central dependency closure; immutable task baseline preserved."], "reason": "Recover complete source-owned movie selection and project-index wrapper with proper Popup lifetime, typed facilities, actual text parsing and existing movie playback. Retain exact seed identities and all original spans; no match or acceptance claim is granted by this binding."}
+void Console::show_movies() { // 0x00515F70
+    show_movies_budget_probe(2);  // WORKAROUND(inline): see show_movies_budget_probe
+    Popup popup;
+    for (;;) {
+        popup.start(PopupStartCaption, "SHOWMOVIES", -1, nullptr, 0x42,
+                    nullptr);
+
+        for (int project_id = 0; project_id < MaxSecretProjectNum;
+             ++project_id) {
+            ::clear();
+            const int facility_id = FacilitySPStart + project_id;
+            char *name = Facility[facility_id].name;
+            strcat(StringTemp, StringTable.get(name));
+            popup.dialogs().item(StringTemp, project_id);
+        }
+        popup.dialogs().item_list_.sort(0);
+
+        const int selected_project = popup.exec(0, nullptr);
+        if (selected_project < 0) {
+            break;
+        }
+        amovie_project(selected_project);
+    }
+}
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x005162A0 ?name_landmark@Console@@QAEXHH@Z 0x005162A0-0x0051648F BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005162a0.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
+void Console::name_landmark(int x, int y) {
+    if (!on_map(x, y)) {
+        x = ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
+        y = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
+    }
+    const int landmark = find_landmark(x, y, 1);
+    if (!(GameDataStateStorage.fields_.game_state_ & 0x80)) {
+        const int valid = landmark >= 0
+            ? valid_landmark(MapLandmark[landmark].x, MapLandmark[landmark].y,
+                             ConsoleGlobal.faction_id_)
+            : valid_landmark(x, y, ConsoleGlobal.faction_id_);
+        if (!valid) {
+            NetMsgPrimary.pop("LANDMARKNO", 5000, 0, nullptr);
+            return;
+        }
+    }
+    if (landmark >= 0) {
+        if (X_pop_ask("LANDMARK", 31, MapLandmark[landmark].name, nullptr, 0)) return;
+        purge_spaces(ParseStrBuffer[0].str);
+        if (!strlen(ParseStrBuffer[0].str)) return;
+        if (IsMultiplayerNet) {
+            message_landmark(0x2e03, 0, ParseStrBuffer[0].str,
+                MapLandmark[landmark].x, MapLandmark[landmark].y, 0, 0);
+            return;
+        }
+        strcpy(MapLandmark[landmark].name, ParseStrBuffer[0].str);
+        ::draw_map(1);
+    } else {
+        if (X_pop_ask("LANDMARK", 31, LandmarkDefaultName, nullptr, 0)) return;
+        purge_spaces(ParseStrBuffer[0].str);
+        if (!strlen(ParseStrBuffer[0].str)) return;
+        if (IsMultiplayerNet) {
+            message_landmark(0x2e01, 0, ParseStrBuffer[0].str, x, y, 0, 0);
+            return;
+        }
+        if (new_landmark(x, y, ParseStrBuffer[0].str) < 0) {
+            parse_num(0, 64);
+            NetMsgPrimary.pop("LANDMARKTOOMANY", 5000, 0, nullptr);
+        }
+        ::draw_map(1);
+    }
+}
+
 // The editor's landmark removal command. The original uses the current
 // cursor-history coordinate when either supplied coordinate is outside the
 // map, then asks for confirmation before deleting the named landmark.
@@ -3054,6 +4694,68 @@ void Console::zoom_to_upkeep_base() {
 
     if (best_base >= 0) {
         TutWinBaseWindow.zoom(best_base, 0);
+    }
+}
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x005166D0 0x005168B8 0x005168D0 0x005166F2
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x005166D0 0x005168D0 0x00516921 0x005166EC
+// ORIGINAL: 0x005166D0 ?cursor_key@Console@@QAEXHHH@Z 0x005166D0-0x005168B7 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005166d0.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
+void Console::cursor_key(int, int character, int) {
+    switch (character) {
+    case ' ': {
+        const int i = ConsoleGlobal.cursor_history_index_;
+        const int base = base_at(ConsoleGlobal.cursor_history_x_[i],
+                                 ConsoleGlobal.cursor_history_y_[i]);
+        if (base >= 0 && ((GameDataStateStorage.fields_.game_state_ & 0x80) ||
+            Bases[base].faction_id_current == ConsoleGlobal.faction_id_ ||
+            ((Bases[base].visibility & (1u << ConsoleGlobal.faction_id_)) &&
+             spying(Bases[base].faction_id_current)))) {
+            TutWinBaseWindow.zoom(base, 0);
+            return;
+        }
+    }
+    case 'a':
+        if (!NetDaemonNet.field_1BB4_) {
+            const int i = ConsoleGlobal.cursor_history_index_;
+            activate(ConsoleGlobal.cursor_history_x_[i],
+                     ConsoleGlobal.cursor_history_y_[i], 1);
+            return;
+        }
+        break;
+    case 'b': {
+        const int i = ConsoleGlobal.cursor_history_index_;
+        const int base = base_find(ConsoleGlobal.cursor_history_x_[i],
+            ConsoleGlobal.cursor_history_y_[i], ConsoleGlobal.faction_id_);
+        if (base >= 0) TutWinBaseWindow.zoom(base, 0);
+        break;
+    }
+    case 'g':
+        if (!ConsoleControlTurnActive && !NetDaemonNet.field_1BB4_) {
+            const int i = ConsoleGlobal.cursor_history_index_;
+            const int base = base_at(ConsoleGlobal.cursor_history_x_[i],
+                                     ConsoleGlobal.cursor_history_y_[i]);
+            if (base >= 0) go_to(base, -1, 0);
+        }
+        break;
+    case 'p': {
+        const unsigned int shown = MapWinTable[0]->field_1DD70_ & 0x400000;
+        // The walk re-reads the window through its slot after each store; an
+        // int index, which VC6 strength-reduces to the slot pointer with the
+        // image's signed bound compare (jl).
+        for (int i = 0; i < MapWinTableSlots; i++) {
+            if (!MapWinTable[i] || (i != 0 && !MapWinTable[i]->view_active_)) continue;
+            if (!shown) {
+                MapWinTable[i]->field_1DD70_ |= 0x400000;
+                MapWinTable[i]->draw_base_dest(1);
+            } else {
+                MapWinTable[i]->field_1DD70_ &= ~0x400000u;
+                MapWinTable[i]->draw_map(1);
+            }
+        }
+        break;
+    }
     }
 }
 
@@ -3191,6 +4893,72 @@ void Console::base_me() {
     }
 }
 
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x005169F0 ?end_my_turn@Console@@QAEXXZ 0x005169F0-0x00516C4D BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005169f0.cpp: retained complete original identity/spans and seed evidence", "recovery/tasks/console-scenario-owner-wave.json; native scope expansions through sequence27", "Source owner interpretation preserves mapped original accesses, lifetime calls and branch roles; source-bound members and globals replace the seed offsets/address aliases. Historical seeds and claims remain independent restoration obligations."], "reason": "Recover end-turn into the genuine Console owner using existing pane/timer/lifecycle members, shared faction waiting state and the independently read original popup captions. Preserve remote-turn and ready-vehicle decisions, including separate timer clear rather than InfoWin::reset. No matching or game-acceptance claim."}
+void Console::end_my_turn() {
+    TutWinBaseWindow.cancel_zoom_wait();
+    ConsoleInfoWin.clear_pending_timer();
+    TutorialWindow.reset();
+    ConsoleStatusWin.reset();
+    g_FX.play(0xF);
+
+    if (ConsoleControlTurnActive != 0) return;
+    if (edit_lock() != 0) {
+        NetMsgPrimary.pop("PROTECTED", 0x1388, 0, nullptr);
+        return;
+    }
+
+    const uint8_t game_flags = static_cast<uint8_t>(GameDataStateStorage.fields_.game_state_);
+    if (IsMultiplayerNet != 0) {
+        if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) != 0 &&
+            GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) {
+            GenderDefault = Players[GameDataStateStorage.fields_.net_turn_faction_].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(0, Players[GameDataStateStorage.fields_.net_turn_faction_].title_leader, -1, -1);
+            GenderDefault = Players[GameDataStateStorage.fields_.net_turn_faction_].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(1, Players[GameDataStateStorage.fields_.net_turn_faction_].name_leader, -1, -1);
+            GenderDefault = Players[GameDataStateStorage.fields_.net_turn_faction_].noun_gender;
+            PluralityDefault = Players[GameDataStateStorage.fields_.net_turn_faction_].is_noun_plural;
+            parse_says(2, Players[GameDataStateStorage.fields_.net_turn_faction_].noun_faction, -1, -1);
+            parse_says(3, NetDaemonNet.get_player_name(NetDaemonNet.who_2_pid(
+                              GameDataStateStorage.fields_.net_turn_faction_)), -1, -1);
+            NetMsgPrimary.pop("SIMULWHOSE", 0x1388, 0, nullptr);
+            return;
+        }
+        if ((game_flags & 2) != 0 && (GameDataStateStorage.fields_.net_turn_flags_ & 0x10) == 0) {
+            const int faction_bit = 1 << ConsoleGlobal.faction_id_;
+            if ((NetDaemonNet.factions_waiting_mask() & faction_bit) != 0 &&
+                NetDaemonNet.factions_waiting_mask() != 0xFF) {
+                NetMsgPrimary.pop("ATTEMPTTOCANCEL", 0x1388, 0, nullptr);
+                message_data(0x2302, 0, GameDataStateStorage.fields_.turn_current_num_, 0, 0, 0);
+                return;
+            }
+        }
+    }
+
+    if (field_23BE8_ == 0) return;
+    if ((game_flags & 2) == 0) {
+        set_move(1);
+        if (ConsoleGlobal.cursor_active_ != 0) {
+            if (selected_vehicle_ >= 0 &&
+                (veh_ready(selected_vehicle_) != 0 ||
+                 ConsoleGlobal.ready_search(selected_vehicle_) >= 0) &&
+                X_pop("REALLYOVER", nullptr) == 0) {
+                return;
+            }
+        }
+    }
+
+    GameDataStateStorage.fields_.game_state_ |= 2u;
+    const int current_selection = selected_vehicle_;
+    field_23BE4_ = 0;
+    field_23BE8_ = 0;
+    focus_vehicle_ = current_selection;
+}
+
 // ORIGINAL: 0x00516C50 ?show_scen_objectives@Console@@QAEXXZ 0x00516C50-0x00516D98 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["The 0x00516C50 seed parses ObjectiveReqVictory, ObjectivesSuddenDeathVictory and EndingMissionYear before processing faction-specific names.", "src/faction.h defines Players as 0x59C Player records: the seed's 0x00946A50, 0x00946A9C, 0x00946A84, 0x00946D4C, 0x00946D50 and 0x00946D34 references correspond to Player::is_leader_female, title_leader, name_leader, noun_gender, is_noun_plural and noun_faction.", "src/game.h owns GameRules and victory settings; general.h owns GenderDefault, PluralityDefault, parse_num, parse_says and say_year; strings.h owns StringTemp. The original popup keys at 0x0068AA0C and 0x0068AA18 are OBJECTIVES and SCENARIO, respectively.", "The seed's 0x005BF330 caption/label/callback call is represented by xpops.h's x_pop_caption_label, whose implementation forwards with the defaults (-1, no override, flags 0) to the typed full popup."], "reason": "Render scenario objectives through the existing faction, game-state, parser, scratch-buffer and popup owners, preserving the pinned OBJECTIVES and SCENARIO key values."}
 void Console::show_scen_objectives() {
@@ -3302,2044 +5070,6 @@ void Console::governor_directives() { // 0x00516DA0
     diplo_unlock();
 }
 
-// ORIGINAL: 0x00517180 ?show_version@Console@@QAEXXZ 0x00517180-0x005171C1 FILE BYTE_EXACT
-// size      65 bytes
-// prototype void (__thiscall ?show_version@Console@@QAEXXZ)(Console* this)
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x0048C0A0 0x00625EC0
-// PRESERVED UNIT - measured BYTE_EXACT.
-//
-// Homed 2026-09-04. Its historical measurement was NO_COMPILE, not MISMATCH.
-// The original writable .data pointer slots at 0x00691870/74 and their
-// distinct text windows are now represented by shared source-owned objects.
-// The caption slot at 0x00691B0C is ScriptPopupFile; the two popp strings are
-// the existing source-owned arrays below.
-
-
-void Console::show_version() {
-    parse_says(0, ConsoleVersionRelease, -1, -1);
-    parse_says(1, ConsoleVersionBuildDate, -1, -1);
-    popp(ScriptPopupFile, ConsoleStrVersionControlX, 0, ConsoleStrAcLogoSm,
-         (NullCallback)0);
-}
-
-
-/*
-Purpose: Load a saved game: leave the base window, refuse outside an active
-         network/PBEM session, then rebuild the desktop or reload the running
-         game and redraw the world.
-// ORIGINAL: 0x0051BBA0 ?load_proc@Console@@QAEXHH@Z 0x0051BBA0-0x0051BC62 FILE BYTE_EXACT
-// size      194 bytes
-// prototype void (__thiscall ?load_proc@Console@@QAEXHH@Z)(Console* this, int, int)
-// callers   2   call targets   9
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x0041A4C0 0x00460DD0 0x0046B190 0x0058EE60 0x0058F450 0x005AAAB0 0x005D5A70 0x005FCBB0 0x00644DFF
-*/
-void Console::load_proc(int save_slot, int faction_id) {
-    TutWinBaseWindow.exit();
-    if (IsMultiplayerNet != 0 && (GameDataStateStorage.fields_.game_state_ & 0x1000) == 0) {
-        return;
-    }
-    if (IsMultiplayerPBEM != 0 && (GameDataStateStorage.fields_.game_state_ & 0x1000) == 0) {
-        return;
-    }
-    if (load_game(save_slot, faction_id) != 0) {
-        return;
-    }
-    if (GameSessionActive != 0) {
-        if (game_reload(1, 0) != 0) {
-            exit(3);
-        }
-    } else {
-        desktop_init(0);
-    }
-    if (save_slot != 0) {
-        GameDataStateStorage.fields_.game_state_ |= 0xE0;
-        do_all_draws();
-        ::draw_map(1);
-        WorldClimateWorldWin.field_239BC_ |= 4;
-        WorldClimateWorldWin.GraphicWin::redraw();
-    }
-    alpha_menu_.check(selected_vehicle_);
-}
-
-
-
-/*
-// ORIGINAL: 0x0051D740 ?menu_update@Console@@QAEXXZ 0x0051D740-0x0051D753 BYTE_EXACT
-// size      19 bytes
-// prototype void (__thiscall ?menu_update@Console@@QAEXXZ)(Console* this)
-// callers   0   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00460DD0
-Status: Complete
-*/
-void Console::menu_update() {
-    // alpha_menu_ IS the object the image calls 0x00460DD0 on - the member
-    // form replaces the MainMenu pun this body used to carry, and measured
-    // BYTE_EXACT unchanged (2026-09-04).
-    alpha_menu_.check(selected_vehicle_);
-}
-
-
-/*
-Purpose: Record that the console was closed from the system menu, by raising
-         the flag the turn loop watches.
-// ORIGINAL: 0x0051D7C0 ?on_sys_close@Console@@QAEXXZ 0x0051D7C0-0x0051D7CB BYTE_EXACT
-// symbol    ?on_sys_close@Console@@UAEXXZ
-// size      11 bytes
-// prototype void (__thiscall ?on_sys_close@Console@@QAEXXZ)(Console* this)
-// callers   0   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void Console::on_sys_close() {
-    ExitTurnLoop = 1;
-}
-
-// Compiler-generated Win slot17 receiver adjustment for MapWin mouse feedback.
-// The original catalogue name remains on the mapping below.
-/*
-Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
-         MapWin::on_mouse_move expects, then forward unchanged.
-// ORIGINAL: 0x0051DE70 ?on_mouse_move@thunk4_MapWin@@QAEXHH@Z 0x0051DE70-0x0051DE7E FILE BYTE_EXACT
-// symbol    ?on_mouse_move@MapWin@@$4PPPPPPPM@CDCI@AEXHH@Z
-// size      14 bytes
-// prototype void (__thiscall ?on_mouse_move@thunk4_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-
-// Compiler-generated Win slot13 adjustor for the genuine MapWin resize
-// override. The virtual-base layout owns the receiver adjustment.
-/*
-Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
-         MapWin::on_resize expects, then forward unchanged.
-// ORIGINAL: 0x0051DE50 ?on_resize@thunk4_MapWin@@QAEXHH@Z 0x0051DE50-0x0051DE5E FILE BYTE_EXACT
-// symbol    ?on_resize@MapWin@@$4PPPPPPPM@CDCI@AEXHH@Z
-// size      14 bytes
-// prototype void (__thiscall ?on_resize@thunk4_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-
-// Compiler-generated Win-branch capture adjustor from the genuine
-// MapWin override and virtual GraphicWin base; no handwritten thunk body.
-/*
-Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
-         MapWin::on_lose_mouse_capture expects, then forward unchanged.
-// ORIGINAL: 0x0051DE30 ?on_lose_mouse_capture@thunk4_MapWin@@QAEXXZ 0x0051DE30-0x0051DE3E FILE BYTE_EXACT
-// symbol    ?on_lose_mouse_capture@MapWin@@$4PPPPPPPM@CDCI@AEXXZ
-// size      14 bytes
-// prototype void (__thiscall ?on_lose_mouse_capture@thunk4_MapWin@@QAEXXZ)(MapWin* this)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-
-/*
-Purpose: Tear down the game console - its own Buffer/Time/Menu/Sprite
-         members, its own extra embedded GraphicWin, then the MapWin
-         fields it holds directly (no separate call into MapWin's own
-         destructor).
-// ORIGINAL: 0x0051D9F0 ??1Console@@QAE@XZ 0x0051D9F0-0x0051DC10;0x0065D0E0-0x0065D220 BYTE_EXACT
-// symbol    ??1Console@@UAE@XZ
-// body      src/console.h
-//
-// HOMED INTO THE CLASS 2026-08-30: the hand-spelled body this spot carried
-// measured MISMATCH (7/123) because everything but `close()` is
-// compiler-owned - the EH frame, the vtable/vtordisp re-stores on the
-// vbase, the member teardown of the GraphicWin/Buffer/Time/Menu/Sprite
-// members console.h now declares, and MapWin's own base teardown inlined
-// (clear(0) and MapWin's carved members). Historically, the in-class
-// `~Console() { close(); }` was interpreted as the original image's
-// ??_DConsole@@QAEXXZ base-object phase (the catalogue's ??1 name sits on the
-// base flavor; the original complete ??1Console phase is 0x0051DDF0,
-// `lea esi,[ecx-0x23D94]` adjust, a call to this, then
-// ??1GraphicWin on the vbase, then the conditional operator delete, with
-// the deleting wrapper ??_GConsole at 0x0051DDE0 before it). The funclet
-// span 0x0065D0E0-0x0065D220 is that historical EH phase's own. The current
-// natural owner-TU compiler symbol is ??1Console@@UAE@XZ, as recorded by the
-// unchanged source symbol override; this comment does not claim a current
-// ??_DConsole emission.
-//
-// TRIED (2026-08-30, after the carve): 30/123, 151 instructions against the
-//        image's 123, and every teardown element is present in the right
-//        order - the whole frame (EH prologue, all three vtable/vtordisp
-//        re-stores) agrees through instruction 22. The +28 are VC6's /O2
-//        member-teardown discipline, which the image does not carry: our
-//        compile nulls each Buffer member's vptr (`mov [edi],0`) before
-//        every ??1Buffer call - five of them, own and inlined-MapWin
-//        alike - spills the member pointer through [ebp-0x10]/[ebp-0x14],
-//        and renumbers the EH states (+3 at close: 9 where the image has
-//        6). The image calls the same five ??1Buffer functions bare.
-//        Established along the way: ~Buffer's virtuality is NOT the
-//        trigger (the store appears with it spelled either way - a
-//        non-virtual spelling was tried and reverted; the Buffer-side
-//        vftable 0x0066FC48 opens with a deleting-dtor thunk, which only
-//        a virtual destructor produces), and the /Od build tree emits no
-//        stores - this is /O2-specific. MapWin's own ??1DMapWin, carved
-//        identically, went BYTE_EXACT 73/73 in the same pass, so the
-//        model and the method are right; whatever makes VC6 skip the
-//        vptr-null for Console's Buffer members specifically is still
-//        hiding.
-// size      864 bytes
-// prototype void (__thiscall ??1Console@@QAE@XZ)(Console* this)
-// callers   2   call targets   10
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x00462870 0x0051D7D0 0x005D4DD0 0x005D7410 0x005E3820 0x005FAD00 0x00616200 0x00618EE0 0x006252B0 0x006456E4
-Return Value: n/a
-
-`this` IS NOT Console's own front, matching `guarded_teardowns.cpp`'s
-already-matching `->Console::~Console()` on `TeardownObject00939444` -
-`g_CONSOLE`'s front plus 0x23D94, the offset of the embedded virtual-base
-GraphicWin, the same convention PlanWin's and MapWin's destructors use (see
-the note in `planwin.cpp`).
-*/
-
-/*
-Purpose: Reset the console - clear its scalar state and history slot zero,
-         then close the Buffer, Time and GraphicWin
-         subobjects and clear the map.
-The historical forwarding notes below predate the separate timer lifecycle TU;
-the timer call now uses the existing Time member directly.
-// ORIGINAL: 0x0051D7D0 ?close@Console@@QAEXXZ 0x0051D7D0-0x0051D88E BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Console owns buffer_ at2247C, time_ at22A04 and alpha_menu_ at22A2C; AlphaMenu derives nonvirtually from Menu/GraphicWin.", "Pinned51D7D0 tail selects receiver+2247C for5D7470, receiver+22A04 for616780, receiver+22A2C for5D4E40, then clear(0); this closes members without substituting destruction."], "reason": "Select the constructed Console Buffer and AlphaMenu GraphicWin base through their real members; preserve scalar resets, repeated history-slot-zero writes and Buffer/Time/GraphicWin/clear ordering."}
-// LEVER: PROMOTED out of src/unrecovered/0051d7d0.cpp, whose claim proved the ARTIFACT reproduced while the program held a pending_bodies forwarder. `void close()` was not declared on Console at all - that, not the body, is what kept it in an artifact.
-// LEVER (2026-09-03): time_close_call, not `->close()` on the Time at
-//        0x22a04. The image CALLS 0x00616780 here (0x0051D873) where
-//        time.h's in-class `MEASURED close` otherwise expands at this site
-//        too - 68 compiled instructions against the image's 40, 22/40
-//        agreeing, the whole extra block being Time's own teardown written
-//        out. Buffer::close and GraphicWin::close needed nothing: both are
-//        declared out-of-line in their headers, so both were already calls.
-// symbol    ?close@Console@@QAEXXZ
-// size      190 bytes
-// kind      game
-Return Value: n/a
-Status: Complete
-*/
-void Console::close() {
-    field_23BC8_ = 0xffffffff;
-    cursor_active_ = 0;
-    field_23BE4_ = 0;
-    field_23BE8_ = 0;
-    field_23BF0_ = 0;
-    field_23BF4_ = 0;
-    survey_mode_ = 0;
-    blink2_counter_ = 0;
-    field_23BFC_ = 0;
-    field_23BF8_ = 0;
-    cursor_history_index_ = 0;
-    // 0x0051D821..0x0051D83C reloads this same index on every iteration.
-    // Slots 1..31 and the history head survive close().
-    int count = 0x20;
-    do {
-        count -= 1;
-        int32_t idx1 = cursor_history_index_;
-        cursor_history_x_[idx1] = 0;
-        int32_t idx2 = cursor_history_index_;
-        cursor_history_y_[idx2] = 0;
-    } while (count != 0);
-    field_23D10_ = 0;
-    field_23D18_ = 0;
-    field_23D88_ = 0;
-    field_23D80_ = 0;
-    field_23D8C_ = 0;
-    field_23D84_ = 0;
-    buffer_.close();
-    time_.close();
-    static_cast<GraphicWin &>(alpha_menu_).close();
-    clear(0);
-}
-
-
-
-
-
-
-
-
-
-
-// The splitter distances use a textual abs: its operand is expanded twice.
-#define SPLIT_ABS(v) ((v) >= 0 ? (v) : -(v))
-
-// True while any of the four splitter slots is armed (-1) for a drag. The
-// image keeps each caller's `return 1` epilogue separate, which only an
-// inline boundary around this test reproduces.
-static inline int pair_armed(int a, int b) {
-    return a == -1 || b == -1;
-}
-
-static inline int splitter_armed(int a, int b, int c, int d) {
-    return a == -1 || b == -1 || c == -1 || d == -1;
-}
-
-// ORIGINAL: 0x0050F680 ?on_nc_hittest@Console@@QAEXHH@Z 0x0050F680-0x0050F951 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["The original 0x0050F680..0x0050F951 disassembly exits return EAX values 1 or 0; its retired transcription is preserved in Git history."], "reason": "Translate the Console non-client hit-test into its existing virtual method; the disassembly exits return EAX values 1 or 0, correcting the seed-only void prototype."}
-// symbol    ?on_nc_hittest@Console@@UAEHHH@Z
-int Console::on_nc_hittest(int x_coord, int y_coord) {
-    // EAX=1 while a split line is armed, else 1 only over a caption box or a
-    // splitter handle.
-    // WORKAROUND(type): the four slots are read through a pointer, not by
-    // name. Naming field_23D88_ here makes VC6 reorder the later
-    // `... + field_23D88_ + caption_height_` sums (0x0050F7E9, 0x0050F827:
-    // caption before the slot). An int[4] member does not reproduce the
-    // image either; the original form of the arming test is unknown.
-    const int *const slots = &field_23D80_;
-    if (splitter_armed(slots[0], slots[1], slots[2], slots[3])) {
-        return 1;
-    }
-
-    RECT caption_box = {0, 0xE, 0x26, 0x1F};
-    caption_box.left = client_width() - 0x5b;
-    caption_box.right = caption_box.left + 0x26;
-    if (in_box(x_coord, y_coord, &caption_box)) {
-        return 1;
-    }
-    if (x_coord > client_width() - border_thickness_) {
-        if (y_coord >= track_height() - bottom_border() + caption_height_ &&
-            y_coord <= client_height() - bottom_border()) {
-            const int handle_height = sprite_b_.height();
-            if ((y_coord >= track_height() - bottom_border() - handle_height +
-                     field_23D88_ + caption_height_ &&
-                 y_coord <= track_height() - bottom_border() + field_23D88_ +
-                     caption_height_ + handle_height) ||
-                (y_coord >= track_height() - bottom_border() - handle_height +
-                     field_23D8C_ + caption_height_ &&
-                 y_coord <= track_height() - bottom_border() + field_23D8C_ +
-                     caption_height_ + handle_height)) {
-                return 1;
-            }
-        }
-    } else if (y_coord > client_height() - bottom_border() &&
-               x_coord >= border_thickness_ &&
-               x_coord <= client_width() - border_thickness_) {
-        const int handle_width = sprite_a_.width();
-        if ((x_coord >= field_23D80_ - handle_width + border_thickness_ &&
-             x_coord <= field_23D80_ + border_thickness_ + handle_width) ||
-            (x_coord >= field_23D84_ - handle_width + border_thickness_ &&
-             x_coord <= field_23D84_ + border_thickness_ + handle_width)) {
-            return 1;
-        }
-    }
-    return 0;
-}
-
-// ORIGINAL: 0x0050F960 ?on_post_redraw_nc_buffer@Console@@QAEXPAUBuffer@@H@Z 0x0050F960-0x0050FB08 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["The original 0x0050F960..0x0050FB08 draws two splitter handles per orientation; its retired transcription remains in Git history."], "reason": "Render the two Console non-client splitter handles with their owned Sprite members and the Window client/outer geometry; the archived scaffold confirms two handles per orientation and the image buffer dimensions."}
-// symbol    ?on_post_redraw_nc_buffer@Console@@UAEXPAVBuffer@@H@Z
-void Console::on_post_redraw_nc_buffer(Buffer *buffer, int which) {
-    if (buffer == nullptr) {
-        return;
-    }
-    // The image recomputes the border and track geometry for every handle.
-    if (which == 1) {
-        Sprite *const handle = &sprite_b_;
-        handle->draw(buffer, handle->transparent_index(),
-                     buffer->dib_.bmiHeader.biWidth - handle->width(),
-                     // stand-in: negated half-height first; the plain order loads
-                     // the virtual-base pointer into eax instead of ecx.
-                     -(sprite_b_.height() / 2) + track_height() + field_23D88_ -
-                         bottom_border(),
-                     1, 1);
-        handle->draw(buffer, handle->transparent_index(),
-                     buffer->dib_.bmiHeader.biWidth - handle->width(),
-                     track_height() - handle->height() / 2 + field_23D8C_ -
-                         bottom_border(),
-                     1, 1);
-    } else if (which == 2) {
-        Sprite *const handle = &sprite_a_;
-        handle->draw(buffer, handle->transparent_index(),
-                     field_23D80_ - sprite_a_.width() / 2 + border_thickness_,
-                     -(buffer->dib_.bmiHeader.biHeight + handle->height()), 1, 1);
-        handle->draw(buffer, handle->transparent_index(),
-                     field_23D84_ - handle->width() / 2 + border_thickness_,
-                     -(buffer->dib_.bmiHeader.biHeight + handle->height()), 1, 1);
-    }
-}
-
-/*
-Purpose: A non-client left press on the console frame: the minimize and
-         maximize caption boxes, then the right-edge splitter (choosing the
-         nearer of its two drag slots) and the bottom-edge splitter, each
-         claiming the shared input-focus pair when nothing owns it yet.
-
-// ORIGINAL: 0x0050FB10 ?on_nc_left_down@Console@@QAEXHH@Z 0x0050FB10-0x0050FE69 FILE
-// symbol    ?on_nc_left_down@Console@@UAEXHH@Z
-// size      857 bytes
-// prototype void (__thiscall ?on_nc_left_down@Console@@QAEXHH@Z)(Console* this, int, int)
-// callers   0   call targets   3
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x005EDE60 0x005EDEB0 0x005FA7E0
-// TRIED (seed): minimize/maximize hit-tests then two edge-distance blocks
-//         (right vs left/right splitter, sign-tested via a discarded add
-//         whose flags a later `js` reuses) reusing the same client_rect_/
-//         outer_rect_/caption_height_/border_thickness_ offsets confirmed on
-//         0x00510110. The seed's raw -0x23cXX reads are the runtime vbtable
-//         walk (the body is entered on the GraphicWin subobject, the virtual
-//         base at Console+0x23d94); the real virtual entry lets the compiler
-//         own that walk, and the four drag slots are the fields at
-//         Console+0x23d80..0x23d8c.
-Status: Coverage transcription - unclaimed body
-*/
-void Console::on_nc_left_down(int x_coord, int y_coord) {
-    RECT box;
-    box.left = 0;
-    box.top = 0xE;
-    box.right = 0x11;
-    box.bottom = 0x1F;
-
-    box.left = client_width() - 0x5b;
-    box.right = box.left + 0x11;
-    if (in_box(x_coord, y_coord, &box)) {
-        minimize();
-        return;
-    }
-
-    box.left += 0x15;
-    box.right += 0x15;
-    if (in_box(x_coord, y_coord, &box)) {
-        maximize();
-        return;
-    }
-
-    // The nearer slot wins; each distance expands its operand twice.
-    if (x_coord > client_width() - border_thickness_) {
-        if (SPLIT_ABS(y_coord - (track_height() - bottom_border() + caption_height_ +
-                                 field_23D88_)) <
-            SPLIT_ABS(y_coord - (track_height() - bottom_border() + caption_height_ +
-                                 field_23D8C_))) {
-            field_23D88_ = -1;
-        } else {
-            field_23D8C_ = -1;
-        }
-        if (WinPointerOwner4 == 0) {
-            take_pointer();
-        }
-    }
-
-    if (y_coord > client_height() - bottom_border()) {
-        if (SPLIT_ABS(x_coord - border_thickness_ - field_23D80_) <
-            SPLIT_ABS(x_coord - border_thickness_ - field_23D84_)) {
-            field_23D80_ = -1;
-        } else {
-            field_23D84_ = -1;
-        }
-        if (WinPointerOwner4 == 0) {
-            take_pointer();
-        }
-    }
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0050FE70 ?on_nc_left_up@Console@@QAEXHH@Z 0x0050FE70-0x0051010A BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0050fe70.cpp: retained complete original identity/spans and seed evidence", "recovery/tasks/console-scenario-owner-wave.json; native scope expansions through sequence27", "Source owner interpretation preserves mapped original accesses, lifetime calls and branch roles; source-bound members and globals replace the seed offsets/address aliases. Historical seeds and claims remain independent restoration obligations."], "reason": "Recover splitter release into the genuine Console owner using source Win capture owners, real Win inheritance, embedded Sprite geometry and named splitter members. Preserve signed sentinel ordering and the original update operations; no fixed executable calls or self-offset access."}
-// symbol    ?on_nc_left_up@Console@@UAEXHH@Z
-void Console::on_nc_left_up(int x, int y) {
-    release_pointer();
-
-    // Each clamp re-reads the geometry: the stores go through `target`.
-    if (field_23D80_ != -1 && field_23D84_ != -1) {
-        if (field_23D88_ == -1 || field_23D8C_ == -1) {
-            int *const target = field_23D88_ == -1 ? &field_23D88_ : &field_23D8C_;
-            *target = y - (track_height() - bottom_border() + caption_height_);
-            if (*target < sprite_b_.height() / 2) {
-                *target = sprite_b_.height() / 2;
-            }
-            if (*target > client_height() - caption_height_ - bottom_border() -
-                              sprite_b_.height() / 2) {
-                *target = client_height() - caption_height_ - bottom_border() -
-                          sprite_b_.height() / 2;
-            }
-            update(0, ConsoleDragLineY, dib_.bmiHeader.biWidth, 1, nullptr);
-            update(ConsoleDragLineX, 0, 1, -static_cast<int>(dib_.bmiHeader.biHeight), nullptr);
-        }
-    } else {
-        int *const target = field_23D80_ == -1 ? &field_23D80_ : &field_23D84_;
-        *target = x - border_thickness_;
-        if (*target < sprite_a_.width() / 2) {
-            *target = sprite_a_.width() / 2;
-        }
-        if (*target > client_width() - border_thickness_ * 2 -
-                          sprite_a_.width() / 2) {
-            *target = client_width() - border_thickness_ * 2 -
-                      sprite_a_.width() / 2;
-        }
-        update(0, ConsoleDragLineY, dib_.bmiHeader.biWidth, 1, nullptr);
-        update(ConsoleDragLineX, 0, 1, -static_cast<int>(dib_.bmiHeader.biHeight), nullptr);
-    }
-
-    if (field_23D88_ > field_23D8C_) {
-        swap(&field_23D88_, &field_23D8C_);
-    }
-    if (field_23D80_ > field_23D84_) {
-        swap(&field_23D80_, &field_23D84_);
-    }
-}
-
-/*
-Purpose: A non-client mouse move while a splitter drag is armed: whichever of
-         the four drag slots holds a live position follows the cursor between
-         its half-track clamp bounds, the dragged edge repaints without the
-         line, and the crossing drag line is drawn at the new position.
-
-// ORIGINAL: 0x00510110 ?on_nc_mouse_move@Console@@QAEXHH@Z 0x00510110-0x005103FF FILE BYTE_EXACT
-// symbol    ?on_nc_mouse_move@Console@@UAEXHH@Z
-// size      751 bytes
-// prototype void (__thiscall ?on_nc_mouse_move@Console@@QAEXHH@Z)(Console* this, int, int)
-// callers   0   call targets   4
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x005D55D0 0x005F2AC0 0x005F4C30 0x005F4CA0
-// TRIED (seed): two near-duplicate splitter-drag blocks (vertical/horizontal),
-//         each a 3-way slot-select then clamp-to-half then
-//         redraw_nc_buffer/update_nc_buffer, sharing one last-value pair
-//         threaded into a final draw section. The five-argument
-//         GraphicWin::update (0x005D55D0, BYTE_EXACT in the retained unit) is
-//         not declared on the class, so the final section's two invalidation
-//         calls go through the original's address.
-Status: Coverage transcription - unclaimed body
-*/
-void Console::on_nc_mouse_move(int x_coord, int y_coord) {
-    int line_x;
-    int line_y;
-    int *target;
-
-    // The clamps match on_nc_left_up; the dragged slot is redrawn without
-    // its line, then the crossing drag line moves to the new position.
-    if (pair_armed(field_23D80_, field_23D84_)) {
-        target = field_23D80_ == -1 ? &field_23D80_ : &field_23D84_;
-        *target = x_coord - border_thickness_;
-        if (*target < sprite_a_.width() / 2) {
-            *target = sprite_a_.width() / 2;
-        }
-        if (*target > client_width() - border_thickness_ * 2 -
-                          sprite_a_.width() / 2) {
-            *target = client_width() - border_thickness_ * 2 -
-                      sprite_a_.width() / 2;
-        }
-        line_x = *target;
-        line_y = field_23D88_;
-        redraw_nc_buffer(2);
-        *target = -1;
-        update_nc_buffer(2);
-    } else {
-        // Both coordinates take x here, as in the image.
-        line_x = x_coord;
-        // WORKAROUND(volatile): the image reloads x_coord from its stack slot
-        // for line_y (0x005101EA) where every plain spelling copies edi.
-        line_y = *(volatile int *)&x_coord;
-    }
-
-    if (pair_armed(field_23D88_, field_23D8C_)) {
-        target = field_23D88_ == -1 ? &field_23D88_ : &field_23D8C_;
-        *target = y_coord - (track_height() - bottom_border() + caption_height_);
-        if (*target < sprite_b_.height() / 2) {
-            *target = sprite_b_.height() / 2;
-        }
-        if (*target > client_height() - caption_height_ - bottom_border() -
-                          sprite_b_.height() / 2) {
-            *target = client_height() - caption_height_ - bottom_border() -
-                      sprite_b_.height() / 2;
-        }
-        line_x = field_23D80_;
-        line_y = *target;
-        redraw_nc_buffer(1);
-        *target = -1;
-        update_nc_buffer(1);
-    }
-
-    if (splitter_armed(field_23D80_, field_23D84_, field_23D88_, field_23D8C_)) {
-        GraphicWin::update(0, ConsoleDragLineY,
-                           static_cast<int>(dib_.bmiHeader.biWidth), 1, nullptr);
-        GraphicWin::update(ConsoleDragLineX, 0, 1,
-                           -static_cast<int>(dib_.bmiHeader.biHeight), nullptr);
-        window_line_raw(static_cast<int>(dib_.bmiHeader.biWidth), line_y,
-                        0, line_y, 0, 1, 0);
-        window_line_raw(line_x, -static_cast<int>(dib_.bmiHeader.biHeight),
-                        line_x, 0, 0, 1, 0);
-        ConsoleDragLineX = line_x;
-        ConsoleDragLineY = line_y;
-    }
-}
-
-extern int IfaceIdToSlotStorage[30];
-extern int ActiveIfaceIdStorage;
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00510F50 ?ready@Console@@QAEXXZ 0x00510F50-0x00511471 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00510f50.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
-void Console::ready() {
-    field_23BF8_ = 0;
-    ::draw_cursor();
-    selected_vehicle_ = ready_search(field_23D18_ ? -1 : selected_vehicle_);
-    field_23D18_ = 0;
-    if (selected_vehicle_ < 0 || !ConsoleGlobal.cursor_active_) return;
-    if (!Vehs[selected_vehicle_].order || Vehs[selected_vehicle_].order >= 24) {
-        const int y = Vehs[selected_vehicle_].y;
-        const int x = Vehs[selected_vehicle_].x;
-        field_23BF8_ = 0;
-        if (survey_mode_) {
-            survey_mode_ = 0;
-            MapWinTable[0]->draw_map(1);
-        }
-        MapWinTable[0]->draw_cursor();
-        cursor_next(x, y);
-        ConsoleInfoWin.change(0);
-        ConsoleStatusWin.redraw();
-        MapWinTable[0]->main_caption();
-        if (!(GameDataStateStorage.fields_.game_preferences_ & 0x80000) ||
-            (!Vehs[selected_vehicle_].order && !(Vehs[selected_vehicle_].state & 0x200) &&
-             (Vehs[selected_vehicle_].state & 0x1000200) != 0x1000200)) {
-            if (!focus(Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y,
-                       Vehs[selected_vehicle_].faction_id)) {
-                if (!tile_in_view(Vehs[selected_vehicle_].x,
-                                  Vehs[selected_vehicle_].y, 3)) {
-                    set_center(Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y, 1);
-                }
-            }
-        }
-        alpha_menu_.check(selected_vehicle_);
-        flush_input();
-        Vehs[selected_vehicle_].unk_6 = 0;
-    }
-    const int base = base_at(Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y);
-    if (!Vehs[selected_vehicle_].order && !(Vehs[selected_vehicle_].state & 0x200) &&
-        (Vehs[selected_vehicle_].state & 0x1000200) != 0x1000200 &&
-        !(Vehs[selected_vehicle_].state & 0x4000) && base >= 0) {
-        const int16_t destination = Bases[base].auto_forward_slots[
-            Chassis[VehPrototypes[Vehs[selected_vehicle_].proto_id].chassis_id].triad];
-        if (destination >= 0 && destination != base) {
-            Vehs[selected_vehicle_].order = 24;
-            Vehs[selected_vehicle_].waypoint_x[0] = Bases[destination].x;
-            Vehs[selected_vehicle_].waypoint_y[0] = Bases[destination].y;
-        }
-    }
-    if (Vehs[selected_vehicle_].faction_id == ConsoleGlobal.faction_id_ &&
-        (Vehs[selected_vehicle_].flags & 0x1000) && !Vehs[selected_vehicle_].order &&
-        !(Vehs[selected_vehicle_].state & 0x200)) {
-        Vehs[selected_vehicle_].flags &= ~0x1000;
-        const int prototype = Vehs[selected_vehicle_].proto_id;
-        switch (Chassis[VehPrototypes[prototype].chassis_id].triad) {
-        case 0:
-            if (VehPrototypes[prototype].chassis_id == 0 && Weapon[VehPrototypes[prototype].weapon_id].offense_rating != 0) {
-                g_FX.play(0x40, Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y);
-            } else if (Weapon[VehPrototypes[prototype].weapon_id].offense_rating != 0) {
-                g_FX.play(0x41, Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y);
-            } else {
-                g_FX.play(0x42, Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y);
-            }
-            break;
-        case 1:
-            if (Weapon[VehPrototypes[prototype].weapon_id].offense_rating != 0) {
-                g_FX.play(0x45, Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y);
-            } else {
-                g_FX.play(0x46, Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y);
-            }
-            break;
-        case 2:
-            if (!Chassis[VehPrototypes[prototype].chassis_id].range) {
-                g_FX.play(0x43, Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y);
-            } else if (Chassis[VehPrototypes[prototype].chassis_id].range == 1) {
-                g_FX.play(0x44, Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y);
-            } else {
-                g_FX.play(0x47, Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y);
-            }
-            break;
-        }
-    }
-    ambience_veh(selected_vehicle_);
-    flush_input();
-}
-
-// ORIGINAL: 0x00511BB0 ?give_hints@Console@@QAEXXZ 0x00511BB0-0x00513B85
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned511BB0..513B85; retained git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00511bb0.cpp; original vehicle-turn caller513BD5", "Initial state2000 branch511C37 encloses early cards and colonist scan; clearstate enters51222C. Tutorial stage511E71 is TutorialWindow+53C0 via set_tour_stage, not separate DesignTutorState73396C. Colonist tail uses ConsoleGlobal faction and always returns; scan ownership uses faction snapshot across whose_territory.", "Native51318A..197 evaluates unowned or own-faction candidate sites, skips hostile-owned ones. Enemy-base scan exhaustion5136AE..B7 continues enemyvehicle/territory hints, never explorationchecker. Matchingpod513596 enters5135E6; valid six-sprite index uses captured triad and bounded coordinates. Historical intermediate source added a defensive bounds check under an earlier permission; faithful-milestone recovery supersedes that deviation and restores the unchecked original dispatch.", "Shared terra epilogue5134E1..F5 calls tut_map then GameState|400; farm writes before its call. All33 distinct original caption literals independently read bounded from pinned data. Actual Sprite sizeof2C and existing banks govern indices; no fixed executable data/function aliases.", "recovery/tasks/console-scenario-owner-wave.json; complete-owner expansion and corrected native-flow history retained; actual-source host controls required", "Pinned 0x5134xx..0x5135E6 predecessor walks the eight RadiusBase offsets, wraps longitude on round maps, rejects y outside [0,MapLatitudeBounds) and x outside [0,MapLongitudeBounds), requires goody_at, and retains the first candidate whose terrain triad matches the selected vehicle.", "Pinned 0x5135E6 calls tut_check(0x2000) before any Unity sprite-index arithmetic; rejection returns immediately. On acceptance, 0x5135FB..0x513623 computes (5*y+7*x) / 3 with signed idiv and forms the captured sea/land discriminator plus 2*remainder; 0x513628..0x513639 performs the indexed table-address calculation and draw call with no intervening range branch.", "Current source's matching-pod inputs are captured only after give_hints_in_map accepts bounded coordinates; selected_is_sea is the captured sea/land discriminator and the native modulo result selects one of the six existing g_TER1_UNITY_POD_SPRITES. Preserve callback/checker ordering and the unchecked native indexed dispatch; do not add an invalid-index runtime scenario."], "reason": "Recover the complete Console tutorial-hint owner using typed vehicle/design/rules/map/faction storage, real tutorial windows and source-owned sprite banks. Preserve original identity, seed and historical obligations; no matching or runtime acceptance is implied. Restore the original unchecked Unity-pod dispatch after the checker; earlier behavior-fix permission is superseded by the faithful milestone."}
-// TRIED: literal per-instruction register simulation (eax/ebx/ecx/edx/esi/edi as locals) with goto-labeled control flow matching every branch target; not tried: reconstructing idiomatic per-block source (member/local variable reuse) that would let the compiler's CSE match the original's code size - rebuilt is 4555 bytes against 8149 original, same first divergence at the prologue (push vs sub), so the whole body likely needs restructuring, not a single-instruction fix.
-void Console::give_hints() {
-    // 0x511BBE tests the selected vehicle's state before any other work.
-    const int entry_vehicle = selected_vehicle_;
-    if ((Vehs[entry_vehicle].state & 0x4200u) != 0 || IsMultiplayerNet != 0 ||
-        TutWinBaseWindow.is_visible() != 0 ||
-        TutWinSocWindow.is_visible() != 0) {
-        return;
-    }
-
-    // The image reloads the selected vehicle after the visibility calls, then
-    // keeps these signed coordinates through the whole function.
-    const int cursor_x = Vehs[selected_vehicle_].x;
-    const int cursor_y = Vehs[selected_vehicle_].y;
-    int proto_id;
-    if ((Vehs[selected_vehicle_].state & 0x2000u) != 0) {
-        proto_id = Vehs[selected_vehicle_].proto_id;
-        if (VehPrototypes[proto_id].plan <= PLAN_RECONNAISANCE &&
-            Vehs[selected_vehicle_].home_base_id >= 0 &&
-            tut_check(8) != 0 && GameDataStateStorage.fields_.turn_current_num_ < 0x19) {
-            ::clear();
-            say_base(StringTemp, Vehs[selected_vehicle_].home_base_id);
-            parse_says(0, StringTemp, -1, -1);
-            proto_id = Vehs[selected_vehicle_].proto_id;
-            parse_says(1, VehPrototypes[proto_id].veh_name, -1, -1);
-            TutorialWindow.tut_map("NEWUNIT", cursor_x, cursor_y,
-                                   selected_vehicle_, 0, 0, -1, -1);
-            return;
-        }
-
-        // 0x511D12 is reached both when the first card is ineligible and
-        // when tut_check(8)/the turn gate rejects it. The checker side effect
-        // therefore remains even when the turn is already 25 or later.
-        proto_id = Vehs[selected_vehicle_].proto_id;
-        if (VehPrototypes[proto_id].plan <= PLAN_RECONNAISANCE &&
-            tut_check(0x10) != 0 && GameDataStateStorage.fields_.turn_current_num_ >= 0x28) {
-            TutorialWindow.tut_map("NEWUNITS", cursor_x, cursor_y,
-                                   selected_vehicle_, 0, 0, -1, -1);
-            return;
-        }
-
-        // 0x511D74, including the active-count == 1 condition and its
-        // sea-triad exclusion (triad value 1). The message and caption inputs
-        // are rebuilt from the then-current selection after the checker.
-        proto_id = Vehs[selected_vehicle_].proto_id;
-        if (VehPrototypes[proto_id].plan == PLAN_TERRAFORMING &&
-            PlayersData[faction_id_].proto_id_active[proto_id] == 1 &&
-            tut_check(0x10000) != 0) {
-            proto_id = Vehs[selected_vehicle_].proto_id;
-            const int chassis_id = VehPrototypes[proto_id].chassis_id;
-            if (Chassis[chassis_id].triad != TRIAD_SEA) {
-                ::clear();
-                say_base(StringTemp, Vehs[selected_vehicle_].home_base_id);
-                parse_says(0, StringTemp, -1, -1);
-                proto_id = Vehs[selected_vehicle_].proto_id;
-                parse_says(1, VehPrototypes[proto_id].veh_name, -1, -1);
-                TutorialWindow.set_tour_stage(2);
-                TutorialWindow.tut_map("NEWTERRAFORMER", cursor_x, cursor_y,
-                                       selected_vehicle_, 0, 0x100,
-                                       -1, -1);
-                goto terra_shown;
-            }
-        }
-        // 0x511E99: the one-time colonization map scan is restricted to the
-        // plan-8/land/flag combination. The 240 iterations index the existing
-        // 289-entry RadiusOffset tables beginning at element 49.
-        proto_id = Vehs[selected_vehicle_].proto_id;
-        const int chassis_id = VehPrototypes[proto_id].chassis_id;
-        if (VehPrototypes[proto_id].plan == PLAN_COLONIZATION &&
-            Chassis[chassis_id].triad == TRIAD_LAND &&
-            (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x1000000u) == 0) {
-            int best_site = 0;
-            int best_x = -1;
-            int best_y = -1;
-            ConsoleGlobal.focus(cursor_x, cursor_y, ConsoleGlobal.faction_id_);
-            for (int radius = 0; radius < 240; ++radius) {
-                // The image keeps `MapIsFlat & 1` in a frame local and lays
-                // the flat (unwrapped) arm first, before the wrapping arm.
-                const int x = wrap_map_x(cursor_x + RadiusOffsetX[49 + radius]);
-                const int y = cursor_y + RadiusOffsetY[49 + radius];
-                if (!on_map(x, y)) {
-                    continue;
-                }
-
-                if (!MapWinTable[0]->tile_in_view(x, y, 2)) {
-                    continue;
-                }
-                // Both region bytes are read after the viewport checks.
-                if (map_loc(x, y)->region != map_loc(cursor_x, cursor_y)->region) {
-                    continue;
-                }
-                // The faction is read once before whose_territory and kept
-                // across the call (0x5120B1).
-                const int faction = faction_id_;
-                if (whose_territory(faction, x, y, 0, 0) != faction) {
-                    continue;
-                }
-                if ((PlayersData[faction].flags & 0x200u) == 0 &&
-                    (map_loc(x, y)->visibility & (1 << faction)) == 0) {
-                    continue;
-                }
-                if ((map_loc(x, y)->bit & 0x20u) != 0 &&
-                    (map_loc(x, y)->climate & ~0x1F) >= 0x40) {
-                    continue;
-                }
-                if ((map_loc(x, y)->val3 & ~0x3F) > 0x40) {
-                    continue;
-                }
-
-                int site = site_at(x, y, 0);
-                if (site >= best_site) {
-                    best_site = site;
-                    best_x = x;
-                    best_y = y;
-                }
-            }
-
-            ::clear();
-            say_base(StringTemp, Vehs[selected_vehicle_].home_base_id);
-            parse_says(0, StringTemp, -1, -1);
-            if ((Players[ConsoleGlobal.faction_id_].rule_flags & 0x100u) == 0) {
-                TutorialWindow.tut_map("NEWCOLONIST", cursor_x, cursor_y,
-                                       selected_vehicle_, 0, 0x1000000,
-                                       best_x, best_y);
-            }
-            return;
-        }
-    }
-
-    // 0x51222C first checks the tutorial window's persistent stop flag, then
-    // snapshots whether the selected prototype is a sea-triad unit into an
-    // int frame local (sete into a dword).
-    if (TutorialWindow.tutorial_blocked()) {
-        return;
-    }
-    proto_id = Vehs[selected_vehicle_].proto_id;
-    int selected_is_sea;
-    selected_is_sea =
-        Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_SEA;
-
-    if (Vehs[selected_vehicle_].dmg_incurred != 0 && tut_check(0x200000) != 0) {
-        TutorialWindow.tut_map("DAMAGED", cursor_x, cursor_y, selected_vehicle_,
-                               0, 0, -1, -1);
-        return;
-    }
-
-    // 0x5122A9: these checks apply only to land chassis on a land cursor tile.
-    // The sea and air cards below are therefore nested in the land test, as
-    // the image's branch to 0x512B8A has it.
-    proto_id = Vehs[selected_vehicle_].proto_id;
-    if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_LAND &&
-        !is_ocean(cursor_x, cursor_y)) {
-        // The image compares the neighbour's prototype ID itself with 8.
-        for (int worm_i = 0; worm_i < 8; ++worm_i) {
-            const int x = wrap_map_x(cursor_x + VehMoveDeltaX[worm_i]);
-            const int y = cursor_y + VehMoveDeltaY[worm_i];
-            if (!on_map(x, y)) {
-                continue;
-            }
-            const int nearby = veh_at(x, y);
-            if (nearby < 0 || Vehs[nearby].faction_id != 0 ||
-                Vehs[nearby].proto_id != 8) {
-                continue;
-            }
-            if (tut_check(0x4000000) != 0) {
-                TutorialWindow.tut_map("MINDWORMS", x, y, nearby, 0,
-                                       0, -1, -1);
-                return;
-            }
-        }
-
-        // 0x5123BE fast-unit card: the current chassis must be land triad,
-        // speed exactly 2, the weapon must have nonzero offense, and the
-        // tutorial bit must be newly accepted.
-        proto_id = Vehs[selected_vehicle_].proto_id;
-        if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_LAND &&
-            Chassis[VehPrototypes[proto_id].chassis_id].speed == 2 &&
-            Weapon[VehPrototypes[proto_id].weapon_id].offense_rating != 0 &&
-            tut_check(0x2000000) != 0) {
-            StringTemp[0] = '\0';
-            say_stats_3(StringTemp, Vehs[selected_vehicle_].proto_id);
-            parse_says(1, StringTemp, -1, -1);
-            proto_id = Vehs[selected_vehicle_].proto_id;
-            parse_says(0, VehPrototypes[proto_id].veh_name, -1, -1);
-            TutorialWindow.tut_map("FASTUNIT", cursor_x, cursor_y, selected_vehicle_,
-                                   0, 0, -1, -1);
-            return;
-        }
-
-        // 0x5124E9: speed-1 land unit with signed offense > 1 that cannot
-        // bombard. The image shows the BIGUNIT caption here (0x5125EC).
-        proto_id = Vehs[selected_vehicle_].proto_id;
-        if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_LAND &&
-            Chassis[VehPrototypes[proto_id].chassis_id].speed == 1 &&
-            Weapon[VehPrototypes[proto_id].weapon_id].offense_rating > 1 &&
-            can_arty(proto_id, 1) == 0 && tut_check(0x40000000) != 0) {
-            StringTemp[0] = '\0';
-            say_stats_3(StringTemp, Vehs[selected_vehicle_].proto_id);
-            parse_says(1, StringTemp, -1, -1);
-            proto_id = Vehs[selected_vehicle_].proto_id;
-            parse_says(0, VehPrototypes[proto_id].veh_name, -1, -1);
-            TutorialWindow.tut_map("BIGUNIT", cursor_x, cursor_y, selected_vehicle_,
-                                   0, 0, -1, -1);
-            return;
-        }
-
-        // 0x512602: the can_arty case shows ARTYUNIT; StringTemp is cleared
-        // before the name parse.
-        proto_id = Vehs[selected_vehicle_].proto_id;
-        if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_LAND &&
-            can_arty(proto_id, 1) != 0 && tut_check(0x80000000u) != 0) {
-            StringTemp[0] = '\0';
-            proto_id = Vehs[selected_vehicle_].proto_id;
-            parse_says(0, VehPrototypes[proto_id].veh_name, -1, -1);
-            TutorialWindow.tut_map("ARTYUNIT", cursor_x, cursor_y, selected_vehicle_,
-                                   0, 0, -1, -1);
-            return;
-        }
-
-        // 0x5126BD/0x512739: the shown flags are distinct from
-        // TutWinFlags9A64BC. Already-shown bits are ORed again, then flow
-        // continues.
-        proto_id = Vehs[selected_vehicle_].proto_id;
-        if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_SEA) {
-            if ((GameDataStateStorage.fields_.tutorial_flags_ & 0x20) == 0) {
-                TutorialWindow.tut_map("NEWSHIP", cursor_x, cursor_y, selected_vehicle_,
-                                       0, 0, -1, -1);
-                GameDataStateStorage.fields_.tutorial_flags_ |= 0x20;
-                return;
-            }
-            GameDataStateStorage.fields_.tutorial_flags_ |= 0x20;
-        }
-        proto_id = Vehs[selected_vehicle_].proto_id;
-        if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_AIR) {
-            if ((GameDataStateStorage.fields_.tutorial_flags_ & 0x40) == 0) {
-                TutorialWindow.tut_map("NEWAIR", cursor_x, cursor_y, selected_vehicle_,
-                                       0, 0, -1, -1);
-                GameDataStateStorage.fields_.tutorial_flags_ |= 0x40;
-                return;
-            }
-            GameDataStateStorage.fields_.tutorial_flags_ |= 0x40;
-        }
-
-        // 0x5127B5 base-defense card. enemy_move receives -1 - selection
-        // (`or eax,-1; sub eax,ecx`).
-        const int cursor_base = base_at(cursor_x, cursor_y);
-        if (cursor_base >= 0 &&
-            Bases[cursor_base].faction_id_current == faction_id_) {
-            const int current_proto = Vehs[selected_vehicle_].proto_id;
-            const Base &base = Bases[cursor_base];
-            if (base.population_size > 2 ||
-                PlayersData[faction_id_].total_mil_veh > 3 ||
-                PlayersData[faction_id_].proto_id_active[current_proto] > 1) {
-                if (enemy_move(-1 - selected_vehicle_) != 0 &&
-                    (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x800000u) == 0) {
-                    StringTemp[0] = '\0';
-                    say_stats_3(StringTemp, Vehs[selected_vehicle_].proto_id);
-                    parse_says(2, StringTemp, -1, -1);
-                    parse_says(0, base.name_string, -1, -1);
-                    proto_id = Vehs[selected_vehicle_].proto_id;
-                    parse_says(1, VehPrototypes[proto_id].veh_name, -1, -1);
-
-                    // 0x5128F7: defensive plan whose armor beats its weapon,
-                    // and whose weapon offense is exactly 1.
-                    proto_id = Vehs[selected_vehicle_].proto_id;
-                    const VehPrototype &prototype = VehPrototypes[proto_id];
-                    TutorialWindow.tut_map(
-                        prototype.plan == PLAN_DEFENSIVE &&
-                                Armor[prototype.armor_id].defense_rating >
-                                    Weapon[prototype.weapon_id].offense_rating &&
-                                Weapon[prototype.weapon_id].offense_rating == 1
-                            ? "DEFENDIT2"
-                            : "DEFENDIT",
-                        cursor_x, cursor_y, selected_vehicle_, 0,
-                        0x800000, -1, -1);
-                    return;
-                }
-            }
-        }
-
-        // 0x512959 empty-base scan. The image checks the current weapon before
-        // iterating and calls tut_check2 before the every-20-turn fallback.
-        // A shown card leaves the loop and continues at 0x512B87; it does not
-        // return.
-        proto_id = Vehs[selected_vehicle_].proto_id;
-        if (GameDataStateStorage.fields_.turn_current_num_ >= 0x14 &&
-            (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x4000000u) == 0 &&
-            Weapon[VehPrototypes[proto_id].weapon_id].offense_rating != 0) {
-            for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_;
-                 ++base_id) {
-                if (Bases[base_id].faction_id_current != faction_id_ ||
-                    veh_at(Bases[base_id].x, Bases[base_id].y) >= 0 ||
-                    Bases[base_id].population_size == 1) {
-                    continue;
-                }
-
-                // 0x5129FD reads both coordinates from the base record again
-                // and MapWinTable[0] once; no x/y/map_window locals.
-                if (!MapWinTable[0]->tile_in_view(Bases[base_id].x, Bases[base_id].y, 2)) {
-                    continue;
-                }
-                if (tut_check2(0x100) != 0 ||
-                    GameDataStateStorage.fields_.turn_current_num_ % 20 == 0) {
-                    parse_says(0, Bases[base_id].name_string, -1, -1);
-                    TutorialWindow.tut_map("EMPTYBASE", Bases[base_id].x,
-                                           Bases[base_id].y, -1, 0,
-                                           0x4000000, -1, -1);
-                    break;
-                }
-            }
-        }
-    }
-
-    // 0x512B90 cursor-tile filter: the inline base_who owner test (the image
-    // tests the base bit, 1, at 0x00512BB6).
-    if (base_who(cursor_x, cursor_y) >= 0) {
-        return;
-    }
-
-    // 0x512BCE artifact card; tut_check's bit is recorded before map display.
-    proto_id = Vehs[selected_vehicle_].proto_id;
-    if (VehPrototypes[proto_id].plan == PLAN_ALIEN_ARTIFACT &&
-        tut_check(0x1000000) != 0) {
-        TutorialWindow.tut_map("ARTIFACT", cursor_x, cursor_y, selected_vehicle_,
-                               0, 0, -1, -1);
-        return;
-    }
-
-    // tut_check2 runs before the prototype test, so its flag side effect
-    // remains when the current design is not one of the three Ogre IDs. The
-    // image compares the 16-bit prototype field directly.
-    if (tut_check2(0x20000) != 0 &&
-        (Vehs[selected_vehicle_].proto_id == 0x10 ||
-         Vehs[selected_vehicle_].proto_id == 0x11 ||
-         Vehs[selected_vehicle_].proto_id == 0x12)) {
-        TutorialWindow.tut_map("GETOGRE", cursor_x, cursor_y, selected_vehicle_,
-                               0, 0, -1, -1);
-        return;
-    }
-
-    // 0x512C82 nearby native-unit hints. A rejected spore-launcher checker
-    // still falls through to the sealurk prototype test.
-    int native_i;
-    for (native_i = 0; native_i < 8; ++native_i) {
-        const int x = wrap_map_x(cursor_x + VehMoveDeltaX[native_i]);
-        const int y = cursor_y + VehMoveDeltaY[native_i];
-        if (!on_map(x, y)) {
-            continue;
-        }
-        const int nearby = veh_at(x, y);
-        if (nearby < 0 || Vehs[nearby].faction_id != 0) {
-            continue;
-        }
-        if (Vehs[nearby].proto_id == 0x0F && tut_check2(0x80000) != 0) {
-            TutorialWindow.tut_map("SPORELAUNCHER", x, y, nearby, 0,
-                                   0, -1, -1);
-            return;
-        }
-        if (Vehs[nearby].proto_id == 0x0E && tut_check2(0x40000) != 0) {
-            TutorialWindow.tut_map("SEALURK", x, y, nearby, 0, 0, -1, -1);
-            return;
-        }
-    }
-
-    // 0x512D4E resource scan: occupied tiles (inline anything_at), tile
-    // exclusions, goody suppression, then a switch on bonus_at. The card
-    // re-reads bonus_at inside the tut_map argument list.
-    int bonus_i;
-    for (bonus_i = 0; bonus_i < 8; ++bonus_i) {
-        const int x = wrap_map_x(cursor_x + VehMoveDeltaX[bonus_i]);
-        const int y = cursor_y + VehMoveDeltaY[bonus_i];
-        if (!on_map(x, y)) {
-            continue;
-        }
-        if (anything_at(x, y) >= 0) {
-            continue;
-        }
-        if ((map_loc(x, y)->bit & 0x81E02850u) != 0) {
-            continue;
-        }
-        if (goody_at(x, y) != 0) {
-            continue;
-        }
-        switch (bonus_at(x, y, 0)) {
-        case 1:
-            if (tut_check(0x20000) != 0) {
-                TutorialWindow.tut_map("BONUSNUTRIENT", x, y, -1,
-                    &g_TER1_SEA_LAND_RESOURCE_SPRITES[
-                        (selected_is_sea + bonus_at(x, y, 0) * 2 - 2) * 2],
-                    0, -1, -1);
-                return;
-            }
-            break;
-        case 2:
-            if (tut_check(0x40000) != 0) {
-                TutorialWindow.tut_map("BONUSMINERALS", x, y, -1,
-                    &g_TER1_SEA_LAND_RESOURCE_SPRITES[
-                        (selected_is_sea + bonus_at(x, y, 0) * 2 - 2) * 2],
-                    0, -1, -1);
-                return;
-            }
-            break;
-        case 3:
-            if (tut_check(0x80000) != 0) {
-                TutorialWindow.tut_map("BONUSENERGY", x, y, -1,
-                    &g_TER1_SEA_LAND_RESOURCE_SPRITES[
-                        (selected_is_sea + bonus_at(x, y, 0) * 2 - 2) * 2],
-                    0, -1, -1);
-                return;
-            }
-            break;
-        }
-    }
-
-    // 0x512EA9: the cursor tile's fungus cards. The altitude band is an int
-    // local (`and al,0E0h` then dword compares); the land arm comes first.
-    if ((map_loc(cursor_x, cursor_y)->bit & 0x20u) != 0) {
-        const int altitude = map_loc(cursor_x, cursor_y)->climate & 0xE0;
-        if (altitude >= 0x40) {
-            if (altitude >= 0x60) {
-                if (tut_check(0x100) != 0) {
-                    TutorialWindow.tut_map("FUNGUSAMUNGUS", cursor_x, cursor_y, -1,
-                                           0, 0, -1, -1);
-                    return;
-                }
-            } else if (tut_check(0x8000) != 0) {
-                TutorialWindow.tut_map("FUNGUSSEA", cursor_x, cursor_y, -1,
-                                       0, 0, -1, -1);
-                return;
-            }
-        }
-    }
-
-    // 0x513022: tutorial-state gate; colonization-site advice. A tile with
-    // bit 0x1000 scores 0 without calling world_site.
-    if ((GameDataStateStorage.fields_.game_state_ & 0x400u) != 0) {
-        return;
-    }
-    proto_id = Vehs[selected_vehicle_].proto_id;
-    if (VehPrototypes[proto_id].plan == PLAN_COLONIZATION &&
-        (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x10000u) == 0) {
-        int site = site_at(cursor_x, cursor_y, 0);
-        if (!(site < 4 &&
-            site < PlayersData[faction_id_].unk_82[map_loc(cursor_x, cursor_y)->region])) {
-        for (int site_i = 0; site_i < 21; ++site_i) {
-            const int x = wrap_map_x(cursor_x + RadiusOffsetX[site_i]);
-            const int y = cursor_y + RadiusOffsetY[site_i];
-            if (!on_map(x, y)) {
-                continue;
-            }
-            const int owner = whose_territory(faction_id_, x, y, 0, 0);
-            if (owner >= 0 && owner != faction_id_) {
-                continue;
-            }
-            int candidate_site = site_at(x, y, 0);
-            if (candidate_site > site) {
-                return;
-            }
-        }
-        TutorialWindow.tut_map("BUILDHERE", cursor_x, cursor_y, selected_vehicle_, 0,
-                               0x10000, -1, -1);
-        return;
-    }
-            return;
-}
-
-    // 0x51323A terraforming chain, only for plan 9 when the captured sea flag
-    // is false. BaseFindDist and BaseCurrent are written/read by base_find.
-    // The improvement tests form one else-if chain: a rejected flag/tile test
-    // skips straight to the sensor card (0x513433).
-    proto_id = Vehs[selected_vehicle_].proto_id;
-    if (VehPrototypes[proto_id].plan == PLAN_TERRAFORMING && !selected_is_sea) {
-        int base_id;
-        base_id = base_find(cursor_x, cursor_y, faction_id_);
-        if (base_id < 0) {
-            return;
-        }
-        if (BaseFindDist <= 2) {
-            if (at_goal(faction_id_, 0x29, cursor_x, cursor_y) != 0 &&
-                (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x200000u) == 0) {
-                parse_says(0, BaseCurrent->name_string, -1, -1);
-                if ((map_loc(cursor_x, cursor_y)->bit & 0x40u) != 0) {
-                    TutorialWindow.tut_map("TERRARAISE", cursor_x, cursor_y, -1, 0,
-                                           0x200000, -1, -1);
-                }
-                goto terra_shown;
-            }
-
-            int improve;
-            improve = can_terraform(faction_id_, cursor_x, cursor_y,
-                                              0, base_id);
-            if (improve == 4) {
-                // 0x513344 tests tile bit 0x8000 (`test dh,80h`).
-                if ((GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x100000u) == 0 &&
-                    (map_loc(cursor_x, cursor_y)->bit & 0x8000u) == 0) {
-                    GameDataStateStorage.fields_.game_state_ |= 0x400u;
-                    parse_says(0, Bases[base_id].name_string, -1, -1);
-                    TutorialWindow.tut_map("TERRAFARM", cursor_x, cursor_y, -1,
-                                           &g_TER1_FARM_SPRITES[3], 0x100000, -1, -1);
-                    return;
-                }
-            } else if (improve == 6) {
-                if ((GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x40000u) == 0) {
-                    TutorialWindow.tut_map("TERRAMINE", cursor_x, cursor_y, -1,
-                                           &g_TER1_MINE_SPRITE, 0x40000, -1, -1);
-                    goto terra_shown;
-                }
-            } else if (improve == 7) {
-                if ((GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x20000u) == 0) {
-                    TutorialWindow.tut_map("TERRASOLAR", cursor_x, cursor_y, -1,
-                                           &g_TER1_SOLAR_COLLECTOR_SPRITE, 0x20000, -1, -1);
-                    goto terra_shown;
-                }
-            } else if (improve == 8) {
-                if ((GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x400000u) == 0) {
-                    TutorialWindow.tut_map("TERRAFOREST", cursor_x, cursor_y, -1, 0,
-                                           0x400000, -1, -1);
-                    goto terra_shown;
-                }
-            }
-
-            if ((at_goal(faction_id_, 0x79, cursor_x, cursor_y) != 0 ||
-                 good_sensor(ConsoleGlobal.faction_id_, cursor_x, cursor_y) != 0) &&
-                (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x2000000u) == 0) {
-                TutorialWindow.tut_map("TERRASENSOR", cursor_x, cursor_y, -1, 0,
-                                       0x2000000, -1, -1);
-                goto terra_shown;
-            }
-            uint32_t tile_flags;
-            tile_flags = map_loc(cursor_x, cursor_y)->bit;
-            if ((tile_flags & 4u) == 0 &&
-                (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x80000u) == 0 &&
-                ((tile_flags & 0x10u) != 0 ||
-                 at_goal(faction_id_, 9, cursor_x, cursor_y) != 0)) {
-                TutorialWindow.tut_map("TERRAROAD", cursor_x, cursor_y, -1, 0,
-                                       0x80000, -1, -1);
-            terra_shown:
-                GameDataStateStorage.fields_.game_state_ |= 0x400u;
-                return;
-            }
-        }
-    }
-
-    // 0x513505 exploration scan: the first goody whose ocean-ness equals the
-    // captured sea flag shows the card directly from inside the loop.
-    if ((GameDataStateStorage.fields_.tutorial_flags_ & 0x2000) == 0) {
-        for (int pod_i = 0; pod_i < 8; ++pod_i) {
-            const int x = wrap_map_x(cursor_x + VehMoveDeltaX[pod_i]);
-            const int y = cursor_y + VehMoveDeltaY[pod_i];
-            if (!on_map(x, y)) {
-                continue;
-            }
-            if (goody_at(x, y) == 0) {
-                continue;
-            }
-            if (is_ocean(x, y) == selected_is_sea) {
-                if (tut_check(0x2000) == 0) {
-                    return;
-                }
-                TutorialWindow.tut_map("EXPLORATION", x, y, -1,
-                    &g_TER1_UNITY_POD_SPRITES[selected_is_sea +
-                                              ((x * 7 + y * 5) % 3) * 2],
-                    0, -1, -1);
-                return;
-            }
-        }
-    }
-
-    // 0x5135AD enemy-base scan. Its exhaustion proceeds to 0x5136B7. The
-    // owner byte is re-read from the base record for each leader/noun parse.
-    if ((GameDataStateStorage.fields_.tutorial_flags_ & 0x8000000) == 0) {
-        for (int enemy_base_i = 0; enemy_base_i < 8; ++enemy_base_i) {
-            const int x = wrap_map_x(cursor_x + VehMoveDeltaX[enemy_base_i]);
-            const int y = cursor_y + VehMoveDeltaY[enemy_base_i];
-            if (!on_map(x, y)) {
-                continue;
-            }
-            const int base_id = base_at(x, y);
-            if (base_id < 0) {
-                continue;
-            }
-            if (Bases[base_id].faction_id_current == faction_id_) {
-                continue;
-            }
-            if (tut_check(0x8000000) == 0) {
-                return;
-            }
-            parse_says(0, Bases[base_id].name_string, -1, -1);
-            GenderDefault = Players[Bases[base_id].faction_id_current].is_leader_female;
-            PluralityDefault = 0;
-            parse_says(1, Players[Bases[base_id].faction_id_current].title_leader, -1, -1);
-            GenderDefault = Players[Bases[base_id].faction_id_current].is_leader_female;
-            PluralityDefault = 0;
-            parse_says(2, Players[Bases[base_id].faction_id_current].name_leader, -1, -1);
-            GenderDefault = Players[Bases[base_id].faction_id_current].noun_gender;
-            PluralityDefault = Players[Bases[base_id].faction_id_current].is_noun_plural;
-            parse_says(3, Players[Bases[base_id].faction_id_current].noun_faction, -1, -1);
-            TutorialWindow.tut_map("ENEMYBASE", x, y, -1, 0, 0, -1, -1);
-            return;
-        }
-    }
-
-    // 0x5136B7 enemy-vehicle scan; skips tiles the inline base_who reports as
-    // owned (the image tests the base bit, 1, at 0x0051384E), and re-reads the
-    // vehicle's faction byte for each parse.
-    if ((GameDataStateStorage.fields_.tutorial_flags_ & 0x10000000) == 0) {
-        for (int enemy_veh_i = 0; enemy_veh_i < 8; ++enemy_veh_i) {
-            const int x = wrap_map_x(cursor_x + VehMoveDeltaX[enemy_veh_i]);
-            const int y = cursor_y + VehMoveDeltaY[enemy_veh_i];
-            if (!on_map(x, y)) {
-                continue;
-            }
-            if (base_who(x, y) >= 0) {
-                continue;
-            }
-            const int vehicle = veh_at(x, y);
-            if (vehicle < 0) {
-                continue;
-            }
-            if (Vehs[vehicle].faction_id == faction_id_ || Vehs[vehicle].faction_id == 0) {
-                continue;
-            }
-            if (tut_check(0x10000000) == 0) {
-                return;
-            }
-            GenderDefault = Players[Vehs[vehicle].faction_id].is_leader_female;
-            PluralityDefault = 0;
-            parse_says(1, Players[Vehs[vehicle].faction_id].title_leader, -1, -1);
-            GenderDefault = Players[Vehs[vehicle].faction_id].is_leader_female;
-            PluralityDefault = 0;
-            parse_says(2, Players[Vehs[vehicle].faction_id].name_leader, -1, -1);
-            GenderDefault = Players[Vehs[vehicle].faction_id].noun_gender;
-            PluralityDefault = Players[Vehs[vehicle].faction_id].is_noun_plural;
-            parse_says(3, Players[Vehs[vehicle].faction_id].noun_faction, -1, -1);
-            TutorialWindow.tut_map("ENEMYVEH", x, y, vehicle, 0, 0, -1, -1);
-            return;
-        }
-    }
-
-    // 0x5138B3 territory edge scan. The candidate owner is tested against
-    // this faction before its sign, then against the cursor tile's owner.
-    if ((GameDataStateStorage.fields_.tutorial_flags_ & 0x20000000) == 0) {
-        for (int terr_i = 0; terr_i < 8; ++terr_i) {
-            const int x = wrap_map_x(cursor_x + VehMoveDeltaX[terr_i]);
-            const int y = cursor_y + VehMoveDeltaY[terr_i];
-            if (!on_map(x, y)) {
-                continue;
-            }
-            if (anything_at(x, y) >= 0) {
-                continue;
-            }
-            const int owner = whose_territory(faction_id_, x, y, 0, 0);
-            if (owner == faction_id_ || owner < 0) {
-                continue;
-            }
-            if (whose_territory(faction_id_, cursor_x, cursor_y, 0, 0) == owner) {
-                continue;
-            }
-            if (tut_check(0x20000000) == 0) {
-                return;
-            }
-            GenderDefault = Players[owner].is_leader_female;
-            PluralityDefault = 0;
-            parse_says(1, Players[owner].title_leader, -1, -1);
-            GenderDefault = Players[owner].is_leader_female;
-            PluralityDefault = 0;
-            parse_says(2, Players[owner].name_leader, -1, -1);
-            GenderDefault = Players[owner].noun_gender;
-            PluralityDefault = Players[owner].is_noun_plural;
-            parse_says(3, Players[owner].noun_faction, -1, -1);
-            TutorialWindow.tut_map("ENEMYTERR", x, y, -1, 0, 0, -1, -1);
-            return;
-        }
-    }
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00513B90 ?veh_turn@Console@@QAEHXZ 0x00513B90-0x00513FB9 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00513b90.cpp; image:0x00513B90-0x00513FB9", "Native513EA3 identifies pointer-preserving NetDaemon::automated_lock; native513F85 clears selected ID only before turn-loop entry."], "reason": "Recover selected-vehicle turn scheduling through real Console state, NetDaemon locking and UI owners. Native branches distinguish cursor activity, readiness and ordered actions, retaining selection after an entered turn loop and clearing it on early refusal; no raw receiver accesses or executable callbacks."}
-int Console::veh_turn() { // 0x00513B90
-    int result = 0;
-    int flag10 = 0;
-    int n = 0;
-    field_23BE4_ = 1;
-
-    if ((GameDataStateStorage.fields_.game_preferences_ & 0x20u) != 0 &&
-        Vehs[selected_vehicle_].order == 0) {
-        give_hints();
-    }
-
-    const int first_ready = veh_ready(selected_vehicle_);
-    for (;;) {
-        if (!veh_selectable(selected_vehicle_) ||
-            veh_ready(selected_vehicle_) != first_ready ||
-            (first_ready == 0 && Vehs[selected_vehicle_].order != 0)) {
-            if (ConsoleGlobal.cursor_active_ != 0) {
-                goto finish_turn;
-            }
-        }
-
-        if (field_23BE4_ == 0 && field_23BF0_ != 2) {
-            goto finish_turn;
-        }
-        if (field_23BE8_ == 0 || ExitTurnLoop != 0 ||
-            end_of_game(0) != 0 ||
-            (IsMultiplayerNet != 0 && (GameDataStateStorage.fields_.game_state_ & 0x800u) != 0)) {
-            goto finish_turn;
-        }
-
-        flag10 = 1;
-        if (field_23BF0_ == 2) {
-            field_23BE4_ = Vehs[selected_vehicle_].order == 0x18;
-            field_23BF0_ = 0;
-        }
-
-        // Native reads 0x0093E8E0 here: NetDaemon + 0x1B50, the already
-        // typed lock_state_[0].dword_[9]. Its wider semantic role is unknown.
-        if (NetDaemonNet.primary_state_.trailing_words_[3] != 0) {
-            if (ConsoleGlobal.cursor_active_ != 0) {
-                ambience(0x1E);
-                cursor_active_ = 0;
-                field_23BF8_ = 1;
-                field_23BFC_ = 1;
-                if (survey_mode_ != 0) {
-                    survey_mode_ = 0;
-                    MapWinTable[0]->draw_map(1);
-                }
-                ::draw_cursor();
-                ConsoleInfoWin.change(0);
-                ConsoleStatusWin.redraw();
-                MapWinTable[0]->main_caption();
-                alpha_menu_.check(selected_vehicle_);
-                continue;
-            }
-            result = 1;
-            wait_loop();
-            continue;
-        }
-
-        if (field_23D24_ != 0 &&
-            (Vehs[selected_vehicle_].state & 0x200u) == 0 &&
-            (Vehs[selected_vehicle_].state & 0x01000200u) != 0x01000200u &&
-            (Vehs[selected_vehicle_].state & 0x4000u) == 0 &&
-            Vehs[selected_vehicle_].order == 0) {
-            goto clear_auto_order;
-        }
-
-        if (ConsoleGlobal.cursor_active_ != 0) {
-            if (veh_ready(selected_vehicle_) != 0) {
-                if (TutWinBaseWindow.is_visible() == 0 &&
-                    ReportWinGlobal.is_visible() == 0) {
-                    if ((Vehs[selected_vehicle_].state & 0x4200u) == 0) {
-                        const uint8_t order = Vehs[selected_vehicle_].order;
-                        if (order == 0) {
-                            n = 0;
-                        } else if (++n > (order == 0x18 ? 100 : 20)) {
-                            if (order == 0x18) {
-                                Vehs[selected_vehicle_].order = 0;
-                            } else {
-                                veh_skip(selected_vehicle_);
-                            }
-                            if (IsMultiplayerNet != 0) {
-                                synch_veh(selected_vehicle_);
-                                NetDaemonNet.await_synch();
-                                NetDaemonNet.unlock_veh();
-                            }
-                            continue;
-                        }
-                        if (NetDaemonNet.action(selected_vehicle_, 0) != 0) {
-                            continue;
-                        }
-                        Vehs[selected_vehicle_].state |= 0x04000000u;
-                    } else {
-                        // Native target 0x00531150 is NetDaemon::automated_lock(int *, int).
-                        if (NetDaemonNet.automated_lock(&selected_vehicle_, 4) != 0) {
-                            goto finish_turn;
-                        }
-                        ++NetBusyCount;
-                        if (++n > 20) {
-                            veh_skip(selected_vehicle_);
-                            if (IsMultiplayerNet != 0) {
-                                synch_veh(selected_vehicle_);
-                                NetDaemonNet.await_synch();
-                                NetDaemonNet.unlock_veh();
-                            }
-                            --NetBusyCount;
-                            continue;
-                        }
-                        if (enemy_veh(selected_vehicle_) != 0) {
-                            goto enemy_vehicle_found;
-                        }
-                        --NetBusyCount;
-                        continue;
-                    }
-                }
-            } else if (Vehs[selected_vehicle_].order != 0 ||
-                       (Vehs[selected_vehicle_].state & 0x4200u) != 0) {
-                goto selected_vehicle_unavailable;
-            }
-        }
-
-        result = 1;
-        wait_loop();
-        if (TutWinTourPending != 0) {
-            TutWinTourPending = 0;
-            TutorialWindow.tour();
-        }
-    }
-
-clear_auto_order:
-    field_23D24_ = 0;
-selected_vehicle_unavailable:
-    selected_vehicle_ = -1;
-finish_turn:
-    field_23BE4_ = 0;
-    if (flag10 == 0) {
-        selected_vehicle_ = -1;
-    }
-    return result;
-
-enemy_vehicle_found:
-    if (IsMultiplayerNet != 0) {
-        NetDaemonNet.unlock_veh();
-        selected_vehicle_ = -1;
-    }
-    --NetBusyCount;
-    goto finish_turn;
-}
-
-// ORIGINAL: 0x00514050 ?human_turn@Console@@QAEXXZ 0x00514050-0x005147DA FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:terranx_original.exe:0x00514050-0x005147DA", "git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00514050.cpp", "FX bank749CF8 plus57 times6C identifies74B504 as existing Effect57; original dispatch uses Wave virtual operations.", "Native5140DC/5143B4/51467E/514694 establish cursor polarity, selection reload and branch-specific flag/audio order."], "reason": "Recover player-turn orchestration in its genuine Console owner, preserving callback-driven selection/faction reloads, cursor guards, turn flags and real UI/audio lifetimes."}
-// TRIED: direct transcription using Console's already-declared field_23BDC_ etc members (no raw casts needed, no embedded objects here - simple frameless prologue); cross-checked against raw asm for the neg/sbb/inc bool-negate idiom, the xor-swapped focus() arg orders, and the veh_ready/veh_selectable branch. Compiles, sim 0.55 frameless; not retried given size (1930 bytes).
-void Console::human_turn() {
-    unsigned int flush_cache = 0;
-    int previous_vehicle_count = -1;
-
-    WorldClimateWorldWin.viewport_outline_enabled_ = 0;
-    WorldClimateWorldWin.set_world_map();
-    GameDataStateStorage.fields_.game_state_ &= ~static_cast<uint32_t>(STATE_UNK_400);
-    MapBaseDisplayOverride = 1;
-    field_23D1C_ = 0;
-
-    for (int vehicle = 0; vehicle < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle) {
-        Vehs[vehicle].state &= ~static_cast<uint32_t>(VSTATE_UNK_8000000);
-    }
-
-    if (ControlTurnPhase == 0) {
-        selected_vehicle_ = -1;
-        set_move(0);
-    } else if (ConsoleGlobal.cursor_active_ != 0) {
-        set_move(1);
-    } else {
-        ambience(0x1E);
-        cursor_active_ = 0;
-        field_23BF8_ = 1;
-        field_23BFC_ = 1;
-        if (survey_mode_ != 0) {
-            survey_mode_ = 0;
-            MapWinTable[0]->draw_map(1);
-        }
-        ::draw_cursor();
-        ConsoleInfoWin.change(0);
-        ConsoleStatusWin.redraw();
-        MapWinTable[0]->main_caption();
-        alpha_menu_.check(selected_vehicle_);
-    }
-
-    alpha_menu_.check(selected_vehicle_);
-    ConsoleStatusWin.reset();
-    ConsoleInfoWin.reset();
-    field_23BE8_ = 1;
-    field_23D24_ = 0;
-
-    if (ControlTurnPhase != 0) {
-        const int selected = selected_vehicle_;
-        bool refresh = selected < 0 || veh_ready(selected) == 0;
-        if (!refresh) {
-            // Native reloads selected_vehicle_ after veh_ready returns.
-            const int current_selected = selected_vehicle_;
-            refresh = (Vehs[current_selected].state & 0x4200u) != 0 ||
-                      Vehs[current_selected].order != 0;
-        }
-        if (refresh && ConsoleGlobal.cursor_active_ != 0) {
-            ambience(0x1E);
-            field_23BF8_ = 1;
-            field_23BFC_ = 1;
-            cursor_active_ = 0;
-            if (survey_mode_ != 0) {
-                survey_mode_ = 0;
-                MapWinTable[0]->draw_map(1);
-            }
-            ::draw_cursor();
-            ConsoleInfoWin.change(0);
-            ConsoleStatusWin.redraw();
-            MapWinTable[0]->main_caption();
-            alpha_menu_.check(selected_vehicle_);
-        }
-    }
-
-    if (IsMultiplayerNet != 0) {
-        g_FX.play(0x21);
-    }
-    ControlTurnPhase = 0;
-
-    for (;;) {
-        if ((GameDataStateStorage.fields_.game_state_ & 0x2000u) != 0 && (GameDataStateStorage.fields_.game_state_ & 1u) == 0 &&
-            (GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_CONQUEST) != 0) {
-            GenderDefault = Players[ConsoleGlobal.faction_id_].is_leader_female;
-            PluralityDefault = 0;
-            parse_says(0, Players[ConsoleGlobal.faction_id_].title_leader, -1, -1);
-            GenderDefault = Players[ConsoleGlobal.faction_id_].is_leader_female;
-            PluralityDefault = 0;
-            parse_says(1, Players[ConsoleGlobal.faction_id_].name_leader, -1, -1);
-            GenderDefault = Players[ConsoleGlobal.faction_id_].noun_gender;
-            PluralityDefault = Players[ConsoleGlobal.faction_id_].is_noun_plural;
-            parse_says(2, Players[ConsoleGlobal.faction_id_].noun_faction, -1, -1);
-            X_pop("CONQUERPLANET", nullptr);
-            GameDataStateStorage.fields_.game_state_ |= 1u;
-        }
-
-        if (ConsoleGlobal.cursor_active_ != 0) {
-            if (selected_vehicle_ < 0 ||
-                GameDataStateStorage.fields_.vehicle_current_count_ != previous_vehicle_count ||
-                (field_23BEC_ ? !veh_selectable(selected_vehicle_) : !veh_ready(selected_vehicle_))) {
-                ready();
-            } else if (field_23BF4_ == 0) {
-                // The helper can run callbacks; native reloads the selection
-                // after the eligibility callback and before reading its tile.
-                const int y = Vehs[selected_vehicle_].y;
-                const int x = Vehs[selected_vehicle_].x;
-                field_23BF8_ = 0;
-                if (survey_mode_ != 0) {
-                    survey_mode_ = 0;
-                    MapWinTable[0]->draw_map(1);
-                }
-                MapWinTable[0]->draw_cursor();
-                cursor_next(x, y);
-                // cursor_next may dispatch callbacks that change the live
-                // selection; native reloads selected_vehicle_ afterward.
-                if (field_23BF0_ == 0 || Vehs[selected_vehicle_].order != 0x18) {
-                    focus(Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y,
-                          Vehs[selected_vehicle_].faction_id);
-                    ConsoleInfoWin.change(0);
-                    ConsoleStatusWin.redraw();
-                    MapWinTable[0]->main_caption();
-                    alpha_menu_.check(selected_vehicle_);
-                }
-            }
-        } else if (selected_vehicle_ < 0 ||
-                   GameDataStateStorage.fields_.vehicle_current_count_ != previous_vehicle_count ||
-                   (field_23BEC_ ? !veh_selectable(selected_vehicle_) : !veh_ready(selected_vehicle_))) {
-            ready();
-        }
-
-        previous_vehicle_count = GameDataStateStorage.fields_.vehicle_current_count_;
-        field_23BF4_ = 0;
-        field_23BF0_ = 0;
-        field_23BEC_ = 0;
-
-        if (selected_vehicle_ < 0) {
-            GameDataStateStorage.fields_.game_state_ |= 2u;
-            if (TutWinBaseWindow.is_visible() || ReportWinGlobal.is_visible()) {
-                GameDataStateStorage.fields_.game_state_ |= 4u;
-            }
-            field_23BE8_ = 1;
-            const int lock_result = edit_lock();
-            if (lock_result == 0) {
-                const bool manual_stop =
-                    (GameDataStateStorage.fields_.game_preferences_ & PREF_BSC_PAUSE_END_TURN) == 0 &&
-                    IsMultiplayerNet == 0 && IsMultiplayerPBEM == 0 &&
-                    flush_cache != 0 && (GameDataStateStorage.fields_.game_state_ & 4u) == 0;
-                if (manual_stop) {
-                    field_23BE8_ = 0;
-                } else if ((GameDataStateStorage.fields_.game_preferences_ & PREF_BSC_PAUSE_END_TURN) == 0 ||
-                           IsMultiplayerNet != 0) {
-                    parse_num(0, static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_)));
-                    NetMsgPrimary.pop(flush_cache == 0 ? "ENDOFTURN1" : "ENDOFTURN",
-                                     0x1388, 0, nullptr);
-                }
-            }
-            if (field_23BE8_ == 0) {
-                goto finish_turn;
-            }
-
-            ambience(0x1E);
-            cursor_active_ = 0;
-            field_23BF8_ = 1;
-            field_23BFC_ = 1;
-            if (survey_mode_ != 0) {
-                survey_mode_ = 0;
-                MapWinTable[0]->draw_map(1);
-            }
-            ::draw_cursor();
-            ConsoleInfoWin.change(0);
-            ConsoleStatusWin.redraw();
-            MapWinTable[0]->main_caption();
-            alpha_menu_.check(selected_vehicle_);
-            focus(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
-                  ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_],
-                  faction_id_);
-        }
-
-        turn_hints();
-        GameDataStateStorage.fields_.game_state_ &= ~4u;
-
-        if (selected_vehicle_ >= 0) {
-            GameDataStateStorage.fields_.game_state_ &= ~2u;
-            flush_cache |= static_cast<unsigned int>(veh_turn());
-        } else {
-            // 0x0074B504 is g_FX.effects_[57] (g_FX + 57 * 0x6C).
-            // Native reaches it only on the negative-selection wait branch,
-            // after turn_hints and the nonnegative-selection dispatch. Keep
-            // these calls virtual on the typed Effect/Wave receiver.
-            Effect &cpu_turn_complete = g_FX.effect(57);
-            if (!cpu_turn_complete.is_playing()) {
-                cpu_turn_complete.load();
-                cpu_turn_complete.set_reverb_mix(0.0f);
-                cpu_turn_complete.play();
-            }
-            ambience(0xCB);
-            field_23BE4_ = 1;
-            const int saved_vehicle_count = GameDataStateStorage.fields_.vehicle_current_count_;
-            while (ConsoleGlobal.cursor_active_ == 0 && field_23BE4_ != 0 &&
-                   field_23BE8_ != 0 && ExitTurnLoop == 0 &&
-                   end_of_game(0) == 0 &&
-                   saved_vehicle_count == GameDataStateStorage.fields_.vehicle_current_count_ &&
-                   (IsMultiplayerNet == 0 || (GameDataStateStorage.fields_.game_state_ & 0x800u) == 0)) {
-                wait_loop();
-                if (TutWinTourPending != 0) {
-                    TutWinTourPending = 0;
-                    TutorialWindow.tour();
-                }
-            }
-            field_23BE4_ = 0;
-        }
-
-        if (ExitTurnLoop != 0) {
-            return;
-        }
-        if ((GameDataStateStorage.fields_.game_state_ & 4u) != 0) {
-            flush_cache = 0;
-        }
-        if (field_23BF8_ != 0) {
-            ::draw_cursor();
-        }
-        if (field_23BE8_ == 0 || ExitTurnLoop != 0 ||
-            (IsMultiplayerNet != 0 && (GameDataStateStorage.fields_.game_state_ & 0x800u) != 0) ||
-            end_of_game(0) != 0) {
-            goto finish_turn;
-        }
-    }
-
-finish_turn:
-    ambience(0x1E);
-    flush_input();
-    field_23BE8_ = 0;
-    go_reset();
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00514990 ?quit_game@Console@@QAEXXZ 0x00514990-0x00514B2C BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00514990.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
-void Console::quit_game() {
-// RECOVERY_LITERAL: v1 0x0068A7E4 0x0068A7EF $SG64053 0x00514990
-    if (!X_pop((IsMultiplayerNet || IsMultiplayerPBEM) &&
-               bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 255) > 1
-                   ? ConsoleReallyWimpOut : "REALLYQUIT", nullptr)) return;
-    if (IsMultiplayerPBEM) {
-        // The original modifies only the human-faction byte of this word.
-        GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &=
-            static_cast<unsigned char>(~(1u << ConsoleGlobal.faction_id_));
-        save_game(0);
-    }
-    if ((GameDataStateStorage.fields_.game_rules_ & 0x400) && !IsMultiplayerPBEM) auto_save();
-    if (IsMultiplayerNet) {
-        NetDaemonNet.hang_up();
-        NetDaemonNet.reset();
-        IsMultiplayerNet = 0;
-    }
-    ExitTurnLoop = 1;
-// RECOVERY_LITERAL: v1 0x0068A7F0 0x0068A818 $SG64058 0x00514990
-    log_say("Quit***********************************", 0, 0, 0);
-}
-
-int __cdecl popv(char *caption, const char *label, int vehicle, int flags);
-void __cdecl action_gate(int vehicle_id, int base_id);
-
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00514B30 ?retire_game@Console@@QAEXXZ 0x00514B30-0x00514D2B BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned original 00514B30; retained seed src/recovered/units/00514b30.cpp", "Native514B55..64 passes the low-byte greater-than-one boolean into bit_count. Native514D10 writes closed-network==0 to93A948 GameRestartQueued,514D16 sets9B2068 ExitTurnLoop. Existing typed close-network helper reproduces lock clear/transport close; scenario, PBEM, ironman and replay branches remain distinct.", "recovery/tasks/console-scenario-owner-wave.json; native scope decisions preserve the original baseline"], "reason": "Recover the complete Console command in its genuine owner, retaining original spans and seed evidence. Typed state and lifecycle/network APIs replace seed address arithmetic; this source binding is not byte, reference, structure or runtime acceptance."}
-void Console::retire_game() { // 0x00514B30
-    // This function owns a separate static string for the distinct retirement pointer.
-// RECOVERY_OBJECT: v1 0x0068A818 _?retire_wimpout@?1??retire_game@Console@@QAEXXZ@4QBDB
-    static const char retire_wimpout[] = "REALLYWIMPOUT";
-    int closed_network = 0;
-    if (GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) {
-        auto_save();
-    }
-
-    const bool multiple_players =
-        (IsMultiplayerNet || IsMultiplayerPBEM) &&
-        bit_count(static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) > 1) != 0;
-    const char *const prompt = multiple_players ? retire_wimpout :
-// RECOVERY_LITERAL: v1 0x0068A828 0x0068A836 $SG64142 0x00514B30
-// RECOVERY_LITERAL: v1 0x0068A838 0x0068A845 $SG64143 0x00514B30
-        (GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) ? "REALLYRETIRE2" : "REALLYRETIRE";
-    if (!X_pop(prompt, nullptr)) {
-        return;
-    }
-
-    if (IsMultiplayerPBEM) {
-        GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &=
-            static_cast<unsigned char>(~(1u << ConsoleGlobal.faction_id_));
-        save_game(0);
-    }
-
-    if (IsMultiplayerNet) {
-        NetDaemonNet.hang_up();
-        NetDaemonNet.reset();
-        IsMultiplayerNet = 0;
-        closed_network = 1;
-    }
-
-    if (GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) {
-        kill_auto_save();
-    }
-    report_score(1);
-    if ((GameDataStateStorage.fields_.game_state_ & STATE_IS_SCENARIO) == 0) {
-        quayle(ConsoleGlobal.faction_id_);
-        hall_of_fame(1);
-    }
-    if (!closed_network) {
-        show_replay();
-    }
-    GameRestartQueued = !closed_network;
-    ExitTurnLoop = 1;
-// RECOVERY_LITERAL: v1 0x0068A848 0x0068A86C $SG64151 0x00514B30
-    log_say("Retire*****************************", 0, 0, 0);
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00514D30 ?new_game@Console@@QAEXXZ 0x00514D30-0x00514EE2 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00514d30.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
-void Console::new_game() {
-    if (IsMultiplayerNet) return;
-    quit_game();
-    if (ExitTurnLoop) GameRestartQueued = 1;
-}
-
-// WORKAROUND(inline): dead /Ob2 budget probe for show_movies (folds away,
-// spends budget). With the loop's `break` exit the image's EH map (20
-// states) matches, but its return-site Popup teardown calls ~StringList
-// (0x004066C0) out of line where this unit's budget still expands it; two
-// chained ifs here starve that expansion exactly. The original spent this
-// budget on something not yet identified.
-static int show_movies_budget_probe(int x) {
-    if (x == 0) x = 1;
-    if (x == 1) x = 4;
-    return x;
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00515F70 ?show_movies@Console@@QAEXXZ 0x00515F70-0x00516291;0x0065D3F3-0x0065D4D0 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Native515FA5..516035 rebuilds64 FacilitySPStart rows through StringTable and owned Dialogs, sorts the virtual-base StringList and dispatches403BA0 until exec returns negative; Popup lifetime is compiler-managed.", "src/recovered/units/00515f70.cpp", "Root-only console-movie-wrapper-20261001 central dependency closure; immutable task baseline preserved."], "reason": "Recover complete source-owned movie selection and project-index wrapper with proper Popup lifetime, typed facilities, actual text parsing and existing movie playback. Retain exact seed identities and all original spans; no match or acceptance claim is granted by this binding."}
-void Console::show_movies() { // 0x00515F70
-    show_movies_budget_probe(2);  // WORKAROUND(inline): see show_movies_budget_probe
-    Popup popup;
-    for (;;) {
-        popup.start(PopupStartCaption, "SHOWMOVIES", -1, nullptr, 0x42,
-                    nullptr);
-
-        for (int project_id = 0; project_id < MaxSecretProjectNum;
-             ++project_id) {
-            ::clear();
-            const int facility_id = FacilitySPStart + project_id;
-            char *name = Facility[facility_id].name;
-            strcat(StringTemp, StringTable.get(name));
-            popup.dialogs().item(StringTemp, project_id);
-        }
-        popup.dialogs().item_list_.sort(0);
-
-        const int selected_project = popup.exec(0, nullptr);
-        if (selected_project < 0) {
-            break;
-        }
-        amovie_project(selected_project);
-    }
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005162A0 ?name_landmark@Console@@QAEXHH@Z 0x005162A0-0x0051648F BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005162a0.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
-void Console::name_landmark(int x, int y) {
-    if (!on_map(x, y)) {
-        x = ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
-        y = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
-    }
-    const int landmark = find_landmark(x, y, 1);
-    if (!(GameDataStateStorage.fields_.game_state_ & 0x80)) {
-        const int valid = landmark >= 0
-            ? valid_landmark(MapLandmark[landmark].x, MapLandmark[landmark].y,
-                             ConsoleGlobal.faction_id_)
-            : valid_landmark(x, y, ConsoleGlobal.faction_id_);
-        if (!valid) {
-            NetMsgPrimary.pop("LANDMARKNO", 5000, 0, nullptr);
-            return;
-        }
-    }
-    if (landmark >= 0) {
-        if (X_pop_ask("LANDMARK", 31, MapLandmark[landmark].name, nullptr, 0)) return;
-        purge_spaces(ParseStrBuffer[0].str);
-        if (!strlen(ParseStrBuffer[0].str)) return;
-        if (IsMultiplayerNet) {
-            message_landmark(0x2e03, 0, ParseStrBuffer[0].str,
-                MapLandmark[landmark].x, MapLandmark[landmark].y, 0, 0);
-            return;
-        }
-        strcpy(MapLandmark[landmark].name, ParseStrBuffer[0].str);
-        ::draw_map(1);
-    } else {
-        if (X_pop_ask("LANDMARK", 31, LandmarkDefaultName, nullptr, 0)) return;
-        purge_spaces(ParseStrBuffer[0].str);
-        if (!strlen(ParseStrBuffer[0].str)) return;
-        if (IsMultiplayerNet) {
-            message_landmark(0x2e01, 0, ParseStrBuffer[0].str, x, y, 0, 0);
-            return;
-        }
-        if (new_landmark(x, y, ParseStrBuffer[0].str) < 0) {
-            parse_num(0, 64);
-            NetMsgPrimary.pop("LANDMARKTOOMANY", 5000, 0, nullptr);
-        }
-        ::draw_map(1);
-    }
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x005166D0 0x005168B8 0x005168D0 0x005166F2
-// RECOVERY_ASSOCIATED: v1 switch_selector 0x005166D0 0x005168D0 0x00516921 0x005166EC
-// ORIGINAL: 0x005166D0 ?cursor_key@Console@@QAEXHHH@Z 0x005166D0-0x005168B7 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005166d0.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
-void Console::cursor_key(int, int character, int) {
-    switch (character) {
-    case ' ': {
-        const int i = ConsoleGlobal.cursor_history_index_;
-        const int base = base_at(ConsoleGlobal.cursor_history_x_[i],
-                                 ConsoleGlobal.cursor_history_y_[i]);
-        if (base >= 0 && ((GameDataStateStorage.fields_.game_state_ & 0x80) ||
-            Bases[base].faction_id_current == ConsoleGlobal.faction_id_ ||
-            ((Bases[base].visibility & (1u << ConsoleGlobal.faction_id_)) &&
-             spying(Bases[base].faction_id_current)))) {
-            TutWinBaseWindow.zoom(base, 0);
-            return;
-        }
-    }
-    case 'a':
-        if (!NetDaemonNet.field_1BB4_) {
-            const int i = ConsoleGlobal.cursor_history_index_;
-            activate(ConsoleGlobal.cursor_history_x_[i],
-                     ConsoleGlobal.cursor_history_y_[i], 1);
-            return;
-        }
-        break;
-    case 'b': {
-        const int i = ConsoleGlobal.cursor_history_index_;
-        const int base = base_find(ConsoleGlobal.cursor_history_x_[i],
-            ConsoleGlobal.cursor_history_y_[i], ConsoleGlobal.faction_id_);
-        if (base >= 0) TutWinBaseWindow.zoom(base, 0);
-        break;
-    }
-    case 'g':
-        if (!ConsoleControlTurnActive && !NetDaemonNet.field_1BB4_) {
-            const int i = ConsoleGlobal.cursor_history_index_;
-            const int base = base_at(ConsoleGlobal.cursor_history_x_[i],
-                                     ConsoleGlobal.cursor_history_y_[i]);
-            if (base >= 0) go_to(base, -1, 0);
-        }
-        break;
-    case 'p': {
-        const unsigned int shown = MapWinTable[0]->field_1DD70_ & 0x400000;
-        // The walk re-reads the window through its slot after each store; an
-        // int index, which VC6 strength-reduces to the slot pointer with the
-        // image's signed bound compare (jl).
-        for (int i = 0; i < MapWinTableSlots; i++) {
-            if (!MapWinTable[i] || (i != 0 && !MapWinTable[i]->view_active_)) continue;
-            if (!shown) {
-                MapWinTable[i]->field_1DD70_ |= 0x400000;
-                MapWinTable[i]->draw_base_dest(1);
-            } else {
-                MapWinTable[i]->field_1DD70_ &= ~0x400000u;
-                MapWinTable[i]->draw_map(1);
-            }
-        }
-        break;
-    }
-    }
-}
-
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005169F0 ?end_my_turn@Console@@QAEXXZ 0x005169F0-0x00516C4D BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005169f0.cpp: retained complete original identity/spans and seed evidence", "recovery/tasks/console-scenario-owner-wave.json; native scope expansions through sequence27", "Source owner interpretation preserves mapped original accesses, lifetime calls and branch roles; source-bound members and globals replace the seed offsets/address aliases. Historical seeds and claims remain independent restoration obligations."], "reason": "Recover end-turn into the genuine Console owner using existing pane/timer/lifecycle members, shared faction waiting state and the independently read original popup captions. Preserve remote-turn and ready-vehicle decisions, including separate timer clear rather than InfoWin::reset. No matching or game-acceptance claim."}
-void Console::end_my_turn() {
-    TutWinBaseWindow.cancel_zoom_wait();
-    ConsoleInfoWin.clear_pending_timer();
-    TutorialWindow.reset();
-    ConsoleStatusWin.reset();
-    g_FX.play(0xF);
-
-    if (ConsoleControlTurnActive != 0) return;
-    if (edit_lock() != 0) {
-        NetMsgPrimary.pop("PROTECTED", 0x1388, 0, nullptr);
-        return;
-    }
-
-    const uint8_t game_flags = static_cast<uint8_t>(GameDataStateStorage.fields_.game_state_);
-    if (IsMultiplayerNet != 0) {
-        if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) != 0 &&
-            GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) {
-            GenderDefault = Players[GameDataStateStorage.fields_.net_turn_faction_].is_leader_female;
-            PluralityDefault = 0;
-            parse_says(0, Players[GameDataStateStorage.fields_.net_turn_faction_].title_leader, -1, -1);
-            GenderDefault = Players[GameDataStateStorage.fields_.net_turn_faction_].is_leader_female;
-            PluralityDefault = 0;
-            parse_says(1, Players[GameDataStateStorage.fields_.net_turn_faction_].name_leader, -1, -1);
-            GenderDefault = Players[GameDataStateStorage.fields_.net_turn_faction_].noun_gender;
-            PluralityDefault = Players[GameDataStateStorage.fields_.net_turn_faction_].is_noun_plural;
-            parse_says(2, Players[GameDataStateStorage.fields_.net_turn_faction_].noun_faction, -1, -1);
-            parse_says(3, NetDaemonNet.get_player_name(NetDaemonNet.who_2_pid(
-                              GameDataStateStorage.fields_.net_turn_faction_)), -1, -1);
-            NetMsgPrimary.pop("SIMULWHOSE", 0x1388, 0, nullptr);
-            return;
-        }
-        if ((game_flags & 2) != 0 && (GameDataStateStorage.fields_.net_turn_flags_ & 0x10) == 0) {
-            const int faction_bit = 1 << ConsoleGlobal.faction_id_;
-            if ((NetDaemonNet.factions_waiting_mask() & faction_bit) != 0 &&
-                NetDaemonNet.factions_waiting_mask() != 0xFF) {
-                NetMsgPrimary.pop("ATTEMPTTOCANCEL", 0x1388, 0, nullptr);
-                message_data(0x2302, 0, GameDataStateStorage.fields_.turn_current_num_, 0, 0, 0);
-                return;
-            }
-        }
-    }
-
-    if (field_23BE8_ == 0) return;
-    if ((game_flags & 2) == 0) {
-        set_move(1);
-        if (ConsoleGlobal.cursor_active_ != 0) {
-            if (selected_vehicle_ >= 0 &&
-                (veh_ready(selected_vehicle_) != 0 ||
-                 ConsoleGlobal.ready_search(selected_vehicle_) >= 0) &&
-                X_pop("REALLYOVER", nullptr) == 0) {
-                return;
-            }
-        }
-    }
-
-    GameDataStateStorage.fields_.game_state_ |= 2u;
-    const int current_selection = selected_vehicle_;
-    field_23BE4_ = 0;
-    field_23BE8_ = 0;
-    focus_vehicle_ = current_selection;
-}
-
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00517060 ?use_time_bonus@Console@@QAEXXZ 0x00517060-0x00517173 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00517060.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
@@ -5373,6 +5103,29 @@ void Console::use_time_bonus() {
         return;
     }
     message_data(0x2306, 0, 0, 0, 0, 0);
+}
+
+// ORIGINAL: 0x00517180 ?show_version@Console@@QAEXXZ 0x00517180-0x005171C1 FILE BYTE_EXACT
+// size      65 bytes
+// prototype void (__thiscall ?show_version@Console@@QAEXXZ)(Console* this)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0048C0A0 0x00625EC0
+// PRESERVED UNIT - measured BYTE_EXACT.
+//
+// Homed 2026-09-04. Its historical measurement was NO_COMPILE, not MISMATCH.
+// The original writable .data pointer slots at 0x00691870/74 and their
+// distinct text windows are now represented by shared source-owned objects.
+// The caption slot at 0x00691B0C is ScriptPopupFile; the two popp strings are
+// the existing source-owned arrays below.
+
+
+void Console::show_version() {
+    parse_says(0, ConsoleVersionRelease, -1, -1);
+    parse_says(1, ConsoleVersionBuildDate, -1, -1);
+    popp(ScriptPopupFile, ConsoleStrVersionControlX, 0, ConsoleStrAcLogoSm,
+         (NullCallback)0);
 }
 
 // ORIGINAL: 0x005171D0 ?veh_key@Console@@QAEXHHH@Z 0x005171D0-0x0051778A FILE BYTE_EXACT
@@ -6925,6 +6678,47 @@ close_messages:
     return 1;
 }
 
+
+/*
+Purpose: Load a saved game: leave the base window, refuse outside an active
+         network/PBEM session, then rebuild the desktop or reload the running
+         game and redraw the world.
+// ORIGINAL: 0x0051BBA0 ?load_proc@Console@@QAEXHH@Z 0x0051BBA0-0x0051BC62 FILE BYTE_EXACT
+// size      194 bytes
+// prototype void (__thiscall ?load_proc@Console@@QAEXHH@Z)(Console* this, int, int)
+// callers   2   call targets   9
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0041A4C0 0x00460DD0 0x0046B190 0x0058EE60 0x0058F450 0x005AAAB0 0x005D5A70 0x005FCBB0 0x00644DFF
+*/
+void Console::load_proc(int save_slot, int faction_id) {
+    TutWinBaseWindow.exit();
+    if (IsMultiplayerNet != 0 && (GameDataStateStorage.fields_.game_state_ & 0x1000) == 0) {
+        return;
+    }
+    if (IsMultiplayerPBEM != 0 && (GameDataStateStorage.fields_.game_state_ & 0x1000) == 0) {
+        return;
+    }
+    if (load_game(save_slot, faction_id) != 0) {
+        return;
+    }
+    if (GameSessionActive != 0) {
+        if (game_reload(1, 0) != 0) {
+            exit(3);
+        }
+    } else {
+        desktop_init(0);
+    }
+    if (save_slot != 0) {
+        GameDataStateStorage.fields_.game_state_ |= 0xE0;
+        do_all_draws();
+        ::draw_map(1);
+        WorldClimateWorldWin.field_239BC_ |= 4;
+        WorldClimateWorldWin.GraphicWin::redraw();
+    }
+    alpha_menu_.check(selected_vehicle_);
+}
+
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0051BC70 0x0051D240 0x0051D274 0x0051BE9E
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0051BC70 0x0051D274 0x0051D2B8 0x0051C15A
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0051BC70 0x0051D2B8 0x0051D324 0x0051C269
@@ -7319,6 +7113,25 @@ void __cdecl Console::menu_daemon(int selection) {
     ConsoleGlobal.menu_proc(selection);
 }
 
+
+
+/*
+// ORIGINAL: 0x0051D740 ?menu_update@Console@@QAEXXZ 0x0051D740-0x0051D753 BYTE_EXACT
+// size      19 bytes
+// prototype void (__thiscall ?menu_update@Console@@QAEXXZ)(Console* this)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00460DD0
+Status: Complete
+*/
+void Console::menu_update() {
+    // alpha_menu_ IS the object the image calls 0x00460DD0 on - the member
+    // form replaces the MainMenu pun this body used to carry, and measured
+    // BYTE_EXACT unchanged (2026-09-04).
+    alpha_menu_.check(selected_vehicle_);
+}
+
 // Publish current screen geometry independently of init's once-only gate.
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0051D760 sub_51d760 0x0051D760-0x0051D7B5 BYTE_EXACT
@@ -7335,6 +7148,81 @@ void Console::set_screen_geometry() {
     ConsoleMenuBounds.right = IfaceScreenWidth;
     ConsoleMenuBounds.bottom = height;
     StatusFlags |= 1u;
+}
+
+
+/*
+Purpose: Record that the console was closed from the system menu, by raising
+         the flag the turn loop watches.
+// ORIGINAL: 0x0051D7C0 ?on_sys_close@Console@@QAEXXZ 0x0051D7C0-0x0051D7CB BYTE_EXACT
+// symbol    ?on_sys_close@Console@@UAEXXZ
+// size      11 bytes
+// prototype void (__thiscall ?on_sys_close@Console@@QAEXXZ)(Console* this)
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void Console::on_sys_close() {
+    ExitTurnLoop = 1;
+}
+
+/*
+Purpose: Reset the console - clear its scalar state and history slot zero,
+         then close the Buffer, Time and GraphicWin
+         subobjects and clear the map.
+The historical forwarding notes below predate the separate timer lifecycle TU;
+the timer call now uses the existing Time member directly.
+// ORIGINAL: 0x0051D7D0 ?close@Console@@QAEXXZ 0x0051D7D0-0x0051D88E BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Console owns buffer_ at2247C, time_ at22A04 and alpha_menu_ at22A2C; AlphaMenu derives nonvirtually from Menu/GraphicWin.", "Pinned51D7D0 tail selects receiver+2247C for5D7470, receiver+22A04 for616780, receiver+22A2C for5D4E40, then clear(0); this closes members without substituting destruction."], "reason": "Select the constructed Console Buffer and AlphaMenu GraphicWin base through their real members; preserve scalar resets, repeated history-slot-zero writes and Buffer/Time/GraphicWin/clear ordering."}
+// LEVER: PROMOTED out of src/unrecovered/0051d7d0.cpp, whose claim proved the ARTIFACT reproduced while the program held a pending_bodies forwarder. `void close()` was not declared on Console at all - that, not the body, is what kept it in an artifact.
+// LEVER (2026-09-03): time_close_call, not `->close()` on the Time at
+//        0x22a04. The image CALLS 0x00616780 here (0x0051D873) where
+//        time.h's in-class `MEASURED close` otherwise expands at this site
+//        too - 68 compiled instructions against the image's 40, 22/40
+//        agreeing, the whole extra block being Time's own teardown written
+//        out. Buffer::close and GraphicWin::close needed nothing: both are
+//        declared out-of-line in their headers, so both were already calls.
+// symbol    ?close@Console@@QAEXXZ
+// size      190 bytes
+// kind      game
+Return Value: n/a
+Status: Complete
+*/
+void Console::close() {
+    field_23BC8_ = 0xffffffff;
+    cursor_active_ = 0;
+    field_23BE4_ = 0;
+    field_23BE8_ = 0;
+    field_23BF0_ = 0;
+    field_23BF4_ = 0;
+    survey_mode_ = 0;
+    blink2_counter_ = 0;
+    field_23BFC_ = 0;
+    field_23BF8_ = 0;
+    cursor_history_index_ = 0;
+    // 0x0051D821..0x0051D83C reloads this same index on every iteration.
+    // Slots 1..31 and the history head survive close().
+    int count = 0x20;
+    do {
+        count -= 1;
+        int32_t idx1 = cursor_history_index_;
+        cursor_history_x_[idx1] = 0;
+        int32_t idx2 = cursor_history_index_;
+        cursor_history_y_[idx2] = 0;
+    } while (count != 0);
+    field_23D10_ = 0;
+    field_23D18_ = 0;
+    field_23D88_ = 0;
+    field_23D80_ = 0;
+    field_23D8C_ = 0;
+    field_23D84_ = 0;
+    buffer_.close();
+    time_.close();
+    static_cast<GraphicWin &>(alpha_menu_).close();
+    clear(0);
 }
 
 // Initialize the Console windows/menu and publish the fallback popup parent.
@@ -7394,6 +7282,7 @@ void __cdecl nullsub_187() {
 // kind      game
 void __cdecl nullsub_188() {
 }
+
 
 /*
  * RECOVERY_HISTORY: v1 address=0x0051DDE0 source_sha256=5d8f8a1d88dea99894d068cf22393a1686f86c8deab34d7b504349c1d2069549 envelope_sha256=0521c4f5ad1301580c581a88b1479693698786bf2c22227d2ccafa4d64ac80fb
@@ -7488,6 +7377,67 @@ void __cdecl nullsub_188() {
  * [ARCHIVE] * /
  */
 
+/*
+Purpose: Tear down the game console - its own Buffer/Time/Menu/Sprite
+         members, its own extra embedded GraphicWin, then the MapWin
+         fields it holds directly (no separate call into MapWin's own
+         destructor).
+// ORIGINAL: 0x0051D9F0 ??1Console@@QAE@XZ 0x0051D9F0-0x0051DC10;0x0065D0E0-0x0065D220 BYTE_EXACT
+// symbol    ??1Console@@UAE@XZ
+// body      src/console.h
+//
+// HOMED INTO THE CLASS 2026-08-30: the hand-spelled body this spot carried
+// measured MISMATCH (7/123) because everything but `close()` is
+// compiler-owned - the EH frame, the vtable/vtordisp re-stores on the
+// vbase, the member teardown of the GraphicWin/Buffer/Time/Menu/Sprite
+// members console.h now declares, and MapWin's own base teardown inlined
+// (clear(0) and MapWin's carved members). Historically, the in-class
+// `~Console() { close(); }` was interpreted as the original image's
+// ??_DConsole@@QAEXXZ base-object phase (the catalogue's ??1 name sits on the
+// base flavor; the original complete ??1Console phase is 0x0051DDF0,
+// `lea esi,[ecx-0x23D94]` adjust, a call to this, then
+// ??1GraphicWin on the vbase, then the conditional operator delete, with
+// the deleting wrapper ??_GConsole at 0x0051DDE0 before it). The funclet
+// span 0x0065D0E0-0x0065D220 is that historical EH phase's own. The current
+// natural owner-TU compiler symbol is ??1Console@@UAE@XZ, as recorded by the
+// unchanged source symbol override; this comment does not claim a current
+// ??_DConsole emission.
+//
+// TRIED (2026-08-30, after the carve): 30/123, 151 instructions against the
+//        image's 123, and every teardown element is present in the right
+//        order - the whole frame (EH prologue, all three vtable/vtordisp
+//        re-stores) agrees through instruction 22. The +28 are VC6's /O2
+//        member-teardown discipline, which the image does not carry: our
+//        compile nulls each Buffer member's vptr (`mov [edi],0`) before
+//        every ??1Buffer call - five of them, own and inlined-MapWin
+//        alike - spills the member pointer through [ebp-0x10]/[ebp-0x14],
+//        and renumbers the EH states (+3 at close: 9 where the image has
+//        6). The image calls the same five ??1Buffer functions bare.
+//        Established along the way: ~Buffer's virtuality is NOT the
+//        trigger (the store appears with it spelled either way - a
+//        non-virtual spelling was tried and reverted; the Buffer-side
+//        vftable 0x0066FC48 opens with a deleting-dtor thunk, which only
+//        a virtual destructor produces), and the /Od build tree emits no
+//        stores - this is /O2-specific. MapWin's own ??1DMapWin, carved
+//        identically, went BYTE_EXACT 73/73 in the same pass, so the
+//        model and the method are right; whatever makes VC6 skip the
+//        vptr-null for Console's Buffer members specifically is still
+//        hiding.
+// size      864 bytes
+// prototype void (__thiscall ??1Console@@QAE@XZ)(Console* this)
+// callers   2   call targets   10
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00462870 0x0051D7D0 0x005D4DD0 0x005D7410 0x005E3820 0x005FAD00 0x00616200 0x00618EE0 0x006252B0 0x006456E4
+Return Value: n/a
+
+`this` IS NOT Console's own front, matching `guarded_teardowns.cpp`'s
+already-matching `->Console::~Console()` on `TeardownObject00939444` -
+`g_CONSOLE`'s front plus 0x23D94, the offset of the embedded virtual-base
+GraphicWin, the same convention PlanWin's and MapWin's destructors use (see
+the note in `planwin.cpp`).
+*/
+
 // ORIGINAL: 0x0051DDE0 ??_Gthunk1_Console@@UAEPAXI@Z 0x0051DDE0-0x0051DDE8 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor-installed class-view slot 0 selects the complete original scalar deleting adjustor at 0x0051DDE0.", "The retained terminal artifact set at build/recovery/builds/build-8b7ms_6y recorded ??_EConsole@@$4PPPPPPPM@A@AEPAXI@Z in the actual console.cpp COFF view-table relocation; its adjustment prefix is byte-identical to the pinned thunk.", "That build's selected linked MAP/PE cell and PDB XFIXUP resolve the generated entry to ??_GConsole@@UAEPAXI@Z at 0x00407ED0; the physical COFF E primary is a per-class weak fallback to its G primary (search mode 2).", "That linked primary tests mode bit 0, conditionally calls ??3@YAXPAX@Z, returns the saved object pointer in EAX, and uses ret 4.", "The original identity, spans, catalog purpose, source kind, claim state and formal lessons are retained; this binding is not a new byte claim."], "reason": "Bind the preserved scalar deleting-adjustor identity to the compiler-emitted class-view entry whose actual per-class E-to-G fallback and linked G body preserve the original receiver adjustment, deletion-flag contract, object return and stack cleanup."}
 // symbol    ??_EConsole@@$4PPPPPPPM@A@AEPAXI@Z
@@ -7500,6 +7450,23 @@ void __cdecl nullsub_188() {
 // Current source ownership is not original TU or COMDAT-selection proof.
 // ORIGINAL: 0x0051DDF0 ??_GConsole@@UAEPAXI@Z 0x0051DDF0-0x0051DE26 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/0051ddf0.cpp", "task:window-generated-deletion-owners", "Pinned entry receives the Console virtual GraphicWin subobject at complete-object+0x23D94; own-part destructor, virtual-base destructor and conditional delete are separate native stages.", "Fresh emitted code and receiver/target controls remain required. Duplicate COMDAT emission does not establish historical translation-unit placement or retained link selection."], "reason": "The existing real class lifetime generates this deleting entry; bind compiler-owned code rather than transcribing receiver arithmetic or invoking member/base destructors twice."}
+
+// Compiler-generated Win-branch capture adjustor from the genuine
+// MapWin override and virtual GraphicWin base; no handwritten thunk body.
+/*
+Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
+         MapWin::on_lose_mouse_capture expects, then forward unchanged.
+// ORIGINAL: 0x0051DE30 ?on_lose_mouse_capture@thunk4_MapWin@@QAEXXZ 0x0051DE30-0x0051DE3E FILE BYTE_EXACT
+// symbol    ?on_lose_mouse_capture@MapWin@@$4PPPPPPPM@CDCI@AEXXZ
+// size      14 bytes
+// prototype void (__thiscall ?on_lose_mouse_capture@thunk4_MapWin@@QAEXXZ)(MapWin* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
 
 // ORIGINAL: 0x0051DE40 ?on_redraw@thunk4_MapWin@@QAEXXZ 0x0051DE40-0x0051DE4E FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor ??0Console@@QAE@H@Z at 0x0050F460 stores the Console Win view view table at 0066EC18.", "Pinned view slot +0x30 contains original thunk VA 0051DE40.", "Original full-span receiver adjustment is sub ecx, dword ptr [ecx - 4]; sub ecx, 0x2328; its tail reaches 0046B1D0 (?on_redraw@MapWin@@QAEXXZ).", "The original tail target ?on_redraw@MapWin@@QAEXXZ is source-mapped in src/mapwin.cpp; the Console Win view class-view entry is physically emitted in src/console.cpp."], "reason": "Bind the original Console Win-view adjustor identity to the compiler-generated most-derived Console class-view entry in src/console.cpp, while retaining the inherited MapWin callback as its typed target in src/mapwin.cpp. No adapter, vtable, or hierarchy change is authored."}
@@ -7546,6 +7513,40 @@ void __cdecl nullsub_188() {
 // symbol    ?on_post_redraw_nc_buffer@Console@@$4PPPPPPPM@A@AEXPAVBuffer@@H@Z
 // kind      game
 // RECOVERY_GENERATED: v1 vbtable 0x0066EF04 0x0066EF0C ??_8Console@@7B@ 0x0050F460
+
+// Compiler-generated Win slot13 adjustor for the genuine MapWin resize
+// override. The virtual-base layout owns the receiver adjustment.
+/*
+Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
+         MapWin::on_resize expects, then forward unchanged.
+// ORIGINAL: 0x0051DE50 ?on_resize@thunk4_MapWin@@QAEXHH@Z 0x0051DE50-0x0051DE5E FILE BYTE_EXACT
+// symbol    ?on_resize@MapWin@@$4PPPPPPPM@CDCI@AEXHH@Z
+// size      14 bytes
+// prototype void (__thiscall ?on_resize@thunk4_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+
+// Compiler-generated Win slot17 receiver adjustment for MapWin mouse feedback.
+// The original catalogue name remains on the mapping below.
+/*
+Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
+         MapWin::on_mouse_move expects, then forward unchanged.
+// ORIGINAL: 0x0051DE70 ?on_mouse_move@thunk4_MapWin@@QAEXHH@Z 0x0051DE70-0x0051DE7E FILE BYTE_EXACT
+// symbol    ?on_mouse_move@MapWin@@$4PPPPPPPM@CDCI@AEXHH@Z
+// size      14 bytes
+// prototype void (__thiscall ?on_mouse_move@thunk4_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
 
 // ORIGINAL: 0x0051DF00 ?on_nc_left_down@thunk1_Console@@QAEXHH@Z 0x0051DF00-0x0051DF08 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor span at 0x0050F460 stores table 0x0066EC18; exact cell 0x0066EC9C is 0x0051DF00.", "The complete original thunk bytes at 0x0051DF00 tail to pinned target 0x0050FB10.", "Fresh full build build-fpcqf1x8: ??_7Console@@6BWin@@@+0x84 COFF relocation selects ?on_nc_left_down@Console@@$4PPPPPPPM@A@AEXHH@Z; thunk bytes and its unique relative tail relocation target ?on_nc_left_down@Console@@UAEXHH@Z.", "The owner compile receipt inputs were unchanged and match current files at proposal emission; selected output is observed in the fresh MAP/PE but this proposal does not claim complete link-preservation acceptance.", "Historical source kind `game`, original identity/name, complete span, and parsed claims/lessons are checked unchanged after native-writer readback."], "reason": "The pinned Console constructor at 0x0050F460 installs the ??_7Console@@6BWin@@@ address point; its exact slot cell at +0x84 selects original identity 0x0051DF00. The fresh full-build owner COFF vftable relocation selects the compiler-generated thunk ?on_nc_left_down@Console@@$4PPPPPPPM@A@AEXHH@Z, whose unique physical relative tail targets ?on_nc_left_down@Console@@UAEXHH@Z. The original marker name and complete source history remain attached to this FILE identity."}
