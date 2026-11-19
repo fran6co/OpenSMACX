@@ -30,6 +30,49 @@
 // RECOVERY_LITERAL: v2 merged 0x0066D8D8 0x0066D8E0 __real@8@3fff8000000000000000 0x006257B0
 
 
+
+// global
+// THE OBJECT, not a pointer to one. `(Random *)0x009BB568` named storage
+// inside terranx.exe, so every use of it in the recovered executable reaches
+// a page this process does not have - and it cost every caller the ratchet
+// besides, because through a pointer VC6 emits `mov ecx, [Rand]` where the
+// image passes the object's address outright. Same defect `stringTemp` had.
+// Original 0x00625705/0x00625720 zero the state updated by the reseed/generator pair; no historical class claim.
+// RECOVERY_OBJECT: v1 0x009BB568 ?Rand@@3VRandom@@A
+Random Rand;   // 0x009BB568
+
+// ORIGINAL: 0x00625700 ??__ERand@@YAXXZ 0x00625700-0x00625716 FILE BYTE_EXACT
+// symbol    _$E4
+// size      22 bytes
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00645398
+// notes     Staged hybrid export redirect calls the source-owned initializer
+// Historical substitute experiment below is not the current C++ lifetime.
+// LEVER: `Rand = Random();`, NOT `Rand.reseed(0)`. This stands in for the
+//        generated `??__ERand`, whose whole job is to run the constructor, and
+//        the image is one `mov dword ptr [0x9bb568], 0`. `reseed(0)` used to
+//        fold to the same store only because reseed was a plain assignment;
+//        once reseed became the aliasing xor-swap above it stopped folding and
+//        this address went BYTE_EXACT -> MISMATCH. Assigning a default-built
+//        temporary says what the initialiser actually does and restores it.
+// Random's global object owns startup through its default constructor.
+// VC6 currently factors zero initialization and atexit registration into
+// generated callees; restoration of the original combined body is pending.
+
+// ORIGINAL: 0x00625720 ??__FRand@@YAXXZ 0x00625720-0x0062572B FILE BYTE_EXACT
+// symbol    _$E2
+// size      11 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Staged hybrid export redirect calls the source-owned exit cleanup
+// Random's global object owns cleanup through its destructor.
+
 /*
 // ORIGINAL: 0x00625730 ??0Random@@QAE@XZ 0x00625730-0x00625739 BYTE_EXACT
 // compile_context src/jackal/random.cpp
@@ -140,48 +183,6 @@ double Random::get() {
     uint32_t bits = (seed_ & 0x7FFFFF) | 0x3F800000;
     return static_cast<double>(*reinterpret_cast<float *>(&bits)) - 1.0;
 }
-
-// global
-// THE OBJECT, not a pointer to one. `(Random *)0x009BB568` named storage
-// inside terranx.exe, so every use of it in the recovered executable reaches
-// a page this process does not have - and it cost every caller the ratchet
-// besides, because through a pointer VC6 emits `mov ecx, [Rand]` where the
-// image passes the object's address outright. Same defect `stringTemp` had.
-// Original 0x00625705/0x00625720 zero the state updated by the reseed/generator pair; no historical class claim.
-// RECOVERY_OBJECT: v1 0x009BB568 ?Rand@@3VRandom@@A
-Random Rand;   // 0x009BB568
-
-// ORIGINAL: 0x00625700 ??__ERand@@YAXXZ 0x00625700-0x00625716 FILE BYTE_EXACT
-// symbol    _$E4
-// size      22 bytes
-// prototype 
-// callers   0   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00645398
-// notes     Staged hybrid export redirect calls the source-owned initializer
-// Historical substitute experiment below is not the current C++ lifetime.
-// LEVER: `Rand = Random();`, NOT `Rand.reseed(0)`. This stands in for the
-//        generated `??__ERand`, whose whole job is to run the constructor, and
-//        the image is one `mov dword ptr [0x9bb568], 0`. `reseed(0)` used to
-//        fold to the same store only because reseed was a plain assignment;
-//        once reseed became the aliasing xor-swap above it stopped folding and
-//        this address went BYTE_EXACT -> MISMATCH. Assigning a default-built
-//        temporary says what the initialiser actually does and restores it.
-// Random's global object owns startup through its default constructor.
-// VC6 currently factors zero initialization and atexit registration into
-// generated callees; restoration of the original combined body is pending.
-
-// ORIGINAL: 0x00625720 ??__FRand@@YAXXZ 0x00625720-0x0062572B FILE BYTE_EXACT
-// symbol    _$E2
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// notes     Staged hybrid export redirect calls the source-owned exit cleanup
-// Random's global object owns cleanup through its destructor.
 
 // ORIGINAL: 0x006257E0 ?random_reseed@@YAXK@Z 0x006257E0-0x006257F9 BYTE_EXACT
 // LEVER: BYTE_EXACT 8/8, and not one character of THIS body changed. The image inlines `Rand.reseed(new_seed)` here and keeps the xor chain, dropping only the first of reseed's two stores - dead once the second follows. Blocking VC6's xor-swap algebra inside reseed - see the LEVER on 0x00625750 - is what makes those four xors survive inlining here too.
