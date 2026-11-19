@@ -856,14 +856,14 @@ L_595083:
                 target_veh = veh_init(spawn_proto, 0, dest_x, dest_y);
                 if (target_veh >= 0) {
                     // WORKAROUND(inline): dead budget spend (supply_options' probe, see
-                    // its declaration). With every message block written at its test
-                    // (literal order) and no probe, the sites are 6,6,6,6,7,16 deep
-                    // against the image's 5,5,5,5,7,15; four to eight of these calls,
-                    // anywhere in the body, give the final teardown's 15. No position or
-                    // count moves the four early sites (structural, not spend). The
-                    // original spending is not identified.
-                    supply_options_budget_probe(2);
-                    supply_options_budget_probe(2);
+                    // its declaration). Without it the final teardown is 16 deep
+                    // against the image's 15. Two calls: with the has_treaty/is_human/
+                    // get_triad spellings (which fixed the four early sites) four
+                    // calls put order_veh over VC6's per-function size ceiling
+                    // (MATCHING_GUIDE 2.8 "Total-size ceiling") before the
+                    // vehicle-count return, whose ??_DStringList the image expands;
+                    // three or none leave the final teardown 16 deep. The original
+                    // spending is not identified.
                     supply_options_budget_probe(2);
                     supply_options_budget_probe(2);
                     Vehs[veh_id].order = ORDER_NONE;
