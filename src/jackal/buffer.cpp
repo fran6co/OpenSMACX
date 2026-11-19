@@ -3604,7 +3604,7 @@ int Buffer::write_multi_font_raw_l(LPSTR text, int x_coord, int y_coord,
         }
         next_slot = write_font_slot_;
     chosen:
-        int opened_at = x;
+        x_coord = x;
         x = write_raw_l(str, x, y_coord,
                               static_cast<int>(stop - str));
 
@@ -3646,8 +3646,8 @@ int Buffer::write_multi_font_raw_l(LPSTR text, int x_coord, int y_coord,
                 const int height = link_font->unk_1_ >= 0
                     ? link_font->height_ + link_font->unk_1_
                     : link_font->line_height_;
-                spot_.add(link_count_ - 1, 0, opened_at, y_coord,
-                          x - opened_at, height);
+                spot_.add(link_count_ - 1, 0, x_coord, y_coord,
+                          x - x_coord, height);
             }
         }
         write_font_slot_ = next_slot;
