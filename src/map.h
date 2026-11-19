@@ -660,6 +660,12 @@ MEASURED inline int __cdecl veh_who(int x, int y) {
     // (0x00500250) and the same expansions as two nested ifs, but one /Ob2
     // cost class cheaper. enemy_move expands it at 0x56CA61 and calls the
     // on_map after it (0x56CC83) only with this body (MATCHING_GUIDE 2.8).
+    // WORKAROUND(inline): Path::find's two expansions (0x59AE58, 0x59B6EF)
+    // store -1 in two copies, the shape of base_who's two early returns;
+    // that body (`if (!bit) return -1; ...; return owner >= 8 ? -1 : owner;`,
+    // copy exact, Path::find 895 -> 876) costs enemy_move this expansion
+    // while anything_at has its two returns, so enemy_move still holds a
+    // charge the original did not have before 0x56CA61.
     int owner;
     if (tile->bit & BIT_VEH_IN_TILE && (owner = tile->val2 & 0xF) < 8) {
         return owner;
@@ -806,16 +812,21 @@ MEASURED inline BOOL __cdecl is_port(int base_id, BOOL is_base_radius) {   // 00
 }
 
 // MEASURED inline, as base_who: world_alt_set and action_fungal inline it.
+// Two early returns, as base_who: enemy_move's two expansions whose result
+// is kept (0x56BB35, 0x56C194) store -1 to `owner` in two separate copies,
+// after `jne` and after `jl`; the nested-if body has one. Same copy
+// (0x005798E0) and the same /Ob2 decisions in every caller.
 MEASURED inline int __cdecl anything_at(int x, int y) {
     Map *tile = map_loc(x, y);
-    if (tile->bit & (BIT_VEH_IN_TILE | BIT_BASE_IN_TILE)) {
-        // `int`, as in veh_who: the image's test is `jl`.
-        int owner = tile->val2 & 0xF;
-        if (owner < MaxPlayerNum) {
-            return owner;
-        }
+    if (!(tile->bit & (BIT_VEH_IN_TILE | BIT_BASE_IN_TILE))) {
+        return -1;
     }
-    return -1;
+    // `int`, as in veh_who: the image's test is `jl`.
+    int owner = tile->val2 & 0xF;
+    if (owner >= MaxPlayerNum) {
+        return -1;
+    }
+    return owner;
 }
 
 // Defined by the world-generation owner in world.cpp.
