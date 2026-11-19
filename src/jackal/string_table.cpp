@@ -244,14 +244,10 @@ Status: Complete
 */
 BOOL __cdecl labels_init() {
     // The original passes equal text through distinct file and section keys.
-    // Keep the two pointer identities separate: text_open copies the file key
-    // before building/searching the section header from the section key.
-    // RECOVERY_OBJECT: v1 0x0069720C _?labels_file_id@?1??labels_init@@YAHXZ@4QBDB
-    static const char labels_file_id[] = "labels";
-    // RECOVERY_OBJECT: v1 0x00697204 _?labels_section_id@?1??labels_init@@YAHXZ@4QBDB
-    static const char labels_section_id[] = "labels";
     labels_shutdown();
-    if (text_open(labels_file_id, labels_section_id)) {
+// RECOVERY_LITERAL: v1 0x0069720C 0x00697213 $SG48811 0x00616A00
+// RECOVERY_LITERAL: v1 0x00697204 0x0069720B $SG48810 0x00616A00
+    if (text_open("labels", "labels")) {
         return true;
     }
     text_get();
