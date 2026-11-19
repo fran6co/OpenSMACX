@@ -386,13 +386,16 @@ def test_configured_terrain_generation_requires_every_bound_table(tmp_path, hook
         start = altitude_start + index * 44
         altitude_rows.append(f'// RECOVERY_OBJECT: v2 0x{start:08X} '
                              f'0x{start + 44:08X} {symbol} 0x00401000')
+    (root / 'src/map_grid.cpp').write_text('\n'.join(altitude_rows) + '\n')
+    # The direction table and the landmark bonus templates are defined by
+    # mapwin.cpp's unit (their .data run), not map_grid.cpp's.
     start = direction_start
-    altitude_rows.append(f'// RECOVERY_OBJECT: v2 0x{start:08X} '
-                         f'0x{start + 245:08X} ?AltDirectionTable@@3QBEB 0x00401000')
+    window_rows = [f'// RECOVERY_OBJECT: v2 0x{start:08X} '
+                   f'0x{start + 245:08X} ?AltDirectionTable@@3QBEB 0x00401000']
     for index, symbol in enumerate(hook._LANDMARK_BONUS_TABLES.values()):
         address = bonus_start + index * 113
-        altitude_rows.append(f'// RECOVERY_OBJECT: v1 0x{address:08X} {symbol}')
-    (root / 'src/map_grid.cpp').write_text('\n'.join(altitude_rows) + '\n')
+        window_rows.append(f'// RECOVERY_OBJECT: v1 0x{address:08X} {symbol}')
+    source.write_text(source.read_text() + '\n'.join(window_rows) + '\n')
     hook.terrain_initializers(root, original, output.parent)
     assert {path.name for path in output.parent.iterdir()} == {
         'terrain_coast_remap.inc', *(filename for filename, _ in LANDMARKS),
