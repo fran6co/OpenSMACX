@@ -769,15 +769,15 @@ void CouncWin::init(int proposal, int faction_id) {
                 support[candidate] = 0;
                 if (Players[candidate].rule_flags & RFLAG_ALIEN) continue;
                 if (!is_alive(candidate)) continue;
-                for (int voter = 1; voter < MaxPlayerNum; voter++) {
-                    if (!(Players[voter].rule_flags & RFLAG_ALIEN)
-                        && is_alive(voter)
-                        && static_cast<int>(leader_label_kind_[voter]) == candidate) {
-                        support[candidate] += leader_tech_[voter];
+                for (proposal = 1; proposal < MaxPlayerNum; proposal++) {
+                    if (!(Players[proposal].rule_flags & RFLAG_ALIEN)
+                        && is_alive(proposal)
+                        && static_cast<int>(leader_label_kind_[proposal]) == candidate) {
+                        support[candidate] += leader_tech_[proposal];
                     }
                 }
             }
-            int done = 0;
+            proposal = 0;
             for (candidate = 1; candidate < MaxPlayerNum; candidate++) {
                 if (Players[candidate].rule_flags & RFLAG_ALIEN) continue;
                 if (!is_alive(candidate)) continue;
@@ -795,7 +795,7 @@ void CouncWin::init(int proposal, int faction_id) {
                 diplomacy_check(local, candidate, 0);
                 if (DiploFriction >= 15) continue;
                 if (DiploScratchFA60) continue;
-                if (done) continue;
+                if (proposal) continue;
                 if (PlayersData[candidate].diplo_treaties[local] & 0x40c31) continue;
                 const int amount = min(PlayersData[candidate].energy_reserves * 3 / 4,
                     GameDataStateStorage.fields_.turn_current_num_
@@ -840,7 +840,7 @@ void CouncWin::init(int proposal, int faction_id) {
                 parse_says(3, Players[candidate].name_leader, -1, -1);
                 clock_wait(500);
                 if (X_pops("VOTEFORMETECH", 0, FactionDiplomacyPortraits[candidate], nullptr)) {
-                    done = 1;
+                    proposal = 1;
                     tech_achieved(local, DiploScratchF800, candidate, 0);
                     tech_achieved(local, DiploScratchF80C, candidate, 0);
                     set_vote(local, candidate);
