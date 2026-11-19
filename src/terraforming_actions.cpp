@@ -89,8 +89,6 @@ extern int TerraformingActionsExternPad11;
 extern int TerraformingActionsExternPad12;
 extern int TerraformingActionsExternPad13;
 extern int TerraformingActionsExternPad14;
-extern int TerraformingActionsExternPad15;
-extern int TerraformingActionsExternPad16;
 #include "vector.h"  // vector_add operates on actual three-float arrays.
 
 extern void __cdecl unspot_stack(int veh_id);
