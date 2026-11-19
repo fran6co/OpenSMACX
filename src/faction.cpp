@@ -8080,7 +8080,6 @@ int communicate_late_contact_best_tech;
 int communicate_late_contact_best_tech_value;
 int communicate_late_contact_bully_random, communicate_late_contact_choice;
 int communicate_late_contact_rank;
-int communicate_late_contact_research_tech;
 int communicate_late_contact_tech, communicate_late_contact_tech_mask;
 int communicate_late_contact_tech_mask_offset;
 int communicate_late_contact_text_result;
@@ -10729,11 +10728,9 @@ if (has_treaty(faction_id, faction_id_with, 1) != 0) {
 }
 if (has_treaty(faction_id, faction_id_with, 1) != 0 &&
     (GameDataStateStorage.fields_.game_rules_ & 0x200) == 0) {
-    communicate_late_contact_research_tech =
-        PlayersData[faction_id_with].tech_id_researching;
-    if (communicate_late_contact_research_tech >= 0 &&
-        has_tech(communicate_late_contact_research_tech, faction_id) == 0 &&
-        communicate_late_contact_research_tech !=
+    if (PlayersData[faction_id_with].tech_id_researching >= 0 &&
+        has_tech(PlayersData[faction_id_with].tech_id_researching, faction_id) == 0 &&
+        PlayersData[faction_id_with].tech_id_researching !=
             PlayersData[faction_id].tech_id_researching &&
         (GameDataStateStorage.fields_.game_rules_ & 0x06000000) == 0 &&
         PlayersData[faction_id].tech_accumulated >=
@@ -10777,13 +10774,13 @@ if (has_treaty(faction_id, faction_id_with, 1) != 0 &&
             // Native order: mark the peer's current research in the peer row,
             // parse it into slot 0, then mark/parse the selected tech in the
             // actor row/slot 1. Do not collapse or reorder these effects.
-            bitmask(communicate_late_contact_research_tech,
+            bitmask(PlayersData[faction_id_with].tech_id_researching,
                     &communicate_late_contact_tech_mask_offset,
                     &communicate_late_contact_tech_mask);
             PlayersData[faction_id_with].tech_pact_shared_goals[
                 communicate_late_contact_tech_mask_offset] |=
                     static_cast<uint32_t>(communicate_late_contact_tech_mask);
-            parse_say(0, Technology[communicate_late_contact_research_tech].name, -1, -1);
+            parse_say(0, Technology[PlayersData[faction_id_with].tech_id_researching].name, -1, -1);
             bitmask(communicate_late_contact_best_tech,
                     &communicate_late_contact_tech_mask_offset,
                     &communicate_late_contact_tech_mask);
