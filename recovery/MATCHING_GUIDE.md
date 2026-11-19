@@ -2205,9 +2205,10 @@ call multiset, then the tree.
     expansions are the current guard-clause body.
   - has_fac 0x00421670: base_psych calls it at its first five sites and
     expands the last four (image `C C C C C b b b b`): called early, expanded
-    late is an owner (2.8 "Missing owner"), not a class. The function-pointer
-    stand-ins in base_psych, staple_the_bastards, end_of_game and
-    base_editor_fac stay until the owner is found; dropping the `queued`
+    late is an owner (2.8 "Missing owner"), not a class (found in round 7,
+    below: an inline facility block around has_fac_built). The
+    function-pointer stand-ins in staple_the_bastards, end_of_game and
+    base_editor_fac stay until their owners are found; dropping the `queued`
     local makes base_doctors and mind_control expand one site too many.
   - go_to 0x00560AD0 dearer (pointer or reference local: copy loses 12 rows;
     proto_id local, dead local: copy exact): enemy_move's first site still
@@ -2225,6 +2226,119 @@ call multiset, then the tree.
   callees that flip are the teardown chain (~Scroll, ~FlatButton, ~BasePop,
   ~Sprite expanded where the image calls them) in 14 functions. The probes
   stand for spend in the callers, not for a header class.
+
+Joint solve of the header-inline bodies (2026-11-19 par-4, round 7)
+
+Tool: `analysis/jointsolve.py` (README). Objective: the image's call count
+of every header-inline callee in every function, with the function-pointer
+stand-ins removed so that a body is not judged against its own
+compensation. Start: 156 site-units (128 as written). Deck: 22 inlines, 2
+to 8 spellings each, every one with its out-of-line copy byte-exact
+(`copies`); 9 spellings fail the copy and are out (range guard+ternary,
+on_map ternary, x_dist with an assignment or two returns, has_project as
+one `&&` or nested, is_known with a guard clause, is_port and has_fac with
+a named `base` pointer, has_fac with `is_built`/`queue_count` as two guard
+clauses).
+
+- **The current set is a fixed point of single moves** (high). 41 single
+  moves, tree-wide: none lowers the site-units without making another
+  (function, callee) pair worse or breaking an exact caller. Every move
+  that changes a decision changes it in battle_fight 0x00506AF0, enemy_move
+  0x0056B5B0 (measured without its go_to stand-in) or probe 0x0059F120 and
+  nowhere else; the copies and all other callers are indifferent. So the
+  remaining header-inline differences are not a property of the header
+  bodies: they are what these three functions' own structure (invented
+  helpers, hand-copied owners, stand-ins) leaves open.
+- **A broken exact caller is shape evidence and outranks a site-unit**
+  (high). Spellings rejected by exact callers although the copy is exact
+  and the decisions are equal or better: base_who/veh_who/anything_at
+  without the `tile` local or through owner_at (14-16 exact functions),
+  veh_top with the local declared after the guard (7), vector_dist(2) with
+  `dx`/`dy` locals (18), has_project as guard + ternary (33), on_map as
+  guard clauses (12-13), has_treaty with a named local (5), has_fac without
+  `queued` (4). on_map as `if (..) return true; return false;` gains one
+  spot_all site (6/3 -> 6/4) and costs Path::move 0x0059BC10 a commutative
+  `lea` operand order at its wrap_map_x + on_map expansion: rejected.
+- **has_fac_built 0x00500290 is a header inline** (high). base_build
+  expands it at its first seven selected-base sites and calls it at the
+  sixteen after its pass-1 budget runs out (the same place where its range
+  sites turn into calls). "Called only by a giant, copy next to the giant"
+  (above) applies to a function that looks like a plain helper defined
+  after its only caller. base.cpp's two invented forwarders were that
+  function. Tree: 156 -> 151 site-units, nothing lost.
+- **Called early, expanded late, and no budget moves it: the early sites
+  are one inline level deeper** (high in base_psych 0x004EA540). The image
+  calls has_fac at base_psych's first five sites and expands the last four,
+  with two has_project sites in between expanded. Dead spend at the top (1
+  to 8 ifs) moves nothing; has_fac_built at all nine sites expands all
+  nine; the facility block as an inline owner with has_fac written
+  directly expands the first has_fac and calls the rest. With the block as
+  an inline owner AND has_fac_built inside it, has_fac is a depth-3 site
+  and all five are refused while has_project (depth 2) expands: byte-exact
+  without the stand-in. The same recipe does not transfer blindly:
+  staple_the_bastards 0x0041B4F0 expands has_fac at depth 2 and at depth 3
+  (image: call) whatever the spend, and base_minerals 0x004E9CB0 refuses
+  has_fac at depth 2 at all seven sites where the image expands the last
+  two, so those two stay written as `has_fac(id, BaseIDCurrentSelected,
+  0)`. Depth decides before budget does, but the depth at which a callee is
+  refused differs per caller; test depth 1, 2 and 3 per function.
+- **Every out-of-line `range(reactor, 1, 100)` copies the reactor first**
+  (high; 13 of 13 image sites: battle_fight 8, enemy_move 0x56B7B8 and
+  0x56B80C, interceptor 0x5067B7, battle_report 0x4221B9, draw_active
+  0x4B5A17: `xor r,r; mov rl,[reactor]; mov eax,r; push eax`). Ours pushes
+  the zero-extended register directly at 11 of them. So proto_power passes
+  the reactor byte through an int: a named `int reactor` after the guard
+  clause, or an inline level `reactor_power(int reactor) { return
+  range(reactor, 1, 100) * 10; }` (both keep 0x005799A0 exact; a cast, a
+  `proto_id` local, a ternary with the local declared first or a named
+  result do not give the copy). Not landed, because both change the cost:
+  the named local is one class dearer (enemy_move then needs anything_at or
+  base_who as guard + ternary to keep its multiset; battle_fight calls
+  range 18 times against the image's 12, 2119 -> 3366 rows), the inline
+  level adds a depth (enemy_move keeps its multiset, 5688 -> 5681 rows;
+  battle_fight 2119 -> 3047 rows with eleven more wrong sites) and no other
+  function of the tree moves. battle_fight's call multiset (a higher rung)
+  is balanced around the copy-less body through its invented veh_cur_hp;
+  land the reactor copy together with battle_fight's helpers, not before.
+- **An unused function-pointer local is a budget probe, not a call forcer**
+  (high in base_build 0x004F81A0). With the current headers each of the 15
+  `range_call(...)` / `project_call(...)` uses can be spelled as the plain
+  call, one at a time and all together, with identical rows (3640) and an
+  equal call multiset, as long as the six `T (__cdecl *const x)(..) = f;`
+  declarations stay; deleting any one declaration (then unused) gives range
+  46/45 and 3754 rows. So base_build's pass 1 already refuses those sites,
+  and what the declarations supply is one unit of pass-1 spend each. Before
+  reading a function-pointer stand-in as "this site needs forcing", spell
+  the use plainly and keep the declaration: if nothing moves, the site is a
+  budget question and the stand-in is a dead probe.
+- **A body one class dearer can make a caller's FRAME right** (medium).
+  veh_who as guard + ternary against one condition with an embedded
+  assignment: air_power 0x005678C0 goes 955 -> 1083 rows with an identical
+  call multiset, and its frame goes 0x44 -> 0x48, the image's. The rows are
+  slot renumbering inside the right frame; judge such a move by the frame.
+- **Where the giants' remaining sites are** (for their owners).
+  battle_fight: ours never exhausts pass 1; the image calls range 0x50AB85,
+  is_ocean 0x50ACB1, has_fac 0x50ACE0 and 0x50ACF4, has_project 0x50AD0A
+  and veh_who 0x50AEC7, all within its last 0x400 bytes of pass-1 sites.
+  spot_all 0x005B6260: the three on_map calls ours lacks (0x5B6D2C,
+  0x5B7200, 0x5B8295) are depth-3 sites inside spot_base/spot_stack ->
+  spot_tile expansions, and the image's sequence over those owners is not
+  monotone (C C C C E E C E E), so it is not an on_map class.
+- **enemy_move's direction loop 0x56BA68** matches (21 -> 7 rows) in two
+  builds: veh_who with one condition, and `remote_own` forced to memory.
+  Both do it by the same wrong equilibrium: faction_id takes ebx for the
+  whole function, which frees edi for the loop counter. The image is a
+  third state: ebx holds the `veh_id * 52` temporary from 0x56B642 (also
+  homed at [ebp-0x10]), proto_id and remote_own are memory only ([ebp-0xAC],
+  [ebp-0xA0]; `remote_own = 1` is stored through ecx at 0x56B619 before
+  the faction compare), faction_id is homed at [ebp-0xC] and loaded into
+  ebx at the loop's pre-header, and edi is the counter. Ours gives ebx to
+  the constant 1 / remote_own at 0x56B5DC and to proto_id at 0x56B694,
+  keeps the temporary in memory and caches it in edi from 0x56B75A across
+  the loop. The order of the four entry assignments (24 orders), a `Veh *`
+  local, five spellings of the remote_own test and a damage-block owner do
+  not move the entry (46 rows); the owner lowers the function to 5547 rows
+  but calls proto_power at 0x56B7B8/0x56B80C where the image expands it.
 
 
 ## 3. Symptom → first thing to check

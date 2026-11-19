@@ -99,6 +99,16 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   `--base` lists the site-units a header hypothesis moved closer to or further from the image. Counts are taken
   after tail merging and an expanded destructor shows as its inner `close` calls, so read one function's sites
   with callseq.py / inlinemap.py. MATCHING_GUIDE 2.8 "Header-inline cost classes".
+- `analysis/jointsolve.py eval|copies|descend` joint solve of the header-inline body spellings. The objective is the
+  image's per-function call count of every header-inline callee over the whole tree, measured WITHOUT the local
+  function-pointer stand-ins (`T (__cdecl *const x)(..) = callee;` deleted, `x(` spelled `callee(` in a scratch copy
+  of the unit), so a body is judged against the image and not against its own compensation. `eval [--base F]
+  [--set name=rung,.. --deck D.py]` one pass (60-80 s: exact set as written, decision vector bare; lists what moved
+  and the exact functions lost beyond the count canaries); `copies D.py` which spellings keep the out-of-line copy
+  fe-exact; `descend D.py [--pairs]` coordinate descent over the copy-exact spellings (a move is kept when site-units
+  drop, no (function, callee) pair gets worse and no exact caller beyond the canaries breaks). The deck is a Python
+  file: `INLINES = {name: dict(file, head=<regex of the definition line>, rungs=[(tag, body), ...], feasible=[...])}`.
+  MATCHING_GUIDE 2.8 "Joint solve of the header-inline bodies".
 - `analysis/probesweep.py [--write] [--each] [unit ...]` dead budget-probe retirement screen (2.5 min tree-wide):
   each probe-carrying function without its `*_budget_probe*` call lines, by (named call difference, rows) and the
   unit's exact markers it breaks; `--write` applies removals that keep all three.

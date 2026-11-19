@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""jointsolve.py eval [--out F.json] [--base F.json] [--units a,b] [--keep-standins]
+"""jointsolve.py eval [--out F.json] [--base F.json] [--units a,b] [--keep-standins] [--set name=rung,.. --deck DECK.py [--keep]]
    jointsolve.py copies DECK.py            # which body spellings keep the out-of-line copy fe-exact
    jointsolve.py descend DECK.py [--pairs] [--log F] [--start name=rung,...]
 
@@ -12,11 +12,13 @@ of the unit), so a body is judged against the image's decisions and not against 
 eval     one pass: every unit compiled once as written (exact set, rows) and the stand-in units a
          second time without them (decision vector).  Prints site-units and, with --base, what moved.
 copies   DECK.py defines INLINES = {name: dict(file=..., head=<regex of the definition line>,
-         copy=(unit, 0xADDR), rungs=[(tag, body_text), ...])}; body_text replaces the text between the
-         definition line and the closing `\\n}\\n`.  Reports, per rung, whether the copy stays exact.
+         rungs=[(tag, body_text), ...], feasible=[tags], ident=<identifier when the key is not one>,
+         sym=<regex of the copy's symbol for an overload>)}; body_text replaces the text between the
+         definition line and the closing `\\n}\\n`.  Reports, per rung, whether every copy stays exact.
 descend  coordinate descent over the rungs whose copy is exact: change one inline's rung, keep the
-         move when tree site-units drop and no (function, callee) pair gets worse; then (--pairs) pair
-         moves, accepted on a strict drop of the total.  The headers are edited in place and left at
+         move when tree site-units drop, no (function, callee) pair gets worse and no exact function
+         beyond the count canaries breaks (a broken exact caller is shape evidence against the
+         spelling); then (--pairs) pair moves, accepted on a strict drop of the total.  The headers are edited in place and left at
          the best configuration; every step is appended to --log.
 Prefixes FE_PFX_BASE.. with FE_JOBS lanes.  Screen only (fe rows; `recover measure` is the authority).
 """
@@ -302,7 +304,7 @@ def closure(deck):
         defs[n] += hdrs[m.end():i]
     out = {}
     for name in deck:
-        short = name.split('/')[0]
+        short = deck[name].get('ident', name.split('/')[0])
         seen = {short}
         grew = True
         while grew:
@@ -316,9 +318,26 @@ def closure(deck):
     return out
 
 
+# count-sensitive canaries (AGENTS.md): they flip with a unit's front-end counter, not with a decision
+CANARIES = {'004A6330', '00524870', '004E2000', '0053EB50', '004CEDE0', '00527290', '004C3090', '0042B630',
+            '0055BC80', '00435400', '0048D840', '005C6DB0', '00453A70', '004CC360', '004A0260', '00500B60'}
+
+
 def cmd_eval(a):
     t0 = time.time()
-    res = tree(a.units.split(',') if a.units else None, keep=a.keep_standins)
+    moves = dict(kv.split('=') for kv in a.set.split(',')) if a.set else {}
+    orig = {}
+    if moves:
+        deck = load_deck(a.deck)
+        orig = {n: get_body(deck[n]) for n in moves}
+        for n, tag in moves.items():
+            set_body(deck[n], rung_body(deck[n], tag))
+    try:
+        res = tree(a.units.split(',') if a.units else None, keep=a.keep_standins)
+    finally:
+        if not a.keep:
+            for n in orig:
+                set_body(deck[n], orig[n])
     json.dump(res, open(a.out, 'w'))
     v = vector(res)
     ex = exact_set(res)
@@ -327,16 +346,20 @@ def cmd_eval(a):
         total(v), len(v), len(ex), time.time() - t0, ('; FAIL ' + ' '.join(fails)) if fails else ''))
     if a.base:
         b = json.load(open(a.base))
-        if a.units:
-            b = {u: r for u, r in b.items() if u in res}
+        gone = sorted(set(b) - set(res))
+        if gone and not a.units:
+            print('units not measured now (left out of the comparison): ' + ' '.join(gone))
+        b = {u: r for u, r in b.items() if u in res}
         vb = vector(b)
+        v = vector({u: r for u, r in res.items() if u in b})
+        ex = exact_set({u: r for u, r in res.items() if u in b})
         cl, fu, lines = compare(vb, v)
         print('against base: closer %d, further %d' % (cl, fu))
         for ln in lines:
             print('  ' + ln)
         eb = exact_set(b)
         sy = syms(res)
-        print('exact lost %d: %s' % (len(eb - ex), ' '.join('%s(%s)' % (x, sy.get(x, '?')[:24]) for x in sorted(eb - ex))))
+        print('exact lost %d (%d beyond the count canaries): %s' % (len(eb - ex), len(eb - ex - CANARIES), ' '.join('%s(%s)' % (x, sy.get(x, '?')[:24]) for x in sorted(eb - ex))))
         print('exact gained %d: %s' % (len(ex - eb), ' '.join('%s(%s)' % (x, sy.get(x, '?')[:24]) for x in sorted(ex - eb))))
     elif a.v:
         for k in sorted(v):
@@ -397,7 +420,8 @@ def cmd_descend(a):
         res, v, e, nu = trial(moves)
         cl, fu, lines = compare(v0, v)
         tag = ' '.join('%s:%s->%s' % (n, cur[n], t) for n, t in moves.items())
-        ok = total(v) < total(v0) and (fu == 0 or not strict)
+        # an exact caller that breaks (beyond the count canaries) is shape evidence against the spelling
+        ok = total(v) < total(v0) and (fu == 0 or not strict) and not (e0 - e - CANARIES)
         say('%s %-60s units %3d site-units %d -> %d (closer %d further %d) exact %+d/-%d' % (
             'KEEP' if ok else 'drop', tag, nu, total(v0), total(v), cl, fu, len(e - e0), len(e0 - e)))
         for ln in lines:
@@ -450,6 +474,9 @@ def main():
     p.add_argument('--base')
     p.add_argument('--units')
     p.add_argument('--keep-standins', action='store_true')
+    p.add_argument('--set', help='name=rung,... from --deck, applied for this evaluation')
+    p.add_argument('--deck')
+    p.add_argument('--keep', action='store_true', help='leave the --set bodies in the headers')
     p.add_argument('-v', action='store_true')
     p = sub.add_parser('copies')
     p.add_argument('deck')
