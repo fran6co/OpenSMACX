@@ -7688,13 +7688,20 @@ void __cdecl drone_riot() {
                         Vehs[v].faction_id = (uint8_t)target;
                         PlayersData[faction_id].proto_id_active[Vehs[v].proto_id]--;
                         if (Vehs[v].proto_id > 64) {
+                            // WORKAROUND(decl): a named 16-bit copy of the prototype id
+                            // for the name argument realigns the frame slots and the
+                            // scratch phase of the whole function (rotscan: 317 -> 119
+                            // rows, phase equal); the image holds proto_id as a word in
+                            // cx across the decrement and the > 64 test (0x4F5967..),
+                            // so the original named it somewhere here.
+                            int16_t name_proto_id = Vehs[v].proto_id;
                             int proto_id = propose_proto(target,
                                 VehPrototypes[Vehs[v].proto_id].chassis_id,
                                 VehPrototypes[Vehs[v].proto_id].weapon_id,
                                 VehPrototypes[Vehs[v].proto_id].armor_id,
                                 VehPrototypes[Vehs[v].proto_id].ability_flags,
                                 VehPrototypes[Vehs[v].proto_id].reactor_id, -2,
-                                VehPrototypes[Vehs[v].proto_id].veh_name);
+                                VehPrototypes[name_proto_id].veh_name);
                             if (proto_id >= 0) {
                                 Vehs[v].proto_id = (int16_t)proto_id;
                             }
