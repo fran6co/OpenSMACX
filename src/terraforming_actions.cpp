@@ -546,13 +546,12 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
     int progress_accum = 0;
     for (int v = veh_top(veh_id); v >= 0; v = Vehs[v].next_veh_id_stack) {
         if (v != veh_id && Vehs[v].order == action + 4) {
-            if (!(!do_it)) {
-                Vehs[veh_id].terraforming_turns =
-                    Vehs[veh_id].terraforming_turns + Vehs[v].terraforming_turns;
-                Vehs[v].terraforming_turns = 0;
-            } else {
+            if (!do_it) {
                 turns_accum += contribution(v, action);
                 progress_accum += Vehs[v].terraforming_turns;
+            } else {
+                Vehs[veh_id].terraforming_turns += Vehs[v].terraforming_turns;
+                Vehs[v].terraforming_turns = 0;
             }
         }
     }
