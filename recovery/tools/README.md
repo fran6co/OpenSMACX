@@ -53,6 +53,12 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   disputed pairs) and ranked calls, frame, candset, rows; `--write` keeps the best when it beats the base. Tree pass of
   2026-11-19 (par-2, about 200 functions >= 60 rows): 29 functions moved, 70,754 -> 69,009 rows, none lost; the sink (s)
   was the most frequent winner (ReportIf::draw_sat 197 -> 57, base_production 515 -> 335, ListBox::on_mouse_move exact).
+  (r) a field adjusted through a local copy, directly (`f = g(f)`) or through `T &r = f` (the double_cross clamp,
+  MATCHING_GUIDE 3.7). The ranking key starts with the named callee difference (analysis/callees.py), so a
+  variant that fixes which callee is called ranks above one that only fixes the call count.
+- `analysis/callees.py <unit> <addr> [--src ALT] [--pfx N]` named call multisets: image direct calls named
+  through the ORIGINAL markers (plus a CRT table learned from aligned call sequences), `call [IAT]` through the
+  image's import directory, ours through relocations; prints the callees on one side only.
 - `analysis/regalloc/` the probe sources and runner behind MATCHING_GUIDE 2.7 (see its README).
 - `crtcalls.py OUT.json` compares, per function, the calls to memcpy/memmove/memset/strlen/strcpy/
   strcat/strcmp/memcmp in our objects with the image's (20 s). The game and Jackal have no

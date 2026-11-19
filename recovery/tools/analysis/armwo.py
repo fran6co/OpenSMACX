@@ -655,6 +655,118 @@ def gen_c(body, root):
     return out
 
 
+# ---------------------------------------------------------------- r: field adjust through a reference
+SIMPLE_T = r'(?:unsigned\s+|signed\s+)?(?:int|short|char|long)|unsigned|BYTE|WORD|DWORD|uint8_t|uint16_t|uint32_t|int8_t|int16_t|int32_t'
+_FTYPE = {}
+
+
+def field_types(name):
+    """declared simple types of a member/global called `name` in the headers (and units)"""
+    if name not in _FTYPE:
+        import glob
+        if not _FTYPE.get('\0'):
+            _FTYPE['\0'] = [open(p, encoding='latin-1').read() for p in
+                            glob.glob(R + '/src/**/*.h', recursive=True) + glob.glob(R + '/src/**/*.cpp', recursive=True)]
+        ts = set()
+        for t in _FTYPE['\0']:
+            for m in re.finditer(r'\b(%s)\s+(?:\w+\s*,\s*)*%s\s*[;\[,=]' % (SIMPLE_T, re.escape(name)), t):
+                ts.add(re.sub(r'\s+', ' ', m.group(1)))
+        _FTYPE[name] = sorted(ts) or ['int']
+    return _FTYPE[name]
+
+
+def top_assign(s):
+    """index of the top-level plain '=' in an expression statement, or -1"""
+    d = 0
+    for i, ch in enumerate(s):
+        if ch in '([{':
+            d += 1
+        elif ch in ')]}':
+            d -= 1
+        elif ch == '=' and d == 0 and s[i - 1:i] not in ('=', '!', '<', '>', '+', '-', '*', '/', '%', '&', '|', '^') \
+                and s[i + 1:i + 2] != '=':
+            return i
+    return -1
+
+
+def lv_ok(lv):
+    v = [x[1] for x in tokenize(lv)]
+    return bool(v) and any(x in ('.', '->', '[') for x in v) and '(' not in v and '++' not in lv and '--' not in lv \
+        and v[0] not in ('int', 'char', 'short', 'unsigned', 'const', 'return')
+
+
+def sub_lv(expr, lv, rep):
+    """replace every whole occurrence of the token sequence lv in expr; -> (text, count)"""
+    et = tokenize(expr)
+    lt = [x[1] for x in tokenize(lv)]
+    out, last, i, n = [], 0, 0, 0
+    while i <= len(et) - len(lt):
+        if [x[1] for x in et[i:i + len(lt)]] == lt and (i == 0 or et[i - 1][1] not in ('.', '->')) and \
+                (i + len(lt) == len(et) or et[i + len(lt)][1] not in ('.', '->', '[', '(')):
+            out.append(expr[last:et[i][2]])
+            out.append(rep)
+            last = et[i + len(lt) - 1][3]
+            i += len(lt)
+            n += 1
+        else:
+            i += 1
+    out.append(expr[last:])
+    return ''.join(out), n
+
+
+def gen_r(body, root):
+    """a field adjusted through a local copy, directly (`f = g(f)`) or through `T &r = f` (MATCHING_GUIDE 3.7)"""
+    out = []
+    k = 0
+    for blk in lists(root):
+        ch = blk.ch
+        for i, n in enumerate(ch):
+            if n.kind != 'simple' or n.sk != 'expr':
+                continue
+            s = txt(body, n)
+            if '"' in s:
+                continue
+            # A: `T v = <lv...>; lv = <...v...>;`, v unused after
+            m = re.match(r'\s*(?:const\s+)?(%s)\s+(\w+)\s*=\s*(.*);\s*$' % SIMPLE_T, s, re.S)
+            if m and i + 1 < len(ch) and ch[i + 1].kind == 'simple':
+                s2 = txt(body, ch[i + 1])
+                a = top_assign(s2)
+                v, rhs1 = m.group(2), m.group(3)
+                if a > 0 and s2.rstrip().endswith(';'):
+                    lv, rhs2 = s2[:a].strip(), s2[a + 1:].rstrip()[:-1].strip()
+                    rest = body[ch[i + 1].e:blk.e]
+                    if lv_ok(lv) and sub_lv(rhs1, lv, '')[1] and re.search(r'\b%s\b' % v, rhs2) \
+                            and not re.search(r'\b%s\b' % v, rest):
+                        ind = re.match(r'\s*', s).group(0)
+                        r1ref = sub_lv(rhs1, lv, v)[0]
+                        for ty in field_types(re.findall(r'\w+', lv)[-1]):
+                            e2 = re.sub(r'\b%s\b' % v, lambda _: '(' + r1ref + ')', rhs2)
+                            out.append(('r:%d:ref:%s' % (n.s, ty), Ed(body).rep(n.s, ch[i + 1].e,
+                                        '%s%s &%s = %s;\n%s = %s;' % (ind, ty, v, lv, v, e2)).text()))
+                        e3 = re.sub(r'\b%s\b' % v, lambda _: '(' + rhs1 + ')', rhs2)
+                        out.append(('r:%d:direct' % n.s, Ed(body).rep(n.s, ch[i + 1].e, '%s%s = %s;' % (ind, lv, e3)).text()))
+                        continue
+            # B: `lv = <...lv...>;`
+            a = top_assign(s)
+            if a <= 0:
+                continue
+            lv, rhs = s[:a].strip(), s[a + 1:].rstrip()[:-1].strip()
+            if not lv_ok(lv) or re.match(r'(%s)\s' % SIMPLE_T, lv):
+                continue
+            k += 1
+            v = 'adj%d' % k
+            r_ref, cnt = sub_lv(rhs, lv, v)
+            if not cnt:
+                continue
+            ind = re.match(r'\s*', s).group(0)
+            for ty in field_types(re.findall(r'\w+', lv)[-1]):
+                out.append(('r:%d:bref:%s' % (n.s, ty), Ed(body).rep(n.s, n.e,
+                            '%s{\n%s%s &%s = %s;\n%s = %s;\n}' % (ind, ind, ty, v, lv, v, r_ref)).text()))
+                out.append(('r:%d:bcopy:%s' % (n.s, ty), Ed(body).rep(n.s, n.e,
+                            '%s{\n%s%s %s = %s;\n%s = %s;\n}' % (ind, ind, ty, v, lv, lv, r_ref)).text()))
+    return out
+
+
 # ---------------------------------------------------------------- structural fingerprint
 def fingerprint(unit, path, addr, pfx):
     import fe
@@ -702,7 +814,15 @@ def fingerprint(unit, path, addr, pfx):
     except Exception as e:
         print('candset failed', path, repr(e)[:200])
         cand = 999
-    return dict(calls=cdiff, frame=fd, cand=cand, rows=r['diff'], exact=r['exact'])
+    try:
+        import callees
+        named = callees.named_diff(c, text, int(addr, 16))
+    except Exception as e:
+        print('callees failed', repr(e)[:200])
+        named = None
+    if named is None:
+        named = 999
+    return dict(named=named, calls=cdiff, frame=fd, cand=cand, rows=r['diff'], exact=r['exact'])
 
 
 def main():
@@ -712,7 +832,7 @@ def main():
     ap.add_argument('--max', type=int, default=80)
     ap.add_argument('--cap', type=int, default=27)
     ap.add_argument('--top', type=int, default=6)
-    ap.add_argument('--only', default='d,t,c')
+    ap.add_argument('--only', default='d,t,c,r')
     ap.add_argument('--write', action='store_true')
     ap.add_argument('--show')
     ap.add_argument('--out')
@@ -741,6 +861,8 @@ def main():
         vs += gen_t(body, root, isvoid, a.cap)
     if 'c' in only:
         vs += gen_c(body, root)
+    if 'r' in only:
+        vs += gen_r(body, root)
     seen = {norm(body)}
     deck = [('base', t)]
     for k, b in vs:
@@ -805,21 +927,21 @@ def main():
     for r, f in zip(cand, fps):
         if f is None:
             continue
-        rank.append(((f['calls'], f['frame'], f['cand'], f['rows']), r[3], f))
+        rank.append(((f['named'], f['calls'], f['frame'], f['cand'], f['rows']), r[3], f))
     bf = [x for x in rank if x[1] == 'base']
     if not bf:
         print('base fingerprint failed')
         return 2
     bk = bf[0][0]
-    slack = max(5, bk[3] // 7)
-    # rows may rise (within the slack) only for a call-count or frame win; a candset-only win keeps rows
-    rank = [x for x in rank if x[1] == 'base' or (x[2]['frame'] <= bk[1] and (
-        x[0][3] <= bk[3] or (x[0][:2] < bk[:2] and x[0][3] <= bk[3] + slack)))]
+    slack = max(5, bk[4] // 7)
+    # rows may rise (within the slack) only for a callee, call-count or frame win; a candset-only win keeps rows
+    rank = [x for x in rank if x[1] == 'base' or (x[2]['frame'] <= bk[2] and (
+        x[0][4] <= bk[4] or (x[0][:3] < bk[:3] and x[0][4] <= bk[4] + slack)))]
     rank.sort(key=lambda x: x[0])
     for k, key, f in rank:
-        print('%-28s calls %d frame %d cand %d rows %d%s' % (key[:28], k[0], k[1], k[2], k[3], ' EXACT' if f['exact'] else ''))
+        print('%-28s named %d calls %d frame %d cand %d rows %d%s' % (key[:28], k[0], k[1], k[2], k[3], k[4], ' EXACT' if f['exact'] else ''))
     best = rank[0]
-    print('BASE %s %d BEST %s %d key %s' % (a.addr, bk[3], best[1], best[0][3], best[0]))
+    print('BASE %s %d BEST %s %d key %s' % (a.addr, bk[4], best[1], best[0][4], best[0]))
     if best[1] != 'base' and best[0] < bk:
         if a.out:
             open(a.out, 'w', encoding='latin-1').write(dict(deck)[best[1]])
