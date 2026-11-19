@@ -48,6 +48,163 @@ void __cdecl report_intel(int selection);
 void __cdecl slide_show(GraphicWin *window, int mode);
 void __cdecl slide_hide(GraphicWin *window, int mode);
 
+
+
+// Original 0x4405B0/0x4405D8 set this distinct state word around the
+// report/datalink calls, then clear it at 0x4405C9/0x4405F5. Its broader
+// meaning is unresolved; do not merge it with the popup's interface state.
+// Its initial zero is loader storage after the bounded popup, not an
+// initializer backed by file bytes. Only the original start is bound.
+// RECOVERY_OBJECT: v1 0x00737CD0 ?DiploCallbackState737CD0@@3HA
+int DiploCallbackState737CD0;
+
+// CRT entry 0x0043EFC0 constructs this object and registers 0x0043EFE0,
+// which destroys the same receiver. The CRT table at 0x00682080 contains
+// that initializer. Its complete constructed member footprint is 0x433C;
+// the original storage is zero-initialized before those constructors run.
+// RECOVERY_OBJECT: v2 0x00733990 0x00737CCC ?DiplomacyPopup@@3VDiploPop@@A 0x0043EFF0
+// ORIGINAL: 0x0043EFC0 ??__EDiplomacyPopup@@YAXXZ 0x0043EFC0-0x0043EFD6 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Original relocated CRT slot682080 names43EFC0, which constructs733990 with43EFF0 then registers43EFE0 through atexit645398. Native compiler emits the constructor/registration helpers as an initializer chain; that split remains a measurement difference, not a source workaround."], "reason": "Bind the natural C++ process-lifetime initializer for the diplomacy popup, without a handwritten startup thunk."}
+// symbol    _$E16
+// ORIGINAL: 0x0043EFE0 ??__FDiplomacyPopup@@YAXXZ 0x0043EFE0-0x0043EFEA FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Original43EFE0 loads733990 and tail-calls the complete destructor440D50. This is the entry registered by43EFC0, not the scalar deleting destructor and not an independently allocated popup."], "reason": "Bind the compiler-generated teardown registered for the same real diplomacy popup object."}
+// symbol    _$E14
+DiploPop DiplomacyPopup;
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x0043EFF0 ??0DiploPop@@QAE@XZ 0x0043EFF0-0x0043F0EA;0x00654880-0x006548F4 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Original43EFF0..43F0EA and unwind654880..6548F4 construct GraphicWin, the secondary interface base, three Fonts, two Times atA98/AC0, Flics atAE8/15CC and three FlatButtons at2158 with strideB4C. All compiler-generated unwind targets belong to those real lifetimes.", "43F0C8/43F0D2 set counterpart factionA94=-1 and field2154=1 only after all members.43F30D publishes the faction argument intoA94. The old field20AC was inside the second Flic, not an additional scalar. Original CRT43EFC0 constructs733990 and registers its destructor wrapper43EFE0."], "reason": "Recover the complete diplomacy-popup construction through real C++ bases and embedded member lifetimes."}
+DiploPop::DiploPop() {
+    // Original 0x0043F0C8/0x0043F0D2 publish these only after the three
+    // Fonts, two Times, two Flics and three FlatButtons have been built.
+    counterpart_faction_ = -1;
+    field_2154_ = 1;
+}
+
+// ORIGINAL: 0x0043F0F0 ?close@DiploPop@@QAEXXZ 0x0043F0F0-0x0043F137 FILE BYTE_EXACT
+// size      71 bytes
+// prototype void (__thiscall ?close@DiploPop@@QAEXXZ)(DiploPop* this)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4E40 0x00616730
+// indirect  0x0043F10D
+// Historical source-form experiments below are retained as seed evidence.
+// TRIED: 2026-09-03 homing pass, 2 spellings. MISMATCH 2/16 is the
+//        `Time::stop` ceiling again - the image CALLS 0x00616730 here and
+//        time.h keeps `stop` in-class MEASURED so `close`/`~Time` inline it,
+//        and VC6 has no noinline. Splitting `stop` is a time.h edit.
+// The complete constructor/destructor establish the typed members in
+// diplopop.h. Slot 2 is ordinary virtual hide; the following close is direct.
+void DiploPop::close() {
+    time1_.stop();
+    time2_.stop();
+    hide();
+    GraphicWin::close();
+    counterpart_faction_ = -1;
+    field_20B0_ = 0;
+    field_2154_ = 1;
+}
+
+// ORIGINAL: 0x0043F140 ?show@DiploPop@@QAEXH@Z 0x0043F140-0x0043F162 BYTE_EXACT
+// symbol    ?show@DiploPop@@UAEXH@Z
+// LEVER: the tail call must be QUALIFIED (`win->Win::show(0)`), otherwise the
+//        override dispatches through the vtable where the image has
+//        `call rel32`.
+// size      34 bytes
+// prototype void (__thiscall ?show@DiploPop@@QAEXH@Z)(DiploPop* this, int)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005ED9D0 0x005F7E90
+// 0x0043F140  ?show@DiploPop@@QAEXH@Z  ->  ?show@DiploPop@@QAEXH@Z
+//
+// Historical seed evidence is retained alongside this product definition.
+
+
+void DiploPop::show(int) {
+    if (is_visible() == 0 && counterpart_faction_ != -1) {
+        Win::show(0);
+    }
+}
+
+
+/*
+// ORIGINAL: 0x0043F170 ?hide@DiploPop@@QAEXXZ 0x0043F170-0x0043F185 BYTE_EXACT
+// symbol    ?hide@DiploPop@@UAEXXZ
+// size      21 bytes
+// prototype void (__thiscall ?hide@DiploPop@@QAEXXZ)(DiploPop* this)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005EDCD0 0x005F7E90
+Status: Complete
+*/
+void DiploPop::hide() {
+    if (Win::is_visible()) {
+        // QUALIFIED: the image emits a direct `call 0x5edcd0`, not a vtable
+        // dispatch. `Win::hide` is virtual now, so an unqualified call would
+        // go through slot 2 - which is what made this claim regress.
+        Win::hide();
+    }
+}
+
+// ORIGINAL: 0x0043F190 ?portrait_anim@DiploPop@@QAEXXZ 0x0043F190-0x0043F1BF FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["The original decodes the Flic at DiploPop +0xAE8 using its stored x/y at Flic +0x5AC/+0x5B0, then passes Flic +0x58C to the main interface's soft_update.", "DiploPop::flic1_ is the constructed Flic at +0xAE8, and MainInterfaceGlobal is the existing GraphicWin owner at 0x007AE820."], "reason": "Home the portrait animation using its embedded Flic, typed update rectangle, and process-owned update window."}
+void DiploPop::portrait_anim() {
+    flic1_.decode_stored_frame();
+    MainInterfaceGlobal.soft_update(flic1_.update_rect());
+}
+
+// ORIGINAL: 0x0043F1C0 ?bioscan_anim@DiploPop@@QAEXXZ 0x0043F1C0-0x0043F1FC FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["The original increments DiploPop +0x20B0, decodes the Flic at +0x15CC using its stored x/y at Flic +0x5AC/+0x5B0, and updates Flic +0x58C.", "DiploPop::flic2_ is the constructed Flic at +0x15CC; its footprint ends at +0x20B0, where the existing animation counter begins."], "reason": "Home the bioscan animation through its typed Flic member, update rectangle, and owner counter."}
+void DiploPop::bioscan_anim() {
+    ++field_20B0_;
+    flic2_.decode_stored_frame();
+    MainInterfaceGlobal.soft_update(flic2_.update_rect());
+}
+
+// ORIGINAL: 0x0043F200 ?timer_callback_daemon@DiploPop@@QAAXHH@Z 0x0043F200-0x0043F245 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Disassembly reads the popup pointer from the second cdecl stack argument ([ebp+0xC]); it does not use ECX as a hidden DiploPop receiver.", "The callback's Flic2 decode, animation counter increment, and update rectangle are exactly the work owned by DiploPop::bioscan_anim.", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/0043f200.cpp"], "reason": "Keep the timer entry a real two-argument cdecl callback and route its explicit popup parameter into the typed owner method. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
+// symbol    ?diplo_bioscan_timer_callback@@YAXHPAX@Z
+void __cdecl diplo_bioscan_timer_callback(int, void *context) {
+    if (!context) return;
+    static_cast<DiploPop *>(context)->bioscan_anim();
+}
+
+// ORIGINAL: 0x0043F250 ?timer_callback_daemon2@DiploPop@@QAAXHH@Z 0x0043F250-0x0043F288 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Disassembly reads the popup pointer from the second cdecl stack argument ([ebp+0xC]); this is a free callback, not a DiploPop member entry despite the historical catalog symbol spelling.", "The callback's Flic1 decode and update rectangle are the work owned by DiploPop::portrait_anim."], "reason": "Preserve the timer callback's actual cdecl stack ABI and use the typed portrait animation implementation."}
+// symbol    ?diplo_portrait_timer_callback@@YAXHPAX@Z
+void __cdecl diplo_portrait_timer_callback(int, void *context) {
+    if (!context) return;
+    static_cast<DiploPop *>(context)->portrait_anim();
+}
+
+// ORIGINAL: 0x0043F290 ?on_button_clicked@DiploPop@@QAEXH@Z 0x0043F290-0x0043F2AD FILE BYTE_EXACT
+// symbol    ?on_button_clicked@DiploPop@@UAEXH@Z
+//           Q->U 2026-09-06, Win's front slots 44/45 taking the image's
+//           own names (on_button_clicked / on_button_toggled): the body is
+//           now an override of the window's slot, so VC6 mangles it virtual
+//           and enters it on the front table, while the image spells the
+//           same body Q and its own table holds the raw address.
+// size      29 bytes
+// prototype void (__thiscall ?on_button_clicked@DiploPop@@QAEXH@Z)(DiploPop* this, int)
+// callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x0043F2A3
+// Forward to the currently modal Win through its actual button-click slot.
+
+
+void DiploPop::on_button_clicked(int button_id) {
+    Win *target = WinModalFocus;
+    if (target) {
+        target->on_button_clicked(button_id);
+    }
+}
+
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0043F2B0 ?start@DiploPop@@QAEXH@Z 0x0043F2B0-0x0043F5B5 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0043f2b0.cpp", "image:terranx_original.exe:0x0043F2B0", "source:docs/recovery/subobject-sites.csv:MainInterface22DFC"], "reason": "Recover the genuine diplomacy popup startup using embedded Flic/Time members, borrowed faction Sprite objects and MainInterface sprite11. Native same-faction fast path, FLIC failure/fallback and stored-frame update remain distinct."}
@@ -110,125 +267,23 @@ void DiploPop::start(int faction_id) {
     MainInterfaceGlobal.soft_update(flic1_.update_rect());
 }
 
-// ORIGINAL: 0x00440700 ?init@DiploPop@@QAEXXZ 0x00440700-0x00440D4B;0x006548F4-0x0065491F
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00440700.cpp", "image:terranx_original.exe:0x00440700", "source:src/diplopop.h:DiploPop"], "reason": "Recover the complete DiploPop initializer with temporary Flic, MainInterface geometry, owned fonts/buttons, and native state."}
-// TRIED: the SEH __try/__finally frame and its per-object unwind-state byte; the layout arithmetic (0x004407B3-0x00440A21) is transcribed as algebraically-simplified named quantities rather than a literal register-by-register replay, so it matches the VALUES the original computes but not the register shuffling that produces them.
-void DiploPop::init() {
-    Flic layout_flic;
-    time1_.stop();
-    time2_.stop();
-    hide();
-    GraphicWin::close();
+// ORIGINAL: 0x0043F5C0 ?stop@DiploPop@@QAEXXZ 0x0043F5C0-0x0043F5F0 BYTE_EXACT
+// size      48 bytes
+// prototype void (__thiscall ?stop@DiploPop@@QAEXXZ)(DiploPop* this)
+// callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0045D380 0x00629DF0
+// 0x0043F5C0  ?stop@DiploPop@@QAEXXZ  ->  ?stop@DiploPop@@QAEXXZ
+//
+// Historical seed evidence is retained alongside this product definition.
+
+
+void DiploPop::stop() {
+    release_iface_mode();
+    flic2_.close();
+    flic1_.close();
     counterpart_faction_ = -1;
-    field_20B0_ = 0;
-    field_2154_ = 1;
-
-    // The native temporary is a real Flic: init reads decoded_width(), then
-    // its ordinary destructor closes the file and destroys Buffer/Palette.
-    RECT rect;
-    layout_flic.init(static_cast<Buffer *>(this),
-                     "faction.flc", 0, 0, 0);
-    int frame_width = 0x28;
-    if (layout_flic.decoded_width() >= 0x28) {
-        frame_width = layout_flic.decoded_width();
-    }
-    layout_flic.close();
-
-    rect = MainInterfaceGlobal.rect2();
-    int x = MainInterfaceGlobal.right_frame_rect().right - MainInterfaceGlobal.rect3().right + MainInterfaceGlobal.right_frame_rect().left;
-    rect.right = rect.left - 3;
-    rect.left = x;
-    right_panel_button_rect_ = rect;
-
-    rect = MainInterfaceGlobal.right_frame_rect();
-    expand_rect(&rect, -4, -4);
-    rect.bottom = right_panel_button_rect_.top - 6;
-    frame_inset_rect_ = rect;
-
-    content_rect_ = MainInterfaceGlobal.lower_frame_rect();
-    expand_rect(&content_rect_, -4, -4);
-
-    rect1_ = MainInterfaceGlobal.main_layout_rect();
-    expand_rect(&rect1_, -4, -4);
-    expand_rect(&rect1_, -3, -3);
-
-    rect = rect1_;
-    rect.top = rect.bottom - 20;
-    rect.right = rect.left + (rect.right - rect.left + 3) / 2 - 3;
-    button_left_rect_ = rect;
-    offset_rect(&rect, rect.right - rect.left + 3, 0);
-    button_right_rect_ = rect;
-    rect1_.bottom = rect.top - 3;
-
-    rect = MainInterfaceGlobal.main_frame_rect();
-    expand_rect(&rect, -4, -4);
-    rect.left = rect.right - frame_width - 2;
-    portrait_text_rect_ = rect;
-
-    rect = MainInterfaceGlobal.main_frame_rect();
-    expand_rect(&rect, -4, -4);
-    rect.right = portrait_text_rect_.left - 3;
-    bioscan_title_rect_ = rect;
-    bioscan_title_rect_.bottom = bioscan_title_rect_.top + 20;
-    bioscan_picture_rect_ = rect;
-    bioscan_picture_rect_.top = bioscan_title_rect_.bottom + 2;
-
-    register_iface(4);
-    if (WinScreenWidth != 0x320) {
-        font1_.init(DefaultFontFace, 10, 0);
-        font2_.init(DefaultFontFace, 12, 0);
-        font3_.init(DefaultFontFace, 14, 1);
-    } else {
-        font1_.init(DefaultFontFace, 10, 0);
-        font2_.init(DefaultFontFace, 10, 0);
-        font3_.init(DefaultFontFace, 12, 1);
-    }
-
-    GraphicWin::init(0, 0, 0x2BC,
-                     (WinScreenWidth == 0x320)
-                         ? (0x258 - MainInterfaceGlobal.panel_height()) : 0x1C2, 0x05000000, static_cast<Win *>(&ConsoleGlobal));
-    field_16C_ = 0x1A;
-    move((WinScreenWidth - pixel_width() + 0x20) / 2,
-         WinScreenHeight - pixel_height() - MainInterfaceGlobal.panel_height());
-    Buffer::sync_to_palette(PaletteCurrent);
-    GraphicWin::fill(9);
-
-    rect = *buffer_working_rect();
-    rect.left += 0x17;
-    rect.right -= 0x37;
-    Buffer::box_sprite(&rect, &InterfaceBoxStyles[9]);
-
-    flatButtons_[0].init(StringTable.get(Labels.strings_ptr[0xEA8 / 4]), 0,
-                         button_left_rect_.left, button_left_rect_.top,
-                         rect_width(&button_left_rect_),
-                         rect_height(&button_left_rect_),
-                         &MainInterfaceGlobal, 0);
-    flatButtons_[2].init(StringTable.get(Labels.strings_ptr[0xEAC / 4]), 2,
-                         right_panel_button_rect_.left,
-                         right_panel_button_rect_.top,
-                         rect_width((&right_panel_button_rect_)),
-                         rect_height((&right_panel_button_rect_)),
-                         &MainInterfaceGlobal, 0);
-
-    StringTemp[0] = '\0';
-    strcat(StringTemp, label_get(0x774 / 4));
-    CharUpperA(StringTemp);
-    flatButtons_[1].init(StringTemp, 1,
-                         button_right_rect_.left, button_right_rect_.top,
-                         rect_width(&button_right_rect_),
-                         rect_height(&button_right_rect_),
-                         &MainInterfaceGlobal, 0);
-
-    for (int button_index = 0; button_index < 3; ++button_index) {
-        flatButtons_[button_index].set_border_styles(
-            &InterfaceBoxStyles[27], &InterfaceBoxStyles[28],
-            &InterfaceBoxStyles[29]);
-        flatButtons_[button_index].set_text_color(0x41, -1, 1, 1);
-        flatButtons_[button_index].Buffer::set_font(&font3_, 0, 0, 0);
-        flatButtons_[button_index].redraw();
-        flatButtons_[button_index].hide();
-    }
-    field_20B0_ = 0;
 }
 
 // ORIGINAL: 0x0043F5F0 ?draw_bioscan@DiploPop@@QAEXXZ 0x0043F5F0-0x0043F784 BYTE_EXACT
@@ -318,45 +373,259 @@ void DiploPop::draw_portrait() {
     write_l_text(MainInterfaceGlobal, StringTemp, text.left, text.top);
 }
 
-// CRT entry 0x0043EFC0 constructs this object and registers 0x0043EFE0,
-// which destroys the same receiver. The CRT table at 0x00682080 contains
-// that initializer. Its complete constructed member footprint is 0x433C;
-// the original storage is zero-initialized before those constructors run.
-// RECOVERY_OBJECT: v2 0x00733990 0x00737CCC ?DiplomacyPopup@@3VDiploPop@@A 0x0043EFF0
-// ORIGINAL: 0x0043EFC0 ??__EDiplomacyPopup@@YAXXZ 0x0043EFC0-0x0043EFD6 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original relocated CRT slot682080 names43EFC0, which constructs733990 with43EFF0 then registers43EFE0 through atexit645398. Native compiler emits the constructor/registration helpers as an initializer chain; that split remains a measurement difference, not a source workaround."], "reason": "Bind the natural C++ process-lifetime initializer for the diplomacy popup, without a handwritten startup thunk."}
-// symbol    _$E16
-// ORIGINAL: 0x0043EFE0 ??__FDiplomacyPopup@@YAXXZ 0x0043EFE0-0x0043EFEA FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original43EFE0 loads733990 and tail-calls the complete destructor440D50. This is the entry registered by43EFC0, not the scalar deleting destructor and not an independently allocated popup."], "reason": "Bind the compiler-generated teardown registered for the same real diplomacy popup object."}
-// symbol    _$E14
-DiploPop DiplomacyPopup;
+// Original interface table 0x0066B424 slot 1 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_iface_scrolled@DiploPop@@UAEXHH@Z 0x00440380
+void DiploPop::on_iface_scrolled(int, int) {}
+// Original interface table 0x0066B424 slot 2 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_iface_scrolling@DiploPop@@UAEXHH@Z 0x00440380
+void DiploPop::on_iface_scrolling(int, int) {}
+// Original interface table 0x0066B424 slot 6 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_iface_left_up@DiploPop@@UAEXHH@Z 0x00440380
+void DiploPop::on_iface_left_up(int, int) {}
 
-// Original 0x4405B0/0x4405D8 set this distinct state word around the
-// report/datalink calls, then clear it at 0x4405C9/0x4405F5. Its broader
-// meaning is unresolved; do not merge it with the popup's interface state.
-// Its initial zero is loader storage after the bounded popup, not an
-// initializer backed by file bytes. Only the original start is bound.
-// RECOVERY_OBJECT: v1 0x00737CD0 ?DiploCallbackState737CD0@@3HA
-int DiploCallbackState737CD0;
+// Original interface table 0x0066B424 slot 14 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404250 0x00404255 ?on_iface_button_pressed@DiploPop@@UAEHH@Z 0x00440380
+int DiploPop::on_iface_button_pressed(int) {
+    return 0;
+}
 
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0043EFF0 ??0DiploPop@@QAE@XZ 0x0043EFF0-0x0043F0EA;0x00654880-0x006548F4 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original43EFF0..43F0EA and unwind654880..6548F4 construct GraphicWin, the secondary interface base, three Fonts, two Times atA98/AC0, Flics atAE8/15CC and three FlatButtons at2158 with strideB4C. All compiler-generated unwind targets belong to those real lifetimes.", "43F0C8/43F0D2 set counterpart factionA94=-1 and field2154=1 only after all members.43F30D publishes the faction argument intoA94. The old field20AC was inside the second Flic, not an additional scalar. Original CRT43EFC0 constructs733990 and registers its destructor wrapper43EFE0."], "reason": "Recover the complete diplomacy-popup construction through real C++ bases and embedded member lifetimes."}
-DiploPop::DiploPop() {
-    // Original 0x0043F0C8/0x0043F0D2 publish these only after the three
-    // Fonts, two Times, two Flics and three FlatButtons have been built.
-    counterpart_faction_ = -1;
-    field_2154_ = 1;
+// Original interface table 0x0066B424 slot 17 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404250 0x00404255 ?on_iface_dialog_back_draw@DiploPop@@UAEHPAVGraphicWin@@@Z 0x00440380
+int DiploPop::on_iface_dialog_back_draw(GraphicWin *) {
+    return 0;
+}
+
+// Original interface table 0x0066B424 slot 18 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404240 0x00404245 ?on_iface_dialog_item_back_draw@DiploPop@@UAEHPAVGraphicWin@@HHPAUtagRECT@@@Z 0x00440380
+int DiploPop::on_iface_dialog_item_back_draw(GraphicWin *, int, int, RECT *) {
+    return 0;
+}
+
+// ORIGINAL: 0x0043FA90 ?draw_info@DiploPop@@QAEXXZ 0x0043FA90-0x0044007F
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned43FA90..44007F; screenwidth800 portrait branch; Buffer wrap field at receiver454; MainInterface Buffer receiver7AEC64; font2/3 and faction portrait typed layouts. Ranking reads96C9E4 PlayerData+4, not misleading94C9E4 Mood. Repeated spying calls and live local-faction loads preserved; host controls verify drawing phases/treaty priority/call ordering."], "reason": "Recover complete two-panel diplomacy display as a genuine nonvirtual DiploPop member, using actual Buffer bases, embedded fonts/portrait assets and source-owned faction state rather than raw self offsets."}
+// TRIED: transcription mixing Ghidra's control-flow structure with a raw-asm re-derivation of the RECT field-to-stack-slot mapping for the box_sprite/draw_mono/draw calls, since Ghidra's own local_XX names there did not correspond to their literal ebp offsets (proven by cross-checking the Y-formula against the confirmed slot layout: RECT starts at ebp-0x10, not ebp-0x14 as the naming implied) - trusted raw asm for that part, and Ghidra's formulas/call order for the later (mechanical) string-building/wrap/write_l portion. The `Sprite* portrait = g_0078ee74 + leaderIdx*0x65c` stride and its iWidth_/iHeight_/cTransparentIndex_ field reads were confirmed against Sprite's catalogued layout. Reaches MISMATCH #4 ('push' vs 'mov'); did not chase the exact prologue/register-allocation shape further given the function's size.
+void DiploPop::draw_info() {
+    int panel = 0;
+    RECT box = rect1_;
+    box.right = ((box.right - box.left) + 3) / 2 - 3 + box.left;
+    Buffer::set_wrap_width(15);
+
+    do {
+        RECT r = box;
+        MainInterfaceGlobal.box_sprite(&r, &InterfaceBoxStyles[0]);
+        r.left += 3;
+        r.right -= 3;
+        r.top += 3;
+        r.bottom -= 3;
+
+        const int faction = panel == 0 ? counterpart_faction_
+                                       : ConsoleGlobal.faction_id_;
+        Sprite *const portrait = &FactionsArt[faction].diplomacy_logo;
+        if (WinScreenWidth == 800) {
+            portrait->draw_mono(&MainInterfaceGlobal, portrait->transparent_index(),
+                                (r.right - portrait->width() - r.left) / 2 + r.left,
+                                (r.bottom - portrait->height() - r.top) / 2 + r.top,
+                                0x41, 1, 1);
+        } else {
+            portrait->draw(&MainInterfaceGlobal, portrait->transparent_index(), r.left,
+                           font_line_advance(font3_) + r.top + 3, 1, 1);
+        }
+
+        MainInterfaceGlobal.set_text_color(ChatItemIdTable[faction], -1, 1, 1);
+        MainInterfaceGlobal.set_font(&font3_, nullptr, nullptr, nullptr);
+        StringTemp[0] = '\0';
+        strcat(StringTemp, Players[faction].formal_name_faction);
+        CharUpperA(StringTemp);
+
+        RECT name_area = r;
+        name_area.bottom = font_line_advance(font3_) + name_area.top;
+        name_area.top += 2;
+        int y = MainInterfaceGlobal.wrap_cent(StringTemp, &name_area);
+        if (WinScreenWidth != 800) {
+            r.left += portrait->width() + 2;
+        }
+
+        MainInterfaceGlobal.set_text_color(0xA0, -1, 1, 1);
+        r.left += 3;
+        r.right -= 3;
+        r.top += 3;
+        r.bottom -= 3;
+        int x = r.left;
+        y += 3;
+        Font *const body_font = &font2_;
+        MainInterfaceGlobal.set_font(body_font, nullptr, nullptr, nullptr);
+
+        if (panel == 0) {
+            StringTemp[0] = '\0';
+            strcat(StringTemp, label_get(0xE98 / 4));
+            strcat(StringTemp, SocialWinColonSpaceText);
+            const uint32_t relation =
+                PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction];
+            LPSTR relation_label;
+            if (relation & DTREATY_PACT) {
+                relation_label = Labels.strings_ptr[0xA14 / 4];
+            } else if (relation & DTREATY_TREATY) {
+                relation_label = Labels.strings_ptr[0xA10 / 4];
+            } else if (relation & DTREATY_TRUCE) {
+                relation_label = Labels.strings_ptr[0xA0C / 4];
+            } else if (relation & DTREATY_VENDETTA) {
+                relation_label = Labels.strings_ptr[0xA1C / 4];
+            } else {
+                relation_label = Labels.strings_ptr[0x64 / 4];
+            }
+            strcat(StringTemp, table_text(relation_label));
+            CharUpperA(StringTemp);
+            y = MainInterfaceGlobal.wrap(StringTemp, x, y, r.right - x);
+        }
+
+        StringTemp[0] = '\0';
+        strcat(StringTemp, label_get(0xE9C / 4));
+        strcat(StringTemp, SocialWinColonSpaceText);
+        strcat(StringTemp, table_text(spying(faction) ? Labels.strings_ptr[0x614 / 4]
+                                                           : Labels.strings_ptr[0xEA0 / 4]));
+        y = MainInterfaceGlobal.wrap(StringTemp, x, y, r.right - x);
+
+        if (faction == ConsoleGlobal.faction_id_ || spying(faction)) {
+            StringTemp[0] = '\0';
+            strcat(StringTemp, label_get(0x90 / 4));
+            strcat(StringTemp, SocialWinColonSpaceText);
+            say_num(PlayersData[faction].energy_reserves
+                    - PlayersData[faction].hurry_cost_total);
+            MainInterfaceGlobal.write_l(StringTemp, x, y);
+            y += font_line_advance(*body_font);
+        }
+
+        StringTemp[0] = '\0';
+        strcat(StringTemp, label_get(0x37C / 4));
+        strcat(StringTemp, SocialWinColonSpaceText);
+        x = MainInterfaceGlobal.write_l(StringTemp, x, y);
+
+        StringTemp[0] = '\0';
+        say_special(StringTemp,
+                    table_text(Might[range(7 - PlayersData[faction].ranking, 0, 6)].adj_start),
+                    faction);
+        CharUpperA(StringTemp);
+        MainInterfaceGlobal.write_l(StringTemp, x, y);
+
+        const int step = (box.right - box.left) + 3;
+        box.left += step;
+        box.right += step;
+    } while (++panel < 2);
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00440D50 ??1DiploPop@@QAE@XZ 0x00440D50-0x00440EB8;0x006547B0-0x00654871 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original440D50..440EB8 and unwind6547B0..654871 restore the class tables, perform the same two Time stops, virtual hide and direct GraphicWin close as close(), then resetA94/20B0/2154. Normal C++ destructor dispatch supplies those table transitions; no table stores are handwritten.", "440DEB onward destroys FlatButton[3] in reverse, then Flic2/Flic1 including their Palette/Buffer members, Time2/Time1, Font3/Font2/Font1, and GraphicWin. The complete unwind path preserves the same partially live subobjects. Existing downstream lifecycle and renderer limitations are not waived."], "reason": "Recover complete diplomacy-popup destruction through close followed by automatic reverse member and base destruction."}
-// symbol    ??1DiploPop@@UAE@XZ
-DiploPop::~DiploPop() {
-    // The original inlines close before reverse member/base teardown.
-    // Normal C++ destruction also owns partial-construction unwinding.
-    close();
+// ORIGINAL: 0x00440080 ?draw_hq@DiploPop@@QAEXXZ 0x00440080-0x00440291 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00440080.cpp retained original identity and spans", "recovery/tasks/interface-contract-report-closure.json authorized ownership recovery", "original:0x00440080 complete control/member accesses and concrete interface table"], "reason": "Recover the concrete SubInterface owner operation through genuine window members and source-owned globals. Original table/call evidence identifies the callback receiver; the retained compatible seed supplies its complete original intervals, not an executable-address forwarding implementation."}
+void DiploPop::draw_hq() {
+    RECT area = frame_inset_rect_;
+
+    if (flatButtons_[2].selected_state() == 0) {
+        MainInterfaceGlobal.set_clip(&area);
+        MainInterfaceGlobal.restore_back(0);
+        MainInterfaceGlobal.set_clip(MainInterfaceGlobal.buffer_working_rect());
+        MainInterfaceGlobal.soft_update(&frame_inset_rect_);
+        return;
+    }
+
+    area.bottom -= 4;
+    MainInterfaceGlobal.box_sprite(&area, &InterfaceBoxStyles[0]);
+    area.left += 1;
+    area.right -= 1;
+    area.top += 1;
+    area.bottom -= 1;
+    RECT text = area;
+    text.bottom = text.top + 0x14;
+
+    StringTemp[0] = 0;
+    int base_id;
+    for (base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_;
+         ++base_id) {
+        if (Bases[base_id].faction_id_current == counterpart_faction_
+            && has_fac(FAC_HEADQUARTERS, base_id, 0)) break;
+    }
+    if (base_id == GameDataStateStorage.fields_.base_current_count_) {
+        strcat(StringTemp, label_get(0x3A9));
+    } else {
+        strcat(StringTemp, Bases[base_id].name_string);
+    }
+    CharUpperA(StringTemp);
+
+    MainInterfaceGlobal.set_font(&font3_, 0, 0, 0);
+    MainInterfaceGlobal.set_text_color(0xA0, -1, 1, 1);
+    MainInterfaceGlobal.write_cent_l(StringTemp, &text);
+
+    area.top = text.bottom + 1;
+    landscape_sprite_->draw(&MainInterfaceGlobal, landscape_sprite_->transparent_index(),
+        (area.right - landscape_sprite_->width() - area.left) / 2 + area.left,
+        area.top, 1, 1);
+    MainInterfaceGlobal.soft_update(&frame_inset_rect_);
+}
+
+// ORIGINAL: 0x004402A0 ?on_redraw@DiploPop@@QAEXXZ 0x004402A0-0x00440379 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Historical source binding before owner migration: Recover the diplomacy pop repaint through its typed interface state and panel members, including the now-source-owned HQ drawer; the first three helper bodies remain an explicit outside-owner dependency.", "Historical source evidence: Original4402A0..440379; retired seed git:ee30a69d:src/unrecovered/004402a0.cpp records the same identity and spans with its RECT-local TRIED note kept below.", "Historical source evidence: The opener is maininterface.h's restore_back on mapwin.h's MainInterfaceGlobal (0x007AE820); the frame styles are buffer.h's InterfaceBoxStyles[3] (0x0078D5A0) and [21] (0x0078D870) against the interface Buffer 0x007AEC64; the UnionRect slot 0x00669328 is the runtime import slot console.h documents.", "Historical source evidence: The four sub-drawers are the seed's measured call targets 0x0043F5F0/0x0043F790/0x0043FA90/0x00440080 in the body's call order (bioscan/portrait/info/hq); 0x00440080 is now the source-owned DiploPop::draw_hq body, while the first three helper bodies remain outside this task's source ownership. The receiver's panel rect at +0x2144 remains the seed's measured walk.", "Pinned constructor 43EFF0 installs primary vfptr 66B478 at 43F0AE; table cell66B4A8 (+30, inherited Win slot12) contains4402A0, establishing the real on_redraw override.", "MainInterfaceGlobal7AE820 owns Buffer base+444=7AEC64 and RECT members rect2_+A8C=7AF2AC, rect3_+A9C=7AF2BC, rect1_+DC0=7AF5E0. Existing getters expose those real members; DiploPop right_panel_button_rect_ is+2144.", "Pinned USER32 import IAT669328 is UnionRect. The original calls shared-canvas box_sprite with styles3 then21, unions the interface panels then the receiver panel, and invokes source-owned bioscan/portrait/info/HQ painters in that order."], "reason": "Recover the complete repaint as the genuine DiploPop virtual member, using existing interface and receiver rectangles, the actual Buffer secondary base, imported UnionRect and source-owned painter methods. Historical outside-owner seam notes are superseded, not erased."}
+// symbol    ?on_redraw@DiploPop@@UAEXXZ
+void DiploPop::on_redraw() {
+    MainInterfaceGlobal.restore_back(1);
+    RECT rc = MainInterfaceGlobal.main_layout_rect();
+    rc.left += 4;
+    rc.right -= 4;
+    rc.top += 4;
+    rc.bottom -= 4;
+    MainInterfaceGlobal.box_sprite(&rc, &InterfaceBoxStyles[3]);
+
+    ::UnionRect(&rc, &MainInterfaceGlobal.rect2(),
+                &MainInterfaceGlobal.rect3());
+    ::UnionRect(&rc, &rc, &right_panel_button_rect_);
+
+    rc.left -= 3;
+    rc.right += 3;
+    rc.top -= 3;
+    rc.bottom += 3;
+    MainInterfaceGlobal.box_sprite(&rc, &InterfaceBoxStyles[21]);
+
+    draw_bioscan();
+    draw_portrait();
+    draw_info();
+    draw_hq();
+}
+
+// ---- the interface table's own slots still carrying an original body ------
+
+// PENDING 0x00440380 ?on_status@DiploPop@@QAEXH@Z 0x00440380-0x004404B4
+// symbol    ?on_status@DiploPop@@UAEXH@Z
+// size      308 bytes
+// prototype void (__thiscall ?on_status@DiploPop@@QAEXH@Z)(DiploPop* this, int)
+// callers   0   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// ORIGINAL: 0x00440380 ?on_status@DiploPop@@QAEXH@Z 0x00440380-0x004404B4 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/00440380.cpp retained original identity and spans", "recovery/tasks/interface-contract-report-closure.json authorized ownership recovery", "original:0x00440380 complete control/member accesses and concrete interface table", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/00440380.cpp"], "reason": "Recover the concrete SubInterface owner operation through genuine window members and source-owned globals. Original table/call evidence identifies the callback receiver; the retained compatible seed supplies its complete original intervals, not an executable-address forwarding implementation. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
+// symbol    ?on_status@DiploPop@@UAEXH@Z
+void DiploPop::on_status(int mode) {
+
+    if (mode) {
+        on_redraw();
+        for (int i = 0; i < 3; ++i) flatButtons_[i].show(0);
+        slide_show(static_cast<GraphicWin *>(this), 2);
+        Win::show(3);
+        time1_.start();
+        time2_.start();
+        MainInterfaceGlobal.flat_button(6).show(0);
+        MainInterfaceGlobal.flat_button(7).show(0);
+        MainInterfaceGlobal.button_group(1).set(-1, 1);
+        flatButtons_[2].set(1);
+        redraw();
+    } else {
+        time1_.stop();
+        time2_.stop();
+        flic2_.rewind();
+        slide_hide(static_cast<GraphicWin *>(this), 2);
+        for (int i = 0; i < 3; ++i) flatButtons_[i].hide();
+        MainInterfaceGlobal.flat_button(6).hide();
+        MainInterfaceGlobal.flat_button(7).hide();
+        Win::hide();
+    }
 }
 
 /*
@@ -511,62 +780,6 @@ Status: Complete
 void DiploPop::on_iface_right_double_click(int, int) {
 }
 
-
-/*
-Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-// ORIGINAL: 0x00440610 ?on_iface_button_toggled@DiploPop@@QAEXHH@Z 0x00440610-0x00440613 BYTE_EXACT
-// symbol    ?on_iface_button_toggled@DiploPop@@UAEXHH@Z
-// size      3 bytes
-// prototype void (__thiscall ?on_iface_button_toggled@DiploPop@@QAEXHH@Z)(DiploPop* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void DiploPop::on_iface_button_toggled(int, int) {
-}
-
-// ---- the interface table's own slots still carrying an original body ------
-
-// PENDING 0x00440380 ?on_status@DiploPop@@QAEXH@Z 0x00440380-0x004404B4
-// symbol    ?on_status@DiploPop@@UAEXH@Z
-// size      308 bytes
-// prototype void (__thiscall ?on_status@DiploPop@@QAEXH@Z)(DiploPop* this, int)
-// callers   0   call targets   4
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// ORIGINAL: 0x00440380 ?on_status@DiploPop@@QAEXH@Z 0x00440380-0x004404B4 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/00440380.cpp retained original identity and spans", "recovery/tasks/interface-contract-report-closure.json authorized ownership recovery", "original:0x00440380 complete control/member accesses and concrete interface table", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/00440380.cpp"], "reason": "Recover the concrete SubInterface owner operation through genuine window members and source-owned globals. Original table/call evidence identifies the callback receiver; the retained compatible seed supplies its complete original intervals, not an executable-address forwarding implementation. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
-// kind      game
-// symbol    ?on_status@DiploPop@@UAEXH@Z
-void DiploPop::on_status(int mode) {
-
-    if (mode) {
-        on_redraw();
-        for (int i = 0; i < 3; ++i) flatButtons_[i].show(0);
-        slide_show(static_cast<GraphicWin *>(this), 2);
-        Win::show(3);
-        time1_.start();
-        time2_.start();
-        MainInterfaceGlobal.flat_button(6).show(0);
-        MainInterfaceGlobal.flat_button(7).show(0);
-        MainInterfaceGlobal.button_group(1).set(-1, 1);
-        flatButtons_[2].set(1);
-        redraw();
-    } else {
-        time1_.stop();
-        time2_.stop();
-        flic2_.rewind();
-        slide_hide(static_cast<GraphicWin *>(this), 2);
-        for (int i = 0; i < 3; ++i) flatButtons_[i].hide();
-        MainInterfaceGlobal.flat_button(6).hide();
-        MainInterfaceGlobal.flat_button(7).hide();
-        Win::hide();
-    }
-}
-
 // PENDING 0x00440550 ?on_iface_button_clicked@DiploPop@@QAEXH@Z 0x00440550-0x00440604
 // Historical emitted spelling was ?vslot_13@DiploPop@@UAEXH@Z.
 // size      180 bytes
@@ -599,6 +812,23 @@ void DiploPop::on_iface_button_clicked(int button_id) {
         draw_hq();
         break;
     }
+}
+
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+// ORIGINAL: 0x00440610 ?on_iface_button_toggled@DiploPop@@QAEXHH@Z 0x00440610-0x00440613 BYTE_EXACT
+// symbol    ?on_iface_button_toggled@DiploPop@@UAEXHH@Z
+// size      3 bytes
+// prototype void (__thiscall ?on_iface_button_toggled@DiploPop@@QAEXHH@Z)(DiploPop* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void DiploPop::on_iface_button_toggled(int, int) {
 }
 
 // PENDING 0x00440620 ?on_iface_group_clicked@DiploPop@@QAEXHHH@Z 0x00440620-0x004406CB
@@ -637,165 +867,6 @@ void DiploPop::on_iface_group_clicked(int group, int x_coord, int y_coord) {
     draw_hq();
 }
 
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00440080 ?draw_hq@DiploPop@@QAEXXZ 0x00440080-0x00440291 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00440080.cpp retained original identity and spans", "recovery/tasks/interface-contract-report-closure.json authorized ownership recovery", "original:0x00440080 complete control/member accesses and concrete interface table"], "reason": "Recover the concrete SubInterface owner operation through genuine window members and source-owned globals. Original table/call evidence identifies the callback receiver; the retained compatible seed supplies its complete original intervals, not an executable-address forwarding implementation."}
-void DiploPop::draw_hq() {
-    RECT area = frame_inset_rect_;
-
-    if (flatButtons_[2].selected_state() == 0) {
-        MainInterfaceGlobal.set_clip(&area);
-        MainInterfaceGlobal.restore_back(0);
-        MainInterfaceGlobal.set_clip(MainInterfaceGlobal.buffer_working_rect());
-        MainInterfaceGlobal.soft_update(&frame_inset_rect_);
-        return;
-    }
-
-    area.bottom -= 4;
-    MainInterfaceGlobal.box_sprite(&area, &InterfaceBoxStyles[0]);
-    area.left += 1;
-    area.right -= 1;
-    area.top += 1;
-    area.bottom -= 1;
-    RECT text = area;
-    text.bottom = text.top + 0x14;
-
-    StringTemp[0] = 0;
-    int base_id;
-    for (base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_;
-         ++base_id) {
-        if (Bases[base_id].faction_id_current == counterpart_faction_
-            && has_fac(FAC_HEADQUARTERS, base_id, 0)) break;
-    }
-    if (base_id == GameDataStateStorage.fields_.base_current_count_) {
-        strcat(StringTemp, label_get(0x3A9));
-    } else {
-        strcat(StringTemp, Bases[base_id].name_string);
-    }
-    CharUpperA(StringTemp);
-
-    MainInterfaceGlobal.set_font(&font3_, 0, 0, 0);
-    MainInterfaceGlobal.set_text_color(0xA0, -1, 1, 1);
-    MainInterfaceGlobal.write_cent_l(StringTemp, &text);
-
-    area.top = text.bottom + 1;
-    landscape_sprite_->draw(&MainInterfaceGlobal, landscape_sprite_->transparent_index(),
-        (area.right - landscape_sprite_->width() - area.left) / 2 + area.left,
-        area.top, 1, 1);
-    MainInterfaceGlobal.soft_update(&frame_inset_rect_);
-}
-
-
-/*
-// ORIGINAL: 0x0043F170 ?hide@DiploPop@@QAEXXZ 0x0043F170-0x0043F185 BYTE_EXACT
-// symbol    ?hide@DiploPop@@UAEXXZ
-// size      21 bytes
-// prototype void (__thiscall ?hide@DiploPop@@QAEXXZ)(DiploPop* this)
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005EDCD0 0x005F7E90
-Status: Complete
-*/
-void DiploPop::hide() {
-    if (Win::is_visible()) {
-        // QUALIFIED: the image emits a direct `call 0x5edcd0`, not a vtable
-        // dispatch. `Win::hide` is virtual now, so an unqualified call would
-        // go through slot 2 - which is what made this claim regress.
-        Win::hide();
-    }
-}
-
-// ORIGINAL: 0x0043F0F0 ?close@DiploPop@@QAEXXZ 0x0043F0F0-0x0043F137 FILE BYTE_EXACT
-// size      71 bytes
-// prototype void (__thiscall ?close@DiploPop@@QAEXXZ)(DiploPop* this)
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005D4E40 0x00616730
-// indirect  0x0043F10D
-// Historical source-form experiments below are retained as seed evidence.
-// TRIED: 2026-09-03 homing pass, 2 spellings. MISMATCH 2/16 is the
-//        `Time::stop` ceiling again - the image CALLS 0x00616730 here and
-//        time.h keeps `stop` in-class MEASURED so `close`/`~Time` inline it,
-//        and VC6 has no noinline. Splitting `stop` is a time.h edit.
-// The complete constructor/destructor establish the typed members in
-// diplopop.h. Slot 2 is ordinary virtual hide; the following close is direct.
-void DiploPop::close() {
-    time1_.stop();
-    time2_.stop();
-    hide();
-    GraphicWin::close();
-    counterpart_faction_ = -1;
-    field_20B0_ = 0;
-    field_2154_ = 1;
-}
-
-// ORIGINAL: 0x0043F140 ?show@DiploPop@@QAEXH@Z 0x0043F140-0x0043F162 BYTE_EXACT
-// symbol    ?show@DiploPop@@UAEXH@Z
-// LEVER: the tail call must be QUALIFIED (`win->Win::show(0)`), otherwise the
-//        override dispatches through the vtable where the image has
-//        `call rel32`.
-// size      34 bytes
-// prototype void (__thiscall ?show@DiploPop@@QAEXH@Z)(DiploPop* this, int)
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005ED9D0 0x005F7E90
-// 0x0043F140  ?show@DiploPop@@QAEXH@Z  ->  ?show@DiploPop@@QAEXH@Z
-//
-// Historical seed evidence is retained alongside this product definition.
-
-
-void DiploPop::show(int) {
-    if (is_visible() == 0 && counterpart_faction_ != -1) {
-        Win::show(0);
-    }
-}
-
-// ORIGINAL: 0x0043F5C0 ?stop@DiploPop@@QAEXXZ 0x0043F5C0-0x0043F5F0 BYTE_EXACT
-// size      48 bytes
-// prototype void (__thiscall ?stop@DiploPop@@QAEXXZ)(DiploPop* this)
-// callers   1   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x0045D380 0x00629DF0
-// 0x0043F5C0  ?stop@DiploPop@@QAEXXZ  ->  ?stop@DiploPop@@QAEXXZ
-//
-// Historical seed evidence is retained alongside this product definition.
-
-
-void DiploPop::stop() {
-    release_iface_mode();
-    flic2_.close();
-    flic1_.close();
-    counterpart_faction_ = -1;
-}
-
-// ORIGINAL: 0x0043F290 ?on_button_clicked@DiploPop@@QAEXH@Z 0x0043F290-0x0043F2AD FILE BYTE_EXACT
-// symbol    ?on_button_clicked@DiploPop@@UAEXH@Z
-//           Q->U 2026-09-06, Win's front slots 44/45 taking the image's
-//           own names (on_button_clicked / on_button_toggled): the body is
-//           now an override of the window's slot, so VC6 mangles it virtual
-//           and enters it on the front table, while the image spells the
-//           same body Q and its own table holds the raw address.
-// size      29 bytes
-// prototype void (__thiscall ?on_button_clicked@DiploPop@@QAEXH@Z)(DiploPop* this, int)
-// callers   0   call targets   0
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     (none)
-// indirect  0x0043F2A3
-// Forward to the currently modal Win through its actual button-click slot.
-
-
-void DiploPop::on_button_clicked(int button_id) {
-    Win *target = WinModalFocus;
-    if (target) {
-        target->on_button_clicked(button_id);
-    }
-}
-
 
 /*
 // ORIGINAL: 0x004406D0 ?set_modal@DiploPop@@QAEHHP6AHXZPAUWin@@@Z 0x004406D0-0x004406EC FILE BYTE_EXACT
@@ -831,202 +902,133 @@ void DiploPop::release_modal() {
     Win::release_modal();
 }
 
-// ORIGINAL: 0x0043F190 ?portrait_anim@DiploPop@@QAEXXZ 0x0043F190-0x0043F1BF FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["The original decodes the Flic at DiploPop +0xAE8 using its stored x/y at Flic +0x5AC/+0x5B0, then passes Flic +0x58C to the main interface's soft_update.", "DiploPop::flic1_ is the constructed Flic at +0xAE8, and MainInterfaceGlobal is the existing GraphicWin owner at 0x007AE820."], "reason": "Home the portrait animation using its embedded Flic, typed update rectangle, and process-owned update window."}
-void DiploPop::portrait_anim() {
-    flic1_.decode_stored_frame();
-    MainInterfaceGlobal.soft_update(flic1_.update_rect());
+// ORIGINAL: 0x00440700 ?init@DiploPop@@QAEXXZ 0x00440700-0x00440D4B;0x006548F4-0x0065491F
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00440700.cpp", "image:terranx_original.exe:0x00440700", "source:src/diplopop.h:DiploPop"], "reason": "Recover the complete DiploPop initializer with temporary Flic, MainInterface geometry, owned fonts/buttons, and native state."}
+// TRIED: the SEH __try/__finally frame and its per-object unwind-state byte; the layout arithmetic (0x004407B3-0x00440A21) is transcribed as algebraically-simplified named quantities rather than a literal register-by-register replay, so it matches the VALUES the original computes but not the register shuffling that produces them.
+void DiploPop::init() {
+    Flic layout_flic;
+    time1_.stop();
+    time2_.stop();
+    hide();
+    GraphicWin::close();
+    counterpart_faction_ = -1;
+    field_20B0_ = 0;
+    field_2154_ = 1;
+
+    // The native temporary is a real Flic: init reads decoded_width(), then
+    // its ordinary destructor closes the file and destroys Buffer/Palette.
+    RECT rect;
+    layout_flic.init(static_cast<Buffer *>(this),
+                     "faction.flc", 0, 0, 0);
+    int frame_width = 0x28;
+    if (layout_flic.decoded_width() >= 0x28) {
+        frame_width = layout_flic.decoded_width();
+    }
+    layout_flic.close();
+
+    rect = MainInterfaceGlobal.rect2();
+    int x = MainInterfaceGlobal.right_frame_rect().right - MainInterfaceGlobal.rect3().right + MainInterfaceGlobal.right_frame_rect().left;
+    rect.right = rect.left - 3;
+    rect.left = x;
+    right_panel_button_rect_ = rect;
+
+    rect = MainInterfaceGlobal.right_frame_rect();
+    expand_rect(&rect, -4, -4);
+    rect.bottom = right_panel_button_rect_.top - 6;
+    frame_inset_rect_ = rect;
+
+    content_rect_ = MainInterfaceGlobal.lower_frame_rect();
+    expand_rect(&content_rect_, -4, -4);
+
+    rect1_ = MainInterfaceGlobal.main_layout_rect();
+    expand_rect(&rect1_, -4, -4);
+    expand_rect(&rect1_, -3, -3);
+
+    rect = rect1_;
+    rect.top = rect.bottom - 20;
+    rect.right = rect.left + (rect.right - rect.left + 3) / 2 - 3;
+    button_left_rect_ = rect;
+    offset_rect(&rect, rect.right - rect.left + 3, 0);
+    button_right_rect_ = rect;
+    rect1_.bottom = rect.top - 3;
+
+    rect = MainInterfaceGlobal.main_frame_rect();
+    expand_rect(&rect, -4, -4);
+    rect.left = rect.right - frame_width - 2;
+    portrait_text_rect_ = rect;
+
+    rect = MainInterfaceGlobal.main_frame_rect();
+    expand_rect(&rect, -4, -4);
+    rect.right = portrait_text_rect_.left - 3;
+    bioscan_title_rect_ = rect;
+    bioscan_title_rect_.bottom = bioscan_title_rect_.top + 20;
+    bioscan_picture_rect_ = rect;
+    bioscan_picture_rect_.top = bioscan_title_rect_.bottom + 2;
+
+    register_iface(4);
+    if (WinScreenWidth != 0x320) {
+        font1_.init(DefaultFontFace, 10, 0);
+        font2_.init(DefaultFontFace, 12, 0);
+        font3_.init(DefaultFontFace, 14, 1);
+    } else {
+        font1_.init(DefaultFontFace, 10, 0);
+        font2_.init(DefaultFontFace, 10, 0);
+        font3_.init(DefaultFontFace, 12, 1);
+    }
+
+    GraphicWin::init(0, 0, 0x2BC,
+                     (WinScreenWidth == 0x320)
+                         ? (0x258 - MainInterfaceGlobal.panel_height()) : 0x1C2, 0x05000000, static_cast<Win *>(&ConsoleGlobal));
+    field_16C_ = 0x1A;
+    move((WinScreenWidth - pixel_width() + 0x20) / 2,
+         WinScreenHeight - pixel_height() - MainInterfaceGlobal.panel_height());
+    Buffer::sync_to_palette(PaletteCurrent);
+    GraphicWin::fill(9);
+
+    rect = *buffer_working_rect();
+    rect.left += 0x17;
+    rect.right -= 0x37;
+    Buffer::box_sprite(&rect, &InterfaceBoxStyles[9]);
+
+    flatButtons_[0].init(StringTable.get(Labels.strings_ptr[0xEA8 / 4]), 0,
+                         button_left_rect_.left, button_left_rect_.top,
+                         rect_width(&button_left_rect_),
+                         rect_height(&button_left_rect_),
+                         &MainInterfaceGlobal, 0);
+    flatButtons_[2].init(StringTable.get(Labels.strings_ptr[0xEAC / 4]), 2,
+                         right_panel_button_rect_.left,
+                         right_panel_button_rect_.top,
+                         rect_width((&right_panel_button_rect_)),
+                         rect_height((&right_panel_button_rect_)),
+                         &MainInterfaceGlobal, 0);
+
+    StringTemp[0] = '\0';
+    strcat(StringTemp, label_get(0x774 / 4));
+    CharUpperA(StringTemp);
+    flatButtons_[1].init(StringTemp, 1,
+                         button_right_rect_.left, button_right_rect_.top,
+                         rect_width(&button_right_rect_),
+                         rect_height(&button_right_rect_),
+                         &MainInterfaceGlobal, 0);
+
+    for (int button_index = 0; button_index < 3; ++button_index) {
+        flatButtons_[button_index].set_border_styles(
+            &InterfaceBoxStyles[27], &InterfaceBoxStyles[28],
+            &InterfaceBoxStyles[29]);
+        flatButtons_[button_index].set_text_color(0x41, -1, 1, 1);
+        flatButtons_[button_index].Buffer::set_font(&font3_, 0, 0, 0);
+        flatButtons_[button_index].redraw();
+        flatButtons_[button_index].hide();
+    }
+    field_20B0_ = 0;
 }
 
-// ORIGINAL: 0x0043F1C0 ?bioscan_anim@DiploPop@@QAEXXZ 0x0043F1C0-0x0043F1FC FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["The original increments DiploPop +0x20B0, decodes the Flic at +0x15CC using its stored x/y at Flic +0x5AC/+0x5B0, and updates Flic +0x58C.", "DiploPop::flic2_ is the constructed Flic at +0x15CC; its footprint ends at +0x20B0, where the existing animation counter begins."], "reason": "Home the bioscan animation through its typed Flic member, update rectangle, and owner counter."}
-void DiploPop::bioscan_anim() {
-    ++field_20B0_;
-    flic2_.decode_stored_frame();
-    MainInterfaceGlobal.soft_update(flic2_.update_rect());
-}
-
-// ORIGINAL: 0x0043F200 ?timer_callback_daemon@DiploPop@@QAAXHH@Z 0x0043F200-0x0043F245 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Disassembly reads the popup pointer from the second cdecl stack argument ([ebp+0xC]); it does not use ECX as a hidden DiploPop receiver.", "The callback's Flic2 decode, animation counter increment, and update rectangle are exactly the work owned by DiploPop::bioscan_anim.", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/0043f200.cpp"], "reason": "Keep the timer entry a real two-argument cdecl callback and route its explicit popup parameter into the typed owner method. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
-// kind      game
-// symbol    ?diplo_bioscan_timer_callback@@YAXHPAX@Z
-void __cdecl diplo_bioscan_timer_callback(int, void *context) {
-    if (!context) return;
-    static_cast<DiploPop *>(context)->bioscan_anim();
-}
-
-// ORIGINAL: 0x0043F250 ?timer_callback_daemon2@DiploPop@@QAAXHH@Z 0x0043F250-0x0043F288 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Disassembly reads the popup pointer from the second cdecl stack argument ([ebp+0xC]); this is a free callback, not a DiploPop member entry despite the historical catalog symbol spelling.", "The callback's Flic1 decode and update rectangle are the work owned by DiploPop::portrait_anim."], "reason": "Preserve the timer callback's actual cdecl stack ABI and use the typed portrait animation implementation."}
-// symbol    ?diplo_portrait_timer_callback@@YAXHPAX@Z
-void __cdecl diplo_portrait_timer_callback(int, void *context) {
-    if (!context) return;
-    static_cast<DiploPop *>(context)->portrait_anim();
-}
-
-// Original interface table 0x0066B424 slot 1 targets this shared complete body.
-// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_iface_scrolled@DiploPop@@UAEXHH@Z 0x00440380
-void DiploPop::on_iface_scrolled(int, int) {}
-// Original interface table 0x0066B424 slot 2 targets this shared complete body.
-// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_iface_scrolling@DiploPop@@UAEXHH@Z 0x00440380
-void DiploPop::on_iface_scrolling(int, int) {}
-// Original interface table 0x0066B424 slot 6 targets this shared complete body.
-// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_iface_left_up@DiploPop@@UAEXHH@Z 0x00440380
-void DiploPop::on_iface_left_up(int, int) {}
-
-// Original interface table 0x0066B424 slot 14 targets this shared complete body.
-// RECOVERY_SHARED: v1 0x00404250 0x00404255 ?on_iface_button_pressed@DiploPop@@UAEHH@Z 0x00440380
-int DiploPop::on_iface_button_pressed(int) {
-    return 0;
-}
-
-// Original interface table 0x0066B424 slot 17 targets this shared complete body.
-// RECOVERY_SHARED: v1 0x00404250 0x00404255 ?on_iface_dialog_back_draw@DiploPop@@UAEHPAVGraphicWin@@@Z 0x00440380
-int DiploPop::on_iface_dialog_back_draw(GraphicWin *) {
-    return 0;
-}
-
-// Original interface table 0x0066B424 slot 18 targets this shared complete body.
-// RECOVERY_SHARED: v1 0x00404240 0x00404245 ?on_iface_dialog_item_back_draw@DiploPop@@UAEHPAVGraphicWin@@HHPAUtagRECT@@@Z 0x00440380
-int DiploPop::on_iface_dialog_item_back_draw(GraphicWin *, int, int, RECT *) {
-    return 0;
-}
-
-// ORIGINAL: 0x0043FA90 ?draw_info@DiploPop@@QAEXXZ 0x0043FA90-0x0044007F
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned43FA90..44007F; screenwidth800 portrait branch; Buffer wrap field at receiver454; MainInterface Buffer receiver7AEC64; font2/3 and faction portrait typed layouts. Ranking reads96C9E4 PlayerData+4, not misleading94C9E4 Mood. Repeated spying calls and live local-faction loads preserved; host controls verify drawing phases/treaty priority/call ordering."], "reason": "Recover complete two-panel diplomacy display as a genuine nonvirtual DiploPop member, using actual Buffer bases, embedded fonts/portrait assets and source-owned faction state rather than raw self offsets."}
-// TRIED: transcription mixing Ghidra's control-flow structure with a raw-asm re-derivation of the RECT field-to-stack-slot mapping for the box_sprite/draw_mono/draw calls, since Ghidra's own local_XX names there did not correspond to their literal ebp offsets (proven by cross-checking the Y-formula against the confirmed slot layout: RECT starts at ebp-0x10, not ebp-0x14 as the naming implied) - trusted raw asm for that part, and Ghidra's formulas/call order for the later (mechanical) string-building/wrap/write_l portion. The `Sprite* portrait = g_0078ee74 + leaderIdx*0x65c` stride and its iWidth_/iHeight_/cTransparentIndex_ field reads were confirmed against Sprite's catalogued layout. Reaches MISMATCH #4 ('push' vs 'mov'); did not chase the exact prologue/register-allocation shape further given the function's size.
-void DiploPop::draw_info() {
-    int panel = 0;
-    RECT box = rect1_;
-    box.right = ((box.right - box.left) + 3) / 2 - 3 + box.left;
-    Buffer::set_wrap_width(15);
-
-    do {
-        RECT r = box;
-        MainInterfaceGlobal.box_sprite(&r, &InterfaceBoxStyles[0]);
-        r.left += 3;
-        r.right -= 3;
-        r.top += 3;
-        r.bottom -= 3;
-
-        const int faction = panel == 0 ? counterpart_faction_
-                                       : ConsoleGlobal.faction_id_;
-        Sprite *const portrait = &FactionsArt[faction].diplomacy_logo;
-        if (WinScreenWidth == 800) {
-            portrait->draw_mono(&MainInterfaceGlobal, portrait->transparent_index(),
-                                (r.right - portrait->width() - r.left) / 2 + r.left,
-                                (r.bottom - portrait->height() - r.top) / 2 + r.top,
-                                0x41, 1, 1);
-        } else {
-            portrait->draw(&MainInterfaceGlobal, portrait->transparent_index(), r.left,
-                           font_line_advance(font3_) + r.top + 3, 1, 1);
-        }
-
-        MainInterfaceGlobal.set_text_color(ChatItemIdTable[faction], -1, 1, 1);
-        MainInterfaceGlobal.set_font(&font3_, nullptr, nullptr, nullptr);
-        StringTemp[0] = '\0';
-        strcat(StringTemp, Players[faction].formal_name_faction);
-        CharUpperA(StringTemp);
-
-        RECT name_area = r;
-        name_area.bottom = font_line_advance(font3_) + name_area.top;
-        name_area.top += 2;
-        int y = MainInterfaceGlobal.wrap_cent(StringTemp, &name_area);
-        if (WinScreenWidth != 800) {
-            r.left += portrait->width() + 2;
-        }
-
-        MainInterfaceGlobal.set_text_color(0xA0, -1, 1, 1);
-        r.left += 3;
-        r.right -= 3;
-        r.top += 3;
-        r.bottom -= 3;
-        int x = r.left;
-        y += 3;
-        Font *const body_font = &font2_;
-        MainInterfaceGlobal.set_font(body_font, nullptr, nullptr, nullptr);
-
-        if (panel == 0) {
-            StringTemp[0] = '\0';
-            strcat(StringTemp, label_get(0xE98 / 4));
-            strcat(StringTemp, SocialWinColonSpaceText);
-            const uint32_t relation =
-                PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction];
-            LPSTR relation_label;
-            if (relation & DTREATY_PACT) {
-                relation_label = Labels.strings_ptr[0xA14 / 4];
-            } else if (relation & DTREATY_TREATY) {
-                relation_label = Labels.strings_ptr[0xA10 / 4];
-            } else if (relation & DTREATY_TRUCE) {
-                relation_label = Labels.strings_ptr[0xA0C / 4];
-            } else if (relation & DTREATY_VENDETTA) {
-                relation_label = Labels.strings_ptr[0xA1C / 4];
-            } else {
-                relation_label = Labels.strings_ptr[0x64 / 4];
-            }
-            strcat(StringTemp, table_text(relation_label));
-            CharUpperA(StringTemp);
-            y = MainInterfaceGlobal.wrap(StringTemp, x, y, r.right - x);
-        }
-
-        StringTemp[0] = '\0';
-        strcat(StringTemp, label_get(0xE9C / 4));
-        strcat(StringTemp, SocialWinColonSpaceText);
-        strcat(StringTemp, table_text(spying(faction) ? Labels.strings_ptr[0x614 / 4]
-                                                           : Labels.strings_ptr[0xEA0 / 4]));
-        y = MainInterfaceGlobal.wrap(StringTemp, x, y, r.right - x);
-
-        if (faction == ConsoleGlobal.faction_id_ || spying(faction)) {
-            StringTemp[0] = '\0';
-            strcat(StringTemp, label_get(0x90 / 4));
-            strcat(StringTemp, SocialWinColonSpaceText);
-            say_num(PlayersData[faction].energy_reserves
-                    - PlayersData[faction].hurry_cost_total);
-            MainInterfaceGlobal.write_l(StringTemp, x, y);
-            y += font_line_advance(*body_font);
-        }
-
-        StringTemp[0] = '\0';
-        strcat(StringTemp, label_get(0x37C / 4));
-        strcat(StringTemp, SocialWinColonSpaceText);
-        x = MainInterfaceGlobal.write_l(StringTemp, x, y);
-
-        StringTemp[0] = '\0';
-        say_special(StringTemp,
-                    table_text(Might[range(7 - PlayersData[faction].ranking, 0, 6)].adj_start),
-                    faction);
-        CharUpperA(StringTemp);
-        MainInterfaceGlobal.write_l(StringTemp, x, y);
-
-        const int step = (box.right - box.left) + 3;
-        box.left += step;
-        box.right += step;
-    } while (++panel < 2);
-}
-
-// ORIGINAL: 0x004402A0 ?on_redraw@DiploPop@@QAEXXZ 0x004402A0-0x00440379 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Historical source binding before owner migration: Recover the diplomacy pop repaint through its typed interface state and panel members, including the now-source-owned HQ drawer; the first three helper bodies remain an explicit outside-owner dependency.", "Historical source evidence: Original4402A0..440379; retired seed git:ee30a69d:src/unrecovered/004402a0.cpp records the same identity and spans with its RECT-local TRIED note kept below.", "Historical source evidence: The opener is maininterface.h's restore_back on mapwin.h's MainInterfaceGlobal (0x007AE820); the frame styles are buffer.h's InterfaceBoxStyles[3] (0x0078D5A0) and [21] (0x0078D870) against the interface Buffer 0x007AEC64; the UnionRect slot 0x00669328 is the runtime import slot console.h documents.", "Historical source evidence: The four sub-drawers are the seed's measured call targets 0x0043F5F0/0x0043F790/0x0043FA90/0x00440080 in the body's call order (bioscan/portrait/info/hq); 0x00440080 is now the source-owned DiploPop::draw_hq body, while the first three helper bodies remain outside this task's source ownership. The receiver's panel rect at +0x2144 remains the seed's measured walk.", "Pinned constructor 43EFF0 installs primary vfptr 66B478 at 43F0AE; table cell66B4A8 (+30, inherited Win slot12) contains4402A0, establishing the real on_redraw override.", "MainInterfaceGlobal7AE820 owns Buffer base+444=7AEC64 and RECT members rect2_+A8C=7AF2AC, rect3_+A9C=7AF2BC, rect1_+DC0=7AF5E0. Existing getters expose those real members; DiploPop right_panel_button_rect_ is+2144.", "Pinned USER32 import IAT669328 is UnionRect. The original calls shared-canvas box_sprite with styles3 then21, unions the interface panels then the receiver panel, and invokes source-owned bioscan/portrait/info/HQ painters in that order."], "reason": "Recover the complete repaint as the genuine DiploPop virtual member, using existing interface and receiver rectangles, the actual Buffer secondary base, imported UnionRect and source-owned painter methods. Historical outside-owner seam notes are superseded, not erased."}
-// symbol    ?on_redraw@DiploPop@@UAEXXZ
-void DiploPop::on_redraw() {
-    MainInterfaceGlobal.restore_back(1);
-    RECT rc = MainInterfaceGlobal.main_layout_rect();
-    rc.left += 4;
-    rc.right -= 4;
-    rc.top += 4;
-    rc.bottom -= 4;
-    MainInterfaceGlobal.box_sprite(&rc, &InterfaceBoxStyles[3]);
-
-    ::UnionRect(&rc, &MainInterfaceGlobal.rect2(),
-                &MainInterfaceGlobal.rect3());
-    ::UnionRect(&rc, &rc, &right_panel_button_rect_);
-
-    rc.left -= 3;
-    rc.right += 3;
-    rc.top -= 3;
-    rc.bottom += 3;
-    MainInterfaceGlobal.box_sprite(&rc, &InterfaceBoxStyles[21]);
-
-    draw_bioscan();
-    draw_portrait();
-    draw_info();
-    draw_hq();
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00440D50 ??1DiploPop@@QAE@XZ 0x00440D50-0x00440EB8;0x006547B0-0x00654871 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Original440D50..440EB8 and unwind6547B0..654871 restore the class tables, perform the same two Time stops, virtual hide and direct GraphicWin close as close(), then resetA94/20B0/2154. Normal C++ destructor dispatch supplies those table transitions; no table stores are handwritten.", "440DEB onward destroys FlatButton[3] in reverse, then Flic2/Flic1 including their Palette/Buffer members, Time2/Time1, Font3/Font2/Font1, and GraphicWin. The complete unwind path preserves the same partially live subobjects. Existing downstream lifecycle and renderer limitations are not waived."], "reason": "Recover complete diplomacy-popup destruction through close followed by automatic reverse member and base destruction."}
+// symbol    ??1DiploPop@@UAE@XZ
+DiploPop::~DiploPop() {
+    // The original inlines close before reverse member/base teardown.
+    // Normal C++ destruction also owns partial-construction unwinding.
+    close();
 }
