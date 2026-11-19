@@ -897,15 +897,12 @@ int NetWin::pick_pass(int payload) {
     NetWinConstructedLobbyRow updated;
     Popup popup;
     const int slot = NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id());
-    int faction_mode;
+    int faction_mode = 0;
     if (NetWinSessionData.fields_.mode_ == 2 ||
         NetWinSessionData.fields_.mode_ == 3) {
         faction_mode = 1;
-    } else {
-        faction_mode = 0;
-        if (payload != 0) {
-            return 1;
-        }
+    } else if (payload != 0) {
+        return 1;
     }
 
     const int faction = NetWinLobbyRows.rows_[slot].faction_or_color_;
