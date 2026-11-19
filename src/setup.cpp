@@ -367,6 +367,8 @@ int __cdecl get_plan(int faction_id, int plan) {
 // are get_plan() expanded by /Ob2; research count, facility order, energy bonus
 // and ai_* field choices restored from the image.
 void __cdecl time_warp() {
+    // [ebp-0x58] (imgmerge.py, par-6): the image keeps the coast-placed flag and the path length counter in one home
+    int v_58;
     // [ebp-0x1c] (imgmerge.py, par-6): the image stores the best landing score, the
     // smallest-base scan index and the best site quality in one home
     int v_1c;
@@ -412,7 +414,7 @@ void __cdecl time_warp() {
         if (Players[faction_id].rule_talent) ++Bases[base_id].population_size;
         if (Players[faction_id].rule_drone || Players[faction_id].rule_population)
             --Bases[base_id].population_size;
-        int coast_placed = 0;
+        v_58 = 0;
         Bases[base_id].nutrients_accumulated = Bases[base_id].population_size * 10 / 2;
         int start_region = region_at(Bases[base_id].x, Bases[base_id].y);
 
@@ -606,7 +608,7 @@ void __cdecl time_warp() {
                 }
                 if (region_at(best_x, best_y) != start_region
                     && is_port(new_base_id, FALSE)
-                    && !coast_placed) {
+                    && !v_58) {
                     for (int dir = 0; dir < 8; ++dir) {
                         int sx = wrap_map_x(VehMoveDeltaX[dir] + best_x);
                         int sy = VehMoveDeltaY[dir] + best_y;
@@ -618,7 +620,7 @@ void __cdecl time_warp() {
                             veh_init(foil_proto, faction_id, sx, sy);
                             veh_id = veh_init(BSC_UNITY_ROVER, faction_id, sx, sy);
                             sleep(veh_id);
-                            coast_placed = 1;
+                            v_58 = 1;
                             break;
                         }
                     }
@@ -694,7 +696,7 @@ void __cdecl time_warp() {
                 if (region_at(px, py) != region_at(Bases[base_id].x, Bases[base_id].y)) continue;
                 x = Bases[base_id].x;
                 y = Bases[base_id].y;
-                int path_length = 0;
+                v_58 = 0;
                 int step = Paths.find(px, py, x, y, 0, -1,
                     has_tech(Rules.tech_build_roads_fungus, faction_id) ? 0 : 4, -1);
                 while (step >= 0) {
@@ -705,7 +707,7 @@ void __cdecl time_warp() {
                         map_loc(px, py)->bit |= BIT_ROAD;
                         synch_bit(px, py, faction_id);
                     }
-                    if (++path_length > 50) break;
+                    if (++v_58 > 50) break;
                     step = Paths.find(px, py, x, y, 0, -1,
                         has_tech(Rules.tech_build_roads_fungus, faction_id) ? 0 : 4, -1);
                 }
