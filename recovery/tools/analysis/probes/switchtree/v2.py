@@ -1,0 +1,6 @@
+V.clear()
+b = fn('v_ifelse')
+V['ifelse'] = b.replace('    switch (key) {', '    if (g_f1) {\n    switch (key) {').replace('    }\n    mk(30);', '    }\n    } else { mk(40); }\n    mk(30);')
+V['ifonly'] = fn('v_ifonly').replace('    switch (key) {', '    if (g_f1) {\n    switch (key) {').replace('    }\n    mk(30);', '    }\n    }\n    mk(30);')
+V['H_last'] = fn('v_H_last', order=('S', 'P', 'H'))
+V['pans_ret'] = fn('v_pans_ret').replace('            break;\n', '            return 1;\n')

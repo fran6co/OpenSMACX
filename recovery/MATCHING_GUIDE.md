@@ -3328,6 +3328,20 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   `max`/`min` macro.
 - **Float types.** A float temporary kept in x87 is `float`; `double` makes the
   constants qword. Check `.rdata` operand widths.
+- **`lea r,[r+r*2+K]; shl r,4; [r+Array]` is a named index variable in an EH
+  function** (par-3 2026-11-19, `analysis/probes/idxfold/`). VC6 folds the
+  constant of `Array[K + id]` into the displacement (`[r+Array+K*size]`)
+  for every expression spelling: order, enum/#define/const, inline helpers
+  returning the pointer, index or field, pointer arithmetic, casts,
+  unsigned/short ids, address-taken or volatile ids, a named index in a
+  function without EH. It keeps K inside the scaled index only when the
+  index is a named variable (`const int fid = FacilitySPStart + id;
+  Facility[fid]`) in a function with an EH object and `id` stays live; when
+  `id` dies at the add, it gives `add eax,K; lea [eax+eax*2]` instead. The
+  image has the shape at three sites only (BaseWin::base_editor_proj
+  0x0041BD85, NetDaemon::process_message 0x00537781/0x0053780E), all now
+  reproduced; a tree-wide `lea [x+n*x+K]` + shift census finds no other
+  address use.
 
 ### 3.5 Behaviour bugs hidden as near-misses
 - **Masking.** Masking hides wrong fields, callees, literals and loop-end
@@ -3807,6 +3821,40 @@ Arm layout and operand sources (par-3, 2026-11-19)
   faction.cpp:2591): 910 -> 788 rows, with registers moving in loops far
   from the clamp. Try it (armwo (r)) when disputed pairs sit outside the
   statement.
+
+Switch layout (par-3 2026-11-19, `analysis/probes/switchtree/`)
+- **Case bodies of a sparse switch are emitted behind the last tree node that
+  references them**, in source order inside that node; the order of case
+  groups in the text does not move them. Console::on_key_click's final switch
+  (nodes `cmp 0x61` + table 0x21..0x28, `cmp 0x10025` + table 0x62..0x69, a
+  byte-indexed table 0x10026..0x10068): the 0x61 body follows node 1, the
+  direction stubs (in both small tables) follow node 2, the pans (0x10025 is
+  node 2's `je` but also in node 3's table) follow node 3. All six textual
+  orders of these groups compile to one layout. Only the order inside a group
+  moves blocks (and which pan hosts the shared `set_center` tail).
+- **A block reached only by `goto` or fall-through follows its last emitted
+  jumper**: the direction body after the last stub when the stubs `goto` it,
+  after the 0x61 block when that is its only predecessor; it stays contiguous
+  either way. `(unsigned)key`, `default: break`, the body after the switch or
+  after the join, `break` into it with the pans `goto` the join, all leave
+  the layout unchanged. A nested switch or an `if (key >= 0x10000)` split with
+  the pans first reproduces a first-pan host with the join head behind it,
+  but changes the tree. The image's split body (head after the 0x61 block,
+  rest after the pans) is not reproduced; it implies the stubs joined the
+  head only after layout (a cross-jump), and written-out bodies per case
+  constant-fold `a2` and never merge.
+
+Teardown reservation (par-3 2026-11-19, `analysis/probes/upgrade_eh/`)
+- **A periodic `~FlatButton` pattern at middle return sites (ours
+  `EcEcEc`, image all `c`) wants reservations, not charges.** Console::upgrade
+  0x004D06C0: flat one-test probes after the last middle return refused at
+  most two of the three sites; seven folded two-level probes (free outer
+  inline around a one-test inner) there refused all of them and matched the
+  image's ~FlatButton multiset (256 -> 147 rows) without touching the later
+  teardowns. The natural part was the header-inline three-argument `popp`
+  wrapper at the two confirmation popups (sites 6 and 7). Neither moves a
+  later teardown deeper (return 1 keeps calling ~StringList where the image
+  expands it).
 
 ## 4. Measured and neutral (do not retry without new evidence)
 
