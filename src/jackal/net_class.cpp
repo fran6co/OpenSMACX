@@ -179,15 +179,6 @@ int NetTextListBase::on_insert(Payload *) { return 0; }
 // RECOVERY_SHARED: v1 0x00404270 0x00404273 ?on_remove@NetTextListBase@@UAEXPAVNetTextPayload@@@Z 0x00401B80
 void NetTextListBase::on_remove(Payload *) { }
 
-void NetUnk72C::on_remove(Payload *payload) {
-    if (allocator_ == 0) {
-        if (payload->text != 0) {
-            free(payload->text);
-            payload->text = 0;
-        }
-    }
-}
-
 int NetTextListBase::seek_pos(int position) {
     typedef int (__cdecl *AbsFunction)(int);
     AbsFunction abs_function = &abs;
@@ -1566,13 +1557,6 @@ int Net::join_session(NetAllocationNode *session, char *player_name,
 
 // ServiceProviderList::~ServiceProviderList: body in alphanet_inline.h.
 
-
-void ServiceList::on_remove(ServiceStruct *payload) {
-    if (allocator_ == 0 && payload->name_ != 0) {
-        free(payload->name_);
-        payload->name_ = 0;
-    }
-}
 
 // ServiceList::~ServiceList lives in alphanet.cpp: choose_service (0x00630D70)
 // calls it out of line, while pick_service (0x004E26E0) expands it.

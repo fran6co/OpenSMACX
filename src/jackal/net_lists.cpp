@@ -33,9 +33,7 @@
 // Net and the AlphaNet lists) reach them. In address order:
 // ServiceList::on_insert/on_remove, AlphaNetLedger::on_insert/on_remove,
 // AlphaNetStringStruct::sort_sessions and compare_session_guid, and
-// NetUnk72C::on_insert/on_remove. The original filename is unknown. The two
-// on_remove bodies are inline in net_class.h and are measured where their
-// tables are emitted.
+// NetUnk72C::on_insert/on_remove. The original filename is unknown.
 
 // Source-only typed algorithms shared by genuine list owners. They own no
 // executable identity. Each instantiated body/reference requires measurement;
@@ -87,9 +85,14 @@ int ServiceList::on_insert(ServiceStruct *payload) {
 
 // ORIGINAL: 0x005D4860 sub_5d4860 0x005D4860-0x005D4887 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/005d4860.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed.", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/005d4860.cpp"], "reason": "Provider table slot1 frees/nulls name +4 only when allocator+18 null; retained exact seed. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
-// compile_context src/jackal/net_class.cpp
 // kind      game
 // symbol    ?on_remove@ServiceList@@UAEXPAUServiceStruct@@@Z
+void ServiceList::on_remove(ServiceStruct *payload) {
+    if (allocator_ == 0 && payload->name_ != 0) {
+        free(payload->name_);
+        payload->name_ = 0;
+    }
+}
 
 // ORIGINAL: 0x005D4890 ?on_insert@AlphaNetLedger@@UAEHPAVNetAllocationNode@@@Z 0x005D4890-0x005D498D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original table 0x66EAE8 slot 0 points here. Insertion 0x401D80 allocates a 0x60 NetAllocationNode, constructs its nested list and invokes this hook; enumeration 0x630C30 supplies DPSESSIONDESC2 fields. Seed extent is retained; this binding makes no matching claim."], "reason": "Recover the session-ledger insertion virtual from its retained seed using the existing allocation-owning payload class."}
@@ -301,6 +304,13 @@ int NetUnk72C::on_insert(Payload *payload) {
 
 // ORIGINAL: 0x005D4CC0 sub_5d4cc0 0x005D4CC0-0x005D4CE7 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/005d4cc0.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed.", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/005d4cc0.cpp"], "reason": "Nested list slot1 cleanup at observed payload+4; original factory/complete extent unknown, retain exact seed. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
-// compile_context src/jackal/net_class.cpp
 // kind      game
 // symbol    ?on_remove@NetUnk72C@@UAEXPAVNetTextPayload@@@Z
+void NetUnk72C::on_remove(Payload *payload) {
+    if (allocator_ == 0) {
+        if (payload->text != 0) {
+            free(payload->text);
+            payload->text = 0;
+        }
+    }
+}
