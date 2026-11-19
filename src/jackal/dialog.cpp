@@ -595,7 +595,7 @@ int Dialog::set_def_dialog_font(Font *font1, Font *font2, Font *font3) {
 // set_def_dialog_text_color (0x00609D50, homed just below) STORES the twelve
 // text-color slots 24..35 at runtime. Reads elsewhere are unchanged by the
 // missing const; the ctor's BYTE_EXACT claim re-measured clean on it.
-// RECOVERY_OBJECT: v1 0x0069704C ?DialogDefaults@@3PAIA
+// RECOVERY_OBJECT: v2 0x0069704C 0x006970E0 ?DialogDefaults@@3PAIA 0x0058E360
 uint32_t DialogDefaults[37] = {
     247, 7, 248, 2, 125, 0,
     0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,

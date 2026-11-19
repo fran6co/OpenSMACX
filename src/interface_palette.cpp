@@ -27,7 +27,7 @@
 #include "alpha.h"  // prefs_get
 
 
-// RECOVERY_OBJECT: v1 0x0094C590 ?g_PALETTE1@@3VPalette@@A
+// RECOVERY_OBJECT: v2 0x0094C590 0x0094C9E4 ?g_PALETTE1@@3VPalette@@A 0x0058E360
 Palette g_PALETTE1;
 // RECOVERY_OBJECT: v2 0x009523A0 0x009527F4 ?g_PALETTE2@@3VPalette@@A 0x00491400
 Palette g_PALETTE2;  // 0x009523A0, the preferences gamma working palette

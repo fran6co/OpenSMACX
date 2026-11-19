@@ -1959,7 +1959,7 @@ uint32_t BasePopDefaultField30A4;  // 0x009B8DCC
 
 // Copied to +0x322c, immediately after the zero store the image overwrites.
 // The image references this slot from 13 sites, all outside this file.
-// RECOVERY_OBJECT: v1 0x009B8DD0 ?BasePopDefaultField322C@@3PAVWin@@A
+// RECOVERY_OBJECT: v2 0x009B8DD0 0x009B8DD4 ?BasePopDefaultField322C@@3PAVWin@@A 0x0058E360
 Win *BasePopDefaultField322C;  // 0x009B8DD0
 
 BasePop::BasePop() {
