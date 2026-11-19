@@ -237,13 +237,6 @@ uint32_t TutWinShownFlag;
 // window. Their fixed-image identities are recorded by the coordinator.
 // RECOVERY_OBJECT: v1 0x008CC248 ?TutWinTourPending@@3HA
 int TutWinTourPending;
-// Historical object identity moved to GameDataStateStorage; see the transport manifest.
-
-// Tutorial tour's original 0x945830 gate controls WorldClimateWorldWin's
-// restoration. It is source-owned, writable state with loader-zero initial
-// storage; no writer or larger object owner is established.
-// RECOVERY_OBJECT: v1 0x00945830 ?TutWinClimateGate945830@@3HA
-int TutWinClimateGate945830;
 
 // THE TWO TUTORIAL-SHOWN BIT SETS, one per checker. tut_check and tut_check2
 // each OR their argument in and refuse to fire again while the bit is set;

@@ -147,6 +147,60 @@ static char ArmorNameBadKey[] = "BADARMKEY";
 #include "multidebug.h"  // MultiDebug, the standing debug window
 #include "datalink.h"  // DatalinkMain
 
+// Borrowed FontTable entries selected by application popup policy.
+// config_popups publishes these pointers; they own no Font lifetime.
+// RECOVERY_OBJECT: v1 0x009403D8 ?PopupMainFont@@3PAVFont@@A
+Font *PopupMainFont;          // 0x009403D8
+// RECOVERY_OBJECT: v1 0x009403DC ?PopupSmallFont@@3PAVFont@@A
+Font *PopupSmallFont;         // 0x009403DC
+// RECOVERY_OBJECT: v1 0x0094575C ?PopupMainBoldFont@@3PAVFont@@A
+Font *PopupMainBoldFont;      // 0x0094575C
+// RECOVERY_OBJECT: v1 0x00945760 ?PopupMainItalicFont@@3PAVFont@@A
+Font *PopupMainItalicFont;    // 0x00945760
+// RECOVERY_OBJECT: v1 0x00945764 ?PopupMenuBoldFont@@3PAVFont@@A
+Font *PopupMenuBoldFont;      // 0x00945764
+// RECOVERY_OBJECT: v1 0x00945768 ?PopupMenuItalicFont@@3PAVFont@@A
+Font *PopupMenuItalicFont;    // 0x00945768
+// RECOVERY_OBJECT: v1 0x0094576C ?PopupMediumFont@@3PAVFont@@A
+Font *PopupMediumFont;        // 0x0094576C
+// RECOVERY_OBJECT: v1 0x00945770 ?InterludeNormalFont@@3PAVFont@@A
+Font *InterludeNormalFont;    // 0x00945770
+// RECOVERY_OBJECT: v1 0x00945774 ?PopupLargeFont@@3PAVFont@@A
+Font *PopupLargeFont;         // 0x00945774
+// RECOVERY_OBJECT: v1 0x00945778 ?PopupMapLabelFont@@3PAVFont@@A
+Font *PopupMapLabelFont;      // 0x00945778
+// RECOVERY_OBJECT: v1 0x009457EC ?PopupMenuFont@@3PAVFont@@A
+Font *PopupMenuFont;          // 0x009457EC
+// RECOVERY_OBJECT: v1 0x009457F0 ?PopupSmallItalicFont@@3PAVFont@@A
+Font *PopupSmallItalicFont;   // 0x009457F0
+// RECOVERY_OBJECT: v1 0x009457F4 ?PopupSmallBoldFont@@3PAVFont@@A
+Font *PopupSmallBoldFont;     // 0x009457F4
+// RECOVERY_OBJECT: v1 0x009457F8 ?InterludeThirdFont@@3PAVFont@@A
+Font *InterludeThirdFont;     // 0x009457F8
+// RECOVERY_OBJECT: v1 0x009457FC ?InterludeSecondFont@@3PAVFont@@A
+Font *InterludeSecondFont;    // 0x009457FC
+// RECOVERY_OBJECT: v1 0x00945800 ?PopupLargeItalicFont@@3PAVFont@@A
+Font *PopupLargeItalicFont;   // 0x00945800
+// RECOVERY_OBJECT: v1 0x00945804 ?PopupLargeBoldFont@@3PAVFont@@A
+Font *PopupLargeBoldFont;     // 0x00945804
+// RECOVERY_OBJECT: v1 0x00945808 ?PopupMediumItalicFont@@3PAVFont@@A
+Font *PopupMediumItalicFont;  // 0x00945808
+// RECOVERY_OBJECT: v1 0x0094580C ?PopupMediumBoldFont@@3PAVFont@@A
+Font *PopupMediumBoldFont;    // 0x0094580C
+// RECOVERY_OBJECT: v1 0x00945810 ?PopupDefaultWindowFont@@3PAVFont@@A
+Font *PopupDefaultWindowFont; // 0x00945810
+// Signed preference: negative/default/positive select slow/normal/fast.
+// The independent INI loader 0x00588AA0 names it FastUnitAnim.
+// RECOVERY_OBJECT: v2 0x0094581C 0x00945820 ?FastUnitAnim@@3HA 0x0055A150
+int FastUnitAnim;
+// Historical object identity moved to GameDataStateStorage; see the transport manifest.
+
+// Tutorial tour's original 0x945830 gate controls WorldClimateWorldWin's
+// restoration. It is source-owned, writable state with loader-zero initial
+// storage; no writer or larger object owner is established.
+// RECOVERY_OBJECT: v1 0x00945830 ?TutWinClimateGate945830@@3HA
+int TutWinClimateGate945830;
+
 // ORIGINAL: 0x00584D30 sub_584d30 0x00584D30-0x00584D52 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:3f7fc8f78d783f09c46cddc646c31c2f5eb6d013:src/recovered/00584d30.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x584d30 complete original body; independent source-owner review.", "source:src/general.cpp and corresponding header own real receiver/dependencies; count-zero copy underflow is intentionally unchanged."], "reason": "Complete typed application helper; retain original call ordering, argument contract and historical obligation."}
 // symbol    ?sub_584d30@@YAPADPAD0I@Z

@@ -485,11 +485,6 @@ LPSTR PlansShortName[MaxPlanNum];  // 0x00945FE0
 LPSTR PlansFullName[MaxPlanNum];  // 0x00952360
 LPSTR Triad[MaxTriadNum];  // 0x0094F1A8
 
-// Signed preference: negative/default/positive select slow/normal/fast.
-// The independent INI loader 0x00588AA0 names it FastUnitAnim.
-// RECOVERY_OBJECT: v2 0x0094581C 0x00945820 ?FastUnitAnim@@3HA 0x0055A150
-int FastUnitAnim;
-
 
 // Shared infantry/native model placement, original 687AE8..687AF4.
 // This is distinct from the four offsets derived from loaded voxel parts.
