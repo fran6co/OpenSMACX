@@ -532,9 +532,8 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
         Bases[base_id].minerals_accumulated = 0;
         Bases[base_id].minerals_accumulated_2 = 0;
         for (int queue_index = 0; queue_index <= Bases[base_id].queue_size; queue_index++) {
-            int queue_item = Bases[base_id].queue_production_id[queue_index];
-            if (queue_item >= 0) {
-                PlayersData[faction_id_def].proto_id_queue[queue_item]--;
+            if (Bases[base_id].queue_production_id[queue_index] >= 0) {
+                PlayersData[faction_id_def].proto_id_queue[Bases[base_id].queue_production_id[queue_index]]--;
             }
         }
         Bases[base_id].queue_size = 0;
