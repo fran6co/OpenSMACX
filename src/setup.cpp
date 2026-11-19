@@ -1292,17 +1292,17 @@ search:
     if (!failed || retry) {
         if (!GameDataStateStorage.fields_.turn_current_num_ || conqueror == -282) {
             int best = -1, best_offset = 0;
-            for (int offset3 = 0; offset3 < 21; ++offset3) {
-                int rx = wrap_map_x(x + RadiusOffsetX[offset3]);
-                int ry = y + RadiusOffsetY[offset3];
-                if (!on_map(rx, ry)) continue;
-                Map &candidate = *map_loc(rx, ry);
+            for (isolation = 0; isolation < 21; ++isolation) {
+                int rx = wrap_map_x(x + RadiusOffsetX[isolation]);
+                score = y + RadiusOffsetY[isolation];
+                if (!on_map(rx, score)) continue;
+                Map &candidate = *map_loc(rx, score);
                 int altitude = candidate.climate & 0xe0;
                 if ((altitude < 0x60) != ((Players[faction].rule_flags >> 8) & 1)
                     || candidate.region != region || altitude >= 0xa0
                     || ((candidate.bit & 0x20) && altitude >= 0x40)
-                    || anything_at(rx, ry) >= 0) continue;
-                base_find(rx, ry);
+                    || anything_at(rx, score) >= 0) continue;
+                base_find(rx, score);
                 // Original 5B204E measures from the old centre, not from
                 // this candidate. Keep that quirk when choosing a site.
                 for (int vehicle3 = 0; vehicle3 < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle3) {
@@ -1312,19 +1312,19 @@ search:
                 if (BaseFindDist < 6) continue;
                 // 5B20F4: map_loc formed again after the calls.
                 int quality;
-                Map *site_tile = map_loc(rx, ry);
+                Map *site_tile = map_loc(rx, score);
                 if (site_tile->bit & 0x1000) quality = 0;
                 else {
                     int site = site_tile->val2 >> 4;
                     if (site) quality = site;
                     else {
-                        quality = world_site(rx, ry, 0);
-                        site_set(rx, ry, quality);
+                        quality = world_site(rx, score, 0);
+                        site_set(rx, score, quality);
                     }
                 }
                 for (int neighbor = 0; neighbor < 8; ++neighbor) {
                     int nx = wrap_map_x(rx + VehMoveDeltaX[neighbor]);
-                    int ny = ry + VehMoveDeltaY[neighbor];
+                    int ny = score + VehMoveDeltaY[neighbor];
                     if (!on_map(nx, ny)) continue;
                     if (Players[faction].rule_flags & 0x100) quality += 2 - (map_loc(nx, ny)->climate >> 5);
                     else {
@@ -1332,7 +1332,7 @@ search:
                         if ((map_loc(nx, ny)->climate >> 5) < ALT_SHORE_LINE) { ++quality; break; }
                     }
                 }
-                if (quality > best) { best = quality; best_offset = offset3; }
+                if (quality > best) { best = quality; best_offset = isolation; }
             }
             x = wrap_map_x(x + RadiusOffsetX[best_offset]);
             y += RadiusOffsetY[best_offset];
@@ -1350,7 +1350,7 @@ search:
         }
         PlayersData[faction].unk_102 = 0;
         GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &= ~(1 << faction);
-        int selected = faction == static_cast<int>(GameDataStateStorage.fields_.faction_rankings_[7])
+        duplicate = faction == static_cast<int>(GameDataStateStorage.fields_.faction_rankings_[7])
             ? static_cast<int>(GameDataStateStorage.fields_.faction_rankings_[6])
             : static_cast<int>(GameDataStateStorage.fields_.faction_rankings_[7]);
         int survivors = 0, partners = 0;
@@ -1359,7 +1359,7 @@ search:
             ++survivors;
             uint32_t treaty = PlayersData[survivor].diplo_treaties[ConsoleGlobal.faction_id_];
             if (!IsMultiplayerNet && (treaty & 1) && (treaty & 0x2000000)) { --survivors; continue; }
-            if (survivor != selected && (PlayersData[survivor].diplo_treaties[selected] & 1)
+            if (survivor != duplicate && (PlayersData[survivor].diplo_treaties[duplicate] & 1)
                 && (GameDataStateStorage.fields_.game_rules_ & 0x1000) && partners < 2) ++partners;
         }
         if (faction == ConsoleGlobal.faction_id_) {
@@ -1384,7 +1384,7 @@ search:
             if (partners) {
                 popp(ScriptPopupFile, "CONQCOOP", 0, "conq_sm.pcx", 0);
                 if (!EndgameExitReason) EndgameExitReason = 5;
-            } else if (selected == ConsoleGlobal.faction_id_) {
+            } else if (duplicate == ConsoleGlobal.faction_id_) {
                 popp(ScriptPopupFile, "CONQSING", 0, "conq_sm.pcx", 0);
                 if (!EndgameExitReason) EndgameExitReason = 4;
             }
