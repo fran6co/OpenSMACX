@@ -163,7 +163,7 @@ void InfoWin::setup_text() {
             }
             k = 2;
             text[0] = 0;
-            strcat(text, StringTable.get(Energy[0].abbrev));
+            strcat(text, table_text(Energy[0].abbrev));
             strcat(text, SocialWinColonSpaceText);
             strcat(text, "{");
             infowin_append_number(text, (10 - PlayersData[faction].se_alloc_labs
@@ -182,7 +182,7 @@ void InfoWin::setup_text() {
             strcat(text, "}");
             strcpy(row_text_[pane][k++], text);
             text[0] = 0;
-            strcat(text, StringTable.get(Energy[1].abbrev));
+            strcat(text, table_text(Energy[1].abbrev));
             strcat(text, SocialWinColonSpaceText);
             strcat(text, "{");
             infowin_append_number(text, PlayersData[faction].se_alloc_psych * 10);
@@ -190,7 +190,7 @@ void InfoWin::setup_text() {
             strcat(text, "}");
             strcpy(row_text_[pane][k++], text);
             text[0] = 0;
-            strcat(text, StringTable.get(Energy[2].abbrev));
+            strcat(text, table_text(Energy[2].abbrev));
             strcat(text, SocialWinColonSpaceText);
             strcat(text, "{");
             infowin_append_number(text, PlayersData[faction].se_alloc_labs * 10);
@@ -274,7 +274,7 @@ void InfoWin::setup_text() {
             strcpy(row_text_[pane][k++], text);
             text[0] = 0;
             if (PlayersData[faction].diplo_treaties[other] & 1) {
-                strcat(text, StringTable.get(Labels.strings_ptr[0xD3]));
+                strcat(text, label_get(0xD3));
             } else if (PlayersData[faction].diplo_treaties[other] & 2) {
                 strcat(text, label_get(0xD4));
             } else if (PlayersData[faction].diplo_treaties[other] & 4) {
@@ -422,7 +422,7 @@ void InfoWin::setup_text() {
                 }
             }
             text[0] = 0;
-            strcat(text, StringTable.get(Labels.strings_ptr[0x97C / 4]));
+            strcat(text, label_get(0x97C / 4));
             strcat(text, SocialWinColonSpaceText);
             strcat(text, "{");
             strcat(text, get_title(best));
@@ -620,7 +620,7 @@ void InfoWin::setup_text() {
                 strcat(text, StringTable.get(Natural[6].name_short));
                 break;
             case 28:
-                strcat(text, StringTable.get(Natural[3].name_short));
+                strcat(text, table_text(Natural[3].name_short));
                 break;
             case 29:
                 strcat(text, StringTable.get(Natural[10].name_short));
@@ -653,10 +653,10 @@ void InfoWin::setup_text() {
             }
             strcpy(row_text_[pane][k++], text);
             text[0] = 0;
-            strcat(text, StringTable.get(Labels.strings_ptr[0x84 / 4]));
+            strcat(text, label_get(0x84 / 4));
             strcat(text, SocialWinColonSpaceText);
             strcat(text, "{");
-            strcat(text, StringTable.get(Labels.strings_ptr[0x14 + MapCloudCover]));
+            strcat(text, label_get(0x14 + MapCloudCover));
             strcat(text, "}");
             strcpy(row_text_[pane][k++], text);
             break;
