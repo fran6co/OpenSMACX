@@ -750,7 +750,7 @@ L_59fb64:
             }
         }
         StringTemp[0] = '\0';
-        strcat(StringTemp, prod_name);
+        says(prod_name);
         space();
         say_open_paren();
         strcat(StringTemp, label_get(0xF9));
