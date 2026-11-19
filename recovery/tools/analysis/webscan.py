@@ -284,6 +284,10 @@ def analyse(unit, src, text, c, lst, addr, verbose):
             continue
         ln = first + i
         for k, kind, col in regprio.refs_on_line(s, names_set, set(), False, 0):
+            if kind != 'u' and re.search(r'(?:^|[=(,;{}!&|?:+\-]|return)\s*\*\s*$', s[:col]):
+                kind = 'u'  # `*p = v` writes through the pointer, not the pointer
+            if kind != 'u' and re.search(r'\[\s*$', s[:col]) is None and re.match(r'\s*\[', s[col + len(k):]):
+                kind = 'u'  # `a[i] = v` writes an element, not the array name
             l2 = ln
             if l2 not in linecode:
                 nxt = [x for x in codelines if x > l2]
@@ -320,6 +324,9 @@ def analyse(unit, src, text, c, lst, addr, verbose):
                           % re.escape(name))
         ws = [rs for rs in ws if not any(x['kind'] == 'd' and 0 <= x['line'] - first < len(stripped)
                                          and decl.search(stripped[x['line'] - first]) for x in rs)]
+        # uses no definition reaches (unreachable blocks in the listing CFG, a parameter's entry value) are one web
+        nodef = [x for rs in ws if not any(y['kind'] in ('d', 'ud') for y in rs) for x in rs]
+        ws = [rs for rs in ws if any(y['kind'] in ('d', 'ud') for y in rs)] + ([nodef] if nodef else [])
         if len(ws) < 2:
             continue
         desc = []
@@ -432,7 +439,7 @@ def decl_type(lines, lo, hi, name):
     """-> (line index of the declaration, its type text) inside lines[lo:hi]"""
     for k in range(lo, hi):
         c = regprio.strip_code(lines[k])
-        m = re.search(r'(?:^|[;{(])\s*((?:const\s+|unsigned\s+|signed\s+|struct\s+)*[A-Za-z_][\w:]*(?:\s*\*+)?)\s+\**\s*%s\s*(?:[=;,\[)])' % re.escape(name), c)
+        m = re.search(r'(?:^|[;{(,])\s*((?:const\s+|unsigned\s+|signed\s+|struct\s+)*[A-Za-z_][\w:]*(?:\s*\*+)?)\s+\**\s*%s\s*(?:[=;,\[)])' % re.escape(name), c)
         if m and m.group(1).split()[-1] not in regprio.KEYWORDS:
             return k, m.group(1)
     return None, None
