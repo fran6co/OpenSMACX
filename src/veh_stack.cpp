@@ -517,6 +517,8 @@ inline void __cdecl spot_stack_tile_call(int veh_id, int faction_id) {
 // TRIED: mechanical register/stack-slot goto transliteration (234 labels, 5638-line body): compiles, MISMATCH sim up to 0.73 on /O2 frameless. Superseded by the 2026-11-12 block-order transcription.
 // TRIED: spot_tile spellings (if-block, mask temp, no tile local) and writing the coordinate wrap out instead of wrap_map_x: none matches the image's per-site inline pattern; the hand-written wrap doubled the diff.
 void __cdecl spot_all(int veh_id, int toggle) {
+    // [ebp-0x30] (imgmerge.py, par-6): the image keeps the sensor match flag and both base ids in one home
+    int v_30;
     int count = 0;
     int enc_a = 0;
     int enc_b = 0;
@@ -552,11 +554,10 @@ void __cdecl spot_all(int veh_id, int toggle) {
             if (i >= (sensor ? 25 : 9) && (map_loc(x, y)->bit2 & 0x200000)) {
                 continue;
             }
-            int match;
             if (i < (sensor ? 25 : 9)) {
-                match = 1;
+                v_30 = 1;
             } else {
-                match = 0;
+                v_30 = 0;
                 for (int j = 0; j < 25; j++) {
                     int x2 = wrap_map_x(x + RadiusOffsetX[j]);
                     int y2 = y + RadiusOffsetY[j];
@@ -566,24 +567,24 @@ void __cdecl spot_all(int veh_id, int toggle) {
                     if (j < 9) {
                         int owner = anything_at(x2, y2);
                         if (owner == faction_id) {
-                            match = 1;
+                            v_30 = 1;
                             break;
                         }
                         if (PlayersData[faction_id].diplo_treaties[owner] & DTREATY_PACT) {
                             for (int v = veh_at(x2, y2); v >= 0; v = Vehs[v].next_veh_id_stack) {
                                 if (Vehs[v].faction_id == faction_id) {
-                                    match = 1;
+                                    v_30 = 1;
                                     break;
                                 }
                             }
-                            if (match) {
+                            if (v_30) {
                                 break;
                             }
                         }
                     }
                     if (is_sensor(x2, y2)) {
                         if (map_loc(x2, y2)->territory == faction_id) {
-                            match = 1;
+                            v_30 = 1;
                             break;
                         }
                         int base_id = base_find(x0, y0);
@@ -593,13 +594,13 @@ void __cdecl spot_all(int veh_id, int toggle) {
                                     || (y0 - Bases[base_id].y >= 0 ? y0 - Bases[base_id].y
                                                                     : Bases[base_id].y - y0) == 2)
                                 && has_fac(FAC_GEOSYNC_SURVEY_POD, base_id, 0)) {
-                                match = 1;
+                                v_30 = 1;
                                 break;
                             }
                         }
                     }
                     if (base_who(x2, y2) == faction_id) {
-                        match = 1;
+                        v_30 = 1;
                         break;
                     }
                     int owner = veh_who(x2, y2);
@@ -610,7 +611,7 @@ void __cdecl spot_all(int veh_id, int toggle) {
                         if (Vehs[v].faction_id == faction_id && has_abil(Vehs[v].proto_id, ABL_DEEP_RADAR)) {
                             int triad2 = get_proto_triad(Vehs[v].proto_id);
                             if (triad2 == TRIAD_AIR || is_ocean(x, y) == (triad2 == TRIAD_SEA)) {
-                                match = 1;
+                                v_30 = 1;
                                 break;
                             }
                         }
@@ -618,10 +619,10 @@ void __cdecl spot_all(int veh_id, int toggle) {
                 }
             }
             if (map_loc(x, y)->bit2 & 0x200000) {
-                if (match) {
+                if (v_30) {
                     radius_tier = max(radius_tier, i < 9 ? 1 : (i < 25 ? 2 : 3));
                 }
-            } else if (!match) {
+            } else if (!v_30) {
                 radius_tier = max(radius_tier, i < 9 ? 1 : (i < 25 ? 2 : 3));
             }
         }
@@ -752,44 +753,44 @@ void __cdecl spot_all(int veh_id, int toggle) {
         if (!i) {
             continue;
         }
-        int base_id = base_at(x, y); // [ebp-0x30]
-        if (base_id >= 0 && Bases[base_id].faction_id_current != faction_id) {
+        v_30 = base_at(x, y); // [ebp-0x30]
+        if (v_30 >= 0 && Bases[v_30].faction_id_current != faction_id) {
             // 0x5B70FD
             if (triad != TRIAD_AIR
                 || !Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range) {
                 // ? 0x5B7134: two copies of the or-body (0x5B7162, 0x5B716E) => if/else, not one ||
                 if (low_terrain || leave) {
-                    if (!(PlayersData[faction_id].diplo_treaties[Bases[base_id].faction_id_current] & 8)) {
-                        encounter_mask |= 1 << Bases[base_id].faction_id_current;
+                    if (!(PlayersData[faction_id].diplo_treaties[Bases[v_30].faction_id_current] & 8)) {
+                        encounter_mask |= 1 << Bases[v_30].faction_id_current;
                     }
                 } else {
-                    encounter_mask |= 1 << Bases[base_id].faction_id_current;
+                    encounter_mask |= 1 << Bases[v_30].faction_id_current;
                 }
             }
             // 0x5B7180
             if (faction_id == ConsoleGlobal.faction_id_
                 && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) {
-                if (!(Bases[base_id].visibility & faction_mask)) {
+                if (!(Bases[v_30].visibility & faction_mask)) {
                     radius_tier = max(radius_tier, 2);
-                } else if (Bases[base_id].faction_pop_size_intel[faction_id]
-                           != Bases[base_id].population_size) {
+                } else if (Bases[v_30].faction_pop_size_intel[faction_id]
+                           != Bases[v_30].population_size) {
                     radius_tier = max(radius_tier, 1);
                 }
             }
             // 0x5B71CB: spot_base inlined; its spot_tile inlined with on_map left as a call
-            spot_base(base_id, faction_id);
+            spot_base(v_30, faction_id);
             // 0x5B729C
             if (!leave
-                || !(PlayersData[faction_id].diplo_treaties[Bases[base_id].faction_id_current] & 8)) {
+                || !(PlayersData[faction_id].diplo_treaties[Bases[v_30].faction_id_current] & 8)) {
                 // 0x5B72CE: spot_stack inlined (spot_tile call, veh_top inlined)
-                spot_stack_tile_call(veh_id, Bases[base_id].faction_id_current);
+                spot_stack_tile_call(veh_id, Bases[v_30].faction_id_current);
             }
             // 0x5B737F
             if (triad == TRIAD_LAND
-                && !(PlayersData[Bases[base_id].faction_id_current].diplo_treaties[faction_id] & 7)
+                && !(PlayersData[Bases[v_30].faction_id_current].diplo_treaties[faction_id] & 7)
                 && toggle) {
-                add_goal(Bases[base_id].faction_id_current, AI_GOAL_ATTACK, 2, x, y, -1);
-                add_goal(Bases[base_id].faction_id_current, AI_GOAL_DEFEND, 1, x, y, -1);
+                add_goal(Bases[v_30].faction_id_current, AI_GOAL_ATTACK, 2, x, y, -1);
+                add_goal(Bases[v_30].faction_id_current, AI_GOAL_DEFEND, 1, x, y, -1);
             }
         }
         // 0x5B73E1
@@ -811,7 +812,7 @@ void __cdecl spot_all(int veh_id, int toggle) {
             || !(PlayersData[faction_id].diplo_treaties[stack_faction] & 8)) {
             // 0x5B74B9: spot_stack inlined (veh_id >= 0 / on_map inline, spot_tile inlined
             // with on_map call 0x5B750A, veh_top CALL 0x5B75B4)
-            if (base_id < 0) {
+            if (v_30 < 0) {
                 spot_stack(veh_id, stack_faction);
             }
             // 0x5B75F9
@@ -838,7 +839,7 @@ void __cdecl spot_all(int veh_id, int toggle) {
             continue;
         }
         // 0x5B7838
-        if (base_id < 0) {
+        if (v_30 < 0) {
             if (faction_id == ConsoleGlobal.faction_id_
                 && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
                 && !(Vehs[stack_id].visibility & faction_mask)) {
@@ -888,7 +889,7 @@ void __cdecl spot_all(int veh_id, int toggle) {
             continue;
         }
         // 0x5B7C77
-        if (low_terrain != contact_low_terrain && (base_id < 0 || low_terrain)
+        if (low_terrain != contact_low_terrain && (v_30 < 0 || low_terrain)
             && (PlayersData[faction_id].diplo_treaties[stack_faction] & 8)) {
             continue;
         }
@@ -934,25 +935,25 @@ void __cdecl spot_all(int veh_id, int toggle) {
             continue;
         }
         int spotted_veh_id = stack_fix(veh_at(x, y));       // [ebp-0x2c]
-        int base_id = base_at(x, y);                        // [ebp-0x30] (ebx)
+        v_30 = base_at(x, y);                        // [ebp-0x30] (ebx)
         // 5B7FDB..5B802B (sensor false -> 5B8400, terrain miss -> 5B8403)
         if (sensor && (triad == TRIAD_AIR
                        || is_ocean(x, y) == (triad == TRIAD_SEA))) {
-            if (base_id >= 0) {                             // 5B802E
+            if (v_30 >= 0) {                             // 5B802E
                 if (faction_id == ConsoleGlobal.faction_id_
                     && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) {
-                    if (!(Bases[base_id].visibility & faction_mask)) {
+                    if (!(Bases[v_30].visibility & faction_mask)) {
                         radius_tier = max(radius_tier, 3);  // 5B805E
-                    } else if (Bases[base_id].faction_pop_size_intel[faction_id]
-                               != Bases[base_id].population_size) {
+                    } else if (Bases[v_30].faction_pop_size_intel[faction_id]
+                               != Bases[v_30].population_size) {
                         radius_tier = max(radius_tier, 2);  // 5B8080
                     }
                 }
-                spot_base(base_id, faction_id);             // 5B808F..5B8180 inlined
+                spot_base(v_30, faction_id);             // 5B808F..5B8180 inlined
             }
             // ? 5B8183/5B818E: separate `if`, not `else`: the base arm falls
             // into the veh test and veh < 0 jumps straight to 5B86A6.
-            if (spotted_veh_id >= 0 && base_id < 0) {
+            if (spotted_veh_id >= 0 && v_30 < 0) {
                 if (!veh_can_leave_stack(spotted_veh_id)) { // 5B8196..5B8233 inlined
                     if (faction_id == ConsoleGlobal.faction_id_
                         && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
@@ -989,7 +990,7 @@ void __cdecl spot_all(int veh_id, int toggle) {
         // [ebp-0x30] is reused here as the CSE byte offset of PlayersData[occupant]
         // and [ebp-0x48] as the CSE of its flags & PFLAG_MAP_REVEALED (reread by
         // the inlined spot_tile's dirty arm at 5B8812).
-        if (base_id >= 0
+        if (v_30 >= 0
             && is_known(x0, y0, occupant)
             && !leave
             // ? 5B8744: region compared as bytes (cmp dl, al), tile0 on the left
