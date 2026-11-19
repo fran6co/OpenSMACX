@@ -2754,7 +2754,7 @@ way. 122 of 201 mnemonics shared at the last attempt.
 // and the `jmp` to the block's own end at 0x005DC855, none of which VC6
 // emits from C++. The `=` variant runs while a link (font slot 3) is open.
 // Descriptive names; the originals are unknown.
-static __forceinline char *markup_scan_link(char *text, int *count) {
+static inline char *markup_scan_link(char *text, int *count) {
     __asm {
         mov eax, text
         mov ebx, count
@@ -2787,7 +2787,7 @@ static __forceinline char *markup_scan_link(char *text, int *count) {
     return text;
 }
 
-static __forceinline char *markup_scan(char *text, int *count) {
+static inline char *markup_scan(char *text, int *count) {
     __asm {
         mov eax, text
         mov ebx, count
