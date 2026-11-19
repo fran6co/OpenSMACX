@@ -2814,6 +2814,21 @@ What the model does not predict (2026-11-19)
   them, so look for a reservation or a statement layout change, not for
   more or less budget. Screen: `sdeck.py` with a per-site flag
   (state store followed by a call).
+- **A suffix shortfall can need two owners: each restores half** (draft,
+  medium; Console::terraform 0x004D3470, 2026-11-19 par-4, caf3479a1a).
+  The image called ~Scroll 17 times then expanded 13; ours 14/16 (three
+  ~Scroll costs of pass-2 room too many). `ownerhunt` found two inline
+  owners (the closing "issue the orders" block, the unavailable-tech
+  message run), each giving EH distance 5 / call distance 6, one ~Scroll
+  site short; together they give the image's ~Scroll and close@Scroll
+  vectors. So when a single owner closes about half the shortfall, keep
+  it and hunt the second rather than enlarging the first. Calibration in
+  that function: 1-if dead probes anywhere are free (inside the free
+  threshold, nothing moves); a 2-if probe overshoots (~FlatButton moves
+  first); the owner's own charge, set by what it holds (the message owner
+  written over an existing say_tech helper is right, the same run
+  open-coded overshoots to EH 9), is the only knob fine enough. Caller
+  size (stripping `!= 0` tests, accessor spellings) does not move it.
 - The units are approximate. Costs come from fitted counts, not node
   counts, so a prediction is good to about one expansion. Use it to choose
   the *kind* and *place* of a missing spend, then confirm with fe.
