@@ -383,6 +383,17 @@ an explicit `--pfx` is only needed to pick another lane.
   check meaning: listing-based webs miss joins after tail merging, so read every web by hand before keeping one
   (first pass 2026-11-19: veh_scoot, monolith, probe, load_vehicles, draw_expenses real; base_draw, setup_text `k`,
   synch `local_turn` were broken splits that read as large gains).
+- `analysis/behavscan.py <unit> <addr[,..]> [-v] | --tree [unit ...] --from FEALL.json [--json F] [--top N]` behaviour-difference
+  screen (MATCHING_GUIDE 3.7 "A jump that skips a call ours always makes is behaviour"; 50 s tree-wide with FE_JOBS=5). Every named
+  call and every field/global store gets the set of predicates it is control dependent on (post-dominator CDG, transitive, jump
+  tables followed), each predicate canonical (`jle 7` = `jl 8`, an inverted jcc is the same test with the other truth, constant
+  registers read through, latch tests and predicates the other side never tests dropped). Sites of one key are paired by guard
+  distance, then fe alignment; one line per differing predicate: `INVERT` (same test, other arm), `CONST`, `OP` (`<` against `<=`,
+  signed against unsigned), `IMG-ONLY` / `OURS-ONLY` (a test one side's site depends on), `COUNT` (missing/extra named call), and
+  `TEST-K` / `TEST-J` (aligned cmp with another immediate, jcc with another relation inside fe's differing stretches). `tested at`
+  names the jccs. Control: 0 hits on 155 exact functions of 8 units. Tail merging (one call copy per arm on one side), arm order
+  that fe aligns crosswise, and constant registers held in scratch still read as hits: read every one against the image.
+  First pass 2026-11-19: 97 strong hits in 99 functions; the battle_report wrap call (pre-fix source) reads `IMG-ONLY [!lt 0]`.
 - `analysis/slotflow.py <unit> <addr> [--src ALT.cpp] [--pfx N]` transcription-error screen (MATCHING_GUIDE 3.5): for every
   image instruction that reads a frame slot and is aligned with one of ours reading a named variable v, it takes the
   image's reaching definitions of that slot, maps each through the fe alignment to our instruction and the variable it
