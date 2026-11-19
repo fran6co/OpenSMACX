@@ -5961,7 +5961,7 @@ int __cdecl propose_treaty(int actor, int other)
             - PlayersData[actor].tech_commerce_bonus, 0, 99) * 50;
     }
     if (!strcmp(Players[other].filename, "MORGAN")
-        && PlayersData[actor].energy_reserves < treaty_score) {
+        && treaty_score > PlayersData[actor].energy_reserves) {
         if (DiploScratchFAA8 < 0) {
             treaty_score = PlayersData[actor].energy_reserves;
         } else {
