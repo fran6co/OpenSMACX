@@ -2503,40 +2503,52 @@ int __cdecl battle_fight(int veh_id, int dir, int mode, int allow_interceptor,
 // Shared separator objects the image pushes instead of unit literals.
 extern const char BufferJoinSpace[];
 
-// Current hit points. battle_fight goes through it at every site: written
-// out by hand, the expression inflated the function's own /Ob2 budget and
-// everything after 0x50ACE0 inlined. Which nested range() the image keeps
-// out of line follows the budget (the inner one at 0x506EDD..0x508F21, the
-// outer one at 0x50AB85).
-static inline int veh_cur_hp(int veh_id) {
-    return range(proto_power(veh_id) - Vehs[veh_id].dmg_incurred, 0, 9999);
-}
-
-
 // ---------------------------------------------------------------------------
 
-// WORKAROUND(inline): the population-loss test of battle_fight's base
-// consequences (0x50ACB1..0x50AD8C) as an inline predicate. battle_fight's
-// /Ob2 pass-1 budget is never the limit (dead spend at its top refuses only
-// nested sites), yet the image CALLS is_ocean, has_fac x2, has_project and
-// veh_who here while expanding them elsewhere: the original's sites were
-// pass-2 sites, inside something battle_fight expanded. A predicate is the
-// smallest such owner; its real name and extent are unknown. With it,
-// has_project and veh_who are called as in the image; is_ocean and has_fac
-// still expand until about 28 if-units more pass-1 spend (not found).
-inline BOOL battle_pop_loss(int base_id, int src_x, int src_y, int def_faction,
-                            int stack_id, int att_faction, int target_x, int target_y) {
-    return !is_ocean(src_x, src_y)
-        && (!is_objective(base_id) || Bases[base_id].population_size > 1)
-        && !has_fac(FAC_PERIMETER_DEFENSE, base_id, 0)
-        && !has_fac(FAC_TACHYON_FIELD, base_id, 0)
-        && !has_project(SP_CITIZENS_DEFENSE_FORCE, def_faction)
-        // unguarded: stack_id may be -1 here
-        && Weapon[VehPrototypes[Vehs[stack_id].proto_id].weapon_id].offense_rating != 0
-        && att_faction != 0
-        && veh_who(target_x, target_y) < 0
-        && (PlayersData[def_faction].diff_level != 0
-            || !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << def_faction)));
+// WORKAROUND(decl): the nerve-gas choice (0x5071DE..0x5073A7: the local
+// human's USENERVE prompt, else the AI attacker's atrocity policy) as an inline
+// owner; its name and signature are ours. Written out, its has_treaty /
+// parse_say / timer expansions are pass-1 spend that runs battle_fight's /Ob2
+// budget out before the dead-unit sweep (0x50AB1E): veh_health, veh_top,
+// is_ocean and base_who were called there while the image expands them. With
+// the block as one owner those sites expand, the population-loss sites
+// (0x50ACB1..0x50AEC7) are refused as in the image, and the eight early
+// veh_health sites keep their inner range() out of line.
+inline void battle_nerve_gas_choice(int &att_faction, int &att_bit, int &veh_id,
+                                    int &def_faction, uint32_t &nerve_state) {
+    if (att_faction == ConsoleGlobal.faction_id_ &&
+        (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & att_bit)) {
+        // 0x5071F0
+        parse_says(0, VehPrototypes[Vehs[veh_id].proto_id].veh_name, -1, -1);
+        parse_say(1, Ability[abil_index(ABL_NERVE_GAS)].name, -1, -1);
+        g_BattleWin.stop_timer();
+        if (popp(ScriptPopupFile, "USENERVE", 0, "biohazd_sm.pcx", 0)) {
+            Vehs[veh_id].state |= VSTATE_USED_NERVE_GAS;
+        }
+        g_BattleWin.pulse_timer();
+    } else if (!(att_bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)) {
+        // 0x507295: AI attacker policy
+        // 0x507295: one combined test, one store at 0x507399. The
+        // defender-human test runs after the first two.
+        if (has_treaty(att_faction, def_faction, DTREATY_ATROCITY_VICTIM) ||
+            (PlayersData[att_faction].flags & PFLAG_COMMIT_ATROCIT_WANTONLY) ||
+            (((1 << def_faction) &
+              GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) &&
+             GameDataStateStorage.fields_.council_resolution_count_[PROP_REPEAL_UN_CHARTER] >
+                 GameDataStateStorage.fields_.council_resolution_count_[PROP_REINSTATE_UN_CHARTER]) ||
+            (((1 << def_faction) &
+              GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) &&
+             has_treaty(att_faction, def_faction, DTREATY_WANT_REVENGE) &&
+             PlayersData[def_faction].integrity_blemishes +
+                     (((GameDataStateStorage.fields_.game_rules_ & RULES_INTENSE_RIVALRY) &&
+                       (PlayersData[def_faction].ranking > PlayersData[att_faction].ranking ||
+                        PlayersData[def_faction].diplo_unk4[att_faction] >
+                            PlayersData[att_faction].diplo_unk4[def_faction]))
+                          ? (PlayersData[att_faction].ai_fight + 1) * 3
+                          : 0) >= 6)) {
+            Vehs[veh_id].state = nerve_state | VSTATE_USED_NERVE_GAS;
+        }
+    }
 }
 
 // ORIGINAL: 0x00506AF0 ?battle_fight@@YAHHHHHHHPAH@Z 0x00506AF0-0x0050B893 FILE
@@ -2689,8 +2701,8 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
     // 0x506E95
 
     // 0x506EAB: hit points (the inner range() is the out-of-line call here)
-    att_hp = veh_cur_hp(veh_id);
-    def_hp = veh_cur_hp(def_id);
+    att_hp = veh_health(veh_id);
+    def_hp = veh_health(def_id);
 
     // 0x506F6D: psi factors
     if (Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating >= 0 &&
@@ -2739,39 +2751,7 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
         if (!IsMultiplayerNet || (NetDaemonNet.action_mode_ & 1)) {
             nerve_state = Vehs[veh_id].state & ~VSTATE_USED_NERVE_GAS;
             Vehs[veh_id].state = nerve_state;
-            if (att_faction == ConsoleGlobal.faction_id_ &&
-                (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & att_bit)) {
-                // 0x5071F0
-                parse_says(0, VehPrototypes[Vehs[veh_id].proto_id].veh_name, -1, -1);
-                parse_say(1, Ability[abil_index(ABL_NERVE_GAS)].name, -1, -1);
-                g_BattleWin.stop_timer();
-                if (popp(ScriptPopupFile, "USENERVE", 0, "biohazd_sm.pcx", 0)) {
-                    Vehs[veh_id].state |= VSTATE_USED_NERVE_GAS;
-                }
-                g_BattleWin.pulse_timer();
-            } else if (!(att_bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)) {
-                // 0x507295: AI attacker policy
-                // 0x507295: one combined test, one store at 0x507399. The
-                // defender-human test runs after the first two.
-                if (has_treaty(att_faction, def_faction, DTREATY_ATROCITY_VICTIM) ||
-                    (PlayersData[att_faction].flags & PFLAG_COMMIT_ATROCIT_WANTONLY) ||
-                    (((1 << def_faction) &
-                      GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) &&
-                     GameDataStateStorage.fields_.council_resolution_count_[PROP_REPEAL_UN_CHARTER] >
-                         GameDataStateStorage.fields_.council_resolution_count_[PROP_REINSTATE_UN_CHARTER]) ||
-                    (((1 << def_faction) &
-                      GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) &&
-                     has_treaty(att_faction, def_faction, DTREATY_WANT_REVENGE) &&
-                     PlayersData[def_faction].integrity_blemishes +
-                             (((GameDataStateStorage.fields_.game_rules_ & RULES_INTENSE_RIVALRY) &&
-                               (PlayersData[def_faction].ranking > PlayersData[att_faction].ranking ||
-                                PlayersData[def_faction].diplo_unk4[att_faction] >
-                                    PlayersData[att_faction].diplo_unk4[def_faction]))
-                                  ? (PlayersData[att_faction].ai_fight + 1) * 3
-                                  : 0) >= 6)) {
-                    Vehs[veh_id].state = nerve_state | VSTATE_USED_NERVE_GAS;
-                }
-            }
+            battle_nerve_gas_choice(att_faction, att_bit, veh_id, def_faction, nerve_state);
             // 0x5073A7
             if (IsMultiplayerNet) {
                 synch_veh(veh_id);
@@ -3048,8 +3028,8 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
 
         {
             // 0x508034: these products do NOT include the psi factors
-            int att_odds = veh_cur_hp(veh_id) * att_strength;   // esi
-            int def_odds = veh_cur_hp(def_id) * def_strength;   // edi
+            int att_odds = veh_health(veh_id) * att_strength;   // esi
+            int def_odds = veh_health(def_id) * def_strength;   // edi
             // 0x5080FC: the minimum is tested once per divisor, not after each division
             for (int div = 2; div < (att_odds < def_odds ? att_odds : def_odds); div++) {
                 while (att_odds && def_odds && !(att_odds % div) && !(def_odds % div)) {
@@ -3195,7 +3175,7 @@ L_50835D:
             keep /= 100;   // 0x50876A
             // 0x50876F
             for (; dmg > 0; dmg--) {
-                if (veh_cur_hp(def_id) - dmg >= keep) {   // 0x5087B5 calls range
+                if (veh_health(def_id) - dmg >= keep) {   // 0x5087B5 calls range
                     break;
                 }
             }
@@ -3255,7 +3235,7 @@ L_50835D:
 
         // 0x508A29: kill the units the bombardment left without HP
         for (int k = stack_fix(veh_at(target_x, target_y)); k >= 0; ) {   // esi
-            if (veh_cur_hp(k) < 1) {   // 0x508A81 calls range
+            if (veh_health(k) < 1) {   // 0x508A81 calls range
                 stack_veh(k, 2);
                 stack_kill(k);
                 k = stack_fix(veh_at(target_x, target_y));
@@ -3318,7 +3298,7 @@ L_50835D:
         && base_id < 0
         && !(map_loc(target_x, target_y)->bit & (BIT_BUNKER | BIT_AIRBASE))
         && stack_check(def_id, 1, -1, -1, -1) == 1) {
-        move_charge = (veh_cur_hp(def_id) + 1) / 2;   // 0x508DFE calls range
+        move_charge = (veh_health(def_id) + 1) / 2;   // 0x508DFE calls range
     }
 
     // 0x508E30: marine detachment threshold
@@ -3332,7 +3312,7 @@ L_50835D:
              && (get_offense_rating(def_id) < 0
                  || Vehs[def_id].proto_id == BSC_SPORE_LAUNCHER))
         && base_id < 0) {
-        marine = veh_cur_hp(def_id) * 2 / 3;   // 0x508F21 calls range
+        marine = veh_health(def_id) * 2 / 3;   // 0x508F21 calls range
     }
 
     // 0x508F5E: planet buster (planet_buster2 inlined on the attacker proto)
@@ -3347,7 +3327,7 @@ L_50835D:
     last_hit = 0;
     if (is_missile(veh_id) || IsMultiplayerNet) {
         boom(target_x, target_y,
-             (veh_cur_hp(def_id) ? 1 : 2));
+             (veh_health(def_id) ? 1 : 2));
     }
     // 0x50906C
     single = ((mode & 2)
@@ -3357,8 +3337,8 @@ L_50835D:
     // ---- 0x5090D7: combat rounds ---------------------------------------------
     // The two loop-top tests jump to 0x509983, i.e. L_509980 without its reload.
     for (;;) {
-        if (veh_cur_hp(veh_id) == 0) break;
-        if (veh_cur_hp(def_id) == 0) break;
+        if (veh_health(veh_id) == 0) break;
+        if (veh_health(def_id) == 0) break;
 
         // 0x5091A5: the attacker draws first; the compare is signed
         int roll_atk = rnd(att_strength, "BATTLE1");   // edi
@@ -3376,7 +3356,7 @@ L_50835D:
                 last_hit = 2;
                 ConsoleStatusWin.draw(veh_id, def_id, att_strength, def_strength, mode);
                 boom(target_x, target_y, 1);
-                if (veh_cur_hp(def_id) != 0) {
+                if (veh_health(def_id) != 0) {
                     draw_tile(src_x, src_y, 2);
                     draw_tile(target_x, target_y, 2);
                 }
@@ -3384,13 +3364,13 @@ L_50835D:
             }
             // 0x5092EA: marines
             if (marine &&
-                veh_cur_hp(def_id) != 0) {
+                veh_health(def_id) != 0) {
                 marine -= def_step;
                 if (marine <= 0 && (int)rnd(100, "DETACHMENT") < 50) goto L_50973a;
             }
             // 0x50936C: withdrawal (the defender's HP, [ebp-0x08])
             if (move_charge == 0) continue;
-            if (veh_cur_hp(def_id) == 0) continue;
+            if (veh_health(def_id) == 0) continue;
             move_charge -= def_step;
             if (move_charge > 0) continue;
 
@@ -3444,7 +3424,7 @@ L_50835D:
             last_hit = 1;
             ConsoleStatusWin.draw(veh_id, def_id, att_strength, def_strength, mode);
             boom(src_x, src_y, 9);
-            if (veh_cur_hp(veh_id) != 0) {
+            if (veh_health(veh_id) != 0) {
                 draw_tile(src_x, src_y, 2);
                 draw_tile(target_x, target_y, 2);
             }
@@ -3501,7 +3481,7 @@ L_509923:
 
     // ---- 0x509980: outcome display -------------------------------------------
 L_509980:
-    atk_left = veh_cur_hp(veh_id);
+    atk_left = veh_health(veh_id);
     if (display || any_visible) {
         draw_tile_fixup(src_x, src_y, target_x, target_y, 2, 2);   // 0x46B040
         if (disengaged && (src_x != rx || src_y != ry) && (target_x != rx || target_y != ry)) {
@@ -3515,41 +3495,41 @@ L_509980:
                         // 0x509A9E
                         if (last_hit != 1 && !IsMultiplayerNet) {
                             boom(src_x, src_y,
-                                 (veh_cur_hp(veh_id) ? 1 : 2) | 8);
+                                 (veh_health(veh_id) ? 1 : 2) | 8);
                         }
                         // 0x509B44
                         boom(target_x, target_y,
-                             (veh_cur_hp(def_id) ? 1 : 2) | 8);
+                             (veh_health(def_id) ? 1 : 2) | 8);
                     } else if (last_hit != 2 && !IsMultiplayerNet) {
                         // 0x509B2E -> 0x509B44 (the block shared with the duel arm)
                         boom(target_x, target_y,
-                             (veh_cur_hp(def_id) ? 1 : 2) | 8);
+                             (veh_health(def_id) ? 1 : 2) | 8);
                     } else if (IsMultiplayerNet ||
-                               veh_cur_hp(def_id) == 0) {
+                               veh_health(def_id) == 0) {
                         // 0x509BBF / 0x509C2C: one boom block for both tests
                         boom(target_x, target_y,
-                             (veh_cur_hp(def_id) != 0 ? 0 : 2) | 8);
+                             (veh_health(def_id) != 0 ? 0 : 2) | 8);
                     }
                 } else if (single) {
                     // 0x509CB4: attacker destroyed in a one-exchange duel
                     if (last_hit != 2 && !IsMultiplayerNet) {
                         boom(target_x, target_y,
-                             veh_cur_hp(def_id) != 0);
+                             veh_health(def_id) != 0);
                     }
                     // 0x509D42 (clamp/push at 0x509E1A)
                     boom(src_x, src_y,
-                         (veh_cur_hp(veh_id) ? 1 : 2));
+                         (veh_health(veh_id) ? 1 : 2));
                 } else {
                     // 0x509DB2: attacker destroyed
                     if (last_hit != 1 && !IsMultiplayerNet) {
                         // 0x509DC8
                         boom(src_x, src_y,
-                             (veh_cur_hp(veh_id) ? 1 : 2));
-                    } else if (veh_cur_hp(veh_id) == 0 ||
+                             (veh_health(veh_id) ? 1 : 2));
+                    } else if (veh_health(veh_id) == 0 ||
                                IsMultiplayerNet) {
                         // 0x509E48 / 0x509EB3: the HP expression is evaluated again
                         boom(src_x, src_y,
-                             veh_cur_hp(veh_id) != 0 ? 0 : 2);
+                             veh_health(veh_id) != 0 ? 0 : 2);
                     }
                 }
             }
@@ -3561,8 +3541,8 @@ L_509980:
 
     // 0x509F1D: a one-exchange duel in which both units survive
     if (single &&
-        veh_cur_hp(veh_id) != 0 &&
-        veh_cur_hp(def_id) != 0) {
+        veh_health(veh_id) != 0 &&
+        veh_health(def_id) != 0) {
         // 0x509FF8
         if (IsMultiplayerNet && def_faction == ConsoleGlobal.faction_id_) {
             parse_says(0, VehPrototypes[Vehs[def_id].proto_id].veh_name, -1, -1);
@@ -3604,7 +3584,7 @@ L_509980:
     if (atk_left != 0) {
         // the attacker survived
         att_strength = VehPrototypes[Vehs[veh_id].proto_id].reactor_id
-                       * veh_cur_hp(veh_id)
+                       * veh_health(veh_id)
                        * att_strength / att_hp;
         // 0x50A237
         def_strength = VehPrototypes[Vehs[def_id].proto_id].reactor_id * def_hp
@@ -3626,7 +3606,7 @@ L_509980:
                        * att_strength / proto_power(veh_id);
         // 0x50A357
         def_strength = VehPrototypes[Vehs[def_id].proto_id].reactor_id
-                       * veh_cur_hp(def_id)
+                       * veh_health(def_id)
                        * def_strength / def_hp;
         if (VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_ALIEN_ARTIFACT) {
             // 0x50A3DA
@@ -3722,7 +3702,7 @@ L_509980:
                          && Vehs[v].waypoint_x[0] != def_id
                          && Vehs[v].waypoint_x[0] >= 0)) {
                     // 0x50A9E0: a land unit carried at sea takes all its HP (byte add)
-                    Vehs[v].dmg_incurred += veh_cur_hp(v);
+                    Vehs[v].dmg_incurred += veh_health(v);
                 } else if (v != def_id) {
                     // 0x50AA4C
                     stack_id = VehPrototypes[v_proto].plan;
@@ -3749,7 +3729,7 @@ L_509980:
                     // 0x50AB1E
                     int next = Vehs[v].next_veh_id_stack;
                     // the outer range() is CALLED here (0x422F00); proto_power stays inlined
-                    if (veh_cur_hp(v) <= 0
+                    if (veh_health(v) <= 0
                         || Vehs[v].faction_id == 0) {
                         // 0x50AB9B
                         if (battle_kill(v, &kill_count, &booty_count, &husk_energy,
@@ -3785,8 +3765,16 @@ L_509980:
         // 0x50AC8B: base consequences (EDI = stack_id on both entries)
         if (base_id >= 0) {
             Bases[base_id].state |= BSTATE_COMBAT_LOSS_LAST_TURN;
-            if (battle_pop_loss(base_id, src_x, src_y, def_faction, stack_id, att_faction,
-                                target_x, target_y)) {
+            if (!is_ocean(src_x, src_y)
+                && (!is_objective(base_id) || Bases[base_id].population_size > 1)
+                && !has_fac(FAC_PERIMETER_DEFENSE, base_id, 0)
+                && !has_fac(FAC_TACHYON_FIELD, base_id, 0)
+                && !has_project(SP_CITIZENS_DEFENSE_FORCE, def_faction)
+                && Weapon[VehPrototypes[Vehs[stack_id].proto_id].weapon_id].offense_rating != 0
+                && att_faction != 0
+                && veh_who(target_x, target_y) < 0
+                && (PlayersData[def_faction].diff_level != 0
+                    || !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << def_faction)))) {
                 // 0x50AD8E
                 if (--Bases[base_id].population_size <= 0) {
                     nerve_gas = 0;

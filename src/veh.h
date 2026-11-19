@@ -890,24 +890,29 @@ int __cdecl veh_fake(int proto_id, int faction_id);
 // One return expression: the guard-clause body (same copy 0x005799A0) is one
 // /Ob2 cost class dearer, and with veh_who's two returns enemy_move then
 // runs out of budget one site before the image does (0x56CA61).
+// WORKAROUND(decl): the inline level's name is ours. Every out-of-line
+// range(reactor, 1, 100) in the image copies the zero-extended reactor byte
+// before the push (13 of 13 sites: battle_fight x8, enemy_move 0x56B7B8 and
+// 0x56B80C, interceptor 0x5067B7, battle_report 0x4221B9, draw_active
+// 0x4B5A17: `xor r,r; mov rl,[reactor]; mov eax,r; push eax`), the shape of an
+// int parameter passed on; proto_power's copy 0x005799A0 stays byte-exact.
+inline int __cdecl reactor_power(int reactor) {
+    return range(reactor, 1, 100) * 10;
+}
+
 MEASURED inline int __cdecl proto_power(int veh_id) {
     return VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_ALIEN_ARTIFACT ? 1
-        : range(VehPrototypes[Vehs[veh_id].proto_id].reactor_id, 1, 100) * 10;
+        : reactor_power(VehPrototypes[Vehs[veh_id].proto_id].reactor_id);
 }
 
 // Current hit points (0x005A59E0). BODY HERE: probe calls it, and
-// StatusWin::draw_active (0x004B59CA) expands this body, the reactor byte
-// copied through the named local before range (`mov eax,ecx; push eax`).
+// StatusWin::draw_active (0x004B59CA) and battle_fight (32 sites) expand it.
+// Written on proto_power, the copy 0x005A59E0 stays byte-exact (the reactor
+// copy comes from reactor_power) and battle_fight's former invented
+// veh_cur_hp, the same expression, is this function.
 // The `// ORIGINAL:` marker stays in veh.cpp.
 MEASURED inline int __cdecl veh_health(int veh_id) {
-    int proto_id = Vehs[veh_id].proto_id;
-    int health;
-    if (VehPrototypes[proto_id].plan == PLAN_ALIEN_ARTIFACT) {
-        health = 1;
-    } else {
-        health = range(VehPrototypes[proto_id].reactor_id, 1, 100) * 10;
-    }
-    return range(health - Vehs[veh_id].dmg_incurred, 0, 9999);
+    return range(proto_power(veh_id) - Vehs[veh_id].dmg_incurred, 0, 9999);
 }
 
 // INLINE: the image has no get_proto_triad - it open-codes what this names.
