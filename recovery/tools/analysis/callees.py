@@ -126,6 +126,8 @@ def our_calls(c, sym):
         at = ins.address + (1 if b[0] == 0xE8 else 2)
         if at in rm and (b[0] == 0xE8 or (b[0] == 0xFF and b[1] == 0x15)):
             sy = c.symbols.get(rm[at][1])
+            if sy and sy.name == sym:
+                continue  # a recursive call: image_calls skips calls into the span too
             out[norm_ours(sy.name) if sy else '?'] += 1
         elif b[0] == 0xE8:
             continue  # a local call
