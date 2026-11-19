@@ -1334,9 +1334,8 @@ void BaseWin::draw_supported(int update_mode) {
         const int icon_y = y - icon_offset + vehicle_height;
         int support, total = 0, convoy_yield; // native yield only read in convoy arm
         if (Vehs[vehicle_id].state & 0x10u) {
-            const int pending_support = PlayersData[faction].soc_effect_pending.values_[SocialEffect::SUPPORT];
             support = has_abil(Vehs[vehicle_id].proto_id, 0x10000)
-                ? 0 : 1 + (pending_support <= -4);
+                ? 0 : 1 + (PlayersData[faction].soc_effect_pending.values_[SocialEffect::SUPPORT] <= -4);
             total = support;
         } else {
             support = 0;
@@ -2052,7 +2051,7 @@ draw_map:
                     const int base_y = BaseCurrent->y;
                     int base_alt = FarmMapWindow.get_alt(base_x, base_y, 4);
                     base_alt += FarmMapWindow.get_alt(base_x, base_y, 3);
-                    base_alt += FarmMapWindow.get_alt(base_x, base_y, 2);
+                    base_alt += FarmMapWindow.get_alt(base_x, BaseCurrent->y, 2);
                     base_alt += FarmMapWindow.get_alt(base_x, base_y, 1);
                     const int py = dy * half_tile - (tile_alt >> 2)
                         + (base_alt >> 2) + origin_y;
@@ -2607,7 +2606,7 @@ void BaseWin::draw_nutrients(int update_mode) {
     int index = 0;
     for (int row = 0; row < rows; row++) {
         for (int column = 0; column < columns; column++) {
-            if (index < stored) {
+            if (index < BaseCurrent->nutrients_accumulated) {
                 if (cell_height < 8) {
                     GraphicWin::fill(&cell, 0x95);
                 } else {
