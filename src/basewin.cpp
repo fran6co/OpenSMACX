@@ -2194,14 +2194,10 @@ void BaseWin::draw_facilities(int update_mode) {
     const int row_height = font_line_advance(font);
     int capacity = (content.bottom - content.top) / row_height;
     if (font_line_advance(font) * capacity + font.pixel_height() <= content.bottom - content.top) ++capacity;
-    int facility = 0;
     int count = 0;
-    while (facility < 134) {
-        if (facility < 70) {
-            if (has_fac(facility, BaseIDCurrentSelected, 0)
-                || redundant(facility, BaseCurrent->faction_id_current)) ++count;
-        } else if (base_project(facility - 70) == BaseIDCurrentSelected) ++count;
-        ++facility;
+    for (int facility = 0; facility < 134; ++facility) {
+        if (facility < 70 ? (has_fac(facility, BaseIDCurrentSelected, 0)
+                || redundant(facility, BaseCurrent->faction_id_current)) : base_project(facility - 70) == BaseIDCurrentSelected) ++count;
     }
     if (count >= capacity) {
         RECT scroll_rect = content;
