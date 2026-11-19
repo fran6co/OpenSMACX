@@ -1490,6 +1490,127 @@ statement:
   130 -> 57 (the chain, not a written-out copy: copies there cost layout).
   `analysis/gotowo.py` screens the tail-block form tree-wide.
 
+Named copies of a field against the base-offset temporary (2026-11-19 par-4;
+`regalloc/c_field.spec` with cand.py, `analysis/copycensus.py`,
+`analysis/localinplace.py`)
+
+The shape: `int v = Obj[i].f;` with M later uses of `v`, beside N other reads
+`Obj[i].g` that go through the address temporary `T` (`lea r,[i+i*2]; lea
+r,[i+r*4]; shl r,2`, reads `[r + Obj.g]`). Which of `v` and `T` gets the
+callee-saved register, and what happens to the other.
+
+Probes (one function per translation unit; `p` and `q` hold two registers, `T`
+and `v` compete for the third; calls between the reads):
+
+- **Counts decide and the temporary starts three ahead** (high; `whole_N*`,
+  `loser_N*`, 14 families of 15 probes). `v` takes the register from
+  M = N + 3 uses: 5, 6, 7, 8, 9 and 11 for N = 2, 3, 4, 5, 6 and 8. Below
+  that `T` takes it, `v` gets a frame slot and each stretch of uses reloads it
+  into a scratch register (`mov eax,[v]`, three compares share the load): the
+  image's enemy_move entry. `T` scores its N reads, the copy's own load and
+  its formation; `v` its M uses and the copy.
+- **The pieces rank by their own references** (high). The thresholds are the
+  same when `T` is a whole web and when it is a whole-function loser holding
+  the register as its first written-back piece (rule 9: `shl esi,2; mov
+  [slot],esi`). 16 later uses of `v` (`latepr`), 16 later reads through `T`
+  (`latetmp`, until it wins the whole function) and 64 blocks that `T` lives
+  through afterwards (`holes`) leave the first piece where it was.
+- **A use spelled through the field again counts like the local** (high;
+  `spell_*`, `push_*`): `garr[Obj[i].f]` for `garr[v]` with no call between
+  compiles and ranks the same at every count, across a `&&` too. The copy
+  does not split the web there.
+- **A named pointer is another program** (`ptr`): `V *v = &Vs[i]` forms the
+  absolute pointer (`lea esi,[Vs + r*4]`, reads `[esi+K]` without a
+  relocation), never the offset temporary.
+
+Census of the exact functions (`copycensus.py`, 4 minutes; ours is the image
+there): 484 single-assignment locals initialised from a pure field or global
+read, in 339 functions. Home of the copy by number of uses and by whether a
+call lies between the copy and its last use (`x`):
+
+| uses | call | register | register + slot | slot | neither |
+| --- | --- | --- | --- | --- | --- |
+| 1 | - | 19 | 0 | 14 | 40 |
+| 1 | x | 17 | 1 | 3 | 3 |
+| 2 | - | 38 | 2 | 12 | 125 |
+| 2 | x | 10 | 0 | 4 | 22 |
+| 3 | - | 14 | 0 | 4 | 25 |
+| 3 | x | 8 | 0 | 2 | 4 |
+| 4-7 | - | 11 | 1 | 5 | 24 |
+| 4-7 | x | 19 | 0 | 3 | 9 |
+| 8+ | - | 2 | 0 | 11 | 4 |
+| 8+ | x | 18 | 1 | 1 | 4 |
+
+"Neither" without a call is the copy living in a scratch register or folded
+into its uses (218 of 351: a named copy that crosses no call usually costs
+nothing and proves nothing). "Neither" across a call is the screen's blind
+spot (42: the register move listed several lines below the copy, ebp under
+/Oy), not a reread. Of the 87 copies it resolves across a call, 72 own a
+callee-saved register, 2 a written-back register and 13 a slot; the slot
+homes with many uses are the texture loops' accumulators and
+`Vehs[veh_id].y` in a function whose three registers hold loop state. So a
+real named copy that crosses calls normally shows a home in the image, and
+the home is a register five times in six.
+
+The rule for the non-exact functions:
+
+- **A named field copy whose image has no home is an invention** (medium;
+  the screen's kept changes below). If the image reloads the field at each
+  use (`[T + Obj.f]`, or the field's own address) and never stores a slot or
+  defines a callee-saved register at the copy, read the field in place. The
+  local was taking a register, or adding a web to the entry block, that the
+  image gives to something else. A copy with one use is the same case when
+  the image loads the field lazily (after an earlier `||` operand failed).
+- **A copy the image homes in a slot stays a local** even when our compile
+  gives it a register: that is a ranking question (the first bullet), not a
+  spelling. Reading it in place there changes the code (the image reads the
+  slot, the variant reads the field: 16-bit compares on a `short` field).
+- **The in-place read is another program wherever the field can change**
+  between the copy and the use (a store, a call). Only the image's rows at
+  the site decide; never respell a statement that names both the copy and
+  the field (`if (Count != count_at_entry)`).
+Screen and results (`analysis/localinplace.py`, 2026-11-19). Per function it
+lists the single-assignment locals initialised from a pure field or global
+read and measures `ALL:v` (every use in place, local gone), `S:v@L` (one
+use), and the reverse `R:v@L` / `RALL:v` (a repeated read spelled through
+the local); key: named callee difference, frame, candset count, slot map,
+rows. An automatic keep never raises the rows and a rows-only keep needs
+three. Pass over the non-exact functions of 100+ rows (other workers'
+skipped): 122 functions, 54 with no such local, 46 neutral or worse, 22
+kept, no exact function lost: BaseWin::draw_supported 228 -> 171,
+veh_draw 159 -> 115 (candset 18 -> 8: the icon test rereads
+`Vehs[veh_id].proto_id`), consider_designs 1059 -> 958 (the chassis copy
+with eight uses), diplomacy_check 787 -> 749, game_data 240 -> 216,
+gen_terrain_poly 1585 -> 1562, battle_fight 2138 -> 2120 (named callee
+difference 12 -> 8), drone_riot 332 -> 317, PickTech::pick 825 -> 811,
+world_rainfall 264 -> 251, draw_farm 386 -> 374, base_production
+301 -> 289, and ten of 3 to 9 rows. All but five are the `ALL` form; the
+reverse (`R`) never won. order_veh's one candidate is a saved count compared
+with the live one (excluded); enemy_strategy has none; time_warp,
+base_build and probe are neutral.
+
+enemy_move 0x0056B5B0 stays open, with the question narrowed. The image is
+the probe's natural outcome (`chain`, `mini` in c_field.spec: `T` in the
+free register with write-back, `proto_id` in its slot, three compares on one
+`mov eax,[slot]`, `remote_own` stored as immediates). Ours is not a count
+race: by the probe law `proto_id` would need twelve uses to beat `T`'s nine
+reads, and it wins with a copy and one compare. Diagnostics (volatile
+locals and deletions, not source): `T` takes ebx only when nothing else
+wants it. It loses to `remote_own`'s piece, to `proto_id`'s and, with both
+volatile, to `faction_id`'s written-back piece; every variant that showed
+`T` in ebx (`has_abil(proto_id, ..)`, the plan through `proto_id`, the
+planet_buster statement removed, `dmg` read in place, x or y removed) did so
+by moving `proto_id` to edi or esi. `proto_id` owes its piece to the
+`has_abil` statement (without it `proto_id` is memory-homed with the
+image's `mov eax,[slot]` compares). Measured without effect on that order:
+about 30 single-site respellings of proto_id/faction_id/x/y in the entry, nine
+placements of the copy statement, the `k` test as if/else, three
+`remote_own` forms, the compares nested or negated, a truncated function
+(another regime: everything wins a register). So something outside the
+entry's spelling ranks our `T` below every named piece; the address
+temporary itself is the same web on both sides (one store to [ebp-0x10],
+167 loads in the image, 175 in ours).
+
 ### 2.8 /Ob2 inlining model
 
 Measured 2026-11-19 (par-4) with generated probe families in
@@ -3800,8 +3921,10 @@ Layout
   tuned around the wrong pieces. Neutral there: `remote_own` as if/else,
   `?:` or pre-set and cleared; a `switch` for the three compares;
   `VehPrototypes[proto_id]` for plan/triad; x/y statement order;
-  `has_abil(proto_id, ...)` (moves proto_id to edi). Open question: what
-  ranks the temporary's piece above `proto_id`'s in the image.
+  `has_abil(proto_id, ...)` (moves proto_id to edi). What ranks the
+  temporary's piece above `proto_id`'s in the image: section 2.7, "Named
+  copies of a field" (the image is the natural outcome; ours ranks the
+  temporary below every named piece, cause still open).
   Slot side of the same function: pairing each aligned frame access shows
   the image spilling compiler temporaries (the `abs()` kept across x_dist in
   map_range, a `Bases[i].x` copy, a faction byte) into the slots of

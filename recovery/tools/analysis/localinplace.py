@@ -16,8 +16,8 @@ field itself changes between the copy and a use is NOT proved: an in-place read 
 reloads, so a variant is only kept when the image agrees. Ranking key, as the structure ladder: call
 multiset (analysis/callees.py counts), frame difference, candset.py count (one-side roles + disputed
 pairs), slot-map difference, rows. --write keeps the best variant when the key says it is better:
-a lower call or frame difference, or the same with fewer candset disagreements and no more rows than
-+ROWS_SLACK, or the same candset with fewer rows; it then repeats (--iter rounds), so the sites of
+a lower call or frame difference, or the same with fewer candset disagreements, never with more rows;
+at an unchanged key, MIN_GAIN fewer rows; it then repeats (--iter rounds), so the sites of
 several locals are found one at a time. The `home` column is the image's evidence for the local: `slot`
 (the aligned image row stores a frame slot at the copy), `reg` (the image's aligned row defines a
 callee-saved register), `none` (neither: no image home at the copy).
@@ -35,6 +35,7 @@ import reusesweep as rs
 
 PB = rs.PB
 ROWS_SLACK = 0
+MIN_GAIN = 3  # a keep on rows alone needs this many rows
 INT_T = (r'(?:const\s+)?(?:unsigned\s+|signed\s+)?(?:int|BOOL|short|char|long|uint32_t|int32_t|uint16_t|int16_t|'
          r'uint8_t|int8_t|unsigned|size_t|DWORD|WORD|BYTE|LONG|UINT)')
 PATH = r'[A-Za-z_]\w*(?:::\w+)*(?:\s*(?:\.|->)\s*\w+|\s*\[[^\[\]();=?]*(?:\[[^\[\]();=?]*\][^\[\]();=?]*)*\])*'
@@ -259,7 +260,7 @@ def sweep(unit, addr, write=False, max_sites=6, only=None, top=5, log=print, gia
             return x['fd'] < bf
         if x['cand'] != bc:
             return x['cand'] < bc
-        return x['rows'] < base['diff']
+        return x['rows'] <= base['diff'] - MIN_GAIN
     good = sorted([x for x in scored if better(x)], key=lambda x: (not x['exact'], x['calls'], x['fd'], x['cand'], x['rows']))
     out = dict(base=base['diff'], bkey=(bcl, bf, bc, bsl, base['diff']), cands=len(cands),
                homes={k: v for k, v in hm.items()},

@@ -274,3 +274,16 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   `tumap.py --merge A.cpp [B.cpp] --into C.cpp [--top] [--dry]` and `--move 0xADDR,.. --into C.cpp [--include '"x.h"']`
   do the mechanical regroup (whole annotation blocks, build lists, project.json flag sets, compile_context); see
   `analysis/tumerge.py`. Judge the result with `feall.py --all <units>` against a base and `recover check-claims`.
+- `analysis/localinplace.py <unit> <addr> [--write] [--iter N] [--only NAME] [--list] [--show KEY] | --from FEALL.json [--min 100]
+  [--skip A,..] [--write] [--json F]` named-copy screen (MATCHING_GUIDE 2.7 "Named copies of a field"): every
+  single-assignment local initialised from a pure field/global read (`int v = Vehs[id].proto_id;`, `v = p->f;`,
+  `v = Global;`; address never taken, no local of the read assigned later) is respelled both ways: `ALL:v` every use reads
+  the field in place and the local goes, `S:v@Lnnn` one use in place, `R:v@Lnnn` / `RALL:v` a later textual repeat of the
+  same read spelled through the local. Ranking key: named callee difference, frame, candset count, slot map, rows; the
+  `image` column says whether the image's aligned rows store a slot or define a callee-saved register at the copy.
+  Statements naming both the copy and the read (saved against live value) are never touched; an automatic keep never
+  raises the rows and a rows-only keep needs 3 rows, because an in-place read after the field changed is another program.
+- `analysis/copycensus.py [unit ...] [--pfx N] [--list] [--json F] [--all]` census of those copies over the exact
+  functions (ours = image there): home of the copy (callee-saved register, frame slot, neither) by use count and by
+  whether a call lies between the copy and its last use. 4 minutes tree-wide on one prefix.
+- `analysis/regalloc/c_field.spec` (`python3 cand.py c_field.spec`) the probes behind that guide section.
