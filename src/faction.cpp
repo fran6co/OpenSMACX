@@ -2889,20 +2889,20 @@ void __cdecl diplomacy_check(int faction, int other, int update) {
     }
     if (update) {
         scan_prototypes(faction, other);
-        update = PlayersData[other].flags_ext & 0x20;
-        if (!((PlayersData[faction].diff_level <= 1 && !update)
+        int special = PlayersData[other].flags_ext & 0x20;
+        if (!((PlayersData[faction].diff_level <= 1 && !special)
                 || DiploScratchFA50 || has_treaty(other, faction, 1)
                 || has_agenda(other, faction, 8)
-                || (has_treaty(other, faction, 0x10) && DiploScratchFA2C <= 1 && !update)
+                || (has_treaty(other, faction, 0x10) && DiploScratchFA2C <= 1 && !special)
                 || (!DiploScratchFA64 && !DiploScratchFA60 && !ideology
-                    && (!update || DiploScratchFA98)
+                    && (!special || DiploScratchFA98)
                     && (!DiploScratchFA4C || !has_treaty(other, faction, 0x800000)
                         || DiploFriction < 12))
-                || (!has_treaty(other, faction, 0x20) && (!update || !DiploScratchFA60)
+                || (!has_treaty(other, faction, 0x20) && (!special || !DiploScratchFA60)
                     && DiploScratchFA78 <= 5
                     && ((!DiploScratchFA60 && ideology <= 1)
                         || (PlayersData[faction].mil_strength_1 <= PlayersData[other].mil_strength_1
-                            && !update))))) {
+                            && !special))))) {
             DiploScratchFA70 = 1;
         } else {
             DiploScratchFA70 = 0;
