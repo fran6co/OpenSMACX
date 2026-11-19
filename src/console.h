@@ -718,9 +718,6 @@ extern InfoWin ConsoleInfoWin;    // 0x007AD2A0, the process-wide InfoWin
 extern StatusWin ConsoleStatusWin;  // 0x008C5568, the process-wide StatusWin
 // The same primary slot published by system_init, not a second fixed-address
 // view of the original executable's table.
-inline MapWin *&console_map_win() {
-  return MapWinTable[0];
-}
 
 
 // focus walks the eight map-window slots and, for the primary window only,

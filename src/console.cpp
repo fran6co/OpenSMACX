@@ -1856,9 +1856,9 @@ void Console::prev_cursor() {
     field_23BF8_ = 0;
     if (had_move != 0) {
         survey_mode_ = 0;
-        console_map_win()->draw_map(1);
+        MapWinTable[0]->draw_map(1);
     }
-    console_map_win()->draw_cursor();
+    MapWinTable[0]->draw_cursor();
     if (ConsoleGlobal.cursor_active_ != 0) {
         ambience(0x1E);
         const int had_move_now = survey_mode_;
@@ -1867,12 +1867,12 @@ void Console::prev_cursor() {
         field_23BFC_ = 1;
         if (had_move_now != 0) {
             survey_mode_ = 0;
-            console_map_win()->draw_map(1);
+            MapWinTable[0]->draw_map(1);
         }
         ::draw_cursor();
         ConsoleInfoWin.change(0);
         ConsoleStatusWin.redraw();
-        console_map_win()->main_caption();
+        MapWinTable[0]->main_caption();
         alpha_menu_.check(selected_vehicle_);
     }
     const int cursor_timer = cursor_history_index_ - 1;
@@ -1883,7 +1883,7 @@ void Console::prev_cursor() {
     const int slot = ConsoleGlobal.cursor_history_index_;
     ConsoleStatusWin.set_loc(ConsoleGlobal.cursor_history_x_[slot], ConsoleGlobal.cursor_history_y_[slot]);
     const int slot_now = ConsoleGlobal.cursor_history_index_;
-    console_map_win()->focus(ConsoleGlobal.cursor_history_x_[slot_now], ConsoleGlobal.cursor_history_y_[slot_now]);
+    MapWinTable[0]->focus(ConsoleGlobal.cursor_history_x_[slot_now], ConsoleGlobal.cursor_history_y_[slot_now]);
 }
 
 // Historical seed finding: Native destruction order: Turn, Go, Line, Blink2, Blink.
@@ -1902,9 +1902,9 @@ void Console::next_cursor() {
     field_23BF8_ = 0;
     if (survey_mode_ != 0) {
         survey_mode_ = 0;
-        console_map_win()->draw_map(1);
+        MapWinTable[0]->draw_map(1);
     }
-    console_map_win()->draw_cursor();
+    MapWinTable[0]->draw_cursor();
     if (ConsoleGlobal.cursor_active_ != 0) {
         ambience(0x1E);
         cursor_active_ = 0;
@@ -1912,12 +1912,12 @@ void Console::next_cursor() {
         field_23BFC_ = 1;
         if (survey_mode_ != 0) {
             survey_mode_ = 0;
-            console_map_win()->draw_map(1);
+            MapWinTable[0]->draw_map(1);
         }
         ::draw_cursor();
         ConsoleInfoWin.change(0);
         ConsoleStatusWin.redraw();
-        console_map_win()->main_caption();
+        MapWinTable[0]->main_caption();
         alpha_menu_.check(selected_vehicle_);
     }
     if (cursor_history_index_ != cursor_history_head_) {
@@ -1926,7 +1926,7 @@ void Console::next_cursor() {
         ConsoleStatusWin.set_loc(ConsoleGlobal.cursor_history_x_[slot],
                                  ConsoleGlobal.cursor_history_y_[slot]);
         const int slot_now = ConsoleGlobal.cursor_history_index_;
-        console_map_win()->focus(ConsoleGlobal.cursor_history_x_[slot_now],
+        MapWinTable[0]->focus(ConsoleGlobal.cursor_history_x_[slot_now],
                                  ConsoleGlobal.cursor_history_y_[slot_now]);
     }
 }
@@ -1943,9 +1943,9 @@ int Console::sub_510c90(int x_coord, int y_coord) {
     field_23BF8_ = 0;
     if (had_survey != 0) {
         survey_mode_ = 0;
-        console_map_win()->draw_map(1);
+        MapWinTable[0]->draw_map(1);
     }
-    console_map_win()->draw_cursor();
+    MapWinTable[0]->draw_cursor();
     cursor_next(x_coord, y_coord);
     return 0;
 }
@@ -2149,12 +2149,12 @@ void Console::set_view(int force_update) {
         field_23BFC_ = 1;
         if (survey_mode_ != 0) {
             survey_mode_ = 0;
-            console_map_win()->draw_map(1);
+            MapWinTable[0]->draw_map(1);
         }
         ::draw_cursor();
         ConsoleInfoWin.change(0);
         ConsoleStatusWin.redraw();
-        console_map_win()->main_caption();
+        MapWinTable[0]->main_caption();
         alpha_menu_.check(selected_vehicle_);
     }
 }
@@ -2193,7 +2193,7 @@ void Console::set_move(int force_update) {
 
         if (survey_mode_ != 0) {
             survey_mode_ = 0;
-            console_map_win()->draw_map(1);
+            MapWinTable[0]->draw_map(1);
         }
         ::draw_cursor();
         cursor_active_ = 1;
@@ -2218,15 +2218,15 @@ void Console::set_move(int force_update) {
         field_23BF8_ = 0;
         if (survey_mode_ != 0) {
             survey_mode_ = 0;
-            console_map_win()->draw_map(1);
+            MapWinTable[0]->draw_map(1);
         }
-        console_map_win()->draw_cursor();
+        MapWinTable[0]->draw_cursor();
         cursor_next(tile_x, tile_y);
 
         if (did_reset) {
             ConsoleInfoWin.change(0);
             ConsoleStatusWin.redraw();
-            console_map_win()->main_caption();
+            MapWinTable[0]->main_caption();
             const int focus_vehicle_id = selected_vehicle_;
             const int history_index = ConsoleGlobal.cursor_history_index_;
             const int focus_faction = Vehs[focus_vehicle_id].faction_id;
@@ -2247,12 +2247,12 @@ void Console::set_move(int force_update) {
         field_23BFC_ = 1;
         if (survey_mode_ != 0) {
             survey_mode_ = 0;
-            console_map_win()->draw_map(1);
+            MapWinTable[0]->draw_map(1);
         }
         ::draw_cursor();
         ConsoleInfoWin.change(0);
         ConsoleStatusWin.redraw();
-        console_map_win()->main_caption();
+        MapWinTable[0]->main_caption();
         alpha_menu_.check(selected_vehicle_);
     }
 
@@ -3487,14 +3487,14 @@ int Console::set_cursor(int x_coord, int y_coord) {
     field_23BF8_ = 0;
     if (survey_mode_ != 0) {
         survey_mode_ = 0;
-        console_map_win()->draw_map(1);
+        MapWinTable[0]->draw_map(1);
     }
-    console_map_win()->draw_cursor();
+    MapWinTable[0]->draw_cursor();
     cursor_next(x_coord, y_coord);
     ConsoleStatusWin.redraw();
     field_23BF8_ = 1;
     field_23BFC_ = 1;
-    console_map_win()->draw_cursor();
+    MapWinTable[0]->draw_cursor();
     return 0;
 }
 
@@ -3535,7 +3535,7 @@ void Console::update_data(int change_flags) {
     ConsoleStatusWin.StatusWin::redraw();
     // 0x0051489B mov ecx,[0x7d3c3c] - a load, not an address-of - then
     // 0x005148A1 call 0x46fb10. The slot is read here, never cached.
-    console_map_win()->main_caption();
+    MapWinTable[0]->main_caption();
 }
 
 // ORIGINAL: 0x005148B0 ?move_cursor@Console@@QAEXH@Z 0x005148B0-0x00514990 FILE BYTE_EXACT
@@ -3572,7 +3572,7 @@ void Console::move_cursor(int direction) {
     int new_y = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_] +
                 VehMoveDeltaY[direction];
     if (set_cursor(new_x, new_y) == 0) {
-        console_map_win()->focus(new_x, new_y);
+        MapWinTable[0]->focus(new_x, new_y);
     }
 }
 
@@ -4022,7 +4022,7 @@ zoom_windows:
 
 void Console::center() {
     const int slot = ConsoleGlobal.cursor_history_index_;
-    console_map_win()->set_center(ConsoleGlobal.cursor_history_x_[slot], ConsoleGlobal.cursor_history_y_[slot], 1);
+    MapWinTable[0]->set_center(ConsoleGlobal.cursor_history_x_[slot], ConsoleGlobal.cursor_history_y_[slot], 1);
 }
 
 // ORIGINAL: 0x00515430 sub_515430 0x00515430-0x00515443 BYTE_EXACT
@@ -4050,30 +4050,30 @@ void Console::survey() {
     const int state = survey_mode_;
     if (state == 1) {
         survey_mode_ = 2;
-        const uint32_t saved = console_map_win()->field_1DD70_;
-        console_map_win()->field_1DD70_ = 0x603;
-        console_map_win()->draw_map(1);
-        console_map_win()->field_1DD70_ = saved;
+        const uint32_t saved = MapWinTable[0]->field_1DD70_;
+        MapWinTable[0]->field_1DD70_ = 0x603;
+        MapWinTable[0]->draw_map(1);
+        MapWinTable[0]->field_1DD70_ = saved;
         return;
     }
     if (state == 2) {
         survey_mode_ = 3;
-        const uint32_t saved = console_map_win()->field_1DD70_;
-        console_map_win()->field_1DD70_ = 0x402;
-        console_map_win()->draw_map(1);
-        console_map_win()->field_1DD70_ = saved;
+        const uint32_t saved = MapWinTable[0]->field_1DD70_;
+        MapWinTable[0]->field_1DD70_ = 0x402;
+        MapWinTable[0]->draw_map(1);
+        MapWinTable[0]->field_1DD70_ = saved;
         return;
     }
     if (state != 0) {
         survey_mode_ = 0;
-        console_map_win()->draw_map(1);
+        MapWinTable[0]->draw_map(1);
         return;
     }
     survey_mode_ = 1;
-    const uint32_t saved = console_map_win()->field_1DD70_;
-    console_map_win()->field_1DD70_ = 0x623;
-    console_map_win()->draw_map(1);
-    console_map_win()->field_1DD70_ = saved;
+    const uint32_t saved = MapWinTable[0]->field_1DD70_;
+    MapWinTable[0]->field_1DD70_ = 0x623;
+    MapWinTable[0]->draw_map(1);
+    MapWinTable[0]->field_1DD70_ = saved;
 }
 
 // ORIGINAL: 0x00515530 ?survey2@Console@@QAEXXZ 0x00515530-0x005155F5 FILE BYTE_EXACT
@@ -4088,18 +4088,18 @@ void Console::survey() {
 void Console::survey2() {
     if (survey_mode_ != 0) {
         survey_mode_ = 0;
-        console_map_win()->draw_map(1);
+        MapWinTable[0]->draw_map(1);
         return;
     }
     survey_mode_ = 1;
-    uint32_t saved = console_map_win()->field_1DD70_;
-    console_map_win()->field_1DD70_ = saved & 0xfffff7ff;
-    console_map_win()->field_1DD70_ =
-        console_map_win()->field_1DD70_ | 0x1000;
-    console_map_win()->draw_map(1);
-    console_map_win()->field_1DD70_ = saved;
-    console_map_win()->field_1DD70_ =
-        console_map_win()->field_1DD70_ & 0xffffefff;
+    uint32_t saved = MapWinTable[0]->field_1DD70_;
+    MapWinTable[0]->field_1DD70_ = saved & 0xfffff7ff;
+    MapWinTable[0]->field_1DD70_ =
+        MapWinTable[0]->field_1DD70_ | 0x1000;
+    MapWinTable[0]->draw_map(1);
+    MapWinTable[0]->field_1DD70_ = saved;
+    MapWinTable[0]->field_1DD70_ =
+        MapWinTable[0]->field_1DD70_ & 0xffffefff;
     if (tut_check(0x400) != 0) {
         const int slot = ConsoleGlobal.cursor_history_index_;
         TutorialWindow.tut_map(ConsoleStrTerraSurvey2, ConsoleGlobal.cursor_history_x_[slot],
@@ -4357,7 +4357,7 @@ void Console::toggle_base_grid() {
 //          inherits, and that thiscall leaves the cleanup to the callee, which
 //          drops the image's trailing `pop ecx` (4 of 6).
 void Console::toggle_dest() {
-    console_map_win()->field_1DD70_ ^= 0x40000;
+    MapWinTable[0]->field_1DD70_ ^= 0x40000;
     ::draw_map(1);
 }
 
@@ -4674,7 +4674,7 @@ void Console::erase_landmark(int x_coord, int y_coord) {
 // ORIGINAL: 0x005165B0 ?zoom_to_upkeep_base@Console@@QAEXXZ 0x005165B0-0x005166C3 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["The retained 0x005165B0 seed selects the nearest own base carrying Base::state bit 0x10, using the current MapWin camera coordinates and wraps X on round maps.", "base.h names the 0x0097D040 array as Bases with 0x134-byte Base records; its x/y/faction/state members are at offsets 0/2/4/0x30, matching all seed reads.", "MapWin fields 0x1DD9C/0x1DDA0 supply the camera point; map.cpp binds MapLongitude/MapIsFlat/MapLongitudeBounds; tutwin.h binds the image's BaseWin at 0x006A7628 as TutWinBaseWindow."], "reason": "Choose the nearest base of ConsoleGlobal's current faction with the seed's wrapped-map distance calculation and pass its typed index to the established BaseWin zoom path."}
 void Console::zoom_to_upkeep_base() {
-    const MapWin *map_window = console_map_win();
+    const MapWin *map_window = MapWinTable[0];
     const int camera_x = map_window->center_x_;
     const int camera_y = map_window->center_y_;
     int best_distance = 99999;

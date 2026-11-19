@@ -927,7 +927,7 @@ void __cdecl random_events(int mode) {
             if (faction != ConsoleGlobal.faction_id_) {
                 return;
             }
-            console_map_win()->set_center(tx, ty, 1);
+            MapWinTable[0]->set_center(tx, ty, 1);
             if (!HIBYTE(GetAsyncKeyState(VK_SHIFT))) {
                 for (i = 0; i < 10; i++) {
                     bit_set(tx, ty, BIT_RSC_BONUS, 1);
@@ -960,7 +960,7 @@ void __cdecl random_events(int mode) {
         if (faction != ConsoleGlobal.faction_id_) {
             return;
         }
-        console_map_win()->set_center(tx, ty, 1);
+        MapWinTable[0]->set_center(tx, ty, 1);
         if (!HIBYTE(GetAsyncKeyState(VK_SHIFT))) {
             for (i = 0; i < 10; i++) {
                 bit_set(tx, ty, BIT_RSC_BONUS, 0);
