@@ -59,6 +59,12 @@
 #include <cstdlib>
 #include <cstring>
 
+// 0x00689218 - the DirectPlay application GUID the lobby check registers the
+// session under, bytes read off the image. The trailing words spell "DEST".
+// RECOVERY_OBJECT: v2 0x00689218 0x00689228 ?LobbyAppGuid@@3U_GUID@@B 0x004E31E0
+const GUID LobbyAppGuid = {0x02D1B480, 0xD680, 0x11D0,
+                                  {0x82, 0x1E, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00}};
+
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004E2400 sub_4e2400 0x004E2400-0x004E2444 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682614 directly selects0x4E2400 as the first callback in the adjacent network-state startup sequence.", "The callback stores only options bytes0,1,2,4,5,6,7,8,9,A,B; NetWinSessionOptionsStorage contains only the existing 0x18-byte NetWinSessionOptionsState at offset zero and its constructor performs exactly those stores."], "reason": "Own the original selected options initialization in the storage object's constructor without adding value-initialization or changing the shared wire type."}

@@ -89,23 +89,6 @@
 #include <cstring>
 #include "replaywin.h"     // ReplayEventBytes: replay recorder's byte length
 
-
-// do_checksums(4), original 51E760, copies 0x54 bytes from its calculated
-// vector; net_upkeep 5296E6..5296F4 sends the same 21 dwords.
-// Initial image storage is zero. The producer remains unfinished.
-// Bound: every use is the 21-dword vector (`mov ecx, 0x15; rep movsd` at 0x0051E830, `push 0x15` at 0x005296E6); the following dword is unreferenced.
-// RECOVERY_OBJECT: v2 0x0093A008 0x0093A05C ?NetTurnChecksums@@3PAHA 0x0051E830
-int NetTurnChecksums[NetTurnChecksumWords];
-
-// Original process_message 53675D..53677C copies 21 payload dwords to the
-// message's faction row. net_upkeep compares rows 1..7 with stride 0x54.
-// Its 93A56C logging cursor is row 1, word 2, not a separate allocation.
-// Incoming faction validation remains unproven.
-// The corresponding dispatcher branch remains an unfinished dependency.
-// Bound: eight 0x54-byte rows (stride at 0x0052978D); MessageWinDeferredBaseMessages starts at the end.
-// RECOVERY_OBJECT: v2 0x0093A510 0x0093A7B0 ?NetPeerTurnChecksums@@3PAY0BF@HA 0x0052978D
-int NetPeerTurnChecksums[NetTurnChecksumPeerSlots][NetTurnChecksumWords];
-
 // The next dword after IsMultiplayerNet. Every sender in this file
 // increments it around one send_message call, every wait loop increments it
 // for the length of its poll and decrements it on the way out, and
@@ -128,12 +111,7 @@ unsigned int NetDaemonProgressInterval;
 // 0x00534EC9 read/sample/write this word. No containing allocation is inferred.
 // RECOVERY_OBJECT: v1 0x0093F66C ?NetDaemonProgressLastTick@@3IA
 unsigned int NetDaemonProgressLastTick;
-// Original 0x0093A960 accumulates the wait durations returned by the daemon's
-// map-order callbacks. Other writers/extent are not yet assigned to an owner.
-// The pinned loader initializes this observed dword to zero; its containing
-// allocation and complete indirect writer set remain unknown.
-// RECOVERY_OBJECT: v1 0x0093A960 ?NetDaemonWaitTicks@@3HA
-int NetDaemonWaitTicks;
+extern int NetDaemonWaitTicks;
 
 // send_game synchs replay records only when the recorder has bytes to send;
 // the counter and buffer are owned together by replaywin.cpp.
@@ -142,11 +120,6 @@ int NetDaemonWaitTicks;
 // (0x0052E370) sets it when a client leaves; a lock whose wait saw it comes
 // back with the "NOLOCK" popup instead of a lock.
 int NetPlayerDropped;  // 0x0093F65C
-
-// Set as a pair by commlink_attempt (0x00558C60): the flag and the faction
-// that asked. process_message tests both when a commlink reply arrives.
-// RECOVERY_OBJECT: v2 0x007492CC 0x007492D0 ?CommlinkPending@@3HA 0x00442740
-int CommlinkPending;   // 0x007492CC
 int CommlinkFaction;   // 0x0073B790
 
 // The spock pair: synch (0x00532E00) raises 0x93F670 when it has something to
@@ -2983,6 +2956,26 @@ void NetDaemon::end_of_event(int faction_id, int turn_value) {
 
 
 #include "netdaemon_message_record.h"
+
+// The file-backed palette defaults (0x0068A5A0..C0) are elements of
+// interface_assets.cpp's IfaceColorTable; their identities moved there.
+
+// Original455610..455E41. The explicit mode argument is unused. All service
+// results are ignored in the original; failed loads still proceed through
+// extraction/publication. The existing asset objects own their allocations.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// TRIED: full transcription landed (MISMATCH #0, prologue push/sub divergence - likely stack-frame shape from the local NCSprites-array/struct layout differing from the original's). Verified every extract()/change_color() argument order and the `this` receiver for the two loop-driven extract() sequences against raw bytes, since Ghidra silently drops the implicit `this` on every extract() call in its pseudocode.
+// 0x009A6804
+// 0x009A6808
+// 0x009A680C
+// save_daemon writes 12 before serialization; setup_game clears this word.
+// Its precise save-format meaning is not established by that write alone.
+// Historical object identity moved to GameDataStateStorage; see the transport manifest.
+
+// Original4838E3 reads this DWORD network-game flag; initial image storage is0.
+// RECOVERY_OBJECT: v2 0x0093F660 0x0093F664 ?IsMultiplayerNet@@3HA 0x004838E0
+BOOL IsMultiplayerNet;  // DirectPlay - Serial, Modem, Internet (TCP/IP)
 
 
 // Shared separator objects the image pushes instead of unit literals.

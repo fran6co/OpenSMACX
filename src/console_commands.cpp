@@ -183,15 +183,8 @@ int ScenarioVehicleMode = 0;
 
 // RECOVERY_OBJECT: v2 0x0090DB90 0x0090DB94 ?ScenarioPreviousPrototype@@3HA 0x004DED00
 int ScenarioPreviousPrototype = 0;
-
-// Original go_to stores source X/Y at 4D6E01/4D6E0D; goto_routine
-// loads the independent dwords at 915680/915650 (4D60C2/4D60A8,
-// 4D6103/4D60FC). Both starts are initially zero-filled storage.
-// RECOVERY_OBJECT: v1 0x00915680 ?GoToSourceX@@3HA
-int GoToSourceX = 0;
-
-// RECOVERY_OBJECT: v1 0x00915650 ?GoToSourceY@@3HA
-int GoToSourceY = 0;
+extern int GoToSourceX;
+extern int GoToSourceY;
 
 // RECOVERY_OBJECT: v2 0x00688F98 0x00688FA4 ?ConsoleStrResetAllFac@@3PADA 0x004DBB40
 char ConsoleStrResetAllFac[] = "RESETALLFAC";  // 0x00688F98

@@ -39,24 +39,6 @@
 int __cdecl diplo_lock(int);
 void __cdecl diplo_unlock();
 
-// council_action increments a proposal's resolution count and records the
-// current turn before dispatching its effect. setup_game's native paired
-// reset loop (005B3A7A..3A90) independently establishes eleven signed entries
-// in each table; its owning implementation remains unfinished.
-// Historical object identity moved to GameDataStateStorage; see the transport manifest.
-
-// Historical object identity moved to GameDataStateStorage; see the transport manifest.
-
-
-// make_resolution publishes per-faction notifications; both overloads of
-// clear_council_notify clear these same eight signed cells per table.
-// RECOVERY_OBJECT: v2 0x00703DE8 0x00703DEC ?CouncilPbemGate@@3HA 0x0052C670
-// PBEM resolution stores the calling faction ID here, not a boolean.
-int CouncilPbemGate;
-// init raises this modal-council flag; key/button teardown clears it.
-// RECOVERY_OBJECT: v2 0x00703DE4 0x00703DE8 ?CouncilDialogActive@@3HA 0x00427230
-int CouncilDialogActive;
-
 // call_council's original multiplayer deferral stores three message arguments
 // here; net_upkeep 5294D3..529536 sends them and resets each to -1. Their
 // initial image bytes are twelve FF bytes. The producer stores faction,

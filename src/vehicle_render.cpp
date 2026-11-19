@@ -60,6 +60,11 @@ void VehicleRenderHeaderPad20();
 #include "vector.h"
 #include "technology.h"
 
+// Shared infantry/native model placement, original 687AE8..687AF4.
+// This is distinct from the four offsets derived from loaded voxel parts.
+// RECOVERY_OBJECT: v2 0x00687AE8 0x00687AF4 ?VehInfantryOffset@@3UVOX_Vect@@A 0x004C3800
+VOX_Vect VehInfantryOffset = {{-400.0f, 200.0f, 0.0f}};
+
 // Vehicle renderer lifetime is later than model, terrain and sprite assets.
 // ORIGINAL: 0x004BF6E0 _$E21 0x004BF6E0-0x004BF6F6 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x006825FC selects init 0x004BF6E0-0x004BF6F6, registering fini 0x004BF700-0x004BF70A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x008CC828; scalar Caviar constructor/destructor 0x00616DA0/0x00617020.", "Physical startup-root, registered-cleanup and global relocations identify this source-owned object in src/vehicle_render.cpp. The adjacent symbol fact names the compiler-emitted operation. Out-of-line class methods supply construction and teardown; no handwritten lifecycle callback or fixed-address object is substituted.", "Current helper names are compiler-output interpretations, not original debug symbols. These individual bindings do not establish full initialization order, allocation extents, linked retained selection or runtime acceptance."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned g_VEHDRAW_CAVIAR; no callback body is authored."}
@@ -110,16 +115,6 @@ VOX_Vect VehDrawCameraAngles;
 // to floats and normalizes this vector. These are the image's defaults.
 // RECOVERY_OBJECT: v2 0x00687AD8 0x00687AE4 ?VehLightDirMap@@3UVOX_Vect@@A 0x004BF8D0
 VOX_Vect VehLightDirMap = {{-0.57735f, 0.57735f, 0.57735f}};
-// load_voxels derives these offsets from the first part's two step vectors:
-// AVGMTGUN, adroper, AVHT-GunReposition, and AVHT-LightsReposition.
-// RECOVERY_OBJECT: v2 0x007AC1B0 0x007AC1BC ?VehGunMountOffset@@3UVOX_Vect@@A 0x00451030
-VOX_Vect VehGunMountOffset;    // 0x007AC1B0
-// RECOVERY_OBJECT: v2 0x0079A618 0x0079A624 ?VehDropOffset@@3UVOX_Vect@@A 0x00451030
-VOX_Vect VehDropOffset;        // 0x0079A618
-// RECOVERY_OBJECT: v2 0x00798C30 0x00798C3C ?VehHoverGunOffset@@3UVOX_Vect@@A 0x00451030
-VOX_Vect VehHoverGunOffset;    // 0x00798C30
-// RECOVERY_OBJECT: v2 0x00789B48 0x00789B54 ?VehHoverLightsOffset@@3UVOX_Vect@@A 0x00451030
-VOX_Vect VehHoverLightsOffset; // 0x00789B48
 
 // Animation frame read by model assembly. Original 8E9F50 starts at zero;
 // scoot_start sets it to one, and visible crawler assembly advances it.
@@ -152,17 +147,6 @@ VOX_Vect VehDrawScootSecondIncrement;
 VOX_Vect VehDrawScootNormalMid;
 // RECOVERY_OBJECT: v2 0x008CDD00 0x008CDD0C ?VehDrawScootNormalStart@@3UVOX_Vect@@A 0x004BFE00
 VOX_Vect VehDrawScootNormalStart;
-
-// Temporary draw coordinates belong to the vehicle rendering state; -1 means
-// no override. veh_draw uses them only when the selected vehicle also agrees.
-// RECOVERY_OBJECT: v2 0x0068E564 0x0068E568 ?VehDrawPositionX@@3HA 0x004C12A0
-int VehDrawPositionX = -1;
-
-// RECOVERY_OBJECT: v2 0x0068E568 0x0068E56C ?VehDrawPositionY@@3HA 0x004C12A0
-int VehDrawPositionY = -1;
-
-// RECOVERY_OBJECT: v2 0x0068E56C 0x0068E570 ?VehDrawPositionVehicle@@3HA 0x004C12A0
-int VehDrawPositionVehicle = -1;
 
 static float vehdraw_scale(int zoom) {
     if (MapWinCaptionScale > 0) {

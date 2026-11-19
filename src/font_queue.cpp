@@ -46,6 +46,15 @@
 #include "alpha.h"
 #include "rectangle_operations.h"
 
+// Temporary draw coordinates belong to the vehicle rendering state; -1 means
+// no override. veh_draw uses them only when the selected vehicle also agrees.
+// RECOVERY_OBJECT: v2 0x0068E564 0x0068E568 ?VehDrawPositionX@@3HA 0x004C12A0
+int VehDrawPositionX = -1;
+// RECOVERY_OBJECT: v2 0x0068E568 0x0068E56C ?VehDrawPositionY@@3HA 0x004C12A0
+int VehDrawPositionY = -1;
+// RECOVERY_OBJECT: v2 0x0068E56C 0x0068E570 ?VehDrawPositionVehicle@@3HA 0x004C12A0
+int VehDrawPositionVehicle = -1;
+
 // The per-element teardown the queue passes: the Font destructor, bound here
 // under its own name so this file needs nothing from the retired thunk
 // family; the old atexit_thunks.cpp binding covered the same address.

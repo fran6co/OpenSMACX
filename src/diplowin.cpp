@@ -53,6 +53,15 @@
 #include "jackal/font_metrics.h"
 #include "general.h"  // swap for the hot-seat pair callbacks
 
+// Set as a pair by commlink_attempt (0x00558C60): the flag and the faction
+// that asked. process_message tests both when a commlink reply arrives.
+// RECOVERY_OBJECT: v2 0x007492CC 0x007492D0 ?CommlinkPending@@3HA 0x00442740
+int CommlinkPending;   // 0x007492CC
+// RECOVERY_OBJECT: v2 0x00749AE4 0x00749AE8 ?BreakthroughTurnsGlobal@@3HA 0x00445130
+int BreakthroughTurnsGlobal;
+// RECOVERY_OBJECT: v2 0x00749C0C 0x00749C10 ?NetIncomeGlobal@@3HA 0x00445130
+int NetIncomeGlobal;
+
 // Shared punctuation objects the image pushes instead of unit literals.
 extern char SocialWinCloseParenText[];
 extern char SocialWinOpenParenText[];
@@ -226,11 +235,7 @@ DiploWin DiploWindow;
 // RECOVERY_OBJECT: v1 0x00737CD8 ?DiplomacyTranscriptLists@@3PAY07VStringList@@A
 // Initializer440F30 constructs 64 StringLists, stride0x30;440F60 destroys them.
 StringList DiplomacyTranscriptLists[8][8];
-
-// 0x00443F10 latches this scalar from zero to one; 0x005290C4 clears it.
-// Its semantic name and broader containing storage remain unresolved.
-// RECOVERY_OBJECT: v2 0x0093A968 0x0093A96C ?DiploDefaultFlag93A968@@3HA 0x004449AF
-int DiploDefaultFlag93A968;
+extern int DiploDefaultFlag93A968;
 
 // 0x004412A0 reads its first stack argument as the faction palette index and
 // writes to the shared DiploWindow StringBox at 0x745060 (DiploWindow+0xA388).
@@ -1996,9 +2001,7 @@ DiploWin::DiploWin() {}
 // RECOVERY_GENERATED: v1 vtable 0x0066B62C ? ??_7DiploWin@@6BBuffer@@@ 0x00444FC0
 // RECOVERY_GENERATED: v1 vtable 0x0066B5E0 ? ??_7DiploWin@@6B@ 0x00444FC0
 
-extern int BreakthroughTurnsGlobal;
 
-extern int NetIncomeGlobal;
 
 // Callees owned outside this TU. slide_show now has its full C++ body in
 // popup.cpp. The remaining original-address helpers retain their seed

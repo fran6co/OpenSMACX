@@ -28,6 +28,13 @@
 #include "statuswin.h"
 #include "terraforming.h"
 
+// Extent: compiled sizeof 0x4; next mapped object at 0x009B227C.
+// RECOVERY_OBJECT: v2 0x009B2278 0x009B227C ?VehLiftX@@3HA 0x004BF928
+int VehLiftX;  // 0x009B2278
+// Extent: compiled sizeof 0x4; 0x9B2288 unreferenced; VehBitError is 0x9B228C.
+// RECOVERY_OBJECT: v2 0x009B2284 0x009B2288 ?VehLiftY@@3HA 0x004BF932
+int VehLiftY;  // 0x009B2284
+
 
 // WORKAROUND(inline): the image keeps two literals no instruction references
 // between veh_at's log line and veh_init's: VEHBIT 0x00691D8C, then "1"

@@ -54,6 +54,13 @@
 #include "tutwin.h"
 #include "veh.h"
 
+// 0x006874C4: draw_my_dest publishes a vehicle index after validation;
+// StatusWin clears it to -1. Pinned original .data bytes at 0x006874C4 are
+// FF FF FF FF; the initializer preserves that startup sentinel. The typed
+// source owner below records the corresponding four-byte original interval.
+// RECOVERY_OBJECT: v2 0x006874C4 0x006874C8 ?DestinationVehicleId@@3HA 0x004B4BF0
+int DestinationVehicleId = -1;
+
 // Shared punctuation objects the image pushes instead of unit literals.
 extern char SocialWinCloseParenText[];
 extern char SocialWinOpenParenText[];
@@ -67,11 +74,6 @@ extern char SocialWinCommaSpaceText[];
 extern int TextColourTable[195];
 
 void __cdecl help_any();
-
-// The status and information-panel initialization latch is shared across
-// three window owners. The pinned image places this zero-filled word here.
-// RECOVERY_OBJECT: v2 0x00939ED8 0x00939EDC ?StatusFlags@@3IA 0x00458D60
-uint32_t StatusFlags;
 
 // The route destination renderer is called by MapWin::set_center. Its
 // retained seed indexes genuine Veh and chassis records, then publishes the

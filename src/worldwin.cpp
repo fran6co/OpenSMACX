@@ -31,6 +31,10 @@
 #include "strings.h"
 #include "tutwin.h"
 
+// Initially zero; main_game's still-unfinished startup enables map input.
+// RECOVERY_OBJECT: v2 0x0090D938 0x0090D93C ?MapInputEnabled@@3HA 0x0046F000
+int MapInputEnabled;
+
 void __cdecl help_any();
 
 // Four consecutive original dwords at 0x00939F08..14 are written by

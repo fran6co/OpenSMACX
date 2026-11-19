@@ -146,57 +146,6 @@ typedef char ScenarioSaveVictoryBonusOffset[offsetof(ScenarioSaveState, victory_
 typedef char ScenarioSaveStartingYearOffset[offsetof(ScenarioSaveState, starting_mission_year) == 0x10 ? 1 : -1];
 typedef char ScenarioSaveEndingYearOffset[offsetof(ScenarioSaveState, ending_mission_year) == 0x14 ? 1 : -1];
 typedef char ScenarioSaveTailOffset[offsetof(ScenarioSaveState, wire_opaque_94b4d8) == 0x18 ? 1 : -1];
-// 0x009A64D8
-// 0x009A6800
-// config_popups copies the live screen dimensions to these independent
-// dwords; both are beyond Console's proven end, not Console members.
-// RECOVERY_OBJECT: v1 0x00939E58 ?IfaceScreenHeight@@3HA
-int IfaceScreenHeight; // 0x00939E58
-// RECOVERY_OBJECT: v1 0x00939E5C ?IfaceScreenWidth@@3HA
-int IfaceScreenWidth;  // 0x00939E5C
-// The file-backed palette defaults (0x0068A5A0..C0) are elements of
-// interface_assets.cpp's IfaceColorTable; their identities moved there.
-
-// Original455610..455E41. The explicit mode argument is unused. All service
-// results are ignored in the original; failed loads still proceed through
-// extraction/publication. The existing asset objects own their allocations.
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// Historical seed observations (not fresh measurements or acceptance):
-// TRIED: full transcription landed (MISMATCH #0, prologue push/sub divergence - likely stack-frame shape from the local NCSprites-array/struct layout differing from the original's). Verified every extract()/change_color() argument order and the `this` receiver for the two loop-driven extract() sequences against raw bytes, since Ghidra silently drops the implicit `this` on every extract() call in its pseudocode.
-// 0x009A6804
-// 0x009A6808
-// 0x009A680C
-// save_daemon writes 12 before serialization; setup_game clears this word.
-// Its precise save-format meaning is not established by that write alone.
-// Historical object identity moved to GameDataStateStorage; see the transport manifest.
-
-// Original4838E3 reads this DWORD network-game flag; initial image storage is0.
-// RECOVERY_OBJECT: v2 0x0093F660 0x0093F664 ?IsMultiplayerNet@@3HA 0x004838E0
-BOOL IsMultiplayerNet;  // DirectPlay - Serial, Modem, Internet (TCP/IP)
-// Original 0x00442721/0x004713B3 test the shared PBEM mode value, not a pointer.
-// RECOVERY_OBJECT: v2 0x0093A95C 0x0093A960 ?IsMultiplayerPBEM@@3HA 0x00405276
-BOOL IsMultiplayerPBEM;  // 0x0093A95C // HotSeat / PBEM
-// 0x009A681C
-// 0x009A6820
-
-// Shared turn handoff flag: next_player_turn and player deletion write it;
-// net_not_my_turn reads it. The observed four bytes start loader-zeroed.
-// RECOVERY_OBJECT: v2 0x0093A950 0x0093A954 ?NextTurnReady@@3HA 0x0052DBF0
-int NextTurnReady;
-// net_upkeep resets/increments this phase and net_upkeep_phase consumes it.
-// Its producer is still unfinished; this storage does not recover that body.
-// RECOVERY_OBJECT: v2 0x0093A93C 0x0093A940 ?NetUpkeepPhase@@3HA 0x005290A0
-int NetUpkeepPhase;
-
-
-// ---------------------------------------------------------------------------
-// The main loop.
-// ---------------------------------------------------------------------------
-
-// Loop state globals; addresses and roles documented in
-// game.h next to each declaration.
-// RECOVERY_OBJECT: v1 0x0093A948 ?GameRestartQueued@@3HA
-int GameRestartQueued;  // 0x0093A948
 // Native control_game reads only this pinned NUL-terminated source string;
 // one byte is the observed lower bound, not its complete original capacity.
 char SaveGameFileName[1];  // 0x0093AA0C
@@ -2750,14 +2699,6 @@ void __cdecl auto_undo() {
     // so the name is already in hand.
     save_daemon(previous);
 }
-
-
-// Combat updates50A4A7/50A4B5 and50AF1B/50AF2D index these eight words.
-// Turn display527CEE/527D0F passes them to WONLOST; reset51E3C0 clears all.
-// RECOVERY_OBJECT: v2 0x0093A96C 0x0093A98C ?FactionTurnCombatWins@@3PAHA 0x0051E3C0
-int FactionTurnCombatWins[MaxPlayerNum];
-// RECOVERY_OBJECT: v2 0x0093A98C 0x0093A9AC ?FactionTurnCombatLosses@@3PAHA 0x0051E3C0
-int FactionTurnCombatLosses[MaxPlayerNum];
 
 // save_daemon clears this word on its rules/PBEM paths, or copies NetDaemon's
 // player count on its network path before game_data transfers its four bytes.

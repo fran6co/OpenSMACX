@@ -1285,10 +1285,6 @@ void __cdecl energy_compute(int faction_id, int mode);   // 0x00445130
 void __cdecl slide_show(GraphicWin *window, int mode);   // 0x0045D440
 void __cdecl slide_hide(GraphicWin *window, int mode);   // 0x0045D970
 void __cdecl do_all_draws();                             // 0x005FCBB0, in temp.cpp
-// RECOVERY_OBJECT: v2 0x00749AE4 0x00749AE8 ?BreakthroughTurnsGlobal@@3HA 0x00445130
-int BreakthroughTurnsGlobal;
-// RECOVERY_OBJECT: v2 0x00749C0C 0x00749C10 ?NetIncomeGlobal@@3HA 0x00445130
-int NetIncomeGlobal;
 
 
 /*

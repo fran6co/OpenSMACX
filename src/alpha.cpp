@@ -147,6 +147,29 @@ static char ArmorNameBadKey[] = "BADARMKEY";
 #include "multidebug.h"  // MultiDebug, the standing debug window
 #include "datalink.h"  // DatalinkMain
 
+// timer_daemon reads this climate gate before dispatch; its wider contract remains unresolved.
+// RECOVERY_OBJECT: v2 0x0068F21C 0x0068F220 ?WorldClimateSkipTerrainClear@@3IA 0x0058E360
+uint32_t WorldClimateSkipTerrainClear = 1;  // 0x0068F21C
+// Rank rows use one palette entry per faction, including native life.
+// RECOVERY_OBJECT: v2 0x0068F9F0 0x0068FA10 ?InfoFactionTextColors@@3PAHA 0x00458420
+int InfoFactionTextColors[8] = {249, 111, 252, 255, 251, 65, 102, 187};
+// RECOVERY_OBJECT: v2 0x0068FA10 0x0068FA30 ?InfoFactionShadowColors@@3PAHA 0x00458420
+int InfoFactionShadowColors[8] = {1, 175, 4, 248, 3, 57, 109, 192};
+// Eight faction foreground colors, independently paired with eight shadows.
+// load_faction_art4537D9/4537E8 writes the two banks and load_vehicles
+// 45443C/454446 publishes entry0. The following 68FA70 string is NOT an
+// array tail. Original chat caller537AD5 passes the packet faction index;
+// malformed packet indices remain unvalidated, not a larger storage owner.
+// Other original-only color users and load_faction_art still need recovery.
+// RECOVERY_OBJECT: v2 0x0068FA30 0x0068FA50 ?ChatItemIdTable@@3PAHA 0x00454270
+int ChatItemIdTable[8] = {
+    249, 111, 252, 255, 251, 65, 102, 187,
+};
+// RECOVERY_OBJECT: v2 0x0068FA50 0x0068FA70 ?ChatShadowColors@@3PAHA 0x00454270
+int ChatShadowColors[8] = {
+    134, 177, 172, 55, 146, 51, 145, 169,
+};
+
 // Borrowed FontTable entries selected by application popup policy.
 // config_popups publishes these pointers; they own no Font lifetime.
 // RECOVERY_OBJECT: v1 0x009403D8 ?PopupMainFont@@3PAVFont@@A
@@ -243,8 +266,6 @@ RulesBonusName BonusName[MaxBonusNameNum];                  // 0x009461A8
 // Historical object identity moved to GameDataStateStorage; see the transport manifest.
 // 0x009A64EC
 uint16_t FactionRankingHistory[MaxPlayerNum * MaxRankingHistoryTurns];  // 0x009A68AC
-// RECOVERY_OBJECT: v2 0x00759194 0x00759198 ?HallOfFameIOMode@@3HA 0x0044AF90
-int HallOfFameIOMode;  // 0x00759194
 // ORIGINAL: 0x00584D00 _$E56 0x00584D00-0x00584D16 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT dispatcher 0x00644DEC-0x00644DFB supplies [0x00682000,0x006826CC) to 0x00644ED8, which calls each non-null dword. Slot 0x00682644 selects init 0x00584D00, which registers exit callback 0x00584D20.", "Original init span 0x00584D00-0x00584D16 and exit span 0x00584D20-0x00584D2A are independently disassembled; both identify receiver 0x00945780 and Wave constructor/destructor 0x004C66E0/0x004C67C0.", "Historical earlier wave.cpp physical COFF selected local STATIC init _$E56 via .CRT$XCU, relocating to g_TOP_MENU_WAVE, Wave construction, paired local fini _$E54 and atexit; fini relocates to the same object and Wave destruction. Native comparator can select these physical local function symbols.", "Independent pin/COFF/source review supports individual lifetime ownership. These mappings do not establish complete global initialization order, linked retained selection, full data layout, original debug names or runtime acceptance."], "reason": "Bind the original startup operation to the genuine compiler-emitted lifetime of source-owned g_TOP_MENU_WAVE. The local symbol identifies current emitted code, not an original debug name; no callback body is authored."}
 // symbol    _$E16

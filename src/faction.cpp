@@ -784,32 +784,6 @@ void __cdecl buy_council_vote(int faction, int other, int proposal, int choice) 
 
 extern uint32_t LockEnableMask;  // 0x009A64E8, defined in lock.cpp
 
-
-// Construction455F10 and destruction456010 enumerate the same37 Sprite
-// members, including cleanup on partial construction. Real member lifetime
-// supplies those operations and unwind actions exactly once.
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// Superseded seed deleted; seed paths below are historical Git provenance.
-
-
-// CRT slot6820B4 selects44CC50: construct eight elements at78E978 with
-// stride65C, then register44CC80 to destroy that same vector at exit.
-// This independently bounds78E978..791C58; the last two members of each
-// element occupy604..65C. Content loading and linked startup ordering
-// remain unfinished; the compiler owns the new vector's lifetime.
-
-// new_base4CFD66/4CFE77 reads a writable eight-entry portrait pointer table.
-// Its initial targets are the diplomacy Sprites at FactionArt+4D0 with
-// the independently established65C object stride. Keep the pointer slots:
-// initial targets alone do not justify erasing this mutable indirection.
-// RECOVERY_OBJECT: v2 0x006846D8 0x006846F8 ?FactionDiplomacyPortraits@@3PAPAVSprite@@A 0x004CF7C0
-Sprite *FactionDiplomacyPortraits[MaxPlayerNum] = {
-    &FactionsArt[0].diplomacy, &FactionsArt[1].diplomacy,
-    &FactionsArt[2].diplomacy, &FactionsArt[3].diplomacy,
-    &FactionsArt[4].diplomacy, &FactionsArt[5].diplomacy,
-    &FactionsArt[6].diplomacy, &FactionsArt[7].diplomacy
-};
-
 // Both original producers453A20/455EB0 fill192 four-byte pointers to the
 // first24 members of those eight objects, independently bounding
 //76E590..76E890. Initial pointer storage is zero.

@@ -127,6 +127,26 @@ int __cdecl veh_init(int prototype, int faction, int x, int y);
 #include <cstdlib>
 #include <cstring>
 
+// RECOVERY_OBJECT: v1 0x00915650 ?GoToSourceY@@3HA
+int GoToSourceY = 0;
+// Original go_to stores source X/Y at 4D6E01/4D6E0D; goto_routine
+// loads the independent dwords at 915680/915650 (4D60C2/4D60A8,
+// 4D6103/4D60FC). Both starts are initially zero-filled storage.
+// RECOVERY_OBJECT: v1 0x00915680 ?GoToSourceX@@3HA
+int GoToSourceX = 0;
+// 0x009A64D8
+// 0x009A6800
+// config_popups copies the live screen dimensions to these independent
+// dwords; both are beyond Console's proven end, not Console members.
+// RECOVERY_OBJECT: v1 0x00939E58 ?IfaceScreenHeight@@3HA
+int IfaceScreenHeight; // 0x00939E58
+// RECOVERY_OBJECT: v1 0x00939E5C ?IfaceScreenWidth@@3HA
+int IfaceScreenWidth;  // 0x00939E5C
+// The status and information-panel initialization latch is shared across
+// three window owners. The pinned image places this zero-filled word here.
+// RECOVERY_OBJECT: v2 0x00939ED8 0x00939EDC ?StatusFlags@@3IA 0x00458D60
+uint32_t StatusFlags;
+
 // Shared separator objects the image pushes instead of unit literals.
 extern char SocialWinColonSpaceText[];
 
@@ -224,8 +244,6 @@ int TimerHoldFlag;      // 0x00915620
 // historical object identity is retained beside ConsoleGlobal in console.cpp.
 // RECOVERY_OBJECT: v1 0x00939FD4 ?PlanLineCounter@@3HA
 int PlanLineCounter;    // 0x00939FD4
-// RECOVERY_OBJECT: v2 0x00703DE0 0x00703DE4 ?TurnRedrawPending@@3HA 0x00404C3B
-int TurnRedrawPending;  // 0x00703DE0
 
 
 
@@ -1748,13 +1766,6 @@ int Console::focus(int x_coord, int y_coord, int faction_id) {
     }
     return focused;
 }
-
-
-
-// Shared by the turn loop and network lock guards. The original writers
-// are control_turn, net_end_of_turn and net_control_turn (see console.h).
-// RECOVERY_OBJECT: v2 0x0093A938 0x0093A93C ?ConsoleControlTurnActive@@3HA 0x00530D50
-int ConsoleControlTurnActive;
 
 // Chat passes 939FE8 as default text, not editable output (5157CC).
 // BasePop forwards it to EditGroup::set_default, which allocates and copies
@@ -3567,7 +3578,7 @@ void Console::move_cursor(int direction) {
 // ORIGINAL: 0x00514990 ?quit_game@Console@@QAEXXZ 0x00514990-0x00514B2C BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00514990.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
 void Console::quit_game() {
-// RECOVERY_LITERAL: v1 0x0068A7E4 0x0068A7EF $SG64027 0x00514990
+// RECOVERY_LITERAL: v1 0x0068A7E4 0x0068A7EF $SG64029 0x00514990
     if (!X_pop((IsMultiplayerNet || IsMultiplayerPBEM) &&
                bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 255) > 1
                    ? ConsoleReallyWimpOut : "REALLYQUIT", nullptr)) return;
@@ -3584,7 +3595,7 @@ void Console::quit_game() {
         IsMultiplayerNet = 0;
     }
     ExitTurnLoop = 1;
-// RECOVERY_LITERAL: v1 0x0068A7F0 0x0068A818 $SG64032 0x00514990
+// RECOVERY_LITERAL: v1 0x0068A7F0 0x0068A818 $SG64034 0x00514990
     log_say("Quit***********************************", 0, 0, 0);
 }
 
@@ -3608,8 +3619,8 @@ void Console::retire_game() { // 0x00514B30
         (IsMultiplayerNet || IsMultiplayerPBEM) &&
         bit_count(static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) > 1) != 0;
     const char *const prompt = multiple_players ? retire_wimpout :
-// RECOVERY_LITERAL: v1 0x0068A828 0x0068A836 $SG64051 0x00514B30
-// RECOVERY_LITERAL: v1 0x0068A838 0x0068A845 $SG64052 0x00514B30
+// RECOVERY_LITERAL: v1 0x0068A828 0x0068A836 $SG64053 0x00514B30
+// RECOVERY_LITERAL: v1 0x0068A838 0x0068A845 $SG64054 0x00514B30
         (GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) ? "REALLYRETIRE2" : "REALLYRETIRE";
     if (!X_pop(prompt, nullptr)) {
         return;
@@ -3641,7 +3652,7 @@ void Console::retire_game() { // 0x00514B30
     }
     GameRestartQueued = !closed_network;
     ExitTurnLoop = 1;
-// RECOVERY_LITERAL: v1 0x0068A848 0x0068A86C $SG64060 0x00514B30
+// RECOVERY_LITERAL: v1 0x0068A848 0x0068A86C $SG64062 0x00514B30
     log_say("Retire*****************************", 0, 0, 0);
 }
 
@@ -4635,7 +4646,7 @@ void Console::erase_landmark(int x_coord, int y_coord) {
 
     const int landmark_id = find_landmark(x_coord, y_coord, 1);
     if (landmark_id < 0) {
-// RECOVERY_LITERAL: v1 0x0068A994 0x0068A9A1 $SG64349 0x00516490
+// RECOVERY_LITERAL: v1 0x0068A994 0x0068A9A1 $SG64351 0x00516490
         NetMsgPrimary.pop("LANDMARKNONE", 5000, 0, nullptr);
         return;
     }
@@ -4646,7 +4657,7 @@ void Console::erase_landmark(int x_coord, int y_coord) {
     }
 
     parse_says(0, MapLandmark[landmark_id].name, -1, -1);
-// RECOVERY_LITERAL: v1 0x0068A9B0 0x0068A9BD $SG64352 0x00516490
+// RECOVERY_LITERAL: v1 0x0068A9B0 0x0068A9BD $SG64354 0x00516490
     if (X_pop("LANDMARKKILL", nullptr) == 0) {
         return;
     }
@@ -5067,25 +5078,25 @@ void Console::use_time_bonus() {
     if (!IsMultiplayerNet) return;
     if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) &&
         GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) {
-// RECOVERY_LITERAL: v1 0x0068AA48 0x0068AA50 $SG64492 0x00517060
+// RECOVERY_LITERAL: v1 0x0068AA48 0x0068AA50 $SG64494 0x00517060
         NetMsgPrimary.pop("SIMULNO", 5000, 0, nullptr);
         return;
     }
     const int faction = ConsoleGlobal.faction_id_;
     if (PlayersData[faction].time_bonus_count <= 0) {
         parse_num(0, TimeControl[selection].refresh);
-// RECOVERY_LITERAL: v1 0x0068AA50 0x0068AA5E $SG64495 0x00517060
+// RECOVERY_LITERAL: v1 0x0068AA50 0x0068AA5E $SG64497 0x00517060
         NetMsgPrimary.pop("NOTIMEBONUSES", 5000, 0, nullptr);
         return;
     }
     if (GameDataStateStorage.fields_.game_state_ & 0x800) {
-// RECOVERY_LITERAL: v1 0x0068AA60 0x0068AA6D $SG64497 0x00517060
+// RECOVERY_LITERAL: v1 0x0068AA60 0x0068AA6D $SG64499 0x00517060
         NetMsgPrimary.pop("NOBONUSATEND", 5000, 0, nullptr);
         return;
     }
     if ((GameDataStateStorage.fields_.game_state_ & 2) &&
         ((1u << faction_id_) & NetDaemonNet.primary_state_.trailing_words_[6])) {
-// RECOVERY_LITERAL: v1 0x0068AA70 0x0068AA7C $SG64499 0x00517060
+// RECOVERY_LITERAL: v1 0x0068AA70 0x0068AA7C $SG64501 0x00517060
         NetMsgPrimary.pop("NOBONUSDONE", 5000, 0, nullptr);
         return;
     }

@@ -698,10 +698,7 @@ int PrefWinNarrowDisplayVerticalOffset;
 extern int MessageWinTextColor, MessageWinTextBackground;
 #define MessageWinTextColor      (IfaceColorTable[1])
 #define MessageWinTextBackground (IfaceColorTable[4])
-// Mutable preference state begins at 1.0; the 100.0 factor converts the
-// stored gamma scalar to the integer value written to the preferences file.
-// RECOVERY_OBJECT: v2 0x006846A8 0x006846AC ?PrefWinGammaCorrection@@3MA 0x00491400
-float PrefWinGammaCorrection = 1.0f;
+extern float PrefWinGammaCorrection;
 // The 100.0 factor at 0x0066D58C is the compiler's float literal for the
 // `* 100.0f` in on_button_clicked (it is fmul's memory operand, loaded after
 // the correction), not a named object.

@@ -2348,6 +2348,51 @@ extern int DiploScratchFA98;  // Diplomacy producer storage defined below.
 #include "stdafx.h"
 #include "texture.h"
 
+// Mutable preference state begins at 1.0; the 100.0 factor converts the
+// stored gamma scalar to the integer value written to the preferences file.
+// RECOVERY_OBJECT: v2 0x006846A8 0x006846AC ?PrefWinGammaCorrection@@3MA 0x00491400
+float PrefWinGammaCorrection = 1.0f;
+// Construction455F10 and destruction456010 enumerate the same37 Sprite
+// members, including cleanup on partial construction. Real member lifetime
+// supplies those operations and unwind actions exactly once.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+
+
+// CRT slot6820B4 selects44CC50: construct eight elements at78E978 with
+// stride65C, then register44CC80 to destroy that same vector at exit.
+// This independently bounds78E978..791C58; the last two members of each
+// element occupy604..65C. Content loading and linked startup ordering
+// remain unfinished; the compiler owns the new vector's lifetime.
+
+// new_base4CFD66/4CFE77 reads a writable eight-entry portrait pointer table.
+// Its initial targets are the diplomacy Sprites at FactionArt+4D0 with
+// the independently established65C object stride. Keep the pointer slots:
+// initial targets alone do not justify erasing this mutable indirection.
+// RECOVERY_OBJECT: v2 0x006846D8 0x006846F8 ?FactionDiplomacyPortraits@@3PAPAVSprite@@A 0x004CF7C0
+Sprite *FactionDiplomacyPortraits[MaxPlayerNum] = {
+    &FactionsArt[0].diplomacy, &FactionsArt[1].diplomacy,
+    &FactionsArt[2].diplomacy, &FactionsArt[3].diplomacy,
+    &FactionsArt[4].diplomacy, &FactionsArt[5].diplomacy,
+    &FactionsArt[6].diplomacy, &FactionsArt[7].diplomacy
+};
+// RECOVERY_OBJECT: v2 0x00788250 0x00789A50 ?ConstantColorTables@@3PAY0BAA@EA 0x00423570
+unsigned char ConstantColorTables[24][256];
+// RECOVERY_OBJECT: v2 0x00789B48 0x00789B54 ?VehHoverLightsOffset@@3UVOX_Vect@@A 0x00451030
+VOX_Vect VehHoverLightsOffset; // 0x00789B48
+// RECOVERY_OBJECT: v2 0x00792664 0x00798664 ?ArmorTintColorTables@@3PAY1BI@BAA@EA 0x00423570
+unsigned char ArmorTintColorTables[4][24][256];
+// RECOVERY_OBJECT: v2 0x00798C30 0x00798C3C ?VehHoverGunOffset@@3UVOX_Vect@@A 0x00451030
+VOX_Vect VehHoverGunOffset;    // 0x00798C30
+// RECOVERY_OBJECT: v2 0x0079A618 0x0079A624 ?VehDropOffset@@3UVOX_Vect@@A 0x00451030
+VOX_Vect VehDropOffset;        // 0x0079A618
+// RECOVERY_OBJECT: v2 0x0079A7EC 0x007A67EC ?BodyTintColorTables@@3PAY1BI@BAA@EA 0x00423570
+unsigned char BodyTintColorTables[8][24][256];
+// load_voxels derives these offsets from the first part's two step vectors:
+// AVGMTGUN, adroper, AVHT-GunReposition, and AVHT-LightsReposition.
+// RECOVERY_OBJECT: v2 0x007AC1B0 0x007AC1BC ?VehGunMountOffset@@3UVOX_Vect@@A 0x00451030
+VOX_Vect VehGunMountOffset;    // 0x007AC1B0
+
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====
 // In the shipped image these live at fixed data addresses and are
 // constructed before WinMain by the CRT's dynamic-initializer walk.
@@ -5129,18 +5174,6 @@ void __cdecl load_cycling() {
         // value, before the next iteration checks the table boundary.
     }
 }
-
-// RECOVERY_OBJECT: v2 0x006861F0 0x00686330 ?OceanDetailShade@@3PAHA 0x00455400
-int OceanDetailShade[80] = {
-    37, 37, 37, 37, 37, 37, 36, 36, 36, 36,
-    35, 35, 35, 35, 35, 25, 25, 25, 25, 25,
-    25, 25, 25, 25, 25, 25, 25, 25, 25, 25,
-    16, 16, 14, 13, 13, 12, 12, 11, 11, 10,
-    10, 9, 9, 8, 8, 8, 7, 7, 6, 6,
-    5, 5, 4, 4, 3, 3, 2, 1, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-};
 
 /*
 Purpose: Paint a window caption's text through the caller's canvas, honouring

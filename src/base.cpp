@@ -96,11 +96,6 @@ int BaseIDCurrentSelected = -1;  // 0x00689370
 // sound callback load it before accessing the selected Base's members.
 // RECOVERY_OBJECT: v2 0x0090EA30 0x0090EA34 ?BaseCurrent@@3PAUBase@@A 0x004E39D0
 Base *BaseCurrent;
-// production_phase publishes the current faction's reserves here (526FB7);
-// allocate_energy reads the retained value (526821), and hurry deducts from it.
-// The name is provisional; producer/allocator bodies remain retained seeds.
-// RECOVERY_OBJECT: v2 0x0093A958 0x0093A95C ?CurrentFactionEnergyReserves@@3HA 0x00526E70
-int CurrentFactionEnergyReserves;
 // base_compute publishes the selected id before running the resource passes.
 // Window refreshes invalidate this cache without changing the selected base.
 // RECOVERY_OBJECT: v2 0x00689374 0x00689378 ?BaseComputedID@@3HA 0x004EC3B0
@@ -172,44 +167,6 @@ static int base_yield_add(int left, int right) {
 // Bound: dword-only accesses; 0x0090E918 is an independently accessed dword.
 // RECOVERY_OBJECT: v2 0x0090E914 0x0090E918 ?BaseSquareEnergy@@3HA 0x004E7D08
 int BaseSquareEnergy;  // 0x0090E914
-
-/*
- * The faction elected Planetary Governor: written by CouncWin::make_resolution
- * (0x004246E5), persisted by game_data (0x005A6B61), read by call_council,
- * wants_prop, num_objectives and the council windows. energy_yield grants it a
- * point of energy on a base square.
- *
- * spying.cpp's former SpyingObserverFaction view named this same datum:
- * the Governor may view other non-alien factions' bases. Both Council writes
- * and visibility checks must use this one source object, not independent
- * integers justified by the retired separate-suite build.
- */
-// Historical object identity moved to GameDataStateStorage; see the transport manifest.
-// 0x009A6614
-// Former independent scalar views CommerceDoubleTarget (009A6624) and
-// CommerceDoubleProgress (009A6628) actually denote CouncilResolutionCount[3]
-// and [4]. council_action increments those proposal counters and setup_game
-// resets the whole array. base_energy doubles commerce while enacted trade
-// pacts outnumber repeals; separate scalar storage would lose that relationship.
-
-/*
- * A two-turn state advanced by random_events (0x0051F2F4 steps it 1 -> 2 -> 0
- * at turn start and arms it at 0x00520529). While the selected bit is set,
- * energy_yield triples its result.
- */
-// 0x009A6818
-
-/*
- * Selects which bit of GlobalEnergyEventState energy_yield consults. Read by
- * Console::on_key_click, faction_upkeep, NetDaemon::lock_base, wait_loop,
- * check_spock, base_yield and base_doctors; sits immediately below
- * ConsoleControlTurnActive (0x0093A938) and near IsMultiplayerPBEM (0x0093A95C).
- * TODO: identify global - its writer was not located, so it is not named.
- */
-// Pinned NetDaemon::lock_base reads this source-owned int at 0x0093A934;
-// start-only binding, not an allocation extent or recovered writer.
-// RECOVERY_OBJECT: v1 0x0093A934 ?UnkGlobal0093A934@@3HA
-int UnkGlobal0093A934;  // 0x0093A934
 
 /*
 Purpose: Check if the base already has a particular facility built or if it's in the queue.
@@ -319,8 +276,7 @@ executable does not name either.
 // while it is busy skips straight to returning -1.
 // RECOVERY_OBJECT: v1 0x0090EA38 ?BaseAtErrorGuard@@3HA
 int BaseAtErrorGuard;  // 0x0090EA38
-// RECOVERY_OBJECT: v2 0x0093A94C 0x0093A950 ?BaseAtDebugPopupFlag@@3HA 0x004E3B12
-int BaseAtDebugPopupFlag;  // 0x0093A94C
+extern int BaseAtDebugPopupFlag;
 // Shared popup/action result lives in console.cpp as ConsoleGroupAction.
 
 int __cdecl base_at(int x, int y) {

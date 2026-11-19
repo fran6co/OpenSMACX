@@ -835,12 +835,6 @@ void InfoWin::timer_change(int) {
     draw_text(active_pane_);
 }
 
-// Rank rows use one palette entry per faction, including native life.
-// RECOVERY_OBJECT: v2 0x0068F9F0 0x0068FA10 ?InfoFactionTextColors@@3PAHA 0x00458420
-int InfoFactionTextColors[8] = {249, 111, 252, 255, 251, 65, 102, 187};
-// RECOVERY_OBJECT: v2 0x0068FA10 0x0068FA30 ?InfoFactionShadowColors@@3PAHA 0x00458420
-int InfoFactionShadowColors[8] = {1, 175, 4, 248, 3, 57, 109, 192};
-
 // ORIGINAL: 0x00458420 ?draw_text@InfoWin@@QAEXH@Z 0x00458420-0x004588A9 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00458420-0x004588A9"], "reason": "Recovered original behavior through real source classes and owned members; source remains subject to byte and structural verification."}
 // The ranked rows right-align through Buffer's guarded write_right; the image

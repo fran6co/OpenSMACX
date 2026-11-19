@@ -164,6 +164,113 @@ void TurnDeclFnPad47();
 void TurnDeclFnPad48();
 void TurnDeclFnPad49();
 
+// do_checksums(4), original 51E760, copies 0x54 bytes from its calculated
+// vector; net_upkeep 5296E6..5296F4 sends the same 21 dwords.
+// Initial image storage is zero. The producer remains unfinished.
+// Bound: every use is the 21-dword vector (`mov ecx, 0x15; rep movsd` at 0x0051E830, `push 0x15` at 0x005296E6); the following dword is unreferenced.
+// RECOVERY_OBJECT: v2 0x0093A008 0x0093A05C ?NetTurnChecksums@@3PAHA 0x0051E830
+int NetTurnChecksums[NetTurnChecksumWords];
+// Original process_message 53675D..53677C copies 21 payload dwords to the
+// message's faction row. net_upkeep compares rows 1..7 with stride 0x54.
+// Its 93A56C logging cursor is row 1, word 2, not a separate allocation.
+// Incoming faction validation remains unproven.
+// The corresponding dispatcher branch remains an unfinished dependency.
+// Bound: eight 0x54-byte rows (stride at 0x0052978D); MessageWinDeferredBaseMessages starts at the end.
+// RECOVERY_OBJECT: v2 0x0093A510 0x0093A7B0 ?NetPeerTurnChecksums@@3PAY0BF@HA 0x0052978D
+int NetPeerTurnChecksums[NetTurnChecksumPeerSlots][NetTurnChecksumWords];
+/*
+ * The faction elected Planetary Governor: written by CouncWin::make_resolution
+ * (0x004246E5), persisted by game_data (0x005A6B61), read by call_council,
+ * wants_prop, num_objectives and the council windows. energy_yield grants it a
+ * point of energy on a base square.
+ *
+ * spying.cpp's former SpyingObserverFaction view named this same datum:
+ * the Governor may view other non-alien factions' bases. Both Council writes
+ * and visibility checks must use this one source object, not independent
+ * integers justified by the retired separate-suite build.
+ */
+// Historical object identity moved to GameDataStateStorage; see the transport manifest.
+// 0x009A6614
+// Former independent scalar views CommerceDoubleTarget (009A6624) and
+// CommerceDoubleProgress (009A6628) actually denote CouncilResolutionCount[3]
+// and [4]. council_action increments those proposal counters and setup_game
+// resets the whole array. base_energy doubles commerce while enacted trade
+// pacts outnumber repeals; separate scalar storage would lose that relationship.
+
+/*
+ * A two-turn state advanced by random_events (0x0051F2F4 steps it 1 -> 2 -> 0
+ * at turn start and arms it at 0x00520529). While the selected bit is set,
+ * energy_yield triples its result.
+ */
+// 0x009A6818
+
+/*
+ * Selects which bit of GlobalEnergyEventState energy_yield consults. Read by
+ * Console::on_key_click, faction_upkeep, NetDaemon::lock_base, wait_loop,
+ * check_spock, base_yield and base_doctors; sits immediately below
+ * ConsoleControlTurnActive (0x0093A938) and near IsMultiplayerPBEM (0x0093A95C).
+ * TODO: identify global - its writer was not located, so it is not named.
+ */
+// Pinned NetDaemon::lock_base reads this source-owned int at 0x0093A934;
+// start-only binding, not an allocation extent or recovered writer.
+// RECOVERY_OBJECT: v1 0x0093A934 ?UnkGlobal0093A934@@3HA
+int UnkGlobal0093A934;  // 0x0093A934
+// Shared by the turn loop and network lock guards. The original writers
+// are control_turn, net_end_of_turn and net_control_turn (see console.h).
+// RECOVERY_OBJECT: v2 0x0093A938 0x0093A93C ?ConsoleControlTurnActive@@3HA 0x00530D50
+int ConsoleControlTurnActive;
+// net_upkeep resets/increments this phase and net_upkeep_phase consumes it.
+// Its producer is still unfinished; this storage does not recover that body.
+// RECOVERY_OBJECT: v2 0x0093A93C 0x0093A940 ?NetUpkeepPhase@@3HA 0x005290A0
+int NetUpkeepPhase;
+// 0x0093A940 gates base-overlay visibility alongside ControlTurnPhase.
+// Pinned PE section evidence places exactly this four-byte read in the
+// zero-fill tail of .data, initialized to 0. Console::human_turn (0x514085)
+// enables it before selecting vehicles for the player-turn loop.
+// RECOVERY_OBJECT: v2 0x0093A940 0x0093A944 ?MapBaseDisplayOverride@@3HA 0x00467190
+int MapBaseDisplayOverride;
+// ---------------------------------------------------------------------------
+// The main loop.
+// ---------------------------------------------------------------------------
+
+// Loop state globals; addresses and roles documented in
+// game.h next to each declaration.
+// RECOVERY_OBJECT: v1 0x0093A948 ?GameRestartQueued@@3HA
+int GameRestartQueued;  // 0x0093A948
+// RECOVERY_OBJECT: v2 0x0093A94C 0x0093A950 ?BaseAtDebugPopupFlag@@3HA 0x004E3B12
+int BaseAtDebugPopupFlag;  // 0x0093A94C
+// 0x009A681C
+// 0x009A6820
+
+// Shared turn handoff flag: next_player_turn and player deletion write it;
+// net_not_my_turn reads it. The observed four bytes start loader-zeroed.
+// RECOVERY_OBJECT: v2 0x0093A950 0x0093A954 ?NextTurnReady@@3HA 0x0052DBF0
+int NextTurnReady;
+// production_phase publishes the current faction's reserves here (526FB7);
+// allocate_energy reads the retained value (526821), and hurry deducts from it.
+// The name is provisional; producer/allocator bodies remain retained seeds.
+// RECOVERY_OBJECT: v2 0x0093A958 0x0093A95C ?CurrentFactionEnergyReserves@@3HA 0x00526E70
+int CurrentFactionEnergyReserves;
+// Original 0x00442721/0x004713B3 test the shared PBEM mode value, not a pointer.
+// RECOVERY_OBJECT: v2 0x0093A95C 0x0093A960 ?IsMultiplayerPBEM@@3HA 0x00405276
+BOOL IsMultiplayerPBEM;  // 0x0093A95C // HotSeat / PBEM
+// Original 0x0093A960 accumulates the wait durations returned by the daemon's
+// map-order callbacks. Other writers/extent are not yet assigned to an owner.
+// The pinned loader initializes this observed dword to zero; its containing
+// allocation and complete indirect writer set remain unknown.
+// RECOVERY_OBJECT: v1 0x0093A960 ?NetDaemonWaitTicks@@3HA
+int NetDaemonWaitTicks;
+// 0x00443F10 latches this scalar from zero to one; 0x005290C4 clears it.
+// Its semantic name and broader containing storage remain unresolved.
+// RECOVERY_OBJECT: v2 0x0093A968 0x0093A96C ?DiploDefaultFlag93A968@@3HA 0x004449AF
+int DiploDefaultFlag93A968;
+// Combat updates50A4A7/50A4B5 and50AF1B/50AF2D index these eight words.
+// Turn display527CEE/527D0F passes them to WONLOST; reset51E3C0 clears all.
+// RECOVERY_OBJECT: v2 0x0093A96C 0x0093A98C ?FactionTurnCombatWins@@3PAHA 0x0051E3C0
+int FactionTurnCombatWins[MaxPlayerNum];
+// RECOVERY_OBJECT: v2 0x0093A98C 0x0093A9AC ?FactionTurnCombatLosses@@3PAHA 0x0051E3C0
+int FactionTurnCombatLosses[MaxPlayerNum];
+
 // ORIGINAL: 0x0051DF80 sub_51df80 0x0051DF80-0x0051DFA4 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:ac4a630920605babb8184f2126ed77052521a59e:src/recovered/units/0051df80.cpp", "image:0x51df80", "source:src/messagewin.cpp"], "reason": "The native eight-StringList array at93A7B0 has30-byte stride, constructor4450B0 and complete teardown406820. The real typed MessageWinDeferredBaseMessages owns forward construction with atexit registration and reverse derived/base destruction. Preserve original identity, complete spans and historical claims; generated delegation is current lowering, not exact layout or linked-selection proof."}
 // symbol    _$E20
@@ -177,7 +284,6 @@ void TurnDeclFnPad49();
 // RECOVERY_OBJECT: v2 0x0093A7B0 0x0093A930 ?MessageWinDeferredBaseMessages@@3PAVStringList@@A 0x004713B0
 StringList MessageWinDeferredBaseMessages[8];
 
-extern int BaseAtDebugPopupFlag;  // base.cpp, original93A94C
 extern char *InterludeTextFile;  // interlude.cpp
 
 OfferResetCell OfferResetCells[MaxPlayerNum][MaxPlayerNum];
@@ -250,18 +356,18 @@ Status: Coverage transcription - unclaimed body
 */
 void __cdecl read_tamper() {
     HKEY key;
-// RECOVERY_LITERAL: v1 0x0068AD88 0x0068ADCE $SG65226 0x0051E000
+// RECOVERY_LITERAL: v1 0x0068AD88 0x0068ADCE $SG65228 0x0051E000
     LONG status = RegCreateKeyExA(HKEY_LOCAL_MACHINE,
         "SOFTWARE\\Microsoft\\DirectPlay\\Applications\\Sid Meier's Alpha Centauri", 0, TamperReadClass, 0, 0xf003f, 0, &key, 0);
     if (status == 0) {
         DWORD value_type;
         DWORD byte_count = 4;
-// RECOVERY_LITERAL: v1 0x0068ADD0 0x0068ADD4 $SG65231 0x0051E000
+// RECOVERY_LITERAL: v1 0x0068ADD0 0x0068ADD4 $SG65233 0x0051E000
         RegQueryValueExA(key, "MVM", 0, &value_type,
                          reinterpret_cast<LPBYTE>(&TamperRegistryCursor),
                          &byte_count);
         byte_count = 0x4B0;
-// RECOVERY_LITERAL: v1 0x0068ADD4 0x0068ADD8 $SG65233 0x0051E000
+// RECOVERY_LITERAL: v1 0x0068ADD4 0x0068ADD8 $SG65235 0x0051E000
         RegQueryValueExA(key, "MVB", 0, &value_type,
                          reinterpret_cast<LPBYTE>(TamperRegistryRecords),
                          &byte_count);
@@ -273,15 +379,15 @@ void __cdecl read_tamper() {
 // RECOVERY_BINDING: v1 {"evidence": ["git:edbf268ff962712fadc389b8283e4c795b6d27a2:src/recovered/units/0051e090.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json"], "reason": "game.cpp beside its already-owned TamperWrite* strings, cursor and 50-record array; uses direct Windows registry APIs. Complete reviewed source translation; historical claims remain restoration obligations, not proof of current matching, linked preservation or game acceptance."}
 void __cdecl set_tamper() {
     HKEY key;
-// RECOVERY_LITERAL: v1 0x0068ADD8 0x0068AE1E $SG65239 0x0051E090
+// RECOVERY_LITERAL: v1 0x0068ADD8 0x0068AE1E $SG65241 0x0051E090
     const LONG status = RegCreateKeyExA(
         HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\DirectPlay\\Applications\\Sid Meier's Alpha Centauri", 0, TamperWriteClass, 0,
         0xF003F, 0, &key, 0);
     if (status == ERROR_SUCCESS) {
-// RECOVERY_LITERAL: v1 0x0068AE20 0x0068AE24 $SG65242 0x0051E090
+// RECOVERY_LITERAL: v1 0x0068AE20 0x0068AE24 $SG65244 0x0051E090
         RegSetValueExA(key, "MVM", 0, REG_BINARY,
                        reinterpret_cast<const BYTE *>(&TamperRegistryCursor), 4);
-// RECOVERY_LITERAL: v1 0x0068AE24 0x0068AE28 $SG65244 0x0051E090
+// RECOVERY_LITERAL: v1 0x0068AE24 0x0068AE28 $SG65246 0x0051E090
         RegSetValueExA(key, "MVB", 0, REG_BINARY,
                        reinterpret_cast<const BYTE *>(TamperRegistryRecords),
                        0x4B0);
@@ -439,33 +545,33 @@ void __cdecl sub_51e6f0(const char *text, int value) {
 }
 
 // The pinned body's 27 unpooled literals, in source order.
-// RECOVERY_LITERAL: v1 0x0068AE34 0x0068AE36 $SG65310 0x0051E760
-// RECOVERY_LITERAL: v1 0x0068AE38 0x0068AE51 $SG65316 0x0051E760
-// RECOVERY_LITERAL: v1 0x0068AE54 0x0068AE6C $SG65318 0x0051E760
-// RECOVERY_LITERAL: v1 0x0068AE6C 0x0068AE89 $SG65320 0x0051E760
-// RECOVERY_LITERAL: v1 0x0068AE8C 0x0068AEA8 $SG65322 0x0051E760
-// RECOVERY_LITERAL: v1 0x0068AEA8 0x0068AEC7 $SG65324 0x0051E760
-// RECOVERY_LITERAL: v1 0x0068AEC8 0x0068AED9 $SG65330 0x0051E760
-// RECOVERY_LITERAL: v1 0x0068AEDC 0x0068AEF0 $SG65331 0x0051E760
-// RECOVERY_LITERAL: v1 0x0068AEF0 0x0068AF00 $SG65332 0x0051E760
-// RECOVERY_LITERAL: v1 0x0068AF00 0x0068AF15 $SG65333 0x0051E760
-// RECOVERY_LITERAL: v1 0x0068AF18 0x0068AF2A $SG65334 0x0051E760
-// RECOVERY_LITERAL: v1 0x0068AF2C 0x0068AF2E $SG65335 0x0051E760
-// RECOVERY_LITERAL: v1 0x0068AF30 0x0068AF3D $SG65342 0x0051E760
-// RECOVERY_LITERAL: v1 0x0068AF40 0x0068AF44 $SG65343 0x0051E760
-// RECOVERY_LITERAL: v1 0x0068AF44 0x0068AF56 $SG65344 0x0051E760
-// RECOVERY_LITERAL: v1 0x0068AF58 0x0068AF6D $SG65345 0x0051E760
-// RECOVERY_LITERAL: v1 0x0068AF70 0x0068AF81 $SG65346 0x0051E760
-// RECOVERY_LITERAL: v1 0x0068AF84 0x0068AF91 $SG65350 0x0051E760
-// RECOVERY_LITERAL: v1 0x0068AF94 0x0068AFAC $SG65351 0x0051E760
-// RECOVERY_LITERAL: v1 0x0068AFAC 0x0068AFC3 $SG65352 0x0051E760
-// RECOVERY_LITERAL: v1 0x0068AFC4 0x0068AFD8 $SG65353 0x0051E760
-// RECOVERY_LITERAL: v1 0x0068AFD8 0x0068AFF0 $SG65354 0x0051E760
-// RECOVERY_LITERAL: v1 0x0068AFF0 0x0068B005 $SG65355 0x0051E760
-// RECOVERY_LITERAL: v1 0x0068B008 0x0068B022 $SG65356 0x0051E760
-// RECOVERY_LITERAL: v1 0x0068B024 0x0068B037 $SG65357 0x0051E760
-// RECOVERY_LITERAL: v1 0x0068B038 0x0068B04E $SG65361 0x0051E760
-// RECOVERY_LITERAL: v1 0x0068B050 0x0068B062 $SG65362 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AE34 0x0068AE36 $SG65312 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AE38 0x0068AE51 $SG65318 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AE54 0x0068AE6C $SG65320 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AE6C 0x0068AE89 $SG65322 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AE8C 0x0068AEA8 $SG65324 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AEA8 0x0068AEC7 $SG65326 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AEC8 0x0068AED9 $SG65332 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AEDC 0x0068AEF0 $SG65333 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AEF0 0x0068AF00 $SG65334 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AF00 0x0068AF15 $SG65335 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AF18 0x0068AF2A $SG65336 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AF2C 0x0068AF2E $SG65337 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AF30 0x0068AF3D $SG65344 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AF40 0x0068AF44 $SG65345 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AF44 0x0068AF56 $SG65346 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AF58 0x0068AF6D $SG65347 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AF70 0x0068AF81 $SG65348 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AF84 0x0068AF91 $SG65352 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AF94 0x0068AFAC $SG65353 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AFAC 0x0068AFC3 $SG65354 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AFC4 0x0068AFD8 $SG65355 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AFD8 0x0068AFF0 $SG65356 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AFF0 0x0068B005 $SG65357 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068B008 0x0068B022 $SG65358 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068B024 0x0068B037 $SG65359 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068B038 0x0068B04E $SG65363 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068B050 0x0068B062 $SG65364 0x0051E760
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0051E760 0x0051F0A8 0x0051F0BC 0x0051E7AD
 // ORIGINAL: 0x0051E760 ?do_checksums@@YAXH@Z 0x0051E760-0x0051F0A7 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Recover checksum diagnostics through the real network producer, source-owned 21-word turn checksum storage, typed faction names and original local/shared text buffers. Preserve the original unwritten diagnostic tail; no byte or runtime acceptance claim.","evidence":["original:0x51E760-0x51F0A7; image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","git:a5b58877:src/unrecovered/0051e760.cpp","Native51E830..51E840 copies21 words; producer appends26 diagnostic words only when BaseAtDebugPopupFlag is nonzero.","Original section and faction header loops mutate StringTemp; the remaining formatted reports use local buffers and _itoa radix10.","recovery/tasks/base-colony-economy-coverage-wave.json; recovery/tests/test_turn_checksums_behavior.py"]}
@@ -567,8 +673,6 @@ void __cdecl do_checksums(int type) {
 
 extern int SpockNotifyPending;
 extern int SpockHelpActive;
-extern int UnkGlobal0093A934;
-extern int ConsoleControlTurnActive;
 
 // ORIGINAL: 0x0051F0C0 ?help_spock@@YAXXZ 0x0051F0C0-0x0051F1AA BYTE_EXACT
 // size      234 bytes
@@ -4315,11 +4419,8 @@ turn_loop:
 // RECOVERY_OBJECT: v2 0x0093A954 0x0093A958 ?TurnControlWord93A954@@3HA 0x0052A2E0
 int TurnControlWord93A954 = 0;
 extern uint32_t UpgradePromptAnswered; // base.cpp, original90EA3C
-extern int BaseAtDebugPopupFlag; // base.cpp, original93A94C
-extern int DiploDefaultFlag93A968; // diplowin.cpp
 extern int SpockHelpActive; // netdaemon.cpp, original93F674
 extern int SpockNotifyPending; // netdaemon.cpp, original93F670
-extern int NetDaemonWaitTicks; // netdaemon.cpp, original93A960
 
 
 
@@ -5354,12 +5455,6 @@ int __cdecl directplay_install_is_complete() {
     RegCloseKey(key);
     return result;
 }
-
-// 0x00689218 - the DirectPlay application GUID the lobby check registers the
-// session under, bytes read off the image. The trailing words spell "DEST".
-// RECOVERY_OBJECT: v2 0x00689218 0x00689228 ?LobbyAppGuid@@3U_GUID@@B 0x004E31E0
-const GUID LobbyAppGuid = {0x02D1B480, 0xD680, 0x11D0,
-                                  {0x82, 0x1E, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00}};
 
 // WORKAROUND(decl): stand-in for an unidentified header inline that ors bits
 // into MapWin::field_1DD70_. The image materializes 0x8C0 in a callee-saved

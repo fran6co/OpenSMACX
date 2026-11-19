@@ -5324,13 +5324,3 @@ int Midi::set_attrib(unsigned long) { return 0x0B; }
 // Compiler-owned VoiceTx scalar deletion mapping.
 // RECOVERY_GENERATED: v1 vtable 0x0066E538 ? ??_7Midi@@6B@ 0x004C75B0
 
-// This method belongs to the same Sound compiler context. Its original
-// out-of-line call boundaries remain matching obligations; current source
-// placement does not establish an original object-module boundary.
-
-
-// The pinned cascade is a Midi trackset operation. 0x00683C2C's image
-// initializer is -0x4B0; no wider allocation/lifetime is claimed here.
-// RECOVERY_OBJECT: v1 0x00683C2C ?MidiTracksetTransposition@@3HA
-int MidiTracksetTransposition = -0x4B0;
-

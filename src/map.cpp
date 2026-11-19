@@ -43,24 +43,6 @@
 #include "xpops.h"
 #include "palette.h"
 
-// Shared renderer corner coordinates, formerly duplicated by map.h in each TU.
-// Original get_alt reads signed dwords at (corner - 1) * 16 + neighbor * 4;
-// alt_get_ocean_detail and the polygon renderer use the same four-by-four rows.
-// RECOVERY_OBJECT: v1 0x00685EA0 ?CornerOffsetX@@3QAY03$$CBHA
-const int CornerOffsetX[4][4] = {
-    { -2, -1,  0, -1 },
-    { -1,  0,  1,  0 },
-    {  0,  1,  2,  1 },
-    { -1,  0,  1,  0 },
-};
-// RECOVERY_OBJECT: v1 0x00685EE0 ?CornerOffsetY@@3QAY03$$CBHA
-const int CornerOffsetY[4][4] = {
-    {  0, -1,  0,  1 },
-    { -1, -2, -1,  0 },
-    {  0, -1,  0,  1 },
-    {  1,  0,  1,  2 },
-};
-
 // Single shared storage for the parallel radius offsets and ring limits.
 // Pinned neighboring starts delimit 289 signed dwords per offset axis;
 // the nine ring limits are independently read by MapWin::UNK6.
@@ -111,14 +93,6 @@ const int RiverStepX[4] = { 1, 1, -1, -1 };
 // RECOVERY_OBJECT: v2 0x0066EF3C 0x0066EF4C ?RiverStepY@@3QBHB 0x00409100
 const int RiverStepY[4] = { -1, 1, 1, -1 };
 
-// Pinned persistent reads cover 0x006858D8..0x00685908 and
-// 0x00685908..0x0068593C in writable .data. These bounded windows do not
-// establish original source constness, full allocation extents, or writers.
-// RECOVERY_OBJECT: v2 0x006858D8 0x00685908 ?WorldCanyonOffsetValues@@3PAIA 0x005C7DFD
-uint32_t WorldCanyonOffsetValues[12] = { 26, 27, 9, 1, 2, 0, 3, 4, 17, 23, 36, 35 };
-// RECOVERY_OBJECT: v2 0x00685908 0x0068593C ?world_ridge_offset_val@@3PAIA 0x005C8299
-uint32_t world_ridge_offset_val[13] = { 47, 44, 24, 20, 8, 7, 0, 5, 4, 17, 23, 35, 45 };
-
 // Nine original direction indices, bounded by the next RadiusOffsetX
 // table at 0x0066EFBC. MapWin's legend and tutorial navigation consume
 // this permutation; it is independent data, not a callable/address alias.
@@ -142,10 +116,6 @@ int BrushVal1;  // 0x009B22B0
 // RECOVERY_OBJECT: v4 0x009B22B8 ?BrushVal2@@3IA target ?BrushVal2@@3HA
 int BrushVal2;  // 0x009B22B8
 int WorldBuildVal1;  // 0x009B22B4
-
-// timer_daemon reads this climate gate before dispatch; its wider contract remains unresolved.
-// RECOVERY_OBJECT: v2 0x0068F21C 0x0068F220 ?WorldClimateSkipTerrainClear@@3IA 0x0058E360
-uint32_t WorldClimateSkipTerrainClear = 1;  // 0x0068F21C
 // RECOVERY_OBJECT: v1 0x009B22EC ?WorldClimateSkipTerritoryReset@@3IA
 uint32_t WorldClimateSkipTerritoryReset;  // 0x009B22EC
 // The map-refresh request the regeneration steps honour. world_build raises

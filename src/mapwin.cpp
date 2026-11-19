@@ -114,6 +114,88 @@ extern char SocialWinColonSpaceText[];/*
 #include <cstring>
 #include <stdlib.h>
 
+// Inferred map-grid/storage contribution core. The address-bounded group
+// includes map allocation and serialization, tile state, altitude/landmark
+// operations, and their shared source-owned data. Its historical TU boundary
+// remains unproved.
+
+// Shared landmark lookups belong to these source arrays, not the old process.
+// Direction data has 49 independently identified rows of five bytes; keep
+// the following three-byte image gap out of the object. Initializers remain
+// pinned ignored configure-time derivatives, not tracked binary dumps.
+// RECOVERY_OBJECT: v2 0x00685684 0x00685779 ?AltDirectionTable@@3QBEB 0x005927D0
+extern const unsigned char AltDirectionTable[49 * 5] = {
+#include "terrain_alt_direction.inc"
+};
+// RECOVERY_OBJECT: v1 0x0068577C ?AltTemplateArid@@3QBEB
+extern const unsigned char AltTemplateArid[113] = {
+#include "terrain_landmark_arid.inc"
+};
+// RECOVERY_OBJECT: v1 0x006857F0 ?AltTemplateMoist@@3QBEB
+extern const unsigned char AltTemplateMoist[113] = {
+#include "terrain_landmark_moist.inc"
+};
+// RECOVERY_OBJECT: v1 0x00685864 ?AltTemplateFlat@@3QBEB
+extern const unsigned char AltTemplateFlat[113] = {
+#include "terrain_landmark_flat.inc"
+};
+// Pinned persistent reads cover 0x006858D8..0x00685908 and
+// 0x00685908..0x0068593C in writable .data. These bounded windows do not
+// establish original source constness, full allocation extents, or writers.
+// RECOVERY_OBJECT: v2 0x006858D8 0x00685908 ?WorldCanyonOffsetValues@@3PAIA 0x005C7DFD
+uint32_t WorldCanyonOffsetValues[12] = { 26, 27, 9, 1, 2, 0, 3, 4, 17, 23, 36, 35 };
+// RECOVERY_OBJECT: v2 0x00685908 0x0068593C ?world_ridge_offset_val@@3PAIA 0x005C8299
+uint32_t world_ridge_offset_val[13] = { 47, 44, 24, 20, 8, 7, 0, 5, 4, 17, 23, 35, 45 };
+// RECOVERY_OBJECT: v1 0x0068593C ?AltTemplateRainy@@3QBEB
+extern const unsigned char AltTemplateRainy[113] = {
+#include "terrain_landmark_rainy.inc"
+};
+// RECOVERY_OBJECT: v1 0x006859B0 ?AltTemplateOcean@@3QBEB
+extern const unsigned char AltTemplateOcean[113] = {
+#include "terrain_landmark_ocean.inc"
+};
+// Shared renderer corner coordinates, formerly duplicated by map.h in each TU.
+// Original get_alt reads signed dwords at (corner - 1) * 16 + neighbor * 4;
+// alt_get_ocean_detail and the polygon renderer use the same four-by-four rows.
+// RECOVERY_OBJECT: v1 0x00685EA0 ?CornerOffsetX@@3QAY03$$CBHA
+const int CornerOffsetX[4][4] = {
+    { -2, -1,  0, -1 },
+    { -1,  0,  1,  0 },
+    {  0,  1,  2,  1 },
+    { -1,  0,  1,  0 },
+};
+// RECOVERY_OBJECT: v1 0x00685EE0 ?CornerOffsetY@@3QAY03$$CBHA
+const int CornerOffsetY[4][4] = {
+    {  0, -1,  0,  1 },
+    { -1, -2, -1,  0 },
+    {  0, -1,  0,  1 },
+    {  1,  0,  1,  2 },
+};
+// RECOVERY_OBJECT: v2 0x006861F0 0x00686330 ?OceanDetailShade@@3PAHA 0x00455400
+int OceanDetailShade[80] = {
+    37, 37, 37, 37, 37, 37, 36, 36, 36, 36,
+    35, 35, 35, 35, 35, 25, 25, 25, 25, 25,
+    25, 25, 25, 25, 25, 25, 25, 25, 25, 25,
+    16, 16, 14, 13, 13, 12, 12, 11, 11, 10,
+    10, 9, 9, 8, 8, 8, 7, 7, 6, 6,
+    5, 5, 4, 4, 3, 3, 2, 1, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+};
+// RECOVERY_OBJECT: v1 0x007D3A78 ?AltBonusFlat@@3PADA
+char AltBonusFlat[113];
+// Both the writable rows and immutable templates have 113-byte accessed
+// source windows. Original upper allocation bounds are unproved; their v1
+// bindings claim starts only. Writable initial windows are loader-zero.
+// RECOVERY_OBJECT: v1 0x007D3B74 ?AltBonusArid@@3PAEA
+unsigned char AltBonusArid[113];
+// RECOVERY_OBJECT: v1 0x007F64E8 ?AltBonusOcean@@3PADA
+char AltBonusOcean[113];
+// RECOVERY_OBJECT: v1 0x007F655C ?AltBonusRainy@@3PADA
+char AltBonusRainy[113];
+// RECOVERY_OBJECT: v1 0x007F65D0 ?AltBonusMoist@@3PADA
+char AltBonusMoist[113];
+
 // Shared punctuation objects the image pushes instead of unit literals.
 extern char SocialWinCloseParenText[];
 extern char SocialWinOpenParenText[];
@@ -645,20 +727,6 @@ void MapWin::init(RECT *bounds, char *caption, int flags) {
     }
 }
 
-// 0x006874C4: draw_my_dest publishes a vehicle index after validation;
-// StatusWin clears it to -1. Pinned original .data bytes at 0x006874C4 are
-// FF FF FF FF; the initializer preserves that startup sentinel. The typed
-// source owner below records the corresponding four-byte original interval.
-// RECOVERY_OBJECT: v2 0x006874C4 0x006874C8 ?DestinationVehicleId@@3HA 0x004B4BF0
-int DestinationVehicleId = -1;
-
-// 0x0093A940 gates base-overlay visibility alongside ControlTurnPhase.
-// Pinned PE section evidence places exactly this four-byte read in the
-// zero-fill tail of .data, initialized to 0. Console::human_turn (0x514085)
-// enables it before selecting vehicles for the player-turn loop.
-// RECOVERY_OBJECT: v2 0x0093A940 0x0093A944 ?MapBaseDisplayOverride@@3HA 0x00467190
-int MapBaseDisplayOverride;
-
 void __cdecl base_draw(Buffer *target, int base_id, int pixel_x, int pixel_y,
                        int style, int flags);
 
@@ -691,10 +759,6 @@ Vert MapCornerCopy[4];
 Vert MapCornerScratch[4];
 // Original46AB95/46ABDF call the actual USER32 rectangle predicate.
 // RECOVERY_IMPORT: v1 __imp__IsRectEmpty@4 USER32.dll name:IsRectEmpty
-
-// Initially zero; main_game's still-unfinished startup enables map input.
-// RECOVERY_OBJECT: v2 0x0090D938 0x0090D93C ?MapInputEnabled@@3HA 0x0046F000
-int MapInputEnabled;
 // All three original references are the mouse handler's pump-reentry guard.
 // RECOVERY_OBJECT: v2 0x007F67C4 0x007F67C8 ?MapMouseFeedbackBusy@@3HA 0x0046F000
 int MapMouseFeedbackBusy;
@@ -5029,37 +5093,37 @@ void MapWin::gen_overlays(int x, int y) {
         int color = 0xFF;
         switch (PlayersData[faction].goals[goal_index].type) {
         case 0:
-// RECOVERY_LITERAL: v1 0x00686360 0x00686362 $SG62719 0x004688E0
+// RECOVERY_LITERAL: v1 0x00686360 0x00686362 $SG62732 0x004688E0
             strcat(StringTemp, "a");
             color = 0xF9;
             break;
         case 2:
-// RECOVERY_LITERAL: v1 0x00686364 0x00686366 $SG62721 0x004688E0
+// RECOVERY_LITERAL: v1 0x00686364 0x00686366 $SG62734 0x004688E0
             strcat(StringTemp, "d");
             color = 0xFB;
             break;
         case 9:
-// RECOVERY_LITERAL: v1 0x00686368 0x0068636A $SG62723 0x004688E0
+// RECOVERY_LITERAL: v1 0x00686368 0x0068636A $SG62736 0x004688E0
             strcat(StringTemp, "f");
             color = 0xFA;
             break;
         case 8:
-// RECOVERY_LITERAL: v1 0x0068636C 0x0068636E $SG62725 0x004688E0
+// RECOVERY_LITERAL: v1 0x0068636C 0x0068636E $SG62738 0x004688E0
             strcat(StringTemp, "c");
             color = 0xFE;
             break;
         case 6:
-// RECOVERY_LITERAL: v1 0x00686370 0x00686372 $SG62727 0x004688E0
+// RECOVERY_LITERAL: v1 0x00686370 0x00686372 $SG62740 0x004688E0
             strcat(StringTemp, "n");
             color = 0xFC;
             break;
         case 41:
-// RECOVERY_LITERAL: v1 0x00686374 0x00686376 $SG62729 0x004688E0
+// RECOVERY_LITERAL: v1 0x00686374 0x00686376 $SG62742 0x004688E0
             strcat(StringTemp, "^");
             color = 0xFF;
             break;
         case 3:
-// RECOVERY_LITERAL: v1 0x00686378 0x0068637A $SG62731 0x004688E0
+// RECOVERY_LITERAL: v1 0x00686378 0x0068637A $SG62744 0x004688E0
             strcat(StringTemp, "s");
             color = 0xFD;
             break;

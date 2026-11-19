@@ -471,12 +471,6 @@ Status: Complete
 // 0x009A64C8
 // RECOVERY_OBJECT: v1 0x009B2280 ?VehDropLiftVehID@@3HA
 int VehDropLiftVehID;  // 0x009B2280
-// Extent: compiled sizeof 0x4; next mapped object at 0x009B227C.
-// RECOVERY_OBJECT: v2 0x009B2278 0x009B227C ?VehLiftX@@3HA 0x004BF928
-int VehLiftX;  // 0x009B2278
-// Extent: compiled sizeof 0x4; 0x9B2288 unreferenced; VehBitError is 0x9B228C.
-// RECOVERY_OBJECT: v2 0x009B2284 0x009B2288 ?VehLiftY@@3HA 0x004BF932
-int VehLiftY;  // 0x009B2284
 BOOL VehBitError;  // 0x009B228C
 int VehMoraleModifierCount; // only used by say_morale(), optimize to local var?
 RulesCombatMode DefenseModes[MaxDefenseModeNum];  // 0x00946A00
@@ -484,12 +478,6 @@ RulesCombatMode OffenseModes[MaxOffenseModeNum];  // 0x00946178
 LPSTR PlansShortName[MaxPlanNum];  // 0x00945FE0
 LPSTR PlansFullName[MaxPlanNum];  // 0x00952360
 LPSTR Triad[MaxTriadNum];  // 0x0094F1A8
-
-
-// Shared infantry/native model placement, original 687AE8..687AF4.
-// This is distinct from the four offsets derived from loaded voxel parts.
-// RECOVERY_OBJECT: v2 0x00687AE8 0x00687AF4 ?VehInfantryOffset@@3UVOX_Vect@@A 0x004C3800
-VOX_Vect VehInfantryOffset = {{-400.0f, 200.0f, 0.0f}};
 
 
 // The original calls the CRT atan entry after storing a double argument;

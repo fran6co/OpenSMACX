@@ -46,55 +46,12 @@
 
 // Existing shared punctuation: declared in string_formatting.cpp and defined in socialwin.cpp.
 extern char SocialWinCommaSpaceText[];
-
-// Inferred map-grid/storage contribution core. The address-bounded group
-// includes map allocation and serialization, tile state, altitude/landmark
-// operations, and their shared source-owned data. Its historical TU boundary
-// remains unproved.
-
-// Shared landmark lookups belong to these source arrays, not the old process.
-// Direction data has 49 independently identified rows of five bytes; keep
-// the following three-byte image gap out of the object. Initializers remain
-// pinned ignored configure-time derivatives, not tracked binary dumps.
-// RECOVERY_OBJECT: v2 0x00685684 0x00685779 ?AltDirectionTable@@3QBEB 0x005927D0
-extern const unsigned char AltDirectionTable[49 * 5] = {
-#include "terrain_alt_direction.inc"
-};
 static_assert(sizeof(AltDirectionTable) == 245, "landmark direction span");
-
-// Both the writable rows and immutable templates have 113-byte accessed
-// source windows. Original upper allocation bounds are unproved; their v1
-// bindings claim starts only. Writable initial windows are loader-zero.
-// RECOVERY_OBJECT: v1 0x007D3B74 ?AltBonusArid@@3PAEA
-unsigned char AltBonusArid[113];
-// RECOVERY_OBJECT: v1 0x0068577C ?AltTemplateArid@@3QBEB
-extern const unsigned char AltTemplateArid[113] = {
-#include "terrain_landmark_arid.inc"
-};
-// RECOVERY_OBJECT: v1 0x007F65D0 ?AltBonusMoist@@3PADA
-char AltBonusMoist[113];
-// RECOVERY_OBJECT: v1 0x006857F0 ?AltTemplateMoist@@3QBEB
-extern const unsigned char AltTemplateMoist[113] = {
-#include "terrain_landmark_moist.inc"
-};
-// RECOVERY_OBJECT: v1 0x007F655C ?AltBonusRainy@@3PADA
-char AltBonusRainy[113];
-// RECOVERY_OBJECT: v1 0x0068593C ?AltTemplateRainy@@3QBEB
-extern const unsigned char AltTemplateRainy[113] = {
-#include "terrain_landmark_rainy.inc"
-};
-// RECOVERY_OBJECT: v1 0x007D3A78 ?AltBonusFlat@@3PADA
-char AltBonusFlat[113];
-// RECOVERY_OBJECT: v1 0x00685864 ?AltTemplateFlat@@3QBEB
-extern const unsigned char AltTemplateFlat[113] = {
-#include "terrain_landmark_flat.inc"
-};
-// RECOVERY_OBJECT: v1 0x007F64E8 ?AltBonusOcean@@3PADA
-char AltBonusOcean[113];
-// RECOVERY_OBJECT: v1 0x006859B0 ?AltTemplateOcean@@3QBEB
-extern const unsigned char AltTemplateOcean[113] = {
-#include "terrain_landmark_ocean.inc"
-};
+extern const unsigned char AltTemplateArid[113];
+extern const unsigned char AltTemplateMoist[113];
+extern const unsigned char AltTemplateRainy[113];
+extern const unsigned char AltTemplateFlat[113];
+extern const unsigned char AltTemplateOcean[113];
 
 // world_build copies eleven words from AltNaturalDefault to AltNatural.
 // world_rivers selects AltContour by the native altitude band. The three

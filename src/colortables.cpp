@@ -121,12 +121,6 @@ unsigned char BlueTintColorTable[256];
 unsigned char ExplosionColorTables[13][16][256];
 // RECOVERY_OBJECT: v2 0x006FEB7C 0x006FEC7C ?SpotlightColorTable@@3PAEA 0x00423570
 unsigned char SpotlightColorTable[256];
-// RECOVERY_OBJECT: v2 0x00788250 0x00789A50 ?ConstantColorTables@@3PAY0BAA@EA 0x00423570
-unsigned char ConstantColorTables[24][256];
-// RECOVERY_OBJECT: v2 0x00792664 0x00798664 ?ArmorTintColorTables@@3PAY1BI@BAA@EA 0x00423570
-unsigned char ArmorTintColorTables[4][24][256];
-// RECOVERY_OBJECT: v2 0x0079A7EC 0x007A67EC ?BodyTintColorTables@@3PAY1BI@BAA@EA 0x00423570
-unsigned char BodyTintColorTables[8][24][256];
 
 
 // The original compares exactly 256 PALETTEENTRYs. Existing mappings are

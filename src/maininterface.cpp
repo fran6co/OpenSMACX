@@ -1425,21 +1425,6 @@ void MainInterface::on_iface_mouse_move(int a1, int a2) {
     }
 }
 
-// Eight faction foreground colors, independently paired with eight shadows.
-// load_faction_art4537D9/4537E8 writes the two banks and load_vehicles
-// 45443C/454446 publishes entry0. The following 68FA70 string is NOT an
-// array tail. Original chat caller537AD5 passes the packet faction index;
-// malformed packet indices remain unvalidated, not a larger storage owner.
-// Other original-only color users and load_faction_art still need recovery.
-// RECOVERY_OBJECT: v2 0x0068FA30 0x0068FA50 ?ChatItemIdTable@@3PAHA 0x00454270
-int ChatItemIdTable[8] = {
-    249, 111, 252, 255, 251, 65, 102, 187,
-};
-// RECOVERY_OBJECT: v2 0x0068FA50 0x0068FA70 ?ChatShadowColors@@3PAHA 0x00454270
-int ChatShadowColors[8] = {
-    134, 177, 172, 55, 146, 51, 145, 169,
-};
-
 // ORIGINAL: 0x0045C0F0 ?set_message@MainInterface@@QAEXPADHHHH@Z 0x0045C0F0-0x0045C163;0x00655745-0x00655757 BYTE_EXACT
 // LEVER: 2026-09-05 homed from 0045c0f0.cpp, exactly as that record's own
 //   LEVER line says: the LOCAL `Font font;` is what earns the SEH frame

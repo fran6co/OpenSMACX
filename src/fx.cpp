@@ -40,6 +40,16 @@
 #include "map.h"
 #include "mapwin.h"
 
+// This method belongs to the same Sound compiler context. Its original
+// out-of-line call boundaries remain matching obligations; current source
+// placement does not establish an original object-module boundary.
+
+
+// The pinned cascade is a Midi trackset operation. 0x00683C2C's image
+// initializer is -0x4B0; no wider allocation/lifetime is claimed here.
+// RECOVERY_OBJECT: v1 0x00683C2C ?MidiTracksetTransposition@@3HA
+int MidiTracksetTransposition = -0x4B0;
+
 
 
 // Sound::get_type and the other small Sound-family virtuals at the end of this
