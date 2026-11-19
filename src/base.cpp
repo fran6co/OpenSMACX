@@ -1835,7 +1835,7 @@ int BaseCurrentForcesMaintCost;  // 0x0090E91C
 uint32_t BaseCurrentForcesMaintCount;  // 0x0090EA08
 
 // Tile base owner, as the yield functions inline it (yield_tile_owner).
-static __forceinline int tile_base_owner(const Map *tile) {
+static inline int tile_base_owner(const Map *tile) {
     if (!(tile->bit & BIT_BASE_IN_TILE)) {
         return -1;
     }
@@ -1998,7 +1998,7 @@ arithmetic - `imul` against y and `sar esi, 1` on x. map_loc() takes unsigned
 coordinates and therefore shifts x logically, which differs for a negative x.
 Neither form bounds-checks, exactly as the original does not.
 */
-static __forceinline Map *yield_tile(int x, int y) {
+static inline Map *yield_tile(int x, int y) {
     return &map_tiles()[(x >> 1) + y * (int)MapLongitude];
 }
 
@@ -2012,7 +2012,7 @@ All three yield functions inline this same sequence: the tile's low `bit` flag
 selects it, the owner nibble of val2 supplies the id, and an id at or above
 MaxPlayerNum - 0xF is the "unoccupied" marker - is rejected.
 */
-static __forceinline int yield_tile_owner(const Map *tile) {
+static inline int yield_tile_owner(const Map *tile) {
     if (!(tile->bit & BIT_BASE_IN_TILE)) {
         return -1;
     }
@@ -8511,7 +8511,8 @@ int __cdecl base_upkeep(int base_id) {
     if (BaseCurrent->nerve_staple_turns_left != 0) --BaseCurrent->nerve_staple_turns_left;
     BaseCurrent->state &= 0xFFDFFFF7u;
     // stand-in: a volatile read forces the image's turn-then-base load order;
-    // every plain spelling of the sum loads BaseIDCurrentSelected first.
+    // every plain spelling of the sum loads BaseIDCurrentSelected first
+    // (fe masks the operands and reads the plain read as equal; measure: SHAPE_EXACT).
     const int turn = *(volatile int *)&GameDataStateStorage.fields_.turn_current_num_;
     const int selected = BaseIDCurrentSelected;
     if (((selected + turn) & 7) == 0) {
