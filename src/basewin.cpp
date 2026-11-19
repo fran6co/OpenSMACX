@@ -416,14 +416,13 @@ void BaseWin::queue_click(int row, int x, int y, int right) {
                 else parse_say(0, Facility[-entry].name, -1, -1);
             }
             MainInterfaceGlobal.client_to_screen(&x, &y);
-            StringTemp[0] = 0;
+            clear();
             strcat(StringTemp, "QUEUE");
             char number[80];
             _itoa(empty ? 2 : 1, number, 10);
             queue_click_budget_probe(1000);  // WORKAROUND(inline)
             queue_click_budget_probe(1001);  // WORKAROUND(inline)
             queue_click_budget_probe(1002);  // WORKAROUND(inline)
-            queue_click_budget_probe(1003);  // WORKAROUND(inline)
             strcat(StringTemp, number);
             int choice = popm(StringTemp, x + 2, y, 0) + 1;
             // QUEUE2 (empty slot) has no "remove item" entry.
