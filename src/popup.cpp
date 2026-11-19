@@ -709,13 +709,13 @@ int Popup::on_link_clicked(int id, char *link) {
     if (link == 0) {
         return 1;
     }
-// RECOVERY_LITERAL: v1 0x006827B8 0x006827C1 $SG60042 0x004050A0
+// RECOVERY_LITERAL: v1 0x006827B8 0x006827C1 $SG60049 0x004050A0
     if (_stricmp(link, "homelink") == 0) {
         ExitTurnLoop = 1;
         fallout();
         ShowWindow(HandleMain, 0);
-// RECOVERY_LITERAL: v1 0x006827DC 0x006827E1 $SG60044 0x004050A0
-// RECOVERY_LITERAL: v1 0x006827C4 0x006827DB $SG60043 0x004050A0
+// RECOVERY_LITERAL: v1 0x006827DC 0x006827E1 $SG60051 0x004050A0
+// RECOVERY_LITERAL: v1 0x006827C4 0x006827DB $SG60050 0x004050A0
         ::ShellExecuteA(0, "open", "http:\\\\www.firaxis.com", 0, 0, 1);
         return 1;
     }
@@ -760,7 +760,7 @@ int Popup::on_link_clicked(int id, char *link) {
 int Popup::start(char *text_file, const char *text_label, int value,
                  char *override_text, int flags, GraphicWin *owner_window) {
     if (strcmp(text_file, ScriptPopupFile) != 0
-// RECOVERY_LITERAL: v1 0x006827E4 0x006827EF $SG60055 0x00406380
+// RECOVERY_LITERAL: v1 0x006827E4 0x006827EF $SG60062 0x00406380
         && strcmp(text_file, "SCRIPT.txt") != 0) {
         return BasePop::start(text_file, text_label, value, override_text, flags,
                               owner_window);
@@ -768,8 +768,8 @@ int Popup::start(char *text_file, const char *text_label, int value,
 
     if ((Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) != 0) {
         if (ExpansionEnabled == 0) goto fallback;
-// RECOVERY_LITERAL: v1 0x006827F4 0x00682805 $SG60062 0x00406380
-// RECOVERY_LITERAL: v1 0x006827F0 0x006827F3 $SG60061 0x00406380
+// RECOVERY_LITERAL: v1 0x006827F4 0x00682805 $SG60069 0x00406380
+// RECOVERY_LITERAL: v1 0x006827F0 0x006827F3 $SG60068 0x00406380
         FILE *const fp = fopen("alienIscript.txt", "rb");
         if (fp == 0) goto fallback;
         fclose(fp);
@@ -783,8 +783,8 @@ int Popup::start(char *text_file, const char *text_label, int value,
     if (PopupDialogFactionID <= 0 || PopupDialogFactionID >= 8) goto fallback;
     if ((Players[PopupDialogFactionID].rule_flags & RFLAG_ALIEN) == 0) goto fallback;
     {
-// RECOVERY_LITERAL: v1 0x0068280C 0x0068281D $SG60077 0x00406380
-// RECOVERY_LITERAL: v1 0x00682808 0x0068280B $SG60076 0x00406380
+// RECOVERY_LITERAL: v1 0x0068280C 0x0068281D $SG60084 0x00406380
+// RECOVERY_LITERAL: v1 0x00682808 0x0068280B $SG60083 0x00406380
         FILE *const fp = fopen("alienuscript.txt", "rb");
         if (fp == 0) goto fallback;
         fclose(fp);
@@ -942,7 +942,7 @@ int Popup::on_exec() {
         return 1;
     }
 }
-// ORIGINAL: 0x00405140 ?POP2@@YAHPBDPBDH@Z 0x00405140-0x0040559B;0x0065078F-0x00650839
+// ORIGINAL: 0x00405140 ?POP2@@YAHPBDPBDH@Z 0x00405140-0x0040559B;0x0065078F-0x00650839 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned 0x405140..0x40559B builds BasePop at EBP-0x5390 and Scroll at EBP-0x2160 (= BasePop+0x3230), then installs Popup primary vptr 0x6695C8 and Buffer-base vptr 0x6695C0", "pinned normal and cold cleanup spans 0x65078F..0x650839 show Scroll/BasePop close and destructor order; current Popup::~Popup calls close, then compiler-owned Scroll and BasePop teardown", "source:src/popup.h Popup inherits BasePop and owns Scroll scroll_ at 0x3230; current sizeof(Popup) is 0x537C", "source:src/basepop.h unit_ids_, owned_picture(), set_caller_picture(); source:src/stringstruct.h entry payload/previous links and StringList::add", "source:src/strings.h StringTemp; src/popup.h PopupStartCaption; src/game.h IsMultiplayerPBEM; src/game_data_state_window.h lock_masks_.bytes_.human_mask_/alive_mask_ and game_warnings_; src/messagewin.h MessageWinDeferredBaseMessages[8]; src/base.h Bases[].faction_id_current; src/mapwin.h MainInterfaceGlobal", "the original rec=0x93A800..<0x93A950 walk advances by 0x30, yielding exactly queue indexes 1..7; keep that bound and the unchecked indexing behavior", "both original spans and seed history remain attached to this identity; the historical TRIED/mismatch notes remain obligations, not current owner claims"], "reason": "Recover POP2 on the real Popup object: its pinned local has Popup's vptr plus Buffer-base vptr, with BasePop at frame offset -0x5390 and its owned Scroll exactly at +0x3230. Popup construction/destruction now follows the actual class lifetime; the body keeps the original queue, text, warning, image and return paths."}
 // size      1285 bytes
 // prototype
