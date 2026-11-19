@@ -71,6 +71,19 @@ void __cdecl caviar_apply_rotation(const float *angles, VOX_Matrix *matrix) {
 // rows the vector multiply walks.
 // ORIGINAL: 0x00627E20 ?vox_matrix_matrix_mul@@YAXPAY02$$CBM0PAY02M@Z 0x00627E20-0x00627F4F
 // RECOVERY_BINDING: v1 {"evidence": ["Original 0x00627E20-0x00627F4F computes nine dot products and stores row-major components one at a time; the x87 stack empties at each store and later products reload input memory. Complete extent agrees with src/unrecovered/00627e20.cpp.", "Existing scene and camera callers own VOX_Matrix records with float values[3][3]. Both input and output matrix parameters therefore point to rows; callers pass values rather than escaping the first three-element row."], "reason": "Multiply two row-major VOX matrices with their genuine three-float row bounds; retain per-cell original expression grouping and row-major sequential output stores, including input/output overlap behavior."}
+// WORKAROUND(decl): VC5 orders x87 operands and these parameters' registers by
+// a symbol key that moves in bands of earlier declarations (MATCHING_GUIDE
+// 3.8). Eight unused declarations here give the image's eax=left/ecx=right
+// (54 -> 26 rows) and keep every later function of the unit exact; the
+// original's real declaration set before this body is unknown.
+extern int vox_mm_pad_0(int);
+extern int vox_mm_pad_1(int);
+extern int vox_mm_pad_2(int);
+extern int vox_mm_pad_3(int);
+extern int vox_mm_pad_4(int);
+extern int vox_mm_pad_5(int);
+extern int vox_mm_pad_6(int);
+extern int vox_mm_pad_7(int);
 void __cdecl vox_matrix_matrix_mul(const float (*left)[3], const float (*right)[3],
                                   float (*out)[3]) {
     // Parentheses retain each original x87 dot-product grouping. Do not
