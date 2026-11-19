@@ -1855,10 +1855,7 @@ void ReportWin::draw_labs() {
             // one (0x499272/0x499275), so the width term is formed first.
             int next = (right - bar.left) * EnergyLabsTotal / 100 / rate;
             bar.left = bar.right;
-            {
-                long bar_right = bar.right;
-                bar.right = range(bar_right + next, bar_right, right);
-            }
+            bar.right = range(bar.left + next, bar.left, right);
         }
         Buffer::set_clip(&bar);
         inflate_frame(&bar, 7, 7);
