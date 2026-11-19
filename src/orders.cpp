@@ -399,6 +399,7 @@ int break_treaty(int faction_id, int target_faction_id, int treaty);
 // kind      game
 int __cdecl order_veh(int veh_id, int direction, int mode) {
     int x;
+    int v;
     int selector = 0;
     int flag_68 = 0;
     int flag_74 = 0;
@@ -563,7 +564,7 @@ L_5949b3:
                 && faction == ConsoleGlobal.faction_id_
                 && base_who(dest_x, dest_y) < 0
                 && (bit_at(dest_x, dest_y) & BIT_AIRBASE) == 0) {
-            for (int v = veh_top(veh_id); v >= 0; v = veh_next_stack_id(v)) {
+            for (v = veh_top(veh_id); v >= 0; v = veh_next_stack_id(v)) {
                 // Tests the mover, not the stack member (bug kept).
                 if (has_abil(Vehs[veh_id].proto_id, ABL_CARRIER))
                     goto L_596573;
@@ -1130,7 +1131,7 @@ L_595be6:
 
 L_595e1b:
     {
-    for (int v = veh_top(target_veh); v >= 0; v = veh_next_stack_id(v)) {
+    for (v = veh_top(target_veh); v >= 0; v = veh_next_stack_id(v)) {
         Vehs[v].faction_id = (uint8_t)faction;
         Vehs[v].morale = (uint8_t)morale_alien(v, 0);
         int b = base_find(dest_x, dest_y);
@@ -1244,7 +1245,7 @@ L_596052:
     {
         int last_moving = -1;
         int attached = 0;
-        for (int v = veh_top(veh_id); v >= 0; v = veh_next_stack_id(v)) {
+        for (v = veh_top(veh_id); v >= 0; v = veh_next_stack_id(v)) {
             if (Vehs[v].order == ORDER_SENTRY_BOARD && Vehs[v].waypoint_x[0] == veh_id) {
                 attached++;
                 if (veh_moves(v)) {
@@ -1677,7 +1678,7 @@ L_597350:
             int x = wrap_map_x(dest_x + RadiusOffsetX[i]);
             int y = dest_y + RadiusOffsetY[i];
             if (on_map(x, y)) {
-                for (int v = stack_fix(veh_at(x, y)); v >= 0; v = veh_next_stack_id(v)) {
+                for (v = stack_fix(veh_at(x, y)); v >= 0; v = veh_next_stack_id(v)) {
                     if (can_arty(Vehs[v].proto_id, 1)
                             && Chassis[VehPrototypes[Vehs[v].proto_id].chassis_id].triad == TRIAD_LAND
                             && Vehs[v].faction_id != faction
@@ -1708,7 +1709,7 @@ L_597350:
             && (Vehs[veh_id].order != ORDER_MOVE_TO
                 || (Vehs[veh_id].waypoint_x[0] == dest_x
                     && Vehs[veh_id].waypoint_y[0] == dest_y))) {
-        for (int v = veh_top(veh_id); v >= 0; v = veh_next_stack_id(v)) {
+        for (v = veh_top(veh_id); v >= 0; v = veh_next_stack_id(v)) {
             if (Vehs[v].faction_id == faction
                     && Vehs[v].order == ORDER_SENTRY_BOARD
                     && (Vehs[v].waypoint_x[0] < 0 || Vehs[v].waypoint_x[0] == veh_id)) {
@@ -1736,7 +1737,7 @@ L_597350:
             }
         }
         if (found) {
-            for (int v = veh_top(veh_id); v >= 0; v = veh_next_stack_id(v)) {
+            for (v = veh_top(veh_id); v >= 0; v = veh_next_stack_id(v)) {
                 if (Chassis[VehPrototypes[Vehs[v].proto_id].chassis_id].triad == TRIAD_LAND
                         && Vehs[v].order == ORDER_SENTRY_BOARD
                         && veh_moves(v)) {
@@ -1935,7 +1936,7 @@ L_599154:
     if (flag_68) {
         sleep(veh_id);
         veh_skip(veh_id);
-        for (int v = veh_top(veh_id); v >= 0; v = veh_next_stack_id(v)) {
+        for (v = veh_top(veh_id); v >= 0; v = veh_next_stack_id(v)) {
             if (!veh_cargo(v)) {
                 if (Vehs[v].moves_expended > speed(v, 0)) {
                     Vehs[v].order = ORDER_NONE;
@@ -1962,7 +1963,7 @@ L_599154:
         if (zoc_any(Vehs[veh_id].x, Vehs[veh_id].y, faction)
                 || (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & Vehs[veh_id].visibility)
                 || Vehs[veh_id].move_to_ai_type == 0x75) {
-            for (int v = veh_top(veh_id); v >= 0; v = veh_next_stack_id(v)) {
+            for (v = veh_top(veh_id); v >= 0; v = veh_next_stack_id(v)) {
                 if (Vehs[v].order == ORDER_SENTRY_BOARD && Vehs[v].waypoint_x[0] == veh_id)
                     Vehs[veh_id].order = ORDER_NONE;
             }
