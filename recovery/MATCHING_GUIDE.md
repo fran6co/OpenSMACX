@@ -1835,6 +1835,49 @@ Applied (2026-11-19):
   and immediates on the other (tree pass: Credits::exec, gen_terrain_poly,
   world_rainfall, enemy_strategy).
 
+Zero webs on one side only (2026-11-20 par-1; candset.py over the 288 rung
+4-7 functions, then single-reference probes)
+
+- Z7 (high, BasePop::exec 0x00602600). **`mov r,[m]; test r,r` in the image
+  against `cmp [m],zreg` in ours is a consequence of our zero web, not a
+  spelling of the compare.** Ours holds 0 in ebx over 0x3E-0x194 (`xor
+  ebx,ebx`, stores and compares through it); the image has no zero web there.
+  Removing any ONE zero reference in a probe copy (the entry store `int
+  pump_result = 0`, the `external_window_ = 0` store, or the
+  `item_list_.entry_count_ == 0` memory compare) removes our web, and every
+  compare in the stretch then compiles to the image's `mov eax,[m]; test
+  eax,eax`. An inline accessor, a named `const` local, `!x` and `x == 0` all
+  compile identically with the web present. So a zero that shows up on one
+  side only is usually one reference (or one block weight) over or under the
+  threshold; do not respell the compares, find what weighs the zero. Our
+  likely extra weight in exec: the `lea ebp,[esi+0x21D0]` address temporary
+  (&dialogs_, rule (a)) referenced in the zero's blocks (raises their `n_b`);
+  the image forms that temporary only around `attach`/`show` (0x6025C7). Not
+  yet resolved; the receiver spellings of set_width/set_height that give the
+  per-arm `lea ecx,[edx+esi+0x21D0]` (58eb11f165) are the place to look.
+- Z8 (high, PickTech::draw_tech 0x00484C60). **The image's zero register can
+  be the loser's absence, not the zero's strength.** Image ebx = 0 over
+  0x484C82-0x484DBB (10 refs: `cmp eax,ebx` for `tech < 0`, `cmp edx,ebx` for
+  Font::line_advance's `adjustment >= 0`, two stores, six pushes); ours has
+  the same ten uses as immediates and `test`, because the `rect` parameter
+  wins ebx for its whole range (16 refs, ours 0x7D-0x689). The image never
+  enregisters `rect` (it reloads `[ebp+0xC]` for each group of field reads).
+  Tried without a fix: an inline layout helper for the five header stores,
+  a `RECT *const` copy, a struct copy of `*rect` (294 -> 240, but a new
+  frame RECT: rejected), a named wrap width, braces; `page_width_ - 4` as
+  wrap_height's width gives 260 but reads the member where the image reads
+  the rect fields (rejected).
+- Screen (2026-11-20, rung 4-7 functions): image-only `#0` webs in
+  CouncWin::make_resolution 0x00424410, MapWin::init 0x00470A90 (ebx, 18
+  refs), draw_tech 0x00484C60, vehdraw_construct_chassis 0x004C2470 (ebx, 22
+  refs); ours-only `#0` in MapWin::right_menu 0x0046C0D0 (edi, 24 refs),
+  ReportWin::on_left_click 0x00496E10 (edi, 18), energy_yield 0x004E7750
+  (edi, 11), ReportWin::draw_labs 0x00498B30, ReportIf::draw_sat 0x004AA970;
+  two zero webs in ours against one in DiploWin::exec 0x00443F10 and
+  ProdPicker::calculate 0x00492FA0. Rerun: `candset.py <unit> <addr>` and
+  read the "one side only" block for `#0`; then probe single references as
+  in Z7 to find which side of the threshold the source sits on.
+
 What the model does not predict
 
 - success_rates 0x0059EEE0: the image enregisters `morale` (ebx; its home
@@ -3302,6 +3345,30 @@ call multiset, then the tree.
   callees that flip are the teardown chain (~Scroll, ~FlatButton, ~BasePop,
   ~Sprite expanded where the image calls them) in 14 functions. The probes
   stand for spend in the callers, not for a header class.
+
+Expression forms of shared header inlines (2026-11-20 par-1; the find_font
+`?:` of config_popups generalised; tree-wide `feall.py --all --base`, 35 s
+per variant)
+
+- Screened on the header inlines with an expression choice that expand in
+  two or more rung 4-7 functions: font_line_advance (`?:`, no `adjustment`
+  local, inverted guard), zoom_scale (if/return, if/else into a named
+  result), StringStruct::seek_pos (`for` walks, `while (i-- > 0)`), rnd
+  (`?:`, no `value` local). None is a clean gain. The `for` forms of
+  seek_pos compile identically; `while (i-- > 0)` breaks the out-of-line
+  copy 0x004015B0. font_line_advance without the local moves only the
+  canary ReportIf::on_iface_button_clicked (and -1/-1 rows elsewhere); the
+  inverted guard breaks 27 exact draw functions. zoom_scale as if/return
+  loses no exact function (net -75 rows) but the rows that move most are in
+  units that never expand it (order_veh 1960 -> 1813, probe +45,
+  enemy_move +29): unit-counter noise, and its real hosts split (veh_draw
+  -12, draw_tech +9, boom +6). rnd as `?:` breaks four exact functions.
+- So the config_popups lever was the function-local find_font (one host
+  per TU, an out-of-line copy to keep exact), not a class of header bodies:
+  the header inlines' forms are already pinned by their exact hosts (see
+  the joint solve below). Look for the same lever in TU-local helpers that a
+  non-exact host expands several times, and judge it by the host's candset
+  (one web per expansion on each side), not by tree rows.
 
 Joint solve of the header-inline bodies (2026-11-19 par-4, round 7)
 
@@ -5967,7 +6034,16 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   fields, an offset loop body, `setup_rects_[36].right + 0x12`, short and
   double detours). The source of 0x14D is something VC6 propagates only
   after folding, most likely an inline's merged return or a tail-duplicated
-  join, not a variable holding a constant.
+  join, not a variable holding a constant. 2026-11-20 par-1, eleven more,
+  all folded: aggregate initialisers for `r`, `box` or both, a static inline
+  taking (rows, left, top, right, bottom) that builds r/box with `right +
+  0x12` or `r.right + 0x12`, `int right`/`const int right` passed to
+  set_rect, a `RECT *const` source, `r.left + (r.right - r.left) + 0x12`,
+  `box = r; box.right += 0x12` after a separate declaration. Note for the
+  next try: the image keeps `box` as a whole frame RECT (all four fields
+  stored at 0x48272C.., `box.right` reread from [ebp-0x1C] every
+  iteration), so in the original `box.right` was not a known constant at
+  the loop either.
 - **Narrow locals: retype the local, not the expression** (par-6 2026-11-19,
   `analysis/widthscan.py` plus a sweep of every char/short/bool local of a
   non-exact function retyped to int). The image's `setg cl; mov edi,ecx;
