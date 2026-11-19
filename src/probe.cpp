@@ -594,7 +594,7 @@ L_59fb64:
             tech_start = random(0, MaxTechnologyNum);
             random_reseed(probe_time());
         } else {
-            tech_start = rand() % MaxTechnologyNum;
+            tech_start = rnd(MaxTechnologyNum, "DECIPHER");
         }
         int i;
         for (i = 0; i < MaxTechnologyNum; i++) {
@@ -684,12 +684,12 @@ L_59fb64:
             rnd_amount = random(0, morale_veh(veh_id, 1, 0) / 2 + 2);
             random_reseed(probe_time());
         } else {
-            rnd_amount = bounded_crt_random(morale_veh(veh_id, 1, 0) / 2 + 2);
+            rnd_amount = rnd(morale_veh(veh_id, 1, 0) / 2 + 2, "SABCHANCE");
         }
         if (Bases[base_id].minerals_accumulated
                 < cost_factor(faction, 1, -1) * cost
             || rnd_amount) {
-            int ofs = rand() % 69;
+            int ofs = rnd(69, "PROBEFAC");
             for (int i = 1; i < 70; i++) {
                 int fac = (i + ofs) % 69 + 1;
                 if (fac == 1) {
@@ -1135,7 +1135,7 @@ L_5a2571:
                 if ((PlayersData[faction].diplo_treaties[faction_tgt] & 0x30)
                     && PlayersData[faction].region_base_plan[region]
                     && Bases[base_id].talent_total == Bases[base_id].drone_total
-                    && !(rand() % 2)
+                    && !rnd(2, "PRAHOBE")
                     && Bases[base_id].population_size > 3) {
                     action = 4;
                 }
