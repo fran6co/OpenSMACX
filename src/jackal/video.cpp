@@ -626,8 +626,8 @@ int Video::configure_codec() {
 // ORIGINAL: 0x00637870 ?decode_frame_process@Video@@QAEXXZ 0x00637870-0x006378B0 FILE BYTE_EXACT
 // symbol    ?decode_frame_process@Video@@QAEHXZ
 int Video::decode_frame_process() {
-  // RECOVERY_LITERAL: v1 0x00698870 0x00698879 $SG48094 0x00637870
-  // RECOVERY_LITERAL: v1 0x0069887C 0x00698891 $SG48095 0x00637870
+  // RECOVERY_LITERAL: v1 0x00698870 0x00698879 $SG48091 0x00637870
+  // RECOVERY_LITERAL: v1 0x0069887C 0x00698891 $SG48092 0x00637870
   log_say("decode_frame_process", "Entering",
           static_cast<int>(timeGetTime()), 0, 0);
   if ((static_cast<unsigned char>(flags_) & 0x10) != 0) return 0;
@@ -638,8 +638,8 @@ int Video::decode_frame_process() {
 // ORIGINAL: 0x006378B0 ?read_frame_process@Video@@QAEXXZ 0x006378B0-0x00637906 FILE BYTE_EXACT
 // symbol    ?read_frame_process@Video@@QAEXXZ
 void Video::read_frame_process() {
-  // RECOVERY_LITERAL: v1 0x00698894 0x0069889D $SG48102 0x006378B0
-  // RECOVERY_LITERAL: v1 0x006988A0 0x006988B3 $SG48103 0x006378B0
+  // RECOVERY_LITERAL: v1 0x00698894 0x0069889D $SG48099 0x006378B0
+  // RECOVERY_LITERAL: v1 0x006988A0 0x006988B3 $SG48100 0x006378B0
   log_say("read_frame_process", "Entering",
           static_cast<int>(timeGetTime()), 0, 0);
   if ((static_cast<unsigned char>(flags_) & 0x10) == 0) {
@@ -770,7 +770,7 @@ int Video::read_frame() {
     result = frame_queue_.allocate(&position, 0,
                                   static_cast<unsigned int>(buffered_frame_), 1);
     if (result != 0) return 0;
-// RECOVERY_LITERAL: v1 0x00698918 0x00698925 $SG48168 0x00637C30
+// RECOVERY_LITERAL: v1 0x00698918 0x00698925 $SG48165 0x00637C30
     log_say("read_frame()", "Read data--still frame", buffered_frame_,
             frame_queue_.count(), 0);
   } else {
@@ -803,7 +803,7 @@ int Video::read_frame() {
 }
 
 
-// RECOVERY_LITERAL: v1 0x00698978 0x00698981 $SG48206 0x00637D70
+// RECOVERY_LITERAL: v1 0x00698978 0x00698981 $SG48203 0x00637D70
 // ORIGINAL: 0x00637D70 ?play_frame@Video@@QAEHXZ 0x00637D70-0x0063808D FILE BYTE_EXACT
 // symbol    ?play_frame@Video@@QAEHXZ
 // TRIED: prologue register order (large 797-byte function, many branches); landed as a structural transcription rather than chasing every register-allocation choice. Div-by-1000 modelled as plain unsigned int/1000 (VC6's own reciprocal-multiply idiom), not the 64-bit division Ghidra's decompile implied.
