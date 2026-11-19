@@ -721,10 +721,11 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
                 if (anything_at(tile_x, tile_y) < 0 || anything_at(tile_x, tile_y) == faction_id_def) {
                     if (is_ocean(tile_x, tile_y)) {
                         veh_init(BSC_SEA_ESCAPE_POD, faction_id_def, tile_x, tile_y);
+                        draw_tile(tile_x, tile_y, 2);
                     } else {
                         veh_init(BSC_COLONY_POD, faction_id_def, tile_x, tile_y);
+                        draw_tile(tile_x, tile_y, 2);
                     }
-                    draw_tile(tile_x, tile_y, 2);
                     if (!--refugees) {
                         break;
                     }
