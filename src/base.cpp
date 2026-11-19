@@ -4736,8 +4736,8 @@ void __cdecl base_terraform(int force_improve) {
         }
         Map *sq = map_loc(x, y);
         uint32_t climate = sq->climate;
-        int alt = climate & ~0x1F;
-        if (alt < ALT_BIT_SHORE_LINE
+        energy_low = climate & ~0x1F;
+        if (energy_low < ALT_BIT_SHORE_LINE
             && !(force_improve && (Players[faction].rule_flags & RFLAG_AQUATIC))) {
             continue;
         }
@@ -4748,7 +4748,7 @@ void __cdecl base_terraform(int force_improve) {
         uint32_t items = sq->bit;
         uint32_t forest = items & BIT_FOREST;
         uint32_t fungus = items & BIT_FUNGUS;
-        int land_fungus = fungus && alt >= ALT_BIT_OCEAN_SHELF;
+        int land_fungus = fungus && energy_low >= ALT_BIT_OCEAN_SHELF;
         if (items & (BIT_CONDENSER | BIT_ECH_MIRROR | BIT_THERMAL_BORE)) {
             specials++;
         }
@@ -4758,7 +4758,7 @@ void __cdecl base_terraform(int force_improve) {
             if (worked) {
                 worked_rough++;
             }
-            if (fungus && alt >= ALT_BIT_OCEAN_SHELF) {
+            if (fungus && energy_low >= ALT_BIT_OCEAN_SHELF) {
                 if (fungus_yield >= 4) {
                     // Counted without the worked-square tally the other kinds get.
                     improved++;
@@ -5347,16 +5347,16 @@ relocate:
         }
     }
     if (wet != 2) {
-        int x = wrap_map_x(BaseCurrent->x + 8);
-        int y = BaseCurrent->y;
+        best = wrap_map_x(BaseCurrent->x + 8);
+        energy_low = BaseCurrent->y;
         // BUG(original): the guard is 25 or 50, never zero, so this raise-land
         // goal east of the base is never set.
         if (!(GameDataStateStorage.fields_.turn_current_num_ >= wet ? 25 : 50)
-            && on_map(x, y) && (map_loc(x, y)->climate & ~0x1F) >= ALT_BIT_SHORE_LINE
-            && (map_loc(x, y)->climate & ~0x1F) <= ALT_BIT_2_LEVELS_ABOVE_SEA) {
-            int occupant = anything_at(x, y);
+            && on_map(best, energy_low) && (map_loc(best, energy_low)->climate & ~0x1F) >= ALT_BIT_SHORE_LINE
+            && (map_loc(best, energy_low)->climate & ~0x1F) <= ALT_BIT_2_LEVELS_ABOVE_SEA) {
+            int occupant = anything_at(best, energy_low);
             if (occupant < 0 || occupant == faction) {
-                int base_id = base_find(x, y);
+                int base_id = base_find(best, energy_low);
                 if (base_id < 0 || base_id == BaseIDCurrentSelected
                     || (Bases[base_id].faction_id_current != faction
                         && !(PlayersData[faction].diplo_treaties[Bases[base_id].faction_id_current]
@@ -5366,7 +5366,7 @@ relocate:
                              && (GameDataStateStorage.fields_.game_preferences_
                                  & PREF_AUTO_FORMER_RAISE_LWR_TERRAIN)))
                         && terrain_avail(TERRA_RAISE_LAND, FALSE, faction)) {
-                        add_goal(faction, AI_GOAL_LANDING_SITE, 2, x, y, BaseIDCurrentSelected);
+                        add_goal(faction, AI_GOAL_LANDING_SITE, 2, best, energy_low, BaseIDCurrentSelected);
                     }
                 }
             }
