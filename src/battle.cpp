@@ -326,11 +326,6 @@ int __cdecl shoot(int atk_factionID, int def_factionID, int xDest, int yDest) {
 }
 
 
-// WORKAROUND(decl): counter alignment. planet_busting (0x00500B60) keeps the
-// image's register choices (MNEMONIC_ONLY) only with one more declaration
-// before it; it dropped to MISMATCH when net_class.h gained a NetAllocationNode
-// operator new (front-end symbol counter, guide 2.5).
-void BattlePlanetBustingDeclPad0();
 // ORIGINAL: 0x00500B60 ?planet_busting@@YAHHHH@Z 0x00500B60-0x005010BB
 // RECOVERY_BINDING: v1 {"evidence": ["task:planet-strike-owner", "pinned:0x00500B60 complete native span; real Veh, PlayerData, Base and Console declarations establish accessed storage.", "pinned:shoot6B7/7C2 live satellite inventory reloads; bonus success bypasses decrement; dword counter/subtraction wrapping retained.", "pinned:planetE16/E29 attacker-row PACT; territory callback follows radius interception; kill/draw precede intercept return; warning coordinates precede popupD0C.", "source:map.cpp bounded shared radius tables and veh.cpp TerraformDrownedBaseId; effect59 is the typed FX child observed by the native wait.", "historical seed:src/unrecovered/00500b60.cpp original mapping and useful findings retained."], "reason": "Recover the complete original strike operation through genuine vehicle, faction, base, console, effect and shared map-table owners; preserve original identity/spans and seed findings without executable storage or calls."}
 int __cdecl planet_busting(int veh_id, int x, int y) {
