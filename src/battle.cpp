@@ -1725,7 +1725,15 @@ int __cdecl boom(int x, int y, int flags) {
         if (slot && !MapWinTable[slot]->view_active_) {
             continue;
         }
-        if (!MapWinTable[slot]->tile_in_view(x, y, 0)) {
+        // WORKAROUND(decl): the zero margin is a plain local, not a literal.
+        // The expansion is the same either way; what changes is the per-window
+        // rectangle arithmetic below (0x504FDE `sub ebx,[ebp-8]`, 0x5051CD and
+        // 0x5052C3 `add edx,eax / add ecx,edi` before the three stores), which
+        // the image has in this form. Of the function's 14 literal arguments
+        // of header inlines only this one moves those rows; a dead local does
+        // not (MATCHING_GUIDE 3.2, cost_factor).
+        int view_margin = 0;
+        if (!MapWinTable[slot]->tile_in_view(x, y, view_margin)) {
             continue;
         }
         any_window = 1;
