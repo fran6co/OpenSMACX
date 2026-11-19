@@ -3898,6 +3898,57 @@ New-expressions and EH states (par-2 2026-11-19, AlphaNetStringStruct::add
   if not, the delete is absent or the constructor expanded nothrow (first
   rule).
 
+Expression residues (par-5 2026-11-19, `analysis/probes/bytecse/`, `addsub/`,
+`deadstore/`; scan with `analysis/findpat.py bytecse|addsub|negcopy`)
+- **VC6 CSEs a char's sign extension in straight-line code, always.** Over
+  about 60 standalone spellings of a four-flag unpack (char local, `signed
+  char`, `(char)` cast of an int global or int local, `*(char *)&g`, union
+  byte member, `char[0]`, char global, `char &`, struct char through a
+  pointer, `register`, comma statements, `do{}while(0)`, labels, inline
+  getters taking `char`, `const char &`, `char *` or `int`, the getter
+  shaped like popup_set_write_check_bit's twin, `#pragma optimize` p/s/w/a,
+  the global's address taken elsewhere in the unit) the result is one
+  `movsx r,byte [g]` folded into the load and reused, or (when the stores
+  may alias: stores through `int *`) a narrowed reload `mov cl,[g]; and
+  ecx,K` at each use with no movsx. Only three shapes hold the byte once and
+  convert per use: uses in blocks that do not dominate each other (an `if`
+  around each use; enemies_trade_tech 0x0055D499, exact, is this), a `switch
+  (c & K)` controlling expression (`movsx ecx,al` again) and an inline whose
+  `char` parameter has its address taken (`char *p = &f`); the first and
+  third narrow to `mov dl,cl; and edx,K` rather than the image's `movsx
+  eax,cl; and eax,K`. `#pragma optimize("g", off)` keeps the movsx per use
+  but reloads memory each time. No source reproduces Console::set_ai
+  0x00514F50's block (the same block is in menu_proc 0x0051C1F1 and
+  on_key_click 0x00518499): confidence that it is not a body spelling is
+  moderate; the remaining candidates are a compiler-internal difference or a
+  header type not probed. Do not retry body spellings of it without a new idea.
+- **`(b - t) + t - 1` survives only when `b - t` is not forward-substituted.**
+  VC6 substitutes a single-definition, single-use local into its use and then
+  cancels `t + (b - t)` to `b` (`dec`), whatever the operand order,
+  parenthesisation, unsigned type or block placement (12 spellings, probe
+  `addsub/run.py`). The form `sub r,t; lea r,[r+t-1]` (image's GraphicWin::fill
+  0x005D53FE) appears when the difference is a value VC6 must keep: used twice,
+  used inside a loop (Gamma::on_redraw 0x005C9452, exact: `top + height` in the
+  loop body), or stored in a member of a local aggregate (`RECT box;
+  box.right = r->right - box.left;` or `int v[4]`). An inline parameter or a
+  local-struct `left` gives a third shape (`mov r,t; sub r,t; lea
+  r,[r+b-1]`). In fill the aggregate spelling reproduces the arithmetic but
+  costs registers (36 -> 42 rows); not applied. Confidence high for the
+  mechanism, open for fill's source.
+- **VC6 removes the last store to a local or parameter before `return`**,
+  spilled (`_width$`), address-taken and passed to a call, aliased onto a
+  parameter by reference or pointer, reassigned parameter, referenced from an
+  `__asm` block in the same function, accumulated through an inline taking
+  `int &` / `int *`, or written as `return w += x` (probe `deadstore/ret.py`,
+  16 spellings). The image's `mov [ebp+8],ecx; mov eax,ecx` before
+  Buffer::text_width's return (0x005DC9F6) therefore comes from storage VC6
+  treats as live after the return, not from a body spelling of a local. A
+  function with an EH object drops it too; only static storage keeps the
+  store (and then reloads it for the return). A `neg esi; mov eax,esi; push eax`
+  (SocialWin::draw_info 0x004B0289) was not reproduced by `-u`, `u = -u`, a
+  named negated local, a shared function-scope local or an inline taking the
+  value (`deadstore/neg.py`): all give `neg esi; push esi`.
+
 ## 4. Measured and neutral (do not retry without new evidence)
 
 - **String pooling.** The original is unpooled everywhere: identical literals stay
