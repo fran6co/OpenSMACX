@@ -3083,9 +3083,17 @@ void ReportWin::draw_energy() {
         Buffer::write_cent_l(StringTemp, &list_head);
         ++list_head.top;
         ++list_head.bottom;
+        // WORKAROUND(decl): has_fac's zero queue count is a plain local. With
+        // the literal, the pair of scratch slots used by the nine column
+        // blocks (0x49C0E9..0x49CA1E) comes out as other frame offsets than
+        // the image's [ebp-8]/[ebp-0xc]; with the local they agree (36 slot
+        // rows). A dead local is neutral and this is the only one of the
+        // function's eight literal inline arguments that does it
+        // (MATCHING_GUIDE 3.2, cost_factor).
+        int queue_count = 0;
         for (facility = 0; facility < 0x41; ++facility) {
             if (Bases[base_id].faction_id_current == ReportIfGlobal.report_faction_id_
-                && has_fac(facility, base_id, 0)) {
+                && has_fac(facility, base_id, queue_count)) {
                 StringTemp[0] = 0;
                 say_facility(StringTemp, facility, 0);
                 strcat(StringTemp, "|");
