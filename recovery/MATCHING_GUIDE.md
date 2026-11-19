@@ -1551,6 +1551,86 @@ Constant candidates and phantom registers (2026-11-18 par-1, standalone probes)
   Exec's frame proves /Oy- for exec, so its source must give the zero more
   weight or one rival less; not found.
 
+Constant pieces and immediates (2026-11-19 par-5; `regalloc/c_zero.spec`,
+`python3 cand.py c_zero.spec --grep 'xor|PTR .*, (0|e..)$|^cmp'`; about 400
+probes, /Oy- unless stated, the same for 0, 5 and -1)
+
+The four-store rule above decides when a constant *pays* for a register. Below
+four, what the stores look like depends on whether the constant is a candidate
+of its own and whether it found a free callee-saved register:
+
+- Z1 (high). A constant with no other reference in the function: two to six
+  adjacent stores in one block become a scratch piece, `xor eax,eax` (or `mov
+  eax,K`) and register stores, whatever the register pressure. Stores in
+  separate blocks or separated by calls stay immediates up to three; from four
+  they take a callee-saved register when one is free (`spread`, `ifs`,
+  `pairs` in the family).
+- Z2 (high). Any other reference to the same constant anywhere in the
+  function makes it a candidate: a `push 0`, a memory compare `cmp [m],0`, a
+  store in another block. A `test reg,reg` of a call result or of a loaded
+  value does not (`pair_memcmp` against `pair_callcmp`). Such a candidate
+  that finds a callee-saved register free over its whole range, but has fewer
+  than four stores, takes that register without materialising it: every store
+  and push is an immediate and the register is not even saved (`pair_push/0..2`).
+  This is the image's "two immediate stores where we have `xor eax,eax`".
+- Z3 (high). The same candidate with no free register over its range (three
+  rivals live across it, `pair_push/3`) loses and forms the scratch piece of
+  Z1 again. Under /Oy ebp counts as the free register: Credits::unload is
+  exactly Z2 under /Oy and Z3 under /Oy-.
+- Z4 (high). If the register it wins is one another web also uses (a variable
+  born after the constant's last use, or dead before its first), it is
+  materialised there: `xor esi,esi`, `push esi`, `mov [m],esi`
+  (`pair_born`; s7 `dead_pa`). So "immediates in the image, `xor esi`
+  + register stores in ours" means our constant shares a register the image's
+  does not, and the reverse.
+- Z5 (high). Typed constants are separate webs: a float zero is always an
+  immediate; a char or bool zero is its own byte web (`gz0 = 0; gc0 = 0;`
+  stays two immediates even at full pressure, `pair_int_char`); short goes
+  with int (`mov [m],ax` in the piece); pointer, unsigned, enum, long and
+  `NULL` are the same web as int 0. Two adjacent char zero stores alone form
+  an `al` piece.
+- Z6 (medium). Compares. A true constant register gives `cmp r,zreg` for an
+  enregistered local and `cmp [m],zreg` for memory, but a call result in eax
+  keeps `test eax,eax`. A zero-initialised *variable* in a callee-saved
+  register replaces the 0 of pushes and stores while it is known zero, but its
+  compares stay `test r,r`, until the constant 0 is itself a candidate merged
+  with the variable. In the `slot2_*` probes one live memory store of 0 in the
+  variable's known-zero stretch (before the compares or in one arm) does it;
+  a dead store, a store to a parameter, and the same store in the lighter
+  `slot_*` shape (one loop memory compare fewer) do not. This is Console::zoom
+  0x005150D0 (`cmp eax,ebx` / `cmp esi,ebx` against our `test`): the image's
+  zero is merged with `slot`; no source store that would do it was found
+  (an explicit `window_index = 0` in the world-map arm, `MapWinTable[slot]`
+  for `[0]`, `window_index = slot` per arm: 3 -> 3..13 rows).
+
+Applied (2026-11-19):
+- Credits::exec 0x004289F0: under Z2/Z3 the image's two immediates need a
+  callee-saved register free over the zero's range, and the range covers the
+  inlined free loop where esi (`this`), edi (pointer) and ebx (counter) are all
+  live, as in the image. Under /Oy- that is impossible for every body tried,
+  so the open question is still what gives exec /Oy-style allocation with a
+  frame; types (Z5) are ruled out (both counts are int in every reader).
+- TexHeap::configure 0x00635050: the inlined shutdown in the loop-failure arm
+  has immediates and `test` in the image while ours materialises the zero in
+  edi (Z4: edi, the dead loop index, is shared and the shutdown loop counter
+  then also starts from it). The image's other two copies agree with ours.
+- DiploWin::exec 0x00443F10 (`constreg.py`: OURS_ONLY zero in edi, 0x444646,
+  2 stores, 2 pushes): in the image edi holds a rectangle edge (`mov
+  edi,[ebx+4]; sub edx,edi`, then `[eax+0xc]`) that outranks the zero, which
+  then loses and stays immediate (spread stores, Z3 without a piece). The
+  lever is that edge's candidate (a named copy), not the zero.
+- save_game 0x005A9EB0: the image's edi/esi constants in the close tail are the
+  two vtable pointers of a second inlined destructor (objects at -0x14b4 and
+  -0x2000); ours does not expand the second one there. It is the teardown
+  depth question (2.3), not constant allocation.
+- mon_facility_built 0x00476FE0: the zero is in eax on both sides; the residue
+  is the else arm storing `owner_faction` through eax at a shared join. Moving
+  the store after the if/else (and four other spellings) loses the eax zero
+  web (3 -> 6..16).
+- `constreg.py --pieces` lists store runs that are a scratch piece on one side
+  and immediates on the other (tree pass: Credits::exec, gen_terrain_poly,
+  world_rainfall, enemy_strategy).
+
 What the model does not predict
 
 - success_rates 0x0059EEE0: the image enregisters `morale` (ebx; its home
@@ -3029,7 +3109,11 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   position weights; cached pieces of memory-homed variables). The earlier
   wording here ("declaration order", "a local outranks a parameter") was
   wrong: equal counts go to the candidate referenced first in the code.
-- **Two zero stores as immediates or through `xor eax,eax`.** Measured on a
+- **Two zero stores as immediates or through `xor eax,eax`.** Rule: 2.7
+  "Constant pieces and immediates" (Z1-Z4): immediates mean the zero has
+  another reference (a push, a memory compare) and a callee-saved register
+  free over its whole range; the scratch piece means no other reference or no
+  free register. Measured on a
   standalone copy of Credits::unload: with `/Oy-` VC6 emits `xor eax,eax`
   and two register stores; with `/Oy` (and with `/Os`) it emits two
   immediate stores. `/G3`-`/G6`, `/Oa`, `/Ow`, `/Op`, `/Ob1` do not change

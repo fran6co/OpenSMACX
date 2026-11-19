@@ -139,6 +139,45 @@ def compare(res):
     for j,t in enumerate(so):
         if j not in used: out.append(('OURS_ONLY',None,t))
     return out,ii,io
+SCR={'eax':('eax','ax','al'),'ecx':('ecx','cx','cl'),'edx':('edx','dx','dl')}
+SOWN={s:r for r,ss in SCR.items() for s in ss}
+def scratch_pieces(seq):
+    """seq: [(row, text)] of one side.  -> [(row of the set, reg, K, [rows of the stores])] for a
+    scratch register set to K (`xor r,r` / `mov r,K`) and stored to memory at least twice before it
+    is written again (MATCHING_GUIDE 2.7 'Constant pieces and immediates')."""
+    out=[]
+    for i,(row,text) in enumerate(seq):
+        mn,ops=ops_of(text)
+        if len(ops)!=2 or ops[0] not in SCR: continue
+        r=ops[0]
+        if mn=='xor' and ops[1]==r: k=0
+        elif mn=='mov' and sval(ops[1]) is not None: k=sval(ops[1])
+        else: continue
+        st=[]
+        for row2,t2 in seq[i+1:i+12]:
+            m2,o2=ops_of(t2)
+            if m2=='mov' and len(o2)==2 and ismem(o2[0]) and SOWN.get(o2[1])==r: st.append(row2); continue
+            if o2 and SOWN.get(o2[0])==r and (m2 in WRITERS or m2.startswith('set')): break
+            if m2.startswith('call') or m2.startswith('j') or m2=='ret': break
+        if len(st)>=2: out.append((row,r,k,st))
+    return out
+def imm_store(text,k):
+    mn,ops=ops_of(text)
+    return mn=='mov' and len(ops)==2 and ismem(ops[0]) and sval(ops[1],width(ops[0]))==k
+def pieces(res):
+    """Store runs that are a scratch piece on one side and immediates on the other."""
+    rows=res['rows']
+    O=[(i,o[1]) for i,(k,o,c) in enumerate(rows) if o]
+    C=[(i,c[1]) for i,(k,o,c) in enumerate(rows) if c]
+    Ot=dict(O); Ct=dict(C)
+    def near(tab,row,k):
+        return [r for r in range(row-4,row+5) if r in tab and imm_store(tab[r],k)]
+    out=[]
+    for kind,mine,other in (('IMG_IMM',C,Ot),('OURS_IMM',O,Ct)):
+        for row,r,k,st in scratch_pieces(mine):
+            hit=sorted({x for s in st for x in near(other,s,k)})
+            if len(hit)>=2: out.append((kind,k,r,len(st),len(hit),res['lo']+rows[hit[0]][1][0] if rows[hit[0]][1] else 0))
+    return out
 def fmt(s,ours=False):
     if s is None: return '-'
     a=('@%x(+%x)'%(s['at'] or 0,s['start'])) if ours else '@%x'%s['start']
@@ -149,6 +188,7 @@ def main():
     ap=argparse.ArgumentParser(); ap.add_argument('units',nargs='*'); ap.add_argument('--addr'); ap.add_argument('--src'); ap.add_argument('--all',action='store_true')
     ap.add_argument('--agree',action='store_true',help='also print stretches that agree'); ap.add_argument('--json'); ap.add_argument('--weak',action='store_true',help='also print short local stretches (fewer than 3 stores and under 60 instructions)')
     ap.add_argument('--jobs',type=int,default=int(os.environ.get('FE_JOBS','14')))
+    ap.add_argument('--pieces',action='store_true',help='list store runs that are a scratch piece (xor eax + register stores) on one side and immediates on the other')
     a=ap.parse_args(); base=int(os.environ.get('FE_PFX_BASE','21'))
     cc=json.load(open(fe.MAIN+'/build/compile_commands.json'))
     units=[e['file'][len(fe.MAIN)+1:] for e in cc if e['file'].startswith(fe.MAIN+'/src/')]
@@ -166,6 +206,19 @@ def main():
     with ThreadPoolExecutor(a.jobs) as ex:
         for o in ex.map(lane,range(a.jobs)): comp+=o
     found=[]
+    if a.pieces:
+        n=0
+        for (u,p,t,ad),(c,err) in comp:
+            if c is None: continue
+            for addr in ad:
+                r=fe.evaluate(c,t,addr)
+                if 'error' in r or r['exact']: continue
+                for kind,k,reg,nst,nimm,at in pieces(r):
+                    n+=1
+                    print('%-8s %08X %-22s %-40s K=%-4s ours/img piece %s, %d stores against %d immediates near %x  diff=%d'%(
+                        kind,addr,u[4:],r['sym'][:40],k,reg,nst,nimm,at,r['diff']))
+        print('pieces',n)
+        return
     for (u,p,t,ad),(c,err) in comp:
         if c is None: print('COMPILE FAIL',u,(err or '')[:200],file=sys.stderr); continue
         for addr in ad:
