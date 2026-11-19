@@ -8268,6 +8268,7 @@ production_again:
                     picture = Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_SEA
                         ? "navun_sm.pcx" : "alunit_sm.pcx";
                 }
+                popb(StringTemp, popup_flags, -1, picture, 0);
             } else {
                 if (proto_id < MaxVehProtoFactionNum
                     && (Weapon[VehPrototypes[proto_id].weapon_id].offense_rating < 0
@@ -8285,8 +8286,8 @@ production_again:
                     picture = Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_SEA
                         ? "navun_sm.pcx" : "unit_sm.pcx";
                 }
+                popb(StringTemp, popup_flags, -1, picture, 0);
             }
-            popb(StringTemp, popup_flags, -1, picture, 0);
             if (!queued && BaseCurrent->governor & GOV_MANAGES_PRODUCTION
                 && BaseCurrent->governor & GOV_ACTIVE) {
                 base_reset(BaseIDCurrentSelected, 0);
