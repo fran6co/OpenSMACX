@@ -2733,6 +2733,18 @@ What the model does not predict (2026-11-19)
   (`analysis/sdeck.py`, `analysis/jseq.py`); never read a row loss on a
   decision gain as a regression, and never compare slot maps
   (`framescan.py --slots`) until the decision strings agree.
+- **Two decisions that flip at one B threshold are not a budget problem**
+  (2026-11-19 par-4, Console::go_to 0x004D61A0). go_to's closing teardown
+  expands ~StringList's remove_all and calls the base ~StringStruct's (the
+  image the reverse, call 0x402970 at 0x4D6897); call multiset and EH are
+  equal, so only the site's order shows it. Any spend (veh_moves(subject)
+  at L2452, get_triad(subject) at L2271, or 4 dead stores anywhere) gives
+  the image's closing shape AND refuses ~Scroll at the action_home return
+  (L2307) where the image expands it; 5 raw stores anywhere undo both at
+  once, at every position tried. Neither spend nor its position separates
+  them, so look for a reservation or a statement layout change, not for
+  more or less budget. Screen: `sdeck.py` with a per-site flag
+  (state store followed by a call).
 - The units are approximate. Costs come from fitted counts, not node
   counts, so a prediction is good to about one expansion. Use it to choose
   the *kind* and *place* of a missing spend, then confirm with fe.
