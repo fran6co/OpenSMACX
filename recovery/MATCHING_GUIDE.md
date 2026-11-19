@@ -3780,6 +3780,34 @@ Constant registers (measured with standalone probes, 2026-11-18)
   `do { ... } while (++k < N);` gives the image's preheader/latch layout
   (3660 -> 3624 rows).
 
+Arm layout and operand sources (par-3, 2026-11-19)
+- **Flat `if (A && B) X else if (!A) Y` is not the nested form.**
+  `if (A) { if (B) X } else Y` hosts the join after the inner then-arm and
+  lays the arms the other way; the flat chain with the same outcomes hosts
+  the join after the last arm and cross-jumps the first arm's tail into it.
+  Inverting the condition or swapping the arms is normalised, so only the
+  flat/nested choice moves the blocks (ReportWin::draw_labs 0x00498B30,
+  one-prerequisite arm at 0x49972B first: 763 -> 626).
+- **An inline fed by fields read just before it takes the fields, not named
+  locals.** When the image reloads the record fields (`movsx` from the
+  record) right before an expanded inline and reads a global once, pass the
+  fields as arguments: `y`/`x` locals holding them gave the value a home slot
+  and a callee-saved register and reshuffled the loop (Console::give_hints
+  0x00511BB0, tile_in_view at 0x5129FD: 682 -> 618, frame equal).
+- **An else-arm `goto` into a label after `break` lays that block last.**
+  `if (!(p > 1)) {Y} else if (p == 2) goto L; ... break; L: X` lays Y before
+  X; the image's X-then-Y order is the plain nesting
+  `if (p >= 0) { if (p > 1) { if (p == 2) {X} } else {Y} }`
+  (NetDaemon::process_message 0x00534400, CHANGEPROJECT block 0x5377E5
+  before BEGIN/HALT 0x537876).
+- **`int &m = arr[i]; m = m > x ? m : x;` changes candidate weights for the
+  whole function**, not only the statement: the reference is one web (the
+  element address) where the written-out `arr[i] = arr[i] > x ? arr[i] : x`
+  forms the address twice. diplomacy_check 0x0053A980 (census clamp at
+  faction.cpp:2591): 910 -> 788 rows, with registers moving in loops far
+  from the clamp. Try it (armwo (r)) when disputed pairs sit outside the
+  statement.
+
 ## 4. Measured and neutral (do not retry without new evidence)
 
 - **String pooling.** The original is unpooled everywhere: identical literals stay
