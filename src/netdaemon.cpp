@@ -3385,7 +3385,15 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
             break;
         }
         if (packet->payload_14_ >= 0) {
-            if (!(packet->payload_14_ > 1)) {
+            if (packet->payload_14_ > 1) {
+                if (packet->payload_14_ == 2) {
+                    parse_says(0, Players[project_faction].adj_name_faction, -1, -1);
+                    parse_say(1, Facility[FacilitySPStart + related_id].name, -1, -1);
+                    parse_says(2, get_noun(project_faction), -1, -1);
+                    parse_say(3, project->name, -1, -1);
+                    NetMsgPrimary.pop("CHANGEPROJECT", 5000, 2, 0);
+                }
+            } else {
                 parse_says(0, get_title(project_faction), -1, -1);
                 parse_says(1, get_name(project_faction), -1, -1);
                 parse_says(2, get_noun(project_faction), -1, -1);
@@ -3397,19 +3405,8 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
                 } else {
                     NetMsgPrimary.pop("BEGINPROJECT", 5000, 2, 0);
                 }
-            } else {
-                if (packet->payload_14_ == 2) {
-                    goto project_changed;
-                }
             }
         }
-        break;
-    project_changed:
-        parse_says(0, Players[project_faction].adj_name_faction, -1, -1);
-        parse_say(1, Facility[FacilitySPStart + related_id].name, -1, -1);
-        parse_says(2, get_noun(project_faction), -1, -1);
-        parse_say(3, project->name, -1, -1);
-        NetMsgPrimary.pop("CHANGEPROJECT", 5000, 2, 0);
         break;
     }
 
