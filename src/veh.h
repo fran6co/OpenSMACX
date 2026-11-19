@@ -921,8 +921,11 @@ inline uint8_t __cdecl get_proto_triad(uint32_t proto_id) {
 }
 
 // INLINE: the image has no get_triad - it open-codes what this names.
+// Written on the fields directly, not through get_proto_triad: the
+// forwarding layer was ours and pushed every read one /Ob2 level deeper
+// (MATCHING_GUIDE 2.1 "Depth before position"; battle_fight's call multiset).
 inline uint8_t __cdecl get_triad(uint32_t veh_id) {
-    return get_proto_triad(Vehs[veh_id].proto_id);
+    return Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad;
 }
 
 // INLINE: the image has no get_proto_offense_rating - it open-codes what this names.
@@ -934,8 +937,11 @@ inline int8_t __cdecl get_proto_offense_rating(uint32_t proto_id) {
 void __cdecl action_sat_attack(int attacker, int target, int type, int base_id);
 
 // INLINE: the image has no get_offense_rating - it open-codes what this names.
+// Written on the fields directly, not through get_proto_offense_rating: the
+// forwarding layer was ours and pushed every read one /Ob2 level deeper
+// (MATCHING_GUIDE 2.1 "Depth before position"; battle_fight's call multiset).
 inline int8_t __cdecl get_offense_rating(uint32_t veh_id) {
-    return get_proto_offense_rating(Vehs[veh_id].proto_id);
+    return Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating;
 }
 
 // INLINE: the image has no get_proto_defense_rating - it open-codes what this names.
@@ -944,8 +950,11 @@ inline int8_t __cdecl get_proto_defense_rating(uint32_t proto_id) {
 }
 
 // INLINE: the image has no get_defense_rating - it open-codes what this names.
+// Written on the fields directly, not through get_proto_defense_rating: the
+// forwarding layer was ours and pushed every read one /Ob2 level deeper
+// (MATCHING_GUIDE 2.1 "Depth before position"; battle_fight's call multiset).
 inline int8_t __cdecl get_defense_rating(uint32_t veh_id) {
-    return get_proto_defense_rating(Vehs[veh_id].proto_id);
+    return Armor[VehPrototypes[Vehs[veh_id].proto_id].armor_id].defense_rating;
 }
 
 // INLINE: the image has no is_proto_missile - it open-codes what this names.
@@ -954,8 +963,11 @@ inline BOOL __cdecl is_proto_missile(uint32_t proto_id) {
 }
 
 // INLINE: the image has no is_missile - it open-codes what this names.
+// Written on the fields directly, not through is_proto_missile: the
+// forwarding layer was ours and pushed every read one /Ob2 level deeper
+// (MATCHING_GUIDE 2.1 "Depth before position"; battle_fight's call multiset).
 inline BOOL __cdecl is_missile(uint32_t veh_id) {
-    return is_proto_missile(Vehs[veh_id].proto_id);
+    return Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].missile;
 }
 
 // Explicitly unfinished link-continuity bodies in veh.cpp, not recovered effects.
