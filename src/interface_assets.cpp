@@ -4795,10 +4795,7 @@ void __cdecl load_vehicles() {
                 sheet_x = 716;
                 source_y = 233;
             }
-            sheet.change_color(0x107, 0x109);
-            sheet.change_color(0x106, 0x109);
-            g_VEH_SPRITES[chassis * 8 + variant].extract(
-                &sheet, 0x109, sheet_x, source_y, 100, 75, 0);
+            sub_450e80(&g_VEH_SPRITES[chassis * 8 + variant], sheet_x, source_y);
             Chassis[chassis].sprite_flag_y_off[variant] = 0;
             Chassis[chassis].sprite_flag_x_off[variant] = 0;
             Chassis[chassis].sprite_unk1_y_off[variant] = 0;
