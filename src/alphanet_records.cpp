@@ -141,11 +141,13 @@ int AlphaNetStringStruct::add(int id) {
         current_->id_ = id;
         if (allocator_ != 0) {
             current_->payload_ = new(allocator_) NetAllocationNode;
+            if (current_->payload_ == 0) return 4;
+            on_insert(current_->payload_);
         } else {
             current_->payload_ = new(static_cast<StringAllocationBase *>(this)) NetAllocationNode;
+            if (current_->payload_ == 0) return 4;
+            on_insert(current_->payload_);
         }
-        if (current_->payload_ == 0) return 4;
-        on_insert(current_->payload_);
     }
     current_position_ = entry_count_;
     ++entry_count_;
