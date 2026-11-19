@@ -3765,6 +3765,84 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   diagnose, don't expect a one-line fix.
 - **Spill reloads in exactly reversed order** at loop boundaries: a known
   blocker, so skip.
+- **Residue census: what is outside the body for the 1-15 row near-misses**
+  (2026-11-19, par-2; `analysis/residue.py`, `analysis/outside.py`,
+  `analysis/sitek.py`; 98 functions of at most 15 fe rows, 95 after the three
+  fixed below). Classes of the residual windows (a function can hold
+  several): scratch renaming 19 functions, callee-saved or mixed renaming 11,
+  register reuse without a renaming 9, schedule (same instructions, other
+  order) 16, instructions more or fewer 32 (register copy 5, folded load 4,
+  zero register 6), layout 23, operand / address-term order 9, immediate,
+  slot or pointer bias 11, with an unclassified window 29. Levers that do not
+  change the body text, one at a time:
+  - **Unit position and counters: nothing.** Function-declaration pads before
+    the marker, 0..63 (`unitpad.py --at`): 0 of 98 move. The function moved
+    to the end of its unit: 86 of 88 unchanged (two VC5 Caviar functions gain
+    one row). So none of these is a count canary, and definition order relative
+    to callers and callees is not a lever under /Ob2.
+  - **Frame-symbol and budget pads: nothing gained.** `locpad.py` 0..7: 14
+    move, all one-way up at a threshold (the 2.1 caller budget), none
+    periodic, none lower. `sympad.py`: 10 move, all up. Every parameter
+    counts one frame symbol (3.6), so an unused extra parameter is the same
+    screen and the same answer.
+  - **Signature: fixed by the image, not a hidden lever.** `int` -> `short` /
+    `char` parameters and return types always add rows (movsx, byte
+    registers: 259 of 270 variants higher, none lower); `int` -> `unsigned
+    int` is invisible in 106 of 135 variants (the rest change a compare or a
+    division) and never lowers a function. Member / static / free is read
+    off the image (`ret N`, ecx read before written); residue.py prints the
+    one case where a member never reads `this` (Console::set_ai, still
+    `ret 4`). An exact direct caller confirms the pushes (printed per
+    function).
+  - **Declared signedness of the globals and fields the body names**
+    (`typ`, 1,324 variants): 226 move, one lowers (draw_base_names 10 -> 6,
+    a function with another cause). Signedness shows as jl/jb, sar/shr,
+    movsx/movzx rows, which residue.py would class `type(sign)`: none of the
+    98 has such a window. The type census (typescan.py) is the right tool;
+    near-miss registers are not a type effect.
+  - **Header inline bodies** (`inl`: each called inline with a named result,
+    a bare return, or its parameters copied to locals; 859 variants for the
+    98 functions, 1,426 more with one parameter copied at a time, 1,307 for
+    the 95 functions of 16..60 rows): 85 of the 859 move, two reach zero
+    rows, and both turned out to be site facts, not header facts: tree-wide
+    the header spelling loses more than it gains, and the same effect written
+    at the one call site is exact. The single-parameter forms and the 16..60
+    group add nothing beyond counter effects.
+  **A header variant that adds a local shifts every including unit's
+  front-end symbol counter**, so the count canaries (3.6) move with any such
+  variant (PrefWin::init, action_airdrop, farm_click 54 -> 46, sat_attack
+  17 -> 15 moved identically under unrelated variants of general.h, map.h and
+  buffer.h). Read a tree-wide header result against a control variant that
+  adds a dead local to another inline of the same header.
+- **A literal argument of a header inline is not the same as a local holding
+  that value** (cost_factor 0x004E4430, propose_treaty 0x00544E40; found by
+  the `inl` screen, reproduced at the site by `sitek.py`). `range(g, -2, 5)`
+  with literals lets the front end fold the constants into the expansion.
+  `int lo = -2; range(g, lo, 5)` passes a variable that the optimiser
+  propagates later: the instruction count is the same or two higher, and
+  what changes is how *other* values in the caller are materialized (the
+  has_fac bit result kept as `neg/sbb/neg` and stored instead of tested in
+  place; a field loaded into ebx before a call instead of folded into the
+  later add). Symptoms: `fold` or `copy` windows away from the call, equal or
+  +1/+2 instruction counts, no response to pads. A `const` local, a dead
+  local, a named copy of a non-constant argument and an enum constant all
+  compile like the literal. In propose_treaty nine of 25 literal sites give
+  the image's code and the others do not move, so the image shows the effect
+  but not which argument the original named: keep one, tagged
+  `WORKAROUND(decl)`. `sitek.py --max 60`: two exact, farm_click 54 -> 45
+  (the three `range(.., 1, 99)` bounds), nothing else below 60 rows.
+- **A struct copied from an accessor that returns a reference**
+  (MapWin::draw_base_names 0x00467DE0): `RECT saved = current_clip();` and
+  `const RECT &clip = current_clip(); RECT saved = clip;` differ in the order
+  of later, unrelated field loads (`pixel_x + field_1DDBC_` loaded as
+  `[ebp-0x10]` then the field, five sites). Same family as S7: the named
+  reference is a named value.
+- **fe-exact is not reference-exact.** Two of this round's fe-exact results
+  read SHAPE_EXACT under `recover measure` because fe masks relocations:
+  mind_control had the operands of `energy_reserves + corner_market_active`
+  swapped, draw_base_names read the InfoWin colour tables where the image
+  reads ChatItemIdTable / ChatShadowColors. Run `analysis/refscan.py` (or
+  `recover measure`) on every function that becomes fe-exact.
 
 ### 3.3 Frame and locals
 - **Locals at `[ebp+8]`/`[ebp+0xc]`** sit in dead parameter slots: write ordinary

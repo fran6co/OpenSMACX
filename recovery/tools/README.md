@@ -237,6 +237,27 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   expand/contract); `--pairs K --triples K` combine the single sites that moved the rows; `--write SUBSTR` keeps
   the best non-probe candidate whose key contains SUBSTR. A probe hit is a pointer: see MATCHING_GUIDE 3.2 S7,
   "Whole-set pass", for how to turn it into source (typed local, accessor) and when to reject it.
+- `analysis/residue.py --from FEALL.json [--max 15] [--show] [--json F] | <unit> <addr[,addr]> [--src ALT]` residue
+  classifier for near-misses (MATCHING_GUIDE 3.2 "Residue census"; 8 s for the 98 functions up to 15 rows): groups each
+  function's differing rows into windows and names what separates the sides: `scratch` / `saved` / `regs` (a renaming,
+  `rot+k` for one eax->ecx->edx rotation), `reuse` (one side reuses a register, no renaming exists), `order`, `operand`,
+  `addr-order`, `zero-reg`, `copy(img|ours)` (a register copy = a named value on that side), `fold`, `slot`, `imm`,
+  `bias` (pointer displacements off by one delta), `type(sign|width)`, `extra(n)` / `missing(n)`, `layout`, `other`.
+  Per function it also prints instruction counts, frame sizes, the image's direct callers and how many sit in BYTE_EXACT
+  markers (they confirm the parameter count and pushed widths), and convention notes (`this` unused, ecx read by a
+  cdecl symbol).
+- `analysis/outside.py --from FEALL.json [--min 1] [--max 15] [--levers sig,pos,inl,typ[,inl1]] [--only A,..] [--json F]
+  [--tree BASEALL.json]` outside-the-body lever screens: every variant leaves the body alone and changes one thing
+  around it in a shadow copy of src/ (`build/recovery/shadow/<prefix>/`, so header edits never touch the worktree):
+  `sig` each int parameter and the int return type as unsigned int / short / char (definition, declarations, COMDAT
+  found by prefix), `pos` the function moved to the end of its unit, `inl` one header inline the body calls respelt
+  (N named result, B bare return, P parameters copied to locals; `inl1` one parameter at a time), `typ` the declared
+  signedness of one global or field the body names. Prints the variants that move the rows. A header variant that adds
+  a local shifts the front-end symbol counter of every including unit, so the count canaries move with it: read a
+  `--tree` result against a control. A hit on `inl` is a pointer to the call site (see the guide), not a header fix.
+- `analysis/sitek.py --from FEALL.json [--max 60] [--only A,..] [--write]` the site form of an `inl` hit: each
+  integer-literal argument of a header-inline call becomes a plain local (`int fe_kN = <literal>;`), one site per
+  variant (cost_factor 0x004E4430: 8 rows -> exact).
 - `analysis/labelsubsets.py <unit> <addr> [--max N] [--write]` all 2^n subsets of a function's label_get /
   table_text sites flipped against the written-out form (S7): finds the pairs no single flip reaches
   (draw_projects 51 -> 9, ProdPicker::exec 62 -> 29, draw_commerce 60 -> 40).
