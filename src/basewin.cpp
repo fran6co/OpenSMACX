@@ -4662,20 +4662,20 @@ setup:
         && BaseCurrent->queue_production_id[0] != old_queue_id) {
         const int new_id = BaseCurrent->queue_production_id[0];
         int new_count = 0;
-        int old_count = 0;
+        sel = 0;
         for (int base_id = 0;
              base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
             if (Bases[focusedBaseID_].faction_id_current == BaseCurrent->faction_id_current
                 && base_id != BaseIDCurrentSelected) {
                 if (Bases[base_id].queue_production_id[0] == new_id) ++new_count;
-                if (Bases[base_id].queue_production_id[0] == old_queue_id) ++old_count;
+                if (Bases[base_id].queue_production_id[0] == old_queue_id) ++sel;
             }
         }
-        if (old_queue_id <= -0x46 && new_id <= -0x46 && old_count && !new_count)
+        if (old_queue_id <= -0x46 && new_id <= -0x46 && sel && !new_count)
             goto retool_new;
-        else if (old_queue_id <= -0x46 && new_id <= -0x46 && !old_count && !new_count)
+        else if (old_queue_id <= -0x46 && new_id <= -0x46 && !sel && !new_count)
             message_data(0x4D00, 0, -0x46 - new_id, 2, -0x46 - old_queue_id, new_count);
-        else if (old_queue_id <= -0x46 && !old_count)
+        else if (old_queue_id <= -0x46 && !sel)
             message_data(0x4D00, 0, -0x46 - old_queue_id, 1, 0, 0);
         else if (new_id <= -0x46 && !new_count) {
 retool_new:
