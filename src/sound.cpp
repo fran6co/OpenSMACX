@@ -164,7 +164,7 @@ Sound *SoundChainTail;
 // Sound wraps its device at 0x3C and asks it these questions through the
 // device's own vtable; the original tail-jumps, so the device's answer is the
 // caller's, and with no device wrapped the answer is zero.
-static __forceinline Sound *sound_device(Sound *device) {
+static inline Sound *sound_device(Sound *device) {
     return device;
 }
 
