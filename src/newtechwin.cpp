@@ -365,12 +365,14 @@ void NewTechWin::exec(int technology_id, int other_faction_id) {
     newtechwin_set_words(reinterpret_cast<uint32_t *>(&field_A14_rect_), 0, 0, 0x226, 0x258);
     inset_rect(&rect, bounds, 12, 12);
     strip = rect;
-    strip.left += 3;
     strip.right -= 3;
     strip.bottom -= 3;
     strip.top = strip.bottom - 0x14;
     RECT *const button = &ok_button_rect_;
-    *button = strip;
+    button->left = strip.left + 3;
+    button->top = strip.top;
+    button->right = strip.right;
+    button->bottom = strip.bottom;
     // 0x0048401E..0x0048403B: main_rect_.bottom is strip.top - 7 (EBP-0x20
     // reloaded, add -7, stored at +0xA30); the copy follows the update.
     rect.bottom = strip.top - 7;
@@ -383,37 +385,37 @@ void NewTechWin::exec(int technology_id, int other_faction_id) {
     category_rect_ = inner;
     category_rect_.top = title_rect_.bottom + 3;
     category_rect_.bottom = category_rect_.top + 0xd9;
+    inner.top = category_rect_.bottom + 3;
     label_rects_[0] = inner;
-    label_rects_[0].top = category_rect_.bottom + 3;
     label_rects_[0].bottom = label_rects_[0].top + 0x14;
+    inner.top = label_rects_[0].bottom + 3;
     row_rects_[0] = inner;
-    row_rects_[0].top = label_rects_[0].bottom + 3;
     row_rects_[0].bottom = row_rects_[0].top + 0x4c;
+    inner.top = row_rects_[0].bottom + 3;
     label_rects_[2] = inner;
-    label_rects_[2].top = row_rects_[0].bottom + 3;
     label_rects_[2].bottom = label_rects_[2].top + 0x14;
+    inner.top = label_rects_[2].bottom + 3;
     row_rects_[2] = inner;
-    row_rects_[2].top = label_rects_[2].bottom + 3;
     row_rects_[2].bottom = row_rects_[2].top + 0x4c;
+    inner.top = row_rects_[2].bottom + 3;
     bottom_rect_ = inner;
-    bottom_rect_.top = row_rects_[2].bottom + 3;
     bottom_rect_.bottom = main_rect_.bottom - 3;
 
     label_rects_[1] = label_rects_[0];
-    const int split = label_rects_[0].left +
+    technology_id = label_rects_[0].left +
                       (label_rects_[0].right - label_rects_[0].left + 3) / 2 - 3;
-    label_rects_[0].right = split;
-    const int split_right = split + 3;
-    label_rects_[1].left = split_right;
+    label_rects_[0].right = technology_id;
+    other_faction_id = technology_id + 3;
+    label_rects_[1].left = other_faction_id;
     row_rects_[1] = row_rects_[0];
-    row_rects_[0].right = split;
-    row_rects_[1].left = split_right;
+    row_rects_[0].right = technology_id;
+    row_rects_[1].left = other_faction_id;
     label_rects_[3] = label_rects_[2];
-    label_rects_[2].right = split;
-    label_rects_[3].left = split_right;
+    label_rects_[2].right = technology_id;
+    label_rects_[3].left = other_faction_id;
     row_rects_[3] = row_rects_[2];
-    row_rects_[2].right = split;
-    row_rects_[3].left = split_right;
+    row_rects_[2].right = technology_id;
+    row_rects_[3].left = other_faction_id;
 
     RECT *const next_button = &next_button_rect_;
     RECT *const prev_button = &prev_button_rect_;
