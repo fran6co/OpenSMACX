@@ -325,7 +325,7 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
     }
     say_tech(StringTemp, tech, 0);
     if (tech == TECH_TRANT) {
-        strcat(StringTemp, BufferJoinSpace);
+        strcat_space(StringTemp);
         int count = PlayersData[faction_id_].theory_of_everything;
         _itoa(count + 1, number_buffer, 10);
         strcat(StringTemp, number_buffer);
@@ -335,7 +335,7 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
         strchr(StringTemp, ' ') == 0) {
         while (Buffer::text_width(text_buffer) > page_width_ - 2 && strlen(text_buffer) != 0)
             text_buffer[strlen(text_buffer) - 1] = '\0';
-        strcat(text_buffer, BufferJoinSpace);
+        strcat_space(text_buffer);
         const size_t suffix_offset = strlen(text_buffer);
         strcat(text_buffer, StringTemp + suffix_offset - 1);
     }
@@ -359,7 +359,7 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
     Buffer::set_text_color(mandate_color(category), 0, 1, 1);
     StringTemp[0] = '\0';
     strcat(StringTemp, table_text(Mandate[category].name_caps));
-    strcat(StringTemp, BufferJoinSpace);
+    strcat_space(StringTemp);
     _itoa(requirement_count, number_buffer, 10);
     strcat(StringTemp, number_buffer);
     page_pen_y_ = Buffer::wrap_cent(StringTemp, page_x_ + 1, page_pen_y_,
@@ -441,7 +441,7 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
             StringTemp[0] = '\0';
             if (page_state_ == 0) strcat(StringTemp, "{");
             strcat(StringTemp, picktech_name(Facility[i].name));
-            strcat(StringTemp, BufferJoinSpace);
+            strcat_space(StringTemp);
             picktech_add_label(0x4dc / 4);
             if (page_state_ == 0) strcat(StringTemp, "}");
             UNK1(StringTemp);
@@ -518,10 +518,10 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
             if (i < FacilitySPStart || page_state_ == 0) strcat(StringTemp, "{");
             strcat(StringTemp, picktech_name(Facility[i].name));
             if (i < FacilitySPStart) {
-                strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, SocialWinOpenParenText);
+                strcat_space(StringTemp);
+                strcat_open_paren(StringTemp);
                 strcat(StringTemp, picktech_name(Facility[i].effect));
-                strcat(StringTemp, SocialWinCloseParenText);
+                strcat_close_paren(StringTemp);
             }
             if (i < FacilitySPStart || page_state_ == 0) strcat(StringTemp, "}");
             UNK1(StringTemp);
@@ -547,14 +547,14 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
             StringTemp[0] = '\0';
             strcat(StringTemp, "{");
             strcat(StringTemp, picktech_name(Chassis[chassis_id].offsv_1_name));
-            strcat(StringTemp, BufferJoinSpace);
-            strcat(StringTemp, SocialWinOpenParenText);
+            strcat_space(StringTemp);
+            strcat_open_paren(StringTemp);
             strcat(StringTemp, StringTable.get(Triad[Chassis[chassis_id].triad]));
-            strcat(StringTemp, BufferJoinSpace);
+            strcat_space(StringTemp);
             _itoa(static_cast<int>(Chassis[chassis_id].speed),
                   number_buffer, 10);
             strcat(StringTemp, number_buffer);
-            strcat(StringTemp, SocialWinCloseParenText);
+            strcat_close_paren(StringTemp);
             strcat(StringTemp, "}");
             UNK1(StringTemp);
         }
@@ -565,14 +565,14 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
             StringTemp[0] = '\0';
             strcat(StringTemp, "{");
             strcat(StringTemp, picktech_name(Armor[armor_id].name));
-            strcat(StringTemp, BufferJoinSpace);
-            strcat(StringTemp, SocialWinOpenParenText);
+            strcat_space(StringTemp);
+            strcat_open_paren(StringTemp);
             if (Armor[armor_id].defense_rating < 0) {
                 picktech_add_label(0x310 / 4);
             } else {
                 _itoa(static_cast<int>(Armor[armor_id].defense_rating), number_buffer, 10);
                 strcat(StringTemp, number_buffer);
-                strcat(StringTemp, SocialWinCloseParenText);
+                strcat_close_paren(StringTemp);
                 strcat(StringTemp, "}");
             }
             UNK1(StringTemp);
@@ -584,8 +584,8 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
             StringTemp[0] = '\0';
             strcat(StringTemp, "{");
             strcat(StringTemp, picktech_name(Weapon[weapon_id].name));
-            strcat(StringTemp, BufferJoinSpace);
-            strcat(StringTemp, SocialWinOpenParenText);
+            strcat_space(StringTemp);
+            strcat_open_paren(StringTemp);
             if (Weapon[weapon_id].offense_rating != 0) {
                 if (Weapon[weapon_id].offense_rating < 0) {
                     picktech_add_label(0x310 / 4);
@@ -599,12 +599,12 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
                 // Native485C81 retains only the label's first byte.
                 text_buffer[1] = '\0';
                 strcat(StringTemp, text_buffer);
-                strcat(StringTemp, BufferJoinSpace);
+                strcat_space(StringTemp);
                 _itoa(static_cast<int>(static_cast<uint8_t>(Weapon[weapon_id].cost)),
                       secondary_buffer, 10);
                 strcat(StringTemp, secondary_buffer);
             }
-            strcat(StringTemp, SocialWinCloseParenText);
+            strcat_close_paren(StringTemp);
             strcat(StringTemp, "}");
             UNK1(StringTemp);
         }
@@ -614,17 +614,17 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
         if (Reactor[reactor_id].preq_tech == tech) {
             StringTemp[0] = '\0';
             strcat(StringTemp, picktech_name(Reactor[reactor_id].name));
-            strcat(StringTemp, BufferJoinSpace);
-            strcat(StringTemp, SocialWinOpenParenText);
+            strcat_space(StringTemp);
+            strcat_open_paren(StringTemp);
             // Native485D8B truncates this label to one byte too.
             text_buffer[0] = '\0';
             strcat(text_buffer, StringTable.get(Labels.strings_ptr[0x13c / 4]));
             text_buffer[1] = '\0';
             strcat(StringTemp, text_buffer);
-            strcat(StringTemp, SocialWinColonSpaceText);
+            strcat_colon(StringTemp);
             _itoa(reactor_id + 1, secondary_buffer, 10);
             strcat(StringTemp, secondary_buffer);
-            strcat(StringTemp, SocialWinCloseParenText);
+            strcat_close_paren(StringTemp);
             UNK1(StringTemp);
         }
     }
@@ -634,7 +634,7 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
             StringTemp[0] = '\0';
             strcat(StringTemp, "{");
             picktech_add_label(0x314 / 4);
-            strcat(StringTemp, SocialWinColonSpaceText);
+            strcat_colon(StringTemp);
             strcat(StringTemp, VehPrototypes[proto_id].veh_name);
             strcat(StringTemp, "}");
             UNK1(StringTemp);
