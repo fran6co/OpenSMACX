@@ -105,39 +105,6 @@ int __cdecl base_claimed(int x, int y, int site1_free, int site2_free,
     return 0;
 }
 
-// WORKAROUND(inline): dead budget probe (folds to no code). Calls ahead of
-// the probe-team tech checks spend what the image spent before its late refusals:
-// range at the weapon/armour and morale clamps, base_lose_minerals and base_claimed
-// stay calls as in the image. Counted with base_compute, is_coast and worm_mod as
-// plain calls in this unit and base.h's one-level has_fac. Since the game units
-// dropped /Oi (2026-11-18) ten were too many: seven stayed out-of-line calls of
-// this probe. Five: the range at 0x4FD528 is a call as in the image and one
-// probe still is (four: no probe call, but that range expands); the frame
-// (0x1F6C) matches at every count from 4 to 10. Branchy probes plus pure-store
-// probes (bb_probe_store, cheaper than a branch) spend the amount in between: no
-// probe call and the image's call multiset. 2026-11-19: three + two; after the
-// 2026-11-19 integration the range at 0x4FD528 expanded again,
-// and four + one (or five + none) is the window again. With the secret-project
-// ternary (a_130[j] = l_84 ? 5 : -l_d8) only five + none keeps the multiset.
-// After is_port became a header inline five leave one probe call and four
-// expand that range again; three one-test probes and one two-test probe
-// (bb_probe2) give the image's call multiset with no probe call.
-static inline int bb_probe(int x) {
-    if (x == 1) {
-        x = 2;
-    }
-    return x;
-}
-static inline int bb_probe2(int x) {
-    if (x == 1) {
-        x = 2;
-    }
-    if (x == 3) {
-        x = 4;
-    }
-    return x;
-}
-
 // Complete base_build was moved here from its retired seed:
 // src/unrecovered/004f81a0.cpp. Its original findings remain below.
 // The independent base_change seed remains retained at
@@ -355,7 +322,7 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
     l_ac = 0;
     l_ec = 0;
     l_104 = 0;
-    l_124 = has_fac_built(FAC_SKUNKWORKS, BaseIDCurrentSelected);
+    l_124 = has_fac(FAC_SKUNKWORKS, BaseIDCurrentSelected, 0);
     l_a0 = 0;
     l_120 = 0;
     l_44 = 0;
@@ -806,11 +773,11 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
         l_c4 = l_c4 * 2 + 1;
     }
     // The image loads the police rating before the brood pit bit: it is the right operand.
-    if (has_fac_built(FAC_BROOD_PIT, BaseIDCurrentSelected) * 2
+    if (has_fac(FAC_BROOD_PIT, BaseIDCurrentSelected, 0) * 2
             + PlayersData[l_8].soc_effect_pending.values_[SocialEffect::POLICE] <= -3) {
         l_c4 = (l_c4 + 1) / 2;
     }
-    if (has_fac_built(FAC_BROOD_PIT, BaseIDCurrentSelected) * 2
+    if (has_fac(FAC_BROOD_PIT, BaseIDCurrentSelected, 0) * 2
             + PlayersData[l_8].soc_effect_pending.values_[SocialEffect::POLICE] <= -5) {
         l_c4 = l_c4 / 2;
     }
@@ -1878,10 +1845,6 @@ L_4fbd3d:
                       + a_4bc[l_20 + l_2c * 3] + bit_count(has_treaty(l_8, target, 7)) + 13,
                   1, 16)
             * w * 3 / (l_58 - l_60 + 3);
-        bb_probe(0);
-        bb_probe(0);
-        bb_probe(0);
-        bb_probe2(0);
         if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)) {
             if (has_tech(Chassis[5].preq_tech, target) && !has_tech(Chassis[5].preq_tech, l_8)) {
                 w /= 2;
@@ -3607,24 +3570,13 @@ Purpose: Checks whether the facility (non-SP) has been build in the currently se
 Return Value: Does current base have facility? true/false
 Status: Complete
 */
-// WORKAROUND(noinline): base_build is this unit's only caller and the image
-// calls this body out of line at all 16 sites (its copy at 0x00500290 follows
-// base_build with the other header-inline copies only base_build calls). The
-// original was a header inline whose sites base_build's /Ob2 budget refused;
-// defined plainly here, /Ob2 expands it. auto_inline(off) gives the same object
-// as the former local function-pointer stand-in and leaves the sites spelled
-// as plain calls.
-#pragma auto_inline(off)
+// Plain function defined after base_build, its only caller: /Ob2 leaves all
+// 16 sites as calls and expands has_fac here (the offset local takes the dead
+// parameter's home, [ebp+8]).
 int __cdecl has_fac_built(int facility_id) {
-    int base_id = BaseIDCurrentSelected;
-    if (facility_id >= FacilityRepStart) {
-        return false;
-    }
-    int mask;
-    bitmask(facility_id, &facility_id, &mask);
-    return (Bases[base_id].facilities_built[facility_id] & mask) != 0;
+    return has_fac(facility_id, BaseIDCurrentSelected, 0);
 }
-#pragma auto_inline(on)
+
 
 /*
 Purpose: Get the current status of the specified project.

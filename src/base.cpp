@@ -3728,7 +3728,7 @@ void __cdecl base_psych() {
     if (has_project(SP_CLINICAL_IMMORTALITY, faction)) {
         proj_talents += 2;
     }
-    BOOL punishment = has_fac_built(FAC_PUNISHMENT_SPHERE, BaseIDCurrentSelected);
+    BOOL punishment = has_fac(FAC_PUNISHMENT_SPHERE, BaseIDCurrentSelected, 0);
 
     for (int i = 8; i >= 0; i--) {
         int talent;
@@ -3749,7 +3749,7 @@ void __cdecl base_psych() {
                 police = j - 6;
             } else {
                 police = PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE]
-                    + 2 * has_fac_built(FAC_BROOD_PIT, BaseIDCurrentSelected);
+                    + 2 * has_fac(FAC_BROOD_PIT, BaseIDCurrentSelected, 0);
                 if (i) {
                     continue;
                 }

@@ -18,7 +18,7 @@
 #pragma once
 void __cdecl action_staple(int base_id);
 
-#include "general.h"  // bitmask, which has_fac_built below calls
+#include "general.h"  // bitmask, which has_fac below calls
 
 class Buffer;
 
@@ -771,13 +771,6 @@ MEASURED inline BOOL __cdecl has_project(int project_id, int faction_id) {
     return Bases[base_id].faction_id_current == faction_id;
 }
 
-inline int __cdecl has_fac_built(int facility_id, int base_id) {
-    int offset;
-    int mask;
-    bitmask(facility_id, &offset, &mask);
-    return (Bases[base_id].facilities_built[offset] & mask) != 0;
-}
-
 // Header inline, one level: 0x00421670 calls bitmask directly, and the image
 // has no two-argument has_fac_built body anywhere, so no caller ever expands
 // has_fac while calling an inner layer (the nested form did: base_growth,
@@ -813,6 +806,8 @@ MEASURED inline BOOL __cdecl has_fac(int facility_id, int base_id, int queue_cou
     return false;
 }
 
+// 0x00500290, defined after base_build (its only caller) in base_build.cpp:
+// `return has_fac(facility_id, BaseIDCurrentSelected, 0);`.
 int __cdecl has_fac_built(int facility_id);
 
 // HISTORICAL BODY PLACEMENT: breed_mod was in base.h as `MEASURED inline`; worm_mod
@@ -835,9 +830,9 @@ int __cdecl has_fac_built(int facility_id);
 // this pass's list and not a recorded match, so this is not a tracked
 // regression, but a future pass on worm_mod needs to know the source of
 // its drop is here, not there).
-// Current source has no `has_fac_built_call` adapter: its int-returning
-// two-argument has_fac_built calls the shared out-of-line bitmask directly.
-// The adapter above was a recovery source spelling, not an original identity.
+// Current source has neither adapter: the `has_fac_built_call` and two-argument
+// `has_fac_built` spellings named above were recovery inventions (the image
+// has no such body); those sites are has_fac(id, base_id, 0).
 MEASURED int __cdecl breed_mod(int base_id, int faction_id);
 
 void __cdecl compute_score(int faction, int *total, int *items, int recursive);

@@ -369,7 +369,7 @@ void BaseWin::draw_psych() {
             case 3:
                 strcat(StringTemp, label_get(325
                     + (PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE]
-                        + has_fac_built(FAC_BROOD_PIT, BaseIDCurrentSelected) * 2 <= -2)));
+                        + has_fac(FAC_BROOD_PIT, BaseIDCurrentSelected, 0) * 2 <= -2)));
                 break;
             case 4:
                 strcat(StringTemp, label_get(327));
@@ -1342,7 +1342,7 @@ void BaseWin::draw_supported(int update_mode) {
             support = 0;
         }
         if (Vehs[vehicle_id].state & 0x600000u) {
-            const int facility = has_fac_built(35, BaseIDCurrentSelected);
+            const int facility = has_fac(35, BaseIDCurrentSelected, 0);
             total += 1 + (PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE] + 2 * facility <= -5);
         }
         if (VehPrototypes[Vehs[vehicle_id].proto_id].plan == 10 && Vehs[vehicle_id].order == 3) {
@@ -1366,7 +1366,7 @@ void BaseWin::draw_supported(int update_mode) {
                 int i = 0;
                 while (1) {
                     if (i >= 1 + (PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE]
-                         + 2 * has_fac_built(35, BaseIDCurrentSelected) <= -5)) break;
+                         + 2 * has_fac(35, BaseIDCurrentSelected, 0) <= -5)) break;
                     base_panel_sprite(g_PEACE_SIGN_SPRITES[1], &MainInterfaceGlobal, icon_x, icon_y);
                     icon_x += icon_pitch;
                     ++i;
@@ -5827,7 +5827,7 @@ again:
         const int base_id = BaseIDCurrentSelected;
         int built = 0;
         if (selected < 65) {
-            built = has_fac_built(selected, base_id);
+            built = has_fac(selected, base_id, 0);
         }
         if (built) {
             set_fac(selected, focusedBaseID_, 0);
