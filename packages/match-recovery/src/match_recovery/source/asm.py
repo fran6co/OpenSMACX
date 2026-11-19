@@ -2502,6 +2502,53 @@ def strict_row_reason(row: dict, *, limit: int = 4) -> str | None:
     return unknown
 
 
+def strict_evidence_reason(strict: dict, *, limit: int = 4) -> str | None:
+    """Name the first evidence-table row that keeps a strict selection from passing.
+
+    The selection's object, literal, generated-table and shared-function
+    proofs decide its result alongside the function rows, but only the
+    explicit evidence checks carry a `reason`. A table row whose own content
+    is unknown or failed (typically an object whose initialiser points at a
+    stale `$SG` literal binding in another unit) is described from its proof
+    fields here, so the refusal says which binding to repair. Failed rows are
+    reported before unknown ones. An unusable link observation is appended
+    (or reported alone): it only matters for weak `??_E` selections.
+    """
+    found = {}
+    for table, field in (("object_definitions", "definition"), ("object_definitions", "content"),
+                         ("literal_definitions", "content"), ("generated_tables", "content"),
+                         ("shared_functions", "result")):
+        for row in strict.get(table, ()) or ():
+            if not isinstance(row, dict) or field not in row:
+                continue
+            state = row[field]
+            if state == Result.PASS or state in found:
+                continue
+            proof = row.get("proof") if isinstance(row.get("proof"), dict) else {}
+            unresolved = [str(item.get("symbol", item.get("target")))
+                          for item in proof.get("relocations", ()) or ()
+                          if isinstance(item, dict) and item.get("result") != Result.PASS]
+            text = (f"selected evidence {row.get('symbol')} in {row.get('unit')} "
+                    f"({table[:-1].replace('_', ' ')} {field}) is {state}")
+            if row.get("reason"):
+                text += f": {row['reason']}"
+            elif unresolved:
+                text += ": unproved relocation target(s) " + ", ".join(unresolved[:limit]) + (
+                    f" and {len(unresolved) - limit} more" if len(unresolved) > limit else "")
+                if any(re.fullmatch(r"\$SG[0-9]+", name) for name in unresolved):
+                    text += f"; run `recover rebind-literals --unit {row.get('unit')}` if a literal binding went stale"
+            found[state] = text
+    observation = strict.get("weak_link_observation")
+    link = (f"observed link is {observation.get('result')}: {observation['reason']}"
+            if isinstance(observation, dict) and observation.get("result") != Result.PASS
+            and observation.get("reason") else None)
+    text = found.get(Result.FAIL) or next(iter(found.values()), None)
+    if text and link:
+        # A weak `??_E` slot is only selectable through a usable observation.
+        return f"{text}; {link}"
+    return text or link
+
+
 def compare_unit(records, exe: Path | str, source: Path | str,
                  command: list[str], flags: tuple | str,
                  shared: frozenset = frozenset(), *, compiler,
@@ -2684,6 +2731,8 @@ def compare_unit(records, exe: Path | str, source: Path | str,
                             diagnostic = "selected code has unresolved references: " + ", ".join(unresolved)
                     elif isinstance(reference_report, str):
                         diagnostic = reference_report
+                if not diagnostic and strict.get("result") != Result.PASS:
+                    diagnostic = strict_evidence_reason(strict)
                 if not diagnostic and strict.get("result") != Result.PASS:
                     diagnostic = f"strict selected evidence result: {strict.get('result', Result.UNKNOWN)}"
                 if result == Result.PASS and strict.get("result") == Result.PASS:

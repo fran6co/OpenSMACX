@@ -475,6 +475,45 @@ def test_associated_refusal_keeps_selected_dependency_reason(tmp_path, monkeypat
                                    "transitive object _g has no bound extent")
 
 
+def test_associated_refusal_names_the_unproved_evidence_table_row(tmp_path, monkeypatch):
+    from match_recovery.source import asm
+
+    root, _task, raw = project(tmp_path)
+    records = read_file(root / "code/unit.cc")
+    stale = {"symbol": "_pointer", "unit": "data/p.cc", "definition": Result.PASS,
+             "content": Result.UNKNOWN,
+             "proof": {"result": Result.UNKNOWN, "relocations": [
+                 {"offset": 0, "result": Result.UNKNOWN, "symbol": "$SG51293"}]}}
+    strict = {"result": Result.UNKNOWN,
+              "functions": [{"address": f"{records[0].address:08X}", "result": Result.PASS}],
+              "object_definitions": [{"symbol": "_fine", "unit": "data/p.cc",
+                                      "definition": Result.PASS, "content": Result.PASS}, stale],
+              "selected_evidence": {"checks": []}}
+    monkeypatch.setattr(asm, "verify_records", lambda *_a, **_k: strict)
+    measure = lambda: compare_unit(records, root / "image.exe", root / "code/unit.cc", (),
+                                   (("first",),), compiler=lambda *_: raw, root=root,
+                                   strict_command_for=lambda _path: ()).results[0][1]
+    observed = measure()
+    assert observed.verdict is Tier.REFUSED
+    assert observed.diagnostic == (
+        "selected evidence _pointer in data/p.cc (object definition content) is unknown: "
+        "unproved relocation target(s) $SG51293; run `recover rebind-literals --unit data/p.cc` "
+        "if a literal binding went stale")
+    # A failed row outranks an unknown one, and an unusable link observation
+    # is appended because weak-slot selections depend on it.
+    strict["generated_tables"] = [{"symbol": "??_7T@@6B@", "unit": "code/unit.cc",
+                                   "content": Result.FAIL, "reason": "slot 2 differs"}]
+    strict["weak_link_observation"] = {"result": Result.UNKNOWN, "reason": "inputs changed"}
+    assert measure().diagnostic == (
+        "selected evidence ??_7T@@6B@ in code/unit.cc (generated table content) is fail: "
+        "slot 2 differs; observed link is unknown: inputs changed")
+    # Without any table row the observation alone explains the refusal, and
+    # with nothing to say the bare result remains.
+    assert asm.strict_evidence_reason({"weak_link_observation": strict["weak_link_observation"]}) == (
+        "observed link is unknown: inputs changed")
+    assert asm.strict_evidence_reason({"object_definitions": [strict["object_definitions"][0]]}) is None
+
+
 def test_associated_refusal_reports_the_failing_variant_reason(tmp_path, monkeypatch):
     from match_recovery.source import asm
 
