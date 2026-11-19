@@ -2318,7 +2318,7 @@ void __cdecl planetfall(int faction_id) {
     X_pop(StringTemp, 0);
 }
 
-// ORIGINAL: 0x00589330 ?time_controls_dialog@@YAXPAUPopup@@@Z 0x00589330-0x0058954A
+// ORIGINAL: 0x00589330 ?time_controls_dialog@@YAXPAUPopup@@@Z 0x00589330-0x0058954A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:time-control-calculation-and-dialog", "historical seed:src/recovered/units/00589330.cpp", "Pinned original native instructions and existing typed source layout; seed aliases independently reconciled."], "reason": "Recover all six original time-control rows through Popup-owned Dialogs, StringTable and existing label_get; preserve numeric field order and punctuation."}
 // symbol    ?time_controls_dialog@@YAXPAVPopup@@@Z
 void __cdecl time_controls_dialog(Popup *popup) {
