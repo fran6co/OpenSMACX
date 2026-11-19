@@ -45,6 +45,7 @@ char ReplayLocalizedPrefix[8];
 // The short localized replay title at 0x00945DFC is a distinct four-byte
 // writable object, immediately before ReplayLocalizedPrefix.
 // RECOVERY_OBJECT: v2 0x00945DFC 0x00945E00 ?ReplayLocalizedTitle@@3PADA 0x005AD720
+char ReplayLocalizedTitle[4];
 
 /*
 Purpose: ?on_left_click@ReplayWin@@QAEXHH@Z - dispatch to slot 0xe8 of this object's OWN
@@ -377,7 +378,6 @@ void ReplayWin::on_redraw() {
     make_bases();
     map_win_.on_redraw();
 }
-char ReplayLocalizedTitle[4];
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005AD720 ?init@ReplayWin@@QAEXXZ 0x005AD720-0x005AD99A

@@ -69,6 +69,7 @@ FileWinConstructPrefix FileWinInitSharedParameters;
 // loader-zero byte and its first-byte use are established; no larger capacity
 // or neighboring extent is claimed.
 // RECOVERY_OBJECT: v1 0x009B90B0 ?FileWinListWindowTitle@@3PADA
+char FileWinListWindowTitle[1] = {0};
 
 /*
 Purpose: Compose a FileWin from four member subobjects (two FlatButtons, an
@@ -154,8 +155,6 @@ void FileWin::close() {
         directory_list_handle_ = 0;
     }
 }
-
-char FileWinListWindowTitle[1] = {0};
 
 
 

@@ -2297,14 +2297,10 @@ int SocialWin::on_button_text_draw(GraphicWin *window, char *text, int button_id
 // receiver's rectangle; preserve that singleton relationship.
 // DefaultFontFace and DefaultLargeFontFace are the genuine source-owned
 // globals already bound to the original face-name slots at 0x00691B2C/30.
-// RECOVERY_LITERAL: v1 0x006874B0 0x006874BB $SG59862 0x004AFB60
-// "socwin.pcx" is the writable source-owned array for original 0x006874B0,
-// whose pinned initial bytes are "socwin.pcx".
+// The "socwin.pcx" literal is original 0x006874B0.
 // TutorialStage 0x008CC228 - the int the tutorial entry stores 5 into.
 // TutorialSocRect 0x008C5380 - the RECT TutWin::soc_rect fills.
-// RECOVERY_LITERAL: v1 0x006874BC 0x006874C3 $SG59972 0x004AFB60
-// "SOCWIN" is the writable source-owned array for original
-// 0x006874BC, whose pinned initial bytes are "SOCWIN".
+// The "SOCWIN" literal is original 0x006874BC.
 // ConsoleGlobal is the modal parent passed to the original window init.
 int __cdecl pop_wait();  // 0x005398E0, defined in faction.cpp
 int __cdecl tut_check2(int veh_id);  // 0x004BA650, defined in tutwin.cpp
