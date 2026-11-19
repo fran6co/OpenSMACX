@@ -873,16 +873,16 @@ void CouncWin::init(int proposal, int faction_id) {
                     }
                 }
             }
-            proposal = 0;
+            int done = 0;
             for (candidate = 1; candidate < MaxPlayerNum; candidate++) {
                 if (Players[candidate].rule_flags & RFLAG_ALIEN) continue;
                 if (!is_alive(candidate)) continue;
                 if (!eligible(candidate)) continue;
                 int best = 0;
-                for (int other = 1; other < MaxPlayerNum; other++) {
-                    if (!(Players[other].rule_flags & RFLAG_ALIEN) && other != candidate
-                        && best <= support[other]) {
-                        best = support[other];
+                for (proposal = 1; proposal < MaxPlayerNum; proposal++) {
+                    if (!(Players[proposal].rule_flags & RFLAG_ALIEN) && proposal != candidate
+                        && best <= support[proposal]) {
+                        best = support[proposal];
                     }
                 }
                 const int own = support[candidate];
@@ -891,7 +891,7 @@ void CouncWin::init(int proposal, int faction_id) {
                 diplomacy_check(local, candidate, 0);
                 if (DiploFriction >= 15) continue;
                 if (DiploScratchFA60) continue;
-                if (proposal) continue;
+                if (done) continue;
                 if (PlayersData[candidate].diplo_treaties[local] & 0x40c31) continue;
                 const int amount = min(PlayersData[candidate].energy_reserves * 3 / 4,
                     GameDataStateStorage.fields_.turn_current_num_
@@ -936,7 +936,7 @@ void CouncWin::init(int proposal, int faction_id) {
                 parse_says(3, Players[candidate].name_leader, -1, -1);
                 clock_wait(500);
                 if (X_pops("VOTEFORMETECH", 0, FactionDiplomacyPortraits[candidate], nullptr)) {
-                    proposal = 1;
+                    done = 1;
                     tech_achieved(local, DiploScratchF800, candidate, 0);
                     tech_achieved(local, DiploScratchF80C, candidate, 0);
                     set_vote(local, candidate);
