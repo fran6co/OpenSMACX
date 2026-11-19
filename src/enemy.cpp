@@ -8992,19 +8992,8 @@ Status: Complete
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x00591B50 0x005C4FD0
-int __cdecl site_at(int x, int y, int is_ocean_site) {
-    Map *tile = map_loc(x, y);
-    if (tile->bit & BIT_BASE_RADIUS) {
-        return 0;
-    }
-    int site = tile->val2 >> 4;
-    if (site != 0) {
-        return site;
-    }
-    const int generated = world_site(x, y, is_ocean_site);
-    site_set(x, y, generated);
-    return generated;
-}
+// body src/map.h
+// BODY IN map.h, as `MEASURED inline`.
 
 /*
 Purpose: Check whether a faction can see the specified tile.

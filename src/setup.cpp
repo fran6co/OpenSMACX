@@ -1280,15 +1280,7 @@ search:
                 || (occupied && conqueror != -282
                     && Continents[region].tile_count / (bit_count(occupied) + 1) < 64 - score)) goto search;
             // 5B1DBA: map_loc is formed again after the bit_count call.
-            int quality;
-            if (map_loc(x, y)->bit & 0x1000) quality = 0;
-            else {
-                quality = map_loc(x, y)->val2 >> 4;
-                if (!quality) {
-                    quality = world_site(x, y, 0);
-                    site_set(x, y, quality);
-                }
-            }
+            int quality = site_at(x, y, 0);
             if ((quality < 15 - score && !GameDataStateStorage.fields_.turn_current_num_ && !(GameDataStateStorage.fields_.game_rules_ & 0x10))
                 || (!(Players[faction].rule_flags & 0x100) && (isolation < (1024 - attempts) / 128 || !isolation))
                 || (GameDataStateStorage.fields_.turn_current_num_ && conqueror != -282 && map_loc(x, y)->territory > 0)

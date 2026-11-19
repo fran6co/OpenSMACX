@@ -2409,21 +2409,9 @@ void __cdecl reset_territory() {
                     }
                 }
             }
-            // if/else, NOT `site = 0` then an inverted guard. The image
-            // falls THROUGH to the zero and jumps to the val2 read
-            // (`test ah, 0x10 / je 0x0052401F`), which is what the positive
-            // test produces; the guard-clause form inverts every branch in
-            // this block.
-            int site;
-            if (tile->bit & BIT_BASE_RADIUS) {
-                site = 0;
-            } else {
-                site = tile->val2 >> 4;
-                if (!site) {
-                    site = world_site(x, y, false);
-                    site_set(x, y, site);
-                }
-            }
+            // site_at, the map.h header inline: the expansion gives the
+            // image's 0x14 frame (the hand-written if/else had 0x10).
+            int site = site_at(x, y, false);
             // `Continents[region]` indexed at each site: the image keeps
             // `region * 28` in EDI as an index (`[edi + 0x9AA738]`). Earlier
             // a `Continent *` beat this; with the loop/BaseFindDist fixes the

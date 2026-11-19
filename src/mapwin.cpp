@@ -4886,18 +4886,7 @@ nexus_done:
         char numbuf[80];
         if ((a6 & 4) != 0) {
             StringTemp[0] = 0;
-            if ((map_tiles()[MapLongitude * a8 + local_14].bit & 0x1000) != 0) {
-                uVar12 = 0;
-            } else {
-                const int stored_site = map_tiles()[MapLongitude * a8 + local_14].val2 >> 4;
-                if (stored_site != 0) {
-                    uVar12 = stored_site;
-                } else {
-                    const int new_site = world_site(a7, a8, 0);
-                    site_set(a7, a8, new_site);
-                    uVar12 = new_site;
-                }
-            }
+            uVar12 = site_at(a7, a8, 0);
             _itoa(uVar12, numbuf, 10);
             strcat(StringTemp, numbuf);
             text_rect.left = a9;

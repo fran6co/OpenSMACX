@@ -4440,16 +4440,7 @@ void Console::give_hints() {
                     continue;
                 }
 
-                int site;
-                if ((map_loc(x, y)->bit & 0x1000u) != 0) {
-                    site = 0;
-                } else {
-                    site = map_loc(x, y)->val2 >> 4;
-                    if (site == 0) {
-                        site = world_site(x, y, 0);
-                        site_set(x, y, site);
-                    }
-                }
+                int site = site_at(x, y, 0);
                 if (site >= best_site) {
                     best_site = site;
                     best_x = x;
@@ -4781,16 +4772,7 @@ void Console::give_hints() {
     proto_id = Vehs[selected_vehicle_].proto_id;
     if (VehPrototypes[proto_id].plan == PLAN_COLONIZATION &&
         (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x10000u) == 0) {
-        int site;
-        if ((map_loc(cursor_x, cursor_y)->bit & 0x1000u) != 0) {
-            site = 0;
-        } else {
-            site = map_loc(cursor_x, cursor_y)->val2 >> 4;
-            if (site == 0) {
-                site = world_site(cursor_x, cursor_y, 0);
-                site_set(cursor_x, cursor_y, site);
-            }
-        }
+        int site = site_at(cursor_x, cursor_y, 0);
         if (!(site < 4 &&
             site < PlayersData[faction_id_].unk_82[map_loc(cursor_x, cursor_y)->region])) {
         for (int site_i = 0; site_i < 21; ++site_i) {
@@ -4803,16 +4785,7 @@ void Console::give_hints() {
             if (owner >= 0 && owner != faction_id_) {
                 continue;
             }
-            int candidate_site;
-            if ((map_loc(x, y)->bit & 0x1000u) != 0) {
-                candidate_site = 0;
-            } else {
-                candidate_site = map_loc(x, y)->val2 >> 4;
-                if (candidate_site == 0) {
-                    candidate_site = world_site(x, y, 0);
-                    site_set(x, y, candidate_site);
-                }
-            }
+            int candidate_site = site_at(x, y, 0);
             if (candidate_site > site) {
                 return;
             }

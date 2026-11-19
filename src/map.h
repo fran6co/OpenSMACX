@@ -855,5 +855,21 @@ MEASURED void __cdecl map_shutdown();
 void __cdecl alt_set(int x, int y, int altitude);
 void __cdecl delete_landmark(int x, int y);
 
-// Existing source-owned APIs used by enemy movement.
-int __cdecl site_at(int x, int y, int is_ocean_site);
+// site_at is a header inline like is_known: its out-of-line copy 0x005797D0
+// sits in the run of header-inline copies in enemy_move's unit (x_dist,
+// site_at, is_known, base_who, ...), the image calls it only from enemy_move,
+// and every other caller (reset_territory, give_hints, setup_player,
+// MapWin::gen_terrain_poly) expands the cached-site lookup.
+MEASURED inline int __cdecl site_at(int x, int y, int is_ocean_site) {   // 005797D0
+    Map *tile = map_loc(x, y);
+    if (tile->bit & BIT_BASE_RADIUS) {
+        return 0;
+    }
+    int site = tile->val2 >> 4;
+    if (site != 0) {
+        return site;
+    }
+    const int generated = world_site(x, y, is_ocean_site);
+    site_set(x, y, generated);
+    return generated;
+}
