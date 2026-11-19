@@ -2793,6 +2793,10 @@ Registers and scratch choice
 - A named per-iteration index `int k = i + C; A[k].f` gives a byte-offset IV
   off the table (`cmp reg,(N+C)*stride; jl`); `A[i + C].f` at each use gives a
   pointer IV tested against the table address (read_rules 0x00587466).
+- x87: `fstp st(N)` followed by pops before a libm call means the argument
+  was rounded through a `float` local (`float sq = …; sqrt(sq)`); only
+  `fstp st(0)` pops and a direct `fstp qword [esp]` mean it was not
+  (Vector::normalize 0x00634520).
 - `inc eax; je` after a call is `f() + 1 == 0`; `== -1` gives `cmp eax,-1`.
 - A `v = 0` before a large switch can become a function-wide zero register.
 
