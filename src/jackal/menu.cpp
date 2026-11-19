@@ -507,9 +507,9 @@ void Menu::on_redraw() {
             if (mnemonic) {
                 int height = rect.bottom - rect.top;
                 int color = foreground_color();
-                int leading = MenuDefaultFont->internal_leading();
+                inset = MenuDefaultFont->internal_leading();
                 int letter_width = text_width(mnemonic, 1);
-                int y = rect.bottom - (height + leading - text_height()) / 2;
+                int y = rect.bottom - (height + inset - text_height()) / 2;
                 int x = text_width(text, static_cast<int>(mnemonic - text)) + rect.right;
                 hline(x, x + letter_width, y, color);
             }
