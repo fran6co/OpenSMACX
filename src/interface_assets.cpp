@@ -4697,15 +4697,14 @@ void __cdecl load_vehicles() {
         }
         for (variant = 0; variant < count; ++variant) {
             int sheet_x = 2 + variant * 102;
-            int sheet_y = source_y;
             if (row == 9) {
                 sheet_x = 716;
-                sheet_y = 233;
+                source_y = 233;
             }
             sheet.change_color(0x107, 0x109);
             sheet.change_color(0x106, 0x109);
             g_VEH_SPRITES[chassis * 8 + variant].extract(
-                &sheet, 0x109, sheet_x, sheet_y, 100, 75, 0);
+                &sheet, 0x109, sheet_x, source_y, 100, 75, 0);
             Chassis[chassis].sprite_flag_y_off[variant] = 0;
             Chassis[chassis].sprite_flag_x_off[variant] = 0;
             Chassis[chassis].sprite_unk1_y_off[variant] = 0;
@@ -4715,7 +4714,7 @@ void __cdecl load_vehicles() {
             Chassis[chassis].sprite_unk3_y_off[variant] = 157;
             Chassis[chassis].sprite_unk3_x_off[variant] = 157;
             for (x = 0; x < 100; ++x) {
-                for (marker_y = sheet_y - 2; marker_y <= sheet_y - 1; ++marker_y) {
+                for (marker_y = source_y - 2; marker_y <= source_y - 1; ++marker_y) {
                     // The first probe's result is ignored, but its call is real.
                     sheet.get_pixel(sheet_x + x, marker_y - 1);
                     if (sheet.get_pixel(sheet_x + x, marker_y) == 5)
@@ -4726,9 +4725,9 @@ void __cdecl load_vehicles() {
             }
             for (y = 0; y < 75; ++y) {
                 for (marker_x = sheet_x - 2; marker_x <= sheet_x - 1; ++marker_x) {
-                    if (sheet.get_pixel(marker_x, sheet_y + y) == 5)
+                    if (sheet.get_pixel(marker_x, source_y + y) == 5)
                         Chassis[chassis].sprite_flag_y_off[variant] = static_cast<unsigned char>(y);
-                    if (sheet.get_pixel(marker_x, sheet_y + y) == 2)
+                    if (sheet.get_pixel(marker_x, source_y + y) == 2)
                         Chassis[chassis].sprite_unk1_y_off[variant] = static_cast<unsigned char>(y);
                 }
             }
