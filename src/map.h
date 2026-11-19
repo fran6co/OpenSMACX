@@ -653,14 +653,16 @@ void __cdecl synch_bit(int x, int y, int faction_id);
 
 MEASURED inline int __cdecl veh_who(int x, int y) {
     Map *tile = map_loc(x, y);
-    if (tile->bit & BIT_VEH_IN_TILE) {
-        // `int`: the image branches with `jl` at 0x00500281 - the SIGNED
-        // test - and `uint32_t` gives `jb`, one opcode different in each of
-        // the three siblings that share this shape.
-        int owner = tile->val2 & 0xF;
-        if (owner < 8) {
-            return owner;
-        }
+    // `int`: the image branches with `jl` at 0x00500281 - the SIGNED test -
+    // and `uint32_t` gives `jb`, one opcode different in each of the three
+    // siblings that share this shape.
+    // One condition with the owner assigned inside it: the same copy
+    // (0x00500250) and the same expansions as two nested ifs, but one /Ob2
+    // cost class cheaper. enemy_move expands it at 0x56CA61 and calls the
+    // on_map after it (0x56CC83) only with this body (MATCHING_GUIDE 2.8).
+    int owner;
+    if (tile->bit & BIT_VEH_IN_TILE && (owner = tile->val2 & 0xF) < 8) {
+        return owner;
     }
     return -1;
 }
