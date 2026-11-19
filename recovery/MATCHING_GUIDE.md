@@ -1227,6 +1227,18 @@ Using it
   call site) and rewrite them as calls, so /Ob2 expands the helper and
   leaves its inner call out of line as the image does (par-3, 2026-11-19;
   the `Win::is_visible`/`screen_to_client` pattern in AGENTS.md).
+- **Missing owner, not missing budget** (high; battle_fight 0x00506AF0,
+  2026-11-19 par-1). In a very large caller, dead pass-1 spend at the top
+  (up to 32 if-units in battle_fight) refuses only nested (pass-2) sites,
+  never a pass-1 site: B grows with the caller, so pass 1 has ample room.
+  So when the image *calls* a pass-1-looking site for a callee that it
+  *expands* elsewhere in the same function, the original's site was inside
+  an inline owner (predicate, helper, wrapper) that the caller expanded;
+  our source writes that owner out. Screen: add a dead probe at the top;
+  if the called site does not flip, look for the owner (a natural helper
+  boundary, or the same statement run in other functions), not for spend.
+  battle_fight's population-loss test as an inline predicate turns
+  has_project and veh_who into calls as in the image.
 - **When to stop.** Dead probes that change other teardowns before they move
   the target mean that pass 1 is the binding limit, not pass 2. Look for a
   structural difference: which object owns the teardown, or a per-TU header
