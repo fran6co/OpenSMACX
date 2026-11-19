@@ -898,8 +898,8 @@ int __cdecl FileWin::init_class() {
         free(s_filewin_text_ptr);
         s_filewin_text_ptr = nullptr;
     }
-// RECOVERY_LITERAL: v1 0x006971CC 0x006971D4 $SG45774 0x00614D90
-// RECOVERY_LITERAL: v1 0x006971D4 0x006971DB $SG45775 0x00614D90
+// RECOVERY_LITERAL: v1 0x006971CC 0x006971D4 $SG45775 0x00614D90
+// RECOVERY_LITERAL: v1 0x006971D4 0x006971DB $SG45776 0x00614D90
     if (text_open("jackal", "FILEWIN") != 0) {
         return 6;
     }
