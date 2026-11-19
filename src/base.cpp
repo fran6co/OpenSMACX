@@ -4879,7 +4879,7 @@ void __cdecl base_terraform(int force_improve) {
         }
 
         Map *sq = map_loc(x, y);
-        int alt = sq->climate >> 5;
+        rain_sum = sq->climate >> 5;
         items = sq->bit;
         uint32_t farm = items & BIT_FARM;
         int solar_or_bore = (items & BIT_SOLAR_TIDAL) || (items & BIT_THERMAL_BORE);
@@ -4892,14 +4892,14 @@ void __cdecl base_terraform(int force_improve) {
         int sensor = is_sensor(x, y);
         sq = map_loc(x, y);
         items = sq->bit;
-        rain_sum = 0;
+        int has_special = 0;
         if (items & (BIT_CONDENSER | BIT_ECH_MIRROR | BIT_THERMAL_BORE)) {
-            rain_sum = 1;
+            has_special = 1;
         }
         uint32_t forest = items & BIT_FOREST;
         int fungus = ((items & BIT_FUNGUS) && (sq->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF) ? 4 : 0;
         uint32_t worked = (1 << i) & BaseCurrent->resource_sqr_radius;
-        best_region = alt - 2 < 0 ? 0 : alt - 2;
+        int height = rain_sum - 2 < 0 ? 0 : rain_sum - 2;
         if (!worked && worked_improved == worked_rough && !unworked_rich && !forest && !fungus) {
             if (food_want && rocky < 2) {
                 worked = 1;
@@ -4907,7 +4907,7 @@ void __cdecl base_terraform(int force_improve) {
         } else {
             if (forest) {
                 // Forest stays unless the square is good enough for something else.
-                score = (sensor ? -1 : 1) + best_region + rocky + food_want;
+                score = (sensor ? -1 : 1) + height + rocky + food_want;
                 if (has_tech(Terraforming[TERRA_SOIL_ENR].prerequisite_tech[0], faction)) {
                     score++;
                 }
@@ -4922,7 +4922,7 @@ void __cdecl base_terraform(int force_improve) {
                 }
             }
             if (fungus) {
-                int value = (sensor == 0) + best_region + rocky + food_want;
+                int value = (sensor == 0) + height + rocky + food_want;
                 if (value < fungus_yield) {
                     continue;
                 }
@@ -4962,12 +4962,12 @@ void __cdecl base_terraform(int force_improve) {
         }
 
         // Solar collector.
-        if ((energy_need || (BaseCurrent->state & BSTATE_UNK_8000)) && !forest && !rain_sum
+        if ((energy_need || (BaseCurrent->state & BSTATE_UNK_8000)) && !forest && !has_special
             && (!sensor || sensors > (worked ? 1 : 2))
-            && (!mine_or_bore || (!mineral_need && best_region >= 2))) {
-            int high = (energy_need > 1 && best_region > 1) ? 1 : 0;
-            if (food >= (farm != 0) + 1 - high && best_region) {
-                int value = best_region * 3;
+            && (!mine_or_bore || (!mineral_need && height >= 2))) {
+            int high = (energy_need > 1 && height > 1) ? 1 : 0;
+            if (food >= (farm != 0) + 1 - high && height) {
+                int value = height * 3;
                 if (bonus == 2 || rocky == 1) {
                     value += 2;
                 }
@@ -5020,12 +5020,12 @@ void __cdecl base_terraform(int force_improve) {
         }
 
         // Raise land: only one very high square may be considered.
-        if (alt >= 5 && ++high_tiles > 1) {
+        if (rain_sum >= 5 && ++high_tiles > 1) {
             mirror_score = -99999;
         }
         if (!wet && mirror_score > -99999 && (mirror_score > -9999 || bonus == 1)) {
             score = RadiusOffsetX[i] * RadiusOffsetX[i] * 2;
-            if (alt == 3) {
+            if (rain_sum == 3) {
                 if (rocky == 1) {
                     score += 3;
                 }
@@ -5041,7 +5041,7 @@ void __cdecl base_terraform(int force_improve) {
                 }
             }
             int ocean_left = ocean_tiles;
-            for (int r = 1, level = alt; r < alt + 1; r++, level--) {
+            for (int r = 1, level = rain_sum; r < rain_sum + 1; r++, level--) {
                 int found = FALSE;
                 for (int k = RadiusRange[r - 1]; k < RadiusRange[r]; k++) {
                     int x2 = wrap_map_x(x + RadiusOffsetX[k]);
@@ -5087,9 +5087,9 @@ void __cdecl base_terraform(int force_improve) {
         // Mine.
         if ((!mineral_need && ((food_want < 1 - Rules.tgl_nutrient_effect_with_mine && food_want) || rocky))
             || (sensor && sensors <= (worked ? 1 : 2))
-            || (solar_or_bore && (energy_need || best_region >= 2))
+            || (solar_or_bore && (energy_need || height >= 2))
             || food_need || forest
-            || (rocky == 1 && best_region >= 2 && mineral_need <= 1)
+            || (rocky == 1 && height >= 2 && mineral_need <= 1)
             || (food + mine_or_bore < (farm != 0) + 2 && rocky == 1)) {
             // Not a mine candidate; only the farm check below applies.
         } else {
@@ -5131,7 +5131,7 @@ void __cdecl base_terraform(int force_improve) {
                 score += BaseCurrent->eco_damage * fungus * 2;
             }
             if (worked || mineral_need > 1 || (food_want && !rocky)) {
-                if (!mine_or_bore && !rain_sum) {
+                if (!mine_or_bore && !has_special) {
                     if (score > best) {
                         best = score;
                         best_idx = i;
@@ -5147,7 +5147,7 @@ void __cdecl base_terraform(int force_improve) {
                         best_idx = i;
                         best_kind = 5;
                     }
-                } else if (mine_or_bore && !rain_sum && !farm && rocky < 2
+                } else if (mine_or_bore && !has_special && !farm && rocky < 2
                            && ((sq2->climate & 0x18) || bonus == 1) && score > best) {
                     best = score;
                     best_idx = i;
@@ -5223,7 +5223,7 @@ void __cdecl base_terraform(int force_improve) {
                 if ((sq2->climate & ~0x1F) < ALT_BIT_SHORE_LINE) {
                     continue;
                 }
-                if ((sq2->climate >> 5) < alt) {
+                if ((sq2->climate >> 5) < rain_sum) {
                     score = -1;
                 }
                 if (sq2->bit & BIT_THERMAL_BORE) {
