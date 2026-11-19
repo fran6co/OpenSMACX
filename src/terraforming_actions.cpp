@@ -79,6 +79,8 @@
 // After the dead-helper batch (d64959c815), whole-unit fe sweep: both exact at 19, 21-24, 26 and 38, so 22.
 // Re-tuned 2026-11-19 against the sprite.h/popup.h headers (extern block swept with the function block at 26):
 // action_airdrop exact at 6, 8, 14-15, 24, 26-29, 34, 36, 40, 42-45, 47, 52-55, 59, 61-62, so 53.
+// After par-1's header batch (015360dbf5), whole-unit fe sweep of the extern block: every
+// fe-exact function of the unit stays exact at 2-4, 28, 39-44, 48, 50, 54, 56-61, so 58.
 // CANARY: 0x004CEDE0 ?action_give@@YAXHH@Z residues 17-20,25-27
 // CANARY-PADS: extern TerraformingActionsExternPad
 
@@ -135,6 +137,11 @@ extern int TerraformingActionsExternPad49;
 extern int TerraformingActionsExternPad50;
 extern int TerraformingActionsExternPad51;
 extern int TerraformingActionsExternPad52;
+extern int TerraformingActionsExternPad53;
+extern int TerraformingActionsExternPad54;
+extern int TerraformingActionsExternPad55;
+extern int TerraformingActionsExternPad56;
+extern int TerraformingActionsExternPad57;
 #include "vector.h"  // vector_add operates on actual three-float arrays.
 
 extern void __cdecl unspot_stack(int veh_id);
@@ -275,9 +282,9 @@ int __cdecl action_build(int veh_id, char *base_name) {
     int x = Vehs[veh_id].x;
     int y = Vehs[veh_id].y;
     int faction_id = Vehs[veh_id].faction_id;
-// RECOVERY_LITERAL: v1 0x00687B60 0x00687B6C $SG61887 0x004C96E0
+// RECOVERY_LITERAL: v1 0x00687B60 0x00687B6C $SG61892 0x004C96E0
     log_say("Action Base", x, y, faction_id);
-// RECOVERY_LITERAL: v1 0x00687B6C 0x00687B7D $SG61888 0x004C96E0
+// RECOVERY_LITERAL: v1 0x00687B6C 0x00687B7D $SG61893 0x004C96E0
     log_say("Action Base Turn", GameDataStateStorage.fields_.turn_current_num_, 0, 0);
     if ((map_loc(x, y)->val3 >> 6) > 1) {
         rocky_set(x, y, 1);
@@ -628,7 +635,7 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
         if (action == TERRA_THERMAL_BORE && faction == ConsoleGlobal.faction_id_
             && base_id >= 0 && Bases[base_id].faction_id_current == faction) {
             parse_says(0, Bases[base_id].name_string, -1, -1);
-// RECOVERY_LITERAL: v1 0x00687B80 0x00687B8D $SG62004 0x004C9B00
+// RECOVERY_LITERAL: v1 0x00687B80 0x00687B8D $SG62009 0x004C9B00
             NetMsgPrimary.pop("BOREHOLEMINE", 5000, 0, 0);
         }
     }
@@ -646,7 +653,7 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
                 && Rules.minerals_harvesting_forest) {
                 parse_says(0, Bases[near_base].name_string, -1, -1);
                 parse_num(0, Rules.minerals_harvesting_forest);
-// RECOVERY_LITERAL: v1 0x00687B90 0x00687B9E $SG62011 0x004C9B00
+// RECOVERY_LITERAL: v1 0x00687B90 0x00687B9E $SG62016 0x004C9B00
                 NetMsgPrimary.pop("HARVESTFOREST", 5000, 0, 0);
             }
             TutWinBaseWindow.check_base(near_base);
@@ -668,10 +675,10 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
             parse_says(0, Bases[TerraformDrownedBaseId].name_string, -1, -1);
             parse_says(1, get_adjective(faction), -1, -1);
             if (faction == ConsoleGlobal.faction_id_) {
-// RECOVERY_LITERAL: v1 0x00687BA0 0x00687BAA $SG62021 0x004C9B00
+// RECOVERY_LITERAL: v1 0x00687BA0 0x00687BAA $SG62026 0x004C9B00
                 NetMsgPrimary.pop("TERRAMINE", 5000, 0, 0);
             } else {
-// RECOVERY_LITERAL: v1 0x00687BAC 0x00687BB7 $SG62023 0x004C9B00
+// RECOVERY_LITERAL: v1 0x00687BAC 0x00687BB7 $SG62028 0x004C9B00
                 NetMsgPrimary.pop("TERRAYOURS", 5000, 0, 0);
             }
         }
@@ -681,10 +688,10 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
             parse_says(0, Bases[MapBaseIdClosestSubmergedVeh[faction]].name_string, -1, -1);
             parse_says(1, get_adjective(faction), -1, -1);
             if (faction == ConsoleGlobal.faction_id_) {
-// RECOVERY_LITERAL: v1 0x00687BB8 0x00687BC2 $SG62026 0x004C9B00
+// RECOVERY_LITERAL: v1 0x00687BB8 0x00687BC2 $SG62031 0x004C9B00
                 NetMsgPrimary.pop("DROWNMINE", 5000, 0, 0);
             } else {
-// RECOVERY_LITERAL: v1 0x00687BC4 0x00687BCF $SG62028 0x004C9B00
+// RECOVERY_LITERAL: v1 0x00687BC4 0x00687BCF $SG62033 0x004C9B00
                 NetMsgPrimary.pop("DROWNYOURS", 5000, 0, 0);
             }
         }
@@ -710,47 +717,47 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
                 if (!is_ocean) {
                     switch (action) {
                     case TERRA_FARM:
-// RECOVERY_LITERAL: v1 0x00687BD0 0x00687BD9 $SG62042 0x004C9B00
+// RECOVERY_LITERAL: v1 0x00687BD0 0x00687BD9 $SG62047 0x004C9B00
                         TutorialWindow.tut_map("MADEFARM", x, y, -1, &g_TER1_FARM_SPRITES[3], 1, -1, -1);
                         break;
                     case TERRA_SOIL_ENR:
-// RECOVERY_LITERAL: v1 0x00687BDC 0x00687BE5 $SG62044 0x004C9B00
+// RECOVERY_LITERAL: v1 0x00687BDC 0x00687BE5 $SG62049 0x004C9B00
                         TutorialWindow.tut_map("MADESOIL", x, y, -1, &g_TER1_SOIL_ENRICHER_SPRITES[3], 1, -1, -1);
                         break;
                     case TERRA_MINE:
-// RECOVERY_LITERAL: v1 0x00687BE8 0x00687BF1 $SG62046 0x004C9B00
+// RECOVERY_LITERAL: v1 0x00687BE8 0x00687BF1 $SG62051 0x004C9B00
                         TutorialWindow.tut_map("MADEMINE", x, y, -1, &g_TER1_MINE_SPRITE, 1, -1, -1);
                         break;
                     case TERRA_SOLAR_TIDAL:
-// RECOVERY_LITERAL: v1 0x00687BF4 0x00687BFE $SG62048 0x004C9B00
+// RECOVERY_LITERAL: v1 0x00687BF4 0x00687BFE $SG62053 0x004C9B00
                         TutorialWindow.tut_map("MADESOLAR", x, y, -1, &g_TER1_SOLAR_COLLECTOR_SPRITE, 1, -1, -1);
                         break;
                     case TERRA_FOREST:
-// RECOVERY_LITERAL: v1 0x00687C00 0x00687C0B $SG62050 0x004C9B00
+// RECOVERY_LITERAL: v1 0x00687C00 0x00687C0B $SG62055 0x004C9B00
                         TutorialWindow.tut_map("MADEFOREST", x, y, veh_id, 0, 1, -1, -1);
                         break;
                     case TERRA_ROAD:
-// RECOVERY_LITERAL: v1 0x00687C0C 0x00687C15 $SG62052 0x004C9B00
+// RECOVERY_LITERAL: v1 0x00687C0C 0x00687C15 $SG62057 0x004C9B00
                         TutorialWindow.tut_map("MADEROAD", x, y, veh_id, 0, 1, -1, -1);
                         break;
                     case TERRA_MAGTUBE:
-// RECOVERY_LITERAL: v1 0x00687C18 0x00687C21 $SG62054 0x004C9B00
+// RECOVERY_LITERAL: v1 0x00687C18 0x00687C21 $SG62059 0x004C9B00
                         TutorialWindow.tut_map("MADETUBE", x, y, veh_id, 0, 1, -1, -1);
                         break;
                     case TERRA_SENSOR:
-// RECOVERY_LITERAL: v1 0x00687C24 0x00687C2F $SG62056 0x004C9B00
+// RECOVERY_LITERAL: v1 0x00687C24 0x00687C2F $SG62061 0x004C9B00
                         TutorialWindow.tut_map("MADESENSOR", x, y, veh_id, 0, 1, -1, -1);
                         break;
                     case TERRA_AQUIFER:
-// RECOVERY_LITERAL: v1 0x00687C30 0x00687C3C $SG62058 0x004C9B00
+// RECOVERY_LITERAL: v1 0x00687C30 0x00687C3C $SG62063 0x004C9B00
                         TutorialWindow.tut_map("MADEAQUIFER", x, y, veh_id, 0, 1, -1, -1);
                         break;
                     case TERRA_CONDENSER:
-// RECOVERY_LITERAL: v1 0x00687C3C 0x00687C4A $SG62060 0x004C9B00
+// RECOVERY_LITERAL: v1 0x00687C3C 0x00687C4A $SG62065 0x004C9B00
                         TutorialWindow.tut_map("MADECONDENSER", x, y, veh_id, 0, 1, -1, -1);
                         break;
                     case TERRA_THERMAL_BORE:
-// RECOVERY_LITERAL: v1 0x00687C4C 0x00687C59 $SG62062 0x004C9B00
+// RECOVERY_LITERAL: v1 0x00687C4C 0x00687C59 $SG62067 0x004C9B00
                         TutorialWindow.tut_map("MADEBOREHOLE", x, y, veh_id, 0, 1, -1, -1);
                         break;
                     default:
@@ -760,15 +767,15 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
                 } else {
                     switch (action) {
                     case TERRA_FARM:
-// RECOVERY_LITERAL: v1 0x00687C5C 0x00687C68 $SG62070 0x004C9B00
+// RECOVERY_LITERAL: v1 0x00687C5C 0x00687C68 $SG62075 0x004C9B00
                         TutorialWindow.tut_map("MADESEAFARM", x, y, -1, &g_TER1_FARM_SPRITES[3], 1, -1, -1);
                         break;
                     case TERRA_MINE:
-// RECOVERY_LITERAL: v1 0x00687C68 0x00687C74 $SG62072 0x004C9B00
+// RECOVERY_LITERAL: v1 0x00687C68 0x00687C74 $SG62077 0x004C9B00
                         TutorialWindow.tut_map("MADESEAMINE", x, y, -1, &g_TER1_MINE_SPRITE, 1, -1, -1);
                         break;
                     case TERRA_SOLAR_TIDAL:
-// RECOVERY_LITERAL: v1 0x00687C74 0x00687C81 $SG62074 0x004C9B00
+// RECOVERY_LITERAL: v1 0x00687C74 0x00687C81 $SG62079 0x004C9B00
                         TutorialWindow.tut_map("MADESEASOLAR", x, y, -1, &g_TER1_SOLAR_COLLECTOR_SPRITE, 1, -1, -1);
                         break;
                     default:
@@ -808,12 +815,12 @@ void __cdecl action_staple(int base_id) {
         if (Bases[base_id].faction_id_current == ConsoleGlobal.faction_id_) {
             parse_says(0, Bases[base_id].name_string, -1, -1);
             if ((Players[faction].rule_flags & RFLAG_ALIEN) != 0) {
-// RECOVERY_LITERAL: v1 0x00687C84 0x00687C93 $SG62089 0x004CA7F0
-// RECOVERY_LITERAL: v1 0x00687C94 0x00687CA4 $SG62090 0x004CA7F0
+// RECOVERY_LITERAL: v1 0x00687C84 0x00687C93 $SG62094 0x004CA7F0
+// RECOVERY_LITERAL: v1 0x00687C94 0x00687CA4 $SG62095 0x004CA7F0
                 popp(ScriptPopupFile, "NERVESTAPLEFAIL", 0, "ALdrone_sm.pcx", 0);
             } else {
-// RECOVERY_LITERAL: v1 0x00687CA4 0x00687CB1 $SG62092 0x004CA7F0
-// RECOVERY_LITERAL: v1 0x00687CB4 0x00687CC4 $SG62093 0x004CA7F0
+// RECOVERY_LITERAL: v1 0x00687CA4 0x00687CB1 $SG62097 0x004CA7F0
+// RECOVERY_LITERAL: v1 0x00687CB4 0x00687CC4 $SG62098 0x004CA7F0
                 popp(ScriptPopupFile, "NERVESTAPLEFAIL", 0, "drone_sm.pcx", 0);
             }
         }
@@ -826,12 +833,12 @@ void __cdecl action_staple(int base_id) {
             // The original retains this faction across draw_tile and does
             // not add an ExpansionEnabled test to the alien rule check.
             if ((Players[faction].rule_flags & RFLAG_ALIEN) != 0) {
-// RECOVERY_LITERAL: v1 0x00687CC4 0x00687CD3 $SG62097 0x004CA7F0
-// RECOVERY_LITERAL: v1 0x00687CD4 0x00687CE4 $SG62098 0x004CA7F0
+// RECOVERY_LITERAL: v1 0x00687CC4 0x00687CD3 $SG62102 0x004CA7F0
+// RECOVERY_LITERAL: v1 0x00687CD4 0x00687CE4 $SG62103 0x004CA7F0
                 popp(ScriptPopupFile, "NERVESTAPLEDONE", 0, "ALdrone_sm.pcx", 0);
             } else {
-// RECOVERY_LITERAL: v1 0x00687CE4 0x00687CF1 $SG62100 0x004CA7F0
-// RECOVERY_LITERAL: v1 0x00687CF4 0x00687D04 $SG62101 0x004CA7F0
+// RECOVERY_LITERAL: v1 0x00687CE4 0x00687CF1 $SG62105 0x004CA7F0
+// RECOVERY_LITERAL: v1 0x00687CF4 0x00687D04 $SG62106 0x004CA7F0
                 popp(ScriptPopupFile, "NERVESTAPLEDONE", 0, "drone_sm.pcx", 0);
             }
         } else {
@@ -842,7 +849,7 @@ void __cdecl action_staple(int base_id) {
             PluralityDefault = 0;
             GenderDefault = Players[Bases[base_id].faction_id_current].is_leader_female;
             parse_says(2, Players[Bases[base_id].faction_id_current].name_leader, -1, -1);
-// RECOVERY_LITERAL: v1 0x00687D04 0x00687D14 $SG62103 0x004CA7F0
+// RECOVERY_LITERAL: v1 0x00687D04 0x00687D14 $SG62108 0x004CA7F0
             NetMsgPrimary.pop("NERVESTAPLETHEM", 5000, 0, 0);
         }
     }
@@ -904,7 +911,7 @@ void __cdecl action_destroy(int veh_id, int bits, int x, int y) {
         && !Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].missile
         && !rnd(4, "ACTIONDESTBOMB")) {
         if (faction_id == ConsoleGlobal.faction_id_) {
-// RECOVERY_LITERAL: v1 0x00687D44 0x00687D4F $SG62138 0x004CAA50
+// RECOVERY_LITERAL: v1 0x00687D44 0x00687D4F $SG62143 0x004CAA50
             NetMsgPrimary.pop("BOMBFAILED", 5000, 0, 0);
         }
     } else {
@@ -938,7 +945,7 @@ void __cdecl action_destroy(int veh_id, int bits, int x, int y) {
         }
         if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == TRIAD_AIR
             && faction_id == ConsoleGlobal.faction_id_) {
-// RECOVERY_LITERAL: v1 0x00687D7C 0x00687D87 $SG62161 0x004CAA50
+// RECOVERY_LITERAL: v1 0x00687D7C 0x00687D87 $SG62166 0x004CAA50
             NetMsgPrimary.pop("BOMBFAILED", 5000, 0, 0);
         }
         goto finish_destroy;
@@ -1224,10 +1231,10 @@ void __cdecl action_road_to(int veh_id) {
                 say_loc(StringTemp, x_goal, y_goal, 0, 2, 0);
                 parse_says(0, StringTemp, -1, -1);
                 if (order == ORDER_ROAD_TO) {
-// RECOVERY_LITERAL: v1 0x00687E20 0x00687E2B $SG62263 0x004CB580
+// RECOVERY_LITERAL: v1 0x00687E20 0x00687E2B $SG62268 0x004CB580
                     NetMsgPrimary.pop("ROADTODONE", 5000, 0, 0);
                 } else {
-// RECOVERY_LITERAL: v1 0x00687E2C 0x00687E37 $SG62265 0x004CB580
+// RECOVERY_LITERAL: v1 0x00687E2C 0x00687E37 $SG62270 0x004CB580
                     NetMsgPrimary.pop("TUBETODONE", 5000, 0, 0);
                 }
             }
@@ -1485,13 +1492,13 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
         if (NetDaemonNet.action_mode_ & 1 && faction_id == ConsoleGlobal.faction_id_) {
             parse_num(0, Rules.max_airdrop_sans_orb_insert);
             if (Players[faction_id].rule_flags & 0x80) {
-// RECOVERY_LITERAL: v1 0x00687E38 0x00687E47 $SG62376 0x004CC360
-// RECOVERY_LITERAL: v1 0x00687E48 0x00687E52 $SG62377 0x004CC360
+// RECOVERY_LITERAL: v1 0x00687E38 0x00687E47 $SG62381 0x004CC360
+// RECOVERY_LITERAL: v1 0x00687E48 0x00687E52 $SG62382 0x004CC360
                 NetMsgPrimary.pop("DROPRANGE", "al_drop_sm.pcx");
                 return 0;
             }
-// RECOVERY_LITERAL: v1 0x00687E54 0x00687E61 $SG62378 0x004CC360
-// RECOVERY_LITERAL: v1 0x00687E64 0x00687E6E $SG62379 0x004CC360
+// RECOVERY_LITERAL: v1 0x00687E54 0x00687E61 $SG62383 0x004CC360
+// RECOVERY_LITERAL: v1 0x00687E64 0x00687E6E $SG62384 0x004CC360
             NetMsgPrimary.pop("DROPRANGE", "airdp_sm.pcx");
         }
         return 0;
@@ -1499,13 +1506,13 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
     if ((map_loc(x, y)->climate & ~0x1F) < ALT_BIT_SHORE_LINE) {
         if (NetDaemonNet.action_mode_ & 1 && faction_id == ConsoleGlobal.faction_id_) {
             if (Players[faction_id].rule_flags & 0x80) {
-// RECOVERY_LITERAL: v1 0x00687E70 0x00687E7F $SG62383 0x004CC360
-// RECOVERY_LITERAL: v1 0x00687E80 0x00687E88 $SG62384 0x004CC360
+// RECOVERY_LITERAL: v1 0x00687E70 0x00687E7F $SG62388 0x004CC360
+// RECOVERY_LITERAL: v1 0x00687E80 0x00687E88 $SG62389 0x004CC360
                 NetMsgPrimary.pop("DROPSEA", "al_drop_sm.pcx");
                 return 0;
             }
-// RECOVERY_LITERAL: v1 0x00687E88 0x00687E95 $SG62385 0x004CC360
-// RECOVERY_LITERAL: v1 0x00687E98 0x00687EA0 $SG62386 0x004CC360
+// RECOVERY_LITERAL: v1 0x00687E88 0x00687E95 $SG62390 0x004CC360
+// RECOVERY_LITERAL: v1 0x00687E98 0x00687EA0 $SG62391 0x004CC360
             NetMsgPrimary.pop("DROPSEA", "airdp_sm.pcx");
         }
         return 0;
@@ -1515,13 +1522,13 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
         && !(PlayersData[faction_id].diplo_treaties[owner] & DTREATY_PACT)) {
         if (NetDaemonNet.action_mode_ & 1 && faction_id == ConsoleGlobal.faction_id_) {
             if (Players[faction_id].rule_flags & 0x80) {
-// RECOVERY_LITERAL: v1 0x00687EA0 0x00687EAF $SG62391 0x004CC360
-// RECOVERY_LITERAL: v1 0x00687EB0 0x00687EB9 $SG62392 0x004CC360
+// RECOVERY_LITERAL: v1 0x00687EA0 0x00687EAF $SG62396 0x004CC360
+// RECOVERY_LITERAL: v1 0x00687EB0 0x00687EB9 $SG62397 0x004CC360
                 NetMsgPrimary.pop("DROPUNIT", "al_drop_sm.pcx");
                 return 0;
             }
-// RECOVERY_LITERAL: v1 0x00687EBC 0x00687EC9 $SG62393 0x004CC360
-// RECOVERY_LITERAL: v1 0x00687ECC 0x00687ED5 $SG62394 0x004CC360
+// RECOVERY_LITERAL: v1 0x00687EBC 0x00687EC9 $SG62398 0x004CC360
+// RECOVERY_LITERAL: v1 0x00687ECC 0x00687ED5 $SG62399 0x004CC360
             NetMsgPrimary.pop("DROPUNIT", "airdp_sm.pcx");
         }
         return 0;
@@ -1529,13 +1536,13 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
     if (!(Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating) && zoc_move(x, y, faction_id)) {
         if (NetDaemonNet.action_mode_ & 1 && faction_id == ConsoleGlobal.faction_id_) {
             if (Players[faction_id].rule_flags & 0x80) {
-// RECOVERY_LITERAL: v1 0x00687ED8 0x00687EE7 $SG62398 0x004CC360
-// RECOVERY_LITERAL: v1 0x00687EE8 0x00687EF3 $SG62399 0x004CC360
+// RECOVERY_LITERAL: v1 0x00687ED8 0x00687EE7 $SG62403 0x004CC360
+// RECOVERY_LITERAL: v1 0x00687EE8 0x00687EF3 $SG62404 0x004CC360
                 NetMsgPrimary.pop("NONCOMDROP", "al_drop_sm.pcx");
                 return 0;
             }
-// RECOVERY_LITERAL: v1 0x00687EF4 0x00687F01 $SG62400 0x004CC360
-// RECOVERY_LITERAL: v1 0x00687F04 0x00687F0F $SG62401 0x004CC360
+// RECOVERY_LITERAL: v1 0x00687EF4 0x00687F01 $SG62405 0x004CC360
+// RECOVERY_LITERAL: v1 0x00687F04 0x00687F0F $SG62406 0x004CC360
             NetMsgPrimary.pop("NONCOMDROP", "airdp_sm.pcx");
         }
         return 0;
@@ -1546,13 +1553,13 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
         if (!get_proto_offense_rating(Vehs[veh_id].proto_id)) {
             if (NetDaemonNet.action_mode_ & 1 && faction_id == ConsoleGlobal.faction_id_) {
                 if (Players[faction_id].rule_flags & 0x80) {
-// RECOVERY_LITERAL: v1 0x00687F10 0x00687F1F $SG62406 0x004CC360
-// RECOVERY_LITERAL: v1 0x00687F20 0x00687F2B $SG62407 0x004CC360
+// RECOVERY_LITERAL: v1 0x00687F10 0x00687F1F $SG62411 0x004CC360
+// RECOVERY_LITERAL: v1 0x00687F20 0x00687F2B $SG62412 0x004CC360
                     NetMsgPrimary.pop("NONCOMDROP", "al_drop_sm.pcx");
                     return 0;
                 }
-// RECOVERY_LITERAL: v1 0x00687F2C 0x00687F39 $SG62408 0x004CC360
-// RECOVERY_LITERAL: v1 0x00687F3C 0x00687F47 $SG62409 0x004CC360
+// RECOVERY_LITERAL: v1 0x00687F2C 0x00687F39 $SG62413 0x004CC360
+// RECOVERY_LITERAL: v1 0x00687F3C 0x00687F47 $SG62414 0x004CC360
                 NetMsgPrimary.pop("NONCOMDROP", "airdp_sm.pcx");
             }
             return 0;
@@ -1577,13 +1584,13 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
                     if (NetDaemonNet.action_mode_ & 1 && faction_id == ConsoleGlobal.faction_id_) {
                         parse_says(0, Bases[mode].name_string, -1, -1);
                         if (Players[faction_id].rule_flags & 0x80) {
-// RECOVERY_LITERAL: v1 0x00687F48 0x00687F55 $SG62423 0x004CC360
-// RECOVERY_LITERAL: v1 0x00687F58 0x00687F64 $SG62424 0x004CC360
+// RECOVERY_LITERAL: v1 0x00687F48 0x00687F55 $SG62428 0x004CC360
+// RECOVERY_LITERAL: v1 0x00687F58 0x00687F64 $SG62429 0x004CC360
                             NetMsgPrimary.pop("AIRDEFENSES", "alair_sm.pcx");
                             return 0;
                         }
-// RECOVERY_LITERAL: v1 0x00687F64 0x00687F6F $SG62425 0x004CC360
-// RECOVERY_LITERAL: v1 0x00687F70 0x00687F7C $SG62426 0x004CC360
+// RECOVERY_LITERAL: v1 0x00687F64 0x00687F6F $SG62430 0x004CC360
+// RECOVERY_LITERAL: v1 0x00687F70 0x00687F7C $SG62431 0x004CC360
                         NetMsgPrimary.pop("AIRDEFENSES", "air_sm.pcx");
                     }
                     return 0;
@@ -1651,15 +1658,15 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
             parse_says(1, get_noun(faction_id), -1, -1);
             if (Players[faction_id].rule_flags & 0x80) {
                 popp(ScriptPopupFile, drop_range(faction_id) > Rules.max_airdrop_sans_orb_insert
-// RECOVERY_LITERAL: v1 0x00687F8C 0x00687F9B $SG62464 0x004CC360
-// RECOVERY_LITERAL: v1 0x00687F9C 0x00687FA8 $SG62465 0x004CC360
-// RECOVERY_LITERAL: v1 0x00687FA8 0x00687FB4 $SG62466 0x004CC360
+// RECOVERY_LITERAL: v1 0x00687F8C 0x00687F9B $SG62469 0x004CC360
+// RECOVERY_LITERAL: v1 0x00687F9C 0x00687FA8 $SG62470 0x004CC360
+// RECOVERY_LITERAL: v1 0x00687FA8 0x00687FB4 $SG62471 0x004CC360
                     ? "MADEORBITAL" : "MADEAIRDROP", 0, "al_drop_sm.pcx", 0);
             } else {
                 popp(ScriptPopupFile, drop_range(faction_id) > Rules.max_airdrop_sans_orb_insert
-// RECOVERY_LITERAL: v1 0x00687FB4 0x00687FC1 $SG62468 0x004CC360
-// RECOVERY_LITERAL: v1 0x00687FC4 0x00687FD0 $SG62469 0x004CC360
-// RECOVERY_LITERAL: v1 0x00687FD0 0x00687FDC $SG62470 0x004CC360
+// RECOVERY_LITERAL: v1 0x00687FB4 0x00687FC1 $SG62473 0x004CC360
+// RECOVERY_LITERAL: v1 0x00687FC4 0x00687FD0 $SG62474 0x004CC360
+// RECOVERY_LITERAL: v1 0x00687FD0 0x00687FDC $SG62475 0x004CC360
                     ? "MADEORBITAL" : "MADEAIRDROP", 0, "airdp_sm.pcx", 0);
             }
         }
@@ -1743,7 +1750,7 @@ Status: BYTE_EXACT.
 */
 void __cdecl action_feature() {
     if (IsMultiplayerNet) {
-// RECOVERY_LITERAL: v1 0x00687FDC 0x00687FE4 $SG62499 0x004CD060
+// RECOVERY_LITERAL: v1 0x00687FDC 0x00687FE4 $SG62504 0x004CD060
         NetMsgPrimary.pop("FEATURE", 0x1388, 0, 0);
     }
 }
@@ -1920,14 +1927,14 @@ void __cdecl action_oblit(int veh_id, int base_id) {
     draw_map(1);
 
     if ((int)veh_faction == ConsoleGlobal.faction_id_) {
-// RECOVERY_LITERAL: v1 0x0068800C 0x00688015 $SG62564 0x004CD4E0
+// RECOVERY_LITERAL: v1 0x0068800C 0x00688015 $SG62569 0x004CD4E0
         popp(ScriptPopupFile, "OBLITTED", 0,
-// RECOVERY_LITERAL: v1 0x00687FFC 0x0068800B $SG62563 0x004CD4E0
+// RECOVERY_LITERAL: v1 0x00687FFC 0x0068800B $SG62568 0x004CD4E0
              "baseobl_sm.pcx", 0);
     } else if ((int)base_former == ConsoleGlobal.faction_id_ || audible) {
-// RECOVERY_LITERAL: v1 0x00688028 0x00688032 $SG62570 0x004CD4E0
+// RECOVERY_LITERAL: v1 0x00688028 0x00688032 $SG62575 0x004CD4E0
         popp(ScriptPopupFile, "OBLITTED2", 0,
-// RECOVERY_LITERAL: v1 0x00688018 0x00688027 $SG62569 0x004CD4E0
+// RECOVERY_LITERAL: v1 0x00688018 0x00688027 $SG62574 0x004CD4E0
              "baseobl_sm.pcx", 0);
     }
 
