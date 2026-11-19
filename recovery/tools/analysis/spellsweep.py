@@ -29,6 +29,13 @@ RULES=collections.OrderedDict([
  # rect_width(&scratch)/rect_height(&scratch) in the call arguments; not in the default rule set)
  ('rw_fn',(r'(?<![\w.>])('+OBJ+r')(\.|->)right - \1\2left\b', lambda m:'rect_width(%s%s)'%('&' if m.group(2)=='.' else '',m.group(1)))),
  ('rh_fn',(r'(?<![\w.>])('+OBJ+r')(\.|->)bottom - \1\2top\b', lambda m:'rect_height(%s%s)'%('&' if m.group(2)=='.' else '',m.group(1)))),
+ # strings.h / alpha.h header inlines (MATCHING_GUIDE 2.8 "late free helpers"; not default): each expands to exactly
+ # the raw statement, and says() keeps the literal argument per site (a `$SG` of the caller, as the image's unpooled
+ # per-site texts), unlike an argument-free helper whose literal is one COMDAT
+ ('says_fn',(r'(?<![\w.>])strcat\(StringTemp, (?!label_get\()'+ARG+r'\)', lambda m:'says(%s)'%m.group(1))),
+ ('sayl_fn',(r'(?<![\w.>])strcat\(StringTemp, label_get\('+ARG+r'\)\)', lambda m:'say_label(%s)'%m.group(1))),
+ ('clear_fn',(r"(?<![\w.>])StringTemp\[0\] = (?:'\\0'|0);", lambda m:'clear();')),
+ ('table_fn',(r'(?<![\w.>])StringTable\.get\(', lambda m:'table_text(')),
  ('rw_raw',(r'\brect_width\(&('+OBJ+r')\)', lambda m:'(%s.right - %s.left)'%(m.group(1),m.group(1)))),
  ('rh_raw',(r'\brect_height\(&('+OBJ+r')\)', lambda m:'(%s.bottom - %s.top)'%(m.group(1),m.group(1)))),
 ])
