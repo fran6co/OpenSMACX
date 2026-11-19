@@ -690,11 +690,11 @@ void Console::unload(int veh_id) {
 // to no code). Returns 7-9 (!is_human, !count, choice < 0) expanded one
 // ~FlatButton more than the image (EH runs 6,6,6 against 5,5,5) and the
 // image's ~FlatButton call multiset needs pass-2 room held past them. A free
-// outer inline around a one-test inner, seven times after return 9, gives the
+// outer inline around a one-test inner, ten times after return 9, gives the
 // image's depths at returns 1-9; flat one-test probes refuse only two. The
 // original's reservation-holding inlines in that stretch are not identified
-// (probes/upgrade_eh); the return-1 teardown still calls ~StringList where
-// the image expands it.
+// (probes/upgrade_eh). With the failure arm's triad read once (below), the
+// return-1 teardown expands both ~StringList stages as the image does.
 static inline int upgrade_reserve_probe_in(int x) {
     if (x == 1) x = 3;
     return x;
@@ -957,6 +957,9 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
     upgrade_reserve_probe(1004);  // WORKAROUND(inline)
     upgrade_reserve_probe(1005);  // WORKAROUND(inline)
     upgrade_reserve_probe(1006);  // WORKAROUND(inline)
+    upgrade_reserve_probe(1007);  // WORKAROUND(inline)
+    upgrade_reserve_probe(1008);  // WORKAROUND(inline)
+    upgrade_reserve_probe(1009);  // WORKAROUND(inline)
     int cost = upgrade_cost(faction_id, choice, Vehs[veh_id].proto_id) * 10;
     parse_num(0, cost);
     parse_num(1, PlayersData[faction_id].energy_reserves);
@@ -1031,21 +1034,16 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
         return 1;
     } else {
         NetDaemonNet.unlock_veh();
+        int triad = get_proto_triad(choice);
         if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
             popp(ScriptPopupFile,
                  (VehPrototypes[choice].flags & 4) ? "COSTTHISUPGRADE" : "COSTTHISUPGRADE2", 0,
-                 get_proto_triad(choice) == TRIAD_AIR
-                     ? "alair_sm.pcx"
-                     : get_proto_triad(choice) == TRIAD_SEA
-                           ? "navun_sm.pcx" : "alunit_sm.pcx",
+                 triad == TRIAD_AIR ? "alair_sm.pcx" : triad == TRIAD_SEA ? "navun_sm.pcx" : "alunit_sm.pcx",
                  pop_wait);
         } else {
             popp(ScriptPopupFile,
                  (VehPrototypes[choice].flags & 4) ? "COSTTHISUPGRADE" : "COSTTHISUPGRADE2", 0,
-                 get_proto_triad(choice) == TRIAD_AIR
-                     ? "air_sm.pcx"
-                     : get_proto_triad(choice) == TRIAD_SEA
-                           ? "navun_sm.pcx" : "unit_sm.pcx",
+                 triad == TRIAD_AIR ? "air_sm.pcx" : triad == TRIAD_SEA ? "navun_sm.pcx" : "unit_sm.pcx",
                  pop_wait);
         }
         return 0;
