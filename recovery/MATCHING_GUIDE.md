@@ -2289,6 +2289,20 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   knowing the type), and tries label_get <-> written out and unname, one
   site per candidate. A hit is a WORKAROUND(inline) until the original's
   spelling (a named local, an accessor, a helper's parameter) is chosen.
+  An inline member accessor's result is such a named value too, and a
+  far-apart pair of "scheduling ties" can be one cursor step: Caviar::
+  init_class 0x006185A0 had 14 rows in two straight-line store blocks 40
+  instructions apart (2026-11-19). The image's first block holds three
+  values in eax one after another (lowest free) and two in edx, ecx
+  (cursor), so the second block starts at edx; ours started it at ecx.
+  Reading the two row pitches through `Buffer::stride()` and the two pixel
+  pointers directly fixed both blocks; named locals for any subset of the
+  five loads in every order (326 forms), statement orders and 0..15 dead
+  locals (3.6) did not. Screen: when a later block is the image's rotated
+  by one, try each load of the earlier block through an identity inline
+  (2^n forms), then replace the hits by the class's accessor. Each
+  expansion is a free inline for the /Ob2 budget (2.8), so re-check the
+  teardown depths of an EH function afterwards.
 - **S8. Constant folding and subtraction order in a chain are canonical**
   (par-2 2026-11-19, p22, p23; high). `a - b - c` with b a field and c a
   named local compiles to `a - b - c` for every spelling tried: the
@@ -4759,6 +4773,19 @@ Accessors, folded helpers and unit order (par-1 2026-11-19)
   costs rows (165 -> 172..181) and one mixed spelling gives the frame at
   174, with no image evidence that separates the local from the CSE'd
   member, so nothing was kept.
+- **A local read through an inline's reference or pointer parameter is
+  not address-taken** once the inline is expanded (ListBox::on_key_down
+  0x0060AF90, 2026-11-19: `n / d` through `lbx_div(const int &n, int d)`,
+  the count written through an `int &out` parameter, a `const int *` local
+  and a two-reference helper all compile to the same code as the plain
+  local, which stays in ebx). In that function every named local of the
+  image has a home slot (count, columns, last visible, old top, old
+  selection at [esp+0x10..0x20]) and registers only cache them and the
+  members per block: ecx (selection) and edx (the Dialog base) stay live
+  across the jump-table dispatch, `key` takes ebx for the switch, edi
+  caches `field_18_` and is incremented in place. The count is eligible
+  and simply loses ebx; the missing lever is what gives `key` and the
+  cached member the registers, not a property of the count.
 - **Inline-local slots look last-freed-first-reused** (hypothesis, one
   observation): order_veh's two has_fac expansions use (offset, mask) =
   (-0x64, -0x50) and (-0x50, -0x64); ours with three locals rotates the
