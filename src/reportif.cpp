@@ -7379,11 +7379,12 @@ void ReportIf::draw_sat() {
             if (selected + 1 != 0 && ((selected - 65 == 4 && elevators)
                 || (selected - 65 != 4 && selected - 65 < 4 && PlayersData[target].satellites_[selected - 65]))) {
                 buttonGroup4_.set(selected, 1);
+                field_1E234_ = 0;
             } else {
                 ReportWinGlobal.flatButton9_.reset_field_A9C_if_ungrouped();
                 ReportWinGlobal.flatButton9_.Win::hide();
+                field_1E234_ = 0;
             }
-            field_1E234_ = 0;
         }
     }
     MainInterfaceGlobal.Buffer::set_clip(MainInterfaceGlobal.buffer_working_rect());
