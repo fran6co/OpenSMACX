@@ -181,8 +181,11 @@ inline void __cdecl strcat_period(char *text) {
 }
 
 // WORKAROUND(inline): named stand-ins for the helper literals, used only in
-// top_menu, save_game, Console::upgrade, Console::editor_edit_veh,
-// DesignWin::select_special, StatusWin::draw_active and PickTech::draw_tech.
+// top_menu, Console::upgrade (4 of 17 sites), Console::editor_edit_veh,
+// DesignWin::select_special and StatusWin::draw_active. save_game and
+// PickTech::draw_tech take the literal through strcat_X(StringTemp) instead
+// of say_X() (fe 2026-11-19: save_game unchanged, draw_tech 303 -> 294;
+// say_X() there moves them), as do 13 of upgrade's sites (147 -> 145).
 // One more inline expansion per site moves their /Ob2 decisions away from
 // the image (fe 2026-11-19: top_menu loses an init_opening_spend expansion
 // with any inline at its one " " site, even an expression-only one;
