@@ -82,8 +82,8 @@ char TechnologyHelpSeparatorText[] = "^";
 // symbol    ?sub_44b340@@YAXP6AXPAD@Z@Z
 // Native44B359 passes the caret string and44B36D reloads TextBufferGetPtr
 // after that callback: these are text pointers, not integer callback values.
-// No observed original caller connects this entry to the similar emit_help
-// factoring below; keep that relationship unclaimed.
+// No image caller: tech_heck (0x0044B380) expands it at each of its emit
+// sites (orphanowner.py, 2026-11-19), so tech_heck calls it by name.
 void __cdecl sub_44b340(void (__cdecl *callback)(char *)) {
     if (TechnologyHelpPrefixEmitted == 0 && TechnologyHelpSectionSelector == -1) {
         TechnologyHelpPrefixEmitted = 1;
@@ -92,14 +92,6 @@ void __cdecl sub_44b340(void (__cdecl *callback)(char *)) {
     callback(TextBufferGetPtr);
 }
 
-static void emit_help(void (__cdecl *cb)(char *)) {
-    if (TechnologyHelpPrefixEmitted == 0 &&
-        TechnologyHelpSectionSelector == -1) {
-        TechnologyHelpPrefixEmitted = 1;
-        cb(TechnologyHelpPrefixText);
-    }
-    cb(TextBufferGetPtr);
-}
 
 /*
 Purpose: The help emission gate shared by the nineteen text_get tests: the
@@ -135,81 +127,81 @@ void __cdecl tech_heck(void (__cdecl *a1)(char *), int a2) {
 
     text_get();
     if (a2 == Rules.tech_improve_fungus_sqr) {
-        emit_help(a1);
+        sub_44b340(a1);
     }
     text_get();
     if (a2 == Rules.tech_ease_fungus_movement) {
-        emit_help(a1);
+        sub_44b340(a1);
     }
     text_get();
     if (a2 == Rules.tech_build_roads_fungus) {
-        emit_help(a1);
+        sub_44b340(a1);
     }
     text_get();
     if (a2 == Rules.tech_two_spec_abilities) {
-        emit_help(a1);
+        sub_44b340(a1);
     }
     text_get();
     if (a2 == Rules.tech_three_nutrients_sqr) {
-        emit_help(a1);
+        sub_44b340(a1);
     }
     text_get();
     if (a2 == Rules.tech_three_minerals_sqr) {
-        emit_help(a1);
+        sub_44b340(a1);
     }
     text_get();
     if (a2 == Rules.tech_three_energy_sqr) {
-        emit_help(a1);
+        sub_44b340(a1);
     }
 
     text_get();
     if (Technology[a2].flags & 1) {
-        emit_help(a1);
+        sub_44b340(a1);
     }
     text_get();
     if (Technology[a2].flags & 2) {
-        emit_help(a1);
+        sub_44b340(a1);
     }
     text_get();
     if (Technology[a2].flags & 4) {
-        emit_help(a1);
+        sub_44b340(a1);
     }
     text_get();
     if (Technology[a2].flags & 8) {
-        emit_help(a1);
+        sub_44b340(a1);
     }
     text_get();
     if (Technology[a2].flags & 0x10) {
-        emit_help(a1);
+        sub_44b340(a1);
     }
     text_get();
     if (Technology[a2].flags & 0x40) {
-        emit_help(a1);
+        sub_44b340(a1);
     }
     text_get();
     if (Technology[a2].flags & 0x80) {
-        emit_help(a1);
+        sub_44b340(a1);
     }
     text_get();
     if (Technology[a2].flags & 0x100) {
-        emit_help(a1);
+        sub_44b340(a1);
     }
 
     text_get();
     if (a2 == Rules.tech_orb_insert_sans_spc_elev) {
-        emit_help(a1);
+        sub_44b340(a1);
     }
     text_get();
     if (a2 == Rules.tech_mining_platform_bonus) {
-        emit_help(a1);
+        sub_44b340(a1);
     }
     text_get();
     if (a2 == Rules.tech_economic_victory) {
-        emit_help(a1);
+        sub_44b340(a1);
     }
     text_get();
     if (a2 == Proposal[1].preq_tech) {
-        emit_help(a1);
+        sub_44b340(a1);
     }
 
     text_get();
@@ -224,7 +216,7 @@ void __cdecl tech_heck(void (__cdecl *a1)(char *), int a2) {
                     // order and order_sea are read as a two-entry run.
                     parse_say(0, Order[4 + row].order[i], -1, -1);
                     parse_string(StringTemp, TextBufferGetPtr);
-                    emit_help(a1);
+                    sub_44b340(a1);
                 }
             }
         }
@@ -240,7 +232,7 @@ void __cdecl tech_heck(void (__cdecl *a1)(char *), int a2) {
                 LPSTR name = Proposal[proposal].name;
                 strcat(StringTemp, StringTable.get(name));
                 strcpy(TextBufferGetPtr, StringTemp);
-                emit_help(a1);
+                sub_44b340(a1);
             }
         }
     }

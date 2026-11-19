@@ -7800,13 +7800,7 @@ void MapWin::on_nc_left_down(int x_coord, int y_coord) {
 // their terrain/detail state. A nonpositive signed MapArea does no writes.
 
 void MapWin::clear_terrain() {
-    if (owned_ != 0) {
-        for (int entry = 0; entry < MapArea; ++entry) {
-            for (int corner = 0; corner < 4; ++corner) {
-                owned_[entry].brightness[corner] = 0xFF;
-            }
-        }
-    }
+    UNK7();
     if (owned_ != 0) {
         for (int altitude_entry = 0; altitude_entry < MapArea;
              ++altitude_entry) {

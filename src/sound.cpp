@@ -264,18 +264,8 @@ int __cdecl init_sound(void *window, unsigned long backends) {
     }
     int result = WaveDeviceGlobal.init(window, backends);
     if (result != 0) {
-        // THE GUARD IS READ BEFORE THE STORE. The image loads [0x90db78]
-        // at 0x004C5D21 and only then writes 0 to [0x90db7c]; the two are
-        // different addresses, so the order is free and the image picked one.
-        const HMODULE module = SoundDllModule;
-        WaveDeviceReleaseGuard = 0;
-        if (module != 0) {
-            FreeLibrary(module);
-            SoundDllModule = 0;
-        }
-        for (int ordinal = 0; ordinal < 11; ordinal++) {
-            SoundDllProcs.by_ordinal[ordinal] = 0;
-        }
+        // unload_sound_dll (0x004C5F70, no image caller) expanded at 0x004C5D21.
+        unload_sound_dll();
         return result;
     }
     if ((backends & 2) != 0) {
