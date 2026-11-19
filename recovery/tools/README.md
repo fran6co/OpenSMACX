@@ -89,3 +89,13 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
 - `analysis/unitexact.py <unit.cpp> [ALT.cpp ...]` fe rows of every marker of a unit for the unit and each
   whole-file variant side by side; prints the exact count per column and only the functions that moved (what a
   variant breaks elsewhere in its unit).
+- `analysis/tailscan.py <unit> <addr[,addr]>|--all [--src ALT.cpp] [--min K] [--agree]`, `tailscan.py --tree [unit ...]
+  [--json F]` tail-merge / cross-jump scan (MATCHING_GUIDE 3.7 "Layout"; 50 s tree-wide with FE_JOBS=5). On each side it
+  clusters the copies VC6 left unmerged: runs of K+ identical instructions (calls and globals by symbol, local jumps by
+  target) that end in the same continuation (`jmp T`, a fallthrough into T, or a `ret` epilogue). A cluster one side keeps
+  and the other lacks is printed as `IMG-MERGES` (ours keeps a copy the image has not got: the image jumps into another
+  copy) or `OURS-MERGES` (the reverse), with each copy's address and source lines (`L123`, `hdr.h:L45`; image positions
+  as `~L123`, our line at the nearest aligned row). `JMP` lines group the unconditional jumps whose image and our targets
+  disagree, with both targets' lines and how many instructions apart the image lands: `-k` = the image cross-jumped k
+  more instructions. Read with the probe/save_game notes in MATCHING_GUIDE 3.7: the image's choice of the join's
+  fallthrough predecessor decides which copy survives.
