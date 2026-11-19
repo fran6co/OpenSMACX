@@ -149,24 +149,8 @@ void __cdecl clear_tamper_registry() {
     }
 }
 
-// These six literals are separate writable source objects because the image
-// uses distinct storage starts for the read/write key, value names, and dialog
-// label. The registry class strings are one-byte zero-filled views only; no
+// The registry class strings are one-byte zero-filled views only; no
 // larger capacity or independent writer is inferred here.
-// RECOVERY_OBJECT: v1 0x0068AD88 _TamperReadApplicationKey
-static char TamperReadApplicationKey[] =
-    "SOFTWARE\\Microsoft\\DirectPlay\\Applications\\Sid Meier's Alpha Centauri";
-// RECOVERY_OBJECT: v1 0x0068ADD8 _TamperWriteApplicationKey
-static char TamperWriteApplicationKey[] =
-    "SOFTWARE\\Microsoft\\DirectPlay\\Applications\\Sid Meier's Alpha Centauri";
-// RECOVERY_OBJECT: v1 0x0068ADD0 _TamperReadValueMVM
-static char TamperReadValueMVM[] = "MVM";
-// RECOVERY_OBJECT: v1 0x0068ADD4 _TamperReadValueMVB
-static char TamperReadValueMVB[] = "MVB";
-// RECOVERY_OBJECT: v1 0x0068AE20 _TamperWriteValueMVM
-static char TamperWriteValueMVM[] = "MVM";
-// RECOVERY_OBJECT: v1 0x0068AE24 _TamperWriteValueMVB
-static char TamperWriteValueMVB[] = "MVB";
 // RECOVERY_OBJECT: v1 0x0093A9FC _TamperReadClass
 static char TamperReadClass[1];
 // RECOVERY_OBJECT: v1 0x0093AA00 _TamperWriteClass
@@ -198,16 +182,19 @@ Status: Coverage transcription - unclaimed body
 */
 void __cdecl read_tamper() {
     HKEY key;
+// RECOVERY_LITERAL: v1 0x0068AD88 0x0068ADCE $SG65328 0x0051E000
     LONG status = RegCreateKeyExA(HKEY_LOCAL_MACHINE,
-        TamperReadApplicationKey, 0, TamperReadClass, 0, 0xf003f, 0, &key, 0);
+        "SOFTWARE\\Microsoft\\DirectPlay\\Applications\\Sid Meier's Alpha Centauri", 0, TamperReadClass, 0, 0xf003f, 0, &key, 0);
     if (status == 0) {
         DWORD value_type;
         DWORD byte_count = 4;
-        RegQueryValueExA(key, TamperReadValueMVM, 0, &value_type,
+// RECOVERY_LITERAL: v1 0x0068ADD0 0x0068ADD4 $SG65333 0x0051E000
+        RegQueryValueExA(key, "MVM", 0, &value_type,
                          reinterpret_cast<LPBYTE>(&TamperRegistryCursor),
                          &byte_count);
         byte_count = 0x4B0;
-        RegQueryValueExA(key, TamperReadValueMVB, 0, &value_type,
+// RECOVERY_LITERAL: v1 0x0068ADD4 0x0068ADD8 $SG65335 0x0051E000
+        RegQueryValueExA(key, "MVB", 0, &value_type,
                          reinterpret_cast<LPBYTE>(TamperRegistryRecords),
                          &byte_count);
         RegCloseKey(key);
@@ -218,13 +205,16 @@ void __cdecl read_tamper() {
 // RECOVERY_BINDING: v1 {"evidence": ["git:edbf268ff962712fadc389b8283e4c795b6d27a2:src/recovered/units/0051e090.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json"], "reason": "game.cpp beside its already-owned TamperWrite* strings, cursor and 50-record array; uses direct Windows registry APIs. Complete reviewed source translation; historical claims remain restoration obligations, not proof of current matching, linked preservation or game acceptance."}
 void __cdecl set_tamper() {
     HKEY key;
+// RECOVERY_LITERAL: v1 0x0068ADD8 0x0068AE1E $SG65341 0x0051E090
     const LONG status = RegCreateKeyExA(
-        HKEY_LOCAL_MACHINE, TamperWriteApplicationKey, 0, TamperWriteClass, 0,
+        HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\DirectPlay\\Applications\\Sid Meier's Alpha Centauri", 0, TamperWriteClass, 0,
         0xF003F, 0, &key, 0);
     if (status == ERROR_SUCCESS) {
-        RegSetValueExA(key, TamperWriteValueMVM, 0, REG_BINARY,
+// RECOVERY_LITERAL: v1 0x0068AE20 0x0068AE24 $SG65344 0x0051E090
+        RegSetValueExA(key, "MVM", 0, REG_BINARY,
                        reinterpret_cast<const BYTE *>(&TamperRegistryCursor), 4);
-        RegSetValueExA(key, TamperWriteValueMVB, 0, REG_BINARY,
+// RECOVERY_LITERAL: v1 0x0068AE24 0x0068AE28 $SG65346 0x0051E090
+        RegSetValueExA(key, "MVB", 0, REG_BINARY,
                        reinterpret_cast<const BYTE *>(TamperRegistryRecords),
                        0x4B0);
         RegCloseKey(key);
@@ -4267,66 +4257,24 @@ extern int SpockHelpActive; // netdaemon.cpp, original93F674
 extern int SpockNotifyPending; // netdaemon.cpp, original93F670
 extern int NetDaemonWaitTicks; // netdaemon.cpp, original93A960
 
-// RECOVERY_OBJECT: v2 0x0068BBE4 0x0068BBFA _NetUpkeepSkippingUpkeepSynch 0x005290A0
-static const char NetUpkeepSkippingUpkeepSynch[] = "Skipping upkeep synch";
-// RECOVERY_OBJECT: v2 0x0068BC1C 0x0068BC32 _NetUpkeepSkippingResearchSynch 0x005290A0
-static const char NetUpkeepSkippingResearchSynch[] = "Skipping upkeep synch";
-// RECOVERY_OBJECT: v2 0x0068BC3C 0x0068BC52 _NetUpkeepSkippingPrototypeSynch 0x005290A0
-static const char NetUpkeepSkippingPrototypeSynch[] = "Skipping upkeep synch";
 
-// RECOVERY_OBJECT: v2 0x0068BBFC 0x0068BC0B _NetUpkeepUpkeepAdvance 0x005290A0
-static const char NetUpkeepUpkeepAdvance[] = "Upkeep Advance";
 
-// RECOVERY_OBJECT: v2 0x0068BC0C 0x0068BC19 _NetUpkeepSetResearch 0x005290A0
-static const char NetUpkeepSetResearch[] = "Set Research";
 
-// RECOVERY_OBJECT: v2 0x0068BC34 0x0068BC3C _NetUpkeepUpkeep4 0x005290A0
-static const char NetUpkeepUpkeep4[] = "UPKEEP4";
 
-// RECOVERY_OBJECT: v2 0x0068BC54 0x0068BC5C _NetUpkeepUpkeep5 0x005290A0
-static const char NetUpkeepUpkeep5[] = "UPKEEP5";
 
-// RECOVERY_OBJECT: v2 0x0068BC5C 0x0068BC68 _NetUpkeepEnemyTurn 0x005290A0
-static const char NetUpkeepEnemyTurn[] = "Enemy turn ";
 
-// RECOVERY_OBJECT: v2 0x0068BC68 0x0068BC70 _NetUpkeepUpkeep6 0x005290A0
-static const char NetUpkeepUpkeep6[] = "UPKEEP6";
 
-// RECOVERY_OBJECT: v2 0x0068BC70 0x0068BC89 _NetUpkeepSaveDirectory 0x005290A0
-static const char NetUpkeepSaveDirectory[] = "k:\\breynolds\\multisaves\\";
 
-// RECOVERY_OBJECT: v2 0x0068BC8C 0x0068BC8F _NetUpkeepSavePrefix 0x005290A0
-static const char NetUpkeepSavePrefix[] = "AC";
 
-// RECOVERY_OBJECT: v2 0x0068BC90 0x0068BC96 _NetUpkeepSaveSuffix 0x005290A0
-static const char NetUpkeepSaveSuffix[] = "multi";
 
-// RECOVERY_OBJECT: v2 0x0068BC98 0x0068BCAA _NetUpkeepSaveLog 0x005290A0
-static const char NetUpkeepSaveLog[] = "Writing save file";
 
-// RECOVERY_OBJECT: v2 0x0068BCAC 0x0068BCB4 _NetUpkeepUpkeep7 0x005290A0
-static const char NetUpkeepUpkeep7[] = "UPKEEP7";
 
-// RECOVERY_OBJECT: v2 0x0068BCB4 0x0068BCD3 _NetUpkeepGameChecksum 0x005290A0
-static const char NetUpkeepGameChecksum[] = "Failed GAME checksum - resynch";
 
-// RECOVERY_OBJECT: v2 0x0068BCD4 0x0068BCF6 _NetUpkeepLeadersChecksum 0x005290A0
-static const char NetUpkeepLeadersChecksum[] = "Failed LEADERS checksum - resynch";
 
-// RECOVERY_OBJECT: v2 0x0068BCF8 0x0068BD16 _NetUpkeepMapChecksum 0x005290A0
-static const char NetUpkeepMapChecksum[] = "Failed MAP checksum - resynch";
 
-// RECOVERY_OBJECT: v2 0x0068BD18 0x0068BD3B _NetUpkeepVehiclesChecksum 0x005290A0
-static const char NetUpkeepVehiclesChecksum[] = "Failed VEHICLES checksum - resynch";
 
-// RECOVERY_OBJECT: v2 0x0068BD3C 0x0068BD5C _NetUpkeepBasesChecksum 0x005290A0
-static const char NetUpkeepBasesChecksum[] = "Failed BASES checksum - resynch";
 
-// RECOVERY_OBJECT: v2 0x0068BD5C 0x0068BD81 _NetUpkeepMapSectionChecksum 0x005290A0
-static const char NetUpkeepMapSectionChecksum[] = "Failed MAP section chcksum - resynch";
 
-// RECOVERY_OBJECT: v2 0x0068BD84 0x0068BD9A _NetUpkeepSkippingUpkeepPhase 0x005290A0
-static const char NetUpkeepSkippingUpkeepPhase[] = "Skipping upkeep phase";
 
 // ORIGINAL: 0x00528EA0 ?net_upkeep_phase@@YAHH@Z 0x00528EA0-0x00529097 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; original:0x00528EA0-0x00529097; saved pinned full-span sha256:6d3147e1a8d83201f57389f6c8ed65a0938667f845bfcec4215f941828ab75ee", "source:src/game.cpp:net_upkeep at 0x005290A0 is the existing caller/turn owner; game.cpp already includes the NetDaemon, Console, lock-mask, MultiWindow, parser/message, log, temp and WinMM interfaces", "source:src/netdaemon.h:the sent mask is the flat member field_1B6C_ (NetDaemon+0x1B6C); the ack mask, turn-end marker and cleared word are primary_state_.trailing_words_[7], leading_words_[0] and trailing_words_[8] (NetDaemon+0x1B60, +0x1B30, +0x1B64); the referenced sent, ack and turn-end words are existing members, not new globals", "source:src/console.h:ConsoleGlobal.faction_id_; source:src/game_data_state_window.h:GameDataStateStorage.fields_.turn_current_num_ and lock_masks_.enable_mask_; source:src/game.h:ExitTurnLoop", "pinned branch review: preserve early returns before close/mask reset, timeout > 1000, phase>=4 popup suppression, live callback mask rereads, server receive loop, common cleanup order and final ExitTurnLoop reread", "historical seed:git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00528ea0.cpp; existing TRIED note remains attached verbatim"], "reason": "Keep the multiplayer turn rendezvous in the existing game-turn owner, using the already typed NetDaemon lock-state, Console, game-turn, GameDataStateWindow lock-mask and WinMM APIs while retaining this complete original body identity."}
@@ -4488,7 +4436,8 @@ void __cdecl net_upkeep() {
         }
     } else {
 skip_upkeep_synch:
-        log_say(NetUpkeepSkippingUpkeepSynch, NetUpkeepPhase, 0, 0);
+// RECOVERY_LITERAL: v1 0x0068BBE4 0x0068BBFA $SG67353 0x005290A0
+        log_say("Skipping upkeep synch", NetUpkeepPhase, 0, 0);
     }
 
     TurnUpkeepPhase = 2;
@@ -4499,7 +4448,8 @@ skip_upkeep_synch:
             const int bit = 1 << faction;
             if ((bit & GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_) != 0) {
                 while (PlayersData[faction].earned_techs_saved != 0) {
-                    log_say(NetUpkeepUpkeepAdvance, Players[faction].name_leader,
+// RECOVERY_LITERAL: v1 0x0068BBFC 0x0068BC0B $SG67363 0x005290A0
+                    log_say("Upkeep Advance", Players[faction].name_leader,
                             faction, PlayersData[faction].earned_techs_saved, 0);
                     --PlayersData[faction].earned_techs_saved;
                     tech_advance(static_cast<int>(faction));
@@ -4511,7 +4461,8 @@ skip_upkeep_synch:
                 }
                 if (PlayersData[faction].tech_accumulated != 0 &&
                     PlayersData[faction].tech_id_researching < 0) {
-                    log_say(NetUpkeepSetResearch, faction, 0, 0);
+// RECOVERY_LITERAL: v1 0x0068BC0C 0x0068BC19 $SG67368 0x005290A0
+                    log_say("Set Research", faction, 0, 0);
                     PlayersData[faction].tech_id_researching =
                         tech_selection(static_cast<int>(faction));
                     if ((bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) != 0) {
@@ -4533,7 +4484,8 @@ skip_upkeep_synch:
             }
             TurnUpkeepPhase = 0;
         } else {
-            log_say(NetUpkeepSkippingResearchSynch, NetUpkeepPhase, 0, 0);
+// RECOVERY_LITERAL: v1 0x0068BC1C 0x0068BC32 $SG67377 0x005290A0
+            log_say("Skipping upkeep synch", NetUpkeepPhase, 0, 0);
             TurnUpkeepPhase = 0;
         }
         ++NetUpkeepPhase;
@@ -4542,7 +4494,8 @@ skip_upkeep_synch:
         }
     }
 
-    NetMsgPrimary.pop(NetUpkeepUpkeep4, 0, 1, 0);
+// RECOVERY_LITERAL: v1 0x0068BC34 0x0068BC3C $SG67379 0x005290A0
+    NetMsgPrimary.pop("UPKEEP4", 0, 1, 0);
     {
         flags = 0;
         UpgradePromptAnswered = 0;
@@ -4584,23 +4537,27 @@ skip_upkeep_synch:
 prototype_synch:
             if (net_upkeep_phase(NetUpkeepPhase) != 0) return;
         } else {
-            log_say(NetUpkeepSkippingPrototypeSynch, NetUpkeepPhase, 0, 0);
+// RECOVERY_LITERAL: v1 0x0068BC3C 0x0068BC52 $SG67402 0x005290A0
+            log_say("Skipping upkeep synch", NetUpkeepPhase, 0, 0);
         }
     }
 
     ++NetUpkeepPhase;
-    NetMsgPrimary.pop(NetUpkeepUpkeep5, 0, 1, 0);
+// RECOVERY_LITERAL: v1 0x0068BC54 0x0068BC5C $SG67403 0x005290A0
+    NetMsgPrimary.pop("UPKEEP5", 0, 1, 0);
     for (i = 0; i < 8; ++i) {
         const int bit = 1 << i;
         if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & bit) != 0 &&
             (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & bit) == 0) {
-            log_say(NetUpkeepEnemyTurn, i, 0, 0);
+// RECOVERY_LITERAL: v1 0x0068BC5C 0x0068BC68 $SG67409 0x005290A0
+            log_say("Enemy turn ", i, 0, 0);
             enemy_turn(i);
         }
     }
     if (net_upkeep_phase(NetUpkeepPhase) != 0) return;
     ++NetUpkeepPhase;
-    NetMsgPrimary.pop(NetUpkeepUpkeep6, 0, 1, 0);
+// RECOVERY_LITERAL: v1 0x0068BC68 0x0068BC70 $SG67411 0x005290A0
+    NetMsgPrimary.pop("UPKEEP6", 0, 1, 0);
     NetDaemonNet.deletion_list_.set_sequence_bits(0);
     for (i = 0; i < 0x18; ++i) {
         NetDaemonNet.deletion_list_.clear(i);
@@ -4610,15 +4567,19 @@ prototype_synch:
     if ((GameDataStateStorage.fields_.game_preferences_ & 2u) != 0) {
         if (BaseAtDebugPopupFlag != 0) {
             StringTemp[0] = 0;
-            strcat(StringTemp, NetUpkeepSaveDirectory);
-            strcat(StringTemp, NetUpkeepSavePrefix);
+// RECOVERY_LITERAL: v1 0x0068BC70 0x0068BC89 $SG67417 0x005290A0
+            strcat(StringTemp, "k:\\breynolds\\multisaves\\");
+// RECOVERY_LITERAL: v1 0x0068BC8C 0x0068BC8F $SG67418 0x005290A0
+            strcat(StringTemp, "AC");
             char number_text[80];
             _itoa(ConsoleGlobal.faction_id_, number_text, 10);
             strcat(StringTemp, number_text);
-            strcat(StringTemp, NetUpkeepSaveSuffix);
+// RECOVERY_LITERAL: v1 0x0068BC90 0x0068BC96 $SG67420 0x005290A0
+            strcat(StringTemp, "multi");
             _itoa(GameDataStateStorage.fields_.turn_current_num_, number_text, 10);
             strcat(StringTemp, number_text);
-            log_say(NetUpkeepSaveLog, StringTemp, 0, 0, 0);
+// RECOVERY_LITERAL: v1 0x0068BC98 0x0068BCAA $SG67421 0x005290A0
+            log_say("Writing save file", StringTemp, 0, 0, 0);
             save_daemon(StringTemp);
         } else {
             auto_save();
@@ -4649,7 +4610,8 @@ prototype_synch:
             for (i = 0; i < NetTurnChecksumWords; ++i) {
                 if (NetTurnChecksums[i] == NetPeerTurnChecksums[faction][i]) continue;
                 if (flags == 0) {
-                    NetMsgPrimary.pop(NetUpkeepUpkeep7, 0, 1, 0);
+// RECOVERY_LITERAL: v1 0x0068BCAC 0x0068BCB4 $SG67440 0x005290A0
+                    NetMsgPrimary.pop("UPKEEP7", 0, 1, 0);
                 }
                 flags = 1;
                 if (mismatch_seen[i] != 0) continue;
@@ -4660,7 +4622,8 @@ prototype_synch:
 
                 switch (i) {
                 case 0:
-                    log_say(NetUpkeepGameChecksum, faction, NetTurnChecksums[0],
+// RECOVERY_LITERAL: v1 0x0068BCB4 0x0068BCD3 $SG67448 0x005290A0
+                    log_say("Failed GAME checksum - resynch", faction, NetTurnChecksums[0],
                             NetPeerTurnChecksums[faction][0]);
                     NetDaemonNet.synch(0, 0, 0, 0, 0, 1, 0x2101);
                     while (NetDaemonNet.receive() != 0) { }
@@ -4668,7 +4631,8 @@ prototype_synch:
                     while (NetDaemonNet.receive() != 0) { }
                     break;
                 case 1: {
-                    log_say(NetUpkeepLeadersChecksum, faction, NetTurnChecksums[1],
+// RECOVERY_LITERAL: v1 0x0068BCD4 0x0068BCF6 $SG67456 0x005290A0
+                    log_say("Failed LEADERS checksum - resynch", faction, NetTurnChecksums[1],
                             NetPeerTurnChecksums[faction][1]);
                     int a = 0;
                     int b = 0;
@@ -4686,7 +4650,8 @@ prototype_synch:
                     break;
                 }
                 case 2:
-                    log_say(NetUpkeepMapChecksum, faction, NetTurnChecksums[2],
+// RECOVERY_LITERAL: v1 0x0068BCF8 0x0068BD16 $SG67472 0x005290A0
+                    log_say("Failed MAP checksum - resynch", faction, NetTurnChecksums[2],
                             NetPeerTurnChecksums[faction][2]);
                     NetDaemonNet.synch(0x1002, 0, 0, 0, 0, 1, 0x2101);
                     while (NetDaemonNet.receive() != 0) { }
@@ -4694,7 +4659,8 @@ prototype_synch:
                     while (NetDaemonNet.receive() != 0) { }
                     break;
                 case 3:
-                    log_say(NetUpkeepVehiclesChecksum, faction, NetTurnChecksums[3],
+// RECOVERY_LITERAL: v1 0x0068BD18 0x0068BD3B $SG67480 0x005290A0
+                    log_say("Failed VEHICLES checksum - resynch", faction, NetTurnChecksums[3],
                             NetPeerTurnChecksums[faction][3]);
                     NetDaemonNet.synch(0x25, 0, 0, 0, 0, 1, 0x2101);
                     while (NetDaemonNet.receive() != 0) { }
@@ -4702,7 +4668,8 @@ prototype_synch:
                     while (NetDaemonNet.receive() != 0) { }
                     break;
                 case 4:
-                    log_say(NetUpkeepBasesChecksum, faction, NetTurnChecksums[4],
+// RECOVERY_LITERAL: v1 0x0068BD3C 0x0068BD5C $SG67488 0x005290A0
+                    log_say("Failed BASES checksum - resynch", faction, NetTurnChecksums[4],
                             NetPeerTurnChecksums[faction][4]);
                     NetDaemonNet.synch(0x26, 0, 0, 0, 0, 1, 0x2101);
                     while (NetDaemonNet.receive() != 0) { }
@@ -4712,7 +4679,8 @@ prototype_synch:
                 default:
                     // Original 0x00529B16 reloads the local checksum through
                     // the 0x0093A008 cursor, independently of peer row zero.
-                    log_say(NetUpkeepMapSectionChecksum, faction,
+// RECOVERY_LITERAL: v1 0x0068BD5C 0x0068BD81 $SG67496 0x005290A0
+                    log_say("Failed MAP section chcksum - resynch", faction,
                             NetTurnChecksums[i], NetPeerTurnChecksums[faction][i]);
                     NetDaemonNet.synch(0x30, i - 5, 0, 0, 0, 1,
                                        0x2101);
@@ -4729,7 +4697,8 @@ prototype_synch:
             net_upkeep_phase(NetUpkeepPhase);
             return;
         }
-        log_say(NetUpkeepSkippingUpkeepPhase, NetUpkeepPhase, 0, 0);
+// RECOVERY_LITERAL: v1 0x0068BD84 0x0068BD9A $SG67501 0x005290A0
+        log_say("Skipping upkeep phase", NetUpkeepPhase, 0, 0);
     }
 }
 
@@ -4835,29 +4804,13 @@ void __cdecl net_not_my_turn() {
     ConsoleGlobal.field_23BE8_ = 0;
 }
 
-// RECOVERY_OBJECT: v2 0x0068BD9C 0x0068BDB8 _NetEndTurnEnterEndTurnLog 0x00529F30
-static const char NetEndTurnEnterEndTurnLog[] = "Entering 'end of turn' loop";
 
-// RECOVERY_OBJECT: v2 0x0068BDB8 0x0068BDC6 _NetEndTurnFinishingTurnLabel 0x00529F30
-static const char NetEndTurnFinishingTurnLabel[] = "FINISHINGTURN";
 
-// RECOVERY_OBJECT: v2 0x0068BDC8 0x0068BDD9 _NetEndTurnReadyToProceedLog 0x00529F30
-static const char NetEndTurnReadyToProceedLog[] = "Ready to proceed";
 
-// RECOVERY_OBJECT: v2 0x0068BDDC 0x0068BDFC _NetEndTurnProceedingToNextTurnLog 0x00529F30
-static const char NetEndTurnProceedingToNextTurnLog[] = "--- Proceeding to next turn ---";
 
-// RECOVERY_OBJECT: v2 0x0068BDFC 0x0068BE15 _NetEndTurnSaveDirectory 0x00529F30
-static const char NetEndTurnSaveDirectory[] = "k:\\breynolds\\multisaves\\";
 
-// RECOVERY_OBJECT: v2 0x0068BE18 0x0068BE1B _NetEndTurnSaveGamePrefix 0x00529F30
-static const char NetEndTurnSaveGamePrefix[] = "AC";
 
-// RECOVERY_OBJECT: v2 0x0068BE1C 0x0068BE20 _NetEndTurnSaveGameSuffix 0x00529F30
-static const char NetEndTurnSaveGameSuffix[] = "end";
 
-// RECOVERY_OBJECT: v2 0x0068BE20 0x0068BE32 _NetEndTurnSaveFileLog 0x00529F30
-static const char NetEndTurnSaveFileLog[] = "Writing save file";
 
 // ORIGINAL: 0x00529F30 ?net_end_of_turn@@YAXXZ 0x00529F30-0x0052A2D3 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/units/00529f30.cpp", "task:net-turn-coordinator-owner", "ConsoleGlobal9156B0+23BE4/+23BE8 owns939294/939298; UpgradePromptAnswered90EA3C, TurnRedrawPending703DE0 and CouncilPendingMessageArgs68BF38 already own their storage. Do not create competing aliases.", "Native prototypes64..511 use34-byte records and flags+30/obsolete_factions+2C, not seed1A stride; peer checksums use8x21-word existing storage. Preserve wait/abort ordering and masked PlayerLock active-bit test; extent/lifetime/runtime and retained-link evidence remain bounded."], "reason": "Recover the complete multiplayer turn operation through actual source-owned objects, arrays, members and SDK calls; preserve historical identity, spans and seed discoveries without implying game acceptance."}
@@ -4872,7 +4825,8 @@ void __cdecl net_end_of_turn() {
         }
     }
 
-    log_say(NetEndTurnEnterEndTurnLog,
+// RECOVERY_LITERAL: v1 0x0068BD9C 0x0068BDB8 $SG67549 0x00529F30
+    log_say("Entering 'end of turn' loop",
             static_cast<int>(NetDaemonNet.factions_waiting_mask()),
             NetDaemonNet.field_1B68_,
             GameDataStateStorage.fields_.game_state_ & 2u);
@@ -4912,7 +4866,8 @@ void __cdecl net_end_of_turn() {
             }
             if (sent_finishing == 0 &&
                 static_cast<DWORD>(timeGetTime() - start_time) > 0x3E8) {
-                NetMsgPrimary.pop(NetEndTurnFinishingTurnLabel, 0, 0, nullptr);
+// RECOVERY_LITERAL: v1 0x0068BDB8 0x0068BDC6 $SG67569 0x00529F30
+                NetMsgPrimary.pop("FINISHINGTURN", 0, 0, nullptr);
                 sent_finishing = 1;
             }
             NetDaemonNet.net_tasks();
@@ -4924,7 +4879,8 @@ void __cdecl net_end_of_turn() {
 
     if ((GameDataStateStorage.fields_.game_state_ & 2u) != 0) {
         if (NetDaemonNet.primary_state_.leading_words_[0] == 0) {
-            log_say(NetEndTurnReadyToProceedLog,
+// RECOVERY_LITERAL: v1 0x0068BDC8 0x0068BDD9 $SG67574 0x00529F30
+            log_say("Ready to proceed",
                     static_cast<int>(NetDaemonNet.factions_waiting_mask()),
                     GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu, 0);
         } else {
@@ -4966,7 +4922,8 @@ after_wait:
     }
 
 proceed_next_turn:
-    log_say(NetEndTurnProceedingToNextTurnLog, 0, 0, 0);
+// RECOVERY_LITERAL: v1 0x0068BDDC 0x0068BDFC $SG67595 0x00529F30
+    log_say("--- Proceeding to next turn ---", 0, 0, 0);
     NetDaemonNet.primary_state_.trailing_words_[7] = 0;
     NetDaemonNet.field_1B6C_ = 0;
     NetUpkeepPhase = 0;
@@ -4982,41 +4939,29 @@ proceed_next_turn:
 
     if ((GameDataStateStorage.fields_.game_preferences_ & 2u) != 0 && BaseAtDebugPopupFlag != 0) {
         StringTemp[0] = 0;
-        strcat(StringTemp, NetEndTurnSaveDirectory);
-        strcat(StringTemp, NetEndTurnSaveGamePrefix);
+// RECOVERY_LITERAL: v1 0x0068BDFC 0x0068BE15 $SG67601 0x00529F30
+        strcat(StringTemp, "k:\\breynolds\\multisaves\\");
+// RECOVERY_LITERAL: v1 0x0068BE18 0x0068BE1B $SG67602 0x00529F30
+        strcat(StringTemp, "AC");
         char number[80];
         _itoa(ConsoleGlobal.faction_id_, number, 10);
         strcat(StringTemp, number);
-        strcat(StringTemp, NetEndTurnSaveGameSuffix);
+// RECOVERY_LITERAL: v1 0x0068BE1C 0x0068BE20 $SG67604 0x00529F30
+        strcat(StringTemp, "end");
         _itoa(GameDataStateStorage.fields_.turn_current_num_, number, 10);
         strcat(StringTemp, number);
-        log_say(NetEndTurnSaveFileLog, StringTemp, 0, 0, 0);
+// RECOVERY_LITERAL: v1 0x0068BE20 0x0068BE32 $SG67605 0x00529F30
+        log_say("Writing save file", StringTemp, 0, 0, 0);
         save_daemon(StringTemp);
     }
     NetDaemonNet.deletion_list_.advance_sequence();
 }
 
-// RECOVERY_OBJECT: v2 0x0068BE78 0x0068BE92 _NetControlTurnClearTurnSemaphore 0x0052A2E0
-static const char NetControlTurnClearTurnSemaphore[] = "(Clearing turn semaphore)";
 
-// RECOVERY_OBJECT: v2 0x0068BE34 0x0068BE40 _NetControlTurnMultiDebugPreference 0x0052A2E0
-static const char NetControlTurnMultiDebugPreference[] = "Multi Debug";
 
-// RECOVERY_OBJECT: v2 0x0068BE40 0x0068BE4B _NetControlTurnMultiDebugPopup 0x0052A2E0
-static const char NetControlTurnMultiDebugPopup[] = "MULTIDEBUG";
 
-// RECOVERY_OBJECT: v2 0x0068BE4C 0x0068BE5D _NetControlTurnTurnLogDirectory 0x0052A2E0
-static const char NetControlTurnTurnLogDirectory[] = "k:\\breynolds\\log";
 
-// RECOVERY_OBJECT: v2 0x0068BE60 0x0068BE65 _NetControlTurnTextFileSuffix 0x0052A2E0
-static const char NetControlTurnTextFileSuffix[] = ".txt";
-// RECOVERY_OBJECT: v2 0x0068BE70 0x0068BE75 _NetControlTurnFallbackTextFileSuffix 0x0052A2E0
-static const char NetControlTurnFallbackTextFileSuffix[] = ".txt";
-// RECOVERY_OBJECT: v2 0x0068BE6C 0x0068BE70 _NetControlTurnFallbackLogPrefix 0x0052A2E0
-static const char NetControlTurnFallbackLogPrefix[] = "log";
 
-// RECOVERY_OBJECT: v2 0x0068BE68 0x0068BE6B _NetControlTurnTextFileMode 0x0052A2E0
-static const char NetControlTurnTextFileMode[] = "wt";
 
 // ORIGINAL: 0x0052A2E0 ?net_control_turn@@YAXXZ 0x0052A2E0-0x0052A971 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/unrecovered/0052a2e0.cpp", "task:net-turn-coordinator-owner", "ConsoleGlobal9156B0+23BE4/+23BE8 owns939294/939298; UpgradePromptAnswered90EA3C, TurnRedrawPending703DE0 and CouncilPendingMessageArgs68BF38 already own their storage. Do not create competing aliases.", "Native prototypes64..511 use34-byte records and flags+30/obsolete_factions+2C, not seed1A stride; peer checksums use8x21-word existing storage. Preserve wait/abort ordering and masked PlayerLock active-bit test; extent/lifetime/runtime and retained-link evidence remain bounded."], "reason": "Recover the complete multiplayer turn operation through actual source-owned objects, arrays, members and SDK calls; preserve historical identity, spans and seed discoveries without implying game acceptance."}
@@ -5029,22 +4974,29 @@ void __cdecl net_control_turn() {
     ConsoleControlTurnActive = 1;
     MapBaseDisplayOverride = 1;
 
-    if (prefs_get(NetControlTurnMultiDebugPreference, 0, 0) != 0 &&
-        X_pop(NetControlTurnMultiDebugPopup, 0) != 0) {
+// RECOVERY_LITERAL: v1 0x0068BE34 0x0068BE40 $SG67610 0x0052A2E0
+    if (prefs_get("Multi Debug", 0, 0) != 0 &&
+// RECOVERY_LITERAL: v1 0x0068BE40 0x0068BE4B $SG67611 0x0052A2E0
+        X_pop("MULTIDEBUG", 0) != 0) {
         StringTemp[0] = 0;
-        strcat(StringTemp, NetControlTurnTurnLogDirectory);
+// RECOVERY_LITERAL: v1 0x0068BE4C 0x0068BE5D $SG67612 0x0052A2E0
+        strcat(StringTemp, "k:\\breynolds\\log");
         _itoa(ConsoleGlobal.faction_id_, log_path, 10);
         strcat(StringTemp, log_path);
-        strcat(StringTemp, NetControlTurnTextFileSuffix);
-        FILE *file = fopen(StringTemp, NetControlTurnTextFileMode);
+// RECOVERY_LITERAL: v1 0x0068BE60 0x0068BE65 $SG67613 0x0052A2E0
+        strcat(StringTemp, ".txt");
+// RECOVERY_LITERAL: v1 0x0068BE68 0x0068BE6B $SG67615 0x0052A2E0
+        FILE *file = fopen(StringTemp, "wt");
         if (file != 0) {
             fclose(file);
         } else {
             StringTemp[0] = 0;
-            strcat(StringTemp, NetControlTurnFallbackLogPrefix);
+// RECOVERY_LITERAL: v1 0x0068BE6C 0x0068BE70 $SG67618 0x0052A2E0
+            strcat(StringTemp, "log");
             _itoa(ConsoleGlobal.faction_id_, log_path, 10);
             strcat(StringTemp, log_path);
-            strcat(StringTemp, NetControlTurnFallbackTextFileSuffix);
+// RECOVERY_LITERAL: v1 0x0068BE70 0x0068BE75 $SG67619 0x0052A2E0
+            strcat(StringTemp, ".txt");
         }
         Logging.init(StringTemp);
         Logging.reset();
@@ -5060,7 +5012,8 @@ void __cdecl net_control_turn() {
     }
 
     for (;;) {
-        log_say(NetControlTurnClearTurnSemaphore,
+// RECOVERY_LITERAL: v1 0x0068BE78 0x0068BE92 $SG67625 0x0052A2E0
+        log_say("(Clearing turn semaphore)",
                 NetDaemonNet.primary_state_.trailing_words_[6],
                 NetDaemonNet.field_1B68_, 0);
         NetDaemonNet.primary_state_.trailing_words_[6] = 0;
