@@ -1747,6 +1747,22 @@ say_label/say_tech batch, 86cc2f1fd4..39c52fa497, 89 probe calls retired)
   last call and its definition flips the unit's count canaries (2.5, 3.6) and
   header-position ties (custom_planet 11 -> 379 from one strings.h
   declaration). Re-tune the canaries once, after the batch.
+- **An expanded inline keeps the literals of arguments it ignores** (high;
+  2026-11-19, par-1). VC6 emits every string literal into the unit's .data
+  in source order (one `$SG` counter slot each) even when the only use is a
+  parameter the expanded body never reads. The original's `rnd(bounds,
+  "LABEL")` (crt_random.h, a header inline whose label is unused) left its
+  labels in the image as literals no instruction references, between the
+  literals around each expanded site (ACTIONDESTROY, GOODY7, TREES0, ...;
+  about 100 in the image). A source that writes `rand() % K` or another
+  stand-in lacks both the literal and its counter slot: restoring the
+  labels moved terraforming_actions' canary pads 17 -> 5 and veh_init
+  0x005C03D0 67 -> 18. rnd returns unsigned; where the image compares a
+  roll signed (`jge`), the source reads `(int)rnd(...)`. Screens:
+  `analysis/litgap.py <unit>` (image literals our object lacks, `U` =
+  unreferenced) and `analysis/giantcallee.py` (helpers called only by the
+  giants). Ambiguous spans (more sites than labels) stay as written until
+  something else orders them.
 
 ## 3. Symptom → first thing to check
 

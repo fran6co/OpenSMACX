@@ -147,6 +147,20 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   WORKAROUND(inline)), and prints fe rows, the inline E/c strings that moved, and (`--unit-exact`) the unit's exact
   functions it breaks. `--keep` adds each helper with only the first k probe lines. Templates pass locals by reference,
   which costs more than a hand-written int parameter (see the guide), so confirm a hit with typed spellings.
+- `analysis/giantcallee.py [--giants N] [--add NAMES] [--max-size B] [--addr A,..] [--copies-only] [--json F] | --probes`
+  header-inline screen (MATCHING_GUIDE 2.8, "Header inlines behind dead probes"; 18 s, no compiler): image call graph over
+  every marker span; giants = the N largest spans plus --add; lists every small function whose image callers are all giants,
+  its address neighbours (G giant, C candidate, H header inline) and the run of C/H copies it sits in, whether our source
+  already defines it as a header inline (HDR, `// body` pointer) or in its .cpp (PLAIN), and the hand-written copies of its
+  body elsewhere (parameters match any balanced expression, locals any identifier; `x` exact host, `G` giant host).
+  `--probes` counts the dead budget-probe call sites in the tree. First pass 2026-11-19: is_port, is_known, rnd and the
+  communicate cluster's adjective/insult forms became header inlines (the enemy cluster 0x00579770-0x00579A30 and the
+  communicate cluster 0x00558FC0-0x00559221 are runs of such copies).
+- `analysis/litgap.py <unit> [--src ALT] [--all] | --tree [unit ...] [--json F]` string-literal gap screen (13 s tree-wide):
+  our object's .data literals in order against the image's literals over the same span; prints the image literals we lack
+  (`U` = no code reference: the label of an expanded `rnd(b, "LABEL")` or another ignored inline argument) with their
+  neighbours, and our literals the image lacks. Units whose literals are spread (base.cpp) anchor poorly; read their
+  labels by neighbours instead. MATCHING_GUIDE 2.8.
 - `analysis/ownerscan.py [unit ...] [--addr A,..] [--probes 8,32] [--repeat] [--swaps] [--json F]` missing inline
   owner screen (MATCHING_GUIDE 2.8 "Missing owner, not missing budget"): per non-exact function, the inline callees
   the image calls more often than ours, our call counts with a dead 0/8/32-probe pass-1 block at the top of the
