@@ -4700,18 +4700,8 @@ void DesignWin::on_iface_right_click(int xCoord, int yCoord) {
         // The label pointer sits at byte offset 0xCE8 of the game block - slot
         // 0x33A of the LPSTR array, the same walk datalink.cpp's
         // CATEGORY_LABEL makes over Labels.strings_ptr.
-        int y = yCoord;
-        int x = xCoord;
-        LPSTR resolved_label = StringTable.get(Labels.strings_ptr[0x33A]);
-        MainInterfaceGlobal.client_to_screen(&x, &y);
-        RECT rect;
-        rect.left = x;
-        rect.top = y;
-        rect.right = x;
-        rect.bottom = y;
-        // MainInterface declares its own (button_id, text) set_bubble_text,
-        // which would hide the Win member the image calls directly.
-        MainInterfaceGlobal.Win::set_bubble_text(resolved_label, &rect);
+        main_interface_bubble_callback_4396b0(
+            StringTable.get(Labels.strings_ptr[0x33A]), xCoord, yCoord);
     }
 }
 
