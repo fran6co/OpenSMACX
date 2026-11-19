@@ -533,10 +533,11 @@ raw field access where the original used inline accessors.
   | buy_council_vote 0x0053EB50 | 0, 9, 12, 14-22, 25, 28-33, 35-42, 44-46, 48-55, 57-63 |
 
   Few functions are counter-sensitive: 2 of 234 in reportif (with sat_attack)
-  and none of faction's 278 across 16 shifts. base_energy 0x004EB560 and
-  give_a_base 0x0054CF40 are **not** counter-sensitive: 64 declaration
-  probes, inline-body probes and struct-type probes leave them unchanged.
-  Their flips come from the header content they use (field types, arrays).
+  and none of faction's 278 across 16 shifts. base_energy 0x004EB560 does
+  not move with pads behind the includes because the symbol it follows is a
+  header global ("Bucket order of referenced symbols" below); give_a_base
+  0x0054CF40 moves at no pad count in any place, so its flips come from the
+  header content it uses (field types, arrays).
   The absolute count is not recoverable: each function only constrains the
   original's count modulo 64, to its residue set, and the whole header stack
   (vc6_compat.h alone is 1,334 symbols, windows.h 16,655 lean or 41,878 full)
@@ -877,35 +878,114 @@ raw field access where the original used inline accessors.
   `measurement.unit_flag_sets` or every recover command refuses. (Before
   2026-11-12, unpinned units were measured under both global trials and the
   better score kept, so a /Oy- unit could be reported from a frameless compile.)
-- **Declaration position of a referenced global (base_energy 0x004EB560,
-  par-5 2026-11-19).** A second counter, not the mod-64 one: base_energy's
-  reload-order row (0x004EB7DE) is exact at no count of pads behind the
-  includes (function, extern, struct, 0..63), yet two in-class inline setters
-  added to scroll.h/basebutton.h broke it. Measured in a scratch export
-  (`git archive` + that copy's fe.py):
-  - what counts is everything declared BEFORE `extern PlayerData
-    PlayersData[]` (faction.h): a pad inserted before any earlier include or
-    line flips it, the same pad one line after that declaration (or anywhere
-    later, base.cpp itself included) never does. The function reads
-    PlayersData; the tie follows where that symbol sits in the front end's
-    tables, so only earlier declarations move it;
-  - the period is 112 in units where an in-class inline member with one
-    parameter is 7, one without parameters 5 and a one-member struct 16
-    (inline members: exact for +6..+14 and +22..+30 of 0..33, period 16;
-    structs: +3..+6, +10..+13, period 7; struct with one inline member:
-    period 5); the exact window is about 38..100 of 112;
-  - not counted, or the same either way: where the member sits in its class
-    (beside the field, end of class), an out-of-class `inline` definition
-    instead of the in-class one, the length of the inline body, non-inline
-    member declarations, free inline functions, prototypes, externs,
-    typedefs and enums (6 of each).
-  So an unused header inline is not neutral for the units that include the
-  header before the globals they read, and the function-pad sweep cannot see
-  it. Remedy when the header content is right: a `// HEADER-PADS: struct`
-  block BEFORE the unit's first include (base.cpp: 3..6 structs give
-  base_energy and move no other marker of the unit, `analysis/unitexact.py`).
-  give_a_base 0x0054CF40 ("flips on header content") is the next candidate
-  for the same test.
+- **Bucket order of referenced symbols: one counter, read at each symbol's
+  own declaration (par-5 2026-11-19, `analysis/declpad.py`).** The
+  "header-position ties" above, the round-6 "second counter with period 112"
+  (base_energy 0x004EB560) and the mod-64 canaries are one mechanism. What
+  the tie reads is the front-end symbol NUMBER (the `$SG` counter) of each
+  file-scope symbol the function references, modulo 64: a header global has
+  the number the counter had at its `extern`, a string literal the number it
+  had at the function. So a pad moves a tie only when it sits before the
+  declaration of a symbol of that tie, and "behind the includes" is simply
+  after every header global.
+  - *Units.* `void f();`, `extern int x;`, `typedef`, a forward `struct S;`
+    and a file-scope definition are 1 each; `struct S {};` is 8, `struct S
+    { int a; };` 9 (each further data member +1), an in-class inline member
+    `void f() {}` 3, `void f(int) {}` 4. The round-6 table (struct 16,
+    parameterless member 5, one-parameter member 7, period 112) is this
+    counter in units of 4/7 symbol: 112 of them are 64 symbols. Confirmed on
+    base_energy with pads of every value 0..111 built from those three kinds
+    (one contiguous exact window, 41..101) and with prototypes (window of 34
+    of 64); "6 prototypes or externs never flip it" was only the width of
+    the window.
+  - *Reading a number.* `char *p = "zq";` at any place takes two numbers,
+    the pointer and then its literal, so the `$SG<n>` of that literal in the
+    object is the counter there plus one (`declpad.py syms <unit> <addr>`
+    lists the number of every global a function references; a unit's first
+    header symbol is about 1,519, its literals start near 60,000).
+  - *Which symbols.* `declpad.py at <unit> <addr>` sweeps 0..63 prototypes
+    before and after the declaration of each referenced global in a shadow
+    copy of src/ and bisects on the pattern: the pattern changes exactly
+    across the declarations the tie follows and is flat after the last one.
+    base_energy follows one symbol, `GameDataStateStorage` (exact while its
+    number mod 64 is 0..33; pads right after its `extern` do nothing, so the
+    round-6 "everything before faction.h's externs" was this one line).
+    DesignWin::draw_armor 0x00435400 follows two, `BufferJoinSpace` (b) and
+    `ArmorTransparentColorTables` (a); the full map of its one swapped pair
+    of loads (`mov edx,[ebp-0x10]; mov eax,[ebp-8]` before an `add`) is
+    piecewise constant with FIXED thresholds: for a in 6..41 wrong iff b in
+    6..41; for a < 6 wrong iff a < b <= 41; for a in 42..45 wrong iff
+    b >= 42; for a >= 46 wrong iff b in 42..45. The thresholds (6, 42, 46;
+    34 for base_energy) move with no pad anywhere, with no added local and
+    with no added literal, and bucket 0 is an edge: the table is walked from
+    bucket 0 and something of the function itself holds fixed buckets. The
+    two loads that swap are locals; the symbols that decide are globals the
+    function merely passes as arguments.
+  - *Per-function table (`declpad.py who`, wip 6a088e1769; residue = symbol
+    number mod 64 in that unit, with the unit's pads in place).*
+
+    | function | symbols the tie follows | allowed |
+    |---|---|---|
+    | base_energy 0x004EB560 | GameDataStateStorage (12) | 0..33 |
+    | wants_to_attack 0x0055BC80 | PlayersData (48) | 33..63, 0 |
+    | world_volcano 0x005C6DB0 | StringTable (12) | 7..63 |
+    | planet_busting 0x00500B60 | ConsoleGlobal (25) | all but 11..15 and 59 |
+    | Datalink::set_cat_social 0x0042B630 | InterfaceBoxStyles (36), SocialCategories (0) | top shift 0..27, 32..62 |
+    | DesignWin::draw_armor 0x00435400 | BufferJoinSpace (60), ArmorTransparentColorTables (11) | map above |
+    | vehdraw_construct_armor 0x004C3090 | eleven `g_*_CAVIARDATA` externs of caviar.h (47..62, 7..26) | top shift 15, 27..34, 43..44, 47..52, 56..3 |
+    | faction_upkeep 0x00527290 | Bases (53) + its literals | - |
+    | end_of_game 0x00524870 | Players (27), NetDaemonNet (57) + literals | - |
+    | corner_the_market 0x004E2000 | ConsoleGlobal (61), NetMsgPrimary (63) + literals | - |
+    | action_airdrop 0x004CC360 | NetMsgPrimary (51) + literals | - |
+    | action_give 0x004CEDE0 | ConsoleGlobal (25), NetMsgPrimary (51) + literals | - |
+    | PrefWin::init 0x0048D840 | PrefWinCaption (unit global) + literals | - |
+    | on_iface_button_clicked 0x004A6330 | ReportIfGlobal (30), Bases (15), MainInterfaceGlobal (10) + literals | - |
+    | load_box_sprites 0x00453A70 (6 rows) | eleven sprite and buffer globals of sprite.h / buffer.h + literals | never exact on any cut |
+    | design_workshop 0x00583E30 (13 rows) | TutWinDesWindow (14) | never exact |
+
+    No global is shared by two of these functions inside one unit except
+    NetMsgPrimary and ConsoleGlobal in terraforming_actions.cpp (action_airdrop
+    and action_give agree on a region: both exact with the unit's two pad
+    blocks emptied and 26, 27, 36, 38..41 or 46 prototypes at the top), so
+    the "several functions must agree on one offset" test has nothing else to
+    bite on; across units the same header global has a different number in
+    each unit (ConsoleGlobal 25, 61, 5), as it had in the original.
+  - *What a top-of-unit sweep proves.* n prototypes before the first line
+    shift every symbol of the unit together, so every pair of symbols with
+    different residues changes its bucket order for part of n = 0..63. A
+    function that does not change at any n has no tie of this kind, whatever
+    its residue looks like. Tree pass (`declpad.py top`, 175 units, 5,473
+    markers, 64 compiles each): 55 functions move at all, 19 of them claimed
+    (the canaries of 3.6) and most of the rest large (enemy_move, probe,
+    battle_fight, order_veh: a few rows of several thousand). Of the 190
+    non-exact functions of at most 60 rows, 9 move and none becomes exact:
+    upgrade_prototype 27 -> 24, sat_attack 17 -> 15, load_interface 18 -> 17,
+    vox_matrix_matrix_mul 54 -> 22 (VC5 library); load_box_sprites 6,
+    design_workshop 13, veh_pick 27, draw_sat 54 and sub_6401b0 33 change
+    which rows differ without improving. The one- to three-row residue
+    (world_site, SpriteBox::draw_item, Popup::on_draw_background,
+    DesignWin::on_iface_right_click, load_voxels, load_palette,
+    vehdraw_compute_facet_normals, compute_odds, Win::update_screen,
+    FileWin::init, Credits::exec, Console::zoom, tech_achieved) and
+    give_a_base are flat at every n. Do not sweep pads at those.
+  - *The image constrains a set, not a number.* Each function allows a
+    region of its symbols' residues (half of the 64 values for base_energy),
+    and the symbols themselves are often our stand-ins: `BufferJoinSpace` is
+    a named object where the original had a literal numbered at the
+    function, `GameDataStateStorage` one struct where the original had
+    dozens of separate globals. So the offsets do not say what a header has
+    too much of. One shift for every unit (a count missing from the shared
+    prefix, stdafx.h) was tested with every pad block emptied
+    (`declpad.py padfree`, `common`): no n keeps all sixteen canaries; n = 49
+    keeps all but action_airdrop (and gives buy_council_vote and action_give),
+    n = 7 and n = 57 lose one each. Three such n of 64 is what independent
+    windows of this width give by chance, and the non-exact functions do not
+    prefer 49 (load_interface 18 -> 31, Console::upgrade 147 -> 167 against
+    probe 1292 -> 1251). The pad blocks stay per unit.
+  - *Placing pads.* A tie on header globals needs the block before the
+    includes (HEADER-PADS); one on literals or unit statics after them
+    (CANARY-PADS); a function that needs both can have two blocks. Use
+    prototypes: struct pads work only through their symbol count (9 each).
 - **The extern-name count is a window, not a threshold.** Superseded: the
   window is the counter residue set modulo 64 (above), so it recurs every 64
   and moves with every earlier symbol. Use `recover canary` instead of
@@ -4788,9 +4868,10 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
 ### 3.6 Canaries (measure after any edit to their unit or a shared header)
 Counter-sensitive canaries carry `CANARY` lines; `uv run recover canary`
 re-aligns their pad blocks (2.5). base_energy 0x004EB560 follows the
-declarations before `PlayersData` (2.5 "Declaration position of a referenced
-global"; struct pads before the first include of base.cpp); give_a_base
-0x0054CF40 flips from header content too and is not yet bisected.
+symbol number of `GameDataStateStorage` (2.5 "Bucket order of referenced
+symbols"; pads before the first include of base.cpp). give_a_base 0x0054CF40
+does not move at any top-of-unit pad count (declpad.py): it is not a tie of
+this kind.
 - **reportif.cpp:** `ReportIf::on_iface_button_clicked` 0x004A6330.
 - **turn.cpp:** `end_of_game` 0x00524870.
 - **Round of 2026-11-19 (after the EditBox setters; one pass, windows by
@@ -4802,6 +4883,19 @@ global"; struct pads before the first include of base.cpp); give_a_base
   does (6, 25-28; set to 26, extern block stays 22). base_energy 0x004EB560
   (one reload-order row) is exact at no count of function pads before its
   marker (0..63) and at no count of dead locals (0..7): not a counter canary.
+- **Round of 2026-11-19, second pass (declpad.py, top-of-unit sweeps with
+  the blocks emptied):** faction_treaty.cpp 12 -> 0 (wants_to_attack exact at
+  49..16, territory at 55..53) and world.cpp 20 -> 0 (world_volcano at
+  59..51): both blocks are empty again. base.cpp: the four struct pads are
+  36 prototypes (same symbol numbers; exact at 24..57). Still needed:
+  datalink 36 (4..34, 36..63), designwin 16 (2..25, 47..61), prefwin 57,
+  turn 50, vehicle_render 21 (exact at 0 and 1 too, but on the edge of a
+  window), console_commands 3 (corner_the_market is exact without them;
+  Console::upgrade is 147 rows with them and 167 without). For the owner of
+  the next canary pass: faction.cpp with its 31 pads removed gives
+  buy_council_vote 0x0053EB50 by fe and moves no other marker;
+  terraforming_actions.cpp with both blocks emptied and 26 prototypes before
+  the first line gives action_give 0x004CEDE0 and keeps action_airdrop.
 - **console_commands.cpp:** `corner_the_market` 0x004E2000.
 - **Header vetting:** `action_give`, `capture_base`, `setup_player`,
   `base_production`, `battle_fight`, `enemy_move`, `game_data`,

@@ -23,6 +23,15 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   one canary does not flip another function of the unit. `--at ADDR` sweeps pads inserted before that marker
   instead (no block needed). `analysis/padext.py <unit> <addr[,addr]> [--write]` is the single-function form
   for an extern-kind block.
+- `analysis/declpad.py top|report|syms|at|who|padfree|common ...` symbol-number ties (MATCHING_GUIDE 2.5 "Bucket order of
+  referenced symbols"). `top OUT.jsonl [unit ...]` puts 0..63 prototypes before the first line of each unit and records every
+  marker that moves (64 compiles per unit, about 2 h tree-wide on 5 lanes; resumable); `report OUT.jsonl [--max N] [--delta]`
+  lists them with their exact pad counts. A function that moves at no n has no such tie. `syms <unit> <addr>` prints the
+  front-end symbol number of every global the function references (probe literals in a shadow copy of src/, as outside.py);
+  `at <unit> <addr[,addr]> [--full] [--only NAME,..] [--extra file:line,..]` sweeps pads before and after each of those
+  declarations and bisects to the ones the tie follows (`DECLPAD_STEP=2` halves the compiles); `who OUT.jsonl WHO.jsonl` runs
+  it for every moving function. `padfree PF.jsonl [unit ...]` is the top sweep with the unit's CANARY-PADS / HEADER-PADS blocks
+  emptied and `common OUT.jsonl PF.jsonl` asks whether one shift serves every unit (2026-11-19: no).
 - `analysis/spellsweep.py <unit> <addr> [--write] [--rules ...]` raw-vs-helper screen of one function for the
   invented budget-only helpers (is_human, is_alive, is_alien_faction, map_tiles(), MapAbstract()): every site
   alone, all sites, then greedy; key = (named call multiset distance to the image, rows), no ratchet on rows
