@@ -1301,12 +1301,13 @@ void __cdecl mon_facility_built(int faction_id, char *base_name) {
                 owner_faction = other;
             }
         }
+        record.owner_faction_ = owner_faction;
     } else {
         record.word_14_ = 1;
         owner_faction = faction_id;
+        record.owner_faction_ = owner_faction;
     }
 
-    record.owner_faction_ = owner_faction;
     record.achieved_ = 1;
     record.year_ = year;
     // Native copies exactly 24 bytes, including strncpy's zero padding but
