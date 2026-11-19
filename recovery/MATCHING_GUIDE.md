@@ -2814,6 +2814,25 @@ What the model does not predict (2026-11-19)
   parameter list. BaseWin's compute_selected_base was the real focus()
   0x00415DD0 (expanded at 24 sites; spell the real body with the twin's node
   count: `!= 0` tests charged at every expansion moved production/hurry).
+- **Orphan refused by the per-callee cap: shrink its own body with an inner
+  inline** (2026-11-20 par-6 r24). A plain function with no image references
+  that the image expands, but that ours calls even from a one-statement
+  caller (`capprobe`: append `void p() { f(); g = 1; }` to the unit), is over
+  the auto-inline cap (2.1), not out of budget. The cap counts only the
+  callee's own body: an inline call inside it counts as one call whatever
+  its body (synthetic g{7 ifs}/f{g(); 7 ifs} expands f; f{14 ifs} is
+  called). So the original orphan held part of its body in an inner inline
+  helper. Found: net_not_my_turn (skip test as a helper; net_control_turn
+  exact), prev_cursor (survey clear as a helper, cursor block as
+  reset_turn_view(); retires two WORKAROUND copies), sub_5a6510 (a terser
+  spelling alone suffices; compass_move exact), set_parent_dialog (screen
+  only: the WinNodeList add as a helper passes the cap, which should replace
+  the __forceinline twin in Win::init). Definition order does not matter.
+  Mark invented helpers WORKAROUND(inline). Note: GameDataStateStorage.fields_
+  member chains count more nodes than plain globals; spelling every one of
+  them as a plain extern also puts net_not_my_turn under the cap, but the
+  tree-wide screen (66 files, 3058 uses) loses 28 exact functions and gains
+  1, so it is not landed.
 - **Popup::start, five arguments (0x0043EF70), editor_who copies**
   (2026-11-19 par-6, screen only). With editor_diplomacy calling the plain
   `editor_who` (auto-inlined, as in the image) instead of the
