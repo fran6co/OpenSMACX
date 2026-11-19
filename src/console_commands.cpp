@@ -1887,13 +1887,13 @@ Purpose: Run the destroy-order dialog on one vehicle: eligibility guards, the
 */
 // WORKAROUND(inline): dead /Ob2 budget probes, not recovered code; constant
 // arguments fold them away. One four-way probe anywhere after the vehicle's
-// faction is read plus two one-way probes after the last early return give
+// faction is read plus three one-way probes after the last early return give
 // the image's teardown depths (six shallow sites, five with ~Scroll expanded,
 // and a final teardown that expands ~Scroll, both of its buttons and
 // ~BasePop); without them the sixth site is deep and the final one shallow.
 // has_treaty, the two-argument start and the six-argument start were tried
 // as natural spends and do not reproduce it; the original's spend is not
-// identified.
+// identified. (Three since base_who was spelled with two early returns.)
 static inline int destroy_budget_probe1(int x) { if (x == 0) x = 1; return x; }
 static inline int destroy_budget_probe4(int x) {
     if (x == 0) x = 1;
@@ -2014,6 +2014,7 @@ void Console::destroy(int veh_id) {
     }
 
     destroy_budget_probe4(5);  // WORKAROUND(inline): see destroy_budget_probe1
+    destroy_budget_probe1(5);  // WORKAROUND(inline)
     destroy_budget_probe1(5);  // WORKAROUND(inline)
     destroy_budget_probe1(5);  // WORKAROUND(inline)
     field_23BE4_ = 0;

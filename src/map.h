@@ -778,14 +778,17 @@ int __cdecl bonus_at(int x, int y, int unk_val);
 
 MEASURED inline int __cdecl base_who(int x, int y) {
     Map *tile = map_loc(x, y);
-    if (tile->bit & BIT_BASE_IN_TILE) {
-        // `int`, as in veh_who: the image's test is `jl`.
-        int owner = tile->val2 & 0xF;
-        if (owner < MaxPlayerNum) {
-            return owner;
-        }
+    // Two early returns: Path::find's expansion (0x59B1C1, 0x59B1D5) stores
+    // -1 to its result in two separate copies, after `jne` and `jl`.
+    if (!(tile->bit & BIT_BASE_IN_TILE)) {
+        return -1;
     }
-    return -1;
+    // `int`, as in veh_who: the image's test is `jl`.
+    int owner = tile->val2 & 0xF;
+    if (owner >= MaxPlayerNum) {
+        return -1;
+    }
+    return owner;
 }
 
 // MEASURED inline, as base_who: world_alt_set and action_fungal inline it.
