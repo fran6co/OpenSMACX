@@ -2816,12 +2816,11 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
         bool notify = false;
         if ((1 << def_faction) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) {
             // 0x507583: the DEFENDER's view of the attacker
-            uint32_t d2a = PlayersData[def_faction].diplo_treaties[att_faction];
-            if (d2a & (DTREATY_TREATY | DTREATY_TRUCE)) {
+            if (PlayersData[def_faction].diplo_treaties[att_faction] & (DTREATY_TREATY | DTREATY_TRUCE)) {
                 notify = true;
-            } else if (((d2a & DTREATY_COMMLINK) ||
+            } else if (((PlayersData[def_faction].diplo_treaties[att_faction] & DTREATY_COMMLINK) ||
                         has_treaty(att_faction, def_faction, DTREATY_UNK_800)) &&
-                       !(d2a & DTREATY_VENDETTA)) {
+                       !(PlayersData[def_faction].diplo_treaties[att_faction] & DTREATY_VENDETTA)) {
                 notify = true;
             }
         }
@@ -4044,13 +4043,12 @@ L_50b203:
     // 0x50B765: the attacker survived; the vehicle in 0x9A64DC pays moves
     {
         int cur = GameDataStateStorage.fields_.vehicle_selection_follow_limit_;   // 0x9A64DC
-        int chas = VehPrototypes[Vehs[cur].proto_id].chassis_id;
-        if (Chassis[chas].triad == TRIAD_AIR) {
-            if (Chassis[chas].range != 1) {
+        if (Chassis[VehPrototypes[Vehs[cur].proto_id].chassis_id].triad == TRIAD_AIR) {
+            if (Chassis[VehPrototypes[Vehs[cur].proto_id].chassis_id].range != 1) {
                 veh_skip(cur);
                 Vehs[cur].moves_expended += Rules.move_rate_roads;   // byte add, 0x949738
             }
-        } else if (Chassis[chas].triad == TRIAD_SEA) {
+        } else if (Chassis[VehPrototypes[Vehs[cur].proto_id].chassis_id].triad == TRIAD_SEA) {
             veh_skip(cur);
             Vehs[cur].moves_expended += Rules.move_rate_roads;
         }
