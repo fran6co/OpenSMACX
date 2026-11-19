@@ -166,7 +166,7 @@ int ButtonGroup::button_click(int clicked_id) {
     int active_index;
     int clicked_index;
 
-    int total = static_cast<int>(count_);
+    int total = count_;
     if (total > 0) {
         for (int index = 0; index < total; ++index) {
             const uint32_t button_id = buttons_[index]->field_A78_;
@@ -218,13 +218,13 @@ int ButtonGroup::button_click(int clicked_id) {
         }
     }
 
-    total = static_cast<int>(count_);
+    total = count_;
     for (int index = 0; index < total; ++index) {
         if (buttons_[index]->field_A74_ != 0) {
             buttons_[index]->field_A74_ = 0;
             buttons_[index]->redraw();
         }
-        total = static_cast<int>(count_);
+        total = count_;
     }
     return 0;
 }

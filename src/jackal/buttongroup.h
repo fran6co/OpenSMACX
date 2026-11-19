@@ -37,7 +37,7 @@ class ButtonGroup {
 
  private:
   BaseButton *buttons_[32];
-  uint32_t count_;
+  int count_;
  public:
   // 0x0084. Public because MainInterface::on_iface_left_click and
   // MainInterface::on_iface_right_click reach it directly across the class
