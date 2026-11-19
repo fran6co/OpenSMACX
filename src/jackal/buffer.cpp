@@ -507,7 +507,12 @@ int Buffer::draw_pie(RECT *area, int first_color, int second_color,
     }
     Pie(dc, area->left, area->top, area->right, area->bottom,
         area->right, area->top, area->right, area->top);
-    offset_rect(area, 0, -thickness);
+    // WORKAROUND(decl): the zero dx is a plain local (sitek.py). With the
+    // literal, thickness stays in its parameter slot; with a variable it takes
+    // ebx as in the image (101 rows -> 34). Written out as two `-=` the image's
+    // `mov eax, ebx; neg eax; add; add` becomes two subs, so the call stays.
+    int dx = 0;
+    offset_rect(area, dx, -thickness);
     RECT strip;
     if (amount * 4 < total) {
         SetRect(&strip, area->left, center_y, width + area->left, center_y + thickness);
