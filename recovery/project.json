@@ -702,23 +702,6 @@
           "/GX"
         ]
       },
-      "src/interface_fonts.cpp": {
-        "flags": [
-          "/nologo",
-          "/TP",
-          "/Zm200",
-          "/GX",
-          "/Og",
-          "/Ot",
-          "/Gs",
-          "/Gy",
-          "/Ob2",
-          "-MT",
-          "/W4",
-          "/Oy-",
-          "-c"
-        ]
-      },
       "src/jackal/spritebox.cpp": {
         "flags": [
           "/nologo",
@@ -1611,24 +1594,6 @@
           "/Ob2",
           "-MT",
           "/W4",
-          "-c"
-        ]
-      },
-      "src/newgame.cpp": {
-        "flags": [
-          "/nologo",
-          "/TP",
-          "/Zm200",
-          "/GX",
-          "/Og",
-          "/Ot",
-          "/Gs",
-          "/Gy",
-          "/Ob2",
-          "-MT",
-          "/W4",
-          "/Oy-",
-          "/Z7",
           "-c"
         ]
       },

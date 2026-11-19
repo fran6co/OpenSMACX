@@ -226,8 +226,6 @@ set(OPENSMACX_SOURCES
     src/enemy.cpp
     src/veh.cpp
     src/alpha.cpp
-    src/interface_fonts.cpp
-    src/newgame.cpp
     src/lock.cpp
     src/datalink_entries.cpp
     src/map_grid.cpp
@@ -364,10 +362,6 @@ set_source_files_properties(
     src/tutwin.cpp
     src/xpops.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
-# Original interface palette initialization and font lookup retain a frame
-# pointer; generic library bodies have independently measured profiles.
-set_source_files_properties(src/interface_fonts.cpp
-    PROPERTIES COMPILE_OPTIONS "/Oy-")
 # The co-located Sound-family lifetimes retain the original frame-based
 # cleanup/deleting entries. Release already supplies /Ob2 for base inlining.
 set_source_files_properties(src/sound.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
@@ -407,7 +401,6 @@ set_source_files_properties(
     src/colortables.cpp
     src/interface_assets.cpp
     src/game_calendar.cpp
-    src/newgame.cpp
     src/netwin.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve measured frame-based accesses across these application window owners.
@@ -545,7 +538,6 @@ set_property(SOURCE
     src/infowin.cpp
     src/messagewin.cpp
     src/netwin.cpp
-    src/newgame.cpp
     src/socialwin.cpp
     src/vehicle_render.cpp
     APPEND PROPERTY COMPILE_OPTIONS "/Z7")

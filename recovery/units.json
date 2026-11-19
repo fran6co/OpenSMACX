@@ -635,7 +635,7 @@
       "name": "NewGameOpening",
       "start": "0x00589870",
       "end_exclusive": "0x0058EE31",
-      "recovered_tu": "src/newgame.cpp",
+      "recovered_tu": "src/alpha.cpp",
       "reason": "Inferred complete known opening/setup contribution core. Reunited opening lifecycle helpers and their complete original mappings; imperfect bodies remain eligible for source correspondence, without historical object-boundary or matching proof.",
       "evidence": [
         "All twelve mapped primary identities in this interval are in newgame.cpp; change_opening and opening lifecycle functions were reunited from application loop/desktop files. crash_landing belongs outside this core and retains its full primary and detached EH mapping in game.cpp.",
