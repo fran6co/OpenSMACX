@@ -1,6 +1,3 @@
-// stand-in: hide seek_id's header body so on_left_down calls 0x00401560
-// out of line twice, as the image does; Datalink inlines it.
-#define STRINGSTRUCT_SEEK_ID_OUT_OF_LINE
 /*
  * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.
  * Copyright (C) 2013-2021 Brendan Casey
@@ -493,34 +490,15 @@ void CheckBox::on_left_down(int x, int y) {
     const int cell_height = Dialog::field_68_ + Dialog::field_44_;
     const int position = (x / cell_width) * rows + y / cell_height;
     const int id = Dialog::pos_to_id(position);
-    box->item_list_.seek_id(id);
-    if ((box->selected_position_ & (1u << static_cast<uint32_t>(box->item_list_.current_position_))) != 0) {
-        box->item_list_.seek_id(id);
-        box->selected_position_ &= ~(1u << static_cast<uint32_t>(box->item_list_.current_position_));
-    } else {
-        set_state_id(id, 1);
-    }
+    flip_state_id(id);
     if (Dialog::pos_to_id(field_4_) != id) {
-        draw_item(field_4_, static_cast<int>((1u << static_cast<uint32_t>(field_4_)) & box->selected_position_), 0);
+        draw_item(field_4_, UNK2(field_4_), 0);
         field_4_ = Dialog::id_to_pos(id);
     }
     WinNotificationCallback callback = key_notification_callback_;
     if (callback != 0) callback(box->selected_position_);
-    {
-        StringStruct &items = box->item_list_;
-        if (items.head_ != 0) {
-            items.current_position_ = 0;
-            items.current_ = items.head_;
-            for (int traversed = 0; traversed < items.entry_count_; ++traversed) {
-                if (items.current_->id == id) break;
-                ++items.current_position_;
-                items.current_ = items.current_->next;
-            }
-        }
-    }
-    const int current_position = box->item_list_.current_position_;
-    draw_item(Dialog::id_to_pos(id),
-              static_cast<int>((1u << static_cast<uint32_t>(current_position)) & box->selected_position_), 1);
+    int state = get_state_id(id);
+    draw_item(Dialog::id_to_pos(id), state, 1);
     soft_update();
 }
 
@@ -771,16 +749,7 @@ Return Value: n/a
 Status: Complete
 */
 void CheckBox::set_state_id(int id, int value) {
-    StringStruct &items = Dialog::item_list_;
-    if (items.head_ != 0) {
-        items.current_position_ = 0;
-        items.current_ = items.head_;
-        for (int traversed = 0; traversed < items.entry_count_; ++traversed) {
-            if (items.current_->id == id) break;
-            ++items.current_position_;
-            items.current_ = items.current_->next;
-        }
-    }
+    Dialog::item_list_.seek_id(id);
     if (value != 0) {
         Dialog::selected_position_ |= 1U << static_cast<uint32_t>(Dialog::item_list_.current_position_);
     } else {
@@ -791,49 +760,10 @@ void CheckBox::set_state_id(int id, int value) {
 // ORIGINAL: 0x0060EA10 ?flip_state_id@CheckBox@@QAEXH@Z 0x0060EA10-0x0060EB48 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x0060EA10 performs one head-gated ID search, tests the selected bit at that resulting cursor, then performs a second head-gated search in each branch before clearing or setting the bit at the second resulting cursor. src/dialog.h exposes the actual item_list_ and selected_position_; src/stringstruct.h exposes typed list cursor/node members."], "reason": "Recover the original two-pass CheckBox toggle through genuine Dialog and StringStruct members, retaining its branch-specific repeated traversal and cursor effects rather than collapsing it to XOR."}
 void CheckBox::flip_state_id(int id) {
-    {
-    StringStruct &items = Dialog::item_list_;
-    if (items.head_ != 0) {
-        items.current_position_ = 0;
-        items.current_ = items.head_;
-        for (int traversed = 0; traversed < items.entry_count_; ++traversed) {
-            if (items.current_->id == id) break;
-            ++items.current_position_;
-            items.current_ = items.current_->next;
-        }
-    }
-    }
-
-    const uint32_t first_mask =
-        1U << static_cast<uint32_t>(Dialog::item_list_.current_position_);
-    if ((Dialog::selected_position_ & first_mask) != 0) {
-        StringStruct &items = Dialog::item_list_;
-        if (items.head_ != 0) {
-            items.current_position_ = 0;
-            items.current_ = items.head_;
-            for (int traversed = 0; traversed < items.entry_count_; ++traversed) {
-                if (items.current_->id == id) break;
-                ++items.current_position_;
-                items.current_ = items.current_->next;
-            }
-        }
-        const uint32_t mask =
-            1U << static_cast<uint32_t>(Dialog::item_list_.current_position_);
-        Dialog::selected_position_ &= ~mask;
+    if (get_state_id(id)) {
+        set_state_id(id, 0);
     } else {
-        StringStruct &items = Dialog::item_list_;
-        if (items.head_ != 0) {
-            items.current_position_ = 0;
-            items.current_ = items.head_;
-            for (int traversed = 0; traversed < items.entry_count_; ++traversed) {
-                if (items.current_->id == id) break;
-                ++items.current_position_;
-                items.current_ = items.current_->next;
-            }
-        }
-        const uint32_t mask =
-            1U << static_cast<uint32_t>(Dialog::item_list_.current_position_);
-        Dialog::selected_position_ |= mask;
+        set_state_id(id, 1);
     }
 }
 
@@ -854,16 +784,7 @@ Return Value: (1 << ordinal) & state word - nonzero when `id`'s box is checked
 Status: Complete
 */
 int CheckBox::get_state_id(int id) {
-    StringStruct &items = Dialog::item_list_;
-    if (items.head_ != 0) {
-        items.current_position_ = 0;
-        items.current_ = items.head_;
-        for (int traversed = 0; traversed < items.entry_count_; ++traversed) {
-            if (items.current_->id == id) break;
-            ++items.current_position_;
-            items.current_ = items.current_->next;
-        }
-    }
+    Dialog::item_list_.seek_id(id);
     const uint32_t mask =
         1U << static_cast<uint32_t>(Dialog::item_list_.current_position_);
     return static_cast<int>(Dialog::selected_position_ & mask);

@@ -595,9 +595,9 @@ inline int StringStruct::current_id() {
 
 // 0x00401560 is called by CheckBox::on_left_down and expanded inline by
 // Datalink::draw_concept/draw_adv_concept; MEASURED keeps the copy emitted.
-// A TU that defines STRINGSTRUCT_SEEK_ID_OUT_OF_LINE sees only the
-// declaration and calls 0x00401560 (CheckBox::on_left_down).
-#ifndef STRINGSTRUCT_SEEK_ID_OUT_OF_LINE
+// CheckBox::on_left_down's two calls are level-3 sites inside its inline
+// flip_state_id -> get_state_id/set_state_id, refused for budget because the
+// later get_state_id in its final draw_item holds a reservation (guide 2.8).
 MEASURED inline int StringStruct::seek_id(int id) {
     if (head_) {
         current_position_ = 0;
@@ -612,7 +612,6 @@ MEASURED inline int StringStruct::seek_id(int id) {
     }
     return 0;
 }
-#endif
 
 #include "name_table.h"
 
