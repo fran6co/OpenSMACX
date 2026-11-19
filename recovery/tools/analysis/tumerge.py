@@ -176,7 +176,8 @@ def insert(C, cs_c, foreign, top=False):
     """cs_c: [[key, text]] chunks of C in file order; foreign: [[key, text]]; returns new chunk list"""
     out = [list(c) for c in cs_c]
     placed = set()
-    for k, s in sorted(foreign, key=lambda x: (x[0] is None, x[0] or 0)):
+    for c_ in sorted(foreign, key=lambda x: (x[0] is None, x[0] or 0)):
+        k, s = c_[0], c_[1]
         best = -1; bk = -1
         for i, (ck, _) in enumerate(out):
             if top and (i, ck) not in placed:
@@ -231,6 +232,13 @@ def rewrite_build(gone, into, dry):
     if not dry:
         json.loads(t)
         open(p, 'w').write(t)
+    p = R + '/build/compile_commands.json'
+    if os.path.exists(p) and not dry:
+        d = json.load(open(p))
+        d2 = [e for e in d if e['file'] not in {R + '/' + g for g in gone}]
+        if len(d2) != len(d):
+            json.dump(d2, open(p, 'w'), indent=1)
+            notes.append('build/compile_commands.json (worktree copy): %d entr%s removed' % (len(d) - len(d2), 'y' if len(d) - len(d2) == 1 else 'ies'))
     return notes
 
 
@@ -590,7 +598,7 @@ def extract_objects(ts, addrs, withnames=()):
         loose = [em[g].group(0) for g in grp if em[g].group(0) not in defs]     # blocks not already above the definition
         txt = ''.join(loose)
         gone_blocks += loose
-        res.append([a, '\n' + txt + defs])
+        res.append([a, '\n' + txt + defs, 'object'])
     if not groups and extra:
         res.append([None, ''.join(pcs[i] for i in extra)])
     keep_body = ''.join(pc for i, pc in enumerate(pcs) if i not in pull)
@@ -605,6 +613,84 @@ def extract_objects(ts, addrs, withnames=()):
         if kinds[i][0] == 'object':
             moved_names |= kinds[i][1]
     return keep, res, rep, moved_names
+
+
+def order_objects(out, into, objs, dry):
+    """Initializer order. VC6 emits a unit's static-initializer thunks in definition order, so an object that
+    arrives with its thunk must be defined after the destination's objects whose thunks precede it in the image
+    and before those whose thunks follow. `out` is the destination text with the arrived chunks at their default
+    place; each is lifted and put directly after the last predecessor's definition (or directly before the first
+    successor's) when the default place breaks that order. The destination's own objects are found through its
+    compile: thunk symbol -> data symbols its code names -> their definitions in the file."""
+    rep = []
+    if not objs or dry:
+        return out, rep
+    import esym
+    try:
+        dest = esym.thunk_objects(into, int(os.environ.get('FE_PFX_BASE', '21')))
+    except SystemExit:
+        dest = {}
+    def def_span(name, text):
+        m = re.search(r'^(?!\s*extern\b)[A-Za-z_][^\n;{}()]*?\b' + re.escape(name) + r'\b\s*(?:\[[^\]\n]*\]\s*)*(?:;|=|\()', text, re.M)
+        if not m:
+            return None
+        e = m.end() - 1
+        # to the end of the item
+        depth = 0
+        while e < len(text):
+            ch = text[e]
+            if ch in '({[':
+                depth += 1
+            elif ch in ')}]':
+                depth -= 1
+            elif ch == ';' and depth == 0:
+                break
+            e += 1
+        e = text.find('\n', e) + 1
+        return m.start(), e
+    def place(c, want_lo):
+        nonlocal out
+        a, txt = c[0], c[1].strip('\n') + '\n'
+        if txt not in out:
+            return
+        at = out.index(txt)
+        rest = out[:at] + out[at + len(txt):]
+        pred = [sp for x, ids in dest.items() if x < a for sp in [def_span(i, rest) for i in ids] if sp]
+        succ = [sp for x, ids in dest.items() if x > a for sp in [def_span(i, rest) for i in ids] if sp]
+        lo = max([e for s_, e in pred], default=None)
+        hi = min([s_ for s_, e in succ], default=None)
+        if (lo is not None) != want_lo:
+            return
+        if lo is None and hi is None:
+            return
+        if lo is not None and hi is not None and lo > hi:
+            rep.append('  WARN initializer order: 0x%08X cannot sit between its neighbours (their definitions are out of thunk order)' % a)
+            return
+        # the arrived objects keep their own (address) order: the caller walks them so that equal targets stack right
+        if want_lo:
+            if at >= lo and (hi is None or at <= hi) and not moved_any[0]:
+                return
+            pos = lo
+        else:
+            if at <= hi and not moved_any[0]:
+                return
+            pos = hi
+            while pos > 0:
+                pb = rest.rfind('\n', 0, pos - 1) + 1
+                if rest[pb:pos].lstrip().startswith('//'):
+                    pos = pb
+                else:
+                    break
+        moved_any[0] = True
+        out = rest[:pos] + txt + '\n' + rest[pos:]
+        rep.append('  initializer order: 0x%08X placed %s' % (a, 'after the definitions of the earlier thunks' if want_lo else 'before the definitions of the later thunks'))
+    moved_any = [False]
+    for c in sorted(objs, key=lambda c: -c[0]):     # after predecessors: last first, each lands in front of the previous one
+        place(c, True)
+    moved_any = [False]
+    for c in sorted(objs, key=lambda c: c[0]):      # before successors: first first, each lands behind the previous one
+        place(c, False)
+    return out, rep
 
 
 def unit_flags(u):
@@ -681,8 +767,15 @@ def merge(srcs, into, dry=False, addrs=None, top=False, with_inc=None, new_like=
             deprep.append('  local declaration removed from %s: %s' % (into, m.group(0).strip()))
             pre = pre[:m.start()] + pre[m.end():]
     out = pre + body
+    for c in foreign:
+        if c[0] is not None and len(c) == 2 and any(int(m.group(1), 16) == c[0] and re.search(r'^// symbol\s+_?\$E\d+\s*$', m.group(5), re.M)
+                                                     for m in EMARK.finditer(c[1])):
+            c.append('object')      # a merged file's own thunk-and-definition chunk
+    out, orep = order_objects(out, into, [c for c in foreign if c[0] is not None and c[2:] == ['object']], dry)
+    deprep += orep
     print('MERGE %s -> %s: %d chunks moved, %d includes added' % (' '.join(srcs), into, len(foreign), len(add_inc)))
-    for k, s in foreign:
+    for c_ in foreign:
+        k, s = c_[0], c_[1]
         print('  chunk %s %d lines' % ('0x%08X' % k if k else '-', s.count('\n')))
     if skipped:
         print('  includes of the source file NOT added (pass --include NAME for the ones the moved bodies need): ' + ' '.join(skipped))

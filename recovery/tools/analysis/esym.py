@@ -146,6 +146,35 @@ def solve(unit, pfx):
     return out
 
 
+def thunk_objects(unit, pfx):
+    """{thunk marker address: [identifiers of the data symbols its emitted code refers to]} for the unit as it
+    stands (markers whose `// symbol` line is current). Used to keep definition order = thunk order."""
+    path = R + '/' + unit
+    t = open(path, encoding='latin-1').read()
+    mk = {}
+    for m in MK.finditer(t):
+        s = re.search(r'// symbol\s+(\S+)', m.group(5))
+        cur = s.group(1) if s else m.group(2)
+        if ENAME.match(cur):
+            mk[cur] = int(m.group(1), 16)
+    if not mk:
+        return {}
+    c, err = fe.compile_unit(unit, path, pfx)
+    if c is None:
+        return {}
+    out = {}
+    for sy in c.symbols.values():
+        if sy.name in mk and sy.section > 0:
+            ids = []
+            for o, si, ty in c.sections[sy.section - 1].relocations:
+                n = c.symbols[si].name
+                m = re.match(r'\?(\w+)@@3', n) or (re.match(r'_(\w+)$', n) if ty == 6 else None)
+                if m and m.group(1) not in ids:
+                    ids.append(m.group(1))
+            out[mk[sy.name]] = ids
+    return out
+
+
 def apply(unit, res):
     path = R + '/' + unit
     t = open(path, encoding='latin-1').read()
