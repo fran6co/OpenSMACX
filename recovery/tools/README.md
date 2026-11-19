@@ -195,6 +195,16 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   image's reaching definitions of that slot, maps each through the fe alignment to our instruction and the variable it
   writes, and prints `READ v image value written as w` when none of them is v (our source may read the wrong variable of a
   packed slot). Misaligned regions give false hits; read each one against the source.
+- `analysis/reusesweep.py <unit> <addr> [--write] [--iter N] | --from FEALL.json [--min 100] [--skip A,..] [--write]`
+  reused function-scope variable screen (MATCHING_GUIDE 3.3 "A block-local that the image keeps in a function-scope
+  variable's slot"): renames each block-local int/BOOL into each depth-1 int/BOOL (or int parameter) that is DEAD over
+  the block-local's whole scope and ranks the renames by frame, slot map (|image refs - our refs| per offset), candset
+  and rows. Deadness is proved by the compiler, never guessed: a variant with every depth-1 int made `volatile` (each
+  source read is a slot read) is compiled with /FAsc and slot liveness is read at the scope's instructions (the unit is
+  moved down 20,000 lines so inlined header lines cannot collide), then every candidate is confirmed by the kill probe:
+  `T = 0x2468ACF;` at the declaration must compile to the unchanged function (dead-store removal). Packed slots,
+  address-taken targets and variants that do not compile fall back to the kill probe alone. `--write` keeps a rename
+  only when it improves frame or slots, or at equal frame and slots lowers rows with no worse candset.
 - `analysis/uninitscan.py [unit ...] [--first] [--json F]` uninitialized-read screen (MATCHING_GUIDE 3.5, wrong variable of
   a packed frame slot; about 3.5 min tree-wide with FE_JOBS=5): compiles every optimised unit with /W4 and lists every C4701/C4700
   site (VC6 reports one per variable; the tool inserts `V = 0;` at each reported statement in a throw-away copy and recompiles
