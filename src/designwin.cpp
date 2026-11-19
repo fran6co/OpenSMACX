@@ -5523,7 +5523,7 @@ void DesignWin::select_special(int which) {
         int found = 0;
         for (int j = 0; j < 0x29; j++) {
             if (Players[factionID_].faction_bonus_id[j] == 0xF
-                && Players[factionID_].faction_bonus_val1[j] == i) {
+                && i == Players[factionID_].faction_bonus_val1[j]) {
                 found = 1;
                 j = 0x29;
             }
@@ -5549,9 +5549,9 @@ void DesignWin::select_special(int which) {
         say_label(0x58);
         strcat(StringTemp, SocialWinColonSpaceText);
 
-        int cost = Ability[i].cost_factor;
-        if (cost < 0) {
-            switch (cost) {
+        RulesAbility *ability = &Ability[i];
+        if (ability->cost_factor < 0) {
+            switch (ability->cost_factor) {
             case -1: {
                 say_num(range(Weapon[protoWeaponType_].cost
                               / Armor[protoArmorType_].cost, 0, 2));
@@ -5621,14 +5621,14 @@ void DesignWin::select_special(int which) {
                 strcat(StringTemp, SocialWinCloseParenText);
                 break;
             }
-        } else if (Ability[i].flags & 0x400) {
+        } else if (ability->flags & 0x400) {
             // Cost scales with the triad: one more on land.
             if (Chassis[protoChassisType_].triad == 0) {
-                say_num(cost + 1);
+                say_num(ability->cost_factor + 1);
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, SocialWinOpenParenText);
             } else {
-                say_num(cost);
+                say_num(ability->cost_factor);
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, SocialWinOpenParenText);
             }
@@ -5636,7 +5636,7 @@ void DesignWin::select_special(int which) {
                    table_text(Triad[Chassis[protoChassisType_].triad]));
             strcat(StringTemp, SocialWinCloseParenText);
         } else {
-            say_num(cost);
+            say_num(ability->cost_factor);
         }
 
         popup.item(StringTemp, i);
