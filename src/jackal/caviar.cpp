@@ -319,7 +319,7 @@ void PointerTripletTable::release_contents() {
 
 /*
 Purpose: Initialize the Caviar renderer's object records and default scalar fields.
-// ORIGINAL: 0x00616DA0 ??0Caviar@@QAE@XZ 0x00616DA0-0x00616DD6 SEMANTIC
+// ORIGINAL: 0x00616DA0 ??0Caviar@@QAE@XZ 0x00616DA0-0x00616DD6 BYTE_EXACT
 // LEVER: 0 of 16 -> SHAPE_EXACT 12 of 16, on two changes that are one idea. The image initializes the 200-element `VoxInstance` array through its three pointer members and does not memset `slots_`. The residual is a pointer bias in VC6's array-construction loop; see TRIED below. CaviarData is a separate loaded-record type and is not the element type of this member array.
 // TRIED: the residual 4 instructions are a pointer bias inside VC6's array-construction loop and no source form here reaches it. The image walks `[eax + 0x750]` and stores at `[edx - 4]`, `[edx]`, `[edx + 4]`; this tree walks `[eax + 0x74c]` and stores at `[edx]`, `[edx + 4]`, `[edx + 8]`. Same element, same order, same encoded length - only the base is biased by 4. listing_diff reports 0 differing runs, which is why this is SHAPE_EXACT rather than a structural mismatch.
 // size      54 bytes
