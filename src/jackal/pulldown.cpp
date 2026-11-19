@@ -1240,6 +1240,7 @@ void PullDown::pulldown_update(int old_selected, int new_selected) {
   base.bottom = top + height;
   expand_rect(&base, -(PullDownTextPadding + PullDownBorderPadding), 0);
   RECT row;
+  uint32_t flags;
 
   if (old_selected != -1) {
     int visible_before = 0;
@@ -1249,14 +1250,17 @@ void PullDown::pulldown_update(int old_selected, int new_selected) {
       }
     }
 
-    row = base;
+    row.left = base.left;
+    row.right = base.right;
+    row.top = base.top;
+    row.bottom = base.bottom;
     const int row_offset = text_line_height() * visible_before;
     row.top += row_offset;
     row.bottom += row_offset;
 
     PullDownItem *const item = &items_[old_selected];
     char *const text = item->text;
-    const uint32_t flags = item->flags;
+    flags = item->flags;
     char *const right_text = item->right_text;
     char *const mnemonic = items_[old_selected].mnemonic;
     if ((flags & 1u) != 0) {
@@ -1345,14 +1349,17 @@ void PullDown::pulldown_update(int old_selected, int new_selected) {
       }
     }
 
-    row = base;
+    row.left = base.left;
+    row.right = base.right;
+    row.top = base.top;
+    row.bottom = base.bottom;
     const int row_offset = text_line_height() * visible_before;
     row.top += row_offset;
     row.bottom += row_offset;
 
     PullDownItem *const item = &items_[new_selected];
     char *const text = item->text;
-    const uint32_t flags = item->flags;
+    flags = item->flags;
     char *const right_text = item->right_text;
     char *const mnemonic = items_[new_selected].mnemonic;
     if ((flags & 1u) != 0) {
