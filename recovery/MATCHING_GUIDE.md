@@ -3829,8 +3829,11 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   compile like the literal. In propose_treaty nine of 25 literal sites give
   the image's code and the others do not move, so the image shows the effect
   but not which argument the original named: keep one, tagged
-  `WORKAROUND(decl)`. `sitek.py --max 60`: two exact, farm_click 54 -> 45
-  (the three `range(.., 1, 99)` bounds), nothing else below 60 rows.
+  `WORKAROUND(decl)`. `sitek.py` over the 290 functions up to 250 rows (2,458
+  literal sites): two exact, Buffer::draw_pie 101 -> 34 (the zero `dx` of one
+  `offset_rect`: `thickness` moves from its parameter slot to ebx), farm_click
+  54 -> 45 (any of the `range(.., 1, 99)` bounds), boom 127 -> 114
+  (`tile_in_view(x, y, 0)`), nothing else.
 - **A struct copied from an accessor that returns a reference**
   (MapWin::draw_base_names 0x00467DE0): `RECT saved = current_clip();` and
   `const RECT &clip = current_clip(); RECT saved = clip;` differ in the order

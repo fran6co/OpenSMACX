@@ -257,7 +257,7 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   `--tree` result against a control. A hit on `inl` is a pointer to the call site (see the guide), not a header fix.
 - `analysis/sitek.py --from FEALL.json [--max 60] [--only A,..] [--write]` the site form of an `inl` hit: each
   integer-literal argument of a header-inline call becomes a plain local (`int fe_kN = <literal>;`), one site per
-  variant (cost_factor 0x004E4430: 8 rows -> exact).
+  variant (cost_factor 0x004E4430: 8 rows -> exact; propose_treaty 0x00544E40 exact; draw_pie 101 -> 34).
 - `analysis/labelsubsets.py <unit> <addr> [--max N] [--write]` all 2^n subsets of a function's label_get /
   table_text sites flipped against the written-out form (S7): finds the pairs no single flip reaches
   (draw_projects 51 -> 9, ProdPicker::exec 62 -> 29, draw_commerce 60 -> 40).
