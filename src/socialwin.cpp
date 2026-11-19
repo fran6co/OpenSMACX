@@ -2598,17 +2598,17 @@ void SocialWin::init(int faction_id) {
     }
     reset();
 
-    for (int row = 0; row < 4; ++row) {
-        buttonGroups_[row].init(row, 0);
-        for (int col = 0; col < 4; ++col) {
-            if (society_avail(row, col, factionID_) == 0) {
+    for (faction_id = 0; faction_id < 4; ++faction_id) {
+        buttonGroups_[faction_id].init(faction_id, 0);
+        for (a1 = 0; a1 < 4; ++a1) {
+            if (society_avail(faction_id, a1, factionID_) == 0) {
                 continue;
             }
             StringTemp[0] = 0;
-            LPSTR name = SocialCategories[row].name[col];
+            LPSTR name = SocialCategories[faction_id].name[a1];
             strcat(StringTemp, StringTable.get(name));
             CharUpperA(StringTemp);
-            int idx = col + row * 4;
+            int idx = a1 + faction_id * 4;
             FlatButton *button = &flatButtons_[idx];
             RECT *cell = &modelRects_[idx];
             static_cast<BaseButton *>(button)->init(StringTemp, idx,
@@ -2619,28 +2619,28 @@ void SocialWin::init(int faction_id) {
             button->redraw();
             static_cast<BaseButton *>(button)->set_bubble_text(
                 StringTable.get(Labels.strings_ptr[0xCF0 / 4]));
-            buttonGroups_[row].add(static_cast<BaseButton *>(button));
+            buttonGroups_[faction_id].add(static_cast<BaseButton *>(button));
         }
         // 0x4B34AF: the selected button id is the model plus row * 4.
-        buttonGroups_[row].set(
-            static_cast<int>(socCategory_.models_[row]) + row * 4, 1);
+        buttonGroups_[faction_id].set(
+            static_cast<int>(socCategory_.models_[faction_id]) + faction_id * 4, 1);
     }
 
     // Effect column: eleven SocialEffects rows, row 3 skipped, so rows past
     // it use the previous slot (0x4B3513..0x4B353F).
     buttonGroup_.init(2, 0);
-    for (row = 0; row < 11; ++row) {
-        if (row == 3) {
+    for (faction_id = 0; faction_id < 11; ++faction_id) {
+        if (faction_id == 3) {
             continue;
         }
         int index;
-        if (row < 3) {
-            index = row;
+        if (faction_id < 3) {
+            index = faction_id;
         } else {
-            index = row - 1;
+            index = faction_id - 1;
         }
         StringTemp[0] = 0;
-        strcat(StringTemp, SocialEffects[row].set2);
+        strcat(StringTemp, SocialEffects[faction_id].set2);
         CharUpperA(StringTemp);
         RECT *cell = &tutRects2_[index];
         FlatButton *button = &flatButtons_[17 + index];
