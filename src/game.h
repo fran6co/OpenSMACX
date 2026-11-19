@@ -441,7 +441,6 @@ MEASURED int __cdecl energy_limit(int);
 
 // Original691B0C is the mutable shared script-file pointer cell, initially
 // pointing at SCRIPT text691B7C. Consumers read this cell through ScriptPopupFile.
-extern char ScriptPopupFileText[];
 extern char *ScriptPopupFile;
 
 // The faction-pact captions and the "whose turn is it" test the net turn loop
@@ -471,11 +470,8 @@ extern int GameDataLoadRequest;  // 0x00945D78, distinct selector
 extern int GameDataWriteMode;       // 0x00945D6C
 extern int GameDataEncryptedMode;   // 0x00945D74
 extern int GameDataLoadStatusWord;  // 0x00945D7C
-extern char SaveGameFileExtensionText[4];  // pointee starts at 0x00691BEC
 extern const char *SaveGameFileExtension;  // pointer cell at 0x00691B34
-extern char ScenarioFileExtensionText[3];  // three-byte SC view at 0x00691BF0
 extern const char *ScenarioFileExtension;  // distinct pointer cell at0x00691B38
-extern char MapFileExtensionText[3];
 extern const char *MapFileExtension; //0x00691B3C -> MP at0x00691BF4
 
 // Scenario placement and Unity events are genuine game.cpp owners.

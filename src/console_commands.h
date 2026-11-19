@@ -23,7 +23,6 @@
 #include <cstring>
 
 // Shared Console state retains one definition in the UI owner.
-extern char TutorialPopupCaptionText[6];
 extern char *TutorialPopupCaption;
 extern int ConsoleGroupAction;
 extern int ConsoleControlTurnActive;
