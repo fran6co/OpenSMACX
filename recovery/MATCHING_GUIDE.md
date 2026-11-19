@@ -7305,6 +7305,26 @@ Re-tests and stack loops (par-2 2026-11-19, enemy_move 0x0056B5B0)
   copy and lowers to a subtract chain ("Switch lowering" above). Write
   `switch (field) { case 1: ...; break; }` even for a single case
   (Console::go_to 0x004D6C4E, bbc27d1969: 286 -> 266 rows).
+Accessors, ternaries, accumulation, shared exits (par-5 2026-11-19, library)
+- **A null-testing accessor costs one `test; je` per call site.** An inline
+  like `current_entry()` (`head ? head->payload : 0`) re-tests the pointer
+  at every use even when the caller already tested it; where the image
+  tests once per arm, read the member through the already-tested local
+  (BasePop::calculate_dimensions 0x603F44/0x603F64, jcc 70 -> 68).
+- **`x = c ? a : 0` has a `jmp` over the zero arm; `x = 0; if (c) x = a;`
+  has none.** Count the jumps around a conditional load: `test; je L0;
+  mov eax,[..]; jmp J; L0: xor eax,eax; J:` is the ternary
+  (BasePop::calculate_dimensions 0x603DAC wrap_kind).
+- **A member stored after every partial sum is accumulated in place.**
+  `m = a; if (c) m += b; m += d;` stores the field after each step; a local
+  sum assigned once stores it once at the end (BasePop::calculate_dimensions
+  0x6041D4-0x604262, field_30C0_; with the two rules above 263 -> 235 rows).
+- **One expansion of a cleanup inline that two paths reach with a `jmp`
+  is one call at a shared label.** When the image expands an inline once
+  at the end and another branch jumps into it, the source called it once
+  after a `done:` (or a common fall-through), not once per branch: two
+  calls give two expansions (Buffer::line 0x005E15F0 free_data(1), jseq
+  hunks 2 -> 0).
 
 ### 3.8 VC5 (Caviar/VOX) x87 rules (2026-11-19 par-5)
 
