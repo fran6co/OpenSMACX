@@ -3171,9 +3171,9 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                 }
                 int unseen = 0;
                 for (int k = 0; k < 9; k++) {
-                    int x_k = wrap_map_x(VehMoveDeltaX[k] + x);
-                    int y_k = VehMoveDeltaY[k] + y;
-                    if (on_map(x_k, y_k) && !is_known(x_k, y_k, faction_id)) {
+                    target_x = wrap_map_x(VehMoveDeltaX[k] + x);
+                    target_y = VehMoveDeltaY[k] + y;
+                    if (on_map(target_x, target_y) && !is_known(target_x, target_y, faction_id)) {
                         unseen++;
                     }
                 }
