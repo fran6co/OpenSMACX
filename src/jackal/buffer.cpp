@@ -2747,80 +2747,15 @@ DEAD `text` parameter slot. That is an inlined helper taking pointers, not a
 loop over locals, and a straight transcription cannot make VC6 spill the same
 way. 122 of 201 mnemonics shared at the last attempt.
 */
-// The markup scanners: hand-written assembly in the original, expanded
+// The markup scanners are get_special / get_special_link (0x005DC2D0,
+// 0x005DC310; hand-written assembly, no image callers): /Ob2 expands them
 // into text_width (0x005DC817/0x005DC85C), write_multi_font_raw_l
 // (0x005DCB23/0x005DCB68) and find_line_break_l (0x005DC46E/0x005DC4B3).
-// Evidence: the `and edx,edx` zero test, EBX as a private pointer register
-// and the `jmp` to the block's own end at 0x005DC855, none of which VC6
-// emits from C++. The `=` variant runs while a link (font slot 3) is open.
-// Descriptive names; the originals are unknown.
-static inline char *markup_scan_link(char *text, int *count) {
-    __asm {
-        mov eax, text
-        mov ebx, count
-        mov edx, [ebx]
-        and edx, edx
-        jz done
-    next:
-        mov cl, [eax]
-        cmp cl, '{'
-        je found
-        cmp cl, '}'
-        je found
-        cmp cl, '['
-        je found
-        cmp cl, ']'
-        je found
-        cmp cl, '$'
-        je found
-        cmp cl, '='
-        je found
-        inc eax
-        dec edx
-        jnz next
-    found:
-        mov [ebx], edx
-        mov text, eax
-        jmp done
-    done:
-    }
-    return text;
-}
-
-static inline char *markup_scan(char *text, int *count) {
-    __asm {
-        mov eax, text
-        mov ebx, count
-        mov edx, [ebx]
-        and edx, edx
-        jz done
-    next:
-        mov cl, [eax]
-        cmp cl, '{'
-        je found
-        cmp cl, '}'
-        je found
-        cmp cl, '['
-        je found
-        cmp cl, ']'
-        je found
-        cmp cl, '$'
-        je found
-        inc eax
-        dec edx
-        jnz next
-    found:
-        mov [ebx], edx
-        mov text, eax
-        jmp done
-    done:
-    }
-    return text;
-}
+// The `=` variant runs while a link (font slot 3) is open.
 
 // LEVER (2026-11-11): the image's scan loops are the hand-written
-//        markup_scan/markup_scan_link assembly helpers expanded inline (see
-//        their definition); that is what forces the EBP frame and the
+//        get_special/get_special_link assembly helpers expanded inline (see
+//        their definitions); that is what forces the EBP frame and the
 //        [ebp-8]/[ebp-0xc] parameter copies. The switch reaches the image's
 //        block order only with `}` taking its escape in the then-branch and
 //        jumping to `]`'s shared `next_slot = 0` arm.
@@ -2842,9 +2777,9 @@ int Buffer::text_width(LPSTR text, int len) {
     for (;;) {
         // Inside a link - font slot 3 - `=` closes the run as well.
         if (font_slot_ == 3) {
-            cursor = markup_scan_link(segment, &len);
+            cursor = get_special_link(segment, &len);
         } else {
-            cursor = markup_scan(segment, &len);
+            cursor = get_special(segment, &len);
         }
         if (len == 0) {
             break;
@@ -3526,8 +3461,8 @@ raises `MessageBoxA(0, "Maximum hypertext links exceeded!", "WARNING!", 0)`
 and then carries on drawing.
 */
 // LEVER (2026-11-11): the image's scan loops are the hand-written
-//        markup_scan/markup_scan_link assembly helpers expanded inline (see
-//        their definition); that is what forces the EBP frame and the
+//        get_special/get_special_link assembly helpers expanded inline (see
+//        their definitions); that is what forces the EBP frame and the
 //        [ebp-8]/[ebp-0xc] parameter copies. The switch reaches the image's
 //        block order only with `}` taking its escape in the then-branch and
 //        jumping to `]`'s shared `next_slot = 0` arm.
@@ -3544,9 +3479,9 @@ int Buffer::write_multi_font_raw_l(LPSTR text, int x_coord, int y_coord,
     for (;;) {
         // Inside a link - font slot 3 - `=` closes the run as well.
         if (write_font_slot_ == 3) {
-            stop = markup_scan_link(str, &len);
+            stop = get_special_link(str, &len);
         } else {
-            stop = markup_scan(str, &len);
+            stop = get_special(str, &len);
         }
         if (stop == 0 || len == 0) {
             break;
@@ -7039,8 +6974,8 @@ int Buffer::wrap(char * a1, RECT * a2) {
 
 
 // LEVER (2026-11-11): the image's scan loops are the hand-written
-//        markup_scan/markup_scan_link assembly helpers expanded inline (see
-//        their definition); that is what forces the EBP frame and the
+//        get_special/get_special_link assembly helpers expanded inline (see
+//        their definitions); that is what forces the EBP frame and the
 //        [ebp-8]/[ebp-0xc] parameter copies. The switch reaches the image's
 //        block order only with `}` taking its escape in the then-branch and
 //        jumping to `]`'s shared `next_slot = 0` arm.
@@ -7065,9 +7000,9 @@ char *Buffer::find_line_break_l(char * a1, int * a2, int a3) {
         for (;;) {
             // Inside a link - font slot 3 - `=` closes the run as well.
             if (field_514_ == 3) {
-                cursor = markup_scan_link(segment, &a3);
+                cursor = get_special_link(segment, &a3);
             } else {
-                cursor = markup_scan(segment, &a3);
+                cursor = get_special(segment, &a3);
             }
             if (a3 == 0) {
                 break;
