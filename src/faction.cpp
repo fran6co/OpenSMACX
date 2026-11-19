@@ -10080,20 +10080,8 @@ communicate_pact_offer_fallthrough:
     if (DiploScratchF7E8 != 0) {
         parse_says(5, get_title(faction_id), -1, -1);
         parse_says(6, get_noun(DiploScratchF7E8), -1, -1);
-        if (!(X_pops("GIMMEHELP", 0x100000,
-                         FactionDiplomacyPortraits[faction_id_with], pop_wait) != 0)) {
-            if (DiploScratchFA98 == 0) {
-                parse_says(2, get_pacts(faction_id, faction_id_with), -1, -1);
-                X_pops("REJPACTNOHELP", 0x100000,
-                             FactionDiplomacyPortraits[faction_id_with], pop_wait);
-                communicate_stack_34 = 1;
-                goto communicate_special_war_rival_gates;
-            }
-            if (communicate_stack_34 == 0) {
-                communicate_stack_34 = 1;
-                goto communicate_special_war_rival_gates;
-            }
-        } else {
+        if (X_pops("GIMMEHELP", 0x100000,
+                   FactionDiplomacyPortraits[faction_id_with], pop_wait) != 0) {
             diplo_lock(0);
             net_double_cross(faction_id, DiploScratchF7E8, faction_id_with, 0);
             net_treaty_off(faction_id, faction_id_with, 0x800000, 0);
@@ -10101,10 +10089,18 @@ communicate_pact_offer_fallthrough:
             diplo_unlock();
             DiploScratchF7E8 = 0;
             DiploScratchFA4C = 0;
+        } else if (DiploScratchFA98 == 0) {
+            parse_says(2, get_pacts(faction_id, faction_id_with), -1, -1);
+            X_pops("REJPACTNOHELP", 0x100000,
+                         FactionDiplomacyPortraits[faction_id_with], pop_wait);
+            goto communicate_gimmehelp_done;
+        } else if (communicate_stack_34 == 0) {
+            goto communicate_gimmehelp_done;
         }
     }
     pact_of_brotherhood(faction_id, faction_id_with);
     diplomacy_caption(faction_id, faction_id_with);
+communicate_gimmehelp_done: // native 0x0055610C
     communicate_stack_34 = 1;
 }
 
