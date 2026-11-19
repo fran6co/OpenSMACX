@@ -618,13 +618,7 @@ void __cdecl enemy_strategy(int faction_id) {
             }
             if (base_id >= 0) {
                 int wanted = garrison_check(base_id);
-                int margin = garrison_check(base_id);
-                if (margin > 5) {
-                    margin--;
-                }
-                if (margin > 2) {
-                    margin--;
-                }
+                int margin = defensive_check(base_id);
                 if (wanted > stack_check(veh_at(Bases[base_id].x, Bases[base_id].y), 0xB,
                                          0x10000000, 0x10000000, faction_id) + margin) {
                     Vehs[veh_id].state |= 0x10000000;
