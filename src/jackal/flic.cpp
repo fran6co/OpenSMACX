@@ -808,7 +808,6 @@ void Flic::decode_delta_flc() {
                     if (static_cast<int8_t>(run_count) > 0) {
                         if (palette_offset_ == 0) {
                             fread(dst, 2, run_count, file_);
-                            dst += run_count * 2;
                         } else {
                             fread(work_buf, 2, run_count, file_);
                             uint8_t *src = static_cast<uint8_t *>(work_buf);
@@ -816,8 +815,8 @@ void Flic::decode_delta_flc() {
                                 dst[i] = static_cast<uint8_t>(
                                     src[i] + palette_offset_);
                             }
-                            dst += run_count * 2;
                         }
+                        dst += run_count * 2;
                     } else if (static_cast<int8_t>(run_count) < 0) {
                         fread(&word, 2, 1, file_);
                         run_count = static_cast<uint8_t>(
