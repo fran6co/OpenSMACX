@@ -1046,11 +1046,11 @@ void Datalink::draw_project() {
 // TRIED: Popup popup; (RAII) for the outer object, mechanical RD()-based field reads for the tech-tier/quotient-remainder lookups, itoa/strcat scratch buffer building, and the per-faction tally loop; deliberately did NOT model the second local object built by sub_4066c0 (Dialog/Dialogs/ StringStruct/Sprite/extra FlatButtons torn down around 0x430642) - its class is unrecoverable from this brief, so popup.close() + RAII stands in for that whole cascade. NO_COMPILE C2660 (set_font arg count) fixed first; MISMATCH #0 (prologue) not chased further.
 // WORKAROUND(inline): draw_social's image calls the first BasePop list's
 // ~StringList (0x004066C0) out of line at 0x00430642 and expands the second
-// one level (remove_all 0x0043068F, ~StringStruct 0x004306A8). Three calls of
-// this dead branchy spend reproduce that composition once the title is built
-// in two arms (re-swept 2026-11-18 with 0-4 calls; two gave the image's state
-// count with the wrong composition). The original's natural spend is not
-// identified.
+// one level (remove_all 0x0043068F, ~StringStruct 0x004306A8). Two calls of
+// this dead branchy spend reproduce that call sequence (2026-11-19: three now
+// call ~StringList at 0x004306A8 too; none leaves 59 of the image's 60 calls).
+// The repeated _itoa/strcat runs as a helper do not replace it (runscan
+// --try). The original's natural spend is not identified.
 static inline void dl_social_budget_probe(int x) {
     if (x == 1) x = 2;
     if (x == 2) x = 3;
@@ -1134,7 +1134,6 @@ void Datalink::draw_social() {
             }
         }
     }
-    dl_social_budget_probe(0);  // WORKAROUND(inline): see the helper
     dl_social_budget_probe(0);  // WORKAROUND(inline): see the helper
     dl_social_budget_probe(0);  // WORKAROUND(inline): see the helper
 }
