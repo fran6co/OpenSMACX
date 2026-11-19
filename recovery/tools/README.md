@@ -242,3 +242,15 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   marker span: `ctrsub` = the unfolded inner product of a counter subscript `A[p][k++]` (MATCHING_GUIDE 2.4), `latectr` =
   rising `mov [slot],K` stores between the pushes of calls (the post-increment's store). 2026-11-19: both hit only
   InfoWin::setup_text, tree-wide, exact functions included.
+- `analysis/unitpad.py <unit> [--write] [--at ADDR] [--only a,b]` whole-unit pad sweep (45 s; FE_PFX_BASE.., FE_JOBS lanes):
+  sweeps the unit's `// CANARY-PADS:` / `// HEADER-PADS: function NAME` block 0..63 and groups the counts by the set of
+  markers that are not fe-exact (`ALL OTHERS EXACT` = only the never-exact ones remain). `--at ADDR` sweeps declarations
+  inserted before one marker instead, so a count-sensitive function (AGENTS.md canaries) is told apart from one that
+  needs a source cause: a function that no count fixes is not a canary flip. `--write` keeps the best count nearest
+  the current one.
+- `analysis/accsweep.py FEALL.json [unit-substr ...]` accessor respelling screen over the non-exact functions of a
+  `feall.py --out` report: families T (`diplo_treaties[..] & K` -> has_treaty), A (has_agenda), N (hand-expanded
+  get_noun/get_title/get_name, `analysis/nat.py`), H (is_human), L (is_alive), X all; prints rows and the named-call
+  distance (analysis/cdeck.py) per family where either moves. `analysis/foldsite.py <unit> <addr>` replaces each two-way
+  treaty/agenda write pair with treaty_off/treaty_on/agenda_off/agenda_on (each site alone and all, MATCHING_GUIDE 3.7
+  "folded writers"); `analysis/foldunit.py <unit>` runs that greedily over a unit. Variants go to build/recovery/fe/.
