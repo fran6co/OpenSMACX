@@ -1459,40 +1459,6 @@ void __cdecl auto_undo() {
 }
 
 
-/*
-Purpose: Extended auto-saving regardless of the game type or settings for debug purposes.
-Original Offset: n/a
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl auto_save_debug() {
-    if (GameDataStateStorage.fields_.turn_current_num_ == 1) {
-        remove("saves\\auto\\Alpha Centauri Autosave Turn 1.SAV");
-        save_daemon("saves\\auto\\Alpha Centauri Autosave Turn 1");
-    }
-    if (!(GameDataStateStorage.fields_.turn_current_num_ % 10)) {
-        remove("saves\\auto\\Alpha Centauri Autosave 500.SAV");
-        char save_path_new[45];
-        char save_path_old[45];
-        for (int i = 0; i < 490; i += 10) {
-            sprintf_s(save_path_old, 45, "saves\\auto\\Alpha Centauri Autosave %d.SAV", 490 - i);
-            sprintf_s(save_path_new, 45, "saves\\auto\\Alpha Centauri Autosave %d.SAV", 500 - i);
-            rename(save_path_old, save_path_new);
-        }
-        save_daemon("saves\\auto\\Alpha Centauri Autosave 10");
-    }
-    remove("saves\\auto\\Alpha Centauri Autosave 5.SAV");
-    rename("saves\\auto\\Alpha Centauri Autosave 4.SAV",
-        "saves\\auto\\Alpha Centauri Autosave 5.SAV");
-    rename("saves\\auto\\Alpha Centauri Autosave 3.SAV",
-        "saves\\auto\\Alpha Centauri Autosave 4.SAV");
-    rename("saves\\auto\\Alpha Centauri Autosave 2.SAV",
-        "saves\\auto\\Alpha Centauri Autosave 3.SAV");
-    rename("saves\\auto\\Alpha Centauri Autosave 1.SAV",
-        "saves\\auto\\Alpha Centauri Autosave 2.SAV");
-    save_daemon("saves\\auto\\Alpha Centauri Autosave 1");
-}
-
 
 // HISTORICAL DEFERRED ANALYSIS (retained from prior source; body below supersedes status): confirmed tractable shape, not yet landed - 1983 lines of Ghidra decompilation and 196 conditionals is more than this pass could hand-verify, but the structure is now characterised: Overwhelmingly mechanical: 220 of 256 call sites are __fwrite(60)/__fread(60)/?encrypt_write@@(50)/?encrypt_read@@(50); the other 36 are ?mem_get@@(4)/_memcpy(4)/_free(4)/_abs(4)/ _strcpy(3)/_strlen(2)/?game_io@@(2)/?add@StringStruct@@(2)/ ?map_write@@/?map_read@@/?clear_scenario@@/?clear_monuments@@/ ?clear_bunglist@@/?bit_count@@ (1 each). This is a save/load serializer, field after field. a2 selects the direction: the FIRST call is FUN_0064603f(local_378) when a2!=0 (write: pack current globals into a 0x31C-byte header buffer before writing it) vs FUN_00646178(local_378,0x31C,1,a1) when a2==0 (read: fread that many bytes off `a1` first). Confirmed against the raw disasm's branch on a2 at function entry. The named blockers are ONE gate, not many: `if (local_74 < 0xb)` (local_74 is the version field inside that same 0x31C legacy header) guards roughly 10 raw copy-loops migrating the OLD struct layout into the CURRENT globals (`?9a6490` region) - this is the whole "legacy-struct migration block" and it is READ-ONLY-PATH dead code on any save from version >= 0xb, i.e. every save this binary itself produces. It is real work to transcribe (found 0x2C/0x40/0x16-element copy loops in the first 120 Ghidra lines alone) but it is bounded and separable from the ~220 I/O calls. Frame is 0x374 bytes (from the brief) - count locals against it before landing; a batch of seven diverged only at the prologue over this exact mistake.
 // Complete source-owned serializer body; historical byte and seed obligations remain.

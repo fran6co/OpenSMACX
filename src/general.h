@@ -141,6 +141,9 @@ uint32_t __cdecl checksum_password(LPCSTR password);
 void __cdecl danger(LPCSTR msg1, LPCSTR msg2, int num1, int num2, int num3);
 void __cdecl kill_auto_save();
 void __cdecl auto_save();
+// auto_save_debug was an OpenSMACX debug helper (no original; its body is
+// gone from game.cpp). The declaration stays until a header pass, since a
+// header declaration moves every including unit's symbol counter.
 void __cdecl auto_save_debug();
 void __cdecl load_undo(int type);
 void __cdecl wipe_undo();
