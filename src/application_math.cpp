@@ -19,6 +19,43 @@
 #include "general.h"
 
 /*
+Purpose: Use the min and max parameters to bound the input.
+// ORIGINAL: 0x00422F00 ?range@@YAHHHH@Z 0x00422F00-0x00422F1E BYTE_EXACT
+// body      src/general.h
+// size      30 bytes
+// prototype int (__cdecl ?range@@YAHHHH@Z)(int input, int min, int max)
+// callers   10   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: Bounded input
+Status: Complete
+*/
+
+/*
+Purpose: Calculate the offset and bitmask for the specified input.
+// ORIGINAL: 0x0050BA00 ?bitmask@@YAXHPAHPAH@Z 0x0050BA00-0x0050BA27 BYTE_EXACT
+// symbol    ?bitmask@@YAXHPAH0@Z
+// size      39 bytes
+// prototype void (__cdecl ?bitmask@@YAXHPAHPAH@Z)(int input, int* offset, int* mask)
+// callers   103   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+// Pinned 0x50BA00..0x50BA27 performs signed /8, then writes offset before
+// the mask. The by-value input preserves callers that alias an out slot.
+// Original mapped callers use this shared utility; the older header-inline
+// policy was not supported by positive inline evidence.
+void __cdecl bitmask(int input, int *offset, int *mask) {
+    const int shift = input & 7;
+    *offset = input / 8;
+    *mask = 1 << shift;
+}
+
+/*
 Purpose: Divide, rounding the quotient AWAY from zero when there is a
          remainder, and report both.
 
@@ -68,6 +105,7 @@ int __stdcall divide_and_increment_quotient_if_remainder(int value, int *quotien
     *quotient_out = quotient;
     return quotient;
 }
+
 /*
 Purpose: Is a point inside an inclusive rectangle?
 
@@ -109,41 +147,7 @@ int __cdecl point_in_inclusive_rect(int x, int y, int left, int top,
     }
     return 1;
 }
-/*
-Purpose: Calculate the offset and bitmask for the specified input.
-// ORIGINAL: 0x0050BA00 ?bitmask@@YAXHPAHPAH@Z 0x0050BA00-0x0050BA27 BYTE_EXACT
-// symbol    ?bitmask@@YAXHPAH0@Z
-// size      39 bytes
-// prototype void (__cdecl ?bitmask@@YAXHPAHPAH@Z)(int input, int* offset, int* mask)
-// callers   103   call targets   0
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-// Pinned 0x50BA00..0x50BA27 performs signed /8, then writes offset before
-// the mask. The by-value input preserves callers that alias an out slot.
-// Original mapped callers use this shared utility; the older header-inline
-// policy was not supported by positive inline evidence.
-void __cdecl bitmask(int input, int *offset, int *mask) {
-    const int shift = input & 7;
-    *offset = input / 8;
-    *mask = 1 << shift;
-}
-/*
-Purpose: Use the min and max parameters to bound the input.
-// ORIGINAL: 0x00422F00 ?range@@YAHHHH@Z 0x00422F00-0x00422F1E BYTE_EXACT
-// body      src/general.h
-// size      30 bytes
-// prototype int (__cdecl ?range@@YAHHHH@Z)(int input, int min, int max)
-// callers   10   call targets   0
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: Bounded input
-Status: Complete
-*/
+
 // BODY IN general.h, as `MEASURED inline`: the image writes it out at
 // some call sites and calls it at others, and a .cpp definition is only ever
 // one of those. The marker stays here because that is where the catalogue
