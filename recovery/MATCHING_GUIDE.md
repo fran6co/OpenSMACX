@@ -1791,6 +1791,80 @@ entry's spelling ranks our `T` below every named piece; the address
 temporary itself is the same web on both sides (one store to [ebp-0x10],
 167 loads in the image, 175 in ours).
 
+Homed addresses (2026-11-19 par-6; `analysis/addrhome.py`,
+`regalloc/c_addrhome.spec`)
+
+The shape: the image stores an address into a frame slot where it is first
+formed (`lea ecx,[esi+K]; mov [slot],ecx`), reloads it much later and lets
+the base (`this`, an index) die in between, where ours keeps the base in its
+register and re-forms the address. What it is, by kind of address:
+
+- **It is not a named pointer local** (high). `T *p = &member;` and
+  `T *p = &arr[i];` are forward-substituted: BaseWin::init with `Font *font`
+  / `FlatButton *button` locals compiles to the same code as without them;
+  custom_planet with two pointer locals reads 84 rows where the plain
+  subscripts read 11. Do not add pointer locals for a homed address.
+- **VC6 forms the temporary itself, always** (high; `mid/N`, `fold/W`). The
+  second use of `this+K` (a member's address) or of `&arr[i]` with an element
+  of 1/2/4/8 bytes (`lea r,[i*4+G]`) is a CSE of the first. With a register
+  free the temporary keeps it; without one it is stored at its definition and
+  reloaded at the reuse, and the base ends in a destructive `add edi,K`. The
+  probe gives the image's shape from the plain source, at any distance (64
+  loops or 29 distinct members between definition and reuse).
+- **The temporary survives only while nothing later names the base**
+  (high; BaseWin::init 0x0041E8D0, `fold/W`). One later expression that needs
+  the base itself keeps the base live through the region, and then every
+  temporary without a register is re-formed from it instead of homed, and the
+  loop counter loses its register to the base. In BaseWin::init that
+  expression was `flatButton_.set_font(..)`: a direct call of a base-class
+  member on a member object folds the two offsets into `this+0xC2C4`. The
+  image has `lea ecx,[ebx+0x444]`, the base formed from the register that
+  holds the button: the `this` of an expanded header inline member
+  (`set_font_redraw`). So when the image homes addresses and lets `this` die,
+  look for the LAST expression of ours that still names `this` after the
+  image's last use, and for the image's `[reg+C]` form of it.
+- **An expanded inline member on a member object unfolds the offsets; on a
+  global array element it does not** (high; `idx/W`). `gob[i].set(a,b,c)`
+  expanded is the same code as three field stores (the offset temporary,
+  reads with the relocation). An OUT-OF-LINE member call on `gob[i]` forms
+  the absolute pointer for `ecx` from the offset (`lea edi,[edi+G]`), and the
+  reads after the call go through that pointer without a relocation. A named
+  pointer local forms the absolute pointer at once (`lea esi,[i*4+G]` after
+  the scaling). So in the image `lea r,[off+G]` followed by pointer reads
+  means a member call on the element or a pointer local, and offset reads
+  with the relocation mean subscripts (or an expanded inline).
+- **Whether a `&arr[i]` temporary is homed can be a symbol-counter tie**
+  (custom_planet 0x0058C2A0: 11 rows at 44 pad counts with both addresses
+  homed and `slot` dead, 373-412 at the other 20 with `slot` kept).
+  BaseWin::init does not move with the counter.
+
+Screen (`addrhome.py`, 50 s tree-wide). Slots: address or scaled-offset
+values stored to the frame and reloaded, by kind (Pg `lea [i*k+G]`, Po
+`lea [off+G]`, Pm `lea [base+d]`, OFF) and by how the reloads are used
+(pointer, offset with relocation, index, `this` of a call, argument),
+paired with ours through the fe alignment. The slot rows are noisy (shared
+slots, linear tracking): of 14 IMG-PTR and 22 OURS-PTR rows on 2026-11-19
+none was a source pointer. The useful rows are **UNFOLD**: the image forms
+`lea r,[b+Kt]` and reaches the parts as `[r+d]`, ours has the folded
+`[b+Kt+d]`. 21 rows in 8 functions led to: BaseWin::init 147 -> 90
+(`set_font_redraw`), MainInterface::init 348 -> 321 (seven
+`set_report_icons` triples written as member stores), NewTechWin::on_redraw
+83 -> 0 (`scratch = rect; expand_rect(&scratch, 3, 3)` for four folded reads,
+then `rect_width(&scratch)` / `rect_height(&scratch)` in the arguments),
+NetWin::exec and NetSessionPickerWin::initialize (`set_font_redraw`),
+DiploWin::exec (a `Buffer &` cast of a member compiles a null test; the image
+calls the member directly). Left as ranking questions (the temporary exists
+on both sides, the image keeps it in a callee-saved register that ours gives
+to a constant): CouncWin::init `this+0xD04` in ebx from 0x427632 to 0x427C8D
+(ours `xor ebx,ebx`), DiploWin::exec `this+0xF3C` in ebx at 0x444640,
+ReportWin::labs_line `this+0xE258`. Left as an inline-body question:
+SocialWin::init 0x4B28C0 and NetWin::exec 0x48285E set three rectangles
+through a pointer with every value in a register (`mov ebx,0x9a; mov
+[edi],ebx; .. mov ebx,edi; mov edi,0x13c; mov [ebx+8],edi`); ten bodies of
+a four-argument rectangle inline (modified parameters, two levels, returned
+pointer, pointer copy, reference, `__stdcall`, non-static) all fold to
+immediate stores.
+
 ### 2.8 /Ob2 inlining model
 
 Measured 2026-11-19 (par-4) with generated probe families in
@@ -4430,6 +4504,8 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
     [ebp-0x14] (0x58C390, 0x58C79A); `slot` dies at the switch (`dec esi`,
     0x58C3BF). Ours keeps `slot` reloadable through the slots walker and
     re-forms both addresses, also when they are written as pointer locals.
+    Resolved as a counter tie (2.7 "Homed addresses"): 31 header pads in
+    alpha.cpp give the image's frame and 11 rows; the three homes are permuted.
   - Buffer::write_pcx 0x005DF590 (+4): the output cursor stays in esi from
     0x5DF6E2 to the end, `this` is in ebp, the pixel row in ebx (home
     [esp+0x10]), the column in edi. Ours has `this` in esi, the cursor in ebp

@@ -13,6 +13,8 @@ sys.path.insert(0,T); sys.path.insert(0,T+'/analysis'); import fe,cdeck
 R=fe.R
 M='GameDataStateStorage.fields_.lock_masks_.bytes_.'
 ARG=r'((?:[^()]|\((?:[^()]|\([^()]*\))*\))+)'
+OBJ=r'[A-Za-z_]\w*(?:\[\w+\])?(?:(?:\.|->)(?!right\b|left\b|top\b|bottom\b)[A-Za-z_]\w*(?:\[\w+\])?)*'
+DEFAULT=['human_raw','alive_raw','alien_raw','tiles_raw','abs_raw','human_fn','alive_fn','tiles_fn','abs_fn']
 RULES=collections.OrderedDict([
  ('human_raw',(r'\bis_human\('+ARG+r'\)', lambda m:'(%shuman_mask_ & (1 << %s))'%(M,par(m.group(1))))),
  ('alive_raw',(r'\bis_alive\('+ARG+r'\)', lambda m:'(%salive_mask_ & (1 << %s))'%(M,par(m.group(1))))),
@@ -23,6 +25,12 @@ RULES=collections.OrderedDict([
  ('alive_fn',(re.escape(M)+r'alive_mask_ & \(1u? << '+ARG+r'\)', lambda m:'is_alive(%s)'%m.group(1))),
  ('tiles_fn',(r'(?<![\w.>:])MapTiles\b(?!\w)', lambda m:'map_tiles()')),
  ('abs_fn',(r'(?<![\w.>:])MapAbstractTiles\b', lambda m:'MapAbstract()')),
+ # RECT extents: raw subtraction against the win.h inlines (NewTechWin::on_redraw 0x00483950 became exact with
+ # rect_width(&scratch)/rect_height(&scratch) in the call arguments; not in the default rule set)
+ ('rw_fn',(r'(?<![\w.>])('+OBJ+r')(\.|->)right - \1\2left\b', lambda m:'rect_width(%s%s)'%('&' if m.group(2)=='.' else '',m.group(1)))),
+ ('rh_fn',(r'(?<![\w.>])('+OBJ+r')(\.|->)bottom - \1\2top\b', lambda m:'rect_height(%s%s)'%('&' if m.group(2)=='.' else '',m.group(1)))),
+ ('rw_raw',(r'\brect_width\(&('+OBJ+r')\)', lambda m:'(%s.right - %s.left)'%(m.group(1),m.group(1)))),
+ ('rh_raw',(r'\brect_height\(&('+OBJ+r')\)', lambda m:'(%s.bottom - %s.top)'%(m.group(1),m.group(1)))),
 ])
 def par(a):
     a=a.strip(); return a if re.fullmatch(r'[\w.\[\]>-]+',a) and '->' not in a.replace('->','') or re.fullmatch(r'\w+',a) else '('+a+')'
@@ -58,7 +66,7 @@ def evaluate(unit,addr,deck):
 def better(n,o): return n is not None and (n[0]<o[0] or (n[0]==o[0] and n[1]<o[1]))
 def main():
     unit=sys.argv[1]; addr=int(sys.argv[2],16)
-    rules=sys.argv[sys.argv.index('--rules')+1].split(',') if '--rules' in sys.argv else list(RULES)
+    rules=sys.argv[sys.argv.index('--rules')+1].split(',') if '--rules' in sys.argv else list(DEFAULT)
     src=open(R+'/'+unit,encoding='latin-1').read(); S=sites(src,addr,rules)
     if not S: print('no sites'); return None
     lab=lambda x:'%s@L%d'%(x[3],src.count('\n',0,x[0])+1)

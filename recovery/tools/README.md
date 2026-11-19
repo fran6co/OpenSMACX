@@ -162,6 +162,15 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   casts on that field in the units that use it, runs feall on every unit that names the field and commits when
   nothing fails to compile and no user of the field is lost or worse; the other functions that move (a cast dropped
   from a header inline shifts every includer's symbol counter) are listed in the commit. 80 s per field.
+- `analysis/addrhome.py [unit ...] [--addr A,..] [--from FEALL.json] [--all] [--min-reloads N] [--json F] [-v]`
+  homed-address screen (50 s tree-wide, MATCHING_GUIDE 2.7 "Homed addresses"): frame slots holding an address or a
+  scaled offset on either side (kind of definition, how the reloads are used), paired through the fe alignment:
+  IMG-PTR / OURS-PTR / IMG-OFF / OURS-OFF / KIND. These slot rows are noisy and none was a source pointer; act on
+  the `UNFOLD` rows (the image reaches a member's parts through `lea r,[b+Kt]` + `[r+d]`, ours folds `[b+Kt+d]`:
+  an expanded inline member, a struct copy plus a pointer inline, or a temporary that lost its register) and the
+  `NULLADJ` rows (a null-tested base cast on one side only).
+- `analysis/spellsweep.py ... --rules rw_fn,rh_fn,rw_raw,rh_raw` RECT extents, raw subtraction against
+  `rect_width(&r)` / `rect_height(&r)` (not in the default rule set).
 - `analysis/datarun.py [--all] [--lo A --hi B]` data-order evidence (MATCHING_GUIDE 2.5): ranks every bound object by
   its owner file's link position and lists the objects outside the longest non-decreasing run of each data section
   (definitions that sit in another unit's .data/.bss contribution), with the units bounding them.

@@ -23,12 +23,22 @@ Each image home is paired with ours through the fe alignment of its store (then 
   (b) IMG-OFF / OURS-OFF   the offset temporary is homed on one side only: a register-ranking question
   (c) OURS-PTR  ours homes a pointer the image never forms: a named pointer of ours to remove
   =             both sides home it (slot offsets may differ)
+  NULLADJ       the sides differ in the number of null-tested base adjustments (`je; lea r,[b+K]; jmp;
+                xor r,r`): a `static_cast<Base *>(ptr)` / `Base &b = member` of ours where the image calls
+                the base member directly (bare `lea ecx,[b+K]`), or the reverse
+  UNFOLD        (registers and slots alike) the image forms `lea r,[b + Kt]` and reaches the member's parts
+                as `[r + d]` / `lea x,[r + d]`, where ours has the folded `[b + Kt + d]`: an expanded inline
+                member function (its `this` is the member's address: BaseWin::init's `lea ecx,[ebx+0x444]`
+                for set_font_redraw), a pointer or reference local, or a homed address CSE
 
 Caveat (custom_planet 0x0058C2A0, 2026-11-19): VC6 homes `&arr[i]` by itself.  With `arr[i]` read before a
 long region and written after it, the compiler CSEs the element address (kind Pg, reads `[r]` without a
 relocation), spills it and lets `i` die; named pointer locals there gave 84 rows against 11 without them.
-So Pg and Pm homes are NOT evidence of a source pointer; Po (an absolute pointer built from the imul offset)
-is, since the compiler's own temporary for a struct array is the offset.  Screen only.
+Named pointer locals for `&this->m` compile to the same code as none (BaseWin::init 0x0041E8D0).  So Pg and Pm
+homes are NOT evidence of a source pointer: the temporary is the compiler's, and it is homed when nothing later
+names its base.  Po (an absolute pointer built from the imul offset, reads without relocation) is a member call
+on the element or a pointer local (regalloc/c_addrhome.spec idx/W).  Slot rows are noisy (shared slots, linear
+register tracking); the UNFOLD and NULLADJ rows are the ones to act on.  Screen only.
 Env: FE_PFX_BASE, FE_JOBS."""
 import sys, os, re, json, argparse, collections
 from concurrent.futures import ThreadPoolExecutor
@@ -274,6 +284,62 @@ def analyse(rows, lo, min_reloads, verbose):
     return I, O, res, rest
 
 
+def unfold(rows):
+    """Member accesses the image makes through a pointer to the member object (`lea r,[b + Kt]`, then
+    `[r + d]`) where ours folds the offset into the owner (`[b + Kt + d]`).  -> [(Kt, [(d, n_img, n_ours)])]
+    The image side of an expanded inline member function (its `this` is the member's address), of a
+    pointer/reference local, or of a homed address CSE."""
+    def disps(side):
+        mem = collections.Counter()
+        lea = collections.Counter()
+        for k, o, c in rows:
+            x = o if side == 0 else c
+            if x is None:
+                continue
+            mn, _, ops = x[1].partition(' ')
+            for m in MEM.finditer(ops):
+                d = parse_mem(m.group(1))
+                if d['reloc'] or d['base'] in (None, 'ebp', 'esp') or d['index'] is not None:
+                    continue
+                (lea if mn == 'lea' else mem)[d['disp']] += 1
+                if mn == 'lea':
+                    mem[d['disp']] += 0
+            m = re.fullmatch(r'add (e..), (%s)' % NUM, x[1])
+            if m and m.group(1) in REGS:
+                lea[int(m.group(2), 0)] += 1
+        return mem, lea
+    mi, li = disps(0)
+    mo, lo = disps(1)
+    alli = mi + li
+    allo = mo + lo
+    extra_o = {k: allo[k] - alli[k] for k in allo if allo[k] > alli[k] and k >= 0x40}
+    extra_i = {k: alli[k] - allo[k] for k in alli if alli[k] > allo[k]}
+    out = []
+    for kt in sorted(li):
+        if kt < 0x40 or li[kt] < 1:
+            continue
+        hits = [(k - kt, extra_i[k - kt], n) for k, n in sorted(extra_o.items()) if 0 <= k - kt < 0x1000 and (k - kt) in extra_i]
+        # the pointer itself: ours forms it more often (re-forms) or as often
+        if len(hits) >= 2 or (hits and hits[0][0] >= 0x40):
+            out.append((kt, li[kt], lo[kt], hits))
+    return out
+
+
+def nulladj(rows):
+    """Null-tested base adjustments (`je; lea r,[b + K]; jmp; xor r,r`: a pointer or reference CAST to a
+    base at a non-zero offset) per side -> (image count, our count, our first sites)"""
+    def scan(side):
+        L = [(o if side == 0 else c) for k, o, c in rows]
+        L = [x for x in L if x is not None]
+        hits = []
+        for i in range(len(L) - 2):
+            m = re.fullmatch(r'lea (e..), \[e.. \+ (%s)\]' % NUM, L[i][1])
+            if m and L[i + 1][1].startswith('jmp') and L[i + 2][1] == 'xor %s, %s' % (m.group(1), m.group(1)):
+                hits.append((L[i][0], m.group(2)))
+        return hits
+    return scan(0), scan(1)
+
+
 def describe(h, org):
     u = ' '.join('%s%d' % (k, v) for k, v in sorted(h['uses'].items())) or '-'
     d = h['defs'][0]
@@ -322,6 +388,15 @@ def scan_unit(unit, addrs, pfx, a):
             cls[tag] += 1
             lines.append('  %-8s ours %s' % (tag, describe(g, 0)))
         forms = {k: (I.forms[k], O.forms[k]) for k in set(I.forms) | set(O.forms) if I.forms[k] != O.forms[k]}
+        ni_, no_ = nulladj(r['rows'])
+        if len(ni_) != len(no_):
+            cls['NULLADJ'] += 1
+            lines.append('  NULLADJ  null-tested base casts: img %d (%s) ours %d (%s)' % (
+                len(ni_), ' '.join('%x:+%s' % (r['lo'] + a_, k_) for a_, k_ in ni_[:6]), len(no_), ' '.join('%x:+%s' % x_ for x_ in no_[:6])))
+        for kt, ni, no, hits in unfold(r['rows']):
+            cls['UNFOLD'] += 1
+            lines.append('  UNFOLD   img  `lea r,[b + %#x]` x%d (ours x%d); ours folds %s' % (
+                kt, ni, no, ' '.join('%#x(+%#x) x%d' % (kt + d, d, n) for d, a_, n in hits)))
         out.append(dict(unit=unit, addr='%08X' % addr, sym=r['sym'], diff=r['diff'], cls=dict(cls), lines=lines, forms=forms))
     return out
 
@@ -377,7 +452,7 @@ def main():
     errs = [x for x in res if isinstance(x, tuple)]
     res = [x for x in res if isinstance(x, dict)]
     tot = collections.Counter()
-    res.sort(key=lambda x: (-(x['cls'].get('IMG-PTR', 0) + x['cls'].get('OURS-PTR', 0)), x['diff']))
+    res.sort(key=lambda x: (-(x['cls'].get('IMG-PTR', 0) + x['cls'].get('OURS-PTR', 0) + x['cls'].get('UNFOLD', 0) + x['cls'].get('NULLADJ', 0)), x['diff']))
     for x in res:
         for k, v in x['cls'].items():
             tot[k] += v
