@@ -81,6 +81,32 @@ void CheckButton::close() {
     GraphicWin::close();
 }
 
+// CheckButton's parent is a GraphicWin because this control's init contract
+// takes that exact type. GraphicWin::init sets up the base window and the
+// image then hides the newly initialized control until its caller shows it.
+// ORIGINAL: 0x006337E0 ?init@CheckButton@@QAEHHHPAUGraphicWin@@H@Z 0x006337E0-0x00633841 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["partition class:CheckButton at master cdfbd8b3","git:cdfbd8b3:src/unrecovered/006337e0.cpp original signature, spans, calls and member accesses","src/graphicwin.h GraphicWin::init signature","src/sprite.h Sprite::width/height accessors and +0x18/+0x1C member offsets"],"reason":"The existing seed identity is implemented by the typed CheckButton member. Sprite::width and Sprite::height preserve the seed's reads from the selected Sprite members at +0x18 and +0x1C; GraphicWin::init and Win::show express its base setup and final hide operation."}
+// symbol    ?init@CheckButton@@QAEHHHPAVGraphicWin@@H@Z
+int CheckButton::init(int x, int y, GraphicWin *parent, int toggle_argument) {
+    if (parent == 0) {
+        return 3;
+    }
+
+    // The seed reads the checked Sprite's iWidth_ at +0x18 and the
+    // unchecked Sprite's iHeight_ at +0x1C.
+    const int height = unchecked_sprite_->height();
+    const int width = checked_sprite_->width();
+    const int result = GraphicWin::init(x, y, width, height, 0x1020,
+                                        parent);
+    if (result != 0) {
+        return result;
+    }
+
+    toggle_argument_ = toggle_argument;
+    show(0);
+    return 0;
+}
+
 /*
 Purpose: Copy the button's surface into its parent and draw the selected
          checked or unchecked sprite onto that surface.
@@ -109,79 +135,6 @@ void CheckButton::on_redraw() {
     }
 }
 
-/*
-Purpose: Invoke the registered double-click callback with the stored toggle
-         argument; the click coordinates are not consumed by this handler.
-// ORIGINAL: 0x00633980 ?on_left_double_click@CheckButton@@QAEXHH@Z 0x00633980-0x00633997 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence":["source:src/recovered/00633980.cpp","original:0x0066DC84","source:src/jackal/checkbutton.h:CheckButton"],"reason":"Use the confirmed virtual override and typed callback/state members; the guarded recorder banks the freshly exact owner source before the duplicate seed is retired."}
-// symbol    ?on_left_double_click@CheckButton@@UAEXHH@Z
-*/
-void CheckButton::on_left_double_click(int, int) {
-    if (double_click_callback_ != nullptr) {
-        double_click_callback_(toggle_argument_);
-    }
-}
-
-/*
-Purpose: Unknown; the legacy implementation is a bare return with no body.
-// ORIGINAL: 0x006339B0 ?close_class@CheckButton@@QAAXXZ 0x006339B0-0x006339B1 BYTE_EXACT
-// symbol    ?close_class@CheckButton@@SAXXZ
-// size      1 bytes
-// prototype 
-// callers   1   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void CheckButton::close_class() {
-}
-
-
-/*
-Purpose: Unknown; the legacy implementation is a constant return that returns 0.
-// ORIGINAL: 0x006339A0 ?init_class@CheckButton@@QAAHXZ 0x006339A0-0x006339A3 BYTE_EXACT
-// symbol    ?init_class@CheckButton@@SAHXZ
-// size      3 bytes
-// prototype 
-// callers   1   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: 0, always
-Status: Complete
-*/
-int CheckButton::init_class() {
-    return 0;
-}
-
-// CheckButton's parent is a GraphicWin because this control's init contract
-// takes that exact type. GraphicWin::init sets up the base window and the
-// image then hides the newly initialized control until its caller shows it.
-// ORIGINAL: 0x006337E0 ?init@CheckButton@@QAEHHHPAUGraphicWin@@H@Z 0x006337E0-0x00633841 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence":["partition class:CheckButton at master cdfbd8b3","git:cdfbd8b3:src/unrecovered/006337e0.cpp original signature, spans, calls and member accesses","src/graphicwin.h GraphicWin::init signature","src/sprite.h Sprite::width/height accessors and +0x18/+0x1C member offsets"],"reason":"The existing seed identity is implemented by the typed CheckButton member. Sprite::width and Sprite::height preserve the seed's reads from the selected Sprite members at +0x18 and +0x1C; GraphicWin::init and Win::show express its base setup and final hide operation."}
-// symbol    ?init@CheckButton@@QAEHHHPAVGraphicWin@@H@Z
-int CheckButton::init(int x, int y, GraphicWin *parent, int toggle_argument) {
-    if (parent == 0) {
-        return 3;
-    }
-
-    // The seed reads the checked Sprite's iWidth_ at +0x18 and the
-    // unchecked Sprite's iHeight_ at +0x1C.
-    const int height = unchecked_sprite_->height();
-    const int width = checked_sprite_->width();
-    const int result = GraphicWin::init(x, y, width, height, 0x1020,
-                                        parent);
-    if (result != 0) {
-        return result;
-    }
-
-    toggle_argument_ = toggle_argument;
-    show(0);
-    return 0;
-}
-
 // A click toggles the stored state, repaints around the callback, and sends
 // the button event through the parent's established Win virtual slot.
 // ORIGINAL: 0x00633920 ?on_left_click@CheckButton@@QAEXHH@Z 0x00633920-0x0063397F BYTE_EXACT
@@ -203,6 +156,53 @@ void CheckButton::on_left_click(int, int) {
     }
     parent->on_button_clicked(toggle_argument_);
     redraw();
+}
+
+/*
+Purpose: Invoke the registered double-click callback with the stored toggle
+         argument; the click coordinates are not consumed by this handler.
+// ORIGINAL: 0x00633980 ?on_left_double_click@CheckButton@@QAEXHH@Z 0x00633980-0x00633997 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["source:src/recovered/00633980.cpp","original:0x0066DC84","source:src/jackal/checkbutton.h:CheckButton"],"reason":"Use the confirmed virtual override and typed callback/state members; the guarded recorder banks the freshly exact owner source before the duplicate seed is retired."}
+// symbol    ?on_left_double_click@CheckButton@@UAEXHH@Z
+*/
+void CheckButton::on_left_double_click(int, int) {
+    if (double_click_callback_ != nullptr) {
+        double_click_callback_(toggle_argument_);
+    }
+}
+
+
+/*
+Purpose: Unknown; the legacy implementation is a constant return that returns 0.
+// ORIGINAL: 0x006339A0 ?init_class@CheckButton@@QAAHXZ 0x006339A0-0x006339A3 BYTE_EXACT
+// symbol    ?init_class@CheckButton@@SAHXZ
+// size      3 bytes
+// prototype 
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: 0, always
+Status: Complete
+*/
+int CheckButton::init_class() {
+    return 0;
+}
+
+/*
+Purpose: Unknown; the legacy implementation is a bare return with no body.
+// ORIGINAL: 0x006339B0 ?close_class@CheckButton@@QAAXXZ 0x006339B0-0x006339B1 BYTE_EXACT
+// symbol    ?close_class@CheckButton@@SAXXZ
+// size      1 bytes
+// prototype 
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void CheckButton::close_class() {
 }
 
 
