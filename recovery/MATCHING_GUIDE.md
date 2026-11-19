@@ -2780,6 +2780,9 @@ Registers and scratch choice
   makes later inlined reads use p's register (Win::init).
 - A member pointer read at every use, against a local reassigned from the
   member, changes subtraction operand order (on_redraw_nc).
+- A named per-iteration index `int k = i + C; A[k].f` gives a byte-offset IV
+  off the table (`cmp reg,(N+C)*stride; jl`); `A[i + C].f` at each use gives a
+  pointer IV tested against the table address (read_rules 0x00587466).
 - `inc eax; je` after a call is `f() + 1 == 0`; `== -1` gives `cmp eax,-1`.
 - A `v = 0` before a large switch can become a function-wide zero register.
 
