@@ -3769,18 +3769,6 @@ void ReportWin::draw_projects() {
     }
 }
 
-// WORKAROUND(decl): guarded full-length five-coordinate centered write. The
-// image (0x49F9EF..0x49FA38) loads all four coordinates before the null test
-// and strlen, i.e. a header inline beside Buffer::write_cent_l that buffer.h
-// does not declare yet; a written-out `if (StringTemp)` folds the test away.
-static inline int reportwin_write_cent_box(ReportWin *win, char *text, int x, int y,
-                                           int width, int height) {
-    if (text == 0) {
-        return x;
-    }
-    return win->Buffer::write_cent_l(text, x, y, width, height,
-                                     static_cast<int>(strlen(text)));
-}
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0049F350 0x0049FE20 0x0049FE34 0x0049F758
 // ORIGINAL: 0x0049F350 ?draw_sat@ReportWin@@QAEXXZ 0x0049F350-0x0049FE1E
@@ -3910,7 +3898,7 @@ void ReportWin::draw_sat() {
             StringTemp[0] = 0;
             strcat(StringTemp, label_get(0xCC4 / 4));
             // Genuine original: passes right/bottom as width/height.
-            reportwin_write_cent_box(this, StringTemp, rect1_.left, rect1_.top,
+            Buffer::write_cent(StringTemp, rect1_.left, rect1_.top,
                                      rect1_.right, rect1_.bottom);
         }
         return;
@@ -4604,7 +4592,7 @@ void ReportWin::draw_score() {
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x1060 / 4));
         strcat(StringTemp, "!");
-        reportwin_write_cent_box(this, StringTemp, rect1_.left, energy_panel_rect_.bottom - 50,
+        Buffer::write_cent(StringTemp, rect1_.left, energy_panel_rect_.bottom - 50,
                                  rect1_.right, 50);
     }
     text_close();

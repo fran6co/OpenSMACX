@@ -4109,25 +4109,7 @@ void DesignWin::draw_special_2(int redraw) {
 
 // The image inlines a null test of the text before strlen at each of these
 // Font-taking writers (mov reg, StringTemp; test; je), like Buffer's guarded
-// write_l/write_cent_l forms; buffer.h has no guarded Font overloads.
-// WORKAROUND(decl): file-local stand-ins for those header inlines.
-static inline int design_write_cent_l(DesignWin *window, Font *font, char *text,
-                                      RECT *area) {
-    if (text == 0) {
-        return 0;
-    }
-    return window->Buffer::write_cent_l(font, text, area,
-                                        static_cast<int>(strlen(text)));
-}
-
-static inline int design_write_l(DesignWin *window, Font *font, char *text,
-                                 int x_coord, int y_coord) {
-    if (text == 0) {
-        return x_coord;
-    }
-    return window->Buffer::write_l(font, text, x_coord, y_coord,
-                                   static_cast<int>(strlen(text)));
-}
+// write_l/write_cent_l forms (buffer.h's guarded Font overloads).
 
 // ORIGINAL: 0x00436090 ?draw_vehicle@DesignWin@@QAEXH@Z 0x00436090-0x00437999 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/veh.h:VehPrototype is size 0x34; row 63 begins at 0x009AC534 and fields at 0x20,0x24-0x27,0x2E own the observed stores", "source:src/designwin.cpp:UNK3, draw_vehicle and draw_flash share VehPrototypes[0x3f] preview storage", "source:src/designwin.h:draw_special_2(int), draw_special_1(int), draw_vehicle(int), draw_flash(), draw_info() are declared DesignWin methods", "source:src/veh.cpp:abil_cond(int,int,int,int) is the existing __cdecl definition at 0x00584B50", "historical seed (Git tree 15fe30a4; retired from the live source tree): src/unrecovered/00436090.cpp; preserve its original draw_vehicle identity, spans and TRIED lesson"], "reason": "Publish the editor preview scratch through the real 0x34-stride VehPrototype row 63, and close its repaint/ability-validation calls through the declared DesignWin methods and existing cdecl abil_cond owner."}
@@ -4396,7 +4378,7 @@ void DesignWin::draw_vehicle(int redraw) {
             StringTemp[0] = 0;
             strcat(StringTemp, label_get(0xe40 / 4));
             CharUpperA(StringTemp);
-            design_write_cent_l(this, &font2_, StringTemp, &dest);         // guarded; tail-merged at 0x4371af
+            Buffer::write_cent_l(&font2_, StringTemp, &dest);         // guarded; tail-merged at 0x4371af
         }
         // ---- see "src advance" note below
         adv = font_line_advance(font2_);
@@ -4426,7 +4408,7 @@ void DesignWin::draw_vehicle(int redraw) {
                 Buffer::set_text_color2(TextColourTable[110], TextColourTable[111], 1, 1);
             }
             CharUpperA(StringTemp);
-            design_write_cent_l(this, &font2_, StringTemp, &dest);         // guarded (0x437194..0x4371bd)
+            Buffer::write_cent_l(&font2_, StringTemp, &dest);         // guarded (0x437194..0x4371bd)
             adv = font_line_advance(font2_);                  // 0x4371c2 (the kept copy)
             src.top += adv;
             src.bottom += adv;
@@ -4434,7 +4416,7 @@ void DesignWin::draw_vehicle(int redraw) {
             StringTemp[0] = 0;
             strcat(StringTemp, label_get(0x3a4 / 4));
             CharUpperA(StringTemp);
-            design_write_cent_l(this, &font2_, StringTemp, &dest);         // guarded; jumps into 0x43719d
+            Buffer::write_cent_l(&font2_, StringTemp, &dest);         // guarded; jumps into 0x43719d
             adv = font_line_advance(font2_);
             src.top += adv;
             src.bottom += adv;
@@ -4457,7 +4439,7 @@ void DesignWin::draw_vehicle(int redraw) {
     adv = font_line_advance(font2_);
     int y = (vehicle_panel_rect_.bottom + vehicle_panel_rect_.top) / 2 - adv * 4;  // edi; member, not src
     CharUpperA(preset_names_[6]);                             // +0x1437e
-    design_write_l(this, &font2_, preset_names_[6], x, y);                 // guarded (test ebx), 0x5db580
+    Buffer::write_l(&font2_, preset_names_[6], x, y);                 // guarded (test ebx), 0x5db580
     y += font_line_advance(font2_);
 
     Buffer::set_text_color2(TextColourTable[152], TextColourTable[153], 1, 1);

@@ -551,6 +551,32 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   }
   int write_cent_l(char *text, int x_coord, int y_coord, int width, int height, int len);
   int write_cent_l(char *text, int x_coord, int y_coord, int width);
+  // Guarded full-length forms of the Font-first and box writers: callers
+  // expand the null test before strlen (BaseWin 0x0040EEB0/0x0040F030,
+  // DesignWin 0x00437194/0x005DB580 call, ReportWin::draw_sat 0x0049F9EF
+  // loading all four coordinates first).
+  int write_l(Font *font, char *text, int x_coord, int y_coord) {
+    if (text == 0) {
+      return x_coord;
+    }
+    return write_l(font, text, x_coord, y_coord, static_cast<int>(strlen(text)));
+  }
+  int write_cent_l(Font *font, char *text, RECT *area) {
+    if (text == 0) {
+      return 0;
+    }
+    return write_cent_l(font, text, area, static_cast<int>(strlen(text)));
+  }
+  // WORKAROUND(decl): named after the Font form above (the five-argument
+  // write_cent_l slot is the explicit-length writer); the original's name
+  // is unknown.
+  int write_cent(char *text, int x_coord, int y_coord, int width, int height) {
+    if (text == 0) {
+      return x_coord;
+    }
+    return write_cent_l(text, x_coord, y_coord, width, height,
+                        static_cast<int>(strlen(text)));
+  }
   int write_right_l(Font *font, char *text, int x_coord, int y_coord,
                     int width, int len);
   int write_right_l(Font *font, char *text, int x_coord, int y_coord, int len);

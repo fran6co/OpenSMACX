@@ -1714,17 +1714,6 @@ void BaseWin::draw_psych() {
 }
 
 
-// WORKAROUND(decl): stands in for an unrecovered guarded Font/RECT
-// write_cent inline; the image tests the text pointer before its strlen
-// (0x0040EEB0, 0x0040F030) as the header's other guarded write_cent does.
-template <class Target>
-static inline int production_write_cent(Target &buffer, Font *font, char *text,
-                                        RECT *area) {
-    if (text == 0) {
-        return area->left;
-    }
-    return buffer.write_cent_l(font, text, area, static_cast<int>(strlen(text)));
-}
 
 // Production selection uses the real picker, queue, retool dialog and UI owners.
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -2689,7 +2678,7 @@ void BaseWin::draw_production(int update_mode) {
             strcat(StringTemp, label_get(489));
             MainInterfaceGlobal.set_text_color(TextColourTable[120],
                                                TextColourTable[121], 1, 1);
-            production_write_cent(MainInterfaceGlobal, &detail_font, StringTemp, &content);
+            MainInterfaceGlobal.write_cent_l(&detail_font, StringTemp, &content);
         } else {
             StringTemp[0] = 0;
             if (BaseCurrent->mineral_surplus > 0) {
@@ -2716,7 +2705,7 @@ void BaseWin::draw_production(int update_mode) {
             content.bottom += 2 * unit_font.pixel_height();
             MainInterfaceGlobal.set_text_color(TextColourTable[104],
                                                TextColourTable[105], 1, 1);
-            production_write_cent(MainInterfaceGlobal, &unit_font, StringTemp, &content);
+            MainInterfaceGlobal.write_cent_l(&unit_font, StringTemp, &content);
         }
     }
 
