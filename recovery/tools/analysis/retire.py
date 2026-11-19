@@ -14,7 +14,9 @@ measured (fe rows, exactness, named-call difference to the image, as probesweep.
 Verdicts: DEAD = every marker of the unit keeps its exactness, rows and named calls (the stand-in did
 nothing measurable); KEEP = nothing gets worse and something improves; else the markers that move.
 --write applies DEAD and KEEP removals cumulatively, one unit at a time (re-measured after each).
-Prefixes FE_PFX_BASE.. with FE_JOBS lanes (one unit per lane). Screen only.
+Prefixes FE_PFX_BASE.. with FE_JOBS lanes (one unit per lane). Screen only: fe masks relocation operands, so a
+load-order stand-in (a volatile read that orders two globals) reads DEAD; confirm with `recover measure`, and run
+`rebind-literals` after removing a volatile-qualified cast type or a definition (both are front-end symbols).
 """
 import sys, os, re, json, argparse, collections
 from concurrent.futures import ThreadPoolExecutor

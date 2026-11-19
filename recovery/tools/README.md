@@ -546,3 +546,11 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   (237 -> 227), base_ecology (184 -> 174), base_terraform (922 -> 893), gen_terrain_poly (1516 -> 1508), Path::find
   (876 -> 858, the value belonged to another variable's home); TutWin::tour, capture_base, probe and setup_player read
   best as they are. Seven of the twelve were reusesweep renames. Judge a candidate with `imgmerge.py --plan` and rows.
+- `analysis/workarounds.py --feall F [--table] [--rules] [--json OUT] [--kind K,..] [--file S]` stand-in debt inventory
+  (MATCHING_GUIDE 4.1): every WORKAROUND tag, budget probe (definitions and call lines), function-pointer local, pragma
+  region, pad block, volatile cast/local and `__forceinline`, with the functions it serves, its evidence comment, their
+  fe exactness (from a `feall.py --all` result) and, with --rules, the rule most likely to retire it. 5 s.
+- `analysis/retire.py WA.json [--write] [--kinds ...] [unit ...]` mechanical retirement screen over workarounds.py
+  `--json` items: each probe statement set, function-pointer local, pragma region, `__forceinline` and volatile cast
+  removed alone, every marker of the unit measured (DEAD / KEEP / NO); --write applies DEAD and KEEP cumulatively.
+  fe masks relocations: confirm with `recover measure` (a load-order volatile reads DEAD and is not).

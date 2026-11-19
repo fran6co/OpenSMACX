@@ -6940,7 +6940,7 @@ fe-exact; the stand-in may be tuning debt or dead):
 
 463 functions are served by a non-pad, non-wide stand-in (318 fe-exact).
 By likely retiring rule (`--rules`, keyword reading, a screen): probe /
-dead spend 263 items (2.8 owner or cost ladder), teardown depth 87 (2.3 and
+dead spend 265 items (2.8 owner or cost ladder), teardown depth 87 (2.3 and
 2.8; the missing level is often a constructor or an owner), call forcers
 92 (2.8 "called early, expanded late": one inline level deeper), registers
 and reloads 85 (2.7, Z1-Z6, named values), counter 30 (2.5), naming only
