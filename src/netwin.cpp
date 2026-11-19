@@ -1646,14 +1646,15 @@ void NetWin::draw_factions() {
                        NetWinLobbyRows.rows_[index + 1].noun_faction_) == 0) {
                 goto named;
             }
+            strcat(StringTemp, SocialWinColonSpaceText);
         } else {
             strcat(StringTemp, label_get(0xFE4 / 4));
             if (strcmp(label_get(0xFE4 / 4),
                        NetWinLobbyRows.rows_[index + 1].noun_faction_) == 0) {
                 goto named;
             }
+            strcat(StringTemp, SocialWinColonSpaceText);
         }
-        strcat(StringTemp, SocialWinColonSpaceText);
         strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, NetWinLobbyRows.rows_[index + 1].noun_faction_);
     named:
