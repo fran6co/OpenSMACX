@@ -1,4 +1,3 @@
-extern const char BufferJoinSpace[];
 /*
  * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.
  * Copyright (C) 2013-2021 Brendan Casey
@@ -52,12 +51,8 @@ extern int BreakthroughTurnsGlobal;
 extern int NetIncomeGlobal;
 extern uint32_t Language;
 
-// Shared punctuation objects (0x00682E90..0x00682EA2): defined at the end of
-// basewin.cpp, where the image's .data order puts them.
-extern char SocialWinCommaSpaceText[];
-extern char SocialWinColonSpaceText[];
-extern char SocialWinCloseParenText[];
-extern char SocialWinOpenParenText[];
+// The shared punctuation (0x00682E90..0x00682EA2) is strings.h's helper
+// literals, kept as COMDATs at the end of basewin.cpp's .data.
 
 // ORIGINAL: 0x004AEF10 ?exit@SocialWin@@QAEXXZ 0x004AEF10-0x004AF10C BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/004aef10.cpp", "image:terranx_original.exe:0x004AEF10", "Original instructions establish owner, bounded body and callback/state order; SocialWin reloads faction after social_upheaval and every later stateful call. GraphicWin dispatches through the real Buffer base.", "recovery/tasks/interface-contract-report-closure.json; bounded UI-five scope preserves original baseline"], "reason": "Recover the original in its genuine UI owner using actual members, globals and base/virtual calls. Retain seed evidence and historical obligations; this binding does not grant a current matching or runtime claim. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
@@ -675,9 +670,7 @@ void __stdcall main_interface_bubble_callback(char *text, int x, int y) {
  * their original starts 0x78D5A0/0x78D618 are no longer address aliases.
  * MainInterfaceGlobal is the actual owner of this shared canvas Buffer base;
  * its restore_clip() restores that Buffer's own rect2_ clip rectangle.
- * SpaceText          0x00682820 - image .data reads " " (one space). technology
- *                    .cpp already names it in prose for the same reason.
- * PercentText        0x00682EA0 - image .data reads "%".
+ * 0x00682820 " " and 0x00682EA0 "%" are strings.h's helper literals.
  * SocialEffectTable  0x0094B024 - SocialCategories[0].model_effect[0]; the
  *                    53-dword category stride and 11-dword model stride are
  *                    the declared RulesSocialCategory / SocialEffect layout.
@@ -853,7 +846,6 @@ void SocialWin::draw_social(int a1) {
     do_sound();
 }
 
-extern char PercentText[];  // shared "%" (0x00682EA0), defined in basewin.cpp
 
 
 typedef void (__cdecl *SoundHookFn)(char *);
@@ -969,11 +961,11 @@ void SocialWin::draw_psych_alloc() {
     const int allocation = PlayersData[factionID_].se_alloc_psych;
     StringTemp[0] = '\0';
     strcat(StringTemp, label_get(318));
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     char number[80];
     _itoa(allocation * 10, number, 10);
     strcat(StringTemp, number);
-    strcat(StringTemp, PercentText);
+    say_percent();
     CharUpperA(StringTemp);
 
     MainInterfaceGlobal.Buffer::set_font(&font1_, 0, 0, 0);
@@ -1021,11 +1013,11 @@ void SocialWin::draw_economy_alloc() {
     const int remaining = 10 - PlayersData[factionID_].se_alloc_psych - PlayersData[factionID_].se_alloc_labs;
     StringTemp[0] = '\0';
     strcat(StringTemp, label_get(366));
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     char number[80];
     _itoa(remaining * 10, number, 10);
     strcat(StringTemp, number);
-    strcat(StringTemp, PercentText);
+    say_percent();
     CharUpperA(StringTemp);
 
     MainInterfaceGlobal.Buffer::set_font(&font1_, 0, 0, 0);
@@ -1072,11 +1064,11 @@ void SocialWin::draw_labs_alloc() {
     const int allocation = PlayersData[factionID_].se_alloc_labs;
     StringTemp[0] = '\0';
     strcat(StringTemp, label_get(60));
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     char number[80];
     _itoa(allocation * 10, number, 10);
     strcat(StringTemp, number);
-    strcat(StringTemp, PercentText);
+    say_percent();
     CharUpperA(StringTemp);
 
     MainInterfaceGlobal.Buffer::set_font(&font1_, 0, 0, 0);
@@ -1608,7 +1600,7 @@ void SocialWin::draw_info() {
 
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x3BF));
-    strcat(StringTemp, SocialWinColonSpaceText);
+    say_colon();
     char number[80];
     _itoa(NetIncomeGlobal, number, 10);
     strcat(StringTemp, number);
@@ -1618,10 +1610,10 @@ void SocialWin::draw_info() {
     y += font_line_advance(font5_);
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(150));
-    strcat(StringTemp, SocialWinColonSpaceText);
+    say_colon();
     _itoa(BreakthroughTurnsGlobal, number, 10);
     strcat(StringTemp, number);
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     strcat(StringTemp, label_get(49));
     social_write_l_at(StringTemp, x, y);
 
@@ -1647,14 +1639,14 @@ void SocialWin::draw_info() {
             > 10 - PlayersData[factionID_].se_alloc_psych - PlayersData[factionID_].se_alloc_labs) {
             _itoa(-range(shift * imbalance, 0, 0x28), number, 10);
             strcat(StringTemp, number);
-// RECOVERY_LITERAL: v1 0x00687480 0x00687483 $SG59394 0x004AFB60
+// RECOVERY_LITERAL: v1 0x00687480 0x00687483 $SG59433 0x004AFB60
             strcat(StringTemp, "% ");
             strcat(StringTemp, label_get(60));
             if (10 - PlayersData[factionID_].se_alloc_psych - PlayersData[factionID_].se_alloc_labs != 0) {
-                strcat(StringTemp, SocialWinCommaSpaceText);
+                say_comma();
                 _itoa(-range(shift * imbalance * 2, 0, 0x50), number, 10);
                 strcat(StringTemp, number);
-// RECOVERY_LITERAL: v1 0x00687484 0x00687487 $SG59396 0x004AFB60
+// RECOVERY_LITERAL: v1 0x00687484 0x00687487 $SG59435 0x004AFB60
                 strcat(StringTemp, "% ");
                 strcat(StringTemp, label_get(169));
             }
@@ -1662,14 +1654,14 @@ void SocialWin::draw_info() {
             if (PlayersData[factionID_].se_alloc_labs != 0) {
                 _itoa(-range(shift * imbalance * 2, 0, 0x50), number, 10);
                 strcat(StringTemp, number);
-// RECOVERY_LITERAL: v1 0x00687488 0x0068748B $SG59399 0x004AFB60
+// RECOVERY_LITERAL: v1 0x00687488 0x0068748B $SG59438 0x004AFB60
                 strcat(StringTemp, "% ");
                 strcat(StringTemp, label_get(60));
-                strcat(StringTemp, SocialWinCommaSpaceText);
+                say_comma();
             }
             _itoa(-range(shift * imbalance, 0, 0x28), number, 10);
             strcat(StringTemp, number);
-// RECOVERY_LITERAL: v1 0x0068748C 0x0068748F $SG59400 0x004AFB60
+// RECOVERY_LITERAL: v1 0x0068748C 0x0068748F $SG59439 0x004AFB60
             strcat(StringTemp, "% ");
             strcat(StringTemp, label_get(169));
         }
@@ -1681,12 +1673,12 @@ void SocialWin::draw_info() {
     if (upheaval < 0) {
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(350));
-        strcat(StringTemp, SocialWinColonSpaceText);
-// RECOVERY_LITERAL: v1 0x00687490 0x00687492 $SG59402 0x004AFB60
+        say_colon();
+// RECOVERY_LITERAL: v1 0x00687490 0x00687492 $SG59441 0x004AFB60
         strcat(StringTemp, "+");
         _itoa(-upheaval, number, 10);
         strcat(StringTemp, number);
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         strcat(StringTemp, label_get(351));
         MainInterfaceGlobal.Buffer::set_text_color(0xa0, -1, 1, 1);
         social_write_l_at(StringTemp, x, y);
@@ -1694,10 +1686,10 @@ void SocialWin::draw_info() {
         MainInterfaceGlobal.Buffer::set_text_color(0xf9, -1, 1, 1);
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(349));
-        strcat(StringTemp, SocialWinColonSpaceText);
+        say_colon();
         _itoa(upheaval, number, 10);
         strcat(StringTemp, number);
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         strcat(StringTemp, label_get(351));
         social_write_l_at(StringTemp, x, y);
     }
@@ -1764,7 +1756,7 @@ void SocialWin::draw_overview() {
         }
 
         StringTemp[0] = 0;
-// RECOVERY_LITERAL: v1 0x0068749C 0x006874A0 $SG59427 0x004B0410
+// RECOVERY_LITERAL: v1 0x0068749C 0x006874A0 $SG59466 0x004B0410
         strcat(StringTemp, "SOC");
         strcat(StringTemp, SocialEffects[effect].set1);
         if (text_open(0, StringTemp) != 0) {
@@ -1811,7 +1803,7 @@ void SocialWin::draw_overview() {
 
         StringTemp[0] = 0;
         if (socEffect_.values_[effect] > 0) {
-// RECOVERY_LITERAL: v1 0x006874A0 0x006874A2 $SG59447 0x004B0410
+// RECOVERY_LITERAL: v1 0x006874A0 0x006874A2 $SG59486 0x004B0410
             strcat(StringTemp, "+");
         }
         char number[80];
@@ -2065,11 +2057,11 @@ void SocialWin::draw_mouseover() {
 
                 StringTemp[0] = 0;
                 if (value < 0) {
-// RECOVERY_LITERAL: v1 0x006874A4 0x006874A6 $SG59542 0x004B1080
+// RECOVERY_LITERAL: v1 0x006874A4 0x006874A6 $SG59581 0x004B1080
                     strcat(StringTemp, "-");
                     MainInterfaceGlobal.Buffer::set_text_color(0x67, -1, 1, 1);
                 } else {
-// RECOVERY_LITERAL: v1 0x006874A8 0x006874AA $SG59544 0x004B1080
+// RECOVERY_LITERAL: v1 0x006874A8 0x006874AA $SG59583 0x004B1080
                     strcat(StringTemp, "+");
                     MainInterfaceGlobal.Buffer::set_text_color(0x98, -1, 1, 1);
                 }
@@ -2169,7 +2161,7 @@ int SocialWin::on_button_text_draw(GraphicWin *window, char *text, int button_id
 
     StringTemp[0] = 0;
     if (socEffect_.values_[effect] > 0) {
-// RECOVERY_LITERAL: v1 0x006874AC 0x006874AE $SG59574 0x004B17A0
+// RECOVERY_LITERAL: v1 0x006874AC 0x006874AE $SG59613 0x004B17A0
         strcat(StringTemp, "+");
     }
     char number[80];
@@ -2412,7 +2404,7 @@ void SocialWin::init(int faction_id) {
     font9_.init(DefaultLargeFontFace, 0xe, 1);
 
     if (!effectIcons_[0].has_pixel_pointer()) {
-// RECOVERY_LITERAL: v1 0x006874B0 0x006874BB $SG59607 0x004B2740
+// RECOVERY_LITERAL: v1 0x006874B0 0x006874BB $SG59646 0x004B2740
         sheet.load_pcx("socwin.pcx", 0, 10, 0xec);
         // Ten rows of three triplets; x restarts in the row clause.
         Sprite *icon = effectIcons_;
@@ -2713,7 +2705,7 @@ void SocialWin::init(int faction_id) {
             // 0x4B3C0B: test; jne to the vbase adjustment, null arm first.
             GraphicWin *graphics = window == 0
                 ? 0 : static_cast<GraphicWin *>(window);
-// RECOVERY_LITERAL: v1 0x006874BC 0x006874C3 $SG59715 0x004B2740
+// RECOVERY_LITERAL: v1 0x006874BC 0x006874C3 $SG59754 0x004B2740
             TutorialWindow.tut_win(graphics, "SOCWIN", out_a, out_b,
                 0, 1, -1, -1);
         }

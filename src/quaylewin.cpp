@@ -269,7 +269,7 @@ void QuayleWin::on_redraw() {
       GenderDefault = Players[faction].is_leader_female;
       PluralityDefault = 0;
       strcat(StringTemp, Players[faction].title_leader);
-      strcat(StringTemp, BufferJoinSpace);
+      space();
       strcat(StringTemp, get_name(faction));
       set_font(ReportIfGlobal.field_1E1AC_, 0, 0, 0);
       set_text_color(0x45, -1, 1, 1);
@@ -281,7 +281,7 @@ void QuayleWin::on_redraw() {
                         window_rect_.top + 0x1A5, 0x1CB, 0x32);
       StringTemp[0] = 0;
       strcat(StringTemp, get_title(faction));
-      strcat(StringTemp, BufferJoinSpace);
+      space();
       strcat(StringTemp, get_name(faction));
       set_font(ReportIfGlobal.field_1E1B8_, 0, 0, 0);
       set_text_color(0x45, -1, 1, 1);
@@ -293,7 +293,7 @@ void QuayleWin::on_redraw() {
                         window_rect_.top + 0x1DF, 0x1C1, 0x54);
       StringTemp[0] = 0;
       strcat(StringTemp, get_title(faction));
-      strcat(StringTemp, BufferJoinSpace);
+      space();
       strcat(StringTemp, get_name(faction));
       set_font(ReportIfGlobal.field_1E1B8_, 0, 0, 0);
       set_text_color(0x5E, -1, 1, 1);
@@ -370,8 +370,8 @@ void QuayleWin::on_redraw() {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x424));
     strcat(StringTemp, ":");
-    strcat(StringTemp, BufferJoinSpace);
-    strcat(StringTemp, BufferJoinSpace);
+    space();
+    space();
     const int rating = get_rating(ConsoleGlobal.faction_id_,
                                   PlayersData[ConsoleGlobal.faction_id_].unk_107);
     _itoa(rating, number, 10);

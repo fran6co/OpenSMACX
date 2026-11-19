@@ -139,12 +139,12 @@ failed:
     StringTemp[0] = '\0';
     parse_set(Players[faction].is_leader_female, FALSE);
     strcat(StringTemp, Players[faction].title_leader);
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     parse_set(Players[faction].is_leader_female, FALSE);
     strcat(StringTemp, Players[faction].name_leader);
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     strcat(StringTemp, label_get(180));
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
     strcat(StringTemp, Players[faction].noun_faction);
 
@@ -297,7 +297,7 @@ void FameWin::on_redraw() {
     } else if ((record->present & 8) != 0) {
       StringTemp[0] = '\0';
       strcat(StringTemp, label_get(524));
-      strcat(StringTemp, BufferJoinSpace);
+      space();
       strcat(StringTemp, label_get(900));
       CharUpperA(StringTemp);
       wrap_cent(StringTemp, field_A14_, field_A18_, field_A1C_);
@@ -317,7 +317,7 @@ void FameWin::on_redraw() {
     } else if ((record->present & 0x40) != 0) {
       StringTemp[0] = '\0';
       strcat(StringTemp, label_get(1029));
-      strcat(StringTemp, BufferJoinSpace);
+      space();
       strcat(StringTemp, label_get(900));
       CharUpperA(StringTemp);
       wrap_cent(StringTemp, field_A14_, field_A18_, field_A1C_);
@@ -467,7 +467,7 @@ void FameWin::on_redraw() {
       else set_text_color(0xE6, -1, 1, 1);
       StringTemp[0] = '\0';
       strcat(StringTemp, entry->leader_title);
-      strcat(StringTemp, BufferJoinSpace);
+      space();
       strcat(StringTemp, entry->leader_name);
       write_cent_text(StringTemp, field_A14_, field_A18_, field_A1C_);
       field_A18_ += field_A44_;
@@ -478,8 +478,8 @@ void FameWin::on_redraw() {
       StringTemp[0] = '\0';
       say_num(entry->rating);
       strcat(StringTemp, "%");
-      strcat(StringTemp, BufferJoinSpace);
-      strcat(StringTemp, BufferJoinSpace);
+      space();
+      space();
       strcat(StringTemp, label_get(730));
       say_num(entry->year);
       write_cent_text(StringTemp, field_A14_, field_A18_, field_A1C_);
@@ -863,7 +863,7 @@ int __cdecl hof_save() {
     // The pinned hall_of_fame and hof_save fopen calls both reference the
     // initial "wb\0" bytes at 0x68460C; this writable-data correspondence does
     // not claim runtime immutability or linker selection.
-    // RECOVERY_LITERAL: v1 0x68460C 0x68460F $SG59191 0x44AE50
+    // RECOVERY_LITERAL: v1 0x68460C 0x68460F $SG59235 0x44AE50
     FILE *file = fopen(HallOfFameWriteFilename, "wb");
     if (file == 0) {
         return 1;
@@ -891,7 +891,7 @@ int __cdecl hof_load() {
     // The pinned hall_of_fame and hof_load fopen calls both reference the
     // initial "rb\0" bytes at 0x684620; this writable-data correspondence does
     // not claim runtime immutability or linker selection.
-    // RECOVERY_LITERAL: v1 0x684620 0x684623 $SG59196 0x44AE50
+    // RECOVERY_LITERAL: v1 0x684620 0x684623 $SG59240 0x44AE50
     FILE *f = fopen(HallOfFameReadFilename, "rb");
     if (f == 0) {
         clear_hall_of_fame();

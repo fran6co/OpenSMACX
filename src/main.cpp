@@ -356,9 +356,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 // versus AlphaMenu class identity is unresolved; keep current layout and
 // typed calls until independent evidence distinguishes those relationships.
 
-// Shared punctuation objects the image pushes instead of unit literals.
-extern char SocialWinCloseParenText[];
-extern char SocialWinOpenParenText[];
 extern char *MenuScriptFile;
 
 // Console initializes its embedded AlphaMenu through this catalogue entry.
@@ -922,17 +919,17 @@ expansion_gate:
                     StringTemp[0] = '\0';
                     strcat(StringTemp, table_text(Order[i + 4].order[sea]));
                     turns = action_terraform(veh_id, i, 0);
-                    strcat(StringTemp, BufferJoinSpace);
-                    strcat(StringTemp, SocialWinOpenParenText);
+                    space();
+                    say_open_paren();
                     _itoa(turns + 1, turn_text, 10);
                     strcat(StringTemp, turn_text);
-                    strcat(StringTemp, BufferJoinSpace);
+                    space();
                     if (turns == 1) {
                         strcat(StringTemp, label_get(0x30));
                     } else {
                         strcat(StringTemp, label_get(0x31));
                     }
-                    strcat(StringTemp, SocialWinCloseParenText);
+                    say_close_paren();
                     strcat(StringTemp, "|");
                     strcat(StringTemp, table_text(Terraforming[i].shortcuts));
                     rename_menu_item(9, i + 0x900, StringTemp);

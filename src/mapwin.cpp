@@ -1,7 +1,5 @@
 
-// Shared separator objects the image pushes instead of unit literals.
-extern const char BufferJoinSpace[];
-extern char SocialWinColonSpaceText[];/*
+/*
  * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.
  * Copyright (C) 2013-2021 Brendan Casey
  *
@@ -196,9 +194,6 @@ char AltBonusRainy[113];
 // RECOVERY_OBJECT: v1 0x007F65D0 ?AltBonusMoist@@3PADA
 char AltBonusMoist[113];
 
-// Shared punctuation objects the image pushes instead of unit literals.
-extern char SocialWinCloseParenText[];
-extern char SocialWinOpenParenText[];
 
 // Eight pointer slots, initially zero; startup publishes slot0 at0x0058F1C1
 // after constructing slots1..7. draw_tile bounds its walk at0x007D3C5C.
@@ -607,7 +602,7 @@ void MapWin::init(int mode, int update) {
     } else {
         strcat(StringTemp, label_get(0x1D));
         if (map_view_index_ != 0) {
-            strcat(StringTemp, BufferJoinSpace);
+            space();
             strcat(StringTemp, "#");
             char number[80];
             _itoa(map_view_index_ + 1, number, 10);
@@ -616,9 +611,9 @@ void MapWin::init(int mode, int update) {
             StringTemp[0] = '\0';
             parse_set(Players[ConsoleGlobal.faction_id_].noun_gender, Players[ConsoleGlobal.faction_id_].is_noun_plural);
             strcat(StringTemp, Players[ConsoleGlobal.faction_id_].formal_name_faction);
-            strcat(StringTemp, SocialWinColonSpaceText);
+            say_colon();
             strcat(StringTemp, label_get(0));
-            strcat(StringTemp, BufferJoinSpace);
+            space();
             say_year(StringTemp);
         }
     }
@@ -2409,16 +2404,16 @@ void MapWin::on_mouse_move(int pixel_x, int pixel_y) {
                 } else {
                     strcat(StringTemp, label_get(411));
                 }
-                strcat(StringTemp, BufferJoinSpace);
+                space();
                 say_loc(StringTemp, tile_x, tile_y, 0, 2, 0);
-                strcat(StringTemp, SocialWinColonSpaceText);
+                say_colon();
                 strcat(StringTemp, label_get(412));
                 strcat(StringTemp, " = ");
                 char number[80];
                 _itoa(MapDestinationCost / Rules.move_rate_roads, number, 10);
                 strcat(StringTemp, number);
                 if (MapDestinationCost % Rules.move_rate_roads != 0) {
-                    strcat(StringTemp, BufferJoinSpace);
+                    space();
                     _itoa(MapDestinationCost % Rules.move_rate_roads, number, 10);
                     strcat(StringTemp, number);
                     strcat(StringTemp, "/");
@@ -5023,37 +5018,37 @@ void MapWin::gen_overlays(int x, int y) {
         int color = 0xFF;
         switch (PlayersData[faction].goals[goal_index].type) {
         case 0:
-// RECOVERY_LITERAL: v1 0x00686360 0x00686362 $SG62710 0x004688E0
+// RECOVERY_LITERAL: v1 0x00686360 0x00686362 $SG62751 0x004688E0
             strcat(StringTemp, "a");
             color = 0xF9;
             break;
         case 2:
-// RECOVERY_LITERAL: v1 0x00686364 0x00686366 $SG62712 0x004688E0
+// RECOVERY_LITERAL: v1 0x00686364 0x00686366 $SG62753 0x004688E0
             strcat(StringTemp, "d");
             color = 0xFB;
             break;
         case 9:
-// RECOVERY_LITERAL: v1 0x00686368 0x0068636A $SG62714 0x004688E0
+// RECOVERY_LITERAL: v1 0x00686368 0x0068636A $SG62755 0x004688E0
             strcat(StringTemp, "f");
             color = 0xFA;
             break;
         case 8:
-// RECOVERY_LITERAL: v1 0x0068636C 0x0068636E $SG62716 0x004688E0
+// RECOVERY_LITERAL: v1 0x0068636C 0x0068636E $SG62757 0x004688E0
             strcat(StringTemp, "c");
             color = 0xFE;
             break;
         case 6:
-// RECOVERY_LITERAL: v1 0x00686370 0x00686372 $SG62718 0x004688E0
+// RECOVERY_LITERAL: v1 0x00686370 0x00686372 $SG62759 0x004688E0
             strcat(StringTemp, "n");
             color = 0xFC;
             break;
         case 41:
-// RECOVERY_LITERAL: v1 0x00686374 0x00686376 $SG62720 0x004688E0
+// RECOVERY_LITERAL: v1 0x00686374 0x00686376 $SG62761 0x004688E0
             strcat(StringTemp, "^");
             color = 0xFF;
             break;
         case 3:
-// RECOVERY_LITERAL: v1 0x00686378 0x0068637A $SG62722 0x004688E0
+// RECOVERY_LITERAL: v1 0x00686378 0x0068637A $SG62763 0x004688E0
             strcat(StringTemp, "s");
             color = 0xFD;
             break;
@@ -5148,10 +5143,10 @@ void MapWin::draw_base_names() {
                 const int region = map_loc(Bases[base_id].x, Bases[base_id].y)->region;
                 // 0x0046812E: the line reuses the name buffer.
                 text[0] = '\0';
-                strcat(text, SocialWinOpenParenText);
+                strcat_open_paren(text);
                 strcat(text, table_text(PlansShortName[
                     PlayersData[Bases[base_id].faction_id_current].region_base_plan[region]]));
-                strcat(text, SocialWinColonSpaceText);
+                strcat_colon(text);
                 // 0x0046819D/0x004685B6: two strcat statements cross-jumped
                 // at their shared push/call, each cleaned up by add esp,8.
                 const int production_id = Bases[base_id].queue_production_id[0];
@@ -5160,7 +5155,7 @@ void MapWin::draw_base_names() {
                 } else {
                     strcat(text, table_text(Facility[-production_id].name));
                 }
-                strcat(text, SocialWinCloseParenText);
+                strcat_close_paren(text);
                 Buffer::write_cent_l(text, pixel_x + field_1DDBC_,
                              pixel_y + field_1DDC8_ * 7 / 2 +
                                  font_line_advance(font_a_));
@@ -5189,11 +5184,11 @@ void MapWin::draw_base_names() {
                 }
             } else {
                 text[0] = '\0';
-                strcat(text, SocialWinOpenParenText);
+                strcat_open_paren(text);
                 if (is_objective(base_id) &&
                     (GameDataStateStorage.fields_.game_rules_ & 0x20000000U) == 0) {
                     strcat(text, label_get(898));
-                    strcat(text, SocialWinColonSpaceText);
+                    strcat_colon(text);
                     CharUpperA(text);
                 } else if ((Bases[base_id].governor & GOV_ACTIVE) != 0 &&
                            (Bases[base_id].governor & GOV_MANAGES_PRODUCTION) != 0) {
@@ -5209,7 +5204,7 @@ void MapWin::draw_base_names() {
                     } else {
                         strcat(text, label_get(649));
                     }
-                    strcat(text, SocialWinColonSpaceText);
+                    strcat_colon(text);
                 }
                 // 0x0046819D/0x004685B6: two strcat statements cross-jumped
                 // at their shared push/call, each cleaned up by add esp,8.
@@ -5219,7 +5214,7 @@ void MapWin::draw_base_names() {
                 } else {
                     strcat(text, table_text(Facility[-production_id].name));
                 }
-                strcat(text, SocialWinCloseParenText);
+                strcat_close_paren(text);
                 Buffer::write_cent_l(text, pixel_x + field_1DDBC_,
                              pixel_y + field_1DDC8_ * 7 / 2 +
                                  font_line_advance(font_a_));
@@ -5394,14 +5389,14 @@ int MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
             // The original shares StringTemp and indents these entries with
             // BufferJoinSpace; production also includes the label before the name.
             ::clear();
-            strcat(StringTemp, BufferJoinSpace);
+            space();
             strcat(StringTemp, label_get(0x898 / 4));
             menu.add_item(0x33, StringTemp);
 
             ::clear();
-            strcat(StringTemp, BufferJoinSpace);
+            space();
             strcat(StringTemp, label_get(0x89C / 4));
-            strcat(StringTemp, BufferJoinSpace);
+            space();
             const int production = Bases[base_id].queue_production_id[0];
             if (production < 0) {
                 strcat(StringTemp, StringTable.get(Facility[-production].name));
@@ -5411,29 +5406,29 @@ int MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
             menu.add_item(0x34, StringTemp);
 
             ::clear();
-            strcat(StringTemp, BufferJoinSpace);
+            space();
             strcat(StringTemp, label_get(0x8A0 / 4));
             menu.add_item(0x35, StringTemp);
 
             ::clear();
-            strcat(StringTemp, BufferJoinSpace);
+            space();
             strcat(StringTemp, label_get(0x8A4 / 4));
             menu.add_item(0x36, StringTemp);
 
             ::clear();
-            strcat(StringTemp, BufferJoinSpace);
+            space();
             strcat(StringTemp, label_get(0x8A8 / 4));
             menu.add_item(0x37, StringTemp);
 
             ::clear();
-            strcat(StringTemp, BufferJoinSpace);
+            space();
             strcat(StringTemp, label_get(0x8AC / 4));
             menu.add_item(0x38, StringTemp);
 
             if ((GameDataStateStorage.fields_.game_more_preferences_ &
                  MPREF_ADV_DETAIL_RIGHT_CLICK_MENUS) != 0) {
                 ::clear();
-                strcat(StringTemp, BufferJoinSpace);
+                space();
                 strcat(StringTemp, label_get(0x8B0 / 4));
                 menu.add_item(0x39, StringTemp);
             }
@@ -5758,7 +5753,7 @@ void MapWin::draw_wars() {
         StringTemp[0] = '\0';
         parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
         strcat(StringTemp, Players[faction].noun_faction);
-        strcat(StringTemp, SocialWinColonSpaceText);
+        say_colon();
         Buffer::set_text_color(InfoFactionTextColors[faction], 0, 1, 1);
         width = Buffer::write_l(StringTemp, width, y);
         if (max_width <= width) {
@@ -5905,9 +5900,9 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
             StringTemp[0] = '\0';
             says(table_text(Triad[triad]));
             space();
-            says(SocialWinOpenParenText);
+            say_open_paren();
             say_base(StringTemp, Bases[editor_tool].auto_forward_slots[triad]);
-            says(SocialWinCloseParenText);
+            say_close_paren();
             popup.item(StringTemp, triad);
         }
         int selected_triad = popup.exec();

@@ -61,14 +61,7 @@
 // RECOVERY_OBJECT: v2 0x006874C4 0x006874C8 ?DestinationVehicleId@@3HA 0x004B4BF0
 int DestinationVehicleId = -1;
 
-// Shared punctuation objects the image pushes instead of unit literals.
-extern char SocialWinCloseParenText[];
-extern char SocialWinOpenParenText[];
 
-// Shared separator objects the image pushes instead of unit literals.
-extern const char BufferJoinSpace[];
-extern char SocialWinColonSpaceText[];
-extern char SocialWinCommaSpaceText[];
 
 // Insert in src/statuswin.cpp after the project headers; palette.cpp owns storage.
 extern int TextColourTable[195];
@@ -174,13 +167,13 @@ void StatusWin::on_right_click(int x, int y, int) {
                 if (Bases[base_id].faction_id_current == ConsoleGlobal.faction_id_
                     || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) {
                 ::clear();
-                strcat(StringTemp, BufferJoinSpace);
+                space();
                 strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x898 / 4]));
                 menu.add_item(51, StringTemp);
                 ::clear();
-                strcat(StringTemp, BufferJoinSpace);
+                space();
                 strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x89C / 4]));
-                strcat(StringTemp, BufferJoinSpace);
+                space();
                 // This caller passes the facility name through Strings::get.
                 // RulesFacility still types its stored string offset as LPSTR;
                 // that shared type/loader disagreement needs coupled recovery.
@@ -190,19 +183,19 @@ void StatusWin::on_right_click(int x, int y, int) {
                     : VehPrototypes[production].veh_name);
                 menu.add_item(52, StringTemp);
                 ::clear();
-                strcat(StringTemp, BufferJoinSpace);
+                space();
                 strcat(StringTemp, label_get(0x8A0 / 4));
                 menu.add_item(53, StringTemp);
                 ::clear();
-                strcat(StringTemp, BufferJoinSpace);
+                space();
                 strcat(StringTemp, label_get(0x8A4 / 4));
                 menu.add_item(54, StringTemp);
                 ::clear();
-                strcat(StringTemp, BufferJoinSpace);
+                space();
                 strcat(StringTemp, label_get(0x8A8 / 4));
                 menu.add_item(55, StringTemp);
                 ::clear();
-                strcat(StringTemp, BufferJoinSpace);
+                space();
                 strcat(StringTemp, label_get(0x8AC / 4));
                 menu.add_item(56, StringTemp);
                 menu.add_separator(99);
@@ -345,7 +338,7 @@ StatusWin::StatusWin() {
 // RECOVERY_OBJECT: v5 0x008C6BB4 0x008C6BD4 ?InfoTextColors@@3PAY01HA 0x00458420 member ?TextColourTable@@3PAHA [22:30]
 int TextColourTable[195];
 
-// RECOVERY_LITERAL: v1 0x00687504 0x0068750D $SG60961 0x004BA220
+// RECOVERY_LITERAL: v1 0x00687504 0x0068750D $SG61001 0x004BA220
 /*
 Purpose: Build the interface's text colours: load text.pcx into a scratch
          buffer, publish its palette as the process palette, then sample the
@@ -809,8 +802,8 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
             MainInterfaceGlobal.set_text_color(TextColourTable[18], TextColourTable[19], 1, 1);
             StringTemp[0] = '\0';
             strcat(StringTemp, table_text(Resource[0].name_plural));
-            strcat(StringTemp, SocialWinColonSpaceText);
-            strcat(StringTemp, BufferJoinSpace);
+            say_colon();
+            space();
             int crop = crop_yield(ConsoleGlobal.faction_id_, -1, x, y, 0);
             _itoa(crop, digits, 10);
             strcat(StringTemp, digits);
@@ -825,11 +818,11 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
                     || bonus_at(x, y, 0) == 1
                     || (map_loc(x, y)->bit & BIT_CONDENSER))) {
                 StringTemp[0] = '\0';
-                strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, BufferJoinSpace);
+                space();
+                space();
                 strcat(StringTemp, label_get(0xfc4 / 4));
-                strcat(StringTemp, SocialWinColonSpaceText);
-                strcat(StringTemp, BufferJoinSpace);
+                say_colon();
+                space();
                 _itoa(crop + 1, digits, 10);
                 strcat(StringTemp, digits);
                 MainInterfaceGlobal.write_l(StringTemp, text_x, line_y);
@@ -837,8 +830,8 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
             line_y += row_pitch;
             StringTemp[0] = '\0';
             strcat(StringTemp, table_text(Resource[1].name_plural));
-            strcat(StringTemp, SocialWinColonSpaceText);
-            strcat(StringTemp, BufferJoinSpace);
+            say_colon();
+            space();
             int minerals = mine_yield(ConsoleGlobal.faction_id_, -1, x, y, 0);
             _itoa(minerals, digits, 10);
             strcat(StringTemp, digits);
@@ -850,11 +843,11 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
                     || (map_loc(x, y)->climate & ~0x1F) < ALT_BIT_OCEAN_SHELF)
                 && mine_yield(ConsoleGlobal.faction_id_, -1, x, y, 1) > minerals) {
                 StringTemp[0] = '\0';
-                strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, BufferJoinSpace);
+                space();
+                space();
                 strcat(StringTemp, label_get(0xfc8 / 4));
-                strcat(StringTemp, SocialWinColonSpaceText);
-                strcat(StringTemp, BufferJoinSpace);
+                say_colon();
+                space();
                 int mine_bonus = mine_yield(ConsoleGlobal.faction_id_, -1, x, y, 1);
                 _itoa(mine_bonus, digits, 10);
                 strcat(StringTemp, digits);
@@ -863,8 +856,8 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
             line_y += row_pitch;
             StringTemp[0] = '\0';
             strcat(StringTemp, table_text(Resource[2].name_plural));
-            strcat(StringTemp, SocialWinColonSpaceText);
-            strcat(StringTemp, BufferJoinSpace);
+            say_colon();
+            space();
             int energy = energy_yield(ConsoleGlobal.faction_id_, -1, x, y, 0);
             _itoa(energy, digits, 10);
             strcat(StringTemp, digits);
@@ -875,11 +868,11 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
                 && (!(map_loc(x, y)->bit & BIT_FUNGUS)
                     || (map_loc(x, y)->climate & ~0x1F) < ALT_BIT_OCEAN_SHELF)) {
                 StringTemp[0] = '\0';
-                strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, BufferJoinSpace);
+                space();
+                space();
                 strcat(StringTemp, label_get(0xfcc / 4));
-                strcat(StringTemp, SocialWinColonSpaceText);
-                strcat(StringTemp, BufferJoinSpace);
+                say_colon();
+                space();
                 int energy_bonus = energy_yield(ConsoleGlobal.faction_id_, -1, x, y, 1);
                 _itoa(energy_bonus, digits, 10);
                 strcat(StringTemp, digits);
@@ -910,7 +903,7 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
             // 0x004B727D: two branch loads joined before one get call.
             strcat(StringTemp, table_text(alt >= 0 ? Labels.strings_ptr[0x2c / 4]
                                                         : Labels.strings_ptr[0x30 / 4]));
-            strcat(StringTemp, SocialWinColonSpaceText);
+            say_colon();
             int elevation = elev_at(x, y);
             if (elevation < 0) {
                 elevation = -elevation;
@@ -946,9 +939,9 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
             if (alt >= 0) {
                 StringTemp[0] = '\0';
                 strcat(StringTemp, label_get(0x164 / 4 + rocky));
-                strcat(StringTemp, BufferJoinSpace);
+                space();
                 strcat(StringTemp, "&");
-                strcat(StringTemp, BufferJoinSpace);
+                space();
             }
             max_width = max_width > col ? max_width : col;
             if (alt >= 0) {
@@ -1002,12 +995,12 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
                 if ((map_loc(x, y)->bit & BIT_FUNGUS)
                     && (map_loc(x, y)->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF) {
                     if (strlen(StringTemp)) {
-                        strcat(StringTemp, SocialWinCommaSpaceText);
+                        say_comma();
                     }
                     strcat(StringTemp, label_get(0x21c / 4));
                 } else if (map_loc(x, y)->bit & BIT_FOREST) {
                     if (strlen(StringTemp)) {
-                        strcat(StringTemp, SocialWinCommaSpaceText);
+                        say_comma();
                     }
                     strcat(StringTemp, label_get(0x48c / 4));
                 }
@@ -1031,7 +1024,7 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
                 if ((map_loc(x, y)->bit & BIT_FUNGUS)
                     && (map_loc(x, y)->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF) {
                     if (strlen(StringTemp)) {
-                        strcat(StringTemp, SocialWinCommaSpaceText);
+                        say_comma();
                     }
                     strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x398 / 4]));
                 }
@@ -1044,7 +1037,7 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
             if (bonus > 0) {
                 StringTemp[0] = '\0';
                 strcat(StringTemp, label_get(0x16c / 4 + bonus));
-                strcat(StringTemp, BufferJoinSpace);
+                space();
                 strcat(StringTemp, label_get(0x17c / 4));
                 MainInterfaceGlobal.write_l(StringTemp, text_x, line_y);
                 line_y += row_pitch;
@@ -1058,7 +1051,7 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
                     && !(i == TERRA_ROAD && (bits & BIT_MAGTUBE))
                     && !(i == TERRA_FARM && (bits & BIT_SOIL_ENRICHER))) {
                     if (strlen(StringTemp)) {
-                        strcat(StringTemp, SocialWinCommaSpaceText);
+                        say_comma();
                     }
                     // The image indexes the name pair by the is_ocean result
                     // (lea [ocean + 8*i]).
@@ -1068,7 +1061,7 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
             }
             if (map_loc(x, y)->bit & BIT_MONOLITH) {
                 if (strlen(StringTemp)) {
-                    strcat(StringTemp, SocialWinCommaSpaceText);
+                    say_comma();
                 }
                 strcat(StringTemp, label_get(0x238 / 4));
             }
@@ -1082,10 +1075,10 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
     if ((GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR)
         && (GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE)) {
         StringTemp[0] = '\0';
-        strcat(StringTemp, SocialWinOpenParenText);
+        say_open_paren();
         _itoa(region_at(x, y), digits, 10);
         strcat(StringTemp, digits);
-        strcat(StringTemp, SocialWinCloseParenText);
+        say_close_paren();
         MainInterfaceGlobal.set_text_color(TextColourTable[18], TextColourTable[19], 1, 1);
         MainInterfaceGlobal.write_l(StringTemp, area.left + 2, area.bottom - row_pitch);
     }
@@ -1093,14 +1086,14 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
          && (GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE))
         || line_y < area.bottom - row_pitch) {
         StringTemp[0] = '\0';
-        strcat(StringTemp, SocialWinOpenParenText);
+        say_open_paren();
         _itoa(x, digits, 10);
         strcat(StringTemp, digits);
-        strcat(StringTemp, BufferJoinSpace);
-        strcat(StringTemp, SocialWinCommaSpaceText);
+        space();
+        say_comma();
         _itoa(y, digits, 10);
         strcat(StringTemp, digits);
-        strcat(StringTemp, SocialWinCloseParenText);
+        say_close_paren();
         MainInterfaceGlobal.set_text_color(TextColourTable[18], TextColourTable[19], 1, 1);
         MainInterfaceGlobal.write_right_l(StringTemp, area.right - 2,
                                           area.bottom - row_pitch);
@@ -1226,7 +1219,7 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
             int turns = action_terraform(v, Vehs[v].order - 4, 0);
             _itoa(turns + 1, digits, 10);
             strcat(StringTemp, digits);
-            strcat(StringTemp, BufferJoinSpace);
+            space();
             // 0x004B85E5: two branch loads joined before one get call.
             strcat(StringTemp, table_text(turns != 1 ? Labels.strings_ptr[0xc4 / 4]
                                                           : Labels.strings_ptr[0xc0 / 4]));
@@ -1239,11 +1232,11 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
             if ((GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR)
                 && (GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE)) {
                 char id_digits[80];
-                strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, SocialWinOpenParenText);
+                space();
+                say_open_paren();
                 _itoa(v, id_digits, 10);
                 strcat(StringTemp, id_digits);
-                strcat(StringTemp, SocialWinCloseParenText);
+                say_close_paren();
             }
             MainInterfaceGlobal.set_text_color(TextColourTable[20], TextColourTable[21], 1, 1);
         }
@@ -1792,7 +1785,7 @@ void StatusWin::set_title(int title_id) {
 
     strcat(StringTemp, label_get(0x8C / 4));
     if (GameDataStateStorage.fields_.turn_current_num_ != 0) {
-        strcat(StringTemp, SocialWinColonSpaceText);
+        say_colon();
         int x;
         int y;
         if (ConsoleGlobal.cursor_active_ == 0) {
@@ -1804,14 +1797,14 @@ void StatusWin::set_title(int title_id) {
             if (ConsoleGlobal.selected_vehicle_ < 0) {
                 return;
             }
-            strcat(StringTemp, BufferJoinSpace);
+            space();
             x = Vehs[ConsoleGlobal.selected_vehicle_].x;
             y = Vehs[ConsoleGlobal.selected_vehicle_].y;
             strcat(StringTemp,
                    VehPrototypes[Vehs[ConsoleGlobal.selected_vehicle_].proto_id].veh_name);
-            strcat(StringTemp, BufferJoinSpace);
+            space();
         }
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         say_loc(StringTemp, x, y, ConsoleGlobal.cursor_active_,
                 ConsoleGlobal.cursor_active_ == 0, ConsoleGlobal.cursor_active_);
     }
@@ -1949,12 +1942,12 @@ void __cdecl say_morale(LPSTR morale_output, int veh_id, int faction_id_vs_nativ
             VehMoraleModifierCount = 1;
         }
         if(VehMoraleModifierCount) {
-            strcat(morale_output, BufferJoinSpace);
-            strcat(morale_output, SocialWinOpenParenText);
+            strcat_space(morale_output);
+            strcat_open_paren(morale_output);
             for (int i = 0; i < VehMoraleModifierCount; i++) {
                 strcat(morale_output, "+");
             }
-            strcat(morale_output, SocialWinCloseParenText);
+            strcat_close_paren(morale_output);
         }
         VehMoraleModifierCount -= morale_penalty;
         if (Vehs[veh_id].state & VSTATE_DESIGNATE_DEFENDER) {
@@ -1994,7 +1987,7 @@ void __cdecl say_orders(char *text, int veh_id) {
     if ((state & 0x00000200u) != 0
         && (state & 0x01000200u) != 0x01000200u
         && ((state & 0x02000200u) != 0x02000200u || prefix_state)) {
-        ::strcat(text, SocialWinOpenParenText);
+        strcat_open_paren(text);
         if (Vehs[veh_id].order_auto_type == 10) {
             prefix[0] = '\0';
             ::strcat(prefix, label_get(0x6F0 / 4));
@@ -2017,8 +2010,8 @@ void __cdecl say_orders(char *text, int veh_id) {
             }
             ::strcat(text, label);
         }
-        ::strcat(text, SocialWinCloseParenText);
-        ::strcat(text, BufferJoinSpace);
+        strcat_close_paren(text);
+        strcat_space(text);
     }
 
     const uint32_t state_after_prefix = Vehs[veh_id].state;
@@ -2029,14 +2022,14 @@ void __cdecl say_orders(char *text, int veh_id) {
 
     if ((state_after_prefix & 0x01000200u) == 0x01000200u) {
         ::strcat(text, label_get(0x65C / 4));
-        ::strcat(text, SocialWinColonSpaceText);
+        strcat_colon(text);
         for (int index = 0; index < Vehs[veh_id].waypoint_count + 1; ++index) {
             say_loc(text, Vehs[veh_id].waypoint_x[index],
                     Vehs[veh_id].waypoint_y[index], 0, 2, 0);
             if (index < Vehs[veh_id].waypoint_count) {
-                ::strcat(text, BufferJoinSpace);
+                strcat_space(text);
                 ::strcat(text, label_get(0x660 / 4));
-                ::strcat(text, BufferJoinSpace);
+                strcat_space(text);
             }
         }
         return;
@@ -2049,30 +2042,30 @@ void __cdecl say_orders(char *text, int veh_id) {
     ::strcat(text, vehicle_order_rule_text(Order[Vehs[veh_id].order & 0x3F].order[sea]));
 
     if (Vehs[veh_id].order == ORDER_CONVOY) {
-        ::strcat(text, BufferJoinSpace);
+        strcat_space(text);
         char *name = Resource[Vehs[veh_id].order_auto_type].name_plural;
         ::strcat(text, StringTable.get(name));
         const int base_id = base_at(Vehs[veh_id].x, Vehs[veh_id].y);
         if (base_id >= 0) {
-            ::strcat(text, BufferJoinSpace);
+            strcat_space(text);
             ::strcat(text, label_get(0x6C8 / 4));
-            ::strcat(text, BufferJoinSpace);
+            strcat_space(text);
             say_base(text, Vehs[veh_id].home_base_id);
         } else {
-            ::strcat(text, SocialWinOpenParenText);
+            strcat_open_paren(text);
             const int yield = resource_yield(
                 Vehs[veh_id].order_auto_type, Vehs[veh_id].faction_id,
                 Vehs[veh_id].home_base_id, Vehs[veh_id].x, Vehs[veh_id].y);
             _itoa(yield, number, 10);
             ::strcat(text, number);
             ::strcat(text, label_get(0x5EC / 4));
-            ::strcat(text, SocialWinCloseParenText);
-            ::strcat(text, BufferJoinSpace);
+            strcat_close_paren(text);
+            strcat_space(text);
         }
     }
 
     if ((static_cast<unsigned char>(Vehs[veh_id].order) & 0x3F) == ORDER_MOVE_TO) {
-        ::strcat(text, BufferJoinSpace);
+        strcat_space(text);
         say_loc(text, Vehs[veh_id].waypoint_x[0], Vehs[veh_id].waypoint_y[0], 0,
                 ((Vehs[veh_id].state & 0x02000200u) == 0x02000200u
                  && Vehs[veh_id].patrol_current_point < Vehs[veh_id].waypoint_count)
@@ -2081,20 +2074,20 @@ void __cdecl say_orders(char *text, int veh_id) {
         if ((Vehs[veh_id].state & 0x02000200u) == 0x02000200u &&
             Vehs[veh_id].patrol_current_point < Vehs[veh_id].waypoint_count) {
             for (int index = 0; index < Vehs[veh_id].waypoint_count; ++index) {
-                ::strcat(text, BufferJoinSpace);
+                strcat_space(text);
                 ::strcat(text, label_get(0x664 / 4));
-                ::strcat(text, BufferJoinSpace);
+                strcat_space(text);
                 say_loc(text, Vehs[veh_id].waypoint_x[index + 1],
                         Vehs[veh_id].waypoint_y[index + 1], 0, 2, 0);
             }
         }
     }
     if (Vehs[veh_id].order == ORDER_MOVE) {
-        ::strcat(text, BufferJoinSpace);
+        strcat_space(text);
         ::strcat(text, compass_name(Vehs[veh_id].waypoint_x[0]));
     }
     if (Vehs[veh_id].order == ORDER_ROAD_TO || Vehs[veh_id].order == ORDER_MAGTUBE_TO) {
-        ::strcat(text, BufferJoinSpace);
+        strcat_space(text);
         say_loc(text, Vehs[veh_id].waypoint_x[0], Vehs[veh_id].waypoint_y[0],
                 0, 2, 0);
     }

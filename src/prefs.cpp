@@ -34,10 +34,7 @@
 #include "textindex.h"
 #include "veh.h"
 
-// Shared separator objects the image pushes instead of unit literals.
-extern const char BufferJoinSpace[];
 
-extern char SocialWinCommaSpaceText[];
 
 // RECOVERY_OBJECT: v1 0x00690110 _alpha_primary_laptop_key
 static const char alpha_primary_laptop_key[] = "Laptop";
@@ -359,7 +356,7 @@ void __cdecl prefs_fac_load() {
         }
         StringTemp[0] = 0;
         strcat(StringTemp, alpha_faction_prefix);
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         say_num(i);
         GetPrivateProfileStringA(PrefsSection, alpha_profile_format_key, alpha_profile_default_zero, TextBufferGetPtr, 256,
             PrefsFile);
@@ -560,7 +557,7 @@ static __forceinline void prefs_put_inline(LPCSTR key_name, int value, BOOL tgl_
     WritePrivateProfileStringA(PrefsSection, key_name, StringTemp, PrefsFile);
 }
 
-// RECOVERY_LITERAL: v1 0x00690208 0x00690215 $SG51399 0x0059E5D0
+// RECOVERY_LITERAL: v1 0x00690208 0x00690215 $SG51442 0x0059E5D0
 /*
 Purpose: Save the most common preferences from memory to the game's ini. 
 // ORIGINAL: 0x0059E5D0 ?prefs_save@@YAXH@Z 0x0059E5D0-0x0059E946 BYTE_EXACT
@@ -607,7 +604,7 @@ void __cdecl prefs_save(BOOL save_factions) {
     StringTemp[0] = 0;
     for (uint32_t i = 0; i < 7; i++) {
         say_num(AlphaIniPrefs.custom_world[i]);
-        strcat(StringTemp, SocialWinCommaSpaceText);
+        say_comma();
     }
     prefs_put("Custom World", StringTemp);
     prefs_put("Time Controls", AlphaIniPrefs.time_controls, false);
@@ -616,7 +613,7 @@ void __cdecl prefs_save(BOOL save_factions) {
             if (ExpansionEnabled) {
                 StringTemp[0] = 0;
                 strcat(StringTemp, "Faction");
-                strcat(StringTemp, BufferJoinSpace);
+                space();
                 say_num(i);
                 prefs_put(StringTemp, Players[i].filename);
             }

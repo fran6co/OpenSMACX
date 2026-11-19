@@ -147,8 +147,6 @@ int BattleWin::on_iface_dialog_item_back_draw(GraphicWin *, int, int, RECT *) {
 
 
 
-// Shared separator objects the image pushes instead of unit literals.
-extern char SocialWinColonSpaceText[];
 
 // These six objects are already defined in sprite.cpp at the observed image
 // addresses. sprite.h does not currently expose declarations for the family.
@@ -160,9 +158,6 @@ extern Sprite g_BATTLE_SPORE_LAUNCHER_SPRITE;
 extern Sprite g_BATTLE_SEALURK_SPRITE;
 
 
-// Shared punctuation objects the image pushes instead of unit literals.
-extern char SocialWinCloseParenText[];
-extern char SocialWinOpenParenText[];
 
 // ORIGINAL: 0x00421B50 ?battle_report@BattleWin@@QAEXHHHHH@Z 0x00421B50-0x00422BFC;0x00652BA0-0x00652BCB
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00421b50.cpp:original hot and cold spans", "pinned terranx_original.exe SHA256:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_battlewin_battle_report_behavior.py", "recovery/tests/battlewin_battle_report_host_control.cpp"], "reason": "Recover the complete two-vehicle battle report through the real SubInterface owner, embedded Time, local Font lifetimes, MainInterface canvas, typed vehicle rules and inline battle modifier text rows."}
@@ -335,22 +330,22 @@ again:
     if (Vehs[first_vehicle_id].faction_id
         && Vehs[first_vehicle_id].faction_id != ConsoleGlobal.faction_id_ && !Language) {
         strcat(StringTemp, Players[Vehs[first_vehicle_id].faction_id].adj_name_faction);
-        strcat(StringTemp, BufferJoinSpace);
+        space();
     }
     strcat(StringTemp, VehPrototypes[Vehs[first_vehicle_id].proto_id].veh_name);
     if (Vehs[first_vehicle_id].faction_id
         && Vehs[first_vehicle_id].faction_id != ConsoleGlobal.faction_id_ && Language) {
-        strcat(StringTemp, BufferJoinSpace);
-        strcat(StringTemp, SocialWinOpenParenText);
+        space();
+        say_open_paren();
         parse_set(Players[Vehs[first_vehicle_id].faction_id].noun_gender,
                   Players[Vehs[first_vehicle_id].faction_id].is_noun_plural);
         strcat(StringTemp, Players[Vehs[first_vehicle_id].faction_id].noun_faction);
-        strcat(StringTemp, SocialWinCloseParenText);
+        say_close_paren();
     }
     if (GameDataStateStorage.fields_.game_state_ & 0x80) {
-        strcat(StringTemp, SocialWinOpenParenText);
+        say_open_paren();
         say_num(first_vehicle_id);
-        strcat(StringTemp, SocialWinCloseParenText);
+        say_close_paren();
     }
     MainInterfaceGlobal.set_font(find_font(WinScreenWidth != 800 ? 16 : 12, 1), 0, 0, 0);
     MainInterfaceGlobal.set_text_color(
@@ -383,7 +378,7 @@ again:
                 Weapon[VehPrototypes[Vehs[first_vehicle_id].proto_id].weapon_id].name));
         }
         if (attack_odds >= 0 && defense_odds >= 0) {
-            strcat(StringTemp, SocialWinColonSpaceText);
+            say_colon();
             if (first_vehicle_id == second_vehicle_id
                 && (!(flags & 2)
                     || Chassis[VehPrototypes[Vehs[first_vehicle_id].proto_id].chassis_id].triad == 1)) {
@@ -406,7 +401,7 @@ again:
     StringTemp[0] = '\0';
     say_morale(first_vehicle_id,
                first_vehicle_id == second_vehicle_id ? first_faction : second_faction);
-    strcat(StringTemp, SocialWinColonSpaceText);
+    say_colon();
     const int side = first_vehicle_id == second_vehicle_id;
     const int morale = (VehBasicBattleMorale[side] - 2) * 100 / 8;
     if (morale >= 0) {
@@ -414,13 +409,13 @@ again:
     }
     say_num(morale);
     strcat(StringTemp, "%");
-    strcat(StringTemp, BufferJoinSpace);
-    strcat(StringTemp, BufferJoinSpace);
+    space();
+    space();
     row_y = MainInterfaceGlobal.wrap(StringTemp, column_x, row_y, half_width);
     for (int i = 0; i < (int)VehBattleModCount[side]; i++) {
         StringTemp[0] = '\0';
         strcat(StringTemp, VehBattleDisplay[side * 4 + i]);
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         if (VehBattleModifier[side * 4 + i] >= 0) {
             strcat(StringTemp, "+");
         }
@@ -431,7 +426,7 @@ again:
 
     StringTemp[0] = '\0';
     strcat(StringTemp, label_get(0x520 / 4));
-    strcat(StringTemp, SocialWinColonSpaceText);
+    say_colon();
     strcat(StringTemp, "{");
     say_num((first_vehicle_id == second_vehicle_id ? defense_odds : attack_odds) >> 8);
     strcat(StringTemp, ".");
@@ -446,7 +441,7 @@ again:
 
     StringTemp[0] = '\0';
     strcat(StringTemp, label_get(0x1E4 / 4));
-    strcat(StringTemp, SocialWinColonSpaceText);
+    say_colon();
     strcat(StringTemp, "{");
     say_num(range(proto_power(first_vehicle_id) - Vehs[first_vehicle_id].dmg_incurred, 0, 9999));
     strcat(StringTemp, "}");

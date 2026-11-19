@@ -121,8 +121,79 @@ extern Strings StringTable;  // 0x009B90D8
 
 // space() is a header inline too: the image calls it out of line only from
 // probe (three sites), whose object contributes the copy right after probe
-// (0x005A58B0), and expands `strcat(StringTemp, BufferJoinSpace)` elsewhere.
-extern const char BufferJoinSpace[];
+// (0x005A58B0), and expands `strcat(StringTemp, " ")` elsewhere.
 MEASURED inline void __cdecl space() {   // 005A58B0
-    strcat(StringTemp, BufferJoinSpace);
+    strcat(StringTemp, " ");
 }
+
+// The shared separator texts are COMDAT literals of header inlines
+// (MATCHING_GUIDE 2.5, "Shared texts"): the image is unpooled, yet " "
+// 0x00682820 is pushed from 43 units (Jackal's buffer.cpp, caviar.cpp and
+// net_class.cpp among them), ", " ": " ")" "(" "%" 0x00682E90-0x00682EA1
+// from up to 24 and ". " 0x006867E0 from two, and each text sits at the end
+// of the .data contribution of the first unit in link order that pushes it
+// (popup.cpp, basewin.cpp, multiwin.cpp), where LINK keeps a COMDAT. Every
+// push of these texts in the image is the source of one `strcat(dest, text)`
+// into StringTemp or another buffer, and no out-of-line copy of a
+// destination-taking helper exists (only space(), above), so the original
+// spelling of the helpers that held them is not known.
+// WORKAROUND(decl): helper names and the one-strcat shape are invented; the
+// image shows only `strcat(dest, "<text>")` at every site. Cleanup: replace
+// with the original helpers when a recurring call shape names them.
+inline void __cdecl say_comma() {
+    strcat(StringTemp, ", ");
+}
+inline void __cdecl say_colon() {
+    strcat(StringTemp, ": ");
+}
+inline void __cdecl say_close_paren() {
+    strcat(StringTemp, ")");
+}
+inline void __cdecl say_open_paren() {
+    strcat(StringTemp, "(");
+}
+inline void __cdecl say_percent() {
+    strcat(StringTemp, "%");
+}
+inline void __cdecl say_period() {
+    strcat(StringTemp, ". ");
+}
+inline void __cdecl strcat_space(char *text) {
+    strcat(text, " ");
+}
+inline void __cdecl strcat_comma(char *text) {
+    strcat(text, ", ");
+}
+inline void __cdecl strcat_colon(char *text) {
+    strcat(text, ": ");
+}
+inline void __cdecl strcat_close_paren(char *text) {
+    strcat(text, ")");
+}
+inline void __cdecl strcat_open_paren(char *text) {
+    strcat(text, "(");
+}
+inline void __cdecl strcat_percent(char *text) {
+    strcat(text, "%");
+}
+inline void __cdecl strcat_period(char *text) {
+    strcat(text, ". ");
+}
+
+// WORKAROUND(inline): named stand-ins for the helper literals, used only in
+// top_menu, save_game, Console::upgrade, Console::editor_edit_veh,
+// DesignWin::select_special, StatusWin::draw_active and PickTech::draw_tech.
+// One more inline expansion per site moves their /Ob2 decisions away from
+// the image (fe 2026-11-19: top_menu loses an init_opening_spend expansion
+// with any inline at its one " " site, even an expression-only one;
+// save_game, upgrade, editor_edit_veh and select_special change their call
+// multisets, draw_active refuses
+// proto_power, draw_tech's block layout moves), so the original spent less
+// there than these helpers do. Defined in string_table.cpp, bound to the
+// literals' addresses. Cleanup: the original helper set that fits these
+// budgets.
+extern const char BufferJoinSpace[];
+extern char SocialWinCommaSpaceText[];
+extern char SocialWinColonSpaceText[];
+extern char SocialWinCloseParenText[];
+extern char SocialWinOpenParenText[];

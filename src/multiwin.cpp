@@ -80,9 +80,6 @@ MultiWin MultiWindow;  // 0x007FD648
 // RECOVERY_OBJECT: v1 0x007FFF00 ?g_MULTIWIN_WAVE@@3VWave@@A
 Wave g_MULTIWIN_WAVE;  // 0x007FFF00
 
-// Shared separator objects the image pushes instead of unit literals.
-extern const char BufferJoinSpace[];
-extern char SocialWinColonSpaceText[];
 
 // Existing source-owned storage, defined in netdaemon.cpp/game.cpp. The
 // original body reads the wait accumulator and turn-control word directly.
@@ -94,10 +91,10 @@ extern uint32_t MultiWinState7FFF7C;
 static_assert(offsetof(PlayerData, time_bonus_count) == 0x2054,
               "MultiWin time-bonus source offset");
 static const char CaretSeparator[] = "^";  // original string at 0x006867C0
-// The rank separator after a player number; MultiDebug::on_redraw pushes the
-// same object.
-// RECOVERY_OBJECT: v2 0x006867E0 0x006867E3 ?MultiWinDotSpaceText@@3PADA 0x00478630
-char MultiWinDotSpaceText[] = ". ";               // 0x006867E0
+// The rank separator after a player number (draw_player; MultiDebug::on_redraw
+// pushes the same text) is strcat_period's COMDAT literal (strings.h): it
+// closes this unit's .data, the first unit in link order that pushes it.
+// RECOVERY_LITERAL: v2 merged 0x006867E0 0x006867E3 ??_C@_02EFBJ@?4?5?$AA@ 0x00478630
 extern int WindowAnimationFrameDelay;
 
 // The original draw suppresses its soft update while show calls the redraw callback.
@@ -258,11 +255,11 @@ void MultiWin::on_right_click(int x, int y) {
 
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x9F0 / 4));
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     parse_set(Players[faction].is_leader_female, 0);
     char *const title = Players[faction].title_leader;
     strcat(StringTemp, title);
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     parse_set(Players[faction].is_leader_female, 0);
     char *const name = Players[faction].name_leader;
     strcat(StringTemp, name);
@@ -300,7 +297,7 @@ void MultiWin::on_right_click(int x, int y) {
         parse_says(1, Players[faction].name_leader, -1, -1);
         parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
         parse_says(2, Players[faction].noun_faction, -1, -1);
-        // RECOVERY_LITERAL: v1 0x0068677C 0x00686787 $SG58605 0x00478150
+        // RECOVERY_LITERAL: v1 0x0068677C 0x00686787 $SG58647 0x00478150
         NetMsgPrimary.pop("ELIMINATED", 5000, 0, 0);
         return;
     }
@@ -401,7 +398,7 @@ void MultiWin::draw_player(int faction_id, int row, RECT *bounds) {
   StringTemp[0] = 0;
   _itoa(row, number, 10);
   strcat(StringTemp, number);
-  strcat(StringTemp, MultiWinDotSpaceText);
+  say_period();
   parse_set(Players[faction_id].is_leader_female, 0);
   strcat(StringTemp, Players[faction_id].name_leader);
   write_l(StringTemp, &text_rect);
@@ -441,13 +438,13 @@ void MultiWin::draw_player(int faction_id, int row, RECT *bounds) {
         // In turn and already answered: no suffix.
       } else if (in_turn && ConsoleControlTurnActive) {
         strcat(StringTemp, label_get(0x42C / 4));
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         _itoa(NetUpkeepPhase, number, 10);
         strcat(StringTemp, number);
       } else if (ConsoleControlTurnActive) {
         strcat(StringTemp, "*");
         strcat(StringTemp, label_get(0x42C / 4));
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         _itoa(NetUpkeepPhase, number, 10);
         strcat(StringTemp, number);
       } else {
@@ -566,7 +563,7 @@ void MultiWin::draw_time(RECT *bounds, int draw_type) {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x7e8 / 4));
     CharUpperA(StringTemp);
-    strcat(StringTemp, SocialWinColonSpaceText);
+    say_colon();
     _itoa(minutes, number, 10);
     strcat(StringTemp, number);
     strcat(StringTemp, ":");
@@ -598,7 +595,7 @@ void MultiWin::draw_time(RECT *bounds, int draw_type) {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x410 / 4));
     CharUpperA(StringTemp);
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     _itoa(NetUpkeepPhase, number, 10);
     strcat(StringTemp, number);
     Buffer::write_cent_l(StringTemp, bounds);
@@ -644,17 +641,17 @@ void MultiWin::draw_time(RECT *bounds, int draw_type) {
 
   StringTemp[0] = 0;
   strcat(StringTemp, label_get(0x40c / 4));
-  strcat(StringTemp, SocialWinColonSpaceText);
+  say_colon();
   if (NetDaemonNet.primary_state_.trailing_words_[3] != 0) {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x988 / 4));
-    strcat(StringTemp, SocialWinColonSpaceText);
+    say_colon();
     strcat(StringTemp, label_get(0x444 / 4));
   } else {
     if (ConsoleControlTurnActive != 0) {
       StringTemp[0] = 0;
       strcat(StringTemp, label_get(0x988 / 4));
-      strcat(StringTemp, SocialWinColonSpaceText);
+      say_colon();
       strcat(StringTemp, label_get(0x410 / 4));
     } else if (GameDataStateStorage.fields_.time_controls_selection_ == 0) {
       StringTemp[0] = 0;
@@ -702,7 +699,7 @@ void MultiWin::draw_time_bonus_markers(RECT *rect) {
         int carets = (time_bonus > 3) ? 3 : time_bonus;
         if (carets != 0) {
             StringTemp[0] = 0;
-            strcat(StringTemp, BufferJoinSpace);
+            space();
             for (; carets > 0; --carets) {
                 strcat(StringTemp, CaretSeparator);
             }
@@ -754,7 +751,7 @@ void MultiWin::draw(int draw_type) {
     int carets = time_bonus < 0 ? 0 : time_bonus > 3 ? 3 : time_bonus;
     if (carets != 0) {
       StringTemp[0] = 0;
-      strcat(StringTemp, BufferJoinSpace);
+      space();
       for (; carets > 0; --carets) strcat(StringTemp, CaretSeparator);
       // WORKAROUND(noinline): the image calls 0x0047A720 out of line here and
       // expands the same inline at the no-player label below.
@@ -806,8 +803,8 @@ void MultiWin::draw(int draw_type) {
     sprite5_.draw(this, 0, y);
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x80c / 4));
-    strcat(StringTemp, SocialWinColonSpaceText);
-    strcat(StringTemp, BufferJoinSpace);
+    say_colon();
+    space();
     char votes_text[80];
     const int votes = council_votes(ConsoleGlobal.faction_id_);
     _itoa(votes, votes_text, 10);

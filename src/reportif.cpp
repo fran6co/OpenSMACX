@@ -126,17 +126,11 @@ void ReportIfDeclFnPad35();
 // Re-tuned 2026-11-19 against the sprite.h/popup.h headers: pads here are exact only at 11-12, 49-50 and 60-61,
 // pads right behind stdafx.h (moved there, see below) have a wide window.
 
-// Shared punctuation objects the image pushes instead of unit literals.
-extern char SocialWinCloseParenText[];
-extern char SocialWinOpenParenText[];
 
 extern char *DatalinkHelpFile;
 // Every report renderer pushes these shared separator objects (0x00682820
 // " ", 0x00682E90 ", ", 0x00682E94 ": ") instead of unit literals; only
 // ReportIf::draw_sat's two paragraph spaces are unit literals.
-extern const char BufferJoinSpace[];
-extern char SocialWinCommaSpaceText[];
-extern char SocialWinColonSpaceText[];
 // The observed report scratch inputs are six immediate char-addresses, not
 // pointer cells. Their original extent/owner is unknown; represent only the
 // observed empty NUL-terminated contents, without asserting a larger bound.
@@ -610,18 +604,18 @@ static void report_topic_line(ReportWin *win, RECT &cursor, int x) {
 }
 // The image keeps a separate "[" / "]" literal pair at each of draw_intel's
 // six sites, so the original spelled this as a macro, not a shared helper.
-#define report_intel_label(label) StringTemp[0] = 0; strcat(StringTemp, "["); strcat(StringTemp, label_get(label)); strcat(StringTemp, SocialWinColonSpaceText); strcat(StringTemp, BufferJoinSpace); strcat(StringTemp, BufferJoinSpace); strcat(StringTemp, "]")
+#define report_intel_label(label) StringTemp[0] = 0; strcat(StringTemp, "["); strcat(StringTemp, label_get(label)); say_colon(); space(); space(); strcat(StringTemp, "]")
 static void report_append_leader(int faction) {
     PluralityDefault = 0;
     GenderDefault = Players[faction].is_leader_female;
     strcat(StringTemp, Players[faction].title_leader);
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     PluralityDefault = 0;
     GenderDefault = Players[faction].is_leader_female;
     strcat(StringTemp, Players[faction].name_leader);
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     strcat(StringTemp, label_get(0x2D0 / 4));
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     GenderDefault = Players[faction].noun_gender;
     PluralityDefault = Players[faction].is_noun_plural;
     strcat(StringTemp, Players[faction].noun_faction);
@@ -1766,8 +1760,8 @@ void ReportWin::draw_labs() {
             }
             Buffer::box_sprite(&header, &InterfaceBoxStyles[1]);
             strcat(StringTemp, label_get(0x254 / 4));
-            strcat(StringTemp, BufferJoinSpace);
-            strcat(StringTemp, BufferJoinSpace);
+            space();
+            space();
             strcat(StringTemp, "]");
             x = Buffer::write_l(StringTemp, x, y);
             StringTemp[0] = 0;
@@ -1778,7 +1772,7 @@ void ReportWin::draw_labs() {
                 == MaxTechnologyNum - 1) {
                 // Genuine original: the future-technology header appends the
                 // count but no closing bracket here; the "]" below adds it.
-                strcat(StringTemp, BufferJoinSpace);
+                space();
                 say_num(
                     PlayersData[faction].theory_of_everything + 1);
             } else if (PlayersData[faction].tech_id_researching >= 0) {
@@ -1791,7 +1785,7 @@ void ReportWin::draw_labs() {
                 strcat(StringTemp, "[");
                 strcat(StringTemp, table_text(Mandate[tech_category(
                     PlayersData[faction].tech_id_researching)].name_caps));
-                strcat(StringTemp, BufferJoinSpace);
+                space();
                 say_num(tech_recurse(
                     PlayersData[faction].tech_id_researching, 0));
             }
@@ -2179,7 +2173,7 @@ void ReportWin::draw_labs() {
         StringTemp[0] = 0;
         strcat(StringTemp, "[");
         strcat(StringTemp, label_get(0x209 + tech_category(tech)));
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         say_num(tech_recurse(tech, 0));
         strcat(StringTemp, "]");
         // Genuine original: field_E268_ is added to the row result and then
@@ -2222,9 +2216,9 @@ void ReportWin::draw_labs() {
                 if (Reactor[v_4].preq_tech == tech) {
                     if (!StringTemp[0]) {
                         strcat(StringTemp, label_get(0x234 / 4));
-                        strcat(StringTemp, SocialWinColonSpaceText);
+                        say_colon();
                     } else {
-                        strcat(StringTemp, SocialWinCommaSpaceText);
+                        say_comma();
                     }
                     if (!datalink) {
                         strcat(StringTemp, StringTable.get(Reactor[v_4].name));
@@ -2252,9 +2246,9 @@ void ReportWin::draw_labs() {
                 if (Chassis[v_4].preq_tech == tech) {
                     if (!StringTemp[0]) {
                         strcat(StringTemp, label_get(0x120 / 4));
-                        strcat(StringTemp, SocialWinColonSpaceText);
+                        say_colon();
                     } else {
-                        strcat(StringTemp, SocialWinCommaSpaceText);
+                        say_comma();
                     }
                     if (!datalink) {
                         strcat(StringTemp,
@@ -2268,10 +2262,10 @@ void ReportWin::draw_labs() {
                     // both passes.
                     TechnologyHelpEntryKind = 0x62;
                     TechnologyHelpEntryName = Chassis[v_4].offsv_1_name;
-                    strcat(StringTemp, BufferJoinSpace);
-                    strcat(StringTemp, SocialWinOpenParenText);
+                    space();
+                    say_open_paren();
                     say_num(Chassis[v_4].speed);
-                    strcat(StringTemp, SocialWinCloseParenText);
+                    say_close_paren();
                 }
             }
             if (StringTemp[0]) {
@@ -2290,9 +2284,9 @@ void ReportWin::draw_labs() {
                 if (Weapon[v_4].preq_tech == tech) {
                     if (!StringTemp[0]) {
                         strcat(StringTemp, label_get(0x124 / 4));
-                        strcat(StringTemp, SocialWinColonSpaceText);
+                        say_colon();
                     } else {
-                        strcat(StringTemp, SocialWinCommaSpaceText);
+                        say_comma();
                     }
                     if (!datalink) {
                         strcat(StringTemp, table_text(Weapon[v_4].name));
@@ -2303,8 +2297,8 @@ void ReportWin::draw_labs() {
                     }
                     TechnologyHelpEntryKind = 0x63;
                     TechnologyHelpEntryName = Weapon[v_4].name;
-                    strcat(StringTemp, BufferJoinSpace);
-                    strcat(StringTemp, SocialWinOpenParenText);
+                    space();
+                    say_open_paren();
                     // The two label arms share their get/strcat tail.
                     if (Weapon[v_4].offense_rating < 0) {
                         strcat(StringTemp, label_get(0x310 / 4));
@@ -2314,7 +2308,7 @@ void ReportWin::draw_labs() {
                     } else {
                         strcat(StringTemp, label_get(0x200 / 4));
                     }
-                    strcat(StringTemp, SocialWinCloseParenText);
+                    say_close_paren();
                 }
             }
             if (StringTemp[0]) {
@@ -2333,9 +2327,9 @@ void ReportWin::draw_labs() {
                 if (Armor[v_4].preq_tech == tech) {
                     if (!StringTemp[0]) {
                         strcat(StringTemp, label_get(0x128 / 4));
-                        strcat(StringTemp, SocialWinColonSpaceText);
+                        say_colon();
                     } else {
-                        strcat(StringTemp, SocialWinCommaSpaceText);
+                        say_comma();
                     }
                     if (!datalink) {
                         strcat(StringTemp, table_text(Armor[v_4].name));
@@ -2346,15 +2340,15 @@ void ReportWin::draw_labs() {
                     }
                     TechnologyHelpEntryKind = 0x64;
                     TechnologyHelpEntryName = Armor[v_4].name;
-                    strcat(StringTemp, BufferJoinSpace);
-                    strcat(StringTemp, SocialWinOpenParenText);
+                    space();
+                    say_open_paren();
                     if (Armor[v_4].defense_rating < 0) {
                         strcat(StringTemp, label_get(0x310 / 4));
                     } else {
                         say_num(
                                                 Armor[v_4].defense_rating);
                     }
-                    strcat(StringTemp, SocialWinCloseParenText);
+                    say_close_paren();
                 }
             }
             if (StringTemp[0]) {
@@ -2373,9 +2367,9 @@ void ReportWin::draw_labs() {
                 if (Ability[v_4].preq_tech == tech) {
                     if (!StringTemp[0]) {
                         strcat(StringTemp, label_get(0x12C / 4));
-                        strcat(StringTemp, SocialWinColonSpaceText);
+                        say_colon();
                     } else {
-                        strcat(StringTemp, SocialWinCommaSpaceText);
+                        say_comma();
                     }
                     if (!datalink) {
                         strcat(StringTemp, StringTable.get(Ability[v_4].name));
@@ -2404,9 +2398,9 @@ void ReportWin::draw_labs() {
                     && VehPrototypes[v_4].preq_tech == tech) {
                     if (!StringTemp[0]) {
                         strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x318 / 4]));
-                        strcat(StringTemp, SocialWinColonSpaceText);
+                        say_colon();
                     } else {
-                        strcat(StringTemp, SocialWinCommaSpaceText);
+                        say_comma();
                     }
                     if (!datalink) {
                         strcat(StringTemp, VehPrototypes[v_4].veh_name);
@@ -2433,14 +2427,14 @@ void ReportWin::draw_labs() {
                     || Facility[v_4].free_tech == tech) {
                     if (!StringTemp[0]) {
                         strcat(StringTemp, label_get(0x110 / 4));
-                        strcat(StringTemp, SocialWinColonSpaceText);
+                        say_colon();
                     } else {
-                        strcat(StringTemp, SocialWinCommaSpaceText);
+                        say_comma();
                     }
                     // Genuine original: the opening parenthesis of the
                     // free-facility note precedes the facility name.
                     if (Facility[v_4].free_tech == tech) {
-                        strcat(StringTemp, SocialWinOpenParenText);
+                        say_open_paren();
                     }
                     if (!datalink) {
                         strcat(StringTemp, StringTable.get(Facility[v_4].name));
@@ -2454,9 +2448,9 @@ void ReportWin::draw_labs() {
                         help_create_link(StringTemp, name, id);
                     }
                     if (Facility[v_4].free_tech == tech) {
-                        strcat(StringTemp, BufferJoinSpace);
+                        space();
                         strcat(StringTemp, label_get(0x4DC / 4));
-                        strcat(StringTemp, SocialWinCloseParenText);
+                        say_close_paren();
                     }
                 }
             }
@@ -2479,9 +2473,9 @@ void ReportWin::draw_labs() {
                     if (SocialCategories[v_4].preq_tech[j] == tech) {
                         if (!StringTemp[0]) {
                             strcat(StringTemp, label_get(0x118 / 4));
-                            strcat(StringTemp, SocialWinColonSpaceText);
+                            say_colon();
                         } else {
-                            strcat(StringTemp, SocialWinCommaSpaceText);
+                            say_comma();
                         }
                         // UNSURE: the image tests datalink here with no
                         // branch (0x49AFEF..0x49AFF7); identical arms that VC6
@@ -2512,9 +2506,9 @@ void ReportWin::draw_labs() {
                 if (Citizen[v_4].preq_tech == tech) {
                     if (!StringTemp[0]) {
                         strcat(StringTemp, label_get(0x4CC / 4));
-                        strcat(StringTemp, SocialWinColonSpaceText);
+                        say_colon();
                     } else {
-                        strcat(StringTemp, SocialWinCommaSpaceText);
+                        say_comma();
                     }
                     strcat(StringTemp,
                            StringTable.get(Citizen[v_4].singular_name));
@@ -2888,7 +2882,7 @@ void ReportWin::draw_energy() {
     PluralityDefault = Players[faction].is_noun_plural;
     strcat(StringTemp, Players[faction].formal_name_faction);
     CharUpperA(StringTemp);
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     strcat(StringTemp, label_get(0xA98 / 4));
     strcat(StringTemp, "]");
     --title.top;
@@ -2915,7 +2909,7 @@ void ReportWin::draw_energy() {
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
     strcat(StringTemp, label_get(0xE4 / 4));
-    strcat(StringTemp, SocialWinColonSpaceText);
+    say_colon();
     Buffer::write_l(StringTemp, rect1_.left, rect1_.top);
     strcat(StringTemp, "}");
     StringTemp[0] = 0;
@@ -2929,7 +2923,7 @@ void ReportWin::draw_energy() {
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
     strcat(StringTemp, label_get(0x5F4 / 4));
-    strcat(StringTemp, SocialWinColonSpaceText);
+    say_colon();
     Buffer::write_l(StringTemp, rect1_.left, rect1_.top);
     strcat(StringTemp, "}");
     StringTemp[0] = 0;
@@ -2943,7 +2937,7 @@ void ReportWin::draw_energy() {
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
     strcat(StringTemp, label_get(0x5F8 / 4));
-    strcat(StringTemp, SocialWinColonSpaceText);
+    say_colon();
     Buffer::write_l(StringTemp, rect1_.left, rect1_.top);
     strcat(StringTemp, "}");
     StringTemp[0] = 0;
@@ -2958,7 +2952,7 @@ void ReportWin::draw_energy() {
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
     strcat(StringTemp, label_get(0x5FC / 4));
-    strcat(StringTemp, SocialWinColonSpaceText);
+    say_colon();
     Buffer::write_l(StringTemp, rect1_.left, rect1_.top);
     strcat(StringTemp, "}");
     StringTemp[0] = 0;
@@ -2978,14 +2972,14 @@ void ReportWin::draw_energy() {
         strcat(StringTemp, StringTable.get((Players[faction].rule_flags & 0x80)
                                                ? Labels.strings_ptr[0x1194 / 4]
                                                : Labels.strings_ptr[0x708 / 4]));
-        strcat(StringTemp, SocialWinColonSpaceText);
+        say_colon();
         strcat(StringTemp, "}");
         CharUpperA(StringTemp);
         Buffer::write_l(StringTemp, rect1_.left, rect1_.top);
         StringTemp[0] = 0;
         strcat(StringTemp, "{");
         say_num(PlayersData[faction].sanction_turns);
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         strcat(StringTemp, label_get(0x71C / 4));
         strcat(StringTemp, "}");
         Buffer::write_right(StringTemp, rect1_.left, rect1_.top, rect1_.right);
@@ -3031,14 +3025,14 @@ void ReportWin::draw_energy() {
         if (PlayersData[faction].diplo_treaties[other] & 0x10) {
             strcat(StringTemp, "*");
             strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x604 / 4]));
-            strcat(StringTemp, BufferJoinSpace);
+            space();
         } else if ((PlayersData[faction].loan_balance[other] != 0
                     && PlayersData[other].sanction_turns != 0)
                    || (PlayersData[other].loan_balance[faction] != 0
                        && PlayersData[faction].sanction_turns != 0)) {
             strcat(StringTemp, "*");
             strcat(StringTemp, label_get(0x708 / 4));
-            strcat(StringTemp, BufferJoinSpace);
+            space();
         }
         parse_says(3, StringTemp, -1, -1);
         GenderDefault = Players[other].is_leader_female;
@@ -3067,7 +3061,7 @@ void ReportWin::draw_energy() {
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
     strcat(StringTemp, label_get(0xEFC / 4));
-    strcat(StringTemp, SocialWinColonSpaceText);
+    say_colon();
     Buffer::write_l(StringTemp, rect1_.left, rect1_.top);
     strcat(StringTemp, "}");
     StringTemp[0] = 0;
@@ -3117,7 +3111,7 @@ void ReportWin::draw_energy() {
         strcat(StringTemp, "[");
         say_base(StringTemp, base_id);
         CharUpperA(StringTemp);
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         strcat(StringTemp, label_get(0xA98 / 4));
         strcat(StringTemp, "]");
         --list_head.top;
@@ -3160,7 +3154,7 @@ void ReportWin::draw_energy() {
         StringTemp[0] = 0;
         strcat(StringTemp, "{");
         strcat(StringTemp, label_get(0xA9C / 4));
-        strcat(StringTemp, SocialWinColonSpaceText);
+        say_colon();
         strcat(StringTemp, "|");
         if (has_project(SP_SELF_AWARE_COLONY, ReportIfGlobal.report_faction_id_)) {
             say_num(total / 2);
@@ -3178,7 +3172,7 @@ void ReportWin::draw_energy() {
         strcat(StringTemp, "[");
         say_facility(StringTemp, facility, 0);
         CharUpperA(StringTemp);
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         strcat(StringTemp, label_get(0x160 / 4));
         strcat(StringTemp, "]");
         CharUpperA(StringTemp);
@@ -3214,7 +3208,7 @@ void ReportWin::draw_energy() {
         StringTemp[0] = 0;
         strcat(StringTemp, "{");
         strcat(StringTemp, label_get(0xA9C / 4));
-        strcat(StringTemp, SocialWinColonSpaceText);
+        say_colon();
         strcat(StringTemp, "|");
         if (has_project(SP_SELF_AWARE_COLONY, ReportIfGlobal.report_faction_id_)) {
             say_num(total / 2);
@@ -3348,13 +3342,13 @@ void ReportWin::draw_ops() {
     // Players[faction] offset (faction * 0x5A4) is CSE'd into [ebp-0x70] and
     // reused by is_alien_faction(faction) in the 0x8B4 page below.
     strcat(StringTemp, get_adjective(faction));
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     strcat(StringTemp, label_get(0xACC / 4));
     if (field_5A08_) {
         // Image: three separate strcats, not one " - " literal.
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         strcat(StringTemp, "-");
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         // Jump table 0x0049EAEC (8 entries); the shared Strings::get+strcat
         // tail is VC6 cross-jumping.
         switch (field_5A08_) {
@@ -3546,7 +3540,7 @@ void ReportWin::draw_ops() {
             Buffer::write_l(StringTemp, rect1_.left, text_y);
             Buffer::set_text_color(0xF2, -1, 1, 1);
             StringTemp[0] = 0;
-            strcat(StringTemp, SocialWinOpenParenText);
+            say_open_paren();
             // Five separate _itoa buffers in the image ([ebp-0xe8], -0x1d8,
             // -0x138, -0x188, -0x228) = five inline expansions.
             if (facility == FAC_STOCKPILE_ENERGY) {   // stale on the unit path (see above)
@@ -3557,17 +3551,17 @@ void ReportWin::draw_ops() {
             strcat(StringTemp, "/");
             int cost = cost_factor(BaseCurrent->faction_id_current, 1, -1) * v_10;  // edi
             say_num(cost);
-            strcat(StringTemp, SocialWinCloseParenText);
-            strcat(StringTemp, BufferJoinSpace);
-            strcat(StringTemp, BufferJoinSpace);
-            strcat(StringTemp, BufferJoinSpace);
-            strcat(StringTemp, BufferJoinSpace);
+            say_close_paren();
+            space();
+            space();
+            space();
+            space();
             if (BaseCurrent->mineral_surplus_final <= 0) {
                 strcat(StringTemp, label_get(0x10C / 4));
             } else {
                 strcat(StringTemp, label_get(0xC4 / 4));
-                strcat(StringTemp, SocialWinColonSpaceText);
-                strcat(StringTemp, BufferJoinSpace);
+                say_colon();
+                space();
                 if (cost > BaseCurrent->minerals_accumulated) {
                     cost -= BaseCurrent->minerals_accumulated;
                     say_num(
@@ -3690,7 +3684,7 @@ void ReportWin::draw_projects() {
     strcat(StringTemp, "[");
     strcat(StringTemp, Players[viewer].adj_name_faction);
     CharUpperA(StringTemp);
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     strcat(StringTemp, label_get(0xAD0 / 4));
     strcat(StringTemp, "]");
     --title.top;
@@ -3835,7 +3829,7 @@ void ReportWin::draw_sat() {
     strcat(StringTemp, "[");
     strcat(StringTemp, Players[faction_id].adj_name_faction);
     CharUpperA(StringTemp);
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     strcat(StringTemp, label_get(0xAD4 / 4));
     strcat(StringTemp, "]");
     --title.top;
@@ -4283,7 +4277,7 @@ void ReportWin::draw_security() {
     strcat(StringTemp, "[");
     strcat(StringTemp, Players[faction_id].adj_name_faction);
     CharUpperA(StringTemp);
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     strcat(StringTemp, label_get(0xAD8 / 4));
     strcat(StringTemp, "]");
     --title.top;
@@ -4382,18 +4376,18 @@ void ReportWin::draw_security() {
         strcat(StringTemp, "{");
         say_num(PlayersData[faction_id].proto_id_active[id] > 250
             ? 0 : PlayersData[faction_id].proto_id_active[id]);
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         strcat(StringTemp, label_get(0x614 / 4));
-        strcat(StringTemp, SocialWinCommaSpaceText);
+        say_comma();
         strcat(StringTemp, "}");
         say_num(PlayersData[faction_id].proto_id_queue[id] > 250
             ? 0 : PlayersData[faction_id].proto_id_queue[id]);
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         strcat(StringTemp, label_get(0x618 / 4));
-        strcat(StringTemp, SocialWinCommaSpaceText);
+        say_comma();
         strcat(StringTemp, "[");
         say_num(PlayersData[faction_id].proto_id_lost[id]);
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         strcat(StringTemp, label_get(0x61C / 4));
         strcat(StringTemp, "]");
         Buffer::write_right_l(StringTemp, rect1_.right - 2, text_y);
@@ -4420,7 +4414,7 @@ void ReportWin::draw_score() {
     strcat(StringTemp, "[");
     strcat(StringTemp, Players[faction].adj_name_faction);
     CharUpperA(StringTemp);
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     strcat(StringTemp, label_get(0xADC / 4));
     strcat(StringTemp, "]");
     --title.top;
@@ -4443,20 +4437,20 @@ void ReportWin::draw_score() {
             StringTemp[0] = 0;
             if (total > own) {
                 say_num(own);
-                strcat(StringTemp, BufferJoinSpace);
+                space();
                 strcat(StringTemp, StringTable.get(Labels.strings_ptr[0xE0C / 4]));
                 report_topic_line(this, rect1_, rect1_.left);
                 rect1_.top += field_E268_;
                 StringTemp[0] = 0;
                 say_num(total - own);
-                strcat(StringTemp, BufferJoinSpace);
+                space();
                 strcat(StringTemp, label_get(0x1030 / 4));
                 report_topic_line(this, rect1_, rect1_.left);
                 rect1_.top += field_E268_ * 3 / 2;
                 StringTemp[0] = 0;
             } else {
                 say_num(own);
-                strcat(StringTemp, BufferJoinSpace);
+                space();
             }
             strcat(StringTemp, TextBufferGetPtr);
         } else {
@@ -4485,11 +4479,11 @@ void ReportWin::draw_score() {
         StringTemp[0] = 0;
         if (MapNativeLifeForms) {
             strcat(StringTemp, label_get(0x908 / 4));
-            strcat(StringTemp, BufferJoinSpace);
+            space();
             strcat(StringTemp, "+25%");
         } else {
             strcat(StringTemp, label_get(0x904 / 4));
-            strcat(StringTemp, BufferJoinSpace);
+            space();
             strcat(StringTemp, "-25%");
         }
         report_topic_line(this, rect1_, rect1_.left);
@@ -4538,14 +4532,14 @@ void ReportWin::draw_score() {
                     if (other == faction) continue;
                     compute_score(other, 0, 0, 0);
                     if (PlayersData[other].score_items_[7]) {
-                        strcat(StringTemp, BufferJoinSpace);
-                        strcat(StringTemp, SocialWinOpenParenText);
+                        space();
+                        say_open_paren();
                         PluralityDefault = 0;
                         GenderDefault = Players[other].is_leader_female;
                         strcat(StringTemp, Players[other].name_leader);
-                        strcat(StringTemp, BufferJoinSpace);
+                        space();
                         strcat(StringTemp, label_get(0x101C / 4));
-                        strcat(StringTemp, SocialWinCloseParenText);
+                        say_close_paren();
                         break;
                     }
                 }
@@ -4572,14 +4566,14 @@ void ReportWin::draw_score() {
                 } else {
                     strcat(StringTemp, label_get(0xE14 / 4));
                     if (leader > 0) {
-                        strcat(StringTemp, BufferJoinSpace);
-                        strcat(StringTemp, SocialWinOpenParenText);
+                        space();
+                        say_open_paren();
                         PluralityDefault = 0;
                         GenderDefault = Players[leader].is_leader_female;
                         strcat(StringTemp, Players[leader].name_leader);
-                        strcat(StringTemp, BufferJoinSpace);
+                        space();
                         strcat(StringTemp, label_get(0x101C / 4));
-                        strcat(StringTemp, SocialWinCloseParenText);
+                        say_close_paren();
                     }
                     outcome = 0;
                 }
@@ -4618,9 +4612,9 @@ void ReportWin::draw_score() {
                 say_num(num_objectives(other, 0));
                 if (num_objectives(other, GameDataStateStorage.fields_.game_rules_ & 0x1000)
                     > num_objectives(other, 0)) {
-                    strcat(StringTemp, SocialWinOpenParenText);
+                    say_open_paren();
                     say_num(num_objectives(other, GameDataStateStorage.fields_.game_rules_ & 0x1000));
-                    strcat(StringTemp, SocialWinCloseParenText);
+                    say_close_paren();
                 }
                 parse_says(3, StringTemp, -1, -1);
                 StringTemp[0] = 0;
@@ -4658,7 +4652,7 @@ void ReportWin::draw_intel() {
     strcat(StringTemp, "[");
     strcat(StringTemp, Players[viewer].adj_name_faction);
     CharUpperA(StringTemp);
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     strcat(StringTemp, label_get(0xAE0 / 4));
     strcat(StringTemp, "]");
     --title.top;
@@ -4710,9 +4704,9 @@ void ReportWin::draw_intel() {
     strcat(StringTemp, "[");
     strcat(StringTemp, label_get(0x5B0 / 4));
     CharUpperA(StringTemp);
-    strcat(StringTemp, SocialWinColonSpaceText);
-    strcat(StringTemp, BufferJoinSpace);
-    strcat(StringTemp, BufferJoinSpace);
+    say_colon();
+    space();
+    space();
     strcat(StringTemp, "]");
     int priorities = 0;
     if (PlayersData[subject].ai_growth) {
@@ -4720,17 +4714,17 @@ void ReportWin::draw_intel() {
         priorities = 1;
     }
     if (PlayersData[subject].ai_tech) {
-        if (priorities) strcat(StringTemp, SocialWinCommaSpaceText);
+        if (priorities) say_comma();
         strcat(StringTemp, label_get(0x828 / 4));
         ++priorities;
     }
     if (PlayersData[subject].ai_wealth) {
-        if (priorities) strcat(StringTemp, SocialWinCommaSpaceText);
+        if (priorities) say_comma();
         strcat(StringTemp, label_get(0x82C / 4));
         ++priorities;
     }
     if (PlayersData[subject].ai_power) {
-        if (priorities) strcat(StringTemp, SocialWinCommaSpaceText);
+        if (priorities) say_comma();
         strcat(StringTemp, label_get(0x830 / 4));
     }
     report_topic_line(this, rect1_, text_x);
@@ -4742,7 +4736,7 @@ void ReportWin::draw_intel() {
         const int model = Players[subject].soc_ideology_model[0];
         if (model != 0) {
             strcat(StringTemp, StringTable.get(SocialCategories[category].type));
-            strcat(StringTemp, SocialWinColonSpaceText);
+            say_colon();
             strcat(StringTemp, StringTable.get(SocialCategories[category].name[model]));
             shown = 1;
         }
@@ -4774,7 +4768,7 @@ void ReportWin::draw_intel() {
         StringTemp[0] = 0;
         strcat(StringTemp, "[");
         strcat(StringTemp, label_get(0x254 / 4));
-        strcat(StringTemp, SocialWinColonSpaceText);
+        say_colon();
         strcat(StringTemp, "]");
         say_tech(StringTemp, PlayersData[subject].tech_id_researching, 0);
         if (informed) {
@@ -4787,9 +4781,9 @@ void ReportWin::draw_intel() {
         strcat(StringTemp, "[");
         strcat(StringTemp, label_get(0xF00 / 4));
         CharUpperA(StringTemp);
-        strcat(StringTemp, SocialWinColonSpaceText);
-        strcat(StringTemp, BufferJoinSpace);
-        strcat(StringTemp, BufferJoinSpace);
+        say_colon();
+        space();
+        space();
         strcat(StringTemp, "]");
         say_num(council_votes(subject));
         report_topic_line(this, rect1_, text_x);
@@ -4799,9 +4793,9 @@ void ReportWin::draw_intel() {
         StringTemp[0] = 0;
         strcat(StringTemp, "[");
         strcat(StringTemp, StringTable.get(SocialCategories[shown].type));
-        strcat(StringTemp, SocialWinColonSpaceText);
-        strcat(StringTemp, BufferJoinSpace);
-        strcat(StringTemp, BufferJoinSpace);
+        say_colon();
+        space();
+        space();
         strcat(StringTemp, "]");
         strcat(StringTemp, StringTable.get(SocialCategories[shown].name[
             PlayersData[subject].soc_category_pending.models_[shown]]));
@@ -4815,24 +4809,24 @@ void ReportWin::draw_intel() {
             (!informed && faction != viewer && !(PlayersData[viewer].diplo_treaties[faction] & 1))) continue;
         StringTemp[0] = 0;
         if (PlayersData[subject].diplo_treaties[faction] & 0x10) {
-            strcat(StringTemp, label_get(0x358 / 4)); strcat(StringTemp, BufferJoinSpace);
+            strcat(StringTemp, label_get(0x358 / 4)); space();
             strcat(StringTemp, label_get(0x5C8 / 4));
         } else if (PlayersData[subject].diplo_treaties[faction] & 1) {
-            strcat(StringTemp, get_pact(subject)); strcat(StringTemp, BufferJoinSpace);
+            strcat(StringTemp, get_pact(subject)); space();
             strcat(StringTemp, label_get(0x43C / 4));
         } else {
             if (PlayersData[subject].diplo_treaties[faction] & 2) {
                 strcat(StringTemp, label_get(0x350 / 4));
-                strcat(StringTemp, BufferJoinSpace);
+                space();
             }
             else {
-                if (PlayersData[subject].diplo_treaties[faction] & 0x10000) { strcat(StringTemp, label_get(0x5D0 / 4)); strcat(StringTemp, BufferJoinSpace); }
+                if (PlayersData[subject].diplo_treaties[faction] & 0x10000) { strcat(StringTemp, label_get(0x5D0 / 4)); space(); }
                 strcat(StringTemp, label_get(0x354 / 4));
-                strcat(StringTemp, BufferJoinSpace);
+                space();
             }
             strcat(StringTemp, label_get(0x5CC / 4));
         }
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         report_append_leader(faction);
         report_topic_line(this, rect1_, text_x + 125);
         rect1_.top += field_E268_;
@@ -5442,7 +5436,7 @@ void ReportIf::on_status(int mode) {
         field_10_ += 22;
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x2EB));
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         strcat(StringTemp, label_get(0x209));
         set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, 20);
         flatButton6_.init(StringTemp, 0xCF0, &draw_workspace_rect_, &MainInterfaceGlobal, 0);
@@ -5451,7 +5445,7 @@ void ReportIf::on_status(int mode) {
         field_10_ += 22;
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x2EB));
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         strcat(StringTemp, label_get(0x20A));
         set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, 20);
         flatButton7_.init(StringTemp, 0xCF1, &draw_workspace_rect_, &MainInterfaceGlobal, 0);
@@ -5460,7 +5454,7 @@ void ReportIf::on_status(int mode) {
         field_10_ += 22;
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x2EB));
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         strcat(StringTemp, label_get(0x20B));
         set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, 20);
         flatButton8_.init(StringTemp, 0xCF2, &draw_workspace_rect_, &MainInterfaceGlobal, 0);
@@ -5469,7 +5463,7 @@ void ReportIf::on_status(int mode) {
         field_10_ += 22;
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x2EB));
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         strcat(StringTemp, label_get(0x20C));
         set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, 20);
         flatButton9_.init(StringTemp, 0xCF3, &draw_workspace_rect_, &MainInterfaceGlobal, 0);
@@ -5566,11 +5560,11 @@ void ReportIf::on_status(int mode) {
             if (visible[slot]) {
                 StringTemp[0] = 0;
                 strcat(StringTemp, get_title(leader));
-                strcat(StringTemp, BufferJoinSpace);
+                space();
                 strcat(StringTemp, get_name(leader));
-                strcat(StringTemp, BufferJoinSpace);
+                space();
                 strcat(StringTemp, label_get(0xB4));
-                strcat(StringTemp, BufferJoinSpace);
+                space();
                 strcat(StringTemp, get_noun(leader));
                 if (leader < ConsoleGlobal.faction_id_) {
                     set_rectangle_dimensions(&draw_workspace_rect_, report_button_positions_[slot],
@@ -5955,9 +5949,9 @@ int ReportIf::on_iface_dialog_item_back_draw(::GraphicWin *, int, int, RECT *) {
 // The three log_say texts are this handler's own copies in the pinned image
 // (0x687280, 0x687298, 0x6872B8; on_left_click keeps a separate EDBC copy at
 // 0x686F04). The image's advanced-governor text ends in "set".
-// RECOVERY_LITERAL: v1 0x00687280 0x00687295 $SG63509 0x004A6330
-// RECOVERY_LITERAL: v1 0x00687298 0x006872B5 $SG63524 0x004A6330
-// RECOVERY_LITERAL: v1 0x006872B8 0x006872CC $SG63535 0x004A6330
+// RECOVERY_LITERAL: v1 0x00687280 0x00687295 $SG63549 0x004A6330
+// RECOVERY_LITERAL: v1 0x00687298 0x006872B5 $SG63564 0x004A6330
+// RECOVERY_LITERAL: v1 0x006872B8 0x006872CC $SG63575 0x004A6330
 // symbol    ?on_iface_button_clicked@ReportIf@@UAEXH@Z
 void ReportIf::on_iface_button_clicked(int button) {
     int row;
@@ -6197,27 +6191,27 @@ void ReportIf::on_iface_group_clicked(int group, int, int item) {
 // TRIED: MISMATCH #0, sim ~0.58 (best of /O1 framed). Full structural transcription (all branches, both list modes, all 4 category bars). Approximated: the ListBox virtual-base (GraphicWin) adjustment at self+0xa384/+0x24/+0x28 uses the flattened `virtual_base_` member instead of the runtime vtable+8 lookup the original performs, so that handful of instructions differ in shape though not in intent.
 // The 21 one-character marker literals ("|", "[", "]", "+", ".", "%") are this function's own unpooled
 // copies in the pinned image, 0x6872CC..0x68731E in source order.
-// RECOVERY_LITERAL: v1 0x006872CC 0x006872CE $SG63650 0x004A7000
-// RECOVERY_LITERAL: v1 0x006872D0 0x006872D2 $SG63651 0x004A7000
-// RECOVERY_LITERAL: v1 0x006872D4 0x006872D6 $SG63652 0x004A7000
-// RECOVERY_LITERAL: v1 0x006872D8 0x006872DA $SG63661 0x004A7000
-// RECOVERY_LITERAL: v1 0x006872DC 0x006872DE $SG63662 0x004A7000
-// RECOVERY_LITERAL: v1 0x006872E0 0x006872E2 $SG63665 0x004A7000
-// RECOVERY_LITERAL: v1 0x006872E4 0x006872E6 $SG63674 0x004A7000
-// RECOVERY_LITERAL: v1 0x006872E8 0x006872EA $SG63675 0x004A7000
-// RECOVERY_LITERAL: v1 0x006872EC 0x006872EE $SG63678 0x004A7000
-// RECOVERY_LITERAL: v1 0x006872F0 0x006872F2 $SG63706 0x004A7000
-// RECOVERY_LITERAL: v1 0x006872F4 0x006872F6 $SG63707 0x004A7000
-// RECOVERY_LITERAL: v1 0x006872F8 0x006872FA $SG63708 0x004A7000
-// RECOVERY_LITERAL: v1 0x006872FC 0x006872FE $SG63711 0x004A7000
-// RECOVERY_LITERAL: v1 0x00687300 0x00687302 $SG63712 0x004A7000
-// RECOVERY_LITERAL: v1 0x00687304 0x00687306 $SG63713 0x004A7000
-// RECOVERY_LITERAL: v1 0x00687308 0x0068730A $SG63716 0x004A7000
-// RECOVERY_LITERAL: v1 0x0068730C 0x0068730E $SG63717 0x004A7000
-// RECOVERY_LITERAL: v1 0x00687310 0x00687312 $SG63718 0x004A7000
-// RECOVERY_LITERAL: v1 0x00687314 0x00687316 $SG63721 0x004A7000
-// RECOVERY_LITERAL: v1 0x00687318 0x0068731A $SG63722 0x004A7000
-// RECOVERY_LITERAL: v1 0x0068731C 0x0068731E $SG63723 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872CC 0x006872CE $SG63690 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872D0 0x006872D2 $SG63691 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872D4 0x006872D6 $SG63692 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872D8 0x006872DA $SG63701 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872DC 0x006872DE $SG63702 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872E0 0x006872E2 $SG63705 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872E4 0x006872E6 $SG63714 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872E8 0x006872EA $SG63715 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872EC 0x006872EE $SG63718 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872F0 0x006872F2 $SG63746 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872F4 0x006872F6 $SG63747 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872F8 0x006872FA $SG63748 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872FC 0x006872FE $SG63751 0x004A7000
+// RECOVERY_LITERAL: v1 0x00687300 0x00687302 $SG63752 0x004A7000
+// RECOVERY_LITERAL: v1 0x00687304 0x00687306 $SG63753 0x004A7000
+// RECOVERY_LITERAL: v1 0x00687308 0x0068730A $SG63756 0x004A7000
+// RECOVERY_LITERAL: v1 0x0068730C 0x0068730E $SG63757 0x004A7000
+// RECOVERY_LITERAL: v1 0x00687310 0x00687312 $SG63758 0x004A7000
+// RECOVERY_LITERAL: v1 0x00687314 0x00687316 $SG63761 0x004A7000
+// RECOVERY_LITERAL: v1 0x00687318 0x0068731A $SG63762 0x004A7000
+// RECOVERY_LITERAL: v1 0x0068731C 0x0068731E $SG63763 0x004A7000
 void ReportIf::draw_labs() {
     char lab_text[80];   // [ebp-0xC8]
     char text[80];       // [ebp-0x78]
@@ -6274,7 +6268,7 @@ void ReportIf::draw_labs() {
                 strcat(StringTemp, "|");
                 strcat(StringTemp, "[");
                 strcat(StringTemp, label_get(0x275 + (levels[best] & 3)));
-                strcat(StringTemp, BufferJoinSpace);
+                space();
                 _itoa(levels[best] >> 2, lab_text, 10);
                 strcat(StringTemp, lab_text);
                 strcat(StringTemp, "]");
@@ -6294,8 +6288,8 @@ void ReportIf::draw_labs() {
                 strcat(StringTemp, "+");
                 _itoa(Bases[base].labs_total, lab_text, 10);
                 strcat(StringTemp, lab_text);
-                strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, SocialWinOpenParenText);
+                space();
+                say_open_paren();
                 int scaled = (range(PlayersData[report_faction_id_].soc_effect_pending
                                         .values_[SocialEffect::RESEARCH], -5, 5) + 10)
                              * Bases[base].labs_total * 10;
@@ -6306,7 +6300,7 @@ void ReportIf::draw_labs() {
                     _itoa(scaled % 100 / 10, text, 10);
                     strcat(StringTemp, text);
                 }
-                strcat(StringTemp, SocialWinCloseParenText);
+                say_close_paren();
                 strcat(StringTemp, label_get(0x17B));
                 list->item(StringTemp, base + 0x400);
             }
@@ -6336,13 +6330,13 @@ void ReportIf::draw_labs() {
     MainInterfaceGlobal.Buffer::set_text_color(0xE1, -1, 1, 1);
     strcat(StringTemp, Players[report_faction_id_].adj_name_faction);
     CharUpperA(StringTemp);
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     strcat(StringTemp, label_get(0x2B1));
     if (field_1E230_) {
-        strcat(StringTemp, SocialWinCommaSpaceText);
-        strcat(StringTemp, BufferJoinSpace);
+        say_comma();
+        space();
         strcat(StringTemp, label_get(0x2DA));
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         say_year(StringTemp);
     }
     MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_ + 10, field_14_);
@@ -6351,30 +6345,30 @@ void ReportIf::draw_labs() {
     field_10_ += field_1C_ * 2;
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x178));
-    strcat(StringTemp, SocialWinColonSpaceText);
+    say_colon();
     int rate = tech_rate(report_faction_id_);
     _itoa(rate, text, 10);
     strcat(StringTemp, text);
-    strcat(StringTemp, BufferJoinSpace);
-    strcat(StringTemp, BufferJoinSpace);
-    strcat(StringTemp, BufferJoinSpace);
-    strcat(StringTemp, BufferJoinSpace);
+    space();
+    space();
+    space();
+    space();
     strcat(StringTemp, label_get(0x179));
-    strcat(StringTemp, SocialWinColonSpaceText);
+    say_colon();
     _itoa(PlayersData[report_faction_id_].tech_accumulated, text, 10);
     strcat(StringTemp, text);
     if (field_1E230_) {
-        strcat(StringTemp, BufferJoinSpace);
-        strcat(StringTemp, BufferJoinSpace);
-        strcat(StringTemp, BufferJoinSpace);
-        strcat(StringTemp, BufferJoinSpace);
+        space();
+        space();
+        space();
+        space();
     } else {
         MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_, field_14_);
         field_10_ += field_1C_;
         StringTemp[0] = 0;
     }
     strcat(StringTemp, label_get(0x17A));
-    strcat(StringTemp, SocialWinColonSpaceText);
+    say_colon();
     energy_compute(report_faction_id_, 0);
     _itoa(EnergyLabsTotal / 100, text, 10);
     strcat(StringTemp, text);
@@ -6403,7 +6397,7 @@ void ReportIf::draw_labs() {
         MainInterfaceGlobal.Buffer::set_text_color3(mandate_color(1), -1, 1, 1);
         say_tech(StringTemp, PlayersData[report_faction_id_].tech_id_researching, 0);
         CharUpperA(StringTemp);
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         _itoa(PlayersData[report_faction_id_].theory_of_everything, text, 10);
         strcat(StringTemp, text);
     } else {
@@ -6466,9 +6460,9 @@ void ReportIf::draw_labs() {
     MainInterfaceGlobal.Buffer::set_text_color3(mandate_color(0), -1, 1, 1);
     strcat(StringTemp, "[");
     strcat(StringTemp, label_get(0x209));
-    strcat(StringTemp, BufferJoinSpace);
-    strcat(StringTemp, BufferJoinSpace);
-    strcat(StringTemp, BufferJoinSpace);
+    space();
+    space();
+    space();
     _itoa(explore_owned * 100 / explore_total, text, 10);
     strcat(StringTemp, text);
     strcat(StringTemp, "%");
@@ -6489,9 +6483,9 @@ void ReportIf::draw_labs() {
     MainInterfaceGlobal.Buffer::set_text_color3(mandate_color(1), -1, 1, 1);
     strcat(StringTemp, "[");
     strcat(StringTemp, label_get(0x20A));
-    strcat(StringTemp, BufferJoinSpace);
-    strcat(StringTemp, BufferJoinSpace);
-    strcat(StringTemp, BufferJoinSpace);
+    space();
+    space();
+    space();
     _itoa(discover_owned * 100 / discover_total, text, 10);
     strcat(StringTemp, text);
     strcat(StringTemp, "%");
@@ -6512,9 +6506,9 @@ void ReportIf::draw_labs() {
     MainInterfaceGlobal.Buffer::set_text_color3(mandate_color(2), -1, 1, 1);
     strcat(StringTemp, "[");
     strcat(StringTemp, label_get(0x20B));
-    strcat(StringTemp, BufferJoinSpace);
-    strcat(StringTemp, BufferJoinSpace);
-    strcat(StringTemp, BufferJoinSpace);
+    space();
+    space();
+    space();
     _itoa(build_owned * 100 / build_total, text, 10);
     strcat(StringTemp, text);
     strcat(StringTemp, "%");
@@ -6535,9 +6529,9 @@ void ReportIf::draw_labs() {
     MainInterfaceGlobal.Buffer::set_text_color3(mandate_color(3), -1, 1, 1);
     strcat(StringTemp, "[");
     strcat(StringTemp, label_get(0x20C));
-    strcat(StringTemp, BufferJoinSpace);
-    strcat(StringTemp, BufferJoinSpace);
-    strcat(StringTemp, BufferJoinSpace);
+    space();
+    space();
+    space();
     _itoa(conquer_owned * 100 / conquer_total, text, 10);
     strcat(StringTemp, text);
     strcat(StringTemp, "%");
@@ -6581,7 +6575,7 @@ void ReportIf::draw_energy() {
     StringTemp[0] = 0;
     strcat(StringTemp, "[");
     strcat(StringTemp, label_get(0xBE));
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     strcat(StringTemp, label_get(0x2E6));
     strcat(StringTemp, "]");
     MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_ + 4, field_14_);
@@ -6647,13 +6641,13 @@ void ReportIf::draw_energy() {
     MainInterfaceGlobal.Buffer::set_text_color(0xE1, -1, 1, 1);
     strcat(StringTemp, Players[report_faction_id_].adj_name_faction);
     CharUpperA(StringTemp);
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     strcat(StringTemp, label_get(0x2B2));
     if (field_1E230_) {
-        strcat(StringTemp, SocialWinCommaSpaceText);
-        strcat(StringTemp, BufferJoinSpace);
+        say_comma();
+        space();
         strcat(StringTemp, label_get(0x2DA));
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         say_year(StringTemp);
     }
     MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_ + 10, field_14_);
@@ -6662,7 +6656,7 @@ void ReportIf::draw_energy() {
     field_10_ += field_1C_ * 2;
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x39));
-    strcat(StringTemp, SocialWinColonSpaceText);
+    say_colon();
     _itoa(PlayersData[report_faction_id_].energy_reserves, text_a, 10);
     strcat(StringTemp, text_a);
     MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_, field_14_);
@@ -6703,7 +6697,7 @@ void ReportIf::draw_energy() {
             StringTemp[0] = 0;
             _itoa(EnergyFacilityCounts[facility], text_a, 10);
             strcat(StringTemp, text_a);
-            strcat(StringTemp, BufferJoinSpace);
+            space();
             char *name = Facility[facility].name;
             strcat(StringTemp, StringTable.get(name));
             strcat(StringTemp, "|");
@@ -6809,7 +6803,7 @@ void ReportIf::draw_ops() {
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0xA0/4));
         CharUpperA(StringTemp);
-        strcat(StringTemp, SocialWinColonSpaceText);
+        say_colon();
         {
             winner = -1;
             best = 0;
@@ -6830,7 +6824,7 @@ void ReportIf::draw_ops() {
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0xA4/4));
         CharUpperA(StringTemp);
-        strcat(StringTemp, SocialWinColonSpaceText);
+        say_colon();
         {
             winner = -1;
             best = 0;
@@ -6850,7 +6844,7 @@ void ReportIf::draw_ops() {
         }
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0xE4/4));
-        strcat(StringTemp, SocialWinColonSpaceText);
+        say_colon();
         {
             winner = -1;
             best = 0;
@@ -6870,7 +6864,7 @@ void ReportIf::draw_ops() {
         }
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0xAAC/4));
-        strcat(StringTemp, SocialWinColonSpaceText);
+        say_colon();
         {
             winner = -1;
             best = 0;
@@ -6890,7 +6884,7 @@ void ReportIf::draw_ops() {
         }
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0xAB0/4));
-        strcat(StringTemp, SocialWinColonSpaceText);
+        say_colon();
         {
             winner = -1;
             best = 0;
@@ -6910,7 +6904,7 @@ void ReportIf::draw_ops() {
         }
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0xAB4/4));
-        strcat(StringTemp, SocialWinColonSpaceText);
+        say_colon();
         {
             winner = -1;
             best = 0;
@@ -6930,7 +6924,7 @@ void ReportIf::draw_ops() {
         }
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0xFC/4));
-        strcat(StringTemp, SocialWinColonSpaceText);
+        say_colon();
         {
             winner = -1;
             best = 0;
@@ -6955,7 +6949,7 @@ void ReportIf::draw_ops() {
         }
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0xAB8/4));
-        strcat(StringTemp, SocialWinColonSpaceText);
+        say_colon();
         {
             winner = -1;
             best = 0;
@@ -7013,13 +7007,13 @@ void ReportIf::draw_ops() {
     MainInterfaceGlobal.Buffer::set_text_color(0xE1, -1, 1, 1);
     strcat(StringTemp, Players[report_faction_id_].adj_name_faction);
     CharUpperA(StringTemp);
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     strcat(StringTemp, label_get(0xACC/4));
     if (field_1E230_) {
-        strcat(StringTemp, SocialWinCommaSpaceText);
-        strcat(StringTemp, BufferJoinSpace);
+        say_comma();
+        space();
         strcat(StringTemp, label_get(0xB68/4));
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         say_year(StringTemp);
     }
     MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_ + 10, field_14_);
@@ -7028,7 +7022,7 @@ void ReportIf::draw_ops() {
     field_10_ += field_1C_ * 2;
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0xE4/4));
-    strcat(StringTemp, SocialWinColonSpaceText);
+    say_colon();
     char number[80];
     _itoa(PlayersData[report_faction_id_].energy_reserves, number, 10);
     strcat(StringTemp, number);
@@ -7174,13 +7168,13 @@ void ReportIf::draw_projects() {
     MainInterfaceGlobal.Buffer::set_text_color(0xE1, -1, 1, 1);
     strcat(StringTemp, Players[report_faction_id_].adj_name_faction);
     CharUpperA(StringTemp);
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x2B4]));
     if (field_1E230_) {
-        strcat(StringTemp, SocialWinCommaSpaceText);
-        strcat(StringTemp, BufferJoinSpace);
+        say_comma();
+        space();
         strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x2DA]));
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         say_year(StringTemp);
     }
     MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_ + 10, field_14_);
@@ -7319,13 +7313,13 @@ void ReportIf::draw_sat() {
     MainInterfaceGlobal.Buffer::set_text_color(0xE1, -1, 1, 1);
     strcat(StringTemp, Players[report_faction_id_].adj_name_faction);
     CharUpperA(StringTemp);
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     strcat(StringTemp, label_get(0x2B5));
     if (field_1E230_) {
-        strcat(StringTemp, SocialWinCommaSpaceText);
-        strcat(StringTemp, BufferJoinSpace);
+        say_comma();
+        space();
         strcat(StringTemp, label_get(0x2DA));
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         say_year(StringTemp);
     }
     MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_ + 10, field_14_);
@@ -7602,13 +7596,13 @@ void ReportIf::draw_security() {
     MainInterfaceGlobal.Buffer::set_text_color(0xE1, -1, 1, 1);
     strcat(StringTemp, Players[report_faction_id_].adj_name_faction);
     CharUpperA(StringTemp);
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     strcat(StringTemp, label_get(0x2B6));
     if (field_1E230_) {
-        strcat(StringTemp, SocialWinCommaSpaceText);
-        strcat(StringTemp, BufferJoinSpace);
+        say_comma();
+        space();
         strcat(StringTemp, label_get(0x2DA));
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         say_year(StringTemp);
     }
     MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_ + 10, field_14_);
@@ -7678,14 +7672,14 @@ void ReportIf::draw_score() {
 
     strcat(StringTemp, Players[report_faction_id_].adj_name_faction);
     CharUpperA(StringTemp);
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     strcat(StringTemp, label_get(0x2B7));
 
     if (field_1E230_ != 0) {
-        strcat(StringTemp, SocialWinCommaSpaceText);
-        strcat(StringTemp, BufferJoinSpace);
+        say_comma();
+        space();
         strcat(StringTemp, label_get(0x2DA));
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         say_year(StringTemp);
     }
 
@@ -7788,13 +7782,13 @@ void ReportIf::draw_intel() {
     MainInterfaceGlobal.Buffer::set_text_color(0xE1, -1, 1, 1);
     strcat(StringTemp, Players[report_faction_id_].adj_name_faction);
     CharUpperA(StringTemp);
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     strcat(StringTemp, label_get(0x2B8));
     if (field_1E230_) {
-        strcat(StringTemp, SocialWinCommaSpaceText);
-        strcat(StringTemp, BufferJoinSpace);
+        say_comma();
+        space();
         strcat(StringTemp, label_get(0x2DA));
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         say_year(StringTemp);
     }
     MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_ + 10, field_14_);

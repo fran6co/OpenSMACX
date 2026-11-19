@@ -89,9 +89,6 @@
 #include "netwin.h"
 #include "deletionlist.h"
 
-// Shared separator objects the image pushes instead of unit literals.
-extern const char BufferJoinSpace[];
-extern char SocialWinCommaSpaceText[];
 
 extern Wave g_CRASH_LANDING_WAVE;
 extern int ConsoleNoMapOverrideLatch;

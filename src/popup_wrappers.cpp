@@ -44,8 +44,6 @@
 #include "netmsg.h"  // NetMsgPrimary - the sprite callbacks pop INJAIL
 #include "netdaemon.h"  // NetDaemonNet - the sprite callbacks lock and synch
 
-// Shared separator objects the image pushes instead of unit literals.
-extern const char BufferJoinSpace[];
 
 
 // Read a script section into the shared substitution buffer. The text
@@ -411,7 +409,7 @@ int __cdecl veh_pick(int veh_id, const char *label, int flags) {
         do {
             StringTemp[0] = '\0';
             say_morale(listed_vehicle, 0);
-            ::strcat(StringTemp, BufferJoinSpace);
+            space();
             ::strcat(StringTemp, VehPrototypes[Vehs[listed_vehicle].proto_id].veh_name);
             popup.set_picture(&sprite, listed_vehicle, StringTemp);
             listed_vehicle = Vehs[listed_vehicle].next_veh_id_stack;

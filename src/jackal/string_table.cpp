@@ -56,6 +56,22 @@ Strings::Strings() : is_populated_(false) {}
 // RECOVERY_OBJECT: v2 0x009B90D8 0x009B90F0 ?StringTable@@3VStrings@@A 0x00490140
 Strings StringTable;  // 0x009B90D8
 
+// WORKAROUND(inline): stand-ins for strings.h's separator literals in the
+// seven functions that cannot yet afford the helpers (see strings.h). The
+// image has no such objects: the texts are COMDAT literals kept by popup.cpp
+// (" ") and basewin.cpp (the rest), whose merged literal bindings share these
+// extents.
+// RECOVERY_OBJECT: v2 0x00682820 0x00682822 ?BufferJoinSpace@@3QBDB 0x0058E360
+extern const char BufferJoinSpace[] = " ";
+// RECOVERY_OBJECT: v2 0x00682E90 0x00682E93 ?SocialWinCommaSpaceText@@3PADA 0x005A9EB0
+char SocialWinCommaSpaceText[] = ", ";
+// RECOVERY_OBJECT: v2 0x00682E94 0x00682E97 ?SocialWinColonSpaceText@@3PADA 0x004D06C0
+char SocialWinColonSpaceText[] = ": ";
+// RECOVERY_OBJECT: v2 0x00682E98 0x00682E9A ?SocialWinCloseParenText@@3PADA 0x0043AC70
+char SocialWinCloseParenText[] = ")";
+// RECOVERY_OBJECT: v2 0x00682E9C 0x00682E9E ?SocialWinOpenParenText@@3PADA 0x0043AC70
+char SocialWinOpenParenText[] = "(";
+
 /*
 Purpose: Initialize the class instance with a new string table of the specified size.
 // ORIGINAL: 0x006168F0 ?init@Strings@@QAEHH@Z 0x006168F0-0x00616950 BYTE_EXACT
@@ -87,7 +103,7 @@ BOOL Strings::init(size_t mem_size) {
     // Both pinned strlen/strcpy arguments select the one object 6971FC (the
     // inlined put() parameter: one literal, not one per call). The six literal
     // bytes precede alignment padding and the independently used labels keys.
-    // RECOVERY_LITERAL: v1 0x006971FC 0x00697202 $SG48617 0x006168F0
+    // RECOVERY_LITERAL: v1 0x006971FC 0x00697202 $SG48661 0x006168F0
     LPCSTR input = "-Nil-";
     size_t len = strlen(input) + 1;
     LPSTR table_addr = LPSTR(Heap::get(len));
@@ -246,8 +262,8 @@ Status: Complete
 BOOL __cdecl labels_init() {
     // The original passes equal text through distinct file and section keys.
     labels_shutdown();
-// RECOVERY_LITERAL: v1 0x0069720C 0x00697213 $SG48653 0x00616A00
-// RECOVERY_LITERAL: v1 0x00697204 0x0069720B $SG48652 0x00616A00
+// RECOVERY_LITERAL: v1 0x0069720C 0x00697213 $SG48697 0x00616A00
+// RECOVERY_LITERAL: v1 0x00697204 0x0069720B $SG48696 0x00616A00
     if (text_open("labels", "labels")) {
         return true;
     }

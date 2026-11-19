@@ -54,15 +54,9 @@
 #include "xpops.h"     // x_pop_caption_label for lobby validation prompts
 #include <stdlib.h>      // _itoa
 
-// Shared punctuation objects the image pushes instead of unit literals.
-extern char SocialWinCloseParenText[];
-extern char SocialWinOpenParenText[];
 
-// Shared separator objects the image pushes instead of unit literals.
-extern const char BufferJoinSpace[];
 
 // Shared original chat separators, also used by the general string formatter.
-extern char SocialWinColonSpaceText[];
 
 // MessageDataRecord and NetDaemon::process_message establish these shared
 // packet-prefix positions. F0D leaves +2..3 and +C unwritten; this describes
@@ -1851,16 +1845,16 @@ void NetWin::draw_factions() {
                        NetWinLobbyRows.rows_[index + 1].noun_faction_) == 0) {
                 goto named;
             }
-            strcat(StringTemp, SocialWinColonSpaceText);
+            say_colon();
         } else {
             strcat(StringTemp, label_get(0xFE4 / 4));
             if (strcmp(label_get(0xFE4 / 4),
                        NetWinLobbyRows.rows_[index + 1].noun_faction_) == 0) {
                 goto named;
             }
-            strcat(StringTemp, SocialWinColonSpaceText);
+            say_colon();
         }
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         strcat(StringTemp, NetWinLobbyRows.rows_[index + 1].noun_faction_);
     named:
         Buffer::write_l(StringTemp, &field);
@@ -2047,8 +2041,8 @@ void NetWin::draw_player_names() {
                    NetDaemonNet.get_player_name(NetDaemonNet.process_slots_[row + 1].pid_));
         }
         if (NetWinLobbyRows.rows_[row + 1].faction_or_color_ != -1) {
-            strcat(StringTemp, SocialWinColonSpaceText);
-            strcat(StringTemp, BufferJoinSpace);
+            say_colon();
+            space();
             strcat(StringTemp, NetWinLobbyRows.rows_[row + 1].leader_name_);
             // Count the earlier rows whose name text matches, and append
             // the tally when there is one.
@@ -2160,9 +2154,9 @@ void NetWin::draw_session_info() {
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
     strcat(StringTemp, label_get(0xFA4 / 4));
-    strcat(StringTemp, SocialWinColonSpaceText);
+    say_colon();
     strcat(StringTemp, "}");
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     strcat(StringTemp, StringTable.get(Difficulty[range(
         NetWinSessionOptions.fields_.difficulty_, 0, 6)]));
     written = Buffer::write_l(StringTemp, col, row);
@@ -2178,9 +2172,9 @@ void NetWin::draw_session_info() {
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
     strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x100C / 4]));
-    strcat(StringTemp, SocialWinColonSpaceText);
+    say_colon();
     strcat(StringTemp, "}");
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     strcat(StringTemp, StringTable.get(
         TimeControl[NetWinSessionOptions.fields_.time_control_].name));
     written = Buffer::write_l(StringTemp, col, row);
@@ -2196,9 +2190,9 @@ void NetWin::draw_session_info() {
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
     strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x1078 / 4]));
-    strcat(StringTemp, SocialWinColonSpaceText);
+    say_colon();
     strcat(StringTemp, "}");
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] != 0) {
         strcat(StringTemp, NetWinSessionData.fields_.scenario_text_wire_tail_);
     } else {
@@ -2206,22 +2200,22 @@ void NetWin::draw_session_info() {
     }
     switch (NetWinSessionData.fields_.mode_) {
     case 3:
-        strcat(StringTemp, BufferJoinSpace);
-        strcat(StringTemp, SocialWinOpenParenText);
+        space();
+        say_open_paren();
         strcat(StringTemp, label_get(0x1014 / 4));
-        strcat(StringTemp, SocialWinCloseParenText);
+        say_close_paren();
         break;
     case 2:
-        strcat(StringTemp, BufferJoinSpace);
-        strcat(StringTemp, SocialWinOpenParenText);
+        space();
+        say_open_paren();
         strcat(StringTemp, label_get(0x1018 / 4));
-        strcat(StringTemp, SocialWinCloseParenText);
+        say_close_paren();
         break;
     case 1:
-        strcat(StringTemp, BufferJoinSpace);
-        strcat(StringTemp, SocialWinOpenParenText);
+        space();
+        say_open_paren();
         strcat(StringTemp, label_get(0x10 / 4));
-        strcat(StringTemp, SocialWinCloseParenText);
+        say_close_paren();
         break;
     }
     bottom = Buffer::wrap(StringTemp, col, row,
@@ -2238,15 +2232,15 @@ void NetWin::draw_session_info() {
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
     strcat(StringTemp, StringTable.get(Labels.strings_ptr[0xFAC / 4]));
-    strcat(StringTemp, SocialWinColonSpaceText);
+    say_colon();
     strcat(StringTemp, "}");
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] != 0) {
         _itoa(NetWinSessionOptions.fields_.option_4_, tally, 10);
         strcat(StringTemp, tally);
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         strcat(StringTemp, "X");
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         _itoa(NetWinSessionOptions.fields_.option_5_, tally, 10);
         strcat(StringTemp, tally);
     } else if (NetWinSessionOptions.fields_.planet_size_ == -1) {
@@ -2278,9 +2272,9 @@ void NetWin::draw_session_info() {
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
     strcat(StringTemp, label_get(0xFB0 / 4));
-    strcat(StringTemp, SocialWinColonSpaceText);
+    say_colon();
     strcat(StringTemp, "}");
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] != 0) {
         strcat(StringTemp, label_get(0x1000 / 4));
     } else if (NetWinSessionOptions.fields_.ocean_coverage_ == -1) {
@@ -2311,9 +2305,9 @@ void NetWin::draw_session_info() {
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
     strcat(StringTemp, label_get(0xFB4 / 4));
-    strcat(StringTemp, SocialWinColonSpaceText);
+    say_colon();
     strcat(StringTemp, "}");
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] != 0) {
         strcat(StringTemp, label_get(0x1000 / 4));
     } else if (NetWinSessionOptions.fields_.erosion_ == -1) {
@@ -2344,9 +2338,9 @@ void NetWin::draw_session_info() {
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
     strcat(StringTemp, label_get(0xFB8 / 4));
-    strcat(StringTemp, SocialWinColonSpaceText);
+    say_colon();
     strcat(StringTemp, "}");
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] != 0) {
         strcat(StringTemp, label_get(0x1000 / 4));
     } else if (NetWinSessionOptions.fields_.native_life_ == -1) {
@@ -2377,9 +2371,9 @@ void NetWin::draw_session_info() {
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
     strcat(StringTemp, label_get(0xFBC / 4));
-    strcat(StringTemp, SocialWinColonSpaceText);
+    say_colon();
     strcat(StringTemp, "}");
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] != 0) {
         strcat(StringTemp, label_get(0x1000 / 4));
     } else if (NetWinSessionOptions.fields_.cloud_cover_ == -1) {
@@ -2430,9 +2424,9 @@ void NetWin::draw_session_info() {
         StringTemp[0] = 0;
         strcat(StringTemp, "{");
         strcat(StringTemp, label_get(0x113C / 4));
-        strcat(StringTemp, SocialWinColonSpaceText);
+        say_colon();
         strcat(StringTemp, "}");
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         _itoa(unclaimed, tally, 10);
         strcat(StringTemp, tally);
         avail = field.right - col - 10;
@@ -2734,7 +2728,7 @@ char NetWinWindowTitleInitialText;
 // choice shows (the leading clear stays at the call site).
 static void netwin_pcx_name(const char *name) {
     strcat(StringTemp, name);
-// RECOVERY_LITERAL: v1 0x00686940 0x00686945 $SG58000 0x00481FD0
+// RECOVERY_LITERAL: v1 0x00686940 0x00686945 $SG58041 0x00481FD0
     strcat(StringTemp, ".pcx");
 }
 
@@ -2799,7 +2793,7 @@ void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
     // Slow path: rebuild the table from the localized faction text. The
     // CUSTOMFACTIONS count is discovered by walking until text_item is empty.
     int custom_count = 0;
-// RECOVERY_LITERAL: v1 0x00686908 0x00686917 $SG58015 0x00481FD0
+// RECOVERY_LITERAL: v1 0x00686908 0x00686917 $SG58056 0x00481FD0
     if (text_open(AlphaxFileID, "CUSTOMFACTIONS") == 0) {
         text_get();
         while (*text_item() != 0) {
@@ -2828,7 +2822,7 @@ void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
 
     faction_records_->record_count_ = static_cast<uint8_t>(record_count);
     faction_records_->record_type_ = 7;
-// RECOVERY_LITERAL: v1 0x00686918 0x00686921 $SG58028 0x00481FD0
+// RECOVERY_LITERAL: v1 0x00686918 0x00686921 $SG58069 0x00481FD0
     if (text_open(AlphaxFileID, "FACTIONS") != 0) {
         return;
     }
@@ -2841,7 +2835,7 @@ void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
         text_get();
         strcpy(faction_records_->records_[name_index++].filename_, text_item());
     }
-// RECOVERY_LITERAL: v1 0x00686924 0x00686930 $SG58035 0x00481FD0
+// RECOVERY_LITERAL: v1 0x00686924 0x00686930 $SG58076 0x00481FD0
     if (text_open(AlphaxFileID, "NEWFACTIONS") != 0) {
         return;
     }
@@ -2850,7 +2844,7 @@ void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
         text_get();
         strcpy(faction_records_->records_[name_index++].filename_, text_item());
     }
-// RECOVERY_LITERAL: v1 0x00686930 0x0068693F $SG58040 0x00481FD0
+// RECOVERY_LITERAL: v1 0x00686930 0x0068693F $SG58081 0x00481FD0
     if (text_open(AlphaxFileID, "CUSTOMFACTIONS") != 0) {
         return;
     }
@@ -2883,7 +2877,7 @@ void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
         netwin_pcx_name(faction_records_->records_[record_index].filename_);
 
         if (buffer.load_pcx(StringTemp, 0, 0xa, 0xec) != 0) {
-// RECOVERY_LITERAL: v1 0x00686948 0x00686954 $SG58051 0x00481FD0
+// RECOVERY_LITERAL: v1 0x00686948 0x00686954 $SG58092 0x00481FD0
             buffer.load_pcx("faction.pcx", 0, 0xa, 0xec);
         }
         faction_records_->records_[record_index].color_ =
@@ -3434,8 +3428,8 @@ void NetWin::new_chat(char *message, int slot) {
     text[0] = 0;
     strcat(text, NetDaemonNet.get_player_name(NetDaemonNet.process_slots_[slot].pid_));
     CharUpperA(text);
-    strcat(text, SocialWinColonSpaceText);
-    strcat(text, BufferJoinSpace);
+    strcat_colon(text);
+    strcat_space(text);
     strcat(text, message);
     stringBox_.add(text, slot, 1);
 }

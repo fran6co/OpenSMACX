@@ -47,10 +47,6 @@
 #include "technology.h"
 #include <cstring>
 
-// Shared punctuation objects the image pushes instead of unit literals.
-extern char SocialWinCloseParenText[];
-extern char SocialWinOpenParenText[];
-extern char PercentText[];  // shared "%" (0x00682EA0)
 
 // Process-wide InfoWin lifecycle; original table callback 0x004562C0
 // constructs the object at 0x007AD2A0 and registers its teardown.
@@ -60,7 +56,6 @@ extern char PercentText[];  // shared "%" (0x00682EA0)
 InfoWin ConsoleInfoWin;
 void __cdecl help_any();
 
-extern char SocialWinColonSpaceText[];
 
 static void infowin_append_number(char *out, int value) {
     char number[80];
@@ -143,7 +138,7 @@ void InfoWin::setup_text() {
             text[0] = 0;
             line_height = 0;
             strcat(text, label_get(0));
-            strcat(text, SocialWinColonSpaceText);
+            strcat_colon(text);
             strcat(text, "{");
             say_year(text);
             strcat(text, "}");
@@ -154,7 +149,7 @@ void InfoWin::setup_text() {
                     || !(GameDataStateStorage.fields_.game_rules_ & 0x200))) {
                 text[0] = 0;
                 strcat(text, label_get(0x6A));
-                strcat(text, SocialWinColonSpaceText);
+                strcat_colon(text);
                 strcat(text, "{");
                 strcat(text, table_text(
                     Technology[PlayersData[faction].tech_id_researching].name));
@@ -164,45 +159,45 @@ void InfoWin::setup_text() {
             k = 2;
             text[0] = 0;
             strcat(text, table_text(Energy[0].abbrev));
-            strcat(text, SocialWinColonSpaceText);
+            strcat_colon(text);
             strcat(text, "{");
             infowin_append_number(text, (10 - PlayersData[faction].se_alloc_labs
                                          - PlayersData[faction].se_alloc_psych) * 10);
-            strcat(text, PercentText);
-            strcat(text, BufferJoinSpace);
-            strcat(text, BufferJoinSpace);
-            strcat(text, SocialWinOpenParenText);
+            strcat_percent(text);
+            strcat_space(text);
+            strcat_space(text);
+            strcat_open_paren(text);
             if (NetIncomeGlobal >= 0) {
                 strcat(text, "+");
             }
             infowin_append_number(text, NetIncomeGlobal);
             strcat(text, "/");
             strcat(text, table_text(Labels.strings_ptr[0x30]));
-            strcat(text, SocialWinCloseParenText);
+            strcat_close_paren(text);
             strcat(text, "}");
             strcpy(row_text_[pane][k++], text);
             text[0] = 0;
             strcat(text, table_text(Energy[1].abbrev));
-            strcat(text, SocialWinColonSpaceText);
+            strcat_colon(text);
             strcat(text, "{");
             infowin_append_number(text, PlayersData[faction].se_alloc_psych * 10);
-            strcat(text, PercentText);
+            strcat_percent(text);
             strcat(text, "}");
             strcpy(row_text_[pane][k++], text);
             text[0] = 0;
             strcat(text, table_text(Energy[2].abbrev));
-            strcat(text, SocialWinColonSpaceText);
+            strcat_colon(text);
             strcat(text, "{");
             infowin_append_number(text, PlayersData[faction].se_alloc_labs * 10);
-            strcat(text, PercentText);
+            strcat_percent(text);
             if (BreakthroughTurnsGlobal < 9000) {
-                strcat(text, BufferJoinSpace);
-                strcat(text, BufferJoinSpace);
-                strcat(text, SocialWinOpenParenText);
+                strcat_space(text);
+                strcat_space(text);
+                strcat_open_paren(text);
                 infowin_append_number(text, BreakthroughTurnsGlobal);
-                strcat(text, BufferJoinSpace);
+                strcat_space(text);
                 strcat(text, label_get(0x31));
-                strcat(text, SocialWinCloseParenText);
+                strcat_close_paren(text);
             }
             strcat(text, "}");
             strcpy(row_text_[pane][k++], text);
@@ -213,14 +208,14 @@ void InfoWin::setup_text() {
             text[0] = 0;
             line_height = 0;
             strcat(text, label_get(300));
-            strcat(text, SocialWinColonSpaceText);
+            strcat_colon(text);
             strcat(text, "{");
             infowin_append_number(text, PlayersData[faction].tech_commerce_bonus + 1);
             strcat(text, "}");
             strcpy(row_text_[pane][k++], text);
             text[0] = 0;
             strcat(text, label_get(301));
-            strcat(text, SocialWinColonSpaceText);
+            strcat_colon(text);
             strcat(text, "{");
             infowin_append_number(text, PlayersData[faction].turn_commerce_income);
             strcat(text, label_get(304));
@@ -228,7 +223,7 @@ void InfoWin::setup_text() {
             strcpy(row_text_[pane][k++], text);
             text[0] = 0;
             strcat(text, table_text(Labels.strings_ptr[302]));
-            strcat(text, SocialWinColonSpaceText);
+            strcat_colon(text);
             strcat(text, "{");
             infowin_append_number(text, EnergyEconomyTotal);
             strcat(text, label_get(304));
@@ -237,7 +232,7 @@ void InfoWin::setup_text() {
             if (Language == 0) {
                 text[0] = 0;
                 strcat(text, "Total Costs");
-                strcat(text, SocialWinColonSpaceText);
+                strcat_colon(text);
                 strcat(text, "{");
                 infowin_append_number(text, NetIncomeGlobal - EnergyEconomyTotal);
                 strcat(text, label_get(304));
@@ -246,7 +241,7 @@ void InfoWin::setup_text() {
             }
             text[0] = 0;
             strcat(text, label_get(0x3BF));
-            strcat(text, SocialWinColonSpaceText);
+            strcat_colon(text);
             strcat(text, "{");
             infowin_append_number(text, NetIncomeGlobal);
             strcat(text, label_get(304));
@@ -263,7 +258,7 @@ void InfoWin::setup_text() {
             strcpy(row_text_[pane][k++], text);
             text[0] = 0;
             strcat(text, get_title(other));
-            strcat(text, BufferJoinSpace);
+            strcat_space(text);
             strcat(text, get_name(other));
             strcpy(row_text_[pane][k++], text);
             text[0] = 0;
@@ -295,12 +290,12 @@ void InfoWin::setup_text() {
             strcpy(row_text_[pane][k++], text);
             text[0] = 0;
             strcat(text, get_title(faction));
-            strcat(text, BufferJoinSpace);
+            strcat_space(text);
             strcat(text, get_name(faction));
             strcpy(row_text_[pane][k++], text);
             text[0] = 0;
             strcat(text, label_get(0xDE));
-            strcat(text, SocialWinColonSpaceText);
+            strcat_colon(text);
             strcat(text, "{");
             say_special(text, table_text(
                 Repute[range(PlayersData[faction].integrity_blemishes, 0, 7)]), faction);
@@ -308,7 +303,7 @@ void InfoWin::setup_text() {
             strcpy(row_text_[pane][k++], text);
             text[0] = 0;
             strcat(text, label_get(0xDF));
-            strcat(text, SocialWinColonSpaceText);
+            strcat_colon(text);
             strcat(text, "{");
             say_special(text, table_text(
                 Might[7 - range(PlayersData[faction].ranking, 1, 7)].adj), faction);
@@ -316,7 +311,7 @@ void InfoWin::setup_text() {
             strcpy(row_text_[pane][k++], text);
             text[0] = 0;
             strcat(text, label_get(0x3C0));
-            strcat(text, SocialWinColonSpaceText);
+            strcat_colon(text);
             strcat(text, "{");
             infowin_append_number(text, council_votes(faction));
             strcat(text, "}");
@@ -336,10 +331,10 @@ void InfoWin::setup_text() {
             }
             text[0] = 0;
             strcat(text, label_get(0x41C / 4));
-            strcat(text, SocialWinColonSpaceText);
+            strcat_colon(text);
             strcat(text, "{");
             strcat(text, get_title(best));
-            strcat(text, BufferJoinSpace);
+            strcat_space(text);
             strcat(text, get_name(best));
             strcat(text, "}");
             strcpy(row_text_[pane][k++], text);
@@ -355,10 +350,10 @@ void InfoWin::setup_text() {
             }
             text[0] = 0;
             strcat(text, label_get(0x420 / 4));
-            strcat(text, SocialWinColonSpaceText);
+            strcat_colon(text);
             strcat(text, "{");
             strcat(text, get_title(best));
-            strcat(text, BufferJoinSpace);
+            strcat_space(text);
             strcat(text, get_name(best));
             strcat(text, "}");
             strcpy(row_text_[pane][k++], text);
@@ -374,10 +369,10 @@ void InfoWin::setup_text() {
             }
             text[0] = 0;
             strcat(text, label_get(0x424 / 4));
-            strcat(text, SocialWinColonSpaceText);
+            strcat_colon(text);
             strcat(text, "{");
             strcat(text, get_title(best));
-            strcat(text, BufferJoinSpace);
+            strcat_space(text);
             strcat(text, get_name(best));
             strcat(text, "}");
             strcpy(row_text_[pane][k++], text);
@@ -393,10 +388,10 @@ void InfoWin::setup_text() {
             }
             text[0] = 0;
             strcat(text, label_get(0x4F0 / 4));
-            strcat(text, SocialWinColonSpaceText);
+            strcat_colon(text);
             strcat(text, "{");
             strcat(text, get_title(best));
-            strcat(text, BufferJoinSpace);
+            strcat_space(text);
             strcat(text, get_name(best));
             strcat(text, "}");
             strcpy(row_text_[pane][k++], text);
@@ -420,10 +415,10 @@ void InfoWin::setup_text() {
             }
             text[0] = 0;
             strcat(text, label_get(0x97C / 4));
-            strcat(text, SocialWinColonSpaceText);
+            strcat_colon(text);
             strcat(text, "{");
             strcat(text, get_title(best));
-            strcat(text, BufferJoinSpace);
+            strcat_space(text);
             strcat(text, get_name(best));
             strcat(text, "}");
             strcpy(row_text_[pane][k++], text);
@@ -431,10 +426,10 @@ void InfoWin::setup_text() {
             if ((int)GameDataStateStorage.fields_.ranking_faction_id_unk1_ > 0) {
                 text[0] = 0;
                 strcat(text, label_get(0x428 / 4));
-                strcat(text, SocialWinColonSpaceText);
+                strcat_colon(text);
                 strcat(text, "{");
                 strcat(text, get_title(GameDataStateStorage.fields_.faction_rankings_[7]));
-                strcat(text, BufferJoinSpace);
+                strcat_space(text);
                 strcat(text, get_name(GameDataStateStorage.fields_.faction_rankings_[7]));
                 strcat(text, "}");
                 strcpy(row_text_[pane][k++], text);
@@ -583,14 +578,14 @@ void InfoWin::setup_text() {
             strcpy(row_text_[pane][k++], text);
             text[0] = 0;
             strcat(text, label_get(0x6A8 / 4));
-            strcat(text, SocialWinColonSpaceText);
+            strcat_colon(text);
             strcat(text, "{");
             strcat(text, MapFilePath);
             strcat(text, "}");
             strcpy(row_text_[pane][k++], text);
             text[0] = 0;
             strcat(text, label_get(0x6A4 / 4));
-            strcat(text, SocialWinColonSpaceText);
+            strcat_colon(text);
             switch (MapEditorPaintId) {
             case 0:
                 strcat(text, label_get(0xEBC / 4));
@@ -629,7 +624,7 @@ void InfoWin::setup_text() {
             strcpy(row_text_[pane][k++], text);
             text[0] = 0;
             strcat(text, label_get(0x684 / 4));
-            strcat(text, SocialWinColonSpaceText);
+            strcat_colon(text);
             if (MapEditorBrushId == 1) {
                 strcat(text, label_get(0x688 / 4));
             } else {
@@ -638,11 +633,11 @@ void InfoWin::setup_text() {
             strcpy(row_text_[pane][k++], text);
             text[0] = 0;
             strcat(text, label_get(0xD7C / 4));
-            strcat(text, SocialWinColonSpaceText);
+            strcat_colon(text);
             infowin_append_number(text, MapLongitudeBounds / 2);
             strcat(text, "x");
             infowin_append_number(text, MapLatitudeBounds);
-            strcat(text, BufferJoinSpace);
+            strcat_space(text);
             if (MapIsFlat & 1) {
                 strcat(text, label_get(0xD80 / 4));
             } else {
@@ -651,7 +646,7 @@ void InfoWin::setup_text() {
             strcpy(row_text_[pane][k++], text);
             text[0] = 0;
             strcat(text, label_get(0x84 / 4));
-            strcat(text, SocialWinColonSpaceText);
+            strcat_colon(text);
             strcat(text, "{");
             strcat(text, label_get(0x14 + MapCloudCover));
             strcat(text, "}");

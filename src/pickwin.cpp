@@ -41,9 +41,6 @@
 #include "popmenu.h"
 #include "rectangle_operations.h"
 
-// Shared punctuation objects the image pushes instead of unit literals.
-extern char SocialWinCloseParenText[];
-extern char SocialWinOpenParenText[];
 extern int TextColourTable[195];
 
 // Original caption834D6C is passed synchronously to Win::init, which
@@ -427,16 +424,16 @@ void PickWin::init(void (__cdecl *callback)(int), int mode, int faction) {
 // operand at the relocation site and checked against the literal text in
 // the body; the repeated "JENN282" and "|" are separate unpooled copies at
 // distinct addresses, in source order.
-// RECOVERY_LITERAL: v1 0x00686AD0 0x00686AD9 $SG51139 0x00489BA0
-// RECOVERY_LITERAL: v1 0x00686ADC 0x00686AE8 $SG51143 0x00489BA0
-// RECOVERY_LITERAL: v1 0x00686AE8 0x00686AF0 $SG51153 0x00489BA0
-// RECOVERY_LITERAL: v1 0x00686AF0 0x00686AF8 $SG51154 0x00489BA0
-// RECOVERY_LITERAL: v1 0x00686AF8 0x00686B00 $SG51162 0x00489BA0
-// RECOVERY_LITERAL: v1 0x00686B00 0x00686B02 $SG51163 0x00489BA0
-// RECOVERY_LITERAL: v1 0x00686B04 0x00686B0C $SG51194 0x00489BA0
-// RECOVERY_LITERAL: v1 0x00686B0C 0x00686B14 $SG51195 0x00489BA0
-// RECOVERY_LITERAL: v1 0x00686B14 0x00686B1C $SG51204 0x00489BA0
-// RECOVERY_LITERAL: v1 0x00686B1C 0x00686B1E $SG51205 0x00489BA0
+// RECOVERY_LITERAL: v1 0x00686AD0 0x00686AD9 $SG51181 0x00489BA0
+// RECOVERY_LITERAL: v1 0x00686ADC 0x00686AE8 $SG51185 0x00489BA0
+// RECOVERY_LITERAL: v1 0x00686AE8 0x00686AF0 $SG51195 0x00489BA0
+// RECOVERY_LITERAL: v1 0x00686AF0 0x00686AF8 $SG51196 0x00489BA0
+// RECOVERY_LITERAL: v1 0x00686AF8 0x00686B00 $SG51204 0x00489BA0
+// RECOVERY_LITERAL: v1 0x00686B00 0x00686B02 $SG51205 0x00489BA0
+// RECOVERY_LITERAL: v1 0x00686B04 0x00686B0C $SG51236 0x00489BA0
+// RECOVERY_LITERAL: v1 0x00686B0C 0x00686B14 $SG51237 0x00489BA0
+// RECOVERY_LITERAL: v1 0x00686B14 0x00686B1C $SG51246 0x00489BA0
+// RECOVERY_LITERAL: v1 0x00686B1C 0x00686B1E $SG51247 0x00489BA0
 // ORIGINAL: 0x00489BA0 ?on_button_clicked@PickWin@@QAEXH@Z 0x00489BA0-0x0048A798;0x00657F85-0x006581C9 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00489ba0.cpp"], "reason": "Recover genuine typed PickWin owner behavior and automatic subobject lifetime from pinned native flow and preserved seed; historical identity and restoration obligations retained, no exactness claim."}
 // TRIED: automatic C++ RAII destruction for Popup/PullDown's ~20 embedded subobjects (Dialogs, EditGroup, SpriteBox, CheckBox, ListBox, Dialog, Sprite, StringStruct x2, FlatButton x2, Heap, nested GraphicWin) - the scaffold's classes represent several of these as raw byte/uint32 padding, so auto-generated dtors would skip real cleanup the original calls explicitly. Used mechanical EBP(x)-buffer-offset transcription (verified against pickwin.h's `Popup popup_` size comment == sizeof(BasePop)+sizeof(Scroll), and cross-checked field offsets against pickwin.h directly) instead, matching each explicit close()/dtor call site.
@@ -484,9 +481,9 @@ void PickWin::on_button_clicked(int button) {
         if (strcmp(Players[faction].filename, "JENN282") != 0) {
           says(Players[faction].formal_name_faction);
           says("|");
-          says(SocialWinOpenParenText);
+          say_open_paren();
           says(Players[faction].desc_name_faction);
-          says(SocialWinCloseParenText);
+          say_close_paren();
         } else {
           say_label(0x462);
         }
@@ -581,9 +578,9 @@ void PickWin::on_button_clicked(int button) {
           if (strcmp(Players[row].filename, "JENN282") != 0) {
             says(Players[row].formal_name_faction);
             says("|");
-            says(SocialWinOpenParenText);
+            say_open_paren();
             says(Players[row].desc_name_faction);
-            says(SocialWinCloseParenText);
+            say_close_paren();
           } else {
             say_label(0x462);
           }

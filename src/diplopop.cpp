@@ -38,8 +38,6 @@
 #include "faction.h"  // spying() is owned by the faction API
 #include "console.h"
 
-// Shared separator objects the image pushes instead of unit literals.
-extern char SocialWinColonSpaceText[];
 
 // SDK import identity; the pinned original IAT cell is 0x00669328.
 // RECOVERY_IMPORT: v1 __imp__UnionRect@12 USER32.dll name:UnionRect
@@ -356,7 +354,7 @@ void DiploPop::draw_portrait() {
     MainInterfaceGlobal.set_font(&font2_, 0, 0, 0);
     StringTemp[0] = '\0';
     strcat(StringTemp, label_get(0xE90 / 4));
-    strcat(StringTemp, SocialWinColonSpaceText);
+    say_colon();
     int faction = counterpart_faction_;
     char *repute = Repute[range(PlayersData[faction].integrity_blemishes, 0, 7)];
     say_special(StringTemp, StringTable.get(repute), faction);
@@ -365,7 +363,7 @@ void DiploPop::draw_portrait() {
 
     StringTemp[0] = '\0';
     strcat(StringTemp, label_get(0xE94 / 4));
-    strcat(StringTemp, SocialWinColonSpaceText);
+    say_colon();
     faction = counterpart_faction_;
     char *mood =
         Mood[get_mood(PlayersData[faction].diplo_friction[ConsoleGlobal.faction_id_])];
@@ -458,7 +456,7 @@ void DiploPop::draw_info() {
         if (panel == 0) {
             StringTemp[0] = '\0';
             strcat(StringTemp, label_get(0xE98 / 4));
-            strcat(StringTemp, SocialWinColonSpaceText);
+            say_colon();
             const uint32_t relation =
                 PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction];
             LPSTR relation_label;
@@ -480,7 +478,7 @@ void DiploPop::draw_info() {
 
         StringTemp[0] = '\0';
         strcat(StringTemp, label_get(0xE9C / 4));
-        strcat(StringTemp, SocialWinColonSpaceText);
+        say_colon();
         strcat(StringTemp, table_text(spying(faction) ? Labels.strings_ptr[0x614 / 4]
                                                            : Labels.strings_ptr[0xEA0 / 4]));
         y = MainInterfaceGlobal.wrap(StringTemp, x, y, r.right - x);
@@ -488,7 +486,7 @@ void DiploPop::draw_info() {
         if (faction == ConsoleGlobal.faction_id_ || spying(faction)) {
             StringTemp[0] = '\0';
             strcat(StringTemp, label_get(0x90 / 4));
-            strcat(StringTemp, SocialWinColonSpaceText);
+            say_colon();
             say_num(PlayersData[faction].energy_reserves
                     - PlayersData[faction].hurry_cost_total);
             MainInterfaceGlobal.write_l(StringTemp, x, y);
@@ -497,7 +495,7 @@ void DiploPop::draw_info() {
 
         StringTemp[0] = '\0';
         strcat(StringTemp, label_get(0x37C / 4));
-        strcat(StringTemp, SocialWinColonSpaceText);
+        say_colon();
         x = MainInterfaceGlobal.write_l(StringTemp, x, y);
 
         StringTemp[0] = '\0';

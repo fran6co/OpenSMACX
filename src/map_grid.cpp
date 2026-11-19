@@ -45,7 +45,6 @@
 #include "crt_random_inline.h"
 
 // Existing shared punctuation: declared in string_formatting.cpp and defined in socialwin.cpp.
-extern char SocialWinCommaSpaceText[];
 static_assert(sizeof(AltDirectionTable) == 245, "landmark direction span");
 extern const unsigned char AltTemplateArid[113];
 extern const unsigned char AltTemplateMoist[113];
@@ -71,9 +70,6 @@ int AltNatural[11] = {
 #include "terrain_altitude_natural.inc"
 };
 
-// Shared punctuation objects the image pushes instead of unit literals.
-extern char SocialWinCloseParenText[];
-extern char SocialWinOpenParenText[];
 static_assert(sizeof(AltNaturalDefault) == 44, "default altitude table extent");
 static_assert(sizeof(AltContour) == 44, "river contour table extent");
 static_assert(sizeof(AltNatural) == 44, "mutable altitude table extent");
@@ -1285,7 +1281,7 @@ void __cdecl say_loc(char *text, int x, int y, int want_name, int trailer_mode,
                 goto trailer;
             }
             strcat(text, label_get(0xf8 / 4));
-            strcat(text, BufferJoinSpace);
+            strcat_space(text);
         } else {
             goto skip_first_check;
         }
@@ -1296,26 +1292,26 @@ void __cdecl say_loc(char *text, int x, int y, int want_name, int trailer_mode,
 skip_first_check:
     if (want_coords != 0) {
         strcat(text, label_get(0x20 / 4));
-        strcat(text, BufferJoinSpace);
+        strcat_space(text);
     }
     strcat(text, Bases[base_id].name_string);
     if (trailer_mode != 0) {
-        strcat(text, BufferJoinSpace);
+        strcat_space(text);
     }
 
 trailer:
     if (trailer_mode == 1 || (trailer_mode == 2 && base_id < 0)) {
-        strcat(text, SocialWinOpenParenText);
+        strcat_open_paren(text);
         _itoa(x, number, 10);
         strcat(text, number);
-        strcat(text, SocialWinCommaSpaceText);
+        strcat_comma(text);
         _itoa(y, number, 10);
         strcat(text, number);
-        strcat(text, SocialWinCloseParenText);
+        strcat_close_paren(text);
 
         int flags = GameDataStateStorage.fields_.game_state_;
         if ((flags & 0x40) != 0 && (flags & 0x1000) != 0) {
-            strcat(StringTemp, BufferJoinSpace);
+            space();
             Map *tile = map_loc(x, y);
             _itoa(tile->region, number, 10);
             strcat(StringTemp, number);

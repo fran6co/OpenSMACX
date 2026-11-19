@@ -25,15 +25,12 @@
 #include "map.h"
 #include "faction.h"
 
-// Shared original punctuation storage, defined in socialwin.cpp.
-extern char SocialWinColonSpaceText[];
-extern char SocialWinCommaSpaceText[];
 
 // Keep these application formatters separate from Strings::get's definition so
 // VC6's same-TU /Ob2 inliner cannot absorb the original get calls. Their shared
 // storage and Strings implementation remain owned by strings.cpp.
 
-// The shared space is owned by BufferJoinSpace (buffer.cpp, 0x00682820).
+// The shared space 0x00682820 is strings.h's space() literal.
 // Canonical RECOVERY_LITERAL anchors now live in datalink_entries.cpp.
 // Their bindings remain facts; source regrouping does not prove the
 // original translation-unit home. Unaffected formatters independently

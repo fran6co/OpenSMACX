@@ -64,9 +64,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-// Shared punctuation objects the image pushes instead of unit literals.
-extern char SocialWinCloseParenText[];
-extern char SocialWinOpenParenText[];
 
 
 // WORKAROUND(inline): has_project() spelled through base_project(), as the
@@ -282,7 +279,7 @@ int __cdecl base_at(int x, int y) {
     }
     if (!BaseAtErrorGuard) {
         // This base_at diagnostic passes its own format literal to log_say, with x and y as separate values.
-// RECOVERY_LITERAL: v1 0x00689390 0x006893A8 $SG62125 0x004E3A50
+// RECOVERY_LITERAL: v1 0x00689390 0x006893A8 $SG62167 0x004E3A50
         log_say("Base Bits Error  (x, y)", x, y, 0);
     }
     if (!(GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE)) {
@@ -297,7 +294,7 @@ int __cdecl base_at(int x, int y) {
         parse_num(0, x);
         parse_num(1, y);
         // This base_at popup key is a separate literal argument from the diagnostic format string above.
-// RECOVERY_LITERAL: v1 0x006893A8 0x006893B0 $SG62129 0x004E3A50
+// RECOVERY_LITERAL: v1 0x006893A8 0x006893B0 $SG62171 0x004E3A50
         X_pop("BASEBIT", NULL);
     }
     BaseAtErrorGuard = 0;
@@ -611,7 +608,7 @@ void __cdecl name_base(int faction_id, LPSTR name_out, BOOL is_final, BOOL is_se
     GenderDefault = Players[faction_id].noun_gender;
     PluralityDefault = Players[faction_id].is_noun_plural;
     strcat(name_out, Players[faction_id].noun_faction);
-    strcat(name_out, BufferJoinSpace);
+    strcat_space(name_out);
     char digits[80];
     _itoa(++offset, digits, 10);
     strcat(name_out, digits);
@@ -5899,34 +5896,34 @@ int __cdecl upgrade_prototype(int faction_id, int proto_id_new,
             int i;
             StringTemp[0] = '\0';
             strcat(StringTemp, VehPrototypes[proto_id_old].veh_name);
-            strcat(StringTemp, BufferJoinSpace);
-            strcat(StringTemp, SocialWinOpenParenText);
+            space();
+            say_open_paren();
             say_stats_2(StringTemp, proto_id_old);
             if (VehPrototypes[proto_id_old].ability_flags) {
-                strcat(StringTemp, BufferJoinSpace);
+                space();
                 for (i = 0; i < MaxAbilityNum; i++) {
                     if (has_abil(proto_id_old, 1 << i)) {
                         strcat(StringTemp, table_text(Ability[i].abbreviation));
                     }
                 }
             }
-            strcat(StringTemp, SocialWinCloseParenText);
+            say_close_paren();
             parse_says(0, StringTemp, -1, -1);
 
             StringTemp[0] = '\0';
             strcat(StringTemp, VehPrototypes[proto_id_new].veh_name);
-            strcat(StringTemp, BufferJoinSpace);
-            strcat(StringTemp, SocialWinOpenParenText);
+            space();
+            say_open_paren();
             say_stats_2(StringTemp, proto_id_new);
             if (VehPrototypes[proto_id_new].ability_flags) {
-                strcat(StringTemp, BufferJoinSpace);
+                space();
                 for (i = 0; i < MaxAbilityNum; i++) {
                     if (has_abil(proto_id_new, 1 << i)) {
                         strcat(StringTemp, table_text(Ability[i].abbreviation));
                     }
                 }
             }
-            strcat(StringTemp, SocialWinCloseParenText);
+            say_close_paren();
             parse_says(1, StringTemp, -1, -1);
 
             parse_num(0, cost);
@@ -6191,8 +6188,6 @@ BOOL __cdecl base_queue(int base_id) {
 
 
 
-// Shared separator objects the image pushes instead of unit literals.
-extern const char BufferJoinSpace[];
 
 extern int BaseProductionZoomRequested;
 extern int BaseProductionUnitCreationDisabled;
@@ -8556,7 +8551,7 @@ void __cdecl make_base_unique(int base_id) {
     if (collisions != 0) {
         Bases[base_id].name_string[21] = 0;
         // make_base_unique passes this one-byte delimiter to strcat; collision digits use a separate buffer.
-// RECOVERY_LITERAL: v1 0x00689F08 0x00689F0A $SG65670 0x004F7FE0
+// RECOVERY_LITERAL: v1 0x00689F08 0x00689F0A $SG65712 0x004F7FE0
         strcat(Bases[base_id].name_string, "-");
         char digits[0x50];
         _itoa(collisions + 1, digits, 10);

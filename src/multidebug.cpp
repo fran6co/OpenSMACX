@@ -18,13 +18,11 @@
 #include "stdafx.h"
 #include "multidebug.h"
 #include "net_class.h"
+#include "strings.h"  // strcat_period, strcat_space: the shared ". " and " "
 #include <stdlib.h>
 #include <string.h>
 
-// Shared separator objects the image pushes instead of unit literals.
-extern const char BufferJoinSpace[];
-// The ". " object (0x006867E0) defined by multiwin.cpp and pushed by both units.
-extern char MultiWinDotSpaceText[];
+// The ". " (0x006867E0) is strings.h's strcat_period literal, kept by multiwin.cpp.
 
 // ORIGINAL: 0x005C97C0 ??__Eg_MULTIDEBUG@@YAXXZ 0x005C97C0-0x005C97D6 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"The original relocated CRT entry constructs the static MultiDebug object and registers its complete teardown; bind the compiler's natural initializer, not a handwritten wrapper.","evidence":["git:40f970d6^:src/init_thunks.cpp","original:CRT slot 0x00682668 points to 0x005C97C0","original:0x005C97C0 constructs 0x009B22F0 and registers 0x005C97E0"]}
@@ -92,7 +90,7 @@ void MultiDebug::close() {
     net_ = 0;
 }
 
-// RECOVERY_LITERAL: v1 0x00691E80 0x00691E90 $SG46077 0x005C9860
+// RECOVERY_LITERAL: v1 0x00691E80 0x00691E90 $SG46195 0x005C9860
 /*
 Purpose: Bring the standing debug window up on its GraphicWin base, then
          arm the pieces that make it a debug window: the face it draws with,
@@ -204,8 +202,8 @@ void MultiDebug::on_redraw() {
         message[0] = 0;
         _itoa(index, number, 10);
         strcat(message, number);
-        strcat(message, MultiWinDotSpaceText);
-        strcat(message, BufferJoinSpace);
+        strcat_period(message);
+        strcat_space(message);
         value_x = Buffer::write_l(message, value_x, y);
         char *name = net_->players_[index].name_and_tail_;
         Buffer::write_l(name, value_x, y);

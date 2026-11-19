@@ -112,8 +112,6 @@ extern int WindowAnimationFrameDelay;
 #include "win.h"
 #include "autosound.h"
 
-// Shared separator objects the image pushes instead of unit literals.
-extern const char BufferJoinSpace[];
 
 // Original dword writes/reads in45D170,45C3A0,45CA40 respectively.
 // Independently read initial bytes:7D3934/7D3938/7D3944 all zero;
@@ -138,14 +136,13 @@ SubInterface *InterfaceRegistry[12];
 // The image appends the shared ": " (0x00682E94) and " " (0x00682820) strings
 // at every use in draw_edit_pane; this unit's own literals stay separate
 // per use, so these are the named socialwin.cpp/buffer.cpp objects.
-extern char SocialWinColonSpaceText[];
-// RECOVERY_LITERAL: v1 0x00685364 0x00685366 $SG58104 0x0045B550
-// RECOVERY_LITERAL: v1 0x00685368 0x0068536A $SG58105 0x0045B550
-// RECOVERY_LITERAL: v1 0x0068536C 0x0068536E $SG58134 0x0045B550
-// RECOVERY_LITERAL: v1 0x00685370 0x00685372 $SG58137 0x0045B550
-// RECOVERY_LITERAL: v1 0x00685374 0x00685376 $SG58138 0x0045B550
-// RECOVERY_LITERAL: v1 0x00685378 0x0068537A $SG58139 0x0045B550
-// RECOVERY_LITERAL: v1 0x0068537C 0x0068537E $SG58144 0x0045B550
+// RECOVERY_LITERAL: v1 0x00685364 0x00685366 $SG58147 0x0045B550
+// RECOVERY_LITERAL: v1 0x00685368 0x0068536A $SG58148 0x0045B550
+// RECOVERY_LITERAL: v1 0x0068536C 0x0068536E $SG58177 0x0045B550
+// RECOVERY_LITERAL: v1 0x00685370 0x00685372 $SG58180 0x0045B550
+// RECOVERY_LITERAL: v1 0x00685374 0x00685376 $SG58181 0x0045B550
+// RECOVERY_LITERAL: v1 0x00685378 0x0068537A $SG58182 0x0045B550
+// RECOVERY_LITERAL: v1 0x0068537C 0x0068537E $SG58187 0x0045B550
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0045B550 0x0045BBF8 0x0045BC24 0x0045B720
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x0045B550 0x0045BC24 0x0045BC42 0x0045B71A
 // ORIGINAL: 0x0045B550 ?draw_edit_pane@MainInterface@@QAEXXZ 0x0045B550-0x0045BBF7 FILE BYTE_EXACT
@@ -170,7 +167,7 @@ void MainInterface::draw_edit_pane() {
 
     line[0] = 0;
     strcat(line, label_get(0x6A8 / 4));
-    strcat(line, SocialWinColonSpaceText);
+    strcat_colon(line);
     strcat(line, "{");
     strcat(line, MapFilePath);
     strcat(line, "}");
@@ -179,7 +176,7 @@ void MainInterface::draw_edit_pane() {
 
     line[0] = 0;
     strcat(line, label_get(0x6A4 / 4));
-    strcat(line, SocialWinColonSpaceText);
+    strcat_colon(line);
     switch (MapEditorPaintId) {
     case 0: { LPSTR name = Labels.strings_ptr[0xEBC / 4]; strcat(line, StringTable.get(name)); } break;
     case 1: { LPSTR name = Labels.strings_ptr[0xEC0 / 4]; strcat(line, StringTable.get(name)); } break;
@@ -198,7 +195,7 @@ void MainInterface::draw_edit_pane() {
 
     line[0] = 0;
     strcat(line, label_get(0x684 / 4));
-    strcat(line, SocialWinColonSpaceText);
+    strcat_colon(line);
     if (MapEditorBrushId == 1) {
         { LPSTR name = Labels.strings_ptr[0x688 / 4]; strcat(line, StringTable.get(name)); }
     } else {
@@ -210,13 +207,13 @@ void MainInterface::draw_edit_pane() {
 
     line[0] = 0;
     strcat(line, label_get(0xD7C / 4));
-    strcat(line, SocialWinColonSpaceText);
+    strcat_colon(line);
     _itoa(MapLongitudeBounds / 2, number, 10);
     strcat(line, number);
     strcat(line, "x");
     _itoa(MapLatitudeBounds, number, 10);
     strcat(line, number);
-    strcat(line, BufferJoinSpace);
+    strcat_space(line);
     if (MapIsFlat & 1) {
         strcat(line, label_get(0xD80 / 4));
     } else {
@@ -227,7 +224,7 @@ void MainInterface::draw_edit_pane() {
 
     line[0] = 0;
     strcat(line, label_get(0x84 / 4));
-    strcat(line, SocialWinColonSpaceText);
+    strcat_colon(line);
     strcat(line, "{");
     // Original 0x45BA7E loads the cloud setting, not the planet-size setting.
     strcat(line, label_get(0x50 / 4 + MapCloudCover));
@@ -967,14 +964,14 @@ void MainInterface::set_date(char *) {
     int y = rect.top;
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0));
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     say_year(StringTemp);
     // The image keeps a null test of the StringTemp address before strlen.
     if (StringTemp) write_l(StringTemp, x, y, strlen(StringTemp));
     y += text_line_height();
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x90 / 4));
-    strcat(StringTemp, SocialWinColonSpaceText);
+    say_colon();
     char number[80];
     _itoa(static_cast<int>(static_cast<uint32_t>(PlayersData[ConsoleGlobal.faction_id_].energy_reserves)
           - PlayersData[ConsoleGlobal.faction_id_].hurry_cost_total), number, 10);

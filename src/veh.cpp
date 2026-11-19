@@ -376,13 +376,6 @@ void __cdecl del_site(int faction_id, int type, int x, int y, int proximity) {
     }
 }
 
-// Shared punctuation objects the image pushes instead of unit literals.
-extern char SocialWinCloseParenText[];
-extern char SocialWinOpenParenText[];
-// Shared separator objects the image pushes instead of unit literals.
-extern const char BufferJoinSpace[];
-extern char SocialWinColonSpaceText[];
-extern char SocialWinCommaSpaceText[];
 
 int __cdecl popp(const char *title, const char *label, int channel,
                  const char *picture, int(__cdecl *callback)());
@@ -1916,7 +1909,7 @@ void __cdecl say_offense(LPSTR stat, int proto_id) {
         strcat(stat, "<");
     }
     if (can_arty(proto_id, true)) {
-        strcat(stat, SocialWinOpenParenText);
+        strcat_open_paren(stat);
     }
     int off_rating = offense_proto(proto_id, -1, 0);
     _itoa(off_rating, num_buf, 10);
@@ -1937,7 +1930,7 @@ void __cdecl say_offense(LPSTR stat, int proto_id) {
         strcat(stat, "!");
     }
     if (can_arty(proto_id, true)) {
-        strcat(stat, SocialWinCloseParenText);
+        strcat_close_paren(stat);
     }
     if (has_abil(proto_id, ABL_AIR_SUPERIORITY)) {
         strcat(stat, ">");
@@ -1964,32 +1957,32 @@ Status: Complete
 void __cdecl say_defense(LPSTR stat, int proto_id) {
     char num_buf[80];
     if (has_abil(proto_id, ABL_AAA)) {
-// RECOVERY_LITERAL: v1 0x0068F118 0x0068F11A $SG62694 0x0057D6D0
+// RECOVERY_LITERAL: v1 0x0068F118 0x0068F11A $SG62734 0x0057D6D0
         strcat(stat, "<");
     }
     int def_rating = armor_proto(proto_id, -1, 0);
     _itoa(def_rating, num_buf, 10);
     strcat(stat, num_buf);
     if (has_abil(proto_id, ABL_COMM_JAMMER)) {
-// RECOVERY_LITERAL: v1 0x0068F11C 0x0068F11E $SG62697 0x0057D6D0
+// RECOVERY_LITERAL: v1 0x0068F11C 0x0068F11E $SG62737 0x0057D6D0
         strcat(stat, "+");
     }
     if (has_abil(proto_id, ABL_TRANCE)) {
-// RECOVERY_LITERAL: v1 0x0068F120 0x0068F122 $SG62699 0x0057D6D0
+// RECOVERY_LITERAL: v1 0x0068F120 0x0068F122 $SG62739 0x0057D6D0
         strcat(stat, "t");
     }
     if (has_abil(proto_id, ABL_AAA)) {
-// RECOVERY_LITERAL: v1 0x0068F124 0x0068F126 $SG62701 0x0057D6D0
+// RECOVERY_LITERAL: v1 0x0068F124 0x0068F126 $SG62741 0x0057D6D0
         strcat(stat, ">");
     }
     if (VehPrototypes[proto_id].armor_id == ARM_PULSE_3_ARMOR
         || VehPrototypes[proto_id].armor_id == ARM_PULSE_8_ARMOR) {
-// RECOVERY_LITERAL: v1 0x0068F128 0x0068F12A $SG62704 0x0057D6D0
+// RECOVERY_LITERAL: v1 0x0068F128 0x0068F12A $SG62744 0x0057D6D0
         strcat(stat, "p");
     }
     if (VehPrototypes[proto_id].armor_id == ARM_RESONANCE_3_ARMOR
         || VehPrototypes[proto_id].armor_id == ARM_RESONANCE_8_ARMOR) {
-// RECOVERY_LITERAL: v1 0x0068F12C 0x0068F12E $SG62707 0x0057D6D0
+// RECOVERY_LITERAL: v1 0x0068F12C 0x0068F12E $SG62747 0x0057D6D0
         strcat(stat, "r");
     }
 }
@@ -2022,29 +2015,29 @@ void __cdecl say_stats_3(LPSTR stat, int proto_id) {
     char num_buf[80];
     int8_t off_rating = get_proto_offense_rating(proto_id);
     if (off_rating < 0) {
-// RECOVERY_LITERAL: v1 0x0068F130 0x0068F132 $SG62715 0x0057D7D0
+// RECOVERY_LITERAL: v1 0x0068F130 0x0068F132 $SG62755 0x0057D7D0
         strcat(stat, "?"); // PSI
     } else if (off_rating >= 99) {
-// RECOVERY_LITERAL: v1 0x0068F134 0x0068F136 $SG62718 0x0057D7D0
+// RECOVERY_LITERAL: v1 0x0068F134 0x0068F136 $SG62758 0x0057D7D0
         strcat(stat, "*");
     } else {
         say_offense(stat, proto_id);
     }
-// RECOVERY_LITERAL: v1 0x0068F138 0x0068F13A $SG62720 0x0057D7D0
+// RECOVERY_LITERAL: v1 0x0068F138 0x0068F13A $SG62760 0x0057D7D0
     strcat(stat, "-");
     if (get_proto_defense_rating(proto_id) < 0) {
-// RECOVERY_LITERAL: v1 0x0068F13C 0x0068F13E $SG62722 0x0057D7D0
+// RECOVERY_LITERAL: v1 0x0068F13C 0x0068F13E $SG62762 0x0057D7D0
         strcat(stat, "?");
     } else {
         say_defense(stat, proto_id);
     }
-// RECOVERY_LITERAL: v1 0x0068F140 0x0068F142 $SG62724 0x0057D7D0
+// RECOVERY_LITERAL: v1 0x0068F140 0x0068F142 $SG62764 0x0057D7D0
     strcat(stat, "-");
     int speed = speed_proto(proto_id) / Rules.move_rate_roads;
     _itoa(speed, num_buf, 10);
     strcat(stat, num_buf);
     if (VehPrototypes[proto_id].reactor_id > RECT_FISSION) {
-// RECOVERY_LITERAL: v1 0x0068F144 0x0068F146 $SG62727 0x0057D7D0
+// RECOVERY_LITERAL: v1 0x0068F144 0x0068F146 $SG62767 0x0057D7D0
         strcat(stat, "*");
         _itoa(VehPrototypes[proto_id].reactor_id, num_buf, 10);
         strcat(stat, num_buf);
@@ -2093,11 +2086,11 @@ void __cdecl say_stats_2(LPSTR stat, int proto_id) {
     _itoa(speed, num_buf, 10);
     strcat(stat, num_buf);
     if (get_proto_triad(proto_id) == TRIAD_SEA) {
-        strcat(stat, BufferJoinSpace);
+        strcat_space(stat);
         strcat(stat, label_get(163)); // 'Sea'
     }
     if (get_proto_triad(proto_id) == TRIAD_AIR) {
-        strcat(stat, BufferJoinSpace);
+        strcat_space(stat);
         strcat(stat, label_get(162)); // 'Air'
     }
     if (VehPrototypes[proto_id].reactor_id > 1) {
@@ -2148,7 +2141,7 @@ void __cdecl say_stats(LPSTR stat, int proto_id, LPSTR custom_spacer) {
         && !VehPrototypes[proto_id].ability_flags) {
         char *name = PlansFullName[3]; // 'Explore/Defense'
         strcat(stat, StringTable.get(name));
-        strcat(stat, SocialWinCommaSpaceText);
+        strcat_comma(stat);
     } else if (Weapon[VehPrototypes[proto_id].weapon_id].mode < 3) { // Projectile, energy, missile
         if (VehPrototypes[proto_id].plan != PLAN_DEFENSIVE || (get_proto_offense_rating(proto_id) >= 0 && get_proto_offense_rating(proto_id) <= get_proto_defense_rating(proto_id))) {
             char *name = PlansShortName[VehPrototypes[proto_id].plan];
@@ -2157,7 +2150,7 @@ void __cdecl say_stats(LPSTR stat, int proto_id, LPSTR custom_spacer) {
             char *name = Labels.strings_ptr[312]; // 'Combat'
             strcat(stat, StringTable.get(name));
         }
-        strcat(stat, SocialWinCommaSpaceText);
+        strcat_comma(stat);
     }
     if (get_proto_offense_rating(proto_id) < 0) {
         strcat(stat, label_get(196)); // 'Psi'
@@ -2176,13 +2169,13 @@ append_spacer:
             char *full_name = PlansFullName[Weapon[VehPrototypes[proto_id].weapon_id].mode];
             strcat(stat, StringTable.get(full_name));
             if (VehPrototypes[proto_id].plan == PLAN_NAVAL_TRANSPORT) {
-                strcat(stat, SocialWinOpenParenText);
+                strcat_open_paren(stat);
                 _itoa(VehPrototypes[proto_id].carry_capacity, num_buf, 10);
                 strcat(stat, num_buf);
-                strcat(stat, SocialWinCloseParenText);
+                strcat_close_paren(stat);
             }
             if (get_proto_triad(proto_id)) { // sea, air
-                strcat(stat, SocialWinCommaSpaceText); // Original separator; the later triad space remains.
+                strcat_comma(stat); // Original separator; the later triad space remains.
             }
             goto append_triad;
         }
@@ -2191,12 +2184,12 @@ append_spacer:
             strcat(stat, StringTable.get(name));
         }
         if (VehPrototypes[proto_id].plan == PLAN_NAVAL_TRANSPORT) {
-            strcat(stat, SocialWinOpenParenText);
+            strcat_open_paren(stat);
             _itoa(VehPrototypes[proto_id].carry_capacity, num_buf, 10);
             strcat(stat, num_buf);
-            strcat(stat, SocialWinCloseParenText);
+            strcat_close_paren(stat);
         }
-        strcat(stat, SocialWinCommaSpaceText);
+        strcat_comma(stat);
     }
     if (get_proto_defense_rating(proto_id) < 0) {
         strcat(stat, label_get(196)); // 'Psi'
@@ -2215,20 +2208,20 @@ append_spacer:
     }
 append_triad:
     if (get_proto_triad(proto_id) == TRIAD_SEA) {
-        strcat(stat, BufferJoinSpace);
+        strcat_space(stat);
         strcat(stat, label_get(163)); // 'Sea'
     }
     if (get_proto_triad(proto_id) == TRIAD_AIR) {
-        strcat(stat, BufferJoinSpace);
+        strcat_space(stat);
         strcat(stat, label_get(162)); // 'Air'
     }
     if (VehPrototypes[proto_id].reactor_id > 1) {
-        strcat(stat, BufferJoinSpace);
-        strcat(stat, SocialWinOpenParenText);
+        strcat_space(stat);
+        strcat_open_paren(stat);
         strcat(stat, "*");
         _itoa(VehPrototypes[proto_id].reactor_id, num_buf, 10);
         strcat(stat, num_buf);
-        strcat(stat, SocialWinCloseParenText);
+        strcat_close_paren(stat);
     }
 }
 
@@ -2396,7 +2389,7 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
                 || Weapon[weapon_id].offense_rating < Armor[armor_id].defense_rating
                 || ability_flags & ABL_ARTILLERY)) {
             strcat(output, table_text(Ability[ability_id].abbreviation));
-            strcat(output, BufferJoinSpace);
+            strcat_space(output);
             break;
         }
     }
@@ -2485,8 +2478,8 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
                 strcat(alternate, table_text(Armor[armor_id].name_short));
             }
         }
-        strcat(output, BufferJoinSpace);
-        strcat(alternate, BufferJoinSpace);
+        strcat_space(output);
+        strcat_space(alternate);
         strcat(output, table_text(Chassis[chassis_id].defsv_1_name));
         if (unique && prototype_id & 1) {
             strcat(alternate, table_text(quality && not_sea
@@ -2506,8 +2499,8 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
                 strcat(alternate, table_text(Weapon[weapon_id].name_short));
             }
         }
-        strcat(output, BufferJoinSpace);
-        strcat(alternate, BufferJoinSpace);
+        strcat_space(output);
+        strcat_space(alternate);
         strcat(output, table_text(Chassis[chassis_id].defsv_1_name));
         if (unique && prototype_id & 1) {
             strcat(alternate, table_text(quality && not_sea
@@ -2519,19 +2512,19 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
     } else if (Chassis[chassis_id].missile && Weapon[weapon_id].offense_rating >= 99) {
         strcat(output, table_text(Reactor[reactor_id - 1].name_short));
         strcat(alternate, table_text(Reactor[reactor_id - 1].name_short));
-        strcat(output, BufferJoinSpace);
-        strcat(alternate, BufferJoinSpace);
+        strcat_space(output);
+        strcat_space(alternate);
         strcat(output, table_text(Weapon[weapon_id].name_short));
         strcat(alternate, table_text(Weapon[weapon_id].name_short));
     } else if (Chassis[chassis_id].missile && (weapon_id == 24 || weapon_id == 25)) {
         strcat(output, table_text(Weapon[weapon_id].name_short));
         strcat(alternate, table_text(Weapon[weapon_id].name_short));
-        strcat(output, BufferJoinSpace);
-        strcat(alternate, BufferJoinSpace);
+        strcat_space(output);
+        strcat_space(alternate);
         strcat(output, table_text(Reactor[reactor_id - 1].name_short));
         strcat(alternate, table_text(Reactor[reactor_id - 1].name_short));
-        strcat(output, BufferJoinSpace);
-        strcat(alternate, BufferJoinSpace);
+        strcat_space(output);
+        strcat_space(alternate);
         strcat(output, table_text(Chassis[chassis_id].offsv_1_name));
         strcat(alternate, table_text(Chassis[chassis_id].offsv_1_name));
     } else {
@@ -2539,8 +2532,8 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
             if (reactor_id > 1) {
                 strcat(output, table_text(Reactor[reactor_id - 1].name_short));
                 strcat(alternate, table_text(Reactor[reactor_id - 1].name_short));
-                strcat(output, BufferJoinSpace);
-                strcat(alternate, BufferJoinSpace);
+                strcat_space(output);
+                strcat_space(alternate);
             }
             if ((Weapon[weapon_id].mode != 7 || chassis_id != 3)
                 && (Weapon[weapon_id].mode != 9 || Chassis[chassis_id].triad != TRIAD_LAND
@@ -2553,8 +2546,8 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
                     strcat(output, table_text(Chassis[chassis_id].offsv_1_name));
                     strcat(alternate, table_text(Chassis[chassis_id].offsv_2_name));
                 }
-                strcat(output, BufferJoinSpace);
-                strcat(alternate, BufferJoinSpace);
+                strcat_space(output);
+                strcat_space(alternate);
             }
         }
         if (!unique) {
@@ -2564,25 +2557,25 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
         }
         if (Weapon[weapon_id].mode < 3) {
             if (ability_flags & ABL_ARTILLERY) {
-                strcat(output, BufferJoinSpace);
+                strcat_space(output);
                 strcat(output, label_get(0x87C / 4));
-                strcat(alternate, BufferJoinSpace);
+                strcat_space(alternate);
                 strcat(alternate, label_get(0x880 / 4));
             } else if (ability_flags & ABL_AMPHIBIOUS && Chassis[chassis_id].speed == 1
                        && Weapon[weapon_id].offense_rating > Armor[armor_id].defense_rating) {
-                strcat(output, BufferJoinSpace);
+                strcat_space(output);
                 strcat(output, label_get(0x998 / 4));
-                strcat(alternate, BufferJoinSpace);
+                strcat_space(alternate);
                 strcat(alternate, label_get(0x99C / 4));
             } else {
-                strcat(output, BufferJoinSpace);
+                strcat_space(output);
                 if (lower) {
                     strcat(output, table_text(Reactor[reactor_id - 1].name_short));
                 } else {
                     strcat(output, table_text(quality && not_sea
                         ? Chassis[chassis_id].offsv_lrg_name : Chassis[chassis_id].offsv_1_name));
                 }
-                strcat(alternate, BufferJoinSpace);
+                strcat_space(alternate);
                 if (lower) {
                     strcat(alternate, table_text(Reactor[reactor_id - 1].name_short));
                 } else {
@@ -2623,7 +2616,7 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
                     }
                 } else {
                     char number[80];
-                    strcat(output, BufferJoinSpace);
+                    strcat_space(output);
                     strcat(output, label_get(0xE5C / 4));
                     _itoa(2, number, 10);
                     strcat(output, number);
@@ -2651,7 +2644,7 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
                 }
             } else {
                 char number[80];
-                strcat(alternate, BufferJoinSpace);
+                strcat_space(alternate);
                 strcat(alternate, StringTable.get(Labels.strings_ptr[0xE5C / 4]));
                 _itoa(2, number, 10);
                 strcat(alternate, number);
@@ -2953,11 +2946,11 @@ void __cdecl retire_proto(int prototype_id, int faction_id) {
 static inline void parse_prototype_report(int parse_id, int design_id) {
     StringTemp[0] = '\0';
     ::strcat(StringTemp, VehPrototypes[design_id].veh_name);
-    ::strcat(StringTemp, BufferJoinSpace);
-    ::strcat(StringTemp, SocialWinOpenParenText);
+    space();
+    say_open_paren();
     say_stats_2(StringTemp, design_id);
     if (VehPrototypes[design_id].ability_flags != 0) {
-        ::strcat(StringTemp, BufferJoinSpace);
+        space();
         for (int ability_id = 0; ability_id < MaxAbilityNum; ++ability_id) {
             if ((VehPrototypes[design_id].ability_flags
                  & (1u << ability_id)) == 0) continue;
@@ -2965,7 +2958,7 @@ static inline void parse_prototype_report(int parse_id, int design_id) {
                 Ability[ability_id].abbreviation));
         }
     }
-    ::strcat(StringTemp, SocialWinCloseParenText);
+    say_close_paren();
     parse_says(parse_id, StringTemp, -1, -1);
 }
 
@@ -4517,8 +4510,6 @@ void __cdecl hq_list_draw(GraphicWin *window, int prototype, int flags,
     SpriteScaleDenominator = 1;
 }
 
-extern char SocialWinCommaSpaceText[];
-extern char SocialWinColonSpaceText[];
 extern uint32_t UpgradePromptAnswered;
 
 // WORKAROUND(inline): dead /Ob2 budget probe (folds to no code). The image's
@@ -4603,18 +4594,18 @@ again:
             strcat(StringTemp, "|");
             if (VehPrototypes[prototype_id].obsolete_factions & (1 << faction_id)) {
                 strcat(StringTemp, label_get(0x368 / 4));
-                strcat(StringTemp, SocialWinCommaSpaceText);
+                say_comma();
             }
             if (!(VehPrototypes[prototype_id].flags & 4) && prototype_id >= MaxVehProtoFactionNum) {
                 strcat(StringTemp, label_get(0x2e4 / 4));
-                strcat(StringTemp, SocialWinCommaSpaceText);
+                say_comma();
             }
             strcat(StringTemp, label_get(0x160 / 4));
-            strcat(StringTemp, SocialWinColonSpaceText);
+            say_colon();
             const int cost = cost_factor(faction_id, 1, -1) * VehPrototypes[prototype_id].cost;
             _itoa(cost, number, 10);
             strcat(StringTemp, number);
-            strcat(StringTemp, SocialWinCommaSpaceText);
+            say_comma();
             say_stats(StringTemp, prototype_id, 0);
             popup.item(StringTemp, prototype_id);
         }

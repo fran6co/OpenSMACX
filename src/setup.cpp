@@ -144,8 +144,6 @@
 // RECOVERY_OBJECT: v1 0x00945E08 ?g_CRASH_LANDING_WAVE@@3VWave@@A
 Wave g_CRASH_LANDING_WAVE;  // 0x00945E08
 
-// Shared separator objects the image pushes instead of unit literals.
-extern const char BufferJoinSpace[];
 
 extern int ConsoleNoMapOverrideLatch;
 
@@ -1071,7 +1069,7 @@ int __cdecl setup_player(int faction, int conqueror, int retry) {
             PlayersData[faction].saved_queue_size[queue] = 0;
             StringTemp[0] = 0;
             strcat(StringTemp, label_get(0x984 / 4));
-            strcat(StringTemp, BufferJoinSpace);
+            space();
             _itoa(queue + 1, number, 10);  // 5B116D: the shared number buffer.
             strcat(StringTemp, number);
             strcpy(PlayersData[faction].saved_queue_name[queue], StringTemp);

@@ -67,12 +67,8 @@ int BreakthroughTurnsGlobal;
 // RECOVERY_OBJECT: v2 0x00749C0C 0x00749C10 ?NetIncomeGlobal@@3HA 0x00445130
 int NetIncomeGlobal;
 
-// Shared punctuation objects the image pushes instead of unit literals.
-extern char SocialWinCloseParenText[];
-extern char SocialWinOpenParenText[];
 
 // Shared original chat separators, also used by the general string formatter.
-extern char SocialWinColonSpaceText[];
 
 void __cdecl slide_show(GraphicWin *window, int mode);
 void __cdecl slide_hide(GraphicWin *window, int mode);
@@ -271,8 +267,8 @@ void DiploWin::new_chat(char *text, int faction_id) {
     PluralityDefault = 0;
     strcat(line, Players[faction_id].name_leader);
     CharUpperA(line);
-    strcat(line, SocialWinColonSpaceText);
-    strcat(line, BufferJoinSpace);
+    strcat_colon(line);
+    strcat_space(line);
     strcat(line, text);
     stringBox_.add(line, faction_id, 1);
     DiploOffersDirty = 1;
@@ -793,8 +789,8 @@ int DiploWin::on_key_click(int repeat, int key) {
             GenderDefault = Players[faction].is_leader_female;
             strcat(line, Players[faction].name_leader);
             CharUpperA(line);
-            strcat(line, SocialWinColonSpaceText);
-            strcat(line, BufferJoinSpace);
+            strcat_colon(line);
+            strcat_space(line);
             strcat(line, editBox_.text_);
 
             stringBox_.add(line, faction, 1);
@@ -939,7 +935,7 @@ void DiploWin::draw_who() {
             GenderDefault = Players[f].is_leader_female;
             strcat(StringTemp, Players[f].title_leader);
         }
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         {
             int f = faction_id_;
             PluralityDefault = 0;
@@ -1017,7 +1013,7 @@ void DiploWin::draw_whom() {
             GenderDefault = Players[f].is_leader_female;
             strcat(StringTemp, Players[f].title_leader);
         }
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         {
             int f = faction_id_with_;
             PluralityDefault = 0;
@@ -1140,14 +1136,14 @@ void DiploWin::draw_offers() {
             GenderDefault = Players[f].is_leader_female;
             strcat(StringTemp, Players[f].title_leader);
         }
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         {
             int f = side ? faction_id_with_ : faction_id_;
             PluralityDefault = 0;
             GenderDefault = Players[f].is_leader_female;
             strcat(StringTemp, Players[f].name_leader);
         }
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         int count = offer_count_[side];
         StringTemp[0] = 0;
         if (count == 0) {
@@ -1178,7 +1174,7 @@ void DiploWin::draw_offers() {
                 char text[80];
                 _itoa(offer_value_[side][i], text, 10);
                 strcat(StringTemp, text);
-                strcat(StringTemp, BufferJoinSpace);
+                space();
                 strcat(StringTemp, label_get(0x90 / 4));
                 break;
             }
@@ -1193,7 +1189,7 @@ void DiploWin::draw_offers() {
                 break;
             case 5: {
                 strcat(StringTemp, label_get(0x980 / 4));
-                strcat(StringTemp, BufferJoinSpace);
+                space();
                 int f = offer_value_[side][i];
                 GenderDefault = Players[f].noun_gender;
                 PluralityDefault = Players[f].is_noun_plural;
@@ -1291,11 +1287,11 @@ void DiploWin::on_redraw() {
 
   StringTemp[0] = 0;
   strcat(StringTemp, label_get(0x748 / 4));
-  strcat(StringTemp, BufferJoinSpace);
-  strcat(StringTemp, BufferJoinSpace);
-  strcat(StringTemp, SocialWinOpenParenText);
+  space();
+  space();
+  say_open_paren();
   strcat(StringTemp, label_get(0x788 / 4));
-  strcat(StringTemp, SocialWinColonSpaceText);
+  say_colon();
   strcat(StringTemp, "{");
 
   const uint32_t treaties =
@@ -1317,7 +1313,7 @@ void DiploWin::on_redraw() {
     Buffer::set_text_color2(0xFB, -1, 1, 1);
   }
   strcat(StringTemp, "}");
-  strcat(StringTemp, SocialWinCloseParenText);
+  say_close_paren();
   Buffer::write_cent_l(StringTemp, &area);
 
   if (MainInterfaceTileFlag != 0) {

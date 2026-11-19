@@ -144,8 +144,8 @@ void __cdecl danger(LPCSTR msg1, LPCSTR msg2, int num1, int num2, int num3) {
     log_say(msg1, msg2, num1, num2, num3);
     // The original immediates at 0x00538F90 and 0x00538F97 point to the
     // independently bounded DANGER and hasty_sm.pcx literals below.
-// RECOVERY_LITERAL: v1 0x0068D428 0x0068D42F $SG62670 0x00538F30
-// RECOVERY_LITERAL: v1 0x0068D418 0x0068D425 $SG62669 0x00538F30
+// RECOVERY_LITERAL: v1 0x0068D428 0x0068D42F $SG62714 0x00538F30
+// RECOVERY_LITERAL: v1 0x0068D418 0x0068D425 $SG62713 0x00538F30
     popp(ScriptPopupFile, "DANGER", 0, "hasty_sm.pcx", 0);
 }
 
@@ -164,7 +164,7 @@ Status: Complete
 */
 // Pinned arguments identify these NUL-terminated keys in the original;
 // the literal spans cover their text and terminators, not surrounding storage.
-// RECOVERY_LITERAL: v1 0x0068D430 0x0068D43A $SG62674 0x00538FB0
+// RECOVERY_LITERAL: v1 0x0068D430 0x0068D43A $SG62718 0x00538FB0
 void __cdecl my_srand(int reseed) {
     // ONE `srand`, not two. The image's `add esp, 0x14` accounts for exactly
     // log_say's four arguments and one seed; ours was `add esp, 0x18`, four
@@ -338,8 +338,6 @@ void __cdecl read_and_parse_text_line() {
 }
 
 
-// Shared separator objects the image pushes instead of unit literals.
-extern const char BufferJoinSpace[];
 
 // Diplomacy script keys and resource paths formerly borrowed from fixed image
 // string addresses. Keep one writable source-owned object for each distinct
@@ -3108,7 +3106,7 @@ void __cdecl introduce(int faction_id, int other_faction_id) {
                 } else {
                     strcat(description, label_get(0x454 / 4));
                 }
-                strcat(description, BufferJoinSpace);
+                strcat_space(description);
             } else {
                 word = StringTable.get(Might[range(7 - PlayersData[faction_id].ranking, 0, 6)].adj);
             }
@@ -3822,7 +3820,7 @@ void __cdecl pact_of_brotherhood(int faction_id, int faction_id_with) {
 
 // The pact, transferred-map and tutorial paths select distinct script topics.
 // Bounds cover the literal payload, not surrounding allocation or lifetime.
-// RECOVERY_LITERAL: v1 0x0068D5D4 0x0068D5DD $SG63958 0x0053CAF0
+// RECOVERY_LITERAL: v1 0x0068D5D4 0x0068D5DD $SG64002 0x0053CAF0
     X_pops("MAKEPACT", 0x100000,
                  FactionDiplomacyPortraits[faction_id_with], pop_wait);
     if (IsMultiplayerNet != 0) {
@@ -3834,7 +3832,7 @@ void __cdecl pact_of_brotherhood(int faction_id, int faction_id_with) {
     }
 
     parse_says(0, get_pact(faction_id), -1, -1);
-// RECOVERY_LITERAL: v1 0x0068D5E0 0x0068D5EC $SG63961 0x0053CAF0
+// RECOVERY_LITERAL: v1 0x0068D5E0 0x0068D5EC $SG64005 0x0053CAF0
     X_pops("HERESTHEMAP", 0x100000,
                  FactionDiplomacyPortraits[faction_id_with], pop_wait);
     scan_prototypes(faction_id, faction_id_with);
@@ -3852,7 +3850,7 @@ void __cdecl pact_of_brotherhood(int faction_id, int faction_id_with) {
         PluralityDefault = 0;
         parse_says(2, Players[faction_id_with].name_leader, -1, -1);
         parse_says(3, Players[faction_id_with].adj_name_faction, -1, -1);
-// RECOVERY_LITERAL: v1 0x0068D5EC 0x0068D5F1 $SG63964 0x0053CAF0
+// RECOVERY_LITERAL: v1 0x0068D5EC 0x0068D5F1 $SG64008 0x0053CAF0
         X_pop(TutorialPopupCaption, "PACT", nullptr);
     }
 }
@@ -3905,7 +3903,7 @@ void __cdecl make_treaty(int faction_id, int faction_id_with) {
     StringTemp[0] = 0;
 // Treaty, commerce and withdrawal notifications retain their script-topic identities.
 // Bounds cover the literal payload, not surrounding allocation or lifetime.
-// RECOVERY_LITERAL: v1 0x0068D5F4 0x0068D5FF $SG63971 0x0053CE10
+// RECOVERY_LITERAL: v1 0x0068D5F4 0x0068D5FF $SG64015 0x0053CE10
     strcat(StringTemp, "MAKETREATY");
     char number[80];
     const int choice = static_cast<int>(random(0, 2));
@@ -3919,7 +3917,7 @@ void __cdecl make_treaty(int faction_id, int faction_id_with) {
             GenderDefault = Players[faction_id_with].noun_gender;
             PluralityDefault = Players[faction_id_with].is_noun_plural;
             parse_says(0, Players[faction_id_with].noun_faction, -1, -1);
-// RECOVERY_LITERAL: v1 0x0068D600 0x0068D609 $SG63978 0x0053CE10
+// RECOVERY_LITERAL: v1 0x0068D600 0x0068D609 $SG64022 0x0053CE10
             X_pop(TutorialPopupCaption, "COMMERCE", nullptr);
         }
     }
@@ -3929,7 +3927,7 @@ void __cdecl make_treaty(int faction_id, int faction_id_with) {
         PluralityDefault = Players[faction_id_with].is_noun_plural;
         parse_says(0, Players[faction_id_with].noun_faction, -1, -1);
         parse_says(1, Players[faction_id_with].adj_name_faction, -1, -1);
-// RECOVERY_LITERAL: v1 0x0068D60C 0x0068D618 $SG63980 0x0053CE10
+// RECOVERY_LITERAL: v1 0x0068D60C 0x0068D618 $SG64024 0x0053CE10
         NetMsgPrimary.pop("TIMETOLEAVE", 5000, 0, nullptr);
     }
 }
@@ -5059,13 +5057,13 @@ void __cdecl propose_trade_maps(int faction_id, int faction_id_with) {
         parse_says(0, Players[faction_id_with].adj_name_faction, -1, -1);
 // Map-trade refusal and proposal use separate script topics.
 // Bounds cover the literal payload, not surrounding allocation or lifetime.
-// RECOVERY_LITERAL: v1 0x0068DA60 0x0068DA68 $SG64422 0x00545D60
+// RECOVERY_LITERAL: v1 0x0068DA60 0x0068DA68 $SG64466 0x00545D60
         X_pops("REJMAPS", 0x100000,
                      FactionDiplomacyPortraits[faction_id_with], pop_wait);
         return;
     }
 
-// RECOVERY_LITERAL: v1 0x0068DA68 0x0068DA72 $SG64423 0x00545D60
+// RECOVERY_LITERAL: v1 0x0068DA68 0x0068DA72 $SG64467 0x00545D60
     X_pops("TRADEMAPS", 0x100000,
                  FactionDiplomacyPortraits[faction_id_with], pop_wait);
 
@@ -5100,17 +5098,17 @@ void __cdecl demands_withdrawal(int faction_id, int faction_id_with) {
 
     switch (response) {
     case 0:
-// RECOVERY_LITERAL: v1 0x0068D68C 0x0068D697 $SG64437 0x0053E4C0
+// RECOVERY_LITERAL: v1 0x0068D68C 0x0068D697 $SG64481 0x0053E4C0
         NetMsgPrimary.pop("WITHSUNYES", 5000, 0, 0);
         break;
     case 1:
-// RECOVERY_LITERAL: v1 0x0068D680 0x0068D68A $SG64439 0x0053E4C0
+// RECOVERY_LITERAL: v1 0x0068D680 0x0068D68A $SG64483 0x0053E4C0
         NetMsgPrimary.pop("WITHSUNNO", 5000, 0, 0);
         break;
     case 2:
 // The withdrawal response selects the war, refusal or acceptance script topic.
 // Bounds cover the literal payload, not surrounding allocation or lifetime.
-// RECOVERY_LITERAL: v1 0x0068D674 0x0068D67F $SG64441 0x0053E4C0
+// RECOVERY_LITERAL: v1 0x0068D674 0x0068D67F $SG64485 0x0053E4C0
         NetMsgPrimary.pop("WITHSUNWAR", 5000, 0, 0);
         break;
     default:
@@ -7789,11 +7787,11 @@ static int communicate_budget_probe4(int x) {
 }
 // make_a_proposal's string operands, each read from the image's push operand
 // and checked against the literal text in the body (unpooled, one copy each).
-// RECOVERY_LITERAL: v1 0x0068DF20 0x0068DF2B $SG65528 0x0054F420
-// RECOVERY_LITERAL: v1 0x0068DF2C 0x0068DF3A $SG65530 0x0054F420
-// RECOVERY_LITERAL: v1 0x0068DF3C 0x0068DF3E $SG65559 0x0054F420
-// RECOVERY_LITERAL: v1 0x0068DF40 0x0068DF4C $SG65564 0x0054F420
-// RECOVERY_LITERAL: v1 0x0068DF4C 0x0068DF5B $SG65568 0x0054F420
+// RECOVERY_LITERAL: v1 0x0068DF20 0x0068DF2B $SG65572 0x0054F420
+// RECOVERY_LITERAL: v1 0x0068DF2C 0x0068DF3A $SG65574 0x0054F420
+// RECOVERY_LITERAL: v1 0x0068DF3C 0x0068DF3E $SG65603 0x0054F420
+// RECOVERY_LITERAL: v1 0x0068DF40 0x0068DF4C $SG65608 0x0054F420
+// RECOVERY_LITERAL: v1 0x0068DF4C 0x0068DF5B $SG65612 0x0054F420
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0054F420 0x0054FFAC 0x0054FFD0 0x0054FA67
 // ORIGINAL: 0x0054F420 ?make_a_proposal@@YAXHHH@Z 0x0054F420-0x0054FFAB;0x0065FD5F-0x0065FF4F BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:diplomacy-actions-owner-coverage", "Pinned54F420-54FFAB and65FD5F-65FF4F; entryFAB0 counteroffer selector andFA34 proposal identity", "Native54F95F rereads multiplayer mode after repayment callback;54F9B6 rereads live Council selector", "Physical54FFAC nine-entry jump table establishes Council cases1-9;54FBEC vote count=-1-reply", "Native54FCDF governor default usesPopup.set_value; no raw modal storage or manual destruction", "historical seed:src/unrecovered/0054f420.cpp"], "reason": "Recover the proposal dispatcher, repayment and Council dialogs in their faction owner using a lexical Popup, source-owned selectors and directed loan/player state. Preserve original primary and generated cleanup spans and all seed findings; no byte or game acceptance claim is granted."}

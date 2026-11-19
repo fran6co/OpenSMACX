@@ -129,10 +129,6 @@ void ConsoleCommandsDeclFnPad30();
 void ConsoleCommandsDeclFnPad31();
 void ConsoleCommandsDeclFnPad32();
 
-// Shared separator objects the image pushes instead of unit literals.
-extern const char BufferJoinSpace[];
-extern char SocialWinColonSpaceText[];
-extern char SocialWinCommaSpaceText[];
 
 void __cdecl base_kill(int base_id);
 int __cdecl wants_to_speak(int faction_id, int other_faction_id);
@@ -689,9 +685,6 @@ void Console::unload(int veh_id) {
     set_move(1);
 }
 
-// Shared punctuation objects the image pushes instead of unit literals.
-extern char SocialWinCloseParenText[];
-extern char SocialWinOpenParenText[];
 
 // WORKAROUND(inline): dead /Ob2 reservation probes for Console::upgrade (fold
 // to no code). Returns 7-9 (!is_human, !count, choice < 0) expanded one
@@ -2243,10 +2236,10 @@ void Console::go_to(int subject, int order, int grouped) {
         for (int i = 0; i < MaxTriadNum; i++) {
             StringTemp[0] = '\0';
             strcat(StringTemp, StringTable.get(Triad[i]));
-            strcat(StringTemp, BufferJoinSpace);
-            strcat(StringTemp, SocialWinOpenParenText);
+            space();
+            say_open_paren();
             say_base(StringTemp, Bases[base_id].auto_forward_slots[i]);
-            strcat(StringTemp, SocialWinCloseParenText);
+            say_close_paren();
             popup.item(StringTemp, i);
         }
         triad = popup.exec();
@@ -2366,9 +2359,9 @@ void Console::go_to(int subject, int order, int grouped) {
         int count = 0;
         if (order == -1) {
             StringTemp[0] = '\0';
-            strcat(StringTemp, SocialWinOpenParenText);
+            say_open_paren();
             strcat(StringTemp, label_get(0xFB));
-            strcat(StringTemp, SocialWinCloseParenText);
+            say_close_paren();
             popup.item(StringTemp, 9999);
             count = 1;
         }
@@ -2475,41 +2468,41 @@ void Console::go_to(int subject, int order, int grouped) {
             strcat(StringTemp, Bases[id].name_string);
             strcat(StringTemp, "|");
             if (Bases[id].faction_id_current != faction) {
-                strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, SocialWinOpenParenText);
+                space();
+                say_open_paren();
                 strcat(StringTemp, get_noun(Bases[id].faction_id_current));
-                strcat(StringTemp, SocialWinCloseParenText);
+                say_close_paren();
             }
             if (artifact && Bases[id].faction_id_current == faction) {
                 if (id == GameDataStateStorage.fields_.secret_project_.universal_translator()) {
-                    strcat(StringTemp, BufferJoinSpace);
-                    strcat(StringTemp, SocialWinOpenParenText);
+                    space();
+                    say_open_paren();
                     strcat(StringTemp, table_text(Facility[FAC_UNIVERSAL_TRANSLATOR].name));
-                    strcat(StringTemp, SocialWinCloseParenText);
+                    say_close_paren();
                 } else if (has_fac(FAC_NETWORK_NODE, id, 0) && !(Bases[id].state & 0x400)) {
-                    strcat(StringTemp, BufferJoinSpace);
-                    strcat(StringTemp, SocialWinOpenParenText);
+                    space();
+                    say_open_paren();
                     strcat(StringTemp, label_get(0x131));
-                    strcat(StringTemp, SocialWinCloseParenText);
+                    say_close_paren();
                 }
             }
             if (!(order == -3)) {
-                strcat(StringTemp, BufferJoinSpace);
+                space();
                 strcat(StringTemp, StringTable.get(Labels.strings_ptr[0xFA]));
-                strcat(StringTemp, SocialWinColonSpaceText);
+                say_colon();
                 char distance_text[80];
                 _itoa(map_range(source_x, source_y, Bases[id].x, Bases[id].y), distance_text, 10);
                 strcat(StringTemp, distance_text);
                 if (sorting == 1) {
-                    strcat(StringTemp, SocialWinCommaSpaceText);
+                    say_comma();
                     strcat(StringTemp, label_get(0x243));
-                    strcat(StringTemp, SocialWinColonSpaceText);
+                    say_colon();
                     char size_text[80];
                     _itoa(Bases[id].population_size, size_text, 10);
                     strcat(StringTemp, size_text);
                 }
             } else {
-                strcat(StringTemp, BufferJoinSpace);
+                space();
                 strcat(StringTemp, label_get((Bases[id].state & 0x20000000) ? 0x212 : 0x211));
             }
             popup.item(StringTemp, id);
@@ -3093,8 +3086,8 @@ void Console::explore(int veh_id) {
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004d8fa0.cpp", "source:src/alpha.h", "pinned:0x004D8FF4 dword value 3 store before supply_options at 0x004D8FFE", "source:src/netdaemon.h:flat member action_mode_ at NetDaemon+0x1B74", "source:src/console.cpp:supply_options reads the same source-owned action flags"], "reason": "Seed 004d8fa0 identifies the Console convoy order and lock lifecycle; typed Veh, Base and RulesResource records replace receiver and table offsets. The resource label run at 0x0094615C is Resource[0].name_plural, with the singular member selected for a yield of one. The original pre-panel dword value 3 write at 0x004D8FF4 targets the already-owned NetDaemonNet.action_mode_, whose singleton-relative offset 0x1B74 identifies 0x0093E904. Preserve that write before supply_options without adding duplicate storage or claiming full matching/acceptance."}
 // Original convoy pushes at 004D9057/004D911D select distinct writable strings.
 // Current NUL-terminated literals have separate complete COMDATs, not lifetime proof.
-// RECOVERY_LITERAL: v1 0x00688ED4 0x00688EDF $SG64134 0x004D8FA0
-// RECOVERY_LITERAL: v1 0x00688EE0 0x00688EEE $SG64142 0x004D8FA0
+// RECOVERY_LITERAL: v1 0x00688ED4 0x00688EDF $SG64174 0x004D8FA0
+// RECOVERY_LITERAL: v1 0x00688EE0 0x00688EEE $SG64182 0x004D8FA0
 void Console::convoy(int veh_id) {
     if (NetDaemonNet.lock_veh(&veh_id, 0, -1, -1, 0) != 0) {
         return;
@@ -3348,10 +3341,10 @@ void Console::assemble() { // 0x004D95F0
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004D9970 ?editor_on@Console@@QAEXXZ 0x004D9970-0x004D9AC5 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004d9970.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
-// RECOVERY_LITERAL: v1 0x00688F3C 0x00688F46 $SG64271 0x004D999D
-// RECOVERY_LITERAL: v1 0x00688F48 0x00688F53 $SG64273 0x004D99B4
-// RECOVERY_LITERAL: v1 0x00688F54 0x00688F5D $SG64276 0x004D99F9
-// RECOVERY_LITERAL: v1 0x00688F60 0x00688F6A $SG64278 0x004D9A11
+// RECOVERY_LITERAL: v1 0x00688F3C 0x00688F46 $SG64311 0x004D999D
+// RECOVERY_LITERAL: v1 0x00688F48 0x00688F53 $SG64313 0x004D99B4
+// RECOVERY_LITERAL: v1 0x00688F54 0x00688F5D $SG64316 0x004D99F9
+// RECOVERY_LITERAL: v1 0x00688F60 0x00688F6A $SG64318 0x004D9A11
 void Console::editor_on() {
     if ((IsMultiplayerNet || IsMultiplayerPBEM) &&
         !(GameDataStateStorage.fields_.game_state_ & 0x61) &&
@@ -4065,7 +4058,7 @@ void DipEdit::init(int faction_index) {
     // The window title: "<label 866> <faction noun>", upper-cased in place.
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(866));
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     const int faction = faction_index_;
     strcat(StringTemp, get_noun(faction));
     CharUpperA(StringTemp);
@@ -5412,10 +5405,10 @@ void Console::editor_view() {
         StringTemp[0] = 0;
         parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
         strcat(StringTemp, Players[faction].formal_name_faction);
-        strcat(StringTemp, SocialWinOpenParenText);
+        say_open_paren();
         parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
         strcat(StringTemp, Players[faction].noun_faction);
-        strcat(StringTemp, SocialWinCloseParenText);
+        say_close_paren();
         popup.dialogs().item(StringTemp, faction);
         if (faction == ConsoleGlobal.faction_id_) {
             popup.set_value(faction);

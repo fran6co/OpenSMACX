@@ -103,8 +103,8 @@ static void __cdecl newtech_info(char *text) {
 // font.h, map.h, console.h and buffer.h are current owners of these APIs.
 extern BoxSpriteParams InterfaceStandardPopupBoxStyle;
 extern Sprite g_TECH_ICON_SPRITES[MaxTechnologyNum];
-// The Transcendent Thought separator is the shared space object
-// BufferJoinSpace (0x00682820, buffer.h), not a unit-owned copy.
+// The Transcendent Thought separator is the shared space literal
+// (0x00682820, strings.h's space()), not a unit-owned copy.
 
 
 // ORIGINAL: 0x00483950 ?on_redraw@NewTechWin@@QAEXXZ 0x00483950-0x00483E7F BYTE_EXACT
@@ -201,7 +201,7 @@ void NewTechWin::on_redraw() {
         // PlayersData+0x368 is theory_of_everything; the neutral member name
         // and exact offset are already independently established in
         // faction.h and consumed by picktech/faction/reportif.
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         char number[80];
         _itoa(PlayersData[faction_snapshot].theory_of_everything,
               number, 10);
@@ -324,7 +324,7 @@ void NewTechWin::on_group_clicked(int, int group) {
     switch (group) {
     case 1:
         StringTemp[0] = '\0';
-// RECOVERY_LITERAL: v1 0x00686968 0x0068696D $SG56665 0x00483EB0
+// RECOVERY_LITERAL: v1 0x00686968 0x0068696D $SG56709 0x00483EB0
         strcat(StringTemp, "TECH");
         _itoa(static_cast<int>(field_B24_), number, 10);
         strcat(StringTemp, number);
@@ -333,12 +333,12 @@ void NewTechWin::on_group_clicked(int, int group) {
         break;
     case 2:
         StringTemp[0] = '\0';
-// RECOVERY_LITERAL: v1 0x00686970 0x00686975 $SG56668 0x00483EB0
+// RECOVERY_LITERAL: v1 0x00686970 0x00686975 $SG56712 0x00483EB0
         strcat(StringTemp, "TECH");
         _itoa(static_cast<int>(field_B24_), number, 10);
         strcat(StringTemp, number);
         stringBox2_.clear();
-// RECOVERY_LITERAL: v1 0x00686978 0x00686982 $SG56670 0x00483EB0
+// RECOVERY_LITERAL: v1 0x00686978 0x00686982 $SG56714 0x00483EB0
         stringBox2_.strings().load("techlongs", StringTemp, 1, 0);
         break;
     default:

@@ -110,11 +110,7 @@ void DatalinkHeaderPad35();
 #include "font_metrics.h"
 #include "help_link.h"
 
-// Shared punctuation objects the image pushes instead of unit literals.
 
-// Shared separator objects the image pushes instead of unit literals.
-extern const char BufferJoinSpace[];
-extern char SocialWinColonSpaceText[];
 
 extern int MainInterfaceTileFlag;
 extern char *DatalinkBlurbFile;
@@ -2225,8 +2221,8 @@ void Datalink::draw_unit() {
     const uint8_t mode = Weapon[VehPrototypes[id].weapon_id].mode;
     if (mode < 3) {
         strcat(StringTemp, label_get(0x204 / 4));
-        strcat(StringTemp, SocialWinColonSpaceText);
-        strcat(StringTemp, BufferJoinSpace);
+        say_colon();
+        space();
         strcat(StringTemp, "{");
         if (Weapon[VehPrototypes[id].weapon_id].offense_rating < 0) {
             strcat(StringTemp, label_get(0x310 / 4));
@@ -2238,8 +2234,8 @@ void Datalink::draw_unit() {
         description.pending_text_ = StringTemp;
     } else {
         strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x200 / 4]));
-        strcat(StringTemp, SocialWinColonSpaceText);
-        strcat(StringTemp, BufferJoinSpace);
+        say_colon();
+        space();
         if (Weapon[VehPrototypes[id].weapon_id].mode >= 7
             && Weapon[VehPrototypes[id].weapon_id].mode <= 12) {
             strcat(StringTemp, "{");
@@ -2247,8 +2243,8 @@ void Datalink::draw_unit() {
             strcat(StringTemp, "}");
         } else {
             strcat(StringTemp, label_get(0x204 / 4));
-            strcat(StringTemp, SocialWinColonSpaceText);
-            strcat(StringTemp, BufferJoinSpace);
+            say_colon();
+            space();
             strcat(StringTemp, "{");
             if (!(Weapon[VehPrototypes[id].weapon_id].offense_rating < 0)) {
                 _itoa(Weapon[VehPrototypes[id].weapon_id].offense_rating, number, 10);
@@ -2265,8 +2261,8 @@ void Datalink::draw_unit() {
     description.add(0);
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x154 / 4));
-    strcat(StringTemp, SocialWinColonSpaceText);
-    strcat(StringTemp, BufferJoinSpace);
+    say_colon();
+    space();
     strcat(StringTemp, "{");
     if (Armor[VehPrototypes[id].armor_id].defense_rating < 0) {
         strcat(StringTemp, label_get(0x310 / 4));
@@ -2281,11 +2277,11 @@ void Datalink::draw_unit() {
     description.add(0);
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x1C / 4));
-    strcat(StringTemp, SocialWinColonSpaceText);
-    strcat(StringTemp, BufferJoinSpace);
+    say_colon();
+    space();
     strcat(StringTemp, "{");
     strcat(StringTemp, StringTable.get(Triad[Chassis[VehPrototypes[id].chassis_id].triad]));
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     _itoa(Chassis[VehPrototypes[id].chassis_id].speed, number, 10);
     strcat(StringTemp, number);
     strcat(StringTemp, "}");
@@ -2296,8 +2292,8 @@ void Datalink::draw_unit() {
     if (VehPrototypes[id].carry_capacity) {
         StringTemp[0] = 0;
         strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x360 / 4]));
-        strcat(StringTemp, SocialWinColonSpaceText);
-        strcat(StringTemp, BufferJoinSpace);
+        say_colon();
+        space();
         strcat(StringTemp, "{");
         _itoa(VehPrototypes[id].carry_capacity, number, 10);
         strcat(StringTemp, number);
@@ -2311,12 +2307,12 @@ void Datalink::draw_unit() {
         && Chassis[VehPrototypes[id].chassis_id].range) {
         StringTemp[0] = 0;
         strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x30C / 4]));
-        strcat(StringTemp, SocialWinColonSpaceText);
-        strcat(StringTemp, BufferJoinSpace);
+        say_colon();
+        space();
         strcat(StringTemp, "{");
         _itoa(Chassis[VehPrototypes[id].chassis_id].range, number, 10);
         strcat(StringTemp, number);
-        strcat(StringTemp, BufferJoinSpace);
+        space();
         if (Chassis[VehPrototypes[id].chassis_id].range == 1) {
             strcat(StringTemp, StringTable.get(Labels.strings_ptr[0xC0 / 4]));
         } else {
@@ -2330,8 +2326,8 @@ void Datalink::draw_unit() {
     }
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x160 / 4));
-    strcat(StringTemp, SocialWinColonSpaceText);
-    strcat(StringTemp, BufferJoinSpace);
+    say_colon();
+    space();
     strcat(StringTemp, "{");
     const int cost = cost_factor(ConsoleGlobal.faction_id_, 1, -1) * VehPrototypes[id].cost;
     _itoa(cost, number, 10);
@@ -2344,8 +2340,8 @@ void Datalink::draw_unit() {
     const int tech = VehPrototypes[id].preq_tech;
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0xF24 / 4));
-    strcat(StringTemp, SocialWinColonSpaceText);
-    strcat(StringTemp, BufferJoinSpace);
+    say_colon();
+    space();
     strcat(StringTemp, "{");
     char name[256];
     name[0] = 0;
@@ -2408,11 +2404,11 @@ void Datalink::draw_chassis() {
     description.reset();
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x1C / 4));
-    strcat(StringTemp, SocialWinColonSpaceText);
-    strcat(StringTemp, BufferJoinSpace);
+    say_colon();
+    space();
     strcat(StringTemp, "{");
     strcat(StringTemp, StringTable.get(Triad[Chassis[id].triad]));
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     const int speed = Chassis[id].speed;
     _itoa(speed, number, 10);
     strcat(StringTemp, number);
@@ -2424,14 +2420,14 @@ void Datalink::draw_chassis() {
     if (Chassis[id].cargo) {
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x360 / 4));
-        strcat(StringTemp, SocialWinColonSpaceText);
-        strcat(StringTemp, BufferJoinSpace);
+        say_colon();
+        space();
         strcat(StringTemp, "{");
         const int cargo = Chassis[id].cargo;
         _itoa(cargo, number, 10);
         strcat(StringTemp, number);
         if (Chassis[id].triad == 1) {
-            strcat(StringTemp, BufferJoinSpace);
+            space();
             strcat(StringTemp, label_get(0xF34 / 4));
         }
         strcat(StringTemp, "}");
@@ -2443,14 +2439,14 @@ void Datalink::draw_chassis() {
     if (Chassis[id].triad == 2) {
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x30C / 4));
-        strcat(StringTemp, SocialWinColonSpaceText);
-        strcat(StringTemp, BufferJoinSpace);
+        say_colon();
+        space();
         strcat(StringTemp, "{");
         if (Chassis[id].range) {
             const int range = Chassis[id].range;
             _itoa(range, number, 10);
             strcat(StringTemp, number);
-            strcat(StringTemp, BufferJoinSpace);
+            space();
             strcat(StringTemp, Chassis[id].range == 1 ? label_get(0xC0 / 4)
                                                       : label_get(0xC4 / 4));
         } else {
@@ -2464,8 +2460,8 @@ void Datalink::draw_chassis() {
     }
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x160 / 4));
-    strcat(StringTemp, SocialWinColonSpaceText);
-    strcat(StringTemp, BufferJoinSpace);
+    say_colon();
+    space();
     strcat(StringTemp, "{");
     const int cost = Chassis[id].cost;
     _itoa(cost, number, 10);
@@ -2477,8 +2473,8 @@ void Datalink::draw_chassis() {
     description.add(0);
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0xF24 / 4));
-    strcat(StringTemp, SocialWinColonSpaceText);
-    strcat(StringTemp, BufferJoinSpace);
+    say_colon();
+    space();
     strcat(StringTemp, "{");
     const int tech = Chassis[id].preq_tech;
     char name[256];
@@ -3031,7 +3027,7 @@ static inline void append_upper_name(LPSTR name) {
 // The unpooled TU still has one "TECH" object for draw_tech and the copy
 // draw_entry expands: both sites go through this helper's literal.
 static inline void append_tech_topic() {
-    // RECOVERY_LITERAL: v1 0x006834D8 0x006834DD $SG55584 0x00430B30
+    // RECOVERY_LITERAL: v1 0x006834D8 0x006834DD $SG55627 0x00430B30
     strcat(StringTemp, "TECH");
 }
 
@@ -3220,7 +3216,7 @@ void Datalink::draw_terraform() {
     // The help topics are this unit's own literals: 0x004317E7 pushes
     // "HELPTERRAFORM", 0x0043187F "HELPTERRA", 0x0043189C/0x004318A3 the
     // "LAND"/"SEA" pair.
-    // RECOVERY_LITERAL: v1 0x00683514 0x00683522 $SG55656 0x00431180
+    // RECOVERY_LITERAL: v1 0x00683514 0x00683522 $SG55699 0x00431180
     strcat(StringTemp, "HELPTERRAFORM");
     popup.start(DatalinkHelpFile, StringTemp, -1, 0, 0, 0);
     set_font(&body_font_, 0, 0, &link_font_);
@@ -3229,10 +3225,10 @@ void Datalink::draw_terraform() {
     set_text_color_hyper(0x96, -1, 1, 1);
     write_strings(&popup.unit_ids_, rect.left, rect.top, rect.right - rect.left, 0);
     StringTemp[0] = 0;
-    // RECOVERY_LITERAL: v1 0x00683524 0x0068352E $SG55657 0x00431180
+    // RECOVERY_LITERAL: v1 0x00683524 0x0068352E $SG55700 0x00431180
     strcat(StringTemp, "HELPTERRA");
-    // RECOVERY_LITERAL: v1 0x00683530 0x00683535 $SG55658 0x00431180
-    // RECOVERY_LITERAL: v1 0x00683538 0x0068353C $SG55659 0x00431180
+    // RECOVERY_LITERAL: v1 0x00683530 0x00683535 $SG55701 0x00431180
+    // RECOVERY_LITERAL: v1 0x00683538 0x0068353C $SG55702 0x00431180
     strcat(StringTemp, land ? "LAND" : "SEA");
     char number[80];
     _itoa(action, number, 10);

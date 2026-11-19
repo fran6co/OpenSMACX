@@ -1,7 +1,6 @@
 
 
-// Shared separator objects the image pushes instead of unit literals.
-extern const char BufferJoinSpace[];/*
+/*
  * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.
  * Copyright (C) 2013-2021 Brendan Casey
  *
@@ -2325,7 +2324,7 @@ int Caviar::init_class() {
             unit_ids.seek_pos(-1);
             for (int i = 0; i < unit_ids.entry_count_; ++i) {
                 strcat(StringTemp, unit_ids.next_text());
-                strcat(StringTemp, BufferJoinSpace);
+                space();
             }
             // The shipped image has this statement patched out (see the
             // RECOVERY_IMAGE_PATCH note above): the caption and window loads
