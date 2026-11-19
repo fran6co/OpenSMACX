@@ -1738,12 +1738,12 @@ void Console::terraform(int vehicle_id, int terraform_id) {
             if (payment != 0) {
                 parse_num(0, payment);
                 parse_num(1, PlayersData[faction_id_].energy_reserves);
-                StringTemp[0] = 0;
-                strcat(StringTemp, "TERRACOST");
+                ::clear();
+                says("TERRACOST");
                 if (terraform_id == TERRA_LOWER_LAND) {
-                    strcat(StringTemp, "DOWN");
+                    says("DOWN");
                 } else {
-                    strcat(StringTemp, "UP");
+                    says("UP");
                 }
                 popup.start(StringTemp);
                 if (PlayersData[faction_id_].energy_reserves >= payment) {
@@ -1784,7 +1784,7 @@ void Console::terraform(int vehicle_id, int terraform_id) {
             const int target_faction = whose_territory(faction_id_, affected_x, affected_y,
                                                        nullptr, 0);
             if (target_faction < 0 || target_faction == faction_id_ ||
-                (PlayersData[faction_id_].diplo_treaties[target_faction] & 7) == 0) {
+                !has_treaty(faction_id_, target_faction, 7)) {
                 continue;
             }
             // A failed lock refunds without unlocking.
