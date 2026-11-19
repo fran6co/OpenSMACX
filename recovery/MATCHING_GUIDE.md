@@ -3596,6 +3596,14 @@ Constant registers (measured with standalone probes, 2026-11-18)
   removed, no function changed). Where it is load-bearing the function sits
   at a game address but lives in a unit built /Oy: fix the unit's flag or
   move the body to the header that the game unit instantiates.
+- **`xor eax,eax` just before the last pop is a shared exit, not another
+  compiler.** A `return 0` exit whose `xor eax,eax` sits immediately before
+  the final `pop`s (rather than right after the test that chose it) is the
+  merged return block that other branches jump to; VC6 schedules the zeroing
+  into the shared tail. Spell the returns so they share one exit (a common
+  `return 0` at the end, or a result variable), do not suspect a different
+  compiler or flags (uV study, par-5: the uV functions are VC6, built with
+  the unit's FE_OPT/FE_COMPILER options).
 
 ## 4. Measured and neutral (do not retry without new evidence)
 
