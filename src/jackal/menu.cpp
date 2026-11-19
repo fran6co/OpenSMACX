@@ -119,16 +119,20 @@ int Menu::add_menu(int menu_id, char *text, int left_justified) {
     if (ampersand && ampersand[1] != ' ') {
         char *after_ampersand = ampersand + 1;
         *ampersand = '\0';
-        strcat(entries_[slot].text, text);
+        { char *label = entries_[slot].text; strcat(label, text); }
         const char next = after_ampersand[0];
         *ampersand = '&';
         if (next != '&')
             entries_[slot].mnemonic = entries_[slot].text + strlen(entries_[slot].text);
         strcat(entries_[slot].text, after_ampersand);
     } else {
-        strcat(entries_[slot].text, text);
+        { char *label = entries_[slot].text; strcat(label, text); }
     }
-    strcat(entries_[slot].text, "  ");
+    // WORKAROUND(inline): the image gives the three appended-to label
+    // pointers the lowest free scratch register (eax) outside the
+    // round-robin cursor, as for a named value (an inline helper's
+    // parameter, name unknown); the plain argument rotates them.
+    { char *label = entries_[slot].text; strcat(label, "  "); }
 
     if (entries_[slot].pull_down) delete entries_[slot].pull_down;
     entries_[slot].pull_down = new PullDown;
