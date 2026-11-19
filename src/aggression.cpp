@@ -783,10 +783,7 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
         int near_id = base_find(base_x, base_y, faction_id_def);
         if (near_id >= 0) {
             int near_x = Bases[near_id].x;
-            int dx = near_x - base_x;
-            if (dx < 0) {
-                dx = base_x - near_x;
-            }
+            int dx = near_x - base_x >= 0 ? near_x - base_x : base_x - near_x;
             int near_y = Bases[near_id].y;
             int dy = near_y - base_y;
             if (dy < 0) {
