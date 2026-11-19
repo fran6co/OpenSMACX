@@ -139,6 +139,12 @@ void ConsoleCommandsDeclFnPad42();
 void ConsoleCommandsDeclFnPad43();
 void ConsoleCommandsDeclFnPad44();
 void ConsoleCommandsDeclFnPad45();
+void ConsoleCommandsDeclFnPad46();
+void ConsoleCommandsDeclFnPad47();
+void ConsoleCommandsDeclFnPad48();
+void ConsoleCommandsDeclFnPad49();
+void ConsoleCommandsDeclFnPad50();
+void ConsoleCommandsDeclFnPad51();
 
 // Shared separator objects the image pushes instead of unit literals.
 extern const char BufferJoinSpace[];
