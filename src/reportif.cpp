@@ -1963,32 +1963,30 @@ void ReportWin::draw_labs() {
 
         // 0x49970D: prerequisites. The one-prerequisite arm is laid out
         // first and its final box_sprite tail-merges with the two-arm's.
-        if (ids[1] < 0 || ids[2] < 0) {
-            if (ids[1] + 1 != 0) {
-                // 0x49972B..0x499862
-                labs_line(field_A28_, lab_center_y_, lab_prerequisite_x_,
-                          lab_center_y_, field_59A0_, field_59A4_, 0);
-                StringTemp[0] = 0;
-                say_tech(StringTemp, ids[1], 0);
-                CharUpperA(StringTemp);
-                FlatButton *button = &flatButtons1_[1];
-                button->init(StringTemp, 0x379, lab_prerequisite_x_,
-                             lab_center_y_, field_59A0_, field_59A4_, host, 0);
-                button->set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
-                button->redraw();
-                if (has_tech(ids[1], faction)) {
-                    button->set_text_color(0xFF, -1, 1, 1);
-                }
-                button->set_border_styles(&InterfaceBoxStyles[27],
-                                          &InterfaceBoxStyles[28],
-                                          &InterfaceBoxStyles[29]);
-                button->redraw();
-                set_rectangle_dimensions(&box, lab_prerequisite_x_ - 3,
-                                         lab_center_y_ - 3, field_59A0_ + 6,
-                                         field_59A4_ + 6);
-                host->Buffer::box_sprite(&box, &InterfaceBoxStyles[3]);
+        if ((ids[1] < 0 || ids[2] < 0) && ids[1] + 1 != 0) {
+            // 0x49972B..0x499862
+            labs_line(field_A28_, lab_center_y_, lab_prerequisite_x_,
+                      lab_center_y_, field_59A0_, field_59A4_, 0);
+            StringTemp[0] = 0;
+            say_tech(StringTemp, ids[1], 0);
+            CharUpperA(StringTemp);
+            FlatButton *button = &flatButtons1_[1];
+            button->init(StringTemp, 0x379, lab_prerequisite_x_,
+                         lab_center_y_, field_59A0_, field_59A4_, host, 0);
+            button->set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
+            button->redraw();
+            if (has_tech(ids[1], faction)) {
+                button->set_text_color(0xFF, -1, 1, 1);
             }
-        } else {
+            button->set_border_styles(&InterfaceBoxStyles[27],
+                                      &InterfaceBoxStyles[28],
+                                      &InterfaceBoxStyles[29]);
+            button->redraw();
+            set_rectangle_dimensions(&box, lab_prerequisite_x_ - 3,
+                                     lab_center_y_ - 3, field_59A0_ + 6,
+                                     field_59A4_ + 6);
+            host->Buffer::box_sprite(&box, &InterfaceBoxStyles[3]);
+        } else if (ids[1] >= 0 && ids[2] >= 0) {
             // 0x499867..0x499ADD
             labs_line(field_A28_, lab_center_y_, lab_prerequisite_x_,
                       lab_upper_inner_y_, field_59A0_, field_59A4_, 0);
