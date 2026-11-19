@@ -626,8 +626,11 @@ def predicate(L, blocks, b):
                         # `test ah, 4` = `test eax, 0x400`
                         if ops[0] in ('ah', 'bh', 'ch', 'dh'):
                             K <<= 8
-                        elif re.match(r'byte ptr .*\+ (0x[1-3]|[1-3])\]$', ops[0]) and od.startswith(('F', 'G')):
-                            K <<= 8 * int(re.search(r'\+ (0x[1-3]|[1-3])\]$', ops[0]).group(1), 0)
+                        elif ops[0].startswith('byte ptr') and od.startswith(('F', 'G')):
+                            # `test byte [x + 0xa], 4` = bit 0x40000 of the dword at +8 (operand already masked to ~3)
+                            dm = re.search(r'([+-]) (0x[0-9a-f]+|\d+)\]$', ops[0])
+                            if dm and dm.group(1) == '+':
+                                K <<= 8 * (int(dm.group(2), 0) & 3)
                     else:
                         K = 'tx'
             elif x.m in ('inc', 'dec', 'sub', 'add') and rel == 'eq' and ops[0] in R32:
@@ -1094,8 +1097,8 @@ def report(r, verbose=False, top=40):
     hs = sorted(r['hits'], key=lambda h: -h['score'])
     for h in hs[:top if not verbose else 10 ** 6]:
         k = h['key'][0] + ':' + str(h['key'][1])[:48]
-        if h['kind'] == 'COUNT':
-            print('   COUNT     %-50s img %d ours %d  img-unpaired %s ours-unpaired %s' % (k, h['img'], h['ours'], ','.join(h['img_at']), ','.join(h['ours_at'])))
+        if h['kind'].startswith('COUNT'):
+            print('   %-9s %-50s img %d ours %d  img-unpaired %s ours-unpaired %s' % (h['kind'], k, h['img'], h['ours'], ','.join(h['img_at']), ','.join(h['ours_at'])))
         else:
             print('   %-9s %-50s img %s [%s]  ours %s [%s]  sites %d (calls %d)' % (h['kind'], k, h['img_at'], fmtp(h['img_pred']), h['ours_at'], fmtp(h['ours_pred']), h['n'], h['ncalls']))
             print('             tested at img %s | ours %s' % (h.get('img_jcc', ''), h.get('ours_jcc', '')))

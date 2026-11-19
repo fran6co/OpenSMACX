@@ -436,6 +436,18 @@ an explicit `--pfx` is only needed to pick another lane.
   (`IMG-ONLY [!bit 32]` on 126 sites), ReportWin::draw_ops 0x0049E26D/0x0049E2F2 Base+0xD4 `mineral_surplus` read as
   `mineral_surplus_final` +0x98 (an IMG-ONLY/OURS-ONLY pair with the same test on different fields),
   NetSessionPickerWin::initialize 0x0063C2BB `Dialog::field_6C_ = 2` written as `field_5C_` (fieldscan FIELD).
+- `analysis/fieldscan.py [--from FEALL.json] [unit ...] [--json F] [--strong] | <unit> --addr A[,..] [--src ALT.cpp]` data-flow
+  half of the behaviour screen (25 s tree-wide with FE_JOBS=5): on fe-aligned differing rows with the same mnemonic and
+  operand shape, a field displacement (FIELD), an immediate (IMM: stored constant, compare constant, pushed argument,
+  multiplier, shift count) or an index scale (SCALE) that differs. Frame operands, stack adjustments, EH state stores and
+  `fxch` are left out; hits are marked `swap`/`order` (the same operands within 8 rows on the other side: scheduling),
+  `moved` (both instructions occur elsewhere on the other side: rows paired across a layout difference) and `ivN` (one
+  displacement delta repeated: a pointer induction variable with another base); `--strong` prints only unmarked hits.
+  `FS_REGMASK=1` compares with general registers masked (more pairs, more false hits through different base registers
+  holding the same address). First pass 2026-11-19: 359 raw hits -> 13 unmarked, one real (NetSessionPickerWin::initialize
+  field_6C_); behavscan's paired IMG-ONLY/OURS-ONLY hit on two fields gave ReportWin::draw_ops. The rest were IV bases
+  (`lea r,[esi+K]` from a relocated base), misaligned rows and ternary sense (`setg; dec; and -2; add 6` against
+  `setle; dec; and 2; add 4`: the same values, the image's `c <= K ? a : b` spelling; setup_player 0x005B28AF).
 - `analysis/slotflow.py <unit> <addr> [--src ALT.cpp] [--pfx N]` transcription-error screen (MATCHING_GUIDE 3.5): for every
   image instruction that reads a frame slot and is aligned with one of ours reading a named variable v, it takes the
   image's reaching definitions of that slot, maps each through the fe alignment to our instruction and the variable it
