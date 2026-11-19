@@ -4339,9 +4339,9 @@ LAB_0046441f:
             // Original 0x0046517B/0x004651B2 reload the map width/base
             // after whose_territory, then cache the center's region (+3).
             local_c0 = MapTiles[MapLongitude * a8 + local_14].region;
-            for (local_94 = 0; local_94 < 8; local_94++) {
-                iVar5 = wrap_map_x(VehMoveDeltaX[local_94] + a7);
-                iVar19 = VehMoveDeltaY[local_94] + a8;
+            for (int dir = 0; dir < 8; dir++) {
+                iVar5 = wrap_map_x(VehMoveDeltaX[dir] + a7);
+                iVar19 = VehMoveDeltaY[dir] + a8;
                 if (iVar19 >= 0 && iVar19 < MapLatitudeBounds && iVar5 >= 0 &&
                     iVar5 < MapLongitudeBounds &&
                     ((MapTiles[MapLongitude * iVar19 + (iVar5 >> 1)]
@@ -4356,16 +4356,16 @@ LAB_0046441f:
                     if (territory_faction != uVar12) {
                         local_44 = 1;
                         cVar4 = (char)territory_faction;
-                        if (((uint32_t)local_94 & 1) == 0) {
-                            if (local_94 == 0) {
+                        if (((uint32_t)dir & 1) == 0) {
+                            if (dir == 0) {
                                 territory_mask[8] = cVar4 + 1;
                                 territory_mask[2] = cVar4 + 1;
                             } else {
-                                territory_mask[local_94] = cVar4 + 1;
-                                territory_mask[local_94 + 2] = cVar4 + 1;
+                                territory_mask[dir] = cVar4 + 1;
+                                territory_mask[dir + 2] = cVar4 + 1;
                             }
                         }
-                        territory_mask[local_94 + 1] = cVar4 + 1;
+                        territory_mask[dir + 1] = cVar4 + 1;
                     }
                 }
             }
