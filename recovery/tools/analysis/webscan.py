@@ -27,7 +27,15 @@ The frame (ours vs image) prints on every function line: a REUSE/COPY on a funct
 is the first place to try.  Loop-counter webs (`for (x = ...`) are tagged `for`; a name whose webs are
 all loop counters is the sibling-counter shape (analysis/loopsweep.py --rule sibling) and listed with -v.
 Screen only: try each split/merge with fe.py and framescan.py --addr, then judge by frame, slot map,
-regmap/candset agreement, rows (MATCHING_GUIDE 1.1)."""
+regmap/candset agreement, rows (MATCHING_GUIDE 1.1).
+
+--sweep variants are NOT checked for meaning.  The source webs come from listing line attribution, which
+tail merging and code motion blur: a def whose line kept no code of its own is attached to the next line's
+block, and a web can then miss its join (base_draw's `revealed = 1` arms, setup_text's per-case row count
+`k` that reaches `row_count_ = k` after the switch).  Such a split changes behaviour and often reads as a
+large row gain.  Read every web by hand before keeping a split; merges are refused when the source is
+redefined while the copy is live (`/live`).  2026-11-19 first pass: of 42 row gains, veh_scoot, monolith,
+probe and load_vehicles were real; base_draw and setup_text k were broken splits."""
 import sys, os, re, json, argparse, collections, subprocess
 from concurrent.futures import ThreadPoolExecutor
 H = os.path.dirname(os.path.abspath(__file__))
@@ -287,6 +295,7 @@ def analyse(unit, src, text, c, lst, addr, verbose):
             refs.append(dict(key=k, kind=kind, block=b, line=ln, seq=seq))
     webs = regprio.build_webs(F, refs, set(params))
     byname = collections.defaultdict(list)
+    livemap = {}
     for w in webs.values():
         rs = [refs[i] for i in w['refs']]
         if not any(x['kind'] in ('u', 'ud') for x in rs):
@@ -294,6 +303,7 @@ def analyse(unit, src, text, c, lst, addr, verbose):
         if not any(x['kind'] in ('d', 'ud') for x in rs) and w['key'] not in params:
             continue
         byname[w['key']].append(rs)
+        livemap[id(rs)] = w['live']
 
     def is_for(name, ln):
         s = stripped[ln - first] if 0 <= ln - first < len(stripped) else ''
@@ -359,8 +369,16 @@ def analyse(unit, src, text, c, lst, addr, verbose):
         # is a still used after the copy (both live) or is the copy a hand-off?
         later = [x for x in refs if x['key'] == a_ and x['line'] > ln]
         handoff = not later or later[0]['kind'] == 'd'
-        bweb = next((sorted({x['line'] for x in rs}) for rs in byname.get(b, ())
-                     if any(x['line'] == ln and x['kind'] == 'd' for x in rs)), [])
+        brs = next((rs for rs in byname.get(b, ()) if any(x['line'] == ln and x['kind'] == 'd' for x in rs)), None)
+        bweb = sorted({x['line'] for x in brs}) if brs else []
+        # one variable only if a is not redefined while b's value is live (a loop's `prev = cur`)
+        if brs:
+            blive = livemap[id(brs)]
+            adefs = [x for x in refs if x['key'] == a_ and x['kind'] in ('d', 'ud') and x['line'] != ln]
+            if any(x['block'] in blive and x['line'] not in bweb for x in adefs) or \
+                    any(x['line'] in bweb and x['line'] != ln for x in adefs):
+                bweb = []
+                verdict += '/live'
         aweb = next((sorted({x['line'] for x in rs}) for rs in byname.get(a_, ()) if any(x['line'] == ln for x in rs)), [])
         if not verbose and verdict == 'APART':
             continue
@@ -429,7 +447,7 @@ def variants(text, rec):
         if ty is None:
             continue
         webs = x['webs']
-        for n in range(1, len(webs)):
+        for n in range(0, len(webs)):
             mine = set(webs[n]['lines'])
             other = set().union(*[set(w['lines']) for j, w in enumerate(webs) if j != n])
             if mine & other or dk + 1 in mine:
