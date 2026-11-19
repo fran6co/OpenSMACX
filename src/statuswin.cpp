@@ -1194,12 +1194,12 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
         }
         if (Vehs[vehicle_id].faction_id == ConsoleGlobal.faction_id_
             || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) {
-            int home_base_id = Vehs[vehicle_id].home_base_id;
+            base_id = Vehs[vehicle_id].home_base_id;
             StringTemp[0] = '\0';
-            if (home_base_id < 0) {
+            if (base_id < 0) {
                 strcat(StringTemp, label_get(0x308 / 4));
             } else {
-                strcat(StringTemp, Bases[home_base_id].name_string);
+                strcat(StringTemp, Bases[base_id].name_string);
             }
             line_y = MainInterfaceGlobal.wrap(StringTemp, content_x, line_y,
                                   area.right - area.left);
