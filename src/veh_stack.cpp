@@ -730,7 +730,7 @@ void __cdecl spot_all(int veh_id, int toggle) {
                 // the `if (faction_id)` guard folded away because sensor_faction > 0)
                 spot_stack_tile_call(veh_id, sensor_faction);
                 // 0x5B7056
-                if (!has_treaty(faction_id, sensor_faction, 7) && toggle) {
+                if (!(PlayersData[faction_id].diplo_treaties[sensor_faction] & 7) && toggle) {
                     if (triad == TRIAD_LAND) {
                         add_goal(sensor_faction, AI_GOAL_ATTACK, 2, x, y, -1);
                         add_goal(sensor_faction, AI_GOAL_DEFEND, 1, x, y, -1);
@@ -815,7 +815,7 @@ void __cdecl spot_all(int veh_id, int toggle) {
                         && want_to_wake(faction_id, stack_id, veh_id)) {
                         veh_move_end(stack_id); // 0x5B7679 inlined (order tail shared at 0x5B7774)
                     }
-                } else if (!has_treaty(faction_id, stack_faction, 7)
+                } else if (!(PlayersData[faction_id].diplo_treaties[stack_faction] & 7)
                            && (contact_low_terrain || !low_terrain)) {
                     veh_move_end(stack_id); // 0x5B7709 inlined
                 }
@@ -826,7 +826,7 @@ void __cdecl spot_all(int veh_id, int toggle) {
         //   0x5B77A7 is that function's exact spelling)
         if (veh_can_leave_stack(stack_id) && !sensor
             && stack_check(stack_id, 1, -1, -1, -1) == 1
-            && has_treaty(faction_id, stack_faction, 8)) {
+            && (PlayersData[faction_id].diplo_treaties[stack_faction] & 8)) {
             continue;
         }
         // 0x5B7838
