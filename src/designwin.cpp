@@ -2097,7 +2097,7 @@ void DesignWin::draw_vehicle(int redraw) {
                 && Armor[j_armor].defense_rating >= Armor[protoArmorType_].defense_rating) {
                 adv = 1;
             }
-            if (Chassis[protoChassisType_].triad == Chassis[j_chassis].triad   // cmp dl(proto), bl(j)
+            if (Chassis[protoChassisType_].triad == Chassis[VehPrototypes[jj].chassis_id].triad   // cmp dl(proto), bl(j)
                 && Chassis[j_chassis].speed >= Chassis[protoChassisType_].speed) { // cmp al(j), dl; jb
                 chassis_ok = 1;
             }
