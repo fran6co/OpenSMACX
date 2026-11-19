@@ -69,26 +69,9 @@ static int CurrentTechnologyBoxIndex = -1;
 // Initial storage binding does not establish complete CRT registration order.
 // RECOVERY_OBJECT: v2 0x00811E40 0x00822604 ?NewTechWindow@@3VNewTechWin@@A 0x004849D0
 NewTechWin NewTechWindow;
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00483920 ?info@NewTechWin@@QAAXPAD@Z 0x00483920-0x00483950 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original callback reads686964 and addresses811E40+2DA4+index*2BA0; exec484434 publishes the index before help dispatch"], "reason": "Genuine cdecl callback appends text to the current embedded technology box in the source-owned NewTech singleton."}
-// symbol    ?newtech_info@@YAXPAD@Z
-static void __cdecl newtech_info(char *text) {
-    NewTechWindow.stringBoxes_[CurrentTechnologyBoxIndex].add_special(text);
-}
-
 void __cdecl help_tech_info(void (__cdecl *append)(char *), int technology,
                             int faction, int box_index);
 
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// Historical seed observations (not fresh measurements or acceptance):
-// TRIED: real `FlatButton flatButtons_[3]`/`StringBox stringBoxes_[4]` array members (the scaffold's own layout) - with no dtor declared on FlatButton/StringBox, MSVC synthesizes its OWN local `??_H@` vector-constructor-iterator COMDAT for the array member init that precedes the body of ANY constructor for that class, which is a SECOND external .text symbol and makes `verify_recovered_function.py`'s `object_code()` raise an uncaught ValueError ("expected one external .text symbol, found 2") instead of reporting NO_COMPILE - crashes --dir and --body scoring outright. Sidestepped the same way the sibling destructor (0x00484810) does: NewTechWin here is its OWN flat class (no real inheritance, byte-array "members"), and every subobject is constructed EXPLICITLY via placement `new` / direct calls, so nothing is ever implicitly member-initialized.
-// TRIED: reproducing the `push -1/push handler/mov fs:[0]` SEH frame and the `ebp-4` progressive construction-state byte - that is MSVC's own codegen for base/member initializer-list unwind, which explicit placement-new statements in an ordinary function body do not trigger; landed without it.
-// ORIGINAL: 0x004849D0 ??0NewTechWin@@QAE@XZ 0x004849D0-0x00484A78;0x006575D0-0x00657626 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004849d0.cpp retained primary and unwind spans; pinned instructions construct3FlatButtons and4StringBoxes before final StringBox"], "reason": "Ordinary GraphicWin inheritance and embedded FlatButton/ButtonGroup/StringBox members reproduce the original construction graph without duplicate placement construction."}
-NewTechWin::NewTechWin() {
-}
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00484810 ??1NewTechWin@@QAE@XZ 0x00484810-0x004849CD;0x00657510-0x006575C9 BYTE_EXACT
@@ -108,38 +91,12 @@ int NewTechWin::on_link_clicked(int, char *link) {
     return 1;
 }
 
-/*
-Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-// ORIGINAL: 0x00483E90 ?on_left_click@NewTechWin@@QAEXHH@Z 0x00483E90-0x00483E93 BYTE_EXACT
-// symbol    ?on_left_click@NewTechWin@@UAEXHH@Z
-// size      3 bytes
-// prototype void (__thiscall ?on_left_click@NewTechWin@@QAEXHH@Z)(NewTechWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void NewTechWin::on_left_click(int, int) {
-}
-
-
-/*
-Purpose: Unknown; the legacy implementation ignores its arguments and returns 1.
-// ORIGINAL: 0x00483EA0 ?on_key_click@NewTechWin@@QAEHHH@Z 0x00483EA0-0x00483EA8 BYTE_EXACT
-// symbol    ?on_key_click@NewTechWin@@UAEHHH@Z
-// size      8 bytes
-// prototype int (__thiscall ?on_key_click@NewTechWin@@QAEHHH@Z)(NewTechWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: 1, always
-Status: Complete
-*/
-int NewTechWin::on_key_click(int, int) {
-    return 1;
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00483920 ?info@NewTechWin@@QAAXPAD@Z 0x00483920-0x00483950 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Original callback reads686964 and addresses811E40+2DA4+index*2BA0; exec484434 publishes the index before help dispatch"], "reason": "Genuine cdecl callback appends text to the current embedded technology box in the source-owned NewTech singleton."}
+// symbol    ?newtech_info@@YAXPAD@Z
+static void __cdecl newtech_info(char *text) {
+    NewTechWindow.stringBoxes_[CurrentTechnologyBoxIndex].add_special(text);
 }
 
 // Include in the real owner: game.h, alpha.h, strings.h, technology.h,
@@ -292,6 +249,106 @@ static inline int newtechwin_run_modal(NewTechWin *win) {
     win->hide();
     do_all_draws();
     return PendingTechnologyLink;
+}
+
+/*
+Purpose: ?on_button_clicked@NewTechWin@@QAEXH@Z - dispatch to slot 0xe8 of this object's OWN
+         vtable with NO arguments: the original pushes nothing between the
+         vtable load and the call, so the parameters this function declares are
+         discarded and only the `ret` cleans them up.
+// ORIGINAL: 0x00483E80 ?on_button_clicked@NewTechWin@@QAEXH@Z 0x00483E80-0x00483E8B BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned original own table 0x0066CE5C, pointer word at +0xB0, identifies original entry 0x00483E80", "source:src/win.h inherited virtual interface; actual emitted method ?on_button_clicked@NewTechWin@@UAEXH@Z in primary Win table ??_7NewTechWin@@6BWin@@@"], "reason": "The original own Win table binds this entry as virtual slot 44. Use genuine member dispatch, not an opaque redirect; retain the catalogued original spelling as historical evidence."}
+// symbol    ?on_button_clicked@NewTechWin@@UAEXH@Z
+// size      11 bytes
+// prototype void (__thiscall ?on_button_clicked@NewTechWin@@QAEXH@Z)(NewTechWin* this, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x00483E82
+Return Value: n/a
+Status: Complete
+*/
+void NewTechWin::on_button_clicked(int) {
+  release_modal();
+}
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+// ORIGINAL: 0x00483E90 ?on_left_click@NewTechWin@@QAEXHH@Z 0x00483E90-0x00483E93 BYTE_EXACT
+// symbol    ?on_left_click@NewTechWin@@UAEXHH@Z
+// size      3 bytes
+// prototype void (__thiscall ?on_left_click@NewTechWin@@QAEXHH@Z)(NewTechWin* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void NewTechWin::on_left_click(int, int) {
+}
+
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns 1.
+// ORIGINAL: 0x00483EA0 ?on_key_click@NewTechWin@@QAEHHH@Z 0x00483EA0-0x00483EA8 BYTE_EXACT
+// symbol    ?on_key_click@NewTechWin@@UAEHHH@Z
+// size      8 bytes
+// prototype int (__thiscall ?on_key_click@NewTechWin@@QAEHHH@Z)(NewTechWin* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: 1, always
+Status: Complete
+*/
+int NewTechWin::on_key_click(int, int) {
+    return 1;
+}
+
+// Original initializer 0x483880 constructs six Sprites at stride 0x2C;
+// initial storage is zero. Registered teardown 0x4838B0 tests/sets mask0x01 of
+// the separate byte0x822604 before reverse array destruction. Keep that byte
+// outside both the NewTechWindow singleton and the array's bounded storage.
+// ORIGINAL: 0x004838B0 ??__Fg_NEWTECHWIN_SPRITES@@YAXXZ 0x004838B0-0x004838D8 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned0x00483880..0x004838A4 constructs six stride0x2C Sprites at0x00822610..0x00822718 using forward construction with prefix unwind, then registers0x004838B0..0x004838D8. Cleanup publishes mask1 of byte0x00822604 before reverse vector destruction; constructors do not reset it.", "NewTechWin::technology_sprites_[6] is ordinary class-static storage, defined after the existing NewTechWin singleton. Physical compiler output supplies the vector constructor/destructor iterators, matching guard, and registration edge. Runtime consumers access the same six elements directly; no value initialization or authored lifetime wrapper is introduced.", "Current compiler names are carried by the function symbol and object-target facts, not treated as historical debug names. Static members add no instance fields. Fresh strict measurement remains required; this binding transports no claim."], "reason": "Bind the pinned lifetime to typed class-static storage and compiler-generated initialization/destruction. Preserve original identity, spans, historical claims and guard/order obligations. Original nominal declarations and complete historical TU boundaries, linked data placement and game behavior remain unproved."}
+// symbol    _$E18
+// RECOVERY_OBJECT: v4 0x00822604 ?NewTechSpritesCleanupGuard@@3EA target _$S19
+// RECOVERY_OBJECT: v4 0x00822610 0x00822718 ?g_NEWTECHWIN_SPRITES@@3PAVSprite@@A 0x00453A70 target ?technology_sprites_@NewTechWin@@2PAVSprite@@A
+Sprite NewTechWin::technology_sprites_[6];
+
+
+// ORIGINAL: 0x00483EB0 ?on_group_clicked@NewTechWin@@QAEXHH@Z 0x00483EB0-0x00483F8C BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"Recover the complete body in its genuine C++ owner, with real embedded members, shared virtual bases, lifecycle and parent operations. Compiler-generated overrides/adjustors replace executable-address or vbtable stand-ins; no current matching claim is granted.","evidence":["git:391d42a9:src/unrecovered/00483eb0.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/ui-eight-owner-coverage.json","Original entry 0x00483eb0; physical VC6 COFF emitted symbol ?on_group_clicked@NewTechWin@@QAEXHH@Z."]}
+// symbol    ?on_group_clicked@NewTechWin@@UAEXHH@Z
+// TRIED: `#pragma function(strcat)` - without it VC6 inlines strcat as a scasb/movs sequence; with it plus a switch(a2){case 1: case 2:} (matching the dec/je/dec/jne shape) this reaches 0.96 mnemonic similarity, MISMATCH only on the final load()-call arg pushes.
+void NewTechWin::on_group_clicked(int, int group) {
+    char number[80];
+    switch (group) {
+    case 1:
+        StringTemp[0] = '\0';
+// RECOVERY_LITERAL: v1 0x00686968 0x0068696D $SG56834 0x00483EB0
+        strcat(StringTemp, "TECH");
+        _itoa(static_cast<int>(field_B24_), number, 10);
+        strcat(StringTemp, number);
+        stringBox2_.clear();
+        stringBox2_.strings().load(DatalinkBlurbFile, StringTemp, 1, 0);
+        break;
+    case 2:
+        StringTemp[0] = '\0';
+// RECOVERY_LITERAL: v1 0x00686970 0x00686975 $SG56837 0x00483EB0
+        strcat(StringTemp, "TECH");
+        _itoa(static_cast<int>(field_B24_), number, 10);
+        strcat(StringTemp, number);
+        stringBox2_.clear();
+// RECOVERY_LITERAL: v1 0x00686978 0x00686982 $SG56839 0x00483EB0
+        stringBox2_.strings().load("techlongs", StringTemp, 1, 0);
+        break;
+    default:
+        return;
+    }
+    stringBox2_.add_fixup();
 }
 // ORIGINAL: 0x00483F90 ?exec@NewTechWin@@QAEXHH@Z 0x00483F90-0x0048480F
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00483f90.cpp retained full original extent; independent pinned geometry review and actual-source controls in recovery/tests/test_newtechwin_exec_behavior.py"], "reason": "Technology popup uses real embedded controls, callback receiver, shared data owners, audio and modal hyperlink dispatch."}
@@ -474,73 +531,14 @@ void NewTechWin::exec(int technology_id, int other_faction_id) {
     do_all_draws();
 }
 
-// Original initializer 0x483880 constructs six Sprites at stride 0x2C;
-// initial storage is zero. Registered teardown 0x4838B0 tests/sets mask0x01 of
-// the separate byte0x822604 before reverse array destruction. Keep that byte
-// outside both the NewTechWindow singleton and the array's bounded storage.
-// ORIGINAL: 0x004838B0 ??__Fg_NEWTECHWIN_SPRITES@@YAXXZ 0x004838B0-0x004838D8 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned0x00483880..0x004838A4 constructs six stride0x2C Sprites at0x00822610..0x00822718 using forward construction with prefix unwind, then registers0x004838B0..0x004838D8. Cleanup publishes mask1 of byte0x00822604 before reverse vector destruction; constructors do not reset it.", "NewTechWin::technology_sprites_[6] is ordinary class-static storage, defined after the existing NewTechWin singleton. Physical compiler output supplies the vector constructor/destructor iterators, matching guard, and registration edge. Runtime consumers access the same six elements directly; no value initialization or authored lifetime wrapper is introduced.", "Current compiler names are carried by the function symbol and object-target facts, not treated as historical debug names. Static members add no instance fields. Fresh strict measurement remains required; this binding transports no claim."], "reason": "Bind the pinned lifetime to typed class-static storage and compiler-generated initialization/destruction. Preserve original identity, spans, historical claims and guard/order obligations. Original nominal declarations and complete historical TU boundaries, linked data placement and game behavior remain unproved."}
-// symbol    _$E18
-// RECOVERY_OBJECT: v4 0x00822604 ?NewTechSpritesCleanupGuard@@3EA target _$S19
-// RECOVERY_OBJECT: v4 0x00822610 0x00822718 ?g_NEWTECHWIN_SPRITES@@3PAVSprite@@A 0x00453A70 target ?technology_sprites_@NewTechWin@@2PAVSprite@@A
-Sprite NewTechWin::technology_sprites_[6];
 
-// Equal section prefixes have separate original storage for the two branches.
-// RECOVERY_OBJECT: v2 0x00686968 0x0068696D _NewTechBlurbSectionPrefix 0x00483EB0
-static const char NewTechBlurbSectionPrefix[] = "TECH";
-// RECOVERY_OBJECT: v2 0x00686970 0x00686975 _NewTechLongSectionPrefix 0x00483EB0
-static const char NewTechLongSectionPrefix[] = "TECH";
-
-// ORIGINAL: 0x00483EB0 ?on_group_clicked@NewTechWin@@QAEXHH@Z 0x00483EB0-0x00483F8C BYTE_EXACT
-// RECOVERY_BINDING: v1 {"reason":"Recover the complete body in its genuine C++ owner, with real embedded members, shared virtual bases, lifecycle and parent operations. Compiler-generated overrides/adjustors replace executable-address or vbtable stand-ins; no current matching claim is granted.","evidence":["git:391d42a9:src/unrecovered/00483eb0.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/ui-eight-owner-coverage.json","Original entry 0x00483eb0; physical VC6 COFF emitted symbol ?on_group_clicked@NewTechWin@@QAEXHH@Z."]}
-// symbol    ?on_group_clicked@NewTechWin@@UAEXHH@Z
-// TRIED: `#pragma function(strcat)` - without it VC6 inlines strcat as a scasb/movs sequence; with it plus a switch(a2){case 1: case 2:} (matching the dec/je/dec/jne shape) this reaches 0.96 mnemonic similarity, MISMATCH only on the final load()-call arg pushes.
-void NewTechWin::on_group_clicked(int, int group) {
-    char number[80];
-    switch (group) {
-    case 1:
-        StringTemp[0] = '\0';
-        strcat(StringTemp, NewTechBlurbSectionPrefix);
-        _itoa(static_cast<int>(field_B24_), number, 10);
-        strcat(StringTemp, number);
-        stringBox2_.clear();
-        stringBox2_.strings().load(DatalinkBlurbFile, StringTemp, 1, 0);
-        break;
-    case 2:
-        StringTemp[0] = '\0';
-        strcat(StringTemp, NewTechLongSectionPrefix);
-        _itoa(static_cast<int>(field_B24_), number, 10);
-        strcat(StringTemp, number);
-        stringBox2_.clear();
-        stringBox2_.strings().load("techlongs", StringTemp, 1, 0);
-        break;
-    default:
-        return;
-    }
-    stringBox2_.add_fixup();
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// TRIED: real `FlatButton flatButtons_[3]`/`StringBox stringBoxes_[4]` array members (the scaffold's own layout) - with no dtor declared on FlatButton/StringBox, MSVC synthesizes its OWN local `??_H@` vector-constructor-iterator COMDAT for the array member init that precedes the body of ANY constructor for that class, which is a SECOND external .text symbol and makes `verify_recovered_function.py`'s `object_code()` raise an uncaught ValueError ("expected one external .text symbol, found 2") instead of reporting NO_COMPILE - crashes --dir and --body scoring outright. Sidestepped the same way the sibling destructor (0x00484810) does: NewTechWin here is its OWN flat class (no real inheritance, byte-array "members"), and every subobject is constructed EXPLICITLY via placement `new` / direct calls, so nothing is ever implicitly member-initialized.
+// TRIED: reproducing the `push -1/push handler/mov fs:[0]` SEH frame and the `ebp-4` progressive construction-state byte - that is MSVC's own codegen for base/member initializer-list unwind, which explicit placement-new statements in an ordinary function body do not trigger; landed without it.
+// ORIGINAL: 0x004849D0 ??0NewTechWin@@QAE@XZ 0x004849D0-0x00484A78;0x006575D0-0x00657626 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004849d0.cpp retained primary and unwind spans; pinned instructions construct3FlatButtons and4StringBoxes before final StringBox"], "reason": "Ordinary GraphicWin inheritance and embedded FlatButton/ButtonGroup/StringBox members reproduce the original construction graph without duplicate placement construction."}
+NewTechWin::NewTechWin() {
 }
-
-/*
-Purpose: ?on_button_clicked@NewTechWin@@QAEXH@Z - dispatch to slot 0xe8 of this object's OWN
-         vtable with NO arguments: the original pushes nothing between the
-         vtable load and the call, so the parameters this function declares are
-         discarded and only the `ret` cleans them up.
-// ORIGINAL: 0x00483E80 ?on_button_clicked@NewTechWin@@QAEXH@Z 0x00483E80-0x00483E8B BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned original own table 0x0066CE5C, pointer word at +0xB0, identifies original entry 0x00483E80", "source:src/win.h inherited virtual interface; actual emitted method ?on_button_clicked@NewTechWin@@UAEXH@Z in primary Win table ??_7NewTechWin@@6BWin@@@"], "reason": "The original own Win table binds this entry as virtual slot 44. Use genuine member dispatch, not an opaque redirect; retain the catalogued original spelling as historical evidence."}
-// symbol    ?on_button_clicked@NewTechWin@@UAEXH@Z
-// size      11 bytes
-// prototype void (__thiscall ?on_button_clicked@NewTechWin@@QAEXH@Z)(NewTechWin* this, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// indirect  0x00483E82
-Return Value: n/a
-Status: Complete
-*/
-void NewTechWin::on_button_clicked(int) {
-  release_modal();
-}
-// RECOVERY_LITERAL: v1 0x00686978 0x00686982 $SG56813 0x00483EB0
 // RECOVERY_GENERATED: v1 vtable 0x0066CE5C ? ??_7NewTechWin@@6BWin@@@ 0x004849D0
 // RECOVERY_GENERATED: v1 vtable 0x0066CE54 ? ??_7NewTechWin@@6BBuffer@@@ 0x004849D0
