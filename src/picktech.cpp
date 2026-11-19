@@ -845,7 +845,7 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
                             say_open_paren();
                             say_label(0x140 / 4);
                             say_colon();
-                            strcat(StringTemp, StringTable.get(Chassis[i].offsv_1_name));
+                            strcat(StringTemp, table_text(Chassis[i].offsv_1_name));
                             say_close_paren();
                         }
                     }
