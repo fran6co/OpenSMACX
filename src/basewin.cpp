@@ -6907,11 +6907,8 @@ void BaseWin::draw_supported(int update_mode) {
                     ++i;
                 }
             }
-            if (total <= 1) {
-                icon_pitch = icon_width;
-            } else {
-                icon_pitch = base_native_clamp((vehicle_width - icon_width) / (total - 1), 1, icon_width);
-            }
+            icon_pitch = total <= 1 ? icon_width
+                : base_native_clamp((vehicle_width - icon_width) / (total - 1), 1, icon_width);
             for (int i = support; i > 0; --i) {
                 base_panel_sprite(g_ICONS_GENERAL_SPRITES[5], &MainInterfaceGlobal, icon_x, icon_y);
                 icon_x += icon_pitch;
