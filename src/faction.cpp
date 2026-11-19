@@ -6618,7 +6618,7 @@ commlink:
     if (DiploScratchFA34 == 9) {
         PlanWindow.init(nullptr);
         PlanWindow.back_redraw();
-        int has_base = 0;
+        commlink_count = 0;
         popup.start("PROPOSEBASE", 0x100040);
         popup.set_picture(FactionDiplomacyPortraits[faction_id_with], 0, nullptr);
         for (i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
@@ -6629,8 +6629,8 @@ commlink:
                 clear();
                 say_base(StringTemp, i);
                 popup.item(StringTemp, i);
-                if (!has_base) {
-                    has_base = 1;
+                if (!commlink_count) {
+                    commlink_count = 1;
                     PlanWindow.clear_lines();
                     PlanWindow.monocenter(Bases[i].x, Bases[i].y, 0);
                     PlanWindow.add_line(i, i, 0);
@@ -6638,7 +6638,7 @@ commlink:
                 }
             }
         }
-        if (has_base) {
+        if (commlink_count) {
             PlanWindow.show(0);
             popup.dialogs().ListBox::set_selection_callback(battle_routine);
             DiploScratchFA7C = popup.exec(pop_wait);
@@ -6732,7 +6732,7 @@ commlink:
     if (DiplomacyProposalMode == 8) {
         PlanWindow.init(nullptr);
         PlanWindow.back_redraw();
-        int has_base = 0;
+        commlink_count = 0;
         popup.start("COUNTERBASE", 0x100040);
         popup.set_picture(FactionDiplomacyPortraits[faction_id_with], 0, nullptr);
         for (i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
@@ -6741,8 +6741,8 @@ commlink:
                 clear();
                 say_base(StringTemp, i);
                 popup.item(StringTemp, i);
-                if (!has_base) {
-                    has_base = 1;
+                if (!commlink_count) {
+                    commlink_count = 1;
                     PlanWindow.clear_lines();
                     PlanWindow.monocenter(Bases[i].x, Bases[i].y, 0);
                     PlanWindow.add_line(i, i, 0);
