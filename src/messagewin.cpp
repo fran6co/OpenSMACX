@@ -88,9 +88,9 @@ void MessageWin::on_selected(int code, int) {
     ConsoleGlobal.get_mouse_pos(&mouse_x, &mouse_y);
     ConsoleGlobal.client_to_screen(&mouse_x, &mouse_y);
     menu.init(0);
-    menu.add_item(1, StringTable.get(Labels.strings_ptr[0x44C]));
+    menu.add_item(1, label_get(0x44C));
     menu.add_item(2, label_get(0x44D));
-    menu.add_item(3, label_get(0x44E));
+    menu.add_item(3, StringTable.get(Labels.strings_ptr[0x44E]));
     menu.show(mouse_x, mouse_y, 0);
     const int selected = menu.get_selected();
     const int action = selected < 64 ? menu.item_id(selected) : -1;
@@ -111,9 +111,9 @@ void MessageWin::on_selected(int code, int) {
                 TutWinBaseWindow.zoom(base_id, 0);
             }
         } else if (!(code & 0x20000000)) {
-            const int square = code & 0x7FFFFFFF;
-            const int y = square / MapLongitudeBounds;
-            const int x = square % MapLongitudeBounds;
+            code &= 0x7FFFFFFF;
+            const int y = code / MapLongitudeBounds;
+            const int x = code % MapLongitudeBounds;
             if (y >= 0 && y < MapLatitudeBounds &&
                 x >= 0 && x < MapLongitudeBounds) {
                 const int faction = ConsoleGlobal.faction_id_;
