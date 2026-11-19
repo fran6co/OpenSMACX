@@ -176,3 +176,8 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   check meaning: listing-based webs miss joins after tail merging, so read every web by hand before keeping one
   (first pass 2026-11-19: veh_scoot, monolith, probe, load_vehicles, draw_expenses real; base_draw, setup_text `k`,
   synch `local_turn` were broken splits that read as large gains).
+- `analysis/uninitscan.py [unit ...] [--first] [--json F]` uninitialized-read screen (MATCHING_GUIDE 3.5, wrong variable of
+  a packed frame slot; about 3.5 min tree-wide with FE_JOBS=5): compiles every optimised unit with /W4 and lists every C4701/C4700
+  site (VC6 reports one per variable; the tool inserts `V = 0;` at each reported statement in a throw-away copy and recompiles
+  until no new site appears), with the function's fe rows or EXACT. A read whose only defs sit in an exclusive branch while a
+  sibling local set on that path shares the image slot is the base_build `l_34`/`w` shape. Sites in exact functions are original.

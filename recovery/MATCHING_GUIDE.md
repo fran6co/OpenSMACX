@@ -3301,7 +3301,17 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   - inverted parent logic;
   - an off-by-one row count;
   - `is_human(f) + K` used without normalisation;
-  - missing dialog callbacks.
+  - missing dialog callbacks;
+  - the wrong variable of a packed frame slot. Decompiler transcriptions name
+    locals by slot, so where the original packed two variables into one slot a
+    read can name the one that is dead there (base_build 0x004F81A0 read the
+    convoy counter `l_34` where the image reads the unit score `w` from their
+    shared `[ebp-0x34]`: 4821 -> 3657 rows). That read has no definition on
+    its path, so VC6 /W4 reports C4701: `analysis/uninitscan.py` lists every
+    such site tree-wide. The 2026-11-19 pass (about 120 sites in non-exact
+    functions) found no second case: the rest are flow false positives (def
+    and read under the same test, a switch without default over a closed
+    range) or original bugs already annotated.
 
   Restore the image's behaviour.
 
