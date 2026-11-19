@@ -2780,7 +2780,7 @@ int __cdecl alien_base(int veh_id, int x, int y) {
 }
 
 
-// ORIGINAL: 0x00566810 ?alien_move@@YAHH@Z 0x00566810-0x005678B9
+// ORIGINAL: 0x00566810 ?alien_move@@YAHH@Z 0x00566810-0x005678B9 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical retired seed src/unrecovered/00566810.cpp", "recovery/tasks/alien-buster-owner-oct5.json", "pinned full native instruction/argument and directed-field review; compiler-observed current function symbol", "PlayerData sites[14].base_id alias: native addresses and compiler offsetof witness; original policy order checked by actual-product controls"], "reason": "Full vehicle-owner semantic recovery with actual Base, PlayerData, vehicle, map and callback relationships. Preserve original no-base adjacent-storage reads, native radius exits and uninitialized launch scratch; byte restoration and runtime fidelity remain unfinished."}
 // symbol    ?alien_move@@YAHH@Z
 // TRIED: near-direct Ghidra transcription (clean decompile, no extraout/jumptable warnings). Per-vehicle/per-target table fields were unified onto two byte offsets (vehOff = a1*0x34, iVar18v = target*0x134) since every DAT_xxx family the disassembly touches shares that stride; a few element widths (e.g. DAT_0096da3c as byte vs int) were guessed rather than confirmed against the raw bytes.

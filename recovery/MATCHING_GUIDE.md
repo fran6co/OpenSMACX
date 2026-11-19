@@ -2826,6 +2826,13 @@ Layout
   keeps it inline (config_game).
 - Blocks reached only through labels are placed by control flow; their source
   order has no effect (order_veh, 24 permutations).
+- Loop-body arms that end by jumping to the loop's continue point are held
+  back and emitted right after the next unconditional `jmp` in layout order. A
+  post-loop `if` whose taken path skips a reload of a cached value supplies
+  that `jmp`; without it the arms land much later (enemy_move passenger loop:
+  a no-op else after `if (!hint)` moves the group to the image's place,
+  5383 -> 4960 rows, so the image's jmp comes from a register cache, not a
+  source statement).
 - Tail merging follows the closing teardown depth and the per-site scratch
   register, so which copy survives can follow a register tie.
 
