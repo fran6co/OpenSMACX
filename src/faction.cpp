@@ -169,35 +169,28 @@ extern int DiploScratchFA98;  // Diplomacy producer storage defined below.
 
 // ORIGINAL: 0x005590E0 ?get_adjective_leader@@YAPADH@Z 0x005590E0-0x005590FA BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:5a0359249be19afbfdbfda27fdc219dda76c5a7c:src/recovered/005590e0.cpp", "source:src/faction.h"], "reason": "The pinned entry returns Player::adj_leader from the typed Player row; the Player type establishes this field and the original record stride."}
-char *__cdecl get_adjective_leader(int faction_id) {
-    return Players[faction_id].adj_leader;
-}
+// body src/faction.h
+// BODY IN faction.h, as `MEASURED inline`.
 
 // ORIGINAL: 0x00559100 ?get_adjective_insult_leader@@YAPADH@Z 0x00559100-0x0055911A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:5a0359249be19afbfdbfda27fdc219dda76c5a7c:src/recovered/00559100.cpp", "source:src/faction.h"], "reason": "The pinned entry returns Player::adj_insult_leader from the typed Player row; the Player type establishes this field and the original record stride."}
-char *__cdecl get_adjective_insult_leader(int faction_id) {
-    return Players[faction_id].adj_insult_leader;
-}
+// body src/faction.h
+// BODY IN faction.h, as `MEASURED inline`.
 
 // ORIGINAL: 0x00559120 ?get_adjective_faction@@YAPADH@Z 0x00559120-0x0055913A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:5a0359249be19afbfdbfda27fdc219dda76c5a7c:src/recovered/00559120.cpp", "source:src/faction.h"], "reason": "The pinned entry returns Player::adj_faction from the typed Player row; the Player type establishes this field and the original record stride."}
-char *__cdecl get_adjective_faction(int faction_id) {
-    return Players[faction_id].adj_faction;
-}
+// body src/faction.h
+// BODY IN faction.h, as `MEASURED inline`.
 
 // ORIGINAL: 0x00559140 ?get_adjective_insult_faction@@YAPADH@Z 0x00559140-0x0055915A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:5a0359249be19afbfdbfda27fdc219dda76c5a7c:src/recovered/00559140.cpp", "source:src/faction.h"], "reason": "The pinned entry returns Player::adj_insult_faction from the typed Player row; the Player type establishes this field and the original record stride."}
-char *__cdecl get_adjective_insult_faction(int faction_id) {
-    return Players[faction_id].adj_insult_faction;
-}
+// body src/faction.h
+// BODY IN faction.h, as `MEASURED inline`.
 
 // ORIGINAL: 0x00559160 ?get_insult_leader@@YAPADH@Z 0x00559160-0x00559192 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:5a0359249be19afbfdbfda27fdc219dda76c5a7c:src/recovered/00559160.cpp", "source:src/faction.h"], "reason": "The pinned entry returns Player::insult_leader after selecting leader gender and singular grammar; the Player type establishes this field and the original record stride."}
-char *__cdecl get_insult_leader(int faction_id) {
-    PluralityDefault = 0;
-    GenderDefault = Players[faction_id].is_leader_female;
-    return Players[faction_id].insult_leader;
-}
+// body src/faction.h
+// BODY IN faction.h, as `MEASURED inline`.
 
 // WORKAROUND(inline): dead /Ob2 budget spend; called with a constant it folds
 // to no code. The image tears down the early Popup exits of propose_attack

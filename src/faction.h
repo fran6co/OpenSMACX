@@ -1047,11 +1047,27 @@ MEASURED inline char *__cdecl get_title(int faction_id) {   // 005590A0
     parse_set(Players[faction_id].is_leader_female, 0);
     return Players[faction_id].title_leader;
 }
-char *__cdecl get_adjective_leader(int faction_id);
-char *__cdecl get_adjective_insult_leader(int faction_id);
-char *__cdecl get_adjective_faction(int faction_id);
-char *__cdecl get_adjective_insult_faction(int faction_id);
-char *__cdecl get_insult_leader(int faction_id);
+// The adjective and insult forms are header inlines of the same kind: their
+// out-of-line copies 0x005590E0-0x00559192 sit in the run that communicate's
+// object contributes (get_name, get_title, say_tech, bad_reg, has_agenda), and
+// the image calls them only from communicate.
+MEASURED inline char *__cdecl get_adjective_leader(int faction_id) {   // 005590E0
+    return Players[faction_id].adj_leader;
+}
+MEASURED inline char *__cdecl get_adjective_insult_leader(int faction_id) {   // 00559100
+    return Players[faction_id].adj_insult_leader;
+}
+MEASURED inline char *__cdecl get_adjective_faction(int faction_id) {   // 00559120
+    return Players[faction_id].adj_faction;
+}
+MEASURED inline char *__cdecl get_adjective_insult_faction(int faction_id) {   // 00559140
+    return Players[faction_id].adj_insult_faction;
+}
+MEASURED inline char *__cdecl get_insult_leader(int faction_id) {   // 00559160
+    PluralityDefault = 0;
+    GenderDefault = Players[faction_id].is_leader_female;
+    return Players[faction_id].insult_leader;
+}
 
 // INLINE: the image has no is_human - it open-codes what this names.
 inline BOOL __cdecl is_human(uint32_t faction_id) {
