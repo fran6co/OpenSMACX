@@ -1701,7 +1701,11 @@ void Console::terraform(int vehicle_id, int terraform_id) {
                 parse_num(1, PlayersData[faction_id_].energy_reserves);
                 StringTemp[0] = 0;
                 strcat(StringTemp, "TERRACOST");
-                strcat(StringTemp, terraform_id == TERRA_LOWER_LAND ? "DOWN" : "UP");
+                if (terraform_id == TERRA_LOWER_LAND) {
+                    strcat(StringTemp, "DOWN");
+                } else {
+                    strcat(StringTemp, "UP");
+                }
                 popup.start(StringTemp);
                 if (PlayersData[faction_id_].energy_reserves >= payment) {
                     popup.start("TERRAPAY", 0x80);
