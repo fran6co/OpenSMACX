@@ -628,14 +628,73 @@ raw field access where the original used inline accessors.
     `.bss`; colortables' tint tables and vehicle_render's hover offsets
     lie inside interface_assets' thunk interval; fifteen turn-state words
     (0x0093A008-0x0093A98C) are turn.cpp's.
+  - *Contiguity alone decides a sandwich (second pass, 2026-11-19).* An
+    object whose bound neighbours on both sides are one unit's is that
+    unit's definition whether or not the unit reads it (`S` asked for a
+    reference and left these open): `DiploRedrawFlag` is fx.cpp's, the map
+    and info panel rectangles console.cpp's, the pending-diplomacy words
+    netdaemon.cpp's, `DesignGridButtonIndex` 0x009B7B10 a jackal/win.cpp
+    global.
+  - *Shared texts are COMDAT literals of header inlines (2026-11-19).* The
+    image is unpooled, yet a few short texts are pushed from many units:
+    `" "` 0x00682820 (43 units, Jackal's buffer.cpp, caviar.cpp and
+    net_class.cpp among them), `", " ": " ")" "(" "%"` 0x00682E90, `">" "="
+    "$LINK<"` 0x0068353C, `". "` 0x006867E0. Each group sits at the *end*
+    of the `.data` contribution of the *first unit in link order that
+    references it* (popup, basewin, datalink, multiwin), and the following
+    unit often does not reference it at all (battlewin has its own `"%"`
+    literals). That is where LINK keeps a COMDAT: from the first object
+    that carries it, behind that object's own data. VC6 emits the string
+    literals of an inline function as `??_C@` COMDATs even without /Gf
+    (the tree's `help_create_link` reproduces the `$LINK<` trio that way),
+    so these texts were literals inside header inlines, not globals; the
+    named arrays (`BufferJoinSpace`, `SocialWin...Text`, `PercentText`) are
+    stand-ins, now defined in the unit that keeps them. A library function
+    that references a text in the game's `.data` is the tell.
+    `analysis/sharedlits.py` lists them with the first referencing unit.
+  - *`char *p = "text";` globals (`analysis/litptr.py`).* A pointer cell
+    among a unit's initialised globals whose text lies in one block behind
+    the last global, in cell order, and is referenced by nothing but its
+    cell, was initialised with a literal. xpops.cpp's 19 cells
+    (0x00691870-0x00691B3C -> 0x00691B40-0x00691BF7) all are; the named
+    text arrays that stood in for them are gone (RECOVERY_LITERAL beside
+    the pointer). One more in the image, Caviar's "Unsupported pixel size"
+    slot 0x00698A9C, is left with that library's named messages.
+  - *Function alignment phase.* VC6 gives every /Gy COMDAT 16-byte
+    alignment, but in two Jackal units the function after one with an
+    `__asm` block starts at that function's last byte and the unit's
+    following functions keep the phase (sprite.cpp from 0x005E4ADA, the
+    end of draw_mono, to its end; buffer.cpp 0x005E2DD3, the end of
+    copy_mask, to 0x005E3563), while a COMDAT copy from a header is
+    realigned (buffer.cpp's 0x005E35D0). Two
+    functions at 0x005EB29F and 0x005EB32F with sprite.cpp's phase
+    (SpriteList::on_insert/on_remove) are therefore sprite.cpp's own, not a
+    run of spritebox.cpp.
+  - *Jackal (2026-11-19).* `g_BUFFER` 0x009B6080 lies inside sprite.cpp's
+    `.bss` run and its thunk 0x005E37B0 directly precedes Sprite::Sprite:
+    sprite.cpp starts there (buffer.cpp's /Oi- is a no-op, no Jackal unit
+    has /Oi, so flags do not separate the two). The blank cell sprite
+    0x009BEAE8 with its compiler-generated cleanup guard 0x009BEAE0 is a
+    class static of net_session_picker.cpp (thunk 0x0063BAE0 starts that
+    unit). net_lists.cpp is one run 0x005D47D0-0x005D4CE7. Every Jackal
+    unit now has one `.text` run apart from COMDAT copies in the image's
+    leading inline area.
   - *Left undecided (adjacent units, neither names the object):*
     `MapEditorPaintId/BrushId` (map_grid or scale_adjustment), `Compass`
     (vehicle_cost or game), `TurnUpkeepPhase` (technology or xpops; moved
-    to xpops with a note), the popup theme colours 0x0068A5A0 (aggression
-    or console), `MapWinCaptionScale/Divisor` 0x00691E6C (world to gamma),
-    the shared punctuation texts 0x00682E90 (popup to battlewin), and in
-    Jackal the 19 sprite raster globals inside buffer.cpp's thunk interval
-    (buffer.cpp and sprite.cpp's main run may be one unit).
+    to xpops with a note), `CursorHotspotX/Y` 0x0093AA10 (turn or
+    netdaemon), `MsgStatus` 0x009B7B9C (win_input or timer_messages),
+    `MapWinCaptionScale/Divisor` 0x00691E6C (world, game_calendar, map or
+    gamma), `vox_projection_selected_angle_` 0x009BE6A0 (caviar_loader or
+    caviar_scene). The popup theme colours 0x0068A5A0 (aggression's tail or
+    console's head, neither reads them) were moved to console.cpp as its
+    leading globals; a tail definition exists elsewhere (EditBox's defaults
+    0x006971F0 follow editbox.cpp's literal), so that one is the likelier
+    reading, not a proof. The `.rdata` float and const objects that read
+    out of order (0x0066AA40, 0x0066EB38, 0x0066EF28, 0x00670A84,
+    0x00670C00, 0x00670C50, 0x00670FE8) and Caviar's end-of-image `.bss`
+    block 0x009C0828-0x009C0E64 are not unit evidence: pooled constants
+    and a VC5 library whose objects do not follow unit order.
   Where an object is defined does not change code (every reference is
   absolute): 180 definitions moved without one function changing, although
   mapwin's symbol counter moved by 13, console's by 2 and popup's by -2.

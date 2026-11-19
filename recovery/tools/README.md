@@ -174,6 +174,14 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   its host (an `extern` stays when no header declares the name), puts them after DEST's includes, initialised objects
   first, in image order, and drops DEST's local externs of the moved names. No body is edited; check with feall on
   both sides, `recover check-claims` and `recover rebind-literals --unit` (a moved `char *p = "lit"` renumbers).
+- `analysis/sharedlits.py` every `.data` text referenced by functions of two or more units, with the single-unit
+  literal before (A) and after (B) it and whether A / B reference it. A real shared text sits at the end of the first
+  referencing unit's data (a COMDAT literal of a header inline, MATCHING_GUIDE 2.5); most other rows are data words
+  that happen to read as text.
+- `analysis/litptr.py <unit.cpp> [--write]` turns `char T[] = "x"; char *p = T;` pairs into `char *p = "x";` where the
+  image proves the literal form (the cell holds the text's address, the bytes match, no other `.text` immediate or
+  `.data` cell holds that address), replacing the text's RECOVERY_OBJECT by a RECOVERY_LITERAL with a placeholder
+  `$SG9000n` label: run `recover rebind-literals --unit <tu> --write` next.
 - `analysis/initorder.py` the hard form of that evidence (2 s, no compile): the objects built by the CRT table's
   initializer thunks, per unit in `.text` order; a unit whose objects start below an earlier unit's maximum shares a
   unit with it (alpha + interface_fonts + newgame, the only violation in the image).
