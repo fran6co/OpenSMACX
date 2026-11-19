@@ -259,6 +259,7 @@ int SetupWin::do_menu_rightside(char *filename, int flags) {
         if (menu_popup_->caption_text() != nullptr) {
             strcat(token, menu_popup_->caption_text());
         }
+        spot_.init(static_cast<int>(row_count_) + 2);
     } else {
         row_count_ = 0;
         int seen_blank = 0;
@@ -297,9 +298,9 @@ int SetupWin::do_menu_rightside(char *filename, int flags) {
         }
         item_texts_ = entries;
         text_close();
+        spot_.init(static_cast<int>(row_count_) + 2);
     }
 
-    spot_.init(static_cast<int>(row_count_) + 2);
     buffer2_.init(0x162, 0x4B, 0, nullptr);
     flic.init(&buffer2_, "openitem.flc", 0, 0, 0);
 
