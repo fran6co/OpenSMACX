@@ -143,6 +143,77 @@ int __cdecl bit_count(int bitfield) {
 
 
 
+
+// SDK imports, never raw IAT pointers.
+// ===== MANAGED GLOBALS - real objects, homed to their domain =====
+// In the shipped image these live at fixed data addresses and are
+// constructed before WinMain by the CRT's dynamic-initializer walk
+// (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
+// Here the same recovered constructors run through this build's own
+// startup, and the matching destructors close them at exit.
+// Faction artwork is owned by the genuine FactionArt array in faction.cpp;
+// its Sprite members now participate in C++ construction and destruction.
+
+
+
+
+
+
+
+
+// ORIGINAL: 0x00538FE0 ?checksum_file@@YAEPAD@Z 0x00538FE0-0x0053908F;0x0065E450-0x0065E462 FILE BYTE_EXACT
+// working copy - scaffold materialised by --work
+// size      193 bytes
+// prototype 
+// callers   2   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00628380 0x006283E0 0x00628430 0x006287C0
+// indirect  0x0053904A
+
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?checksum_file@@YAEPAD@Z  at 0x00538FE0  (193 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+unsigned char __cdecl checksum_file(char *file_path) {
+    Filemap fm;
+    unsigned char sum = 0;
+    char *data = (char *)fm.open_read(file_path, 1);
+    if (data == 0) {
+        return 0;
+    }
+    unsigned int file_size = GetFileSize(fm.get_handle(), 0);
+    // Hand-written assembly: lodsb/xor ah,al/loop XOR scan with explicit esi save.
+    __asm {
+        push esi
+        mov esi, data
+        mov ecx, file_size
+        mov ah, sum
+    sum_loop:
+        lodsb
+        xor ah, al
+        loop sum_loop
+        mov sum, ah
+        pop esi
+    }
+    fm.close();
+    return sum;
+}
+
+
+
+
+
 /*
 Purpose: Calculate a basic XOR checksum for the data buffer.
 // The pinned body uses forward LODSB and a 32-bit ECX LOOP counter.
@@ -212,77 +283,6 @@ uint32_t __cdecl checksum_password(LPCSTR password) {
     CharUpper(buffer); // incorrect results for Turkish/Azerbaijani 'i'
     uint8_t chksum = checksum(buffer, strlen(buffer), 0);
     return chksum + 1;
-}
-
-
-
-
-
-
-// SDK imports, never raw IAT pointers.
-// ===== MANAGED GLOBALS - real objects, homed to their domain =====
-// In the shipped image these live at fixed data addresses and are
-// constructed before WinMain by the CRT's dynamic-initializer walk
-// (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
-// Here the same recovered constructors run through this build's own
-// startup, and the matching destructors close them at exit.
-// Faction artwork is owned by the genuine FactionArt array in faction.cpp;
-// its Sprite members now participate in C++ construction and destruction.
-
-
-
-
-
-
-
-
-// ORIGINAL: 0x00538FE0 ?checksum_file@@YAEPAD@Z 0x00538FE0-0x0053908F;0x0065E450-0x0065E462 FILE BYTE_EXACT
-// working copy - scaffold materialised by --work
-// size      193 bytes
-// prototype 
-// callers   2   call targets   4
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x00628380 0x006283E0 0x00628430 0x006287C0
-// indirect  0x0053904A
-
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?checksum_file@@YAEPAD@Z  at 0x00538FE0  (193 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// The VC6 dialect limits and the source-form rules used to live here.
-// They are knowledge, not scaffolding, so they now live in the agent
-// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
-// where they can be edited without regenerating anything and are in
-// context from the first token rather than behind a file read. This
-// emitter computes declarations; it does not carry lessons.
-
-unsigned char __cdecl checksum_file(char *file_path) {
-    Filemap fm;
-    unsigned char sum = 0;
-    char *data = (char *)fm.open_read(file_path, 1);
-    if (data == 0) {
-        return 0;
-    }
-    unsigned int file_size = GetFileSize(fm.get_handle(), 0);
-    // Hand-written assembly: lodsb/xor ah,al/loop XOR scan with explicit esi save.
-    __asm {
-        push esi
-        mov esi, data
-        mov ecx, file_size
-        mov ah, sum
-    sum_loop:
-        lodsb
-        xor ah, al
-        loop sum_loop
-        mov sum, ah
-        pop esi
-    }
-    fm.close();
-    return sum;
 }
 
 
