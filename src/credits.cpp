@@ -56,6 +56,13 @@ Credits::Credits() {
 // Credits' list is populated with owned C-heap strings by load(); unload()
 // releases every slot and clears both count fields before releasing audio.
 // ORIGINAL: 0x00428830 ?unload@Credits@@QAEXXZ 0x00428830-0x0042887D BYTE_EXACT
+// WORKAROUND(decl): frame omission on for this one body. The image's two
+// immediate zero stores (0x00428860/0x0042886A) are what /Oy gives (the zero
+// wins ebp and is not materialised); the unit's /Oy- gives xor eax,eax and
+// register stores. Credits::exec's inlined copy shows the same immediates
+// under its ebp frame, so the original's real cause is still unknown
+// (MATCHING_GUIDE 3.2 "Two zero stores as immediates").
+#pragma optimize("y", on)
 void Credits::unload() {
   for (int i = 0; i < 512; ++i) {
     if (lines_[i] != 0) {
@@ -67,6 +74,7 @@ void Credits::unload() {
   frame_count_ = 0;
   g_CREDITS_WAVE.unload();
 }
+#pragma optimize("", on)
 
 // Distinct source-owned text objects selected by the original calls. These
 // names describe their roles; the original source spellings are unknown.
