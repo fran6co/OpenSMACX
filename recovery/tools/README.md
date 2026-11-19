@@ -264,3 +264,13 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   distance (analysis/cdeck.py) per family where either moves. `analysis/foldsite.py <unit> <addr>` replaces each two-way
   treaty/agenda write pair with treaty_off/treaty_on/agenda_off/agenda_on (each site alone and all, MATCHING_GUIDE 3.7
   "folded writers"); `analysis/foldunit.py <unit>` runs that greedily over a unit. Variants go to build/recovery/fe/.
+- `analysis/tumap.py [--text] [--lits] [--units] [--cands [--strong]] [--inside] [--unit U]` translation-unit evidence
+  map from the image alone (3 s, no compile): every unit's .text runs in address order with its flag set, the span of
+  the literals only its functions reference, and `INIT n` where the run starts with static-initializer thunks (the
+  CRT table's `$E` functions; VC6 emits each at its object's definition, so the first one marks a unit start);
+  literal runs in .data order; units with several runs (split candidates or misplaced functions); short runs
+  enclosed by another unit. Adjacency alone proves nothing (the files are already in image order): a boundary is
+  shown by an INIT, by different flags, or by a small same-unit callee the image calls where /Ob2 would expand it.
+  `tumap.py --merge A.cpp [B.cpp] --into C.cpp [--top] [--dry]` and `--move 0xADDR,.. --into C.cpp [--include '"x.h"']`
+  do the mechanical regroup (whole annotation blocks, build lists, project.json flag sets, compile_context); see
+  `analysis/tumerge.py`. Judge the result with `feall.py --all <units>` against a base and `recover check-claims`.
