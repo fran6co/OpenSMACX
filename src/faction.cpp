@@ -171,8 +171,8 @@ char *__cdecl get_insult_leader(int faction_id) {
 }
 
 // WORKAROUND(inline): dead /Ob2 budget spend; called with a constant it folds
-// to no code. The image tears down the early Popup exits of buy_council_vote,
-// propose_attack and tech_trade with an out-of-line ~Scroll; no natural
+// to no code. The image tears down the early Popup exits of propose_attack
+// and tech_trade with an out-of-line ~Scroll; no natural
 // spelling found yet supplies the spend the originals made after those exits.
 static inline void diplo_spend(int x) {
     if (x == 1) x = 2;
@@ -241,7 +241,6 @@ void __cdecl buy_council_vote(int faction, int other, int proposal, int choice) 
         proposal > 1 && !has_treaty(other, faction, 0x20) && votes < -2) {
         votes = -2;
     }
-    diplo_spend(10);diplo_spend(11);diplo_spend(12);diplo_spend(13);diplo_spend(14);diplo_spend(15);diplo_spend(16);diplo_spend(17);diplo_spend(18);diplo_spend(19);diplo_spend(20);diplo_spend(21);  // WORKAROUND(inline)
 
     if (TurnRedrawPending &&
         choice == static_cast<int>(CouncilWindow.leader_label_kind_[other])) {
@@ -348,7 +347,7 @@ void __cdecl buy_council_vote(int faction, int other, int proposal, int choice) 
     }
 
     clear();
-    strcat(StringTemp, "BUYVOTE");
+    says("BUYVOTE");
     if (votes == 0) {
         say_num(0);  // ? image pushes immediate 0, not the (zero) votes register
         parse_says(0, get_title(faction), -1, -1);
@@ -358,17 +357,17 @@ void __cdecl buy_council_vote(int faction, int other, int proposal, int choice) 
         if (proposal) {
             switch (choice) {
             case -1:
-                strcat(StringTemp, "YEA");
+                says("YEA");
                 break;
             case -2:
-                strcat(StringTemp, "NAY");
+                says("NAY");
                 break;
             case -3:
-                strcat(StringTemp, "ABSTAIN");
+                says("ABSTAIN");
                 break;
             }
         } else {
-            strcat(StringTemp, "GOV");
+            says("GOV");
         }
         // Bug-for-bug: choice < 0 indexes before the Players table.
         parse_says(2, get_title(faction), -1, -1);
@@ -384,19 +383,19 @@ void __cdecl buy_council_vote(int faction, int other, int proposal, int choice) 
                     parse_say(4, Technology[DiploScratchFA1C].name, -1, -1);
                     if (DiploScratchFA28 >= 0) {
                         parse_say(5, Technology[DiploScratchFA28].name, -1, -1);
-                        strcat(StringTemp, "4");
+                        says("4");
                     } else {
-                        strcat(StringTemp, "3");
+                        says("3");
                     }
                 } else {
-                    strcat(StringTemp, "2");
+                    says("2");
                 }
             } else {
-                strcat(StringTemp, "1");
+                says("1");
             }
         }
         if (proposal == 0 && choice > 0 && choice != faction) {
-            strcat(StringTemp, "A");
+            says("A");
         }
         popup.start(StringTemp, 0x100000);
         popup.set_picture(FactionDiplomacyPortraits[other], 0, nullptr);
