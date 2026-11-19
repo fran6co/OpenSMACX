@@ -806,9 +806,16 @@ MEASURED inline BOOL __cdecl has_fac(int facility_id, int base_id, int queue_cou
     return false;
 }
 
-// 0x00500290, defined after base_build (its only caller) in base_build.cpp:
-// `return has_fac(facility_id, BaseIDCurrentSelected, 0);`.
-int __cdecl has_fac_built(int facility_id);
+// has_fac on the selected base (0x00500290). A header inline like range and
+// has_project: base_build expands it at its first seven sites and calls it at
+// the sixteen after its pass-1 budget runs out (from 0x4FC6xx on, the same
+// point where its range sites turn into calls), so the copy sits right after
+// base_build; every other unit expands it. Its has_fac is then a nested
+// (pass-2) site: base_minerals and base_psych call 0x00421670 at their early
+// sites and expand it at the late ones (MATCHING_GUIDE 2.8).
+MEASURED inline int __cdecl has_fac_built(int facility_id) {
+    return has_fac(facility_id, BaseIDCurrentSelected, 0);
+}
 
 // HISTORICAL BODY PLACEMENT: breed_mod was in base.h as `MEASURED inline`; worm_mod
 // (base.cpp) is the caller that needs it folded in place - the image writes

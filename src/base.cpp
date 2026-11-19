@@ -70,12 +70,6 @@ struct BaseTypePad3 { int a; };
 // Shared punctuation objects the image pushes instead of unit literals.
 extern char SocialWinCloseParenText[];
 extern char SocialWinOpenParenText[];
-// Recovery spelling (name unknown): has_fac() on the selected base, one
-// inline level deep. The image keeps that nested has_fac() as a real call
-// where VC6's inline budget runs out (base_minerals, base_doctors).
-static inline BOOL selected_base_has_fac(int facility_id) {
-    return has_fac(facility_id, BaseIDCurrentSelected, 0);
-}
 
 
 // WORKAROUND(inline): has_project() spelled through base_project(), as the
@@ -3401,7 +3395,7 @@ void __cdecl base_nutrient() {
 Purpose: Calculate minerals and ecological damage for the current base.
 // ORIGINAL: 0x004E9CB0 ?base_minerals@@YAXXZ 0x004E9CB0-0x004EA1EF BYTE_EXACT
 // LEVER: the five out-of-line has_fac() calls sit one inline level deep
-//   (selected_base_has_fac) and exceed VC6's inline budget, which expands
+//   (has_fac_built) and exceed VC6's inline budget, which expands
 //   shallower levels first, then in source order; the two later direct
 //   has_fac() sites still inline. Plain int arithmetic, no wrappers.
 //   The has_project() reads go through base_project() (one more inline
@@ -3420,16 +3414,16 @@ void __cdecl base_minerals() {
     uint32_t faction_id = BaseCurrent->faction_id_current;
     BaseCurrent->intake_2[RSC_MINERALS] = (BaseCurrent->intake_2[RSC_MINERALS] + (int)BaseCurrentConvoyTo[RSC_MINERALS]);
     int mineral_bonus = 0;
-    if (selected_base_has_fac(FAC_QUANTUM_CONVERTER) || has_project_via_base_project(SP_SINGULARITY_INDUCTOR, faction_id)) {
+    if (has_fac_built(FAC_QUANTUM_CONVERTER) || has_project_via_base_project(SP_SINGULARITY_INDUCTOR, faction_id)) {
         mineral_bonus = 1;
     }
-    if (selected_base_has_fac(FAC_ROBOTIC_ASSEMBLY_PLANT)) {
+    if (has_fac_built(FAC_ROBOTIC_ASSEMBLY_PLANT)) {
         mineral_bonus++;
     }
-    if (selected_base_has_fac(FAC_GENEJACK_FACTORY)) {
+    if (has_fac_built(FAC_GENEJACK_FACTORY)) {
         mineral_bonus++;
     }
-    if (selected_base_has_fac(FAC_NANOREPLICATOR)) {
+    if (has_fac_built(FAC_NANOREPLICATOR)) {
         mineral_bonus++;
     }
     if (has_project_via_base_project(SP_BULK_MATTER_TRANSMITTER, faction_id)) {
@@ -3453,7 +3447,7 @@ void __cdecl base_minerals() {
         BaseCurrent->eco_damage = (BaseCurrent->eco_damage - planet_modifier);
     }
     int eco_dmg_reduction = 1;
-    if (selected_base_has_fac(FAC_NANOREPLICATOR) || has_project_via_base_project(SP_SINGULARITY_INDUCTOR, faction_id)) {
+    if (has_fac_built(FAC_NANOREPLICATOR) || has_project_via_base_project(SP_SINGULARITY_INDUCTOR, faction_id)) {
         eco_dmg_reduction = 2;
     }
     if (has_fac(FAC_CENTAURI_PRESERVE, BaseIDCurrentSelected, 0)) {
@@ -3650,22 +3644,47 @@ int BasePsychDrones[5];
 // RECOVERY_OBJECT: v2 0x0090E94C 0x0090E960 ?BasePsychSuperDrones@@3PAHA 0x004EA540
 int BasePsychSuperDrones[5];
 
+// The facility block of base_psych as an inline owner. The image calls
+// has_fac (0x00421670) at these five sites (0x4EA742..0x4EA807) and expands
+// it at the four after them, with both has_project sites in between
+// expanded: inside this owner each has_fac_built -> has_fac is a depth-3
+// site, refused, while has_project is depth 2; written straight into
+// base_psych all nine expand, whatever the budget (dead spend at the top
+// moves nothing). Two out-parameters as psych_check, which base_psych
+// expands just above it.
+// WORKAROUND(decl): the helper's original name and signature are unknown.
+static inline void __cdecl psych_facilities(int faction, int *drones, int *talents) {
+    if (has_fac_built(FAC_GENEJACK_FACTORY)) {
+        *drones = Rules.drones_genejack_factory;
+    }
+    if (has_fac_built(FAC_RECREATION_COMMONS)) {
+        *drones -= 2;
+    }
+    if ((has_fac_built(FAC_NETWORK_NODE) && has_project(SP_VIRTUAL_WORLD, faction))
+        || has_fac_built(FAC_HOLOGRAM_THEATRE)) {
+        *drones -= 2;
+    }
+    if (has_project(SP_PLANETARY_TRANS_SYS, faction) && BaseCurrent->population_size <= 3) {
+        (*drones)--;
+    }
+    if (has_fac_built(FAC_PARADISE_GARDEN)) {
+        *talents = 2;
+    }
+}
+
 /*
 Purpose: Calculate the current base's psych values.
 // ORIGINAL: 0x004EA540 ?base_psych@@YAXXZ 0x004EA540-0x004EB481 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x004EA540-0x004EB481 complete original body; 0x004EA712-0x004EA722 clamps the first NoDrone adjustment immediately, and 0x004EAA23-0x004EAA3E applies signed talent rather than police.", "image:0x004EAB85,0x004EACD1,0x004EAE30,0x004EB209,0x004EB3D1 publish the five independent stage histories; draw_psych and base_growth remain seed-only consumers.", "image:0x004EAEDF-0x004EB0C5 scans fresh vehicle stacks in two passes with repeated ability queries; 0x004EB0CA-0x004EB0E3 uses a signed pacifism-count comparison.", "image:0x004EA946 and 0x004EB44E-0x004EB45E use talent=i-4 and matrix row=i-1; original social_ai at 0x005B50DB-0x005B511A instead consumes row=clamp(talent+4,0,7). Preserve the original one-step discrepancy."], "reason": "Recover the complete five-stage psych calculation and shared stage histories, including social simulations followed by the actual case, using genuine base, faction, project and vehicle state. Existing partial source was not a verified prefix."}
-// Historical compiler lesson: the first facility queries are real has_fac
-// calls, followed by real bitmask calls for hospitals, punishment and brood
-// pit. Earlier inlining experiments lost calls despite similar source forms.
+// The first five facility queries are real has_fac calls (psych_facilities,
+// above), followed by real bitmask calls for hospitals, punishment and brood
+// pit, whose has_fac is expanded.
 // Historical reconstruction correction: the second has_fac uses facility 6,
 // Recreation Commons, not facility 2, Children's Creche. This is not evidence
 // of an original game bug. The old partial prefix also substituted police for
 // the signed talent effect and omitted the five-stage shared publications.
 */
 void __cdecl base_psych() {
-    // stand-in: the image calls has_fac out of line here (inline budget); a
-    // local const function pointer forces the real call.
-    BOOL (__cdecl *const has_fac_call)(int, int, int) = has_fac;
     int faction = BaseCurrent->faction_id_current;
     int content;
     int bureaucracy;
@@ -3700,23 +3719,7 @@ void __cdecl base_psych() {
 
     int fac_drones = 0;
     int fac_talents = 0;
-    if (has_fac_call(FAC_GENEJACK_FACTORY, BaseIDCurrentSelected, 0)) {
-        fac_drones = Rules.drones_genejack_factory;
-    }
-    if (has_fac_call(FAC_RECREATION_COMMONS, BaseIDCurrentSelected, 0)) {
-        fac_drones -= 2;
-    }
-    if ((has_fac_call(FAC_NETWORK_NODE, BaseIDCurrentSelected, 0)
-        && has_project(SP_VIRTUAL_WORLD, faction))
-        || has_fac_call(FAC_HOLOGRAM_THEATRE, BaseIDCurrentSelected, 0)) {
-        fac_drones -= 2;
-    }
-    if (has_project(SP_PLANETARY_TRANS_SYS, faction) && BaseCurrent->population_size <= 3) {
-        fac_drones--;
-    }
-    if (has_fac_call(FAC_PARADISE_GARDEN, BaseIDCurrentSelected, 0)) {
-        fac_talents = 2;
-    }
+    psych_facilities(faction, &fac_drones, &fac_talents);
     // One variable ([ebp-0x48]) receives all three built-facility tests.
     if (has_fac(FAC_RESEARCH_HOSPITAL, BaseIDCurrentSelected, 0)) {
         fac_drones--;
@@ -7827,24 +7830,16 @@ void __cdecl base_drones() {
 // kind      game
 // TRIED: near-verbatim transcription of the (clean, non-SEH) Ghidra output with DAT_/FUN_ substituted for the catalogued globals and callees, and `*(char**)g_0090ea30` for the base-pointer dereference; the two duplicated "pick best doctor" loops are written out twice (matching the original's own duplication) rather than factored into a helper, to avoid the one-external-symbol risk seen on 0x00405140. Reaches MISMATCH #6 ('xor' vs 'push'); did not chase the exact register/stack layout further given the function's size.
 // Defined after best_specialist and pop_goal_fac: the image inlines both.
-// WORKAROUND(decl): the image calls has_fac (0x421670) out of line in
-// base_doctors. It is an inline owner, not a pointer: as a plain call inside
-// this helper, has_fac becomes a pass-2 (nested) site that base_doctors' /Ob2
-// budget refuses, as in the image (measured 2026-11-19: the former local
-// function pointer is redundant; writing has_fac at the call site instead
-// expands it, 0 -> 28 rows). The helper's original name is unknown.
-// The two helpers also shrink base_doctors, so its /Ob2 budget leaves the
-// has_fac calls in its pop_goal_fac copy out of line as in the image.
-static inline BOOL selected_base_has_fac_call(int facility_id) {
-    return has_fac(facility_id, BaseIDCurrentSelected, 0);
-}
+// has_fac_built (base.h) makes has_fac a nested (pass-2) site that
+// base_doctors' /Ob2 budget refuses, as in the image (0x421670 called);
+// has_fac written at the call site instead expands it (0 -> 28 rows).
 
 void __cdecl base_doctors() {
     int faction = BaseCurrent->faction_id_current;
     int riot_adjust;
     if ((BaseCurrent->state & BSTATE_DRONE_RIOTS_ACTIVE) != 0
         && PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE]
-               + selected_base_has_fac_call(FAC_BROOD_PIT) * 2 < -1
+               + has_fac_built(FAC_BROOD_PIT) * 2 < -1
         && !pop_goal_fac(BaseIDCurrentSelected)
         && (((has_project(SP_CLONING_VATS, faction) || BaseCurrentGrowthRate >= 6)
              && Rules.nutrient_req_citizen != 0
