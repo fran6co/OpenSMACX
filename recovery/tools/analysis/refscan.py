@@ -19,8 +19,9 @@ bound symbol (and offset into it) when one source binding covers it.
 --unbound N lists the N symbols most often left masked (no single source binding: the scan's blind
 spot; section-local $L labels excluded).
 Default: non-BYTE_EXACT markers; --claimed adds the BYTE_EXACT ones (broken references in claims).
-Screen only; `recover measure` is the authority. Single-span COMDAT bodies only (EH regions split
-into several image spans and RECOVERY_FRAGMENT markers are skipped, as fe skips them)."""
+Screen only; `recover measure` is the authority. The main COMDAT only (an EH function's cold
+cleanup span is not asked) and RECOVERY_FRAGMENT markers are skipped. A `// compile_context` marker
+is measured in that unit's compile."""
 import sys, os, re, json, argparse, bisect, pathlib
 from types import SimpleNamespace
 from concurrent.futures import ThreadPoolExecutor
@@ -34,6 +35,7 @@ from match_recovery.measurement import Measurement  # noqa: E402
 
 R = fe.R
 EXE = fe.MAIN + '/.opensmacx/game/terranx_original.exe'
+CHECKED = []   # fe-exact markers asked
 UNBOUND = {}   # masked fields: symbols with no single source binding
 MARK = re.compile(r'// ORIGINAL: (0x[0-9A-F]{8}) \S+ 0x[0-9A-Fa-f]+-0x[0-9A-Fa-f]+([^\n]*)')
 
@@ -75,21 +77,28 @@ def scan_unit(unit, addrs, claimed, pfx, targets, namer, image):
     c, err = fe.compile_unit(unit, R + '/' + unit, pfx)
     if c is None:
         return [dict(unit=unit, addr='?', error='compile failed: ' + (err or '')[:200])]
-    out = []
+    out, contexts = [], {}
     host = pathlib.Path(R + '/' + unit).resolve()
     for addr in addrs:
         if re.search(r'// ORIGINAL: 0x%08X [^\n]*\n// RECOVERY_FRAGMENT' % addr, text):
             continue
         m = re.search(r'// ORIGINAL: 0x%08X [^\n]*\n((?://(?! ORIGINAL)[^\n]*\n)*)' % addr, text)
-        if m and re.search(r'// compile_context (\S+)', m.group(1)):
-            continue   # measured in another unit's compile
-        r = fe.evaluate(c, text, addr)
+        cc_ = c
+        mc = m and re.search(r'// compile_context (\S+)', m.group(1))
+        if mc and mc.group(1) != unit:   # measured in that unit's compile, as fe and recover measure do
+            if mc.group(1) not in contexts:
+                contexts[mc.group(1)] = fe.compile_unit(mc.group(1), R + '/' + mc.group(1), pfx)[0]
+            cc_ = contexts[mc.group(1)]
+            if cc_ is None:
+                continue
+        r = fe.evaluate(cc_, text, addr)
         if 'error' in r or not r['exact']:
             continue
         try:
-            code, refs = references(c, r['sym'])
+            code, refs = references(cc_, r['sym'])
         except Exception:
             continue
+        CHECKED.append(addr)
         lo = r['lo']
         original = SimpleNamespace(code=fe.imgbytes(lo, lo + len(code)), base=lo)
         compiled = SimpleNamespace(references=refs)
@@ -158,6 +167,7 @@ def main():
         for name, n in sorted(UNBOUND.items(), key=lambda kv: -kv[1])[:a.unbound]:
             print('UNBOUND %5d %s' % (n, name))
     print('masked (unbound) fields', sum(UNBOUND.values()), 'in', len(UNBOUND), 'symbols')
+    print('fe-exact markers checked', len(CHECKED))
     print('units', len(work), 'functions with wrong references', sum('sites' in f for f in found))
     if a.json:
         json.dump(found, open(a.json, 'w'), indent=1)
