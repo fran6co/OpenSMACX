@@ -517,9 +517,8 @@ void NewTechWin::exec(int technology_id, int other_faction_id) {
         if (newtechwin_run_modal(this) == -1) {
             break;
         }
-        int entry_id;
-        DatalinkMain.parse_id(PendingTechnologyLink, &category_id, &entry_id);
-        DatalinkMain.exec(category_id, entry_id);
+        DatalinkMain.parse_id(PendingTechnologyLink, &category_id, &technology_id);
+        DatalinkMain.exec(category_id, technology_id);
         PendingTechnologyLink = -1;
     }
 
