@@ -5727,8 +5727,16 @@ int __cdecl propose_treaty(int actor, int other)
         * PlayersData[other].mil_strength_1
         / (PlayersData[actor].mil_strength_1 + PlayersData[other].mil_strength_1 + 1) / 50 * 50;
     if (!(has_treaty(other, actor, 0x20))) {
+        // WORKAROUND(decl): the upper bound is a plain local. With literal
+        // arguments at every inline call the image's two loads into ebx
+        // (0x005457C4, 0x00545A1B) are folded into their adds; one literal
+        // argument passed as a variable restores them (sitek.py: this bound,
+        // the 0x20 of the has_treaty calls here, below and in the acceptance
+        // test, or the 0 / 2 of the difficulty range all give the image's
+        // code; other sites do not). Same family as cost_factor 0x004E4430.
+        int commerce_cap = 99;
         treaty_score -= range(PlayersData[other].tech_commerce_bonus
-            - PlayersData[actor].tech_commerce_bonus, 0, 99) * 50;
+            - PlayersData[actor].tech_commerce_bonus, 0, commerce_cap) * 50;
     }
     if (!strcmp(Players[other].filename, "MORGAN")
         && treaty_score > PlayersData[actor].energy_reserves) {
