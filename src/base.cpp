@@ -4856,26 +4856,26 @@ void __cdecl base_terraform(int force_improve) {
         int food = crop_yield(faction, -1, x, y, TRUE);
         int rocky = map_loc(x, y)->val3 >> 6;
         int bonus = bonus_at(x, y, 0);
-        int rain = (map_loc(x, y)->climate >> 3) & 3;
+        food_want = (map_loc(x, y)->climate >> 3) & 3;
         int sensor = is_sensor(x, y);
         sq = map_loc(x, y);
         items = sq->bit;
-        int has_special = 0;
+        rain_sum = 0;
         if (items & (BIT_CONDENSER | BIT_ECH_MIRROR | BIT_THERMAL_BORE)) {
-            has_special = 1;
+            rain_sum = 1;
         }
         uint32_t forest = items & BIT_FOREST;
         int fungus = ((items & BIT_FUNGUS) && (sq->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF) ? 4 : 0;
         uint32_t worked = (1 << i) & BaseCurrent->resource_sqr_radius;
-        int height = alt - 2 < 0 ? 0 : alt - 2;
+        best_region = alt - 2 < 0 ? 0 : alt - 2;
         if (!worked && worked_improved == worked_rough && !unworked_rich && !forest && !fungus) {
-            if (rain && rocky < 2) {
+            if (food_want && rocky < 2) {
                 worked = 1;
             }
         } else {
             if (forest) {
                 // Forest stays unless the square is good enough for something else.
-                score = (sensor ? -1 : 1) + height + rocky + rain;
+                score = (sensor ? -1 : 1) + best_region + rocky + food_want;
                 if (has_tech(Terraforming[TERRA_SOIL_ENR].prerequisite_tech[0], faction)) {
                     score++;
                 }
@@ -4890,7 +4890,7 @@ void __cdecl base_terraform(int force_improve) {
                 }
             }
             if (fungus) {
-                int value = (sensor == 0) + height + rocky + rain;
+                int value = (sensor == 0) + best_region + rocky + food_want;
                 if (value < fungus_yield) {
                     continue;
                 }
@@ -4909,10 +4909,10 @@ void __cdecl base_terraform(int force_improve) {
             && (!unworked_rich || worked_farmable >= BaseCurrent->population_size - 1
                 || BaseCurrent->population_size >= 2)
             && (!fungus || has_tech(Rules.tech_improve_fungus_sqr, faction))
-            && (rocky > 1 || forest || !rain
+            && (rocky > 1 || forest || !food_want
                 || (fungus && has_tech(Rules.tech_improve_fungus_sqr, faction)))) {
             score = (BaseCurrent->population_size + PlayersData[faction].ai_fight * 2 + 2) * 4;
-            if (forest || fungus || !rain) {
+            if (forest || fungus || !food_want) {
                 score *= 2;
             }
             // is_coast (0x004E49D0) is inlined here.
@@ -4930,12 +4930,12 @@ void __cdecl base_terraform(int force_improve) {
         }
 
         // Solar collector.
-        if ((energy_need || (BaseCurrent->state & BSTATE_UNK_8000)) && !forest && !has_special
+        if ((energy_need || (BaseCurrent->state & BSTATE_UNK_8000)) && !forest && !rain_sum
             && (!sensor || sensors > (worked ? 1 : 2))
-            && (!mine_or_bore || (!mineral_need && height >= 2))) {
-            int high = (energy_need > 1 && height > 1) ? 1 : 0;
-            if (food >= (farm != 0) + 1 - high && height) {
-                int value = height * 3;
+            && (!mine_or_bore || (!mineral_need && best_region >= 2))) {
+            int high = (energy_need > 1 && best_region > 1) ? 1 : 0;
+            if (food >= (farm != 0) + 1 - high && best_region) {
+                int value = best_region * 3;
                 if (bonus == 2 || rocky == 1) {
                     value += 2;
                 }
@@ -5053,11 +5053,11 @@ void __cdecl base_terraform(int force_improve) {
         }
 
         // Mine.
-        if ((!mineral_need && ((rain < 1 - Rules.tgl_nutrient_effect_with_mine && rain) || rocky))
+        if ((!mineral_need && ((food_want < 1 - Rules.tgl_nutrient_effect_with_mine && food_want) || rocky))
             || (sensor && sensors <= (worked ? 1 : 2))
-            || (solar_or_bore && (energy_need || height >= 2))
+            || (solar_or_bore && (energy_need || best_region >= 2))
             || food_need || forest
-            || (rocky == 1 && height >= 2 && mineral_need <= 1)
+            || (rocky == 1 && best_region >= 2 && mineral_need <= 1)
             || (food + mine_or_bore < (farm != 0) + 2 && rocky == 1)) {
             // Not a mine candidate; only the farm check below applies.
         } else {
@@ -5098,8 +5098,8 @@ void __cdecl base_terraform(int force_improve) {
             if (fungus) {
                 score += BaseCurrent->eco_damage * fungus * 2;
             }
-            if (worked || mineral_need > 1 || (rain && !rocky)) {
-                if (!mine_or_bore && !has_special) {
+            if (worked || mineral_need > 1 || (food_want && !rocky)) {
+                if (!mine_or_bore && !rain_sum) {
                     if (score > best) {
                         best = score;
                         best_idx = i;
@@ -5115,7 +5115,7 @@ void __cdecl base_terraform(int force_improve) {
                         best_idx = i;
                         best_kind = 5;
                     }
-                } else if (mine_or_bore && !has_special && !farm && rocky < 2
+                } else if (mine_or_bore && !rain_sum && !farm && rocky < 2
                            && ((sq2->climate & 0x18) || bonus == 1) && score > best) {
                     best = score;
                     best_idx = i;
@@ -5128,7 +5128,7 @@ void __cdecl base_terraform(int force_improve) {
         if (!farm && rocky < 2 && !forest
             && (food_need > 1 || !((rocky && food) ? unworked_rich : unworked_good) || worked)
             && (food_need || (mineral_need && rocky && food)
-                || (rain && (rocky == 1 || rain == 2 || mine_or_bore || solar_or_bore)))) {
+                || (food_want && (rocky == 1 || food_want == 2 || mine_or_bore || solar_or_bore)))) {
             int value = food * 3 + 3;
             if (bonus > 1) {
                 value += 3;
@@ -5150,7 +5150,7 @@ void __cdecl base_terraform(int force_improve) {
             if (worked) {
                 score *= 2;
             }
-            if (rain > 1 && !has_tech(Rules.tech_three_nutrients_sqr, faction)) {
+            if (food_want > 1 && !has_tech(Rules.tech_three_nutrients_sqr, faction)) {
                 score /= 3;
             }
             if (fungus) {
@@ -5177,7 +5177,7 @@ void __cdecl base_terraform(int force_improve) {
         // Thermal borehole.
         if (!bore_seen) {
             score = (rocky == 2 ? 12 : 0) - i + 21;
-            score += (rocky == 2 || !rain) ? 12 : 0;
+            score += (rocky == 2 || !food_want) ? 12 : 0;
             if (improvements) {
                 score -= 8;
             }
@@ -5214,8 +5214,8 @@ void __cdecl base_terraform(int force_improve) {
             if (!farm) {
                 score += 2;
             }
-            score += ((2 - rain) * (2 - rain) + rocky * 2) * 2;
-            if (!MapCloudCover && rain < 2) {
+            score += ((2 - food_want) * (2 - food_want) + rocky * 2) * 2;
+            if (!MapCloudCover && food_want < 2) {
                 score *= 2;
             }
             if (score > cond_score) {
@@ -8184,23 +8184,23 @@ void __cdecl base_ecology() {
     int created = 0;
     for (i = 0; i < (PlayersData[faction].planet_ecology < 9
                      ? PlayersData[faction].planet_ecology : 9); i++) {
-        int x = wrap_map_x(event_x + RadiusOffsetX[i]);
-        int y = event_y + RadiusOffsetY[i];
-        if (!on_map(x, y)) {
+        shown = wrap_map_x(event_x + RadiusOffsetX[i]);
+        report_terraform = event_y + RadiusOffsetY[i];
+        if (!on_map(shown, report_terraform)) {
             continue;
         }
-        Map *tile = map_loc(x, y);
+        Map *tile = map_loc(shown, report_terraform);
         if (!(tile->bit & BIT_FUNGUS) || (tile->climate & ~0x1F) < ALT_BIT_OCEAN_SHELF) {
             continue;
         }
-        int base_id = base_find(x, y);
+        int base_id = base_find(shown, report_terraform);
         if (base_id < 0 || Bases[base_id].faction_id_current != faction) {
             continue;
         }
-        if (veh_who(x, y) > 0 || base_who(x, y) > 0) {
+        if (veh_who(shown, report_terraform) > 0 || base_who(shown, report_terraform) > 0) {
             continue;
         }
-        int region = region_at(x, y);
+        int region = region_at(shown, report_terraform);
         int unit_id;
         if (region >= 0x40) {
             unit_id = (gated_spawns % 3) ? BSC_ISLE_OF_THE_DEEP : BSC_LOCUSTS_OF_CHIRON;
@@ -8220,11 +8220,11 @@ void __cdecl base_ecology() {
         if (unit_id == BSC_MIND_WORMS && !(rand() % 5) && ExpansionEnabled) {
             unit_id = BSC_SPORE_LAUNCHER;
         }
-        int veh_id = veh_init(unit_id, 0, x, y);
+        int veh_id = veh_init(unit_id, 0, shown, report_terraform);
         if (veh_id >= 0) {
             Vehs[veh_id].order_auto_type = static_cast<uint8_t>(faction);
         }
-        draw_tile(x, y, 2);
+        draw_tile(shown, report_terraform, 2);
     }
     if (anything_at(event_x, event_y) <= 0) {
         int region = region_at(event_x, event_y);
