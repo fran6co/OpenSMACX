@@ -109,3 +109,7 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   callee and other functions with the same 2-3 statement window (windows found in more than 4 places are idioms and
   are dropped). `--swaps` adds per-site E/c rows for callees with equal counts (slow on large functions). The probe
   `probe calls` column counts refused probes (pass-1 budget already spent, the probe measures nothing there).
+- `analysis/probes/<topic>/` standalone VC6 probe families with a README each (2026-11-19, par-3): `vecctor` (`??_H`
+  vector constructor iterator expansion), `mulorder` (index multiply operand order, MapLongitude's type; `scan.py`
+  tree screen), `aggreg` (4-byte aggregates in registers), `switchtail` (switch tail-merge direction), `slotshare`
+  (frame slot sharing with inlined callees' locals). Rules in MATCHING_GUIDE 2.6, 3.3, 3.4, 3.7.

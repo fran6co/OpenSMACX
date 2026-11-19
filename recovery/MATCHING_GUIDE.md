@@ -852,6 +852,28 @@ raw field access where the original used inline accessors.
     (CouncWin::draw_leader had five label cases reversed).
   - Switch cases follow source order; out-of-order cases make strict measurement
     refuse with a jump-table cell diagnostic.
+- **Arrays of objects: the vector constructor iterator is an ordinary /Ob2
+  inline** (par-3 2026-11-19, `analysis/probes/vecctor/`, high on probes,
+  medium on the one real case). For `T a[N]` (local, member, `new T[N]`)
+  whose element has a constructor and *no destructor*, VC6 generates the
+  `??_H` (`vector constructor iterator`) COMDAT in every unit and treats it
+  like an auto-inline callee: expanded, it is a `dec/jne` loop that calls (or
+  expands) the element constructor; refused, it is `push ctor; push N; push
+  size; push ptr; call ??_H` (stdcall, no `add esp`). Element count (1..16),
+  ctor inline/out of line/compiler-generated/extern, a default argument, a
+  virtual table, a local vs member vs `new` array and an EH frame elsewhere
+  never refuse it (`run.py`, `more.py`, `eh.py`); only the caller's budget
+  does (`budget.py`: 16 two-if inline sites before the array refuse it, none
+  after it does, a bigger caller restores it). With a destructor and /GX the
+  EH iterators `??_L`/`??_M` are always called, never expanded. An array
+  member makes the iterator a depth-2 site inside the class's generated
+  constructor. The image's only out-of-line `??_H` call (NetWin::exec
+  0x4824D5) is such a depth-2 site, and 96 if-units of added pass-1 charge
+  did not refuse it in ours, so it is not that caller's budget: the image
+  expands nothing below depth 1 in exec, and `#pragma inline_depth(1)`
+  around exec (WORKAROUND(inline)) reproduces its call multiset exactly
+  (266 -> 233 rows). Tree-wide, the call multisets of `??_H/??_L/??_M` agree
+  everywhere else (calldiff, 2026-11-19).
 
 ### 2.7 Callee-saved register allocation model
 
@@ -2779,6 +2801,39 @@ Conclusions
   CSE temporary): read the member in place at each use; a named `const` copy
   is propagated back into member reads and loses the slot
   (MapWin::pixel_to_tile 0x14 -> 0x18).
+- **Slot sharing follows live ranges, not scopes or inline boundaries**
+  (par-3 2026-11-19, `analysis/probes/slotshare/`, high on probes). After
+  register allocation VC6 packs every memory-resident value whose live range
+  is disjoint from another's into the same slot: a spilled scalar (no address
+  taken) goes into the slot of an inlined callee's address-taken local
+  (`bitmask(id, &offset, &mask)` in has_fac), of an earlier spilled loop
+  counter, or of a dead parameter, and the image's out-of-line has_fac
+  (0x00421670) even puts its address-taken `offset` into the dead
+  `facility_id` slot. Two address-taken locals with disjoint lives stayed
+  apart in every probe (`run.py` for_addr). Where several slots are free, a
+  spilled counter took the inline's local's slot ahead of an earlier
+  counter's (`pick.py`), which is what ours does in draw_intel 0x004A2210
+  (`faction` on has_fac's `mask`); the image puts `faction` with the earlier
+  loop counters and keeps `mask` alone (frame 0x9C vs ours 0x98), so in the
+  original `mask` was live where `faction` is, or `faction` was not a fresh
+  spill. Sharing one function-scope counter among the base/category/faction
+  loops, or declaring `faction` at the top, leaves the frame at 0x98.
+  NewTechWin::exec 0x00483F90 is the same family (`number[16]` packed with
+  the RECT locals in ours, alone in the image: frame 0x64 vs 0x74). Not
+  solved; the lever is the live range, not the declaration's scope.
+- **A 4-byte aggregate is never enregistered** (par-3 2026-11-19,
+  `analysis/probes/aggreg/`, high). A union of DWORD/WORD (any member order,
+  `WORD half[2]`, int/short, named or anonymous), a struct of two shorts,
+  `*(WORD *)&dword` and bitfields all stay in a frame slot under the game and
+  the uv flags, with or without an `__asm` helper in the function; the
+  scalar spellings (`p = h; p <<= 16; p |= h`, masks) fold to
+  `and/shl/or` and are hoisted out of the loop. VC6 writes a 16-bit register
+  only to load a WORD variable (`mov dx, word ptr [m]; and edx, 0xFFFF`). So
+  sub_5cd560 0x005CD560's per-iteration `mov dx,ax; mov bx,dx; shl ebx,16;
+  mov bx,dx; mov edx,ebx` (not hoisted, partial-register merges, the counter
+  and stride spilled to dead parameter slots) is not a C spelling we can
+  find; read it as a hand-written `__asm` loop body (AGENTS.md asm policy)
+  before trying more union forms.
 
 ### 3.4 Arithmetic idioms
 - **Signedness of a field (movsx/movzx, jl/jb, idiv/div, sar/shr) is its
@@ -2791,6 +2846,25 @@ Conclusions
   first is signed whatever its source: only signed uses of a dword are strong
   evidence. `(flags & bit) != 0` is an int and lowers to `shr; and 1` like the
   shift (communicate's game-rules bit).
+- **MapLongitude is `int`** (par-3 2026-11-19). The catalogue name
+  `?MapLongitude@@3IA` (unsigned) is an inferred type: the image's 132 uses
+  outside multiplies are x_dist's signed `cmp; jle`, none is unsigned
+  (no `jb/ja`, `shr`, `div` or unsigned-to-float), and declaring it unsigned
+  loses 37 exact functions and gains none (feall). The stride's signedness
+  never changes code in `G * y` index multiplies.
+- **Operand order of `global * value` is register allocation, not spelling**
+  (`analysis/probes/mulorder/`, high). `G*y`, `y*G`, casts and an unsigned G
+  compile identically. The form follows where y lives: y already in the
+  destination register (a fresh, dying temp) gives `imul r,[G]`; a y that
+  stays live gives `mov r,[G]; imul r,y` when the caller passed a *named
+  local* to the inline, and `mov r,y; imul r,[G]` when it passed the *field
+  expression* itself (CSE'd with its later use; `inl.py`). balance
+  0x005B0420 is the latter: `map_loc(Vehs[v].x, Vehs[v].y)` and
+  `veh_find(Vehs[v].x, Vehs[v].y, ...)` instead of `const int x/y` locals
+  (108 -> 106). `mulorder/scan.py FEALL.json` lists functions whose counts of
+  the two forms differ (22 on 2026-11-19); most (alien_fauna, enemy_move,
+  Path::find) differ because y sits in a different register or slot, a
+  register-allocation symptom (2.7), not a source spelling.
 - **`rand() & 0x80000001; jns; dec; or -2; inc`** is `rand() % 2`.
 - **A magic divide then multiply-subtract** is `x - x/C*C`, not `%`.
 - **Ternary setcc forms.** `c ? K : 0` gives `set!c; dec; and K`;
@@ -2967,6 +3041,31 @@ Layout
   instructions before the merged point are copied into each predecessor arm,
   so a store after an inline's if/else appears in both arms. One pushing call
   (`push; call f; add esp,4; call g`, T2/T4/T9/T15) stays unmerged.
+- **Switch tail-merge direction (measured, `analysis/probes/switchtail/const.py`,
+  par-3 2026-11-19).** With register-free tails (`use(1)..use(7)`), VC6 lays
+  case blocks out in source order whatever the case values, and when two
+  cases ending in `break` share a tail and none of them falls through into
+  the join, the *later* case jumps back into the *first* copy (3,7 -> 7
+  jumps into 3; 1,3,5,7 -> 3, 5 and 7 jump into 1). The copy survives in the
+  later case only when that case is the join's fall-through predecessor (no
+  else arm after the switch, `no guard`) or the tails end in a void
+  `return;` (`3,7 return`; for `f(); return K;` tails see 3.2). Case
+  values, a default, the tail length and short identical bodies elsewhere
+  do not change it; text order does (7 written first keeps 7). Real tails
+  merge only where register allocation made them identical, so even cases
+  that look identical can stay separate (vehdraw's 0/2/4/6 differ in the
+  image by registers; ours merges 6 into 4). vehdraw_scoot_start
+  0x004BFE00: the image's case 3 jumps forward into case 7 with the else arm
+  (`midpoint = 0,0,1`) between case 7 and the join, which contradicts both
+  rules for an if/else around a switch. Putting the else stores into the
+  switch itself (`switch (uses ? direction : -1) { ... default: stores }`)
+  reproduces the image's merges and layout (171 -> 7 rows) but changes
+  behaviour for an out-of-range direction (the `ja` goes to the stores, not
+  the join), and a `case 8` selector gives 14 rows; the inverted
+  `if (!uses) {stores} else switch` gives 81. No faithful spelling found
+  yet; the evidence is that the stores were a block of the switch region.
+  3.2's "the last branch keeps the copy" holds for `return` tails and the
+  fall-through case only.
 - **The join's head block follows its most-shared tail.** VC6 moves the
   first block of a join (probe 0x5A36EE: the prb_defense ternary's test and
   has_fac arm, ending `jmp` to the merge at 0x5A42CC) after the predecessor
