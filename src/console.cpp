@@ -3497,13 +3497,7 @@ int Console::set_cursor(int x_coord, int y_coord) {
     if (!on_map(x_coord, y_coord)) {
         return 1;
     }
-    field_23BF8_ = 0;
-    if (survey_mode_ != 0) {
-        survey_mode_ = 0;
-        MapWinTable[0]->draw_map(1);
-    }
-    MapWinTable[0]->draw_cursor();
-    cursor_next(x_coord, y_coord);
+    sub_510c90(x_coord, y_coord);
     ConsoleStatusWin.redraw();
     field_23BF8_ = 1;
     field_23BFC_ = 1;
