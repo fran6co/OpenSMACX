@@ -8811,6 +8811,13 @@ if (DiploScratchF7D4 &&
         net_double_cross(faction_id, DiploScratchF7D4, faction_id_with, 1);
         net_treaty_on(faction_id, DiploScratchF7D4, 0x8000008, 0);
         diplo_unlock();
+        DiploScratchFA8C = DiploScratchF7D4;
+        DiploScratchF7E8 = 0;
+        DiploScratchF7D4 = 0;
+        communicate_stack_20 = 1;
+        DiploScratchFA4C = 0;
+        communicate_stack_34 = 1;
+        goto communicate_menu_continuation;
     } else {
         if (!X_pops("INTRODUCEENEMY", 0x100000,
                     FactionDiplomacyPortraits[faction_id_with], pop_wait)) {
@@ -8830,14 +8837,14 @@ if (DiploScratchF7D4 &&
         communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0);
         net_treaty_on(faction_id, DiploScratchF7D4, 0x8000008, 0);
         diplo_unlock();
+        DiploScratchFA8C = DiploScratchF7D4;
+        DiploScratchF7E8 = 0;
+        DiploScratchF7D4 = 0;
+        communicate_stack_20 = 1;
+        DiploScratchFA4C = 0;
+        communicate_stack_34 = 1;
+        goto communicate_menu_continuation;
     }
-    DiploScratchFA8C = DiploScratchF7D4;
-    DiploScratchF7E8 = 0;
-    DiploScratchF7D4 = 0;
-    communicate_stack_20 = 1;
-    DiploScratchFA4C = 0;
-    communicate_stack_34 = 1;
-    goto communicate_menu_continuation;
 }
 
 if (DiploScratchFA38 && !has_treaty(faction_id, faction_id_with, 0x31) &&
