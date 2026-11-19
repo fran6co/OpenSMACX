@@ -113,12 +113,19 @@ int __cdecl base_claimed(int x, int y, int site1_free, int site2_free,
 // dropped /Oi (2026-11-18) ten were too many: seven stayed out-of-line calls of
 // this probe. Five: the range at 0x4FD528 is a call as in the image and one
 // probe still is (four: no probe call, but that range expands); the frame
-// (0x1F6C) matches at every count from 4 to 10.
+// (0x1F6C) matches at every count from 4 to 10. Three branchy probes plus two
+// pure-store probes (bb_probe_store, cheaper than a branch) spend the amount in
+// between: no probe call and the image's call multiset (2026-11-19).
 static inline int bb_probe(int x) {
     if (x == 1) {
         x = 2;
     }
     return x;
+}
+
+// WORKAROUND(inline): pure-store budget probe; see bb_probe.
+static inline void bb_probe_store(int *p) {
+    *p = 0;
 }
 
 // Complete base_build was moved here from its retired seed:
@@ -1862,8 +1869,14 @@ L_4fbd3d:
         bb_probe(0);
         bb_probe(0);
         bb_probe(0);
-        bb_probe(0);
-        bb_probe(0);
+        {
+            int probe_;
+            bb_probe_store(&probe_);
+        }
+        {
+            int probe_;
+            bb_probe_store(&probe_);
+        }
         if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)) {
             if (has_tech(Chassis[5].preq_tech, target) && !has_tech(Chassis[5].preq_tech, l_8)) {
                 w /= 2;
