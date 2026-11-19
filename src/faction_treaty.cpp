@@ -83,17 +83,15 @@ void __cdecl treaty_off(int faction_id, int faction_id_with, int treaty) {
         treaty |= 0x8040;
     }
     if (treaty & DTREATY_WANT_REVENGE) {
-        // 0xfffff3ff == ~(SHALL_BETRAY | 0x800), and in the +8 view: dropping
-        // WANT_REVENGE drops that pair as well.
-        int index = faction_id_with;
-        PlayersData[faction_id].diplo_agenda[index] &= 0xfffff3ff;
-        index = faction_id;
-        PlayersData[faction_id_with].diplo_agenda[index] &= 0xfffff3ff;
+        // 0xfffff3ff == ~(SHALL_BETRAY | 0x800): dropping WANT_REVENGE
+        // drops that agenda pair as well. No named index locals in these
+        // writers: each one counts in /Ob2's cost of the expansion, and with
+        // them enemies_war's second treaty_off is refused (image: expanded).
+        PlayersData[faction_id].diplo_agenda[faction_id_with] &= 0xfffff3ff;
+        PlayersData[faction_id_with].diplo_agenda[faction_id] &= 0xfffff3ff;
     }
-    int index = faction_id_with;
-    PlayersData[faction_id].diplo_treaties[index] &= ~treaty;
-    index = faction_id;
-    PlayersData[faction_id_with].diplo_treaties[index] &= ~treaty;
+    PlayersData[faction_id].diplo_treaties[faction_id_with] &= ~treaty;
+    PlayersData[faction_id_with].diplo_treaties[faction_id] &= ~treaty;
 }
 
 
@@ -118,10 +116,8 @@ Status: Complete
 */
 void __cdecl agenda_off(int faction_id, int faction_id_with, int agenda) {
     int mask = ~agenda;
-    int index = faction_id_with;
-    PlayersData[faction_id].diplo_agenda[index] &= mask;
-    index = faction_id;
-    PlayersData[faction_id_with].diplo_agenda[index] &= mask;
+    PlayersData[faction_id].diplo_agenda[faction_id_with] &= mask;
+    PlayersData[faction_id_with].diplo_agenda[faction_id] &= mask;
 }
 
 
@@ -187,23 +183,20 @@ void __cdecl treaty_on(int faction_id, int faction_id_with, int treaty) {
         // ~0x118050: VENDETTA, both UNK_40/UNK_8000 and the 0x1100000 pair -
         // the same bits treaty_off adds to its mask for the same three low
         // bits, cleared here rather than or'ed on.
-        int index = faction_id_with;
-        PlayersData[faction_id].diplo_treaties[index] &= 0xffee7faf;
-        index = faction_id;
-        PlayersData[faction_id_with].diplo_treaties[index] &= 0xffee7faf;
+        PlayersData[faction_id].diplo_treaties[faction_id_with] &= 0xffee7faf;
+        PlayersData[faction_id_with].diplo_treaties[faction_id] &= 0xffee7faf;
     }
     if (treaty & DTREATY_PACT) {
         treaty |= DTREATY_TREATY;
     }
     if (treaty & DTREATY_VENDETTA) {
-        int index = faction_id_with;
-        if (PlayersData[faction_id].diplo_treaties[index] & 7) {
+        if (PlayersData[faction_id].diplo_treaties[faction_id_with] & 7) {
             PlayersData[faction_id_with].diplo_unk4[faction_id] = 0;
-            PlayersData[faction_id].diplo_unk4[index] = 0;
+            PlayersData[faction_id].diplo_unk4[faction_id_with] = 0;
             local_faction = ConsoleGlobal.faction_id_;
         }
         treaty |= 0x80000108;
-        PlayersData[faction_id].diplo_treaties[index] &= 0xfaeef378;
+        PlayersData[faction_id].diplo_treaties[faction_id_with] &= 0xfaeef378;
         PlayersData[faction_id_with].diplo_treaties[faction_id]
             &= 0xfaeef378;
         if (faction_id == local_faction
@@ -214,15 +207,11 @@ void __cdecl treaty_on(int faction_id, int faction_id_with, int treaty) {
         }
     }
     if (treaty & 0x17) {
-        int index = faction_id_with;
-        PlayersData[faction_id].diplo_treaties[index] &= 0xff7fffff;
-        index = faction_id;
-        PlayersData[faction_id_with].diplo_treaties[index] &= 0xff7fffff;
+        PlayersData[faction_id].diplo_treaties[faction_id_with] &= 0xff7fffff;
+        PlayersData[faction_id_with].diplo_treaties[faction_id] &= 0xff7fffff;
     }
-    int index = faction_id_with;
-    PlayersData[faction_id].diplo_treaties[index] |= treaty;
-    index = faction_id;
-    PlayersData[faction_id_with].diplo_treaties[index] |= treaty;
+    PlayersData[faction_id].diplo_treaties[faction_id_with] |= treaty;
+    PlayersData[faction_id_with].diplo_treaties[faction_id] |= treaty;
     if ((faction_id == local_faction || faction_id_with == local_faction)
         && (treaty & 0x1f) && MultiWindow.panel_open()) {
         MultiWindow.GraphicWin::redraw();
@@ -253,15 +242,11 @@ void __cdecl agenda_on(int faction_id, int faction_id_with, int agenda) {
     // The agenda view is the same table eight dwords in - 0x96CA18, which is
     // PlayerData::diplo_agenda[0].
     if (agenda & 0x20) {
-        int index = faction_id_with;
-        PlayersData[faction_id].diplo_agenda[index] &= ~0x40;
-        index = faction_id;
-        PlayersData[faction_id_with].diplo_agenda[index] &= ~0x40;
+        PlayersData[faction_id].diplo_agenda[faction_id_with] &= ~0x40;
+        PlayersData[faction_id_with].diplo_agenda[faction_id] &= ~0x40;
     }
-    int index = faction_id_with;
-    PlayersData[faction_id].diplo_agenda[index] |= agenda;
-    index = faction_id;
-    PlayersData[faction_id_with].diplo_agenda[index] |= agenda;
+    PlayersData[faction_id].diplo_agenda[faction_id_with] |= agenda;
+    PlayersData[faction_id_with].diplo_agenda[faction_id] |= agenda;
 }
 
 
