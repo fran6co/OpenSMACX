@@ -120,7 +120,12 @@ def check_initial_data(bindings, objects, image, targets, *, literal_targets=Non
                     if local_data_targets.get((binding.unit, binding.emitted_symbol)) != binding.origin.address:
                         raise ValueError("TU-local target lacks a validated ordinary same-owner data definition")
                 elif (binding.target_symbol is not None
-                      and targets.get(binding.emitted_symbol) != binding.origin.address):
+                      and targets.get(binding.emitted_symbol) != binding.origin.address
+                      # A bounded v4 alias may name a same-owner file static:
+                      # local_object_targets validated its unique definition
+                      # and CodeView extent against the declared span.
+                      and local_data_targets.get((binding.unit, binding.emitted_symbol))
+                      != binding.origin.address):
                     raise ValueError("direct target alias lacks a validated external object definition")
                 observed = data_layout(obj, binding.emitted_symbol)
             row.update(definition=Result.PASS, compiler_storage=observed)

@@ -330,7 +330,10 @@ current name, not through the old spelling. The target must be unique in one
 source owner and cannot collide with another historical object identity or
 member owner. Direct target aliases and member paths are mutually exclusive.
 Bounded records still require fresh ordinary COFF definition and exact CodeView
-extent, initializer and reference evidence. Rebinding does not prove allocation,
+extent, initializer and reference evidence. A bounded target may be a file
+static of the owning unit (COFF storage class 3): it is then validated through
+the same-owner local route (unique ordinary definition, CodeView extent equal
+to the declared span), never as a global target. Rebinding does not prove allocation,
 lifetime, final-link selection or runtime ownership.
 
 Version 5 retains a bounded old object identity as a half-open slice of a
