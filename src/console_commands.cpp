@@ -2216,7 +2216,6 @@ void Console::go_to(int subject, int order, int grouped) {
     int faction;
     int triad;
     int base_id;
-    int max_range;
     int centre_x;
     int centre_y;
     int ids[512];
@@ -2301,10 +2300,10 @@ void Console::go_to(int subject, int order, int grouped) {
         } else if (order == 128) {
             switch (Chassis[VehPrototypes[Vehs[subject].proto_id].chassis_id].range) {
             case 1:
-                max_range = speed(subject, 0) / 2;
+                base_id = speed(subject, 0) / 2;
                 break;
             default:
-                max_range = speed(subject, 0);
+                base_id = speed(subject, 0);
                 break;
             }
             if (base_who(source_x, source_y) >= 0) {
@@ -2442,7 +2441,7 @@ void Console::go_to(int subject, int order, int grouped) {
                     }
                 } else if (triad == TRIAD_AIR) {
                     if (order == 128) {
-                        if (map_range(centre_x, centre_y, Bases[id].x, Bases[id].y) > max_range) {
+                        if (map_range(centre_x, centre_y, Bases[id].x, Bases[id].y) > base_id) {
                             continue;
                         }
                     } else if (order >= 0) {
