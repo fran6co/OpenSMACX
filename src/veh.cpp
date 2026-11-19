@@ -2379,6 +2379,12 @@ reroll:
             } else {
                 NetMsg::pop(StringTemp, "supply_sm.pcx");
             }
+        } else {
+            tech_achieved(faction_id, tech_id, 0, 0);
+            if (forced) {
+                PlayersData[faction_id].tech_ranking--;
+            }
+            return 0;
         }
         tech_achieved(faction_id, tech_id, 0, 0);
         if (forced) {
