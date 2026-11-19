@@ -1905,24 +1905,7 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
   set_modal(0, pop_expire, &MainInterfaceGlobal);
 
   if (IsMultiplayerPBEM != 0) {
-    StringList &source = DiploWindow.stringBox_.strings();
-    int high_faction = faction_id_with_;
-    int low_faction = faction_id_;
-    if (low_faction > high_faction) {
-      swap(&low_faction, &high_faction);
-    }
-    const int source_count = source.entry_count_;
-    for (int source_index = source_count - 3;
-         source_index < source_count; ++source_index) {
-      if (source_index < 0)
-        continue;
-      source.seek_pos(source_index);
-      DiplomacyTranscriptLists[low_faction][high_faction].pending_text_ = source.head_ != 0
-          ? source.current_->string_payload()->text : 0;
-      DiplomacyTranscriptLists[low_faction][high_faction].field_20_ = 0;
-      DiplomacyTranscriptLists[low_faction][high_faction].field_24_ = 0;
-      DiplomacyTranscriptLists[low_faction][high_faction].add(source.current_id());
-    }
+    sub_441040(faction_id_, faction_id_with_);
 
     // Each side is stored twice: in the local cell as seen from here, and
     // mirrored into the counterpart's cell with the parties swapped.
