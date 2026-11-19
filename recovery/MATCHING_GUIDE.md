@@ -3959,6 +3959,25 @@ Expression residues (par-5 2026-11-19, `analysis/probes/bytecse/`, `addsub/`,
   (SocialWin::draw_info 0x004B0289) was not reproduced by `-u`, `u = -u`, a
   named negated local, a shared function-scope local or an inline taking the
   value (`deadstore/neg.py`): all give `neg esi; push esi`.
+Arithmetic, prologue and arm order (par-2 2026-11-19)
+- **`x -= q * K` written in place gives `shl/sub/neg/lea`**: the image forms
+  a remainder as `x + q*-K` (`shl` by 4, `sub`, `neg`, `lea [x+q*4]` for
+  K = 60) into the slot of the variable that held the dividend, then
+  subtracts in place. A separate temporary (`int s = x - q*60`) gives the
+  `lea`-based `q*60` and a register copy instead. Source:
+  `s = (t + 999) / 1000; m = s / 60; s -= m * 60;` (MultiWin::draw_time
+  0x00478BE0, exact).
+- **Deferred callee-saved pushes mean a single exit.** When the image pushes
+  only one register before an early guard and saves the others after it
+  (Dialog::init 0x00609486..0x0060948E: esi, then ebx/ebp/edi past the
+  null-rect test), the function has one `return`; any second `return`
+  makes VC6 push all of them up front. Keep the single-exit form even when
+  a two-return spelling scores fewer rows.
+- **The fallthrough arm is the first `if` arm.** When the image tests
+  `cmp a, b; jge` and lays the `a < b` work in the fallthrough, the source
+  is `if (a < b) {that} else {other}`; the negated test with the arms
+  exchanged emits the inverse jump and swaps the blocks (base_build
+  0x004F81A0, two sites: `l_e0 < unk_28 / 2`, `l_20 == FAC_COMMAND_CENTER`).
 
 ## 4. Measured and neutral (do not retry without new evidence)
 
