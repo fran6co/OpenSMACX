@@ -2427,6 +2427,14 @@ static inline void netwin_set_column(RECT *rows, int left, int top, int right,
 // ORIGINAL: 0x00482490 ?exec@NetWin@@QAEHXZ 0x00482490-0x00482D84
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00482490.cpp; original identity and primary482490..482D84 span retained", "Pinned original 0x004824C2 pushes callback 0x00483820, count 7, stride 0x17C and the stack array at EBP-0xAB0 before calling 0x00402EE0; originally the helper calls the callback with each element as ECX. Current source uses a seven-element array of constructed payload wrappers; VC6 supplies its non-EH ??_H iterator and the wrapper constructor returns the receiver, matching the original 0x483820 ABI. 0x00483820 writes offsets 0, 1, 2, 3, 4 and 0x178, matching the constructed row payload. Global wire rows remain passive; this composition does not assert an original class hierarchy.", "recovery/tasks/netwin-owner-coverage.json; revisions1-3 authorize coupled ownership and consumer changes; no matching or runtime acceptance implied."], "reason": "Recover the complete lobby window lifecycle with typed setup rectangles, existing controls, stack-local lobby rows and real receiver-free callbacks."}
 // TRIED: full transcription treating `self` as `int *` (matches the original's word-indexed field layout exactly); vtable slot057 retyped to (int,int,int) in this file's VCall, verified against raw disasm; UnionRect/CharUpperA reached via the IAT slot pattern. Reaches MISMATCH #6 'xor' vs 'mov' (register allocation), not chased further given size (2292 bytes).
+// WORKAROUND(inline): the image calls the ??_H vector constructor iterator
+// (4824D5) for lobby_message.rows_. That site is depth 2 (inside the local
+// struct's generated constructor, which is depth 1), and the image expands
+// nothing else below depth 1 in exec; our /Ob2 expands ??_H there although
+// added pass-1 charge (96 if-units) does not move it, so it is not the
+// caller budget. inline_depth(1) reproduces the image's call multiset
+// exactly (MATCHING_GUIDE 2.6 "Arrays of objects").
+#pragma inline_depth(1)
 int NetWin::exec() {
     if (ExitTurnLoop != 0) {
         return 0;
@@ -2634,6 +2642,7 @@ int NetWin::exec() {
     }
     return field_7614_;
 }
+#pragma inline_depth()
 
 /*
 Purpose: The player-count picker: entries numbered max(2, lobby count) to 7,
@@ -3179,10 +3188,6 @@ Purpose: Construct a lobby row, not the GraphicWin base. Native4824C2
 Return Value: n/a
 Status: Complete
 */
-// WORKAROUND(noinline): exec reaches this constructor out of line through
-// the ??_H iterator (4824C2 pushes 483820); /Ob2 otherwise expands it there.
-// The ??_H call itself (4824D5) is still expanded inline in our build.
-#pragma auto_inline(off)
 NetWinConstructedLobbyRow::NetWinConstructedLobbyRow() {
     payload_.owner_ = 0;
     payload_.prefix_ = -1;
@@ -3191,7 +3196,6 @@ NetWinConstructedLobbyRow::NetWinConstructedLobbyRow() {
     payload_.faction_or_color_ = -1;
     payload_.field_4_ = 2;
 }
-#pragma auto_inline(on)
 
 
 
