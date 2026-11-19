@@ -2684,6 +2684,16 @@ Conclusions
   (MapWin::pixel_to_tile 0x14 -> 0x18).
 
 ### 3.4 Arithmetic idioms
+- **Signedness of a field (movsx/movzx, jl/jb, idiv/div, sar/shr) is its
+  declaration, not a cast.** Run `analysis/typescan.py` (about 2 min): it lists
+  the fields whose image uses contradict the declared type, with the casts that
+  stand in for it. Retype the field (same offset and size) and drop the casts;
+  round 9 retyped about 70 uint32_t fields to int this way with no function lost.
+  A compare against an unsigned operand is unsigned whatever the field's type,
+  `(x >> n) & 1` lowers to `shr` for int too, and a value stored to an int local
+  first is signed whatever its source: only signed uses of a dword are strong
+  evidence. `(flags & bit) != 0` is an int and lowers to `shr; and 1` like the
+  shift (communicate's game-rules bit).
 - **`rand() & 0x80000001; jns; dec; or -2; inc`** is `rand() % 2`.
 - **A magic divide then multiply-subtract** is `x - x/C*C`, not `%`.
 - **Ternary setcc forms.** `c ? K : 0` gives `set!c; dec; and K`;
