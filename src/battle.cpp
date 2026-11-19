@@ -2647,7 +2647,7 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
     }
 
     // 0x506CFE
-    def_id = stack_id = best_defender(target_veh, veh_id, mode);
+    stack_id = def_id = best_defender(target_veh, veh_id, mode);
     def_faction = Vehs[def_id].faction_id;
     base_id = base_at(target_x, target_y);
 
