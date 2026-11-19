@@ -417,7 +417,7 @@ MultiWin MultiWindow;  // 0x007FD648
 
 // Shared load request: NetWin47D501/47D79D and58E79B/58E7AD write it;
 // game_data5A7951 reads it under read mode. Broader storage remains unknown.
-// RECOVERY_OBJECT: v1 0x00945D78 ?GameDataLoadRequest@@3HA
+// RECOVERY_OBJECT: v2 0x00945D78 0x00945D7C ?GameDataLoadRequest@@3HA 0x0058D6B0
 int GameDataLoadRequest;
 
 

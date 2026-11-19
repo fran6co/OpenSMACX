@@ -6113,7 +6113,7 @@ int __cdecl propose_treaty(int actor, int other)
 }
 
 // Shared proposal selection; threaten and proposal dispatch read this slot.
-// RECOVERY_OBJECT: v1 0x0093FA34 ?DiploScratchFA34@@3HA
+// RECOVERY_OBJECT: v2 0x0093FA34 0x0093FA38 ?DiploScratchFA34@@3HA 0x0054F420
 int DiploScratchFA34;
 
 // ORIGINAL: 0x00549930 ?threaten@@YAXHH@Z 0x00549930-0x0054ACB9 BYTE_EXACT
