@@ -28,7 +28,6 @@
 // ORIGINAL: 0x004E31E0 ?setup@AlphaNet@@QAEHH@Z 0x004E31E0-0x004E32BA FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004e31e0.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Existing actual LobbyAppGuid689218 and provider selection/setup state."}
 // symbol    ?setup@AlphaNet@@QAEHH@Z
-#define ALPHANET_REMOVE_ALL_CALLED
 #include "stdafx.h"
 #include "alphanet.h"
 #include "spritebox.h"
@@ -360,9 +359,10 @@ int AlphaNet::join() {
     int selected;
 again:
     {
+        // Both drains are pass-2 sites inside close(); the image calls
+        // remove_all (0x004E2F0C, 0x004E3126 -> the folded 0x00402970).
         AlphaNetStringStruct *list = &ledger_;
-        list->remove_all();
-        list->current_position_ = 0;
+        list->close();
         list->allocator_ = 0;
     }
     NetDaemonNet.enumerate_sessions(&ledger_, 0);
@@ -429,10 +429,3 @@ ServiceList::~ServiceList() {
     close();
 }
 
-// Drain for this unit's explicit callers (see alphanet.h); the image's copy
-// is the linker-folded StringStruct body at 0x00402970. Defined after join
-// so its calls stay out of line; `inline` keeps it a pick-any COMDAT beside
-// the other units' expansions.
-inline void AlphaNetStringStruct::remove_all() {
-    remove_all_walk();
-}
