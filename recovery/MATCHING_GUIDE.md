@@ -4952,6 +4952,23 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
     has it (both arms merge after the pushes, the branch goes, the test
     stays) and the flag in its home: 319 -> 268 rows. An if/else of two
     identical calls keeps the home but not the merge (372).
+  - *A seed copied into a working local is one variable.*
+    BaseWin::draw_production 0x0040E360: `int columns = turn_cost;` after
+    the last use of `turn_cost`. The image keeps cost_factor's result in edi
+    from 0x40EB31 through the column search and homes it at [ebp-0x28]
+    (shared with the vehicle arm's `display`); one variable `columns`
+    assigned from cost_factor and used for the gross cost gives slot-map
+    difference 21 -> 8 and 163 -> 149 rows. `webscan.py` lists such copies
+    as `COPY REGCOPY ... handoff`; most are neutral, try each.
+  - *Read the member, not a local copy or a pointer alias.* BaseWin::init
+    0x0041E8D0, 90 -> 12 rows in three edits: `RECT *production =
+    &production_content_rect_;` let VC6 CSE `rect_height(production)`
+    where the image re-reads bottom (0x41ED79); after `r = member;` the
+    image forms `r.top = member.bottom + 3` from a member load and keeps the
+    copy's bottom store (0x41EEB6), where `r.top = r.bottom + 3` forwards
+    the copy; and one `rect_height(&rect6_)` among written-out siblings
+    loaded bottom first where the image loads top first (0x41FB8D). A
+    statement-order permutation (`perm.py`) then fixed the last block.
   Not every rank difference is structure. ProdPicker::draw_item 0x004927C0
   (id/color/veh_id ranked color > veh_id > id in the image, id > color >
   veh_id in ours): the image spills `item - first` and the row's y into
