@@ -679,12 +679,10 @@ int Video::decode_frame(int destination_index) {
     viewport_y_ = 0;
   } else {
     const int doubled = flags_ & 4;
-    int height = main_header_.dwHeight;
-    const int compared_height = doubled ? height * 2 : height;
-    const int output_height = output_buffer_.dib_.bmiHeader.biHeight;
-    if (viewport_y_ > -(compared_height + output_height)) {
+    if (viewport_y_ > -(int)((doubled ? main_header_.dwHeight * 2 : main_header_.dwHeight) + output_buffer_.dib_.bmiHeader.biHeight)) {
+      int height = main_header_.dwHeight;
       if (doubled) height *= 2;
-      viewport_y_ = -(output_height + height);
+      viewport_y_ = -(output_buffer_.dib_.bmiHeader.biHeight + height);
     }
   }
 
