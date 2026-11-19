@@ -2020,7 +2020,7 @@ int SocialWin::on_button_text_draw(GraphicWin *window, char *text, int button_id
  *          the faction's own base probes mark unavailable. The -2 hover (the
  *          faction-power rectangle) shows the faction's power column instead,
  *          and -1 draws the empty frame only.
-// ORIGINAL: 0x004B1080 ?draw_mouseover@SocialWin@@QAEXXZ 0x004B1080-0x004B178F FILE
+// ORIGINAL: 0x004B1080 ?draw_mouseover@SocialWin@@QAEXXZ 0x004B1080-0x004B178F FILE BYTE_EXACT
 // TRIED: MISMATCH #9 'call' vs 'mov' (framed build, sim 0.57). Diplomacy mood
 //        tooltip: two nested 11-slot table walks (skipping index 3, the "self"
 //        faction) with two neg/border-guard special cases.
