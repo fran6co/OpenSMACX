@@ -729,7 +729,7 @@ BOOL __cdecl read_basic_rules() {
     return false;
 }
 
-// RECOVERY_LITERAL: v1 0x0068F2FC 0x0068F30A $SG51426 0x00585E30
+// RECOVERY_LITERAL: v1 0x0068F2FC 0x0068F30A $SG51439 0x00585E30
 /*
 Purpose: Parse the #TECHNOLOGY section inside the alpha(x).txt with a duplicate entry check.
 // ORIGINAL: 0x00585E30 ?read_tech@@YAHXZ 0x00585E30-0x00585FDB BYTE_EXACT
