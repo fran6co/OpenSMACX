@@ -396,14 +396,18 @@ int Video::decode_frame(int destination_index) {
       if ((flags_ & 4) != 0) {
         height_out = VideoViewportCodec.height * 2;
         width = VideoViewportCodec.width * 2;
+          set_rectangle_dimensions(&source_rect_,
+                                   viewport_x_ + VideoViewportCodec.origin_x,
+                                   VideoViewportCodec.origin_y + viewport_y_,
+                                   width, height_out);
       } else {
         height_out = VideoViewportCodec.height;
         width = VideoViewportCodec.width;
-      }
-      set_rectangle_dimensions(&source_rect_,
-                               viewport_x_ + VideoViewportCodec.origin_x,
-                               VideoViewportCodec.origin_y + viewport_y_,
-                               width, height_out);
+          set_rectangle_dimensions(&source_rect_,
+                                   viewport_x_ + VideoViewportCodec.origin_x,
+                                   VideoViewportCodec.origin_y + viewport_y_,
+                                   width, height_out);
+          }
       UnionRect(&VideoDirtyRect, &previous, &source_rect_);
     }
     frame_queue_.discard_head();
