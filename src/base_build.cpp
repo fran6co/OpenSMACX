@@ -495,7 +495,7 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
             }
             if (Bases[base_id].queue_production_id[0] == -FAC_ASCENT_TO_TRANSCENDENCE) {
                 l_68++;
-                if (is_human(owner)) {
+                if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << owner)) {
                     l_154++;
                 }
             }
@@ -505,7 +505,7 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
             if (Bases[base_id].queue_production_id[0] <= -70) {
                 a_694[-Bases[base_id].queue_production_id[0] - 70] |= 1 << owner;
             }
-            if (is_human(owner) && Bases[base_id].faction_id_former == l_8
+            if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << owner)) && Bases[base_id].faction_id_former == l_8
                 && region_at(Bases[base_id].x, Bases[base_id].y) == l_10
                 && !(PlayersData[l_8].diplo_treaties[owner] & 1)) {
                 l_a0++;
@@ -1343,7 +1343,7 @@ L_4fa03d:
         for (i = 1; i < 8; i++) {
             if (i != l_8
                 && (!has_treaty(l_8, i, 1)
-                    || is_human(i))) {
+                    || (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << i)))) {
                 if (l_54 <= PlayersData[i].satellites_[3]) {
                     l_54 = PlayersData[i].satellites_[3];
                 }
@@ -1787,7 +1787,7 @@ L_4fbd3d:
             }
             l_b4++;
             if (has_treaty(l_8, i, 7)) {
-                if (!is_human(i) && !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)) {
+                if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << i)) && !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)) {
                     continue;
                 }
                 if (!l_54) {
@@ -1806,7 +1806,7 @@ L_4fbd3d:
                 }
             }
             target = i;
-            if (is_human(i) && !IsMultiplayerNet) {
+            if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << i)) && !IsMultiplayerNet) {
                 break;
             }
         }
