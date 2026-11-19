@@ -5434,10 +5434,16 @@ L_56ef2f:
                 if (other_id >= 0) {
                     dist = map_range(x, y, tx, ty);
                     if (Vehs[other_id].faction_id == faction_id) {
-                        if (VehPrototypes[Vehs[other_id].proto_id].plan != PLAN_NAVAL_TRANSPORT
-                            || veh_moves(other_id)
-                            || stack_check(other_id, 2, 6, -1, -1)
-                                > (Vehs[other_id].x == x && Vehs[other_id].y == y)) {
+                        // Three statements: the last one's `continue` is a direct jg
+                        // to the latch and the arm ends in a jmp (image 0x56F190).
+                        if (VehPrototypes[Vehs[other_id].proto_id].plan != PLAN_NAVAL_TRANSPORT) {
+                            continue;
+                        }
+                        if (veh_moves(other_id)) {
+                            continue;
+                        }
+                        if (stack_check(other_id, 2, 6, -1, -1)
+                            > (Vehs[other_id].x == x && Vehs[other_id].y == y)) {
                             continue;
                         }
                     } else if (!(PlayersData[faction_id].diplo_treaties[Vehs[other_id].faction_id]
@@ -7393,12 +7399,15 @@ L_574a88:
                             && faction_bit == map_loc(PlayersData[faction_id].x_target,
                                                       PlayersData[faction_id].y_target)->region) {
                             own_ground = 1;
+                            // Separate statements, as at 0x56F190 (image 0x57518D jge latch | jmp).
                             if (!(PlayersData[faction_id].flags & 0x800)
                                 || Bases[base_id].x != PlayersData[faction_id].x_target
-                                || Bases[base_id].y != PlayersData[faction_id].y_target
-                                || stack_check(veh_at(Bases[base_id].x, Bases[base_id].y), 2, 7, -1, -1)
-                                    >= ((k && (Vehs[veh_id].waypoint_x[0] != Bases[base_id].x
-                                               || Vehs[veh_id].waypoint_y[0] != Bases[base_id].y)) ? 1 : 2)) {
+                                || Bases[base_id].y != PlayersData[faction_id].y_target) {
+                                continue;
+                            }
+                            if (stack_check(veh_at(Bases[base_id].x, Bases[base_id].y), 2, 7, -1, -1)
+                                >= ((k && (Vehs[veh_id].waypoint_x[0] != Bases[base_id].x
+                                           || Vehs[veh_id].waypoint_y[0] != Bases[base_id].y)) ? 1 : 2)) {
                                 continue;
                             }
                         } else if (!Bases[base_id].unk_1
