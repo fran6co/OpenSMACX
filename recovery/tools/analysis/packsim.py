@@ -5,7 +5,8 @@ probes in analysis/probes/tempslot/).
 
 Model (measured on probes): every memory-resident symbol (a named local, a front-end temporary `$T..`, or an
 optimizer temporary = one web of an anonymous frame operand) has a RAW reference count (frame accesses, no
-loop weighting). Symbols are taken in descending count; each joins the MOST RECENTLY CREATED slot none of
+loop weighting; probe g15: a ?: result spilled per arm and a spilled pointer IV count exactly their frame
+accesses, not less). Symbols are taken in descending count; each joins the MOST RECENTLY CREATED slot none of
 whose occupants interferes with it, else opens a new slot; slots get frame offsets in creation order (-4
 first). Interference is liveness of the HOME (stores to loads of the slot through the flow graph): a value
 cached in a register over a stretch leaves its home dead there.

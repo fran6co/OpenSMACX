@@ -5700,6 +5700,26 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
     needs the outer value temp created first, arms 2/3 the inner one); a
     probe should test whether a ?: join result and an IV pointer count as
     lighter than their frame accesses.
+    Probe `tempslot/g15` (2026-11-20): they do not. An inline ?: result spilled
+    on each arm (two arm stores + one reload) packs as 3, a loop's spilled
+    struct-pointer IV (init, two reloads, step store) as 4: both exactly their
+    frame accesses. The probe never produced boom's single store after the
+    join (0x504F97), so that form's count is still open; if it counts its
+    pre-merge arm stores it would pack EARLIER, not later, than a count-2
+    unit.
+  - **Equal counts, one side must win: BaseWin::init 0x0041E8D0** (par-2
+    2026-11-20, open). Image -0x10 = sprite(24) + window_height(3), -0x14 =
+    load_inverts' dest pointer(4) + the six sprite-loop temporaries(3) + yy.
+    The image needs window_height packed before dest (then dest, live inside
+    window_height's range, opens -0x14 and yy follows it); ours packs dest(4)
+    first. window_height must count 5 (4 ties and dest's last reference,
+    L7163, comes first). Measured not to move it: dest as an index or IV
+    temporary (four loop spellings), `= 0`/`= -1` initialisers (dead stores
+    drop before counting), clamp `wh = avail; if (wh > 398) wh = 398;` (4,
+    still a tie lost), ?: and raw-expression arms. The image has 3 frame
+    accesses (0x398 store, the tail-merged eax store 0x41EE92, one read
+    0x41F4C7 shared by `top` and the init argument), so the missing count is
+    in references the final code merges away.
   - **One variable for two exclusive-arm roles packs as one heavy unit**
     (par-2 2026-11-20, Console::go_to 0x004D61A0, verdict for par-4).
     Image -0x18 holds base_id (order == -1 arm, 3 accesses), max_range

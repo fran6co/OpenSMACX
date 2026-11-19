@@ -15,5 +15,6 @@ named symbols (named-access counts) and `~N` anonymous accesses (`-N+[ebp]`: opt
 | g12 | are two loops' temporaries one unit when they share a counter | no: one unit per web |
 | g13 | is a maybe-uninitialised home live where none of its stores reaches | no: live AND defined; exclusive-arm variables share a slot |
 | g14 | which of two equal-count units is created first | the one whose last reference comes first (not declaration, scope, address-taking or first use) |
+| g15 | do a spilled ?: result and a spilled pointer IV count lighter than their frame accesses (boom) | no: ?: per-arm spill ~3 packs as 3, struct-pointer IV ~4 as 4; a single join store was not reproduced |
 
 Run: `FE_PFX_BASE=N uv run python g3.py [FUNC]` (FUNC prints its listing).
