@@ -678,10 +678,10 @@ int Video::decode_frame(int destination_index) {
   if (viewport_y_ < 0) {
     viewport_y_ = 0;
   } else {
-    const int doubled = flags_ & 4;
-    if (viewport_y_ > -(int)((doubled ? main_header_.dwHeight * 2 : main_header_.dwHeight) + output_buffer_.dib_.bmiHeader.biHeight)) {
+    const unsigned flags = flags_;
+    if (viewport_y_ > -(int)(((flags & 4) ? main_header_.dwHeight * 2 : main_header_.dwHeight) + output_buffer_.dib_.bmiHeader.biHeight)) {
       int height = main_header_.dwHeight;
-      if (doubled) height *= 2;
+      if (flags & 4) height *= 2;
       viewport_y_ = -(output_buffer_.dib_.bmiHeader.biHeight + height);
     }
   }
@@ -714,8 +714,9 @@ int Video::decode_frame(int destination_index) {
         x_offset *= 2;
         y_offset *= 2;
       }
-      int height = main_header_.dwHeight;
-      if ((flags_ & 4) != 0) height <<= 1;
+      int height;
+      if ((flags_ & 4) != 0) height = main_header_.dwHeight << 1;
+      else height = main_header_.dwHeight;
 
       // vfw.h's inline ICDecompressEx fills the ICDECOMPRESSEX block.
       if (ICDecompressEx(codec_, decompress_flags,
