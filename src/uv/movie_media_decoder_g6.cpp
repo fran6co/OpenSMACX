@@ -58,7 +58,7 @@ extern "C" int __cdecl sub_5d427c(unsigned short *samples, unsigned char *steps,
 // Original inline-assembly reader (VC6 never emits this neg/lea/shr form):
 // loads the DWORD that ends at p+2 and keeps its high word, i.e. the
 // little-endian 16-bit value at p. ECX is saved around the block.
-static __forceinline DWORD movie_packet_read16(const unsigned char *p) {
+static inline DWORD movie_packet_read16(const unsigned char *p) {
     __asm {
         push ecx
         mov eax, p
