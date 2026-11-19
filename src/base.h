@@ -744,7 +744,6 @@ int __cdecl garrison_check(int base_id);
 // ?get_rating@@YAHHH@Z - a faction's score weight from its difficulty level.
 int __cdecl get_rating(int faction_id, int arg2);
 int __cdecl defensive_check(int base_id);
-BOOL __cdecl is_port(int base_id, BOOL is_base_radius);
 int __cdecl vulnerable(int faction_id, int x, int y);
 BOOL __cdecl is_objective(int base_id);
 int __cdecl num_objectives(int faction_id, BOOL count_pact_factions);

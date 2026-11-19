@@ -518,19 +518,6 @@ __forceinline BOOL __cdecl redundant_inline(int facility_id, int faction_id) {
     return false;
 }
 
-// WORKAROUND(inline): dead branchy budget probe (folds to no code). With
-// base.h's one-level has_fac, facility_avail keeps the image's call sequence
-// (bitmask, has_project, nine bitmask, then has_project twice and has_fac
-// for ROBOTIC/GENEJACK) only with two of these ahead of the Aerospace test:
-// none or one expands the late SP_SPACE_ELEVATOR has_project, three call a
-// tenth has_fac. Flat one-if probes only grow the budget here.
-static int fa_probe_sink;
-static inline void fa_budget_probe(int x) {
-    if (x == 1) fa_probe_sink = 3;
-    if (x == 2) fa_probe_sink = 5;
-    if (x == 3) fa_probe_sink = 7;
-}
-
 /*
 Purpose: Determine if the provided faction can build a specific facility or Secret Project in the
          specified base. Checks are included to prevent SMACX specific facilities from being built
@@ -612,7 +599,7 @@ BOOL __cdecl facility_avail(int facility_id, int faction_id, int base_id,
         if (redundant_inline(facility_id, faction_id)) {
             return false; // has SP that counts as facility
         }
-        if (facility_id == FAC_NAVAL_YARD && !is_coast(Bases[base_id].x, Bases[base_id].y, false)) {
+        if (facility_id == FAC_NAVAL_YARD && !is_port(base_id, false)) {
             return false; // needs ocean
         }
         if (facility_id == FAC_AQUAFARM || facility_id == FAC_SUBSEA_TRUNKLINE
@@ -667,8 +654,6 @@ BOOL __cdecl facility_avail(int facility_id, int faction_id, int base_id,
             && !has_fac(FAC_HAB_COMPLEX, base_id, queue_count)) {
             return false; // must have Complex
         }
-        // WORKAROUND(inline): see fa_budget_probe
-        fa_budget_probe(9);
         if (((facility_id >= FAC_SKY_HYDRO_LAB && facility_id < FAC_STOCKPILE_ENERGY)
             || facility_id == FAC_GEOSYNC_SURVEY_POD) // must have Aerospace Complex
             && !has_fac(FAC_AEROSPACE_COMPLEX, base_id, queue_count)
@@ -734,9 +719,9 @@ BOOL __cdecl veh_avail(int proto_id, int faction_id, int base_id) {
         && GameDataStateStorage.fields_.game_rules_ & RULES_SCN_NO_COLONY_PODS) {
         return false;
     }
-    // is_port(), hand-inlined - the image calls is_coast() directly here, not is_port().
+    // is_port() is a header inline (map.h): the image expands it to is_coast() here.
     if (base_id >= 0 && get_proto_triad(proto_id) == TRIAD_SEA
-        && !is_coast(Bases[base_id].x, Bases[base_id].y, false)) {
+        && !is_port(base_id, false)) {
         return false;
     }
     // The image splits this whole SMAC-mode block into eighteen separate early

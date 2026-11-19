@@ -791,6 +791,16 @@ MEASURED inline int __cdecl base_who(int x, int y) {
     return owner;
 }
 
+// is_port is a header inline like base_who and anything_at: its out-of-line
+// copy 0x00579A00 closes the run of header-inline copies in enemy_move's unit
+// (x_dist, base_who, anything_at, veh_top, veh_moves, proto_power), the image
+// calls it only from the budget-exhausted giants (probe 4, enemy_move 2), and
+// everything else (enemy_strategy, facility_avail, veh_avail, pact_withdraw,
+// time_warp, base_build) expands `is_coast(Bases[b].x, Bases[b].y, r)`.
+MEASURED inline BOOL __cdecl is_port(int base_id, BOOL is_base_radius) {   // 00579A00
+    return is_coast(Bases[base_id].x, Bases[base_id].y, is_base_radius);
+}
+
 // MEASURED inline, as base_who: world_alt_set and action_fungal inline it.
 MEASURED inline int __cdecl anything_at(int x, int y) {
     Map *tile = map_loc(x, y);

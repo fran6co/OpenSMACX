@@ -594,7 +594,7 @@ void __cdecl time_warp() {
                         veh_id = veh_init(BSC_FORMERS, faction_id, best_x, best_y);
                 }
                 if (region_at(best_x, best_y) != start_region
-                    && is_coast(Bases[new_base_id].x, Bases[new_base_id].y, FALSE)
+                    && is_port(new_base_id, FALSE)
                     && !coast_placed) {
                     for (int dir = 0; dir < 8; ++dir) {
                         int sx = wrap_map_x(VehMoveDeltaX[dir] + best_x);

@@ -9166,6 +9166,5 @@ Purpose: Determine if base is a port.
 Return Value: Is base a port? true/false
 Status: Complete
 */
-BOOL __cdecl is_port(int base_id, BOOL is_base_radius) {
-    return is_coast(Bases[base_id].x, Bases[base_id].y, is_base_radius);
-}
+// body src/map.h
+// BODY IN map.h, as `MEASURED inline`.

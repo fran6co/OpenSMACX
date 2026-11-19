@@ -999,7 +999,7 @@ L_4fa03d:
                    < PlayersData[l_8].region_total_bases[l_10] * 2 + 2) {
             goto L_4fd8f6;
         }
-        if (!is_coast(Bases[BaseIDCurrentSelected].x, Bases[BaseIDCurrentSelected].y, 0)) {
+        if (!is_port(BaseIDCurrentSelected, 0)) {
             goto L_4fd8f6;
         }
         int coast = base_coast(BaseIDCurrentSelected);

@@ -3968,13 +3968,10 @@ int __cdecl pact_withdraw(int faction_id, int faction_id_with) {
             if (Bases[base_id].faction_id_current != faction_id) continue;
 
             if (get_proto_triad(Vehs[vehicle_id].proto_id) == TRIAD_SEA) {
-                // Preserve the original's coordinate-as-index bug exactly:
-                // native uses base.x as a Bases[] index and base.y as the
-                // is_coast boolean, rather than using base_id / TRUE. The
-                // two named locals reproduce the image's load order.
-                const int probe = Bases[base_id].x;
-                const int probe_flag = Bases[base_id].y;
-                if (!is_coast(Bases[probe].x, Bases[probe].y, probe_flag)) continue;
+                // Original bug, preserved: is_port (a header inline) is
+                // passed the base's coordinates, so base.x is used as a
+                // Bases[] index and base.y as the is_coast radius flag.
+                if (!is_port(Bases[base_id].x, Bases[base_id].y)) continue;
             }
 
             if (get_proto_triad(Vehs[vehicle_id].proto_id) == TRIAD_SEA) {
