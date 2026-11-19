@@ -1378,7 +1378,7 @@ void __cdecl enemy_strategy(int faction_id) {
                     continue;
                 }
                 int proto_id = Vehs[veh_id].proto_id;
-                int goal_triad = Chassis[VehPrototypes[proto_id].chassis_id].triad;
+                uint8_t goal_triad = Chassis[VehPrototypes[proto_id].chassis_id].triad;
                 if (goal_triad == TRIAD_AIR) {
                     continue;
                 }
