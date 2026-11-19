@@ -1,6 +1,6 @@
 # eh.py unit addr [--src ALT] [--pfx N]: FuncInfo unwind toState tuples image vs ours, and per-site depth runs
 import sys,os,struct,re,argparse
-R='/home/fran6co/code/OpenSMACX/.opensmacx/worktrees/par-3'
+R='.'
 sys.path.insert(0,R+'/recovery/tools'); import fe
 ap=argparse.ArgumentParser(); ap.add_argument('unit'); ap.add_argument('addr'); ap.add_argument('--src'); ap.add_argument('--pfx',default='14'); a=ap.parse_args()
 text=open(a.src or R+'/'+a.unit,encoding='latin-1').read()

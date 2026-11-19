@@ -6701,12 +6701,12 @@ void BaseWin::garrison_click(int vehicle_id, int x, int y, int right) {
     // Cases in the image's block order (jump table 0x40BFE4).
     switch (action) {
     case 1:
-        // RECOVERY_LITERAL: v1 0x006828DC 0x006828E1 $SG65267 0x0040B140
+        // RECOVERY_LITERAL: v1 0x006828DC 0x006828E1 $SG65268 0x0040B140
         if (veh_jail(vehicle_id)) X_pop("JAIL", 0);
         else { Vehs[vehicle_id].order = 0; synch_veh(vehicle_id); NetDaemonNet.await_synch(); }
         break;
     case 2:
-        // RECOVERY_LITERAL: v1 0x006828E4 0x006828E9 $SG65271 0x0040B140
+        // RECOVERY_LITERAL: v1 0x006828E4 0x006828E9 $SG65272 0x0040B140
         if (veh_jail(vehicle_id)) { X_pop("JAIL", 0); break; }
         Vehs[vehicle_id].order = 0;
         Vehs[vehicle_id].state &= 0xFCFFBDFFu;
@@ -6734,12 +6734,12 @@ void BaseWin::garrison_click(int vehicle_id, int x, int y, int right) {
         zoom(Vehs[vehicle_id].home_base_id, 0);
         return;
     case 10:
-        // RECOVERY_LITERAL: v1 0x006828EC 0x006828F1 $SG65282 0x0040B140
+        // RECOVERY_LITERAL: v1 0x006828EC 0x006828F1 $SG65283 0x0040B140
         if (veh_jail(vehicle_id)) X_pop("JAIL", 0);
         else { sleep(vehicle_id); synch_veh(vehicle_id); NetDaemonNet.await_synch(); }
         break;
     case 11:
-        // RECOVERY_LITERAL: v1 0x006828F4 0x006828F9 $SG65286 0x0040B140
+        // RECOVERY_LITERAL: v1 0x006828F4 0x006828F9 $SG65287 0x0040B140
         if (veh_jail(vehicle_id)) X_pop("JAIL", 0);
         else { Vehs[vehicle_id].order = 2; synch_veh(vehicle_id); NetDaemonNet.await_synch(); }
         break;
@@ -6750,7 +6750,7 @@ void BaseWin::garrison_click(int vehicle_id, int x, int y, int right) {
         else if (ReportWinGlobal.is_visible()) ReportWinGlobal.redraw();
         return;
     case 30:
-        // RECOVERY_LITERAL: v1 0x006828FC 0x00682901 $SG65294 0x0040B140
+        // RECOVERY_LITERAL: v1 0x006828FC 0x00682901 $SG65295 0x0040B140
         if (veh_jail(vehicle_id)) { X_pop("JAIL", 0); break; }
         Vehs[vehicle_id].state &= 0xFCFFBDFFu;
         Vehs[vehicle_id].order = 24;
