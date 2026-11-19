@@ -475,9 +475,15 @@ int MainInterface::init(int) {
     // Two pushes merged into one call (0x0045A021..035): an if/else, not
     // a selected pointer like the console_A load above.
     if (WinScreenWidth == 800)
-        assets.load_pcx("console_x_A.pcx", 0, 10, 236);
+    {
+            assets.load_pcx("console_x_A.pcx", 0, 10, 236);
+        x = 1;
+    }
     else
-        assets.load_pcx("console_x2_A.pcx", 0, 10, 236);
+    {
+            assets.load_pcx("console_x2_A.pcx", 0, 10, 236);
+        x = 1;
+    }
     // The sprite sheets are walked with a hand-stepped x/y cursor beside the
     // loop counters: the image keeps a down-counter per loop and a separate
     // stepped coordinate, sets both coordinates before the outer loop and
@@ -485,7 +491,6 @@ int MainInterface::init(int) {
     // 0x0045A09E/A1 here; 0x0045A686..6F6, 0x0045A78E..7FE below). A
     // coordinate computed from the counter (1 + i * 52) or stepped in the
     // for header lets VC6 drop the counter and test the coordinate.
-    x = 1;
     y = 1;
     for (i = 0; i < 2; i++) {
         for (j = 0; j < 5; j++) {
