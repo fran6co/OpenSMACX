@@ -2896,6 +2896,16 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   map_range (time_warp 0x005AEDE0), rect_width for a re-read edge (DesignWin::init 0x0043C270). When
   several unrelated window sites give the same small gain (BasePop::exec: eleven nv() sites, 303 -> 258..266;
   NetDaemon::synch, 432 -> 430) it is a priority shift, not the cause (S7 caution above).
+  Second round (same day): the rest of the 148 divergent functions swept at their windows gave one more
+  real hit (popb 0x0048C650, a label_get written out, 23 -> 9); the cursor is per function (probe: one to
+  three extra loads in the preceding function leave the next one's first register unchanged), so a
+  divergence at entry is a named-value or callee-saved choice, not a neighbour. `rotscan.py` now also
+  reports the first callee-saved occupant divergence; 70 of the 199 phase-equal functions differ there
+  first. The S7 single-site rules aimed at those lines (57 functions, `--near` = line-15..line+1) found
+  nothing that fixes the site: the few row drops were priority shifts. Callee-saved and register/slot
+  divergences need the rule-4 levers of 2.7 (reference counts and loop depth of the competing roles:
+  regprio.py, candset.py), and most of them start with a frame-slot difference (slide_hide, reset_territory,
+  draw_ops), i.e. rung 5 first.
   Callee-saved cases are not rotation: ReportWin::labs_line keeps `half` in a frame slot [ebp-8] and the
   host's Buffer view in ebx (`lea ebx,[eax+0x444]` once, the null-checked `neg/sbb/and eax,ebx` at every
   Sprite::draw), ours gives ebx to half and spills the view to [ebp+0x14]: a priority question for 2.7.
