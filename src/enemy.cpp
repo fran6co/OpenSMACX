@@ -4442,7 +4442,7 @@ L_56bf5f:
     if (Vehs[veh_id].order == ORDER_MOVE_TO) {
         goto L_578f46;
     }
-    if (((&map_tiles()[(x >> 1) + y * MapLongitude])->bit & BIT_FUNGUS) && (map_loc(x, y)->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF) {
+    if ((bit_at(x, y) & BIT_FUNGUS) && (map_loc(x, y)->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF) {
         Vehs[veh_id].order = ORDER_REMOVE_FUNGUS;
         goto L_578f46;
     }
