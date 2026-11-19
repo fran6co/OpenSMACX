@@ -8097,7 +8097,6 @@ char *communicate_patience_ptr;
 
 int communicate_pair_treaties;
 int communicate_plea_reserves;
-int communicate_plea_amount;
 char communicate_demand_suffix[24];
 char communicate_demand_number[80];
 int communicate_demand_variant;
@@ -8386,14 +8385,14 @@ if (PlayersData[DiploScratchF7E8].mil_strength_1 >=
         PlayersData[faction_id_with].mil_strength_1 * 2 &&
     PlayersData[faction_id_with].energy_reserves >= 10) {
 communicate_plea_reserves = PlayersData[faction_id_with].energy_reserves;
-communicate_plea_amount = communicate_round_down_multiple(communicate_plea_reserves / 2, 25);
-if (communicate_plea_amount < 25) {
-    communicate_plea_amount = communicate_plea_reserves;
+communicate_stack_c = communicate_round_down_multiple(communicate_plea_reserves / 2, 25);
+if (communicate_stack_c < 25) {
+    communicate_stack_c = communicate_plea_reserves;
     if (communicate_plea_reserves >= 25) {
-        communicate_plea_amount = 25;
+        communicate_stack_c = 25;
     }
 }
-parse_num(0, communicate_plea_amount);
+parse_num(0, communicate_stack_c);
 parse_says(0, get_title(DiploScratchF7E8), -1, -1);
 parse_says(1, get_name(DiploScratchF7E8), -1, -1);
 parse_says(2, get_noun(DiploScratchF7E8), -1, -1);
@@ -8421,7 +8420,7 @@ if (DiploScratchF800 >= 0) {
     net_tech(faction_id, DiploScratchF800, faction_id_with, 0);
     DiploScratchF800 = -1;
 }
-net_energy(faction_id_with, -communicate_plea_amount, faction_id, communicate_plea_amount, 1);
+net_energy(faction_id_with, -communicate_stack_c, faction_id, communicate_stack_c, 1);
 communicate_stack_14 = 1;
 diplo_unlock();
 DiploScratchFA8C = DiploScratchF7E8;
