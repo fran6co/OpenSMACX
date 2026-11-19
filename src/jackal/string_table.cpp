@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
+
 // ORIGINAL: 0x006168A0 _$E21 0x006168A0-0x006168B6 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x6826b0 selects initializer0x6168a0..0x6168b6, registering exit0x6168c0..0x6168ca. Root independent complete decode confirms exclusive RET/JMP bounds; original/source-owned storage is0x9b90d8 bound to?StringTable@@3VStrings@@A.", "Original startup instruction evidence: [[\"0x6168a0\", \"mov\", \"ecx, 0x9b90d8\"], [\"0x6168a5\", \"call\", \"0x6168d0\"], [\"0x6168aa\", \"push\", \"0x6168c0\"], [\"0x6168af\", \"call\", \"0x645398\"], [\"0x6168b4\", \"pop\", \"ecx\"], [\"0x6168b5\", \"ret\", \"\"]]. Original exit instruction evidence: [[\"0x6168c0\", \"mov\", \"ecx, 0x9b90d8\"], [\"0x6168c5\", \"jmp\", \"0x6169c0\"]]. Preserve constructor arguments, array counts/strides, registration and reverse destruction without authored callback stand-ins.", "Fresh complete build-iveupb5l physical src/strings.cpp COFF selects _$E21 via .CRT$XCU, registering _$E19. Startup relocation targets: [\"?StringTable@@3VStrings@@A\", \"??0Strings@@QAE@XZ\", \"_$E19\", \"_atexit\"]; exit targets: [\"?StringTable@@3VStrings@@A\", \"??1Strings@@QAE@XZ\"]. Actual linked helper occurs once at CRT slot0x63f890; selected same-owner order agrees with the pinned order.", "BaseWin/DesignWin definitions now precede their Wave globals as pinned. Existing DesignWin Wave mappings retain original names/spans and current helper overrides after fresh emission proof. Scalar constructor effects and array construction/cleanup belong to genuine source globals, classes and compiler-generated lifetime machinery.", "Current local labels are emission interpretations, not original debug names or recovered historical TU boundaries. Start bindings grant no allocation extent. Selected same-owner linked order is not full CRT/global-order, retained-selection, reference-target, dependency-provider, runtime or full-game acceptance. Guarded callbacks excluded; no claim grant or bug fix."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned ?StringTable@@3VStrings@@A; preserve complete original identity and remaining restoration/structure obligations."}
 // symbol    _$E12
@@ -25,6 +26,26 @@
 #include "buffer.h"
 #include "alpha.h"
 #include "text.h"
+
+// global
+
+
+// Historical compiler notes: these mappings were previously associated with
+// header-defined measured bodies, which caused each including TU to supply a
+// COMDAT copy. The real StringTable owner now provides ordinary out-of-line
+// definitions here; original claims and emission history remain recorded.
+
+/*
+// ORIGINAL: 0x006168D0 ??0Strings@@QAE@XZ 0x006168D0-0x006168E3 BYTE_EXACT
+// size      19 bytes
+// prototype void (__thiscall ??0Strings@@QAE@XZ)(Strings* this)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4560
+// notes     Staged hybrid export redirect calls the source-owned constructor
+*/
+Strings::Strings() : is_populated_(false) {}
 
 // The one game-wide string table, 0x009B90D8 in the image - REAL STORAGE,
 // not the `static Strings *const` binding that named terranx.exe's address
@@ -152,26 +173,6 @@ LPSTR Strings::get(LPSTR address) {
     }
     return static_cast<LPSTR>(get_base()); // return base
 }
-
-// global
-
-
-// Historical compiler notes: these mappings were previously associated with
-// header-defined measured bodies, which caused each including TU to supply a
-// COMDAT copy. The real StringTable owner now provides ordinary out-of-line
-// definitions here; original claims and emission history remain recorded.
-
-/*
-// ORIGINAL: 0x006168D0 ??0Strings@@QAE@XZ 0x006168D0-0x006168E3 BYTE_EXACT
-// size      19 bytes
-// prototype void (__thiscall ??0Strings@@QAE@XZ)(Strings* this)
-// callers   1   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005D4560
-// notes     Staged hybrid export redirect calls the source-owned constructor
-*/
-Strings::Strings() : is_populated_(false) {}
 
 /*
 // ORIGINAL: 0x006169C0 ??1Strings@@QAE@XZ 0x006169C0-0x006169C5 BYTE_EXACT
