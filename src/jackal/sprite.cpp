@@ -61,26 +61,21 @@ Purpose: Initialize an empty sprite and charge its own size to the sprite
 Status: Complete
 */
 Sprite::Sprite() {
-    // The legacy body interleaves the accounting update between the first two
-    // field stores and writes the type byte late, so the observable store
-    // order is pinned rather than left to the compiler.
-    // Use the actual pointer and signed member types. Volatile receiver
-    // access preserves the original store sequence without aliasing pointer
-    // storage through a dword lvalue. Target pointers are four bytes.
-    volatile Sprite *const receiver = this;
-    receiver->ppszFileName_ = 0;
+    // The image interleaves the accounting update between the first two
+    // field stores; plain member stores give that order.
+    ppszFileName_ = 0;
     SpriteMemoryUsed = static_cast<int>(
         static_cast<uint32_t>(SpriteMemoryUsed) + sizeof(Sprite));
-    receiver->pcBits_ = 0;
-    receiver->iSpriteWidth2_ = 0;
-    receiver->iSpriteWidth_ = 0;
-    receiver->iSpriteHeight_ = 0;
-    receiver->iWidth_ = 0;
-    receiver->iHeight_ = 0;
-    receiver->iLeftOffset_ = 0;
-    receiver->iTopOffset_ = 0;
-    receiver->cTransparentIndex_ = 9;
-    receiver->fObj1Exists_ = 0;
+    pcBits_ = 0;
+    iSpriteWidth2_ = 0;
+    iSpriteWidth_ = 0;
+    iSpriteHeight_ = 0;
+    iWidth_ = 0;
+    iHeight_ = 0;
+    iLeftOffset_ = 0;
+    iTopOffset_ = 0;
+    cTransparentIndex_ = 9;
+    fObj1Exists_ = 0;
 }
 
 
