@@ -4678,7 +4678,7 @@ void DesignWin::on_iface_left_click(int a1, int a2) {
     }
 }
 
-// ORIGINAL: 0x0043D290 ?on_iface_right_click@DesignWin@@QAEXHH@Z 0x0043D290-0x0043D327
+// ORIGINAL: 0x0043D290 ?on_iface_right_click@DesignWin@@QAEXHH@Z 0x0043D290-0x0043D327 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/designwin.cpp:DesignWin::on_iface_right_click", "src/designwin.h:spot1_", "src/alpha.h:Labels.strings_ptr", "Pinned 0x0043D2E4 calls Strings::get with Labels.strings_ptr[0x33A] before Win::client_to_screen at 0x0043D2F8; the returned LPSTR is retained through the conversion and passed with the point RECT to Win::set_bubble_text at 0x0043D319.", "The current typed owner uses existing Labels, StringTable and MainInterfaceGlobal/Win APIs; only statement order is corrected. The signed position guard, check inputs, coordinate conversion, point rectangle, and explicit hidden-base call remain unchanged."], "reason": "Resolve the prototype-stack hover target and show its localized label at the target's screen-space anchor. Preserve the pinned lookup-before-conversion order and pass the retained translated string to Win::set_bubble_text."}
 // symbol    ?on_iface_right_click@DesignWin@@UAEXHH@Z
 // size      151 bytes
