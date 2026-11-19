@@ -255,7 +255,7 @@ int Sprite::extract(Buffer *buffer, int transparent, int left, int top,
             buffer->free_data(1);
             return 7;
         }
-        stride = static_cast<int>(buffer->stride_);
+        stride = buffer->stride_;
         iTopOffset_ = 0;
         // TOP TRIM: walk down until a row carries a visible pixel.
         for (row_index = 0; row_index < height; row_index++) {

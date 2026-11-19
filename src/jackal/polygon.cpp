@@ -206,7 +206,7 @@ int __cdecl polygon(Buffer *buffer, Vert *vertices, int count, int color) {
         PolygonVertices = vertices;
         PolygonColor = color;
         PolygonVertexCount = count;
-        PolygonPitch = static_cast<int>(buffer->stride_);
+        PolygonPitch = buffer->stride_;
         // The image tests the clip rectangle's address before reading it.
         RECT *clip = &buffer->rect1_;
         if (clip != 0) {
@@ -380,7 +380,7 @@ int __cdecl polygon_gouraud(Buffer *buffer, Vert *vertices, int *lights) {
         __asm finit
         PolygonVertices = vertices;
         PolygonLights = lights;
-        PolygonPitch = static_cast<int>(buffer->stride_);
+        PolygonPitch = buffer->stride_;
         RECT *clip = &buffer->rect1_;
         if (clip != 0) {
             PolygonClipRight = clip->right;
@@ -617,7 +617,7 @@ int __cdecl polygon_dest(Buffer *buffer, Vert *vertices, int count, unsigned cha
         PolygonVertices = vertices;
         PolygonRemap = remap;
         PolygonVertexCount = count;
-        PolygonPitch = static_cast<int>(buffer->stride_);
+        PolygonPitch = buffer->stride_;
         // The image tests the clip rectangle's address before reading it.
         RECT *clip = &buffer->rect1_;
         if (clip != 0) {

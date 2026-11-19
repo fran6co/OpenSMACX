@@ -1471,7 +1471,7 @@ int Buffer::load_pcx(BYTE *data, DWORD size, Palette *palette,
         // A row ends short of the buffer's stride, so step over the gap and
         // give back whatever the run overshot by.
         if (filled >= row_bytes) {
-            pixels += static_cast<int>(stride_) - filled;
+            pixels += stride_ - filled;
             outstanding += filled - row_bytes;
             filled = 0;
         }
@@ -3007,7 +3007,7 @@ void Buffer::fill_line(int x1, int y1, int x2, int y2, char fill_colour) {
                 step_x = -1;
                 run = -run;
             }
-            const int stride = static_cast<int>(stride_);
+            const int stride = stride_;
             int row_step;
             if (height >= 0) {
                 row_step = stride;
@@ -3395,7 +3395,7 @@ void Buffer::vline(int x, int y1, int y2, int color) {
     if (pixel == nullptr) {
         return;
     }
-    const int pitch = static_cast<int>(stride_);
+    const int pitch = stride_;
     // Hand-written assembly: explicit edi save, mov ah/[edi],ah and `loop` column fill.
     __asm {
         push edi
@@ -5423,7 +5423,7 @@ void Buffer::dotted_vline(int x, int y1, int y2, int color) {
     if (dest == nullptr) {
         return;
     }
-    const int pitch = static_cast<int>(stride_);
+    const int pitch = stride_;
     // Hand-written assembly: explicit edi save, mov ah/[edi],ah and `loop` over every other row.
     __asm {
         push edi
@@ -7247,7 +7247,7 @@ inline int Buffer::change_color(int a1, int a2, int a3, int a4, int a5, int a6) 
         // image's frame.
         a3 = rect.right - rect.left;
         a4 = rect.bottom - rect.top;
-        const int remainder = static_cast<int>(stride_) - a3;
+        const int remainder = stride_ - a3;
         // Hand-written assembly: explicit edi/esi saves, mov ah/al color pair, nested dec/jne loops.
         __asm {
             push edi
@@ -7302,7 +7302,7 @@ int Buffer::map_colors(int left, int top, int right, int bottom,
     if (IntersectRect(&clipped, &clipped, &rect1_)) {
         const int width = clipped.right - clipped.left;
         const int rows = clipped.bottom - clipped.top;
-        const int row_gap = static_cast<int>(stride_) - width;
+        const int row_gap = stride_ - width;
         const int y = clipped.top;
         const int x = clipped.left;
         if (x < dib_.bmiHeader.biWidth && y < -dib_.bmiHeader.biHeight) {
@@ -7378,7 +7378,7 @@ int Buffer::map_colors(RECT *area, unsigned char *table) {
     if (IntersectRect(&clipped, &clipped, &rect1_)) {
         const int width = clipped.right - clipped.left;
         const int rows = clipped.bottom - clipped.top;
-        const int row_gap = static_cast<int>(stride_) - width;
+        const int row_gap = stride_ - width;
         const int y = clipped.top;
         const int x = clipped.left;
         if (x < dib_.bmiHeader.biWidth && y < -dib_.bmiHeader.biHeight) {
@@ -8167,7 +8167,7 @@ int Buffer::write_bmp(char *filename) {
     // original5DFAC7 reloads width for every row write.
     const int current_height = dib_.bmiHeader.biHeight;
     uint8_t *row = static_cast<uint8_t *>(locked_bits_)
-        - (current_height + 1) * static_cast<int>(stride_);
+        - (current_height + 1) * stride_;
     for (int i = 0; i < -current_height; i++) {
         fwrite(row, dib_.bmiHeader.biWidth, 1, file);
         row -= stride_;
@@ -8575,7 +8575,7 @@ void Buffer::vline(int x, int y1, int y2, int first_color, int second_color,
     if (bits == nullptr) {
         return;
     }
-    const int pitch = static_cast<int>(stride_);
+    const int pitch = stride_;
     const int remainder = phase % (pattern_on + pattern_off);
     if (remainder >= pattern_on) {
         phase = pattern_on - remainder + pattern_off;
@@ -9963,7 +9963,7 @@ int Buffer::gouraud(Vert *vertices, int *lights, int count, int mode,
         BufferGouraudVertices = vertices;
         BufferGouraudLights = lights;
         BufferGouraudMode = mode;
-        BufferGouraudPitch = static_cast<int>(stride_);
+        BufferGouraudPitch = stride_;
         BufferGouraudCount = count;
         BufferGouraudAlpha = alpha;
         RECT *clip = &rect1_;

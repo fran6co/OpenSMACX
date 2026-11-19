@@ -796,7 +796,7 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
  public:
   // 0x4A8. `Buffer::init` sets it to `(width + 3) & ~3`: the row pitch a
   // DIB needs, the width rounded up to a DWORD.
-  uint32_t stride_;
+  int stride_;
  private:
   /*
    * 0x4AC. HOW MANY OF `link_labels_` ARE IN USE, and it is ONE-BASED:
