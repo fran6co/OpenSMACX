@@ -270,7 +270,7 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
 - `analysis/foldk.py --from FEALL.json [--min 1] [--max N] [--only A,..] [--skip A,..] [--json F]` the inverse of
   sitek.py: every plain single-assignment literal local of a non-exact body (`int lo = 1;`, not const) replaced by
   its literal, one local per variant (six such locals tree-wide on 2026-11-19; every fold is worse).
-- `analysis/probes/blockorder/run.py [name ...]` block-order probe family (MATCHING_GUIDE 3.7, "Block order"): 70
+- `analysis/probes/blockorder/run.py [name ...]` block-order probe family (MATCHING_GUIDE 3.7, "Block order"): 79
   one-function variants (early returns, if/else arm order, goto joins, loop break/continue/return arms, if-chain
   against switch); prints each function's skeleton (branches, `ret`, `use(K)` markers); `SHOW=1` for the listing.
 - `analysis/labelsubsets.py <unit> <addr> [--max N] [--write]` all 2^n subsets of a function's label_get /

@@ -5357,7 +5357,7 @@ Prologue saves and return tails (par-5 2026-11-19; `analysis/prosave.py`,
     spellings of the statement, eight of the guard and four of the Ascent
     arm leave the 8 rows.
 Block order: which arm is in line, which is moved after the `ret` (par-2
-2026-11-19; `analysis/probes/blockorder/run.py`, 70 one-function probes whose
+2026-11-19; `analysis/probes/blockorder/run.py`, 79 one-function probes whose
 skeleton keeps only branches, `ret` and numbered `use(K)` markers)
 - **Source arm order is emitted order.** `if (c) A else B` emits A, then B
   (`je B`); negating the test and swapping the arms swaps the emitted blocks
