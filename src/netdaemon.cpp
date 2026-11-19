@@ -5160,9 +5160,8 @@ move_veh_ack:
         break;
 
     case 0x8240: {
-        const int second = packet->payload_14_;
         const int first = packet->payload_10_;
-        unsigned int open_mask = (1u << first) | (1u << second);
+        unsigned int open_mask = (1u << first) | (1u << packet->payload_14_);
         int newly_opened = (open_mask & field_1B7C_) == 0;
         if (newly_opened) {
             faction_masks_[who] = open_mask;
