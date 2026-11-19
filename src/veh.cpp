@@ -572,8 +572,8 @@ void __cdecl monolith(int veh_id) {
         }
         return;
     }
-    for (value = 1; value < MaxPlayerNum; value++) {
-        del_site(value, 0, x, y, 0);
+    for (int i = 1; i < MaxPlayerNum; i++) {
+        del_site(i, 0, x, y, 0);
     }
     if (is_human(faction)) {
         if (!IsMultiplayerNet && !(GameDataStateStorage.fields_.game_more_preferences_ & 0x800u)) {
