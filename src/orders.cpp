@@ -1215,7 +1215,7 @@ L_596052:
             if (faction == ConsoleGlobal.faction_id_
                     && (NetDaemonNet.action_mode_ & 1) != 0) {
                 parse_say(0, Ability[abil_index(ABL_AMPHIBIOUS)].name, -1, -1);
-                NetMsgPrimary.pop("AMPHIBBASE2", 5000, 0, NULL);
+                veh_battle_msg("AMPHIBBASE2", NULL);
             }
             goto done;
         }
