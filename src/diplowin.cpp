@@ -1807,7 +1807,7 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
                    static_cast<GraphicWin *>(&ConsoleGlobal));
   field_16C_ = 0x1A;
   fill(9);
-  static_cast<Buffer &>(*this).box_sprite(&rect_EDC_, &InterfaceBoxStyles[9]);
+  Buffer::box_sprite(&rect_EDC_, &InterfaceBoxStyles[9]);
 
   stringBox_.init(rect_F3C_.left + 3, rect_F3C_.top + 3,
                   rect_F3C_.right - rect_F3C_.left - 6,
@@ -1844,8 +1844,7 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
                   button_rects_[button_index].right - button_rects_[button_index].left,
                   button_rects_[button_index].bottom - button_rects_[button_index].top,
                   this, 0);
-      button.set_font(find_font(0x0E, 1), 0, 0, 0);
-      button.redraw();
+      button.set_font_redraw(find_font(0x0E, 1));
       button.set_text_color(0x41, -1, 1, 1);
       button.hide();
       // InterfaceBoxStyles begins at 0x0078D528 with 0x28-byte elements;
