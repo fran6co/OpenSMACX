@@ -1715,6 +1715,17 @@ Conclusions
   callers (missing inline helpers or wrappers, hand-copied helper bodies,
   teardown-site order, block layout).
 
+- **An inline helper's by-value argument is evaluated once and spilled**
+  (par-5 2026-11-19, base_build 0x004F81A0). A helper `f(int tech)` called
+  with `Chassis[c].preq_tech` stores the argument to a slot before the first
+  use inside the body and reloads that slot for the second use. When the
+  image re-reads the source expression at each use (0x4FC395, 0x4FC3CE,
+  0x4FC401: the preq_tech field loaded again for the second `has_tech`), the
+  original wrote the expression out at each use or used a macro. A
+  `const short &` parameter re-reads, but only where every caller's field has
+  that type; a helper that restores the call multiset with the wrong reload
+  shape is not the original (2858bb1c47 reverted fd3923ed2a).
+
 ## 3. Symptom → first thing to check
 
 ### 3.1 Calls and inlining
@@ -3215,6 +3226,17 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   find; read it as a hand-written `__asm` loop body (AGENTS.md asm policy)
   before trying more union forms.
 
+- **Slot order follows weighted priority** (par-5 2026-11-19, base_build
+  0x004F81A0). Memory-resident locals get their frame offsets in the order of
+  the same `n_b * 2^depth` reference weight that ranks register candidates
+  (2.7, rule 4), not in declaration order. A slot that sits at another offset
+  in ours than in the image therefore means one variable has too many or too
+  few weighted references: before reordering declarations, compare the image's
+  slot at each read with the variable our source reads there. base_build read
+  `l_34` (the supply-convoy counter that shares `w`'s slot by live-range
+  packing) where the image read `w` at 0x4FC356; reading `w` restored its
+  weight and the slot map (4821 -> 3657 rows).
+
 ### 3.4 Arithmetic idioms
 - **Signedness of a field (movsx/movzx, jl/jb, idiv/div, sar/shr) is its
   declaration, not a cast.** Run `analysis/typescan.py` (about 2 min): it lists
@@ -3700,6 +3722,15 @@ Constant registers (measured with standalone probes, 2026-11-18)
   `return 0` at the end, or a result variable), do not suspect a different
   compiler or flags (uV study, par-5: the uV functions are VC6, built with
   the unit's FE_OPT/FE_COMPILER options).
+
+- **Hoisted global loads before the loop init and again at a `jge`-exit
+  latch is a do-while** (par-5 2026-11-19, base_build 0x004F81A0, frontier
+  scan at 0x4F9E89/0x4F9FCB). The image loads the loop-invariant globals once
+  ahead of the counter stores and again at the latch, which exits with `jge`
+  and jumps back past the loads. A `for` whose first test is constant-true
+  keeps the loads at the top of the body and loops with `jl`;
+  `do { ... } while (++k < N);` gives the image's preheader/latch layout
+  (3660 -> 3624 rows).
 
 ## 4. Measured and neutral (do not retry without new evidence)
 
