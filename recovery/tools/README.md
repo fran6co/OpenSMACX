@@ -103,6 +103,14 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
 - `analysis/unitexact.py <unit.cpp> [ALT.cpp ...]` fe rows of every marker of a unit for the unit and each
   whole-file variant side by side; prints the exact count per column and only the functions that moved (what a
   variant breaks elsewhere in its unit).
+- `analysis/refscan.py [unit ...] [--addr A,..] [--claimed] [--unbound N] [--json F]` reference scan (50 s tree-wide
+  with FE_JOBS=5): fe masks relocations, so a body that names the wrong global, the wrong offset into an object
+  (`G[2]` for `G[3]`, another member) or the wrong literal reads exact by fe and SHAPE_EXACT by `recover measure`.
+  For every fe-exact marker it runs the package's strict `reference_mismatches` with the measurement's source-bound
+  targets and prints each wrong field with the symbol the image's address is bound to. `--unbound N` lists the
+  symbols left masked (no single binding: vtables, asm-defined data, imports), i.e. the scan's blind spot.
+  Operand order matters: VC6 loads the LATER operand of `a - b - c` / `a - b + c` first, so a swapped pair of
+  globals at one expression is a source operand-order fix (PrefWin::init 0x0048D840).
 - `analysis/tailscan.py <unit> <addr[,addr]>|--all [--src ALT.cpp] [--min K] [--agree]`, `tailscan.py --tree [unit ...]
   [--json F] [--hosts]` tail-merge / cross-jump scan (MATCHING_GUIDE 3.7 "Layout"; 50 s tree-wide with FE_JOBS=5). On each side it
   clusters the copies VC6 left unmerged: runs of K+ identical instructions (calls and globals by symbol, local jumps by
