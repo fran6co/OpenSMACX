@@ -7299,7 +7299,7 @@ void BaseWin::init() {
     strcat(StringTemp, label_get(0x194 / 4));
     CharUpperA(StringTemp);
     flatButtons_[0].init(StringTemp, 0, rect6_.left, rect6_.top,
-        rect6_.right - rect6_.left, rect_height(&rect6_), this, 0);
+        rect6_.right - rect6_.left, rect6_.bottom - rect6_.top, this, 0);
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x1F4 / 4));
     CharUpperA(StringTemp);
