@@ -8167,6 +8167,7 @@ production_again:
         if (proto_id < MaxVehProtoFactionNum
             && Weapon[VehPrototypes[proto_id].weapon_id].offense_rating < 0) {
             morale = breed_mod(BaseIDCurrentSelected, faction_id);
+            morale++;
         } else {
             morale = morale_mod(BaseIDCurrentSelected, faction_id,
                 Chassis[VehPrototypes[proto_id].chassis_id].triad);
@@ -8184,10 +8185,10 @@ production_again:
             if (new_proto) {
                 morale++;
             }
+            morale++;
         }
         // The image increments the morale variable itself at the join
         // (0x4F13A6) and clamps that register, not a separate temporary.
-        morale++;
         Vehs[veh_id].morale = (uint8_t)range(morale, MORALE_VERY_GREEN, MORALE_ELITE);
         Vehs[veh_id].state |= 0x2000;
         if (faction_id == ConsoleGlobal.faction_id_) {
