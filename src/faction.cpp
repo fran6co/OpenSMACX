@@ -2742,16 +2742,15 @@ void __cdecl diplomacy_check(int faction, int other, int update) {
             DiploScratchF808++;
             int strength = PlayersData[other].mil_strength_1;
             DiploScratchFA9C += (strength / 2 + PlayersData[ally].mil_strength_1) * 2 / (strength + 1);
-            uint32_t faction_treaty = PlayersData[faction].diplo_treaties[ally];
             if (FactionDiplomacyFlags[other] & 0x40) {
-                if ((faction_treaty & 0x18) == 8 && PlayersData[ally].mil_strength_1 > strength) {
+                if ((PlayersData[faction].diplo_treaties[ally] & 0x18) == 8 && PlayersData[ally].mil_strength_1 > strength) {
                     DiploScratchF7E8 = ally;
                 }
-            } else if (!(faction_treaty & 0x10)
-                && ((faction_treaty & 8) || has_treaty(faction, other, 1))
+            } else if (!(PlayersData[faction].diplo_treaties[ally] & 0x10)
+                && ((PlayersData[faction].diplo_treaties[ally] & 8) || has_treaty(faction, other, 1))
                 && (!has_treaty(ally, faction, 1) || !has_treaty(ally, faction, 0x2000000))) {
                 DiploScratchF7E8 = ally;
-            } else if (!DiploScratchF7E8 && update && !(faction_treaty & 8)
+            } else if (!DiploScratchF7E8 && update && !(PlayersData[faction].diplo_treaties[ally] & 8)
                 && !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & bit)) {
                 if (PlayersData[ally].mil_strength_1 > strength || !wants_to_attack(other, ally, 0) || DiploScratchFA98) {
                     DiploScratchF7D4 = ally;
