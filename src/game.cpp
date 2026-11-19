@@ -2038,11 +2038,11 @@ int __cdecl save_game(int mode) {
     }
 
     strcat(StringTemp, Players[ConsoleGlobal.faction_id_].name_leader);
-    strcat(StringTemp, BufferJoinSpace);
+    strcat_space(StringTemp);
     strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x2D0 / 4]));
-    strcat(StringTemp, BufferJoinSpace);
+    strcat_space(StringTemp);
     strcat(StringTemp, get_noun(ConsoleGlobal.faction_id_));
-    strcat(StringTemp, SocialWinCommaSpaceText);
+    strcat_comma(StringTemp);
     say_year(StringTemp);
 
     char name[256];
