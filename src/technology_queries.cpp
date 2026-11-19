@@ -39,6 +39,5 @@ Purpose: Get tech string for techID and store it into stringTemp buffer.
 Return Value: n/a
 Status: Complete
 */
-void __cdecl say_tech(int tech_id, BOOL category_lvl) {
-    say_tech(StringTemp, tech_id, category_lvl);
-}
+// body src/technology.h
+// BODY IN technology.h, as `MEASURED inline`.

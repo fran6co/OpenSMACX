@@ -172,9 +172,15 @@ extern RulesTechnology Technology[MaxTechnologyNum]; // 0x0094F358
 extern RulesMandate Mandate[MaxMandateNum]; // 0x0094B4A0
 extern char TechName[80];
 
-void __cdecl say_tech(int tech_id, BOOL category_lvl);
 BOOL __cdecl valid_tech_leap(int tech_id, int faction_id);
 void __cdecl say_tech(LPSTR output, int tech_id, BOOL category_lvl);
+// say_tech(int, BOOL) is a header inline: the image calls it out of line only
+// from communicate (13) and probe (1), and its copy sits among the other
+// header inlines communicate's object contributes (get_name, get_title,
+// has_agenda at 0x00559060-0x00559210); other units expand it.
+MEASURED inline void __cdecl say_tech(int tech_id, BOOL category_lvl) {   // 005591A0
+    say_tech(StringTemp, tech_id, category_lvl);
+}
 // `has_tech` and `tech_recurse` are DEFINED below, both as `MEASURED inline`,
 // so neither carries a bare declaration here - an `extern` one alongside an
 // inline definition is C2375, "redefinition; different linkage". Two agents
