@@ -232,18 +232,19 @@ int NetSessionPickerWin::initialize(Net *network, char *caption,
   Buffer::set_font(font, 0, 0, 0);
 
   // The button column: a third of the client width wide and 7/4 line
-  // heights tall, then shifted to the right margin and down.
+  // heights tall, then shifted to the right margin and down. The image's
+  // 0x14 frame is margin_x plus this RECT (left and right homed at +4/+0xC,
+  // 0x0063C064/0x0063C06A); the left is set after dx/dy and the shift is
+  // one offset_rect (with the four adds written out and left set first the
+  // RECT dissolved into registers and dead parameter slots: frame 8).
   RECT rect;
-  rect.left = tail_.client_width_;
   rect.top = tail_.client_height_;
   rect.right = tail_.client_width_ * 200 / 600 + tail_.client_width_;
   rect.bottom = font->pixel_height() * 7 / 4 + tail_.client_height_;
   const int dx = tail_.client_width_ - tail_.client_width_ * 10 / 600 - rect.right;
-  rect.left += dx;
-  rect.right += dx;
   const int dy = (tail_.client_height_ - rect.bottom - margin_y) * 3;
-  rect.top += dy;
-  rect.bottom += dy;
+  rect.left = tail_.client_width_;
+  offset_rect(&rect, dx, dy);
   int button_width = rect.right - rect.left;
   int button_height = rect.bottom - rect.top;
   result = action_button_.init(BasePopDefaultOkText, -1, rect.left, rect.top,
