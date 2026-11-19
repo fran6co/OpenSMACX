@@ -1388,7 +1388,7 @@ BOOL __cdecl read_units() {
 /*
 Purpose: Parse in all the game rules via alpha/x.txt. If the toggle param is set to true, parse the
          #UNITS & #FACTIONS sections. Otherwise, skip both. New game vs reload?
-// ORIGINAL: 0x005873C0 ?read_rules@@YAHH@Z 0x005873C0-0x0058829C
+// ORIGINAL: 0x005873C0 ?read_rules@@YAHH@Z 0x005873C0-0x0058829C BYTE_EXACT
 // LEVER: the #TERRAIN loop's `order_str` is copied into a 256-byte LOCAL
 //        buffer (`strcpy` at 0x005874AE into `[ebp-0x114]`) before being
 //        handed to `parse_string` - not held as a bare `LPSTR`. That

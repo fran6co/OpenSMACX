@@ -79,7 +79,7 @@ int Menu::init(Win *owner) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005FAEF0 ?add_menu@Menu@@QAEHHPADH@Z 0x005FAEF0-0x005FB0FA;0x00662D22-0x00662D37
+// ORIGINAL: 0x005FAEF0 ?add_menu@Menu@@QAEHHPADH@Z 0x005FAEF0-0x005FB0FA;0x00662D22-0x00662D37 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005faef0.cpp", "image:Menu6700B0/AlphaMenu66ED88/PullDown66FF40 constructor-selected primary tables; Buffer secondary subobject+444", "recovery/tasks/popup-font-configuration-owner-closure.json"], "reason": "Recover this complete operation in its genuine Menu/PullDown owner, using native constructor-selected virtual dispatch, real members and shared source-owned dependencies; preserve original identity, retained seed and historical restoration obligations."}
 // symbol    ?add_menu@Menu@@QAEHHPADH@Z
 // TRIED: SEH frame (push -1/push handler/fs:[0]) not reproduced by the plain operator-new + placement-new PullDown construction (same gap as the 0x00428DF0 precedent, which drops it the same way); not chased further. Field layout (entries_[idx].id/text/ mnemonic/flags/pull_down), the ampersand-mnemonic split, and the duplicate-id/table-full/alloc-fail return codes are a faithful transcription off the raw disassembly.
