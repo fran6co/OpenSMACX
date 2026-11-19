@@ -300,6 +300,40 @@ LPSTR __cdecl filefind_get(LPCSTR file_name) {
 }
 
 /*
+Purpose: Trim the leading spaces in-line from the start of the string.
+// ORIGINAL: 0x00600760 ?purge_leading@@YAXPAD@Z 0x00600760-0x00600773 BYTE_EXACT
+// symbol    ?purge_leading@@YAPADPAD@Z
+// size      19 bytes
+// prototype 
+// callers   2   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+// `MEASURED inline`, not a bare definition: the image expands this body in
+// place at its same-TU caller (purge_spaces 0x006007B0 folds the leading scan
+// straight into its own frame, 19 of 39 agreeing with the `call` spelling),
+// so the /Ob1 auto-inliner has to see the keyword - AND it still keeps the
+// standalone copy at 0x00600760, which the bare `inline` dropped entirely once
+// both of this unit's callers folded it and left the COMDAT unreferenced.
+// dllexport forces the emission; nothing about the body changes. Declared
+// MEASURED inline in general.h to match, which VC6 requires (C2375 otherwise).
+MEASURED inline LPSTR __cdecl purge_leading(LPSTR input) {
+    // IT DOES NOT COPY. The shipped body is eight instructions - advance past
+    // the leading spaces and `ret` - with no `strcpy` and nothing written
+    // back, so the skipped prefix survives in the caller's buffer and the
+    // advanced pointer is left in EAX. The catalogued name spells the return
+    // `X`, void; the `symbol` fact records what this tree emits instead.
+    LPSTR trim = input;
+    while (*trim == ' ') {
+        trim++;
+    }
+    return trim;
+}
+
+/*
 Purpose: Trim the trailing spaces in-line from the end of the string.
 // ORIGINAL: 0x00600780 ?purge_trailing@@YAXPAD@Z 0x00600780-0x006007AD BYTE_EXACT
 // body      src/jackal/filefind.cpp
@@ -333,40 +367,6 @@ MEASURED void __cdecl purge_trailing(LPSTR input) {
         }
         --end;
     }
-}
-
-/*
-Purpose: Trim the leading spaces in-line from the start of the string.
-// ORIGINAL: 0x00600760 ?purge_leading@@YAXPAD@Z 0x00600760-0x00600773 BYTE_EXACT
-// symbol    ?purge_leading@@YAPADPAD@Z
-// size      19 bytes
-// prototype 
-// callers   2   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-// `MEASURED inline`, not a bare definition: the image expands this body in
-// place at its same-TU caller (purge_spaces 0x006007B0 folds the leading scan
-// straight into its own frame, 19 of 39 agreeing with the `call` spelling),
-// so the /Ob1 auto-inliner has to see the keyword - AND it still keeps the
-// standalone copy at 0x00600760, which the bare `inline` dropped entirely once
-// both of this unit's callers folded it and left the COMDAT unreferenced.
-// dllexport forces the emission; nothing about the body changes. Declared
-// MEASURED inline in general.h to match, which VC6 requires (C2375 otherwise).
-MEASURED inline LPSTR __cdecl purge_leading(LPSTR input) {
-    // IT DOES NOT COPY. The shipped body is eight instructions - advance past
-    // the leading spaces and `ret` - with no `strcpy` and nothing written
-    // back, so the skipped prefix survives in the caller's buffer and the
-    // advanced pointer is left in EAX. The catalogued name spells the return
-    // `X`, void; the `symbol` fact records what this tree emits instead.
-    LPSTR trim = input;
-    while (*trim == ' ') {
-        trim++;
-    }
-    return trim;
 }
 
 /*
