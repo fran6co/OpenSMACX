@@ -5857,7 +5857,7 @@ again:
 // WORKAROUND(inline): dead /Ob2 budget probe for base_editor_proj (folds
 // away). The image's first cancel return calls ~Scroll and ~BasePop out of
 // line (0x0041BD5D, 0x0041BD6F) while the second expands ~BasePop fully;
-// twelve one-test expansions after the first return reproduce both (EH map
+// six one-test expansions after the first return reproduce both (EH map
 // 1,2,7,9,7,11 against the image's 1,2,7,9,7,9: the closing teardown still
 // expands ??_DDialogs and both ??_DStringList, 0x00406AF0/0x00406820, at every
 // probe count and placement tried). The original's spend is not identified.
@@ -5900,7 +5900,6 @@ void BaseWin::base_editor_proj() {
     const int project = popup.exec();
     PopupModalState = 0;
     if (project < 0) return;
-    base_editor_proj_budget_probe(1000);  // WORKAROUND(inline): see base_editor_proj_budget_probe
     base_editor_proj_budget_probe(1001);  // WORKAROUND(inline)
     base_editor_proj_budget_probe(1002);  // WORKAROUND(inline)
     base_editor_proj_budget_probe(1003);  // WORKAROUND(inline)
