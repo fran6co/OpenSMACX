@@ -7672,8 +7672,11 @@ L_575b27:
             if (Bases[base_id].faction_id_current != faction_id) continue;
             faction_bit = map_loc(Bases[base_id].x, Bases[base_id].y)->region;
             if (PlayersData[faction_id].region_base_plan[faction_bit] != 2) continue;
-            if (!home_dist ? !port_to_port(home_base, base_id)
-                           : !base_on_sea(base_id, region)) continue;
+            if (!home_dist) {
+                if (!port_to_port(home_base, base_id)) continue;
+            } else if (!base_on_sea(base_id, region)) {
+                continue;
+            }
             dist = map_range(x, y, Bases[base_id].x, Bases[base_id].y);
             if (veh_who(Bases[base_id].x, Bases[base_id].y) < 0) dist /= 2;
             if (at_goal(faction_id, 2, Bases[base_id].x, Bases[base_id].y)) dist /= 2;
@@ -7724,8 +7727,11 @@ L_575b27:
                 {
                     int r = map_loc(Bases[base_id].x, Bases[base_id].y)->region;
                     if (r == region && !at_sea) continue;
-                    if (!home_dist ? !port_to_coast(home_base, r)
-                                   : !sea_coast(r, region)) continue;
+                    if (!home_dist) {
+                        if (!port_to_coast(home_base, r)) continue;
+                    } else if (!sea_coast(r, region)) {
+                        continue;
+                    }
                     m = 1;
                     for (other_id = veh_top(veh_id); other_id >= 0;
                          other_id = other_id >= 0 ? Vehs[other_id].next_veh_id_stack : -1) {
@@ -7800,8 +7806,11 @@ L_575b27:
                 if (region == r) continue;
                 int r_plan = PlayersData[faction_id].region_base_plan[r];
                 if (r_plan == 7 || (i & 0x100) || !(i & (1 << r_plan))) continue;
-                if (!home_dist ? !port_to_port(home_base, base_id)
-                               : !base_on_sea(base_id, region)) continue;
+                if (!home_dist) {
+                    if (!port_to_port(home_base, base_id)) continue;
+                } else if (!base_on_sea(base_id, region)) {
+                    continue;
+                }
                 dist = map_range(x, y, Bases[base_id].x, Bases[base_id].y);
                 if (dist < best_score) {
                     best_score = dist;
@@ -7821,11 +7830,14 @@ L_575b27:
                 if (PlayersData[faction_id].region_total_bases[r]) continue;
                 // BUG(original): tests the plan of the unit's own region.
                 if (!(i & (1 << PlayersData[faction_id].region_base_plan[region]))) continue;
-                if (!home_dist ? port_to_coast(home_base, r) : sea_coast(r, region)) {
-                    // Laid out out of line at 0x5767d2.
-                    set_course(veh_id, 'J', tx, ty);
-                    break;
+                if (!home_dist) {
+                    if (!port_to_coast(home_base, r)) continue;
+                } else if (!sea_coast(r, region)) {
+                    continue;
                 }
+                // Laid out out of line at 0x5767d2.
+                set_course(veh_id, 'J', tx, ty);
+                break;
             }
         }
     }
@@ -7873,8 +7885,11 @@ L_5767ed:
                 if (!(PlayersData[faction_id].diplo_treaties[Bases[base_id].faction_id_current]
                       & DTREATY_VENDETTA)) continue;
                 // BUG(original): the base_on_sea arm tests home_base, not base_id.
-                if (!home_dist ? !port_to_port(home_base, base_id)
-                               : !base_on_sea(home_base, region)) continue;
+                if (!home_dist) {
+                    if (!port_to_port(home_base, base_id)) continue;
+                } else if (!base_on_sea(home_base, region)) {
+                    continue;
+                }
                 score = Bases[base_id].population_size * Bases[base_id].population_size * 32
                     / (map_range(x, y, Bases[base_id].x, Bases[base_id].y) + 1);
                 for (other_id = 0; other_id < GameDataStateStorage.fields_.vehicle_current_count_; other_id++) {
@@ -7908,8 +7923,11 @@ L_576a95:
             for (ty = 0; ty < MapLatitudeBounds; ty++) {
                 for (tx = ty & 1; tx < MapLongitudeBounds; tx += 2) {
                     if (!is_ocean(tx, ty)) continue;
-                    if (!home_dist ? !base_on_sea(home_base, map_loc(tx, ty)->region)
-                                   : map_loc(tx, ty)->region != region) continue;
+                    if (!home_dist) {
+                        if (!base_on_sea(home_base, map_loc(tx, ty)->region)) continue;
+                    } else if (map_loc(tx, ty)->region != region) {
+                        continue;
+                    }
                     if (map_range(x, y, tx, ty) < 8) continue;
                     for (other_id = 0; other_id < GameDataStateStorage.fields_.vehicle_current_count_; other_id++) {
                         if (Vehs[other_id].faction_id == faction_id && other_id != veh_id
@@ -7964,8 +7982,11 @@ L_576d87:;
         for (tx = ty & 1; tx < MapLongitudeBounds; tx += 2) {
             if (!is_known(tx, ty, faction_id)) continue;
             if (!is_ocean(tx, ty)) continue;
-            if (!home_dist ? !base_on_sea(home_base, map_loc(tx, ty)->region)
-                           : map_loc(tx, ty)->region != region) continue;
+            if (!home_dist) {
+                if (!base_on_sea(home_base, map_loc(tx, ty)->region)) continue;
+            } else if (map_loc(tx, ty)->region != region) {
+                continue;
+            }
             score = 0;
             if (PlayersData[faction_id].flags & PFLAG_STRAT_SEARCH_OBJECTIVES) {
                 if (!(map_loc(tx, ty)->bit & 0x100000)) {
