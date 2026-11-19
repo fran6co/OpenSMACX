@@ -750,10 +750,9 @@ void __cdecl balance() {
         int vehicle_id = veh_find(0, 0, faction_id, -1);
         vehicles_by_faction[faction_id] = vehicle_id;
         if (vehicle_id >= 0) {
-            const int y = Vehs[vehicle_id].y;
-            const int x = Vehs[vehicle_id].x;
-            if (map_loc(x, y)->region >= 0x40) {
-                vehicles_by_faction[faction_id] = veh_find(x, y, faction_id, vehicle_id);
+            if (map_loc(Vehs[vehicle_id].x, Vehs[vehicle_id].y)->region >= 0x40) {
+                vehicles_by_faction[faction_id] =
+                    veh_find(Vehs[vehicle_id].x, Vehs[vehicle_id].y, faction_id, vehicle_id);
             }
         }
     }
