@@ -1281,11 +1281,11 @@ static inline void map_menu_budget_probe(int x) {
 // map_menu's string operands, each read from the image's push operand at
 // 0x0058D710 ("MAPMENU"), 0x0058D840 ("maps\\xplanet.mp") and 0x0058D847
 // ("maps\\xplanetx.mp") and checked against the literal text in the body.
-// RECOVERY_LITERAL: v1 0x0068F8A0 0x0068F8A8 $SG63937 0x0058D6B0
-// RECOVERY_LITERAL: v1 0x0068F8A8 0x0068F8B8 $SG63955 0x0058D6B0
-// RECOVERY_LITERAL: v1 0x0068F8B8 0x0068F8C9 $SG63958 0x0058D6B0
+// RECOVERY_LITERAL: v1 0x0068F8A0 0x0068F8A8 $SG63868 0x0058D6B0
+// RECOVERY_LITERAL: v1 0x0068F8A8 0x0068F8B8 $SG63886 0x0058D6B0
+// RECOVERY_LITERAL: v1 0x0068F8B8 0x0068F8C9 $SG63889 0x0058D6B0
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0058D6B0 0x0058DB18 0x0058DB2C 0x0058D778
-// ORIGINAL: 0x0058D6B0 ?map_menu@@YAHH@Z 0x0058D6B0-0x0058DB17;0x00660989-0x00660A96
+// ORIGINAL: 0x0058D6B0 ?map_menu@@YAHH@Z 0x0058D6B0-0x0058DB17;0x00660989-0x00660A96 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:newgame-menu-owner", "historical seed:src/unrecovered/0058d6b0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete mapped native control flow", "source:existing SetupWin/Popup/Buffer/NetDaemon owner declarations; provisional bounded945820 and9B2074 objects, not raw image aliases"], "reason": "Source-owned new-game/menu family preserving complete original identity, auxiliary spans and historical seed findings; existing genuine object lifetimes and typed member owners. Unfinished bodies remain explicit, not implementation coverage."}
 // TRIED: MISMATCH #11. Real SetupWin/Popup/Buffer/Spot/StringStruct locals (Popup embeds Scroll+2 FlatButtons per the scaffold) do produce the SEH frame and destructor-chain shape, but local declaration order/count likely differs from the original's stack layout past instruction 11.
 int __cdecl map_menu(int quick_start) {
