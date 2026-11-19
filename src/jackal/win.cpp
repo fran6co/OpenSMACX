@@ -27,7 +27,7 @@
 // ORIGINAL: 0x005EB3B0 sub_5eb3b0 0x005EB3B0-0x005EB3CF FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned Win::screen_buffer_ storage starts at 0x9B7490; startup 0x5EB390 constructs the complete Buffer and registers finalizer 0x5EB3B0. The finalizer tests and publishes mask 2 of shared byte0x009B6E30 before the complete Buffer destructor0x005D7410, preserving other bits and repeated-cleanup skip.", "Original CRT slots0x00682678/0x0068267C register drawing then screen; ordinary class-static definitions retain that order and compiler-owned reverse cleanup. No placement storage, manual guard, accessor call, or dynamic pointer/reference facade remains.", "Original0x009B74C0 is screen Buffer+0x30 rect2_, established by pinned0x005EFED9/0x005EFEDE/0x005EFEE3; rendering accesses the real member. The original complete allocation bound remains unproved.", "Current compiler names are carried by the function symbol and object-target facts, not treated as historical debug names. Static members add no instance fields. Fresh strict measurement remains required; this binding transports no claim."], "reason": "Bind the pinned lifetime to typed class-static storage and compiler-generated initialization/destruction. Preserve original identity, spans, historical claims and guard/order obligations. Original nominal declarations and complete historical TU boundaries, linked data placement and game behavior remain unproved."}
 // symbol    _$E20
-// RECOVERY_LITERAL: v1 0x00696DEC 0x00696DF8 $SG50123 0x005F04E0
+// RECOVERY_LITERAL: v1 0x00696DEC 0x00696DF8 $SG50099 0x005F04E0
 #include "stdafx.h"
 // Drawing imports resolve by SDK export identity in the pinned PE directory.
 // RECOVERY_IMPORT: v1 __imp__CreateSolidBrush@4 GDI32.dll name:CreateSolidBrush
@@ -2421,69 +2421,9 @@ int Win::init(int x, int y, int width, int height, char * caption,
     this->do_caption_buttons();
     WinCallbackWindow = this;
 
-    unsigned int fl = this->iFlags_;
-    bool skipMenuList = (fl & 0x100000) == 0 || (fl & 0x200000) != 0 ||
-                         (this->iSomeFlag_ & 8) != 0 ||
-                         ((fl & 0x1000) != 0 && parent == 0);
-
-    // Keep the unchecked saved-parent access and the partially linked failure
-    // paths. Allocation callbacks can change the list's allocator and cursor.
-    // Image order (0x005EC48D): the empty-list arm comes first, each payload
-    // allocation stores straight into the node, and every link is reread
-    // through head_.
-    if (!skipMenuList && (~parent->iFlags_ & 0x1000) != 0) {
-        if (parent->list_.count_ == 0) {
-            parent->list_.head_ = parent->list_.allocator_
-                ? static_cast<WinDialogNode *>(parent->list_.allocator_->get(0x1C))
-                : static_cast<WinDialogNode *>(mem_get(0x1C));
-            if (parent->list_.head_ == 0) {
-                goto init_registration_tail;
-            }
-            parent->list_.head_->focus_owner_ = this;
-            parent->list_.head_->next_ = parent->list_.head_;
-            parent->list_.head_->previous_ = parent->list_.head_;
-            if (parent->list_.allocator_ != 0) {
-                parent->list_.head_->allocation_ = parent->list_.allocator_->get(4);
-            } else {
-                parent->list_.head_->allocation_ = mem_get(4);
-            }
-            if (parent->list_.head_->allocation_ == 0) {
-                goto init_registration_tail;
-            }
-            parent->list_.current_ = parent->list_.head_;
-        } else {
-            parent->list_.head_->previous_->next_ = parent->list_.allocator_
-                ? static_cast<WinDialogNode *>(parent->list_.allocator_->get(0x1C))
-                : static_cast<WinDialogNode *>(mem_get(0x1C));
-            if (parent->list_.head_->previous_->next_ == 0) {
-                goto init_registration_tail;
-            }
-            parent->list_.head_->previous_->next_->previous_ = parent->list_.head_->previous_;
-            parent->list_.head_->previous_->next_->next_ = parent->list_.head_;
-            parent->list_.head_->previous_ = parent->list_.head_->previous_->next_;
-            parent->list_.current_ = parent->list_.head_->previous_;
-            parent->list_.current_->focus_owner_ = this;
-            if (parent->list_.allocator_ != 0) {
-                parent->list_.current_->allocation_ = parent->list_.allocator_->get(4);
-            } else {
-                parent->list_.current_->allocation_ = mem_get(4);
-            }
-            if (parent->list_.current_->allocation_ == 0) {
-                goto init_registration_tail;
-            }
-        }
-
-        parent->list_.tail_ = parent->list_.count_;
-        parent->list_.count_ = parent->list_.count_ + 1;
-
-init_registration_tail:
-        int cnt = parent->list_.count_ - 1;
-        if (cnt >= 0) {
-            WinDialogNode *head = parent->list_.head_;
-            parent->list_.tail_ = 0;
-            parent->list_.current_ = head;
-        }
-        win_parent_ = parent;
+    // set_parent_dialog (0x005EC9A0, no image callers) expanded.
+    if ((this->iFlags_ & 0x100000) != 0) {
+        set_parent_dialog(parent);
     }
 
     this->iSomeFlag_ |= 4;
@@ -3008,7 +2948,7 @@ int __cdecl Win::init_class(LPSTR window_name) {
     wndclass.lpszMenuName = nullptr;
     // `JackalClass` is at 0x00696DC8 and again at 0x00696DD4: one per-site
     // literal for the registration and one for the creation (unpooled).
-    // RECOVERY_LITERAL: v1 0x00696DC8 0x00696DD4 $SG49987 0x005F01F0
+    // RECOVERY_LITERAL: v1 0x00696DC8 0x00696DD4 $SG49963 0x005F01F0
     wndclass.lpszClassName = "JackalClass";
 
     if (RegisterClassA(&wndclass) == 0) {
@@ -3017,7 +2957,7 @@ int __cdecl Win::init_class(LPSTR window_name) {
 
     WinScreenWidth = GetSystemMetrics(SM_CXSCREEN);
     WinScreenHeight = GetSystemMetrics(SM_CYSCREEN);
-    // RECOVERY_LITERAL: v1 0x00696DD4 0x00696DE0 $SG49990 0x005F01F0
+    // RECOVERY_LITERAL: v1 0x00696DD4 0x00696DE0 $SG49966 0x005F01F0
     HandleMain = CreateWindowExA(
         WS_EX_APPWINDOW, "JackalClass", window_name, WS_POPUP,
         0, 0, WinScreenWidth, WinScreenHeight,
@@ -4673,6 +4613,74 @@ int Win::get_rbutton_state() {
 // where they can be edited without regenerating anything and are in
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
+// WORKAROUND(inline): invented name. set_parent_dialog (0x005EC9A0) is
+// expanded by Win::init in the image; with this ring append written in place
+// it is over VC6's per-callee auto-inline cap (a one-call probe calls it),
+// as an inner inline it is under. Likely a WinNodeList member in the original.
+static inline void dialog_list_add(WinNodeList &list, Win *owner) {
+    if (list.count_ == 0) {
+        WinDialogNode *iv2 = (list.allocator_ != 0)
+            ? static_cast<WinDialogNode *>(list.allocator_->get(0x1c))
+            : static_cast<WinDialogNode *>(mem_get(0x1c));
+        list.head_ = iv2;
+        if (iv2 == 0) {
+            goto tail_common;
+        }
+        iv2->focus_owner_ = owner;
+        list.head_->next_ = list.head_;
+        list.head_->previous_ = list.head_;
+
+        if (list.allocator_ != 0) {
+            list.head_->allocation_ =
+                list.allocator_->get(4);
+        } else {
+            list.head_->allocation_ = mem_get(4);
+        }
+        if (list.head_->allocation_ == 0) {
+            goto tail_common;
+        }
+        list.current_ = list.head_;
+    } else {
+        WinDialogNode *newnode = (list.allocator_ != 0)
+            ? static_cast<WinDialogNode *>(list.allocator_->get(0x1c))
+            : static_cast<WinDialogNode *>(mem_get(0x1c));
+        WinDialogNode *head = list.head_;
+        WinDialogNode *tail = head->previous_;
+        tail->next_ = newnode;
+
+        WinDialogNode *tail2 = list.head_->previous_;
+        WinDialogNode *node = tail2->next_;
+        if (node == 0) {
+            goto tail_common;
+        }
+        node->previous_ = tail2;
+        list.head_->previous_->next_->next_ = list.head_;
+        list.head_->previous_ = list.head_->previous_->next_;
+        WinDialogNode *nn = list.head_->previous_;
+        list.current_ = nn;
+        nn->focus_owner_ = owner;
+
+        if (list.allocator_ != 0) {
+            list.current_->allocation_ =
+                list.allocator_->get(4);
+        } else {
+            list.current_->allocation_ = mem_get(4);
+        }
+        if (list.current_->allocation_ == 0) {
+            goto tail_common;
+        }
+    }
+
+    list.tail_ = list.count_;
+    list.count_ = list.count_ + 1;
+
+tail_common:
+    if (list.count_ - 1 >= 0) {
+        list.tail_ = 0;
+        list.current_ = list.head_;
+    }
+}
+
 void Win::set_parent_dialog(Win *dialog) {
 
     if (iFlags_ & 0x200000) {
@@ -4689,67 +4697,7 @@ void Win::set_parent_dialog(Win *dialog) {
         return;
     }
 
-    if (dialog->list_.count_ == 0) {
-        WinDialogNode *iv2 = (dialog->list_.allocator_ != 0)
-            ? static_cast<WinDialogNode *>(dialog->list_.allocator_->get(0x1c))
-            : static_cast<WinDialogNode *>(mem_get(0x1c));
-        dialog->list_.head_ = iv2;
-        if (iv2 == 0) {
-            goto tail_common;
-        }
-        iv2->focus_owner_ = this;
-        dialog->list_.head_->next_ = dialog->list_.head_;
-        dialog->list_.head_->previous_ = dialog->list_.head_;
-
-        if (dialog->list_.allocator_ != 0) {
-            dialog->list_.head_->allocation_ =
-                dialog->list_.allocator_->get(4);
-        } else {
-            dialog->list_.head_->allocation_ = mem_get(4);
-        }
-        if (dialog->list_.head_->allocation_ == 0) {
-            goto tail_common;
-        }
-        dialog->list_.current_ = dialog->list_.head_;
-    } else {
-        WinDialogNode *newnode = (dialog->list_.allocator_ != 0)
-            ? static_cast<WinDialogNode *>(dialog->list_.allocator_->get(0x1c))
-            : static_cast<WinDialogNode *>(mem_get(0x1c));
-        WinDialogNode *head = dialog->list_.head_;
-        WinDialogNode *tail = head->previous_;
-        tail->next_ = newnode;
-
-        WinDialogNode *tail2 = dialog->list_.head_->previous_;
-        WinDialogNode *node = tail2->next_;
-        if (node == 0) {
-            goto tail_common;
-        }
-        node->previous_ = tail2;
-        dialog->list_.head_->previous_->next_->next_ = dialog->list_.head_;
-        dialog->list_.head_->previous_ = dialog->list_.head_->previous_->next_;
-        WinDialogNode *nn = dialog->list_.head_->previous_;
-        dialog->list_.current_ = nn;
-        nn->focus_owner_ = this;
-
-        if (dialog->list_.allocator_ != 0) {
-            dialog->list_.current_->allocation_ =
-                dialog->list_.allocator_->get(4);
-        } else {
-            dialog->list_.current_->allocation_ = mem_get(4);
-        }
-        if (dialog->list_.current_->allocation_ == 0) {
-            goto tail_common;
-        }
-    }
-
-    dialog->list_.tail_ = dialog->list_.count_;
-    dialog->list_.count_ = dialog->list_.count_ + 1;
-
-tail_common:
-    if (dialog->list_.count_ - 1 >= 0) {
-        dialog->list_.tail_ = 0;
-        dialog->list_.current_ = dialog->list_.head_;
-    }
+    dialog_list_add(dialog->list_, this);
     win_parent_ = dialog;
 }
 
@@ -5950,7 +5898,7 @@ void __cdecl add_parent(Win * window) {
 void Win::on_char(char param2, int param3) {
     *WinKeyRingCursor = param2;
     // typed_keys_differ is inlined (it reads the code backward from its end).
-// RECOVERY_LITERAL: v1 0x00696DF8 0x00696DFF $SG50936 0x005F5FB0
+// RECOVERY_LITERAL: v1 0x00696DF8 0x00696DFF $SG50916 0x005F5FB0
     if (!typed_keys_differ("mdebug", 6)) {
         // Toggle the debug window; hide() is inlined here.
         if (WinBubbleWindow.is_visible()) {
@@ -10070,7 +10018,7 @@ void Win::set_bubble_text(char * text, RECT * rect) {
             *caret = 0;
         }
         int line_width = WinBubbleFont->width(str) +
-// RECOVERY_LITERAL: v1 0x00696E00 0x00696E02 $SG52503 0x005F83D0
+// RECOVERY_LITERAL: v1 0x00696E00 0x00696E02 $SG52483 0x005F83D0
                          WinBubbleFont->width(" ") * 2;
         if (line_width > max_width) {
             max_width = line_width;

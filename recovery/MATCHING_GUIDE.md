@@ -2796,8 +2796,9 @@ What the model does not predict (2026-11-19)
   counter-case: its two PlanWindow blocks are sub_54dc90 (0x0054DC90) in
   the image, but calling it moves ~Scroll/close/~FlatButton/~GraphicWin
   decisions (named call distance 0 -> 5, 86 -> 102 rows), so the written-out
-  copies are tuned around another missing charge in that function; not
-  landed. Read `show` before editing: below score 0.9 shared parse_says/pop
+  copies are tuned around another missing charge in that function. Found
+  (r24): the ten has_treaty spellings; written raw, the sub_54dc90 calls give
+  the image's EH map and call multiset (landed). Read `show` before editing: below score 0.9 shared parse_says/pop
   runs and show_all/hide_all pairs score as hits.
 - **Referenced owners too: an invented helper is often a real header inline**
   (high; 2026-11-19 par-4). orphanowner only tries unreferenced markers, so it
@@ -2825,9 +2826,10 @@ What the model does not predict (2026-11-19)
   helper. Found: net_not_my_turn (skip test as a helper; net_control_turn
   exact), prev_cursor (survey clear as a helper, cursor block as
   reset_turn_view(); retires two WORKAROUND copies), sub_5a6510 (a terser
-  spelling alone suffices; compass_move exact), set_parent_dialog (screen
-  only: the WinNodeList add as a helper passes the cap, which should replace
-  the __forceinline twin in Win::init). Definition order does not matter.
+  spelling alone suffices; compass_move exact), set_parent_dialog (the
+  WinNodeList ring append as a helper passes the cap; Win::init's hand copy
+  becomes `if (iFlags_ & 0x100000) set_parent_dialog(parent);`, same 48
+  rows). rscan finds no real owner for any of these helpers. Definition order does not matter.
   Mark invented helpers WORKAROUND(inline). Note: GameDataStateStorage.fields_
   member chains count more nodes than plain globals; spelling every one of
   them as a plain extern also puts net_not_my_turn under the cap, but the

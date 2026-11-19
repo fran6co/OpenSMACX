@@ -211,11 +211,6 @@ class BaseWin : public GraphicWin, public SubInterface {
   // below with the rest of the table: slot 8 0x0041DF50, slot 9 0x0041E3E0.
   void on_redraw();                                     // 0x0041E790
   void init();                                          // 0x0041E8D0
-  // WORKAROUND(decl): no such method; the old invented twin of focus()
-  // (0x00415DD0) is retired, but dropping this declaration shifts the
-  // front-end symbol counter in 28 units (ReportIf::on_iface_button_clicked
-  // canary lost, 11 moved): left for the header cleanup pass.
-  void compute_selected_base();
 
   // UNK2 calls the garrison interaction; on_scrolled repaints facilities.
   // garrison_click's arguments select a vehicle and screen coordinates, with
