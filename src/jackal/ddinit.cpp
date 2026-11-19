@@ -170,22 +170,7 @@ int DDInit::init(int width, int height, int depth, int tgl) {
         return 7;
     }
 
-    if (locked_surface_ != nullptr && locked_bits_ != nullptr) {
-        locked_surface_->Unlock(locked_bits_);
-        locked_bits_ = nullptr;
-    }
-    if (surf_ != nullptr) {
-        surf_->RestoreDisplayMode();
-        surf_->Release();
-        surf_ = nullptr;
-    }
-    if (hwnd_ != nullptr) {
-        DestroyWindow(hwnd_);
-        hwnd_ = nullptr;
-        UnregisterClassA(DDInitClassName, WinInstance);
-    }
-    locked_surface_ = nullptr;
-    DDInitRefreshScreenMetrics();
+    teardown();
 
     if (width == 0 || height == 0) {
         width = GetSystemMetrics(SM_CXSCREEN);
@@ -253,10 +238,7 @@ Purpose: Tear down whatever DirectDraw surface and device window this object
 // homed DDInitRefreshScreenMetrics.
 */
 void DDInit::teardown() {
-    if (locked_surface_ != nullptr && locked_bits_ != nullptr) {
-        locked_surface_->Unlock(locked_bits_);
-        locked_bits_ = nullptr;
-    }
+    flush();
     if (surf_ != nullptr) {
         surf_->RestoreDisplayMode();
         surf_->Release();
@@ -332,7 +314,8 @@ LPVOID DDInit::lock_surface() {
 // (0x00635750) and DDInit::lock_surface (0x006357D0) and reads exactly
 // DDInit's locked_surface_ (0xC) / locked_bits_ (0x10) pair, calling the
 // surface's slot-0x80 Unlock - the unlock half of the pair as its own entry
-// point, which `teardown` repeats inline. The scaffold called the class
+// point, which `teardown` calls and /Ob2 expands (flush has no image
+// reference; its body is teardown's first block, orphanowner.py score 1.00). The scaffold called the class
 // `Handler` because the scaffold did not know DDInit existed.
 void DDInit::flush() {
     if (locked_surface_ != nullptr && locked_bits_ != nullptr) {
