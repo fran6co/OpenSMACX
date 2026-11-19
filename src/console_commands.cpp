@@ -90,9 +90,56 @@ inline int __cdecl has_treaty(int faction_id, int faction_id_with, int treaty) {
 // WORKAROUND(decl): counter alignment. corner_the_market's `add ecx, edx;
 // push ecx` (image) against `add edx, ecx; push edx` is a tie-break on the
 // front-end symbol counter modulo 64 (guide 2.5); `recover canary
-// src/console_commands.cpp` computes the pad count (none needed now).
+// src/console_commands.cpp` computes the pad count.
 // CANARY: 0x004E2000 ?corner_the_market@Console@@QAEXXZ residues 6,15-45
 // CANARY-PADS: function ConsoleCommandsDeclFnPad
+void ConsoleCommandsDeclFnPad0();
+void ConsoleCommandsDeclFnPad1();
+void ConsoleCommandsDeclFnPad2();
+void ConsoleCommandsDeclFnPad3();
+void ConsoleCommandsDeclFnPad4();
+void ConsoleCommandsDeclFnPad5();
+void ConsoleCommandsDeclFnPad6();
+void ConsoleCommandsDeclFnPad7();
+void ConsoleCommandsDeclFnPad8();
+void ConsoleCommandsDeclFnPad9();
+void ConsoleCommandsDeclFnPad10();
+void ConsoleCommandsDeclFnPad11();
+void ConsoleCommandsDeclFnPad12();
+void ConsoleCommandsDeclFnPad13();
+void ConsoleCommandsDeclFnPad14();
+void ConsoleCommandsDeclFnPad15();
+void ConsoleCommandsDeclFnPad16();
+void ConsoleCommandsDeclFnPad17();
+void ConsoleCommandsDeclFnPad18();
+void ConsoleCommandsDeclFnPad19();
+void ConsoleCommandsDeclFnPad20();
+void ConsoleCommandsDeclFnPad21();
+void ConsoleCommandsDeclFnPad22();
+void ConsoleCommandsDeclFnPad23();
+void ConsoleCommandsDeclFnPad24();
+void ConsoleCommandsDeclFnPad25();
+void ConsoleCommandsDeclFnPad26();
+void ConsoleCommandsDeclFnPad27();
+void ConsoleCommandsDeclFnPad28();
+void ConsoleCommandsDeclFnPad29();
+void ConsoleCommandsDeclFnPad30();
+void ConsoleCommandsDeclFnPad31();
+void ConsoleCommandsDeclFnPad32();
+void ConsoleCommandsDeclFnPad33();
+void ConsoleCommandsDeclFnPad34();
+void ConsoleCommandsDeclFnPad35();
+void ConsoleCommandsDeclFnPad36();
+void ConsoleCommandsDeclFnPad37();
+void ConsoleCommandsDeclFnPad38();
+void ConsoleCommandsDeclFnPad39();
+void ConsoleCommandsDeclFnPad40();
+void ConsoleCommandsDeclFnPad41();
+void ConsoleCommandsDeclFnPad42();
+void ConsoleCommandsDeclFnPad43();
+void ConsoleCommandsDeclFnPad44();
+void ConsoleCommandsDeclFnPad45();
+void ConsoleCommandsDeclFnPad46();
 
 // Shared separator objects the image pushes instead of unit literals.
 extern const char BufferJoinSpace[];
