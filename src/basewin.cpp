@@ -1337,8 +1337,9 @@ void BaseWin::draw_supported(int update_mode) {
         const int icon_y = y - icon_offset + vehicle_height;
         int support, total = 0, convoy_yield; // native yield only read in convoy arm
         if (Vehs[vehicle_id].state & 0x10u) {
+            support = PlayersData[faction].soc_effect_pending.values_[SocialEffect::SUPPORT];
             support = has_abil(Vehs[vehicle_id].proto_id, 0x10000)
-                ? 0 : 1 + (PlayersData[faction].soc_effect_pending.values_[SocialEffect::SUPPORT] <= -4);
+                ? 0 : 1 + (support <= -4);
             total = support;
         } else {
             support = 0;
