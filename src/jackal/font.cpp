@@ -435,13 +435,17 @@ LPSTR Font::find_line_break_l(LPSTR input, int *break_len, int len) {
                     *break_len = 0;
                     return NULL;
                 }
+                BufferStrHeight += *break_len - search_brk;
+                *break_len = search_brk;
+                return NULL;
             } else if (search_brk < 0) {
                 *break_len = 0;
                 return search_str + 1;
+            } else {
+                BufferStrHeight += *break_len - search_brk;
+                *break_len = search_brk;
+                return NULL;
             }
-            BufferStrHeight += *break_len - search_brk;
-            *break_len = search_brk;
-            return NULL;
         }
         search_brk -= width(search_str, space - search_str);
         if (search_str == input) {
