@@ -1141,6 +1141,7 @@ int __cdecl size_of_planet(int mode) {
     size_of_planet_budget_probe(1005);  // WORKAROUND(inline)
     size_of_planet_budget_probe(1006);  // WORKAROUND(inline)
     size_of_planet_budget_probe(1007);  // WORKAROUND(inline)
+    size_of_planet_budget_probe(1008);  // WORKAROUND(inline): ninth probe pays for the written-out label once rnd(5, "INIT1") expands here
     Popup popup;
     SetupWin setup;
     popup.start("WORLDSIZE", mode != 2 ? 0x40 : 0);
