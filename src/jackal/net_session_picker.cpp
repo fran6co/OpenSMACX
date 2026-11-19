@@ -126,25 +126,392 @@ void NetSessionPickerWin::close() {
   tail_.field_3794_ = 1;
 }
 
-// ORIGINAL: 0x0063CD50 sub_63cd50 0x0063CD50-0x0063CDBB FILE BYTE_EXACT
+/*
+Purpose: Scale a field by an argument and divide by 600.
+
+             mov ecx,[ecx+0x3798] / mov eax,0x1b4e81b5 / imul ecx,[esp+4]
+             imul ecx / mov eax,edx / sar eax,6 / mov ecx,eax / shr ecx,0x1f
+             add eax,ecx / ret 4
+
+         MSVC's magic-number division: multiply by 0x1b4e81b5, keep the high
+         dword, shift right 6, then add the sign bit so it truncates toward
+         zero instead of toward negative infinity. 0x1b4e81b5 is
+         ceil(2^38 / 600), and the divisor was confirmed by running the
+         original's exact sequence against truncating division over 206,006
+         inputs - the whole of -3000..3000, 200,000 random int32s, and both
+         extremes - with no disagreement.
+
+         The multiply is an ordinary 32-bit one and WRAPS. Spelling it in
+         unsigned and casting back keeps that defined, which signed overflow
+         in C++ would not be.
+
+// ORIGINAL: 0x0063BEB0 sub_63beb0 0x0063BEB0-0x0063BED1 BYTE_EXACT
+// symbol    ?scale_client_width@NetSessionPickerWin@@QAEHH@Z
+// size      33 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+Return Value: (field 0x3798 * argument) / 600
+Status: Complete
+*/
+
+int NetSessionPickerWin::scale_client_width(int factor) {
+    const uint32_t product = static_cast<uint32_t>(tail_.client_width_) *
+                             static_cast<uint32_t>(factor);
+    return static_cast<int32_t>(product) / 600;
+}
+
+
+/*
+Purpose: Scale a field by an argument and divide by 440.
+
+         The same shape as 0063BEB0 with a different field, magic and shift:
+         0x94f2095 is ceil(2^36 / 440). Confirmed the same way, over the same
+         206,006 inputs, with no disagreement.
+
+// ORIGINAL: 0x0063BEE0 sub_63bee0 0x0063BEE0-0x0063BF01 BYTE_EXACT
+// symbol    ?scale_client_height@NetSessionPickerWin@@QAEHH@Z
+// size      33 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+Return Value: (field 0x379c * argument) / 440
+Status: Complete
+*/
+
+int NetSessionPickerWin::scale_client_height(int factor) {
+    const uint32_t product = static_cast<uint32_t>(tail_.client_height_) *
+                             static_cast<uint32_t>(factor);
+    return static_cast<int32_t>(product) / 440;
+}
+
+// ORIGINAL: 0x0063BF10 sub_63bf10 0x0063BF10-0x0063C33F FILE
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor/destructor calls and direct accesses establish the GraphicWin base, ordered Time/Heap/ListBox/PushButton/list members, and observed tail through +0x37A4. The descriptive owner name and complete original allocation remain unproved.", "The integer timer adapter checks nonzero context; the distinct nullary focus member does not. Pinned table 0x670DDC establishes slot 12 at 0x670E0C -> 0x63C9D0 and slot 44 at 0x670E8C -> 0x63C3A0. Automatic owner destruction replaces manual table staging and executable-address forwarding.", "The Net caller retains one automatic picker, original unchecked copies and invalid-node error paths, and password-pointer reloads after modal execution. Indirect event linkage, precise unwind correspondence, historical matching and full linked/runtime fidelity remain obligations."], "reason": "Typed session-picker ownership and its Net receiver-backed caller, preserving the original entries and compiler-generated lifetime identities."}
-// symbol    ?draw_frame@NetSessionPickerWin@@QAEXXZ
-void NetSessionPickerWin::draw_frame() {
-  RECT *rect = &tail_.frame_rect_;
-  GraphicWin::fill(rect, tail_.frame_color_);
-  int count = tail_.row_count_;
-  int i = 0;
-  if (count > 0) {
-    do {
-      Buffer::box(rect, tail_.box_color_a_, tail_.box_color_b_);
-      ++rect->left;
-      --rect->right;
-      ++rect->top;
-      --rect->bottom;
-      count = tail_.row_count_;
-      ++i;
-    } while (i < count);
+// symbol    ?initialize@NetSessionPickerWin@@QAEHPAVNet@@PADPAVFont@@HHH@Z
+// TRIED: not __stdcall(int,int,int) as the brief's fallback signature guessed - it's __thiscall(int,char*,Font*,int,int,int) returning int, 6 stack args popped by `ret 0x18`, cross-checked against Ghidra's param numbering (param_1 is `this`). Dialog init/ set_dialog_* calls do NOT address self+0xa50 directly: the embedded Dialog's real base is `self+0xa50+*(*(self+0xa50)+8)`, an owner/index indirection re-derived from the raw disasm since Ghidra's flattened `*(*piVar1+8)+OFFSET+param_1` addressing looked at first like a plain field write. slot062 (0xf8/4) called nullary, no retype needed. sim 0.85 at plain /O2; first divergence #53 is a register-vs-recompute choice in the width/height layout arithmetic, not chased further.
+int NetSessionPickerWin::initialize(Net *network, char *caption,
+                                    Font *font, int width, int height,
+                                    int rows) {
+  if (rows == 0) return 3;
+  if (network == 0 || font == 0) return 0x10;
+  if (!font->is_initialized()) return 7;
+
+  tail_.rows_visible_ = rows;
+  net_ = network;
+  const int margin_x = width * 10 / 600;
+  const int margin_y = height * 10 / 440;
+  tail_.client_width_ = width;
+  tail_.client_height_ = height;
+  int result = GraphicWin::init(
+      0, 0, width, height, caption, 0x800, BasePopDefaultField322C, 0, 0);
+  if (result != 0) return result;
+
+  center();
+  Buffer::set_font(font, 0, 0, 0);
+
+  // The button column: a third of the client width wide and 7/4 line
+  // heights tall, then shifted to the right margin and down.
+  RECT rect;
+  rect.left = tail_.client_width_;
+  rect.top = tail_.client_height_;
+  rect.right = tail_.client_width_ * 200 / 600 + tail_.client_width_;
+  rect.bottom = font->pixel_height() * 7 / 4 + tail_.client_height_;
+  const int dx = tail_.client_width_ - tail_.client_width_ * 10 / 600 - rect.right;
+  rect.left += dx;
+  rect.right += dx;
+  const int dy = (tail_.client_height_ - rect.bottom - margin_y) * 3;
+  rect.top += dy;
+  rect.bottom += dy;
+  int button_width = rect.right - rect.left;
+  int button_height = rect.bottom - rect.top;
+  result = action_button_.init(BasePopDefaultOkText, -1, rect.left, rect.top,
+                               button_width, button_height, this, 0);
+  if (result != 0) return result;
+  action_button_.set_font(font, 0, 0, 0);
+  action_button_.redraw();
+
+  rect.top += button_height + margin_y;
+  rect.bottom += button_height + margin_y;
+  int create_height = rect.bottom - rect.top;
+  result = create_button_.init("Create Session (Translate)",
+                               0, rect.left, rect.top, button_width,
+                               create_height, this, 0);
+  if (result != 0) return result;
+  create_button_.set_font(font, 0, 0, 0);
+  create_button_.redraw();
+
+  rect.top += button_height + margin_y;
+  rect.bottom += button_height + margin_y;
+  // The image passes the create button's height as the cancel width.
+  result = cancel_button_.init(BasePopDefaultCancelText, -2, rect.left,
+                               rect.top, create_height, rect.bottom - rect.top,
+                               this, 0);
+  if (result != 0) return result;
+  cancel_button_.set_font(font, 0, 0, 0);
+  cancel_button_.redraw();
+
+  tail_.first_label_rect_.top = margin_y;
+  tail_.first_label_rect_.left = margin_x;
+  tail_.first_label_rect_.right = margin_x * -2 - cancel_button_.pixel_width()
+      + width;
+  tail_.first_label_rect_.bottom = margin_y + cancel_button_.pixel_height();
+  tail_.second_label_rect_.right = width - margin_x;
+  tail_.panel_rect_.left = margin_x;
+  const int second_left = tail_.first_label_rect_.right + margin_x;
+  tail_.second_label_rect_.left = second_left;
+  tail_.panel_rect_.bottom = height - margin_y;
+  tail_.second_label_rect_.top = margin_y;
+  tail_.second_label_rect_.bottom = tail_.first_label_rect_.bottom;
+  tail_.panel_rect_.top = tail_.first_label_rect_.bottom;
+  tail_.panel_rect_.right = tail_.first_label_rect_.right;
+  tail_.rows_rect_.left = second_left;
+  tail_.rows_rect_.right = width - margin_x;
+  tail_.rows_rect_.top = tail_.first_label_rect_.bottom;
+
+  tail_.rows_rect_.bottom = action_button_.client_rect().top - margin_y * 2;
+  tail_.row_height_ = (tail_.rows_rect_.bottom - tail_.boxes_per_row_ * 2
+                       - tail_.rows_rect_.top) / rows;
+  tail_.rows_rect_.bottom = tail_.row_height_ * rows + tail_.rows_rect_.top;
+
+  sessions_view_.close();
+  result = sessions_view_.Dialog::init(&tail_.panel_rect_, 0);
+  if (result != 0) return result;
+
+  sessions_view_.Dialog::field_AC_ = 0;
+  sessions_view_.Dialog::field_B0_ = 0;
+  sessions_view_.Dialog::field_B4_ = 2;
+  sessions_view_.Dialog::field_5C_ = 2;
+  sessions_view_.Dialog::set_dialog_text_color(tail_.field_3714_, -1, 1, 1);
+  sessions_view_.Dialog::set_dialog_text_color2(tail_.field_3718_, -1, 1, 1);
+  sessions_view_.Dialog::set_dialog_font(fonts_[0], 0, 0);
+  sessions_view_.Dialog::field_34_ = blank_sprite().width();
+  return 0;
+}
+
+// ORIGINAL: 0x0063C340 sub_63c340 0x0063C340-0x0063C38F FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor/destructor calls and direct accesses establish the GraphicWin base, ordered Time/Heap/ListBox/PushButton/list members, and observed tail through +0x37A4. The descriptive owner name and complete original allocation remain unproved.", "The integer timer adapter checks nonzero context; the distinct nullary focus member does not. Pinned table 0x670DDC establishes slot 12 at 0x670E0C -> 0x63C9D0 and slot 44 at 0x670E8C -> 0x63C3A0. Automatic owner destruction replaces manual table staging and executable-address forwarding.", "The Net caller retains one automatic picker, original unchecked copies and invalid-node error paths, and password-pointer reloads after modal execution. Indirect event linkage, precise unwind correspondence, historical matching and full linked/runtime fidelity remain obligations."], "reason": "Typed session-picker ownership and its Net receiver-backed caller, preserving the original entries and compiler-generated lifetime identities."}
+// symbol    ?start_refresh_timer@NetSessionPickerWin@@QAEHXZ
+int NetSessionPickerWin::start_refresh_timer() {
+  // Native 0x63C340 passes this owner through Time's existing integer
+  // callback-context ABI; the old Win attribution read beyond sizeof(Win).
+  if (refresh_timer_.start(refresh_timer_callback,
+                           static_cast<int>(reinterpret_cast<uintptr_t>(this)),
+                           1000, 5) != 0) {
+    return 0;
   }
+  refresh_player_list();
+  set_modal(0, 0, 0);
+  hide();
+  return net_->local_player_id();
+}
+
+// ORIGINAL: 0x0063C390 sub_63c390 0x0063C390-0x0063C39E FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor/destructor calls and direct accesses establish the GraphicWin base, ordered Time/Heap/ListBox/PushButton/list members, and observed tail through +0x37A4. The descriptive owner name and complete original allocation remain unproved.", "The integer timer adapter checks nonzero context; the distinct nullary focus member does not. Pinned table 0x670DDC establishes slot 12 at 0x670E0C -> 0x63C9D0 and slot 44 at 0x670E8C -> 0x63C3A0. Automatic owner destruction replaces manual table staging and executable-address forwarding.", "The Net caller retains one automatic picker, original unchecked copies and invalid-node error paths, and password-pointer reloads after modal execution. Indirect event linkage, precise unwind correspondence, historical matching and full linked/runtime fidelity remain obligations."], "reason": "Typed session-picker ownership and its Net receiver-backed caller, preserving the original entries and compiler-generated lifetime identities."}
+// symbol    ?refresh_if_focused@NetSessionPickerWin@@QAEXXZ
+void NetSessionPickerWin::refresh_if_focused() {
+  if (WinFocusWindow == static_cast<Win *>(this)) refresh_player_list();
+}
+
+// ORIGINAL: 0x0063C3A0 sub_63c3a0 0x0063C3A0-0x0063C4D6 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor/destructor calls and direct accesses establish the GraphicWin base, ordered Time/Heap/ListBox/PushButton/list members, and observed tail through +0x37A4. The descriptive owner name and complete original allocation remain unproved.", "The integer timer adapter checks nonzero context; the distinct nullary focus member does not. Pinned table 0x670DDC establishes slot 12 at 0x670E0C -> 0x63C9D0 and slot 44 at 0x670E8C -> 0x63C3A0. Automatic owner destruction replaces manual table staging and executable-address forwarding.", "The Net caller retains one automatic picker, original unchecked copies and invalid-node error paths, and password-pointer reloads after modal execution. Indirect event linkage, precise unwind correspondence, historical matching and full linked/runtime fidelity remain obligations."], "reason": "Typed session-picker ownership and its Net receiver-backed caller, preserving the original entries and compiler-generated lifetime identities."}
+// symbol    ?on_button_clicked@NetSessionPickerWin@@UAEXH@Z
+// TRIED: IDA guessed 1 stack arg; ecx=esi with no matching stack read confirms a __thiscall receiver, its own minimal class (no catalogued name). The vtable-slot-58 call needs its own dummy-padded virtual class (same reason as 0x5ED880), so this stays FILE mode. `if (a2==-2){A}else if(a2!=-1){...}` compiles the -2 case inline (jne to skip past it); the original places that handler in a separate far block and jumps to it directly (je) - a block-layout difference this source form did not reproduce. Landed at MISMATCH #4.
+void NetSessionPickerWin::on_button_clicked(int action) {
+  switch (action) {
+  case 0:
+    if (connect_session() != 0) return;
+    release_modal();
+    return;
+  case -1:
+    // join_selected_session is expanded here: the image pushes its
+    // "jackal"/"NETCONNECT_JOIN" literals (0x698C60/0x698C50).
+    if (!join_selected_session()) release_modal();
+    return;
+  case -2:
+    tail_.action_result_ = 0;
+    release_modal();
+    return;
+  }
+}
+
+// ORIGINAL: 0x0063C4E0 sub_63c4e0 0x0063C4E0-0x0063C4F6 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor/destructor calls and direct accesses establish the GraphicWin base, ordered Time/Heap/ListBox/PushButton/list members, and observed tail through +0x37A4. The descriptive owner name and complete original allocation remain unproved.", "The integer timer adapter checks nonzero context; the distinct nullary focus member does not. Pinned table 0x670DDC establishes slot 12 at 0x670E0C -> 0x63C9D0 and slot 44 at 0x670E8C -> 0x63C3A0. Automatic owner destruction replaces manual table staging and executable-address forwarding.", "The Net caller retains one automatic picker, original unchecked copies and invalid-node error paths, and password-pointer reloads after modal execution. Indirect event linkage, precise unwind correspondence, historical matching and full linked/runtime fidelity remain obligations."], "reason": "Typed session-picker ownership and its Net receiver-backed caller, preserving the original entries and compiler-generated lifetime identities."}
+// symbol    ?refresh_timer_callback@NetSessionPickerWin@@SAXH@Z
+void __cdecl NetSessionPickerWin::refresh_timer_callback(int context) {
+  // Keep the image's int payload ABI and the nonzero/focus guard order.
+  if (context == 0) return;
+  NetSessionPickerWin *owner = reinterpret_cast<NetSessionPickerWin *>(
+      static_cast<uintptr_t>(static_cast<unsigned int>(context)));
+  if (WinFocusWindow == static_cast<Win *>(owner)) owner->refresh_player_list();
+}
+
+// ORIGINAL: 0x0063C510 sub_63c510 0x0063C510-0x0063C6CA FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor/destructor calls and direct accesses establish the GraphicWin base, ordered Time/Heap/ListBox/PushButton/list members, and observed tail through +0x37A4. The descriptive owner name and complete original allocation remain unproved.", "The integer timer adapter checks nonzero context; the distinct nullary focus member does not. Pinned table 0x670DDC establishes slot 12 at 0x670E0C -> 0x63C9D0 and slot 44 at 0x670E8C -> 0x63C3A0. Automatic owner destruction replaces manual table staging and executable-address forwarding.", "The Net caller retains one automatic picker, original unchecked copies and invalid-node error paths, and password-pointer reloads after modal execution. Indirect event linkage, precise unwind correspondence, historical matching and full linked/runtime fidelity remain obligations."], "reason": "Typed session-picker ownership and its Net receiver-backed caller, preserving the original entries and compiler-generated lifetime identities."}
+// symbol    ?connect_session@NetSessionPickerWin@@QAEHXZ
+// TRIED: __thiscall helper class (NetConnectHelper) with pop()/parse_says() overload resolution by arg count and a 1-arg VCall::slot000; diverges at #0, frame setup differs
+int NetSessionPickerWin::connect_session() {
+  parse_says(0, "My Session", -1, -1);
+  parse_says(1, "My Name", -1, -1);
+  parse_says(2, &SessionPickerPasswordPrompt, -1, -1);
+
+  for (;;) {
+    if (pop_caption_value_title("jackal", "NETCONNECT_CREATE", 0x3c, 0x44, 0) == -1) return 1;
+    if (ParseStrBuffer[0].str[0] == 0) {
+      pop_caption("jackal", "NETCONNECT_NEED_SESSION", 0);
+    } else if (ParseStrBuffer[1].str[0] == 0) {
+      pop_caption("jackal", "NETCONNECT_NEED_PLAYER", 0);
+    } else {
+      if (ParseStrBuffer[2].str[0] != 0) {
+        pop_caption("jackal", "NETCONNECT_PASSWORD_SET", 0);
+      }
+
+      BasePop *popup = PopupAllocHook();
+      if (popup == 0) return 4;
+      popup->start("jackal", "NETCONNECT_MAX_PLAYERS",
+                   -1, 0, 0x50, 0);
+
+      int faction_count = tail_.rows_visible_;
+      char letter = '2';
+      for (int i = 2; i < faction_count + 1; ++i) {
+        char label[12];  // 12-byte frame slot in the image
+        label[0] = letter;
+        label[1] = 0;
+        popup->dialogs().item(label, i);
+        ++letter;
+        faction_count = tail_.rows_visible_;
+      }
+
+      const int selected_players = popup->exec(0, 0);
+      delete popup;
+      if (selected_players != -1) {
+        NetAllocationNode *session = net_->create_session(
+            ParseStrBuffer[0].str, selected_players, ParseStrBuffer[2].str);
+        if (session == 0) {
+          return 1;
+        }
+        return net_->join_session(session, ParseStrBuffer[1].str, 0) == 0;
+      }
+    }
+  }
+}
+
+// ORIGINAL: 0x0063C6D0 sub_63c6d0 0x0063C6D0-0x0063C7B5 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/unrecovered/0063c6d0.cpp; full original marker, spans, byte claim and lessons transported by match_recovery.source.writer", "historical scaffold symbol hint (not an emitted-symbol fact):    ?connect@T63C6D0@@QAEHXZ", "owner proposal: src/net_session_picker.cpp; original identity 0x0063C6D0; symbol observation intentionally pending physical compilation"], "reason": "Recover the selected-session operation as a real NetSessionPickerWin member over the existing ListBox, AlphaNetLedger, Net and popup owners; emitted symbol awaits physical observation."}
+// symbol    ?join_selected_session@NetSessionPickerWin@@QAEHXZ
+// LEVER: ecx/cdecl the given `extern "C" int __cdecl sub_63c6d0()` head was wrong - every field access reads `[ecx+N]`/`[esi+N]` with `esi=ecx` and no stack argument, so the receiver is `this`. Changing it to a `__thiscall` member of a local helper class is part of what made this match, so it is a lever and not a tried spelling.
+// LEVER: reversing a `>=` comparison's operand order (`iVar2 <= *w` instead of `*w >= iVar2`) flipped `jl` to the original's `jg`; and giving the "abs bound exceeded" early-exit its own flag (skipping the trailing `field36bc = iVar1` store) instead of relying on it falling out of a plain if/else, matched the original NOT sharing that store between the negative- and positive-`iVar1` branches - it stores separately in each.
+// working copy - scaffold materialised by --work
+// size      229 bytes
+// prototype
+// callers   0   call targets   3
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00627200 0x0062E540 0x00644F3A
+int NetSessionPickerWin::join_selected_session() {
+    if (pop_caption_value_title("jackal", "NETCONNECT_JOIN", 0x3c, 0x44,
+                                0) == -1) {
+        return 1;
+    }
+
+    sessions_.seek_pos(sessions_view_.selected_position_);
+    NetAllocationNode *session;
+    if (sessions_.head_ != 0) {
+        session = sessions_.current_->payload_;
+    } else {
+        session = 0;
+    }
+
+    const int result = net_->join_session(
+        session, ParseStrBuffer[0].str, 0);
+    tail_.action_result_ = result;
+    if (result != 0) {
+        return 0;
+    }
+    return 1;
+}
+
+// ORIGINAL: 0x0063C7C0 sub_63c7c0 0x0063C7C0-0x0063C9B6 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor/destructor calls and direct accesses establish the GraphicWin base, ordered Time/Heap/ListBox/PushButton/list members, and observed tail through +0x37A4. The descriptive owner name and complete original allocation remain unproved.", "The integer timer adapter checks nonzero context; the distinct nullary focus member does not. Pinned table 0x670DDC establishes slot 12 at 0x670E0C -> 0x63C9D0 and slot 44 at 0x670E8C -> 0x63C3A0. Automatic owner destruction replaces manual table staging and executable-address forwarding.", "The Net caller retains one automatic picker, original unchecked copies and invalid-node error paths, and password-pointer reloads after modal execution. Indirect event linkage, precise unwind correspondence, historical matching and full linked/runtime fidelity remain obligations."], "reason": "Typed session-picker ownership and its Net receiver-backed caller, preserving the original entries and compiler-generated lifetime identities."}
+// symbol    ?refresh_player_list@NetSessionPickerWin@@QAEXXZ
+// TRIED: `__thiscall` function-pointer casts for the dynamically adjusted vtable dispatches (C4234, VC6 refuses them) - routed through a second VCall-style shim (VCallSlot0) instead, one per distinct slot/arity pair, matching the brief's guidance. Did not chase the remaining register-allocation divergence (first mismatch at instruction #2) further given the size and structural complexity of this function (three raw vtable adjustor dispatches plus ListBox::attach/item/update_changes).
+// Inline cursor read: the image reloads head_ after it for the step back.
+static inline NetAllocationNode *ledger_current_id(AlphaNetLedger *list) {
+  return list->head_ != 0 ? list->current_->payload_ : 0;
+}
+
+void NetSessionPickerWin::refresh_player_list() {
+  // The list implementation owns the observed hook/delete/cursor-reset
+  // sequence; it preserves the original callback and allocator protocol.
+  sessions_.remove_all();
+
+  // Direct pinned call 0x62E420: ECX is net_, arguments are this exact ledger
+  // and a null password. A nonzero result returns before the UI lists change.
+  if (net_->enumerate_sessions(&sessions_, 0) != 0) return;
+  ListBox *view = &sessions_view_;
+
+  {
+    StringList &items = sessions_view_.item_list_;
+    items.remove_all();
+    items.current_position_ = 0;
+  }
+  // Native63C874 reloads the virtual Dialog view between the two clears.
+  // Each call's following stores use that call's captured list receiver.
+  StringList &items = sessions_view_.item_list_;
+  items.reset();
+
+  if (sessions_.entry_count_ == 0) {
+    view->item("NO SESSIONS (Translate this)", 0);
+  } else {
+    sessions_.seek_pos(-1);
+
+    int index = 0;
+    if (sessions_.entry_count_ > 0) {
+      do {
+        AlphaNetLedger *list = &sessions_;
+        NetAllocationNode *item_id = ledger_current_id(&sessions_);
+        if (list->head_ != 0) {
+          list->current_ = list->current_->previous_;
+          if (--list->current_position_ == -1) {
+            list->current_position_ = list->entry_count_ - 1;
+          }
+        }
+        // The original's null-head/inconsistent-current path reads through
+        // an invalid payload expression; under the actual circular-list
+        // invariant this arm is unreachable. Do not repair it here.
+        char *text = list->current_ != 0
+            ? (list->head_ != 0 ? list->current_->payload_ : 0)->session_name_
+            : 0;
+        view->item(text, static_cast<int>(reinterpret_cast<uintptr_t>(item_id)));
+        ++index;
+      } while (index < sessions_.entry_count_);
+    }
+  }
+
+  int result;
+  if (HandleMain == 0) {
+    // Native63C963 reloads the Dialog coordinates at this late phase;
+    // Native63C981 directly calls the real ListBox attachment method.
+    result = view->ListBox::attach(
+        this, view->window_x_, view->window_y_, 0x80000);
+  } else {
+    result = view->update_changes();
+  }
+  tail_.action_result_ = result;
+  if (result != 0) return;
+  sessions_view_.show(0);
+}
+
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x0063C9C0 nullsub_266 0x0063C9C0-0x0063C9C1 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x0063C9C0-0x0063C9C1 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x0063C7C0 sub_63c7c0 (src/net_session_picker.cpp) and 0x0063C9D0 sub_63c9d0 (src/net_session_picker.cpp)"]}
+// symbol    ?nullsub_266@@YAXXZ
+// kind      game
+void __cdecl nullsub_266() {
 }
 
 // ORIGINAL: 0x0063C9D0 sub_63c9d0 0x0063C9D0-0x0063CA98 FILE BYTE_EXACT
@@ -269,401 +636,25 @@ void NetSessionPickerWin::draw_selected_rows() {
   }
 }
 
-// ORIGINAL: 0x0063C7C0 sub_63c7c0 0x0063C7C0-0x0063C9B6 FILE BYTE_EXACT
+// ORIGINAL: 0x0063CD50 sub_63cd50 0x0063CD50-0x0063CDBB FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor/destructor calls and direct accesses establish the GraphicWin base, ordered Time/Heap/ListBox/PushButton/list members, and observed tail through +0x37A4. The descriptive owner name and complete original allocation remain unproved.", "The integer timer adapter checks nonzero context; the distinct nullary focus member does not. Pinned table 0x670DDC establishes slot 12 at 0x670E0C -> 0x63C9D0 and slot 44 at 0x670E8C -> 0x63C3A0. Automatic owner destruction replaces manual table staging and executable-address forwarding.", "The Net caller retains one automatic picker, original unchecked copies and invalid-node error paths, and password-pointer reloads after modal execution. Indirect event linkage, precise unwind correspondence, historical matching and full linked/runtime fidelity remain obligations."], "reason": "Typed session-picker ownership and its Net receiver-backed caller, preserving the original entries and compiler-generated lifetime identities."}
-// symbol    ?refresh_player_list@NetSessionPickerWin@@QAEXXZ
-// TRIED: `__thiscall` function-pointer casts for the dynamically adjusted vtable dispatches (C4234, VC6 refuses them) - routed through a second VCall-style shim (VCallSlot0) instead, one per distinct slot/arity pair, matching the brief's guidance. Did not chase the remaining register-allocation divergence (first mismatch at instruction #2) further given the size and structural complexity of this function (three raw vtable adjustor dispatches plus ListBox::attach/item/update_changes).
-// Inline cursor read: the image reloads head_ after it for the step back.
-static inline NetAllocationNode *ledger_current_id(AlphaNetLedger *list) {
-  return list->head_ != 0 ? list->current_->payload_ : 0;
-}
-
-void NetSessionPickerWin::refresh_player_list() {
-  // The list implementation owns the observed hook/delete/cursor-reset
-  // sequence; it preserves the original callback and allocator protocol.
-  sessions_.remove_all();
-
-  // Direct pinned call 0x62E420: ECX is net_, arguments are this exact ledger
-  // and a null password. A nonzero result returns before the UI lists change.
-  if (net_->enumerate_sessions(&sessions_, 0) != 0) return;
-  ListBox *view = &sessions_view_;
-
-  {
-    StringList &items = sessions_view_.item_list_;
-    items.remove_all();
-    items.current_position_ = 0;
+// symbol    ?draw_frame@NetSessionPickerWin@@QAEXXZ
+void NetSessionPickerWin::draw_frame() {
+  RECT *rect = &tail_.frame_rect_;
+  GraphicWin::fill(rect, tail_.frame_color_);
+  int count = tail_.row_count_;
+  int i = 0;
+  if (count > 0) {
+    do {
+      Buffer::box(rect, tail_.box_color_a_, tail_.box_color_b_);
+      ++rect->left;
+      --rect->right;
+      ++rect->top;
+      --rect->bottom;
+      count = tail_.row_count_;
+      ++i;
+    } while (i < count);
   }
-  // Native63C874 reloads the virtual Dialog view between the two clears.
-  // Each call's following stores use that call's captured list receiver.
-  StringList &items = sessions_view_.item_list_;
-  items.reset();
-
-  if (sessions_.entry_count_ == 0) {
-    view->item("NO SESSIONS (Translate this)", 0);
-  } else {
-    sessions_.seek_pos(-1);
-
-    int index = 0;
-    if (sessions_.entry_count_ > 0) {
-      do {
-        AlphaNetLedger *list = &sessions_;
-        NetAllocationNode *item_id = ledger_current_id(&sessions_);
-        if (list->head_ != 0) {
-          list->current_ = list->current_->previous_;
-          if (--list->current_position_ == -1) {
-            list->current_position_ = list->entry_count_ - 1;
-          }
-        }
-        // The original's null-head/inconsistent-current path reads through
-        // an invalid payload expression; under the actual circular-list
-        // invariant this arm is unreachable. Do not repair it here.
-        char *text = list->current_ != 0
-            ? (list->head_ != 0 ? list->current_->payload_ : 0)->session_name_
-            : 0;
-        view->item(text, static_cast<int>(reinterpret_cast<uintptr_t>(item_id)));
-        ++index;
-      } while (index < sessions_.entry_count_);
-    }
-  }
-
-  int result;
-  if (HandleMain == 0) {
-    // Native63C963 reloads the Dialog coordinates at this late phase;
-    // Native63C981 directly calls the real ListBox attachment method.
-    result = view->ListBox::attach(
-        this, view->window_x_, view->window_y_, 0x80000);
-  } else {
-    result = view->update_changes();
-  }
-  tail_.action_result_ = result;
-  if (result != 0) return;
-  sessions_view_.show(0);
-}
-
-// Unreferenced in the pinned image (no call, jump or data reference).
-// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
-// ORIGINAL: 0x0063C9C0 nullsub_266 0x0063C9C0-0x0063C9C1 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x0063C9C0-0x0063C9C1 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x0063C7C0 sub_63c7c0 (src/net_session_picker.cpp) and 0x0063C9D0 sub_63c9d0 (src/net_session_picker.cpp)"]}
-// symbol    ?nullsub_266@@YAXXZ
-// kind      game
-void __cdecl nullsub_266() {
-}
-
-// ORIGINAL: 0x0063C340 sub_63c340 0x0063C340-0x0063C38F FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor/destructor calls and direct accesses establish the GraphicWin base, ordered Time/Heap/ListBox/PushButton/list members, and observed tail through +0x37A4. The descriptive owner name and complete original allocation remain unproved.", "The integer timer adapter checks nonzero context; the distinct nullary focus member does not. Pinned table 0x670DDC establishes slot 12 at 0x670E0C -> 0x63C9D0 and slot 44 at 0x670E8C -> 0x63C3A0. Automatic owner destruction replaces manual table staging and executable-address forwarding.", "The Net caller retains one automatic picker, original unchecked copies and invalid-node error paths, and password-pointer reloads after modal execution. Indirect event linkage, precise unwind correspondence, historical matching and full linked/runtime fidelity remain obligations."], "reason": "Typed session-picker ownership and its Net receiver-backed caller, preserving the original entries and compiler-generated lifetime identities."}
-// symbol    ?start_refresh_timer@NetSessionPickerWin@@QAEHXZ
-int NetSessionPickerWin::start_refresh_timer() {
-  // Native 0x63C340 passes this owner through Time's existing integer
-  // callback-context ABI; the old Win attribution read beyond sizeof(Win).
-  if (refresh_timer_.start(refresh_timer_callback,
-                           static_cast<int>(reinterpret_cast<uintptr_t>(this)),
-                           1000, 5) != 0) {
-    return 0;
-  }
-  refresh_player_list();
-  set_modal(0, 0, 0);
-  hide();
-  return net_->local_player_id();
-}
-
-// ORIGINAL: 0x0063C4E0 sub_63c4e0 0x0063C4E0-0x0063C4F6 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor/destructor calls and direct accesses establish the GraphicWin base, ordered Time/Heap/ListBox/PushButton/list members, and observed tail through +0x37A4. The descriptive owner name and complete original allocation remain unproved.", "The integer timer adapter checks nonzero context; the distinct nullary focus member does not. Pinned table 0x670DDC establishes slot 12 at 0x670E0C -> 0x63C9D0 and slot 44 at 0x670E8C -> 0x63C3A0. Automatic owner destruction replaces manual table staging and executable-address forwarding.", "The Net caller retains one automatic picker, original unchecked copies and invalid-node error paths, and password-pointer reloads after modal execution. Indirect event linkage, precise unwind correspondence, historical matching and full linked/runtime fidelity remain obligations."], "reason": "Typed session-picker ownership and its Net receiver-backed caller, preserving the original entries and compiler-generated lifetime identities."}
-// symbol    ?refresh_timer_callback@NetSessionPickerWin@@SAXH@Z
-void __cdecl NetSessionPickerWin::refresh_timer_callback(int context) {
-  // Keep the image's int payload ABI and the nonzero/focus guard order.
-  if (context == 0) return;
-  NetSessionPickerWin *owner = reinterpret_cast<NetSessionPickerWin *>(
-      static_cast<uintptr_t>(static_cast<unsigned int>(context)));
-  if (WinFocusWindow == static_cast<Win *>(owner)) owner->refresh_player_list();
-}
-
-// ORIGINAL: 0x0063C390 sub_63c390 0x0063C390-0x0063C39E FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor/destructor calls and direct accesses establish the GraphicWin base, ordered Time/Heap/ListBox/PushButton/list members, and observed tail through +0x37A4. The descriptive owner name and complete original allocation remain unproved.", "The integer timer adapter checks nonzero context; the distinct nullary focus member does not. Pinned table 0x670DDC establishes slot 12 at 0x670E0C -> 0x63C9D0 and slot 44 at 0x670E8C -> 0x63C3A0. Automatic owner destruction replaces manual table staging and executable-address forwarding.", "The Net caller retains one automatic picker, original unchecked copies and invalid-node error paths, and password-pointer reloads after modal execution. Indirect event linkage, precise unwind correspondence, historical matching and full linked/runtime fidelity remain obligations."], "reason": "Typed session-picker ownership and its Net receiver-backed caller, preserving the original entries and compiler-generated lifetime identities."}
-// symbol    ?refresh_if_focused@NetSessionPickerWin@@QAEXXZ
-void NetSessionPickerWin::refresh_if_focused() {
-  if (WinFocusWindow == static_cast<Win *>(this)) refresh_player_list();
-}
-
-// ORIGINAL: 0x0063BF10 sub_63bf10 0x0063BF10-0x0063C33F FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor/destructor calls and direct accesses establish the GraphicWin base, ordered Time/Heap/ListBox/PushButton/list members, and observed tail through +0x37A4. The descriptive owner name and complete original allocation remain unproved.", "The integer timer adapter checks nonzero context; the distinct nullary focus member does not. Pinned table 0x670DDC establishes slot 12 at 0x670E0C -> 0x63C9D0 and slot 44 at 0x670E8C -> 0x63C3A0. Automatic owner destruction replaces manual table staging and executable-address forwarding.", "The Net caller retains one automatic picker, original unchecked copies and invalid-node error paths, and password-pointer reloads after modal execution. Indirect event linkage, precise unwind correspondence, historical matching and full linked/runtime fidelity remain obligations."], "reason": "Typed session-picker ownership and its Net receiver-backed caller, preserving the original entries and compiler-generated lifetime identities."}
-// symbol    ?initialize@NetSessionPickerWin@@QAEHPAVNet@@PADPAVFont@@HHH@Z
-// TRIED: not __stdcall(int,int,int) as the brief's fallback signature guessed - it's __thiscall(int,char*,Font*,int,int,int) returning int, 6 stack args popped by `ret 0x18`, cross-checked against Ghidra's param numbering (param_1 is `this`). Dialog init/ set_dialog_* calls do NOT address self+0xa50 directly: the embedded Dialog's real base is `self+0xa50+*(*(self+0xa50)+8)`, an owner/index indirection re-derived from the raw disasm since Ghidra's flattened `*(*piVar1+8)+OFFSET+param_1` addressing looked at first like a plain field write. slot062 (0xf8/4) called nullary, no retype needed. sim 0.85 at plain /O2; first divergence #53 is a register-vs-recompute choice in the width/height layout arithmetic, not chased further.
-int NetSessionPickerWin::initialize(Net *network, char *caption,
-                                    Font *font, int width, int height,
-                                    int rows) {
-  if (rows == 0) return 3;
-  if (network == 0 || font == 0) return 0x10;
-  if (!font->is_initialized()) return 7;
-
-  tail_.rows_visible_ = rows;
-  net_ = network;
-  const int margin_x = width * 10 / 600;
-  const int margin_y = height * 10 / 440;
-  tail_.client_width_ = width;
-  tail_.client_height_ = height;
-  int result = GraphicWin::init(
-      0, 0, width, height, caption, 0x800, BasePopDefaultField322C, 0, 0);
-  if (result != 0) return result;
-
-  center();
-  Buffer::set_font(font, 0, 0, 0);
-
-  // The button column: a third of the client width wide and 7/4 line
-  // heights tall, then shifted to the right margin and down.
-  RECT rect;
-  rect.left = tail_.client_width_;
-  rect.top = tail_.client_height_;
-  rect.right = tail_.client_width_ * 200 / 600 + tail_.client_width_;
-  rect.bottom = font->pixel_height() * 7 / 4 + tail_.client_height_;
-  const int dx = tail_.client_width_ - tail_.client_width_ * 10 / 600 - rect.right;
-  rect.left += dx;
-  rect.right += dx;
-  const int dy = (tail_.client_height_ - rect.bottom - margin_y) * 3;
-  rect.top += dy;
-  rect.bottom += dy;
-  int button_width = rect.right - rect.left;
-  int button_height = rect.bottom - rect.top;
-  result = action_button_.init(BasePopDefaultOkText, -1, rect.left, rect.top,
-                               button_width, button_height, this, 0);
-  if (result != 0) return result;
-  action_button_.set_font(font, 0, 0, 0);
-  action_button_.redraw();
-
-  rect.top += button_height + margin_y;
-  rect.bottom += button_height + margin_y;
-  int create_height = rect.bottom - rect.top;
-  result = create_button_.init("Create Session (Translate)",
-                               0, rect.left, rect.top, button_width,
-                               create_height, this, 0);
-  if (result != 0) return result;
-  create_button_.set_font(font, 0, 0, 0);
-  create_button_.redraw();
-
-  rect.top += button_height + margin_y;
-  rect.bottom += button_height + margin_y;
-  // The image passes the create button's height as the cancel width.
-  result = cancel_button_.init(BasePopDefaultCancelText, -2, rect.left,
-                               rect.top, create_height, rect.bottom - rect.top,
-                               this, 0);
-  if (result != 0) return result;
-  cancel_button_.set_font(font, 0, 0, 0);
-  cancel_button_.redraw();
-
-  tail_.first_label_rect_.top = margin_y;
-  tail_.first_label_rect_.left = margin_x;
-  tail_.first_label_rect_.right = margin_x * -2 - cancel_button_.pixel_width()
-      + width;
-  tail_.first_label_rect_.bottom = margin_y + cancel_button_.pixel_height();
-  tail_.second_label_rect_.right = width - margin_x;
-  tail_.panel_rect_.left = margin_x;
-  const int second_left = tail_.first_label_rect_.right + margin_x;
-  tail_.second_label_rect_.left = second_left;
-  tail_.panel_rect_.bottom = height - margin_y;
-  tail_.second_label_rect_.top = margin_y;
-  tail_.second_label_rect_.bottom = tail_.first_label_rect_.bottom;
-  tail_.panel_rect_.top = tail_.first_label_rect_.bottom;
-  tail_.panel_rect_.right = tail_.first_label_rect_.right;
-  tail_.rows_rect_.left = second_left;
-  tail_.rows_rect_.right = width - margin_x;
-  tail_.rows_rect_.top = tail_.first_label_rect_.bottom;
-
-  tail_.rows_rect_.bottom = action_button_.client_rect().top - margin_y * 2;
-  tail_.row_height_ = (tail_.rows_rect_.bottom - tail_.boxes_per_row_ * 2
-                       - tail_.rows_rect_.top) / rows;
-  tail_.rows_rect_.bottom = tail_.row_height_ * rows + tail_.rows_rect_.top;
-
-  sessions_view_.close();
-  result = sessions_view_.Dialog::init(&tail_.panel_rect_, 0);
-  if (result != 0) return result;
-
-  sessions_view_.Dialog::field_AC_ = 0;
-  sessions_view_.Dialog::field_B0_ = 0;
-  sessions_view_.Dialog::field_B4_ = 2;
-  sessions_view_.Dialog::field_5C_ = 2;
-  sessions_view_.Dialog::set_dialog_text_color(tail_.field_3714_, -1, 1, 1);
-  sessions_view_.Dialog::set_dialog_text_color2(tail_.field_3718_, -1, 1, 1);
-  sessions_view_.Dialog::set_dialog_font(fonts_[0], 0, 0);
-  sessions_view_.Dialog::field_34_ = blank_sprite().width();
-  return 0;
-}
-
-// The image pushes one "jackal"/"NETCONNECT_CREATE" pair (0x698BC8/0x698BB4)
-// at both of connect_session's create prompts while every other literal in
-// the unit is a separate object: both prompts expand this one inline body.
-static inline int ask_create_session() {
-  return pop_caption_value_title("jackal", "NETCONNECT_CREATE", 0x3c, 0x44, 0);
-}
-
-// ORIGINAL: 0x0063C510 sub_63c510 0x0063C510-0x0063C6CA FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor/destructor calls and direct accesses establish the GraphicWin base, ordered Time/Heap/ListBox/PushButton/list members, and observed tail through +0x37A4. The descriptive owner name and complete original allocation remain unproved.", "The integer timer adapter checks nonzero context; the distinct nullary focus member does not. Pinned table 0x670DDC establishes slot 12 at 0x670E0C -> 0x63C9D0 and slot 44 at 0x670E8C -> 0x63C3A0. Automatic owner destruction replaces manual table staging and executable-address forwarding.", "The Net caller retains one automatic picker, original unchecked copies and invalid-node error paths, and password-pointer reloads after modal execution. Indirect event linkage, precise unwind correspondence, historical matching and full linked/runtime fidelity remain obligations."], "reason": "Typed session-picker ownership and its Net receiver-backed caller, preserving the original entries and compiler-generated lifetime identities."}
-// symbol    ?connect_session@NetSessionPickerWin@@QAEHXZ
-// TRIED: __thiscall helper class (NetConnectHelper) with pop()/parse_says() overload resolution by arg count and a 1-arg VCall::slot000; diverges at #0, frame setup differs
-int NetSessionPickerWin::connect_session() {
-  parse_says(0, "My Session", -1, -1);
-  parse_says(1, "My Name", -1, -1);
-  parse_says(2, &SessionPickerPasswordPrompt, -1, -1);
-
-  int status = ask_create_session();
-  for (;;) {
-    if (status == -1) return 1;
-    if (ParseStrBuffer[0].str[0] == 0) {
-      pop_caption("jackal", "NETCONNECT_NEED_SESSION", 0);
-    } else if (ParseStrBuffer[1].str[0] == 0) {
-      pop_caption("jackal", "NETCONNECT_NEED_PLAYER", 0);
-    } else {
-      if (ParseStrBuffer[2].str[0] != 0) {
-        pop_caption("jackal", "NETCONNECT_PASSWORD_SET", 0);
-      }
-
-      BasePop *popup = PopupAllocHook();
-      if (popup == 0) return 4;
-      popup->start("jackal", "NETCONNECT_MAX_PLAYERS",
-                   -1, 0, 0x50, 0);
-
-      int faction_count = tail_.rows_visible_;
-      char letter = '2';
-      for (int i = 2; i < faction_count + 1; ++i) {
-        char label[12];  // 12-byte frame slot in the image
-        label[0] = letter;
-        label[1] = 0;
-        popup->dialogs().item(label, i);
-        ++letter;
-        faction_count = tail_.rows_visible_;
-      }
-
-      const int selected_players = popup->exec(0, 0);
-      delete popup;
-      if (selected_players != -1) {
-        NetAllocationNode *session = net_->create_session(
-            ParseStrBuffer[0].str, selected_players, ParseStrBuffer[2].str);
-        if (session == 0) {
-          return 1;
-        }
-        return net_->join_session(session, ParseStrBuffer[1].str, 0) == 0;
-      }
-    }
-    status = ask_create_session();
-  }
-}
-
-// ORIGINAL: 0x0063C6D0 sub_63c6d0 0x0063C6D0-0x0063C7B5 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/unrecovered/0063c6d0.cpp; full original marker, spans, byte claim and lessons transported by match_recovery.source.writer", "historical scaffold symbol hint (not an emitted-symbol fact):    ?connect@T63C6D0@@QAEHXZ", "owner proposal: src/net_session_picker.cpp; original identity 0x0063C6D0; symbol observation intentionally pending physical compilation"], "reason": "Recover the selected-session operation as a real NetSessionPickerWin member over the existing ListBox, AlphaNetLedger, Net and popup owners; emitted symbol awaits physical observation."}
-// symbol    ?join_selected_session@NetSessionPickerWin@@QAEHXZ
-// LEVER: ecx/cdecl the given `extern "C" int __cdecl sub_63c6d0()` head was wrong - every field access reads `[ecx+N]`/`[esi+N]` with `esi=ecx` and no stack argument, so the receiver is `this`. Changing it to a `__thiscall` member of a local helper class is part of what made this match, so it is a lever and not a tried spelling.
-// LEVER: reversing a `>=` comparison's operand order (`iVar2 <= *w` instead of `*w >= iVar2`) flipped `jl` to the original's `jg`; and giving the "abs bound exceeded" early-exit its own flag (skipping the trailing `field36bc = iVar1` store) instead of relying on it falling out of a plain if/else, matched the original NOT sharing that store between the negative- and positive-`iVar1` branches - it stores separately in each.
-// working copy - scaffold materialised by --work
-// size      229 bytes
-// prototype
-// callers   0   call targets   3
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x00627200 0x0062E540 0x00644F3A
-int NetSessionPickerWin::join_selected_session() {
-    if (pop_caption_value_title("jackal", "NETCONNECT_JOIN", 0x3c, 0x44,
-                                0) == -1) {
-        return 1;
-    }
-
-    sessions_.seek_pos(sessions_view_.selected_position_);
-    NetAllocationNode *session;
-    if (sessions_.head_ != 0) {
-        session = sessions_.current_->payload_;
-    } else {
-        session = 0;
-    }
-
-    const int result = net_->join_session(
-        session, ParseStrBuffer[0].str, 0);
-    tail_.action_result_ = result;
-    if (result != 0) {
-        return 0;
-    }
-    return 1;
-}
-
-// ORIGINAL: 0x0063C3A0 sub_63c3a0 0x0063C3A0-0x0063C4D6 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor/destructor calls and direct accesses establish the GraphicWin base, ordered Time/Heap/ListBox/PushButton/list members, and observed tail through +0x37A4. The descriptive owner name and complete original allocation remain unproved.", "The integer timer adapter checks nonzero context; the distinct nullary focus member does not. Pinned table 0x670DDC establishes slot 12 at 0x670E0C -> 0x63C9D0 and slot 44 at 0x670E8C -> 0x63C3A0. Automatic owner destruction replaces manual table staging and executable-address forwarding.", "The Net caller retains one automatic picker, original unchecked copies and invalid-node error paths, and password-pointer reloads after modal execution. Indirect event linkage, precise unwind correspondence, historical matching and full linked/runtime fidelity remain obligations."], "reason": "Typed session-picker ownership and its Net receiver-backed caller, preserving the original entries and compiler-generated lifetime identities."}
-// symbol    ?on_button_clicked@NetSessionPickerWin@@UAEXH@Z
-// TRIED: IDA guessed 1 stack arg; ecx=esi with no matching stack read confirms a __thiscall receiver, its own minimal class (no catalogued name). The vtable-slot-58 call needs its own dummy-padded virtual class (same reason as 0x5ED880), so this stays FILE mode. `if (a2==-2){A}else if(a2!=-1){...}` compiles the -2 case inline (jne to skip past it); the original places that handler in a separate far block and jumps to it directly (je) - a block-layout difference this source form did not reproduce. Landed at MISMATCH #4.
-void NetSessionPickerWin::on_button_clicked(int action) {
-  switch (action) {
-  case 0:
-    if (connect_session() != 0) return;
-    release_modal();
-    return;
-  case -1:
-    // join_selected_session is expanded here: the image pushes its
-    // "jackal"/"NETCONNECT_JOIN" literals (0x698C60/0x698C50).
-    if (!join_selected_session()) release_modal();
-    return;
-  case -2:
-    tail_.action_result_ = 0;
-    release_modal();
-    return;
-  }
-}
-
-/*
-Purpose: Scale a field by an argument and divide by 600.
-
-             mov ecx,[ecx+0x3798] / mov eax,0x1b4e81b5 / imul ecx,[esp+4]
-             imul ecx / mov eax,edx / sar eax,6 / mov ecx,eax / shr ecx,0x1f
-             add eax,ecx / ret 4
-
-         MSVC's magic-number division: multiply by 0x1b4e81b5, keep the high
-         dword, shift right 6, then add the sign bit so it truncates toward
-         zero instead of toward negative infinity. 0x1b4e81b5 is
-         ceil(2^38 / 600), and the divisor was confirmed by running the
-         original's exact sequence against truncating division over 206,006
-         inputs - the whole of -3000..3000, 200,000 random int32s, and both
-         extremes - with no disagreement.
-
-         The multiply is an ordinary 32-bit one and WRAPS. Spelling it in
-         unsigned and casting back keeps that defined, which signed overflow
-         in C++ would not be.
-
-// ORIGINAL: 0x0063BEB0 sub_63beb0 0x0063BEB0-0x0063BED1 BYTE_EXACT
-// symbol    ?scale_client_width@NetSessionPickerWin@@QAEHH@Z
-// size      33 bytes
-// prototype
-// callers   0   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-Return Value: (field 0x3798 * argument) / 600
-Status: Complete
-*/
-
-int NetSessionPickerWin::scale_client_width(int factor) {
-    const uint32_t product = static_cast<uint32_t>(tail_.client_width_) *
-                             static_cast<uint32_t>(factor);
-    return static_cast<int32_t>(product) / 600;
-}
-
-
-/*
-Purpose: Scale a field by an argument and divide by 440.
-
-         The same shape as 0063BEB0 with a different field, magic and shift:
-         0x94f2095 is ceil(2^36 / 440). Confirmed the same way, over the same
-         206,006 inputs, with no disagreement.
-
-// ORIGINAL: 0x0063BEE0 sub_63bee0 0x0063BEE0-0x0063BF01 BYTE_EXACT
-// symbol    ?scale_client_height@NetSessionPickerWin@@QAEHH@Z
-// size      33 bytes
-// prototype
-// callers   0   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-Return Value: (field 0x379c * argument) / 440
-Status: Complete
-*/
-
-int NetSessionPickerWin::scale_client_height(int factor) {
-    const uint32_t product = static_cast<uint32_t>(tail_.client_height_) *
-                             static_cast<uint32_t>(factor);
-    return static_cast<int32_t>(product) / 440;
 }
 // RECOVERY_GENERATED: v1 vbtable 0x0066EAF0 ? ??_8AlphaNetLedger@@7B@ 0x0063BB20
 // RECOVERY_GENERATED: v1 vtable 0x0066EAE4 ? ??_7AlphaNetLedger@@6BStringAllocationBase@@@ 0x0063BB20
@@ -711,10 +702,6 @@ Status: Complete
 // guarded_teardowns.h's TeardownObject009BEAE8 scaffold name. The current
 // source owner is BlankSpriteStorageOwner and its blank_sprite() accessor;
 // retain that older interpretation here as provenance, not as a current owner.
-// The pinned short-string read at 0x00698CAC independently establishes this
-// filename's spelling and terminator, not its original allocation extent.
-// RECOVERY_OBJECT: v1 0x00698CAC _JackalPcxPath
-static const char JackalPcxPath[] = "jackal.pcx";
 
 // ORIGINAL: 0x0063CDC0 sub_63cdc0 0x0063CDC0-0x0063CE17 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned image span 0x0063CDC0-0x0063CE17: early argument-2/null and dword-at-+8 checks; argument-1 selects null or +0x444 Buffer; final call targets Sprite::draw at 0x005E4B9A.", "Current GraphicWin multiply-inherits Buffer after Win; sizeof(Win)==0x444. Typed GraphicWin-to-Buffer conversion replaces the observed +0x444 destination adjustment.", "The absolute reads 0x009BEAF0 and 0x009BEB04 are the blank Sprite's cTransparentIndex_ (+8) and iHeight_ (+0x1c) in source-owned storage at 0x009BEAE8; access them through blank_sprite().", "The retired seed recorded the same identity/span and historical BYTE_EXACT claim; the claim remains an obligation, not fresh proof.", "Argument 2 remains opaque: only the original dword-at-+8 nonzero test is recovered; no caller edge or enclosing type is established in the current mapped-source closure."], "reason": "Draw the source-owned shared blank Sprite through blank_sprite() and a typed GraphicWin/Buffer destination while preserving the unknown gate context's original dword test, centering and ignored draw result."}
@@ -747,7 +734,8 @@ void __cdecl sub_63cdc0(GraphicWin *window, void *gate_context, int unused,
 int Sprite::init_class() {
     Buffer buf;
     int result;
-    if (buf.load_pcx(JackalPcxPath, 0, 10, 0xec) != 0) {
+// RECOVERY_LITERAL: v1 0x00698CAC 0x00698CB7 $SG50007 0x0063CE20
+    if (buf.load_pcx("jackal.pcx", 0, 10, 0xec) != 0) {
         result = blank_sprite().create_blank(0x10, 0x10, 9);
     } else {
         result = blank_sprite().extract(&buf, 9, 1, 0x12, 0x10, 0x10, 0);
