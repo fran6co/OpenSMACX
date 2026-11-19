@@ -7039,6 +7039,22 @@ Finish-line round (par-1 2026-11-19, round 14):
   the sprite loops indexed instead of walked (92-112: y then takes the
   pointer's slot). The remaining push/store schedule at 0x41F3C2 is neutral
   to all 24 orders of the camera-angle stores and four pointer/cast forms.
+Re-tests and stack loops (par-2 2026-11-19, enemy_move 0x0056B5B0)
+- **A re-test the image keeps was spelled differently from the test before
+  it.** When two tests of the same value are textually identical (same
+  operands, same operator, same constant), VC6 threads the jump of the first
+  past the second and the re-test disappears; a non-identical spelling of the
+  same fact (`home_dist < 4` then `home_dist <= 3`, a field against its local,
+  a helper against its expansion) keeps the second compare and its block.
+  So a compare in the image that ours threads away names a second spelling,
+  not a reordered condition (the radius_move guard after the order-9 block,
+  7710690f98).
+- **A stack loop that tests the id for `< 0` again before reading the next
+  link is `veh_next_stack_id(id)`**, not `id = Vehs[id].next_veh_id_stack`:
+  the inline's own `id >= 0 ? … : id` adds the re-test (`test reg,reg; jl`
+  before the `mov reg,[reg*0x34+next]`). Look for it in every walk the image
+  shows with two sign tests per step (enemy_move's sea-transport scan
+  0x56F0BD and coast-region passenger check 0x576183, 3134ae26b7).
 
 ## 4. Measured and neutral (do not retry without new evidence)
 
