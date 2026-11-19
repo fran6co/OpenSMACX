@@ -247,6 +247,8 @@ void PullDown::pulldown_update(int old_selected, int new_selected) {
         const int second_y = text_line_height() / 2 + row.top + 1;
         const int second_left = PullDownBorderPadding;
         hline(second_left, second_left + second_width, second_y, second_color);
+    expand_rect(&row, PullDownTextPadding, 0);
+          soft_update(&row);
       } else {
         if (old_selected == selected_) {
           if (field_F38_ != 0) {
@@ -295,9 +297,9 @@ void PullDown::pulldown_update(int old_selected, int new_selected) {
         if (right_text != 0) {
           write_right_l(right_text, &row, static_cast<int>(strlen(right_text)));
         }
-      }
-      expand_rect(&row, PullDownTextPadding, 0);
-      soft_update(&row);
+          expand_rect(&row, PullDownTextPadding, 0);
+          soft_update(&row);
+          }
     }
   }
 
