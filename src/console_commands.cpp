@@ -1493,6 +1493,47 @@ static inline void terraform_refund(Console *console, int payment) {
         console->update_data(0);
     }
 }
+// WORKAROUND(inline): the closing "issue the orders" block as an inline
+// owner (no out-of-line copy in the image; name and home unknown). With the
+// unavailable-tech owner below it gives the image's ~Scroll vector
+// (17 calls, then 13 expansions; ours wrote out 14 calls, 16 expansions) and
+// EH distance 10 -> 3; either owner alone stops one ~Scroll site short
+// (screens of 1-3-if dead probes at 11 places move nothing).
+static inline void terraform_issue_orders(Console *self, int &vehicle_id, int terraform_id) {
+    if (NetDaemonNet.exec_pending_ != 0 ||
+        NetDaemonNet.lock_veh(&vehicle_id, 0, -1, -1, 0) == 0) {
+        Vehs[vehicle_id].order = static_cast<uint8_t>(terraform_id + 4);
+        synch_veh(vehicle_id);
+        log_say("Issuing Vehicle Orders", vehicle_id, terraform_id + 4, 0);
+        if (IsMultiplayerNet) {
+            if (veh_moves(vehicle_id)) {
+                NetDaemonNet.action(vehicle_id, 1);
+            } else {
+                NetDaemonNet.unlock_veh();
+            }
+        } else {
+            NetDaemonNet.unlock_veh();
+        }
+        log_say("Finished issuing orders", vehicle_id, terraform_id + 4, 0);
+        self->field_23BE4_ = 0;
+    }
+}
+
+// WORKAROUND(inline): the unavailable-tech message (tech name, then the
+// HASROAD/HASFARM/NOTUNTILTECH choice) as an inline owner over
+// terraform_say_tech; see terraform_issue_orders. Written with the
+// StringTemp/say_tech run open-coded instead, it overshoots (~Scroll exact,
+// ~FlatButton 21 against 20, EH 9).
+static inline void terraform_tech_message(int terraform_id, int is_sea) {
+    terraform_say_tech(Terraforming[terraform_id].prerequisite_tech[is_sea]);
+    if (terraform_id == TERRA_MAGTUBE) {
+        veh_battle_msg("HASROAD", nullptr);
+    } else if (terraform_id == TERRA_SOIL_ENR) {
+        veh_battle_msg("HASFARM", nullptr);
+    } else {
+        veh_battle_msg("NOTUNTILTECH", nullptr);
+    }
+}
 void Console::terraform(int vehicle_id, int terraform_id) {
     Popup popup;
 
@@ -1554,16 +1595,7 @@ void Console::terraform(int vehicle_id, int terraform_id) {
     if (!terrain_avail(terraform_id, is_sea, faction_id_) &&
         (terraform_id != TERRA_REMOVE_FUNGUS ||
          !has_abil(Vehs[vehicle_id].proto_id, 0x2000))) {
-        StringTemp[0] = 0;
-        say_tech(StringTemp, Terraforming[terraform_id].prerequisite_tech[is_sea], 0);
-        parse_says(0, StringTemp, -1, -1);
-        if (terraform_id == TERRA_MAGTUBE) {
-            veh_battle_msg("HASROAD", nullptr);
-        } else if (terraform_id == TERRA_SOIL_ENR) {
-            veh_battle_msg("HASFARM", nullptr);
-        } else {
-            veh_battle_msg("NOTUNTILTECH", nullptr);
-        }
+        terraform_tech_message(terraform_id, is_sea);
         return;
     }
 
@@ -1839,23 +1871,7 @@ void Console::terraform(int vehicle_id, int terraform_id) {
     if (NetDaemonNet.exec_pending_ != 0) {
         log_say("I think I've already got my lock", 0, 0, 0);
     }
-    if (NetDaemonNet.exec_pending_ != 0 ||
-        NetDaemonNet.lock_veh(&vehicle_id, 0, -1, -1, 0) == 0) {
-        Vehs[vehicle_id].order = static_cast<uint8_t>(terraform_id + 4);
-        synch_veh(vehicle_id);
-        log_say("Issuing Vehicle Orders", vehicle_id, terraform_id + 4, 0);
-        if (IsMultiplayerNet) {
-            if (veh_moves(vehicle_id)) {
-                NetDaemonNet.action(vehicle_id, 1);
-            } else {
-                NetDaemonNet.unlock_veh();
-            }
-        } else {
-            NetDaemonNet.unlock_veh();
-        }
-        log_say("Finished issuing orders", vehicle_id, terraform_id + 4, 0);
-        field_23BE4_ = 0;
-    }
+    terraform_issue_orders(this, vehicle_id, terraform_id);
 }
 
 /*
