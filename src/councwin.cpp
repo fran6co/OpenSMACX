@@ -1579,17 +1579,6 @@ void CouncWin::show(int visible) {
 // guarded-writer shape buffer.h uses for write_l; the receiver is this
 // window's own Buffer base, reached without a null-checked conversion.
 // The rectangle form is buffer.h's guarded write_cent_l(text, rect).
-// WORKAROUND(decl): stand-in for a guarded three-argument Buffer::write_cent_l
-// that buffer.h does not declare. Adding any Buffer member declaration shifts
-// VC6 codegen in unrelated includers (5 claims lost in console_commands,
-// datalink, faction_treaty, game and turn), so it stays local.
-static inline void council_leader_write_cent(CouncWin *win, char *text,
-                                             int x_coord, int y_coord) {
-    if (text != 0) {
-        win->Buffer::write_cent_l(text, x_coord, y_coord,
-                                  static_cast<int>(strlen(text)));
-    }
-}
 
 void CouncWin::draw_leader(int factionID) {
     if (factionID == 0 || (Players[factionID].rule_flags & RFLAG_ALIEN) != 0) {
@@ -1646,13 +1635,13 @@ void CouncWin::draw_leader(int factionID) {
     StringTemp[0] = '\0';
     parse_set(Players[factionID].is_leader_female, 0);
     strcat(StringTemp, Players[factionID].title_leader);
-    council_leader_write_cent(this, StringTemp, centerX, textY);
+    Buffer::write_cent_l(StringTemp, centerX, textY);
 
     textY += font_line_advance(font3_);
     StringTemp[0] = '\0';
     parse_set(Players[factionID].is_leader_female, 0);
     strcat(StringTemp, Players[factionID].name_leader);
-    council_leader_write_cent(this, StringTemp, centerX, textY);
+    Buffer::write_cent_l(StringTemp, centerX, textY);
 
     RECT badgeRect = rect;
     badgeRect.top = textY + font_line_advance(font3_) + 10;
