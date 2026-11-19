@@ -1717,7 +1717,7 @@ int Console::focus(int x_coord, int y_coord, int faction_id) {
         }
         if (slot != 0) {
             const uint32_t active =
-                static_cast<const volatile MapWin *>(window)->view_active_;
+                window->view_active_;
             if (active == 0) {
                 continue;
             }
