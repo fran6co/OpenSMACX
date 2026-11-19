@@ -172,6 +172,22 @@ uint32_t SystemInterfaceFlags;  // 0x00933420
 // RECOVERY_OBJECT: v2 0x007388D8 0x0073ACD8 ?OfferResetCells@@3PAY07UOfferResetCell@@A 0x00441250
 
 
+
+
+// ORIGINAL: 0x004411F0 sub_4411f0 0x004411F0-0x00441241 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:typed-offer-tamper-reset-owners", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x4411f0", "historical seed:src/recovered/units/004411f0.cpp; identity/spans/claims and useful discoveries retained; seed retirement requires fresh verification."], "reason": "Reset the two directed offer cells through the existing typed owner, preserving interleaved count/state write order and payload. Original has two stack ints, no receiver and no meaningful return; caller reachability remains unknown. Seed spelling lesson: full symmetric index expressions preserve native register allocation better than hoisted temporary indices; evidence is not a requirement to use fixed addresses."}
+// symbol    ?clear_offer_pair@@YAXHH@Z
+void __cdecl clear_offer_pair(int faction_a, int faction_b) {
+    OfferResetCells[faction_a][faction_b].count_[0] = 0;
+    OfferResetCells[faction_a][faction_b].count_[1] = 0;
+    OfferResetCells[faction_b][faction_a].count_[0] = 0;
+    OfferResetCells[faction_b][faction_a].count_[1] = 0;
+    OfferResetCells[faction_a][faction_b].state_[0] = 0;
+    OfferResetCells[faction_a][faction_b].state_[1] = 0;
+    OfferResetCells[faction_b][faction_a].state_[0] = 0;
+    OfferResetCells[faction_b][faction_a].state_[1] = 0;
+}
+
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00441250 ?clear_all_offers@@YAXXZ 0x00441250-0x00441296 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned441250 writes four words at offsets0/4/8/12 in90-byte cells over8x8 faction pairs. Source-extracted tracked assignments exercise exact interleaved flat/transposed order."], "reason": "Recover complete offer reset using genuine64-cell storage and typed fields while preserving flat/transposed write ordering and untouched payload. No wider offer semantics are invented."}
@@ -188,6 +204,15 @@ void __cdecl clear_all_offers() {
             OfferResetCells[column][row].state_[1] = 0;
         }
     }
+}
+
+
+// ORIGINAL: 0x00444D90 ?diplo@@YAXHH@Z 0x00444D90-0x00444DA7 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:a1347e25:src/recovered/00444d90.cpp complete original identity/spans and historical claims/findings.", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x444d90 full native body review.", "source:src/game.cpp existing real state owners; no executable-address alias or synthetic receiver."], "reason": "Recover the complete short helper through established source-owned diplomacy, vehicle, text or window state; preserve signed sentinel behavior, original receiver/argument order and conditional callbacks."}
+// symbol    ?diplo@@YAXHH@Z
+// TRIED: homed into game.cpp (its real TU) 2026-09-03 - does not compile there: the body's only call is `DiploWin::exec` at 0x00443F10, which diplowin.h does not declare and no product TU defines yet. Declaring `void exec(int,int)` on DiploWin without a definition is a link error, so the body stays here until 0x00443F10 is homed into diplowin.cpp and `exec` declared on the class. The `#include "diplowin.h"` game.cpp needs for it is already added.
+void __cdecl diplo(int faction_id, int faction_id_with) {
+  DiploWindow.exec(faction_id, faction_id_with);
 }
 
 // 0x009A6494
@@ -835,623 +860,6 @@ int __cdecl game_io(MapWin *record, FILE *file) {
             : static_cast<int>(fread(field, 4, 1, file));
     }
     return result == 0;
-}
-
-static int map_data_plain_block(FILE *file, void *buffer, unsigned int size) {
-    if (GameDataWriteMode) return fwrite(buffer, size, 1, file);
-    return fread(buffer, size, 1, file);
-}
-
-static int map_data_block(FILE *file, void *buffer, unsigned int size) {
-    if (GameDataEncryptedMode) {
-        if (GameDataWriteMode) {
-            return encrypt_write(buffer, size, 1, file);
-        }
-        return encrypt_read(buffer, size, 1, file);
-    }
-    return map_data_plain_block(file, buffer, size);
-}
-
-int __cdecl game_data_plain_transfer(FILE *file, void *buffer, unsigned int byte_count, int write_mode) {
-    if (write_mode != 0) return static_cast<int>(fwrite(buffer, byte_count, 1, file));
-    return static_cast<int>(fread(buffer, byte_count, 1, file));
-}
-
-// ORIGINAL: 0x005A9280 ?map_data@@YAHPAUFILE@@HH@Z 0x005A9280-0x005A94ED BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/005a9280.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover complete map-data transfer including archive-header blocks, legacy version-dependent block length, failure ordering and real map_read/map_write owners."}
-// symbol    ?map_data@@YAHPAU_iobuf@@HH@Z
-// TRIED: inline duplication of each read/write block - factored into rw_plain/rw_block helpers instead; DAT_00945d74 is written once (=0) and never again, so the encrypt branch is dead at runtime but still emitted (matches source, not a live check removed); diverges at instr #5
-int __cdecl map_data(FILE *file, int write_mode, int transfer_map_header) {
-    MapDataTransferHeader header;
-    char large_block[0x10660];
-    char medium_block[0x2CE0];
-    char small_block[0x20];
-
-    GameDataWriteMode = write_mode;
-    GameDataEncryptedMode = 0;
-    if (transfer_map_header != 0) {
-        if (map_data_plain_block(file, &header, sizeof(header)) == 0) goto fail;
-        if (map_data_block(file, &write_mode, sizeof(write_mode)) == 0) goto fail;
-        if (header.format_version_ >= 3) {
-            if (map_data_block(file, large_block, 0x10660) == 0) return 1;
-        } else {
-            if (map_data_block(file, large_block, 0xE5E0) == 0) goto fail;
-        }
-        if (map_data_block(file, medium_block, sizeof(medium_block)) == 0) goto fail;
-        if (map_data_block(file, small_block, sizeof(small_block)) == 0) goto fail;
-    }
-    if (GameDataWriteMode ? map_write(file) : map_read(file)) goto fail;
-    return 0;
-fail:
-    return 1;
-}
-
-// ORIGINAL: 0x005A9C10 ?load_map_daemon@@YAHPAD@Z 0x005A9C10-0x005A9DAD BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/005a9c10.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover extension/header/version validation, map windows and map tiles, contour copy direction and Paths lifecycle through existing genuine owners."}
-// symbol    ?load_map_daemon@@YAHPAD@Z
-// TRIED: extension check, env_open, header_check against the TERRAN/ TERRANMAP string depending on the extension, then (fread reuses the `a1` parameter's own stack slot as scratch, matching the disassembly) a MapWin close sweep, map_data, and the counter table reset/copy. Landed at 0.80 similarity; diverges at #3 on register vs stack scheduling for the extension check.
-int __cdecl load_map_daemon(char *path) {
-    int is_saved_game = 0;
-    char *dot = strchr(path, '.');
-    // Native691B34 points to SAV. Saved games include the additional
-    // extraction blocks; ordinary scenario archives use TERRANMAP.
-    if (dot != 0 && _stricmp(dot + 1, SaveGameFileExtension) == 0) {
-        is_saved_game = 1;
-    }
-
-    FILE *file = env_open(path, OpenFileMode);
-    if (file == 0) return 1;
-
-    int result = 2;
-    char header[256];
-    header_check(header, file);
-    const char *expected_header = is_saved_game ? LoadMapSaveHeaderText : MapHeaderText;
-    if (strcmp(header, expected_header) == 0) {
-        result = 3;
-        int version;
-        if (fread(&version, sizeof(version), 1, file) != 0) {
-            const int required_version = is_saved_game ? 0x56 : 5;
-            if (version >= required_version) {
-                for (size_t slot = 1; slot < MapWinTableSlots; ++slot) {
-                    if (MapWinTable[slot] != nullptr
-                        && MapWinTable[slot]->view_active_ != 0) {
-                        MapWinTable[slot]->view_active_ = 0;
-                        MapWinTable[slot]->close();
-                    }
-                }
-                ConsoleGlobal.field_23BE4_ = 0;
-                result = 4;
-                if (map_data(file, 0, is_saved_game) == 0) {
-                    GameDataStateStorage.fields_.base_current_count_ = 0;
-                    GameDataStateStorage.fields_.vehicle_current_count_ = 0;
-                    ConsoleGlobal.cursor_active_ = 0;
-                    ConsoleGlobal.selected_vehicle_ = -1;
-                    // Native5A9D58/5A9D73 use signed JLE/JL tests on the
-                    // shared signed map-area word.
-                    Map *tile = MapTiles;
-                    for (int map_tile_index = 0;
-                         map_tile_index < MapArea;
-                         ++map_tile_index, ++tile) {
-                        tile->visibility = 0;
-                        tile->bit &= ~3U;
-                    }
-                    BaseComputedID = -1;
-                    for (int contour_index = 0; contour_index < 11; ++contour_index) {
-                        AltNatural[contour_index] = AltContour[contour_index];
-                    }
-                    result = 0;
-                    Paths.init();
-                }
-            }
-        }
-    }
-
-    fclose(file);
-    return result;
-}
-
-// ORIGINAL: 0x005A94F0 ?save_daemon@@YAHPAD@Z 0x005A94F0-0x005A96C3 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:ee0a7309708fe62c6408f9896b1bea59ef9f288b:src/unrecovered/005a94f0.cpp: complete identity/span and historical return-accumulator lesson", "Pinned5A95A1..5A95CD copies eight live process records93D4FC..93E1DC to93E978..93F658", "Pinned5389F0 preserves partial alias writes through the24-entry lock-state constructor loop", "src/game.cpp: reset_saved_process_slot_state separately initializes snapshot identity bytes at93E99C+i*19C", "recovery/tasks/save-daemon-owner-oct5.json", "recovery/tests/test_save_daemon_actual_source.py"], "reason": "Recover complete daemon save operation with original mutable-pointer ABI, error statuses, side-effect order and file cleanup. Persistent snapshot is an overlapping NetDaemon storage view; its observed endpoint is a lower bound, not a proven original class size or union declaration. Existing lock-state constructor initialization and separate startup identity initializer remain unchanged."}
-// TRIED: `fclose`/`remove` are catalogued nullary cdecl, so they are reached through explicit function-pointer casts rather than by name (a direct call fails C2660: too many arguments). The return-value accumulator (`edi`) starts at 2 before `header_write`, becomes 3 once the first `fwrite` succeeds, and only reaches 0 once `game_data` and the second `fwrite` both succeed - the fclose/remove tail runs unconditionally, and `remove` only when the status is still nonzero. Landing the closest control-flow-faithful form (divergence starts at instruction #6, on the `inc` vs. explicit reload of the reentrancy counter).
-int __cdecl save_daemon(char *save_path) {
-// RECOVERY_OBJECT: v1 0x00690D80 _?PathDot@?1??save_daemon@@YAHPAD@Z@4PADA
-    static char PathDot[] = ".";
-// RECOVERY_OBJECT: v1 0x00690D84 _?SaveFileMode@?1??save_daemon@@YAHPAD@Z@4PADA
-    static char SaveFileMode[] = "wb";
-
-    if (IsMultiplayerPBEM != 0) ++TamperState93A9B4;
-
-    DWORD save_tick = timeGetTime();
-    if ((GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) != 0 && IsMultiplayerNet == 0) {
-        my_srand(static_cast<int>(save_tick));
-    }
-
-    GameDataStateStorage.fields_.save_daemon_state_word_ = 0xC;
-    const uint32_t save_state_flag = 0x10000000u;
-    if ((GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) != 0) {
-        GameDataPlayerCountSnapshot = 0;
-        GameDataStateStorage.fields_.game_state_ |= save_state_flag;
-    }
-    if (IsMultiplayerPBEM != 0) {
-        GameDataStateStorage.fields_.net_turn_flags_ |= 0x20u;
-        GameDataStateStorage.fields_.game_state_ |= save_state_flag;
-        GameDataPlayerCountSnapshot = 0;
-    }
-    if (IsMultiplayerNet != 0) {
-        GameDataStateStorage.fields_.game_state_ |= save_state_flag;
-        GameDataPlayerCountSnapshot = NetDaemonNet.player_count_;
-        memcpy(NetDaemonSavedProcessSlots,
-               NetDaemonNet.process_slots_,
-               sizeof(NetDaemonSavedProcessSlots));
-    }
-
-    char filename[0x100];
-    filename[0] = 0;
-    strcat(filename, save_path);
-    if (strchr(filename, '.') == 0) {
-        strcat(filename, PathDot);
-        strcat(filename, SaveGameFileExtension);
-    }
-
-    FILE *file = env_open(filename, SaveFileMode);
-    if (file == 0) return 1;
-
-    int result = 2;
-    header_write(SaveHeaderText, file);
-    int version = 0x56;
-    if (fwrite(&version, 4, 1, file) != 0) {
-        result = 3;
-        if (game_data(file, 1) == 0) {
-            if (fwrite(&save_tick, 4, 1, file) != 0) result = 0;
-        }
-    }
-
-    fclose(file);
-    if (result != 0) remove(filename);
-    return result;
-}
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005A9B20 ?save_map_daemon@@YAHPAD@Z 0x005A9B20-0x005A9C05 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/005a9b20.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover map-save header/version/data flow and preserve the original unconditional fclose and failed-file removal error behavior."}
-// symbol    ?save_map_daemon@@YAHPAD@Z
-int __cdecl save_map_daemon(char *path) {
-// RECOVERY_OBJECT: v1 0x00690DA4 _?PathDot@?1??save_map_daemon@@YAHPAD@Z@4PADA
-    static char PathDot[] = ".";
-// RECOVERY_OBJECT: v1 0x00690DA8 _?SaveFileMode@?1??save_map_daemon@@YAHPAD@Z@4PADA
-    static char SaveFileMode[] = "wb";
-
-    int result = 1;
-    char filename[256];
-    filename[0] = 0;
-    strcat(filename, path);
-    if (strchr(filename, '.') == 0) {
-        strcat(filename, PathDot);
-        strcat(filename, MapFileExtension);
-    }
-
-    FILE *file = env_open(filename, SaveFileMode);
-    if (file != 0) {
-        result = 2;
-        header_write(MapSaveHeaderText, file);
-        int version = 5;
-        if (fwrite(&version, sizeof(version), 1, file) != 0) {
-            result = 3;
-            if (map_data(file, 1, 0) == 0) result = 0;
-        }
-    }
-
-    fclose(file);
-    if (result != 0) remove(filename);
-    return result;
-}
-
-/*
-Purpose: Validate whether each faction meets the requirements to have the Map revealed.
-// ORIGINAL: 0x005A96D0 ?see_map_check@@YAXXZ 0x005A96D0-0x005A9753 BYTE_EXACT
-// LEVER: the image runs BOTH loops unconditionally, every time - no early `break` out of the 4-satellite loop (it always checks all four, re-OR-ing the same bit), and no `if (!PFLAG_MAP_REVEALED)` guard skipping the tech loop once the satellites already set it. Removing both "optimisations" (which changed nothing observable, only the instruction count) reached BYTE_EXACT.
-// size      131 bytes
-// prototype
-// callers   2   call targets   1
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x005B9F20
-// LEVER (2026-09-03): `has_tech_call` at the tech loop. 0 of 51 agreeing,
-//   66 instructions against the image's 51, because technology.h's MEASURED
-//   inline was open-coded at the one `has_tech` site in the body. With the
-//   forwarder the whole body dropped to the image's own 51 AND the winning
-//   flag set flipped to `/O2 /Oy- /GX`, which is what supplies the image's
-//   `push ebp / mov ebp, esp` frame - the /O2 build could never match the
-//   prologue, so the bloat was masking the right set, not just the right
-//   size. 51 of 51, BYTE_EXACT.
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl see_map_check() {
-    for (int faction_id = 1; faction_id < MaxPlayerNum; faction_id++) {
-        PlayersData[faction_id].flags &= ~PFLAG_MAP_REVEALED;
-        for (int i = 0; i < 4; i++) {
-            if (PlayersData[faction_id].satellites_[i]) {
-                PlayersData[faction_id].flags |= PFLAG_MAP_REVEALED;
-            }
-        }
-        for (int tech_id = 0; tech_id < MaxTechnologyNum; tech_id++) {
-            // has_tech_call, not has_tech: the image CALLS 0x005B9F20 once
-            // from here (0x005A9718) and technology.h's MEASURED inline was
-            // open-coded into this body.
-            if (Technology[tech_id].flags & TFLAG_REVEALS_MAP
-                && has_tech(tech_id, faction_id)) {
-                PlayersData[faction_id].flags |= PFLAG_MAP_REVEALED;
-            }
-        }
-    }
-}
-
-// ORIGINAL: 0x005A9760 ?load_daemon@@YAHPADH@Z 0x005A9760-0x005A9B19 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/005a9760.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover the complete load orchestration through actual windows, paths, player/base/vehicle state and PBEM/tamper lifecycle. The called game_data serializer remains explicitly unfinished; this is not working-game acceptance."}
-// symbol    ?load_daemon@@YAHPBDH@Z
-// TRIED: no Ghidra decompilation was provided for this address; transcribed straight from the disassembly. The two `// indirect` sites are vtable slots 1 (takes an int) and 2 (nullary) on the static object at g_007b0cb8, dispatched through VCall as the brief's shim pattern.
-// TRIED: nothing further tried; MISMATCH #0 (push vs sub - a prologue/ stack-layout difference from the local array sizing), similarity 0.73 over 953 bytes. The "copy loop" at 0x5A9A02 is a broadcast of the value at a fixed index into all 0x20 slots of two parallel int arrays (g_009392c0, g_00939340), not a running index as first guessed.
-int __cdecl load_daemon(LPCSTR path, int linearize_contours) {
-    // Function-scope reads keep their own frame slots, as in the image.
-    int version;
-    int seed;
-    FILE *file = env_open(path, GameSaveReadMode);
-    if (file == 0) return 1;
-    int result = 2;
-    char header[256];
-    header_check(header, file);
-    if (strcmp(header, GameSaveHeaderText) == 0) {
-        result = 3;
-        if (fread(&version, sizeof(version), 1, file) != 0 && version >= 0x56) {
-            for (size_t close_slot = 2; close_slot < MapWinTableSlots; ++close_slot) {
-                if (MapWinTable[close_slot] != 0
-                    && MapWinTable[close_slot]->view_active_ != 0) {
-                    MapWinTable[close_slot]->view_active_ = 0;
-                    MapWinTable[close_slot]->close();
-                }
-            }
-            ConsoleGlobal.field_23BE4_ = 0;
-            ConsoleGlobal.field_23BE8_ = 0;
-            result = 4;
-            if (game_data(file, 0) != 0) {
-                if (GameDataLoadStatusWord != 0) {
-                    result = 5;
-                }
-            } else {
-                if ((GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) != 0) {
-                    if (fread(&seed, sizeof(seed), 1, file) != 0) my_srand(seed);
-                }
-                if (IsMultiplayerNet == 0) {
-                    for (size_t offline_slot = 2; offline_slot < MapWinTableSlots; ++offline_slot) {
-                        if (MapWinTable[offline_slot] != 0) {
-                            MapWinTable[offline_slot]->view_active_ = 0;
-                        }
-                    }
-                }
-                BaseComputedID = -1;
-                result = 0;
-                Paths.init();
-                if (linearize_contours != 0) world_linearize_contours();
-                for (int contour_slot = 0; contour_slot < 11; ++contour_slot) {
-                    AltNatural[contour_slot] = AltContour[contour_slot];
-                }
-
-                see_map_check();
-
-                for (int alive_faction = 1; alive_faction < MaxPlayerNum; ++alive_faction) {
-                    int has_presence = 0;
-                    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
-                        if (Bases[base_id].faction_id_current == alive_faction) {
-                            has_presence = 1;
-                            break;
-                        }
-                    }
-                    if (!has_presence) {
-                        for (int vehicle_id = 0; vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle_id) {
-                            if (Vehs[vehicle_id].faction_id == alive_faction
-                                && VehPrototypes[Vehs[vehicle_id].proto_id].plan == PLAN_COLONIZATION) {
-                                has_presence = 1;
-                            }
-                        }
-                    }
-                    if (!has_presence) {
-                        GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &= ~(1 << alive_faction);
-                    } else {
-                        GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ |= 1 << alive_faction;
-                    }
-                }
-
-                if ((GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) != 0) remove(path);
-
-                // The current history index is re-read for every slot.
-                for (int history_slot = 0; history_slot < 32; ++history_slot) {
-                    ConsoleGlobal.cursor_history_x_[history_slot] =
-                        ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
-                    ConsoleGlobal.cursor_history_y_[history_slot] =
-                        ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
-                }
-
-                rebuild_vehicle_bits();
-                rebuild_base_bits();
-
-                if (strstr(path, GameSaveMultiplayerMarker) != 0 && IsMultiplayerNet == 0) {
-                    ConsoleGlobal.cursor_active_ = 0;
-                    GameDataStateStorage.fields_.game_state_ |= 0x10C0;
-                    const unsigned char state_low_byte = static_cast<unsigned char>(GameDataStateStorage.fields_.game_state_);
-                    if ((state_low_byte & 0x80) != 0 && (state_low_byte & 0x40) != 0) {
-                        MainInterfaceGlobal.flat_button_[2].show(0);
-                    } else {
-                        MainInterfaceGlobal.flat_button_[2].hide();
-                    }
-                }
-
-                ControlTurnPhase = ConsoleGlobal.faction_id_;
-                if (IsMultiplayerNet != 0) {
-                    IsMultiplayerPBEM = 0;
-                } else if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x20) == 0
-                    && bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu) <= 1) {
-                    IsMultiplayerPBEM = 0;
-                } else {
-                    IsMultiplayerPBEM = 1;
-                    check_tamper();
-                }
-                WorldClimateWorldWin.field_239BC_ |= 4;
-            }
-        }
-    }
-    fclose(file);
-    return result;
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005ABB90 ?save_map@@YAXXZ 0x005ABB90-0x005ABD0C;0x0066221F-0x00662234 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005abb90.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover map-save dialog, selection, preference and save orchestration through lexical FileBox lifetime. Preserve both original spans including compiler cleanup; retain the seed."}
-// symbol    ?save_map@@YAXXZ
-void __cdecl save_map() {
-    FileBox box;
-    box.set_def_name(MapFilePath);
-    box.set_def_ext(MapFileExtension);
-
-    char filter[256];
-    filter[0] = 0;
-    strcat(filter, MapFileFilterPattern);
-    strcat(filter, MapFileExtension);
-    box.add_filter(filter, StringTable.get(Labels.strings_ptr[0x678 / 4]));
-
-    char *const selection = box.save();
-    do_all_draws();
-    if (selection == 0) return;
-
-    char name[256];
-    strcpy(name, selection);
-    if (strcmp(name, EmptyMapName) == 0) {
-        strcpy(name, StringTemp);
-    }
-    char preference_value[256];
-    strcpy(preference_value, name);
-    char *dot = strchr(preference_value, '.');
-    if (dot != 0) *dot = 0;
-
-    strncpy(MapFilePath, preference_value, 0x4B);
-    prefs_put(LatestMapPreference, preference_value);
-    save_map_daemon(name);
-}
-
-/*
-Purpose: Delete the initial auto-save game file.
-// ORIGINAL: 0x005ABD10 ?kill_auto_save@@YAXXZ 0x005ABD10-0x005ABD1C BYTE_EXACT
-// size      12 bytes
-// prototype 
-// callers   1   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00646950
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl kill_auto_save() {
-    remove(InitialAutoSaveDeletePath);
-}
-
-/*
-Purpose: Handle the creation and management of the auto-save game files.
-// ORIGINAL: 0x005ABD20 ?auto_save@@YAXXZ 0x005ABD20-0x005ABE39 BYTE_EXACT
-// TRIED (2026-09-03, probed against cl 12.00.8168 in isolation): the
-//   image's split cleanup - a batched `add esp, 0x1c` covering the seven
-//   `remove` calls and then `pop ecx` for the trailing `save_daemon`, so 0x1c
-//   + 4 rather than this tree's single `add esp, 0x20` - is the per-call
-//   cleanup merged by peephole with a size-shaped `pop ecx` on the last one.
-//   Probed with a two-branch function shaped like this one (7 same-callee
-//   calls then a different one-arg callee, then a mixed run): /O2 defers all
-//   eight into one `add esp, 0x20` and elides nothing else; /O1, /O2 /Os and
-//   /O1 /Oy keep the `pop ecx` but replace the pushes with
-//   `mov dword ptr [esp], imm32` argument-slot reuse, which the image does
-//   NOT have (it pushes every argument); /O2 /Os and /O2 /G6 likewise. No
-//   combination of /O1//O2 /Os//Ot /Ob0 /Oi- /Oy- /G5//G6 in FLAG_SETS or
-//   outside them produces fresh pushes, a partial batched `add esp`, AND a
-//   trailing `pop ecx` - which reads as this translation unit having been
-//   compiled with the stack-pop deferral off, a setting the flag space here
-//   does not model. listing_diff agrees the ONLY two differences in the body
-//   are those cleanups (image 66 instructions, this tree 64); 28/66 is the
-//   byte-shift cost of the two bytes they add, not four divergent
-//   instructions.
-// TRIED: 28/66, 0.954 similar - as close as this gets. Both branches'
-//            call sequences end with the image cleaning the LAST call's
-//            single pushed argument via `pop ecx` (1 byte) rather than
-//            folding it into the preceding `add esp, N` that cleans the
-//            other calls in the run; this body folds all of them into one
-//            `add esp`. Pure VC6 stack-cleanup-size heuristic across a run
-//            of same-shaped `__cdecl` calls, not a source-form lever.
-// size      281 bytes
-// prototype 
-// callers   9   call targets   3
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x005A94F0 0x00646950 0x006469F7
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl auto_save() {
-    if (!IsMultiplayerPBEM || IsMultiplayerNet) { // auto-saving disabled for PBEM/HotSeat games
-        if (GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN && !(GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR)) {
-            remove("saves\\auto\\Alpha Centauri Autosave 30.SAV");
-            remove("saves\\auto\\Alpha Centauri Autosave 20.SAV");
-            remove("saves\\auto\\Alpha Centauri Autosave 10.SAV");
-            remove("saves\\auto\\Alpha Centauri Autosave 5.SAV");
-            remove("saves\\auto\\Alpha Centauri Autosave 4.SAV");
-            remove("saves\\auto\\Alpha Centauri Autosave 3.SAV");
-            remove("saves\\auto\\Alpha Centauri Autosave 2.SAV");
-        } else { // standard auto saves
-            if (!(GameDataStateStorage.fields_.turn_current_num_ % 10)) {
-                remove("saves\\auto\\Alpha Centauri Autosave 30.SAV");
-                rename("saves\\auto\\Alpha Centauri Autosave 20.SAV",
-                    "saves\\auto\\Alpha Centauri Autosave 30.SAV");
-                rename("saves\\auto\\Alpha Centauri Autosave 10.SAV",
-                    "saves\\auto\\Alpha Centauri Autosave 20.SAV");
-                save_daemon("saves\\auto\\Alpha Centauri Autosave 10");
-            }
-            remove("saves\\auto\\Alpha Centauri Autosave 5.SAV");
-            rename("saves\\auto\\Alpha Centauri Autosave 4.SAV",
-                "saves\\auto\\Alpha Centauri Autosave 5.SAV");
-            rename("saves\\auto\\Alpha Centauri Autosave 3.SAV",
-                "saves\\auto\\Alpha Centauri Autosave 4.SAV");
-            rename("saves\\auto\\Alpha Centauri Autosave 2.SAV",
-                "saves\\auto\\Alpha Centauri Autosave 3.SAV");
-            rename("saves\\auto\\Alpha Centauri Autosave 1.SAV",
-                "saves\\auto\\Alpha Centauri Autosave 2.SAV");
-        }
-        save_daemon("saves\\auto\\Alpha Centauri Autosave 1");
-    }
-}
-
-// Original load_undo at 0x005ABE4E/0x005ABE59 updates this cursor; auto_undo at 0x005ABF37 resets 1; start only.
-// RECOVERY_OBJECT: v1 0x00690D7C ?ScenEditorUndoPosition@@3HA
-int ScenEditorUndoPosition = 1; // 0x00690D7C
-
-/*
-Purpose: Load a Scenario Editor undo (type: 1) or redo (type: -1) auto-save. TODO: Revisit in the 
-         future to fix some of the underlying issues with the undo/redo process.
-// ORIGINAL: 0x005ABE40 ?load_undo@@YAXH@Z 0x005ABE40-0x005ABEBF BYTE_EXACT
-// LEVER: two real bugs in the committed body, fixed by transcription
-//        instead of invention. (1) WRONG CALLEE - `sprintf_s` is not in the
-//        image; it's the `strcat`/`_itoa`/`strcat`-into-StringTemp idiom,
-//        no ".SAV" suffix, matching `wipe_undo`/`auto_undo` below. (2) the
-//        image calls NEITHER an early `return` on `type==-1`, NOR
-//        `draw_map` at the end - both were invented, not transcribed; the
-//        image's only calls are the two `strcat`s, `_itoa` and
-//        `load_daemon`. (3) the image's `cmp`s on ScenEditorUndoPosition
-//        are signed (`jle`/`jge`): the global is `int`.
-// size      127 bytes
-// prototype void (__cdecl ?load_undo@@YAXH@Z)(int type)
-// callers   2   call targets   3
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x005A9760 0x00645470 0x0064FC88
-Return Value: n/a
-Status: Complete
-*/
-// The three undo operations use distinct original static path starts even
-// though their text agrees. Keep their source storage separate; the bindings
-// identify starts, without claiming the enclosing original allocations.
-void __cdecl load_undo(int type) {
-    if (type < 0 && ScenEditorUndoPosition > 1) {
-        ScenEditorUndoPosition--;
-    }
-    // THE PRE-sprintf IDIOM, same as `wipe_undo`/`auto_undo` immediately
-    // below: `strcat`/`_itoa`/`strcat` into StringTemp, no ".SAV" extension
-    // appended, and no `draw_map` call - the image's own call targets are
-    // just strcat x2, _itoa and load_daemon.
-    StringTemp[0] = 0;
-    // RECOVERY_OBJECT: v1 0x0069137C _?UndoPath@?4??load_undo@@YAXH@Z@4QBDB
-    static const char UndoPath[] = "saves\\auto\\Scenario Editor Undo ";
-    strcat(StringTemp, UndoPath);
-    char number[80];
-    _itoa(ScenEditorUndoPosition, number, 10);
-    strcat(StringTemp, number);
-    if (type > 0 && ScenEditorUndoPosition < 9) {
-        ScenEditorUndoPosition++;
-    }
-    load_daemon(StringTemp, false);
-}
-
-/*
-Purpose: Remove all the existing Scenario Editor undo auto-saves.
-// ORIGINAL: 0x005ABEC0 ?wipe_undo@@YAXXZ 0x005ABEC0-0x005ABF14 BYTE_EXACT
-// LEVER: WRONG CALLEE - `sprintf_s` is not in the image at all (the image has no C++/CRT sprintf for paths here); it builds the name with `strcat`/`_itoa`/`strcat` into the global `StringTemp` buffer (0x009B86A0) and calls `remove()` directly, with no ".SAV" extension appended - matching auto_undo's own documented idiom immediately below.
-// size      84 bytes
-// prototype
-// callers   1   call targets   3
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x00645470 0x00646950 0x0064FC88
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl wipe_undo() {
-    for (int i = 9; i >= 1; i--) {
-        StringTemp[0] = 0;
-        // RECOVERY_OBJECT: v1 0x006913A0 _?UndoPath@?3??wipe_undo@@YAXXZ@4QBDB
-        static const char UndoPath[] = "saves\\auto\\Scenario Editor Undo ";
-        strcat(StringTemp, UndoPath);
-        char number[80];
-        _itoa(i, number, 10);
-        strcat(StringTemp, number);
-        remove(StringTemp);
-    }
-}
-
-/*
-Purpose: Handle the creation of an undo auto-save when certain Scenario Editor changes are made.
-// ORIGINAL: 0x005ABF20 ?auto_undo@@YAXXZ 0x005ABF20-0x005ABFEF BYTE_EXACT
-// size      207 bytes
-// prototype 
-// callers   32   call targets   7
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x005A94F0 0x006453E0 0x00645460 0x00645470 0x00646950 0x006469F7 0x0064FC88
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl auto_undo() {
-    if (!(GameDataStateStorage.fields_.game_preferences_ & PREF_BSC_AUTOSAVE_EACH_TURN)) {
-        return;
-    }
-    // THREE 0x100 BUFFERS AND THE PRE-sprintf IDIOM. The image reserves 0x250
-    // bytes at 0x005ABF23 and builds each name with `strcat`, `_itoa`,
-    // `strcat` - no `sprintf` anywhere. It also carries the PREVIOUS name
-    // forward rather than formatting it twice, and decides between `remove`
-    // and `rename` on whether that carried name is empty, which is what makes
-    // the first pass delete rather than rename.
-    ScenEditorUndoPosition = 1;
-    // 0x100, 0x100 and 0x50: the image's three locals sit at [ebp-0x250],
-    // [ebp-0x150] and [ebp-0x50], which is where `sub esp, 0x250` comes from.
-    char previous[256];
-    char current[256];
-    char number[80];
-    // RECOVERY_OBJECT: v1 0x006913C4 _?UndoPath@?4??auto_undo@@YAXXZ@4QBDB
-    static const char UndoPath[] = "saves\\auto\\Scenario Editor Undo ";
-    previous[0] = 0;
-    for (int i = 9; i >= 1; i--) {
-        current[0] = 0;
-        strcat(current, UndoPath);
-        _itoa(i, number, 10);
-        strcat(current, number);
-        if (strlen(previous) == 0) {
-            remove(current);
-        } else {
-            // (previous, current), in that order: the image pushes the
-            // current name and then the carried one, so the CARRIED name is
-            // the first argument - it renames the name it built last pass
-            // onto the one it just built, which collapses the history rather
-            // than rotating it. That is what the shipped code does.
-            rename(previous, current);
-        }
-        strcpy(previous, current);
-    }
-    // THE BUILT PATH, not a literal: the image pushes [ebp-0x250] at
-    // 0x005ABFE1. The loop's last pass builds "Undo 1" and carries it there,
-    // so the name is already in hand.
-    save_daemon(previous);
 }
 
 
@@ -2456,89 +1864,370 @@ int __cdecl game_data(FILE *file, int write_mode) {
     return 0;
 }
 
-// ORIGINAL: 0x005AB600 ?load_map@@YAHXZ 0x005AB600-0x005ABB8D;0x006620A7-0x0066221F BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/005ab600.cpp", "recovery/tasks/game-save-load-owner-coverage.json", "pinned image sha256:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_load_map_behavior.py"], "reason": "Recover map loading through AlphaSave's real selected-path return and existing extension, map-daemon, multiplayer, preference, and dialog owners."}
-// TRIED: FileBox/AlphaSave are opaque (no fields) in this scaffold, so their real stack sizes are unknown; used one raw byte buffer + placement-new/reinterpret_cast at the exact ebp-relative offsets from the disasm (incl. the manual vtable pokes before AlphaSave/Scroll/FlatButton close() calls) instead of real SEH locals. Compiles, right call order/addresses/args, sim 0.34-0.50 - the missing SEH frame and giant flat buffer (vs per-object locals) rule out byte-exact; not retried given size (1797 bytes, ~30 embedded objects).
-// WORKAROUND(inline): dead /Ob2 budget probe; folds to nothing. The image's
-// early return teardown (0x005AB77E) expands ~AlphaSave one level only and
-// its final teardown expands ~FileWin's members; ten zero-code expansions
-// after the early return reproduce both (31 EH states, sites 8 and 21).
-static int load_map_budget_probe(int x)
-{
-    if (x == 1) x = 4;
-    return x;
+static int map_data_plain_block(FILE *file, void *buffer, unsigned int size) {
+    if (GameDataWriteMode) return fwrite(buffer, size, 1, file);
+    return fread(buffer, size, 1, file);
 }
 
-int __cdecl load_map() {
-    FileBox file_box_lifetime;
-    AlphaSave dialog;
-    dialog.init();
-
-    char extension[256];
-    extension[0] = '\0';
-    strcat(extension, ".");
-    strcat(extension, MapFileExtension);
-    dialog.add_default_extension(extension);
-    extension[0] = '\0';
-    strcat(extension, ".");
-    strcat(extension, SaveGameFileExtension);
-    dialog.add_default_extension(extension);
-
-    char initial_pattern[256];
-    initial_pattern[0] = '\0';
-    strcat(initial_pattern, "maps\\*.");
-    strcat(initial_pattern, MapFileExtension);
-    char selected_path[256];
-    strncpy(selected_path, prefs_get("Latest Map", initial_pattern, 0), 0xFF);
-    if (strlen(selected_path) == 0) {
-        strcpy(selected_path, initial_pattern);
-    }
-    dialog.set_default_filename(selected_path);
-
-    char *selected = dialog.load();
-    do_all_draws();
-    if (selected == 0) {
-        return 1;
-    }
-
-    strcpy(selected_path, selected);
-    load_map_budget_probe(0);
-    load_map_budget_probe(1);
-    load_map_budget_probe(2);
-    load_map_budget_probe(0);
-    load_map_budget_probe(1);
-    load_map_budget_probe(2);
-    load_map_budget_probe(0);
-    load_map_budget_probe(1);
-    load_map_budget_probe(2);
-    load_map_budget_probe(0);
-    char preference_value[256];
-    strcpy(preference_value, selected);
-    char *dot = strchr(preference_value, '.');
-    if (dot != 0) {
-        *dot = '\0';
-    }
-    prefs_put("Latest Map", preference_value);
-
-    const int result = load_map_daemon(selected_path);
-    if (IsMultiplayerNet != 0 && result == 0) {
-        NetWinDialog.loaded_file_path_[0] = '\0';
-        strcat(NetWinDialog.loaded_file_path_, preference_value);
-        NetWinDialog.field_7728_ = 1;
-    } else if (result != 0) {
-        parse_says(0, selected_path, -1, -1);
-        parse_num(0, result);
-        StringTemp[0] = '\0';
-        strcat(StringTemp, "LOAD");
-        switch (result) {
-        case 1: strcat(StringTemp, "NONE"); break;
-        case 2: strcat(StringTemp, "NOT"); break;
-        case 3: strcat(StringTemp, "OLD"); break;
-        default: strcat(StringTemp, "ERROR"); break;
+static int map_data_block(FILE *file, void *buffer, unsigned int size) {
+    if (GameDataEncryptedMode) {
+        if (GameDataWriteMode) {
+            return encrypt_write(buffer, size, 1, file);
         }
-        X_pop(StringTemp, 0);
-        do_all_draws();
+        return encrypt_read(buffer, size, 1, file);
     }
+    return map_data_plain_block(file, buffer, size);
+}
+
+int __cdecl game_data_plain_transfer(FILE *file, void *buffer, unsigned int byte_count, int write_mode) {
+    if (write_mode != 0) return static_cast<int>(fwrite(buffer, byte_count, 1, file));
+    return static_cast<int>(fread(buffer, byte_count, 1, file));
+}
+
+// ORIGINAL: 0x005A9280 ?map_data@@YAHPAUFILE@@HH@Z 0x005A9280-0x005A94ED BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/005a9280.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover complete map-data transfer including archive-header blocks, legacy version-dependent block length, failure ordering and real map_read/map_write owners."}
+// symbol    ?map_data@@YAHPAU_iobuf@@HH@Z
+// TRIED: inline duplication of each read/write block - factored into rw_plain/rw_block helpers instead; DAT_00945d74 is written once (=0) and never again, so the encrypt branch is dead at runtime but still emitted (matches source, not a live check removed); diverges at instr #5
+int __cdecl map_data(FILE *file, int write_mode, int transfer_map_header) {
+    MapDataTransferHeader header;
+    char large_block[0x10660];
+    char medium_block[0x2CE0];
+    char small_block[0x20];
+
+    GameDataWriteMode = write_mode;
+    GameDataEncryptedMode = 0;
+    if (transfer_map_header != 0) {
+        if (map_data_plain_block(file, &header, sizeof(header)) == 0) goto fail;
+        if (map_data_block(file, &write_mode, sizeof(write_mode)) == 0) goto fail;
+        if (header.format_version_ >= 3) {
+            if (map_data_block(file, large_block, 0x10660) == 0) return 1;
+        } else {
+            if (map_data_block(file, large_block, 0xE5E0) == 0) goto fail;
+        }
+        if (map_data_block(file, medium_block, sizeof(medium_block)) == 0) goto fail;
+        if (map_data_block(file, small_block, sizeof(small_block)) == 0) goto fail;
+    }
+    if (GameDataWriteMode ? map_write(file) : map_read(file)) goto fail;
+    return 0;
+fail:
+    return 1;
+}
+
+// ORIGINAL: 0x005A94F0 ?save_daemon@@YAHPAD@Z 0x005A94F0-0x005A96C3 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:ee0a7309708fe62c6408f9896b1bea59ef9f288b:src/unrecovered/005a94f0.cpp: complete identity/span and historical return-accumulator lesson", "Pinned5A95A1..5A95CD copies eight live process records93D4FC..93E1DC to93E978..93F658", "Pinned5389F0 preserves partial alias writes through the24-entry lock-state constructor loop", "src/game.cpp: reset_saved_process_slot_state separately initializes snapshot identity bytes at93E99C+i*19C", "recovery/tasks/save-daemon-owner-oct5.json", "recovery/tests/test_save_daemon_actual_source.py"], "reason": "Recover complete daemon save operation with original mutable-pointer ABI, error statuses, side-effect order and file cleanup. Persistent snapshot is an overlapping NetDaemon storage view; its observed endpoint is a lower bound, not a proven original class size or union declaration. Existing lock-state constructor initialization and separate startup identity initializer remain unchanged."}
+// TRIED: `fclose`/`remove` are catalogued nullary cdecl, so they are reached through explicit function-pointer casts rather than by name (a direct call fails C2660: too many arguments). The return-value accumulator (`edi`) starts at 2 before `header_write`, becomes 3 once the first `fwrite` succeeds, and only reaches 0 once `game_data` and the second `fwrite` both succeed - the fclose/remove tail runs unconditionally, and `remove` only when the status is still nonzero. Landing the closest control-flow-faithful form (divergence starts at instruction #6, on the `inc` vs. explicit reload of the reentrancy counter).
+int __cdecl save_daemon(char *save_path) {
+// RECOVERY_OBJECT: v1 0x00690D80 _?PathDot@?1??save_daemon@@YAHPAD@Z@4PADA
+    static char PathDot[] = ".";
+// RECOVERY_OBJECT: v1 0x00690D84 _?SaveFileMode@?1??save_daemon@@YAHPAD@Z@4PADA
+    static char SaveFileMode[] = "wb";
+
+    if (IsMultiplayerPBEM != 0) ++TamperState93A9B4;
+
+    DWORD save_tick = timeGetTime();
+    if ((GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) != 0 && IsMultiplayerNet == 0) {
+        my_srand(static_cast<int>(save_tick));
+    }
+
+    GameDataStateStorage.fields_.save_daemon_state_word_ = 0xC;
+    const uint32_t save_state_flag = 0x10000000u;
+    if ((GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) != 0) {
+        GameDataPlayerCountSnapshot = 0;
+        GameDataStateStorage.fields_.game_state_ |= save_state_flag;
+    }
+    if (IsMultiplayerPBEM != 0) {
+        GameDataStateStorage.fields_.net_turn_flags_ |= 0x20u;
+        GameDataStateStorage.fields_.game_state_ |= save_state_flag;
+        GameDataPlayerCountSnapshot = 0;
+    }
+    if (IsMultiplayerNet != 0) {
+        GameDataStateStorage.fields_.game_state_ |= save_state_flag;
+        GameDataPlayerCountSnapshot = NetDaemonNet.player_count_;
+        memcpy(NetDaemonSavedProcessSlots,
+               NetDaemonNet.process_slots_,
+               sizeof(NetDaemonSavedProcessSlots));
+    }
+
+    char filename[0x100];
+    filename[0] = 0;
+    strcat(filename, save_path);
+    if (strchr(filename, '.') == 0) {
+        strcat(filename, PathDot);
+        strcat(filename, SaveGameFileExtension);
+    }
+
+    FILE *file = env_open(filename, SaveFileMode);
+    if (file == 0) return 1;
+
+    int result = 2;
+    header_write(SaveHeaderText, file);
+    int version = 0x56;
+    if (fwrite(&version, 4, 1, file) != 0) {
+        result = 3;
+        if (game_data(file, 1) == 0) {
+            if (fwrite(&save_tick, 4, 1, file) != 0) result = 0;
+        }
+    }
+
+    fclose(file);
+    if (result != 0) remove(filename);
+    return result;
+}
+
+/*
+Purpose: Validate whether each faction meets the requirements to have the Map revealed.
+// ORIGINAL: 0x005A96D0 ?see_map_check@@YAXXZ 0x005A96D0-0x005A9753 BYTE_EXACT
+// LEVER: the image runs BOTH loops unconditionally, every time - no early `break` out of the 4-satellite loop (it always checks all four, re-OR-ing the same bit), and no `if (!PFLAG_MAP_REVEALED)` guard skipping the tech loop once the satellites already set it. Removing both "optimisations" (which changed nothing observable, only the instruction count) reached BYTE_EXACT.
+// size      131 bytes
+// prototype
+// callers   2   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005B9F20
+// LEVER (2026-09-03): `has_tech_call` at the tech loop. 0 of 51 agreeing,
+//   66 instructions against the image's 51, because technology.h's MEASURED
+//   inline was open-coded at the one `has_tech` site in the body. With the
+//   forwarder the whole body dropped to the image's own 51 AND the winning
+//   flag set flipped to `/O2 /Oy- /GX`, which is what supplies the image's
+//   `push ebp / mov ebp, esp` frame - the /O2 build could never match the
+//   prologue, so the bloat was masking the right set, not just the right
+//   size. 51 of 51, BYTE_EXACT.
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl see_map_check() {
+    for (int faction_id = 1; faction_id < MaxPlayerNum; faction_id++) {
+        PlayersData[faction_id].flags &= ~PFLAG_MAP_REVEALED;
+        for (int i = 0; i < 4; i++) {
+            if (PlayersData[faction_id].satellites_[i]) {
+                PlayersData[faction_id].flags |= PFLAG_MAP_REVEALED;
+            }
+        }
+        for (int tech_id = 0; tech_id < MaxTechnologyNum; tech_id++) {
+            // has_tech_call, not has_tech: the image CALLS 0x005B9F20 once
+            // from here (0x005A9718) and technology.h's MEASURED inline was
+            // open-coded into this body.
+            if (Technology[tech_id].flags & TFLAG_REVEALS_MAP
+                && has_tech(tech_id, faction_id)) {
+                PlayersData[faction_id].flags |= PFLAG_MAP_REVEALED;
+            }
+        }
+    }
+}
+
+// ORIGINAL: 0x005A9760 ?load_daemon@@YAHPADH@Z 0x005A9760-0x005A9B19 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/005a9760.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover the complete load orchestration through actual windows, paths, player/base/vehicle state and PBEM/tamper lifecycle. The called game_data serializer remains explicitly unfinished; this is not working-game acceptance."}
+// symbol    ?load_daemon@@YAHPBDH@Z
+// TRIED: no Ghidra decompilation was provided for this address; transcribed straight from the disassembly. The two `// indirect` sites are vtable slots 1 (takes an int) and 2 (nullary) on the static object at g_007b0cb8, dispatched through VCall as the brief's shim pattern.
+// TRIED: nothing further tried; MISMATCH #0 (push vs sub - a prologue/ stack-layout difference from the local array sizing), similarity 0.73 over 953 bytes. The "copy loop" at 0x5A9A02 is a broadcast of the value at a fixed index into all 0x20 slots of two parallel int arrays (g_009392c0, g_00939340), not a running index as first guessed.
+int __cdecl load_daemon(LPCSTR path, int linearize_contours) {
+    // Function-scope reads keep their own frame slots, as in the image.
+    int version;
+    int seed;
+    FILE *file = env_open(path, GameSaveReadMode);
+    if (file == 0) return 1;
+    int result = 2;
+    char header[256];
+    header_check(header, file);
+    if (strcmp(header, GameSaveHeaderText) == 0) {
+        result = 3;
+        if (fread(&version, sizeof(version), 1, file) != 0 && version >= 0x56) {
+            for (size_t close_slot = 2; close_slot < MapWinTableSlots; ++close_slot) {
+                if (MapWinTable[close_slot] != 0
+                    && MapWinTable[close_slot]->view_active_ != 0) {
+                    MapWinTable[close_slot]->view_active_ = 0;
+                    MapWinTable[close_slot]->close();
+                }
+            }
+            ConsoleGlobal.field_23BE4_ = 0;
+            ConsoleGlobal.field_23BE8_ = 0;
+            result = 4;
+            if (game_data(file, 0) != 0) {
+                if (GameDataLoadStatusWord != 0) {
+                    result = 5;
+                }
+            } else {
+                if ((GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) != 0) {
+                    if (fread(&seed, sizeof(seed), 1, file) != 0) my_srand(seed);
+                }
+                if (IsMultiplayerNet == 0) {
+                    for (size_t offline_slot = 2; offline_slot < MapWinTableSlots; ++offline_slot) {
+                        if (MapWinTable[offline_slot] != 0) {
+                            MapWinTable[offline_slot]->view_active_ = 0;
+                        }
+                    }
+                }
+                BaseComputedID = -1;
+                result = 0;
+                Paths.init();
+                if (linearize_contours != 0) world_linearize_contours();
+                for (int contour_slot = 0; contour_slot < 11; ++contour_slot) {
+                    AltNatural[contour_slot] = AltContour[contour_slot];
+                }
+
+                see_map_check();
+
+                for (int alive_faction = 1; alive_faction < MaxPlayerNum; ++alive_faction) {
+                    int has_presence = 0;
+                    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
+                        if (Bases[base_id].faction_id_current == alive_faction) {
+                            has_presence = 1;
+                            break;
+                        }
+                    }
+                    if (!has_presence) {
+                        for (int vehicle_id = 0; vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle_id) {
+                            if (Vehs[vehicle_id].faction_id == alive_faction
+                                && VehPrototypes[Vehs[vehicle_id].proto_id].plan == PLAN_COLONIZATION) {
+                                has_presence = 1;
+                            }
+                        }
+                    }
+                    if (!has_presence) {
+                        GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &= ~(1 << alive_faction);
+                    } else {
+                        GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ |= 1 << alive_faction;
+                    }
+                }
+
+                if ((GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) != 0) remove(path);
+
+                // The current history index is re-read for every slot.
+                for (int history_slot = 0; history_slot < 32; ++history_slot) {
+                    ConsoleGlobal.cursor_history_x_[history_slot] =
+                        ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
+                    ConsoleGlobal.cursor_history_y_[history_slot] =
+                        ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
+                }
+
+                rebuild_vehicle_bits();
+                rebuild_base_bits();
+
+                if (strstr(path, GameSaveMultiplayerMarker) != 0 && IsMultiplayerNet == 0) {
+                    ConsoleGlobal.cursor_active_ = 0;
+                    GameDataStateStorage.fields_.game_state_ |= 0x10C0;
+                    const unsigned char state_low_byte = static_cast<unsigned char>(GameDataStateStorage.fields_.game_state_);
+                    if ((state_low_byte & 0x80) != 0 && (state_low_byte & 0x40) != 0) {
+                        MainInterfaceGlobal.flat_button_[2].show(0);
+                    } else {
+                        MainInterfaceGlobal.flat_button_[2].hide();
+                    }
+                }
+
+                ControlTurnPhase = ConsoleGlobal.faction_id_;
+                if (IsMultiplayerNet != 0) {
+                    IsMultiplayerPBEM = 0;
+                } else if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x20) == 0
+                    && bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu) <= 1) {
+                    IsMultiplayerPBEM = 0;
+                } else {
+                    IsMultiplayerPBEM = 1;
+                    check_tamper();
+                }
+                WorldClimateWorldWin.field_239BC_ |= 4;
+            }
+        }
+    }
+    fclose(file);
+    return result;
+}
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x005A9B20 ?save_map_daemon@@YAHPAD@Z 0x005A9B20-0x005A9C05 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/005a9b20.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover map-save header/version/data flow and preserve the original unconditional fclose and failed-file removal error behavior."}
+// symbol    ?save_map_daemon@@YAHPAD@Z
+int __cdecl save_map_daemon(char *path) {
+// RECOVERY_OBJECT: v1 0x00690DA4 _?PathDot@?1??save_map_daemon@@YAHPAD@Z@4PADA
+    static char PathDot[] = ".";
+// RECOVERY_OBJECT: v1 0x00690DA8 _?SaveFileMode@?1??save_map_daemon@@YAHPAD@Z@4PADA
+    static char SaveFileMode[] = "wb";
+
+    int result = 1;
+    char filename[256];
+    filename[0] = 0;
+    strcat(filename, path);
+    if (strchr(filename, '.') == 0) {
+        strcat(filename, PathDot);
+        strcat(filename, MapFileExtension);
+    }
+
+    FILE *file = env_open(filename, SaveFileMode);
+    if (file != 0) {
+        result = 2;
+        header_write(MapSaveHeaderText, file);
+        int version = 5;
+        if (fwrite(&version, sizeof(version), 1, file) != 0) {
+            result = 3;
+            if (map_data(file, 1, 0) == 0) result = 0;
+        }
+    }
+
+    fclose(file);
+    if (result != 0) remove(filename);
+    return result;
+}
+
+// ORIGINAL: 0x005A9C10 ?load_map_daemon@@YAHPAD@Z 0x005A9C10-0x005A9DAD BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/005a9c10.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover extension/header/version validation, map windows and map tiles, contour copy direction and Paths lifecycle through existing genuine owners."}
+// symbol    ?load_map_daemon@@YAHPAD@Z
+// TRIED: extension check, env_open, header_check against the TERRAN/ TERRANMAP string depending on the extension, then (fread reuses the `a1` parameter's own stack slot as scratch, matching the disassembly) a MapWin close sweep, map_data, and the counter table reset/copy. Landed at 0.80 similarity; diverges at #3 on register vs stack scheduling for the extension check.
+int __cdecl load_map_daemon(char *path) {
+    int is_saved_game = 0;
+    char *dot = strchr(path, '.');
+    // Native691B34 points to SAV. Saved games include the additional
+    // extraction blocks; ordinary scenario archives use TERRANMAP.
+    if (dot != 0 && _stricmp(dot + 1, SaveGameFileExtension) == 0) {
+        is_saved_game = 1;
+    }
+
+    FILE *file = env_open(path, OpenFileMode);
+    if (file == 0) return 1;
+
+    int result = 2;
+    char header[256];
+    header_check(header, file);
+    const char *expected_header = is_saved_game ? LoadMapSaveHeaderText : MapHeaderText;
+    if (strcmp(header, expected_header) == 0) {
+        result = 3;
+        int version;
+        if (fread(&version, sizeof(version), 1, file) != 0) {
+            const int required_version = is_saved_game ? 0x56 : 5;
+            if (version >= required_version) {
+                for (size_t slot = 1; slot < MapWinTableSlots; ++slot) {
+                    if (MapWinTable[slot] != nullptr
+                        && MapWinTable[slot]->view_active_ != 0) {
+                        MapWinTable[slot]->view_active_ = 0;
+                        MapWinTable[slot]->close();
+                    }
+                }
+                ConsoleGlobal.field_23BE4_ = 0;
+                result = 4;
+                if (map_data(file, 0, is_saved_game) == 0) {
+                    GameDataStateStorage.fields_.base_current_count_ = 0;
+                    GameDataStateStorage.fields_.vehicle_current_count_ = 0;
+                    ConsoleGlobal.cursor_active_ = 0;
+                    ConsoleGlobal.selected_vehicle_ = -1;
+                    // Native5A9D58/5A9D73 use signed JLE/JL tests on the
+                    // shared signed map-area word.
+                    Map *tile = MapTiles;
+                    for (int map_tile_index = 0;
+                         map_tile_index < MapArea;
+                         ++map_tile_index, ++tile) {
+                        tile->visibility = 0;
+                        tile->bit &= ~3U;
+                    }
+                    BaseComputedID = -1;
+                    for (int contour_index = 0; contour_index < 11; ++contour_index) {
+                        AltNatural[contour_index] = AltContour[contour_index];
+                    }
+                    result = 0;
+                    Paths.init();
+                }
+            }
+        }
+    }
+
+    fclose(file);
     return result;
 }
 
@@ -2575,127 +2264,6 @@ void __cdecl yearmotize(char *text) {
 }
 
 
-// Combat updates50A4A7/50A4B5 and50AF1B/50AF2D index these eight words.
-// Turn display527CEE/527D0F passes them to WONLOST; reset51E3C0 clears all.
-// RECOVERY_OBJECT: v2 0x0093A96C 0x0093A98C ?FactionTurnCombatWins@@3PAHA 0x0051E3C0
-int FactionTurnCombatWins[MaxPlayerNum];
-// RECOVERY_OBJECT: v2 0x0093A98C 0x0093A9AC ?FactionTurnCombatLosses@@3PAHA 0x0051E3C0
-int FactionTurnCombatLosses[MaxPlayerNum];
-
-// save_daemon clears this word on its rules/PBEM paths, or copies NetDaemon's
-// player count on its network path before game_data transfers its four bytes.
-// It begins after PendingDiplomacyFlags, not inside that matrix or NetDaemon.
-// RECOVERY_OBJECT: v2 0x0093F798 0x0093F79C ?GameDataPlayerCountSnapshot@@3HA 0x005A94F0
-int GameDataPlayerCountSnapshot;
-
-
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x005BED20 0x005BEFE0 0x005BEFF0 0x005BED70
-// RECOVERY_ASSOCIATED: v1 switch_selector 0x005BED20 0x005BEFF0 0x005BF004 0x005BED6A
-// ORIGINAL: 0x005BED20 ?do_unity_crash@@YAHHHH@Z 0x005BED20-0x005BEFDF BYTE_EXACT
-// RECOVERY_BINDING: v1 {"reason":"Recover Map bit2 event dispatch, spawn/morale and turn-based energy awards, and the live Base table radar scan with real UI/audio objects. The seed note calling this a unit scan is historical; the original stride134 and nativeBase count prove Bases. No byte/reference or runtime claim is granted.","evidence":["git:3f579310:src/unrecovered/005bed20.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/scenario-artifact-unity-owner-coverage.json","Original full span and native physical COFF emitted symbol ?do_unity_crash@@YAHHHH@Z; existing source owns all referenced storage and services."]}
-// NOTE: code bytes match the image with relocations masked; recover measure
-//       refuses it while ConsoleInfoWin/WorldClimateWorldWin lack bounded
-//       object spans. The image keeps two "unitfound_sm.pcx" literals (unpooled).
-// RECOVERY_LITERAL: v1 0x00691BF8 0x00691C09 $SG66462 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C0C 0x00691C19 $SG66463 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C1C 0x00691C2D $SG66466 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C30 0x00691C3B $SG66467 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C3C 0x00691C4C $SG66470 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C4C 0x00691C58 $SG66471 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C58 0x00691C60 $SG66478 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C60 0x00691C72 $SG66480 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C74 0x00691C7F $SG66481 0x005BED20
-int __cdecl do_unity_crash(int x, int y, int faction_id) {
-    const uint32_t event = MapTiles[static_cast<int>(MapLongitude) * y + (x >> 1)].bit2;
-    if ((event & 0x80004000u) != 0x4000u) {
-        return 0;
-    }
-
-    const int event_kind = static_cast<int>(event) >> 24;
-    switch (event_kind) {
-    case 0:
-    case 8: {
-        int prototype;
-        if (event_kind) {
-            prototype = 0x0C;
-            if (faction_id == ConsoleGlobal.faction_id_) {
-                g_FX.play(0x16);
-                NetMsgPrimary.pop("UNITYCHOPPER", -5000, 0, "unitfound_sm.pcx");
-                g_FX.fade(0x16);
-            }
-        } else {
-            prototype = 0x14;
-            if (faction_id == ConsoleGlobal.faction_id_) {
-                g_FX.play(0x16);
-                NetMsgPrimary.pop("UNITYMINER", -5000, 0, "unitfound_sm.pcx");
-                g_FX.fade(0x16);
-            }
-        }
-        Vehs[veh_init(prototype, faction_id, x, y)].morale = 2;
-        return 1;
-    }
-    case 10: {
-        // The award expression is written twice; VC6 CSEs it into one value.
-        PlayersData[faction_id].energy_reserves += (GameDataStateStorage.fields_.turn_current_num_ < 0x32) ? 150 : 300;
-        parse_num(0, (GameDataStateStorage.fields_.turn_current_num_ < 0x32) ? 150 : 300);
-        ConsoleInfoWin.on_redraw();
-        if (faction_id == ConsoleGlobal.faction_id_) {
-            g_FX.play(0x16);
-            NetMsgPrimary.pop("UNITYENGINE", -5000, 0, "foundeng_sm.pcx");
-            g_FX.fade(0x16);
-        }
-        return 1;
-    }
-    case 0x13: {
-        for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
-            StringTemp[0] = 0;
-            strcat(StringTemp, Players[Bases[base_id].faction_id_current].filename);
-            CharUpperA(StringTemp);
-            if (has_fac(1, base_id, 0)
-                && (Players[Bases[base_id].faction_id_current].rule_flags & RFLAG_ALIEN) == 0
-                && strcmp(StringTemp, "FUNGBOY") != 0) {
-                spot_loc(Bases[base_id].x, Bases[base_id].y, faction_id);
-            }
-        }
-        if (faction_id == ConsoleGlobal.faction_id_) {
-            draw_map(1);
-            WorldClimateWorldWin.field_239BC_ |= 4;
-            WorldClimateWorldWin.GraphicWin::redraw();
-            g_FX.play(0x16);
-            NetMsgPrimary.pop("UNITYRADAR", -5000, 0, "foundradar_sm.pcx");
-            g_FX.fade(0x16);
-        }
-        return 1;
-    }
-    }
-    return 0;
-}
-
-
-// ORIGINAL: 0x00444D90 ?diplo@@YAXHH@Z 0x00444D90-0x00444DA7 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:a1347e25:src/recovered/00444d90.cpp complete original identity/spans and historical claims/findings.", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x444d90 full native body review.", "source:src/game.cpp existing real state owners; no executable-address alias or synthetic receiver."], "reason": "Recover the complete short helper through established source-owned diplomacy, vehicle, text or window state; preserve signed sentinel behavior, original receiver/argument order and conditional callbacks."}
-// symbol    ?diplo@@YAXHH@Z
-// TRIED: homed into game.cpp (its real TU) 2026-09-03 - does not compile there: the body's only call is `DiploWin::exec` at 0x00443F10, which diplowin.h does not declare and no product TU defines yet. Declaring `void exec(int,int)` on DiploWin without a definition is a link error, so the body stays here until 0x00443F10 is homed into diplowin.cpp and `exec` declared on the class. The `#include "diplowin.h"` game.cpp needs for it is already added.
-void __cdecl diplo(int faction_id, int faction_id_with) {
-  DiploWindow.exec(faction_id, faction_id_with);
-}
-
-
-// ORIGINAL: 0x004411F0 sub_4411f0 0x004411F0-0x00441241 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["task:typed-offer-tamper-reset-owners", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x4411f0", "historical seed:src/recovered/units/004411f0.cpp; identity/spans/claims and useful discoveries retained; seed retirement requires fresh verification."], "reason": "Reset the two directed offer cells through the existing typed owner, preserving interleaved count/state write order and payload. Original has two stack ints, no receiver and no meaningful return; caller reachability remains unknown. Seed spelling lesson: full symmetric index expressions preserve native register allocation better than hoisted temporary indices; evidence is not a requirement to use fixed addresses."}
-// symbol    ?clear_offer_pair@@YAXHH@Z
-void __cdecl clear_offer_pair(int faction_a, int faction_b) {
-    OfferResetCells[faction_a][faction_b].count_[0] = 0;
-    OfferResetCells[faction_a][faction_b].count_[1] = 0;
-    OfferResetCells[faction_b][faction_a].count_[0] = 0;
-    OfferResetCells[faction_b][faction_a].count_[1] = 0;
-    OfferResetCells[faction_a][faction_b].state_[0] = 0;
-    OfferResetCells[faction_a][faction_b].state_[1] = 0;
-    OfferResetCells[faction_b][faction_a].state_[0] = 0;
-    OfferResetCells[faction_b][faction_a].state_[1] = 0;
-}
-
-
 // RECOVERY_OBJECT: v1 0x00945D80 ?SaveNameDefaultStorageGlobal@@3USaveNameDefaultStorage@@A
 SaveNameDefaultStorage SaveNameDefaultStorageGlobal;
 
@@ -2722,6 +2290,8 @@ inline void load_game_reload_faction_art() {
     }
     load_flags();
 }
+
+static int load_map_budget_probe(int x);
 
 /*
 // ORIGINAL: 0x005A9EB0 ?save_game@@YAHH@Z 0x005A9EB0-0x005AAAA9;0x00661B40-0x00661E84 FILE
@@ -3064,5 +2634,439 @@ done:
         dialog_default_style() &= ~4u;
     }
     return result;
+}
+
+// ORIGINAL: 0x005AB600 ?load_map@@YAHXZ 0x005AB600-0x005ABB8D;0x006620A7-0x0066221F BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/005ab600.cpp", "recovery/tasks/game-save-load-owner-coverage.json", "pinned image sha256:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_load_map_behavior.py"], "reason": "Recover map loading through AlphaSave's real selected-path return and existing extension, map-daemon, multiplayer, preference, and dialog owners."}
+// TRIED: FileBox/AlphaSave are opaque (no fields) in this scaffold, so their real stack sizes are unknown; used one raw byte buffer + placement-new/reinterpret_cast at the exact ebp-relative offsets from the disasm (incl. the manual vtable pokes before AlphaSave/Scroll/FlatButton close() calls) instead of real SEH locals. Compiles, right call order/addresses/args, sim 0.34-0.50 - the missing SEH frame and giant flat buffer (vs per-object locals) rule out byte-exact; not retried given size (1797 bytes, ~30 embedded objects).
+// WORKAROUND(inline): dead /Ob2 budget probe; folds to nothing. The image's
+// early return teardown (0x005AB77E) expands ~AlphaSave one level only and
+// its final teardown expands ~FileWin's members; ten zero-code expansions
+// after the early return reproduce both (31 EH states, sites 8 and 21).
+static int load_map_budget_probe(int x)
+{
+    if (x == 1) x = 4;
+    return x;
+}
+
+int __cdecl load_map() {
+    FileBox file_box_lifetime;
+    AlphaSave dialog;
+    dialog.init();
+
+    char extension[256];
+    extension[0] = '\0';
+    strcat(extension, ".");
+    strcat(extension, MapFileExtension);
+    dialog.add_default_extension(extension);
+    extension[0] = '\0';
+    strcat(extension, ".");
+    strcat(extension, SaveGameFileExtension);
+    dialog.add_default_extension(extension);
+
+    char initial_pattern[256];
+    initial_pattern[0] = '\0';
+    strcat(initial_pattern, "maps\\*.");
+    strcat(initial_pattern, MapFileExtension);
+    char selected_path[256];
+    strncpy(selected_path, prefs_get("Latest Map", initial_pattern, 0), 0xFF);
+    if (strlen(selected_path) == 0) {
+        strcpy(selected_path, initial_pattern);
+    }
+    dialog.set_default_filename(selected_path);
+
+    char *selected = dialog.load();
+    do_all_draws();
+    if (selected == 0) {
+        return 1;
+    }
+
+    strcpy(selected_path, selected);
+    load_map_budget_probe(0);
+    load_map_budget_probe(1);
+    load_map_budget_probe(2);
+    load_map_budget_probe(0);
+    load_map_budget_probe(1);
+    load_map_budget_probe(2);
+    load_map_budget_probe(0);
+    load_map_budget_probe(1);
+    load_map_budget_probe(2);
+    load_map_budget_probe(0);
+    char preference_value[256];
+    strcpy(preference_value, selected);
+    char *dot = strchr(preference_value, '.');
+    if (dot != 0) {
+        *dot = '\0';
+    }
+    prefs_put("Latest Map", preference_value);
+
+    const int result = load_map_daemon(selected_path);
+    if (IsMultiplayerNet != 0 && result == 0) {
+        NetWinDialog.loaded_file_path_[0] = '\0';
+        strcat(NetWinDialog.loaded_file_path_, preference_value);
+        NetWinDialog.field_7728_ = 1;
+    } else if (result != 0) {
+        parse_says(0, selected_path, -1, -1);
+        parse_num(0, result);
+        StringTemp[0] = '\0';
+        strcat(StringTemp, "LOAD");
+        switch (result) {
+        case 1: strcat(StringTemp, "NONE"); break;
+        case 2: strcat(StringTemp, "NOT"); break;
+        case 3: strcat(StringTemp, "OLD"); break;
+        default: strcat(StringTemp, "ERROR"); break;
+        }
+        X_pop(StringTemp, 0);
+        do_all_draws();
+    }
+    return result;
+}
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x005ABB90 ?save_map@@YAXXZ 0x005ABB90-0x005ABD0C;0x0066221F-0x00662234 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005abb90.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover map-save dialog, selection, preference and save orchestration through lexical FileBox lifetime. Preserve both original spans including compiler cleanup; retain the seed."}
+// symbol    ?save_map@@YAXXZ
+void __cdecl save_map() {
+    FileBox box;
+    box.set_def_name(MapFilePath);
+    box.set_def_ext(MapFileExtension);
+
+    char filter[256];
+    filter[0] = 0;
+    strcat(filter, MapFileFilterPattern);
+    strcat(filter, MapFileExtension);
+    box.add_filter(filter, StringTable.get(Labels.strings_ptr[0x678 / 4]));
+
+    char *const selection = box.save();
+    do_all_draws();
+    if (selection == 0) return;
+
+    char name[256];
+    strcpy(name, selection);
+    if (strcmp(name, EmptyMapName) == 0) {
+        strcpy(name, StringTemp);
+    }
+    char preference_value[256];
+    strcpy(preference_value, name);
+    char *dot = strchr(preference_value, '.');
+    if (dot != 0) *dot = 0;
+
+    strncpy(MapFilePath, preference_value, 0x4B);
+    prefs_put(LatestMapPreference, preference_value);
+    save_map_daemon(name);
+}
+
+/*
+Purpose: Delete the initial auto-save game file.
+// ORIGINAL: 0x005ABD10 ?kill_auto_save@@YAXXZ 0x005ABD10-0x005ABD1C BYTE_EXACT
+// size      12 bytes
+// prototype 
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00646950
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl kill_auto_save() {
+    remove(InitialAutoSaveDeletePath);
+}
+
+/*
+Purpose: Handle the creation and management of the auto-save game files.
+// ORIGINAL: 0x005ABD20 ?auto_save@@YAXXZ 0x005ABD20-0x005ABE39 BYTE_EXACT
+// TRIED (2026-09-03, probed against cl 12.00.8168 in isolation): the
+//   image's split cleanup - a batched `add esp, 0x1c` covering the seven
+//   `remove` calls and then `pop ecx` for the trailing `save_daemon`, so 0x1c
+//   + 4 rather than this tree's single `add esp, 0x20` - is the per-call
+//   cleanup merged by peephole with a size-shaped `pop ecx` on the last one.
+//   Probed with a two-branch function shaped like this one (7 same-callee
+//   calls then a different one-arg callee, then a mixed run): /O2 defers all
+//   eight into one `add esp, 0x20` and elides nothing else; /O1, /O2 /Os and
+//   /O1 /Oy keep the `pop ecx` but replace the pushes with
+//   `mov dword ptr [esp], imm32` argument-slot reuse, which the image does
+//   NOT have (it pushes every argument); /O2 /Os and /O2 /G6 likewise. No
+//   combination of /O1//O2 /Os//Ot /Ob0 /Oi- /Oy- /G5//G6 in FLAG_SETS or
+//   outside them produces fresh pushes, a partial batched `add esp`, AND a
+//   trailing `pop ecx` - which reads as this translation unit having been
+//   compiled with the stack-pop deferral off, a setting the flag space here
+//   does not model. listing_diff agrees the ONLY two differences in the body
+//   are those cleanups (image 66 instructions, this tree 64); 28/66 is the
+//   byte-shift cost of the two bytes they add, not four divergent
+//   instructions.
+// TRIED: 28/66, 0.954 similar - as close as this gets. Both branches'
+//            call sequences end with the image cleaning the LAST call's
+//            single pushed argument via `pop ecx` (1 byte) rather than
+//            folding it into the preceding `add esp, N` that cleans the
+//            other calls in the run; this body folds all of them into one
+//            `add esp`. Pure VC6 stack-cleanup-size heuristic across a run
+//            of same-shaped `__cdecl` calls, not a source-form lever.
+// size      281 bytes
+// prototype 
+// callers   9   call targets   3
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005A94F0 0x00646950 0x006469F7
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl auto_save() {
+    if (!IsMultiplayerPBEM || IsMultiplayerNet) { // auto-saving disabled for PBEM/HotSeat games
+        if (GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN && !(GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR)) {
+            remove("saves\\auto\\Alpha Centauri Autosave 30.SAV");
+            remove("saves\\auto\\Alpha Centauri Autosave 20.SAV");
+            remove("saves\\auto\\Alpha Centauri Autosave 10.SAV");
+            remove("saves\\auto\\Alpha Centauri Autosave 5.SAV");
+            remove("saves\\auto\\Alpha Centauri Autosave 4.SAV");
+            remove("saves\\auto\\Alpha Centauri Autosave 3.SAV");
+            remove("saves\\auto\\Alpha Centauri Autosave 2.SAV");
+        } else { // standard auto saves
+            if (!(GameDataStateStorage.fields_.turn_current_num_ % 10)) {
+                remove("saves\\auto\\Alpha Centauri Autosave 30.SAV");
+                rename("saves\\auto\\Alpha Centauri Autosave 20.SAV",
+                    "saves\\auto\\Alpha Centauri Autosave 30.SAV");
+                rename("saves\\auto\\Alpha Centauri Autosave 10.SAV",
+                    "saves\\auto\\Alpha Centauri Autosave 20.SAV");
+                save_daemon("saves\\auto\\Alpha Centauri Autosave 10");
+            }
+            remove("saves\\auto\\Alpha Centauri Autosave 5.SAV");
+            rename("saves\\auto\\Alpha Centauri Autosave 4.SAV",
+                "saves\\auto\\Alpha Centauri Autosave 5.SAV");
+            rename("saves\\auto\\Alpha Centauri Autosave 3.SAV",
+                "saves\\auto\\Alpha Centauri Autosave 4.SAV");
+            rename("saves\\auto\\Alpha Centauri Autosave 2.SAV",
+                "saves\\auto\\Alpha Centauri Autosave 3.SAV");
+            rename("saves\\auto\\Alpha Centauri Autosave 1.SAV",
+                "saves\\auto\\Alpha Centauri Autosave 2.SAV");
+        }
+        save_daemon("saves\\auto\\Alpha Centauri Autosave 1");
+    }
+}
+
+// Original load_undo at 0x005ABE4E/0x005ABE59 updates this cursor; auto_undo at 0x005ABF37 resets 1; start only.
+// RECOVERY_OBJECT: v1 0x00690D7C ?ScenEditorUndoPosition@@3HA
+int ScenEditorUndoPosition = 1; // 0x00690D7C
+
+/*
+Purpose: Load a Scenario Editor undo (type: 1) or redo (type: -1) auto-save. TODO: Revisit in the 
+         future to fix some of the underlying issues with the undo/redo process.
+// ORIGINAL: 0x005ABE40 ?load_undo@@YAXH@Z 0x005ABE40-0x005ABEBF BYTE_EXACT
+// LEVER: two real bugs in the committed body, fixed by transcription
+//        instead of invention. (1) WRONG CALLEE - `sprintf_s` is not in the
+//        image; it's the `strcat`/`_itoa`/`strcat`-into-StringTemp idiom,
+//        no ".SAV" suffix, matching `wipe_undo`/`auto_undo` below. (2) the
+//        image calls NEITHER an early `return` on `type==-1`, NOR
+//        `draw_map` at the end - both were invented, not transcribed; the
+//        image's only calls are the two `strcat`s, `_itoa` and
+//        `load_daemon`. (3) the image's `cmp`s on ScenEditorUndoPosition
+//        are signed (`jle`/`jge`): the global is `int`.
+// size      127 bytes
+// prototype void (__cdecl ?load_undo@@YAXH@Z)(int type)
+// callers   2   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005A9760 0x00645470 0x0064FC88
+Return Value: n/a
+Status: Complete
+*/
+// The three undo operations use distinct original static path starts even
+// though their text agrees. Keep their source storage separate; the bindings
+// identify starts, without claiming the enclosing original allocations.
+void __cdecl load_undo(int type) {
+    if (type < 0 && ScenEditorUndoPosition > 1) {
+        ScenEditorUndoPosition--;
+    }
+    // THE PRE-sprintf IDIOM, same as `wipe_undo`/`auto_undo` immediately
+    // below: `strcat`/`_itoa`/`strcat` into StringTemp, no ".SAV" extension
+    // appended, and no `draw_map` call - the image's own call targets are
+    // just strcat x2, _itoa and load_daemon.
+    StringTemp[0] = 0;
+    // RECOVERY_OBJECT: v1 0x0069137C _?UndoPath@?4??load_undo@@YAXH@Z@4QBDB
+    static const char UndoPath[] = "saves\\auto\\Scenario Editor Undo ";
+    strcat(StringTemp, UndoPath);
+    char number[80];
+    _itoa(ScenEditorUndoPosition, number, 10);
+    strcat(StringTemp, number);
+    if (type > 0 && ScenEditorUndoPosition < 9) {
+        ScenEditorUndoPosition++;
+    }
+    load_daemon(StringTemp, false);
+}
+
+/*
+Purpose: Remove all the existing Scenario Editor undo auto-saves.
+// ORIGINAL: 0x005ABEC0 ?wipe_undo@@YAXXZ 0x005ABEC0-0x005ABF14 BYTE_EXACT
+// LEVER: WRONG CALLEE - `sprintf_s` is not in the image at all (the image has no C++/CRT sprintf for paths here); it builds the name with `strcat`/`_itoa`/`strcat` into the global `StringTemp` buffer (0x009B86A0) and calls `remove()` directly, with no ".SAV" extension appended - matching auto_undo's own documented idiom immediately below.
+// size      84 bytes
+// prototype
+// callers   1   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00645470 0x00646950 0x0064FC88
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl wipe_undo() {
+    for (int i = 9; i >= 1; i--) {
+        StringTemp[0] = 0;
+        // RECOVERY_OBJECT: v1 0x006913A0 _?UndoPath@?3??wipe_undo@@YAXXZ@4QBDB
+        static const char UndoPath[] = "saves\\auto\\Scenario Editor Undo ";
+        strcat(StringTemp, UndoPath);
+        char number[80];
+        _itoa(i, number, 10);
+        strcat(StringTemp, number);
+        remove(StringTemp);
+    }
+}
+
+/*
+Purpose: Handle the creation of an undo auto-save when certain Scenario Editor changes are made.
+// ORIGINAL: 0x005ABF20 ?auto_undo@@YAXXZ 0x005ABF20-0x005ABFEF BYTE_EXACT
+// size      207 bytes
+// prototype 
+// callers   32   call targets   7
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005A94F0 0x006453E0 0x00645460 0x00645470 0x00646950 0x006469F7 0x0064FC88
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl auto_undo() {
+    if (!(GameDataStateStorage.fields_.game_preferences_ & PREF_BSC_AUTOSAVE_EACH_TURN)) {
+        return;
+    }
+    // THREE 0x100 BUFFERS AND THE PRE-sprintf IDIOM. The image reserves 0x250
+    // bytes at 0x005ABF23 and builds each name with `strcat`, `_itoa`,
+    // `strcat` - no `sprintf` anywhere. It also carries the PREVIOUS name
+    // forward rather than formatting it twice, and decides between `remove`
+    // and `rename` on whether that carried name is empty, which is what makes
+    // the first pass delete rather than rename.
+    ScenEditorUndoPosition = 1;
+    // 0x100, 0x100 and 0x50: the image's three locals sit at [ebp-0x250],
+    // [ebp-0x150] and [ebp-0x50], which is where `sub esp, 0x250` comes from.
+    char previous[256];
+    char current[256];
+    char number[80];
+    // RECOVERY_OBJECT: v1 0x006913C4 _?UndoPath@?4??auto_undo@@YAXXZ@4QBDB
+    static const char UndoPath[] = "saves\\auto\\Scenario Editor Undo ";
+    previous[0] = 0;
+    for (int i = 9; i >= 1; i--) {
+        current[0] = 0;
+        strcat(current, UndoPath);
+        _itoa(i, number, 10);
+        strcat(current, number);
+        if (strlen(previous) == 0) {
+            remove(current);
+        } else {
+            // (previous, current), in that order: the image pushes the
+            // current name and then the carried one, so the CARRIED name is
+            // the first argument - it renames the name it built last pass
+            // onto the one it just built, which collapses the history rather
+            // than rotating it. That is what the shipped code does.
+            rename(previous, current);
+        }
+        strcpy(previous, current);
+    }
+    // THE BUILT PATH, not a literal: the image pushes [ebp-0x250] at
+    // 0x005ABFE1. The loop's last pass builds "Undo 1" and carries it there,
+    // so the name is already in hand.
+    save_daemon(previous);
+}
+
+
+// Combat updates50A4A7/50A4B5 and50AF1B/50AF2D index these eight words.
+// Turn display527CEE/527D0F passes them to WONLOST; reset51E3C0 clears all.
+// RECOVERY_OBJECT: v2 0x0093A96C 0x0093A98C ?FactionTurnCombatWins@@3PAHA 0x0051E3C0
+int FactionTurnCombatWins[MaxPlayerNum];
+// RECOVERY_OBJECT: v2 0x0093A98C 0x0093A9AC ?FactionTurnCombatLosses@@3PAHA 0x0051E3C0
+int FactionTurnCombatLosses[MaxPlayerNum];
+
+// save_daemon clears this word on its rules/PBEM paths, or copies NetDaemon's
+// player count on its network path before game_data transfers its four bytes.
+// It begins after PendingDiplomacyFlags, not inside that matrix or NetDaemon.
+// RECOVERY_OBJECT: v2 0x0093F798 0x0093F79C ?GameDataPlayerCountSnapshot@@3HA 0x005A94F0
+int GameDataPlayerCountSnapshot;
+
+
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x005BED20 0x005BEFE0 0x005BEFF0 0x005BED70
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x005BED20 0x005BEFF0 0x005BF004 0x005BED6A
+// ORIGINAL: 0x005BED20 ?do_unity_crash@@YAHHHH@Z 0x005BED20-0x005BEFDF BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"Recover Map bit2 event dispatch, spawn/morale and turn-based energy awards, and the live Base table radar scan with real UI/audio objects. The seed note calling this a unit scan is historical; the original stride134 and nativeBase count prove Bases. No byte/reference or runtime claim is granted.","evidence":["git:3f579310:src/unrecovered/005bed20.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/scenario-artifact-unity-owner-coverage.json","Original full span and native physical COFF emitted symbol ?do_unity_crash@@YAHHHH@Z; existing source owns all referenced storage and services."]}
+// NOTE: code bytes match the image with relocations masked; recover measure
+//       refuses it while ConsoleInfoWin/WorldClimateWorldWin lack bounded
+//       object spans. The image keeps two "unitfound_sm.pcx" literals (unpooled).
+// RECOVERY_LITERAL: v1 0x00691BF8 0x00691C09 $SG66462 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C0C 0x00691C19 $SG66463 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C1C 0x00691C2D $SG66466 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C30 0x00691C3B $SG66467 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C3C 0x00691C4C $SG66470 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C4C 0x00691C58 $SG66471 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C58 0x00691C60 $SG66478 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C60 0x00691C72 $SG66480 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C74 0x00691C7F $SG66481 0x005BED20
+int __cdecl do_unity_crash(int x, int y, int faction_id) {
+    const uint32_t event = MapTiles[static_cast<int>(MapLongitude) * y + (x >> 1)].bit2;
+    if ((event & 0x80004000u) != 0x4000u) {
+        return 0;
+    }
+
+    const int event_kind = static_cast<int>(event) >> 24;
+    switch (event_kind) {
+    case 0:
+    case 8: {
+        int prototype;
+        if (event_kind) {
+            prototype = 0x0C;
+            if (faction_id == ConsoleGlobal.faction_id_) {
+                g_FX.play(0x16);
+                NetMsgPrimary.pop("UNITYCHOPPER", -5000, 0, "unitfound_sm.pcx");
+                g_FX.fade(0x16);
+            }
+        } else {
+            prototype = 0x14;
+            if (faction_id == ConsoleGlobal.faction_id_) {
+                g_FX.play(0x16);
+                NetMsgPrimary.pop("UNITYMINER", -5000, 0, "unitfound_sm.pcx");
+                g_FX.fade(0x16);
+            }
+        }
+        Vehs[veh_init(prototype, faction_id, x, y)].morale = 2;
+        return 1;
+    }
+    case 10: {
+        // The award expression is written twice; VC6 CSEs it into one value.
+        PlayersData[faction_id].energy_reserves += (GameDataStateStorage.fields_.turn_current_num_ < 0x32) ? 150 : 300;
+        parse_num(0, (GameDataStateStorage.fields_.turn_current_num_ < 0x32) ? 150 : 300);
+        ConsoleInfoWin.on_redraw();
+        if (faction_id == ConsoleGlobal.faction_id_) {
+            g_FX.play(0x16);
+            NetMsgPrimary.pop("UNITYENGINE", -5000, 0, "foundeng_sm.pcx");
+            g_FX.fade(0x16);
+        }
+        return 1;
+    }
+    case 0x13: {
+        for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
+            StringTemp[0] = 0;
+            strcat(StringTemp, Players[Bases[base_id].faction_id_current].filename);
+            CharUpperA(StringTemp);
+            if (has_fac(1, base_id, 0)
+                && (Players[Bases[base_id].faction_id_current].rule_flags & RFLAG_ALIEN) == 0
+                && strcmp(StringTemp, "FUNGBOY") != 0) {
+                spot_loc(Bases[base_id].x, Bases[base_id].y, faction_id);
+            }
+        }
+        if (faction_id == ConsoleGlobal.faction_id_) {
+            draw_map(1);
+            WorldClimateWorldWin.field_239BC_ |= 4;
+            WorldClimateWorldWin.GraphicWin::redraw();
+            g_FX.play(0x16);
+            NetMsgPrimary.pop("UNITYRADAR", -5000, 0, "foundradar_sm.pcx");
+            g_FX.fade(0x16);
+        }
+        return 1;
+    }
+    }
+    return 0;
 }
 
