@@ -21,6 +21,7 @@
 /*
 Purpose: Use the min and max parameters to bound the input.
 // ORIGINAL: 0x00422F00 ?range@@YAHHHH@Z 0x00422F00-0x00422F1E BYTE_EXACT
+// compile_context src/battlewin.cpp
 // body      src/general.h
 // size      30 bytes
 // prototype int (__cdecl ?range@@YAHHHH@Z)(int input, int min, int max)

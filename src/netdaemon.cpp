@@ -2806,6 +2806,7 @@ int NetDaemon::order_veh(int veh_id, int direction, int mode) {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0051DD00 sub_51dd00 0x0051DD00-0x0051DDE0 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0051dd00.cpp"], "reason": "Recover typed lock-entry reset, borrowed selection pointer clearing and ordered lock cleanup before qualified AlphaNet close."}
+// compile_context src/console.cpp
 // body src/netdaemon.h
 // symbol    ?reset@NetDaemon@@QAEXXZ
 // BODY IN netdaemon.h, as an in-class `MEASURED` inline member.

@@ -423,6 +423,7 @@ static const uint32_t PrototypeAbilitySimilarityMask = 0x0048841Au;
 /*
 Purpose: Relocate an existing unit to the specified tile.
 // ORIGINAL: 0x005A59B0 ?veh_put@@YAXHHH@Z 0x005A59B0-0x005A59D2 BYTE_EXACT
+// compile_context src/probe.cpp
 // body      src/veh.h
 // size      34 bytes
 // prototype void (__cdecl ?veh_put@@YAXHHH@Z)(int vehID, int xCoord, int yCoord)
@@ -442,6 +443,7 @@ Status: Complete
 /*
 Purpose: Get the current health of the specified unit factoring in damage.
 // ORIGINAL: 0x005A59E0 ?veh_health@@YAHH@Z 0x005A59E0-0x005A5A52 BYTE_EXACT
+// compile_context src/probe.cpp
 // body      src/veh.h
 // LEVER: ternary -> if/else. The image branches on `plan != ALIEN_ARTIFACT`
 // with `jne` to the range()*10 path and falls through `mov eax,1; jmp` on
