@@ -579,6 +579,56 @@ raw field access where the original used inline accessors.
   function are mostly out-of-line COMDAT copies of header inlines kept from
   the first unit in link order that calls them out of line; their marker
   belongs in that unit (it must emit the copy, or fe reports `nosymbol`).
+- **Data order is unit evidence too (measured 2026-11-19).** A unit's `.bss`
+  (and `.data`) contribution is contiguous and the units follow link order,
+  as in `.text`. Inside one unit the order is by symbol name (2.6), so only
+  the unit's interval matters.
+  - *Hard form, `analysis/initorder.py`:* a static-initializer thunk sits in
+    its unit's `.text` and names an object of that unit's `.bss`. Taking the
+    units in `.text` order, the intervals of the objects their thunks build
+    never overlap: 288 thunks, 48 units, no exception once alpha,
+    interface_fonts and newgame are one unit. That was the one violation:
+    the thunk at the head of alpha's run (0x00584D00) builds
+    `g_TOP_MENU_WAVE` 0x00945780, above `ConfigFactionPreview` 0x009403E0
+    built by newgame's thunk 0x00589870, so both thunks, and all the code
+    between them, are one unit (the wave is used by top_menu 0x0058E360
+    alone). A thunk is a definition point, not a unit start: only the first
+    thunk of a *unit* starts one. The merge changes no function, which the
+    inline test could not have decided.
+  - *Soft form, `analysis/datarun.py`:* ranked by the link position of the
+    file that defines them, the 1,291 bound `.bss` objects are in order for
+    1,111 (`.data`: 371 of 475). The 293 outside the longest ordered run are
+    definitions that sit in another unit's contribution: the popup and
+    interlude font pointers 0x0094575C-0x00945810, `FastUnitAnim` and
+    `TutWinClimateGate945830` lie among that same alpha/newgame unit's
+    objects (0x0093FC58-0x00945834), not at popup.cpp's, veh.cpp's or
+    tutwin.cpp's position; `MapEditorPaintId` and `MapEditorBrushId`
+    between map_grid's objects and `StoredScaleAdjustment` (not mapwin.cpp);
+    `Compass` between vehicle_cost's and game's. The game state proper
+    (0x00945F48-0x009B22EC: the rules tables, MapStorage, Players, Bases,
+    Vehs, world's counters) lies after technology's thunk object 0x00945ED0
+    and before multidebug's 0x009B22F0, and xpops' two thunk objects
+    (`g_PALETTE1` 0x0094C590, `g_PALETTE2` 0x009523A0) lie inside it: at
+    least 0x0094C590-0x009523A0 (FactionMonuments, TimeControl, Armor,
+    Technology, WorldBuilder, ReplayEvents, Morale) is defined by the unit
+    we call xpops.cpp, and the rest by it or the units up to gamma, not by
+    alpha.cpp, game.cpp and veh.cpp where the tree defines them.
+  Where an object is defined does not change code (every reference is
+  absolute), so the soft form is a structural record, not a matching lever;
+  moving a definition can still shift a unit's symbol counter.
+- **The emitting unit of an inline copy (`analysis/ctxscan.py`).** For a
+  marker in a short run between two other units, compile both neighbours:
+  the one that emits the symbol and reads exact is the `compile_context`
+  (range 0x00422F00 -> battlewin.cpp, NetDaemon::reset 0x0051DD00 ->
+  console.cpp, veh_put/veh_health 0x005A59B0 -> probe.cpp). A dead function
+  no unit calls (divide_and_increment 0x00532A50, point_in_inclusive_rect
+  0x00592DB0, the two scale_adjustment functions) is no inline copy (an
+  unused inline is not emitted): it is a real definition of the unit
+  around it, and nothing in the image says which neighbour when it sits on
+  a boundary.
+- **Build list order.** `OPENSMACX_SOURCES` mirrors the image's unit order
+  (each unit's main `.text` run); a unit without code keeps the position
+  its data run gives it.
 - **Pad sweeps do not fix general register ties (measured 2026-11-18).**
   Full 64-step `extern int` pad sweeps over about 33 units holding
   MNEMONIC_ONLY and register-cause functions flipped no non-exact function,
@@ -3849,6 +3899,32 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   first is signed whatever its source: only signed uses of a dword are strong
   evidence. `(flags & bit) != 0` is an int and lowers to `shr; and 1` like the
   shift (communicate's game-rules bit).
+- **Field and return types are not a tree-wide lever any more (census
+  2026-11-19, par-1).** Three independent screens agree. `imgtypes.py`
+  (image alone, 46,597 accesses of 1,596 fields of bound globals): no field
+  whose operand width or extension contradicts its declaration; what is left
+  is per site (a `(char)` cast: scenario_setup's `movsx` of `is_flat`,
+  diplomacy_check's of a treaty word). `accdiff.py` (our compile against the
+  image inside differing blocks): 91 access-form differences in 40 of the
+  non-exact functions, no operand above 4 functions, and those are register
+  rows. `retscan.py`: 2,636 callees, no caller consumes a result at another
+  width or extension than the declared return type. What remained were 32-bit
+  fields declared `uint32_t` by default and cast to int at their signed uses
+  (`retype.py`); retyping them changes no user of the field. A cast dropped
+  from a *header inline* does move functions that never touch the field:
+  it shifts every includer's symbol counter, with one signature per shift
+  (MainInterface::panel_height: PrefWin::init exact, probe 1250 -> 1299,
+  enemy_move 5625 -> 5619, order_veh, goody_box, boom, give_hints,
+  capture_base, battle_plans, draw_sat, setup_player). So even the giant
+  non-exact functions carry counter-dependent ties; judge a header change by
+  the functions that use what changed.
+- **A single-byte treaty mask tested as a dword is the helper.**
+  `test dword ptr [PlayersData + ..], 0x200` (spot_all, Path::find) against
+  our narrowed `test byte ptr [.. + 1], 2`: VC6 narrows `field & K` written
+  in place; battle_fight's `has_treaty(a, b, DTREATY_UNK_800)` gives the
+  dword `test .., 0x800` in ours and in the image, so the mask arriving as
+  an inline's parameter is the likely spelling (not yet applied at those two
+  sites; the named-value sweep's family T covers it).
 - **MapLongitude is `int`** (par-3 2026-11-19). The catalogue name
   `?MapLongitude@@3IA` (unsigned) is an inferred type: the image's 132 uses
   outside multiplies are x_dist's signed `cmp; jle`, none is unsigned

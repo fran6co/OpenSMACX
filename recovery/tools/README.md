@@ -104,6 +104,39 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   our source. A signed use of a 32-bit field is strong evidence against `unsigned` (int op uint is
   unsigned); an unsigned use can come from the other operand, so read U as a majority. Byte/word fields are
   judged by their extension only. `--uses` prints every attributed use of the `--field` selection.
+- `analysis/imgtypes.py [--field SUBSTR] [--uses] [--json F] [--refresh]` image-side type census (35 s; the class
+  layouts come from one /Z7 compile of every unit, cached in build/recovery/fe/imgtypes_layouts.json): reads the IMAGE
+  alone, so it covers non-exact functions. Every memory operand whose displacement lies inside a source-bound global
+  (RECOVERY_OBJECT; extent from our link map, a 4-byte `T *p` told from `T a[]` by its size) is named through the
+  decorated type and the CodeView layout (struct arrays: offset modulo the element size), and its access form is
+  counted (`movsx/movzx b|w`, plain `ld`, `ldzx` for xor+mov or mov+`and 0xff`, `st`, memory-operand arithmetic, and S/U
+  for dword loads through typescan's follower). Flags: OVER (operand wider than the declared field), NARROW (extension,
+  store, compare or inc/dec through a narrower operand; a narrowed mask test is normal and not counted), SIGN, INNER
+  (non-mask access inside a scalar), NOLEAF. Ranked by non-exact functions with a contradicting access.
+- `analysis/accdiff.py [unit ...] [--all] [--json F]` access-form differences in the non-exact functions (60 s): inside
+  each differing block, image and our instructions that name the same operand (same address expression, a global by
+  its relocation symbol) but differ in extension, operand width or the signedness of the following jcc, keyed by
+  operand and ranked by the number of functions. A wrongly declared field is one key in many functions; a local cast
+  is one function. (2026-11-19: 91 sites in 40 functions, no key above 4 functions once register-only rows are read
+  out: field types are not a tree-wide lever any more.)
+- `analysis/retscan.py [--all]` return-type census from the image alone (5 s): how each caller consumes eax/ax/al
+  after a direct call, against the callee's decorated return type (2026-11-19: 2,636 callees, no contradiction).
+- `analysis/retype.py TYPESCAN.json FEALL_BASE.json [--only C::f,..] [--skip FILE] [--dry]` one-field retype runner:
+  for each 32-bit field declared unsigned with no unsigned use in the image (typescan). Evidence is a signed use in
+  the image, or a load-bearing cast (dropping the int casts while the field stays unsigned moves some function; a cast
+  that changes nothing says nothing about the type). With evidence it retypes the declaration to `int`, drops the int
+  casts on that field in the units that use it, runs feall on every unit that names the field and commits when
+  nothing fails to compile and no user of the field is lost or worse; the other functions that move (a cast dropped
+  from a header inline shifts every includer's symbol counter) are listed in the commit. 80 s per field.
+- `analysis/datarun.py [--all] [--lo A --hi B]` data-order evidence (MATCHING_GUIDE 2.5): ranks every bound object by
+  its owner file's link position and lists the objects outside the longest non-decreasing run of each data section
+  (definitions that sit in another unit's .data/.bss contribution), with the units bounding them.
+- `analysis/initorder.py` the hard form of that evidence (2 s, no compile): the objects built by the CRT table's
+  initializer thunks, per unit in `.text` order; a unit whose objects start below an earlier unit's maximum shares a
+  unit with it (alpha + interface_fonts + newgame, the only violation in the image).
+- `analysis/ctxscan.py [--pfx N] [--max-run K]` emitting-unit screen for stray markers: for each marker in a short run
+  between other units' runs, compiles the preceding and following units and says which emit the symbol and read exact
+  (`compile_context` of an out-of-line header-inline copy = the unit whose object keeps it in the image).
 - `analysis/loopscan.py [unit ...] [--addr A] [--src ALT] [--struct] [--tagged] [--json F]` loop-form census
   (MATCHING_GUIDE 2.4) over the non-exact functions (35 s tree-wide): tags the source loops that hand-write
   what VC6's induction-variable optimiser derives (`ptr+ctr` pointer stepped beside a counter, `clause+=`
