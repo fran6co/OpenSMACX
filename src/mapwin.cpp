@@ -66,7 +66,6 @@ extern char SocialWinColonSpaceText[];/*
 // symbol    _$E14
 // click's base-routing Popup uses BasePop's item and exec() wrappers, which
 // expand to the image's direct Dialogs::item and exec(0, 0) calls.
-// WORKAROUND(decl): Buffer's guarded three-argument write_cent_l (buffer.h).
 #include "stdafx.h"
 #include "font_metrics.h"
 #include "interface_fonts.h"
