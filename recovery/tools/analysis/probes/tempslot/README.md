@@ -13,5 +13,6 @@ named symbols (named-access counts) and `~N` anonymous accesses (`-N+[ebp]`: opt
 | g10 | does a strength-reduced counter keep its variable's home | no |
 | g11 | (pressure attempt; inconclusive) | |
 | g12 | are two loops' temporaries one unit when they share a counter | no: one unit per web |
+| g13 | is a maybe-uninitialised home live where none of its stores reaches | no: live AND defined; exclusive-arm variables share a slot |
 
 Run: `FE_PFX_BASE=N uv run python g3.py [FUNC]` (FUNC prints its listing).

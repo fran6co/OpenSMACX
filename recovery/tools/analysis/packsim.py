@@ -37,6 +37,8 @@ ap.add_argument('--sym', default='')
 ap.add_argument('--why', action='store_true')
 ap.add_argument('--fit', default='last', choices=['last', 'first', 'smallest'], help='alternative models for comparison')
 ap.add_argument('--pfx', default=os.environ.get('FE_PFX_BASE', '29'))
+ap.add_argument('--defined', action='store_true', help='interference on live AND defined (a home is live only where one of '
+                'its own stores reaches), not plain flow liveness')
 a = ap.parse_args()
 addr = int(a.addr, 16)
 src = os.path.abspath(a.src) if a.src else R + '/' + a.unit
@@ -111,6 +113,16 @@ def relabel(sym):
                 continue
             liv.add(p)
             work.append(p)
+    if a.defined and wr:
+        reach = set()
+        work = [x for w in wr for x in F.ins[w]['s']]
+        while work:
+            n = work.pop()
+            if n in reach:
+                continue
+            reach.add(n)
+            work.extend(F.ins[n]['s'])
+        liv &= reach | wr
     return liv, wr
 
 

@@ -5421,6 +5421,27 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
     inflate. `packsim.py <unit> <addr> --why` prints the model's slots, the
     offset-order check and, per temporary, the deeper slots and the
     occupant that blocks each one in ours.
+  - **Interference is live AND defined, not plain flow liveness** (par-2
+    2026-11-19, probe `tempslot/g13`). A variable stored on one arm and read
+    later under the same test is maybe-uninitialised by flow, yet its home is
+    free on the other arm: an address-taken block-local there shares its slot
+    (`maybe_uninit`), and two variables stored on exclusive arms and each read
+    after the join share ONE slot (`exclusive`: A(2)/B(2)). This corrects
+    rule 5's "an uninitialised read keeps the home live from entry" (true only
+    where a store of the variable reaches). Consequence for reading the image:
+    one slot whose def-use web carries two of our names is NOT proof of one
+    variable. Console::go_to 0x004D61A0 slot -0x18 (`base_id` stored at
+    0x4D621C, read 0x4D778C/0x4D793A; `max_range` stored 0x4D6C78, read
+    0x4D7308; both stores reach every read by flow) is two packed variables:
+    base_id's store never reaches max_range's, so they do not interfere.
+  - `analysis/packrev.py <unit> <addr>` runs the model on the IMAGE (units =
+    image webs labelled with our variables by the fe alignment, split where
+    labels change, live-and-defined interference) and greedily searches
+    split/merge moves that reproduce the image's slots. MUST-MERGE (two names
+    whose homes interfere yet share an image slot) and SPLIT ACROSS SLOTS are
+    the certain findings; the search moves are screens (alignment labels are
+    noisy on big functions, and ties between equal counts are not modelled).
+    esp-frame functions (most of jackal/caviar) have no ebp slots to read.
 
 - **A loop counter the image keeps in memory while a callee-saved register
   holds a per-iteration conversion** (par-2 2026-11-19, ReportWin::draw_ops
