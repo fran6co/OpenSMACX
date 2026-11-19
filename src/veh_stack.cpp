@@ -1340,10 +1340,13 @@ int __cdecl stack_veh(int veh_id, int mode) {
                         board = open_ocean;
                     }
                 } else if (Vehs[i].state & VSTATE_UNK_40000) {
-                    board = (Vehs[i].state & VSTATE_UNK_20000)
-                        && PlayersData[Vehs[i].faction_id]
+                    if (Vehs[i].state & VSTATE_UNK_20000) {
+                        board = PlayersData[Vehs[i].faction_id]
                                .region_base_plan[region_at(Vehs[i].x, Vehs[i].y)]
                            == PLAN_NAVAL_TRANSPORT;
+                    } else {
+                        board = FALSE;
+                    }
                 } else if (Vehs[i].order == ORDER_HOLD
                            || VehPrototypes[Vehs[i].proto_id].plan == PLAN_ALIEN_ARTIFACT
                            || VehPrototypes[Vehs[i].proto_id].plan == PLAN_TERRAFORMING) {
