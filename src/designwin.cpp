@@ -2043,7 +2043,7 @@ void DesignWin::draw_vehicle(int redraw) {
     int custom = protoID_ >= 0x40;          // setge -> [ebp-0x38]
     if (custom) {
         int chassis_ok = 0;                                   // [ebp-0x2c]
-        int armor_ok = 0;                                     // [ebp-0x34]
+        adv = 0;                                     // [ebp-0x34]
         int weapon_ok = 0;                                    // [ebp-0x30]
         for (int j = 0; j < 0x80; j++) {                      // [ebp-0x3c]
             int jj = j % 64;                                  // and 0x8000003f / dec / or -0x40 / inc
@@ -2066,7 +2066,7 @@ void DesignWin::draw_vehicle(int redraw) {
             }
             int j_armor = VehPrototypes[jj].armor_id;         // ebx / [ebp-0x4]
             if (protoArmorType_ == j_armor) {
-                armor_ok = 1;
+                adv = 1;
             }
             int j_chassis = VehPrototypes[jj].chassis_id;     // edi
             if (protoChassisType_ == j_chassis) {
@@ -2078,14 +2078,14 @@ void DesignWin::draw_vehicle(int redraw) {
             }
             if (Armor[protoArmorType_].defense_rating > 0
                 && Armor[j_armor].defense_rating >= Armor[protoArmorType_].defense_rating) {
-                armor_ok = 1;
+                adv = 1;
             }
             if (Chassis[protoChassisType_].triad == Chassis[j_chassis].triad   // cmp dl(proto), bl(j)
                 && Chassis[j_chassis].speed >= Chassis[protoChassisType_].speed) { // cmp al(j), dl; jb
                 chassis_ok = 1;
             }
         }
-        if (weapon_ok && armor_ok && chassis_ok) {            // tested -0x30, -0x34, -0x2c
+        if (weapon_ok && adv && chassis_ok) {            // tested -0x30, -0x34, -0x2c
             custom = 0;
         }
     }
