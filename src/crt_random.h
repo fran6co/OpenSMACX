@@ -19,4 +19,17 @@
 
 // These wrappers use the CRT stream, not the separate Random/Rand LCG.
 void __cdecl my_srand(int reseed);
-unsigned int __cdecl rnd(int bounds, char *input);
+#include <stdlib.h>
+
+// rnd is a header inline: its out-of-line copy 0x00579770 heads the run of
+// header-inline copies in enemy_move's unit (x_dist, site_at, is_known,
+// base_who, ...), the image calls it only from the budget-exhausted giants
+// (enemy_move 5, probe 9), and everywhere else it expands to `rand() % bounds`
+// (the constant-bound guard folds away). The label argument is unused; the
+// labels of expanded sites stay in the image's data as unreferenced literals.
+MEASURED inline unsigned int __cdecl rnd(int bounds, char *input) {   // 00579770
+    if (bounds - 1 <= 0) {
+        return 0;
+    }
+    return rand() % bounds;
+}

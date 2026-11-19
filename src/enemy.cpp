@@ -8948,18 +8948,8 @@ Purpose: Calculate a random value within the provided bounds. The unused 2nd par
 Return Value: Bounded random value
 Status: Complete
 */
-// WORKAROUND(noinline): enemy_move calls rnd (0x00579770) at all five sites
-// and probe (another unit) calls the same copy. The copy heads the enemy
-// unit's tail run of header-inline copies (x_dist, base_who, anything_at,
-// veh_top follow it), so the original was a header inline refused by
-// enemy_move's /Ob2 budget. Visible here, /Ob2 expands every site, whether
-// the body is the bounded_crt_random call or written out, explicit inline
-// or not (measured 2026-11-19).
-#pragma auto_inline(off)
-uint32_t __cdecl rnd(int bounds, LPSTR UNUSED(input)) {
-    return bounded_crt_random(bounds);
-}
-#pragma auto_inline(on)
+// body src/crt_random.h
+// BODY IN crt_random.h, as `MEASURED inline`.
 
 /*
 Purpose: Calculate the distance between two x coordinates with handling for round maps.

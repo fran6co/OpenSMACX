@@ -866,7 +866,7 @@ void __cdecl action_destroy(int veh_id, int bits, int x, int y) {
             }
             return;
         }
-        if (rand() % 2) {
+        if (rnd(2, "ACTIONDESTROY")) {
             if (faction_id == ConsoleGlobal.faction_id_) {
                 NetMsgPrimary.pop("ARTYBOMBFAILED", 5000, 0, 0);
             }
@@ -901,7 +901,7 @@ void __cdecl action_destroy(int veh_id, int bits, int x, int y) {
     }
     if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == TRIAD_AIR
         && !Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].missile
-        && !(rand() % 4)) {
+        && !rnd(4, "ACTIONDESTBOMB")) {
         if (faction_id == ConsoleGlobal.faction_id_) {
             NetMsgPrimary.pop(VehLabelBOMBFAILED, 5000, 0, 0);
         }
@@ -1660,7 +1660,7 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
             int x_radius = wrap_map_x(x + VehMoveDeltaX[dir]);
             int y_radius = y + VehMoveDeltaY[dir];
             if (on_map(x_radius, y_radius)) {
-                int score = rand() % 10 + 50;
+                int score = rnd(10, "ACTIONAIRDROP") + 50;
                 if (dir >= 6 || dir <= 0) {
                     score -= 25;
                 }
@@ -2154,7 +2154,7 @@ int __cdecl shoot_it(int attacker, int defender, int x, int y,
     int unused = PlayersData[defender].satellites_[sat] - PlayersData[defender].sat_odp_deployed;
     for (int attempt = 0; attempt < unused; attempt++) {
         PlayersData[defender].sat_odp_deployed++;
-        if (rand() % 100 >= 50) {
+        if ((int)rnd(100, "FUNGTEC") >= 50) {
             result = 1;
             break;
         }
@@ -2168,7 +2168,7 @@ int __cdecl shoot_it(int attacker, int defender, int x, int y,
             if (on_map(x_radius, y_radius)) {
                 int base_id = base_at(x_radius, y_radius);
                 if (base_id >= 0 && Bases[base_id].faction_id_current != attacker
-                    && has_fac(FAC_FLECHETTE_DEFENSE_SYS, base_id, 0) && rand() % 100 < 50) {
+                    && has_fac(FAC_FLECHETTE_DEFENSE_SYS, base_id, 0) && (int)rnd(100, "FLECHETTEFUNGTEC") < 50) {
                     parse_says(0, Bases[base_id].name_string, -1, -1);
                     if (fungal_attack) {
                         if (defender == ConsoleGlobal.faction_id_) {
@@ -2698,7 +2698,7 @@ void __cdecl action_sat_attack(int attacker, int target, int type, int base_id) 
 
     // Original CRT rand, signed idiv remainder, exactly once after parsing.
     // No random() substitution, counter clamping or invalid-type filtering.
-    if (rand() % 100 < 50) {
+    if ((int)rnd(100, "SAT") < 50) {
         if (type == 4) set_fac(41, base_id, 0);
         else --PlayersData[target].satellites_[type];
         ++PlayersData[attacker].sat_odp_deployed;
