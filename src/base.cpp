@@ -1329,11 +1329,13 @@ void __cdecl base_change(int base_id, int production_id) {
     if (previous <= -70 && (new_unbuilt || base_project(-previous - 70) == -1)) {
         old_relevant = 1;
         if (has_project((previous < 0 ? -previous : previous) - 70, faction)) old_relevant = 0;
+        if (!new_unbuilt && !old_relevant) return;
+        if ((GameDataStateStorage.fields_.game_state_ & 1) && !(GameDataStateStorage.fields_.game_state_ & 8)) return;
     } else {
         old_relevant = 0;
+        if (!new_unbuilt && !old_relevant) return;
+        if ((GameDataStateStorage.fields_.game_state_ & 1) && !(GameDataStateStorage.fields_.game_state_ & 8)) return;
     }
-    if (!new_unbuilt && !old_relevant) return;
-    if ((GameDataStateStorage.fields_.game_state_ & 1) && !(GameDataStateStorage.fields_.game_state_ & 8)) return;
     const int facility = (next < 0 ? -next : next);
     const int project = facility - 70;
     int word, mask;
