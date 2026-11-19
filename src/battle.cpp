@@ -3815,10 +3815,7 @@ L_509980:
                                                          ? 1 : Bases[base_id].population_size;
                 }
                 // 0x50AE6C
-                if (!(Bases[base_id].population_size <= 0)) {
-                    // 0x50AEB2
-                    spot_base(base_id, att_faction);
-                } else {
+                if (Bases[base_id].population_size <= 0) {
                     base_kill(base_id);
                     base_id = -1;
                     for (int i = 0; i < 8; i++) {
@@ -3829,6 +3826,9 @@ L_509980:
                     if (eliminate_player(def_faction, att_faction)) {
                         pact_report = 0;
                     }
+                } else {
+                    // 0x50AEB2
+                    spot_base(base_id, att_faction);
                 }
             }
 L_50aebf:
