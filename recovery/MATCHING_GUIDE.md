@@ -561,6 +561,24 @@ raw field access where the original used inline accessors.
     0x00584D60 and 0x0059D980; map.cpp's eleven runs).
   A merge that changes no function is not evidence for it. wants_to_attack
   flips with any unit change (header-position canary), so it is not either.
+  Further measured cases (2026-11-19, par-1): bitmask 0x0050BA00 is expanded
+  in battle.cpp (get_basic_offense, shoot, battle_compute) and at the head of
+  aggression.cpp (sea_coast, port_to_coast, capture_base) where the image
+  calls it, so bitmask + bit_count are a two-function unit between them;
+  council.cpp merged into turn.cpp expands into control_turn (313 -> 543).
+  A unit's static-initializer thunks are emitted in definition order, so
+  `// symbol _$E<n>` numbers must rise with thunk address inside a unit
+  (`analysis/esym.py` refreshes them after a move). An `extern T obj;`
+  redeclaration AFTER the definition of a class object makes VC6 emit that
+  object's dynamic initializer and atexit pair a second time (setup.cpp's
+  g_CRASH_LANDING_WAVE: `_$E20/_$E18` and `_$E25/_$E23` for one object):
+  never leave a local extern behind a definition. A thunk run between two
+  units does not say which side it is on (last definition of the first or
+  first of the second); only its contiguity with the next unit's own thunks,
+  or a name, decides. Small functions in the row after a unit's last large
+  function are mostly out-of-line COMDAT copies of header inlines kept from
+  the first unit in link order that calls them out of line; their marker
+  belongs in that unit (it must emit the copy, or fe reports `nosymbol`).
 - **Pad sweeps do not fix general register ties (measured 2026-11-18).**
   Full 64-step `extern int` pad sweeps over about 33 units holding
   MNEMONIC_ONLY and register-cause functions flipped no non-exact function,

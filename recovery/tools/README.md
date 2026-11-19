@@ -290,3 +290,14 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
 - `analysis/locpad.py FEALL.json [maxrows] [minrows]` function-local tie screen (MATCHING_GUIDE 3.6, "the number of named
   locals mod 8"): 0..7 dead referenced locals before each near-miss function's closing brace; lists the functions whose rows
   move (2026-11-19: ReportIf::draw_labs exact at 7, Gamma::exec 21 -> 6 rows at 6). Fix by naming, never keep the pads.
+  `--move` options: `--deps` also moves the host's unmarked pieces (objects, helpers, `#define` blocks) only the moved
+  functions name, and the detached body of a moved marker block; `--include '*'` unites the hosts' includes;
+  `--new-like L.cpp [--after P.cpp]` creates the destination as a new unit with L's flags and includes; `--with NAME,..`
+  moves named definitions. A `$E` address (static-initializer thunk) moves its marker blocks with the object it
+  constructs, removes the destination's own `extern` of it, and places the definition in thunk order among the
+  destination's objects. A host left with only its prelude is removed from the tree and the build lists.
+- `analysis/esym.py <unit> [--write]` refreshes the `// symbol _$E<n>` lines of a unit's static-initializer markers from
+  its compile (bytes outside relocations, named relocation targets at the image's addresses, sibling thunks); run
+  automatically after every tumap regroup. `NOT EMITTED` = the object's definition is not in the unit.
+- `feall.py --base` compares rows by address, so a marker moved to another unit is compared with its old row; fe/feall
+  read a worktree's own `build/compile_commands.json` for units the main database lacks (a unit created by a split).
