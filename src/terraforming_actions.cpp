@@ -2187,11 +2187,14 @@ int __cdecl shoot_it(int attacker, int defender, int x, int y,
                 int dismissed;
                 if (fungal_attack) {
                     dismissed = popp(ScriptPopupFile, "FUNGALSAC", 0, "space_sm.pcx", 0);
+                    if (dismissed) {
+                        goto flechette_failed;
+                    }
                 } else {
                     dismissed = popp(ScriptPopupFile, "TECTONICSAC", 0, "space_sm.pcx", 0);
-                }
-                if (dismissed) {
-                    goto flechette_failed;
+                    if (dismissed) {
+                        goto flechette_failed;
+                    }
                 }
             } else {
                 if (defender == ConsoleGlobal.faction_id_) {
