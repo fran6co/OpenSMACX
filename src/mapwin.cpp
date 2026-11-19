@@ -3472,7 +3472,6 @@ int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3, int a4,
     int local_b8[4];
     Vert quad[4];
     int quad_z[4];
-    int edge_vertex;
     int local_a8;
     int local_a4;
     int local_a0;
@@ -3838,18 +3837,16 @@ int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3, int a4,
     // 0x463FD3..0x465433: edge_uv lives in this block; numbuf, in the
     // sibling readout block, shares its frame bytes (-0x238 inside -0x268).
     Vert edge_uv[16];
-    // 463F9F-46401E initializes four quads, not eight vertices.
-    edge_vertex = 0;
+    // 463F9F-46401E initializes four quads, not eight vertices. The edge
+    // index is corner * 4 + k and the direction is written inline: VC6
+    // strength-reduces both (ecx steps by 8 and carries the outer test,
+    // esi = corner + k - 2 carries the inner one), eliminating k.
     for (corner = 0; corner < 4; ++corner) {
         for (int k = 0; k < 4; ++k) {
-            const int direction = (corner + k - 2) & 3;
-            const int ex = CornerOffsetX[corner][direction] * local_78;
-            const int ey = CornerOffsetY[corner][direction] * local_98;
-            edge_vertices[edge_vertex].x = ex + a9;
-            edge_vertices[edge_vertex].y = ey + a10;
-            edge_uv[edge_vertex].x = EdgeMidUVs[edge_vertex].x;
-            edge_uv[edge_vertex].y = EdgeMidUVs[edge_vertex].y;
-            ++edge_vertex;
+            edge_vertices[corner * 4 + k].x = CornerOffsetX[corner][(corner + k - 2) & 3] * local_78 + a9;
+            edge_vertices[corner * 4 + k].y = CornerOffsetY[corner][(corner + k - 2) & 3] * local_98 + a10;
+            edge_uv[corner * 4 + k].x = EdgeMidUVs[corner * 4 + k].x;
+            edge_uv[corner * 4 + k].y = EdgeMidUVs[corner * 4 + k].y;
         }
     }
     local_80 = 0;
