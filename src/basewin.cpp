@@ -2482,7 +2482,8 @@ void BaseWin::draw_commerce(int update_mode) {
                 && PlayersData[partner].sanction_turns == 0) {
                 strcat(StringTemp, SocialWinColonSpaceText);
                 strcat(StringTemp, "+");
-                _itoa(BaseCommerceReceipts[slot], amount, 10);
+                int receipts = BaseCommerceReceipts[slot];
+                _itoa(receipts, amount, 10);
                 strcat(StringTemp, amount);
             }
             Buffer::write_l(StringTemp, x, row_y);
@@ -2495,14 +2496,14 @@ void BaseWin::draw_commerce(int update_mode) {
                 // 0x410EE3: the pact test rereads BaseCurrent's faction.
                 strcat(StringTemp,
                        (PlayersData[BaseCurrent->faction_id_current].diplo_treaties[partner]
-                        & DTREATY_PACT) != 0 ? StringTable.get(Labels.strings_ptr[645]) : label_get(644));
+                        & DTREATY_PACT) != 0 ? label_get(645) : label_get(644));
                 detail_x = Buffer::write_l(StringTemp, detail_x, detail_y);
                 if (BaseCommercePartnerReceipts[slot] != BaseCommerceReceipts[slot]) {
                     Buffer::set_text_color(ChatItemIdTable[partner], -1, 1, 1);
                     StringTemp[0] = 0;
                     strcat(StringTemp, BufferJoinSpace);
                     strcat(StringTemp, "(");
-                    strcat(StringTemp, label_get(648));
+                    strcat(StringTemp, StringTable.get(Labels.strings_ptr[648]));
                     strcat(StringTemp, BufferJoinSpace);
                     strcat(StringTemp, "+");
                     char partner_amount[80];
