@@ -3409,6 +3409,32 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   use_ability rule in 2.7 (Console::use_ability 0x004D7F60): sometimes the
   original had ONE reassigned variable where ours copies into a second
   local. `analysis/webscan.py` lists both shapes per function.
+- **A block-local that the image keeps in a function-scope variable's slot**
+  (par-4 2026-11-19, `analysis/reusesweep.py`, measured tree-wide). The other
+  direction of the rule above: a short-lived counter, flag or scratch value
+  that our source declares in an inner block, and that VC6 gives a
+  callee-saved register (or a slot of its own), was often written by the
+  original into an existing function-scope variable that is dead over the
+  whole block. The value then lives in that variable's slot, the register
+  goes to a loop's pointer IV or another web, and the slot map moves onto the
+  image's. Only rename into a variable that is provably dead over the
+  block-local's entire scope: reusesweep.py proves it with the compiler (a
+  `volatile` variant gives slot liveness; the kill probe `T = K;` at the
+  declaration must compile away), because a source-level guess clobbers live
+  values (enemy_move's y2 -> n and healthy -> n renames read well and were
+  wrong). Tree pass over the non-exact functions of 100+ rows (par-3's
+  functions skipped): of 108 functions, 44 had no block-local/target pair,
+  16 had no dead target, 35 were neutral or worse, 13 improved and were kept
+  (proposal_menu 129 -> 86 with the slot map exact, has_base in
+  commlink_count; NewTechWin::exec frame 0x10 -> 0x0C off; consider_designs
+  1155 -> 1059; gen_terrain_poly 1648 -> 1578; base_terraform 1050 -> 953;
+  Path::find 969 -> 895; air_power 1195 -> 1130; base_ecology 280 -> 242;
+  capture_base 327 -> 294; TutWin::tour 302 -> 276; propose_pact 401 -> 388;
+  SocialWin::init 330 -> 319; random_events 328 -> 327). Each kept rename
+  improved the slot map or the frame, or lowered rows at an unchanged slot
+  map with no worse candset. The screen and the probe disagree in a few
+  pairs (enemy_move: 16 of 450 screen-dead pairs kept their store), and those
+  are dropped, so the tool under-reports rather than clobbers.
 - **Frame-size differences: run `analysis/framescan.py` first** (13 s tree-wide);
   `--addr A` prints both slot maps with widths, `&` and our /Fa names. A frame
   that differs is a declaration problem, never a register tie.
