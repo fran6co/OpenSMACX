@@ -262,107 +262,6 @@ static int SAmbienceArmed = 1; // Original 0x00683C28, independently read initia
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT dispatcher 0x00644DEC-0x00644DFB supplies [0x00682000,0x006826CC) to 0x00644ED8, which calls each non-null dword. Slot 0x006820A0 selects init 0x00445560, which registers exit callback 0x00445580.", "Original init span 0x00445560-0x00445576 and exit span 0x00445580-0x0044558A are independently disassembled; both identify receiver 0x0074D9D0 and Wave constructor/destructor 0x004C66E0/0x004C67C0.", "Historical earlier wave.cpp physical COFF selected local STATIC init _$E41 via .CRT$XCU, relocating to g_PASSOVER_WAVE, Wave construction, paired local fini _$E39 and atexit; fini relocates to the same object and Wave destruction. Native comparator can select these physical local function symbols.", "Independent pin/COFF/source review supports individual lifetime ownership. These mappings do not establish complete global initialization order, linked retained selection, full data layout, original debug names or runtime acceptance.", "The six source-owned Wave resource declarations and their paired compiler-generated lifetimes are grouped in src/fx_wave_resources.cpp in pinned CRT-slot order 0x0068208C..0x006820A0. Generic Wave methods and the FX manager remain separate; this is inferred source correspondence, not proof of historical object boundaries or linked selection."], "reason": "Bind the original exit operation to the genuine compiler-emitted lifetime of source-owned g_PASSOVER_WAVE. The local symbol identifies current emitted code, not an original debug name; no callback body is authored."}
 // symbol    _$E39
 
-// ===== MANAGED GLOBALS - real objects, homed to their domain =====
-// In the shipped image these live at fixed data addresses and are
-// constructed before WinMain by the CRT's dynamic-initializer walk
-// (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
-// Here the same recovered constructors run through this build's own
-// startup, and the matching destructors close them at exit. Addresses of
-// the ones documented individually live beside their definitions.
-// FX::init supplies these receivers; array teardown independently witnesses
-// the CPU bank's 45 elements and 0x6C stride.
-// FX::init loads and configures these existing menu sound owners.
-
-// RECOVERY_OBJECT: v2 0x0074C5F0 0x0074D8EC ?g_CPU_WAVES@@3PAVWave@@A 0x00445CD0
-Wave g_CPU_WAVES[45];  // 0x0074C5F0, 0x6c stride
-// RECOVERY_OBJECT: v1 0x00749C88 ?g_MENU_UP_WAVE@@3VWave@@A
-Wave g_MENU_UP_WAVE;  // 0x00749C88
-// RECOVERY_OBJECT: v1 0x0074D960 ?g_MENU_DOWN_WAVE@@3VWave@@A
-Wave g_MENU_DOWN_WAVE;  // 0x0074D960
-// RECOVERY_OBJECT: v1 0x00749C18 ?g_SCOOT_WAVE@@3VWave@@A
-Wave g_SCOOT_WAVE;  // 0x00749C18
-// RECOVERY_OBJECT: v1 0x0074D8F0 ?g_OK_WAVE@@3VWave@@A
-Wave g_OK_WAVE;  // 0x0074D8F0
-// RECOVERY_OBJECT: v1 0x0074D9D0 ?g_PASSOVER_WAVE@@3VWave@@A
-Wave g_PASSOVER_WAVE;  // 0x0074D9D0
-
-// ===== MANAGED GLOBALS - real objects, homed to their domain =====
-// In the shipped image these live at fixed data addresses and are
-// constructed before WinMain by the CRT's dynamic-initializer walk
-// (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
-// Here the same recovered constructors run through this build's own
-// startup, and the matching destructors close them at exit. Addresses of
-// the ones documented individually live beside their definitions.
-// 0x28F0 bytes: 97 Effects of 0x6C, then engine_effect_index_ at +0x28EC
-// (written absolutely by ambience at 0x00446C59); the next object starts at
-// 0x0074C5E8. The historical AmbienceTransitionMarker identity is that member.
-// RECOVERY_OBJECT: v2 0x00749CF8 0x0074C5E8 ?g_FX@@3VFX@@A 0x004482A0
-// RECOVERY_OBJECT: v3 0x0074C5E4 0x0074C5E8 ?AmbienceTransitionMarker@@3HA 0x00446C59 member ?g_FX@@3VFX@@A engine_effect_index_
-FX g_FX;
-
-// ===== MANAGED GLOBALS - real objects, homed to their domain =====
-// In the shipped image these live at fixed data addresses and are
-// constructed before WinMain by the CRT's dynamic-initializer walk
-// (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
-// Here the same recovered constructors run through this build's own
-// startup, and the matching destructors close them at exit. Addresses of
-// the ones documented individually live beside their definitions.
-// RECOVERY_OBJECT: v1 0x0074DA40 ?g_AMBIENCE@@3VAmbience@@A
-Ambience g_AMBIENCE;  // 0x0074DA40
-/*
-Purpose: Tear down an Effect, which is a Wave and nothing more.
-// ORIGINAL: 0x004482C0 ??1Effect@@QAE@XZ 0x004482C0-0x004482C5 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x448290 array destruction and 0x4482A0 construction-unwind each pass0x4482C0 for97elements of0x6Cbytes; original0x4482C0..0x4482C5 is a direct tail toWave::~Wave at0x4C67C0.", "src/fx.h owns Effect effects_[97]; Effect adds initialization policy but no members or destructor work beyond its Wave base. Implicit destruction preserves the existing virtual hierarchy.", "Native compiler controls distinguish the empty user-defined destructor (derived vptr store plus base tail) from implicit destruction emitted inFX (base tail only). Original compiler command and complete linked/runtime preservation remain separate obligations."], "reason": "The real FX array owns the compiler-generated Effect complete destructor; retain its independent original identity without a handwritten forwarding body."}
-// symbol    ??1Effect@@UAE@XZ
-// CORRECTED from 0x004482C0-0x004482C4, which the artifact carried: the body
-//   is one `E9 rel32`, five bytes, and a four-byte span cannot decode a single
-//   instruction - `measure` read "0 of 0 instructions, 4 discounted as
-//   relocations", which is what a span one byte short looks like.
-// Implicit Effect destruction is owned by the FX array below. The original
-// FX teardown and construction unwind both select this five-byte tail
-// to Wave::~Wave. No additional derived destructor work is present.
-// The historical experiments below are superseded: removing the empty
-// user-defined destructor AND its declaration emits the direct base
-// tail in this owner with the consistent virtual Sound/Wave hierarchy.
-// A stale header is not required to explain the original lifetime.
-// TRIED 2026-08-30, post-virtualization sweep (the claim regressed when
-//   ~Sound went virtual): empty user dtor measures `mov [ecx],0; ret` - the
-//   base-dtor call is ELIDED outright; qualified `this->Wave::~Wave()` gives
-//   23 instructions of SEH frame + vptr store + TWO base calls; a no-user-
-//   dtor implicit compiles the dtor straight into the fx.cpp caller and the
-//   symbol disappears; `#pragma auto_inline(off)` on ~Wave changes nothing.
-//   Evidence for the class pass: the image's Sound vtable slot 2 holds
-//   ??_GSound (0x004C92D0, verified in the image), so ~Sound IS virtual and
-//   the catalogue's QAE spelling hides UAE - yet the original's ??1Effect
-//   still folds to a 5-byte tail-jmp, which our VC6 refuses for a virtual
-//   base dtor. Something about the original Effect model (a friend-side
-//   emission, a different TU split, or /GX flags) remains unmodelled.
-//   MEASURED 2026-08-30, VoiceTx class pass: the regression reproduces on the
-//   PRISTINE tree - `git checkout HEAD` of every file this pass touched and
-//   this body still measures 0/1 (`mov [ecx], <vtable>` + the jump) - so the
-//   red claim was inherited, not caused here. The structural reading the
-//   evidence supports: the shipped Effect.obj was compiled against a sound.h
-//   that did not yet have `virtual ~Sound` (a stale-TU build), which is why
-//   the SAME 12.00.8168 compiler both puts ??_GSound in slot 2 of every
-//   Sound-family vtable AND emits this storeless tail-jmp - the two shapes
-//   cannot come from one consistent header, and no source this tree can hold
-//   reproduces both. The model choice stands with the virtual ~Sound, because
-//   slot 2 is measured in the image's tables and ??1Effect is one 5-byte
-//   thorn; leave the claim red and the TRIED wall standing.
-// size      5 bytes
-// prototype void (__thiscall ??1Effect@@QAE@XZ)(Effect* this)
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x004C67C0
-//
-// PROMOTED from src/recovered/units/004482c0.cpp. The whole body is the tail
-// jump into `??1Wave@@QAE@XZ` that a trivial derived destructor emits, which
-// is why `class Effect : public Wave` is the fix and an empty inline stub is
-// not - that compiles to nothing at all.
-Return Value: n/a
-Status: Complete
-*/
-
 
 // ORIGINAL: 0x00448350 ??_GEffect@@UAEPAXI@Z 0x00448350-0x00448371 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical deleting-thunk source src/deleting_thunks.cpp; original full spans retained: 0x00448350-0x00448371", "Pinned class constructor ??0Effect@@QAE@XZ at 0x004482D0 stores original class/view table VA 0x66b7a4 at 0x004482D8 (mov dword ptr [esi], 0x66b7a4); the current genuine owner vftable ??_7Effect@@6B@ selects generated ??_GEffect@@UAEPAXI@Z in slot 2 (+0x8) through weak entry ??_EEffect@@UAEPAXI@Z (mode 2).", "Pinned ??_GEffect@@UAEPAXI@Z at 0x00448350 calls the source-mapped ??1Effect@@QAE@XZ at 0x004482C0, then tests byte ptr [ebp + 8], 1; je 0x44836a bypasses scalar delete when bit 0 is clear, while bit 0 set calls 0x0064557F; it save original this; call destructor; delete only when flags bit 0 is set; return saved this with ret 4.", "The real class lifetime is owned by src/fx.cpp; its compiler-emitted deleting symbol and vftable slot carry this original identity. Hand-written adapter bodies with live adjustor callers remain until those callers are independently qualified and transferred. The linked weak/COMDAT copy is not used to choose source ownership.", "the source writer preserves the historical mapping's exactness state (historical exactness obligation retained); current compiler extent is not asserted equal to the original span"], "reason": "Bind the original Effect scalar deleting-destructor identity to the actual compiler-emitted class deleting destructor in its genuine owner translation unit. The original constructor's pinned vptr store and the current owner's physical table slot identify this class/view; no callback/thunk body is hand-authored here."}
@@ -930,6 +829,7 @@ void FX::play(int effect, int, int) {
     if (release_flags & 1) effects_[effect].load();
     effects_[effect].play();
 }
+
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====
 // In the shipped image these live at fixed data addresses and are
 // constructed before WinMain by the CRT's dynamic-initializer walk
@@ -1030,12 +930,6 @@ void FX::engine_pitch(int pitch) {
         effects_[engine_effect_index_].set_pitch(pitch);
     }
 }
-
-
-// ORIGINAL: 0x004483C0 j_??1Ambience@@QAE@XZ 0x004483C0-0x004483C5 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned final Ambience table slot 2 selects 0x00448390, which calls 0x004483C0.", "Pinned 0x004483C0 is a five-byte tail to 0x004C7670, the full destructor now recovered as Midi::~Midi in src/sound.cpp.", "src/ambience.h leaves the Ambience destructor implicit over Midi. Its compiler-generated complete stage tail-calls Midi::~Midi without an intervening derived-table store; the class deleting path retains that stage.", "Historical TRIED prose predates class-stage identification. No new bare-jump wrapper or substitute source behavior is introduced."], "reason": "Bind the original destructor tail to the real compiler-generated empty Ambience derived stage, which delegates destruction to Midi. Preserve the historical catalog and TRIED note as provenance, not current class identification."}
-// symbol    ??1Ambience@@UAE@XZ
-// Historical TRIED: an authored bare-jump/linker-thunk scaffold was rejected. The tail is instead emitted by the implicit Ambience destructor over Midi; no handwritten wrapper or machine-code body is needed. The target 0x004C7670 is the separately mapped Midi destructor.
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00446B40 0x00446CD8 0x00446D10 0x00446B9A
 // ORIGINAL: 0x00446B40 ?ambience@@YAHH@Z 0x00446B40-0x00446CD6 BYTE_EXACT
@@ -2190,6 +2084,7 @@ void SAmbience::base_liberated() {
         self->play_trackset(0x64);
     }
 }
+
 // ORIGINAL: 0x004478D0 ??0BAmbience@@QAE@XZ 0x004478D0-0x00447911 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:291c01ea:src/recovered/units/004478d0.cpp", "src/ambience.h", "src/midi.h", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/004478d0.cpp"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // kind      game
@@ -2872,6 +2767,109 @@ Status: Complete
 */
 FX::FX() {
 }
+
+// ===== MANAGED GLOBALS - real objects, homed to their domain =====
+// In the shipped image these live at fixed data addresses and are
+// constructed before WinMain by the CRT's dynamic-initializer walk
+// (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
+// Here the same recovered constructors run through this build's own
+// startup, and the matching destructors close them at exit. Addresses of
+// the ones documented individually live beside their definitions.
+// FX::init supplies these receivers; array teardown independently witnesses
+// the CPU bank's 45 elements and 0x6C stride.
+// FX::init loads and configures these existing menu sound owners.
+
+// RECOVERY_OBJECT: v2 0x0074C5F0 0x0074D8EC ?g_CPU_WAVES@@3PAVWave@@A 0x00445CD0
+Wave g_CPU_WAVES[45];  // 0x0074C5F0, 0x6c stride
+// RECOVERY_OBJECT: v1 0x00749C88 ?g_MENU_UP_WAVE@@3VWave@@A
+Wave g_MENU_UP_WAVE;  // 0x00749C88
+// RECOVERY_OBJECT: v1 0x0074D960 ?g_MENU_DOWN_WAVE@@3VWave@@A
+Wave g_MENU_DOWN_WAVE;  // 0x0074D960
+// RECOVERY_OBJECT: v1 0x00749C18 ?g_SCOOT_WAVE@@3VWave@@A
+Wave g_SCOOT_WAVE;  // 0x00749C18
+// RECOVERY_OBJECT: v1 0x0074D8F0 ?g_OK_WAVE@@3VWave@@A
+Wave g_OK_WAVE;  // 0x0074D8F0
+// RECOVERY_OBJECT: v1 0x0074D9D0 ?g_PASSOVER_WAVE@@3VWave@@A
+Wave g_PASSOVER_WAVE;  // 0x0074D9D0
+
+// ===== MANAGED GLOBALS - real objects, homed to their domain =====
+// In the shipped image these live at fixed data addresses and are
+// constructed before WinMain by the CRT's dynamic-initializer walk
+// (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
+// Here the same recovered constructors run through this build's own
+// startup, and the matching destructors close them at exit. Addresses of
+// the ones documented individually live beside their definitions.
+// 0x28F0 bytes: 97 Effects of 0x6C, then engine_effect_index_ at +0x28EC
+// (written absolutely by ambience at 0x00446C59); the next object starts at
+// 0x0074C5E8. The historical AmbienceTransitionMarker identity is that member.
+// RECOVERY_OBJECT: v2 0x00749CF8 0x0074C5E8 ?g_FX@@3VFX@@A 0x004482A0
+// RECOVERY_OBJECT: v3 0x0074C5E4 0x0074C5E8 ?AmbienceTransitionMarker@@3HA 0x00446C59 member ?g_FX@@3VFX@@A engine_effect_index_
+FX g_FX;
+
+// ===== MANAGED GLOBALS - real objects, homed to their domain =====
+// In the shipped image these live at fixed data addresses and are
+// constructed before WinMain by the CRT's dynamic-initializer walk
+// (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
+// Here the same recovered constructors run through this build's own
+// startup, and the matching destructors close them at exit. Addresses of
+// the ones documented individually live beside their definitions.
+// RECOVERY_OBJECT: v1 0x0074DA40 ?g_AMBIENCE@@3VAmbience@@A
+Ambience g_AMBIENCE;  // 0x0074DA40
+
+/*
+Purpose: Tear down an Effect, which is a Wave and nothing more.
+// ORIGINAL: 0x004482C0 ??1Effect@@QAE@XZ 0x004482C0-0x004482C5 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x448290 array destruction and 0x4482A0 construction-unwind each pass0x4482C0 for97elements of0x6Cbytes; original0x4482C0..0x4482C5 is a direct tail toWave::~Wave at0x4C67C0.", "src/fx.h owns Effect effects_[97]; Effect adds initialization policy but no members or destructor work beyond its Wave base. Implicit destruction preserves the existing virtual hierarchy.", "Native compiler controls distinguish the empty user-defined destructor (derived vptr store plus base tail) from implicit destruction emitted inFX (base tail only). Original compiler command and complete linked/runtime preservation remain separate obligations."], "reason": "The real FX array owns the compiler-generated Effect complete destructor; retain its independent original identity without a handwritten forwarding body."}
+// symbol    ??1Effect@@UAE@XZ
+// CORRECTED from 0x004482C0-0x004482C4, which the artifact carried: the body
+//   is one `E9 rel32`, five bytes, and a four-byte span cannot decode a single
+//   instruction - `measure` read "0 of 0 instructions, 4 discounted as
+//   relocations", which is what a span one byte short looks like.
+// Implicit Effect destruction is owned by the FX array below. The original
+// FX teardown and construction unwind both select this five-byte tail
+// to Wave::~Wave. No additional derived destructor work is present.
+// The historical experiments below are superseded: removing the empty
+// user-defined destructor AND its declaration emits the direct base
+// tail in this owner with the consistent virtual Sound/Wave hierarchy.
+// A stale header is not required to explain the original lifetime.
+// TRIED 2026-08-30, post-virtualization sweep (the claim regressed when
+//   ~Sound went virtual): empty user dtor measures `mov [ecx],0; ret` - the
+//   base-dtor call is ELIDED outright; qualified `this->Wave::~Wave()` gives
+//   23 instructions of SEH frame + vptr store + TWO base calls; a no-user-
+//   dtor implicit compiles the dtor straight into the fx.cpp caller and the
+//   symbol disappears; `#pragma auto_inline(off)` on ~Wave changes nothing.
+//   Evidence for the class pass: the image's Sound vtable slot 2 holds
+//   ??_GSound (0x004C92D0, verified in the image), so ~Sound IS virtual and
+//   the catalogue's QAE spelling hides UAE - yet the original's ??1Effect
+//   still folds to a 5-byte tail-jmp, which our VC6 refuses for a virtual
+//   base dtor. Something about the original Effect model (a friend-side
+//   emission, a different TU split, or /GX flags) remains unmodelled.
+//   MEASURED 2026-08-30, VoiceTx class pass: the regression reproduces on the
+//   PRISTINE tree - `git checkout HEAD` of every file this pass touched and
+//   this body still measures 0/1 (`mov [ecx], <vtable>` + the jump) - so the
+//   red claim was inherited, not caused here. The structural reading the
+//   evidence supports: the shipped Effect.obj was compiled against a sound.h
+//   that did not yet have `virtual ~Sound` (a stale-TU build), which is why
+//   the SAME 12.00.8168 compiler both puts ??_GSound in slot 2 of every
+//   Sound-family vtable AND emits this storeless tail-jmp - the two shapes
+//   cannot come from one consistent header, and no source this tree can hold
+//   reproduces both. The model choice stands with the virtual ~Sound, because
+//   slot 2 is measured in the image's tables and ??1Effect is one 5-byte
+//   thorn; leave the claim red and the TRIED wall standing.
+// size      5 bytes
+// prototype void (__thiscall ??1Effect@@QAE@XZ)(Effect* this)
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004C67C0
+//
+// PROMOTED from src/recovered/units/004482c0.cpp. The whole body is the tail
+// jump into `??1Wave@@QAE@XZ` that a trivial derived destructor emits, which
+// is why `class Effect : public Wave` is the fix and an empty inline stub is
+// not - that compiles to nothing at all.
+Return Value: n/a
+Status: Complete
+*/
+
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004482D0 ??0Effect@@QAE@XZ 0x004482D0-0x004482E2 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original FX construction at0x004482A0 passes0x004482D0 as its per-element constructor for97elements of0x6Cbytes.", "Existing seedsrc/recovered/units/004482d0.cpp identifies span0x004482D0-0x004482E2; original instructions call Wave::Wave at0x004C66E0 then store the Effect virtual table at0x0066B7A4."], "reason": "Implicit Effect constructor emitted for the real FX Effect array; Wave base construction and derived virtual-table installation are compiler-owned."}
@@ -2994,4 +2992,10 @@ int Wave::unk_slot24() {
 int Sound::unk_slot24() {
     return static_cast<int>(flags_40_ << 31) >> 31;
 }
+
+
+// ORIGINAL: 0x004483C0 j_??1Ambience@@QAE@XZ 0x004483C0-0x004483C5 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned final Ambience table slot 2 selects 0x00448390, which calls 0x004483C0.", "Pinned 0x004483C0 is a five-byte tail to 0x004C7670, the full destructor now recovered as Midi::~Midi in src/sound.cpp.", "src/ambience.h leaves the Ambience destructor implicit over Midi. Its compiler-generated complete stage tail-calls Midi::~Midi without an intervening derived-table store; the class deleting path retains that stage.", "Historical TRIED prose predates class-stage identification. No new bare-jump wrapper or substitute source behavior is introduced."], "reason": "Bind the original destructor tail to the real compiler-generated empty Ambience derived stage, which delegates destruction to Midi. Preserve the historical catalog and TRIED note as provenance, not current class identification."}
+// symbol    ??1Ambience@@UAE@XZ
+// Historical TRIED: an authored bare-jump/linker-thunk scaffold was rejected. The tail is instead emitted by the implicit Ambience destructor over Midi; no handwritten wrapper or machine-code body is needed. The target 0x004C7670 is the separately mapped Midi destructor.
 
