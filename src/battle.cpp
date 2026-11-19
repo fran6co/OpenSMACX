@@ -1031,7 +1031,12 @@ int __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, int
                 // eax, eax`). Its PlayersData index (esi) is reused after the
                 // get/strcpy calls with no Vehs re-read, so it is a local,
                 // and all three uses go through it.
-                uint8_t faction_id_planet = Vehs[veh_id_atk].faction_id;
+                // WORKAROUND(type): image keeps the byte in al with no home
+                // (`and eax, 0xff`); a uint8_t local is homed at [ebp-0x18]
+                // (mov bl / store / dword reload), a char local is not but
+                // widens with movsx. int, short, const, assignment-in-test and
+                // raw-test spellings all lose (2026-11-20, 35/32 rows).
+                char faction_id_planet = Vehs[veh_id_atk].faction_id;
                 if (faction_id_planet
                     && PlayersData[faction_id_planet].soc_effect_active.values_[SocialEffect::PLANET]
                     && Rules.combat_pct_psi_atk_bonus_planet) {
