@@ -8393,8 +8393,8 @@ if (dialogue_flags & 0x2C) {
         parse_says(4, get_name(faction_id), -1, -1);
         parse_says(5, get_adjective_insult_faction(faction_id), -1, -1);
         parse_says(6, get_adjective(faction_id_with), -1, -1);
-        StringTemp[0] = 0;
-        strcat(StringTemp, "GETOUT");
+        clear();
+        says("GETOUT");
         say_num(random(0, 5) + 1);
         communicate_getout_result = X_pops(StringTemp, 0x100000,
                             FactionDiplomacyPortraits[faction_id_with], pop_wait);
@@ -8433,8 +8433,8 @@ if (dialogue_flags & 0x2C) {
             parse_says(1, get_name(faction_id), -1, -1);
             parse_says(2, get_insult_leader(faction_id), -1, -1);
             parse_says(3, get_adjective_insult_faction(faction_id), -1, -1);
-            StringTemp[0] = 0;
-            strcat(StringTemp, "OUTRAGE");
+            clear();
+            says("OUTRAGE");
             say_num(random(0, 3));
             X_pops(StringTemp, 0x100000,
                    FactionDiplomacyPortraits[faction_id_with], pop_wait);
@@ -8454,8 +8454,8 @@ if (dialogue_flags & 0x2C) {
         ConsoleGlobal.focus(Bases[communicate_territory_base_id].x,
                             Bases[communicate_territory_base_id].y, faction_id);
         parse_says(0, Bases[communicate_territory_base_id].name_string, -1, -1);
-        StringTemp[0] = 0;
-        strcat(StringTemp, "GOAWAY");
+        clear();
+        says("GOAWAY");
         say_num(random(0, 2));
         X_pops(StringTemp, 0x100000,
                FactionDiplomacyPortraits[faction_id_with], pop_wait);
@@ -8569,13 +8569,13 @@ parse_says(5, get_pact_hood(faction_id, DiploScratchF7E8), -1, -1);
 parse_says(6, get_his_her(DiploScratchF7E8, 0), -1, -1);
 parse_says(8, get_adjective_insult_leader(DiploScratchF7E8), -1, -1);
 parse_says(9, get_phrase(DiploScratchF7E8, 2), -1, -1);
-StringTemp[0] = 0;
-strcat(StringTemp, "PLEA");
+clear();
+says("PLEA");
 if (PlayersData[faction_id].diplo_treaties[DiploScratchF7E8] & 1) {
-    strcat(StringTemp, "PACT");
+    says("PACT");
 }
 if (DiploScratchF800 >= 0) {
-    strcat(StringTemp, "TECH");
+    says("TECH");
     parse_say(4, Technology[DiploScratchF800].name, -1, -1);
 }
 if (X_pops(StringTemp, 0x100000,
@@ -8616,13 +8616,13 @@ parse_says(3, get_him_her(DiploScratchF7E8, 0), -1, -1);
 parse_says(4, get_pact_hood(faction_id, faction_id_with), -1, -1);
 parse_says(5, get_title(faction_id), -1, -1);
 parse_says(6, get_pact(DiploScratchF7E8), -1, -1);
-StringTemp[0] = 0;
-strcat(StringTemp, "PROPOSE");
+clear();
+says("PROPOSE");
 if (!(PlayersData[faction_id].diplo_treaties[DiploScratchF7E8] & 1)) {
     parse_says(8, get_adjective_insult_faction(DiploScratchF7E8), -1, -1);
     parse_says(9, get_phrase(DiploScratchF7E8, 5), -1, -1);
 } else {
-    strcat(StringTemp, "PACT");
+    says("PACT");
     parse_says(8, get_title(faction_id_with), -1, -1);
     parse_says(9, get_phrase(DiploScratchF7E8, 2), -1, -1);
 }
@@ -8707,10 +8707,10 @@ if (DiploScratchF7E8 &&
     } else {
         communicate_demand_variant = 4;
     }
-    StringTemp[0] = 0;
-    strcat(StringTemp, "DEMANDATTACK");
+    clear();
+    says("DEMANDATTACK");
     say_num(communicate_demand_variant);
-    strcat(StringTemp, communicate_demand_suffix);
+    says(communicate_demand_suffix);
     if (!X_pops(StringTemp, 0x100000,
                 FactionDiplomacyPortraits[faction_id_with], pop_wait)) {
         if (PlayersData[faction_id_with].diplo_treaties[faction_id] & 1) {
@@ -8806,7 +8806,7 @@ if (DiploScratchF7D4 &&
         // follow; nine probes all expand (eight leave both inline; fourteen
         // emit five probe calls). The natural spend before this point is
         // still unknown.
-        communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0);
+        communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0);
         net_treaty_on(faction_id, DiploScratchF7D4, 0x8000008, 0);
         diplo_unlock();
         DiploScratchFA8C = DiploScratchF7D4;
