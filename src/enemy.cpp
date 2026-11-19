@@ -8131,6 +8131,7 @@ L_577723:
                 if (plan == 8) {
                     if (PlayersData[faction_id].region_base_plan[region] != 7)
                         goto L_578ae1;
+                    score += 16;
                 } else {
                     if (plan == 9)
                         goto L_578ae1;
@@ -8140,8 +8141,8 @@ L_577723:
                             || PlayersData[faction_id].region_base_plan[region] <= 2)
                             goto L_578ae1;
                     }
+                    score += 16;
                 }
-                score += 16;
             }
         }
     }
