@@ -328,7 +328,7 @@ void NewTechWin::on_group_clicked(int, int group) {
     switch (group) {
     case 1:
         StringTemp[0] = '\0';
-// RECOVERY_LITERAL: v1 0x00686968 0x0068696D $SG56834 0x00483EB0
+// RECOVERY_LITERAL: v1 0x00686968 0x0068696D $SG56758 0x00483EB0
         strcat(StringTemp, "TECH");
         _itoa(static_cast<int>(field_B24_), number, 10);
         strcat(StringTemp, number);
@@ -337,12 +337,12 @@ void NewTechWin::on_group_clicked(int, int group) {
         break;
     case 2:
         StringTemp[0] = '\0';
-// RECOVERY_LITERAL: v1 0x00686970 0x00686975 $SG56837 0x00483EB0
+// RECOVERY_LITERAL: v1 0x00686970 0x00686975 $SG56761 0x00483EB0
         strcat(StringTemp, "TECH");
         _itoa(static_cast<int>(field_B24_), number, 10);
         strcat(StringTemp, number);
         stringBox2_.clear();
-// RECOVERY_LITERAL: v1 0x00686978 0x00686982 $SG56839 0x00483EB0
+// RECOVERY_LITERAL: v1 0x00686978 0x00686982 $SG56763 0x00483EB0
         stringBox2_.strings().load("techlongs", StringTemp, 1, 0);
         break;
     default:

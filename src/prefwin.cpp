@@ -645,17 +645,17 @@ void PrefWin::init() {
   volumeMusicScroll_.set_range(0, 0x7F);
 
   // 0x48F3DD: set_pos and its on_scrolling (virtual, vtable +0xC4) interleaved.
-// RECOVERY_LITERAL: v1 0x00686D00 0x00686D0C $SG55872 0x0048D840
+// RECOVERY_LITERAL: v1 0x00686D00 0x00686D0C $SG55794 0x0048D840
   volumeMainScroll_.set_pos(prefs_get("Main Volume", 0x7F, 0));    // 0x686D00 "Main Volume"
   on_scrolling(0x50, volumeMainScroll_.position());                     // [esi+0xB1B8]
-// RECOVERY_LITERAL: v1 0x00686D0C 0x00686D19 $SG55873 0x0048D840
+// RECOVERY_LITERAL: v1 0x00686D0C 0x00686D19 $SG55795 0x0048D840
   volumeVoiceScroll_.set_pos(prefs_get("Voice Volume", 0x55, 0));  // 0x686D0C "Voice Volume"
   on_scrolling(0x51, volumeVoiceScroll_.position());
-// RECOVERY_LITERAL: v1 0x00686D1C 0x00686D27 $SG55874 0x0048D840
+// RECOVERY_LITERAL: v1 0x00686D1C 0x00686D27 $SG55796 0x0048D840
   volumeSFXScroll_.set_pos(prefs_get("SFX Volume", 0x5F, 0));      // 0x686D1C "SFX Volume"
   on_scrolling(0x52, volumeSFXScroll_.position());
   if (FactionMusic) {  // 0x74DAA0; the shared `push 0` precedes the cmp
-// RECOVERY_LITERAL: v1 0x00686D28 0x00686D35 $SG55876 0x0048D840
+// RECOVERY_LITERAL: v1 0x00686D28 0x00686D35 $SG55798 0x0048D840
     volumeMusicScroll_.set_pos(prefs_get("Music Volume", 0x3F, 0));  // 0x686D28 "Music Volume"
     on_scrolling(0x53, volumeMusicScroll_.position());
   } else {
@@ -812,13 +812,13 @@ void PrefWin::destroy() {
     AlphaIniPrefs.announce = warningsFinal_;
     prefs_use();
     prefs_save(0);
-// RECOVERY_LITERAL: v1 0x00686D38 0x00686D44 $SG55895 0x0048FDD0
+// RECOVERY_LITERAL: v1 0x00686D38 0x00686D44 $SG55817 0x0048FDD0
     prefs_put("Main Volume", volumeMainScroll_.position(), 0);
-// RECOVERY_LITERAL: v1 0x00686D44 0x00686D51 $SG55896 0x0048FDD0
+// RECOVERY_LITERAL: v1 0x00686D44 0x00686D51 $SG55818 0x0048FDD0
     prefs_put("Voice Volume", volumeVoiceScroll_.position(), 0);
-// RECOVERY_LITERAL: v1 0x00686D54 0x00686D61 $SG55897 0x0048FDD0
+// RECOVERY_LITERAL: v1 0x00686D54 0x00686D61 $SG55819 0x0048FDD0
     prefs_put("Music Volume", volumeMusicScroll_.position(), 0);
-// RECOVERY_LITERAL: v1 0x00686D64 0x00686D6F $SG55898 0x0048FDD0
+// RECOVERY_LITERAL: v1 0x00686D64 0x00686D6F $SG55820 0x0048FDD0
     prefs_put("SFX Volume", volumeSFXScroll_.position(), 0);
     field_A5C_ = 0;
   }

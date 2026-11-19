@@ -245,8 +245,8 @@ Status: Complete
 BOOL __cdecl labels_init() {
     // The original passes equal text through distinct file and section keys.
     labels_shutdown();
-// RECOVERY_LITERAL: v1 0x0069720C 0x00697213 $SG48811 0x00616A00
-// RECOVERY_LITERAL: v1 0x00697204 0x0069720B $SG48810 0x00616A00
+// RECOVERY_LITERAL: v1 0x0069720C 0x00697213 $SG48743 0x00616A00
+// RECOVERY_LITERAL: v1 0x00697204 0x0069720B $SG48742 0x00616A00
     if (text_open("labels", "labels")) {
         return true;
     }

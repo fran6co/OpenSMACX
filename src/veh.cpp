@@ -1754,32 +1754,32 @@ Status: Complete
 void __cdecl say_defense(LPSTR stat, int proto_id) {
     char num_buf[80];
     if (has_abil(proto_id, ABL_AAA)) {
-// RECOVERY_LITERAL: v1 0x0068F118 0x0068F11A $SG62818 0x0057D6D0
+// RECOVERY_LITERAL: v1 0x0068F118 0x0068F11A $SG62736 0x0057D6D0
         strcat(stat, "<");
     }
     int def_rating = armor_proto(proto_id, -1, 0);
     _itoa(def_rating, num_buf, 10);
     strcat(stat, num_buf);
     if (has_abil(proto_id, ABL_COMM_JAMMER)) {
-// RECOVERY_LITERAL: v1 0x0068F11C 0x0068F11E $SG62821 0x0057D6D0
+// RECOVERY_LITERAL: v1 0x0068F11C 0x0068F11E $SG62739 0x0057D6D0
         strcat(stat, "+");
     }
     if (has_abil(proto_id, ABL_TRANCE)) {
-// RECOVERY_LITERAL: v1 0x0068F120 0x0068F122 $SG62823 0x0057D6D0
+// RECOVERY_LITERAL: v1 0x0068F120 0x0068F122 $SG62741 0x0057D6D0
         strcat(stat, "t");
     }
     if (has_abil(proto_id, ABL_AAA)) {
-// RECOVERY_LITERAL: v1 0x0068F124 0x0068F126 $SG62825 0x0057D6D0
+// RECOVERY_LITERAL: v1 0x0068F124 0x0068F126 $SG62743 0x0057D6D0
         strcat(stat, ">");
     }
     if (VehPrototypes[proto_id].armor_id == ARM_PULSE_3_ARMOR
         || VehPrototypes[proto_id].armor_id == ARM_PULSE_8_ARMOR) {
-// RECOVERY_LITERAL: v1 0x0068F128 0x0068F12A $SG62828 0x0057D6D0
+// RECOVERY_LITERAL: v1 0x0068F128 0x0068F12A $SG62746 0x0057D6D0
         strcat(stat, "p");
     }
     if (VehPrototypes[proto_id].armor_id == ARM_RESONANCE_3_ARMOR
         || VehPrototypes[proto_id].armor_id == ARM_RESONANCE_8_ARMOR) {
-// RECOVERY_LITERAL: v1 0x0068F12C 0x0068F12E $SG62831 0x0057D6D0
+// RECOVERY_LITERAL: v1 0x0068F12C 0x0068F12E $SG62749 0x0057D6D0
         strcat(stat, "r");
     }
 }
@@ -1812,29 +1812,29 @@ void __cdecl say_stats_3(LPSTR stat, int proto_id) {
     char num_buf[80];
     int8_t off_rating = get_proto_offense_rating(proto_id);
     if (off_rating < 0) {
-// RECOVERY_LITERAL: v1 0x0068F130 0x0068F132 $SG62839 0x0057D7D0
+// RECOVERY_LITERAL: v1 0x0068F130 0x0068F132 $SG62757 0x0057D7D0
         strcat(stat, "?"); // PSI
     } else if (off_rating >= 99) {
-// RECOVERY_LITERAL: v1 0x0068F134 0x0068F136 $SG62842 0x0057D7D0
+// RECOVERY_LITERAL: v1 0x0068F134 0x0068F136 $SG62760 0x0057D7D0
         strcat(stat, "*");
     } else {
         say_offense(stat, proto_id);
     }
-// RECOVERY_LITERAL: v1 0x0068F138 0x0068F13A $SG62844 0x0057D7D0
+// RECOVERY_LITERAL: v1 0x0068F138 0x0068F13A $SG62762 0x0057D7D0
     strcat(stat, "-");
     if (get_proto_defense_rating(proto_id) < 0) {
-// RECOVERY_LITERAL: v1 0x0068F13C 0x0068F13E $SG62846 0x0057D7D0
+// RECOVERY_LITERAL: v1 0x0068F13C 0x0068F13E $SG62764 0x0057D7D0
         strcat(stat, "?");
     } else {
         say_defense(stat, proto_id);
     }
-// RECOVERY_LITERAL: v1 0x0068F140 0x0068F142 $SG62848 0x0057D7D0
+// RECOVERY_LITERAL: v1 0x0068F140 0x0068F142 $SG62766 0x0057D7D0
     strcat(stat, "-");
     int speed = speed_proto(proto_id) / Rules.move_rate_roads;
     _itoa(speed, num_buf, 10);
     strcat(stat, num_buf);
     if (VehPrototypes[proto_id].reactor_id > RECT_FISSION) {
-// RECOVERY_LITERAL: v1 0x0068F144 0x0068F146 $SG62851 0x0057D7D0
+// RECOVERY_LITERAL: v1 0x0068F144 0x0068F146 $SG62769 0x0057D7D0
         strcat(stat, "*");
         _itoa(VehPrototypes[proto_id].reactor_id, num_buf, 10);
         strcat(stat, num_buf);

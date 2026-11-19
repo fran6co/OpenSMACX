@@ -4853,6 +4853,8 @@ static const MediaHResultText media_hresult_texts[] = {
     {0x8876024EL, "DDERR_UNSUPPORTEDMODE"},
 };
 
+// RECOVERY_OBJECT: v1 0x00695B34 _media_hresult_unknown
+static const char media_hresult_unknown[] = "Uknown Error Code";
 
 // ORIGINAL: 0x005CF120 sub_5cf120 0x005CF120-0x005CF144 BYTE_EXACT
 // symbol    @sub_5cf120@4
@@ -4864,8 +4866,7 @@ extern "C" char *__fastcall sub_5cf120(int code) {
     if (code == media_hresult_texts[i].result)
       return (char *)media_hresult_texts[i].text;
   }
-// RECOVERY_LITERAL: v1 0x00695B34 0x00695B46 $SG41327 0x005CF120
-  return (char *)"Uknown Error Code";
+  return (char *)media_hresult_unknown;
 }
 
 

@@ -2194,7 +2194,7 @@ int __cdecl tech_selection(int faction) {
             return PlayersData[faction].tech_id_researching;
         }
     }
-    // RECOVERY_LITERAL: v1 0x0069180C 0x00691818 $SG61119 0x005BE380
+    // RECOVERY_LITERAL: v1 0x0069180C 0x00691818 $SG61120 0x005BE380
     const int result = tech_pick(faction, 0, -1, 0);
     PlayersData[faction].tech_id_researching = result;
     if (IsMultiplayerNet != 0) {
@@ -2213,8 +2213,8 @@ int __cdecl tech_selection(int faction) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// RECOVERY_LITERAL: v1 0x00691828 0x00691845 $SG61148 0x005BE530
-// RECOVERY_LITERAL: v1 0x00691818 0x00691827 $SG61134 0x005BE530
+// RECOVERY_LITERAL: v1 0x00691828 0x00691845 $SG61149 0x005BE530
+// RECOVERY_LITERAL: v1 0x00691818 0x00691827 $SG61135 0x005BE530
 /*
 Purpose: Finish one faction's research turn: log the tech being researched,
          or when the faction finishes (no PBEM/human gate applies) commit
