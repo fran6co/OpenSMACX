@@ -590,8 +590,8 @@ BOOL __cdecl facility_avail(int facility_id, int faction_id, int base_id,
     }
     // The original normalizes the filename in shared scratch storage here;
     // the early Ascent return above bypasses this later Caretaker check.
-    StringTemp[0] = 0;
-    strcat(StringTemp, Players[faction_id].filename);
+    clear();
+    says(Players[faction_id].filename);
     CharUpperA(StringTemp);
     if (!strcmp(StringTemp, "CARETAKE")
         && (facility_id == FAC_VOICE_OF_PLANET
@@ -668,7 +668,6 @@ BOOL __cdecl facility_avail(int facility_id, int faction_id, int base_id,
             return false; // must have Complex
         }
         // WORKAROUND(inline): see fa_budget_probe
-        fa_budget_probe(9);
         fa_budget_probe(9);
         if (((facility_id >= FAC_SKY_HYDRO_LAB && facility_id < FAC_STOCKPILE_ENERGY)
             || facility_id == FAC_GEOSYNC_SURVEY_POD) // must have Aerospace Complex
