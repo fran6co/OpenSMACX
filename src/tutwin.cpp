@@ -1187,11 +1187,10 @@ void TutWin::tour() {
     best_dir = 0;
     start = random(0, 8);
     cursor_x = ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
-    cursor_y = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
     for (step = 0; step < 8; step++) {
         lower = (step + start) % 8;
         x = wrap_map_x(cursor_x + VehMoveDeltaX[lower]);
-        y = cursor_y + VehMoveDeltaY[lower];
+        y = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_] + VehMoveDeltaY[lower];
         if (on_map(x, y) && MapWinTable[0]->tile_in_view(x, y, 2) && !is_ocean(x, y)) {
             int score = 8;
             if ((bit_at(x, y) & BIT_FUNGUS) && (map_loc(x, y)->climate & ~0x1F) >= 0x40) {
@@ -1247,7 +1246,7 @@ void TutWin::tour() {
         }
     } else if (field_53C0_ == 3 && ConsoleGlobal.selected_vehicle_ >= 0
                && Vehs[ConsoleGlobal.selected_vehicle_].proto_id == 1) {
-        if (!tut_map("TERRAFORMER", cursor_x, cursor_y, ConsoleGlobal.selected_vehicle_,
+        if (!tut_map("TERRAFORMER", cursor_x, ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], ConsoleGlobal.selected_vehicle_,
                      0, 2, -1, -1)) {
             goto tour_cleanup;
         }
