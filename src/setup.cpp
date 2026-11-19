@@ -253,7 +253,7 @@ void __cdecl crash_landing(int faction_id) {
     previous_rect.left = static_cast<int>(x);
     previous_rect.right = previous_rect.left + 0x15f;
     previous_rect.bottom = previous_rect.top + 0x197;
-    int last_tick = timeGetTime();
+    tile_y = timeGetTime();
 
     for (int frame = 0; frame < 0x1e; ++frame) {
         captured_screen.copy(MapWinTable[0], &previous_rect);
@@ -290,8 +290,8 @@ void __cdecl crash_landing(int faction_id) {
         int tick;
         do {
             tick = timeGetTime();
-        } while (tick - last_tick < frame_delay && !ConsoleNoMapOverrideLatch);
-        last_tick = tick;
+        } while (tick - tile_y < frame_delay && !ConsoleNoMapOverrideLatch);
+        tile_y = tick;
     }
     }
 

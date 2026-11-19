@@ -7291,7 +7291,7 @@ void ReportIf::draw_sat() {
         field_C_ += 4;
         field_10_ += 4;
         field_14_ -= 8;
-        for (int button = 0; button < 5; ++button) flatButtonsD_[button].hide();
+        for (elevators = 0; elevators < 5; ++elevators) flatButtonsD_[elevators].hide();
         strcpy(paragraph, ReportSatelliteScratchLowerText);
         strcpy(line, ReportSatelliteScratchLowerLine);
         StringTemp[0] = 0;

@@ -1904,7 +1904,7 @@ void __cdecl alien_fauna() {
 
     int direction = 21;
     int notice_sent = 0;
-    for (int n = 0; n < count; ++n) {
+    for (attempt = 0; attempt < count; ++attempt) {
         do {
             direction = (direction + 1) % 21;
             int tx = x + RadiusOffsetX[direction];
