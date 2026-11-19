@@ -768,7 +768,7 @@ int Video::read_frame() {
     result = frame_queue_.allocate(&position, 0,
                                   static_cast<unsigned int>(buffered_frame_), 1);
     if (result != 0) return 0;
-// RECOVERY_LITERAL: v1 0x00698918 0x00698925 $SG48116 0x00637C30
+// RECOVERY_LITERAL: v1 0x00698918 0x00698925 $SG48115 0x00637C30
     log_say("read_frame()", "Read data--still frame", buffered_frame_,
             frame_queue_.count(), 0);
   } else {
@@ -801,7 +801,7 @@ int Video::read_frame() {
 }
 
 
-// RECOVERY_LITERAL: v1 0x00698978 0x00698981 $SG48154 0x00637D70
+// RECOVERY_LITERAL: v1 0x00698978 0x00698981 $SG48153 0x00637D70
 // ORIGINAL: 0x00637D70 ?play_frame@Video@@QAEHXZ 0x00637D70-0x0063808D FILE BYTE_EXACT
 // symbol    ?play_frame@Video@@QAEHXZ
 // TRIED: prologue register order (large 797-byte function, many branches); landed as a structural transcription rather than chasing every register-allocation choice. Div-by-1000 modelled as plain unsigned int/1000 (VC6's own reciprocal-multiply idiom), not the 64-bit division Ghidra's decompile implied.
