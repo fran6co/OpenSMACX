@@ -7055,6 +7055,22 @@ Finish-line round (par-1 2026-11-19, round 14):
   the freed /Ob2 budget expands two later teardowns that the image calls
   (24 -> about 60 rows). The open question is the original's spend, a 2.8
   budget problem, not an S7 choice; the best pair of flips is 18 rows.
+- **A shared arm tail entered by `jmp` means every arm computed its input
+  the same way** (par-1 2026-11-19, BaseWin::base_editor_fac 0x0041B790, 7
+  rows -> exact). Image: three if/else arms each end `mov eax,<label>; jmp
+  T` (the last falls into T), T = `push eax; mov ecx,StringTable; call get;
+  push eax; push StringTemp; call strcat`. VC6 cross-jumps identical arm
+  tails only when the instructions are identical, including the register:
+  ours passed `StringTable.get(Labels.strings_ptr[k])` in arms 2/3, whose
+  label load went to edx with a push per arm. Passing the label through
+  `table_text(...)` (alpha.h, an inline returning `StringTable.get(p)`) in
+  every arm puts the value in eax and the tail merges. The same arm also
+  needed its other string in a named local like its sibling (`char *again
+  = Facility[f].name;`) so the common `StringTemp[0]=0; get` prefix hoisted
+  above the arm test. Rule: when the image's arms end in the same register
+  and `jmp` to one tail, spell the tail's input with the same expression
+  shape in every arm (same helper, same named local); when ours merges a
+  tail the image repeats per arm, the inverse: the arms differ in spelling.
 - **BaseWin::init 0x0041E8D0's last slot tie is packing order** (12 rows).
   Image: [ebp-0x10] = window_height + the sprite-run pointer, [ebp-0x14] =
   load_inverts' inlined `dest` + the camera's `yy` + the strength-reduced
