@@ -6458,9 +6458,6 @@ void BaseWin::base_editor_proj() {
     base_editor_proj_budget_probe(1006);  // WORKAROUND(inline)
     base_editor_proj_budget_probe(1007);  // WORKAROUND(inline)
     base_editor_proj_budget_probe(1008);  // WORKAROUND(inline)
-    base_editor_proj_budget_probe(1009);  // WORKAROUND(inline)
-    base_editor_proj_budget_probe(1010);  // WORKAROUND(inline)
-    base_editor_proj_budget_probe(1011);  // WORKAROUND(inline)
     parse_say(0, Facility[FacilitySPStart + project].name, -1, -1);
     PopupModalState = 6;
     popup.start("PICKAPLACE", 0x42);
