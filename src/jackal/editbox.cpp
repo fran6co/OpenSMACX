@@ -295,7 +295,7 @@ void EditBox::on_redraw() {
         }
         x += field_B34_;
         Buffer::vline(x, y, Buffer::text_line_height() + y,
-                      text_parameters_[0][0]);
+                      foreground_color());
     }
     Buffer::set_clip(&area);
     if (field_B3C_ & 2) {
@@ -329,14 +329,11 @@ void EditBox::on_redraw() {
                 width = Buffer::text_width(text_ + start, field_B44_ - field_B40_);
             }
         }
-        const int foreground = field_B24_ != -1 ? field_B24_ : text_parameters_[0][0];
-        int background = field_B20_;
-        if (background == -1) {
-            background = field_B1C_;
-        }
+        const int foreground = field_B24_ != -1 ? field_B24_ : foreground_color();
+        const int background = field_B20_ != -1 ? field_B20_ : field_B1C_;
         const int temporary = foreground + 1;
         Buffer::change_color(x, y, width, Buffer::text_line_height(), field_B1C_, temporary);
-        Buffer::change_color(x, y, width, Buffer::text_line_height(), text_parameters_[0][0], background);
+        Buffer::change_color(x, y, width, Buffer::text_line_height(), foreground_color(), background);
         Buffer::change_color(x, y, width, Buffer::text_line_height(), temporary, foreground);
     }
 }
