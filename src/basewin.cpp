@@ -5874,11 +5874,16 @@ void BaseWin::base_editor_proj() {
     popup.start("PICKAPROJ", 0x42);
     // Original41BC22..41BD0E walks Facility[70..133] at48-byte stride and
     // the64 SecretProject words at4-byte stride, independently of expansion.
-    for (int project_index = 0; project_index < MaxSecretProjectNum; ++project_index) {
+    // The owner words are walked by a pointer stepped beside the index: the image
+    // keeps the index (ebx, the item id), the Facility walk in esi (it carries the
+    // loop test) and this pointer in edi; an indexed read ranks the owner walk
+    // above the Facility walk (MATCHING_GUIDE 2.7, strength reduction).
+    int *owner = &GameDataStateStorage.fields_.secret_project_.project_base[0];
+    for (int project_index = 0; project_index < MaxSecretProjectNum; ++project_index, ++owner) {
         StringTemp[0] = 0;
         strcat(StringTemp, table_text(Facility[FacilitySPStart + project_index].name));
         strcat(StringTemp, "|");
-        const int owner_base = (GameDataStateStorage.fields_.secret_project_.project_base[project_index]);
+        const int owner_base = *owner;
         if (owner_base == -2) {
             strcat(StringTemp, label_get(0xD54 / 4));
         } else if (owner_base == -1) {
