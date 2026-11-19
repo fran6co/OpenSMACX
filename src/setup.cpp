@@ -1758,7 +1758,7 @@ extern uint32_t TerraformAnnouncedMask[2];
 extern int TutorialFlags;
 extern int TutorialFlags2;
 
-// ORIGINAL: 0x005B3920 ?setup_game@@YAXH@Z 0x005B3920-0x005B4201
+// ORIGINAL: 0x005B3920 ?setup_game@@YAXH@Z 0x005B3920-0x005B4201 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Retained setup owner full native seed and independent full-body review; corrected shared social-effect seen state and pre-callback player labels; actual-source setup controls; no historical byte claim copied."], "reason": "Recover complete game setup using actual source-owned reset storage, player construction and diplomacy initialization; preserve native callback order and final time-warp versus balance branch."}
 // Rewritten from the image (2026-11-08, 0.76 -> 0.98): the beginner-prefs bit
 // lives in AlphaIniPrefs.preferences, agenda_on takes (outer, inner), each
