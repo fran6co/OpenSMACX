@@ -784,7 +784,9 @@ def main():
         return 2
     bk = bf[0][0]
     slack = max(5, bk[3] // 7)
-    rank = [x for x in rank if x[1] == 'base' or (x[2]['frame'] <= bk[1] and x[0][3] <= bk[3] + slack)]
+    # rows may rise (within the slack) only for a call-count or frame win; a candset-only win keeps rows
+    rank = [x for x in rank if x[1] == 'base' or (x[2]['frame'] <= bk[1] and (
+        x[0][3] <= bk[3] or (x[0][:2] < bk[:2] and x[0][3] <= bk[3] + slack)))]
     rank.sort(key=lambda x: x[0])
     for k, key, f in rank:
         print('%-28s calls %d frame %d cand %d rows %d%s' % (key[:28], k[0], k[1], k[2], k[3], ' EXACT' if f['exact'] else ''))
