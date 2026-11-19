@@ -2115,6 +2115,7 @@ L_5a4b28:
                 treaty_on(faction, faction_tgt, 0x10);
             }
         }
+        return 1;
     } else if (!has_treaty(faction_tgt, faction, 0x20) && action < 6
                && (((action == 1 || action == 5)
                     && PlayersData[faction_tgt].tech_ranking > PlayersData[faction].tech_ranking
@@ -2131,6 +2132,7 @@ L_5a4b28:
             say_num(action);
             x_pops_minimal(StringTemp, FactionDiplomacyPortraits[faction_tgt], 0);
         }
+        return 1;
     } else {
         if (faction == ConsoleGlobal.faction_id_) {
             x_pops_minimal("USEDEXCUSE", FactionDiplomacyPortraits[faction_tgt], 0);
