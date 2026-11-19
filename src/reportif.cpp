@@ -4791,12 +4791,15 @@ void ReportWin::draw_intel() {
             strcat(StringTemp, get_pact(subject)); strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, label_get(0x43C / 4));
         } else {
-            if (flags & 2) strcat(StringTemp, label_get(0x350 / 4));
+            if (flags & 2) {
+                strcat(StringTemp, label_get(0x350 / 4));
+                strcat(StringTemp, BufferJoinSpace);
+            }
             else {
                 if (flags & 0x10000) { strcat(StringTemp, label_get(0x5D0 / 4)); strcat(StringTemp, BufferJoinSpace); }
                 strcat(StringTemp, label_get(0x354 / 4));
+                strcat(StringTemp, BufferJoinSpace);
             }
-            strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, label_get(0x5CC / 4));
         }
         strcat(StringTemp, BufferJoinSpace);
