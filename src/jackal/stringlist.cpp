@@ -23,6 +23,16 @@ static inline void release_text(char *text) {
     }
 }
 
+
+// Derived cleanup invokes the shared entry walk before the base destructor
+// changes dispatch, then restores the cursor position even when the list was
+// empty. remove_all() itself is nonvirtual; on_remove() supplies the virtual
+// payload-cleanup hook.
+// ORIGINAL: 0x004066C0 ??1StringList@@UAE@XZ 0x004066C0-0x00406818;0x00650980-0x00650995 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Original 4066C0 installs derived tables6698C4/6698C0 and clears entries before switching to base tables6693A4/6693A0; primary removal slot selects the text-cleanup hook during the derived stage. Implicit base-only cleanup cannot preserve that lifecycle.", "Original bounds4066C0-406818 and650980-650995 retained in 95e07f7c parent src/stringstruct.cpp. Support code650980 adjusts the saved virtual-base receiver by -0xC before jumping to StringStruct base teardown401060. These are original identity/ownership interpretations, not a matching claim."], "reason": "Restore the original two-stage StringList destructor identity to its real C++ destructor, including its historical EH support span."}
+// compile_context src/alphanet.cpp
+// body      src/jackal/stringstruct.h
+
 // ORIGINAL: 0x006086F0 ?on_insert@StringList@@UAEHPAVStringStructPayload@@@Z 0x006086F0-0x00608761 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Primary table 0x6698C4 slot0 targets this body. Original StringStruct::add at 0x4012ED/0x4014F7 passes its 0x18 allocation as the one hook argument; this body writes text at +4 and metadata at +8/+C. The retired seed identity and extent are retained by this compiled owner.", "Original 0x6086FD bypasses the text store when the source is null; preserve that behavior without assuming zeroed allocation. Receiver +0x18 is passed to Heap::get. No byte claim is banked by this binding.", "git:0e184947304cbb843b26264d5145e9b9b452cf16:src/unrecovered/006086f0.cpp", "Historical seed spelling ?fill_entry@StringList@@QAEHPAUStringStruct@@@Z; prior typed-payload source mapping ?on_insert@StringList@@UAEHPAVStringStructPayload@@@Z; prior emitted symbol ?on_insert@StringList@@UAEHPAVStringStructPayload@@@Z.", "Current erased hook is ?on_insert@StringList@@UAEHPAX@Z; real StringStructPayload remains the concrete typed sibling behind ListPayloadBase. Native COFF confirms this current symbol, not a new byte grant."], "reason": "Recover the StringList insertion virtual using its allocated payload type; on_insert is a descriptive name, not a recovered original spelling. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim. The shared erased hook accepts either concrete payload sibling; this method restores its genuine string payload view."}
 // symbol    ?on_insert@StringList@@UAEHPAX@Z
@@ -58,35 +68,6 @@ void StringList::on_remove(void *raw_payload) {
         release_text(payload->text);
         payload->text = 0;
     }
-}
-
-// Parse the caret-prefix convention into pending insertion fields, then
-// return the original normalized StringStruct::add result.
-// ORIGINAL: 0x00608BA0 ?add_special@StringList@@QAEHPAD@Z 0x00608BA0-0x00608BFC BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:22febd5265b4b2830ac952bedd62e5df1f423569:src/recovered/units/00608ba0.cpp; src/stringstruct.h StringList pending fields and inherited StringStruct::add"], "reason": "Recover caret-prefix parsing and normalized ID-zero insertion on the real StringList owner."}
-int StringList::add_special(char *text) {
-    int kind = 0;
-    if (*text == '^') {
-        if (text[1] != '\0') {
-            if (text[1] != '^') {
-                kind = 1;
-                ++text;
-            } else if (text[2] == '^') {
-                kind = 2;
-                text += 3;
-            } else {
-                kind = 2;
-                text += 2;
-            }
-        } else {
-            kind = 3;
-            ++text;
-        }
-    }
-    pending_text_ = text;
-    field_20_ = static_cast<uint32_t>(kind);
-    field_24_ = 0;
-    return add(0) != 0;
 }
 
 // WORKAROUND(inline): dead /Ob2 spend; with it sort keeps the image's
@@ -243,14 +224,34 @@ int StringList::load(LPSTR file_name, LPSTR section_id, int clear_existing,
     }
 }
 
-// Derived cleanup invokes the shared entry walk before the base destructor
-// changes dispatch, then restores the cursor position even when the list was
-// empty. remove_all() itself is nonvirtual; on_remove() supplies the virtual
-// payload-cleanup hook.
-// ORIGINAL: 0x004066C0 ??1StringList@@UAE@XZ 0x004066C0-0x00406818;0x00650980-0x00650995 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original 4066C0 installs derived tables6698C4/6698C0 and clears entries before switching to base tables6693A4/6693A0; primary removal slot selects the text-cleanup hook during the derived stage. Implicit base-only cleanup cannot preserve that lifecycle.", "Original bounds4066C0-406818 and650980-650995 retained in 95e07f7c parent src/stringstruct.cpp. Support code650980 adjusts the saved virtual-base receiver by -0xC before jumping to StringStruct base teardown401060. These are original identity/ownership interpretations, not a matching claim."], "reason": "Restore the original two-stage StringList destructor identity to its real C++ destructor, including its historical EH support span."}
-// compile_context src/alphanet.cpp
-// body      src/jackal/stringstruct.h
+// Parse the caret-prefix convention into pending insertion fields, then
+// return the original normalized StringStruct::add result.
+// ORIGINAL: 0x00608BA0 ?add_special@StringList@@QAEHPAD@Z 0x00608BA0-0x00608BFC BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:22febd5265b4b2830ac952bedd62e5df1f423569:src/recovered/units/00608ba0.cpp; src/stringstruct.h StringList pending fields and inherited StringStruct::add"], "reason": "Recover caret-prefix parsing and normalized ID-zero insertion on the real StringList owner."}
+int StringList::add_special(char *text) {
+    int kind = 0;
+    if (*text == '^') {
+        if (text[1] != '\0') {
+            if (text[1] != '^') {
+                kind = 1;
+                ++text;
+            } else if (text[2] == '^') {
+                kind = 2;
+                text += 3;
+            } else {
+                kind = 2;
+                text += 2;
+            }
+        } else {
+            kind = 3;
+            ++text;
+        }
+    }
+    pending_text_ = text;
+    field_20_ = static_cast<uint32_t>(kind);
+    field_24_ = 0;
+    return add(0) != 0;
+}
 
 /*
 // ORIGINAL: 0x00608C00 ??1Text@@QAE@XZ 0x00608C00-0x00608C05 FILE BYTE_EXACT
