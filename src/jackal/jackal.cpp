@@ -73,9 +73,9 @@ int __cdecl sound_header_version() {
 void __cdecl teardown_0060fd60();
 void __cdecl teardown_0060e5d0();
 
-// RECOVERY_LITERAL: v1 0x00697478 0x0069747E $SG44737 0x0062D570
-// RECOVERY_LITERAL: v1 0x00697480 0x006974AD $SG44738 0x0062D570
-// RECOVERY_LITERAL: v1 0x006974B0 0x00697547 $SG44739 0x0062D570
+// RECOVERY_LITERAL: v1 0x00697478 0x0069747E $SG44883 0x0062D570
+// RECOVERY_LITERAL: v1 0x00697480 0x006974AD $SG44884 0x0062D570
+// RECOVERY_LITERAL: v1 0x006974B0 0x00697547 $SG44885 0x0062D570
 /*
 Purpose: Checks to see if the JACKAL library version is up to date. Pretty pointless but might add
          an OpenSMACX check in the future.
