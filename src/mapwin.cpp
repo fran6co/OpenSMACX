@@ -5990,11 +5990,11 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
         popup.start(PopupStartCaption, "DESTTRIAD2", -1, nullptr, 0x40, nullptr);
         for (int triad = 0; triad < MaxTriadNum; ++triad) {
             StringTemp[0] = '\0';
-            strcat(StringTemp, table_text(Triad[triad]));
-            strcat(StringTemp, BufferJoinSpace);
-            strcat(StringTemp, SocialWinOpenParenText);
+            says(table_text(Triad[triad]));
+            space();
+            says(SocialWinOpenParenText);
             say_base(StringTemp, Bases[editor_tool].auto_forward_slots[triad]);
-            strcat(StringTemp, SocialWinCloseParenText);
+            says(SocialWinCloseParenText);
             popup.item(StringTemp, triad);
         }
         int selected_triad = popup.exec();
@@ -6151,7 +6151,7 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
         // WORKAROUND(inline): budget probe, see click_probe.
         click_probe(1000); click_probe(1001); click_probe(1002); click_probe(1003);
         click_probe(1004); click_probe(1005); click_probe(1006); click_probe(1007);
-        click_probe(1008); click_probe(1009);
+        click_probe(1008);
     }
 
     if (map_view_index_ == 0) {
