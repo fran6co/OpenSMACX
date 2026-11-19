@@ -2144,6 +2144,10 @@ void StatusWin::on_left_double_click(int x, int y) {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00618F40
 
+// font.h's `int unk_1_; // height offset? set outside of class function`:
+// this is that outside setter. The offsets are the embedded Fonts' own starts
+// (font1_ 0x1530, font2_ 0x1558, font3_ 0x1580), so the int written is each
+// Font's first member.
 void StatusWin::UNK1() {
     int size = (WinScreenWidth != 800) ? 12 : 10;
     if (size != font_size_) {
@@ -2240,31 +2244,14 @@ Purpose: Re-init the three status fonts when the screen size changed enough
 Return Value: n/a
 Status: Complete
 */
-// WORKAROUND(inline): on_right_click (0x004B9010) expands this body at all
-// three of its call sites, while every other caller (console, battle, mapwin)
-// calls the copy at 0x004B9EA0. A plain member is not auto-inlined there
-// (too large, whether defined before or after); the explicit inline member
-// is, even defined here at its image position after UNK4. Measured
-// 2026-11-12: a header inline is refuted, since console.cpp then expands all
-// 26 of its sites. Nothing in this unit calls the copy out of line, so the
-// MEASURED declaration in statuswin.h is what emits it.
-MEASURED inline void StatusWin::redraw() {
-    int sizeVal = (WinScreenWidth != 0x320) ? 0xC : 0xA;
-    if (sizeVal != font_size_) {
-        font_size_ = sizeVal;
-        font1_.init(DefaultFontFace, sizeVal, 0);
-        font2_.init(DefaultFontFace, sizeVal, 2);
-        font3_.init(DefaultFontFace, sizeVal, 1);
-    }
-    if (WinScreenWidth != 0x320) {
-        // font.h's `int unk_1_; // height offset? set outside of class
-        // function` - and THIS IS that outside setter. The offsets are the
-        // embedded Fonts' own starts (font1_ 0x1530, font2_ 0x1558, font3_
-        // 0x1580), so the int written is each Font's first member.
-        font1_.unk_1_ = 4;
-        font2_.unk_1_ = 4;
-        font3_.unk_1_ = 4;
-    }
+// The font block is UNK1 (0x004B4990, no callers in the image, same
+// instructions) expanded, not written out (2026-11-19, orphanowner.py). With
+// the call, the plain member is small enough for /Ob2: on_right_click
+// (0x004B9010) expands it at all three of its sites as in the image, and the
+// former `inline` stand-in is gone. Other units (console, battle, mapwin)
+// call the copy at 0x004B9EA0.
+void StatusWin::redraw() {
+    UNK1();
     draw_status(-1, -1, -1, -1, 0);
     RECT localRect;
     UnionRect(&localRect, &MainInterfaceGlobal.status_hit_rect(),

@@ -45,9 +45,7 @@ class StatusWin {
   void UNK1();
 
  public:
-  // WORKAROUND(decl): MEASURED keeps statuswin.cpp's copy of the explicit
-  // inline definition (0x004B9EA0), which the other units call.
-  MEASURED void redraw();
+  void redraw();
   // 0x004B6570, 8885 original bytes. The typed HUD renderer is owned here;
   // redraw() and navigation call it by name.
   void draw_status(int a1, int a2, int a3, int a4, int a5);
