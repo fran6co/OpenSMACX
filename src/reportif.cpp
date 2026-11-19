@@ -75,6 +75,8 @@
 // 27-32 (0 flips it), so 4.
 // After the dead-helper batch (d64959c815), whole-unit fe sweep: on_iface_button_clicked exact at 24-32,
 // 35-43 and 50-58; sat_attack 0x004A0260 (not exact) keeps 15 rows and draw_sat 0x004AA970 54 at 32, 36, 51, 55, 57-58, so 36.
+// After sat_attack's function-scope attack_target, whole-unit fe sweep: on_iface_button_clicked exact at 26-34, 37-45, 52-60;
+// sat_attack keeps 15 rows and draw_sat 54 at 34, 37, 55, 56, 58, 60, so 37.
 // CANARY: 0x004A6330 ?on_iface_button_clicked@ReportIf@@UAEXH@Z residues 0-27,38,49-53
 // CANARY-PADS: function ReportIfDeclFnPad
 void ReportIfDeclFnPad0();
@@ -113,6 +115,7 @@ void ReportIfDeclFnPad32();
 void ReportIfDeclFnPad33();
 void ReportIfDeclFnPad34();
 void ReportIfDeclFnPad35();
+void ReportIfDeclFnPad36();
 
 // Shared punctuation objects the image pushes instead of unit literals.
 extern char SocialWinCloseParenText[];
