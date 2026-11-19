@@ -2835,6 +2835,22 @@ What the model does not predict (2026-11-19)
   them as a plain extern also puts net_not_my_turn under the cap, but the
   tree-wide screen (66 files, 3058 uses) loses 28 exact functions and gains
   1, so it is not landed.
+  Tree-wide census (2026-11-20 par-4, `helperscan.py`, 76 invented helpers,
+  thr 0.85): no other invented helper of a non-exact host has a real marker
+  playing its role; the remaining ones are twins of known functions kept for
+  an inline/out-of-line split in one TU (stringbox/picker/popmenu next/
+  current entries, net_next_stack_id, xrange_inline) or have no image copy.
+  The scan's real yield was a written-out header inline instead: say_num
+  (0x0050B8A0, `_itoa(v, buf, 10); strcat(StringTemp, buf)`) in ten hosts
+  (StatusWin::draw_active calls 1->0, cf 5->0, 161->60; draw_unit 104->41;
+  net_upkeep 65->31 with only its first site). Screen per site: in
+  draw_commerce, production, upgrade, draw_tech and QuayleWin every subset
+  is worse, so those runs stay written out. get_adjective/get_title/get_name/
+  get_noun spellings of written-out parse pairs were neutral in all 34 hosts.
+  Console::terraform's four invented helpers against written-out bodies (all
+  16 combinations): with all four EH 3 / named calls 9 / 119 rows, all
+  written out EH 27 / calls 34 / 347; every single write-out is worse, so the
+  owners stay until a real spelling with the same charge is found.
 - **Popup::start, five arguments (0x0043EF70), editor_who copies**
   (2026-11-19 par-6, screen only). With editor_diplomacy calling the plain
   `editor_who` (auto-inlined, as in the image) instead of the
