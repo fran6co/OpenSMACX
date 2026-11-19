@@ -338,8 +338,14 @@ in the short import objects of the declared toolchain's import libraries
 (VC6 `LIB/*.LIB`), matched to the image's own import directory. A call through
 such an IAT slot (`call [slot]`, a register loaded from it, or a `jmp [slot]`
 thunk) takes that stack effect and, per the same documented Win32 contract,
-preserves EBX/ESI/EDI/EBP. Imports without a unique decorated contract and all
-virtual calls still refuse. See `docs/DECOMP_MAP.md`; linked retention/allocation,
+preserves EBX/ESI/EDI/EBP. Imports without a unique decorated contract still
+refuse. Virtual calls follow only the user's 2026-11-17 rules, all from image
+bytes (module docstring of `callee_preservation`): a frame-constant vtable,
+the image-wide slot proof (every installed vtable's slot agrees), virtual-base
+narrowing with non-negative vbtable offsets, the plain object-model rule for
+vptr facts across calls/stores, and constructor-installed vptrs carried into
+`this` callees. A recursive call of the query being proved is its inductive
+hypothesis; other unresolved indirect calls still refuse. See `docs/DECOMP_MAP.md`; linked retention/allocation,
 structural/runtime evidence and full acceptance prerequisites are unchanged.
 
 Unplaced compiler labels and all unbound pooled literals remain unknown references
