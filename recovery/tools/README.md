@@ -368,10 +368,16 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   with a function-scope owner (or hoists its first block-local), renames the other block-locals into the owner one at
   a time (owner not named in the scope, no goto into it, reusesweep's kill probe compiled away), measures each slot
   alone (frame difference, slot-map difference, rows) in FE_JOBS lanes and then applies the improving slots
-  cumulatively, best first. `--only`/`--all` apply the named/all slots without the screen. A marker followed by
-  inline helpers (enemy_strategy) is located by the function the marker's symbol names. First results: air_power
-  frame 0x44 -> 0x48 and 955 -> 753 rows (done by hand from `--sites`); order_veh: no slot improves (its shared
-  slot is VC6 packing at the image's rank already).
+  cumulatively, best first. `--only=SLOT,..`/`--all` apply the named/all slots without the screen. `--fscope` also
+  merges function-scope variables that share an image slot (every plain definition of either is probed for the other
+  being dead); a refusal lists the source lines where the other variable is still live, which is the finding when the
+  image packs two of our variables that our source keeps alive together (base_build's `w`/`l_34`: the image holds
+  `w` in ebx over the convoy loop, so its home is free there). A marker followed by inline helpers (enemy_strategy)
+  is located by the function the marker's symbol names. Results 2026-11-19: air_power frame 0x44 -> 0x48 and
+  955 -> 753 rows (by hand from `--sites`), enemy_strategy slot difference 102 -> 75 (2 of 13 shared slots kept),
+  time_warp 150 -> 142; order_veh, consider_designs, setup_text, social_ai, communicate: no slot improves (their
+  shared slots are VC6 packing at the image's rank already). Lanes: one slot per prefix FE_PFX_BASE..+FE_JOBS-1; a
+  3,000-row unit takes 10-25 s per rename, so run large functions in the background.
 - `analysis/padkinds.py <unit> <addr> <signature> <lo-hi> [kinds]` which declarations count for such a tie: k = 0..9 pads of
   ~40 kinds, rows inside the image window per k (period 8 = one frame symbol, 4 = two, one step = /Ob2 caller budget).
 - `analysis/sympad.py FEALL.json maxrows OUT.jsonl` the budget twin of locpad.py: block-scope `(void)&extern` pads, which grow

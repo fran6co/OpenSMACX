@@ -4013,6 +4013,24 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   names a variable that is still live there in OUR source: either the image's
   owner is another variable, or our source keeps a value alive that the
   original did not.
+  Yield of the screen on the other large functions (2026-11-19): it is a
+  lever for bodies that still carry one block-local per role, not a general
+  one. enemy_strategy 0x00561080 (122 named frame variables against 36 image
+  slots): of 13 shared slots only the unit x ([ebp-0x40]) and the triad/row/
+  cost scratch ([ebp-0x2C]) improve the slot map (102 -> 75); the other eleven,
+  merged alone or together, move it away. time_warp 0x005AEDE0: one slot
+  (best score / scan index / best quality at [ebp-0x1C], 150 -> 142).
+  order_veh, consider_designs, setup_text, social_ai, communicate,
+  can_terraform, battle_fight, base_build: nothing to merge, their shared
+  slots already sit at the image's rank.
+  `--fscope` extends the proof to two function-scope variables in one image
+  slot; its refusals name the lines where our source keeps both alive. In
+  base_build 0x004F81A0 `w` and the convoy counter `l_34` share [ebp-0x34]
+  in the image although our source updates `w` inside the convoy loop
+  (0x4FC5EB..0x4FC649): the image holds `w` in ebx from 0x4FC371 on, so its
+  home is free. A shared image slot that our liveness refuses is therefore a
+  register finding (which variable the image enregisters there), not a
+  naming one.
 - **A scan whose candidate is stored to a function-scope pair every
   iteration and never reloaded there is a block-local pair plus a copy**
   (par-6 2026-11-19, battle_fight 0x00506AF0). The withdraw scan holds the

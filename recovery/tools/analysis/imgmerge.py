@@ -221,6 +221,100 @@ def decl_type(text, L):
     return text[L['at']:L['at'] + L['kwlen']].strip()
 
 
+def stmt_start(m, pos, bs):
+    """offset where the statement containing pos starts: after the last ; { } before pos that is outside every
+    parenthesis (a for-clause semicolon is inside one)"""
+    d, last = 0, bs + 1
+    for i in range(bs, pos):
+        c = m[i]
+        if c == '(':
+            d += 1
+        elif c == ')':
+            d -= 1
+        elif c in ';{}' and d == 0:
+            last = i + 1
+    return last
+
+
+def pure_defs(m, bs, be, name):
+    """offsets of `name = ...` (plain assignment; a compound assignment reads first)"""
+    return [bs + mm.start() for mm in re.finditer(
+        r'(?<![\w.$>:])%s(?!\w)\s*=(?!=)' % re.escape(name), m[bs:be])]
+
+
+def merge_fvar(unit, addr, cur, B, T, pfx):
+    """function-scope B renamed into function-scope T when their live ranges are disjoint: T is dead at every
+    plain definition of B and B at every plain definition of T (kill probes). -> (text or None, reason)"""
+    bs, be, m, fvars, locs = rs.analyse(cur, addr)
+    if fvars.get(B, -1) < 0 or T not in fvars:
+        return None, 'not a function-scope local'
+    body = m[bs:be]
+    for v in (B, T):
+        if re.search(r'(?<![&\w])&\s*%s(?!\w)' % re.escape(v), body):
+            return None, '%s has its address taken' % v
+        if any(L['name'] == v for L in locs):
+            return None, '%s is also a block-local name' % v
+    decl = next((x for x in rs.FDECL if B in x[1]), None)
+    if decl is None or len(decl[1]) != 1:
+        return None, 'declaration of %s is not a single declarator' % B
+    probes = collections.defaultdict(list)
+    for dpos in pure_defs(m, bs, be, B):
+        probes[stmt_start(m, dpos, bs)].append(T)
+    for dpos in pure_defs(m, bs, be, T):
+        probes[stmt_start(m, dpos, bs)].append(B)
+    if not probes:
+        return None, 'no definitions'
+    kt = cur
+    for pos in sorted(probes, reverse=True):
+        kt = kt[:pos] + ''.join(' %s = %s;' % (v, rs.KILL) for v in sorted(set(probes[pos]))) + kt[pos:]
+    rb, _, _ = compile_text(unit, cur, addr, 'b', pfx)
+    rk, _, err = compile_text(unit, kt, addr, 'k', pfx)
+    if rk is None:
+        return None, 'probe variant does not compile'
+    if rs.ours_sig(rk) != rs.ours_sig(rb):
+        # name the definitions where the other variable is live: one probe position at a time
+        bsig, live = rs.ours_sig(rb), []
+        for pos in sorted(probes):
+            for v in sorted(set(probes[pos])):
+                k1 = cur[:pos] + ' %s = %s;' % (v, rs.KILL) + cur[pos:]
+                r1, _, _ = compile_text(unit, k1, addr, 'k', pfx)
+                if r1 is None or rs.ours_sig(r1) != bsig:
+                    live.append('%s live at L%d' % (v, cur.count('\n', 0, pos) + 1 + (1 if cur[pos:pos + 1] == '\n' else 0)))
+            if len(live) >= 8:
+                break
+        return None, 'live ranges overlap: ' + ', '.join(live)
+    # rename: every B in the body becomes T; B's declaration loses its keyword or disappears
+    at = decl[0]
+    end = m.find(';', at)
+    dtext = cur[at:end]
+    init = '=' in m[at:end]
+    seg_a, seg_b = cur[bs:at], cur[end + 1:be]
+    msa, msb = m[bs:at], m[end + 1:be]
+    def ren(seg, mseg):
+        out, last = [], 0
+        for mm in rs.ident_re(B).finditer(mseg):
+            out.append(seg[last:mm.start()])
+            out.append(T)
+            last = mm.end()
+        out.append(seg[last:])
+        return ''.join(out)
+    if init:
+        mid = ren(dtext, m[at:end])
+        mid = re.sub(r'^(?:int|BOOL)\s+', '', mid) + ';'
+    else:
+        mid = ''
+        ls = cur.rfind('\n', 0, at) + 1
+        le = cur.find('\n', end)
+        if not cur[ls:at].strip() and not m[end + 1:le].strip():
+            # the declaration is the whole line: drop the line (keep a trailing comment out too)
+            new = cur[:bs] + ren(cur[bs:ls], m[bs:ls]) + ren(cur[le + 1:be], m[le + 1:be]) + cur[be:]
+            r2, _, err = compile_text(unit, new, addr, 'h', pfx)
+            return (new, 'ok') if r2 is not None else (None, 'merge does not compile: %s' % (err or '')[:120])
+    new = cur[:bs] + ren(seg_a, msa) + mid + ren(seg_b, msb) + cur[be:]
+    r2, _, err = compile_text(unit, new, addr, 'h', pfx)
+    return (new, 'ok') if r2 is not None else (None, 'merge does not compile: %s' % (err or '')[:120])
+
+
 def find_loc(locs, name, ordinal):
     same = sorted((y for y in locs if y['name'] == name), key=lambda y: y['at'])
     return same[ordinal] if ordinal < len(same) else None
@@ -233,6 +327,17 @@ def apply_slot(unit, addr, cur, s, owner, members, pfx, gone=None):
     gone = collections.defaultdict(set) if gone is None else gone   # name -> base ordinals already renamed away
     sig = None
     for bname, ordn, bline in members:
+        if ordn is None:   # a function-scope variable
+            if owner is None:
+                refused.append((s, bname, 0, 'no owner'))
+                continue
+            new, why = merge_fvar(unit, addr, cur, bname, owner, pfx)
+            if new is None:
+                refused.append((s, bname, 0, why))
+            else:
+                cur, sig = new, None
+                done.append((s, '%s (function scope)' % bname, '-> %s' % owner))
+            continue
         bs, be, m, fvars, locs = rs.analyse(cur, addr)
         L = find_loc(locs, bname, ordn - sum(1 for g in gone[bname] if g < ordn))
         if L is None:
@@ -291,6 +396,7 @@ def main():
     ap.add_argument('--sites', default='')
     ap.add_argument('--no-hoist', action='store_true')
     ap.add_argument('--all', action='store_true')
+    ap.add_argument('--fscope', action='store_true', help='also merge function-scope variables that share an image slot')
     a = ap.parse_args()
     unit = a.unit if a.unit.startswith('src/') else 'src/' + a.unit
     addr = int(a.addr, 16)
@@ -327,11 +433,11 @@ def main():
         mem = by[s]
         fs = [x for x in mem if x[1][0] == 'f']
         bl = sorted((x for x in mem if x[1][0] == 'b' and x[1][1]['name'] not in skip), key=lambda x: x[1][1]['line'])
-        if len(fs) > 1:
-            print('  NOTE %s hosts several function-scope variables: %s (not merged)' % (
+        if len(fs) > 1 and not a.fscope:
+            print('  NOTE %s hosts several function-scope variables: %s (merged only with --fscope)' % (
                 hex(s), ', '.join(x[1][1] for x in fs)))
         owner = max(fs, key=lambda x: x[2])[1][1] if fs else None
-        if not bl or (owner is None and (len(bl) < 2 or a.no_hoist)):
+        if (not bl and not (a.fscope and len(fs) > 1)) or (owner is None and (len(bl) < 2 or a.no_hoist)):
             continue
         # declarations are found again by (name, ordinal among the same-named block-locals): lines move
         locs = an[4]
@@ -340,6 +446,8 @@ def main():
             L = x[1][1]
             same = sorted(y['at'] for y in locs if y['name'] == L['name'])
             members.append((L['name'], same.index(L['at']), L['line']))
+        if a.fscope:
+            members += [(x[1][1], None, 0) for x in fs if x[1][1] != owner and x[1][1] not in skip]
         todo.append((s, owner, members))
     done, refused = [], []
     cur = text
