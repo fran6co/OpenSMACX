@@ -176,6 +176,11 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   check meaning: listing-based webs miss joins after tail merging, so read every web by hand before keeping one
   (first pass 2026-11-19: veh_scoot, monolith, probe, load_vehicles, draw_expenses real; base_draw, setup_text `k`,
   synch `local_turn` were broken splits that read as large gains).
+- `analysis/slotflow.py <unit> <addr> [--src ALT.cpp] [--pfx N]` transcription-error screen (MATCHING_GUIDE 3.5): for every
+  image instruction that reads a frame slot and is aligned with one of ours reading a named variable v, it takes the
+  image's reaching definitions of that slot, maps each through the fe alignment to our instruction and the variable it
+  writes, and prints `READ v image value written as w` when none of them is v (our source may read the wrong variable of a
+  packed slot). Misaligned regions give false hits; read each one against the source.
 - `analysis/uninitscan.py [unit ...] [--first] [--json F]` uninitialized-read screen (MATCHING_GUIDE 3.5, wrong variable of
   a packed frame slot; about 3.5 min tree-wide with FE_JOBS=5): compiles every optimised unit with /W4 and lists every C4701/C4700
   site (VC6 reports one per variable; the tool inserts `V = 0;` at each reported statement in a throw-away copy and recompiles
