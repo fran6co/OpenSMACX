@@ -716,12 +716,13 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
                 if (prod >= 0 && VehPrototypes[prod].plan == 2 && ++def >= l_f0) {
                     continue;
                 }
+                l_160++;
             } else {
                 if (prod >= 0 && VehPrototypes[prod].plan <= 1 && ++def >= l_f0) {
                     continue;
                 }
+                l_160++;
             }
-            l_160++;
         }
     }
     if (BaseCurrent->state & 1) {
