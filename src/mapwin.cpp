@@ -5863,17 +5863,9 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
     if (!on_map(tile_x, tile_y)) return;
 
     if (field_1DD8C_ != 0) {
-        editor(tile_x, tile_y, static_cast<int>(field_1DD8C_ & 2));
-        field_1DD8C_ = 0;
-        if (MapEditorPaintId != 0 && MapEditorPaintId != 2 &&
-            MapEditorPaintId != 0x12) {
-            ::draw_map(1);
-        } else {
-            world_climate();
-            // The free redraw-all (0x46B190): the image calls it in the
-            // other arm and expands it here (0x46D986..9B3).
-            ::draw_map(1);
-        }
+        // 0x0046D94B..9B3 is UNK4 (0x0046C020) expanded: its first
+        // ::draw_map stays a call, the second expands (pass-2 sites).
+        UNK4(tile_x, tile_y);
         return;
     }
 
