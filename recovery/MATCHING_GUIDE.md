@@ -3783,6 +3783,17 @@ Layout
   counter, ray x) leaves the frame at 0x2C4 and moves no temporary (slot
   difference 163-169 against 164), so the temporaries' slots follow the
   packing order, not the names.
+  One site of that kind is a real order difference: at 0x56D1B4 (the
+  plan-10 base loop, `stack_check(veh_at(...), 2, 12, -1, -1) > (x ==
+  Bases[i].x && y == Bases[i].y)`) the image calls first and forms the 0/1
+  after the call in ecx; ours forms it first and keeps it in a frame
+  temporary across the call. The sibling `stack_check(other_id, 2, 6, ...)
+  > (...)` at 0x56F15D forms the 0/1 first on both sides (edi is free
+  there), so the image's order here is the allocator's (the loop's
+  registers are esi = `&Bases[i].x` cursor, edi = score, ebx = base_id;
+  ours anchors the cursor on `.y` and has esi = base_id), not a spelling:
+  the reversed compare, `?:`, an inline helper for the 0/1, a `Base &`
+  local and four spellings of the region lookup leave the window as it is.
 - Tail merging follows the closing teardown depth and the per-site scratch
   register, so which copy survives can follow a register tie.
 - **Both arms end with their own tail and goto** (communicate 0x0054FFD0,
