@@ -7233,7 +7233,7 @@ void ReportIf::draw_sat() {
                 line[0] = 0;
                 parse_string(text, line);
                 strcat(paragraph, line);
-                strcat(paragraph, " ");
+                strcat_space(paragraph);
             }
         }
     } else {
