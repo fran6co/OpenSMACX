@@ -581,6 +581,27 @@ char SaveNameBuffer[256];
 // RECOVERY_OBJECT: v2 0x009B2178 0x009B2278 ?ScenarioSaveNameBuffer@@3PADA 0x005A6AC0
 char ScenarioSaveNameBuffer[256];
 
+// Unbound rules tables of the same run (address comments only), in image order.
+// Each address is zero-initialised data in the shipped image (image_data.py:
+// all sixteen sit in .data past the bytes the file carries, ZERO at run
+// time), filled in by read_rules()/read_basic_rules()/read_tech() below.
+// They were typed-pointer bindings into the image's address space until
+// converted to the objects themselves; the folded absolute addressing of
+// every use site is unchanged, the immediate now a relocation.
+RulesResourceinfo ResourceInfo[MaxResourceInfoNum]; // 0x00945F50
+LPSTR PlansShortName[MaxPlanNum];  // 0x00945FE0
+RulesCombatMode OffenseModes[MaxOffenseModeNum];  // 0x00946178
+RulesBonusName BonusName[MaxBonusNameNum];                  // 0x009461A8
+RulesCombatMode DefenseModes[MaxDefenseModeNum];  // 0x00946A00
+LPSTR Repute[MaxReputeNum];                                 // 0x00946A30
+RulesEnergy Energy[MaxEnergyNum];                   // 0x0094A318
+RulesMight Might[MaxMightNum];                              // 0x0094C558
+LPSTR Mood[MaxMoodNum];                                     // 0x0094C9E4
+LPSTR Triad[MaxTriadNum];  // 0x0094F1A8
+LPSTR PlansFullName[MaxPlanNum];  // 0x00952360
+LPSTR Difficulty[MaxDiffNum];      // 0x0096C85C
+uint16_t FactionRankingHistory[MaxPlayerNum * MaxRankingHistoryTurns];  // 0x009A68AC
+
 // ORIGINAL: 0x005BEC40 _$E21 0x005BEC40-0x005BEC56 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682660 selects initializer0x5bec40..0x5bec56, registering exit0x5bec60..0x5bec6a. Root independent complete decode confirms exclusive RET/JMP bounds; original/source-owned storage is0x94c590 bound to?g_PALETTE1@@3VPalette@@A.", "Original startup instruction evidence: [[\"0x5bec40\", \"mov\", \"ecx, 0x94c590\"], [\"0x5bec45\", \"call\", \"0x5fe2a0\"], [\"0x5bec4a\", \"push\", \"0x5bec60\"], [\"0x5bec4f\", \"call\", \"0x645398\"], [\"0x5bec54\", \"pop\", \"ecx\"], [\"0x5bec55\", \"ret\", \"\"]]. Original exit instruction evidence: [[\"0x5bec60\", \"mov\", \"ecx, 0x94c590\"], [\"0x5bec65\", \"jmp\", \"0x5fe2e0\"]]. Preserve constructor arguments, array counts/strides, registration and reverse destruction without authored callback stand-ins.", "Fresh complete build-iveupb5l physical src/interface_palette.cpp COFF selects _$E21 via .CRT$XCU, registering _$E19. Startup relocation targets: [\"?g_PALETTE1@@3VPalette@@A\", \"??0Palette@@QAE@XZ\", \"_$E19\", \"_atexit\"]; exit targets: [\"?g_PALETTE1@@3VPalette@@A\", \"??1Palette@@QAE@XZ\"]. Actual linked helper occurs once at CRT slot0x63f53c; selected same-owner order agrees with the pinned order.", "BaseWin/DesignWin definitions now precede their Wave globals as pinned. Existing DesignWin Wave mappings retain original names/spans and current helper overrides after fresh emission proof. Scalar constructor effects and array construction/cleanup belong to genuine source globals, classes and compiler-generated lifetime machinery.", "Current local labels are emission interpretations, not original debug names or recovered historical TU boundaries. Start bindings grant no allocation extent. Selected same-owner linked order is not full CRT/global-order, retained-selection, reference-target, dependency-provider, runtime or full-game acceptance. Guarded callbacks excluded; no claim grant or bug fix."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned ?g_PALETTE1@@3VPalette@@A; preserve complete original identity and remaining restoration/structure obligations."}
 // symbol    _$E20

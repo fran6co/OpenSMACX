@@ -99,9 +99,6 @@ extern int ConsoleNoMapOverrideLatch;
 uint32_t SystemInterfaceFlags;  // 0x00933420
 
 
-// Original441250 clears four words in each of64 cells, preserving the
-// payload and the flat/transposed write order. Cell stride is90 bytes.
-// RECOVERY_OBJECT: v2 0x007388D8 0x0073ACD8 ?OfferResetCells@@3PAY07UOfferResetCell@@A 0x00441250
 
 
 

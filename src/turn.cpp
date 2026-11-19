@@ -286,7 +286,6 @@ StringList MessageWinDeferredBaseMessages[8];
 
 extern char *InterludeTextFile;  // interlude.cpp
 
-OfferResetCell OfferResetCells[MaxPlayerNum][MaxPlayerNum];
 
 // Original51E390 clears these independent words and two faction arrays.
 // Consumer5275B0 displays the faction and repeated-event value. The three

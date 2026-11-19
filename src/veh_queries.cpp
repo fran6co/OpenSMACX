@@ -487,6 +487,8 @@ int __cdecl veh_init(int prototype, int faction, int x, int y) {
 // pinned reference scan identifies those two writes, while indirect readers,
 // aliases and the full allocation / lifetime remain unproved. Neighboring
 // storage is not part of this binding.
+// RECOVERY_OBJECT: v1 0x009B2280 ?VehDropLiftVehID@@3HA
+int VehDropLiftVehID;  // 0x009B2280
 // RECOVERY_OBJECT: v2 0x009B227C 0x009B2280 ?VehFindBestDist@@3HA 0x005C0CB0
 int VehFindBestDist = 0;
 

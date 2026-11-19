@@ -53,6 +53,11 @@
 #include "jackal/font_metrics.h"
 #include "general.h"  // swap for the hot-seat pair callbacks
 
+// Original441250 clears four words in each of64 cells, preserving the
+// payload and the flat/transposed write order. Cell stride is90 bytes.
+// RECOVERY_OBJECT: v2 0x007388D8 0x0073ACD8 ?OfferResetCells@@3PAY07UOfferResetCell@@A 0x00441250
+OfferResetCell OfferResetCells[MaxPlayerNum][MaxPlayerNum];
+
 // Set as a pair by commlink_attempt (0x00558C60): the flag and the faction
 // that asked. process_message tests both when a commlink reply arrives.
 // RECOVERY_OBJECT: v2 0x007492CC 0x007492D0 ?CommlinkPending@@3HA 0x00442740

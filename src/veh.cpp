@@ -469,15 +469,8 @@ Status: Complete
 
 
 // 0x009A64C8
-// RECOVERY_OBJECT: v1 0x009B2280 ?VehDropLiftVehID@@3HA
-int VehDropLiftVehID;  // 0x009B2280
 BOOL VehBitError;  // 0x009B228C
 int VehMoraleModifierCount; // only used by say_morale(), optimize to local var?
-RulesCombatMode DefenseModes[MaxDefenseModeNum];  // 0x00946A00
-RulesCombatMode OffenseModes[MaxOffenseModeNum];  // 0x00946178
-LPSTR PlansShortName[MaxPlanNum];  // 0x00945FE0
-LPSTR PlansFullName[MaxPlanNum];  // 0x00952360
-LPSTR Triad[MaxTriadNum];  // 0x0094F1A8
 
 
 // The original calls the CRT atan entry after storing a double argument;

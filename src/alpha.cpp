@@ -244,28 +244,13 @@ static const char alpha_tech_values_section[] = "TECHNOLOGY";
 // RECOVERY_OBJECT: v1 0x00945D48 ?Compass@@3PAPADA
 LPSTR Compass[MaxCompassNum];      // 0x00945D48
 
-LPSTR Difficulty[MaxDiffNum];      // 0x0096C85C
 
-// ===== THE RULES OBJECTS - real storage, homed to the parser =====
-// Each address is zero-initialised data in the shipped image (image_data.py:
-// all sixteen sit in .data past the bytes the file carries, ZERO at run
-// time), filled in by read_rules()/read_basic_rules()/read_tech() below.
-// They were typed-pointer bindings into the image's address space until
-// converted to the objects themselves; the folded absolute addressing of
-// every use site is unchanged, the immediate now a relocation.
-RulesResourceinfo ResourceInfo[MaxResourceInfoNum]; // 0x00945F50
-RulesEnergy Energy[MaxEnergyNum];                   // 0x0094A318
-LPSTR Mood[MaxMoodNum];                                     // 0x0094C9E4
-LPSTR Repute[MaxReputeNum];                                 // 0x00946A30
-RulesMight Might[MaxMightNum];                              // 0x0094C558
-RulesBonusName BonusName[MaxBonusNameNum];                  // 0x009461A8
 // rankings (0x005AC690) writes the eight native dwords at
 // [0x009A64EC,0x009A650C). setup_player's apparent endgame selector
 // cells 0x009A6504/0x009A6508 are entries 6/7 of this same allocation;
 // InfoWin::setup_text also reads entry 7, not an independent scalar.
 // Historical object identity moved to GameDataStateStorage; see the transport manifest.
 // 0x009A64EC
-uint16_t FactionRankingHistory[MaxPlayerNum * MaxRankingHistoryTurns];  // 0x009A68AC
 // ORIGINAL: 0x00584D00 _$E56 0x00584D00-0x00584D16 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT dispatcher 0x00644DEC-0x00644DFB supplies [0x00682000,0x006826CC) to 0x00644ED8, which calls each non-null dword. Slot 0x00682644 selects init 0x00584D00, which registers exit callback 0x00584D20.", "Original init span 0x00584D00-0x00584D16 and exit span 0x00584D20-0x00584D2A are independently disassembled; both identify receiver 0x00945780 and Wave constructor/destructor 0x004C66E0/0x004C67C0.", "Historical earlier wave.cpp physical COFF selected local STATIC init _$E56 via .CRT$XCU, relocating to g_TOP_MENU_WAVE, Wave construction, paired local fini _$E54 and atexit; fini relocates to the same object and Wave destruction. Native comparator can select these physical local function symbols.", "Independent pin/COFF/source review supports individual lifetime ownership. These mappings do not establish complete global initialization order, linked retained selection, full data layout, original debug names or runtime acceptance."], "reason": "Bind the original startup operation to the genuine compiler-emitted lifetime of source-owned g_TOP_MENU_WAVE. The local symbol identifies current emitted code, not an original debug name; no callback body is authored."}
 // symbol    _$E16
