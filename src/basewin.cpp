@@ -7109,11 +7109,10 @@ void BaseWin::init() {
         set_rect(&nutrient_title_rect_, 30, 36, 160, 56);
         set_rect(&nutrient_outer_rect_, 27, 33, 163, 143);
         set_rect(&production_outer_rect_, 166, 260, 699, 349);
-        RECT *production = &production_content_rect_;
-        *production = production_outer_rect_;
-        const int half_old_height = rect_height(production) / 2;
-        offset_rect(production, 0, rect_height(production) + 3);
-        const int half_new_height = rect_height(production) / 2;
+        production_content_rect_ = production_outer_rect_;
+        const int half_old_height = rect_height(&production_content_rect_) / 2;
+        offset_rect(&production_content_rect_, 0, rect_height(&production_content_rect_) + 3);
+        const int half_new_height = rect_height(&production_content_rect_) / 2;
         offset_rect(&commerce_report_rect_, 0, half_new_height);
         offset_rect(&commerce_outer_rect_, 0, half_old_height);
         offset_rect(&commerce_title_rect_, 0, half_old_height);
@@ -7121,9 +7120,9 @@ void BaseWin::init() {
         commerce_outer_rect_.bottom += half_old_height;
         nutrient_content_rect_.bottom += half_old_height;
         nutrient_outer_rect_.bottom += half_old_height;
-        set_rectangle_dimensions(&rect6_, 381, rect_height(production) + 360, 238, 20);
-        set_rectangle_dimensions(&rect7_, 131, rect_height(production) + 360, 238, 20);
-        window_height = rect_height(production) + 401;
+        set_rectangle_dimensions(&rect6_, 381, rect_height(&production_content_rect_) + 360, 238, 20);
+        set_rectangle_dimensions(&rect7_, 131, rect_height(&production_content_rect_) + 360, 238, 20);
+        window_height = rect_height(&production_content_rect_) + 401;
     }
     r = commerce_outer_rect_;
     r.top = r.bottom + 3;
