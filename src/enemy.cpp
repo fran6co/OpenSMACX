@@ -4841,7 +4841,7 @@ L_56d265:
             goto L_57707f;
 L_56d372:
             Bases[base_id].minerals_accumulated += veh_cost(Vehs[veh_id].proto_id, -1, NULL) * 10;
-            Bases[base_id].unused_surplus = Bases[base_id].minerals_accumulated;
+            Bases[base_id].minerals_accumulated_2 = Bases[base_id].minerals_accumulated;
             Bases[base_id].production_id_last = Bases[base_id].queue_production_id[0];
             kill(veh_id);
             return 1;
