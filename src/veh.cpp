@@ -2685,7 +2685,7 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
                 } else {
                     char number[80];
                     strcat(output, BufferJoinSpace);
-                    strcat(output, StringTable.get(Labels.strings_ptr[0xE5C / 4]));
+                    strcat(output, label_get(0xE5C / 4));
                     _itoa(2, number, 10);
                     strcat(output, number);
                 }
