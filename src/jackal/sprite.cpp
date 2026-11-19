@@ -7991,12 +7991,10 @@ int Sprite::load(const char *filename) {
     cTransparentIndex_ = *byte_cursor++;
     cursor = reinterpret_cast<const SpriteFileInt *>(byte_cursor);
     // The image sizes the copy from its own copy of the stride before the
-    // stride store (mov edx, ecx at 0x005EB1BF).
-    const int stride = cursor->value;
-    const uint32_t size = stride * iSpriteHeight_;
-    iSpriteWidth2_ = stride;
-    cursor++;
-    memcpy(pcBits_, cursor, size);
+    // stride store (mov edx, ecx at 0x005EB1BF); no spelling tried gives that
+    // copy (named stride, size local, `size *=`, operand order).
+    iSpriteWidth2_ = cursor++->value;
+    memcpy(pcBits_, cursor, iSpriteWidth2_ * iSpriteHeight_);
     fm.close();
     return 0;
 }
