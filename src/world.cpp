@@ -3338,6 +3338,8 @@ extern int TerraformDrownedBaseId;
 // RECOVERY_BINDING: v1 {"reason":"Recover the complete three-pass rainfall algorithm through existing Map storage, WorldBuilder terrain parameters and real base/climate APIs. The common land-terrain join and west-to-east scan continuation come from the original control flow, not the old condensed seed. Restore these original state, callback-read and column-arithmetic effects without normalizing the zero-carry, lock-byte or persistent-cursor quirks. The retained TRIED condensation describes seed history; these branch corrections do not establish full-game or linked-preservation acceptance.","evidence":["original:0x005C4470-0x005C4FC1; image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","git:1f61a95d:src/unrecovered/005c4470.cpp","Original0x5C45AD joins at0x5C47DB before all-tile altitude processing; original0x5C499D/0x5C49A7 join at0x5C49E5 before the east scan.","src/map.h Map and radius tables; src/alpha.h RulesWorldbuilder; src/base.h base_find; src/console.h ConsoleGlobal; existing src/veh.cpp terraform results.","Pinned5C4665/46F3/4774 and4919/49BB/49EB/4A86 reload cloud cover at the consumer and cloudmass scan tails; row callbacks service networking. Entry5C4487/448C resets drowned-base then tile-faction.","Pinned5C4C2A/57/5D/6B separates altitude0..2 carry/reset/counter decay from exactly3;5C4CE2 reaches4C6B without forcing carry.5C4B33 preserves x>>1 through river IDIV3 at4CA3.","Pinned5C4ACF/4B84/4DD7/4E61/4E89 retains a separate Map cursor for scratch, live old/final climate and each processed record, while4B27..49 indexes live terrain storage. Base callbacks may alter climate;5C4DFE tests only the lock-mask low byte."]}
 // TRIED: no Ghidra hypothesis was available for this address, so this is a from-scratch disassembly transcription (three map passes: windward-hint marking, 2-bit rainfall-class finalization with base_find caching, moderate-rain propagation). Pass 2's middle heuristic (unk_1 bit cascade feeding the 0-3 class value) is a best-effort condensation of ~80 instructions, not a literal register replay - the surrounding loop bounds, byte-merge write and base_find call sites are transcribed directly.
 void __cdecl world_rainfall() {
+    // [ebp-0x20] (imgmerge.py, par-6): both passes keep the tile altitude in one home
+    int altitude_20;
     int x;
     int saved_faction = ConsoleGlobal.faction_id_;
     TerraformDrownedBaseId = -1;
@@ -3399,9 +3401,9 @@ void __cdecl world_rainfall() {
                     }
                 }
             }
-            int altitude = alt_at(x, y);
-            if (altitude <= 4) {
-                if (altitude >= 3 && (bit_at(x, y) & BIT_FOREST)) {
+            altitude_20 = alt_at(x, y);
+            if (altitude_20 <= 4) {
+                if (altitude_20 >= 3 && (bit_at(x, y) & BIT_FOREST)) {
                     for (int y_forest = y - 1; y_forest <= y + 1; y_forest++) {
                         int x_forest = wrap_map_x(x + 1);
                         if (on_map(x_forest, y_forest)) {
@@ -3414,14 +3416,14 @@ void __cdecl world_rainfall() {
                     }
                 }
             } else {
-                int cloudmass = (int)(altitude > 5 ? WorldBuilder.cloudmass_peaks
+                int cloudmass = (int)(altitude_20 > 5 ? WorldBuilder.cloudmass_peaks
                                                    : WorldBuilder.cloudmass_hills);
                 for (i = -1;
                      i >= -((MapCloudCover - 1) * WorldBuilder.rainfall_coeff + cloudmass);
                      i--) {
                     int x_cloud = wrap_map_x(x + i * 2);
                     if (on_map(x_cloud, y)) {
-                        if (is_ocean(x_cloud, y) || alt_at(x_cloud, y) >= altitude) {
+                        if (is_ocean(x_cloud, y) || alt_at(x_cloud, y) >= altitude_20) {
                             break;
                         }
                         map_loc(x_cloud, y)->unk_1 |= 0x20;
@@ -3432,7 +3434,7 @@ void __cdecl world_rainfall() {
                      i++) {
                     int x_cloud = wrap_map_x(x + i * 2);
                     if (on_map(x_cloud, y)) {
-                        if (is_ocean(x_cloud, y) || alt_at(x_cloud, y) >= altitude) {
+                        if (is_ocean(x_cloud, y) || alt_at(x_cloud, y) >= altitude_20) {
                             break;
                         }
                         map_loc(x_cloud, y)->unk_1 |= 0x10;
@@ -3465,7 +3467,7 @@ void __cdecl world_rainfall() {
                     cloud_count = 0;
                     rain_carry = 1;
                 }
-                int altitude = climate >> 5;
+                altitude_20 = climate >> 5;
                 int cloud_cover = MapCloudCover;
                 if (scratch & 0x80) {
                     rain_carry = temperature > 1;
@@ -3481,13 +3483,13 @@ void __cdecl world_rainfall() {
                     }
                     adjustment--;
                 }
-                if ((scratch & 0x40) && altitude <= 5 && altitude <= 4) {
+                if ((scratch & 0x40) && altitude_20 <= 5 && altitude_20 <= 4) {
                     pass2_count = 0;
                     cloud_count = 0;
                     if ((adjustment < 0)) adjustment = 0;
                     else adjustment = adjustment;
                 }
-                if (altitude > 3) {
+                if (altitude_20 > 3) {
                     if (++pass2_count > WorldBuilder.rainfall_coeff * cloud_cover * 4 + 1
                         && rain_carry) {
                         rain_carry--;
@@ -3502,17 +3504,17 @@ void __cdecl world_rainfall() {
                 } else {
                     // One shared decay block (image 0x5C4C6B/0x5C4C72): the
                     // altitude-3 arms thread into it.
-                    if (altitude < 3) {
+                    if (altitude_20 < 3) {
                         cloud_count = 0;
                         rain_carry = 1;
                     }
-                    if (altitude < 3 || !rain_carry || pass2_count) {
+                    if (altitude_20 < 3 || !rain_carry || pass2_count) {
                         if (pass2_count) {
                             pass2_count += -1 - cloud_cover;
                             if (pass2_count < 1) {
                                 pass2_count = 0;
                                 cloud_count = 0;
-                                if (cloud_cover || altitude < 3) {
+                                if (cloud_cover || altitude_20 < 3) {
                                     rain_carry = 1;
                                 }
                             }
@@ -3535,19 +3537,19 @@ void __cdecl world_rainfall() {
                 } else if (rain_carry) {
                     adjustment += rain_carry;
                 }
-                if (altitude <= (temperature != 0) + 4) {
+                if (altitude_20 <= (temperature != 0) + 4) {
                     rainfall_class += adjustment;
-                } else if (cloud_cover - altitude + temperature + 5 >= 2 && adjustment > 0) {
+                } else if (cloud_cover - altitude_20 + temperature + 5 >= 2 && adjustment > 0) {
                     rainfall_class++;
                 }
-                if ((tile->bit2 & 0x80000004) == 0x4 && (climate & ~0x1F) >= 0x60 && altitude < 6) {
+                if ((tile->bit2 & 0x80000004) == 0x4 && (climate & ~0x1F) >= 0x60 && altitude_20 < 6) {
                     int distance = (int)tile->bit2 >> 24;
                     if (distance < 0) {
                         distance = -distance;
                     }
                     if (distance < 0x31) {
                         rainfall_class += 2;
-                    } else if (distance < 0x51 && altitude < 5) {
+                    } else if (distance < 0x51 && altitude_20 < 5) {
                         rainfall_class += 2;
                     } else {
                         rainfall_class++;
