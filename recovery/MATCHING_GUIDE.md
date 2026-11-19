@@ -5101,6 +5101,27 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   rectangle in memory; a by-value helper return does, but reloads top too.
   After a struct copy, the first field modified with `+=` keeps its copy
   store and later ones lose theirs (ProdPicker::on_scrolled 0x00493CB0).
+- **A RECT dissolves into registers unless its left edge is assigned late
+  and the shift goes through `offset_rect`** (par-5 2026-11-19,
+  NetSessionPickerWin::initialize 0x0063BF10). The image keeps a 16-byte
+  RECT in the frame (`sub esp,0x14`, left/right homed at +4/+0xC, top and
+  bottom in registers). Written with `rect.left = ...` first and the shift
+  as four `+=`, VC6 scalarised the whole RECT into registers and dead
+  parameter slots (frame 8). Assigning left after the dx/dy computation and
+  shifting with `offset_rect(&rect, dx, dy)` gives the frame and the
+  image's right/bottom/dx order (173 -> 78 rows; a 1134-order deck of the
+  ten statements ties at 78). Rung 3: an image RECT frame home with partly
+  enregistered edges means the RECT's address reached an inline helper.
+- **A member read back through an address-taking inline keeps an earlier
+  dead store** (par-5 2026-11-19, same function 0x63C240). The image stores
+  `tail_.rows_rect_.bottom` (`mov [esi+0x3758],eax`) and immediately
+  overwrites it after computing `row_height_` from it; ours, written
+  `(rows_rect_.bottom - k - rows_rect_.top) / rows`, drops the first store
+  as dead. `rect_height(&tail_.rows_rect_)` (the header inline that takes
+  the RECT's address) keeps the store and uses the value from the register
+  (78 -> 68). An image store that a later store of the same field
+  overwrites with no read between them is the trace of an address-taking
+  inline (`rect_height`, `rect_width`, `offset_rect`) in the source.
 - **Two same-type locals in disjoint block scopes share one slot**
   (on_scrolled's two shifted rectangles in a 0x10 frame).
 - **Slot sharing follows the source's variable structure: read the image's
@@ -5564,8 +5585,8 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
     does not separate them (the packing takes any dead 16-byte area).
   - NetSessionPickerWin::initialize 0x0063BF10 (-12): `rect` is a RECT in
     memory ([esp+0x14], left/right stored at 0x63C06A/0x63C064, top in ebx,
-    bottom in edi) and margin_y is in ebp; ours scalarises the RECT, also when
-    its address goes through offset_rect.
+    bottom in edi) and margin_y is in ebp. Solved (4aa216e1f5, 173 -> 78):
+    see "A RECT dissolves into registers" below.
 - **An allocated slot that nothing reads or writes, between homes of one
   type, is an array element** (par-6 2026-11-19, slide_show 0x0045D440).
   The image keeps the four sprite x positions at [ebp-0x38], [ebp-0x34],
