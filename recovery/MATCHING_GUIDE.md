@@ -1573,6 +1573,22 @@ What the model does not predict (2026-11-19)
   ordering. The image instead keeps level-3 expansions at later sites while
   refusing level 2 at the earliest ones, so its pass-2 reservations are
   larger than ours in a way that dead spend cannot imitate.
+- **Console::terraform 0x004D3470** (2026-11-19, par-1). Dead 8-64-if
+  probes at the top or at five later positions move ~Scroll by at most 3
+  sites (spend leaves ~FlatButton first), yet turning two written-out
+  `StringTemp[0] = 0; say_tech; parse_says` runs and the two payment
+  refunds into inline helpers refuses ~Scroll at two early sites and makes
+  the old 16-if probe inert. Helpers holding real calls act on level 2
+  where dead ifs do not; screen hand-written repeated statement runs as
+  helpers before reaching for probes. Still E17c13 against E13c17.
+- **Same suffix shortfall elsewhere.** go_to 0x004D61A0 (image c,c,c
+  with sites 2/3 cross-jumped into one ~Scroll call, then E,E; ours E×5),
+  PickTech::pick (image refuses the four first-return sites, ours none)
+  and terraform all err the same way: the image refuses ~Scroll at the
+  earliest teardowns. queue_click and pick_pass instead swap which of two
+  early sites expands (image E,c / c,E against ours c,E / E,c); pick_pass
+  also keeps `payload` in memory where ours enregisters it in edx and
+  gives its slot [ebp+8] to faction_mode (image: to verify_hash).
 - The units are approximate. Costs come from fitted counts, not node
   counts, so a prediction is good to about one expansion. Use it to choose
   the *kind* and *place* of a missing spend, then confirm with fe.
