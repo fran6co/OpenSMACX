@@ -837,7 +837,7 @@ L_595083:
                         chance /= 2;
                 }
             }
-            if (rand() % 100 < chance) {
+            if ((int)rnd(100, "WORMSHIDING") < chance) {
                 int spawn_proto;
                 if (dest_ocean)
                     spawn_proto = BSC_ISLE_OF_THE_DEEP;
@@ -1111,13 +1111,8 @@ L_595be6:
                 PlayersData[faction].soc_effect_active.values_[SocialEffect::PLANET], 0);
         if ((Vehs[target_veh].flags & 0x2000) != 0)
             goto L_5971ce;
-        if (rand() % 4 < PlayersData[faction].soc_effect_active.values_[SocialEffect::PLANET]) {
-            int bound = GameDataStateStorage.fields_.turn_current_num_ / 5 + 100;
-            int roll;
-            if (bound - 1 <= 0)
-                roll = 0;
-            else
-                roll = rand() % bound;
+        if ((int)rnd(4, "ORDER") < PlayersData[faction].soc_effect_active.values_[SocialEffect::PLANET]) {
+            int roll = rnd(GameDataStateStorage.fields_.turn_current_num_ / 5 + 100, "ORDER2");
             if (roll >= PlayersData[faction].proto_id_active[Vehs[target_veh].proto_id] * 10
                     || rand() % 10 == 0)
                 goto L_595e1b;
@@ -1573,7 +1568,7 @@ L_597350:
             int tries;
             int fac;
             for (tries = 0; tries <= 100; tries++) {
-                fac = rand() % 70;
+                fac = rnd(70, "MOVE1");
                 int ok = 1;
                 for (int b = 0; b < Players[0].faction_bonus_count; b++) {
                     if ((Players[0].faction_bonus_id[b] == 2
