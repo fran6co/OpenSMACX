@@ -100,3 +100,12 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   more instructions. Read with the probe/save_game notes in MATCHING_GUIDE 3.7: the image's choice of the join's
   fallthrough predecessor decides which copy survives. `jj=N` (and `JJ` lines) counts our jumper-into-jumper merges,
   the strongest single sign of a merge the image does not make (33/110 non-exact vs 15/626 exact functions sampled).
+- `analysis/ownerscan.py [unit ...] [--addr A,..] [--probes 8,32] [--repeat] [--swaps] [--json F]` missing inline
+  owner screen (MATCHING_GUIDE 2.8 "Missing owner, not missing budget"): per non-exact function, the inline callees
+  the image calls more often than ours, our call counts with a dead 0/8/32-probe pass-1 block at the top of the
+  body (one recompile per unit and size, every target function probed at once), and a verdict: `budget` (the probe
+  turns ours into the image's calls: find natural spend), `partial`, `owner` (nothing flips: the image's sites sat
+  inside an inline helper our source writes out). `--repeat` lists the function's source lines naming an owner
+  callee and other functions with the same 2-3 statement window (windows found in more than 4 places are idioms and
+  are dropped). `--swaps` adds per-site E/c rows for callees with equal counts (slow on large functions). The probe
+  `probe calls` column counts refused probes (pass-1 budget already spent, the probe measures nothing there).

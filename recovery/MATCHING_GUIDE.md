@@ -2917,6 +2917,31 @@ Layout
   return (save_game 0x005A9EB0: the image hosts strcpy in the then arm and
   holds the else arm, `push default; jmp back`, after the next unconditional
   jmp; ours hosts it in the else arm; all five spellings measure 49 rows).
+- **Cross-jumping merges the longest identical instruction suffix**, after
+  allocation (2026-11-19 par-1). battle_fight 0x50ADDC merges two
+  `eliminate_player` tails from the `call` on, after pushes from different
+  registers (ecx/edx against eax/ecx). So a call-count gap from a tail merge
+  is usually a register difference one or two instructions before the call:
+  - propose_pact 0x543BC0: the image keeps `pact_of_brotherhood; return 1`
+    private in both net_set_treaty arms because myFac is in edi there and
+    reloaded into ebx at the final site (edi = 0 there); ours keeps myFac in
+    ebx throughout, so all three merge. Fix the allocation (2.7), not the tail.
+  - MapWin::draw_map 0x46A550: the image's first seam arm uses ebx (dy) as
+    scratch and reloads dy from a spill after its fill call (one more frame
+    slot, 0x60 against 0x5C), which keeps that call private.
+  - Buffer::write_strings_height 0x5DAD70: the reverse; ours reloads ebp and
+    re-zeros edi after arm 2's call, so ours keeps three wrap_height_flying
+    calls where the image shares one.
+  - Not explained: menu_proc 0x51BC70 keeps four identical
+    `call prefs_save; push 1; call draw_map; add esp,8; jmp 51C23B` tails
+    (ours merges them into base_names' copy). Neutral in ours: up to 128 dead
+    calls, dead locals, 64 extra cases, the toggles written out by hand, a
+    `{ int z = 0; prefs_save(z); }` argument. Only `return` in place of `break`
+    unmerges (wrong target). Since bytes and target are equal at the end, the
+    targets must have differed when VC6 merged. Likewise Console::go_to
+    0x4D61A0: the image cross-jumps the three Psi Gate `NetMsgPrimary.pop`
+    calls into the first and lays the `finish:` unlock right after it; ours
+    keeps three identical `mov ecx; call pop; jmp finish` copies.
 
 Types
 - Wrong declarations hide as casts: a member cast at each use, a byte buffer
