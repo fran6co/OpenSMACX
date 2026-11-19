@@ -4862,12 +4862,12 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
             break;
         }
         --PlayersData[faction].time_bonus_count;
-        int duration = TimeControl[GameDataStateStorage.fields_.time_controls_selection_].event * 1000;
+        int duration = TimeControl[GameDataStateStorage.fields_.time_controls_selection_].extra * 1000;
         NetDaemonWaitTicks += duration;
         GameDataStateStorage.fields_.turn_control_duration_milliseconds_ += duration;
         MultiWindow.GraphicWin::redraw();
         parse_says(0, get_player_name(sender_id), -1, -1);
-        parse_num(0, TimeControl[GameDataStateStorage.fields_.time_controls_selection_].event);
+        parse_num(0, TimeControl[GameDataStateStorage.fields_.time_controls_selection_].extra);
         NetMsgPrimary.pop(faction == ConsoleGlobal.faction_id_ ? "WEBONUSED" : "HEBONUSED",
                           5000, 0, 0);
         break;
