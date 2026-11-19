@@ -420,6 +420,7 @@ int TutWin::do_des(RECT *rect, const char *text, int flag) {
     TutWinDesWindow.client_to_screen(&x, &y);
     return this->tut_win(MapWinTable[0], text, x, y, nullptr, flag, -1, -1);
 }
+#pragma auto_inline(on)
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004BAA70 ?tour6@TutWin@@QAEXXZ 0x004BAA70-0x004BAF12 FILE BYTE_EXACT
@@ -2031,4 +2032,3 @@ static int tut_callout(TutWin &tutorial, Win &coordinates, RECT &rect,
     coordinates.client_to_screen(&x, &y);
     return tutorial.tut_win(MapWinTable[0], label, x, y, 0, 2, -1, -1);
 }
-#pragma auto_inline(on)
