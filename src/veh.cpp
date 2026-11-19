@@ -630,7 +630,7 @@ void __cdecl monolith(int veh_id) {
             }
         }
     } else {
-        value = rand() % 32;
+        value = rnd(32, "GOODY1");
         if (!(map_loc(x, y)->bit & 0x02000000u) || GameDataStateStorage.fields_.turn_current_num_ < 100) {
             value = 1;
             bit_set(x, y, 0x02000000, 1);

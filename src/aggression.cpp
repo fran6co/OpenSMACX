@@ -562,7 +562,7 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
         Bases[base_id].state &= 0xFFDEF7B1;
         if (!mode && !liberated) {
             for (int facility_id = FAC_HEADQUARTERS; facility_id < FAC_HUMAN_GENOME_PROJ; facility_id++) {
-                if (facility_id != FAC_PRESSURE_DOME && !(rand() % 3)) {
+                if (facility_id != FAC_PRESSURE_DOME && !rnd(3, "CAPTURE")) {
                     set_fac(facility_id, base_id, 0);
                 }
             }

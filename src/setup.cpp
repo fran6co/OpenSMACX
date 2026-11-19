@@ -369,7 +369,7 @@ void __cdecl time_warp() {
     int x;
     int y;
     // No default: the image leaves all five uninitialized outside 0..2.
-    switch (rand() % 3) {
+    switch (rnd(3, "SETUPMODE")) {
     case 0:
         scenario_turn = 30;
         initial_research = 6;
@@ -491,7 +491,7 @@ void __cdecl time_warp() {
 
         int project;
         do {
-            project = rand() % 8;
+            project = rnd(8, "SETUPPROJ");
         } while (GameDataStateStorage.fields_.secret_project_.project_base[project] != SP_Unbuilt
                  || project == 4
                  || (project == 5 && !strcmp(Players[faction_id].filename, "HIVE")));

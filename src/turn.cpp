@@ -1693,8 +1693,8 @@ void __cdecl alien_fauna() {
 
     // Fungus/kelp spread.
     for (i = 0; i < MapArea / (GameDataStateStorage.fields_.turn_current_num_ / 4 + 32); ++i) {
-        x = bounded_crt_random(MapLongitudeBounds);
-        y = bounded_crt_random(MapLatitudeBounds);
+        x = rnd(MapLongitudeBounds, "TREES0");
+        y = rnd(MapLatitudeBounds, "TREES1");
         x = (y & 1) - (x & 1) + x;
         if (!on_map(x, y)) continue;
 
@@ -1776,8 +1776,8 @@ void __cdecl alien_fauna() {
         // never tested. Accept: fungus land, or an unoccupied ocean tile in a
         // valid region of at least 50 tiles.
         do {
-            x = bounded_crt_random(MapLongitudeBounds);
-            y = bounded_crt_random(MapLatitudeBounds);
+            x = rnd(MapLongitudeBounds, "ALIEN0");
+            y = rnd(MapLatitudeBounds, "ALIEN1");
             x = (y & 1) - (x & 1) + x;  // no on_map check in the original
             region = map_loc(x, y)->region;
             if (++tries >= 1000) break;
@@ -1832,8 +1832,8 @@ void __cdecl alien_fauna() {
     // Native-life sampler. A do/while: no entry test on the limit.
     int attempt = 0;
     do {
-        x = bounded_crt_random(MapLongitudeBounds);
-        y = bounded_crt_random(MapLatitudeBounds);
+        x = rnd(MapLongitudeBounds, "Alien2x");
+        y = rnd(MapLatitudeBounds, "Alien2y");
         x = (y & 1) - (x & 1) + x;  // no on_map check in the original
         Map *tile = map_loc(x, y);
         if ((tile->climate & ~0x1F) < ALT_BIT_SHORE_LINE) continue;

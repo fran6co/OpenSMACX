@@ -1421,7 +1421,7 @@ int __cdecl multiplayer_init(int startup_mode) {
                     }
                     const int8_t selected =
                         NetWinSessionOptions.fields_.planet_size_;
-                    const int index = selected == -1 ? rand() % 5 : selected;
+                    const int index = selected == -1 ? (int)rnd(5, "INIT1") : selected;
                     MapSizePlanet = static_cast<uint32_t>(index);
                     MapLongitudeBounds = longitude[index] << 1;
                     MapLatitudeBounds = latitude[index];

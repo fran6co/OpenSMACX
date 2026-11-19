@@ -2727,8 +2727,8 @@ void __cdecl base_ecology() {
         return;
     }
     // Volcano at a random ocean tile with nobody around.
-    int rand_x = bounded_crt_random(MapLongitudeBounds);
-    int volcano_y = bounded_crt_random(MapLatitudeBounds);
+    int rand_x = rnd(MapLongitudeBounds, "VOLCa");
+    int volcano_y = rnd(MapLatitudeBounds, "VOLCb");
     int volcano_x = rand_x;
     if (rand_x & 1) {
         volcano_x = rand_x - 1;

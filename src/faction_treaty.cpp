@@ -1796,9 +1796,9 @@ void __cdecl atrocity(int actor_id, int victim_id, int kind, int unknown) {
                 && !was_victim) {
                 if (PlayersData[other_id].diplo_treaties[actor_id] & DTREATY_WANT_REVENGE
                     || (great_satan(actor_id, false)
-                        ? rand() % 16 - PlayersData[actor_id].atrocities <= 8
-                        : !bounded_crt_random((8 - ((GameDataStateStorage.fields_.game_rules_ & RULES_INTENSE_RIVALRY)
-                            ? 5 : GameDataStateStorage.fields_.diff_level_current_)) * 2))) {
+                        ? (int)rnd(16, "ATROC1") - PlayersData[actor_id].atrocities <= 8
+                        : !rnd((8 - ((GameDataStateStorage.fields_.game_rules_ & RULES_INTENSE_RIVALRY)
+                            ? 5 : GameDataStateStorage.fields_.diff_level_current_)) * 2, "ATROC2"))) {
                     if (actor_id == ConsoleGlobal.faction_id_) {
                         GenderDefault = Players[actor_id].is_leader_female;
                         PluralityDefault = FALSE;
