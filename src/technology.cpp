@@ -2392,11 +2392,12 @@ int __cdecl tech_rate(int faction_id) {
     }
     diff_factor = range(is_human(faction_id) ? diff_factor * 4 + 8 : 29 - diff_factor * 3,
         12 - player_factor, player_factor + 12);
-    int tech_stagnation = GameDataStateStorage.fields_.game_rules_ & RULES_TECH_STAGNATION;
-    uint32_t rule_factor = tech_stagnation | 0x40; // 64 or 96
+    uint32_t tech_stagnation = GameDataStateStorage.fields_.game_rules_ & RULES_TECH_STAGNATION;
+    // (tech_stagnation | 0x40) is 64 or 96; the image forms it once and shifts
+    // copies (shr), with no separate rule_factor local.
     diff_factor += range(
-        player_factor - (GameDataStateStorage.fields_.turn_current_num_ / static_cast<int>(rule_factor >> 3)),
-        0, (diff_factor * static_cast<int>(rule_factor >> 5)) >> 1);
+        player_factor - (GameDataStateStorage.fields_.turn_current_num_ / static_cast<int>((tech_stagnation | 0x40) >> 3)),
+        0, (diff_factor * static_cast<int>((tech_stagnation | 0x40) >> 5)) >> 1);
     diff_factor -= range((top_factor - diff_lvl - player_factor + 7) / (8 - diff_lvl),
             0, diff_lvl * diff_factor / 10 + 1);
     diff_factor *= range(player_factor
