@@ -1727,6 +1727,25 @@ Constant candidates and phantom registers (2026-11-18 par-1, standalone probes)
   `dirty = 1; f1 = g1; f2 = g2;` after the loop gives ours; any two of the
   three tail stores give the image's order. No natural spelling with all three
   found (order, struct copy, inline reset, member destructor, `while`/`do`).
+- **A losing member-address candidate reserves nothing** (high, 2026-11-20
+  par-5, `regalloc/asmprobe/gen_addr.py`: `dd.m()` receiver calls on a
+  member at +8192 against 0-4 int candidates of 12 references, /Oy and
+  /Oy-). With registers to spare the address takes one (`lea edi,[esi+8192]`,
+  `mov ecx,edi` per call, from N = 2 calls). When it loses it is
+  rematerialised at every site (`lea ecx,[ebx+8192]`, or `[esi+K]` folded
+  into a load) and the other candidates still take esi, edi, ebx in order:
+  no register is skipped. From N = 4 calls with `this` otherwise used only
+  for a few small offsets, VC6 rebases `this` itself (`add ebx,8192`, the
+  other members at negative displacements) instead of keeping two webs.
+  So an image register that is never used (~PullDown's edi) is not a dropped
+  address CSE; look for a winning constant (Z2 below) instead. BasePop::exec
+  0x00602600: ours forms `&dialogs_` (ebp, 8 vbptr loads `[ebp]`) and a zero
+  (ebx, 12 `cmp [m],ebx`); the image has neither, reads the vbptr as
+  `[esi+0x21d0]` and leaves ebx/ebp unused until 0x602C74. With both
+  registers free there, a formed address would have won one, so the
+  original did not form these candidates at all: a source-reference
+  question (fewer `dialogs_` receiver/vbptr uses in the first block, fewer
+  zero compares), not a reservation.
 - A loser constant still forms short pieces: two adjacent zero stores in one
   block always become `xor eax,eax` + two register stores (both flag sets). The
   image's immediates mean the zero *won* a callee-saved register (and was then
