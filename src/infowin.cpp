@@ -267,10 +267,7 @@ void InfoWin::setup_text() {
             strcat(text, get_name(other));
             strcpy(row_text_[pane][k++], text);
             text[0] = 0;
-            {
-                int mood = get_mood(DiploFriction);
-                say_special(text, StringTable.get(Mood[mood]), other);
-            }
+            say_special(text, table_text(Mood[get_mood(DiploFriction)]), other);
             strcpy(row_text_[pane][k++], text);
             text[0] = 0;
             if (PlayersData[faction].diplo_treaties[other] & 1) {
