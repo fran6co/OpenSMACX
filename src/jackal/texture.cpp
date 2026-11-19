@@ -661,8 +661,8 @@ int Texture::extract(Buffer *buffer, int x, int y, int width, int height,
 
         buffer->free_data(1);
 
-        int w = static_cast<int>(iWidth_);
-        int h = static_cast<int>(iHeight_);
+        int w = iWidth_;
+        int h = iHeight_;
         int widthMinus1 = w - 1;
         int heightMinus1 = h - 1;
         corners_[0].x = 0;
@@ -1013,12 +1013,12 @@ void Texture::draw_coast(Buffer *buffer, Vert *vertices, int *zvals, Texture *co
     TextureRasterZValues = zvals;
     TextureRasterScratch550 = remap;
     TextureRasterScratch544 = pixels_;
-    TextureRowPitchScratch = static_cast<int>(iWidth_);
-    TextureRasterTextureHeight = static_cast<int>(iHeight_);
+    TextureRowPitchScratch = iWidth_;
+    TextureRasterTextureHeight = iHeight_;
     TextureRasterVertexCount = count;
     TextureRasterEdgeVerticesA = uv;
     TextureRasterBufferStride = static_cast<int>(buffer->stride_);
-    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    TextureRasterTextureWidth = iWidth_;
     TextureRasterScratch554 = coast->pixels_;
     if (TextureRasterScratch554 != 0) {
     RECT *clip = &buffer->rect1_;
@@ -1478,12 +1478,12 @@ void Texture::draw_trans(Buffer *buffer, Vert *vertices, int count, Vert *uv) {
     __asm finit
     TextureRasterEdgeVerticesB = vertices;
     TextureRasterScratch544 = pixels_;
-    TextureRowPitchScratch = static_cast<int>(iWidth_);
-    TextureRasterTextureHeight = static_cast<int>(iHeight_);
+    TextureRowPitchScratch = iWidth_;
+    TextureRasterTextureHeight = iHeight_;
     TextureRasterVertexCount = count;
     TextureRasterEdgeVerticesA = uv;
     TextureRasterBufferStride = static_cast<int>(buffer->stride_);
-    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    TextureRasterTextureWidth = iWidth_;
     RECT *clip = &buffer->rect1_;
     if (clip != 0) {
         TextureRasterClipRight = clip->right;
@@ -1725,8 +1725,8 @@ void Texture::draw_trans(Buffer *buffer, Vert *vertices, int use_eight_vertices)
     __asm finit
     TextureRasterEdgeVerticesB = vertices;
     TextureRasterScratch544 = pixels_;
-    TextureRowPitchScratch = static_cast<int>(iWidth_);
-    TextureRasterTextureHeight = static_cast<int>(iHeight_);
+    TextureRowPitchScratch = iWidth_;
+    TextureRasterTextureHeight = iHeight_;
     if (use_eight_vertices) {
         TextureRasterVertexCount = 8;
         TextureRasterEdgeVerticesA = cornersAndMids_;
@@ -1736,7 +1736,7 @@ void Texture::draw_trans(Buffer *buffer, Vert *vertices, int use_eight_vertices)
     }
     TextureRasterLightThreshold = static_cast<int>(TextureRasterKey);
     TextureRasterBufferStride = static_cast<int>(buffer->stride_);
-    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    TextureRasterTextureWidth = iWidth_;
     RECT *clip = &buffer->rect1_;
     if (clip != 0) {
         TextureRasterClipRight = clip->right;
@@ -2000,13 +2000,13 @@ void Texture::draw_color_key(Buffer *buffer, Vert *vertices, int count, Vert *uv
     __asm finit
     TextureRasterEdgeVerticesB = vertices;
     TextureRasterScratch544 = pixels_;
-    TextureRowPitchScratch = static_cast<int>(iWidth_);
-    TextureRasterTextureHeight = static_cast<int>(iHeight_);
+    TextureRowPitchScratch = iWidth_;
+    TextureRasterTextureHeight = iHeight_;
     TextureRasterEdgeVerticesA = uv;
     TextureRasterVertexCount = count;
     TextureRasterLightThreshold = static_cast<int>(TextureRasterKey);
     TextureRasterBufferStride = static_cast<int>(buffer->stride_);
-    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    TextureRasterTextureWidth = iWidth_;
     RECT *clip = &buffer->rect1_;
     if (clip != 0) {
         TextureRasterClipRight = clip->right;
@@ -2274,7 +2274,7 @@ void Texture::draw(Buffer *buffer, Vert *vertices, int *zvals, int count, Vert *
     TextureRasterZValues = zvals;
     TextureRasterScratch544 = pixels_;
     TextureRasterBufferStride = static_cast<int>(buffer->stride_);
-    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    TextureRasterTextureWidth = iWidth_;
     RECT *clip = &buffer->rect1_;
     if (clip != 0) {
         for (int i = 0; i < count; ++i) {
@@ -2582,7 +2582,7 @@ void Texture::draw_trans(Buffer *buffer, Vert *vertices, int *zvals,
     TextureRasterZValues = zvals;
     TextureRasterScratch544 = pixels_;
     TextureRasterBufferStride = static_cast<int>(buffer->stride_);
-    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    TextureRasterTextureWidth = iWidth_;
     RECT *clip = &buffer->rect1_;
     if (clip != 0) {
         for (int i = 0; i < count; ++i) {
@@ -2898,12 +2898,12 @@ void Texture::draw_mask_dest(Buffer *buffer, Vert *vertices,
     TextureRasterEdgeVerticesB = vertices;
     TextureRasterScratch550 = remap;
     TextureRasterScratch544 = pixels_;
-    TextureRowPitchScratch = static_cast<int>(iWidth_);
-    TextureRasterTextureHeight = static_cast<int>(iHeight_);
+    TextureRowPitchScratch = iWidth_;
+    TextureRasterTextureHeight = iHeight_;
     TextureRasterEdgeVerticesA = uv;
     TextureRasterVertexCount = count;
     TextureRasterBufferStride = static_cast<int>(buffer->stride_);
-    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    TextureRasterTextureWidth = iWidth_;
     TextureRasterPalette = palette;
     RECT *clip = &buffer->rect1_;
     if (clip != 0) {
@@ -3191,7 +3191,7 @@ void Texture::draw(Buffer *buffer, Vert *vertices, int *zvals, int count,
     TextureRasterZValues = zvals;
     TextureRasterScratch544 = pixels_;
     TextureRasterBufferStride = static_cast<int>(buffer->stride_);
-    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    TextureRasterTextureWidth = iWidth_;
     RECT *clip = &buffer->rect1_;
     if (clip != 0) {
         for (int i = 0; i < count; ++i) {
@@ -3491,12 +3491,12 @@ void Texture::draw_coast(Buffer *buffer, Vert *vertices, int *zvals, Texture *co
     TextureRasterZValues = zvals;
     TextureRasterScratch550 = remap;
     TextureRasterScratch544 = pixels_;
-    TextureRowPitchScratch = static_cast<int>(iWidth_);
-    TextureRasterTextureHeight = static_cast<int>(iHeight_);
+    TextureRowPitchScratch = iWidth_;
+    TextureRasterTextureHeight = iHeight_;
     TextureRasterVertexCount = count;
     TextureRasterEdgeVerticesA = uv;
     TextureRasterBufferStride = static_cast<int>(buffer->stride_);
-    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    TextureRasterTextureWidth = iWidth_;
     TextureRasterScratch554 = coast->pixels_;
     if (TextureRasterScratch554 != 0) {
     RECT *clip = &buffer->rect1_;
@@ -3822,8 +3822,8 @@ void Texture::draw_trans2(Buffer *buffer, Vert *vertices, int use_eight_vertices
     __asm finit
     TextureRasterEdgeVerticesB = vertices;
     TextureRasterScratch544 = pixels_;
-    TextureRowPitchScratch = static_cast<int>(iWidth_);
-    TextureRasterTextureHeight = static_cast<int>(iHeight_);
+    TextureRowPitchScratch = iWidth_;
+    TextureRasterTextureHeight = iHeight_;
     if (use_eight_vertices) {
         TextureRasterVertexCount = 8;
         TextureRasterEdgeVerticesA = cornersAndMids_;
@@ -3832,7 +3832,7 @@ void Texture::draw_trans2(Buffer *buffer, Vert *vertices, int use_eight_vertices
         TextureRasterEdgeVerticesA = corners_;
     }
     TextureRasterBufferStride = static_cast<int>(buffer->stride_);
-    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    TextureRasterTextureWidth = iWidth_;
     RECT *clip = &buffer->rect1_;
     if (clip != 0) {
         TextureRasterClipRight = clip->right;
@@ -4071,7 +4071,7 @@ void Texture::draw_trans_3(Buffer *buffer, Vert *vertices, int *zvals, int count
     TextureRasterZValues = zvals;
     TextureRasterScratch544 = pixels_;
     TextureRasterBufferStride = static_cast<int>(buffer->stride_);
-    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    TextureRasterTextureWidth = iWidth_;
     RECT *clip = &buffer->rect1_;
     if (clip != 0) {
         for (int i = 0; i < count; ++i) {
@@ -4816,12 +4816,12 @@ void Texture::sub_61df60(Buffer *buffer, Vert *vertices, int *zvals,
     TextureRasterZValues = zvals;
     TextureRasterScratch550 = remap;
     TextureRasterScratch544 = pixels_;
-    TextureRowPitchScratch = static_cast<int>(iWidth_);
-    TextureRasterTextureHeight = static_cast<int>(iHeight_);
+    TextureRowPitchScratch = iWidth_;
+    TextureRasterTextureHeight = iHeight_;
     TextureRasterEdgeVerticesA = uv;
     TextureRasterVertexCount = count;
     TextureRasterBufferStride = static_cast<int>(buffer->stride_);
-    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    TextureRasterTextureWidth = iWidth_;
     TextureRasterScratch554 = mask_texture->pixels_;
     if (TextureRasterScratch554 != 0) {
     RECT *clip = &buffer->rect1_;
@@ -5125,7 +5125,7 @@ void Texture::draw_below_cutoff(Buffer *buffer, Vert *vertices, int *zvals, int 
     TextureRasterZValues = zvals;
     TextureRasterScratch544 = pixels_;
     TextureRasterBufferStride = static_cast<int>(buffer->stride_);
-    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    TextureRasterTextureWidth = iWidth_;
     int i;
     for (i = 0; i < count; ++i) {
         if (zvals[i] < cutoff) {
@@ -5427,7 +5427,7 @@ void Texture::sub_6212b0(Buffer *buffer, Vert *vertices, int *zvals, int count,
     TextureRasterZValues = zvals;
     TextureRasterScratch544 = pixels_;
     TextureRasterBufferStride = static_cast<int>(buffer->stride_);
-    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    TextureRasterTextureWidth = iWidth_;
     RECT *clip = &buffer->rect1_;
     if (clip != 0) {
         for (int i = 0; i < count; ++i) {
@@ -5712,7 +5712,7 @@ void Texture::sub_622810(Buffer *buffer, Vert *vertices, int *zvals, int count,
     TextureRasterZValues = zvals;
     TextureRasterScratch544 = pixels_;
     TextureRasterBufferStride = static_cast<int>(buffer->stride_);
-    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    TextureRasterTextureWidth = iWidth_;
     int i;
     for (i = 0; i < count; ++i) {
         if (zvals[i] < threshold) {
@@ -5992,12 +5992,12 @@ void Texture::sub_622200(Buffer *buffer, Vert *vertices, int *zvals,
     TextureRasterEdgeVerticesB = vertices;
     TextureRasterScratch550 = remap;
     TextureRasterScratch544 = pixels_;
-    TextureRowPitchScratch = static_cast<int>(iWidth_);
-    TextureRasterTextureHeight = static_cast<int>(iHeight_);
+    TextureRowPitchScratch = iWidth_;
+    TextureRasterTextureHeight = iHeight_;
     TextureRasterVertexCount = count;
     TextureRasterEdgeVerticesA = uv;
     TextureRasterBufferStride = static_cast<int>(buffer->stride_);
-    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    TextureRasterTextureWidth = iWidth_;
     TextureRasterScratch554 = shade_texture->pixels_;
     if (TextureRasterScratch554 != 0) {
     RECT *clip = &buffer->rect1_;
@@ -6297,12 +6297,12 @@ void Texture::sub_61c630(Buffer *buffer, Vert *vertices, Texture *shade,
     TextureRasterScratch550 = remap;
     TextureRasterEdgeVerticesB = vertices;
     TextureRasterScratch544 = pixels_;
-    TextureRowPitchScratch = static_cast<int>(iWidth_);
-    TextureRasterTextureHeight = static_cast<int>(iHeight_);
+    TextureRowPitchScratch = iWidth_;
+    TextureRasterTextureHeight = iHeight_;
     TextureRasterVertexCount = count;
     TextureRasterEdgeVerticesA = uv;
     TextureRasterBufferStride = static_cast<int>(buffer->stride_);
-    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    TextureRasterTextureWidth = iWidth_;
     TextureRasterScratch554 = shade->pixels_;
     if (TextureRasterScratch554 != 0) {
     RECT *clip = &buffer->rect1_;
@@ -6629,8 +6629,8 @@ void Texture::sub_61d990(Buffer *buffer, Vert *vertices, int *zvals,
     TextureRasterZValues = zvals;
     TextureRasterScratch550 = remap;
     TextureRasterScratch544 = pixels_;
-    TextureRowPitchScratch = static_cast<int>(iWidth_);
-    TextureRasterTextureHeight = static_cast<int>(iHeight_);
+    TextureRowPitchScratch = iWidth_;
+    TextureRasterTextureHeight = iHeight_;
     if (wide_flag) {
         TextureRasterVertexCount = 8;
         TextureRasterEdgeVerticesA = cornersAndMids_;
@@ -6639,7 +6639,7 @@ void Texture::sub_61d990(Buffer *buffer, Vert *vertices, int *zvals,
         TextureRasterEdgeVerticesA = corners_;
     }
     TextureRasterBufferStride = static_cast<int>(buffer->stride_);
-    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    TextureRasterTextureWidth = iWidth_;
     TextureRasterScratch554 = shade_texture->pixels_;
     if (TextureRasterScratch554 != 0) {
     RECT *clip = &buffer->rect1_;
@@ -6952,7 +6952,7 @@ void Texture::sub_61b780(Buffer *buffer, Vert *vertices, int *zvals, int mode) {
     TextureRasterZValues = zvals;
     TextureRasterScratch544 = pixels_;
     TextureRasterBufferStride = static_cast<int>(buffer->stride_);
-    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    TextureRasterTextureWidth = iWidth_;
     RECT *clip = &buffer->rect1_;
     if (clip != 0) {
         TextureRasterClipRight = clip->right;
@@ -7467,13 +7467,13 @@ void Texture::sub_620a10(Buffer *buffer, Vert *vertices, int count, Vert *uv,
     __asm finit
     TextureRasterEdgeVerticesB = vertices;
     TextureRasterScratch544 = pixels_;
-    TextureRowPitchScratch = static_cast<int>(iWidth_);
-    TextureRasterTextureHeight = static_cast<int>(iHeight_);
+    TextureRowPitchScratch = iWidth_;
+    TextureRasterTextureHeight = iHeight_;
     TextureRasterEdgeVerticesA = uv;
     TextureRasterVertexCount = count;
     TextureRasterLightThreshold = static_cast<int>(TextureRasterKey);
     TextureRasterBufferStride = static_cast<int>(buffer->stride_);
-    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    TextureRasterTextureWidth = iWidth_;
     RECT *clip = &buffer->rect1_;
     if (clip != 0) {
         TextureRasterClipRight = clip->right;
@@ -7951,7 +7951,7 @@ void Texture::sub_61d090(Buffer *buffer, Vert *vertices, int *zvals, unsigned in
     TextureRasterZValues = zvals;
     TextureRasterScratch544 = pixels_;
     TextureRasterBufferStride = static_cast<int>(buffer->stride_);
-    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    TextureRasterTextureWidth = iWidth_;
     RECT *clip = &buffer->rect1_;
     if (clip != 0) {
         TextureRasterClipRight = clip->right;
@@ -9075,8 +9075,8 @@ void Texture::sub_61cb50(Buffer *buffer, Vert *vertices, Texture *shade,
     TextureRasterScratch550 = remap;
     TextureRasterEdgeVerticesB = vertices;
     TextureRasterScratch544 = pixels_;
-    TextureRowPitchScratch = static_cast<int>(iWidth_);
-    TextureRasterTextureHeight = static_cast<int>(iHeight_);
+    TextureRowPitchScratch = iWidth_;
+    TextureRasterTextureHeight = iHeight_;
     if (use_eight_vertices) {
         TextureRasterVertexCount = 8;
         TextureRasterEdgeVerticesA = cornersAndMids_;
@@ -9085,7 +9085,7 @@ void Texture::sub_61cb50(Buffer *buffer, Vert *vertices, Texture *shade,
         TextureRasterEdgeVerticesA = corners_;
     }
     TextureRasterBufferStride = static_cast<int>(buffer->stride_);
-    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    TextureRasterTextureWidth = iWidth_;
     TextureRasterScratch554 = shade->pixels_;
     if (TextureRasterScratch554 != 0) {
     RECT *clip = &buffer->rect1_;
@@ -10547,8 +10547,8 @@ void Texture::sub_61f0d0(Buffer *param_2, Vert *param_3, int *param_4,
                 TextureRasterEdgeVerticesB = param_3;
                 TextureRasterScratch550 = remap;
                 TextureRasterScratch544 = pixels_;
-                TextureRowPitchScratch = static_cast<int>(iWidth_);
-                TextureRasterTextureHeight = static_cast<int>(iHeight_);
+                TextureRowPitchScratch = iWidth_;
+                TextureRasterTextureHeight = iHeight_;
                 if (param_8 != 0) {
                     TextureRasterVertexCount = 8;
                     TextureRasterEdgeVerticesA = cornersAndMids_;
@@ -10557,7 +10557,7 @@ void Texture::sub_61f0d0(Buffer *param_2, Vert *param_3, int *param_4,
                     TextureRasterEdgeVerticesA = corners_;
                 }
                 TextureRasterBufferStride = param_2->stride_;
-                TextureRasterTextureWidth = static_cast<int>(iWidth_);
+                TextureRasterTextureWidth = iWidth_;
                 TextureRasterScratch55C = static_cast<int>(texture_pointer_address(lookup_bytes));
                 TextureRasterScratch550 = remap;
                 TextureRasterScratch554 = *static_cast<void *const *>(shade_source);
@@ -10658,13 +10658,13 @@ void Texture::draw_color_key(Buffer *buffer, Vert *vertices, int count, Vert *uv
     TextureRasterScratch494 = static_cast<unsigned char>(color);
     TextureRasterEdgeVerticesB = vertices;
     TextureRasterScratch544 = pixels_;
-    TextureRowPitchScratch = static_cast<int>(iWidth_);
-    TextureRasterTextureHeight = static_cast<int>(iHeight_);
+    TextureRowPitchScratch = iWidth_;
+    TextureRasterTextureHeight = iHeight_;
     TextureRasterEdgeVerticesA = uv;
     TextureRasterVertexCount = count;
     TextureRasterLightThreshold = static_cast<int>(TextureRasterKey);
     TextureRasterBufferStride = static_cast<int>(buffer->stride_);
-    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    TextureRasterTextureWidth = iWidth_;
     RECT *clip = &buffer->rect1_;
     if (clip != 0) {
         TextureRasterClipRight = clip->right;
@@ -11241,7 +11241,7 @@ void Texture::draw2(Buffer *buffer, Vert *vertices, int *zvals, int count,
     TextureRasterZValues = zvals;
     TextureRasterScratch544 = pixels_;
     TextureRasterBufferStride = static_cast<int>(buffer->stride_);
-    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    TextureRasterTextureWidth = iWidth_;
     int i;
     for (i = 0; i < count; ++i) {
         if (zvals[i] < cutoff) {
@@ -11562,7 +11562,7 @@ void Texture::draw_cached_lit(Buffer *buffer, Vert *vertices, int *zvals,
     TextureRasterZValues = zvals;
     TextureRasterScratch544 = pixels_;
     TextureRasterBufferStride = static_cast<int>(buffer->stride_);
-    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    TextureRasterTextureWidth = iWidth_;
     RECT *clip = &buffer->rect1_;
     if (clip != 0) {
         for (int i = 0; i < count; ++i) {

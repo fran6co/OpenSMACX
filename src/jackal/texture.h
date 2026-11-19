@@ -268,8 +268,8 @@ class Texture {
   // Indexed pixel bytes from mem_get or TexHeap; borrowed_ selects lifetime.
   // Pinned extract copies width bytes per row, with 256-byte borrowed pitch.
   unsigned char *pixels_; // 0x00
-  uint32_t iWidth_;
-  uint32_t iHeight_;
+  int iWidth_;
+  int iHeight_;
   // THE TWO VERTEX-ARRAY BASES, 0x0c and 0x2c. Evidenced three ways: the
   // rasterisers take a base off `this` at one of exactly those two offsets
   // and index it as Vert[4] or Vert[8] (`sub_61d990` and
