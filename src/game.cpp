@@ -2015,6 +2015,18 @@ inline void load_game_reload_faction_art() {
     load_flags();
 }
 
+// WORKAROUND(decl): name ours. The network hang-up block (hang_up, reset,
+// IsMultiplayerNet = 0) recurs in setup_player, end_of_game, net_control_turn,
+// Console::quit_game and Console::retire_game; as an inline owner there it
+// compiles identically, here it gives save_game's teardown depths.
+static inline void net_hang_up_if_net() {
+    if (IsMultiplayerNet != 0) {
+        NetDaemonNet.hang_up();
+        NetDaemonNet.reset();
+        IsMultiplayerNet = 0;
+    }
+}
+
 static int load_map_budget_probe(int x);
 
 /*
@@ -2170,12 +2182,7 @@ int __cdecl save_game(int mode) {
         auto_save();
         ExitTurnLoop = 1;
 
-        if (IsMultiplayerNet != 0) {
-            NetDaemonNet.hang_up();
-
-            NetDaemonNet.reset();
-            IsMultiplayerNet = 0;
-        }
+        net_hang_up_if_net();
 
         X_pop("IRONMAN", 0);
         do_all_draws();
