@@ -2680,12 +2680,13 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
     // 0x506E50: movement charge
     if ((mode & 3) && mode < 4) {
         move_charge = veh_moves(veh_id);
+        battle_compute(veh_id, def_id, &att_strength, &def_strength, mode);
     } else {
         move_charge = Rules.move_rate_roads;
+        battle_compute(veh_id, def_id, &att_strength, &def_strength, mode);
     }
 
     // 0x506E95
-    battle_compute(veh_id, def_id, &att_strength, &def_strength, mode);
 
     // 0x506EAB: hit points (the inner range() is the out-of-line call here)
     att_hp = veh_cur_hp(veh_id);
@@ -2806,7 +2807,10 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
     }
 
     // 0x5074F4
-    Vehs[veh_id].state = (Vehs[veh_id].state & ~VSTATE_UNK_1000) | VSTATE_UNK_4;
+    {
+        uint32_t &adj1 = Vehs[veh_id].state;
+        adj1 = (adj1 & ~VSTATE_UNK_1000) | VSTATE_UNK_4;
+    }
     Vehs[def_id].state |= VSTATE_UNK_4;
     if (!(NetDaemonNet.action_mode_ & 2)) {
         return 0;
