@@ -216,7 +216,6 @@ set(OPENSMACX_SOURCES
     src/battle.cpp
     src/bitmask.cpp
     src/aggression.cpp
-    src/map.cpp
     src/console.cpp
     src/turn.cpp
     src/council.cpp
@@ -254,6 +253,7 @@ set(OPENSMACX_SOURCES
     src/vehicle_storage.cpp
     src/world.cpp
     src/game_calendar.cpp
+    src/map.cpp
     src/gamma.cpp
     src/multidebug.cpp
 )
