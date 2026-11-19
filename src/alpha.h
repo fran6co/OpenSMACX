@@ -697,7 +697,7 @@ struct AlphaIniPref {
 
 struct DefaultPref {
     int difficulty;
-    uint32_t faction_id;
+    int faction_id;
     uint32_t pad; // unused
     uint32_t map_type;
     uint32_t top_menu;
