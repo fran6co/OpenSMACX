@@ -3879,24 +3879,71 @@ re-aligns their pad blocks (2.5). base_energy 0x004EB560 and give_a_base
 - **Header vetting:** `action_give`, `capture_base`, `setup_player`,
   `base_production`, `battle_fight`, `enemy_move`, `game_data`,
   `load_interface`, `SocialWin::init`, `tech_achieved`.
-- **Function-local ties: the number of named locals mod 8** (2026-11-19;
-  ReportIf::draw_intel 0x004AC140, draw_labs 0x004A7000). An operand-order
-  tie (`a - b - c` emitted as `a - c - b`, a swapped `sub` pair) that no unit
-  pad moves (function, extern, data or literal pads before the marker, 0..69)
-  can follow the function's own symbols instead:
-  - referenced locals, period 8: dead `{ int q = 0; }` pads before the closing
-    brace made draw_intel exact at 5, 13, 21, 29, 37. An unreferenced local,
-    a second store to the same local and identifier names do not count; an
-    array counts two; block or function scope is the same.
-  - the function's distinct data symbols (literals, externs): draw_intel was
-    exact with 4 literal symbols and not with 5..132, which is why /GF (pooled
-    duplicates) hid the tie until the units went unpooled.
-  Screen: sweep 0..7 dead locals; when one count is exact, the original had
-  that many more locals mod 8, or 8 minus that many fewer. Fix it by naming:
-  reuse a function-scope loop index or pointer, drop a local that only names
-  a repeated expression (each change must be code-neutral alone). Do not keep
-  the pads. draw_security 0x004AB600 has the same block and a second tie (the
-  `inset + left` add order) that these pads do not move.
+- **Function-local ties: the function's frame symbols mod 8** (2026-11-19;
+  ReportIf::draw_intel 0x004AC140, draw_labs 0x004A7000, Gamma::exec
+  0x005C8E60). An operand-order tie (`a - b - c` emitted as `a - c - b`,
+  `h - bottom + top`, a swapped `sub`/`add` pair) that no unit pad moves
+  (function, extern, data or literal pads before the marker, 0..69) follows
+  the function's own frame symbols, period 8. Measured with code-free pads
+  on draw_intel and Gamma::exec (`analysis/padkinds.py`, same table on both):
+  - counts 1: every parameter, referenced or not (draw_intel with 0..9 added
+    parameters: exact at 0 and 8); a local that is stored at least once: int,
+    pointer, double, `const int`, `register int`, also when it is read,
+    stored twice or has its address taken; a local array or struct that is
+    only passed by address, indexed by a variable or copied whole. Where it
+    is declared (first line, last line, own block, one shared block) does
+    not matter.
+  - counts 2: a local aggregate with a constant-offset store (`char q[4];
+    q[0] = 0;`, `RECT r; r.left = 0;`, also when it is passed afterwards);
+    each further field stored that way adds 2 (two fields 4, three 6); a
+    local class object with a constructor (`Font f;`).
+  - counts 0: an unreferenced local, a static local, extern and literal
+    references (0..40 extra distinct symbols, file or block scope), labels,
+    empty blocks, typedefs, enums, calls, file-scope declarations, and the
+    parameters and locals of inline expansions (member setters included).
+  - code-neutral ways to change the count by one: a constant-valued local
+    used in place of the literal (`int width = 236;`), a plain copy of a
+    member or global used in place of it inside one block (`int faction =
+    report_faction_id_;`, draw_security), a loop index or pointer shared by
+    two loops instead of one each. Dropping a local that the code needs is
+    not neutral (Gamma::exec without `ok`/`cancel`/`screen_width`: 21 -> 30+).
+  Working model (fits all three functions, not proven): parameters and locals
+  take the first serial numbers and the compiler's temporaries follow, and a
+  commutative/associative operand pair is ordered by serial mod 8; so every
+  frame symbol rotates all the function's ties together, a pair of adjacent
+  temporaries is the image's way round for one residue in eight, and a
+  spelling change that adds or removes a temporary earlier in the function
+  (a named pointer instead of a CSE'd index) changes which residues are
+  right (draw_security with `VehPrototype *proto`: 5 of 8). The old /GF
+  observation (draw_intel exact with pooled literals, not unpooled) is
+  probably the same thing: a pooled literal used twice is one symbol and a
+  CSE candidate, an unpooled pair is two symbols and none.
+  Screen: `analysis/locpad.py` sweeps 0..7 dead locals; one exact (or much
+  lower) count k means the original had k more frame symbols mod 8, or 8-k
+  fewer. Do not keep the pads; find the locals. Tree-wide on 2026-11-19
+  (277 non-exact functions up to 150 rows) only four functions are periodic:
+  Gamma::exec (21 -> 6 at 6: six layout constants named as locals plus three
+  setter parameters for the store scheduling: exact, WORKAROUND(decl) since
+  any six constants do), draw_security 0x004AB600 (10 -> 8 at 3), ReportIf::
+  draw_sat 0x004AA970 (54 -> 52 at 2), and draw_intel (fixed earlier).
+  Every other function that moves under these pads moves once and stays
+  (mind_control 3 -> 100 at 3, sat_attack 15 -> 90 at 1, custom_planet
+  11 -> 458 at 1): that is the /Ob2 caller budget of 2.1, which grows with
+  the caller's source size. It has the same threshold for a dead local, a
+  dead static or literal store, a block-scope extern reference or a dead
+  call (mind_control: 3 of any), 4 labels, 5 `(void)&extern` statements, 9
+  empty blocks or unreferenced declarations, and none for file-scope pads,
+  so it is told apart from the tie by using `(void)&X` pads
+  (`analysis/sympad.py`): they move the budget and never the tie.
+  draw_security also has a second tie (the `inset + left` add order) that
+  frame pads do not move; two extra `(void)&extern` statements flip it
+  together with 59 rows of the prototype loop (one-way, 2..40), so it sits
+  just under a budget step and the image's combination is not found.
+- **A member setter's parameter schedules the store early** (Gamma::exec):
+  `scroll_.set_paging(10)` puts the store between the next call's pushes
+  where `scroll_.paging_ = 10` leaves it after them; a free inline helper
+  taking the field by pointer or reference compiles like the direct store.
+  Same family as S7 (the callee's `this` is the named value).
 
 ### 3.7 Rules from the 2026-11-18 parallel rounds
 

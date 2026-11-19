@@ -311,3 +311,7 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   (one of our names over several image slots). First pass: enemy_move (j/k/own_ground/n rank 7-13 places low, the
   spilled induction temporaries all in tile_owner's slot), battle_fight (image slots -0x74/-0x78 have no local of
   ours: the 8 missing frame bytes; stack_id spans -0x18 and -0x40), order_veh, probe, base_build.
+- `analysis/padkinds.py <unit> <addr> <signature> <lo-hi> [kinds]` which declarations count for such a tie: k = 0..9 pads of
+  ~40 kinds, rows inside the image window per k (period 8 = one frame symbol, 4 = two, one step = /Ob2 caller budget).
+- `analysis/sympad.py FEALL.json maxrows OUT.jsonl` the budget twin of locpad.py: block-scope `(void)&extern` pads, which grow
+  the caller's size and never move a tie; a function that moves under both at the same count is a budget case.
