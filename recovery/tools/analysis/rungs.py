@@ -22,6 +22,14 @@ Output (default build/recovery/rungs/, an ignored path): rungs.json (one record 
 image/our values and `rung` = the first that differs) and rungs.txt (counts per rung; the table sorted by rung
 then rows; the same for the count-sensitive canaries and the broken claims = BYTE_EXACT markers that are not
 fe-exact).  `--md` prints the MATCHING_GUIDE summary (counts and the top K functions per rung).
+Rung 4 is split into causes (`layout.sub`, the `4x` column): a = return-tail count differs; b = basic-block count
+differs with equal tails (`b:sw` jump-table count, `b:jcc` conditional-branch count = a test one side splits or
+duplicates, `b:jmp` unconditional jumps = a merged / duplicated tail, `b:mix` both, `b:tgt` same branches but
+a jump lands inside a block = a tail cross-jumped at another depth); c = equal counts, the order
+signature differs (which arm falls through); p = prologue-save class only; `+d` = the loop set differs (headers,
+back edges, `jmp`-closed back edges = unrotated `for (;;)`, loops entered by a jump to their test).  `first` is
+the first block where the two block sequences (terminator kind and call count per block) stop aligning: image
+address, our offset and our source line (/FAsc, one more compile for units with a rung-4 function).
 Image callees without a marker are named `sub_<addr>` and never pair with ours; when the only call difference
 is such names against the same number of our-only names the function is classed by the next rung and flagged `c?`.
 Screen only: fe masks relocations; confirm with `recover measure`."""
@@ -83,6 +91,131 @@ def blocks(L):
                 sig.append(('fall', -1))
             cur = None
     return len(offs), sig
+
+
+def blockrows(L):
+    """fe.dis rows -> [dict(off, kind, tgt, calls, jt)] per basic block, in layout order"""
+    lead = {0}
+    for k, r in enumerate(L):
+        mn = r[1].split(' ', 1)[0]
+        if r[3] is not None and mn != 'call':
+            lead.add(r[3])
+        if (mn.startswith('j') or mn.startswith('ret')) and k + 1 < len(L):
+            lead.add(L[k + 1][0])
+    present = {r[0] for r in L}
+    lead = {o for o in lead if o in present}
+    out = []
+    cur = None
+    for k, r in enumerate(L):
+        if r[0] in lead:
+            cur = dict(off=r[0], kind='fall', tgt=None, calls=0, jt=False, n=0)
+            out.append(cur)
+        mn = r[1].split(' ', 1)[0]
+        cur['n'] += 1
+        if mn == 'call':
+            cur['calls'] += 1
+        last = k + 1 == len(L) or L[k + 1][0] in lead
+        if last:
+            if mn.startswith('ret'):
+                cur['kind'] = 'ret'
+            elif mn == 'jmp':
+                cur['kind'] = 'jmp'
+                cur['tgt'] = r[3]
+                cur['jt'] = r[3] is None and '*4' in r[1]
+            elif mn.startswith('j'):
+                cur['kind'] = 'jcc'
+                cur['tgt'] = r[3]
+    return out
+
+
+def loopset(B):
+    """blocks -> (loop headers, back edges, back edges closed by `jmp`, loops entered by a jump to their test).
+    A back edge is a branch to a block that dominates it, so a tail cross-jumped backwards is not a loop."""
+    n = len(B)
+    idx = {b['off']: i for i, b in enumerate(B)}
+    succ = [[] for _ in B]
+    for i, b in enumerate(B):
+        if b['kind'] in ('fall', 'jcc') and i + 1 < n:
+            succ[i].append(i + 1)
+        if b['tgt'] is not None and b['tgt'] in idx:
+            succ[i].append(idx[b['tgt']])
+    has = set(j for v in succ for j in v)
+    orphans = [i for i in range(1, n) if i not in has]  # jump-table targets
+    for i, b in enumerate(B):
+        if b['jt']:
+            succ[i] += orphans
+    pred = [[] for _ in B]
+    for i, v in enumerate(succ):
+        for j in v:
+            pred[j].append(i)
+    full = (1 << n) - 1
+    dom = [full] * n
+    dom[0] = 1
+    ch = True
+    while ch:
+        ch = False
+        for i in range(1, n):
+            d = full
+            for p in pred[i]:
+                d &= dom[p]
+            if not pred[i]:
+                d = 0
+            d |= 1 << i
+            if d != dom[i]:
+                dom[i] = d
+                ch = True
+    fwd = [(i, idx[b['tgt']]) for i, b in enumerate(B) if b['kind'] == 'jmp' and b['tgt'] in idx and idx[b['tgt']] > i + 1]
+    # a loop entered by a jump to its test: the body's first block does not dominate the latch
+    mid = lambda j, i: any(a < j < t <= i and a >= j - 2 for a, t in fwd)
+    back = [(i, j) for i, v in enumerate(succ) for j in v
+            if j <= i and not B[i]['jt'] and (dom[i] >> j & 1 or mid(j, i))]
+    heads = {}
+    for i, h in back:
+        heads[h] = max(heads.get(h, h), i)
+    jb = sum(1 for i, h in back if B[i]['kind'] == 'jmp')
+    ent = 0
+    for h, latch in heads.items():
+        if mid(h, latch):
+            ent += 1
+    return [len(heads), len(back), jb, ent]
+
+
+def layout_split(LI, LO, tails):
+    """-> dict(sub, first=[image block offset, our block offset, opcode], counts)"""
+    import difflib
+    BI, BO = blockrows(LI), blockrows(LO)
+    li, lo_ = loopset(BI), loopset(BO)
+    cnt = lambda B: [sum(1 for b in B if b['kind'] == 'jcc'), sum(1 for b in B if b['kind'] == 'jmp' and not b['jt']),
+                     sum(1 for b in B if b['jt'])]
+    ci, co = cnt(BI), cnt(BO)
+    KI = [(b['kind'], b['calls']) for b in BI]
+    KO = [(b['kind'], b['calls']) for b in BO]
+    first = None
+    for t, i1, i2, j1, j2 in difflib.SequenceMatcher(None, KI, KO, autojunk=False).get_opcodes():
+        if t != 'equal':
+            first = [BI[min(i1, len(BI) - 1)]['off'], BO[min(j1, len(BO) - 1)]['off'],
+                     {'insert': 'ours+%d' % (j2 - j1), 'delete': 'img+%d' % (i2 - i1),
+                      'replace': 'img%d/ours%d' % (i2 - i1, j2 - j1)}[t]]
+            break
+    if first is None:  # same kind sequence: the first block whose branch goes to a different block
+        ii = {b['off']: i for i, b in enumerate(BI)}
+        oo = {b['off']: i for i, b in enumerate(BO)}
+        for a, b in zip(BI, BO):
+            if ii.get(a['tgt']) != oo.get(b['tgt']):
+                first = [a['off'], b['off'], 'target']
+                break
+    if tails[0] != tails[1]:
+        sub = 'a'
+    elif len(BI) != len(BO):
+        sub = 'b:' + ('sw' if ci[2] != co[2] else 'mix' if ci[0] != co[0] and ci[1] != co[1] else
+                      'jcc' if ci[0] != co[0] else 'jmp' if ci[1] != co[1] else 'tgt')
+    elif KI != KO or first is not None:
+        sub = 'c'
+    else:
+        sub = 'p'
+    if li != lo_:
+        sub += '+d'
+    return dict(sub=sub, first=first, loops=[li, lo_], jcc=[ci[0], co[0]], jmp=[ci[1], co[1]], sw=[ci[2], co[2]])
 
 
 def slotkey(m):
@@ -163,6 +296,8 @@ def one(c, text, unit, addr):
     cls = prosave.classes(si, so)
     rec['layout'] = dict(blocks=[bi, bo], tails=[len(si['tails']), len(so['tails'])], order=sgi == sgo,
                          cls=cls, save=[prosave.fmt(si), prosave.fmt(so)])
+    rec['layout'].update(layout_split(LI, LO, rec['layout']['tails']))
+    rec['lo'] = lo
     if bi != bo or len(si['tails']) != len(so['tails']) or sgi != sgo or 'a' in cls or 'b' in cls:
         diffs.append(4)
     # 5 slots
@@ -216,6 +351,14 @@ def worker(unit, pfx):
         rec['claimed'] = 'BYTE_EXACT' in m.group(2)
         rec['canary'] = addr in CANARIES
         out.append(rec)
+    need = [r for r in out if r.get('rung') == 4 and r['layout'].get('first')]
+    if need:
+        import tailscan
+        cod = tailscan.compile_listing(unit, fe.R + '/' + unit, pfx)[1] or ''
+        for r in need:
+            lm = tailscan.lines_of(cod, r['sym'], os.path.basename(unit).lower())
+            ks = [k for k in sorted(lm) if k >= r['layout']['first'][1]]
+            r['layout']['line'] = lm[ks[0]] if ks else '?'
     return out
 
 
@@ -239,8 +382,13 @@ def detail(r):
         return 'img 0x%x%s%s | ours 0x%x%s%s' % (a, ' ebp' if ba else ' esp', ' eh' if ea else '', b, ' ebp' if bb else ' esp', ' eh' if eb else '')
     if k == 4:
         l = r['layout']
-        return 'blocks %d/%d tails %d/%d order %s%s' % (l['blocks'][0], l['blocks'][1], l['tails'][0], l['tails'][1],
-                                                        '=' if l['order'] else 'differs', (' save-class ' + l['cls']) if l['cls'] else '')
+        s = '4%-7s blocks %d/%d tails %d/%d jcc %d/%d jmp %d/%d sw %d/%d loops %s/%s order %s%s' % (
+            l.get('sub', '?'), l['blocks'][0], l['blocks'][1], l['tails'][0], l['tails'][1], l['jcc'][0], l['jcc'][1],
+            l['jmp'][0], l['jmp'][1], l['sw'][0], l['sw'][1], '.'.join(map(str, l['loops'][0])), '.'.join(map(str, l['loops'][1])),
+            '=' if l['order'] else 'differs', (' save-class ' + l['cls']) if l['cls'] else '')
+        if l.get('first'):
+            s += ' first img 0x%X ours +0x%x %s (%s)' % (r['lo'] + l['first'][0], l['first'][1], l.get('line', '?'), l['first'][2])
+        return s
     if k == 5:
         s = r['slots']
         return 'slots %d/%d img-only %s ours-only %s changed %d' % (s['n'][0], s['n'][1], ','.join(hex(x) for x in s['only_img'][:5]) or '-',
@@ -254,6 +402,21 @@ def detail(r):
 def line(r):
     return '%d %-6s %s %-26s %-40s rows=%4d %s%s' % (r['rung'], NAMES[r['rung']], r['addr'], r['unit'][4:30], r['sym'][:40], r['diff'],
                                                     detail(r), ' c?' if r.get('calls_unnamed') else '')
+
+
+def subtable(rs):
+    """rung-4 causes -> markdown rows"""
+    g = collections.defaultdict(list)
+    for r in rs:
+        if r['rung'] == 4:
+            g[r['layout']['sub']].append(r)
+    out = ['| cause | functions | rows | largest |', '|---|---|---|---|']
+    for k in sorted(g):
+        v = sorted(g[k], key=lambda r: -r['diff'])
+        out.append('| %s | %d | %d | %s |' % (k, len(v), sum(r['diff'] for r in v), ', '.join(
+            '%s 0x%s (%d)' % (re.sub(r'^\?+(\w+)@(?:(\w+)@)?.*', lambda m: (m.group(2) + '::' if m.group(2) else '') + m.group(1), r['sym'])[:30],
+                              r['addr'], r['diff']) for r in v[:4])))
+    return out
 
 
 def table(rs, title, out):
@@ -348,7 +511,10 @@ def main():
                 g = sorted((r for r in rs if r['rung'] == k), key=lambda r: -r['diff'])
                 print('| %d %s | %d | %d | %s |' % (k, NAMES[k], cnt[k], sum(r['diff'] for r in g),
                                                    ', '.join('%s 0x%s (%d)' % (re.sub(r'^\?+(\w+)@(?:(\w+)@)?.*', lambda m: (m.group(2) + '::' if m.group(2) else '') + m.group(1), r['sym'])[:34], r['addr'], r['diff']) for r in g[:a.top])))
-            print()
+            if title == 'Non-exact functions':
+                print('Rung 4 by cause:\n')
+                print('\n'.join(subtable(rs)))
+                print()
     else:
         print('\n'.join(l for l in out if l.startswith(('rungs.py', '==', '   '))))
         print('written', a.out + '/rungs.txt', a.out + '/rungs.json')
