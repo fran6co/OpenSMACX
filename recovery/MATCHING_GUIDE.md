@@ -7277,6 +7277,13 @@ Re-tests and stack loops (par-2 2026-11-19, enemy_move 0x0056B5B0)
   (aligned rows whose image and our `[ebp-N]` agree), after block layout:
   enemy_move's 0x577C67 split closes four layout hunks and opens five, and
   swaps the two hottest slots (1661 -> 1345 of ~2800); it was not kept.
+- **Switch on a byte (par-4 2026-11-19).** `if (x == 1)` on a `uint8_t`
+  field compiles to `cmp byte ptr [..],1; jne`. The image's `xor edx,edx;
+  mov dl,[..]; mov ecx,edx; dec ecx; je` (or `sub ecx,K; je`) is a switch
+  with `case 1:` (or `case K:`): the switch widens the byte into a register
+  copy and lowers to a subtract chain ("Switch lowering" above). Write
+  `switch (field) { case 1: ...; break; }` even for a single case
+  (Console::go_to 0x004D6C4E, bbc27d1969: 286 -> 266 rows).
 
 ### 3.8 VC5 (Caviar/VOX) x87 rules (2026-11-19 par-5)
 
