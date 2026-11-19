@@ -107,7 +107,7 @@ extern Sprite g_TECH_ICON_SPRITES[MaxTechnologyNum];
 // BufferJoinSpace (0x00682820, buffer.h), not a unit-owned copy.
 
 
-// ORIGINAL: 0x00483950 ?on_redraw@NewTechWin@@QAEXXZ 0x00483950-0x00483E7F
+// ORIGINAL: 0x00483950 ?on_redraw@NewTechWin@@QAEXXZ 0x00483950-0x00483E7F BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Recover the complete technology popup redraw in its real NewTechWin owner.","evidence":["Pinned NewTechWin table 0x66CE5C slot 12 selects 0x483950.","Current NewTechWin rectangle words are written by exec; existing label, technology, player-data, buffer, style and sprite owners supply every draw.","The previous unit's NO_COMPILE finding was its fake standalone class/undefined Buffer scaffold; this candidate instead uses newtechwin.h's genuine GraphicWin hierarchy and embedded rectangle words."]}
 // kind      game
 // symbol    ?on_redraw@NewTechWin@@UAEXXZ
@@ -324,7 +324,7 @@ void NewTechWin::on_group_clicked(int, int group) {
     switch (group) {
     case 1:
         StringTemp[0] = '\0';
-// RECOVERY_LITERAL: v1 0x00686968 0x0068696D $SG56697 0x00483EB0
+// RECOVERY_LITERAL: v1 0x00686968 0x0068696D $SG56695 0x00483EB0
         strcat(StringTemp, "TECH");
         _itoa(static_cast<int>(field_B24_), number, 10);
         strcat(StringTemp, number);
@@ -333,12 +333,12 @@ void NewTechWin::on_group_clicked(int, int group) {
         break;
     case 2:
         StringTemp[0] = '\0';
-// RECOVERY_LITERAL: v1 0x00686970 0x00686975 $SG56700 0x00483EB0
+// RECOVERY_LITERAL: v1 0x00686970 0x00686975 $SG56698 0x00483EB0
         strcat(StringTemp, "TECH");
         _itoa(static_cast<int>(field_B24_), number, 10);
         strcat(StringTemp, number);
         stringBox2_.clear();
-// RECOVERY_LITERAL: v1 0x00686978 0x00686982 $SG56702 0x00483EB0
+// RECOVERY_LITERAL: v1 0x00686978 0x00686982 $SG56700 0x00483EB0
         stringBox2_.strings().load("techlongs", StringTemp, 1, 0);
         break;
     default:
