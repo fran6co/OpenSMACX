@@ -6084,7 +6084,7 @@ int Console::on_key_click(int a1, int a2) {
             report_log.say("UNIT CHECKSUMS", 0, 0, 0, 0);
             for (int veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; ++veh_id) {
                 Veh &vehicle = Vehs[veh_id];
-                uint8_t value = checksum(reinterpret_cast<char *>(&vehicle.x), 2, 0);
+                int value = checksum(reinterpret_cast<char *>(&vehicle.x), 2, 0);
                 value = checksum(reinterpret_cast<char *>(&vehicle.y), 2, value);
                 value = checksum(reinterpret_cast<char *>(&vehicle.proto_id), 3, value);
                 value = checksum(reinterpret_cast<char *>(&vehicle.morale), 1, value);
