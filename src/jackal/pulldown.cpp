@@ -335,7 +335,7 @@ int PullDown::UNK3(int, int, int) {
 
 static const int ItemNotFound = 11;
 
-static __forceinline int int_from_bits(uint32_t bits) {
+static inline int int_from_bits(uint32_t bits) {
     return static_cast<int>(bits);
 }
 
