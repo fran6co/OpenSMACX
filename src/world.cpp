@@ -3467,7 +3467,7 @@ void __cdecl world_rainfall() {
                     cloud_count = 0;
                     rain_carry = 1;
                 }
-                altitude_20 = climate >> 5;
+                altitude_20 = (uint32_t)climate >> 5;
                 int cloud_cover = MapCloudCover;
                 if (scratch & 0x80) {
                     rain_carry = temperature > 1;
@@ -3486,20 +3486,12 @@ void __cdecl world_rainfall() {
                 if ((scratch & 0x40) && altitude_20 <= 5 && altitude_20 <= 4) {
                     pass2_count = 0;
                     cloud_count = 0;
-                    if ((adjustment < 0)) adjustment = 0;
-                    else adjustment = adjustment;
+                    adjustment = adjustment < 0 ? 0 : adjustment;
                 }
                 if (altitude_20 > 3) {
                     if (++pass2_count > WorldBuilder.rainfall_coeff * cloud_cover * 4 + 1
                         && rain_carry) {
                         rain_carry--;
-                    }
-                    if (tile->bit & BIT_RIVER) {
-                        if ((x >> 1) % 3 && adjustment < 0) {
-                            adjustment = 0;
-                        }
-                        rain_carry = 1;
-                        cloud_count = 0;
                     }
                 } else {
                     // One shared decay block (image 0x5C4C6B/0x5C4C72): the
@@ -3523,13 +3515,13 @@ void __cdecl world_rainfall() {
                         rain_carry = 0;
                         cloud_count = 0;
                     }
-                    if (tile->bit & BIT_RIVER) {
-                        if ((x >> 1) % 3 && adjustment < 0) {
-                            adjustment = 0;
-                        }
-                        rain_carry = 1;
-                        cloud_count = 0;
+                }
+                if (tile->bit & BIT_RIVER) {
+                    if ((x >> 1) % 3 && adjustment < 0) {
+                        adjustment = 0;
                     }
+                    rain_carry = 1;
+                    cloud_count = 0;
                 }
                 if (scratch & 0x02) {
                     rainfall_class--;
