@@ -116,141 +116,292 @@ void Sprite::close() {
     fObj1Exists_ = 0;
 }
 
-
-// ORIGINAL: 0x005EAD9F ?change_color@Sprite@@QAEHHH@Z 0x005EAD9F-0x005EAE4E BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original5EADA5 tests the pixel pointer; null returns7.5EADBC multiplies height by stride, not source or display width.5EADFA skips all work when the four-byte group count is zero, including non-null one-to-three-byte buffers; preserve that asymmetry rather than the seed full-scan loop.", "For valid nonnegative allocated sprite sizes, original unrolled byte comparisons and tail replace only matches after masking both colors to8bits. No transparency/metadata change or service call occurs; borrowed pixels are modified too. Malformed dimensions/overflowed allocation domains are not established as safe. Genuine C++ loop remains unclaimed; no assembly or copied machine code."], "reason": "Recover the sprite pixel recoloring service using the genuine owned/borrowed pixel pointer and stride."}
-int Sprite::change_color(int old_color, int new_color) {
-    if (pcBits_ == 0) {
-        return 7;
+BlankSpriteStorageOwner::~BlankSpriteStorageOwner() {
+    if ((BlankSpriteCleanupGuard & 1) != 0) {
+        return;
     }
-    unsigned char *pixels;
-    int group_count;
-    int tail_count;
-    old_color = static_cast<unsigned char>(old_color);
-    pixels = pcBits_;
-    group_count = (iSpriteHeight_ * iSpriteWidth2_) >> 2;
-    new_color = static_cast<unsigned char>(new_color);
-    tail_count = (iSpriteHeight_ * iSpriteWidth2_) - (group_count << 2);
-    // Hand-written assembly: unrolled compare chains with `loop`, `and ecx,ecx` tests, mov ah writes.
-    // A zero group count skips the tail too; a negative product wraps the LOOP count.
-    __asm {
-        push esi
-        mov esi, pixels
-        mov ecx, group_count
-        mov al, byte ptr old_color
-        mov ah, byte ptr new_color
-        and ecx, ecx
-        je recolor_done
-    scan_0:
-        cmp [esi], al
-        je hit_0
-    scan_1:
-        inc esi
-        cmp [esi], al
-        je hit_1
-    scan_2:
-        inc esi
-        cmp [esi], al
-        je hit_2
-    scan_3:
-        inc esi
-        cmp [esi], al
-        je hit_3
-    scan_next:
-        inc esi
-        loop scan_0
-        dec esi
-        jmp tail_start
-    hit_loop:
-        cmp [esi], al
-        jne scan_1
-    hit_0:
-        mov [esi], ah
-        inc esi
-        cmp [esi], al
-        jne scan_2
-    hit_1:
-        mov [esi], ah
-        inc esi
-        cmp [esi], al
-        jne scan_3
-    hit_2:
-        mov [esi], ah
-        inc esi
-        cmp [esi], al
-        jne scan_next
-    hit_3:
-        mov [esi], ah
-        inc esi
-        loop hit_loop
-        dec esi
-    tail_start:
-        mov ecx, tail_count
-        and ecx, ecx
-        je recolor_done
-    tail_loop:
-        inc esi
-        cmp [esi], al
-        jne tail_next
-        mov [esi], ah
-    tail_next:
-        loop tail_loop
-    recolor_done:
-        pop esi
-    }
-    return 0;
+    BlankSpriteCleanupGuard |= 1;
+    sprite().~Sprite();
 }
 
-// ORIGINAL: 0x005EAE4F ?copy@Sprite@@QAEHPAUSprite@@@Z 0x005EAE4F-0x005EAF34 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["5EAE57 checks source bits before touching destination.5EAE6C..5EAEC4 performs the same owned/borrowed cleanup and field clearing as Sprite::close, preserving the transparent key.5EAEC7 captures wrapped32bit stride*height only after cleanup; allocation pointer publishes before null failure4.", "5EAEEA rereads source bits after allocation;5EAEF5..5EAF29 reads metadata after memcpy, writes dimensions/offsets/key, clears borrowed status and copies stride last. Original has no pixel-allocation increment to SpriteMemoryUsed and no self/null destination guard. Valid pixel allocations and ordinary C++ memcpy domains remain required; no behavioral repair is invented."], "reason": "Recover source.copy(destination) through Sprite ownership and close semantics, retaining original allocation failure and metadata observation order."}
-// symbol    ?copy@Sprite@@QAEHPAV1@@Z
-int Sprite::copy(Sprite *destination) {
-    if (pcBits_ == 0) {
-        return 7;
+
+/*
+Purpose: Extract a sprite from a rectangle, rejecting a null region.
+// ORIGINAL: 0x005E3960 ?extract@Sprite@@QAEHPAUBuffer@@HPAURECT@@PAUTexHeap@@@Z 0x005E3960-0x005E399E FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"The rectangle overload forwards its bounds to the source-owned coordinate extractor, returning 3 for a null rectangle.","evidence":["Original 0x005E3960-0x005E399E loads RECT.left/top/right/bottom, computes right-left and bottom-top, and calls 0x005E39A0.","src/sprite.cpp owns the coordinate overload at 0x005E39A0; git:2aca2e3f:src/recovered/units/005e3960.cpp retains the historical exact seed."]}
+// symbol    ?extract@Sprite@@QAEHPAVBuffer@@HPAUtagRECT@@PAUTexHeap@@@Z
+*/
+int Sprite::extract(Buffer *buffer, int transparent, RECT *region, TexHeap *heap) {
+    if (region == 0) {
+        return 3;
     }
-    if (destination->fObj1Exists_ == 0 && destination->pcBits_ != 0) {
-        SpriteMemoryUsed = static_cast<int>(
-            static_cast<uint32_t>(SpriteMemoryUsed)
-            - static_cast<uint32_t>(destination->iSpriteHeight_)
-                  * static_cast<uint32_t>(destination->iSpriteWidth_));
-        if (destination->pcBits_ != 0) {
-            free(destination->pcBits_);
+    return extract(buffer, transparent, region->left, region->top,
+                   region->right - region->left, region->bottom - region->top,
+                   heap);
+}
+
+/*
+Purpose: Cut the width x height rectangle at (left, top) out of a locked
+         buffer's pixels into this sprite, trimming the fully transparent
+         border on all four sides, then allocate the trimmed pixel block from
+         the sheet heap or the CRT and copy it across.
+// ORIGINAL: 0x005E39A0 ?extract@Sprite@@QAEHPAUBuffer@@HHHHHPAUTexHeap@@@Z 0x005E39A0-0x005E3DF1 FILE
+// symbol    ?extract@Sprite@@QAEHPAVBuffer@@HHHHHPAUTexHeap@@@Z
+// The image spells the buffer pointer `PAU` - Buffer as a STRUCT - where this
+// tree declares `class Buffer`, and MSVC decorates the first-seen class-key.
+// `Sprite::draw` carries the same fact for the same reason.
+// TRIED: direct field-name transcription of Sprite::extract mirroring Ghidra's param_1[N]; frame-pointer/register allocation shape diverges at insn #0
+// TRIED: first guard spelled `buffer == 0 || buffer->get_data() == 0`, as two
+//   nested `if (x != 0)` blocks, and as one `x != 0 && y != 0` chain - all
+//   three compile to the same 44 of 397 agreeing instructions (0.392 similar).
+//   Flag sets scored by measure --all-flags: /c /O2 /Ob0 /Gy /GR- /GX is the
+//   best at 44/397; every non-/Ob0 set is 7/397 or worse because the in-class
+//   `get_data()` then inlines and its E8 disappears. /Ob0 is load-bearing.
+// TRIED 2026-09-03, re-swept after sprite.h retyped cTransparentIndex_ to
+//   unsigned char: the committed body is 17 of 397 (0.415 similar) at /O2
+//   /Ob0 /GX, the same best set as before. The fold
+//   `cTransparentIndex_ = transparent & 0xff` scores 12 of 397; the nested
+//   two-`if` guard scores the same 17; the volatile-punned byte store scores
+//   18 and was refused as source. The retype neither helped nor hurt here.
+// TRIED: the receiver-spill fingerprint, not reached. The image never
+//   enregisters `buffer`: it loads it fresh into volatile ecx at each of its
+//   ten uses (`mov ecx, [esp+0x1c]`) and spends the callee-saved registers on
+//   this=esi, width=ebx, height=edi, zero=ebp - `xor ebp,ebp` sits above the
+//   first null test. Every spelling tried instead enregisters `buffer` into
+//   ebx at the function's first statement (scheduled before the remaining
+//   callee-saved pushes) and shifts every other role one register over
+//   (this=ebp, width=esi, zero=edi), renaming every field access and call
+//   receiver in the body at once. Same wall as the Palette receiver-spill
+//   bodies: guard reordering and condition shape do not move it.
+// size      1105 bytes
+// prototype int (__thiscall ?extract@Sprite@@QAEHPAUBuffer@@HHHHHPAUTexHeap@@@Z)(Sprite* this, Buffer*, int, int, int, int, int, #120*)
+// callers   29   call targets   8
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x005E3373 0x005E33F3 0x005E34A3 0x005FD2B0 0x006353C0 0x00644EF2 0x00645930
+Return Value: 0 extracted; 3 bad arguments or empty rectangle; 4 the CRT
+              allocation failed; 7 the buffer would not lock; 9 the rectangle
+              is entirely transparent
+Status: Semantics transcribed from the image
+
+The four scans walk the requested rectangle four ways: top down for the first
+row with a visible pixel, bottom up for the last, and across the kept rows for
+the first and last visible columns. `iTopOffset_` counts the rows the top scan
+spent; `iSpriteHeight_` opens as the untrimmed height and each bottom-scan row
+spends one; `iLeftOffset_` and the right-trim local mirror them on the columns.
+The bounds come off `dib_.bmiHeader`, whose `biHeight` is NEGATIVE for a
+top-down DIB - so the bottom bound really is `-biHeight`, and the
+two-coordinate `get_data` rejects the same way.
+*/
+int Sprite::extract(Buffer *buffer, int transparent, int left, int top,
+                    int width, int height, TexHeap *heap) {
+    int stride;
+    int col;
+    int rows;
+    int right_trim;
+    int row_index;
+    const uint8_t *pixels;
+
+    // ONE LOAD, ONE EXIT: the image tests `buffer` against zero with the same
+    // ecx load that then serves as the call's receiver, and both tests share
+    // the `return 3` tail with the four guards further down. NESTED, not `||`:
+    // the nesting is what ends `buffer`'s live range at the test.
+    if (buffer != 0 && buffer->get_data() != 0) {
+        // Free the previous contents exactly as Sprite::close opens: the pixel
+        // block is only owned, accounted, and released while the borrowed flag is
+        // clear, and the image re-tests `pcBits_` before the free.
+        if (fObj1Exists_ == 0 && pcBits_ != 0) {
+            SpriteMemoryUsed = static_cast<int>(
+                static_cast<uint32_t>(SpriteMemoryUsed)
+                - static_cast<uint32_t>(iSpriteHeight_)
+                      * static_cast<uint32_t>(iSpriteWidth_));
+            if (pcBits_ != 0) {
+                free(pcBits_);
+            }
+            pcBits_ = 0;
         }
-        destination->pcBits_ = 0;
+        if (ppszFileName_ != 0) {
+            free(ppszFileName_);
+            ppszFileName_ = 0;
+        }
+        iSpriteWidth2_ = 0;
+        iSpriteWidth_ = 0;
+        iSpriteHeight_ = 0;
+        iWidth_ = 0;
+        iHeight_ = 0;
+        iLeftOffset_ = 0;
+        iTopOffset_ = 0;
+        fObj1Exists_ = 0;
+
+        if (width == 0) {
+            return 3;
+        }
+        if (height == 0) {
+            return 3;
+        }
+        if (left + width > static_cast<int>(buffer->dib_.bmiHeader.biWidth)) {
+            return 3;
+        }
+        if (top + height > -static_cast<int>(buffer->dib_.bmiHeader.biHeight)) {
+            return 3;
+        }
+
+        transparent &= 0xff;
+        cTransparentIndex_ = static_cast<unsigned char>(transparent);
+        iWidth_ = width;
+        iHeight_ = height;
+        pixels = buffer->get_data(left, top);
+        if (pixels == 0) {
+            buffer->free_data(1);
+            return 7;
+        }
+        stride = static_cast<int>(buffer->stride_);
+        iTopOffset_ = 0;
+        // TOP TRIM: walk down until a row carries a visible pixel.
+        for (row_index = 0; row_index < height; row_index++) {
+            for (col = 0; col < width; col++) {
+                if (pixels[col] != transparent) {
+                    goto top_done;
+                }
+            }
+            pixels += stride;
+            iTopOffset_++;
+        }
+    top_done:
+        do_sound();
+        if (iTopOffset_ == height) {
+            buffer->free_data(2);
+            return 9;
+        }
+        buffer->free_data(1);
+        // BOTTOM TRIM: walk up from the last row, right to left, until a row
+        // carries a visible pixel. The pointer arrives pre-decremented - the
+        // image indexes `row[col]` off `pixels - 1`, not `pixels[col - 1]`.
+        pixels = buffer->get_data(left, top + height - 1);
+        iSpriteHeight_ = height - iTopOffset_;
+        for (row_index = 0; row_index < height; row_index++) {
+            const uint8_t *from_right = pixels - 1;
+            for (col = width; col > 0; col--) {
+                if (from_right[col] != transparent) {
+                    goto bottom_done;
+                }
+            }
+            pixels -= stride;
+            iSpriteHeight_--;
+        }
+    bottom_done:
+        if (iSpriteHeight_ == 0) {
+            buffer->free_data(2);
+            return 9;
+        }
+        do_sound();
+        buffer->free_data(1);
+        // LEFT TRIM: on every kept row, find the first visible column.
+        pixels = buffer->get_data(left, top + iTopOffset_);
+        iLeftOffset_ = width;
+        for (rows = iSpriteHeight_; rows > 0; rows--) {
+            for (col = 0; col < width; col++) {
+                if (pixels[col] != transparent) {
+                    break;
+                }
+            }
+            if (col < iLeftOffset_) {
+                iLeftOffset_ = col;
+            }
+            pixels += stride;
+        }
+        do_sound();
+        buffer->free_data(1);
+        // RIGHT TRIM: on every kept row, count the transparent pixels at the end.
+        // THIS scan indexes `pixels[col - 1]` - the image folds the -1 into the
+        // addressing here, unlike the bottom trim above.
+        pixels = buffer->get_data(left, top + iTopOffset_);
+        right_trim = width;
+        for (rows = iSpriteHeight_; rows > 0; rows--) {
+            int counted = 0;
+            for (col = width; col > 0; col--) {
+                if (pixels[col - 1] != transparent) {
+                    break;
+                }
+                counted++;
+            }
+            if (counted < right_trim) {
+                right_trim = counted;
+            }
+            pixels += stride;
+        }
+        buffer->free_data(1);
+        iSpriteWidth_ = width - iLeftOffset_ - right_trim;
+        if (iSpriteWidth_ == 0) {
+            buffer->free_data(1);
+            return 9;
+        }
+        // The sheet heap is tried first and only when the caller named one. The
+        // pixels then draw through the heap and `fObj1Exists_` says so; anything
+        // else comes off the CRT as plain owned memory.
+        pcBits_ = 0;
+        if (heap != 0) {
+            pcBits_ = static_cast<unsigned char *>(heap->get_mem(iSpriteHeight_ * iSpriteWidth_));
+            if (pcBits_ != 0) {
+                fObj1Exists_ = 1;
+            }
+        }
+        do_sound();
+        if (pcBits_ == 0) {
+            pcBits_ = static_cast<unsigned char *>(mem_get(iSpriteWidth_ * iSpriteHeight_));
+            if (pcBits_ == 0) {
+                if (ppszFileName_ != 0) {
+                    free(ppszFileName_);
+                    ppszFileName_ = 0;
+                }
+                iSpriteWidth2_ = 0;
+                iSpriteWidth_ = 0;
+                iSpriteHeight_ = 0;
+                iWidth_ = 0;
+                iHeight_ = 0;
+                iLeftOffset_ = 0;
+                iTopOffset_ = 0;
+                fObj1Exists_ = 0;
+                buffer->free_data(1);
+                return 4;
+            }
+            fObj1Exists_ = 0;
+        }
+        SpriteMemoryUsed += iSpriteWidth_ * iSpriteHeight_;
+        pixels = buffer->get_data(left + iLeftOffset_, top + iTopOffset_);
+        uint8_t *out = pcBits_;
+        do_sound();
+        for (rows = iSpriteHeight_; rows > 0; rows--) {
+            memcpy(out, pixels, iSpriteWidth_);
+            out += iSpriteWidth_;
+            pixels += stride;
+        }
+        iSpriteWidth2_ = iSpriteWidth_;
+        buffer->free_data(2);
+        return 0;
+
     }
-    if (destination->ppszFileName_ != 0) {
-        free(destination->ppszFileName_);
-        destination->ppszFileName_ = 0;
-    }
-    destination->iSpriteWidth2_ = 0;
-    destination->iSpriteWidth_ = 0;
-    destination->iSpriteHeight_ = 0;
-    destination->iWidth_ = 0;
-    destination->iHeight_ = 0;
-    destination->iLeftOffset_ = 0;
-    destination->iTopOffset_ = 0;
-    destination->fObj1Exists_ = 0;
-    unsigned int size = static_cast<unsigned int>(iSpriteWidth2_);
-    size *= static_cast<unsigned int>(iSpriteHeight_);
-    unsigned char *pixels = static_cast<unsigned char *>(mem_get(size));
-    destination->pcBits_ = pixels;
-    if (pixels == 0) {
-        return 4;
-    }
-    memcpy(pixels, pcBits_, size);
-    // These are fresh source reads AFTER copying, not a saved descriptor.
-    // The original does not charge this allocation to SpriteMemoryUsed.
-    destination->iSpriteWidth_ = iSpriteWidth_;
-    destination->iSpriteHeight_ = iSpriteHeight_;
-    destination->iWidth_ = iWidth_;
-    destination->iHeight_ = iHeight_;
-    destination->iLeftOffset_ = iLeftOffset_;
-    destination->iTopOffset_ = iTopOffset_;
-    destination->cTransparentIndex_ = cTransparentIndex_;
-    destination->fObj1Exists_ = 0;
-    destination->iSpriteWidth2_ = iSpriteWidth2_;
-    return 0;
+    return 3;
 }
+
+// Clip skips and transient pixel cursors are local, but counts, table cursors
+// and pitches use the shared storage above. Pixel loops preserve source order,
+// including overlapping source/destination and expansion replication.
+// ORIGINAL: 0x005E3E00 ?draw_mono@Sprite@@QAEHPAUBuffer@@HHHHHH@Z 0x005E3E00-0x005E3E50 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned5E3E00 saves696D18/1C, substitutes final two parameters, calls5E3E50 with destination/key/x/y/color, restores denominator then numerator and returns result. Retain the claimed same-span seed and its restoration obligation; this binding is not a new claim.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Recover the genuine mono scaling overload rather than changing global layout or copying an opaque seed class."}
+// symbol    ?draw_mono@Sprite@@QAEHPAVBuffer@@HHHHHH@Z
+int Sprite::draw_mono(Buffer *destination, int transparent, int x, int y,
+                      int color, int numerator, int denominator) {
+    const int saved_numerator = SpriteScaleNumerator;
+    const int saved_denominator = SpriteScaleDenominator;
+    SpriteScaleNumerator = numerator;
+    SpriteScaleDenominator = denominator;
+    const int result = draw_mono(destination, transparent, x, y, color);
+    SpriteScaleDenominator = saved_denominator;
+    SpriteScaleNumerator = saved_numerator;
+    return result;
+}
+
 
 // Sprite's first initialised object: 0x00696D14 runs straight into
 // SpriteScaleNumerator at 0x00696D18, while Buffer's .data ends at 0x00696CE4.
@@ -348,202 +499,6 @@ union SpriteRasterRemapPointer {
 };
 // RECOVERY_OBJECT: v1 0x009B3AC0 ?SpriteRasterRemapTable@@3TSpriteRasterRemapPointer@@A
 SpriteRasterRemapPointer SpriteRasterRemapTable;
-
-// ORIGINAL: 0x005EB20F ?fill_scaling_table@Sprite@@QAEXXZ 0x005EB20F-0x005EB294 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned5EB20F..5EB294 divides larger by smaller scale operands, biases error by quotient parity, and fills9B3AD8 until9B4758. Integer error operations wrap32bits before signed branches; cache publication belongs to callers.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Recover the shared800-entry scale-step table generator with its original quotient-parity phase."}
-void Sprite::fill_scaling_table() {
-    const int larger = SpriteScaleNumerator > SpriteScaleDenominator
-        ? SpriteScaleNumerator : SpriteScaleDenominator;
-    const int smaller = SpriteScaleNumerator < SpriteScaleDenominator
-        ? SpriteScaleNumerator : SpriteScaleDenominator;
-    int quotient, twice_remainder, twice_divisor, error;
-    if (smaller > 1) {
-        quotient = larger / smaller;
-        twice_remainder = static_cast<int>(static_cast<uint32_t>(larger % smaller) * 2u);
-        twice_divisor = static_cast<int>(static_cast<uint32_t>(smaller) * 2u);
-        error = static_cast<int>(static_cast<uint32_t>(twice_remainder >> 1) -
-                                 static_cast<uint32_t>(twice_divisor));
-    } else {
-        quotient = larger;
-        error = twice_divisor = twice_remainder = 0;
-    }
-    // Original integer error accumulation wraps at 32 bits before its signed
-    // branch. Positive scale operands alone do not guarantee no overflow.
-    if (quotient & 1)
-        error = static_cast<int>(static_cast<uint32_t>(error) + static_cast<uint32_t>(larger));
-    int i = 0;
-    if (smaller == 1) {
-        for (i = 0; i < SpriteScalingTableCount; ++i) {
-            SpriteScalingSteps[i] = quotient;
-        }
-    } else {
-        for (i = 0; i < SpriteScalingTableCount; ++i) {
-            error = static_cast<int>(static_cast<uint32_t>(error) + static_cast<uint32_t>(twice_remainder));
-            SpriteScalingSteps[i] = quotient;
-            if (error > 0) {
-                error = static_cast<int>(static_cast<uint32_t>(error) - static_cast<uint32_t>(twice_divisor));
-                SpriteScalingSteps[i] = static_cast<int>(static_cast<uint32_t>(quotient) + 1u);
-            }
-        }
-    }
-}
-
-// ORIGINAL: 0x005EAB0F ?get_clipped_x_table_expand@Sprite@@QAEHPAURECT@@PAURECT@@PAHPAHPAHPAH@Z 0x005EAB0F-0x005EABB7 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original returns9B53EC and caller5E5244 consumes EAX as an int-table pointer. It clips partial first/last runs and reports source and destination extents, retaining ordered alias-visible output stores.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Recover expansion clipping as a typed pointer to the actual X run table."}
-// symbol    ?get_clipped_x_table_expand@Sprite@@QAEPAHPAUtagRECT@@0PAH111@Z
-// Capture rectangle-derived values before writes; the caller can alias
-// source_skip with a RECT coordinate.
-int *Sprite::get_clipped_x_table_expand(RECT *full, RECT *clipped, int *source_skip,
-    int *destination_skip, int *source_count, int *destination_count) {
-    const int skip = clipped->left - full->left;
-    int extent = clipped->right - clipped->left;
-    if (extent == 0) return 0;
-    *destination_count = extent;
-    *destination_skip = skip;
-    int index = 0;
-    int adjusted_skip = skip;
-    while (adjusted_skip > 0) { adjusted_skip -= SpriteScalingSteps[index]; ++index; }
-    const int *input = SpriteScalingSteps + index;
-    int count;
-    int *output;
-    if (adjusted_skip < 0) {
-        const int remaining = -adjusted_skip;
-        extent -= remaining;
-        SpriteClippedXSteps[0] = remaining;
-        output = SpriteClippedXSteps + 1;
-        *source_skip = index - 1;
-        count = 1;
-    } else {
-        output = SpriteClippedXSteps;
-        *source_skip = index;
-        count = 0;
-    }
-    while (extent > 0) {
-        const int step = *input++;
-        *output++ = step;
-        extent -= step;
-        ++count;
-    }
-    if (extent < 0) {
-        --output;
-        *output = *output + extent;
-    }
-    *source_count = count;
-    return SpriteClippedXSteps;
-}
-
-// ORIGINAL: 0x005EABBF ?get_clipped_y_table_expand@Sprite@@QAEHPAURECT@@PAURECT@@PAHPAHPAHPAH@Z 0x005EABBF-0x005EAC69 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original returns9B4760 and caller5E5285 consumes EAX as an int-table pointer. Top/bottom coordinate counterpart of5EAB0F with its own scratch table.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Recover expansion clipping as a typed pointer to the independent Y run table."}
-// symbol    ?get_clipped_y_table_expand@Sprite@@QAEPAHPAUtagRECT@@0PAH111@Z
-// Preserve the X routine's ordered stores and partial head/tail handling for
-// the independent Y scratch table.
-int *Sprite::get_clipped_y_table_expand(RECT *full, RECT *clipped, int *source_skip,
-    int *destination_skip, int *source_count, int *destination_count) {
-    const int skip = clipped->top - full->top;
-    int extent = clipped->bottom - clipped->top;
-    if (extent == 0) return 0;
-    *destination_count = extent;
-    *destination_skip = skip;
-    int index = 0;
-    int adjusted_skip = skip;
-    while (adjusted_skip > 0) { adjusted_skip -= SpriteScalingSteps[index]; ++index; }
-    const int *input = SpriteScalingSteps + index;
-    int count;
-    int *output;
-    if (adjusted_skip < 0) {
-        const int remaining = -adjusted_skip;
-        extent -= remaining;
-        SpriteClippedYSteps[0] = remaining;
-        output = SpriteClippedYSteps + 1;
-        *source_skip = index - 1;
-        count = 1;
-    } else {
-        output = SpriteClippedYSteps;
-        *source_skip = index;
-        count = 0;
-    }
-    while (extent > 0) {
-        const int step = *input++;
-        *output++ = step;
-        extent -= step;
-        ++count;
-    }
-    if (extent < 0) {
-        --output;
-        *output = *output + extent;
-    }
-    *source_count = count;
-    return SpriteClippedYSteps;
-}
-
-// ORIGINAL: 0x005EAC6F ?get_clipped_x_table_shrink@Sprite@@QAEHPAURECT@@PAURECT@@PAHPAHPAHPAH@Z 0x005EAC6F-0x005EACFB BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original computes source prefix skip and total source advances from9B3AD8; returned9B53EC is consumed as a pointer by5E503C. Output roles differ from expansion and retain alias-visible writes.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Recover shrinking X clipping using actual source-advance entries."}
-// symbol    ?get_clipped_x_table_shrink@Sprite@@QAEPAHPAUtagRECT@@0PAH111@Z
-// The zero-extent return precedes output writes; nonpositive extents retain
-// the original signed loop behavior.
-int *Sprite::get_clipped_x_table_shrink(RECT *full, RECT *clipped, int *destination_skip,
-    int *source_skip, int *destination_count, int *source_count) {
-    const int skip = clipped->left - full->left;
-    const int extent = clipped->right - clipped->left;
-    if (extent == 0) return 0;
-    *destination_skip = skip;
-    *destination_count = extent;
-    *source_skip = 0;
-    int index = 0;
-    while (index < skip) {
-        *source_skip += SpriteScalingSteps[index];
-        ++index;
-    }
-    *source_count = 0;
-    for (int i = 0; i < extent; ++i) {
-        SpriteClippedXSteps[i] = SpriteScalingSteps[i + index];
-        *source_count += SpriteScalingSteps[i + index];
-    }
-    return SpriteClippedXSteps;
-}
-
-// ORIGINAL: 0x005EACFF ?get_clipped_y_table_shrink@Sprite@@QAEHPAURECT@@PAURECT@@PAHPAHPAHPAH@Z 0x005EACFF-0x005EAD8D BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original top/bottom counterpart of5EAC6F returns9B4760. Callers read one int entry per row but pixel kernels explicitly consume its low byte.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Recover shrinking Y clipping with an independent source-advance table."}
-// symbol    ?get_clipped_y_table_shrink@Sprite@@QAEPAHPAUtagRECT@@0PAH111@Z
-// Keep the same no-write zero-extent return and signed iteration as X.
-int *Sprite::get_clipped_y_table_shrink(RECT *full, RECT *clipped, int *destination_skip,
-    int *source_skip, int *destination_count, int *source_count) {
-    const int skip = clipped->top - full->top;
-    const int extent = clipped->bottom - clipped->top;
-    if (extent == 0) return 0;
-    *destination_skip = skip;
-    *destination_count = extent;
-    *source_skip = 0;
-    int index = 0;
-    while (index < skip) {
-        *source_skip += SpriteScalingSteps[index];
-        ++index;
-    }
-    *source_count = 0;
-    for (int i = 0; i < extent; ++i) {
-        SpriteClippedYSteps[i] = SpriteScalingSteps[i + index];
-        *source_count += SpriteScalingSteps[i + index];
-    }
-    return SpriteClippedYSteps;
-}
-
-// Clip skips and transient pixel cursors are local, but counts, table cursors
-// and pitches use the shared storage above. Pixel loops preserve source order,
-// including overlapping source/destination and expansion replication.
-// ORIGINAL: 0x005E3E00 ?draw_mono@Sprite@@QAEHPAUBuffer@@HHHHHH@Z 0x005E3E00-0x005E3E50 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned5E3E00 saves696D18/1C, substitutes final two parameters, calls5E3E50 with destination/key/x/y/color, restores denominator then numerator and returns result. Retain the claimed same-span seed and its restoration obligation; this binding is not a new claim.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Recover the genuine mono scaling overload rather than changing global layout or copying an opaque seed class."}
-// symbol    ?draw_mono@Sprite@@QAEHPAVBuffer@@HHHHHH@Z
-int Sprite::draw_mono(Buffer *destination, int transparent, int x, int y,
-                      int color, int numerator, int denominator) {
-    const int saved_numerator = SpriteScaleNumerator;
-    const int saved_denominator = SpriteScaleDenominator;
-    SpriteScaleNumerator = numerator;
-    SpriteScaleDenominator = denominator;
-    const int result = draw_mono(destination, transparent, x, y, color);
-    SpriteScaleDenominator = saved_denominator;
-    SpriteScaleNumerator = saved_numerator;
-    return result;
-}
 
 // ORIGINAL: 0x005E3E50 ?draw_mono@Sprite@@QAEHPAUBuffer@@HHHH@Z 0x005E3E50-0x005E4ADA BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned3210-byte worker loads file-backed sprites through9B6080; software paths cover1:1, shrinking and expansion. Initial unscaled top skip uses logical width while subsequent rows use pitch. Scaled origins truncate coordinate+offset*ratio, not scaled coordinates. Preserve final free_data and source-byte/run ordering; shared clip counts, table cursors and pitches retain their original storage while transient pixel cursors remain local.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Recover the monochrome sprite blitter through actual Sprite storage, Buffer locking and scale tables."}
@@ -1602,6 +1557,94 @@ int Sprite::draw_mono(Buffer *destination, int transparent, int x, int y,
     }
     destination->free_data(1);
     return 0;
+}
+
+
+/*
+Purpose: Legacy stub; the original body returns 0 without reading its
+         arguments.
+// ORIGINAL: 0x005E4ADA ?UNK1@Sprite@@QAEHHHHHHHH@Z 0x005E4ADA-0x005E4ADF BYTE_EXACT
+// symbol    ?draw_noop@Sprite@@QAEHPAVBuffer@@HHHHHH@Z
+// size      5 bytes
+// prototype int (__thiscall ?UNK1@Sprite@@QAEHHHHHHHH@Z)(Sprite* this, int, int, int, int, int, int, int)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Status: Complete
+*/
+int Sprite::draw_noop(Buffer *, int, int, int, int, int, int) {
+    return 0;
+}
+
+
+/*
+Purpose: Legacy stub; the original body returns 0 without reading its
+         arguments.
+// ORIGINAL: 0x005E4AEA ?UNK2@Sprite@@QAEHHHHHH@Z 0x005E4AEA-0x005E4AEF BYTE_EXACT
+// symbol    ?draw_noop@Sprite@@QAEHPAVBuffer@@HHHH@Z
+// size      5 bytes
+// prototype int (__thiscall ?UNK2@Sprite@@QAEHHHHHH@Z)(Sprite* this, int, int, int, int, int)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Status: Complete
+*/
+int Sprite::draw_noop(Buffer *, int, int, int, int) {
+    return 0;
+}
+
+// Shared four-byte sprite-memory counter: the constructor at 0x005E37E6/
+// 0x005E37EF reads/writes it, and close at 0x005E3833/0x005E383F updates
+// the same scalar. Its original storage is in .data's loader-zero-filled
+// tail, not a pointer into the executable. The constructor adds sizeof(Sprite);
+// pixel-release paths subtract pixel area, so full accounting is still unclear.
+// RECOVERY_OBJECT: v2 0x009B6618 0x009B661C ?SpriteMemoryUsed@@3HA 0x005E37E0
+int SpriteMemoryUsed = 0;
+
+/*
+Purpose: Draw with a temporary scale and a destination remap table.
+// ORIGINAL: 0x005E4AFA ?draw@Sprite@@QAEHPAUBuffer@@HHHHHH@Z 0x005E4AFA-0x005E4B4A FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"The seven-argument seed is a scale-substitution wrapper around the already source-owned table-remapping Sprite::draw overload; its final catalogued int is a pointer to the remap table.","evidence":["Original 0x005E4AFA-0x005E4B4A saves the dwords at 0x00696D18/1C, substitutes numerator/denominator, calls 0x005E9D44 and restores in reverse order.","src/sprite.cpp owns 0x005E9D44 and binds both scale globals; git:2aca2e3f:src/recovered/units/005e4afa.cpp retains the historical exact seed."]}
+// symbol    ?draw@Sprite@@QAEHPAVBuffer@@HHHHHPAE@Z
+*/
+int Sprite::draw(Buffer *destination, int transparent, int x, int y,
+                 int numerator, int denominator, unsigned char *table) {
+    const int saved_numerator = SpriteScaleNumerator;
+    const int saved_denominator = SpriteScaleDenominator;
+    SpriteScaleNumerator = numerator;
+    SpriteScaleDenominator = denominator;
+    const int result = draw(destination, transparent, x, y, table);
+    SpriteScaleDenominator = saved_denominator;
+    SpriteScaleNumerator = saved_numerator;
+    return result;
+}
+
+/*
+Purpose: Draw the sprite with a temporarily substituted uniform scale ratio.
+// ORIGINAL: 0x005E4B4A ?draw@Sprite@@QAEHPAUBuffer@@HHHHH@Z 0x005E4B4A-0x005E4B95 BYTE_EXACT
+// symbol    ?draw@Sprite@@QAEHPAVBuffer@@HHHHH@Z
+// size      75 bytes
+// prototype int (__thiscall ?draw@Sprite@@QAEHPAUBuffer@@HHHHH@Z)(Sprite* this, Buffer*, int, int, int, int, int)
+// callers   48   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005E4B9A
+Return Value: Whatever the four-argument overload returns
+Status: Complete with a temporary dependency on the four-argument overload
+*/
+int Sprite::draw(Buffer *buffer, int a, int b, int c, int x, int y) {
+    // The ratio is swapped for the duration of the call and restored in the
+    // reverse order the legacy body uses.
+    const int saved_numerator = SpriteScaleNumerator;
+    const int saved_denominator = SpriteScaleDenominator;
+    SpriteScaleNumerator = x;
+    SpriteScaleDenominator = y;
+    const int result = draw(buffer, a, b, c);
+    SpriteScaleDenominator = saved_denominator;
+    SpriteScaleNumerator = saved_numerator;
+    return result;
 }
 
 // ORIGINAL: 0x005E4B9A ?draw@Sprite@@QAEHPAUBuffer@@HHH@Z 0x005E4B9A-0x005E5833 BYTE_EXACT
@@ -2667,1213 +2710,6 @@ int Sprite::draw(Buffer *destination, int transparent, int x, int y) {
                         popf
                         pop esi
                         pop edi
-            }
-        }
-    }
-    destination->free_data(1);
-    return 0;
-}
-
-// ORIGINAL: 0x005E9D44 ?draw@Sprite@@QAEHPAUBuffer@@HHHPAE@Z 0x005E9D44-0x005EAAFF BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Terrain loader calls4522AF/45238B select this five-argument worker. Unlike plain Sprite draw it has no filename-load branch. Unit/shrink compare the low-byte key then map every other source value, including zero; expansion also skips zero.", "Expansion consumes the low byte of each Y selector:1/2/3 repeats that many rows, all other values repeat4. Four-row lookups5EA54D/5EA5A0/5EA5F3/5EA646 alone read table[first destination pixel], while other modes read table[source]. Map once per source pixel before row-major replication, preserving live source/destination/table overlap.", "Unit clipping reloads pcBits afterward with the earlier pitch. Scaled clipping retains preclip source bits and post-first-clip destination bits; original-position base uses the old pitch, traversal the reloaded pitch. Retain shared float32 ratio/cache and genuine helper owners.", "This structured kernel assumes valid buffers/tables, positive bounded scaling and ordinary fitting geometry. Zero low-byte shrink steps have a pathological original wrap loop. Extreme x87 cancellation, altered FP environment and asynchronous aliases of historical assembly scratch are not established by the portable spelling. No original bug fix is authorized. Preserve the full seed in src/unrecovered/005e9d44.cpp."], "reason": "Recover the complete source-remap Sprite worker used by terrain-sheet conversion, using genuine members, clipped-table helpers and typed Buffer access."}
-// symbol    ?draw@Sprite@@QAEHPAVBuffer@@HHHPAE@Z
-int Sprite::draw(Buffer *destination, int transparent, int x, int y,
-                 unsigned char *table) {
-    int source_y;
-    int source_col;
-    RECT rc_clip;
-    int dest_col_ofs;
-    unsigned char *dest_ptr;
-    RECT original;
-    int start_x;
-    unsigned char *source;
-    int dest_y;
-    int start_y;
-    int w;
-    int scaled_height;
-    int scaled_cx;
-    int s_top;
-    int sc_left;
-    int h;
-    if (pcBits_ == 0 || destination == 0 || destination->get_data() == 0) {
-        return 3;
-    }
-    if (SpriteScaleNumerator != SpriteScaleDenominator
-        && (SpriteCachedScaleNumerator != SpriteScaleNumerator
-            || SpriteCachedScaleDenominator != SpriteScaleDenominator)) {
-        SpriteScalingRatio = static_cast<float>(SpriteScaleNumerator) / SpriteScaleDenominator;
-        if (SpriteScalingRatio > 4.0) {
-            destination->free_data(1);
-            return 0;
-        }
-        fill_scaling_table();
-        SpriteCachedScaleNumerator = SpriteScaleNumerator;
-        SpriteCachedScaleDenominator = SpriteScaleDenominator;
-    }
-    transparent = static_cast<unsigned char>(transparent);
-    SpriteRasterSourcePitch = iSpriteWidth2_;
-    SpriteRasterDestinationPitch = destination->stride_;
-    source = pcBits_;
-    if (SpriteScaleNumerator == SpriteScaleDenominator) {
-        h = iSpriteHeight_;
-        w = iSpriteWidth_;
-        start_y = y + iTopOffset_;
-        start_x = x + iLeftOffset_;
-        rc_clip.left = start_x;
-        rc_clip.top = start_y;
-        rc_clip.right = start_x + w;
-        rc_clip.bottom = start_y + h;
-        original = rc_clip;
-        if (!IntersectRect(&rc_clip, &rc_clip, &destination->rect1_)) {
-            destination->free_data(1);
-            return 0;
-        }
-        source = pcBits_ + (rc_clip.left - original.left)
-            + (rc_clip.top - original.top) * SpriteRasterSourcePitch;
-        dest_ptr = static_cast<unsigned char *>(destination->locked_bits_) + rc_clip.left
-            + rc_clip.top * SpriteRasterDestinationPitch;
-        SpriteRasterDestinationRowCount = rc_clip.bottom - rc_clip.top;
-        SpriteRasterDestinationColumnCount = rc_clip.right - rc_clip.left;
-        SpriteRasterGroupCount = SpriteRasterDestinationColumnCount >> 2;
-        SpriteRasterSourceRowTail = SpriteRasterSourcePitch - SpriteRasterDestinationColumnCount;
-        SpriteRasterDestinationRowTail = SpriteRasterDestinationPitch - SpriteRasterDestinationColumnCount;
-        // Hand-written assembly: computed `lea edx, label` / `jmp edx` entry
-        // into an unrolled four-pixel keyed fill.
-        __asm {
-                        push esi
-                        push edi
-                        mov esi, dword ptr [source]
-                        mov edi, dword ptr [dest_ptr]
-                        mov ecx, dword ptr [SpriteRasterGroupCount]
-                        mov al, byte ptr [transparent]
-                        mov edx, dword ptr [table]
-                        xor ebx, ebx
-                        push ebp
-                        mov ebp, edx
-                        mov edx, dword ptr [SpriteRasterDestinationColumnCount]
-                        and edx, 0x3
-                        je T1_2d
-                        dec edx
-                        je T1_35
-                        dec edx
-                        je T1_44
-                        dec edx
-                        je T1_53
-                    T1_2d:
-                        lea edx, T1_a1
-                        jmp T1_a1
-                    T1_35:
-                        lea edx, T1_b3
-                        inc ecx
-                        mov dword ptr [SpriteRasterGroupCount], ecx
-                        jmp T1_b3
-                    T1_44:
-                        lea edx, T1_ad
-                        inc ecx
-                        mov dword ptr [SpriteRasterGroupCount], ecx
-                        jmp T1_ad
-                    T1_53:
-                        lea edx, T1_a7
-                        inc ecx
-                        mov dword ptr [SpriteRasterGroupCount], ecx
-                        jmp T1_a7
-                    T1_62:
-                        jmp edx
-                    T1_64:
-                        cmp byte ptr [esi], al
-                        je T1_a5
-                    T1_68:
-                        mov bl, byte ptr [esi]
-                        mov bl, byte ptr [ebp+ebx]
-                        mov byte ptr [edi], bl
-                        inc esi
-                        inc edi
-                        cmp byte ptr [esi], al
-                        je T1_ab
-                    T1_76:
-                        mov bl, byte ptr [esi]
-                        mov bl, byte ptr [ebp+ebx]
-                        mov byte ptr [edi], bl
-                        inc esi
-                        inc edi
-                        cmp byte ptr [esi], al
-                        je T1_b1
-                    T1_84:
-                        mov bl, byte ptr [esi]
-                        mov bl, byte ptr [ebp+ebx]
-                        mov byte ptr [edi], bl
-                        inc esi
-                        inc edi
-                        cmp byte ptr [esi], al
-                        je T1_b7
-                    T1_92:
-                        mov bl, byte ptr [esi]
-                        mov bl, byte ptr [ebp+ebx]
-                        mov byte ptr [edi], bl
-                        inc esi
-                        inc edi
-                        dec ecx
-                        jne T1_64
-                        jmp T1_bc
-                    T1_a1:
-                        cmp byte ptr [esi], al
-                        jne T1_68
-                    T1_a5:
-                        inc esi
-                        inc edi
-                    T1_a7:
-                        cmp byte ptr [esi], al
-                        jne T1_76
-                    T1_ab:
-                        inc esi
-                        inc edi
-                    T1_ad:
-                        cmp byte ptr [esi], al
-                        jne T1_84
-                    T1_b1:
-                        inc esi
-                        inc edi
-                    T1_b3:
-                        cmp byte ptr [esi], al
-                        jne T1_92
-                    T1_b7:
-                        inc esi
-                        inc edi
-                        dec ecx
-                        jne T1_a1
-                    T1_bc:
-                        mov ecx, dword ptr [SpriteRasterGroupCount]
-                        add esi, dword ptr [SpriteRasterSourceRowTail]
-                        add edi, dword ptr [SpriteRasterDestinationRowTail]
-                        dec dword ptr [SpriteRasterDestinationRowCount]
-                        jne T1_62
-                        pop ebp
-                        pop edi
-                        pop esi
-        }
-    } else {
-        scaled_height = static_cast<int>(iSpriteHeight_ * SpriteScalingRatio);
-        scaled_cx = static_cast<int>(iSpriteWidth_ * SpriteScalingRatio);
-        s_top = static_cast<int>(y + iTopOffset_ * SpriteScalingRatio);
-        sc_left = static_cast<int>(x + iLeftOffset_ * SpriteScalingRatio);
-        rc_clip.left = sc_left;
-        rc_clip.top = s_top;
-        rc_clip.right = sc_left + scaled_cx;
-        rc_clip.bottom = s_top + scaled_height;
-        original = rc_clip;
-        if (!IntersectRect(&rc_clip, &rc_clip, &destination->rect1_)) {
-            destination->free_data(1);
-            return 0;
-        }
-        rc_clip = original;
-        dest_ptr = static_cast<unsigned char *>(destination->locked_bits_) + rc_clip.left
-            + rc_clip.top * SpriteRasterDestinationPitch;
-        SpriteRasterDestinationPitch = destination->stride_;
-        if (SpriteScaleNumerator < SpriteScaleDenominator) {
-            if (original.right - original.left < SpriteMinimumScaledWidth
-                || original.bottom - original.top < SpriteMinimumScaledHeight) {
-                destination->free_data(1);
-                return 0;
-            }
-            IntersectRect(&rc_clip, &original, &destination->rect1_);
-            SpriteRasterXTable = get_clipped_x_table_shrink(&original, &rc_clip,
-                &dest_col_ofs, &source_col, &SpriteRasterDestinationColumnCount,
-                &SpriteRasterSourceColumnCount);
-            if (SpriteRasterXTable == 0) {
-                destination->free_data(1);
-                return 0;
-            }
-            SpriteRasterYTable = get_clipped_y_table_shrink(&original, &rc_clip,
-                &dest_y, &source_y, &SpriteRasterDestinationRowCount,
-                &SpriteRasterSourceRowCount);
-            if (SpriteRasterYTable == 0) {
-                destination->free_data(1);
-                return 0;
-            }
-            SpriteRasterGroupCount = SpriteRasterDestinationColumnCount >> 2;
-            SpriteRasterDestinationRowTail = SpriteRasterDestinationPitch - SpriteRasterDestinationColumnCount;
-            SpriteRasterSourceRowTail = SpriteRasterSourcePitch - SpriteRasterSourceColumnCount;
-            dest_ptr += dest_col_ofs + SpriteRasterDestinationPitch * dest_y;
-            // Hand-written assembly: one-operand MUL row offset and computed
-            // `jmp ebx` entry into an X-table stepped keyed fill.
-            __asm {
-                            push esi
-                            push edi
-                            mov eax, dword ptr [SpriteRasterSourcePitch]
-                            mul dword ptr [source_y]
-                            mov esi, eax
-                            add esi, dword ptr [source_col]
-                            add esi, dword ptr [source]
-                            mov edi, dword ptr [dest_ptr]
-                            mov edx, dword ptr [SpriteRasterXTable]
-                            mov ecx, dword ptr [SpriteRasterGroupCount]
-                            mov ebx, dword ptr [table]
-                            mov ah, byte ptr [transparent]
-                            push ebp
-                            mov ebp, ebx
-                            mov ebx, dword ptr [SpriteRasterDestinationColumnCount]
-                            and ebx, 0x3
-                            je T2_3e
-                            dec ebx
-                            je T2_51
-                            dec ebx
-                            je T2_6b
-                            dec ebx
-                            je T2_82
-                        T2_3e:
-                            lea ebx, T2_ec
-                            mov dword ptr [SpriteRasterShrinkEntry], ebx
-                            xor ebx, ebx
-                            jmp T2_ec
-                        T2_51:
-                            lea ebx, T2_10a
-                            mov dword ptr [SpriteRasterShrinkEntry], ebx
-                            xor ebx, ebx
-                            inc ecx
-                            mov dword ptr [SpriteRasterGroupCount], ecx
-                            jmp T2_10a
-                        T2_6b:
-                            lea ebx, T2_100
-                            mov dword ptr [SpriteRasterShrinkEntry], ebx
-                            xor ebx, ebx
-                            inc ecx
-                            mov dword ptr [SpriteRasterGroupCount], ecx
-                            jmp T2_100
-                        T2_82:
-                            lea ebx, T2_f6
-                            mov dword ptr [SpriteRasterShrinkEntry], ebx
-                            xor ebx, ebx
-                            inc ecx
-                            mov dword ptr [SpriteRasterGroupCount], ecx
-                            jmp T2_f6
-                        T2_99:
-                            jmp dword ptr [SpriteRasterShrinkEntry]
-                        T2_9f:
-                            cmp byte ptr [esi], ah
-                            je T2_f0
-                        T2_a3:
-                            mov bl, byte ptr [esi]
-                            mov bl, byte ptr [ebp+ebx]
-                            mov byte ptr [edi], bl
-                            add esi, dword ptr [edx]
-                            inc edi
-                            add edx, 0x4
-                            cmp byte ptr [esi], ah
-                            je T2_fa
-                        T2_b5:
-                            mov bl, byte ptr [esi]
-                            mov bl, byte ptr [ebp+ebx]
-                            mov byte ptr [edi], bl
-                            add esi, dword ptr [edx]
-                            inc edi
-                            add edx, 0x4
-                            cmp byte ptr [esi], ah
-                            je T2_104
-                        T2_c7:
-                            mov bl, byte ptr [esi]
-                            mov bl, byte ptr [ebp+ebx]
-                            mov byte ptr [edi], bl
-                            add esi, dword ptr [edx]
-                            inc edi
-                            add edx, 0x4
-                            cmp byte ptr [esi], ah
-                            je T2_10e
-                        T2_d9:
-                            mov bl, byte ptr [esi]
-                            mov bl, byte ptr [ebp+ebx]
-                            mov byte ptr [edi], bl
-                            add esi, dword ptr [edx]
-                            inc edi
-                            add edx, 0x4
-                            dec ecx
-                            jne T2_9f
-                            jmp T2_117
-                        T2_ec:
-                            cmp byte ptr [esi], ah
-                            jne T2_a3
-                        T2_f0:
-                            inc edi
-                            add esi, dword ptr [edx]
-                            add edx, 0x4
-                        T2_f6:
-                            cmp byte ptr [esi], ah
-                            jne T2_b5
-                        T2_fa:
-                            inc edi
-                            add esi, dword ptr [edx]
-                            add edx, 0x4
-                        T2_100:
-                            cmp byte ptr [esi], ah
-                            jne T2_c7
-                        T2_104:
-                            inc edi
-                            add esi, dword ptr [edx]
-                            add edx, 0x4
-                        T2_10a:
-                            cmp byte ptr [esi], ah
-                            jne T2_d9
-                        T2_10e:
-                            inc edi
-                            add esi, dword ptr [edx]
-                            add edx, 0x4
-                            dec ecx
-                            jne T2_ec
-                        T2_117:
-                            mov ecx, dword ptr [SpriteRasterYTable]
-                            mov al, byte ptr [ecx]
-                            add ecx, 0x4
-                            mov dword ptr [SpriteRasterYTable], ecx
-                            xor ecx, ecx
-                            mov cl, al
-                            dec ecx
-                            je T2_138
-                        T2_12f:
-                            add esi, dword ptr [SpriteRasterSourcePitch]
-                            dec ecx
-                            jne T2_12f
-                        T2_138:
-                            add esi, dword ptr [SpriteRasterSourceRowTail]
-                            add edi, dword ptr [SpriteRasterDestinationRowTail]
-                            mov edx, dword ptr [SpriteRasterXTable]
-                            mov ecx, dword ptr [SpriteRasterDestinationRowCount]
-                            dec ecx
-                            mov dword ptr [SpriteRasterDestinationRowCount], ecx
-                            mov ecx, dword ptr [SpriteRasterGroupCount]
-                            jne T2_99
-                            pop ebp
-                            pop edi
-                            pop esi
-            }
-        } else {
-            IntersectRect(&rc_clip, &original, &destination->rect1_);
-            SpriteRasterXTable = get_clipped_x_table_expand(&original, &rc_clip,
-                &source_col, &dest_col_ofs, &SpriteRasterSourceColumnCount,
-                &SpriteRasterDestinationColumnCount);
-            if (SpriteRasterXTable == 0) {
-                destination->free_data(1);
-                return 0;
-            }
-            SpriteRasterYTable = get_clipped_y_table_expand(&original, &rc_clip,
-                &source_y, &dest_y, &SpriteRasterSourceRowCount,
-                &SpriteRasterDestinationRowCount);
-            if (SpriteRasterYTable == 0) {
-                destination->free_data(1);
-                return 0;
-            }
-            dest_ptr += dest_col_ofs + SpriteRasterDestinationPitch * dest_y;
-            SpriteRasterDestinationRowTail = SpriteRasterDestinationPitch - SpriteRasterDestinationColumnCount;
-            SpriteRasterGroupCount = SpriteRasterSourceColumnCount >> 2;
-            SpriteRasterGroupRemainder = SpriteRasterSourceColumnCount - (SpriteRasterGroupCount << 2);
-            SpriteRasterSourceRowTail = SpriteRasterSourcePitch - SpriteRasterSourceColumnCount;
-            SpriteRasterRemapTable.single = table;
-            // Hand-written assembly: 16-bit PUSHF/POPF around CLD, EBP as the
-            // row counter, and replicated expansion rows.
-            __asm {
-                            push edi
-                            push esi
-                            pushf
-                            cld
-                            mov eax, dword ptr [SpriteRasterSourcePitch]
-                            mul dword ptr [source_y]
-                            mov esi, eax
-                            add esi, dword ptr [source_col]
-                            add esi, dword ptr [source]
-                            mov edi, dword ptr [dest_ptr]
-                            mov edx, dword ptr [SpriteRasterXTable]
-                            mov ah, byte ptr [transparent]
-                            mov ebx, dword ptr [SpriteRasterSourceColumnCount]
-                            and ebx, 0x3
-                            push ebp
-                            mov ebp, dword ptr [SpriteRasterDestinationPitch]
-                            je T3_40
-                            mov ecx, dword ptr [SpriteRasterGroupCount]
-                            inc ecx
-                            mov dword ptr [SpriteRasterGroupCount], ecx
-                        T3_40:
-                            mov ecx, dword ptr [SpriteRasterGroupCount]
-                            mov dword ptr [SpriteRasterColumnCountdown], ecx
-                            mov ecx, dword ptr [SpriteRasterYTable]
-                            mov al, byte ptr [ecx]
-                            add ecx, 0x4
-                            mov dword ptr [SpriteRasterYTable], ecx
-                            mov edx, dword ptr [SpriteRasterXTable]
-                            cmp al, 0x1
-                            je T3_52a
-                            cmp al, 0x2
-                            je T3_3d7
-                            cmp al, 0x3
-                            je T3_24c
-                            mov ebx, dword ptr [SpriteRasterSourceColumnCount]
-                            and ebx, 0x3
-                            je T3_9e
-                            dec ebx
-                            je T3_8f
-                            dec ebx
-                            je T3_94
-                            dec ebx
-                            je T3_99
-                        T3_8f:
-                            jmp T3_22b
-                        T3_94:
-                            jmp T3_21d
-                        T3_99:
-                            jmp T3_20f
-                        T3_9e:
-                            cmp byte ptr [esi], ah
-                            je T3_209
-                        T3_a6:
-                            cmp byte ptr [esi], 0x0
-                            mov ecx, dword ptr [edx]
-                            je T3_eb
-                            xor ebx, ebx
-                            mov bl, byte ptr [edi]
-                            add ebx, dword ptr [SpriteRasterRemapTable]
-                            mov al, byte ptr [ebx]
-                        T3_b9:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_b9
-                            add edi, ebp
-                            sub edi, dword ptr [edx]
-                            mov ecx, dword ptr [edx]
-                        T3_c5:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_c5
-                            add edi, ebp
-                            sub edi, dword ptr [edx]
-                            mov ecx, dword ptr [edx]
-                        T3_d1:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_d1
-                            add edi, ebp
-                            sub edi, dword ptr [edx]
-                            mov ecx, dword ptr [edx]
-                        T3_dd:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_dd
-                            sub edi, ebp
-                            sub edi, ebp
-                            sub edi, ebp
-                            jmp T3_ed
-                        T3_eb:
-                            add edi, ecx
-                        T3_ed:
-                            inc esi
-                            add edx, 0x4
-                            cmp byte ptr [esi], ah
-                            je T3_217
-                        T3_f9:
-                            cmp byte ptr [esi], 0x0
-                            mov ecx, dword ptr [edx]
-                            je T3_13e
-                            xor ebx, ebx
-                            mov bl, byte ptr [edi]
-                            add ebx, dword ptr [SpriteRasterRemapTable]
-                            mov al, byte ptr [ebx]
-                        T3_10c:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_10c
-                            add edi, ebp
-                            sub edi, dword ptr [edx]
-                            mov ecx, dword ptr [edx]
-                        T3_118:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_118
-                            add edi, ebp
-                            sub edi, dword ptr [edx]
-                            mov ecx, dword ptr [edx]
-                        T3_124:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_124
-                            add edi, ebp
-                            sub edi, dword ptr [edx]
-                            mov ecx, dword ptr [edx]
-                        T3_130:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_130
-                            sub edi, ebp
-                            sub edi, ebp
-                            sub edi, ebp
-                            jmp T3_140
-                        T3_13e:
-                            add edi, ecx
-                        T3_140:
-                            inc esi
-                            add edx, 0x4
-                            cmp byte ptr [esi], ah
-                            je T3_225
-                        T3_14c:
-                            cmp byte ptr [esi], 0x0
-                            mov ecx, dword ptr [edx]
-                            je T3_191
-                            xor ebx, ebx
-                            mov bl, byte ptr [edi]
-                            add ebx, dword ptr [SpriteRasterRemapTable]
-                            mov al, byte ptr [ebx]
-                        T3_15f:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_15f
-                            add edi, ebp
-                            sub edi, dword ptr [edx]
-                            mov ecx, dword ptr [edx]
-                        T3_16b:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_16b
-                            add edi, ebp
-                            sub edi, dword ptr [edx]
-                            mov ecx, dword ptr [edx]
-                        T3_177:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_177
-                            add edi, ebp
-                            sub edi, dword ptr [edx]
-                            mov ecx, dword ptr [edx]
-                        T3_183:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_183
-                            sub edi, ebp
-                            sub edi, ebp
-                            sub edi, ebp
-                            jmp T3_193
-                        T3_191:
-                            add edi, ecx
-                        T3_193:
-                            inc esi
-                            add edx, 0x4
-                            cmp byte ptr [esi], ah
-                            je T3_233
-                        T3_19f:
-                            cmp byte ptr [esi], 0x0
-                            mov ecx, dword ptr [edx]
-                            je T3_1e4
-                            xor ebx, ebx
-                            mov bl, byte ptr [edi]
-                            add ebx, dword ptr [SpriteRasterRemapTable]
-                            mov al, byte ptr [ebx]
-                        T3_1b2:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_1b2
-                            add edi, ebp
-                            sub edi, dword ptr [edx]
-                            mov ecx, dword ptr [edx]
-                        T3_1be:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_1be
-                            add edi, ebp
-                            sub edi, dword ptr [edx]
-                            mov ecx, dword ptr [edx]
-                        T3_1ca:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_1ca
-                            add edi, ebp
-                            sub edi, dword ptr [edx]
-                            mov ecx, dword ptr [edx]
-                        T3_1d6:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_1d6
-                            sub edi, ebp
-                            sub edi, ebp
-                            sub edi, ebp
-                            jmp T3_1e6
-                        T3_1e4:
-                            add edi, ecx
-                        T3_1e6:
-                            inc esi
-                            add edx, 0x4
-                            dec dword ptr [SpriteRasterColumnCountdown]
-                            jne T3_9e
-                            lea edi, [edi+2*ebp]
-                            lea edi, [edi+ebp]
-                            jmp T3_62f
-                        T3_201:
-                            cmp byte ptr [esi], ah
-                            jne T3_a6
-                        T3_209:
-                            inc esi
-                            add edi, dword ptr [edx]
-                            add edx, 0x4
-                        T3_20f:
-                            cmp byte ptr [esi], ah
-                            jne T3_f9
-                        T3_217:
-                            inc esi
-                            add edi, dword ptr [edx]
-                            add edx, 0x4
-                        T3_21d:
-                            cmp byte ptr [esi], ah
-                            jne T3_14c
-                        T3_225:
-                            inc esi
-                            add edi, dword ptr [edx]
-                            add edx, 0x4
-                        T3_22b:
-                            cmp byte ptr [esi], ah
-                            jne T3_19f
-                        T3_233:
-                            inc esi
-                            add edi, dword ptr [edx]
-                            add edx, 0x4
-                            dec dword ptr [SpriteRasterColumnCountdown]
-                            jne T3_201
-                            lea edi, [edi+2*ebp]
-                            lea edi, [edi+ebp]
-                            jmp T3_62f
-                        T3_24c:
-                            mov ebx, dword ptr [SpriteRasterSourceColumnCount]
-                            and ebx, 0x3
-                            je T3_26f
-                            dec ebx
-                            je T3_260
-                            dec ebx
-                            je T3_265
-                            dec ebx
-                            je T3_26a
-                        T3_260:
-                            jmp T3_3bd
-                        T3_265:
-                            jmp T3_3af
-                        T3_26a:
-                            jmp T3_3a1
-                        T3_26f:
-                            cmp byte ptr [esi], ah
-                            je T3_39b
-                        T3_277:
-                            cmp byte ptr [esi], 0x0
-                            mov ecx, dword ptr [edx]
-                            je T3_2ae
-                            xor ebx, ebx
-                            mov bl, byte ptr [esi]
-                            add ebx, dword ptr [SpriteRasterRemapTable]
-                            mov al, byte ptr [ebx]
-                        T3_28a:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_28a
-                            add edi, ebp
-                            sub edi, dword ptr [edx]
-                            mov ecx, dword ptr [edx]
-                        T3_296:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_296
-                            add edi, ebp
-                            sub edi, dword ptr [edx]
-                            mov ecx, dword ptr [edx]
-                        T3_2a2:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_2a2
-                            sub edi, ebp
-                            sub edi, ebp
-                            jmp T3_2b0
-                        T3_2ae:
-                            add edi, ecx
-                        T3_2b0:
-                            inc esi
-                            add edx, 0x4
-                            cmp byte ptr [esi], ah
-                            je T3_3a9
-                        T3_2bc:
-                            cmp byte ptr [esi], 0x0
-                            mov ecx, dword ptr [edx]
-                            je T3_2f3
-                            xor ebx, ebx
-                            mov bl, byte ptr [esi]
-                            add ebx, dword ptr [SpriteRasterRemapTable]
-                            mov al, byte ptr [ebx]
-                        T3_2cf:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_2cf
-                            add edi, ebp
-                            sub edi, dword ptr [edx]
-                            mov ecx, dword ptr [edx]
-                        T3_2db:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_2db
-                            add edi, ebp
-                            sub edi, dword ptr [edx]
-                            mov ecx, dword ptr [edx]
-                        T3_2e7:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_2e7
-                            sub edi, ebp
-                            sub edi, ebp
-                            jmp T3_2f5
-                        T3_2f3:
-                            add edi, ecx
-                        T3_2f5:
-                            inc esi
-                            add edx, 0x4
-                            cmp byte ptr [esi], ah
-                            je T3_3b7
-                        T3_301:
-                            cmp byte ptr [esi], 0x0
-                            mov ecx, dword ptr [edx]
-                            je T3_338
-                            xor ebx, ebx
-                            mov bl, byte ptr [esi]
-                            add ebx, dword ptr [SpriteRasterRemapTable]
-                            mov al, byte ptr [ebx]
-                        T3_314:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_314
-                            add edi, ebp
-                            sub edi, dword ptr [edx]
-                            mov ecx, dword ptr [edx]
-                        T3_320:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_320
-                            add edi, ebp
-                            sub edi, dword ptr [edx]
-                            mov ecx, dword ptr [edx]
-                        T3_32c:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_32c
-                            sub edi, ebp
-                            sub edi, ebp
-                            jmp T3_33a
-                        T3_338:
-                            add edi, ecx
-                        T3_33a:
-                            inc esi
-                            add edx, 0x4
-                            cmp byte ptr [esi], ah
-                            je T3_3c1
-                        T3_342:
-                            cmp byte ptr [esi], 0x0
-                            mov ecx, dword ptr [edx]
-                            je T3_379
-                            xor ebx, ebx
-                            mov bl, byte ptr [esi]
-                            add ebx, dword ptr [SpriteRasterRemapTable]
-                            mov al, byte ptr [ebx]
-                        T3_355:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_355
-                            add edi, ebp
-                            sub edi, dword ptr [edx]
-                            mov ecx, dword ptr [edx]
-                        T3_361:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_361
-                            add edi, ebp
-                            sub edi, dword ptr [edx]
-                            mov ecx, dword ptr [edx]
-                        T3_36d:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_36d
-                            sub edi, ebp
-                            sub edi, ebp
-                            jmp T3_37b
-                        T3_379:
-                            add edi, ecx
-                        T3_37b:
-                            inc esi
-                            add edx, 0x4
-                            dec dword ptr [SpriteRasterColumnCountdown]
-                            jne T3_26f
-                            lea edi, [edi+2*ebp]
-                            jmp T3_62f
-                        T3_393:
-                            cmp byte ptr [esi], ah
-                            jne T3_277
-                        T3_39b:
-                            inc esi
-                            add edi, dword ptr [edx]
-                            add edx, 0x4
-                        T3_3a1:
-                            cmp byte ptr [esi], ah
-                            jne T3_2bc
-                        T3_3a9:
-                            inc esi
-                            add edi, dword ptr [edx]
-                            add edx, 0x4
-                        T3_3af:
-                            cmp byte ptr [esi], ah
-                            jne T3_301
-                        T3_3b7:
-                            inc esi
-                            add edi, dword ptr [edx]
-                            add edx, 0x4
-                        T3_3bd:
-                            cmp byte ptr [esi], ah
-                            jne T3_342
-                        T3_3c1:
-                            inc esi
-                            add edi, dword ptr [edx]
-                            add edx, 0x4
-                            dec dword ptr [SpriteRasterColumnCountdown]
-                            jne T3_393
-                            lea edi, [edi+2*ebp]
-                            jmp T3_62f
-                        T3_3d7:
-                            mov ebx, dword ptr [SpriteRasterSourceColumnCount]
-                            and ebx, 0x3
-                            je T3_3fa
-                            dec ebx
-                            je T3_3eb
-                            dec ebx
-                            je T3_3f0
-                            dec ebx
-                            je T3_3f5
-                        T3_3eb:
-                            jmp T3_510
-                        T3_3f0:
-                            jmp T3_502
-                        T3_3f5:
-                            jmp T3_4f4
-                        T3_3fa:
-                            cmp byte ptr [esi], ah
-                            je T3_4ee
-                        T3_402:
-                            cmp byte ptr [esi], 0x0
-                            mov ecx, dword ptr [edx]
-                            je T3_42b
-                            xor ebx, ebx
-                            mov bl, byte ptr [esi]
-                            add ebx, dword ptr [SpriteRasterRemapTable]
-                            mov al, byte ptr [ebx]
-                        T3_415:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_415
-                            add edi, ebp
-                            sub edi, dword ptr [edx]
-                            mov ecx, dword ptr [edx]
-                        T3_421:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_421
-                            sub edi, ebp
-                            jmp T3_42d
-                        T3_42b:
-                            add edi, ecx
-                        T3_42d:
-                            inc esi
-                            add edx, 0x4
-                            cmp byte ptr [esi], ah
-                            je T3_4fc
-                        T3_439:
-                            cmp byte ptr [esi], 0x0
-                            mov ecx, dword ptr [edx]
-                            je T3_462
-                            xor ebx, ebx
-                            mov bl, byte ptr [esi]
-                            add ebx, dword ptr [SpriteRasterRemapTable]
-                            mov al, byte ptr [ebx]
-                        T3_44c:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_44c
-                            add edi, ebp
-                            sub edi, dword ptr [edx]
-                            mov ecx, dword ptr [edx]
-                        T3_458:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_458
-                            sub edi, ebp
-                            jmp T3_464
-                        T3_462:
-                            add edi, ecx
-                        T3_464:
-                            inc esi
-                            add edx, 0x4
-                            cmp byte ptr [esi], ah
-                            je T3_50a
-                        T3_470:
-                            cmp byte ptr [esi], 0x0
-                            mov ecx, dword ptr [edx]
-                            je T3_499
-                            xor ebx, ebx
-                            mov bl, byte ptr [esi]
-                            add ebx, dword ptr [SpriteRasterRemapTable]
-                            mov al, byte ptr [ebx]
-                        T3_483:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_483
-                            add edi, ebp
-                            sub edi, dword ptr [edx]
-                            mov ecx, dword ptr [edx]
-                        T3_48f:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_48f
-                            sub edi, ebp
-                            jmp T3_49b
-                        T3_499:
-                            add edi, ecx
-                        T3_49b:
-                            inc esi
-                            add edx, 0x4
-                            cmp byte ptr [esi], ah
-                            je T3_514
-                        T3_4a3:
-                            cmp byte ptr [esi], 0x0
-                            mov ecx, dword ptr [edx]
-                            je T3_4cc
-                            xor ebx, ebx
-                            mov bl, byte ptr [esi]
-                            add ebx, dword ptr [SpriteRasterRemapTable]
-                            mov al, byte ptr [ebx]
-                        T3_4b6:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_4b6
-                            add edi, ebp
-                            sub edi, dword ptr [edx]
-                            mov ecx, dword ptr [edx]
-                        T3_4c2:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_4c2
-                            sub edi, ebp
-                            jmp T3_4ce
-                        T3_4cc:
-                            add edi, ecx
-                        T3_4ce:
-                            inc esi
-                            add edx, 0x4
-                            dec dword ptr [SpriteRasterColumnCountdown]
-                            jne T3_3fa
-                            lea edi, [edi+ebp]
-                            jmp T3_62f
-                        T3_4e6:
-                            cmp byte ptr [esi], ah
-                            jne T3_402
-                        T3_4ee:
-                            inc esi
-                            add edi, dword ptr [edx]
-                            add edx, 0x4
-                        T3_4f4:
-                            cmp byte ptr [esi], ah
-                            jne T3_439
-                        T3_4fc:
-                            inc esi
-                            add edi, dword ptr [edx]
-                            add edx, 0x4
-                        T3_502:
-                            cmp byte ptr [esi], ah
-                            jne T3_470
-                        T3_50a:
-                            inc esi
-                            add edi, dword ptr [edx]
-                            add edx, 0x4
-                        T3_510:
-                            cmp byte ptr [esi], ah
-                            jne T3_4a3
-                        T3_514:
-                            inc esi
-                            add edi, dword ptr [edx]
-                            add edx, 0x4
-                            dec dword ptr [SpriteRasterColumnCountdown]
-                            jne T3_4e6
-                            lea edi, [edi+ebp]
-                            jmp T3_62f
-                        T3_52a:
-                            mov ebx, dword ptr [SpriteRasterSourceColumnCount]
-                            and ebx, 0x3
-                            je T3_54d
-                            dec ebx
-                            je T3_53e
-                            dec ebx
-                            je T3_543
-                            dec ebx
-                            je T3_548
-                        T3_53e:
-                            jmp T3_61d
-                        T3_543:
-                            jmp T3_613
-                        T3_548:
-                            jmp T3_605
-                        T3_54d:
-                            cmp byte ptr [esi], ah
-                            je T3_5ff
-                        T3_555:
-                            cmp byte ptr [esi], 0x0
-                            mov ecx, dword ptr [edx]
-                            je T3_570
-                            xor ebx, ebx
-                            mov bl, byte ptr [esi]
-                            add ebx, dword ptr [SpriteRasterRemapTable]
-                            mov al, byte ptr [ebx]
-                        T3_568:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_568
-                            jmp T3_572
-                        T3_570:
-                            add edi, ecx
-                        T3_572:
-                            inc esi
-                            add edx, 0x4
-                            cmp byte ptr [esi], ah
-                            je T3_60d
-                        T3_57e:
-                            cmp byte ptr [esi], 0x0
-                            mov ecx, dword ptr [edx]
-                            je T3_599
-                            xor ebx, ebx
-                            mov bl, byte ptr [esi]
-                            add ebx, dword ptr [SpriteRasterRemapTable]
-                            mov al, byte ptr [ebx]
-                        T3_591:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_591
-                            jmp T3_59b
-                        T3_599:
-                            add edi, ecx
-                        T3_59b:
-                            inc esi
-                            add edx, 0x4
-                            cmp byte ptr [esi], ah
-                            je T3_617
-                        T3_5a3:
-                            cmp byte ptr [esi], 0x0
-                            mov ecx, dword ptr [edx]
-                            je T3_5be
-                            xor ebx, ebx
-                            mov bl, byte ptr [esi]
-                            add ebx, dword ptr [SpriteRasterRemapTable]
-                            mov al, byte ptr [ebx]
-                        T3_5b6:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_5b6
-                            jmp T3_5c0
-                        T3_5be:
-                            add edi, ecx
-                        T3_5c0:
-                            inc esi
-                            add edx, 0x4
-                            cmp byte ptr [esi], ah
-                            je T3_621
-                        T3_5c8:
-                            cmp byte ptr [esi], 0x0
-                            mov ecx, dword ptr [edx]
-                            je T3_5e3
-                            xor ebx, ebx
-                            mov bl, byte ptr [esi]
-                            add ebx, dword ptr [SpriteRasterRemapTable]
-                            mov al, byte ptr [ebx]
-                        T3_5db:
-                            mov byte ptr [edi], al
-                            inc edi
-                            dec ecx
-                            jne T3_5db
-                            jmp T3_5e5
-                        T3_5e3:
-                            add edi, ecx
-                        T3_5e5:
-                            inc esi
-                            add edx, 0x4
-                            dec dword ptr [SpriteRasterColumnCountdown]
-                            jne T3_54d
-                            jmp T3_62f
-                        T3_5f7:
-                            cmp byte ptr [esi], ah
-                            jne T3_555
-                        T3_5ff:
-                            inc esi
-                            add edi, dword ptr [edx]
-                            add edx, 0x4
-                        T3_605:
-                            cmp byte ptr [esi], ah
-                            jne T3_57e
-                        T3_60d:
-                            inc esi
-                            add edi, dword ptr [edx]
-                            add edx, 0x4
-                        T3_613:
-                            cmp byte ptr [esi], ah
-                            jne T3_5a3
-                        T3_617:
-                            inc esi
-                            add edi, dword ptr [edx]
-                            add edx, 0x4
-                        T3_61d:
-                            cmp byte ptr [esi], ah
-                            jne T3_5c8
-                        T3_621:
-                            inc esi
-                            add edi, dword ptr [edx]
-                            add edx, 0x4
-                            dec dword ptr [SpriteRasterColumnCountdown]
-                            jne T3_5f7
-                        T3_62f:
-                            add esi, dword ptr [SpriteRasterSourceRowTail]
-                            add edi, dword ptr [SpriteRasterDestinationRowTail]
-                            dec dword ptr [SpriteRasterSourceRowCount]
-                            jne T3_40
-                            pop ebp
-                            popf
-                            pop esi
-                            pop edi
             }
         }
     }
@@ -7405,91 +6241,1210 @@ int Sprite::draw_dest_source(Buffer *destination, int transparent, int x, int y,
     return result;
 }
 
-// Shared four-byte sprite-memory counter: the constructor at 0x005E37E6/
-// 0x005E37EF reads/writes it, and close at 0x005E3833/0x005E383F updates
-// the same scalar. Its original storage is in .data's loader-zero-filled
-// tail, not a pointer into the executable. The constructor adds sizeof(Sprite);
-// pixel-release paths subtract pixel area, so full accounting is still unclear.
-// RECOVERY_OBJECT: v2 0x009B6618 0x009B661C ?SpriteMemoryUsed@@3HA 0x005E37E0
-int SpriteMemoryUsed = 0;
-
-/*
-Purpose: Draw with a temporary scale and a destination remap table.
-// ORIGINAL: 0x005E4AFA ?draw@Sprite@@QAEHPAUBuffer@@HHHHHH@Z 0x005E4AFA-0x005E4B4A FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"reason":"The seven-argument seed is a scale-substitution wrapper around the already source-owned table-remapping Sprite::draw overload; its final catalogued int is a pointer to the remap table.","evidence":["Original 0x005E4AFA-0x005E4B4A saves the dwords at 0x00696D18/1C, substitutes numerator/denominator, calls 0x005E9D44 and restores in reverse order.","src/sprite.cpp owns 0x005E9D44 and binds both scale globals; git:2aca2e3f:src/recovered/units/005e4afa.cpp retains the historical exact seed."]}
-// symbol    ?draw@Sprite@@QAEHPAVBuffer@@HHHHHPAE@Z
-*/
+// ORIGINAL: 0x005E9D44 ?draw@Sprite@@QAEHPAUBuffer@@HHHPAE@Z 0x005E9D44-0x005EAAFF BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Terrain loader calls4522AF/45238B select this five-argument worker. Unlike plain Sprite draw it has no filename-load branch. Unit/shrink compare the low-byte key then map every other source value, including zero; expansion also skips zero.", "Expansion consumes the low byte of each Y selector:1/2/3 repeats that many rows, all other values repeat4. Four-row lookups5EA54D/5EA5A0/5EA5F3/5EA646 alone read table[first destination pixel], while other modes read table[source]. Map once per source pixel before row-major replication, preserving live source/destination/table overlap.", "Unit clipping reloads pcBits afterward with the earlier pitch. Scaled clipping retains preclip source bits and post-first-clip destination bits; original-position base uses the old pitch, traversal the reloaded pitch. Retain shared float32 ratio/cache and genuine helper owners.", "This structured kernel assumes valid buffers/tables, positive bounded scaling and ordinary fitting geometry. Zero low-byte shrink steps have a pathological original wrap loop. Extreme x87 cancellation, altered FP environment and asynchronous aliases of historical assembly scratch are not established by the portable spelling. No original bug fix is authorized. Preserve the full seed in src/unrecovered/005e9d44.cpp."], "reason": "Recover the complete source-remap Sprite worker used by terrain-sheet conversion, using genuine members, clipped-table helpers and typed Buffer access."}
+// symbol    ?draw@Sprite@@QAEHPAVBuffer@@HHHPAE@Z
 int Sprite::draw(Buffer *destination, int transparent, int x, int y,
-                 int numerator, int denominator, unsigned char *table) {
-    const int saved_numerator = SpriteScaleNumerator;
-    const int saved_denominator = SpriteScaleDenominator;
-    SpriteScaleNumerator = numerator;
-    SpriteScaleDenominator = denominator;
-    const int result = draw(destination, transparent, x, y, table);
-    SpriteScaleDenominator = saved_denominator;
-    SpriteScaleNumerator = saved_numerator;
-    return result;
-}
-
-/*
-Purpose: Draw the sprite with a temporarily substituted uniform scale ratio.
-// ORIGINAL: 0x005E4B4A ?draw@Sprite@@QAEHPAUBuffer@@HHHHH@Z 0x005E4B4A-0x005E4B95 BYTE_EXACT
-// symbol    ?draw@Sprite@@QAEHPAVBuffer@@HHHHH@Z
-// size      75 bytes
-// prototype int (__thiscall ?draw@Sprite@@QAEHPAUBuffer@@HHHHH@Z)(Sprite* this, Buffer*, int, int, int, int, int)
-// callers   48   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005E4B9A
-Return Value: Whatever the four-argument overload returns
-Status: Complete with a temporary dependency on the four-argument overload
-*/
-int Sprite::draw(Buffer *buffer, int a, int b, int c, int x, int y) {
-    // The ratio is swapped for the duration of the call and restored in the
-    // reverse order the legacy body uses.
-    const int saved_numerator = SpriteScaleNumerator;
-    const int saved_denominator = SpriteScaleDenominator;
-    SpriteScaleNumerator = x;
-    SpriteScaleDenominator = y;
-    const int result = draw(buffer, a, b, c);
-    SpriteScaleDenominator = saved_denominator;
-    SpriteScaleNumerator = saved_numerator;
-    return result;
-}
-
-
-/*
-Purpose: Legacy stub; the original body returns 0 without reading its
-         arguments.
-// ORIGINAL: 0x005E4ADA ?UNK1@Sprite@@QAEHHHHHHHH@Z 0x005E4ADA-0x005E4ADF BYTE_EXACT
-// symbol    ?draw_noop@Sprite@@QAEHPAVBuffer@@HHHHHH@Z
-// size      5 bytes
-// prototype int (__thiscall ?UNK1@Sprite@@QAEHHHHHHHH@Z)(Sprite* this, int, int, int, int, int, int, int)
-// callers   1   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Status: Complete
-*/
-int Sprite::draw_noop(Buffer *, int, int, int, int, int, int) {
-    return 0;
-}
-
-
-/*
-Purpose: Legacy stub; the original body returns 0 without reading its
-         arguments.
-// ORIGINAL: 0x005E4AEA ?UNK2@Sprite@@QAEHHHHHH@Z 0x005E4AEA-0x005E4AEF BYTE_EXACT
-// symbol    ?draw_noop@Sprite@@QAEHPAVBuffer@@HHHH@Z
-// size      5 bytes
-// prototype int (__thiscall ?UNK2@Sprite@@QAEHHHHHH@Z)(Sprite* this, int, int, int, int, int)
-// callers   1   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Status: Complete
-*/
-int Sprite::draw_noop(Buffer *, int, int, int, int) {
+                 unsigned char *table) {
+    int source_y;
+    int source_col;
+    RECT rc_clip;
+    int dest_col_ofs;
+    unsigned char *dest_ptr;
+    RECT original;
+    int start_x;
+    unsigned char *source;
+    int dest_y;
+    int start_y;
+    int w;
+    int scaled_height;
+    int scaled_cx;
+    int s_top;
+    int sc_left;
+    int h;
+    if (pcBits_ == 0 || destination == 0 || destination->get_data() == 0) {
+        return 3;
+    }
+    if (SpriteScaleNumerator != SpriteScaleDenominator
+        && (SpriteCachedScaleNumerator != SpriteScaleNumerator
+            || SpriteCachedScaleDenominator != SpriteScaleDenominator)) {
+        SpriteScalingRatio = static_cast<float>(SpriteScaleNumerator) / SpriteScaleDenominator;
+        if (SpriteScalingRatio > 4.0) {
+            destination->free_data(1);
+            return 0;
+        }
+        fill_scaling_table();
+        SpriteCachedScaleNumerator = SpriteScaleNumerator;
+        SpriteCachedScaleDenominator = SpriteScaleDenominator;
+    }
+    transparent = static_cast<unsigned char>(transparent);
+    SpriteRasterSourcePitch = iSpriteWidth2_;
+    SpriteRasterDestinationPitch = destination->stride_;
+    source = pcBits_;
+    if (SpriteScaleNumerator == SpriteScaleDenominator) {
+        h = iSpriteHeight_;
+        w = iSpriteWidth_;
+        start_y = y + iTopOffset_;
+        start_x = x + iLeftOffset_;
+        rc_clip.left = start_x;
+        rc_clip.top = start_y;
+        rc_clip.right = start_x + w;
+        rc_clip.bottom = start_y + h;
+        original = rc_clip;
+        if (!IntersectRect(&rc_clip, &rc_clip, &destination->rect1_)) {
+            destination->free_data(1);
+            return 0;
+        }
+        source = pcBits_ + (rc_clip.left - original.left)
+            + (rc_clip.top - original.top) * SpriteRasterSourcePitch;
+        dest_ptr = static_cast<unsigned char *>(destination->locked_bits_) + rc_clip.left
+            + rc_clip.top * SpriteRasterDestinationPitch;
+        SpriteRasterDestinationRowCount = rc_clip.bottom - rc_clip.top;
+        SpriteRasterDestinationColumnCount = rc_clip.right - rc_clip.left;
+        SpriteRasterGroupCount = SpriteRasterDestinationColumnCount >> 2;
+        SpriteRasterSourceRowTail = SpriteRasterSourcePitch - SpriteRasterDestinationColumnCount;
+        SpriteRasterDestinationRowTail = SpriteRasterDestinationPitch - SpriteRasterDestinationColumnCount;
+        // Hand-written assembly: computed `lea edx, label` / `jmp edx` entry
+        // into an unrolled four-pixel keyed fill.
+        __asm {
+                        push esi
+                        push edi
+                        mov esi, dword ptr [source]
+                        mov edi, dword ptr [dest_ptr]
+                        mov ecx, dword ptr [SpriteRasterGroupCount]
+                        mov al, byte ptr [transparent]
+                        mov edx, dword ptr [table]
+                        xor ebx, ebx
+                        push ebp
+                        mov ebp, edx
+                        mov edx, dword ptr [SpriteRasterDestinationColumnCount]
+                        and edx, 0x3
+                        je T1_2d
+                        dec edx
+                        je T1_35
+                        dec edx
+                        je T1_44
+                        dec edx
+                        je T1_53
+                    T1_2d:
+                        lea edx, T1_a1
+                        jmp T1_a1
+                    T1_35:
+                        lea edx, T1_b3
+                        inc ecx
+                        mov dword ptr [SpriteRasterGroupCount], ecx
+                        jmp T1_b3
+                    T1_44:
+                        lea edx, T1_ad
+                        inc ecx
+                        mov dword ptr [SpriteRasterGroupCount], ecx
+                        jmp T1_ad
+                    T1_53:
+                        lea edx, T1_a7
+                        inc ecx
+                        mov dword ptr [SpriteRasterGroupCount], ecx
+                        jmp T1_a7
+                    T1_62:
+                        jmp edx
+                    T1_64:
+                        cmp byte ptr [esi], al
+                        je T1_a5
+                    T1_68:
+                        mov bl, byte ptr [esi]
+                        mov bl, byte ptr [ebp+ebx]
+                        mov byte ptr [edi], bl
+                        inc esi
+                        inc edi
+                        cmp byte ptr [esi], al
+                        je T1_ab
+                    T1_76:
+                        mov bl, byte ptr [esi]
+                        mov bl, byte ptr [ebp+ebx]
+                        mov byte ptr [edi], bl
+                        inc esi
+                        inc edi
+                        cmp byte ptr [esi], al
+                        je T1_b1
+                    T1_84:
+                        mov bl, byte ptr [esi]
+                        mov bl, byte ptr [ebp+ebx]
+                        mov byte ptr [edi], bl
+                        inc esi
+                        inc edi
+                        cmp byte ptr [esi], al
+                        je T1_b7
+                    T1_92:
+                        mov bl, byte ptr [esi]
+                        mov bl, byte ptr [ebp+ebx]
+                        mov byte ptr [edi], bl
+                        inc esi
+                        inc edi
+                        dec ecx
+                        jne T1_64
+                        jmp T1_bc
+                    T1_a1:
+                        cmp byte ptr [esi], al
+                        jne T1_68
+                    T1_a5:
+                        inc esi
+                        inc edi
+                    T1_a7:
+                        cmp byte ptr [esi], al
+                        jne T1_76
+                    T1_ab:
+                        inc esi
+                        inc edi
+                    T1_ad:
+                        cmp byte ptr [esi], al
+                        jne T1_84
+                    T1_b1:
+                        inc esi
+                        inc edi
+                    T1_b3:
+                        cmp byte ptr [esi], al
+                        jne T1_92
+                    T1_b7:
+                        inc esi
+                        inc edi
+                        dec ecx
+                        jne T1_a1
+                    T1_bc:
+                        mov ecx, dword ptr [SpriteRasterGroupCount]
+                        add esi, dword ptr [SpriteRasterSourceRowTail]
+                        add edi, dword ptr [SpriteRasterDestinationRowTail]
+                        dec dword ptr [SpriteRasterDestinationRowCount]
+                        jne T1_62
+                        pop ebp
+                        pop edi
+                        pop esi
+        }
+    } else {
+        scaled_height = static_cast<int>(iSpriteHeight_ * SpriteScalingRatio);
+        scaled_cx = static_cast<int>(iSpriteWidth_ * SpriteScalingRatio);
+        s_top = static_cast<int>(y + iTopOffset_ * SpriteScalingRatio);
+        sc_left = static_cast<int>(x + iLeftOffset_ * SpriteScalingRatio);
+        rc_clip.left = sc_left;
+        rc_clip.top = s_top;
+        rc_clip.right = sc_left + scaled_cx;
+        rc_clip.bottom = s_top + scaled_height;
+        original = rc_clip;
+        if (!IntersectRect(&rc_clip, &rc_clip, &destination->rect1_)) {
+            destination->free_data(1);
+            return 0;
+        }
+        rc_clip = original;
+        dest_ptr = static_cast<unsigned char *>(destination->locked_bits_) + rc_clip.left
+            + rc_clip.top * SpriteRasterDestinationPitch;
+        SpriteRasterDestinationPitch = destination->stride_;
+        if (SpriteScaleNumerator < SpriteScaleDenominator) {
+            if (original.right - original.left < SpriteMinimumScaledWidth
+                || original.bottom - original.top < SpriteMinimumScaledHeight) {
+                destination->free_data(1);
+                return 0;
+            }
+            IntersectRect(&rc_clip, &original, &destination->rect1_);
+            SpriteRasterXTable = get_clipped_x_table_shrink(&original, &rc_clip,
+                &dest_col_ofs, &source_col, &SpriteRasterDestinationColumnCount,
+                &SpriteRasterSourceColumnCount);
+            if (SpriteRasterXTable == 0) {
+                destination->free_data(1);
+                return 0;
+            }
+            SpriteRasterYTable = get_clipped_y_table_shrink(&original, &rc_clip,
+                &dest_y, &source_y, &SpriteRasterDestinationRowCount,
+                &SpriteRasterSourceRowCount);
+            if (SpriteRasterYTable == 0) {
+                destination->free_data(1);
+                return 0;
+            }
+            SpriteRasterGroupCount = SpriteRasterDestinationColumnCount >> 2;
+            SpriteRasterDestinationRowTail = SpriteRasterDestinationPitch - SpriteRasterDestinationColumnCount;
+            SpriteRasterSourceRowTail = SpriteRasterSourcePitch - SpriteRasterSourceColumnCount;
+            dest_ptr += dest_col_ofs + SpriteRasterDestinationPitch * dest_y;
+            // Hand-written assembly: one-operand MUL row offset and computed
+            // `jmp ebx` entry into an X-table stepped keyed fill.
+            __asm {
+                            push esi
+                            push edi
+                            mov eax, dword ptr [SpriteRasterSourcePitch]
+                            mul dword ptr [source_y]
+                            mov esi, eax
+                            add esi, dword ptr [source_col]
+                            add esi, dword ptr [source]
+                            mov edi, dword ptr [dest_ptr]
+                            mov edx, dword ptr [SpriteRasterXTable]
+                            mov ecx, dword ptr [SpriteRasterGroupCount]
+                            mov ebx, dword ptr [table]
+                            mov ah, byte ptr [transparent]
+                            push ebp
+                            mov ebp, ebx
+                            mov ebx, dword ptr [SpriteRasterDestinationColumnCount]
+                            and ebx, 0x3
+                            je T2_3e
+                            dec ebx
+                            je T2_51
+                            dec ebx
+                            je T2_6b
+                            dec ebx
+                            je T2_82
+                        T2_3e:
+                            lea ebx, T2_ec
+                            mov dword ptr [SpriteRasterShrinkEntry], ebx
+                            xor ebx, ebx
+                            jmp T2_ec
+                        T2_51:
+                            lea ebx, T2_10a
+                            mov dword ptr [SpriteRasterShrinkEntry], ebx
+                            xor ebx, ebx
+                            inc ecx
+                            mov dword ptr [SpriteRasterGroupCount], ecx
+                            jmp T2_10a
+                        T2_6b:
+                            lea ebx, T2_100
+                            mov dword ptr [SpriteRasterShrinkEntry], ebx
+                            xor ebx, ebx
+                            inc ecx
+                            mov dword ptr [SpriteRasterGroupCount], ecx
+                            jmp T2_100
+                        T2_82:
+                            lea ebx, T2_f6
+                            mov dword ptr [SpriteRasterShrinkEntry], ebx
+                            xor ebx, ebx
+                            inc ecx
+                            mov dword ptr [SpriteRasterGroupCount], ecx
+                            jmp T2_f6
+                        T2_99:
+                            jmp dword ptr [SpriteRasterShrinkEntry]
+                        T2_9f:
+                            cmp byte ptr [esi], ah
+                            je T2_f0
+                        T2_a3:
+                            mov bl, byte ptr [esi]
+                            mov bl, byte ptr [ebp+ebx]
+                            mov byte ptr [edi], bl
+                            add esi, dword ptr [edx]
+                            inc edi
+                            add edx, 0x4
+                            cmp byte ptr [esi], ah
+                            je T2_fa
+                        T2_b5:
+                            mov bl, byte ptr [esi]
+                            mov bl, byte ptr [ebp+ebx]
+                            mov byte ptr [edi], bl
+                            add esi, dword ptr [edx]
+                            inc edi
+                            add edx, 0x4
+                            cmp byte ptr [esi], ah
+                            je T2_104
+                        T2_c7:
+                            mov bl, byte ptr [esi]
+                            mov bl, byte ptr [ebp+ebx]
+                            mov byte ptr [edi], bl
+                            add esi, dword ptr [edx]
+                            inc edi
+                            add edx, 0x4
+                            cmp byte ptr [esi], ah
+                            je T2_10e
+                        T2_d9:
+                            mov bl, byte ptr [esi]
+                            mov bl, byte ptr [ebp+ebx]
+                            mov byte ptr [edi], bl
+                            add esi, dword ptr [edx]
+                            inc edi
+                            add edx, 0x4
+                            dec ecx
+                            jne T2_9f
+                            jmp T2_117
+                        T2_ec:
+                            cmp byte ptr [esi], ah
+                            jne T2_a3
+                        T2_f0:
+                            inc edi
+                            add esi, dword ptr [edx]
+                            add edx, 0x4
+                        T2_f6:
+                            cmp byte ptr [esi], ah
+                            jne T2_b5
+                        T2_fa:
+                            inc edi
+                            add esi, dword ptr [edx]
+                            add edx, 0x4
+                        T2_100:
+                            cmp byte ptr [esi], ah
+                            jne T2_c7
+                        T2_104:
+                            inc edi
+                            add esi, dword ptr [edx]
+                            add edx, 0x4
+                        T2_10a:
+                            cmp byte ptr [esi], ah
+                            jne T2_d9
+                        T2_10e:
+                            inc edi
+                            add esi, dword ptr [edx]
+                            add edx, 0x4
+                            dec ecx
+                            jne T2_ec
+                        T2_117:
+                            mov ecx, dword ptr [SpriteRasterYTable]
+                            mov al, byte ptr [ecx]
+                            add ecx, 0x4
+                            mov dword ptr [SpriteRasterYTable], ecx
+                            xor ecx, ecx
+                            mov cl, al
+                            dec ecx
+                            je T2_138
+                        T2_12f:
+                            add esi, dword ptr [SpriteRasterSourcePitch]
+                            dec ecx
+                            jne T2_12f
+                        T2_138:
+                            add esi, dword ptr [SpriteRasterSourceRowTail]
+                            add edi, dword ptr [SpriteRasterDestinationRowTail]
+                            mov edx, dword ptr [SpriteRasterXTable]
+                            mov ecx, dword ptr [SpriteRasterDestinationRowCount]
+                            dec ecx
+                            mov dword ptr [SpriteRasterDestinationRowCount], ecx
+                            mov ecx, dword ptr [SpriteRasterGroupCount]
+                            jne T2_99
+                            pop ebp
+                            pop edi
+                            pop esi
+            }
+        } else {
+            IntersectRect(&rc_clip, &original, &destination->rect1_);
+            SpriteRasterXTable = get_clipped_x_table_expand(&original, &rc_clip,
+                &source_col, &dest_col_ofs, &SpriteRasterSourceColumnCount,
+                &SpriteRasterDestinationColumnCount);
+            if (SpriteRasterXTable == 0) {
+                destination->free_data(1);
+                return 0;
+            }
+            SpriteRasterYTable = get_clipped_y_table_expand(&original, &rc_clip,
+                &source_y, &dest_y, &SpriteRasterSourceRowCount,
+                &SpriteRasterDestinationRowCount);
+            if (SpriteRasterYTable == 0) {
+                destination->free_data(1);
+                return 0;
+            }
+            dest_ptr += dest_col_ofs + SpriteRasterDestinationPitch * dest_y;
+            SpriteRasterDestinationRowTail = SpriteRasterDestinationPitch - SpriteRasterDestinationColumnCount;
+            SpriteRasterGroupCount = SpriteRasterSourceColumnCount >> 2;
+            SpriteRasterGroupRemainder = SpriteRasterSourceColumnCount - (SpriteRasterGroupCount << 2);
+            SpriteRasterSourceRowTail = SpriteRasterSourcePitch - SpriteRasterSourceColumnCount;
+            SpriteRasterRemapTable.single = table;
+            // Hand-written assembly: 16-bit PUSHF/POPF around CLD, EBP as the
+            // row counter, and replicated expansion rows.
+            __asm {
+                            push edi
+                            push esi
+                            pushf
+                            cld
+                            mov eax, dword ptr [SpriteRasterSourcePitch]
+                            mul dword ptr [source_y]
+                            mov esi, eax
+                            add esi, dword ptr [source_col]
+                            add esi, dword ptr [source]
+                            mov edi, dword ptr [dest_ptr]
+                            mov edx, dword ptr [SpriteRasterXTable]
+                            mov ah, byte ptr [transparent]
+                            mov ebx, dword ptr [SpriteRasterSourceColumnCount]
+                            and ebx, 0x3
+                            push ebp
+                            mov ebp, dword ptr [SpriteRasterDestinationPitch]
+                            je T3_40
+                            mov ecx, dword ptr [SpriteRasterGroupCount]
+                            inc ecx
+                            mov dword ptr [SpriteRasterGroupCount], ecx
+                        T3_40:
+                            mov ecx, dword ptr [SpriteRasterGroupCount]
+                            mov dword ptr [SpriteRasterColumnCountdown], ecx
+                            mov ecx, dword ptr [SpriteRasterYTable]
+                            mov al, byte ptr [ecx]
+                            add ecx, 0x4
+                            mov dword ptr [SpriteRasterYTable], ecx
+                            mov edx, dword ptr [SpriteRasterXTable]
+                            cmp al, 0x1
+                            je T3_52a
+                            cmp al, 0x2
+                            je T3_3d7
+                            cmp al, 0x3
+                            je T3_24c
+                            mov ebx, dword ptr [SpriteRasterSourceColumnCount]
+                            and ebx, 0x3
+                            je T3_9e
+                            dec ebx
+                            je T3_8f
+                            dec ebx
+                            je T3_94
+                            dec ebx
+                            je T3_99
+                        T3_8f:
+                            jmp T3_22b
+                        T3_94:
+                            jmp T3_21d
+                        T3_99:
+                            jmp T3_20f
+                        T3_9e:
+                            cmp byte ptr [esi], ah
+                            je T3_209
+                        T3_a6:
+                            cmp byte ptr [esi], 0x0
+                            mov ecx, dword ptr [edx]
+                            je T3_eb
+                            xor ebx, ebx
+                            mov bl, byte ptr [edi]
+                            add ebx, dword ptr [SpriteRasterRemapTable]
+                            mov al, byte ptr [ebx]
+                        T3_b9:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_b9
+                            add edi, ebp
+                            sub edi, dword ptr [edx]
+                            mov ecx, dword ptr [edx]
+                        T3_c5:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_c5
+                            add edi, ebp
+                            sub edi, dword ptr [edx]
+                            mov ecx, dword ptr [edx]
+                        T3_d1:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_d1
+                            add edi, ebp
+                            sub edi, dword ptr [edx]
+                            mov ecx, dword ptr [edx]
+                        T3_dd:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_dd
+                            sub edi, ebp
+                            sub edi, ebp
+                            sub edi, ebp
+                            jmp T3_ed
+                        T3_eb:
+                            add edi, ecx
+                        T3_ed:
+                            inc esi
+                            add edx, 0x4
+                            cmp byte ptr [esi], ah
+                            je T3_217
+                        T3_f9:
+                            cmp byte ptr [esi], 0x0
+                            mov ecx, dword ptr [edx]
+                            je T3_13e
+                            xor ebx, ebx
+                            mov bl, byte ptr [edi]
+                            add ebx, dword ptr [SpriteRasterRemapTable]
+                            mov al, byte ptr [ebx]
+                        T3_10c:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_10c
+                            add edi, ebp
+                            sub edi, dword ptr [edx]
+                            mov ecx, dword ptr [edx]
+                        T3_118:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_118
+                            add edi, ebp
+                            sub edi, dword ptr [edx]
+                            mov ecx, dword ptr [edx]
+                        T3_124:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_124
+                            add edi, ebp
+                            sub edi, dword ptr [edx]
+                            mov ecx, dword ptr [edx]
+                        T3_130:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_130
+                            sub edi, ebp
+                            sub edi, ebp
+                            sub edi, ebp
+                            jmp T3_140
+                        T3_13e:
+                            add edi, ecx
+                        T3_140:
+                            inc esi
+                            add edx, 0x4
+                            cmp byte ptr [esi], ah
+                            je T3_225
+                        T3_14c:
+                            cmp byte ptr [esi], 0x0
+                            mov ecx, dword ptr [edx]
+                            je T3_191
+                            xor ebx, ebx
+                            mov bl, byte ptr [edi]
+                            add ebx, dword ptr [SpriteRasterRemapTable]
+                            mov al, byte ptr [ebx]
+                        T3_15f:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_15f
+                            add edi, ebp
+                            sub edi, dword ptr [edx]
+                            mov ecx, dword ptr [edx]
+                        T3_16b:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_16b
+                            add edi, ebp
+                            sub edi, dword ptr [edx]
+                            mov ecx, dword ptr [edx]
+                        T3_177:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_177
+                            add edi, ebp
+                            sub edi, dword ptr [edx]
+                            mov ecx, dword ptr [edx]
+                        T3_183:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_183
+                            sub edi, ebp
+                            sub edi, ebp
+                            sub edi, ebp
+                            jmp T3_193
+                        T3_191:
+                            add edi, ecx
+                        T3_193:
+                            inc esi
+                            add edx, 0x4
+                            cmp byte ptr [esi], ah
+                            je T3_233
+                        T3_19f:
+                            cmp byte ptr [esi], 0x0
+                            mov ecx, dword ptr [edx]
+                            je T3_1e4
+                            xor ebx, ebx
+                            mov bl, byte ptr [edi]
+                            add ebx, dword ptr [SpriteRasterRemapTable]
+                            mov al, byte ptr [ebx]
+                        T3_1b2:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_1b2
+                            add edi, ebp
+                            sub edi, dword ptr [edx]
+                            mov ecx, dword ptr [edx]
+                        T3_1be:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_1be
+                            add edi, ebp
+                            sub edi, dword ptr [edx]
+                            mov ecx, dword ptr [edx]
+                        T3_1ca:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_1ca
+                            add edi, ebp
+                            sub edi, dword ptr [edx]
+                            mov ecx, dword ptr [edx]
+                        T3_1d6:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_1d6
+                            sub edi, ebp
+                            sub edi, ebp
+                            sub edi, ebp
+                            jmp T3_1e6
+                        T3_1e4:
+                            add edi, ecx
+                        T3_1e6:
+                            inc esi
+                            add edx, 0x4
+                            dec dword ptr [SpriteRasterColumnCountdown]
+                            jne T3_9e
+                            lea edi, [edi+2*ebp]
+                            lea edi, [edi+ebp]
+                            jmp T3_62f
+                        T3_201:
+                            cmp byte ptr [esi], ah
+                            jne T3_a6
+                        T3_209:
+                            inc esi
+                            add edi, dword ptr [edx]
+                            add edx, 0x4
+                        T3_20f:
+                            cmp byte ptr [esi], ah
+                            jne T3_f9
+                        T3_217:
+                            inc esi
+                            add edi, dword ptr [edx]
+                            add edx, 0x4
+                        T3_21d:
+                            cmp byte ptr [esi], ah
+                            jne T3_14c
+                        T3_225:
+                            inc esi
+                            add edi, dword ptr [edx]
+                            add edx, 0x4
+                        T3_22b:
+                            cmp byte ptr [esi], ah
+                            jne T3_19f
+                        T3_233:
+                            inc esi
+                            add edi, dword ptr [edx]
+                            add edx, 0x4
+                            dec dword ptr [SpriteRasterColumnCountdown]
+                            jne T3_201
+                            lea edi, [edi+2*ebp]
+                            lea edi, [edi+ebp]
+                            jmp T3_62f
+                        T3_24c:
+                            mov ebx, dword ptr [SpriteRasterSourceColumnCount]
+                            and ebx, 0x3
+                            je T3_26f
+                            dec ebx
+                            je T3_260
+                            dec ebx
+                            je T3_265
+                            dec ebx
+                            je T3_26a
+                        T3_260:
+                            jmp T3_3bd
+                        T3_265:
+                            jmp T3_3af
+                        T3_26a:
+                            jmp T3_3a1
+                        T3_26f:
+                            cmp byte ptr [esi], ah
+                            je T3_39b
+                        T3_277:
+                            cmp byte ptr [esi], 0x0
+                            mov ecx, dword ptr [edx]
+                            je T3_2ae
+                            xor ebx, ebx
+                            mov bl, byte ptr [esi]
+                            add ebx, dword ptr [SpriteRasterRemapTable]
+                            mov al, byte ptr [ebx]
+                        T3_28a:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_28a
+                            add edi, ebp
+                            sub edi, dword ptr [edx]
+                            mov ecx, dword ptr [edx]
+                        T3_296:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_296
+                            add edi, ebp
+                            sub edi, dword ptr [edx]
+                            mov ecx, dword ptr [edx]
+                        T3_2a2:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_2a2
+                            sub edi, ebp
+                            sub edi, ebp
+                            jmp T3_2b0
+                        T3_2ae:
+                            add edi, ecx
+                        T3_2b0:
+                            inc esi
+                            add edx, 0x4
+                            cmp byte ptr [esi], ah
+                            je T3_3a9
+                        T3_2bc:
+                            cmp byte ptr [esi], 0x0
+                            mov ecx, dword ptr [edx]
+                            je T3_2f3
+                            xor ebx, ebx
+                            mov bl, byte ptr [esi]
+                            add ebx, dword ptr [SpriteRasterRemapTable]
+                            mov al, byte ptr [ebx]
+                        T3_2cf:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_2cf
+                            add edi, ebp
+                            sub edi, dword ptr [edx]
+                            mov ecx, dword ptr [edx]
+                        T3_2db:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_2db
+                            add edi, ebp
+                            sub edi, dword ptr [edx]
+                            mov ecx, dword ptr [edx]
+                        T3_2e7:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_2e7
+                            sub edi, ebp
+                            sub edi, ebp
+                            jmp T3_2f5
+                        T3_2f3:
+                            add edi, ecx
+                        T3_2f5:
+                            inc esi
+                            add edx, 0x4
+                            cmp byte ptr [esi], ah
+                            je T3_3b7
+                        T3_301:
+                            cmp byte ptr [esi], 0x0
+                            mov ecx, dword ptr [edx]
+                            je T3_338
+                            xor ebx, ebx
+                            mov bl, byte ptr [esi]
+                            add ebx, dword ptr [SpriteRasterRemapTable]
+                            mov al, byte ptr [ebx]
+                        T3_314:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_314
+                            add edi, ebp
+                            sub edi, dword ptr [edx]
+                            mov ecx, dword ptr [edx]
+                        T3_320:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_320
+                            add edi, ebp
+                            sub edi, dword ptr [edx]
+                            mov ecx, dword ptr [edx]
+                        T3_32c:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_32c
+                            sub edi, ebp
+                            sub edi, ebp
+                            jmp T3_33a
+                        T3_338:
+                            add edi, ecx
+                        T3_33a:
+                            inc esi
+                            add edx, 0x4
+                            cmp byte ptr [esi], ah
+                            je T3_3c1
+                        T3_342:
+                            cmp byte ptr [esi], 0x0
+                            mov ecx, dword ptr [edx]
+                            je T3_379
+                            xor ebx, ebx
+                            mov bl, byte ptr [esi]
+                            add ebx, dword ptr [SpriteRasterRemapTable]
+                            mov al, byte ptr [ebx]
+                        T3_355:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_355
+                            add edi, ebp
+                            sub edi, dword ptr [edx]
+                            mov ecx, dword ptr [edx]
+                        T3_361:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_361
+                            add edi, ebp
+                            sub edi, dword ptr [edx]
+                            mov ecx, dword ptr [edx]
+                        T3_36d:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_36d
+                            sub edi, ebp
+                            sub edi, ebp
+                            jmp T3_37b
+                        T3_379:
+                            add edi, ecx
+                        T3_37b:
+                            inc esi
+                            add edx, 0x4
+                            dec dword ptr [SpriteRasterColumnCountdown]
+                            jne T3_26f
+                            lea edi, [edi+2*ebp]
+                            jmp T3_62f
+                        T3_393:
+                            cmp byte ptr [esi], ah
+                            jne T3_277
+                        T3_39b:
+                            inc esi
+                            add edi, dword ptr [edx]
+                            add edx, 0x4
+                        T3_3a1:
+                            cmp byte ptr [esi], ah
+                            jne T3_2bc
+                        T3_3a9:
+                            inc esi
+                            add edi, dword ptr [edx]
+                            add edx, 0x4
+                        T3_3af:
+                            cmp byte ptr [esi], ah
+                            jne T3_301
+                        T3_3b7:
+                            inc esi
+                            add edi, dword ptr [edx]
+                            add edx, 0x4
+                        T3_3bd:
+                            cmp byte ptr [esi], ah
+                            jne T3_342
+                        T3_3c1:
+                            inc esi
+                            add edi, dword ptr [edx]
+                            add edx, 0x4
+                            dec dword ptr [SpriteRasterColumnCountdown]
+                            jne T3_393
+                            lea edi, [edi+2*ebp]
+                            jmp T3_62f
+                        T3_3d7:
+                            mov ebx, dword ptr [SpriteRasterSourceColumnCount]
+                            and ebx, 0x3
+                            je T3_3fa
+                            dec ebx
+                            je T3_3eb
+                            dec ebx
+                            je T3_3f0
+                            dec ebx
+                            je T3_3f5
+                        T3_3eb:
+                            jmp T3_510
+                        T3_3f0:
+                            jmp T3_502
+                        T3_3f5:
+                            jmp T3_4f4
+                        T3_3fa:
+                            cmp byte ptr [esi], ah
+                            je T3_4ee
+                        T3_402:
+                            cmp byte ptr [esi], 0x0
+                            mov ecx, dword ptr [edx]
+                            je T3_42b
+                            xor ebx, ebx
+                            mov bl, byte ptr [esi]
+                            add ebx, dword ptr [SpriteRasterRemapTable]
+                            mov al, byte ptr [ebx]
+                        T3_415:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_415
+                            add edi, ebp
+                            sub edi, dword ptr [edx]
+                            mov ecx, dword ptr [edx]
+                        T3_421:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_421
+                            sub edi, ebp
+                            jmp T3_42d
+                        T3_42b:
+                            add edi, ecx
+                        T3_42d:
+                            inc esi
+                            add edx, 0x4
+                            cmp byte ptr [esi], ah
+                            je T3_4fc
+                        T3_439:
+                            cmp byte ptr [esi], 0x0
+                            mov ecx, dword ptr [edx]
+                            je T3_462
+                            xor ebx, ebx
+                            mov bl, byte ptr [esi]
+                            add ebx, dword ptr [SpriteRasterRemapTable]
+                            mov al, byte ptr [ebx]
+                        T3_44c:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_44c
+                            add edi, ebp
+                            sub edi, dword ptr [edx]
+                            mov ecx, dword ptr [edx]
+                        T3_458:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_458
+                            sub edi, ebp
+                            jmp T3_464
+                        T3_462:
+                            add edi, ecx
+                        T3_464:
+                            inc esi
+                            add edx, 0x4
+                            cmp byte ptr [esi], ah
+                            je T3_50a
+                        T3_470:
+                            cmp byte ptr [esi], 0x0
+                            mov ecx, dword ptr [edx]
+                            je T3_499
+                            xor ebx, ebx
+                            mov bl, byte ptr [esi]
+                            add ebx, dword ptr [SpriteRasterRemapTable]
+                            mov al, byte ptr [ebx]
+                        T3_483:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_483
+                            add edi, ebp
+                            sub edi, dword ptr [edx]
+                            mov ecx, dword ptr [edx]
+                        T3_48f:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_48f
+                            sub edi, ebp
+                            jmp T3_49b
+                        T3_499:
+                            add edi, ecx
+                        T3_49b:
+                            inc esi
+                            add edx, 0x4
+                            cmp byte ptr [esi], ah
+                            je T3_514
+                        T3_4a3:
+                            cmp byte ptr [esi], 0x0
+                            mov ecx, dword ptr [edx]
+                            je T3_4cc
+                            xor ebx, ebx
+                            mov bl, byte ptr [esi]
+                            add ebx, dword ptr [SpriteRasterRemapTable]
+                            mov al, byte ptr [ebx]
+                        T3_4b6:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_4b6
+                            add edi, ebp
+                            sub edi, dword ptr [edx]
+                            mov ecx, dword ptr [edx]
+                        T3_4c2:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_4c2
+                            sub edi, ebp
+                            jmp T3_4ce
+                        T3_4cc:
+                            add edi, ecx
+                        T3_4ce:
+                            inc esi
+                            add edx, 0x4
+                            dec dword ptr [SpriteRasterColumnCountdown]
+                            jne T3_3fa
+                            lea edi, [edi+ebp]
+                            jmp T3_62f
+                        T3_4e6:
+                            cmp byte ptr [esi], ah
+                            jne T3_402
+                        T3_4ee:
+                            inc esi
+                            add edi, dword ptr [edx]
+                            add edx, 0x4
+                        T3_4f4:
+                            cmp byte ptr [esi], ah
+                            jne T3_439
+                        T3_4fc:
+                            inc esi
+                            add edi, dword ptr [edx]
+                            add edx, 0x4
+                        T3_502:
+                            cmp byte ptr [esi], ah
+                            jne T3_470
+                        T3_50a:
+                            inc esi
+                            add edi, dword ptr [edx]
+                            add edx, 0x4
+                        T3_510:
+                            cmp byte ptr [esi], ah
+                            jne T3_4a3
+                        T3_514:
+                            inc esi
+                            add edi, dword ptr [edx]
+                            add edx, 0x4
+                            dec dword ptr [SpriteRasterColumnCountdown]
+                            jne T3_4e6
+                            lea edi, [edi+ebp]
+                            jmp T3_62f
+                        T3_52a:
+                            mov ebx, dword ptr [SpriteRasterSourceColumnCount]
+                            and ebx, 0x3
+                            je T3_54d
+                            dec ebx
+                            je T3_53e
+                            dec ebx
+                            je T3_543
+                            dec ebx
+                            je T3_548
+                        T3_53e:
+                            jmp T3_61d
+                        T3_543:
+                            jmp T3_613
+                        T3_548:
+                            jmp T3_605
+                        T3_54d:
+                            cmp byte ptr [esi], ah
+                            je T3_5ff
+                        T3_555:
+                            cmp byte ptr [esi], 0x0
+                            mov ecx, dword ptr [edx]
+                            je T3_570
+                            xor ebx, ebx
+                            mov bl, byte ptr [esi]
+                            add ebx, dword ptr [SpriteRasterRemapTable]
+                            mov al, byte ptr [ebx]
+                        T3_568:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_568
+                            jmp T3_572
+                        T3_570:
+                            add edi, ecx
+                        T3_572:
+                            inc esi
+                            add edx, 0x4
+                            cmp byte ptr [esi], ah
+                            je T3_60d
+                        T3_57e:
+                            cmp byte ptr [esi], 0x0
+                            mov ecx, dword ptr [edx]
+                            je T3_599
+                            xor ebx, ebx
+                            mov bl, byte ptr [esi]
+                            add ebx, dword ptr [SpriteRasterRemapTable]
+                            mov al, byte ptr [ebx]
+                        T3_591:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_591
+                            jmp T3_59b
+                        T3_599:
+                            add edi, ecx
+                        T3_59b:
+                            inc esi
+                            add edx, 0x4
+                            cmp byte ptr [esi], ah
+                            je T3_617
+                        T3_5a3:
+                            cmp byte ptr [esi], 0x0
+                            mov ecx, dword ptr [edx]
+                            je T3_5be
+                            xor ebx, ebx
+                            mov bl, byte ptr [esi]
+                            add ebx, dword ptr [SpriteRasterRemapTable]
+                            mov al, byte ptr [ebx]
+                        T3_5b6:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_5b6
+                            jmp T3_5c0
+                        T3_5be:
+                            add edi, ecx
+                        T3_5c0:
+                            inc esi
+                            add edx, 0x4
+                            cmp byte ptr [esi], ah
+                            je T3_621
+                        T3_5c8:
+                            cmp byte ptr [esi], 0x0
+                            mov ecx, dword ptr [edx]
+                            je T3_5e3
+                            xor ebx, ebx
+                            mov bl, byte ptr [esi]
+                            add ebx, dword ptr [SpriteRasterRemapTable]
+                            mov al, byte ptr [ebx]
+                        T3_5db:
+                            mov byte ptr [edi], al
+                            inc edi
+                            dec ecx
+                            jne T3_5db
+                            jmp T3_5e5
+                        T3_5e3:
+                            add edi, ecx
+                        T3_5e5:
+                            inc esi
+                            add edx, 0x4
+                            dec dword ptr [SpriteRasterColumnCountdown]
+                            jne T3_54d
+                            jmp T3_62f
+                        T3_5f7:
+                            cmp byte ptr [esi], ah
+                            jne T3_555
+                        T3_5ff:
+                            inc esi
+                            add edi, dword ptr [edx]
+                            add edx, 0x4
+                        T3_605:
+                            cmp byte ptr [esi], ah
+                            jne T3_57e
+                        T3_60d:
+                            inc esi
+                            add edi, dword ptr [edx]
+                            add edx, 0x4
+                        T3_613:
+                            cmp byte ptr [esi], ah
+                            jne T3_5a3
+                        T3_617:
+                            inc esi
+                            add edi, dword ptr [edx]
+                            add edx, 0x4
+                        T3_61d:
+                            cmp byte ptr [esi], ah
+                            jne T3_5c8
+                        T3_621:
+                            inc esi
+                            add edi, dword ptr [edx]
+                            add edx, 0x4
+                            dec dword ptr [SpriteRasterColumnCountdown]
+                            jne T3_5f7
+                        T3_62f:
+                            add esi, dword ptr [SpriteRasterSourceRowTail]
+                            add edi, dword ptr [SpriteRasterDestinationRowTail]
+                            dec dword ptr [SpriteRasterSourceRowCount]
+                            jne T3_40
+                            pop ebp
+                            popf
+                            pop esi
+                            pop edi
+            }
+        }
+    }
+    destination->free_data(1);
     return 0;
 }
 
@@ -7509,6 +7464,145 @@ Status: Complete
 void Sprite::UNK3(int, int) {
 }
 
+// ORIGINAL: 0x005EAB0F ?get_clipped_x_table_expand@Sprite@@QAEHPAURECT@@PAURECT@@PAHPAHPAHPAH@Z 0x005EAB0F-0x005EABB7 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Original returns9B53EC and caller5E5244 consumes EAX as an int-table pointer. It clips partial first/last runs and reports source and destination extents, retaining ordered alias-visible output stores.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Recover expansion clipping as a typed pointer to the actual X run table."}
+// symbol    ?get_clipped_x_table_expand@Sprite@@QAEPAHPAUtagRECT@@0PAH111@Z
+// Capture rectangle-derived values before writes; the caller can alias
+// source_skip with a RECT coordinate.
+int *Sprite::get_clipped_x_table_expand(RECT *full, RECT *clipped, int *source_skip,
+    int *destination_skip, int *source_count, int *destination_count) {
+    const int skip = clipped->left - full->left;
+    int extent = clipped->right - clipped->left;
+    if (extent == 0) return 0;
+    *destination_count = extent;
+    *destination_skip = skip;
+    int index = 0;
+    int adjusted_skip = skip;
+    while (adjusted_skip > 0) { adjusted_skip -= SpriteScalingSteps[index]; ++index; }
+    const int *input = SpriteScalingSteps + index;
+    int count;
+    int *output;
+    if (adjusted_skip < 0) {
+        const int remaining = -adjusted_skip;
+        extent -= remaining;
+        SpriteClippedXSteps[0] = remaining;
+        output = SpriteClippedXSteps + 1;
+        *source_skip = index - 1;
+        count = 1;
+    } else {
+        output = SpriteClippedXSteps;
+        *source_skip = index;
+        count = 0;
+    }
+    while (extent > 0) {
+        const int step = *input++;
+        *output++ = step;
+        extent -= step;
+        ++count;
+    }
+    if (extent < 0) {
+        --output;
+        *output = *output + extent;
+    }
+    *source_count = count;
+    return SpriteClippedXSteps;
+}
+
+// ORIGINAL: 0x005EABBF ?get_clipped_y_table_expand@Sprite@@QAEHPAURECT@@PAURECT@@PAHPAHPAHPAH@Z 0x005EABBF-0x005EAC69 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Original returns9B4760 and caller5E5285 consumes EAX as an int-table pointer. Top/bottom coordinate counterpart of5EAB0F with its own scratch table.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Recover expansion clipping as a typed pointer to the independent Y run table."}
+// symbol    ?get_clipped_y_table_expand@Sprite@@QAEPAHPAUtagRECT@@0PAH111@Z
+// Preserve the X routine's ordered stores and partial head/tail handling for
+// the independent Y scratch table.
+int *Sprite::get_clipped_y_table_expand(RECT *full, RECT *clipped, int *source_skip,
+    int *destination_skip, int *source_count, int *destination_count) {
+    const int skip = clipped->top - full->top;
+    int extent = clipped->bottom - clipped->top;
+    if (extent == 0) return 0;
+    *destination_count = extent;
+    *destination_skip = skip;
+    int index = 0;
+    int adjusted_skip = skip;
+    while (adjusted_skip > 0) { adjusted_skip -= SpriteScalingSteps[index]; ++index; }
+    const int *input = SpriteScalingSteps + index;
+    int count;
+    int *output;
+    if (adjusted_skip < 0) {
+        const int remaining = -adjusted_skip;
+        extent -= remaining;
+        SpriteClippedYSteps[0] = remaining;
+        output = SpriteClippedYSteps + 1;
+        *source_skip = index - 1;
+        count = 1;
+    } else {
+        output = SpriteClippedYSteps;
+        *source_skip = index;
+        count = 0;
+    }
+    while (extent > 0) {
+        const int step = *input++;
+        *output++ = step;
+        extent -= step;
+        ++count;
+    }
+    if (extent < 0) {
+        --output;
+        *output = *output + extent;
+    }
+    *source_count = count;
+    return SpriteClippedYSteps;
+}
+
+// ORIGINAL: 0x005EAC6F ?get_clipped_x_table_shrink@Sprite@@QAEHPAURECT@@PAURECT@@PAHPAHPAHPAH@Z 0x005EAC6F-0x005EACFB BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Original computes source prefix skip and total source advances from9B3AD8; returned9B53EC is consumed as a pointer by5E503C. Output roles differ from expansion and retain alias-visible writes.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Recover shrinking X clipping using actual source-advance entries."}
+// symbol    ?get_clipped_x_table_shrink@Sprite@@QAEPAHPAUtagRECT@@0PAH111@Z
+// The zero-extent return precedes output writes; nonpositive extents retain
+// the original signed loop behavior.
+int *Sprite::get_clipped_x_table_shrink(RECT *full, RECT *clipped, int *destination_skip,
+    int *source_skip, int *destination_count, int *source_count) {
+    const int skip = clipped->left - full->left;
+    const int extent = clipped->right - clipped->left;
+    if (extent == 0) return 0;
+    *destination_skip = skip;
+    *destination_count = extent;
+    *source_skip = 0;
+    int index = 0;
+    while (index < skip) {
+        *source_skip += SpriteScalingSteps[index];
+        ++index;
+    }
+    *source_count = 0;
+    for (int i = 0; i < extent; ++i) {
+        SpriteClippedXSteps[i] = SpriteScalingSteps[i + index];
+        *source_count += SpriteScalingSteps[i + index];
+    }
+    return SpriteClippedXSteps;
+}
+
+// ORIGINAL: 0x005EACFF ?get_clipped_y_table_shrink@Sprite@@QAEHPAURECT@@PAURECT@@PAHPAHPAHPAH@Z 0x005EACFF-0x005EAD8D BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Original top/bottom counterpart of5EAC6F returns9B4760. Callers read one int entry per row but pixel kernels explicitly consume its low byte.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Recover shrinking Y clipping with an independent source-advance table."}
+// symbol    ?get_clipped_y_table_shrink@Sprite@@QAEPAHPAUtagRECT@@0PAH111@Z
+// Keep the same no-write zero-extent return and signed iteration as X.
+int *Sprite::get_clipped_y_table_shrink(RECT *full, RECT *clipped, int *destination_skip,
+    int *source_skip, int *destination_count, int *source_count) {
+    const int skip = clipped->top - full->top;
+    const int extent = clipped->bottom - clipped->top;
+    if (extent == 0) return 0;
+    *destination_skip = skip;
+    *destination_count = extent;
+    *source_skip = 0;
+    int index = 0;
+    while (index < skip) {
+        *source_skip += SpriteScalingSteps[index];
+        ++index;
+    }
+    *source_count = 0;
+    for (int i = 0; i < extent; ++i) {
+        SpriteClippedYSteps[i] = SpriteScalingSteps[i + index];
+        *source_count += SpriteScalingSteps[i + index];
+    }
+    return SpriteClippedYSteps;
+}
+
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -7526,296 +7620,139 @@ void Sprite::UNK4(int, int) {
 }
 
 
-// The exit byte is a real separate global at 0x009BEAE0. The original callback
-// sets bit 0 before calling Sprite::~Sprite; do not fold this byte into an
-// invented prefix allocation or let a second implicit destructor bypass it.
-// RECOVERY_OBJECT: v1 0x009BEAE0 ?BlankSpriteCleanupGuard@@3EA
-uint8_t BlankSpriteCleanupGuard;
-
-// Raw, four-byte-aligned storage starts at the original Sprite address
-// 0x009BEAE8. Placement construction starts one Sprite lifetime; the trivial
-// byte union suppresses the compiler's unconditional second teardown.
-// ORIGINAL: 0x0063BAE0 sub_63bae0 0x0063BAE0-0x0063BAF6 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence":["Historical seed src/recovered/units/0063bae0.cpp retains the complete original span and BYTE_EXACT obligation; its TRIED finding is retained by the source marker writer.","The seed finding’s explanation is retained: the earlier general.cpp prototype measured 5/6 because its atexit argument cleanup used add esp,4 where the pinned startup uses pop ecx.","Pinned startup 0x0063BAE0 constructs the Sprite at 0x009BEAE8 and registers cleanup callback 0x0063BB00 with _atexit.","The compiler-generated initializer references this owner, its constructor, the generated exit callback and _atexit, and is selected through .CRT$XCU. The owner embeds a 44-byte rawstorage_.bytes member at offset zero, qualified through the directly bound standalone CodeView definition; this is storage/lifetime evidence, not an exact linked allocation claim."],"reason":"Bind the original startup identity to the genuine compiler-generated initializer for the source-owned blank Sprite lifetime."}
-// symbol    _$E17
-// TRIED: same finding as 0x00589870 - homed into general.cpp it measures 5 of 6
-// Historical TRIED continuation: the earlier atexit argument cleanup used add esp,4 where the pinned startup uses pop ecx.
-// ORIGINAL: 0x0063BB00 sub_63bb00 0x0063BB00-0x0063BB1F FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence":["Pinned 0x0063BB00-0x0063BB1F tests and sets bit 0 at 0x009BEAE0 before calling Sprite::~Sprite on 0x009BEAE8; the set-bit branch returns without a second teardown.","The source-owned generated exit callback tests and sets the separate cleanup guard, then destroys the Sprite in rawstorage_.bytes. Its physical COFF references select this guard, this owner storage and Sprite::close; no unconditional second destruction is introduced.","docs/recovery/ida9-functions.csv retains the complete catalogued callback extent. This new identity has no matching claim."],"reason":"Bind the generated exit callback to the real owner’s guarded Sprite teardown; preserve bit-set-before-destruction and avoid an implicit second dtor."}
-// symbol    _$E15
-// RECOVERY_OBJECT: v3 0x009BEAE8 ?g_BLANK_SPRITE@@3VSprite@@A member ?g_BLANK_SPRITE_OWNER@@3UBlankSpriteStorageOwner@@A rawstorage_.bytes
-BlankSpriteStorageOwner g_BLANK_SPRITE_OWNER;
-
-BlankSpriteStorageOwner::BlankSpriteStorageOwner() {
-    new (&rawstorage_.bytes[0]) Sprite();
+// ORIGINAL: 0x005EAD9F ?change_color@Sprite@@QAEHHH@Z 0x005EAD9F-0x005EAE4E BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Original5EADA5 tests the pixel pointer; null returns7.5EADBC multiplies height by stride, not source or display width.5EADFA skips all work when the four-byte group count is zero, including non-null one-to-three-byte buffers; preserve that asymmetry rather than the seed full-scan loop.", "For valid nonnegative allocated sprite sizes, original unrolled byte comparisons and tail replace only matches after masking both colors to8bits. No transparency/metadata change or service call occurs; borrowed pixels are modified too. Malformed dimensions/overflowed allocation domains are not established as safe. Genuine C++ loop remains unclaimed; no assembly or copied machine code."], "reason": "Recover the sprite pixel recoloring service using the genuine owned/borrowed pixel pointer and stride."}
+int Sprite::change_color(int old_color, int new_color) {
+    if (pcBits_ == 0) {
+        return 7;
+    }
+    unsigned char *pixels;
+    int group_count;
+    int tail_count;
+    old_color = static_cast<unsigned char>(old_color);
+    pixels = pcBits_;
+    group_count = (iSpriteHeight_ * iSpriteWidth2_) >> 2;
+    new_color = static_cast<unsigned char>(new_color);
+    tail_count = (iSpriteHeight_ * iSpriteWidth2_) - (group_count << 2);
+    // Hand-written assembly: unrolled compare chains with `loop`, `and ecx,ecx` tests, mov ah writes.
+    // A zero group count skips the tail too; a negative product wraps the LOOP count.
+    __asm {
+        push esi
+        mov esi, pixels
+        mov ecx, group_count
+        mov al, byte ptr old_color
+        mov ah, byte ptr new_color
+        and ecx, ecx
+        je recolor_done
+    scan_0:
+        cmp [esi], al
+        je hit_0
+    scan_1:
+        inc esi
+        cmp [esi], al
+        je hit_1
+    scan_2:
+        inc esi
+        cmp [esi], al
+        je hit_2
+    scan_3:
+        inc esi
+        cmp [esi], al
+        je hit_3
+    scan_next:
+        inc esi
+        loop scan_0
+        dec esi
+        jmp tail_start
+    hit_loop:
+        cmp [esi], al
+        jne scan_1
+    hit_0:
+        mov [esi], ah
+        inc esi
+        cmp [esi], al
+        jne scan_2
+    hit_1:
+        mov [esi], ah
+        inc esi
+        cmp [esi], al
+        jne scan_3
+    hit_2:
+        mov [esi], ah
+        inc esi
+        cmp [esi], al
+        jne scan_next
+    hit_3:
+        mov [esi], ah
+        inc esi
+        loop hit_loop
+        dec esi
+    tail_start:
+        mov ecx, tail_count
+        and ecx, ecx
+        je recolor_done
+    tail_loop:
+        inc esi
+        cmp [esi], al
+        jne tail_next
+        mov [esi], ah
+    tail_next:
+        loop tail_loop
+    recolor_done:
+        pop esi
+    }
+    return 0;
 }
 
-BlankSpriteStorageOwner::~BlankSpriteStorageOwner() {
-    if ((BlankSpriteCleanupGuard & 1) != 0) {
-        return;
+// ORIGINAL: 0x005EAE4F ?copy@Sprite@@QAEHPAUSprite@@@Z 0x005EAE4F-0x005EAF34 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["5EAE57 checks source bits before touching destination.5EAE6C..5EAEC4 performs the same owned/borrowed cleanup and field clearing as Sprite::close, preserving the transparent key.5EAEC7 captures wrapped32bit stride*height only after cleanup; allocation pointer publishes before null failure4.", "5EAEEA rereads source bits after allocation;5EAEF5..5EAF29 reads metadata after memcpy, writes dimensions/offsets/key, clears borrowed status and copies stride last. Original has no pixel-allocation increment to SpriteMemoryUsed and no self/null destination guard. Valid pixel allocations and ordinary C++ memcpy domains remain required; no behavioral repair is invented."], "reason": "Recover source.copy(destination) through Sprite ownership and close semantics, retaining original allocation failure and metadata observation order."}
+// symbol    ?copy@Sprite@@QAEHPAV1@@Z
+int Sprite::copy(Sprite *destination) {
+    if (pcBits_ == 0) {
+        return 7;
     }
-    BlankSpriteCleanupGuard |= 1;
-    sprite().~Sprite();
-}
-
-
-/*
-Purpose: Extract a sprite from a rectangle, rejecting a null region.
-// ORIGINAL: 0x005E3960 ?extract@Sprite@@QAEHPAUBuffer@@HPAURECT@@PAUTexHeap@@@Z 0x005E3960-0x005E399E FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"reason":"The rectangle overload forwards its bounds to the source-owned coordinate extractor, returning 3 for a null rectangle.","evidence":["Original 0x005E3960-0x005E399E loads RECT.left/top/right/bottom, computes right-left and bottom-top, and calls 0x005E39A0.","src/sprite.cpp owns the coordinate overload at 0x005E39A0; git:2aca2e3f:src/recovered/units/005e3960.cpp retains the historical exact seed."]}
-// symbol    ?extract@Sprite@@QAEHPAVBuffer@@HPAUtagRECT@@PAUTexHeap@@@Z
-*/
-int Sprite::extract(Buffer *buffer, int transparent, RECT *region, TexHeap *heap) {
-    if (region == 0) {
-        return 3;
+    if (destination->fObj1Exists_ == 0 && destination->pcBits_ != 0) {
+        SpriteMemoryUsed = static_cast<int>(
+            static_cast<uint32_t>(SpriteMemoryUsed)
+            - static_cast<uint32_t>(destination->iSpriteHeight_)
+                  * static_cast<uint32_t>(destination->iSpriteWidth_));
+        if (destination->pcBits_ != 0) {
+            free(destination->pcBits_);
+        }
+        destination->pcBits_ = 0;
     }
-    return extract(buffer, transparent, region->left, region->top,
-                   region->right - region->left, region->bottom - region->top,
-                   heap);
-}
-
-/*
-Purpose: Cut the width x height rectangle at (left, top) out of a locked
-         buffer's pixels into this sprite, trimming the fully transparent
-         border on all four sides, then allocate the trimmed pixel block from
-         the sheet heap or the CRT and copy it across.
-// ORIGINAL: 0x005E39A0 ?extract@Sprite@@QAEHPAUBuffer@@HHHHHPAUTexHeap@@@Z 0x005E39A0-0x005E3DF1 FILE
-// symbol    ?extract@Sprite@@QAEHPAVBuffer@@HHHHHPAUTexHeap@@@Z
-// The image spells the buffer pointer `PAU` - Buffer as a STRUCT - where this
-// tree declares `class Buffer`, and MSVC decorates the first-seen class-key.
-// `Sprite::draw` carries the same fact for the same reason.
-// TRIED: direct field-name transcription of Sprite::extract mirroring Ghidra's param_1[N]; frame-pointer/register allocation shape diverges at insn #0
-// TRIED: first guard spelled `buffer == 0 || buffer->get_data() == 0`, as two
-//   nested `if (x != 0)` blocks, and as one `x != 0 && y != 0` chain - all
-//   three compile to the same 44 of 397 agreeing instructions (0.392 similar).
-//   Flag sets scored by measure --all-flags: /c /O2 /Ob0 /Gy /GR- /GX is the
-//   best at 44/397; every non-/Ob0 set is 7/397 or worse because the in-class
-//   `get_data()` then inlines and its E8 disappears. /Ob0 is load-bearing.
-// TRIED 2026-09-03, re-swept after sprite.h retyped cTransparentIndex_ to
-//   unsigned char: the committed body is 17 of 397 (0.415 similar) at /O2
-//   /Ob0 /GX, the same best set as before. The fold
-//   `cTransparentIndex_ = transparent & 0xff` scores 12 of 397; the nested
-//   two-`if` guard scores the same 17; the volatile-punned byte store scores
-//   18 and was refused as source. The retype neither helped nor hurt here.
-// TRIED: the receiver-spill fingerprint, not reached. The image never
-//   enregisters `buffer`: it loads it fresh into volatile ecx at each of its
-//   ten uses (`mov ecx, [esp+0x1c]`) and spends the callee-saved registers on
-//   this=esi, width=ebx, height=edi, zero=ebp - `xor ebp,ebp` sits above the
-//   first null test. Every spelling tried instead enregisters `buffer` into
-//   ebx at the function's first statement (scheduled before the remaining
-//   callee-saved pushes) and shifts every other role one register over
-//   (this=ebp, width=esi, zero=edi), renaming every field access and call
-//   receiver in the body at once. Same wall as the Palette receiver-spill
-//   bodies: guard reordering and condition shape do not move it.
-// size      1105 bytes
-// prototype int (__thiscall ?extract@Sprite@@QAEHPAUBuffer@@HHHHHPAUTexHeap@@@Z)(Sprite* this, Buffer*, int, int, int, int, int, #120*)
-// callers   29   call targets   8
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005D4510 0x005E3373 0x005E33F3 0x005E34A3 0x005FD2B0 0x006353C0 0x00644EF2 0x00645930
-Return Value: 0 extracted; 3 bad arguments or empty rectangle; 4 the CRT
-              allocation failed; 7 the buffer would not lock; 9 the rectangle
-              is entirely transparent
-Status: Semantics transcribed from the image
-
-The four scans walk the requested rectangle four ways: top down for the first
-row with a visible pixel, bottom up for the last, and across the kept rows for
-the first and last visible columns. `iTopOffset_` counts the rows the top scan
-spent; `iSpriteHeight_` opens as the untrimmed height and each bottom-scan row
-spends one; `iLeftOffset_` and the right-trim local mirror them on the columns.
-The bounds come off `dib_.bmiHeader`, whose `biHeight` is NEGATIVE for a
-top-down DIB - so the bottom bound really is `-biHeight`, and the
-two-coordinate `get_data` rejects the same way.
-*/
-int Sprite::extract(Buffer *buffer, int transparent, int left, int top,
-                    int width, int height, TexHeap *heap) {
-    int stride;
-    int col;
-    int rows;
-    int right_trim;
-    int row_index;
-    const uint8_t *pixels;
-
-    // ONE LOAD, ONE EXIT: the image tests `buffer` against zero with the same
-    // ecx load that then serves as the call's receiver, and both tests share
-    // the `return 3` tail with the four guards further down. NESTED, not `||`:
-    // the nesting is what ends `buffer`'s live range at the test.
-    if (buffer != 0 && buffer->get_data() != 0) {
-        // Free the previous contents exactly as Sprite::close opens: the pixel
-        // block is only owned, accounted, and released while the borrowed flag is
-        // clear, and the image re-tests `pcBits_` before the free.
-        if (fObj1Exists_ == 0 && pcBits_ != 0) {
-            SpriteMemoryUsed = static_cast<int>(
-                static_cast<uint32_t>(SpriteMemoryUsed)
-                - static_cast<uint32_t>(iSpriteHeight_)
-                      * static_cast<uint32_t>(iSpriteWidth_));
-            if (pcBits_ != 0) {
-                free(pcBits_);
-            }
-            pcBits_ = 0;
-        }
-        if (ppszFileName_ != 0) {
-            free(ppszFileName_);
-            ppszFileName_ = 0;
-        }
-        iSpriteWidth2_ = 0;
-        iSpriteWidth_ = 0;
-        iSpriteHeight_ = 0;
-        iWidth_ = 0;
-        iHeight_ = 0;
-        iLeftOffset_ = 0;
-        iTopOffset_ = 0;
-        fObj1Exists_ = 0;
-
-        if (width == 0) {
-            return 3;
-        }
-        if (height == 0) {
-            return 3;
-        }
-        if (left + width > static_cast<int>(buffer->dib_.bmiHeader.biWidth)) {
-            return 3;
-        }
-        if (top + height > -static_cast<int>(buffer->dib_.bmiHeader.biHeight)) {
-            return 3;
-        }
-
-        transparent &= 0xff;
-        cTransparentIndex_ = static_cast<unsigned char>(transparent);
-        iWidth_ = width;
-        iHeight_ = height;
-        pixels = buffer->get_data(left, top);
-        if (pixels == 0) {
-            buffer->free_data(1);
-            return 7;
-        }
-        stride = static_cast<int>(buffer->stride_);
-        iTopOffset_ = 0;
-        // TOP TRIM: walk down until a row carries a visible pixel.
-        for (row_index = 0; row_index < height; row_index++) {
-            for (col = 0; col < width; col++) {
-                if (pixels[col] != transparent) {
-                    goto top_done;
-                }
-            }
-            pixels += stride;
-            iTopOffset_++;
-        }
-    top_done:
-        do_sound();
-        if (iTopOffset_ == height) {
-            buffer->free_data(2);
-            return 9;
-        }
-        buffer->free_data(1);
-        // BOTTOM TRIM: walk up from the last row, right to left, until a row
-        // carries a visible pixel. The pointer arrives pre-decremented - the
-        // image indexes `row[col]` off `pixels - 1`, not `pixels[col - 1]`.
-        pixels = buffer->get_data(left, top + height - 1);
-        iSpriteHeight_ = height - iTopOffset_;
-        for (row_index = 0; row_index < height; row_index++) {
-            const uint8_t *from_right = pixels - 1;
-            for (col = width; col > 0; col--) {
-                if (from_right[col] != transparent) {
-                    goto bottom_done;
-                }
-            }
-            pixels -= stride;
-            iSpriteHeight_--;
-        }
-    bottom_done:
-        if (iSpriteHeight_ == 0) {
-            buffer->free_data(2);
-            return 9;
-        }
-        do_sound();
-        buffer->free_data(1);
-        // LEFT TRIM: on every kept row, find the first visible column.
-        pixels = buffer->get_data(left, top + iTopOffset_);
-        iLeftOffset_ = width;
-        for (rows = iSpriteHeight_; rows > 0; rows--) {
-            for (col = 0; col < width; col++) {
-                if (pixels[col] != transparent) {
-                    break;
-                }
-            }
-            if (col < iLeftOffset_) {
-                iLeftOffset_ = col;
-            }
-            pixels += stride;
-        }
-        do_sound();
-        buffer->free_data(1);
-        // RIGHT TRIM: on every kept row, count the transparent pixels at the end.
-        // THIS scan indexes `pixels[col - 1]` - the image folds the -1 into the
-        // addressing here, unlike the bottom trim above.
-        pixels = buffer->get_data(left, top + iTopOffset_);
-        right_trim = width;
-        for (rows = iSpriteHeight_; rows > 0; rows--) {
-            int counted = 0;
-            for (col = width; col > 0; col--) {
-                if (pixels[col - 1] != transparent) {
-                    break;
-                }
-                counted++;
-            }
-            if (counted < right_trim) {
-                right_trim = counted;
-            }
-            pixels += stride;
-        }
-        buffer->free_data(1);
-        iSpriteWidth_ = width - iLeftOffset_ - right_trim;
-        if (iSpriteWidth_ == 0) {
-            buffer->free_data(1);
-            return 9;
-        }
-        // The sheet heap is tried first and only when the caller named one. The
-        // pixels then draw through the heap and `fObj1Exists_` says so; anything
-        // else comes off the CRT as plain owned memory.
-        pcBits_ = 0;
-        if (heap != 0) {
-            pcBits_ = static_cast<unsigned char *>(heap->get_mem(iSpriteHeight_ * iSpriteWidth_));
-            if (pcBits_ != 0) {
-                fObj1Exists_ = 1;
-            }
-        }
-        do_sound();
-        if (pcBits_ == 0) {
-            pcBits_ = static_cast<unsigned char *>(mem_get(iSpriteWidth_ * iSpriteHeight_));
-            if (pcBits_ == 0) {
-                if (ppszFileName_ != 0) {
-                    free(ppszFileName_);
-                    ppszFileName_ = 0;
-                }
-                iSpriteWidth2_ = 0;
-                iSpriteWidth_ = 0;
-                iSpriteHeight_ = 0;
-                iWidth_ = 0;
-                iHeight_ = 0;
-                iLeftOffset_ = 0;
-                iTopOffset_ = 0;
-                fObj1Exists_ = 0;
-                buffer->free_data(1);
-                return 4;
-            }
-            fObj1Exists_ = 0;
-        }
-        SpriteMemoryUsed += iSpriteWidth_ * iSpriteHeight_;
-        pixels = buffer->get_data(left + iLeftOffset_, top + iTopOffset_);
-        uint8_t *out = pcBits_;
-        do_sound();
-        for (rows = iSpriteHeight_; rows > 0; rows--) {
-            memcpy(out, pixels, iSpriteWidth_);
-            out += iSpriteWidth_;
-            pixels += stride;
-        }
-        iSpriteWidth2_ = iSpriteWidth_;
-        buffer->free_data(2);
-        return 0;
-
+    if (destination->ppszFileName_ != 0) {
+        free(destination->ppszFileName_);
+        destination->ppszFileName_ = 0;
     }
-    return 3;
+    destination->iSpriteWidth2_ = 0;
+    destination->iSpriteWidth_ = 0;
+    destination->iSpriteHeight_ = 0;
+    destination->iWidth_ = 0;
+    destination->iHeight_ = 0;
+    destination->iLeftOffset_ = 0;
+    destination->iTopOffset_ = 0;
+    destination->fObj1Exists_ = 0;
+    unsigned int size = static_cast<unsigned int>(iSpriteWidth2_);
+    size *= static_cast<unsigned int>(iSpriteHeight_);
+    unsigned char *pixels = static_cast<unsigned char *>(mem_get(size));
+    destination->pcBits_ = pixels;
+    if (pixels == 0) {
+        return 4;
+    }
+    memcpy(pixels, pcBits_, size);
+    // These are fresh source reads AFTER copying, not a saved descriptor.
+    // The original does not charge this allocation to SpriteMemoryUsed.
+    destination->iSpriteWidth_ = iSpriteWidth_;
+    destination->iSpriteHeight_ = iSpriteHeight_;
+    destination->iWidth_ = iWidth_;
+    destination->iHeight_ = iHeight_;
+    destination->iLeftOffset_ = iLeftOffset_;
+    destination->iTopOffset_ = iTopOffset_;
+    destination->cTransparentIndex_ = cTransparentIndex_;
+    destination->fObj1Exists_ = 0;
+    destination->iSpriteWidth2_ = iSpriteWidth2_;
+    return 0;
 }
 
 
@@ -7878,6 +7815,70 @@ int Sprite::create_blank(int width, int height, int depth) {
     return pcBits_ ? 0 : 4;
 }
 
+// ORIGINAL: 0x005EB20F ?fill_scaling_table@Sprite@@QAEXXZ 0x005EB20F-0x005EB294 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned5EB20F..5EB294 divides larger by smaller scale operands, biases error by quotient parity, and fills9B3AD8 until9B4758. Integer error operations wrap32bits before signed branches; cache publication belongs to callers.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Recover the shared800-entry scale-step table generator with its original quotient-parity phase."}
+void Sprite::fill_scaling_table() {
+    const int larger = SpriteScaleNumerator > SpriteScaleDenominator
+        ? SpriteScaleNumerator : SpriteScaleDenominator;
+    const int smaller = SpriteScaleNumerator < SpriteScaleDenominator
+        ? SpriteScaleNumerator : SpriteScaleDenominator;
+    int quotient, twice_remainder, twice_divisor, error;
+    if (smaller > 1) {
+        quotient = larger / smaller;
+        twice_remainder = static_cast<int>(static_cast<uint32_t>(larger % smaller) * 2u);
+        twice_divisor = static_cast<int>(static_cast<uint32_t>(smaller) * 2u);
+        error = static_cast<int>(static_cast<uint32_t>(twice_remainder >> 1) -
+                                 static_cast<uint32_t>(twice_divisor));
+    } else {
+        quotient = larger;
+        error = twice_divisor = twice_remainder = 0;
+    }
+    // Original integer error accumulation wraps at 32 bits before its signed
+    // branch. Positive scale operands alone do not guarantee no overflow.
+    if (quotient & 1)
+        error = static_cast<int>(static_cast<uint32_t>(error) + static_cast<uint32_t>(larger));
+    int i = 0;
+    if (smaller == 1) {
+        for (i = 0; i < SpriteScalingTableCount; ++i) {
+            SpriteScalingSteps[i] = quotient;
+        }
+    } else {
+        for (i = 0; i < SpriteScalingTableCount; ++i) {
+            error = static_cast<int>(static_cast<uint32_t>(error) + static_cast<uint32_t>(twice_remainder));
+            SpriteScalingSteps[i] = quotient;
+            if (error > 0) {
+                error = static_cast<int>(static_cast<uint32_t>(error) - static_cast<uint32_t>(twice_divisor));
+                SpriteScalingSteps[i] = static_cast<int>(static_cast<uint32_t>(quotient) + 1u);
+            }
+        }
+    }
+}
+
+
+// The exit byte is a real separate global at 0x009BEAE0. The original callback
+// sets bit 0 before calling Sprite::~Sprite; do not fold this byte into an
+// invented prefix allocation or let a second implicit destructor bypass it.
+// RECOVERY_OBJECT: v1 0x009BEAE0 ?BlankSpriteCleanupGuard@@3EA
+uint8_t BlankSpriteCleanupGuard;
+
+// Raw, four-byte-aligned storage starts at the original Sprite address
+// 0x009BEAE8. Placement construction starts one Sprite lifetime; the trivial
+// byte union suppresses the compiler's unconditional second teardown.
+// ORIGINAL: 0x0063BAE0 sub_63bae0 0x0063BAE0-0x0063BAF6 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["Historical seed src/recovered/units/0063bae0.cpp retains the complete original span and BYTE_EXACT obligation; its TRIED finding is retained by the source marker writer.","The seed finding’s explanation is retained: the earlier general.cpp prototype measured 5/6 because its atexit argument cleanup used add esp,4 where the pinned startup uses pop ecx.","Pinned startup 0x0063BAE0 constructs the Sprite at 0x009BEAE8 and registers cleanup callback 0x0063BB00 with _atexit.","The compiler-generated initializer references this owner, its constructor, the generated exit callback and _atexit, and is selected through .CRT$XCU. The owner embeds a 44-byte rawstorage_.bytes member at offset zero, qualified through the directly bound standalone CodeView definition; this is storage/lifetime evidence, not an exact linked allocation claim."],"reason":"Bind the original startup identity to the genuine compiler-generated initializer for the source-owned blank Sprite lifetime."}
+// symbol    _$E17
+// TRIED: same finding as 0x00589870 - homed into general.cpp it measures 5 of 6
+// Historical TRIED continuation: the earlier atexit argument cleanup used add esp,4 where the pinned startup uses pop ecx.
+// ORIGINAL: 0x0063BB00 sub_63bb00 0x0063BB00-0x0063BB1F FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["Pinned 0x0063BB00-0x0063BB1F tests and sets bit 0 at 0x009BEAE0 before calling Sprite::~Sprite on 0x009BEAE8; the set-bit branch returns without a second teardown.","The source-owned generated exit callback tests and sets the separate cleanup guard, then destroys the Sprite in rawstorage_.bytes. Its physical COFF references select this guard, this owner storage and Sprite::close; no unconditional second destruction is introduced.","docs/recovery/ida9-functions.csv retains the complete catalogued callback extent. This new identity has no matching claim."],"reason":"Bind the generated exit callback to the real owner’s guarded Sprite teardown; preserve bit-set-before-destruction and avoid an implicit second dtor."}
+// symbol    _$E15
+// RECOVERY_OBJECT: v3 0x009BEAE8 ?g_BLANK_SPRITE@@3VSprite@@A member ?g_BLANK_SPRITE_OWNER@@3UBlankSpriteStorageOwner@@A rawstorage_.bytes
+BlankSpriteStorageOwner g_BLANK_SPRITE_OWNER;
+
+BlankSpriteStorageOwner::BlankSpriteStorageOwner() {
+    new (&rawstorage_.bytes[0]) Sprite();
+}
+
 // File-format view, not a recovered runtime class. Original persistence
 // places stride immediately after the transparency byte, without padding.
 #pragma pack(push, 1)
@@ -7898,66 +7899,21 @@ struct SpriteFileHeader {
 #pragma pack(pop)
 static_assert(sizeof(SpriteFileHeader) == 0x1D, "packed Sprite file header");
 
-// ORIGINAL: 0x005EAF8F ?save@Sprite@@QAEHH@Z 0x005EAF8F-0x005EB0B2;0x00662C30-0x00662C42 BYTE_EXACT
-// symbol    ?save@Sprite@@QAEHPBD@Z
-// Writes the sprite to a Filemap-mapped file: six metadata ints, the
-// transparency byte, the stride int - deliberately UNALIGNED, at offset
-// 0x19 (the image stores it with mov after the byte, no alignment padding) -
-// then the pixel block at 0x1D. The allocation adds 0x2C, independently of
-// this packed prefix and the height*stride copy count. The stack-local Filemap is
-// the image's SEH try/finally (0x00662C30/0x00662C38, __CxxFrameHandler):
-// every early return runs its destructor without an explicit close.
-// Calls 0x00628380 (ctor) 0x00628650 (create) 0x006287C0 (close)
-// 0x006283E0 (dtor) 0x00645930 (memcpy).
-int Sprite::save(const char *filename) {
-    Filemap fm;
-    if (pcBits_ == 0) {
-        return 7;
-    }
-    SpriteFileHeader *header = static_cast<SpriteFileHeader *>(fm.create(
-        filename,
-        static_cast<uint32_t>(iSpriteWidth_) *
-            static_cast<uint32_t>(iSpriteHeight_) + 0x2cu, 1));
-    if (header == 0) {
-        return 4;
-    }
-    SpriteFileInt *cursor = reinterpret_cast<SpriteFileInt *>(header);
-    cursor++->value = iSpriteWidth_;
-    cursor++->value = iSpriteHeight_;
-    cursor++->value = iWidth_;
-    cursor++->value = iHeight_;
-    cursor++->value = iLeftOffset_;
-    cursor++->value = iTopOffset_;
-    unsigned char *byte_cursor = reinterpret_cast<unsigned char *>(cursor);
-    *byte_cursor++ = static_cast<unsigned char>(cTransparentIndex_);
-    cursor = reinterpret_cast<SpriteFileInt *>(byte_cursor);
-    cursor++->value = iSpriteWidth2_;
-    memcpy(cursor, pcBits_,
-           static_cast<uint32_t>(iSpriteHeight_) * iSpriteWidth2_);
-    fm.close();
-    return 0;
-}
 
-// ORIGINAL: 0x005EB0BF ?load@Sprite@@QAEHH@Z 0x005EB0BF-0x005EB205;0x00662C42-0x00662C54
-// symbol    ?load@Sprite@@QAEHPBD@Z
-// close()'s cleanup as the head (borrowed pixels survive it, owned pixels
-// are released and charged back through 0x009B6618, the name is freed, and
-// like close() the transparency byte at 0x08 is not among the zero stores),
-// then the save() header parse in reverse into the EXISTING pcBits_. The image
-// never allocates: memcpy targets whatever pcBits_ still holds, so a sprite
-// without borrowed pixels hands memcpy a null destination - no guard exists
-// in the original and none is invented here. The unaligned stride read at
-// 0x19 mirrors save()'s store. Calls 0x00628380 (ctor) 0x00628540 (open)
-// 0x006283E0 (dtor) 0x006287C0 (close) 0x00644EF2 (free) 0x00645930 (memcpy).
-int Sprite::load(const char *filename) {
-    Filemap fm;
+// ORIGINAL: 0x005E3890 ?init@Sprite@@QAEHPADHH@Z 0x005E3890-0x005E3953 FILE BYTE_EXACT
+// Re-target a live sprite at a new PCX file: release the previous pixel block
+// (charging its size back to SpriteMemoryUsed) and file name, clear the
+// geometry, copy the new name into heap storage, and store the requested
+// width/height into both the source and the displayed dimension pairs.
+int Sprite::init(char *filename, int width, int height) {
+    if (filename == 0) {
+        return 0x10;
+    }
     if (fObj1Exists_ == 0 && pcBits_ != 0) {
         SpriteMemoryUsed = static_cast<int>(
             static_cast<uint32_t>(SpriteMemoryUsed)
             - static_cast<uint32_t>(iSpriteHeight_)
                   * static_cast<uint32_t>(iSpriteWidth_));
-        // close()'s second test of the same pointer, kept: the zero store
-        // sits outside the inner guard in the image as well.
         if (pcBits_ != 0) {
             free(pcBits_);
         }
@@ -7975,27 +7931,17 @@ int Sprite::load(const char *filename) {
     iLeftOffset_ = 0;
     iTopOffset_ = 0;
     fObj1Exists_ = 0;
-    const SpriteFileHeader *header = static_cast<const SpriteFileHeader *>(
-        fm.open(filename, 1));
-    if (header == 0) {
-        return 6;
+    ppszFileName_ = static_cast<char *>(mem_get(strlen(filename) + 1));
+    if (ppszFileName_ == 0) {
+        return 4;
     }
-    const SpriteFileInt *cursor = reinterpret_cast<const SpriteFileInt *>(header);
-    iSpriteWidth_ = cursor++->value;
-    iSpriteHeight_ = cursor++->value;
-    iWidth_ = cursor++->value;
-    iHeight_ = cursor++->value;
-    iLeftOffset_ = cursor++->value;
-    iTopOffset_ = cursor++->value;
-    const unsigned char *byte_cursor = reinterpret_cast<const unsigned char *>(cursor);
-    cTransparentIndex_ = *byte_cursor++;
-    cursor = reinterpret_cast<const SpriteFileInt *>(byte_cursor);
-    // The image sizes the copy from its own copy of the stride before the
-    // stride store (mov edx, ecx at 0x005EB1BF); no spelling tried gives that
-    // copy (named stride, size local, `size *=`, operand order).
-    iSpriteWidth2_ = cursor++->value;
-    memcpy(pcBits_, cursor, iSpriteWidth2_ * iSpriteHeight_);
-    fm.close();
+    ppszFileName_[0] = 0;
+    strcat(ppszFileName_, filename);
+    iSpriteWidth2_ = width;
+    iSpriteWidth_ = width;
+    iSpriteHeight_ = height;
+    iWidth_ = width;
+    iHeight_ = height;
     return 0;
 }
 
@@ -8055,1181 +8001,6 @@ int Sprite::draw_dest_unk2(Buffer *buffer, int a, int b, int c, int x, int y,
     SpriteScaleDenominator = saved_denominator;
     SpriteScaleNumerator = saved_numerator;
     return result;
-}
-
-/*
-Purpose: Draw into a destination buffer through the multi-table worker with
-         ratio x/y, substituting the pair into the class scale for the
-         duration of the call. Byte for byte the same wrapper as draw_dest
-         above.
-// ORIGINAL: 0x005E8FA5 ?draw_multi_table_dest@Sprite@@QAEHPAUBuffer@@HHHHHPAE@Z 0x005E8FA5-0x005E8FF5 BYTE_EXACT
-// symbol    ?draw_multi_table_dest@Sprite@@QAEHPAVBuffer@@HHHHHPAY0BAA@E@Z
-// size      80 bytes
-// prototype int (__thiscall ?draw_multi_table_dest@Sprite@@QAEHPAUBuffer@@HHHHHPAE@Z)(Sprite* this, Buffer*, int, int, int, int, int, unsigned int8*)
-// callers   1   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005E8FF5
-Status: Complete
-*/
-int Sprite::draw_multi_table_dest(Buffer *buffer, int a, int b, int c, int x,
-                                  int y, ColorTable *bits) {
-    const int saved_numerator = SpriteScaleNumerator;
-    const int saved_denominator = SpriteScaleDenominator;
-    SpriteScaleNumerator = x;
-    SpriteScaleDenominator = y;
-    const int result = draw_multi_table_dest(buffer, a, b, c, bits);
-    SpriteScaleDenominator = saved_denominator;
-    SpriteScaleNumerator = saved_numerator;
-    return result;
-}
-
-
-// ORIGINAL: 0x005E8FF5 ?draw_multi_table_dest@Sprite@@QAEHPAUBuffer@@HHHPAE@Z 0x005E8FF5-0x005E9D44 FILE BYTE_EXACT
-// symbol    ?draw_multi_table_dest@Sprite@@QAEHPAVBuffer@@HHHPAY0BAA@E@Z
-// draw_dest's 16-bit-table sibling: every drawn destination pixel samples the
-// 256-byte row selected by the source pixel at the destination pixel column,
-// and the transparency key
-// compares SIGNED (the image's `char` loads). The original's inner copy loop
-// is a hand-unrolled Duff's device that computes its own re-entry address at
-// runtime; this body keeps the guard clauses, the scale-ratio gate and the
-// rect intersection and performs the same per-pixel operation with plain
-// nested loops. The seed's scaled walkers dropped the y-table row repeats and
-// the per-run replication; the family's verified walk (see draw_dest above)
-// supplies both, and the disassembly at 0x005E929A..0x005E92AC (the seed's
-// four re-entry labels) is the same sampler.
-// TRIED (forwarder): the remaining specialized Sprite workers were reached
-// through this forwarder until the body landed here beside its family.
-// HAND-WRITTEN ASSEMBLY IN THE ORIGINAL: pushf/popf around the unrolled copy
-// - semantic equivalence is the honest ceiling; the answer is not `__asm`.
-int Sprite::draw_multi_table_dest(Buffer *destination, int transparent, int x,
-                                  int y, ColorTable *multi_table) {
-    int source_y;
-    int source_col;
-    RECT rc_clip;
-    int dest_col_ofs;
-    unsigned char *dest_ptr;
-    RECT original;
-    int start_x;
-    unsigned char *source;
-    int dest_y;
-    int start_y;
-    int w;
-    int scaled_height;
-    int scaled_cx;
-    int s_top;
-    int sc_left;
-    int h;
-    if (pcBits_ == 0 || destination == 0 || destination->get_data() == 0) {
-        return 3;
-    }
-    if (SpriteScaleNumerator != SpriteScaleDenominator
-        && (SpriteCachedScaleNumerator != SpriteScaleNumerator
-            || SpriteCachedScaleDenominator != SpriteScaleDenominator)) {
-        SpriteScalingRatio = static_cast<float>(SpriteScaleNumerator) / SpriteScaleDenominator;
-        if (SpriteScalingRatio > 4.0) {
-            destination->free_data(1);
-            return 0;
-        }
-        fill_scaling_table();
-        SpriteCachedScaleNumerator = SpriteScaleNumerator;
-        SpriteCachedScaleDenominator = SpriteScaleDenominator;
-    }
-    transparent = static_cast<unsigned char>(transparent);
-    SpriteRasterSourcePitch = iSpriteWidth2_;
-    SpriteRasterDestinationPitch = destination->stride_;
-    source = pcBits_;
-    if (SpriteScaleNumerator == SpriteScaleDenominator) {
-        h = iSpriteHeight_;
-        w = iSpriteWidth_;
-        start_y = y + iTopOffset_;
-        start_x = x + iLeftOffset_;
-        rc_clip.left = start_x;
-        rc_clip.top = start_y;
-        rc_clip.right = start_x + w;
-        rc_clip.bottom = start_y + h;
-        original = rc_clip;
-        if (!IntersectRect(&rc_clip, &rc_clip, &destination->rect1_)) {
-            destination->free_data(1);
-            return 0;
-        }
-        source = pcBits_ + (rc_clip.left - original.left)
-            + (rc_clip.top - original.top) * SpriteRasterSourcePitch;
-        dest_ptr = static_cast<unsigned char *>(destination->locked_bits_) + rc_clip.left
-            + rc_clip.top * SpriteRasterDestinationPitch;
-        SpriteRasterDestinationRowCount = rc_clip.bottom - rc_clip.top;
-        SpriteRasterDestinationColumnCount = rc_clip.right - rc_clip.left;
-        SpriteRasterGroupCount = SpriteRasterDestinationColumnCount >> 2;
-        SpriteRasterSourceRowTail = SpriteRasterSourcePitch - SpriteRasterDestinationColumnCount;
-        SpriteRasterDestinationRowTail = SpriteRasterDestinationPitch - SpriteRasterDestinationColumnCount;
-        // Hand-written assembly: computed `lea edx, label` / `jmp edx` entry
-        // into an unrolled four-pixel keyed fill.
-        __asm {
-                            push esi
-                            push edi
-                            mov esi, dword ptr [source]
-                            mov edi, dword ptr [dest_ptr]
-                            mov ecx, dword ptr [SpriteRasterGroupCount]
-                            mov al, byte ptr [transparent]
-                            mov edx, dword ptr [multi_table]
-                            xor ebx, ebx
-                            push ebp
-                            mov ebp, edx
-                            mov edx, dword ptr [SpriteRasterDestinationColumnCount]
-                            and edx, 0x3
-                            je G1_2d
-                            dec edx
-                            je G1_35
-                            dec edx
-                            je G1_44
-                            dec edx
-                            je G1_53
-                        G1_2d:
-                            lea edx, G1_a9
-                            jmp G1_a9
-                        G1_35:
-                            lea edx, G1_bb
-                            inc ecx
-                            mov dword ptr [SpriteRasterGroupCount], ecx
-                            jmp G1_bb
-                        G1_44:
-                            lea edx, G1_b5
-                            inc ecx
-                            mov dword ptr [SpriteRasterGroupCount], ecx
-                            jmp G1_b5
-                        G1_53:
-                            lea edx, G1_af
-                            inc ecx
-                            mov dword ptr [SpriteRasterGroupCount], ecx
-                            jmp G1_af
-                        G1_62:
-                            jmp edx
-                        G1_64:
-                            cmp byte ptr [esi], al
-                            je G1_ad
-                        G1_68:
-                            mov bh, byte ptr [esi]
-                            mov bl, byte ptr [edi]
-                            mov bl, byte ptr [ebp+ebx]
-                            mov byte ptr [edi], bl
-                            inc esi
-                            inc edi
-                            cmp byte ptr [esi], al
-                            je G1_b3
-                        G1_78:
-                            mov bh, byte ptr [esi]
-                            mov bl, byte ptr [edi]
-                            mov bl, byte ptr [ebp+ebx]
-                            mov byte ptr [edi], bl
-                            inc esi
-                            inc edi
-                            cmp byte ptr [esi], al
-                            je G1_b9
-                        G1_88:
-                            mov bh, byte ptr [esi]
-                            mov bl, byte ptr [edi]
-                            mov bl, byte ptr [ebp+ebx]
-                            mov byte ptr [edi], bl
-                            inc esi
-                            inc edi
-                            cmp byte ptr [esi], al
-                            je G1_bf
-                        G1_98:
-                            mov bh, byte ptr [esi]
-                            mov bl, byte ptr [edi]
-                            mov bl, byte ptr [ebp+ebx]
-                            mov byte ptr [edi], bl
-                            inc esi
-                            inc edi
-                            dec ecx
-                            jne G1_64
-                            jmp G1_c4
-                        G1_a9:
-                            cmp byte ptr [esi], al
-                            jne G1_68
-                        G1_ad:
-                            inc esi
-                            inc edi
-                        G1_af:
-                            cmp byte ptr [esi], al
-                            jne G1_78
-                        G1_b3:
-                            inc esi
-                            inc edi
-                        G1_b5:
-                            cmp byte ptr [esi], al
-                            jne G1_88
-                        G1_b9:
-                            inc esi
-                            inc edi
-                        G1_bb:
-                            cmp byte ptr [esi], al
-                            jne G1_98
-                        G1_bf:
-                            inc esi
-                            inc edi
-                            dec ecx
-                            jne G1_a9
-                        G1_c4:
-                            mov ecx, dword ptr [SpriteRasterGroupCount]
-                            add esi, dword ptr [SpriteRasterSourceRowTail]
-                            add edi, dword ptr [SpriteRasterDestinationRowTail]
-                            dec dword ptr [SpriteRasterDestinationRowCount]
-                            jne G1_62
-                            pop ebp
-                            pop edi
-                            pop esi
-        }
-    } else {
-        scaled_height = static_cast<int>(iSpriteHeight_ * SpriteScalingRatio);
-        scaled_cx = static_cast<int>(iSpriteWidth_ * SpriteScalingRatio);
-        s_top = static_cast<int>(y + iTopOffset_ * SpriteScalingRatio);
-        sc_left = static_cast<int>(x + iLeftOffset_ * SpriteScalingRatio);
-        rc_clip.left = sc_left;
-        rc_clip.top = s_top;
-        rc_clip.right = sc_left + scaled_cx;
-        rc_clip.bottom = s_top + scaled_height;
-        original = rc_clip;
-        if (!IntersectRect(&rc_clip, &rc_clip, &destination->rect1_)) {
-            destination->free_data(1);
-            return 0;
-        }
-        rc_clip = original;
-        dest_ptr = static_cast<unsigned char *>(destination->locked_bits_) + rc_clip.left
-            + rc_clip.top * SpriteRasterDestinationPitch;
-        SpriteRasterDestinationPitch = destination->stride_;
-        if (SpriteScaleNumerator < SpriteScaleDenominator) {
-            if (original.right - original.left < SpriteMinimumScaledWidth
-                || original.bottom - original.top < SpriteMinimumScaledHeight) {
-                destination->free_data(1);
-                return 0;
-            }
-            IntersectRect(&rc_clip, &original, &destination->rect1_);
-            SpriteRasterXTable = get_clipped_x_table_shrink(&original, &rc_clip,
-                &dest_col_ofs, &source_col, &SpriteRasterDestinationColumnCount,
-                &SpriteRasterSourceColumnCount);
-            if (SpriteRasterXTable == 0) {
-                destination->free_data(1);
-                return 0;
-            }
-            SpriteRasterYTable = get_clipped_y_table_shrink(&original, &rc_clip,
-                &dest_y, &source_y, &SpriteRasterDestinationRowCount,
-                &SpriteRasterSourceRowCount);
-            if (SpriteRasterYTable == 0) {
-                destination->free_data(1);
-                return 0;
-            }
-            SpriteRasterGroupCount = SpriteRasterDestinationColumnCount >> 2;
-            SpriteRasterDestinationRowTail = SpriteRasterDestinationPitch - SpriteRasterDestinationColumnCount;
-            SpriteRasterSourceRowTail = SpriteRasterSourcePitch - SpriteRasterSourceColumnCount;
-            dest_ptr += dest_col_ofs + SpriteRasterDestinationPitch * dest_y;
-            // Hand-written assembly: one-operand MUL row offset and computed
-            // `jmp ebx` entry into an X-table stepped keyed fill.
-            __asm {
-                                push esi
-                                push edi
-                                mov eax, dword ptr [SpriteRasterSourcePitch]
-                                mul dword ptr [source_y]
-                                mov esi, eax
-                                add esi, dword ptr [source_col]
-                                add esi, dword ptr [source]
-                                mov edi, dword ptr [dest_ptr]
-                                mov edx, dword ptr [SpriteRasterXTable]
-                                mov ecx, dword ptr [SpriteRasterGroupCount]
-                                mov ah, byte ptr [transparent]
-                                mov ebx, dword ptr [multi_table]
-                                push ebp
-                                mov ebp, ebx
-                                mov ebx, dword ptr [SpriteRasterDestinationColumnCount]
-                                and ebx, 0x3
-                                je G2_3e
-                                dec ebx
-                                je G2_51
-                                dec ebx
-                                je G2_6b
-                                dec ebx
-                                je G2_85
-                            G2_3e:
-                                lea ebx, G2_f7
-                                mov dword ptr [SpriteRasterShrinkEntry], ebx
-                                xor ebx, ebx
-                                jmp G2_f7
-                            G2_51:
-                                lea ebx, G2_115
-                                mov dword ptr [SpriteRasterShrinkEntry], ebx
-                                xor ebx, ebx
-                                inc ecx
-                                mov dword ptr [SpriteRasterGroupCount], ecx
-                                jmp G2_115
-                            G2_6b:
-                                lea ebx, G2_10b
-                                mov dword ptr [SpriteRasterShrinkEntry], ebx
-                                xor ebx, ebx
-                                inc ecx
-                                mov dword ptr [SpriteRasterGroupCount], ecx
-                                jmp G2_10b
-                            G2_85:
-                                lea ebx, G2_101
-                                mov dword ptr [SpriteRasterShrinkEntry], ebx
-                                xor ebx, ebx
-                                inc ecx
-                                mov dword ptr [SpriteRasterGroupCount], ecx
-                                jmp G2_101
-                            G2_9c:
-                                jmp dword ptr [SpriteRasterShrinkEntry]
-                            G2_a2:
-                                cmp byte ptr [esi], ah
-                                je G2_fb
-                            G2_a6:
-                                mov bh, byte ptr [esi]
-                                mov bl, byte ptr [edi]
-                                mov bl, byte ptr [ebp+ebx]
-                                mov byte ptr [edi], bl
-                                add esi, dword ptr [edx]
-                                inc edi
-                                add edx, 0x4
-                                cmp byte ptr [esi], ah
-                                je G2_105
-                            G2_ba:
-                                mov bh, byte ptr [esi]
-                                mov bl, byte ptr [edi]
-                                mov bl, byte ptr [ebp+ebx]
-                                mov byte ptr [edi], bl
-                                add esi, dword ptr [edx]
-                                inc edi
-                                add edx, 0x4
-                                cmp byte ptr [esi], ah
-                                je G2_10f
-                            G2_ce:
-                                mov bh, byte ptr [esi]
-                                mov bl, byte ptr [edi]
-                                mov bl, byte ptr [ebp+ebx]
-                                mov byte ptr [edi], bl
-                                add esi, dword ptr [edx]
-                                inc edi
-                                add edx, 0x4
-                                cmp byte ptr [esi], ah
-                                je G2_119
-                            G2_e2:
-                                mov bh, byte ptr [esi]
-                                mov bl, byte ptr [edi]
-                                mov bl, byte ptr [ebp+ebx]
-                                mov byte ptr [edi], bl
-                                add esi, dword ptr [edx]
-                                inc edi
-                                add edx, 0x4
-                                dec ecx
-                                jne G2_a2
-                                jmp G2_122
-                            G2_f7:
-                                cmp byte ptr [esi], ah
-                                jne G2_a6
-                            G2_fb:
-                                inc edi
-                                add esi, dword ptr [edx]
-                                add edx, 0x4
-                            G2_101:
-                                cmp byte ptr [esi], ah
-                                jne G2_ba
-                            G2_105:
-                                inc edi
-                                add esi, dword ptr [edx]
-                                add edx, 0x4
-                            G2_10b:
-                                cmp byte ptr [esi], ah
-                                jne G2_ce
-                            G2_10f:
-                                inc edi
-                                add esi, dword ptr [edx]
-                                add edx, 0x4
-                            G2_115:
-                                cmp byte ptr [esi], ah
-                                jne G2_e2
-                            G2_119:
-                                inc edi
-                                add esi, dword ptr [edx]
-                                add edx, 0x4
-                                dec ecx
-                                jne G2_f7
-                            G2_122:
-                                mov ecx, dword ptr [SpriteRasterYTable]
-                                mov al, byte ptr [ecx]
-                                add ecx, 0x4
-                                mov dword ptr [SpriteRasterYTable], ecx
-                                xor ecx, ecx
-                                mov cl, al
-                                dec ecx
-                                je G2_143
-                            G2_13a:
-                                add esi, dword ptr [SpriteRasterSourcePitch]
-                                dec ecx
-                                jne G2_13a
-                            G2_143:
-                                add esi, dword ptr [SpriteRasterSourceRowTail]
-                                add edi, dword ptr [SpriteRasterDestinationRowTail]
-                                mov edx, dword ptr [SpriteRasterXTable]
-                                mov ecx, dword ptr [SpriteRasterGroupCount]
-                                dec dword ptr [SpriteRasterDestinationRowCount]
-                                jne G2_9c
-                                pop ebp
-                                pop edi
-                                pop esi
-            }
-        } else {
-            IntersectRect(&rc_clip, &original, &destination->rect1_);
-            SpriteRasterXTable = get_clipped_x_table_expand(&original, &rc_clip,
-                &source_col, &dest_col_ofs, &SpriteRasterSourceColumnCount,
-                &SpriteRasterDestinationColumnCount);
-            if (SpriteRasterXTable == 0) {
-                destination->free_data(1);
-                return 0;
-            }
-            SpriteRasterYTable = get_clipped_y_table_expand(&original, &rc_clip,
-                &source_y, &dest_y, &SpriteRasterSourceRowCount,
-                &SpriteRasterDestinationRowCount);
-            if (SpriteRasterYTable == 0) {
-                destination->free_data(1);
-                return 0;
-            }
-            dest_ptr += dest_col_ofs + SpriteRasterDestinationPitch * dest_y;
-            SpriteRasterDestinationRowTail = SpriteRasterDestinationPitch - SpriteRasterDestinationColumnCount;
-            SpriteRasterGroupCount = SpriteRasterSourceColumnCount >> 2;
-            SpriteRasterGroupRemainder = SpriteRasterSourceColumnCount - (SpriteRasterGroupCount << 2);
-            SpriteRasterSourceRowTail = SpriteRasterSourcePitch - SpriteRasterSourceColumnCount;
-            SpriteRasterRemapTable.multi = multi_table;
-            // Hand-written assembly: 16-bit PUSHF/POPF around CLD, EBP as the
-            // row counter, and replicated expansion rows.
-            __asm {
-                                push edi
-                                push esi
-                                pushf
-                                cld
-                                mov eax, dword ptr [SpriteRasterSourcePitch]
-                                mul dword ptr [source_y]
-                                mov esi, eax
-                                add esi, dword ptr [source_col]
-                                add esi, dword ptr [source]
-                                mov edi, dword ptr [dest_ptr]
-                                mov edx, dword ptr [SpriteRasterXTable]
-                                mov ah, byte ptr [transparent]
-                                mov ebx, dword ptr [SpriteRasterSourceColumnCount]
-                                and ebx, 0x3
-                                push ebp
-                                mov ebp, dword ptr [SpriteRasterDestinationPitch]
-                                je G3_40
-                                mov ecx, dword ptr [SpriteRasterGroupCount]
-                                inc ecx
-                                mov dword ptr [SpriteRasterGroupCount], ecx
-                            G3_40:
-                                mov ecx, dword ptr [SpriteRasterGroupCount]
-                                mov dword ptr [SpriteRasterColumnCountdown], ecx
-                                mov ecx, dword ptr [SpriteRasterYTable]
-                                mov al, byte ptr [ecx]
-                                add ecx, 0x4
-                                mov dword ptr [SpriteRasterYTable], ecx
-                                mov edx, dword ptr [SpriteRasterXTable]
-                                cmp al, 0x1
-                                je G3_4d6
-                                cmp al, 0x2
-                                je G3_39f
-                                cmp al, 0x3
-                                je G3_230
-                                mov ebx, dword ptr [SpriteRasterSourceColumnCount]
-                                and ebx, 0x3
-                                je G3_9e
-                                dec ebx
-                                je G3_8f
-                                dec ebx
-                                je G3_94
-                                dec ebx
-                                je G3_99
-                            G3_8f:
-                                jmp G3_20f
-                            G3_94:
-                                jmp G3_201
-                            G3_99:
-                                jmp G3_1f3
-                            G3_9e:
-                                cmp byte ptr [esi], ah
-                                je G3_1ed
-                            G3_a6:
-                                xor ebx, ebx
-                                mov bh, byte ptr [esi]
-                                mov bl, byte ptr [edi]
-                                add ebx, dword ptr [SpriteRasterRemapTable]
-                                mov al, byte ptr [ebx]
-                                mov ecx, dword ptr [edx]
-                            G3_b6:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_b6
-                                add edi, ebp
-                                sub edi, dword ptr [edx]
-                                mov ecx, dword ptr [edx]
-                            G3_c2:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_c2
-                                add edi, ebp
-                                sub edi, dword ptr [edx]
-                                mov ecx, dword ptr [edx]
-                            G3_ce:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_ce
-                                add edi, ebp
-                                sub edi, dword ptr [edx]
-                                mov ecx, dword ptr [edx]
-                            G3_da:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_da
-                                sub edi, ebp
-                                sub edi, ebp
-                                sub edi, ebp
-                                inc esi
-                                add edx, 0x4
-                                cmp byte ptr [esi], ah
-                                je G3_1fb
-                            G3_f2:
-                                xor ebx, ebx
-                                mov bh, byte ptr [esi]
-                                mov bl, byte ptr [edi]
-                                add ebx, dword ptr [SpriteRasterRemapTable]
-                                mov al, byte ptr [ebx]
-                                mov ecx, dword ptr [edx]
-                            G3_102:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_102
-                                add edi, ebp
-                                sub edi, dword ptr [edx]
-                                mov ecx, dword ptr [edx]
-                            G3_10e:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_10e
-                                add edi, ebp
-                                sub edi, dword ptr [edx]
-                                mov ecx, dword ptr [edx]
-                            G3_11a:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_11a
-                                add edi, ebp
-                                sub edi, dword ptr [edx]
-                                mov ecx, dword ptr [edx]
-                            G3_126:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_126
-                                sub edi, ebp
-                                sub edi, ebp
-                                sub edi, ebp
-                                inc esi
-                                add edx, 0x4
-                                cmp byte ptr [esi], ah
-                                je G3_209
-                            G3_13e:
-                                xor ebx, ebx
-                                mov bh, byte ptr [esi]
-                                mov bl, byte ptr [edi]
-                                add ebx, dword ptr [SpriteRasterRemapTable]
-                                mov al, byte ptr [ebx]
-                                mov ecx, dword ptr [edx]
-                            G3_14e:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_14e
-                                add edi, ebp
-                                sub edi, dword ptr [edx]
-                                mov ecx, dword ptr [edx]
-                            G3_15a:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_15a
-                                add edi, ebp
-                                sub edi, dword ptr [edx]
-                                mov ecx, dword ptr [edx]
-                            G3_166:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_166
-                                add edi, ebp
-                                sub edi, dword ptr [edx]
-                                mov ecx, dword ptr [edx]
-                            G3_172:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_172
-                                sub edi, ebp
-                                sub edi, ebp
-                                sub edi, ebp
-                                inc esi
-                                add edx, 0x4
-                                cmp byte ptr [esi], ah
-                                je G3_217
-                            G3_18a:
-                                xor ebx, ebx
-                                mov bh, byte ptr [esi]
-                                mov bl, byte ptr [edi]
-                                add ebx, dword ptr [SpriteRasterRemapTable]
-                                mov al, byte ptr [ebx]
-                                mov ecx, dword ptr [edx]
-                            G3_19a:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_19a
-                                add edi, ebp
-                                sub edi, dword ptr [edx]
-                                mov ecx, dword ptr [edx]
-                            G3_1a6:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_1a6
-                                add edi, ebp
-                                sub edi, dword ptr [edx]
-                                mov ecx, dword ptr [edx]
-                            G3_1b2:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_1b2
-                                add edi, ebp
-                                sub edi, dword ptr [edx]
-                                mov ecx, dword ptr [edx]
-                            G3_1be:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_1be
-                                sub edi, ebp
-                                sub edi, ebp
-                                sub edi, ebp
-                                inc esi
-                                add edx, 0x4
-                                dec dword ptr [SpriteRasterColumnCountdown]
-                                jne G3_9e
-                                lea edi, [edi+2*ebp]
-                                lea edi, [edi+ebp]
-                                jmp G3_5b7
-                            G3_1e5:
-                                cmp byte ptr [esi], ah
-                                jne G3_a6
-                            G3_1ed:
-                                inc esi
-                                add edi, dword ptr [edx]
-                                add edx, 0x4
-                            G3_1f3:
-                                cmp byte ptr [esi], ah
-                                jne G3_f2
-                            G3_1fb:
-                                inc esi
-                                add edi, dword ptr [edx]
-                                add edx, 0x4
-                            G3_201:
-                                cmp byte ptr [esi], ah
-                                jne G3_13e
-                            G3_209:
-                                inc esi
-                                add edi, dword ptr [edx]
-                                add edx, 0x4
-                            G3_20f:
-                                cmp byte ptr [esi], ah
-                                jne G3_18a
-                            G3_217:
-                                inc esi
-                                add edi, dword ptr [edx]
-                                add edx, 0x4
-                                dec dword ptr [SpriteRasterColumnCountdown]
-                                jne G3_1e5
-                                lea edi, [edi+2*ebp]
-                                lea edi, [edi+ebp]
-                                jmp G3_5b7
-                            G3_230:
-                                mov ebx, dword ptr [SpriteRasterSourceColumnCount]
-                                and ebx, 0x3
-                                je G3_253
-                                dec ebx
-                                je G3_244
-                                dec ebx
-                                je G3_249
-                                dec ebx
-                                je G3_24e
-                            G3_244:
-                                jmp G3_385
-                            G3_249:
-                                jmp G3_377
-                            G3_24e:
-                                jmp G3_369
-                            G3_253:
-                                cmp byte ptr [esi], ah
-                                je G3_363
-                            G3_25b:
-                                xor ebx, ebx
-                                mov bh, byte ptr [esi]
-                                mov bl, byte ptr [edi]
-                                add ebx, dword ptr [SpriteRasterRemapTable]
-                                mov al, byte ptr [ebx]
-                                mov ecx, dword ptr [edx]
-                            G3_26b:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_26b
-                                add edi, ebp
-                                sub edi, dword ptr [edx]
-                                mov ecx, dword ptr [edx]
-                            G3_277:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_277
-                                add edi, ebp
-                                sub edi, dword ptr [edx]
-                                mov ecx, dword ptr [edx]
-                            G3_283:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_283
-                                sub edi, ebp
-                                sub edi, ebp
-                                inc esi
-                                add edx, 0x4
-                                cmp byte ptr [esi], ah
-                                je G3_371
-                            G3_299:
-                                xor ebx, ebx
-                                mov bh, byte ptr [esi]
-                                mov bl, byte ptr [edi]
-                                add ebx, dword ptr [SpriteRasterRemapTable]
-                                mov al, byte ptr [ebx]
-                                mov ecx, dword ptr [edx]
-                            G3_2a9:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_2a9
-                                add edi, ebp
-                                sub edi, dword ptr [edx]
-                                mov ecx, dword ptr [edx]
-                            G3_2b5:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_2b5
-                                add edi, ebp
-                                sub edi, dword ptr [edx]
-                                mov ecx, dword ptr [edx]
-                            G3_2c1:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_2c1
-                                sub edi, ebp
-                                sub edi, ebp
-                                inc esi
-                                add edx, 0x4
-                                cmp byte ptr [esi], ah
-                                je G3_37f
-                            G3_2d7:
-                                xor ebx, ebx
-                                mov bh, byte ptr [esi]
-                                mov bl, byte ptr [edi]
-                                add ebx, dword ptr [SpriteRasterRemapTable]
-                                mov al, byte ptr [ebx]
-                                mov ecx, dword ptr [edx]
-                            G3_2e7:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_2e7
-                                add edi, ebp
-                                sub edi, dword ptr [edx]
-                                mov ecx, dword ptr [edx]
-                            G3_2f3:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_2f3
-                                add edi, ebp
-                                sub edi, dword ptr [edx]
-                                mov ecx, dword ptr [edx]
-                            G3_2ff:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_2ff
-                                sub edi, ebp
-                                sub edi, ebp
-                                inc esi
-                                add edx, 0x4
-                                cmp byte ptr [esi], ah
-                                je G3_389
-                            G3_311:
-                                xor ebx, ebx
-                                mov bh, byte ptr [esi]
-                                mov bl, byte ptr [edi]
-                                add ebx, dword ptr [SpriteRasterRemapTable]
-                                mov al, byte ptr [ebx]
-                                mov ecx, dword ptr [edx]
-                            G3_321:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_321
-                                add edi, ebp
-                                sub edi, dword ptr [edx]
-                                mov ecx, dword ptr [edx]
-                            G3_32d:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_32d
-                                add edi, ebp
-                                sub edi, dword ptr [edx]
-                                mov ecx, dword ptr [edx]
-                            G3_339:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_339
-                                sub edi, ebp
-                                sub edi, ebp
-                                inc esi
-                                add edx, 0x4
-                                dec dword ptr [SpriteRasterColumnCountdown]
-                                jne G3_253
-                                lea edi, [edi+2*ebp]
-                                jmp G3_5b7
-                            G3_35b:
-                                cmp byte ptr [esi], ah
-                                jne G3_25b
-                            G3_363:
-                                inc esi
-                                add edi, dword ptr [edx]
-                                add edx, 0x4
-                            G3_369:
-                                cmp byte ptr [esi], ah
-                                jne G3_299
-                            G3_371:
-                                inc esi
-                                add edi, dword ptr [edx]
-                                add edx, 0x4
-                            G3_377:
-                                cmp byte ptr [esi], ah
-                                jne G3_2d7
-                            G3_37f:
-                                inc esi
-                                add edi, dword ptr [edx]
-                                add edx, 0x4
-                            G3_385:
-                                cmp byte ptr [esi], ah
-                                jne G3_311
-                            G3_389:
-                                inc esi
-                                add edi, dword ptr [edx]
-                                add edx, 0x4
-                                dec dword ptr [SpriteRasterColumnCountdown]
-                                jne G3_35b
-                                lea edi, [edi+2*ebp]
-                                jmp G3_5b7
-                            G3_39f:
-                                mov ebx, dword ptr [SpriteRasterSourceColumnCount]
-                                and ebx, 0x3
-                                je G3_3c2
-                                dec ebx
-                                je G3_3b3
-                                dec ebx
-                                je G3_3b8
-                                dec ebx
-                                je G3_3bd
-                            G3_3b3:
-                                jmp G3_4bc
-                            G3_3b8:
-                                jmp G3_4ae
-                            G3_3bd:
-                                jmp G3_4a0
-                            G3_3c2:
-                                cmp byte ptr [esi], ah
-                                je G3_49a
-                            G3_3ca:
-                                xor ebx, ebx
-                                mov bh, byte ptr [esi]
-                                mov bl, byte ptr [edi]
-                                add ebx, dword ptr [SpriteRasterRemapTable]
-                                mov al, byte ptr [ebx]
-                                mov ecx, dword ptr [edx]
-                            G3_3da:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_3da
-                                add edi, ebp
-                                sub edi, dword ptr [edx]
-                                mov ecx, dword ptr [edx]
-                            G3_3e6:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_3e6
-                                sub edi, ebp
-                                inc esi
-                                add edx, 0x4
-                                cmp byte ptr [esi], ah
-                                je G3_4a8
-                            G3_3fa:
-                                xor ebx, ebx
-                                mov bh, byte ptr [esi]
-                                mov bl, byte ptr [edi]
-                                add ebx, dword ptr [SpriteRasterRemapTable]
-                                mov al, byte ptr [ebx]
-                                mov ecx, dword ptr [edx]
-                            G3_40a:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_40a
-                                add edi, ebp
-                                sub edi, dword ptr [edx]
-                                mov ecx, dword ptr [edx]
-                            G3_416:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_416
-                                sub edi, ebp
-                                inc esi
-                                add edx, 0x4
-                                cmp byte ptr [esi], ah
-                                je G3_4b6
-                            G3_42a:
-                                xor ebx, ebx
-                                mov bh, byte ptr [esi]
-                                mov bl, byte ptr [edi]
-                                add ebx, dword ptr [SpriteRasterRemapTable]
-                                mov al, byte ptr [ebx]
-                                mov ecx, dword ptr [edx]
-                            G3_43a:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_43a
-                                add edi, ebp
-                                sub edi, dword ptr [edx]
-                                mov ecx, dword ptr [edx]
-                            G3_446:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_446
-                                sub edi, ebp
-                                inc esi
-                                add edx, 0x4
-                                cmp byte ptr [esi], ah
-                                je G3_4c0
-                            G3_456:
-                                xor ebx, ebx
-                                mov bh, byte ptr [esi]
-                                mov bl, byte ptr [edi]
-                                add ebx, dword ptr [SpriteRasterRemapTable]
-                                mov al, byte ptr [ebx]
-                                mov ecx, dword ptr [edx]
-                            G3_466:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_466
-                                add edi, ebp
-                                sub edi, dword ptr [edx]
-                                mov ecx, dword ptr [edx]
-                            G3_472:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_472
-                                sub edi, ebp
-                                inc esi
-                                add edx, 0x4
-                                dec dword ptr [SpriteRasterColumnCountdown]
-                                jne G3_3c2
-                                lea edi, [edi+ebp]
-                                jmp G3_5b7
-                            G3_492:
-                                cmp byte ptr [esi], ah
-                                jne G3_3ca
-                            G3_49a:
-                                inc esi
-                                add edi, dword ptr [edx]
-                                add edx, 0x4
-                            G3_4a0:
-                                cmp byte ptr [esi], ah
-                                jne G3_3fa
-                            G3_4a8:
-                                inc esi
-                                add edi, dword ptr [edx]
-                                add edx, 0x4
-                            G3_4ae:
-                                cmp byte ptr [esi], ah
-                                jne G3_42a
-                            G3_4b6:
-                                inc esi
-                                add edi, dword ptr [edx]
-                                add edx, 0x4
-                            G3_4bc:
-                                cmp byte ptr [esi], ah
-                                jne G3_456
-                            G3_4c0:
-                                inc esi
-                                add edi, dword ptr [edx]
-                                add edx, 0x4
-                                dec dword ptr [SpriteRasterColumnCountdown]
-                                jne G3_492
-                                lea edi, [edi+ebp]
-                                jmp G3_5b7
-                            G3_4d6:
-                                mov ebx, dword ptr [SpriteRasterSourceColumnCount]
-                                and ebx, 0x3
-                                je G3_4f9
-                                dec ebx
-                                je G3_4ea
-                                dec ebx
-                                je G3_4ef
-                                dec ebx
-                                je G3_4f4
-                            G3_4ea:
-                                jmp G3_5a5
-                            G3_4ef:
-                                jmp G3_59b
-                            G3_4f4:
-                                jmp G3_591
-                            G3_4f9:
-                                cmp byte ptr [esi], ah
-                                je G3_58b
-                            G3_501:
-                                xor ebx, ebx
-                                mov bh, byte ptr [esi]
-                                mov bl, byte ptr [edi]
-                                add ebx, dword ptr [SpriteRasterRemapTable]
-                                mov al, byte ptr [ebx]
-                                mov ecx, dword ptr [edx]
-                            G3_511:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_511
-                                inc esi
-                                add edx, 0x4
-                                cmp byte ptr [esi], ah
-                                je G3_595
-                            G3_51f:
-                                xor ebx, ebx
-                                mov bh, byte ptr [esi]
-                                mov bl, byte ptr [edi]
-                                add ebx, dword ptr [SpriteRasterRemapTable]
-                                mov al, byte ptr [ebx]
-                                mov ecx, dword ptr [edx]
-                            G3_52f:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_52f
-                                inc esi
-                                add edx, 0x4
-                                cmp byte ptr [esi], ah
-                                je G3_59f
-                            G3_53d:
-                                xor ebx, ebx
-                                mov bh, byte ptr [esi]
-                                mov bl, byte ptr [edi]
-                                add ebx, dword ptr [SpriteRasterRemapTable]
-                                mov al, byte ptr [ebx]
-                                mov ecx, dword ptr [edx]
-                            G3_54d:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_54d
-                                inc esi
-                                add edx, 0x4
-                                cmp byte ptr [esi], ah
-                                je G3_5a9
-                            G3_55b:
-                                xor ebx, ebx
-                                mov bh, byte ptr [esi]
-                                mov bl, byte ptr [edi]
-                                add ebx, dword ptr [SpriteRasterRemapTable]
-                                mov al, byte ptr [ebx]
-                                mov ecx, dword ptr [edx]
-                            G3_56b:
-                                mov byte ptr [edi], al
-                                inc edi
-                                dec ecx
-                                jne G3_56b
-                                inc esi
-                                add edx, 0x4
-                                dec dword ptr [SpriteRasterColumnCountdown]
-                                jne G3_4f9
-                                jmp G3_5b7
-                            G3_583:
-                                cmp byte ptr [esi], ah
-                                jne G3_501
-                            G3_58b:
-                                inc esi
-                                add edi, dword ptr [edx]
-                                add edx, 0x4
-                            G3_591:
-                                cmp byte ptr [esi], ah
-                                jne G3_51f
-                            G3_595:
-                                inc esi
-                                add edi, dword ptr [edx]
-                                add edx, 0x4
-                            G3_59b:
-                                cmp byte ptr [esi], ah
-                                jne G3_53d
-                            G3_59f:
-                                inc esi
-                                add edi, dword ptr [edx]
-                                add edx, 0x4
-                            G3_5a5:
-                                cmp byte ptr [esi], ah
-                                jne G3_55b
-                            G3_5a9:
-                                inc esi
-                                add edi, dword ptr [edx]
-                                add edx, 0x4
-                                dec dword ptr [SpriteRasterColumnCountdown]
-                                jne G3_583
-                            G3_5b7:
-                                add esi, dword ptr [SpriteRasterSourceRowTail]
-                                add edi, dword ptr [SpriteRasterDestinationRowTail]
-                                dec dword ptr [SpriteRasterSourceRowCount]
-                                jne G3_40
-                                pop ebp
-                                popf
-                                pop esi
-                                pop edi
-            }
-        }
-    }
-    destination->free_data(1);
-    return 0;
 }
 
 // ORIGINAL: 0x005E81BC ?draw_dest_unk2@Sprite@@QAEHPAUBuffer@@HHHPAE@Z 0x005E81BC-0x005E8FA5 FILE BYTE_EXACT
@@ -10476,20 +9247,1241 @@ int Sprite::draw_dest_unk2(Buffer *destination, int transparent, int x, int y,
     return 0;
 }
 
-// ORIGINAL: 0x005E3890 ?init@Sprite@@QAEHPADHH@Z 0x005E3890-0x005E3953 FILE BYTE_EXACT
-// Re-target a live sprite at a new PCX file: release the previous pixel block
-// (charging its size back to SpriteMemoryUsed) and file name, clear the
-// geometry, copy the new name into heap storage, and store the requested
-// width/height into both the source and the displayed dimension pairs.
-int Sprite::init(char *filename, int width, int height) {
-    if (filename == 0) {
-        return 0x10;
+/*
+Purpose: Draw into a destination buffer through the multi-table worker with
+         ratio x/y, substituting the pair into the class scale for the
+         duration of the call. Byte for byte the same wrapper as draw_dest
+         above.
+// ORIGINAL: 0x005E8FA5 ?draw_multi_table_dest@Sprite@@QAEHPAUBuffer@@HHHHHPAE@Z 0x005E8FA5-0x005E8FF5 BYTE_EXACT
+// symbol    ?draw_multi_table_dest@Sprite@@QAEHPAVBuffer@@HHHHHPAY0BAA@E@Z
+// size      80 bytes
+// prototype int (__thiscall ?draw_multi_table_dest@Sprite@@QAEHPAUBuffer@@HHHHHPAE@Z)(Sprite* this, Buffer*, int, int, int, int, int, unsigned int8*)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005E8FF5
+Status: Complete
+*/
+int Sprite::draw_multi_table_dest(Buffer *buffer, int a, int b, int c, int x,
+                                  int y, ColorTable *bits) {
+    const int saved_numerator = SpriteScaleNumerator;
+    const int saved_denominator = SpriteScaleDenominator;
+    SpriteScaleNumerator = x;
+    SpriteScaleDenominator = y;
+    const int result = draw_multi_table_dest(buffer, a, b, c, bits);
+    SpriteScaleDenominator = saved_denominator;
+    SpriteScaleNumerator = saved_numerator;
+    return result;
+}
+
+
+// ORIGINAL: 0x005E8FF5 ?draw_multi_table_dest@Sprite@@QAEHPAUBuffer@@HHHPAE@Z 0x005E8FF5-0x005E9D44 FILE BYTE_EXACT
+// symbol    ?draw_multi_table_dest@Sprite@@QAEHPAVBuffer@@HHHPAY0BAA@E@Z
+// draw_dest's 16-bit-table sibling: every drawn destination pixel samples the
+// 256-byte row selected by the source pixel at the destination pixel column,
+// and the transparency key
+// compares SIGNED (the image's `char` loads). The original's inner copy loop
+// is a hand-unrolled Duff's device that computes its own re-entry address at
+// runtime; this body keeps the guard clauses, the scale-ratio gate and the
+// rect intersection and performs the same per-pixel operation with plain
+// nested loops. The seed's scaled walkers dropped the y-table row repeats and
+// the per-run replication; the family's verified walk (see draw_dest above)
+// supplies both, and the disassembly at 0x005E929A..0x005E92AC (the seed's
+// four re-entry labels) is the same sampler.
+// TRIED (forwarder): the remaining specialized Sprite workers were reached
+// through this forwarder until the body landed here beside its family.
+// HAND-WRITTEN ASSEMBLY IN THE ORIGINAL: pushf/popf around the unrolled copy
+// - semantic equivalence is the honest ceiling; the answer is not `__asm`.
+int Sprite::draw_multi_table_dest(Buffer *destination, int transparent, int x,
+                                  int y, ColorTable *multi_table) {
+    int source_y;
+    int source_col;
+    RECT rc_clip;
+    int dest_col_ofs;
+    unsigned char *dest_ptr;
+    RECT original;
+    int start_x;
+    unsigned char *source;
+    int dest_y;
+    int start_y;
+    int w;
+    int scaled_height;
+    int scaled_cx;
+    int s_top;
+    int sc_left;
+    int h;
+    if (pcBits_ == 0 || destination == 0 || destination->get_data() == 0) {
+        return 3;
     }
+    if (SpriteScaleNumerator != SpriteScaleDenominator
+        && (SpriteCachedScaleNumerator != SpriteScaleNumerator
+            || SpriteCachedScaleDenominator != SpriteScaleDenominator)) {
+        SpriteScalingRatio = static_cast<float>(SpriteScaleNumerator) / SpriteScaleDenominator;
+        if (SpriteScalingRatio > 4.0) {
+            destination->free_data(1);
+            return 0;
+        }
+        fill_scaling_table();
+        SpriteCachedScaleNumerator = SpriteScaleNumerator;
+        SpriteCachedScaleDenominator = SpriteScaleDenominator;
+    }
+    transparent = static_cast<unsigned char>(transparent);
+    SpriteRasterSourcePitch = iSpriteWidth2_;
+    SpriteRasterDestinationPitch = destination->stride_;
+    source = pcBits_;
+    if (SpriteScaleNumerator == SpriteScaleDenominator) {
+        h = iSpriteHeight_;
+        w = iSpriteWidth_;
+        start_y = y + iTopOffset_;
+        start_x = x + iLeftOffset_;
+        rc_clip.left = start_x;
+        rc_clip.top = start_y;
+        rc_clip.right = start_x + w;
+        rc_clip.bottom = start_y + h;
+        original = rc_clip;
+        if (!IntersectRect(&rc_clip, &rc_clip, &destination->rect1_)) {
+            destination->free_data(1);
+            return 0;
+        }
+        source = pcBits_ + (rc_clip.left - original.left)
+            + (rc_clip.top - original.top) * SpriteRasterSourcePitch;
+        dest_ptr = static_cast<unsigned char *>(destination->locked_bits_) + rc_clip.left
+            + rc_clip.top * SpriteRasterDestinationPitch;
+        SpriteRasterDestinationRowCount = rc_clip.bottom - rc_clip.top;
+        SpriteRasterDestinationColumnCount = rc_clip.right - rc_clip.left;
+        SpriteRasterGroupCount = SpriteRasterDestinationColumnCount >> 2;
+        SpriteRasterSourceRowTail = SpriteRasterSourcePitch - SpriteRasterDestinationColumnCount;
+        SpriteRasterDestinationRowTail = SpriteRasterDestinationPitch - SpriteRasterDestinationColumnCount;
+        // Hand-written assembly: computed `lea edx, label` / `jmp edx` entry
+        // into an unrolled four-pixel keyed fill.
+        __asm {
+                            push esi
+                            push edi
+                            mov esi, dword ptr [source]
+                            mov edi, dword ptr [dest_ptr]
+                            mov ecx, dword ptr [SpriteRasterGroupCount]
+                            mov al, byte ptr [transparent]
+                            mov edx, dword ptr [multi_table]
+                            xor ebx, ebx
+                            push ebp
+                            mov ebp, edx
+                            mov edx, dword ptr [SpriteRasterDestinationColumnCount]
+                            and edx, 0x3
+                            je G1_2d
+                            dec edx
+                            je G1_35
+                            dec edx
+                            je G1_44
+                            dec edx
+                            je G1_53
+                        G1_2d:
+                            lea edx, G1_a9
+                            jmp G1_a9
+                        G1_35:
+                            lea edx, G1_bb
+                            inc ecx
+                            mov dword ptr [SpriteRasterGroupCount], ecx
+                            jmp G1_bb
+                        G1_44:
+                            lea edx, G1_b5
+                            inc ecx
+                            mov dword ptr [SpriteRasterGroupCount], ecx
+                            jmp G1_b5
+                        G1_53:
+                            lea edx, G1_af
+                            inc ecx
+                            mov dword ptr [SpriteRasterGroupCount], ecx
+                            jmp G1_af
+                        G1_62:
+                            jmp edx
+                        G1_64:
+                            cmp byte ptr [esi], al
+                            je G1_ad
+                        G1_68:
+                            mov bh, byte ptr [esi]
+                            mov bl, byte ptr [edi]
+                            mov bl, byte ptr [ebp+ebx]
+                            mov byte ptr [edi], bl
+                            inc esi
+                            inc edi
+                            cmp byte ptr [esi], al
+                            je G1_b3
+                        G1_78:
+                            mov bh, byte ptr [esi]
+                            mov bl, byte ptr [edi]
+                            mov bl, byte ptr [ebp+ebx]
+                            mov byte ptr [edi], bl
+                            inc esi
+                            inc edi
+                            cmp byte ptr [esi], al
+                            je G1_b9
+                        G1_88:
+                            mov bh, byte ptr [esi]
+                            mov bl, byte ptr [edi]
+                            mov bl, byte ptr [ebp+ebx]
+                            mov byte ptr [edi], bl
+                            inc esi
+                            inc edi
+                            cmp byte ptr [esi], al
+                            je G1_bf
+                        G1_98:
+                            mov bh, byte ptr [esi]
+                            mov bl, byte ptr [edi]
+                            mov bl, byte ptr [ebp+ebx]
+                            mov byte ptr [edi], bl
+                            inc esi
+                            inc edi
+                            dec ecx
+                            jne G1_64
+                            jmp G1_c4
+                        G1_a9:
+                            cmp byte ptr [esi], al
+                            jne G1_68
+                        G1_ad:
+                            inc esi
+                            inc edi
+                        G1_af:
+                            cmp byte ptr [esi], al
+                            jne G1_78
+                        G1_b3:
+                            inc esi
+                            inc edi
+                        G1_b5:
+                            cmp byte ptr [esi], al
+                            jne G1_88
+                        G1_b9:
+                            inc esi
+                            inc edi
+                        G1_bb:
+                            cmp byte ptr [esi], al
+                            jne G1_98
+                        G1_bf:
+                            inc esi
+                            inc edi
+                            dec ecx
+                            jne G1_a9
+                        G1_c4:
+                            mov ecx, dword ptr [SpriteRasterGroupCount]
+                            add esi, dword ptr [SpriteRasterSourceRowTail]
+                            add edi, dword ptr [SpriteRasterDestinationRowTail]
+                            dec dword ptr [SpriteRasterDestinationRowCount]
+                            jne G1_62
+                            pop ebp
+                            pop edi
+                            pop esi
+        }
+    } else {
+        scaled_height = static_cast<int>(iSpriteHeight_ * SpriteScalingRatio);
+        scaled_cx = static_cast<int>(iSpriteWidth_ * SpriteScalingRatio);
+        s_top = static_cast<int>(y + iTopOffset_ * SpriteScalingRatio);
+        sc_left = static_cast<int>(x + iLeftOffset_ * SpriteScalingRatio);
+        rc_clip.left = sc_left;
+        rc_clip.top = s_top;
+        rc_clip.right = sc_left + scaled_cx;
+        rc_clip.bottom = s_top + scaled_height;
+        original = rc_clip;
+        if (!IntersectRect(&rc_clip, &rc_clip, &destination->rect1_)) {
+            destination->free_data(1);
+            return 0;
+        }
+        rc_clip = original;
+        dest_ptr = static_cast<unsigned char *>(destination->locked_bits_) + rc_clip.left
+            + rc_clip.top * SpriteRasterDestinationPitch;
+        SpriteRasterDestinationPitch = destination->stride_;
+        if (SpriteScaleNumerator < SpriteScaleDenominator) {
+            if (original.right - original.left < SpriteMinimumScaledWidth
+                || original.bottom - original.top < SpriteMinimumScaledHeight) {
+                destination->free_data(1);
+                return 0;
+            }
+            IntersectRect(&rc_clip, &original, &destination->rect1_);
+            SpriteRasterXTable = get_clipped_x_table_shrink(&original, &rc_clip,
+                &dest_col_ofs, &source_col, &SpriteRasterDestinationColumnCount,
+                &SpriteRasterSourceColumnCount);
+            if (SpriteRasterXTable == 0) {
+                destination->free_data(1);
+                return 0;
+            }
+            SpriteRasterYTable = get_clipped_y_table_shrink(&original, &rc_clip,
+                &dest_y, &source_y, &SpriteRasterDestinationRowCount,
+                &SpriteRasterSourceRowCount);
+            if (SpriteRasterYTable == 0) {
+                destination->free_data(1);
+                return 0;
+            }
+            SpriteRasterGroupCount = SpriteRasterDestinationColumnCount >> 2;
+            SpriteRasterDestinationRowTail = SpriteRasterDestinationPitch - SpriteRasterDestinationColumnCount;
+            SpriteRasterSourceRowTail = SpriteRasterSourcePitch - SpriteRasterSourceColumnCount;
+            dest_ptr += dest_col_ofs + SpriteRasterDestinationPitch * dest_y;
+            // Hand-written assembly: one-operand MUL row offset and computed
+            // `jmp ebx` entry into an X-table stepped keyed fill.
+            __asm {
+                                push esi
+                                push edi
+                                mov eax, dword ptr [SpriteRasterSourcePitch]
+                                mul dword ptr [source_y]
+                                mov esi, eax
+                                add esi, dword ptr [source_col]
+                                add esi, dword ptr [source]
+                                mov edi, dword ptr [dest_ptr]
+                                mov edx, dword ptr [SpriteRasterXTable]
+                                mov ecx, dword ptr [SpriteRasterGroupCount]
+                                mov ah, byte ptr [transparent]
+                                mov ebx, dword ptr [multi_table]
+                                push ebp
+                                mov ebp, ebx
+                                mov ebx, dword ptr [SpriteRasterDestinationColumnCount]
+                                and ebx, 0x3
+                                je G2_3e
+                                dec ebx
+                                je G2_51
+                                dec ebx
+                                je G2_6b
+                                dec ebx
+                                je G2_85
+                            G2_3e:
+                                lea ebx, G2_f7
+                                mov dword ptr [SpriteRasterShrinkEntry], ebx
+                                xor ebx, ebx
+                                jmp G2_f7
+                            G2_51:
+                                lea ebx, G2_115
+                                mov dword ptr [SpriteRasterShrinkEntry], ebx
+                                xor ebx, ebx
+                                inc ecx
+                                mov dword ptr [SpriteRasterGroupCount], ecx
+                                jmp G2_115
+                            G2_6b:
+                                lea ebx, G2_10b
+                                mov dword ptr [SpriteRasterShrinkEntry], ebx
+                                xor ebx, ebx
+                                inc ecx
+                                mov dword ptr [SpriteRasterGroupCount], ecx
+                                jmp G2_10b
+                            G2_85:
+                                lea ebx, G2_101
+                                mov dword ptr [SpriteRasterShrinkEntry], ebx
+                                xor ebx, ebx
+                                inc ecx
+                                mov dword ptr [SpriteRasterGroupCount], ecx
+                                jmp G2_101
+                            G2_9c:
+                                jmp dword ptr [SpriteRasterShrinkEntry]
+                            G2_a2:
+                                cmp byte ptr [esi], ah
+                                je G2_fb
+                            G2_a6:
+                                mov bh, byte ptr [esi]
+                                mov bl, byte ptr [edi]
+                                mov bl, byte ptr [ebp+ebx]
+                                mov byte ptr [edi], bl
+                                add esi, dword ptr [edx]
+                                inc edi
+                                add edx, 0x4
+                                cmp byte ptr [esi], ah
+                                je G2_105
+                            G2_ba:
+                                mov bh, byte ptr [esi]
+                                mov bl, byte ptr [edi]
+                                mov bl, byte ptr [ebp+ebx]
+                                mov byte ptr [edi], bl
+                                add esi, dword ptr [edx]
+                                inc edi
+                                add edx, 0x4
+                                cmp byte ptr [esi], ah
+                                je G2_10f
+                            G2_ce:
+                                mov bh, byte ptr [esi]
+                                mov bl, byte ptr [edi]
+                                mov bl, byte ptr [ebp+ebx]
+                                mov byte ptr [edi], bl
+                                add esi, dword ptr [edx]
+                                inc edi
+                                add edx, 0x4
+                                cmp byte ptr [esi], ah
+                                je G2_119
+                            G2_e2:
+                                mov bh, byte ptr [esi]
+                                mov bl, byte ptr [edi]
+                                mov bl, byte ptr [ebp+ebx]
+                                mov byte ptr [edi], bl
+                                add esi, dword ptr [edx]
+                                inc edi
+                                add edx, 0x4
+                                dec ecx
+                                jne G2_a2
+                                jmp G2_122
+                            G2_f7:
+                                cmp byte ptr [esi], ah
+                                jne G2_a6
+                            G2_fb:
+                                inc edi
+                                add esi, dword ptr [edx]
+                                add edx, 0x4
+                            G2_101:
+                                cmp byte ptr [esi], ah
+                                jne G2_ba
+                            G2_105:
+                                inc edi
+                                add esi, dword ptr [edx]
+                                add edx, 0x4
+                            G2_10b:
+                                cmp byte ptr [esi], ah
+                                jne G2_ce
+                            G2_10f:
+                                inc edi
+                                add esi, dword ptr [edx]
+                                add edx, 0x4
+                            G2_115:
+                                cmp byte ptr [esi], ah
+                                jne G2_e2
+                            G2_119:
+                                inc edi
+                                add esi, dword ptr [edx]
+                                add edx, 0x4
+                                dec ecx
+                                jne G2_f7
+                            G2_122:
+                                mov ecx, dword ptr [SpriteRasterYTable]
+                                mov al, byte ptr [ecx]
+                                add ecx, 0x4
+                                mov dword ptr [SpriteRasterYTable], ecx
+                                xor ecx, ecx
+                                mov cl, al
+                                dec ecx
+                                je G2_143
+                            G2_13a:
+                                add esi, dword ptr [SpriteRasterSourcePitch]
+                                dec ecx
+                                jne G2_13a
+                            G2_143:
+                                add esi, dword ptr [SpriteRasterSourceRowTail]
+                                add edi, dword ptr [SpriteRasterDestinationRowTail]
+                                mov edx, dword ptr [SpriteRasterXTable]
+                                mov ecx, dword ptr [SpriteRasterGroupCount]
+                                dec dword ptr [SpriteRasterDestinationRowCount]
+                                jne G2_9c
+                                pop ebp
+                                pop edi
+                                pop esi
+            }
+        } else {
+            IntersectRect(&rc_clip, &original, &destination->rect1_);
+            SpriteRasterXTable = get_clipped_x_table_expand(&original, &rc_clip,
+                &source_col, &dest_col_ofs, &SpriteRasterSourceColumnCount,
+                &SpriteRasterDestinationColumnCount);
+            if (SpriteRasterXTable == 0) {
+                destination->free_data(1);
+                return 0;
+            }
+            SpriteRasterYTable = get_clipped_y_table_expand(&original, &rc_clip,
+                &source_y, &dest_y, &SpriteRasterSourceRowCount,
+                &SpriteRasterDestinationRowCount);
+            if (SpriteRasterYTable == 0) {
+                destination->free_data(1);
+                return 0;
+            }
+            dest_ptr += dest_col_ofs + SpriteRasterDestinationPitch * dest_y;
+            SpriteRasterDestinationRowTail = SpriteRasterDestinationPitch - SpriteRasterDestinationColumnCount;
+            SpriteRasterGroupCount = SpriteRasterSourceColumnCount >> 2;
+            SpriteRasterGroupRemainder = SpriteRasterSourceColumnCount - (SpriteRasterGroupCount << 2);
+            SpriteRasterSourceRowTail = SpriteRasterSourcePitch - SpriteRasterSourceColumnCount;
+            SpriteRasterRemapTable.multi = multi_table;
+            // Hand-written assembly: 16-bit PUSHF/POPF around CLD, EBP as the
+            // row counter, and replicated expansion rows.
+            __asm {
+                                push edi
+                                push esi
+                                pushf
+                                cld
+                                mov eax, dword ptr [SpriteRasterSourcePitch]
+                                mul dword ptr [source_y]
+                                mov esi, eax
+                                add esi, dword ptr [source_col]
+                                add esi, dword ptr [source]
+                                mov edi, dword ptr [dest_ptr]
+                                mov edx, dword ptr [SpriteRasterXTable]
+                                mov ah, byte ptr [transparent]
+                                mov ebx, dword ptr [SpriteRasterSourceColumnCount]
+                                and ebx, 0x3
+                                push ebp
+                                mov ebp, dword ptr [SpriteRasterDestinationPitch]
+                                je G3_40
+                                mov ecx, dword ptr [SpriteRasterGroupCount]
+                                inc ecx
+                                mov dword ptr [SpriteRasterGroupCount], ecx
+                            G3_40:
+                                mov ecx, dword ptr [SpriteRasterGroupCount]
+                                mov dword ptr [SpriteRasterColumnCountdown], ecx
+                                mov ecx, dword ptr [SpriteRasterYTable]
+                                mov al, byte ptr [ecx]
+                                add ecx, 0x4
+                                mov dword ptr [SpriteRasterYTable], ecx
+                                mov edx, dword ptr [SpriteRasterXTable]
+                                cmp al, 0x1
+                                je G3_4d6
+                                cmp al, 0x2
+                                je G3_39f
+                                cmp al, 0x3
+                                je G3_230
+                                mov ebx, dword ptr [SpriteRasterSourceColumnCount]
+                                and ebx, 0x3
+                                je G3_9e
+                                dec ebx
+                                je G3_8f
+                                dec ebx
+                                je G3_94
+                                dec ebx
+                                je G3_99
+                            G3_8f:
+                                jmp G3_20f
+                            G3_94:
+                                jmp G3_201
+                            G3_99:
+                                jmp G3_1f3
+                            G3_9e:
+                                cmp byte ptr [esi], ah
+                                je G3_1ed
+                            G3_a6:
+                                xor ebx, ebx
+                                mov bh, byte ptr [esi]
+                                mov bl, byte ptr [edi]
+                                add ebx, dword ptr [SpriteRasterRemapTable]
+                                mov al, byte ptr [ebx]
+                                mov ecx, dword ptr [edx]
+                            G3_b6:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_b6
+                                add edi, ebp
+                                sub edi, dword ptr [edx]
+                                mov ecx, dword ptr [edx]
+                            G3_c2:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_c2
+                                add edi, ebp
+                                sub edi, dword ptr [edx]
+                                mov ecx, dword ptr [edx]
+                            G3_ce:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_ce
+                                add edi, ebp
+                                sub edi, dword ptr [edx]
+                                mov ecx, dword ptr [edx]
+                            G3_da:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_da
+                                sub edi, ebp
+                                sub edi, ebp
+                                sub edi, ebp
+                                inc esi
+                                add edx, 0x4
+                                cmp byte ptr [esi], ah
+                                je G3_1fb
+                            G3_f2:
+                                xor ebx, ebx
+                                mov bh, byte ptr [esi]
+                                mov bl, byte ptr [edi]
+                                add ebx, dword ptr [SpriteRasterRemapTable]
+                                mov al, byte ptr [ebx]
+                                mov ecx, dword ptr [edx]
+                            G3_102:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_102
+                                add edi, ebp
+                                sub edi, dword ptr [edx]
+                                mov ecx, dword ptr [edx]
+                            G3_10e:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_10e
+                                add edi, ebp
+                                sub edi, dword ptr [edx]
+                                mov ecx, dword ptr [edx]
+                            G3_11a:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_11a
+                                add edi, ebp
+                                sub edi, dword ptr [edx]
+                                mov ecx, dword ptr [edx]
+                            G3_126:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_126
+                                sub edi, ebp
+                                sub edi, ebp
+                                sub edi, ebp
+                                inc esi
+                                add edx, 0x4
+                                cmp byte ptr [esi], ah
+                                je G3_209
+                            G3_13e:
+                                xor ebx, ebx
+                                mov bh, byte ptr [esi]
+                                mov bl, byte ptr [edi]
+                                add ebx, dword ptr [SpriteRasterRemapTable]
+                                mov al, byte ptr [ebx]
+                                mov ecx, dword ptr [edx]
+                            G3_14e:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_14e
+                                add edi, ebp
+                                sub edi, dword ptr [edx]
+                                mov ecx, dword ptr [edx]
+                            G3_15a:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_15a
+                                add edi, ebp
+                                sub edi, dword ptr [edx]
+                                mov ecx, dword ptr [edx]
+                            G3_166:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_166
+                                add edi, ebp
+                                sub edi, dword ptr [edx]
+                                mov ecx, dword ptr [edx]
+                            G3_172:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_172
+                                sub edi, ebp
+                                sub edi, ebp
+                                sub edi, ebp
+                                inc esi
+                                add edx, 0x4
+                                cmp byte ptr [esi], ah
+                                je G3_217
+                            G3_18a:
+                                xor ebx, ebx
+                                mov bh, byte ptr [esi]
+                                mov bl, byte ptr [edi]
+                                add ebx, dword ptr [SpriteRasterRemapTable]
+                                mov al, byte ptr [ebx]
+                                mov ecx, dword ptr [edx]
+                            G3_19a:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_19a
+                                add edi, ebp
+                                sub edi, dword ptr [edx]
+                                mov ecx, dword ptr [edx]
+                            G3_1a6:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_1a6
+                                add edi, ebp
+                                sub edi, dword ptr [edx]
+                                mov ecx, dword ptr [edx]
+                            G3_1b2:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_1b2
+                                add edi, ebp
+                                sub edi, dword ptr [edx]
+                                mov ecx, dword ptr [edx]
+                            G3_1be:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_1be
+                                sub edi, ebp
+                                sub edi, ebp
+                                sub edi, ebp
+                                inc esi
+                                add edx, 0x4
+                                dec dword ptr [SpriteRasterColumnCountdown]
+                                jne G3_9e
+                                lea edi, [edi+2*ebp]
+                                lea edi, [edi+ebp]
+                                jmp G3_5b7
+                            G3_1e5:
+                                cmp byte ptr [esi], ah
+                                jne G3_a6
+                            G3_1ed:
+                                inc esi
+                                add edi, dword ptr [edx]
+                                add edx, 0x4
+                            G3_1f3:
+                                cmp byte ptr [esi], ah
+                                jne G3_f2
+                            G3_1fb:
+                                inc esi
+                                add edi, dword ptr [edx]
+                                add edx, 0x4
+                            G3_201:
+                                cmp byte ptr [esi], ah
+                                jne G3_13e
+                            G3_209:
+                                inc esi
+                                add edi, dword ptr [edx]
+                                add edx, 0x4
+                            G3_20f:
+                                cmp byte ptr [esi], ah
+                                jne G3_18a
+                            G3_217:
+                                inc esi
+                                add edi, dword ptr [edx]
+                                add edx, 0x4
+                                dec dword ptr [SpriteRasterColumnCountdown]
+                                jne G3_1e5
+                                lea edi, [edi+2*ebp]
+                                lea edi, [edi+ebp]
+                                jmp G3_5b7
+                            G3_230:
+                                mov ebx, dword ptr [SpriteRasterSourceColumnCount]
+                                and ebx, 0x3
+                                je G3_253
+                                dec ebx
+                                je G3_244
+                                dec ebx
+                                je G3_249
+                                dec ebx
+                                je G3_24e
+                            G3_244:
+                                jmp G3_385
+                            G3_249:
+                                jmp G3_377
+                            G3_24e:
+                                jmp G3_369
+                            G3_253:
+                                cmp byte ptr [esi], ah
+                                je G3_363
+                            G3_25b:
+                                xor ebx, ebx
+                                mov bh, byte ptr [esi]
+                                mov bl, byte ptr [edi]
+                                add ebx, dword ptr [SpriteRasterRemapTable]
+                                mov al, byte ptr [ebx]
+                                mov ecx, dword ptr [edx]
+                            G3_26b:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_26b
+                                add edi, ebp
+                                sub edi, dword ptr [edx]
+                                mov ecx, dword ptr [edx]
+                            G3_277:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_277
+                                add edi, ebp
+                                sub edi, dword ptr [edx]
+                                mov ecx, dword ptr [edx]
+                            G3_283:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_283
+                                sub edi, ebp
+                                sub edi, ebp
+                                inc esi
+                                add edx, 0x4
+                                cmp byte ptr [esi], ah
+                                je G3_371
+                            G3_299:
+                                xor ebx, ebx
+                                mov bh, byte ptr [esi]
+                                mov bl, byte ptr [edi]
+                                add ebx, dword ptr [SpriteRasterRemapTable]
+                                mov al, byte ptr [ebx]
+                                mov ecx, dword ptr [edx]
+                            G3_2a9:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_2a9
+                                add edi, ebp
+                                sub edi, dword ptr [edx]
+                                mov ecx, dword ptr [edx]
+                            G3_2b5:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_2b5
+                                add edi, ebp
+                                sub edi, dword ptr [edx]
+                                mov ecx, dword ptr [edx]
+                            G3_2c1:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_2c1
+                                sub edi, ebp
+                                sub edi, ebp
+                                inc esi
+                                add edx, 0x4
+                                cmp byte ptr [esi], ah
+                                je G3_37f
+                            G3_2d7:
+                                xor ebx, ebx
+                                mov bh, byte ptr [esi]
+                                mov bl, byte ptr [edi]
+                                add ebx, dword ptr [SpriteRasterRemapTable]
+                                mov al, byte ptr [ebx]
+                                mov ecx, dword ptr [edx]
+                            G3_2e7:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_2e7
+                                add edi, ebp
+                                sub edi, dword ptr [edx]
+                                mov ecx, dword ptr [edx]
+                            G3_2f3:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_2f3
+                                add edi, ebp
+                                sub edi, dword ptr [edx]
+                                mov ecx, dword ptr [edx]
+                            G3_2ff:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_2ff
+                                sub edi, ebp
+                                sub edi, ebp
+                                inc esi
+                                add edx, 0x4
+                                cmp byte ptr [esi], ah
+                                je G3_389
+                            G3_311:
+                                xor ebx, ebx
+                                mov bh, byte ptr [esi]
+                                mov bl, byte ptr [edi]
+                                add ebx, dword ptr [SpriteRasterRemapTable]
+                                mov al, byte ptr [ebx]
+                                mov ecx, dword ptr [edx]
+                            G3_321:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_321
+                                add edi, ebp
+                                sub edi, dword ptr [edx]
+                                mov ecx, dword ptr [edx]
+                            G3_32d:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_32d
+                                add edi, ebp
+                                sub edi, dword ptr [edx]
+                                mov ecx, dword ptr [edx]
+                            G3_339:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_339
+                                sub edi, ebp
+                                sub edi, ebp
+                                inc esi
+                                add edx, 0x4
+                                dec dword ptr [SpriteRasterColumnCountdown]
+                                jne G3_253
+                                lea edi, [edi+2*ebp]
+                                jmp G3_5b7
+                            G3_35b:
+                                cmp byte ptr [esi], ah
+                                jne G3_25b
+                            G3_363:
+                                inc esi
+                                add edi, dword ptr [edx]
+                                add edx, 0x4
+                            G3_369:
+                                cmp byte ptr [esi], ah
+                                jne G3_299
+                            G3_371:
+                                inc esi
+                                add edi, dword ptr [edx]
+                                add edx, 0x4
+                            G3_377:
+                                cmp byte ptr [esi], ah
+                                jne G3_2d7
+                            G3_37f:
+                                inc esi
+                                add edi, dword ptr [edx]
+                                add edx, 0x4
+                            G3_385:
+                                cmp byte ptr [esi], ah
+                                jne G3_311
+                            G3_389:
+                                inc esi
+                                add edi, dword ptr [edx]
+                                add edx, 0x4
+                                dec dword ptr [SpriteRasterColumnCountdown]
+                                jne G3_35b
+                                lea edi, [edi+2*ebp]
+                                jmp G3_5b7
+                            G3_39f:
+                                mov ebx, dword ptr [SpriteRasterSourceColumnCount]
+                                and ebx, 0x3
+                                je G3_3c2
+                                dec ebx
+                                je G3_3b3
+                                dec ebx
+                                je G3_3b8
+                                dec ebx
+                                je G3_3bd
+                            G3_3b3:
+                                jmp G3_4bc
+                            G3_3b8:
+                                jmp G3_4ae
+                            G3_3bd:
+                                jmp G3_4a0
+                            G3_3c2:
+                                cmp byte ptr [esi], ah
+                                je G3_49a
+                            G3_3ca:
+                                xor ebx, ebx
+                                mov bh, byte ptr [esi]
+                                mov bl, byte ptr [edi]
+                                add ebx, dword ptr [SpriteRasterRemapTable]
+                                mov al, byte ptr [ebx]
+                                mov ecx, dword ptr [edx]
+                            G3_3da:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_3da
+                                add edi, ebp
+                                sub edi, dword ptr [edx]
+                                mov ecx, dword ptr [edx]
+                            G3_3e6:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_3e6
+                                sub edi, ebp
+                                inc esi
+                                add edx, 0x4
+                                cmp byte ptr [esi], ah
+                                je G3_4a8
+                            G3_3fa:
+                                xor ebx, ebx
+                                mov bh, byte ptr [esi]
+                                mov bl, byte ptr [edi]
+                                add ebx, dword ptr [SpriteRasterRemapTable]
+                                mov al, byte ptr [ebx]
+                                mov ecx, dword ptr [edx]
+                            G3_40a:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_40a
+                                add edi, ebp
+                                sub edi, dword ptr [edx]
+                                mov ecx, dword ptr [edx]
+                            G3_416:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_416
+                                sub edi, ebp
+                                inc esi
+                                add edx, 0x4
+                                cmp byte ptr [esi], ah
+                                je G3_4b6
+                            G3_42a:
+                                xor ebx, ebx
+                                mov bh, byte ptr [esi]
+                                mov bl, byte ptr [edi]
+                                add ebx, dword ptr [SpriteRasterRemapTable]
+                                mov al, byte ptr [ebx]
+                                mov ecx, dword ptr [edx]
+                            G3_43a:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_43a
+                                add edi, ebp
+                                sub edi, dword ptr [edx]
+                                mov ecx, dword ptr [edx]
+                            G3_446:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_446
+                                sub edi, ebp
+                                inc esi
+                                add edx, 0x4
+                                cmp byte ptr [esi], ah
+                                je G3_4c0
+                            G3_456:
+                                xor ebx, ebx
+                                mov bh, byte ptr [esi]
+                                mov bl, byte ptr [edi]
+                                add ebx, dword ptr [SpriteRasterRemapTable]
+                                mov al, byte ptr [ebx]
+                                mov ecx, dword ptr [edx]
+                            G3_466:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_466
+                                add edi, ebp
+                                sub edi, dword ptr [edx]
+                                mov ecx, dword ptr [edx]
+                            G3_472:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_472
+                                sub edi, ebp
+                                inc esi
+                                add edx, 0x4
+                                dec dword ptr [SpriteRasterColumnCountdown]
+                                jne G3_3c2
+                                lea edi, [edi+ebp]
+                                jmp G3_5b7
+                            G3_492:
+                                cmp byte ptr [esi], ah
+                                jne G3_3ca
+                            G3_49a:
+                                inc esi
+                                add edi, dword ptr [edx]
+                                add edx, 0x4
+                            G3_4a0:
+                                cmp byte ptr [esi], ah
+                                jne G3_3fa
+                            G3_4a8:
+                                inc esi
+                                add edi, dword ptr [edx]
+                                add edx, 0x4
+                            G3_4ae:
+                                cmp byte ptr [esi], ah
+                                jne G3_42a
+                            G3_4b6:
+                                inc esi
+                                add edi, dword ptr [edx]
+                                add edx, 0x4
+                            G3_4bc:
+                                cmp byte ptr [esi], ah
+                                jne G3_456
+                            G3_4c0:
+                                inc esi
+                                add edi, dword ptr [edx]
+                                add edx, 0x4
+                                dec dword ptr [SpriteRasterColumnCountdown]
+                                jne G3_492
+                                lea edi, [edi+ebp]
+                                jmp G3_5b7
+                            G3_4d6:
+                                mov ebx, dword ptr [SpriteRasterSourceColumnCount]
+                                and ebx, 0x3
+                                je G3_4f9
+                                dec ebx
+                                je G3_4ea
+                                dec ebx
+                                je G3_4ef
+                                dec ebx
+                                je G3_4f4
+                            G3_4ea:
+                                jmp G3_5a5
+                            G3_4ef:
+                                jmp G3_59b
+                            G3_4f4:
+                                jmp G3_591
+                            G3_4f9:
+                                cmp byte ptr [esi], ah
+                                je G3_58b
+                            G3_501:
+                                xor ebx, ebx
+                                mov bh, byte ptr [esi]
+                                mov bl, byte ptr [edi]
+                                add ebx, dword ptr [SpriteRasterRemapTable]
+                                mov al, byte ptr [ebx]
+                                mov ecx, dword ptr [edx]
+                            G3_511:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_511
+                                inc esi
+                                add edx, 0x4
+                                cmp byte ptr [esi], ah
+                                je G3_595
+                            G3_51f:
+                                xor ebx, ebx
+                                mov bh, byte ptr [esi]
+                                mov bl, byte ptr [edi]
+                                add ebx, dword ptr [SpriteRasterRemapTable]
+                                mov al, byte ptr [ebx]
+                                mov ecx, dword ptr [edx]
+                            G3_52f:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_52f
+                                inc esi
+                                add edx, 0x4
+                                cmp byte ptr [esi], ah
+                                je G3_59f
+                            G3_53d:
+                                xor ebx, ebx
+                                mov bh, byte ptr [esi]
+                                mov bl, byte ptr [edi]
+                                add ebx, dword ptr [SpriteRasterRemapTable]
+                                mov al, byte ptr [ebx]
+                                mov ecx, dword ptr [edx]
+                            G3_54d:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_54d
+                                inc esi
+                                add edx, 0x4
+                                cmp byte ptr [esi], ah
+                                je G3_5a9
+                            G3_55b:
+                                xor ebx, ebx
+                                mov bh, byte ptr [esi]
+                                mov bl, byte ptr [edi]
+                                add ebx, dword ptr [SpriteRasterRemapTable]
+                                mov al, byte ptr [ebx]
+                                mov ecx, dword ptr [edx]
+                            G3_56b:
+                                mov byte ptr [edi], al
+                                inc edi
+                                dec ecx
+                                jne G3_56b
+                                inc esi
+                                add edx, 0x4
+                                dec dword ptr [SpriteRasterColumnCountdown]
+                                jne G3_4f9
+                                jmp G3_5b7
+                            G3_583:
+                                cmp byte ptr [esi], ah
+                                jne G3_501
+                            G3_58b:
+                                inc esi
+                                add edi, dword ptr [edx]
+                                add edx, 0x4
+                            G3_591:
+                                cmp byte ptr [esi], ah
+                                jne G3_51f
+                            G3_595:
+                                inc esi
+                                add edi, dword ptr [edx]
+                                add edx, 0x4
+                            G3_59b:
+                                cmp byte ptr [esi], ah
+                                jne G3_53d
+                            G3_59f:
+                                inc esi
+                                add edi, dword ptr [edx]
+                                add edx, 0x4
+                            G3_5a5:
+                                cmp byte ptr [esi], ah
+                                jne G3_55b
+                            G3_5a9:
+                                inc esi
+                                add edi, dword ptr [edx]
+                                add edx, 0x4
+                                dec dword ptr [SpriteRasterColumnCountdown]
+                                jne G3_583
+                            G3_5b7:
+                                add esi, dword ptr [SpriteRasterSourceRowTail]
+                                add edi, dword ptr [SpriteRasterDestinationRowTail]
+                                dec dword ptr [SpriteRasterSourceRowCount]
+                                jne G3_40
+                                pop ebp
+                                popf
+                                pop esi
+                                pop edi
+            }
+        }
+    }
+    destination->free_data(1);
+    return 0;
+}
+
+// ORIGINAL: 0x005EAF8F ?save@Sprite@@QAEHH@Z 0x005EAF8F-0x005EB0B2;0x00662C30-0x00662C42 BYTE_EXACT
+// symbol    ?save@Sprite@@QAEHPBD@Z
+// Writes the sprite to a Filemap-mapped file: six metadata ints, the
+// transparency byte, the stride int - deliberately UNALIGNED, at offset
+// 0x19 (the image stores it with mov after the byte, no alignment padding) -
+// then the pixel block at 0x1D. The allocation adds 0x2C, independently of
+// this packed prefix and the height*stride copy count. The stack-local Filemap is
+// the image's SEH try/finally (0x00662C30/0x00662C38, __CxxFrameHandler):
+// every early return runs its destructor without an explicit close.
+// Calls 0x00628380 (ctor) 0x00628650 (create) 0x006287C0 (close)
+// 0x006283E0 (dtor) 0x00645930 (memcpy).
+int Sprite::save(const char *filename) {
+    Filemap fm;
+    if (pcBits_ == 0) {
+        return 7;
+    }
+    SpriteFileHeader *header = static_cast<SpriteFileHeader *>(fm.create(
+        filename,
+        static_cast<uint32_t>(iSpriteWidth_) *
+            static_cast<uint32_t>(iSpriteHeight_) + 0x2cu, 1));
+    if (header == 0) {
+        return 4;
+    }
+    SpriteFileInt *cursor = reinterpret_cast<SpriteFileInt *>(header);
+    cursor++->value = iSpriteWidth_;
+    cursor++->value = iSpriteHeight_;
+    cursor++->value = iWidth_;
+    cursor++->value = iHeight_;
+    cursor++->value = iLeftOffset_;
+    cursor++->value = iTopOffset_;
+    unsigned char *byte_cursor = reinterpret_cast<unsigned char *>(cursor);
+    *byte_cursor++ = static_cast<unsigned char>(cTransparentIndex_);
+    cursor = reinterpret_cast<SpriteFileInt *>(byte_cursor);
+    cursor++->value = iSpriteWidth2_;
+    memcpy(cursor, pcBits_,
+           static_cast<uint32_t>(iSpriteHeight_) * iSpriteWidth2_);
+    fm.close();
+    return 0;
+}
+
+// ORIGINAL: 0x005EB0BF ?load@Sprite@@QAEHH@Z 0x005EB0BF-0x005EB205;0x00662C42-0x00662C54
+// symbol    ?load@Sprite@@QAEHPBD@Z
+// close()'s cleanup as the head (borrowed pixels survive it, owned pixels
+// are released and charged back through 0x009B6618, the name is freed, and
+// like close() the transparency byte at 0x08 is not among the zero stores),
+// then the save() header parse in reverse into the EXISTING pcBits_. The image
+// never allocates: memcpy targets whatever pcBits_ still holds, so a sprite
+// without borrowed pixels hands memcpy a null destination - no guard exists
+// in the original and none is invented here. The unaligned stride read at
+// 0x19 mirrors save()'s store. Calls 0x00628380 (ctor) 0x00628540 (open)
+// 0x006283E0 (dtor) 0x006287C0 (close) 0x00644EF2 (free) 0x00645930 (memcpy).
+int Sprite::load(const char *filename) {
+    Filemap fm;
     if (fObj1Exists_ == 0 && pcBits_ != 0) {
         SpriteMemoryUsed = static_cast<int>(
             static_cast<uint32_t>(SpriteMemoryUsed)
             - static_cast<uint32_t>(iSpriteHeight_)
                   * static_cast<uint32_t>(iSpriteWidth_));
+        // close()'s second test of the same pointer, kept: the zero store
+        // sits outside the inner guard in the image as well.
         if (pcBits_ != 0) {
             free(pcBits_);
         }
@@ -10507,16 +10499,26 @@ int Sprite::init(char *filename, int width, int height) {
     iLeftOffset_ = 0;
     iTopOffset_ = 0;
     fObj1Exists_ = 0;
-    ppszFileName_ = static_cast<char *>(mem_get(strlen(filename) + 1));
-    if (ppszFileName_ == 0) {
-        return 4;
+    const SpriteFileHeader *header = static_cast<const SpriteFileHeader *>(
+        fm.open(filename, 1));
+    if (header == 0) {
+        return 6;
     }
-    ppszFileName_[0] = 0;
-    strcat(ppszFileName_, filename);
-    iSpriteWidth2_ = width;
-    iSpriteWidth_ = width;
-    iSpriteHeight_ = height;
-    iWidth_ = width;
-    iHeight_ = height;
+    const SpriteFileInt *cursor = reinterpret_cast<const SpriteFileInt *>(header);
+    iSpriteWidth_ = cursor++->value;
+    iSpriteHeight_ = cursor++->value;
+    iWidth_ = cursor++->value;
+    iHeight_ = cursor++->value;
+    iLeftOffset_ = cursor++->value;
+    iTopOffset_ = cursor++->value;
+    const unsigned char *byte_cursor = reinterpret_cast<const unsigned char *>(cursor);
+    cTransparentIndex_ = *byte_cursor++;
+    cursor = reinterpret_cast<const SpriteFileInt *>(byte_cursor);
+    // The image sizes the copy from its own copy of the stride before the
+    // stride store (mov edx, ecx at 0x005EB1BF); no spelling tried gives that
+    // copy (named stride, size local, `size *=`, operand order).
+    iSpriteWidth2_ = cursor++->value;
+    memcpy(pcBits_, cursor, iSpriteWidth2_ * iSpriteHeight_);
+    fm.close();
     return 0;
 }
