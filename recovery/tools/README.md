@@ -301,3 +301,13 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   automatically after every tumap regroup. `NOT EMITTED` = the object's definition is not in the unit.
 - `feall.py --base` compares rows by address, so a marker moved to another unit is compared with its old row; fe/feall
   read a worktree's own `build/compile_commands.json` for units the main database lacks (a unit created by a split).
+- `analysis/varset.py <unit> <addr> [--src ALT.cpp] [--min K] [--sites]` variable-set reconciliation (MATCHING_GUIDE 3.3):
+  the image's frame slots (accesses, immediate/callee-saved/scratch stores and loads, `mem` when never cached in a
+  callee-saved register) against our locals, each access of ours named from its /FAsc operand (`name`, block-locals
+  `name#NNN`, compiler temporaries `$T..`/`T-0xNN`) and paired through the fe alignment. Prints both tables with the
+  slot rank on each side (slot order is the packed slot's access total, so a rank difference names a variable with
+  too many or too few references, or a slot that hosts the temporaries another variable hosts in the image), MERGE
+  candidates (several of our variables in one image slot: an original reuse, or VC6 packing) and SPLIT candidates
+  (one of our names over several image slots). First pass: enemy_move (j/k/own_ground/n rank 7-13 places low, the
+  spilled induction temporaries all in tile_owner's slot), battle_fight (image slots -0x74/-0x78 have no local of
+  ours: the 8 missing frame bytes; stack_id spans -0x18 and -0x40), order_veh, probe, base_build.

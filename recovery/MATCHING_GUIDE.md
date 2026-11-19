@@ -1995,6 +1995,53 @@ say_label/say_tech batch, 86cc2f1fd4..39c52fa497, 89 probe calls retired)
   compare the unit's referenced image strings in address order with the
   object's `$SG` order.
 
+enemy_move 0x0056B5B0, call multiset (2026-11-19 par-4)
+
+- **A named local takes a small header inline out of the free class** (high in
+  enemy_move, one function; `rnd`, crt_random.h). The image calls rnd at
+  enemy_move's five constant-bound sites. With the guard-clause body
+  (`if (bounds - 1 <= 0) return 0; return rand() % bounds;`) ours expanded all
+  five and no dead pass-1 spend at the top refused them (ownerscan `--probes
+  1,2,4,8,16,32`: at 16 the probes themselves are refused, at 8 all 53 on_map
+  sites are, rnd never), so the body was free. `int value = rand() % bounds;
+  return value;` (or `int limit = bounds - 1;`, or one `result` assigned in
+  both arms) keeps rnd's own 32 bytes and makes it a charged inline: the five
+  sites become calls and rnd's expanded/called decision equals the image's in
+  every function of the 17 units that call it (ccu.py). A ternary stays free.
+  Cost: a function balanced around the free body breaks (enemies_war
+  0x0055C840: its second treaty_off is now refused instead of the last
+  set_treaty). Symptom to look for: an image that calls a tiny header inline
+  only inside its budget-exhausted giants while ours never calls it.
+- **Pass 1 of a giant is a prefix, and plain caller statements do not move
+  it** (high in enemy_move). Dead inline probes at the top turn expanded
+  sites into calls in exactly reverse source order (veh_who L4648, base_who,
+  base_who, go_to, on_map+anything_at, veh_top, ..., proto_power), so the
+  budget runs out about 450 lines into the body; 128 dead stores or dead
+  `if`s before that point, after it or at the end move nothing (B is not
+  growing with this caller). Sites further down that stay expanded on both
+  sides (on_map in the radius scans, veh_moves, anything_at) are not touched
+  by 38 if-units of extra spend either: they do not draw on that budget.
+- **The image's last expansion is one site later than ours** (open). Image:
+  veh_who expanded at 0x56CA61 (its map_loc shared with the following
+  is_ocean), on_map called at 0x56CC83; ours calls veh_who and expands
+  on_map. So at that point the image has more room than ours, by more than
+  nothing and less than one base_who/proto_power/wrap_map_x expansion:
+  taking veh_moves' expansion out (function-pointer call, a measurement)
+  gives exactly the image's two decisions, taking base_who, one proto_power
+  or one raw wrap out releases too much (on_map still expands, then go_to).
+  One 2-if probe at the top makes on_map a call without making veh_who
+  expand. Not the cause: named locals in veh_who/anything_at/base_who
+  (`tile`, `owner` dropped or the parameter reused: same decisions, copies
+  exact), filler statements. A veh_who without `owner` gives the image's
+  whole call sequence but its out-of-line copy 0x00500250 loses 6 rows.
+- **Called x_dist/vector_dist beside expanded base_who: map_dist** (kept).
+  A site the image calls while pass 1 still expands dearer callees below it
+  was a nested site: `dist = map_dist(x, y, tx, ty)` at 0x56C1E3 replaces two
+  function-pointer stand-ins (5935 -> 5625 rows). The same reading says the
+  first go_to (0x56BF4E, called; the second site at 0x56C21E is expanded)
+  sat inside an inline owner; none found yet, its stand-in stays.
+
+
 ## 3. Symptom → first thing to check
 
 ### 3.1 Calls and inlining
@@ -3692,6 +3739,29 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   scope and merges tried, none moves them). Offsets follow weighted priority
   (previous entry); leave a pure slot permutation once the homes hold the
   right variables.
+
+- **Frame offsets follow the packed slot's total, and spilled induction
+  temporaries join the first free slot** (par-4 2026-11-19, enemy_move
+  0x0056B5B0, `analysis/varset.py`). The image's 49 scalar slots are in
+  descending order of accesses (-4: 253 ... -0xC4: 4), counted per slot
+  after packing. VC6's own spilled temporaries (strength-reduced table
+  pointers and counters of the radius and base loops, `mov [slot],0 ...
+  mov eax,[slot]; add; mov [slot],eax`) have no slot of their own: each goes
+  into a named variable's slot that is dead over its loop. In the image
+  they sit in `j`'s slot (12 sites), the garrison/ring slot -0x48 (10),
+  `tile_owner`'s (9), `k`'s (7), `hint`'s (8); in ours 68 of them share
+  `tile_owner`'s slot, which therefore ranks 9th (image: 23rd), and `j`
+  keeps a slot alone (ours 18th, image 11th). `j` cannot take them in ours
+  because it is live across three of those loops (written L5822, L6589 and
+  L7584 and read after the scans), where the image's `j` slot is free
+  (its temporaries at 0x56D9F9, 0x56E365, 0x56FBD5, 0x572739, 0x57602D lie
+  outside j's ranges 0x5729B7-0x57419F etc.). The lever is the named
+  variable's live range, as in the slot-sharing rule above; a slot-rank
+  difference of several places in varset.py's OUR LOCALS table names the
+  variables to read. A heavy spilled temporary is itself a register
+  symptom: the drop-pod base loop (0x56E6D8) keeps its `Bases` pointer in
+  ebx and `d` in esi in the image, ours gives ebx to `best_id` and esi to
+  `faction_id` and spills the pointer (same family as the entry's `T`).
 
 ### 3.4 Arithmetic idioms
 - **Signedness of a field (movsx/movzx, jl/jb, idiv/div, sar/shr) is its
