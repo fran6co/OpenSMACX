@@ -2203,7 +2203,7 @@ void StatusWin::arrow_right() {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004B9FC0 ?init@StatusWin@@QAEXXZ 0x004B9FC0-0x004BA11E
+// ORIGINAL: 0x004B9FC0 ?init@StatusWin@@QAEXXZ 0x004B9FC0-0x004BA11E BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004b9fc0.cpp", "Pinned original01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_statuswin_remaining_behavior.py"], "reason": "Home the complete typed StatusWin init operation. Retain the original seed and historical obligations; this product has no new measured claim."}
 void StatusWin::init() {
     field_15A8_ = 0;

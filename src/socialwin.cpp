@@ -933,7 +933,7 @@ void SocialWin::on_redraw() {
     }
 }
 
-// ORIGINAL: 0x004B0D50 ?draw_psych_alloc@SocialWin@@QAEXXZ 0x004B0D50-0x004B0F92 FILE
+// ORIGINAL: 0x004B0D50 ?draw_psych_alloc@SocialWin@@QAEXXZ 0x004B0D50-0x004B0F92 FILE BYTE_EXACT
 // size      578 bytes
 // prototype void (__thiscall ?draw_psych_alloc@SocialWin@@QAEXXZ)(SocialWin* this)
 // callers   1   call targets   13
@@ -1039,7 +1039,7 @@ void SocialWin::draw_psych_alloc() {
 
 // Draw the unassigned energy share with the two slider buffers owned by the
 // SocialWin. PlayerData is the source owner for the psych and lab shares.
-// ORIGINAL: 0x004B08A0 ?draw_economy_alloc@SocialWin@@QAEXXZ 0x004B08A0-0x004B0AF2
+// ORIGINAL: 0x004B08A0 ?draw_economy_alloc@SocialWin@@QAEXXZ 0x004B08A0-0x004B0AF2 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:seed:src/recovered/units/004b08a0.cpp; source:src/socialwin.h:tooltipEconomy_,energyAllocSlider_,energyAllocLock_; source:src/faction.h:PlayerData.se_alloc_psych,se_alloc_labs; image:0x004B08A0-0x004B0AF2"], "reason": "Home the economy allocation panel on SocialWin’s typed rectangles, slider buffers, font, and PlayerData allocation values."}
 void SocialWin::draw_economy_alloc() {
     RECT panel = tooltipEconomy_;
@@ -1090,7 +1090,7 @@ void SocialWin::draw_economy_alloc() {
 }
 
 // Draw the labs share with the panel's own buffers and typed faction data.
-// ORIGINAL: 0x004B0B00 ?draw_labs_alloc@SocialWin@@QAEXXZ 0x004B0B00-0x004B0D42
+// ORIGINAL: 0x004B0B00 ?draw_labs_alloc@SocialWin@@QAEXXZ 0x004B0B00-0x004B0D42 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:seed:src/recovered/units/004b0b00.cpp; source:src/socialwin.h:tooltipLabs_,energyAllocSlider_,energyAllocLock_; source:src/faction.h:PlayerData.se_alloc_labs; image:0x004B0B00-0x004B0D42"], "reason": "Home the labs allocation panel on SocialWin’s typed rectangles, slider buffers, font, and PlayerData lab allocation."}
 void SocialWin::draw_labs_alloc() {
     RECT panel = tooltipLabs_;
