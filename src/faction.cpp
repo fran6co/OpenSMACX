@@ -77,6 +77,9 @@
 // most of 31-61).
 // After the dead-helper batch (d64959c815), whole-unit fe sweep: buy_council_vote 0x0053EB50 exact at 0-4, 7-9,
 // 11-12, 15-16, 18-21, 23, 28, 35, 46, 48-53, 55, 57, 60, 62-63, so 50, the middle of the widest run.
+// After the EditBox setters (par-5 round 5, 2026-11-19), whole-unit fe sweep: buy_council_vote exact at 0-3, 5-6,
+// 8-9, 12-13, 15-16, 18-19, 21-23, 26, 28-33, 35-36, 38-39, 41-42, 44, 46, 60, 62 (25 and 45 failed to compile in
+// the sweep), so 31, inside the widest run.
 // CANARY: 0x0053EB50 ?buy_council_vote@@YAXHHHH@Z residues 0-2,4,6,9,16-18,21-29,31-32,36,38,40-44,48,50-53,55,57-63
 // CANARY-PADS: function FactionDeclFnPad
 void FactionDeclFnPad0();
@@ -110,25 +113,6 @@ void FactionDeclFnPad27();
 void FactionDeclFnPad28();
 void FactionDeclFnPad29();
 void FactionDeclFnPad30();
-void FactionDeclFnPad31();
-void FactionDeclFnPad32();
-void FactionDeclFnPad33();
-void FactionDeclFnPad34();
-void FactionDeclFnPad35();
-void FactionDeclFnPad36();
-void FactionDeclFnPad37();
-void FactionDeclFnPad38();
-void FactionDeclFnPad39();
-void FactionDeclFnPad40();
-void FactionDeclFnPad41();
-void FactionDeclFnPad42();
-void FactionDeclFnPad43();
-void FactionDeclFnPad44();
-void FactionDeclFnPad45();
-void FactionDeclFnPad46();
-void FactionDeclFnPad47();
-void FactionDeclFnPad48();
-void FactionDeclFnPad49();
 
 // From src/danger.cpp (unit prelude):
 // The pinned diagnostic wrapper calls the parsing helpers out of line.

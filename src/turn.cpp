@@ -108,6 +108,9 @@
 // src/turn.cpp` computes the pad count (none needed now).
 // After the dead-helper batch (d64959c815), whole-unit fe sweep: all exact at 0-2, 7, 9-14, 19, 21-27,
 // 30-45 and 48-60 (faction_upkeep 0x00527290 flips at 3-6, 8, 15-18, 20; end_of_game at 28-29, 46-47, 61-63), so 38.
+// After the EditBox setters (par-5 round 5, 2026-11-19), whole-unit fe sweep: all exact at 1, 5-17, 21-23, 28,
+// 30-35, 40 and 42-63 (faction_upkeep 0x00527290 flips at 24-27, 29, 36-39, 41; end_of_game at 0, 2-4, 18-20),
+// so 50.
 // CANARY: 0x00524870 ?end_of_game@@YAHH@Z residues 1-4,6-19,21-23,27-34,39-49,52,54-60,62-63
 // CANARY-PADS: function TurnDeclFnPad
 void TurnDeclFnPad0();
@@ -148,6 +151,18 @@ void TurnDeclFnPad34();
 void TurnDeclFnPad35();
 void TurnDeclFnPad36();
 void TurnDeclFnPad37();
+void TurnDeclFnPad38();
+void TurnDeclFnPad39();
+void TurnDeclFnPad40();
+void TurnDeclFnPad41();
+void TurnDeclFnPad42();
+void TurnDeclFnPad43();
+void TurnDeclFnPad44();
+void TurnDeclFnPad45();
+void TurnDeclFnPad46();
+void TurnDeclFnPad47();
+void TurnDeclFnPad48();
+void TurnDeclFnPad49();
 
 // ORIGINAL: 0x0051DF80 sub_51df80 0x0051DF80-0x0051DFA4 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:ac4a630920605babb8184f2126ed77052521a59e:src/recovered/units/0051df80.cpp", "image:0x51df80", "source:src/messagewin.cpp"], "reason": "The native eight-StringList array at93A7B0 has30-byte stride, constructor4450B0 and complete teardown406820. The real typed MessageWinDeferredBaseMessages owns forward construction with atexit registration and reverse derived/base destruction. Preserve original identity, complete spans and historical claims; generated delegation is current lowering, not exact layout or linked-selection proof."}

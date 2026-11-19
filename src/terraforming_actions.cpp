@@ -2422,6 +2422,38 @@ void __cdecl action_fungal(int vehicle_id, int x, int y) {
 // Coupled transfer/terrain actions and their still-unfinished prototype dependencies.
 // Partial dependencies retain explicit BODY GOES HERE sentinels and seed obligations.
 // Superseded seed deleted; seed paths below are historical Git provenance.
+// WORKAROUND(decl): counter alignment for action_give 0x004CEDE0 (count canary, guide 3.6). After the EditBox
+// setters (par-5 round 5, 2026-11-19) no count of the unit's extern block gives it (best 2 rows at every count;
+// action_airdrop exact at 1, 3, 7, 12, 20-22, 29, 37-39, 55, 57-60, so the extern block stays at 22). Function
+// declarations placed here do: whole-unit fe sweep exact at 6 and 25-28, so 26.
+// HEADER-PADS: function TerraformingActionsGiveFnPad
+void TerraformingActionsGiveFnPad0();
+void TerraformingActionsGiveFnPad1();
+void TerraformingActionsGiveFnPad2();
+void TerraformingActionsGiveFnPad3();
+void TerraformingActionsGiveFnPad4();
+void TerraformingActionsGiveFnPad5();
+void TerraformingActionsGiveFnPad6();
+void TerraformingActionsGiveFnPad7();
+void TerraformingActionsGiveFnPad8();
+void TerraformingActionsGiveFnPad9();
+void TerraformingActionsGiveFnPad10();
+void TerraformingActionsGiveFnPad11();
+void TerraformingActionsGiveFnPad12();
+void TerraformingActionsGiveFnPad13();
+void TerraformingActionsGiveFnPad14();
+void TerraformingActionsGiveFnPad15();
+void TerraformingActionsGiveFnPad16();
+void TerraformingActionsGiveFnPad17();
+void TerraformingActionsGiveFnPad18();
+void TerraformingActionsGiveFnPad19();
+void TerraformingActionsGiveFnPad20();
+void TerraformingActionsGiveFnPad21();
+void TerraformingActionsGiveFnPad22();
+void TerraformingActionsGiveFnPad23();
+void TerraformingActionsGiveFnPad24();
+void TerraformingActionsGiveFnPad25();
+
 // ORIGINAL: 0x004CEDE0 ?action_give@@YAXHH@Z 0x004CEDE0-0x004CF379 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned entry 004CEDE0; retained seed src/recovered/units/004cede0.cpp", "recovery/tasks/vehicle-special-actions-coverage.json; native scope expansion preserves task baseline", "Native4CE326/4CE7F0 kill precedes announcement; fungal EBX retains initial combat faction while later slot reads observe compacted storage;580B51/580BF7 are mask immediates, not globals."], "reason": "Typed transfer or terrain action preserves native parser, kill, interception and post-call vehicle-slot read order; retained seed remains evidence, not executable backing."}
 void __cdecl action_give(int vehicle_id, int faction_id) {
