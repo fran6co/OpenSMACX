@@ -3856,6 +3856,29 @@ Teardown reservation (par-3 2026-11-19, `analysis/probes/upgrade_eh/`)
   later teardown deeper (return 1 keeps calling ~StringList where the image
   expands it).
 
+New-expressions and EH states (par-2 2026-11-19, AlphaNetStringStruct::add
+0x00401D80, FuncInfo 0x00671810 `[-1,0,-1,2,-1,4]`)
+- **A new-expression whose constructor expands inline and is nothrow has no
+  EH state at all**, its placement-delete cleanup included. When every
+  callee of the expanded constructor is a same-TU nothrow function
+  (NetUnk72C() over NetTextListBase), the site loses the state the called
+  form has. A state count one above the image's at a `new` site is therefore
+  an /Ob2 budget question (the image expanded the constructor there: look for
+  its inner callee called out of line), not an unwind refusal.
+- **An lvalue placement argument is re-read in the unwind funclet; a value
+  argument is spilled by the body.** `new(member_) T` makes the cleanup
+  funclet reload the member through `this`; `new(owner(this)) T` (any rvalue,
+  e.g. an inline accessor's return) stores it to a frame slot or a dead
+  parameter slot before the call (0x00401F4A into `[ebp-0x14]`, 0x0040220B
+  into `[ebp+8]`) and the funclet pushes that slot. Same shape as
+  JackalVoiceRx::add_player's `voice_owner`.
+- **A placement `operator new` without a matching placement `operator
+  delete` (same extra parameter types) gets no cleanup state**: the
+  constructor call is not covered (C4291). If the image's FuncInfo has a
+  state at a placement-new site, the class declares the matching delete;
+  if not, the delete is absent or the constructor expanded nothrow (first
+  rule).
+
 ## 4. Measured and neutral (do not retry without new evidence)
 
 - **String pooling.** The original is unpooled everywhere: identical literals stay
