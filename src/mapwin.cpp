@@ -5030,37 +5030,37 @@ void MapWin::gen_overlays(int x, int y) {
         int color = 0xFF;
         switch (PlayersData[faction].goals[goal_index].type) {
         case 0:
-// RECOVERY_LITERAL: v1 0x00686360 0x00686362 $SG62729 0x004688E0
+// RECOVERY_LITERAL: v1 0x00686360 0x00686362 $SG62711 0x004688E0
             strcat(StringTemp, "a");
             color = 0xF9;
             break;
         case 2:
-// RECOVERY_LITERAL: v1 0x00686364 0x00686366 $SG62731 0x004688E0
+// RECOVERY_LITERAL: v1 0x00686364 0x00686366 $SG62713 0x004688E0
             strcat(StringTemp, "d");
             color = 0xFB;
             break;
         case 9:
-// RECOVERY_LITERAL: v1 0x00686368 0x0068636A $SG62733 0x004688E0
+// RECOVERY_LITERAL: v1 0x00686368 0x0068636A $SG62715 0x004688E0
             strcat(StringTemp, "f");
             color = 0xFA;
             break;
         case 8:
-// RECOVERY_LITERAL: v1 0x0068636C 0x0068636E $SG62735 0x004688E0
+// RECOVERY_LITERAL: v1 0x0068636C 0x0068636E $SG62717 0x004688E0
             strcat(StringTemp, "c");
             color = 0xFE;
             break;
         case 6:
-// RECOVERY_LITERAL: v1 0x00686370 0x00686372 $SG62737 0x004688E0
+// RECOVERY_LITERAL: v1 0x00686370 0x00686372 $SG62719 0x004688E0
             strcat(StringTemp, "n");
             color = 0xFC;
             break;
         case 41:
-// RECOVERY_LITERAL: v1 0x00686374 0x00686376 $SG62739 0x004688E0
+// RECOVERY_LITERAL: v1 0x00686374 0x00686376 $SG62721 0x004688E0
             strcat(StringTemp, "^");
             color = 0xFF;
             break;
         case 3:
-// RECOVERY_LITERAL: v1 0x00686378 0x0068637A $SG62741 0x004688E0
+// RECOVERY_LITERAL: v1 0x00686378 0x0068637A $SG62723 0x004688E0
             strcat(StringTemp, "s");
             color = 0xFD;
             break;

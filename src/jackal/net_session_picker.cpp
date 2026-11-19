@@ -734,7 +734,7 @@ void __cdecl sub_63cdc0(GraphicWin *window, void *gate_context, int unused,
 int Sprite::init_class() {
     Buffer buf;
     int result;
-// RECOVERY_LITERAL: v1 0x00698CAC 0x00698CB7 $SG49912 0x0063CE20
+// RECOVERY_LITERAL: v1 0x00698CAC 0x00698CB7 $SG49894 0x0063CE20
     if (buf.load_pcx("jackal.pcx", 0, 10, 0xec) != 0) {
         result = blank_sprite().create_blank(0x10, 0x10, 9);
     } else {

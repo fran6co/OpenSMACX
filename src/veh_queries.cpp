@@ -520,7 +520,7 @@ void __cdecl veh_kill(int veh_id) {
         NetDaemonNet.deletion_list_.add_deletion(veh_id);
     }
 
-// RECOVERY_LITERAL: v1 0x00691DC0 0x00691DDB $SG60227 0x005C08C0
+// RECOVERY_LITERAL: v1 0x00691DC0 0x00691DDB $SG60209 0x005C08C0
     log_say("Killing vehicle (v,who,v2)", veh_id, Vehs[veh_id].faction_id,
             Vehs[veh_id].proto_id);
 

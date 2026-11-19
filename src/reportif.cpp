@@ -5907,9 +5907,9 @@ int ReportIf::on_iface_dialog_item_back_draw(::GraphicWin *, int, int, RECT *) {
 // The three log_say texts are this handler's own copies in the pinned image
 // (0x687280, 0x687298, 0x6872B8; on_left_click keeps a separate EDBC copy at
 // 0x686F04). The image's advanced-governor text ends in "set".
-// RECOVERY_LITERAL: v1 0x00687280 0x00687295 $SG63527 0x004A6330
-// RECOVERY_LITERAL: v1 0x00687298 0x006872B5 $SG63542 0x004A6330
-// RECOVERY_LITERAL: v1 0x006872B8 0x006872CC $SG63553 0x004A6330
+// RECOVERY_LITERAL: v1 0x00687280 0x00687295 $SG63509 0x004A6330
+// RECOVERY_LITERAL: v1 0x00687298 0x006872B5 $SG63524 0x004A6330
+// RECOVERY_LITERAL: v1 0x006872B8 0x006872CC $SG63535 0x004A6330
 // symbol    ?on_iface_button_clicked@ReportIf@@UAEXH@Z
 void ReportIf::on_iface_button_clicked(int button) {
     int row;

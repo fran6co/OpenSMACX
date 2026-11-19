@@ -115,7 +115,7 @@ const char *PrefsSection = "Alpha Centauri";       // 0x006900D0
 // RECOVERY_OBJECT: v2 0x00691AFC 0x00691B00 ?AlphaxFileID@@3PBDB 0x0048207D
 // The initialiser's own literal: the image DWORD at 0x00691AFC holds
 // 0x00691B58, where the seven bytes "ALPHAX\0" sit.
-// RECOVERY_LITERAL: v1 0x00691B58 0x00691B5F $SG51293 0x0048207D
+// RECOVERY_LITERAL: v1 0x00691B58 0x00691B5F $SG51279 0x0048207D
 LPCSTR AlphaxFileID = "ALPHAX";
 // Alpha owns the parsed #COMPASS pointer IDs populated by read_rules.
 // RECOVERY_OBJECT: v1 0x00945D48 ?Compass@@3PAPADA
@@ -732,7 +732,7 @@ BOOL __cdecl read_basic_rules() {
     return false;
 }
 
-// RECOVERY_LITERAL: v1 0x0068F2FC 0x0068F30A $SG51389 0x00585E30
+// RECOVERY_LITERAL: v1 0x0068F2FC 0x0068F30A $SG51375 0x00585E30
 /*
 Purpose: Parse the #TECHNOLOGY section inside the alpha(x).txt with a duplicate entry check.
 // ORIGINAL: 0x00585E30 ?read_tech@@YAHXZ 0x00585E30-0x00585FDB BYTE_EXACT
@@ -2330,7 +2330,7 @@ static __forceinline void prefs_put_inline(LPCSTR key_name, int value, BOOL tgl_
     WritePrivateProfileStringA(PrefsSection, key_name, StringTemp, PrefsFile);
 }
 
-// RECOVERY_LITERAL: v1 0x00690208 0x00690215 $SG52069 0x0059E5D0
+// RECOVERY_LITERAL: v1 0x00690208 0x00690215 $SG52055 0x0059E5D0
 /*
 Purpose: Save the most common preferences from memory to the game's ini. 
 // ORIGINAL: 0x0059E5D0 ?prefs_save@@YAXH@Z 0x0059E5D0-0x0059E946 BYTE_EXACT

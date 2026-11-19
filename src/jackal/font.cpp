@@ -306,7 +306,7 @@ int Font::init(LPCSTR file, LPCSTR font_name, int height, int style) {
     // allocation, and caching one costs the image's bare `inc eax; push eax`
     // on the mem_get size.
     fot_file_name_[strlen(fot_file_name_) - 4] = 0; // font extension length
-    // RECOVERY_LITERAL: v1 0x006972AC 0x006972B1 $SG37842 0x006190D0
+    // RECOVERY_LITERAL: v1 0x006972AC 0x006972B1 $SG37832 0x006190D0
     strcat(fot_file_name_, ".fot");
     // MAX_PATH, not MAX_PATH + 1: the image's frame is 0x104, which is 260
     // bytes of local and nothing else. GetCurrentDirectoryA(MAX_PATH, path)
@@ -582,7 +582,7 @@ int __cdecl Font::init_font_class(Font *font) {
         }
         FontDefault = font;
         if (!font->font_obj_) {
-            // RECOVERY_LITERAL: v1 0x006972B4 0x006972C4 $SG37901 0x006195B0
+            // RECOVERY_LITERAL: v1 0x006972B4 0x006972C4 $SG37891 0x006195B0
             int const result = font->init("Times New Roman", 12, 0);
             if (result) {
                 return result;
