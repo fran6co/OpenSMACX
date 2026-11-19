@@ -1023,8 +1023,9 @@ void __cdecl tech_effects(int faction_id) {
 // constant argument the body folds to no code; each expansion spends inline
 // budget. The image's five early-return Popup teardowns are one level
 // shallower than this source compiles them (EH sites 5,5,5,5,5,7,18 against
-// 6,6,6,6,6,7,18); ten expansions after the last early return reproduce the
-// image's unwind map. The original spend is not identified.
+// 6,6,6,6,6,7,18). With the says/say_tech header inlines expanded, two
+// expansions after the last early return reproduce the image's unwind map
+// (ten before). The original spend is not identified.
 static inline void tech_achieved_budget_probe(int x) {
     if (x == 1) {
         x = 2;
@@ -1131,14 +1132,6 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
     // WORKAROUND(inline): see tech_achieved_budget_probe.
     tech_achieved_budget_probe(0);
     tech_achieved_budget_probe(0);
-    tech_achieved_budget_probe(0);
-    tech_achieved_budget_probe(0);
-    tech_achieved_budget_probe(0);
-    tech_achieved_budget_probe(0);
-    tech_achieved_budget_probe(0);
-    tech_achieved_budget_probe(0);
-    tech_achieved_budget_probe(0);
-    tech_achieved_budget_probe(0);
     int reactor_unlock = 0;
     for (int reactor_level = 2; reactor_level <= 4; reactor_level++) {
         if (tech_id == Reactor[reactor_level - 1].preq_tech) {
@@ -1206,7 +1199,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
 
     if (faction_id == ConsoleGlobal.faction_id_ || (GameDataStateStorage.fields_.game_state_ & 0x80)) {
         StringTemp[0] = 0;
-        say_tech(StringTemp, tech_id, FALSE);
+        say_tech(tech_id, FALSE);
         parse_says(0, StringTemp, -1, -1);
         parse_says(1, get_noun(faction_id), -1, -1);
         if (faction_id_with > 0) {
@@ -1224,9 +1217,9 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
             // expanded tech_secret's own buffer ([ebp-0x84]).
             char num_text[80];
             StringTemp[0] = 0;
-            strcat(StringTemp, "TECH");
+            says("TECH");
             _itoa(tech_id, num_text, 10);
-            strcat(StringTemp, num_text);
+            says(num_text);
             popup.init(0, 0);
             popup.set_width(500);
             popup.start(DatalinkBlurbFile, StringTemp, -1, nullptr, 0x80, nullptr);
@@ -1237,18 +1230,18 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
         }
         StringTemp[0] = 0;
         if (faction_id == ConsoleGlobal.faction_id_) {
-            strcat(StringTemp, "WE");
+            says("WE");
         } else {
-            strcat(StringTemp, "THEY");
+            says("THEY");
         }
         if (faction_id_with) {
-            strcat(StringTemp, "ACQUIRE");
+            says("ACQUIRE");
         } else {
-            strcat(StringTemp, "DEVELOP");
+            says("DEVELOP");
         }
         if (give_freebie) {
             StringTemp[0] = 0;
-            strcat(StringTemp, "WEGETSHARETECH");
+            says("WEGETSHARETECH");
         }
         popup.set_picture(&g_TECH_ICON_SPRITES[tech_id], tech_id, nullptr);
         popup.set_sprite_layout(1, 2);
@@ -1373,7 +1366,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
                         parse_say(0, Technology[tech_id].name, -1, -1);
                         parse_say(1, SocialCategories[category].name[model], -1, -1);
                         StringTemp[0] = 0;
-                        strcat(StringTemp, "SOCIETY");
+                        says("SOCIETY");
                         selection = X_pop(TutorialPopupCaption, StringTemp, nullptr);
                         if (selection) {
                             social_select(faction_id);
