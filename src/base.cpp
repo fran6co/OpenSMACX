@@ -15,6 +15,17 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
+// base_energy 0x004EB560 (one reload-order row at 0x004EB7DE) follows the front-end position of the globals
+// faction.h declares (bisected to its extern block, Players/PlayersData): everything declared BEFORE that
+// block moves it with period 112 (an in-class inline member with one parameter counts 7, without parameters
+// 5, a one-member struct 16; exact for 38..100), declarations after it (the usual pad place behind the
+// includes, any kind, 0..63) do not. Whole-unit fe sweep of this block: 3..6 structs give base_energy and
+// change no other marker of the unit (MATCHING_GUIDE 2.5 "Declaration position of a referenced global").
+// HEADER-PADS: struct BaseTypePad
+struct BaseTypePad0 { int a; };
+struct BaseTypePad1 { int a; };
+struct BaseTypePad2 { int a; };
+struct BaseTypePad3 { int a; };
 #define DIALOGS_DTOR_INLINE  // stand-in: see ~Dialogs in dialogs.h
 #include "stdafx.h"
 #include "popup.h"
