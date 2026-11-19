@@ -2145,6 +2145,7 @@ void NetWin::draw_session_info() {
     int row = field.top;
     int written;
     int bottom;
+    int next;
     int avail;
     char tally[0x50];
     // The wrapped-text width every write measures against.
@@ -2226,8 +2227,10 @@ void NetWin::draw_session_info() {
     }
     spot_.add(0, 0, col, row, rect_width(&setup_rects_[1]),
               bottom - row);
-    row = bottom;
 
+    // From here each section starts at the previous one's bottom and ends at
+    // `next` (image: bottom homed at [ebp-0x14], row's [ebp-0x1C] dead and
+    // reused by avail until row = next after the cloud-cover line).
     // Planet size, or the scenario map's dimensions.
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
@@ -2252,22 +2255,22 @@ void NetWin::draw_session_info() {
     avail = field.right - col - 10;
     if (Buffer::text_width(StringTemp) > avail) {
         written = field.right - 10;
-        bottom = Buffer::wrap(StringTemp, col, row, avail);
+        next = Buffer::wrap(StringTemp, col, bottom, avail);
     } else {
-        written = Buffer::write_l(StringTemp, col, row);
-        bottom = row + Buffer::text_line_height();
+        written = Buffer::write_l(StringTemp, col, bottom);
+        next = bottom + Buffer::text_line_height();
     }
     if (NetDaemonNet.primary_state_.leading_words_[0] != 0
         && NetWinSessionData.fields_.scenario_text_wire_tail_[0] == 0) {
         g_IFACE_MP_COMBO_ARROW_SPRITES[0].draw(
             this, g_IFACE_MP_COMBO_ARROW_SPRITES[0].transparent_index(),
-            written + 3, row);
+            written + 3, bottom);
     }
     if (NetDaemonNet.primary_state_.leading_words_[0] != 0
         && NetWinSessionData.fields_.scenario_text_wire_tail_[0] == 0) {
-        spot_.add(4, 0, col, row, written - col + 0x1E, bottom - row);
+        spot_.add(4, 0, col, bottom, written - col + 0x1E, next - bottom);
     }
-    row = bottom;
+    bottom = next;
 
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
@@ -2285,22 +2288,22 @@ void NetWin::draw_session_info() {
     avail = field.right - col - 10;
     if (Buffer::text_width(StringTemp) > avail) {
         written = field.right - 10;
-        bottom = Buffer::wrap(StringTemp, col, row, avail);
+        next = Buffer::wrap(StringTemp, col, bottom, avail);
     } else {
-        written = Buffer::write_l(StringTemp, col, row);
-        bottom = row + Buffer::text_line_height();
+        written = Buffer::write_l(StringTemp, col, bottom);
+        next = bottom + Buffer::text_line_height();
     }
     if (NetDaemonNet.primary_state_.leading_words_[0] != 0
         && NetWinSessionData.fields_.scenario_text_wire_tail_[0] == 0) {
         g_IFACE_MP_COMBO_ARROW_SPRITES[0].draw(
             this, g_IFACE_MP_COMBO_ARROW_SPRITES[0].transparent_index(),
-            written + 3, row);
+            written + 3, bottom);
     }
     if (NetDaemonNet.primary_state_.leading_words_[0] != 0
         && NetWinSessionData.fields_.scenario_text_wire_tail_[0] == 0) {
-        spot_.add(5, 0, col, row, written - col + 0x1E, bottom - row);
+        spot_.add(5, 0, col, bottom, written - col + 0x1E, next - bottom);
     }
-    row = bottom;
+    bottom = next;
 
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
@@ -2318,22 +2321,22 @@ void NetWin::draw_session_info() {
     avail = field.right - col - 10;
     if (Buffer::text_width(StringTemp) > avail) {
         written = field.right - 10;
-        bottom = Buffer::wrap(StringTemp, col, row, avail);
+        next = Buffer::wrap(StringTemp, col, bottom, avail);
     } else {
-        written = Buffer::write_l(StringTemp, col, row);
-        bottom = row + Buffer::text_line_height();
+        written = Buffer::write_l(StringTemp, col, bottom);
+        next = bottom + Buffer::text_line_height();
     }
     if (NetDaemonNet.primary_state_.leading_words_[0] != 0
         && NetWinSessionData.fields_.scenario_text_wire_tail_[0] == 0) {
         g_IFACE_MP_COMBO_ARROW_SPRITES[0].draw(
             this, g_IFACE_MP_COMBO_ARROW_SPRITES[0].transparent_index(),
-            written + 3, row);
+            written + 3, bottom);
     }
     if (NetDaemonNet.primary_state_.leading_words_[0] != 0
         && NetWinSessionData.fields_.scenario_text_wire_tail_[0] == 0) {
-        spot_.add(6, 0, col, row, written - col + 0x1E, bottom - row);
+        spot_.add(6, 0, col, bottom, written - col + 0x1E, next - bottom);
     }
-    row = bottom;
+    bottom = next;
 
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
@@ -2351,22 +2354,22 @@ void NetWin::draw_session_info() {
     avail = field.right - col - 10;
     if (Buffer::text_width(StringTemp) > avail) {
         written = field.right - 10;
-        bottom = Buffer::wrap(StringTemp, col, row, avail);
+        next = Buffer::wrap(StringTemp, col, bottom, avail);
     } else {
-        written = Buffer::write_l(StringTemp, col, row);
-        bottom = row + Buffer::text_line_height();
+        written = Buffer::write_l(StringTemp, col, bottom);
+        next = bottom + Buffer::text_line_height();
     }
     if (NetDaemonNet.primary_state_.leading_words_[0] != 0
         && NetWinSessionData.fields_.scenario_text_wire_tail_[0] == 0) {
         g_IFACE_MP_COMBO_ARROW_SPRITES[0].draw(
             this, g_IFACE_MP_COMBO_ARROW_SPRITES[0].transparent_index(),
-            written + 3, row);
+            written + 3, bottom);
     }
     if (NetDaemonNet.primary_state_.leading_words_[0] != 0
         && NetWinSessionData.fields_.scenario_text_wire_tail_[0] == 0) {
-        spot_.add(7, 0, col, row, written - col + 0x1E, bottom - row);
+        spot_.add(7, 0, col, bottom, written - col + 0x1E, next - bottom);
     }
-    row = bottom;
+    bottom = next;
 
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
@@ -2384,22 +2387,22 @@ void NetWin::draw_session_info() {
     avail = field.right - col - 10;
     if (Buffer::text_width(StringTemp) > avail) {
         written = field.right - 10;
-        bottom = Buffer::wrap(StringTemp, col, row, avail);
+        next = Buffer::wrap(StringTemp, col, bottom, avail);
     } else {
-        written = Buffer::write_l(StringTemp, col, row);
-        bottom = row + Buffer::text_line_height();
+        written = Buffer::write_l(StringTemp, col, bottom);
+        next = bottom + Buffer::text_line_height();
     }
     if (NetDaemonNet.primary_state_.leading_words_[0] != 0
         && NetWinSessionData.fields_.scenario_text_wire_tail_[0] == 0) {
         g_IFACE_MP_COMBO_ARROW_SPRITES[0].draw(
             this, g_IFACE_MP_COMBO_ARROW_SPRITES[0].transparent_index(),
-            written + 3, row);
+            written + 3, bottom);
     }
     if (NetDaemonNet.primary_state_.leading_words_[0] != 0
         && NetWinSessionData.fields_.scenario_text_wire_tail_[0] == 0) {
-        spot_.add(8, 0, col, row, written - col + 0x1E, bottom - row);
+        spot_.add(8, 0, col, bottom, written - col + 0x1E, next - bottom);
     }
-    row = bottom;
+    row = next;
 
     row += Buffer::text_line_height();
 
