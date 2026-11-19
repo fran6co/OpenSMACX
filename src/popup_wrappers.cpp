@@ -435,21 +435,18 @@ int __cdecl veh_pick(int veh_id, const char *label, int flags) {
     popup.dialogs().SpriteBox::field_20_ = 2;
 
     int listed_count = 0;
-    // The stack walk is veh_top's inline expansion (0x48D175..0x48D1A6).
-    // A separate top-of-stack temporary keeps the image's register choice.
-    int listed_vehicle;
-    int stack_top = veh_top(veh_id);
-    listed_vehicle = stack_top;
-    if (listed_vehicle >= 0) {
-        do {
-            StringTemp[0] = '\0';
-            say_morale(listed_vehicle, 0);
-            space();
-            ::strcat(StringTemp, VehPrototypes[Vehs[listed_vehicle].proto_id].veh_name);
-            popup.set_picture(&sprite, listed_vehicle, StringTemp);
-            listed_vehicle = Vehs[listed_vehicle].next_veh_id_stack;
-            ++listed_count;
-        } while (listed_vehicle >= 0);
+    // The stack walk is veh_top's inline expansion (0x48D175..0x48D1A6); its
+    // -1 return is threaded straight past the loop (jl at 0x48D175).
+    for (int listed_vehicle = veh_top(veh_id); listed_vehicle >= 0;
+         listed_vehicle = Vehs[listed_vehicle].next_veh_id_stack) {
+        StringTemp[0] = '\0';
+        say_morale(listed_vehicle, 0);
+        space();
+        // The name address reuses eax (0x48D1DE) as a named value.
+        char *name = VehPrototypes[Vehs[listed_vehicle].proto_id].veh_name;
+        ::strcat(StringTemp, name);
+        popup.set_picture(&sprite, listed_vehicle, StringTemp);
+        ++listed_count;
     }
 
     if (listed_count == 0) {
