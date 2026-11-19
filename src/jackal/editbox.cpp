@@ -286,8 +286,10 @@ int EditBox::on_key_down(int key) {
             if (!(field_B38_ & 1)) {
                 field_B40_ = 0;
                 redraw();
+                return 1;
+            } else {
+                return 1;
             }
-            return 1;
         }
         unsigned int flags = field_B38_;
         if (!(flags & 2)) {
