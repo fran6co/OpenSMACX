@@ -4224,6 +4224,11 @@ int __cdecl enemy_move(int veh_id) {
     // them for unrelated roles, and some paths read a slot this call has not
     // written (original uninitialised reads).
     int tx, ty, faction_id, y, x, other_id, score, base_id, best_score, i, j;
+    // k's roles outside its early loops are separate light variables: the
+    // image's k slot (-0x44) also hosts loop temporaries that need its founder
+    // lighter than hint (12 references), which one 37-reference k is not
+    // (packrev.py, MATCHING_GUIDE 3.3).
+    int moved_count, terraform_order, garrison_count, spot, bias;
     int region, dist, triad, k, keep_count, own_ground, plan, m, n;
     int home_base, tile_owner, home_dist, faction_bit, hint, owner, at_sea;
     int best_id, near_dist, best_dir, near_hostile, region_plan, stay, damage;
@@ -6430,7 +6435,7 @@ L_571982:
     Bases[base_id].event |= faction_bit;
     i = 0;
     m = 0;
-    k = 0;
+    moved_count = 0;
     {
         int r; // esi (scaled)
         for (r = 1; r < 9; r++) {
@@ -6465,7 +6470,7 @@ L_571982:
                               Vehs[other_id].move_to_ai_type <= 0x35) ||
                              (Vehs[other_id].waypoint_x[0] == Vehs[veh_id].waypoint_x[0] &&
                               Vehs[other_id].waypoint_y[0] == Vehs[veh_id].waypoint_y[0]))) {
-                            if (Vehs[other_id].moves_expended) k++;
+                            if (Vehs[other_id].moves_expended) moved_count++;
                             else m++;
                         }
                     }
@@ -6489,14 +6494,14 @@ L_571982:
                              ((base_who(tx, ty) < 0 || (Vehs[other_id].state & 0x10000)) &&
                               Vehs[other_id].waypoint_x[0] == Vehs[veh_id].waypoint_x[0] &&
                               Vehs[other_id].waypoint_y[0] == Vehs[veh_id].waypoint_y[0]))) {
-                            k++;
+                            moved_count++;
                         }
                     }
                 }
             }
         }
     }
-    if (m + i >= 8 || k <= i) goto L_5725e2;
+    if (m + i >= 8 || moved_count <= i) goto L_5725e2;
     j = stack_check(veh_id, 2, 1, -1, -1) + stack_check(veh_id, 2, 0, -1, -1);
     if (zoc_move(x, y, faction_id) || j <= 1) goto L_5725c9;
     best_id = -1;
@@ -6752,7 +6757,7 @@ L_572ffa:
             }
         }
     }
-    k = can_terraform(faction_id, x, y, at_goal(faction_id, 9, x, y) || auto_former, home_base);
+    terraform_order = can_terraform(faction_id, x, y, at_goal(faction_id, 9, x, y) || auto_former, home_base);
     if (!near_hostile
         && (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == 2
             || at_sea == (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == 1))
@@ -6823,7 +6828,7 @@ L_5733d7:
             || (Vehs[veh_id].waypoint_x[0] == x && Vehs[veh_id].waypoint_y[0] == y)
             || stack_check(veh_id, 9, 3, -1, -1)
             || (m && (Bases[home_base].resource_sqr_radius & (1 << m)));
-        if ((map_loc(x, y)->bit & BIT_FUNGUS) && (map_loc(x, y)->climate & ~0x1F) >= 0x40 && k
+        if ((map_loc(x, y)->bit & BIT_FUNGUS) && (map_loc(x, y)->climate & ~0x1F) >= 0x40 && terraform_order
             && (has_abil(Vehs[veh_id].proto_id, 0x2000)
                 || has_tech(Terraforming[TERRA_REMOVE_FUNGUS].prerequisite_tech[is_ocean(x, y)], faction_id))
             && (i || (home_dist <= 2
@@ -6833,7 +6838,7 @@ L_5733d7:
         }
         // BUG(original): `&&` where `&` was meant; any nonzero resource word
         // and any m pass (the shifted bit itself is tested).
-        if (k == 4 && (i || (m && Bases[home_base].resource_sqr_radius && (1 << m)))) {
+        if (terraform_order == 4 && (i || (m && Bases[home_base].resource_sqr_radius && (1 << m)))) {
             Vehs[veh_id].order = 4;
             Vehs[veh_id].move_to_ai_type = 0x2B;
             goto L_578f46;
@@ -6843,7 +6848,7 @@ L_5733d7:
                 || !(GameDataStateStorage.fields_.game_more_preferences_ & 0x400000))
             && (i || (home_dist <= 2
                       && ((map_loc(x, y)->bit & BIT_MINE) || (map_loc(x, y)->bit & BIT_FARM)
-                          || (((map_loc(x, y)->bit & BIT_FOREST) || k)
+                          || (((map_loc(x, y)->bit & BIT_FOREST) || terraform_order)
                               && (!(map_loc(x, y)->bit & BIT_FUNGUS)
                                   || (map_loc(x, y)->climate & ~0x1F) < 0x40)))))) {
             Map *tile = map_loc(x, y);
@@ -6862,9 +6867,9 @@ L_5733d7:
                 goto L_578f46;
             }
         }
-        if (k && (home_dist <= 2 || stack_check(veh_id, 9, 3, -1, -1))
+        if (terraform_order && (home_dist <= 2 || stack_check(veh_id, 9, 3, -1, -1))
             && (i || !Vehs[veh_id].order)) {
-            Vehs[veh_id].order = (int8_t)k;
+            Vehs[veh_id].order = (int8_t)terraform_order;
             Vehs[veh_id].move_to_ai_type = 0x2B;
             goto L_578f46;
         }
@@ -7243,7 +7248,7 @@ L_574a88:
         del_site(faction_id, plan, x, y, 0);
     }
     hint = 0;
-    k = 0;
+    garrison_count = 0;
     i = 0;
     m = 0;
     j = 0;
@@ -7298,8 +7303,8 @@ L_574a88:
                         continue;
                     }
                     if (VehPrototypes[Vehs[other_id].proto_id].plan == PLAN_DEFENSIVE
-                        && k < garrison && !home_dist) {
-                        k++;
+                        && garrison_count < garrison && !home_dist) {
+                        garrison_count++;
                         Vehs[other_id].order = ORDER_HOLD;
                     } else if (!home_dist && !healthy) {
                         Vehs[other_id].order = ORDER_HOLD;
@@ -7328,7 +7333,7 @@ L_574a88:
                                 && (VehPrototypes[Vehs[other_id].proto_id].plan == PLAN_COMBAT
                                     || VehPrototypes[Vehs[other_id].proto_id].plan == PLAN_RECONNAISANCE))
                             || !stack_check(other_id, 16, -1, -1, -1))) {
-                        if (++k <= garrison) {
+                        if (++garrison_count <= garrison) {
                             continue;
                         }
                         if (region_plan <= 2 && n) {
@@ -7967,13 +7972,13 @@ L_576a95:
                         }
                     }
                     score = 0;
-                    for (k = 9; k < 81; k++) {
-                        int ax = xrange(tx + RadiusOffsetX[k]);
-                        int ay = ty + RadiusOffsetY[k];
+                    for (spot = 9; spot < 81; spot++) {
+                        int ax = xrange(tx + RadiusOffsetX[spot]);
+                        int ay = ty + RadiusOffsetY[spot];
                         if (!on_map(ax, ay)) continue;
                         if (is_ocean(ax, ay)) continue;
-                        int bx = xrange(tx - RadiusOffsetX[k]);
-                        int by = ty - RadiusOffsetY[k];
+                        int bx = xrange(tx - RadiusOffsetX[spot]);
+                        int by = ty - RadiusOffsetY[spot];
                         if (!on_map(bx, by)) continue;
                         if (is_ocean(bx, by)) continue;
                         int ar = map_loc(ax, ay)->region;
@@ -8130,10 +8135,10 @@ L_57717f:
         assault = 1;
         if (plan == 12) assault = 0;
     }
-    k = rnd(9, "ENEMYBIAS");
+    bias = rnd(9, "ENEMYBIAS");
     hint = 0;
     do {   // 0x5774ac
-    i = (hint + k) % 9;
+    i = (hint + bias) % 9;
     tx = xrange(x + RadiusOffsetX[i]);
     ty = y + RadiusOffsetY[i];
     if (!on_map(tx, ty)) goto L_578ae1;
