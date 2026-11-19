@@ -990,8 +990,7 @@ void __cdecl spot_all(int veh_id, int toggle) {
         // and [ebp-0x48] as the CSE of its flags & PFLAG_MAP_REVEALED (reread by
         // the inlined spot_tile's dirty arm at 5B8812).
         if (base_id >= 0
-            && ((PlayersData[occupant].flags & PFLAG_MAP_REVEALED)
-                || (map_loc(x0, y0)->visibility & (1 << occupant)))
+            && is_known(x0, y0, occupant)
             && !leave
             // ? 5B8744: region compared as bytes (cmp dl, al), tile0 on the left
             && (low_terrain != is_ocean(x, y)

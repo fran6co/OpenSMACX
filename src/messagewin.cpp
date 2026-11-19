@@ -112,8 +112,7 @@ void MessageWin::on_selected(int code, int) {
             if (y >= 0 && y < MapLatitudeBounds &&
                 x >= 0 && x < MapLongitudeBounds) {
                 const int faction = ConsoleGlobal.faction_id_;
-                if ((PlayersData[faction].flags & PFLAG_MAP_REVEALED) != 0 ||
-                    (map_loc(x, y)->visibility & (1 << faction)) != 0) {
+                if (is_known(x, y, faction)) {
                     ConsoleGlobal.set_center(x, y, 1);
                     if (!ConsoleGlobal.cursor_active_) {
                         ConsoleGlobal.set_cursor(x, y);

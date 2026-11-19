@@ -2568,8 +2568,7 @@ void __cdecl base_ecology() {
         if ((map_loc(x, y)->climate >> 5) < ALT_OCEAN_SHELF) {
             world_alt_set(x, y, ALT_OCEAN_SHELF, false);
         }
-        if ((PlayersData[ConsoleGlobal.faction_id_].flags & PFLAG_MAP_REVEALED)
-                || (map_loc(x, y)->visibility & (1 << ConsoleGlobal.faction_id_))
+        if (is_known(x, y, ConsoleGlobal.faction_id_)
                 || (GameDataStateStorage.fields_.game_state_ & 0x80)) {
             shown = true;
             if (faction == ConsoleGlobal.faction_id_) {
@@ -2769,8 +2768,7 @@ void __cdecl base_ecology() {
     PluralityDefault = 0;
     GenderDefault = Players[ConsoleGlobal.faction_id_].is_leader_female;
     parse_says(1, Players[ConsoleGlobal.faction_id_].name_leader, -1, -1);
-    if ((PlayersData[ConsoleGlobal.faction_id_].flags & PFLAG_MAP_REVEALED)
-            || (map_loc(volcano_x, volcano_y)->visibility & (1 << ConsoleGlobal.faction_id_))) {
+    if (is_known(volcano_x, volcano_y, ConsoleGlobal.faction_id_)) {
         popp(ScriptPopupFile, "VOLCANO", 0, "volc_sm.pcx", nullptr);
     }
 }

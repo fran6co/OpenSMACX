@@ -483,7 +483,6 @@ void __cdecl kill_landmark(int x, int y);
 int __cdecl is_coast(int x, int y, BOOL is_base_radius);
 void __cdecl rebuild_vehicle_bits();
 void __cdecl rebuild_base_bits();
-BOOL __cdecl is_known(int x, int y, int faction_id);
 BOOL __cdecl map_init();
 void __cdecl map_wipe();
 BOOL __cdecl map_write(FILE *map_file);
@@ -789,6 +788,15 @@ MEASURED inline int __cdecl base_who(int x, int y) {
         return -1;
     }
     return owner;
+}
+
+// is_known is a header inline like base_who: its out-of-line copy 0x00579840
+// sits in the same run of copies in enemy_move's unit, the image calls it only
+// from enemy_move (13 sites), and every other caller expands the
+// MAP_REVEALED-or-visibility test.
+MEASURED inline BOOL __cdecl is_known(int x, int y, int faction_id) {   // 00579840
+    return (PlayersData[faction_id].flags & PFLAG_MAP_REVEALED
+        || map_loc(x, y)->visibility & (1 << faction_id));
 }
 
 // is_port is a header inline like base_who and anything_at: its out-of-line

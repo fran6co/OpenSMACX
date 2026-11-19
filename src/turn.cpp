@@ -1185,7 +1185,7 @@ void __cdecl random_events(int mode) {
         if (PlayersData[faction].ranking < 6) {
             return;
         }
-        seen = (PlayersData[ConsoleGlobal.faction_id_].flags & PFLAG_MAP_REVEALED) || (map_loc(GameDataStateStorage.fields_.mount_planet_x_, GameDataStateStorage.fields_.mount_planet_y_)->visibility & (1 << ConsoleGlobal.faction_id_));
+        seen = is_known(GameDataStateStorage.fields_.mount_planet_x_, GameDataStateStorage.fields_.mount_planet_y_, ConsoleGlobal.faction_id_);
         for (int i = 0; i < 81; i++) {
             int t = GameDataStateStorage.fields_.mount_planet_x_ + RadiusOffsetX[i];
             int x2 = wrap_map_x(t);
@@ -1252,8 +1252,7 @@ void __cdecl random_events(int mode) {
         if (near_landmark(x, y)) {
             return;
         }
-        seen = (PlayersData[ConsoleGlobal.faction_id_].flags & PFLAG_MAP_REVEALED)
-            || (map_loc(x, y)->visibility & (1 << ConsoleGlobal.faction_id_));
+        seen = is_known(x, y, ConsoleGlobal.faction_id_);
         int water = 0;
         int i;
         for (i = 0; i < 49; i++) {
@@ -1929,8 +1928,7 @@ void __cdecl alien_fauna() {
         }
         if (!notice_sent &&
             Bases[base_id].faction_id_current == ConsoleGlobal.faction_id_ &&
-            ((PlayersData[ConsoleGlobal.faction_id_].flags & PFLAG_MAP_REVEALED) ||
-             (map_loc(x2, y2)->visibility & (1 << ConsoleGlobal.faction_id_))) &&
+            is_known(x2, y2, ConsoleGlobal.faction_id_) &&
             alien_tile_vehicle_visible(veh_id, ConsoleGlobal.faction_id_)) {
             notice_sent = 1;
             parse_says(0, Bases[base_id].name_string, -1, -1);

@@ -9052,10 +9052,8 @@ Purpose: Check whether a faction can see the specified tile.
 Return Value: Is tile visible/known to faction? true/false
 Status: Complete
 */
-BOOL __cdecl is_known(int x, int y, int faction_id) {
-    return (PlayersData[faction_id].flags & PFLAG_MAP_REVEALED
-        || map_loc(x, y)->visibility & (1 << faction_id));
-}
+// body src/map.h
+// BODY IN map.h, as `MEASURED inline`.
 
 /*
 Purpose: If a base exists, get the owner of the specified tile.

@@ -968,8 +968,7 @@ found_terra:
                 }
                 if (owner >= 0 && owner != faction_id
                     && PlayersData[faction_id].diplo_treaties[owner] & DTREATY_COMMLINK
-                    && (PlayersData[owner].flags & PFLAG_MAP_REVEALED
-                        || map_loc(x, y)->visibility & (1 << owner))) {
+                    && is_known(x, y, owner)) {
                     synch_bit(x, y, owner);
                     add_goal(owner, 0, 5, Vehs[veh_id].x, Vehs[veh_id].y, -1);
                     if (owner == ConsoleGlobal.faction_id_) {
@@ -980,8 +979,7 @@ found_terra:
                         NetMsgPrimary.pop(is_assault ? "HAVEDESTROYED1" : "HAVEDESTROYED", 5000, 0, 0);
                     }
                 }
-            } else if ((PlayersData[ConsoleGlobal.faction_id_].flags & PFLAG_MAP_REVEALED
-                    || map_loc(x, y)->visibility & (1 << ConsoleGlobal.faction_id_))
+            } else if (is_known(x, y, ConsoleGlobal.faction_id_)
                 && owner == ConsoleGlobal.faction_id_) {
                 int base_id = base_find(x, y, -1, -1, -1, ConsoleGlobal.faction_id_);
                 if (base_id >= 0 && Bases[base_id].faction_id_current == ConsoleGlobal.faction_id_) {
@@ -2281,8 +2279,7 @@ void __cdecl action_tectonic(int vehicle_id, int x, int y) {
     const int base_id = base_find(x, y);
     int attacker = Vehs[vehicle_id].faction_id;
     if (attacker != ConsoleGlobal.faction_id_
-        && (PlayersData[ConsoleGlobal.faction_id_].flags & PFLAG_MAP_REVEALED
-            || map_loc(x, y)->visibility & (1 << ConsoleGlobal.faction_id_))
+        && is_known(x, y, ConsoleGlobal.faction_id_)
         && base_id >= 0 && Bases[base_id].faction_id_current == ConsoleGlobal.faction_id_) {
         ConsoleGlobal.focus(x, y, attacker);
         focused_on_event = true;
@@ -2462,8 +2459,7 @@ void __cdecl action_fungal(int vehicle_id, int x, int y) {
         }
         const int focus_faction = Vehs[vehicle_id].faction_id;
         if (focus_faction != ConsoleGlobal.faction_id_
-            && (PlayersData[ConsoleGlobal.faction_id_].flags & PFLAG_MAP_REVEALED
-                || map_loc(x_spread, y_spread)->visibility & (1 << ConsoleGlobal.faction_id_))
+            && is_known(x_spread, y_spread, ConsoleGlobal.faction_id_)
             && base_id >= 0 && Bases[base_id].faction_id_current == ConsoleGlobal.faction_id_) {
             ConsoleGlobal.focus(x_spread, y_spread, focus_faction);
             focused_on_spread = true;
@@ -2476,8 +2472,7 @@ void __cdecl action_fungal(int vehicle_id, int x, int y) {
             world_alt_set(x_spread, y_spread, 2, 0);
         }
         const int faction = ConsoleGlobal.faction_id_;
-        if (PlayersData[faction].flags & PFLAG_MAP_REVEALED
-            || map_loc(x_spread, y_spread)->visibility & (1 << faction)
+        if (is_known(x_spread, y_spread, faction)
             || GameDataStateStorage.fields_.game_state_ & 0x80) {
             synch_bit(x_spread, y_spread, faction);
             draw_tile(x_spread, y_spread, 2);

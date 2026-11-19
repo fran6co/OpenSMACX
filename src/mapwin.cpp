@@ -849,10 +849,7 @@ void MapWin::editor(int tile_x, int tile_y, int erase) {
                     // The image rereads ConsoleGlobal.faction_id_ after each
                     // clobber/call (46BA2C, 46BA77, 46BAED).
                     if (erase != 0) {
-                        if ((PlayersData[ConsoleGlobal.faction_id_].flags &
-                             PFLAG_MAP_REVEALED) != 0 ||
-                            (map_loc(x, y)->visibility &
-                             (1 << ConsoleGlobal.faction_id_)) != 0)
+                        if (is_known(x, y, ConsoleGlobal.faction_id_))
                             changed = 1;
                         map_loc(x, y)->visibility &=
                             ~(1 << ConsoleGlobal.faction_id_);
@@ -861,10 +858,7 @@ void MapWin::editor(int tile_x, int tile_y, int erase) {
                             Bases[base_id].visibility &=
                                 ~(1 << ConsoleGlobal.faction_id_);
                     } else {
-                        if ((PlayersData[ConsoleGlobal.faction_id_].flags &
-                             PFLAG_MAP_REVEALED) == 0 &&
-                            (map_loc(x, y)->visibility &
-                             (1 << ConsoleGlobal.faction_id_)) == 0)
+                        if (!is_known(x, y, ConsoleGlobal.faction_id_))
                             changed = 1;
                         spot_loc(x, y, ConsoleGlobal.faction_id_);
                         synch_bit(x, y, ConsoleGlobal.faction_id_);
