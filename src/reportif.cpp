@@ -7543,7 +7543,7 @@ void ReportIf::draw_security() {
     int inset = field_1E230_ ? 0x4C : 0;
     field_C_ = inset + field_50_.left;
     field_10_ = field_50_.top;
-    field_14_ = field_50_.right - inset - field_50_.left;
+    field_14_ = rect_width(&field_50_) - (field_1E230_ ? 0x4C : 0);
     field_18_ = rect_height(&field_50_);
     StringTemp[0] = 0;
     MainInterfaceGlobal.Buffer::set_font(field_1E190_, field_1E194_, field_1E198_, nullptr);
@@ -7673,7 +7673,11 @@ void ReportIf::close_score() {
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004ac140.cpp", "source:src/reportif.h", "source:src/faction.h", "source:src/tech.h"], "reason": "Retained identity identifies ReportIf's intelligence panel. Original faction-indexed treaty accesses and technology iteration map to source-owned player data and technology records; the informed-view conditions select the same information rather than treating the panel as a link-only placeholder."}
 // TRIED: full field-offset transcription off `self`, with the two embedded ListBox virtual-base dispatches done as explicit two-step vbtable-pointer/displacement reads (not flattened pointer arithmetic) and the vtable slot1 call retyped to take an int; compiles, MISMATCH #3 (early - likely the spy-flag bool-to-int store or the `test ecx,ecx` on a provably-nonzero fixed global getting folded away).
 void ReportIf::draw_intel() {
+    // One index, one ListBox pointer and no inset local: the order VC6 gives `right - left - inset`
+    // (0x004AC4D3 subtracts the inset first) follows the number of referenced locals of the function
+    // mod 8 (an array counts two). Three fewer than the earlier eight-local spelling is the image's order.
     int target = report_selection_;
+    int i;
     int informed = (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
         || spying(target) != 0
         || (PlayersData[report_faction_id_].diplo_treaties[target] & 1);
@@ -7695,36 +7699,35 @@ void ReportIf::draw_intel() {
     MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
     inflate_frame(&draw_workspace_rect_, -3, -3);
     scroll_small();
-    ListBox *techs = &listBox1_;
-    techs->close();
-    techs->Dialog::init(&draw_workspace_rect_, 0);
-    techs->Dialog::field_48_ = field_1C_ + 3;
+    ListBox *list = &listBox1_;
+    list->close();
+    list->Dialog::init(&draw_workspace_rect_, 0);
+    list->Dialog::field_48_ = field_1C_ + 3;
     listBox1_.Dialog::set_dialog_font(field_1E184_, field_1E184_, field_1E184_);
     listBox1_.Dialog::set_dialog_text_color(0x99, -1, 1, 1);
     listBox1_.Dialog::set_dialog_text_color2(0x99, -1, 1, 1);
     listBox1_.Dialog::set_dialog_text_color3(0x99, -1, 1, 1);
     listBox1_.set_report_text_color(0xF2);
     if (informed) {
-        for (int tech = 0; tech < 89; ++tech) {
-            if (has_tech(tech, target)) {
+        for (i = 0; i < 89; ++i) {
+            if (has_tech(i, target)) {
                 StringTemp[0] = 0;
-                say_tech(StringTemp, tech, 0);
-                if (!has_tech(tech, report_faction_id_)) strcat(StringTemp, " (*)");
-                listBox1_.item(StringTemp, tech);
+                say_tech(StringTemp, i, 0);
+                if (!has_tech(i, report_faction_id_)) strcat(StringTemp, " (*)");
+                listBox1_.item(StringTemp, i);
             }
         }
     }
     listBox1_.field_2C_ = 0;
     listBox1_.clear_selection_index();
     listBox1_.Dialog::field_B4_ = 0;
-    techs->ListBox::attach(&MainInterfaceGlobal, techs->Dialog::window_x_, techs->Dialog::window_y_, 0x80020);
+    list->ListBox::attach(&MainInterfaceGlobal, list->Dialog::window_x_, list->Dialog::window_y_, 0x80020);
     listBox1_.show(0);
     scroll_normal();
     MainInterfaceGlobal.Buffer::set_clip(MainInterfaceGlobal.buffer_working_rect());
 
     MainInterfaceGlobal.Buffer::set_clip(&field_50_);
-    int inset = field_1E230_ ? 0x4C : 0;
-    field_C_ = inset + field_50_.left;
+    field_C_ = (field_1E230_ ? 0x4C : 0) + field_50_.left;
     field_10_ = field_50_.top;
     field_14_ = rect_width(&field_50_) - (field_1E230_ ? 0x4C : 0);
     field_18_ = rect_height(&field_50_);
@@ -7762,34 +7765,34 @@ void ReportIf::draw_intel() {
     MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
     inflate_frame(&draw_workspace_rect_, -3, -3);
     scroll_small();
-    ListBox *bases = &listBox2_;
-    bases->close();
-    bases->Dialog::init(&draw_workspace_rect_, 0);
-    bases->Dialog::field_48_ = field_1C_ + 3;
+    list = &listBox2_;
+    list->close();
+    list->Dialog::init(&draw_workspace_rect_, 0);
+    list->Dialog::field_48_ = field_1C_ + 3;
     listBox2_.Dialog::set_dialog_font(field_1E184_, field_1E184_, field_1E184_);
     listBox2_.Dialog::set_dialog_text_color(0x99, -1, 1, 1);
     listBox2_.Dialog::set_dialog_text_color2(0x99, -1, 1, 1);
     listBox2_.Dialog::set_dialog_text_color3(0x99, -1, 1, 1);
     listBox2_.set_report_text_color(0xF2);
-    for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
-        if (Bases[base].faction_id_current == target
-            && (informed || Bases[base].faction_id_current == report_faction_id_
-                || (Bases[base].visibility & (1 << report_faction_id_)))) {
+    for (i = 0; i < GameDataStateStorage.fields_.base_current_count_; ++i) {
+        if (Bases[i].faction_id_current == target
+            && (informed || Bases[i].faction_id_current == report_faction_id_
+                || (Bases[i].visibility & (1 << report_faction_id_)))) {
             char number[80];
             StringTemp[0] = 0;
-            say_base(StringTemp, base);
+            say_base(StringTemp, i);
             strcat(StringTemp, "|");
             // Original movzx intentionally treats current population as unsigned.
-            _itoa(informed ? static_cast<uint8_t>(Bases[base].population_size)
-                : Bases[base].faction_pop_size_intel[report_faction_id_], number, 10);
+            _itoa(informed ? static_cast<uint8_t>(Bases[i].population_size)
+                : Bases[i].faction_pop_size_intel[report_faction_id_], number, 10);
             strcat(StringTemp, number);
-            listBox2_.item(StringTemp, base);
+            listBox2_.item(StringTemp, i);
         }
     }
     listBox2_.field_2C_ = 0;
     listBox2_.clear_selection_index();
     listBox2_.Dialog::field_B4_ = 0;
-    bases->ListBox::attach(&MainInterfaceGlobal, bases->Dialog::window_x_, bases->Dialog::window_y_, 0x80020);
+    list->ListBox::attach(&MainInterfaceGlobal, list->Dialog::window_x_, list->Dialog::window_y_, 0x80020);
     listBox2_.show(0);
     scroll_normal();
     MainInterfaceGlobal.Buffer::set_clip(MainInterfaceGlobal.buffer_working_rect());
