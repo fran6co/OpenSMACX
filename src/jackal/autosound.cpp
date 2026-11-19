@@ -28,6 +28,23 @@
 AutoSoundDefaultsBlock AutoSoundDefaults;
 
 
+
+
+/*
+Purpose: The compiler-generated scalar deleting destructor: re-install the
+         virtual table, reset the fields through close, and, when bit 0 of
+         the mode asks, free the storage to the game heap.
+// ORIGINAL: 0x005F8640 ??_GAutoSound@@UAEPAXI@Z 0x005F8640-0x005F8664 BYTE_EXACT
+// size      36 bytes
+// prototype void* (__thiscall ??_GAutoSound@@UAEPAXI@Z)(AutoSound* this, unsigned int)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0062BBF0 0x0064557F
+Return Value: the object pointer
+Status: Complete
+*/
+
 /*
 Purpose: Construct an AutoSound by installing its virtual table and copying
          the complete process-default block in legacy store order.
@@ -147,63 +164,6 @@ void AutoSound::close() {
 
 
 /*
-Purpose: Reset every field from the process-default block, exactly as close
-         does but storing in ascending field order - the two differ only in
-         which of the shuffled leading fields lands first.
-// ORIGINAL: 0x0062BDD0 ?close2@AutoSound@@QAEXXZ 0x0062BDD0-0x0062BF1D BYTE_EXACT
-// LEVER: unrolled the `for` tail into 33 named field assignments, exactly as close() above - the loop compiles to 15 address-stepping instructions where the image is 37 straight load/store pairs.
-// size      333 bytes
-// prototype void (__thiscall ?close2@AutoSound@@QAEXXZ)(AutoSound* this)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void AutoSound::close2() {
-    // Spelled out, NOT a loop - see close() above.
-    val_1_ = AutoSoundDefaults.val_1_;
-    val_2_ = AutoSoundDefaults.val_2_;
-    val_3_ = AutoSoundDefaults.val_3_;
-    val_4_ = AutoSoundDefaults.val_4_;
-    val_5_ = AutoSoundDefaults.val_5_;
-    val_6_ = AutoSoundDefaults.val_6_;
-    val_7_ = AutoSoundDefaults.val_7_;
-    val_8_ = AutoSoundDefaults.val_8_;
-    val_9_ = AutoSoundDefaults.val_9_;
-    val_10_ = AutoSoundDefaults.val_10_;
-    val_11_ = AutoSoundDefaults.val_11_;
-    val_12_ = AutoSoundDefaults.val_12_;
-    val_13_ = AutoSoundDefaults.val_13_;
-    val_14_ = AutoSoundDefaults.val_14_;
-    val_15_ = AutoSoundDefaults.val_15_;
-    val_16_ = AutoSoundDefaults.val_16_;
-    val_17_ = AutoSoundDefaults.val_17_;
-    val_18_ = AutoSoundDefaults.val_18_;
-    val_19_ = AutoSoundDefaults.val_19_;
-    val_20_ = AutoSoundDefaults.val_20_;
-    val_21_ = AutoSoundDefaults.val_21_;
-    val_22_ = AutoSoundDefaults.val_22_;
-    val_23_ = AutoSoundDefaults.val_23_;
-    val_24_ = AutoSoundDefaults.val_24_;
-    val_25_ = AutoSoundDefaults.val_25_;
-    val_26_ = AutoSoundDefaults.val_26_;
-    val_27_ = AutoSoundDefaults.val_27_;
-    val_28_ = AutoSoundDefaults.val_28_;
-    val_29_ = AutoSoundDefaults.val_29_;
-    val_30_ = AutoSoundDefaults.val_30_;
-    val_31_ = AutoSoundDefaults.val_31_;
-    val_32_ = AutoSoundDefaults.val_32_;
-    val_33_ = AutoSoundDefaults.val_33_;
-    event_window_ = AutoSoundDefaults.event_window_;
-    val_35_ = AutoSoundDefaults.val_35_;
-    val_36_ = AutoSoundDefaults.val_36_;
-    val_37_ = AutoSoundDefaults.val_37_;
-}
-
-
-/*
 Purpose: Zero every field, in the same legacy store order as construction,
          leaving the virtual table alone.
 // ORIGINAL: 0x0062BD40 ?init@AutoSound@@QAEXXZ 0x0062BD40-0x0062BDC4 BYTE_EXACT
@@ -263,16 +223,57 @@ void AutoSound::init() {
 
 
 /*
-Purpose: The compiler-generated scalar deleting destructor: re-install the
-         virtual table, reset the fields through close, and, when bit 0 of
-         the mode asks, free the storage to the game heap.
-// ORIGINAL: 0x005F8640 ??_GAutoSound@@UAEPAXI@Z 0x005F8640-0x005F8664 BYTE_EXACT
-// size      36 bytes
-// prototype void* (__thiscall ??_GAutoSound@@UAEPAXI@Z)(AutoSound* this, unsigned int)
-// callers   0   call targets   2
+Purpose: Reset every field from the process-default block, exactly as close
+         does but storing in ascending field order - the two differ only in
+         which of the shuffled leading fields lands first.
+// ORIGINAL: 0x0062BDD0 ?close2@AutoSound@@QAEXXZ 0x0062BDD0-0x0062BF1D BYTE_EXACT
+// LEVER: unrolled the `for` tail into 33 named field assignments, exactly as close() above - the loop compiles to 15 address-stepping instructions where the image is 37 straight load/store pairs.
+// size      333 bytes
+// prototype void (__thiscall ?close2@AutoSound@@QAEXXZ)(AutoSound* this)
+// callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
-// calls     0x0062BBF0 0x0064557F
-Return Value: the object pointer
+// calls     (none)
+Return Value: n/a
 Status: Complete
 */
+void AutoSound::close2() {
+    // Spelled out, NOT a loop - see close() above.
+    val_1_ = AutoSoundDefaults.val_1_;
+    val_2_ = AutoSoundDefaults.val_2_;
+    val_3_ = AutoSoundDefaults.val_3_;
+    val_4_ = AutoSoundDefaults.val_4_;
+    val_5_ = AutoSoundDefaults.val_5_;
+    val_6_ = AutoSoundDefaults.val_6_;
+    val_7_ = AutoSoundDefaults.val_7_;
+    val_8_ = AutoSoundDefaults.val_8_;
+    val_9_ = AutoSoundDefaults.val_9_;
+    val_10_ = AutoSoundDefaults.val_10_;
+    val_11_ = AutoSoundDefaults.val_11_;
+    val_12_ = AutoSoundDefaults.val_12_;
+    val_13_ = AutoSoundDefaults.val_13_;
+    val_14_ = AutoSoundDefaults.val_14_;
+    val_15_ = AutoSoundDefaults.val_15_;
+    val_16_ = AutoSoundDefaults.val_16_;
+    val_17_ = AutoSoundDefaults.val_17_;
+    val_18_ = AutoSoundDefaults.val_18_;
+    val_19_ = AutoSoundDefaults.val_19_;
+    val_20_ = AutoSoundDefaults.val_20_;
+    val_21_ = AutoSoundDefaults.val_21_;
+    val_22_ = AutoSoundDefaults.val_22_;
+    val_23_ = AutoSoundDefaults.val_23_;
+    val_24_ = AutoSoundDefaults.val_24_;
+    val_25_ = AutoSoundDefaults.val_25_;
+    val_26_ = AutoSoundDefaults.val_26_;
+    val_27_ = AutoSoundDefaults.val_27_;
+    val_28_ = AutoSoundDefaults.val_28_;
+    val_29_ = AutoSoundDefaults.val_29_;
+    val_30_ = AutoSoundDefaults.val_30_;
+    val_31_ = AutoSoundDefaults.val_31_;
+    val_32_ = AutoSoundDefaults.val_32_;
+    val_33_ = AutoSoundDefaults.val_33_;
+    event_window_ = AutoSoundDefaults.event_window_;
+    val_35_ = AutoSoundDefaults.val_35_;
+    val_36_ = AutoSoundDefaults.val_36_;
+    val_37_ = AutoSoundDefaults.val_37_;
+}
