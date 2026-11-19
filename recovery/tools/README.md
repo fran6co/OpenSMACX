@@ -162,3 +162,11 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   mod 3) and where it changes; the first change bounds the source window where ours creates one register
   value more or fewer than the original.
 - `analysis/sched/` the probe families and runner behind those rules (see its README).
+- `analysis/webscan.py [unit ...] [--addr A,..] [--from FEALL.json] [--sweep] [-v] [--json F]` one name vs one value
+  (MATCHING_GUIDE 3.3, 2.7 use_ability): per non-exact function, named locals/parameters with 2+ disjoint def-use
+  webs (REUSE: SPLIT when the image keeps the webs in different slots, SHARED, REG) and hand-off copies `b = a`
+  (COPY: MERGE/APART/REGCOPY, `/live` when a is redefined while b is live). `--sweep` compiles one split variant per
+  web and one merge per hand-off copy and prints rows and frame (15 min tree-wide with FE_JOBS=5). The sweep does not
+  check meaning: listing-based webs miss joins after tail merging, so read every web by hand before keeping one
+  (first pass 2026-11-19: veh_scoot, monolith, probe, load_vehicles, draw_expenses real; base_draw, setup_text `k`,
+  synch `local_turn` were broken splits that read as large gains).
