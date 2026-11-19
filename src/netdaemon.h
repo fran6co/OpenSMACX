@@ -437,6 +437,23 @@ static_assert(offsetof(NetDaemon, file_index_records_) == 0x1BE0, "flat channel 
 // receiver keeps its folded `mov ecx, imm32` form, the displacement
 // relocated, and `->` becomes `.`.
 extern NetDaemon NetDaemonNet;  // 0x0093CD90
+
+// The network hang-up block, an inline owner shared by save_game,
+// end_of_game and Console::quit_game (three units). In save_game it is what
+// gives the image's call multiset (fe 2026-11-19: written out, or with the
+// test outside the inline, ~ListBox and FlatButton::close teardowns move).
+// setup_player, net_control_turn and Console::retire_game run the same three
+// statements in another shape (an extra statement inside the test, or no
+// test at all: the image has none in net_control_turn), so they write it out.
+// WORKAROUND(decl): the name is ours. IsMultiplayerNet is game.h's; every
+// includer declares it first.
+inline void net_hang_up_if_net() {
+    if (IsMultiplayerNet != 0) {
+        NetDaemonNet.hang_up();
+        NetDaemonNet.reset();
+        IsMultiplayerNet = 0;
+    }
+}
 extern int NetBusyCount;  // 0x0093F664, network exchanges currently in flight
 extern unsigned int NetDaemonProgressInterval;  // distinct 0x0093F668 dword
 extern unsigned int NetDaemonProgressLastTick;  // distinct 0x0093F66C dword
