@@ -21,15 +21,6 @@
 #include "win.h"
 #include <math.h>
 
-// ORIGINAL: 0x0062C830 ??_GPushButton@@UAEPAXI@Z 0x0062C830-0x0062C84E FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["historical deleting-thunk source src/deleting_thunks.cpp; original full spans retained: 0x0062C830-0x0062C84E", "Pinned class constructor ??0PushButton@@QAE@XZ at 0x0062BF20 stores original class/view table VA 0x670c60 at 0x0062BF28 (mov dword ptr [esi], 0x670c60); the current genuine owner vftable ??_7PushButton@@6BWin@@@ selects generated ??_GPushButton@@UAEPAXI@Z in slot 0 (+0x0) through weak entry ??_EPushButton@@UAEPAXI@Z (mode 2).", "Pinned ??_GPushButton@@UAEPAXI@Z at 0x0062C830 calls the source-mapped ??1PushButton@@QAE@XZ at 0x0062C010, then tests byte ptr [esp + 8], 1; je 0x62c848 bypasses scalar delete when bit 0 is clear, while bit 0 set calls 0x0064557F; it save original this; call destructor; delete only when flags bit 0 is set; return saved this with ret 4.", "The real class lifetime is owned by src/pushbutton.cpp; its compiler-emitted deleting symbol and vftable slot carry this original identity. Hand-written adapter bodies with live adjustor callers remain until those callers are independently qualified and transferred. The linked weak/COMDAT copy is not used to choose source ownership.", "the source writer preserves the historical mapping's exactness state (historical exactness obligation retained); current compiler extent is not asserted equal to the original span"], "reason": "Bind the original PushButton scalar deleting-destructor identity to the actual compiler-emitted class deleting destructor in its genuine PushButton owner translation unit. The original constructor's pinned vptr store and the current owner's physical table slot identify this class/view; no callback/thunk body is hand-authored here."}
-// symbol    ??_GPushButton@@UAEPAXI@Z
-// kind      game
-// The zero-init .bss table PushButton's constructor loads its field defaults
-// from. Zero at load in the image, as here - the same idiom as
-// BaseButtonA94Default (basebutton.cpp) and `Log Logging` (log.cpp).
-// RECOVERY_OBJECT: v1 0x009BC118 ?PushButtonDefaults@@3PAPAVSprite@@A
-Sprite *PushButtonDefaults[18];  // 0x009BC118
 
 
 /*
@@ -89,6 +80,36 @@ Purpose: Destroy PushButton through its real BaseButton subobject.
 // calls     (none)
 */
 PushButton::~PushButton() {
+}
+
+// Reset the base first, then consume the current shared defaults. This is
+// slot90 of the PushButton primary table, not part of its destructor.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// LEVER: reinterpret_cast<BaseButton*>(this)->close() for the zero-offset base call, then 18 individual field-by-field assignments from the 18 fixed globals (fully unrolled in the original, no rep movsd), matching disasm order exactly.
+// ORIGINAL: 0x0062C030 ?close@PushButton@@QAEXXZ 0x0062C030-0x0062C10C BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Original constructor62BF28 stages table670C60, whose slot90 targets complete body62C030..62C10C. GraphicWin ends at slot89; BaseButton introduces virtual void close and this body overrides it.", "Original62C033 calls BaseButton6070C0 directly before eighteen sequential default loads9BC118..9BC160 into existing fieldsAB8..B00. Source uses the existing PushButtonDefaults owner without caching across the base cleanup. Its load_interface producer remains unrecovered; this binding is not a full startup/storage-closure claim.", "Original62C010 destructor only stages tables and delegates to BaseButton destruction; no extra PushButton close belongs in the destructor. Preserve the exact seed identity/obligation while measuring the real void override."], "reason": "Recover the missing PushButton virtual cleanup in its genuine BaseButton hierarchy and owning translation unit."}
+// symbol    ?close@PushButton@@UAEXXZ
+void PushButton::close() {
+    BaseButton::close();
+    field_AB8_ = PushButtonDefaults[0];
+    field_ABC_ = PushButtonDefaults[1];
+    field_AC0_ = PushButtonDefaults[2];
+    field_AC4_ = PushButtonDefaults[3];
+    field_AC8_ = PushButtonDefaults[4];
+    field_ACC_ = PushButtonDefaults[5];
+    field_AD0_ = PushButtonDefaults[6];
+    field_AD4_ = PushButtonDefaults[7];
+    field_AD8_ = PushButtonDefaults[8];
+    field_ADC_ = PushButtonDefaults[9];
+    field_AE0_ = PushButtonDefaults[10];
+    field_AE4_ = PushButtonDefaults[11];
+    field_AE8_ = PushButtonDefaults[12];
+    field_AEC_ = PushButtonDefaults[13];
+    field_AF0_ = PushButtonDefaults[14];
+    field_AF4_ = PushButtonDefaults[15];
+    field_AF8_ = PushButtonDefaults[16];
+    field_AFC_ = PushButtonDefaults[17];
 }
 
 // ORIGINAL: 0x0062C110 ?on_redraw@PushButton@@QAEXXZ 0x0062C110-0x0062C82D BYTE_EXACT
@@ -260,35 +281,15 @@ void PushButton::on_redraw() {
     write_cent_l(name_, &rectangle);
 }
 
-// Reset the base first, then consume the current shared defaults. This is
-// slot90 of the PushButton primary table, not part of its destructor.
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// Historical seed observations (not fresh measurements or acceptance):
-// LEVER: reinterpret_cast<BaseButton*>(this)->close() for the zero-offset base call, then 18 individual field-by-field assignments from the 18 fixed globals (fully unrolled in the original, no rep movsd), matching disasm order exactly.
-// ORIGINAL: 0x0062C030 ?close@PushButton@@QAEXXZ 0x0062C030-0x0062C10C BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original constructor62BF28 stages table670C60, whose slot90 targets complete body62C030..62C10C. GraphicWin ends at slot89; BaseButton introduces virtual void close and this body overrides it.", "Original62C033 calls BaseButton6070C0 directly before eighteen sequential default loads9BC118..9BC160 into existing fieldsAB8..B00. Source uses the existing PushButtonDefaults owner without caching across the base cleanup. Its load_interface producer remains unrecovered; this binding is not a full startup/storage-closure claim.", "Original62C010 destructor only stages tables and delegates to BaseButton destruction; no extra PushButton close belongs in the destructor. Preserve the exact seed identity/obligation while measuring the real void override."], "reason": "Recover the missing PushButton virtual cleanup in its genuine BaseButton hierarchy and owning translation unit."}
-// symbol    ?close@PushButton@@UAEXXZ
-void PushButton::close() {
-    BaseButton::close();
-    field_AB8_ = PushButtonDefaults[0];
-    field_ABC_ = PushButtonDefaults[1];
-    field_AC0_ = PushButtonDefaults[2];
-    field_AC4_ = PushButtonDefaults[3];
-    field_AC8_ = PushButtonDefaults[4];
-    field_ACC_ = PushButtonDefaults[5];
-    field_AD0_ = PushButtonDefaults[6];
-    field_AD4_ = PushButtonDefaults[7];
-    field_AD8_ = PushButtonDefaults[8];
-    field_ADC_ = PushButtonDefaults[9];
-    field_AE0_ = PushButtonDefaults[10];
-    field_AE4_ = PushButtonDefaults[11];
-    field_AE8_ = PushButtonDefaults[12];
-    field_AEC_ = PushButtonDefaults[13];
-    field_AF0_ = PushButtonDefaults[14];
-    field_AF4_ = PushButtonDefaults[15];
-    field_AF8_ = PushButtonDefaults[16];
-    field_AFC_ = PushButtonDefaults[17];
-}
+// ORIGINAL: 0x0062C830 ??_GPushButton@@UAEPAXI@Z 0x0062C830-0x0062C84E FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["historical deleting-thunk source src/deleting_thunks.cpp; original full spans retained: 0x0062C830-0x0062C84E", "Pinned class constructor ??0PushButton@@QAE@XZ at 0x0062BF20 stores original class/view table VA 0x670c60 at 0x0062BF28 (mov dword ptr [esi], 0x670c60); the current genuine owner vftable ??_7PushButton@@6BWin@@@ selects generated ??_GPushButton@@UAEPAXI@Z in slot 0 (+0x0) through weak entry ??_EPushButton@@UAEPAXI@Z (mode 2).", "Pinned ??_GPushButton@@UAEPAXI@Z at 0x0062C830 calls the source-mapped ??1PushButton@@QAE@XZ at 0x0062C010, then tests byte ptr [esp + 8], 1; je 0x62c848 bypasses scalar delete when bit 0 is clear, while bit 0 set calls 0x0064557F; it save original this; call destructor; delete only when flags bit 0 is set; return saved this with ret 4.", "The real class lifetime is owned by src/pushbutton.cpp; its compiler-emitted deleting symbol and vftable slot carry this original identity. Hand-written adapter bodies with live adjustor callers remain until those callers are independently qualified and transferred. The linked weak/COMDAT copy is not used to choose source ownership.", "the source writer preserves the historical mapping's exactness state (historical exactness obligation retained); current compiler extent is not asserted equal to the original span"], "reason": "Bind the original PushButton scalar deleting-destructor identity to the actual compiler-emitted class deleting destructor in its genuine PushButton owner translation unit. The original constructor's pinned vptr store and the current owner's physical table slot identify this class/view; no callback/thunk body is hand-authored here."}
+// symbol    ??_GPushButton@@UAEPAXI@Z
+// kind      game
+// The zero-init .bss table PushButton's constructor loads its field defaults
+// from. Zero at load in the image, as here - the same idiom as
+// BaseButtonA94Default (basebutton.cpp) and `Log Logging` (log.cpp).
+// RECOVERY_OBJECT: v1 0x009BC118 ?PushButtonDefaults@@3PAPAVSprite@@A
+Sprite *PushButtonDefaults[18];  // 0x009BC118
 
 /*
 Purpose: Step the receiver back to the subobject ??_GPushButton@@UAEPAXI@Z
