@@ -26,14 +26,6 @@
 // These reconstruction names and array bounds do not establish original declarations.
 // RECOVERY_OBJECT: v1 0x00696E68 ?TextFileExtension@@3PADA
 char TextFileExtension[] = ".txt";
-// RECOVERY_OBJECT: v1 0x00696E7C _text_open_named_mode
-static char text_open_named_mode[] = "rt";
-// RECOVERY_OBJECT: v1 0x00696E80 _text_open_reopen_mode
-static char text_open_reopen_mode[] = "rt";
-// RECOVERY_OBJECT: v1 0x00696E84 _text_open_section_prefix
-static char text_open_section_prefix[] = "#";
-// RECOVERY_OBJECT: v1 0x00696E88 _text_open_seek_log_key
-static char text_open_seek_log_key[] = "Seeking to";
 
 /*
 Purpose: Initialize the class instance.
@@ -136,7 +128,8 @@ BOOL Text::open(LPCSTR src_file_id, LPCSTR section_id) {
             strcat(file_name_, TextFileExtension);
         }
         close();
-        text_file_ = env_open(file_name_, text_open_named_mode);
+// RECOVERY_LITERAL: v1 0x00696E7C 0x00696E7F $SG18492 0x005FDA00
+        text_file_ = env_open(file_name_, "rt");
         if (!text_file_) {
             return true;
         }
@@ -144,7 +137,8 @@ BOOL Text::open(LPCSTR src_file_id, LPCSTR section_id) {
     } else if (text_file_) {
         is_file_open = true;
     } else {
-        text_file_ = env_open(file_name_, text_open_reopen_mode);
+// RECOVERY_LITERAL: v1 0x00696E80 0x00696E83 $SG18497 0x005FDA00
+        text_file_ = env_open(file_name_, "rt");
         if (!text_file_) {
             return true;
         }
@@ -157,11 +151,13 @@ BOOL Text::open(LPCSTR src_file_id, LPCSTR section_id) {
     // std::string's constructor/destructor pull in an SEH frame (`mov eax,
     // fs:[0]` in the prologue) the image's `sub esp, 0x54` does not have.
     char sect_header[80];
-    strcpy(sect_header, text_open_section_prefix);
+// RECOVERY_LITERAL: v1 0x00696E84 0x00696E86 $SG18501 0x005FDA00
+    strcpy(sect_header, "#");
     strcat(sect_header, section_id);
     int seek_addr = text_search_index(file_name_, section_id);
     if (seek_addr >= 0) {
-        log_say(text_open_seek_log_key, section_id, seek_addr, 0, 0);
+// RECOVERY_LITERAL: v1 0x00696E88 0x00696E93 $SG18504 0x005FDA00
+        log_say("Seeking to", section_id, seek_addr, 0, 0);
         fseek(text_file_, seek_addr, SEEK_SET);
         is_file_open = true;
     }
