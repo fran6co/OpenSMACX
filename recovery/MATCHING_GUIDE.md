@@ -1572,6 +1572,40 @@ not see, and those are the levers:
   back to a slot) and an image-only `dwordptr[ecx+<r>` ebx role marked
   "source variable home" (the mask load itself owning the register to the
   final test): one source name too many.
+- **A global cached across a loop** (2026-11-19 par-5; probes in
+  `analysis/regalloc` style, game flags; base_support, CouncWin::on_left_click).
+  Rule 10's "globals across calls are not candidates" is too strong: VC6 forms
+  one web for a global's loads over the whole function and gives it a register
+  like any candidate. Measured:
+  - Kills are calls only. Stores to other globals do not kill it (a direct
+    store, `gcnt[i]++` into an int or unsigned array, a store into a global
+    struct array element): the load is hoisted out of a call-free loop.
+  - After each kill VC6 inserts a reload so the value is available again:
+    in the call's own block, at the merge of the killed paths (it splits a
+    `continue` target into a reload block and the plain latch), after an
+    inner loop that calls, or on the loop's back edge (a block at the loop top
+    that the preheader skips with a `jmp`: base_support 0x004E9609).
+  - Formation is a cost trade: weighted uses against reload sites. With 3 uses
+    (entry, one in an earlier loop, two in the loop) one or two reload sites
+    keep the web (callee-saved register when it spans a call, a SCRATCH
+    register such as edx when every call is followed by a reload); three
+    conditional calls (three sites) drop it, unless one more use follows the
+    calls; five sites drop it even then. Without a use inside an earlier loop
+    (the entry read alone) no web forms at all.
+  - Where the reloads go is a per-function decision we do not predict:
+    base_support's Veh loop with `if (faction != f) continue;` reloads after
+    each kill (too many sites: the web is dropped, the loop's use loads into
+    eax); with the body nested under `if (faction == f) { ... }` VC6 takes the
+    back-edge site and the image's ebx web appears (29 -> 11 rows). In synthetic
+    loops `continue` and the nested form compile alike, so try both spellings
+    of an early `continue` when the image shows a loop-top reload block.
+  - A web that wins a register can push a local out of it: CouncWin::on_left_click
+    keeps ConsoleGlobal.faction_id_ in esi through both popup arms (reloads after
+    X_pop and exec) because the single-player buy_council_vote reads it with no
+    call between; the image has the vote (`y`) in esi across the join and loads
+    the global at that call. A separate `vote` local (`vote = y` on the
+    is_alive path; VC6 parks it in y's dead home, as the image's [ebp+0xc]) does
+    not change the winner (30 -> 33): the deciding reference is still unknown.
 - **Hoisted loop-invariant globals are candidates.** In can_terraform's
   radius census the image hoists MapLongitudeBounds (four references per
   iteration) into edi and rereads MapLongitude; the statement form of the
