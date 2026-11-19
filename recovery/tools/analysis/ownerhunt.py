@@ -394,7 +394,8 @@ def make_variant(text, m, fstart, sig_a, cand, cls, kind, members=()):
           'force': 'static __forceinline void'}[kind]
     helper = '%s oh_owner(%s)\n{\n    %s\n}\n\n' % (kw, ', '.join(t for _, t in args), seg)
     call = 'oh_owner(%s);' % ', '.join(n for n, _ in args)
-    return text[:fstart] + helper + text[fstart:a] + call + text[b:], len(helper)
+    # Insert right before the definition line: the marker block may sit inside a /* */ comment.
+    return text[:sig_a] + helper + text[sig_a:a] + call + text[b:], len(helper)
 
 
 # ---------------------------------------------------------------- measuring
