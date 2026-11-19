@@ -2440,6 +2440,25 @@ Using it
   the nerve-gas owner's level-2 spend is the deep room the rounds lack. So
   the remaining gap is caller size against the owner's nested spend, not the
   veh_health/range spelling.
+  Round 15 (2026-11-19 par-2): the giant's tail is a hard stop, not room.
+  From some source point on, pass 1 refuses *everything*, including a free
+  `x = x;` probe: in battle_fight a free probe expands before the stack-damage
+  `veh_health(v)` (0x50A9E0) and is called right after it, so 0x50AB1E's
+  veh_top/veh_health are refused there whatever the owner's spelling (by-value
+  or const-reference parameters, the state local inside the owner, has_treaty
+  written raw, is_human: all identical). Deleting the 11-statement GOODIDEA
+  block at 0x507E7E moves the stop past 0x50AB1E (both expand, frame 0x138 as
+  the image); deleting any one of its statements does not. order_veh shows the
+  same stop right after its vehicle-count return teardown. Screen for it:
+  one free probe before and after the refused site; if both are called, look
+  for statements before the stop that the original did not have or spelled
+  smaller, not for spend.
+  order_veh 0x005947C0 (same round): its four early Popup returns expanded
+  ~FlatButton where the image calls it. 20 raw treaty tests, 12 raw human-mask
+  tests and 11 raw triad reads spelled as has_treaty/is_human/get_triad (free
+  inlines after those returns, rule 4 reservations) give the image's EH map,
+  frame and call multiset except one ??_DStringList at the vehicle-count return.
+  The `triad = ...` initialiser stays raw: through get_triad it adds a frame slot.
 - **When to stop.** Dead probes that change other teardowns before they move
   the target mean that pass 1 is the binding limit, not pass 2. Look for a
   structural difference: which object owns the teardown, or a per-TU header
