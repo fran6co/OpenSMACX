@@ -3185,12 +3185,13 @@ L_50835D:
                 // 0x508712
                 keep = (100 - Rules.max_pct_dmg_art_vs_unit_base_bnkr) * proto_power(def_id) + 99;
             } else {
-                // 0x5086A2: `100 - pct` is computed before proto_power here
-                // (right operand first), unlike the bunker arm at 0x508712
-                keep = proto_power(def_id)
-                       * (100 - (get_triad(def_id) == TRIAD_LAND
-                                     ? Rules.max_pct_dmg_art_vs_units_open
-                                     : Rules.max_pct_dmg_art_vs_units_sea)) + 99;
+                // 0x5086A2: `100 - pct` is computed into eax before
+                // proto_power's plan test, unlike the bunker arm at 0x508712:
+                // its own statement (inline it is evaluated after the test)
+                int spared = 100 - (get_triad(def_id) == TRIAD_LAND
+                                        ? Rules.max_pct_dmg_art_vs_units_open
+                                        : Rules.max_pct_dmg_art_vs_units_sea);
+                keep = proto_power(def_id) * spared + 99;
             }
             keep /= 100;   // 0x50876A
             // 0x50876F
