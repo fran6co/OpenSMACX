@@ -1,7 +1,8 @@
 """Bounded original initialization versus compiled object data and references.
 
 Only source-declared extents are checked. Compiler type metadata supplies the
-candidate extent; no inferred next-symbol boundary or four-byte scalar guess.
+candidate extent; no inferred next-symbol boundary or four-byte scalar guess,
+except the decoration-checked VC6 local-static extent in `codeview_data`.
 Passing initial storage says nothing about later constructors or lifetime.
 """
 

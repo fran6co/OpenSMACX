@@ -4,7 +4,14 @@ Format: Microsoft microsoft-pdb/include/cvinfo.h (DATASYM32, LF_*_ST).
 Names are diagnostic only: the SECTION/SECREL pair identifies the emitted
 definition. No source spelling sizes, next-symbol guesses or PCH type voting.
 This observes compiler storage extent, not original extent or C++ lifetime.
+
+One narrow exception: VC6 emits no S_LDATA32 record for a function-local
+static, even with /Z7. Such a symbol's extent is taken from its own C++
+decoration and its COFF neighbour only when the two agree unambiguously
+(see `_local_static_layout`).
 """
+
+import re
 
 from .codeview import Cursor, _fields, _type_records, _unqualified_type
 from .pe_coff import static_name_matches
@@ -168,9 +175,99 @@ def data_layout(obj, name):
                 raise ValueError("data type overlaps another COFF definition")
             matches.append({"symbol": name, "source_name": source_name, "section": symbol.section,
                             "offset": symbol.value, "size": extent, "type_index": type_index})
+    if not matches and not any(index == symbol.index for _, debug in debug_sections
+                               for _, index, _ in debug.relocations):
+        local = _local_static_layout(obj, symbol, section)
+        if local is not None:
+            return local
     if len(matches) != 1:
         raise ValueError("requires one directly bound CodeView data definition")
     return matches[0]
+
+
+# MSVC decoration of a function-local static: `?name@?<scope>@<enclosing
+# function's decoration>@4<type><cv>`; VC6 prefixes the COFF name with `_`.
+# Storage class 4 is "function-local static" in the MSVC name grammar.
+_LOCAL_STATIC = re.compile(r"_?\?([A-Za-z_$][\w$]*)@\?(?:[0-9]|[A-P]+@)\?\?")
+_PRIMITIVE_SIZE = {"C": 1, "D": 1, "E": 1, "F": 2, "G": 2, "H": 4, "I": 4, "J": 4, "K": 4,
+                   "M": 4, "N": 8, "O": 8, "_J": 8, "_K": 8, "_N": 1}
+
+
+def _decoded_number(text, at):
+    """MSVC encoded dimension: digit d is d+1, else hex digits A-P ended by `@`."""
+    if at < len(text) and text[at].isdigit():
+        return int(text[at]) + 1, at + 1
+    end = text.find("@", at)
+    if end <= at or any(not "A" <= c <= "P" for c in text[at:end]):
+        return None, at
+    return int("".join("0123456789ABCDEF"[ord(c) - 65] for c in text[at:end]), 16), end + 1
+
+
+def _local_static_type(text):
+    """(element size, is_array) for a decorated variable type with storage cv.
+
+    Only primitive scalars and `P<cv>Y<dims><primitive>` multidimensional
+    arrays are decoded; MSVC drops the outer array bound, so an array yields
+    its outer element size. A plain `P<cv><type>` is either a pointer or a
+    one-dimensional array and stays undecided (None).
+    """
+    at, array, element = 0, False, 1
+    if text[:1] == "P" and text[1:2] in ("A", "B", "C", "D") and text[2:3] == "Y":
+        count, at = _decoded_number(text, 3)
+        if not count:
+            return None
+        for _ in range(count):
+            dim, at = _decoded_number(text, at)
+            if not dim:
+                return None
+            element *= dim
+        array = True
+    code = text[at:at + 2] if text[at:at + 1] == "_" else text[at:at + 1]
+    if code not in _PRIMITIVE_SIZE or text[at + len(code):] not in ("A", "B", "C", "D"):
+        return None
+    return element * _PRIMITIVE_SIZE[code], array
+
+
+def _local_static_layout(obj, symbol, section):
+    """COFF-observed extent of a VC6 function-local static without CodeView.
+
+    Accepted only for a storage-class-3 definition in an ordinary (non-COMDAT,
+    non-associative) data section whose decoration marks a function-local
+    static of a decodable type, with no alias at its offset. The extent runs to
+    the next definition in the section (or the section end); padding before
+    that neighbour is bounded by the neighbour's offset alignment A, so the
+    extent is unique only when a scalar fits with less than A of padding, or
+    an array's outer element is at least A bytes and divides the span.
+    """
+    match = _LOCAL_STATIC.match(symbol.name)
+    if (symbol.storage != 3 or match is None or section.flags & 0x1000
+            or symbol.section in obj.associations):
+        return None
+    decoded = [found for found in (_local_static_type(symbol.name[at + 2:])
+                                   for at in range(match.end(), len(symbol.name) - 2)
+                                   if symbol.name[at:at + 2] == "@4") if found is not None]
+    if len(decoded) != 1:
+        return None
+    element, array = decoded[0]
+    others = [s for s in obj.symbols.values() if s.index != symbol.index and s.section == symbol.section
+              and s.storage in (2, 3) and not (s.name == section.name and s.index in obj.auxiliary)]
+    if any(s.value == symbol.value for s in others):
+        return None
+    following = [s.value for s in others if s.value > symbol.value]
+    end = min(following) if following else obj.section_sizes[symbol.section - 1]
+    gap = end - symbol.value
+    alignment = min(16, end & -end) if following else 1
+    if array:
+        if element < alignment or gap <= 0 or gap % element:
+            return None
+        size = gap
+    else:
+        if not 0 <= gap - element < alignment:
+            return None
+        size = element
+    return {"symbol": symbol.name, "source_name": match.group(1), "section": symbol.section,
+            "offset": symbol.value, "size": size, "type_index": None,
+            "extent_basis": "coff_local_static"}
 
 
 def _complete_udt(index, records, seen=frozenset()):
@@ -302,6 +399,8 @@ def member_data_layout(obj, parent_symbol, member_path):
     bounds = array_slice_bounds(member_path)
     if bounds is not None:
         parent = data_layout(obj, parent_symbol)
+        if parent["type_index"] is None:
+            raise ValueError("array slice requires a CodeView-typed parent")
         records = _type_records(obj)
         element_type, array_size, element_size, element_count = _array_element_layout(
             parent["type_index"], records)
@@ -327,6 +426,8 @@ def member_data_layout(obj, parent_symbol, member_path):
                    for index, part in enumerate(member_path))):
         raise ValueError("member path must contain names and canonical fixed indices")
     parent = data_layout(obj, parent_symbol)
+    if parent["type_index"] is None:
+        raise ValueError("member path requires a CodeView-typed parent")
     records = _type_records(obj)
     current_type = parent["type_index"]
     relative = 0
