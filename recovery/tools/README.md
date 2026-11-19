@@ -413,3 +413,12 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   "A member setter's parameter schedules the store early"; 60 s tree-wide): the `mov [reg + K], v` stores both sides emit at
   different places of one differing stretch, rows earlier/later, base register `this` or another object; `SETTER?` = moved
   only across argument pushes (try the class's inline setter, or a one-value setter when two functions need it).
+- `analysis/retcensus.py [unit ...] [--json F] [--show CTX/FORM]` return-statement census over the exact functions
+  (25 s tree-wide): one /FAsc compile per unit; every `return` statement is COPY (own epilogue), FOLD (no code), JMP or
+  FALL against its context (last, guard, guard&&, guard||, after, case, else; `=last` when it returns the last return's
+  expression). Ground truth for MATCHING_GUIDE 3.7 "Return-tail copies".
+- `analysis/retbrk.py <unit> <addr> [--write] | --from FEALL.json` switch-arm exit screen: for every `switch` directly
+  followed by `return X;`, the arms' `return X;` as `break;` (A) or the reverse (B), per switch and every subset
+  (Net::drop_player 0x00632350: both inner switches A -> exact).
+- `analysis/probes/rettail/run.py [name ...]` probe family for return-tail copies (guards, switch arms, loops, the
+  drop_player, veh_init and NetDaemon::init shapes); prints each `ret` copy's value and how it is entered.

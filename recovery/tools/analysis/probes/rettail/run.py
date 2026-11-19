@@ -13,6 +13,7 @@ HDR = '''#include "probe.h"
 struct P { int key; char pad[84]; };
 struct W { int a; int b; int c; P ps[16]; int vis(); void redraw(); int ask(int); %s };
 int pcv(const char *, const char *, int, int, int); int pc(const char *, const char *, int); void says(int, const char *, int, int); const char *nm(int); void cat(char *, const char *); void note(char *, int);
+void usep(int *);
 struct D { D(); ~D(); int v; };
 '''
 SRCH = 'int k = 0; while (k < 16 && i != ps[k].key) { ++k; } '
@@ -82,6 +83,23 @@ for _k, _inner in (('ret', 'return 0;'), ('brk', 'break;')):
     V['dp_' + _k] = ('int', SRCH + 'if (k == 16) return 0; if (b == 0) { if (c != a && c != ps[1].key) { says(0, nm(ps[0].key), -1, -1); says(1, nm(ps[1].key), -1, -1); '
                      + _swc(_inner, ('"HOSTS"', 'case 0: g = 1; return 1;')) + ' return 0; } says(0, nm(i), -1, -1); ' + _swc(_inner, ('c == a ? "CLIENT" : "HOST"', '')) + ' }' + _TAIL)
     V['dp1_' + _k] = ('int', SRCH + 'if (k == 16) return 0; if (b == 0) { says(0, nm(i), -1, -1); ' + _swc(_inner, ('c == a ? "CLIENT" : "HOST"', '')) + ' }' + _TAIL)
+
+# the veh_init 0x005C03D0 tail: `if (x) { if (p || q) return v; } else if (..) { ..; return v; } join; return v;`
+_VI = 'int v = ga[i]; use(v); int w = ask(1), z = ask(2); %s g |= 4; c++; if (w < z) { c |= 1; } return v;'
+V['vi_or'] = ('int', _VI % 'if (w < z) { if ((c & 1) || b == 7) { return v; } } else if (b != 7 && !ask(3)) { g |= 2; return v; }')
+V['vi_two'] = ('int', _VI % 'if (w < z) { if (c & 1) { return v; } if (b == 7) { return v; } } else if (b != 7 && !ask(3)) { g |= 2; return v; }')
+V['vi_one'] = ('int', _VI % 'if (w < z) { if (b == 7) { return v; } } else if (b != 7 && !ask(3)) { g |= 2; return v; }')
+V['vi_noelse'] = ('int', _VI % 'if (w < z) { if ((c & 1) || b == 7) { return v; } }')
+V['vi_and'] = ('int', _VI % 'if (w < z && ((c & 1) || b == 7)) { return v; } if (w >= z && b != 7 && !ask(3)) { g |= 2; return v; }')
+V['vi_elseif'] = ('int', _VI % 'if (w >= z) { if (b != 7 && !ask(3)) { g |= 2; return v; } } else if ((c & 1) || b == 7) { return v; }')
+V['vi_const'] = ('int', (_VI % 'if (w < z) { if ((c & 1) || b == 7) { return 0; } } else if (b != 7 && !ask(3)) { g |= 2; return 0; }').replace('return v;', 'return 0;'))
+V['vi_mem'] = ('int', 'int v = ga[i]; usep(&v); int w = ask(1), z = ask(2); if (w < z) { if ((c & 1) || b == 7) { return v; } } else if (b != 7 && !ask(3)) { g |= 2; return v; } g |= 4; c++; if (w < z) { c |= 1; } return v;')
+V['vi_goto'] = ('int', 'int v = ga[i]; use(v); int w = ask(1), z = ask(2); if (w < z) { if ((c & 1) || b == 7) { goto out; } } else if (b != 7 && !ask(3)) { g |= 2; return v; } g |= 4; c++; if (w < z) { c |= 1; } out: return v;')
+V['vi_stmt'] = ('int', _VI % 'if (w < z) { if ((c & 1) || b == 7) { return v; } use(1); } else if (b != 7 && !ask(3)) { g |= 2; return v; }')
+V['vi_neg'] = ('int', _VI % 'if (w < z) { if (!(c & 1) && b != 7) { } else { return v; } } else if (b != 7 && !ask(3)) { g |= 2; return v; }')
+V['vi_else_join'] = ('int', 'int v = ga[i]; use(v); int w = ask(1), z = ask(2); if (w < z) { if ((c & 1) || b == 7) { return v; } } else { if (b != 7 && !ask(3)) { g |= 2; return v; } } g |= 4; c++; if (w < z) { c |= 1; } return v;')
+V['vi_elseret'] = ('int', 'int v = ga[i]; use(v); int w = ask(1), z = ask(2); if (w < z) { if ((c & 1) || b == 7) { return v; } } else if (b != 7 && !ask(3)) { g |= 2; } else { goto mark; } return v; mark: g |= 4; c++; if (w < z) { c |= 1; } return v;')
+V['vi_flag'] = ('int', 'int v = ga[i]; use(v); int w = ask(1), z = ask(2); if (w < z) { if (!((c & 1) || b == 7)) { goto mark; } } else if (b != 7 && !ask(3)) { g |= 2; } else { mark: g |= 4; c++; if (w < z) { c |= 1; } } return v;')
 
 
 def analyse(L):

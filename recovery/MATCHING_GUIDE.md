@@ -794,6 +794,35 @@ raw field access where the original used inline accessors.
   `measurement.unit_flag_sets` or every recover command refuses. (Before
   2026-11-12, unpinned units were measured under both global trials and the
   better score kept, so a /Oy- unit could be reported from a frameless compile.)
+- **Declaration position of a referenced global (base_energy 0x004EB560,
+  par-5 2026-11-19).** A second counter, not the mod-64 one: base_energy's
+  reload-order row (0x004EB7DE) is exact at no count of pads behind the
+  includes (function, extern, struct, 0..63), yet two in-class inline setters
+  added to scroll.h/basebutton.h broke it. Measured in a scratch export
+  (`git archive` + that copy's fe.py):
+  - what counts is everything declared BEFORE `extern PlayerData
+    PlayersData[]` (faction.h): a pad inserted before any earlier include or
+    line flips it, the same pad one line after that declaration (or anywhere
+    later, base.cpp itself included) never does. The function reads
+    PlayersData; the tie follows where that symbol sits in the front end's
+    tables, so only earlier declarations move it;
+  - the period is 112 in units where an in-class inline member with one
+    parameter is 7, one without parameters 5 and a one-member struct 16
+    (inline members: exact for +6..+14 and +22..+30 of 0..33, period 16;
+    structs: +3..+6, +10..+13, period 7; struct with one inline member:
+    period 5); the exact window is about 38..100 of 112;
+  - not counted, or the same either way: where the member sits in its class
+    (beside the field, end of class), an out-of-class `inline` definition
+    instead of the in-class one, the length of the inline body, non-inline
+    member declarations, free inline functions, prototypes, externs,
+    typedefs and enums (6 of each).
+  So an unused header inline is not neutral for the units that include the
+  header before the globals they read, and the function-pad sweep cannot see
+  it. Remedy when the header content is right: a `// HEADER-PADS: struct`
+  block BEFORE the unit's first include (base.cpp: 3..6 structs give
+  base_energy and move no other marker of the unit, `analysis/unitexact.py`).
+  give_a_base 0x0054CF40 ("flips on header content") is the next candidate
+  for the same test.
 - **The extern-name count is a window, not a threshold.** Superseded: the
   window is the counter residue set modulo 64 (above), so it recurs every 64
   and moves with every earlier symbol. Use `recover canary` instead of
@@ -4208,13 +4237,34 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   capture_base, battle_plans, draw_sat, setup_player). So even the giant
   non-exact functions carry counter-dependent ties; judge a header change by
   the functions that use what changed.
-- **A single-byte treaty mask tested as a dword is the helper.**
-  `test dword ptr [PlayersData + ..], 0x200` (spot_all, Path::find) against
-  our narrowed `test byte ptr [.. + 1], 2`: VC6 narrows `field & K` written
-  in place; battle_fight's `has_treaty(a, b, DTREATY_UNK_800)` gives the
-  dword `test .., 0x800` in ours and in the image, so the mask arriving as
-  an inline's parameter is the likely spelling (not yet applied at those two
-  sites; the named-value sweep's family T covers it).
+- **`field & K` with K in the second byte: three forms, none of them a
+  spelling** (par-5 2026-11-19, replaces "the dword test is the helper").
+  For a 32-bit field and a mask in bits 8..15 (`flags & 0x200`) VC6 emits
+  - `mov r,[m]; test rh,2` when eax/ecx/edx has a free register at the test
+    (the usual form);
+  - `test dword ptr [m],0x200` when none is free and the test is NOT inside
+    a loop the optimiser processed;
+  - `test byte ptr [m+1],2` when none is free and the test is inside a loop
+    (`for`, `while`, `do`, a backward `goto`; a `for` that always breaks is
+    not a loop).
+  Masks in the low byte always narrow (`test byte ptr [m],0x80`), masks in
+  bits 16..31 never do. Measured on 60 probe functions: literal, enum, `!=
+  0`/`== 0`, `!`, an int cast, a pointer or reference to the struct, an
+  inline helper taking the mask (`hasf(i, 0x200)`) or the whole test, the
+  field's signedness, a store to the same field in the loop and a call in
+  the loop change nothing but the register pressure. In the real function
+  ten spellings of spot_all's site (0x005B6A60) compile identically. Image
+  census: PlayersData flags & 0x200 is 7 times the byte form and 6 times the
+  dword form, both forms in spot_all, gen_terrain_poly and Console::zoom;
+  exact prototype_factor, morale_alien and goody_at have the dword form from
+  plain source, exact spot_stack and action_tectonic the byte form.
+  So a dword-against-byte difference says the image's test sits in a loop
+  VC6 did not treat as one, or the reverse (spot_all's first reveal loop:
+  the image keeps `i` in its slot, reloads MapLongitude at the latch and
+  has a dead `and edx,0x80001000`, ours strength-reduces `i`), and a
+  load-against-memory difference is register pressure. Fix the loop or the
+  variable set; do not respell the test. `accdiff.py`'s remaining rows of
+  this kind (spot_all, Path::find, enemy_move 0x0056BCBD) are symptoms.
 - **MapLongitude is `int`** (par-3 2026-11-19). The catalogue name
   `?MapLongitude@@3IA` (unsigned) is an inferred type: the image's 132 uses
   outside multiplies are x_dist's signed `cmp; jle`, none is unsigned
@@ -4298,8 +4348,10 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
 
 ### 3.6 Canaries (measure after any edit to their unit or a shared header)
 Counter-sensitive canaries carry `CANARY` lines; `uv run recover canary`
-re-aligns their pad blocks (2.5). base_energy 0x004EB560 and give_a_base
-0x0054CF40 flip from header content, not from the counter.
+re-aligns their pad blocks (2.5). base_energy 0x004EB560 follows the
+declarations before `PlayersData` (2.5 "Declaration position of a referenced
+global"; struct pads before the first include of base.cpp); give_a_base
+0x0054CF40 flips from header content too and is not yet bisected.
 - **reportif.cpp:** `ReportIf::on_iface_button_clicked` 0x004A6330.
 - **turn.cpp:** `end_of_game` 0x00524870.
 - **Round of 2026-11-19 (after the EditBox setters; one pass, windows by
@@ -5211,6 +5263,56 @@ Prologue saves and return tails (par-5 2026-11-19; `analysis/prosave.py`,
   statements are cross-jumped back into one (er_inret_same: 1 `ret`); a
   conditional branch to the exit never gets a copy, it targets a surviving
   one. An if/else as the last statement gives two copies (er_ifelse).
+
+- **Return-tail copies: ground truth** (par-5 2026-11-19;
+  `analysis/retcensus.py`, one /FAsc compile per unit, 2,613 `return`
+  statements in 880 exact functions; `analysis/probes/rettail/run.py`).
+  COPY = the statement has its own `pop..ret`, FOLD = no code (its branch
+  targets another statement's copy), FALL/JMP = value set, shared epilogue.
+  - *Same expression as the function's last `return`:* folded into the last
+    return's copy. Guards 8 COPY against 358 folded (192 FOLD, 144 FALL, 22
+    JMP), `S; return x;` 12 against 253. A copy there is a red flag.
+  - *A different value, single condition (`if (c) return K;`):* its own copy
+    (`jncc skip; mov eax,K; pops; ret`), also when several guards return the
+    same K (prototype_factor: two `return 0` copies in a row): unique value
+    171 COPY / 7 FOLD, first of several equal ones 72 / 26, a later one
+    166 / 36. `&&` 60 / 25 and `||` 46 / 12 follow, but the terms before the
+    last one jump to the copy the last term falls into (or_guard).
+  - *`S; return K;`* (an unconditional path): own copy, 120 of 172; two
+    paths ending in the same statements are cross-jumped (see above).
+  - *Probe results:* the number of equal returns alone never folds a guard
+    (`if (c) return 0;` followed by 1..8 `if (ask(n)) return 0;` or by
+    switch arms `a = n; return 0;`: the guard keeps its copy every time). A
+    guard is folded when the last return has the same value (g_end0), when
+    the guard is an `else`-less wrap (`if (c) {..} return 0;`), and when
+    switch arms written `S; return K;` are cross-jumped into a common tail:
+    that tail then also takes one bare conditional `return K` (dp_ret 7
+    `ret`, dp_brk 8). Net::drop_player 0x00632350: both tolerance switches
+    with `poll_timeout = N; break;` and the one `return 0` after the switch
+    give the image's guard copy; `poll_timeout = N; return 0;` in the arms
+    folds it (7 rows -> exact). The arms get their epilogue copies either
+    way. `analysis/retbrk.py` tries both spellings per switch and for
+    every subset (only four non-exact functions have a switch directly
+    followed by `return`, no other gain).
+  - *Layout `jcc RET; jmp JOIN`* (veh_init 0x005C080A) against ours `jncc
+    JOIN; mov eax,v; pops; ret`: the then-arm ends in `if (p || q) return v;`
+    with v the last return's value. VC6 has two ways to simplify `jcc L1;
+    jmp RET; L1: jmp JOIN`; our source always gets the copy (probes vi_or,
+    vi_two, vi_goto, vi_neg, vi_else_join: all the copy; a statement after
+    the inner `if` gives `je RET` but moves the else arm out of line).
+    Twelve arm structures and every single/paired `goto out` of the ten
+    returns leave the 8 rows: not found.
+  - *A fall-off path with its own epilogue* (NetDaemon::init 0x0052E02A:
+    `test eax,eax; jne L; pops; ret; L: pops; mov eax,1; ret`) against ours
+    `test; je; mov eax,1` inside one epilogue: sixteen spellings (result
+    local, negated guard, if/else, switch, loop forms, `&&`) compile to our
+    form; not found.
+  - facility_avail 0x005BA0E0: the first guard's copy is folded in ours
+    only while the Tachyon Field statement is present (deleting any other
+    statement keeps `je`); that statement's expanded has_fac writes its
+    `offset`/`mask` into the homes of facility_id and base_id. Seven
+    spellings of the statement, eight of the guard and four of the Ascent
+    arm leave the 8 rows.
 
 ## 4. Measured and neutral (do not retry without new evidence)
 
