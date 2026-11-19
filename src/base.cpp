@@ -8550,7 +8550,7 @@ void __cdecl make_base_unique(int base_id) {
     if (collisions != 0) {
         Bases[base_id].name_string[21] = 0;
         // make_base_unique passes this one-byte delimiter to strcat; collision digits use a separate buffer.
-// RECOVERY_LITERAL: v1 0x00689F08 0x00689F0A $SG65711 0x004F7FE0
+// RECOVERY_LITERAL: v1 0x00689F08 0x00689F0A $SG65710 0x004F7FE0
         strcat(Bases[base_id].name_string, "-");
         char digits[0x50];
         _itoa(collisions + 1, digits, 10);
