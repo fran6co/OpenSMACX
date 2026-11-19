@@ -98,6 +98,8 @@ an explicit `--pfx` is only needed to pick another lane.
   its role (`this`, `lea:this+K`, `[slot]{name}` piece, `#K`, `ret@line`), scored by rule 4/4b at instruction
   level and checked against its own side's registers; prints the roles on one side only and the pairs the sides
   order differently (MATCHING_GUIDE 2.7 "Candidate set"). `regprio.py ... --candset` appends the same report.
+  `candset.py --census [unit ..] [--oy] --opts k=v,.. --opts ..` sums the image-side rank constraints explained over
+  the fe-exact functions per option set (70 s tree-wide; 4j `bytepref` validated this way).
 - `analysis/rotscan.py <unit> <addr[,..]> [--src ALT] [--track] | --tree [unit ..] [--from FEALL.json] [--all] [--json F]`
   scratch-rotation scan (MATCHING_GUIDE 3.2 S1/S7, 3.7 "Cross-jumping ground truth"; 40 s tree-wide with FE_JOBS=5):
   aligns both listings with eax/ecx/edx abstracted, pairs every scratch load (return-value `mov eax, K` excluded) and

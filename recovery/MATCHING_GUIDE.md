@@ -1505,8 +1505,46 @@ loop2d and armd were the "ties"). Rerun: `python3 ties.py ties.spec --n 1-30`.
    Whole-function member counts are equal (0x4a8 11/11, +0x50 10/10, +0x6c
    11/11), so look for y1 reads the original had (clip tests, the pixel
    bases) rather than for `this` differences.
+   **Superseded by 4j** (2026-11-20 par-5): the swap is not a k-dependent
+   serving order. At k = 4 `this` leaves ebx to the byte webs
+   (`first_color`/`second_color`, stored through `al`) and takes ebp, and
+   the next web (`y1`, or `x1` in a one-octant cut) inherits ebx. So the
+   k = 4 compile says nothing about `y1` against `this`; at k = 3 the plain
+   order holds, and the image (y1 ebx, this spilled) still needs `y1` above
+   `this` where ours has `this` above `y1`.
+4j. **Under /Oy a web leaves ebx to a lower byte web and takes ebp** (high,
+   2026-11-20 par-5; `regalloc/asmprobe/gen_byte.py`, Buffer::line cut to
+   one octant). Only ebx has byte sub-registers, so a web whose value is
+   used as a byte (`gch[i] = (char)x`, `*pixel = (unsigned char)c`) can only
+   take ebx. When a non-byte web is served and its first free register is
+   ebx, ebp is free over its range, and an interfering byte web ranks below
+   it, it takes ebp instead. The look-ahead is one step: the next non-byte
+   web can still take the ebx it left (probe `t10_z5`: `this` ebp, `z` ebx,
+   the byte `x` in memory; `t16`: `b` ebp below `this`/`a` on esi/edi).
+   With ebp unavailable (/Oy-, any ebp frame: `__asm`, `_alloca`, EH) the
+   rule is silent, which is all of 4i. Census of the fe-exact functions
+   (`candset.py --census`, 5,164 functions, 13,049 rank constraints):
+   9,968 explained without 4j, 10,005 with it; 41 ebp webs explained, 4
+   ebx webs against it (two of them in hand-written `uv/` decoders). The
+   byte demand of a loser is read from the code (a dword stack load whose
+   low byte is stored or compared); byte reads of stack slots
+   (`bytepref=2`) also catch local char arrays and explain less (9,997).
+   Reading it: an image web in ebp that its score would put in ebx, in an
+   /Oy function that stores a value as a byte nearby, is 4j and not a
+   priority gap; the lever is the byte web (its type, its cast, whether it
+   is a candidate at all), not the ebp web.
+   Refuted on the way, with probes in this round's scratch (`g1`-`g4`):
+   interference degree does not move a single-block threshold (6 short webs
+   interfering with one candidate leave its crossover at 8 of 8 references,
+   so no Chaitin cost/degree spill choice); an unconstrained high-priority
+   web (degree 1 at k = 3) is still served first and takes esi (no
+   Chow-Hennessy deferral of unconstrained ranges); a 256-byte frame that
+   pushes the parameters past disp8 does not move `this` against a
+   parameter. Served-in-order greedy plus 4j stands.
 
-Using it (regprio.py uses 4b and 4c by default; `--model old` is rule 4 only):
+Using it (regprio.py uses 4b, 4c and 4j by default; `--model old` is rule 4 only, `--no-bytepref` drops 4j;
+candset.py `--opt bytepref=0` drops 4j there, `candset.py --census [units] --opts A --opts B` compares option
+sets over the fe-exact functions):
 
 - A pair swapped between the image and ours is either an exact tie of the
   full score (regprio prints `TIE` and which order 4c picks) or a near tie

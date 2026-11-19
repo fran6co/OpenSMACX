@@ -481,6 +481,8 @@ def main():
     ap.add_argument('--candset', action='store_true',
                     help='append candset.py: the candidates VC6 formed on each side (ground truth from the code), '
                          'those on one side only, and the instruction-level rule-4 check of both allocations')
+    ap.add_argument('--no-bytepref', dest='bytepref', action='store_false',
+                    help='drop rule 4j (a web leaves ebx to a lower byte web and takes ebp under /Oy)')
     ap.add_argument('--model', default='new', choices=('new', 'old'),
                     help='new: rule 4 minus the live-through penalty, rule-4c tie order (2026-11-19); old: rule 4 only')
     a = ap.parse_args()
@@ -745,11 +747,25 @@ def main():
         # two constants in one block: the later first reference (rule 4f)
         order = sorted(cands, key=lambda w: (-prio[w], -F.blocks[refs[first_ref(w)]['block']]['start'],
                                              tieseq(w)))
+    # byte webs (guide 2.7 4j): a char-typed variable, or one cast to a char type, can only take ebx; under /Oy a
+    # web whose first free register is ebx takes ebp instead while a lower interfering byte web exists
+    body_all = '\n'.join(stripped)
+    CH = r'(?:unsigned\s+char|signed\s+char|char|uint8_t|int8_t|BYTE|UCHAR|bool)'
+    def is_byte(key):
+        k = re.escape(key.split('.')[0])
+        return bool(re.search(r'\b%s\s*\*?\s*(?:const\s+)?\b%s\b\s*[=;,)\[]' % (CH, k), body_all) and
+                    not re.search(r'\b%s\s*\*\s*(?:const\s+)?\b%s\b' % (CH, k), body_all) or
+                    re.search(r'(?:\(\s*%s\s*\)\s*|_cast<\s*%s\s*>\s*\(\s*)%s\b' % (CH, CH, k), body_all))
+    byteweb = {w for w in cands if a.bytepref and is_byte(webs[w]['key'])}
     pred = {}
-    for w in order:
+    for k_, w in enumerate(order):
         taken = {pred[o] for o in pred if pred[o] != 'mem' and webs[o]['live'] & webs[w]['live']}
-        free = [g for g in regs if g not in taken]
-        pred[w] = free[0] if free else 'mem'
+        free = [g for g in regs if g not in taken and (g == 'ebx' or w not in byteweb)]
+        pick = free[0] if free else 'mem'
+        if pick == 'ebx' and 'ebp' in free and w not in byteweb and any(
+                o in byteweb and webs[o]['live'] & webs[w]['live'] for o in order[k_ + 1:]):
+            pick = 'ebp'
+        pred[w] = pick
 
     # ---- which web is a variable's at a block
     byvar = collections.defaultdict(list)

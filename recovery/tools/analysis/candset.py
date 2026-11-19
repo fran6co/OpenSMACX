@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """candset.py <unit> <0xADDR> [--src ALT.cpp] [--pfx N] [--scratch] [--quiet] [--webs]
+   candset.py --census [unit ...] [--oy] [--opts k=v,.. ...] [--show N]   (image-side rank constraints explained
+   over the fe-exact functions, per option set; FE_PFX_BASE/FE_JOBS lanes)
 The register candidates VC6 actually formed, read from the compiled code of both sides (MATCHING_GUIDE 2.7,
 "Candidate set").  Where regprio.py counts references in our *source*, this tool takes the candidate set as
 ground truth from the instructions: every callee-saved register web (reaching definitions over the CFG, so a
@@ -364,7 +366,7 @@ def role_of(code, w, names, lst, this_reg, srclines):
     return re.sub(r'\s+', '', src)[:20] or mn, 'var'
 
 
-OPT = dict(penalty=True, slotmin=2, scratch=False, constimm=0, constw=100, constdef=1)
+OPT = dict(penalty=True, slotmin=2, scratch=False, constimm=0, constw=100, constdef=1, bytepref=1)
 
 
 def score_webs(code, webs, slots_n, scratch_webs, penalty=None):
@@ -460,7 +462,43 @@ def side_analysis(code, regs, names, lst, srclines, scratch=False):
                 w['excl'] |= {'esi', 'edi'}
         if w['byte']:
             w['excl'] |= {'esi', 'edi'}
+    # MATCHING_GUIDE 2.7 4j: byte demand inside each web's range from a memory-homed loser (a stack slot read as a
+    # byte, or a dword stack load whose low byte is used); with the byte webs that won ebx, this is what makes a
+    # web whose first free register is ebx take ebp instead under /Oy
+    bl = byte_losers(code)
+    for w in webs:
+        w['bytel'] = bool(w['live'] & bl)
     return webs
+
+
+B8 = r'\b(al|cl|dl|ah|ch|dh)\b'
+STACK = r'\[(esp|ebp)( [-+] [^\]]+)?\]'
+
+
+def byte_losers(code):
+    """instruction indices where a stack-homed value is used as a byte (a loser that would need ebx)"""
+    out = set()
+    ins = code.ins
+    for i, (off, t, g) in enumerate(ins):
+        m = re.search(B8, t)
+        if not m or mnem(t) in ('push', 'call') or mnem(t).startswith('set'):
+            continue
+        r8 = m.group(1)
+        if re.search(r'byte ptr ' + STACK, t) and mnem(t) in ('mov', 'cmp', 'test', 'movsx', 'movzx'):
+            if OPT['bytepref'] >= 2:
+                out.add(i)  # a char slot loaded or compared as a byte (also local char arrays: noisy)
+            continue
+        if re.match(r'(cmp|test) ' + r8 + r', ', t) or re.search(r', ' + r8 + r'$', t):
+            parent = 'e' + r8[0] + 'x'
+            for j in range(i - 1, max(-1, i - 8), -1):
+                tj = ins[j][1]
+                if re.match(r'(mov|movsx|movzx) ' + parent + r', ', tj):
+                    if re.search(r'dword ptr ' + STACK, tj):
+                        out.add(i)
+                    break
+                if re.search(r'\b' + parent + r'\b', tj) or mnem(tj) == 'call' or tj.startswith('j'):
+                    break
+    return out
 
 
 def better(a, b):
@@ -501,6 +539,9 @@ def consistency(webs, regs):
             hold = [x for x in webs if x['reg'] == regs[j] and interferes(x, w)]
             if any(better(x, w) for x in hold):
                 ok += 1
+            elif OPT['bytepref'] and w['reg'] == 'ebp' and regs[j] == 'ebx' and (
+                    w.get('bytel') or any(x['byte'] and interferes(x, w) for x in webs)):
+                ok += 1  # 4j: ebx left to an interfering byte candidate, ebp taken instead
             else:
                 good = False
                 bad.append((w, regs[j], hold))
@@ -508,7 +549,133 @@ def consistency(webs, regs):
     return ok, tot, bad
 
 
+def census_unit(unit, pfx, opts_list, only_oy=False):
+    """image-side rank constraints explained over the fe-exact functions of one unit, for each option set"""
+    src = fe.R + '/' + unit
+    text = open(src, encoding='latin-1').read()
+    c, err = fe.compile_unit(unit, src, pfx)
+    if c is None:
+        return unit, None
+    srclines = text.split('\n')
+    res = []
+    for m in re.finditer(r'// ORIGINAL: 0x([0-9A-F]{8}) ', text):
+        addr = int(m.group(1), 16)
+        try:
+            r = fe.evaluate(c, text, addr)
+        except Exception:
+            continue
+        if 'error' in r or not r['exact']:
+            continue
+        rows = r['rows']
+        oy = not any(x[1] and x[1][1] == 'mov ebp, esp' for x in rows[:3])
+        if only_oy and not oy:
+            continue
+        regs = ['esi', 'edi', 'ebx'] + (['ebp'] if oy else [])
+        iins = [(x[0], x[1], x[3]) for k, x, cc in rows if x is not None]
+        if not iins:
+            continue
+        try:
+            icode = Code(iins, image_tables(r['lo'], r['lo'] + max(o[0] for o in iins) + 16, rows))
+        except Exception:
+            continue
+        per = []
+        saved = dict(OPT)
+        for opts in opts_list:
+            OPT.update(saved)
+            OPT.update(opts)
+            iw = side_analysis(icode, regs, {}, None, srclines)
+            ok, tot, bad = consistency(iw, regs)
+            per.append((ok, tot, [(w['reg'], rj) for w, rj, h in bad], bytepref_check(iw, regs)))
+        OPT.update(saved)
+        res.append((addr, r['sym'], oy, per))
+    return unit, res
+
+
+def census(units, pfx_base, jobs, opts_list, only_oy=False, show=0):
+    from concurrent.futures import ThreadPoolExecutor
+    out = []
+    lanes = [units[k::jobs] for k in range(jobs)]
+
+    def lane(k):
+        o = []
+        for u in lanes[k]:
+            o.append(census_unit(u, str(pfx_base + k), opts_list, only_oy))
+        return o
+    fe.compile_cmd(units[0])
+    with ThreadPoolExecutor(jobs) as ex:
+        for o in ex.map(lane, range(jobs)):
+            out += o
+    tot = [[0, 0] for _ in opts_list]
+    bpt = [0, 0]
+    neg = []
+    nf = 0
+    diff = []
+    for unit, res in out:
+        for addr, sym, oy, per in res or ():
+            nf += 1
+            for k, (ok, t_, bad, bp) in enumerate(per):
+                tot[k][0] += ok
+                tot[k][1] += t_
+                if k == 0:
+                    bpt[0] += bp[0]
+                    bpt[1] += bp[1]
+                    if bp[1]:
+                        neg.append((unit, addr, sym, bp[1]))
+            if len(per) > 1 and per[0][0] != per[-1][0]:
+                diff.append((unit, addr, sym, [p[0] for p in per], per[0][1]))
+    print('exact functions %d' % nf)
+    for opts, (ok, t_) in zip(opts_list, tot):
+        print('  %-40s explained %d/%d' % (','.join('%s=%s' % kv for kv in opts.items()) or 'default', ok, t_))
+    print('  4j (/Oy): ebp webs it explains %d, non-byte ebx webs it says should be in ebp %d' % tuple(bpt))
+    for unit, addr, sym, n in neg[:show]:
+        print('  4j against %-26s %08X %-40s %d' % (unit[4:], addr, sym[:40], n))
+    for unit, addr, sym, oks, t_ in diff[:show]:
+        print('  moved %-28s %08X %-40s %s of %d' % (unit[4:], addr, sym[:40], ' -> '.join(map(str, oks)), t_))
+    return out
+
+
+def bytepref_check(webs, regs):
+    """4j both ways on one side: (webs in ebp that 4j explains and the plain order does not, non-byte webs in ebx
+    that 4j says should have taken ebp: ebp free of higher interfering webs and byte demand in range)"""
+    if 'ebp' not in regs:
+        return 0, 0
+    pos = neg = 0
+    for w in webs:
+        demand = w.get('bytel') or any(x['byte'] and x is not w and interferes(x, w) and not better(x, w) for x in webs)
+        if not demand or w['byte']:
+            continue
+        if w['reg'] == 'ebp':
+            hold = [x for x in webs if x['reg'] == 'ebx' and interferes(x, w)]
+            if not any(better(x, w) for x in hold):
+                pos += 1
+        elif w['reg'] == 'ebx':
+            if not any(x['reg'] == 'ebp' and interferes(x, w) and better(x, w) for x in webs):
+                neg += 1
+    return pos, neg
+
+
 def main():
+    if len(sys.argv) > 1 and sys.argv[1] == '--census':
+        ap = argparse.ArgumentParser()
+        ap.add_argument('--census', action='store_true')
+        ap.add_argument('units', nargs='*')
+        ap.add_argument('--oy', action='store_true', help='only /Oy functions (ebp allocatable)')
+        ap.add_argument('--opts', action='append', default=[], help='an option set k=v,..; repeat to compare')
+        ap.add_argument('--show', type=int, default=20)
+        a = ap.parse_args()
+        import json as _j
+        cc = _j.load(open(fe.R + '/build/compile_commands.json'))
+        allu = sorted({os.path.relpath(e['file'], fe.R) for e in cc if os.path.relpath(e['file'], fe.R).startswith('src/')})
+        units = [u if u.startswith('src/') else 'src/' + u for u in a.units] or allu
+        opts_list = []
+        for s in a.opts or ['bytepref=0', 'bytepref=1']:
+            d = {}
+            for kv in filter(None, s.split(',')):
+                k, v = kv.split('=')
+                d[k] = type(OPT[k])(int(v))
+            opts_list.append(d)
+        census(units, int(os.environ.get('FE_PFX_BASE', '2')), int(os.environ.get('FE_JOBS', '5')), opts_list, a.oy, a.show)
+        return
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('unit')
     ap.add_argument('addr')
