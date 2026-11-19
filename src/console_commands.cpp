@@ -2217,7 +2217,7 @@ void Console::go_to(int subject, int order, int grouped) {
         popup.start("DESTTRIAD", 0x40);
         for (int i = 0; i < MaxTriadNum; i++) {
             StringTemp[0] = '\0';
-            strcat(StringTemp, table_text(Triad[i]));
+            strcat(StringTemp, StringTable.get(Triad[i]));
             strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, SocialWinOpenParenText);
             say_base(StringTemp, Bases[base_id].auto_forward_slots[i]);
