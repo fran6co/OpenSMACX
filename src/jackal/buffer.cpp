@@ -3468,8 +3468,8 @@ and then carries on drawing.
 //        jumping to `]`'s shared `next_slot = 0` arm.
 int Buffer::write_multi_font_raw_l(LPSTR text, int x_coord, int y_coord,
                                    int len) {
-    int x = x_coord;
     LPSTR str = text;
+    int x = x_coord;
     if (!markup_enabled_) {
         return write_raw_l(str, x, y_coord, len);
     }
@@ -3551,7 +3551,7 @@ int Buffer::write_multi_font_raw_l(LPSTR text, int x_coord, int y_coord,
         str = stop;
 
         if (pending == 2) {
-            LPSTR const close = strchr(stop, '>');
+            LPSTR const close = strchr(str, '>');
             if (close) {
                 // The label between `=` and `>` is copied out and owned.
                 if (link_count_ < 20) {
