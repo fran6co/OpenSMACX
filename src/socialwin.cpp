@@ -996,8 +996,7 @@ void SocialWin::draw_psych_alloc() {
     expand_rect(&local_rect, -3, -3);
 
     RECT box_rect = local_rect;
-    box_rect.left += 0x17;
-    box_rect.right -= 0x17;
+    expand_rect(&box_rect, -0x17, 0);
     box_rect.bottom = box_rect.top + 0x14;
     MainInterfaceGlobal.Buffer::box(&box_rect, 0xbc, 0xbc);
 
@@ -1049,8 +1048,7 @@ void SocialWin::draw_economy_alloc() {
     expand_rect(&panel, -3, -3);
 
     RECT title = panel;
-    title.left += 0x17;
-    title.right -= 0x17;
+    expand_rect(&title, -0x17, 0);
     title.bottom = title.top + 0x14;
     MainInterfaceGlobal.Buffer::box(&title, 0xbc, 0xbc);
 
@@ -1101,8 +1099,7 @@ void SocialWin::draw_labs_alloc() {
     expand_rect(&panel, -3, -3);
 
     RECT title = panel;
-    title.left += 0x17;
-    title.right -= 0x17;
+    expand_rect(&title, -0x17, 0);
     title.bottom = title.top + 0x14;
     MainInterfaceGlobal.Buffer::box(&title, 0xbc, 0xbc);
 
@@ -1128,7 +1125,7 @@ void SocialWin::draw_labs_alloc() {
     panel.top = panel.bottom - energyAllocLock_[0].height();
     panel.left += energyAllocLock_[0].width();
     title = panel;
-    panel.left = title.left + (title.right - title.left) * allocation / 10;
+    panel.left += (panel.right - panel.left) * allocation / 10;
     if (panel.left < panel.right) {
         title.right = panel.left + (allocation != 0);
         MainInterfaceGlobal.Buffer::tile(&energyAllocSlider_[2], panel.left, panel.top,
