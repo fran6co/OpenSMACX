@@ -2741,7 +2741,7 @@ char NetWinWindowTitleInitialText;
 // choice shows (the leading clear stays at the call site).
 static void netwin_pcx_name(const char *name) {
     strcat(StringTemp, name);
-// RECOVERY_LITERAL: v1 0x00686940 0x00686945 $SG58016 0x00481FD0
+// RECOVERY_LITERAL: v1 0x00686940 0x00686945 $SG58028 0x00481FD0
     strcat(StringTemp, ".pcx");
 }
 
@@ -2806,7 +2806,7 @@ void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
     // Slow path: rebuild the table from the localized faction text. The
     // CUSTOMFACTIONS count is discovered by walking until text_item is empty.
     int custom_count = 0;
-// RECOVERY_LITERAL: v1 0x00686908 0x00686917 $SG58031 0x00481FD0
+// RECOVERY_LITERAL: v1 0x00686908 0x00686917 $SG58043 0x00481FD0
     if (text_open(AlphaxFileID, "CUSTOMFACTIONS") == 0) {
         text_get();
         while (*text_item() != 0) {
@@ -2835,7 +2835,7 @@ void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
 
     faction_records_->record_count_ = static_cast<uint8_t>(record_count);
     faction_records_->record_type_ = 7;
-// RECOVERY_LITERAL: v1 0x00686918 0x00686921 $SG58044 0x00481FD0
+// RECOVERY_LITERAL: v1 0x00686918 0x00686921 $SG58056 0x00481FD0
     if (text_open(AlphaxFileID, "FACTIONS") != 0) {
         return;
     }
@@ -2848,7 +2848,7 @@ void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
         text_get();
         strcpy(faction_records_->records_[name_index++].filename_, text_item());
     }
-// RECOVERY_LITERAL: v1 0x00686924 0x00686930 $SG58051 0x00481FD0
+// RECOVERY_LITERAL: v1 0x00686924 0x00686930 $SG58063 0x00481FD0
     if (text_open(AlphaxFileID, "NEWFACTIONS") != 0) {
         return;
     }
@@ -2857,7 +2857,7 @@ void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
         text_get();
         strcpy(faction_records_->records_[name_index++].filename_, text_item());
     }
-// RECOVERY_LITERAL: v1 0x00686930 0x0068693F $SG58056 0x00481FD0
+// RECOVERY_LITERAL: v1 0x00686930 0x0068693F $SG58068 0x00481FD0
     if (text_open(AlphaxFileID, "CUSTOMFACTIONS") != 0) {
         return;
     }
@@ -2890,7 +2890,7 @@ void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
         netwin_pcx_name(faction_records_->records_[record_index].filename_);
 
         if (buffer.load_pcx(StringTemp, 0, 0xa, 0xec) != 0) {
-// RECOVERY_LITERAL: v1 0x00686948 0x00686954 $SG58067 0x00481FD0
+// RECOVERY_LITERAL: v1 0x00686948 0x00686954 $SG58079 0x00481FD0
             buffer.load_pcx("faction.pcx", 0, 0xa, 0xec);
         }
         faction_records_->records_[record_index].color_ =
