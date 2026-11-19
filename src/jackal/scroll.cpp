@@ -178,7 +178,7 @@ static inline LONG long_from_bits(uint32_t bits) {
 //     where the image has it - after the three stores, before the branch.
 // Measured 2026-09-03: 5/21 (volatile alias, raw dib reads) -> 8/21 (named
 // dib reads, volatile alias kept) -> 21/21 with the volatile dropped.
-static __forceinline void set_sprite_triplet(Scroll *object, Sprite *primary[3],
+static inline void set_sprite_triplet(Scroll *object, Sprite *primary[3],
                         FlatButton *button, bool horizontal, Sprite *sprite1,
                         Sprite *sprite2, Sprite *sprite3) {
     primary[0] = sprite1;
@@ -542,7 +542,7 @@ int Scroll::init(int x, int y, int width, int height, Win *parent,
         *reinterpret_cast<volatile uint32_t *>(&flat_button_left_.color_) = color_;
         *reinterpret_cast<volatile uint32_t *>(&flat_button_left_.bevel_thickness_) = bevel_thickness_;
         *reinterpret_cast<volatile uint32_t *>(&flat_button_left_.bevel_upper_) = bevel_upper_;
-        *reinterpret_cast<volatile uint32_t *>(&flat_button_left_.bevel_lower_) = bevel_lower_;
+        flat_button_left_.bevel_lower_ = bevel_lower_;
         *reinterpret_cast<volatile uint32_t *>(&flat_button_left_.field_AA0_) = 0;
         flat_button_left_.field_A44_ = 0x32;
         flat_button_left_.redraw();
@@ -570,7 +570,7 @@ int Scroll::init(int x, int y, int width, int height, Win *parent,
         *reinterpret_cast<volatile uint32_t *>(&flat_button_right_.color_) = color_;
         *reinterpret_cast<volatile uint32_t *>(&flat_button_right_.bevel_thickness_) = bevel_thickness_;
         *reinterpret_cast<volatile uint32_t *>(&flat_button_right_.bevel_upper_) = bevel_upper_;
-        *reinterpret_cast<volatile uint32_t *>(&flat_button_right_.bevel_lower_) = bevel_lower_;
+        flat_button_right_.bevel_lower_ = bevel_lower_;
         *reinterpret_cast<volatile uint32_t *>(&flat_button_right_.field_AA0_) = 0;
         flat_button_right_.field_A44_ = 0x32;
         flat_button_right_.redraw();
