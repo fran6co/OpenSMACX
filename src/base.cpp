@@ -1262,6 +1262,7 @@ void __cdecl base_kill(int base_id) {
                 kill(veh_id);
             }
         }
+        TutWinBaseWindow.base_killed(base_id);
     } else {
         for (veh_id = GameDataStateStorage.fields_.vehicle_current_count_; veh_id >= 0; veh_id--) {
             if (get_triad(veh_id) == TRIAD_SEA
@@ -1269,8 +1270,8 @@ void __cdecl base_kill(int base_id) {
                 kill(veh_id);
             }
         }
+        TutWinBaseWindow.base_killed(base_id);
     }
-    TutWinBaseWindow.base_killed(base_id);
     for (i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
         base_mark(i);
     }
