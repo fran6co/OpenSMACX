@@ -2484,7 +2484,10 @@ void Console::go_to(int subject, int order, int grouped) {
                     say_close_paren();
                 }
             }
-            if (!(order == -3)) {
+            if (order == -3) {
+                space();
+                says((Bases[id].state & 0x20000000) ? label_get(0x212) : label_get(0x211));
+            } else {
                 space();
                 say_label(0xFA);
                 say_colon();
@@ -2495,9 +2498,6 @@ void Console::go_to(int subject, int order, int grouped) {
                     say_colon();
                     say_num(Bases[id].population_size);
                 }
-            } else {
-                space();
-                say_label((Bases[id].state & 0x20000000) ? 0x212 : 0x211);
             }
             popup.item(StringTemp, id);
             count++;
