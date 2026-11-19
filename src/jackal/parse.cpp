@@ -105,6 +105,7 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
         LPSTR next = var + 1;
         switch (*next) {
           case 'N':
+            // RECOVERY_LITERAL: v1 0x00697350 0x00697358 $SG18208 0x00625880
             if (!strncmp(var, "$NUMBER", 7)) {
                 number = var[7] - '0';
                 if (number > 9) {
@@ -119,6 +120,7 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
                 strcat(output, number_text);
                 output += strlen(output);
                 continue;
+            // RECOVERY_LITERAL: v1 0x00697358 0x0069735D $SG18212 0x00625880
             } else if (!strncmp(var, "$NUM", 4)) {
                 number = var[4] - '0';
                 if (number > 9) {
@@ -154,6 +156,7 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
             break;
 
           case 'H':
+            // RECOVERY_LITERAL: v1 0x00697360 0x00697365 $SG18219 0x00625880
             if (!strncmp(var, "$HEX", 4)) {
                 // The image formats $HEX in decimal, like $NUM.
                 number = var[4] - '0';
@@ -203,6 +206,7 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
             memcpy(output, input, len);
             output += len;
             *output = 0;
+            // RECOVERY_LITERAL: v1 0x00697368 0x0069736A $SG18227 0x00625880
             LPSTR end_bracket = strstr(var, ">");
             if (!end_bracket) {
                 input = next;
@@ -289,6 +293,7 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
           }
 
           case 'L':
+            // RECOVERY_LITERAL: v1 0x0069736C 0x00697373 $SG18282 0x00625880
             if (!strncmp(var, "$LINK<", 6)) {
                 len = var - input;
                 memcpy(output, input, len + 1);
