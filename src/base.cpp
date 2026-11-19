@@ -7103,7 +7103,9 @@ void __cdecl base_hurry() {
     int scaled_cost = cost_factor(faction, 1, -1) * cost;
     int y = BaseCurrent->y;
     int x = BaseCurrent->x;
-    int region = map_loc(x, y)->region;
+    // The image multiplies `mov eax, y; imul eax, [MapLongitude]` (0x004F408D):
+    // the y argument is the field expression, CSE'd with the local above.
+    int region = map_loc(x, BaseCurrent->y)->region;
 
     if (production_id >= 0) {
         if (VehPrototypes[production_id].plan == PLAN_COLONIZATION
