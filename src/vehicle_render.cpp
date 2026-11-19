@@ -22,6 +22,7 @@
 // other function of the unit changes; after the dead-declaration batch exact
 // at 4, 16-20, 22 and 29, so 18. The original header declaration
 // set is unknown; re-tune after header batches.
+// After the dead-helper batch (d64959c815), whole-unit fe sweep: exact at 0-1, 14, 16-27, 32-35, 39, 62-63, so 21.
 // HEADER-PADS: function VehicleRenderHeaderPad
 void VehicleRenderHeaderPad0();
 void VehicleRenderHeaderPad1();
@@ -41,6 +42,9 @@ void VehicleRenderHeaderPad14();
 void VehicleRenderHeaderPad15();
 void VehicleRenderHeaderPad16();
 void VehicleRenderHeaderPad17();
+void VehicleRenderHeaderPad18();
+void VehicleRenderHeaderPad19();
+void VehicleRenderHeaderPad20();
 
 #include "general.h"  // range is used by veh.h inline members.
 #include "veh.h"

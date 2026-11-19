@@ -2,7 +2,9 @@
 // WORKAROUND(decl): wants_to_attack 0x0055BC80 ties on how many declarations precede
 // faction.h's (pads here or before stdafx.h move it; pads after the last
 // include never do). fe sweep 2026-11-19, 0-63 pads: exact at 14-45, no
-// other function of the unit changes. The original header declaration
+// other function of the unit changes; after the dead-helper batch
+// (d64959c815) exact at 1-27 and 60-63 (territory 0x0055EB80 flips at 0), so
+// 12. The original header declaration
 // set is unknown; re-tune after header batches.
 // HEADER-PADS: function FactionTreatyHeaderPad
 void FactionTreatyHeaderPad0();
@@ -17,24 +19,6 @@ void FactionTreatyHeaderPad8();
 void FactionTreatyHeaderPad9();
 void FactionTreatyHeaderPad10();
 void FactionTreatyHeaderPad11();
-void FactionTreatyHeaderPad12();
-void FactionTreatyHeaderPad13();
-void FactionTreatyHeaderPad14();
-void FactionTreatyHeaderPad15();
-void FactionTreatyHeaderPad16();
-void FactionTreatyHeaderPad17();
-void FactionTreatyHeaderPad18();
-void FactionTreatyHeaderPad19();
-void FactionTreatyHeaderPad20();
-void FactionTreatyHeaderPad21();
-void FactionTreatyHeaderPad22();
-void FactionTreatyHeaderPad23();
-void FactionTreatyHeaderPad24();
-void FactionTreatyHeaderPad25();
-void FactionTreatyHeaderPad26();
-void FactionTreatyHeaderPad27();
-void FactionTreatyHeaderPad28();
-void FactionTreatyHeaderPad29();
 #include "faction.h"
 #include "map.h"
 #include "base.h"

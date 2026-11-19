@@ -92,7 +92,7 @@ buy_council_vote 0x0053EB50, action_give 0x004CEDE0, faction_upkeep
 0x0042B630, wants_to_attack 0x0055BC80, DesignWin::draw_armor 0x00435400,
 PrefWin::init 0x0048D840, world_volcano 0x005C6DB0, load_box_sprites
 0x00453A70, action_airdrop 0x004CC360, sat_attack 0x004A0260, planet_busting
-0x00500B60 (and the large swings of
+0x00500B60, base_energy 0x004EB560, territory 0x0055EB80 (and the large swings of
 custom_planet and Console::upgrade). A header batch may land with them listed as lost;
 they are re-tuned once after the header batch, against the final headers.
 

@@ -59,7 +59,66 @@
 // batch: exact at 2-4, 6-9, 12, 14, 16-17, 19-20, 22-43, ... (0 and 1 flip it), so 2.
 // After the par-3 literal sweep (eight volume keys as literals): exact at 1, 4-7, 9, 13, 15-18, 21-26, ..., so 1.
 // After the faction.h label externs left (2026-11-19): exact at 0, 3, 5, 7, 8, 10-12, 15, 18-21, ..., so no pads.
+// After the dead-helper batch (d64959c815), whole-unit fe sweep: exact at 2-5, 8-9, 12, 14, 16-17, 19-21, 24, 27-30,
+// 32, 36, 38-41, 44-49 and 51-63 (0 and 1 flip it), so 57, the middle of the widest run.
 // CANARY-PADS: function PrefWinDeclFnPad
+void PrefWinDeclFnPad0();
+void PrefWinDeclFnPad1();
+void PrefWinDeclFnPad2();
+void PrefWinDeclFnPad3();
+void PrefWinDeclFnPad4();
+void PrefWinDeclFnPad5();
+void PrefWinDeclFnPad6();
+void PrefWinDeclFnPad7();
+void PrefWinDeclFnPad8();
+void PrefWinDeclFnPad9();
+void PrefWinDeclFnPad10();
+void PrefWinDeclFnPad11();
+void PrefWinDeclFnPad12();
+void PrefWinDeclFnPad13();
+void PrefWinDeclFnPad14();
+void PrefWinDeclFnPad15();
+void PrefWinDeclFnPad16();
+void PrefWinDeclFnPad17();
+void PrefWinDeclFnPad18();
+void PrefWinDeclFnPad19();
+void PrefWinDeclFnPad20();
+void PrefWinDeclFnPad21();
+void PrefWinDeclFnPad22();
+void PrefWinDeclFnPad23();
+void PrefWinDeclFnPad24();
+void PrefWinDeclFnPad25();
+void PrefWinDeclFnPad26();
+void PrefWinDeclFnPad27();
+void PrefWinDeclFnPad28();
+void PrefWinDeclFnPad29();
+void PrefWinDeclFnPad30();
+void PrefWinDeclFnPad31();
+void PrefWinDeclFnPad32();
+void PrefWinDeclFnPad33();
+void PrefWinDeclFnPad34();
+void PrefWinDeclFnPad35();
+void PrefWinDeclFnPad36();
+void PrefWinDeclFnPad37();
+void PrefWinDeclFnPad38();
+void PrefWinDeclFnPad39();
+void PrefWinDeclFnPad40();
+void PrefWinDeclFnPad41();
+void PrefWinDeclFnPad42();
+void PrefWinDeclFnPad43();
+void PrefWinDeclFnPad44();
+void PrefWinDeclFnPad45();
+void PrefWinDeclFnPad46();
+void PrefWinDeclFnPad47();
+void PrefWinDeclFnPad48();
+void PrefWinDeclFnPad49();
+void PrefWinDeclFnPad50();
+void PrefWinDeclFnPad51();
+void PrefWinDeclFnPad52();
+void PrefWinDeclFnPad53();
+void PrefWinDeclFnPad54();
+void PrefWinDeclFnPad55();
+void PrefWinDeclFnPad56();
 
 int __cdecl X_text_open(char *src_file_id, const char *section_id);
 void __cdecl slide_show(GraphicWin *window, int mode);

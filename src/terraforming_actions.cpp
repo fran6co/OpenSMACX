@@ -76,6 +76,7 @@
 // 22, 29-32 pads, action_airdrop at those too, so 22.
 // After the par-5 header removals (2026-11-19): both exact at 0, 1, 8, 17, 19,
 // 25, 26, 35, 39, 40, 45, 46, 51, 53-56, 58, 63, so 19.
+// After the dead-helper batch (d64959c815), whole-unit fe sweep: both exact at 19, 21-24, 26 and 38, so 22.
 // CANARY: 0x004CEDE0 ?action_give@@YAXHH@Z residues 17-20,25-27
 // CANARY-PADS: extern TerraformingActionsExternPad
 
@@ -98,6 +99,9 @@ extern int TerraformingActionsExternPad15;
 extern int TerraformingActionsExternPad16;
 extern int TerraformingActionsExternPad17;
 extern int TerraformingActionsExternPad18;
+extern int TerraformingActionsExternPad19;
+extern int TerraformingActionsExternPad20;
+extern int TerraformingActionsExternPad21;
 #include "vector.h"  // vector_add operates on actual three-float arrays.
 
 extern void __cdecl unspot_stack(int veh_id);

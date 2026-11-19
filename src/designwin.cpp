@@ -43,7 +43,24 @@
 // other function of the unit changes; after the dead-declaration batch exact
 // at 0-9, 13-31 and 55-63, so no pads. The original header declaration
 // set is unknown; re-tune after header batches.
+// After the dead-helper batch (d64959c815), whole-unit fe sweep: exact at 0, 5-28 and 58-63, so 16.
 // HEADER-PADS: function DesignWinHeaderPad
+void DesignWinHeaderPad0();
+void DesignWinHeaderPad1();
+void DesignWinHeaderPad2();
+void DesignWinHeaderPad3();
+void DesignWinHeaderPad4();
+void DesignWinHeaderPad5();
+void DesignWinHeaderPad6();
+void DesignWinHeaderPad7();
+void DesignWinHeaderPad8();
+void DesignWinHeaderPad9();
+void DesignWinHeaderPad10();
+void DesignWinHeaderPad11();
+void DesignWinHeaderPad12();
+void DesignWinHeaderPad13();
+void DesignWinHeaderPad14();
+void DesignWinHeaderPad15();
 #include "font_metrics.h"
 #include "interface_fonts.h"
 #include "map.h"

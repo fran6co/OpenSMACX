@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 """unitpad.py <unit> [--write] [--at ADDR]: whole-unit sweep of the unit's pad block (CANARY-PADS/HEADER-PADS: function NAME) 0..63.
-Prefixes FE_PFX_BASE.. (FE_JOBS lanes). Per count: number of fe-exact markers and the claimed markers that are not exact. --at ADDR sweeps pads inserted before that marker instead (no block needed)."""
+Per count: number of fe-exact markers and the claimed markers that are not exact. --at ADDR sweeps pads inserted before that marker instead (no block needed)."""
 import sys,os,re,collections
-T=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-R=os.path.dirname(os.path.dirname(T))
-sys.path.insert(0,T); import fe
+R=os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.insert(0,R+'/recovery/tools'); import fe
 from concurrent.futures import ThreadPoolExecutor
-os.makedirs(R+'/build/recovery/fe',exist_ok=True)
 unit=sys.argv[1]; src=open(R+'/'+unit,encoding='latin-1').read()
 base=int(os.environ.get('FE_PFX_BASE','2')); jobs=int(os.environ.get('FE_JOBS','5'))
 if '--at' in sys.argv:
@@ -14,7 +12,7 @@ if '--at' in sys.argv:
     if c>e: m0=c
     mk=lambda n: src[:m0]+''.join('void FePadDecl%d();\n'%i for i in range(n))+src[m0:]; cur=0
 else:
-    m=re.search(r'(// (?:CANARY|HEADER)-PADS: (function|extern) (\w+)\n)((?:[^\n]*\b\3\d+[^\n]*;\n)*)',src)
+    m=re.search(r'(// (?:CANARY|HEADER)-PADS: (function|extern) (\w+)\n\n?)((?:[^\n]*\b\3\d+[^\n]*;\n)*)',src)
     kind=m.group(2); name=m.group(3); lines=[l for l in m.group(4).split('\n') if l]; cur=len(lines)
     fmt=('void %s%d();\n' if kind=='function' else None)
     if fmt is None:

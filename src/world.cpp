@@ -22,6 +22,7 @@
 // sort_descending, auto_save_debug, sub_63bb20, ...) left general.h and the
 // other headers. fe sweep 2026-11-19, 0-63 pads: exact at 5-61, no other
 // function of the unit changes. Re-tune after header batches.
+// After the dead-helper batch (d64959c815), whole-unit fe sweep: exact at 5-61, so 20.
 // HEADER-PADS: function WorldHeaderPad
 void WorldHeaderPad0();
 void WorldHeaderPad1();
@@ -31,6 +32,18 @@ void WorldHeaderPad4();
 void WorldHeaderPad5();
 void WorldHeaderPad6();
 void WorldHeaderPad7();
+void WorldHeaderPad8();
+void WorldHeaderPad9();
+void WorldHeaderPad10();
+void WorldHeaderPad11();
+void WorldHeaderPad12();
+void WorldHeaderPad13();
+void WorldHeaderPad14();
+void WorldHeaderPad15();
+void WorldHeaderPad16();
+void WorldHeaderPad17();
+void WorldHeaderPad18();
+void WorldHeaderPad19();
 // No direct popup.h include: world.cpp uses no Popup, and popup.h ahead of
 // map.h flips the x/y reload order in world_volcano (0x005C6DB0). It still
 // arrives later through netmsg.h, which is harmless.

@@ -17,6 +17,43 @@
  */
 #define DIALOGS_DTOR_INLINE  // stand-in: see ~Dialogs in dialogs.h
 #include "stdafx.h"
+// WORKAROUND(decl): custom_planet 0x0058C2A0 (not exact) swings with how many
+// declarations precede game.h's (guide 2.5). After the dead-helper batch
+// (d64959c815) it read 373 rows with no pads; fe sweep 0-63: 11 rows at 1-7,
+// 10, 13-14, 17, 20-39, 43, 46-50, 53, 56-57, 59-62 and 373-412 elsewhere, no
+// other function of the unit changes, so 30. The original header declaration
+// set is unknown; re-tune after header batches.
+// HEADER-PADS: function NewGameHeaderPad
+void NewGameHeaderPad0();
+void NewGameHeaderPad1();
+void NewGameHeaderPad2();
+void NewGameHeaderPad3();
+void NewGameHeaderPad4();
+void NewGameHeaderPad5();
+void NewGameHeaderPad6();
+void NewGameHeaderPad7();
+void NewGameHeaderPad8();
+void NewGameHeaderPad9();
+void NewGameHeaderPad10();
+void NewGameHeaderPad11();
+void NewGameHeaderPad12();
+void NewGameHeaderPad13();
+void NewGameHeaderPad14();
+void NewGameHeaderPad15();
+void NewGameHeaderPad16();
+void NewGameHeaderPad17();
+void NewGameHeaderPad18();
+void NewGameHeaderPad19();
+void NewGameHeaderPad20();
+void NewGameHeaderPad21();
+void NewGameHeaderPad22();
+void NewGameHeaderPad23();
+void NewGameHeaderPad24();
+void NewGameHeaderPad25();
+void NewGameHeaderPad26();
+void NewGameHeaderPad27();
+void NewGameHeaderPad28();
+void NewGameHeaderPad29();
 #include "game.h"
 #include "interface_palette.h"
 #include "main.h"

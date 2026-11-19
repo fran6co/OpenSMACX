@@ -17,6 +17,16 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   lines A..B (36 candidates/s). `perm.run_deck(unit, addr, [(key, source_text), ...])` evaluates
   any hand-built deck of whole-file variants.
 - `padsweep2.py <unit> <addr> [--write]` sweeps the CANARY-PADS count 0..63 in seconds.
+- `analysis/unitpad.py <unit> [--write] [--at ADDR] [--only a,b]` whole-unit sweep of the unit's pad block
+  (`CANARY-PADS` / `HEADER-PADS`, function or extern kind) 0..63: per count, which markers of the unit are not
+  fe-exact (markers never exact at any count are left out). Use it after a header batch so a pad that restores
+  one canary does not flip another function of the unit. `--at ADDR` sweeps pads inserted before that marker
+  instead (no block needed). `analysis/padext.py <unit> <addr[,addr]> [--write]` is the single-function form
+  for an extern-kind block.
+- `analysis/spellsweep.py <unit> <addr> [--write] [--rules ...]` raw-vs-helper screen of one function for the
+  invented budget-only helpers (is_human, is_alive, is_alien_faction, map_tiles(), MapAbstract()): every site
+  alone, all sites, then greedy; key = (named call multiset distance to the image, rows), no ratchet on rows
+  when the call distance drops.
 - `objdis.py <unit> <src> <addr>` raw listing of our function with real jump targets.
 - `analysis/regmap.py <unit> <addr> [--src ALT.cpp] [--min N] [--ranges]` which callee-saved register holds
   which role (this, a named slot's cached copy, a call result at a source line, a temporary), for the image

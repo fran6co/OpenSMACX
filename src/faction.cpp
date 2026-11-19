@@ -73,6 +73,8 @@
 // `recover canary src/faction.cpp` computes the pad count (none since the
 // dead-declaration batch of 2026-11-19: fe sweep exact at 0-22, 27-28 and
 // most of 31-61).
+// After the dead-helper batch (d64959c815), whole-unit fe sweep: buy_council_vote 0x0053EB50 exact at 0-4, 7-9,
+// 11-12, 15-16, 18-21, 23, 28, 35, 46, 48-53, 55, 57, 60, 62-63, so 50, the middle of the widest run.
 // CANARY: 0x0053EB50 ?buy_council_vote@@YAXHHHH@Z residues 0-2,4,6,9,16-18,21-29,31-32,36,38,40-44,48,50-53,55,57-63
 // CANARY-PADS: function FactionDeclFnPad
 void FactionDeclFnPad0();
@@ -90,6 +92,41 @@ void FactionDeclFnPad11();
 void FactionDeclFnPad12();
 void FactionDeclFnPad13();
 void FactionDeclFnPad14();
+void FactionDeclFnPad15();
+void FactionDeclFnPad16();
+void FactionDeclFnPad17();
+void FactionDeclFnPad18();
+void FactionDeclFnPad19();
+void FactionDeclFnPad20();
+void FactionDeclFnPad21();
+void FactionDeclFnPad22();
+void FactionDeclFnPad23();
+void FactionDeclFnPad24();
+void FactionDeclFnPad25();
+void FactionDeclFnPad26();
+void FactionDeclFnPad27();
+void FactionDeclFnPad28();
+void FactionDeclFnPad29();
+void FactionDeclFnPad30();
+void FactionDeclFnPad31();
+void FactionDeclFnPad32();
+void FactionDeclFnPad33();
+void FactionDeclFnPad34();
+void FactionDeclFnPad35();
+void FactionDeclFnPad36();
+void FactionDeclFnPad37();
+void FactionDeclFnPad38();
+void FactionDeclFnPad39();
+void FactionDeclFnPad40();
+void FactionDeclFnPad41();
+void FactionDeclFnPad42();
+void FactionDeclFnPad43();
+void FactionDeclFnPad44();
+void FactionDeclFnPad45();
+void FactionDeclFnPad46();
+void FactionDeclFnPad47();
+void FactionDeclFnPad48();
+void FactionDeclFnPad49();
 
 // Shared separator objects the image pushes instead of unit literals.
 extern const char BufferJoinSpace[];

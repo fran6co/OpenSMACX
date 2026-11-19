@@ -106,8 +106,48 @@
 // WORKAROUND(decl): counter alignment. end_of_game is a tie-break on the
 // front-end symbol counter modulo 64 (guide 2.5); `recover canary
 // src/turn.cpp` computes the pad count (none needed now).
+// After the dead-helper batch (d64959c815), whole-unit fe sweep: all exact at 0-2, 7, 9-14, 19, 21-27,
+// 30-45 and 48-60 (faction_upkeep 0x00527290 flips at 3-6, 8, 15-18, 20; end_of_game at 28-29, 46-47, 61-63), so 38.
 // CANARY: 0x00524870 ?end_of_game@@YAHH@Z residues 1-4,6-19,21-23,27-34,39-49,52,54-60,62-63
 // CANARY-PADS: function TurnDeclFnPad
+void TurnDeclFnPad0();
+void TurnDeclFnPad1();
+void TurnDeclFnPad2();
+void TurnDeclFnPad3();
+void TurnDeclFnPad4();
+void TurnDeclFnPad5();
+void TurnDeclFnPad6();
+void TurnDeclFnPad7();
+void TurnDeclFnPad8();
+void TurnDeclFnPad9();
+void TurnDeclFnPad10();
+void TurnDeclFnPad11();
+void TurnDeclFnPad12();
+void TurnDeclFnPad13();
+void TurnDeclFnPad14();
+void TurnDeclFnPad15();
+void TurnDeclFnPad16();
+void TurnDeclFnPad17();
+void TurnDeclFnPad18();
+void TurnDeclFnPad19();
+void TurnDeclFnPad20();
+void TurnDeclFnPad21();
+void TurnDeclFnPad22();
+void TurnDeclFnPad23();
+void TurnDeclFnPad24();
+void TurnDeclFnPad25();
+void TurnDeclFnPad26();
+void TurnDeclFnPad27();
+void TurnDeclFnPad28();
+void TurnDeclFnPad29();
+void TurnDeclFnPad30();
+void TurnDeclFnPad31();
+void TurnDeclFnPad32();
+void TurnDeclFnPad33();
+void TurnDeclFnPad34();
+void TurnDeclFnPad35();
+void TurnDeclFnPad36();
+void TurnDeclFnPad37();
 
 extern int BaseAtDebugPopupFlag;  // base.cpp, original93A94C
 extern char *InterludeTextFile;  // interlude.cpp
