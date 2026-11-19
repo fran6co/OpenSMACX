@@ -314,6 +314,14 @@ def analyse(unit, src, text, c, lst, addr, verbose):
         if len(ws) < 2 or name in excl:
             continue
         mw, part = code.webs(name, name in params)
+        # a web that owns a declaration (`int x = ...`, `for (int x = ...`) is a distinct variable that only
+        # shares the name; leave it out
+        decl = re.compile(r'(?:^|[;{(])\s*(?:const\s+|unsigned\s+|signed\s+|struct\s+)*[A-Za-z_][\w:]*[\s*&]+%s\s*[=(\[;,]'
+                          % re.escape(name))
+        ws = [rs for rs in ws if not any(x['kind'] == 'd' and 0 <= x['line'] - first < len(stripped)
+                                         and decl.search(stripped[x['line'] - first]) for x in rs)]
+        if len(ws) < 2:
+            continue
         desc = []
         for rs in sorted(ws, key=lambda rs: min(x['line'] for x in rs)):
             dl = sorted({x['line'] for x in rs if x['kind'] in ('d', 'ud')})
