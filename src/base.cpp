@@ -4184,7 +4184,7 @@ void __cdecl base_support() {
             BaseCurrentConvoyTo[Vehs[veh_id].order_auto_type] += convoyed;
         }
         // AI offensive strength tally; psi weapons count only on custom prototypes.
-        int offense = Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating;
+        int8_t offense = Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating;
         if (offense && (offense > 0 || Vehs[veh_id].proto_id >= MaxVehProtoFactionNum)) {
             uint8_t tally_plan = VehPrototypes[Vehs[veh_id].proto_id].plan;
             if (tally_plan != PLAN_RECONNAISANCE && tally_plan != PLAN_PLANET_BUSTER) {
