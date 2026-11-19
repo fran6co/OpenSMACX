@@ -1176,7 +1176,8 @@ void CouncWin::on_button_clicked(int button_id) {
     case 3:
         if (field_A24_ == 0) {
             if (IsMultiplayerNet) {
-                if (!council_humans_present(field_A44_)) {
+                const uint32_t seated = field_A44_;
+                if (!council_humans_present(seated)) {
                     NetMsgPrimary.pop("VOTING", 0x1388, 1, nullptr);
                 } else {
                     message_data(0x2601, 0, ConsoleGlobal.faction_id_, -button_id, 0, 0);
