@@ -220,10 +220,10 @@ int NetSessionPickerWin::initialize(Net *network, char *caption,
 
   tail_.rows_visible_ = rows;
   net_ = network;
-  const int margin_x = width * 10 / 600;
-  const int margin_y = height * 10 / 440;
   tail_.client_width_ = width;
   tail_.client_height_ = height;
+  const int margin_x = scale_client_width(10);
+  const int margin_y = scale_client_height(10);
   int result = GraphicWin::init(
       0, 0, width, height, caption, 0x800, BasePopDefaultField322C, 0, 0);
   if (result != 0) return result;
@@ -239,9 +239,9 @@ int NetSessionPickerWin::initialize(Net *network, char *caption,
   // RECT dissolved into registers and dead parameter slots: frame 8).
   RECT rect;
   rect.top = tail_.client_height_;
-  rect.right = tail_.client_width_ * 200 / 600 + tail_.client_width_;
+  rect.right = scale_client_width(200) + tail_.client_width_;
   rect.bottom = font->pixel_height() * 7 / 4 + tail_.client_height_;
-  const int dx = tail_.client_width_ - tail_.client_width_ * 10 / 600 - rect.right;
+  const int dx = tail_.client_width_ - scale_client_width(10) - rect.right;
   const int dy = (tail_.client_height_ - rect.bottom - margin_y) * 3;
   rect.left = tail_.client_width_;
   offset_rect(&rect, dx, dy);
