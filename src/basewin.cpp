@@ -7466,13 +7466,11 @@ void BaseWin::init() {
     // with the second when a derived painter has stateful behavior.
     for (index = 0; index < 22; ++index) {
         flatButtons_[index].hide();
-        flatButtons_[index].set_font(&font1_, 0, 0, 0);
-        flatButtons_[index].redraw();
+        flatButtons_[index].set_font_redraw(&font1_);
         flatButtons_[index].redraw();
     }
     flatButton_.hide();
-    flatButton_.set_font(&font1_, 0, 0, 0);
-    flatButton_.redraw();
+    flatButton_.set_font_redraw(&font1_);
     flatButton_.redraw();
 }
 
