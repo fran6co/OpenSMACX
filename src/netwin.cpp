@@ -165,226 +165,223 @@ char NetWinPasswordPromptInitialText;
 // RECOVERY_OBJECT: v1 0x00811E34 ?NetWinPasswordVerifyInitialText@@3DA
 char NetWinPasswordVerifyInitialText;
 
-// Pinned original faction-section/path strings; real source storage replaces
-// pointers into the old executable. Separate CUSTOMFACTIONS copies stay distinct.
-// Original string start0x00686908; pinned file-backed bytes and terminating NUL verified.
-// RECOVERY_OBJECT: v1 0x00686908 _NetWinSectionCustomCount
-static char NetWinSectionCustomCount[] = "CUSTOMFACTIONS";
-// Original string start0x00686918; pinned file-backed bytes and terminating NUL verified.
-// RECOVERY_OBJECT: v1 0x00686918 _NetWinSectionFactions
-static char NetWinSectionFactions[] = "FACTIONS";
-// Original string start0x00686924; pinned file-backed bytes and terminating NUL verified.
-// RECOVERY_OBJECT: v1 0x00686924 _NetWinSectionNewFactions
-static char NetWinSectionNewFactions[] = "NEWFACTIONS";
-// Original string start0x00686930; pinned file-backed bytes and terminating NUL verified.
-// RECOVERY_OBJECT: v1 0x00686930 _NetWinSectionCustom
-static char NetWinSectionCustom[] = "CUSTOMFACTIONS";
-// Original string start0x00686940; pinned file-backed bytes and terminating NUL verified.
-// RECOVERY_OBJECT: v1 0x00686940 _NetWinPcxSuffix
-static char NetWinPcxSuffix[] = ".pcx";
-// Original string start0x00686948; pinned file-backed bytes and terminating NUL verified.
-// RECOVERY_OBJECT: v1 0x00686948 _NetWinDefaultPcx
-static char NetWinDefaultPcx[] = "faction.pcx";
-// setup_faction_data reads the same 0x00691AFC pointer slot as the rules
-// loader. AlphaxFileID in alpha.cpp owns it; this TU does not own an alias
-// into the old executable's storage.
+// 0x0080A6F0 - the planet-size name count beside the fixed dialog (the
+// names occupy world_size_labels_: 32 rows at native 0x80-byte stride.
+// Original starts below are distinct objects; stores/accesses establish only
+// those starts, not original allocations, complete lifetimes or exact data layout.
+// RECOVERY_OBJECT: v1 0x0080A6F0 ?NetWinPlanetSizeLabelCount@@3HA
+int NetWinPlanetSizeLabelCount;
+// RECOVERY_OBJECT: v1 0x0080A6F4 ?NetWinExecAdjacentState@@3HA
+int NetWinExecAdjacentState;
 
-// Historical call-boundary attempt: ordinary /O2 /Oi memcpy expanded to
-// rep movsd; the former memcpy_call wrapper's measured result is retained in
-// setup_faction_data's LEVER note. The mapped bodies now use narrow direct
-// CRT-call pragmas instead of a file-local forwarding helper.
+/*
+Purpose: Step the receiver back to the subobject ??_GNetWin@@UAEPAXI@Z expects,
+         then forward unchanged.
+// ORIGINAL: 0x00483840 ??_GNetWin@@WEEE@AEPAXI@Z 0x00483840-0x0048384B BYTE_EXACT
+// symbol    ??_ENetWin@@WEEE@AEPAXI@Z
+// CORRECTED from ??3NetWin@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x004837C0` into
+//   ??_GNetWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/
 
-// ---- fixed bindings the dialog bodies reach -------------------------------
+/*
+Purpose: Send one faction's data block over the net: make sure the
+         MessageFactionData clone exists (asking the dialog to rebuild it),
+         then frame the clone with the 0xF0D header and ship it to
+         everyone or to the slot a1 names.
 
-// 0x0093D4F8 is AlphaNet::player_count_ inside NetDaemonNet. Lobby scans and
-// modal callbacks read it at their original sites, including between callbacks.
-
-// Original 0x0090DB98 begins the eight NetWinLobbyRows (0x17C stride).
-// Original 0x0093D51C is NetDaemonNet.process_slots_[0].pid_, not a
-// separately allocated slot table: AlphaNet starts at 0x0093CD90, its
-// process_slots_ at +0x76C and each slot's pid_ at +0x20.
-// The unchecked readiness/owner scans below can leave the eight-row array.
-// In the original, index 8's ready-byte access aliases byte 1 of the existing
-// mode_ dword at 0x0090E779; its owner dword aliases rule_bits_b_ in the
-// existing session-options record at 0x0090E8F0. The scenario text's first
-// byte is separately named scenario_text_wire_tail_[0].
-// Those observations do not prove a ninth row or source-object adjacency;
-// preserving the original abnormal-count effects remains a layout obligation.
-
-// The faction's pcx path: an inline helper boundary the image's register
-// choice shows (the leading clear stays at the call site).
-static void netwin_pcx_name(const char *name) {
-    strcat(StringTemp, name);
-    strcat(StringTemp, NetWinPcxSuffix);
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x0047B020 ?send_faction_data@@YAXH@Z 0x0047B020-0x0047B0E1 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/netwin.h declares this network-dialog synchronization API; src/netwin.cpp owns NetWinDialog, NetWinLobbyRows, the session state, and the player-ID globals; slot ids are NetDaemonNet AlphaNet members.", "The source body preserves the pinned same-player gate, byte count, allocation size, copy extent/order, unfreed frame and broadcast/slot destination branches."], "reason": "Move the complete existing faction-data sender to the owner of its typed dialog, record table and network globals without changing packet writes, send order, leak or historical claim."}
+// size      193 bytes
+// prototype
+// callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00481FD0 0x005D4510 0x00630080 0x00645930
+Return Value: n/a
+Status: Coverage transcription - claim pending re-measurement
+*/
+void __cdecl send_faction_data(int slot_id) {
+    if (NetDaemonNet.local_player_id() == NetDaemonNet.host_player_id_) {
+        if (NetWinDialog.faction_records_ == 0) {
+            NetWinDialog.setup_faction_data(0);
+        }
+        const uint8_t count = NetWinDialog.faction_records_->record_count_;
+        const int records = count * 133;
+        const uint32_t size = records * 3 + 0x1A4;
+        NetWinFactionDataPrefix *packet =
+            static_cast<NetWinFactionDataPrefix *>(mem_get(size));
+        packet->opcode_ = 0xF0D;
+        packet->faction_ = -1;
+        packet->timestamp_ = 0;
+        memcpy(packet + 1, NetWinDialog.faction_records_,
+               records * 3 + 0x194);
+        if (slot_id < 0) {
+            NetDaemonNet.Net::send(packet, size, 0, 1);
+            return;
+        }
+        NetDaemonNet.Net::send(
+            packet, size, NetDaemonNet.process_slots_[slot_id].pid_, 1);
+    }
 }
 
 /*
-// ORIGINAL: 0x00481FD0 ?setup_faction_data@NetWin@@QAEXPAUMessageFactionData@@@Z 0x00481FD0-0x00482488;0x006574E9-0x006574FE FILE BYTE_EXACT
-// size      1229 bytes
-// prototype void (__thiscall ?setup_faction_data@NetWin@@QAEXPAUMessageFactionData@@@Z)(NetWin* this, MessageFactionData*)
-// callers   3   call targets   15
+Purpose: Broadcast the full-state block to every player: stamp the seven
+         per-slot packet headers into one 0xA74-byte frame, copy the
+         0xA64-byte state, and send it to everyone (0x4F04) or to the slot
+         a1 names (0x1F04) once the turn hand-over allows it.
+
+// ORIGINAL: 0x0047B0F0 ?send_all_player_packets@@YAXH@Z 0x0047B0F0-0x0047B1CE FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/netwin.h declares this API and src/netwin.cpp owns the seven-row lobby payload. The destination IDs use NetDaemonNet AlphaNet process slots.", "The gate at 0x0093E8C0 is NetDaemonNet.primary_state_.leading_words_[0] (+0x1B30), the same storage game.cpp names TurnsAssigned."], "reason": "Move the complete state-frame sender to netwin.cpp and use the existing typed turn-handover member; preserve initialization-before-gate, packet copy extent and target branches."}
+// LEVER: xor/or order - writing the dword-zero field first in the record loop (matching `xor ebx,ebx` before `or ecx,-1`) reproduced the register setup order; `#pragma function(memcpy)` kept the `call _memcpy` instead of an inlined `rep movsd`.
+// size      222 bytes
+// prototype
+// callers   0   call targets   1
 // kind      game
-// flags     frame;purged_ok
-// calls     0x00586090 0x005D4510 0x005D7210 0x005D7410 0x005D7DE0 0x005E2210 0x005FD530 0x005FD550 0x005FD570 0x005FD670 0x00644EF2 0x00645460 0x00645470 0x00645930 0x00645E90
-// Homed 2026-09-04 out of src/recovered/units/00481fd0.cpp, which is deleted
-// by this: the body is a transcription of the image, not a recovery of it.
-//
-// CEILING: the local `Buffer buffer` needs unwind-safe destruction, so VC6
-// builds the SEH frame the image has (`push -1 / push 0x6574f4 / fs:[0]`)
-// and its funclet at 0x006574E9 - the flatbutton.cpp family. The frame turned
-// out NOT to be the blocker: this tree's prologue agrees with the image
-// through instruction 9, `sub esp,0xb30` included.
-//
-// LEVER: `memcpy_call`, the palette.cpp / path.cpp idiom. /O2 implies /Oi and
-//        VC6 expanded both copies to `shr ecx,2 / rep movsd` where the image
-//        calls 0x00645930 twice; the out-of-line forwarder took it 42/323 to
-//        51/323.
-// TRIED: the register swap that is now the first divergence. The image spills
-//        `this` to ESI and uses EDI as its zero register; this tree does the
-//        reverse (`push edi / mov edi,ecx`, then `xor esi,esi`), which shifts
-//        every subsequent instruction by one. Same callee-saved pair, same
-//        count of each, so nothing in the source model names the difference -
-//        recorded rather than ground on.
-Status: Homed 2026-09-04, MISMATCH 51 of 323 instructions
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00630080
+Return Value: n/a
+Status: Coverage transcription - claim pending re-measurement
 */
-void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
-    Buffer buffer;
-
-    // The image tests `message != 0` first and only then compares the two
-    // player ids - `cmp ebx,edi / je` past the id test - so a null message
-    // rebuilds from the text file whatever the ids say.
-    if (message_faction_data != 0 && NetDaemonNet.local_player_id() == NetDaemonNet.host_player_id_) {
-        return;
+void __cdecl send_all_player_packets(int slot_id) {
+    NetWinLobbyFullPacket packet;
+    NetWinLobbyRow *row = packet.rows_;
+    for (int slot = 7; slot != 0; --slot) {
+        row->owner_ = 0;
+        row->prefix_ = -1;
+        row->ready_or_occupied_ = 0;
+        row->field_2_ = 0;
+        row->faction_or_color_ = -1;
+        row->field_4_ = 2;
+        ++row;
     }
-
-    if (faction_records_ != 0) {
-        free(faction_records_);
-        faction_records_ = 0;
-    }
-
-    if (message_faction_data != 0) {
-        // Fast path: the sender already has the table; clone it whole. The
-        // record count rides byte 0x11 and is clamped to a floor of 8 - the
-        // image compares the BYTE (`cmp al,8 / jae`), not a widened int.
-        int count =
-            message_faction_data->record_count_ < 8
-                ? 8
-                : static_cast<int>(message_faction_data->record_count_);
-        int size = count * 399 + 0x194;
-        faction_records_ = static_cast<NetWinFactionTable *>(mem_get(size));
-        memcpy(faction_records_, &message_faction_data->record_type_, size);
-        return;
-    }
-
-    // Slow path: rebuild the table from the localized faction text. The
-    // CUSTOMFACTIONS count is discovered by walking until text_item is empty.
-    int custom_count = 0;
-    if (text_open(AlphaxFileID, NetWinSectionCustomCount) == 0) {
-        text_get();
-        while (*text_item() != 0) {
-            custom_count++;
-            text_get();
-        }
-        if (custom_count >= 0) {
-            if (custom_count > 10) {
-                custom_count = 10;
-            }
-        } else {
-            custom_count = 0;
-        }
-    }
-
-    // 0xe base factions plus the custom ones. The allocation never holds
-    // fewer than 8 records, but the image stores and walks the unclamped
-    // count (482102/48211F/48243C).
-    int record_count = custom_count + 0xe;
-    int record_size = (record_count >= 8 ? record_count : 8) * 399 + 0x194;
-
-    faction_records_ =
-        static_cast<NetWinFactionTable *>(mem_get(record_size));
-    faction_records_copy_ =
-        static_cast<NetWinFactionTable *>(mem_get(record_size));
-
-    faction_records_->record_count_ = static_cast<uint8_t>(record_count);
-    faction_records_->record_type_ = 7;
-    if (text_open(AlphaxFileID, NetWinSectionFactions) != 0) {
-        return;
-    }
-    // Filenames fill consecutive records, while each section's active flags
-    // restart at record 0, as in the original.
-    int name_index = 0;
-    int record_index;
-    for (record_index = 0; record_index < 7; ++record_index) {
-        faction_records_->records_[record_index].active_ = 1;
-        text_get();
-        strcpy(faction_records_->records_[name_index++].filename_, text_item());
-    }
-    if (text_open(AlphaxFileID, NetWinSectionNewFactions) != 0) {
-        return;
-    }
-    for (record_index = 0; record_index < 7; ++record_index) {
-        faction_records_->records_[record_index].active_ = 1;
-        text_get();
-        strcpy(faction_records_->records_[name_index++].filename_, text_item());
-    }
-    if (text_open(AlphaxFileID, NetWinSectionCustom) != 0) {
-        return;
-    }
-    for (record_index = 0; record_index < custom_count; ++record_index) {
-        faction_records_->records_[record_index].active_ = 1;
-        text_get();
-        strcpy(faction_records_->records_[name_index++].filename_, text_item());
-    }
-
-    // Each record is then re-read from its own file - the faction name IS the
-    // file id - to pull the leader titles, the noun and the colour pixel.
-    Player player;
-    for (record_index = 0; record_index < record_count; ++record_index) {
-        const int opened = text_open(faction_records_->records_[record_index].filename_,
-                                     faction_records_->records_[record_index].filename_);
-        if (opened != 0) {
+    if (slot_id != -1 || NetDaemonNet.primary_state_.leading_words_[0] != 0) {
+        packet.header_.set_opcode(0x0F04);
+        packet.header_.slot_ = -1;
+        packet.header_.field_8_ = 0;
+        memcpy(packet.rows_, &NetWinLobbyRows.rows_[1], sizeof(packet.rows_));
+        if (slot_id < 0) {
+            packet.header_.opcode_ |= 0x4000;
+            NetDaemonNet.Net::send(&packet, sizeof(packet), 0, 1);
             return;
         }
-        faction_records_->records_[record_index].active_ = 1;
-        // The image stores text_open's zero result as the owner dword.
-        faction_records_->records_[record_index].owner_ = opened;
-
-        text_get();
-        text_item();
-        text_item();
-        strncpy(faction_records_->records_[record_index].leader_name_, text_item(), 0x18);
-        faction_records_->records_[record_index].leader_name_[0x17] = 0;
-
-        StringTemp[0] = 0;
-        netwin_pcx_name(faction_records_->records_[record_index].filename_);
-
-        if (buffer.load_pcx(StringTemp, 0, 0xa, 0xec) != 0) {
-            buffer.load_pcx(NetWinDefaultPcx, 0, 0xa, 0xec);
-        }
-        faction_records_->records_[record_index].color_ =
-            static_cast<uint8_t>(buffer.get_pixel(4, 0x2f3));
-
-        // read_faction fills the Player from the faction's own file; its
-        // strings are copied back into the record, and the leader-gender
-        // flag crosses the 0x190-byte row stride.
-        strcpy(player.filename, faction_records_->records_[record_index].filename_);
-        strcpy(player.search_key, faction_records_->records_[record_index].filename_);
-        read_faction(&player, 0);
-        strcpy(faction_records_->records_[record_index].leader_name_, player.name_leader);
-        strcpy(faction_records_->records_[record_index].formal_faction_name_,
-               player.formal_name_faction);
-        strcpy(faction_records_->records_[record_index].noun_faction_, player.noun_faction);
-        strcpy(faction_records_->records_[record_index].adjective_faction_,
-               player.adj_name_faction);
-        strcpy(faction_records_->records_[record_index].leader_title_, player.title_leader);
-        strcpy(faction_records_->records_[record_index].adjective_leader_,
-               player.adj_leader);
-        faction_records_->records_[record_index].leader_female_ =
-            static_cast<unsigned char>(player.is_leader_female);
+        packet.header_.opcode_ |= 0x1000;
+        NetDaemonNet.Net::send(
+            &packet, sizeof(packet), NetDaemonNet.process_slots_[slot_id].pid_, 1);
     }
+}
 
-    text_close();
-    memcpy(faction_records_copy_, faction_records_, record_size);
+/*
+Purpose: Broadcast one faction's 0x2F04 data packet to the other player:
+         shape the 0x18C-byte message (header word, faction word, zero,
+         the five-byte prefix and the 0x17C-byte copied payload - the
+         image writes the prefix before the copy overwrites it), and hand
+         it to the Net sender sized at one target.
+
+// ORIGINAL: 0x0047B1D0 sub_47b1d0 0x0047B1D0-0x0047B25C FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["The helper sends through NetDaemonNet to NetDaemonNet.host_player_id() and uses the same 0x17C lobby payload/0x18C message contract as the neighboring NetWin packet senders.", "No direct mapped caller is known; this transfer retains the externally callable identity and does not infer a caller."], "reason": "Move this source-owned packet helper alongside its established NetWin senders; retain prefix-before-copy ordering, positive-faction/null-payload guard and the original unclaimed caller status."}
+// symbol    ?sub_47b1d0@@YAXHPAX@Z
+// size      140 bytes
+// prototype
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00630080 0x00645930
+Return Value: n/a
+Status: Coverage transcription - unclaimed body
+*/
+void __cdecl sub_47b1d0(int faction_id, void *payload) {
+    NetWinLobbySinglePacket packet;
+    packet.row_.reset();
+    if (faction_id >= 1 && payload != 0) {
+        packet.header_.set_opcode(0x2F04);
+        packet.header_.slot_ = faction_id;
+        packet.header_.field_8_ = 0;
+        memcpy(&packet.row_, payload, sizeof(packet.row_));
+        NetDaemonNet.Net::send(
+            &packet, sizeof(packet), NetDaemonNet.host_player_id_, 1);
+    }
+}
+
+/*
+Purpose: Broadcast the 24-byte session state words: copy them into the
+         0x28-byte frame and send it to everyone (0x4F02), to this
+         client's counterpart (0x2F02), or to the slot a2 names (0x1F02).
+
+// ORIGINAL: 0x0047B260 ?send_session_packet@@YAXHH@Z 0x0047B260-0x0047B2DE FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/netwin.h declares this API; NetWinSessionOptions, NetDaemonNet.host_player_id() and NetDaemonNet are owned/referenced in netwin.cpp.", "The first argument remains unused as in the current body; negative, zero and positive targets keep their distinct packet opcodes and destinations."], "reason": "Move the complete existing 24-byte session packet sender into netwin.cpp without changing payload, unused parameter, target comparison or header selection."}
+// size      126 bytes
+// prototype
+// callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00630080
+Return Value: n/a
+Status: Coverage transcription - claim pending re-measurement
+*/
+void __cdecl send_session_packet(int slot_id, int target) {
+    NetWinSessionOptionsPacket packet;
+    packet.options_ = NetWinSessionOptions.fields_;
+    if (target < 0) {
+        packet.opcode_ = 0x4F02;
+        NetDaemonNet.Net::send(&packet, sizeof(packet), 0, 1);
+        return;
+    }
+    uint32_t who;
+    if (target != 0) {
+        who = NetDaemonNet.process_slots_[target].pid_;
+        packet.opcode_ = 0x1F02;
+    } else {
+        who = NetDaemonNet.host_player_id_;
+        packet.opcode_ = 0x2F02;
+    }
+    NetDaemonNet.Net::send(&packet, sizeof(packet), who, 1);
+}
+
+/*
+Purpose: Broadcast the session state blob: copy the 0x168-byte payload,
+         then send it addressed to everyone (0x4F03), to this client's
+         counterpart (0x2F03), or to the slot a2 names (0x1F03).
+
+// ORIGINAL: 0x0047B2E0 ?send_session2_packet@@YAXHH@Z 0x0047B2E0-0x0047B379 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/netwin.h owns the 0x168-byte NetWinSessionData block and declares this sender; the NetDaemonNet owns AlphaNet process slots.", "The first argument remains unused, and packet bytes/header fields and the target==0 comparison are retained."], "reason": "Move the complete second-session sender into netwin.cpp, preserving its 0x178-byte frame, copy, opcode branches and unused first argument."}
+// size      153 bytes
+// prototype
+// callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00630080
+Return Value: n/a
+Status: Coverage transcription - unclaimed body
+*/
+void __cdecl send_session2_packet(int slot_id, int target) {
+    NetWinSessionBlockPacket packet;
+    packet.session_ = NetWinSessionData.fields_;
+    if (target < 0) {
+        packet.opcode_ = 0x4F03;
+        NetDaemonNet.Net::send(&packet, sizeof(packet), 0, 1);
+        return;
+    }
+    uint32_t who;
+    if (target != 0) {
+        packet.opcode_ = 0x1F03;
+        who = NetDaemonNet.process_slots_[target].pid_;
+    } else {
+        packet.opcode_ = 0x2F03;
+        who = NetDaemonNet.host_player_id_;
+    }
+    NetDaemonNet.Net::send(&packet, sizeof(packet), who, 1);
 }
 
 /*
@@ -458,6 +455,1353 @@ int NetWin::get_player_color(int faction) {
 }
 
 /*
+Purpose: Answer the multiplayer setup dialog's button click. Id -2 hangs up
+         the session (store -1 into the dialog's +0x7614 slot) and every id
+         but 10 returns; id 10 - the join/start button - validates the lobby
+         before broadcasting: the local slot's ready byte is set and every
+         peer row probed for a free slot (any free slot, or the
+         NOTALLREADY prompt refuses), a running session re-scans its
+         faction-record run against the occupied slot rows so a duplicated
+         faction raises the PASSWORDSNOTVALIDATED prompt and a 0x2f0e
+         leave packet instead, and only then does the click re-mark the
+         lobby rows and send either the 0x4f04 full-state packet (0xa74
+         bytes including its header) or the single-slot 0x2f04 packet
+         (0x18c bytes, when the local slot is at least one).
+
+The original writes only the opcode and each path's selected header/payload
+fields. Reserved header bytes and the leave-packet tail remain uninitialized;
+do not replace those unspecified bytes with a deterministic zero fill.
+*/
+// ORIGINAL: 0x0047B450 ?on_button_clicked@NetWin@@QAEXH@Z 0x0047B450-0x0047B746 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["The original NetWin constructor installs primary vtable 0x0066CCEC; inherited Win slot 44 at 0x0066CD9C targets 0x0047B450.", "NetDaemon::on_player_deleted directly calls 0x0047B450 with NetWinDialog as receiver and -2 as argument; retired seed git:7eb4d2e7:src/unrecovered/0047b450.cpp records the historical body.", "Pinned47B5FD..47B639/47B664..47B675/47B701..47B738: full and single packets write opcode word, slot and +8 zero then copied rows; leave writes only opcode word. +2..3/+C..F and leave tail are untouched."], "reason": "NetWin owns the lobby button handler as its inherited Win callback and shares the typed lobby rows and session storage with its network senders."}
+// symbol    ?on_button_clicked@NetWin@@UAEXH@Z
+// TRIED: no SEH frame here (plain `sub esp,0xd9c`, no fs:[0] chain), so this is a direct disassembly transcription rather than a lever candidate. Used one flat byte buffer plus raw `base - N` stores/memcpy matching each `ebp - N` write and each record's 0x17c-byte stride, rather than named locals, since the frame mixes several differently-shaped record buffers with no natural C struct boundary between them.
+// size      758 bytes
+// prototype void (__thiscall ?on_button_clicked@NetWin@@QAEXH@Z)(NetWin* this, int)
+// callers   1   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004E25E0 0x005BF330 0x00630080 0x00645930
+// Return Value: n/a
+// Status: Recovered lobby click handling; original seed retired.
+void NetWin::on_button_clicked(int clicked_id) {
+    NetWinLobbyRow row;
+    row.reset();
+    if (clicked_id == -2) {
+        field_7614_ = -1;
+        return;
+    }
+    if (clicked_id != 10) {
+        return;
+    }
+
+    const int local_slot = NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id());
+    if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
+        NetWinLobbyRows.rows_[local_slot].ready_or_occupied_ = 1;
+        int slot;
+        for (slot = 1; slot < NetDaemonNet.player_count_ + 1; ++slot) {
+            if (NetWinLobbyRows.rows_[slot].ready_or_occupied_ == 0) {
+                break;
+            }
+        }
+        NetWinLobbyRows.rows_[local_slot].ready_or_occupied_ = 0;
+
+        if (slot != NetDaemonNet.player_count_ + 1 &&
+            X_pop(ScriptPopupFile, "NOTALLREADY",
+                                0) != 0) {
+            return;
+        }
+
+        const int transport = NetWinSessionData.fields_.mode_;
+        if (transport == 2 || transport == 3) {
+            for (int faction = 1; faction < 8; ++faction) {
+                if (faction_records_->records_[faction].owner_ != 0) {
+                    int scan;
+                    for (scan = 1; scan < NetDaemonNet.player_count_ + 1; ++scan) {
+                        if (NetWinLobbyRows.rows_[scan].faction_or_color_ ==
+                            faction) {
+                            break;
+                        }
+                    }
+                    if (scan == NetDaemonNet.player_count_ + 1 ||
+                        faction_records_->records_[faction].owner_ !=
+                            NetWinLobbyRows.rows_[scan].owner_) {
+                        X_pop(ScriptPopupFile,
+                                            "PASSWORDSNOTVALIDATED", 0);
+                        NetWinLobbyLeavePacket packet;
+                        packet.header_.set_opcode(0x2F0E);
+                        NetDaemonNet.Net::send(&packet, sizeof(packet),
+                                               NetDaemonNet.host_player_id_, 1);
+                        return;
+                    }
+                }
+            }
+        }
+
+        const int ready_count = NetDaemonNet.player_count_ + 1;
+        for (int ready_slot = 1; ready_slot < ready_count; ++ready_slot) {
+            NetWinLobbyRows.rows_[ready_slot].ready_or_occupied_ = 1;
+        }
+        // 47B5B6..47B639: send_all_player_packets(-1)'s body.
+        NetWinLobbyFullPacket packet;
+        NetWinLobbyRow *row_out = packet.rows_;
+        for (int count = 7; count != 0; --count) {
+            row_out->reset();
+            ++row_out;
+        }
+        if (NetDaemonNet.primary_state_.leading_words_[0] == 0) {
+            return;
+        }
+        packet.header_.set_opcode(0x0F04);
+        packet.header_.slot_ = -1;
+        packet.header_.field_8_ = 0;
+        memcpy(packet.rows_, &NetWinLobbyRows.rows_[1], sizeof(packet.rows_));
+        packet.header_.opcode_ |= 0x4000;
+        NetDaemonNet.Net::send(&packet, sizeof(packet), 0, 1);
+    } else {
+        memcpy(&row, &NetWinLobbyRows.rows_[local_slot], sizeof(row));
+        row.ready_or_occupied_ = row.ready_or_occupied_ == 0;
+        // 47B6AF: sub_47b1d0 inlined, its row reset and null test included.
+        sub_47b1d0(local_slot, &row);
+    }
+}
+
+
+
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns 1.
+// ORIGINAL: 0x0047B750 ?on_key_click@NetWin@@QAEHHH@Z 0x0047B750-0x0047B758 BYTE_EXACT
+// symbol    ?on_key_click@NetWin@@UAEHHH@Z
+// size      8 bytes
+// prototype int (__thiscall ?on_key_click@NetWin@@QAEHHH@Z)(NetWin* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: 1, always
+Status: Complete
+*/
+int NetWin::on_key_click(int, int) {
+    return 1;
+}
+
+// Rule clicks load the destination before copying (47B9B5). The number and
+// planet pickers use pick_send_state; their image's edx-vs-eax choice for
+// the destination load remains an open register tie.
+static void pick_send_state_with_captured_target() {
+    NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id());
+    const int target = NetDaemonNet.host_player_id_;
+    NetWinSessionOptionsPacket packet;
+    packet.options_ = NetWinSessionOptions.fields_;
+    packet.opcode_ = 0x2F02;
+    NetDaemonNet.send(&packet, sizeof(packet), target, 1);
+}
+
+/*
+Purpose: Dispatch a lobby spot click to the map/options/faction/player action
+         represented by that spot. Rule toggles update the typed session state
+         and send the opcode/options-only 0x2F02 state packet. The original
+         leaves the intervening header bytes uninitialized.
+// ORIGINAL: 0x0047B760 ?on_left_click@NetWin@@QAEXHH@Z 0x0047B760-0x0047BAF6 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned47B9C7/47B9D7/47B9DD: copy six option dwords to packet+10, write opcode word2F02, send28. Shared pick_send_state preserves these writes; header+2..F remains unspecified."], "reason": "Recover the original options packet through genuine NetWin state and typed packet storage."}
+// symbol    ?on_left_click@NetWin@@UAEXHH@Z
+*/
+void NetWin::on_left_click(int x, int y) {
+    int spot_position;
+    int spot_type;
+    spot_.check(x, y, &spot_position, &spot_type);
+
+    switch (spot_type) {
+    case 0:
+        switch (spot_position) {
+        case 3:
+            if (NetDaemonNet.primary_state_.leading_words_[0] != 0) pick_time();
+            return;
+        case 0:
+            if (NetDaemonNet.primary_state_.leading_words_[0] != 0) pick_map();
+            return;
+        case 1:
+            if (NetDaemonNet.primary_state_.leading_words_[0] != 0) pick_num_players();
+            return;
+        case 2:
+            if (NetDaemonNet.primary_state_.leading_words_[0] != 0) pick_global_diff();
+            return;
+        case 4:
+            if (NetDaemonNet.primary_state_.leading_words_[0] != 0) pick_planet_size();
+            return;
+        case 5:
+            if (NetDaemonNet.primary_state_.leading_words_[0] != 0) pick_ocean();
+            return;
+        case 6:
+            if (NetDaemonNet.primary_state_.leading_words_[0] != 0) pick_erosion();
+            return;
+        case 7:
+            if (NetDaemonNet.primary_state_.leading_words_[0] != 0) pick_native();
+            return;
+        case 8:
+            if (NetDaemonNet.primary_state_.leading_words_[0] != 0) pick_clouds();
+            return;
+        }
+        return;
+    case 1:
+        if (NetDaemonNet.primary_state_.leading_words_[0] == 0) {
+            return;
+        }
+        switch (spot_position) {
+        case 100: NetWinSessionOptions.fields_.rule_bits_c_ ^= 0x10; break;
+        case 0: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x800; break;
+        case 1: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x2; break;
+        case 2: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x8; break;
+        case 3: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x4; break;
+        case 4: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x1000; break;
+        case 5: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x1; break;
+        case 6: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x10; break;
+        case 7: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x20; break;
+        case 8: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x4000; break;
+        case 9: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x200; break;
+        case 10: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x40; break;
+        case 11: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x100; break;
+        case 12: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x2000; break;
+        case 13: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x8000; break;
+        case 14: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x80; break;
+        case 16: NetWinSessionOptions.fields_.rule_bits_b_ ^= 0x800000; break;
+        case 17: NetWinSessionOptions.fields_.rule_bits_b_ ^= 0x1000000; break;
+        }
+        // Unknown selectors still send the unchanged options.
+        pick_send_state_with_captured_target();
+        return;
+    case 5:
+        if ((NetWinSessionData.fields_.mode_ == 0 || NetWinSessionData.fields_.mode_ == 1) &&
+            NetDaemonNet.process_slots_[spot_position + 1].pid_ ==
+                static_cast<unsigned long>(NetDaemonNet.local_player_id_)) {
+            pick_pass(0);
+        }
+        return;
+    case 2:
+        if (NetDaemonNet.process_slots_[spot_position + 1].pid_ ==
+            static_cast<unsigned long>(NetDaemonNet.local_player_id_)) {
+            pick_player();
+        }
+        return;
+    case 3:
+        if (NetDaemonNet.process_slots_[spot_position + 1].pid_ ==
+                static_cast<unsigned long>(NetDaemonNet.local_player_id_) ||
+            (NetWinLobbyRows.rows_[spot_position + 1].prefix_ == -1 &&
+             NetDaemonNet.local_player_id_ == NetDaemonNet.host_player_id_)) {
+            pick_faction(spot_position + 1);
+        }
+        return;
+    case 4:
+        if (NetDaemonNet.process_slots_[spot_position + 1].pid_ ==
+                static_cast<unsigned long>(NetDaemonNet.local_player_id_) ||
+            (NetWinLobbyRows.rows_[spot_position + 1].prefix_ == -1 &&
+             NetDaemonNet.local_player_id_ == NetDaemonNet.host_player_id_)) {
+            pick_diff(spot_position + 1);
+        }
+        return;
+    }
+}
+
+// ORIGINAL: 0x0047BBF0 ?pick_player@NetWin@@QAEXXZ 0x0047BBF0-0x0047C527;0x00656740-0x006568F9
+// RECOVERY_BINDING: v1 {"evidence": ["git:f929e9e6:src/unrecovered/0047bbf0.cpp", "pinned:0x0047BBF0-0x0047C527 reads Popup/BasePop +0x3100 input-poll state, copies the 0x17c row, selects the source row's faction byte, copies Player fields or ParseStrBuffer strings, and reaches packet construction only when signed slot >= 1", "source:src/netwin.h:NetWinLobbyRow and NetWinSessionData", "source:src/faction.h:Players and Player fields", "source:src/general.h:ParseStrBuffer", "source:src/basepop.h:Popup::input_poll_state and dialogs"], "reason": "Retain the substantive typed lobby-name editor and its complete original primary/exceptional mapping; retire the unannotated generated duplicate, not its unresolved radio/default-faction and seventh gender-field behavior. The seed's synthetic stack frame and manual widget teardown are hypotheses, not additional source owners or proof of native lifetime fidelity. Complete the native custom-name modal through the existing Popup, EditGroup, lobby-row, Player, ParseStrBuffer and typed single-row packet owners. Preserve the signed faction selector, unbounded strcpy operations, one-character case-insensitive gender test, accepted/cancel paths, and native signed slot >= 1 packet condition; retain the full original primary and exceptional spans."}
+// TRIED: historical scaffold git:f929e9e6:src/unrecovered/0047bbf0.cpp mixes an approximate
+// stack-frame reconstruction with untyped widget cleanup and custom/default
+// radio selection. This source recovers the typed six-field edit and outgoing
+// lobby update; its radio/default-faction branch still needs restoration.
+// RECOVERY_NOTE: The pinned modal branch, default/player copies, seventh gender
+// field, and signed-positive packet condition are now represented below using
+// the existing Popup, Player, ParseStrBuffer, and lobby packet owners.
+void NetWin::pick_player() {
+    // Native 47BC1B constructs the owner even on the saved-mode early exit.
+    Popup popup;
+    // Native 47BC2D..47BC4A resets the copy row after the popup exists.
+    NetWinLobbyRow updated;
+    updated.reset();
+    if (NetWinSessionData.fields_.mode_ == 3 || NetWinSessionData.fields_.mode_ == 2) {
+        return;
+    }
+    const int slot = NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id());
+
+    // Native scratch starts at EBP-41C, after the 537C-byte Popup, and
+    // precedes the first packet at EBP-31C. Recover that 100h accessed
+    // window, not an original array/padding declaration or overflow layout.
+    char gender_text[0x100];
+    strcpy(gender_text,
+           StringTable.get(NetWinLobbyRows.rows_[slot].tail_[0] != 0
+                               ? Labels.strings_ptr[0xB8C / 4]
+                               : Labels.strings_ptr[0xB88 / 4]));
+    popup.start(PopupStartCaption, "CUSTOMNAMES", -1, 0, 0x200044, 0);
+    {
+        char *label = label_get(0x2B8 / 4);
+        popup.dialogs().edit(label, NetWinLobbyRows.rows_[slot].leader_name_, 0x17);
+    }
+    {
+        char *label = label_get(0x2BC / 4);
+        popup.dialogs().edit(label, NetWinLobbyRows.rows_[slot].formal_faction_name_, 0x27);
+    }
+    {
+        char *label = label_get(0x2C0 / 4);
+        popup.dialogs().edit(label, NetWinLobbyRows.rows_[slot].noun_faction_, 0x17);
+    }
+    {
+        char *label = label_get(0x2C4 / 4);
+        popup.dialogs().edit(label, NetWinLobbyRows.rows_[slot].adjective_faction_, 0x17);
+    }
+    {
+        char *label = label_get(0x78C / 4);
+        popup.dialogs().edit(label, NetWinLobbyRows.rows_[slot].leader_title_, 0x17);
+    }
+    {
+        char *label = label_get(0x790 / 4);
+        popup.dialogs().edit(label, NetWinLobbyRows.rows_[slot].adjective_leader_, 0x17);
+    }
+    {
+        char *label = label_get(0x794 / 4);
+        popup.dialogs().edit(label, gender_text, 0x17);
+    }
+    popup.set_loc(0x1000, 0x1000);
+    if (popup.exec(0, NetWin::modal_callback_daemon) < 0) {
+        return;
+    }
+
+    memcpy(&updated, &NetWinLobbyRows.rows_[slot], 0x17C);
+    if (popup.input_poll_state() == 1) {
+        const int faction = updated.faction_or_color_;
+        if (faction != -1) {
+            const Player &player = Players[faction];
+            strcpy(updated.leader_name_, player.name_leader);
+            strcpy(updated.formal_faction_name_, player.formal_name_faction);
+            strcpy(updated.noun_faction_, player.noun_faction);
+            strcpy(updated.adjective_faction_, player.adj_name_faction);
+            strcpy(updated.leader_title_, player.title_leader);
+            strcpy(updated.adjective_leader_, player.adj_leader);
+            updated.tail_[0] =
+                static_cast<uint8_t>(player.is_leader_female);
+        } else {
+            // Native 47C073..47C13E interleaves six fresh lookups/copies.
+            strcpy(updated.leader_name_, StringTable.get(Labels.strings_ptr[0xFE4 / 4]));
+            strcpy(updated.formal_faction_name_, StringTable.get(Labels.strings_ptr[0xFE4 / 4]));
+            strcpy(updated.noun_faction_, StringTable.get(Labels.strings_ptr[0xFE4 / 4]));
+            strcpy(updated.adjective_faction_, StringTable.get(Labels.strings_ptr[0xFE4 / 4]));
+            strcpy(updated.leader_title_, StringTable.get(Labels.strings_ptr[0xFE4 / 4]));
+            strcpy(updated.adjective_leader_, StringTable.get(Labels.strings_ptr[0xFE4 / 4]));
+            updated.tail_[0] = 10; // Native 47C146, not a boolean default.
+        }
+    } else {
+        strcpy(updated.leader_name_, ParseStrBuffer[0].str);
+        strcpy(updated.formal_faction_name_, ParseStrBuffer[1].str);
+        strcpy(updated.noun_faction_, ParseStrBuffer[2].str);
+        strcpy(updated.adjective_faction_, ParseStrBuffer[3].str);
+        strcpy(updated.leader_title_, ParseStrBuffer[4].str);
+        strcpy(updated.adjective_leader_, ParseStrBuffer[5].str);
+        updated.tail_[0] = static_cast<uint8_t>(
+            _strnicmp(gender_text, StringTable.get(Labels.strings_ptr[0xB8C / 4]), 1) == 0);
+    }
+
+    // Native 47C1E8..47C268: sub_47b1d0 inline.
+    sub_47b1d0(slot, &updated);
+}
+
+// The option pick itself: mouse position to screen coordinates, then the
+// popup run modally with the daemon callback; the answer is the chosen item
+// index, negative when the pick was dismissed.
+// Scalar pickers keep x/y in their own frame: the image never reuses those
+// slots for the teardown temporaries.
+static int pick_answer_at(NetWin &self, PopMenu &pop_menu, int *x, int *y) {
+    self.get_mouse_pos(x, y);
+    self.client_to_screen(x, y);
+    return pop_menu.exec(*x, *y, NetWin::modal_callback_daemon);
+}
+
+// ORIGINAL: 0x0047C530 ?pick_faction@NetWin@@QAEXH@Z 0x0047C530-0x0047C965;0x006568F9-0x006569C4 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/recovered/units/0047c530.cpp:NetWin::pick_faction", "src/netwin.h:NetWinFactionRecord and NetWinLobbyRow", "src/netwin.cpp:NetWin::pick_pass and NetWinLobbySinglePacket", "Pinned47C819 clears EAX;47C854 stores it to [EBP-1A4], packet+8 relative to sent [EBP-1AC] at47C88A/47C89D. Opcode word/slot/row+10 are written; +2..3/+C..F remain untouched."], "reason": "Recover faction selection through the typed faction records, lobby rows, popup dialog and single-row packet."}
+void NetWin::pick_faction(int slot) {
+    PopMenu pop_menu;
+    // Native 47C5AA..47C5CC resets the copy row before init.
+    NetWinLobbyRow updated;
+    updated.reset();
+    pop_menu.init();
+
+    char *label = StringTable.get(Labels.strings_ptr[0xFE4 / 4]);
+    pop_menu.dialogs().item(label, 0);
+
+    const int count = faction_records_->record_count_;
+    for (int faction = 0; faction < count; ++faction) {
+        // Native 47C618 reloads the allocation, but not the captured count.
+        if (faction_records_->records_[faction].active_ == 0) {
+            continue;
+        }
+        if (NetWinSessionData.fields_.mode_ == 3 || NetWinSessionData.fields_.mode_ == 2) {
+            // Native 47C656 compares zero with a negative scan bound too.
+            int player;
+            for (player = 0; player < NetDaemonNet.player_count_; ++player) {
+                if (NetWinLobbyRows.rows_[player + 1].faction_or_color_ == faction) {
+                    break;
+                }
+            }
+            if (player != NetDaemonNet.player_count_) {
+                continue;
+            }
+        }
+        char *noun = faction_records_->records_[faction].noun_faction_;
+        pop_menu.dialogs().item(noun, faction + 1);
+    }
+
+    int x;
+    int y;
+    const int answer = pick_answer_at(*this, pop_menu, &x, &y);
+    if (answer < 0) {
+        return;
+    }
+
+    int chosen_faction;
+    if (answer < 64) {
+        chosen_faction = pop_menu.item_id(answer);
+    } else {
+        chosen_faction = -1;
+    }
+    --chosen_faction;
+    const int previous = NetWinLobbyRows.rows_[slot].faction_or_color_;
+    NetWinLobbyRows.rows_[slot].faction_or_color_ =
+        static_cast<int8_t>(chosen_faction);
+    if (pick_pass(1) == 0) {
+        NetWinLobbyRows.rows_[slot].faction_or_color_ =
+            static_cast<int8_t>(previous);
+        return;
+    }
+    NetWinLobbyRows.rows_[slot].faction_or_color_ =
+        static_cast<int8_t>(previous);
+
+    // Native 47C811 copies the restored row, then runs sub_47b1d0 inline.
+    memcpy(&updated, &NetWinLobbyRows.rows_[slot], 0x17C);
+    updated.faction_or_color_ = static_cast<int8_t>(chosen_faction);
+    sub_47b1d0(slot, &updated);
+}
+
+/*
+Purpose: Retain the historical original identity while binding its current
+         owner to CheckBox's compiler-emitted complete-object destructor.
+         This is generated from NetWin's real CheckBox member lifetime; it is
+         not a handwritten NetWin method or a manually staged teardown.
+// ORIGINAL: 0x004837F0 ?UNK4@NetWin@@QAEXXZ 0x004837F0-0x00483813 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/004837f0.cpp (historical NetWin catalogue interpretation and preserved seed claim)", "Consumer-emitted ??_DCheckBox@@QAEXXZ calls the CheckBox, Dialog and GraphicWin destructors at receiver+0x1C/+0xA34/+0x1C; pinned original 0x004837F9/0x00483804/0x0048380B target 0x0060E740/0x00608E10/0x005D4DD0 respectively. These are CheckBox-relative receiver adjustments, not NetWin-relative.", "src/netwin.h: NetWin owns the actual CheckBox checkBox_ member at +0x4454; ordinary member destruction emits the CheckBox complete-object helper in this consuming translation unit. No NetWin::UNK4 source callers exist."], "reason": "Keep the original NetWin catalogue identity and seed provenance as historical facts, but bind its current source identity to the genuine compiler-generated CheckBox complete-object destructor emitted for NetWin's real member. Do not hand-author cleanup or attribute the CheckBox-relative receivers to NetWin."}
+// symbol    ??_DCheckBox@@QAEXXZ
+// size      35 bytes
+// prototype void (__thiscall ?UNK4@NetWin@@QAEXXZ)(NetWin* this) [historical catalogue interpretation; not the current owner]
+// callers   2   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4DD0 0x00608E10 0x0060E740
+// Homed from src/recovered/004837f0.cpp.
+Return Value: n/a
+Status: Compiler-generated CheckBox complete-object destructor, emitted from
+        NetWin's CheckBox member lifetime in this consuming translation unit.
+*/
+// Native 0x0047C970 password flow. Popup and its owned members use ordinary
+// automatic lifetime; the native explicit close calls in the archived seed
+// are not duplicated over the recovered destructor chain.
+// ORIGINAL: 0x0047C970 ?pick_pass@NetWin@@QAEHH@Z 0x0047C970-0x0047CF32;0x006569C4-0x00656AED
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0047c970.cpp", "recovery/tasks/netwin-owner-coverage.json", "Pinned47CEB9/47CED2/47CEDB..47CF03: slot dword, opcode word, explicit +8 zero, row at +10 of size17C; send18C. The opcode does not write +2..3 and +C..F is untouched."], "reason": "Recover full password dialog using genuine Popup lifecycle, input override text and shared parse output, faction validation and native sixteen-byte-header/full-row wire layout. No exactness or game acceptance claim."}
+// TRIED: MISMATCH #10 'push' vs 'mov' (framed build). SEH-frame password dialog: local `Popup popup;` is a real automatic object (BasePop fully laid out in the scaffold: embedded FlatButton x2 and Sprite, plus Popup's own `Scroll scroll_` which itself embeds two more FlatButtons at offsets 0xAAC/0x15F8 - matches the trailer thunks in the disassembly exactly), so ctor/dtor calls are emitted by the language rather than hand-modelled. Explicit popup.close()/ popup.scroll_.close() only where the disassembly names them, not at every scope exit. Did not attempt to reproduce the compiler's own SEH funclet layout - accepted as an "omitted as unreachable" divergence per the precedent in dialog.cpp/graphicwin.cpp.
+// WORKAROUND(inline): pick_pass's image tears its Popup down out of line at
+// the X_pop_ask cancel (0x0047CD05/0x0047CD17), the accepted-check return
+// and the closing brace (0x00406C00), but in full at the BADPASSWORD return
+// (EH predecessors 5,5,5,2,5,2); written out, every site expands fully. Dead
+// branchy spend placed after the BADPASSWORD return reproduces that unwind
+// topology; the original's natural spend there is not identified. Two
+// five-test probes also leave the image's inline NetWinLobbyRow::reset in
+// the sub_47b1d0 expansion (eight-test probes call it out of line).
+static inline void pick_pass_budget_probe(int x) {
+    if (x == 1) x = 2;
+    if (x == 2) x = 3;
+    if (x == 3) x = 4;
+    if (x == 4) x = 5;
+    if (x == 5) x = 6;
+}
+int NetWin::pick_pass(int payload) {
+    // Native 47C9A2..47C9C2 resets the copy row before the popup exists.
+    NetWinLobbyRow updated;
+    updated.reset();
+    Popup popup;
+    const int slot = NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id());
+    int faction_mode;
+    if (NetWinSessionData.fields_.mode_ == 2 ||
+        NetWinSessionData.fields_.mode_ == 3) {
+        faction_mode = 1;
+    } else {
+        faction_mode = 0;
+        if (payload != 0) {
+            return 1;
+        }
+    }
+
+    const int faction = NetWinLobbyRows.rows_[slot].faction_or_color_;
+    if (faction == -1) {
+        NetWinLobbyRows.rows_[slot].owner_ = 0;
+        return 1;
+    }
+
+    if (faction_mode) {
+        const uint32_t expected_hash = faction_records_->records_[faction].owner_;
+        // Native 47CB5A..47CB64 bypasses the row read for a zero hash.
+        if (expected_hash == 0 ||
+            expected_hash == NetWinLobbyRows.rows_[slot].owner_) {
+            if (payload == 0) {
+                X_pop(ScriptPopupFile, "PASSWORDOK", nullptr);
+            }
+            return 1;
+        }
+    }
+
+    uint32_t entered_hash;
+    for (;;) {
+        entered_hash = 0;
+        uint32_t verify_hash = 0;
+        const char *prompt;
+        if (faction_mode) {
+            parse_says(0, faction_records_->records_[faction].noun_faction_, -1, -1);
+            prompt = "ENTERPASSWORDFACTION";
+        } else {
+            prompt = "ENTERPASSWORDNEW";
+        }
+
+        if (X_pop_ask(prompt, 0x50, &NetWinPasswordPromptInitialText,
+                      nullptr, 0x800040) == -1) {
+            return 0;
+        }
+        if (ParseStrBuffer[0].str[0] != 0) {
+            entered_hash = checksum_password(ParseStrBuffer[0].str);
+            if (faction_mode) {
+                goto check;
+            }
+            X_pop_ask("VERIFYPASSWORD", 0x50,
+                      &NetWinPasswordVerifyInitialText, nullptr, 0x800000);
+            if (ParseStrBuffer[0].str[0] != 0) {
+                verify_hash = checksum_password(ParseStrBuffer[0].str);
+            }
+            if (entered_hash == verify_hash) {
+                break;
+            }
+            X_pop("DIFFERENTPASSWORDS", nullptr);
+            continue;
+        }
+        if (faction_mode) {
+        check:
+            // Native 47CD43..47CD4C checks the live post-modal allocation.
+            if (faction_records_->records_[faction].owner_ != entered_hash) {
+                X_pop("BADPASSWORD", nullptr);
+                return 0;
+            }
+            pick_pass_budget_probe(0);  // WORKAROUND(inline): see the helper
+            pick_pass_budget_probe(0);  // WORKAROUND(inline): see the helper
+            NetWinLobbyRows.rows_[slot].owner_ = entered_hash;
+            return 1;
+        }
+        break;
+    }
+    NetWinLobbyRows.rows_[slot].owner_ = entered_hash;
+    memcpy(&updated, &NetWinLobbyRows.rows_[slot], 0x17C);
+    sub_47b1d0(slot, &updated);
+    return 1;
+}
+
+// ORIGINAL: 0x0047CF40 ?pick_diff@NetWin@@QAEXH@Z 0x0047CF40-0x0047D2F4;0x00656AED-0x00656BC5 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/recovered/units/0047cf40.cpp:NetWin::pick_diff", "src/netwin.cpp:pick_global_diff and sibling pickers", "src/netwin.cpp:NetWinLobbySinglePacket and NetWin::on_button_clicked", "Pinned47D0C7/47D0D0/47D0D6: opcode word, slot dword and +8 zero; copied row+10 and send18C. +2..3/+C..F are untouched."], "reason": "Recover the per-slot difficulty picker using the established popup objects, difficulty text table, typed lobby row and typed single-row packet."}
+void NetWin::pick_diff(int slot) {
+    PopMenu pop_menu;
+    NetWinLobbyRow row;
+    row.owner_ = 0;
+    row.prefix_ = -1;
+    row.ready_or_occupied_ = 0;
+    row.field_2_ = 0;
+    row.faction_or_color_ = -1;
+    row.field_4_ = 2;
+    pop_menu.init();
+
+    for (int index = 0; index < 6; ++index) {
+        char *label = StringTable.get(Difficulty[index]);
+        pop_menu.dialogs().item(label, index);
+    }
+
+    int x;
+    int y;
+    get_mouse_pos(&x, &y);
+    client_to_screen(&x, &y);
+    const int answer = pop_menu.exec(x, y, NetWin::modal_callback_daemon);
+    memcpy(&row, &NetWinLobbyRows.rows_[slot], sizeof(row));
+    if (answer >= 0) {
+        row.field_2_ = static_cast<uint8_t>(answer);
+    }
+    // 47D081: sub_47b1d0 inlined, its row reset and null test included.
+    sub_47b1d0(slot, &row);
+}
+
+// ORIGINAL: 0x0047D300 ?pick_map@NetWin@@QAEXXZ 0x0047D300-0x0047E003;0x00656BC5-0x00656D9D
+// RECOVERY_BINDING: v1 {"evidence": ["git:f929e9e6:src/unrecovered/0047d300.cpp", "source:src/netwin.h", "source:recovery/tests/test_netwin_pick_map_behavior.py", "Pinned47DC27..47DC79: full packet opcode word/slot=-1/+8 zero and A64 row bytes;47DC99..47DCC5: session168 bytes at+10 and opcode word only;47DCDC..47DCEF: leave opcode word only. Unwritten packet bytes remain unspecified."], "reason": "Retain the typed map/game picker with its complete original primary/exceptional mapping. The retired unannotated scaffold omitted the host session population, used an unconstructed scratch Dialogs receiver, and approximated the local widget aggregate. Its useful lifetime observation is that nested Popup/Scroll/FlatButton cleanup belongs to genuine member destruction, not independent manually staged objects; complete native cleanup fidelity remains an obligation."}
+// Historical observation from an earlier source state:
+// TRIED: the popup and load-map/game dispatch are transcribed; the scenario
+// host guard now uses LockEnableMask's live-faction byte. Choice zero still
+// lacks the original session-record population and is explicitly unfinished.
+
+// Current source evidence: this body populates and sends NetWinSessionData in
+// session_packet below (original 0x0047DC99 onward), and represents the original
+// full-lobby packet's local row normalization at 0x0047DBF1..0x0047DC1E below.
+void NetWin::pick_map() {
+    PopMenu menu;
+    Buffer faction_art;
+    const uint32_t initial_mode = field_7728_;
+    // Native 47D38F: set only after a saved game loads (47D796); gates the
+    // closing 0x2F0E packet.
+    int loaded_game = 0;
+    menu.init();
+    char *label = StringTable.get(Labels.strings_ptr[0x107C / 4]);
+    menu.dialogs().item(label, 0);
+    label = StringTable.get(Labels.strings_ptr[0x0FD8 / 4]);
+    menu.dialogs().item(label, 1);
+    label = StringTable.get(Labels.strings_ptr[0x0FDC / 4]);
+    menu.dialogs().item(label, 2);
+    label = StringTable.get(Labels.strings_ptr[0x0FE0 / 4]);
+    menu.dialogs().item(label, 3);
+
+    // Native 47D463: a cancelled pick skips to the session broadcast.
+    int x;
+    int y;
+    const int choice = pick_answer_at(*this, menu, &x, &y);
+    if (choice >= 0) {
+        if (choice == 0) {
+            const NetWinFactionTable *const source_records =
+                faction_records_copy_;
+            const int record_count = source_records->record_count_;
+            const unsigned int record_bytes =
+                static_cast<unsigned int>(record_count) * 399u + 0x194u;
+            memcpy(faction_records_, faction_records_copy_, record_bytes);
+
+            field_7728_ = 0;
+            NetWinSessionOptions.fields_.difficulty_ =
+                static_cast<uint8_t>(DefaultPrefs.difficulty);
+            NetWinSessionOptions.fields_.rule_bits_a_ = AlphaIniPrefs.rules;
+            NetWinSessionData.fields_.scenario_text_wire_tail_[0] = 0;
+            NetWinSessionOptions.fields_.status_ = 0xFF;
+            send_session_packet(
+                NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id_), 0);
+        } else {
+            GameDataLoadRequest = 1;
+            if (choice == 1) {
+                if (load_map() != 0) {
+                    return;
+                }
+            } else {
+                if (load_game(choice == 2, 0) != 0) {
+                    return;
+                }
+                if (choice == 2) {
+                    const int scenario_factions = bit_count(
+                        static_cast<int>(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & 0xFFFE));
+                    if (scenario_factions < NetDaemonNet.player_count_) {
+                        parse_num(scenario_factions, 0);
+                        X_pop("TOOMANYFORSCENARIO", 0);
+                        return;
+                    }
+                }
+                loaded_game = 1;
+            }
+
+            GameDataLoadRequest = 0;
+            if (field_7728_ != 0) {
+                NetWinFactionTable *const records = faction_records_;
+                // Native 47D7AD..47D7D0 copies all eight owners, slot 0 too.
+                for (int faction = 0; faction < 8; ++faction) {
+                    records->records_[faction].owner_ = PlayersData[faction].unk_102;
+                }
+
+                NetWinSessionOptions.fields_.option_4_ = static_cast<uint8_t>(
+                    MapLongitudeBounds / 2);
+                NetWinSessionOptions.fields_.option_5_ =
+                    static_cast<uint8_t>(MapLatitudeBounds);
+                NetWinSessionData.fields_.scenario_text_wire_tail_[0] = 0;
+
+                char *scenario_name = strrchr(
+                    loaded_file_path_, '\\');
+                if (scenario_name == nullptr) {
+                    scenario_name = loaded_file_path_;
+                } else {
+                    ++scenario_name;
+                }
+                strcat(NetWinSessionData.fields_.scenario_text_wire_tail_, scenario_name);
+            }
+
+            if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0) {
+                NetWinSessionOptions.fields_.rule_bits_c_ |= 0x10u;
+            } else {
+                NetWinSessionOptions.fields_.rule_bits_c_ &= ~0x10u;
+            }
+            NetWinSessionOptions.fields_.difficulty_ =
+                static_cast<uint8_t>(GameDataStateStorage.fields_.diff_level_current_);
+            NetWinSessionOptions.fields_.status_ =
+                GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
+            NetWinSessionOptions.fields_.rule_bits_a_ = GameDataStateStorage.fields_.game_rules_;
+            send_session_packet(
+                NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id()), 0);
+        }
+
+        if (field_7728_ != 0 && field_7728_ != 1) {
+            NetWinFactionTable *const records = faction_records_;
+            records->record_count_ = 8;
+            records->record_type_ = static_cast<uint8_t>(
+                bit_count(static_cast<int>(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & 0xFFFE)));
+            records->records_[0].active_ = 0;
+
+            // Native 47D8FE: the lobby row cursor advances only for live
+            // factions, packing them into the leading rows.
+            NetWinLobbyRow *row = &NetWinLobbyRows.rows_[1];
+            for (int player_slot = 1; player_slot < 8; ++player_slot) {
+                if ((NetWinSessionOptions.fields_.status_ & (1 << player_slot)) == 0) {
+                    faction_records_->records_[player_slot].active_ = 0;
+                    continue;
+                }
+
+                faction_records_->records_[player_slot].owner_ = PlayersData[player_slot].unk_102;
+                faction_records_->records_[player_slot].active_ = 1;
+                strcpy(faction_records_->records_[player_slot].filename_, Players[player_slot].filename);
+                // Native 47D959/47D96A copies the leader name twice.
+                strcpy(faction_records_->records_[player_slot].leader_name_, Players[player_slot].name_leader);
+                strcpy(faction_records_->records_[player_slot].leader_name_, Players[player_slot].name_leader);
+                strcpy(faction_records_->records_[player_slot].formal_faction_name_, Players[player_slot].formal_name_faction);
+                strcpy(faction_records_->records_[player_slot].noun_faction_, Players[player_slot].noun_faction);
+                strcpy(faction_records_->records_[player_slot].adjective_faction_, Players[player_slot].adj_name_faction);
+                strcpy(faction_records_->records_[player_slot].leader_title_, Players[player_slot].title_leader);
+                strcpy(faction_records_->records_[player_slot].adjective_leader_,
+                       Players[player_slot].adj_leader);
+                faction_records_->records_[player_slot].leader_female_ =
+                    static_cast<uint8_t>(Players[player_slot].is_leader_female);
+
+                StringTemp[0] = 0;
+                strcat(StringTemp, faction_records_->records_[player_slot].filename_);
+                strcat(StringTemp, ".pcx");
+                if (faction_art.load_pcx(StringTemp, 0, 0x0A, 0xEC) != 0) {
+                    faction_art.load_pcx("faction.pcx", 0, 0x0A, 0xEC);
+                }
+                faction_records_->records_[player_slot].color_ =
+                    static_cast<uint8_t>(faction_art.get_pixel(4, 0x2F3));
+
+                row->owner_ = 0;
+                row->faction_or_color_ = -1;
+                strcpy(row->leader_name_, Players[player_slot].name_leader);
+                strcpy(row->formal_faction_name_, Players[player_slot].formal_name_faction);
+                strcpy(row->noun_faction_,
+                       label_get(0xFE4 / 4));
+                strcpy(row->adjective_faction_, Players[player_slot].adj_name_faction);
+                strcpy(row->leader_title_, Players[player_slot].title_leader);
+                strcpy(row->adjective_leader_, Players[player_slot].adj_leader);
+                row->tail_[0] = static_cast<uint8_t>(Players[player_slot].is_leader_female);
+                ++row;
+            }
+            send_faction_data(-1);
+        } else {
+            if (initial_mode != 0 && initial_mode != 1) {
+                const NetWinFactionTable *const source_records =
+                    faction_records_copy_;
+                const unsigned int record_bytes =
+                    static_cast<unsigned int>(source_records->record_count_) *
+                        399u +
+                    0x194u;
+                memcpy(faction_records_, faction_records_copy_, record_bytes);
+                send_faction_data(-1);
+            }
+
+            for (int player_slot = 1; player_slot < 8; ++player_slot) {
+                NetWinLobbyRow &row = NetWinLobbyRows.rows_[player_slot];
+                row.faction_or_color_ = -1;
+                strcpy(row.leader_name_,
+                       label_get(0xFE4 / 4));
+                strcpy(row.noun_faction_,
+                       label_get(0xFE4 / 4));
+            }
+        }
+
+        // Native 47DBF1: send_all_player_packets(-1) inline.
+        NetWinLobbyFullPacket assigned_packet;
+        for (int normalized_row = 0; normalized_row < 7; ++normalized_row) {
+            NetWinLobbyRow &row = assigned_packet.rows_[normalized_row];
+            row.owner_ = 0;
+            row.prefix_ = -1;
+            row.ready_or_occupied_ = 0;
+            row.field_2_ = 0;
+            row.faction_or_color_ = -1;
+            row.field_4_ = 2;
+        }
+        if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
+            assigned_packet.header_.set_opcode(0x0F04);
+            assigned_packet.header_.slot_ = -1;
+            assigned_packet.header_.field_8_ = 0;
+            memcpy(assigned_packet.rows_, &NetWinLobbyRows.rows_[1], 0xA64);
+            assigned_packet.header_.opcode_ |= 0x4000;
+            NetDaemonNet.Net::send(&assigned_packet, sizeof(assigned_packet), 0, 1);
+        }
+    }
+
+    NetWinSessionData.fields_.mode_ = static_cast<uint32_t>(field_7728_);
+    send_session2_packet(NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id()), 0);
+
+    NetWinLobbyLeavePacket leave_packet;
+    if (loaded_game != 0) {
+        leave_packet.header_.set_opcode(0x2F0E);
+        NetDaemonNet.Net::send(&leave_packet, sizeof(leave_packet),
+                               NetDaemonNet.host_player_id_, 1);
+    }
+}
+
+static void pick_send_state() {
+    send_session_packet(NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id()), 0);
+}
+#pragma inline_depth()
+
+/*
+Purpose: The player-count picker: entries numbered max(2, lobby count) to 7,
+         the entry itself the answer; the ninth slot's player byte stores
+         count - 1.
+// ORIGINAL: 0x0047E010 ?pick_num_players@NetWin@@QAEXXZ 0x0047E010-0x0047E33B;0x00656D9D-0x00656E75 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned47E15D/47E16A/47E170: copy six option dwords to packet+10, write opcode word2F02, send28. Shared pick_send_state preserves these writes; header+2..F remains unspecified."], "reason": "Recover the original options packet through genuine NetWin state and typed packet storage."}
+// size      1027 bytes
+// prototype void (__thiscall ?pick_num_players@NetWin@@QAEXXZ)(NetWin* this)
+// callers   1   call targets   26
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004048A0 0x00404900 0x004066C0 0x00406820 0x00406880 0x00406910 0x004E25E0 0x0059D250 0x0059D3A0 0x005D45B0 0x005D4DD0 0x005E3820 0x005EC8A0 0x005ED240 0x005F8800 0x005F88A0 0x005FA870 0x00600F00 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00612A70 0x006169A0 0x00630080 0x00645550 0x0064FC88
+// Homed from src/recovered/units/0047e010.cpp.
+Return Value: n/a
+Status: Coverage transcription - unclaimed body
+*/
+void NetWin::pick_num_players() {
+    PopMenu pop_menu;
+    pop_menu.init();
+    Dialogs &dialogs = pop_menu.dialogs();
+    char number[0x28];
+    int first = NetDaemonNet.player_count_;
+    if (first <= 2) {
+        first = 2;
+    }
+    for (int count = first; count < 8; ++count) {
+        StringTemp[0] = 0;
+        _itoa(count, number, 10);
+        strcat(StringTemp, number);
+        dialogs.item(StringTemp, count);
+    }
+    // WORKAROUND(type): native 47E0E0..47E0FE keeps x at EBP-10 and y at
+    // EBP-14; separate x/y locals land swapped next to the number buffer.
+    int xy[2];
+    int answer = pick_answer_at(*this, pop_menu, &xy[1], &xy[0]);
+    if (answer >= 0) {
+        // Native 47E11A..47E132 retains the pre-modal lower bound.
+        NetWinSessionOptions.fields_.player_count_ =
+            static_cast<unsigned char>(range(answer + first, 2, 7));
+    }
+    pick_send_state();
+}
+
+/*
+Purpose: The global-difficulty picker: a popup with the title and the six
+         difficulty names off alpha's table; the ninth slot's global byte
+         stores the answer.
+// ORIGINAL: 0x0047E340 ?pick_global_diff@NetWin@@QAEXXZ 0x0047E340-0x0047E640;0x00656E75-0x00656F4D FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned47E445/47E459/47E45F: copy six option dwords to packet+10, write opcode word2F02, send28. Shared pick_send_state preserves these writes; header+2..F remains unspecified."], "reason": "Recover the original options packet through genuine NetWin state and typed packet storage."}
+// size      984 bytes
+// prototype void (__thiscall ?pick_global_diff@NetWin@@QAEXXZ)(NetWin* this)
+// callers   1   call targets   26
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004048A0 0x00404900 0x004066C0 0x00406820 0x00406880 0x00406910 0x004E25E0 0x0059D250 0x0059D3A0 0x005D45B0 0x005D4DD0 0x005E3820 0x005EC8A0 0x005ED240 0x005F8800 0x005F88A0 0x005FA870 0x00600F00 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00612A70 0x006169A0 0x00630080 0x00645550
+// Homed from src/recovered/units/0047e340.cpp.
+Return Value: n/a
+Status: Coverage transcription - unclaimed body
+*/
+void NetWin::pick_global_diff() {
+    PopMenu pop_menu;
+    pop_menu.init();
+    Dialogs &dialogs = pop_menu.dialogs();
+    for (int index = 0; index < 6; ++index) {
+        char *label = StringTable.get(Difficulty[index]);
+        dialogs.item(label, index);
+    }
+    int x;
+    int y;
+    int answer = pick_answer_at(*this, pop_menu, &x, &y);
+    if (answer >= 0) {
+        NetWinSessionOptions.fields_.difficulty_ =
+            static_cast<unsigned char>(answer);
+    }
+    pick_send_state();
+}
+
+/*
+Purpose: The time-control picker: the popup is filled by the source-owned
+         time-control list builder, then the same
+         modal walk; the ninth slot's time byte stores the answer.
+// ORIGINAL: 0x0047E640 ?pick_time@NetWin@@QAEXXZ 0x0047E640-0x0047E924;0x00656F4D-0x00657025 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned47E72A/47E73E/47E744: copy six option dwords to packet+10, write opcode word2F02, send28. Shared pick_send_state preserves these writes; header+2..F remains unspecified."], "reason": "Recover the original options packet through genuine NetWin state and typed packet storage."}
+// size      956 bytes
+// prototype void (__thiscall ?pick_time@NetWin@@QAEXXZ)(NetWin* this)
+// callers   1   call targets   25
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004048A0 0x00404900 0x004066C0 0x00406820 0x00406880 0x00406910 0x004E25E0 0x00588330 0x0059D250 0x0059D3A0 0x005D45B0 0x005D4DD0 0x005E3820 0x005EC8A0 0x005ED240 0x005F8800 0x005F88A0 0x005FA870 0x00600F00 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00612A70 0x006169A0 0x00630080 0x00645550
+// Homed from src/recovered/units/0047e640.cpp.
+Return Value: n/a
+Status: Coverage transcription - unclaimed body
+*/
+void NetWin::pick_time() {
+    PopMenu pop_menu;
+    pop_menu.init();
+    time_controls_dialog(&pop_menu);
+    int x;
+    int y;
+    int answer = pick_answer_at(*this, pop_menu, &x, &y);
+    if (answer >= 0) {
+        NetWinSessionOptions.fields_.time_control_ =
+            static_cast<unsigned char>(answer);
+    }
+    pick_send_state();
+}
+
+/*
+Purpose: The planet-size picker: a popup with the title and one entry per
+         name in the 0x80-stride name block at 0x6614, counted by the word at
+         0x80A6F0; the answer lands in the ninth slot's planet byte.
+// ORIGINAL: 0x0047E930 ?pick_planet_size@NetWin@@QAEXXZ 0x0047E930-0x0047EC60;0x00657025-0x006570FD FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned47EA6D/47EA7A/47EA80: copy six option dwords to packet+10, write opcode word2F02, send28. Shared pick_send_state preserves these writes; header+2..F remains unspecified."], "reason": "Recover the original options packet through genuine NetWin state and typed packet storage."}
+// size      1032 bytes
+// prototype void (__thiscall ?pick_planet_size@NetWin@@QAEXXZ)(NetWin* this)
+// callers   1   call targets   26
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004048A0 0x00404900 0x004066C0 0x00406820 0x00406880 0x00406910 0x004E25E0 0x0059D250 0x0059D3A0 0x005D45B0 0x005D4DD0 0x005E3820 0x005EC8A0 0x005ED240 0x005F8800 0x005F88A0 0x005FA870 0x00600F00 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00612A70 0x006169A0 0x00630080 0x00645550
+// Homed from src/recovered/units/0047e930.cpp.
+Return Value: n/a
+Status: Coverage transcription - unclaimed body
+*/
+void NetWin::pick_planet_size() {
+    PopMenu pop_menu;
+    pop_menu.init();
+    Dialogs &dialogs = pop_menu.dialogs();
+    char *label = StringTable.get(Labels.strings_ptr[0xFE4 / 4]);
+    dialogs.item(label, 0);
+    // Native 47E9F4 reloads the bound after each owned-dialog insertion.
+    for (int index = 0; index < NetWinPlanetSizeLabelCount; ++index) {
+        dialogs.item(world_size_labels_[index], index + 1);
+    }
+    int x;
+    int y;
+    int answer = pick_answer_at(*this, pop_menu, &x, &y);
+    if (answer >= 0) {
+        NetWinSessionOptions.fields_.planet_size_ =
+            static_cast<unsigned char>(answer - 1);
+    }
+    pick_send_state();
+}
+
+// WORKAROUND(decl): 482B2B..482B44 evaluates find_font before pushing the
+// three zero arguments, the shape of an inline one-argument button set_font.
+static inline void netwin_button_font(FlatButton *button, Font *font) {
+    button->Buffer::set_font(font, 0, 0, 0);
+}
+
+// One seven-row column of lobby cells, 0x16 apart.
+static inline void netwin_set_column(RECT *rows, int left, int top, int right,
+                                     int bottom) {
+    for (int i = 0; i < 7; ++i) {
+        set_rect(rows++, left, top, right, bottom);
+        top += 0x16;
+        bottom += 0x16;
+    }
+}
+
+/*
+Purpose: The ocean-coverage picker: the same popup walk with the three ocean
+         options; the answer lands in the ninth slot's ocean byte.
+// ORIGINAL: 0x0047EC60 ?pick_ocean@NetWin@@QAEXXZ 0x0047EC60-0x0047EF8C;0x006570FD-0x006571D5 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned47ED91/47EDA5/47EDAB: copy six option dwords to packet+10, write opcode word2F02, send28. Shared pick_send_state preserves these writes; header+2..F remains unspecified."], "reason": "Recover the original options packet through genuine NetWin state and typed packet storage."}
+// size      1028 bytes
+// prototype void (__thiscall ?pick_ocean@NetWin@@QAEXXZ)(NetWin* this)
+// callers   1   call targets   26
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004048A0 0x00404900 0x004066C0 0x00406820 0x00406880 0x00406910 0x004E25E0 0x0059D250 0x0059D3A0 0x005D45B0 0x005D4DD0 0x005E3820 0x005EC8A0 0x005ED240 0x005F8800 0x005F88A0 0x005FA870 0x00600F00 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00612A70 0x006169A0 0x00630080 0x00645550
+// Homed from src/recovered/units/0047ec60.cpp.
+Return Value: n/a
+Status: Coverage transcription - unclaimed body
+*/
+void NetWin::pick_ocean() {
+    PopMenu pop_menu;
+    pop_menu.init();
+    Dialogs &dialogs = pop_menu.dialogs();
+    int index = 0;
+    char *label = StringTable.get(Labels.strings_ptr[0xFE4 / 4]);
+    dialogs.item(label, index);
+    for (int slot = 0; slot < 3; ++slot) {
+        label = StringTable.get(Labels.strings_ptr[slot + 0xF60 / 4]);
+        dialogs.item(label, slot + 1);
+    }
+    int x;
+    int y;
+    int answer = pick_answer_at(*this, pop_menu, &x, &y);
+    if (answer >= 0) {
+        NetWinSessionOptions.fields_.ocean_coverage_ =
+            static_cast<unsigned char>(answer - 1);
+    }
+    pick_send_state();
+}
+
+/*
+Purpose: The erosion picker: the same popup walk with the three erosion
+         options; the answer lands in the ninth slot's erosion byte.
+// ORIGINAL: 0x0047EF90 ?pick_erosion@NetWin@@QAEXXZ 0x0047EF90-0x0047F2BC;0x006571D5-0x006572AD FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned47F0C1/47F0D5/47F0DB: copy six option dwords to packet+10, write opcode word2F02, send28. Shared pick_send_state preserves these writes; header+2..F remains unspecified."], "reason": "Recover the original options packet through genuine NetWin state and typed packet storage."}
+// size      1028 bytes
+// prototype void (__thiscall ?pick_erosion@NetWin@@QAEXXZ)(NetWin* this)
+// callers   1   call targets   26
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004048A0 0x00404900 0x004066C0 0x00406820 0x00406880 0x00406910 0x004E25E0 0x0059D250 0x0059D3A0 0x005D45B0 0x005D4DD0 0x005E3820 0x005EC8A0 0x005ED240 0x005F8800 0x005F88A0 0x005FA870 0x00600F00 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00612A70 0x006169A0 0x00630080 0x00645550
+// Homed from src/recovered/units/0047ef90.cpp.
+Return Value: n/a
+Status: Coverage transcription - unclaimed body
+*/
+void NetWin::pick_erosion() {
+    PopMenu pop_menu;
+    pop_menu.init();
+    Dialogs &dialogs = pop_menu.dialogs();
+    int index = 0;
+    char *label = StringTable.get(Labels.strings_ptr[0xFE4 / 4]);
+    dialogs.item(label, index);
+    for (int slot = 0; slot < 3; ++slot) {
+        label = StringTable.get(Labels.strings_ptr[slot + 0xF6C / 4]);
+        dialogs.item(label, slot + 1);
+    }
+    int x;
+    int y;
+    int answer = pick_answer_at(*this, pop_menu, &x, &y);
+    if (answer >= 0) {
+        NetWinSessionOptions.fields_.erosion_ =
+            static_cast<unsigned char>(answer - 1);
+    }
+    pick_send_state();
+}
+
+/*
+Purpose: The native-life picker: the same popup walk with the three fungal
+         options; the answer lands in the ninth slot's native byte.
+// ORIGINAL: 0x0047F2C0 ?pick_native@NetWin@@QAEXXZ 0x0047F2C0-0x0047F5EC;0x006572AD-0x00657385 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned47F3F1/47F405/47F40B: copy six option dwords to packet+10, write opcode word2F02, send28. Shared pick_send_state preserves these writes; header+2..F remains unspecified."], "reason": "Recover the original options packet through genuine NetWin state and typed packet storage."}
+// size      1028 bytes
+// prototype void (__thiscall ?pick_native@NetWin@@QAEXXZ)(NetWin* this)
+// callers   1   call targets   26
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004048A0 0x00404900 0x004066C0 0x00406820 0x00406880 0x00406910 0x004E25E0 0x0059D250 0x0059D3A0 0x005D45B0 0x005D4DD0 0x005E3820 0x005EC8A0 0x005ED240 0x005F8800 0x005F88A0 0x005FA870 0x00600F00 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00612A70 0x006169A0 0x00630080 0x00645550
+// Homed from src/recovered/units/0047f2c0.cpp.
+Return Value: n/a
+Status: Coverage transcription - unclaimed body
+*/
+void NetWin::pick_native() {
+    PopMenu pop_menu;
+    pop_menu.init();
+    Dialogs &dialogs = pop_menu.dialogs();
+    int index = 0;
+    char *label = StringTable.get(Labels.strings_ptr[0xFE4 / 4]);
+    dialogs.item(label, index);
+    for (int slot = 0; slot < 3; ++slot) {
+        label = StringTable.get(Labels.strings_ptr[slot + 0xF90 / 4]);
+        dialogs.item(label, slot + 1);
+    }
+    int x;
+    int y;
+    int answer = pick_answer_at(*this, pop_menu, &x, &y);
+    if (answer >= 0) {
+        NetWinSessionOptions.fields_.native_life_ =
+            static_cast<unsigned char>(answer - 1);
+    }
+    pick_send_state();
+}
+
+/*
+Purpose: The cloud-cover picker: a popup titled from the string table with
+         the two cloud options, the answer stored in the ninth slot's cloud
+         byte and sent to the peer.
+// ORIGINAL: 0x0047F5F0 ?pick_clouds@NetWin@@QAEXXZ 0x0047F5F0-0x0047F91C;0x00657385-0x0065745D FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned47F721/47F735/47F73B: copy six option dwords to packet+10, write opcode word2F02, send28. Shared pick_send_state preserves these writes; header+2..F remains unspecified."], "reason": "Recover the original options packet through genuine NetWin state and typed packet storage."}
+// size      1028 bytes
+// prototype void (__thiscall ?pick_clouds@NetWin@@QAEXXZ)(NetWin* this)
+// callers   1   call targets   25
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004048A0 0x00404900 0x004066C0 0x00406820 0x00406880 0x00406910 0x004E25E0 0x0059D250 0x0059D3A0 0x005D45B0 0x005D4DD0 0x005E3820 0x005EC8A0 0x005ED240 0x005F8800 0x005F88A0 0x005FA870 0x00600F00 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00612A70 0x006169A0 0x00630080 0x00645550
+// Homed from src/recovered/units/0047f5f0.cpp.
+Return Value: n/a
+Status: Coverage transcription - unclaimed body
+*/
+void NetWin::pick_clouds() {
+    PopMenu pop_menu;
+    pop_menu.init();
+    Dialogs &dialogs = pop_menu.dialogs();
+    int index = 0;
+    char *label = StringTable.get(Labels.strings_ptr[0xFE4 / 4]);
+    dialogs.item(label, index);
+    for (int slot = 0; slot < 3; ++slot) {
+        label = StringTable.get(Labels.strings_ptr[slot + 0xF84 / 4]);
+        dialogs.item(label, slot + 1);
+    }
+    int x;
+    int y;
+    int answer = pick_answer_at(*this, pop_menu, &x, &y);
+    if (answer >= 0) {
+        NetWinSessionOptions.fields_.cloud_cover_ =
+            static_cast<unsigned char>(answer - 1);
+    }
+    pick_send_state();
+}
+
+/*
+Purpose: Unknown; the legacy implementation is a bare return with no body.
+// ORIGINAL: 0x0047F920 ?UNK1@NetWin@@QAEXXZ 0x0047F920-0x0047F921 BYTE_EXACT
+// size      1 bytes
+// prototype void (__thiscall ?UNK1@NetWin@@QAEXXZ)(NetWin* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void NetWin::UNK1() {
+}
+
+/*
+Purpose: Unknown; the legacy implementation is a bare return with no body.
+// ORIGINAL: 0x0047F930 ?UNK2@NetWin@@QAEXXZ 0x0047F930-0x0047F931 BYTE_EXACT
+// size      1 bytes
+// prototype void (__thiscall ?UNK2@NetWin@@QAEXXZ)(NetWin* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void NetWin::UNK2() {
+}
+
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+// ORIGINAL: 0x0047F940 ?on_mouse_move@NetWin@@QAEXHH@Z 0x0047F940-0x0047F943 BYTE_EXACT
+// symbol    ?on_mouse_move@NetWin@@UAEXHH@Z
+// size      3 bytes
+// prototype void (__thiscall ?on_mouse_move@NetWin@@QAEXHH@Z)(NetWin* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void NetWin::on_mouse_move(int, int) {
+}
+
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+// ORIGINAL: 0x0047F950 ?on_mouse_leave@NetWin@@QAEXHH@Z 0x0047F950-0x0047F953 BYTE_EXACT
+// symbol    ?on_mouse_leave@NetWin@@UAEXHH@Z
+// size      3 bytes
+// prototype void (__thiscall ?on_mouse_leave@NetWin@@QAEXHH@Z)(NetWin* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void NetWin::on_mouse_leave(int, int) {
+}
+
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0047F960 0x0047FE30 0x0047FE78 0x0047FC02
+/*
+Purpose: Paint the custom-rules panel: the panel and title frames, the
+         centred title, and the eighteen RULES-text rows - each a checkbox
+         glyph whose state is one ability/allowed bit of the custom-rules
+         words (the bit per row in the image's own jump-table order), the
+         row's label from the RULES text section, coloured by its state, and
+         the row handed to the spot list as a type-1 icon when the gate word
+         is set. The standing free-technology checkbox (row id 100, the
+         inverted 0x10 bit) is drawn before the text opens; row 15 draws
+         nothing; after row 7 the walk jumps to the second column.
+// ORIGINAL: 0x0047F960 ?draw_custom_rules@NetWin@@QAEXXZ 0x0047F960-0x0047FE2E FILE
+// symbol    ?draw_custom_rules@NetWin@@QAEXXZ
+// size      1230 bytes
+// prototype void (__thiscall ?draw_custom_rules@NetWin@@QAEXXZ)(NetWin* this)
+// callers   1   call targets   15
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005882F0 0x005BECA0 0x005DAC70 0x005DACB0 0x005DCF40 0x005DD130 0x005E2DD3 0x005E4B9A 0x005FA960 0x005FAA90 0x005FD530 0x005FD570 0x006169A0 0x006453E0 0x00645470
+// Homed from src/recovered/units/0047f960.cpp.
+Return Value: n/a
+Status: Coverage transcription - unclaimed body
+*/
+void NetWin::draw_custom_rules() {
+    spot_.kill_type(1);
+    Buffer::box_sprite(&setup_rects_[47], &InterfaceBoxStyles[3]);
+    Buffer::box_sprite(&setup_rects_[46], &InterfaceBoxStyles[0]);
+
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0xF9C / 4));
+    CharUpperA(StringTemp);
+    Buffer::set_font(find_font(0xE, 1), 0, 0, 0);
+    Buffer::set_text_color(0xE1, -1, 1, 1);
+    Buffer::write_cent_l(StringTemp, &setup_rects_[46]);
+
+    Buffer::box_sprite(&setup_rects_[48], &InterfaceBoxStyles[0]);
+    Buffer::box_sprite(&setup_rects_[49], &InterfaceBoxStyles[0]);
+
+    // One row rectangle walks both columns; the checkbox sits at its left
+    // edge and the label 0x19 to the right of it. Native 47FA56 loads the
+    // left edge before the top.
+    const int left = setup_rects_[48].left - 0x14;
+    const int top = setup_rects_[48].top;
+    Buffer::set_font(find_font(0xC, 1), 0, 0, 0);
+    RECT rect;
+    rect.left = left;
+    rect.top = top;
+    rect.right = rect_width(&setup_rects_[48]) + left - 6;
+    rect.bottom = top + 0x12;
+
+    // The standing free-technology checkbox, spot id 100, and its label
+    // (native 47FB32..47FB98).
+    const int free_tech = (NetWinSessionOptions.fields_.rule_bits_c_ & 0x10) == 0;
+    Buffer *buffer = this;
+    Sprite &standing = g_IFACE_CLOSE_X_SPRITES[free_tech ? 2 : 0];
+    standing.draw(buffer, left, top);
+    if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
+        spot_.add(0x64, 1, rect.left, rect.top, rect_width(&rect),
+                  rect_height(&rect));
+    }
+    rect.left += 0x19;
+    if (free_tech) {
+        Buffer::set_text_color(0xDE, -1, 1, 1);
+    } else {
+        Buffer::set_text_color(0xE4, -1, 1, 1);
+    }
+    char text[0x100];
+    text[0] = 0;
+    strcat(text, label_get(0x10A4 / 4));
+    strcat(text, ".");
+    Buffer::write_l(text, &rect);
+    rect.left -= 0x19;
+    rect.top += 0x14;
+    rect.bottom += 0x14;
+
+    if (X_text_open(ScriptPopupFile, "RULES") != 0) {
+        return;
+    }
+    // '#' lines are comments and do not name a row.
+    char *line = text_get();
+    while (line[0] == '#') {
+        line = text_get();
+    }
+
+    for (int row = 0; row < 0x12; ++row) {
+        unsigned int state;
+        switch (row) {
+        case 0:
+            state = NetWinSessionOptions.fields_.rule_bits_a_ & 0x800;
+            break;
+        case 1:
+            state = NetWinSessionOptions.fields_.rule_bits_a_ & 0x2;
+            break;
+        case 2:
+            state = NetWinSessionOptions.fields_.rule_bits_a_ & 0x8;
+            break;
+        case 3:
+            state = NetWinSessionOptions.fields_.rule_bits_a_ & 0x4;
+            break;
+        case 4:
+            state = NetWinSessionOptions.fields_.rule_bits_a_ & 0x1000;
+            break;
+        case 5:
+            state = NetWinSessionOptions.fields_.rule_bits_a_ & 0x1;
+            break;
+        case 6:
+            state = NetWinSessionOptions.fields_.rule_bits_a_ & 0x10;
+            break;
+        case 7:
+            state = NetWinSessionOptions.fields_.rule_bits_a_ & 0x20;
+            break;
+        case 8:
+            state = NetWinSessionOptions.fields_.rule_bits_a_ & 0x4000;
+            break;
+        case 9:
+            state = NetWinSessionOptions.fields_.rule_bits_a_ & 0x200;
+            break;
+        case 10:
+            state = NetWinSessionOptions.fields_.rule_bits_a_ & 0x40;
+            break;
+        case 11:
+            state = (NetWinSessionOptions.fields_.rule_bits_a_ & 0x100) == 0;
+            break;
+        case 12:
+            state = NetWinSessionOptions.fields_.rule_bits_a_ & 0x2000;
+            break;
+        case 13:
+            state = NetWinSessionOptions.fields_.rule_bits_a_ & 0x8000;
+            break;
+        case 14:
+            state = NetWinSessionOptions.fields_.rule_bits_a_ & 0x80;
+            break;
+        case 16:
+            state = NetWinSessionOptions.fields_.rule_bits_b_ & 0x800000;
+            break;
+        case 17:
+            state = NetWinSessionOptions.fields_.rule_bits_b_ & 0x1000000;
+            break;
+        default:
+            // Row 15 draws nothing - the separator line in the RULES text.
+            line = text_get();
+            continue;
+        }
+
+        Buffer *buffer = this;
+        Sprite &check = g_IFACE_CLOSE_X_SPRITES[state != 0 ? 2 : 0];
+        check.draw(buffer, check.transparent_index(), rect.left, rect.top);
+        if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
+            spot_.add(row, 1, rect.left, rect.top, rect_width(&rect),
+                      rect_height(&rect));
+        }
+        rect.left += 0x19;
+        if (line != 0) {
+            if (state != 0) {
+                Buffer::set_text_color(0xDE, -1, 1, 1);
+            } else {
+                Buffer::set_text_color(0xE4, -1, 1, 1);
+            }
+            Buffer::write_l(line, &rect, strlen(line));
+        }
+        rect.left -= 0x19;
+        if (row == 7) {
+            // The second column: back to the top, 0x18A to the right.
+            rect.left += 0x18A;
+            rect.right += 0x18A;
+            rect.top -= 0xA0;
+            rect.bottom -= 0xA0;
+        } else {
+            rect.top += 0x14;
+            rect.bottom += 0x14;
+        }
+        line = text_get();
+    }
+    text_close();
+}
+
+/*
 Purpose: Paint the three setup-dialog panel sprites: the map's ocean colours
          and the two neighbour panels, each through Buffer::box_sprite with
          the shared InterfaceBoxStyles records (element 3 for the map, 0 for
@@ -487,346 +1831,302 @@ void NetWin::UNK3() {
 }
 
 /*
-Purpose: Tear the setup dialog's session state down: drop both faction-record
-         blocks, reset the two dialog words at 0x761C/0x7620 to -1, and close
-         the embedded controls - the spot list, the message list, the edit
-         box, the check box and the front flat button's slot-90 reset.
-// ORIGINAL: 0x00481D10 ?close@NetWin@@QAEXXZ 0x00481D10-0x00481D9C FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/unrecovered/00481d10.cpp"], "reason": "Retain the existing source implementation and complete original mapping. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
-// size      140 bytes
-// prototype void (__thiscall ?close@NetWin@@QAEXXZ)(NetWin* this)
-// callers   0   call targets   5
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005FA830 0x0060E7C0 0x00614F30 0x00629210 0x00644EF2
-// indirect  0x00481D94
-// Homed from src/unrecovered/00481d10.cpp.
-Return Value: n/a
-Status: Coverage transcription - unclaimed body (the preserved seed keeps its
-        own FILE BYTE_EXACT claim until this converges)
-*/
-void NetWin::close() {
-    if (faction_records_ != 0) {
-        free(faction_records_);
-        faction_records_ = 0;
-    }
-    if (faction_records_copy_ != 0) {
-        free(faction_records_copy_);
-        faction_records_copy_ = 0;
-    }
-    field_761C_ = 0xFFFFFFFF;
-    field_7620_ = 0xFFFFFFFF;
-    spot_.shutdown();
-    stringBox_.close();
-    editBox_.close();
-    checkBox_.close();
-    flatButton1_.close();
-}
-
-// Native 0x004834E0: explicit resource and control shutdown precedes normal
-// compiler-owned teardown of the typed members and GraphicWin base.
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004834E0 ??1NetWin@@QAE@XZ 0x004834E0-0x004837B4;0x00656650-0x0065673F BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004834e0.cpp", "recovery/tasks/netwin-owner-coverage.json"], "reason": "Recover true destructor with typed automatic member and base teardown, retaining observed explicit frees, state resets and close calls. Native baseline/candidate controls and complete isolated application compile/link passed; no matching or game acceptance claim."}
-// symbol    ??1NetWin@@UAE@XZ
-NetWin::~NetWin() {
-    if (faction_records_ != nullptr) {
-        free(faction_records_);
-        faction_records_ = nullptr;
-    }
-    if (faction_records_copy_ != nullptr) {
-        free(faction_records_copy_);
-        faction_records_copy_ = nullptr;
-    }
-    field_761C_ = -1;
-    field_7620_ = -1;
-
-    spot_.shutdown();
-    stringBox_.close();
-    editBox_.close();
-    checkBox_.close();
-    flatButton1_.close();
-}
-
-/*
-Purpose: Copy one faction record's name/title block into the lobby row
-         carried by the received packet: six text fields land in its named
-         members and the leader-gender byte in tail_[0]. Slot -1 instead
-         re-reads just noun_faction_ through the string table, for the row
-         the scenario file's own faction entry describes.
-// ORIGINAL: 0x00481DA0 ?fill_player@NetWin@@QAEXPAUPlayerData@@H@Z 0x00481DA0-0x00481E8D FILE BYTE_EXACT
-// symbol    ?fill_player@NetWin@@QAEXPAUNetWinLobbyRow@@H@Z
-// size      237 bytes
-// prototype void (__thiscall ?fill_player@NetWin@@QAEXPAUPlayerData@@H@Z)(NetWin* this, PlayerData*, int)
-// callers   2   call targets   3
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00644EF2
-// Homed from src/unrecovered/00481da0.cpp.
-Return Value: n/a
-*/
-void NetWin::fill_player(NetWinLobbyRow *lobby_row, int slot) {
-    if (slot == -1) {
-        lobby_row->noun_faction_[0] = 0;
-        strcat(lobby_row->noun_faction_,
-               StringTable.get(Labels.strings_ptr[0xFE4 / 4]));
-        return;
-    }
-    strcpy(lobby_row->leader_name_, faction_records_->records_[slot].leader_name_);
-    strcpy(lobby_row->formal_faction_name_,
-           faction_records_->records_[slot].formal_faction_name_);
-    strcpy(lobby_row->noun_faction_, faction_records_->records_[slot].noun_faction_);
-    strcpy(lobby_row->adjective_faction_,
-           faction_records_->records_[slot].adjective_faction_);
-    strcpy(lobby_row->leader_title_, faction_records_->records_[slot].leader_title_);
-    strcpy(lobby_row->adjective_leader_,
-           faction_records_->records_[slot].adjective_leader_);
-    lobby_row->tail_[0] = faction_records_->records_[slot].leader_female_;
-}
-
-// 0x0090E778 / 0x0090E79C - the two words beside the seven records
-// config_players seeds: the eighth slot's dword and its mode byte.
-// 0x0090E8E0 - the ninth slot's colour/mode prefix: 0xFF, the colour byte
-// read from 0x93D4B0, 2 - with the zeroed pair at +4/+5, the mode bytes 2 at
-// +6..+0xA and the 0xFF at +0xB.
-// The original byte read at 0x0090E8E3 is options.time_control_ (+3), not a
-// separate ninth-row object.
-
-/*
-Purpose: Seed the seven base faction records of the static faction table.
-         Each record's colour/mode prefix is rewritten - 0xFF, 0, 2, 0xFF, 2,
-         with the dword at +0x177 cleared - the name, formal-name and leader
-         text copied out of the template record at the same index, the title
-         re-read through the string table, the +0x174 byte taken from the
-         template, and the trailing eighth/ninth slot words reset (the ninth
-         slot's prefix carrying the colour byte at 0x93D4B0). The image
-         writes the prefix twice per record - the second pass re-stores
-         0xFF/0xFF/2/0 over the same bytes - so only the net values land.
-// ORIGINAL: 0x00481E90 ?config_players@NetWin@@QAEXXZ 0x00481E90-0x00481FC9 FILE BYTE_EXACT
-// size      313 bytes
-// prototype void (__thiscall ?config_players@NetWin@@QAEXXZ)(NetWin* this)
-// callers   1   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x006169A0 0x00645460
-// Homed from src/recovered/units/00481e90.cpp.
-Return Value: n/a
-Status: Coverage transcription - unclaimed body
-*/
-void NetWin::config_players() {
-    unsigned char color = static_cast<unsigned char>(
-        NetDaemonNet.allocation_node().max_players_);
-    NetWinSessionData.fields_.mode_ = 0;
-    NetWinSessionData.fields_.scenario_text_wire_tail_[0] = 0;
-    NetWinSessionOptions.fields_.status_ = 0xFF;
-    NetWinSessionOptions.fields_.option_4_ = 0;
-    NetWinSessionOptions.fields_.option_5_ = 0;
-    NetWinSessionOptions.fields_.reserved_B_ = -1;
-    NetWinSessionOptions.fields_.player_count_ = color;
-    NetWinSessionOptions.fields_.difficulty_ = 2;
-    NetWinSessionOptions.fields_.planet_size_ = 2;
-    NetWinSessionOptions.fields_.ocean_coverage_ = 2;
-    NetWinSessionOptions.fields_.erosion_ = 2;
-    NetWinSessionOptions.fields_.native_life_ = 2;
-    NetWinSessionOptions.fields_.cloud_cover_ = 2;
-
-    for (int i = 1; i < 8; i++) {
-        NetWinLobbyRows.rows_[i].reset();
-        NetWinLobbyRows.rows_[i].prefix_ = -1;
-        NetWinLobbyRows.rows_[i].faction_or_color_ = -1;
-        NetWinLobbyRows.rows_[i].field_2_ = NetWinSessionOptions.fields_.difficulty_;
-        NetWinLobbyRows.rows_[i].ready_or_occupied_ = 0;
-        strcpy(NetWinLobbyRows.rows_[i].leader_name_, Players[i].name_leader);
-        strcpy(NetWinLobbyRows.rows_[i].formal_faction_name_, Players[i].formal_name_faction);
-        strcpy(NetWinLobbyRows.rows_[i].noun_faction_,
-               StringTable.get(Labels.strings_ptr[0xFE4 / 4]));
-        strcpy(NetWinLobbyRows.rows_[i].adjective_faction_, Players[i].adj_name_faction);
-        strcpy(NetWinLobbyRows.rows_[i].leader_title_, Players[i].title_leader);
-        strcpy(NetWinLobbyRows.rows_[i].adjective_leader_, Players[i].adj_leader);
-        NetWinLobbyRows.rows_[i].tail_[0] = static_cast<uint8_t>(Players[i].is_leader_female);
-    }
-}
-
-// Private recovered body for the native 0x00482D90 roster finalizer.
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00482D90 ?prepare_game@NetWin@@QAEXXZ 0x00482D90-0x0048318E;0x006574FE-0x00657510 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00482d90.cpp", "recovery/tasks/netwin-owner-coverage.json"], "reason": "Recover complete lobby game preparation through real faction records, AlphaNet process-slot ownership, player data and Random lifecycle. Native low-five-bit shifts, signed difficulty and copied status extent preserved; seed and historical obligations retained."}
-void NetWin::prepare_game() {
-    Random random;
-    random.reseed(1000);
-
-    unsigned int used_mask = 0;
-    unsigned int hidden_mask = 0;
-    const int faction_count = faction_records_->record_count_;
-    int i;
-    for (i = 0; i < faction_count; i++) {
-        if (faction_records_->records_[i].active_ == 0) {
-            const int bit = 1 << i;
-            used_mask |= bit;
-        }
-    }
-    int seat;
-    for (seat = 1; seat < 8; seat++) {
-        if (NetWinLobbyRows.rows_[seat].faction_or_color_ != -1) {
-            const int bit = 1 << NetWinLobbyRows.rows_[seat].faction_or_color_;
-            used_mask |= bit;
-        }
-    }
-    int needed = 0;
-    for (i = 0; i < faction_count; i++) {
-        if (faction_records_->records_[i].active_ != 0 && !(used_mask & (1u << i))) {
-            needed++;
-        }
-    }
-    for (seat = 1; seat < 8; seat++) {
-        if (NetWinLobbyRows.rows_[seat].faction_or_color_ == -1) {
-            hidden_mask |= 1u << seat;
-            unsigned int picked;
-            if (needed) {
-                do {
-                    picked = random.get(0, faction_count);
-                } while (used_mask & (1u << picked));
-                needed--;
-            } else {
-                picked = random.get(0, faction_count);
-            }
-            NetWinLobbyRows.rows_[seat].faction_or_color_ = static_cast<int8_t>(picked);
-            used_mask |= 1u << picked;
-        }
-    }
-
-    // Each process slot receives the leading 0x176 row bytes at its identity.
-    // WORKAROUND(type): a structure assignment (rep movsd 0x5d + movsw,
-    // 0x00482EDB): the player record is a 0x176-byte type embedded at the head
-    // of both the lobby row and the process slot; modelled here by its extent.
-    struct NetWinLobbyRowPrefix176 { char bytes_[0x176]; };
-    if (NetWinSessionData.fields_.mode_ != 0 && NetWinSessionData.fields_.mode_ != 1) {
-        for (i = 0; i < 8; i++) {
-            *reinterpret_cast<NetWinLobbyRowPrefix176 *>(&NetDaemonNet.process_slots_[i].state_.identity_) =
-                *reinterpret_cast<NetWinLobbyRowPrefix176 *>(&NetWinLobbyRows.rows_[i]);
-            NetDaemonNet.process_slots_[i].state_.identity_ =
-                NetWinLobbyRows.rows_[i].faction_or_color_ == -1
-                ? 0 : NetWinLobbyRows.rows_[i].faction_or_color_;
-        }
-    } else {
-        for (i = 0; i < 8; i++) {
-            *reinterpret_cast<NetWinLobbyRowPrefix176 *>(&NetDaemonNet.process_slots_[i].state_.identity_) =
-                *reinterpret_cast<NetWinLobbyRowPrefix176 *>(&NetWinLobbyRows.rows_[i]);
-            NetDaemonNet.process_slots_[i].state_.identity_ = static_cast<int8_t>(i);
-        }
-    }
-
-    if (NetWinSessionData.fields_.mode_ != 0 && NetWinSessionData.fields_.mode_ != 1) {
-        if (NetDaemonNet.local_player_id_ != NetDaemonNet.host_player_id_) {
-            for (i = 1; i < 8; i++) {
-                strcpy(Players[i].filename, faction_records_->records_[i].filename_);
-                load_faction_art(i);
-            }
-        }
-    } else {
-        for (seat = 2; seat < 8; seat++) {
-            char *const leader_name = NetWinLobbyRows.rows_[seat].leader_name_;
-            needed = 0;
-            for (int earlier = 1; earlier < seat; earlier++) {
-                if (!strcmp(leader_name, NetWinLobbyRows.rows_[earlier].leader_name_)) {
-                    needed++;
-                }
-            }
-            if (needed) {
-                char suffix[80];
-                _itoa(needed, suffix, 10);
-                strcat(leader_name, suffix);
-            }
-        }
-        for (i = 1; i < 8; i++) {
-            strcpy(Players[i].filename,
-                   faction_records_->records_[NetWinLobbyRows.rows_[i].faction_or_color_].filename_);
-            strcpy(Players[i].search_key,
-                   faction_records_->records_[NetWinLobbyRows.rows_[i].faction_or_color_].filename_);
-            read_faction(i);
-            compute_faction_modifiers(i);
-        }
-        for (seat = 1; seat < 8; seat++) {
-            const AlphaNetProcessSlot &process = NetDaemonNet.process_slots_[seat];
-            const int faction = process.state_.identity_;
-            PlayersData[faction].diff_level = static_cast<int8_t>(process.state_.field_26_);
-            if (!(hidden_mask & (1u << seat))) {
-                const NetWinLobbyRow &row = NetWinLobbyRows.rows_[seat];
-                strcpy(Players[faction].name_leader, row.leader_name_);
-                strcpy(Players[faction].formal_name_faction, row.formal_faction_name_);
-                strcpy(Players[faction].noun_faction, row.noun_faction_);
-                strcpy(Players[faction].adj_name_faction, row.adjective_faction_);
-                strcpy(Players[faction].title_leader, row.leader_title_);
-                strcpy(Players[faction].adj_leader, row.adjective_leader_);
-                Players[faction].is_leader_female = row.tail_[0];
-            }
-        }
-    }
-
-    load_flags();
-}
-
-/*
-Purpose: Repaint the setup dialog: the guard test, the panel sprites (the
-         map frame at 0x474, the banner rectangle copied from 0xA14 and then
-         inset by three, and the three helper panels at 0xCE4/0xCD4/0xCC4,
-         each through its shared InterfaceBoxStyles entry), the centered
-         session title upper-cased out of the string table, and the five
-         content groups - draw_custom_rules, draw_player_names, draw_diffs,
-         draw_factions, draw_session_info - then soft_update.
-// ORIGINAL: 0x00481AD0 ?on_redraw@NetWin@@QAEXXZ 0x00481AD0-0x00481C50 FILE BYTE_EXACT
-// symbol    ?on_redraw@NetWin@@UAEXXZ
-// size      384 bytes
-// prototype void (__thiscall ?on_redraw@NetWin@@QAEXXZ)(NetWin* this)
-// callers   3   call targets   15
+Purpose: Paint the faction rows: the same framed-row walk as draw_diffs one
+         panel over - box sprite, chip for the player's own slot, the row
+         clipped to a vertically inset field - with the row's text built from
+         the allocated faction record the row's mode byte names (its noun at
+         +0x62 of the 0x190-stride record) or the string table when the byte
+         is -1, and the static table's title appended after ": " whenever it
+         differs. Each row lands in the spot list as a type-3 icon.
+// ORIGINAL: 0x0047FED0 ?draw_factions@NetWin@@QAEXXZ 0x0047FED0-0x00480173 FILE
+// size      675 bytes
+// prototype void (__thiscall ?draw_factions@NetWin@@QAEXXZ)(NetWin* this)
+// callers   1   call targets   15
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
-// calls     0x0047F960 0x0047FED0 0x00480180 0x00480370 0x00480900 0x005882F0 0x005D5890 0x005DAC70 0x005DACB0 0x005DD130 0x005E2DD3 0x005F7E90 0x006169A0 0x006453E0 0x00645470
-// Homed from src/recovered/units/00481ad0.cpp.
+// calls     0x0047B380 0x004E25E0 0x005882F0 0x005D8000 0x005DAC70 0x005DACB0 0x005DCF40 0x005E2DD3 0x005E4B9A 0x005FA960 0x005FAA90 0x006169A0 0x006453E0 0x00645470 0x00645660
+// Homed from src/recovered/units/0047fed0.cpp.
 Return Value: n/a
 Status: Coverage transcription - unclaimed body
 */
-void NetWin::on_redraw() {
-    if (is_visible() == 0) {
-        return;
-    }
-    Buffer::box_sprite(buffer_working_rect(),
-                       &InterfaceBoxStyles[9]);
+void NetWin::draw_factions() {
+    spot_.kill_type(3);
+    // Native 47FEF2 walks rows_[index + 1].noun_faction_ (0x90DD59).
+    for (int index = 0; index < 7; ++index) {
+        if (NetWinSessionData.fields_.mode_ == 3
+            && index >= faction_records_->record_type_) {
+            break;
+        }
+        Buffer::box_sprite(&setup_rects_[13 + index], &InterfaceBoxStyles[0]);
+        if (NetWinSessionData.fields_.mode_ == 3
+            && NetWinLobbyRows.rows_[index + 1].prefix_ == -1) {
+            continue;
+        }
 
-    // The banner rectangle: painted as 0xA14 holds it, then inset by three
-    // on every side and painted again - the inset copy is the one the title
-    // is centred in.
-    RECT banner = setup_rects_[0];
-    Buffer::box_sprite(&banner, &InterfaceBoxStyles[3]);
-    banner.left += 3;
-    banner.right -= 3;
-    banner.top += 3;
-    banner.bottom -= 3;
-    Buffer::box_sprite(&banner, &InterfaceBoxStyles[6]);
+        int mode = NetWinLobbyRows.rows_[index + 1].faction_or_color_;
+        RECT field = setup_rects_[13 + index];
+        if (index + 1 == NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id_)
+            || (NetDaemonNet.local_player_id_ == NetDaemonNet.host_player_id_
+                && NetWinLobbyRows.rows_[index + 1].prefix_ == -1)) {
+            Sprite &arrow = g_IFACE_MP_COMBO_ARROW_SPRITES[0];
+            arrow.draw(this, arrow.transparent_index(),
+                       field.right - 0xA,
+                       field.top
+                           + (field.bottom - arrow.height() - field.top) / 2);
+        }
+
+        Buffer::set_font(find_font(0xE, 1), 0, 0, 0);
+        Buffer::set_text_color(get_player_color(index + 1), 0, 1, 1);
+        field.right -= 0xB;
+        field.left += 4;
+        Buffer::set_clip(&field);
+
+        StringTemp[0] = 0;
+        // Native 47FFF3/480043: both name branches skip or join one shared
+        // ": <noun>" append.
+        if (mode != -1) {
+            strcat(StringTemp, faction_records_->records_[mode].noun_faction_);
+            if (strcmp(faction_records_->records_[mode].noun_faction_,
+                       NetWinLobbyRows.rows_[index + 1].noun_faction_) == 0) {
+                goto named;
+            }
+            strcat(StringTemp, SocialWinColonSpaceText);
+        } else {
+            strcat(StringTemp, label_get(0xFE4 / 4));
+            if (strcmp(label_get(0xFE4 / 4),
+                       NetWinLobbyRows.rows_[index + 1].noun_faction_) == 0) {
+                goto named;
+            }
+            strcat(StringTemp, SocialWinColonSpaceText);
+        }
+        strcat(StringTemp, BufferJoinSpace);
+        strcat(StringTemp, NetWinLobbyRows.rows_[index + 1].noun_faction_);
+    named:
+        Buffer::write_l(StringTemp, &field);
+        Buffer::restore_clip();
+        spot_.add(index, 3, setup_rects_[13 + index].left,
+                  setup_rects_[13 + index].top,
+                  setup_rects_[13 + index].right - setup_rects_[13 + index].left,
+                  setup_rects_[13 + index].bottom - setup_rects_[13 + index].top);
+    }
+}
+
+
+
+
+
+
+
+/*
+Purpose: Paint the difficulty rows: one framed row per base faction record
+         (the box sprite, the combo-arrow chip for the player's own slot, the
+         difficulty name drawn left-aligned inside an inset field, and the
+         row handed to the spot list as a type-4 icon). The icon walk stops
+         early while the eighth slot word says 3 and the faction-record
+         block's count byte covers fewer rows, and a 0xFF-prefixed record
+         keeps its frame but no content.
+// ORIGINAL: 0x00480180 ?draw_diffs@NetWin@@QAEXXZ 0x00480180-0x0048036F FILE BYTE_EXACT
+// size      495 bytes
+// prototype void (__thiscall ?draw_diffs@NetWin@@QAEXXZ)(NetWin* this)
+// callers   1   call targets   13
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0047B380 0x004E25E0 0x005882F0 0x005D8000 0x005DAC70 0x005DACB0 0x005DCF40 0x005E2DD3 0x005E4B9A 0x005FA960 0x005FAA90 0x006169A0 0x006453E0
+// Homed from src/recovered/units/00480180.cpp.
+Return Value: n/a
+Status: Coverage transcription - unclaimed body
+*/
+void NetWin::draw_diffs() {
+    spot_.kill_type(4);
+    for (int index = 0; index < 7; ++index) {
+        if (NetWinSessionData.fields_.mode_ == 3
+            && index >= faction_records_->record_type_) {
+            break;
+        }
+        RECT *rect = &setup_rects_[20 + index];
+        Buffer::box_sprite(rect, &InterfaceBoxStyles[0]);
+        if (NetWinSessionData.fields_.mode_ == 3
+            && NetWinLobbyRows.rows_[index + 1].prefix_ == -1) {
+            continue;
+        }
+
+        RECT field = *rect;
+        // The combo-arrow chip: the player's own slot, or - with the two ids
+        // still equal - the row whose prefix is the 0xFF default.
+        int slot = index + 1;
+        if (slot == NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id())
+            || (NetDaemonNet.local_player_id() == NetDaemonNet.host_player_id_
+                && NetWinLobbyRows.rows_[index + 1].prefix_ == -1)) {
+            Sprite &arrow = g_IFACE_MP_COMBO_ARROW_SPRITES[0];
+            arrow.draw(this, arrow.transparent_index(),
+                       field.right - 0xA,
+                       field.top
+                           + (field.bottom - arrow.height() - field.top) / 2);
+        }
+
+        Buffer::set_font(find_font(0xE, 1), 0, 0, 0);
+        Buffer::set_text_color(get_player_color(slot), 0, 1, 1);
+        field = *rect;
+        field.left += 4;
+        field.right -= 4;
+        Buffer::set_clip(&field);
+        char *name = StringTable.get(
+            Difficulty[static_cast<int8_t>(NetWinLobbyRows.rows_[index + 1].field_2_)]);
+        if (name != 0) {
+            Buffer::write_l(name, &field, strlen(name));
+        }
+        Buffer::restore_clip();
+        spot_.add(index, 4, rect->left, rect->top,
+                  rect->right - rect->left, rect->bottom - rect->top);
+    }
+}
+
+/*
+Purpose: Paint the player rows: the panel and title frames, the centred
+         title, and one row per lobby slot record - the row frame with its
+         ready glyph, the lock chip (the lock sprite when the row's chosen
+         faction is already claimed elsewhere), the player's name or
+         "Computer", the ": <faction>" suffix with a duplicate count, and the
+         row, colour and name rectangles handed to the spot list as type-2
+         and type-5 icons. Ends by renaming the left flat button for the
+         unconnected case.
+// ORIGINAL: 0x00480370 ?draw_player_names@NetWin@@QAEXXZ 0x00480370-0x004808F2 FILE
+// size      1410 bytes
+// prototype void (__thiscall ?draw_player_names@NetWin@@QAEXXZ)(NetWin* this)
+// callers   1   call targets   21
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0047B380 0x004E25E0 0x005882F0 0x005D5930 0x005D8000 0x005DAC70 0x005DACB0 0x005DCF40 0x005DD130 0x005E2DD3 0x005E4B4A 0x005E4B9A 0x005FA960 0x005FAA90 0x006074E0 0x006169A0 0x00631A20 0x006453E0 0x00645470 0x00645660 0x0064FC88
+// indirect  0x00669328
+// Homed from src/recovered/units/00480370.cpp.
+Return Value: n/a
+Status: Coverage transcription - unclaimed body
+*/
+void NetWin::draw_player_names() {
+    spot_.kill_type(2);
+    spot_.kill_type(5);
+    int pid_idx = NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id_);
+    Buffer::box_sprite(&setup_rects_[5],
+                       &InterfaceBoxStyles[3]);
+    RECT *title_rect = &setup_rects_[4];
+    Buffer::box_sprite(title_rect, &InterfaceBoxStyles[6]);
 
     StringTemp[0] = 0;
     strcat(StringTemp,
-           label_get(0x3F0 / 4));
+           StringTable.get(Labels.strings_ptr[0x414 / 4]));
     CharUpperA(StringTemp);
     Buffer::set_font(find_font(0xE, 1), 0, 0, 0);
     Buffer::set_text_color(0xE1, -1, 1, 1);
-    if (StringTemp != 0) {
-        Buffer::write_cent_l(StringTemp, &banner,
-                             strlen(StringTemp));
+    Buffer::write_cent_l(StringTemp, title_rect);
+
+    for (int row = 0; row < 7; ++row) {
+        if (NetWinSessionData.fields_.mode_ == 3
+            && row >= faction_records_->record_type_) {
+            break;
+        }
+        Buffer::box_sprite(&setup_rects_[row + 6], &InterfaceBoxStyles[0]);
+        Buffer::box_sprite(&setup_rects_[row + 27], &InterfaceBoxStyles[0]);
+
+        // The ready glyph: element 2 when the record block's leading byte
+        // says the slot holds a player.
+        int ready = NetWinLobbyRows.rows_[row + 1].ready_or_occupied_ != 0 ? 2 : 0;
+        Buffer::box_sprite(&setup_rects_[row + 36], &InterfaceBoxStyles[48 + ready]);
+
+        if (NetWinSessionData.fields_.mode_ == 3 && NetWinLobbyRows.rows_[row + 1].prefix_ == -1) {
+            continue;
+        }
+
+        // The lock chip: the chosen faction's own id field against the
+        // record's claim dword, only while the eighth word is 2 or 3.
+        const signed char mode = NetWinLobbyRows.rows_[row + 1].faction_or_color_;
+        int locked = 0;
+        if (NetWinSessionData.fields_.mode_ == 2 || NetWinSessionData.fields_.mode_ == 3) {
+            if (mode != -1) {
+                const unsigned long owned = faction_records_->records_[mode].owner_;
+                if (owned != 0 && owned != NetWinLobbyRows.rows_[row + 1].owner_) {
+                    locked = 1;
+                }
+            }
+        } else if (NetWinLobbyRows.rows_[row + 1].owner_ != 0) {
+            locked = 1;
+        }
+        if (locked) {
+            g_IFACE_LOCK_SPRITES[1].draw(this, g_IFACE_LOCK_SPRITES[1].transparent_index(),
+                                         setup_rects_[row + 27].left + 1, setup_rects_[row + 27].top, 1, 1);
+        } else {
+            g_IFACE_LOCK_SPRITES[0].draw(this, g_IFACE_LOCK_SPRITES[0].transparent_index(),
+                                         setup_rects_[row + 27].left + 1, setup_rects_[row + 27].top, 1, 1);
+        }
+
+        RECT field = setup_rects_[row + 6];
+        if (NetWinSessionData.fields_.mode_ == 0 || NetWinSessionData.fields_.mode_ == 1) {
+            if (row + 1 == NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id_)) {
+                Sprite &arrow = g_IFACE_MP_COMBO_ARROW_SPRITES[0];
+                arrow.draw(this, arrow.transparent_index(),
+                           field.right - 0xA,
+                           field.top
+                               + (field.bottom - arrow.height() - field.top)
+                                     / 2);
+            }
+        }
+
+        Buffer::set_font(find_font(0xE, 1), 0, 0, 0);
+        Buffer::set_text_color(get_player_color(row + 1), 0, 1, 1);
+        // The name field: the rectangle again, inset by four.
+        field = setup_rects_[row + 6];
+        field.left += 4;
+        field.right -= 4;
+        Buffer::set_clip(&field);
+
+        StringTemp[0] = 0;
+        if (NetWinLobbyRows.rows_[row + 1].prefix_ == -1) {
+            strcat(StringTemp, "Computer");
+        } else {
+            strcat(StringTemp,
+                   NetDaemonNet.get_player_name(NetDaemonNet.process_slots_[row + 1].pid_));
+        }
+        if (NetWinLobbyRows.rows_[row + 1].faction_or_color_ != -1) {
+            strcat(StringTemp, SocialWinColonSpaceText);
+            strcat(StringTemp, BufferJoinSpace);
+            strcat(StringTemp, NetWinLobbyRows.rows_[row + 1].leader_name_);
+            // Count the earlier rows whose name text matches, and append
+            // the tally when there is one.
+            int matches = 0;
+            for (int seen = 0; seen < row; ++seen) {
+                if (strcmp(NetWinLobbyRows.rows_[seen + 1].leader_name_,
+                           NetWinLobbyRows.rows_[row + 1].leader_name_) == 0) {
+                    ++matches;
+                }
+            }
+            if (matches != 0) {
+                char tally[0x50];
+                _itoa(matches, tally, 10);
+                strcat(StringTemp, tally);
+            }
+        }
+        Buffer::write_l(StringTemp, &field);
+        Buffer::restore_clip();
+
+        // 4807B7: the union lands in the text rectangle.
+        ::UnionRect(&field, &setup_rects_[row + 36], &setup_rects_[row + 6]);
+
+        spot_.add(row, 2, &setup_rects_[row + 36]);
+        if (NetWinSessionData.fields_.mode_ == 0 || NetWinSessionData.fields_.mode_ == 1) {
+            spot_.add(row, 2, &setup_rects_[row + 6]);
+        }
+        spot_.add(row, 5, &setup_rects_[row + 27]);
+        soft_update(&field);
     }
 
-    draw_custom_rules();
-    Buffer::box_sprite(&setup_rects_[45],
-                       &InterfaceBoxStyles[3]);
-    Buffer::box_sprite(&setup_rects_[44],
-                       &InterfaceBoxStyles[0]);
-    Buffer::box_sprite(&setup_rects_[43],
-                       &InterfaceBoxStyles[0]);
-    draw_player_names();
-    draw_diffs();
-    draw_factions();
-    draw_session_info();
-    soft_update();
+    if (NetDaemonNet.primary_state_.leading_words_[0] == 0) {
+        // Not connected: the left button's label follows the local row's
+        // ready byte (480 8A9).
+        flatButton1_.set_name(StringTable.get(
+            NetWinLobbyRows.rows_[pid_idx].ready_or_occupied_ != 0
+                ? Labels.strings_ptr[0x1054 / 4]
+                : Labels.strings_ptr[0x1050 / 4]));
+        flatButton1_.redraw();
+    }
 }
 
 // 0x0090E8EC/F0/F4 are the three rule-bit members of the options record.
@@ -834,16 +2134,6 @@ void NetWin::on_redraw() {
 // initialized by NetDaemon's constructor; it is shared with TurnsAssigned,
 // not a separate global or one of the flat members from 0x1B68 on.
 
-// 0x0080A6F0 - the planet-size name count beside the fixed dialog (the
-// names occupy world_size_labels_: 32 rows at native 0x80-byte stride.
-// Original starts below are distinct objects; stores/accesses establish only
-// those starts, not original allocations, complete lifetimes or exact data layout.
-// RECOVERY_OBJECT: v1 0x0080A6F0 ?NetWinPlanetSizeLabelCount@@3HA
-int NetWinPlanetSizeLabelCount;
-// RECOVERY_OBJECT: v1 0x0080A6F4 ?NetWinExecAdjacentState@@3HA
-int NetWinExecAdjacentState;
-// RECOVERY_OBJECT: v1 0x00811E38 ?NetWinWindowTitleInitialText@@3DA
-char NetWinWindowTitleInitialText;
 
 
 /*
@@ -1199,1213 +2489,466 @@ void NetWin::draw_session_info() {
 }
 
 /*
-Purpose: Paint the player rows: the panel and title frames, the centred
-         title, and one row per lobby slot record - the row frame with its
-         ready glyph, the lock chip (the lock sprite when the row's chosen
-         faction is already claimed elsewhere), the player's name or
-         "Computer", the ": <faction>" suffix with a duplicate count, and the
-         row, colour and name rectangles handed to the spot list as type-2
-         and type-5 icons. Ends by renaming the left flat button for the
-         unconnected case.
-// ORIGINAL: 0x00480370 ?draw_player_names@NetWin@@QAEXXZ 0x00480370-0x004808F2 FILE
-// size      1410 bytes
-// prototype void (__thiscall ?draw_player_names@NetWin@@QAEXXZ)(NetWin* this)
-// callers   1   call targets   21
+Purpose: Repaint the setup dialog: the guard test, the panel sprites (the
+         map frame at 0x474, the banner rectangle copied from 0xA14 and then
+         inset by three, and the three helper panels at 0xCE4/0xCD4/0xCC4,
+         each through its shared InterfaceBoxStyles entry), the centered
+         session title upper-cased out of the string table, and the five
+         content groups - draw_custom_rules, draw_player_names, draw_diffs,
+         draw_factions, draw_session_info - then soft_update.
+// ORIGINAL: 0x00481AD0 ?on_redraw@NetWin@@QAEXXZ 0x00481AD0-0x00481C50 FILE BYTE_EXACT
+// symbol    ?on_redraw@NetWin@@UAEXXZ
+// size      384 bytes
+// prototype void (__thiscall ?on_redraw@NetWin@@QAEXXZ)(NetWin* this)
+// callers   3   call targets   15
 // kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x0047B380 0x004E25E0 0x005882F0 0x005D5930 0x005D8000 0x005DAC70 0x005DACB0 0x005DCF40 0x005DD130 0x005E2DD3 0x005E4B4A 0x005E4B9A 0x005FA960 0x005FAA90 0x006074E0 0x006169A0 0x00631A20 0x006453E0 0x00645470 0x00645660 0x0064FC88
-// indirect  0x00669328
-// Homed from src/recovered/units/00480370.cpp.
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0047F960 0x0047FED0 0x00480180 0x00480370 0x00480900 0x005882F0 0x005D5890 0x005DAC70 0x005DACB0 0x005DD130 0x005E2DD3 0x005F7E90 0x006169A0 0x006453E0 0x00645470
+// Homed from src/recovered/units/00481ad0.cpp.
 Return Value: n/a
 Status: Coverage transcription - unclaimed body
 */
-void NetWin::draw_player_names() {
-    spot_.kill_type(2);
-    spot_.kill_type(5);
-    int pid_idx = NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id_);
-    Buffer::box_sprite(&setup_rects_[5],
-                       &InterfaceBoxStyles[3]);
-    RECT *title_rect = &setup_rects_[4];
-    Buffer::box_sprite(title_rect, &InterfaceBoxStyles[6]);
+void NetWin::on_redraw() {
+    if (is_visible() == 0) {
+        return;
+    }
+    Buffer::box_sprite(buffer_working_rect(),
+                       &InterfaceBoxStyles[9]);
+
+    // The banner rectangle: painted as 0xA14 holds it, then inset by three
+    // on every side and painted again - the inset copy is the one the title
+    // is centred in.
+    RECT banner = setup_rects_[0];
+    Buffer::box_sprite(&banner, &InterfaceBoxStyles[3]);
+    banner.left += 3;
+    banner.right -= 3;
+    banner.top += 3;
+    banner.bottom -= 3;
+    Buffer::box_sprite(&banner, &InterfaceBoxStyles[6]);
 
     StringTemp[0] = 0;
     strcat(StringTemp,
-           StringTable.get(Labels.strings_ptr[0x414 / 4]));
+           label_get(0x3F0 / 4));
     CharUpperA(StringTemp);
     Buffer::set_font(find_font(0xE, 1), 0, 0, 0);
     Buffer::set_text_color(0xE1, -1, 1, 1);
-    Buffer::write_cent_l(StringTemp, title_rect);
-
-    for (int row = 0; row < 7; ++row) {
-        if (NetWinSessionData.fields_.mode_ == 3
-            && row >= faction_records_->record_type_) {
-            break;
-        }
-        Buffer::box_sprite(&setup_rects_[row + 6], &InterfaceBoxStyles[0]);
-        Buffer::box_sprite(&setup_rects_[row + 27], &InterfaceBoxStyles[0]);
-
-        // The ready glyph: element 2 when the record block's leading byte
-        // says the slot holds a player.
-        int ready = NetWinLobbyRows.rows_[row + 1].ready_or_occupied_ != 0 ? 2 : 0;
-        Buffer::box_sprite(&setup_rects_[row + 36], &InterfaceBoxStyles[48 + ready]);
-
-        if (NetWinSessionData.fields_.mode_ == 3 && NetWinLobbyRows.rows_[row + 1].prefix_ == -1) {
-            continue;
-        }
-
-        // The lock chip: the chosen faction's own id field against the
-        // record's claim dword, only while the eighth word is 2 or 3.
-        const signed char mode = NetWinLobbyRows.rows_[row + 1].faction_or_color_;
-        int locked = 0;
-        if (NetWinSessionData.fields_.mode_ == 2 || NetWinSessionData.fields_.mode_ == 3) {
-            if (mode != -1) {
-                const unsigned long owned = faction_records_->records_[mode].owner_;
-                if (owned != 0 && owned != NetWinLobbyRows.rows_[row + 1].owner_) {
-                    locked = 1;
-                }
-            }
-        } else if (NetWinLobbyRows.rows_[row + 1].owner_ != 0) {
-            locked = 1;
-        }
-        if (locked) {
-            g_IFACE_LOCK_SPRITES[1].draw(this, g_IFACE_LOCK_SPRITES[1].transparent_index(),
-                                         setup_rects_[row + 27].left + 1, setup_rects_[row + 27].top, 1, 1);
-        } else {
-            g_IFACE_LOCK_SPRITES[0].draw(this, g_IFACE_LOCK_SPRITES[0].transparent_index(),
-                                         setup_rects_[row + 27].left + 1, setup_rects_[row + 27].top, 1, 1);
-        }
-
-        RECT field = setup_rects_[row + 6];
-        if (NetWinSessionData.fields_.mode_ == 0 || NetWinSessionData.fields_.mode_ == 1) {
-            if (row + 1 == NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id_)) {
-                Sprite &arrow = g_IFACE_MP_COMBO_ARROW_SPRITES[0];
-                arrow.draw(this, arrow.transparent_index(),
-                           field.right - 0xA,
-                           field.top
-                               + (field.bottom - arrow.height() - field.top)
-                                     / 2);
-            }
-        }
-
-        Buffer::set_font(find_font(0xE, 1), 0, 0, 0);
-        Buffer::set_text_color(get_player_color(row + 1), 0, 1, 1);
-        // The name field: the rectangle again, inset by four.
-        field = setup_rects_[row + 6];
-        field.left += 4;
-        field.right -= 4;
-        Buffer::set_clip(&field);
-
-        StringTemp[0] = 0;
-        if (NetWinLobbyRows.rows_[row + 1].prefix_ == -1) {
-            strcat(StringTemp, "Computer");
-        } else {
-            strcat(StringTemp,
-                   NetDaemonNet.get_player_name(NetDaemonNet.process_slots_[row + 1].pid_));
-        }
-        if (NetWinLobbyRows.rows_[row + 1].faction_or_color_ != -1) {
-            strcat(StringTemp, SocialWinColonSpaceText);
-            strcat(StringTemp, BufferJoinSpace);
-            strcat(StringTemp, NetWinLobbyRows.rows_[row + 1].leader_name_);
-            // Count the earlier rows whose name text matches, and append
-            // the tally when there is one.
-            int matches = 0;
-            for (int seen = 0; seen < row; ++seen) {
-                if (strcmp(NetWinLobbyRows.rows_[seen + 1].leader_name_,
-                           NetWinLobbyRows.rows_[row + 1].leader_name_) == 0) {
-                    ++matches;
-                }
-            }
-            if (matches != 0) {
-                char tally[0x50];
-                _itoa(matches, tally, 10);
-                strcat(StringTemp, tally);
-            }
-        }
-        Buffer::write_l(StringTemp, &field);
-        Buffer::restore_clip();
-
-        // 4807B7: the union lands in the text rectangle.
-        ::UnionRect(&field, &setup_rects_[row + 36], &setup_rects_[row + 6]);
-
-        spot_.add(row, 2, &setup_rects_[row + 36]);
-        if (NetWinSessionData.fields_.mode_ == 0 || NetWinSessionData.fields_.mode_ == 1) {
-            spot_.add(row, 2, &setup_rects_[row + 6]);
-        }
-        spot_.add(row, 5, &setup_rects_[row + 27]);
-        soft_update(&field);
+    if (StringTemp != 0) {
+        Buffer::write_cent_l(StringTemp, &banner,
+                             strlen(StringTemp));
     }
 
-    if (NetDaemonNet.primary_state_.leading_words_[0] == 0) {
-        // Not connected: the left button's label follows the local row's
-        // ready byte (480 8A9).
-        flatButton1_.set_name(StringTable.get(
-            NetWinLobbyRows.rows_[pid_idx].ready_or_occupied_ != 0
-                ? Labels.strings_ptr[0x1054 / 4]
-                : Labels.strings_ptr[0x1050 / 4]));
-        flatButton1_.redraw();
-    }
+    draw_custom_rules();
+    Buffer::box_sprite(&setup_rects_[45],
+                       &InterfaceBoxStyles[3]);
+    Buffer::box_sprite(&setup_rects_[44],
+                       &InterfaceBoxStyles[0]);
+    Buffer::box_sprite(&setup_rects_[43],
+                       &InterfaceBoxStyles[0]);
+    draw_player_names();
+    draw_diffs();
+    draw_factions();
+    draw_session_info();
+    soft_update();
 }
 
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x0047F960 0x0047FE30 0x0047FE78 0x0047FC02
+
+
+
+
+// ---------------------------------------------------------------------------
+// DEFINED IN THE HEADER, CLAIMED HERE.
+//
+// These pieces are written in-class so the image's own inlining reproduces -
+// a constructor or destructor the compiler is expected to fold into its
+// caller. A marker cannot live beside them: `decomp.reader` globs `*.cpp`
+// and `*.c`, and a comparison compiles a TRANSLATION UNIT, so a marker in a
+// header could be neither read nor measured. VC6 emits each of them into
+// this unit's object as its own COMDAT anyway, which is what the comparison
+// pulls out, and the `body` fact says where to go to edit one.
+//
+// The ratchet still covers the header: this unit includes it, so breaking an
+// in-class body here fails the claim below. Measured, not assumed.
+// ---------------------------------------------------------------------------
+
 /*
-Purpose: Paint the custom-rules panel: the panel and title frames, the
-         centred title, and the eighteen RULES-text rows - each a checkbox
-         glyph whose state is one ability/allowed bit of the custom-rules
-         words (the bit per row in the image's own jump-table order), the
-         row's label from the RULES text section, coloured by its state, and
-         the row handed to the spot list as a type-1 icon when the gate word
-         is set. The standing free-technology checkbox (row id 100, the
-         inverted 0x10 bit) is drawn before the text opens; row 15 draws
-         nothing; after row 7 the walk jumps to the second column.
-// ORIGINAL: 0x0047F960 ?draw_custom_rules@NetWin@@QAEXXZ 0x0047F960-0x0047FE2E FILE
-// symbol    ?draw_custom_rules@NetWin@@QAEXXZ
-// size      1230 bytes
-// prototype void (__thiscall ?draw_custom_rules@NetWin@@QAEXXZ)(NetWin* this)
-// callers   1   call targets   15
+// ORIGINAL: 0x00481C50 ??0NetWin@@QAE@XZ 0x00481C50-0x00481D08;0x00657491-0x006574E9 BYTE_EXACT
+// size      272 bytes
+// prototype void (__thiscall ??0NetWin@@QAE@XZ)(NetWin* this)
+// callers   1   call targets   6
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
-// calls     0x005882F0 0x005BECA0 0x005DAC70 0x005DACB0 0x005DCF40 0x005DD130 0x005E2DD3 0x005E4B9A 0x005FA960 0x005FAA90 0x005FD530 0x005FD570 0x006169A0 0x006453E0 0x00645470
-// Homed from src/recovered/units/0047f960.cpp.
+// calls     0x005D4CF0 0x005FA860 0x00607CF0 0x0060E670 0x00614E50 0x00629110
+*/
+
+// The six subobjects (GraphicWin base, then spot_/stringBox_/editBox_/
+// checkBox_/flatButton1_/flatButton2_, in declaration order) construct via
+// the implicit base+member-init sequence; 0x005D4CF0 is `?construct@
+// GraphicWin@@QAEXXZ`, a construct() method (see basebutton.cpp's own
+// `?construct@BaseButton@@QAEXXZ`), which the trivial `GraphicWin() { ; }`
+// base ctor cannot reach implicitly, so it is called explicitly here.
+//
+// TRIED: byte-exact is not reachable from this marker alone.
+// StringBox()/CheckBox() are still trivial stubs (0x00629110/0x0060E670
+// unfilled) and EditBox() has no declared constructor at all - none of the
+// three are among this pass's seven targets, so the image's calls to them
+// cannot be reproduced from here. CheckBox's own call also pushes an extra
+// `1` (a virtually-inherited GraphicWin's hidden most-derived flag, added
+// automatically by the compiler once CheckBox::CheckBox() takes it - not
+// reachable while checkBox_'s constructor is the current no-arg stub).
+NetWin::NetWin() {
+    // The two vtable stores the old hand body spelled at [this] (0x0066CCEC)
+    // and [this+0x444] (0x0066CCE4) are the compiler's now: NetWin is
+    // most-derived through GraphicWin's Win/Buffer base pair, and its real
+    // constructor installs both vptrs itself. The two scalar clears below are
+    // the body's own work - 0x772C and 0x7730, the faction-record blocks.
+    faction_records_ = 0;
+    faction_records_copy_ = 0;
+}
+
+/*
+Purpose: Tear the setup dialog's session state down: drop both faction-record
+         blocks, reset the two dialog words at 0x761C/0x7620 to -1, and close
+         the embedded controls - the spot list, the message list, the edit
+         box, the check box and the front flat button's slot-90 reset.
+// ORIGINAL: 0x00481D10 ?close@NetWin@@QAEXXZ 0x00481D10-0x00481D9C FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/unrecovered/00481d10.cpp"], "reason": "Retain the existing source implementation and complete original mapping. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// size      140 bytes
+// prototype void (__thiscall ?close@NetWin@@QAEXXZ)(NetWin* this)
+// callers   0   call targets   5
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FA830 0x0060E7C0 0x00614F30 0x00629210 0x00644EF2
+// indirect  0x00481D94
+// Homed from src/unrecovered/00481d10.cpp.
+Return Value: n/a
+Status: Coverage transcription - unclaimed body (the preserved seed keeps its
+        own FILE BYTE_EXACT claim until this converges)
+*/
+void NetWin::close() {
+    if (faction_records_ != 0) {
+        free(faction_records_);
+        faction_records_ = 0;
+    }
+    if (faction_records_copy_ != 0) {
+        free(faction_records_copy_);
+        faction_records_copy_ = 0;
+    }
+    field_761C_ = 0xFFFFFFFF;
+    field_7620_ = 0xFFFFFFFF;
+    spot_.shutdown();
+    stringBox_.close();
+    editBox_.close();
+    checkBox_.close();
+    flatButton1_.close();
+}
+
+/*
+Purpose: Copy one faction record's name/title block into the lobby row
+         carried by the received packet: six text fields land in its named
+         members and the leader-gender byte in tail_[0]. Slot -1 instead
+         re-reads just noun_faction_ through the string table, for the row
+         the scenario file's own faction entry describes.
+// ORIGINAL: 0x00481DA0 ?fill_player@NetWin@@QAEXPAUPlayerData@@H@Z 0x00481DA0-0x00481E8D FILE BYTE_EXACT
+// symbol    ?fill_player@NetWin@@QAEXPAUNetWinLobbyRow@@H@Z
+// size      237 bytes
+// prototype void (__thiscall ?fill_player@NetWin@@QAEXPAUPlayerData@@H@Z)(NetWin* this, PlayerData*, int)
+// callers   2   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00644EF2
+// Homed from src/unrecovered/00481da0.cpp.
+Return Value: n/a
+*/
+void NetWin::fill_player(NetWinLobbyRow *lobby_row, int slot) {
+    if (slot == -1) {
+        lobby_row->noun_faction_[0] = 0;
+        strcat(lobby_row->noun_faction_,
+               StringTable.get(Labels.strings_ptr[0xFE4 / 4]));
+        return;
+    }
+    strcpy(lobby_row->leader_name_, faction_records_->records_[slot].leader_name_);
+    strcpy(lobby_row->formal_faction_name_,
+           faction_records_->records_[slot].formal_faction_name_);
+    strcpy(lobby_row->noun_faction_, faction_records_->records_[slot].noun_faction_);
+    strcpy(lobby_row->adjective_faction_,
+           faction_records_->records_[slot].adjective_faction_);
+    strcpy(lobby_row->leader_title_, faction_records_->records_[slot].leader_title_);
+    strcpy(lobby_row->adjective_leader_,
+           faction_records_->records_[slot].adjective_leader_);
+    lobby_row->tail_[0] = faction_records_->records_[slot].leader_female_;
+}
+
+// 0x0090E778 / 0x0090E79C - the two words beside the seven records
+// config_players seeds: the eighth slot's dword and its mode byte.
+// 0x0090E8E0 - the ninth slot's colour/mode prefix: 0xFF, the colour byte
+// read from 0x93D4B0, 2 - with the zeroed pair at +4/+5, the mode bytes 2 at
+// +6..+0xA and the 0xFF at +0xB.
+// The original byte read at 0x0090E8E3 is options.time_control_ (+3), not a
+// separate ninth-row object.
+
+/*
+Purpose: Seed the seven base faction records of the static faction table.
+         Each record's colour/mode prefix is rewritten - 0xFF, 0, 2, 0xFF, 2,
+         with the dword at +0x177 cleared - the name, formal-name and leader
+         text copied out of the template record at the same index, the title
+         re-read through the string table, the +0x174 byte taken from the
+         template, and the trailing eighth/ninth slot words reset (the ninth
+         slot's prefix carrying the colour byte at 0x93D4B0). The image
+         writes the prefix twice per record - the second pass re-stores
+         0xFF/0xFF/2/0 over the same bytes - so only the net values land.
+// ORIGINAL: 0x00481E90 ?config_players@NetWin@@QAEXXZ 0x00481E90-0x00481FC9 FILE BYTE_EXACT
+// size      313 bytes
+// prototype void (__thiscall ?config_players@NetWin@@QAEXXZ)(NetWin* this)
+// callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006169A0 0x00645460
+// Homed from src/recovered/units/00481e90.cpp.
 Return Value: n/a
 Status: Coverage transcription - unclaimed body
 */
-void NetWin::draw_custom_rules() {
-    spot_.kill_type(1);
-    Buffer::box_sprite(&setup_rects_[47], &InterfaceBoxStyles[3]);
-    Buffer::box_sprite(&setup_rects_[46], &InterfaceBoxStyles[0]);
+void NetWin::config_players() {
+    unsigned char color = static_cast<unsigned char>(
+        NetDaemonNet.allocation_node().max_players_);
+    NetWinSessionData.fields_.mode_ = 0;
+    NetWinSessionData.fields_.scenario_text_wire_tail_[0] = 0;
+    NetWinSessionOptions.fields_.status_ = 0xFF;
+    NetWinSessionOptions.fields_.option_4_ = 0;
+    NetWinSessionOptions.fields_.option_5_ = 0;
+    NetWinSessionOptions.fields_.reserved_B_ = -1;
+    NetWinSessionOptions.fields_.player_count_ = color;
+    NetWinSessionOptions.fields_.difficulty_ = 2;
+    NetWinSessionOptions.fields_.planet_size_ = 2;
+    NetWinSessionOptions.fields_.ocean_coverage_ = 2;
+    NetWinSessionOptions.fields_.erosion_ = 2;
+    NetWinSessionOptions.fields_.native_life_ = 2;
+    NetWinSessionOptions.fields_.cloud_cover_ = 2;
 
-    StringTemp[0] = 0;
-    strcat(StringTemp, label_get(0xF9C / 4));
-    CharUpperA(StringTemp);
-    Buffer::set_font(find_font(0xE, 1), 0, 0, 0);
-    Buffer::set_text_color(0xE1, -1, 1, 1);
-    Buffer::write_cent_l(StringTemp, &setup_rects_[46]);
-
-    Buffer::box_sprite(&setup_rects_[48], &InterfaceBoxStyles[0]);
-    Buffer::box_sprite(&setup_rects_[49], &InterfaceBoxStyles[0]);
-
-    // One row rectangle walks both columns; the checkbox sits at its left
-    // edge and the label 0x19 to the right of it. Native 47FA56 loads the
-    // left edge before the top.
-    const int left = setup_rects_[48].left - 0x14;
-    const int top = setup_rects_[48].top;
-    Buffer::set_font(find_font(0xC, 1), 0, 0, 0);
-    RECT rect;
-    rect.left = left;
-    rect.top = top;
-    rect.right = rect_width(&setup_rects_[48]) + left - 6;
-    rect.bottom = top + 0x12;
-
-    // The standing free-technology checkbox, spot id 100, and its label
-    // (native 47FB32..47FB98).
-    const int free_tech = (NetWinSessionOptions.fields_.rule_bits_c_ & 0x10) == 0;
-    Buffer *buffer = this;
-    Sprite &standing = g_IFACE_CLOSE_X_SPRITES[free_tech ? 2 : 0];
-    standing.draw(buffer, left, top);
-    if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
-        spot_.add(0x64, 1, rect.left, rect.top, rect_width(&rect),
-                  rect_height(&rect));
+    for (int i = 1; i < 8; i++) {
+        NetWinLobbyRows.rows_[i].reset();
+        NetWinLobbyRows.rows_[i].prefix_ = -1;
+        NetWinLobbyRows.rows_[i].faction_or_color_ = -1;
+        NetWinLobbyRows.rows_[i].field_2_ = NetWinSessionOptions.fields_.difficulty_;
+        NetWinLobbyRows.rows_[i].ready_or_occupied_ = 0;
+        strcpy(NetWinLobbyRows.rows_[i].leader_name_, Players[i].name_leader);
+        strcpy(NetWinLobbyRows.rows_[i].formal_faction_name_, Players[i].formal_name_faction);
+        strcpy(NetWinLobbyRows.rows_[i].noun_faction_,
+               StringTable.get(Labels.strings_ptr[0xFE4 / 4]));
+        strcpy(NetWinLobbyRows.rows_[i].adjective_faction_, Players[i].adj_name_faction);
+        strcpy(NetWinLobbyRows.rows_[i].leader_title_, Players[i].title_leader);
+        strcpy(NetWinLobbyRows.rows_[i].adjective_leader_, Players[i].adj_leader);
+        NetWinLobbyRows.rows_[i].tail_[0] = static_cast<uint8_t>(Players[i].is_leader_female);
     }
-    rect.left += 0x19;
-    if (free_tech) {
-        Buffer::set_text_color(0xDE, -1, 1, 1);
-    } else {
-        Buffer::set_text_color(0xE4, -1, 1, 1);
-    }
-    char text[0x100];
-    text[0] = 0;
-    strcat(text, label_get(0x10A4 / 4));
-    strcat(text, ".");
-    Buffer::write_l(text, &rect);
-    rect.left -= 0x19;
-    rect.top += 0x14;
-    rect.bottom += 0x14;
+}
+// RECOVERY_OBJECT: v1 0x00811E38 ?NetWinWindowTitleInitialText@@3DA
+char NetWinWindowTitleInitialText;
 
-    if (X_text_open(ScriptPopupFile, "RULES") != 0) {
+// setup_faction_data reads the same 0x00691AFC pointer slot as the rules
+// loader. AlphaxFileID in alpha.cpp owns it; this TU does not own an alias
+// into the old executable's storage.
+
+// Historical call-boundary attempt: ordinary /O2 /Oi memcpy expanded to
+// rep movsd; the former memcpy_call wrapper's measured result is retained in
+// setup_faction_data's LEVER note. The mapped bodies now use narrow direct
+// CRT-call pragmas instead of a file-local forwarding helper.
+
+// ---- fixed bindings the dialog bodies reach -------------------------------
+
+// 0x0093D4F8 is AlphaNet::player_count_ inside NetDaemonNet. Lobby scans and
+// modal callbacks read it at their original sites, including between callbacks.
+
+// Original 0x0090DB98 begins the eight NetWinLobbyRows (0x17C stride).
+// Original 0x0093D51C is NetDaemonNet.process_slots_[0].pid_, not a
+// separately allocated slot table: AlphaNet starts at 0x0093CD90, its
+// process_slots_ at +0x76C and each slot's pid_ at +0x20.
+// The unchecked readiness/owner scans below can leave the eight-row array.
+// In the original, index 8's ready-byte access aliases byte 1 of the existing
+// mode_ dword at 0x0090E779; its owner dword aliases rule_bits_b_ in the
+// existing session-options record at 0x0090E8F0. The scenario text's first
+// byte is separately named scenario_text_wire_tail_[0].
+// Those observations do not prove a ninth row or source-object adjacency;
+// preserving the original abnormal-count effects remains a layout obligation.
+
+// The faction's pcx path: an inline helper boundary the image's register
+// choice shows (the leading clear stays at the call site).
+static void netwin_pcx_name(const char *name) {
+    strcat(StringTemp, name);
+// RECOVERY_LITERAL: v1 0x00686940 0x00686945 $SG58185 0x00481FD0
+    strcat(StringTemp, ".pcx");
+}
+
+/*
+// ORIGINAL: 0x00481FD0 ?setup_faction_data@NetWin@@QAEXPAUMessageFactionData@@@Z 0x00481FD0-0x00482488;0x006574E9-0x006574FE FILE BYTE_EXACT
+// size      1229 bytes
+// prototype void (__thiscall ?setup_faction_data@NetWin@@QAEXPAUMessageFactionData@@@Z)(NetWin* this, MessageFactionData*)
+// callers   3   call targets   15
+// kind      game
+// flags     frame;purged_ok
+// calls     0x00586090 0x005D4510 0x005D7210 0x005D7410 0x005D7DE0 0x005E2210 0x005FD530 0x005FD550 0x005FD570 0x005FD670 0x00644EF2 0x00645460 0x00645470 0x00645930 0x00645E90
+// Homed 2026-09-04 out of src/recovered/units/00481fd0.cpp, which is deleted
+// by this: the body is a transcription of the image, not a recovery of it.
+//
+// CEILING: the local `Buffer buffer` needs unwind-safe destruction, so VC6
+// builds the SEH frame the image has (`push -1 / push 0x6574f4 / fs:[0]`)
+// and its funclet at 0x006574E9 - the flatbutton.cpp family. The frame turned
+// out NOT to be the blocker: this tree's prologue agrees with the image
+// through instruction 9, `sub esp,0xb30` included.
+//
+// LEVER: `memcpy_call`, the palette.cpp / path.cpp idiom. /O2 implies /Oi and
+//        VC6 expanded both copies to `shr ecx,2 / rep movsd` where the image
+//        calls 0x00645930 twice; the out-of-line forwarder took it 42/323 to
+//        51/323.
+// TRIED: the register swap that is now the first divergence. The image spills
+//        `this` to ESI and uses EDI as its zero register; this tree does the
+//        reverse (`push edi / mov edi,ecx`, then `xor esi,esi`), which shifts
+//        every subsequent instruction by one. Same callee-saved pair, same
+//        count of each, so nothing in the source model names the difference -
+//        recorded rather than ground on.
+Status: Homed 2026-09-04, MISMATCH 51 of 323 instructions
+*/
+void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
+    Buffer buffer;
+
+    // The image tests `message != 0` first and only then compares the two
+    // player ids - `cmp ebx,edi / je` past the id test - so a null message
+    // rebuilds from the text file whatever the ids say.
+    if (message_faction_data != 0 && NetDaemonNet.local_player_id() == NetDaemonNet.host_player_id_) {
         return;
     }
-    // '#' lines are comments and do not name a row.
-    char *line = text_get();
-    while (line[0] == '#') {
-        line = text_get();
+
+    if (faction_records_ != 0) {
+        free(faction_records_);
+        faction_records_ = 0;
     }
 
-    for (int row = 0; row < 0x12; ++row) {
-        unsigned int state;
-        switch (row) {
-        case 0:
-            state = NetWinSessionOptions.fields_.rule_bits_a_ & 0x800;
-            break;
-        case 1:
-            state = NetWinSessionOptions.fields_.rule_bits_a_ & 0x2;
-            break;
-        case 2:
-            state = NetWinSessionOptions.fields_.rule_bits_a_ & 0x8;
-            break;
-        case 3:
-            state = NetWinSessionOptions.fields_.rule_bits_a_ & 0x4;
-            break;
-        case 4:
-            state = NetWinSessionOptions.fields_.rule_bits_a_ & 0x1000;
-            break;
-        case 5:
-            state = NetWinSessionOptions.fields_.rule_bits_a_ & 0x1;
-            break;
-        case 6:
-            state = NetWinSessionOptions.fields_.rule_bits_a_ & 0x10;
-            break;
-        case 7:
-            state = NetWinSessionOptions.fields_.rule_bits_a_ & 0x20;
-            break;
-        case 8:
-            state = NetWinSessionOptions.fields_.rule_bits_a_ & 0x4000;
-            break;
-        case 9:
-            state = NetWinSessionOptions.fields_.rule_bits_a_ & 0x200;
-            break;
-        case 10:
-            state = NetWinSessionOptions.fields_.rule_bits_a_ & 0x40;
-            break;
-        case 11:
-            state = (NetWinSessionOptions.fields_.rule_bits_a_ & 0x100) == 0;
-            break;
-        case 12:
-            state = NetWinSessionOptions.fields_.rule_bits_a_ & 0x2000;
-            break;
-        case 13:
-            state = NetWinSessionOptions.fields_.rule_bits_a_ & 0x8000;
-            break;
-        case 14:
-            state = NetWinSessionOptions.fields_.rule_bits_a_ & 0x80;
-            break;
-        case 16:
-            state = NetWinSessionOptions.fields_.rule_bits_b_ & 0x800000;
-            break;
-        case 17:
-            state = NetWinSessionOptions.fields_.rule_bits_b_ & 0x1000000;
-            break;
-        default:
-            // Row 15 draws nothing - the separator line in the RULES text.
-            line = text_get();
-            continue;
-        }
+    if (message_faction_data != 0) {
+        // Fast path: the sender already has the table; clone it whole. The
+        // record count rides byte 0x11 and is clamped to a floor of 8 - the
+        // image compares the BYTE (`cmp al,8 / jae`), not a widened int.
+        int count =
+            message_faction_data->record_count_ < 8
+                ? 8
+                : static_cast<int>(message_faction_data->record_count_);
+        int size = count * 399 + 0x194;
+        faction_records_ = static_cast<NetWinFactionTable *>(mem_get(size));
+        memcpy(faction_records_, &message_faction_data->record_type_, size);
+        return;
+    }
 
-        Buffer *buffer = this;
-        Sprite &check = g_IFACE_CLOSE_X_SPRITES[state != 0 ? 2 : 0];
-        check.draw(buffer, check.transparent_index(), rect.left, rect.top);
-        if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
-            spot_.add(row, 1, rect.left, rect.top, rect_width(&rect),
-                      rect_height(&rect));
+    // Slow path: rebuild the table from the localized faction text. The
+    // CUSTOMFACTIONS count is discovered by walking until text_item is empty.
+    int custom_count = 0;
+// RECOVERY_LITERAL: v1 0x00686908 0x00686917 $SG58200 0x00481FD0
+    if (text_open(AlphaxFileID, "CUSTOMFACTIONS") == 0) {
+        text_get();
+        while (*text_item() != 0) {
+            custom_count++;
+            text_get();
         }
-        rect.left += 0x19;
-        if (line != 0) {
-            if (state != 0) {
-                Buffer::set_text_color(0xDE, -1, 1, 1);
-            } else {
-                Buffer::set_text_color(0xE4, -1, 1, 1);
+        if (custom_count >= 0) {
+            if (custom_count > 10) {
+                custom_count = 10;
             }
-            Buffer::write_l(line, &rect, strlen(line));
-        }
-        rect.left -= 0x19;
-        if (row == 7) {
-            // The second column: back to the top, 0x18A to the right.
-            rect.left += 0x18A;
-            rect.right += 0x18A;
-            rect.top -= 0xA0;
-            rect.bottom -= 0xA0;
         } else {
-            rect.top += 0x14;
-            rect.bottom += 0x14;
+            custom_count = 0;
         }
-        line = text_get();
     }
+
+    // 0xe base factions plus the custom ones. The allocation never holds
+    // fewer than 8 records, but the image stores and walks the unclamped
+    // count (482102/48211F/48243C).
+    int record_count = custom_count + 0xe;
+    int record_size = (record_count >= 8 ? record_count : 8) * 399 + 0x194;
+
+    faction_records_ =
+        static_cast<NetWinFactionTable *>(mem_get(record_size));
+    faction_records_copy_ =
+        static_cast<NetWinFactionTable *>(mem_get(record_size));
+
+    faction_records_->record_count_ = static_cast<uint8_t>(record_count);
+    faction_records_->record_type_ = 7;
+// RECOVERY_LITERAL: v1 0x00686918 0x00686921 $SG58213 0x00481FD0
+    if (text_open(AlphaxFileID, "FACTIONS") != 0) {
+        return;
+    }
+    // Filenames fill consecutive records, while each section's active flags
+    // restart at record 0, as in the original.
+    int name_index = 0;
+    int record_index;
+    for (record_index = 0; record_index < 7; ++record_index) {
+        faction_records_->records_[record_index].active_ = 1;
+        text_get();
+        strcpy(faction_records_->records_[name_index++].filename_, text_item());
+    }
+// RECOVERY_LITERAL: v1 0x00686924 0x00686930 $SG58220 0x00481FD0
+    if (text_open(AlphaxFileID, "NEWFACTIONS") != 0) {
+        return;
+    }
+    for (record_index = 0; record_index < 7; ++record_index) {
+        faction_records_->records_[record_index].active_ = 1;
+        text_get();
+        strcpy(faction_records_->records_[name_index++].filename_, text_item());
+    }
+// RECOVERY_LITERAL: v1 0x00686930 0x0068693F $SG58225 0x00481FD0
+    if (text_open(AlphaxFileID, "CUSTOMFACTIONS") != 0) {
+        return;
+    }
+    for (record_index = 0; record_index < custom_count; ++record_index) {
+        faction_records_->records_[record_index].active_ = 1;
+        text_get();
+        strcpy(faction_records_->records_[name_index++].filename_, text_item());
+    }
+
+    // Each record is then re-read from its own file - the faction name IS the
+    // file id - to pull the leader titles, the noun and the colour pixel.
+    Player player;
+    for (record_index = 0; record_index < record_count; ++record_index) {
+        const int opened = text_open(faction_records_->records_[record_index].filename_,
+                                     faction_records_->records_[record_index].filename_);
+        if (opened != 0) {
+            return;
+        }
+        faction_records_->records_[record_index].active_ = 1;
+        // The image stores text_open's zero result as the owner dword.
+        faction_records_->records_[record_index].owner_ = opened;
+
+        text_get();
+        text_item();
+        text_item();
+        strncpy(faction_records_->records_[record_index].leader_name_, text_item(), 0x18);
+        faction_records_->records_[record_index].leader_name_[0x17] = 0;
+
+        StringTemp[0] = 0;
+        netwin_pcx_name(faction_records_->records_[record_index].filename_);
+
+        if (buffer.load_pcx(StringTemp, 0, 0xa, 0xec) != 0) {
+// RECOVERY_LITERAL: v1 0x00686948 0x00686954 $SG58236 0x00481FD0
+            buffer.load_pcx("faction.pcx", 0, 0xa, 0xec);
+        }
+        faction_records_->records_[record_index].color_ =
+            static_cast<uint8_t>(buffer.get_pixel(4, 0x2f3));
+
+        // read_faction fills the Player from the faction's own file; its
+        // strings are copied back into the record, and the leader-gender
+        // flag crosses the 0x190-byte row stride.
+        strcpy(player.filename, faction_records_->records_[record_index].filename_);
+        strcpy(player.search_key, faction_records_->records_[record_index].filename_);
+        read_faction(&player, 0);
+        strcpy(faction_records_->records_[record_index].leader_name_, player.name_leader);
+        strcpy(faction_records_->records_[record_index].formal_faction_name_,
+               player.formal_name_faction);
+        strcpy(faction_records_->records_[record_index].noun_faction_, player.noun_faction);
+        strcpy(faction_records_->records_[record_index].adjective_faction_,
+               player.adj_name_faction);
+        strcpy(faction_records_->records_[record_index].leader_title_, player.title_leader);
+        strcpy(faction_records_->records_[record_index].adjective_leader_,
+               player.adj_leader);
+        faction_records_->records_[record_index].leader_female_ =
+            static_cast<unsigned char>(player.is_leader_female);
+    }
+
     text_close();
-}
-
-/*
-Purpose: Paint the difficulty rows: one framed row per base faction record
-         (the box sprite, the combo-arrow chip for the player's own slot, the
-         difficulty name drawn left-aligned inside an inset field, and the
-         row handed to the spot list as a type-4 icon). The icon walk stops
-         early while the eighth slot word says 3 and the faction-record
-         block's count byte covers fewer rows, and a 0xFF-prefixed record
-         keeps its frame but no content.
-// ORIGINAL: 0x00480180 ?draw_diffs@NetWin@@QAEXXZ 0x00480180-0x0048036F FILE BYTE_EXACT
-// size      495 bytes
-// prototype void (__thiscall ?draw_diffs@NetWin@@QAEXXZ)(NetWin* this)
-// callers   1   call targets   13
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x0047B380 0x004E25E0 0x005882F0 0x005D8000 0x005DAC70 0x005DACB0 0x005DCF40 0x005E2DD3 0x005E4B9A 0x005FA960 0x005FAA90 0x006169A0 0x006453E0
-// Homed from src/recovered/units/00480180.cpp.
-Return Value: n/a
-Status: Coverage transcription - unclaimed body
-*/
-void NetWin::draw_diffs() {
-    spot_.kill_type(4);
-    for (int index = 0; index < 7; ++index) {
-        if (NetWinSessionData.fields_.mode_ == 3
-            && index >= faction_records_->record_type_) {
-            break;
-        }
-        RECT *rect = &setup_rects_[20 + index];
-        Buffer::box_sprite(rect, &InterfaceBoxStyles[0]);
-        if (NetWinSessionData.fields_.mode_ == 3
-            && NetWinLobbyRows.rows_[index + 1].prefix_ == -1) {
-            continue;
-        }
-
-        RECT field = *rect;
-        // The combo-arrow chip: the player's own slot, or - with the two ids
-        // still equal - the row whose prefix is the 0xFF default.
-        int slot = index + 1;
-        if (slot == NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id())
-            || (NetDaemonNet.local_player_id() == NetDaemonNet.host_player_id_
-                && NetWinLobbyRows.rows_[index + 1].prefix_ == -1)) {
-            Sprite &arrow = g_IFACE_MP_COMBO_ARROW_SPRITES[0];
-            arrow.draw(this, arrow.transparent_index(),
-                       field.right - 0xA,
-                       field.top
-                           + (field.bottom - arrow.height() - field.top) / 2);
-        }
-
-        Buffer::set_font(find_font(0xE, 1), 0, 0, 0);
-        Buffer::set_text_color(get_player_color(slot), 0, 1, 1);
-        field = *rect;
-        field.left += 4;
-        field.right -= 4;
-        Buffer::set_clip(&field);
-        char *name = StringTable.get(
-            Difficulty[static_cast<int8_t>(NetWinLobbyRows.rows_[index + 1].field_2_)]);
-        if (name != 0) {
-            Buffer::write_l(name, &field, strlen(name));
-        }
-        Buffer::restore_clip();
-        spot_.add(index, 4, rect->left, rect->top,
-                  rect->right - rect->left, rect->bottom - rect->top);
-    }
-}
-
-/*
-Purpose: Paint the faction rows: the same framed-row walk as draw_diffs one
-         panel over - box sprite, chip for the player's own slot, the row
-         clipped to a vertically inset field - with the row's text built from
-         the allocated faction record the row's mode byte names (its noun at
-         +0x62 of the 0x190-stride record) or the string table when the byte
-         is -1, and the static table's title appended after ": " whenever it
-         differs. Each row lands in the spot list as a type-3 icon.
-// ORIGINAL: 0x0047FED0 ?draw_factions@NetWin@@QAEXXZ 0x0047FED0-0x00480173 FILE
-// size      675 bytes
-// prototype void (__thiscall ?draw_factions@NetWin@@QAEXXZ)(NetWin* this)
-// callers   1   call targets   15
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x0047B380 0x004E25E0 0x005882F0 0x005D8000 0x005DAC70 0x005DACB0 0x005DCF40 0x005E2DD3 0x005E4B9A 0x005FA960 0x005FAA90 0x006169A0 0x006453E0 0x00645470 0x00645660
-// Homed from src/recovered/units/0047fed0.cpp.
-Return Value: n/a
-Status: Coverage transcription - unclaimed body
-*/
-void NetWin::draw_factions() {
-    spot_.kill_type(3);
-    // Native 47FEF2 walks rows_[index + 1].noun_faction_ (0x90DD59).
-    for (int index = 0; index < 7; ++index) {
-        if (NetWinSessionData.fields_.mode_ == 3
-            && index >= faction_records_->record_type_) {
-            break;
-        }
-        Buffer::box_sprite(&setup_rects_[13 + index], &InterfaceBoxStyles[0]);
-        if (NetWinSessionData.fields_.mode_ == 3
-            && NetWinLobbyRows.rows_[index + 1].prefix_ == -1) {
-            continue;
-        }
-
-        int mode = NetWinLobbyRows.rows_[index + 1].faction_or_color_;
-        RECT field = setup_rects_[13 + index];
-        if (index + 1 == NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id_)
-            || (NetDaemonNet.local_player_id_ == NetDaemonNet.host_player_id_
-                && NetWinLobbyRows.rows_[index + 1].prefix_ == -1)) {
-            Sprite &arrow = g_IFACE_MP_COMBO_ARROW_SPRITES[0];
-            arrow.draw(this, arrow.transparent_index(),
-                       field.right - 0xA,
-                       field.top
-                           + (field.bottom - arrow.height() - field.top) / 2);
-        }
-
-        Buffer::set_font(find_font(0xE, 1), 0, 0, 0);
-        Buffer::set_text_color(get_player_color(index + 1), 0, 1, 1);
-        field.right -= 0xB;
-        field.left += 4;
-        Buffer::set_clip(&field);
-
-        StringTemp[0] = 0;
-        // Native 47FFF3/480043: both name branches skip or join one shared
-        // ": <noun>" append.
-        if (mode != -1) {
-            strcat(StringTemp, faction_records_->records_[mode].noun_faction_);
-            if (strcmp(faction_records_->records_[mode].noun_faction_,
-                       NetWinLobbyRows.rows_[index + 1].noun_faction_) == 0) {
-                goto named;
-            }
-            strcat(StringTemp, SocialWinColonSpaceText);
-        } else {
-            strcat(StringTemp, label_get(0xFE4 / 4));
-            if (strcmp(label_get(0xFE4 / 4),
-                       NetWinLobbyRows.rows_[index + 1].noun_faction_) == 0) {
-                goto named;
-            }
-            strcat(StringTemp, SocialWinColonSpaceText);
-        }
-        strcat(StringTemp, BufferJoinSpace);
-        strcat(StringTemp, NetWinLobbyRows.rows_[index + 1].noun_faction_);
-    named:
-        Buffer::write_l(StringTemp, &field);
-        Buffer::restore_clip();
-        spot_.add(index, 3, setup_rects_[13 + index].left,
-                  setup_rects_[13 + index].top,
-                  setup_rects_[13 + index].right - setup_rects_[13 + index].left,
-                  setup_rects_[13 + index].bottom - setup_rects_[13 + index].top);
-    }
-}
-
-
-static void pick_send_state() {
-    send_session_packet(NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id()), 0);
-}
-
-// Rule clicks load the destination before copying (47B9B5). The number and
-// planet pickers use pick_send_state; their image's edx-vs-eax choice for
-// the destination load remains an open register tie.
-static void pick_send_state_with_captured_target() {
-    NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id());
-    const int target = NetDaemonNet.host_player_id_;
-    NetWinSessionOptionsPacket packet;
-    packet.options_ = NetWinSessionOptions.fields_;
-    packet.opcode_ = 0x2F02;
-    NetDaemonNet.send(&packet, sizeof(packet), target, 1);
-}
-
-// The option pick itself: mouse position to screen coordinates, then the
-// popup run modally with the daemon callback; the answer is the chosen item
-// index, negative when the pick was dismissed.
-// Scalar pickers keep x/y in their own frame: the image never reuses those
-// slots for the teardown temporaries.
-static int pick_answer_at(NetWin &self, PopMenu &pop_menu, int *x, int *y) {
-    self.get_mouse_pos(x, y);
-    self.client_to_screen(x, y);
-    return pop_menu.exec(*x, *y, NetWin::modal_callback_daemon);
-}
-
-/*
-Purpose: Dispatch a lobby spot click to the map/options/faction/player action
-         represented by that spot. Rule toggles update the typed session state
-         and send the opcode/options-only 0x2F02 state packet. The original
-         leaves the intervening header bytes uninitialized.
-// ORIGINAL: 0x0047B760 ?on_left_click@NetWin@@QAEXHH@Z 0x0047B760-0x0047BAF6 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned47B9C7/47B9D7/47B9DD: copy six option dwords to packet+10, write opcode word2F02, send28. Shared pick_send_state preserves these writes; header+2..F remains unspecified."], "reason": "Recover the original options packet through genuine NetWin state and typed packet storage."}
-// symbol    ?on_left_click@NetWin@@UAEXHH@Z
-*/
-void NetWin::on_left_click(int x, int y) {
-    int spot_position;
-    int spot_type;
-    spot_.check(x, y, &spot_position, &spot_type);
-
-    switch (spot_type) {
-    case 0:
-        switch (spot_position) {
-        case 3:
-            if (NetDaemonNet.primary_state_.leading_words_[0] != 0) pick_time();
-            return;
-        case 0:
-            if (NetDaemonNet.primary_state_.leading_words_[0] != 0) pick_map();
-            return;
-        case 1:
-            if (NetDaemonNet.primary_state_.leading_words_[0] != 0) pick_num_players();
-            return;
-        case 2:
-            if (NetDaemonNet.primary_state_.leading_words_[0] != 0) pick_global_diff();
-            return;
-        case 4:
-            if (NetDaemonNet.primary_state_.leading_words_[0] != 0) pick_planet_size();
-            return;
-        case 5:
-            if (NetDaemonNet.primary_state_.leading_words_[0] != 0) pick_ocean();
-            return;
-        case 6:
-            if (NetDaemonNet.primary_state_.leading_words_[0] != 0) pick_erosion();
-            return;
-        case 7:
-            if (NetDaemonNet.primary_state_.leading_words_[0] != 0) pick_native();
-            return;
-        case 8:
-            if (NetDaemonNet.primary_state_.leading_words_[0] != 0) pick_clouds();
-            return;
-        }
-        return;
-    case 1:
-        if (NetDaemonNet.primary_state_.leading_words_[0] == 0) {
-            return;
-        }
-        switch (spot_position) {
-        case 100: NetWinSessionOptions.fields_.rule_bits_c_ ^= 0x10; break;
-        case 0: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x800; break;
-        case 1: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x2; break;
-        case 2: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x8; break;
-        case 3: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x4; break;
-        case 4: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x1000; break;
-        case 5: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x1; break;
-        case 6: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x10; break;
-        case 7: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x20; break;
-        case 8: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x4000; break;
-        case 9: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x200; break;
-        case 10: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x40; break;
-        case 11: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x100; break;
-        case 12: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x2000; break;
-        case 13: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x8000; break;
-        case 14: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x80; break;
-        case 16: NetWinSessionOptions.fields_.rule_bits_b_ ^= 0x800000; break;
-        case 17: NetWinSessionOptions.fields_.rule_bits_b_ ^= 0x1000000; break;
-        }
-        // Unknown selectors still send the unchanged options.
-        pick_send_state_with_captured_target();
-        return;
-    case 5:
-        if ((NetWinSessionData.fields_.mode_ == 0 || NetWinSessionData.fields_.mode_ == 1) &&
-            NetDaemonNet.process_slots_[spot_position + 1].pid_ ==
-                static_cast<unsigned long>(NetDaemonNet.local_player_id_)) {
-            pick_pass(0);
-        }
-        return;
-    case 2:
-        if (NetDaemonNet.process_slots_[spot_position + 1].pid_ ==
-            static_cast<unsigned long>(NetDaemonNet.local_player_id_)) {
-            pick_player();
-        }
-        return;
-    case 3:
-        if (NetDaemonNet.process_slots_[spot_position + 1].pid_ ==
-                static_cast<unsigned long>(NetDaemonNet.local_player_id_) ||
-            (NetWinLobbyRows.rows_[spot_position + 1].prefix_ == -1 &&
-             NetDaemonNet.local_player_id_ == NetDaemonNet.host_player_id_)) {
-            pick_faction(spot_position + 1);
-        }
-        return;
-    case 4:
-        if (NetDaemonNet.process_slots_[spot_position + 1].pid_ ==
-                static_cast<unsigned long>(NetDaemonNet.local_player_id_) ||
-            (NetWinLobbyRows.rows_[spot_position + 1].prefix_ == -1 &&
-             NetDaemonNet.local_player_id_ == NetDaemonNet.host_player_id_)) {
-            pick_diff(spot_position + 1);
-        }
-        return;
-    }
-}
-
-// ORIGINAL: 0x0047BBF0 ?pick_player@NetWin@@QAEXXZ 0x0047BBF0-0x0047C527;0x00656740-0x006568F9
-// RECOVERY_BINDING: v1 {"evidence": ["git:f929e9e6:src/unrecovered/0047bbf0.cpp", "pinned:0x0047BBF0-0x0047C527 reads Popup/BasePop +0x3100 input-poll state, copies the 0x17c row, selects the source row's faction byte, copies Player fields or ParseStrBuffer strings, and reaches packet construction only when signed slot >= 1", "source:src/netwin.h:NetWinLobbyRow and NetWinSessionData", "source:src/faction.h:Players and Player fields", "source:src/general.h:ParseStrBuffer", "source:src/basepop.h:Popup::input_poll_state and dialogs"], "reason": "Retain the substantive typed lobby-name editor and its complete original primary/exceptional mapping; retire the unannotated generated duplicate, not its unresolved radio/default-faction and seventh gender-field behavior. The seed's synthetic stack frame and manual widget teardown are hypotheses, not additional source owners or proof of native lifetime fidelity. Complete the native custom-name modal through the existing Popup, EditGroup, lobby-row, Player, ParseStrBuffer and typed single-row packet owners. Preserve the signed faction selector, unbounded strcpy operations, one-character case-insensitive gender test, accepted/cancel paths, and native signed slot >= 1 packet condition; retain the full original primary and exceptional spans."}
-// TRIED: historical scaffold git:f929e9e6:src/unrecovered/0047bbf0.cpp mixes an approximate
-// stack-frame reconstruction with untyped widget cleanup and custom/default
-// radio selection. This source recovers the typed six-field edit and outgoing
-// lobby update; its radio/default-faction branch still needs restoration.
-// RECOVERY_NOTE: The pinned modal branch, default/player copies, seventh gender
-// field, and signed-positive packet condition are now represented below using
-// the existing Popup, Player, ParseStrBuffer, and lobby packet owners.
-void NetWin::pick_player() {
-    // Native 47BC1B constructs the owner even on the saved-mode early exit.
-    Popup popup;
-    // Native 47BC2D..47BC4A resets the copy row after the popup exists.
-    NetWinLobbyRow updated;
-    updated.reset();
-    if (NetWinSessionData.fields_.mode_ == 3 || NetWinSessionData.fields_.mode_ == 2) {
-        return;
-    }
-    const int slot = NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id());
-
-    // Native scratch starts at EBP-41C, after the 537C-byte Popup, and
-    // precedes the first packet at EBP-31C. Recover that 100h accessed
-    // window, not an original array/padding declaration or overflow layout.
-    char gender_text[0x100];
-    strcpy(gender_text,
-           StringTable.get(NetWinLobbyRows.rows_[slot].tail_[0] != 0
-                               ? Labels.strings_ptr[0xB8C / 4]
-                               : Labels.strings_ptr[0xB88 / 4]));
-    popup.start(PopupStartCaption, "CUSTOMNAMES", -1, 0, 0x200044, 0);
-    {
-        char *label = label_get(0x2B8 / 4);
-        popup.dialogs().edit(label, NetWinLobbyRows.rows_[slot].leader_name_, 0x17);
-    }
-    {
-        char *label = label_get(0x2BC / 4);
-        popup.dialogs().edit(label, NetWinLobbyRows.rows_[slot].formal_faction_name_, 0x27);
-    }
-    {
-        char *label = label_get(0x2C0 / 4);
-        popup.dialogs().edit(label, NetWinLobbyRows.rows_[slot].noun_faction_, 0x17);
-    }
-    {
-        char *label = label_get(0x2C4 / 4);
-        popup.dialogs().edit(label, NetWinLobbyRows.rows_[slot].adjective_faction_, 0x17);
-    }
-    {
-        char *label = label_get(0x78C / 4);
-        popup.dialogs().edit(label, NetWinLobbyRows.rows_[slot].leader_title_, 0x17);
-    }
-    {
-        char *label = label_get(0x790 / 4);
-        popup.dialogs().edit(label, NetWinLobbyRows.rows_[slot].adjective_leader_, 0x17);
-    }
-    {
-        char *label = label_get(0x794 / 4);
-        popup.dialogs().edit(label, gender_text, 0x17);
-    }
-    popup.set_loc(0x1000, 0x1000);
-    if (popup.exec(0, NetWin::modal_callback_daemon) < 0) {
-        return;
-    }
-
-    memcpy(&updated, &NetWinLobbyRows.rows_[slot], 0x17C);
-    if (popup.input_poll_state() == 1) {
-        const int faction = updated.faction_or_color_;
-        if (faction != -1) {
-            const Player &player = Players[faction];
-            strcpy(updated.leader_name_, player.name_leader);
-            strcpy(updated.formal_faction_name_, player.formal_name_faction);
-            strcpy(updated.noun_faction_, player.noun_faction);
-            strcpy(updated.adjective_faction_, player.adj_name_faction);
-            strcpy(updated.leader_title_, player.title_leader);
-            strcpy(updated.adjective_leader_, player.adj_leader);
-            updated.tail_[0] =
-                static_cast<uint8_t>(player.is_leader_female);
-        } else {
-            // Native 47C073..47C13E interleaves six fresh lookups/copies.
-            strcpy(updated.leader_name_, StringTable.get(Labels.strings_ptr[0xFE4 / 4]));
-            strcpy(updated.formal_faction_name_, StringTable.get(Labels.strings_ptr[0xFE4 / 4]));
-            strcpy(updated.noun_faction_, StringTable.get(Labels.strings_ptr[0xFE4 / 4]));
-            strcpy(updated.adjective_faction_, StringTable.get(Labels.strings_ptr[0xFE4 / 4]));
-            strcpy(updated.leader_title_, StringTable.get(Labels.strings_ptr[0xFE4 / 4]));
-            strcpy(updated.adjective_leader_, StringTable.get(Labels.strings_ptr[0xFE4 / 4]));
-            updated.tail_[0] = 10; // Native 47C146, not a boolean default.
-        }
-    } else {
-        strcpy(updated.leader_name_, ParseStrBuffer[0].str);
-        strcpy(updated.formal_faction_name_, ParseStrBuffer[1].str);
-        strcpy(updated.noun_faction_, ParseStrBuffer[2].str);
-        strcpy(updated.adjective_faction_, ParseStrBuffer[3].str);
-        strcpy(updated.leader_title_, ParseStrBuffer[4].str);
-        strcpy(updated.adjective_leader_, ParseStrBuffer[5].str);
-        updated.tail_[0] = static_cast<uint8_t>(
-            _strnicmp(gender_text, StringTable.get(Labels.strings_ptr[0xB8C / 4]), 1) == 0);
-    }
-
-    // Native 47C1E8..47C268: sub_47b1d0 inline.
-    sub_47b1d0(slot, &updated);
-}
-
-// ORIGINAL: 0x0047C530 ?pick_faction@NetWin@@QAEXH@Z 0x0047C530-0x0047C965;0x006568F9-0x006569C4 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/recovered/units/0047c530.cpp:NetWin::pick_faction", "src/netwin.h:NetWinFactionRecord and NetWinLobbyRow", "src/netwin.cpp:NetWin::pick_pass and NetWinLobbySinglePacket", "Pinned47C819 clears EAX;47C854 stores it to [EBP-1A4], packet+8 relative to sent [EBP-1AC] at47C88A/47C89D. Opcode word/slot/row+10 are written; +2..3/+C..F remain untouched."], "reason": "Recover faction selection through the typed faction records, lobby rows, popup dialog and single-row packet."}
-void NetWin::pick_faction(int slot) {
-    PopMenu pop_menu;
-    // Native 47C5AA..47C5CC resets the copy row before init.
-    NetWinLobbyRow updated;
-    updated.reset();
-    pop_menu.init();
-
-    char *label = StringTable.get(Labels.strings_ptr[0xFE4 / 4]);
-    pop_menu.dialogs().item(label, 0);
-
-    const int count = faction_records_->record_count_;
-    for (int faction = 0; faction < count; ++faction) {
-        // Native 47C618 reloads the allocation, but not the captured count.
-        if (faction_records_->records_[faction].active_ == 0) {
-            continue;
-        }
-        if (NetWinSessionData.fields_.mode_ == 3 || NetWinSessionData.fields_.mode_ == 2) {
-            // Native 47C656 compares zero with a negative scan bound too.
-            int player;
-            for (player = 0; player < NetDaemonNet.player_count_; ++player) {
-                if (NetWinLobbyRows.rows_[player + 1].faction_or_color_ == faction) {
-                    break;
-                }
-            }
-            if (player != NetDaemonNet.player_count_) {
-                continue;
-            }
-        }
-        char *noun = faction_records_->records_[faction].noun_faction_;
-        pop_menu.dialogs().item(noun, faction + 1);
-    }
-
-    int x;
-    int y;
-    const int answer = pick_answer_at(*this, pop_menu, &x, &y);
-    if (answer < 0) {
-        return;
-    }
-
-    int chosen_faction;
-    if (answer < 64) {
-        chosen_faction = pop_menu.item_id(answer);
-    } else {
-        chosen_faction = -1;
-    }
-    --chosen_faction;
-    const int previous = NetWinLobbyRows.rows_[slot].faction_or_color_;
-    NetWinLobbyRows.rows_[slot].faction_or_color_ =
-        static_cast<int8_t>(chosen_faction);
-    if (pick_pass(1) == 0) {
-        NetWinLobbyRows.rows_[slot].faction_or_color_ =
-            static_cast<int8_t>(previous);
-        return;
-    }
-    NetWinLobbyRows.rows_[slot].faction_or_color_ =
-        static_cast<int8_t>(previous);
-
-    // Native 47C811 copies the restored row, then runs sub_47b1d0 inline.
-    memcpy(&updated, &NetWinLobbyRows.rows_[slot], 0x17C);
-    updated.faction_or_color_ = static_cast<int8_t>(chosen_faction);
-    sub_47b1d0(slot, &updated);
-}
-
-// ORIGINAL: 0x0047CF40 ?pick_diff@NetWin@@QAEXH@Z 0x0047CF40-0x0047D2F4;0x00656AED-0x00656BC5 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/recovered/units/0047cf40.cpp:NetWin::pick_diff", "src/netwin.cpp:pick_global_diff and sibling pickers", "src/netwin.cpp:NetWinLobbySinglePacket and NetWin::on_button_clicked", "Pinned47D0C7/47D0D0/47D0D6: opcode word, slot dword and +8 zero; copied row+10 and send18C. +2..3/+C..F are untouched."], "reason": "Recover the per-slot difficulty picker using the established popup objects, difficulty text table, typed lobby row and typed single-row packet."}
-void NetWin::pick_diff(int slot) {
-    PopMenu pop_menu;
-    NetWinLobbyRow row;
-    row.owner_ = 0;
-    row.prefix_ = -1;
-    row.ready_or_occupied_ = 0;
-    row.field_2_ = 0;
-    row.faction_or_color_ = -1;
-    row.field_4_ = 2;
-    pop_menu.init();
-
-    for (int index = 0; index < 6; ++index) {
-        char *label = StringTable.get(Difficulty[index]);
-        pop_menu.dialogs().item(label, index);
-    }
-
-    int x;
-    int y;
-    get_mouse_pos(&x, &y);
-    client_to_screen(&x, &y);
-    const int answer = pop_menu.exec(x, y, NetWin::modal_callback_daemon);
-    memcpy(&row, &NetWinLobbyRows.rows_[slot], sizeof(row));
-    if (answer >= 0) {
-        row.field_2_ = static_cast<uint8_t>(answer);
-    }
-    // 47D081: sub_47b1d0 inlined, its row reset and null test included.
-    sub_47b1d0(slot, &row);
-}
-
-// ORIGINAL: 0x0047D300 ?pick_map@NetWin@@QAEXXZ 0x0047D300-0x0047E003;0x00656BC5-0x00656D9D
-// RECOVERY_BINDING: v1 {"evidence": ["git:f929e9e6:src/unrecovered/0047d300.cpp", "source:src/netwin.h", "source:recovery/tests/test_netwin_pick_map_behavior.py", "Pinned47DC27..47DC79: full packet opcode word/slot=-1/+8 zero and A64 row bytes;47DC99..47DCC5: session168 bytes at+10 and opcode word only;47DCDC..47DCEF: leave opcode word only. Unwritten packet bytes remain unspecified."], "reason": "Retain the typed map/game picker with its complete original primary/exceptional mapping. The retired unannotated scaffold omitted the host session population, used an unconstructed scratch Dialogs receiver, and approximated the local widget aggregate. Its useful lifetime observation is that nested Popup/Scroll/FlatButton cleanup belongs to genuine member destruction, not independent manually staged objects; complete native cleanup fidelity remains an obligation."}
-// Historical observation from an earlier source state:
-// TRIED: the popup and load-map/game dispatch are transcribed; the scenario
-// host guard now uses LockEnableMask's live-faction byte. Choice zero still
-// lacks the original session-record population and is explicitly unfinished.
-
-// Current source evidence: this body populates and sends NetWinSessionData in
-// session_packet below (original 0x0047DC99 onward), and represents the original
-// full-lobby packet's local row normalization at 0x0047DBF1..0x0047DC1E below.
-void NetWin::pick_map() {
-    PopMenu menu;
-    Buffer faction_art;
-    const uint32_t initial_mode = field_7728_;
-    // Native 47D38F: set only after a saved game loads (47D796); gates the
-    // closing 0x2F0E packet.
-    int loaded_game = 0;
-    menu.init();
-    char *label = StringTable.get(Labels.strings_ptr[0x107C / 4]);
-    menu.dialogs().item(label, 0);
-    label = StringTable.get(Labels.strings_ptr[0x0FD8 / 4]);
-    menu.dialogs().item(label, 1);
-    label = StringTable.get(Labels.strings_ptr[0x0FDC / 4]);
-    menu.dialogs().item(label, 2);
-    label = StringTable.get(Labels.strings_ptr[0x0FE0 / 4]);
-    menu.dialogs().item(label, 3);
-
-    // Native 47D463: a cancelled pick skips to the session broadcast.
-    int x;
-    int y;
-    const int choice = pick_answer_at(*this, menu, &x, &y);
-    if (choice >= 0) {
-        if (choice == 0) {
-            const NetWinFactionTable *const source_records =
-                faction_records_copy_;
-            const int record_count = source_records->record_count_;
-            const unsigned int record_bytes =
-                static_cast<unsigned int>(record_count) * 399u + 0x194u;
-            memcpy(faction_records_, faction_records_copy_, record_bytes);
-
-            field_7728_ = 0;
-            NetWinSessionOptions.fields_.difficulty_ =
-                static_cast<uint8_t>(DefaultPrefs.difficulty);
-            NetWinSessionOptions.fields_.rule_bits_a_ = AlphaIniPrefs.rules;
-            NetWinSessionData.fields_.scenario_text_wire_tail_[0] = 0;
-            NetWinSessionOptions.fields_.status_ = 0xFF;
-            send_session_packet(
-                NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id_), 0);
-        } else {
-            GameDataLoadRequest = 1;
-            if (choice == 1) {
-                if (load_map() != 0) {
-                    return;
-                }
-            } else {
-                if (load_game(choice == 2, 0) != 0) {
-                    return;
-                }
-                if (choice == 2) {
-                    const int scenario_factions = bit_count(
-                        static_cast<int>(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & 0xFFFE));
-                    if (scenario_factions < NetDaemonNet.player_count_) {
-                        parse_num(scenario_factions, 0);
-                        X_pop("TOOMANYFORSCENARIO", 0);
-                        return;
-                    }
-                }
-                loaded_game = 1;
-            }
-
-            GameDataLoadRequest = 0;
-            if (field_7728_ != 0) {
-                NetWinFactionTable *const records = faction_records_;
-                // Native 47D7AD..47D7D0 copies all eight owners, slot 0 too.
-                for (int faction = 0; faction < 8; ++faction) {
-                    records->records_[faction].owner_ = PlayersData[faction].unk_102;
-                }
-
-                NetWinSessionOptions.fields_.option_4_ = static_cast<uint8_t>(
-                    MapLongitudeBounds / 2);
-                NetWinSessionOptions.fields_.option_5_ =
-                    static_cast<uint8_t>(MapLatitudeBounds);
-                NetWinSessionData.fields_.scenario_text_wire_tail_[0] = 0;
-
-                char *scenario_name = strrchr(
-                    loaded_file_path_, '\\');
-                if (scenario_name == nullptr) {
-                    scenario_name = loaded_file_path_;
-                } else {
-                    ++scenario_name;
-                }
-                strcat(NetWinSessionData.fields_.scenario_text_wire_tail_, scenario_name);
-            }
-
-            if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0) {
-                NetWinSessionOptions.fields_.rule_bits_c_ |= 0x10u;
-            } else {
-                NetWinSessionOptions.fields_.rule_bits_c_ &= ~0x10u;
-            }
-            NetWinSessionOptions.fields_.difficulty_ =
-                static_cast<uint8_t>(GameDataStateStorage.fields_.diff_level_current_);
-            NetWinSessionOptions.fields_.status_ =
-                GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
-            NetWinSessionOptions.fields_.rule_bits_a_ = GameDataStateStorage.fields_.game_rules_;
-            send_session_packet(
-                NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id()), 0);
-        }
-
-        if (field_7728_ != 0 && field_7728_ != 1) {
-            NetWinFactionTable *const records = faction_records_;
-            records->record_count_ = 8;
-            records->record_type_ = static_cast<uint8_t>(
-                bit_count(static_cast<int>(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & 0xFFFE)));
-            records->records_[0].active_ = 0;
-
-            // Native 47D8FE: the lobby row cursor advances only for live
-            // factions, packing them into the leading rows.
-            NetWinLobbyRow *row = &NetWinLobbyRows.rows_[1];
-            for (int player_slot = 1; player_slot < 8; ++player_slot) {
-                if ((NetWinSessionOptions.fields_.status_ & (1 << player_slot)) == 0) {
-                    faction_records_->records_[player_slot].active_ = 0;
-                    continue;
-                }
-
-                faction_records_->records_[player_slot].owner_ = PlayersData[player_slot].unk_102;
-                faction_records_->records_[player_slot].active_ = 1;
-                strcpy(faction_records_->records_[player_slot].filename_, Players[player_slot].filename);
-                // Native 47D959/47D96A copies the leader name twice.
-                strcpy(faction_records_->records_[player_slot].leader_name_, Players[player_slot].name_leader);
-                strcpy(faction_records_->records_[player_slot].leader_name_, Players[player_slot].name_leader);
-                strcpy(faction_records_->records_[player_slot].formal_faction_name_, Players[player_slot].formal_name_faction);
-                strcpy(faction_records_->records_[player_slot].noun_faction_, Players[player_slot].noun_faction);
-                strcpy(faction_records_->records_[player_slot].adjective_faction_, Players[player_slot].adj_name_faction);
-                strcpy(faction_records_->records_[player_slot].leader_title_, Players[player_slot].title_leader);
-                strcpy(faction_records_->records_[player_slot].adjective_leader_,
-                       Players[player_slot].adj_leader);
-                faction_records_->records_[player_slot].leader_female_ =
-                    static_cast<uint8_t>(Players[player_slot].is_leader_female);
-
-                StringTemp[0] = 0;
-                strcat(StringTemp, faction_records_->records_[player_slot].filename_);
-                strcat(StringTemp, ".pcx");
-                if (faction_art.load_pcx(StringTemp, 0, 0x0A, 0xEC) != 0) {
-                    faction_art.load_pcx("faction.pcx", 0, 0x0A, 0xEC);
-                }
-                faction_records_->records_[player_slot].color_ =
-                    static_cast<uint8_t>(faction_art.get_pixel(4, 0x2F3));
-
-                row->owner_ = 0;
-                row->faction_or_color_ = -1;
-                strcpy(row->leader_name_, Players[player_slot].name_leader);
-                strcpy(row->formal_faction_name_, Players[player_slot].formal_name_faction);
-                strcpy(row->noun_faction_,
-                       label_get(0xFE4 / 4));
-                strcpy(row->adjective_faction_, Players[player_slot].adj_name_faction);
-                strcpy(row->leader_title_, Players[player_slot].title_leader);
-                strcpy(row->adjective_leader_, Players[player_slot].adj_leader);
-                row->tail_[0] = static_cast<uint8_t>(Players[player_slot].is_leader_female);
-                ++row;
-            }
-            send_faction_data(-1);
-        } else {
-            if (initial_mode != 0 && initial_mode != 1) {
-                const NetWinFactionTable *const source_records =
-                    faction_records_copy_;
-                const unsigned int record_bytes =
-                    static_cast<unsigned int>(source_records->record_count_) *
-                        399u +
-                    0x194u;
-                memcpy(faction_records_, faction_records_copy_, record_bytes);
-                send_faction_data(-1);
-            }
-
-            for (int player_slot = 1; player_slot < 8; ++player_slot) {
-                NetWinLobbyRow &row = NetWinLobbyRows.rows_[player_slot];
-                row.faction_or_color_ = -1;
-                strcpy(row.leader_name_,
-                       label_get(0xFE4 / 4));
-                strcpy(row.noun_faction_,
-                       label_get(0xFE4 / 4));
-            }
-        }
-
-        // Native 47DBF1: send_all_player_packets(-1) inline.
-        NetWinLobbyFullPacket assigned_packet;
-        for (int normalized_row = 0; normalized_row < 7; ++normalized_row) {
-            NetWinLobbyRow &row = assigned_packet.rows_[normalized_row];
-            row.owner_ = 0;
-            row.prefix_ = -1;
-            row.ready_or_occupied_ = 0;
-            row.field_2_ = 0;
-            row.faction_or_color_ = -1;
-            row.field_4_ = 2;
-        }
-        if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
-            assigned_packet.header_.set_opcode(0x0F04);
-            assigned_packet.header_.slot_ = -1;
-            assigned_packet.header_.field_8_ = 0;
-            memcpy(assigned_packet.rows_, &NetWinLobbyRows.rows_[1], 0xA64);
-            assigned_packet.header_.opcode_ |= 0x4000;
-            NetDaemonNet.Net::send(&assigned_packet, sizeof(assigned_packet), 0, 1);
-        }
-    }
-
-    NetWinSessionData.fields_.mode_ = static_cast<uint32_t>(field_7728_);
-    send_session2_packet(NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id()), 0);
-
-    NetWinLobbyLeavePacket leave_packet;
-    if (loaded_game != 0) {
-        leave_packet.header_.set_opcode(0x2F0E);
-        NetDaemonNet.Net::send(&leave_packet, sizeof(leave_packet),
-                               NetDaemonNet.host_player_id_, 1);
-    }
-}
-
-/*
-Purpose: The cloud-cover picker: a popup titled from the string table with
-         the two cloud options, the answer stored in the ninth slot's cloud
-         byte and sent to the peer.
-// ORIGINAL: 0x0047F5F0 ?pick_clouds@NetWin@@QAEXXZ 0x0047F5F0-0x0047F91C;0x00657385-0x0065745D FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned47F721/47F735/47F73B: copy six option dwords to packet+10, write opcode word2F02, send28. Shared pick_send_state preserves these writes; header+2..F remains unspecified."], "reason": "Recover the original options packet through genuine NetWin state and typed packet storage."}
-// size      1028 bytes
-// prototype void (__thiscall ?pick_clouds@NetWin@@QAEXXZ)(NetWin* this)
-// callers   1   call targets   25
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x004048A0 0x00404900 0x004066C0 0x00406820 0x00406880 0x00406910 0x004E25E0 0x0059D250 0x0059D3A0 0x005D45B0 0x005D4DD0 0x005E3820 0x005EC8A0 0x005ED240 0x005F8800 0x005F88A0 0x005FA870 0x00600F00 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00612A70 0x006169A0 0x00630080 0x00645550
-// Homed from src/recovered/units/0047f5f0.cpp.
-Return Value: n/a
-Status: Coverage transcription - unclaimed body
-*/
-void NetWin::pick_clouds() {
-    PopMenu pop_menu;
-    pop_menu.init();
-    Dialogs &dialogs = pop_menu.dialogs();
-    int index = 0;
-    char *label = StringTable.get(Labels.strings_ptr[0xFE4 / 4]);
-    dialogs.item(label, index);
-    for (int slot = 0; slot < 3; ++slot) {
-        label = StringTable.get(Labels.strings_ptr[slot + 0xF84 / 4]);
-        dialogs.item(label, slot + 1);
-    }
-    int x;
-    int y;
-    int answer = pick_answer_at(*this, pop_menu, &x, &y);
-    if (answer >= 0) {
-        NetWinSessionOptions.fields_.cloud_cover_ =
-            static_cast<unsigned char>(answer - 1);
-    }
-    pick_send_state();
-}
-
-/*
-Purpose: The ocean-coverage picker: the same popup walk with the three ocean
-         options; the answer lands in the ninth slot's ocean byte.
-// ORIGINAL: 0x0047EC60 ?pick_ocean@NetWin@@QAEXXZ 0x0047EC60-0x0047EF8C;0x006570FD-0x006571D5 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned47ED91/47EDA5/47EDAB: copy six option dwords to packet+10, write opcode word2F02, send28. Shared pick_send_state preserves these writes; header+2..F remains unspecified."], "reason": "Recover the original options packet through genuine NetWin state and typed packet storage."}
-// size      1028 bytes
-// prototype void (__thiscall ?pick_ocean@NetWin@@QAEXXZ)(NetWin* this)
-// callers   1   call targets   26
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x004048A0 0x00404900 0x004066C0 0x00406820 0x00406880 0x00406910 0x004E25E0 0x0059D250 0x0059D3A0 0x005D45B0 0x005D4DD0 0x005E3820 0x005EC8A0 0x005ED240 0x005F8800 0x005F88A0 0x005FA870 0x00600F00 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00612A70 0x006169A0 0x00630080 0x00645550
-// Homed from src/recovered/units/0047ec60.cpp.
-Return Value: n/a
-Status: Coverage transcription - unclaimed body
-*/
-void NetWin::pick_ocean() {
-    PopMenu pop_menu;
-    pop_menu.init();
-    Dialogs &dialogs = pop_menu.dialogs();
-    int index = 0;
-    char *label = StringTable.get(Labels.strings_ptr[0xFE4 / 4]);
-    dialogs.item(label, index);
-    for (int slot = 0; slot < 3; ++slot) {
-        label = StringTable.get(Labels.strings_ptr[slot + 0xF60 / 4]);
-        dialogs.item(label, slot + 1);
-    }
-    int x;
-    int y;
-    int answer = pick_answer_at(*this, pop_menu, &x, &y);
-    if (answer >= 0) {
-        NetWinSessionOptions.fields_.ocean_coverage_ =
-            static_cast<unsigned char>(answer - 1);
-    }
-    pick_send_state();
-}
-
-/*
-Purpose: The erosion picker: the same popup walk with the three erosion
-         options; the answer lands in the ninth slot's erosion byte.
-// ORIGINAL: 0x0047EF90 ?pick_erosion@NetWin@@QAEXXZ 0x0047EF90-0x0047F2BC;0x006571D5-0x006572AD FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned47F0C1/47F0D5/47F0DB: copy six option dwords to packet+10, write opcode word2F02, send28. Shared pick_send_state preserves these writes; header+2..F remains unspecified."], "reason": "Recover the original options packet through genuine NetWin state and typed packet storage."}
-// size      1028 bytes
-// prototype void (__thiscall ?pick_erosion@NetWin@@QAEXXZ)(NetWin* this)
-// callers   1   call targets   26
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x004048A0 0x00404900 0x004066C0 0x00406820 0x00406880 0x00406910 0x004E25E0 0x0059D250 0x0059D3A0 0x005D45B0 0x005D4DD0 0x005E3820 0x005EC8A0 0x005ED240 0x005F8800 0x005F88A0 0x005FA870 0x00600F00 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00612A70 0x006169A0 0x00630080 0x00645550
-// Homed from src/recovered/units/0047ef90.cpp.
-Return Value: n/a
-Status: Coverage transcription - unclaimed body
-*/
-void NetWin::pick_erosion() {
-    PopMenu pop_menu;
-    pop_menu.init();
-    Dialogs &dialogs = pop_menu.dialogs();
-    int index = 0;
-    char *label = StringTable.get(Labels.strings_ptr[0xFE4 / 4]);
-    dialogs.item(label, index);
-    for (int slot = 0; slot < 3; ++slot) {
-        label = StringTable.get(Labels.strings_ptr[slot + 0xF6C / 4]);
-        dialogs.item(label, slot + 1);
-    }
-    int x;
-    int y;
-    int answer = pick_answer_at(*this, pop_menu, &x, &y);
-    if (answer >= 0) {
-        NetWinSessionOptions.fields_.erosion_ =
-            static_cast<unsigned char>(answer - 1);
-    }
-    pick_send_state();
-}
-
-/*
-Purpose: The native-life picker: the same popup walk with the three fungal
-         options; the answer lands in the ninth slot's native byte.
-// ORIGINAL: 0x0047F2C0 ?pick_native@NetWin@@QAEXXZ 0x0047F2C0-0x0047F5EC;0x006572AD-0x00657385 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned47F3F1/47F405/47F40B: copy six option dwords to packet+10, write opcode word2F02, send28. Shared pick_send_state preserves these writes; header+2..F remains unspecified."], "reason": "Recover the original options packet through genuine NetWin state and typed packet storage."}
-// size      1028 bytes
-// prototype void (__thiscall ?pick_native@NetWin@@QAEXXZ)(NetWin* this)
-// callers   1   call targets   26
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x004048A0 0x00404900 0x004066C0 0x00406820 0x00406880 0x00406910 0x004E25E0 0x0059D250 0x0059D3A0 0x005D45B0 0x005D4DD0 0x005E3820 0x005EC8A0 0x005ED240 0x005F8800 0x005F88A0 0x005FA870 0x00600F00 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00612A70 0x006169A0 0x00630080 0x00645550
-// Homed from src/recovered/units/0047f2c0.cpp.
-Return Value: n/a
-Status: Coverage transcription - unclaimed body
-*/
-void NetWin::pick_native() {
-    PopMenu pop_menu;
-    pop_menu.init();
-    Dialogs &dialogs = pop_menu.dialogs();
-    int index = 0;
-    char *label = StringTable.get(Labels.strings_ptr[0xFE4 / 4]);
-    dialogs.item(label, index);
-    for (int slot = 0; slot < 3; ++slot) {
-        label = StringTable.get(Labels.strings_ptr[slot + 0xF90 / 4]);
-        dialogs.item(label, slot + 1);
-    }
-    int x;
-    int y;
-    int answer = pick_answer_at(*this, pop_menu, &x, &y);
-    if (answer >= 0) {
-        NetWinSessionOptions.fields_.native_life_ =
-            static_cast<unsigned char>(answer - 1);
-    }
-    pick_send_state();
-}
-
-/*
-Purpose: The planet-size picker: a popup with the title and one entry per
-         name in the 0x80-stride name block at 0x6614, counted by the word at
-         0x80A6F0; the answer lands in the ninth slot's planet byte.
-// ORIGINAL: 0x0047E930 ?pick_planet_size@NetWin@@QAEXXZ 0x0047E930-0x0047EC60;0x00657025-0x006570FD FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned47EA6D/47EA7A/47EA80: copy six option dwords to packet+10, write opcode word2F02, send28. Shared pick_send_state preserves these writes; header+2..F remains unspecified."], "reason": "Recover the original options packet through genuine NetWin state and typed packet storage."}
-// size      1032 bytes
-// prototype void (__thiscall ?pick_planet_size@NetWin@@QAEXXZ)(NetWin* this)
-// callers   1   call targets   26
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x004048A0 0x00404900 0x004066C0 0x00406820 0x00406880 0x00406910 0x004E25E0 0x0059D250 0x0059D3A0 0x005D45B0 0x005D4DD0 0x005E3820 0x005EC8A0 0x005ED240 0x005F8800 0x005F88A0 0x005FA870 0x00600F00 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00612A70 0x006169A0 0x00630080 0x00645550
-// Homed from src/recovered/units/0047e930.cpp.
-Return Value: n/a
-Status: Coverage transcription - unclaimed body
-*/
-void NetWin::pick_planet_size() {
-    PopMenu pop_menu;
-    pop_menu.init();
-    Dialogs &dialogs = pop_menu.dialogs();
-    char *label = StringTable.get(Labels.strings_ptr[0xFE4 / 4]);
-    dialogs.item(label, 0);
-    // Native 47E9F4 reloads the bound after each owned-dialog insertion.
-    for (int index = 0; index < NetWinPlanetSizeLabelCount; ++index) {
-        dialogs.item(world_size_labels_[index], index + 1);
-    }
-    int x;
-    int y;
-    int answer = pick_answer_at(*this, pop_menu, &x, &y);
-    if (answer >= 0) {
-        NetWinSessionOptions.fields_.planet_size_ =
-            static_cast<unsigned char>(answer - 1);
-    }
-    pick_send_state();
-}
-
-// WORKAROUND(decl): 482B2B..482B44 evaluates find_font before pushing the
-// three zero arguments, the shape of an inline one-argument button set_font.
-static inline void netwin_button_font(FlatButton *button, Font *font) {
-    button->Buffer::set_font(font, 0, 0, 0);
-}
-
-// One seven-row column of lobby cells, 0x16 apart.
-static inline void netwin_set_column(RECT *rows, int left, int top, int right,
-                                     int bottom) {
-    for (int i = 0; i < 7; ++i) {
-        set_rect(rows++, left, top, right, bottom);
-        top += 0x16;
-        bottom += 0x16;
-    }
+    memcpy(faction_records_copy_, faction_records_, record_size);
 }
 
 // ORIGINAL: 0x00482490 ?exec@NetWin@@QAEHXZ 0x00482490-0x00482D84
@@ -2626,113 +3169,124 @@ int NetWin::exec() {
     }
     return field_7614_;
 }
-#pragma inline_depth()
 
-/*
-Purpose: The player-count picker: entries numbered max(2, lobby count) to 7,
-         the entry itself the answer; the ninth slot's player byte stores
-         count - 1.
-// ORIGINAL: 0x0047E010 ?pick_num_players@NetWin@@QAEXXZ 0x0047E010-0x0047E33B;0x00656D9D-0x00656E75 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned47E15D/47E16A/47E170: copy six option dwords to packet+10, write opcode word2F02, send28. Shared pick_send_state preserves these writes; header+2..F remains unspecified."], "reason": "Recover the original options packet through genuine NetWin state and typed packet storage."}
-// size      1027 bytes
-// prototype void (__thiscall ?pick_num_players@NetWin@@QAEXXZ)(NetWin* this)
-// callers   1   call targets   26
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x004048A0 0x00404900 0x004066C0 0x00406820 0x00406880 0x00406910 0x004E25E0 0x0059D250 0x0059D3A0 0x005D45B0 0x005D4DD0 0x005E3820 0x005EC8A0 0x005ED240 0x005F8800 0x005F88A0 0x005FA870 0x00600F00 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00612A70 0x006169A0 0x00630080 0x00645550 0x0064FC88
-// Homed from src/recovered/units/0047e010.cpp.
-Return Value: n/a
-Status: Coverage transcription - unclaimed body
-*/
-void NetWin::pick_num_players() {
-    PopMenu pop_menu;
-    pop_menu.init();
-    Dialogs &dialogs = pop_menu.dialogs();
-    char number[0x28];
-    int first = NetDaemonNet.player_count_;
-    if (first <= 2) {
-        first = 2;
-    }
-    for (int count = first; count < 8; ++count) {
-        StringTemp[0] = 0;
-        _itoa(count, number, 10);
-        strcat(StringTemp, number);
-        dialogs.item(StringTemp, count);
-    }
-    // WORKAROUND(type): native 47E0E0..47E0FE keeps x at EBP-10 and y at
-    // EBP-14; separate x/y locals land swapped next to the number buffer.
-    int xy[2];
-    int answer = pick_answer_at(*this, pop_menu, &xy[1], &xy[0]);
-    if (answer >= 0) {
-        // Native 47E11A..47E132 retains the pre-modal lower bound.
-        NetWinSessionOptions.fields_.player_count_ =
-            static_cast<unsigned char>(range(answer + first, 2, 7));
-    }
-    pick_send_state();
-}
+// Private recovered body for the native 0x00482D90 roster finalizer.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00482D90 ?prepare_game@NetWin@@QAEXXZ 0x00482D90-0x0048318E;0x006574FE-0x00657510 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00482d90.cpp", "recovery/tasks/netwin-owner-coverage.json"], "reason": "Recover complete lobby game preparation through real faction records, AlphaNet process-slot ownership, player data and Random lifecycle. Native low-five-bit shifts, signed difficulty and copied status extent preserved; seed and historical obligations retained."}
+void NetWin::prepare_game() {
+    Random random;
+    random.reseed(1000);
 
-/*
-Purpose: The global-difficulty picker: a popup with the title and the six
-         difficulty names off alpha's table; the ninth slot's global byte
-         stores the answer.
-// ORIGINAL: 0x0047E340 ?pick_global_diff@NetWin@@QAEXXZ 0x0047E340-0x0047E640;0x00656E75-0x00656F4D FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned47E445/47E459/47E45F: copy six option dwords to packet+10, write opcode word2F02, send28. Shared pick_send_state preserves these writes; header+2..F remains unspecified."], "reason": "Recover the original options packet through genuine NetWin state and typed packet storage."}
-// size      984 bytes
-// prototype void (__thiscall ?pick_global_diff@NetWin@@QAEXXZ)(NetWin* this)
-// callers   1   call targets   26
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x004048A0 0x00404900 0x004066C0 0x00406820 0x00406880 0x00406910 0x004E25E0 0x0059D250 0x0059D3A0 0x005D45B0 0x005D4DD0 0x005E3820 0x005EC8A0 0x005ED240 0x005F8800 0x005F88A0 0x005FA870 0x00600F00 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00612A70 0x006169A0 0x00630080 0x00645550
-// Homed from src/recovered/units/0047e340.cpp.
-Return Value: n/a
-Status: Coverage transcription - unclaimed body
-*/
-void NetWin::pick_global_diff() {
-    PopMenu pop_menu;
-    pop_menu.init();
-    Dialogs &dialogs = pop_menu.dialogs();
-    for (int index = 0; index < 6; ++index) {
-        char *label = StringTable.get(Difficulty[index]);
-        dialogs.item(label, index);
+    unsigned int used_mask = 0;
+    unsigned int hidden_mask = 0;
+    const int faction_count = faction_records_->record_count_;
+    int i;
+    for (i = 0; i < faction_count; i++) {
+        if (faction_records_->records_[i].active_ == 0) {
+            const int bit = 1 << i;
+            used_mask |= bit;
+        }
     }
-    int x;
-    int y;
-    int answer = pick_answer_at(*this, pop_menu, &x, &y);
-    if (answer >= 0) {
-        NetWinSessionOptions.fields_.difficulty_ =
-            static_cast<unsigned char>(answer);
+    int seat;
+    for (seat = 1; seat < 8; seat++) {
+        if (NetWinLobbyRows.rows_[seat].faction_or_color_ != -1) {
+            const int bit = 1 << NetWinLobbyRows.rows_[seat].faction_or_color_;
+            used_mask |= bit;
+        }
     }
-    pick_send_state();
-}
+    int needed = 0;
+    for (i = 0; i < faction_count; i++) {
+        if (faction_records_->records_[i].active_ != 0 && !(used_mask & (1u << i))) {
+            needed++;
+        }
+    }
+    for (seat = 1; seat < 8; seat++) {
+        if (NetWinLobbyRows.rows_[seat].faction_or_color_ == -1) {
+            hidden_mask |= 1u << seat;
+            unsigned int picked;
+            if (needed) {
+                do {
+                    picked = random.get(0, faction_count);
+                } while (used_mask & (1u << picked));
+                needed--;
+            } else {
+                picked = random.get(0, faction_count);
+            }
+            NetWinLobbyRows.rows_[seat].faction_or_color_ = static_cast<int8_t>(picked);
+            used_mask |= 1u << picked;
+        }
+    }
 
-/*
-Purpose: The time-control picker: the popup is filled by the source-owned
-         time-control list builder, then the same
-         modal walk; the ninth slot's time byte stores the answer.
-// ORIGINAL: 0x0047E640 ?pick_time@NetWin@@QAEXXZ 0x0047E640-0x0047E924;0x00656F4D-0x00657025 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned47E72A/47E73E/47E744: copy six option dwords to packet+10, write opcode word2F02, send28. Shared pick_send_state preserves these writes; header+2..F remains unspecified."], "reason": "Recover the original options packet through genuine NetWin state and typed packet storage."}
-// size      956 bytes
-// prototype void (__thiscall ?pick_time@NetWin@@QAEXXZ)(NetWin* this)
-// callers   1   call targets   25
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x004048A0 0x00404900 0x004066C0 0x00406820 0x00406880 0x00406910 0x004E25E0 0x00588330 0x0059D250 0x0059D3A0 0x005D45B0 0x005D4DD0 0x005E3820 0x005EC8A0 0x005ED240 0x005F8800 0x005F88A0 0x005FA870 0x00600F00 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00612A70 0x006169A0 0x00630080 0x00645550
-// Homed from src/recovered/units/0047e640.cpp.
-Return Value: n/a
-Status: Coverage transcription - unclaimed body
-*/
-void NetWin::pick_time() {
-    PopMenu pop_menu;
-    pop_menu.init();
-    time_controls_dialog(&pop_menu);
-    int x;
-    int y;
-    int answer = pick_answer_at(*this, pop_menu, &x, &y);
-    if (answer >= 0) {
-        NetWinSessionOptions.fields_.time_control_ =
-            static_cast<unsigned char>(answer);
+    // Each process slot receives the leading 0x176 row bytes at its identity.
+    // WORKAROUND(type): a structure assignment (rep movsd 0x5d + movsw,
+    // 0x00482EDB): the player record is a 0x176-byte type embedded at the head
+    // of both the lobby row and the process slot; modelled here by its extent.
+    struct NetWinLobbyRowPrefix176 { char bytes_[0x176]; };
+    if (NetWinSessionData.fields_.mode_ != 0 && NetWinSessionData.fields_.mode_ != 1) {
+        for (i = 0; i < 8; i++) {
+            *reinterpret_cast<NetWinLobbyRowPrefix176 *>(&NetDaemonNet.process_slots_[i].state_.identity_) =
+                *reinterpret_cast<NetWinLobbyRowPrefix176 *>(&NetWinLobbyRows.rows_[i]);
+            NetDaemonNet.process_slots_[i].state_.identity_ =
+                NetWinLobbyRows.rows_[i].faction_or_color_ == -1
+                ? 0 : NetWinLobbyRows.rows_[i].faction_or_color_;
+        }
+    } else {
+        for (i = 0; i < 8; i++) {
+            *reinterpret_cast<NetWinLobbyRowPrefix176 *>(&NetDaemonNet.process_slots_[i].state_.identity_) =
+                *reinterpret_cast<NetWinLobbyRowPrefix176 *>(&NetWinLobbyRows.rows_[i]);
+            NetDaemonNet.process_slots_[i].state_.identity_ = static_cast<int8_t>(i);
+        }
     }
-    pick_send_state();
+
+    if (NetWinSessionData.fields_.mode_ != 0 && NetWinSessionData.fields_.mode_ != 1) {
+        if (NetDaemonNet.local_player_id_ != NetDaemonNet.host_player_id_) {
+            for (i = 1; i < 8; i++) {
+                strcpy(Players[i].filename, faction_records_->records_[i].filename_);
+                load_faction_art(i);
+            }
+        }
+    } else {
+        for (seat = 2; seat < 8; seat++) {
+            char *const leader_name = NetWinLobbyRows.rows_[seat].leader_name_;
+            needed = 0;
+            for (int earlier = 1; earlier < seat; earlier++) {
+                if (!strcmp(leader_name, NetWinLobbyRows.rows_[earlier].leader_name_)) {
+                    needed++;
+                }
+            }
+            if (needed) {
+                char suffix[80];
+                _itoa(needed, suffix, 10);
+                strcat(leader_name, suffix);
+            }
+        }
+        for (i = 1; i < 8; i++) {
+            strcpy(Players[i].filename,
+                   faction_records_->records_[NetWinLobbyRows.rows_[i].faction_or_color_].filename_);
+            strcpy(Players[i].search_key,
+                   faction_records_->records_[NetWinLobbyRows.rows_[i].faction_or_color_].filename_);
+            read_faction(i);
+            compute_faction_modifiers(i);
+        }
+        for (seat = 1; seat < 8; seat++) {
+            const AlphaNetProcessSlot &process = NetDaemonNet.process_slots_[seat];
+            const int faction = process.state_.identity_;
+            PlayersData[faction].diff_level = static_cast<int8_t>(process.state_.field_26_);
+            if (!(hidden_mask & (1u << seat))) {
+                const NetWinLobbyRow &row = NetWinLobbyRows.rows_[seat];
+                strcpy(Players[faction].name_leader, row.leader_name_);
+                strcpy(Players[faction].formal_name_faction, row.formal_faction_name_);
+                strcpy(Players[faction].noun_faction, row.noun_faction_);
+                strcpy(Players[faction].adj_name_faction, row.adjective_faction_);
+                strcpy(Players[faction].title_leader, row.leader_title_);
+                strcpy(Players[faction].adj_leader, row.adjective_leader_);
+                Players[faction].is_leader_female = row.tail_[0];
+            }
+        }
+    }
+
+    load_flags();
 }
 
 /*
@@ -2927,163 +3481,6 @@ void NetWin::new_chat(char *message, int slot) {
 }
 
 /*
-Purpose: Retain the historical original identity while binding its current
-         owner to CheckBox's compiler-emitted complete-object destructor.
-         This is generated from NetWin's real CheckBox member lifetime; it is
-         not a handwritten NetWin method or a manually staged teardown.
-// ORIGINAL: 0x004837F0 ?UNK4@NetWin@@QAEXXZ 0x004837F0-0x00483813 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/004837f0.cpp (historical NetWin catalogue interpretation and preserved seed claim)", "Consumer-emitted ??_DCheckBox@@QAEXXZ calls the CheckBox, Dialog and GraphicWin destructors at receiver+0x1C/+0xA34/+0x1C; pinned original 0x004837F9/0x00483804/0x0048380B target 0x0060E740/0x00608E10/0x005D4DD0 respectively. These are CheckBox-relative receiver adjustments, not NetWin-relative.", "src/netwin.h: NetWin owns the actual CheckBox checkBox_ member at +0x4454; ordinary member destruction emits the CheckBox complete-object helper in this consuming translation unit. No NetWin::UNK4 source callers exist."], "reason": "Keep the original NetWin catalogue identity and seed provenance as historical facts, but bind its current source identity to the genuine compiler-generated CheckBox complete-object destructor emitted for NetWin's real member. Do not hand-author cleanup or attribute the CheckBox-relative receivers to NetWin."}
-// symbol    ??_DCheckBox@@QAEXXZ
-// size      35 bytes
-// prototype void (__thiscall ?UNK4@NetWin@@QAEXXZ)(NetWin* this) [historical catalogue interpretation; not the current owner]
-// callers   2   call targets   3
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005D4DD0 0x00608E10 0x0060E740
-// Homed from src/recovered/004837f0.cpp.
-Return Value: n/a
-Status: Compiler-generated CheckBox complete-object destructor, emitted from
-        NetWin's CheckBox member lifetime in this consuming translation unit.
-*/
-// Native 0x0047C970 password flow. Popup and its owned members use ordinary
-// automatic lifetime; the native explicit close calls in the archived seed
-// are not duplicated over the recovered destructor chain.
-// ORIGINAL: 0x0047C970 ?pick_pass@NetWin@@QAEHH@Z 0x0047C970-0x0047CF32;0x006569C4-0x00656AED
-// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0047c970.cpp", "recovery/tasks/netwin-owner-coverage.json", "Pinned47CEB9/47CED2/47CEDB..47CF03: slot dword, opcode word, explicit +8 zero, row at +10 of size17C; send18C. The opcode does not write +2..3 and +C..F is untouched."], "reason": "Recover full password dialog using genuine Popup lifecycle, input override text and shared parse output, faction validation and native sixteen-byte-header/full-row wire layout. No exactness or game acceptance claim."}
-// TRIED: MISMATCH #10 'push' vs 'mov' (framed build). SEH-frame password dialog: local `Popup popup;` is a real automatic object (BasePop fully laid out in the scaffold: embedded FlatButton x2 and Sprite, plus Popup's own `Scroll scroll_` which itself embeds two more FlatButtons at offsets 0xAAC/0x15F8 - matches the trailer thunks in the disassembly exactly), so ctor/dtor calls are emitted by the language rather than hand-modelled. Explicit popup.close()/ popup.scroll_.close() only where the disassembly names them, not at every scope exit. Did not attempt to reproduce the compiler's own SEH funclet layout - accepted as an "omitted as unreachable" divergence per the precedent in dialog.cpp/graphicwin.cpp.
-// WORKAROUND(inline): pick_pass's image tears its Popup down out of line at
-// the X_pop_ask cancel (0x0047CD05/0x0047CD17), the accepted-check return
-// and the closing brace (0x00406C00), but in full at the BADPASSWORD return
-// (EH predecessors 5,5,5,2,5,2); written out, every site expands fully. Dead
-// branchy spend placed after the BADPASSWORD return reproduces that unwind
-// topology; the original's natural spend there is not identified. Two
-// five-test probes also leave the image's inline NetWinLobbyRow::reset in
-// the sub_47b1d0 expansion (eight-test probes call it out of line).
-static inline void pick_pass_budget_probe(int x) {
-    if (x == 1) x = 2;
-    if (x == 2) x = 3;
-    if (x == 3) x = 4;
-    if (x == 4) x = 5;
-    if (x == 5) x = 6;
-}
-int NetWin::pick_pass(int payload) {
-    // Native 47C9A2..47C9C2 resets the copy row before the popup exists.
-    NetWinLobbyRow updated;
-    updated.reset();
-    Popup popup;
-    const int slot = NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id());
-    int faction_mode;
-    if (NetWinSessionData.fields_.mode_ == 2 ||
-        NetWinSessionData.fields_.mode_ == 3) {
-        faction_mode = 1;
-    } else {
-        faction_mode = 0;
-        if (payload != 0) {
-            return 1;
-        }
-    }
-
-    const int faction = NetWinLobbyRows.rows_[slot].faction_or_color_;
-    if (faction == -1) {
-        NetWinLobbyRows.rows_[slot].owner_ = 0;
-        return 1;
-    }
-
-    if (faction_mode) {
-        const uint32_t expected_hash = faction_records_->records_[faction].owner_;
-        // Native 47CB5A..47CB64 bypasses the row read for a zero hash.
-        if (expected_hash == 0 ||
-            expected_hash == NetWinLobbyRows.rows_[slot].owner_) {
-            if (payload == 0) {
-                X_pop(ScriptPopupFile, "PASSWORDOK", nullptr);
-            }
-            return 1;
-        }
-    }
-
-    uint32_t entered_hash;
-    for (;;) {
-        entered_hash = 0;
-        uint32_t verify_hash = 0;
-        const char *prompt;
-        if (faction_mode) {
-            parse_says(0, faction_records_->records_[faction].noun_faction_, -1, -1);
-            prompt = "ENTERPASSWORDFACTION";
-        } else {
-            prompt = "ENTERPASSWORDNEW";
-        }
-
-        if (X_pop_ask(prompt, 0x50, &NetWinPasswordPromptInitialText,
-                      nullptr, 0x800040) == -1) {
-            return 0;
-        }
-        if (ParseStrBuffer[0].str[0] != 0) {
-            entered_hash = checksum_password(ParseStrBuffer[0].str);
-            if (faction_mode) {
-                goto check;
-            }
-            X_pop_ask("VERIFYPASSWORD", 0x50,
-                      &NetWinPasswordVerifyInitialText, nullptr, 0x800000);
-            if (ParseStrBuffer[0].str[0] != 0) {
-                verify_hash = checksum_password(ParseStrBuffer[0].str);
-            }
-            if (entered_hash == verify_hash) {
-                break;
-            }
-            X_pop("DIFFERENTPASSWORDS", nullptr);
-            continue;
-        }
-        if (faction_mode) {
-        check:
-            // Native 47CD43..47CD4C checks the live post-modal allocation.
-            if (faction_records_->records_[faction].owner_ != entered_hash) {
-                X_pop("BADPASSWORD", nullptr);
-                return 0;
-            }
-            pick_pass_budget_probe(0);  // WORKAROUND(inline): see the helper
-            pick_pass_budget_probe(0);  // WORKAROUND(inline): see the helper
-            NetWinLobbyRows.rows_[slot].owner_ = entered_hash;
-            return 1;
-        }
-        break;
-    }
-    NetWinLobbyRows.rows_[slot].owner_ = entered_hash;
-    memcpy(&updated, &NetWinLobbyRows.rows_[slot], 0x17C);
-    sub_47b1d0(slot, &updated);
-    return 1;
-}
-
-/*
-Purpose: Unknown; the legacy implementation is a bare return with no body.
-// ORIGINAL: 0x0047F920 ?UNK1@NetWin@@QAEXXZ 0x0047F920-0x0047F921 BYTE_EXACT
-// size      1 bytes
-// prototype void (__thiscall ?UNK1@NetWin@@QAEXXZ)(NetWin* this)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void NetWin::UNK1() {
-}
-
-/*
-Purpose: Unknown; the legacy implementation is a bare return with no body.
-// ORIGINAL: 0x0047F930 ?UNK2@NetWin@@QAEXXZ 0x0047F930-0x0047F931 BYTE_EXACT
-// size      1 bytes
-// prototype void (__thiscall ?UNK2@NetWin@@QAEXXZ)(NetWin* this)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void NetWin::UNK2() {
-}
-
-/*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
 // ORIGINAL: 0x004834D0 ?alloc_slots@NetWin@@QAEXXZ 0x004834D0-0x004834D1 BYTE_EXACT
 // size      1 bytes
@@ -3098,58 +3495,29 @@ Status: Complete
 void NetWin::alloc_slots() {
 }
 
+// Native 0x004834E0: explicit resource and control shutdown precedes normal
+// compiler-owned teardown of the typed members and GraphicWin base.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x004834E0 ??1NetWin@@QAE@XZ 0x004834E0-0x004837B4;0x00656650-0x0065673F BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004834e0.cpp", "recovery/tasks/netwin-owner-coverage.json"], "reason": "Recover true destructor with typed automatic member and base teardown, retaining observed explicit frees, state resets and close calls. Native baseline/candidate controls and complete isolated application compile/link passed; no matching or game acceptance claim."}
+// symbol    ??1NetWin@@UAE@XZ
+NetWin::~NetWin() {
+    if (faction_records_ != nullptr) {
+        free(faction_records_);
+        faction_records_ = nullptr;
+    }
+    if (faction_records_copy_ != nullptr) {
+        free(faction_records_copy_);
+        faction_records_copy_ = nullptr;
+    }
+    field_761C_ = -1;
+    field_7620_ = -1;
 
-
-
-/*
-Purpose: Unknown; the legacy implementation ignores its arguments and returns 1.
-// ORIGINAL: 0x0047B750 ?on_key_click@NetWin@@QAEHHH@Z 0x0047B750-0x0047B758 BYTE_EXACT
-// symbol    ?on_key_click@NetWin@@UAEHHH@Z
-// size      8 bytes
-// prototype int (__thiscall ?on_key_click@NetWin@@QAEHHH@Z)(NetWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: 1, always
-Status: Complete
-*/
-int NetWin::on_key_click(int, int) {
-    return 1;
-}
-
-
-/*
-Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-// ORIGINAL: 0x0047F940 ?on_mouse_move@NetWin@@QAEXHH@Z 0x0047F940-0x0047F943 BYTE_EXACT
-// symbol    ?on_mouse_move@NetWin@@UAEXHH@Z
-// size      3 bytes
-// prototype void (__thiscall ?on_mouse_move@NetWin@@QAEXHH@Z)(NetWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void NetWin::on_mouse_move(int, int) {
-}
-
-
-/*
-Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-// ORIGINAL: 0x0047F950 ?on_mouse_leave@NetWin@@QAEXHH@Z 0x0047F950-0x0047F953 BYTE_EXACT
-// symbol    ?on_mouse_leave@NetWin@@UAEXHH@Z
-// size      3 bytes
-// prototype void (__thiscall ?on_mouse_leave@NetWin@@QAEXHH@Z)(NetWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void NetWin::on_mouse_leave(int, int) {
+    spot_.shutdown();
+    stringBox_.close();
+    editBox_.close();
+    checkBox_.close();
+    flatButton1_.close();
 }
 
 
@@ -3179,382 +3547,6 @@ NetWinConstructedLobbyRow::NetWinConstructedLobbyRow() {
     payload_.field_2_ = 0;
     payload_.faction_or_color_ = -1;
     payload_.field_4_ = 2;
-}
-
-
-
-
-
-// ---------------------------------------------------------------------------
-// DEFINED IN THE HEADER, CLAIMED HERE.
-//
-// These pieces are written in-class so the image's own inlining reproduces -
-// a constructor or destructor the compiler is expected to fold into its
-// caller. A marker cannot live beside them: `decomp.reader` globs `*.cpp`
-// and `*.c`, and a comparison compiles a TRANSLATION UNIT, so a marker in a
-// header could be neither read nor measured. VC6 emits each of them into
-// this unit's object as its own COMDAT anyway, which is what the comparison
-// pulls out, and the `body` fact says where to go to edit one.
-//
-// The ratchet still covers the header: this unit includes it, so breaking an
-// in-class body here fails the claim below. Measured, not assumed.
-// ---------------------------------------------------------------------------
-
-/*
-// ORIGINAL: 0x00481C50 ??0NetWin@@QAE@XZ 0x00481C50-0x00481D08;0x00657491-0x006574E9 BYTE_EXACT
-// size      272 bytes
-// prototype void (__thiscall ??0NetWin@@QAE@XZ)(NetWin* this)
-// callers   1   call targets   6
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x005D4CF0 0x005FA860 0x00607CF0 0x0060E670 0x00614E50 0x00629110
-*/
-
-// The six subobjects (GraphicWin base, then spot_/stringBox_/editBox_/
-// checkBox_/flatButton1_/flatButton2_, in declaration order) construct via
-// the implicit base+member-init sequence; 0x005D4CF0 is `?construct@
-// GraphicWin@@QAEXXZ`, a construct() method (see basebutton.cpp's own
-// `?construct@BaseButton@@QAEXXZ`), which the trivial `GraphicWin() { ; }`
-// base ctor cannot reach implicitly, so it is called explicitly here.
-//
-// TRIED: byte-exact is not reachable from this marker alone.
-// StringBox()/CheckBox() are still trivial stubs (0x00629110/0x0060E670
-// unfilled) and EditBox() has no declared constructor at all - none of the
-// three are among this pass's seven targets, so the image's calls to them
-// cannot be reproduced from here. CheckBox's own call also pushes an extra
-// `1` (a virtually-inherited GraphicWin's hidden most-derived flag, added
-// automatically by the compiler once CheckBox::CheckBox() takes it - not
-// reachable while checkBox_'s constructor is the current no-arg stub).
-NetWin::NetWin() {
-    // The two vtable stores the old hand body spelled at [this] (0x0066CCEC)
-    // and [this+0x444] (0x0066CCE4) are the compiler's now: NetWin is
-    // most-derived through GraphicWin's Win/Buffer base pair, and its real
-    // constructor installs both vptrs itself. The two scalar clears below are
-    // the body's own work - 0x772C and 0x7730, the faction-record blocks.
-    faction_records_ = 0;
-    faction_records_copy_ = 0;
-}
-
-/*
-Purpose: Answer the multiplayer setup dialog's button click. Id -2 hangs up
-         the session (store -1 into the dialog's +0x7614 slot) and every id
-         but 10 returns; id 10 - the join/start button - validates the lobby
-         before broadcasting: the local slot's ready byte is set and every
-         peer row probed for a free slot (any free slot, or the
-         NOTALLREADY prompt refuses), a running session re-scans its
-         faction-record run against the occupied slot rows so a duplicated
-         faction raises the PASSWORDSNOTVALIDATED prompt and a 0x2f0e
-         leave packet instead, and only then does the click re-mark the
-         lobby rows and send either the 0x4f04 full-state packet (0xa74
-         bytes including its header) or the single-slot 0x2f04 packet
-         (0x18c bytes, when the local slot is at least one).
-
-The original writes only the opcode and each path's selected header/payload
-fields. Reserved header bytes and the leave-packet tail remain uninitialized;
-do not replace those unspecified bytes with a deterministic zero fill.
-*/
-// ORIGINAL: 0x0047B450 ?on_button_clicked@NetWin@@QAEXH@Z 0x0047B450-0x0047B746 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["The original NetWin constructor installs primary vtable 0x0066CCEC; inherited Win slot 44 at 0x0066CD9C targets 0x0047B450.", "NetDaemon::on_player_deleted directly calls 0x0047B450 with NetWinDialog as receiver and -2 as argument; retired seed git:7eb4d2e7:src/unrecovered/0047b450.cpp records the historical body.", "Pinned47B5FD..47B639/47B664..47B675/47B701..47B738: full and single packets write opcode word, slot and +8 zero then copied rows; leave writes only opcode word. +2..3/+C..F and leave tail are untouched."], "reason": "NetWin owns the lobby button handler as its inherited Win callback and shares the typed lobby rows and session storage with its network senders."}
-// symbol    ?on_button_clicked@NetWin@@UAEXH@Z
-// TRIED: no SEH frame here (plain `sub esp,0xd9c`, no fs:[0] chain), so this is a direct disassembly transcription rather than a lever candidate. Used one flat byte buffer plus raw `base - N` stores/memcpy matching each `ebp - N` write and each record's 0x17c-byte stride, rather than named locals, since the frame mixes several differently-shaped record buffers with no natural C struct boundary between them.
-// size      758 bytes
-// prototype void (__thiscall ?on_button_clicked@NetWin@@QAEXH@Z)(NetWin* this, int)
-// callers   1   call targets   4
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x004E25E0 0x005BF330 0x00630080 0x00645930
-// Return Value: n/a
-// Status: Recovered lobby click handling; original seed retired.
-void NetWin::on_button_clicked(int clicked_id) {
-    NetWinLobbyRow row;
-    row.reset();
-    if (clicked_id == -2) {
-        field_7614_ = -1;
-        return;
-    }
-    if (clicked_id != 10) {
-        return;
-    }
-
-    const int local_slot = NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id());
-    if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
-        NetWinLobbyRows.rows_[local_slot].ready_or_occupied_ = 1;
-        int slot;
-        for (slot = 1; slot < NetDaemonNet.player_count_ + 1; ++slot) {
-            if (NetWinLobbyRows.rows_[slot].ready_or_occupied_ == 0) {
-                break;
-            }
-        }
-        NetWinLobbyRows.rows_[local_slot].ready_or_occupied_ = 0;
-
-        if (slot != NetDaemonNet.player_count_ + 1 &&
-            X_pop(ScriptPopupFile, "NOTALLREADY",
-                                0) != 0) {
-            return;
-        }
-
-        const int transport = NetWinSessionData.fields_.mode_;
-        if (transport == 2 || transport == 3) {
-            for (int faction = 1; faction < 8; ++faction) {
-                if (faction_records_->records_[faction].owner_ != 0) {
-                    int scan;
-                    for (scan = 1; scan < NetDaemonNet.player_count_ + 1; ++scan) {
-                        if (NetWinLobbyRows.rows_[scan].faction_or_color_ ==
-                            faction) {
-                            break;
-                        }
-                    }
-                    if (scan == NetDaemonNet.player_count_ + 1 ||
-                        faction_records_->records_[faction].owner_ !=
-                            NetWinLobbyRows.rows_[scan].owner_) {
-                        X_pop(ScriptPopupFile,
-                                            "PASSWORDSNOTVALIDATED", 0);
-                        NetWinLobbyLeavePacket packet;
-                        packet.header_.set_opcode(0x2F0E);
-                        NetDaemonNet.Net::send(&packet, sizeof(packet),
-                                               NetDaemonNet.host_player_id_, 1);
-                        return;
-                    }
-                }
-            }
-        }
-
-        const int ready_count = NetDaemonNet.player_count_ + 1;
-        for (int ready_slot = 1; ready_slot < ready_count; ++ready_slot) {
-            NetWinLobbyRows.rows_[ready_slot].ready_or_occupied_ = 1;
-        }
-        // 47B5B6..47B639: send_all_player_packets(-1)'s body.
-        NetWinLobbyFullPacket packet;
-        NetWinLobbyRow *row_out = packet.rows_;
-        for (int count = 7; count != 0; --count) {
-            row_out->reset();
-            ++row_out;
-        }
-        if (NetDaemonNet.primary_state_.leading_words_[0] == 0) {
-            return;
-        }
-        packet.header_.set_opcode(0x0F04);
-        packet.header_.slot_ = -1;
-        packet.header_.field_8_ = 0;
-        memcpy(packet.rows_, &NetWinLobbyRows.rows_[1], sizeof(packet.rows_));
-        packet.header_.opcode_ |= 0x4000;
-        NetDaemonNet.Net::send(&packet, sizeof(packet), 0, 1);
-    } else {
-        memcpy(&row, &NetWinLobbyRows.rows_[local_slot], sizeof(row));
-        row.ready_or_occupied_ = row.ready_or_occupied_ == 0;
-        // 47B6AF: sub_47b1d0 inlined, its row reset and null test included.
-        sub_47b1d0(local_slot, &row);
-    }
-}
-
-/*
-Purpose: Step the receiver back to the subobject ??_GNetWin@@UAEPAXI@Z expects,
-         then forward unchanged.
-// ORIGINAL: 0x00483840 ??_GNetWin@@WEEE@AEPAXI@Z 0x00483840-0x0048384B BYTE_EXACT
-// symbol    ??_ENetWin@@WEEE@AEPAXI@Z
-// CORRECTED from ??3NetWin@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x004837C0` into
-//   ??_GNetWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
-//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
-//   and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-
-/*
-Purpose: Send one faction's data block over the net: make sure the
-         MessageFactionData clone exists (asking the dialog to rebuild it),
-         then frame the clone with the 0xF0D header and ship it to
-         everyone or to the slot a1 names.
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0047B020 ?send_faction_data@@YAXH@Z 0x0047B020-0x0047B0E1 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/netwin.h declares this network-dialog synchronization API; src/netwin.cpp owns NetWinDialog, NetWinLobbyRows, the session state, and the player-ID globals; slot ids are NetDaemonNet AlphaNet members.", "The source body preserves the pinned same-player gate, byte count, allocation size, copy extent/order, unfreed frame and broadcast/slot destination branches."], "reason": "Move the complete existing faction-data sender to the owner of its typed dialog, record table and network globals without changing packet writes, send order, leak or historical claim."}
-// size      193 bytes
-// prototype
-// callers   0   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x00481FD0 0x005D4510 0x00630080 0x00645930
-Return Value: n/a
-Status: Coverage transcription - claim pending re-measurement
-*/
-void __cdecl send_faction_data(int slot_id) {
-    if (NetDaemonNet.local_player_id() == NetDaemonNet.host_player_id_) {
-        if (NetWinDialog.faction_records_ == 0) {
-            NetWinDialog.setup_faction_data(0);
-        }
-        const uint8_t count = NetWinDialog.faction_records_->record_count_;
-        const int records = count * 133;
-        const uint32_t size = records * 3 + 0x1A4;
-        NetWinFactionDataPrefix *packet =
-            static_cast<NetWinFactionDataPrefix *>(mem_get(size));
-        packet->opcode_ = 0xF0D;
-        packet->faction_ = -1;
-        packet->timestamp_ = 0;
-        memcpy(packet + 1, NetWinDialog.faction_records_,
-               records * 3 + 0x194);
-        if (slot_id < 0) {
-            NetDaemonNet.Net::send(packet, size, 0, 1);
-            return;
-        }
-        NetDaemonNet.Net::send(
-            packet, size, NetDaemonNet.process_slots_[slot_id].pid_, 1);
-    }
-}
-
-/*
-Purpose: Broadcast the full-state block to every player: stamp the seven
-         per-slot packet headers into one 0xA74-byte frame, copy the
-         0xA64-byte state, and send it to everyone (0x4F04) or to the slot
-         a1 names (0x1F04) once the turn hand-over allows it.
-
-// ORIGINAL: 0x0047B0F0 ?send_all_player_packets@@YAXH@Z 0x0047B0F0-0x0047B1CE FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/netwin.h declares this API and src/netwin.cpp owns the seven-row lobby payload. The destination IDs use NetDaemonNet AlphaNet process slots.", "The gate at 0x0093E8C0 is NetDaemonNet.primary_state_.leading_words_[0] (+0x1B30), the same storage game.cpp names TurnsAssigned."], "reason": "Move the complete state-frame sender to netwin.cpp and use the existing typed turn-handover member; preserve initialization-before-gate, packet copy extent and target branches."}
-// LEVER: xor/or order - writing the dword-zero field first in the record loop (matching `xor ebx,ebx` before `or ecx,-1`) reproduced the register setup order; `#pragma function(memcpy)` kept the `call _memcpy` instead of an inlined `rep movsd`.
-// size      222 bytes
-// prototype
-// callers   0   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x00630080
-Return Value: n/a
-Status: Coverage transcription - claim pending re-measurement
-*/
-void __cdecl send_all_player_packets(int slot_id) {
-    NetWinLobbyFullPacket packet;
-    NetWinLobbyRow *row = packet.rows_;
-    for (int slot = 7; slot != 0; --slot) {
-        row->owner_ = 0;
-        row->prefix_ = -1;
-        row->ready_or_occupied_ = 0;
-        row->field_2_ = 0;
-        row->faction_or_color_ = -1;
-        row->field_4_ = 2;
-        ++row;
-    }
-    if (slot_id != -1 || NetDaemonNet.primary_state_.leading_words_[0] != 0) {
-        packet.header_.set_opcode(0x0F04);
-        packet.header_.slot_ = -1;
-        packet.header_.field_8_ = 0;
-        memcpy(packet.rows_, &NetWinLobbyRows.rows_[1], sizeof(packet.rows_));
-        if (slot_id < 0) {
-            packet.header_.opcode_ |= 0x4000;
-            NetDaemonNet.Net::send(&packet, sizeof(packet), 0, 1);
-            return;
-        }
-        packet.header_.opcode_ |= 0x1000;
-        NetDaemonNet.Net::send(
-            &packet, sizeof(packet), NetDaemonNet.process_slots_[slot_id].pid_, 1);
-    }
-}
-
-/*
-Purpose: Broadcast one faction's 0x2F04 data packet to the other player:
-         shape the 0x18C-byte message (header word, faction word, zero,
-         the five-byte prefix and the 0x17C-byte copied payload - the
-         image writes the prefix before the copy overwrites it), and hand
-         it to the Net sender sized at one target.
-
-// ORIGINAL: 0x0047B1D0 sub_47b1d0 0x0047B1D0-0x0047B25C FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["The helper sends through NetDaemonNet to NetDaemonNet.host_player_id() and uses the same 0x17C lobby payload/0x18C message contract as the neighboring NetWin packet senders.", "No direct mapped caller is known; this transfer retains the externally callable identity and does not infer a caller."], "reason": "Move this source-owned packet helper alongside its established NetWin senders; retain prefix-before-copy ordering, positive-faction/null-payload guard and the original unclaimed caller status."}
-// symbol    ?sub_47b1d0@@YAXHPAX@Z
-// size      140 bytes
-// prototype
-// callers   0   call targets   2
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x00630080 0x00645930
-Return Value: n/a
-Status: Coverage transcription - unclaimed body
-*/
-void __cdecl sub_47b1d0(int faction_id, void *payload) {
-    NetWinLobbySinglePacket packet;
-    packet.row_.reset();
-    if (faction_id >= 1 && payload != 0) {
-        packet.header_.set_opcode(0x2F04);
-        packet.header_.slot_ = faction_id;
-        packet.header_.field_8_ = 0;
-        memcpy(&packet.row_, payload, sizeof(packet.row_));
-        NetDaemonNet.Net::send(
-            &packet, sizeof(packet), NetDaemonNet.host_player_id_, 1);
-    }
-}
-
-/*
-Purpose: Broadcast the 24-byte session state words: copy them into the
-         0x28-byte frame and send it to everyone (0x4F02), to this
-         client's counterpart (0x2F02), or to the slot a2 names (0x1F02).
-
-// ORIGINAL: 0x0047B260 ?send_session_packet@@YAXHH@Z 0x0047B260-0x0047B2DE FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/netwin.h declares this API; NetWinSessionOptions, NetDaemonNet.host_player_id() and NetDaemonNet are owned/referenced in netwin.cpp.", "The first argument remains unused as in the current body; negative, zero and positive targets keep their distinct packet opcodes and destinations."], "reason": "Move the complete existing 24-byte session packet sender into netwin.cpp without changing payload, unused parameter, target comparison or header selection."}
-// size      126 bytes
-// prototype
-// callers   0   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x00630080
-Return Value: n/a
-Status: Coverage transcription - claim pending re-measurement
-*/
-void __cdecl send_session_packet(int slot_id, int target) {
-    NetWinSessionOptionsPacket packet;
-    packet.options_ = NetWinSessionOptions.fields_;
-    if (target < 0) {
-        packet.opcode_ = 0x4F02;
-        NetDaemonNet.Net::send(&packet, sizeof(packet), 0, 1);
-        return;
-    }
-    uint32_t who;
-    if (target != 0) {
-        who = NetDaemonNet.process_slots_[target].pid_;
-        packet.opcode_ = 0x1F02;
-    } else {
-        who = NetDaemonNet.host_player_id_;
-        packet.opcode_ = 0x2F02;
-    }
-    NetDaemonNet.Net::send(&packet, sizeof(packet), who, 1);
-}
-
-/*
-Purpose: Broadcast the session state blob: copy the 0x168-byte payload,
-         then send it addressed to everyone (0x4F03), to this client's
-         counterpart (0x2F03), or to the slot a2 names (0x1F03).
-
-// ORIGINAL: 0x0047B2E0 ?send_session2_packet@@YAXHH@Z 0x0047B2E0-0x0047B379 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/netwin.h owns the 0x168-byte NetWinSessionData block and declares this sender; the NetDaemonNet owns AlphaNet process slots.", "The first argument remains unused, and packet bytes/header fields and the target==0 comparison are retained."], "reason": "Move the complete second-session sender into netwin.cpp, preserving its 0x178-byte frame, copy, opcode branches and unused first argument."}
-// size      153 bytes
-// prototype
-// callers   0   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x00630080
-Return Value: n/a
-Status: Coverage transcription - unclaimed body
-*/
-void __cdecl send_session2_packet(int slot_id, int target) {
-    NetWinSessionBlockPacket packet;
-    packet.session_ = NetWinSessionData.fields_;
-    if (target < 0) {
-        packet.opcode_ = 0x4F03;
-        NetDaemonNet.Net::send(&packet, sizeof(packet), 0, 1);
-        return;
-    }
-    uint32_t who;
-    if (target != 0) {
-        packet.opcode_ = 0x1F03;
-        who = NetDaemonNet.process_slots_[target].pid_;
-    } else {
-        packet.opcode_ = 0x2F03;
-        who = NetDaemonNet.host_player_id_;
-    }
-    NetDaemonNet.Net::send(&packet, sizeof(packet), who, 1);
 }
 
 // RECOVERY_GENERATED: v1 vtable 0x0066CCEC ? ??_7NetWin@@6BWin@@@ 0x00481C50
