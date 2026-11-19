@@ -2111,16 +2111,16 @@ L_4fc68f:
         if (l_e0 >= PlayersData[l_8].unk_28 * 2 / 3 && l_c != 8) {
             w = w * 2 / 3;
         }
-        if (!(l_e0 < PlayersData[l_8].unk_28 / 2)) {
+        if (l_e0 < PlayersData[l_8].unk_28 / 2) {
+            if (!l_124 && !(l_80 && l_2c == 2)) {
+                w *= 2;
+            }
+        } else {
             if (!l_158 && l_c != 8) {
                 w = w * 3 / 4;
             }
             if (l_3c && !l_124) {
                 w /= 2;
-            }
-        } else {
-            if (!l_124 && !(l_80 && l_2c == 2)) {
-                w *= 2;
             }
         }
     }
