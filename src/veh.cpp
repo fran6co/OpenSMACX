@@ -4407,10 +4407,9 @@ again:
         return -1;
     dw_probe(0);dw_probe(1);dw_probe(2);dw_probe(3);dw_probe(4);dw_probe(5);dw_probe(6);dw_probe(7);dw_probe(8);dw_probe(9);dw_probe(10);dw_probe(11);
     if (action == 2) {
-        char *prototype_name = VehPrototypes[selected].veh_name;
-        if (X_pop_ask("DESIGNNAME", 31, prototype_name, 0, 0) != 0)
+        if (X_pop_ask("DESIGNNAME", 31, VehPrototypes[selected].veh_name, 0, 0) != 0)
             return -1;
-        strcpy(prototype_name, ParseStrBuffer[0].str);
+        strcpy(VehPrototypes[selected].veh_name, ParseStrBuffer[0].str);
         synch_proto(selected);
         return -1;
     }
