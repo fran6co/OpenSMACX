@@ -1361,13 +1361,18 @@ void NetWin::pick_planet_size() {
     pick_send_state();
 }
 
-// One seven-row column of lobby cells, 0x16 apart.
+// One seven-row column of lobby cells, 0x16 apart. A RECT copied into each
+// row: the image keeps top and bottom as two induction registers (0x4827C6
+// add eax,0x16 / 0x4827D5 add ecx,0x16) and routes left/right through ESI,
+// where separate top/bottom ints merge into one (lea edi,[ecx-0x14]).
 static inline void netwin_set_column(RECT *rows, int left, int top, int right,
                                      int bottom) {
+    RECT r;
+    set_rect(&r, left, top, right, bottom);
     for (int i = 0; i < 7; ++i) {
-        set_rect(rows++, left, top, right, bottom);
-        top += 0x16;
-        bottom += 0x16;
+        rows[i] = r;
+        r.top += 0x16;
+        r.bottom += 0x16;
     }
 }
 
@@ -3000,16 +3005,18 @@ int NetWin::exec() {
     set_rect(&setup_rects_[5], 0x13A, 0x21, 0x31C, 0xEB);
 
     int i;
-    int top = 0x3A;
-    int bottom = 0x4E;
-    RECT box;
-    set_rect(&box, 0x13D, top, 0x14D + 0x12, bottom);
+    // box is a whole copy of r: the image stores all four fields, box.left
+    // included (0x48272C), and reads box from its frame slots in the loop.
+    RECT r;
+    set_rect(&r, 0x13D, 0x3A, 0x14D, 0x4E);
+    RECT box = r;
+    box.right = r.right + 0x12;
     RECT *rows = &setup_rects_[27];
     for (i = 0; i < 7; ++i) {
-        set_rect(rows + 9, 0x13D, top, 0x14D, bottom);
-        set_rect(rows++, 0x14F, box.top, box.right, box.bottom);
-        top += 0x16;
-        bottom += 0x16;
+        rows[i + 9] = r;
+        set_rect(&rows[i], 0x14F, box.top, box.right, box.bottom);
+        r.top += 0x16;
+        r.bottom += 0x16;
         box.top += 0x16;
         box.bottom += 0x16;
     }
