@@ -1985,7 +1985,17 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   on_right_click 0x00493EA0 (written-out `StringTable.get(Labels...)`
   instead of label_get at one site, and the faction read inside the `|=`
   instead of a named const: 8 -> 4), QuayleWin::on_redraw 0x004956D0
-  (`_itoa` of the chapter through a named local: 13 -> 9).
+  (`_itoa` of the chapter through a named local: 13 -> 9), read_rules
+  0x005873C0 (three `table_text(x)` -> `StringTable.get(x)` together: the
+  image's four bubble labels are one cursor run ecx, edx, eax, ecx; exact),
+  size_of_planet 0x0058CED0 (label_get -> written out at one site: exact),
+  MultiWin::draw_player 0x00478630 (written out -> label_get: 57 -> 47).
+  label_get, table_text and every other inline whose parameter or local
+  holds the label are named values; `StringTable.get(expr)` written at the
+  call is a temporary. The choice is per site and can need several sites
+  flipped together (read_rules): --try adds an all-sites candidate for
+  these rules. A flip can also move the /Ob2 budget (DiploWin::on_redraw:
+  one label_get written out, 4 -> 243 rows), so check the call multiset.
   Caution: in isolated probes a named local of a plain load is
   forward-substituted and compiles exactly like the expression (p15, p17,
   p18, p19, p21, p24: about 60 pairs, globals, members, params, pointer
