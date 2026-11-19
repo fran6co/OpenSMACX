@@ -3391,15 +3391,17 @@ L_50835D:
             best_dir = -1;
             best_angle = 0;
             for (move_charge = 0; move_charge < 8; move_charge++) {
-                rx = wrap_map_x(VehMoveDeltaX[move_charge] + target_x);
-                ry = VehMoveDeltaY[move_charge] + target_y;
-                if (!(ry >= 0 && ry < (int)MapLatitudeBounds && rx >= 0 && rx < (int)MapLongitudeBounds)) continue;
-                if (zoc_move(rx, ry, def_faction)) continue;
+                int x = wrap_map_x(VehMoveDeltaX[move_charge] + target_x);
+                rx = x;
+                int y = VehMoveDeltaY[move_charge] + target_y;
+                ry = y;
+                if (!(y >= 0 && y < (int)MapLatitudeBounds && x >= 0 && x < (int)MapLongitudeBounds)) continue;
+                if (zoc_move(x, y, def_faction)) continue;
                 // 0x5094A9: the chassis triad byte stays in cl for both compares
                 if (get_triad(def_id) != TRIAD_AIR &&
-                    is_ocean(rx, ry) != (get_triad(def_id) == TRIAD_SEA)) continue;
-                if (goody_at(rx, ry)) continue;
-                Map *tile = map_loc(rx, ry);   // ecx, reused by anything_at below
+                    is_ocean(x, y) != (get_triad(def_id) == TRIAD_SEA)) continue;
+                if (goody_at(x, y)) continue;
+                Map *tile = map_loc(x, y);   // ecx, reused by anything_at below
                 if ((tile->bit & BIT_FUNGUS) && (tile->climate & ~0x1F) >= 0x40
                     && !has_project(SP_PHOLUS_MUTAGEN, def_faction)) {
                     // 0x509555: the short proto_id is compared directly (cmp dx)
@@ -3408,7 +3410,7 @@ L_50835D:
                               || Vehs[def_id].proto_id == BSC_SPORE_LAUNCHER))) continue;
                 }
                 // 0x509594
-                int who = anything_at(rx, ry);
+                int who = anything_at(x, y);
                 if (who >= 0 && who != def_faction &&
                     !has_treaty(who, def_faction, DTREATY_PACT)) continue;
                 // 0x5095CC: angular distance from the reversed attack direction
