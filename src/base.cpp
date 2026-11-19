@@ -8214,23 +8214,23 @@ void __cdecl base_ecology() {
     int created = 0;
     for (i = 0; i < (PlayersData[faction].planet_ecology < 9
                      ? PlayersData[faction].planet_ecology : 9); i++) {
-        shown = wrap_map_x(event_x + RadiusOffsetX[i]);
-        report_terraform = event_y + RadiusOffsetY[i];
-        if (!on_map(shown, report_terraform)) {
+        int x = wrap_map_x(event_x + RadiusOffsetX[i]);
+        int y = event_y + RadiusOffsetY[i];
+        if (!on_map(x, y)) {
             continue;
         }
-        Map *tile = map_loc(shown, report_terraform);
+        Map *tile = map_loc(x, y);
         if (!(tile->bit & BIT_FUNGUS) || (tile->climate & ~0x1F) < ALT_BIT_OCEAN_SHELF) {
             continue;
         }
-        int base_id = base_find(shown, report_terraform);
+        int base_id = base_find(x, y);
         if (base_id < 0 || Bases[base_id].faction_id_current != faction) {
             continue;
         }
-        if (veh_who(shown, report_terraform) > 0 || base_who(shown, report_terraform) > 0) {
+        if (veh_who(x, y) > 0 || base_who(x, y) > 0) {
             continue;
         }
-        int region = region_at(shown, report_terraform);
+        int region = region_at(x, y);
         int unit_id;
         if (region >= 0x40) {
             unit_id = (gated_spawns % 3) ? BSC_ISLE_OF_THE_DEEP : BSC_LOCUSTS_OF_CHIRON;
@@ -8250,11 +8250,11 @@ void __cdecl base_ecology() {
         if (unit_id == BSC_MIND_WORMS && !(rand() % 5) && ExpansionEnabled) {
             unit_id = BSC_SPORE_LAUNCHER;
         }
-        int veh_id = veh_init(unit_id, 0, shown, report_terraform);
+        int veh_id = veh_init(unit_id, 0, x, y);
         if (veh_id >= 0) {
             Vehs[veh_id].order_auto_type = static_cast<uint8_t>(faction);
         }
-        draw_tile(shown, report_terraform, 2);
+        draw_tile(x, y, 2);
     }
     if (anything_at(event_x, event_y) <= 0) {
         int region = region_at(event_x, event_y);
