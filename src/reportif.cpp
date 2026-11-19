@@ -4704,9 +4704,9 @@ void ReportWin::draw_intel() {
         rect1_.top += field_E268_;
     }
     int headquarters = -1;
-    for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
-        if (Bases[base].faction_id_current == subject && has_fac(FAC_HEADQUARTERS, base, 0)) {
-            headquarters = base;
+    for (priorities = 0; priorities < GameDataStateStorage.fields_.base_current_count_; ++priorities) {
+        if (Bases[priorities].faction_id_current == subject && has_fac(FAC_HEADQUARTERS, priorities, 0)) {
+            headquarters = priorities;
             break;
         }
     }
@@ -4746,19 +4746,19 @@ void ReportWin::draw_intel() {
         report_topic_line(this, rect1_, text_x);
     }
     rect1_.top += field_E268_ + 20;
-    for (int category_index = 0; category_index < 4; ++category_index) {
+    for (shown = 0; shown < 4; ++shown) {
         StringTemp[0] = 0;
         strcat(StringTemp, "[");
-        strcat(StringTemp, StringTable.get(SocialCategories[category_index].type));
+        strcat(StringTemp, StringTable.get(SocialCategories[shown].type));
         strcat(StringTemp, SocialWinColonSpaceText);
         strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, "]");
-        strcat(StringTemp, StringTable.get(SocialCategories[category_index].name[
-            PlayersData[subject].soc_category_pending.models_[category_index]]));
+        strcat(StringTemp, StringTable.get(SocialCategories[shown].name[
+            PlayersData[subject].soc_category_pending.models_[shown]]));
         CharUpperA(StringTemp);
         Buffer::write_l(StringTemp, rect1_.left + 20,
-                       rect1_.top + category_index * field_E268_);
+                       rect1_.top + shown * field_E268_);
     }
     for (int faction = 1; faction < 8; ++faction) {
         const unsigned int flags = PlayersData[subject].diplo_treaties[faction];
