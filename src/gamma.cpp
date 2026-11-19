@@ -15,6 +15,14 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00456110 ??1Gamma@@QAE@XZ 0x00456110-0x00456275;0x00655190-0x00655240 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00456110.cpp shows a Gamma::close call followed by reverse subobject teardown", "src/gamma.h declares the real member order and GraphicWin base", "C++ destruction emits subobject and EH cleanup without writing historical vtable addresses", "Pinned PrefWin::on_button_clicked 0x491400 and load_palette 0x451A10 normal cleanup expand the Gamma close and reverse member/base lifetime at the actual Gamma receiver.", "Both pinned cold EH cleanups call the standalone destructor at 0x456110; keep that independent exceptional entry and all original spans/claims.", "The current Gamma header owns the actual typed members and GraphicWin base; Gamma::close remains the unchanged mapped body at 0x5C9330.", "Current physical production-recipe screening observed a complete matching destructor copy in both real consumers; src/interface_palette.cpp is a measured current compile context only, not an assertion about original TU ownership."], "reason": "Retain Gamma’s standalone destructor identity in its original owner while exposing the unchanged class lifetime to the measured real consumer; the normal consumer paths inline Gamma::close and member/base teardown, while the original cold EH path enters this emitted destructor. Current compile_context names a present emitting TU, not the original translation unit."}
+// compile_context src/interface_assets.cpp
+// body src/gamma.h
+// symbol    ??1Gamma@@UAE@XZ
+
 // ORIGINAL: 0x00456280 ??_GGamma@@UAEPAXI@Z 0x00456280-0x004562A1 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical deleting-thunk source src/deleting_thunks.cpp; original full spans retained: 0x00456280-0x004562A1", "Pinned class constructor ??0Gamma@@QAE@XZ at 0x005C8DA0 stores original class/view table VA 0x66c3d8 at 0x005C8E2E (mov dword ptr [esi], 0x66c3d8); the current genuine owner vftable ??_7Gamma@@6BWin@@@ selects generated ??_GGamma@@UAEPAXI@Z in slot 0 (+0x0) through weak entry ??_EGamma@@UAEPAXI@Z (mode 2).", "Pinned ??_GGamma@@UAEPAXI@Z at 0x00456280 calls the source-mapped ??1Gamma@@QAE@XZ at 0x00456110, then tests byte ptr [ebp + 8], 1; je 0x45629a bypasses scalar delete when bit 0 is clear, while bit 0 set calls 0x0064557F; it save original this; call destructor; delete only when flags bit 0 is set; return saved this with ret 4.", "The real class lifetime is owned by src/gamma.cpp; its compiler-emitted deleting symbol and vftable slot carry this original identity. Hand-written adapter bodies with live adjustor callers remain until those callers are independently qualified and transferred. The linked weak/COMDAT copy is not used to choose source ownership.", "the source writer preserves the historical mapping's exactness state (historical exactness obligation retained); current compiler extent is not asserted equal to the original span"], "reason": "Bind the original Gamma scalar deleting-destructor identity to the actual compiler-emitted class deleting destructor in its genuine owner translation unit. The original constructor's pinned vptr store and the current owner's physical table slot identify this class/view; no callback/thunk body is hand-authored here."}
 // compile_context src/interface_assets.cpp
@@ -45,6 +53,67 @@ static inline void gamma_inset(RECT *rect, int dx, int dy) {
     rect->right -= dx;
     rect->top += dy;
     rect->bottom -= dy;
+}
+
+/*
+Purpose: Step the receiver back to the subobject ??_GGamma@@UAEPAXI@Z expects,
+         then forward unchanged.
+// ORIGINAL: 0x004562B0 ??_GGamma@@WEEE@AEPAXI@Z 0x004562B0-0x004562BB BYTE_EXACT
+// compile_context src/interface_assets.cpp
+// symbol    ??_EGamma@@WEEE@AEPAXI@Z
+// CORRECTED from ??3Gamma@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x00456280` into
+//   ??_GGamma@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/
+
+
+/*
+Purpose: Construct the gamma-correction dialog.
+// ORIGINAL: 0x005C8DA0 ??0Gamma@@QAE@XZ 0x005C8DA0-0x005C8E60;0x00662A70-0x00662AC8 BYTE_EXACT
+// LEVER: the two vtable stores must come FIRST, before `gamma_ = 1.0`. Written after it the body is SHAPE_EXACT 39/42; written before it, BYTE_EXACT 42/42. The image interleaves them - `[esi+0xee8] = 0`, both vtables, then `[esi+0xeec] = 0x3ff00000` - which reads like the vtable stores landing in the middle of the double and impossible to write as source. It is the other way round: VC6 hoists the double's ZERO half ahead of whatever precedes it and leaves the 0x3ff00000 half in place, so putting the vtable stores first is what produces the image's own order. (This lesson was already written out in full INSIDE the function body, ten lines below the marker, where `decomp.reader` - which reads only the comment run immediately after the marker - could not see it: `osmx show` listed no LEVER for this address at all.)
+// size      280 bytes
+// prototype void (__thiscall ??0Gamma@@QAE@XZ)(Gamma* this)
+// callers   2   call targets   6
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005D4CF0 0x005FE2A0 0x006051D0 0x00614E50 0x00618EA0 0x0062BF20
+// LEVER (2026-09-03, the /Ob0 dependency closed): of the six member
+//        constructors this body calls, five were already out of line
+//        (Palette, Font, Scroll, EditBox and the GraphicWin base). The one
+//        that was not - `PushButton() { ; }` in pushbutton.h - was EXPANDED
+//        twice here, and each expansion carried the whole BaseButton chain,
+//        so VC6 paid a second EH spill slot (`sub esp, 8`) plus 22 extra
+//        instructions: 64 compiled against the image's 42, 10 of 42 agreeing.
+//        Out of line (gamma.cpp, 0x0062BF20 BYTE_EXACT) the site is six
+//        `call`s from a one-slot frame, 42 of 42. Nothing in this body
+//        changed; the fix is entirely in the callee's definition.
+Return Value: None
+Status: Complete
+*/
+// The original constructor installs Gamma's Win and secondary Buffer views
+// at object offsets 0 and 0x444. Each emitted identity is compiler-owned;
+// their table extents and full contents remain unbounded here.
+// RECOVERY_GENERATED: v1 vtable 0x0066C3D8 ? ??_7Gamma@@6BWin@@@ 0x005C8DA0
+// RECOVERY_GENERATED: v1 vtable 0x0066C3D0 ? ??_7Gamma@@6BBuffer@@@ 0x005C8DA0
+Gamma::Gamma() {
+    // The vtable slots are compiler-managed, not ordinary members a class can
+    // name - the same reason GraphicWin::construct writes its own pair at
+    // these exact two offsets. Gamma has its own vtable because it overrides;
+    // nothing in this chain is declared `virtual`, so the store is explicit
+    // rather than emitted by a constructor VC6 would generate.
+    // The store order matters; see the LEVER line on the marker above.
+    gamma_ = 1.0;
+    target_palette_ = 0;
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -146,25 +215,89 @@ double Gamma::exec(Palette *target, float initial_gamma, int apply_only) {
     return gamma_;
 }
 
-// ORIGINAL: 0x005C9520 ?adjust_palette@Gamma@@QAEXXZ 0x005C9520-0x005C95E0 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Earlier source-owned body in src/stringstruct.cpp and retained original seed at git:ee30a69d", "Gamma's Scroll position occupies Gamma+0x191C and Palette entries begin at Gamma+0xA68", "Original ramp writes 236 RGB triples, reseeds and sets the Palette, then calls Win slot 12"], "reason": "Keep gamma-ramp behavior in its owning translation unit and operate on Palette entries and Scroll state rather than executable addresses or object offsets."}
-// symbol    ?adjust_palette@Gamma@@QAEXXZ
-void Gamma::adjust_palette() {
-    gamma_ = static_cast<double>(scroll_.position()) * GammaPositionScale;
-    for (int i = 0; i < 236; i++) {
-        double value = pow(static_cast<double>(i) * GammaComponentScale,
-                           1.0 / gamma_);
-        if (value < 0.0) value = 0.0;
-        else if (value > 1.0) value = 1.0;
-        const unsigned char shade = static_cast<unsigned char>(
-            static_cast<int>(value * 235.99));
-        palette_.entries_[i + 10].peRed = shade;
-        palette_.entries_[i + 10].peGreen = shade;
-        palette_.entries_[i + 10].peBlue = shade;
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x005C9330 ?close@Gamma@@QAEXXZ 0x005C9330-0x005C938B BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005c9330.cpp records the cleanup order", "src/gamma.h owns the Palette, Scroll, EditBox and two PushButton subobjects at the measured offsets", "PushButton::close is the virtual slot 90 selected by the original"], "reason": "Close Gamma's real owned controls and base window rather than dispatching through fabricated vtable arrays and raw offsets."}
+// symbol    ?close@Gamma@@QAEXXZ
+void Gamma::close() {
+    target_palette_ = 0;
+    palette_.close();
+    scroll_.close();
+    editBox_.close();
+    pushButton1_.close();
+    pushButton2_.close();
+    GraphicWin::close();
+}
+
+
+
+/*
+// ORIGINAL: 0x005C9390 ?on_scrolled@Gamma@@QAEXHH@Z 0x005C9390-0x005C9398 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned original own table 0x0066C3D8, pointer word at +0xC0, identifies original entry 0x005C9390", "source:src/win.h inherited virtual interface; actual emitted method ?vslot_48@Gamma@@UAEXHH@Z in primary Win table ??_7Gamma@@6BWin@@@"], "reason": "The original own Win table binds this entry as virtual slot 48. Use genuine member dispatch, not an opaque redirect; retain the catalogued original spelling as historical evidence. The previous on_scrolled definition is the class slot-48 target; renaming connects the unchanged body to its real virtual slot."}
+// symbol    ?on_scrolled@Gamma@@UAEXHH@Z
+// size      8 bytes
+// prototype void (__thiscall ?on_scrolled@Gamma@@QAEXHH@Z)(Gamma* this, int, int)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005C9520
+Status: Complete
+*/
+void Gamma::on_scrolled(int code, int pos) {
+    adjust_palette();
+}
+
+/*
+Purpose: ?on_scrolling@Gamma@@QAEXHH@Z - dispatch to slot 0xc0 of this object's OWN
+         vtable, forwarding 2 argument(s).
+// ORIGINAL: 0x005C93A0 ?on_scrolling@Gamma@@QAEXHH@Z 0x005C93A0-0x005C93B7 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned original own table 0x0066C3D8, pointer word at +0xC4, identifies original entry 0x005C93A0", "source:src/win.h inherited virtual interface; actual emitted method ?vslot_49@Gamma@@UAEXHH@Z in primary Win table ??_7Gamma@@6BWin@@@"], "reason": "The original own Win table binds this entry as virtual slot 49. Use genuine member dispatch, not an opaque redirect; retain the catalogued original spelling as historical evidence."}
+// symbol    ?on_scrolling@Gamma@@UAEXHH@Z
+// size      23 bytes
+// prototype void (__thiscall ?on_scrolling@Gamma@@QAEXHH@Z)(Gamma* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005C93AD
+Return Value: n/a
+Status: Complete
+*/
+void Gamma::on_scrolling(int code, int position) {
+  on_scrolled(code, position);
+}
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x005C93C0 ?on_button_clicked@Gamma@@QAEXH@Z 0x005C93C0-0x005C9406 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005c93c0.cpp separates button -1 scroll acceptance from button -2 initial-gamma restoration", "src/gamma.h identifies gamma_, initialGamma_ and the embedded Scroll", "Win slot 58 is release_modal, the original indirect target"], "reason": "Apply or cancel the gamma adjustment and close the modal dialog through its real virtual method."}
+// symbol    ?on_button_clicked@Gamma@@UAEXH@Z
+void Gamma::on_button_clicked(int button_id) {
+    switch (button_id) {
+    case -1:
+        gamma_ = static_cast<double>(scroll_.position()) * GammaPositionScale;
+        break;
+    case -2:
+        gamma_ = initialGamma_;
+        break;
     }
-    palette_.reseed();
-    palette_.set();
-    on_redraw();
+    release_modal();
+}
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns 1.
+// ORIGINAL: 0x005C9410 ?on_key_click@Gamma@@QAEHHH@Z 0x005C9410-0x005C9418 BYTE_EXACT
+// symbol    ?on_key_click@Gamma@@UAEHHH@Z
+// size      8 bytes
+// prototype int (__thiscall ?on_key_click@Gamma@@QAEHHH@Z)(Gamma* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: 1, always
+Status: Complete
+*/
+int Gamma::on_key_click(int, int) {
+    return 1;
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -206,18 +339,25 @@ void Gamma::on_redraw() {
     GraphicWin::soft_update();
 }
 
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005C9330 ?close@Gamma@@QAEXXZ 0x005C9330-0x005C938B BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005c9330.cpp records the cleanup order", "src/gamma.h owns the Palette, Scroll, EditBox and two PushButton subobjects at the measured offsets", "PushButton::close is the virtual slot 90 selected by the original"], "reason": "Close Gamma's real owned controls and base window rather than dispatching through fabricated vtable arrays and raw offsets."}
-// symbol    ?close@Gamma@@QAEXXZ
-void Gamma::close() {
-    target_palette_ = 0;
-    palette_.close();
-    scroll_.close();
-    editBox_.close();
-    pushButton1_.close();
-    pushButton2_.close();
-    GraphicWin::close();
+// ORIGINAL: 0x005C9520 ?adjust_palette@Gamma@@QAEXXZ 0x005C9520-0x005C95E0 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Earlier source-owned body in src/stringstruct.cpp and retained original seed at git:ee30a69d", "Gamma's Scroll position occupies Gamma+0x191C and Palette entries begin at Gamma+0xA68", "Original ramp writes 236 RGB triples, reseeds and sets the Palette, then calls Win slot 12"], "reason": "Keep gamma-ramp behavior in its owning translation unit and operate on Palette entries and Scroll state rather than executable addresses or object offsets."}
+// symbol    ?adjust_palette@Gamma@@QAEXXZ
+void Gamma::adjust_palette() {
+    gamma_ = static_cast<double>(scroll_.position()) * GammaPositionScale;
+    for (int i = 0; i < 236; i++) {
+        double value = pow(static_cast<double>(i) * GammaComponentScale,
+                           1.0 / gamma_);
+        if (value < 0.0) value = 0.0;
+        else if (value > 1.0) value = 1.0;
+        const unsigned char shade = static_cast<unsigned char>(
+            static_cast<int>(value * 235.99));
+        palette_.entries_[i + 10].peRed = shade;
+        palette_.entries_[i + 10].peGreen = shade;
+        palette_.entries_[i + 10].peBlue = shade;
+    }
+    palette_.reseed();
+    palette_.set();
+    on_redraw();
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -256,143 +396,4 @@ void Gamma::adjust_pal(double gamma) {
     }
     target_palette_->reseed();
     target_palette_->set();
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00456110 ??1Gamma@@QAE@XZ 0x00456110-0x00456275;0x00655190-0x00655240 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00456110.cpp shows a Gamma::close call followed by reverse subobject teardown", "src/gamma.h declares the real member order and GraphicWin base", "C++ destruction emits subobject and EH cleanup without writing historical vtable addresses", "Pinned PrefWin::on_button_clicked 0x491400 and load_palette 0x451A10 normal cleanup expand the Gamma close and reverse member/base lifetime at the actual Gamma receiver.", "Both pinned cold EH cleanups call the standalone destructor at 0x456110; keep that independent exceptional entry and all original spans/claims.", "The current Gamma header owns the actual typed members and GraphicWin base; Gamma::close remains the unchanged mapped body at 0x5C9330.", "Current physical production-recipe screening observed a complete matching destructor copy in both real consumers; src/interface_palette.cpp is a measured current compile context only, not an assertion about original TU ownership."], "reason": "Retain Gamma’s standalone destructor identity in its original owner while exposing the unchanged class lifetime to the measured real consumer; the normal consumer paths inline Gamma::close and member/base teardown, while the original cold EH path enters this emitted destructor. Current compile_context names a present emitting TU, not the original translation unit."}
-// compile_context src/interface_assets.cpp
-// body src/gamma.h
-// symbol    ??1Gamma@@UAE@XZ
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005C93C0 ?on_button_clicked@Gamma@@QAEXH@Z 0x005C93C0-0x005C9406 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005c93c0.cpp separates button -1 scroll acceptance from button -2 initial-gamma restoration", "src/gamma.h identifies gamma_, initialGamma_ and the embedded Scroll", "Win slot 58 is release_modal, the original indirect target"], "reason": "Apply or cancel the gamma adjustment and close the modal dialog through its real virtual method."}
-// symbol    ?on_button_clicked@Gamma@@UAEXH@Z
-void Gamma::on_button_clicked(int button_id) {
-    switch (button_id) {
-    case -1:
-        gamma_ = static_cast<double>(scroll_.position()) * GammaPositionScale;
-        break;
-    case -2:
-        gamma_ = initialGamma_;
-        break;
-    }
-    release_modal();
-}
-
-/*
-Purpose: Unknown; the legacy implementation ignores its arguments and returns 1.
-// ORIGINAL: 0x005C9410 ?on_key_click@Gamma@@QAEHHH@Z 0x005C9410-0x005C9418 BYTE_EXACT
-// symbol    ?on_key_click@Gamma@@UAEHHH@Z
-// size      8 bytes
-// prototype int (__thiscall ?on_key_click@Gamma@@QAEHHH@Z)(Gamma* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: 1, always
-Status: Complete
-*/
-int Gamma::on_key_click(int, int) {
-    return 1;
-}
-
-
-
-/*
-// ORIGINAL: 0x005C9390 ?on_scrolled@Gamma@@QAEXHH@Z 0x005C9390-0x005C9398 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned original own table 0x0066C3D8, pointer word at +0xC0, identifies original entry 0x005C9390", "source:src/win.h inherited virtual interface; actual emitted method ?vslot_48@Gamma@@UAEXHH@Z in primary Win table ??_7Gamma@@6BWin@@@"], "reason": "The original own Win table binds this entry as virtual slot 48. Use genuine member dispatch, not an opaque redirect; retain the catalogued original spelling as historical evidence. The previous on_scrolled definition is the class slot-48 target; renaming connects the unchanged body to its real virtual slot."}
-// symbol    ?on_scrolled@Gamma@@UAEXHH@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_scrolled@Gamma@@QAEXHH@Z)(Gamma* this, int, int)
-// callers   0   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005C9520
-Status: Complete
-*/
-void Gamma::on_scrolled(int code, int pos) {
-    adjust_palette();
-}
-
-
-/*
-Purpose: Construct the gamma-correction dialog.
-// ORIGINAL: 0x005C8DA0 ??0Gamma@@QAE@XZ 0x005C8DA0-0x005C8E60;0x00662A70-0x00662AC8 BYTE_EXACT
-// LEVER: the two vtable stores must come FIRST, before `gamma_ = 1.0`. Written after it the body is SHAPE_EXACT 39/42; written before it, BYTE_EXACT 42/42. The image interleaves them - `[esi+0xee8] = 0`, both vtables, then `[esi+0xeec] = 0x3ff00000` - which reads like the vtable stores landing in the middle of the double and impossible to write as source. It is the other way round: VC6 hoists the double's ZERO half ahead of whatever precedes it and leaves the 0x3ff00000 half in place, so putting the vtable stores first is what produces the image's own order. (This lesson was already written out in full INSIDE the function body, ten lines below the marker, where `decomp.reader` - which reads only the comment run immediately after the marker - could not see it: `osmx show` listed no LEVER for this address at all.)
-// size      280 bytes
-// prototype void (__thiscall ??0Gamma@@QAE@XZ)(Gamma* this)
-// callers   2   call targets   6
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x005D4CF0 0x005FE2A0 0x006051D0 0x00614E50 0x00618EA0 0x0062BF20
-// LEVER (2026-09-03, the /Ob0 dependency closed): of the six member
-//        constructors this body calls, five were already out of line
-//        (Palette, Font, Scroll, EditBox and the GraphicWin base). The one
-//        that was not - `PushButton() { ; }` in pushbutton.h - was EXPANDED
-//        twice here, and each expansion carried the whole BaseButton chain,
-//        so VC6 paid a second EH spill slot (`sub esp, 8`) plus 22 extra
-//        instructions: 64 compiled against the image's 42, 10 of 42 agreeing.
-//        Out of line (gamma.cpp, 0x0062BF20 BYTE_EXACT) the site is six
-//        `call`s from a one-slot frame, 42 of 42. Nothing in this body
-//        changed; the fix is entirely in the callee's definition.
-Return Value: None
-Status: Complete
-*/
-// The original constructor installs Gamma's Win and secondary Buffer views
-// at object offsets 0 and 0x444. Each emitted identity is compiler-owned;
-// their table extents and full contents remain unbounded here.
-// RECOVERY_GENERATED: v1 vtable 0x0066C3D8 ? ??_7Gamma@@6BWin@@@ 0x005C8DA0
-// RECOVERY_GENERATED: v1 vtable 0x0066C3D0 ? ??_7Gamma@@6BBuffer@@@ 0x005C8DA0
-Gamma::Gamma() {
-    // The vtable slots are compiler-managed, not ordinary members a class can
-    // name - the same reason GraphicWin::construct writes its own pair at
-    // these exact two offsets. Gamma has its own vtable because it overrides;
-    // nothing in this chain is declared `virtual`, so the store is explicit
-    // rather than emitted by a constructor VC6 would generate.
-    // The store order matters; see the LEVER line on the marker above.
-    gamma_ = 1.0;
-    target_palette_ = 0;
-}
-
-/*
-Purpose: Step the receiver back to the subobject ??_GGamma@@UAEPAXI@Z expects,
-         then forward unchanged.
-// ORIGINAL: 0x004562B0 ??_GGamma@@WEEE@AEPAXI@Z 0x004562B0-0x004562BB BYTE_EXACT
-// compile_context src/interface_assets.cpp
-// symbol    ??_EGamma@@WEEE@AEPAXI@Z
-// CORRECTED from ??3Gamma@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x00456280` into
-//   ??_GGamma@@UAEPAXI@Z, which executes `ret 4`; no stack access and
-//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
-//   and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-
-/*
-Purpose: ?on_scrolling@Gamma@@QAEXHH@Z - dispatch to slot 0xc0 of this object's OWN
-         vtable, forwarding 2 argument(s).
-// ORIGINAL: 0x005C93A0 ?on_scrolling@Gamma@@QAEXHH@Z 0x005C93A0-0x005C93B7 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned original own table 0x0066C3D8, pointer word at +0xC4, identifies original entry 0x005C93A0", "source:src/win.h inherited virtual interface; actual emitted method ?vslot_49@Gamma@@UAEXHH@Z in primary Win table ??_7Gamma@@6BWin@@@"], "reason": "The original own Win table binds this entry as virtual slot 49. Use genuine member dispatch, not an opaque redirect; retain the catalogued original spelling as historical evidence."}
-// symbol    ?on_scrolling@Gamma@@UAEXHH@Z
-// size      23 bytes
-// prototype void (__thiscall ?on_scrolling@Gamma@@QAEXHH@Z)(Gamma* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     (none)
-// indirect  0x005C93AD
-Return Value: n/a
-Status: Complete
-*/
-void Gamma::on_scrolling(int code, int position) {
-  on_scrolled(code, position);
 }
