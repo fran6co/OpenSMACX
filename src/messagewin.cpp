@@ -105,7 +105,8 @@ void MessageWin::on_selected(int code, int) {
                 Bases[base_id].faction_id_current == ConsoleGlobal.faction_id_) {
                 ConsoleGlobal.set_center(Bases[base_id].x, Bases[base_id].y, 1);
                 if (!ConsoleGlobal.cursor_active_) {
-                    ConsoleGlobal.set_cursor(Bases[base_id].x, Bases[base_id].y);
+                    short y = Bases[base_id].y;
+                    ConsoleGlobal.set_cursor(Bases[base_id].x, y);
                 }
                 TutWinBaseWindow.zoom(base_id, 0);
             }
