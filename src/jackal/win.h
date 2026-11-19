@@ -414,8 +414,6 @@ class Win : public AutoSound {
   void take_pointer();
   void grab_pointer();
   int has_dialog_focus_flag() const { return iFlags_ & 0x1000; }
-  // ListBox row painting tests this existing Win flag to select parent-surface copying.
-  bool has_listbox_backfill_flag() const { return (iFlags_ & 0x80000u) != 0; }
   // ?client_to_screen@Win@@QAEXPAURECT@@@Z at 0x005ECFE0 - the RECT
   // overload, distinct from the (int*, int*) one above. Not yet recovered,
   // a pending_bodies forwarder.

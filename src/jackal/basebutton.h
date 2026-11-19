@@ -114,22 +114,11 @@ class BaseButton : public GraphicWin {
   }
   int selected_state() const { return static_cast<int>(field_A18_); }
   int field_A74() const { return static_cast<int>(field_A74_); }
-  // Store-only configuration used by PrefWin: unlike set(), this must not
-  // repaint or notify the parent between the original ordered stores.
-  void set_selected_state(int value) { field_A18_ = static_cast<uint32_t>(value); }
   // DesignWin initializes this still-unnamed word directly; no new role is
   // inferred from that store, and no callback or timer operation is added.
   void set_field_A44(int value) { field_A44_ = static_cast<uint32_t>(value); }
   // Original BaseWin init41FB4B writes this still-unnamed button state.
   void set_field_A14(int value) { field_A14_ = static_cast<uint32_t>(value); }
-  // The base governor panel clears this auxiliary state when a priority
-  // becomes unavailable, then repaints through Win's virtual redraw slot.
-  void clear_auxiliary_state_for_disabled_button() {
-    if (field_A74_ != 0) {
-      field_A74_ = 0;
-      redraw();
-    }
-  }
   // ReportIf::close_ops (0x004A9F90) clears this established state word
   // only when the button is not attached to a ButtonGroup. Keep both fields
   // encapsulated here rather than exposing their legacy storage offsets.

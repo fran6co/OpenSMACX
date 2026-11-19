@@ -562,9 +562,6 @@ class BasePop : public GraphicWin {
   Dialogs &dialogs() {
     return dialogs_;
   }
-  // Application pickers sort this same owned list before executing the
-  // dialog. Keep the original StringList virtual operation and receiver.
-  void sort_item_ids(int mode) { item_ids_.sort(mode); }
   // Calculated popup dimensions at original +0x30BC/+0x30C0. BasePop uses
   // these for GraphicWin::init; tutorial placement reads the same values.
   // Return the stored type so existing signed casts and unsigned additions
@@ -574,12 +571,6 @@ class BasePop : public GraphicWin {
   // Satellite target selection initializes the owned picture, then selects
   // that same member only after Sprite::init succeeds (4A067F..4A0694).
   Sprite &owned_picture() { return sprite_; }
-  // Native popb configures this owned SpriteBox, then its two state fields.
-  void configure_sprite_dialog(Sprite *picture) {
-    dialogs_.sprite(picture, 0, 0);
-    field_3104_ = 2;
-    field_3108_ = 1;
-  }
   // veh_pick stores 1 and 2 here (0x48D14E..0x48D16C) before its SpriteBox pair.
   // stand-in: only a TU defining BASEPOP_SET_SPRITE_LAYOUT sees this inline;
   // its visible body flips register ties in 18 unrelated TUs.

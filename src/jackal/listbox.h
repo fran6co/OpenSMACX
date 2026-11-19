@@ -140,11 +140,6 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
     fill_callback_ = fill;
   }
   void set_draw_callback(DrawCallback draw) { draw_callback_ = draw; }
-  void set_message_initial_state() {
-    field_10_ = 0;
-    field_14_ = static_cast<uint32_t>(-1);
-    field_2C_ = 0;
-  }
   // ReportIf 0x004AC140 sets the text palette before inserting rows, then
   // clears selection/row state afterwards. Keep those two effects separate.
   void set_report_text_color(int color) { field_10_ = color; }
@@ -160,12 +155,6 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
   void set_write_callback(WriteCallback callback) { write_callback_ = callback; }
   void set_selection_callback(WinNotificationCallback callback) {
     selection_callback_ = callback;
-  }
-  // PickWin list setup resets these existing state fields.
-  void initialize_picker_state() {
-    field_2C_ = 0;
-    field_14_ = static_cast<uint32_t>(-1);
-    iFlags_ = 0x40;
   }
  public:
   // 0x0060C6A0, a pending_bodies forwarder.

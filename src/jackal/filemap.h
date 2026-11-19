@@ -34,8 +34,6 @@ class Filemap {
   // confined to Filemap's own original methods, not its public interface.
   void close(); // 006287C0
   void close(LPVOID new_addr);
-  // additional functions to assist with encapsulation
-  uint32_t get_size() { return file_size_; }
   // `Buffer::load_pcx` calls `GetFileSize(file_, NULL)` itself rather than
   // reading `file_size_`, even though `open_read` has just set the two to
   // the same value - so the handle has to be reachable to reproduce the

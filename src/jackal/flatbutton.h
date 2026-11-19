@@ -77,12 +77,6 @@ class FlatButton : public BaseButton {
     field_AD4_[1] = hover;
     field_AD4_[2] = pressed;
   }
-  // Borrowed slice configuration used by BaseWin init and the redraw method.
-  void set_slice_colours(int normal, int hover, int pressed) {
-    field_ABC_[0] = static_cast<uint32_t>(normal);
-    field_ABC_[1] = static_cast<uint32_t>(hover);
-    field_ABC_[2] = static_cast<uint32_t>(pressed);
-  }
   void set_slice_icons(Sprite *left_normal, Sprite *left_hover, Sprite *left_pressed,
                        Sprite *middle_normal, Sprite *middle_hover, Sprite *middle_pressed,
                        Sprite *right_normal, Sprite *right_hover, Sprite *right_pressed) {

@@ -212,7 +212,6 @@ class BaseWin : public GraphicWin, public SubInterface {
   void on_redraw();                                     // 0x0041E790
   void init();                                          // 0x0041E8D0
   void compute_selected_base();
-  int displayed_production_id() const { return displayed_production_id_; }
 
   // UNK2 calls the garrison interaction; on_scrolled repaints facilities.
   // garrison_click's arguments select a vehicle and screen coordinates, with
