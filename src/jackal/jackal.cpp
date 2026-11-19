@@ -66,43 +66,6 @@ int __cdecl sound_header_version() {
     return 1;
 }
 
-// These three pinned lifecycle/version functions establish the current Jackal
-// boundary. Called subsystems remain separately owned; their archive membership
-// and the original translation-unit boundaries are not inferred from these calls.
-// close_class methods, homed to checkbox.cpp / radiobutton.cpp
-void __cdecl teardown_0060fd60();
-void __cdecl teardown_0060e5d0();
-
-// RECOVERY_LITERAL: v1 0x00697478 0x0069747E $SG44843 0x0062D570
-// RECOVERY_LITERAL: v1 0x00697480 0x006974AD $SG44844 0x0062D570
-// RECOVERY_LITERAL: v1 0x006974B0 0x00697547 $SG44845 0x0062D570
-/*
-Purpose: Checks to see if the JACKAL library version is up to date. Pretty pointless but might add
-         an OpenSMACX check in the future.
-// ORIGINAL: 0x0062D570 ?jackal_version_check@@YAHPAD@Z 0x0062D570-0x0062D5A3 BYTE_EXACT
-// symbol    ?jackal_version_check@@YAHPBD@Z
-// size      51 bytes
-// prototype
-// callers   1   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00645660
-// indirect  0x0062D594
-Return Value: Was there an error? true/false
-Status: Complete
-*/
-BOOL __cdecl jackal_version_check(LPCSTR version) {
-    if (strcmp(version, "10.10")) {
-        MessageBoxA(NULL,
-            "The version of the JACKAL library you (Brian Reynolds) are attempting to use "
-            "is out of sync with the library headers! Please rebuild JACKAL.LIB...Bye!",
-            "Oh, such serious danger, William Robinson!!!",
-            MB_OK);
-        return true;
-    }
-    return false;
-}
-
 // ---------------------------------------------------------------------------
 // The Jackal engine's bring-up, promoted out of src/unrecovered/0062d3a0.cpp
 // on 2026-08-15. WinMain calls it once; everything the game draws with exists
@@ -219,6 +182,14 @@ int __cdecl jackal_init_real(Palette *palette, Font *font, LPSTR window_name,
     return 0;
 }
 
+
+// These three pinned lifecycle/version functions establish the current Jackal
+// boundary. Called subsystems remain separately owned; their archive membership
+// and the original translation-unit boundaries are not inferred from these calls.
+// close_class methods, homed to checkbox.cpp / radiobutton.cpp
+void __cdecl teardown_0060fd60();
+void __cdecl teardown_0060e5d0();
+
 /*
 Purpose: Tear down every subsystem jackal_init_real brought up, in the
          image's own order, then clear the "initialised" bit.
@@ -252,4 +223,34 @@ void __cdecl jackal_close() {
     Palette::close_palette_class();
     StringTable.shutdown();
     JackalInitFlags &= ~1;
+}
+
+// RECOVERY_LITERAL: v1 0x00697478 0x0069747E $SG44843 0x0062D570
+// RECOVERY_LITERAL: v1 0x00697480 0x006974AD $SG44844 0x0062D570
+// RECOVERY_LITERAL: v1 0x006974B0 0x00697547 $SG44845 0x0062D570
+/*
+Purpose: Checks to see if the JACKAL library version is up to date. Pretty pointless but might add
+         an OpenSMACX check in the future.
+// ORIGINAL: 0x0062D570 ?jackal_version_check@@YAHPAD@Z 0x0062D570-0x0062D5A3 BYTE_EXACT
+// symbol    ?jackal_version_check@@YAHPBD@Z
+// size      51 bytes
+// prototype
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00645660
+// indirect  0x0062D594
+Return Value: Was there an error? true/false
+Status: Complete
+*/
+BOOL __cdecl jackal_version_check(LPCSTR version) {
+    if (strcmp(version, "10.10")) {
+        MessageBoxA(NULL,
+            "The version of the JACKAL library you (Brian Reynolds) are attempting to use "
+            "is out of sync with the library headers! Please rebuild JACKAL.LIB...Bye!",
+            "Oh, such serious danger, William Robinson!!!",
+            MB_OK);
+        return true;
+    }
+    return false;
 }
