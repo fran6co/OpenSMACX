@@ -26,6 +26,66 @@
 #include "listbox.h"
 #include "win_pointer.h"
 
+
+
+
+/*
+Purpose: Destroy a Scroll: run close, destroy the embedded right then left
+         FlatButtons, and finish with the GraphicWin base teardown through
+         ordinary C++ destruction, including exception cleanup.
+// ORIGINAL: 0x00406E60 ??1Scroll@@QAE@XZ 0x00406E60-0x00406F1A;0x00650BB0-0x00650BEE FILE BYTE_EXACT
+// compile_context src/alphasave.cpp
+// symbol    ??1Scroll@@UAE@XZ
+// size      248 bytes
+// prototype void (__thiscall ??1Scroll@@QAE@XZ)(Scroll* this)
+// callers   41   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D4DD0 0x00605370 0x00607040 0x00607DA0
+Return Value: n/a
+*/
+
+/*
+Purpose: The compiler-generated scalar deleting destructor: run the complete
+         destructor and, when bit 0 of the mode asks, free the storage to the
+         game heap.
+// ORIGINAL: 0x00406F20 ??_GScroll@@UAEPAXI@Z 0x00406F20-0x00406F41 FILE BYTE_EXACT
+// compile_context src/alphasave.cpp
+// symbol    ??_GScroll@@UAEPAXI@Z
+// size      33 bytes
+// prototype 
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00406E60 0x0064557F
+Return Value: the object pointer
+Status: Complete
+*/
+
+// The existing virtual destructor owns this compiler-generated entry.
+
+
+/*
+Purpose: Step the receiver back to the subobject ??_GScroll@@UAEPAXI@Z expects,
+         then forward unchanged.
+// ORIGINAL: 0x004070C0 ??_GScroll@@WEEE@AEPAXI@Z 0x004070C0-0x004070CB BYTE_EXACT
+// compile_context src/alphasave.cpp
+// symbol    ??_EScroll@@WEEE@AEPAXI@Z
+// CORRECTED from ??3Scroll@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x00406F20` into
+//   ??_GScroll@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/
+
 // AN OBJECT, NOT A POINTER TO A FIXED ADDRESS: the pointer form costs a
 // load at every use where the image addresses the storage directly, and
 // the address is terranx.exe's data, unmapped in a standalone build.
@@ -781,92 +841,43 @@ void Scroll::set_bevel_lower(int color) {
 }
 
 /*
-Purpose: Resize the scrollbar track and its right/down arrow after the parent
-         changes size. The smaller axis sets the track thickness.
-// ORIGINAL: 0x00606860 ?on_resize@Scroll@@QAEXHH@Z 0x00606860-0x0060699B FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence":["source:src/recovered/units/00606860.cpp","source:src/scroll.h:Scroll","source:src/win.h:Win::on_resize"],"reason":"Home the resize handler on the actual Scroll layout and dispatch the embedded FlatButton through its inherited virtual resize, without raw self offsets or an invented vtable."}
-// symbol    ?on_resize@Scroll@@UAEXHH@Z
-// The catalogue spells this QAE, but the real Win base declares slot 13;
-// Scroll's emitted override is UAE, as independently checked with VC6.
-*/
-void Scroll::on_resize(int width, int height) {
-    set_bar_thickness(width > height ? height : width);
-
-    if (border_color_ == -1) {
-        flat_button_right_.resize(bar_thickness_, bar_thickness_, 0);
-        const int y = width > height ? 0 : height - bar_thickness_;
-        const int x = width > height ? width - bar_thickness_ : 0;
-        flat_button_right_.move(x, y);
-    } else {
-        flat_button_right_.resize(bar_thickness_ - 2, bar_thickness_ - 2, 0);
-        const int y = width > height ? 1 : height - bar_thickness_ + 1;
-        const int x = width > height ? width - bar_thickness_ + 1 : 1;
-        flat_button_right_.move(x, y);
-    }
-}
-
-/*
-Purpose: Paint the arrow buttons, track, optional pattern and the thumb's
-         sprite and bevel on this window's inherited Buffer.
-// ORIGINAL: 0x006066F0 ?on_redraw@Scroll@@QAEXXZ 0x006066F0-0x00606854 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/006066f0.cpp", "source:src/scroll.h:Scroll", "source:src/graphicwin.h:GraphicWin", "source:src/buffer.h:Buffer"], "reason": "Home the redraw path on the real GraphicWin/Buffer hierarchy, embedded FlatButtons and source-owned thumb sprite instead of seed vtable and raw-offset stand-ins. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
-// kind      game
-// symbol    ?on_redraw@Scroll@@UAEXXZ
-// Likewise, this is Win's slot 12 override despite the catalogue's QAE name.
-// The separately claimed seed remains a restoration obligation while this
-// structurally homed body does not yet reproduce its compiled instructions.
-*/
-void Scroll::on_redraw() {
-    flat_button_left_.redraw();
-    flat_button_right_.redraw();
-    fill(field_A64_);
-
-    if (border_color_ != -1) {
-        const int color = static_cast<unsigned char>(border_color_);
-        Buffer::box(&rect2_, color, color);
-    }
-
-    RECT thumb;
-    compute_thumb_rect(&thumb);
-    fill(&thumb, field_A64_);
-
-    if (field_A78_ != nullptr) {
-        Buffer::tile(field_A78_, 0, 0, 0, 0,
-                     dib_.bmiHeader.biWidth, -dib_.bmiHeader.biHeight);
-    }
-
-    if (thumb_sprite_ != nullptr) {
-        // The Buffer base conversion is taken first and held across the
-        // centring arithmetic (`test esi,esi / lea ebx,[esi+0x444]`).
-        Buffer *const target = this;
-        const int x = (thumb.right - thumb_sprite_->width() - thumb.left) / 2
-                      + thumb.left;
-        const int y = (thumb.bottom - thumb_sprite_->height() - thumb.top) / 2
-                      + thumb.top;
-        thumb_sprite_->draw(target, thumb_sprite_->transparent_index(), x, y,
-                            1, 1);
-    }
-
-    // Native6067F2/6067FC and60684B use signed comparisons. The stored
-    // word can retain a negative set_bevel_thickness(int) bit pattern.
-    for (int layer = 0; layer < long_from_bits(bevel_thickness_); ++layer) {
-        Buffer::box(&thumb, bevel_upper_, bevel_lower_);
-        ++thumb.left;
-        --thumb.right;
-        ++thumb.top;
-        --thumb.bottom;
-    }
-}
-
-/*
-Purpose: Expand a rectangle horizontally and vertically.
-// ORIGINAL: 0x00606F00 sub_606f00 0x00606F00-0x00606F2B BYTE_EXACT
-// body      src/jackal/win.h
-// LEVER: the long_from_bits/uint32_t round trip on plain LONG subtraction was dead weight the image never does (no overflow-defined behavior needed for these fields); direct `RECT` member arithmetic on the `volatile RECT*` matches the mnemonics exactly (2/16 -> 11/16).
-// LEVER: the `volatile RECT *ordered_rect` alias was itself the remaining wall, not a fix for anything read twice - every field here is written once and read once. Reading `rect->field` directly (compound `-=`/`+=`, no volatile handle) let VC6 fold the param-then-field load order the image has instead of forcing a `mov edx, [eax]` ahead of the `ecx` load through the alias. 11/16 -> BYTE_EXACT 16/16.
-// symbol    ?expand_rect@@YAPAUtagRECT@@PAU1@HH@Z
-// size      43 bytes
-// prototype 
+Purpose: Set the border color and reset the scrollbar thumb rectangle.
+// ORIGINAL: 0x00605B10 ?set_border_color@Scroll@@QAEXH@Z 0x00605B10-0x00605B74 BYTE_EXACT
+// LEVER: image writes defaults unconditionally then overwrites in the branch;
+//   ternary/direct-assign forms let the optimizer prove the first write dead and
+//   drop it. A `volatile RECT*` keeps both writes, and re-reading `border_color_`
+//   (not the `color` parameter) for the branch condition matches the image, which
+//   reloads from the just-stored field instead of keeping color live (1/22 -> 9/22).
+// TRIED: forcing the thickness read through a volatile cast, no further gain.
+// TRIED: `thumb->left = 1` re-spelled as `thumb->left + 1` (mirroring the
+//   already-matching `top`/`right`/`bottom` idiom, on the theory that the
+//   image's `inc edx` reuses the register the unconditional zero-init left
+//   at 0 rather than materialising a fresh literal) - WORSE, 9/22 -> 7/22
+//   and the compiled body grows from 21 to 23 instructions. Reverted.
+// TRIED: hoisting the RECT zero-init through a named `const uint32_t zero`
+//   local, on the theory that a value with no dependency on the
+//   `border_color_` store would let VC6 schedule the `xor edx, edx` before
+//   it, matching the image's instruction 1. No effect - still 9/22, same
+//   schedule. Reverted. The `xor edx, edx` vs its later position is the
+//   remaining divergence and is pure instruction scheduling, not source
+//   shape.
+// RETRACTED (2026-08-28) that "pure instruction scheduling" conclusion, and
+//   the conclusion it shared with set_thumb_rect's TRIED. It was the STORE's
+//   volatile, not the schedule: `border_color_ = color` as a plain member
+//   store moves the `xor edx,edx` to instruction 1 where the image has it,
+//   because the volatile cast was what ordered it after the colour store.
+//   9/22 -> 12/22, 0.837 -> 0.930. The branch still re-READS `border_color_`
+//   from memory (`cmp dword ptr [ecx+0xa1c],-1`), which is what this body's
+//   own LEVER above established, so nothing the volatile was guarding is
+//   lost - the image's one store and one load are both still there.
+// TRIED (2026-08-28) `thumb_rect_.left = thumb_rect_.left + 1` for the
+//   image's `inc edx / mov [ecx+0xa4c],edx` once the schedule was right:
+//   11/22, WORSE than the plain literal's 12/22, same as set_bar_thickness's
+//   own attempt. VC6 constant-propagates the member read back to the literal.
+//   Refuted twice now, in two different schedules. The residue is that one
+//   instruction pair and the 3-byte shift it puts in the `je` target.
+// size      100 bytes
+// prototype void (__thiscall ?set_border_color@Scroll@@QAEXH@Z)(Scroll* this, int)
 // callers   1   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -874,6 +885,14 @@ Purpose: Expand a rectangle horizontally and vertically.
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
+void Scroll::set_border_color(int color) {
+    border_color_ = color;
+    set_rectangle_dimensions(&thumb_rect_, 0, 0, bar_thickness_, bar_thickness_);
+    if (border_color_ != -1) {
+        expand_rect(&thumb_rect_, -1, -1);
+    }
+}
+
 // BODY IN win.h, as `MEASURED inline`.
 
 /*
@@ -943,59 +962,6 @@ Status: Complete
 void Scroll::set_bar_thickness(int thickness) {
     bar_thickness_ = thickness;
     set_rectangle_dimensions(&thumb_rect_, 0, 0, thickness, thickness);
-    if (border_color_ != -1) {
-        expand_rect(&thumb_rect_, -1, -1);
-    }
-}
-
-/*
-Purpose: Set the border color and reset the scrollbar thumb rectangle.
-// ORIGINAL: 0x00605B10 ?set_border_color@Scroll@@QAEXH@Z 0x00605B10-0x00605B74 BYTE_EXACT
-// LEVER: image writes defaults unconditionally then overwrites in the branch;
-//   ternary/direct-assign forms let the optimizer prove the first write dead and
-//   drop it. A `volatile RECT*` keeps both writes, and re-reading `border_color_`
-//   (not the `color` parameter) for the branch condition matches the image, which
-//   reloads from the just-stored field instead of keeping color live (1/22 -> 9/22).
-// TRIED: forcing the thickness read through a volatile cast, no further gain.
-// TRIED: `thumb->left = 1` re-spelled as `thumb->left + 1` (mirroring the
-//   already-matching `top`/`right`/`bottom` idiom, on the theory that the
-//   image's `inc edx` reuses the register the unconditional zero-init left
-//   at 0 rather than materialising a fresh literal) - WORSE, 9/22 -> 7/22
-//   and the compiled body grows from 21 to 23 instructions. Reverted.
-// TRIED: hoisting the RECT zero-init through a named `const uint32_t zero`
-//   local, on the theory that a value with no dependency on the
-//   `border_color_` store would let VC6 schedule the `xor edx, edx` before
-//   it, matching the image's instruction 1. No effect - still 9/22, same
-//   schedule. Reverted. The `xor edx, edx` vs its later position is the
-//   remaining divergence and is pure instruction scheduling, not source
-//   shape.
-// RETRACTED (2026-08-28) that "pure instruction scheduling" conclusion, and
-//   the conclusion it shared with set_thumb_rect's TRIED. It was the STORE's
-//   volatile, not the schedule: `border_color_ = color` as a plain member
-//   store moves the `xor edx,edx` to instruction 1 where the image has it,
-//   because the volatile cast was what ordered it after the colour store.
-//   9/22 -> 12/22, 0.837 -> 0.930. The branch still re-READS `border_color_`
-//   from memory (`cmp dword ptr [ecx+0xa1c],-1`), which is what this body's
-//   own LEVER above established, so nothing the volatile was guarding is
-//   lost - the image's one store and one load are both still there.
-// TRIED (2026-08-28) `thumb_rect_.left = thumb_rect_.left + 1` for the
-//   image's `inc edx / mov [ecx+0xa4c],edx` once the schedule was right:
-//   11/22, WORSE than the plain literal's 12/22, same as set_bar_thickness's
-//   own attempt. VC6 constant-propagates the member read back to the literal.
-//   Refuted twice now, in two different schedules. The residue is that one
-//   instruction pair and the 3-byte shift it puts in the `je` target.
-// size      100 bytes
-// prototype void (__thiscall ?set_border_color@Scroll@@QAEXH@Z)(Scroll* this, int)
-// callers   1   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// notes     Runtime redirect installed by DllMain after byte-signature validation
-Status: Complete
-*/
-void Scroll::set_border_color(int color) {
-    border_color_ = color;
-    set_rectangle_dimensions(&thumb_rect_, 0, 0, bar_thickness_, bar_thickness_);
     if (border_color_ != -1) {
         expand_rect(&thumb_rect_, -1, -1);
     }
@@ -1185,184 +1151,6 @@ void Scroll::set_pos(int position) {
             position_ = range_maximum_ - position_ + range_minimum_;
         }
         redraw();
-    }
-}
-
-/*
-Purpose: Compute and publish the scrollbar thumb rectangle.
-// ORIGINAL: 0x00606C50 ?compute_thumb_rect@Scroll@@QAEXPAURECT@@@Z 0x00606C50-0x00606E9E
-// REWRITTEN 2026-08-28 off the raw-offset working copy (4/215, first divergence
-//   at instruction 0) into named members: 52/215 at /c /O2 /Gy /GR- /GX, first
-//   divergence now at instruction 48 - the first 48 instructions, the whole
-//   prologue, the unrolled 16-byte copy and the whole normalize-to-origin
-//   block, agree instruction for instruction.
-// FIELD MAP (what the raw offsets were): 0xA4C thumb_rect_, 0xA1C
-//   border_color_, 0xA3C field_A3C_ (the drag coordinate), 0xA14 field_A14_
-//   (bit 1 = no end buttons), 0xA24 range_maximum_, 0xA20 range_minimum_,
-//   0xA2C position_, 0x4C4/0x4C8 dib_.bmiHeader.biWidth/biHeight (Buffer is at
-//   0x444, so those are +0x80/+0x84 - biHeight stored negative, hence the neg).
-// LEVER: the copy loops were the body's own `for (offset; offset < sizeof
-//   (RECT); offset += 4)` over read_bits/write_bits. The image UNROLLS both
-//   16-byte copies into four load/store pairs; writing `*rect = thumb_rect_`
-//   and `thumb_rect_ = *rect` gives exactly that. 4/215 -> 21/215 together
-//   with the member rewrite.
-// LEVER: the normalize block holds its offsets NEGATED and ADDS them
-//   (`const LONG left = -rect->left; rect->right += left; rect->left += left;`).
-//   The spelling you would write - read `left`, subtract twice - lets VC6 CSE
-//   the two loads of rect->left and fold `left - left` to zero, which the image
-//   never does: it loads rect->left TWICE and shares one `neg` across both
-//   additions. Sub-form measured 12/215, negated form 26/215.
-// LEVER: declaration and statement order in that block. `top` declared BEFORE
-//   `left`, and the field updates in the order left/right/top/bottom (not
-//   right/left/bottom/top), move it 26/215 -> 52/215. Pure register-allocation
-//   scheduling: VC6 hands the two locals eax/edx the other way round
-//   otherwise, and every load after them shifts.
-// TRIED: restructuring the no-end-buttons selects in the not-dragging branch
-//   into the single `if/else` the image's one `test byte` suggests (it sets
-//   thumb_offset AND adjustment in the same two arms). 52/215 unchanged, only
-//   0.590 -> 0.598 similar - kept, but it does not buy the instruction. The
-//   real residue there is that VC6 materialises the mask `2` in edx
-//   (`mov edx,2 / test byte ptr [ecx+0xa14], dl / sub [esp+0x1c], edx`) where
-//   the image uses two immediates, so `adjustment` spills to the stack where
-//   the image keeps it in a register.
-// TRIED: `adjustment = -1 - adjustment` to reuse the -1 the image keeps live in
-//   ebx - WORSE, 50/215 and 0.598 -> 0.504 similar; `0 - adjustment` (neg) is
-//   what the image's own `neg`-bearing schedule wants. Reverted.
-// TRIED: the two `if` conditions as `test byte`-friendly bools - the image
-//   tests `[ecx+0xa14]` once per branch and never materialises a bool, so the
-//   bool form is right; the earlier working copy's `no_end_buttons` bool was
-//   NOT the defect. What is left is register naming (image carries rect->left
-//   in ebp / drag in edx at instruction 48, this tree the other way round)
-//   cascading through the two arms.
-// symbol    ?compute_thumb_rect@Scroll@@QAEXPAUtagRECT@@@Z
-// size      590 bytes
-// prototype void (__thiscall ?compute_thumb_rect@Scroll@@QAEXPAURECT@@@Z)(Scroll* this, RECT*)
-// callers   1   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// notes     Runtime redirect installed by DllMain after byte-signature validation
-Status: Complete
-Verification note: several mutation-harness survivors in this body are
-equivalent by construction, not coverage gaps. The two interim stores to
-0xA3C in the drag branch are dead - the branch ends by unconditionally
-storing 0xFFFFFFFF over them, faithfully mirroring the original's transient
-writes, so no suite can observe them. The clamp idioms are strictness-
-insensitive: `x < 0 ? 0U : x` equals `x < 1 ? 0U : x` and `x <= 0 ? 0U : x`
-everywhere (the only inputs where the branches differ select equal values),
-and likewise `a > b ? a : b` equals `a >= b ? a : b`. The early read_bits
-offsets over the just-normalized rect scan bytes that were all zeroed two
-statements earlier, so off-by-small-constant offset mutants read the same
-zeros.
-*/
-void Scroll::compute_thumb_rect(RECT *rect) {
-    RECT *thumb = &thumb_rect_;
-    *rect = *thumb;
-    offset_rect(rect, -rect->left, -rect->top);
-    if (border_color_ != -1) {
-        offset_rect(rect, 1, 1);
-    }
-    const LONG extent = rect->right - rect->left;
-    if (field_A3C_ == -1) {
-        LONG thumb_offset;
-        LONG span;
-        if ((field_A14_ & 2) != 0) {
-            thumb_offset = 0;
-            span = extent;
-        } else {
-            span = extent * 3;
-            thumb_offset = extent + 1;
-        }
-        // The image subtracts from -1, not 0 (0x00606CEE `mov edx,ebx`).
-        LONG adjustment = -1 - span;
-        if (border_color_ != -1) {
-            adjustment -= 2;
-        }
-        if (dib_.bmiHeader.biWidth > -dib_.bmiHeader.biHeight) {
-            if (range_maximum_ != range_minimum_) {
-                thumb_offset += (position_ - range_minimum_)
-                    * (dib_.bmiHeader.biWidth + adjustment) / (range_maximum_ - range_minimum_);
-            }
-            offset_rect(rect, thumb_offset, 0);
-        } else {
-            if (range_maximum_ != range_minimum_) {
-                thumb_offset += (position_ - range_minimum_)
-                    * (-dib_.bmiHeader.biHeight + adjustment) / (range_maximum_ - range_minimum_);
-            }
-            offset_rect(rect, 0, thumb_offset);
-        }
-    } else {
-        // MIN/MAX are macro-shaped: the image re-evaluates the inner MIN.
-        if ((field_A14_ & 2) != 0) {
-            const LONG far_edge = rect->left + extent;
-            LONG offset = static_cast<LONG>(field_A3C_) + (extent >> 1);
-            field_A3C_ = offset;
-            if (dib_.bmiHeader.biWidth > -dib_.bmiHeader.biHeight) {
-                offset = max(0, min(offset, dib_.bmiHeader.biWidth - far_edge));
-                field_A3C_ = offset;
-                offset_rect(rect, offset, 0);
-            } else {
-                offset = max(0, min(offset, -dib_.bmiHeader.biHeight - far_edge));
-                field_A3C_ = offset;
-                offset_rect(rect, 0, offset);
-            }
-        } else {
-            const LONG far_edge = rect->left + extent;
-            LONG offset = static_cast<LONG>(field_A3C_) + (extent >> 1);
-            field_A3C_ = offset;
-            if (dib_.bmiHeader.biWidth > -dib_.bmiHeader.biHeight) {
-                offset = max(far_edge, min(offset, dib_.bmiHeader.biWidth - far_edge * 2));
-                field_A3C_ = offset;
-                offset_rect(rect, offset, 0);
-            } else {
-                offset = max(far_edge, min(offset, -dib_.bmiHeader.biHeight - far_edge * 2));
-                field_A3C_ = offset;
-                offset_rect(rect, 0, offset);
-            }
-        }
-        field_A3C_ = -1;
-    }
-    *thumb = *rect;
-}
-
-/*
-Purpose: Reset the scrollbar thumb rectangle from its stored thickness.
-// ORIGINAL: 0x00606EA0 ?set_thumb_rect@Scroll@@QAEXXZ 0x00606EA0-0x00606EF8 BYTE_EXACT
-// TRIED: dropping the `volatile` casts on `bar_thickness_`, `border_color_`
-//   and the `thumb` RECT alias: 12/20 -> 7/20, a clear regression. Without
-//   `volatile` the optimizer proves the unconditional 0/0/thickness/thickness
-//   rect writes are dead when the branch below overwrites them and elides
-//   them, which the image does not do - same shape as `set_border_color`'s
-//   already-documented dead-store hazard. Reverted.
-// TRIED (2026-08-28) dropping the volatile ONLY on the two integer accesses,
-//   `bar_thickness_` and the `border_color_` guard, keeping `volatile RECT
-//   *const thumb`: fixes the compare - the image has a memory-immediate
-//   `cmp dword ptr [ecx+0xa1c],-1` and the volatile read forces
-//   `mov edx,[ecx+0xa1c] / cmp edx,-1`, one instruction longer - but the
-//   body then compiles to 19 instructions against the image's 20, so the
-//   `je` target shifts 3 bytes and lands differently: 10/20 at 0.923 similar
-//   against the tree's 12/20 at 0.900. Same measurement for the single-exit
-//   `result` shape that took set_bar_thickness to 12/22, and for holding the
-//   zero in a `uint32_t left_edge` local. LEFT on the tree's 12/20, but note
-//   the direction: the volatile-read version is one lever from exact (the
-//   image's `inc edx / mov [ecx+0xa4c],edx` pair, see set_bar_thickness's
-//   TRIED), while the volatile-guard version is two.
-// TRIED (2026-08-28) `thumb_rect_.left = thumb_rect_.left + 1` and
-//   `thumb->left = thumb->left + 1` for that pair: 9/20 and 9/20. Refuted.
-// symbol    ?set_thumb_rect@Scroll@@QAEXXZ
-// size      88 bytes
-// prototype void (__thiscall ?set_thumb_rect@Scroll@@QAEXXZ)(Scroll* this)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// notes     Runtime redirect installed by DllMain after byte-signature validation
-Status: Complete
-*/
-void Scroll::set_thumb_rect() {
-    set_rectangle_dimensions(&thumb_rect_, 0, 0, bar_thickness_, bar_thickness_);
-    if (border_color_ != -1) {
-        expand_rect(&thumb_rect_, -1, -1);
     }
 }
 
@@ -1560,6 +1348,23 @@ void Scroll::on_left_up(int, int) {
     }
 }
 
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+// ORIGINAL: 0x00606310 ?on_left_click@Scroll@@QAEHHH@Z 0x00606310-0x00606313 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned Scroll constructor 0x6051D0 stores primary addresspoint 0x669D58 at [this] at 0x605214; table slot 19 at 0x669DA4 targets original 0x606310.", "Pinned 0x606310 is a bare ret 8 with no register writes. Win's slot-19 callback type is void, and observed calls through that slot continue using other registers without consuming EAX.", "The original catalogued decorated identity/prototype still says int (__thiscall ?on_left_click@Scroll@@QAEHHH@Z); that mismatch is preserved in the ORIGINAL history. This candidate does not assert a new emitted symbol before native owner-object observation."], "reason": "Model Scroll's constructor-installed Win slot-19 entry as the genuine void callback, keeping its original byte claim and catalogued int signature as historical evidence."}
+// symbol    ?on_left_click@Scroll@@UAEXHH@Z
+// size      3 bytes
+// prototype int (__thiscall ?on_left_click@Scroll@@QAEHHH@Z)(Scroll* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void Scroll::on_left_click(int, int) {
+}
+
 // ORIGINAL: 0x00606320 ?on_mousewheel_down@Scroll@@QAEXH@Z 0x00606320-0x0060643E BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Keep the original chosen reversal branch, callback-visible reloads and delta-gated sound operation instead of caching notification values or omitting sound.","evidence":["pinned:606382..6063FD reloads callback/id/position/bounds after parent notification inside the original reversal branch","pinned:60637C jumps directly to redraw for delta zero;606402..606425 otherwise reloads the live parent and checks/plays its sound after both notifications, without another parent-null guard"]}
 void Scroll::on_mousewheel_down(int delta) {
@@ -1723,55 +1528,82 @@ done:
     return handled;
 }
 
-// ORIGINAL: 0x00606B20 ?on_button_clicked@Scroll@@QAEXH@Z 0x00606B20-0x00606C43 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"reason":"Preserve the original branch-selected notification mapping while reloading callback-visible position, bounds, callback identity and parent after external notifications; do not reuse pre-callback snapshots.","evidence":["pinned:606B7E..606B9F selects normal/reversed notification before the parent virtual call;606BA5..606BB5 reloads the normal callback and current position;606BDB..606C03 reloads the reversed callback and current max/position/min/id without retesting reversal","pinned:606C08 reloads current parent+0xC4 and its sound+0x80 after both notifications; there is no second parent-null guard. Preserve that original error path, final thumb reset and virtual redraw."]}
-// symbol    ?on_button_clicked@Scroll@@UAEXH@Z
-void Scroll::on_button_clicked(int button_id) {
-    Win *const parent = win_parent_;
-    if (parent == nullptr) {
-        return;
+/*
+Purpose: Paint the arrow buttons, track, optional pattern and the thumb's
+         sprite and bevel on this window's inherited Buffer.
+// ORIGINAL: 0x006066F0 ?on_redraw@Scroll@@QAEXXZ 0x006066F0-0x00606854 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/006066f0.cpp", "source:src/scroll.h:Scroll", "source:src/graphicwin.h:GraphicWin", "source:src/buffer.h:Buffer"], "reason": "Home the redraw path on the real GraphicWin/Buffer hierarchy, embedded FlatButtons and source-owned thumb sprite instead of seed vtable and raw-offset stand-ins. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
+// symbol    ?on_redraw@Scroll@@UAEXXZ
+// Likewise, this is Win's slot 12 override despite the catalogue's QAE name.
+// The separately claimed seed remains a restoration obligation while this
+// structurally homed body does not yet reproduce its compiled instructions.
+*/
+void Scroll::on_redraw() {
+    flat_button_left_.redraw();
+    flat_button_right_.redraw();
+    fill(field_A64_);
+
+    if (border_color_ != -1) {
+        const int color = static_cast<unsigned char>(border_color_);
+        Buffer::box(&rect2_, color, color);
     }
 
-    field_A38_ = 0;
-    WinCallbackWindow = parent;
-    ListBoxGlobalDDC = 0;
+    RECT thumb;
+    compute_thumb_rect(&thumb);
+    fill(&thumb, field_A64_);
 
-    switch (button_id) {
-    case 1:
-        if (position_ > range_minimum_) {
-            --position_;
-        }
-        break;
-    case 2:
-        if (position_ < range_maximum_) {
-            ++position_;
-        }
-        break;
+    if (field_A78_ != nullptr) {
+        Buffer::tile(field_A78_, 0, 0, 0, 0,
+                     dib_.bmiHeader.biWidth, -dib_.bmiHeader.biHeight);
     }
 
-    // The original chooses the mapping branch once, before notification.
-    // Callbacks can change the values, but not that already chosen branch.
-    if (range_reversed_ == 0U) {
-        win_parent_->on_scrolled(field_A18_, position_);
-        if (field_2144_ != nullptr) {
-            field_2144_(field_A18_, position_);
-        }
+    if (thumb_sprite_ != nullptr) {
+        // The Buffer base conversion is taken first and held across the
+        // centring arithmetic (`test esi,esi / lea ebx,[esi+0x444]`).
+        Buffer *const target = this;
+        const int x = (thumb.right - thumb_sprite_->width() - thumb.left) / 2
+                      + thumb.left;
+        const int y = (thumb.bottom - thumb_sprite_->height() - thumb.top) / 2
+                      + thumb.top;
+        thumb_sprite_->draw(target, thumb_sprite_->transparent_index(), x, y,
+                            1, 1);
+    }
+
+    // Native6067F2/6067FC and60684B use signed comparisons. The stored
+    // word can retain a negative set_bevel_thickness(int) bit pattern.
+    for (int layer = 0; layer < long_from_bits(bevel_thickness_); ++layer) {
+        Buffer::box(&thumb, bevel_upper_, bevel_lower_);
+        ++thumb.left;
+        --thumb.right;
+        ++thumb.top;
+        --thumb.bottom;
+    }
+}
+
+/*
+Purpose: Resize the scrollbar track and its right/down arrow after the parent
+         changes size. The smaller axis sets the track thickness.
+// ORIGINAL: 0x00606860 ?on_resize@Scroll@@QAEXHH@Z 0x00606860-0x0060699B FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["source:src/recovered/units/00606860.cpp","source:src/scroll.h:Scroll","source:src/win.h:Win::on_resize"],"reason":"Home the resize handler on the actual Scroll layout and dispatch the embedded FlatButton through its inherited virtual resize, without raw self offsets or an invented vtable."}
+// symbol    ?on_resize@Scroll@@UAEXHH@Z
+// The catalogue spells this QAE, but the real Win base declares slot 13;
+// Scroll's emitted override is UAE, as independently checked with VC6.
+*/
+void Scroll::on_resize(int width, int height) {
+    set_bar_thickness(width > height ? height : width);
+
+    if (border_color_ == -1) {
+        flat_button_right_.resize(bar_thickness_, bar_thickness_, 0);
+        const int y = width > height ? 0 : height - bar_thickness_;
+        const int x = width > height ? width - bar_thickness_ : 0;
+        flat_button_right_.move(x, y);
     } else {
-        win_parent_->on_scrolled(field_A18_,
-                                (range_maximum_ - position_) + range_minimum_);
-        if (field_2144_ != nullptr) {
-            field_2144_(field_A18_,
-                        (range_maximum_ - position_) + range_minimum_);
-        }
+        flat_button_right_.resize(bar_thickness_ - 2, bar_thickness_ - 2, 0);
+        const int y = width > height ? 1 : height - bar_thickness_ + 1;
+        const int x = width > height ? width - bar_thickness_ + 1 : 1;
+        flat_button_right_.move(x, y);
     }
-
-    Sound *const target = win_parent_->legacy_sound_32();
-    if (target != nullptr && target->is_playing() == 0) {
-        target->play();
-    }
-
-    field_A3C_ = 0xFFFFFFFFU;
-    redraw();
 }
 
 // ORIGINAL: 0x006069A0 ?on_button_pressed@Scroll@@QAEXH@Z 0x006069A0-0x00606B14 BYTE_EXACT
@@ -1834,77 +1666,249 @@ int Scroll::on_button_pressed(int button_id) {
     return 1;
 }
 
-/*
-Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-// ORIGINAL: 0x00606310 ?on_left_click@Scroll@@QAEHHH@Z 0x00606310-0x00606313 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned Scroll constructor 0x6051D0 stores primary addresspoint 0x669D58 at [this] at 0x605214; table slot 19 at 0x669DA4 targets original 0x606310.", "Pinned 0x606310 is a bare ret 8 with no register writes. Win's slot-19 callback type is void, and observed calls through that slot continue using other registers without consuming EAX.", "The original catalogued decorated identity/prototype still says int (__thiscall ?on_left_click@Scroll@@QAEHHH@Z); that mismatch is preserved in the ORIGINAL history. This candidate does not assert a new emitted symbol before native owner-object observation."], "reason": "Model Scroll's constructor-installed Win slot-19 entry as the genuine void callback, keeping its original byte claim and catalogued int signature as historical evidence."}
-// symbol    ?on_left_click@Scroll@@UAEXHH@Z
-// size      3 bytes
-// prototype int (__thiscall ?on_left_click@Scroll@@QAEHHH@Z)(Scroll* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void Scroll::on_left_click(int, int) {
+// ORIGINAL: 0x00606B20 ?on_button_clicked@Scroll@@QAEXH@Z 0x00606B20-0x00606C43 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"Preserve the original branch-selected notification mapping while reloading callback-visible position, bounds, callback identity and parent after external notifications; do not reuse pre-callback snapshots.","evidence":["pinned:606B7E..606B9F selects normal/reversed notification before the parent virtual call;606BA5..606BB5 reloads the normal callback and current position;606BDB..606C03 reloads the reversed callback and current max/position/min/id without retesting reversal","pinned:606C08 reloads current parent+0xC4 and its sound+0x80 after both notifications; there is no second parent-null guard. Preserve that original error path, final thumb reset and virtual redraw."]}
+// symbol    ?on_button_clicked@Scroll@@UAEXH@Z
+void Scroll::on_button_clicked(int button_id) {
+    Win *const parent = win_parent_;
+    if (parent == nullptr) {
+        return;
+    }
+
+    field_A38_ = 0;
+    WinCallbackWindow = parent;
+    ListBoxGlobalDDC = 0;
+
+    switch (button_id) {
+    case 1:
+        if (position_ > range_minimum_) {
+            --position_;
+        }
+        break;
+    case 2:
+        if (position_ < range_maximum_) {
+            ++position_;
+        }
+        break;
+    }
+
+    // The original chooses the mapping branch once, before notification.
+    // Callbacks can change the values, but not that already chosen branch.
+    if (range_reversed_ == 0U) {
+        win_parent_->on_scrolled(field_A18_, position_);
+        if (field_2144_ != nullptr) {
+            field_2144_(field_A18_, position_);
+        }
+    } else {
+        win_parent_->on_scrolled(field_A18_,
+                                (range_maximum_ - position_) + range_minimum_);
+        if (field_2144_ != nullptr) {
+            field_2144_(field_A18_,
+                        (range_maximum_ - position_) + range_minimum_);
+        }
+    }
+
+    Sound *const target = win_parent_->legacy_sound_32();
+    if (target != nullptr && target->is_playing() == 0) {
+        target->play();
+    }
+
+    field_A3C_ = 0xFFFFFFFFU;
+    redraw();
 }
 
-
-
 /*
-Purpose: Destroy a Scroll: run close, destroy the embedded right then left
-         FlatButtons, and finish with the GraphicWin base teardown through
-         ordinary C++ destruction, including exception cleanup.
-// ORIGINAL: 0x00406E60 ??1Scroll@@QAE@XZ 0x00406E60-0x00406F1A;0x00650BB0-0x00650BEE FILE BYTE_EXACT
-// compile_context src/alphasave.cpp
-// symbol    ??1Scroll@@UAE@XZ
-// size      248 bytes
-// prototype void (__thiscall ??1Scroll@@QAE@XZ)(Scroll* this)
-// callers   41   call targets   4
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x005D4DD0 0x00605370 0x00607040 0x00607DA0
-Return Value: n/a
-*/
-/*
-Purpose: The compiler-generated scalar deleting destructor: run the complete
-         destructor and, when bit 0 of the mode asks, free the storage to the
-         game heap.
-// ORIGINAL: 0x00406F20 ??_GScroll@@UAEPAXI@Z 0x00406F20-0x00406F41 FILE BYTE_EXACT
-// compile_context src/alphasave.cpp
-// symbol    ??_GScroll@@UAEPAXI@Z
-// size      33 bytes
-// prototype 
-// callers   0   call targets   2
+Purpose: Compute and publish the scrollbar thumb rectangle.
+// ORIGINAL: 0x00606C50 ?compute_thumb_rect@Scroll@@QAEXPAURECT@@@Z 0x00606C50-0x00606E9E
+// REWRITTEN 2026-08-28 off the raw-offset working copy (4/215, first divergence
+//   at instruction 0) into named members: 52/215 at /c /O2 /Gy /GR- /GX, first
+//   divergence now at instruction 48 - the first 48 instructions, the whole
+//   prologue, the unrolled 16-byte copy and the whole normalize-to-origin
+//   block, agree instruction for instruction.
+// FIELD MAP (what the raw offsets were): 0xA4C thumb_rect_, 0xA1C
+//   border_color_, 0xA3C field_A3C_ (the drag coordinate), 0xA14 field_A14_
+//   (bit 1 = no end buttons), 0xA24 range_maximum_, 0xA20 range_minimum_,
+//   0xA2C position_, 0x4C4/0x4C8 dib_.bmiHeader.biWidth/biHeight (Buffer is at
+//   0x444, so those are +0x80/+0x84 - biHeight stored negative, hence the neg).
+// LEVER: the copy loops were the body's own `for (offset; offset < sizeof
+//   (RECT); offset += 4)` over read_bits/write_bits. The image UNROLLS both
+//   16-byte copies into four load/store pairs; writing `*rect = thumb_rect_`
+//   and `thumb_rect_ = *rect` gives exactly that. 4/215 -> 21/215 together
+//   with the member rewrite.
+// LEVER: the normalize block holds its offsets NEGATED and ADDS them
+//   (`const LONG left = -rect->left; rect->right += left; rect->left += left;`).
+//   The spelling you would write - read `left`, subtract twice - lets VC6 CSE
+//   the two loads of rect->left and fold `left - left` to zero, which the image
+//   never does: it loads rect->left TWICE and shares one `neg` across both
+//   additions. Sub-form measured 12/215, negated form 26/215.
+// LEVER: declaration and statement order in that block. `top` declared BEFORE
+//   `left`, and the field updates in the order left/right/top/bottom (not
+//   right/left/bottom/top), move it 26/215 -> 52/215. Pure register-allocation
+//   scheduling: VC6 hands the two locals eax/edx the other way round
+//   otherwise, and every load after them shifts.
+// TRIED: restructuring the no-end-buttons selects in the not-dragging branch
+//   into the single `if/else` the image's one `test byte` suggests (it sets
+//   thumb_offset AND adjustment in the same two arms). 52/215 unchanged, only
+//   0.590 -> 0.598 similar - kept, but it does not buy the instruction. The
+//   real residue there is that VC6 materialises the mask `2` in edx
+//   (`mov edx,2 / test byte ptr [ecx+0xa14], dl / sub [esp+0x1c], edx`) where
+//   the image uses two immediates, so `adjustment` spills to the stack where
+//   the image keeps it in a register.
+// TRIED: `adjustment = -1 - adjustment` to reuse the -1 the image keeps live in
+//   ebx - WORSE, 50/215 and 0.598 -> 0.504 similar; `0 - adjustment` (neg) is
+//   what the image's own `neg`-bearing schedule wants. Reverted.
+// TRIED: the two `if` conditions as `test byte`-friendly bools - the image
+//   tests `[ecx+0xa14]` once per branch and never materialises a bool, so the
+//   bool form is right; the earlier working copy's `no_end_buttons` bool was
+//   NOT the defect. What is left is register naming (image carries rect->left
+//   in ebp / drag in edx at instruction 48, this tree the other way round)
+//   cascading through the two arms.
+// symbol    ?compute_thumb_rect@Scroll@@QAEXPAUtagRECT@@@Z
+// size      590 bytes
+// prototype void (__thiscall ?compute_thumb_rect@Scroll@@QAEXPAURECT@@@Z)(Scroll* this, RECT*)
+// callers   1   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
-// calls     0x00406E60 0x0064557F
-Return Value: the object pointer
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
+Verification note: several mutation-harness survivors in this body are
+equivalent by construction, not coverage gaps. The two interim stores to
+0xA3C in the drag branch are dead - the branch ends by unconditionally
+storing 0xFFFFFFFF over them, faithfully mirroring the original's transient
+writes, so no suite can observe them. The clamp idioms are strictness-
+insensitive: `x < 0 ? 0U : x` equals `x < 1 ? 0U : x` and `x <= 0 ? 0U : x`
+everywhere (the only inputs where the branches differ select equal values),
+and likewise `a > b ? a : b` equals `a >= b ? a : b`. The early read_bits
+offsets over the just-normalized rect scan bytes that were all zeroed two
+statements earlier, so off-by-small-constant offset mutants read the same
+zeros.
 */
-// The existing virtual destructor owns this compiler-generated entry.
-
+void Scroll::compute_thumb_rect(RECT *rect) {
+    RECT *thumb = &thumb_rect_;
+    *rect = *thumb;
+    offset_rect(rect, -rect->left, -rect->top);
+    if (border_color_ != -1) {
+        offset_rect(rect, 1, 1);
+    }
+    const LONG extent = rect->right - rect->left;
+    if (field_A3C_ == -1) {
+        LONG thumb_offset;
+        LONG span;
+        if ((field_A14_ & 2) != 0) {
+            thumb_offset = 0;
+            span = extent;
+        } else {
+            span = extent * 3;
+            thumb_offset = extent + 1;
+        }
+        // The image subtracts from -1, not 0 (0x00606CEE `mov edx,ebx`).
+        LONG adjustment = -1 - span;
+        if (border_color_ != -1) {
+            adjustment -= 2;
+        }
+        if (dib_.bmiHeader.biWidth > -dib_.bmiHeader.biHeight) {
+            if (range_maximum_ != range_minimum_) {
+                thumb_offset += (position_ - range_minimum_)
+                    * (dib_.bmiHeader.biWidth + adjustment) / (range_maximum_ - range_minimum_);
+            }
+            offset_rect(rect, thumb_offset, 0);
+        } else {
+            if (range_maximum_ != range_minimum_) {
+                thumb_offset += (position_ - range_minimum_)
+                    * (-dib_.bmiHeader.biHeight + adjustment) / (range_maximum_ - range_minimum_);
+            }
+            offset_rect(rect, 0, thumb_offset);
+        }
+    } else {
+        // MIN/MAX are macro-shaped: the image re-evaluates the inner MIN.
+        if ((field_A14_ & 2) != 0) {
+            const LONG far_edge = rect->left + extent;
+            LONG offset = static_cast<LONG>(field_A3C_) + (extent >> 1);
+            field_A3C_ = offset;
+            if (dib_.bmiHeader.biWidth > -dib_.bmiHeader.biHeight) {
+                offset = max(0, min(offset, dib_.bmiHeader.biWidth - far_edge));
+                field_A3C_ = offset;
+                offset_rect(rect, offset, 0);
+            } else {
+                offset = max(0, min(offset, -dib_.bmiHeader.biHeight - far_edge));
+                field_A3C_ = offset;
+                offset_rect(rect, 0, offset);
+            }
+        } else {
+            const LONG far_edge = rect->left + extent;
+            LONG offset = static_cast<LONG>(field_A3C_) + (extent >> 1);
+            field_A3C_ = offset;
+            if (dib_.bmiHeader.biWidth > -dib_.bmiHeader.biHeight) {
+                offset = max(far_edge, min(offset, dib_.bmiHeader.biWidth - far_edge * 2));
+                field_A3C_ = offset;
+                offset_rect(rect, offset, 0);
+            } else {
+                offset = max(far_edge, min(offset, -dib_.bmiHeader.biHeight - far_edge * 2));
+                field_A3C_ = offset;
+                offset_rect(rect, 0, offset);
+            }
+        }
+        field_A3C_ = -1;
+    }
+    *thumb = *rect;
+}
 
 /*
-Purpose: Step the receiver back to the subobject ??_GScroll@@UAEPAXI@Z expects,
-         then forward unchanged.
-// ORIGINAL: 0x004070C0 ??_GScroll@@WEEE@AEPAXI@Z 0x004070C0-0x004070CB BYTE_EXACT
-// compile_context src/alphasave.cpp
-// symbol    ??_EScroll@@WEEE@AEPAXI@Z
-// CORRECTED from ??3Scroll@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x00406F20` into
-//   ??_GScroll@@UAEPAXI@Z, which executes `ret 4`; no stack access and
-//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
-//   and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
+Purpose: Reset the scrollbar thumb rectangle from its stored thickness.
+// ORIGINAL: 0x00606EA0 ?set_thumb_rect@Scroll@@QAEXXZ 0x00606EA0-0x00606EF8 BYTE_EXACT
+// TRIED: dropping the `volatile` casts on `bar_thickness_`, `border_color_`
+//   and the `thumb` RECT alias: 12/20 -> 7/20, a clear regression. Without
+//   `volatile` the optimizer proves the unconditional 0/0/thickness/thickness
+//   rect writes are dead when the branch below overwrites them and elides
+//   them, which the image does not do - same shape as `set_border_color`'s
+//   already-documented dead-store hazard. Reverted.
+// TRIED (2026-08-28) dropping the volatile ONLY on the two integer accesses,
+//   `bar_thickness_` and the `border_color_` guard, keeping `volatile RECT
+//   *const thumb`: fixes the compare - the image has a memory-immediate
+//   `cmp dword ptr [ecx+0xa1c],-1` and the volatile read forces
+//   `mov edx,[ecx+0xa1c] / cmp edx,-1`, one instruction longer - but the
+//   body then compiles to 19 instructions against the image's 20, so the
+//   `je` target shifts 3 bytes and lands differently: 10/20 at 0.923 similar
+//   against the tree's 12/20 at 0.900. Same measurement for the single-exit
+//   `result` shape that took set_bar_thickness to 12/22, and for holding the
+//   zero in a `uint32_t left_edge` local. LEFT on the tree's 12/20, but note
+//   the direction: the volatile-read version is one lever from exact (the
+//   image's `inc edx / mov [ecx+0xa4c],edx` pair, see set_bar_thickness's
+//   TRIED), while the volatile-guard version is two.
+// TRIED (2026-08-28) `thumb_rect_.left = thumb_rect_.left + 1` and
+//   `thumb->left = thumb->left + 1` for that pair: 9/20 and 9/20. Refuted.
+// symbol    ?set_thumb_rect@Scroll@@QAEXXZ
+// size      88 bytes
+// prototype void (__thiscall ?set_thumb_rect@Scroll@@QAEXXZ)(Scroll* this)
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
-Return Value: the forwarded call's
+// notes     Runtime redirect installed by DllMain after byte-signature validation
+Status: Complete
+*/
+void Scroll::set_thumb_rect() {
+    set_rectangle_dimensions(&thumb_rect_, 0, 0, bar_thickness_, bar_thickness_);
+    if (border_color_ != -1) {
+        expand_rect(&thumb_rect_, -1, -1);
+    }
+}
+
+/*
+Purpose: Expand a rectangle horizontally and vertically.
+// ORIGINAL: 0x00606F00 sub_606f00 0x00606F00-0x00606F2B BYTE_EXACT
+// body      src/jackal/win.h
+// LEVER: the long_from_bits/uint32_t round trip on plain LONG subtraction was dead weight the image never does (no overflow-defined behavior needed for these fields); direct `RECT` member arithmetic on the `volatile RECT*` matches the mnemonics exactly (2/16 -> 11/16).
+// LEVER: the `volatile RECT *ordered_rect` alias was itself the remaining wall, not a fix for anything read twice - every field here is written once and read once. Reading `rect->field` directly (compound `-=`/`+=`, no volatile handle) let VC6 fold the param-then-field load order the image has instead of forcing a `mov edx, [eax]` ahead of the `ecx` load through the alias. 11/16 -> BYTE_EXACT 16/16.
+// symbol    ?expand_rect@@YAPAUtagRECT@@PAU1@HH@Z
+// size      43 bytes
+// prototype 
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 
