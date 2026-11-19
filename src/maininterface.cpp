@@ -664,14 +664,10 @@ int MainInterface::init(int) {
     flat_button_[4].set_bubble_text(StringTable.get(Labels.strings_ptr[0xC40 / 4]));
     flat_button_[6].init(0, 1006, &rect2_, this, 0);
     flat_button_[6].set_bubble_text(StringTable.get(Labels.strings_ptr[0x4C8 / 4]));
-    flat_button_[6].field_AD4_[0] = &sprites7_[0];
-    flat_button_[6].field_AD4_[1] = &sprites7_[1];
-    flat_button_[6].field_AD4_[2] = &sprites7_[2];
+    flat_button_[6].set_report_icons(&sprites7_[0], &sprites7_[1], &sprites7_[2]);
     flat_button_[7].init(0, 1007, &rect3_, this, 0);
     flat_button_[7].set_bubble_text(StringTable.get(Labels.strings_ptr[0xF20 / 4]));
-    flat_button_[7].field_AD4_[0] = &sprites7_[3];
-    flat_button_[7].field_AD4_[1] = &sprites7_[4];
-    flat_button_[7].field_AD4_[2] = &sprites7_[5];
+    flat_button_[7].set_report_icons(&sprites7_[3], &sprites7_[4], &sprites7_[5]);
     for (i = 6; i < 8; i++) {
         button_group_[1].add(&flat_button_[i]);
         flat_button_[i].redraw();
@@ -679,21 +675,15 @@ int MainInterface::init(int) {
     button_group_[1].set(1006, 1);
     flat_button_[8].init(0, 1008, &stack_button_rect_, this, 0);
     flat_button_[8].hide();
-    flat_button_[8].field_AD4_[0] = &sprites12_[0];
-    flat_button_[8].field_AD4_[1] = &sprites12_[1];
-    flat_button_[8].field_AD4_[2] = &sprites12_[2];
+    flat_button_[8].set_report_icons(&sprites12_[0], &sprites12_[1], &sprites12_[2]);
     flat_button_[9].init(0, 1009, &adjacent_panel_left_rect_,
                          this, 0);
     flat_button_[9].hide();
-    flat_button_[9].field_AD4_[0] = &sprites12_[0];
-    flat_button_[9].field_AD4_[1] = &sprites12_[1];
-    flat_button_[9].field_AD4_[2] = &sprites12_[2];
+    flat_button_[9].set_report_icons(&sprites12_[0], &sprites12_[1], &sprites12_[2]);
     flat_button_[10].init(0, 1010, &adjacent_panel_right_rect_,
                           this, 0);
     flat_button_[10].hide();
-    flat_button_[10].field_AD4_[0] = &sprites12_[3];
-    flat_button_[10].field_AD4_[1] = &sprites12_[4];
-    flat_button_[10].field_AD4_[2] = &sprites12_[5];
+    flat_button_[10].set_report_icons(&sprites12_[3], &sprites12_[4], &sprites12_[5]);
     // Editor buttons 11..35: five rows per column, stepping r down a row and
     // back up to the next column. The image rebases k to k - 11
     // (cmp k - 11 + 11 < 36).
@@ -736,9 +726,7 @@ int MainInterface::init(int) {
         flat_button_[k].init(0, k + 1000, &editor_button_rects_[k - 11],
                              this, 0);
         flat_button_[k].hide();
-        flat_button_[k].field_AD4_[0] = &sprites9_[(k - 11) * 3];
-        flat_button_[k].field_AD4_[1] = &sprites9_[(k - 11) * 3 + 1];
-        flat_button_[k].field_AD4_[2] = &sprites9_[(k - 11) * 3 + 2];
+        flat_button_[k].set_report_icons(&sprites9_[(k - 11) * 3], &sprites9_[(k - 11) * 3 + 1], &sprites9_[(k - 11) * 3 + 2]);
         if (k >= 17 && k <= 31) {
             for (j = 0; j < 20; j++) {
                 if (Terraforming[j].bit == 0 && tool >= j) tool++;
@@ -792,9 +780,7 @@ int MainInterface::init(int) {
             flat_button_[k].init(0, k + 1000, &brush_button_rects_[k - 36],
                                  this, 0);
             flat_button_[k].hide();
-            flat_button_[k].field_AD4_[0] = &sprites10_[(k - 36) * 3];
-            flat_button_[k].field_AD4_[1] = &sprites10_[(k - 36) * 3 + 1];
-            flat_button_[k].field_AD4_[2] = &sprites10_[(k - 36) * 3 + 2];
+            flat_button_[k].set_report_icons(&sprites10_[(k - 36) * 3], &sprites10_[(k - 36) * 3 + 1], &sprites10_[(k - 36) * 3 + 2]);
             flat_button_[k].set_bubble_text(StringTable.get(Labels.strings_ptr[0xF64 / 4 + k - 36]));
             button_group_[3].add(&flat_button_[k]);
         }
