@@ -1584,7 +1584,10 @@ L_5a2dcd:
                 return 0;
             }
         }
-        if (local_64 != -1) {
+        // The image tests the -1 sentinel as `local_64 + 1` (lea/test at
+        // 0x005A3C53), the spelling mon_killed_faction uses for the same
+        // monument-record sentinel (0x00477A99, 0x00477AAC).
+        if (local_64 + 1 != 0) {
             home_base_id = Vehs[veh_id].home_base_id;
             if (home_base_id < 0) {
                 veh_kill(veh_id);
