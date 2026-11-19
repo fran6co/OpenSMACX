@@ -87,7 +87,7 @@ BOOL Strings::init(size_t mem_size) {
     // Both pinned strlen/strcpy arguments select the one object 6971FC (the
     // inlined put() parameter: one literal, not one per call). The six literal
     // bytes precede alignment padding and the independently used labels keys.
-    // RECOVERY_LITERAL: v1 0x006971FC 0x00697202 $SG48655 0x006168F0
+    // RECOVERY_LITERAL: v1 0x006971FC 0x00697202 $SG48654 0x006168F0
     LPCSTR input = "-Nil-";
     size_t len = strlen(input) + 1;
     LPSTR table_addr = LPSTR(Heap::get(len));
@@ -246,8 +246,8 @@ Status: Complete
 BOOL __cdecl labels_init() {
     // The original passes equal text through distinct file and section keys.
     labels_shutdown();
-// RECOVERY_LITERAL: v1 0x0069720C 0x00697213 $SG48691 0x00616A00
-// RECOVERY_LITERAL: v1 0x00697204 0x0069720B $SG48690 0x00616A00
+// RECOVERY_LITERAL: v1 0x0069720C 0x00697213 $SG48690 0x00616A00
+// RECOVERY_LITERAL: v1 0x00697204 0x0069720B $SG48689 0x00616A00
     if (text_open("labels", "labels")) {
         return true;
     }
