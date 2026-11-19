@@ -8014,13 +8014,6 @@ static bool production_project_events_tail(int owner, int project_id) {
 
 
 
-// WORKAROUND(inline): folds to no code; see the probe calls in base_production.
-static inline int production_budget_probe(int x) {
-    if (x == 0) {
-        x = 7;
-    }
-    return x;
-}
 
 
 // ORIGINAL: 0x004F07E0 ?base_production@@YAXXZ 0x004F07E0-0x004F3FD8;0x0065C8A0-0x0065D0D6
@@ -8091,13 +8084,13 @@ production_again:
             }
             parse_says(0, BaseCurrent->name_string, -1, -1);
             parse_says(1, VehPrototypes[proto_id].veh_name, -1, -1);
-            StringTemp[0] = '\0';
-            strcat(StringTemp, "ABANDONBASE");
+            clear();
+            says("ABANDONBASE");
             int pop_cost = cost_factor(BaseCurrent->faction_id_current, RSC_NUTRIENTS,
                                        BaseIDCurrentSelected)
                 * (BaseCurrent->population_size + 1);
             if (BaseCurrent->nutrient_surplus > 0) {
-                strcat(StringTemp, "1");
+                says("1");
                 parse_num(0, range((pop_cost - BaseCurrent->nutrients_accumulated)
                                    / BaseCurrent->nutrient_surplus, 0, 9999));
             }
@@ -8227,30 +8220,30 @@ production_again:
                     parse_num(0, cost_factor(BaseCurrent->faction_id_current,
                                              RSC_MINERALS, -1)
                                  * veh_cost(proto_id, BaseIDCurrentSelected, 0));
-                    StringTemp[0] = '\0';
-                    strcat(StringTemp, "PRODUCEPROTO");
+                    clear();
+                    says("PRODUCEPROTO");
                     popup_flags = 4;
                 } else {
-                    StringTemp[0] = '\0';
+                    clear();
                     if (VehPrototypes[proto_id].plan < PLAN_COLONIZATION) {
-                        strcat(StringTemp, "PRODUCE");
+                        says("PRODUCE");
                         popup_flags = 0x400;
                     } else {
-                        strcat(StringTemp, "PRODUCE");
+                        says("PRODUCE");
                         popup_flags = 2;
                     }
                 }
             } else {
-                StringTemp[0] = '\0';
-                strcat(StringTemp, "PRODUCE");
+                clear();
+                says("PRODUCE");
                 popup_flags = 0;
             }
             if (queued) {
                 parse_num(1, BaseCurrent->queue_size + 1);
-                strcat(StringTemp, "Q");
+                says("Q");
             } else if (BaseCurrent->governor & GOV_MANAGES_PRODUCTION
                        && BaseCurrent->governor & GOV_ACTIVE) {
-                strcat(StringTemp, "G");
+                says("G");
             }
             // Each picture arm reloads the chassis triad as a byte and
             // compares it in place (cmp al,2 / cmp al,1).
@@ -8357,8 +8350,8 @@ production_again:
             && !(BaseCurrent->governor & GOV_MANAGES_PRODUCTION
                  && BaseCurrent->governor & GOV_ACTIVE)) {
             parse_say(1, Facility[facility_id].name, -1, -1);
-            StringTemp[0] = '\0';
-            strcat(StringTemp, "ALREADYPROJECT");
+            clear();
+            says("ALREADYPROJECT");
             int project_base_id = base_project(project_id);
             if (project_base_id >= 0) {
                 parse_says(2, Bases[project_base_id].name_string, -1, -1);
@@ -8370,12 +8363,12 @@ production_again:
                     Players[Bases[project_base_id].faction_id_current].noun_faction,
                     -1, -1);
                 if (Bases[project_base_id].faction_id_current == faction_id) {
-                    strcat(StringTemp, "1");
+                    says("1");
                 } else {
-                    strcat(StringTemp, "2");
+                    says("2");
                 }
             } else {
-                strcat(StringTemp, "0");
+                says("0");
             }
             popb(StringTemp, 0x200, -1, "secproj_sm.pcx", 0);
         } else {
@@ -8426,29 +8419,6 @@ production_again:
     if (facility_id <= 0) {
         return;
     }
-    // WORKAROUND(inline): dead budget probe. Twenty folded expansions after the
-    // last shallow return give the image's EH topology (151 states, sixteen
-    // five-state teardowns); no natural spelling of the missing spend found yet.
-    production_budget_probe(1000);
-    production_budget_probe(1001);
-    production_budget_probe(1002);
-    production_budget_probe(1003);
-    production_budget_probe(1004);
-    production_budget_probe(1005);
-    production_budget_probe(1006);
-    production_budget_probe(1007);
-    production_budget_probe(1008);
-    production_budget_probe(1009);
-    production_budget_probe(1010);
-    production_budget_probe(1011);
-    production_budget_probe(1012);
-    production_budget_probe(1013);
-    production_budget_probe(1014);
-    production_budget_probe(1015);
-    production_budget_probe(1016);
-    production_budget_probe(1017);
-    production_budget_probe(1018);
-    production_budget_probe(1019);
 
     // ---- Completion ----
     BaseCurrent->minerals_accumulated -= cost;
@@ -8528,14 +8498,14 @@ production_again:
                        && !has_fac_announced(faction_id, facility_id)
                        && !(GameDataStateStorage.fields_.game_state_ & 1)
                        && GameDataStateStorage.fields_.game_warnings_ & 1)) {
-                StringTemp[0] = '\0';
-                strcat(StringTemp, "PRODUCE");
+                clear();
+                says("PRODUCE");
                 if (queued) {
                     parse_num(1, BaseCurrent->queue_size + 1);
-                    strcat(StringTemp, "Q");
+                    says("Q");
                 } else if (BaseCurrent->governor & GOV_MANAGES_PRODUCTION
                            && BaseCurrent->governor & GOV_ACTIVE) {
-                    strcat(StringTemp, "G");
+                    says("G");
                 }
                 // Two calls, tail-merged after the flag test: each arm
                 // selects its picture and repeats the queued/governor test
@@ -8566,12 +8536,12 @@ production_again:
                 popup.init(0, 0);
                 popup.set_width(500);
                 if (GameDataStateStorage.fields_.game_warnings_ & 1) {
-                    StringTemp[0] = '\0';
+                    clear();
                     if (project_id >= 0) {
-                        strcat(StringTemp, "PROJECT");
+                        says("PROJECT");
                         say_num(project_id);
                     } else {
-                        strcat(StringTemp, "FAC");
+                        says("FAC");
                         say_num(facility_id);
                         set_fac_announced(faction_id, facility_id, TRUE);
                     }
@@ -8580,8 +8550,8 @@ production_again:
                     popup.string("^------");
                     popup.string("^");
                 }
-                StringTemp[0] = '\0';
-                strcat(StringTemp, "voices\\fac");
+                clear();
+                says("voices\\fac");
                 if (facility_id >= FacilityRepStart && facility_id <= FAC_STOCKPILE_ENERGY) {
                     say_num(facility_id - 31);
                 } else {
@@ -8590,7 +8560,7 @@ production_again:
                 if (facility_id >= FAC_COVERT_OPS_CENTER && facility_id <= 41) {
                     say_num(0);
                 }
-                strcat(StringTemp, ".mp3");
+                says(".mp3");
                 if (GameDataStateStorage.fields_.game_more_preferences_ & 0x4000
                     && faction_id == ConsoleGlobal.faction_id_
                     && is_human(faction_id)) {
@@ -8598,14 +8568,14 @@ production_again:
                     g_WAVE_GENERAL.load(StringTemp);
                     g_WAVE_GENERAL.play();
                 }
-                StringTemp[0] = '\0';
-                strcat(StringTemp, "PRODUCEX");
+                clear();
+                says("PRODUCEX");
                 if (queued) {
                     parse_num(1, BaseCurrent->queue_size + 1);
-                    strcat(StringTemp, "Q");
+                    says("Q");
                 } else if (BaseCurrent->governor & GOV_MANAGES_PRODUCTION
                            && BaseCurrent->governor & GOV_ACTIVE) {
-                    strcat(StringTemp, "G");
+                    says("G");
                 }
                 // Two calls, tail-merged: each arm pushes its own picture
                 // after the hoisted trailing 0 (0x4F25FB).
@@ -8623,8 +8593,8 @@ production_again:
             parse_says(0, BaseCurrent->name_string, -1, -1);
             popup.init(0, 0);
             popup.set_width(600);
-            StringTemp[0] = '\0';
-            strcat(StringTemp, "PROJECT");
+            clear();
+            says("PROJECT");
             say_num(project_id);
             popup.start("BLURBS", StringTemp, -1, 0, 0x80, 0);
             if (WinScreenWidth != 800) {
