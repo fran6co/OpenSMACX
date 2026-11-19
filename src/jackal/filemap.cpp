@@ -47,21 +47,28 @@ inline void Filemap::close_impl() {
     // Original 6287C0 writes only +0, +8 and +4; retain file_size_.
 }
 
+
+// ---------------------------------------------------------------------------
+// Merged from the retired src/filemap_recovery.cpp on 2026-08-20, following
+// src/text_recovery.cpp, which went into text.cpp on 2026-08-15. A class's
+// bodies in two translation units is not a neutral choice: which unit a
+// piece compiles in decides what can be inlined into it.
+// ---------------------------------------------------------------------------
+
 /*
-Purpose: Close the map and all handles to the file.
-// ORIGINAL: 0x006287C0 ?close@Filemap@@QAEXXZ 0x006287C0-0x00628803 BYTE_EXACT
-// size      67 bytes
-// prototype void (__thiscall ?close@Filemap@@QAEXXZ)(Filemap* this)
-// callers   10   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
+// ORIGINAL: 0x00628380 ??0Filemap@@QAE@XZ 0x00628380-0x00628397 BYTE_EXACT
+// size      23 bytes
+// prototype void (__thiscall ??0Filemap@@QAE@XZ)(Filemap* this)
+// callers   15   call targets   0
+// kind      
+// flags     
 // calls     (none)
-// indirect  0x006287CB 0x006287E5 0x006287F7
-Return Value: n/a
-Status: Complete
+// notes     Staged hybrid export redirect calls the source-owned constructor
 */
-void Filemap::close() {
-    close_impl();
+Filemap::Filemap()
+    : map_view_addr_(nullptr),
+      file_(INVALID_HANDLE_VALUE),
+      file_map_(nullptr) {
 }
 
 /*
@@ -99,6 +106,21 @@ Status: Complete
 Filemap *Filemap::init(LPCSTR file_name) {
     open(file_name, false);
     return this;
+}
+
+/*
+// ORIGINAL: 0x006283E0 ??1Filemap@@QAE@XZ 0x006283E0-0x00628423 BYTE_EXACT
+// size      67 bytes
+// prototype void (__thiscall ??1Filemap@@QAE@XZ)(Filemap* this)
+// callers   15   call targets   0
+// kind      
+// flags     
+// calls     (none)
+// indirect  0x006283EB 0x00628405 0x00628417
+// notes     Staged hybrid export redirect calls the source-owned destructor
+*/
+Filemap::~Filemap() {
+    close_impl();
 }
 
 /*
@@ -272,6 +294,23 @@ LPVOID Filemap::create(LPCSTR file_name, uint32_t size, BOOL is_sequential) {
     return map_view_addr_;
 }
 
+/*
+Purpose: Close the map and all handles to the file.
+// ORIGINAL: 0x006287C0 ?close@Filemap@@QAEXXZ 0x006287C0-0x00628803 BYTE_EXACT
+// size      67 bytes
+// prototype void (__thiscall ?close@Filemap@@QAEXXZ)(Filemap* this)
+// callers   10   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x006287CB 0x006287E5 0x006287F7
+Return Value: n/a
+Status: Complete
+*/
+void Filemap::close() {
+    close_impl();
+}
+
 
 /*
 Purpose: Close and set the end of the file. This can be used to truncate existing files. It also 
@@ -324,42 +363,4 @@ void Filemap::close(LPVOID new_addr) {
         CloseHandle(file_);
         file_ = 0;
     }
-}
-
-// ---------------------------------------------------------------------------
-// Merged from the retired src/filemap_recovery.cpp on 2026-08-20, following
-// src/text_recovery.cpp, which went into text.cpp on 2026-08-15. A class's
-// bodies in two translation units is not a neutral choice: which unit a
-// piece compiles in decides what can be inlined into it.
-// ---------------------------------------------------------------------------
-
-/*
-// ORIGINAL: 0x00628380 ??0Filemap@@QAE@XZ 0x00628380-0x00628397 BYTE_EXACT
-// size      23 bytes
-// prototype void (__thiscall ??0Filemap@@QAE@XZ)(Filemap* this)
-// callers   15   call targets   0
-// kind      
-// flags     
-// calls     (none)
-// notes     Staged hybrid export redirect calls the source-owned constructor
-*/
-Filemap::Filemap()
-    : map_view_addr_(nullptr),
-      file_(INVALID_HANDLE_VALUE),
-      file_map_(nullptr) {
-}
-
-/*
-// ORIGINAL: 0x006283E0 ??1Filemap@@QAE@XZ 0x006283E0-0x00628423 BYTE_EXACT
-// size      67 bytes
-// prototype void (__thiscall ??1Filemap@@QAE@XZ)(Filemap* this)
-// callers   15   call targets   0
-// kind      
-// flags     
-// calls     (none)
-// indirect  0x006283EB 0x00628405 0x00628417
-// notes     Staged hybrid export redirect calls the source-owned destructor
-*/
-Filemap::~Filemap() {
-    close_impl();
 }
