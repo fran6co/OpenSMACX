@@ -1819,7 +1819,7 @@ int __cdecl tech_ai(int faction_id) {
             if (is_human(faction_id)) {
                 compare = random(0, tech_value + 1); // unsure why humans get random()
             } else {
-                compare = bounded_crt_random(tech_value + 1); // vs AI rnd() ?
+                compare = rnd(tech_value + 1, "TECH2");
             }
             if (compare > search) {
                 search = compare;
