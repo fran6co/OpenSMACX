@@ -3383,9 +3383,9 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                 }
                 best = VehPrototypes[Vehs[veh_id].proto_id].cost << 4;
                 for (i = 0; i < GameDataStateStorage.fields_.vehicle_current_count_; i++) {
-                    int owner = Vehs[i].faction_id;
-                    if (owner == faction_id
-                        || !(PlayersData[faction_id].diplo_treaties[owner] & DTREATY_VENDETTA)) {
+                    here_region = Vehs[i].faction_id;
+                    if (here_region == faction_id
+                        || !(PlayersData[faction_id].diplo_treaties[here_region] & DTREATY_VENDETTA)) {
                         continue;
                     }
                     int base_id = base_at(Vehs[i].x, Vehs[i].y);
@@ -3445,10 +3445,10 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                         pods++;
                     }
                     if (pods) {
-                        if (is_human(owner)) {
+                        if (is_human(here_region)) {
                             val *= 2;
                         }
-                        if (PlayersData[owner].ranking == 7) {
+                        if (PlayersData[here_region].ranking == 7) {
                             val *= 2;
                         }
                     }
