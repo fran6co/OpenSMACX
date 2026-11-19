@@ -398,6 +398,12 @@ an explicit `--pfx` is only needed to pick another lane.
   table_text sites flipped against the written-out form (S7): finds the pairs no single flip reaches
   (draw_projects 51 -> 9, ProdPicker::exec 62 -> 29, draw_commerce 60 -> 40).
 - `analysis/sched/` the probe families and runner behind those rules (see its README).
+- `analysis/webflow.py <unit> <addr> | --from FEALL.json [--list] [--show KEY] [--write]` value-flow screen
+  (Buffer::tile 0x005DA860): a parameter adjusted into a separate local (`T L = P op E;`, P not read after it, or
+  overwritten first) is rewritten in place (`P = P op E; T L = P;`, IP0/IPALL/IPS) or a plain copy dropped (CPALL),
+  and the reverse, an unconditional in-place `P op= E` split into a new local (SPLIT). Ranked like localinplace.py.
+  2026-11-19 tree pass: 10 candidates; MessageWin::on_selected 28 -> 17 the only source-proved gain (the analogous
+  Buffer::tile(Sprite) needed the overwrite rule and a height local by hand, 61 -> 29).
 - `analysis/webscan.py [unit ...] [--addr A,..] [--from FEALL.json] [--sweep] [-v] [--json F]` one name vs one value
   (MATCHING_GUIDE 3.3, 2.7 use_ability): per non-exact function, named locals/parameters with 2+ disjoint def-use
   webs (REUSE: SPLIT when the image keeps the webs in different slots, SHARED, REG) and hand-off copies `b = a`
