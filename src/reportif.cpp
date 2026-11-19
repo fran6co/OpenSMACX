@@ -6777,6 +6777,7 @@ void ReportIf::draw_ops() {
         int winner;
         int best;
         int base;
+        int count;
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0xA0/4));
         CharUpperA(StringTemp);
@@ -6910,7 +6911,7 @@ void ReportIf::draw_ops() {
                     set_base(base);
                     base_compute(0);
                     int vehicle = veh_at(BaseCurrent->x, BaseCurrent->y);
-                    int count = 0;
+                    count = 0;
                     for (vehicle = veh_top(vehicle); vehicle >= 0; vehicle = Vehs[vehicle].next_veh_id_stack) {
                         ++count;
                     }
@@ -6935,7 +6936,7 @@ void ReportIf::draw_ops() {
                     set_base(base);
                     base_compute(0);
                     // Native4A99A4..4A99EA counts bits0..69 with no filter.
-                    int count = 0;
+                    count = 0;
                     for (int facility = 0; facility < 70; ++facility) {
                         if (BaseCurrent->facilities_built[facility / 8] & (1 << (facility % 8))) ++count;
                     }
