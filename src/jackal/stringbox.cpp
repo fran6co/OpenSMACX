@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
+
 // ORIGINAL: 0x00432770 ??_GStringBox@@UAEPAXI@Z 0x00432770-0x00432791 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical deleting-thunk source src/deleting_thunks.cpp; original full spans retained: 0x00432770-0x00432791", "Pinned class constructor ??0StringBox@@QAE@XZ at 0x00629110 stores original class/view table VA 0x66adc8 at 0x006291E1 (mov dword ptr [esi], 0x66adc8); the current genuine owner vftable ??_7StringBox@@6BWin@@@ selects generated ??_GStringBox@@UAEPAXI@Z in slot 0 (+0x0) through weak entry ??_EStringBox@@UAEPAXI@Z (mode 2).", "Pinned ??_GStringBox@@UAEPAXI@Z at 0x00432770 calls the source-mapped ??1StringBox@@QAE@XZ at 0x004325C0, then tests byte ptr [ebp + 8], 1; je 0x43278a bypasses scalar delete when bit 0 is clear, while bit 0 set calls 0x0064557F; it save original this; call destructor; delete only when flags bit 0 is set; return saved this with ret 4.", "The real class lifetime is owned by src/stringbox.cpp; its compiler-emitted deleting symbol and vftable slot carry this original identity. Hand-written adapter bodies with live adjustor callers remain until those callers are independently qualified and transferred. The linked weak/COMDAT copy is not used to choose source ownership.", "the source writer preserves the historical mapping's exactness state (historical exactness obligation retained); current compiler extent is not asserted equal to the original span"], "reason": "Bind the original StringBox scalar deleting-destructor identity to the actual compiler-emitted class deleting destructor in its genuine owner translation unit. The original constructor's pinned vptr store and the current owner's physical table slot identify this class/view; no callback/thunk body is hand-authored here."}
 // compile_context src/maininterface.cpp
@@ -30,29 +31,6 @@
 // by /Oy- game units (datalink.cpp, maininterface.cpp: compile_context).
 #include "stringbox.h"
 #include <cstring>
-
-// The StringBox scroll-in-progress hook is Win slot 48. Use the real
-// inherited virtual member; the two values are the original event code and
-// position.
-// ORIGINAL: 0x00629D40 ?on_scrolling@StringBox@@QAEXHH@Z 0x00629D40-0x00629D55 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:22febd5265b4b2830ac952bedd62e5df1f423569:src/recovered/00629d40.cpp", "src/stringbox.h: StringBox derives directly from GraphicWin", "src/win.h: Win::vslot_48(int,int)"], "reason": "Forward StringBox scroll-in-progress events through inherited Win slot 48 using its two integer arguments."}
-// symbol    ?on_scrolling@StringBox@@UAEXHH@Z
-void StringBox::on_scrolling(int code, int position) {
-    on_scrolled(code, position);
-}
-
-// The owned StringList handles caret parsing and ID-zero insertion; a
-// successful insertion asks the box to re-fit its visible rows.
-// ORIGINAL: 0x00629750 ?add_special@StringBox@@QAEHPAD@Z 0x00629750-0x00629774 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:22febd5265b4b2830ac952bedd62e5df1f423569:src/recovered/units/00629750.cpp", "src/stringlist.cpp StringList::add_special; src/stringstruct.h", "src/stringbox.h"], "reason": "Delegate caret-prefix parsing and ID-zero insertion to the owned StringList, then request row fitting after a successful insert."}
-int StringBox::add_special(char *text) {
-    const int result = stringList_.add_special(text);
-    if (result != 0) {
-        return result;
-    }
-    add_fixup();
-    return 0;
-}
 
 // Close the real GraphicWin base, clear the owned StringList, and reset its
 // cursor before closing the embedded Scroll. The list's typed removal path
@@ -74,7 +52,111 @@ void StringBox::close() {
     list.current_position_ = 0;
     scroll_.close();
 }
+
+// The owned StringList handles caret parsing and ID-zero insertion; a
+// successful insertion asks the box to re-fit its visible rows.
+// ORIGINAL: 0x00629750 ?add_special@StringBox@@QAEHPAD@Z 0x00629750-0x00629774 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:22febd5265b4b2830ac952bedd62e5df1f423569:src/recovered/units/00629750.cpp", "src/stringlist.cpp StringList::add_special; src/stringstruct.h", "src/stringbox.h"], "reason": "Delegate caret-prefix parsing and ID-zero insertion to the owned StringList, then request row fitting after a successful insert."}
+int StringBox::add_special(char *text) {
+    const int result = stringList_.add_special(text);
+    if (result != 0) {
+        return result;
+    }
+    add_fixup();
+    return 0;
+}
+
+// The StringBox scroll-in-progress hook is Win slot 48. Use the real
+// inherited virtual member; the two values are the original event code and
+// position.
+// ORIGINAL: 0x00629D40 ?on_scrolling@StringBox@@QAEXHH@Z 0x00629D40-0x00629D55 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:22febd5265b4b2830ac952bedd62e5df1f423569:src/recovered/00629d40.cpp", "src/stringbox.h: StringBox derives directly from GraphicWin", "src/win.h: Win::vslot_48(int,int)"], "reason": "Forward StringBox scroll-in-progress events through inherited Win slot 48 using its two integer arguments."}
+// symbol    ?on_scrolling@StringBox@@UAEXHH@Z
+void StringBox::on_scrolling(int code, int position) {
+    on_scrolled(code, position);
+}
+
 #pragma auto_inline(on)
+
+
+// The member and base destructors follow the header body implicitly, in reverse
+// construction order: StringList, Scroll, then GraphicWin.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x004325C0 ??1StringBox@@QAE@XZ 0x004325C0-0x00432713;0x006533B0-0x0065341D FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["original:0x004325C0-0x00432713;0x006533B0-0x0065341D;seed:src/recovered/units/004325c0.cpp;source:src/stringbox.h;source:src/stringstruct.h;source:src/scroll.h", "Pinned Datalink destructor0x432290 and its0x6531D0 cold cleanup expand the nested StringBox, StringList virtual-base, Scroll and GraphicWin lifetimes; src/datalink.h owns the four actual concept_box_, blurb_box_, detail_box_ and stringBox_ members.", "src/stringbox.h owns the existing StringList/Scroll/GraphicWin declaration and unchanged class destructor body; src/stringbox.cpp retains the standalone original entry, emitted symbol and complete spans. The normal containing-owner paths and independent exceptional entry remain distinct obligations.", "Definition visibility does not identify an original filename/TU, guarantee which inline COMDAT the linker selects, or settle the remaining normal-body, frame, reference or runtime obligations."], "reason": "Run StringBox cleanup then let C++ destroy its StringList, Scroll and GraphicWin subobjects in lifetime order. Keep the unchanged class-defined lifetime visible to genuine containing owners while retaining this independently emitted standalone identity in its canonical current translation unit."}
+// compile_context src/datalink.cpp
+// body src/jackal/stringbox.h
+// symbol    ??1StringBox@@UAE@XZ
+
+/*
+Purpose: Step the receiver back to the subobject ??_GStringBox@@UAEPAXI@Z
+         expects, then forward unchanged.
+// ORIGINAL: 0x00432830 ??_GStringBox@@WEEE@AEPAXI@Z 0x00432830-0x0043283B BYTE_EXACT
+// compile_context src/maininterface.cpp
+// symbol    ??_EStringBox@@WEEE@AEPAXI@Z
+// CORRECTED from ??3StringBox@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x00432770` into
+//   ??_GStringBox@@UAEPAXI@Z, which executes `ret 4`; no stack access
+//   and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/
+
+/*
+Purpose: Construct a StringBox: run the GraphicWin base construction, build
+         the Scroll at 0xA20 and the StringList at 0x2B70, install this
+         class's own two virtual tables, and clear the window state.
+// ORIGINAL: 0x00629110 ??0StringBox@@QAE@XZ 0x00629110-0x00629208;0x00663300-0x00663312 BYTE_EXACT
+// LEVER: THE StringList IS A REAL, VIRTUALLY-DERIVED MEMBER. The image's
+//        frame reserves TWO dwords below its EH record (`sub esp, 8`) and
+//        stores `this` into one and zero into the other before the base call;
+//        every spelling with the StringList held by layout reserved one. The
+//        two-slot frame is what VC6 emits only when the constructed hierarchy
+//        really derives virtually - measured against cl 12.00.8168 in
+//        isolation (2026-08-29), and landed here by making StringStruct
+//        `: public virtual StringAllocationBase` (stringstruct.h) with the
+//        owner capture in StringAllocationBase's inline ctor and the field
+//        zeroing in StringStruct's. The whole 0x2B70 block - vbtable, vbase
+//        vtable, owner capture, both vtable stages, the five zeroes - is then
+//        COMPILER-GENERATED, inlined in the image's exact store order, with
+//        no call anywhere: the earlier hand-written body reproduced the block
+//        but never the frame.
+// LEVER: DERIVE FROM GraphicWin DIRECTLY, not through ConstructedGraphicWin.
+//        The shim is an empty pass-through now that GraphicWin has a real
+//        constructor, but its inlined implicit constructor stores the SHIM's
+//        own two vftables between the base call and the Scroll member - a
+//        pair the image does not have. Dropping the layer removed exactly
+//        those two instructions; the funclet (cold span) is the image's own
+//        `mov ecx, [this-slot] / jmp ??1StringBox` shape because ~StringBox
+//        stays declared in the header and defined only in pending_bodies.cpp.
+// TRIED: BYTE_EXACT with the StringList held by layout, and the wall was the
+//        frame, not the block: the hand-written staging measured 46 of 47
+//        instructions with only `sub esp, 8` against `push ecx` disagreeing.
+// TRIED: a `static void ...(char *self, unsigned offset)` helper for the
+//        StringList staging - prodpicker.cpp's shape. VC6 declines to inline
+//        it and emits `push 0x2b70 / push esi / call`: 0.683 similar.
+// size      266 bytes
+// prototype void (__thiscall ??0StringBox@@QAE@XZ)(StringBox* this)
+// callers   6   call targets   2
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005D4CF0 0x006051D0
+Return Value: Instance pointer in EAX
+Status: Complete
+*/
+StringBox::StringBox() {
+    top_line_ = 0;
+    list_override_ = 0;
+    per_line_draw_ = 0;
+    visible_rows_ = -1;
+}
 
 // Reinitialization closes GraphicWin, clears the owned list and closes Scroll.
 // The Scroll is initialized again only after GraphicWin initialization succeeds;
@@ -196,6 +278,40 @@ void StringBox::add_fixup() {
     }
 }
 
+/*
+Purpose: Add a string to the box - stage the text, index and a cleared flag
+         into the string struct at 0x2B70, add it, and run the fixup pass when
+         insertion succeeds. Return the insertion error unchanged or zero.
+// ORIGINAL: 0x00629710 ?add@StringBox@@QAEXPADHH@Z 0x00629710-0x00629749 BYTE_EXACT
+// symbol    ?add@StringBox@@QAEHPADHH@Z
+// size      57 bytes
+// prototype void (__thiscall ?add@StringBox@@QAEXPADHH@Z)(StringBox* this, int8*, int, int)
+// callers   6   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00401100 0x00629490
+Return Value: StringStruct insertion result; zero after successful fixup.
+Status: Complete
+*/
+// The catalogue's void decoration is a historical hint, not a proven return
+// contract. At 0x00629738 the original returns nonzero EAX unchanged; only
+// success calls add_fixup and then explicitly clears EAX at 0x00629743.
+int StringBox::add(char *text, int index, int flag) {
+    // The original stages this embedded StringList's pending fields before
+    // its inherited StringStruct insertion. Dialog::item uses the same
+    // declared fields; StringList's real base supplies the receiver.
+    StringList &list = stringList_;
+    list.pending_text_ = text;
+    list.field_20_ = static_cast<uint32_t>(flag);
+    list.field_24_ = 0;
+    const int result = list.add(index);
+    if (result != 0) {
+        return result;
+    }
+    StringBox::add_fixup();
+    return 0;
+}
+
 // This is the canonical product body for original 0x00629780. Clearing may
 // target a borrowed alternate list; destruction of that list remains its
 // owner's responsibility. The typed removal path invokes the virtual
@@ -215,71 +331,6 @@ void StringBox::clear() {
         redraw();
     }
 }
-
-// WORKAROUND(inline): file-local twin of StringStruct::next_entry
-// (0x00402500). on_redraw expands it, while add_fixup in this same TU calls
-// 0x00402500 out of line, so the TU sees only the declaration
-// (STRINGSTRUCT_NEXT_ENTRY_OUT_OF_LINE; VC6 has no noinline).
-static inline StringStructPayload *stringbox_next_entry(StringStruct *list) {
-    if (!list->head_) {
-        return 0;
-    }
-
-    // The image's `inc edx; mov eax, edx` copy is a member pre-increment.
-    list->current_ = list->current_->next;
-    if (++list->current_position_ == list->entry_count_) {
-        list->current_position_ = 0;
-    }
-    return list->current_->string_payload();
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00629B70 ?on_redraw@StringBox@@QAEXXZ 0x00629B70-0x00629D1C
-// RECOVERY_BINDING: v1 {"evidence": ["original:0x00629B70-0x00629D1C;seed:src/recovered/units/00629b70.cpp;source:src/stringbox.h;source:src/stringstruct.h;source:src/scroll.h"], "reason": "Render the selected StringList through inherited Buffer and GraphicWin drawing methods."}
-// symbol    ?on_redraw@StringBox@@UAEXXZ
-void StringBox::on_redraw() {
-    clear_links();
-    StringList &list = list_override_ != 0 ? *list_override_ : stringList_;
-    fill(9);
-    int text_width = dib_.bmiHeader.biWidth;
-    if ((scroll_.iSomeFlag_ & WinFlagVisible) != 0) {
-        text_width -= scroll_.bar_thickness_;
-    }
-
-    list.seek_pos(top_line_);
-
-    if (per_line_draw_ == 0) {
-        write_strings(&list, 0, 0, text_width, 2);
-        return;
-    }
-    int remaining = -dib_.bmiHeader.biHeight;
-    int index = 0;
-    while (remaining > 0 && index++ < list.entry_count_) {
-        remaining -= wrap_height(
-            list.head_ != 0 ? list.current_->string_payload()->text : 0,
-            text_width);
-        if (remaining < 0) {
-            break;
-        }
-        if ((list.head_ != 0 ? list.current_->string_payload()->field_8_ : 0) & 2) {
-            wrap_cent(list.head_ != 0 ? list.current_->string_payload()->text : 0,
-                      0, remaining, text_width);
-        } else {
-            wrap(list.head_ != 0 ? list.current_->string_payload()->text : 0,
-                 0, remaining, text_width);
-        }
-        stringbox_next_entry(&list);
-    }
-}
-
-// The member and base destructors follow the header body implicitly, in reverse
-// construction order: StringList, Scroll, then GraphicWin.
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004325C0 ??1StringBox@@QAE@XZ 0x004325C0-0x00432713;0x006533B0-0x0065341D FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["original:0x004325C0-0x00432713;0x006533B0-0x0065341D;seed:src/recovered/units/004325c0.cpp;source:src/stringbox.h;source:src/stringstruct.h;source:src/scroll.h", "Pinned Datalink destructor0x432290 and its0x6531D0 cold cleanup expand the nested StringBox, StringList virtual-base, Scroll and GraphicWin lifetimes; src/datalink.h owns the four actual concept_box_, blurb_box_, detail_box_ and stringBox_ members.", "src/stringbox.h owns the existing StringList/Scroll/GraphicWin declaration and unchanged class destructor body; src/stringbox.cpp retains the standalone original entry, emitted symbol and complete spans. The normal containing-owner paths and independent exceptional entry remain distinct obligations.", "Definition visibility does not identify an original filename/TU, guarantee which inline COMDAT the linker selects, or settle the remaining normal-body, frame, reference or runtime obligations."], "reason": "Run StringBox cleanup then let C++ destroy its StringList, Scroll and GraphicWin subobjects in lifetime order. Keep the unchanged class-defined lifetime visible to genuine containing owners while retaining this independently emitted standalone identity in its canonical current translation unit."}
-// compile_context src/datalink.cpp
-// body src/jackal/stringbox.h
-// symbol    ??1StringBox@@UAE@XZ
 
 // Remove the first list entry with this ID, retaining the original cursor
 // position side effect and then re-fitting the visible rows.
@@ -409,87 +460,60 @@ void StringBox::clip_ids(unsigned long count) {
     }
 }
 
-/*
-Purpose: Construct a StringBox: run the GraphicWin base construction, build
-         the Scroll at 0xA20 and the StringList at 0x2B70, install this
-         class's own two virtual tables, and clear the window state.
-// ORIGINAL: 0x00629110 ??0StringBox@@QAE@XZ 0x00629110-0x00629208;0x00663300-0x00663312 BYTE_EXACT
-// LEVER: THE StringList IS A REAL, VIRTUALLY-DERIVED MEMBER. The image's
-//        frame reserves TWO dwords below its EH record (`sub esp, 8`) and
-//        stores `this` into one and zero into the other before the base call;
-//        every spelling with the StringList held by layout reserved one. The
-//        two-slot frame is what VC6 emits only when the constructed hierarchy
-//        really derives virtually - measured against cl 12.00.8168 in
-//        isolation (2026-08-29), and landed here by making StringStruct
-//        `: public virtual StringAllocationBase` (stringstruct.h) with the
-//        owner capture in StringAllocationBase's inline ctor and the field
-//        zeroing in StringStruct's. The whole 0x2B70 block - vbtable, vbase
-//        vtable, owner capture, both vtable stages, the five zeroes - is then
-//        COMPILER-GENERATED, inlined in the image's exact store order, with
-//        no call anywhere: the earlier hand-written body reproduced the block
-//        but never the frame.
-// LEVER: DERIVE FROM GraphicWin DIRECTLY, not through ConstructedGraphicWin.
-//        The shim is an empty pass-through now that GraphicWin has a real
-//        constructor, but its inlined implicit constructor stores the SHIM's
-//        own two vftables between the base call and the Scroll member - a
-//        pair the image does not have. Dropping the layer removed exactly
-//        those two instructions; the funclet (cold span) is the image's own
-//        `mov ecx, [this-slot] / jmp ??1StringBox` shape because ~StringBox
-//        stays declared in the header and defined only in pending_bodies.cpp.
-// TRIED: BYTE_EXACT with the StringList held by layout, and the wall was the
-//        frame, not the block: the hand-written staging measured 46 of 47
-//        instructions with only `sub esp, 8` against `push ecx` disagreeing.
-// TRIED: a `static void ...(char *self, unsigned offset)` helper for the
-//        StringList staging - prodpicker.cpp's shape. VC6 declines to inline
-//        it and emits `push 0x2b70 / push esi / call`: 0.683 similar.
-// size      266 bytes
-// prototype void (__thiscall ??0StringBox@@QAE@XZ)(StringBox* this)
-// callers   6   call targets   2
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x005D4CF0 0x006051D0
-Return Value: Instance pointer in EAX
-Status: Complete
-*/
-StringBox::StringBox() {
-    top_line_ = 0;
-    list_override_ = 0;
-    per_line_draw_ = 0;
-    visible_rows_ = -1;
+// WORKAROUND(inline): file-local twin of StringStruct::next_entry
+// (0x00402500). on_redraw expands it, while add_fixup in this same TU calls
+// 0x00402500 out of line, so the TU sees only the declaration
+// (STRINGSTRUCT_NEXT_ENTRY_OUT_OF_LINE; VC6 has no noinline).
+static inline StringStructPayload *stringbox_next_entry(StringStruct *list) {
+    if (!list->head_) {
+        return 0;
+    }
+
+    // The image's `inc edx; mov eax, edx` copy is a member pre-increment.
+    list->current_ = list->current_->next;
+    if (++list->current_position_ == list->entry_count_) {
+        list->current_position_ = 0;
+    }
+    return list->current_->string_payload();
 }
 
-/*
-Purpose: Add a string to the box - stage the text, index and a cleared flag
-         into the string struct at 0x2B70, add it, and run the fixup pass when
-         insertion succeeds. Return the insertion error unchanged or zero.
-// ORIGINAL: 0x00629710 ?add@StringBox@@QAEXPADHH@Z 0x00629710-0x00629749 BYTE_EXACT
-// symbol    ?add@StringBox@@QAEHPADHH@Z
-// size      57 bytes
-// prototype void (__thiscall ?add@StringBox@@QAEXPADHH@Z)(StringBox* this, int8*, int, int)
-// callers   6   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00401100 0x00629490
-Return Value: StringStruct insertion result; zero after successful fixup.
-Status: Complete
-*/
-// The catalogue's void decoration is a historical hint, not a proven return
-// contract. At 0x00629738 the original returns nonzero EAX unchanged; only
-// success calls add_fixup and then explicitly clears EAX at 0x00629743.
-int StringBox::add(char *text, int index, int flag) {
-    // The original stages this embedded StringList's pending fields before
-    // its inherited StringStruct insertion. Dialog::item uses the same
-    // declared fields; StringList's real base supplies the receiver.
-    StringList &list = stringList_;
-    list.pending_text_ = text;
-    list.field_20_ = static_cast<uint32_t>(flag);
-    list.field_24_ = 0;
-    const int result = list.add(index);
-    if (result != 0) {
-        return result;
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00629B70 ?on_redraw@StringBox@@QAEXXZ 0x00629B70-0x00629D1C
+// RECOVERY_BINDING: v1 {"evidence": ["original:0x00629B70-0x00629D1C;seed:src/recovered/units/00629b70.cpp;source:src/stringbox.h;source:src/stringstruct.h;source:src/scroll.h"], "reason": "Render the selected StringList through inherited Buffer and GraphicWin drawing methods."}
+// symbol    ?on_redraw@StringBox@@UAEXXZ
+void StringBox::on_redraw() {
+    clear_links();
+    StringList &list = list_override_ != 0 ? *list_override_ : stringList_;
+    fill(9);
+    int text_width = dib_.bmiHeader.biWidth;
+    if ((scroll_.iSomeFlag_ & WinFlagVisible) != 0) {
+        text_width -= scroll_.bar_thickness_;
     }
-    StringBox::add_fixup();
-    return 0;
+
+    list.seek_pos(top_line_);
+
+    if (per_line_draw_ == 0) {
+        write_strings(&list, 0, 0, text_width, 2);
+        return;
+    }
+    int remaining = -dib_.bmiHeader.biHeight;
+    int index = 0;
+    while (remaining > 0 && index++ < list.entry_count_) {
+        remaining -= wrap_height(
+            list.head_ != 0 ? list.current_->string_payload()->text : 0,
+            text_width);
+        if (remaining < 0) {
+            break;
+        }
+        if ((list.head_ != 0 ? list.current_->string_payload()->field_8_ : 0) & 2) {
+            wrap_cent(list.head_ != 0 ? list.current_->string_payload()->text : 0,
+                      0, remaining, text_width);
+        } else {
+            wrap(list.head_ != 0 ? list.current_->string_payload()->text : 0,
+                 0, remaining, text_width);
+        }
+        stringbox_next_entry(&list);
+    }
 }
 
 
@@ -512,25 +536,5 @@ void StringBox::on_scrolled(int code, int pos) {
     redraw();
 }
 
-/*
-Purpose: Step the receiver back to the subobject ??_GStringBox@@UAEPAXI@Z
-         expects, then forward unchanged.
-// ORIGINAL: 0x00432830 ??_GStringBox@@WEEE@AEPAXI@Z 0x00432830-0x0043283B BYTE_EXACT
-// compile_context src/maininterface.cpp
-// symbol    ??_EStringBox@@WEEE@AEPAXI@Z
-// CORRECTED from ??3StringBox@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x00432770` into
-//   ??_GStringBox@@UAEPAXI@Z, which executes `ret 4`; no stack access
-//   and the receiver stays in ECX. `WEEE@` re-demangles to
-//   adjustor{1092} and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
 // RECOVERY_GENERATED: v1 vtable 0x0066ADC8 0x0066AF30 ??_7StringBox@@6BWin@@@ 0x00629110
 // RECOVERY_GENERATED: v1 vtable 0x0066ADC0 ? ??_7StringBox@@6BBuffer@@@ 0x00629110
