@@ -3387,14 +3387,6 @@ static inline int value_of_base_veh_top(int veh_id) {
     return top_veh_id;
 }
 
-// The image also inlines veh_next_stack_id (0x0050B8F0) for the walk.
-static inline int value_of_base_veh_next(int veh_id) {
-    if (veh_id < 0) {
-        return veh_id;
-    }
-    return Vehs[veh_id].next_veh_id_stack;
-}
-
 int __cdecl value_of_base(int base_id, int faction_id_req, int faction_id_res,
                           int overmatch_deg, BOOL tgl) {
     if (base_id < 0) {
@@ -3481,7 +3473,8 @@ int __cdecl value_of_base(int base_id, int faction_id_req, int faction_id_res,
             value += Facility[FacilitySPStart + proj].cost * 25;
         }
     }
-    for (int veh = value_of_base_veh_top(veh_id); veh >= 0; veh = value_of_base_veh_next(veh)) {
+    // The image also inlines veh_next_stack_id (0x0050B8F0) for the walk.
+    for (int veh = value_of_base_veh_top(veh_id); veh >= 0; veh = veh_next_stack_id(veh)) {
         if (Vehs[veh].faction_id == faction_id_req) {
             value += VehPrototypes[Vehs[veh].proto_id].cost * 2;
         }
