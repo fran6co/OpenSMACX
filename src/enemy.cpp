@@ -4237,7 +4237,7 @@ int __cdecl enemy_move(int veh_id) {
     // variables for the same reason; keep_count stays for the two ring scans
     // whose reduced index the image keeps there.
     int garrison;
-    int ring, sea_unit, sea_veh, good_sites, fights;
+    int ring, sea_unit, sea_veh, fights;
     // ---- chunk 0: 0x56b5b0-0x56d265 ----
     best_dir = -1;
     near_hostile = 0;
@@ -5835,7 +5835,9 @@ L_5702c1:
         goto L_570c89;
     }
     j = 0;           // matching sites in this region
-    good_sites = 0;  // of those, still worthwhile
+    // garrison doubles as the count of still-worthwhile sites: the image keeps
+    // it memory-homed in garrison's slot while the site pointer walks in edi.
+    garrison = 0;
     // VC6 turns this loop into a pointer walk with a 25..1 down-counter kept in
     // tile_owner's slot.
     for (tile_owner = 0; tile_owner < 25; tile_owner++) {
@@ -5847,7 +5849,7 @@ L_5702c1:
             if (plan == PLAN_RECONNAISANCE) {
                 if (goody_at(PlayersData[faction_id].sites[tile_owner].x,
                              PlayersData[faction_id].sites[tile_owner].y)) {
-                    good_sites++;
+                    garrison++;
                 }
             } else {
                 int threshold = PlayersData[faction_id].unk_82[region] > 8
@@ -5857,13 +5859,13 @@ L_5702c1:
                 }
                 if (site_at(PlayersData[faction_id].sites[tile_owner].x,
                             PlayersData[faction_id].sites[tile_owner].y, 0) >= threshold) {
-                    good_sites++;
+                    garrison++;
                 }
             }
         }
     }
     i = (Vehs[veh_id].order == ORDER_MOVE_TO);
-    if (j && ((GameDataStateStorage.fields_.turn_current_num_ + faction_id) & (good_sites ? 15 : 3))
+    if (j && ((GameDataStateStorage.fields_.turn_current_num_ + faction_id) & (garrison ? 15 : 3))
         && near_dist) {
         goto L_570bdb;
     }
