@@ -152,7 +152,7 @@ class MainInterface : public GraphicWin, public SubInterface {
   const RECT &right_frame_rect() const { return right_frame_rect_; }
   const RECT &lower_frame_rect() const { return lower_frame_rect_; }
   // Console screen geometry reads the original panel height at +0xD7C.
-  int panel_height() const { return static_cast<int>(field_D7C_); }
+  int panel_height() const { return field_D7C_; }
   // homed from 00459680.cpp
   int init(int a1);
 
@@ -377,7 +377,7 @@ class MainInterface : public GraphicWin, public SubInterface {
   RECT editor_panel_rect_;
   RECT editor_tools_rect_;
   RECT editor_text_rect_;
-  uint32_t field_D7C_;
+  int field_D7C_;
   RECT rect4_;  // 0xD80, the IDB names the 16 bytes at 0xD80 rect4
   RECT right_frame_rect_;
   // InfoWin::init reads all four coordinates at MainInterfaceGlobal+0xDA0;

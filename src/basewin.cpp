@@ -7080,7 +7080,7 @@ void BaseWin::init() {
         set_rect(&nutrient_outer_rect_, 27, 33, 163, 143);
         set_rect(&production_outer_rect_, 166, 260, 699, 349);
         production_content_rect_ = production_outer_rect_;
-        const int available = WinScreenHeight - static_cast<int>(MainInterfaceGlobal.field_D7C_);
+        const int available = WinScreenHeight - MainInterfaceGlobal.field_D7C_;
         if (available > 398) window_height = 398;
         else window_height = available;
     } else {
