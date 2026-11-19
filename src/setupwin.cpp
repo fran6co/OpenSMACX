@@ -474,7 +474,7 @@ void SetupWin::draw_item(int position, int selected) {
             }
         }
 
-        if (selected && opening_window() != 0 &&
+        if (selected && OpeningWindow != 0 &&
             (WinScreenWidth == 800 || WinScreenWidth == 1024)) {
             // A separate clamped index: reusing `position` gives it the
             // second callee-saved register; the image keeps it in ebx, third.
@@ -482,14 +482,14 @@ void SetupWin::draw_item(int position, int selected) {
             Buffer *overlay = overlay_buffers_[index];
             if (overlay != 0) {
                 if (overlay->get_pixel(0, 0) == 9) {
-                    overlay->draw(opening_window(), 9, overlay_x_[index],
+                    overlay->draw(OpeningWindow, 9, overlay_x_[index],
                                   overlay_y_[index], 1, 1);
                 } else {
-                    overlay->copy(opening_window(), 0, 0, overlay_x_[index],
+                    overlay->copy(OpeningWindow, 0, 0, overlay_x_[index],
                                   overlay_y_[index], overlay->dib_.bmiHeader.biWidth,
                                   overlay->pixel_height());
                 }
-                opening_window()->soft_update(overlay_x_[index], overlay_y_[index],
+                OpeningWindow->soft_update(overlay_x_[index], overlay_y_[index],
                                               overlay->dib_.bmiHeader.biWidth,
                                               overlay->pixel_height());
             }
@@ -506,7 +506,7 @@ SetupWin::SetupWin() {
     overlay_buffers_[2] = 0;
     selected_row_ = 0;
     row_count_ = 0;
-    opening_window_snapshot_ = opening_window();
+    opening_window_snapshot_ = OpeningWindow;
     menu_popup_ = 0;
     field_A14_ = WinScreenWidth;
     field_A18_ = WinScreenHeight;

@@ -2629,9 +2629,9 @@ again:
 
 done:
     if (~GameDataStateStorage.fields_.game_preferences_ & 0x20000000u) {
-        dialog_default_style() |= 4u;
+        DialogDefaults[36] |= 4u;
     } else {
-        dialog_default_style() &= ~4u;
+        DialogDefaults[36] &= ~4u;
     }
     return result;
 }

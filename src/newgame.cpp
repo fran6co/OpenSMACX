@@ -180,7 +180,7 @@ Purpose: Swap the opening logo the desktop shows: load the PCX named a1 into
 // calls     0x005D7210 0x005D7410 0x005D7DE0 0x005D9610
 Return Value: 0 when the opening swapped, 7 when there is no opening window
 The second ORIGINAL span is the local Buffer's unwind funclet and scope
-descriptor. opening_window() still reaches original storage; its producer and
+descriptor. OpeningWindow still reaches original storage; its producer and
 lifetime consumers need a coordinated migration. The window is reloaded after
 load_pcx and before on_update, as in the image. The retained seed's SEH attempt
 relies on the compiler-generated unwind for the real local Buffer rather than
@@ -253,9 +253,9 @@ inline int __cdecl init_opening(const char *filename) {
     // spend that refuses it (no natural spelling found yet).
     init_opening_spend(0);
     init_opening_spend(1);
-    if (opening_window() == 0) {
+    if (OpeningWindow == 0) {
         GraphicWin *const window = new GraphicWin();
-        opening_window() = window;
+        OpeningWindow = window;
         if (window == 0) {
             return 4;
         }
@@ -271,12 +271,12 @@ inline int __cdecl init_opening(const char *filename) {
         }
     }
 
-    opening_window()->fill(0);
+    OpeningWindow->fill(0);
     change_opening(const_cast<char *>(filename));
     g_PALETTE1.set();
-    opening_window()->show(0);
+    OpeningWindow->show(0);
     do_all_draws();
-    BasePopDefaultField322C = opening_window();
+    BasePopDefaultField322C = OpeningWindow;
     return 0;
 }
 
@@ -1570,9 +1570,9 @@ int __cdecl top_menu(int mode) {
         g_TOP_MENU_WAVE.play();
     }
     if (~AlphaIniPrefs.preferences & 0x20000000u)
-        dialog_default_style() |= 4u;
+        DialogDefaults[36] |= 4u;
     else
-        dialog_default_style() &= ~4u;
+        DialogDefaults[36] &= ~4u;
 
     top_menu_spend(5);  // WORKAROUND(inline): see top_menu_spend
     top_menu_spend(5);  // WORKAROUND(inline): see top_menu_spend

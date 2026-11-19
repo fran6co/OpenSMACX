@@ -1821,7 +1821,7 @@ Status: Complete
 int Menu::requested_height() {
     // The menu's own font wins when set; otherwise the process default is
     // resolved at the point of use rather than cached.
-    Font *font = MenuFont();
+    Font *font = MenuDefaultFont;
     if (!font) {
         font = FontDefault;
     }

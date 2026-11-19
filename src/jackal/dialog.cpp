@@ -124,7 +124,7 @@ Dialog::Dialog() {
     // selected_position_/field_F0_ after field_30_, field_34_ between
     // field_44_ and field_48_, and field_1C_ near the end. The three -1
     // stores are the image's one `or eax,-1` reused.
-    field_20_ = dialog_default_style();
+    field_20_ = DialogDefaults[36];
     window_x_ = 0;
     window_y_ = 0;
     field_2C_ = DialogDefaults[19];
@@ -244,7 +244,7 @@ void Dialog::close() {
     list->current_position_ = 0;
     heap_.reset();
     heap_ptr_ = 0;
-    field_20_ = dialog_default_style();
+    field_20_ = DialogDefaults[36];
     window_x_ = 0;
     window_y_ = 0;
     field_2C_ = DialogDefaults[19];

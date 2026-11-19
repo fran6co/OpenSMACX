@@ -241,7 +241,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     if (&Popup::alloc) {
         PopupAllocHook = &Popup::alloc;
     }
-    dialog_default_style() |= 4u;
+    DialogDefaults[36] |= 4u;
 
     int video_mode = prefs_get("Video Mode", 0, false);
     int tgl_direct_draw = prefs_get("DirectDraw", 1, false);

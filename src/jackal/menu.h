@@ -125,7 +125,6 @@ static_assert(sizeof(Menu) == 0xB64, "Menu layout must match the legacy ABI");
 
 // The menu's own font, falling back to the process default when unset.
 extern Font *MenuDefaultFont;
-inline Font *&MenuFont() { return MenuDefaultFont; }
 
 // Independent defaults written by the popup policy. These declarations
 // do not assert an otherwise unwitnessed containing array.

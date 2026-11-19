@@ -432,9 +432,6 @@ extern char PronounBuffer[256];
 // SetupWin keeps its own pointer snapshot; this accessor refers to the live
 // shared slot for callback-sensitive consumers and lifetime operations.
 extern GraphicWin *OpeningWindow;
-inline GraphicWin *&opening_window() {
-  return OpeningWindow;
-}
 MEASURED int __cdecl init_opening(const char *filename);
 
 MEASURED BOOL __cdecl not_my_turn();

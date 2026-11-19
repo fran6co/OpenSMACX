@@ -28,6 +28,3 @@
 // alter the original slot-3 write.
 extern uint32_t DialogDefaults[37];
 
-inline uint32_t &dialog_default_style() {
-    return DialogDefaults[36];
-}
