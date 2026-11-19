@@ -2130,7 +2130,7 @@ call multiset, then the tree.
 - **The same body can show one or two `-1` stores** (medium). Of the image's
   expansions of base_who / veh_who / anything_at whose result is kept, 2 / 2
   / 2 store -1 in two separate copies (Console::hold, enemy_strategy;
-  Path::find twice; enemy_move 0x56BB35, 0x56C194) and 7 / 9 / 5 in one. A
+  Path::find twice; enemy_move 0x56BB35, 0x56C194) and 6 / 8 / 4 in one. A
   body with one `return -1` can never give two, so all three have two
   returns; whether VC6 cross-jumps the two stores depends on the caller
   (enemy_move's pair at 0x56BB3B/0x56BB4F is separate with veh_who's

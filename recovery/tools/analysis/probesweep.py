@@ -6,7 +6,7 @@ For every function that holds `*_budget_probe*(...)` statement lines: the functi
 (--each: also without each line alone), measured by (named call difference to the image, fe rows)
 against the unit as written, plus the unit's other markers that change.  A removal is KEEP when the
 named call difference does not grow, the function's rows do not grow and no other marker of the unit
-loses exactness; --write applies the KEEP removals (all lines of a function, one function at a time,
+loses exactness, rows or calls; --write applies the KEEP removals (all lines of a function, one function at a time,
 re-measured cumulatively).  Probe definitions are left in place: removing an unused definition
 shifts the unit's front-end counter (guide 2.8), do that once per batch.
 Prefixes FE_PFX_BASE.. with FE_JOBS lanes (one unit per lane).  Screen only.
@@ -70,7 +70,9 @@ def unit_job(arg):
             lost = [a for a in base if base[a][1] and not r.get(a, (0, False))[1]]
             gained = [a for a in base if not base[a][1] and r.get(a, (0, False))[1]]
             others = [a for a in base if a != addr and base[a] != r.get(a)]
-            keep = v[2] <= b[2] and v[0] <= b[0] and not lost
+            # a probe may sit in an unmarked helper that other markers expand: no marker of the unit may get worse
+            worse = [a for a in others if a in r and (r[a][0] > base[a][0] or (r[a][2] or 0) > (base[a][2] or 0))]
+            keep = v[2] <= b[2] and v[0] <= b[0] and not lost and not worse
             lines.append('%s %08X %-4s probes %2d  calls %d -> %d  rows %d -> %d  lost %s gained %s others-moved %d  %s' % (
                 unit, addr, key, len(sel), b[2], v[2], b[0], v[0], ['%08X' % a for a in lost], ['%08X' % a for a in gained], len(others),
                 'KEEP' if keep else ('calls-ok' if v[2] <= b[2] and not lost else '')))
