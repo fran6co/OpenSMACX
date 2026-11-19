@@ -1801,11 +1801,11 @@ for (i = 0; i < MaxCompassNum; i++) {
             if (Terraforming[entry].bit == 0 && terrain >= entry) ++terrain;
         }
         MainInterfaceGlobal.flat_button_[button].set_bubble_text(
-            table_text(Terraforming[terrain].name[0]));
+            StringTable.get(Terraforming[terrain].name[0]));
     }
-    MainInterfaceGlobal.flat_button(32).set_bubble_text(table_text(Natural[LM_JUNGLE].name_short));
+    MainInterfaceGlobal.flat_button(32).set_bubble_text(StringTable.get(Natural[LM_JUNGLE].name_short));
     MainInterfaceGlobal.flat_button(33).set_bubble_text(StringTable.get(Natural[LM_DUNES].name_short));
-    MainInterfaceGlobal.flat_button(34).set_bubble_text(table_text(Natural[LM_URANIUM].name_short));
+    MainInterfaceGlobal.flat_button(34).set_bubble_text(StringTable.get(Natural[LM_URANIUM].name_short));
     MainInterfaceGlobal.flat_button(35).set_bubble_text(StringTable.get(Natural[LM_GEOTHERMAL].name_short));
     return false;
 }
