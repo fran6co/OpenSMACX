@@ -1031,7 +1031,7 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
                     if (strlen(StringTemp)) {
                         strcat(StringTemp, SocialWinCommaSpaceText);
                     }
-                    strcat(StringTemp, table_text(Labels.strings_ptr[0x398 / 4]));
+                    strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x398 / 4]));
                 }
                 if (strlen(StringTemp)) {
                     col = MainInterfaceGlobal.write_l(StringTemp, text_x, line_y);
