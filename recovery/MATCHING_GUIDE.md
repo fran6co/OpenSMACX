@@ -515,6 +515,24 @@ raw field access where the original used inline accessors.
   MNEMONIC_ONLY and register-cause functions flipped no non-exact function,
   and lost no claim. The counter governs only the listed canaries. Don't
   sweep pads to try to close an ordinary register tie; look for the spelling.
+- **Header-position ties (measured 2026-11-19, par-5).** A second family
+  of ties depends on how many declarations precede a particular *header*,
+  not on the symbol counter at the function. Pads after the last `#include`
+  (the CANARY-PADS position) never move them, at any count or kind; the same
+  pads placed after `stdafx.h` (or before it) do, with a short period
+  (set_cat_social: exact at 19-22 and 51-54 of 0-63 `void f();` pads).
+  Moving the pad block down include by include names the header whose
+  declarations matter (game.h for set_cat_social, caviar.h for
+  vehdraw_construct_armor, faction.h for wants_to_attack, map.h for
+  DesignWin::draw_armor). Fingerprint: a function that flips on several
+  unrelated header commits (a new Buffer overload, a union member, an
+  ungated inline elsewhere) and that no after-include pad count restores.
+  Removing one unused inline overload restores it while renaming it,
+  declaring it without a body, or adding members, blank lines or bodies
+  does not; so the header edit is not wrong for it. Restore with a
+  `// HEADER-PADS:` block right after `#include "stdafx.h"`, tagged
+  `WORKAROUND(decl)`, swept over 0-63 against every function of the unit;
+  re-tune after header batches like the counter canaries.
 - **Re-tune by sweeping against the image.** Each canary unit has one pad
   block, and the last measured set lives beside it:
 
