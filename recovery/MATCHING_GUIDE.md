@@ -2725,6 +2725,29 @@ What the model does not predict (2026-11-19)
   expanded. Screen for this elsewhere: a plain same-unit function with no
   image callers whose body equals a block another function writes out is
   an auto-inlined owner (2.8 "Missing owner").
+- **Orphan owners** (2026-11-19 par-6, `analysis/orphanowner.py`). The
+  click/UNK4 screen run tree-wide: 667 markers of >= 8 instructions have no
+  image reference of any kind. Matched against their units' image bodies,
+  the clean hits were real owners: DesignWin::on_iface_right_click calls
+  main_interface_bubble_callback_4396b0 (2 rows -> exact, the `mov ecx`
+  placement the written-out copy missed), DiploWin::exec calls sub_441040
+  (279 -> 227, block layout fixed), battle_fight's dead-unit sweep is
+  battle_kill_chaff (2409 -> 2346 under a marked __forceinline: a plain call
+  is refused by the giant's ceiling), base_terraform's arid tests are crappy
+  (an invented static twin, 893 -> 873, but the borehole/condenser add_goal
+  sites stop cross-jumping: img 4 calls, ours 6), StatusWin::redraw calls
+  UNK1 and is then auto-inlined at on_right_click's three sites without the
+  `inline`/MEASURED stand-ins. Eight more (set_cursor/sub_510c90,
+  cursor_key/base_me, toggle_patrol twice, tech_heck/sub_44b340 replacing
+  the emit_help twin, clear_terrain/UNK7, init_sound/unload_sound_dll,
+  load_vehicles/sub_450e80, monolith/veh_site_scan, DiploPop::start/
+  portrait_anim) expand to the same bytes. proposal_menu 0x0054DCF0 is the
+  counter-case: its two PlanWindow blocks are sub_54dc90 (0x0054DC90) in
+  the image, but calling it moves ~Scroll/close/~FlatButton/~GraphicWin
+  decisions (named call distance 0 -> 5, 86 -> 102 rows), so the written-out
+  copies are tuned around another missing charge in that function; not
+  landed. Read `show` before editing: below score 0.9 shared parse_says/pop
+  runs and show_all/hide_all pairs score as hits.
 - **Popup::start, five arguments (0x0043EF70), editor_who copies**
   (2026-11-19 par-6, screen only). With editor_diplomacy calling the plain
   `editor_who` (auto-inlined, as in the image) instead of the

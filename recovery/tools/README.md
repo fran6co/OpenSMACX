@@ -341,6 +341,15 @@ an explicit `--pfx` is only needed to pick another lane.
   callee and other functions with the same 2-3 statement window (windows found in more than 4 places are idioms and
   are dropped). `--swaps` adds per-site E/c rows for callees with equal counts (slow on large functions). The probe
   `probe calls` column counts refused probes (pass-1 budget already spent, the probe measures nothing there).
+- `analysis/orphanowner.py census|scan|show` real owners from the image (MATCHING_GUIDE 2.8 "Orphan owners"): every
+  marker with no image reference at all (no rel32 call/jmp/jcc, no absolute dword in any section) of >= 8
+  instructions (667 on 2026-11-19) was only used where /Ob2 expanded it. `scan [unit ..] [--open] [--lines]
+  [--exact-hosts] [--any-unit]` searches the image bodies of the orphan's unit for a window with the orphan's
+  instruction shape (registers, frame slots and argument loads masked; callees and globals named), `show <orphan>
+  <host>` prints the aligned rows. A hit outranks ownerhunt's invented owners: replace the written-out block (or the
+  invented twin) with a call to the orphan. First pass (par-6): DesignWin::on_iface_right_click exact,
+  DiploWin::exec 279 -> 227, battle_fight 2409 -> 2346, base_terraform 893 -> 873, the StatusWin::redraw inline and
+  MEASURED stand-ins and the terraform_arid_count/emit_help twins retired, eight neutral re-spellings.
 - `analysis/ownerhunt.py <unit> <addr> [--lines A-B] [--maxlen N] [--limit N] [--moved] [--vec] [--fast] [--repeat]
   [--write K]` missing inline OWNER search (MATCHING_GUIDE 2.8 "Missing owner"): parses the function body into
   statements, wraps every liftable contiguous sibling range (a loop, an if-arm, a run of statements; no return/goto/
