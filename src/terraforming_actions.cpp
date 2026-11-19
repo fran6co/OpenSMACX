@@ -81,6 +81,8 @@
 // action_airdrop exact at 6, 8, 14-15, 24, 26-29, 34, 36, 40, 42-45, 47, 52-55, 59, 61-62, so 53.
 // After par-1's header batch (015360dbf5), whole-unit fe sweep of the extern block: every
 // fe-exact function of the unit stays exact at 2-4, 28, 39-44, 48, 50, 54, 56-61, so 58.
+// After MapWin::reset_cursor (mapwin.h, 27e8a32f76), whole-unit fe sweep of the extern block (function block 42):
+// every fe-exact function stays exact at 15, 33, 36-38, 43-44, 49, 51-54, 56 and 61-63, so 53.
 // CANARY: 0x004CEDE0 ?action_give@@YAXHH@Z residues 17-20,25-27
 // CANARY-PADS: extern TerraformingActionsExternPad
 
@@ -137,11 +139,6 @@ extern int TerraformingActionsExternPad49;
 extern int TerraformingActionsExternPad50;
 extern int TerraformingActionsExternPad51;
 extern int TerraformingActionsExternPad52;
-extern int TerraformingActionsExternPad53;
-extern int TerraformingActionsExternPad54;
-extern int TerraformingActionsExternPad55;
-extern int TerraformingActionsExternPad56;
-extern int TerraformingActionsExternPad57;
 #include "vector.h"  // vector_add operates on actual three-float arrays.
 
 extern void __cdecl unspot_stack(int veh_id);
