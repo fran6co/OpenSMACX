@@ -2187,6 +2187,67 @@ Member-address temporaries that live across calls (2026-11-19 par-6, round 11)
     pointer into a fresh register and pushes it before loading `this`; the
     inline's named local loads `this` between).
 
+Write-through pieces (2026-11-19 par-5 round 14; `regalloc/c_wthru.spec`, about
+300 probes, and a scan of the image)
+
+The shape: a callee-saved register holds a variable that also has a frame home,
+every definition in the stretch is `mov reg,K; mov [home],reg` (or `mov
+reg,eax; mov [home],reg`), and the register is reloaded from the home at joins.
+What is established, and what is not:
+
+- W1 (high). **A prefix piece writes every definition through.** Rule 9's loser
+  holds the register from its first definition until the winner's web starts,
+  and every definition inside the prefix is stored, redefinitions and
+  read-modify-writes included (tech_val 0x005BCBE0, exact: `add edi,ebx; mov
+  [ebp-4],edi` twice before the address temporary takes edi; ListBox::on_key_down
+  0x0060AF90 image: `count` in edi with `mov [esp+0x10],edi` until `old_top`'s
+  web starts). Probe `prefix/nolate`: c gets the stored prefix when d is first
+  defined after it.
+- W2 (high). **A constant initialiser never starts a prefix.** `int d = 0;`
+  early makes d's web start there: d either wins the register from the `xor`
+  (`prefix/lateinit`) or stays in memory with immediate stores; it never
+  hands the stretch before its later definitions to another loser.
+- W3 (high). **An ordinary memory-homed loser never writes through in the
+  middle of its range.** With a callee-saved register free over a stretch of
+  its references (rival dead before, next winner born after), its reads are
+  cached (rule 8: `nd/k_d4_r8`, `dr/d4_r8`) but each definition stays a memory
+  store (`mov [o],K` or `mov [o],eax`) followed by a reload. Measured with 2-8
+  constant, call-result and unconditional definitions, 1-8 reads, the region
+  repeated up to 8 times, local or parameter, init early or late: no probe
+  formed a mid-range write-through piece. A repeated constant takes the free
+  register instead (`#6` piece, Z1).
+- W4 (high). **Address-taken locals are cached with write-through only between
+  calls.** Win::center 0x005ED5C0 (exact): `x`, passed as `&x`, is `mov edi,eax;
+  sar edi,1; mov [esp+0xc],edi`, updated in edi with a store per definition,
+  and reloaded after the call that receives its address. With a call between
+  definition and use (`at/self`) it is never cached. Sharing a frame slot with
+  an address-taken local does not make a variable address-taken (`at/noat`,
+  `at/press`: can_terraform's `order` lives in x's slot, which the inlined
+  `bitmask(.., &offset, ..)` also uses; that is slot packing, not the cause).
+- Open. A mid-range write-through piece of a constant-assigned local with a
+  reload at the join is in two image functions only (`mov reg,imm; mov
+  [slot],reg` twice or more plus `mov reg,[slot]`, scanned over every
+  function): can_terraform 0x00565320 (`order` in ebx from the solar test to
+  the enricher test, 15 stores, reloads at 0x565A54 and 0x565BE3; the last
+  definition 0x565D67 and the final read are memory) and enemy_strategy
+  0x00561080 (ebx, [ebp-0x38]). No exact function has it, so no measured source
+  produces it; under W2/W3 the image's piece behaves like a web that starts at
+  0x565A4A, i.e. the original's `order` before the solar test is a different
+  web or memory-only (W2 forbids the plain `int order = 0;` there). The
+  region's rival is `solar_tech` (image: stored prefix in ebx up to the piece,
+  W1; ours: whole ebx to 0x81B), not `faction_id`. Moving the declaration
+  next to the region (400 rows from 325), dropping the enricher definition,
+  the result copy or a solar_tech read (diagnostics) never gave the piece.
+- Applied without a flip (decks in the commit message): ListBox::on_key_down
+  `field_18_` read through the member in the DOWN case (172 -> 162 rows; the
+  image's frame 0x14 needs `count` memory-homed, ours keeps it whole in ebx
+  and `old_top` in memory); repair_phase 0x00526030 (frame 0x28 against 0x24:
+  ours caches `repair_rate` in ebx from the nano-factory assignment to the
+  `reactor_id *` multiply, so `reactor_id` reuses its slot; the image keeps it
+  in memory, `imul edi,[ebp-4]`, and starts the `faction_id` piece in ebx at the
+  join; operand order, a split multiply, a late `repair_total`, a cast on the
+  assignment: all 16 rows, frame unchanged).
+
 ### 2.8 /Ob2 inlining model
 
 Measured 2026-11-19 (par-4) with generated probe families in

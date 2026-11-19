@@ -843,8 +843,8 @@ int ListBox::on_key_down(int key) {
                 }
             } else {
                 if (old_selected + 1 > last_visible
-                    && old_top + Dialog::row_count_ <= count - 1) {
-                    field_18_ = old_top + Dialog::row_count_;
+                    && static_cast<int>(field_18_) + Dialog::row_count_ <= count - 1) {
+                    field_18_ += static_cast<uint32_t>(Dialog::row_count_);
                 }
                 if (Dialog::selected_position_ == count - 1
                     && field_18_ < (columns_needed - 1) * Dialog::row_count_) {
