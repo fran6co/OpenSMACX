@@ -1368,12 +1368,6 @@ void NetWin::pick_planet_size() {
     pick_send_state();
 }
 
-// WORKAROUND(decl): 482B2B..482B44 evaluates find_font before pushing the
-// three zero arguments, the shape of an inline one-argument button set_font.
-static inline void netwin_button_font(FlatButton *button, Font *font) {
-    button->Buffer::set_font(font, 0, 0, 0);
-}
-
 // One seven-row column of lobby cells, 0x16 apart.
 static inline void netwin_set_column(RECT *rows, int left, int top, int right,
                                      int bottom) {
@@ -3072,8 +3066,7 @@ int NetWin::exec() {
     flatButton1_.init(button_text, 10, setup_rects_[34].left, setup_rects_[34].top,
                       setup_rects_[34].right - setup_rects_[34].left, setup_rects_[34].bottom - setup_rects_[34].top,
                       this, 0);
-    netwin_button_font(&flatButton1_, find_font(0xE, 1));
-    flatButton1_.redraw();
+    flatButton1_.set_font_redraw(find_font(0xE, 1));
     flatButton1_.set_text_color(0x41, -1, 1, 1);
 
     StringTemp[0] = '\0';
@@ -3084,8 +3077,7 @@ int NetWin::exec() {
     flatButton2_.init(StringTemp, -2, setup_rects_[35].left, setup_rects_[35].top,
                       setup_rects_[35].right - setup_rects_[35].left, setup_rects_[35].bottom - setup_rects_[35].top,
                       this, 0);
-    netwin_button_font(&flatButton2_, find_font(0xE, 1));
-    flatButton2_.redraw();
+    flatButton2_.set_font_redraw(find_font(0xE, 1));
     flatButton2_.set_text_color(0x41, -1, 1, 1);
 
     if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
