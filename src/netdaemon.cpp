@@ -5430,11 +5430,10 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
                 break;
             }
             case 0x8D: {
-                RulesSocialCategory *stage = NetDaemonRulesSyncStaging.social_category;
-                for (k = 0; k < MaxSocialCatNum; k++, stage++) {
+                for (k = 0; k < MaxSocialCatNum; k++) {
                     for (j = 0; j < 4; j++) {
-                        SocialCategories[k].model_effect[j] = stage->model_effect[j];
-                        SocialCategories[k].preq_tech[j] = stage->preq_tech[j];
+                        SocialCategories[k].preq_tech[j] = NetDaemonRulesSyncStaging.social_category[k].preq_tech[j];
+                        SocialCategories[k].model_effect[j] = NetDaemonRulesSyncStaging.social_category[k].model_effect[j];
                     }
                 }
                 break;
