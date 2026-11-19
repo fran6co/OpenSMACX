@@ -835,7 +835,7 @@ void __cdecl balance() {
         }
         const int x = Vehs[vehicle_id].x;
         const int y = Vehs[vehicle_id].y;
-        const int seed = rand() % 16;
+        const int seed = rnd(16, "SETUPRAD");
         int placed = 0;
         int deficit = best_score - faction_scores[faction_id];
         for (int bonus = 0; bonus < Players[faction_id].faction_bonus_count; ++bonus) {
@@ -900,8 +900,8 @@ void __cdecl scenario_setup() {
             // (movsx; the image's only byte-sign read of is_flat_) and computes
             // the latitude bound before the x offset; a char-typed term gives
             // both. The original operand's declared type is unknown.
-            x = bounded_crt_random(MapLongitudeBounds - (char)((MapIsFlat & 1) * 4)) + (MapIsFlat & 1) * 2;
-            y = bounded_crt_random(MapLatitudeBounds - 4) + 2;
+            x = rnd(MapLongitudeBounds - (char)((MapIsFlat & 1) * 4), "SCENSETUP2") + (MapIsFlat & 1) * 2;
+            y = rnd(MapLatitudeBounds - 4, "SCENSETUP3") + 2;
             if (x & 1) {
                 x--;
             }
@@ -1134,7 +1134,7 @@ int __cdecl setup_player(int faction, int conqueror, int retry) {
             // 5B143E: treaties, then merc.
             PlayersData[faction].diplo_merc[other] = PlayersData[faction].diplo_treaties[other] = 0;
             int limit = ((GameDataStateStorage.fields_.game_rules_ & 0x40) ? 5 : GameDataStateStorage.fields_.diff_level_current_) * 3 + 8;
-            PlayersData[faction].diplo_friction[other] = range(bounded_crt_random(limit), 1, 16);
+            PlayersData[faction].diplo_friction[other] = range(rnd(limit, "SETUP1"), 1, 16);
             // 5B1490: unk1, wrongs, betrayed, patience, spoke, unk4, unk3.
             PlayersData[faction].diplo_betrayed[other] = PlayersData[faction].diplo_wrongs[other] = PlayersData[faction].diplo_unk1[other] = 0;
             PlayersData[faction].diplo_patience[other] = 0;
@@ -1193,9 +1193,9 @@ search:
     {
         int margin = range((1024 - attempts) * MapLongitudeBounds / 8192, 0, 9999);
         x = ((MapIsFlat & 1) ? margin : 0)
-            + bounded_crt_random(MapLongitudeBounds - ((MapIsFlat & 1) ? margin * 2 : 0));
+            + rnd(MapLongitudeBounds - ((MapIsFlat & 1) ? margin * 2 : 0), "SETUP2");
         margin = range((1024 - attempts) * MapLatitudeBounds / 8192, 0, 9999);
-        y = margin + bounded_crt_random(MapLatitudeBounds - margin * 2);
+        y = margin + rnd(MapLatitudeBounds - margin * 2, "SETUP3");
         if (x & 1) --x;
         if (y & 1) ++x;  // Original: an odd y adjusts x.
         isolation = 32;
