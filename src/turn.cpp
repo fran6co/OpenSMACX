@@ -994,16 +994,16 @@ void __cdecl random_events(int mode) {
         if (random(0, 5)) {
             return;
         }
-        int changed = 0;
+        seen = 0;
         for (f = 1; f < MaxPlayerNum; f++) {
             if (PlayersData[f].satellites_[2] || PlayersData[f].satellites_[3]) {
                 PlayersData[f].satellites_[2] = 0;
                 PlayersData[f].satellites_[3] = 0;
-                changed = 1;
+                seen = 1;
             }
         }
         GameDataStateStorage.fields_.global_energy_event_state_ = 1;
-        if (changed) {
+        if (seen) {
             POP2("SOLARSTORM", "sun_sm.pcx", -1);
         } else {
             POP2("SOLARFLARE", "heat_sm.pcx", -1);
