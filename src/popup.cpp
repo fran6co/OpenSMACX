@@ -177,20 +177,6 @@ Status: Complete
 // mutable arrays cover only the observed NUL-terminated text. Original
 // allocation capacities, source mutability and literal provenance remain
 // unresolved; the start-argument bindings below claim no allocation spans.
-// INITIAL VALUES FROM THE IMAGE (image_data.py): these are the mod-
-// redirection defaults the fopen probe falls back to, and the link
-// handler's match/verb/target triple - declared zero at first landing,
-// the data_values census caught all ten.
-// RECOVERY_OBJECT: v1 0x006827E4 ?PopupStartModTag@@3PADA
-char PopupStartModTag[] = "SCRIPT.txt";        // 0x006827E4
-// RECOVERY_OBJECT: v1 0x006827F4 ?PopupStartModFile1@@3PADA
-char PopupStartModFile1[] = "alienIscript.txt"; // 0x006827F4
-// RECOVERY_OBJECT: v1 0x006827F0 ?PopupStartModMode1@@3PADA
-char PopupStartModMode1[] = "rb";              // 0x006827F0
-// RECOVERY_OBJECT: v1 0x0068280C ?PopupStartModFile2@@3PADA
-char PopupStartModFile2[] = "alienuscript.txt"; // 0x0068280C
-// RECOVERY_OBJECT: v1 0x00682808 ?PopupStartModMode2@@3PADA
-char PopupStartModMode2[] = "rb";              // 0x00682808
 // The image's pointer slots select these NUL-terminated text identifiers.
 // Their allocation extents are unresolved; these arrays own the observed text.
 static char PopupAlienScriptName[] = "alienIscript";
@@ -207,16 +193,6 @@ char *PopupStartAltFile2 = PopupAlienOtherScriptName;    // 0x00691B24
 // RECOVERY_OBJECT: v2 0x006A721C 0x006A7220 ?PopupModalState@@3HA 0x004E0EA0
 int PopupModalState;  // 0x006A721C
 
-// The link handler's storage (popup.h has the role note). The image's copies
-// of the three strings carry text this packed build does not ship, so ours
-// initialise empty: the link branch compares against "" and opens nothing
-// until something writes them.
-// RECOVERY_OBJECT: v1 0x006827B8 ?PopupLinkMatchText@@3PADA
-char PopupLinkMatchText[64] = "homelink";              // 0x006827B8
-// RECOVERY_OBJECT: v1 0x006827DC ?PopupLinkOpenVerb@@3PADA
-char PopupLinkOpenVerb[16] = "open";                    // 0x006827DC
-// RECOVERY_OBJECT: v1 0x006827C4 ?PopupLinkTarget@@3PADA
-char PopupLinkTarget[128] = "http:\\\\www.firaxis.com"; // 0x006827C4
 
 /*
 Purpose: Start a popup from just a label, defaulting the rest.
@@ -577,11 +553,14 @@ int Popup::on_link_clicked(int id, char *link) {
     if (link == 0) {
         return 1;
     }
-    if (_stricmp(link, PopupLinkMatchText) == 0) {
+// RECOVERY_LITERAL: v1 0x006827B8 0x006827C1 $SG60000 0x004050A0
+    if (_stricmp(link, "homelink") == 0) {
         ExitTurnLoop = 1;
         fallout();
         ShowWindow(HandleMain, 0);
-        ::ShellExecuteA(0, PopupLinkOpenVerb, PopupLinkTarget, 0, 0, 1);
+// RECOVERY_LITERAL: v1 0x006827DC 0x006827E1 $SG60002 0x004050A0
+// RECOVERY_LITERAL: v1 0x006827C4 0x006827DB $SG60001 0x004050A0
+        ::ShellExecuteA(0, "open", "http:\\\\www.firaxis.com", 0, 0, 1);
         return 1;
     }
     PopupPendingLink[0] = 0;
@@ -625,14 +604,17 @@ int Popup::on_link_clicked(int id, char *link) {
 int Popup::start(char *text_file, const char *text_label, int value,
                  char *override_text, int flags, GraphicWin *owner_window) {
     if (strcmp(text_file, ScriptPopupFile) != 0
-        && strcmp(text_file, PopupStartModTag) != 0) {
+// RECOVERY_LITERAL: v1 0x006827E4 0x006827EF $SG60013 0x00406380
+        && strcmp(text_file, "SCRIPT.txt") != 0) {
         return BasePop::start(text_file, text_label, value, override_text, flags,
                               owner_window);
     }
 
     if ((Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) != 0) {
         if (ExpansionEnabled == 0) goto fallback;
-        FILE *const fp = fopen(PopupStartModFile1, PopupStartModMode1);
+// RECOVERY_LITERAL: v1 0x006827F4 0x00682805 $SG60020 0x00406380
+// RECOVERY_LITERAL: v1 0x006827F0 0x006827F3 $SG60019 0x00406380
+        FILE *const fp = fopen("alienIscript.txt", "rb");
         if (fp == 0) goto fallback;
         fclose(fp);
         const int result = BasePop::start(PopupStartAltFile1, text_label, value,
@@ -645,7 +627,9 @@ int Popup::start(char *text_file, const char *text_label, int value,
     if (PopupDialogFactionID <= 0 || PopupDialogFactionID >= 8) goto fallback;
     if ((Players[PopupDialogFactionID].rule_flags & RFLAG_ALIEN) == 0) goto fallback;
     {
-        FILE *const fp = fopen(PopupStartModFile2, PopupStartModMode2);
+// RECOVERY_LITERAL: v1 0x0068280C 0x0068281D $SG60035 0x00406380
+// RECOVERY_LITERAL: v1 0x00682808 0x0068280B $SG60034 0x00406380
+        FILE *const fp = fopen("alienuscript.txt", "rb");
         if (fp == 0) goto fallback;
         fclose(fp);
         const int result = BasePop::start(PopupStartAltFile2, text_label, value,
