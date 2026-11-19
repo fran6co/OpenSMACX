@@ -7158,7 +7158,7 @@ L_57460a:
                         owner = whose_territory(faction_id, tx, ty, NULL, 0);
                         if (owner < 0 || owner == faction_id
                             || !(PlayersData[faction_id].diplo_treaties[owner] & 7)) {
-                            int value = is_known(tx, ty, faction_id) ? (goody_at(tx, ty) ? 512 : 0) : 0;
+                            int value = !is_known(tx, ty, faction_id) ? 0 : (goody_at(tx, ty) ? 512 : 0);
                             for (j = 0; j < 9; j++) {
                                 // BUG(original): offsets by i, not j, so the same
                                 // neighbour is examined nine times.
