@@ -653,24 +653,20 @@ void __cdecl synch_bit(int x, int y, int faction_id);
 
 MEASURED inline int __cdecl veh_who(int x, int y) {
     Map *tile = map_loc(x, y);
+    // Two returns of -1, as base_who and anything_at: Path::find's two
+    // expansions (0x59AE58, 0x59B6EF) store -1 in two separate copies. The
+    // second one is a ternary arm, not a second guard clause: with the guard
+    // clause (one /Ob2 cost class dearer, same copy 0x00500250) enemy_move
+    // refuses this inline at 0x56CA61 where the image expands it
+    // (MATCHING_GUIDE 2.8).
+    if (!(tile->bit & BIT_VEH_IN_TILE)) {
+        return -1;
+    }
     // `int`: the image branches with `jl` at 0x00500281 - the SIGNED test -
     // and `uint32_t` gives `jb`, one opcode different in each of the three
     // siblings that share this shape.
-    // One condition with the owner assigned inside it: the same copy
-    // (0x00500250) and the same expansions as two nested ifs, but one /Ob2
-    // cost class cheaper. enemy_move expands it at 0x56CA61 and calls the
-    // on_map after it (0x56CC83) only with this body (MATCHING_GUIDE 2.8).
-    // WORKAROUND(inline): Path::find's two expansions (0x59AE58, 0x59B6EF)
-    // store -1 in two copies, the shape of base_who's two early returns;
-    // that body (`if (!bit) return -1; ...; return owner >= 8 ? -1 : owner;`,
-    // copy exact, Path::find 895 -> 876) costs enemy_move this expansion
-    // while anything_at has its two returns, so enemy_move still holds a
-    // charge the original did not have before 0x56CA61.
-    int owner;
-    if (tile->bit & BIT_VEH_IN_TILE && (owner = tile->val2 & 0xF) < 8) {
-        return owner;
-    }
-    return -1;
+    int owner = tile->val2 & 0xF;
+    return owner >= 8 ? -1 : owner;
 }
 
 MEASURED inline int __cdecl x_dist(int x_point_a, int x_point_b) {

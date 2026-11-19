@@ -887,11 +887,12 @@ int __cdecl veh_fake(int proto_id, int faction_id);
 // two callers (best_defender, action_home) has it in their `calls` list -
 // both inline it - and a plain function is never an /Ob1 inline candidate.
 // The `// ORIGINAL:` marker stays in veh.cpp.
+// One return expression: the guard-clause body (same copy 0x005799A0) is one
+// /Ob2 cost class dearer, and with veh_who's two returns enemy_move then
+// runs out of budget one site before the image does (0x56CA61).
 MEASURED inline int __cdecl proto_power(int veh_id) {
-    if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_ALIEN_ARTIFACT) {
-        return 1;
-    }
-    return range(VehPrototypes[Vehs[veh_id].proto_id].reactor_id, 1, 100) * 10;
+    return VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_ALIEN_ARTIFACT ? 1
+        : range(VehPrototypes[Vehs[veh_id].proto_id].reactor_id, 1, 100) * 10;
 }
 
 // Current hit points (0x005A59E0). BODY HERE: probe calls it, and
