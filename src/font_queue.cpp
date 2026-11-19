@@ -577,10 +577,11 @@ void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int fl
                         veh_draw(MapWinTable[i], veh_id, start_x[i], start_y[i],
                             MapWinTable[i]->zoom_offset_, 0x12, frame);
                         MapWinTable[i]->update(&area[i], 0);
+                        int my = margin_y[i];
                         saved[i].copy(MapWinTable[i],
                             start_x[i] - margin_x[i] - area[i].left,
-                            start_y[i] - margin_y[i] - area[i].top,
-                            start_x[i] - margin_x[i], start_y[i] - margin_y[i],
+                            start_y[i] - my - area[i].top,
+                            start_x[i] - margin_x[i], start_y[i] - my,
                             rect_width(&area[i]), rect_height(&area[i]));
                     }
                 }
