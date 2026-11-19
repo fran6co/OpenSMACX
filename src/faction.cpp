@@ -4167,7 +4167,7 @@ void __cdecl make_gift(int giver, int receiver) {
         gift_result_key[0] = 0;
         strcat(gift_result_key, "BASEGIFT");
         if (favored) {
-            const bool existing_pact_or_treaty =
+            const BOOL existing_pact_or_treaty =
                 has_treaty(receiver, giver, DTREATY_WANT_REVENGE | DTREATY_UNK_40) != 0;
             const char *suffix = (existing_pact_or_treaty ||
                                   great_satan(giver, 0) != 0) ? "2" : "1";
