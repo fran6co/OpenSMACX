@@ -24,46 +24,6 @@
 
 // RECOVERY_IMPORT: v1 __imp__DestroyCursor@4 USER32.dll name:DestroyCursor
 
-/*
-Purpose: Unknown; the legacy implementation is a bare return with no body.
-// ORIGINAL: 0x0063B930 ?close_cursor_class@Cursor@@QAAXXZ 0x0063B930-0x0063B931 BYTE_EXACT
-// symbol    ?close_cursor_class@Cursor@@SAXXZ
-// size      1 bytes
-// prototype 
-// callers   1   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void Cursor::close_cursor_class() {
-}
-
-
-// RECOVERY_OBJECT: v1 0x009BE6D4 ?CursorWidth@@3HA
-int CursorWidth;   // 0x009BE6D4
-// RECOVERY_OBJECT: v1 0x009BE6D8 ?CursorHeight@@3HA
-int CursorHeight;  // 0x009BE6D8
-
-/*
-Purpose: Cache the system cursor's width and height.
-// ORIGINAL: 0x0063B910 ?init_cursor_class@Cursor@@QAAHXZ 0x0063B910-0x0063B92D BYTE_EXACT
-// symbol    ?init_cursor_class@Cursor@@SAHXZ
-// size      29 bytes
-// prototype int (__cdecl ?init_cursor_class@Cursor@@QAAHXZ)()
-// callers   1   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-Return Value: 0
-Status: Complete
-*/
-int Cursor::init_cursor_class() {
-    CursorWidth = GetSystemMetrics(SM_CXCURSOR);
-    CursorHeight = GetSystemMetrics(SM_CYCURSOR);
-    return 0;
-}
 
 /*
 Purpose: Clear all four fields.
@@ -89,27 +49,6 @@ Cursor::Cursor() {
     hotspot_x_ = 0;
     hotspot_y_ = 0;
     owned_sprite_ = 0;
-}
-
-
-
-// Owns the Windows cursor and copied Sprite; the definition follows its mapping.
-// ORIGINAL: 0x0063B8D0 ??1Cursor@@QAE@XZ 0x0063B8D0-0x0063B90A BYTE_EXACT
-Cursor::~Cursor() {
-    // `cursor_handle_` is the HCURSOR and `owned_sprite_` a Sprite the object owns;
-    // the image destroys both and then clears the two words after them.
-    HCURSOR handle = cursor_handle_;
-    if (handle) {
-        DestroyCursor(handle);
-        cursor_handle_ = 0;
-    }
-    Sprite *sprite = owned_sprite_;
-    if (sprite) {
-        delete sprite;
-        owned_sprite_ = 0;
-    }
-    hotspot_x_ = 0;
-    hotspot_y_ = 0;
 }
 
 // ORIGINAL: 0x0063B2E0 ?init@Cursor@@QAEXPAUSprite@@HH@Z 0x0063B2E0-0x0063B8CA;0x00663910-0x0066393E
@@ -267,5 +206,67 @@ int Cursor::init(Sprite *sprite, int hotspot_x, int hotspot_y) {
     } else {
         return 0;
     }
+}
+
+
+
+// Owns the Windows cursor and copied Sprite; the definition follows its mapping.
+// ORIGINAL: 0x0063B8D0 ??1Cursor@@QAE@XZ 0x0063B8D0-0x0063B90A BYTE_EXACT
+Cursor::~Cursor() {
+    // `cursor_handle_` is the HCURSOR and `owned_sprite_` a Sprite the object owns;
+    // the image destroys both and then clears the two words after them.
+    HCURSOR handle = cursor_handle_;
+    if (handle) {
+        DestroyCursor(handle);
+        cursor_handle_ = 0;
+    }
+    Sprite *sprite = owned_sprite_;
+    if (sprite) {
+        delete sprite;
+        owned_sprite_ = 0;
+    }
+    hotspot_x_ = 0;
+    hotspot_y_ = 0;
+}
+
+
+// RECOVERY_OBJECT: v1 0x009BE6D4 ?CursorWidth@@3HA
+int CursorWidth;   // 0x009BE6D4
+// RECOVERY_OBJECT: v1 0x009BE6D8 ?CursorHeight@@3HA
+int CursorHeight;  // 0x009BE6D8
+
+/*
+Purpose: Cache the system cursor's width and height.
+// ORIGINAL: 0x0063B910 ?init_cursor_class@Cursor@@QAAHXZ 0x0063B910-0x0063B92D BYTE_EXACT
+// symbol    ?init_cursor_class@Cursor@@SAHXZ
+// size      29 bytes
+// prototype int (__cdecl ?init_cursor_class@Cursor@@QAAHXZ)()
+// callers   1   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+Return Value: 0
+Status: Complete
+*/
+int Cursor::init_cursor_class() {
+    CursorWidth = GetSystemMetrics(SM_CXCURSOR);
+    CursorHeight = GetSystemMetrics(SM_CYCURSOR);
+    return 0;
+}
+
+/*
+Purpose: Unknown; the legacy implementation is a bare return with no body.
+// ORIGINAL: 0x0063B930 ?close_cursor_class@Cursor@@QAAXXZ 0x0063B930-0x0063B931 BYTE_EXACT
+// symbol    ?close_cursor_class@Cursor@@SAXXZ
+// size      1 bytes
+// prototype 
+// callers   1   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void Cursor::close_cursor_class() {
 }
 
