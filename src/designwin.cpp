@@ -5625,11 +5625,13 @@ void DesignWin::select_special(int which) {
             // Cost scales with the triad: one more on land.
             if (Chassis[protoChassisType_].triad == 0) {
                 say_num(cost + 1);
+                strcat(StringTemp, BufferJoinSpace);
+                strcat(StringTemp, SocialWinOpenParenText);
             } else {
                 say_num(cost);
+                strcat(StringTemp, BufferJoinSpace);
+                strcat(StringTemp, SocialWinOpenParenText);
             }
-            strcat(StringTemp, BufferJoinSpace);
-            strcat(StringTemp, SocialWinOpenParenText);
             strcat(StringTemp,
                    table_text(Triad[Chassis[protoChassisType_].triad]));
             strcat(StringTemp, SocialWinCloseParenText);
