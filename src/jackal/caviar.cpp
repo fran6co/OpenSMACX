@@ -852,7 +852,7 @@ Purpose: Boot the CAVIAR voxel renderer. Hands the vx_* file-IO callbacks to
          the two 256x256 scene surfaces plus the shared 0x20000-entry colour
          table, and builds the render record from them. Nonzero returns make
          WinMain abort the boot; 0x17 is the render-record failure.
-// ORIGINAL: 0x006185A0 ?init_class@Caviar@@QAAHXZ 0x006185A0-0x00618D16;0x00663150-0x006632F1
+// ORIGINAL: 0x006185A0 ?init_class@Caviar@@QAAHXZ 0x006185A0-0x00618D16;0x00663150-0x006632F1 BYTE_EXACT
 // symbol    ?init_class@Caviar@@SAHXZ
 //           (static member: WinMain's `call 0x6185a0` sets up no ecx, so a
 //           plain member would C2352 - the same rule as palette.h's
