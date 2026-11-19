@@ -1897,7 +1897,7 @@ L_4fbd3d:
                 }
             }
             if (PlayersData[target].best_weapon_value > PlayersData[l_8].best_weapon_value
-                || PlayersData[l_8].best_armor_value < PlayersData[target].best_armor_value) {
+                || PlayersData[target].best_armor_value > PlayersData[l_8].best_armor_value) {
                 w /= 2;
             }
         }
