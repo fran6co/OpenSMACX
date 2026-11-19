@@ -284,145 +284,6 @@ int __cdecl polygon(Buffer *buffer, Vert *vertices, int count, int color) {
     return 0;
 }
 
-// ORIGINAL: 0x00626D90 ?scan_out_line_poly_dest@@YAIHH@Z 0x00626D90-0x00626E0B FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["626D90..626E0B reads9BC030 and indexes it sequentially with each destination byte. There is no meaningful return value or copied lookup table."], "reason": "The standalone destination span writer clips endpoints against the same polygon state and performs live unsigned-byte lookup-table writes."}
-// symbol    ?draw_remapped_polygon_span@@YAXHH@Z
-// Hand-written assembly: explicit push edi/pop edi pair, one-operand imul, byte remap loop.
-MEASURED inline void __cdecl draw_remapped_polygon_span(int left, int right) {
-    __asm {
-        push edi
-        mov ebx, right
-        cmp ebx, PolygonClipLeft
-        jle span_done
-        mov ecx, left
-        cmp ecx, PolygonClipRight
-        jge span_done
-        sub ebx, ecx
-        jle span_done
-        mov ecx, right
-        cmp ecx, PolygonClipRight
-        jl right_clipped
-        mov ecx, PolygonClipRight
-        mov right, ecx
-    right_clipped:
-        mov edi, left
-        cmp edi, PolygonClipLeft
-        jge left_clipped
-        mov edi, PolygonClipLeft
-        mov left, edi
-    left_clipped:
-        sub ecx, edi
-        jle span_done
-        mov eax, PolygonY.coordinate
-        imul PolygonPitch
-        add eax, left
-        add eax, PolygonPixels
-        mov edi, eax
-        mov ebx, PolygonRemap
-    span_remap:
-        xor edx, edx
-        mov dl, [edi]
-        add edx, ebx
-        mov al, [edx]
-        mov [edi], al
-        inc edi
-        dec ecx
-        jne span_remap
-    span_done:
-        pop edi
-    }
-}
-
-// ORIGINAL: 0x00626E10 ?polygon_dest@@YAHPAUBuffer@@PAUVert@@HPAE@Z 0x00626E10-0x00627100 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["BaseWin draw_farm40F38C/40F40A call626E10;626E38 acquires before publishing geometry/clip,6270E6 releases, and shared9BC030 supplies the per-pixel remap."], "reason": "The cdecl destination-remapping rasterizer shares flat edge/storage ownership with solid polygon and consumes a live caller-provided byte lookup table."}
-// symbol    ?polygon_dest@@YAHPAVBuffer@@PAUVert@@HPAE@Z
-int __cdecl polygon_dest(Buffer *buffer, Vert *vertices, int count, unsigned char *remap) {
-    if (vertices == 0 || buffer == 0) {
-        return 16;
-    }
-    PolygonPixels = static_cast<unsigned char *>(buffer->get_data());
-    if (PolygonPixels != 0) {
-        PolygonVertices = vertices;
-        PolygonRemap = remap;
-        PolygonVertexCount = count;
-        PolygonPitch = static_cast<int>(buffer->stride_);
-        // The image tests the clip rectangle's address before reading it.
-        RECT *clip = &buffer->rect1_;
-        if (clip != 0) {
-            int maximum_y = -32765;
-            int minimum_vertex;
-            PolygonClipRight = clip->right - 1;
-            PolygonClipLeft = clip->left;
-            PolygonClipBottom.coordinate = clip->bottom - 1;
-            PolygonClipTop.coordinate = clip->top;
-            int minimum_y = 32767;
-            {
-                for (int vertex = 0; vertex < count; ++vertex) {
-                    if (vertices[vertex].y < minimum_y) {
-                        minimum_y = vertices[vertex].y;
-                        minimum_vertex = vertex;
-                    }
-                    if (vertices[vertex].y > maximum_y) {
-                        // volatile: stand-in for the image's reload of vertices[vertex].y at 0x00626EC1; no plain spelling found
-                        maximum_y = *(volatile int *)&vertices[vertex].y;
-                        PolygonBottomVertex = vertex;
-                    }
-                }
-                if (minimum_y < maximum_y) {
-                    FlatPolygonEdge backward;
-                    FlatPolygonEdge forward;
-                    PolygonY.coordinate = minimum_y;
-                    backward.direction = -1;
-                    if (setup_flat_polygon_edge(&backward, minimum_vertex)) {
-                        forward.direction = 1;
-                        if (setup_flat_polygon_edge(&forward, minimum_vertex)
-                            && PolygonY.coordinate < PolygonClipBottom.coordinate) {
-                            do {
-                                if (PolygonY.coordinate >= PolygonClipTop.coordinate) {
-                                    if (backward.x < forward.x) {
-                                        draw_remapped_polygon_span(backward.x, forward.x);
-                                    } else {
-                                        draw_remapped_polygon_span(forward.x, backward.x);
-                                    }
-                                }
-                                // Edge advance is open-coded: the image tests the
-                                // raw setup result, without advance's normalization.
-                                if (--backward.remaining_rows == 0) {
-                                    if (!setup_flat_polygon_edge(&backward, backward.next_vertex)) {
-                                        break;
-                                    }
-                                } else {
-                                    backward.x += backward.x_step;
-                                    backward.error += backward.remainder;
-                                    if (backward.error > 0) {
-                                        backward.x += backward.x_direction;
-                                        backward.error -= backward.height;
-                                    }
-                                }
-                                if (--forward.remaining_rows == 0) {
-                                    if (!setup_flat_polygon_edge(&forward, forward.next_vertex)) {
-                                        break;
-                                    }
-                                } else {
-                                    forward.x += forward.x_step;
-                                    forward.error += forward.remainder;
-                                    if (forward.error > 0) {
-                                        forward.x += forward.x_direction;
-                                        forward.error -= forward.height;
-                                    }
-                                }
-                                ++PolygonY.coordinate;
-                            } while (PolygonY.coordinate < PolygonClipBottom.coordinate);
-                        }
-                    }
-                }
-            }
-        }
-    }
-    buffer->free_data(1);
-    return 0;
-}
-
 static int polygon_fixed(int value) {
     return static_cast<int>(static_cast<unsigned int>(value) << 16);
 }
@@ -692,5 +553,144 @@ int __cdecl polygon_gouraud(Buffer *buffer, Vert *vertices, int *lights) {
     }
     buffer->free_data(1);
     __asm finit
+    return 0;
+}
+
+// ORIGINAL: 0x00626D90 ?scan_out_line_poly_dest@@YAIHH@Z 0x00626D90-0x00626E0B FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["626D90..626E0B reads9BC030 and indexes it sequentially with each destination byte. There is no meaningful return value or copied lookup table."], "reason": "The standalone destination span writer clips endpoints against the same polygon state and performs live unsigned-byte lookup-table writes."}
+// symbol    ?draw_remapped_polygon_span@@YAXHH@Z
+// Hand-written assembly: explicit push edi/pop edi pair, one-operand imul, byte remap loop.
+MEASURED inline void __cdecl draw_remapped_polygon_span(int left, int right) {
+    __asm {
+        push edi
+        mov ebx, right
+        cmp ebx, PolygonClipLeft
+        jle span_done
+        mov ecx, left
+        cmp ecx, PolygonClipRight
+        jge span_done
+        sub ebx, ecx
+        jle span_done
+        mov ecx, right
+        cmp ecx, PolygonClipRight
+        jl right_clipped
+        mov ecx, PolygonClipRight
+        mov right, ecx
+    right_clipped:
+        mov edi, left
+        cmp edi, PolygonClipLeft
+        jge left_clipped
+        mov edi, PolygonClipLeft
+        mov left, edi
+    left_clipped:
+        sub ecx, edi
+        jle span_done
+        mov eax, PolygonY.coordinate
+        imul PolygonPitch
+        add eax, left
+        add eax, PolygonPixels
+        mov edi, eax
+        mov ebx, PolygonRemap
+    span_remap:
+        xor edx, edx
+        mov dl, [edi]
+        add edx, ebx
+        mov al, [edx]
+        mov [edi], al
+        inc edi
+        dec ecx
+        jne span_remap
+    span_done:
+        pop edi
+    }
+}
+
+// ORIGINAL: 0x00626E10 ?polygon_dest@@YAHPAUBuffer@@PAUVert@@HPAE@Z 0x00626E10-0x00627100 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["BaseWin draw_farm40F38C/40F40A call626E10;626E38 acquires before publishing geometry/clip,6270E6 releases, and shared9BC030 supplies the per-pixel remap."], "reason": "The cdecl destination-remapping rasterizer shares flat edge/storage ownership with solid polygon and consumes a live caller-provided byte lookup table."}
+// symbol    ?polygon_dest@@YAHPAVBuffer@@PAUVert@@HPAE@Z
+int __cdecl polygon_dest(Buffer *buffer, Vert *vertices, int count, unsigned char *remap) {
+    if (vertices == 0 || buffer == 0) {
+        return 16;
+    }
+    PolygonPixels = static_cast<unsigned char *>(buffer->get_data());
+    if (PolygonPixels != 0) {
+        PolygonVertices = vertices;
+        PolygonRemap = remap;
+        PolygonVertexCount = count;
+        PolygonPitch = static_cast<int>(buffer->stride_);
+        // The image tests the clip rectangle's address before reading it.
+        RECT *clip = &buffer->rect1_;
+        if (clip != 0) {
+            int maximum_y = -32765;
+            int minimum_vertex;
+            PolygonClipRight = clip->right - 1;
+            PolygonClipLeft = clip->left;
+            PolygonClipBottom.coordinate = clip->bottom - 1;
+            PolygonClipTop.coordinate = clip->top;
+            int minimum_y = 32767;
+            {
+                for (int vertex = 0; vertex < count; ++vertex) {
+                    if (vertices[vertex].y < minimum_y) {
+                        minimum_y = vertices[vertex].y;
+                        minimum_vertex = vertex;
+                    }
+                    if (vertices[vertex].y > maximum_y) {
+                        // volatile: stand-in for the image's reload of vertices[vertex].y at 0x00626EC1; no plain spelling found
+                        maximum_y = *(volatile int *)&vertices[vertex].y;
+                        PolygonBottomVertex = vertex;
+                    }
+                }
+                if (minimum_y < maximum_y) {
+                    FlatPolygonEdge backward;
+                    FlatPolygonEdge forward;
+                    PolygonY.coordinate = minimum_y;
+                    backward.direction = -1;
+                    if (setup_flat_polygon_edge(&backward, minimum_vertex)) {
+                        forward.direction = 1;
+                        if (setup_flat_polygon_edge(&forward, minimum_vertex)
+                            && PolygonY.coordinate < PolygonClipBottom.coordinate) {
+                            do {
+                                if (PolygonY.coordinate >= PolygonClipTop.coordinate) {
+                                    if (backward.x < forward.x) {
+                                        draw_remapped_polygon_span(backward.x, forward.x);
+                                    } else {
+                                        draw_remapped_polygon_span(forward.x, backward.x);
+                                    }
+                                }
+                                // Edge advance is open-coded: the image tests the
+                                // raw setup result, without advance's normalization.
+                                if (--backward.remaining_rows == 0) {
+                                    if (!setup_flat_polygon_edge(&backward, backward.next_vertex)) {
+                                        break;
+                                    }
+                                } else {
+                                    backward.x += backward.x_step;
+                                    backward.error += backward.remainder;
+                                    if (backward.error > 0) {
+                                        backward.x += backward.x_direction;
+                                        backward.error -= backward.height;
+                                    }
+                                }
+                                if (--forward.remaining_rows == 0) {
+                                    if (!setup_flat_polygon_edge(&forward, forward.next_vertex)) {
+                                        break;
+                                    }
+                                } else {
+                                    forward.x += forward.x_step;
+                                    forward.error += forward.remainder;
+                                    if (forward.error > 0) {
+                                        forward.x += forward.x_direction;
+                                        forward.error -= forward.height;
+                                    }
+                                }
+                                ++PolygonY.coordinate;
+                            } while (PolygonY.coordinate < PolygonClipBottom.coordinate);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    buffer->free_data(1);
     return 0;
 }
