@@ -4848,21 +4848,24 @@ L_56d372:
         }
     }
     if (Vehs[veh_id].order == 3) {
+        // One flag tested after the switch (jump-threaded into each case): the
+        // image materialises case 1 as a value (0x56D458 not/shr 4/and 1/test)
+        // and shares one add_goal block. Case 2 tests the subtraction twice
+        // (0x56D42A lea eax,[edx-2]; test; jl; jne), which `alt > 2` does not give.
+        int ok = 0;
         switch (Vehs[veh_id].order_auto_type) {
         case 2:
-            if (!(map_loc(x, y)->bit & 0x40) && alt > 2)
-                goto L_56d46c;
+            ok = !(map_loc(x, y)->bit & 0x40) && alt - 2 >= 0 && alt - 2 != 0;
             break;
         case 1:
-            if ((~map_loc(x, y)->bit >> 4) & 1) {
-L_56d46c:
-                add_goal(faction_id, 9, 1, x, y, -1);
-            }
+            ok = !(map_loc(x, y)->bit & 0x10);
             break;
         case 0:
-            if (!(map_loc(x, y)->bit & 0x8000) && (map_loc(x, y)->val3 & ~0x3F) < 0x80)
-                goto L_56d46c;
+            ok = !(map_loc(x, y)->bit & 0x8000) && (map_loc(x, y)->val3 & ~0x3F) < 0x80;
             break;
+        }
+        if (ok) {
+            add_goal(faction_id, 9, 1, x, y, -1);
         }
         goto L_578f46;
     }
