@@ -10085,7 +10085,7 @@ void Win::set_bubble_text(char * text, RECT * rect) {
             *caret = 0;
         }
         int line_width = WinBubbleFont->width(str) +
-// RECOVERY_LITERAL: v1 0x00696E00 0x00696E02 $SG52516 0x005F83D0
+// RECOVERY_LITERAL: v1 0x00696E00 0x00696E02 $SG52515 0x005F83D0
                          WinBubbleFont->width(" ") * 2;
         if (line_width > max_width) {
             max_width = line_width;
