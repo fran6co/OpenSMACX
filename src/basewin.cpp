@@ -1292,7 +1292,7 @@ void BaseWin::rename() {
     // The pinned BaseWin::rename call references bytes 52 45 4E 41 4D 45 00
     // at 0x682C70. This writable-data correspondence says nothing about
     // runtime immutability or linker selection.
-    // RECOVERY_LITERAL: v1 0x682C70 0x682C77 $SG62802 0x41A2B0
+    // RECOVERY_LITERAL: v1 0x682C70 0x682C77 $SG62807 0x41A2B0
     if (X_pop_ask("RENAME", 0x18, BaseCurrent->name_string, nullptr, 0)) {
         NetDaemonNet.unlock_base(BaseIDCurrentSelected);
         return;
@@ -4477,8 +4477,8 @@ char InvertEntries[8][32];
 
 // BaseWin::init independently passes this same file/section pair at
 // 0x0041F2A6/0x0041F2AB; the two bounded literals are shared in this TU.
-// RECOVERY_LITERAL: v1 0x00682824 0x0068282F $SG64015 0x0041E8D0
-// RECOVERY_LITERAL: v1 0x00682830 0x00682839 $SG64016 0x0041E8D0
+// RECOVERY_LITERAL: v1 0x00682824 0x0068282F $SG64020 0x0041E8D0
+// RECOVERY_LITERAL: v1 0x00682830 0x00682839 $SG64021 0x0041E8D0
 void __cdecl load_inverts() {
     if (text_open("BASENAME", "INVERTLIST") == 0) {
         text_get();
@@ -6700,12 +6700,12 @@ void BaseWin::garrison_click(int vehicle_id, int x, int y, int right) {
     // Cases in the image's block order (jump table 0x40BFE4).
     switch (action) {
     case 1:
-        // RECOVERY_LITERAL: v1 0x006828DC 0x006828E1 $SG65253 0x0040B140
+        // RECOVERY_LITERAL: v1 0x006828DC 0x006828E1 $SG65258 0x0040B140
         if (veh_jail(vehicle_id)) X_pop("JAIL", 0);
         else { Vehs[vehicle_id].order = 0; synch_veh(vehicle_id); NetDaemonNet.await_synch(); }
         break;
     case 2:
-        // RECOVERY_LITERAL: v1 0x006828E4 0x006828E9 $SG65257 0x0040B140
+        // RECOVERY_LITERAL: v1 0x006828E4 0x006828E9 $SG65262 0x0040B140
         if (veh_jail(vehicle_id)) { X_pop("JAIL", 0); break; }
         Vehs[vehicle_id].order = 0;
         Vehs[vehicle_id].state &= 0xFCFFBDFFu;
@@ -6733,12 +6733,12 @@ void BaseWin::garrison_click(int vehicle_id, int x, int y, int right) {
         zoom(Vehs[vehicle_id].home_base_id, 0);
         return;
     case 10:
-        // RECOVERY_LITERAL: v1 0x006828EC 0x006828F1 $SG65268 0x0040B140
+        // RECOVERY_LITERAL: v1 0x006828EC 0x006828F1 $SG65273 0x0040B140
         if (veh_jail(vehicle_id)) X_pop("JAIL", 0);
         else { sleep(vehicle_id); synch_veh(vehicle_id); NetDaemonNet.await_synch(); }
         break;
     case 11:
-        // RECOVERY_LITERAL: v1 0x006828F4 0x006828F9 $SG65272 0x0040B140
+        // RECOVERY_LITERAL: v1 0x006828F4 0x006828F9 $SG65277 0x0040B140
         if (veh_jail(vehicle_id)) X_pop("JAIL", 0);
         else { Vehs[vehicle_id].order = 2; synch_veh(vehicle_id); NetDaemonNet.await_synch(); }
         break;
@@ -6749,7 +6749,7 @@ void BaseWin::garrison_click(int vehicle_id, int x, int y, int right) {
         else if (ReportWinGlobal.is_visible()) ReportWinGlobal.redraw();
         return;
     case 30:
-        // RECOVERY_LITERAL: v1 0x006828FC 0x00682901 $SG65280 0x0040B140
+        // RECOVERY_LITERAL: v1 0x006828FC 0x00682901 $SG65285 0x0040B140
         if (veh_jail(vehicle_id)) { X_pop("JAIL", 0); break; }
         Vehs[vehicle_id].state &= 0xFCFFBDFFu;
         Vehs[vehicle_id].order = 24;
