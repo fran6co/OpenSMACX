@@ -7137,10 +7137,10 @@ void BaseWin::init() {
     queue_help_rect_.right = rect_width(&queue_help_rect_) * 7 / 12;
     expand_rect(&queue_help_rect_, -4, -4);
     r = queue_help_rect_;
-    r.left = queue_help_rect_.right + 3;
     r.right = garrison_rect_.left - 7;
     r.bottom -= 3;
     r.top = r.bottom - 20;
+    r.left = queue_help_rect_.right + 3;
     flash_rect_b_ = r;
     offset_rect(&r, 0, -22);
     flash_rect_a_ = r;
