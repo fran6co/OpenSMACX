@@ -93,15 +93,6 @@ GraphicWin *OpeningWindow = 0;
 
 char PronounBuffer[256];  // 0x00945838 - see game.h for the naming evidence
 
-static const char WorldSizePopupLabel[] = "WORLDSIZE";
-static const char CustomMapPopupLabel[] = "CUSTOMMAP";
-static const char CustomMapXKey[] = "Custom Map X";
-static const char CustomMapYKey[] = "Custom Map Y";
-static const char VeryLargeMapLabel[] = "VERYLARGEMAP";
-// size_of_planet writes the custom size back through its own two texts
-// (image 0x68F880/0x68F890), not the read keys.
-static const char CustomMapXPutKey[] = "Custom Map X";
-static const char CustomMapYPutKey[] = "Custom Map Y";
 
 // Newgame-owned shared faction preview and callback state.
 // Generated initializer and destructor bindings below identify this global's startup lifetime.
@@ -133,15 +124,14 @@ char ConfigRandomLeaderInitial[4];
 
 // ORIGINAL: 0x005898A0 ?thumb_routine@@YAXH@Z 0x005898A0-0x00589A24 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/units/005898a0.cpp", "pinned:5898A0..589A24; preview9403E0; detail945818; diplomacy art78EE48 with65C faction stride", "source:Popup537C and PickWin redraw/ListBox cdecl(int) callback contract; allocation/lifetime selection still requires native qualification"], "reason": "Typed shared faction preview callback with real Popup/SpriteBox/FactionArt owners and genuine global storage; no executable-address aliases or manual vtables."}
-// RECOVERY_LITERAL: v1 0x0068F5C0 0x0068F5CB $SG63370 0x005898A0
-// RECOVERY_LITERAL: v1 0x0068F5CC 0x0068F5D2 $SG63372 0x005898A0
-// RECOVERY_LITERAL: v1 0x0068F5D4 0x0068F5DF $SG63374 0x005898A0
+// RECOVERY_LITERAL: v1 0x0068F5C0 0x0068F5CB $SG63444 0x005898A0
+// RECOVERY_LITERAL: v1 0x0068F5CC 0x0068F5D2 $SG63446 0x005898A0
+// RECOVERY_LITERAL: v1 0x0068F5D4 0x0068F5DF $SG63448 0x005898A0
 void __cdecl thumb_routine(int faction) {
-// RECOVERY_OBJECT: v1 0x0068F5B8 _?preview_skip_filename@?1??thumb_routine@@YAXH@Z@4PADA
-    static char preview_skip_filename[] = "JENN282";
     if (ExpansionEnabled) {
         PickWinGlobal.GraphicWin::redraw();
-        if (strcmp(Players[faction].filename, preview_skip_filename) == 0) {
+// RECOVERY_LITERAL: v1 0x0068F5B8 0x0068F5C0 $SG63442 0x005898A0
+        if (strcmp(Players[faction].filename, "JENN282") == 0) {
             ConfigFactionPreview.close();
             return;
         }
@@ -1153,7 +1143,7 @@ int __cdecl size_of_planet(int mode) {
     size_of_planet_budget_probe(1007);  // WORKAROUND(inline)
     Popup popup;
     SetupWin setup;
-    popup.start(WorldSizePopupLabel, mode != 2 ? 0x40 : 0);
+    popup.start("WORLDSIZE", mode != 2 ? 0x40 : 0);
 
     int width;
     MapSetupStatus = 1;
@@ -1195,7 +1185,7 @@ int __cdecl size_of_planet(int mode) {
                 // for a random size; a menu choice other than "custom" is
                 // remembered.
                 if (popup.input_poll_state() != 0) {
-                    choice = rand() % 5;
+                    choice = rnd(5, "INIT1");
                     MapSizePlanet = static_cast<uint32_t>(choice);
                 } else if (choice != 0x63) {
                     AlphaIniPrefs.custom_world[0] = static_cast<uint32_t>(choice);
@@ -1210,9 +1200,9 @@ int __cdecl size_of_planet(int mode) {
         }
 
         {
-            popup.start(CustomMapPopupLabel, 0x44);
-            const int pref_x = prefs_get(CustomMapXKey, 0x28, 0);
-            const int pref_y = prefs_get(CustomMapYKey, 0x50, 0);
+            popup.start("CUSTOMMAP", 0x44);
+            const int pref_x = prefs_get("Custom Map X", 0x28, 0);
+            const int pref_y = prefs_get("Custom Map Y", 0x50, 0);
             char number[80];
             size_of_planet_number(pref_x, number);
             {
@@ -1237,12 +1227,12 @@ int __cdecl size_of_planet(int mode) {
                 if (custom_height > 0x100) custom_height = 0x100;
             } else custom_height = 0x10;
             if (custom_width > 0x80 || custom_height > 0x80) {
-                if (X_pop(VeryLargeMapLabel, 0) != 0) {
+                if (X_pop("VERYLARGEMAP", 0) != 0) {
                     return 1;
                 }
             }
-            prefs_put(CustomMapXPutKey, custom_width, 0);
-            prefs_put(CustomMapYPutKey, custom_height, 0);
+            prefs_put("Custom Map X", custom_width, 0);
+            prefs_put("Custom Map Y", custom_height, 0);
             MapLatitudeBounds = custom_height;
             width = custom_width;
         }
@@ -1278,12 +1268,6 @@ static inline void random_planet_rules() {
     MapErosiveForces = (erosion_roll + 5) / 5;
 }
 
-// RECOVERY_OBJECT: v2 0x0068F8A0 0x0068F8A8 _MapMenuTitle 0x0058D6B0
-static const char MapMenuTitle[] = "MAPMENU";
-// RECOVERY_OBJECT: v2 0x0068F8A8 0x0068F8B8 _MapXPlanetPath 0x0058D6B0
-static const char MapXPlanetPath[] = "maps\\xplanet.mp";
-// RECOVERY_OBJECT: v2 0x0068F8B8 0x0068F8C9 _MapXPlanetXPath 0x0058D6B0
-static const char MapXPlanetXPath[] = "maps\\xplanetx.mp";
 
 // WORKAROUND(inline): dead /Ob2 budget probe, not recovered code. Two
 // zero-code expansions after map_menu's menu-cancel return move the
@@ -1305,7 +1289,7 @@ int __cdecl map_menu(int quick_start) {
 
 map_menu_retry:
     MapSetupStatus = 0;
-    popup.start(PopupStartCaption, MapMenuTitle, -1, 0, 0, 0);
+    popup.start(PopupStartCaption, "MAPMENU", -1, 0, 0, 0);
     choice = static_cast<int>(DefaultPrefs.map_type);
     popup.set_value(choice);
     if (quick_start == 0) choice = setup.do_menu(&popup, 1, quick_start);
@@ -1331,12 +1315,12 @@ map_menu_dispatch:
         }
         break;
     case 2:
-        if (load_map_daemon(const_cast<char *>(MapXPlanetPath)) != 0)
+        if (load_map_daemon("maps\\xplanet.mp") != 0)
             goto map_menu_retry;
         world_climate();
         break;
     case 3:
-        if (load_map_daemon(const_cast<char *>(MapXPlanetXPath)) != 0)
+        if (load_map_daemon("maps\\xplanetx.mp") != 0)
             goto map_menu_retry;
         world_climate();
         break;
@@ -1540,20 +1524,20 @@ do_cleanup:
 // top_menu's string operands, each read from the image's push operand and
 // checked against the literal text in the body; the repeated file names are
 // separate unpooled copies at distinct addresses.
-// RECOVERY_LITERAL: v1 0x0068F8F4 0x0068F908 $SG64051 0x0058E360
-// RECOVERY_LITERAL: v1 0x0068F908 0x0068F916 $SG64055 0x0058E360
-// RECOVERY_LITERAL: v1 0x0068F918 0x0068F926 $SG64056 0x0058E360
-// RECOVERY_LITERAL: v1 0x0068F928 0x0068F935 $SG64058 0x0058E360
-// RECOVERY_LITERAL: v1 0x0068F938 0x0068F945 $SG64059 0x0058E360
-// RECOVERY_LITERAL: v1 0x0068F948 0x0068F956 $SG64064 0x0058E360
-// RECOVERY_LITERAL: v1 0x0068F958 0x0068F966 $SG64065 0x0058E360
-// RECOVERY_LITERAL: v1 0x0068F968 0x0068F975 $SG64067 0x0058E360
-// RECOVERY_LITERAL: v1 0x0068F978 0x0068F985 $SG64068 0x0058E360
-// RECOVERY_LITERAL: v1 0x0068F988 0x0068F990 $SG64069 0x0058E360
-// RECOVERY_LITERAL: v1 0x0068F990 0x0068F998 $SG64070 0x0058E360
-// RECOVERY_LITERAL: v1 0x0068F998 0x0068F9A5 $SG64095 0x0058E360
-// RECOVERY_LITERAL: v1 0x0068F9A8 0x0068F9AE $SG64113 0x0058E360
-// RECOVERY_LITERAL: v1 0x0068F9B0 0x0068F9B9 $SG64114 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F8F4 0x0068F908 $SG64131 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F908 0x0068F916 $SG64135 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F918 0x0068F926 $SG64136 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F928 0x0068F935 $SG64138 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F938 0x0068F945 $SG64139 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F948 0x0068F956 $SG64144 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F958 0x0068F966 $SG64145 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F968 0x0068F975 $SG64147 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F978 0x0068F985 $SG64148 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F988 0x0068F990 $SG64149 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F990 0x0068F998 $SG64150 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F998 0x0068F9A5 $SG64175 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F9A8 0x0068F9AE $SG64193 0x0058E360
+// RECOVERY_LITERAL: v1 0x0068F9B0 0x0068F9B9 $SG64194 0x0058E360
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0058E360 0x0058EE34 0x0058EE4C 0x0058E758
 // WORKAROUND(inline): dead /Ob2 spend for top_menu, not recovered code (a
 // constant argument folds it away). The image expands one more member
@@ -2166,27 +2150,6 @@ int __cdecl game_reload(int mode, int reload) {
 // flags     frame;sp_ready;purged_ok
 // calls     0x00625880 0x00645470
 
-// Historical candidate note: the const-pointer spelling reproduced the old
-// fixed-address encoding; it is not the current source-owned token storage.
-// The original reads these eight short markup strings from 0x0068FA70..8C.
-// Keep source-owned semantic constants, not aliases to executable storage.
-// The complete original allocation/pooling extent is unknown.
-// RECOVERY_OBJECT: v1 0x0068FA70 _SayTokOpen
-static const char SayTokOpen[] = "$<";
-// RECOVERY_OBJECT: v1 0x0068FA74 _SayTokMale
-static const char SayTokMale[] = "M";
-// RECOVERY_OBJECT: v1 0x0068FA78 _SayTokFemale
-static const char SayTokFemale[] = "F";
-// RECOVERY_OBJECT: v1 0x0068FA7C _SayTokNeutral
-static const char SayTokNeutral[] = "N";
-// RECOVERY_OBJECT: v1 0x0068FA80 _SayTokOne
-static const char SayTokOne[] = "1";
-// RECOVERY_OBJECT: v1 0x0068FA84 _SayTokTwo
-static const char SayTokTwo[] = "2";
-// RECOVERY_OBJECT: v1 0x0068FA88 _SayTokSep
-static const char SayTokSep[] = ":";
-// RECOVERY_OBJECT: v1 0x0068FA8C _SayTokClose
-static const char SayTokClose[] = ">";
 
 char * __cdecl sub_58f4f0(char *output, int faction_id, int plurality, int gender) {
     char parsed[256];
@@ -2199,34 +2162,42 @@ char * __cdecl sub_58f4f0(char *output, int faction_id, int plurality, int gende
         gender = GenderDefault;
     }
     buffer[0] = 0;
-    strcat(buffer, SayTokOpen);
+// RECOVERY_LITERAL: v1 0x0068FA70 0x0068FA73 $SG64283 0x0058F4F0
+    strcat(buffer, "$<");
     if (gender == 0) {
-        strcat(buffer, SayTokMale);
+// RECOVERY_LITERAL: v1 0x0068FA74 0x0068FA76 $SG64285 0x0058F4F0
+        strcat(buffer, "M");
     } else if (gender == 1) {
-        strcat(buffer, SayTokFemale);
+// RECOVERY_LITERAL: v1 0x0068FA78 0x0068FA7A $SG64288 0x0058F4F0
+        strcat(buffer, "F");
     } else if (gender == 2) {
-        strcat(buffer, SayTokNeutral);
+// RECOVERY_LITERAL: v1 0x0068FA7C 0x0068FA7E $SG64291 0x0058F4F0
+        strcat(buffer, "N");
     }
     if (plurality == 0) {
-        strcat(buffer, SayTokOne);
+// RECOVERY_LITERAL: v1 0x0068FA80 0x0068FA82 $SG64293 0x0058F4F0
+        strcat(buffer, "1");
     } else if (plurality == 1) {
-        strcat(buffer, SayTokTwo);
+// RECOVERY_LITERAL: v1 0x0068FA84 0x0068FA86 $SG64296 0x0058F4F0
+        strcat(buffer, "2");
     }
-    strcat(buffer, SayTokSep);
+// RECOVERY_LITERAL: v1 0x0068FA88 0x0068FA8A $SG64297 0x0058F4F0
+    strcat(buffer, ":");
     strcat(buffer, Players[faction_id].adj_name_faction);
-    strcat(buffer, SayTokClose);
+// RECOVERY_LITERAL: v1 0x0068FA8C 0x0068FA8E $SG64298 0x0058F4F0
+    strcat(buffer, ">");
     parse_string(buffer, parsed);
     return strcat(output, parsed);
 }
 
 
-// RECOVERY_LITERAL: v1 0x0068FAAC 0x0068FAAE $SG64238 0x0058F610
-// RECOVERY_LITERAL: v1 0x0068FAA0 0x0068FAA2 $SG64236 0x0058F610
-// RECOVERY_LITERAL: v1 0x0068FA98 0x0068FA9A $SG64232 0x0058F610
-// RECOVERY_LITERAL: v1 0x0068FA9C 0x0068FA9E $SG64235 0x0058F610
-// RECOVERY_LITERAL: v1 0x0068FA94 0x0068FA96 $SG64229 0x0058F610
-// RECOVERY_LITERAL: v1 0x0068FAA8 0x0068FAAA $SG64237 0x0058F610
-// RECOVERY_LITERAL: v1 0x0068FA90 0x0068FA93 $SG64227 0x0058F610
+// RECOVERY_LITERAL: v1 0x0068FAAC 0x0068FAAE $SG64323 0x0058F610
+// RECOVERY_LITERAL: v1 0x0068FAA0 0x0068FAA2 $SG64318 0x0058F610
+// RECOVERY_LITERAL: v1 0x0068FA98 0x0068FA9A $SG64312 0x0058F610
+// RECOVERY_LITERAL: v1 0x0068FA9C 0x0068FA9E $SG64315 0x0058F610
+// RECOVERY_LITERAL: v1 0x0068FA94 0x0068FA96 $SG64309 0x0058F610
+// RECOVERY_LITERAL: v1 0x0068FAA8 0x0068FAAA $SG64322 0x0058F610
+// RECOVERY_LITERAL: v1 0x0068FA90 0x0068FA93 $SG64307 0x0058F610
 // ORIGINAL: 0x0058F610 ?say_special@@YAXPADPADH@Z 0x0058F610-0x0058F6F6 BYTE_EXACT
 // LEVER: the eight fixed-address bindings are .rdata STRING LITERALS, read
 //         out of the image with image_data.py and spelled as the text, the
@@ -2261,7 +2232,14 @@ void __cdecl say_special(char *output, char *text, int faction_id) {
         strcat(buffer, "N");
     }
 
-    strcat(buffer, "1");
+    // 0x0068FAA4 "2" is an unreferenced literal between "1" and ":": the
+    // plural arm of the noun-form test, folded away for the constant form.
+    int plural = 0;
+    if (plural == 0) {
+        strcat(buffer, "1");
+    } else if (plural == 1) {
+        strcat(buffer, "2");
+    }
     strcat(buffer, ":");
     strcat(buffer, text);
     strcat(buffer, ">");
@@ -2314,30 +2292,7 @@ void __cdecl say_special(char *output, char *text, int faction_id) {
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
 
-// Historical candidate note: the const-pointer spelling reproduced the old
-// fixed-address encoding; it is not the current source-owned token storage.
-// This is a distinct original token set at 0x0068FAB0..CC. Its bytes match
-// SayTok's strings, but no shared original allocation/pooling is established.
-// RECOVERY_OBJECT: v1 0x0068FAB0 _SayFacTokOpen
-static const char SayFacTokOpen[] = "$<";
-// RECOVERY_OBJECT: v1 0x0068FAB4 _SayFacTokMale
-static const char SayFacTokMale[] = "M";
-// RECOVERY_OBJECT: v1 0x0068FAB8 _SayFacTokFemale
-static const char SayFacTokFemale[] = "F";
-// RECOVERY_OBJECT: v1 0x0068FABC _SayFacTokNeutral
-static const char SayFacTokNeutral[] = "N";
-// RECOVERY_OBJECT: v1 0x0068FAC0 _SayFacTokOne
-static const char SayFacTokOne[] = "1";
-// RECOVERY_OBJECT: v1 0x0068FAC4 _SayFacTokTwo
-static const char SayFacTokTwo[] = "2";
-// RECOVERY_OBJECT: v1 0x0068FAC8 _SayFacTokSep
-static const char SayFacTokSep[] = ":";
-// RECOVERY_OBJECT: v1 0x0068FACC _SayFacTokClose
-static const char SayFacTokClose[] = ">";
 
-// Historical source-form finding for the former indexed fixed-address table
-// bases: see "the lever that keeps working" above; current token constants are
-// distinct source-owned strings, not indexed table views.
 
 void __cdecl say_fac_special(char *output, char *text, int faction_id) {
     char buffer[256];
@@ -2347,25 +2302,33 @@ void __cdecl say_fac_special(char *output, char *text, int faction_id) {
     int gender = Players[faction_id].noun_gender;
 
     buffer[0] = 0;
-    strcat(buffer, SayFacTokOpen);
+// RECOVERY_LITERAL: v1 0x0068FAB0 0x0068FAB3 $SG64333 0x0058F700
+    strcat(buffer, "$<");
 
     if (gender == 0) {
-        strcat(buffer, SayFacTokMale);
+// RECOVERY_LITERAL: v1 0x0068FAB4 0x0068FAB6 $SG64335 0x0058F700
+        strcat(buffer, "M");
     } else if (gender == 1) {
-        strcat(buffer, SayFacTokFemale);
+// RECOVERY_LITERAL: v1 0x0068FAB8 0x0068FABA $SG64338 0x0058F700
+        strcat(buffer, "F");
     } else if (gender == 2) {
-        strcat(buffer, SayFacTokNeutral);
+// RECOVERY_LITERAL: v1 0x0068FABC 0x0068FABE $SG64341 0x0058F700
+        strcat(buffer, "N");
     }
 
     if (plurality == 0) {
-        strcat(buffer, SayFacTokOne);
+// RECOVERY_LITERAL: v1 0x0068FAC0 0x0068FAC2 $SG64343 0x0058F700
+        strcat(buffer, "1");
     } else if (plurality == 1) {
-        strcat(buffer, SayFacTokTwo);
+// RECOVERY_LITERAL: v1 0x0068FAC4 0x0068FAC6 $SG64346 0x0058F700
+        strcat(buffer, "2");
     }
 
-    strcat(buffer, SayFacTokSep);
+// RECOVERY_LITERAL: v1 0x0068FAC8 0x0068FACA $SG64347 0x0058F700
+    strcat(buffer, ":");
     strcat(buffer, text);
-    strcat(buffer, SayFacTokClose);
+// RECOVERY_LITERAL: v1 0x0068FACC 0x0068FACE $SG64348 0x0058F700
+    strcat(buffer, ">");
 
     parse_string(buffer, parsed);
     strcat(output, parsed);
@@ -2384,9 +2347,6 @@ void __cdecl say_fac_special(char *output, char *text, int faction_id) {
 //         image returns the POINTER stored there (`mov eax, [0x9b7d00]`), so
 //         the binding is a real global, not a buffer.
 char *__cdecl get_phrase(int faction_id, int phrase_id) {
-    // X_pop's PLAYERFILE label has a distinct original start in this function.
-    // RECOVERY_OBJECT: v1 0x0068FAD0 _?PlayerFileSectionKey@?1??get_phrase@@YAPADHH@Z@4QBDB
-    static const char PlayerFileSectionKey[] = "PLAYERFILE";
     char *search_key = Players[faction_id].search_key;
     char *filename = Players[faction_id].filename;
     int ok = text_open(filename, search_key);
@@ -2395,7 +2355,8 @@ char *__cdecl get_phrase(int faction_id, int phrase_id) {
         if (ok != 0) {
             parse_says(0, search_key, -1, -1);
             parse_says(1, filename, -1, -1);
-            X_pop(PlayerFileSectionKey, 0);
+// RECOVERY_LITERAL: v1 0x0068FAD0 0x0068FADB $SG64358 0x0058F810
+            X_pop("PLAYERFILE", 0);
             return StringTable.get(0);
         }
     }
@@ -2429,9 +2390,6 @@ char *__cdecl get_phrase(int faction_id, int phrase_id) {
 //         purpose - caching one local would delete the second
 //         `mov eax, [0x9b7d00]`.
 char *__cdecl get_noun_phrase(int faction_id, int phrase_id) {
-    // Keep this API label in a separate original storage identity.
-    // RECOVERY_OBJECT: v1 0x0068FADC _?PlayerFileSectionKey@?1??get_noun_phrase@@YAPADHH@Z@4QBDB
-    static const char PlayerFileSectionKey[] = "PLAYERFILE";
     char buffer[256];
     char *search_key = Players[faction_id].search_key;
     char *filename = Players[faction_id].filename;
@@ -2440,7 +2398,8 @@ char *__cdecl get_noun_phrase(int faction_id, int phrase_id) {
         && (text_open(filename, filename) != 0)) {
         parse_says(0, search_key, -1, -1);
         parse_says(1, filename, -1, -1);
-        X_pop(PlayerFileSectionKey, 0);
+// RECOVERY_LITERAL: v1 0x0068FADC 0x0068FAE7 $SG64371 0x0058F8B0
+        X_pop("PLAYERFILE", 0);
         return StringTable.get(0);
     }
 
