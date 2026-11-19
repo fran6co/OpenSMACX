@@ -273,7 +273,425 @@ def test_eh_framed_table_dispatching_callee_preserves_through_its_teardown():
 
 
 def test_eh_framed_callee_with_a_virtual_call_under_the_save_refuses():
-    # Arm 0: push 1; mov eax,[ecx]; call [eax] (user decision: virtual calls refuse).
+    # Arm 0: push 1; mov eax,[ecx]; call [eax]. The image installs no vtable,
+    # so the image-wide slot proof has no candidate and the call stays unprovable.
     placed, relocations = _eh_framed_callee(bytes.fromhex("6a 01 8b 01 ff 10 90 90"))
     with pytest.raises(ValueError, match="restores ebx at an unknown stack depth"):
         _proves(placed, relocations=relocations)
+
+
+# Virtual calls through a frame-constant vtable (user decision 2026-11-17).
+RDATA = BASE + 0x1000
+VTABLE, VBTABLE = RDATA + 0x10, RDATA + 0x40
+
+
+OTHER8, OTHER0 = RDATA + 0x80, RDATA + 0xA0
+
+
+def _disagreeing_vtables() -> tuple[dict[int, bytes], dict[int, bytes], set[int]]:
+    """Two more installed vtables whose slots return with ret 8 and ret 0.
+
+    With them in the image the image-wide slot proof cannot agree on one stack
+    effect, so the frame-constant controls below see only their own rule.
+    """
+    installer = (bytes.fromhex("c7 01") + struct.pack("<I", OTHER8)  # mov dword [ecx],OTHER8
+                 + bytes.fromhex("c7 01") + struct.pack("<I", OTHER0) + b"\xc3")
+    placed = {0x700: installer, 0x740: RET8, 0x760: RET0}
+    rdata = {OTHER8 - RDATA: struct.pack("<II", BASE + 0x740, BASE + 0x740),
+             OTHER0 - RDATA: struct.pack("<II", BASE + 0x760, BASE + 0x760)}
+    relocations = {BASE + 0x702, BASE + 0x708, OTHER8, OTHER8 + 4, OTHER0, OTHER0 + 4}
+    return placed, rdata, relocations
+
+
+def _image_with_rdata(placed: dict[int, bytes], rdata: dict[int, bytes], relocations=(),
+                      *, others=True) -> PeImage:
+    """.text at BASE, read-only .rdata at BASE+0x1000 and a .reloc section."""
+    if others:
+        extra_placed, extra_rdata, extra_relocations = _disagreeing_vtables()
+        placed = {**extra_placed, **placed}
+        rdata = {**extra_rdata, **rdata}
+        relocations = set(relocations) | extra_relocations
+    text = bytearray(b"\xcc" * SECTION)
+    for offset, code in placed.items():
+        text[offset:offset + len(code)] = code
+    data = bytearray(0x200)
+    for offset, words in rdata.items():
+        data[offset:offset + len(words)] = words
+    pages: dict[int, list[int]] = {}
+    for site in sorted(relocations):
+        pages.setdefault((site - 0x400000) & ~0xFFF, []).append(0x3000 | (site & 0xFFF))
+    block = b""
+    for page, entries in sorted(pages.items()):
+        if len(entries) % 2:
+            entries.append(0)
+        block += struct.pack("<II", page, 8 + 2 * len(entries))
+        block += b"".join(struct.pack("<H", entry) for entry in entries)
+    reloc = block + bytes(-len(block) % 0x200 or (0x200 if not block else 0))
+    raw = bytearray(0x400)
+    raw[:2] = b"MZ"
+    struct.pack_into("<I", raw, 0x3C, 0x80)
+    raw[0x80:0x84] = b"PE\0\0"
+    struct.pack_into("<HHIIIHH", raw, 0x84, 0x14C, 3, 0, 0, 0, 224, 0)
+    struct.pack_into("<H", raw, 0x98, 0x10B)
+    struct.pack_into("<I", raw, 0x98 + 28, 0x400000)
+    struct.pack_into("<I", raw, 0x98 + 92, 16)
+    struct.pack_into("<II", raw, 0x98 + 96 + 5 * 8, 0x3000, len(block))
+    layout = ((b".text", 0x1000, text, 0x60000020), (b".rdata", 0x2000, data, 0x40000040),
+              (b".reloc", 0x3000, reloc, 0x42000040))
+    offset = 0x400
+    for index, (name, rva, body, flags) in enumerate(layout):
+        header = 0x178 + 40 * index
+        raw[header:header + 8] = name.ljust(8, b"\0")
+        struct.pack_into("<IIII", raw, header + 8, len(body), rva, len(body), offset)
+        struct.pack_into("<I", raw, header + 36, flags)
+        offset += len(body)
+    for _, _, body, _ in layout:
+        raw += body
+    image = bytes(raw)
+    return PeImage(image, hashlib.sha256(image).hexdigest())
+
+
+RET4 = bytes.fromhex("8b 44 24 04 c2 04 00")  # mov eax,[esp+4]; ret 4
+RET8 = bytes.fromhex("8b 44 24 04 c2 08 00")
+RET0 = bytes.fromhex("8b c1 c3")  # mov eax,ecx; ret
+STORE_VTABLE = bytes.fromhex("c7 45 f8") + struct.pack("<I", VTABLE)  # mov dword [ebp-8],VTABLE
+SAVED_HEAD = bytes.fromhex("55 8b ec 83 ec 08 53 31 db")  # push ebp; mov ebp,esp; sub esp,8; push ebx; xor ebx,ebx
+# push 1; lea ecx,[ebp-8]; mov eax,[ebp-8]; call [eax+4]; pop ebx; mov esp,ebp; pop ebp; ret
+SAVED_CALL = bytes.fromhex("6a 01 8d 4d f8 8b 45 f8 ff 50 04 5b 8b e5 5d c3")
+
+
+def _virtual(body: bytes, slot_targets=(0x380, 0x3A0), *, targets=None, relocate_store=True,
+             relocate_slots=True, extra=()):
+    """custom_planet-shaped callee at 0x100 whose vtable at VTABLE holds two slots."""
+    placed = {0x100: body, 0x380: RET4, 0x3A0: RET4, 0x3C0: RET0, 0x3E0: CLOBBERS,
+              **(targets or {})}
+    rdata = {VTABLE - RDATA: b"".join(struct.pack("<I", BASE + target) for target in slot_targets)}
+    relocations = set(extra)
+    if relocate_slots:
+        relocations |= {VTABLE, VTABLE + 4}
+    store = body.find(STORE_VTABLE)
+    if relocate_store and store >= 0:
+        relocations.add(BASE + 0x100 + store + 3)
+    return _image_with_rdata(placed, rdata, relocations)
+
+
+def test_virtual_call_through_a_frame_constant_vtable_is_proved_with_evidence():
+    body = SAVED_HEAD + STORE_VTABLE + SAVED_CALL
+    image = _virtual(body)
+    evidence = callee_preserves(image, BASE + 0x100, "ebx")
+    call = BASE + 0x100 + len(SAVED_HEAD) + len(STORE_VTABLE) + 8
+    assert evidence == [{
+        "call": call, "vtable": VTABLE, "slot": VTABLE + 4, "target": BASE + 0x3A0,
+        "stores": [{"address": BASE + 0x100 + len(SAVED_HEAD), "constant": VTABLE,
+                    "frame_offset": -12}],
+        "table_reads": []}]
+    # The resolved target's own stack effect is what places the restore.
+    with pytest.raises(ValueError, match="releases|without restoring"):
+        callee_preserves(_virtual(body, targets={0x3A0: RET8}), BASE + 0x100, "ebx")
+
+
+def test_virtual_target_must_itself_preserve_an_unsaved_register():
+    # push ebp; mov ebp,esp; sub esp,8; mov [ebp-8],VTABLE; lea ecx,[ebp-8];
+    # mov eax,[ebp-8]; call [eax]; mov esp,ebp; pop ebp; ret
+    body = (bytes.fromhex("55 8b ec 83 ec 08") + STORE_VTABLE
+            + bytes.fromhex("8d 4d f8 8b 45 f8 ff 10 8b e5 5d c3"))
+    assert callee_preserves(_virtual(body, (0x3C0, 0x3C0)), BASE + 0x100, "ebx")[0]["target"] == BASE + 0x3C0
+    with pytest.raises(ValueError, match="0x4013e0 overwrites ebx"):
+        callee_preserves(_virtual(body, (0x3E0, 0x3C0)), BASE + 0x100, "ebx")
+
+
+@pytest.mark.parametrize("between", [
+    bytes.fromhex("89 75 f8"),  # mov [ebp-8],esi: the vptr slot is overwritten
+    bytes.fromhex("88 44 0d fa"),  # mov [ebp+ecx-6],al: unknown frame index
+    bytes.fromhex("f3 ab"),  # rep stosd: a string store
+])
+def test_vptr_slot_written_before_the_call_refuses(between):
+    body = SAVED_HEAD + STORE_VTABLE + between + SAVED_CALL
+    with pytest.raises(ValueError, match="unknown stack depth"):
+        callee_preserves(_virtual(body), BASE + 0x100, "ebx")
+    # A disjoint frame store keeps the fact: mov [ebp-4],esi.
+    callee_preserves(_virtual(SAVED_HEAD + STORE_VTABLE + bytes.fromhex("89 75 fc") + SAVED_CALL),
+                     BASE + 0x100, "ebx")
+
+
+def test_vtable_from_a_non_constant_source_refuses():
+    non_constant = SAVED_HEAD + bytes.fromhex("89 75 f8 90 90 90 90") + SAVED_CALL  # mov [ebp-8],esi
+    code_vtable = SAVED_HEAD + bytes.fromhex("c7 45 f8") + struct.pack("<I", BASE + 0x380) + SAVED_CALL
+    cases = [
+        _virtual(non_constant),
+        _virtual(SAVED_HEAD + STORE_VTABLE + SAVED_CALL, relocate_store=False),
+        _virtual(SAVED_HEAD + STORE_VTABLE + SAVED_CALL, relocate_slots=False),
+        _virtual(code_vtable, extra=(BASE + 0x100 + len(SAVED_HEAD) + 3,)),
+    ]
+    for image in cases:
+        with pytest.raises(ValueError, match="unknown stack depth"):
+            callee_preserves(image, BASE + 0x100, "ebx")
+    # Only one path stores the constant: the store must dominate the call.
+    # push ebp; mov ebp,esp; sub esp,8; push ebx; xor ebx,ebx; test ecx,ecx;
+    # jz +7; mov [ebp-8],VTABLE; <call>
+    branch = SAVED_HEAD + bytes.fromhex("85 c9 74 07") + STORE_VTABLE + SAVED_CALL
+    with pytest.raises(ValueError, match="unknown stack depth"):
+        callee_preserves(_virtual(branch), BASE + 0x100, "ebx")
+
+
+def _vbase_body(vbptr_store: bytes) -> bytes:
+    """Virtual-base deleting call: vbptr at [ebp-10h], vbase vptr at vbptr+[vbtable+4]."""
+    return (bytes.fromhex("55 8b ec 83 ec 10 53 31 db") + vbptr_store
+            + bytes.fromhex("8b 4d f0 8b 51 04")  # mov ecx,[ebp-10h]; mov edx,[ecx+4]
+            + bytes.fromhex("c7 44 15 f0") + struct.pack("<I", VTABLE)  # mov [ebp+edx-10h],VTABLE
+            + bytes.fromhex("6a 01 8b 45 f0 8b 50 04")  # push 1; mov eax,[ebp-10h]; mov edx,[eax+4]
+            + bytes.fromhex("8d 4c 15 f0 8b 01 ff 10")  # lea ecx,[ebp+edx-10h]; mov eax,[ecx]; call [eax]
+            + bytes.fromhex("5b 8b e5 5d c3"))
+
+
+def test_virtual_base_adjusted_call_needs_a_constant_vbtable():
+    store = bytes.fromhex("c7 45 f0") + struct.pack("<I", VBTABLE)
+    body = _vbase_body(store)
+    vbptr_store = BASE + 0x109
+    vptr_store = vbptr_store + 7 + 6
+    relocations = {vbptr_store + 3, vptr_store + 4}
+    image = _image_with_rdata(
+        {0x100: body, 0x380: RET4},
+        {VTABLE - RDATA: struct.pack("<I", BASE + 0x380), VBTABLE - RDATA: struct.pack("<ii", 0, 8)},
+        relocations | {VTABLE})
+    evidence = callee_preserves(image, BASE + 0x100, "ebx")
+    assert len(evidence) == 1
+    assert evidence[0]["target"] == BASE + 0x380 and evidence[0]["vtable"] == VTABLE
+    assert {"cell": VBTABLE + 4, "value": 8} in evidence[0]["table_reads"]
+    assert {(row["address"], row["constant"]) for row in evidence[0]["stores"]} == {
+        (vbptr_store, VBTABLE), (vptr_store, VTABLE)}
+    # A vbptr from a non-constant source, or a relocated vbtable cell (an
+    # address, not a virtual-base offset), leaves the frame-constant rule
+    # without a vtable. The call still reaches its vptr through a
+    # virtual-base offset, so ASSUMPTION (a) narrows the image-wide slot
+    # proof to the vtables installed by indexed stores: VTABLE alone (the
+    # disagreeing OTHER8/OTHER0 tables are installed by plain stores).
+    unknown = _vbase_body(bytes.fromhex("89 75 f0 90 90 90 90"))
+    images = [
+        _image_with_rdata(
+            {0x100: unknown, 0x380: RET4},
+            {VTABLE - RDATA: struct.pack("<I", BASE + 0x380), VBTABLE - RDATA: struct.pack("<ii", 0, 8)},
+            {vptr_store + 4, VTABLE}),
+        _image_with_rdata(
+            {0x100: body, 0x380: RET4},
+            {VTABLE - RDATA: struct.pack("<I", BASE + 0x380), VBTABLE - RDATA: struct.pack("<ii", 0, 8)},
+            relocations | {VTABLE, VBTABLE + 4}),
+    ]
+    for image in images:
+        evidence = callee_preserves(image, BASE + 0x100, "ebx")
+        assert [(row["kind"], row["targets"], row["vtables"]) for row in evidence] == [
+            ("image_wide_slot", (BASE + 0x380,), 1)]
+    # Without the indexed install the narrowed set is empty: unprovable.
+    image = _image_with_rdata(
+        {0x100: unknown, 0x380: RET4},
+        {VTABLE - RDATA: struct.pack("<I", BASE + 0x380), VBTABLE - RDATA: struct.pack("<ii", 0, 8)},
+        {VTABLE})
+    with pytest.raises(ValueError, match="unknown stack depth"):
+        callee_preserves(image, BASE + 0x100, "ebx")
+
+
+# Image-wide slot proof (user decision 2026-11-17, option 1). Assumes objects
+# carry only vtables the image installs with a relocated `mov dword [mem],imm32`.
+VT_A, VT_B = RDATA + 0x10, RDATA + 0x20
+# push ebx; xor ebx,ebx; push 1; mov eax,[ecx]; call [eax+4]; pop ebx; ret
+HEAP_CALL = bytes.fromhex("53 31 db 6a 01 8b 01 ff 50 04 5b c3")
+# ecx-based constructors: mov dword [ecx],VT_A; ret / mov dword [ecx],VT_B; ret
+INSTALL_A = bytes.fromhex("c7 01") + struct.pack("<I", VT_A) + b"\xc3"
+INSTALL_B = bytes.fromhex("c7 01") + struct.pack("<I", VT_B) + b"\xc3"
+
+
+def _heap_call_image(slot_a: bytes, slot_b: bytes, *, body=HEAP_CALL, install_b=True,
+                     relocate_installs=True) -> PeImage:
+    placed = {0x100: body, 0x200: INSTALL_A, 0x400: RET4, 0x420: slot_a, 0x440: slot_b}
+    if install_b:
+        placed[0x210] = INSTALL_B
+    rdata = {VT_A - RDATA: struct.pack("<II", BASE + 0x400, BASE + 0x420),
+             VT_B - RDATA: struct.pack("<II", BASE + 0x400, BASE + 0x440)}
+    relocations = {VT_A, VT_A + 4, VT_B, VT_B + 4}
+    if relocate_installs:
+        relocations |= {BASE + 0x202, BASE + 0x212}
+    return _image_with_rdata(placed, rdata, relocations, others=False)
+
+
+def test_slot_call_through_every_installed_vtable_is_proved_with_evidence():
+    evidence = callee_preserves(_heap_call_image(RET4, RET4), BASE + 0x100, "ebx")
+    assert evidence == [{
+        "call": BASE + 0x107, "kind": "image_wide_slot", "slot_offset": 4,
+        "targets": (BASE + 0x420, BASE + 0x440), "vtables": 2, "virtual_base": False,
+        "stores": [], "table_reads": []}]
+
+
+def test_slot_call_with_differing_effects_or_no_installed_vtable_refuses():
+    # One installed vtable's slot pops 8 bytes: no shared effect.
+    with pytest.raises(ValueError, match="restores ebx at an unknown stack depth"):
+        callee_preserves(_heap_call_image(RET4, RET8), BASE + 0x100, "ebx")
+    # A slot target whose effect cannot be established.
+    unknown = bytes.fromhex("ff e0")  # jmp eax
+    with pytest.raises(ValueError, match="restores ebx at an unknown stack depth"):
+        callee_preserves(_heap_call_image(RET4, unknown), BASE + 0x100, "ebx")
+    # No relocated installing store: nothing is a vtable, the call stays unprovable.
+    with pytest.raises(ValueError, match="restores ebx at an unknown stack depth"):
+        callee_preserves(_heap_call_image(RET4, RET4, relocate_installs=False),
+                         BASE + 0x100, "ebx")
+    # Only VT_A installed: its slot alone decides (one RET4 candidate).
+    evidence = callee_preserves(_heap_call_image(RET4, RET8, install_b=False), BASE + 0x100, "ebx")
+    assert evidence[0]["targets"] == (BASE + 0x420,) and evidence[0]["vtables"] == 1
+
+
+def test_slot_targets_must_preserve_an_unsaved_register():
+    # mov eax,[ecx]; push 1; call [eax+4]; ret 0 -- EBX never saved.
+    body = bytes.fromhex("8b 01 6a 01 ff 50 04 c3")
+    callee_preserves(_heap_call_image(RET4, RET4, body=body), BASE + 0x100, "ebx")
+    clobber4 = bytes.fromhex("bb 01 00 00 00 c2 04 00")  # mov ebx,1; ret 4
+    with pytest.raises(ValueError, match="overwrites ebx"):
+        callee_preserves(_heap_call_image(RET4, clobber4, body=body), BASE + 0x100, "ebx")
+
+
+# ASSUMPTION (a): a call that reaches its vptr through a virtual-base offset
+# only sees vtables installed through indexed (virtual-base) stores.
+# push ebx; xor ebx,ebx; push 1; mov eax,[esi]; mov ecx,[eax+4]; add ecx,esi;
+# mov edx,[ecx]; call [edx]; pop ebx; ret
+VBASE_HEAP_CALL = bytes.fromhex("53 31 db 6a 01 8b 06 8b 48 04 03 ce 8b 11 ff 12 5b c3")
+
+
+def _vbase_heap_image(indexed_target: bytes, plain_target: bytes) -> PeImage:
+    # mov ecx,[esi+4]; mov dword [esi+ecx],VT_A; ret  -- an indexed install
+    # mov dword [esi],VT_B; ret                       -- a plain install
+    placed = {0x100: VBASE_HEAP_CALL,
+              0x200: bytes.fromhex("8b 4e 04 c7 04 0e") + struct.pack("<I", VT_A) + b"\xc3",
+              0x220: bytes.fromhex("c7 06") + struct.pack("<I", VT_B) + b"\xc3",
+              0x400: indexed_target, 0x420: plain_target}
+    rdata = {VT_A - RDATA: struct.pack("<I", BASE + 0x400), VT_B - RDATA: struct.pack("<I", BASE + 0x420)}
+    relocations = {VT_A, VT_B, BASE + 0x206, BASE + 0x222}
+    return _image_with_rdata(placed, rdata, relocations, others=False)
+
+
+def test_virtual_base_reached_call_sees_only_indexed_installs():
+    evidence = callee_preserves(_vbase_heap_image(RET4, RET8), BASE + 0x100, "ebx")
+    assert [(row["targets"], row["vtables"], row["virtual_base"]) for row in evidence] == [
+        ((BASE + 0x400,), 1, True)]
+    # The narrowed slot decides the effect: ret 8 there releases the saved slot.
+    with pytest.raises(ValueError, match="releases its saved ebx slot"):
+        callee_preserves(_vbase_heap_image(RET8, RET4), BASE + 0x100, "ebx")
+    # The plain heap call (no virtual-base offset) still sees both installs.
+    with pytest.raises(ValueError, match="unknown stack depth"):
+        callee_preserves(_heap_call_image(RET4, RET8), BASE + 0x100, "ebx")
+
+
+# ASSUMPTION (b): every installed vbtable's virtual-base offsets are proved
+# non-negative, so an indexed virtual-base store into the frame writes only at
+# or above its displacement and a frame-constant vptr below survives it.
+VBT = RDATA + 0x60
+
+
+def _floor_image(offset: int) -> PeImage:
+    # push ebp; mov ebp,esp; sub esp,8; push ebx; xor ebx,ebx; mov [ebp-8],VTABLE;
+    # mov ecx,[ebp-4]; mov edx,[ecx+4]; mov dword [ebp+edx-4],VTABLE; <SAVED_CALL>
+    body = (SAVED_HEAD + STORE_VTABLE + bytes.fromhex("8b 4d fc 8b 51 04 c7 44 15 fc")
+            + struct.pack("<I", VTABLE) + SAVED_CALL)
+    store = BASE + 0x100 + len(SAVED_HEAD)
+    indexed_store = store + len(STORE_VTABLE) + 6
+    # mov dword [ecx],VBT; ret -- installs the vbtable candidate
+    placed = {0x100: body, 0x200: bytes.fromhex("c7 01") + struct.pack("<I", VBT) + b"\xc3",
+              0x380: RET4, 0x3A0: RET4}
+    rdata = {VTABLE - RDATA: struct.pack("<II", BASE + 0x380, BASE + 0x3A0),
+             VBT - RDATA: struct.pack("<ii", 0, offset)}
+    relocations = {VTABLE, VTABLE + 4, store + 3, indexed_store + 4, BASE + 0x202}
+    return _image_with_rdata(placed, rdata, relocations)
+
+
+def test_frame_constant_vptr_survives_a_non_negative_virtual_base_store():
+    evidence = callee_preserves(_floor_image(8), BASE + 0x100, "ebx")
+    assert [(row.get("vtable"), row.get("target")) for row in evidence] == [(VTABLE, BASE + 0x3A0)]
+    # A negative virtual-base offset in any installed vbtable: the store may hit the slot.
+    with pytest.raises(ValueError, match="unknown stack depth"):
+        callee_preserves(_floor_image(-8), BASE + 0x100, "ebx")
+
+
+# ASSUMPTION (c): a frame object's known vptr changes only in that object's own
+# constructor or destructor (a call receiving its address in ECX whose callee
+# installs a vtable or vbtable).
+# mov dword [ecx],OTHER8; ret  -- installs a vtable: a constructor/destructor
+CTOR = bytes.fromhex("c7 01") + struct.pack("<I", OTHER8) + b"\xc3"
+
+
+def _with_call(prefix: bytes, callee: bytes, relocate_callee_store=False) -> PeImage:
+    """SAVED_HEAD; mov [ebp-8],VTABLE; <prefix>; call 0x5C0; SAVED_CALL."""
+    start = BASE + 0x100 + len(SAVED_HEAD) + len(STORE_VTABLE) + len(prefix)
+    body = SAVED_HEAD + STORE_VTABLE + prefix + _call(start, BASE + 0x5C0) + SAVED_CALL
+    extra = (BASE + 0x5C2,) if relocate_callee_store else ()
+    image = _virtual(body, targets={0x5C0: callee}, extra=extra)
+    return image
+
+
+def test_known_vptr_survives_unrelated_calls_and_pointer_stores():
+    lea_this = bytes.fromhex("8d 4d f8")  # lea ecx,[ebp-8]: the callee receives the object
+    for prefix, callee in ((lea_this, RET0), (b"", CTOR), (bytes.fromhex("89 06"), RET0)):
+        evidence = callee_preserves(_with_call(prefix, callee, callee is CTOR), BASE + 0x100, "ebx")
+        assert [(row.get("vtable"), row.get("target")) for row in evidence] == [(VTABLE, BASE + 0x3A0)]
+
+
+def test_known_vptr_is_forgotten_by_the_objects_own_constructor_or_destructor():
+    lea_this = bytes.fromhex("8d 4d f8")
+    # The callee re-installs OTHER8 into the object it receives: by ASSUMPTION
+    # (e1) the object now carries OTHER8, whose slot 1 pops 8 bytes.
+    with pytest.raises(ValueError, match="releases its saved ebx slot"):
+        callee_preserves(_with_call(lea_this, CTOR, True), BASE + 0x100, "ebx")
+    # An object starting above the known slot is a different object: its
+    # constructor keeps the fact. One starting below may contain the slot.
+    above = bytes.fromhex("8d 4d fc")  # lea ecx,[ebp-4]
+    callee_preserves(_with_call(above, CTOR, True), BASE + 0x100, "ebx")
+    below = bytes.fromhex("8d 4d f4")  # lea ecx,[ebp-0Ch]
+    with pytest.raises(ValueError, match="unknown stack depth"):
+        callee_preserves(_with_call(below, CTOR, True), BASE + 0x100, "ebx")
+    # A vtable install through a pointer forgets every fact.
+    install = bytes.fromhex("c7 06") + struct.pack("<I", OTHER0)  # mov dword [esi],OTHER0
+    with pytest.raises(ValueError, match="unknown stack depth"):
+        callee_preserves(_virtual(SAVED_HEAD + STORE_VTABLE + install + SAVED_CALL,
+                                  extra=(BASE + 0x100 + len(SAVED_HEAD) + len(STORE_VTABLE) + 2,)),
+                         BASE + 0x100, "ebx")
+
+
+# ASSUMPTION (e1): after the object's own constructor its vptr is the last
+# vtable that constructor installs at [this].
+def test_constructor_result_becomes_the_known_vptr():
+    lea_this = bytes.fromhex("8d 4d f8")
+    # mov esi,ecx; mov dword [esi],OTHER0; mov dword [esi],VTABLE; mov dword [esi+4],OTHER8; ret
+    ctor = (bytes.fromhex("8b f1 c7 06") + struct.pack("<I", OTHER0)
+            + bytes.fromhex("c7 06") + struct.pack("<I", VTABLE)
+            + bytes.fromhex("c7 46 04") + struct.pack("<I", OTHER8) + b"\xc3")
+    image = _virtual(SAVED_HEAD + STORE_VTABLE + lea_this
+                     + _call(BASE + 0x100 + len(SAVED_HEAD) + len(STORE_VTABLE) + 3, BASE + 0x5C0)
+                     + SAVED_CALL,
+                     targets={0x5C0: ctor},
+                     extra=(BASE + 0x5C4, BASE + 0x5CA, BASE + 0x5D1))
+    evidence = callee_preserves(image, BASE + 0x100, "ebx")
+    assert [(row.get("vtable"), row.get("target")) for row in evidence] == [(VTABLE, BASE + 0x3A0)]
+    # Two returns leaving different vtables: no known result, the call stays unprovable.
+    # mov esi,ecx; test eax,eax; jz +7; mov [esi],OTHER0; ret; mov [esi],VTABLE; ret
+    split = (bytes.fromhex("8b f1 85 c0 74 07 c7 06") + struct.pack("<I", OTHER0) + b"\xc3"
+             + bytes.fromhex("c7 06") + struct.pack("<I", VTABLE) + b"\xc3")
+    image = _virtual(SAVED_HEAD + STORE_VTABLE + lea_this
+                     + _call(BASE + 0x100 + len(SAVED_HEAD) + len(STORE_VTABLE) + 3, BASE + 0x5C0)
+                     + SAVED_CALL,
+                     targets={0x5C0: split}, extra=(BASE + 0x5C8, BASE + 0x5CF))
+    with pytest.raises(ValueError, match="unknown stack depth"):
+        callee_preserves(image, BASE + 0x100, "ebx")
+
+
+# ASSUMPTION (e2): a known frame-object vptr is carried into a callee that
+# receives the object as `this`.
+def test_known_vptr_is_carried_into_a_callee_receiving_this():
+    def image(lea: bytes) -> PeImage:
+        # push ebp; mov ebp,esp; sub esp,8; mov [ebp-8],VTABLE; <lea ecx>; call 0x5C0;
+        # mov esp,ebp; pop ebp; ret
+        head = bytes.fromhex("55 8b ec 83 ec 08") + STORE_VTABLE + lea
+        body = head + _call(BASE + 0x100 + len(head), BASE + 0x5C0) + bytes.fromhex("8b e5 5d c3")
+        # push ebx; xor ebx,ebx; push 1; mov eax,[ecx]; call [eax+4]; pop ebx; ret
+        return _virtual(body, targets={0x5C0: HEAP_CALL})
+    callee_preserves(image(bytes.fromhex("8d 4d f8")), BASE + 0x100, "ebx")
+    # The callee alone, or receiving an object whose vptr is unknown, refuses.
+    with pytest.raises(ValueError, match="unknown stack depth"):
+        callee_preserves(image(bytes.fromhex("8d 4d f8")), BASE + 0x5C0, "ebx")
+    with pytest.raises(ValueError, match="overwrites ebx|unknown stack depth"):
+        callee_preserves(image(bytes.fromhex("8d 4d fc")), BASE + 0x100, "ebx")

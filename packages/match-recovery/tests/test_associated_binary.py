@@ -1327,6 +1327,33 @@ def test_register_bound_guard_resolves_one_constant_on_every_path():
     assert [row["edge"] for row in witness["bounds"]] == ["constant"]
 
 
+def _equality_reentry_code(branch=0x75):
+    # cmp esi,4; mov eax,esi; ja DEF; D: jmp [eax*4+T];
+    # A: cmp esi,ebx; jne DEF; mov eax,ebx; jmp D; DEF: ret
+    # (map_menu 0x0058D6B0: a case re-enters its own dispatch with the
+    # register it just compared equal to the guarded index.)
+    return (bytes.fromhex("83 fe 04 8b c6 77 0f ff 24 85 00 00 00 00 3b f3") + bytes((branch, 0x04))
+            + bytes.fromhex("8b c3 eb f1 c3"))
+
+
+def test_equality_edge_keeps_both_compared_locations_on_a_dispatch_reentry():
+    code = _equality_reentry_code()
+    instructions = list(_ENGINE.disasm(code, BASE))
+    assert sum(item.size for item in instructions) == len(code)
+    dispatch = instructions[3]
+    span = Span(BASE, BASE + len(code))
+    targets = frozenset({instructions[4].address})
+    witness = _path_bounded_dispatch(instructions, dispatch, "eax", span, targets)
+    assert witness["maximum_index"] == 4
+    assert {(row["address"], row["edge"]) for row in witness["bounds"]} == {
+        (instructions[1].address, "fact"), (instructions[2].address, "fallthrough")}
+    # `je DEF` re-enters on the unequal edge: ebx is unrelated to the guard.
+    code = _equality_reentry_code(branch=0x74)
+    instructions = list(_ENGINE.disasm(code, BASE))
+    with pytest.raises(ValueError, match="reaches the function entry without a bound"):
+        _path_bounded_dispatch(instructions, instructions[3], "eax", span, targets)
+
+
 def test_register_bound_guard_extent_proof_requires_opt_in_and_matching_table():
     _, _, _, image, _, _ = fixture()
     code = _register_bound_code()

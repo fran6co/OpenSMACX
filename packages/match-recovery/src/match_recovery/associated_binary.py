@@ -456,6 +456,9 @@ def _edge_bounds(instructions, edges, position: int, kind: str):
     for location in (left, right[1] if right[0] == "location" else None):
         if location is not None and any(_kills(item, location) for item in corridor):
             return []
+    if relation == "==" and right[0] == "location":
+        # Equal values bound each other in both directions.
+        return [(left, right), (right[1], ("location", left))]
     if relation in ("<=", "=="):
         return [(left, right)]
     if relation == "<":
@@ -480,7 +483,8 @@ def _is_eh_registration_access(instruction) -> bool:
             and not address.base and not address.index and address.disp == 0)
 
 
-def _call_step(instruction, locations: frozenset, image: PeImage | None, preserved: dict):
+def _call_step(instruction, locations: frozenset, image: PeImage | None, preserved: dict,
+               resolved: dict | None = None):
     """Locations still holding their value after a direct CALL.
 
     Only registers that `callee_preserves` proves the callee hands back
@@ -496,8 +500,10 @@ def _call_step(instruction, locations: frozenset, image: PeImage | None, preserv
         key = (target, location[1])
         if key not in preserved:
             try:
-                callee_preserves(image, target, location[1])
+                virtual_calls = callee_preserves(image, target, location[1])
                 preserved[key] = None
+                if virtual_calls and resolved is not None:
+                    resolved[key] = virtual_calls
             except ValueError as error:
                 preserved[key] = str(error)
         if preserved[key] is None:
@@ -512,9 +518,13 @@ def _path_bounded_dispatch(instructions, dispatch, index_family: str, span: Span
 
     Each path from the indexed JMP back towards the entry tracks the set of
     registers/EBP slots that hold the index (or, after a register-register
-    unsigned compare, an upper bound of it). A path is proved by a 32-bit
-    constant definition of that set or by an unsigned/equality branch edge
-    whose `cmp` constrains a location equal to it. Reaching the function
+    unsigned compare, an upper bound of it; an equality edge `cmp a,b` keeps
+    both compared locations, since each then bounds the other). A path is
+    proved by a 32-bit constant definition of that set or by an
+    unsigned/equality branch edge whose `cmp` constrains a location equal
+    to it. A path that returns to a state already being searched (a case
+    arm that re-enters the dispatch) adds no new execution: every real
+    path is finite and starts at the entry. Reaching the function
     entry, a call edge into the body, or losing every tracked location
     refuses. Non-explicit memory writes kill every location they can affect.
     Calls kill every EBP slot; with the pinned `image`, a direct `call rel32`
@@ -530,10 +540,11 @@ def _path_bounded_dispatch(instructions, dispatch, index_family: str, span: Span
            for item in instructions for operand in item.operands):
         raise ValueError("path-bounded index proof refuses segment-relative (EH/SEH) frames")
     preserved: dict = {}
+    resolved: dict = {}
 
     def step(item, locations):
         if item.group(CS_GRP_CALL):
-            return _call_step(item, locations, image, preserved)
+            return _call_step(item, locations, image, preserved, resolved)
         return _backward_step(item, locations)
 
     edges = _incoming_edges(instructions, span, indirect_targets)
@@ -561,9 +572,18 @@ def _path_bounded_dispatch(instructions, dispatch, index_family: str, span: Span
                 raise ValueError("direct call enters a dispatch index path")
             item = instructions[predecessor]
             edge_tracked, edge_facts = tracked, set(facts)
-            for location, bound in _edge_bounds(instructions, edges, predecessor, kind):
+            edge_pairs = _edge_bounds(instructions, edges, predecessor, kind)
+            equal = {(location, bound[1]) for location, bound in edge_pairs
+                     if bound[0] == "location"
+                     and (bound[1], ("location", location)) in edge_pairs}
+            for location, bound in edge_pairs:
                 if bound[0] == "imm":
                     edge_facts.add((frozenset({location}), bound[1]))
+                elif (location, bound[1]) in equal:
+                    # index <= location == other: both hold an upper bound
+                    # of the index, so both stay tracked.
+                    if location in tracked:
+                        edge_tracked = edge_tracked | {bound[1]}
                 elif location in edge_tracked:
                     # index <= location <= bound: bound the compared value instead.
                     edge_tracked = frozenset({bound[1]})
@@ -598,8 +618,10 @@ def _path_bounded_dispatch(instructions, dispatch, index_family: str, span: Span
                           for address, kind, value in sorted(bounds)]}
     carried = sorted(key for key, reason in preserved.items() if reason is None)
     if carried:
-        witness["preserving_callees"] = [{"callee": callee, "register": register}
-                                         for callee, register in carried]
+        witness["preserving_callees"] = [
+            {"callee": callee, "register": register,
+             **({"virtual_calls": resolved[callee, register]} if (callee, register) in resolved else {})}
+            for callee, register in carried]
     return witness
 
 

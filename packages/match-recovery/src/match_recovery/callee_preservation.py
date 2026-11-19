@@ -49,9 +49,65 @@ the same documented signature states, hands back EBX, ESI, EDI and EBP
 unchanged while EAX, ECX and EDX are clobbered. That contract applies only to
 slots with a declared signature; an import without one refuses as before.
 
+Virtual calls (user decision 2026-11-17) are followed only when the vtable
+pointer is provably a constant stored into the analysed function's own frame:
+on the path, `mov dword [frame],imm32` stored a HIGHLOW-relocated address of
+read-only image data, the slot was then reloaded into the CALL's base register
+(`call [r+disp]`), and between the store and the CALL no CALL of any kind ran
+and no memory write could overlap the slot (see ASSUMPTIONS (b) and (c)
+below for indexed virtual-base stores, pointer stores and calls). The slot cell `vtable+disp` must lie
+in read-only initialized image data and carry a HIGHLOW relocation; its value
+is the target, proved (and its stack effect taken) exactly like a direct
+callee. A frame address may be adjusted by a virtual-base offset only when
+that offset is read from read-only image data (no relocation) through a
+vbtable pointer that is itself such a frame constant. The resolutions are
+returned by `callee_preserves` as evidence records.
+
+Any other virtual call `call [r+disp]` (user decision 2026-11-17, option 1:
+image-wide slot proof) is followed through every vtable the image installs.
+ASSUMPTION: an object only ever carries a vtable present in the image, and
+the image installs each such vtable with a HIGHLOW-relocated
+`mov dword [mem],imm32` whose immediate addresses read-only, initialized,
+non-executable data holding a relocated pointer into executable code (VC6
+constructors store vptrs this way). The candidate targets of slot `disp` are
+then the relocated code pointers at `vtable+disp` over every such installed
+vtable. The call is followed only when there is at least one candidate, every
+candidate has the same known stack effect, and (while R holds the caller's
+value) every candidate is proved to preserve R; any unprovable or differing
+candidate refuses. This is proved from image bytes alone; the source plays no
+part. A `call [r+disp]` through a non-vtable function-pointer table is held
+to the same rule, so it only passes when every installed vtable's slot agrees.
+
+Three further ASSUMPTIONS (user decisions 2026-11-17) refine virtual calls:
+
+(a) A call that reaches its vptr through a virtual-base offset (the VC6
+chain: vbptr load, vbtable entry `[vbptr+k]`, offset added to the object,
+vptr load from the sum) only sees vtables the image installs through indexed
+(virtual-base subobject) stores `mov [obj+off+disp],imm32`. Its slot
+candidates are taken from those vtables alone.
+
+(b) Objects carry only vbtables the image installs: relocated
+`mov dword [mem],imm32` immediates addressing read-only data whose first
+dword is an unrelocated multiple of 4 in (-0x10000, 0] (MSVC's vbtable[0],
+the vbptr's offset back to its object). When entry k of every such candidate
+is an unrelocated non-negative multiple of 4, a frame store
+`[frame + r + disp]` whose r was read at vbtable entry k writes only at or
+above frame+disp, so frame vptr facts wholly below it survive the store.
+
+(c) A frame object's known vptr changes only in that object's own
+constructor or destructor (the C++ object model). The image shows such a call
+as one receiving a frame address in ECX whose callee (the direct target,
+the resolved virtual target or every slot candidate) itself contains a
+vtable/vbtable install store; it forgets the facts at or above that address.
+An unresolved call receiving a frame address counts as one. Every other call
+keeps the facts, as do stores through non-frame pointers unless they install
+a vtable/vbtable themselves; exact frame stores, frame stores at an unknown
+index and string stores still forget what they may overlap.
+
 Everything else refuses: undecodable or non-executable bytes, other indirect
-calls while R holds the caller's value (virtual calls through vtables
-included), unbounded indirect jumps, interrupts and other unsupported
+calls while R holds the caller's value (`call reg`, ESP/EBP-based and indexed
+memory calls),
+unbounded indirect jumps, interrupts and other unsupported
 transfers, a restore at an unknown or wrong stack depth, recursion and the
 search/depth bounds. Stores through computed pointers (including indexed frame
 addresses) are outside this model.
@@ -104,6 +160,9 @@ _PROBE = "probe"
 # Documented Win32 x86 contract of every documented API function (stdcall and
 # cdecl alike): these registers come back unchanged; EAX, ECX, EDX do not.
 _IMPORT_PRESERVES = frozenset(("ebx", "esi", "edi", "ebp"))
+_READ_ONLY_DATA = 0x00000040
+_MEM_WRITE = 0x80000000
+_STRING_STORES = ("stos", "movs", "ins")
 
 
 class _Refusal(ValueError):
@@ -123,6 +182,14 @@ class _Context:
         self.decoded: dict[int, object] = {}
         self.verdicts: dict[tuple[int, str], str] = {}
         self.effects: dict[int, int | str | None] = {}
+        self.evidence: dict[tuple[int, str], frozenset] = {}
+        self._vtables: tuple[int, ...] | None = None
+        self._indexed: tuple[int, ...] = ()
+        self._vbtables: tuple[int, ...] = ()
+        self._slots: dict[tuple[int, bool], tuple[int, ...]] = {}
+        self._vbase: dict[int, bool] = {}
+        self.installers: dict[int, bool] = {}
+        self._tables: frozenset[int] | None = None
         self.taint = 0  # count of depth/call-chain refusals met so far
 
     def _code_region(self, address: int):
@@ -147,6 +214,126 @@ class _Context:
             raise _Refusal(f"callee code {address:#x} does not decode")
         self.decoded[address] = decoded
         return decoded
+
+    def read_only_word(self, address: int) -> int | None:
+        """A dword of read-only, initialized, non-executable image data."""
+        matches = [flags for (region, _, size), flags in zip(self.image.sections, self.image.section_flags)
+                   if region.start <= address and address + 4 <= region.start + size]
+        if (len(matches) != 1 or not matches[0] & _READ_ONLY_DATA
+                or matches[0] & (_MEM_WRITE | _EXECUTE | _CODE)):
+            return None
+        return int.from_bytes(self.image.read(Span(address, address + 4)), "little")
+
+    def relocated_immediate(self, instruction, value: int) -> bool:
+        """Whether a HIGHLOW relocation inside the instruction encodes `value`."""
+        return any(site in self.image.relocations
+                   and int.from_bytes(instruction.bytes[site - instruction.address:
+                                                        site - instruction.address + 4],
+                                      "little") == value
+                   for site in range(instruction.address, instruction.address + instruction.size - 3))
+
+    def executable(self, address: int) -> bool:
+        try:
+            self._code_region(address)
+        except _Refusal:
+            return False
+        return True
+
+    def _installs(self) -> None:
+        """Scan every relocated `mov dword [mem],imm32` immediate in executable code.
+
+        Its value is a vtable when it addresses read-only data holding a
+        relocated pointer into executable code; the vtable is "indexed" when
+        some install addresses memory through an index register (the VC6
+        virtual-base subobject store `mov [obj+off+disp],imm32`). Its value is
+        a vbtable candidate when it addresses read-only data whose first
+        dword is unrelocated, a multiple of 4 and in (-0x10000, 0] (MSVC's
+        vbtable[0] is the vbptr's offset back to its object start).
+        """
+        if self._vtables is not None:
+            return
+        vtables, indexed, vbtables = set(), set(), set()
+        for site in sorted(self.image.relocations):
+            if not self.executable(site):
+                continue
+            value = int.from_bytes(self.image.read(Span(site, site + 4)), "little")
+            first = self.read_only_word(value)
+            if first is None:
+                continue
+            is_vtable = value in self.image.relocations and self.executable(first)
+            is_vbtable = (not any(cell in self.image.relocations for cell in range(value - 3, value + 4))
+                          and -0x10000 < _signed(first) <= 0 and not first % 4)
+            if not (is_vtable or is_vbtable):
+                continue
+            # The immediate ends the instruction: `C7 modrm [sib] [disp8|disp32] imm32`.
+            for start in range(site - 7, site - 1):
+                if not self.executable(start):
+                    continue
+                code = self.image.read(Span(start, site + 4))
+                decoded = next(_ENGINE.disasm(code, start, 1), None)
+                if (decoded is not None and decoded.address + decoded.size == site + 4
+                        and decoded.mnemonic == "mov" and len(decoded.operands) == 2
+                        and decoded.operands[0].type == x86.X86_OP_MEM
+                        and decoded.operands[0].size == 4
+                        and decoded.operands[1].type == x86.X86_OP_IMM
+                        and decoded.operands[1].imm & 0xFFFFFFFF == value):
+                    if is_vtable:
+                        vtables.add(value)
+                        if decoded.operands[0].mem.index:
+                            indexed.add(value)
+                    else:
+                        vbtables.add(value)
+                    break
+        self._indexed = tuple(sorted(indexed))
+        self._vbtables = tuple(sorted(vbtables))
+        self._vtables = tuple(sorted(vtables))
+
+    def install_tables(self) -> frozenset[int]:
+        """Every installed vtable and vbtable candidate."""
+        self._installs()
+        if self._tables is None:
+            self._tables = frozenset(self._vtables) | frozenset(self._vbtables)
+        return self._tables
+
+    def vtables(self, indexed: bool = False) -> tuple[int, ...]:
+        """Every vtable the image installs, or only those installed through
+        virtual-base (indexed) stores (see the module ASSUMPTIONS)."""
+        self._installs()
+        return self._indexed if indexed else self._vtables
+
+    def vbase_offsets_nonnegative(self, displacement: int) -> bool:
+        """Whether entry `displacement` of every installed vbtable candidate is
+        an unrelocated, non-negative multiple of 4 (a virtual-base offset)."""
+        cached = self._vbase.get(displacement)
+        if cached is not None:
+            return cached
+        self._installs()
+        result = displacement >= 4 and not displacement % 4 and bool(self._vbtables)
+        for vbtable in self._vbtables if result else ():
+            cell = vbtable + displacement
+            word = self.read_only_word(cell)
+            if (word is None or any(site in self.image.relocations for site in range(cell - 3, cell + 4))
+                    or _signed(word) < 0 or word % 4):
+                result = False
+                break
+        self._vbase[displacement] = result
+        return result
+
+    def slot_targets(self, displacement: int, indexed: bool = False) -> tuple[int, ...]:
+        """Relocated code pointers at `vtable+displacement` over every installed
+        vtable (only the virtual-base-installed ones when `indexed`)."""
+        key = (displacement, indexed)
+        cached = self._slots.get(key)
+        if cached is not None:
+            return cached
+        targets = set()
+        for vtable in self.vtables(indexed):
+            cell = (vtable + displacement) & 0xFFFFFFFF
+            target = self.read_only_word(cell)
+            if target is not None and cell in self.image.relocations and self.executable(target):
+                targets.add(target)
+        self._slots[key] = tuple(sorted(targets))
+        return self._slots[key]
 
     def is_stack_probe(self, entry: int) -> bool:
         try:
@@ -441,8 +628,543 @@ def _eax_constant(instruction, eax: int | None) -> int | None:
     return None if "eax" in _written_families(instruction) else eax
 
 
+def _value_of(values: frozenset, family: str | None):
+    for item in values:
+        if item[0] == family:
+            return item[1:]
+    return None
+
+
+def _frame_address(instruction, memory, esp: int | None, ebp: int | None,
+                   values: frozenset):
+    """(entry-relative offset, provenance) of a frame memory operand, or None.
+
+    Exactly one component is a frame anchor (ESP/EBP at a known depth or a
+    register holding a frame address); every other register component must
+    hold a read-only table integer.
+    """
+    if memory.segment != x86.X86_REG_INVALID:
+        return None
+    anchor, offset, provenance = None, memory.disp, ()
+    for register, scale in ((memory.base, 1), (memory.index, memory.scale)):
+        if not register:
+            continue
+        family = _family(instruction, register)
+        if family in ("esp", "ebp"):
+            depth = esp if family == "esp" else ebp
+            value = None if depth is None else ("frame", depth, ())
+        else:
+            value = _value_of(values, family)
+        if value is None:
+            return None
+        kind, amount, origin = value
+        if kind == "frame" and scale == 1 and anchor is None:
+            anchor = amount
+        elif kind == "int":
+            offset += amount * scale
+        else:
+            return None
+        provenance += origin
+    if anchor is None:
+        return None
+    return anchor + offset, provenance
+
+
+def _signed(value: int) -> int:
+    value &= 0xFFFFFFFF
+    return value - (1 << 32) if value & 0x80000000 else value
+
+
+def _fact_step(context: _Context, instruction, esp: int | None, ebp: int | None,
+               facts: frozenset, values: frozenset) -> tuple[frozenset, frozenset]:
+    """Carry frame vtable facts and register values across one non-call instruction.
+
+    A fact is (entry-relative slot, constant, provenance) for a dword slot
+    that a relocated `mov dword [frame],imm32` set to an address of
+    read-only image data. A value is (family, kind, amount, provenance) with
+    kind "frame" (an entry-relative frame address), "vptr" (a fact reloaded
+    into a register) or "int" (a dword of read-only image data read through
+    a vptr value, e.g. a vbtable's virtual-base offset).
+    """
+    operands = instruction.operands
+    mnemonic = instruction.mnemonic
+    # Memory writes: each must resolve to an exact frame range or every fact is lost.
+    for operand in operands:
+        if operand.type != x86.X86_OP_MEM or not operand.access & CS_AC_WRITE:
+            continue
+        resolved = _frame_address(instruction, operand.mem, esp, ebp, values)
+        plain = not (mnemonic == "pop" or mnemonic.startswith(_STRING_STORES)
+                     or instruction.prefix[0] in (x86.X86_PREFIX_REP, x86.X86_PREFIX_REPNE))
+        if resolved is None and plain:
+            floor = _virtual_base_floor(context, instruction, operand.mem, esp, ebp, values)
+            if floor is not None:
+                # Writes start at or above `floor`: facts wholly below survive.
+                facts = frozenset(fact for fact in facts if fact[0] + 4 <= floor)
+                continue
+        if resolved is None and plain and not _frame_based(instruction, operand.mem, values):
+            # ASSUMPTION (c): a store through a non-frame pointer is not a vptr
+            # write unless it installs a vtable/vbtable itself.
+            if (mnemonic == "mov" and len(operands) == 2 and operands[1].type == x86.X86_OP_IMM
+                    and operands[1].imm & 0xFFFFFFFF in context.install_tables()):
+                facts = frozenset()
+                break
+            continue
+        if resolved is None or not plain:
+            facts = frozenset()
+            break
+        start = resolved[0]
+        facts = frozenset(fact for fact in facts
+                          if not (start < fact[0] + 4 and fact[0] < start + operand.size))
+    if mnemonic in ("push", "pushf", "pushfd", "pushal", "pushad"):
+        size = (operands[0].size if mnemonic == "push" and operands
+                else {"pushf": 2, "pushfd": 4}.get(mnemonic, 32))
+        if esp is None:
+            facts = frozenset()
+        else:
+            start = esp - size
+            facts = frozenset(fact for fact in facts if not (start < fact[0] + 4 and fact[0] < esp))
+    if (mnemonic == "mov" and len(operands) == 2 and operands[0].type == x86.X86_OP_MEM
+            and operands[0].size == 4 and operands[1].type == x86.X86_OP_IMM):
+        constant = operands[1].imm & 0xFFFFFFFF
+        resolved = _frame_address(instruction, operands[0].mem, esp, ebp, values)
+        if (resolved is not None and context.read_only_word(constant) is not None
+                and context.relocated_immediate(instruction, constant)):
+            slot = resolved[0]
+            origin = resolved[1] + (("store", instruction.address, slot, constant),)
+            facts = facts | {(slot, constant, origin)}
+    # Register values.
+    written = _written_families(instruction)
+    previous = values
+    values = frozenset(item for item in values if item[0] not in written)
+    if len(operands) != 2 or operands[0].type != x86.X86_OP_REG or operands[0].size != 4:
+        return facts, values
+    destination = _family(instruction, operands[0].reg)
+    if destination in (None, "esp", "ebp"):
+        return facts, values
+    source = operands[1]
+    value = None
+    if mnemonic == "lea" and source.type == x86.X86_OP_MEM:
+        resolved = _frame_address(instruction, source.mem, esp, ebp, previous)
+        if resolved is not None:
+            value = ("frame", resolved[0], resolved[1])
+    elif mnemonic == "mov" and source.type == x86.X86_OP_REG and source.size == 4:
+        value = _value_of(previous, _family(instruction, source.reg))
+        if value is None and _family(instruction, source.reg) in ("esp", "ebp"):
+            depth = esp if _family(instruction, source.reg) == "esp" else ebp
+            value = None if depth is None else ("frame", depth, ())
+    elif mnemonic == "mov" and source.type == x86.X86_OP_MEM and source.size == 4:
+        memory = source.mem
+        resolved = _frame_address(instruction, memory, esp, ebp, previous)
+        if resolved is not None:
+            slot = resolved[0]
+            fact = next((fact for fact in facts if fact[0] == slot), None)
+            if fact is not None:
+                value = ("vptr", fact[1], resolved[1] + fact[2])
+        elif (memory.base and not memory.index and memory.segment == x86.X86_REG_INVALID
+              and (_value_of(previous, _family(instruction, memory.base)) or ("",))[0] == "vptr"):
+            base = _value_of(previous, _family(instruction, memory.base))
+            if base is not None and base[0] == "vptr":
+                cell = (base[1] + memory.disp) & 0xFFFFFFFF
+                word = context.read_only_word(cell)
+                if word is not None and not any(site in context.image.relocations
+                                                for site in range(cell - 3, cell + 4)):
+                    value = ("int", _signed(word), base[2] + (("table", cell, _signed(word)),))
+    elif mnemonic == "add" and source.type == x86.X86_OP_REG and source.size == 4:
+        left = _value_of(previous, destination)
+        right = _value_of(previous, _family(instruction, source.reg))
+        if left is not None and right is not None:
+            kinds = {left[0], right[0]}
+            if kinds == {"frame", "int"}:
+                value = ("frame", left[1] + right[1], left[2] + right[2])
+    if (value is None and mnemonic == "mov" and source.type == x86.X86_OP_MEM
+            and source.size == 4 and source.mem.disp == 0 and source.mem.base
+            and not source.mem.index and source.mem.segment == x86.X86_REG_INVALID):
+        base = _value_of(previous, _family(instruction, source.mem.base))
+        if base is not None and base[0] == "object":
+            value = ("vptr", base[1], base[2])
+    if value is None:
+        value = _virtual_base_value(instruction, previous)
+    if value is not None:
+        values = values | {(destination, *value)}
+    return facts, values
+
+
+def _installs_vptr(context: _Context, entry: int) -> bool:
+    """Whether a callee's own reachable body installs a vtable or vbtable.
+
+    Scans the instructions reachable from `entry` through fallthrough, direct
+    jumps and path-bounded jump tables (calls fall through, like `_effect`)
+    for a `mov dword [mem],imm32` whose immediate is an installed vtable or
+    vbtable candidate: the vptr/vbptr store of a VC6 constructor, or the vptr
+    re-install a VC6 destructor makes before tearing down. Anything that
+    cannot be scanned counts as installing.
+    """
+    cached = context.installers.get(entry)
+    if cached is not None:
+        return cached
+    tables = context.install_tables()
+    pending = [(entry, None, frozenset())]
+    seen = set()
+    result = False
+    try:
+        while pending and not result:
+            state = pending.pop()
+            if state in seen:
+                continue
+            seen.add(state)
+            if len(seen) > PRESERVATION_STATE_LIMIT:
+                raise _Refusal("installer scan exceeds its bound")
+            address, flags, bounds = state
+            instruction = context.decode(address)
+            following = address + instruction.size
+            operands = instruction.operands
+            if (instruction.mnemonic == "mov" and len(operands) == 2
+                    and operands[0].type == x86.X86_OP_MEM and operands[0].size == 4
+                    and operands[1].type == x86.X86_OP_IMM
+                    and operands[1].imm & 0xFFFFFFFF in tables):
+                result = True
+                break
+            if instruction.group(CS_GRP_RET):
+                continue
+            if instruction.group(CS_GRP_CALL):
+                pending.append((following, None, frozenset()))
+                continue
+            if instruction.group(CS_GRP_JUMP) or instruction.group(CS_GRP_BRANCH_RELATIVE):
+                target = _direct_target(instruction)
+                if target is None:
+                    if _import_slot(context, instruction, frozenset()) is not None:
+                        continue
+                    pending.extend((item, None, bounds)
+                                   for item in context.table_targets(instruction, bounds))
+                    continue
+                taken, fallthrough = _edge_bounds(instruction, flags, bounds)
+                pending.append((target, flags, taken))
+                if instruction.id != x86.X86_INS_JMP:
+                    pending.append((following, flags, fallthrough))
+                continue
+            next_flags, next_bounds = _value_step(instruction, flags, bounds, context)
+            pending.append((following, next_flags, next_bounds))
+    except _Refusal:
+        result = True
+    context.installers[entry] = result
+    return result
+
+
+def _facts_across_call(context: _Context, targets, values: frozenset,
+                       facts: frozenset, address: int = 0, depth: int = 0,
+                       active: frozenset[int] = frozenset()) -> frozenset:
+    """Frame vtable facts that survive one CALL (ASSUMPTION (c)).
+
+    A frame object's vptr changes only in that object's own constructor or
+    destructor. The image shows such a call as one that receives the object's
+    address in ECX (VC6 thiscall) and whose callee installs a vtable or
+    vbtable (`_installs_vptr`). Such a call forgets every fact at or above
+    the address in ECX; an unknown callee receiving a frame address counts
+    as one. Every other call, including one that receives the address of an
+    object whose vptr is known, keeps the facts.
+    """
+    if not facts:
+        return facts
+    this = _value_of(values, "ecx")
+    if this is None or this[0] != "frame":
+        return facts
+    if targets is not None and not any(_installs_vptr(context, target) for target in targets):
+        return facts
+    kept = frozenset(fact for fact in facts if fact[0] < this[1])
+    # ASSUMPTION (e1): after the object's own constructor its vptr is the last
+    # vtable that constructor installs at [this], read from its bytes.
+    if targets is not None and len(targets) == 1:
+        constructed = _constructed_vptr(context, targets[0], depth, active)
+        if constructed is not None:
+            kept = kept | {(this[1], constructed, (("store", address, this[1], constructed),))}
+    return kept
+
+
+def _receiver(values: frozenset, facts: frozenset) -> int | None:
+    """The known vptr of the object a CALL passes in ECX (ASSUMPTION (e2))."""
+    this = _value_of(values, "ecx")
+    if this is None:
+        return None
+    if this[0] == "object":
+        return this[1]
+    if this[0] == "frame":
+        return next((fact[1] for fact in facts if fact[0] == this[1]), None)
+    return None
+
+
+def _objects_across_call(context: _Context, targets, values: frozenset, depth: int,
+                         active: frozenset[int]) -> frozenset:
+    """Object values (`this` with a known vptr) that survive a CALL.
+
+    A value survives in a register the callee is proved to hand back, unless
+    the call is that object's own constructor/destructor (ASSUMPTION (c)).
+    """
+    objects = [item for item in values if item[1] == "object"]
+    if not objects or targets is None:
+        return frozenset()
+    this = _value_of(values, "ecx")
+    kept = set()
+    for item in objects:
+        if item[0] == "eax":
+            continue
+        if (this is not None and this[0] == "object" and this[1] == item[2]
+                and any(_installs_vptr(context, target) for target in targets)):
+            continue
+        if all(_preserves_quietly(context, target, item[0], depth, active) for target in targets):
+            kept.add(item)
+    return frozenset(kept)
+
+
+def _constructed_vptr(context: _Context, entry: int, depth: int = 0,
+                      active: frozenset[int] = frozenset()) -> int | None:
+    """The vtable a constructor leaves at [this] (ASSUMPTION (e1)), or None.
+
+    Tracks the registers holding `this` (ECX at entry, register copies; a
+    callee-saved copy survives a nested call only when that callee is proved
+    to preserve it). A `mov dword [this],vtable` sets the result; a nested
+    call receiving `this` whose callee installs (a base constructor) sets it
+    to that callee's own result. Every return must agree. A vtable store
+    through any other register at displacement 0 or an unscannable path
+    gives None.
+    """
+    key = ("constructed", entry)
+    if key in context.installers:
+        return context.installers[key]
+    context.installers[key] = None  # recursion guard
+    if depth > PRESERVATION_DEPTH_LIMIT or entry in active:
+        return None
+    active = active | {entry}
+    tables = frozenset(context.vtables())
+    # `this` holds (family, offset) pairs: registers holding this+offset.
+    pending = [(entry, frozenset({("ecx", 0)}), None, None, frozenset())]
+    seen = set()
+    results = set()
+    try:
+        while pending:
+            state = pending.pop()
+            if state in seen:
+                continue
+            seen.add(state)
+            if len(seen) > PRESERVATION_STATE_LIMIT:
+                raise _Refusal("constructor scan exceeds its bound")
+            address, this, last, flags, bounds = state
+            instruction = context.decode(address)
+            following = address + instruction.size
+            operands = instruction.operands
+            if instruction.group(CS_GRP_RET):
+                results.add(last)
+                continue
+            if instruction.group(CS_GRP_CALL):
+                target = _direct_target(instruction)
+                if target is None and _import_slot(context, instruction, frozenset()) is not None:
+                    pending.append((following, frozenset(item for item in this
+                                                         if item[0] in _IMPORT_PRESERVES),
+                                    last, None, frozenset()))
+                    continue
+                if target is None or instruction.bytes[0] != 0xE8:
+                    raise _Refusal("unresolved call in a constructor")
+                if ("ecx", 0) in this and _installs_vptr(context, target):
+                    last = _constructed_vptr(context, target, depth + 1, active)
+                    if last is None:
+                        raise _Refusal("a base constructor's result is unknown")
+                kept = frozenset(item for item in this if item[0] not in ("eax", "ecx", "edx")
+                                 and _preserves_quietly(context, target, item[0], depth, active))
+                pending.append((following, kept, last, None, frozenset()))
+                continue
+            if instruction.group(CS_GRP_JUMP) or instruction.group(CS_GRP_BRANCH_RELATIVE):
+                target = _direct_target(instruction)
+                if target is None:
+                    pending.extend((item, this, last, None, bounds)
+                                   for item in context.table_targets(instruction, bounds))
+                    continue
+                taken, fallthrough = _edge_bounds(instruction, flags, bounds)
+                pending.append((target, this, last, flags, taken))
+                if instruction.id != x86.X86_INS_JMP:
+                    pending.append((following, this, last, flags, fallthrough))
+                continue
+            if (instruction.mnemonic == "mov" and len(operands) == 2
+                    and operands[0].type == x86.X86_OP_MEM and operands[0].size == 4
+                    and operands[1].type == x86.X86_OP_IMM
+                    and operands[1].imm & 0xFFFFFFFF in tables):
+                memory = operands[0].mem
+                offsets = dict(this)
+                base = _family(instruction, memory.base) if memory.base else None
+                if (base in offsets and not memory.index
+                        and memory.segment == x86.X86_REG_INVALID):
+                    if offsets[base] + memory.disp == 0:
+                        last = operands[1].imm & 0xFFFFFFFF
+                elif memory.disp == 0 or not memory.base:
+                    raise _Refusal("a vtable store through an untracked pointer")
+            written = _written_families(instruction)
+            offsets = dict(this)
+            copied = None
+            if (instruction.mnemonic == "mov" and len(operands) == 2
+                    and operands[0].type == x86.X86_OP_REG and operands[1].type == x86.X86_OP_REG
+                    and operands[0].size == 4 and _family(instruction, operands[1].reg) in offsets):
+                copied = (_family(instruction, operands[0].reg),
+                          offsets[_family(instruction, operands[1].reg)])
+            elif (instruction.mnemonic == "lea" and len(operands) == 2
+                    and operands[0].type == x86.X86_OP_REG and operands[0].size == 4
+                    and operands[1].mem.base and not operands[1].mem.index
+                    and _family(instruction, operands[1].mem.base) in offsets):
+                copied = (_family(instruction, operands[0].reg),
+                          offsets[_family(instruction, operands[1].mem.base)] + operands[1].mem.disp)
+            this = frozenset(item for item in this if item[0] not in written)
+            if copied is not None:
+                this = this | {copied}
+            next_flags, next_bounds = _value_step(instruction, flags, bounds, context)
+            pending.append((following, this, last, next_flags, next_bounds))
+    except _Refusal:
+        results = {None}
+    result = next(iter(results)) if len(results) == 1 else None
+    context.installers[key] = result
+    return result
+
+
+def _virtual_base_value(instruction, previous: frozenset):
+    """Shape tags of the VC6 virtual-base access chain, for one register write.
+
+    "word": any dword loaded from memory (e.g. an object's vbptr).
+    "vbofs": `[word+disp]`, disp >= 4: a candidate virtual-base offset read
+    from vbtable entry disp/4 (amount = disp).
+    "vbsub": a register sum (`add`, `lea [a+b]`) with a "vbofs" term: an
+    adjusted virtual-base subobject address.
+    "vbvptr": `[vbsub]` or `[a+b]` with a "vbofs" term and no displacement:
+    the vptr of a virtual-base subobject.
+    """
+    operands = instruction.operands
+    mnemonic = instruction.mnemonic
+    source = operands[1]
+
+    def kind(register):
+        value = _value_of(previous, _family(instruction, register)) if register else None
+        return None if value is None else value[0]
+
+    if mnemonic == "mov" and source.type == x86.X86_OP_MEM and source.size == 4:
+        memory = source.mem
+        if memory.segment != x86.X86_REG_INVALID:
+            return ("word", 0, ())
+        kinds = {kind(memory.base), kind(memory.index)}
+        if memory.disp == 0 and memory.index and memory.scale == 1 and "vbofs" in kinds:
+            return ("vbvptr", 0, ())
+        if memory.disp == 0 and not memory.index and kind(memory.base) == "vbsub":
+            return ("vbvptr", 0, ())
+        if (memory.base and not memory.index and kind(memory.base) == "word"
+                and memory.disp >= 4 and not memory.disp % 4):
+            return ("vbofs", memory.disp, ())
+        return ("word", 0, ())
+    if mnemonic == "add" and source.type == x86.X86_OP_REG and source.size == 4:
+        if "vbofs" in {kind(operands[0].reg), kind(source.reg)}:
+            return ("vbsub", 0, ())
+    if mnemonic == "lea" and source.type == x86.X86_OP_MEM:
+        memory = source.mem
+        if memory.index and memory.scale == 1 and "vbofs" in {kind(memory.base), kind(memory.index)}:
+            return ("vbsub", 0, ())
+    return None
+
+
+def _frame_based(instruction, memory, values: frozenset) -> bool:
+    """Whether a memory operand may address the frame: ESP/EBP or a register
+    holding a frame address appears in it (any other base is a pointer)."""
+    for register in (memory.base, memory.index):
+        if not register:
+            continue
+        family = _family(instruction, register)
+        if family in ("esp", "ebp"):
+            return True
+        value = _value_of(values, family)
+        if value is not None and value[0] == "frame":
+            return True
+    return not (memory.base or memory.index)  # an absolute address: be conservative
+
+
+def _virtual_base_floor(context: _Context, instruction, memory, esp: int | None,
+                        ebp: int | None, values: frozenset) -> int | None:
+    """Lowest entry-relative frame offset an indexed virtual-base store can write.
+
+    The store is `[frame + r + disp]` (scale 1) where r holds a "vbofs"
+    value read at vbtable entry k; when every installed vbtable candidate's
+    entry k is non-negative (ASSUMPTION (b)), the write lands at or above
+    frame+disp. Any other shape returns None.
+    """
+    if memory.segment != x86.X86_REG_INVALID or not memory.base or not memory.index or memory.scale != 1:
+        return None
+    anchor, offset = None, None
+    for first, second in ((memory.base, memory.index), (memory.index, memory.base)):
+        family = _family(instruction, first)
+        if family in ("esp", "ebp"):
+            depth = esp if family == "esp" else ebp
+        else:
+            value = _value_of(values, family)
+            depth = value[1] if value is not None and value[0] == "frame" else None
+        other = _value_of(values, _family(instruction, second))
+        if depth is not None and other is not None and other[0] == "vbofs":
+            anchor, offset = depth, other[1]
+            break
+    if anchor is None or not context.vbase_offsets_nonnegative(offset):
+        return None
+    return anchor + memory.disp
+
+
+def _virtual_target(context: _Context, instruction, values: frozenset):
+    """(target, evidence) of `call [r+disp]` through a frame-constant vtable, or None."""
+    operands = instruction.operands
+    if len(operands) != 1 or operands[0].type != x86.X86_OP_MEM or operands[0].size != 4:
+        return None
+    memory = operands[0].mem
+    if not memory.base or memory.index or memory.segment != x86.X86_REG_INVALID:
+        return None
+    value = _value_of(values, _family(instruction, memory.base))
+    if value is None or value[0] != "vptr":
+        return None
+    cell = (value[1] + memory.disp) & 0xFFFFFFFF
+    target = context.read_only_word(cell)
+    if target is None or cell not in context.image.relocations:
+        return None  # not a relocated read-only vtable slot: an unprovable call
+    stores = [{"address": item[1], "frame_offset": item[2], "constant": item[3]}
+              for item in value[2] if item[0] == "store"]
+    tables = [{"cell": item[1], "value": item[2]} for item in value[2] if item[0] == "table"]
+    record = (("call", instruction.address), ("vtable", value[1]), ("slot", cell),
+              ("target", target),
+              ("stores", tuple(tuple(sorted(item.items())) for item in stores)),
+              ("table_reads", tuple(tuple(sorted(item.items())) for item in tables)))
+    return target, record
+
+
+def _slot_call(context: _Context, instruction,
+               values: frozenset = frozenset()) -> tuple[int, tuple[int, ...], bool] | None:
+    """(slot displacement, candidate targets, narrowed) of a `call [r+disp]` virtual call, or None.
+
+    A call whose base register holds a virtual-base subobject's vptr
+    ("vbvptr") considers only vtables installed through virtual-base
+    (indexed) stores (ASSUMPTION (a)).
+    """
+    operands = instruction.operands
+    if len(operands) != 1 or operands[0].type != x86.X86_OP_MEM or operands[0].size != 4:
+        return None
+    memory = operands[0].mem
+    if (not memory.base or memory.index or memory.segment != x86.X86_REG_INVALID
+            or _family(instruction, memory.base) in ("esp", "ebp")):
+        return None
+    displacement = memory.disp
+    if displacement < 0 or displacement % 4:
+        return None
+    base = _value_of(values, _family(instruction, memory.base))
+    indexed = base is not None and base[0] == "vbvptr"
+    return displacement, context.slot_targets(displacement, indexed), indexed
+
+
+def _slot_effect(context: _Context, candidates: tuple[int, ...]) -> int | None:
+    """The one known stack effect every slot candidate shares, else None."""
+    effects = {_effect(context, candidate) for candidate in candidates}
+    if len(effects) != 1:
+        return None
+    effect = next(iter(effects))
+    return effect if isinstance(effect, int) else None
+
+
 def _analyse(context: _Context, entry: int, family: str, depth: int,
-             active: frozenset[int]) -> None:
+             active: frozenset[int], receiver: int | None = None) -> None:
     """Prove `family` preserved on every reachable state of one callee.
 
     The register status is ORIGINAL (the register holds the caller's value
@@ -454,9 +1176,14 @@ def _analyse(context: _Context, entry: int, family: str, depth: int,
     if entry in active:
         raise _ContextRefusal(f"callee {entry:#x} is recursive; preservation is not proved")
     active = active | {entry}
-    stack = [(entry, 0, None, None, _ORIGINAL, None, frozenset(), frozenset())]
+    empty = frozenset()
+    # ASSUMPTION (e2): a caller's known receiver vptr arrives with `this` (ECX).
+    initial = (frozenset({("ecx", "object", receiver, (("receiver", entry, receiver),))})
+               if receiver is not None else empty)
+    stack = [(entry, 0, None, None, _ORIGINAL, None, empty, empty, empty, initial)]
     seen = set()
     returns = 0
+    evidence = set()
     while stack:
         state = stack.pop()
         if state in seen:
@@ -464,7 +1191,7 @@ def _analyse(context: _Context, entry: int, family: str, depth: int,
         seen.add(state)
         if len(seen) > PRESERVATION_STATE_LIMIT:
             raise _Refusal(f"callee {entry:#x} exceeds the preservation search bound")
-        address, esp, ebp, eax, status, flags, bounds, held = state
+        address, esp, ebp, eax, status, flags, bounds, held, facts, values = state
         instruction = context.decode(address)
         following = address + instruction.size
         if (instruction.group(CS_GRP_INT) or instruction.group(CS_GRP_IRET)
@@ -506,10 +1233,43 @@ def _analyse(context: _Context, entry: int, family: str, depth: int,
                     next_status = (status[0], True)
                 next_esp = None if esp is None else esp + context.imports[slot].popped
                 next_held = frozenset(item for item in held if item[0] in _IMPORT_PRESERVES)
-                stack.append((following, next_esp, ebp, None, next_status, None, frozenset(), next_held))
+                # An imported API is never a frame object's constructor/destructor.
+                kept = frozenset(item for item in values
+                                 if item[1] == "object" and item[0] in _IMPORT_PRESERVES)
+                stack.append((following, next_esp, ebp, None, next_status, None, empty, next_held,
+                              facts, kept))
                 continue
             next_held = frozenset()
-            if target is None or instruction.bytes[0] != 0xE8:
+            virtual = None if target is not None else _virtual_target(context, instruction, values)
+            if virtual is not None:
+                target = virtual[0]
+                evidence.add(virtual[1])
+            slots = None
+            if target is None and virtual is None:
+                slots = _slot_call(context, instruction, values)
+                # No candidate, or candidates without one shared known effect:
+                # the call stays unprovable (handled below).
+                if slots is not None and (not slots[1] or _slot_effect(context, slots[1]) is None):
+                    slots = None
+            if slots is not None:
+                displacement, candidates = slots[:2]
+                effect = _slot_effect(context, candidates)
+                if not (saved and status[1]):
+                    try:
+                        for candidate in candidates:
+                            _verdict(context, candidate, family, depth + 1, active)
+                            evidence |= context.evidence.get((candidate, family), empty)
+                    except _Refusal:
+                        if not saved:
+                            raise
+                        next_status = (status[0], True)
+                narrowed = slots[2]
+                evidence.add((("call", address), ("kind", "image_wide_slot"),
+                              ("slot_offset", displacement), ("targets", candidates),
+                              ("vtables", len(context.vtables(narrowed))),
+                              ("virtual_base", narrowed), ("stores", ()),
+                              ("table_reads", ())))
+            elif target is None or (virtual is None and instruction.bytes[0] != 0xE8):
                 if not saved:
                     raise _Refusal(f"callee {entry:#x} makes an unprovable call at {address:#x}")
                 effect = None
@@ -517,9 +1277,11 @@ def _analyse(context: _Context, entry: int, family: str, depth: int,
                     next_status = (status[0], True)
             else:
                 effect = _effect(context, target)
+                receiver_in = _receiver(values, facts)
                 if not (saved and status[1]):
                     try:
-                        _verdict(context, target, family, depth + 1, active)
+                        _verdict(context, target, family, depth + 1, active, receiver_in)
+                        evidence |= context.evidence.get(_key(target, family, receiver_in), empty)
                     except _Refusal:
                         if not saved:
                             raise
@@ -528,22 +1290,30 @@ def _analyse(context: _Context, entry: int, family: str, depth: int,
                         next_status = (status[0], True)
                 next_held = frozenset(item for item in held
                                       if _preserves_quietly(context, target, item[0], depth, active))
+                for item in next_held:
+                    evidence |= context.evidence.get((target, item[0]), empty)
             if effect == _PROBE:
                 next_esp = None if esp is None or eax is None else esp - eax
             else:
                 next_esp = None if esp is None or effect is None else esp + effect
-            stack.append((following, next_esp, ebp, None, next_status, None, frozenset(), next_held))
+            # ASSUMPTION (c): only the object's own constructor/destructor changes its vptr.
+            possible = ((target,) if target is not None
+                        else slots[1] if slots is not None else None)
+            next_facts = _facts_across_call(context, possible, values, facts, address, depth, active)
+            next_values = _objects_across_call(context, possible, values, depth, active)
+            stack.append((following, next_esp, ebp, None, next_status, None, empty, next_held,
+                          next_facts, next_values))
             continue
         if instruction.group(CS_GRP_JUMP) or instruction.group(CS_GRP_BRANCH_RELATIVE):
             target = _direct_target(instruction)
             if target is None:
                 for target in context.table_targets(instruction, bounds):
-                    stack.append((target, esp, ebp, eax, status, None, bounds, held))
+                    stack.append((target, esp, ebp, eax, status, None, bounds, held, facts, values))
                 continue
             taken, fallthrough = _edge_bounds(instruction, flags, bounds)
-            stack.append((target, esp, ebp, eax, status, flags, taken, held))
+            stack.append((target, esp, ebp, eax, status, flags, taken, held, facts, values))
             if instruction.id != x86.X86_INS_JMP:
-                stack.append((following, esp, ebp, eax, status, flags, fallthrough, held))
+                stack.append((following, esp, ebp, eax, status, flags, fallthrough, held, facts, values))
             continue
         next_status = status
         operands = instruction.operands
@@ -569,17 +1339,20 @@ def _analyse(context: _Context, entry: int, family: str, depth: int,
                 raise _Refusal(f"callee {entry:#x} releases its saved {family} slot at {address:#x}")
             next_status = _ORIGINAL  # released while the register still holds the value
         next_flags, next_bounds = _value_step(instruction, flags, bounds, context)
+        next_facts, next_values = _fact_step(context, instruction, esp, ebp, facts, values)
         stack.append((following, next_esp, next_ebp, _eax_constant(instruction, eax), next_status,
-                      next_flags, next_bounds, _held_step(context, instruction, held)))
+                      next_flags, next_bounds, _held_step(context, instruction, held),
+                      next_facts, next_values))
     if not returns:
         raise _Refusal(f"callee {entry:#x} has no reachable return")
+    return frozenset(evidence)
 
 
 def _preserves_quietly(context: _Context, target: int, family: str, depth: int,
-                       active: frozenset[int]) -> bool:
+                       active: frozenset[int], receiver: int | None = None) -> bool:
     """Whether a nested direct callee is proved to hand `family` back."""
     try:
-        _verdict(context, target, family, depth + 1, active)
+        _verdict(context, target, family, depth + 1, active, receiver)
     except _Refusal:
         return False
     return True
@@ -670,9 +1443,13 @@ def _effect(context: _Context, entry: int) -> int | str | None:
     return effect
 
 
+def _key(entry: int, family: str, receiver: int | None) -> tuple:
+    return (entry, family) if receiver is None else (entry, family, receiver)
+
+
 def _verdict(context: _Context, entry: int, family: str, depth: int,
-             active: frozenset[int]) -> None:
-    key = (entry, family)
+             active: frozenset[int], receiver: int | None = None) -> None:
+    key = _key(entry, family, receiver)
     cached = context.verdicts.get(key)
     if isinstance(cached, str) and cached != "proved":
         raise _Refusal(cached)
@@ -686,7 +1463,7 @@ def _verdict(context: _Context, entry: int, family: str, depth: int,
         return
     taint = context.taint
     try:
-        _analyse(context, entry, family, depth, active)
+        resolved = _analyse(context, entry, family, depth, active, receiver)
     except _ContextRefusal:
         context.taint += 1
         raise
@@ -694,15 +1471,31 @@ def _verdict(context: _Context, entry: int, family: str, depth: int,
         if context.taint == taint:
             context.verdicts[key] = str(error)
         raise
+    context.evidence[key] = resolved
     context.verdicts[key] = "proved"
 
 
-def callee_preserves(image: PeImage, entry: int, family: str) -> None:
-    """Raise ValueError unless the callee at `entry` provably preserves `family`."""
+def callee_preserves(image: PeImage, entry: int, family: str) -> list[dict]:
+    """Raise ValueError unless the callee at `entry` provably preserves `family`.
+
+    Returns the virtual calls the proof resolved (in this callee or any
+    nested callee whose proof it relied on): for each, the CALL address,
+    the frame-constant vtable, the slot cell read, the target proved, the
+    constant stores (address, entry-relative frame offset, constant) and any
+    read-only table reads (virtual-base offsets) the resolution used.
+    """
     if type(image) is not PeImage:
         raise ValueError("callee preservation requires a pinned parsed PE image")
     if family not in _PRESERVABLE:
         raise ValueError(f"callee preservation does not model register {family!r}")
     if type(entry) is not int or not 0 <= entry <= 0xFFFFFFFF:
         raise ValueError("callee entry is outside i386 address space")
-    _verdict(_context(image), entry, family, 0, frozenset())
+    context = _context(image)
+    _verdict(context, entry, family, 0, frozenset())
+    records = []
+    for record in sorted(context.evidence.get((entry, family), frozenset())):
+        item = dict(record)
+        item["stores"] = [dict(store) for store in item["stores"]]
+        item["table_reads"] = [dict(read) for read in item["table_reads"]]
+        records.append(item)
+    return records

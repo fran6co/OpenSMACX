@@ -327,7 +327,8 @@ original/candidate-identical two-byte `MOV EDI,EDI` case before a DWORD-aligned
 table; they do not treat arbitrary instructions as padding.
 Unsupported layouts, extra bytes, wrong targets and missing evidence remain
 failures or unknowns. A direct-index table without one dominating guard may be
-bounded on every incoming path (`associated_binary._path_bounded_dispatch`); a
+bounded on every incoming path (`associated_binary._path_bounded_dispatch`;
+an equality edge `cmp a,b` keeps both compared locations tracked); a
 register carried across a direct call survives only when
 `callee_preservation` proves from the callee's image bytes that it hands the
 register back (no blanket callee-saved assumption, user decision 2026-11-12).
@@ -344,8 +345,8 @@ bytes (module docstring of `callee_preservation`): a frame-constant vtable,
 the image-wide slot proof (every installed vtable's slot agrees), virtual-base
 narrowing with non-negative vbtable offsets, the plain object-model rule for
 vptr facts across calls/stores, and constructor-installed vptrs carried into
-`this` callees. A recursive call of the query being proved is its inductive
-hypothesis; other unresolved indirect calls still refuse. See `docs/DECOMP_MAP.md`; linked retention/allocation,
+`this` callees. Recursion and other unresolved indirect calls still refuse.
+See `docs/DECOMP_MAP.md`; linked retention/allocation,
 structural/runtime evidence and full acceptance prerequisites are unchanged.
 
 Unplaced compiler labels and all unbound pooled literals remain unknown references
