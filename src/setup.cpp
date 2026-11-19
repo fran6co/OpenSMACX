@@ -265,10 +265,11 @@ void __cdecl crash_landing(int faction_id) {
 
         if (fungus) {
             x = x_step - static_cast<float>(frame / 2) + x + 7.0f;
+            y = static_cast<float>(frame) + y_step - 15.0f + y;
         } else {
             x = static_cast<float>(frame / 2) + x_step - 7.0f + x;
+            y = static_cast<float>(frame) + y_step - 15.0f + y;
         }
-        y = static_cast<float>(frame) + y_step - 15.0f + y;
 
         pod_animation.decode_stored_frame();
         smoke_animation.decode_stored_frame();
