@@ -55,27 +55,178 @@ TutWin TutorialWindow;
 #include "text.h"
 #include "alpha.h"      // Labels and the typed tutorial-label table
 
+// Defined beside tut_win below: its callers (tour6, tour1) precede it in
+// address order, and defined after them it still expands at every site.
+static int tut_callout(TutWin &tutorial, Win &coordinates, RECT &rect,
+                       const char *label);
 
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004BDF20 ?terrain_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z 0x004BDF20-0x004BDF66 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x004BDF20-0x004BDF66; seed:src/recovered/004bdf20.cpp; source:src/mapwin.h:gen_terrain_poly; source:src/tutwin.h:TutorialWindow"], "reason": "The draw callback takes no receiver and reads the singleton tutorial tile state while invoking the typed terrain renderer."}
-// symbol    ?tut_terrain_draw@@YAXPAVSprite@@PAVGraphicWin@@HHH@Z
-void __cdecl tut_terrain_draw(Sprite *, GraphicWin *window, int,
-                              int pixel_x, int pixel_y) {
-    Buffer *canvas = window ? static_cast<Buffer *>(window) : 0;
-    gen_terrain_poly(canvas, 0, 0, ConsoleGlobal.faction_id_, -1, 0x621,
-                     TutorialWindow.field_537C_, TutorialWindow.field_5380_,
-                     pixel_x, pixel_y);
+
+// ORIGINAL: 0x004BA5F0 ?tut_check@@YAHH@Z 0x004BA5F0-0x004BA64E FILE BYTE_EXACT
+// LEVER: test/push the flag word as a named `extern int`, not a const-address pointer - the pointer spelling lets VC6 prove no alias with the table read, cache it in eax and push/pop esi; a real global may alias, so it reloads and `|=` lowers to load/or/store. Transferred from 0x004BA650, then MEASURED here.
+// size      94 bytes
+// prototype 
+// callers   7   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+
+tut_check(int flag) {
+    // Gates, in the image's order: no tutorial hints in multiplayer, none
+    // unless GamePreferences keeps the hints switch on, none for a hint bit
+    // already shown, and none in an expansion alien faction (bit 0x80 of
+    // rule_flags is RFLAG_ALIEN - the same gate X_pop's mod-caption check
+    // makes). Players is walked by faction because 0x00946F58 is
+    // Players[0].rule_flags and the image scales its index by 0x59C.
+    if (IsMultiplayerNet != 0) {
+        return 0;
+    }
+    if ((GameDataStateStorage.fields_.game_preferences_ & 0x20) == 0) {
+        return 0;
+    }
+    if ((flag & GameDataStateStorage.fields_.tutorial_flags_) != 0) {
+        return 0;
+    }
+    if ((Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) != 0) {
+        return 0;
+    }
+    GameDataStateStorage.fields_.tutorial_flags_ |= flag;
+    return 1;
+}
+
+// ORIGINAL: 0x004BA650 ?tut_check2@@YAHH@Z 0x004BA650-0x004BA6AE FILE BYTE_EXACT
+// LEVER: test/push 0x9A64B0 as a named `extern int`, not a const-address pointer: the pointer spelling let VC6 cache the flag word in eax across the table read and push/pop esi for the parameter; a real global may be aliased by the table pointer, so it reloads, keeps `a1` in scratch edx, and `|=` lowers to load/or/store instead of `or [mem], reg`.
+// size      94 bytes
+// prototype 
+// callers   9   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+
+tut_check2(int flag) {
+    // The second gate, identical in shape to tut_check but with its own
+    // shown-bit word, which is what makes the two hint sequences independent.
+    if (IsMultiplayerNet != 0) {
+        return 0;
+    }
+    if ((GameDataStateStorage.fields_.game_preferences_ & 0x20) == 0) {
+        return 0;
+    }
+    if ((flag & GameDataStateStorage.fields_.tutorial_flags_2_) != 0) {
+        return 0;
+    }
+    if ((Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) != 0) {
+        return 0;
+    }
+    GameDataStateStorage.fields_.tutorial_flags_2_ |= flag;
+    return 1;
+}
+
+
+
+// ---------------------------------------------------------------------------
+// DEFINED IN THE HEADER, CLAIMED HERE.
+//
+// These pieces are written in-class so the image's own inlining reproduces -
+// a constructor or destructor the compiler is expected to fold into its
+// caller. A marker cannot live beside them: `decomp.reader` globs `*.cpp`
+// and `*.c`, and a comparison compiles a TRANSLATION UNIT, so a marker in a
+// header could be neither read nor measured. VC6 emits each of them into
+// this unit's object as its own COMDAT anyway, which is what the comparison
+// pulls out, and the `body` fact says where to go to edit one.
+//
+// The ratchet still covers the header: this unit includes it, so breaking an
+// in-class body here fails the claim below. Measured, not assumed.
+// ---------------------------------------------------------------------------
+
+/*
+// ORIGINAL: 0x004BA6B0 ??0TutWin@@QAE@XZ 0x004BA6B0-0x004BA71E BYTE_EXACT
+// body      src/tutwin.h
+// size      110 bytes
+// prototype void (__thiscall ??0TutWin@@QAE@XZ)(TutWin* this)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004048A0
+*/
+
+// LEVER: `: public Popup` real inheritance, so the single call is the
+// implicit base constructor (now BYTE_EXACT, see popup.cpp) - no explicit
+// `Popup::Popup()` call needed, and (matching Popup's own fix) the trailing
+// stores use a non-volatile pointer.
+TutWin::TutWin() {
+    field_53B4_ = 0;
+    field_53C0_ = 0;
+    field_53D0_ = 0;
+    field_53D4_ = 0;
+    field_53A4_ = 0;
+    field_5380_ = -1;
+    field_537C_ = -1;
+    field_539C_ = -1;
+    field_53A8_ = 0;
+    field_53AC_ = -1;
+    field_53B8_ = 0;
+    field_53C4_ = 0;
+    TutWinShownFlag = 0;
+}
+
+/*
+Purpose: Reset the tutorial window - four fields to zero, four to -1, and the
+         shared shown-marker cleared with them.
+// ORIGINAL: 0x004BA720 ?UNK1@TutWin@@QAEXXZ 0x004BA720-0x004BA761 BYTE_EXACT
+// size      65 bytes
+// prototype void (__thiscall ?UNK1@TutWin@@QAEXXZ)(TutWin* this)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void TutWin::UNK1() {
+    field_53D4_ = 0;
+    field_53A4_ = 0;
+    field_5380_ = -1;
+    field_537C_ = -1;
+    field_539C_ = -1;
+    field_53A8_ = 0;
+    field_53AC_ = -1;
+    field_53B8_ = 0;
+    field_53C4_ = 0;
+    TutWinShownFlag = 0;
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004BDF70 ?veh_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z 0x004BDF70-0x004BDFA0 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x004BDF70-0x004BDFA0; seed:src/recovered/004bdf70.cpp; source:src/veh.h:veh_draw; source:src/graphicwin.h:Buffer base"], "reason": "The tutorial vehicle draw callback has no receiver and forwards a typed GraphicWin canvas to the recovered renderer."}
-// symbol    ?tut_veh_draw@@YAXPAVSprite@@PAVGraphicWin@@HHH@Z
-void __cdecl tut_veh_draw(Sprite *, GraphicWin *window, int vehicle,
-                          int pixel_x, int pixel_y) {
-    Buffer *canvas = window ? static_cast<Buffer *>(window) : 0;
-    veh_draw(canvas, vehicle, pixel_x, pixel_y, 0, 0, 0);
+// ORIGINAL: 0x004BA770 ?on_key_click@TutWin@@QAEHHH@Z 0x004BA770-0x004BA82E BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x004BA770-0x004BA82E; seed:src/unrecovered/004ba770.cpp; source:src/win.h:Win::release_modal,Win::hide,Win::on_update"], "reason": "The tutorial key callback owns its modal dismissal, saved key tuple, and TutWin state reset."}
+// symbol    ?on_key_click@TutWin@@UAEHHH@Z
+int TutWin::on_key_click(int key, int code) {
+    if (field_53B8_ != 0) {
+        release_modal();
+        if (field_53D4_ != 0) {
+            field_53A4_ = 0;
+            hide();
+            field_53D4_->on_update();
+            do_all_draws();
+        }
+        field_53D4_ = 0;
+        field_5380_ = -1;
+        field_537C_ = -1;
+        field_539C_ = -1;
+        field_53AC_ = -1;
+        field_53A4_ = 0;
+        field_53A8_ = 0;
+        field_53B8_ = 0;
+        field_53C4_ = 0;
+        TutWinShownFlag = 0;
+        if (code == 0x1b) {
+            field_53B4_ = 0;
+        }
+        field_53C4_ = 1;
+        field_53C8_ = key;
+        field_53CC_ = code;
+        return 1;
+    }
+    return 0;
 }
 
 // Reset at 0x004BDDE0 clears this process-wide marker after the tutorial's
@@ -122,338 +273,220 @@ int __stdcall rect_center(RECT *rect, int *x, int *y) {
     *y = center_y;
     return center_y;
 }
+// WORKAROUND(noinline): tour1/tour5/tour7 call do_base/do_iface/do_soc/do_des
+// out of line (and BaseWin::zoom calls do_base); /Ob2 expands them here.
+#pragma auto_inline(off)
+
 
 /*
-Purpose: Reset the tutorial window - four fields to zero, four to -1, and the
-         shared shown-marker cleared with them.
-// ORIGINAL: 0x004BA720 ?UNK1@TutWin@@QAEXXZ 0x004BA720-0x004BA761 BYTE_EXACT
-// size      65 bytes
-// prototype void (__thiscall ?UNK1@TutWin@@QAEXXZ)(TutWin* this)
-// callers   1   call targets   0
+Purpose: Centre the rectangle, convert it through the base window, and
+         show the tutorial text there against the primary map window.
+// ORIGINAL: 0x004BA870 ?do_base@TutWin@@QAEXPAURECT@@PBDH@Z 0x004BA870-0x004BA8EB BYTE_EXACT
+// LEVER: two levers stacked, 4/56 -> 45/56 MNEMONIC_ONLY. (1) plain `left + (right - left) / 2` signed division instead of the unsigned-with-sign-carried trick, same as `iface_rect`. (2) `primary` read BEFORE `window` is given any value, and its null-check written `if (primary == nullptr) { window = nullptr; } else { ...compute... }` (primary-first declaration order, and the null case as the FIRST arm) - the image reads the global first and only zeroes the result register on the branch that skips the vtable dereference, both of which a `window = nullptr;`-then-test body reorders.
+// TRIED: 45/56 plateau - the remainder is a consistent eax/ecx role swap through the vbtable-dereference block and the final argument push order, tried: `uint8_t *` instead of `void *` for `window`, and folding the `vbtable` local into the expression directly - neither changes it. VC6 register allocation, not a source-form lever found here.
+// symbol    ?do_base@TutWin@@QAEHPAUtagRECT@@PBDH@Z
+// size      123 bytes
+// prototype void (__thiscall ?do_base@TutWin@@QAEXPAURECT@@PBDH@Z)(TutWin* this, RECT*, int8*, int)
+// callers   2   call targets   2
 // kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004BDFE0 0x005ED240
+Return Value: the callout result, consumed by the tutorial's continuation gates
+Verification note: the GraphicWin handed to the show is MapWinTable[0]
+         VIRTUAL-BASE ADJUSTED - `mov edx,[ecx]` / `mov eax,[edx+4]` /
+         `add eax,ecx` - and a null slot passes a null through rather than
+         faulting, which is the only branch in the body.
+Verification note: the original writes the y centre over its own first
+         argument slot before taking its address, so the RECT pointer is dead
+         from that point. A local is equivalent and is what is used here.
 */
-void TutWin::UNK1() {
-    field_53D4_ = 0;
-    field_53A4_ = 0;
-    field_5380_ = -1;
-    field_537C_ = -1;
-    field_539C_ = -1;
-    field_53A8_ = 0;
-    field_53AC_ = -1;
-    field_53B8_ = 0;
-    field_53C4_ = 0;
-    TutWinShownFlag = 0;
+int TutWin::do_base(RECT *rect, const char *text, int flag) {
+    // Plain signed division: the image emits `cdq; sub eax,edx; sar eax,1`
+    // (round-toward-zero) for each half, not a rounding bit-trick.
+    int x = static_cast<int32_t>(static_cast<uint32_t>(rect->left) +
+        static_cast<uint32_t>(static_cast<int32_t>(
+            static_cast<uint32_t>(rect->right) - static_cast<uint32_t>(rect->left)) / 2));
+    int y = static_cast<int32_t>(static_cast<uint32_t>(rect->top) +
+        static_cast<uint32_t>(static_cast<int32_t>(
+            static_cast<uint32_t>(rect->bottom) - static_cast<uint32_t>(rect->top)) / 2));
+    TutWinBaseWindow.client_to_screen(&x, &y);
+    return this->tut_win(MapWinTable[0], text, x, y, nullptr, flag, -1, -1);
 }
+
 
 /*
-Purpose: Store a single value at 0x53D4.
-// ORIGINAL: 0x004BDDD0 ?UNK3@TutWin@@QAEXH@Z 0x004BDDD0-0x004BDDE0 BYTE_EXACT
-// symbol    ?UNK3@TutWin@@QAEXPAVWin@@@Z
-// size      16 bytes
-// prototype void (__thiscall ?UNK3@TutWin@@QAEXH@Z)(TutWin* this, int)
-// callers   0   call targets   0
+Purpose: Centre the rectangle, convert it through the iface window, and
+         show the tutorial text there against the primary map window.
+// ORIGINAL: 0x004BA8F0 ?do_iface@TutWin@@QAEXPAURECT@@PBDH@Z 0x004BA8F0-0x004BA96B BYTE_EXACT
+// LEVER: same two levers as `do_base` (see that marker) - plain signed division, and `primary` read/null-checked before `window` is given any value. 4/56 -> 45/56 MNEMONIC_ONLY.
+// TRIED: same 45/56 plateau as `do_base` - a consistent eax/ecx register swap through the vbtable block; see that marker for what was tried.
+// symbol    ?do_iface@TutWin@@QAEHPAUtagRECT@@PBDH@Z
+// size      123 bytes
+// prototype void (__thiscall ?do_iface@TutWin@@QAEXPAURECT@@PBDH@Z)(TutWin* this, RECT*, int8*, int)
+// callers   1   call targets   2
 // kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004BDFE0 0x005ED240
+Return Value: the callout result, consumed by the tutorial's continuation gates
+Verification note: the GraphicWin handed to the show is MapWinTable[0]
+         VIRTUAL-BASE ADJUSTED - `mov edx,[ecx]` / `mov eax,[edx+4]` /
+         `add eax,ecx` - and a null slot passes a null through rather than
+         faulting, which is the only branch in the body.
+Verification note: the original writes the y centre over its own first
+         argument slot before taking its address, so the RECT pointer is dead
+         from that point. A local is equivalent and is what is used here.
 */
-void TutWin::UNK3(Win *a1) {
-    field_53D4_ = a1;
+int TutWin::do_iface(RECT *rect, const char *text, int flag) {
+    // Plain signed division: the image emits `cdq; sub eax,edx; sar eax,1`
+    // (round-toward-zero) for each half, not a rounding bit-trick.
+    int x = static_cast<int32_t>(static_cast<uint32_t>(rect->left) +
+        static_cast<uint32_t>(static_cast<int32_t>(
+            static_cast<uint32_t>(rect->right) - static_cast<uint32_t>(rect->left)) / 2));
+    int y = static_cast<int32_t>(static_cast<uint32_t>(rect->top) +
+        static_cast<uint32_t>(static_cast<int32_t>(
+            static_cast<uint32_t>(rect->bottom) - static_cast<uint32_t>(rect->top)) / 2));
+    MainInterfaceGlobal.client_to_screen(&x, &y);
+    return this->tut_win(MapWinTable[0], text, x, y, nullptr, flag, -1, -1);
 }
 
-// The active path clears the arrow state before virtual hide. Hide may
-// change the owner, so the owner's update dispatch must reload field_53D4_.
-// Drawing completes before either the owner or the shared marker is reset.
-// Both arms end in UNK1, the ten-store clear: tut_win's expansion of reset
-// inlines it in the owner arm and calls 0x004BA720 in the other, which is
-// that copy's single caller.
-// ORIGINAL: 0x004BDDE0 ?reset@TutWin@@QAEHXZ 0x004BDDE0-0x004BDE97 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original4BDDEE..4BDE07 clears53A4, calls this slot2, reloads owner53D4 for slot63 and then calls do_all_draws5FCBB0. The initial owner test selects the return value; callbacks precede all final reset stores.", "Both original tails clear owner53D4 and53A4, store minus one to5380/537C/539C, zero53A8, minus one53AC, zero53B8/53C4 and finally real TutWinShownFlag8CC244. Existing TutorialWindow and typed Win owner are preserved; no fixed-address aliases or VCall shim are required."], "reason": "Recover tutorial dismissal and owner notification through real members and virtual Win methods, retaining its original reset ordering and result."}
-int TutWin::reset() {
-    if (field_53D4_ != 0) {
-        field_53A4_ = 0;
-        hide();
-        field_53D4_->on_update();
-        do_all_draws();
-        UNK1();
-        return 1;
-    }
-    UNK1();
-    return 0;
+
+/*
+Purpose: Centre the rectangle, convert it through the soc window, and
+         show the tutorial text there against the primary map window.
+// ORIGINAL: 0x004BA970 ?do_soc@TutWin@@QAEXPAURECT@@PBDH@Z 0x004BA970-0x004BA9EB BYTE_EXACT
+// LEVER: same two levers as `do_base` (see that marker) - plain signed division, and `primary` read/null-checked before `window` is given any value. 4/56 -> 45/56 MNEMONIC_ONLY.
+// TRIED: same 45/56 plateau as `do_base` - a consistent eax/ecx register swap through the vbtable block; see that marker for what was tried.
+// symbol    ?do_soc@TutWin@@QAEHPAUtagRECT@@PBDH@Z
+// size      123 bytes
+// prototype void (__thiscall ?do_soc@TutWin@@QAEXPAURECT@@PBDH@Z)(TutWin* this, RECT*, int8*, int)
+// callers   1   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004BDFE0 0x005ED240
+Return Value: the callout result, consumed by the tutorial's continuation gates
+Verification note: the GraphicWin handed to the show is MapWinTable[0]
+         VIRTUAL-BASE ADJUSTED - `mov edx,[ecx]` / `mov eax,[edx+4]` /
+         `add eax,ecx` - and a null slot passes a null through rather than
+         faulting, which is the only branch in the body.
+Verification note: the original writes the y centre over its own first
+         argument slot before taking its address, so the RECT pointer is dead
+         from that point. A local is equivalent and is what is used here.
+*/
+int TutWin::do_soc(RECT *rect, const char *text, int flag) {
+    // Plain signed division: the image emits `cdq; sub eax,edx; sar eax,1`
+    // (round-toward-zero) for each half, not a rounding bit-trick.
+    int x = static_cast<int32_t>(static_cast<uint32_t>(rect->left) +
+        static_cast<uint32_t>(static_cast<int32_t>(
+            static_cast<uint32_t>(rect->right) - static_cast<uint32_t>(rect->left)) / 2));
+    int y = static_cast<int32_t>(static_cast<uint32_t>(rect->top) +
+        static_cast<uint32_t>(static_cast<int32_t>(
+            static_cast<uint32_t>(rect->bottom) - static_cast<uint32_t>(rect->top)) / 2));
+    TutWinSocWindow.client_to_screen(&x, &y);
+    return this->tut_win(MapWinTable[0], text, x, y, nullptr, flag, -1, -1);
+}
+
+
+/*
+Purpose: Centre the rectangle, convert it through the des window, and
+         show the tutorial text there against the primary map window.
+// ORIGINAL: 0x004BA9F0 ?do_des@TutWin@@QAEXPAURECT@@PBDH@Z 0x004BA9F0-0x004BAA6B BYTE_EXACT
+// LEVER: same two levers as `do_base` (see that marker) - plain signed division, and `primary` read/null-checked before `window` is given any value. 4/56 -> 45/56 MNEMONIC_ONLY.
+// TRIED: same 45/56 plateau as `do_base` - a consistent eax/ecx register swap through the vbtable block; see that marker for what was tried.
+// symbol    ?do_des@TutWin@@QAEHPAUtagRECT@@PBDH@Z
+// size      123 bytes
+// prototype void (__thiscall ?do_des@TutWin@@QAEXPAURECT@@PBDH@Z)(TutWin* this, RECT*, int8*, int)
+// callers   1   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004BDFE0 0x005ED240
+Return Value: the callout result, consumed by the tutorial's continuation gates
+Verification note: the GraphicWin handed to the show is MapWinTable[0]
+         VIRTUAL-BASE ADJUSTED - `mov edx,[ecx]` / `mov eax,[edx+4]` /
+         `add eax,ecx` - and a null slot passes a null through rather than
+         faulting, which is the only branch in the body.
+Verification note: the original writes the y centre over its own first
+         argument slot before taking its address, so the RECT pointer is dead
+         from that point. A local is equivalent and is what is used here.
+*/
+int TutWin::do_des(RECT *rect, const char *text, int flag) {
+    // Plain signed division: the image emits `cdq; sub eax,edx; sar eax,1`
+    // (round-toward-zero) for each half, not a rounding bit-trick.
+    int x = static_cast<int32_t>(static_cast<uint32_t>(rect->left) +
+        static_cast<uint32_t>(static_cast<int32_t>(
+            static_cast<uint32_t>(rect->right) - static_cast<uint32_t>(rect->left)) / 2));
+    int y = static_cast<int32_t>(static_cast<uint32_t>(rect->top) +
+        static_cast<uint32_t>(static_cast<int32_t>(
+            static_cast<uint32_t>(rect->bottom) - static_cast<uint32_t>(rect->top)) / 2));
+    TutWinDesWindow.client_to_screen(&x, &y);
+    return this->tut_win(MapWinTable[0], text, x, y, nullptr, flag, -1, -1);
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// Historical seed observations (not fresh measurements or acceptance):
-// TRIED: `extern int g_009a64bc_rmw;` for the trailing `or [addr],esi` (RMW on a fixed global) turned the const-pointer's load/or/store into a single `or`, reaching MNEMONIC_ONLY (61/61 mnemonics match); the one remaining divergence is register choice in the tail, where the original reuses esi for child2 and ours picks another.
-// ORIGINAL: 0x004BDCC0 ?on_button_clicked@TutWin@@QAEXH@Z 0x004BDCC0-0x004BDDA2 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["seed:src/unrecovered/004bdcc0.cpp", "image:0x004bdcc0; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
-// symbol    ?on_button_clicked@TutWin@@UAEXH@Z
-void TutWin::on_button_clicked(int button_id) {
-    const uint32_t tour_was_shown = TutWinShownFlag;
-
-    if (field_53B8_ != 0) {
-        release_modal();
-    }
-    reset();
-
-    field_53BC_ = button_id < 0 ? button_id + 1 : button_id;
-    if (button_id < -1) {
-        field_53B4_ = 0;
-    }
-    if (button_id <= 0) {
-        return;
-    }
-
-    if (field_53B4_ == 0) {
-        if (tour_was_shown != 0) {
-            TutWinTourPending = 1;
+// ORIGINAL: 0x004BAA70 ?tour6@TutWin@@QAEXXZ 0x004BAA70-0x004BAF12 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["seed:src/recovered/units/004baa70.cpp", "image:0x004baa70; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
+void TutWin::tour6() {
+    if (!TutWinBaseWindow.is_visible()) {
+        for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; ++i) {
+            if (Bases[i].faction_id_current == ConsoleGlobal.faction_id_) {
+                TutWinBaseWindow.zoom(i, 0);
+                break;
+            }
         }
-        if (field_53B4_ == 0) {
-            goto finish_button;
-        }
-    }
-    field_53B4_ = 0;
-
-finish_button:
-    if (field_53D0_ != 0) {
-        GameDataStateStorage.fields_.tutwin_flags_9a64bc_ |= field_53D0_;
-    }
-}
-
-// ORIGINAL: 0x004BE650 ?tut_map@TutWin@@QAEHPBDHHHPAUSprite@@HHH@Z 0x004BE650-0x004BE7C6 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["seed:src/unrecovered/004be650.cpp", "image:0x004be650; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
-// TRIED: separate `int x = -1; int y = -1;` locals instead of the original's shared `or eax,0xffffffff` init (#3 mismatch, 'or' vs 'mov'); combined declaration compiled the same way.
-// symbol    ?tut_map@TutWin@@QAEHPBDHHHPAVSprite@@HHH@Z
-int TutWin::tut_map(const char *text, int x_coord, int y_coord, int pixel_x,
-                    Sprite *sprite, int forwarded_6, int arrow_x,
-                    int arrow_y) {
-    int arrow_pixel_x = -1;
-    int arrow_pixel_y = -1;
-
-    if (pixel_x >= 0) {
-        field_53AC_ = pixel_x;
-    } else if (sprite == 0) {
-        field_537C_ = x_coord;
-        field_5380_ = y_coord;
+        if (!TutWinBaseWindow.is_visible()) return;
     }
 
-    MapWinTable[0]->focus(x_coord, y_coord);
-    int screen_x;
-    int screen_y;
-    MapWinTable[0]->tile_to_pixel(x_coord, y_coord, &screen_x, &screen_y);
-    MapWin *map_window = MapWinTable[0];
-    screen_x += map_window->field_1DDBC_;
-    screen_y += map_window->field_1DDC0_;
+    TutWinBaseWindow.focus();
+    parse_says(0, BaseCurrent->name_string, -1, -1);
+    int x;
+    int y;
+    // DRONETOUR1/5 pass the unconverted client left edge + 5 as x.
+    x = TutWinBaseWindow.population_rect_.left + (TutWinBaseWindow.population_rect_.right - TutWinBaseWindow.population_rect_.left) / 2;
+    y = TutWinBaseWindow.population_rect_.top + (TutWinBaseWindow.population_rect_.bottom - TutWinBaseWindow.population_rect_.top) / 2;
+    MainInterfaceGlobal.client_to_screen(&x, &y);
+    if (!tut_win(MapWinTable[0], "DRONETOUR1", TutWinBaseWindow.population_rect_.left + 5, y, 0, 2, -1, -1)) return;
+    if (!tut_callout(*this, MainInterfaceGlobal, TutWinBaseWindow.garrison_rect_, "DRONETOUR2")) return;
+    if (!tut_callout(*this, MainInterfaceGlobal, TutWinBaseWindow.rect12_, "DRONETOUR3")) return;
+    if (!tut_callout(*this, MainInterfaceGlobal, TutWinBaseWindow.flash_rect_a_, "DRONETOUR4")) return;
+    x = TutWinBaseWindow.population_rect_.left + (TutWinBaseWindow.population_rect_.right - TutWinBaseWindow.population_rect_.left) / 2;
+    y = TutWinBaseWindow.population_rect_.top + (TutWinBaseWindow.population_rect_.bottom - TutWinBaseWindow.population_rect_.top) / 2;
+    MainInterfaceGlobal.client_to_screen(&x, &y);
+    if (!tut_win(MapWinTable[0], "DRONETOUR5", TutWinBaseWindow.population_rect_.left + 5, y, 0, 2, -1, -1)) return;
 
-    if (arrow_x >= 0) {
-        if (map_window->tile_in_view(arrow_x, arrow_y, 0)) {
-            map_window->tile_to_pixel(arrow_x, arrow_y, &arrow_pixel_x,
-                                          &arrow_pixel_y);
-            map_window = MapWinTable[0];
-            arrow_pixel_x += map_window->field_1DDBC_;
-            arrow_pixel_y += map_window->field_1DDC0_;
-        }
-    }
-
-    GraphicWin *const owner = static_cast<GraphicWin *>(map_window);
-    return tut_win(owner, text, screen_x, screen_y, sprite,
-                   forwarded_6, arrow_pixel_x, arrow_pixel_y);
-}
-
-// The old callout helpers all transform a panel rectangle into screen
-// coordinates, then host the popup in MapWin's virtual GraphicWin base.
-// Keeping the transformation receiver explicit preserves which window owns
-// each rectangle while using the declared virtual-base conversion.
-static int tut_callout(TutWin &tutorial, Win &coordinates, RECT &rect,
-                       const char *label) {
-    int x = rect.left + (rect.right - rect.left) / 2;
-    int y = rect.top + (rect.bottom - rect.top) / 2;
-    coordinates.client_to_screen(&x, &y);
-    return tutorial.tut_win(MapWinTable[0], label, x, y, 0, 2, -1, -1);
-}
-
-// ORIGINAL: 0x004BDFE0 ?tut_win@TutWin@@QAEHPAUGraphicWin@@PBDHHPAUSprite@@HHH@Z 0x004BDFE0-0x004BE643;0x00659CE0-0x00659CF2 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["seed:src/unrecovered/004bdfe0.cpp", "image:0x004bdfe0; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
-// TRIED: real `Sprite localSprite;` (no explicit ctor/dtor calls, relying on the scaffold's Sprite having no declared destructor so none is emitted, matching the disassembly which never calls ~Sprite on the normal path) plus field-offset writes transcribed instruction-by-instruction (including the cdq/and-7 rounding idioms rewritten as `(val<0)?7:0` bias terms) compiles and reaches instruction #2 before diverging (no SEH try/finally frame is generated without a non-trivial local destructor, and the original's frame protects the Sprite constructor call).
-// symbol    ?tut_win@TutWin@@QAEHPAVGraphicWin@@PBDHHPAVSprite@@HHH@Z
-int TutWin::tut_win(GraphicWin *owner, const char *text, int x, int y,
-                    Sprite *picture, int flags, int arrow_x, int arrow_y) {
-    Sprite local_sprite;
-    int mode;
-    int popup_flags;
-    int screen_width;
-    int screen_height;
-
-    field_53C4_ = 0;
-    field_53D0_ = 0;
-    if (flags >> 16) {
-        field_53D0_ = flags & 0xFFFF0000;
-        flags &= 0xFFFF;
-    }
-    mode = flags & 0xFF;
-    switch (mode) {
-    case 0:
-        popup_flags = 0x4000;
-        break;
-    case 1:
-        popup_flags = 0;
-        break;
-    default:
-        popup_flags = 0x40;
-        break;
-    }
-    field_5384_ = x;
-    field_5388_ = y;
-    screen_width = WinScreenWidth;
-    screen_height = WinScreenHeight;
-
-    popups_tutorial();
-    reset();
-    field_53D4_ = owner;
-    if (flags & 0xFF00) {
-        TutWinShownFlag = 1;
-        flags = mode;
-    }
-
-    start(TutorialPopupCaption, text, -1, 0, popup_flags, 0);
-    if (flags < 2) {
-        set_ok_text(StringTable.get(Labels.strings_ptr[219]));
+    TutWinBaseWindow.draw_energy_alloc(2);
+    if (!TutWinBaseWindow.flatButtons_[17].is_visible()) {
+        x = TutWinBaseWindow.expenses_help_rects_[5].left + (TutWinBaseWindow.expenses_help_rects_[5].right - TutWinBaseWindow.expenses_help_rects_[5].left) / 2;
+        y = TutWinBaseWindow.expenses_help_rects_[5].top + (TutWinBaseWindow.expenses_help_rects_[5].bottom - TutWinBaseWindow.expenses_help_rects_[5].top) / 2;
+        TutWinBaseWindow.client_to_screen(&x, &y);
+        if (!tut_win(MapWinTable[0], "DRONETOUR6", x, y, 0, 2, -1, -1)) return;
     } else {
-        set_ok_text(StringTable.get(Labels.strings_ptr[236]));
-        set_cancel_text(label_get(235));
+        if (!tut_callout(*this, TutWinBaseWindow, TutWinBaseWindow.rect13_, "DRONETOUR6")) return;
     }
-
-    if (picture != 0) {
-        set_picture(picture, 0, 0);
-    } else if (field_53AC_ >= 0) {
-        set_picture(&g_VEH_SPRITES[0], 0, 0);
-        set_redraw_callback(tut_veh_draw);
-    } else if (field_53AC_ < -1) {
-        set_picture(&g_VEH_SPRITES[0], 0, 0);
-        set_redraw_callback(TutWin::base_draw);
-    } else if (field_537C_ >= 0) {
-        set_picture(&g_TER1_TUT_BLANK_SPRITE, 0, 0);
-        set_redraw_callback(tut_terrain_draw);
+    TutWinBaseWindow.draw_expenses(1);
+    TutWinBaseWindow.draw_farm(2);
+    if (tut_callout(*this, TutWinBaseWindow, TutWinBaseWindow.rect11_, "TOUR1PSYCHBUTTON")) {
+        TutWinBaseWindow.draw_farm(1);
     }
-
-    exec(1, 0);
-
-    int vertical_anchor = screen_height * 5 / 8;
-    int horizontal_anchor = screen_width / 2;
-    int height_eighth = screen_height / 8;
-    int width_eighth = screen_width / 8;
-    if (flags < 2) {
-        horizontal_anchor += width_eighth;
-    }
-    if (flags == 2 || flags == 5) {
-        horizontal_anchor += width_eighth;
-    }
-    if (flags == 3 || flags == 4) {
-        horizontal_anchor -= width_eighth;
-    }
-    if (flags == 4 || flags == 5) {
-        vertical_anchor -= height_eighth;
-    }
-
-    if (y <= vertical_anchor) {
-        y = screen_height - layout_height() - 8;
-        field_5390_ = y;
-    } else {
-        y = field_5388_ / 8;
-        field_5390_ = y + layout_height();
-    }
-
-    if (x <= horizontal_anchor) {
-        x = 5;
-        field_538C_ = static_cast<int>(layout_width()) / 2 + 5;
-    } else {
-        field_538C_ = screen_width - static_cast<int>(layout_width()) / 2 - 5;
-        x = screen_width - layout_width() - 5;
-    }
-
-    if (arrow_x >= 0) {
-        field_5394_ = arrow_x;
-        field_5398_ = arrow_y;
-        field_539C_ = field_538C_;
-        field_53A0_ = field_5390_;
-    }
-    field_53B8_ = flags;
-    field_53A4_ = 1;
-    field_53D4_->window_line_raw(field_538C_, field_5390_, field_5384_,
-                                  field_5388_, PopupThemeWindowColor, 2, 2);
-    if (field_539C_ >= 0) {
-        field_53D4_->window_line_raw(field_539C_, field_53A0_, field_5394_,
-                                      field_5398_, PopupThemeWindowColor, 2, 2);
-    }
-
-    start(TutorialPopupCaption, text, -1, 0, popup_flags, 0);
-    if (flags == 0) {
-        set_ok_text(label_get(219));
-    } else {
-        set_ok_text(label_get(236));
-        set_cancel_text(label_get(235));
-    }
-    if (flags != 6) {
-        set_loc(x, y);
-    }
-
-    if (picture != 0) {
-        set_picture(picture, 0, 0);
-    } else if (field_53AC_ >= 0) {
-        set_picture(&local_sprite, static_cast<int>(field_53AC_), 0);
-        set_redraw_callback(tut_veh_draw);
-    } else if (field_53AC_ < -1) {
-        set_picture(&local_sprite, static_cast<int>(field_53AC_), 0);
-        set_redraw_callback(TutWin::base_draw);
-    } else if (field_537C_ >= 0) {
-        set_picture(&local_sprite, 0, 0);
-        set_redraw_callback(tut_terrain_draw);
-    }
-
-    exec(0, 0);
-    popups_normal();
-    field_53A8_ = 1;
-    if (flags == 1) {
-        // tour() may change the key fields; the image reads them first.
-        int run_tour = field_53BC_;
-        int send_key = field_53C4_;
-        int key = field_53C8_;
-        int key_state = field_53CC_;
-        if (run_tour) {
-            tour();
-        }
-        if (send_key) {
-            ConsoleGlobal.on_key_click(key, key_state);
-        }
-    }
-
-    return static_cast<int>(field_53B4_);
 }
 
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// RECOVERY_LITERAL: v1 0x00687630 0x0068763B $SG55835 0x004BAF20
-// RECOVERY_LITERAL: v1 0x00687590 0x0068759B $SG55784 0x004BAF20
-// RECOVERY_LITERAL: v1 0x006875D8 0x006875E3 $SG55809 0x004BAF20
-// RECOVERY_LITERAL: v1 0x00687604 0x00687610 $SG55824 0x004BAF20
-// RECOVERY_LITERAL: v1 0x00687584 0x00687590 $SG55779 0x004BAF20
-// RECOVERY_LITERAL: v1 0x006875BC 0x006875C8 $SG55799 0x004BAF20
-// RECOVERY_LITERAL: v1 0x00687578 0x00687584 $SG55773 0x004BAF20
-// RECOVERY_LITERAL: v1 0x006875C8 0x006875D5 $SG55804 0x004BAF20
-// RECOVERY_LITERAL: v1 0x00687610 0x0068761D $SG55829 0x004BAF20
-// RECOVERY_LITERAL: v1 0x0068764C 0x0068765A $SG55841 0x004BAF20
-// RECOVERY_LITERAL: v1 0x00687620 0x0068762E $SG55832 0x004BAF20
-// RECOVERY_LITERAL: v1 0x006875E4 0x006875F2 $SG55814 0x004BAF20
-// RECOVERY_LITERAL: v1 0x0068765C 0x0068766A $SG55843 0x004BAF20
-// RECOVERY_LITERAL: v1 0x0068763C 0x0068764B $SG55838 0x004BAF20
-// RECOVERY_LITERAL: v1 0x006875AC 0x006875BB $SG55794 0x004BAF20
-// RECOVERY_LITERAL: v1 0x006875F4 0x00687603 $SG55819 0x004BAF20
-// RECOVERY_LITERAL: v1 0x0068759C 0x006875AB $SG55789 0x004BAF20
+// RECOVERY_LITERAL: v1 0x00687630 0x0068763B $SG55913 0x004BAF20
+// RECOVERY_LITERAL: v1 0x00687590 0x0068759B $SG55862 0x004BAF20
+// RECOVERY_LITERAL: v1 0x006875D8 0x006875E3 $SG55887 0x004BAF20
+// RECOVERY_LITERAL: v1 0x00687604 0x00687610 $SG55902 0x004BAF20
+// RECOVERY_LITERAL: v1 0x00687584 0x00687590 $SG55857 0x004BAF20
+// RECOVERY_LITERAL: v1 0x006875BC 0x006875C8 $SG55877 0x004BAF20
+// RECOVERY_LITERAL: v1 0x00687578 0x00687584 $SG55851 0x004BAF20
+// RECOVERY_LITERAL: v1 0x006875C8 0x006875D5 $SG55882 0x004BAF20
+// RECOVERY_LITERAL: v1 0x00687610 0x0068761D $SG55907 0x004BAF20
+// RECOVERY_LITERAL: v1 0x0068764C 0x0068765A $SG55919 0x004BAF20
+// RECOVERY_LITERAL: v1 0x00687620 0x0068762E $SG55910 0x004BAF20
+// RECOVERY_LITERAL: v1 0x006875E4 0x006875F2 $SG55892 0x004BAF20
+// RECOVERY_LITERAL: v1 0x0068765C 0x0068766A $SG55921 0x004BAF20
+// RECOVERY_LITERAL: v1 0x0068763C 0x0068764B $SG55916 0x004BAF20
+// RECOVERY_LITERAL: v1 0x006875AC 0x006875BB $SG55872 0x004BAF20
+// RECOVERY_LITERAL: v1 0x006875F4 0x00687603 $SG55897 0x004BAF20
+// RECOVERY_LITERAL: v1 0x0068759C 0x006875AB $SG55867 0x004BAF20
 // ORIGINAL: 0x004BAF20 ?tour7@TutWin@@QAEXXZ 0x004BAF20-0x004BB373 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["seed:src/recovered/units/004baf20.cpp", "image:0x004baf20; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
 void TutWin::tour7() {
@@ -677,53 +710,6 @@ tour5_cleanup:
     }
 }
 
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004BAA70 ?tour6@TutWin@@QAEXXZ 0x004BAA70-0x004BAF12 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["seed:src/recovered/units/004baa70.cpp", "image:0x004baa70; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
-void TutWin::tour6() {
-    if (!TutWinBaseWindow.is_visible()) {
-        for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; ++i) {
-            if (Bases[i].faction_id_current == ConsoleGlobal.faction_id_) {
-                TutWinBaseWindow.zoom(i, 0);
-                break;
-            }
-        }
-        if (!TutWinBaseWindow.is_visible()) return;
-    }
-
-    TutWinBaseWindow.focus();
-    parse_says(0, BaseCurrent->name_string, -1, -1);
-    int x;
-    int y;
-    // DRONETOUR1/5 pass the unconverted client left edge + 5 as x.
-    x = TutWinBaseWindow.population_rect_.left + (TutWinBaseWindow.population_rect_.right - TutWinBaseWindow.population_rect_.left) / 2;
-    y = TutWinBaseWindow.population_rect_.top + (TutWinBaseWindow.population_rect_.bottom - TutWinBaseWindow.population_rect_.top) / 2;
-    MainInterfaceGlobal.client_to_screen(&x, &y);
-    if (!tut_win(MapWinTable[0], "DRONETOUR1", TutWinBaseWindow.population_rect_.left + 5, y, 0, 2, -1, -1)) return;
-    if (!tut_callout(*this, MainInterfaceGlobal, TutWinBaseWindow.garrison_rect_, "DRONETOUR2")) return;
-    if (!tut_callout(*this, MainInterfaceGlobal, TutWinBaseWindow.rect12_, "DRONETOUR3")) return;
-    if (!tut_callout(*this, MainInterfaceGlobal, TutWinBaseWindow.flash_rect_a_, "DRONETOUR4")) return;
-    x = TutWinBaseWindow.population_rect_.left + (TutWinBaseWindow.population_rect_.right - TutWinBaseWindow.population_rect_.left) / 2;
-    y = TutWinBaseWindow.population_rect_.top + (TutWinBaseWindow.population_rect_.bottom - TutWinBaseWindow.population_rect_.top) / 2;
-    MainInterfaceGlobal.client_to_screen(&x, &y);
-    if (!tut_win(MapWinTable[0], "DRONETOUR5", TutWinBaseWindow.population_rect_.left + 5, y, 0, 2, -1, -1)) return;
-
-    TutWinBaseWindow.draw_energy_alloc(2);
-    if (!TutWinBaseWindow.flatButtons_[17].is_visible()) {
-        x = TutWinBaseWindow.expenses_help_rects_[5].left + (TutWinBaseWindow.expenses_help_rects_[5].right - TutWinBaseWindow.expenses_help_rects_[5].left) / 2;
-        y = TutWinBaseWindow.expenses_help_rects_[5].top + (TutWinBaseWindow.expenses_help_rects_[5].bottom - TutWinBaseWindow.expenses_help_rects_[5].top) / 2;
-        TutWinBaseWindow.client_to_screen(&x, &y);
-        if (!tut_win(MapWinTable[0], "DRONETOUR6", x, y, 0, 2, -1, -1)) return;
-    } else {
-        if (!tut_callout(*this, TutWinBaseWindow, TutWinBaseWindow.rect13_, "DRONETOUR6")) return;
-    }
-    TutWinBaseWindow.draw_expenses(1);
-    TutWinBaseWindow.draw_farm(2);
-    if (tut_callout(*this, TutWinBaseWindow, TutWinBaseWindow.rect11_, "TOUR1PSYCHBUTTON")) {
-        TutWinBaseWindow.draw_farm(1);
-    }
-}
-
 // ORIGINAL: 0x004BB7A0 ?tour1@TutWin@@QAEXXZ 0x004BB7A0-0x004BC591 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["seed:src/unrecovered/004bb7a0.cpp", "image:0x004bb7a0; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
 // TRIED: inline-casting the 0x6a7628/0x6c0df4/0x7ae820 receivers at every call site (no cached local pointer) matches from #0; remaining divergence is that /O2 and /O1 both hoist the ebx/edi push for the zoom-search loop into the true prologue, while the original defers it to just inside the `!is_visible()` branch and pops it back out before the giant guard-clause chain. Tried plain casts, reordering locals (count/target/rec/idx) to match register assignment order - none moved the push. Flat guard-clause control flow (if(!x) return;) reproduces the CFG; all ~30 repeated tut_win/iface_rect/base_rect/client_to_screen blocks and the ALLOC/ALLOC2 branch and do_iface/do_base tail are transcribed directly from the disassembly.
@@ -915,252 +901,9 @@ void TutWin::tour1() {
     // tutor.txt names this final OK-button card independently of the emitted
     // literal. Its pinned NUL-terminated storage is 68790C..687913; the final
     // original do_base gate must succeed before the farm view is restored.
-    // RECOVERY_LITERAL: v1 0x0068790C 0x00687914 $SG56063 0x004BB7A0
+    // RECOVERY_LITERAL: v1 0x0068790C 0x00687914 $SG56111 0x004BB7A0
     if (do_base(&TutWinBaseWindow.rect6_, "TOUR1OK", 2) == 0) return;
     TutWinBaseWindow.draw_farm(1);
-}
-
-
-
-/*
-Purpose: Tell the attached object the tutorial window moved.
-// ORIGINAL: 0x004BDDB0 ?on_move@TutWin@@QAEXHH@Z 0x004BDDB0-0x004BDDC5 BYTE_EXACT
-// symbol    ?on_move@TutWin@@UAEXHH@Z
-// size      21 bytes
-// prototype void (__thiscall ?on_move@TutWin@@QAEXHH@Z)(TutWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// indirect  0x004BDDBC
-Return Value: n/a
-Status: Complete
-*/
-void TutWin::on_move(int x, int y) {
-    // field_53D4_ holds a Win-family object pointer (now typed as one); the
-    // repaint is its declared on_update virtual.
-    if (field_53D4_) {
-        field_53D4_->on_update();
-    }
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004BA770 ?on_key_click@TutWin@@QAEHHH@Z 0x004BA770-0x004BA82E BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x004BA770-0x004BA82E; seed:src/unrecovered/004ba770.cpp; source:src/win.h:Win::release_modal,Win::hide,Win::on_update"], "reason": "The tutorial key callback owns its modal dismissal, saved key tuple, and TutWin state reset."}
-// symbol    ?on_key_click@TutWin@@UAEHHH@Z
-int TutWin::on_key_click(int key, int code) {
-    if (field_53B8_ != 0) {
-        release_modal();
-        if (field_53D4_ != 0) {
-            field_53A4_ = 0;
-            hide();
-            field_53D4_->on_update();
-            do_all_draws();
-        }
-        field_53D4_ = 0;
-        field_5380_ = -1;
-        field_537C_ = -1;
-        field_539C_ = -1;
-        field_53AC_ = -1;
-        field_53A4_ = 0;
-        field_53A8_ = 0;
-        field_53B8_ = 0;
-        field_53C4_ = 0;
-        TutWinShownFlag = 0;
-        if (code == 0x1b) {
-            field_53B4_ = 0;
-        }
-        field_53C4_ = 1;
-        field_53C8_ = key;
-        field_53CC_ = code;
-        return 1;
-    }
-    return 0;
-}
-
-
-
-// ---------------------------------------------------------------------------
-// DEFINED IN THE HEADER, CLAIMED HERE.
-//
-// These pieces are written in-class so the image's own inlining reproduces -
-// a constructor or destructor the compiler is expected to fold into its
-// caller. A marker cannot live beside them: `decomp.reader` globs `*.cpp`
-// and `*.c`, and a comparison compiles a TRANSLATION UNIT, so a marker in a
-// header could be neither read nor measured. VC6 emits each of them into
-// this unit's object as its own COMDAT anyway, which is what the comparison
-// pulls out, and the `body` fact says where to go to edit one.
-//
-// The ratchet still covers the header: this unit includes it, so breaking an
-// in-class body here fails the claim below. Measured, not assumed.
-// ---------------------------------------------------------------------------
-
-/*
-// ORIGINAL: 0x004BA6B0 ??0TutWin@@QAE@XZ 0x004BA6B0-0x004BA71E BYTE_EXACT
-// body      src/tutwin.h
-// size      110 bytes
-// prototype void (__thiscall ??0TutWin@@QAE@XZ)(TutWin* this)
-// callers   1   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x004048A0
-*/
-
-// LEVER: `: public Popup` real inheritance, so the single call is the
-// implicit base constructor (now BYTE_EXACT, see popup.cpp) - no explicit
-// `Popup::Popup()` call needed, and (matching Popup's own fix) the trailing
-// stores use a non-volatile pointer.
-TutWin::TutWin() {
-    field_53B4_ = 0;
-    field_53C0_ = 0;
-    field_53D0_ = 0;
-    field_53D4_ = 0;
-    field_53A4_ = 0;
-    field_5380_ = -1;
-    field_537C_ = -1;
-    field_539C_ = -1;
-    field_53A8_ = 0;
-    field_53AC_ = -1;
-    field_53B8_ = 0;
-    field_53C4_ = 0;
-    TutWinShownFlag = 0;
-}
-
-// The original inline teardown is exactly Popup::close followed by the
-// compiler-owned destructors for Popup's Scroll, BasePop members, and
-// GraphicWin bases. TutWin owns no non-trivial member after Popup, so letting
-// the declared C++ hierarchy run its normal reverse-lifetime chain preserves
-// that ordering without replaying subobject offsets or vptr stores.
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004BE7D0 ??1TutWin@@QAE@XZ 0x004BE7D0-0x004BE9EE;0x00659BF0-0x00659CD7 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["seed:src/recovered/units/004be7d0.cpp", "image:0x004be7d0; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
-// symbol    ??1TutWin@@UAE@XZ
-TutWin::~TutWin() {}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004BDFA0 ?base_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z 0x004BDFA0-0x004BDFDD FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["seed:src/recovered/units/004bdfa0.cpp", "image:0x004bdfa0; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
-// symbol    ?base_draw@TutWin@@SAXPAVSprite@@PAVGraphicWin@@HHH@Z
-void __cdecl TutWin::base_draw(Sprite *, GraphicWin *window, int mode,
-                              int pixel_x, int pixel_y) {
-    int base_id = mode + 2;
-    if (base_id < 0) {
-        base_id = -2 - mode;
-    }
-    Buffer *const destination = window != 0
-        ? static_cast<Buffer *>(window) : 0;
-    ::base_draw(destination, base_id, pixel_x, pixel_y, 0, 0);
-}
-
-/*
-Purpose: Step the receiver back to the subobject ??_GTutWin@@UAEPAXI@Z expects,
-         then forward unchanged.
-// ORIGINAL: 0x004BEA20 ??_GTutWin@@WEEE@AEPAXI@Z 0x004BEA20-0x004BEA2B BYTE_EXACT
-// symbol    ??_ETutWin@@WEEE@AEPAXI@Z
-// CORRECTED from ??3TutWin@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x004BE9F0` into
-//   ??_GTutWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
-//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
-//   and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-
-// Tutorial arrows use game.cpp's PopupThemeWindowColor (original 0x0068A5A0).
-// config_popups updates that shared palette cell; no separate arrow copy exists.
-
-/*
-Purpose: Draw the tutorial's pointing arrow: its shaft across the rectangle the
-         window records, then its head from the recorded corner, both in the one
-         colour index and only when the window says it is on screen at all.
-// ORIGINAL: 0x004BDEA0 ?draw_arrow@TutWin@@QAEXXZ 0x004BDEA0-0x004BDF16 FILE BYTE_EXACT
-// LEVER: the two calls are Win::window_line_raw on the Win-family object at
-//   0x53D4, and the second only fires when field_539C_ is non-negative - the
-//   arrow's head, drawn from a different corner of the same rectangle.
-// size      118 bytes
-// callers   3   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005F2AC0
-Return Value: n/a
-Status: Complete
-*/
-void TutWin::draw_arrow() {
-    if (field_53A4_ != 0) {
-        field_53D4_->window_line_raw(field_538C_, field_5390_, field_5384_,
-                                     field_5388_, PopupThemeWindowColor, 2, 2);
-        int head = field_539C_;
-        if (head >= 0) {
-            field_53D4_->window_line_raw(head, field_53A0_, field_5394_,
-                                         field_5398_, PopupThemeWindowColor, 2, 2);
-        }
-    }
-}
-
-// ORIGINAL: 0x004BA5F0 ?tut_check@@YAHH@Z 0x004BA5F0-0x004BA64E FILE BYTE_EXACT
-// LEVER: test/push the flag word as a named `extern int`, not a const-address pointer - the pointer spelling lets VC6 prove no alias with the table read, cache it in eax and push/pop esi; a real global may alias, so it reloads and `|=` lowers to load/or/store. Transferred from 0x004BA650, then MEASURED here.
-// size      94 bytes
-// prototype 
-// callers   7   call targets   0
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     (none)
-
-tut_check(int flag) {
-    // Gates, in the image's order: no tutorial hints in multiplayer, none
-    // unless GamePreferences keeps the hints switch on, none for a hint bit
-    // already shown, and none in an expansion alien faction (bit 0x80 of
-    // rule_flags is RFLAG_ALIEN - the same gate X_pop's mod-caption check
-    // makes). Players is walked by faction because 0x00946F58 is
-    // Players[0].rule_flags and the image scales its index by 0x59C.
-    if (IsMultiplayerNet != 0) {
-        return 0;
-    }
-    if ((GameDataStateStorage.fields_.game_preferences_ & 0x20) == 0) {
-        return 0;
-    }
-    if ((flag & GameDataStateStorage.fields_.tutorial_flags_) != 0) {
-        return 0;
-    }
-    if ((Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) != 0) {
-        return 0;
-    }
-    GameDataStateStorage.fields_.tutorial_flags_ |= flag;
-    return 1;
-}
-
-// ORIGINAL: 0x004BA650 ?tut_check2@@YAHH@Z 0x004BA650-0x004BA6AE FILE BYTE_EXACT
-// LEVER: test/push 0x9A64B0 as a named `extern int`, not a const-address pointer: the pointer spelling let VC6 cache the flag word in eax across the table read and push/pop esi for the parameter; a real global may be aliased by the table pointer, so it reloads, keeps `a1` in scratch edx, and `|=` lowers to load/or/store instead of `or [mem], reg`.
-// size      94 bytes
-// prototype 
-// callers   9   call targets   0
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     (none)
-
-tut_check2(int flag) {
-    // The second gate, identical in shape to tut_check but with its own
-    // shown-bit word, which is what makes the two hint sequences independent.
-    if (IsMultiplayerNet != 0) {
-        return 0;
-    }
-    if ((GameDataStateStorage.fields_.game_preferences_ & 0x20) == 0) {
-        return 0;
-    }
-    if ((flag & GameDataStateStorage.fields_.tutorial_flags_2_) != 0) {
-        return 0;
-    }
-    if ((Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) != 0) {
-        return 0;
-    }
-    GameDataStateStorage.fields_.tutorial_flags_2_ |= flag;
-    return 1;
 }
 // RECOVERY_GENERATED: v1 vtable 0x0066DD84 ? ??_7TutWin@@6BWin@@@ 0x004BA6B0
 // RECOVERY_GENERATED: v1 vtable 0x0066DD7C ? ??_7TutWin@@6BBuffer@@@ 0x004BA6B0
@@ -1879,151 +1622,413 @@ tour_menu:
     tut_map("TOUROVER", site_x, site_y, ConsoleGlobal.selected_vehicle_, 0, 0, -1, -1);
     return;
 }
-// WORKAROUND(noinline): tour1/tour5/tour7 call do_base/do_iface/do_soc/do_des
-// out of line (and BaseWin::zoom calls do_base); /Ob2 expands them here.
-#pragma auto_inline(off)
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// TRIED: `extern int g_009a64bc_rmw;` for the trailing `or [addr],esi` (RMW on a fixed global) turned the const-pointer's load/or/store into a single `or`, reaching MNEMONIC_ONLY (61/61 mnemonics match); the one remaining divergence is register choice in the tail, where the original reuses esi for child2 and ours picks another.
+// ORIGINAL: 0x004BDCC0 ?on_button_clicked@TutWin@@QAEXH@Z 0x004BDCC0-0x004BDDA2 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["seed:src/unrecovered/004bdcc0.cpp", "image:0x004bdcc0; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
+// symbol    ?on_button_clicked@TutWin@@UAEXH@Z
+void TutWin::on_button_clicked(int button_id) {
+    const uint32_t tour_was_shown = TutWinShownFlag;
 
-/*
-Purpose: Centre the rectangle, convert it through the base window, and
-         show the tutorial text there against the primary map window.
-// ORIGINAL: 0x004BA870 ?do_base@TutWin@@QAEXPAURECT@@PBDH@Z 0x004BA870-0x004BA8EB BYTE_EXACT
-// LEVER: two levers stacked, 4/56 -> 45/56 MNEMONIC_ONLY. (1) plain `left + (right - left) / 2` signed division instead of the unsigned-with-sign-carried trick, same as `iface_rect`. (2) `primary` read BEFORE `window` is given any value, and its null-check written `if (primary == nullptr) { window = nullptr; } else { ...compute... }` (primary-first declaration order, and the null case as the FIRST arm) - the image reads the global first and only zeroes the result register on the branch that skips the vtable dereference, both of which a `window = nullptr;`-then-test body reorders.
-// TRIED: 45/56 plateau - the remainder is a consistent eax/ecx role swap through the vbtable-dereference block and the final argument push order, tried: `uint8_t *` instead of `void *` for `window`, and folding the `vbtable` local into the expression directly - neither changes it. VC6 register allocation, not a source-form lever found here.
-// symbol    ?do_base@TutWin@@QAEHPAUtagRECT@@PBDH@Z
-// size      123 bytes
-// prototype void (__thiscall ?do_base@TutWin@@QAEXPAURECT@@PBDH@Z)(TutWin* this, RECT*, int8*, int)
-// callers   2   call targets   2
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x004BDFE0 0x005ED240
-Return Value: the callout result, consumed by the tutorial's continuation gates
-Verification note: the GraphicWin handed to the show is MapWinTable[0]
-         VIRTUAL-BASE ADJUSTED - `mov edx,[ecx]` / `mov eax,[edx+4]` /
-         `add eax,ecx` - and a null slot passes a null through rather than
-         faulting, which is the only branch in the body.
-Verification note: the original writes the y centre over its own first
-         argument slot before taking its address, so the RECT pointer is dead
-         from that point. A local is equivalent and is what is used here.
-*/
-int TutWin::do_base(RECT *rect, const char *text, int flag) {
-    // Plain signed division: the image emits `cdq; sub eax,edx; sar eax,1`
-    // (round-toward-zero) for each half, not a rounding bit-trick.
-    int x = static_cast<int32_t>(static_cast<uint32_t>(rect->left) +
-        static_cast<uint32_t>(static_cast<int32_t>(
-            static_cast<uint32_t>(rect->right) - static_cast<uint32_t>(rect->left)) / 2));
-    int y = static_cast<int32_t>(static_cast<uint32_t>(rect->top) +
-        static_cast<uint32_t>(static_cast<int32_t>(
-            static_cast<uint32_t>(rect->bottom) - static_cast<uint32_t>(rect->top)) / 2));
-    TutWinBaseWindow.client_to_screen(&x, &y);
-    return this->tut_win(MapWinTable[0], text, x, y, nullptr, flag, -1, -1);
+    if (field_53B8_ != 0) {
+        release_modal();
+    }
+    reset();
+
+    field_53BC_ = button_id < 0 ? button_id + 1 : button_id;
+    if (button_id < -1) {
+        field_53B4_ = 0;
+    }
+    if (button_id <= 0) {
+        return;
+    }
+
+    if (field_53B4_ == 0) {
+        if (tour_was_shown != 0) {
+            TutWinTourPending = 1;
+        }
+        if (field_53B4_ == 0) {
+            goto finish_button;
+        }
+    }
+    field_53B4_ = 0;
+
+finish_button:
+    if (field_53D0_ != 0) {
+        GameDataStateStorage.fields_.tutwin_flags_9a64bc_ |= field_53D0_;
+    }
 }
 
 
+
 /*
-Purpose: Centre the rectangle, convert it through the iface window, and
-         show the tutorial text there against the primary map window.
-// ORIGINAL: 0x004BA8F0 ?do_iface@TutWin@@QAEXPAURECT@@PBDH@Z 0x004BA8F0-0x004BA96B BYTE_EXACT
-// LEVER: same two levers as `do_base` (see that marker) - plain signed division, and `primary` read/null-checked before `window` is given any value. 4/56 -> 45/56 MNEMONIC_ONLY.
-// TRIED: same 45/56 plateau as `do_base` - a consistent eax/ecx register swap through the vbtable block; see that marker for what was tried.
-// symbol    ?do_iface@TutWin@@QAEHPAUtagRECT@@PBDH@Z
-// size      123 bytes
-// prototype void (__thiscall ?do_iface@TutWin@@QAEXPAURECT@@PBDH@Z)(TutWin* this, RECT*, int8*, int)
-// callers   1   call targets   2
+Purpose: Tell the attached object the tutorial window moved.
+// ORIGINAL: 0x004BDDB0 ?on_move@TutWin@@QAEXHH@Z 0x004BDDB0-0x004BDDC5 BYTE_EXACT
+// symbol    ?on_move@TutWin@@UAEXHH@Z
+// size      21 bytes
+// prototype void (__thiscall ?on_move@TutWin@@QAEXHH@Z)(TutWin* this, int, int)
+// callers   0   call targets   0
 // kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x004BDFE0 0x005ED240
-Return Value: the callout result, consumed by the tutorial's continuation gates
-Verification note: the GraphicWin handed to the show is MapWinTable[0]
-         VIRTUAL-BASE ADJUSTED - `mov edx,[ecx]` / `mov eax,[edx+4]` /
-         `add eax,ecx` - and a null slot passes a null through rather than
-         faulting, which is the only branch in the body.
-Verification note: the original writes the y centre over its own first
-         argument slot before taking its address, so the RECT pointer is dead
-         from that point. A local is equivalent and is what is used here.
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x004BDDBC
+Return Value: n/a
+Status: Complete
 */
-int TutWin::do_iface(RECT *rect, const char *text, int flag) {
-    // Plain signed division: the image emits `cdq; sub eax,edx; sar eax,1`
-    // (round-toward-zero) for each half, not a rounding bit-trick.
-    int x = static_cast<int32_t>(static_cast<uint32_t>(rect->left) +
-        static_cast<uint32_t>(static_cast<int32_t>(
-            static_cast<uint32_t>(rect->right) - static_cast<uint32_t>(rect->left)) / 2));
-    int y = static_cast<int32_t>(static_cast<uint32_t>(rect->top) +
-        static_cast<uint32_t>(static_cast<int32_t>(
-            static_cast<uint32_t>(rect->bottom) - static_cast<uint32_t>(rect->top)) / 2));
-    MainInterfaceGlobal.client_to_screen(&x, &y);
-    return this->tut_win(MapWinTable[0], text, x, y, nullptr, flag, -1, -1);
+void TutWin::on_move(int x, int y) {
+    // field_53D4_ holds a Win-family object pointer (now typed as one); the
+    // repaint is its declared on_update virtual.
+    if (field_53D4_) {
+        field_53D4_->on_update();
+    }
 }
 
-
 /*
-Purpose: Centre the rectangle, convert it through the soc window, and
-         show the tutorial text there against the primary map window.
-// ORIGINAL: 0x004BA970 ?do_soc@TutWin@@QAEXPAURECT@@PBDH@Z 0x004BA970-0x004BA9EB BYTE_EXACT
-// LEVER: same two levers as `do_base` (see that marker) - plain signed division, and `primary` read/null-checked before `window` is given any value. 4/56 -> 45/56 MNEMONIC_ONLY.
-// TRIED: same 45/56 plateau as `do_base` - a consistent eax/ecx register swap through the vbtable block; see that marker for what was tried.
-// symbol    ?do_soc@TutWin@@QAEHPAUtagRECT@@PBDH@Z
-// size      123 bytes
-// prototype void (__thiscall ?do_soc@TutWin@@QAEXPAURECT@@PBDH@Z)(TutWin* this, RECT*, int8*, int)
-// callers   1   call targets   2
+Purpose: Store a single value at 0x53D4.
+// ORIGINAL: 0x004BDDD0 ?UNK3@TutWin@@QAEXH@Z 0x004BDDD0-0x004BDDE0 BYTE_EXACT
+// symbol    ?UNK3@TutWin@@QAEXPAVWin@@@Z
+// size      16 bytes
+// prototype void (__thiscall ?UNK3@TutWin@@QAEXH@Z)(TutWin* this, int)
+// callers   0   call targets   0
 // kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x004BDFE0 0x005ED240
-Return Value: the callout result, consumed by the tutorial's continuation gates
-Verification note: the GraphicWin handed to the show is MapWinTable[0]
-         VIRTUAL-BASE ADJUSTED - `mov edx,[ecx]` / `mov eax,[edx+4]` /
-         `add eax,ecx` - and a null slot passes a null through rather than
-         faulting, which is the only branch in the body.
-Verification note: the original writes the y centre over its own first
-         argument slot before taking its address, so the RECT pointer is dead
-         from that point. A local is equivalent and is what is used here.
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
 */
-int TutWin::do_soc(RECT *rect, const char *text, int flag) {
-    // Plain signed division: the image emits `cdq; sub eax,edx; sar eax,1`
-    // (round-toward-zero) for each half, not a rounding bit-trick.
-    int x = static_cast<int32_t>(static_cast<uint32_t>(rect->left) +
-        static_cast<uint32_t>(static_cast<int32_t>(
-            static_cast<uint32_t>(rect->right) - static_cast<uint32_t>(rect->left)) / 2));
-    int y = static_cast<int32_t>(static_cast<uint32_t>(rect->top) +
-        static_cast<uint32_t>(static_cast<int32_t>(
-            static_cast<uint32_t>(rect->bottom) - static_cast<uint32_t>(rect->top)) / 2));
-    TutWinSocWindow.client_to_screen(&x, &y);
-    return this->tut_win(MapWinTable[0], text, x, y, nullptr, flag, -1, -1);
+void TutWin::UNK3(Win *a1) {
+    field_53D4_ = a1;
 }
 
+// The active path clears the arrow state before virtual hide. Hide may
+// change the owner, so the owner's update dispatch must reload field_53D4_.
+// Drawing completes before either the owner or the shared marker is reset.
+// Both arms end in UNK1, the ten-store clear: tut_win's expansion of reset
+// inlines it in the owner arm and calls 0x004BA720 in the other, which is
+// that copy's single caller.
+// ORIGINAL: 0x004BDDE0 ?reset@TutWin@@QAEHXZ 0x004BDDE0-0x004BDE97 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Original4BDDEE..4BDE07 clears53A4, calls this slot2, reloads owner53D4 for slot63 and then calls do_all_draws5FCBB0. The initial owner test selects the return value; callbacks precede all final reset stores.", "Both original tails clear owner53D4 and53A4, store minus one to5380/537C/539C, zero53A8, minus one53AC, zero53B8/53C4 and finally real TutWinShownFlag8CC244. Existing TutorialWindow and typed Win owner are preserved; no fixed-address aliases or VCall shim are required."], "reason": "Recover tutorial dismissal and owner notification through real members and virtual Win methods, retaining its original reset ordering and result."}
+int TutWin::reset() {
+    if (field_53D4_ != 0) {
+        field_53A4_ = 0;
+        hide();
+        field_53D4_->on_update();
+        do_all_draws();
+        UNK1();
+        return 1;
+    }
+    UNK1();
+    return 0;
+}
 
 /*
-Purpose: Centre the rectangle, convert it through the des window, and
-         show the tutorial text there against the primary map window.
-// ORIGINAL: 0x004BA9F0 ?do_des@TutWin@@QAEXPAURECT@@PBDH@Z 0x004BA9F0-0x004BAA6B BYTE_EXACT
-// LEVER: same two levers as `do_base` (see that marker) - plain signed division, and `primary` read/null-checked before `window` is given any value. 4/56 -> 45/56 MNEMONIC_ONLY.
-// TRIED: same 45/56 plateau as `do_base` - a consistent eax/ecx register swap through the vbtable block; see that marker for what was tried.
-// symbol    ?do_des@TutWin@@QAEHPAUtagRECT@@PBDH@Z
-// size      123 bytes
-// prototype void (__thiscall ?do_des@TutWin@@QAEXPAURECT@@PBDH@Z)(TutWin* this, RECT*, int8*, int)
-// callers   1   call targets   2
+Purpose: Step the receiver back to the subobject ??_GTutWin@@UAEPAXI@Z expects,
+         then forward unchanged.
+// ORIGINAL: 0x004BEA20 ??_GTutWin@@WEEE@AEPAXI@Z 0x004BEA20-0x004BEA2B BYTE_EXACT
+// symbol    ??_ETutWin@@WEEE@AEPAXI@Z
+// CORRECTED from ??3TutWin@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x004BE9F0` into
+//   ??_GTutWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype 
+// callers   0   call targets   0
 // kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x004BDFE0 0x005ED240
-Return Value: the callout result, consumed by the tutorial's continuation gates
-Verification note: the GraphicWin handed to the show is MapWinTable[0]
-         VIRTUAL-BASE ADJUSTED - `mov edx,[ecx]` / `mov eax,[edx+4]` /
-         `add eax,ecx` - and a null slot passes a null through rather than
-         faulting, which is the only branch in the body.
-Verification note: the original writes the y centre over its own first
-         argument slot before taking its address, so the RECT pointer is dead
-         from that point. A local is equivalent and is what is used here.
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
 */
-int TutWin::do_des(RECT *rect, const char *text, int flag) {
-    // Plain signed division: the image emits `cdq; sub eax,edx; sar eax,1`
-    // (round-toward-zero) for each half, not a rounding bit-trick.
-    int x = static_cast<int32_t>(static_cast<uint32_t>(rect->left) +
-        static_cast<uint32_t>(static_cast<int32_t>(
-            static_cast<uint32_t>(rect->right) - static_cast<uint32_t>(rect->left)) / 2));
-    int y = static_cast<int32_t>(static_cast<uint32_t>(rect->top) +
-        static_cast<uint32_t>(static_cast<int32_t>(
-            static_cast<uint32_t>(rect->bottom) - static_cast<uint32_t>(rect->top)) / 2));
-    TutWinDesWindow.client_to_screen(&x, &y);
-    return this->tut_win(MapWinTable[0], text, x, y, nullptr, flag, -1, -1);
+
+// Tutorial arrows use game.cpp's PopupThemeWindowColor (original 0x0068A5A0).
+// config_popups updates that shared palette cell; no separate arrow copy exists.
+
+/*
+Purpose: Draw the tutorial's pointing arrow: its shaft across the rectangle the
+         window records, then its head from the recorded corner, both in the one
+         colour index and only when the window says it is on screen at all.
+// ORIGINAL: 0x004BDEA0 ?draw_arrow@TutWin@@QAEXXZ 0x004BDEA0-0x004BDF16 FILE BYTE_EXACT
+// LEVER: the two calls are Win::window_line_raw on the Win-family object at
+//   0x53D4, and the second only fires when field_539C_ is non-negative - the
+//   arrow's head, drawn from a different corner of the same rectangle.
+// size      118 bytes
+// callers   3   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F2AC0
+Return Value: n/a
+Status: Complete
+*/
+void TutWin::draw_arrow() {
+    if (field_53A4_ != 0) {
+        field_53D4_->window_line_raw(field_538C_, field_5390_, field_5384_,
+                                     field_5388_, PopupThemeWindowColor, 2, 2);
+        int head = field_539C_;
+        if (head >= 0) {
+            field_53D4_->window_line_raw(head, field_53A0_, field_5394_,
+                                         field_5398_, PopupThemeWindowColor, 2, 2);
+        }
+    }
+}
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x004BDF20 ?terrain_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z 0x004BDF20-0x004BDF66 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x004BDF20-0x004BDF66; seed:src/recovered/004bdf20.cpp; source:src/mapwin.h:gen_terrain_poly; source:src/tutwin.h:TutorialWindow"], "reason": "The draw callback takes no receiver and reads the singleton tutorial tile state while invoking the typed terrain renderer."}
+// symbol    ?tut_terrain_draw@@YAXPAVSprite@@PAVGraphicWin@@HHH@Z
+void __cdecl tut_terrain_draw(Sprite *, GraphicWin *window, int,
+                              int pixel_x, int pixel_y) {
+    Buffer *canvas = window ? static_cast<Buffer *>(window) : 0;
+    gen_terrain_poly(canvas, 0, 0, ConsoleGlobal.faction_id_, -1, 0x621,
+                     TutorialWindow.field_537C_, TutorialWindow.field_5380_,
+                     pixel_x, pixel_y);
+}
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x004BDF70 ?veh_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z 0x004BDF70-0x004BDFA0 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x004BDF70-0x004BDFA0; seed:src/recovered/004bdf70.cpp; source:src/veh.h:veh_draw; source:src/graphicwin.h:Buffer base"], "reason": "The tutorial vehicle draw callback has no receiver and forwards a typed GraphicWin canvas to the recovered renderer."}
+// symbol    ?tut_veh_draw@@YAXPAVSprite@@PAVGraphicWin@@HHH@Z
+void __cdecl tut_veh_draw(Sprite *, GraphicWin *window, int vehicle,
+                          int pixel_x, int pixel_y) {
+    Buffer *canvas = window ? static_cast<Buffer *>(window) : 0;
+    veh_draw(canvas, vehicle, pixel_x, pixel_y, 0, 0, 0);
+}
+
+// The original inline teardown is exactly Popup::close followed by the
+// compiler-owned destructors for Popup's Scroll, BasePop members, and
+// GraphicWin bases. TutWin owns no non-trivial member after Popup, so letting
+// the declared C++ hierarchy run its normal reverse-lifetime chain preserves
+// that ordering without replaying subobject offsets or vptr stores.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x004BE7D0 ??1TutWin@@QAE@XZ 0x004BE7D0-0x004BE9EE;0x00659BF0-0x00659CD7 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["seed:src/recovered/units/004be7d0.cpp", "image:0x004be7d0; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
+// symbol    ??1TutWin@@UAE@XZ
+TutWin::~TutWin() {}
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x004BDFA0 ?base_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z 0x004BDFA0-0x004BDFDD FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["seed:src/recovered/units/004bdfa0.cpp", "image:0x004bdfa0; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
+// symbol    ?base_draw@TutWin@@SAXPAVSprite@@PAVGraphicWin@@HHH@Z
+void __cdecl TutWin::base_draw(Sprite *, GraphicWin *window, int mode,
+                              int pixel_x, int pixel_y) {
+    int base_id = mode + 2;
+    if (base_id < 0) {
+        base_id = -2 - mode;
+    }
+    Buffer *const destination = window != 0
+        ? static_cast<Buffer *>(window) : 0;
+    ::base_draw(destination, base_id, pixel_x, pixel_y, 0, 0);
+}
+
+// ORIGINAL: 0x004BDFE0 ?tut_win@TutWin@@QAEHPAUGraphicWin@@PBDHHPAUSprite@@HHH@Z 0x004BDFE0-0x004BE643;0x00659CE0-0x00659CF2 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["seed:src/unrecovered/004bdfe0.cpp", "image:0x004bdfe0; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
+// TRIED: real `Sprite localSprite;` (no explicit ctor/dtor calls, relying on the scaffold's Sprite having no declared destructor so none is emitted, matching the disassembly which never calls ~Sprite on the normal path) plus field-offset writes transcribed instruction-by-instruction (including the cdq/and-7 rounding idioms rewritten as `(val<0)?7:0` bias terms) compiles and reaches instruction #2 before diverging (no SEH try/finally frame is generated without a non-trivial local destructor, and the original's frame protects the Sprite constructor call).
+// symbol    ?tut_win@TutWin@@QAEHPAVGraphicWin@@PBDHHPAVSprite@@HHH@Z
+int TutWin::tut_win(GraphicWin *owner, const char *text, int x, int y,
+                    Sprite *picture, int flags, int arrow_x, int arrow_y) {
+    Sprite local_sprite;
+    int mode;
+    int popup_flags;
+    int screen_width;
+    int screen_height;
+
+    field_53C4_ = 0;
+    field_53D0_ = 0;
+    if (flags >> 16) {
+        field_53D0_ = flags & 0xFFFF0000;
+        flags &= 0xFFFF;
+    }
+    mode = flags & 0xFF;
+    switch (mode) {
+    case 0:
+        popup_flags = 0x4000;
+        break;
+    case 1:
+        popup_flags = 0;
+        break;
+    default:
+        popup_flags = 0x40;
+        break;
+    }
+    field_5384_ = x;
+    field_5388_ = y;
+    screen_width = WinScreenWidth;
+    screen_height = WinScreenHeight;
+
+    popups_tutorial();
+    reset();
+    field_53D4_ = owner;
+    if (flags & 0xFF00) {
+        TutWinShownFlag = 1;
+        flags = mode;
+    }
+
+    start(TutorialPopupCaption, text, -1, 0, popup_flags, 0);
+    if (flags < 2) {
+        set_ok_text(StringTable.get(Labels.strings_ptr[219]));
+    } else {
+        set_ok_text(StringTable.get(Labels.strings_ptr[236]));
+        set_cancel_text(label_get(235));
+    }
+
+    if (picture != 0) {
+        set_picture(picture, 0, 0);
+    } else if (field_53AC_ >= 0) {
+        set_picture(&g_VEH_SPRITES[0], 0, 0);
+        set_redraw_callback(tut_veh_draw);
+    } else if (field_53AC_ < -1) {
+        set_picture(&g_VEH_SPRITES[0], 0, 0);
+        set_redraw_callback(TutWin::base_draw);
+    } else if (field_537C_ >= 0) {
+        set_picture(&g_TER1_TUT_BLANK_SPRITE, 0, 0);
+        set_redraw_callback(tut_terrain_draw);
+    }
+
+    exec(1, 0);
+
+    int vertical_anchor = screen_height * 5 / 8;
+    int horizontal_anchor = screen_width / 2;
+    int height_eighth = screen_height / 8;
+    int width_eighth = screen_width / 8;
+    if (flags < 2) {
+        horizontal_anchor += width_eighth;
+    }
+    if (flags == 2 || flags == 5) {
+        horizontal_anchor += width_eighth;
+    }
+    if (flags == 3 || flags == 4) {
+        horizontal_anchor -= width_eighth;
+    }
+    if (flags == 4 || flags == 5) {
+        vertical_anchor -= height_eighth;
+    }
+
+    if (y <= vertical_anchor) {
+        y = screen_height - layout_height() - 8;
+        field_5390_ = y;
+    } else {
+        y = field_5388_ / 8;
+        field_5390_ = y + layout_height();
+    }
+
+    if (x <= horizontal_anchor) {
+        x = 5;
+        field_538C_ = static_cast<int>(layout_width()) / 2 + 5;
+    } else {
+        field_538C_ = screen_width - static_cast<int>(layout_width()) / 2 - 5;
+        x = screen_width - layout_width() - 5;
+    }
+
+    if (arrow_x >= 0) {
+        field_5394_ = arrow_x;
+        field_5398_ = arrow_y;
+        field_539C_ = field_538C_;
+        field_53A0_ = field_5390_;
+    }
+    field_53B8_ = flags;
+    field_53A4_ = 1;
+    field_53D4_->window_line_raw(field_538C_, field_5390_, field_5384_,
+                                  field_5388_, PopupThemeWindowColor, 2, 2);
+    if (field_539C_ >= 0) {
+        field_53D4_->window_line_raw(field_539C_, field_53A0_, field_5394_,
+                                      field_5398_, PopupThemeWindowColor, 2, 2);
+    }
+
+    start(TutorialPopupCaption, text, -1, 0, popup_flags, 0);
+    if (flags == 0) {
+        set_ok_text(label_get(219));
+    } else {
+        set_ok_text(label_get(236));
+        set_cancel_text(label_get(235));
+    }
+    if (flags != 6) {
+        set_loc(x, y);
+    }
+
+    if (picture != 0) {
+        set_picture(picture, 0, 0);
+    } else if (field_53AC_ >= 0) {
+        set_picture(&local_sprite, static_cast<int>(field_53AC_), 0);
+        set_redraw_callback(tut_veh_draw);
+    } else if (field_53AC_ < -1) {
+        set_picture(&local_sprite, static_cast<int>(field_53AC_), 0);
+        set_redraw_callback(TutWin::base_draw);
+    } else if (field_537C_ >= 0) {
+        set_picture(&local_sprite, 0, 0);
+        set_redraw_callback(tut_terrain_draw);
+    }
+
+    exec(0, 0);
+    popups_normal();
+    field_53A8_ = 1;
+    if (flags == 1) {
+        // tour() may change the key fields; the image reads them first.
+        int run_tour = field_53BC_;
+        int send_key = field_53C4_;
+        int key = field_53C8_;
+        int key_state = field_53CC_;
+        if (run_tour) {
+            tour();
+        }
+        if (send_key) {
+            ConsoleGlobal.on_key_click(key, key_state);
+        }
+    }
+
+    return static_cast<int>(field_53B4_);
+}
+
+// ORIGINAL: 0x004BE650 ?tut_map@TutWin@@QAEHPBDHHHPAUSprite@@HHH@Z 0x004BE650-0x004BE7C6 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["seed:src/unrecovered/004be650.cpp", "image:0x004be650; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
+// TRIED: separate `int x = -1; int y = -1;` locals instead of the original's shared `or eax,0xffffffff` init (#3 mismatch, 'or' vs 'mov'); combined declaration compiled the same way.
+// symbol    ?tut_map@TutWin@@QAEHPBDHHHPAVSprite@@HHH@Z
+int TutWin::tut_map(const char *text, int x_coord, int y_coord, int pixel_x,
+                    Sprite *sprite, int forwarded_6, int arrow_x,
+                    int arrow_y) {
+    int arrow_pixel_x = -1;
+    int arrow_pixel_y = -1;
+
+    if (pixel_x >= 0) {
+        field_53AC_ = pixel_x;
+    } else if (sprite == 0) {
+        field_537C_ = x_coord;
+        field_5380_ = y_coord;
+    }
+
+    MapWinTable[0]->focus(x_coord, y_coord);
+    int screen_x;
+    int screen_y;
+    MapWinTable[0]->tile_to_pixel(x_coord, y_coord, &screen_x, &screen_y);
+    MapWin *map_window = MapWinTable[0];
+    screen_x += map_window->field_1DDBC_;
+    screen_y += map_window->field_1DDC0_;
+
+    if (arrow_x >= 0) {
+        if (map_window->tile_in_view(arrow_x, arrow_y, 0)) {
+            map_window->tile_to_pixel(arrow_x, arrow_y, &arrow_pixel_x,
+                                          &arrow_pixel_y);
+            map_window = MapWinTable[0];
+            arrow_pixel_x += map_window->field_1DDBC_;
+            arrow_pixel_y += map_window->field_1DDC0_;
+        }
+    }
+
+    GraphicWin *const owner = static_cast<GraphicWin *>(map_window);
+    return tut_win(owner, text, screen_x, screen_y, sprite,
+                   forwarded_6, arrow_pixel_x, arrow_pixel_y);
+}
+
+// The old callout helpers all transform a panel rectangle into screen
+// coordinates, then host the popup in MapWin's virtual GraphicWin base.
+// Keeping the transformation receiver explicit preserves which window owns
+// each rectangle while using the declared virtual-base conversion.
+static int tut_callout(TutWin &tutorial, Win &coordinates, RECT &rect,
+                       const char *label) {
+    int x = rect.left + (rect.right - rect.left) / 2;
+    int y = rect.top + (rect.bottom - rect.top) / 2;
+    coordinates.client_to_screen(&x, &y);
+    return tutorial.tut_win(MapWinTable[0], label, x, y, 0, 2, -1, -1);
 }
 #pragma auto_inline(on)
