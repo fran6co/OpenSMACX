@@ -5456,34 +5456,6 @@ Purpose: The unit-special ability picker both select_special_N thunks tail
 // the existing __cdecl abil_cond owner while preserving call order.
 Status: Coverage transcription - unclaimed body
 */
-// WORKAROUND(inline): select_special's image tears its Popup down only one
-// level at the four refusal returns (close() inline, then ~Scroll 0x00406E60
-// and ~BasePop 0x004064D0 out of line through one shared tail at 0x0043AE8D)
-// and leaves one more stage out of line at the empty-list return; written
-// out, ours expands those teardowns (79 EH states against the image's 64).
-// Dead branchy spend after the refusals and after the empty-list return
-// reproduces the image's unwind topology exactly; the original's natural
-// spend is not identified.
-static inline void select_special_budget_probe(int x) {
-    if (x == 1) x = 2;
-    if (x == 2) x = 3;
-    if (x == 3) x = 4;
-    if (x == 4) x = 5;
-}
-static inline void select_special_late_probe(int x) {
-    if (x == 1) x = 2;
-    if (x == 2) x = 3;
-    if (x == 3) x = 4;
-    if (x == 4) x = 5;
-    if (x == 5) x = 6;
-    if (x == 6) x = 7;
-    if (x == 7) x = 8;
-    if (x == 8) x = 9;
-    if (x == 9) x = 10;
-    if (x == 10) x = 11;
-    if (x == 11) x = 12;
-    if (x == 12) x = 13;
-}
 void DesignWin::select_special(int which) {
     Popup popup;
 
@@ -5518,21 +5490,8 @@ void DesignWin::select_special(int which) {
     // /Ob2 refuses it here without a member-pointer stand-in.
     popup.start(PopupStartCaption, "UNITSPECIAL", -1, nullptr, 0x200042);
 
-    // WORKAROUND(inline): twelve dead expansions; see the helper.
-    select_special_budget_probe(0);
-    select_special_budget_probe(0);
-    select_special_budget_probe(0);
-    select_special_budget_probe(0);
-    select_special_budget_probe(0);
-    select_special_budget_probe(0);
-    select_special_budget_probe(0);
-    select_special_budget_probe(0);
-    select_special_budget_probe(0);
-    select_special_budget_probe(0);
-    select_special_budget_probe(0);
-    select_special_budget_probe(0);
     StringTemp[0] = 0;
-    strcat(StringTemp, label_get(0x88));
+    say_label(0x88);
     popup.item(StringTemp, 0x1D);
 
     int count = 1;
@@ -5573,7 +5532,7 @@ void DesignWin::select_special(int which) {
         strcat(StringTemp, SocialWinColonSpaceText);
         strcat(StringTemp, table_text(Ability[i].description));
         strcat(StringTemp, "|");
-        strcat(StringTemp, label_get(0x58));
+        say_label(0x58);
         strcat(StringTemp, SocialWinColonSpaceText);
 
         int cost = Ability[i].cost_factor;
@@ -5584,9 +5543,9 @@ void DesignWin::select_special(int which) {
                               / Armor[protoArmorType_].cost, 0, 2));
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, SocialWinOpenParenText);
-                strcat(StringTemp, label_get(0x7C));
+                say_label(0x7C);
                 strcat(StringTemp, "/");
-                strcat(StringTemp, label_get(0x55));
+                say_label(0x55);
                 strcat(StringTemp, SocialWinCloseParenText);
                 break;
             }
@@ -5594,7 +5553,7 @@ void DesignWin::select_special(int which) {
                 say_num(Weapon[protoWeaponType_].cost - 1);
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, SocialWinOpenParenText);
-                strcat(StringTemp, label_get(0x7C));
+                say_label(0x7C);
                 strcat(StringTemp, "-1");
                 strcat(StringTemp, SocialWinCloseParenText);
                 break;
@@ -5602,7 +5561,7 @@ void DesignWin::select_special(int which) {
                 say_num(Armor[protoArmorType_].cost - 1);
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, SocialWinOpenParenText);
-                strcat(StringTemp, label_get(0x55));
+                say_label(0x55);
                 strcat(StringTemp, "-1");
                 strcat(StringTemp, SocialWinCloseParenText);
                 break;
@@ -5610,7 +5569,7 @@ void DesignWin::select_special(int which) {
                 say_num(Chassis[protoChassisType_].speed - 1);
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, SocialWinOpenParenText);
-                strcat(StringTemp, label_get(0x2C5));
+                say_label(0x2C5);
                 strcat(StringTemp, "-1");
                 strcat(StringTemp, SocialWinCloseParenText);
                 break;
@@ -5619,9 +5578,9 @@ void DesignWin::select_special(int which) {
                         + Weapon[protoWeaponType_].cost - 2);
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, SocialWinOpenParenText);
-                strcat(StringTemp, label_get(0x7C));
+                say_label(0x7C);
                 strcat(StringTemp, "+");
-                strcat(StringTemp, label_get(0x55));
+                say_label(0x55);
                 strcat(StringTemp, "-2");
                 strcat(StringTemp, SocialWinCloseParenText);
                 break;
@@ -5630,9 +5589,9 @@ void DesignWin::select_special(int which) {
                         + Weapon[protoWeaponType_].cost - 2);
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, SocialWinOpenParenText);
-                strcat(StringTemp, label_get(0x7C));
+                say_label(0x7C);
                 strcat(StringTemp, "+");
-                strcat(StringTemp, label_get(0x2C5));
+                say_label(0x2C5);
                 strcat(StringTemp, "-2");
                 strcat(StringTemp, SocialWinCloseParenText);
                 break;
@@ -5641,9 +5600,9 @@ void DesignWin::select_special(int which) {
                         + Armor[protoArmorType_].cost - 2);
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, SocialWinOpenParenText);
-                strcat(StringTemp, label_get(0x55));
+                say_label(0x55);
                 strcat(StringTemp, "+");
-                strcat(StringTemp, label_get(0x2C5));
+                say_label(0x2C5);
                 strcat(StringTemp, "-2");
                 strcat(StringTemp, SocialWinCloseParenText);
                 break;
@@ -5671,7 +5630,6 @@ void DesignWin::select_special(int which) {
     if (!count) {
         return;
     }
-    select_special_late_probe(0);  // WORKAROUND(inline): see the helper
 
     int choice = popup.exec(pop_wait);
     if (choice < 0) {
