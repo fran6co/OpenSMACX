@@ -35,6 +35,7 @@
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "newtechwin.h"
+#include "rectangle_operations.h"
 #include "game.h"
 #include "alpha.h"
 #include "console.h"
@@ -148,14 +149,6 @@ extern Sprite g_TECH_ICON_SPRITES[MaxTechnologyNum];
 // The Transcendent Thought separator is the shared space object
 // BufferJoinSpace (0x00682820, buffer.h), not a unit-owned copy.
 
-// WORKAROUND(decl): 0x00483FB3..483FF2 loads all four source edges through a
-// copy of the source pointer, then +n/-n into the destination.
-static inline void newtechwin_inset_copy(RECT *dst, const RECT *src, int amount) {
-    dst->left = src->left + amount;
-    dst->top = src->top + amount;
-    dst->right = src->right - amount;
-    dst->bottom = src->bottom - amount;
-}
 
 // ORIGINAL: 0x00483950 ?on_redraw@NewTechWin@@QAEXXZ 0x00483950-0x00483E7F
 // RECOVERY_BINDING: v1 {"reason":"Recover the complete technology popup redraw in its real NewTechWin owner.","evidence":["Pinned NewTechWin table 0x66CE5C slot 12 selects 0x483950.","Current NewTechWin rectangle words are written by exec; existing label, technology, player-data, buffer, style and sprite owners supply every draw.","The previous unit's NO_COMPILE finding was its fake standalone class/undefined Buffer scaffold; this candidate instead uses newtechwin.h's genuine GraphicWin hierarchy and embedded rectangle words."]}
@@ -313,7 +306,7 @@ void NewTechWin::exec(int technology_id, int other_faction_id) {
     uint32_t category_id;
     RECT *const bounds = &field_A14_rect_;
     newtechwin_set_words(reinterpret_cast<uint32_t *>(&field_A14_rect_), 0, 0, 0x226, 0x258);
-    newtechwin_inset_copy(&rect, bounds, 12);
+    inset_rect(&rect, bounds, 12, 12);
     strip = rect;
     strip.left += 3;
     strip.right -= 3;
@@ -327,7 +320,7 @@ void NewTechWin::exec(int technology_id, int other_faction_id) {
     main_rect_ = rect;
 
     RECT inner;
-    newtechwin_inset_copy(&inner, &rect, 3);
+    inset_rect(&inner, &rect, 3, 3);
     title_rect_ = inner;
     title_rect_.bottom = title_rect_.top + 0x17;
     category_rect_ = inner;
@@ -404,7 +397,7 @@ void NewTechWin::exec(int technology_id, int other_faction_id) {
         box.show(0);
     }
 
-    newtechwin_inset_copy(&rect, text_rect, 3);
+    inset_rect(&rect, text_rect, 3, 3);
     stringBox2_.init(rect.left, rect.top, rect.right - rect.left,
                      rect.bottom - rect.top, this, 0, -1);
     stringBox2_.Buffer::set_font(find_font(0xc, 0), find_font(0xc, 1),

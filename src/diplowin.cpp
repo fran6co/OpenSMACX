@@ -123,14 +123,6 @@ void __cdecl DiploWin::string_callback(int faction_id, int unused) {
 // 0x444140..44415E / 0x4444F9..444515 load all four
 // source edges through a copy of the source pointer, then +n/-n (dead
 // top/bottom copies included when the vertical amount is zero).
-// WORKAROUND(decl): file-local RECT helper stand-in (original name unknown).
-static inline void diplo_inset_rect(RECT *dst, const RECT *src, int horizontal,
-                                    int vertical) {
-  dst->left = src->left + horizontal;
-  dst->top = src->top + vertical;
-  dst->right = src->right - horizontal;
-  dst->bottom = src->bottom - vertical;
-}
 
 // ---------------------------------------------------------------------------
 // ORIGINAL: 0x00443F10 ?exec@DiploWin@@QAEXHH@Z 0x00443F10-0x00444D8B
@@ -189,7 +181,7 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
   button_rects_[4] = rc;
 
   // 0x444140: four offer columns (gaps 2, 8, 2) ending 10 above that row.
-  diplo_inset_rect(&row, &rect_EDC_, 7, 0);
+  inset_rect(&row, &rect_EDC_, 7, 0);
   row.bottom = rc.top - 10;
   row.right = row.left + (row.right - row.left - 4) / 4 - 2;
 
@@ -248,13 +240,13 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
 
   // 0x444421: MainInterface frames inset 7, each split into a 0x14 header
   // and the body 3 below it.
-  diplo_inset_rect(&rc, &MainInterfaceGlobal.main_frame_rect(), 7, 7);
+  inset_rect(&rc, &MainInterfaceGlobal.main_frame_rect(), 7, 7);
   rect_EEC_ = rc;
   rect_EEC_.bottom = rect_EEC_.top + 0x14;
   rect_EFC_ = rc;
   rect_EFC_.top = rect_EEC_.bottom + 3;
 
-  diplo_inset_rect(&rc, &MainInterfaceGlobal.right_frame_rect(), 7, 7);
+  inset_rect(&rc, &MainInterfaceGlobal.right_frame_rect(), 7, 7);
   rect_F0C_ = rc;
   rect_F0C_.bottom = rect_F0C_.top + 0x14;
   rect_F1C_ = rc;
@@ -262,7 +254,7 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
 
   // 0x4444F9: the two portrait panes between the leader panes and the
   // left offer group's (already grown) top.
-  diplo_inset_rect(&rc, &rect_EDC_, 7, 0);
+  inset_rect(&rc, &rect_EDC_, 7, 0);
   rc.top = leader_rect_[0].bottom + 3;
   rc.bottom = rect_FAC_.top - 7;
   rc.right = rc.left + (rc.right - rc.left + 2) / 2 - 2;
@@ -271,7 +263,7 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
   portrait_rect_[1] = rc;
 
   // 0x444572: chat transcript and the 0x14-tall edit line 3 below it.
-  diplo_inset_rect(&rc, &MainInterfaceGlobal.main_layout_rect(), 4, 4);
+  inset_rect(&rc, &MainInterfaceGlobal.main_layout_rect(), 4, 4);
   rc.bottom -= 0x17;
   rect_F3C_ = rc;
   rc.top = rc.bottom + 3;
@@ -306,7 +298,7 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
   editBox_.field_B14_ = 0x80;
 
   // 0x444754: computed and never read (dead stores into rc in the image).
-  diplo_inset_rect(&rc, &rect_EFC_, 3, 3);
+  inset_rect(&rc, &rect_EFC_, 3, 3);
 
   // Buttons 0 and 1 are not initialized here: the image skips the whole
   // body until the label offset reaches 0xDCC.

@@ -21,6 +21,17 @@ static inline RECT *__cdecl set_rectangle_dimensions(
 // 0x004ADF95 (SetupWin), 0x0055AFEF (base_draw) and 0x0055A150 (veh_scoot),
 // MonuWin's icon rects and QuayleWin: the edges are evaluated right to left,
 // as call arguments are, then stored in order through the pointer.
+// WORKAROUND(decl): the name is descriptive. Copies src into dst inset by
+// the horizontal and vertical amounts, reading all four source edges through
+// the source pointer (NewTechWin 0x00483FB3..0x00483FF2, DiploWin).
+static inline void inset_rect(RECT *dst, const RECT *src, int horizontal,
+                              int vertical) {
+    dst->left = src->left + horizontal;
+    dst->top = src->top + vertical;
+    dst->right = src->right - horizontal;
+    dst->bottom = src->bottom - vertical;
+}
+
 static inline void __cdecl set_rect(RECT *rect, int left, int top, int right,
                                     int bottom) {
     rect->left = left;
