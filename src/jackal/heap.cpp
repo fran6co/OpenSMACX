@@ -255,7 +255,7 @@ Status: Complete
 */
 LPVOID Heap::get(int req_size) {
     for (;;) {
-        if (static_cast<int>(free_size_) >= req_size) {
+        if (free_size_ >= req_size) {
             LPVOID free_mem_addr = current_;
             free_size_ -= req_size;
             current_ = LPVOID(size_t(current_) + req_size);
@@ -281,7 +281,7 @@ LPVOID Heap::get(int req_size) {
             say_num((int)base_size_);
             add_lf(StringTemp);
             strcat(StringTemp, "Free size: ");
-            say_num((int)free_size_);
+            say_num(free_size_);
             add_lf(StringTemp);
             strcat(StringTemp, "Requested size: ");
             say_num(req_size);

@@ -152,7 +152,7 @@ void *TexHeap::get_tex_mem(int size) {
     if (base_ != 0) {
         for (int index = 0; index < static_cast<int>(count_ + 1u); ++index) {
             if ((reinterpret_cast<uintptr_t>(blocks_[index]->current_) & 0xffff) == 0 &&
-                static_cast<int>(blocks_[index]->free_size_) >= size) {
+                blocks_[index]->free_size_ >= size) {
                 return blocks_[index]->get(size);
             }
         }
@@ -180,7 +180,7 @@ only reaches here when a caller passed a heap at all.
 void *TexHeap::get_mem(int size) {
     if (base_ != 0) {
         for (int index = 0; index < static_cast<int>(count_ + 1u); ++index) {
-            if (static_cast<int>(blocks_[index]->free_size_) >= size) {
+            if (blocks_[index]->free_size_ >= size) {
                 return blocks_[index]->get(size);
             }
         }

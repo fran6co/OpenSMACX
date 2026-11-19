@@ -79,7 +79,7 @@ class Heap {
  private:
   size_t base_size_; // (+12) -> size of total memory
  public:
-  size_t free_size_; // (+16) -> size of free available memory
+  int free_size_; // (+16) -> size of free available memory
 };
 
 #if defined(_M_IX86) || defined(__i386__)
