@@ -3429,6 +3429,25 @@ Layout
     arms meet at a join shared with other predecessors: the last-written arm
     hosts. Write the arm order the image's `jg`/`jle` shows (battle_fight
     0x00506AF0: kill arm first, spot_base last falling into the join).
+- **Constant-type inline subscripts fold per subscript** (2026-11-19,
+  par-1): add_bat inlined with a constant `type` folds `type * 4` into each
+  array base only where each subscript is written `type * 4 + offset`; one
+  shared `int index` local computes `(offset + 4) * 80` (`lea r,[r+r*4+0x14]`)
+  instead (battle_compute 158 -> 131, add_bat exact both ways).
+- **Open, not probe-solvable here** (2026-11-19, par-1): PickTech::pick
+  0x00486510 and Console::terraform 0x004D3470 call `??1Scroll` out of line
+  at their first 4 / 17 ~Popup return sites and expand it later; ours expands
+  it at every early site. 1-24 dead probes after the early returns (pick) or
+  at the switch / before the lock tail (terraform) never reach the image's
+  call multiset (best: terraform Scroll 14 of 17 with other teardowns
+  wrong). Same family as editor_edit_veh / custom_my_faction (2.3).
+  NetDaemon::synch 0x00532E00 (frame 0x78 vs 0x7C): the image keeps `this`
+  in edi with its home at [ebp-0x18], recomputes `total - 1` (`dec eax`) at
+  every chunk_done test where ours keeps a CSE slot, and walks the 0x8D
+  social-category compaction with a stage pointer and a `j * 0x2C` counter
+  (`cmp eax, 0xB0`); a `RulesSocialCategory *stage` like the other cases
+  gives the stage pointer but a down-counter and frame 0x80, and no natural
+  spelling tried reaches 0x7C.
 
 Types
 - Wrong declarations hide as casts: a member cast at each use, a byte buffer
