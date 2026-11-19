@@ -119,9 +119,21 @@ int __cdecl base_claimed(int x, int y, int site1_free, int site2_free,
 // 2026-11-19 integration the range at 0x4FD528 expanded again,
 // and four + one (or five + none) is the window again. With the secret-project
 // ternary (a_130[j] = l_84 ? 5 : -l_d8) only five + none keeps the multiset.
+// After is_port became a header inline five leave one probe call and four
+// expand that range again; three one-test probes and one two-test probe
+// (bb_probe2) give the image's call multiset with no probe call.
 static inline int bb_probe(int x) {
     if (x == 1) {
         x = 2;
+    }
+    return x;
+}
+static inline int bb_probe2(int x) {
+    if (x == 1) {
+        x = 2;
+    }
+    if (x == 3) {
+        x = 4;
     }
     return x;
 }
@@ -1869,8 +1881,7 @@ L_4fbd3d:
         bb_probe(0);
         bb_probe(0);
         bb_probe(0);
-        bb_probe(0);
-        bb_probe(0);
+        bb_probe2(0);
         if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)) {
             if (has_tech(Chassis[5].preq_tech, target) && !has_tech(Chassis[5].preq_tech, l_8)) {
                 w /= 2;
