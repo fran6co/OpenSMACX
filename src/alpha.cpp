@@ -266,6 +266,32 @@ RulesCitizen Citizen[MaxCitizenNum];                // 0x00946020
 // (0x004E4B80); Base is 0x134 bytes, so the bounded array ends at 0x009A3840.
 // RECOVERY_OBJECT: v2 0x0097D040 0x009A3840 ?Bases@@3PAUBase@@A 0x004E4B80
 Base Bases[MaxBaseNum];                             // 0x0097D040
+
+/*
+Purpose: Append a decimal number to the StringTemp buffer.
+// ORIGINAL: 0x0050B8A0 ?say_num@@YAXH@Z 0x0050B8A0-0x0050B8CA BYTE_EXACT
+// body      src/strings.h
+// size      42 bytes
+// prototype void (__cdecl ?say_num@@YAXH@Z)(int)
+// kind      game
+Return Value: n/a
+Status: Complete
+*/
+
+// WORKAROUND(noinline): expanded twin of prefs_get(LPCSTR, int, BOOL); see
+// the out-of-line definition below.
+inline int __cdecl prefs_get_inline(LPCSTR key_name, int default_value, BOOL use_default) {
+    StringTemp[0] = 0;
+    say_num(default_value);
+    if (use_default) {
+        strcpy(TextBufferGetPtr, StringTemp);
+    } else {
+        GetPrivateProfileStringA(PrefsSection, key_name, StringTemp,
+            TextBufferGetPtr, 256, PrefsFile);
+    }
+    return atoi(Txt.update());
+}
+
 // Native base_project indexes 64 dwords at 0x009A6514; setup_game
 // resets all 64 to -1. The spying/social/energy selectors inside this
 // range are views of named project fields, never separate allocations.
@@ -486,6 +512,7 @@ Purpose: Parse the current tech name inside the Txt item buffer into a tech id.
 Return Value: Tech id
 Status: Complete
 */
+
 // BODY IN alpha.h, as `MEASURED inline`: see LEVER above.
 
 /*
@@ -714,6 +741,7 @@ Purpose: Clear the rule values for the specified player.
 Return Value: n/a
 Status: Complete
 */
+
 // BODY IN alpha.h, as `MEASURED inline`: see the LEVER note above.
 
 /*
@@ -1848,31 +1876,6 @@ LPSTR __cdecl prefs_get(LPCSTR key_name, LPCSTR default_value, BOOL use_default)
 }
 
 /*
-Purpose: Append a decimal number to the StringTemp buffer.
-// ORIGINAL: 0x0050B8A0 ?say_num@@YAXH@Z 0x0050B8A0-0x0050B8CA BYTE_EXACT
-// body      src/strings.h
-// size      42 bytes
-// prototype void (__cdecl ?say_num@@YAXH@Z)(int)
-// kind      game
-Return Value: n/a
-Status: Complete
-*/
-
-// WORKAROUND(noinline): expanded twin of prefs_get(LPCSTR, int, BOOL); see
-// the out-of-line definition below.
-inline int __cdecl prefs_get_inline(LPCSTR key_name, int default_value, BOOL use_default) {
-    StringTemp[0] = 0;
-    say_num(default_value);
-    if (use_default) {
-        strcpy(TextBufferGetPtr, StringTemp);
-    } else {
-        GetPrivateProfileStringA(PrefsSection, key_name, StringTemp,
-            TextBufferGetPtr, 256, PrefsFile);
-    }
-    return atoi(Txt.update());
-}
-
-/*
 Purpose: Get the default value for the 1st set of preferences.
 // ORIGINAL: 0x0059DA20 ?default_prefs@@YAHXZ 0x0059DA20-0x0059DA99 BYTE_EXACT
 // symbol    ?default_prefs@@YAIXZ
@@ -1991,6 +1994,7 @@ int __cdecl prefs_get(LPCSTR key_name, int default_value, BOOL use_default) {
     }
     return atoi(Txt.update());
 }
+
 #pragma auto_inline(on)
 
 /*
@@ -2118,6 +2122,31 @@ static inline uint32_t default_prefs2_load() {
         | MPREF_AUTO_FORMER_BUILD_SENSORS | MPREF_AUTO_FORMER_REMOVE_FUNGUS;
     return prefs_get(alpha_secondary_laptop_key, 0, false) ? base_prefs2 : base_prefs2 | MPREF_AV_SLIDING_SCROLLBARS;
 }
+
+// body src/alpha.h
+// BODY IN alpha.h, as `MEASURED inline`.
+
+/*
+Purpose: Get the label string from a label offset. Created to reduce code complexity.
+Original Offset: n/a
+Return Value: Pointer to label string
+Status: Complete
+*/
+// BODY IN alpha.h, as plain `inline` (no ORIGINAL marker of its own - "Original
+// Offset: n/a"): say_base (base.cpp) needs it folded to `StringTable.get(...)`
+// the way the image does.
+
+// ORIGINAL: 0x00585120 ?text_get_number@@YAHHH@Z 0x00585120-0x00585150 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned585120 calls5FD570 then5FD740 and uses an EBP frame; adjacent585170 is read_basic_rules.", "Fresh complete application COFF at421b46dbe: alpha.cpp emitted header helper matches18/18; library text.cpp emits67.", "Canonical identity, full spans, historical claim and lessons moved intact from src/text.cpp; definition remains src/text.h."], "reason": "Current application rules-parser ownership; the header definition remains shared. Library-TU emission inlines both wrappers and is not this original body. No original TU or linked selection claim."}
+// body      src/jackal/text.h
+// LEVER: BYTE_EXACT 18/18, from 2/18 and 71 compiled instructions against the image's 18. The body went through `text_get_number_source(&Txt, ...)`, so both parses were written out INLINE; the image CALLS the zero-arg wrappers, `call 0x005FD570` then `call 0x005FD740`, and open-codes only the range() clamp. call_diff said exactly that - 1 call against the image's 2. Rewritten in text.h as `text_get(); return range(text_item_number(), min, max);`, which is the same two-statement shape alpha.cpp's LEVER already spells out at its own 83 call sites. Nothing else calls text_get_number(), so no caller moved.
+// size      48 bytes
+// prototype int (__cdecl ?text_get_number@@YAHHH@Z)(int min, int max)
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005FD570 0x005FD740
+// notes     Staged hybrid export redirect calls the source-owned wrapper
 
 /*
 Purpose: Load the most common preferences from the game's ini to globals.
@@ -2417,28 +2446,4 @@ Purpose: Get the label string and concatenate it to the stringTemp buffer.
 Return Value: n/a
 Status: Complete
 */
-// body src/alpha.h
-// BODY IN alpha.h, as `MEASURED inline`.
-
-/*
-Purpose: Get the label string from a label offset. Created to reduce code complexity.
-Original Offset: n/a
-Return Value: Pointer to label string
-Status: Complete
-*/
-// BODY IN alpha.h, as plain `inline` (no ORIGINAL marker of its own - "Original
-// Offset: n/a"): say_base (base.cpp) needs it folded to `StringTable.get(...)`
-// the way the image does.
-
-// ORIGINAL: 0x00585120 ?text_get_number@@YAHHH@Z 0x00585120-0x00585150 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned585120 calls5FD570 then5FD740 and uses an EBP frame; adjacent585170 is read_basic_rules.", "Fresh complete application COFF at421b46dbe: alpha.cpp emitted header helper matches18/18; library text.cpp emits67.", "Canonical identity, full spans, historical claim and lessons moved intact from src/text.cpp; definition remains src/text.h."], "reason": "Current application rules-parser ownership; the header definition remains shared. Library-TU emission inlines both wrappers and is not this original body. No original TU or linked selection claim."}
-// body      src/jackal/text.h
-// LEVER: BYTE_EXACT 18/18, from 2/18 and 71 compiled instructions against the image's 18. The body went through `text_get_number_source(&Txt, ...)`, so both parses were written out INLINE; the image CALLS the zero-arg wrappers, `call 0x005FD570` then `call 0x005FD740`, and open-codes only the range() clamp. call_diff said exactly that - 1 call against the image's 2. Rewritten in text.h as `text_get(); return range(text_item_number(), min, max);`, which is the same two-statement shape alpha.cpp's LEVER already spells out at its own 83 call sites. Nothing else calls text_get_number(), so no caller moved.
-// size      48 bytes
-// prototype int (__cdecl ?text_get_number@@YAHHH@Z)(int min, int max)
-// callers   0   call targets   2
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x005FD570 0x005FD740
-// notes     Staged hybrid export redirect calls the source-owned wrapper
 
