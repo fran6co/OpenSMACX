@@ -40,6 +40,17 @@ an explicit `--pfx` is only needed to pick another lane.
   invented budget-only helpers (is_human, is_alive, is_alien_faction, map_tiles(), MapAbstract()): every site
   alone, all sites, then greedy; key = (named call multiset distance to the image, rows), no ratchet on rows
   when the call distance drops.
+- `analysis/accspell.py list|deck|census` raw field tests against header accessors (has_treaty, has_agenda,
+  is_human/is_alive incl. local `1 << f` bits, get_triad, get_proto_triad, is_missile, offense/defense ratings,
+  map.h `*_at`, is_ocean). `list --rungs R.json` sites of every rung-1/2 function with the return they follow;
+  `deck <unit> <addr> [--write VARIANT] [--no-im]` BASE/ALL/ALL:family/AFTER_R<k>/ONLY_R<k>/FROM_S<k> keyed by
+  (EH distance, named call distance, inlinemap site distance, frame, rows); `census` raw/accessor counts per unit
+  over the fe-exact functions. MATCHING_GUIDE 2.8.
+- `analysis/ceilscan.py [unit ...] [--all] [--addr A --bisect]` which functions hit the /Ob2 total-size
+  ceiling: a free probe at the top and end of each function (`Ec` = ceiling-bound), `--bisect` spreads
+  `CEIL_PROBES` probes to locate the stop. One compile per unit, 18 s tree-wide. MATCHING_GUIDE 2.8 rule 7.
+- `analysis/inline/giant.py N STRIDE [if|store|call] [--charged] [--mixed] [--front]` synthetic giant caller:
+  expansions against caller size (the ceiling T, MATCHING_GUIDE 2.8 rule 7).
 - `objdis.py <unit> <src> <addr>` raw listing of our function with real jump targets.
 - `analysis/regmap.py <unit> <addr> [--src ALT.cpp] [--min N] [--ranges]` which callee-saved register holds
   which role (this, a named slot's cached copy, a call result at a source line, a temporary), for the image

@@ -2399,6 +2399,49 @@ we cannot see, so the numbers are fitted within about 0.3 unit.
    Its ~Scroll then falls in the periodic regime: 5 returns give
    `SSSSSs`, 10 give `sssssssSsss`. From 20 returns on, the closing sites
    call ~Popup itself.
+7. **Total-size ceiling: the hard stop** (high; `inline/giant.py`,
+   2026-11-19 par-2 round 16). Rule 2's B = k × caller size has a cap: the
+   function's running total (its own size plus every expansion accepted so
+   far, free ones included) may not pass a fixed ceiling T. Measured with
+   one caller of N filler `if (ga[i] == i) use(i);` and a charged 4-if site
+   after every tenth filler (`giant.py N 10 if --charged`):
+
+   | N fillers | 1300 | 1400 | 1500 | 1600 | 1700 | 1800 | 2000-6500 |
+   | --- | --- | --- | --- | --- | --- | --- | --- |
+   | 4-if sites expanded | all 129 | 110 | 88 | 65 | 42 | 12 | 12 |
+
+   N + 4.4 × expansions stays at T ≈ 1885 filler ifs (about 5300 global
+   stores with `store` filler): every 100 fillers more take about 23
+   expansions away. The cut is a running total in source order, but it
+   counts the *whole* caller's own size from the start: `--front` (every
+   site first, then the fillers) stops at the same 65. Consequences:
+   - **Everything after the stop is refused, free inlines too**
+     (`--mixed`, free `fr(k)` sites between the charged ones: N=1600 gives
+     43 charged and 43 free expansions, then every site of both kinds
+     called). This is battle_fight's and order_veh's round-15 "hard stop".
+   - **Only the B0 floor survives** a caller that is over T by itself
+     (N ≥ 1800): about 58 units of charged sites, and free sites expand
+     without limit (N=3000 `--mixed`: 12 charged, all 300 free). So a free
+     site is refused only when both the B0 floor and the ceiling are spent.
+   - **Not a budget**: free probes, dead blocks and helper spellings cannot
+     buy room past the stop. Every statement anywhere in the function, and
+     every byte of every expansion before the stop (an inline body's dead
+     temporaries, a deeper member chain), moves the stop earlier. So the
+     original giant was smaller by at least the overshoot; dead budget
+     probes in a ceiling-bound function cost twice (their nested spend and
+     their size).
+   - **Screen**: `analysis/ceilscan.py [unit ...]` puts a free probe at the
+     top and at the end of every non-exact function, one compile per unit
+     (18 s tree-wide with `--all`). `Ec` = ceiling-bound; `--bisect --addr A`
+     spreads `CEIL_PROBES` (default 12) probes over the body and prints the
+     last expanded one (each expanded probe adds size: use few). At head
+     a61619e09f + round 16: exactly four functions are ceiling-bound, the
+     four largest giants: base_build 0x004F81A0 (its has_fac_built/range
+     calls from 0x4FC6xx on are this stop, in the image too), battle_fight
+     0x00506AF0 (stop between source lines 3763 and 3838 with 24 probes),
+     order_veh 0x005947C0 (after the vehicle-count return since its two
+     probes were retired) and probe 0x0059F120. No exact function is
+     ceiling-bound (Win::on_l_button_down's `cc` is a no-inline unit).
 
 Using it
 - Run inlinemap. For each callee row:
@@ -2515,6 +2558,51 @@ Using it
   inlines after those returns, rule 4 reservations) give the image's EH map,
   frame and call multiset except one ??_DStringList at the vehicle-count return.
   The `triad = ...` initialiser stays raw: through get_triad it adds a frame slot.
+  Round 16 (par-2): the remaining ??_DStringList was the ceiling (rule 7), not
+  room. Two of the four supply_options_budget_probe calls retired: EH, named
+  call multiset and frame all equal to the image (three or none leave the final
+  teardown 16 deep). The 10 sites accspell.py still finds (8 offense ratings,
+  1 triad, 1 human) all keep or worsen that vector.
+- **Accessor spelling screen, tree-wide** (round 16 par-2;
+  `analysis/accspell.py`). `list` names, for every rung-1/2 function of a
+  rungs.json, each raw test that has a header accessor (has_treaty,
+  has_agenda, is_human/is_alive including a local `b = 1 << f` bit,
+  get_triad, get_proto_triad, is_missile, get_offense/defense_rating,
+  temp_at, altitude_at, owner_at, code_at, is_ocean) with the return it
+  follows; `deck <unit> <addr>` measures BASE, ALL, ALL:<family>,
+  AFTER_R<k>, ONLY_R<k> and FROM_S<k> (every site from the k-th on) as
+  (EH distance, named call distance, inlinemap site distance, frame, rows).
+  It adds `#include "faction_inline.h"` where a variant needs has_treaty
+  (faction.h declares the out-of-line copy). Results on the rung-1/2 list
+  not held by par-4: none of farm_click, battle_report, CouncWin::init,
+  draw_score, use_ability, editor_edit_veh, menu_proc, propose_attack,
+  communicate, call_council or spot_all moves toward the image (the
+  console_commands and call_council variants break their Popup teardowns;
+  spot_all's 21 treaty sites change on_map/veh_top both ways). tech_trade,
+  propose_pact and Net::session_picker_dialog have no raw site left (faction.cpp
+  is already accessor-spelled; the picker has no field tests), so no accessor
+  spelling can replace their probes. battle_fight's 34 sites only add calls
+  (it is ceiling-bound, rule 7).
+- **Raw against accessor in the exact functions** (round 16 census,
+  `accspell.py census`, 5199 fe-exact functions). Counts of raw / accessor
+  spellings of the same test: treaty 325/459, agenda 16/50, human 48/82,
+  alive 24/35, triad 65/36, proto triad 42/28, offense 18/12, missile 2/7,
+  is_ocean 22/142. Per unit the split is a recovery-era convention more than
+  evidence: faction.cpp is the only unit where most treaty/agenda tests go
+  through the accessor (414 against 173 raw), council.cpp (27/0),
+  console_commands.cpp (21/0), terraforming_actions.cpp (13/0) and the
+  window units write them raw; the human test is accessor-spelled in
+  technology.cpp (13/0), base.cpp (13/6), console.cpp (7/0), raw in
+  basewin.cpp (6/0); triad reads are raw in console_commands.cpp (23/2),
+  mapwin.cpp (14/0), console.cpp (10/0), main.cpp (7/0), accessor in
+  battle.cpp (8/0), veh_stack.cpp (6/0), enemy.cpp (8/2). Exact functions
+  that mix both spellings of one family are rare: two in faction.cpp, one
+  in setup.cpp (human), and ten mapwin.cpp functions mix raw and is_ocean
+  (20/66). Because a free accessor
+  expands to exactly the raw code, an exact function constrains the spelling
+  only when it has inline decisions after the site (teardowns, charged
+  inlines); so read a unit's split as the spelling to try first in its
+  non-exact functions, not as proof.
 - **When to stop.** Dead probes that change other teardowns before they move
   the target mean that pass 1 is the binding limit, not pass 2. Look for a
   structural difference: which object owns the teardown, or a per-TU header
