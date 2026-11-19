@@ -1,9 +1,9 @@
 """rscan.py HOSTADDR [--min N] [--thr R]: every marker (referenced or not) whose body appears inside the host's image body."""
 import sys, os
 sys.argv_saved = list(sys.argv)
-R = '/home/fran6co/code/OpenSMACX/.opensmacx/worktrees/par-4'
-sys.path.insert(0, R + '/recovery/tools/analysis')
-sys.path.insert(0, R + '/recovery/tools')
+H = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, H)
+sys.path.insert(0, os.path.dirname(H))
 args = sys.argv_saved[1:]
 host = int(args[0], 16)
 mn = int(args[args.index('--min') + 1]) if '--min' in args else 4

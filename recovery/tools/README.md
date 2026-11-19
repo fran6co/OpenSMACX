@@ -350,6 +350,14 @@ an explicit `--pfx` is only needed to pick another lane.
   invented twin) with a call to the orphan. First pass (par-6): DesignWin::on_iface_right_click exact,
   DiploWin::exec 279 -> 227, battle_fight 2409 -> 2346, base_terraform 893 -> 873, the StatusWin::redraw inline and
   MEASURED stand-ins and the terraform_arid_count/emit_help twins retired, eight neutral re-spellings.
+- `analysis/rscan.py <host> [--min N] [--thr R]` reverse owner scan (MATCHING_GUIDE 2.8 "Referenced owners too"):
+  every marker's image body, referenced or not, searched inside ONE host's image body (score*prec >= R, default
+  0.9; min N tokens, default 4), so header inlines with an out-of-line copy show up too (orphanowner skips them).
+  Compare each invented helper of the host with the hits (go_to's refusals were veh_battle_msg 0x0050B9C0,
+  BaseWin's recompute twin was focus()). About 14 s per host.
+- `analysis/helperscan.py [NAME ..] [--thr R] [--top K] [--json F]` the same scan for every invented helper in the
+  tree (a definition with no ORIGINAL marker under a WORKAROUND(inline|decl) tag, budget probes left out): its
+  hosts (marked bodies that call it) and each host's rscan hits. `HS_LIST=1` only lists the helpers.
 - `analysis/ownerhunt.py <unit> <addr> [--lines A-B] [--maxlen N] [--limit N] [--moved] [--vec] [--fast] [--repeat]
   [--write K]` missing inline OWNER search (MATCHING_GUIDE 2.8 "Missing owner"): parses the function body into
   statements, wraps every liftable contiguous sibling range (a loop, an if-arm, a run of statements; no return/goto/
