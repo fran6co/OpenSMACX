@@ -72,12 +72,12 @@ class StringBox : public GraphicWin {
   // The visible-row budget. -1 from the constructor means "do not trim";
   // add_fixup deletes oldest entries while the list measures taller than
   // this many text lines.
-  uint32_t visible_rows_;
+  int visible_rows_;
   // The first visible line, kept in step with the scrollbar: on_scrolled
   // stores the WM_VSCROLL position here, add_fixup copies the clamped
   // position back from the Scroll after re-fitting, and on_redraw starts
   // drawing from this entry.
-  uint32_t top_line_;
+  int top_line_;
   Scroll scroll_;
   // An optional ALTERNATE StringList. add_fixup and on_redraw both read it
   // first and fall back to the embedded list when it is null, so measuring,

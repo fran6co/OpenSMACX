@@ -129,13 +129,13 @@ void StringBox::add_fixup() {
     }
     StringList *list = list_override_ != 0 ? list_override_ : &stringList_;
 
-    if (static_cast<int>(visible_rows_) > 0) {
+    if (visible_rows_ > 0) {
         int text_width = dib_.bmiHeader.biWidth;
         if ((scroll_.iSomeFlag_ & WinFlagVisible) != 0) {
             text_width -= scroll_.bar_thickness_;
         }
         while (write_strings_height(list, text_width, 0) / line_height >
-               static_cast<int>(visible_rows_)) {
+               visible_rows_) {
             list->seek_pos(0);
             if (list->head_ != 0) {
                 list->current_->next->previous = list->current_->previous;
@@ -246,7 +246,7 @@ void StringBox::on_redraw() {
         text_width -= scroll_.bar_thickness_;
     }
 
-    list.seek_pos(static_cast<int>(top_line_));
+    list.seek_pos(top_line_);
 
     if (per_line_draw_ == 0) {
         write_strings(&list, 0, 0, text_width, 2);
