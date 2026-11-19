@@ -31,6 +31,17 @@ typedef signed char int8;  // a scaffold spelling the artifacts use
 #include "basepop.h"  // Win::set_bubble_text's popup interfaces
 #include <ddraw.h>  // IDirectDrawSurface::GetDC / ReleaseDC in the hdc pair
 
+
+// ORIGINAL: 0x00635410 sub_635410 0x00635410-0x00635441 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:ddinit-global-lifetime", "Pinned native original0x635410", "historical source:src/recovered/units/00635410.cpp", "Fresh COFF symbols and helper references in both configured flag sets."], "reason": "Original635410 clears seven words of global9BE618 and registers635450. Current compiler-owned global initializer is independently observed _$E21 with startup and registration helpers _$E18/_$E20. Preserve historical single-body claim; helper splitting remains restoration work, not a pass."}
+// symbol    _$E16
+// ORIGINAL: 0x00635450 sub_635450 0x00635450-0x006354CA FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:ddinit-global-lifetime", "Pinned native original0x635450", "historical source:src/unrecovered/00635450.cpp", "Fresh COFF symbols and helper references in both configured flag sets."], "reason": "Original635450 cleanup belongs to global DDInit lifetime. Current compiler-owned exit _$E19 dispatches genuine destructor and teardown; original direct inline cleanup not presently reproduced. Seed stdcall-virtual-call insight is retained; named SDK COM methods supply that ABI. No new claim."}
+// symbol    _$E14
+// TRIED: falling off the end without a return (C4716, error under the scoring flags); "return 0" adds an extra "xor eax,eax" the original's bare "pop esi; ret" tail does not have (#36). Modelled the 3 vtable dispatches as raw __stdcall function pointers (COM-style, this pushed as an explicit arg) rather than the VCall thiscall shim, since the disassembly pushes "this" onto the stack instead of loading it into ecx.
+// RECOVERY_OBJECT: v1 0x009BE618 ?WinDisplayInit@@3VDDInit@@A
+DDInit WinDisplayInit;     // 0x009BE618
+
 // Native6354D0 leaves pitch untouched, including on nonstatic objects.
 // The global instance is separately zero-initialized by C++ static storage.
 // ORIGINAL: 0x006354D0 sub_6354d0 0x006354D0-0x006354E9 BYTE_EXACT
@@ -59,16 +70,6 @@ DDInit::~DDInit() {
 int DDInit::init_default_mode(int depth) {
     return init(0, 0, depth, 1);
 }
-
-// ORIGINAL: 0x00635410 sub_635410 0x00635410-0x00635441 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["task:ddinit-global-lifetime", "Pinned native original0x635410", "historical source:src/recovered/units/00635410.cpp", "Fresh COFF symbols and helper references in both configured flag sets."], "reason": "Original635410 clears seven words of global9BE618 and registers635450. Current compiler-owned global initializer is independently observed _$E21 with startup and registration helpers _$E18/_$E20. Preserve historical single-body claim; helper splitting remains restoration work, not a pass."}
-// symbol    _$E16
-// ORIGINAL: 0x00635450 sub_635450 0x00635450-0x006354CA FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["task:ddinit-global-lifetime", "Pinned native original0x635450", "historical source:src/unrecovered/00635450.cpp", "Fresh COFF symbols and helper references in both configured flag sets."], "reason": "Original635450 cleanup belongs to global DDInit lifetime. Current compiler-owned exit _$E19 dispatches genuine destructor and teardown; original direct inline cleanup not presently reproduced. Seed stdcall-virtual-call insight is retained; named SDK COM methods supply that ABI. No new claim."}
-// symbol    _$E14
-// TRIED: falling off the end without a return (C4716, error under the scoring flags); "return 0" adds an extra "xor eax,eax" the original's bare "pop esi; ret" tail does not have (#36). Modelled the 3 vtable dispatches as raw __stdcall function pointers (COM-style, this pushed as an explicit arg) rather than the VCall thiscall shim, since the disassembly pushes "this" onto the stack instead of loading it into ecx.
-// RECOVERY_OBJECT: v1 0x009BE618 ?WinDisplayInit@@3VDDInit@@A
-DDInit WinDisplayInit;     // 0x009BE618
 
 
 // The class name `UnregisterClassA` is handed at teardown - a THIRD copy of
@@ -268,6 +269,76 @@ void DDInit::teardown() {
     }
     locked_surface_ = nullptr;
     DDInitRefreshScreenMetrics();
+}
+
+
+
+// ===== homed from src/unrecovered/006357d0.cpp =====
+// The original calls CRT memset here; keep that target rather than a
+// reconstruction-only wrapper or an intrinsic expansion.
+// ORIGINAL: 0x006357D0 sub_6357d0 0x006357D0-0x00635835 FILE BYTE_EXACT
+// symbol    ?lock_surface@DDInit@@QAEPAXXZ
+// size      101 bytes
+// prototype
+// callers   0   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x006465F0
+// indirect  0x00635814
+// NAMED from the body and its address: it sits directly after
+// DDInit::teardown (0x00635750) and reads exactly DDInit's own
+// `locked_surface_`/`locked_bits_` pair at 0xC/0x10, so it is DDInit's
+// surface lock - the lock half of the same pair `teardown` unlocks.
+//
+// The descriptor is the SDK's own `DDSURFACEDESC` - 0x6C bytes, `lPitch` at
+// 0x10, `lpSurface` at 0x24, which is where the image reads. 0x21 is
+// DDLOCK_WAIT | DDLOCK_WRITEONLY, left as the literal: no other body here
+// spells that pair, so there is nothing to name it against.
+//
+// LEVER: the pitch is a REAL MEMBER. The scaffold reached it as
+// `*(int *)(self + 0x14)` - the one field the five-offset survey of
+// WinDisplayInit in win.h had not accounted for - and declaring `pitch_`
+// turned the raw store into the image's own `mov [esi+0x14], eax`.
+LPVOID DDInit::lock_surface() {
+    if (locked_surface_ == nullptr) {
+        return nullptr;
+    }
+    if (locked_bits_ != nullptr) {
+        return locked_bits_;
+    }
+    DDSURFACEDESC description;
+    memset(&description, 0, sizeof(description));
+    description.dwSize = sizeof(description);
+    if (locked_surface_->Lock(nullptr, &description, 0x21, nullptr) != 0) {
+        return nullptr;
+    }
+    pitch_ = description.lPitch;
+    locked_bits_ = description.lpSurface;
+    return locked_bits_;
+}
+
+
+// ===== homed from src/recovered/00635840.cpp =====
+// ORIGINAL: 0x00635840 sub_635840 0x00635840-0x00635864 BYTE_EXACT
+// symbol    ?flush@DDInit@@QAEXXZ
+// size      36 bytes
+// prototype
+// callers   0   call targets   0
+// kind       game
+// flags     sp_ready;purged_ok
+// calls     (none)
+// indirect  0x00635855
+// NAMED from its address and its fields: it sits between DDInit::teardown
+// (0x00635750) and DDInit::lock_surface (0x006357D0) and reads exactly
+// DDInit's locked_surface_ (0xC) / locked_bits_ (0x10) pair, calling the
+// surface's slot-0x80 Unlock - the unlock half of the pair as its own entry
+// point, which `teardown` repeats inline. The scaffold called the class
+// `Handler` because the scaffold did not know DDInit existed.
+void DDInit::flush() {
+    if (locked_surface_ != nullptr && locked_bits_ != nullptr) {
+        locked_surface_->Unlock(locked_bits_);
+        locked_bits_ = nullptr;
+    }
 }
 
 // The 101 literals report_error pushes (99 DDERR_ names, DDRAWERROR and jackal),
@@ -735,75 +806,5 @@ int DDInit::report_error(int hr) {
         return 0;
     }
     return cd_check();
-}
-
-
-
-// ===== homed from src/unrecovered/006357d0.cpp =====
-// The original calls CRT memset here; keep that target rather than a
-// reconstruction-only wrapper or an intrinsic expansion.
-// ORIGINAL: 0x006357D0 sub_6357d0 0x006357D0-0x00635835 FILE BYTE_EXACT
-// symbol    ?lock_surface@DDInit@@QAEPAXXZ
-// size      101 bytes
-// prototype
-// callers   0   call targets   1
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x006465F0
-// indirect  0x00635814
-// NAMED from the body and its address: it sits directly after
-// DDInit::teardown (0x00635750) and reads exactly DDInit's own
-// `locked_surface_`/`locked_bits_` pair at 0xC/0x10, so it is DDInit's
-// surface lock - the lock half of the same pair `teardown` unlocks.
-//
-// The descriptor is the SDK's own `DDSURFACEDESC` - 0x6C bytes, `lPitch` at
-// 0x10, `lpSurface` at 0x24, which is where the image reads. 0x21 is
-// DDLOCK_WAIT | DDLOCK_WRITEONLY, left as the literal: no other body here
-// spells that pair, so there is nothing to name it against.
-//
-// LEVER: the pitch is a REAL MEMBER. The scaffold reached it as
-// `*(int *)(self + 0x14)` - the one field the five-offset survey of
-// WinDisplayInit in win.h had not accounted for - and declaring `pitch_`
-// turned the raw store into the image's own `mov [esi+0x14], eax`.
-LPVOID DDInit::lock_surface() {
-    if (locked_surface_ == nullptr) {
-        return nullptr;
-    }
-    if (locked_bits_ != nullptr) {
-        return locked_bits_;
-    }
-    DDSURFACEDESC description;
-    memset(&description, 0, sizeof(description));
-    description.dwSize = sizeof(description);
-    if (locked_surface_->Lock(nullptr, &description, 0x21, nullptr) != 0) {
-        return nullptr;
-    }
-    pitch_ = description.lPitch;
-    locked_bits_ = description.lpSurface;
-    return locked_bits_;
-}
-
-
-// ===== homed from src/recovered/00635840.cpp =====
-// ORIGINAL: 0x00635840 sub_635840 0x00635840-0x00635864 BYTE_EXACT
-// symbol    ?flush@DDInit@@QAEXXZ
-// size      36 bytes
-// prototype
-// callers   0   call targets   0
-// kind       game
-// flags     sp_ready;purged_ok
-// calls     (none)
-// indirect  0x00635855
-// NAMED from its address and its fields: it sits between DDInit::teardown
-// (0x00635750) and DDInit::lock_surface (0x006357D0) and reads exactly
-// DDInit's locked_surface_ (0xC) / locked_bits_ (0x10) pair, calling the
-// surface's slot-0x80 Unlock - the unlock half of the pair as its own entry
-// point, which `teardown` repeats inline. The scaffold called the class
-// `Handler` because the scaffold did not know DDInit existed.
-void DDInit::flush() {
-    if (locked_surface_ != nullptr && locked_bits_ != nullptr) {
-        locked_surface_->Unlock(locked_bits_);
-        locked_bits_ = nullptr;
-    }
 }
 
