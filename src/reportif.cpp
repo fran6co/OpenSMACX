@@ -1604,7 +1604,7 @@ void ReportWin::on_group_clicked(int group, int, int state) {
 //   -0x28 bar RECT           -0x14 x                   -0x08 y
 //   (x and y are address-taken by get_mouse_pos at the end, so every store to
 //    them survives; that is why the image keeps them in memory throughout.)
-//   header block: -0x18 icon_x / saved bar right, -0x34 icon_y, -0x04 rate,
+//   header block: -0x18 icon_x / saved bar right, -0x34 icon_y, -0x04 v_4,
 //                 -0x10 accumulated, -0xd8 reportwin_append_number buffer
 //   chart/lab block: -0x18 tech, -0x84/-0x80 prerequisite1/2, -0x10 count,
 //                 -0x0c i, -0x10 pass, -0x04 section index, -0xc8 id[64]
@@ -1612,10 +1612,12 @@ void ReportWin::on_group_clicked(int group, int, int state) {
 //   prerequisite scan, has_tech/say_tech of the status rows and the -1 test),
 //   while -0x18 serves the category label, tech_recurse and section compares.
 //   That looks like an inline-helper parameter copy; one variable is used here.
-//   UNSURE: rate (-0x04) / section index (-0x04), accumulated (-0x10) / count /
+//   UNSURE: v_4 (-0x04) / section index (-0x04), accumulated (-0x10) / count /
 //   pass (-0x10) and the child index / host+0x444 (-0x0c) share slots in the
 //   image; block scopes are used below so VC6 can overlap them.
 void ReportWin::draw_labs() {
+    // [ebp-0x04] (imgmerge.py, par-6): the image keeps the tech rate and the item scan index in one home
+    int v_4;
     // Seven technology ids in one array: the tech itself, its two
     // prerequisites and up to four children (image [ebp-0x88]..[ebp-0x70]).
     int ids[7];
@@ -1696,7 +1698,7 @@ void ReportWin::draw_labs() {
         field_A30_ = field_A28_ + 0xBE;
         field_A34_ = field_A2C_ + 0xAE;
         energy_compute(faction, 0);
-        int rate = tech_rate(faction);
+        v_4 = tech_rate(faction);
         // UNSURE: the image stores x, then y, around the accumulated load.
         x = header.left + 3;
         y = header.top + 5;
@@ -1797,7 +1799,7 @@ void ReportWin::draw_labs() {
         {
             long bar_right = bar.right;
             bar.right = range(bar.left
-                    + (bar_right - bar.left) * accumulated / rate,
+                    + (bar_right - bar.left) * accumulated / v_4,
                     bar.left, bar_right);
         }
         Buffer::set_clip(&bar);
@@ -1823,7 +1825,7 @@ void ReportWin::draw_labs() {
         {
             // UNSURE: the image reads the old bar.left before storing the new
             // one (0x499272/0x499275), so the width term is formed first.
-            int next = (right - bar.left) * EnergyLabsTotal / 100 / rate;
+            int next = (right - bar.left) * EnergyLabsTotal / 100 / v_4;
             bar.left = bar.right;
             bar.right = range(bar.left + next, bar.left, right);
         }
@@ -1861,7 +1863,7 @@ void ReportWin::draw_labs() {
         if (EnergyLabsTotal == 0) {
             turns = 9999;
         } else {
-            turns = (range(rate - accumulated, 0, 99999999) * 100
+            turns = (range(v_4 - accumulated, 0, 99999999) * 100
                      + EnergyLabsTotal - 1) / EnergyLabsTotal;
         }
         parse_num(0, turns);
@@ -2098,7 +2100,6 @@ void ReportWin::draw_labs() {
     field_A24_ = 0;
     for (int pass = 0; pass < 2; pass++) {
         char id[64];  // UNSURE: size from the frame gap (-0xc8 .. -0x88)
-        int i;
 
         // 0x499FE3..0x49A12C: first status row.
         host->Buffer::set_font(ReportIfGlobal.field_1E19C_,
@@ -2175,8 +2176,8 @@ void ReportWin::draw_labs() {
 
             // 0x49A37B..0x49A4E2: reactors.
             StringTemp[0] = 0;
-            for (i = 0; i < 4; i++) {
-                if (Reactor[i].preq_tech == tech) {
+            for (v_4 = 0; v_4 < 4; v_4++) {
+                if (Reactor[v_4].preq_tech == tech) {
                     if (!StringTemp[0]) {
                         strcat(StringTemp, label_get(0x234 / 4));
                         strcat(StringTemp, SocialWinColonSpaceText);
@@ -2184,11 +2185,11 @@ void ReportWin::draw_labs() {
                         strcat(StringTemp, SocialWinCommaSpaceText);
                     }
                     if (!datalink) {
-                        strcat(StringTemp, StringTable.get(Reactor[i].name));
+                        strcat(StringTemp, StringTable.get(Reactor[v_4].name));
                     } else {
                         // Reactor link ids are one-based.
-                        DatalinkMain.construct_id(id, 5, i + 1);
-                        LPSTR name = StringTable.get(Reactor[i].name);
+                        DatalinkMain.construct_id(id, 5, v_4 + 1);
+                        LPSTR name = StringTable.get(Reactor[v_4].name);
                         help_create_link(StringTemp, name, id);
                     }
                 }
@@ -2205,8 +2206,8 @@ void ReportWin::draw_labs() {
 
             // 0x49A4E8..0x49A6B6: chassis.
             StringTemp[0] = 0;
-            for (i = 0; i < 9; i++) {
-                if (Chassis[i].preq_tech == tech) {
+            for (v_4 = 0; v_4 < 9; v_4++) {
+                if (Chassis[v_4].preq_tech == tech) {
                     if (!StringTemp[0]) {
                         strcat(StringTemp, label_get(0x120 / 4));
                         strcat(StringTemp, SocialWinColonSpaceText);
@@ -2215,19 +2216,19 @@ void ReportWin::draw_labs() {
                     }
                     if (!datalink) {
                         strcat(StringTemp,
-                               table_text(Chassis[i].offsv_1_name));
+                               table_text(Chassis[v_4].offsv_1_name));
                     } else {
-                        DatalinkMain.construct_id(id, 4, i);
-                        LPSTR name = StringTable.get(Chassis[i].offsv_1_name);
+                        DatalinkMain.construct_id(id, 4, v_4);
+                        LPSTR name = StringTable.get(Chassis[v_4].offsv_1_name);
                         help_create_link(StringTemp, name, id);
                     }
                     // Pinned 0x49A5FC/0x49A606: kind, then the raw name, on
                     // both passes.
                     TechnologyHelpEntryKind = 0x62;
-                    TechnologyHelpEntryName = Chassis[i].offsv_1_name;
+                    TechnologyHelpEntryName = Chassis[v_4].offsv_1_name;
                     strcat(StringTemp, BufferJoinSpace);
                     strcat(StringTemp, SocialWinOpenParenText);
-                    say_num(Chassis[i].speed);
+                    say_num(Chassis[v_4].speed);
                     strcat(StringTemp, SocialWinCloseParenText);
                 }
             }
@@ -2243,8 +2244,8 @@ void ReportWin::draw_labs() {
 
             // 0x49A6BC..0x49A8CA: weapons.
             StringTemp[0] = 0;
-            for (i = 0; i < 26; i++) {
-                if (Weapon[i].preq_tech == tech) {
+            for (v_4 = 0; v_4 < 26; v_4++) {
+                if (Weapon[v_4].preq_tech == tech) {
                     if (!StringTemp[0]) {
                         strcat(StringTemp, label_get(0x124 / 4));
                         strcat(StringTemp, SocialWinColonSpaceText);
@@ -2252,22 +2253,22 @@ void ReportWin::draw_labs() {
                         strcat(StringTemp, SocialWinCommaSpaceText);
                     }
                     if (!datalink) {
-                        strcat(StringTemp, table_text(Weapon[i].name));
+                        strcat(StringTemp, table_text(Weapon[v_4].name));
                     } else {
-                        DatalinkMain.construct_id(id, 6, i);
-                        LPSTR name = StringTable.get(Weapon[i].name);
+                        DatalinkMain.construct_id(id, 6, v_4);
+                        LPSTR name = StringTable.get(Weapon[v_4].name);
                         help_create_link(StringTemp, name, id);
                     }
                     TechnologyHelpEntryKind = 0x63;
-                    TechnologyHelpEntryName = Weapon[i].name;
+                    TechnologyHelpEntryName = Weapon[v_4].name;
                     strcat(StringTemp, BufferJoinSpace);
                     strcat(StringTemp, SocialWinOpenParenText);
                     // The two label arms share their get/strcat tail.
-                    if (Weapon[i].offense_rating < 0) {
+                    if (Weapon[v_4].offense_rating < 0) {
                         strcat(StringTemp, label_get(0x310 / 4));
-                    } else if (Weapon[i].mode < 3) {
+                    } else if (Weapon[v_4].mode < 3) {
                         say_num(
-                                                Weapon[i].offense_rating);
+                                                Weapon[v_4].offense_rating);
                     } else {
                         strcat(StringTemp, label_get(0x200 / 4));
                     }
@@ -2286,8 +2287,8 @@ void ReportWin::draw_labs() {
 
             // 0x49A8D0..0x49AACA: armor.
             StringTemp[0] = 0;
-            for (i = 0; i < 14; i++) {
-                if (Armor[i].preq_tech == tech) {
+            for (v_4 = 0; v_4 < 14; v_4++) {
+                if (Armor[v_4].preq_tech == tech) {
                     if (!StringTemp[0]) {
                         strcat(StringTemp, label_get(0x128 / 4));
                         strcat(StringTemp, SocialWinColonSpaceText);
@@ -2295,21 +2296,21 @@ void ReportWin::draw_labs() {
                         strcat(StringTemp, SocialWinCommaSpaceText);
                     }
                     if (!datalink) {
-                        strcat(StringTemp, table_text(Armor[i].name));
+                        strcat(StringTemp, table_text(Armor[v_4].name));
                     } else {
-                        DatalinkMain.construct_id(id, 7, i);
-                        LPSTR name = StringTable.get(Armor[i].name);
+                        DatalinkMain.construct_id(id, 7, v_4);
+                        LPSTR name = StringTable.get(Armor[v_4].name);
                         help_create_link(StringTemp, name, id);
                     }
                     TechnologyHelpEntryKind = 0x64;
-                    TechnologyHelpEntryName = Armor[i].name;
+                    TechnologyHelpEntryName = Armor[v_4].name;
                     strcat(StringTemp, BufferJoinSpace);
                     strcat(StringTemp, SocialWinOpenParenText);
-                    if (Armor[i].defense_rating < 0) {
+                    if (Armor[v_4].defense_rating < 0) {
                         strcat(StringTemp, label_get(0x310 / 4));
                     } else {
                         say_num(
-                                                Armor[i].defense_rating);
+                                                Armor[v_4].defense_rating);
                     }
                     strcat(StringTemp, SocialWinCloseParenText);
                 }
@@ -2326,8 +2327,8 @@ void ReportWin::draw_labs() {
 
             // 0x49AAD0..0x49AC35: abilities.
             StringTemp[0] = 0;
-            for (i = 0; i < 29; i++) {
-                if (Ability[i].preq_tech == tech) {
+            for (v_4 = 0; v_4 < 29; v_4++) {
+                if (Ability[v_4].preq_tech == tech) {
                     if (!StringTemp[0]) {
                         strcat(StringTemp, label_get(0x12C / 4));
                         strcat(StringTemp, SocialWinColonSpaceText);
@@ -2335,10 +2336,10 @@ void ReportWin::draw_labs() {
                         strcat(StringTemp, SocialWinCommaSpaceText);
                     }
                     if (!datalink) {
-                        strcat(StringTemp, StringTable.get(Ability[i].name));
+                        strcat(StringTemp, StringTable.get(Ability[v_4].name));
                     } else {
-                        DatalinkMain.construct_id(id, 8, i);
-                        LPSTR name = StringTable.get(Ability[i].name);
+                        DatalinkMain.construct_id(id, 8, v_4);
+                        LPSTR name = StringTable.get(Ability[v_4].name);
                         help_create_link(StringTemp, name, id);
                     }
                 }
@@ -2356,9 +2357,9 @@ void ReportWin::draw_labs() {
             // 0x49AC3B..0x49AD80: predefined prototypes. Genuine original:
             // all 64 prototype rows are scanned (0x9AB868..0x9AC568).
             StringTemp[0] = 0;
-            for (i = 0; i < 64; i++) {
-                if ((VehPrototypes[i].flags & 1)
-                    && VehPrototypes[i].preq_tech == tech) {
+            for (v_4 = 0; v_4 < 64; v_4++) {
+                if ((VehPrototypes[v_4].flags & 1)
+                    && VehPrototypes[v_4].preq_tech == tech) {
                     if (!StringTemp[0]) {
                         strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x318 / 4]));
                         strcat(StringTemp, SocialWinColonSpaceText);
@@ -2366,10 +2367,10 @@ void ReportWin::draw_labs() {
                         strcat(StringTemp, SocialWinCommaSpaceText);
                     }
                     if (!datalink) {
-                        strcat(StringTemp, VehPrototypes[i].veh_name);
+                        strcat(StringTemp, VehPrototypes[v_4].veh_name);
                     } else {
-                        DatalinkMain.construct_id(id, 3, i);
-                        help_create_link(StringTemp, VehPrototypes[i].veh_name, id);
+                        DatalinkMain.construct_id(id, 3, v_4);
+                        help_create_link(StringTemp, VehPrototypes[v_4].veh_name, id);
                     }
                 }
             }
@@ -2385,9 +2386,9 @@ void ReportWin::draw_labs() {
 
             // 0x49AD86..0x49AF76: facilities 1..133.
             StringTemp[0] = 0;
-            for (i = 1; i < 134; i++) {
-                if (Facility[i].preq_tech == tech
-                    || Facility[i].free_tech == tech) {
+            for (v_4 = 1; v_4 < 134; v_4++) {
+                if (Facility[v_4].preq_tech == tech
+                    || Facility[v_4].free_tech == tech) {
                     if (!StringTemp[0]) {
                         strcat(StringTemp, label_get(0x110 / 4));
                         strcat(StringTemp, SocialWinColonSpaceText);
@@ -2396,21 +2397,21 @@ void ReportWin::draw_labs() {
                     }
                     // Genuine original: the opening parenthesis of the
                     // free-facility note precedes the facility name.
-                    if (Facility[i].free_tech == tech) {
+                    if (Facility[v_4].free_tech == tech) {
                         strcat(StringTemp, SocialWinOpenParenText);
                     }
                     if (!datalink) {
-                        strcat(StringTemp, StringTable.get(Facility[i].name));
+                        strcat(StringTemp, StringTable.get(Facility[v_4].name));
                     } else {
-                        if (i < 70) {
-                            DatalinkMain.construct_id(id, 0xA, i);
+                        if (v_4 < 70) {
+                            DatalinkMain.construct_id(id, 0xA, v_4);
                         } else {
-                            DatalinkMain.construct_id(id, 0xB, i);
+                            DatalinkMain.construct_id(id, 0xB, v_4);
                         }
-                        LPSTR name = StringTable.get(Facility[i].name);
+                        LPSTR name = StringTable.get(Facility[v_4].name);
                         help_create_link(StringTemp, name, id);
                     }
-                    if (Facility[i].free_tech == tech) {
+                    if (Facility[v_4].free_tech == tech) {
                         strcat(StringTemp, BufferJoinSpace);
                         strcat(StringTemp, label_get(0x4DC / 4));
                         strcat(StringTemp, SocialWinCloseParenText);
@@ -2431,9 +2432,9 @@ void ReportWin::draw_labs() {
             // section is flushed after every match without clearing
             // StringTemp, so the accumulated text is wrapped again each time.
             StringTemp[0] = 0;
-            for (i = 0; i < 4; i++) {
+            for (v_4 = 0; v_4 < 4; v_4++) {
                 for (int j = 0; j < 4; j++) {
-                    if (SocialCategories[i].preq_tech[j] == tech) {
+                    if (SocialCategories[v_4].preq_tech[j] == tech) {
                         if (!StringTemp[0]) {
                             strcat(StringTemp, label_get(0x118 / 4));
                             strcat(StringTemp, SocialWinColonSpaceText);
@@ -2445,10 +2446,10 @@ void ReportWin::draw_labs() {
                         // merged would leave exactly that test.
                         if (!datalink) {
                             strcat(StringTemp, StringTable.get(
-                                SocialCategories[i].name[j]));
+                                SocialCategories[v_4].name[j]));
                         } else {
                             strcat(StringTemp, StringTable.get(
-                                SocialCategories[i].name[j]));
+                                SocialCategories[v_4].name[j]));
                         }
                         if (StringTemp[0]) {
                             if (pass) {
@@ -2465,8 +2466,8 @@ void ReportWin::draw_labs() {
 
             // 0x49B083..0x49B162: citizens. Same per-match flush; no link.
             StringTemp[0] = 0;
-            for (i = 0; i < 7; i++) {
-                if (Citizen[i].preq_tech == tech) {
+            for (v_4 = 0; v_4 < 7; v_4++) {
+                if (Citizen[v_4].preq_tech == tech) {
                     if (!StringTemp[0]) {
                         strcat(StringTemp, label_get(0x4CC / 4));
                         strcat(StringTemp, SocialWinColonSpaceText);
@@ -2474,7 +2475,7 @@ void ReportWin::draw_labs() {
                         strcat(StringTemp, SocialWinCommaSpaceText);
                     }
                     strcat(StringTemp,
-                           StringTable.get(Citizen[i].singular_name));
+                           StringTable.get(Citizen[v_4].singular_name));
                     if (StringTemp[0]) {
                         if (pass) {
                             y = host->Buffer::wrap(StringTemp, x + 3, y,
