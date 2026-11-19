@@ -49,6 +49,14 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   CSE'd values) as candidates, since those are usually the candidate a source-only count misses. Screen only:
   on 50 exact functions it orders 64% of interfering register pairs right (strength-reduced loop counters,
   address CSEs that replace an index, and constant pieces are the misses).
+- `analysis/ivscan.py <unit> <addr[,..]> | --tree [unit ..] [--all] [--json F]` induction-step census of both sides
+  (MATCHING_GUIDE 2.7 "Strength reduction is a candidate-set question"): every `add/sub/lea/inc/dec` of a register (or
+  `add dword ptr [slot], K`) inside a natural loop, at any stride and sign, whose register is used as an address or
+  written back to a home that is, keyed (sign, stride); prints the strides one side steps and the other does not, with
+  image addresses and our source lines. Steps in latch blocks only by default (`IV_ANYBLOCK=1` counts every loop
+  block); the two filters disagree on loop-rotation and value adds, so trust a stride that both report. 75 s
+  tree-wide with --all on 5 lanes; validated: no BYTE_EXACT function reports a difference. 2026-11-19: after
+  setup_game no second clean "image steps a struct pointer ours recomputes" case remains outside NetDaemon::synch.
 - `analysis/candset.py <unit> <addr> [--src ALT.cpp] [--min N] [--quiet]` the register candidates VC6 actually
   formed, read from the code of both sides: every callee-saved web (reaching definitions over the CFG) named by
   its role (`this`, `lea:this+K`, `[slot]{name}` piece, `#K`, `ret@line`), scored by rule 4/4b at instruction
