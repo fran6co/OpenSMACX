@@ -234,21 +234,22 @@ int NetSessionPickerWin::initialize(Net *network, char *caption,
   action_button_.set_font(font, 0, 0, 0);
   action_button_.redraw();
 
-  rect.top += button_height + margin_y;
-  rect.bottom += button_height + margin_y;
-  int create_height = rect.bottom - rect.top;
+  offset_rect(&rect, 0, button_height + margin_y);
+  button_height = rect.bottom - rect.top;
   result = create_button_.init("Create Session (Translate)",
                                0, rect.left, rect.top, button_width,
-                               create_height, this, 0);
+                               button_height, this, 0);
   if (result != 0) return result;
   create_button_.set_font(font, 0, 0, 0);
   create_button_.redraw();
 
-  rect.top += button_height + margin_y;
-  rect.bottom += button_height + margin_y;
-  // The image passes the create button's height as the cancel width.
+  offset_rect(&rect, 0, button_height + margin_y);
+  // 0x0063C138: the width pushed is button_width, reloaded from its home
+  // (caption's dead slot); the height home (network's dead slot) was
+  // rewritten with the create button's height at 0x0063C0EF and supplies
+  // this step.
   result = cancel_button_.init(BasePopDefaultCancelText, -2, rect.left,
-                               rect.top, create_height, rect.bottom - rect.top,
+                               rect.top, button_width, rect.bottom - rect.top,
                                this, 0);
   if (result != 0) return result;
   cancel_button_.set_font(font, 0, 0, 0);
