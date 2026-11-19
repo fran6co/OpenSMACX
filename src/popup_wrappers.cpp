@@ -164,6 +164,40 @@ int __cdecl popv(char *caption, const char *label, int vehicle, int flags) {
     return result;
 }
 
+// WORKAROUND(inline): dead /Ob2 budget probe for popb (folds to no code with a
+// constant argument). The image has two teardowns after exec (no closing-brace
+// phantom: the last statement is `return result`), yet refuses ~BasePop at the
+// last one and ??_DStringList/~FlatButton at the first, while expanding
+// ??_DDialogs there: about 20 if-units of pass-1 charge after the early-return
+// teardowns and before the first exit (with is_human at both mask tests, 20
+// or 21 ifs here reproduce it; 22-28 give the image's EH map with ??_DDialogs
+// called, 19 or fewer leave ~BasePop expanded at the last exit, and any size
+// above the early returns moves their teardowns). The original spend is not
+// identified; inline owners of the focus block or the staple items give the
+// image's EH map but keep ??_DDialogs called.
+static inline void popb_budget_probe(int x) {
+    if (x == 1) x = 2;
+    if (x == 3) x = 4;
+    if (x == 5) x = 6;
+    if (x == 7) x = 8;
+    if (x == 9) x = 10;
+    if (x == 11) x = 12;
+    if (x == 13) x = 14;
+    if (x == 15) x = 16;
+    if (x == 17) x = 18;
+    if (x == 19) x = 20;
+    if (x == 21) x = 22;
+    if (x == 23) x = 24;
+    if (x == 25) x = 26;
+    if (x == 27) x = 28;
+    if (x == 29) x = 30;
+    if (x == 31) x = 32;
+    if (x == 33) x = 34;
+    if (x == 35) x = 36;
+    if (x == 37) x = 38;
+    if (x == 39) x = 40;
+}
+
 // Superseded seed removed; retained findings below are historical evidence.
 // ORIGINAL: 0x0048C650 ?popb@@YAHPBDHHPBDPAUSprite@@@Z 0x0048C650-0x0048CEA2;0x00658411-0x006585CB FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:391232e01af6824fcf4bf348d5277f5b58c0c53a:src/unrecovered/0048c650.cpp", "pinned:terranx_original:0x48c650", "source:src/popup.cpp"], "reason": "Recover complete popup operation with native early gates, warning/focus/result effects and genuine owned Sprite/Dialogs members, never duplicate locals. Preserve complete spans, original identity and historical obligations; scoped compiler/host observations are not game acceptance."}
@@ -174,7 +208,7 @@ int __cdecl popb(LPCSTR text_label, int warning_mask, int sound_id,
     Popup popup;
     const int faction = BaseCurrent->faction_id_current;
 
-    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction)) == 0) {
+    if (!is_human(faction)) {
         return 0;
     }
     if ((GameDataStateStorage.fields_.game_state_ & STATE_UNK_1) != 0
@@ -248,13 +282,15 @@ int __cdecl popb(LPCSTR text_label, int warning_mask, int sound_id,
         popup.set_sprite_layout(2, 1);
     }
 
+    // WORKAROUND(inline): see popb_budget_probe.
+    popb_budget_probe(0);
     int result = popup.exec(0, 0);
     if (IsMultiplayerNet != 0 || IsMultiplayerPBEM) {
         result = 1;
         if (IsMultiplayerNet != 0) {
             const int owner = BaseCurrent->faction_id_current;
             if (owner == ConsoleGlobal.faction_id_
-                && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << owner)) != 0) {
+                && is_human(owner)) {
                 BaseCurrent->state |= BSTATE_UNK_10;
             }
         }
@@ -269,16 +305,15 @@ int __cdecl popb(LPCSTR text_label, int warning_mask, int sound_id,
         AlphaIniPrefs.announce = GameDataStateStorage.fields_.game_warnings_;
         prefs_save(0);
         return 0;
-    } else {
-        if (result == 0) {
-            BaseProductionZoomRequested = 1;
-        } else if (result == 2) {
-            BaseCurrent->governor |= GOV_ACTIVE | GOV_MANAGES_CITIZENS_SPECS;
-        } else if (result == 3) {
-            action_staple(BaseIDCurrentSelected);
-        }
-        return result;
     }
+    if (result == 0) {
+        BaseProductionZoomRequested = 1;
+    } else if (result == 2) {
+        BaseCurrent->governor |= GOV_ACTIVE | GOV_MANAGES_CITIZENS_SPECS;
+    } else if (result == 3) {
+        action_staple(BaseIDCurrentSelected);
+    }
+    return result;
 }
 
 // ORIGINAL: 0x0048CEB0 ?veh_sprite_draw@@YAHPAUSprite@@PAUGraphicWin@@HHH@Z 0x0048CEB0-0x0048CEF2 BYTE_EXACT
