@@ -39,7 +39,13 @@ extern char StringTemp[1032];    // 0x009B86A0
 MEASURED inline void __cdecl clear() {   // 00500120
     StringTemp[0] = 0;
 }
-void __cdecl says(const char *text);
+// says() is the same kind of header inline as clear() (its out-of-line copy
+// 0x00500130 sits next to clear's): the image calls it out of line only from
+// the same budget-exhausted giants (base_build 1, battle_fight 4,
+// communicate 33, probe 21) and expands `strcat(StringTemp, text)` elsewhere.
+MEASURED inline void __cdecl says(const char *text) {   // 00500130
+    strcat(StringTemp, text);
+}
 
 void __cdecl say_reactor(char *output, int reactor_id, int with_detail);
 void __cdecl say_weapon(char *output, int weapon_id, int with_detail);
