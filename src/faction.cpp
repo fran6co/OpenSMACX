@@ -2469,7 +2469,7 @@ void __cdecl diplomacy_check(int faction, int other, int update) {
         int other_bases = PlayersData[other].region_total_bases[region];
         int faction_vehicles = PlayersData[faction].region_total_combat_vehs[region];
         int other_vehicles = PlayersData[other].region_total_combat_vehs[region];
-        if ((!faction_vehicles && !faction_bases) || (!other_vehicles && !other_bases)) {
+        if ((!faction_vehicles && !faction_bases) || (!other_vehicles && !PlayersData[other].region_total_bases[region])) {
             continue;
         }
         int other_weapon = PlayersData[other].best_weapon_value + 1;
@@ -2770,12 +2770,11 @@ void __cdecl diplomacy_check(int faction, int other, int update) {
             }
         } else {
             DiploScratchF808++;
-            int ally_strength = PlayersData[ally].mil_strength_1;
             int strength = PlayersData[other].mil_strength_1;
-            DiploScratchFA9C += (strength / 2 + ally_strength) * 2 / (strength + 1);
+            DiploScratchFA9C += (strength / 2 + PlayersData[ally].mil_strength_1) * 2 / (strength + 1);
             uint32_t faction_treaty = PlayersData[faction].diplo_treaties[ally];
             if (FactionDiplomacyFlags[other] & 0x40) {
-                if ((faction_treaty & 0x18) == 8 && ally_strength > strength) {
+                if ((faction_treaty & 0x18) == 8 && PlayersData[ally].mil_strength_1 > strength) {
                     DiploScratchF7E8 = ally;
                 }
             } else if (!(faction_treaty & 0x10)
@@ -2784,7 +2783,7 @@ void __cdecl diplomacy_check(int faction, int other, int update) {
                 DiploScratchF7E8 = ally;
             } else if (!DiploScratchF7E8 && update && !(faction_treaty & 8)
                 && !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & bit)) {
-                if (ally_strength > strength || !wants_to_attack(other, ally, 0) || DiploScratchFA98) {
+                if (PlayersData[ally].mil_strength_1 > strength || !wants_to_attack(other, ally, 0) || DiploScratchFA98) {
                     DiploScratchF7D4 = ally;
                 }
             }
