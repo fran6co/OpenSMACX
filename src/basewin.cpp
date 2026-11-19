@@ -4966,6 +4966,7 @@ void BaseWin::draw_expenses(int update_mode) {
     int energy_ineff;
     int mineral;
     int span;
+    int total;
     int energy_cost;
     RECT title;
     RECT tile;
@@ -5012,9 +5013,9 @@ void BaseWin::draw_expenses(int update_mode) {
     mineral_cost = BaseCurrent->mineral_inefficiency + mineral_cons;
     mineral = BaseCurrent->mineral_surplus;
 
-    span = max(EXPENSE_ABS(energy) + energy_cost,
+    total = max(EXPENSE_ABS(energy) + energy_cost,
                max(EXPENSE_ABS(mineral) + mineral_cost, EXPENSE_ABS(nutrient) + count));
-    unit = (int)max(1.0f, min(5.0f, 194.0f / span));
+    unit = (int)max(1.0f, min(5.0f, 194.0f / total));
     span = 194 / unit + 1;
     width = unit * span;
 
