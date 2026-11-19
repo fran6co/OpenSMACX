@@ -421,14 +421,6 @@ void PickWin::init(void (__cdecl *callback)(int), int mode, int faction) {
   buttonGroup_.set(0x104, 1);
 }
 
-// WORKAROUND(inline): dead /Ob2 budget probe (folds to no code). With the
-// image's inline ~Dialogs, on_button_clicked still lacks about five budget
-// units after its two text_open early returns; the image calls ~Scroll out of
-// line there (0x00489D16) and shares one tail, which this spend reproduces.
-static inline void pickwin_budget_probe(int x) {
-  if (x == 1) x = 2;
-  if (x == 3) x = 4;
-}
 
 // ORIGINAL: 0x00489BA0 ?on_button_clicked@PickWin@@QAEXH@Z 0x00489BA0-0x0048A798;0x00657F85-0x006581C9
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00489ba0.cpp"], "reason": "Recover genuine typed PickWin owner behavior and automatic subobject lifetime from pinned native flow and preserved seed; historical identity and restoration obligations retained, no exactness claim."}
@@ -475,13 +467,13 @@ void PickWin::on_button_clicked(int button) {
           is_alive(faction)) {
         StringTemp[0] = '\0';
         if (strcmp(Players[faction].filename, "JENN282") != 0) {
-          strcat(StringTemp, Players[faction].formal_name_faction);
-          strcat(StringTemp, "|");
-          strcat(StringTemp, SocialWinOpenParenText);
-          strcat(StringTemp, Players[faction].desc_name_faction);
-          strcat(StringTemp, SocialWinCloseParenText);
+          says(Players[faction].formal_name_faction);
+          says("|");
+          says(SocialWinOpenParenText);
+          says(Players[faction].desc_name_faction);
+          says(SocialWinCloseParenText);
         } else {
-          strcat(StringTemp, label_get(0x462));
+          say_label(0x462);
         }
         listBox_.item(StringTemp, faction);
       }
@@ -510,8 +502,6 @@ void PickWin::on_button_clicked(int button) {
     break;
 
   case 0x103:
-    pickwin_budget_probe(0); pickwin_budget_probe(0); pickwin_budget_probe(0);
-    pickwin_budget_probe(0); pickwin_budget_probe(0);
     field_5DA8_ = static_cast<uint32_t>(-1);
     field_5DA4_ = 0;
     release_modal();
@@ -542,7 +532,7 @@ void PickWin::on_button_clicked(int button) {
         menu.dialogs().item(faction_menu_items_[index], index);
       }
       StringTemp[0] = '\0';
-      strcat(StringTemp, label_get(0x462));
+      say_label(0x462);
       menu.dialogs().item(StringTemp, static_cast<int>(field_5DB0_) + 14);
       const int chosen = menu.exec(x, y, 0);
       flatButtons10_[button - 0x3039].field_A74_ = 0;
@@ -571,13 +561,13 @@ void PickWin::on_button_clicked(int button) {
             is_alive(row)) {
           StringTemp[0] = '\0';
           if (strcmp(Players[row].filename, "JENN282") != 0) {
-            strcat(StringTemp, Players[row].formal_name_faction);
-            strcat(StringTemp, "|");
-            strcat(StringTemp, SocialWinOpenParenText);
-            strcat(StringTemp, Players[row].desc_name_faction);
-            strcat(StringTemp, SocialWinCloseParenText);
+            says(Players[row].formal_name_faction);
+            says("|");
+            says(SocialWinOpenParenText);
+            says(Players[row].desc_name_faction);
+            says(SocialWinCloseParenText);
           } else {
-            strcat(StringTemp, label_get(0x462));
+            say_label(0x462);
           }
           listBox_.item(StringTemp, row);
         }
