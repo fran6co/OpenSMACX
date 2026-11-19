@@ -231,7 +231,18 @@ without `/Oy-`).
   after the first function in the unit that calls it out of line; if every
   caller expands it, no copy is emitted. The copy's image position therefore
   names the function that needed it. A 219-byte plain member
-  (StatusWin::redraw) is never auto-inlined.
+  (StatusWin::redraw) is never auto-inlined. Caveat (2026-11-19 par-2): in
+  the image many copies sit in an end-of-unit cluster instead, after the
+  unit's destructors and before its `??_E` adjustor thunks: datalink's
+  ~ButtonGroup/~StringBox/~Flic copies (0x4325B0..) follow ~Datalink
+  although ??0Datalink, the unit's first function, jumps to them from its
+  unwind funclets; Popup::start's 5-argument copy 0x43EF70 follows
+  ~SelectPartWin although select_special calls it. A copy at a unit's end
+  is not evidence for a plain function defined there. The 5-argument start
+  stays a header inline: made a plain member (defined in designwin.cpp,
+  every other site spelled with the sixth argument), popp 0x0048C0A0,
+  destroy, editor_diplomacy and seven more exact functions lose their
+  teardown decisions, so its expansions are load-bearing spend.
 - **Out of line at one site:** `(obj.*&C::f)()` still expands a header inline;
   a non-const local member pointer `void (C::*p)() = &C::f; (obj.*p)();`
   keeps the call (NetDaemon::reset in menu_proc).
@@ -2249,6 +2260,20 @@ Using it
   boundary, or the same statement run in other functions), not for spend.
   battle_fight's population-loss test as an inline predicate turns
   has_project and veh_who into calls as in the image.
+- **In a giant, caller size takes room away** (high; battle_fight
+  0x00506AF0, 2026-11-19 par-2). Rule 2's "B grows with the caller" stops
+  at the top: in battle_fight every added statement *removes* expansions,
+  wherever it is placed (top or last block) and whether it is live (`g = K;`)
+  or dead (`if (0) { g = K; }`, which counts about twice a store). 1-12
+  stores move nothing, 16 refuse is_ocean/base_who/range/veh_top sites,
+  32 dead blocks change a dozen callees. Deleting about 20 call-free
+  statements closes the image's last pass-1 sites (map_loc, veh_health x2,
+  veh_top at 0x50AAE0..0x50AB9B). So the original giant was *smaller* (or
+  its statements cheaper) than ours: never look for compiled-out debug
+  code or `if (0)` blocks to explain missing room in a giant; look for
+  statements our source has and the original did not, or that the
+  original spelled with fewer nodes. Writing repeated chassis/triad reads
+  as the veh.h getters (is_missile, get_triad) charges more than it saves.
 - **When to stop.** Dead probes that change other teardowns before they move
   the target mean that pass 1 is the binding limit, not pass 2. Look for a
   structural difference: which object owns the teardown, or a per-TU header
