@@ -2760,16 +2760,6 @@ inline void load_game_reload_faction_art() {
     }
     load_flags();
 }
-// WORKAROUND(inline): dead /Ob2 budget probe; folds to nothing. The image's
-// password-return teardown (0x005AB19A) is as shallow as the first one.
-// get_title/get_name at the parse slots supply most of that spend; four
-// one-test expansions after the password return supply the rest (one
-// 32-test chain before the return did too).
-static inline int load_game_budget_probe(int x)
-{
-    if (x == 0) x = 1;
-    return x;
-}
 
 /*
 // ORIGINAL: 0x005A9EB0 ?save_game@@YAHH@Z 0x005A9EB0-0x005AAAA9;0x00661B40-0x00661E84 FILE
@@ -3054,24 +3044,20 @@ again:
             }
             return 5;
         }
-        load_game_budget_probe(1000);  // WORKAROUND(inline): see load_game_budget_probe
-        load_game_budget_probe(1001);  // WORKAROUND(inline)
-        load_game_budget_probe(1002);  // WORKAROUND(inline)
-        load_game_budget_probe(1003);  // WORKAROUND(inline)
     }
 
     if (result != 0) {
         // Image 0x005AB2B0: the selected path fills parser slot 0.
     parse_says(0, name, -1, -1);
         parse_num(0, result);
-        StringTemp[0] = '\0';
-        strcat(StringTemp, "LOAD");
+        clear();
+        says("LOAD");
         switch (result) {
-        case 1: strcat(StringTemp, "NONE"); break;
-        case 2: strcat(StringTemp, "NOT"); break;
-        case 3: strcat(StringTemp, "OLD"); break;
-        case 4: strcat(StringTemp, "ERROR"); break;
-        case 5: strcat(StringTemp, "SECURITY"); break;
+        case 1: says("NONE"); break;
+        case 2: says("NOT"); break;
+        case 3: says("OLD"); break;
+        case 4: says("ERROR"); break;
+        case 5: says("SECURITY"); break;
         }
         X_pop(StringTemp, 0);
         do_all_draws();
@@ -3088,9 +3074,9 @@ again:
     parse_says(1, get_title(ConsoleGlobal.faction_id_), -1, -1);
     parse_says(2, get_name(ConsoleGlobal.faction_id_), -1, -1);
     parse_says(3, get_noun(ConsoleGlobal.faction_id_), -1, -1);
-    StringTemp[0] = '\0';
-    strcat(StringTemp, load_game_label(0));
-    strcat(StringTemp, BufferJoinSpace);
+    clear();
+    says(load_game_label(0));
+    space();
     say_year(StringTemp);
     parse_says(4, StringTemp, -1, -1);
     choice = X_pops("LOADGAME", 0x40,
