@@ -738,15 +738,14 @@ void NetWin::pick_player() {
     if (popup.input_poll_state() == 1) {
         const int faction = updated.faction_or_color_;
         if (faction != -1) {
-            const Player &player = Players[faction];
-            strcpy(updated.leader_name_, player.name_leader);
-            strcpy(updated.formal_faction_name_, player.formal_name_faction);
-            strcpy(updated.noun_faction_, player.noun_faction);
-            strcpy(updated.adjective_faction_, player.adj_name_faction);
-            strcpy(updated.leader_title_, player.title_leader);
-            strcpy(updated.adjective_leader_, player.adj_leader);
+            strcpy(updated.leader_name_, Players[faction].name_leader);
+            strcpy(updated.formal_faction_name_, Players[faction].formal_name_faction);
+            strcpy(updated.noun_faction_, Players[faction].noun_faction);
+            strcpy(updated.adjective_faction_, Players[faction].adj_name_faction);
+            strcpy(updated.leader_title_, Players[faction].title_leader);
+            strcpy(updated.adjective_leader_, Players[faction].adj_leader);
             updated.tail_[0] =
-                static_cast<uint8_t>(player.is_leader_female);
+                static_cast<uint8_t>(Players[faction].is_leader_female);
         } else {
             // Native 47C073..47C13E interleaves six fresh lookups/copies.
             strcpy(updated.leader_name_, StringTable.get(Labels.strings_ptr[0xFE4 / 4]));
