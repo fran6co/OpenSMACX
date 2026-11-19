@@ -14,8 +14,9 @@ The source declarations are the only list. For every declaration:
   instructions that begin at the span's first byte and end at its last (the
   comparator's `covering_run` rule), no base relocation field may cross a
   span edge, and the bytes must not already be the patch;
-- a `nop-jmp` destination must lie inside the same function and land on a
-  decoded instruction start; it moves with the function.
+- a `nop-jmp` destination must lie inside the same function and land on the
+  start of an instruction that decodes whole inside the function's extent;
+  it moves with the function.
 
 Then the declared bytes are written at `built address + span offset`. The
 relocation table is left alone, as the original patcher left it: an absolute
@@ -133,7 +134,18 @@ def plan_patch(record, patch, image: PeImage, mapping) -> dict:
             raise ValueError("the declared jump leaves its function; only an in-function "
                              "destination moves with the built function")
         target = patch.jmp_target - original_start
-        reach = max(reach, target + 1)
+        # The destination instruction must decode whole: read to the end of
+        # the function's extent (clipped to the file-backed bytes), never just
+        # to the destination's first byte, which truncates every destination
+        # longer than one byte and drops it from the decoded starts.
+        reach = max(reach, original_end - original_start)
+        backed = [region.start + size - built for region, _offset, size in image.sections
+                  if region.start <= built < region.start + size]
+        if len(backed) != 1:
+            raise ValueError("built span is not uniquely backed by file bytes")
+        reach = min(reach, backed[0])
+        if reach < end or reach <= target:
+            raise ValueError("built span is not uniquely backed by file bytes")
     code = image.read(Span(built, built + reach))
     instructions = _decode(code, built)
     extents = [(instruction.address - built, instruction.size) for instruction in instructions]

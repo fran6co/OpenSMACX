@@ -79,6 +79,26 @@ def test_nop_jmp_keeps_its_relative_displacement_and_checks_the_destination(tmp_
         assert report["result"] == "fail" and not out.exists()
 
 
+def test_nop_jmp_destination_may_be_a_multi_byte_instruction(tmp_path):
+    # The destination is `mov eax, 1` (5 bytes), not a one-byte `ret`: reading
+    # the built bytes only up to the destination's first byte truncated it and
+    # refused a sound patch (Caviar::init_class 0x006185A0).
+    code = PREFIX_CODE + CALL + bytes.fromhex("B801000000" "5E" "C3")
+    target = ORIGINAL + 14
+    options = {"code": code, "span_end": ORIGINAL + len(code)}
+    report, _, out = run(tmp_path, f"0x{START:08X} 0x{END:08X} nop-jmp 0x{START + 2:08X} 0x{target:08X}",
+                         **options)
+    assert report["result"] == "pass" and report["changed_bytes"] == len(CALL)
+    written = b"\x90\x90" + b"\xE9" + (target - (START + 7)).to_bytes(4, "little") + b"\x90" * 4
+    assert out.read_bytes()[FILE_AT:FILE_AT + len(CALL)] == written
+    # Its interior still refuses, and so does the last instruction's interior.
+    for bad in (target + 1, target + 4):
+        report, _, out = run(tmp_path, f"0x{START:08X} 0x{END:08X} nop-jmp 0x{START + 2:08X} 0x{bad:08X}",
+                             **options)
+        assert report["result"] == "fail" and not out.exists()
+        assert "not a built instruction start" in report["refused"][0]["reason"]
+
+
 def test_base_relocations_inside_the_span_are_left_and_reported(tmp_path):
     # push imm32 with a HIGHLOW entry on the immediate, wholly inside the span.
     code = PREFIX_CODE + bytes.fromhex("6800204000" "6A00" "6A00" "8BCE") + SUFFIX_CODE
