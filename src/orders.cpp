@@ -855,11 +855,10 @@ L_595083:
                     // WORKAROUND(inline): dead budget spend (supply_options' probe, see
                     // its declaration). With every message block written at its test
                     // (literal order) and no probe, the sites are 6,6,6,6,7,16 deep
-                    // against the image's 5,5,5,5,7,15; five to eight of these calls,
+                    // against the image's 5,5,5,5,7,15; four to eight of these calls,
                     // anywhere in the body, give the final teardown's 15. No position or
                     // count moves the four early sites (structural, not spend). The
                     // original spending is not identified.
-                    supply_options_budget_probe(2);
                     supply_options_budget_probe(2);
                     supply_options_budget_probe(2);
                     supply_options_budget_probe(2);
