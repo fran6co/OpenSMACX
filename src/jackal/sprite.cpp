@@ -7873,6 +7873,58 @@ void Sprite::fill_scaling_table() {
     }
 }
 
+// SpriteList's entry virtuals close this unit: 0x005EB29F and 0x005EB32F keep
+// the 16-byte phase of Sprite::create_blank .. fill_scaling_table
+// (0x005EAAFF..0x005EB20F, all at xxxF) and win.cpp starts aligned at
+// 0x005EB350, so they are part of sprite.cpp's own contribution.
+
+// ORIGINAL: 0x005EB29F ?fill_entry@SpriteList@@QAEHPAUSpriteStruct@@@Z 0x005EB29F-0x005EB320 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:1240d9eead700ef28006f35018fca68d1123defd:src/unrecovered/005eb29f.cpp", "pinned:SpriteList tables6708A0/6708A4;6116E0 calls611730 with virtual-baseview+28", "pinned:SpriteListBase tables66943C/669438 and list fields +8..+18; StringStruct independently uses 6693A4/6693A0", "source:src/spritebox.h;source:src/stringstruct.h", "source:recovery/tests/test_spritelist_base_lifetime.py", "historical-source:recovery/tests/test_sprite_list_lifecycle_actual_source.py"], "reason": "Recover SpriteList's typed payload insertion on its own ring owner and distinct polymorphic string/sprite payload siblings. SpriteListBase is modeled as a sibling owner with the compatible ring layout and virtual allocation base; combined constructor and destructor table-stage evidence supports this model, while transient constructor-stage elision remains possible. Preserve original identities, spans and historical claims; the original 611730 walk and current lifecycle structure remain matching obligations. The historical kill_entry int-return contract remains unresolved for unknown indirect callers; the current void hook follows observed result-discarding callers without inventing a return."}
+// symbol    ?on_insert@SpriteList@@UAEHPAX@Z
+// Historical seed finding: int8 catalogue spelling means char, not signed char; PAD/PAC mangling distinction
+// Historical seed finding: generated verification scaffold is not product source
+// Historical seed finding: writes sprite at payload+4, label at +8, metadata at +C; null source writes zero label and metadata
+// Historical seed finding: allocator is list+0x18; allocation failure returns 4 after payload label pointer was stored
+// Historical seed finding: calls/callee evidence at 0x5D4510, 0x5D4680, 0x6453E0, 0x645470
+int SpriteList::on_insert(void *raw_payload) {
+    SpriteStruct *const payload = static_cast<SpriteStruct *>(raw_payload);
+    payload->sprite_ = pending_sprite_;
+    if (pending_label_ == 0) {
+        payload->label_ = 0;
+    } else {
+        char *copy;
+        if (allocator_ != 0) {
+            copy = static_cast<char *>(allocator_->get(strlen(pending_label_) + 1));
+        } else {
+            copy = static_cast<char *>(mem_get(strlen(pending_label_) + 1));
+        }
+        payload->label_ = copy;
+        if (copy == 0) return 4;
+        *copy = '\0';
+        strcat(payload->label_, pending_label_);
+    }
+    payload->field_C_ = field_24_;
+    return 0;
+}
+
+// ORIGINAL: 0x005EB32F ?kill_entry@SpriteList@@QAEHPAUSpriteStruct@@@Z 0x005EB32F-0x005EB34B FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:1240d9eead700ef28006f35018fca68d1123defd:src/recovered/units/005eb32f.cpp", "pinned:SpriteList tables6708A0/6708A4;6116E0 calls611730 with virtual-baseview+28", "pinned:SpriteListBase tables66943C/669438 and list fields +8..+18; StringStruct independently uses 6693A4/6693A0", "source:src/spritebox.h;source:src/stringstruct.h", "source:recovery/tests/test_spritelist_base_lifetime.py", "historical-source:recovery/tests/test_sprite_list_lifecycle_actual_source.py"], "reason": "Recover SpriteList's typed payload removal on its own ring owner and distinct polymorphic string/sprite payload siblings. SpriteListBase is modeled as a sibling owner with the compatible ring layout and virtual allocation base; combined constructor and destructor table-stage evidence supports this model, while transient constructor-stage elision remains possible. Preserve original identities, spans and historical claims. The historical kill_entry int-return contract remains unresolved for unknown indirect callers; the current void hook follows observed result-discarding callers without inventing a return."}
+// symbol    ?on_remove@SpriteList@@UAEXPAX@Z
+// Historical seed finding: historical body reads allocator at +0x18, payload label at +8, frees only when allocator is null
+// Historical seed finding: catalogue records one _free call at 0x644EF2
+// Historical seed finding: guard-vs-early-return source-form note: a second ret4 changed the matched shape
+// Historical seed finding: same-polarity guards, ternary lowering, loop lowering and dummy-member-pointer advice are seed lessons, not current behavior mandates
+// Historical seed finding: all observed mapped direct virtual callers discard EAX; indirect caller domain and original return contract remain unresolved
+// Historical seed finding: the old claim does not establish current source equivalence
+void SpriteList::on_remove(void *raw_payload) {
+    SpriteStruct *const payload = static_cast<SpriteStruct *>(raw_payload);
+    if (allocator_ == 0) {
+        if (payload->label_ != 0) {
+            free(payload->label_);
+        }
+    }
+}
+
 
 // The exit byte is a real separate global at 0x009BEAE0. The original callback
 // sets bit 0 before calling Sprite::~Sprite; do not fold this byte into an
