@@ -49,6 +49,15 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   CSE'd values) as candidates, since those are usually the candidate a source-only count misses. Screen only:
   on 50 exact functions it orders 64% of interfering register pairs right (strength-reduced loop counters,
   address CSEs that replace an index, and constant pieces are the misses).
+- `analysis/constfold.py [unit ..] [--all|--exact] [--json F]` runtime constant arithmetic on both sides
+  (MATCHING_GUIDE 3.4): straight-line `op r,K2` (and `lea r,[s+K]`) whose register input is a known constant from
+  `mov r,K`, `xor r,r` or a register copy; image pairs marked `ours-folded` when ours uses the folded value as an
+  immediate. 70 s tree-wide with --all on 5 lanes; 2026-11-19: twelve image pairs in ten functions, one unexplained (NetWin::exec).
+- `analysis/widthscan.py [unit ..] [--json F] [--min N]` byte/word-register arithmetic on one side against the same
+  mnemonic on a full register on the other, inside fe's differing blocks (MATCHING_GUIDE 3.4 "Narrow locals").
+  40 s tree-wide; most rows are register-allocation noise, the clean ones are a bool/uint8_t local the image keeps
+  as int. A per-local retype sweep (every char/short/bool local of a non-exact function to int) finds the same
+  cases more directly.
 - `analysis/ivscan.py <unit> <addr[,..]> | --tree [unit ..] [--all] [--json F]` induction-step census of both sides
   (MATCHING_GUIDE 2.7 "Strength reduction is a candidate-set question"): every `add/sub/lea/inc/dec` of a register (or
   `add dword ptr [slot], K`) inside a natural loop, at any stride and sign, whose register is used as an address or

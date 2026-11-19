@@ -495,6 +495,18 @@ raw field access where the original used inline accessors.
 - `recovery/tools/analysis/loopscan.py` lists the loop tests of both sides and
   the source loops with these shapes; `loopsweep.py --rule rebind|sibling|
   derive|basic` tries each rewrite site by site.
+- **Open: NetDaemon::synch 0x00532E00, case 0x8D** (par-6 2026-11-19; do not
+  repeat these). The image walks the social-category compaction with a
+  staging pointer and reads `k` inside the inner loop; what keeps `k` read
+  there is unknown. Tried in the window 0x533EE7-0x533F72, none reaching the
+  image: indexed source and destination; a `RulesSocialCategory *stage`
+  stepped in the `for` header, at the body end, or rebuilt as `&staging[k]`
+  per iteration; `stage[0].` and `(*stage).` forms; destination as index,
+  reference and pointer to `SocialCategories[k]`; an `int *` stage stepped by
+  0x35 dwords; both store orders; `j++`/`++j`; `*(a + j)`, `[j + 0]` and
+  `(&x)->` destination forms; `memcpy` of the preq dword and of the
+  SocialEffect (about 80 variants in 4 decks). The stage pointer comes with a
+  down-counter and frame 0x80 against the image's 0x7C.
 
 ### 2.5 Unit coupling
 
@@ -5017,6 +5029,48 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   the two forms differ (22 on 2026-11-19); most (alien_fauna, enemy_move,
   Path::find) differ because y sits in a different register or slot, a
   register-allocation symptom (2.7), not a source spelling.
+- **Runtime constant arithmetic is almost absent** (par-6 2026-11-19,
+  `analysis/constfold.py`: every straight-line `op r,K2` whose register input
+  is a known constant from `mov r,K`/`xor r,r`, both sides, all 5,600
+  markers, 70 s). VC6 folds literal arithmetic, named constant locals,
+  struct fields set and read back (`set_rect(&b, ...); b.right += 0x12`),
+  `static const`, single- and two-return inline results, ternaries and
+  if/else merges of one value, loop-invariant locals, char/short/double
+  detours and `a[0] + a[1]` of a local array (probes). The image has twelve
+  pairs in ten functions, and ours reproduces all but one: merges after tail
+  duplication or an inline's multi-return result (arm_val's `mov eax,1; add
+  eax,eax` is arm_strat's `return 1` doubled by the caller; `mov eax,1; or
+  eax,-1` shared returns) and constant registers (`mov ecx,4; lea
+  edx,[ecx-4]`, base_energy). The one unexplained site is NetWin::exec 0x004826CD (`mov
+  esi,0x14D; add esi,0x12`, stored to `box.right`): no spelling folded into
+  a RECT local reproduces it (14 variants: named locals before or after
+  setup_rects_[4], `box.right += 0x12`, a second set_rect from box's own
+  fields, an offset loop body, `setup_rects_[36].right + 0x12`, short and
+  double detours). The source of 0x14D is something VC6 propagates only
+  after folding, most likely an inline's merged return or a tail-duplicated
+  join, not a variable holding a constant.
+- **Narrow locals: retype the local, not the expression** (par-6 2026-11-19,
+  `analysis/widthscan.py` plus a sweep of every char/short/bool local of a
+  non-exact function retyped to int). The image's `setg cl; mov edi,ecx;
+  test edi,edi` (or `and eax,0xff; push eax` after a `uint8_t` call) is an
+  int/BOOL local; ours `setg bl; test bl,bl` (or a byte spill and reload)
+  is `bool`/`uint8_t`. Fixed: BaseWin::queue_click (`BOOL empty`, 119 ->
+  82), make_gift (`BOOL existing_pact_or_treaty`, 177 -> 151),
+  Console::on_key_click (`int value` for the checksum chain, 633 -> 593).
+  Read the image before keeping a sweep gain: an int local that lowers the
+  rows can still be wrong when the image keeps the narrow form at the use
+  (design_workshop's `mov ax,word ptr [esi]` is the uint16_t flags local;
+  Buffer::write_pcx's `mov al,1; inc al; cmp al,1; ja` is an unsigned byte
+  `count`, whose int or char retypes lower the rows but change the use).
+  Narrow ARITHMETIC on a promoted byte (MapWin::get_alt 0x470377, image
+  `mov dl,[m]; shr edx,3; and edx,~3; ...; add eax,4; and eax,0xf` against
+  ours `shr al,3; and eax,0xfffc; add dl,4`) is not a declared type: the
+  `& 0xF` of set_alt_detail lets VC6 keep only the low bits in both, and 20
+  spellings (parameter types, casts, `% 16`, a named detail, the add inside
+  the helper, the order of the masked halves) leave it unchanged.
+  scenario_setup's `movsx eax,byte [is_flat]; and eax,1; shl eax,2` is the
+  same: every char spelling tried (casts, char local, char inline return or
+  parameter, volatile) gives a narrow load without the movsx.
 - **`rand() & 0x80000001; jns; dec; or -2; inc`** is `rand() % 2`.
 - **A magic divide then multiply-subtract** is `x - x/C*C`, not `%`.
 - **Ternary setcc forms.** `c ? K : 0` gives `set!c; dec; and K`;
