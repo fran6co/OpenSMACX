@@ -330,8 +330,8 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
     say_tech(StringTemp, tech, 0);
     if (tech == TECH_TRANT) {
         strcat(StringTemp, BufferJoinSpace);
-        _itoa(PlayersData[faction_id_].theory_of_everything + 1,
-              number_buffer, 10);
+        int count = PlayersData[faction_id_].theory_of_everything;
+        _itoa(count + 1, number_buffer, 10);
         strcat(StringTemp, number_buffer);
     }
     strcpy(text_buffer, StringTemp);
