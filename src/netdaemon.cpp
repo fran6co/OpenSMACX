@@ -4675,8 +4675,8 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
         primary_state_.trailing_words_[6] |= done_bit;
         field_1B68_ |= done_bit;
         if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) == 0) {
-            for (int notify_slot = 1; notify_slot <= player_count_; notify_slot++) {
-                int target = process_slots_[notify_slot].state_.identity_;
+            for (slot = 1; slot <= player_count_; slot++) {
+                int target = process_slots_[slot].state_.identity_;
                 if (target != ConsoleGlobal.faction_id_) {
                     message_data(0x1301, target, who, 1,
                                  GameDataStateStorage.fields_.turn_current_num_, 0);
@@ -4721,9 +4721,9 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
         parse_says(0, get_title(next_faction), -1, -1);
         parse_says(1, get_name(next_faction), -1, -1);
         parse_says(2, get_noun(next_faction), -1, -1);
-        for (int name_slot = 1; name_slot <= player_count_; name_slot++) {
-            if (process_slots_[name_slot].state_.identity_ == next_faction) {
-                parse_says(3, process_slots_[name_slot].name_, -1, -1);
+        for (slot = 1; slot <= player_count_; slot++) {
+            if (process_slots_[slot].state_.identity_ == next_faction) {
+                parse_says(3, process_slots_[slot].name_, -1, -1);
             }
         }
         NetMsgPrimary.pop("SLOWPOKE", 5000, 0, 0);
