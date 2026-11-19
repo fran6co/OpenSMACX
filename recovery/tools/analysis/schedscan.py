@@ -11,6 +11,8 @@ Read with MATCHING_GUIDE 3.2 "Scratch registers and scheduling" (rules S1..S6).
               `rot+k` when one rotation eax->ecx->edx (k steps) maps ours onto the image.
      SCHED    same instructions in another order (after abstraction): scheduling. The moved
               instructions are listed in image order.
+     LOADS    same instructions with memory operands exchanged between rows: which value is
+              loaded first / becomes the destination (rule S4: reference order of the operands).
      OTHER    different instructions: not a scheduling difference; read it with fe.py.
 2. Cursor track (rule S1). VC6 hands out scratch registers round-robin eax -> ecx -> edx in
    code-generation order, continuing through the whole function. Every instruction that starts
@@ -93,6 +95,10 @@ def classify(img, ours):
         return 'REGS', ''
     if sorted(ai) == sorted(ao):
         return 'SCHED', ''
+    mem = re.compile(r'(?:byte|word|dword) ptr \[[^\]]+\]')
+    if [mem.sub('M', x) for x in ai] == [mem.sub('M', x) for x in ao] and sorted(
+            m for x in img for m in mem.findall(x)) == sorted(m for x in ours for m in mem.findall(x)):
+        return 'LOADS', ''
     return 'OTHER', ''
 
 
@@ -144,7 +150,7 @@ def main():
                 if op in ('insert', 'replace'):
                     for k in range(b1, b2):
                         print('        image places `%s` %s' % (img[k], 'earlier' if ai[k] in ao[a2:] else 'later' if ai[k] in ao[:a1] else 'here'))
-        if a.rows or kind == 'OTHER':
+        if a.rows or kind in ('OTHER', 'LOADS'):
             for r in rows[s:e]:
                 o, q = r[1], r[2]
                 print('        %s %-6s %-40s | %s' % (r[0], ('%x' % (lo + o[0])) if o else '', o[1] if o else '', q[1] if q else ''))
