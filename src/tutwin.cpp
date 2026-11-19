@@ -294,14 +294,10 @@ Verification note: the original writes the y centre over its own first
          from that point. A local is equivalent and is what is used here.
 */
 int TutWin::do_base(RECT *rect, const char *text, int flag) {
-    // Plain signed division: the image emits `cdq; sub eax,edx; sar eax,1`
-    // (round-toward-zero) for each half, not a rounding bit-trick.
-    int x = static_cast<int32_t>(static_cast<uint32_t>(rect->left) +
-        static_cast<uint32_t>(static_cast<int32_t>(
-            static_cast<uint32_t>(rect->right) - static_cast<uint32_t>(rect->left)) / 2));
-    int y = static_cast<int32_t>(static_cast<uint32_t>(rect->top) +
-        static_cast<uint32_t>(static_cast<int32_t>(
-            static_cast<uint32_t>(rect->bottom) - static_cast<uint32_t>(rect->top)) / 2));
+    // rect_center (0x004BA830, no image callers) expanded.
+    int x;
+    int y;
+    rect_center(rect, &x, &y);
     TutWinBaseWindow.client_to_screen(&x, &y);
     return this->tut_win(MapWinTable[0], text, x, y, nullptr, flag, -1, -1);
 }
@@ -330,14 +326,10 @@ Verification note: the original writes the y centre over its own first
          from that point. A local is equivalent and is what is used here.
 */
 int TutWin::do_iface(RECT *rect, const char *text, int flag) {
-    // Plain signed division: the image emits `cdq; sub eax,edx; sar eax,1`
-    // (round-toward-zero) for each half, not a rounding bit-trick.
-    int x = static_cast<int32_t>(static_cast<uint32_t>(rect->left) +
-        static_cast<uint32_t>(static_cast<int32_t>(
-            static_cast<uint32_t>(rect->right) - static_cast<uint32_t>(rect->left)) / 2));
-    int y = static_cast<int32_t>(static_cast<uint32_t>(rect->top) +
-        static_cast<uint32_t>(static_cast<int32_t>(
-            static_cast<uint32_t>(rect->bottom) - static_cast<uint32_t>(rect->top)) / 2));
+    // rect_center (0x004BA830, no image callers) expanded.
+    int x;
+    int y;
+    rect_center(rect, &x, &y);
     MainInterfaceGlobal.client_to_screen(&x, &y);
     return this->tut_win(MapWinTable[0], text, x, y, nullptr, flag, -1, -1);
 }
@@ -366,14 +358,10 @@ Verification note: the original writes the y centre over its own first
          from that point. A local is equivalent and is what is used here.
 */
 int TutWin::do_soc(RECT *rect, const char *text, int flag) {
-    // Plain signed division: the image emits `cdq; sub eax,edx; sar eax,1`
-    // (round-toward-zero) for each half, not a rounding bit-trick.
-    int x = static_cast<int32_t>(static_cast<uint32_t>(rect->left) +
-        static_cast<uint32_t>(static_cast<int32_t>(
-            static_cast<uint32_t>(rect->right) - static_cast<uint32_t>(rect->left)) / 2));
-    int y = static_cast<int32_t>(static_cast<uint32_t>(rect->top) +
-        static_cast<uint32_t>(static_cast<int32_t>(
-            static_cast<uint32_t>(rect->bottom) - static_cast<uint32_t>(rect->top)) / 2));
+    // rect_center (0x004BA830, no image callers) expanded.
+    int x;
+    int y;
+    rect_center(rect, &x, &y);
     TutWinSocWindow.client_to_screen(&x, &y);
     return this->tut_win(MapWinTable[0], text, x, y, nullptr, flag, -1, -1);
 }
@@ -402,14 +390,10 @@ Verification note: the original writes the y centre over its own first
          from that point. A local is equivalent and is what is used here.
 */
 int TutWin::do_des(RECT *rect, const char *text, int flag) {
-    // Plain signed division: the image emits `cdq; sub eax,edx; sar eax,1`
-    // (round-toward-zero) for each half, not a rounding bit-trick.
-    int x = static_cast<int32_t>(static_cast<uint32_t>(rect->left) +
-        static_cast<uint32_t>(static_cast<int32_t>(
-            static_cast<uint32_t>(rect->right) - static_cast<uint32_t>(rect->left)) / 2));
-    int y = static_cast<int32_t>(static_cast<uint32_t>(rect->top) +
-        static_cast<uint32_t>(static_cast<int32_t>(
-            static_cast<uint32_t>(rect->bottom) - static_cast<uint32_t>(rect->top)) / 2));
+    // rect_center (0x004BA830, no image callers) expanded.
+    int x;
+    int y;
+    rect_center(rect, &x, &y);
     TutWinDesWindow.client_to_screen(&x, &y);
     return this->tut_win(MapWinTable[0], text, x, y, nullptr, flag, -1, -1);
 }
@@ -464,23 +448,23 @@ void TutWin::tour6() {
 
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// RECOVERY_LITERAL: v1 0x00687630 0x0068763B $SG55778 0x004BAF20
-// RECOVERY_LITERAL: v1 0x00687590 0x0068759B $SG55727 0x004BAF20
-// RECOVERY_LITERAL: v1 0x006875D8 0x006875E3 $SG55752 0x004BAF20
-// RECOVERY_LITERAL: v1 0x00687604 0x00687610 $SG55767 0x004BAF20
-// RECOVERY_LITERAL: v1 0x00687584 0x00687590 $SG55722 0x004BAF20
-// RECOVERY_LITERAL: v1 0x006875BC 0x006875C8 $SG55742 0x004BAF20
-// RECOVERY_LITERAL: v1 0x00687578 0x00687584 $SG55716 0x004BAF20
-// RECOVERY_LITERAL: v1 0x006875C8 0x006875D5 $SG55747 0x004BAF20
-// RECOVERY_LITERAL: v1 0x00687610 0x0068761D $SG55772 0x004BAF20
-// RECOVERY_LITERAL: v1 0x0068764C 0x0068765A $SG55784 0x004BAF20
-// RECOVERY_LITERAL: v1 0x00687620 0x0068762E $SG55775 0x004BAF20
-// RECOVERY_LITERAL: v1 0x006875E4 0x006875F2 $SG55757 0x004BAF20
-// RECOVERY_LITERAL: v1 0x0068765C 0x0068766A $SG55786 0x004BAF20
-// RECOVERY_LITERAL: v1 0x0068763C 0x0068764B $SG55781 0x004BAF20
-// RECOVERY_LITERAL: v1 0x006875AC 0x006875BB $SG55737 0x004BAF20
-// RECOVERY_LITERAL: v1 0x006875F4 0x00687603 $SG55762 0x004BAF20
-// RECOVERY_LITERAL: v1 0x0068759C 0x006875AB $SG55732 0x004BAF20
+// RECOVERY_LITERAL: v1 0x00687630 0x0068763B $SG55729 0x004BAF20
+// RECOVERY_LITERAL: v1 0x00687590 0x0068759B $SG55678 0x004BAF20
+// RECOVERY_LITERAL: v1 0x006875D8 0x006875E3 $SG55703 0x004BAF20
+// RECOVERY_LITERAL: v1 0x00687604 0x00687610 $SG55718 0x004BAF20
+// RECOVERY_LITERAL: v1 0x00687584 0x00687590 $SG55673 0x004BAF20
+// RECOVERY_LITERAL: v1 0x006875BC 0x006875C8 $SG55693 0x004BAF20
+// RECOVERY_LITERAL: v1 0x00687578 0x00687584 $SG55667 0x004BAF20
+// RECOVERY_LITERAL: v1 0x006875C8 0x006875D5 $SG55698 0x004BAF20
+// RECOVERY_LITERAL: v1 0x00687610 0x0068761D $SG55723 0x004BAF20
+// RECOVERY_LITERAL: v1 0x0068764C 0x0068765A $SG55735 0x004BAF20
+// RECOVERY_LITERAL: v1 0x00687620 0x0068762E $SG55726 0x004BAF20
+// RECOVERY_LITERAL: v1 0x006875E4 0x006875F2 $SG55708 0x004BAF20
+// RECOVERY_LITERAL: v1 0x0068765C 0x0068766A $SG55737 0x004BAF20
+// RECOVERY_LITERAL: v1 0x0068763C 0x0068764B $SG55732 0x004BAF20
+// RECOVERY_LITERAL: v1 0x006875AC 0x006875BB $SG55688 0x004BAF20
+// RECOVERY_LITERAL: v1 0x006875F4 0x00687603 $SG55713 0x004BAF20
+// RECOVERY_LITERAL: v1 0x0068759C 0x006875AB $SG55683 0x004BAF20
 // ORIGINAL: 0x004BAF20 ?tour7@TutWin@@QAEXXZ 0x004BAF20-0x004BB373 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["seed:src/recovered/units/004baf20.cpp", "image:0x004baf20; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
 void TutWin::tour7() {
@@ -895,7 +879,7 @@ void TutWin::tour1() {
     // tutor.txt names this final OK-button card independently of the emitted
     // literal. Its pinned NUL-terminated storage is 68790C..687913; the final
     // original do_base gate must succeed before the farm view is restored.
-    // RECOVERY_LITERAL: v1 0x0068790C 0x00687914 $SG55976 0x004BB7A0
+    // RECOVERY_LITERAL: v1 0x0068790C 0x00687914 $SG55927 0x004BB7A0
     if (do_base(&TutWinBaseWindow.rect6_, "TOUR1OK", 2) == 0) return;
     TutWinBaseWindow.draw_farm(1);
 }

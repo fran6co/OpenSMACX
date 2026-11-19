@@ -1139,10 +1139,10 @@ Sprite g_UNUSED_SPRITE_VAR83;  // 0x007ACC20
 // RECOVERY_OBJECT: v2 0x0077A5C8 0x0077AA6C ?g_BASEWIN_SPRITES@@3PAVSprite@@A 0x00450D90
 Sprite g_BASEWIN_SPRITES[27];
 
-// RECOVERY_LITERAL: v1 0x00685148 0x00685150 $SG69550 0x00455400
-// RECOVERY_LITERAL: v1 0x00685158 0x00685165 $SG69564 0x00455400
-// RECOVERY_LITERAL: v1 0x0068511C 0x00685127 $SG69494 0x00454FC0
-// RECOVERY_LITERAL: v1 0x00685138 0x00685145 $SG69534 0x00454FC0
+// RECOVERY_LITERAL: v1 0x00685148 0x00685150 $SG69543 0x00455400
+// RECOVERY_LITERAL: v1 0x00685158 0x00685165 $SG69557 0x00455400
+// RECOVERY_LITERAL: v1 0x0068511C 0x00685127 $SG69487 0x00454FC0
+// RECOVERY_LITERAL: v1 0x00685138 0x00685145 $SG69527 0x00454FC0
 // Equal filename contents retain separate original source-owned storage.
 // RECOVERY_OBJECT: v2 0x00685064 0x00685071 _InterfaceIconSheetName 0x004547E0
 static char InterfaceIconSheetName[] = "NEWICONS.PCX";
@@ -4042,7 +4042,7 @@ void __cdecl load_terrain() {
     unsigned char remap[256];
 
     TextureRasterKey = 9;
-    // RECOVERY_LITERAL: v1 0x00684FBC 0x00684FC8 $SG69070 0x00451C50
+    // RECOVERY_LITERAL: v1 0x00684FBC 0x00684FC8 $SG69063 0x00451C50
     g_PCX_PARSE_TEMP_BUFFER1.load_pcx("TEXTURE.PCX", 0, 10, 236);
     scratch.init(28, 28, 0, 0);
     g_RADIUS1_TEXTURE.extract(&g_PCX_PARSE_TEMP_BUFFER1, 1, 571, 56, 56, 0);
@@ -4133,11 +4133,9 @@ void __cdecl load_terrain() {
         }
     }
 
-    // RECOVERY_LITERAL: v1 0x00684FC8 0x00684FD5 $SG69155 0x00451C50
+    // RECOVERY_LITERAL: v1 0x00684FC8 0x00684FD5 $SG69148 0x00451C50
     g_PCX_PARSE_TEMP_BUFFER1.load_pcx("RAINFALL.PCX", 0, 10, 236);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_RAINFALL_DOUBLE_TILE_SPRITES[0].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 1, 52, 100, 100, 0);
+    sub_450ed0(&g_RAINFALL_DOUBLE_TILE_SPRITES[0], 1, 52, 100, 100);
     remapped[0].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 2, 333, 113, 56, 0);
     // Each sampled byte is stored before the next get_pixel call.
     coast = TerrainCoastPalette;
@@ -4169,212 +4167,86 @@ void __cdecl load_terrain() {
     remapped[0].draw(&scratch, remapped[0].transparent_index(), 0, 0, remap);
     g_RAINFALL_SINGLE_TILE_TEXTURE.extract(&scratch, 0, 0, 60, 60, 0);
 
-    // RECOVERY_LITERAL: v1 0x00684FD8 0x00684FE1 $SG69180 0x00451C50
+    // RECOVERY_LITERAL: v1 0x00684FD8 0x00684FE1 $SG69173 0x00451C50
     g_PCX_PARSE_TEMP_BUFFER1.load_pcx("glow.pcx", 0, 0, 256);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_GLOW_SPRITES[0].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 1, 1, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_GLOW_SPRITES[1].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 102, 1, 100, 62, 0);
+    sub_450e30(&g_GLOW_SPRITES[0], 1, 1);
+    sub_450e30(&g_GLOW_SPRITES[1], 102, 1);
     g_PCX_PARSE_TEMP_BUFFER1.load_pcx(TerrainWreckSheetName, 0, 10, 236);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1WRECK_UNITY_WRECKAGE_SPRITES[13].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 26, 21, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1WRECK_UNITY_WRECKAGE_SPRITES[10].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 127, 21, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1WRECK_UNITY_WRECKAGE_SPRITES[14].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 228, 21, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1WRECK_UNITY_WRECKAGE_SPRITES[6].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 26, 84, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1WRECK_UNITY_WRECKAGE_SPRITES[7].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 127, 84, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1WRECK_UNITY_WRECKAGE_SPRITES[8].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 228, 84, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1WRECK_UNITY_WRECKAGE_SPRITES[5].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 26, 147, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1WRECK_UNITY_WRECKAGE_SPRITES[0].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 127, 147, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1WRECK_UNITY_WRECKAGE_SPRITES[1].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 228, 147, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1WRECK_UNITY_WRECKAGE_SPRITES[4].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 26, 210, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1WRECK_UNITY_WRECKAGE_SPRITES[3].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 127, 210, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1WRECK_UNITY_WRECKAGE_SPRITES[2].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 228, 210, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1WRECK_UNITY_WRECKAGE_SPRITES[12].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 26, 273, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1WRECK_UNITY_WRECKAGE_SPRITES[9].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 127, 273, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1WRECK_UNITY_WRECKAGE_SPRITES[11].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 228, 273, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES[0].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 329, 147, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES[1].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 430, 147, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES[2].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 329, 210, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES[3].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 430, 210, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_FOSSIL_FIELD_RIDGE_SPRITES[5].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 329, 21, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_FOSSIL_FIELD_RIDGE_SPRITES[0].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 430, 21, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_FOSSIL_FIELD_RIDGE_SPRITES[1].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 531, 21, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_FOSSIL_FIELD_RIDGE_SPRITES[4].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 329, 84, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_FOSSIL_FIELD_RIDGE_SPRITES[3].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 430, 84, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_FOSSIL_FIELD_RIDGE_SPRITES[2].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 531, 84, 100, 62, 0);
-    // RECOVERY_LITERAL: v1 0x00684FF4 0x00684FFD $SG69181 0x00451C50
+    sub_450e30(&g_TER1WRECK_UNITY_WRECKAGE_SPRITES[13], 26, 21);
+    sub_450e30(&g_TER1WRECK_UNITY_WRECKAGE_SPRITES[10], 127, 21);
+    sub_450e30(&g_TER1WRECK_UNITY_WRECKAGE_SPRITES[14], 228, 21);
+    sub_450e30(&g_TER1WRECK_UNITY_WRECKAGE_SPRITES[6], 26, 84);
+    sub_450e30(&g_TER1WRECK_UNITY_WRECKAGE_SPRITES[7], 127, 84);
+    sub_450e30(&g_TER1WRECK_UNITY_WRECKAGE_SPRITES[8], 228, 84);
+    sub_450e30(&g_TER1WRECK_UNITY_WRECKAGE_SPRITES[5], 26, 147);
+    sub_450e30(&g_TER1WRECK_UNITY_WRECKAGE_SPRITES[0], 127, 147);
+    sub_450e30(&g_TER1WRECK_UNITY_WRECKAGE_SPRITES[1], 228, 147);
+    sub_450e30(&g_TER1WRECK_UNITY_WRECKAGE_SPRITES[4], 26, 210);
+    sub_450e30(&g_TER1WRECK_UNITY_WRECKAGE_SPRITES[3], 127, 210);
+    sub_450e30(&g_TER1WRECK_UNITY_WRECKAGE_SPRITES[2], 228, 210);
+    sub_450e30(&g_TER1WRECK_UNITY_WRECKAGE_SPRITES[12], 26, 273);
+    sub_450e30(&g_TER1WRECK_UNITY_WRECKAGE_SPRITES[9], 127, 273);
+    sub_450e30(&g_TER1WRECK_UNITY_WRECKAGE_SPRITES[11], 228, 273);
+    sub_450e30(&g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES[0], 329, 147);
+    sub_450e30(&g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES[1], 430, 147);
+    sub_450e30(&g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES[2], 329, 210);
+    sub_450e30(&g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES[3], 430, 210);
+    sub_450e30(&g_FOSSIL_FIELD_RIDGE_SPRITES[5], 329, 21);
+    sub_450e30(&g_FOSSIL_FIELD_RIDGE_SPRITES[0], 430, 21);
+    sub_450e30(&g_FOSSIL_FIELD_RIDGE_SPRITES[1], 531, 21);
+    sub_450e30(&g_FOSSIL_FIELD_RIDGE_SPRITES[4], 329, 84);
+    sub_450e30(&g_FOSSIL_FIELD_RIDGE_SPRITES[3], 430, 84);
+    sub_450e30(&g_FOSSIL_FIELD_RIDGE_SPRITES[2], 531, 84);
+    // RECOVERY_LITERAL: v1 0x00684FF4 0x00684FFD $SG69174 0x00451C50
     g_PCX_PARSE_TEMP_BUFFER1.load_pcx("TER1.PCX", 0, 10, 236);
     scratch.init(100, 62, 0, 0);
     for (n = 0, x = 1; n < 3; ++n, x += 101) {
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-        g_TER1_WHITE_ORG_YEL_TILE_SPRITES[n * 2].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, x, 447, 100, 62, 0);
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-        g_TER1_WHITE_ORG_YEL_TILE_SPRITES[n * 2 + 1].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, x, 579, 100, 62, 0);
+        sub_450e30(&g_TER1_WHITE_ORG_YEL_TILE_SPRITES[n * 2], x, 447);
+        sub_450e30(&g_TER1_WHITE_ORG_YEL_TILE_SPRITES[n * 2 + 1], x, 579);
     }
     for (n = 0, x = 1; n < 3; ++n, x += 101) {
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-        g_TER1_BOTTOM_LEFT_TILE_SPRITES[n * 3].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, x, 510, 100, 62, 0);
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-        g_TER1_BOTTOM_LEFT_TILE_SPRITES[n * 3 + 1].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, x, 642, 100, 62, 0);
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-        g_TER1_BOTTOM_LEFT_TILE_SPRITES[n * 3 + 2].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, x, 705, 100, 62, 0);
+        sub_450e30(&g_TER1_BOTTOM_LEFT_TILE_SPRITES[n * 3], x, 510);
+        sub_450e30(&g_TER1_BOTTOM_LEFT_TILE_SPRITES[n * 3 + 1], x, 642);
+        sub_450e30(&g_TER1_BOTTOM_LEFT_TILE_SPRITES[n * 3 + 2], x, 705);
     }
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1_UNUSED_SPRITES2[1].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 506, 1, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1_MINE_SPRITE.extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 607, 64, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1_MINING_PLATFORM_SPRITE.extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 506, 64, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1_SOLAR_COLLECTOR_SPRITE.extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 607, 127, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1_TIDAL_HARNESS_SPRITE.extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 506, 127, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1_TUT_BLANK_SPRITE.extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 506, 190, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1_KELP_FARM_SPRITE.extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 607, 190, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1_BUNKER_SPRITE.extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 506, 316, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1_AIRBASE_SPRITE.extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 607, 316, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1_SENSOR_ARRAY_SPRITE.extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 708, 316, 100, 62, 0);
+    sub_450e30(&g_TER1_UNUSED_SPRITES2[1], 506, 1);
+    sub_450e30(&g_TER1_MINE_SPRITE, 607, 64);
+    sub_450e30(&g_TER1_MINING_PLATFORM_SPRITE, 506, 64);
+    sub_450e30(&g_TER1_SOLAR_COLLECTOR_SPRITE, 607, 127);
+    sub_450e30(&g_TER1_TIDAL_HARNESS_SPRITE, 506, 127);
+    sub_450e30(&g_TER1_TUT_BLANK_SPRITE, 506, 190);
+    sub_450e30(&g_TER1_KELP_FARM_SPRITE, 607, 190);
+    sub_450e30(&g_TER1_BUNKER_SPRITE, 506, 316);
+    sub_450e30(&g_TER1_AIRBASE_SPRITE, 607, 316);
+    sub_450e30(&g_TER1_SENSOR_ARRAY_SPRITE, 708, 316);
     for (n = 0, y = 453; n < 5; ++n, y += 63) {
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-        g_TER1_UNUSED_SPRITES1[n].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 620, y, 100, 62, 0);
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-        g_TER1_SOIL_ENRICHER_SPRITES[n].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 822, y, 100, 62, 0);
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-        g_TER1_FARM_SPRITES[n].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 923, y, 100, 62, 0);
+        sub_450e30(&g_TER1_UNUSED_SPRITES1[n], 620, y);
+        sub_450e30(&g_TER1_SOIL_ENRICHER_SPRITES[n], 822, y);
+        sub_450e30(&g_TER1_FARM_SPRITES[n], 923, y);
     }
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1_CONDENSER_SPRITE.extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 506, 253, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1_ECHELON_MIRROR_SPRITE.extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 607, 253, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1_BOREHOLE_SPRITE.extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 708, 253, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1_BOREHOLE_CLUSTER_SPRITE.extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 708, 190, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1_LANDMARK_RESOURCE_SPRITES[4].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 822, 253, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1_LANDMARK_RESOURCE_SPRITES[5].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 822, 190, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1_MANIFOLD_NEXUS_SPRITES[3].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 478, 632, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1_MANIFOLD_NEXUS_SPRITES[2].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 478, 695, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1_MANIFOLD_NEXUS_SPRITES[4].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 579, 632, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1_MANIFOLD_NEXUS_SPRITES[0].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 579, 695, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1_MANIFOLD_NEXUS_SPRITES[5].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 680, 632, 100, 62, 0);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1_MANIFOLD_NEXUS_SPRITES[1].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 680, 695, 100, 62, 0);
+    sub_450e30(&g_TER1_CONDENSER_SPRITE, 506, 253);
+    sub_450e30(&g_TER1_ECHELON_MIRROR_SPRITE, 607, 253);
+    sub_450e30(&g_TER1_BOREHOLE_SPRITE, 708, 253);
+    sub_450e30(&g_TER1_BOREHOLE_CLUSTER_SPRITE, 708, 190);
+    sub_450e30(&g_TER1_LANDMARK_RESOURCE_SPRITES[4], 822, 253);
+    sub_450e30(&g_TER1_LANDMARK_RESOURCE_SPRITES[5], 822, 190);
+    sub_450e30(&g_TER1_MANIFOLD_NEXUS_SPRITES[3], 478, 632);
+    sub_450e30(&g_TER1_MANIFOLD_NEXUS_SPRITES[2], 478, 695);
+    sub_450e30(&g_TER1_MANIFOLD_NEXUS_SPRITES[4], 579, 632);
+    sub_450e30(&g_TER1_MANIFOLD_NEXUS_SPRITES[0], 579, 695);
+    sub_450e30(&g_TER1_MANIFOLD_NEXUS_SPRITES[5], 680, 632);
+    sub_450e30(&g_TER1_MANIFOLD_NEXUS_SPRITES[1], 680, 695);
     for (n = 0, y = 253; n < 3; ++n, y += 63) {
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-        g_TER1_SEA_LAND_RESOURCE_SPRITES[n * 4 + 2].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 1, y, 100, 62, 0);
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-        g_TER1_SEA_LAND_RESOURCE_SPRITES[n * 4 + 3].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 102, y, 100, 62, 0);
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-        g_TER1_SEA_LAND_RESOURCE_SPRITES[n * 4].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 203, y, 100, 62, 0);
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-        g_TER1_SEA_LAND_RESOURCE_SPRITES[n * 4 + 1].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 304, y, 100, 62, 0);
+        sub_450e30(&g_TER1_SEA_LAND_RESOURCE_SPRITES[n * 4 + 2], 1, y);
+        sub_450e30(&g_TER1_SEA_LAND_RESOURCE_SPRITES[n * 4 + 3], 102, y);
+        sub_450e30(&g_TER1_SEA_LAND_RESOURCE_SPRITES[n * 4], 203, y);
+        sub_450e30(&g_TER1_SEA_LAND_RESOURCE_SPRITES[n * 4 + 1], 304, y);
     }
     // Pairs swapped: slots 1, 0, 3, 2, 5, 4.
     for (x = 418, n = 0; n < 6; x += 101, ++n) {
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-        g_TER1_UNITY_POD_SPRITES[(n / 2) * 2 + !(n & 1)].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, x, 379, 100, 62, 0);
+        sub_450e30(&g_TER1_UNITY_POD_SPRITES[(n / 2) * 2 + !(n & 1)], x, 379);
     }
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    g_TER1_MONOLITH_SPRITE.extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 304, 1, 100, 62, 0);
+    sub_450e30(&g_TER1_MONOLITH_SPRITE, 304, 1);
     g_PCX_PARSE_TEMP_BUFFER1.close();
 }
 
@@ -4542,7 +4414,7 @@ void __cdecl load_box_sprites() {
     Buffer &canvas = g_PCX_PARSE_TEMP_BUFFER1;
     // Original ignores failure and continues the full publication sequence.
     // Original 0x453A82 names this 14-byte NUL-terminated literal.
-    // RECOVERY_LITERAL: v1 0x00685014 0x00685022 $SG69247 0x00453A70
+    // RECOVERY_LITERAL: v1 0x00685014 0x00685022 $SG69240 0x00453A70
     canvas.load_pcx("interface.pcx", 0, 10, 236);
     extract_interface_box_sprite(g_IFACE_LOCK_SPRITES[0], 247, 71, 15, 19);
     extract_interface_box_sprite(g_IFACE_LOCK_SPRITES[1], 263, 71, 15, 19);
@@ -4659,7 +4531,7 @@ static const char FlagUnitSheet[] = "UNITS.PCX";
 static const char VehicleUnitSheet[] = "UNITS.PCX";
 
 void __cdecl load_flags() {
-    // RECOVERY_LITERAL: v1 0x00685030 0x0068503A $SG69306 0x00453F70
+    // RECOVERY_LITERAL: v1 0x00685030 0x0068503A $SG69299 0x00453F70
     Sprite source[7][2];
     Buffer &sheet = g_PCX_PARSE_TEMP_BUFFER1;
     sheet.load_pcx(FlagUnitSheet, 0, 10, 236);
@@ -4668,12 +4540,8 @@ void __cdecl load_flags() {
     int faction;
     int x;
     for (x = 1, kind = 0; kind < 7; x += 24, ++kind) {
-        sheet.change_color(0x107, 0x109);
-        sheet.change_color(0x106, 0x109);
-        source[kind][0].extract(&sheet, 0x109, x, 700, 23, 30, 0);
-        sheet.change_color(0x107, 0x109);
-        sheet.change_color(0x106, 0x109);
-        source[kind][1].extract(&sheet, 0x109, x, 731, 23, 30, 0);
+        sub_450ed0(&source[kind][0], x, 700, 23, 30);
+        sub_450ed0(&source[kind][1], x, 731, 23, 30);
     }
     for (faction = 0; faction < 8; ++faction) {
         for (kind = 0; kind < 7; ++kind) {
@@ -4688,12 +4556,8 @@ void __cdecl load_flags() {
     }
     sheet.load_pcx("FLAGS.PCX", 0, 10, 236);
     for (x = 1, kind = 0; kind < 7; x += 24, ++kind) {
-        sheet.change_color(0x107, 0x109);
-        sheet.change_color(0x106, 0x109);
-        source[kind][0].extract(&sheet, 0x109, x, 1, 23, 30, 0);
-        sheet.change_color(0x107, 0x109);
-        sheet.change_color(0x106, 0x109);
-        source[kind][1].extract(&sheet, 0x109, x, 32, 23, 30, 0);
+        sub_450ed0(&source[kind][0], x, 1, 23, 30);
+        sub_450ed0(&source[kind][1], x, 32, 23, 30);
     }
     for (faction = 0; faction < 8; ++faction) {
         // Original tests the rule bit directly, not the expansion-aware helper.
@@ -4717,9 +4581,9 @@ void __cdecl load_flags() {
 // ORIGINAL: 0x00454270 ?load_vehicles@@YAXXZ 0x00454270-0x004547DB;0x0065515A-0x00655182
 // RECOVERY_BINDING: v1 {"evidence": ["Original454270..4547DB plus unwind65515A..655182 constructs Sprite[2] then a singleton, and destroys them in reverse including partial unwind. All are real even though apparently unused; the shared PCX buffer is not a local lifetime.", "XI is9x16 sprites, XF is4 pairs of8 with receiver indices16*row+column and +8, not seed pointer+0x98. Original CRT construction/destruction independently bounds each Sprite bank. Four sheets perform244 extracts,74 Buffer recolors and37354 pixel queries before load_flags.", "Original palette loop only updates faction0, publishing each of four get_pixel results immediately into distinct eight-color owners. Two UNITS.PCX strings have distinct original storage685024 and685058; named constant arrays preserve the identities without old-image access or forced literal pooling.", "UNITS rows populate chassis9..18 with1,7 or3 variants; marker defaults and repeated get_pixel calls follow original order. The vertical marker scan uses sourceX-2/-1, not seed sourceY. Final chassis0..8 marker-Y stores target slot1 at4546CC while X uses slot0; no normalization or omitted ignored probes.", "load_flags is called after all marker scans; it closes the shared buffer once, followed by two further closes here. Service errors are ignored as in the original and exceptions only destroy locals. Existing unfinished loader/callee/runtime work remains separate; no byte claim or whole asset-startup acceptance."], "reason": "Recover the complete vehicle asset loader through genuine Sprite banks, chassis marker fields and shared palette owners."}
 void __cdecl load_vehicles() {
-    // RECOVERY_LITERAL: v1 0x0068503C 0x00685043 $SG69330 0x00454270
-    // RECOVERY_LITERAL: v1 0x00685044 0x0068504B $SG69350 0x00454270
-    // RECOVERY_LITERAL: v1 0x0068504C 0x00685058 $SG69357 0x00454270
+    // RECOVERY_LITERAL: v1 0x0068503C 0x00685043 $SG69323 0x00454270
+    // RECOVERY_LITERAL: v1 0x00685044 0x0068504B $SG69343 0x00454270
+    // RECOVERY_LITERAL: v1 0x0068504C 0x00685058 $SG69350 0x00454270
     // These apparently unused objects are real original lifetimes: two array
     // elements first, then a separate Sprite; exception cleanup reverses this.
     Sprite scratch[2];
@@ -4871,23 +4735,17 @@ void __cdecl load_icons() {
     for (row = 0; row < 4; ++row) {
         source_x = 1;
         for (column = 0; column < 4; ++column) {
-            buffer.change_color(263, 265);
-            buffer.change_color(262, 265);
-            g_ICONS_GENERAL_SPRITES[row * 4 + column].extract(&buffer, 265, source_x, source_y, 22, 22, 0);
+            sub_450ed0(&g_ICONS_GENERAL_SPRITES[row * 4 + column], source_x, source_y, 22, 22);
             source_x += 23;
         }
         source_y += 23;
     }
 
-    buffer.change_color(263, 265);
-    buffer.change_color(262, 265);
-    g_NULL_RESOURCE_ICON_SPRITE.extract(&buffer, 265, 1, 174, 22, 22, 0);
+    sub_450ed0(&g_NULL_RESOURCE_ICON_SPRITE, 1, 174, 22, 22);
 
     source_y = 220;
     for (row = 0; row < 2; ++row) {
-        buffer.change_color(263, 265);
-        buffer.change_color(262, 265);
-        g_PEACE_SIGN_SPRITES[row].extract(&buffer, 265, 1, source_y, 22, 22, 0);
+        sub_450ed0(&g_PEACE_SIGN_SPRITES[row], 1, source_y, 22, 22);
         source_y += 23;
     }
 
@@ -4895,35 +4753,25 @@ void __cdecl load_icons() {
     for (row = 0; row < 4; ++row) {
         source_x = 174;
         for (column = 0; column < 8; ++column) {
-            buffer.change_color(263, 265);
-            buffer.change_color(262, 265);
-            g_RESOURCE_ICON_SPRITES[row * 8 + column].extract(&buffer, 265, source_x, source_y, 40, 40, 0);
+            sub_450ed0(&g_RESOURCE_ICON_SPRITES[row * 8 + column], source_x, source_y, 40, 40);
             source_x += 41;
         }
         source_y += 41;
     }
     buffer.load_pcx(IconWreckSheetName, 0, 10, 236);
-    buffer.change_color(263, 265);
-    buffer.change_color(262, 265);
-    g_RED_ALIEN_HEAD_ICON_SPRITE.extract(&buffer, 265, 768, 148, 28, 42, 0);
+    sub_450ed0(&g_RED_ALIEN_HEAD_ICON_SPRITE, 768, 148, 28, 42);
 
-    // RECOVERY_LITERAL: v1 0x00685084 0x0068508E $SG69441 0x004547E0
+    // RECOVERY_LITERAL: v1 0x00685084 0x0068508E $SG69434 0x004547E0
     buffer.load_pcx("ICONS.PCX", 0, 10, 236);
-    buffer.change_color(263, 265);
-    buffer.change_color(262, 265);
-    g_ICON_TILE_SQUARE_SPRITE.extract(&buffer, 265, 1, 1, 100, 50, 0);
+    sub_450de0(&g_ICON_TILE_SQUARE_SPRITE, 1, 1);
 
-    buffer.change_color(263, 265);
-    buffer.change_color(262, 265);
-    g_RED_MALE_HEAD_ICON_SPRITE.extract(&buffer, 265, 46, 303, 33, 30, 0);
+    sub_450ed0(&g_RED_MALE_HEAD_ICON_SPRITE, 46, 303, 33, 30);
 
     source_x = 104;
     source_y = 1;
     for (row = 0; row < 4; ++row) {
         for (column = 0; column < 3; ++column) {
-            buffer.change_color(263, 265);
-            buffer.change_color(262, 265);
-            g_SCROLL_BAR_ARROW_ICON_SPRITES[row * 3 + column].extract(&buffer, 265, source_x, source_y, 24, 24, 0);
+            sub_450ed0(&g_SCROLL_BAR_ARROW_ICON_SPRITES[row * 3 + column], source_x, source_y, 24, 24);
             source_x += 25;
         }
         source_y += 25;
@@ -4932,42 +4780,30 @@ void __cdecl load_icons() {
 
     // Original EDI is reset to 104 after the final arrow row; the filler
     // source X is not the previous row's final icon or its one-past position.
-    buffer.change_color(263, 265);
-    buffer.change_color(262, 265);
-    g_SCROLL_BAR_FILLER_ICON_SPRITES.extract(&buffer, 265, source_x, 101, 18, 18, 0);
+    sub_450ed0(&g_SCROLL_BAR_FILLER_ICON_SPRITES, source_x, 101, 18, 18);
 
     source_x = 192;
     source_y = 1;
     for (row = 0; row < 4; ++row) {
         for (column = 0; column < 3; ++column) {
-            buffer.change_color(263, 265);
-            buffer.change_color(262, 265);
-            g_SCROLL_BAR_SMALL_ARROW_ICON_SPRITES[row * 3 + column].extract(&buffer, 265, source_x, source_y, 10, 10, 0);
+            sub_450ed0(&g_SCROLL_BAR_SMALL_ARROW_ICON_SPRITES[row * 3 + column], source_x, source_y, 10, 10);
             source_x += 11;
         }
         source_y += 11;
         source_x = 192;
     }
 
-    buffer.change_color(263, 265);
-    buffer.change_color(262, 265);
-    g_SCROLL_BAR_SMALL_FILLER_ICON_SPRITE.extract(&buffer, 265, 225, 1, 10, 10, 0);
+    sub_450ed0(&g_SCROLL_BAR_SMALL_FILLER_ICON_SPRITE, 225, 1, 10, 10);
 
     source_x = 320;
     for (column = 0; column < 4; ++column) {
-        buffer.change_color(263, 265);
-        buffer.change_color(262, 265);
-        g_SILVER_MENU_ICON_SPRITES[column].extract(&buffer, 265, source_x, 1, 15, 15, 0);
+        sub_450ed0(&g_SILVER_MENU_ICON_SPRITES[column], source_x, 1, 15, 15);
         source_x += 16;
     }
 
-    buffer.change_color(263, 265);
-    buffer.change_color(262, 265);
-    g_SILVER_CHECKBOX_ICON_SPRITES[0].extract(&buffer, 265, 320, 20, 16, 16, 0);
+    sub_450ed0(&g_SILVER_CHECKBOX_ICON_SPRITES[0], 320, 20, 16, 16);
 
-    buffer.change_color(263, 265);
-    buffer.change_color(262, 265);
-    g_SILVER_CHECKBOX_ICON_SPRITES[1].extract(&buffer, 265, 337, 20, 16, 16, 0);
+    sub_450ed0(&g_SILVER_CHECKBOX_ICON_SPRITES[1], 337, 20, 16, 16);
 
     // Every service result above is deliberately ignored, including failed
     // loads and extractions. Close occurs only after all 86 extraction attempts.
@@ -5095,10 +4931,7 @@ void __cdecl load_cursors() {
                 hot_y = row;
             }
         }
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(0x107, 0x109);
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(0x106, 0x109);
-        g_CURSOR_SPRITES[cursor].extract(
-            &g_PCX_PARSE_TEMP_BUFFER1, 0x109, x, 1, 32, 32, 0);
+        sub_450ed0(&g_CURSOR_SPRITES[cursor], x, 1, 32, 32);
         CursorHotspotX[cursor] = hot_x;
         CursorHotspotY[cursor] = hot_y;
         x += 33;
@@ -5110,69 +4943,45 @@ void __cdecl load_cursors() {
     int specialist;
     for (mood = 0; mood < 4; ++mood) {
         for (int variant = 0; variant < 2; ++variant) {
-            g_PCX_PARSE_TEMP_BUFFER1.change_color(0x107, 0x109);
-            g_PCX_PARSE_TEMP_BUFFER1.change_color(0x106, 0x109);
-            g_CITIZEN_LG_CURSOR_SPRITES[mood + 4 * variant].extract(
-                &g_PCX_PARSE_TEMP_BUFFER1, 0x109, x, 501, 38, 48, 0);
+            sub_450ed0(&g_CITIZEN_LG_CURSOR_SPRITES[mood + 4 * variant], x, 501, 38, 48);
             x += 39;
         }
     }
     for (specialist = 0; specialist < 7; ++specialist) {
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(0x107, 0x109);
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(0x106, 0x109);
-        g_SPECIALIST_LG_CURSOR_SPRITES[specialist].extract(
-            &g_PCX_PARSE_TEMP_BUFFER1, 0x109, x, 501, 38, 48, 0);
+        sub_450ed0(&g_SPECIALIST_LG_CURSOR_SPRITES[specialist], x, 501, 38, 48);
         x += 39;
     }
 
     x = 44;
     for (mood = 0; mood < 4; ++mood) {
         for (int variant = 0; variant < 2; ++variant) {
-            g_PCX_PARSE_TEMP_BUFFER1.change_color(0x107, 0x109);
-            g_PCX_PARSE_TEMP_BUFFER1.change_color(0x106, 0x109);
-            g_CITIZEN_SM_CURSOR_SPRITES[mood + 4 * variant].extract(
-                &g_PCX_PARSE_TEMP_BUFFER1, 0x109, x, 458, 30, 38, 0);
+            sub_450ed0(&g_CITIZEN_SM_CURSOR_SPRITES[mood + 4 * variant], x, 458, 30, 38);
             x += 31;
         }
     }
     for (specialist = 0; specialist < 7; ++specialist) {
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(0x107, 0x109);
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(0x106, 0x109);
-        g_SPECIALIST_SM_CURSOR_SPRITES[specialist].extract(
-            &g_PCX_PARSE_TEMP_BUFFER1, 0x109, x, 458, 30, 38, 0);
+        sub_450ed0(&g_SPECIALIST_SM_CURSOR_SPRITES[specialist], x, 458, 30, 38);
         x += 31;
     }
 
     g_PCX_PARSE_TEMP_BUFFER1.load_pcx("ALIENCIT.PCX", 0, 10, 236);
     x = 1;
     for (mood = 0; mood < 4; ++mood) {
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(0x107, 0x109);
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(0x106, 0x109);
-        g_AL_CITIZEN_SM_CURSOR_SPRITES[mood].extract(
-            &g_PCX_PARSE_TEMP_BUFFER1, 0x109, x, 1, 30, 38, 0);
+        sub_450ed0(&g_AL_CITIZEN_SM_CURSOR_SPRITES[mood], x, 1, 30, 38);
         x += 31;
     }
     for (specialist = 0; specialist < 7; ++specialist) {
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(0x107, 0x109);
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(0x106, 0x109);
-        g_AL_SPECIALIST_SM_CURSOR_SPRITES[specialist].extract(
-            &g_PCX_PARSE_TEMP_BUFFER1, 0x109, x, 1, 30, 38, 0);
+        sub_450ed0(&g_AL_SPECIALIST_SM_CURSOR_SPRITES[specialist], x, 1, 30, 38);
         x += 31;
     }
 
     x = 1;
     for (mood = 0; mood < 4; ++mood) {
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(0x107, 0x109);
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(0x106, 0x109);
-        g_AL_CITIZEN_LG_CURSOR_SPRITES[mood].extract(
-            &g_PCX_PARSE_TEMP_BUFFER1, 0x109, x, 41, 38, 48, 0);
+        sub_450ed0(&g_AL_CITIZEN_LG_CURSOR_SPRITES[mood], x, 41, 38, 48);
         x += 39;
     }
     for (specialist = 0; specialist < 7; ++specialist) {
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(0x107, 0x109);
-        g_PCX_PARSE_TEMP_BUFFER1.change_color(0x106, 0x109);
-        g_AL_SPECIALIST_LG_CURSOR_SPRITES[specialist].extract(
-            &g_PCX_PARSE_TEMP_BUFFER1, 0x109, x, 41, 38, 48, 0);
+        sub_450ed0(&g_AL_SPECIALIST_LG_CURSOR_SPRITES[specialist], x, 41, 38, 48);
         x += 39;
     }
     g_PCX_PARSE_TEMP_BUFFER1.close();
@@ -5317,39 +5126,17 @@ void __cdecl load_interface(int mode) {
         IfaceColorTable[i] = canvas.get_pixel(0x3A3, y);
 
     canvas.change_color(0x108, 0x109);
-    canvas.change_color(0x107, 0x109);
-    canvas.change_color(0x106, 0x109);
-    g_IFACE_GENERAL_WINDOWS_TOP_LEFT_SPRITE.extract(&canvas, 0x109, 0x223, 0x26, 0x4D, 0x42, 0);
-    canvas.change_color(0x107, 0x109);
-    canvas.change_color(0x106, 0x109);
-    g_IFACE_GENERAL_WINDOWS_TOP_RIGHT_SPRITE.extract(&canvas, 0x109, 0x296, 0x26, 0x3D, 0x42, 0);
-    canvas.change_color(0x107, 0x109);
-    canvas.change_color(0x106, 0x109);
-    g_IFACE_GENERAL_WINDOWS_BOT_LEFT_SPRITE.extract(&canvas, 0x109, 0x223, 0x90, 0x4D, 0x29, 0);
-    canvas.change_color(0x107, 0x109);
-    canvas.change_color(0x106, 0x109);
-    g_IFACE_GENERAL_WINDOWS_BOT_RIGHT_SPRITE.extract(&canvas, 0x109, 0x296, 0x90, 0x3D, 0x29, 0);
-    canvas.change_color(0x107, 0x109);
-    canvas.change_color(0x106, 0x109);
-    g_IFACE_GENERAL_WINDOWS_TOP_MID_SPRITE.extract(&canvas, 0x109, 0x271, 0x26, 0x24, 0x42, 0);
-    canvas.change_color(0x107, 0x109);
-    canvas.change_color(0x106, 0x109);
-    g_IFACE_GENERAL_WINDOWS_BOT_MID_SPRITE.extract(&canvas, 0x109, 0x271, 0x90, 0x24, 0x29, 0);
-    canvas.change_color(0x107, 0x109);
-    canvas.change_color(0x106, 0x109);
-    g_IFACE_GENERAL_WINDOWS_MID_LEFT_SPRITE.extract(&canvas, 0x109, 0x223, 0x69, 0x4D, 0x26, 0);
-    canvas.change_color(0x107, 0x109);
-    canvas.change_color(0x106, 0x109);
-    g_IFACE_GENERAL_WINDOWS_MID_RIGHT_SPRITE.extract(&canvas, 0x109, 0x296, 0x69, 0x3D, 0x26, 0);
-    canvas.change_color(0x107, 0x109);
-    canvas.change_color(0x106, 0x109);
-    g_IFACE_GENERAL_WINDOWS_NONCAP_LEFT_SPRITE.extract(&canvas, 0x109, 0x223, 0xC3, 0x23, 0x1F, 0);
-    canvas.change_color(0x107, 0x109);
-    canvas.change_color(0x106, 0x109);
-    g_IFACE_GENERAL_WINDOWS_NONCAP_MID_SPRITE.extract(&canvas, 0x109, 0x247, 0xC3, 0x30, 0x1F, 0);
-    canvas.change_color(0x107, 0x109);
-    canvas.change_color(0x106, 0x109);
-    g_IFACE_GENERAL_WINDOWS_NONCAP_RIGHT_SPRITE.extract(&canvas, 0x109, 0x278, 0xC3, 0x24, 0x1F, 0);
+    sub_450ed0(&g_IFACE_GENERAL_WINDOWS_TOP_LEFT_SPRITE, 0x223, 0x26, 0x4D, 0x42);
+    sub_450ed0(&g_IFACE_GENERAL_WINDOWS_TOP_RIGHT_SPRITE, 0x296, 0x26, 0x3D, 0x42);
+    sub_450ed0(&g_IFACE_GENERAL_WINDOWS_BOT_LEFT_SPRITE, 0x223, 0x90, 0x4D, 0x29);
+    sub_450ed0(&g_IFACE_GENERAL_WINDOWS_BOT_RIGHT_SPRITE, 0x296, 0x90, 0x3D, 0x29);
+    sub_450ed0(&g_IFACE_GENERAL_WINDOWS_TOP_MID_SPRITE, 0x271, 0x26, 0x24, 0x42);
+    sub_450ed0(&g_IFACE_GENERAL_WINDOWS_BOT_MID_SPRITE, 0x271, 0x90, 0x24, 0x29);
+    sub_450ed0(&g_IFACE_GENERAL_WINDOWS_MID_LEFT_SPRITE, 0x223, 0x69, 0x4D, 0x26);
+    sub_450ed0(&g_IFACE_GENERAL_WINDOWS_MID_RIGHT_SPRITE, 0x296, 0x69, 0x3D, 0x26);
+    sub_450ed0(&g_IFACE_GENERAL_WINDOWS_NONCAP_LEFT_SPRITE, 0x223, 0xC3, 0x23, 0x1F);
+    sub_450ed0(&g_IFACE_GENERAL_WINDOWS_NONCAP_MID_SPRITE, 0x247, 0xC3, 0x30, 0x1F);
+    sub_450ed0(&g_IFACE_GENERAL_WINDOWS_NONCAP_RIGHT_SPRITE, 0x278, 0xC3, 0x24, 0x1F);
 
     NCSprites defaults;
     defaults.top_left = &g_IFACE_GENERAL_WINDOWS_TOP_LEFT_SPRITE;
@@ -5454,15 +5241,9 @@ void __cdecl load_interface(int mode) {
     for (int group = 0; group < 3; ++group) {
         for (int member = 0; member < 3; ++member) {
             const int row = group * 3 + member;
-            canvas.change_color(0x107, 0x109);
-            canvas.change_color(0x106, 0x109);
-            g_BASEWIN_SPRITES[row * 3].extract(&canvas, 0x109, 0x40, 1 + row * 21, 3, 20, 0);
-            canvas.change_color(0x107, 0x109);
-            canvas.change_color(0x106, 0x109);
-            g_BASEWIN_SPRITES[row * 3 + 1].extract(&canvas, 0x109, 0x44, 1 + row * 21, 0x43, 20, 0);
-            canvas.change_color(0x107, 0x109);
-            canvas.change_color(0x106, 0x109);
-            g_BASEWIN_SPRITES[row * 3 + 2].extract(&canvas, 0x109, 0x88, 1 + row * 21, 3, 20, 0);
+            sub_450ed0(&g_BASEWIN_SPRITES[row * 3], 0x40, 1 + row * 21, 3, 20);
+            sub_450ed0(&g_BASEWIN_SPRITES[row * 3 + 1], 0x44, 1 + row * 21, 0x43, 20);
+            sub_450ed0(&g_BASEWIN_SPRITES[row * 3 + 2], 0x88, 1 + row * 21, 3, 20);
         }
     }
     int icon_y = 1;

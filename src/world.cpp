@@ -1290,7 +1290,7 @@ Status: Complete
 */
 void __cdecl world_climate() {
     do_checksums(2);
-// RECOVERY_LITERAL: v1 0x00691E2C 0x00691E4A $SG58545 0x005C5A30
+// RECOVERY_LITERAL: v1 0x00691E2C 0x00691E4A $SG58539 0x005C5A30
     log_say("-- ADJUSTING WORLD CLIMATE --", 0, 0, 0);
     world_shorelines();
     world_temperature();
@@ -1314,7 +1314,7 @@ void __cdecl world_climate() {
         WorldClimateWorldWin.clear_terrain();
     }
 
-// RECOVERY_LITERAL: v1 0x00691E4C 0x00691E69 $SG58554 0x005C5A30
+// RECOVERY_LITERAL: v1 0x00691E4C 0x00691E69 $SG58548 0x005C5A30
     log_say("-- WORLD CLIMATE COMPLETE --", 0, 0, 0);
     do_checksums(3);
 }
@@ -3283,27 +3283,7 @@ void __cdecl world_build() {
     world_temperature();
     world_riverbeds();
     world_fungus();
-    world_monsoon(-1, -1);
-    world_crater(-1, -1);
-    world_volcano(-1, -1, 0);
-    world_mesa(-1, -1);
-    world_ridge(-1, -1);
-    world_diamond(-1, -1);
-    world_ruin(-1, -1);
-    if (ExpansionEnabled != 0) {
-        world_unity(-1, -1);
-        if (ExpansionEnabled != 0) {
-            world_fossil(-1, -1);
-        }
-    }
-    world_temple(-1, -1);
-    world_borehole(-1, -1);
-    world_sargasso(-1, -1);
-    world_dune(-1, -1);
-    world_fresh(-1, -1);
-    world_geothermal(-1, -1);
-
-    fixup_landmarks();
+    world_landmarks();
     world_linearize_contours();
     WorldClimateRedrawRequest = 0;
     world_climate();

@@ -2501,12 +2501,7 @@ void NetWin::on_redraw() {
     }
 
     draw_custom_rules();
-    Buffer::box_sprite(&setup_rects_[45],
-                       &InterfaceBoxStyles[3]);
-    Buffer::box_sprite(&setup_rects_[44],
-                       &InterfaceBoxStyles[0]);
-    Buffer::box_sprite(&setup_rects_[43],
-                       &InterfaceBoxStyles[0]);
+    UNK3();
     draw_player_names();
     draw_diffs();
     draw_factions();

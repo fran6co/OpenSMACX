@@ -24,7 +24,7 @@ class Path {
  public:
   // Paths is statically zero-initialized in the original. Its startup entry
   // 59A1B0 only registers destruction; there is no constructor setting unk_=5.
-  MEASURED ~Path() { release_storage(); } // 0059A320
+  MEASURED ~Path() { shutdown(); } // 0059A320
 
   void init();
   void clear_destination() { x_dst_ = -1; y_dst_ = -1; }
@@ -51,28 +51,10 @@ class Path {
   BOOL sensors(int faction_id, int *x_sensor, int *y_sensor);
 
  private:
-  // init and the inline destructor expand this cleanup in the image; external
-  // mapped callers use the out-of-line shutdown entry point.
-  void release_storage() {
-    if (map_table_) {
-      free(map_table_);
-    }
-    if (x_table_) {
-      free(x_table_);
-    }
-    if (y_table_) {
-      free(y_table_);
-    }
-    // IMAGE ORDER: y_table_ is nulled before x_table_.
-    map_table_ = nullptr;
-    y_table_ = nullptr;
-    x_table_ = nullptr;
-  }
-
   // ANCHORED FROM THE IMAGE, not from the ABI alone. `Path::shutdown`
   // (0x0059A2D0) frees `[esi]`, `[esi+4]` and `[esi+8]` in this
   // declaration's order, then nulls them as `[esi]`, `[esi+8]`, `[esi+4]` -
-  // which is why the body above spells y_table_ before x_table_. Three
+  // which is why shutdown spells y_table_ before x_table_. Three
   // members at three known offsets, and the first of them is 0.
   int *map_table_;  // 0x0
   int16_t *x_table_;

@@ -165,9 +165,7 @@ void WorldWin::click(int x, int y, int button, int is_double) {
         MapWinTable[1]->set_center(MapWinTable[0]->center_x_,
                                    MapWinTable[0]->center_y_, 1);
         detail_map_selected_ = 1;
-        MainInterfaceGlobal.button_group(1).set(1007, 0);
-        MapWinTable[1]->show(0);
-        WorldClimateWorldWin.Win::hide();
+        show_detail_map_view();
     }
 }
 
@@ -201,20 +199,14 @@ void __cdecl clear_dirty();
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original0x004C3950 writes1 to receiver+0x239CC;0x004C395A-0x004C3966 calls ButtonGroup::set(1007,0) on0x7CD12C, equal to MainInterfaceGlobal0x7AE820 plus its constructor-established group-array offset0x1E878 plus one0x94-byte element.0x004C396B-0x004C397D calls Win slot1 through MapWinTable[1] with its real virtual-base adjustment.0x004C3980-0x004C3985 directly tail-calls Win::hide on WorldClimateWorldWin0x8E9F60, not on this. Complete span agrees with src/recovered/units/004c3950.cpp."], "reason": "Recover the complete WorldWin detail-map operation using actual owned members, genuine virtual dispatch and the distinct global climate-window receiver; replace the seed-only raw-offset and fake-vtable model without deleting the seed or its historical obligation."}
 void WorldWin::set_detail_map() {
     detail_map_selected_ = 1;
-    MainInterfaceGlobal.button_group(1).set(1007, 0);
-    // The map slot dispatches through Win; the climate window is a separate
-    // global receiver whose hide call explicitly targets the Win base body.
-    MapWinTable[1]->show(0);
-    WorldClimateWorldWin.Win::hide();
+    show_detail_map_view();
 }
 
 // ORIGINAL: 0x004C3990 ?set_world_map@WorldWin@@QAEXXZ 0x004C3990-0x004C39CB BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original0x004C3990-0x004C39CB fully decodes59bytes and agrees with the retained004c3990 seed. Stores this+0x239CC=0, calls ButtonGroup::set(1006,0) at0x7CD12C, invokes Win hide slot2 through MapWinTable[1] virtual-base adjustment, then directly calls Win::show(0) at0x005ED9D0 on0x008E9F60."], "reason": "The world-map setter changes the remembered choice to zero, selects button1006, virtually hides the detail MapWin and directly shows the distinct global WorldWin through Win. Preserve the protected seed as a historical obligation."}
 void WorldWin::set_world_map() {
     detail_map_selected_ = 0;
-    MainInterfaceGlobal.button_group(1).set(1006, 0);
-    MapWinTable[1]->hide();
-    WorldClimateWorldWin.Win::show(0);
+    show_world_map_view();
 }
 
 // ORIGINAL: 0x004C39D0 ?show_all@WorldWin@@QAEXXZ 0x004C39D0-0x004C3A39 BYTE_EXACT
@@ -223,13 +215,9 @@ void WorldWin::show_all() {
     // Restore the remembered selection without changing it. In particular,
     // any nonzero selection chooses the detail map, not only the value one.
     if (detail_map_selected_ != 0) {
-        MainInterfaceGlobal.button_group(1).set(1007, 0);
-        MapWinTable[1]->show(0);
-        WorldClimateWorldWin.Win::hide();
+        show_detail_map_view();
     } else {
-        MainInterfaceGlobal.button_group(1).set(1006, 0);
-        MapWinTable[1]->hide();
-        WorldClimateWorldWin.Win::show(0);
+        show_world_map_view();
     }
 }
 

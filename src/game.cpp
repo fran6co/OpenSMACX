@@ -249,39 +249,12 @@ struct MapDataTransferHeader {
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/005a6510.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover direction-sign lookup through the genuine nine-entry movement tables and historical C linkage. Preserve the exact seed obligation; new matching claims require native recording."}
 // symbol    ?sub_5a6510@@YAHHH@Z
 int __cdecl sub_5a6510(int x, int y) {
-    int sign_x;
-    if (x > 0) {
-        sign_x = 1;
-    } else {
-        sign_x = (x >= 0) - 1;
-    }
-
-    int sign_y;
-    if (y > 0) {
-        sign_y = 1;
-    } else {
-        sign_y = (y >= 0) - 1;
-    }
-
-    for (int index = 0; index < 9; ++index) {
-        const int delta_x = VehMoveDeltaX[index];
-        int sign_delta_x;
-        if (delta_x > 0) {
-            sign_delta_x = 1;
-        } else {
-            sign_delta_x = (delta_x >= 0) - 1;
-        }
-        if (sign_x == sign_delta_x) {
-            const int delta_y = VehMoveDeltaY[index];
-            int sign_delta_y;
-            if (delta_y > 0) {
-                sign_delta_y = 1;
-            } else {
-                sign_delta_y = (delta_y >= 0) - 1;
-            }
-            if (sign_y == sign_delta_y) {
-                return index;
-            }
+    int direction_x = (x > 0) ? 1 : (x >= 0) - 1;
+    int direction_y = (y > 0) ? 1 : (y >= 0) - 1;
+    for (int i = 0; i < 9; i++) {
+        if (direction_x == (VehMoveDeltaX[i] > 0 ? 1 : (VehMoveDeltaX[i] >= 0) - 1)
+            && direction_y == (VehMoveDeltaY[i] > 0 ? 1 : (VehMoveDeltaY[i] >= 0) - 1)) {
+            return i;
         }
     }
     return -1;
@@ -377,16 +350,7 @@ int __cdecl compass_move(int x_src, int y_src, int x_dst, int y_dst) {
     if (x_radius_off > ((int)MapLongitudeBounds / 2)) {
         x_radius_off -= MapLongitudeBounds;
     }
-    int y_radius_off = y_dst - y_src;
-    int direction_x = (x_radius_off > 0) ? 1 : (x_radius_off >= 0) - 1;
-    int direction_y = (y_radius_off > 0) ? 1 : (y_radius_off >= 0) - 1;
-    for (int i = 0; i < 9; i++) {
-        if (direction_x == (VehMoveDeltaX[i] > 0 ? 1 : (VehMoveDeltaX[i] >= 0) - 1)
-            && direction_y == (VehMoveDeltaY[i] > 0 ? 1 : (VehMoveDeltaY[i] >= 0) - 1)) {
-            return i;
-        }
-    }
-    return -1;
+    return sub_5a6510(x_radius_off, y_dst - y_src);
 }
 
 // ORIGINAL: 0x005A66E0 ?encrypt_write@@YAHPAXIIPAUFILE@@@Z 0x005A66E0-0x005A67A8 FILE BYTE_EXACT

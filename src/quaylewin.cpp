@@ -424,15 +424,5 @@ void __cdecl quayle(int faction_id) {
     if (rating < (step * step) / 2) break;
     ++rank;
   }
-  if (IsMultiplayerNet) return;
-  if (QuayleWinGlobal.init() != 0) return;
-  if (rank >= 0x19) {
-    rank = 0x18;
-  } else if (rank < -1) {
-    rank = -1;
-  }
-  QuayleWinGlobal.set_page(rank);
-  QuayleWinGlobal.set_chapter(-1);
-  Win &modal_window = QuayleWinGlobal;
-  modal_window.set_modal(0, 0, 0);
+  sub_496610(rank);
 }

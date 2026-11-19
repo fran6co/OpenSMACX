@@ -69,7 +69,7 @@ Return Value: n/a
 Status: Complete
 */
 void Path::init() {
-    release_storage();
+    shutdown();
     clear_destination();
     map_table_ = (int *)mem_get(MapArea * sizeof(*map_table_));
     x_table_ = (int16_t *)mem_get(MapArea * sizeof(*x_table_));

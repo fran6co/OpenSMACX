@@ -338,7 +338,7 @@ StatusWin::StatusWin() {
 // RECOVERY_OBJECT: v5 0x008C6BB4 0x008C6BD4 ?InfoTextColors@@3PAY01HA 0x00458420 member ?TextColourTable@@3PAHA [22:30]
 int TextColourTable[195];
 
-// RECOVERY_LITERAL: v1 0x00687504 0x0068750D $SG61005 0x004BA220
+// RECOVERY_LITERAL: v1 0x00687504 0x0068750D $SG61004 0x004BA220
 /*
 Purpose: Build the interface's text colours: load text.pcx into a scratch
          buffer, publish its palette as the process palette, then sample the
@@ -2182,21 +2182,7 @@ typedef int (__stdcall *UnionRectFn)(RECT *, const RECT *, const RECT *);
 
 
 void StatusWin::on_redraw() {
-    int fontSize = ((WinScreenWidth != 0x320) ? 2 : 0) + 10;
-
-    if (fontSize != font_size_) {
-        font_size_ = fontSize;
-        font1_.init(DefaultFontFace, fontSize, 0);
-        font2_.init(DefaultFontFace, fontSize, 2);
-        font3_.init(DefaultFontFace, fontSize, 1);
-    }
-
-    if (WinScreenWidth != 0x320) {
-        font1_.unk_1_ = 4;
-        font2_.unk_1_ = 4;
-        font3_.unk_1_ = 4;
-    }
-
+    UNK1();
     draw_status(-1, -1, -1, -1, 0);
 
     RECT rect;
@@ -2294,25 +2280,7 @@ void StatusWin::arrow_left() {
     if (previous >= 0) {
         iUnitIndex_ = previous;
 
-        const int font_height = WinScreenWidth == 0x320 ? 10 : 12;
-        if (font_height != font_size_) {
-            font_size_ = font_height;
-            font1_.init(DefaultFontFace, font_height, 0);
-            font2_.init(DefaultFontFace, font_height, 2);
-            font3_.init(DefaultFontFace, font_height, 1);
-        }
-        if (WinScreenWidth != 0x320) {
-            font1_.unk_1_ = 4;
-            font2_.unk_1_ = 4;
-            font3_.unk_1_ = 4;
-        }
-
-        draw_status(-1, -1, -1, -1, 0);
-        RECT rect;
-        UnionRect(&rect, &MainInterfaceGlobal.status_hit_rect(),
-                  &MainInterfaceGlobal.status_right_rect());
-        UnionRect(&rect, &rect, &MainInterfaceGlobal.status_left_rect());
-        MainInterfaceGlobal.soft_update(&rect);
+        redraw();
         return;
     } else {
         const int base_id = base_at(iTileX_, iTileY_);
@@ -2322,25 +2290,7 @@ void StatusWin::arrow_left() {
         iCityIndex_ = base_id;
         iUnitIndex_ = -1;
 
-        const int font_height = WinScreenWidth == 0x320 ? 10 : 12;
-        if (font_height != font_size_) {
-            font_size_ = font_height;
-            font1_.init(DefaultFontFace, font_height, 0);
-            font2_.init(DefaultFontFace, font_height, 2);
-            font3_.init(DefaultFontFace, font_height, 1);
-        }
-        if (WinScreenWidth != 0x320) {
-            font1_.unk_1_ = 4;
-            font2_.unk_1_ = 4;
-            font3_.unk_1_ = 4;
-        }
-
-        draw_status(-1, -1, -1, -1, 0);
-        RECT rect;
-        UnionRect(&rect, &MainInterfaceGlobal.status_hit_rect(),
-                  &MainInterfaceGlobal.status_right_rect());
-        UnionRect(&rect, &rect, &MainInterfaceGlobal.status_left_rect());
-        MainInterfaceGlobal.soft_update(&rect);
+        redraw();
     }
 }
 
@@ -2354,25 +2304,7 @@ void StatusWin::arrow_right() {
             iCityIndex_ = -1;
             iUnitIndex_ = vehicle_id;
 
-            const int font_height = WinScreenWidth == 0x320 ? 10 : 12;
-            if (font_height != font_size_) {
-                font_size_ = font_height;
-                font1_.init(DefaultFontFace, font_height, 0);
-                font2_.init(DefaultFontFace, font_height, 2);
-                font3_.init(DefaultFontFace, font_height, 1);
-            }
-            if (WinScreenWidth != 0x320) {
-                font1_.unk_1_ = 4;
-                font2_.unk_1_ = 4;
-                font3_.unk_1_ = 4;
-            }
-
-            draw_status(-1, -1, -1, -1, 0);
-            RECT rect;
-            UnionRect(&rect, &MainInterfaceGlobal.status_hit_rect(),
-                      &MainInterfaceGlobal.status_right_rect());
-            UnionRect(&rect, &rect, &MainInterfaceGlobal.status_left_rect());
-            MainInterfaceGlobal.soft_update(&rect);
+            redraw();
             return;
         }
     } else if (iUnitIndex_ >= 0) {
@@ -2380,25 +2312,7 @@ void StatusWin::arrow_right() {
         if (next >= 0) {
             iUnitIndex_ = next;
 
-            const int font_height = WinScreenWidth == 0x320 ? 10 : 12;
-            if (font_height != font_size_) {
-                font_size_ = font_height;
-                font1_.init(DefaultFontFace, font_height, 0);
-                font2_.init(DefaultFontFace, font_height, 2);
-                font3_.init(DefaultFontFace, font_height, 1);
-            }
-            if (WinScreenWidth != 0x320) {
-                font1_.unk_1_ = 4;
-                font2_.unk_1_ = 4;
-                font3_.unk_1_ = 4;
-            }
-
-            draw_status(-1, -1, -1, -1, 0);
-            RECT rect;
-            UnionRect(&rect, &MainInterfaceGlobal.status_hit_rect(),
-                      &MainInterfaceGlobal.status_right_rect());
-            UnionRect(&rect, &rect, &MainInterfaceGlobal.status_left_rect());
-            MainInterfaceGlobal.soft_update(&rect);
+            redraw();
             return;
         }
     }

@@ -815,14 +815,7 @@ void InfoWin::timer_change(int) {
     visible_characters_[0] = 0;
     visible_characters_[1] = 0;
     field_A8_ = 0;
-    MainInterfaceGlobal.box_sprite(&pane_rects_[active_pane_],
-                                   &InterfaceBoxStyles[18]);
-    if (pane_states_ != 0) {
-        visible_characters_[0] = 0;
-        visible_characters_[1] = 0;
-    }
-    setup_text();
-    draw_text(active_pane_);
+    UNK2();
 }
 
 // ORIGINAL: 0x00458420 ?draw_text@InfoWin@@QAEXH@Z 0x00458420-0x004588A9 BYTE_EXACT
@@ -944,6 +937,7 @@ void InfoWin::draw_text(int pane) {
 void InfoWin::UNK2() {
     MainInterfaceGlobal.box_sprite(&pane_rects_[active_pane_],
                                    &InterfaceBoxStyles[18]);
+    // The original tests the pane-state array address, not its contents.
     if (pane_states_ != 0) {
         visible_characters_[0] = 0;
         visible_characters_[1] = 0;
@@ -1081,15 +1075,7 @@ void InfoWin::set_state(int state, int a2) {
     visible_characters_[0] = a2 != 0 ? 0 : text_lengths_[0] + 1;
     visible_characters_[1] = a2 != 0 ? 0 : text_lengths_[1] + 1;
     field_A8_ = 0;
-    MainInterfaceGlobal.box_sprite(&pane_rects_[active_pane_],
-                                   &InterfaceBoxStyles[18]);
-    // The original tests the pane-state array address, not its contents.
-    if (pane_states_ != 0) {
-        visible_characters_[0] = 0;
-        visible_characters_[1] = 0;
-    }
-    setup_text();
-    draw_text(active_pane_);
+    UNK2();
 }
 
 

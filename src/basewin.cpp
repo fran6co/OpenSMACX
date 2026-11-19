@@ -4039,15 +4039,7 @@ void BaseWin::focus() {
 void BaseWin::UNK3(int base_id) {
     focusedBaseID_ = static_cast<uint32_t>(base_id);
     BaseComputedID = -1;
-    const int worked_tiles = Bases[focusedBaseID_].resource_sqr_radius;
-    set_base(static_cast<int>(focusedBaseID_));
-    base_compute(0);
-    if (IsMultiplayerNet != 0 && ConsoleControlTurnActive == 0
-        && worked_tiles != Bases[focusedBaseID_].resource_sqr_radius) {
-        if (NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1) == 0) {
-            NetDaemonNet.unlock_base(BaseIDCurrentSelected);
-        }
-    }
+    focus();
 }
 
 // ORIGINAL: 0x00415F00 ?gov_activate@BaseWin@@QAEXXZ 0x00415F00-0x00415F70 FILE BYTE_EXACT
@@ -5165,9 +5157,7 @@ void BaseWin::zoom(int base_id, int wait) {
     int y;
     field_40B00_ = -1;
     TutorialWindow.reset();
-    focusedBaseID_ = base_id;
-    BaseComputedID = -1;
-    focus();
+    UNK3(base_id);
 
     BaseCurrent->state &= ~BSTATE_UNK_10;
     zoom_wait_pending_ = 1;
@@ -5279,17 +5269,7 @@ void BaseWin::zoom(int base_id, int wait) {
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x0041AE40-0x0041AF12"], "reason": "Recover the original base-selection/cache operation with source-owned state and typed fields. The archived seed remains an obligation until this product definition is freshly remeasured."}
 void BaseWin::soft_zoom(int base_id) {
     if (!Win::is_visible()) {
-        focusedBaseID_ = base_id;
-        BaseComputedID = -1;
-        int worked_tiles = Bases[focusedBaseID_].resource_sqr_radius;
-        set_base(focusedBaseID_);
-        base_compute(0);
-        if (IsMultiplayerNet && !ConsoleControlTurnActive
-            && worked_tiles != Bases[focusedBaseID_].resource_sqr_radius) {
-            if (NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1) == 0) {
-                NetDaemonNet.unlock_base(BaseIDCurrentSelected);
-            }
-        }
+        UNK3(base_id);
         displayed_production_id_ = Bases[base_id].queue_production_id[0];
         return;
     }

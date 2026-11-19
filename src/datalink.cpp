@@ -3292,10 +3292,7 @@ int Datalink::on_link_clicked(int, char *link) {
         return 0;
     }
 
-    set_cat(static_cast<unsigned int>(category), 0);
-    history_[0] = facility;
-    listBox_.set_selected_id(field_29DC_ * 10000 + facility);
-    repaint_slot();
+    show_topic(static_cast<unsigned int>(category), facility);
     return 0;
 }
 
@@ -3361,17 +3358,7 @@ void Datalink::on_button_clicked(int button_id) {
             return;
         }
 
-        --field_2A34_;
-        const int entry = history_[field_2A34_];
-        const int category = entry / 10000;
-        set_cat(static_cast<unsigned int>(category), 0);
-        const int item = entry - category * 10000;
-        history_[0] = item;
-
-        const int selected = field_29DC_ * 10000 + item;
-        listBox_.set_selected_id(selected);
-        repaint_slot();
-        draw_entry();
+        pop_history();
         break;
     }
     case 0x11:

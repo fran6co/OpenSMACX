@@ -1540,23 +1540,8 @@ int CursorHotspotY[12] = {0};  // 0x0093AA40, defined here
 
 // ORIGINAL: 0x005105C0 ?selecting@Console@@QAEHHH@Z 0x005105C0-0x005107D5 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original 0x005105C0..0x005107D5 and its retired transcription preserved in Git history.", "Original early mode1/mode0 returns skip pumping. Ordinary cursor mode is captured after valid_patrol; each called receiver is retained for cache writeback while subsequent table slots and hotspots are read live.", "Original68FAF0 is MapLongitude, the half-width used by the wrap test; valid initialized vehicle/window state and representable coordinate arithmetic are required by the original."], "reason": "Console owns selection-mode admission and the shared map-window cursor update. Recover genuine receivers and cursor globals; the range and patrol refusals both select loaded sprite5."}
-// The image repeats this map-window cursor walk at each of selecting's
-// three exits, each followed by do_non_input.
-static inline void selecting_cursor(int shape) {
-    for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
-        MapWin *const window = MapWinTable[slot];
-        if (window != nullptr && (slot == 0 || window->view_active_ != 0)) {
-            Sprite *const sprite = &g_CURSOR_SPRITES[shape];
-            if (window->cursor_sprite_ != sprite) {
-                window->GraphicWin::set_cursor(sprite,
-                    CursorHotspotX[shape], CursorHotspotY[shape]);
-                window->cursor_sprite_ = sprite;
-            }
-        }
-    }
-    do_non_input();
-}
-
+// The three cursor walks are cursor_on(int) (0x00510400, no image callers)
+// expanded at each exit, not a file-local twin (orphanowner.py).
 int Console::selecting(int tile_x, int tile_y) {
     if (field_23D10_ == 1) {
         return 1;
@@ -1564,15 +1549,15 @@ int Console::selecting(int tile_x, int tile_y) {
     if (field_23D10_ != 0) {
         if (field_23D14_ >= 0) {
             if (map_range(tile_x, tile_y, Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y) > field_23D14_) {
-                selecting_cursor(5);
+                cursor_on(5);
                 return 1;
             }
         }
         if (field_23D10_ == 8 && !valid_patrol(selected_vehicle_, tile_x, tile_y)) {
-            selecting_cursor(5);
+            cursor_on(5);
             return 1;
         }
-        selecting_cursor(field_23D10_);
+        cursor_on(field_23D10_);
         return 1;
     }
     return 0;
@@ -3424,20 +3409,7 @@ void Console::human_turn() {
                 cpu_turn_complete.play();
             }
             ambience(0xCB);
-            field_23BE4_ = 1;
-            const int saved_vehicle_count = GameDataStateStorage.fields_.vehicle_current_count_;
-            while (ConsoleGlobal.cursor_active_ == 0 && field_23BE4_ != 0 &&
-                   field_23BE8_ != 0 && ExitTurnLoop == 0 &&
-                   end_of_game(0) == 0 &&
-                   saved_vehicle_count == GameDataStateStorage.fields_.vehicle_current_count_ &&
-                   (IsMultiplayerNet == 0 || (GameDataStateStorage.fields_.game_state_ & 0x800u) == 0)) {
-                wait_loop();
-                if (TutWinTourPending != 0) {
-                    TutWinTourPending = 0;
-                    TutorialWindow.tour();
-                }
-            }
-            field_23BE4_ = 0;
+            end_of_turn();
         }
 
         if (ExitTurnLoop != 0) {
@@ -3587,7 +3559,7 @@ void Console::move_cursor(int direction) {
 // ORIGINAL: 0x00514990 ?quit_game@Console@@QAEXXZ 0x00514990-0x00514B2C BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00514990.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
 void Console::quit_game() {
-// RECOVERY_LITERAL: v1 0x0068A7E4 0x0068A7EF $SG64042 0x00514990
+// RECOVERY_LITERAL: v1 0x0068A7E4 0x0068A7EF $SG64016 0x00514990
     if (!X_pop((IsMultiplayerNet || IsMultiplayerPBEM) &&
                bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 255) > 1
                    ? ConsoleReallyWimpOut : "REALLYQUIT", nullptr)) return;
@@ -3600,7 +3572,7 @@ void Console::quit_game() {
     if ((GameDataStateStorage.fields_.game_rules_ & 0x400) && !IsMultiplayerPBEM) auto_save();
     net_hang_up_if_net();
     ExitTurnLoop = 1;
-// RECOVERY_LITERAL: v1 0x0068A7F0 0x0068A818 $SG64046 0x00514990
+// RECOVERY_LITERAL: v1 0x0068A7F0 0x0068A818 $SG64020 0x00514990
     log_say("Quit***********************************", 0, 0, 0);
 }
 
@@ -3624,8 +3596,8 @@ void Console::retire_game() { // 0x00514B30
         (IsMultiplayerNet || IsMultiplayerPBEM) &&
         bit_count(static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) > 1) != 0;
     const char *const prompt = multiple_players ? retire_wimpout :
-// RECOVERY_LITERAL: v1 0x0068A828 0x0068A836 $SG64065 0x00514B30
-// RECOVERY_LITERAL: v1 0x0068A838 0x0068A845 $SG64066 0x00514B30
+// RECOVERY_LITERAL: v1 0x0068A828 0x0068A836 $SG64039 0x00514B30
+// RECOVERY_LITERAL: v1 0x0068A838 0x0068A845 $SG64040 0x00514B30
         (GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) ? "REALLYRETIRE2" : "REALLYRETIRE";
     if (!X_pop(prompt, nullptr)) {
         return;
@@ -3657,7 +3629,7 @@ void Console::retire_game() { // 0x00514B30
     }
     GameRestartQueued = !closed_network;
     ExitTurnLoop = 1;
-// RECOVERY_LITERAL: v1 0x0068A848 0x0068A86C $SG64074 0x00514B30
+// RECOVERY_LITERAL: v1 0x0068A848 0x0068A86C $SG64048 0x00514B30
     log_say("Retire*****************************", 0, 0, 0);
 }
 
@@ -4651,7 +4623,7 @@ void Console::erase_landmark(int x_coord, int y_coord) {
 
     const int landmark_id = find_landmark(x_coord, y_coord, 1);
     if (landmark_id < 0) {
-// RECOVERY_LITERAL: v1 0x0068A994 0x0068A9A1 $SG64363 0x00516490
+// RECOVERY_LITERAL: v1 0x0068A994 0x0068A9A1 $SG64337 0x00516490
         NetMsgPrimary.pop("LANDMARKNONE", 5000, 0, nullptr);
         return;
     }
@@ -4662,7 +4634,7 @@ void Console::erase_landmark(int x_coord, int y_coord) {
     }
 
     parse_says(0, MapLandmark[landmark_id].name, -1, -1);
-// RECOVERY_LITERAL: v1 0x0068A9B0 0x0068A9BD $SG64366 0x00516490
+// RECOVERY_LITERAL: v1 0x0068A9B0 0x0068A9BD $SG64340 0x00516490
     if (X_pop("LANDMARKKILL", nullptr) == 0) {
         return;
     }
@@ -5065,25 +5037,25 @@ void Console::use_time_bonus() {
     if (!IsMultiplayerNet) return;
     if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) &&
         GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) {
-// RECOVERY_LITERAL: v1 0x0068AA48 0x0068AA50 $SG64494 0x00517060
+// RECOVERY_LITERAL: v1 0x0068AA48 0x0068AA50 $SG64468 0x00517060
         NetMsgPrimary.pop("SIMULNO", 5000, 0, nullptr);
         return;
     }
     const int faction = ConsoleGlobal.faction_id_;
     if (PlayersData[faction].time_bonus_count <= 0) {
         parse_num(0, TimeControl[selection].refresh);
-// RECOVERY_LITERAL: v1 0x0068AA50 0x0068AA5E $SG64497 0x00517060
+// RECOVERY_LITERAL: v1 0x0068AA50 0x0068AA5E $SG64471 0x00517060
         NetMsgPrimary.pop("NOTIMEBONUSES", 5000, 0, nullptr);
         return;
     }
     if (GameDataStateStorage.fields_.game_state_ & 0x800) {
-// RECOVERY_LITERAL: v1 0x0068AA60 0x0068AA6D $SG64499 0x00517060
+// RECOVERY_LITERAL: v1 0x0068AA60 0x0068AA6D $SG64473 0x00517060
         NetMsgPrimary.pop("NOBONUSATEND", 5000, 0, nullptr);
         return;
     }
     if ((GameDataStateStorage.fields_.game_state_ & 2) &&
         ((1u << faction_id_) & NetDaemonNet.primary_state_.trailing_words_[6])) {
-// RECOVERY_LITERAL: v1 0x0068AA70 0x0068AA7C $SG64501 0x00517060
+// RECOVERY_LITERAL: v1 0x0068AA70 0x0068AA7C $SG64475 0x00517060
         NetMsgPrimary.pop("NOBONUSDONE", 5000, 0, nullptr);
         return;
     }

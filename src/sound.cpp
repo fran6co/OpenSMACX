@@ -1618,11 +1618,7 @@ void Wave::init(char *group_id, unsigned long flags) {
     if (!resolved) {
         return;
     }
-    if (fname_) {
-        operator delete(fname_);
-    }
-    fname_ = static_cast<char *>(operator new(strlen(resolved) + 1));
-    strcpy(fname_, resolved);
+    set_fname(resolved);
     // The original's `memset(this + 0x54, 0, 4)` call is at 0x004C6A22
     // (its argument setup starts at 0x004C6A1A). This used to be
     // a byte loop, the only way to spell a four-byte clear while the header
@@ -3640,14 +3636,7 @@ Return Value: memset's destination pointer, reinterpreted
 Status: Complete
 */
 int Midi::init(char *a1, unsigned long a2) {
-    if (a1 != 0) {
-        if (fname_) {
-            operator delete(fname_);
-        }
-        fname_ = nullptr;
-        fname_ = static_cast<char *>(operator new(strlen(a1) + 1));
-        strcpy(fname_, a1);
-    }
+    set_fname(a1);
     return reinterpret_cast<int>(
         memset(&field_54_, 0, 1));
 }
@@ -4761,7 +4750,7 @@ int VideoSoundState::get_time() {
   return 0;
 }
 
-// RECOVERY_LITERAL: v1 0x00687B24 0x00687B2D $SG63445 0x004C8960
+// RECOVERY_LITERAL: v1 0x00687B24 0x00687B2D $SG63440 0x004C8960
 // ORIGINAL: 0x004C8960 ??0VoiceRx@@QAE@XZ 0x004C8960-0x004C8A43;0x00659F8A-0x00659FA4 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original 4C8960/4C8CC0 constructors, 4C8A50/4C8DB0 destructors and 66E82C/66E8C4 tables; native VC6 emits Sound base at0, Rx extent54, Tx extent58 and own flag54.", "631A60 consumes record18/20 and returns the same record; soundx.dll kind7 slots34/35 allocate MMIOINFO48 and enforce pointer identity. Shared cleanup/EH spans remain historical obligations."], "reason": "Voice Rx and Tx genuinely derive from Sound; natural lifecycle stages and typed DLL device contracts replace raw wrappers. Tx returns and consumes the exact borrowed SDK MMIOINFO pointer, not an integer handle."}
 // symbol    ??0VoiceRx@@QAE@XZ
@@ -4946,7 +4935,7 @@ int VoiceRx::get_buffer_size() {
     return 0;
 }
 
-// RECOVERY_LITERAL: v1 0x00687B30 0x00687B39 $SG63513 0x004C8CC0
+// RECOVERY_LITERAL: v1 0x00687B30 0x00687B39 $SG63508 0x004C8CC0
 /*
 Purpose: Build a VoiceTx: full volume, centred pan, cleared regions, a
          1000ms default fade, the "Voice Tx" name on the CRT heap, and
