@@ -2248,6 +2248,62 @@ What is established, and what is not:
   join; operand order, a split multiply, a late `repair_total`, a cast on the
   assignment: all 16 rows, frame unchanged).
 
+Open terms (2026-11-19 par-5 round 16). Patterns seen in several non-exact
+functions that no rule above explains, with what has been ruled out.
+
+- O1. **Hidden references: dead and folded copies are not them** (high for the
+  negative; `regalloc/m_hidden.spec`, `m_hidden2.spec`, `python3 duel.py`).
+  candset.py shows image winners ranked above their own instruction-level
+  score (shoot_it 0x004CDAF0: `defender` 45.5 in esi above the `mask`
+  write-back piece 56.5; DiploPop::start 0x0043F2B0: `faction_id` 33.0 in ebx
+  with edi held by lower webs, around `alternate_size`). The idea that the
+  original had copies the optimizer removed after counting them is refuted:
+  each of these, added for `d` in a c/d duel (threshold 8), moves nothing: a
+  local copy overwritten before use (`int t = d; t = def();`), a dead store
+  in one arm, `d - d`, `d * 0`, `d && 0`, statements after a `return`, an
+  expanded inline that ignores its parameter (one or three calls), `k ? x : 7`
+  with constant k, `d == d`, a copy loop that never reads it. A second
+  identical `if (d > 0)` (sequential, nested or in the else) is merged before
+  allocation and counts once; an inline that uses its parameter twice counts
+  like two direct uses; a while test counts once per loop weight and a `do`
+  with a guard test twice. So the only reference that leaves no instruction
+  and still counts is a tail-merged copy (table above): for these two
+  functions read mergescan.py and the goto/arm structure, not dead code.
+- O2. **Commutative operand order follows a web property, not the spelling**
+  (medium; probes in this round's scratch `tp/`). PrefWin::get_preferences
+  0x00490B00 has the same registers on both sides but 16 `test value,bit`
+  rows in the image against `test bit,value` in ours, and three member tests
+  `mov eax,[this+0xA50]; test eax,edi` (image) against the folded `test
+  [ebx+0xA50],edi` (ours). Only the second operand of the tree folds, so the
+  image's tree has the value first. In a four-case probe of the same loop:
+  `prefs & bit` and `bit & prefs` compile the same; 1-6 extra references of
+  `prefs` or 3 of `bit` do not flip it; int/unsigned on either side does not;
+  per-iteration copies (`u32 prefs = member;` in the loop) give the image's
+  `test prefs,bit`, the same copies made once before the loop give ours'
+  `test bit,prefs`, and a direct member read folds (ours' third-loop form);
+  an `unsigned short bit` gives the unfolded load. In the real function the
+  per-iteration spelling still gives ours' order, so the order encodes some
+  other state of the value's web (dropping the `id`/`bit` initialisers: 58 ->
+  55 rows, no flip). Treat a swapped `test`/`and`/`add` operand pair with
+  equal registers as a candidate-set signal, not a spelling to permute.
+- O3. **Scratch-held loop accumulator with a constant initialiser** (high;
+  this round's scratch `pm/`). polygon 0x00626620 (and polygon_dest,
+  polygon_gouraud, Texture::sub_61f0d0 by the same `0x7fff` shape): the image
+  keeps `minimum_y` in edx with `mov edx,0x7fff` scheduled between `test
+  esi,esi` and the loop's `jle`, and the loaded `y` in edi; ours has `mov
+  edi,0x7fff` early and `y` in ecx. The image holds the constant, so the
+  original did not start from the first vertex. A plain probe of the loop
+  (no volatile) reproduces the image's minimum exactly (edx, same schedule);
+  the `*(volatile int *)&vertices[vertex].y` stand-in for the max arm's
+  reload (0x6266D1 `mov ebx,[ecx]`) is what promotes `minimum_y` to a
+  callee-saved register. So W2 is not involved; the open term is the reload:
+  the image compares through the cached `y` and assigns from memory. Not
+  reproduced by a named `y`, a named `y` for the compares with the field for
+  the assignments, the compare reversed, a pointer walk, or a global store
+  between (it reloads both reads). In polygon: late, for-init and early
+  `minimum_y`, named `y`, pointer walk: 25 rows each; any variant without
+  the volatile: 68-77.
+
 ### 2.8 /Ob2 inlining model
 
 Measured 2026-11-19 (par-4) with generated probe families in
