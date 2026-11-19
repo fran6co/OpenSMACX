@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """tailscan.py <unit> <0xADDR[,0xADDR]>|--all [--src ALT.cpp] [--pfx N] [--min K] [--agree]
-       tailscan.py --tree [unit ...] [--json OUT] [--min K]
+       tailscan.py --tree [unit ...] [--json OUT] [--min K] [--hosts]
 Tail-merge / cross-jump scan (MATCHING_GUIDE 3.7, "Layout").
 
 For each side (the image span and our COMDAT) it finds the copies VC6 kept unmerged: two code runs
@@ -23,6 +23,13 @@ earlier in the image than in ours is a K-instruction cross-jump the image made a
 
 Source lines come from our /FAsc listing (`L123`; `h:L45` for a line from an included header);
 image positions are named through the fe alignment (`~L123` = the nearest aligned our row before).
+`HOST` lines (MATCHING_GUIDE 3.7 "Which predecessor hosts a join"): for each join where the image and
+ours place the join after different predecessors, both sides' predecessors in our source order as
+`line[last instruction]` (`H:` host, `x:` cross-jumped into the host's tail, `/T` our tail ends the
+then-arm of an inner if/else), what rules 1-2 predict for ours, and the source change they predict gives
+the image's host: a pop-size difference (rule 3: move a call across an inner branch), an image host that
+is not the first partnered arm (rule 2: its tail was in an inner then-arm), ours promoted by a then-arm
+the image ignores (make it a lone if / else-arm / straight), or an arm order to change.
 --all: every non-BYTE_EXACT marker of the unit.  --tree: every unit with non-exact markers, a
 summary line per function with a disagreement, most disagreements first (FE_JOBS lanes from
 FE_PFX_BASE).  Screen only; confirm with `recover measure`."""
@@ -210,6 +217,229 @@ def dups(I, kmin):
         out.append(r)
     return out
 
+# ---- join host analysis (MATCHING_GUIDE 3.7 "Which predecessor hosts a join") ----
+WIN = 8
+
+
+def is_cf(t):
+    return t.startswith('j') or t.startswith('ret') or t.startswith('loop')
+
+
+def joins(I):
+    """-> {J_index: dict(host=idx_of_last_host_instr, preds=[(kind, jmp_idx or None, last_idx)])}
+    A join J is a label with a fallthrough predecessor (the host) that one or more `jmp`s reach, either
+    directly or through a cross-jump into the host's tail (a label at most WIN straight-line instructions
+    before J).  A cross-jump label inside a later join's host tail is folded into that join."""
+    idx = {x[0]: i for i, x in enumerate(I)}
+    labels = {x[3] for x in I if x[3] is not None and x[3] in idx}
+    lab_i = {idx[t] for t in labels}
+
+    def chain(i):
+        out = [i]
+        j = i
+        for _ in range(WIN):
+            if is_cf(I[j][1]):
+                break
+            j += 1
+            if j >= len(I):
+                break
+            if j in lab_i:
+                out.append(j)
+        return out
+    reach = collections.defaultdict(list)  # label index -> jumpers reaching it
+    for j, x in enumerate(I):
+        if x[1] == 'jmp L' and x[3] in idx:
+            for L in chain(idx[x[3]]):
+                reach[L].append(j)
+    cand = {L for L in reach if L > 0 and not is_cf(I[L - 1][1])}
+    res = {}
+    for L in sorted(cand):
+        ch = chain(L)[1:]
+        # folded into a later join whose own jumpers come directly
+        if any(L2 in cand and set(reach[L]) <= set(reach[L2]) for L2 in ch):
+            continue
+        preds = [('host', None, L - 1)]
+        for j in reach[L]:
+            t = idx[I[j][3]]
+            if t == L:
+                preds.append(('jmp', j, j - 1))
+            else:
+                preds.append(('xjmp', j, L - 1))  # cross-jumped: its tail is the host's
+        res[L] = dict(host=L - 1, preds=preds)
+    return res
+
+
+def tail_key(I, k):
+    """the pred's last instruction, masked (relocated operands as <r>) so both sides compare"""
+    t = I[k][4]
+    return None if is_cf(t) else t
+
+
+def lnum(s):
+    m = re.search(r'L(\d+)$', s or '')
+    return int(m.group(1)) if m and ':' not in (s or '') else None
+
+
+def indent(srclines, n):
+    if n is None or n > len(srclines):
+        return None
+    l = srclines[n - 1]
+    return len(l) - len(l.lstrip())
+
+
+def then_arm(srclines, n, arm_indent=None):
+    """our source line n ends the then-arm of an INNER if/else: the next code line is `} else` and the
+    tail sits deeper than the join's arm level (a `} else` after an arm-level tail is the arm separator)"""
+    if n is None:
+        return False
+    if arm_indent is not None and indent(srclines, n) is not None and indent(srclines, n) <= arm_indent:
+        return False
+    for l in srclines[n:n + 4]:
+        s = l.strip()
+        if not s or s.startswith('//'):
+            continue
+        return bool(re.match(r'\}\s*else\b', s))
+    return False
+
+
+def predict_host(ps, then):
+    """rules 1-2 of MATCHING_GUIDE 3.7 over preds in source order: a partnered tail that ends an inner
+    then-arm promotes its pair (host = the pair's first member); else the first partnered arm; else the
+    first arm.  Cross-jumped preds count as partners of the host's tail."""
+    keys = collections.Counter(p['key'] for p in ps if p['kind'] != 'xjmp' and p['key'])
+    h = next(q for q in ps if q['kind'] == 'host')
+    for p in ps:
+        if p['kind'] == 'xjmp':
+            keys[h['key']] += 1
+    arms = [p for p in ps if p['kind'] != 'xjmp']
+    for p in arms:
+        if p['key'] and keys[p['key']] >= 2 and then(p):
+            return next(q for q in arms if q['key'] == p['key']), 'rule 2 (then-arm %s)' % p['line']
+    for p in arms:
+        if p['key'] and keys[p['key']] >= 2:
+            return p, 'rule 1'
+    return (arms[0] if arms else None), 'no partner'
+
+
+def host_report(C, O, lo, src, i2o, o2i, iline, srclines):
+    """-> report lines for joins whose host differs between the image and ours, with the source change
+    that the host rules (MATCHING_GUIDE 3.7) predict gives the image's host"""
+    Jc, Jo = joins(C), joins(O)
+    cidx = {x[0]: i for i, x in enumerate(C)}
+
+    def oline(i):
+        return src.get(C[i][0], '?')
+
+    def mapped_line(i):  # image index -> our line through the alignment
+        off = O[i][0]
+        if off in i2o:
+            return src.get(i2o[off], '?')
+        return iline(off)
+    cj = {}
+    for J, d in Jc.items():
+        for kind, j, last in d['preds']:
+            if j is not None:
+                cj[j] = J
+    best = {}
+    for Ji, di in Jo.items():
+        votes = collections.Counter()
+        for kind, j, last in di['preds']:
+            if j is not None and O[j][0] in i2o and i2o[O[j][0]] in cidx:
+                J = cj.get(cidx[i2o[O[j][0]]])
+                if J is not None:
+                    votes[J] += 1
+        if votes:
+            Jc_ = votes.most_common(1)[0][0]
+            if Jc_ not in best or len(di['preds']) > len(Jo[best[Jc_]]['preds']):
+                best[Jc_] = Ji
+
+    def describe(d, I, ours):
+        ps = []
+        idx_ = {x[0]: n for n, x in enumerate(I)}
+        xt = [idx_[I[j][3]] for kind, j, last in d['preds'] if kind == 'xjmp']
+        for kind, j, last in d['preds']:
+            pos = last if kind != 'xjmp' else j - 1
+            if kind == 'host' and xt:
+                pos = min(xt) - 1  # the host's own code before the shared (cross-jumped) part
+            if pos < 0:
+                continue
+            ln = oline(pos) if ours else mapped_line(pos)
+            if lnum(ln.lstrip('~')) is None and j is not None:
+                ln = oline(j) if ours else mapped_line(j)
+            ps.append(dict(kind=kind, line=ln, n=lnum(ln.lstrip('~')), key=tail_key(I, last),
+                           at=(I[pos][0] if ours else lo + I[pos][0])))
+        ps.sort(key=lambda p: (p['n'] is None, p['n'] or 0))
+        return ps
+    out = []
+    for Jc_, Ji in sorted(best.items()):
+        dc, di = Jc[Jc_], Jo[Ji]
+        pc, pi = describe(dc, C, True), describe(di, O, False)
+        if max(len(pc), len(pi)) < 3 and not any(
+                (p['key'] or '').startswith(('add esp', 'call')) for p in pc + pi):
+            continue
+        hc = next(p for p in pc if p['kind'] == 'host')
+        hi_ = next(p for p in pi if p['kind'] == 'host')
+        if hc['n'] == hi_['n'] or (hi_['line'].startswith('~') and hc['n'] is not None and hi_['n'] is not None
+                                   and abs(hc['n'] - hi_['n']) <= 2 and hc['key'] == hi_['key']):
+            continue
+        ind = [indent(srclines, p['n']) for p in pc if p['n'] is not None]
+        ind = [x for x in ind if x is not None]
+        arm_ind = min(ind) if ind else None
+
+        def then(p):
+            return then_arm(srclines, p['n'], arm_ind)
+
+        def fmt(ps):
+            return ' '.join('%s%s[%s]%s' % ('H:' if p['kind'] == 'host' else ('x:' if p['kind'] == 'xjmp' else ''),
+                                            p['line'], (p['key'] or 'cf')[:14], '/T' if then(p) else '')
+                            for p in ps)
+        out.append('  HOST join img@%x ours@%x (%s): img host %s [%s]  ours host %s [%s]' % (
+            lo + O[Ji][0], C[Jc_][0], oline(Jc_), hi_['line'], hi_['key'], hc['line'], hc['key']))
+        out.append('       img  preds: ' + fmt(pi))
+        out.append('       ours preds: ' + fmt(pc))
+        adv = []
+        pr_c, why_c = predict_host(pc, then)
+        pr_i1, _ = predict_host(pi, lambda p: False)
+        adv.append('rules on ours predict %s (%s): %s' % (pr_c['line'] if pr_c else '?', why_c,
+                                                           'agrees' if pr_c and pr_c['n'] == hc['n'] else 'DISAGREES'))
+        bym = {}
+        for p in pc:
+            if p['n'] is not None and p['kind'] != 'xjmp':
+                bym.setdefault(p['n'], p)
+        diffk = []
+        for p in pi:
+            q = bym.get(p['n'])
+            if q and p['kind'] != 'xjmp' and p['key'] != q['key']:
+                diffk.append((p, q))
+        for p, q in diffk:
+            m1 = re.match(r'add esp, (\w+)', p['key'] or '')
+            m2 = re.match(r'add esp, (\w+)', q['key'] or '')
+            if m1 and m2:
+                a_, b_ = int(m1.group(1), 0), int(m2.group(1), 0)
+                adv.append('%s pops %#x in the image, %#x in ours (rule 3): %s' % (
+                    p['line'], a_, b_, 'the image deferred an earlier call\'s pop into the tail: put that call and '
+                    'the tail straight-line, no inner branch between' if a_ > b_ else 'the image flushed an earlier '
+                    'pop at a branch: an inner if/else between the earlier call and the tail'))
+            else:
+                adv.append('%s tail [%s] in the image, [%s] in ours: partnership differs' % (
+                    p['line'], p['key'], q['key']))
+        if pr_i1 is not None and pr_i1['n'] != hi_['n']:
+            adv.append('image host %s is not the first partnered arm (%s): rule-2 priority, the original ended %s '
+                       'in the then-arm of an inner if/else whose else does not end in it' % (
+                           hi_['line'], pr_i1['line'], hi_['line']))
+        elif why_c.startswith('rule 2') and pr_i1 is not None and pr_i1['n'] == hi_['n']:
+            adv.append('the image follows rule 1 (%s); ours is promoted by %s: make that tail a lone if, an '
+                       'else-arm or straight in its arm (or give its pair different pops)' % (hi_['line'], why_c))
+        elif pr_c and hi_['n'] is not None and pr_c['n'] is not None and hi_['n'] > pr_c['n'] and not diffk:
+            adv.append('the image passes over %s: unpartner it (a distinct last instruction) or move %s after %s' % (
+                pr_c['line'], pr_c['line'], hi_['line']))
+        elif pr_c and hi_['n'] is not None and pr_c['n'] is not None and hi_['n'] < pr_c['n'] and not diffk:
+            adv.append('the image hosts the earlier %s: give it a partner, or promote it (inner then-arm tail)' %
+                       hi_['line'])
+        for a_ in adv:
+            out.append('       -> ' + a_)
+    return out
+
 
 def scan(unit, addr, text, c, cod, kmin=2, agree=False, quiet=False):
     """-> (report lines, counts dict)"""
@@ -321,12 +551,15 @@ def scan(unit, addr, text, c, cod, kmin=2, agree=False, quiet=False):
                     jj.append((x[0], x[3]))
                 break
     cnt['jj'] = len(jj)
+    hosts = host_report(C, O, lo, src, i2o, o2i, iline, text.split('\n'))
+    cnt['host'] = sum(1 for l in hosts if l.startswith('  HOST'))
+    out += hosts
     if jj:
         out.append('  JJ   ours jumper-into-jumper merges: ' + ' '.join(
             '%x(%s)->%x(%s)' % (a_, oline(a_), b_, oline(b_)) for a_, b_ in jj[:8]))
-    head = 'TS %08X %-34s diff=%d jt=%d img-merges=%d ours-merges=%d jmp-target=%d jj=%d dups img/ours=%d/%d' % (
+    head = 'TS %08X %-34s diff=%d jt=%d img-merges=%d ours-merges=%d jmp-target=%d jj=%d dups img/ours=%d/%d host=%d' % (
         addr, sym[:34], r['diff'], r['jt'], cnt['img_merges'], cnt['ours_merges'], cnt['jt_jmp'], cnt['jj'],
-        cnt['img_dups'], cnt['ours_dups'])
+        cnt['img_dups'], cnt['ours_dups'], cnt['host'])
     cnt.update(diff=r['diff'], sym=sym)
     return [head] + out, cnt
 
@@ -362,6 +595,7 @@ def main():
     ap.add_argument('--min', type=int, default=2)
     ap.add_argument('--agree', action='store_true')
     ap.add_argument('--json')
+    ap.add_argument('--hosts', action='store_true', help='--tree: print each HOST block')
     a = ap.parse_args()
     if a.tree is not None:
         cc = json.load(open(fe.MAIN + '/build/compile_commands.json'))
@@ -394,13 +628,18 @@ def main():
         with ThreadPoolExecutor(jobs) as ex:
             for o in ex.map(lane, range(jobs)):
                 allr += o
-        hit = [x for x in allr if x['img_merges'] or x['ours_merges'] or x['jt_jmp'] or x['jj']]
-        hit.sort(key=lambda x: -(x['img_merges'] + x['ours_merges'] + x['jt_jmp']))
+        hit = [x for x in allr if x['img_merges'] or x['ours_merges'] or x['jt_jmp'] or x['jj'] or x['host']]
+        hit.sort(key=lambda x: (-x['host'], -(x['img_merges'] + x['ours_merges'] + x['jt_jmp'])))
         for x in hit:
-            print('%s %-28s %-30s diff=%-5d img-merges=%d ours-merges=%d jmp-target=%d jj=%d' % (
+            print('%s %-28s %-30s diff=%-5d img-merges=%d ours-merges=%d jmp-target=%d jj=%d host=%d' % (
                 x['addr'], x['unit'][4:], x['sym'][:30], x['diff'], x['img_merges'], x['ours_merges'], x['jt_jmp'],
-                x['jj']))
-        print('functions', len(allr), 'with tail/jump disagreements', len(hit))
+                x['jj'], x['host']))
+            if a.hosts:
+                for l in x['lines']:
+                    if l.startswith(('  HOST', '       ')):
+                        print(l)
+        print('functions', len(allr), 'with tail/jump disagreements', len(hit),
+              'with a join-host disagreement', sum(1 for x in hit if x['host']))
         if a.json:
             json.dump(hit, open(a.json, 'w'), indent=0)
         return

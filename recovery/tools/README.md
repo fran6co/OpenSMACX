@@ -90,7 +90,7 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   whole-file variant side by side; prints the exact count per column and only the functions that moved (what a
   variant breaks elsewhere in its unit).
 - `analysis/tailscan.py <unit> <addr[,addr]>|--all [--src ALT.cpp] [--min K] [--agree]`, `tailscan.py --tree [unit ...]
-  [--json F]` tail-merge / cross-jump scan (MATCHING_GUIDE 3.7 "Layout"; 50 s tree-wide with FE_JOBS=5). On each side it
+  [--json F] [--hosts]` tail-merge / cross-jump scan (MATCHING_GUIDE 3.7 "Layout"; 50 s tree-wide with FE_JOBS=5). On each side it
   clusters the copies VC6 left unmerged: runs of K+ identical instructions (calls and globals by symbol, local jumps by
   target) that end in the same continuation (`jmp T`, a fallthrough into T, or a `ret` epilogue). A cluster one side keeps
   and the other lacks is printed as `IMG-MERGES` (ours keeps a copy the image has not got: the image jumps into another
@@ -99,7 +99,7 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   disagree, with both targets' lines and how many instructions apart the image lands: `-k` = the image cross-jumped k
   more instructions. Read with the probe/save_game notes in MATCHING_GUIDE 3.7: the image's choice of the join's
   fallthrough predecessor decides which copy survives. `jj=N` (and `JJ` lines) counts our jumper-into-jumper merges,
-  the strongest single sign of a merge the image does not make (33/110 non-exact vs 15/626 exact functions sampled).
+  the strongest single sign of a merge the image does not make (33/110 non-exact vs 15/626 exact functions sampled). `HOST` lines: each join whose host (the predecessor it is laid after) differs between the image and ours, both sides' predecessors as `line[last instruction]` in our source order (`H:` host, `x:` cross-jumped into it, `/T` inner then-arm tail), whether rules 1-2 of MATCHING_GUIDE 3.7 predict our host, and the source change they predict gives the image's (pop size: move a call across a branch; image host not first partnered: its tail was an inner then-arm; ours promoted by a then-arm: make it a lone if / else-arm; or reorder arms). `--tree --hosts` prints them all.
 - `analysis/ownerscan.py [unit ...] [--addr A,..] [--probes 8,32] [--repeat] [--swaps] [--json F]` missing inline
   owner screen (MATCHING_GUIDE 2.8 "Missing owner, not missing budget"): per non-exact function, the inline callees
   the image calls more often than ours, our call counts with a dead 0/8/32-probe pass-1 block at the top of the
