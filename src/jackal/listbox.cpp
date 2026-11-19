@@ -1497,6 +1497,8 @@ void ListBox::on_mouse_move(int x, int y) {
         }
         ListBoxDrawOffset = static_cast<int>(Dialog::field_F0_) - static_cast<int>(field_18_);
         draw_item(static_cast<int>(Dialog::field_F0_));
+        GraphicWin::soft_update();
+        return;
     }
     GraphicWin::soft_update();
 }
