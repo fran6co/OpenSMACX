@@ -438,6 +438,17 @@ def pull_deps(host_text, pe, moved_keys, deps=True):
                 continue
             marked = bool(ms) and kind in ('function', '')
             P.append([ci, pc, kind, names, marked, False])
+    # a moved marker block that stands apart from its body (an object definition between them): the unmarked
+    # function of the marker's name, when the marker does not point at a header body, is that body
+    want = set()
+    for p in P:
+        if p[5] and piece_names(p[1])[0] != 'function' and not re.search(r'^// body\s', p[1], re.M):
+            for m in re.finditer(r'// ORIGINAL: 0x[0-9A-F]{8} \?(\w+)@@Y', p[1]):
+                want.add(m.group(1))
+    for p in P:
+        if not p[5] and not p[4] and p[2] == 'function' and p[3] & want:
+            p[5] = True
+            rep.append('  body of a moved marker: function %s (%d lines)' % (' '.join(sorted(p[3])), p[1].count('\n')))
     def idents(s):
         return set(re.findall(r'[A-Za-z_]\w*', strip_code(s)))
     ID = [idents(p[1]) for p in P]
