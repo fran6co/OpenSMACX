@@ -2246,6 +2246,6 @@ void StatusWin::init() {
     direction.values[0] = 0.0f;
     direction.values[1] = 0.0f;
     direction.values[2] = 1.0f;
-    caviar_.shadow_vector() = direction;
-    caviar_.light_vector() = direction;
+    caviar_.scene_context_.shadow_vector_ = direction;
+    caviar_.scene_context_.light_vector_ = direction;
 }

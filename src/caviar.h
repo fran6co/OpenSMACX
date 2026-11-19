@@ -601,6 +601,7 @@ class Caviar {
  public:
   friend class SelectPartWin;
   friend class DesignWin;
+  friend class StatusWin;
   // Vehicle assembly starts a new instance list without releasing any of
   // the renderer's allocated slots or loaded model definitions.
   void reset_objects() { field_13CC_ = 0; }
