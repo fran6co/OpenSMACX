@@ -3038,13 +3038,14 @@ void __cdecl slide_show(GraphicWin *window, int mode) {
         Sprite &left_inner = MainInterfaceGlobal.slide_frame_sprite(1);
         Sprite &right_inner = MainInterfaceGlobal.slide_frame_sprite(2);
         Sprite &right_outer = MainInterfaceGlobal.slide_frame_sprite(3);
-        const int left_x = area.left;
-        const int left_inner_x = left_x + left_outer.width();
-        const int right_inner_x = area.left + frame_buffer.pixel_width()
+        int frame_x[4];
+        frame_x[0] = area.left;
+        frame_x[1] = frame_x[0] + left_outer.width();
+        frame_x[2] = area.left + frame_buffer.pixel_width()
             - right_outer.width()
             - right_inner.width() - 0x20;
         RECT flip_rect = area;
-        const int right_x = area.left + frame_buffer.pixel_width()
+        frame_x[3] = area.left + frame_buffer.pixel_width()
             - right_outer.width() - 0x20;
 
         if ((GameDataStateStorage.fields_.game_preferences_ & PREF_AV_SLIDING_WINDOWS) != 0
@@ -3055,11 +3056,11 @@ void __cdecl slide_show(GraphicWin *window, int mode) {
                 const DWORD started = timeGetTime();
                 frame_buffer.draw(&Win::screen_buffer_, 9, area.left, animation_y, 1, 1);
 
-                left_outer.draw(&Win::screen_buffer_, left_x, animation_y > frame_edge ? animation_y : frame_edge,
+                left_outer.draw(&Win::screen_buffer_, frame_x[0], animation_y > frame_edge ? animation_y : frame_edge,
                                 1, 1);
-                left_inner.draw(&Win::screen_buffer_, left_inner_x, animation_y, 1, 1);
-                right_inner.draw(&Win::screen_buffer_, right_inner_x, animation_y, 1, 1);
-                right_outer.draw(&Win::screen_buffer_, right_x, animation_y > frame_edge ? animation_y : frame_edge,
+                left_inner.draw(&Win::screen_buffer_, frame_x[1], animation_y, 1, 1);
+                right_inner.draw(&Win::screen_buffer_, frame_x[2], animation_y, 1, 1);
+                right_outer.draw(&Win::screen_buffer_, frame_x[3], animation_y > frame_edge ? animation_y : frame_edge,
                                  1, 1);
 
                 Win::screen_buffer_.set_clip(&animation_strip);
@@ -3084,12 +3085,12 @@ void __cdecl slide_show(GraphicWin *window, int mode) {
         }
 
         window->Buffer::restore_clip();
-        left_outer.draw(static_cast<Buffer *>(window), left_x - area.left,
+        left_outer.draw(static_cast<Buffer *>(window), frame_x[0] - area.left,
                         (animation_y > frame_edge ? animation_y : frame_edge) - area.top, 1, 1);
-        left_inner.draw(static_cast<Buffer *>(window), left_inner_x - area.left, 0, 1, 1);
-        right_inner.draw(static_cast<Buffer *>(window), right_inner_x - area.left, 0, 1, 1);
+        left_inner.draw(static_cast<Buffer *>(window), frame_x[1] - area.left, 0, 1, 1);
+        right_inner.draw(static_cast<Buffer *>(window), frame_x[2] - area.left, 0, 1, 1);
         if (animation_y <= frame_edge) animation_y = frame_edge;
-        right_outer.draw(static_cast<Buffer *>(window), right_x - area.left, animation_y - area.top, 1, 1);
+        right_outer.draw(static_cast<Buffer *>(window), frame_x[3] - area.left, animation_y - area.top, 1, 1);
     }
 
     if ((mode & 2) != 0) {
