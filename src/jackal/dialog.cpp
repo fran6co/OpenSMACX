@@ -201,7 +201,7 @@ int Dialog::init(RECT *rect, int heap_size) {
     field_2C_ = width;
     field_30_ = height;
     field_20_ |= 3U;
-    field_1C_ = static_cast<uint32_t>(heap_size);
+    field_1C_ = heap_size;
 
     // One result and one return: the single exit lets VC6 defer the
     // ebx/ebp/edi saves past the null-rect guard (60947D..609489).
@@ -243,7 +243,7 @@ int Dialog::init(int left, int top, int right, int bottom, int heap_size) {
     field_2C_ = right;
     field_30_ = bottom;
     field_20_ |= 3U;
-    field_1C_ = static_cast<uint32_t>(heap_size);
+    field_1C_ = heap_size;
 
     if (heap_size != 0) {
         Heap *heap = &heap_;
@@ -937,7 +937,7 @@ int Dialog::UNK2(int window, int message, int wparam, int lparam) {
 // historical Status: Complete
 // TRIED: the three inlined entry-list clears written out with a locally redefined dispatch shim for the notify/destroy virtual calls; stack frame layout differs from instruction 1 on.
 int Dialog::init() {
-    if (static_cast<int32_t>(field_1C_) < 0) {
+    if (field_1C_ < 0) {
         return 1;
     }
     StringList *list = &item_list_;
@@ -982,7 +982,7 @@ Status: Coverage transcription - unclaimed body
 */
 int Dialog::init(int heap_size) {
     close();
-    field_1C_ = static_cast<uint32_t>(heap_size);
+    field_1C_ = heap_size;
     if (heap_size != 0) {
         Heap *heap = &heap_;
         if (heap->init(static_cast<size_t>(heap_size))) {
@@ -1022,7 +1022,7 @@ Status: Coverage transcription - unclaimed body
 */
 int Dialog::init(Heap *heap) {
     close();
-    field_1C_ = 0xFFFFFFFF;
+    field_1C_ = -1;
     heap_ptr_ = heap;
     StringList &list = item_list_;
     if (list.head_ != 0) {

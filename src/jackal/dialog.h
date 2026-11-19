@@ -190,7 +190,7 @@ class Dialog {
   // modelled, which is what keeps sizeof(Dialog) at 0xF4.
   Heap heap_;
   Heap *heap_ptr_;
-  uint32_t field_1C_;  // 0x001c
+  int field_1C_;  // 0x001c
  public:
   // field_20_, field_44_ and field_6C_ are PUBLIC for the same reason the
   // block near the bottom of the class is: the derived families write them
