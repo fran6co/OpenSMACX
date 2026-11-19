@@ -70,33 +70,6 @@
 // is visible, preserving its opaque call and ordinary member teardown. The
 // historical probes below do not establish the original translation unit.
 
-/*
-Purpose: Construct the embedded Buffer and Palette (the class's only two
-         non-POD members, in declaration order - no explicit statement
-         reaches either), then zero every scalar/pointer field the image
-         zeroes.
-// ORIGINAL: 0x00629D60 ??0Flic@@QAE@XZ 0x00629D60-0x00629DE2;0x00663320-0x00663335 BYTE_EXACT
-// size      130 bytes
-// prototype void (__thiscall ??0Flic@@QAE@XZ)(Flic* this)
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok;frame
-// calls     0x005D7210 0x005FE2A0
-Return Value: n/a
-Status: Complete
-*/
-Flic::Flic() {
-    origin_x_ = 0;
-    origin_y_ = 0;
-    decoder_flags_ = 0;
-    file_ = nullptr;
-    frame_ = 0;
-    destination_buffer_ = nullptr;
-    transparent_index_ = 0;
-    palette_offset_ = 0;
-    decoded_width_ = 0;
-    decoded_height_ = 0;
-}
 
 /*
 Purpose: Close the file, then tear down the embedded Palette and Buffer in
@@ -184,6 +157,35 @@ Purpose: Close the file, then tear down the embedded Palette and Buffer in
 Return Value: n/a
 Status: Complete
 */
+
+/*
+Purpose: Construct the embedded Buffer and Palette (the class's only two
+         non-POD members, in declaration order - no explicit statement
+         reaches either), then zero every scalar/pointer field the image
+         zeroes.
+// ORIGINAL: 0x00629D60 ??0Flic@@QAE@XZ 0x00629D60-0x00629DE2;0x00663320-0x00663335 BYTE_EXACT
+// size      130 bytes
+// prototype void (__thiscall ??0Flic@@QAE@XZ)(Flic* this)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok;frame
+// calls     0x005D7210 0x005FE2A0
+Return Value: n/a
+Status: Complete
+*/
+Flic::Flic() {
+    origin_x_ = 0;
+    origin_y_ = 0;
+    decoder_flags_ = 0;
+    file_ = nullptr;
+    frame_ = 0;
+    destination_buffer_ = nullptr;
+    transparent_index_ = 0;
+    palette_offset_ = 0;
+    decoded_width_ = 0;
+    decoded_height_ = 0;
+}
+
 /*
 Purpose: Release the open file (if any) and zero the same fields close()
          zeroes.
@@ -212,81 +214,6 @@ void Flic::close() {
         fclose(file);
         file_ = nullptr;
     }
-}
-
-/*
-Purpose: Unknown; the legacy implementation is a bare return with no body.
-// ORIGINAL: 0x0062A710 ?UNK4@Flic@@QAEXXZ 0x0062A710-0x0062A711 BYTE_EXACT
-// size      1 bytes
-// prototype void (__thiscall ?UNK4@Flic@@QAEXXZ)(Flic* this)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void Flic::UNK4() {
-}
-
-/*
-Purpose: Unknown; the legacy implementation is a bare return with no body.
-// ORIGINAL: 0x0062AAF0 ?UNK5@Flic@@QAEXXZ 0x0062AAF0-0x0062AAF1 BYTE_EXACT
-// size      1 bytes
-// prototype void (__thiscall ?UNK5@Flic@@QAEXXZ)(Flic* this)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void Flic::UNK5() {
-}
-
-/*
-Purpose: Unknown; the legacy implementation is a bare return with no body.
-// ORIGINAL: 0x0062AB00 ?UNK6@Flic@@QAEXXZ 0x0062AB00-0x0062AB01 BYTE_EXACT
-// size      1 bytes
-// prototype void (__thiscall ?UNK6@Flic@@QAEXXZ)(Flic* this)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void Flic::UNK6() {
-}
-
-/*
-Purpose: Unknown; the legacy implementation is a bare return with no body.
-// ORIGINAL: 0x0062ACC0 ?UNK7@Flic@@QAEXXZ 0x0062ACC0-0x0062ACC1 BYTE_EXACT
-// size      1 bytes
-// prototype void (__thiscall ?UNK7@Flic@@QAEXXZ)(Flic* this)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void Flic::UNK7() {
-}
-
-/*
-Purpose: Unknown; the legacy implementation is a bare return with no body.
-// ORIGINAL: 0x0062B5F0 ?UNK8@Flic@@QAEXXZ 0x0062B5F0-0x0062B5F1 BYTE_EXACT
-// size      1 bytes
-// prototype void (__thiscall ?UNK8@Flic@@QAEXXZ)(Flic* this)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void Flic::UNK8() {
 }
 
 // RECOVERY_LITERAL: v1 0x00697470 0x00697473 $SG40718 0x00629E50
@@ -717,6 +644,21 @@ void Flic::decode_byte_run() {
 }
 
 /*
+Purpose: Unknown; the legacy implementation is a bare return with no body.
+// ORIGINAL: 0x0062A710 ?UNK4@Flic@@QAEXXZ 0x0062A710-0x0062A711 BYTE_EXACT
+// size      1 bytes
+// prototype void (__thiscall ?UNK4@Flic@@QAEXXZ)(Flic* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void Flic::UNK4() {
+}
+
+/*
 Purpose: Decode a type-7 (FLC DELTA) chunk: word-run deltas. Per line a
          signed line count, optional 0xC000 skip words, an optional
          last-pixel opcode (0x8000), then packets - a skip byte followed
@@ -853,6 +795,36 @@ void Flic::decode_delta_flc() {
 }
 
 /*
+Purpose: Unknown; the legacy implementation is a bare return with no body.
+// ORIGINAL: 0x0062AAF0 ?UNK5@Flic@@QAEXXZ 0x0062AAF0-0x0062AAF1 BYTE_EXACT
+// size      1 bytes
+// prototype void (__thiscall ?UNK5@Flic@@QAEXXZ)(Flic* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void Flic::UNK5() {
+}
+
+/*
+Purpose: Unknown; the legacy implementation is a bare return with no body.
+// ORIGINAL: 0x0062AB00 ?UNK6@Flic@@QAEXXZ 0x0062AB00-0x0062AB01 BYTE_EXACT
+// size      1 bytes
+// prototype void (__thiscall ?UNK6@Flic@@QAEXXZ)(Flic* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void Flic::UNK6() {
+}
+
+/*
 Purpose: Fill the rectangle the animation occupies on the destination
          buffer with color zero and mark it dirty.
 // ORIGINAL: 0x0062AB10 ?fill@Flic@@QAEXXZ 0x0062AB10-0x0062AB72 BYTE_EXACT
@@ -926,6 +898,21 @@ void Flic::decode_fli_copy() {
     if (scratch != nullptr) {
         free(scratch);
     }
+}
+
+/*
+Purpose: Unknown; the legacy implementation is a bare return with no body.
+// ORIGINAL: 0x0062ACC0 ?UNK7@Flic@@QAEXXZ 0x0062ACC0-0x0062ACC1 BYTE_EXACT
+// size      1 bytes
+// prototype void (__thiscall ?UNK7@Flic@@QAEXXZ)(Flic* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void Flic::UNK7() {
 }
 
 /*
@@ -1334,6 +1321,21 @@ void Flic::decode_delta_flc_trans() {
     }
     set_rect(&update_rect_, origin_x_ + min_x, origin_y_ + min_y,
              origin_x_ + max_x + 1, origin_y_ + max_y + 1);
+}
+
+/*
+Purpose: Unknown; the legacy implementation is a bare return with no body.
+// ORIGINAL: 0x0062B5F0 ?UNK8@Flic@@QAEXXZ 0x0062B5F0-0x0062B5F1 BYTE_EXACT
+// size      1 bytes
+// prototype void (__thiscall ?UNK8@Flic@@QAEXXZ)(Flic* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void Flic::UNK8() {
 }
 
 /*
