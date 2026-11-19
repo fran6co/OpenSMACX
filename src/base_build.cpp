@@ -833,7 +833,7 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
     {
         int t = stack_check(l_4c, 2, 2, l_8, -1);
         if (t >= 0 && l_c8 >= 0) {
-            l_88 = min(l_c8, t);  // one store: the image computes it in a register
+            l_88 = (t > l_c8) ? l_c8 : t;  // one store: the image computes it in a register
             if (l_88 && l_5c) {
                 l_88++;
             }
