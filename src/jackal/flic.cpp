@@ -536,7 +536,7 @@ int Flic::advance_to_frame(int target_frame) {
 #pragma pack(pop)
     target_frame %= header_.frames_;
 
-    if (target_frame < static_cast<int>(frame_) && (decoder_flags_ & 1)) {
+    if (target_frame < frame_ && (decoder_flags_ & 1)) {
         fseek(file_, header_.first_frame_, SEEK_SET);
         frame_ = 0;
     }
@@ -557,7 +557,7 @@ int Flic::advance_to_frame(int target_frame) {
     // the scan guard (lea at 0x0062A379) and reuses the register.
     FlicFrameChunk *chunks = &chunk_;
 
-    if (static_cast<int>(frame_) <= target_frame) {
+    if (frame_ <= target_frame) {
         do {
             frame_pos = ftell(file_);
             fread(chunks, 0x10, 1, file_);
@@ -580,14 +580,14 @@ int Flic::advance_to_frame(int target_frame) {
 
             fseek(file_, next_pos, SEEK_SET);
             frame_++;
-        } while (static_cast<int>(frame_) <= target_frame);
+        } while (frame_ <= target_frame);
     }
 
-    if (static_cast<int>(pending_frame) < static_cast<int>(frame_)) {
+    if (static_cast<int>(pending_frame) < frame_) {
         frame_ = pending_frame;
         fseek(file_, pending_pos, SEEK_SET);
 
-        if (static_cast<int>(frame_) < target_frame) {
+        if (frame_ < target_frame) {
             do {
                 // x/y captured before the guards and stored back once both
                 // pass: the call may mutate *this, so the image carries the
@@ -607,7 +607,7 @@ int Flic::advance_to_frame(int target_frame) {
                         frame_++;
                     }
                 }
-            } while (static_cast<int>(frame_) < target_frame);
+            } while (frame_ < target_frame);
         }
 
         return 0;
@@ -676,7 +676,7 @@ void Flic::decode_byte_run() {
     set_rectangle_dimensions(&update_rect_, origin_x_, origin_y_,
                              decoded_width_, decoded_height_);
 
-    for (int row = 0; row < static_cast<int>(decoded_height_); row++) {
+    for (int row = 0; row < decoded_height_; row++) {
         uint8_t *row_dst = dst;
         int remaining = decoded_width_;
         uint8_t count;
@@ -911,7 +911,7 @@ void Flic::decode_fli_copy() {
 
     uint8_t *dst = destination_buffer_->get_data(origin_x_, origin_y_);
 
-    for (int row = 0; row < static_cast<int>(decoded_height_); row++) {
+    for (int row = 0; row < decoded_height_; row++) {
         if (palette_offset_ == 0) {
             fread(dst, 1, decoded_width_, file_);
         } else {
@@ -1127,7 +1127,7 @@ void Flic::decode_byte_run_trans() {
     uint8_t *row_dst = destination_buffer_->get_data(origin_x_, origin_y_);
     uint8_t *row_src = static_cast<uint8_t *>(background_buffer_.get_data());
 
-    for (int row = 0; row < static_cast<int>(decoded_height_); row++) {
+    for (int row = 0; row < decoded_height_; row++) {
         uint8_t *dst = row_dst;
         uint8_t *src = row_src;
         int remaining = decoded_width_;
@@ -1381,7 +1381,7 @@ void Flic::decode_fli_copy_trans() {
     uint8_t *dst = destination_buffer_->get_data(origin_x_, origin_y_);
     uint8_t *src = static_cast<uint8_t *>(background_buffer_.get_data());
 
-    for (int row = 0; row < static_cast<int>(decoded_height_); row++) {
+    for (int row = 0; row < decoded_height_; row++) {
         for (int i = 0; i < static_cast<int>(decoded_width_); i++) {
             uint8_t value;
             fread(&value, 1, 1, file_);

@@ -137,7 +137,7 @@ class Flic {
   // RECOVERY_MEMBER: v1 Flic decoded_width_ 0x59C 0x00629E50
   uint32_t decoded_width_;
   // RECOVERY_MEMBER: v1 Flic decoded_height_ 0x5A0 0x00629E50
-  uint32_t decoded_height_;
+  int decoded_height_;
   // MonuWin sets this palette-index offset. Decoders retain their original
   // per-format truncation and signed-byte behavior when applying it.
   uint32_t palette_offset_;
@@ -163,7 +163,7 @@ class Flic {
   // (0x5C0 + 329*4 == 0xAE4) is unchanged: 0xA10 + 53*4 == 0xAE4.
   // That blob is now split into the named members below; the extent is
   // unchanged and still ends at 0xAE4.
-  uint32_t frame_;           // 0xA10  frames decoded since the last wrap
+  int frame_;                // 0xA10  frames decoded since the last wrap
   FliHeader header_;         // 0xA14  the 128-byte file header
   uint8_t field_A94_[0x20];  // 0xA94  no decoded body addresses this gap
   FlicFrameChunk chunk_;          // 0xAB4  frame bytes in flight
