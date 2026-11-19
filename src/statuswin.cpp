@@ -680,19 +680,20 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
     char digits[80];
     // 0x004B665E: max_width lives in [ebp-0x28] with dead stores kept; that
     // slot later holds item_x + item_width (0x004B82C9, read 0x004B8401).
-    // WORKAROUND(volatile): the image keeps max_width and alt in the frame
-    // ([ebp-0x28], [ebp-0x1c]) and keeps max_width's dead max() stores
+    // WORKAROUND(volatile): the image keeps max_width in the frame
+    // ([ebp-0x28]; alt at [ebp-0x1c] needs no volatile since 2026-11-19,
+    // fe 331 -> 319 without it) and keeps max_width's dead max() stores
     // (0x004B726B, 0x004B75DC); a plain int is enregistered or dead-store
     // eliminated, which also moves `this` out of [ebp-0x18], drops the edi
     // zero register at entry and shrinks the frame to 0xD4. The original
-    // reason these two stay in memory is unknown.
+    // reason it stays in memory is unknown.
     volatile int max_width = 0;
     // Shared image slots: [ebp-0x14] holds the text widths and the visible
     // item count (0x004B731E, 0x004B8237); [ebp-0x24] holds the stack row
     // height (0x004B8179). One reused variable each.
     int col;
     int row;
-    volatile int alt;
+    int alt;
     veh = ConsoleGlobal.selected_vehicle_;
     int y;
     if (ConsoleGlobal.cursor_active_ && veh >= 0
