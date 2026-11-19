@@ -608,20 +608,20 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
             }
         }
 
-        for (int bonus_new = 0; bonus_new < Players[faction_id].faction_bonus_count; bonus_new++) {
-            if (Players[faction_id].faction_bonus_id[bonus_new] == RULE_FACILITY
-                || (Players[faction_id].faction_bonus_id[bonus_new] == RULE_FREEFAC
-                    && has_tech(Facility[Players[faction_id].faction_bonus_val1[bonus_new]].preq_tech, faction_id))) {
-                set_fac(range(Players[faction_id].faction_bonus_val1[bonus_new],
+        for (best_base = 0; best_base < Players[faction_id].faction_bonus_count; best_base++) {
+            if (Players[faction_id].faction_bonus_id[best_base] == RULE_FACILITY
+                || (Players[faction_id].faction_bonus_id[best_base] == RULE_FREEFAC
+                    && has_tech(Facility[Players[faction_id].faction_bonus_val1[best_base]].preq_tech, faction_id))) {
+                set_fac(range(Players[faction_id].faction_bonus_val1[best_base],
                               FAC_HEADQUARTERS, FAC_STOCKPILE_ENERGY),
                         BaseIDCurrentSelected, 1);
             }
         }
-        for (int bonus_old = 0; bonus_old < Players[faction_id_def].faction_bonus_count; bonus_old++) {
-            if (Players[faction_id_def].faction_bonus_id[bonus_old] == RULE_FACILITY
-                || (Players[faction_id_def].faction_bonus_id[bonus_old] == RULE_FREEFAC
-                    && has_tech(Facility[Players[faction_id_def].faction_bonus_val1[bonus_old]].preq_tech, faction_id))) {
-                set_fac(range(Players[faction_id_def].faction_bonus_val1[bonus_old],
+        for (best_base = 0; best_base < Players[faction_id_def].faction_bonus_count; best_base++) {
+            if (Players[faction_id_def].faction_bonus_id[best_base] == RULE_FACILITY
+                || (Players[faction_id_def].faction_bonus_id[best_base] == RULE_FREEFAC
+                    && has_tech(Facility[Players[faction_id_def].faction_bonus_val1[best_base]].preq_tech, faction_id))) {
+                set_fac(range(Players[faction_id_def].faction_bonus_val1[best_base],
                               FAC_HEADQUARTERS, FAC_STOCKPILE_ENERGY),
                         BaseIDCurrentSelected, 1);
             }
