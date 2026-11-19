@@ -300,7 +300,8 @@ int NetSessionPickerWin::initialize(Net *network, char *caption,
   sessions_view_.Dialog::field_AC_ = 0;
   sessions_view_.Dialog::field_B0_ = 0;
   sessions_view_.Dialog::field_B4_ = 2;
-  sessions_view_.Dialog::field_5C_ = 2;
+  // 0x0063C2BB stores the 2 at Dialog+0x6C (esi+0xA50+0x6C = 0xABC), not +0x5C.
+  sessions_view_.Dialog::field_6C_ = 2;
   sessions_view_.Dialog::set_dialog_text_color(tail_.field_3714_, -1, 1, 1);
   sessions_view_.Dialog::set_dialog_text_color2(tail_.field_3718_, -1, 1, 1);
   sessions_view_.Dialog::set_dialog_font(fonts_[0], 0, 0);

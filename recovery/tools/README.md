@@ -434,7 +434,8 @@ an explicit `--pfx` is only needed to pick another lane.
   one-side inline expansions, teardown arms, ICF class twins (MATCHING_GUIDE 3.7). Confirmed transcription errors:
   battle_report wrap call (`IMG-ONLY [!lt 0]`), communicate pact-renewal arm, game_data 0x005A8651 flag block
   (`IMG-ONLY [!bit 32]` on 126 sites), ReportWin::draw_ops 0x0049E26D/0x0049E2F2 Base+0xD4 `mineral_surplus` read as
-  `mineral_surplus_final` +0x98 (an IMG-ONLY/OURS-ONLY pair with the same test on different fields).
+  `mineral_surplus_final` +0x98 (an IMG-ONLY/OURS-ONLY pair with the same test on different fields),
+  NetSessionPickerWin::initialize 0x0063C2BB `Dialog::field_6C_ = 2` written as `field_5C_` (fieldscan FIELD).
 - `analysis/slotflow.py <unit> <addr> [--src ALT.cpp] [--pfx N]` transcription-error screen (MATCHING_GUIDE 3.5): for every
   image instruction that reads a frame slot and is aligned with one of ours reading a named variable v, it takes the
   image's reaching definitions of that slot, maps each through the fe alignment to our instruction and the variable it
