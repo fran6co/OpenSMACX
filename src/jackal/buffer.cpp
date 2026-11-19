@@ -8039,13 +8039,12 @@ int Buffer::write_pcx(char *filename) {
         return 3;
     }
 
-    const int width = dib_.bmiHeader.biWidth;
     const int height = dib_.bmiHeader.biHeight;
     // Original5DF6BE saves the pixels before create; header fields below
     // are read again after create, rather than sharing its size snapshot.
     const uint8_t *bits = static_cast<const uint8_t *>(locked_bits_);
     unsigned char *view = static_cast<unsigned char *>(map.create(
-        name, static_cast<uint32_t>(width * height * -2 + 0x80), 1));
+        name, static_cast<uint32_t>(dib_.bmiHeader.biWidth * height * -2 + 0x80), 1));
     if (view == 0) {
         free_data(1);
         return 4;
