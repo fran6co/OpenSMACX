@@ -119,4 +119,10 @@ static_assert(sizeof(Strings) == 0x18, "Strings layout must match the legacy ABI
 // `Strings *` argument pass `&StringTable`.
 extern Strings StringTable;  // 0x009B90D8
 
-void __cdecl space();
+// space() is a header inline too: the image calls it out of line only from
+// probe (three sites), whose object contributes the copy right after probe
+// (0x005A58B0), and expands `strcat(StringTemp, BufferJoinSpace)` elsewhere.
+extern const char BufferJoinSpace[];
+MEASURED inline void __cdecl space() {   // 005A58B0
+    strcat(StringTemp, BufferJoinSpace);
+}
