@@ -1043,7 +1043,7 @@ BOOL __cdecl port_to_coast(int base_id, int region) {
     return false;
 }
 
-static __forceinline BOOL __cdecl port_to_port_body(int base_id_src, int base_id_dst) {
+static inline BOOL __cdecl port_to_port_body(int base_id_src, int base_id_dst) {
     int last_region = -1;
     int x = Bases[base_id_src].x;
     int y = Bases[base_id_src].y;
