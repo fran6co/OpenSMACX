@@ -28,6 +28,25 @@
 #include "spritebox.h"
 #include <stdlib.h>
 
+// ===== MANAGED GLOBALS - real objects, homed to their domain =====
+// In the shipped image these live at fixed data addresses and are
+// constructed before WinMain by the CRT's dynamic-initializer walk
+// (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
+// Here the same recovered constructors run through this build's own
+// startup, and the matching destructors close them at exit. Addresses of
+// the ones documented individually live beside their definitions.
+// File-backed Sprite draw stages through this Buffer: original 0x005E4BC3,
+// 0x005E4BFC and 0x005E4C09 use it for load_pcx, drawing and close.
+// RECOVERY_OBJECT: v1 0x009B6080 ?g_BUFFER@@3VBuffer@@A
+Buffer g_BUFFER;
+
+// ORIGINAL: 0x005E37B0 _$E51 0x005E37B0-0x005E37C6 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682674 selects startup 0x005E37B0..0x005E37C6, which constructs the ordinary namespace-global Buffer at 0x009B6080 and registers finalizer 0x005E37D0..0x005E37DA. This separate lifetime has no cleanup guard.", "The existing g_BUFFER object and its source ownership remain unchanged. Its generated constructor registration and destructor references identify these compiler callbacks independently of private compiler label numbering.", "Original identities, full spans and historical claims remain unchanged. Static members add no instance fields. Current compiler symbols are binding facts, not historical debug names; complete original TU boundaries, linked storage placement and game fidelity remain unproved. Fresh strict measurement is required; this binding grants no claim."], "reason": "Bind the original lifetime to ordinary typed storage and its compiler-generated initialization/destruction, preserving guard, order and restoration obligations."}
+// symbol    _$E17
+// ORIGINAL: 0x005E37D0 _$E49 0x005E37D0-0x005E37DA FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682674 selects startup 0x005E37B0..0x005E37C6, which constructs the ordinary namespace-global Buffer at 0x009B6080 and registers finalizer 0x005E37D0..0x005E37DA. This separate lifetime has no cleanup guard.", "The existing g_BUFFER object and its source ownership remain unchanged. Its generated constructor registration and destructor references identify these compiler callbacks independently of private compiler label numbering.", "Original identities, full spans and historical claims remain unchanged. Static members add no instance fields. Current compiler symbols are binding facts, not historical debug names; complete original TU boundaries, linked storage placement and game fidelity remain unproved. Fresh strict measurement is required; this binding grants no claim."], "reason": "Bind the original lifetime to ordinary typed storage and its compiler-generated initialization/destruction, preserving guard, order and restoration obligations."}
+// symbol    _$E15
+
 /*
 Purpose: Initialize an empty sprite and charge its own size to the sprite
          memory total.
@@ -7866,12 +7885,12 @@ uint8_t BlankSpriteCleanupGuard;
 // byte union suppresses the compiler's unconditional second teardown.
 // ORIGINAL: 0x0063BAE0 sub_63bae0 0x0063BAE0-0x0063BAF6 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["Historical seed src/recovered/units/0063bae0.cpp retains the complete original span and BYTE_EXACT obligation; its TRIED finding is retained by the source marker writer.","The seed finding’s explanation is retained: the earlier general.cpp prototype measured 5/6 because its atexit argument cleanup used add esp,4 where the pinned startup uses pop ecx.","Pinned startup 0x0063BAE0 constructs the Sprite at 0x009BEAE8 and registers cleanup callback 0x0063BB00 with _atexit.","The compiler-generated initializer references this owner, its constructor, the generated exit callback and _atexit, and is selected through .CRT$XCU. The owner embeds a 44-byte rawstorage_.bytes member at offset zero, qualified through the directly bound standalone CodeView definition; this is storage/lifetime evidence, not an exact linked allocation claim."],"reason":"Bind the original startup identity to the genuine compiler-generated initializer for the source-owned blank Sprite lifetime."}
-// symbol    _$E17
+// symbol    _$E22
 // TRIED: same finding as 0x00589870 - homed into general.cpp it measures 5 of 6
 // Historical TRIED continuation: the earlier atexit argument cleanup used add esp,4 where the pinned startup uses pop ecx.
 // ORIGINAL: 0x0063BB00 sub_63bb00 0x0063BB00-0x0063BB1F FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["Pinned 0x0063BB00-0x0063BB1F tests and sets bit 0 at 0x009BEAE0 before calling Sprite::~Sprite on 0x009BEAE8; the set-bit branch returns without a second teardown.","The source-owned generated exit callback tests and sets the separate cleanup guard, then destroys the Sprite in rawstorage_.bytes. Its physical COFF references select this guard, this owner storage and Sprite::close; no unconditional second destruction is introduced.","docs/recovery/ida9-functions.csv retains the complete catalogued callback extent. This new identity has no matching claim."],"reason":"Bind the generated exit callback to the real owner’s guarded Sprite teardown; preserve bit-set-before-destruction and avoid an implicit second dtor."}
-// symbol    _$E15
+// symbol    _$E20
 // RECOVERY_OBJECT: v3 0x009BEAE8 ?g_BLANK_SPRITE@@3VSprite@@A member ?g_BLANK_SPRITE_OWNER@@3UBlankSpriteStorageOwner@@A rawstorage_.bytes
 BlankSpriteStorageOwner g_BLANK_SPRITE_OWNER;
 

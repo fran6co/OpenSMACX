@@ -19,12 +19,6 @@
 // RECOVERY_BINDING: v1 {"evidence": ["historical deleting-thunk source src/deleting_thunks.cpp; original full spans retained: 0x005E3610-0x005E362E", "Pinned class constructor ??0Buffer@@QAE@XZ at 0x005D7210 stores original class/view table VA 0x66fdbc at 0x005D7248 (mov dword ptr [esi], 0x66fdbc); the current genuine owner vftable ??_7Buffer@@6B@ selects generated ??_GBuffer@@UAEPAXI@Z in slot 0 (+0x0) through weak entry ??_EBuffer@@UAEPAXI@Z (mode 2).", "Pinned ??_GBuffer@@UAEPAXI@Z at 0x005E3610 calls the source-mapped ??1Buffer@@QAE@XZ at 0x005D7410, then tests byte ptr [esp + 8], 1; je 0x5e3628 bypasses scalar delete when bit 0 is clear, while bit 0 set calls 0x0064557F; it save original this; call destructor; delete only when flags bit 0 is set; return saved this with ret 4.", "The real class lifetime is owned by src/buffer.cpp; its compiler-emitted deleting symbol and vftable slot carry this original identity. Hand-written adapter bodies with live adjustor callers remain until those callers are independently qualified and transferred. The linked weak/COMDAT copy is not used to choose source ownership.", "the source writer preserves the historical mapping's exactness state (historical exactness obligation retained); current compiler extent is not asserted equal to the original span"], "reason": "Bind the original Buffer scalar deleting-destructor identity to the actual compiler-emitted class deleting destructor in its genuine owner translation unit. The original constructor's pinned vptr store and the current owner's physical table slot identify this class/view; no callback/thunk body is hand-authored here."}
 // symbol    ??_GBuffer@@UAEPAXI@Z
 // kind      game
-// ORIGINAL: 0x005E37B0 _$E51 0x005E37B0-0x005E37C6 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682674 selects startup 0x005E37B0..0x005E37C6, which constructs the ordinary namespace-global Buffer at 0x009B6080 and registers finalizer 0x005E37D0..0x005E37DA. This separate lifetime has no cleanup guard.", "The existing g_BUFFER object and its source ownership remain unchanged. Its generated constructor registration and destructor references identify these compiler callbacks independently of private compiler label numbering.", "Original identities, full spans and historical claims remain unchanged. Static members add no instance fields. Current compiler symbols are binding facts, not historical debug names; complete original TU boundaries, linked storage placement and game fidelity remain unproved. Fresh strict measurement is required; this binding grants no claim."], "reason": "Bind the original lifetime to ordinary typed storage and its compiler-generated initialization/destruction, preserving guard, order and restoration obligations."}
-// symbol    _$E23
-// ORIGINAL: 0x005E37D0 _$E49 0x005E37D0-0x005E37DA FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682674 selects startup 0x005E37B0..0x005E37C6, which constructs the ordinary namespace-global Buffer at 0x009B6080 and registers finalizer 0x005E37D0..0x005E37DA. This separate lifetime has no cleanup guard.", "The existing g_BUFFER object and its source ownership remain unchanged. Its generated constructor registration and destructor references identify these compiler callbacks independently of private compiler label numbering.", "Original identities, full spans and historical claims remain unchanged. Static members add no instance fields. Current compiler symbols are binding facts, not historical debug names; complete original TU boundaries, linked storage placement and game fidelity remain unproved. Fresh strict measurement is required; this binding grants no claim."], "reason": "Bind the original lifetime to ordinary typed storage and its compiler-generated initialization/destruction, preserving guard, order and restoration obligations."}
-// symbol    _$E21
 // ORIGINAL: 0x005D71D0 sub_5d71d0 0x005D71D0-0x005D71E6 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned startup 0x005D71D0..0x005D71E6 constructs the Sprite at 0x009B3A50..0x009B3A7C and registers finalizer 0x005D71F0..0x005D720F. Cleanup publishes bit 2 of the same byte 0x009B37CC before Sprite::close at 0x005E3820; constructors do not reset the guard.", "Buffer::shared_sprite_ is ordinary class-static storage defined after the special-text array. Physical compiler output supplies the shared guard and registration edges; consumers access the actual typed Sprite directly.", "Original identities, full spans and historical claims remain unchanged. Static members add no instance fields. Current compiler symbols are binding facts, not historical debug names; complete original TU boundaries, linked storage placement and game fidelity remain unproved. Fresh strict measurement is required; this binding grants no claim."], "reason": "Bind the original lifetime to ordinary typed storage and its compiler-generated initialization/destruction, preserving guard, order and restoration obligations."}
 // symbol    _$E18
@@ -5215,19 +5209,6 @@ BufferSpecialText Buffer::special_texts_[10];
 // than owning another allocation. Its original storage is 0x2C zero-fill bytes.
 // RECOVERY_OBJECT: v4 0x009B3A50 0x009B3A7C ?g_BUFFER_SPRITE@@3VSprite@@A 0x005D8290 target ?shared_sprite_@Buffer@@0VSprite@@A
 Sprite Buffer::shared_sprite_;
-
-
-// ===== MANAGED GLOBALS - real objects, homed to their domain =====
-// In the shipped image these live at fixed data addresses and are
-// constructed before WinMain by the CRT's dynamic-initializer walk
-// (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
-// Here the same recovered constructors run through this build's own
-// startup, and the matching destructors close them at exit. Addresses of
-// the ones documented individually live beside their definitions.
-// File-backed Sprite draw stages through this Buffer: original 0x005E4BC3,
-// 0x005E4BFC and 0x005E4C09 use it for load_pcx, drawing and close.
-// RECOVERY_OBJECT: v1 0x009B6080 ?g_BUFFER@@3VBuffer@@A
-Buffer g_BUFFER;
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====
 // In the shipped image these live at fixed data addresses and are
 // constructed before WinMain by the CRT's dynamic-initializer walk
@@ -5261,11 +5242,11 @@ int __stdcall Buffer::load_tga(const char * a1, Palette * a2, int a3, int a4) {
         goto has_ext;
     }
     switch (Language) {
-// RECOVERY_LITERAL: v1 0x00696C58 0x00696C5D $SG44342 0x005D7B40
+// RECOVERY_LITERAL: v1 0x00696C58 0x00696C5D $SG44333 0x005D7B40
         case 1: strcat(path, ".tgf"); break;
-// RECOVERY_LITERAL: v1 0x00696C60 0x00696C65 $SG44344 0x005D7B40
+// RECOVERY_LITERAL: v1 0x00696C60 0x00696C65 $SG44335 0x005D7B40
         case 2: strcat(path, ".tgg"); break;
-// RECOVERY_LITERAL: v1 0x00696C68 0x00696C6D $SG44346 0x005D7B40
+// RECOVERY_LITERAL: v1 0x00696C68 0x00696C6D $SG44337 0x005D7B40
         default: strcat(path, ".tga"); break;
     }
   has_ext:
@@ -7818,11 +7799,11 @@ int __stdcall Buffer::load_bmp(const char * a1, Palette * a2, int a3, int a4) {
         goto has_ext;
     }
     switch (Language) {
-// RECOVERY_LITERAL: v1 0x00696C70 0x00696C75 $SG45261 0x005D7CA0
+// RECOVERY_LITERAL: v1 0x00696C70 0x00696C75 $SG45252 0x005D7CA0
         case 1: strcat(path, ".bmf"); break;
-// RECOVERY_LITERAL: v1 0x00696C78 0x00696C7D $SG45263 0x005D7CA0
+// RECOVERY_LITERAL: v1 0x00696C78 0x00696C7D $SG45254 0x005D7CA0
         case 2: strcat(path, ".bmg"); break;
-// RECOVERY_LITERAL: v1 0x00696C80 0x00696C85 $SG45265 0x005D7CA0
+// RECOVERY_LITERAL: v1 0x00696C80 0x00696C85 $SG45256 0x005D7CA0
         default: strcat(path, ".bmp"); break;
     }
   has_ext:
