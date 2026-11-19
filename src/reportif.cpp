@@ -4126,6 +4126,7 @@ void __cdecl sat_attack(int attacker, int target, int kind) {
     // The picture extent lives for the whole function: the image keeps its
     // two slots apart from the base-count loop's has_fac temporaries.
     int width, height;
+    int attack_target;
     Popup popup;
     if (attacker == target) return;
     if (target <= 0) return;
@@ -4161,7 +4162,6 @@ void __cdecl sat_attack(int attacker, int target, int kind) {
             < PlayersData[attacker].satellites_[3]
         && ((kind == 4 && targets)
             || (kind != 4 && kind < 4 && PlayersData[target].satellites_[kind]))) {
-        int attack_target;
         if (kind != 4) {
             attack_target = attacker;
         } else {
