@@ -566,6 +566,7 @@ void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int fl
             FastUnitAnim < 0 ? 25 : (FastUnitAnim == 0 ? 16 : 8), 2);
         int previous_time = timeGetTime();
         int now;
+        int move_now;
         int frame;
         for (frame = 0; frame < turn_frames; ++frame) {
             for (i = 0; i < 8; ++i) {
@@ -616,9 +617,9 @@ void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int fl
             }
             do {
                 do_non_input();
-                now = timeGetTime();
-            } while (now - previous_time < delay);
-            previous_time = now;
+                move_now = timeGetTime();
+            } while (move_now - previous_time < delay);
+            previous_time = move_now;
         }
         for (i = 0; i < 8; ++i) position[i] -= increment[i];
     }
