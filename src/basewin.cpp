@@ -43,7 +43,6 @@ extern char SocialWinCommaSpaceText[];/*
 // ~Dialogs in place (0x41D0xx: close@Dialogs, ~EditGroup, ~SpriteBox, ...).
 #define DIALOGS_DTOR_INLINE
 #define BASEWIN_INLINE_BODIES  // recompute/delete_queue/exit bodies in basewin.h
-#define BUFFER_WRITE_RIGHT_L3  // guarded Buffer::write_right_l(text, x, y)
 #define FLATBUTTON_SLICE_COLOURS_PUBLIC  // direct field_ABC_ stores in init
 #include "stdafx.h"
 #include "font_metrics.h"

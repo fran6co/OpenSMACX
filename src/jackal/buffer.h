@@ -586,17 +586,14 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   int write_right_l(char *text, int x_coord, int y_coord, int width);
   // Guarded full-length form (draw_farm 0x40FC37, StatusWin::draw_status
   // 0x4B7FEC): the callers expand the null test before strlen and 0x5DD3B0.
-  // WORKAROUND(decl): only TUs defining BUFFER_WRITE_RIGHT_L3 see it; adding
-  // a Buffer member perturbs ~50 unrelated includers (52 of 148 objects
-  // changed when it was visible everywhere).
-#ifdef BUFFER_WRITE_RIGHT_L3
+  // Also ReportWin's draw_ops/draw_security/draw_score. Visible to every
+  // unit (measured 2026-11-19: only front-end counter movement elsewhere).
   int write_right_l(char *text, int x_coord, int y_coord) {
     if (!text) {
       return x_coord;
     }
     return write_right_l(text, x_coord, y_coord, static_cast<int>(strlen(text)));
   }
-#endif
   int wrap(Font *font, char *text, RECT *area);
   int wrap(char *text, RECT *area);
   int wrap(char *text, int x_coord, int y_coord, int width);

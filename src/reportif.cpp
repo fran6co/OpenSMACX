@@ -3515,19 +3515,9 @@ void ReportWin::draw_ops() {
                     say_num(0);
                 }
             }
-            {
-                // Guarded write_right_l (0x005DD3B0) expansion: x is
-                // evaluated before the null test (lea edi,[edx-4]).
-                // UNSURE: reportwin_write_right (defined after this function)
-                // or Buffer's BUFFER_WRITE_RIGHT_L3 inline would be the
-                // natural spelling; neither is visible here.
-                char *const right_text = StringTemp;
-                const int right_x = text.right - 4;
-                if (right_text != 0) {
-                    Buffer::write_right_l(right_text, right_x, text_y,
-                        static_cast<int>(strlen(right_text)));
-                }
-            }
+            // Guarded write_right_l (0x005DD3B0) expansion: x is evaluated
+            // before the null test (lea edi,[edx-4]).
+            Buffer::write_right_l(StringTemp, text.right - 4, text_y);
         } else if (mode == 0x8B4) {
             // UNSURE: `<= 1` from cmp reg,1 / jg (the 34 arm falls through).
             const int spacing = BaseCurrent->population_size <= 1 ? 34    // edi
@@ -4218,13 +4208,6 @@ void __cdecl sat_edit(int report_faction_id, int target_faction_id, int satellit
 
 // ORIGINAL: 0x004A08E0 ?draw_security@ReportWin@@QAEXXZ 0x004A08E0-0x004A1134 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/unrecovered/004a08e0.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
-// Guarded full-length right-aligned write on a report canvas.
-static inline int reportwin_write_right(ReportWin *win, char *text, int x, int y) {
-    if (text == 0) {
-        return x;
-    }
-    return win->Buffer::write_right_l(text, x, y, static_cast<int>(strlen(text)));
-}
 
 void ReportWin::draw_security() {
     const int faction_id = ReportIfGlobal.report_faction_id_;
@@ -4352,7 +4335,7 @@ void ReportWin::draw_security() {
         strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, label_get(0x61C / 4));
         strcat(StringTemp, "]");
-        reportwin_write_right(this, StringTemp, rect1_.right - 2, text_y);
+        Buffer::write_right_l(StringTemp, rect1_.right - 2, text_y);
         rect1_.top += 43;
     }
 }
@@ -4432,7 +4415,7 @@ void ReportWin::draw_score() {
         if (PlayersData[faction].score_items_[item] >= 0) strcat(StringTemp, "+ ");
         else strcat(StringTemp, "- ");
         say_num(abs(PlayersData[faction].score_items_[item]));
-        reportwin_write_right(this, StringTemp, rect1_.left + rect1_.right, rect1_.top);
+        Buffer::write_right_l(StringTemp, rect1_.left + rect1_.right, rect1_.top);
         rect1_.top += field_E268_;
     }
     // Genuine original: this PlayerData offset slot doubles as the outcome.
@@ -4453,7 +4436,7 @@ void ReportWin::draw_score() {
         if (PlayersData[faction].score_items_[5] >= 0) strcat(StringTemp, "+ ");
         else strcat(StringTemp, "- ");
         say_num(abs(PlayersData[faction].score_items_[5]));
-        reportwin_write_right(this, StringTemp, rect1_.left + rect1_.right, rect1_.top);
+        Buffer::write_right_l(StringTemp, rect1_.left + rect1_.right, rect1_.top);
         rect1_.top += field_E268_;
     }
     if ((GameDataStateStorage.fields_.game_rules_ & 0x400)
@@ -4466,7 +4449,7 @@ void ReportWin::draw_score() {
         report_topic_line(this, rect1_, rect1_.left);
         StringTemp[0] = 0;
         strcat(StringTemp, "+100%");
-        reportwin_write_right(this, StringTemp, rect1_.left + rect1_.right, rect1_.top);
+        Buffer::write_right_l(StringTemp, rect1_.left + rect1_.right, rect1_.top);
         rect1_.top += field_E268_;
     }
     rect1_.top += field_E268_;
@@ -4480,7 +4463,7 @@ void ReportWin::draw_score() {
     if (PlayersData[faction].unk_109 < 0) strcat(StringTemp, "- ");
     say_num(abs(PlayersData[faction].unk_107));
     strcat(StringTemp, "}");
-    reportwin_write_right(this, StringTemp, rect1_.left + rect1_.right, rect1_.top);
+    Buffer::write_right_l(StringTemp, rect1_.left + rect1_.right, rect1_.top);
     rect1_.top += field_E268_ * 2;
     if (GameDataStateStorage.fields_.game_state_ & 1) {
         if (GameDataStateStorage.fields_.game_state_ & 0x80000) {
