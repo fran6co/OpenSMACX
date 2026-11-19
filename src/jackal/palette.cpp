@@ -1683,7 +1683,7 @@ int Palette::get_nearest_palette_index(unsigned char red, unsigned char green,
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x006463E4 0x00646494
 
-static __forceinline double hsv_sq_distance(const HSV *a, const HSV *b) {
+static inline double hsv_sq_distance(const HSV *a, const HSV *b) {
     double dv = a->v - b->v;
     double chroma_square = (((double(__cdecl *)(double))sin)(a->h * 0.017453292519444445) * a->s - ((double(__cdecl *)(double))sin)(b->h * 0.017453292519444445) * b->s) * (((double(__cdecl *)(double))sin)(a->h * 0.017453292519444445) * a->s - ((double(__cdecl *)(double))sin)(b->h * 0.017453292519444445) * b->s)
         + (((double(__cdecl *)(double))cos)(a->h * 0.017453292519444445) * a->s - ((double(__cdecl *)(double))cos)(b->h * 0.017453292519444445) * b->s) * (((double(__cdecl *)(double))cos)(a->h * 0.017453292519444445) * a->s - ((double(__cdecl *)(double))cos)(b->h * 0.017453292519444445) * b->s);
