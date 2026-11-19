@@ -6008,6 +6008,8 @@ void BaseWin::draw_pop(int update_mode) {
         MainInterfaceGlobal.update(rect, 0);
     } else {
         MainInterfaceGlobal.soft_update(rect);
+        MainInterfaceGlobal.set_clip(&saved_clip);
+        return;
     }
     MainInterfaceGlobal.set_clip(&saved_clip);
 }
