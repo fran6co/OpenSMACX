@@ -282,6 +282,7 @@ Purpose: Return the current string-list item ID.
 // size      17 bytes
 // prototype int (__thiscall ?current_id@StringStruct@@QAEHXZ)(StringStruct* this)
 // callers   1   call targets   0
+// body      src/jackal/stringstruct.h
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
