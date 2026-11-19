@@ -3149,6 +3149,22 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   store and later ones lose theirs (ProdPicker::on_scrolled 0x00493CB0).
 - **Two same-type locals in disjoint block scopes share one slot**
   (on_scrolled's two shifted rectangles in a 0x10 frame).
+- **One name reused for unrelated values costs a slot or reorders slots,
+  even when the live ranges do not overlap** (par-3 2026-11-19). VC6 gives a
+  named local one home per name; two disjoint webs under one name are
+  written back and reloaded as one variable, and the second value's slot
+  sits where the first's did. Decompiler-style sources reuse locals freely
+  (iVar/local_ renamed, reuse kept); the original often had a separate
+  name. InfoWin::setup_text 0x00456300 reused the viewing `faction` as the
+  land-census loop counter: a separate `owner` counter cut the frame by 8
+  (0x50C -> 0x508, image 0x504) and 2071 -> 2013 rows; BaseWin::draw_expenses
+  0x00412AA0 parked `line.left` in the screen-width flag `wide`: a separate
+  `left` moved our slots onto the image's one-to-one (1212 -> 1078 rows).
+  Not every reuse matters: draw_expenses' reused count variable was
+  neutral, so judge each split by frame and slot map. The converse is the
+  use_ability rule in 2.7 (Console::use_ability 0x004D7F60): sometimes the
+  original had ONE reassigned variable where ours copies into a second
+  local. `analysis/webscan.py` lists both shapes per function.
 - **Frame-size differences: run `analysis/framescan.py` first** (13 s tree-wide);
   `--addr A` prints both slot maps with widths, `&` and our /Fa names. A frame
   that differs is a declaration problem, never a register tie.
