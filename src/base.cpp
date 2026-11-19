@@ -7154,15 +7154,16 @@ no_energy:
                 Chassis[VehPrototypes[proto_id_new].chassis_id].triad == 2 ? "alair_sm.pcx"
                     : Chassis[VehPrototypes[proto_id_new].chassis_id].triad == 1 ? "navun_sm.pcx" : "alunit_sm.pcx", 0);
             return 0;
+        } else {
+            if (set_flag && !(GameDataStateStorage.fields_.game_warnings_ & 4)) {
+                goto fail;
+            }
+            popp(ScriptPopupFile,
+                flag_clear ? "UPGRADEPROTOCOST2" : "UPGRADEPROTOCOST", 0,
+                Chassis[VehPrototypes[proto_id_new].chassis_id].triad == 2 ? "air_sm.pcx"
+                    : Chassis[VehPrototypes[proto_id_new].chassis_id].triad == 1 ? "navun_sm.pcx" : "unit_sm.pcx", 0);
+            return 0;
         }
-        if (set_flag && !(GameDataStateStorage.fields_.game_warnings_ & 4)) {
-            goto fail;
-        }
-        popp(ScriptPopupFile,
-            flag_clear ? "UPGRADEPROTOCOST2" : "UPGRADEPROTOCOST", 0,
-            Chassis[VehPrototypes[proto_id_new].chassis_id].triad == 2 ? "air_sm.pcx"
-                : Chassis[VehPrototypes[proto_id_new].chassis_id].triad == 1 ? "navun_sm.pcx" : "unit_sm.pcx", 0);
-        return 0;
     }
     do_upgrade(faction_id, proto_id_new, proto_id_old);
     return 1;
