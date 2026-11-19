@@ -5026,12 +5026,9 @@ void BaseWin::draw_expenses(int update_mode) {
     if (!wide) {
         title.left = 191;
     } else {
-        // WORKAROUND(type): the image reads production_outer_rect_.left through
-        // the saved member pointer (0x412E48); box is the same rectangle copied
-        // above. Reading the copy puts the panel's StringTemp tests in the
-        // image's eax/ecx/edx order (diff weight 345 -> 166); the member read
-        // is one register rotation off. The original's spelling is unknown.
-        title.left = box.left + 3;
+        // The image reads the member through the spilled &production_outer_rect_
+        // address temporary (stored 0x412B23, reloaded 0x412E48).
+        title.left = production_outer_rect_.left + 3;
     }
     Buffer::box_sprite(&title, &InterfaceBoxStyles[6]);
     title.left += 3;
