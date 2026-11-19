@@ -79,43 +79,10 @@
 // sat_attack keeps 15 rows and draw_sat 54 at 34, 37, 55, 56, 58, 60, so 37.
 // After the in-place field reads (63095921b1), whole-unit fe sweep: on_iface_button_clicked exact at 27-35, 38-46, 53-61;
 // sat_attack keeps 15 rows and draw_sat 54 only at 35, so 35.
+// After Scroll::set_field_A64 and BaseButton::set_bevel_upper (Gamma::exec), whole-unit fe sweep: on_iface_button_clicked
+// exact at 0-18, 29, 40-44, 55-63; sat_attack 15 and draw_sat 54 at 0-3, 29, 43, 55-58, 60-63, so 0: no pads.
 // CANARY: 0x004A6330 ?on_iface_button_clicked@ReportIf@@UAEXH@Z residues 0-27,38,49-53
 // CANARY-PADS: function ReportIfDeclFnPad
-void ReportIfDeclFnPad0();
-void ReportIfDeclFnPad1();
-void ReportIfDeclFnPad2();
-void ReportIfDeclFnPad3();
-void ReportIfDeclFnPad4();
-void ReportIfDeclFnPad5();
-void ReportIfDeclFnPad6();
-void ReportIfDeclFnPad7();
-void ReportIfDeclFnPad8();
-void ReportIfDeclFnPad9();
-void ReportIfDeclFnPad10();
-void ReportIfDeclFnPad11();
-void ReportIfDeclFnPad12();
-void ReportIfDeclFnPad13();
-void ReportIfDeclFnPad14();
-void ReportIfDeclFnPad15();
-void ReportIfDeclFnPad16();
-void ReportIfDeclFnPad17();
-void ReportIfDeclFnPad18();
-void ReportIfDeclFnPad19();
-void ReportIfDeclFnPad20();
-void ReportIfDeclFnPad21();
-void ReportIfDeclFnPad22();
-void ReportIfDeclFnPad23();
-void ReportIfDeclFnPad24();
-void ReportIfDeclFnPad25();
-void ReportIfDeclFnPad26();
-void ReportIfDeclFnPad27();
-void ReportIfDeclFnPad28();
-void ReportIfDeclFnPad29();
-void ReportIfDeclFnPad30();
-void ReportIfDeclFnPad31();
-void ReportIfDeclFnPad32();
-void ReportIfDeclFnPad33();
-void ReportIfDeclFnPad34();
 
 // Shared punctuation objects the image pushes instead of unit literals.
 extern char SocialWinCloseParenText[];
@@ -5928,9 +5895,9 @@ int ReportIf::on_iface_dialog_item_back_draw(::GraphicWin *, int, int, RECT *) {
 // The three log_say texts are this handler's own copies in the pinned image
 // (0x687280, 0x687298, 0x6872B8; on_left_click keeps a separate EDBC copy at
 // 0x686F04). The image's advanced-governor text ends in "set".
-// RECOVERY_LITERAL: v1 0x00687280 0x00687295 $SG63524 0x004A6330
-// RECOVERY_LITERAL: v1 0x00687298 0x006872B5 $SG63539 0x004A6330
-// RECOVERY_LITERAL: v1 0x006872B8 0x006872CC $SG63550 0x004A6330
+// RECOVERY_LITERAL: v1 0x00687280 0x00687295 $SG63497 0x004A6330
+// RECOVERY_LITERAL: v1 0x00687298 0x006872B5 $SG63512 0x004A6330
+// RECOVERY_LITERAL: v1 0x006872B8 0x006872CC $SG63523 0x004A6330
 // symbol    ?on_iface_button_clicked@ReportIf@@UAEXH@Z
 void ReportIf::on_iface_button_clicked(int button) {
     int row;
@@ -6170,27 +6137,27 @@ void ReportIf::on_iface_group_clicked(int group, int, int item) {
 // TRIED: MISMATCH #0, sim ~0.58 (best of /O1 framed). Full structural transcription (all branches, both list modes, all 4 category bars). Approximated: the ListBox virtual-base (GraphicWin) adjustment at self+0xa384/+0x24/+0x28 uses the flattened `virtual_base_` member instead of the runtime vtable+8 lookup the original performs, so that handful of instructions differ in shape though not in intent.
 // The 21 one-character marker literals ("|", "[", "]", "+", ".", "%") are this function's own unpooled
 // copies in the pinned image, 0x6872CC..0x68731E in source order.
-// RECOVERY_LITERAL: v1 0x006872CC 0x006872CE $SG63665 0x004A7000
-// RECOVERY_LITERAL: v1 0x006872D0 0x006872D2 $SG63666 0x004A7000
-// RECOVERY_LITERAL: v1 0x006872D4 0x006872D6 $SG63667 0x004A7000
-// RECOVERY_LITERAL: v1 0x006872D8 0x006872DA $SG63676 0x004A7000
-// RECOVERY_LITERAL: v1 0x006872DC 0x006872DE $SG63677 0x004A7000
-// RECOVERY_LITERAL: v1 0x006872E0 0x006872E2 $SG63680 0x004A7000
-// RECOVERY_LITERAL: v1 0x006872E4 0x006872E6 $SG63689 0x004A7000
-// RECOVERY_LITERAL: v1 0x006872E8 0x006872EA $SG63690 0x004A7000
-// RECOVERY_LITERAL: v1 0x006872EC 0x006872EE $SG63693 0x004A7000
-// RECOVERY_LITERAL: v1 0x006872F0 0x006872F2 $SG63721 0x004A7000
-// RECOVERY_LITERAL: v1 0x006872F4 0x006872F6 $SG63722 0x004A7000
-// RECOVERY_LITERAL: v1 0x006872F8 0x006872FA $SG63723 0x004A7000
-// RECOVERY_LITERAL: v1 0x006872FC 0x006872FE $SG63726 0x004A7000
-// RECOVERY_LITERAL: v1 0x00687300 0x00687302 $SG63727 0x004A7000
-// RECOVERY_LITERAL: v1 0x00687304 0x00687306 $SG63728 0x004A7000
-// RECOVERY_LITERAL: v1 0x00687308 0x0068730A $SG63731 0x004A7000
-// RECOVERY_LITERAL: v1 0x0068730C 0x0068730E $SG63732 0x004A7000
-// RECOVERY_LITERAL: v1 0x00687310 0x00687312 $SG63733 0x004A7000
-// RECOVERY_LITERAL: v1 0x00687314 0x00687316 $SG63736 0x004A7000
-// RECOVERY_LITERAL: v1 0x00687318 0x0068731A $SG63737 0x004A7000
-// RECOVERY_LITERAL: v1 0x0068731C 0x0068731E $SG63738 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872CC 0x006872CE $SG63638 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872D0 0x006872D2 $SG63639 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872D4 0x006872D6 $SG63640 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872D8 0x006872DA $SG63649 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872DC 0x006872DE $SG63650 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872E0 0x006872E2 $SG63653 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872E4 0x006872E6 $SG63662 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872E8 0x006872EA $SG63663 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872EC 0x006872EE $SG63666 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872F0 0x006872F2 $SG63694 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872F4 0x006872F6 $SG63695 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872F8 0x006872FA $SG63696 0x004A7000
+// RECOVERY_LITERAL: v1 0x006872FC 0x006872FE $SG63699 0x004A7000
+// RECOVERY_LITERAL: v1 0x00687300 0x00687302 $SG63700 0x004A7000
+// RECOVERY_LITERAL: v1 0x00687304 0x00687306 $SG63701 0x004A7000
+// RECOVERY_LITERAL: v1 0x00687308 0x0068730A $SG63704 0x004A7000
+// RECOVERY_LITERAL: v1 0x0068730C 0x0068730E $SG63705 0x004A7000
+// RECOVERY_LITERAL: v1 0x00687310 0x00687312 $SG63706 0x004A7000
+// RECOVERY_LITERAL: v1 0x00687314 0x00687316 $SG63709 0x004A7000
+// RECOVERY_LITERAL: v1 0x00687318 0x0068731A $SG63710 0x004A7000
+// RECOVERY_LITERAL: v1 0x0068731C 0x0068731E $SG63711 0x004A7000
 void ReportIf::draw_labs() {
     char lab_text[80];   // [ebp-0xC8]
     char text[80];       // [ebp-0x78]
