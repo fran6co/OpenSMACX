@@ -6,6 +6,8 @@
 // (d64959c815) exact at 1-27 and 60-63 (territory 0x0055EB80 flips at 0), so
 // 12. The original header declaration
 // set is unknown; re-tune after header batches.
+// Re-tuned 2026-11-19 against the sprite.h/popup.h headers (whole-unit fe sweep of this block): wants_to_attack exact
+// at 22-53 (territory 0x0055EB80 flips at 20 only), so 37.
 // HEADER-PADS: function FactionTreatyHeaderPad
 void FactionTreatyHeaderPad0();
 void FactionTreatyHeaderPad1();
@@ -19,6 +21,31 @@ void FactionTreatyHeaderPad8();
 void FactionTreatyHeaderPad9();
 void FactionTreatyHeaderPad10();
 void FactionTreatyHeaderPad11();
+void FactionTreatyHeaderPad12();
+void FactionTreatyHeaderPad13();
+void FactionTreatyHeaderPad14();
+void FactionTreatyHeaderPad15();
+void FactionTreatyHeaderPad16();
+void FactionTreatyHeaderPad17();
+void FactionTreatyHeaderPad18();
+void FactionTreatyHeaderPad19();
+void FactionTreatyHeaderPad20();
+void FactionTreatyHeaderPad21();
+void FactionTreatyHeaderPad22();
+void FactionTreatyHeaderPad23();
+void FactionTreatyHeaderPad24();
+void FactionTreatyHeaderPad25();
+void FactionTreatyHeaderPad26();
+void FactionTreatyHeaderPad27();
+void FactionTreatyHeaderPad28();
+void FactionTreatyHeaderPad29();
+void FactionTreatyHeaderPad30();
+void FactionTreatyHeaderPad31();
+void FactionTreatyHeaderPad32();
+void FactionTreatyHeaderPad33();
+void FactionTreatyHeaderPad34();
+void FactionTreatyHeaderPad35();
+void FactionTreatyHeaderPad36();
 #include "faction.h"
 #include "map.h"
 #include "base.h"
