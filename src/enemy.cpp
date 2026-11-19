@@ -4767,9 +4767,10 @@ L_56cf7a:
                     return 1;
                 }
                 if (((has_fac(FAC_NETWORK_NODE, home_base, 0) && !(Bases[home_base].state & 0x400))
-                     || GameDataStateStorage.fields_.secret_project_.universal_translator() == home_base)
-                    && study_artifact(veh_id)) {
-                    return 1;
+                     || GameDataStateStorage.fields_.secret_project_.universal_translator() == home_base)) {
+                    if (study_artifact(veh_id)) {
+                        return 1;
+                    }
                 }
             }
             if (!((uint8_t)faction_bit & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)
