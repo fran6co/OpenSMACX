@@ -195,6 +195,8 @@ def main():
     ap.add_argument('--max-moves', type=int, default=12)
     ap.add_argument('--units', action='store_true', help='print every image unit')
     ap.add_argument('--raw-webs', action='store_true', help='plain def-use webs (no split at label changes)')
+    ap.add_argument('--tie', default='last', choices=['last', 'slot'],
+                    help='order among equal counts: earlier last access first (probe g14) or the image slot (oracle)')
     ap.add_argument('--slots', default='', help='print the web timeline of these image slots')
     a = ap.parse_args()
     unit = a.unit if a.unit.startswith('src/') else 'src/' + a.unit
@@ -202,6 +204,8 @@ def main():
     addr = int(a.addr, 16)
     r, I, lab, our_slots, our_cnt, oline = build(unit, src, addr, a.pfx)
     A = [i['a'] for i in I.ins]
+    global TIE
+    TIE = a.tie
     aggregate = {n for n, s in our_slots.items() if len(s) > 1 and not TEMP.match(n)}
     slots = sorted({s for i in I.ins for s in i['rd'] | i['wr'] if isinstance(s, int) and s < 0}, reverse=True)
     fixed = set()
@@ -317,7 +321,11 @@ def main():
 
     def run(groups):
         U = units_of(groups)
-        order = sorted(U, key=lambda u: (-u['n'], -u['slot']))
+        # equal counts: the unit whose last access comes first is created first (probe g14); TIE=slot uses the image slot
+        if TIE == 'slot':
+            order = sorted(U, key=lambda u: (-u['n'], -u['slot']))
+        else:
+            order = sorted(U, key=lambda u: (-u['n'], max(A[x] for i in u['webs'] for x in webs[i]['idx'])))
         G = []
         where = {}
         for u in order:

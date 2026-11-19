@@ -14,5 +14,6 @@ named symbols (named-access counts) and `~N` anonymous accesses (`-N+[ebp]`: opt
 | g11 | (pressure attempt; inconclusive) | |
 | g12 | are two loops' temporaries one unit when they share a counter | no: one unit per web |
 | g13 | is a maybe-uninitialised home live where none of its stores reaches | no: live AND defined; exclusive-arm variables share a slot |
+| g14 | which of two equal-count units is created first | the one whose last reference comes first (not declaration, scope, address-taking or first use) |
 
 Run: `FE_PFX_BASE=N uv run python g3.py [FUNC]` (FUNC prints its listing).

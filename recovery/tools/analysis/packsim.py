@@ -39,6 +39,8 @@ ap.add_argument('--fit', default='last', choices=['last', 'first', 'smallest'], 
 ap.add_argument('--pfx', default=os.environ.get('FE_PFX_BASE', '29'))
 ap.add_argument('--defined', action='store_true', help='interference on live AND defined (a home is live only where one of '
                 'its own stores reaches), not plain flow liveness')
+ap.add_argument('--tie', default='last', choices=['last', 'first', 'actual'],
+                help='order among equal counts: earlier LAST reference first (probe g14, default), or the actual slot (oracle)')
 a = ap.parse_args()
 addr = int(a.addr, 16)
 src = os.path.abspath(a.src) if a.src else R + '/' + a.unit
@@ -143,7 +145,12 @@ def interferes(x, y):
 
 actual = {sym: sym_slot[sym].most_common(1)[0][0] for sym in sym_ins}
 count = {sym: len(sym_ins[sym]) for sym in sym_ins}
-order = sorted(sym_ins, key=lambda x: (-count[x], actual[x] if actual[x] < 0 else -9999))
+if a.tie == 'last':  # probe g14: of two equal counts, the one whose last reference comes first is created first
+    order = sorted(sym_ins, key=lambda x: (-count[x], max(addr_of[n] for n in sym_ins[x])))
+elif a.tie == 'first':  # control: earlier first reference first
+    order = sorted(sym_ins, key=lambda x: (-count[x], min(addr_of[n] for n in sym_ins[x])))
+else:
+    order = sorted(sym_ins, key=lambda x: (-count[x], actual[x] if actual[x] < 0 else -9999))
 # model run
 groups = []  # list of [members]
 model = {}

@@ -5457,6 +5457,21 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
     the certain findings; the search moves are screens (alignment labels are
     noisy on big functions, and ties between equal counts are not modelled).
     esp-frame functions (most of jackal/caviar) have no ebp slots to read.
+  - **Equal counts: the unit whose LAST reference comes first is created
+    first** (par-2 2026-11-19, probe `tempslot/g14`). X and Y with equal
+    counts overlap, a light Z joins the later-created one: declaration order,
+    nesting (outer/inner scope), the order of `take(&X)`/`take(&Y)` and the
+    first use do not decide; a sandwich `use(X); Y x5; X x4` creates Y
+    first. packsim.py/packrev.py now break ties this way (`--tie last`,
+    default; `--tie actual`/`slot` is the old oracle): packsim agreement on
+    our own compiles enemy_move 102 -> 117 of 125 units (2071 of 2097
+    accesses), ReportIf::draw_ops 13 -> 18 of 18, setup_text 24 -> 30 of 34,
+    base_ecology 21 -> 23, process_message 12 -> 13; first-reference order
+    is worse on all of them. Reading the image: two block-locals of one name
+    in one image slot are usually ONE function-scope variable whose summed
+    count packs it before the loop temporaries (ReportIf::draw_ops: the
+    vehicle and facility `count`s, 2 + 4 references, slot-map difference
+    8 -> 0).
 
 - **A loop counter the image keeps in memory while a callee-saved register
   holds a per-iteration conversion** (par-2 2026-11-19, ReportWin::draw_ops
