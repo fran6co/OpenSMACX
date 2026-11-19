@@ -121,8 +121,6 @@ void StringList::sort(int) {
         stringlist_sort_budget_probe(0);
         stringlist_sort_budget_probe(0);
         stringlist_sort_budget_probe(0);
-        stringlist_sort_budget_probe(0);
-        stringlist_sort_budget_probe(0);
         // The guarded current_entry() chase (StringList::current_text's
         // body): its repeated head test keeps every link in eax.
         char *smallest_text = head_ ? current_entry()->text : 0;
