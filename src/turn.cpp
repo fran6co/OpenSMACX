@@ -130,6 +130,7 @@ void TurnDeclFnPad18();
 void TurnDeclFnPad19();
 void TurnDeclFnPad20();
 void TurnDeclFnPad21();
+void TurnDeclFnPad22();
 
 extern int BaseAtDebugPopupFlag;  // base.cpp, original93A94C
 extern char *InterludeTextFile;  // interlude.cpp

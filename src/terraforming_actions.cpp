@@ -75,20 +75,6 @@
 // CANARY: 0x004CEDE0 ?action_give@@YAXHH@Z residues 17-20,25-27
 // CANARY-PADS: extern TerraformingActionsExternPad
 extern int TerraformingActionsExternPad0;
-extern int TerraformingActionsExternPad1;
-extern int TerraformingActionsExternPad2;
-extern int TerraformingActionsExternPad3;
-extern int TerraformingActionsExternPad4;
-extern int TerraformingActionsExternPad5;
-extern int TerraformingActionsExternPad6;
-extern int TerraformingActionsExternPad7;
-extern int TerraformingActionsExternPad8;
-extern int TerraformingActionsExternPad9;
-extern int TerraformingActionsExternPad10;
-extern int TerraformingActionsExternPad11;
-extern int TerraformingActionsExternPad12;
-extern int TerraformingActionsExternPad13;
-extern int TerraformingActionsExternPad14;
 #include "vector.h"  // vector_add operates on actual three-float arrays.
 
 extern void __cdecl unspot_stack(int veh_id);
