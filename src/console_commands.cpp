@@ -2201,13 +2201,14 @@ void __cdecl Console::goto_routine(int base_id) {
 // ORIGINAL: 0x004D61A0 ?go_to@Console@@QAEXHHH@Z 0x004D61A0-0x004D7B3C;0x0065AD6A-0x0065AFD2
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004d61a0.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
 // TRIED: full-function transcription (~95% of the call sequence by count) of a genuine multi-branch dispatcher: the a2==-1 multi-option popup, a2==-2 "next unit", a1<0/a2==-3 fake-veh "go home", the real-vehicle lock/cargo-check/base-at/action_home paths, the shared cursor-position tail, the 8-case jump-table message builder, the base-candidate eligibility+sort loop (fixed 512-entry stack arrays inferred from the frame span, not confirmed against a named constant), and the post-exec() a2 in {-2,-1,-3,default} redispatch. Confirmed via the exception funclet table (0x0065AD6A-0x0065AFD2) that every "standalone-looking" teardown local (2 FlatButton, Sprite, Heap, Spot, Dialogs, RadioButton/ListBox/EditGroup/SpriteBox/ CheckBox/Dialog/GraphicWin sub-objects, 2 StringStruct-shaped fields) is actually embedded inside Popup/BasePop/Scroll/ Dialogs at a fixed offset - so the whole function needs only one real local (`Popup popup;`) and the RAII lever applies to it alone. Approximated rather than exact: the per-pair diplomacy bit-matrix index feeding the eligibility test (0x004D7179-0x004D718B / 0x004D720B-0x004D721D), the speed-based "half speed" gate deep in that same loop (0x004D7382 area), and the name/distance tie-break in the candidate sort (0x004D706E-0x004D7124) - all replaced with a same-faction/plain-distance stand-in that keeps the same call shape. MISMATCH at instruction #12 (xor vs push), which is register/stack-slot allocation this early, not a logic fork.
-// WORKAROUND(decl): go_to's psi-gate refusals and its two move-order waypoint
-// stores as inline helpers (no out-of-line copies in the image; names and
-// homes unknown). Together they spend the /Ob2 room a dead 20-if
-// go_to_budget_probe stood in for (runscan --try: same fe rows; either alone,
-// or neither, expands StringStruct::remove_all at the closing teardown where
-// the image calls it). The first three return teardowns call ~Scroll as the
-// image does since the late free helpers (MATCHING_GUIDE 2.8).
+// WORKAROUND(decl): go_to's three psi-gate refusals and its two move-order
+// waypoint stores as inline helpers (no out-of-line copies in the image; names
+// and homes unknown). With veh_moves(subject) in the air-range test and the
+// "no destination" refusal written out (sdeck: EH and call multiset equal to
+// the image's, 266 -> 125 rows; veh_moves alone moves remove_all, all four
+// refusals as helpers or any second raw one moves ~FlatButton/~GraphicWin)
+// they spend the /Ob2 room the image's closing teardown shows
+// (MATCHING_GUIDE 2.8).
 static inline void go_to_refuse(const char *message) {
     NetMsgPrimary.pop(message, 5000, 0, 0);
 }
@@ -2479,7 +2480,7 @@ void Console::go_to(int subject, int order, int grouped) {
                                 > (speed(subject, 0)
                                        * (Chassis[VehPrototypes[Vehs[subject].proto_id].chassis_id].range
                                           - Vehs[subject].terraforming_turns - 1)
-                                   + range(speed(subject, 0) - Vehs[subject].moves_expended, 0, 999))
+                                   + veh_moves(subject))
                                       / static_cast<int>(Rules.move_rate_roads)) {
                                 continue;
                             }
@@ -2549,7 +2550,7 @@ void Console::go_to(int subject, int order, int grouped) {
         }
         if (!count) {
             if (order == -3) {
-                go_to_refuse("GATENODEST");
+                NetMsgPrimary.pop("GATENODEST", 5000, 0, 0);
             }
             PlanWindow.close();
             break;
