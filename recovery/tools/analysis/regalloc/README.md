@@ -34,5 +34,7 @@ two definitions: a threshold that moves by one between them is an exact tie.
 | ties.spec (ties.py) | tie-breaking: live-through penalty (4b), exact-tie order (4c), symbol counter (4d); one function per TU |
 | tiegen.py, tiemodel.py | random exact-tie probes and the scoring model they validate (`tiegen.py --count 300 --seed 7 [--others 2] [--loops]`) |
 | cand.py, c_*.spec | candidate-set probes: which temporaries VC6 forms and how they rank (`python3 cand.py c_cse.spec`; `--asm NAME`, `--grep RE`) |
+| c_sr.spec | strength reduction of a large-stride table index: blocked by an index read in an inner loop; a pointer stepped beside the index (setup_game) |
+| c_looppiece.spec | a memory-homed parameter read once per iteration of two loops: scratch read against per-iteration callee-saved load |
 | duel.py, m_*.spec | which removed references count: CSE, copy, dead code (no) against tail-merged copies (yes) (`python3 duel.py m_tail.spec`) |
 | tiescan.py | non-exact functions whose diff is a pure permutation of callee-saved registers (`uv run python tiescan.py feall.json`) |

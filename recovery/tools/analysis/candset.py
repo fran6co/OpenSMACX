@@ -628,6 +628,24 @@ def report(r, text, items, addr, quiet=False, minrefs=2, scratch=False, sections
                         seen.add(kk)
                         print('  image %s (%s %.1f) above %s (%s %.1f); ours %s (%s %.1f) above (%s %.1f)' % (
                             key(x), x['reg'], x['score'], key(y), y['reg'], y['score'], key(y), q['reg'], q['score'], p['reg'], p['score']))
+    # pointer induction (MATCHING_GUIDE 2.7 "Strength reduction is a candidate-set question"): a callee-saved
+    # register stepped by a large stride is a strength-reduced table pointer; VC6 does not form one when the index
+    # is also read inside an inner loop, and recomputes the scaled index per iteration (an ours-only lea:idx web).
+    def steps(code):
+        out = collections.Counter()
+        for off, t, *_ in code.ins:
+            m = re.match(r'add (esi|edi|ebx|ebp), (0x[0-9a-f]+|\d+)$', t)
+            if m and int(m.group(2), 0) >= 0x10:
+                out[int(m.group(2), 0)] += 1
+        return out
+    si, so = steps(icode), steps(ocode)
+    extra = {k: v - so.get(k, 0) for k, v in si.items() if v > so.get(k, 0)}
+    if extra:
+        print('--- pointer induction in the image only (stride: count): %s' % ', '.join(
+            '0x%x: %d' % kv for kv in sorted(extra.items())))
+        print('    ours lea:idx webs: %s' % (', '.join(sorted({key(w) for w in ow if w['kind'] == 'lea:idx'})) or 'none')
+              + '  -> an index read inside an inner loop blocks strength reduction; step a pointer beside the index '
+                'in the for-increment (setup_game 0x005B3920)')
     for tag, bad in (('image', ic[2]), ('ours', oc[2])):
         if bad and 'unexplained' in sections:
             print('--- %s webs its own instruction-level scores do not explain' % tag)

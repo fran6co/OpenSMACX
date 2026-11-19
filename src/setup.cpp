@@ -1763,8 +1763,12 @@ extern int TutorialFlags2;
 // Rewritten from the image (2026-11-08, 0.76 -> 0.98): the beginner-prefs bit
 // lives in AlphaIniPrefs.preferences, agenda_on takes (outer, inner), each
 // faction's ideology is reset to -1/0/-1 before the draw, and the effect scan
-// indexes values_ directly. Left: the social loop's i/rejected register choice
-// and the image's separate (unpooled) "BELIEVE"/"DRONE"/"HIVE" literals.
+// indexes values_ directly. The social loop walks a Player pointer beside
+// the faction index (0x005B3B30 `mov edi,&Players[1].soc_ideology_model`,
+// `add edi,0x59c` at the bottom); the index form costs an 11-reference
+// address CSE that pulls `reload` into one cached piece across both
+// setup_player loops. The two "formal"/"noun" label reads are written out
+// (argument before `this`, as 0x005B3C71).
 // The image passes zero-filled 0x945E78/0x945E7C cells, not literals, as
 // the cleared "Latest Save"/"Latest Scenario" values; nothing else
 // references either cell. Names are descriptive.
@@ -1853,24 +1857,25 @@ void __cdecl setup_game(int reload) {
         for (clear = 0; clear < 12; clear++) {
             seen_social_models[clear] = 0;
         }
-        for (int social_faction = 1; social_faction < MaxPlayerNum; social_faction++) {
+        Player *player = &Players[1];
+        for (int social_faction = 1; social_faction < MaxPlayerNum; social_faction++, player++) {
             rejected = 0;
             int category;
             int model;
-            Players[social_faction].soc_ideology_category[0] = -1;
-            Players[social_faction].soc_ideology_model[0] = 0;
-            Players[social_faction].soc_ideology_effect[0] = -1;
+            player->soc_ideology_category[0] = -1;
+            player->soc_ideology_model[0] = 0;
+            player->soc_ideology_effect[0] = -1;
             do {
                 category = rand() % 3;
                 model = rand() % 3 + 1;
             } while (seen_social_models[category * 3 + model] && ++rejected < social_faction + 1);
             if (rejected <= social_faction + 1) {
-                Players[social_faction].soc_ideology_category[0] = category;
-                Players[social_faction].soc_ideology_model[0] = model;
+                player->soc_ideology_category[0] = category;
+                player->soc_ideology_model[0] = model;
                 seen_social_models[category * 3 + model] = 1;
                 for (int effect = 0; effect < 11; effect++) {
                     if (SocialCategories[category].model_effect[model].values_[effect] > 0) {
-                        Players[social_faction].soc_ideology_effect[0] = effect;
+                        player->soc_ideology_effect[0] = effect;
                         break;
                     }
                 }
@@ -1905,8 +1910,8 @@ void __cdecl setup_game(int reload) {
 
     // The original publishes the default human's labels before the optional
     // new-game diplomacy/time-warp branch, whose callbacks observe them.
-    strcpy(Players[0].formal_name_faction, label_get(245));
-    strcpy(Players[0].noun_faction, label_get(245));
+    strcpy(Players[0].formal_name_faction, StringTable.get(Labels.strings_ptr[245]));
+    strcpy(Players[0].noun_faction, StringTable.get(Labels.strings_ptr[245]));
     strcpy(Players[0].adj_name_faction, StringTable.get(Labels.strings_ptr[244]));
 
     if (reload == 0) {

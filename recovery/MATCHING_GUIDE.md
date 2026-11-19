@@ -1987,6 +1987,45 @@ Member-address temporaries that live across calls (2026-11-19 par-6, round 11)
   are declared for every includer, as an original header would; the
   counter-sensitive functions that move with them are re-tuned in the pad
   pass, not protected by a per-unit guard.
+- **A parameter cached across a loop in ours but read from memory inside it
+  in the image is usually a candidate-set error elsewhere, not a piece rule**
+  (high, setup_game 0x005B3920, 132 -> 0 rows, `regalloc/c_sr.spec`,
+  `regalloc/c_looppiece.spec`, 2026-11-19 par-6). Ours kept `reload` in esi
+  from before the first setup_player loop to the `reload == 0` test (candset
+  16 refs, 56.5, above the zero constant); the image reads `[ebp+8]` into eax
+  inside the first loop and caches it in ebx only after it. No spelling of
+  the loops, the call argument (`~r`, `-(r + 1)`, a named temporary, an inline
+  helper taking `r`), the loop test (`is_human`, the raw mask, `continue`,
+  `while`) or the counter moved the piece. The cause was the social loop
+  earlier in the function: the image steps a pointer to `Players[1]` (`mov
+  edi,&Players[1].soc_ideology_model; ... add edi,0x59c`), ours recomputed
+  `social_faction * 0x59c` per iteration (`lea edi,[ebx+ebx*4]` ..., an
+  11-reference address CSE). With the pointer, `reload` falls into the
+  image's pieces (entry piece in edi, none in loop 1, ebx after it) with no
+  change to the loops themselves.
+  - **Strength reduction is a candidate-set question** (high, c_sr.spec).
+    VC6 replaces `T[i].f` by a pointer stepped by the stride only when `i`
+    is not read inside an inner loop of the body: `++rejected < i + 1` in a
+    do-while blocks it (base), and dropping that read (nouse_sf) or the
+    inner loop (nodo) restores it (and then deletes `i` if nothing else reads
+    it). The image keeping both `i` (ebx) and the stepped pointer means a
+    source pointer stepped beside the index: `T *p = &T[1]; for (i = 1; ...;
+    i++, p++)` (ptrinc). The pointer's base is the middle field the body
+    touches (`[edi-8]`, `[edi]`, `[edi+8]`), in source and SR alike.
+    `candset.py` prints "pointer induction in the image only" with the
+    stride when the image steps a callee-saved register by a stride ours
+    lacks, beside our `lea:idx` webs.
+  - A loser's single reference per loop iteration (low, c_looppiece.spec):
+    with no call between two such loops, each read is a scratch load
+    (`mov eax,[r]` right before its use, and the loop test loads the mask
+    into a scratch register: `mov cl,[mask]; test al,cl`); one call between
+    the loops turns both into a per-iteration callee-saved load (`mov
+    ebx,[r]`, and the test reads memory: `test byte ptr [mask],al`). The
+    test's form tells which of the two the image has.
+  - Same function: two `strcpy(x, label_get(245))` reads are written out as
+    `StringTable.get(Labels.strings_ptr[245])` (the image loads the label
+    pointer into a fresh register and pushes it before loading `this`; the
+    inline's named local loads `this` between).
 
 ### 2.8 /Ob2 inlining model
 
