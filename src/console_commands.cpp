@@ -2577,10 +2577,12 @@ void Console::go_to(int subject, int order, int grouped) {
     }
     }
 finish:
-    if (order == -1) {
-        NetDaemonNet.unlock_base(BaseIDCurrentSelected);
-    } else if (order != -2) {
-        NetDaemonNet.unlock_veh();
+    if (order != -2) {
+        if (order == -1) {
+            NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+        } else {
+            NetDaemonNet.unlock_veh();
+        }
     }
     if (MapWinTable[0]->field_1DD70_ != saved_flags) {
         MapWinTable[0]->field_1DD70_ = saved_flags;

@@ -269,10 +269,11 @@ def joins(I):
     return res
 
 
-def tail_key(I, k):
-    """the pred's last instruction, masked (relocated operands as <r>) so both sides compare"""
-    t = I[k][4]
-    return None if is_cf(t) else t
+def tail_key(I, k, masked=False):
+    """the pred's last instruction: named (calls and globals by symbol / address) for partnership within
+    a side, masked (relocated operands as <r>) to compare the two sides"""
+    t = I[k][4 if masked else 1]
+    return None if is_cf(I[k][4]) else t
 
 
 def lnum(s):
@@ -367,6 +368,7 @@ def host_report(C, O, lo, src, i2o, o2i, iline, srclines):
             if lnum(ln.lstrip('~')) is None and j is not None:
                 ln = oline(j) if ours else mapped_line(j)
             ps.append(dict(kind=kind, line=ln, n=lnum(ln.lstrip('~')), key=tail_key(I, last),
+                           mkey=tail_key(I, last, True),
                            at=(I[pos][0] if ours else lo + I[pos][0])))
         ps.sort(key=lambda p: (p['n'] is None, p['n'] or 0))
         return ps
@@ -380,7 +382,7 @@ def host_report(C, O, lo, src, i2o, o2i, iline, srclines):
         hc = next(p for p in pc if p['kind'] == 'host')
         hi_ = next(p for p in pi if p['kind'] == 'host')
         if hc['n'] == hi_['n'] or (hi_['line'].startswith('~') and hc['n'] is not None and hi_['n'] is not None
-                                   and abs(hc['n'] - hi_['n']) <= 2 and hc['key'] == hi_['key']):
+                                   and abs(hc['n'] - hi_['n']) <= 2 and hc['mkey'] == hi_['mkey']):
             continue
         ind = [indent(srclines, p['n']) for p in pc if p['n'] is not None]
         ind = [x for x in ind if x is not None]
@@ -409,7 +411,7 @@ def host_report(C, O, lo, src, i2o, o2i, iline, srclines):
         diffk = []
         for p in pi:
             q = bym.get(p['n'])
-            if q and p['kind'] != 'xjmp' and p['key'] != q['key']:
+            if q and p['kind'] != 'xjmp' and p['mkey'] != q['mkey']:
                 diffk.append((p, q))
         for p, q in diffk:
             m1 = re.match(r'add esp, (\w+)', p['key'] or '')
@@ -422,7 +424,7 @@ def host_report(C, O, lo, src, i2o, o2i, iline, srclines):
                     'pop at a branch: an inner if/else between the earlier call and the tail'))
             else:
                 adv.append('%s tail [%s] in the image, [%s] in ours: partnership differs' % (
-                    p['line'], p['key'], q['key']))
+                    p['line'], p['mkey'], q['mkey']))
         if pr_i1 is not None and pr_i1['n'] != hi_['n']:
             adv.append('image host %s is not the first partnered arm (%s): rule-2 priority, the original ended %s '
                        'in the then-arm of an inner if/else whose else does not end in it' % (
