@@ -1425,77 +1425,36 @@ int __cdecl game_data(FILE *file, int write_mode) {
     }
     if (game_io(&WorldClimateWorldWin.mapWin_, file) != 0) return 1;
 
-    if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x20u) != 0
-        && game_data_candidate_transfer(file, OfferResetCells, 0x2400) == 0)
-        return 1;
-    if (game_data_candidate_transfer(file, PendingDiplomacyFlags, 0x100) == 0)
-        return 1;
-    if (game_data_candidate_transfer(file, FactionTurnCombatWins, 0x20) == 0)
-        return 1;
-    if (game_data_candidate_transfer(file, FactionTurnCombatLosses, 0x20) == 0)
-        return 1;
-    // The native StringList records use raw fread/fwrite, unlike the
-    // surrounding encrypted-aware blocks; both walks share these slots.
     int string_count;
     int string_id;
     int string_length;
-    for (int faction = 1; faction < 8; ++faction) {
-        if (write_mode != 0) {
-            string_count = MessageWinDeferredBaseMessages[faction].entry_count_;
-            if (fwrite(&string_count, 4, 1, file) == 0)
-                return 1;
-            for (index = 0; index < string_count; ++index) {
-                MessageWinDeferredBaseMessages[faction].seek_pos(index);
-                string_id = MessageWinDeferredBaseMessages[faction].current_id();
-                if (fwrite(&string_id, 4, 1, file) == 0)
-                    return 1;
-                strcpy(StringTemp, MessageWinDeferredBaseMessages[faction].head_
-                    ? MessageWinDeferredBaseMessages[faction].current_->string_payload()->text : 0);
-                string_length = static_cast<int>(strlen(StringTemp));
-                if (fwrite(&string_length, 4, 1, file) == 0)
-                    return 1;
-                if (string_length != 0
-                    && fwrite(StringTemp, string_length, 1, file) == 0)
-                    return 1;
-            }
-        } else {
-            MessageWinDeferredBaseMessages[faction].remove_all();
-            StringList *list = &MessageWinDeferredBaseMessages[faction];
-            list->current_position_ = 0;
-            list->allocator_ = 0;
-            if (fread(&string_count, 4, 1, file) == 0)
-                return 1;
-            for (index = 0; index < string_count; ++index) {
-                if (fread(&string_id, 4, 1, file) == 0)
-                    return 1;
-                if (fread(&string_length, 4, 1, file) == 0)
-                    return 1;
-                if (fread(StringTemp, string_length, 1, file) == 0)
-                    return 1;
-                StringTemp[string_length] = '\0';
-                list->field_20_ = 0;
-                list->field_24_ = 0;
-                list->pending_text_ = StringTemp;
-                list->add(string_id);
-            }
-        }
-    }
-
-    // 5A8A39 starts the column walk at [1][1]; each column visits rows 1
-    // through column-1, the 21 off-diagonal lists in columns 2 through 7.
-    for (int column = 1; column < 8; ++column) {
-        for (int row = 1; row < column; ++row) {
+    // 0x005A8651 tests net_turn_flags_ bit 0x20 once and jumps to the screen
+    // size block at 0x005A91B2: every transfer from OfferResetCells through
+    // TamperDialogValue depends on it, not the first one alone.
+    if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x20u) != 0) {
+        if (game_data_candidate_transfer(file, OfferResetCells, 0x2400) == 0)
+            return 1;
+        if (game_data_candidate_transfer(file, PendingDiplomacyFlags, 0x100) == 0)
+            return 1;
+        if (game_data_candidate_transfer(file, FactionTurnCombatWins, 0x20) == 0)
+            return 1;
+        if (game_data_candidate_transfer(file, FactionTurnCombatLosses, 0x20) == 0)
+            return 1;
+        // The native StringList records use raw fread/fwrite, unlike the
+        // surrounding encrypted-aware blocks; both walks share the slots
+        // declared above the flag test.
+        for (int faction = 1; faction < 8; ++faction) {
             if (write_mode != 0) {
-                string_count = DiplomacyTranscriptLists[row][column].entry_count_;
+                string_count = MessageWinDeferredBaseMessages[faction].entry_count_;
                 if (fwrite(&string_count, 4, 1, file) == 0)
                     return 1;
                 for (index = 0; index < string_count; ++index) {
-                    DiplomacyTranscriptLists[row][column].seek_pos(index);
-                    string_id = DiplomacyTranscriptLists[row][column].current_id();
+                    MessageWinDeferredBaseMessages[faction].seek_pos(index);
+                    string_id = MessageWinDeferredBaseMessages[faction].current_id();
                     if (fwrite(&string_id, 4, 1, file) == 0)
                         return 1;
-                    strcpy(StringTemp, DiplomacyTranscriptLists[row][column].head_
-                        ? DiplomacyTranscriptLists[row][column].current_->string_payload()->text : 0);
+                    strcpy(StringTemp, MessageWinDeferredBaseMessages[faction].head_
+                        ? MessageWinDeferredBaseMessages[faction].current_->string_payload()->text : 0);
                     string_length = static_cast<int>(strlen(StringTemp));
                     if (fwrite(&string_length, 4, 1, file) == 0)
                         return 1;
@@ -1504,8 +1463,8 @@ int __cdecl game_data(FILE *file, int write_mode) {
                         return 1;
                 }
             } else {
-                StringList *list = &DiplomacyTranscriptLists[row][column];
-                DiplomacyTranscriptLists[row][column].remove_all();
+                MessageWinDeferredBaseMessages[faction].remove_all();
+                StringList *list = &MessageWinDeferredBaseMessages[faction];
                 list->current_position_ = 0;
                 list->allocator_ = 0;
                 if (fread(&string_count, 4, 1, file) == 0)
@@ -1518,49 +1477,95 @@ int __cdecl game_data(FILE *file, int write_mode) {
                     if (fread(StringTemp, string_length, 1, file) == 0)
                         return 1;
                     StringTemp[string_length] = '\0';
-                    DiplomacyTranscriptLists[row][column].field_20_ = 0;
-                    DiplomacyTranscriptLists[row][column].field_24_ = 0;
-                    DiplomacyTranscriptLists[row][column].pending_text_ = StringTemp;
+                    list->field_20_ = 0;
+                    list->field_24_ = 0;
+                    list->pending_text_ = StringTemp;
                     list->add(string_id);
                 }
             }
         }
-    }
 
-    if (game_data_candidate_transfer(
-            file, &CouncilWindow.field_A1C_, 4) == 0)
-        return 1;
-    if (game_data_candidate_transfer(
-            file, &CouncilWindow.field_A20_, 4) == 0)
-        return 1;
-    if (game_data_candidate_transfer(
-            file, &CouncilWindow.field_A24_, 4) == 0)
-        return 1;
-    if (game_data_candidate_transfer(
-            file, &CouncilWindow.field_A28_, 4) == 0)
-        return 1;
-    if (game_data_candidate_transfer(
-            file, CouncilWindow.leader_label_kind_, 0x20) == 0)
-        return 1;
-    if (game_data_candidate_transfer(
-            file, CouncilWindow.leader_tech_, 0x20) == 0)
-        return 1;
-    if (game_data_candidate_transfer(file, &CouncilPbemGate, 4) == 0)
-        return 1;
-    if (game_data_candidate_transfer(file, CouncilNotifyFormSlots, 0x20) == 0)
-        return 1;
-    if (game_data_candidate_transfer(file, CouncilNotifyPluralSlots, 0x20) == 0)
-        return 1;
-    if (game_data_candidate_transfer(file, &TamperState93A9AC, 4) == 0)
-        return 1;
-    if (game_data_candidate_transfer(file, &TamperState93A9B0, 4) == 0)
-        return 1;
-    if (game_data_candidate_transfer(file, &TamperState93A9B4, 4) == 0)
-        return 1;
-    if (game_data_candidate_transfer(file, TamperDialogFaction, 0x20) == 0)
-        return 1;
-    if (game_data_candidate_transfer(file, TamperDialogValue, 0x20) == 0)
-        return 1;
+        // 5A8A39 starts the column walk at [1][1]; each column visits rows 1
+        // through column-1, the 21 off-diagonal lists in columns 2 through 7.
+        for (int column = 1; column < 8; ++column) {
+            for (int row = 1; row < column; ++row) {
+                if (write_mode != 0) {
+                    string_count = DiplomacyTranscriptLists[row][column].entry_count_;
+                    if (fwrite(&string_count, 4, 1, file) == 0)
+                        return 1;
+                    for (index = 0; index < string_count; ++index) {
+                        DiplomacyTranscriptLists[row][column].seek_pos(index);
+                        string_id = DiplomacyTranscriptLists[row][column].current_id();
+                        if (fwrite(&string_id, 4, 1, file) == 0)
+                            return 1;
+                        strcpy(StringTemp, DiplomacyTranscriptLists[row][column].head_
+                            ? DiplomacyTranscriptLists[row][column].current_->string_payload()->text : 0);
+                        string_length = static_cast<int>(strlen(StringTemp));
+                        if (fwrite(&string_length, 4, 1, file) == 0)
+                            return 1;
+                        if (string_length != 0
+                            && fwrite(StringTemp, string_length, 1, file) == 0)
+                            return 1;
+                    }
+                } else {
+                    StringList *list = &DiplomacyTranscriptLists[row][column];
+                    DiplomacyTranscriptLists[row][column].remove_all();
+                    list->current_position_ = 0;
+                    list->allocator_ = 0;
+                    if (fread(&string_count, 4, 1, file) == 0)
+                        return 1;
+                    for (index = 0; index < string_count; ++index) {
+                        if (fread(&string_id, 4, 1, file) == 0)
+                            return 1;
+                        if (fread(&string_length, 4, 1, file) == 0)
+                            return 1;
+                        if (fread(StringTemp, string_length, 1, file) == 0)
+                            return 1;
+                        StringTemp[string_length] = '\0';
+                        DiplomacyTranscriptLists[row][column].field_20_ = 0;
+                        DiplomacyTranscriptLists[row][column].field_24_ = 0;
+                        DiplomacyTranscriptLists[row][column].pending_text_ = StringTemp;
+                        list->add(string_id);
+                    }
+                }
+            }
+        }
+
+        if (game_data_candidate_transfer(
+                file, &CouncilWindow.field_A1C_, 4) == 0)
+            return 1;
+        if (game_data_candidate_transfer(
+                file, &CouncilWindow.field_A20_, 4) == 0)
+            return 1;
+        if (game_data_candidate_transfer(
+                file, &CouncilWindow.field_A24_, 4) == 0)
+            return 1;
+        if (game_data_candidate_transfer(
+                file, &CouncilWindow.field_A28_, 4) == 0)
+            return 1;
+        if (game_data_candidate_transfer(
+                file, CouncilWindow.leader_label_kind_, 0x20) == 0)
+            return 1;
+        if (game_data_candidate_transfer(
+                file, CouncilWindow.leader_tech_, 0x20) == 0)
+            return 1;
+        if (game_data_candidate_transfer(file, &CouncilPbemGate, 4) == 0)
+            return 1;
+        if (game_data_candidate_transfer(file, CouncilNotifyFormSlots, 0x20) == 0)
+            return 1;
+        if (game_data_candidate_transfer(file, CouncilNotifyPluralSlots, 0x20) == 0)
+            return 1;
+        if (game_data_candidate_transfer(file, &TamperState93A9AC, 4) == 0)
+            return 1;
+        if (game_data_candidate_transfer(file, &TamperState93A9B0, 4) == 0)
+            return 1;
+        if (game_data_candidate_transfer(file, &TamperState93A9B4, 4) == 0)
+            return 1;
+        if (game_data_candidate_transfer(file, TamperDialogFaction, 0x20) == 0)
+            return 1;
+        if (game_data_candidate_transfer(file, TamperDialogValue, 0x20) == 0)
+            return 1;
+    }
 
     // The trailing screen size is a raw transfer, unlike the blocks above.
     int saved_width;
