@@ -3378,7 +3378,10 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
         int project_id = packet->payload_10_;
         int related_id = packet->payload_18_;
         int project_faction = packet->faction_;
-        RulesFacility *project = &Facility[FacilitySPStart + project_id];
+        // Named facility ids keep the +70 in the scaled index (0x00537781,
+        // 0x0053780E lea r,[r+r*2+0xD2]; MATCHING_GUIDE 3.4).
+        const int project_facility = FacilitySPStart + project_id;
+        RulesFacility *project = &Facility[project_facility];
         log_say("Received PROJECT", StringTable.get(project->name),
                 project_faction, packet->payload_14_, related_id);
         if (project_faction == ConsoleGlobal.faction_id_) {
@@ -3388,7 +3391,8 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
             if (packet->payload_14_ > 1) {
                 if (packet->payload_14_ == 2) {
                     parse_says(0, Players[project_faction].adj_name_faction, -1, -1);
-                    parse_say(1, Facility[FacilitySPStart + related_id].name, -1, -1);
+                    const int related_facility = FacilitySPStart + related_id;
+                    parse_say(1, Facility[related_facility].name, -1, -1);
                     parse_says(2, get_noun(project_faction), -1, -1);
                     parse_say(3, project->name, -1, -1);
                     NetMsgPrimary.pop("CHANGEPROJECT", 5000, 2, 0);
