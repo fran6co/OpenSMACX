@@ -113,8 +113,14 @@ int __cdecl base_claimed(int x, int y, int site1_free, int site2_free,
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004f81a0.cpp", "source:src/base.cpp:base_reset", "source:src/unrecovered/004f81a0.cpp: complete original identity/span and historical seed findings preserved", "Pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; original32280-byte span and68-selector/36-target facility dispatcher", "build/recovery/base-build-owner-resume-oct6/review-receipt-oct6.md: bounded independent review, not exhaustive or native acceptance", "recovery/tests/test_base_build_owner.py: actual-source bounded host/damage controls", "BaseSecretProject true64-word storage; historical scalar-member bindings remain unresolved primitive-array accessor interpretations"], "reason": "Recover complete build selection through real Base, faction, map, prototype, facility and project owners, preserving original unchecked indexes, arithmetic, lifecycle and output contracts. Prior source decision retained as history: Explicitly unfinished Base-owned dependency required to link the recovered base_reset caller; full 72-arm build-selection behavior remains in its seed"}
 // TRIED: mismatch #3 (call vs test) - this is the largest function in the batch (32280 bytes, a 72-entry switch reached via the jump table at 0x4FA56E documented in the brief, one arm per buildable unit/facility/project id) preceded by ~0x360 bytes of reactor/rules-bit eligibility computation and several 0x200/0x36-int array-zeroing blocks. Only the entry parameter normalization (a1<0 fold) plus set_base()/base_compute(1) are transcribed; the switch and its scoring tables are not modelled - the body returns the same -1/"no candidate" sentinel the original's accumulator starts in, rather than fabricate any of the 72 per-item eligibility rules.
 int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *out_score) {
-    // WORKAROUND(inline): the image calls range (0x00422F00) and has_project
-    // (0x004F80D0) out of line at these sites of base_build.
+    // WORKAROUND(inline): size pads, not call stand-ins. base_build is bound by
+    // VC6's per-function /Ob2 size ceiling (MATCHING_GUIDE 2.8 rule 7): its
+    // range (0x00422F00) and has_project (0x004F80D0) sites are out of line in
+    // the image because they lie past the stop, and plain calls reproduce that.
+    // These six unreferenced pointer declarations (here and in four cases
+    // below) only add caller size: dropping any one of them lets one range
+    // site expand that the image calls, so the original body is larger than
+    // ours by about their size; the statements that make it up are not found.
     int (__cdecl *const range_call)(int, int, int) = range;
     BOOL (__cdecl *const project_call)(int, int) = has_project;
     int sat_type;  // WORKAROUND(decl): base_build 0x004FED4D forms faction*0x833 + (type - 0x41) before scaling; only a local subscript keeps the -0x41 out of the displacement.
@@ -1052,8 +1058,7 @@ L_4fa03d:
         }
         break;
     case 2: {
-        // WORKAROUND(inline): the image calls range (0x00422F00) out of line for the
-        // three clamps after n - 2 (0x4fa280, 0x4fa2d9, 0x4fa2ec).
+        // WORKAROUND(inline): size pad, see the top of base_build.
         int (__cdecl *const range_call)(int, int, int) = range;
         if (l_c != 7 && !l_38
             && PlayersData[l_8].region_total_combat_vehs[l_10]
@@ -1078,9 +1083,9 @@ L_4fa03d:
             w /= 2;
         }
         l_18 = ((l_2c != 4) + 1) * l_48 + range(n - 2, 0, 99) + l_b8;
-        int s = range_call(8 - l_fc, 4, 8) * w / 8;
-        w = range_call(veh_cost(l_14, BaseIDCurrentSelected, NULL) * cost_factor(l_8, 1, -1) * s
-                           / (range_call(BaseCurrent->mineral_surplus, 1, 999) * 15),
+        int s = range(8 - l_fc, 4, 8) * w / 8;
+        w = range(veh_cost(l_14, BaseIDCurrentSelected, NULL) * cost_factor(l_8, 1, -1) * s
+                           / (range(BaseCurrent->mineral_surplus, 1, 999) * 15),
                        s, s * 10);
         if (l_38) {
             w /= 2;  // tail shared with the triad 0 test at 0x4fa2fe
@@ -1187,7 +1192,7 @@ L_4fa03d:
         }
         goto L_4fc68f;
     case 3: {  // reconnaissance
-        // WORKAROUND(inline): the image calls range (0x00422F00) out of line at 0x4fac23.
+        // WORKAROUND(inline): size pad, see the top of base_build.
         int (__cdecl *const range_call)(int, int, int) = range;
         l_48 = has_abil(l_14, 0x40000);
         if (!l_28 && (l_e4 || !l_48)) {
@@ -1208,7 +1213,7 @@ L_4fa03d:
                 l_78 = 1;
             }
             if (a_176c[l_14] > PlayersData[l_8].current_num_bases
-                    - range_call(GameDataStateStorage.fields_.turn_current_num_ / 50, 0,
+                    - range(GameDataStateStorage.fields_.turn_current_num_ / 50, 0,
                                  PlayersData[l_8].current_num_bases - 1)) {
                 l_78 = 1;
             }
@@ -1238,7 +1243,7 @@ L_4fa03d:
         goto L_4fc68f;
     }
     case 6: {  // naval superiority (laid between reconnaissance and air superiority, 0x4fad54)
-        // WORKAROUND(inline): the image calls range (0x00422F00) out of line at 0x4fae88.
+        // WORKAROUND(inline): size pad, see the top of base_build.
         int (__cdecl *const range_call)(int, int, int) = range;
         if (!naval_base(BaseIDCurrentSelected)) goto L_4fd8f6;
         w = (l_70 != 1 ? 128 : 256) * w * 56 / MapAreaSqRoot;
@@ -1263,7 +1268,7 @@ L_4fa03d:
         if (at_goal(l_8, 6, BaseCurrent->x, BaseCurrent->y)) {
             w /= 2;
         }
-        w = (range_call((a_2ec[l_20 + 18] - (PlayersData[l_8].unk_64 & 0x7ff)) * 2 + 8
+        w = (range((a_2ec[l_20 + 18] - (PlayersData[l_8].unk_64 & 0x7ff)) * 2 + 8
                             - PlayersData[l_8].unk_65 / 2, 0, 8) + 8) * w / 16;
         if (a_2ec[19] + a_3c4[19] * 2 < l_c4) {
             w /= 2;
@@ -1518,7 +1523,7 @@ L_4fb650:
                 if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff & l_1c)
                     && (BaseCurrent->governor & 0x80000000)) {
                     if (l_64) {
-                        w /= range_call(GameDataStateStorage.fields_.diff_level_current_ + 1, 2, 99);
+                        w /= range(GameDataStateStorage.fields_.diff_level_current_ + 1, 2, 99);
                     } else if (l_40 || l_30) {
                         w /= 2;
                     }
@@ -1779,7 +1784,7 @@ L_4fbd3d:
             if (!PlayersData[i].region_total_bases[l_10]) {
                 continue;
             }
-            if (project_call(SP_HUNTER_SEEKER_ALGO, i)) {
+            if (has_project(SP_HUNTER_SEEKER_ALGO, i)) {
                 continue;
             }
             if (!has_treaty(l_8, i, 8)) {
@@ -1825,13 +1830,13 @@ L_4fbd3d:
         if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c) {
             l_b8 = 0;
         } else {
-            l_b8 = PlayersData[l_8].energy_reserves / range_call(PlayersData[target].energy_reserves, 100, 999999);
+            l_b8 = PlayersData[l_8].energy_reserves / range(PlayersData[target].energy_reserves, 100, 999999);
         }
         if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c) {
             l_8c = 0;
         } else {
             l_8c = PlayersData[target].mil_strength_1
-                / range_call(PlayersData[l_8].mil_strength_1, PlayersData[l_8].current_num_bases + 1, 999999);
+                / range(PlayersData[l_8].mil_strength_1, PlayersData[l_8].current_num_bases + 1, 999999);
         }
         if (GameDataStateStorage.fields_.game_rules_ & 0x40) {
             l_bc = 5;
@@ -1839,7 +1844,7 @@ L_4fbd3d:
             l_bc = PlayersData[target].diff_level;
         }
         k = (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c) ? 4 : 2;
-        w = range_call(PlayersData[l_8].tech_ranking / k - PlayersData[target].tech_ranking / k
+        w = range(PlayersData[l_8].tech_ranking / k - PlayersData[target].tech_ranking / k
                       + PlayersData[target].soc_effect_pending.values_[SocialEffect::PROBE]
                       - l_bc - l_8c - l_b8 - l_54
                       + a_4bc[l_20 + l_2c * 3] + bit_count(has_treaty(l_8, target, 7)) + 13,
@@ -1984,7 +1989,7 @@ L_4fc68f:
         if (!l_124) {
             if (l_2c != 5 || PlayersData[l_8].planet_busters) {
                 if (!l_80) {
-                    l_18 += range_call((l_c > 2) - (l_30 || l_3c) + l_a4, 0, 2);
+                    l_18 += range((l_c > 2) - (l_30 || l_3c) + l_a4, 0, 2);
                 }
                 if (l_c == 8 || (l_c == 7 && !(BaseCurrent->state & 0x1000000))) {
                     if (l_2c != 8) {
@@ -2254,8 +2259,7 @@ L_4fcf70:
         }
     }
     if (Weapon[VehPrototypes[l_14].weapon_id].offense_rating) {
-        // WORKAROUND(inline): the image calls range (0x422F00) out of line at all four
-        // sites of this block; plain `range` is expanded at three of them here.
+        // WORKAROUND(inline): size pad, see the top of base_build.
         int (__cdecl *const range_call)(int, int, int) = range;
         int worm = worm_mod(BaseIDCurrentSelected, l_8);
         int morale = morale_mod(BaseIDCurrentSelected, l_8,
@@ -2268,13 +2272,13 @@ L_4fcf70:
             }
         }
         if (Weapon[VehPrototypes[l_14].weapon_id].offense_rating < 0 && l_14 < 64) {
-            l_18 += 2 - range_call(worm_mod(BaseIDCurrentSelected, l_8), 0, 2);
+            l_18 += 2 - range(worm_mod(BaseIDCurrentSelected, l_8), 0, 2);
             if (morale > worm) {
                 l_18 += morale - worm;
             }
-            w = w * 8 / range_call(worm - morale + 6, 1, 16);
+            w = w * 8 / range(worm - morale + 6, 1, 16);
             if (Players[l_8].rule_psi) {
-                w = w * 100 / range_call(Players[l_8].rule_psi + 100, 50, 200);
+                w = w * 100 / range(Players[l_8].rule_psi + 100, 50, 200);
             }
             if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
                 && morale >= 0 && worm < 3) {
@@ -2285,7 +2289,7 @@ L_4fcf70:
             if (l_20 != 2 && worm > morale + 1) {
                 l_18++;
             }
-            w = w * 8 / range_call(worm - morale + 8, 1, 16);
+            w = w * 8 / range(worm - morale + 8, 1, 16);
         }
     }
     {
