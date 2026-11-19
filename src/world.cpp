@@ -3453,11 +3453,10 @@ void __cdecl world_rainfall() {
                 int adjustment = 0;
                 int rainfall_class = 0;
                 Map *tile = map_loc(x, y);
-                uint32_t flags = tile->bit2;
                 int climate = tile->climate;
-                uint32_t coastal = flags & 0x80000040;
+                uint32_t coastal = tile->bit2 & 0x80000040;
                 int temperature = climate & 7;
-                if (coastal == 0x40 || (flags & 0x80000100) == 0x100) {
+                if (coastal == 0x40 || (tile->bit2 & 0x80000100) == 0x100) {
                     rain_carry = 1;
                 }
                 uint8_t scratch = cursor->unk_1;
@@ -3541,8 +3540,8 @@ void __cdecl world_rainfall() {
                 } else if (cloud_cover - altitude + temperature + 5 >= 2 && adjustment > 0) {
                     rainfall_class++;
                 }
-                if ((flags & 0x80000004) == 0x4 && (climate & ~0x1F) >= 0x60 && altitude < 6) {
-                    int distance = (int)flags >> 24;
+                if ((tile->bit2 & 0x80000004) == 0x4 && (climate & ~0x1F) >= 0x60 && altitude < 6) {
+                    int distance = (int)tile->bit2 >> 24;
                     if (distance < 0) {
                         distance = -distance;
                     }
@@ -3557,7 +3556,7 @@ void __cdecl world_rainfall() {
                 if (coastal == 0x40) {
                     rainfall_class = 0;
                 }
-                if ((flags & 0x80004000) == 0x4000) {
+                if ((tile->bit2 & 0x80004000) == 0x4000) {
                     rainfall_class = 0;
                 } else {
                     rainfall_class = range(rainfall_class, 0, 2);
