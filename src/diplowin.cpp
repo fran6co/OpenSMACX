@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
+
 // ORIGINAL: 0x00445080 ??_GDiploWin@@UAEPAXI@Z 0x00445080-0x004450A1 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical deleting-thunk source src/deleting_thunks.cpp; original full spans retained: 0x00445080-0x004450A1", "Pinned class constructor ??0DiploWin@@QAE@XZ at 0x00444FC0 stores original class/view table VA 0x66b634 at 0x00445053 (mov dword ptr [esi], 0x66b634); the current genuine owner vftable ??_7DiploWin@@6BWin@@@ selects generated ??_GDiploWin@@UAEPAXI@Z in slot 0 (+0x0) through weak entry ??_EDiploWin@@UAEPAXI@Z (mode 2).", "Pinned ??_GDiploWin@@UAEPAXI@Z at 0x00445080 calls the source-mapped ??1DiploWin@@QAE@XZ at 0x00444DB0, then tests byte ptr [ebp + 8], 1; je 0x44509a bypasses scalar delete when bit 0 is clear, while bit 0 set calls 0x0064557F; it save original this; call destructor; delete only when flags bit 0 is set; return saved this with ret 4.", "The real class lifetime is owned by src/diplowin.cpp; its compiler-emitted deleting symbol and vftable slot carry this original identity. Hand-written adapter bodies with live adjustor callers remain until those callers are independently qualified and transferred. The linked weak/COMDAT copy is not used to choose source ownership.", "the source writer preserves the historical mapping's exactness state (historical exactness obligation retained); current compiler extent is not asserted equal to the original span"], "reason": "Bind the original DiploWin scalar deleting-destructor identity to the actual compiler-emitted class deleting destructor in its genuine owner translation unit. The original constructor's pinned vptr store and the current owner's physical table slot identify this class/view; no callback/thunk body is hand-authored here."}
 // symbol    ??_GDiploWin@@UAEPAXI@Z
@@ -71,21 +72,149 @@ char DiploLocalizedTradeTitle;
 // RECOVERY_OBJECT: v2 0x007492D8 0x007492D9 ?DiploLocalizedDiplomacyTitle@@3DA 0x004436C0
 char DiploLocalizedDiplomacyTitle;
 
-// DiploWin owns cleanup through its real typed subobjects. Its destructor
-// body has no separate unregister or global-state operation; C++ performs
-// reverse-order member/base destruction after this body.
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00444DB0 ??1DiploWin@@QAE@XZ 0x00444DB0-0x00444FB2;0x00654920-0x006549F0 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00444db0.cpp", "Pinned444DB0 cleanup sequence and654920 unwind funclets; existing typed members match their native receiver offsets and thirteen-element FlatButton array."], "reason": "Recover complete DiploWin destruction through genuine automatic reverse-order member/base lifetimes; pinned teardown contains no additional DiploWin unregister. Replace only executable-address forwarder and preserve seed history, no exactness claim."}
-// symbol ??1DiploWin@@UAE@XZ
-// The destructor is compiler-generated: no declaration, no body.
 
-// Native 0x444FC0 constructs both bases, Spot, thirteen FlatButtons, StringBox,
-// ListBox and EditBox in declaration order. No scalar initialization follows.
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00444FC0 ??0DiploWin@@QAE@XZ 0x00444FC0-0x0044507B;0x006549F0-0x00654A47 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned original constructor444FC0 establishes GraphicWin+0, SubInterface+A14 and member construction order; secondary table66B5E0 gives nineteen callback slots and adjusted receivers.", "Redraw4436C0, status443C70 and painter443E50 inspected over declared original spans; source rectangle/control owners preserve native offsets. Palette colors reuse TextColourTable[80-2*item]/[81-2*item]. Localized title producer and full extents remain unknown.", "recovery/tasks/interface-contract-report-closure.json; root coordinator owns import and independent compilation; no current byte, structural or runtime acceptance is implied."], "reason": "Recover the genuine DiploWin GraphicWin/SubInterface owner with typed callbacks and automatic base/member lifetimes; retain independent seed history and restoration obligations."}
-DiploWin::DiploWin() {}
+// Compiler-generated source-owned lifecycle entry; no handwritten wrapper.
+/*
+// ORIGINAL: 0x00440F30 sub_440f30 0x00440F30-0x00440F54 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:c02baa72365fcd4a910683a3dc9b3c39399a9191:src/recovered/00440f30.cpp", "pinned:terranx_original lifecycle0x440f30", "source:src/diplowin.cpp"], "reason": "Generated complete initializer for the genuine64-element DiplomacyTranscriptLists array composes array construction and registration of reverse array destruction. Preserve complete original spans, catalogue names, claims and historical lessons; current compiler emission is not a fresh grant or linked selection proof."}
+// symbol    _$E21
+*/
+
+// Historical seed finding: Native vector constructor receives64 elements with30-byte stride, constructor4450B0 and destructor406820, then registers440F60.
+// Historical seed finding: Current vector/registration helper delegation is generated lowering; original full36-byte span remains a matching obligation.
+
+// Compiler-generated source-owned lifecycle entry; no handwritten wrapper.
+/*
+// ORIGINAL: 0x00440F60 sub_440f60 0x00440F60-0x00440F74 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:c02baa72365fcd4a910683a3dc9b3c39399a9191:src/recovered/units/00440f60.cpp", "pinned:terranx_original lifecycle0x440f60", "source:src/diplowin.cpp"], "reason": "Generated reverse array teardown owns the complete DiplomacyTranscriptLists64-element StringList lifecycle. Preserve complete original spans, catalogue names, claims and historical lessons; current compiler emission is not a fresh grant or linked selection proof."}
+// symbol    _$E19
+*/
+
+/*
+Purpose: Clear the hot-seat chat log: walk all 64 0x30-byte records (eight
+         groups of eight), whose first head is at 0x00737CE0, and for each
+         live one walk its entry chain - freeing
+         every node through the owning object's vtable-adjusted release
+         slot and each node's own scalar-deleting slot - then clear the
+         record's head, count and trailing words.
+
+// ORIGINAL: 0x00440F80 ?clear_hotseat_chat@@YAXXZ 0x00440F80-0x00441033 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["diplowin.cpp owns the genuine DiplomacyTranscriptLists[8][8] StringList array whose first head is 0x00737CE0 (+8); game.cpp is its direct caller.", "StringStruct::remove_all performs the same count-reloaded on_remove/payload-delete/entry-delete traversal. For a nonempty head it also resets head/count/position; the source body then preserves the original unconditional position and allocator clears while leaving current_ untouched."], "reason": "Move this global cleanup beside its actual 64-list owner and use StringList::remove_all rather than a hand-indexed vtable thunk; keep the empty-head conditional and all per-record resets."}
+// TRIED: member-fn-pointer+union thunk for the two vtable-adjusted "release" calls; raw pointer cast over fixed globals for record base/bound (address itself does read-modify-write via `rec += 0xc`). First divergence is #11 lea vs je.
+// size      179 bytes
+// prototype
+// callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x00440FBA 0x00440FCC 0x00440FEA
+Status: Source body moved to the DiplomacyTranscriptLists owner;
+        nonempty rows now use the real StringList::remove_all lifecycle.
+        The old union-thunk spelling remains seed history and is
+        superseded by the current source binding; its TRIED note stands.
+*/
+
+void __cdecl clear_hotseat_chat() {
+    for (int row = 0; row < 8; ++row) {
+        for (int column = 0; column < 8; ++column) {
+            StringList &list = DiplomacyTranscriptLists[row][column];
+            if (list.head_ != 0) {
+                list.remove_all();
+            }
+            list.current_position_ = 0;
+            list.allocator_ = 0;
+        }
+    }
+}
+
+/*
+Purpose: Publish the (a1,a2) id pair into the 0x30-byte dialog entry slot
+         the 0x00747BD8 list describes: order the pair, walk the entry
+         chain to the requested index (caching node and index in the
+         list's own state when the walk ran), read the node's payload and
+         its predecessor's, then stage both into the 0x00737CD8 table slot
+         and add it under the payload id through StringStruct::add.
+
+// ORIGINAL: 0x00441040 sub_441040 0x00441040-0x004410F1 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["DiploWin owns stringBox_ at +0xA388; StringBox::stringList_ is at +0x2B70, giving the exact original StringList receiver at DiploWindow+0xCEF8 = 0x00747BD0.", "The pinned words 0x747BD8/BC/E0/E4 therefore map to StringList head_/current_/entry_count_/current_position_; 0x737CD8 is the typed 8x8 destination list table."], "reason": "Move the global callback into the owner of both the observed source StringList member and destination transcript array; preserve cursor caching, pair-index arithmetic, target-field writes and add order."}
+// symbol    ?sub_441040@@YAXHH@Z
+// TRIED: void __cdecl(int a1, int a2), direct linked-list walk transcription; diverges at #29 mov vs cmp, not chased further
+// size      177 bytes
+// prototype
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00401100 0x00628A50
+Status: Coverage transcription - unclaimed body; the walk now goes through
+        the tree's own StringStruct::add and the general.h swap, whose
+        measured bodies are the image's 0x00401100 and 0x00628A50.
+*/
+// The image reads the list head separately for each of these two values.
+static inline char *transcript_current_text(StringList *list) {
+  return list->head_ ? list->current_entry()->text : 0;
+}
+
+static inline void transcript_add(StringList *list, char *text, int id) {
+  list->pending_text_ = text;
+  list->field_20_ = 0;
+  list->field_24_ = 0;
+  list->add(id);
+}
+
+void __cdecl sub_441040(int a1, int a2) {
+    StringList &source = DiploWindow.shared_string_box().strings();
+    if (a1 > a2) {
+        swap(&a1, &a2);
+    }
+    int loopBound = source.entry_count_;
+    for (int i = loopBound - 3; i < loopBound; ++i) {
+        if (i >= 0) {
+            source.seek_pos(i);
+            transcript_add(&DiplomacyTranscriptLists[a1][a2],
+                           transcript_current_text(&source),
+                           source.current_id());
+        }
+    }
+}
+
+/*
+Purpose: Refill one hot-seat chat view: order the two record indices, clear
+         the shared StringBox and its EditBox caption, then stage the three
+         newest entries of the record's entry chain into the box - each
+         entry's payload text added under its id.
+
+// ORIGINAL: 0x00441100 sub_441100 0x00441100-0x004411EC FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["diplowin.cpp owns the direct DiploWin::exec caller, the shared DiploWindow StringBox/EditBox and the typed DiplomacyTranscriptLists array.", "The original implementation clears both shared controls, normalizes the pair, then reads the last three entries from the selected list in its existing order."], "reason": "Move the complete externally named callback from the catch-all leaf TU into the owning diplomacy TU; retain normalization, clear order, loop bounds and typed list/control behavior."}
+// symbol    ?sub_441100@@YAXHH@Z
+// TRIED: signature had no params in the fallback head (IDA guessed 2 stack ints, confirmed by [ebp+8]/[ebp+0xc] reads before any push, and no meaningful eax at ret so void not int - both changed). Landed at MISMATCH (90% mnemonic similarity, 11 edits).
+// size      236 bytes
+// prototype
+// callers   1   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x006151E0 0x00628A50 0x00629710 0x00629780
+Status: The body now lives beside the real DiploWindow StringBox/EditBox
+        and transcript-array owners. Its historical MISMATCH note stands;
+        the former uncertainty about shared StringBox ownership is
+        superseded by the current source binding.
+*/
+// The shared window is the typed DiploWindow object; its saved entries are
+// held in the 8x8 StringList table at the observed 0x737CD8 storage region.
+void __cdecl sub_441100(int faction_id, int faction_id_with) {
+  if (faction_id > faction_id_with)
+    swap(&faction_id, &faction_id_with);
+  DiploWindow.shared_string_box().clear();
+  DiploWindow.shared_edit_box().set_text(0);
+  const int saved_count =
+      DiplomacyTranscriptLists[faction_id][faction_id_with].entry_count_;
+  for (int index = saved_count - 3; index < saved_count; ++index) {
+    if (index < 0) continue;
+    DiplomacyTranscriptLists[faction_id][faction_id_with].seek_pos(index);
+    int id = DiplomacyTranscriptLists[faction_id][faction_id_with].current_id();
+    char *text = transcript_current_text(&DiplomacyTranscriptLists[faction_id][faction_id_with]);
+    DiploWindow.shared_string_box().add(text, id, 1);
+  }
+}
 
 // The executable constructs the singleton and all 64 transcript lists with
 // static lifetime; their typed constructors/destructors own their storage.
@@ -116,864 +245,6 @@ void __cdecl DiploWin::string_callback(int faction_id, int unused) {
                         ChatShadowColors[faction_id], 1, 1);
 }
 
-// ---------------------------------------------------------------------------
-// File-local helpers (place above DiploWin::exec; they replace the old
-// by-value `inset_rect` at the top of diplowin.cpp, which exec no longer uses).
-//
-// 0x444140..44415E / 0x4444F9..444515 load all four
-// source edges through a copy of the source pointer, then +n/-n (dead
-// top/bottom copies included when the vertical amount is zero).
-
-// ---------------------------------------------------------------------------
-// ORIGINAL: 0x00443F10 ?exec@DiploWin@@QAEXHH@Z 0x00443F10-0x00444D8B
-// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00443f10.cpp", "image:terranx_original.exe:443F10-444D8B; callback4412A0 and transcript lifecycle440F30/440F60"], "reason": "Recover the full diplomacy window lifecycle using real base/member controls, singleton transcripts and bilateral offer storage; original catalogue extent retained."}
-// TRIED: the ~500-instruction layout-RECT tree (this+0xedc onward, built by repeatedly splitting/insetting a screen rect) is approximated at the right field offsets with plausible rather than register-derived values; likewise the AI offer-table indexing (0x7388d8/0x7388e0/0x7388e8/0x738928, 9-wide rows keyed by ab4/ab8) is a simplified approximation, not the exact addressing. The widget init/call sequence (Spot::init, GraphicWin::init/fill, box_sprite, StringBox::init, EditBox::init, the 13-button BaseButton loop, add_offer/rand dispatch, message_data/iface teardown) is transcribed in order with matching argument counts. MISMATCH #20 (layout block, lea vs sub).
-void DiploWin::exec(int faction_id, int faction_id_with) {
-    int side;
-  // Frame: three ints (x/y/height) and two RECT locals (rc at ebp-0x20,
-  // row at ebp-0x30) = 0x2C, plus one compiler temp = the image's 0x30.
-  RECT rc;
-  RECT row;
-
-  spot_.init(100);
-
-  register_iface(0x0B);
-
-  faction_id_ = faction_id;
-  faction_id_with_ = faction_id_with;
-
-  int window_height = 0x254 - MainInterfaceGlobal.panel_height();
-  int window_x = (WinScreenWidth - 0x320) / 2;
-  int window_y = WinScreenHeight - MainInterfaceGlobal.panel_height() - window_height;
-
-  // 0x443F82: the outer window, shrunk 0x17 each side, then 0x20 more on the right.
-  set_rectangle_dimensions(&rect_EDC_, 0, 0, 0x340, window_height);
-  expand_rect(&rect_EDC_, -0x17, 0);
-  rect_EDC_.right -= 0x20;
-
-  // 0x443FB2: title strip = outer inset 4, then 3, then 0x14 tall. The
-  // copy-then-expand_rect spelling gives the image's load order and the
-  // rc.right/bottom spills; the inset helper does not.
-  rc = rect_EDC_;
-  expand_rect(&rc, -4, -4);
-  rect_F4C_ = rc;
-  expand_rect(&rect_F4C_, -3, -3);
-  rect_F4C_.bottom = rect_F4C_.top + 0x14;
-
-  // 0x444024: two leader panes under the title strip, gap 2.
-  rc = rect_F4C_;
-  offset_rect(&rc, 0, 0x17);
-  rc.right = rc.left + (rc.right - rc.left + 2) / 2 - 2;
-  leader_rect_[0] = rc;
-  offset_rect(&rc, rc.right - rc.left + 2, 0);
-  leader_rect_[1] = rc;
-
-  // 0x444087: bottom row of three buttons (outer width shrunk by 1/7 a side).
-  rc = rect_EDC_;
-  rc.bottom -= 0x1A;
-  rc.top = rc.bottom - 0x14;
-  expand_rect(&rc, (rc.right - rc.left) / -7, 0);
-  rc.right = rc.left + (rc.right - rc.left + 2) / 3 - 2;
-  button_rects_[2] = rc;
-  offset_rect(&rc, rc.right - rc.left + 2, 0);
-  button_rects_[3] = rc;
-  offset_rect(&rc, rc.right - rc.left + 2, 0);
-  button_rects_[4] = rc;
-
-  // 0x444140: four offer columns (gaps 2, 8, 2) ending 10 above that row.
-  inset_rect(&row, &rect_EDC_, 7, 0);
-  row.bottom = rc.top - 10;
-  row.right = row.left + (row.right - row.left - 4) / 4 - 2;
-
-  rc = row;
-  rc.top = rc.bottom - 0x14;
-  button_rects_[7] = rc;
-  offset_rect(&rc, rc.right - rc.left + 2, 0);
-  button_rects_[8] = rc;
-  offset_rect(&rc, rc.right - rc.left + 8, 0);
-  button_rects_[11] = rc;
-  offset_rect(&rc, rc.right - rc.left + 2, 0);
-  button_rects_[12] = rc;
-
-  // 0x44421F: the row above (0x16 higher).
-  rc = row;
-  rc.top = rc.bottom - 0x14;
-  offset_rect(&rc, 0, -0x16);
-  button_rects_[5] = rc;
-  offset_rect(&rc, rc.right - rc.left + 2, 0);
-  button_rects_[6] = rc;
-  offset_rect(&rc, rc.right - rc.left + 8, 0);
-  button_rects_[9] = rc;
-  offset_rect(&rc, rc.right - rc.left + 2, 0);
-  button_rects_[10] = rc;
-
-  // 0x4442AD: two-column-wide title cells another 0x16 higher.
-  rc = row;
-  rc.top = rc.bottom - 0x14;
-  offset_rect(&rc, 0, -0x2C);
-  rc.right += rc.right - rc.left + 2;
-  rect_F9C_ = rc;
-  offset_rect(&rc, rc.right - rc.left + 8, 0);
-  rect_FBC_ = rc;
-
-  // 0x444327: union each 2x2 group with its title cell, then grow by 3.
-  rc.left = 0;
-  rc.right = 0;
-  rc.top = 0;
-  rc.bottom = 0;
-  int index;
-  for (index = 5; index < 9; ++index) {
-    UnionRect(&rc, &rc, &button_rects_[index]);
-  }
-  UnionRect(&rect_FAC_, &rc, &rect_F9C_);
-  expand_rect(&rect_FAC_, 3, 3);
-
-  rc.left = 0;
-  rc.right = 0;
-  rc.top = 0;
-  rc.bottom = 0;
-  for (index = 9; index < 13; ++index) {
-    UnionRect(&rc, &rc, &button_rects_[index]);
-  }
-  UnionRect(&rect_FCC_, &rc, &rect_FBC_);
-  expand_rect(&rect_FCC_, 3, 3);
-
-  // 0x444421: MainInterface frames inset 7, each split into a 0x14 header
-  // and the body 3 below it.
-  inset_rect(&rc, &MainInterfaceGlobal.main_frame_rect(), 7, 7);
-  rect_EEC_ = rc;
-  rect_EEC_.bottom = rect_EEC_.top + 0x14;
-  rect_EFC_ = rc;
-  rect_EFC_.top = rect_EEC_.bottom + 3;
-
-  inset_rect(&rc, &MainInterfaceGlobal.right_frame_rect(), 7, 7);
-  rect_F0C_ = rc;
-  rect_F0C_.bottom = rect_F0C_.top + 0x14;
-  rect_F1C_ = rc;
-  rect_F1C_.top = rect_F0C_.bottom + 3;
-
-  // 0x4444F9: the two portrait panes between the leader panes and the
-  // left offer group's (already grown) top.
-  inset_rect(&rc, &rect_EDC_, 7, 0);
-  rc.top = leader_rect_[0].bottom + 3;
-  rc.bottom = rect_FAC_.top - 7;
-  rc.right = rc.left + (rc.right - rc.left + 2) / 2 - 2;
-  portrait_rect_[0] = rc;
-  offset_rect(&rc, rc.right - rc.left + 2, 0);
-  portrait_rect_[1] = rc;
-
-  // 0x444572: chat transcript and the 0x14-tall edit line 3 below it.
-  inset_rect(&rc, &MainInterfaceGlobal.main_layout_rect(), 4, 4);
-  rc.bottom -= 0x17;
-  rect_F3C_ = rc;
-  rc.top = rc.bottom + 3;
-  rect_F2C_ = rc;
-  rc.bottom = rc.top + 0x14;
-
-  GraphicWin::init(window_x, window_y, 0x340, window_height, 0x05000000,
-                   static_cast<GraphicWin *>(&ConsoleGlobal));
-  field_16C_ = 0x1A;
-  fill(9);
-  static_cast<Buffer &>(*this).box_sprite(&rect_EDC_, &InterfaceBoxStyles[9]);
-
-  stringBox_.init(rect_F3C_.left + 3, rect_F3C_.top + 3,
-                  rect_F3C_.right - rect_F3C_.left - 6,
-                  rect_F3C_.bottom - rect_F3C_.top - 6,
-                  static_cast<Win *>(&MainInterfaceGlobal), 0, -1);
-  Buffer &string_canvas = static_cast<Buffer &>(stringBox_);
-  string_canvas.set_write_strings_callback(&DiploWin::string_callback);
-  string_canvas.set_text_color(0xFF, -1, 1, 1);
-  stringBox_.set_visible_rows(100);
-
-  editBox_.init(&rect_F2C_,
-                  static_cast<Win *>(&MainInterfaceGlobal), 0);
-  editBox_.add_window_flags(0x01000000);
-  editBox_.field_B1C_ = 9;
-  editBox_.field_B30_ = 0;
-  Buffer &edit_canvas = static_cast<Buffer &>(editBox_);
-  edit_canvas.set_text_color(ChatItemIdTable[faction_id_],
-                             ChatShadowColors[faction_id_], 1, 1);
-  editBox_.field_B20_ = 0x41;
-  editBox_.field_B24_ = ChatItemIdTable[faction_id_];
-  editBox_.field_B14_ = 0x80;
-
-  // 0x444754: computed and never read (dead stores into rc in the image).
-  inset_rect(&rc, &rect_EFC_, 3, 3);
-
-  // Buttons 0 and 1 are not initialized here: the image skips the whole
-  // body until the label offset reaches 0xDCC.
-  for (int button_index = 0; button_index < 13; ++button_index) {
-    if (button_index >= 2) {
-      FlatButton &button = flatButtons_[button_index];
-      button.init(label_get(0x371 + button_index), button_index,
-                  button_rects_[button_index].left,
-                  button_rects_[button_index].top,
-                  button_rects_[button_index].right - button_rects_[button_index].left,
-                  button_rects_[button_index].bottom - button_rects_[button_index].top,
-                  this, 0);
-      button.set_font(find_font(0x0E, 1), 0, 0, 0);
-      button.redraw();
-      button.set_text_color(0x41, -1, 1, 1);
-      button.hide();
-      // InterfaceBoxStyles begins at 0x0078D528 with 0x28-byte elements;
-      // these are the native 0x78D960/0x78D988/0x78D9B0 slots 27..29.
-      button.set_border_styles(&InterfaceBoxStyles[27],
-                               &InterfaceBoxStyles[28],
-                               &InterfaceBoxStyles[29]);
-    }
-  }
-
-  stringBox_.clear();
-  editBox_.set_text(0);
-
-  if (IsMultiplayerPBEM != 0) {
-    sub_441100(faction_id_, faction_id_with_);
-    for (side = 0; side < 2; ++side) {
-      offer_count_[side] = OfferResetCells[faction_id_][faction_id_with_].count_[side];
-      offer_state_[side] = OfferResetCells[faction_id_][faction_id_with_].state_[side];
-      for (int item = 0; item < 8; ++item) {
-        offer_type_[side][item] =
-            OfferResetCells[faction_id_][faction_id_with_].type_[side][item];
-        offer_value_[side][item] =
-            OfferResetCells[faction_id_][faction_id_with_].value_[side][item];
-      }
-    }
-  } else {
-    UNK3(0);
-    UNK3(1);
-  }
-
-  const int player_flags = static_cast<int>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF);
-  CommlinkPending = 1;
-  DiploOffersDirty = 0;
-  if (bit_count(player_flags) == 2)
-    GameDataStateStorage.fields_.turn_control_duration_milliseconds_ *= 2;
-  if (DiploDefaultFlag93A968 == 0)
-    DiploDefaultFlag93A968 = 1;
-
-  if (IsMultiplayerNet == 0 && IsMultiplayerPBEM == 0) {
-    if (rand() % 2 == 0) {
-      add_offer(1, 0, rand() % 0x59);
-      if (rand() % 3 != 0) {
-        add_offer(1, 0, rand() % 0x59);
-      }
-    } else {
-      add_offer(1, 1, (rand() % 0x32 * 5 + 5) * 5);
-    }
-
-    switch (rand() % 4) {
-      case 0: add_offer(1, 4, 0);
-        // Native switch intentionally falls through to the next offers.
-      case 1: add_offer(1, 3, 0);
-        // Native switch intentionally falls through to the next offer.
-      case 2: add_offer(1, 2, 0);
-    }
-
-    // The image lays the case-1 body out before the case-0 body.
-    switch (rand() % 3) {
-      case 1: offer_type_[0][0] = 2; break;
-      case 0: offer_state_[1] = 1; break;
-    }
-  }
-
-  set_modal(0, pop_expire, &MainInterfaceGlobal);
-
-  if (IsMultiplayerPBEM != 0) {
-    StringList &source = DiploWindow.stringBox_.strings();
-    int high_faction = faction_id_with_;
-    int low_faction = faction_id_;
-    if (low_faction > high_faction) {
-      swap(&low_faction, &high_faction);
-    }
-    const int source_count = source.entry_count_;
-    for (int source_index = source_count - 3;
-         source_index < source_count; ++source_index) {
-      if (source_index < 0)
-        continue;
-      source.seek_pos(source_index);
-      DiplomacyTranscriptLists[low_faction][high_faction].pending_text_ = source.head_ != 0
-          ? source.current_->string_payload()->text : 0;
-      DiplomacyTranscriptLists[low_faction][high_faction].field_20_ = 0;
-      DiplomacyTranscriptLists[low_faction][high_faction].field_24_ = 0;
-      DiplomacyTranscriptLists[low_faction][high_faction].add(source.current_id());
-    }
-
-    // Each side is stored twice: in the local cell as seen from here, and
-    // mirrored into the counterpart's cell with the parties swapped.
-    for (side = 0; side < 2; ++side) {
-      OfferResetCells[faction_id_][faction_id_with_].count_[side] = offer_count_[side];
-      OfferResetCells[faction_id_][faction_id_with_].state_[side] = offer_state_[side];
-      OfferResetCells[faction_id_with_][faction_id_].count_[side] = offer_count_[1 - side];
-      OfferResetCells[faction_id_with_][faction_id_].state_[side] = offer_state_[1 - side];
-      for (int item = 0; item < 8; ++item) {
-        OfferResetCells[faction_id_][faction_id_with_].type_[side][item] =
-            offer_type_[side][item];
-        OfferResetCells[faction_id_][faction_id_with_].value_[side][item] =
-            offer_value_[side][item];
-        OfferResetCells[faction_id_with_][faction_id_].type_[side][item] =
-            offer_type_[1 - side][item];
-        OfferResetCells[faction_id_with_][faction_id_].value_[side][item] =
-            offer_value_[1 - side][item];
-      }
-    }
-
-    if (DiploOffersDirty != 0
-        && (offer_state_[0] != 0 || offer_count_[0] > 0))
-      PendingDiplomacyFlags[faction_id_with_][faction_id_] |= 1;
-  }
-
-  if (CommlinkPending != 0) {
-    CommlinkPending = 0;
-    message_data(0x1505, faction_id_with_, 0, 0, 0, 0);
-  }
-
-  release_iface_mode();
-  delete_iface_mode();
-  close();
-}
-
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004436C0 ?on_redraw@DiploWin@@QAEXXZ 0x004436C0-0x00443C25
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned original constructor444FC0 establishes GraphicWin+0, SubInterface+A14 and member construction order; secondary table66B5E0 gives nineteen callback slots and adjusted receivers.", "Redraw4436C0, status443C70 and painter443E50 inspected over declared original spans; source rectangle/control owners preserve native offsets. Palette colors reuse TextColourTable[80-2*item]/[81-2*item]. Localized title producer and full extents remain unknown.", "recovery/tasks/interface-contract-report-closure.json; root coordinator owns import and independent compilation; no current byte, structural or runtime acceptance is implied."], "reason": "Recover the genuine DiploWin GraphicWin/SubInterface owner with typed callbacks and automatic base/member lifetimes; retain independent seed history and restoration obligations."}
-// symbol ?on_redraw@DiploWin@@UAEXXZ
-void DiploWin::on_redraw() {
-  MainInterfaceGlobal.restore_back(1);
-
-  RECT area = MainInterfaceGlobal.right_frame_rect();
-  area.left += 4;
-  area.right -= 4;
-  area.top += 4;
-  area.bottom -= 4;
-  MainInterfaceGlobal.Buffer::box_sprite(&area, &InterfaceBoxStyles[3]);
-
-  area = MainInterfaceGlobal.main_frame_rect();
-  area.left += 4;
-  area.top += 4;
-  area.right -= 4;
-  area.bottom -= 4;
-  MainInterfaceGlobal.Buffer::box_sprite(&area, &InterfaceBoxStyles[3]);
-
-  UnionRect(&area, &portrait_rect_[0], &portrait_rect_[1]);
-  RECT *f4c = &rect_F4C_;
-  UnionRect(&area, &area, f4c);
-  area.left -= 3;
-  area.right += 3;
-  area.top -= 3;
-  area.bottom += 3;
-
-  Buffer::box_sprite(&area, &InterfaceBoxStyles[3]);
-
-  UnionRect(&area, &button_rects_[2], &button_rects_[3]);
-  UnionRect(&area, &area, &button_rects_[4]);
-  area.left -= 3;
-  area.right += 3;
-  area.top -= 3;
-  area.bottom += 3;
-  Buffer::box_sprite(&area, &InterfaceBoxStyles[3]);
-
-  area = rect_F9C_;
-  Buffer::box_sprite(&area, &InterfaceBoxStyles[6]);
-  area.left += 3;
-  area.right -= 3;
-  area.top += 3;
-  area.bottom -= 3;
-  Buffer::set_font(find_font(14, 1), 0, 0, 0);
-  Buffer::set_text_color(0x99, -1, 1, 1);
-
-  LPSTR title = Language == 0 ? "TRADE"
-                              : &DiploLocalizedTradeTitle;
-  Buffer::write_cent_l(title, &area);
-
-  area = rect_FAC_;
-  Buffer::box_sprite(&area, &InterfaceBoxStyles[3]);
-
-  area = rect_FBC_;
-  Buffer::box_sprite(&area, &InterfaceBoxStyles[6]);
-  area.left += 3;
-  area.right -= 3;
-  area.top += 3;
-  area.bottom -= 3;
-  title = Language == 0 ? "DIPLOMACY"
-                        : &DiploLocalizedDiplomacyTitle;
-  Buffer::write_cent_l(title, &area);
-
-  area = rect_FCC_;
-  Buffer::box_sprite(&area, &InterfaceBoxStyles[3]);
-
-  area.left = f4c->left;
-  area.top = f4c->top;
-  area.right = f4c->right;
-  area.bottom = f4c->bottom;
-  Buffer::box_sprite(&area, &InterfaceBoxStyles[6]);
-  area.left += 3;
-  area.right -= 3;
-  area.top += 3;
-  area.bottom -= 3;
-
-  StringTemp[0] = 0;
-  strcat(StringTemp, label_get(0x748 / 4));
-  strcat(StringTemp, BufferJoinSpace);
-  strcat(StringTemp, BufferJoinSpace);
-  strcat(StringTemp, SocialWinOpenParenText);
-  strcat(StringTemp, label_get(0x788 / 4));
-  strcat(StringTemp, SocialWinColonSpaceText);
-  strcat(StringTemp, "{");
-
-  const uint32_t treaties =
-      PlayersData[faction_id_].diplo_treaties[faction_id_with_];
-  if ((treaties & 1) != 0) {
-    strcat(StringTemp, label_get(0x34C / 4));
-    Buffer::set_text_color2(0xFA, -1, 1, 1);
-  } else if ((treaties & 2) != 0) {
-    strcat(StringTemp, label_get(0x350 / 4));
-    Buffer::set_text_color2(0xFA, -1, 1, 1);
-  } else if ((treaties & 4) != 0) {
-    strcat(StringTemp, label_get(0x354 / 4));
-    Buffer::set_text_color2(0xFA, -1, 1, 1);
-  } else if ((treaties & 0x10) != 0) {
-    strcat(StringTemp, label_get(0x358 / 4));
-    Buffer::set_text_color2(0xF9, -1, 1, 1);
-  } else {
-    strcat(StringTemp, label_get(0x784 / 4));
-    Buffer::set_text_color2(0xFB, -1, 1, 1);
-  }
-  strcat(StringTemp, "}");
-  strcat(StringTemp, SocialWinCloseParenText);
-  Buffer::write_cent_l(StringTemp, &area);
-
-  if (MainInterfaceTileFlag != 0) {
-    MainInterfaceGlobal.Buffer::box_sprite(&rect_F3C_, &InterfaceBoxStyles[0]);
-    MainInterfaceGlobal.Buffer::box_sprite(&rect_F2C_, &InterfaceBoxStyles[0]);
-  }
-
-  draw_who();
-  draw_whom();
-  draw_offers();
-}
-
-extern int TextColourTable[195];
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// Historical seed observations (not fresh measurements or acceptance):
-// TRIED: two separate null-check ifs (worse fit); localRect copy before set_clip (worse fit); closest is buf cached once, single || null check, localRect copied after set_clip - 5-edit MISMATCH
-// ORIGINAL: 0x00443E50 ?on_iface_dialog_item_back_draw@DiploWin@@QAEHPAUGraphicWin@@HHPAURECT@@@Z 0x00443E50-0x00443F0C BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned original constructor444FC0 establishes GraphicWin+0, SubInterface+A14 and member construction order; secondary table66B5E0 gives nineteen callback slots and adjusted receivers.", "Redraw4436C0, status443C70 and painter443E50 inspected over declared original spans; source rectangle/control owners preserve native offsets. Palette colors reuse TextColourTable[80-2*item]/[81-2*item]. Localized title producer and full extents remain unknown.", "recovery/tasks/interface-contract-report-closure.json; root coordinator owns import and independent compilation; no current byte, structural or runtime acceptance is implied."], "reason": "Recover the genuine DiploWin GraphicWin/SubInterface owner with typed callbacks and automatic base/member lifetimes; retain independent seed history and restoration obligations."}
-// symbol ?on_iface_dialog_item_back_draw@DiploWin@@UAEHPAVGraphicWin@@HHPAUtagRECT@@@Z
-int DiploWin::on_iface_dialog_item_back_draw(GraphicWin *window, int, int item,
-                                             RECT *rect) {
-  if (window == 0 || rect == 0) {
-    return 0;
-  }
-  Buffer &canvas = static_cast<Buffer &>(*window);
-  canvas.restore_clip();
-  RECT local = *rect;
-
-  // These words belong to the text.pcx palette published by textcolor_init.
-  // The native addresses are TextColourTable[80]/[81], walked backward as
-  // two-int pairs for each item.
-  canvas.set_text_color(TextColourTable[80 - 2 * item],
-                        TextColourTable[81 - 2 * item], 1, 1);
-  if (item == 0) {
-    window->fill(rect, item);
-  } else {
-    canvas.box_sprite(&local, &InterfaceBoxStyles[27 + item]);
-  }
-  return 1;
-}
-
-// ORIGINAL: 0x00443C70 ?on_status@DiploWin@@QAEXH@Z 0x00443C70-0x00443D77 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned original constructor444FC0 establishes GraphicWin+0, SubInterface+A14 and member construction order; secondary table66B5E0 gives nineteen callback slots and adjusted receivers.", "Redraw4436C0, status443C70 and painter443E50 inspected over declared original spans; source rectangle/control owners preserve native offsets. Palette colors reuse TextColourTable[80-2*item]/[81-2*item]. Localized title producer and full extents remain unknown.", "recovery/tasks/interface-contract-report-closure.json; root coordinator owns import and independent compilation; no current byte, structural or runtime acceptance is implied.", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/00443c70.cpp"], "reason": "Recover the genuine DiploWin GraphicWin/SubInterface owner with typed callbacks and automatic base/member lifetimes; retain independent seed history and restoration obligations. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
-// kind      game
-// symbol ?on_status@DiploWin@@UAEXH@Z
-void DiploWin::on_status(int mode) {
-  if (mode != 0) {
-    GraphicWin *const front = static_cast<GraphicWin *>(this);
-    front->on_redraw();
-    for (int i = 0; i != 13; ++i) {
-      flatButtons_[i].show(0);
-    }
-    slide_show(front, 2);
-    front->Win::show(3);
-    stringBox_.show(0);
-    editBox_.show(0);
-    editBox_.time_.start();
-    front->redraw();
-    MainInterfaceGlobal.soft_update();
-    return;
-  }
-
-  stringBox_.hide();
-  editBox_.time_.stop();
-  editBox_.hide();
-  GraphicWin *const front = static_cast<GraphicWin *>(this);
-  slide_hide(front, 2);
-  front->Win::hide();
-  for (int i = 0; i != 13; ++i) {
-    flatButtons_[i].hide();
-  }
-}
-
-// SubInterface vtable slots with exact native shared-stub targets. These are
-// declarations/bodies to add only after the secondary-base layout is adopted.
-// Native secondary table66B5E0 selects these shared return bodies at slots
-// 1,2,14,16,17. They do not create additional original identities or claims.
-// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_iface_scrolled@DiploWin@@UAEXHH@Z 0x00444FC0
-void DiploWin::on_iface_scrolled(int, int) {}
-// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_iface_scrolling@DiploWin@@UAEXHH@Z 0x00444FC0
-void DiploWin::on_iface_scrolling(int, int) {}
-// RECOVERY_SHARED: v1 0x00404250 0x00404255 ?on_iface_button_pressed@DiploWin@@UAEHH@Z 0x00444FC0
-int DiploWin::on_iface_button_pressed(int) { return 0; }
-// RECOVERY_SHARED: v1 0x00406B20 0x00406B23 ?on_iface_group_clicked@DiploWin@@UAEXHHH@Z 0x00444FC0
-void DiploWin::on_iface_group_clicked(int, int, int) {}
-// RECOVERY_SHARED: v1 0x00443E40 0x00443E45 ?on_iface_dialog_back_draw@DiploWin@@UAEHPAVGraphicWin@@@Z 0x00444FC0
-int DiploWin::on_iface_dialog_back_draw(GraphicWin *) { return 0; }
-
-// The diplomacy window's redraw latch is writable application storage, not a
-// pointer into the original executable. on_key_click and the offer paths write it.
-// RECOVERY_OBJECT: v2 0x007492D0 0x007492D4 ?DiploOffersDirty@@3HA 0x00442590
-int DiploOffersDirty;
-
-// Original initialized .data and literal evidence, inspected from the pinned image.
-// DiploKnownTechColor (0x0068A5C4) is IfaceColorTable[9]; its identity moved
-// to interface_assets.cpp.
-// RECOVERY_OBJECT: v2 0x006839F4 0x006839F6 ?DiploKnownTechOpen@@3PADA 0x00443170
-char DiploKnownTechOpen[2] = "(";
-// RECOVERY_OBJECT: v2 0x006839F8 0x006839FA ?DiploKnownTechClose@@3PADA 0x00443170
-char DiploKnownTechClose[2] = ")";
-
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x00443170 0x004436A0 0x004436B8 0x00443480
-// ORIGINAL: 0x00443170 ?draw_offers@DiploWin@@QAEXXZ 0x00443170-0x0044369F BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:def4db5d8cde1ddd00c5735adc0e3cd230ec02b8:src/recovered/units/00443170.cpp"], "reason": "Typed offer-panel rendering, technology/energy/treaty/faction labels and Spot ownership, replacing seed raw offsets."}
-void DiploWin::draw_offers() {
-    int line_height = font_line_advance(*find_font(14, 0));
-    int side = 0;
-    do {
-        spot_.kill_type(side);
-        set_font(find_font(14, 0), find_font(14, 1), find_font(14, 2), 0);
-        RECT panel;
-        if (side) {
-            panel = portrait_rect_[1];
-            panel.right += -1 - FactionsArt[faction_id_with_].datalink.width();
-        } else {
-            panel = portrait_rect_[0];
-            panel.left += FactionsArt[faction_id_].datalink.width() + 1;
-        }
-        panel.left += 3;
-        panel.top += 3;
-        panel.right -= 3;
-        int width = panel.right - panel.left;
-        set_text_color(ChatItemIdTable[side ? faction_id_with_ : faction_id_],
-                       ChatShadowColors[side ? faction_id_with_ : faction_id_], 1, 1);
-        StringTemp[0] = 0;
-        {
-            int f = side ? faction_id_with_ : faction_id_;
-            PluralityDefault = 0;
-            GenderDefault = Players[f].is_leader_female;
-            strcat(StringTemp, Players[f].title_leader);
-        }
-        strcat(StringTemp, BufferJoinSpace);
-        {
-            int f = side ? faction_id_with_ : faction_id_;
-            PluralityDefault = 0;
-            GenderDefault = Players[f].is_leader_female;
-            strcat(StringTemp, Players[f].name_leader);
-        }
-        strcat(StringTemp, BufferJoinSpace);
-        int count = offer_count_[side];
-        StringTemp[0] = 0;
-        if (count == 0) {
-            strcat(StringTemp, label_get(0x734 / 4));
-            write_cent_text(StringTemp, panel.left, panel.top, width);
-        } else {
-            strcat(StringTemp, label_get(0x738 / 4));
-            write_cent_text(StringTemp, panel.left, panel.top, width);
-        }
-        int top = panel.top + line_height;
-        for (int i = 0; i < offer_count_[side]; ++i) {
-            StringTemp[0] = 0;
-            set_text_color(ChatItemIdTable[side ? faction_id_with_ : faction_id_],
-                           ChatShadowColors[side ? faction_id_with_ : faction_id_], 1, 1);
-            switch (offer_type_[side][i]) {
-            case 0:
-                if (side == 1 && offer_value_[1][i] < 89
-                    && has_tech(offer_value_[1][i], faction_id_)) {
-                    set_text_color(DiploKnownTechColor, 0, side, side);
-                    strcat(StringTemp, DiploKnownTechOpen);
-                    say_tech(StringTemp, offer_value_[1][i], side);
-                    strcat(StringTemp, DiploKnownTechClose);
-                } else {
-                    say_tech(StringTemp, offer_value_[side][i], 1);
-                }
-                break;
-            case 1: {
-                char text[80];
-                _itoa(offer_value_[side][i], text, 10);
-                strcat(StringTemp, text);
-                strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, label_get(0x90 / 4));
-                break;
-            }
-            case 2:
-                strcat(StringTemp, label_get(0x34C / 4));
-                break;
-            case 3:
-                strcat(StringTemp, label_get(0x350 / 4));
-                break;
-            case 4:
-                strcat(StringTemp, label_get(0x354 / 4));
-                break;
-            case 5: {
-                strcat(StringTemp, label_get(0x980 / 4));
-                strcat(StringTemp, BufferJoinSpace);
-                int f = offer_value_[side][i];
-                GenderDefault = Players[f].noun_gender;
-                PluralityDefault = Players[f].is_noun_plural;
-                strcat(StringTemp, Players[f].noun_faction);
-                break;
-            }
-            }
-            write_cent_text(StringTemp, panel.left, top, width);
-            RECT item;
-            spot_.add(i, side, set_rectangle_dimensions(&item, panel.left, top, width, line_height));
-            top += line_height;
-        }
-        ++side;
-    } while (side < 2);
-}
-
-// Source-owned faction/network operations; shared declarations await owner review.
-int __cdecl diplo_lock(int timeout);
-void __cdecl diplo_unlock();
-
-// ORIGINAL: 0x004426F0 ?check_done@DiploWin@@QAEXXZ 0x004426F0-0x00442736 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:def4db5d8cde1ddd00c5735adc0e3cd230ec02b8:src/recovered/004426f0.cpp"], "reason": "Rehome seed into typed DiploWin owner; states and counterpart are source members."}
-void DiploWin::check_done() {
-    if (offer_state_[0] == 1 && offer_state_[1] == 1) {
-        message_data(0x150A, faction_id_with_, 0, 0, 0, 0);
-        if (IsMultiplayerPBEM != 0) {
-            do_it();
-        }
-    }
-}
-
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x00442740 0x004429A0 0x004429B8 0x004427F0
-// ORIGINAL: 0x00442740 ?do_it@DiploWin@@QAEXXZ 0x00442740-0x0044299D BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:def4db5d8cde1ddd00c5735adc0e3cd230ec02b8:src/recovered/units/00442740.cpp"], "reason": "Rehome exchange execution into source-owned DiploWin arrays and faction/network globals."}
-void DiploWin::do_it() {
-    if ((faction_id_ <= faction_id_with_ || IsMultiplayerPBEM != 0)
-        && CommlinkPending <= 1) {
-        CommlinkPending = 2;
-        if (diplo_lock(200) == 0) {
-            int side = 0;
-            do {
-                for (int i = 0; i < offer_count_[side]; ++i) {
-                    int giver = side ? faction_id_with_ : faction_id_;
-                    int recipient = side ? faction_id_ : faction_id_with_;
-                    switch (offer_type_[side][i]) {
-                    case 2: net_treaty_on(giver, recipient, 1, 1); break;
-                    case 3: net_treaty_on(giver, recipient, 2, 1); break;
-                    case 4: net_treaty_on(giver, recipient, 4, 1); break;
-                    case 0: {
-                        int tech = offer_value_[side][i];
-                        if (tech < 89 && has_tech(tech, recipient)) break;
-                        net_tech(recipient, tech, giver, 1);
-                        break;
-                    }
-                    case 1: {
-                        int reserves = PlayersData[giver].energy_reserves;
-                        int amount = offer_value_[side][i];
-                        if (amount < 0 || reserves < 0) {
-                            amount = 0;
-                        } else if (amount > reserves) {
-                            amount = reserves;
-                        }
-                        net_energy(giver, -amount, recipient, amount, 1);
-                        break;
-                    }
-                    case 5: {
-                        int target = offer_value_[side][i];
-                        if (((unsigned char)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1 << target)) != 0
-                            && !(PlayersData[giver].diplo_treaties[target] & 0x10)) {
-                            message_data(0x150F, target, giver, recipient, 0, 0);
-                        }
-                        net_treaty_on(giver, target, 8, 0);
-                        net_double_cross(giver, target, recipient, 1);
-                        break;
-                    }
-                    }
-                }
-                ++side;
-            } while (side < 2);
-            diplo_unlock();
-            CommlinkPending = 1;
-            offer_state_[1] = 3;
-            offer_state_[0] = 3;
-            offer_count_[1] = 0;
-            offer_count_[0] = 0;
-            message_data(0x150D, faction_id_with_, 0, 0, 0, 0);
-            redraw();
-        }
-    }
-}
-
-
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x00442A10 0x00442D98 0x00442DB4 0x00442C50
-// ORIGINAL: 0x00442A10 ?draw_who@DiploWin@@QAEXXZ 0x00442A10-0x00442D98 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:def4db5d8cde1ddd00c5735adc0e3cd230ec02b8:src/recovered/units/00442a10.cpp"], "reason": "Typed DiploWin party rendering using source-owned FactionArt datalink portraits, rectangles and label storage."}
-void DiploWin::draw_who() {
-    if (faction_id_ > 0) {
-        set_font(find_font(14, 1), 0, 0, 0);
-        StringTemp[0] = 0;
-        {
-            int f = faction_id_;
-            PluralityDefault = 0;
-            GenderDefault = Players[f].is_leader_female;
-            strcat(StringTemp, Players[f].title_leader);
-        }
-        strcat(StringTemp, BufferJoinSpace);
-        {
-            int f = faction_id_;
-            PluralityDefault = 0;
-            GenderDefault = Players[f].is_leader_female;
-            strcat(StringTemp, Players[f].name_leader);
-        }
-        set_text_color(ChatItemIdTable[faction_id_], ChatShadowColors[faction_id_], 1, 1);
-        RECT area = leader_rect_[0];
-        box_sprite(&area, &InterfaceBoxStyles[6]);
-        area.left += 3;
-        area.right -= 3;
-        area.top += 3;
-        area.bottom -= 3;
-        CharUpperA(StringTemp);
-        write_cent_l(StringTemp, &area);
-        area = portrait_rect_[0];
-        box_sprite(&area, &InterfaceBoxStyles[0]);
-        Sprite *portrait = &FactionsArt[faction_id_].datalink;
-        set_rectangle_dimensions(&area, area.left + 1, area.top + 1,
-                                 portrait->width(), portrait->height());
-        portrait->draw(this, portrait->transparent_index(), area.left, area.top, 1, 1);
-        area.left += 4;
-        area.right -= 4;
-        area.bottom -= 4;
-        area.top = area.bottom - 20;
-        set_font(find_font(14, 1), 0, 0, 0);
-        StringTemp[0] = 0;
-        switch (offer_state_[0]) {
-        case 0:
-            strcat(StringTemp, label_get(0x73C / 4));
-            break;
-        case 1:
-            strcat(StringTemp, label_get(0x740 / 4));
-            break;
-        case 2:
-            set_text_color(ChatItemIdTable[0], ChatShadowColors[0], 1, 1);
-            strcat(StringTemp, label_get(0x744 / 4));
-            break;
-        case 3:
-            strcat(StringTemp, label_get(0x780 / 4));
-            break;
-        case 4:
-            set_text_color(ChatItemIdTable[0], ChatShadowColors[0], 1, 1);
-            strcat(StringTemp, label_get(0x968 / 4));
-            break;
-        case 5:
-            set_text_color(ChatItemIdTable[0], ChatShadowColors[0], 1, 1);
-            strcat(StringTemp, label_get(0x95C / 4));
-            break;
-        case 6:
-            set_text_color(251, 0, 1, 1);
-            strcat(StringTemp, label_get(0x960 / 4));
-            break;
-        }
-        CharUpperA(StringTemp);
-        map_colors(&area, ShadowColorTable);
-        area.left += 3;
-        area.right -= 3;
-        area.top += 3;
-        area.bottom -= 3;
-        write_cent_l(StringTemp, &area);
-    }
-}
-
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x00442DC0 0x0044314C 0x00443168 0x00443000
-// ORIGINAL: 0x00442DC0 ?draw_whom@DiploWin@@QAEXXZ 0x00442DC0-0x00443149 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:def4db5d8cde1ddd00c5735adc0e3cd230ec02b8:src/recovered/units/00442dc0.cpp"], "reason": "Typed DiploWin party rendering using source-owned FactionArt datalink portraits, rectangles and label storage."}
-void DiploWin::draw_whom() {
-    if (faction_id_ > 0) {
-        set_font(find_font(14, 1), 0, 0, 0);
-        StringTemp[0] = 0;
-        {
-            int f = faction_id_with_;
-            PluralityDefault = 0;
-            GenderDefault = Players[f].is_leader_female;
-            strcat(StringTemp, Players[f].title_leader);
-        }
-        strcat(StringTemp, BufferJoinSpace);
-        {
-            int f = faction_id_with_;
-            PluralityDefault = 0;
-            GenderDefault = Players[f].is_leader_female;
-            strcat(StringTemp, Players[f].name_leader);
-        }
-        set_text_color(ChatItemIdTable[faction_id_with_], ChatShadowColors[faction_id_with_], 1, 1);
-        RECT area = leader_rect_[1];
-        box_sprite(&area, &InterfaceBoxStyles[6]);
-        area.left += 3;
-        area.right -= 3;
-        area.top += 3;
-        area.bottom -= 3;
-        CharUpperA(StringTemp);
-        write_cent_l(StringTemp, &area);
-        area = portrait_rect_[1];
-        box_sprite(&area, &InterfaceBoxStyles[0]);
-        Sprite *portrait = &FactionsArt[faction_id_with_].datalink;
-        set_rectangle_dimensions(&area, area.right - portrait->width() - 1, area.top + 1,
-                                 portrait->width(), portrait->height());
-        portrait->draw(this, portrait->transparent_index(), area.left, area.top, 1, 1);
-        area.left += 4;
-        area.right -= 4;
-        area.bottom -= 4;
-        area.top = area.bottom - 20;
-        set_font(find_font(14, 1), 0, 0, 0);
-        StringTemp[0] = 0;
-        switch (offer_state_[1]) {
-        case 0:
-            strcat(StringTemp, label_get(0x73C / 4));
-            break;
-        case 1:
-            strcat(StringTemp, label_get(0x740 / 4));
-            break;
-        case 2:
-            set_text_color(ChatItemIdTable[0], ChatShadowColors[0], 1, 1);
-            strcat(StringTemp, label_get(0x744 / 4));
-            break;
-        case 3:
-            strcat(StringTemp, label_get(0x780 / 4));
-            break;
-        case 4:
-            set_text_color(ChatItemIdTable[0], ChatShadowColors[0], 1, 1);
-            strcat(StringTemp, label_get(0x968 / 4));
-            break;
-        case 5:
-            set_text_color(ChatItemIdTable[0], ChatShadowColors[0], 1, 1);
-            strcat(StringTemp, label_get(0x95C / 4));
-            break;
-        case 6:
-            set_text_color(251, 0, 1, 1);
-            strcat(StringTemp, label_get(0x960 / 4));
-            break;
-        }
-        CharUpperA(StringTemp);
-        map_colors(&area, ShadowColorTable);
-        area.left += 3;
-        area.right -= 3;
-        area.top += 3;
-        area.bottom -= 3;
-        write_cent_l(StringTemp, &area);
-    }
-}
-
 // ORIGINAL: 0x004412D0 ?UNK1@DiploWin@@QAEXXZ 0x004412D0-0x004412ED BYTE_EXACT
 void DiploWin::UNK1() {
     stringBox_.clear();
@@ -995,319 +266,6 @@ void DiploWin::new_chat(char *text, int faction_id) {
     strcat(line, text);
     stringBox_.add(line, faction_id, 1);
     DiploOffersDirty = 1;
-}
-
-// Slot 62 (+0xF8) is inherited GraphicWin::redraw(); source calls retain
-// the pinned receiver and virtual dispatch.
-
-// ORIGINAL: 0x00442560 ?on_key_down@DiploWin@@QAEHH@Z 0x00442560-0x0044258A BYTE_EXACT
-// symbol    ?on_key_down@DiploWin@@UAEHH@Z
-int DiploWin::on_key_down(int key) {
-    if (key == 0x0D || key == 0x1B) {
-        return 0;
-    }
-    return editBox_.on_key_down(key);
-}
-
-// ORIGINAL: 0x004429C0 ?done_deal@DiploWin@@QAEXXZ 0x004429C0-0x004429E7 BYTE_EXACT
-void DiploWin::done_deal() {
-    offer_state_[1] = 3;
-    offer_state_[0] = 3;
-    offer_count_[1] = 0;
-    offer_count_[0] = 0;
-    redraw();
-}
-
-// Historical TRIED entries below describe the scaffolded seed, not this typed member body.
-// ORIGINAL: 0x00442590 ?on_key_click@DiploWin@@QAEHHH@Z 0x00442590-0x004426ED BYTE_EXACT
-// symbol    ?on_key_click@DiploWin@@UAEHHH@Z
-// TRIED: Seed provenance: 0.74 mnemonic similarity - the edit box's slot-25 vtable call needed a shim in the scaffold; the tree's own Win::vslot_25 declares the same two-int signature, and Win slot 58 is release_modal, so both dispatch through the real declarations here. The private DiploWin state stays raw-offset (0xAB8, the 0xE490 edit text, stringBox_, editBox_).
-// TRIED: DAT_00946a50/DAT_00946a84 are per-faction record fields (stride 1436 = 0x59C) whose address itself is indexed - declared as extern arrays instead of the auto-scaffold's plain const-pointer globals (which would fold the stride multiply away), per the same lever as 0x00423000's g_faction_table. slot 25 on the edit_box_ sub-object takes two ints (a1,a2) - the auto-emitted VCall shim is nullary, so a second small vtable-shim class (VCall25) declares only the 26 ordinals needed with the right signature on the last one; a bare __thiscall function-pointer cast is C4234 on VC6. Landed at 0.74 mnemonic similarity.
-int DiploWin::on_key_click(int repeat, int key) {
-    if (key == 0x1B) {
-        release_modal();
-        return 1;
-    }
-    if (key == 0x0D) {
-        char *const text = editBox_.text_;
-        if (text != 0 && strlen(text) != 0) {
-            message_chat(0x1E00, faction_id_with_, text);
-            // 4425F5 reads the live faction after the chat callback.
-            const int faction = ConsoleGlobal.faction_id_;
-
-            char line[256];
-            line[0] = 0;
-            PluralityDefault = 0;
-            GenderDefault = Players[faction].is_leader_female;
-            strcat(line, Players[faction].name_leader);
-            CharUpperA(line);
-            strcat(line, SocialWinColonSpaceText);
-            strcat(line, BufferJoinSpace);
-            strcat(line, editBox_.text_);
-
-            stringBox_.add(line, faction, 1);
-            DiploOffersDirty = 1;
-            editBox_.set_text(0);
-            return 1;
-        }
-        release_modal();
-        return 1;
-    }
-    editBox_.on_key_click(repeat, key);
-    return 1;
-}
-
-
-/*
-Purpose: Unknown; the legacy implementation is a bare return with no body.
-// ORIGINAL: 0x00442A00 ?UNK5@DiploWin@@QAEXXZ 0x00442A00-0x00442A01 BYTE_EXACT
-// size      1 bytes
-// prototype void (__thiscall ?UNK5@DiploWin@@QAEXXZ)(DiploWin* this)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void DiploWin::UNK5() {
-}
-
-
-/*
-Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-// ORIGINAL: 0x004429F0 ?UNK4@DiploWin@@QAEXH@Z 0x004429F0-0x004429F3 BYTE_EXACT
-// size      3 bytes
-// prototype void (__thiscall ?UNK4@DiploWin@@QAEXH@Z)(DiploWin* this, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void DiploWin::UNK4(int) {
-}
-
-
-/*
-Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-// ORIGINAL: 0x00443D80 ?on_iface_left_click@DiploWin@@QAEXHH@Z 0x00443D80-0x00443D83 BYTE_EXACT
-// symbol ?on_iface_left_click@DiploWin@@UAEXHH@Z
-// size      3 bytes
-// prototype void (__thiscall ?on_iface_left_click@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void DiploWin::on_iface_left_click(int, int) {
-}
-
-
-/*
-Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-// ORIGINAL: 0x00443D90 ?on_iface_left_up@DiploWin@@QAEXHH@Z 0x00443D90-0x00443D93 BYTE_EXACT
-// symbol ?on_iface_left_up@DiploWin@@UAEXHH@Z
-// size      3 bytes
-// prototype void (__thiscall ?on_iface_left_up@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void DiploWin::on_iface_left_up(int, int) {
-}
-
-
-/*
-Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-// ORIGINAL: 0x00443DA0 ?on_iface_right_click@DiploWin@@QAEXHH@Z 0x00443DA0-0x00443DA3 BYTE_EXACT
-// symbol ?on_iface_right_click@DiploWin@@UAEXHH@Z
-// size      3 bytes
-// prototype void (__thiscall ?on_iface_right_click@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void DiploWin::on_iface_right_click(int, int) {
-}
-
-
-/*
-Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-// ORIGINAL: 0x00443DB0 ?on_iface_left_down@DiploWin@@QAEXHH@Z 0x00443DB0-0x00443DB3 BYTE_EXACT
-// symbol ?on_iface_left_down@DiploWin@@UAEXHH@Z
-// size      3 bytes
-// prototype void (__thiscall ?on_iface_left_down@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void DiploWin::on_iface_left_down(int, int) {
-}
-
-
-/*
-Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-// ORIGINAL: 0x00443DC0 ?on_iface_right_down@DiploWin@@QAEXHH@Z 0x00443DC0-0x00443DC3 BYTE_EXACT
-// symbol ?on_iface_right_down@DiploWin@@UAEXHH@Z
-// size      3 bytes
-// prototype void (__thiscall ?on_iface_right_down@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void DiploWin::on_iface_right_down(int, int) {
-}
-
-
-/*
-Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-// ORIGINAL: 0x00443DD0 ?on_iface_mouse_move@DiploWin@@QAEXHH@Z 0x00443DD0-0x00443DD3 BYTE_EXACT
-// symbol ?on_iface_mouse_move@DiploWin@@UAEXHH@Z
-// size      3 bytes
-// prototype void (__thiscall ?on_iface_mouse_move@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void DiploWin::on_iface_mouse_move(int, int) {
-}
-
-
-/*
-Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-// ORIGINAL: 0x00443DE0 ?on_iface_mouse_leave@DiploWin@@QAEXHH@Z 0x00443DE0-0x00443DE3 BYTE_EXACT
-// symbol ?on_iface_mouse_leave@DiploWin@@UAEXHH@Z
-// size      3 bytes
-// prototype void (__thiscall ?on_iface_mouse_leave@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void DiploWin::on_iface_mouse_leave(int, int) {
-}
-
-
-/*
-Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-// ORIGINAL: 0x00443DF0 ?on_iface_selected@DiploWin@@QAEXHH@Z 0x00443DF0-0x00443DF3 BYTE_EXACT
-// symbol ?on_iface_selected@DiploWin@@UAEXHH@Z
-// size      3 bytes
-// prototype void (__thiscall ?on_iface_selected@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void DiploWin::on_iface_selected(int, int) {
-}
-
-
-/*
-Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-// ORIGINAL: 0x00443E00 ?on_iface_left_double_click@DiploWin@@QAEXHH@Z 0x00443E00-0x00443E03 BYTE_EXACT
-// symbol ?on_iface_left_double_click@DiploWin@@UAEXHH@Z
-// size      3 bytes
-// prototype void (__thiscall ?on_iface_left_double_click@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void DiploWin::on_iface_left_double_click(int, int) {
-}
-
-
-/*
-Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-// ORIGINAL: 0x00443E10 ?on_iface_right_double_click@DiploWin@@QAEXHH@Z 0x00443E10-0x00443E13 BYTE_EXACT
-// symbol ?on_iface_right_double_click@DiploWin@@UAEXHH@Z
-// size      3 bytes
-// prototype void (__thiscall ?on_iface_right_double_click@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void DiploWin::on_iface_right_double_click(int, int) {
-}
-
-
-/*
-Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-// ORIGINAL: 0x00443E20 ?on_iface_button_clicked@DiploWin@@QAEXH@Z 0x00443E20-0x00443E23 BYTE_EXACT
-// symbol ?on_iface_button_clicked@DiploWin@@UAEXH@Z
-// size      3 bytes
-// prototype void (__thiscall ?on_iface_button_clicked@DiploWin@@QAEXH@Z)(DiploWin* this, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void DiploWin::on_iface_button_clicked(int) {
-}
-
-
-/*
-Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-// ORIGINAL: 0x00443E30 ?on_iface_button_toggled@DiploWin@@QAEXHH@Z 0x00443E30-0x00443E33 BYTE_EXACT
-// symbol ?on_iface_button_toggled@DiploWin@@UAEXHH@Z
-// size      3 bytes
-// prototype void (__thiscall ?on_iface_button_toggled@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void DiploWin::on_iface_button_toggled(int, int) {
-}
-
-
-/*
-Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
-// ORIGINAL: 0x00443E40 ?on_iface_dialog_back_draw@DiploWin@@QAEHH@Z 0x00443E40-0x00443E45 BYTE_EXACT
-// size      5 bytes
-// prototype int (__thiscall ?on_iface_dialog_back_draw@DiploWin@@QAEHH@Z)(DiploWin* this, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: 0, always
-Status: Complete
-*/
-int DiploWin::on_iface_dialog_back_draw(int) {
-    return 0;
 }
 
 
@@ -1361,42 +319,6 @@ void DiploWin::UNK3(int a1) {
     offer_count_[a1] = 0;
     for (int side = 0; side != 2; ++side) {
         offer_state_[side] = 0;
-    }
-}
-
-
-/*
-// ORIGINAL: 0x00443C30 ?show@DiploWin@@QAEXH@Z 0x00443C30-0x00443C4B BYTE_EXACT
-// symbol    ?show@DiploWin@@UAEXH@Z
-// size      27 bytes
-// prototype void (__thiscall ?show@DiploWin@@QAEXH@Z)(DiploWin* this, int)
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x0045D310 0x005F7E90
-Status: Complete
-*/
-void DiploWin::show(int visible) {
-    if (!is_visible()) {
-        set_iface_mode();
-    }
-}
-
-/*
-// ORIGINAL: 0x00443C50 ?hide@DiploWin@@QAEXXZ 0x00443C50-0x00443C68 BYTE_EXACT
-// symbol    ?hide@DiploWin@@UAEXXZ
-// size      24 bytes
-// prototype void (__thiscall ?hide@DiploWin@@QAEXXZ)(DiploWin* this)
-// callers   0   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005F7E90
-// indirect  0x00443C60
-Status: Complete
-*/
-void DiploWin::hide() {
-    if (is_visible()) {
-        release_modal();
     }
 }
 
@@ -1490,35 +412,6 @@ found:
         redraw();
     }
 }
-
-// Compiler-generated source-owned lifecycle entry; no handwritten wrapper.
-/*
-// ORIGINAL: 0x00440F30 sub_440f30 0x00440F30-0x00440F54 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:c02baa72365fcd4a910683a3dc9b3c39399a9191:src/recovered/00440f30.cpp", "pinned:terranx_original lifecycle0x440f30", "source:src/diplowin.cpp"], "reason": "Generated complete initializer for the genuine64-element DiplomacyTranscriptLists array composes array construction and registration of reverse array destruction. Preserve complete original spans, catalogue names, claims and historical lessons; current compiler emission is not a fresh grant or linked selection proof."}
-// symbol    _$E21
-*/
-
-// Historical seed finding: Native vector constructor receives64 elements with30-byte stride, constructor4450B0 and destructor406820, then registers440F60.
-// Historical seed finding: Current vector/registration helper delegation is generated lowering; original full36-byte span remains a matching obligation.
-
-// Compiler-generated source-owned lifecycle entry; no handwritten wrapper.
-/*
-// ORIGINAL: 0x00440F60 sub_440f60 0x00440F60-0x00440F74 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:c02baa72365fcd4a910683a3dc9b3c39399a9191:src/recovered/units/00440f60.cpp", "pinned:terranx_original lifecycle0x440f60", "source:src/diplowin.cpp"], "reason": "Generated reverse array teardown owns the complete DiplomacyTranscriptLists64-element StringList lifecycle. Preserve complete original spans, catalogue names, claims and historical lessons; current compiler emission is not a fresh grant or linked selection proof."}
-// symbol    _$E19
-*/
-
-// Historical seed finding: Native vector destruction helper6456E4 takes the array737CD8, stride30, count40hex and complete StringList destruction406820.
-// Historical seed finding: Opaque void-pointer callback spelling was a scaffold workaround, not the actual source array type.
-
-// Compiler-generated source-owned lifecycle entry; no handwritten wrapper.
-/*
-// ORIGINAL: 0x004450B0 sub_4450b0 0x004450B0-0x0044511C FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:c02baa72365fcd4a910683a3dc9b3c39399a9191:src/leaf_recoveries.cpp", "pinned:terranx_original lifecycle0x4450b0", "source:src/diplowin.cpp"], "reason": "The actual compiler-generated StringList constructor owns virtual-base allocation capture, inherited field initialization and both derived table transitions. This replaces the raw-address leaf transcription without changing StringList members. Preserve complete original spans, catalogue names, claims and historical lessons; current compiler emission is not a fresh grant or linked selection proof."}
-// symbol    ??0StringList@@QAE@XZ
-// TRIED: homed into game.cpp (its real TU) 2026-09-03 and reverted for one reason:
-// TRIED: plain constructor with raw pointer-offset writes (eax=ecx=this, returns this implicitly). Diverges at instr #2: original pushes ecx for a compiler-generated [ebp-4] unwind-context local (a partially-constructed-object marker) that a plain non-throwing body never allocates.
-*/
 
 // Historical seed finding: Original30-byte object has virtual allocation base at28; constructor captures StringAllocationHeap and clears it only for complete-object construction.
 // Historical seed finding: Original inherited fields8/C/10/14/18 are zeroed; trailing StringList pending fields are not silently initialized.
@@ -1855,131 +748,1241 @@ void DiploWin::on_left_click(int a1, int a2) {
     }
 }
 
-/*
-Purpose: Clear the hot-seat chat log: walk all 64 0x30-byte records (eight
-         groups of eight), whose first head is at 0x00737CE0, and for each
-         live one walk its entry chain - freeing
-         every node through the owning object's vtable-adjusted release
-         slot and each node's own scalar-deleting slot - then clear the
-         record's head, count and trailing words.
+// Slot 62 (+0xF8) is inherited GraphicWin::redraw(); source calls retain
+// the pinned receiver and virtual dispatch.
 
-// ORIGINAL: 0x00440F80 ?clear_hotseat_chat@@YAXXZ 0x00440F80-0x00441033 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["diplowin.cpp owns the genuine DiplomacyTranscriptLists[8][8] StringList array whose first head is 0x00737CE0 (+8); game.cpp is its direct caller.", "StringStruct::remove_all performs the same count-reloaded on_remove/payload-delete/entry-delete traversal. For a nonempty head it also resets head/count/position; the source body then preserves the original unconditional position and allocator clears while leaving current_ untouched."], "reason": "Move this global cleanup beside its actual 64-list owner and use StringList::remove_all rather than a hand-indexed vtable thunk; keep the empty-head conditional and all per-record resets."}
-// TRIED: member-fn-pointer+union thunk for the two vtable-adjusted "release" calls; raw pointer cast over fixed globals for record base/bound (address itself does read-modify-write via `rec += 0xc`). First divergence is #11 lea vs je.
-// size      179 bytes
-// prototype
-// callers   1   call targets   0
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     (none)
-// indirect  0x00440FBA 0x00440FCC 0x00440FEA
-Status: Source body moved to the DiplomacyTranscriptLists owner;
-        nonempty rows now use the real StringList::remove_all lifecycle.
-        The old union-thunk spelling remains seed history and is
-        superseded by the current source binding; its TRIED note stands.
-*/
+// ORIGINAL: 0x00442560 ?on_key_down@DiploWin@@QAEHH@Z 0x00442560-0x0044258A BYTE_EXACT
+// symbol    ?on_key_down@DiploWin@@UAEHH@Z
+int DiploWin::on_key_down(int key) {
+    if (key == 0x0D || key == 0x1B) {
+        return 0;
+    }
+    return editBox_.on_key_down(key);
+}
 
-void __cdecl clear_hotseat_chat() {
-    for (int row = 0; row < 8; ++row) {
-        for (int column = 0; column < 8; ++column) {
-            StringList &list = DiplomacyTranscriptLists[row][column];
-            if (list.head_ != 0) {
-                list.remove_all();
-            }
-            list.current_position_ = 0;
-            list.allocator_ = 0;
+// Historical TRIED entries below describe the scaffolded seed, not this typed member body.
+// ORIGINAL: 0x00442590 ?on_key_click@DiploWin@@QAEHHH@Z 0x00442590-0x004426ED BYTE_EXACT
+// symbol    ?on_key_click@DiploWin@@UAEHHH@Z
+// TRIED: Seed provenance: 0.74 mnemonic similarity - the edit box's slot-25 vtable call needed a shim in the scaffold; the tree's own Win::vslot_25 declares the same two-int signature, and Win slot 58 is release_modal, so both dispatch through the real declarations here. The private DiploWin state stays raw-offset (0xAB8, the 0xE490 edit text, stringBox_, editBox_).
+// TRIED: DAT_00946a50/DAT_00946a84 are per-faction record fields (stride 1436 = 0x59C) whose address itself is indexed - declared as extern arrays instead of the auto-scaffold's plain const-pointer globals (which would fold the stride multiply away), per the same lever as 0x00423000's g_faction_table. slot 25 on the edit_box_ sub-object takes two ints (a1,a2) - the auto-emitted VCall shim is nullary, so a second small vtable-shim class (VCall25) declares only the 26 ordinals needed with the right signature on the last one; a bare __thiscall function-pointer cast is C4234 on VC6. Landed at 0.74 mnemonic similarity.
+int DiploWin::on_key_click(int repeat, int key) {
+    if (key == 0x1B) {
+        release_modal();
+        return 1;
+    }
+    if (key == 0x0D) {
+        char *const text = editBox_.text_;
+        if (text != 0 && strlen(text) != 0) {
+            message_chat(0x1E00, faction_id_with_, text);
+            // 4425F5 reads the live faction after the chat callback.
+            const int faction = ConsoleGlobal.faction_id_;
+
+            char line[256];
+            line[0] = 0;
+            PluralityDefault = 0;
+            GenderDefault = Players[faction].is_leader_female;
+            strcat(line, Players[faction].name_leader);
+            CharUpperA(line);
+            strcat(line, SocialWinColonSpaceText);
+            strcat(line, BufferJoinSpace);
+            strcat(line, editBox_.text_);
+
+            stringBox_.add(line, faction, 1);
+            DiploOffersDirty = 1;
+            editBox_.set_text(0);
+            return 1;
+        }
+        release_modal();
+        return 1;
+    }
+    editBox_.on_key_click(repeat, key);
+    return 1;
+}
+
+// Source-owned faction/network operations; shared declarations await owner review.
+int __cdecl diplo_lock(int timeout);
+void __cdecl diplo_unlock();
+
+// ORIGINAL: 0x004426F0 ?check_done@DiploWin@@QAEXXZ 0x004426F0-0x00442736 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:def4db5d8cde1ddd00c5735adc0e3cd230ec02b8:src/recovered/004426f0.cpp"], "reason": "Rehome seed into typed DiploWin owner; states and counterpart are source members."}
+void DiploWin::check_done() {
+    if (offer_state_[0] == 1 && offer_state_[1] == 1) {
+        message_data(0x150A, faction_id_with_, 0, 0, 0, 0);
+        if (IsMultiplayerPBEM != 0) {
+            do_it();
         }
     }
 }
 
-/*
-Purpose: Publish the (a1,a2) id pair into the 0x30-byte dialog entry slot
-         the 0x00747BD8 list describes: order the pair, walk the entry
-         chain to the requested index (caching node and index in the
-         list's own state when the walk ran), read the node's payload and
-         its predecessor's, then stage both into the 0x00737CD8 table slot
-         and add it under the payload id through StringStruct::add.
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00442740 0x004429A0 0x004429B8 0x004427F0
+// ORIGINAL: 0x00442740 ?do_it@DiploWin@@QAEXXZ 0x00442740-0x0044299D BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:def4db5d8cde1ddd00c5735adc0e3cd230ec02b8:src/recovered/units/00442740.cpp"], "reason": "Rehome exchange execution into source-owned DiploWin arrays and faction/network globals."}
+void DiploWin::do_it() {
+    if ((faction_id_ <= faction_id_with_ || IsMultiplayerPBEM != 0)
+        && CommlinkPending <= 1) {
+        CommlinkPending = 2;
+        if (diplo_lock(200) == 0) {
+            int side = 0;
+            do {
+                for (int i = 0; i < offer_count_[side]; ++i) {
+                    int giver = side ? faction_id_with_ : faction_id_;
+                    int recipient = side ? faction_id_ : faction_id_with_;
+                    switch (offer_type_[side][i]) {
+                    case 2: net_treaty_on(giver, recipient, 1, 1); break;
+                    case 3: net_treaty_on(giver, recipient, 2, 1); break;
+                    case 4: net_treaty_on(giver, recipient, 4, 1); break;
+                    case 0: {
+                        int tech = offer_value_[side][i];
+                        if (tech < 89 && has_tech(tech, recipient)) break;
+                        net_tech(recipient, tech, giver, 1);
+                        break;
+                    }
+                    case 1: {
+                        int reserves = PlayersData[giver].energy_reserves;
+                        int amount = offer_value_[side][i];
+                        if (amount < 0 || reserves < 0) {
+                            amount = 0;
+                        } else if (amount > reserves) {
+                            amount = reserves;
+                        }
+                        net_energy(giver, -amount, recipient, amount, 1);
+                        break;
+                    }
+                    case 5: {
+                        int target = offer_value_[side][i];
+                        if (((unsigned char)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1 << target)) != 0
+                            && !(PlayersData[giver].diplo_treaties[target] & 0x10)) {
+                            message_data(0x150F, target, giver, recipient, 0, 0);
+                        }
+                        net_treaty_on(giver, target, 8, 0);
+                        net_double_cross(giver, target, recipient, 1);
+                        break;
+                    }
+                    }
+                }
+                ++side;
+            } while (side < 2);
+            diplo_unlock();
+            CommlinkPending = 1;
+            offer_state_[1] = 3;
+            offer_state_[0] = 3;
+            offer_count_[1] = 0;
+            offer_count_[0] = 0;
+            message_data(0x150D, faction_id_with_, 0, 0, 0, 0);
+            redraw();
+        }
+    }
+}
 
-// ORIGINAL: 0x00441040 sub_441040 0x00441040-0x004410F1 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["DiploWin owns stringBox_ at +0xA388; StringBox::stringList_ is at +0x2B70, giving the exact original StringList receiver at DiploWindow+0xCEF8 = 0x00747BD0.", "The pinned words 0x747BD8/BC/E0/E4 therefore map to StringList head_/current_/entry_count_/current_position_; 0x737CD8 is the typed 8x8 destination list table."], "reason": "Move the global callback into the owner of both the observed source StringList member and destination transcript array; preserve cursor caching, pair-index arithmetic, target-field writes and add order."}
-// symbol    ?sub_441040@@YAXHH@Z
-// TRIED: void __cdecl(int a1, int a2), direct linked-list walk transcription; diverges at #29 mov vs cmp, not chased further
-// size      177 bytes
-// prototype
+// ORIGINAL: 0x004429C0 ?done_deal@DiploWin@@QAEXXZ 0x004429C0-0x004429E7 BYTE_EXACT
+void DiploWin::done_deal() {
+    offer_state_[1] = 3;
+    offer_state_[0] = 3;
+    offer_count_[1] = 0;
+    offer_count_[0] = 0;
+    redraw();
+}
+
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+// ORIGINAL: 0x004429F0 ?UNK4@DiploWin@@QAEXH@Z 0x004429F0-0x004429F3 BYTE_EXACT
+// size      3 bytes
+// prototype void (__thiscall ?UNK4@DiploWin@@QAEXH@Z)(DiploWin* this, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void DiploWin::UNK4(int) {
+}
+
+
+/*
+Purpose: Unknown; the legacy implementation is a bare return with no body.
+// ORIGINAL: 0x00442A00 ?UNK5@DiploWin@@QAEXXZ 0x00442A00-0x00442A01 BYTE_EXACT
+// size      1 bytes
+// prototype void (__thiscall ?UNK5@DiploWin@@QAEXXZ)(DiploWin* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void DiploWin::UNK5() {
+}
+
+
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00442A10 0x00442D98 0x00442DB4 0x00442C50
+// ORIGINAL: 0x00442A10 ?draw_who@DiploWin@@QAEXXZ 0x00442A10-0x00442D98 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:def4db5d8cde1ddd00c5735adc0e3cd230ec02b8:src/recovered/units/00442a10.cpp"], "reason": "Typed DiploWin party rendering using source-owned FactionArt datalink portraits, rectangles and label storage."}
+void DiploWin::draw_who() {
+    if (faction_id_ > 0) {
+        set_font(find_font(14, 1), 0, 0, 0);
+        StringTemp[0] = 0;
+        {
+            int f = faction_id_;
+            PluralityDefault = 0;
+            GenderDefault = Players[f].is_leader_female;
+            strcat(StringTemp, Players[f].title_leader);
+        }
+        strcat(StringTemp, BufferJoinSpace);
+        {
+            int f = faction_id_;
+            PluralityDefault = 0;
+            GenderDefault = Players[f].is_leader_female;
+            strcat(StringTemp, Players[f].name_leader);
+        }
+        set_text_color(ChatItemIdTable[faction_id_], ChatShadowColors[faction_id_], 1, 1);
+        RECT area = leader_rect_[0];
+        box_sprite(&area, &InterfaceBoxStyles[6]);
+        area.left += 3;
+        area.right -= 3;
+        area.top += 3;
+        area.bottom -= 3;
+        CharUpperA(StringTemp);
+        write_cent_l(StringTemp, &area);
+        area = portrait_rect_[0];
+        box_sprite(&area, &InterfaceBoxStyles[0]);
+        Sprite *portrait = &FactionsArt[faction_id_].datalink;
+        set_rectangle_dimensions(&area, area.left + 1, area.top + 1,
+                                 portrait->width(), portrait->height());
+        portrait->draw(this, portrait->transparent_index(), area.left, area.top, 1, 1);
+        area.left += 4;
+        area.right -= 4;
+        area.bottom -= 4;
+        area.top = area.bottom - 20;
+        set_font(find_font(14, 1), 0, 0, 0);
+        StringTemp[0] = 0;
+        switch (offer_state_[0]) {
+        case 0:
+            strcat(StringTemp, label_get(0x73C / 4));
+            break;
+        case 1:
+            strcat(StringTemp, label_get(0x740 / 4));
+            break;
+        case 2:
+            set_text_color(ChatItemIdTable[0], ChatShadowColors[0], 1, 1);
+            strcat(StringTemp, label_get(0x744 / 4));
+            break;
+        case 3:
+            strcat(StringTemp, label_get(0x780 / 4));
+            break;
+        case 4:
+            set_text_color(ChatItemIdTable[0], ChatShadowColors[0], 1, 1);
+            strcat(StringTemp, label_get(0x968 / 4));
+            break;
+        case 5:
+            set_text_color(ChatItemIdTable[0], ChatShadowColors[0], 1, 1);
+            strcat(StringTemp, label_get(0x95C / 4));
+            break;
+        case 6:
+            set_text_color(251, 0, 1, 1);
+            strcat(StringTemp, label_get(0x960 / 4));
+            break;
+        }
+        CharUpperA(StringTemp);
+        map_colors(&area, ShadowColorTable);
+        area.left += 3;
+        area.right -= 3;
+        area.top += 3;
+        area.bottom -= 3;
+        write_cent_l(StringTemp, &area);
+    }
+}
+
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00442DC0 0x0044314C 0x00443168 0x00443000
+// ORIGINAL: 0x00442DC0 ?draw_whom@DiploWin@@QAEXXZ 0x00442DC0-0x00443149 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:def4db5d8cde1ddd00c5735adc0e3cd230ec02b8:src/recovered/units/00442dc0.cpp"], "reason": "Typed DiploWin party rendering using source-owned FactionArt datalink portraits, rectangles and label storage."}
+void DiploWin::draw_whom() {
+    if (faction_id_ > 0) {
+        set_font(find_font(14, 1), 0, 0, 0);
+        StringTemp[0] = 0;
+        {
+            int f = faction_id_with_;
+            PluralityDefault = 0;
+            GenderDefault = Players[f].is_leader_female;
+            strcat(StringTemp, Players[f].title_leader);
+        }
+        strcat(StringTemp, BufferJoinSpace);
+        {
+            int f = faction_id_with_;
+            PluralityDefault = 0;
+            GenderDefault = Players[f].is_leader_female;
+            strcat(StringTemp, Players[f].name_leader);
+        }
+        set_text_color(ChatItemIdTable[faction_id_with_], ChatShadowColors[faction_id_with_], 1, 1);
+        RECT area = leader_rect_[1];
+        box_sprite(&area, &InterfaceBoxStyles[6]);
+        area.left += 3;
+        area.right -= 3;
+        area.top += 3;
+        area.bottom -= 3;
+        CharUpperA(StringTemp);
+        write_cent_l(StringTemp, &area);
+        area = portrait_rect_[1];
+        box_sprite(&area, &InterfaceBoxStyles[0]);
+        Sprite *portrait = &FactionsArt[faction_id_with_].datalink;
+        set_rectangle_dimensions(&area, area.right - portrait->width() - 1, area.top + 1,
+                                 portrait->width(), portrait->height());
+        portrait->draw(this, portrait->transparent_index(), area.left, area.top, 1, 1);
+        area.left += 4;
+        area.right -= 4;
+        area.bottom -= 4;
+        area.top = area.bottom - 20;
+        set_font(find_font(14, 1), 0, 0, 0);
+        StringTemp[0] = 0;
+        switch (offer_state_[1]) {
+        case 0:
+            strcat(StringTemp, label_get(0x73C / 4));
+            break;
+        case 1:
+            strcat(StringTemp, label_get(0x740 / 4));
+            break;
+        case 2:
+            set_text_color(ChatItemIdTable[0], ChatShadowColors[0], 1, 1);
+            strcat(StringTemp, label_get(0x744 / 4));
+            break;
+        case 3:
+            strcat(StringTemp, label_get(0x780 / 4));
+            break;
+        case 4:
+            set_text_color(ChatItemIdTable[0], ChatShadowColors[0], 1, 1);
+            strcat(StringTemp, label_get(0x968 / 4));
+            break;
+        case 5:
+            set_text_color(ChatItemIdTable[0], ChatShadowColors[0], 1, 1);
+            strcat(StringTemp, label_get(0x95C / 4));
+            break;
+        case 6:
+            set_text_color(251, 0, 1, 1);
+            strcat(StringTemp, label_get(0x960 / 4));
+            break;
+        }
+        CharUpperA(StringTemp);
+        map_colors(&area, ShadowColorTable);
+        area.left += 3;
+        area.right -= 3;
+        area.top += 3;
+        area.bottom -= 3;
+        write_cent_l(StringTemp, &area);
+    }
+}
+
+// SubInterface vtable slots with exact native shared-stub targets. These are
+// declarations/bodies to add only after the secondary-base layout is adopted.
+// Native secondary table66B5E0 selects these shared return bodies at slots
+// 1,2,14,16,17. They do not create additional original identities or claims.
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_iface_scrolled@DiploWin@@UAEXHH@Z 0x00444FC0
+void DiploWin::on_iface_scrolled(int, int) {}
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_iface_scrolling@DiploWin@@UAEXHH@Z 0x00444FC0
+void DiploWin::on_iface_scrolling(int, int) {}
+// RECOVERY_SHARED: v1 0x00404250 0x00404255 ?on_iface_button_pressed@DiploWin@@UAEHH@Z 0x00444FC0
+int DiploWin::on_iface_button_pressed(int) { return 0; }
+// RECOVERY_SHARED: v1 0x00406B20 0x00406B23 ?on_iface_group_clicked@DiploWin@@UAEXHHH@Z 0x00444FC0
+void DiploWin::on_iface_group_clicked(int, int, int) {}
+// RECOVERY_SHARED: v1 0x00443E40 0x00443E45 ?on_iface_dialog_back_draw@DiploWin@@UAEHPAVGraphicWin@@@Z 0x00444FC0
+int DiploWin::on_iface_dialog_back_draw(GraphicWin *) { return 0; }
+
+// The diplomacy window's redraw latch is writable application storage, not a
+// pointer into the original executable. on_key_click and the offer paths write it.
+// RECOVERY_OBJECT: v2 0x007492D0 0x007492D4 ?DiploOffersDirty@@3HA 0x00442590
+int DiploOffersDirty;
+
+// Original initialized .data and literal evidence, inspected from the pinned image.
+// DiploKnownTechColor (0x0068A5C4) is IfaceColorTable[9]; its identity moved
+// to interface_assets.cpp.
+// RECOVERY_OBJECT: v2 0x006839F4 0x006839F6 ?DiploKnownTechOpen@@3PADA 0x00443170
+char DiploKnownTechOpen[2] = "(";
+// RECOVERY_OBJECT: v2 0x006839F8 0x006839FA ?DiploKnownTechClose@@3PADA 0x00443170
+char DiploKnownTechClose[2] = ")";
+
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00443170 0x004436A0 0x004436B8 0x00443480
+// ORIGINAL: 0x00443170 ?draw_offers@DiploWin@@QAEXXZ 0x00443170-0x0044369F BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:def4db5d8cde1ddd00c5735adc0e3cd230ec02b8:src/recovered/units/00443170.cpp"], "reason": "Typed offer-panel rendering, technology/energy/treaty/faction labels and Spot ownership, replacing seed raw offsets."}
+void DiploWin::draw_offers() {
+    int line_height = font_line_advance(*find_font(14, 0));
+    int side = 0;
+    do {
+        spot_.kill_type(side);
+        set_font(find_font(14, 0), find_font(14, 1), find_font(14, 2), 0);
+        RECT panel;
+        if (side) {
+            panel = portrait_rect_[1];
+            panel.right += -1 - FactionsArt[faction_id_with_].datalink.width();
+        } else {
+            panel = portrait_rect_[0];
+            panel.left += FactionsArt[faction_id_].datalink.width() + 1;
+        }
+        panel.left += 3;
+        panel.top += 3;
+        panel.right -= 3;
+        int width = panel.right - panel.left;
+        set_text_color(ChatItemIdTable[side ? faction_id_with_ : faction_id_],
+                       ChatShadowColors[side ? faction_id_with_ : faction_id_], 1, 1);
+        StringTemp[0] = 0;
+        {
+            int f = side ? faction_id_with_ : faction_id_;
+            PluralityDefault = 0;
+            GenderDefault = Players[f].is_leader_female;
+            strcat(StringTemp, Players[f].title_leader);
+        }
+        strcat(StringTemp, BufferJoinSpace);
+        {
+            int f = side ? faction_id_with_ : faction_id_;
+            PluralityDefault = 0;
+            GenderDefault = Players[f].is_leader_female;
+            strcat(StringTemp, Players[f].name_leader);
+        }
+        strcat(StringTemp, BufferJoinSpace);
+        int count = offer_count_[side];
+        StringTemp[0] = 0;
+        if (count == 0) {
+            strcat(StringTemp, label_get(0x734 / 4));
+            write_cent_text(StringTemp, panel.left, panel.top, width);
+        } else {
+            strcat(StringTemp, label_get(0x738 / 4));
+            write_cent_text(StringTemp, panel.left, panel.top, width);
+        }
+        int top = panel.top + line_height;
+        for (int i = 0; i < offer_count_[side]; ++i) {
+            StringTemp[0] = 0;
+            set_text_color(ChatItemIdTable[side ? faction_id_with_ : faction_id_],
+                           ChatShadowColors[side ? faction_id_with_ : faction_id_], 1, 1);
+            switch (offer_type_[side][i]) {
+            case 0:
+                if (side == 1 && offer_value_[1][i] < 89
+                    && has_tech(offer_value_[1][i], faction_id_)) {
+                    set_text_color(DiploKnownTechColor, 0, side, side);
+                    strcat(StringTemp, DiploKnownTechOpen);
+                    say_tech(StringTemp, offer_value_[1][i], side);
+                    strcat(StringTemp, DiploKnownTechClose);
+                } else {
+                    say_tech(StringTemp, offer_value_[side][i], 1);
+                }
+                break;
+            case 1: {
+                char text[80];
+                _itoa(offer_value_[side][i], text, 10);
+                strcat(StringTemp, text);
+                strcat(StringTemp, BufferJoinSpace);
+                strcat(StringTemp, label_get(0x90 / 4));
+                break;
+            }
+            case 2:
+                strcat(StringTemp, label_get(0x34C / 4));
+                break;
+            case 3:
+                strcat(StringTemp, label_get(0x350 / 4));
+                break;
+            case 4:
+                strcat(StringTemp, label_get(0x354 / 4));
+                break;
+            case 5: {
+                strcat(StringTemp, label_get(0x980 / 4));
+                strcat(StringTemp, BufferJoinSpace);
+                int f = offer_value_[side][i];
+                GenderDefault = Players[f].noun_gender;
+                PluralityDefault = Players[f].is_noun_plural;
+                strcat(StringTemp, Players[f].noun_faction);
+                break;
+            }
+            }
+            write_cent_text(StringTemp, panel.left, top, width);
+            RECT item;
+            spot_.add(i, side, set_rectangle_dimensions(&item, panel.left, top, width, line_height));
+            top += line_height;
+        }
+        ++side;
+    } while (side < 2);
+}
+
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x004436C0 ?on_redraw@DiploWin@@QAEXXZ 0x004436C0-0x00443C25
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original constructor444FC0 establishes GraphicWin+0, SubInterface+A14 and member construction order; secondary table66B5E0 gives nineteen callback slots and adjusted receivers.", "Redraw4436C0, status443C70 and painter443E50 inspected over declared original spans; source rectangle/control owners preserve native offsets. Palette colors reuse TextColourTable[80-2*item]/[81-2*item]. Localized title producer and full extents remain unknown.", "recovery/tasks/interface-contract-report-closure.json; root coordinator owns import and independent compilation; no current byte, structural or runtime acceptance is implied."], "reason": "Recover the genuine DiploWin GraphicWin/SubInterface owner with typed callbacks and automatic base/member lifetimes; retain independent seed history and restoration obligations."}
+// symbol ?on_redraw@DiploWin@@UAEXXZ
+void DiploWin::on_redraw() {
+  MainInterfaceGlobal.restore_back(1);
+
+  RECT area = MainInterfaceGlobal.right_frame_rect();
+  area.left += 4;
+  area.right -= 4;
+  area.top += 4;
+  area.bottom -= 4;
+  MainInterfaceGlobal.Buffer::box_sprite(&area, &InterfaceBoxStyles[3]);
+
+  area = MainInterfaceGlobal.main_frame_rect();
+  area.left += 4;
+  area.top += 4;
+  area.right -= 4;
+  area.bottom -= 4;
+  MainInterfaceGlobal.Buffer::box_sprite(&area, &InterfaceBoxStyles[3]);
+
+  UnionRect(&area, &portrait_rect_[0], &portrait_rect_[1]);
+  RECT *f4c = &rect_F4C_;
+  UnionRect(&area, &area, f4c);
+  area.left -= 3;
+  area.right += 3;
+  area.top -= 3;
+  area.bottom += 3;
+
+  Buffer::box_sprite(&area, &InterfaceBoxStyles[3]);
+
+  UnionRect(&area, &button_rects_[2], &button_rects_[3]);
+  UnionRect(&area, &area, &button_rects_[4]);
+  area.left -= 3;
+  area.right += 3;
+  area.top -= 3;
+  area.bottom += 3;
+  Buffer::box_sprite(&area, &InterfaceBoxStyles[3]);
+
+  area = rect_F9C_;
+  Buffer::box_sprite(&area, &InterfaceBoxStyles[6]);
+  area.left += 3;
+  area.right -= 3;
+  area.top += 3;
+  area.bottom -= 3;
+  Buffer::set_font(find_font(14, 1), 0, 0, 0);
+  Buffer::set_text_color(0x99, -1, 1, 1);
+
+  LPSTR title = Language == 0 ? "TRADE"
+                              : &DiploLocalizedTradeTitle;
+  Buffer::write_cent_l(title, &area);
+
+  area = rect_FAC_;
+  Buffer::box_sprite(&area, &InterfaceBoxStyles[3]);
+
+  area = rect_FBC_;
+  Buffer::box_sprite(&area, &InterfaceBoxStyles[6]);
+  area.left += 3;
+  area.right -= 3;
+  area.top += 3;
+  area.bottom -= 3;
+  title = Language == 0 ? "DIPLOMACY"
+                        : &DiploLocalizedDiplomacyTitle;
+  Buffer::write_cent_l(title, &area);
+
+  area = rect_FCC_;
+  Buffer::box_sprite(&area, &InterfaceBoxStyles[3]);
+
+  area.left = f4c->left;
+  area.top = f4c->top;
+  area.right = f4c->right;
+  area.bottom = f4c->bottom;
+  Buffer::box_sprite(&area, &InterfaceBoxStyles[6]);
+  area.left += 3;
+  area.right -= 3;
+  area.top += 3;
+  area.bottom -= 3;
+
+  StringTemp[0] = 0;
+  strcat(StringTemp, label_get(0x748 / 4));
+  strcat(StringTemp, BufferJoinSpace);
+  strcat(StringTemp, BufferJoinSpace);
+  strcat(StringTemp, SocialWinOpenParenText);
+  strcat(StringTemp, label_get(0x788 / 4));
+  strcat(StringTemp, SocialWinColonSpaceText);
+  strcat(StringTemp, "{");
+
+  const uint32_t treaties =
+      PlayersData[faction_id_].diplo_treaties[faction_id_with_];
+  if ((treaties & 1) != 0) {
+    strcat(StringTemp, label_get(0x34C / 4));
+    Buffer::set_text_color2(0xFA, -1, 1, 1);
+  } else if ((treaties & 2) != 0) {
+    strcat(StringTemp, label_get(0x350 / 4));
+    Buffer::set_text_color2(0xFA, -1, 1, 1);
+  } else if ((treaties & 4) != 0) {
+    strcat(StringTemp, label_get(0x354 / 4));
+    Buffer::set_text_color2(0xFA, -1, 1, 1);
+  } else if ((treaties & 0x10) != 0) {
+    strcat(StringTemp, label_get(0x358 / 4));
+    Buffer::set_text_color2(0xF9, -1, 1, 1);
+  } else {
+    strcat(StringTemp, label_get(0x784 / 4));
+    Buffer::set_text_color2(0xFB, -1, 1, 1);
+  }
+  strcat(StringTemp, "}");
+  strcat(StringTemp, SocialWinCloseParenText);
+  Buffer::write_cent_l(StringTemp, &area);
+
+  if (MainInterfaceTileFlag != 0) {
+    MainInterfaceGlobal.Buffer::box_sprite(&rect_F3C_, &InterfaceBoxStyles[0]);
+    MainInterfaceGlobal.Buffer::box_sprite(&rect_F2C_, &InterfaceBoxStyles[0]);
+  }
+
+  draw_who();
+  draw_whom();
+  draw_offers();
+}
+
+
+/*
+// ORIGINAL: 0x00443C30 ?show@DiploWin@@QAEXH@Z 0x00443C30-0x00443C4B BYTE_EXACT
+// symbol    ?show@DiploWin@@UAEXH@Z
+// size      27 bytes
+// prototype void (__thiscall ?show@DiploWin@@QAEXH@Z)(DiploWin* this, int)
 // callers   0   call targets   2
 // kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x00401100 0x00628A50
-Status: Coverage transcription - unclaimed body; the walk now goes through
-        the tree's own StringStruct::add and the general.h swap, whose
-        measured bodies are the image's 0x00401100 and 0x00628A50.
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0045D310 0x005F7E90
+Status: Complete
 */
-// The image reads the list head separately for each of these two values.
-static inline char *transcript_current_text(StringList *list) {
-  return list->head_ ? list->current_entry()->text : 0;
-}
-
-static inline void transcript_add(StringList *list, char *text, int id) {
-  list->pending_text_ = text;
-  list->field_20_ = 0;
-  list->field_24_ = 0;
-  list->add(id);
-}
-
-void __cdecl sub_441040(int a1, int a2) {
-    StringList &source = DiploWindow.shared_string_box().strings();
-    if (a1 > a2) {
-        swap(&a1, &a2);
-    }
-    int loopBound = source.entry_count_;
-    for (int i = loopBound - 3; i < loopBound; ++i) {
-        if (i >= 0) {
-            source.seek_pos(i);
-            transcript_add(&DiplomacyTranscriptLists[a1][a2],
-                           transcript_current_text(&source),
-                           source.current_id());
-        }
+void DiploWin::show(int visible) {
+    if (!is_visible()) {
+        set_iface_mode();
     }
 }
 
 /*
-Purpose: Refill one hot-seat chat view: order the two record indices, clear
-         the shared StringBox and its EditBox caption, then stage the three
-         newest entries of the record's entry chain into the box - each
-         entry's payload text added under its id.
-
-// ORIGINAL: 0x00441100 sub_441100 0x00441100-0x004411EC FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["diplowin.cpp owns the direct DiploWin::exec caller, the shared DiploWindow StringBox/EditBox and the typed DiplomacyTranscriptLists array.", "The original implementation clears both shared controls, normalizes the pair, then reads the last three entries from the selected list in its existing order."], "reason": "Move the complete externally named callback from the catch-all leaf TU into the owning diplomacy TU; retain normalization, clear order, loop bounds and typed list/control behavior."}
-// symbol    ?sub_441100@@YAXHH@Z
-// TRIED: signature had no params in the fallback head (IDA guessed 2 stack ints, confirmed by [ebp+8]/[ebp+0xc] reads before any push, and no meaningful eax at ret so void not int - both changed). Landed at MISMATCH (90% mnemonic similarity, 11 edits).
-// size      236 bytes
-// prototype
-// callers   1   call targets   4
+// ORIGINAL: 0x00443C50 ?hide@DiploWin@@QAEXXZ 0x00443C50-0x00443C68 BYTE_EXACT
+// symbol    ?hide@DiploWin@@UAEXXZ
+// size      24 bytes
+// prototype void (__thiscall ?hide@DiploWin@@QAEXXZ)(DiploWin* this)
+// callers   0   call targets   1
 // kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x006151E0 0x00628A50 0x00629710 0x00629780
-Status: The body now lives beside the real DiploWindow StringBox/EditBox
-        and transcript-array owners. Its historical MISMATCH note stands;
-        the former uncertainty about shared StringBox ownership is
-        superseded by the current source binding.
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F7E90
+// indirect  0x00443C60
+Status: Complete
 */
-// The shared window is the typed DiploWindow object; its saved entries are
-// held in the 8x8 StringList table at the observed 0x737CD8 storage region.
-void __cdecl sub_441100(int faction_id, int faction_id_with) {
-  if (faction_id > faction_id_with)
-    swap(&faction_id, &faction_id_with);
-  DiploWindow.shared_string_box().clear();
-  DiploWindow.shared_edit_box().set_text(0);
-  const int saved_count =
-      DiplomacyTranscriptLists[faction_id][faction_id_with].entry_count_;
-  for (int index = saved_count - 3; index < saved_count; ++index) {
-    if (index < 0) continue;
-    DiplomacyTranscriptLists[faction_id][faction_id_with].seek_pos(index);
-    int id = DiplomacyTranscriptLists[faction_id][faction_id_with].current_id();
-    char *text = transcript_current_text(&DiplomacyTranscriptLists[faction_id][faction_id_with]);
-    DiploWindow.shared_string_box().add(text, id, 1);
+void DiploWin::hide() {
+    if (is_visible()) {
+        release_modal();
+    }
+}
+
+// ORIGINAL: 0x00443C70 ?on_status@DiploWin@@QAEXH@Z 0x00443C70-0x00443D77 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original constructor444FC0 establishes GraphicWin+0, SubInterface+A14 and member construction order; secondary table66B5E0 gives nineteen callback slots and adjusted receivers.", "Redraw4436C0, status443C70 and painter443E50 inspected over declared original spans; source rectangle/control owners preserve native offsets. Palette colors reuse TextColourTable[80-2*item]/[81-2*item]. Localized title producer and full extents remain unknown.", "recovery/tasks/interface-contract-report-closure.json; root coordinator owns import and independent compilation; no current byte, structural or runtime acceptance is implied.", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/00443c70.cpp"], "reason": "Recover the genuine DiploWin GraphicWin/SubInterface owner with typed callbacks and automatic base/member lifetimes; retain independent seed history and restoration obligations. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
+// symbol ?on_status@DiploWin@@UAEXH@Z
+void DiploWin::on_status(int mode) {
+  if (mode != 0) {
+    GraphicWin *const front = static_cast<GraphicWin *>(this);
+    front->on_redraw();
+    for (int i = 0; i != 13; ++i) {
+      flatButtons_[i].show(0);
+    }
+    slide_show(front, 2);
+    front->Win::show(3);
+    stringBox_.show(0);
+    editBox_.show(0);
+    editBox_.time_.start();
+    front->redraw();
+    MainInterfaceGlobal.soft_update();
+    return;
+  }
+
+  stringBox_.hide();
+  editBox_.time_.stop();
+  editBox_.hide();
+  GraphicWin *const front = static_cast<GraphicWin *>(this);
+  slide_hide(front, 2);
+  front->Win::hide();
+  for (int i = 0; i != 13; ++i) {
+    flatButtons_[i].hide();
   }
 }
+
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+// ORIGINAL: 0x00443D80 ?on_iface_left_click@DiploWin@@QAEXHH@Z 0x00443D80-0x00443D83 BYTE_EXACT
+// symbol ?on_iface_left_click@DiploWin@@UAEXHH@Z
+// size      3 bytes
+// prototype void (__thiscall ?on_iface_left_click@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void DiploWin::on_iface_left_click(int, int) {
+}
+
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+// ORIGINAL: 0x00443D90 ?on_iface_left_up@DiploWin@@QAEXHH@Z 0x00443D90-0x00443D93 BYTE_EXACT
+// symbol ?on_iface_left_up@DiploWin@@UAEXHH@Z
+// size      3 bytes
+// prototype void (__thiscall ?on_iface_left_up@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void DiploWin::on_iface_left_up(int, int) {
+}
+
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+// ORIGINAL: 0x00443DA0 ?on_iface_right_click@DiploWin@@QAEXHH@Z 0x00443DA0-0x00443DA3 BYTE_EXACT
+// symbol ?on_iface_right_click@DiploWin@@UAEXHH@Z
+// size      3 bytes
+// prototype void (__thiscall ?on_iface_right_click@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void DiploWin::on_iface_right_click(int, int) {
+}
+
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+// ORIGINAL: 0x00443DB0 ?on_iface_left_down@DiploWin@@QAEXHH@Z 0x00443DB0-0x00443DB3 BYTE_EXACT
+// symbol ?on_iface_left_down@DiploWin@@UAEXHH@Z
+// size      3 bytes
+// prototype void (__thiscall ?on_iface_left_down@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void DiploWin::on_iface_left_down(int, int) {
+}
+
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+// ORIGINAL: 0x00443DC0 ?on_iface_right_down@DiploWin@@QAEXHH@Z 0x00443DC0-0x00443DC3 BYTE_EXACT
+// symbol ?on_iface_right_down@DiploWin@@UAEXHH@Z
+// size      3 bytes
+// prototype void (__thiscall ?on_iface_right_down@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void DiploWin::on_iface_right_down(int, int) {
+}
+
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+// ORIGINAL: 0x00443DD0 ?on_iface_mouse_move@DiploWin@@QAEXHH@Z 0x00443DD0-0x00443DD3 BYTE_EXACT
+// symbol ?on_iface_mouse_move@DiploWin@@UAEXHH@Z
+// size      3 bytes
+// prototype void (__thiscall ?on_iface_mouse_move@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void DiploWin::on_iface_mouse_move(int, int) {
+}
+
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+// ORIGINAL: 0x00443DE0 ?on_iface_mouse_leave@DiploWin@@QAEXHH@Z 0x00443DE0-0x00443DE3 BYTE_EXACT
+// symbol ?on_iface_mouse_leave@DiploWin@@UAEXHH@Z
+// size      3 bytes
+// prototype void (__thiscall ?on_iface_mouse_leave@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void DiploWin::on_iface_mouse_leave(int, int) {
+}
+
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+// ORIGINAL: 0x00443DF0 ?on_iface_selected@DiploWin@@QAEXHH@Z 0x00443DF0-0x00443DF3 BYTE_EXACT
+// symbol ?on_iface_selected@DiploWin@@UAEXHH@Z
+// size      3 bytes
+// prototype void (__thiscall ?on_iface_selected@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void DiploWin::on_iface_selected(int, int) {
+}
+
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+// ORIGINAL: 0x00443E00 ?on_iface_left_double_click@DiploWin@@QAEXHH@Z 0x00443E00-0x00443E03 BYTE_EXACT
+// symbol ?on_iface_left_double_click@DiploWin@@UAEXHH@Z
+// size      3 bytes
+// prototype void (__thiscall ?on_iface_left_double_click@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void DiploWin::on_iface_left_double_click(int, int) {
+}
+
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+// ORIGINAL: 0x00443E10 ?on_iface_right_double_click@DiploWin@@QAEXHH@Z 0x00443E10-0x00443E13 BYTE_EXACT
+// symbol ?on_iface_right_double_click@DiploWin@@UAEXHH@Z
+// size      3 bytes
+// prototype void (__thiscall ?on_iface_right_double_click@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void DiploWin::on_iface_right_double_click(int, int) {
+}
+
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+// ORIGINAL: 0x00443E20 ?on_iface_button_clicked@DiploWin@@QAEXH@Z 0x00443E20-0x00443E23 BYTE_EXACT
+// symbol ?on_iface_button_clicked@DiploWin@@UAEXH@Z
+// size      3 bytes
+// prototype void (__thiscall ?on_iface_button_clicked@DiploWin@@QAEXH@Z)(DiploWin* this, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void DiploWin::on_iface_button_clicked(int) {
+}
+
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+// ORIGINAL: 0x00443E30 ?on_iface_button_toggled@DiploWin@@QAEXHH@Z 0x00443E30-0x00443E33 BYTE_EXACT
+// symbol ?on_iface_button_toggled@DiploWin@@UAEXHH@Z
+// size      3 bytes
+// prototype void (__thiscall ?on_iface_button_toggled@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void DiploWin::on_iface_button_toggled(int, int) {
+}
+
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
+// ORIGINAL: 0x00443E40 ?on_iface_dialog_back_draw@DiploWin@@QAEHH@Z 0x00443E40-0x00443E45 BYTE_EXACT
+// size      5 bytes
+// prototype int (__thiscall ?on_iface_dialog_back_draw@DiploWin@@QAEHH@Z)(DiploWin* this, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: 0, always
+Status: Complete
+*/
+int DiploWin::on_iface_dialog_back_draw(int) {
+    return 0;
+}
+
+extern int TextColourTable[195];
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// TRIED: two separate null-check ifs (worse fit); localRect copy before set_clip (worse fit); closest is buf cached once, single || null check, localRect copied after set_clip - 5-edit MISMATCH
+// ORIGINAL: 0x00443E50 ?on_iface_dialog_item_back_draw@DiploWin@@QAEHPAUGraphicWin@@HHPAURECT@@@Z 0x00443E50-0x00443F0C BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original constructor444FC0 establishes GraphicWin+0, SubInterface+A14 and member construction order; secondary table66B5E0 gives nineteen callback slots and adjusted receivers.", "Redraw4436C0, status443C70 and painter443E50 inspected over declared original spans; source rectangle/control owners preserve native offsets. Palette colors reuse TextColourTable[80-2*item]/[81-2*item]. Localized title producer and full extents remain unknown.", "recovery/tasks/interface-contract-report-closure.json; root coordinator owns import and independent compilation; no current byte, structural or runtime acceptance is implied."], "reason": "Recover the genuine DiploWin GraphicWin/SubInterface owner with typed callbacks and automatic base/member lifetimes; retain independent seed history and restoration obligations."}
+// symbol ?on_iface_dialog_item_back_draw@DiploWin@@UAEHPAVGraphicWin@@HHPAUtagRECT@@@Z
+int DiploWin::on_iface_dialog_item_back_draw(GraphicWin *window, int, int item,
+                                             RECT *rect) {
+  if (window == 0 || rect == 0) {
+    return 0;
+  }
+  Buffer &canvas = static_cast<Buffer &>(*window);
+  canvas.restore_clip();
+  RECT local = *rect;
+
+  // These words belong to the text.pcx palette published by textcolor_init.
+  // The native addresses are TextColourTable[80]/[81], walked backward as
+  // two-int pairs for each item.
+  canvas.set_text_color(TextColourTable[80 - 2 * item],
+                        TextColourTable[81 - 2 * item], 1, 1);
+  if (item == 0) {
+    window->fill(rect, item);
+  } else {
+    canvas.box_sprite(&local, &InterfaceBoxStyles[27 + item]);
+  }
+  return 1;
+}
+
+// ---------------------------------------------------------------------------
+// File-local helpers (place above DiploWin::exec; they replace the old
+// by-value `inset_rect` at the top of diplowin.cpp, which exec no longer uses).
+//
+// 0x444140..44415E / 0x4444F9..444515 load all four
+// source edges through a copy of the source pointer, then +n/-n (dead
+// top/bottom copies included when the vertical amount is zero).
+
+// ---------------------------------------------------------------------------
+// ORIGINAL: 0x00443F10 ?exec@DiploWin@@QAEXHH@Z 0x00443F10-0x00444D8B
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00443f10.cpp", "image:terranx_original.exe:443F10-444D8B; callback4412A0 and transcript lifecycle440F30/440F60"], "reason": "Recover the full diplomacy window lifecycle using real base/member controls, singleton transcripts and bilateral offer storage; original catalogue extent retained."}
+// TRIED: the ~500-instruction layout-RECT tree (this+0xedc onward, built by repeatedly splitting/insetting a screen rect) is approximated at the right field offsets with plausible rather than register-derived values; likewise the AI offer-table indexing (0x7388d8/0x7388e0/0x7388e8/0x738928, 9-wide rows keyed by ab4/ab8) is a simplified approximation, not the exact addressing. The widget init/call sequence (Spot::init, GraphicWin::init/fill, box_sprite, StringBox::init, EditBox::init, the 13-button BaseButton loop, add_offer/rand dispatch, message_data/iface teardown) is transcribed in order with matching argument counts. MISMATCH #20 (layout block, lea vs sub).
+void DiploWin::exec(int faction_id, int faction_id_with) {
+    int side;
+  // Frame: three ints (x/y/height) and two RECT locals (rc at ebp-0x20,
+  // row at ebp-0x30) = 0x2C, plus one compiler temp = the image's 0x30.
+  RECT rc;
+  RECT row;
+
+  spot_.init(100);
+
+  register_iface(0x0B);
+
+  faction_id_ = faction_id;
+  faction_id_with_ = faction_id_with;
+
+  int window_height = 0x254 - MainInterfaceGlobal.panel_height();
+  int window_x = (WinScreenWidth - 0x320) / 2;
+  int window_y = WinScreenHeight - MainInterfaceGlobal.panel_height() - window_height;
+
+  // 0x443F82: the outer window, shrunk 0x17 each side, then 0x20 more on the right.
+  set_rectangle_dimensions(&rect_EDC_, 0, 0, 0x340, window_height);
+  expand_rect(&rect_EDC_, -0x17, 0);
+  rect_EDC_.right -= 0x20;
+
+  // 0x443FB2: title strip = outer inset 4, then 3, then 0x14 tall. The
+  // copy-then-expand_rect spelling gives the image's load order and the
+  // rc.right/bottom spills; the inset helper does not.
+  rc = rect_EDC_;
+  expand_rect(&rc, -4, -4);
+  rect_F4C_ = rc;
+  expand_rect(&rect_F4C_, -3, -3);
+  rect_F4C_.bottom = rect_F4C_.top + 0x14;
+
+  // 0x444024: two leader panes under the title strip, gap 2.
+  rc = rect_F4C_;
+  offset_rect(&rc, 0, 0x17);
+  rc.right = rc.left + (rc.right - rc.left + 2) / 2 - 2;
+  leader_rect_[0] = rc;
+  offset_rect(&rc, rc.right - rc.left + 2, 0);
+  leader_rect_[1] = rc;
+
+  // 0x444087: bottom row of three buttons (outer width shrunk by 1/7 a side).
+  rc = rect_EDC_;
+  rc.bottom -= 0x1A;
+  rc.top = rc.bottom - 0x14;
+  expand_rect(&rc, (rc.right - rc.left) / -7, 0);
+  rc.right = rc.left + (rc.right - rc.left + 2) / 3 - 2;
+  button_rects_[2] = rc;
+  offset_rect(&rc, rc.right - rc.left + 2, 0);
+  button_rects_[3] = rc;
+  offset_rect(&rc, rc.right - rc.left + 2, 0);
+  button_rects_[4] = rc;
+
+  // 0x444140: four offer columns (gaps 2, 8, 2) ending 10 above that row.
+  inset_rect(&row, &rect_EDC_, 7, 0);
+  row.bottom = rc.top - 10;
+  row.right = row.left + (row.right - row.left - 4) / 4 - 2;
+
+  rc = row;
+  rc.top = rc.bottom - 0x14;
+  button_rects_[7] = rc;
+  offset_rect(&rc, rc.right - rc.left + 2, 0);
+  button_rects_[8] = rc;
+  offset_rect(&rc, rc.right - rc.left + 8, 0);
+  button_rects_[11] = rc;
+  offset_rect(&rc, rc.right - rc.left + 2, 0);
+  button_rects_[12] = rc;
+
+  // 0x44421F: the row above (0x16 higher).
+  rc = row;
+  rc.top = rc.bottom - 0x14;
+  offset_rect(&rc, 0, -0x16);
+  button_rects_[5] = rc;
+  offset_rect(&rc, rc.right - rc.left + 2, 0);
+  button_rects_[6] = rc;
+  offset_rect(&rc, rc.right - rc.left + 8, 0);
+  button_rects_[9] = rc;
+  offset_rect(&rc, rc.right - rc.left + 2, 0);
+  button_rects_[10] = rc;
+
+  // 0x4442AD: two-column-wide title cells another 0x16 higher.
+  rc = row;
+  rc.top = rc.bottom - 0x14;
+  offset_rect(&rc, 0, -0x2C);
+  rc.right += rc.right - rc.left + 2;
+  rect_F9C_ = rc;
+  offset_rect(&rc, rc.right - rc.left + 8, 0);
+  rect_FBC_ = rc;
+
+  // 0x444327: union each 2x2 group with its title cell, then grow by 3.
+  rc.left = 0;
+  rc.right = 0;
+  rc.top = 0;
+  rc.bottom = 0;
+  int index;
+  for (index = 5; index < 9; ++index) {
+    UnionRect(&rc, &rc, &button_rects_[index]);
+  }
+  UnionRect(&rect_FAC_, &rc, &rect_F9C_);
+  expand_rect(&rect_FAC_, 3, 3);
+
+  rc.left = 0;
+  rc.right = 0;
+  rc.top = 0;
+  rc.bottom = 0;
+  for (index = 9; index < 13; ++index) {
+    UnionRect(&rc, &rc, &button_rects_[index]);
+  }
+  UnionRect(&rect_FCC_, &rc, &rect_FBC_);
+  expand_rect(&rect_FCC_, 3, 3);
+
+  // 0x444421: MainInterface frames inset 7, each split into a 0x14 header
+  // and the body 3 below it.
+  inset_rect(&rc, &MainInterfaceGlobal.main_frame_rect(), 7, 7);
+  rect_EEC_ = rc;
+  rect_EEC_.bottom = rect_EEC_.top + 0x14;
+  rect_EFC_ = rc;
+  rect_EFC_.top = rect_EEC_.bottom + 3;
+
+  inset_rect(&rc, &MainInterfaceGlobal.right_frame_rect(), 7, 7);
+  rect_F0C_ = rc;
+  rect_F0C_.bottom = rect_F0C_.top + 0x14;
+  rect_F1C_ = rc;
+  rect_F1C_.top = rect_F0C_.bottom + 3;
+
+  // 0x4444F9: the two portrait panes between the leader panes and the
+  // left offer group's (already grown) top.
+  inset_rect(&rc, &rect_EDC_, 7, 0);
+  rc.top = leader_rect_[0].bottom + 3;
+  rc.bottom = rect_FAC_.top - 7;
+  rc.right = rc.left + (rc.right - rc.left + 2) / 2 - 2;
+  portrait_rect_[0] = rc;
+  offset_rect(&rc, rc.right - rc.left + 2, 0);
+  portrait_rect_[1] = rc;
+
+  // 0x444572: chat transcript and the 0x14-tall edit line 3 below it.
+  inset_rect(&rc, &MainInterfaceGlobal.main_layout_rect(), 4, 4);
+  rc.bottom -= 0x17;
+  rect_F3C_ = rc;
+  rc.top = rc.bottom + 3;
+  rect_F2C_ = rc;
+  rc.bottom = rc.top + 0x14;
+
+  GraphicWin::init(window_x, window_y, 0x340, window_height, 0x05000000,
+                   static_cast<GraphicWin *>(&ConsoleGlobal));
+  field_16C_ = 0x1A;
+  fill(9);
+  static_cast<Buffer &>(*this).box_sprite(&rect_EDC_, &InterfaceBoxStyles[9]);
+
+  stringBox_.init(rect_F3C_.left + 3, rect_F3C_.top + 3,
+                  rect_F3C_.right - rect_F3C_.left - 6,
+                  rect_F3C_.bottom - rect_F3C_.top - 6,
+                  static_cast<Win *>(&MainInterfaceGlobal), 0, -1);
+  Buffer &string_canvas = static_cast<Buffer &>(stringBox_);
+  string_canvas.set_write_strings_callback(&DiploWin::string_callback);
+  string_canvas.set_text_color(0xFF, -1, 1, 1);
+  stringBox_.set_visible_rows(100);
+
+  editBox_.init(&rect_F2C_,
+                  static_cast<Win *>(&MainInterfaceGlobal), 0);
+  editBox_.add_window_flags(0x01000000);
+  editBox_.field_B1C_ = 9;
+  editBox_.field_B30_ = 0;
+  Buffer &edit_canvas = static_cast<Buffer &>(editBox_);
+  edit_canvas.set_text_color(ChatItemIdTable[faction_id_],
+                             ChatShadowColors[faction_id_], 1, 1);
+  editBox_.field_B20_ = 0x41;
+  editBox_.field_B24_ = ChatItemIdTable[faction_id_];
+  editBox_.field_B14_ = 0x80;
+
+  // 0x444754: computed and never read (dead stores into rc in the image).
+  inset_rect(&rc, &rect_EFC_, 3, 3);
+
+  // Buttons 0 and 1 are not initialized here: the image skips the whole
+  // body until the label offset reaches 0xDCC.
+  for (int button_index = 0; button_index < 13; ++button_index) {
+    if (button_index >= 2) {
+      FlatButton &button = flatButtons_[button_index];
+      button.init(label_get(0x371 + button_index), button_index,
+                  button_rects_[button_index].left,
+                  button_rects_[button_index].top,
+                  button_rects_[button_index].right - button_rects_[button_index].left,
+                  button_rects_[button_index].bottom - button_rects_[button_index].top,
+                  this, 0);
+      button.set_font(find_font(0x0E, 1), 0, 0, 0);
+      button.redraw();
+      button.set_text_color(0x41, -1, 1, 1);
+      button.hide();
+      // InterfaceBoxStyles begins at 0x0078D528 with 0x28-byte elements;
+      // these are the native 0x78D960/0x78D988/0x78D9B0 slots 27..29.
+      button.set_border_styles(&InterfaceBoxStyles[27],
+                               &InterfaceBoxStyles[28],
+                               &InterfaceBoxStyles[29]);
+    }
+  }
+
+  stringBox_.clear();
+  editBox_.set_text(0);
+
+  if (IsMultiplayerPBEM != 0) {
+    sub_441100(faction_id_, faction_id_with_);
+    for (side = 0; side < 2; ++side) {
+      offer_count_[side] = OfferResetCells[faction_id_][faction_id_with_].count_[side];
+      offer_state_[side] = OfferResetCells[faction_id_][faction_id_with_].state_[side];
+      for (int item = 0; item < 8; ++item) {
+        offer_type_[side][item] =
+            OfferResetCells[faction_id_][faction_id_with_].type_[side][item];
+        offer_value_[side][item] =
+            OfferResetCells[faction_id_][faction_id_with_].value_[side][item];
+      }
+    }
+  } else {
+    UNK3(0);
+    UNK3(1);
+  }
+
+  const int player_flags = static_cast<int>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF);
+  CommlinkPending = 1;
+  DiploOffersDirty = 0;
+  if (bit_count(player_flags) == 2)
+    GameDataStateStorage.fields_.turn_control_duration_milliseconds_ *= 2;
+  if (DiploDefaultFlag93A968 == 0)
+    DiploDefaultFlag93A968 = 1;
+
+  if (IsMultiplayerNet == 0 && IsMultiplayerPBEM == 0) {
+    if (rand() % 2 == 0) {
+      add_offer(1, 0, rand() % 0x59);
+      if (rand() % 3 != 0) {
+        add_offer(1, 0, rand() % 0x59);
+      }
+    } else {
+      add_offer(1, 1, (rand() % 0x32 * 5 + 5) * 5);
+    }
+
+    switch (rand() % 4) {
+      case 0: add_offer(1, 4, 0);
+        // Native switch intentionally falls through to the next offers.
+      case 1: add_offer(1, 3, 0);
+        // Native switch intentionally falls through to the next offer.
+      case 2: add_offer(1, 2, 0);
+    }
+
+    // The image lays the case-1 body out before the case-0 body.
+    switch (rand() % 3) {
+      case 1: offer_type_[0][0] = 2; break;
+      case 0: offer_state_[1] = 1; break;
+    }
+  }
+
+  set_modal(0, pop_expire, &MainInterfaceGlobal);
+
+  if (IsMultiplayerPBEM != 0) {
+    StringList &source = DiploWindow.stringBox_.strings();
+    int high_faction = faction_id_with_;
+    int low_faction = faction_id_;
+    if (low_faction > high_faction) {
+      swap(&low_faction, &high_faction);
+    }
+    const int source_count = source.entry_count_;
+    for (int source_index = source_count - 3;
+         source_index < source_count; ++source_index) {
+      if (source_index < 0)
+        continue;
+      source.seek_pos(source_index);
+      DiplomacyTranscriptLists[low_faction][high_faction].pending_text_ = source.head_ != 0
+          ? source.current_->string_payload()->text : 0;
+      DiplomacyTranscriptLists[low_faction][high_faction].field_20_ = 0;
+      DiplomacyTranscriptLists[low_faction][high_faction].field_24_ = 0;
+      DiplomacyTranscriptLists[low_faction][high_faction].add(source.current_id());
+    }
+
+    // Each side is stored twice: in the local cell as seen from here, and
+    // mirrored into the counterpart's cell with the parties swapped.
+    for (side = 0; side < 2; ++side) {
+      OfferResetCells[faction_id_][faction_id_with_].count_[side] = offer_count_[side];
+      OfferResetCells[faction_id_][faction_id_with_].state_[side] = offer_state_[side];
+      OfferResetCells[faction_id_with_][faction_id_].count_[side] = offer_count_[1 - side];
+      OfferResetCells[faction_id_with_][faction_id_].state_[side] = offer_state_[1 - side];
+      for (int item = 0; item < 8; ++item) {
+        OfferResetCells[faction_id_][faction_id_with_].type_[side][item] =
+            offer_type_[side][item];
+        OfferResetCells[faction_id_][faction_id_with_].value_[side][item] =
+            offer_value_[side][item];
+        OfferResetCells[faction_id_with_][faction_id_].type_[side][item] =
+            offer_type_[1 - side][item];
+        OfferResetCells[faction_id_with_][faction_id_].value_[side][item] =
+            offer_value_[1 - side][item];
+      }
+    }
+
+    if (DiploOffersDirty != 0
+        && (offer_state_[0] != 0 || offer_count_[0] > 0))
+      PendingDiplomacyFlags[faction_id_with_][faction_id_] |= 1;
+  }
+
+  if (CommlinkPending != 0) {
+    CommlinkPending = 0;
+    message_data(0x1505, faction_id_with_, 0, 0, 0, 0);
+  }
+
+  release_iface_mode();
+  delete_iface_mode();
+  close();
+}
+
+// DiploWin owns cleanup through its real typed subobjects. Its destructor
+// body has no separate unregister or global-state operation; C++ performs
+// reverse-order member/base destruction after this body.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00444DB0 ??1DiploWin@@QAE@XZ 0x00444DB0-0x00444FB2;0x00654920-0x006549F0 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00444db0.cpp", "Pinned444DB0 cleanup sequence and654920 unwind funclets; existing typed members match their native receiver offsets and thirteen-element FlatButton array."], "reason": "Recover complete DiploWin destruction through genuine automatic reverse-order member/base lifetimes; pinned teardown contains no additional DiploWin unregister. Replace only executable-address forwarder and preserve seed history, no exactness claim."}
+// symbol ??1DiploWin@@UAE@XZ
+// The destructor is compiler-generated: no declaration, no body.
+
+// Native 0x444FC0 constructs both bases, Spot, thirteen FlatButtons, StringBox,
+// ListBox and EditBox in declaration order. No scalar initialization follows.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00444FC0 ??0DiploWin@@QAE@XZ 0x00444FC0-0x0044507B;0x006549F0-0x00654A47 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original constructor444FC0 establishes GraphicWin+0, SubInterface+A14 and member construction order; secondary table66B5E0 gives nineteen callback slots and adjusted receivers.", "Redraw4436C0, status443C70 and painter443E50 inspected over declared original spans; source rectangle/control owners preserve native offsets. Palette colors reuse TextColourTable[80-2*item]/[81-2*item]. Localized title producer and full extents remain unknown.", "recovery/tasks/interface-contract-report-closure.json; root coordinator owns import and independent compilation; no current byte, structural or runtime acceptance is implied."], "reason": "Recover the genuine DiploWin GraphicWin/SubInterface owner with typed callbacks and automatic base/member lifetimes; retain independent seed history and restoration obligations."}
+DiploWin::DiploWin() {}
+
+// Historical seed finding: Native vector destruction helper6456E4 takes the array737CD8, stride30, count40hex and complete StringList destruction406820.
+// Historical seed finding: Opaque void-pointer callback spelling was a scaffold workaround, not the actual source array type.
+
+// Compiler-generated source-owned lifecycle entry; no handwritten wrapper.
+/*
+// ORIGINAL: 0x004450B0 sub_4450b0 0x004450B0-0x0044511C FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:c02baa72365fcd4a910683a3dc9b3c39399a9191:src/leaf_recoveries.cpp", "pinned:terranx_original lifecycle0x4450b0", "source:src/diplowin.cpp"], "reason": "The actual compiler-generated StringList constructor owns virtual-base allocation capture, inherited field initialization and both derived table transitions. This replaces the raw-address leaf transcription without changing StringList members. Preserve complete original spans, catalogue names, claims and historical lessons; current compiler emission is not a fresh grant or linked selection proof."}
+// symbol    ??0StringList@@QAE@XZ
+// TRIED: homed into game.cpp (its real TU) 2026-09-03 and reverted for one reason:
+// TRIED: plain constructor with raw pointer-offset writes (eax=ecx=this, returns this implicitly). Diverges at instr #2: original pushes ecx for a compiler-generated [ebp-4] unwind-context local (a partially-constructed-object marker) that a plain non-throwing body never allocates.
+*/
+
 // RECOVERY_GENERATED: v1 vtable 0x0066B634 ? ??_7DiploWin@@6BWin@@@ 0x00444FC0
 // RECOVERY_GENERATED: v1 vtable 0x0066B62C ? ??_7DiploWin@@6BBuffer@@@ 0x00444FC0
 // RECOVERY_GENERATED: v1 vtable 0x0066B5E0 ? ??_7DiploWin@@6B@ 0x00444FC0
