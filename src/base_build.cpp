@@ -113,9 +113,11 @@ int __cdecl base_claimed(int x, int y, int site1_free, int site2_free,
 // dropped /Oi (2026-11-18) ten were too many: seven stayed out-of-line calls of
 // this probe. Five: the range at 0x4FD528 is a call as in the image and one
 // probe still is (four: no probe call, but that range expands); the frame
-// (0x1F6C) matches at every count from 4 to 10. Three branchy probes plus two
-// pure-store probes (bb_probe_store, cheaper than a branch) spend the amount in
-// between: no probe call and the image's call multiset (2026-11-19).
+// (0x1F6C) matches at every count from 4 to 10. Branchy probes plus pure-store
+// probes (bb_probe_store, cheaper than a branch) spend the amount in between: no
+// probe call and the image's call multiset. 2026-11-19: three + two; after the
+// 2026-11-19 integration the range at 0x4FD528 expanded again,
+// and four + one (or five + none) is the window again.
 static inline int bb_probe(int x) {
     if (x == 1) {
         x = 2;
@@ -1869,10 +1871,7 @@ L_4fbd3d:
         bb_probe(0);
         bb_probe(0);
         bb_probe(0);
-        {
-            int probe_;
-            bb_probe_store(&probe_);
-        }
+        bb_probe(0);
         {
             int probe_;
             bb_probe_store(&probe_);
