@@ -135,13 +135,20 @@ int __fastcall sub_5d3980(MediaRuntime *runtime, unsigned char *packet) {
         const int header_bytes =
             (static_cast<int>(motion_count * 20 + 0x1f) >> 3) & ~3;
         const DWORD component_count = motion_count * 2;
-        const unsigned char *data = packet + 0xc;
+        // WORKAROUND(decl): the image keeps the payload cursor in edx for its
+        // whole life (lea edx,[esi+0xc] at 0x5D3B9A, never homed) and spills the
+        // row and coordinate pointers of the offset loop instead. A separate
+        // `data` local is coalesced with packet's register here, loses it to
+        // the bit position and is homed (frame 0x20 against 0x1C); advancing
+        // the parameter keeps the cursor in a register and gives the image's
+        // seven homes, in esi rather than edx.
+        packet += 0xc;
         DWORD bit_position = component_count * 10 - 10;
         int *component = reinterpret_cast<int *>(runtime->motion_coordinates) +
                          component_count;
         for (DWORD remaining = component_count; remaining > 0; --remaining) {
             int value = *reinterpret_cast<const DWORD *>(
-                            data + (bit_position >> 3)) >> (bit_position & 7);
+                            packet + (bit_position >> 3)) >> (bit_position & 7);
             bit_position -= 10;
             value &= 0x3ff;
             if (value & 0x200) value |= 0xfffffc00;
@@ -156,12 +163,12 @@ int __fastcall sub_5d3980(MediaRuntime *runtime, unsigned char *packet) {
                 runtime->motion_coordinates[i].x;
         }
 
-        data += header_bytes;
+        packet += header_bytes;
         raw_count <<= 4;
         if (raw_count != 0) {
-            memcpy(runtime->decoded_pixel_blocks, data, raw_count);
+            memcpy(runtime->decoded_pixel_blocks, packet, raw_count);
         }
-        const unsigned char *const packed_data = data + raw_count;
+        const unsigned char *const packed_data = packet + raw_count;
         const DWORD packed_bytes = packed_count * 8;
         if (packed_bytes != 0) {
             unsigned char *block =
