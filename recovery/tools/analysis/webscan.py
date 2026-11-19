@@ -391,7 +391,8 @@ def analyse(unit, src, text, c, lst, addr, verbose):
             blive = livemap[id(brs)]
             adefs = [x for x in refs if x['key'] == a_ and x['kind'] in ('d', 'ud') and x['line'] != ln]
             if any(x['block'] in blive and x['line'] not in bweb for x in adefs) or \
-                    any(x['line'] in bweb and x['line'] != ln for x in adefs):
+                    any(x['line'] in bweb and x['line'] != ln for x in adefs) or \
+                    any(x['line'] < ln and is_for(a_, x['line']) for x in adefs) and max(bweb) > ln:
                 bweb = []
                 verdict += '/live'
         aweb = next((sorted({x['line'] for x in rs}) for rs in byname.get(a_, ()) if any(x['line'] == ln for x in rs)), [])
