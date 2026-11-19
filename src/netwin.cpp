@@ -118,37 +118,6 @@ int __cdecl load_map();
 // RECOVERY_OBJECT: v1 0x0080A6F8 ?NetWinDialog@@3VNetWin@@A
 NetWin NetWinDialog;  // 0x0080A6F8
 
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004E2400 sub_4e2400 0x004E2400-0x004E2444 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682614 directly selects0x4E2400 as the first callback in the adjacent network-state startup sequence.", "The callback stores only options bytes0,1,2,4,5,6,7,8,9,A,B; NetWinSessionOptionsStorage contains only the existing 0x18-byte NetWinSessionOptionsState at offset zero and its constructor performs exactly those stores."], "reason": "Own the original selected options initialization in the storage object's constructor without adding value-initialization or changing the shared wire type."}
-// symbol    _$E19
-// RECOVERY_OBJECT: v4 0x0090E8E0 0x0090E8F8 ?NetWinSessionOptions@@3UNetWinSessionOptionsState@@A 0x0047B450 target ?NetWinSessionOptions@@3UNetWinSessionOptionsStorage@@A
-NetWinSessionOptionsStorage NetWinSessionOptions;
-
-// ORIGINAL: 0x004E2450 sub_4e2450 0x004E2450-0x004E245D FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682618 directly selects0x4E2450 between the options and lobby-row initializers.", "The callback writes only NetWinSessionData.mode_ and scenario_text_wire_tail_[0]; its real owner is the storage global at0x0090E778."], "reason": "Recover the pinned global's selected startup stores as construction of its owning storage object; keep the wire/POD member unchanged."}
-// symbol    _$E22
-// size      13 bytes
-// prototype
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// Return Value: n/a
-// Status: Complete
-// RECOVERY_OBJECT: v4 0x0090E778 0x0090E8E0 ?NetWinSessionData@@3UNetWinSessionBlock@@A 0x0047B450 target ?NetWinSessionData@@3UNetWinSessionDataStorage@@A
-NetWinSessionDataStorage NetWinSessionData;
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004E2460 sub_4e2460 0x004E2460-0x004E248F FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x68261C directly selects0x4E2460 after the options and session-data callbacks.", "The callback stores only six fields in each of eight 0x17C-byte rows; NetWinLobbyRowsStorage contains only the existing eight-row array at offset zero and its constructor writes those same fields."], "reason": "Own the original selected lobby-row initialization in the storage object's constructor while preserving the shared wire-row type and untouched bytes."}
-// symbol    _$E25
-// The pinned PE's .data raw contents end at 0x006A8000, while its virtual
-// extent includes 0x0090DB98..0x0090E778: these rows start zero-filled.
-// config_players and the network receive path subsequently populate them.
-// RECOVERY_OBJECT: v4 0x0090DB98 0x0090E778 ?NetWinLobbyRows@@3PAUNetWinLobbyRow@@A 0x0047B450 target ?NetWinLobbyRows@@3UNetWinLobbyRowsStorage@@A
-NetWinLobbyRowsStorage NetWinLobbyRows;
-
 void NetWinSessionBlock::receive_wire_block(const unsigned char *bytes) {
     memcpy(this, bytes, sizeof(*this));
 }
@@ -2772,7 +2741,7 @@ char NetWinWindowTitleInitialText;
 // choice shows (the leading clear stays at the call site).
 static void netwin_pcx_name(const char *name) {
     strcat(StringTemp, name);
-// RECOVERY_LITERAL: v1 0x00686940 0x00686945 $SG58020 0x00481FD0
+// RECOVERY_LITERAL: v1 0x00686940 0x00686945 $SG58005 0x00481FD0
     strcat(StringTemp, ".pcx");
 }
 
@@ -2837,7 +2806,7 @@ void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
     // Slow path: rebuild the table from the localized faction text. The
     // CUSTOMFACTIONS count is discovered by walking until text_item is empty.
     int custom_count = 0;
-// RECOVERY_LITERAL: v1 0x00686908 0x00686917 $SG58035 0x00481FD0
+// RECOVERY_LITERAL: v1 0x00686908 0x00686917 $SG58020 0x00481FD0
     if (text_open(AlphaxFileID, "CUSTOMFACTIONS") == 0) {
         text_get();
         while (*text_item() != 0) {
@@ -2866,7 +2835,7 @@ void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
 
     faction_records_->record_count_ = static_cast<uint8_t>(record_count);
     faction_records_->record_type_ = 7;
-// RECOVERY_LITERAL: v1 0x00686918 0x00686921 $SG58048 0x00481FD0
+// RECOVERY_LITERAL: v1 0x00686918 0x00686921 $SG58033 0x00481FD0
     if (text_open(AlphaxFileID, "FACTIONS") != 0) {
         return;
     }
@@ -2879,7 +2848,7 @@ void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
         text_get();
         strcpy(faction_records_->records_[name_index++].filename_, text_item());
     }
-// RECOVERY_LITERAL: v1 0x00686924 0x00686930 $SG58055 0x00481FD0
+// RECOVERY_LITERAL: v1 0x00686924 0x00686930 $SG58040 0x00481FD0
     if (text_open(AlphaxFileID, "NEWFACTIONS") != 0) {
         return;
     }
@@ -2888,7 +2857,7 @@ void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
         text_get();
         strcpy(faction_records_->records_[name_index++].filename_, text_item());
     }
-// RECOVERY_LITERAL: v1 0x00686930 0x0068693F $SG58060 0x00481FD0
+// RECOVERY_LITERAL: v1 0x00686930 0x0068693F $SG58045 0x00481FD0
     if (text_open(AlphaxFileID, "CUSTOMFACTIONS") != 0) {
         return;
     }
@@ -2921,7 +2890,7 @@ void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
         netwin_pcx_name(faction_records_->records_[record_index].filename_);
 
         if (buffer.load_pcx(StringTemp, 0, 0xa, 0xec) != 0) {
-// RECOVERY_LITERAL: v1 0x00686948 0x00686954 $SG58071 0x00481FD0
+// RECOVERY_LITERAL: v1 0x00686948 0x00686954 $SG58056 0x00481FD0
             buffer.load_pcx("faction.pcx", 0, 0xa, 0xec);
         }
         faction_records_->records_[record_index].color_ =

@@ -539,6 +539,32 @@ int __cdecl whose_territory(int faction_id, int x, int y, int *base_id,
 }
 
 /*
+Purpose: Find closest base to territory owned by another faction not at war with specified faction.
+// ORIGINAL: 0x004E3FA0 ?base_territory@@YAHHHH@Z 0x004E3FA0-0x004E4017 BYTE_EXACT
+// size      119 bytes
+// prototype int (__cdecl ?base_territory@@YAHHHH@Z)(int factionID, int xCoord, int yCoord)
+// callers   2   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004E3EF0
+Return Value: Base id or -1
+Status: Complete
+*/
+// LEVER: `faction_id != (uint32_t)owner`, not `(uint32_t)owner != faction_id`
+//        - the image's `cmp esi, eax` (faction_id, owner) matches the
+//        operands in that order; took the best flag set (/O2 /Gy /GR- /Oy-
+//        /GX) from 42/50 to 43/50, 0.960 similar.
+int __cdecl base_territory(int faction_id, int x, int y) {
+    int base_id;
+    int owner = whose_territory(faction_id, x, y, &base_id, false);
+    if (owner >= 0 && faction_id != (uint32_t)owner && (is_human(faction_id) || is_human(owner))
+        && (PlayersData[faction_id].diplo_treaties[owner] & DTREATY_VENDETTA) == 0) {
+        return base_id;
+    }
+    return -1;
+}
+
+/*
 Purpose: Find the best specialist available to the current base with more weight placed on psych.
 // ORIGINAL: 0x004E4020 ?best_specialist@@YAHXZ 0x004E4020-0x004E4090 BYTE_EXACT
 // LEVER: two fixes. (1) has_tech(...) was inlining its whole preq_tech walk
@@ -4501,6 +4527,35 @@ int __cdecl base_connect(int priority) {
     add_goal(BaseCurrent->faction_id_current, AI_GOAL_TERRAFORM_LAND, priority, x, y,
              BaseIDCurrentSelected);
     return 1;
+}
+
+/*
+Purpose: For the specified tile, calculate the quality of the terrain.
+// ORIGINAL: 0x004ECB90 ?crappy@@YAHHH@Z 0x004ECB90-0x004ECBE1 BYTE_EXACT
+// LEVER: every test re-reads map_loc() (VC6 CSEs the pointer), rocky as
+//         `& ~0x3F` (byte and, dword cmp), rainfall cast to uint8_t.
+// size      81 bytes
+// prototype int (__cdecl ?crappy@@YAHHH@Z)(int xCoord, int yCoord)
+// callers   0   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+Return Value: Quality of terrain, lower is better (0-2)
+Status: Complete
+*/
+int __cdecl crappy(int x, int y) {
+    int poor_quality = 0;
+    if (!(map_loc(x, y)->climate & (RAINFALL_RAINY | RAINFALL_MOIST))) {
+        poor_quality = 1; // neither moist or rainy
+    }
+    if ((map_loc(x, y)->val3 & ~0x3F) == TERRAIN_BIT_ROCKY) {
+        poor_quality++; // rocky
+    }
+    if ((map_loc(x, y)->val3 & ~0x3F) == ROCKINESS_FLAT
+        && (uint8_t)(map_loc(x, y)->climate & (RAINFALL_RAINY | RAINFALL_MOIST)) < RAINFALL_RAINY) {
+        poor_quality++; // flat, moist or arid
+    }
+    return poor_quality;
 }
 
 // Inlined twice into base_terraform (0x004EEA85 and 0x004EEBC4): how poorly
@@ -8523,13 +8578,37 @@ void __cdecl make_base_unique(int base_id) {
     if (collisions != 0) {
         Bases[base_id].name_string[21] = 0;
         // make_base_unique passes this one-byte delimiter to strcat; collision digits use a separate buffer.
-// RECOVERY_LITERAL: v1 0x00689F08 0x00689F0A $SG65666 0x004F7FE0
+// RECOVERY_LITERAL: v1 0x00689F08 0x00689F0A $SG65685 0x004F7FE0
         strcat(Bases[base_id].name_string, "-");
         char digits[0x50];
         _itoa(collisions + 1, digits, 10);
         strcat(Bases[base_id].name_string, digits);
     }
 }
+
+
+/*
+Purpose: Take the absolute distance between two points as parameters to calculate how far out they
+         radiate. This is mainly used to determine proximity or how far away the two points are from
+         each other in a rough circle shape (see RadiusOffsetX[]/RadiusOffsetY[]).
+// ORIGINAL: 0x004F8090 ?vector_dist@@YAHHH@Z 0x004F8090-0x004F80CB BYTE_EXACT
+// body      src/map.h
+// LEVER: the two `abs()` stay real calls (image: `call _abs` 0x00644F3A
+//            twice) because stdafx.h's project-wide `#pragma function` line
+//            names abs - /Oi would otherwise expand it inline at every site.
+//            An `abs_call` forwarder carried this body before the line was
+//            extended; same root cause as path.cpp's `memset_call`.
+// size      59 bytes
+// prototype int (__cdecl ?vector_dist@@YAHHH@Z)(int xCoord, int yCoord)
+// callers   5   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00644F3A
+Return Value: Distance radius
+Status: Complete
+*/
+// BODY IN map.h as `MEASURED inline`: vulnerable inlines it while
+// base_ecology, enemy_move, mind_control and probe call it.
 
 /*
 Purpose: Check if a faction has the specified secret project built in a base they control.

@@ -325,3 +325,108 @@ void __cdecl make_proto(int proto_id, int chassis_id, int weapon_id, int armor_i
         0xFF : 1 << (proto_id / MaxVehProtoFactionNum);
     VehPrototypes[proto_id].icon_offset = -1;
 }
+
+
+
+/*
+Purpose: Rank the prototypes a faction can build, best first, into ProtoSortIds.
+// ORIGINAL: 0x005A6270 ?proto_sort@@YAXH@Z 0x005A6270-0x005A63C9 FILE BYTE_EXACT
+// size      345 bytes
+// prototype void (__cdecl ?proto_sort@@YAXH@Z)(int factionID)
+// callers   2   call targets   4
+// calls     0x0057D360 0x0057D3F0 0x005B5690 0x005B9F20
+// SYMBOL FACTS. ?proto_sort@@YAXH@Z is the catalogue's name; the two fixed
+//        slots it shares with proto_sort_2 are bound here because nothing
+//        else in the tree names them and the pair is one table - 0x00945B40
+//        is how many entries the sort filled and 0x00945B44 the id list
+//        itself, contiguous, which is why the image writes them 4 bytes
+//        apart. The key's four terms are read straight off the layout:
+//        Chassis[].triad (+0x49), Chassis[].speed (+0x48), and the
+//        prototype's plan / chassis_id / armor_id / flags / preq_tech.
+// symbol    ?proto_sort@@YAXH@Z
+// TRIED: 0/109. `has_tech` is `MEASURED inline` in technology.h, so this body
+//        INLINES it where the image calls it (136 compiled instructions
+//        against 109); `has_tech_call` closes that (115 against 109). The
+//        rest is the frame: the image keeps a frame pointer and allocates
+//        0x204 for the 512-byte key array plus one dword, where this tree
+//        allocates 0x20c and goes frame-less under both flag sets, so
+//        everything from instruction 0 is shifted. Left as a compiling body.
+Return Value: n/a
+Status: Complete
+*/
+
+// RECOVERY_OBJECT: v2 0x00945B40 0x00945B44 ?ProtoSortCount@@3HA 0x005A63D0
+int ProtoSortCount;
+
+// RECOVERY_OBJECT: v2 0x00945B44 0x00945D44 ?ProtoSortIds@@3PAHA 0x005A63D0
+int ProtoSortIds[128];
+
+void __cdecl proto_sort(int faction_id) {
+    int sort_keys[128];
+    ProtoSortCount = 0;
+    int i = 0;
+    do {
+        int proto_id = (i % 64) + (i >= MaxVehProtoFactionNum ? faction_id * 64 : 0);
+        ProtoSortIds[i] = proto_id;
+        int key;
+        if (!(VehPrototypes[proto_id].flags & PROTO_ACTIVE)
+            || (proto_id < MaxVehProtoFactionNum
+                && !has_tech(VehPrototypes[proto_id].preq_tech, faction_id))) {
+            if (proto_id >= MaxVehProtoFactionNum) {
+                key = 0x34FB5E38;
+                ProtoSortCount++;
+            } else {
+                key = 999999999;
+            }
+        } else {
+            key = (Chassis[VehPrototypes[proto_id].chassis_id].triad
+                   + VehPrototypes[proto_id].plan * 16) << 18;
+            key += (32 - weap_val(proto_id, faction_id)) << 9;
+            key += (8 - Chassis[VehPrototypes[proto_id].chassis_id].speed) << 6;
+            key += 8 - arm_val(VehPrototypes[proto_id].armor_id, faction_id);
+            ProtoSortCount++;
+        }
+        sort_keys[i] = key;
+        i++;
+    } while (i < 128);
+    sort(128, ProtoSortIds, sort_keys);
+}
+
+// Order design choices by availability and obsolete status. Original IDs stay
+// in the output table; the added status bands are sorting keys only.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x005A63D0 ?proto_sort_2@@YAXH@Z 0x005A63D0-0x005A650B BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x005A63D0-0x005A650B", "source:src/recovered/units/005a63d0.cpp", "source:src/faction.h:PlayerData.proto_id_active"], "reason": "Recover design-choice ordering with typed prototype, weapon and faction state and source-owned shared output; original IDs remain separate from status ranking keys."}
+void __cdecl proto_sort_2(int faction_id) {
+    ProtoSortCount = 0;
+    int sort_keys[128];
+    for (int index = 0; index < 128; ++index) {
+        int prototype_id = (index >= MaxVehProtoFactionNum ? faction_id * MaxVehProtoFactionNum : 0)
+            + index % MaxVehProtoFactionNum;
+        ProtoSortIds[index] = prototype_id;
+        if ((VehPrototypes[prototype_id].flags & PROTO_ACTIVE) != 0
+            && (prototype_id >= MaxVehProtoFactionNum
+                || (Weapon[VehPrototypes[prototype_id].weapon_id].offense_rating >= 0
+                    && prototype_id != 15
+                    && has_tech(VehPrototypes[prototype_id].preq_tech, faction_id)))) {
+            if (VehPrototypes[prototype_id].obsolete_factions & (1 << faction_id)) {
+                if (prototype_id >= MaxVehProtoFactionNum) {
+                    prototype_id += PlayersData[faction_id].proto_id_active[prototype_id]
+                        ? 0x800 : 0x1000;
+                } else {
+                    prototype_id += 0x2000;
+                }
+            }
+            ++ProtoSortCount;
+        } else {
+            if (prototype_id >= MaxVehProtoFactionNum) {
+                prototype_id += 0x400;
+                ++ProtoSortCount;
+            } else {
+                prototype_id = 999999999;
+            }
+        }
+        sort_keys[index] = prototype_id;
+    }
+    sort(128, ProtoSortIds, sort_keys);
+}

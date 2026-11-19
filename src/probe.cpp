@@ -2150,3 +2150,99 @@ static inline char *probe_noun(int faction_id) {
     parse_set(Players[faction_id].noun_gender, Players[faction_id].is_noun_plural);
     return Players[faction_id].noun_faction;
 }
+
+
+/*
+Purpose: Get the label string and concatenate it to the stringTemp buffer.
+// ORIGINAL: 0x005A5880 ?say_label@@YAXH@Z 0x005A5880-0x005A58AA BYTE_EXACT
+// LEVER: `strcat_s` was calling the CRT's inlined byte-copy loop (29
+//        instructions) instead of the image's plain `call strcat`; `strcat`
+//        drops it to 10/14 MNEMONIC_ONLY.
+// TRIED: remaining divergence is load order inside the inlined
+//            `label_get` - image loads `label_offset` before
+//            `Labels.strings_ptr`, this tree's forceinline loads the
+//            reverse. Caching `label_offset` in a local first, caching the
+//            `label_get` result first, and manually inlining the
+//            `StringTable.get(...)` expression in place of the call all
+//            score identically (10/14) - not a lever found at this call
+//            site; `label_get` itself is shared and used correctly
+//            elsewhere.
+// size      42 bytes
+// prototype void (__cdecl ?say_label@@YAXH@Z)(int labelID)
+// callers   1   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x006169A0 0x00645470
+Return Value: n/a
+Status: Complete
+*/
+
+
+// ORIGINAL: 0x005A58B0 ?space@@YAXXZ 0x005A58B0-0x005A58C3 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:edbf268ff962712fadc389b8283e4c795b6d27a2:src/recovered/units/005a58b0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json"], "reason": "strings.cpp / strings.h: append one ordinary space to the existing StringTemp via strcat. Complete reviewed source translation; historical claims remain restoration obligations, not proof of current matching, linked preservation or game acceptance."}
+// body src/strings.h
+// BODY IN strings.h, as `MEASURED inline`.
+
+/*
+Purpose: Set the global gender and plurality variables used by various parse functions.
+// ORIGINAL: 0x005A58E0 ?parse_set@@YAXHH@Z 0x005A58E0-0x005A58F6 BYTE_EXACT
+// body      src/general.h
+// size      22 bytes
+// prototype 
+// callers   1   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+// BODY IN general.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
+/*
+Purpose: Take two points and calculate how far out they radiate. This is mainly used to determine
+         proximity or how far away the two points are from each other in a rough circle shape.
+// ORIGINAL: 0x005A5910 ?vector_dist@@YAHHHHH@Z 0x005A5910-0x005A5987 BYTE_EXACT
+// body      src/map.h
+// Historical LEVER: inlining the two-argument overload here removed the
+//        original function call from this body. The overload now has an
+//        ordinary map.cpp definition above; same-translation-unit visibility
+//        is retained for measurement rather than forcing a call boundary.
+// TRIED: `__forceinline` instead of `inline` - identical score, so the
+//            call-count fix, not the inlining strength, was the lever.
+//            Remaining gap (14/50 raw, 0.929 similar, best of every flag
+//            set) is x_dist's inner subtraction: the image caches
+//            x_point_b in edi before subtracting, this tree reads it
+//            straight from the stack slot - same register-caching family
+//            as base_on_sea/base_coast, not fixable from source shape.
+// size      119 bytes
+// prototype 
+// callers   1   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00644F3A
+Return Value: Distance radius
+Status: Complete
+*/
+// BODY IN map.h as `MEASURED inline`: vulnerable inlines it; probe calls it.
+
+
+
+
+/*
+Purpose: Start a popup from just a label, defaulting the rest.
+// ORIGINAL: 0x005A5990 ?start@Popup@@QAEXPBD@Z 0x005A5990-0x005A59AD BYTE_EXACT
+// size      29 bytes
+// prototype void (__thiscall ?start@Popup@@QAEXPBD@Z)(Popup* this, int8*)
+// callers   1   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00406380
+Return Value: n/a
+Status: Complete
+*/
+// body src/popup.h
+// BODY IN popup.h, as an in-class `MEASURED` inline member.
+

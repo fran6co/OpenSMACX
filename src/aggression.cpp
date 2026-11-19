@@ -63,6 +63,7 @@
 #include "messagewin.h"
 #include "terraforming.h"
 #include "interlude.h"
+#include "interface_palette.h"
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0050BA50 ?intervention@@YAXHH@Z 0x0050BA50-0x0050BCB6 BYTE_EXACT
@@ -287,10 +288,10 @@ int __cdecl steal_tech(int faction_id, int faction_id_with,
         ? const_cast<char *>
 // Technology selection and the stolen-technology popup use these distinct script topics.
 // Bounds cover the literal payload, not surrounding allocation or lifetime.
-// RECOVERY_LITERAL: v1 0x0068A334 0x0068A33E $SG62888 0x0050C340
+// RECOVERY_LITERAL: v1 0x0068A334 0x0068A33E $SG62892 0x0050C340
             ("STEALTECH")
         : const_cast<char *>
-// RECOVERY_LITERAL: v1 0x0068A340 0x0068A34C $SG62889 0x0050C340
+// RECOVERY_LITERAL: v1 0x0068A340 0x0068A34C $SG62893 0x0050C340
             ("ACQUIRETECH");
     int cost = tech_pick(faction_id, 0, faction_id_with, topic);
     if (cost < 0) {
@@ -310,7 +311,7 @@ int __cdecl steal_tech(int faction_id, int faction_id_with,
         StringTemp[0] = '\0';
         say_tech(StringTemp, cost, 0);
         parse_says(1, StringTemp, -1, -1);
-// RECOVERY_LITERAL: v1 0x0068A34C 0x0068A356 $SG62894 0x0050C340
+// RECOVERY_LITERAL: v1 0x0068A34C 0x0068A356 $SG62898 0x0050C340
         NetMsgPrimary.pop("STOLETECH", 5000, 0, NULL);
     }
 
@@ -830,5 +831,433 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
             }
             TutWinBaseWindow.zoom(base_id, 0);
         }
+    }
+}
+
+// Pump redraws before non-input work at least once. The original captures the
+// WINMM timeGetTime import once and compares unsigned elapsed time, including
+// wraparound and negative arguments interpreted as unsigned durations.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x0050DD90 ?clock_wait@@YAXH@Z 0x0050DD90-0x0050DDBA FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/0050dd90.cpp retained exact seed and original extent; preserved without copying historical claim", "Pinned PE import669368 resolves WINMM.dll timeGetTime; full disassembly50DD90..50DDBA captures import once, calls5FCBB0 then5FCA30 and uses unsigned jb elapsed compare"], "reason": "Home cooperative unsigned elapsed-time wait to timer integration; preserve import capture, redraw/non-input ordering, mandatory first iteration and modular DWORD subtraction, without fixed import address."}
+void __cdecl clock_wait(int milliseconds) {
+    DWORD (WINAPI *const read_clock)() = timeGetTime;
+    const DWORD started = read_clock();
+    do {
+        do_all_draws();
+        do_non_input();
+    } while (read_clock() - started < static_cast<DWORD>(milliseconds));
+}
+
+/*
+Purpose: Check whether there is a path between two regions. It seems to only take into account land
+         destinations. TODO: Revisit in the future when Continent/Path is complete.
+// ORIGINAL: 0x0050DDC0 ?sea_coast@@YAHHH@Z 0x0050DDC0-0x0050DE00 BYTE_EXACT
+// LEVER: two spellings, both visible in the image's own body. (1) the
+//            offset out-param is the PARAMETER ITSELF - `bitmask_call(...,
+//            &region_src, &mask)`, then `sea_coasts[region_src]` reads it
+//            back - not a separate `int offset` local. The image's
+//            `lea ecx, [ebp + 0xc]` is `&region_src`, and its second read of
+//            [ebp+0xc] at 0x0050DDB is the offset coming back out of
+//            bitmask. (2) the call is `bitmask_call`, the real E8 - at /Ob2
+//            the header `inline bitmask` expands at this site and the whole
+//            body collapses to 24 instructions with no call at all.
+// size      64 bytes
+// prototype int (__cdecl ?sea_coast@@YAHHH@Z)(int regionDst, int regionSrc)
+// callers   2   call targets   1
+// kind      game
+// flags     frame;sp_ready
+// calls     0x0050BA00
+Return Value: Is there a path? true/false
+Status: Complete
+*/
+BOOL __cdecl sea_coast(int region_dst, int region_src) {
+    int mask;
+    bitmask(region_src & RegionBounds, &region_src, &mask);
+    return (Continents[region_dst].sea_coasts[region_src] & mask) != 0;
+}
+
+/*
+Purpose: Count the number of paths from the source region. It seems to only take into account land 
+         source and destination ranges. TODO: Revisit in the future when Continent/Path is complete.
+// ORIGINAL: 0x0050DE00 ?sea_coasts@@YAHH@Z 0x0050DE00-0x0050DE49 BYTE_EXACT
+// size      73 bytes
+// prototype 
+// callers   1   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0050BA00
+Return Value: Sea coasts valid path count
+Status: Complete
+*/
+int __cdecl sea_coasts(int region_src) {
+    uint32_t sea_coast_count = 0;
+    for (int i = 1; i < RegionBounds; i++) {
+        // sea_coast() (0x0050DDC0, BYTE_EXACT as its own out-of-line
+        // function) is hand-inlined here: the image writes its body out at
+        // this call site (bitmask() is the only call it keeps), rather than
+        // calling 0x0050DDC0.
+        int offset;
+        int mask;
+        bitmask(region_src & RegionBounds, &offset, &mask);
+        if ((Continents[i].sea_coasts[offset] & mask) != 0) {
+            sea_coast_count++;
+        }
+    }
+    return sea_coast_count;
+}
+
+/*
+Purpose: Check to see whether base is within a one tile radius of a sea tile with specified region.
+         If you pass a land region (<63) as the 2nd parameter, it is possible to get collision
+         behavior due to region bounding. TODO: Revisit in the future to see whether to remove them.
+// ORIGINAL: 0x0050DE50 ?base_on_sea@@YAHHH@Z 0x0050DE50-0x0050DF28 BYTE_EXACT
+// TRIED: --all-flags's winner (23/81, the default set) already beats every other set;
+//            first divergence is the prologue's two globals (MapIsFlat at 0x94988c,
+//            MapLongitudeBounds at 0x949870) loading into ebx/edi in the opposite order
+//            from the image - same register-allocation swap seen on base_coast
+//            (0x0050DF30) and the rest of this xrange/on_map-loop family
+//            (bonus_at, goody_at already carry the same note).
+// size      216 bytes
+// prototype int (__cdecl ?base_on_sea@@YAHHH@Z)(int baseID, int region)
+// callers   10   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: Is base connected to specified sea region? true/false
+Status: Complete
+*/
+BOOL __cdecl base_on_sea(int base_id, int region_sea) {
+    region_sea &= RegionBounds;
+    if (region_sea >= RegionBounds) { // change to equals since already bounded?
+        return false; // skips poles (land or ocean)
+    }
+    int x = Bases[base_id].x;
+    int y = Bases[base_id].y;
+    for (uint32_t i = 0; i < 8; i++) {
+        int x_radius = wrap_map_x(x + VehMoveDeltaX[i]);
+        int y_radius = y + VehMoveDeltaY[i];
+        if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)
+            && (region_at(x_radius, y_radius) & RegionBounds) == region_sea) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/*
+Purpose: Determine the ocean region for coastal bases. There is an issue if a base is connected to
+         more than one ocean region, it will only return the last checked region based on the base
+         radius clockwise order. This could cause the AI to make incorrect calculations for what to
+         prioritize building at the base. An example could be a base that is connected to a small
+         water body as well as the much larger ocean. Depending on where these bodies of water are
+         positioned, the AI might make assumptions not to prioritize building naval units. Also,
+         the Continents compare logic isn't used by anything. This might be the root cause of
+         outlined bug. TODO: Revisit in the future once more is known about Continent structure.
+// ORIGINAL: 0x0050DF30 ?base_coast@@YAHH@Z 0x0050DF30-0x0050E021 BYTE_EXACT
+// TRIED: 42/81 plateau, same xrange/on_map-loop family as base_on_sea
+//            (0x0050DE50). First divergence is inside the inlined `xrange`:
+//            the image loads MapLongitudeBounds ONCE and reuses that
+//            register for both the `+=` and `-=` wrap arms, this tree
+//            reloads it from memory for the `-=` arm, shifting every
+//            address after it by 4 bytes and cascading the mismatch
+//            through the rest of the loop body (which otherwise agrees,
+//            per `listing_diff`: only 6 runs differ across 81
+//            instructions). Tried hand-inlining `xrange`/`on_map` instead
+//            of calling them - no change, confirming this is `xrange`'s own
+//            shared register-allocation ceiling, not something local to
+//            this call site.
+// size      241 bytes
+// prototype int (__cdecl ?base_coast@@YAHH@Z)(int baseID)
+// callers   3   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: Ocean region or -1 if landlocked
+Status: Complete
+*/
+int __cdecl base_coast(int base_id) {
+    int region = -1;
+    int val = 0;
+    int x = Bases[base_id].x;
+    int y = Bases[base_id].y;
+    for (int i = 0; i < 8; i++) { // is_coast()
+        int x_radius = wrap_map_x(x + VehMoveDeltaX[i]);
+        int y_radius = y + VehMoveDeltaY[i];
+        if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
+            region = region_at(x_radius, y_radius);
+            int compare = Continents[region].tile_count;
+            if (region >= 127) {
+                compare = 1;
+            }
+            if (compare >= val) {
+                val = compare; // value isn't used?
+            }
+            i += (2 - (i & 1)); // skips adjacent tiles
+        }
+    }
+    return region;
+}
+
+/*
+Purpose: Check to see if a port base shares a common body of water with destination coastal region.
+// ORIGINAL: 0x0050E030 ?port_to_coast@@YAHHH@Z 0x0050E030-0x0050E15A BYTE_EXACT
+// size      298 bytes
+// prototype int (__cdecl ?port_to_coast@@YAHHH@Z)(int baseID, int region)
+// callers   2   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0050BA00
+Return Value: Is port and coastal region accessible by water to each other? true/false
+Status: Complete
+*/
+// TRIED: best 77/103, 0.922 similar (best flag set /O2 /Gy /GR- /Oy-
+//            /GX), MISMATCH at every flag set. The remaining gaps are all
+//            `region_at`'s inlined `map_loc()->region` read: the image
+//            schedules `xor ecx, ecx` (or the byte-index add) before loading
+//            the map_tiles() pointer, this tree always loads the pointer
+//            first - same register-scheduling plateau as alt_at/alt_detail_at
+//            (0x00500150/0x00500180) and abstract_at (0x00591210), inherited
+//            here because `region_at` is called four times over the body.
+//            Not chased further.
+BOOL __cdecl port_to_coast(int base_id, int region) {
+    int x = Bases[base_id].x;
+    int y = Bases[base_id].y;
+    if (region == region_at(x, y)) {
+        return true;
+    }
+    for (int i = 0; i < 8; i++) { // is_coast()
+        int x_radius = wrap_map_x(x + VehMoveDeltaX[i]);
+        int y_radius = y + VehMoveDeltaY[i];
+        if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
+            // sea_coast() (0x0050DDC0, BYTE_EXACT as its own out-of-line
+            // function) is hand-inlined here: the image writes its body out
+            // at this call site (bitmask() is the only call it keeps),
+            // rather than calling 0x0050DDC0.
+            int offset;
+            int mask;
+            bitmask(region_at(x_radius, y_radius) & RegionBounds, &offset, &mask);
+            if ((Continents[region].sea_coasts[offset] & mask) != 0) {
+                return true;
+            }
+            i += (2 - (i & 1)); // skips adjacent tiles
+        }
+    }
+    return false;
+}
+
+static __forceinline BOOL __cdecl port_to_port_body(int base_id_src, int base_id_dst) {
+    int last_region = -1;
+    int x = Bases[base_id_src].x;
+    int y = Bases[base_id_src].y;
+    uint32_t i = 0;
+    for (;;) { // is_coast()
+        int x_radius = wrap_map_x(x + VehMoveDeltaX[i]);
+        int y_radius = y + VehMoveDeltaY[i];
+        if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
+            int region_src = region_at(x_radius, y_radius);
+            if (region_src != last_region) { // reduce redundant checks especially sea bases
+                last_region = region_src;
+                // Inlined base_on_sea(base_id_dst, region_src): the image
+                // writes this out here rather than calling it.
+                int region_sea = region_src & RegionBounds;
+                if (region_sea < RegionBounds) {
+                    int x_dst = Bases[base_id_dst].x;
+                    int y_dst = Bases[base_id_dst].y;
+                    for (uint32_t j = 0; j < 8; j++) {
+                        int x_radius_dst = wrap_map_x(x_dst + VehMoveDeltaX[j]);
+                        int y_radius_dst = y_dst + VehMoveDeltaY[j];
+                        if (on_map(x_radius_dst, y_radius_dst) && is_ocean(x_radius_dst, y_radius_dst)
+                            && (region_at(x_radius_dst, y_radius_dst) & RegionBounds) == region_sea) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        if (++i >= 8) {
+            return false;
+        }
+    }
+}
+
+/*
+Purpose: Check to see if two port bases share a common body of water determined by region.
+// ORIGINAL: 0x0050E160 ?port_to_port@@YAHHH@Z 0x0050E160-0x0050E306 BYTE_EXACT
+// LEVER: call_diff showed this tree calling base_on_sea where the image makes
+//        no calls at all - the image inlines base_on_sea's whole body into
+//        the loop instead. Manually inlining it (guard clause on
+//        `region_sea >= RegionBounds`, then the destination-base radius
+//        loop) took this from 5/141 to 12/141 instructions agreeing
+//        (0.587 -> 0.785 similarity); still MISMATCH, the remaining gap
+//        looks like register/stack-slot allocation (image reserves
+//        `sub esp, 0x18`, this tree `0x10`) rather than another structural
+//        difference.
+// TRIED: the same inline rewritten as early-return guard clauses
+//            (`if (!on_map(...)) continue;` etc.) instead of nested `if` -
+//            scored identically (12/141), so the remaining gap is not
+//            branch polarity.
+// size      422 bytes
+// prototype int (__cdecl ?port_to_port@@YAHHH@Z)(int baseIDSrc, int baseIDDst)
+// callers   7   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+// LEVER (2026-08-21): moved to map.h as `MEASURED inline`. naval_base (0x0050E3C0) and
+//        convoy (0x0050E5C0) call_diff MORE by exactly one call each on port_to_port -
+//        the image inlines this whole 422-byte body at both, while still keeping a
+//        real call at get_there and veh.cpp's valid_patrol (both already call_diff-clean
+//        and stayed that way after this move).
+Return Value: Are both ports accessible by water to each other? true/false
+Status: Complete
+*/
+BOOL __cdecl port_to_port(int base_id_src, int base_id_dst) {
+    return port_to_port_body(base_id_src, base_id_dst);
+}
+
+/*
+Purpose: Determine if a base has access to ports or more than one coastal region. This helps
+         prioritize whether naval transports should be built.
+// ORIGINAL: 0x0050E310 ?transport_base@@YAHH@Z 0x0050E310-0x0050E3BD BYTE_EXACT
+// LEVER: catalogue lists `sea_coasts` as callers=1, and this wasn't it - the
+//        image hand-inlines `sea_coasts`'s whole loop at this call site
+//        (same shape as `sea_coasts`'s own comment about `sea_coast()`)
+//        instead of calling 0x0050DE00. Went 2/67 -> 42/67 (0.889 similar)
+//        inlining that loop instead of calling `sea_coasts(region)`.
+// TRIED: the remaining gap is is_ocean's own known plateau - the image
+//            loads map_tiles() (0x94a30c) earlier, before the Bases[].x/y
+//            reads, than this tree schedules it. Same root cause as
+//            is_ocean's standalone note, not something local to this site.
+// size      173 bytes
+// prototype int (__cdecl ?transport_base@@YAHH@Z)(int baseID)
+// callers   1   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0050BA00 0x0050DF30
+Return Value: Should base build naval transports? true/false
+Status: Complete
+*/
+BOOL __cdecl transport_base(int base_id) {
+    int region = base_coast(base_id);
+    if (region < 0) {
+        return false;
+    }
+    if (is_ocean(Bases[base_id].x, Bases[base_id].y)) {
+        return true;
+    }
+    // `sea_coasts` (0x0050DE00, BYTE_EXACT as its own out-of-line function)
+    // is hand-inlined here: the image writes its whole loop body out at this
+    // call site (bitmask() is the only call it keeps), rather than calling
+    // 0x0050DE00.
+    int sea_coast_count = 0;
+    for (int i = 1; i < RegionBounds; i++) {
+        int offset;
+        int mask;
+        bitmask(region & RegionBounds, &offset, &mask);
+        if ((Continents[i].sea_coasts[offset] & mask) != 0) {
+            sea_coast_count++;
+        }
+    }
+    return sea_coast_count > 1;
+}
+
+/*
+Purpose: Determine if there are other faction's ports in the vicinity of the specified base.
+// ORIGINAL: 0x0050E3C0 ?naval_base@@YAHH@Z 0x0050E3C0-0x0050E5BE
+// TRIED: call count already matches the image (1 call, to base_coast;
+//            port_to_port makes 0 calls here, same as the image - `call_diff`
+//            agrees). The plateau (11/164, 0.894 similar, best of every flag
+//            set) is inherited from `port_to_port`'s own already-documented
+//            MISMATCH ceiling (12/141, register/stack-slot allocation, not
+//            branch shape) - here it is inlined a SECOND time, inside the
+//            `BaseCurrentCount` loop, compounding the same divergence.
+// size      510 bytes
+// prototype int (__cdecl ?naval_base@@YAHH@Z)(int baseID)
+// callers   1   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0050DF30
+Return Value: Does base have a strategic naval importance? true/false
+Status: Complete
+*/
+BOOL __cdecl naval_base(int base_id) {
+    if (base_coast(base_id) < 0) {
+        return false;
+    }
+    for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
+        if (Bases[i].faction_id_current != Bases[base_id].faction_id_current
+            && port_to_port(base_id, i)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/*
+Purpose: Determine if specified unit can set up a convoy route with specified base.
+// ORIGINAL: 0x0050E5C0 ?convoy@@YAHHH@Z 0x0050E5C0-0x0050E81C BYTE_EXACT
+// TRIED: call count already matches the image (0 calls - `port_to_port`
+//            fully inlines, same as the image; `call_diff` agrees). Best of
+//            every flag set is the default (18/200, 0.514 similar) - same
+//            inherited `port_to_port` inlining plateau as `naval_base`,
+//            not something specific to this call site's own control flow.
+// size      604 bytes
+// prototype int (__cdecl ?convoy@@YAHHH@Z)(int vehID, int baseID)
+// callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: Is a convoy route possible? true/false
+Status: Complete
+*/
+BOOL __cdecl convoy(int veh_id, int base_id) {
+    int home_base_id = Vehs[veh_id].home_base_id;
+    if (home_base_id < 0 || home_base_id == base_id) {
+        return false;
+    }
+    uint8_t triad = get_triad(veh_id);
+    if (triad == TRIAD_AIR) {
+        return true;
+    }
+    int region_base = region_at(Bases[base_id].x, Bases[base_id].y);
+    if (region_base == region_at(Bases[home_base_id].x, Bases[home_base_id].y)
+        && ((region_base >= 64) == (get_triad(veh_id) == TRIAD_SEA))) {
+        return true; // same region, by land or sea
+    }
+    if (triad) {
+        return port_to_port(base_id, home_base_id); // sea
+    }
+    return false;
+}
+
+// Homed from src/map_color.cpp (2026-09-02): its leaf-test isolation
+// rationale died with the leaf suite, the same retirement that freed
+// basepop_font.cpp. The mandate row belongs to TextColourTable[162..168].
+/*
+Purpose: Return the display colour for a mandate selector. Selectors 0, 1, and 2
+         map to the first three table entries; any other value returns the
+         fourth. The original decrements the selector twice against zero, so the
+         branch structure is preserved for exactness.
+// ORIGINAL: 0x0050E820 ?mandate_color@@YAHH@Z 0x0050E820-0x0050E84D BYTE_EXACT
+// LEVER: a `switch`, not a chain of `if`s. The image's dispatch is `sub eax, 0 / je` then `dec eax / je` twice - VC6's small-switch lowering, which keeps the selector live in eax and lays the arms out in reverse after the chain. Three separate `if (mandate == N)` compare `[ebp+8]` against an immediate at every arm and scored 5 of 21; the switch scores 21 of 21.
+// size      45 bytes
+// prototype int (__cdecl ?mandate_color@@YAHH@Z)(int category)
+// callers   9   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+Return Value: Colour dword from the mandate colour table
+Status: Complete
+*/
+int __cdecl mandate_color(int mandate) {
+    switch (mandate) {
+    case 0:
+        return TextColourTable[162];
+    case 1:
+        return TextColourTable[164];
+    case 2:
+        return TextColourTable[166];
+    default:
+        return TextColourTable[168];
     }
 }

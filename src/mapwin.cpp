@@ -6771,6 +6771,27 @@ void __cdecl terrain_fixup(MapWin * window) {
     }
 }
 
+
+/*
+Purpose: Check whether the coordinates are on the map.
+// ORIGINAL: 0x004712A0 ?on_map@@YAHHH@Z 0x004712A0-0x004712CC BYTE_EXACT
+// body      src/map.h
+// size      44 bytes
+// prototype BOOL (__cdecl ?on_map@@YAHHH@Z)(int xCoord, int yCoord)
+// callers   7   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: Are the coordinates on the map? true/false
+Status: Complete
+*/
+// BODY IN map.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
+
+
 // Reset only the five altitude samples, retaining brightness, terrain and
 // detail. MapArea is tested as signed and re-read after each complete row.
 // The existing cache receiver/storage model supports this source home;

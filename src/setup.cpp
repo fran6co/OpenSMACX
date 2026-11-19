@@ -135,10 +135,18 @@
 #include "socialwin.h"
 #include "game_data_state_window.h"
 
+// ORIGINAL: 0x005AE0F0 _$E61 0x005AE0F0-0x005AE106 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT dispatcher 0x00644DEC-0x00644DFB supplies [0x00682000,0x006826CC) to 0x00644ED8, which calls each non-null dword. Slot 0x00682658 selects init 0x005AE0F0, which registers exit callback 0x005AE110.", "Original init span 0x005AE0F0-0x005AE106 and exit span 0x005AE110-0x005AE11A are independently disassembled; both identify receiver 0x00945E08 and Wave constructor/destructor 0x004C66E0/0x004C67C0.", "Historical earlier wave.cpp physical COFF selected local STATIC init _$E61 via .CRT$XCU, relocating to g_CRASH_LANDING_WAVE, Wave construction, paired local fini _$E59 and atexit; fini relocates to the same object and Wave destruction. Native comparator can select these physical local function symbols.", "Independent pin/COFF/source review supports individual lifetime ownership. These mappings do not establish complete global initialization order, linked retained selection, full data layout, original debug names or runtime acceptance."], "reason": "Bind the original startup operation to the genuine compiler-emitted lifetime of source-owned g_CRASH_LANDING_WAVE. The local symbol identifies current emitted code, not an original debug name; no callback body is authored."}
+// symbol    _$E20
+// ORIGINAL: 0x005AE110 _$E59 0x005AE110-0x005AE11A FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT dispatcher 0x00644DEC-0x00644DFB supplies [0x00682000,0x006826CC) to 0x00644ED8, which calls each non-null dword. Slot 0x00682658 selects init 0x005AE0F0, which registers exit callback 0x005AE110.", "Original init span 0x005AE0F0-0x005AE106 and exit span 0x005AE110-0x005AE11A are independently disassembled; both identify receiver 0x00945E08 and Wave constructor/destructor 0x004C66E0/0x004C67C0.", "Historical earlier wave.cpp physical COFF selected local STATIC init _$E61 via .CRT$XCU, relocating to g_CRASH_LANDING_WAVE, Wave construction, paired local fini _$E59 and atexit; fini relocates to the same object and Wave destruction. Native comparator can select these physical local function symbols.", "Independent pin/COFF/source review supports individual lifetime ownership. These mappings do not establish complete global initialization order, linked retained selection, full data layout, original debug names or runtime acceptance."], "reason": "Bind the original exit operation to the genuine compiler-emitted lifetime of source-owned g_CRASH_LANDING_WAVE. The local symbol identifies current emitted code, not an original debug name; no callback body is authored."}
+// symbol    _$E18
+// RECOVERY_OBJECT: v1 0x00945E08 ?g_CRASH_LANDING_WAVE@@3VWave@@A
+Wave g_CRASH_LANDING_WAVE;  // 0x00945E08
+
 // Shared separator objects the image pushes instead of unit literals.
 extern const char BufferJoinSpace[];
 
-extern Wave g_CRASH_LANDING_WAVE;
 extern int ConsoleNoMapOverrideLatch;
 
 // WORKAROUND(inline): dead /Ob2 budget probe (folds to nothing). Without eight

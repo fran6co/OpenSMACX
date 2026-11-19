@@ -109,6 +109,250 @@ Font *PopupDefaultWindowFont; // 0x00945810
 #include "pulldown.h"
 #include "diplowin.h" // DiploKnownTechColor shares the original menu palette cell.
 
+// ORIGINAL: 0x00404440 _$E26 0x00404440-0x00404456 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682008 selects init 0x00404440-0x00404456, registering fini 0x00404460-0x0040446A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A7130; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E26 via .CRT$XCU and registers _$E24, with relocations naming ?g_UNUSED_SPRITE_VAR02@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR02; no callback body is authored."}
+// symbol    _$E16
+// ORIGINAL: 0x00404460 _$E24 0x00404460-0x0040446A FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682008 selects init 0x00404440-0x00404456, registering fini 0x00404460-0x0040446A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A7130; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E26 via .CRT$XCU and registers _$E24, with relocations naming ?g_UNUSED_SPRITE_VAR02@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR02; no callback body is authored."}
+// symbol    _$E14
+// Canonical mapping for the inline destructor emitted by these object lifetimes.
+/*
+// ORIGINAL: 0x00406850 ??1Sprite@@QAE@XZ 0x00406850-0x00406855 BYTE_EXACT
+// body      src/jackal/sprite.h
+// size      5 bytes
+// prototype
+// callers   1   call targets   0
+// kind      thunk
+// flags     hidden;thunk;sp_ready;purged_ok
+// calls     (none)
+*/
+
+// ===== MANAGED GLOBALS - real objects, homed to their domain =====
+// In the shipped image these live at fixed data addresses and are
+// constructed before WinMain by the CRT's dynamic-initializer walk
+// (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
+// Here the same recovered constructors run through this build's own
+// startup, and the matching destructors close them at exit. Addresses of
+// the ones documented individually live beside their definitions.
+// Pinned original init -> registered cleanup pairs, in CRT order. Each init
+// loads the stated global into ECX, calls Sprite::Sprite (0x005E37E0), pushes
+// the paired cleanup and calls _atexit (0x00645398). Each cleanup loads that
+// same global into ECX and tail-jumps to Sprite::close (0x005E3820). These are
+// lifetime identities only; no allocation ends are asserted here.
+// 0x00404440 -> 0x006A7130 -> 0x00404460
+// 0x00404470 -> 0x006A72E0 -> 0x00404490
+// 0x004044A0 -> 0x006A71F0 -> 0x004044C0
+// 0x004044D0 -> 0x006A7280 -> 0x004044F0
+// 0x00404500 -> 0x006A74C0 -> 0x00404520
+// 0x00404530 -> 0x006A71C0 -> 0x00404550
+// 0x00404560 -> 0x006A7250 -> 0x00404580
+// 0x00404590 -> 0x006A7190 -> 0x004045B0
+// 0x004045C0 -> 0x006A7100 -> 0x004045E0
+// 0x004045F0 -> 0x006A7430 -> 0x00404610
+// 0x00404620 -> 0x006A7160 -> 0x00404640
+// 0x00404650 -> 0x006A7490 -> 0x00404670
+// 0x00404680 -> 0x006A73D0 -> 0x004046A0
+// 0x004046B0 -> 0x006A7370 -> 0x004046D0
+// 0x004046E0 -> 0x006A74F0 -> 0x00404700
+// 0x00404710 -> 0x006A72B0 -> 0x00404730
+// 0x00404740 -> 0x006A73A0 -> 0x00404760
+// 0x00404770 -> 0x006A7340 -> 0x00404790
+// 0x004047A0 -> 0x006A7400 -> 0x004047C0
+// 0x004047D0 -> 0x006A7460 -> 0x004047F0
+// 0x00404800 -> 0x006A7310 -> 0x00404820
+// 0x00404830 -> 0x006A7220 -> 0x00404850
+// RECOVERY_OBJECT: v1 0x006A7130 ?g_UNUSED_SPRITE_VAR02@@3VSprite@@A
+Sprite g_UNUSED_SPRITE_VAR02;  // 0x006A7130
+
+// ORIGINAL: 0x00404470 _$E31 0x00404470-0x00404486 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x0068200C selects init 0x00404470-0x00404486, registering fini 0x00404490-0x0040449A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A72E0; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E31 via .CRT$XCU and registers _$E29, with relocations naming ?g_UNUSED_SPRITE_VAR11@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR11; no callback body is authored."}
+// symbol    _$E21
+// ORIGINAL: 0x00404490 _$E29 0x00404490-0x0040449A FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x0068200C selects init 0x00404470-0x00404486, registering fini 0x00404490-0x0040449A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A72E0; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E31 via .CRT$XCU and registers _$E29, with relocations naming ?g_UNUSED_SPRITE_VAR11@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR11; no callback body is authored."}
+// symbol    _$E19
+// RECOVERY_OBJECT: v1 0x006A72E0 ?g_UNUSED_SPRITE_VAR11@@3VSprite@@A
+Sprite g_UNUSED_SPRITE_VAR11;  // 0x006A72E0
+
+// ORIGINAL: 0x004044A0 _$E36 0x004044A0-0x004044B6 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682010 selects init 0x004044A0-0x004044B6, registering fini 0x004044C0-0x004044CA; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A71F0; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E36 via .CRT$XCU and registers _$E34, with relocations naming ?g_UNUSED_SPRITE_VAR06@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR06; no callback body is authored."}
+// symbol    _$E26
+// ORIGINAL: 0x004044C0 _$E34 0x004044C0-0x004044CA FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682010 selects init 0x004044A0-0x004044B6, registering fini 0x004044C0-0x004044CA; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A71F0; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E36 via .CRT$XCU and registers _$E34, with relocations naming ?g_UNUSED_SPRITE_VAR06@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR06; no callback body is authored."}
+// symbol    _$E24
+// RECOVERY_OBJECT: v1 0x006A71F0 ?g_UNUSED_SPRITE_VAR06@@3VSprite@@A
+Sprite g_UNUSED_SPRITE_VAR06;  // 0x006A71F0
+
+// ORIGINAL: 0x004044D0 _$E41 0x004044D0-0x004044E6 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682014 selects init 0x004044D0-0x004044E6, registering fini 0x004044F0-0x004044FA; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A7280; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E41 via .CRT$XCU and registers _$E39, with relocations naming ?g_UNUSED_SPRITE_VAR09@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR09; no callback body is authored."}
+// symbol    _$E31
+// ORIGINAL: 0x004044F0 _$E39 0x004044F0-0x004044FA FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682014 selects init 0x004044D0-0x004044E6, registering fini 0x004044F0-0x004044FA; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A7280; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E41 via .CRT$XCU and registers _$E39, with relocations naming ?g_UNUSED_SPRITE_VAR09@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR09; no callback body is authored."}
+// symbol    _$E29
+// RECOVERY_OBJECT: v1 0x006A7280 ?g_UNUSED_SPRITE_VAR09@@3VSprite@@A
+Sprite g_UNUSED_SPRITE_VAR09;  // 0x006A7280
+
+// ORIGINAL: 0x00404500 _$E46 0x00404500-0x00404516 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682018 selects init 0x00404500-0x00404516, registering fini 0x00404520-0x0040452A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A74C0; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E46 via .CRT$XCU and registers _$E44, with relocations naming ?g_UNUSED_SPRITE_VAR21@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR21; no callback body is authored."}
+// symbol    _$E36
+// ORIGINAL: 0x00404520 _$E44 0x00404520-0x0040452A FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682018 selects init 0x00404500-0x00404516, registering fini 0x00404520-0x0040452A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A74C0; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E46 via .CRT$XCU and registers _$E44, with relocations naming ?g_UNUSED_SPRITE_VAR21@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR21; no callback body is authored."}
+// symbol    _$E34
+// RECOVERY_OBJECT: v1 0x006A74C0 ?g_UNUSED_SPRITE_VAR21@@3VSprite@@A
+Sprite g_UNUSED_SPRITE_VAR21;  // 0x006A74C0
+
+// ORIGINAL: 0x00404530 _$E51 0x00404530-0x00404546 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x0068201C selects init 0x00404530-0x00404546, registering fini 0x00404550-0x0040455A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A71C0; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E51 via .CRT$XCU and registers _$E49, with relocations naming ?g_UNUSED_SPRITE_VAR05@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR05; no callback body is authored."}
+// symbol    _$E41
+// ORIGINAL: 0x00404550 _$E49 0x00404550-0x0040455A FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x0068201C selects init 0x00404530-0x00404546, registering fini 0x00404550-0x0040455A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A71C0; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E51 via .CRT$XCU and registers _$E49, with relocations naming ?g_UNUSED_SPRITE_VAR05@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR05; no callback body is authored."}
+// symbol    _$E39
+// RECOVERY_OBJECT: v1 0x006A71C0 ?g_UNUSED_SPRITE_VAR05@@3VSprite@@A
+Sprite g_UNUSED_SPRITE_VAR05;  // 0x006A71C0
+
+// ORIGINAL: 0x00404560 _$E56 0x00404560-0x00404576 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682020 selects init 0x00404560-0x00404576, registering fini 0x00404580-0x0040458A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A7250; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E56 via .CRT$XCU and registers _$E54, with relocations naming ?g_UNUSED_SPRITE_VAR08@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR08; no callback body is authored."}
+// symbol    _$E46
+// ORIGINAL: 0x00404580 _$E54 0x00404580-0x0040458A FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682020 selects init 0x00404560-0x00404576, registering fini 0x00404580-0x0040458A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A7250; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E56 via .CRT$XCU and registers _$E54, with relocations naming ?g_UNUSED_SPRITE_VAR08@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR08; no callback body is authored."}
+// symbol    _$E44
+// RECOVERY_OBJECT: v1 0x006A7250 ?g_UNUSED_SPRITE_VAR08@@3VSprite@@A
+Sprite g_UNUSED_SPRITE_VAR08;  // 0x006A7250
+
+// ORIGINAL: 0x00404590 _$E61 0x00404590-0x004045A6 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682024 selects init 0x00404590-0x004045A6, registering fini 0x004045B0-0x004045BA; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A7190; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E61 via .CRT$XCU and registers _$E59, with relocations naming ?g_UNUSED_SPRITE_VAR04@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR04; no callback body is authored."}
+// symbol    _$E51
+// ORIGINAL: 0x004045B0 _$E59 0x004045B0-0x004045BA FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682024 selects init 0x00404590-0x004045A6, registering fini 0x004045B0-0x004045BA; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A7190; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E61 via .CRT$XCU and registers _$E59, with relocations naming ?g_UNUSED_SPRITE_VAR04@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR04; no callback body is authored."}
+// symbol    _$E49
+// RECOVERY_OBJECT: v1 0x006A7190 ?g_UNUSED_SPRITE_VAR04@@3VSprite@@A
+Sprite g_UNUSED_SPRITE_VAR04;  // 0x006A7190
+
+// ORIGINAL: 0x004045C0 _$E66 0x004045C0-0x004045D6 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682028 selects init 0x004045C0-0x004045D6, registering fini 0x004045E0-0x004045EA; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A7100; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E66 via .CRT$XCU and registers _$E64, with relocations naming ?g_UNUSED_SPRITE_VAR01@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR01; no callback body is authored."}
+// symbol    _$E56
+// ORIGINAL: 0x004045E0 _$E64 0x004045E0-0x004045EA FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682028 selects init 0x004045C0-0x004045D6, registering fini 0x004045E0-0x004045EA; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A7100; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E66 via .CRT$XCU and registers _$E64, with relocations naming ?g_UNUSED_SPRITE_VAR01@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR01; no callback body is authored."}
+// symbol    _$E54
+// RECOVERY_OBJECT: v1 0x006A7100 ?g_UNUSED_SPRITE_VAR01@@3VSprite@@A
+Sprite g_UNUSED_SPRITE_VAR01;  // 0x006A7100
+
+// ORIGINAL: 0x004045F0 _$E71 0x004045F0-0x00404606 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x0068202C selects init 0x004045F0-0x00404606, registering fini 0x00404610-0x0040461A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A7430; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E71 via .CRT$XCU and registers _$E69, with relocations naming ?g_UNUSED_SPRITE_VAR18@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR18; no callback body is authored."}
+// symbol    _$E61
+// ORIGINAL: 0x00404610 _$E69 0x00404610-0x0040461A FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x0068202C selects init 0x004045F0-0x00404606, registering fini 0x00404610-0x0040461A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A7430; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E71 via .CRT$XCU and registers _$E69, with relocations naming ?g_UNUSED_SPRITE_VAR18@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR18; no callback body is authored."}
+// symbol    _$E59
+// RECOVERY_OBJECT: v1 0x006A7430 ?g_UNUSED_SPRITE_VAR18@@3VSprite@@A
+Sprite g_UNUSED_SPRITE_VAR18;  // 0x006A7430
+
+// ORIGINAL: 0x00404620 _$E76 0x00404620-0x00404636 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682030 selects init 0x00404620-0x00404636, registering fini 0x00404640-0x0040464A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A7160; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E76 via .CRT$XCU and registers _$E74, with relocations naming ?g_UNUSED_SPRITE_VAR03@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR03; no callback body is authored."}
+// symbol    _$E66
+// ORIGINAL: 0x00404640 _$E74 0x00404640-0x0040464A FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682030 selects init 0x00404620-0x00404636, registering fini 0x00404640-0x0040464A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A7160; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E76 via .CRT$XCU and registers _$E74, with relocations naming ?g_UNUSED_SPRITE_VAR03@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR03; no callback body is authored."}
+// symbol    _$E64
+// RECOVERY_OBJECT: v1 0x006A7160 ?g_UNUSED_SPRITE_VAR03@@3VSprite@@A
+Sprite g_UNUSED_SPRITE_VAR03;  // 0x006A7160
+
+// ORIGINAL: 0x00404650 _$E81 0x00404650-0x00404666 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682034 selects init 0x00404650-0x00404666, registering fini 0x00404670-0x0040467A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A7490; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E81 via .CRT$XCU and registers _$E79, with relocations naming ?g_UNUSED_SPRITE_VAR20@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR20; no callback body is authored."}
+// symbol    _$E71
+// ORIGINAL: 0x00404670 _$E79 0x00404670-0x0040467A FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682034 selects init 0x00404650-0x00404666, registering fini 0x00404670-0x0040467A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A7490; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E81 via .CRT$XCU and registers _$E79, with relocations naming ?g_UNUSED_SPRITE_VAR20@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR20; no callback body is authored."}
+// symbol    _$E69
+// RECOVERY_OBJECT: v1 0x006A7490 ?g_UNUSED_SPRITE_VAR20@@3VSprite@@A
+Sprite g_UNUSED_SPRITE_VAR20;  // 0x006A7490
+
+// ORIGINAL: 0x00404680 _$E86 0x00404680-0x00404696 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682038 selects init 0x00404680-0x00404696, registering fini 0x004046A0-0x004046AA; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A73D0; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E86 via .CRT$XCU and registers _$E84, with relocations naming ?g_UNUSED_SPRITE_VAR16@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR16; no callback body is authored."}
+// symbol    _$E76
+// ORIGINAL: 0x004046A0 _$E84 0x004046A0-0x004046AA FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682038 selects init 0x00404680-0x00404696, registering fini 0x004046A0-0x004046AA; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A73D0; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E86 via .CRT$XCU and registers _$E84, with relocations naming ?g_UNUSED_SPRITE_VAR16@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR16; no callback body is authored."}
+// symbol    _$E74
+// RECOVERY_OBJECT: v1 0x006A73D0 ?g_UNUSED_SPRITE_VAR16@@3VSprite@@A
+Sprite g_UNUSED_SPRITE_VAR16;  // 0x006A73D0
+
+// ORIGINAL: 0x004046B0 _$E91 0x004046B0-0x004046C6 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x0068203C selects init 0x004046B0-0x004046C6, registering fini 0x004046D0-0x004046DA; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A7370; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E91 via .CRT$XCU and registers _$E89, with relocations naming ?g_UNUSED_SPRITE_VAR14@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR14; no callback body is authored."}
+// symbol    _$E81
+// ORIGINAL: 0x004046D0 _$E89 0x004046D0-0x004046DA FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x0068203C selects init 0x004046B0-0x004046C6, registering fini 0x004046D0-0x004046DA; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A7370; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E91 via .CRT$XCU and registers _$E89, with relocations naming ?g_UNUSED_SPRITE_VAR14@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR14; no callback body is authored."}
+// symbol    _$E79
+// RECOVERY_OBJECT: v1 0x006A7370 ?g_UNUSED_SPRITE_VAR14@@3VSprite@@A
+Sprite g_UNUSED_SPRITE_VAR14;  // 0x006A7370
+
+// ORIGINAL: 0x004046E0 _$E96 0x004046E0-0x004046F6 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682040 selects init 0x004046E0-0x004046F6, registering fini 0x00404700-0x0040470A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A74F0; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E96 via .CRT$XCU and registers _$E94, with relocations naming ?g_UNUSED_SPRITE_VAR22@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR22; no callback body is authored."}
+// symbol    _$E86
+// ORIGINAL: 0x00404700 _$E94 0x00404700-0x0040470A FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682040 selects init 0x004046E0-0x004046F6, registering fini 0x00404700-0x0040470A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A74F0; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E96 via .CRT$XCU and registers _$E94, with relocations naming ?g_UNUSED_SPRITE_VAR22@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR22; no callback body is authored."}
+// symbol    _$E84
+// RECOVERY_OBJECT: v1 0x006A74F0 ?g_UNUSED_SPRITE_VAR22@@3VSprite@@A
+Sprite g_UNUSED_SPRITE_VAR22;  // 0x006A74F0
+
+// ORIGINAL: 0x00404710 _$E101 0x00404710-0x00404726 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682044 selects init 0x00404710-0x00404726, registering fini 0x00404730-0x0040473A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A72B0; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E101 via .CRT$XCU and registers _$E99, with relocations naming ?g_UNUSED_SPRITE_VAR10@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR10; no callback body is authored."}
+// symbol    _$E91
+// ORIGINAL: 0x00404730 _$E99 0x00404730-0x0040473A FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682044 selects init 0x00404710-0x00404726, registering fini 0x00404730-0x0040473A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A72B0; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E101 via .CRT$XCU and registers _$E99, with relocations naming ?g_UNUSED_SPRITE_VAR10@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR10; no callback body is authored."}
+// symbol    _$E89
+// RECOVERY_OBJECT: v1 0x006A72B0 ?g_UNUSED_SPRITE_VAR10@@3VSprite@@A
+Sprite g_UNUSED_SPRITE_VAR10;  // 0x006A72B0
+
+// ORIGINAL: 0x00404740 _$E106 0x00404740-0x00404756 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682048 selects init 0x00404740-0x00404756, registering fini 0x00404760-0x0040476A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A73A0; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E106 via .CRT$XCU and registers _$E104, with relocations naming ?g_UNUSED_SPRITE_VAR15@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR15; no callback body is authored."}
+// symbol    _$E96
+// ORIGINAL: 0x00404760 _$E104 0x00404760-0x0040476A FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682048 selects init 0x00404740-0x00404756, registering fini 0x00404760-0x0040476A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A73A0; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E106 via .CRT$XCU and registers _$E104, with relocations naming ?g_UNUSED_SPRITE_VAR15@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR15; no callback body is authored."}
+// symbol    _$E94
+// RECOVERY_OBJECT: v1 0x006A73A0 ?g_UNUSED_SPRITE_VAR15@@3VSprite@@A
+Sprite g_UNUSED_SPRITE_VAR15;  // 0x006A73A0
+
+// ORIGINAL: 0x00404770 _$E111 0x00404770-0x00404786 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x0068204C selects init 0x00404770-0x00404786, registering fini 0x00404790-0x0040479A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A7340; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E111 via .CRT$XCU and registers _$E109, with relocations naming ?g_UNUSED_SPRITE_VAR13@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR13; no callback body is authored."}
+// symbol    _$E101
+// ORIGINAL: 0x00404790 _$E109 0x00404790-0x0040479A FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x0068204C selects init 0x00404770-0x00404786, registering fini 0x00404790-0x0040479A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A7340; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E111 via .CRT$XCU and registers _$E109, with relocations naming ?g_UNUSED_SPRITE_VAR13@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR13; no callback body is authored."}
+// symbol    _$E99
+// RECOVERY_OBJECT: v1 0x006A7340 ?g_UNUSED_SPRITE_VAR13@@3VSprite@@A
+Sprite g_UNUSED_SPRITE_VAR13;  // 0x006A7340
+
+// ORIGINAL: 0x004047A0 _$E116 0x004047A0-0x004047B6 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682050 selects init 0x004047A0-0x004047B6, registering fini 0x004047C0-0x004047CA; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A7400; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E116 via .CRT$XCU and registers _$E114, with relocations naming ?g_UNUSED_SPRITE_VAR17@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR17; no callback body is authored."}
+// symbol    _$E106
+// ORIGINAL: 0x004047C0 _$E114 0x004047C0-0x004047CA FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682050 selects init 0x004047A0-0x004047B6, registering fini 0x004047C0-0x004047CA; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A7400; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E116 via .CRT$XCU and registers _$E114, with relocations naming ?g_UNUSED_SPRITE_VAR17@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR17; no callback body is authored."}
+// symbol    _$E104
+// RECOVERY_OBJECT: v1 0x006A7400 ?g_UNUSED_SPRITE_VAR17@@3VSprite@@A
+Sprite g_UNUSED_SPRITE_VAR17;  // 0x006A7400
+
+// ORIGINAL: 0x004047D0 _$E121 0x004047D0-0x004047E6 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682054 selects init 0x004047D0-0x004047E6, registering fini 0x004047F0-0x004047FA; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A7460; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E121 via .CRT$XCU and registers _$E119, with relocations naming ?g_UNUSED_SPRITE_VAR19@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR19; no callback body is authored."}
+// symbol    _$E111
+// ORIGINAL: 0x004047F0 _$E119 0x004047F0-0x004047FA FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682054 selects init 0x004047D0-0x004047E6, registering fini 0x004047F0-0x004047FA; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A7460; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E121 via .CRT$XCU and registers _$E119, with relocations naming ?g_UNUSED_SPRITE_VAR19@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR19; no callback body is authored."}
+// symbol    _$E109
+// RECOVERY_OBJECT: v1 0x006A7460 ?g_UNUSED_SPRITE_VAR19@@3VSprite@@A
+Sprite g_UNUSED_SPRITE_VAR19;  // 0x006A7460
+
+// ORIGINAL: 0x00404800 _$E126 0x00404800-0x00404816 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682058 selects init 0x00404800-0x00404816, registering fini 0x00404820-0x0040482A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A7310; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E126 via .CRT$XCU and registers _$E124, with relocations naming ?g_UNUSED_SPRITE_VAR12@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR12; no callback body is authored."}
+// symbol    _$E116
+// ORIGINAL: 0x00404820 _$E124 0x00404820-0x0040482A FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682058 selects init 0x00404800-0x00404816, registering fini 0x00404820-0x0040482A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A7310; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E126 via .CRT$XCU and registers _$E124, with relocations naming ?g_UNUSED_SPRITE_VAR12@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR12; no callback body is authored."}
+// symbol    _$E114
+// RECOVERY_OBJECT: v1 0x006A7310 ?g_UNUSED_SPRITE_VAR12@@3VSprite@@A
+Sprite g_UNUSED_SPRITE_VAR12;  // 0x006A7310
+
+// ORIGINAL: 0x00404830 _$E131 0x00404830-0x00404846 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x0068205C selects init 0x00404830-0x00404846, registering fini 0x00404850-0x0040485A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A7220; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E131 via .CRT$XCU and registers _$E129, with relocations naming ?g_UNUSED_SPRITE_VAR07@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR07; no callback body is authored."}
+// symbol    _$E121
+// ORIGINAL: 0x00404850 _$E129 0x00404850-0x0040485A FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x0068205C selects init 0x00404830-0x00404846, registering fini 0x00404850-0x0040485A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x006A7220; Sprite constructor 0x005E37E0 and teardown tail-jump 0x005E3820.", "Current owner physical COFF selects _$E131 via .CRT$XCU and registers _$E129, with relocations naming ?g_UNUSED_SPRITE_VAR07@@3VSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_SPRITE_VAR07; no callback body is authored."}
+// symbol    _$E119
+// RECOVERY_OBJECT: v1 0x006A7220 ?g_UNUSED_SPRITE_VAR07@@3VSprite@@A
+Sprite g_UNUSED_SPRITE_VAR07;  // 0x006A7220
+
 
 extern int TextColourTable[195];
 extern BoxSpriteParams InterfaceStandardPopupBoxStyle;
@@ -192,40 +436,6 @@ char *PopupStartAltFile2 = PopupAlienOtherScriptName;    // 0x00691B24
 // popup runs and clears the moment exec comes back. See the note in popup.h.
 // RECOVERY_OBJECT: v2 0x006A721C 0x006A7220 ?PopupModalState@@3HA 0x004E0EA0
 int PopupModalState;  // 0x006A721C
-
-
-/*
-Purpose: Start a popup from just a label, defaulting the rest.
-// ORIGINAL: 0x005A5990 ?start@Popup@@QAEXPBD@Z 0x005A5990-0x005A59AD BYTE_EXACT
-// size      29 bytes
-// prototype void (__thiscall ?start@Popup@@QAEXPBD@Z)(Popup* this, int8*)
-// callers   1   call targets   1
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x00406380
-Return Value: n/a
-Status: Complete
-*/
-// body src/popup.h
-// BODY IN popup.h, as an in-class `MEASURED` inline member.
-
-/*
-Purpose: Start a popup from a label and a value, defaulting the rest.
-// ORIGINAL: 0x00559040 ?start@Popup@@QAEXPBDH@Z 0x00559040-0x0055905F BYTE_EXACT
-// size      31 bytes
-// prototype void (__thiscall ?start@Popup@@QAEXPBDH@Z)(Popup* this, int8* sectionID, int)
-// callers   2   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x00406380
-Return Value: n/a
-Status: Complete
-*/
-// body src/popup.h
-// BODY IN popup.h, as an in-class `MEASURED` inline member.
-
-
-
 /*
 Purpose: Draw a popup's dialog background; the legacy implementation does
          nothing and returns 0.
@@ -553,13 +763,13 @@ int Popup::on_link_clicked(int id, char *link) {
     if (link == 0) {
         return 1;
     }
-// RECOVERY_LITERAL: v1 0x006827B8 0x006827C1 $SG59844 0x004050A0
+// RECOVERY_LITERAL: v1 0x006827B8 0x006827C1 $SG60065 0x004050A0
     if (_stricmp(link, "homelink") == 0) {
         ExitTurnLoop = 1;
         fallout();
         ShowWindow(HandleMain, 0);
-// RECOVERY_LITERAL: v1 0x006827DC 0x006827E1 $SG59846 0x004050A0
-// RECOVERY_LITERAL: v1 0x006827C4 0x006827DB $SG59845 0x004050A0
+// RECOVERY_LITERAL: v1 0x006827DC 0x006827E1 $SG60067 0x004050A0
+// RECOVERY_LITERAL: v1 0x006827C4 0x006827DB $SG60066 0x004050A0
         ::ShellExecuteA(0, "open", "http:\\\\www.firaxis.com", 0, 0, 1);
         return 1;
     }
@@ -604,7 +814,7 @@ int Popup::on_link_clicked(int id, char *link) {
 int Popup::start(char *text_file, const char *text_label, int value,
                  char *override_text, int flags, GraphicWin *owner_window) {
     if (strcmp(text_file, ScriptPopupFile) != 0
-// RECOVERY_LITERAL: v1 0x006827E4 0x006827EF $SG59857 0x00406380
+// RECOVERY_LITERAL: v1 0x006827E4 0x006827EF $SG60078 0x00406380
         && strcmp(text_file, "SCRIPT.txt") != 0) {
         return BasePop::start(text_file, text_label, value, override_text, flags,
                               owner_window);
@@ -612,8 +822,8 @@ int Popup::start(char *text_file, const char *text_label, int value,
 
     if ((Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) != 0) {
         if (ExpansionEnabled == 0) goto fallback;
-// RECOVERY_LITERAL: v1 0x006827F4 0x00682805 $SG59864 0x00406380
-// RECOVERY_LITERAL: v1 0x006827F0 0x006827F3 $SG59863 0x00406380
+// RECOVERY_LITERAL: v1 0x006827F4 0x00682805 $SG60085 0x00406380
+// RECOVERY_LITERAL: v1 0x006827F0 0x006827F3 $SG60084 0x00406380
         FILE *const fp = fopen("alienIscript.txt", "rb");
         if (fp == 0) goto fallback;
         fclose(fp);
@@ -627,8 +837,8 @@ int Popup::start(char *text_file, const char *text_label, int value,
     if (PopupDialogFactionID <= 0 || PopupDialogFactionID >= 8) goto fallback;
     if ((Players[PopupDialogFactionID].rule_flags & RFLAG_ALIEN) == 0) goto fallback;
     {
-// RECOVERY_LITERAL: v1 0x0068280C 0x0068281D $SG59879 0x00406380
-// RECOVERY_LITERAL: v1 0x00682808 0x0068280B $SG59878 0x00406380
+// RECOVERY_LITERAL: v1 0x0068280C 0x0068281D $SG60100 0x00406380
+// RECOVERY_LITERAL: v1 0x00682808 0x0068280B $SG60099 0x00406380
         FILE *const fp = fopen("alienuscript.txt", "rb");
         if (fp == 0) goto fallback;
         fclose(fp);
@@ -786,22 +996,6 @@ int Popup::on_exec() {
         return 1;
     }
 }
-
-// ORIGINAL: 0x00559000 sub_559000 0x00559000-0x0055903A BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["original:0x0055468E-0x005546A5:shared-Popup-receiver", "original:0x00559000-0x0055903A", "source:src/basepop.h:caller_sprite_,dialogs_", "git:0af6726c:src/recovered/units/00559000.cpp"], "reason": "The original communicate caller uses the same local Popup receiver for start and this member. Existing BasePop caller_sprite_ and owned Dialogs/SpriteBox state explain the observed member accesses. Clear only the stored caller picture when the list is nonempty; always forward the incoming picture to SpriteBox::sprite. The behavior-derived method name is provisional; the original name remains unknown."}
-// symbol    ?set_picture@Popup@@QAEHPAVSprite@@HPAD@Z
-// Provisional behavior-derived name; original method name is unknown.
-// Historical seed evidence: direct ECX-relative field accesses identify a
-// thiscall receiver, despite the old scaffold's initial free-stdcall guess.
-// body src/popup.h
-// BODY IN popup.h, as an in-class `MEASURED` inline member.
-
-// ORIGINAL: 0x0050B8D0 ?POP3@@YAXPBDHHH@Z 0x0050B8D0-0x0050B8EF BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["original:terranx_original.exe:0x0050B8D0-0x0050B8EF", "source:src/popup.cpp:typed owner", "source:src/popup.h:POP3 overload declarations", "original:0x004055A0 full POP3 target", "seed:retained original source identity 0x0050B8D0"], "reason": "The short POP3 entry is a typed overload that delegates its original arguments to the full POP3 owner."}
-// body src/popup.h
-// symbol    ?POP3@@YAHPBDHHH@Z
-// BODY IN popup.h, as `MEASURED inline`.
-
 // ORIGINAL: 0x00405140 ?POP2@@YAHPBDPBDH@Z 0x00405140-0x0040559B;0x0065078F-0x00650839
 // RECOVERY_BINDING: v1 {"evidence": ["pinned 0x405140..0x40559B builds BasePop at EBP-0x5390 and Scroll at EBP-0x2160 (= BasePop+0x3230), then installs Popup primary vptr 0x6695C8 and Buffer-base vptr 0x6695C0", "pinned normal and cold cleanup spans 0x65078F..0x650839 show Scroll/BasePop close and destructor order; current Popup::~Popup calls close, then compiler-owned Scroll and BasePop teardown", "source:src/popup.h Popup inherits BasePop and owns Scroll scroll_ at 0x3230; current sizeof(Popup) is 0x537C", "source:src/basepop.h unit_ids_, owned_picture(), set_caller_picture(); source:src/stringstruct.h entry payload/previous links and StringList::add", "source:src/strings.h StringTemp; src/popup.h PopupStartCaption; src/game.h IsMultiplayerPBEM; src/game_data_state_window.h lock_masks_.bytes_.human_mask_/alive_mask_ and game_warnings_; src/messagewin.h MessageWinDeferredBaseMessages[8]; src/base.h Bases[].faction_id_current; src/mapwin.h MainInterfaceGlobal", "the original rec=0x93A800..<0x93A950 walk advances by 0x30, yielding exactly queue indexes 1..7; keep that bound and the unchecked indexing behavior", "both original spans and seed history remain attached to this identity; the historical TRIED/mismatch notes remain obligations, not current owner claims"], "reason": "Recover POP2 on the real Popup object: its pinned local has Popup's vptr plus Buffer-base vptr, with BasePop at frame offset -0x5390 and its owned Scroll exactly at +0x3230. Popup construction/destruction now follows the actual class lifetime; the body keeps the original queue, text, warning, image and return paths."}
 // size      1285 bytes

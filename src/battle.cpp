@@ -4071,6 +4071,31 @@ L_50b203:
     }
 }
 
+
+/*
+Purpose: Append a decimal number to the StringTemp buffer.
+// ORIGINAL: 0x0050B8A0 ?say_num@@YAXH@Z 0x0050B8A0-0x0050B8CA BYTE_EXACT
+// body      src/strings.h
+// size      42 bytes
+// prototype void (__cdecl ?say_num@@YAXH@Z)(int)
+// kind      game
+Return Value: n/a
+Status: Complete
+*/
+
+// Native base_project indexes 64 dwords at 0x009A6514; setup_game
+// resets all 64 to -1. The spying/social/energy selectors inside this
+// range are views of named project fields, never separate allocations.
+// Historical object identity moved to GameDataStateStorage; see the transport manifest.
+// 0x009A6514
+
+
+// ORIGINAL: 0x0050B8D0 ?POP3@@YAXPBDHHH@Z 0x0050B8D0-0x0050B8EF BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["original:terranx_original.exe:0x0050B8D0-0x0050B8EF", "source:src/popup.cpp:typed owner", "source:src/popup.h:POP3 overload declarations", "original:0x004055A0 full POP3 target", "seed:retained original source identity 0x0050B8D0"], "reason": "The short POP3 entry is a typed overload that delegates its original arguments to the full POP3 owner."}
+// body src/popup.h
+// symbol    ?POP3@@YAHPBDHHH@Z
+// BODY IN popup.h, as `MEASURED inline`.
+
 // ORIGINAL: 0x0050B8F0 sub_50b8f0 0x0050B8F0-0x0050B90A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:a1347e25:src/recovered/0050b8f0.cpp complete original identity/spans and historical claims/findings.", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x50b8f0 full native body review.", "source:src/veh.cpp existing real state owners; no executable-address alias or synthetic receiver."], "reason": "Recover the complete short helper through established source-owned diplomacy, vehicle, text or window state; preserve signed sentinel behavior, original receiver/argument order and conditional callbacks."}
 // body src/veh.h
@@ -4078,6 +4103,51 @@ L_50b203:
 // BODY IN veh.h, as `MEASURED inline`.
 
 // ===== veh.cpp, P2 wave 2: the order verbs =====
+
+
+/*
+Purpose: Get the faction's name adjective.
+// ORIGINAL: 0x0050B910 ?get_adjective@@YAHH@Z 0x0050B910-0x0050B92A BYTE_EXACT
+// body      src/faction.h
+// symbol    ?get_adjective@@YAPADH@Z
+// size      26 bytes
+// prototype int (__cdecl ?get_adjective@@YAHH@Z)(int factionID)
+// callers   3   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+Return Value: Faction name adjective
+Status: Complete
+*/
+// BODY IN faction.h, as `MEASURED inline`.
+
+
+
+/*
+Purpose: Get the faction's noun.
+// ORIGINAL: 0x0050B930 ?get_noun@@YAHH@Z 0x0050B930-0x0050B964 BYTE_EXACT
+// body      src/faction.h
+// LEVER: calling `parse_set(...)` grouped the two field reads together (matching
+//        the image's read/read/store/store order) but gave the temps the wrong
+//        registers (edx for gender, ecx for plurality). Assigning `GenderDefault`
+//        and `PluralityDefault` directly, without going through parse_set, keeps
+//        the image's register choice (ecx for gender, edx for plurality) - moved
+//        10/15 -> 12/15. Remaining divergence: the image computes the
+//        `noun_faction` return pointer (`lea eax,[eax+0x946d34]`) only after BOTH
+//        stores; this tree's O2 hoists that address computation right after the
+//        first read and reaches the second field off the new eax
+//        (`mov edx,[eax+0x1c]`) instead of off the original one - scheduling only.
+// symbol    ?get_noun@@YAPADH@Z
+// size      52 bytes
+// prototype int (__cdecl ?get_noun@@YAHH@Z)(int factionID)
+// callers   5   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+Return Value: Faction noun
+Status: Complete
+*/
+// BODY IN faction.h, as `MEASURED inline`.
 
 /*
 Purpose: Open a popup with the climate title and a body, no buttons.
@@ -4139,3 +4209,25 @@ Status: BYTE_EXACT.
 */
 // BODY IN netmsg.h, as `MEASURED inline`.
 
+
+
+
+
+
+
+
+
+
+
+
+
+// Pinned wrapper reads [ebp+8/+0xc], uses plain RET, and callers clean both args.
+// VC6 static __cdecl control matches this shape without hidden this.
+// ORIGINAL: 0x0050B9E0 ?pop@NetMsg@@QAAXPBDPBD@Z 0x0050B9E0-0x0050B9FE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/0050b9e0.cpp"], "reason": "Complete genuine NetMsg owner implementation replaces executable aliases/forwarders; original seed establishes catalogue identity and spans, native emitted symbols are separately recorded. Full private application compile/link and both native flag sets checked; preserve seed and historical claims, no exactness granted by binding. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// body src/netmsg.h
+// kind      game
+// symbol    ?pop@NetMsg@@SAXPBD0@Z
+// BODY IN netmsg.h, as `MEASURED inline`.
+// RECOVERY_GENERATED: v1 vtable 0x0066CB60 ? ??_7NetMsg@@6BWin@@@ 0x0047ACF0
+// RECOVERY_GENERATED: v1 vtable 0x0066CB58 ? ??_7NetMsg@@6BBuffer@@@ 0x0047ACF0

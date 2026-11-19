@@ -21,6 +21,340 @@
 #include "faction.h"  // PopupDialogFactionID, ExpansionEnabled
 #include <cstdio>
 #include <cstring>
+#include "general.h"
+#include "strings.h"
+#include "text.h"
+#include "game.h"
+#include "console.h"
+#include <shellapi.h>
+#include <ctype.h> // yearmotize preserves the original signed-byte CRT arguments.
+#include <stddef.h>
+#include <mmsystem.h>
+#include "win.h"
+#include "ambience.h"  // load_music, the startup faction ambience owner.
+#include "interface_palette.h"
+#include "sound.h"
+#include "netmsg.h"
+#include "alpha.h"
+#include "base.h"
+#include "basepop.h"  // BasePopDefaultField322C
+#include "buffer.h"  // g_PCX_PARSE_TEMP_BUFFER1
+#include "graphicwin.h"  // opening window's Buffer base and virtual update
+#include "sprite.h"  // Sprite::extract
+#include "texture.h" // Terrain-sheet texture assets.
+#include "basewin.h"  // BaseWin::close
+#include "designwin.h"  // DesignWin::close
+#include "fx.h"  // g_FX
+#include "filebox.h"
+#include "prefwin.h"  // ConsolePrefWin.init needs the complete owner declaration.
+#include "lock.h"
+#include "map.h"
+#include "main.h"  // CommandLineText
+#include "mapwin.h" // draw_tile, mapwin_system_shutdown
+#include "multiwin.h"
+#include "log.h"  // log_set_state
+#include "random.h"  // random_reseed
+#include "battlewin.h"  // the standing battle window
+#include "datalink.h"  // DatalinkMain
+#include "messagewin.h"  // the standing MessageWin
+#include "multidebug.h"  // MultiDebug, the standing debug window
+#include "netdaemon.h"  // NetDaemonNet
+#include "halloffame.h"
+#include "interlude.h"
+#include "quaylewin.h"
+#include "reportif.h"
+#include "statuswin.h"  // StatusWin::close
+#include "time.h"  // stop_timers
+#include "tutwin.h"  // TutWinDesWindow, TutWinBaseWindow, TutWinIfaceWindow
+#include "veh.h"
+#include "crt_random_inline.h"  // bounded_crt_random
+#include "wave.h"  // g_WAVE_GENERAL
+#include "worldwin.h"  // WorldClimateWorldWin
+#include "diplowin.h"  // DiploWin::exec, homed here out of the archive
+#include "diplopop.h"  // DiplomacyPopup
+#include "filemap.h"
+#include "palette.h"
+#include "caviar.h"
+#include "vector.h"  // free three-float operations
+#include "newtechwin.h"  // Existing technology-popup sprite assets.
+#include "infowin.h"  // Shared faction text/shadow colors.
+#include "maininterface.h"  // Shared chat foreground/shadow colors.
+#include "pushbutton.h"
+#include "flatbutton.h"
+#include "council.h"
+#include "councwin.h"  // game_data transfers the live council window fields
+#include "replaywin.h"
+#include "technology.h"
+#include "path.h"
+#include "alphasave.h"
+#include "netwin.h"
+#include "deletionlist.h"
+#include "gamma.h"
+#include "map_coordinates.h"
+#include "terraforming.h"
+#include "net_checksum_report.h"
+#include "flic.h"
+#include "font.h"
+#include "font_queue.h"
+
+// ORIGINAL: 0x005BEC40 _$E21 0x005BEC40-0x005BEC56 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682660 selects initializer0x5bec40..0x5bec56, registering exit0x5bec60..0x5bec6a. Root independent complete decode confirms exclusive RET/JMP bounds; original/source-owned storage is0x94c590 bound to?g_PALETTE1@@3VPalette@@A.", "Original startup instruction evidence: [[\"0x5bec40\", \"mov\", \"ecx, 0x94c590\"], [\"0x5bec45\", \"call\", \"0x5fe2a0\"], [\"0x5bec4a\", \"push\", \"0x5bec60\"], [\"0x5bec4f\", \"call\", \"0x645398\"], [\"0x5bec54\", \"pop\", \"ecx\"], [\"0x5bec55\", \"ret\", \"\"]]. Original exit instruction evidence: [[\"0x5bec60\", \"mov\", \"ecx, 0x94c590\"], [\"0x5bec65\", \"jmp\", \"0x5fe2e0\"]]. Preserve constructor arguments, array counts/strides, registration and reverse destruction without authored callback stand-ins.", "Fresh complete build-iveupb5l physical src/interface_palette.cpp COFF selects _$E21 via .CRT$XCU, registering _$E19. Startup relocation targets: [\"?g_PALETTE1@@3VPalette@@A\", \"??0Palette@@QAE@XZ\", \"_$E19\", \"_atexit\"]; exit targets: [\"?g_PALETTE1@@3VPalette@@A\", \"??1Palette@@QAE@XZ\"]. Actual linked helper occurs once at CRT slot0x63f53c; selected same-owner order agrees with the pinned order.", "BaseWin/DesignWin definitions now precede their Wave globals as pinned. Existing DesignWin Wave mappings retain original names/spans and current helper overrides after fresh emission proof. Scalar constructor effects and array construction/cleanup belong to genuine source globals, classes and compiler-generated lifetime machinery.", "Current local labels are emission interpretations, not original debug names or recovered historical TU boundaries. Start bindings grant no allocation extent. Selected same-owner linked order is not full CRT/global-order, retained-selection, reference-target, dependency-provider, runtime or full-game acceptance. Guarded callbacks excluded; no claim grant or bug fix."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned ?g_PALETTE1@@3VPalette@@A; preserve complete original identity and remaining restoration/structure obligations."}
+// symbol    _$E20
+// ORIGINAL: 0x005BEC60 _$E19 0x005BEC60-0x005BEC6A FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682660 selects initializer0x5bec40..0x5bec56, registering exit0x5bec60..0x5bec6a. Root independent complete decode confirms exclusive RET/JMP bounds; original/source-owned storage is0x94c590 bound to?g_PALETTE1@@3VPalette@@A.", "Original startup instruction evidence: [[\"0x5bec40\", \"mov\", \"ecx, 0x94c590\"], [\"0x5bec45\", \"call\", \"0x5fe2a0\"], [\"0x5bec4a\", \"push\", \"0x5bec60\"], [\"0x5bec4f\", \"call\", \"0x645398\"], [\"0x5bec54\", \"pop\", \"ecx\"], [\"0x5bec55\", \"ret\", \"\"]]. Original exit instruction evidence: [[\"0x5bec60\", \"mov\", \"ecx, 0x94c590\"], [\"0x5bec65\", \"jmp\", \"0x5fe2e0\"]]. Preserve constructor arguments, array counts/strides, registration and reverse destruction without authored callback stand-ins.", "Fresh complete build-iveupb5l physical src/interface_palette.cpp COFF selects _$E21 via .CRT$XCU, registering _$E19. Startup relocation targets: [\"?g_PALETTE1@@3VPalette@@A\", \"??0Palette@@QAE@XZ\", \"_$E19\", \"_atexit\"]; exit targets: [\"?g_PALETTE1@@3VPalette@@A\", \"??1Palette@@QAE@XZ\"]. Actual linked helper occurs once at CRT slot0x63f53c; selected same-owner order agrees with the pinned order.", "BaseWin/DesignWin definitions now precede their Wave globals as pinned. Existing DesignWin Wave mappings retain original names/spans and current helper overrides after fresh emission proof. Scalar constructor effects and array construction/cleanup belong to genuine source globals, classes and compiler-generated lifetime machinery.", "Current local labels are emission interpretations, not original debug names or recovered historical TU boundaries. Start bindings grant no allocation extent. Selected same-owner linked order is not full CRT/global-order, retained-selection, reference-target, dependency-provider, runtime or full-game acceptance. Guarded callbacks excluded; no claim grant or bug fix."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned ?g_PALETTE1@@3VPalette@@A; preserve complete original identity and remaining restoration/structure obligations."}
+// symbol    _$E18
+// RECOVERY_OBJECT: v2 0x0094C590 0x0094C9E4 ?g_PALETTE1@@3VPalette@@A 0x0058E360
+Palette g_PALETTE1;
+
+// ORIGINAL: 0x005BEC70 _$E26 0x005BEC70-0x005BEC86 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682664 selects initializer0x5bec70..0x5bec86, registering exit0x5bec90..0x5bec9a. Root independent complete decode confirms exclusive RET/JMP bounds; original/source-owned storage is0x9523a0 bound to?g_PALETTE2@@3VPalette@@A.", "Original startup instruction evidence: [[\"0x5bec70\", \"mov\", \"ecx, 0x9523a0\"], [\"0x5bec75\", \"call\", \"0x5fe2a0\"], [\"0x5bec7a\", \"push\", \"0x5bec90\"], [\"0x5bec7f\", \"call\", \"0x645398\"], [\"0x5bec84\", \"pop\", \"ecx\"], [\"0x5bec85\", \"ret\", \"\"]]. Original exit instruction evidence: [[\"0x5bec90\", \"mov\", \"ecx, 0x9523a0\"], [\"0x5bec95\", \"jmp\", \"0x5fe2e0\"]]. Preserve constructor arguments, array counts/strides, registration and reverse destruction without authored callback stand-ins.", "Fresh complete build-iveupb5l physical src/interface_palette.cpp COFF selects _$E26 via .CRT$XCU, registering _$E24. Startup relocation targets: [\"?g_PALETTE2@@3VPalette@@A\", \"??0Palette@@QAE@XZ\", \"_$E24\", \"_atexit\"]; exit targets: [\"?g_PALETTE2@@3VPalette@@A\", \"??1Palette@@QAE@XZ\"]. Actual linked helper occurs once at CRT slot0x63f540; selected same-owner order agrees with the pinned order.", "BaseWin/DesignWin definitions now precede their Wave globals as pinned. Existing DesignWin Wave mappings retain original names/spans and current helper overrides after fresh emission proof. Scalar constructor effects and array construction/cleanup belong to genuine source globals, classes and compiler-generated lifetime machinery.", "Current local labels are emission interpretations, not original debug names or recovered historical TU boundaries. Start bindings grant no allocation extent. Selected same-owner linked order is not full CRT/global-order, retained-selection, reference-target, dependency-provider, runtime or full-game acceptance. Guarded callbacks excluded; no claim grant or bug fix."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned ?g_PALETTE2@@3VPalette@@A; preserve complete original identity and remaining restoration/structure obligations."}
+// symbol    _$E25
+// ORIGINAL: 0x005BEC90 _$E24 0x005BEC90-0x005BEC9A FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682664 selects initializer0x5bec70..0x5bec86, registering exit0x5bec90..0x5bec9a. Root independent complete decode confirms exclusive RET/JMP bounds; original/source-owned storage is0x9523a0 bound to?g_PALETTE2@@3VPalette@@A.", "Original startup instruction evidence: [[\"0x5bec70\", \"mov\", \"ecx, 0x9523a0\"], [\"0x5bec75\", \"call\", \"0x5fe2a0\"], [\"0x5bec7a\", \"push\", \"0x5bec90\"], [\"0x5bec7f\", \"call\", \"0x645398\"], [\"0x5bec84\", \"pop\", \"ecx\"], [\"0x5bec85\", \"ret\", \"\"]]. Original exit instruction evidence: [[\"0x5bec90\", \"mov\", \"ecx, 0x9523a0\"], [\"0x5bec95\", \"jmp\", \"0x5fe2e0\"]]. Preserve constructor arguments, array counts/strides, registration and reverse destruction without authored callback stand-ins.", "Fresh complete build-iveupb5l physical src/interface_palette.cpp COFF selects _$E26 via .CRT$XCU, registering _$E24. Startup relocation targets: [\"?g_PALETTE2@@3VPalette@@A\", \"??0Palette@@QAE@XZ\", \"_$E24\", \"_atexit\"]; exit targets: [\"?g_PALETTE2@@3VPalette@@A\", \"??1Palette@@QAE@XZ\"]. Actual linked helper occurs once at CRT slot0x63f540; selected same-owner order agrees with the pinned order.", "BaseWin/DesignWin definitions now precede their Wave globals as pinned. Existing DesignWin Wave mappings retain original names/spans and current helper overrides after fresh emission proof. Scalar constructor effects and array construction/cleanup belong to genuine source globals, classes and compiler-generated lifetime machinery.", "Current local labels are emission interpretations, not original debug names or recovered historical TU boundaries. Start bindings grant no allocation extent. Selected same-owner linked order is not full CRT/global-order, retained-selection, reference-target, dependency-provider, runtime or full-game acceptance. Guarded callbacks excluded; no claim grant or bug fix."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned ?g_PALETTE2@@3VPalette@@A; preserve complete original identity and remaining restoration/structure obligations."}
+// symbol    _$E23
+// RECOVERY_OBJECT: v2 0x009523A0 0x009527F4 ?g_PALETTE2@@3VPalette@@A 0x00491400
+Palette g_PALETTE2;  // 0x009523A0, the preferences gamma working palette
+
+// ORIGINAL: 0x005BECA0 ?X_text_open@@YAHPADPBD@Z 0x005BECA0-0x005BED17 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["the current helper calls only text_open and compares the requested file to the process script-file pointer", "ClimatePopupTitle aliases &ScriptPopupFile; 0x00939284 is ConsoleGlobal.faction_id_; 0x00946f58 is Players[0].rule_flags with 0x59c stride", "src/game.h, src/console.h, src/faction.h and src/popup.h declare the corresponding real objects and flags; unrelated leaf bodies still use the two TU-local aliases, which this transfer leaves in place", "the current function checks only the local faction's 0x80 rule bit and ExpansionEnabled, tries PopupStartAltFile1, then falls back to the original requested file"], "reason": "Home the original section-opening policy beside Text::open/text_open, replacing transitional pointer aliases with existing source-owned script, local-faction, player-rule, expansion, and alternate-file objects without changing branch order."}
+// size      119 bytes
+// prototype int (__cdecl ?X_text_open@@YAHPADPBD@Z)(int8* srcFileID, int8* sectionID)
+// callers   19   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005FD550 0x00645660
+// notes     Seed provenance: the LEVER note records that the entry frame is
+//           downstream of the strcmp intrinsic - inlining a string routine
+//           forced esi/edi saves - and that the two globals are PTR_s_
+//           slots holding a char*, one dereference more than the string.
+// historical Return Value: text_open's result for the section
+// historical Status: Measured BYTE_EXACT here in place (wave 7 record-then-retire); the
+// LEVER: string-routines-are-calls "Original keeps a `push ebp; mov ebp, esp` frame this source form never reproduces (register-pressure shape, not yet found)" was the note here, and the shape has now been found: the scaffold inlined a string routine the image calls, the expansion needs esi and edi, and VC6 answered by changing what it saved on entry. The prologue was downstream of the intrinsic. The `g_00691b0c`/`g_00691b20` reading stands - they are PTR_s_ globals holding a `char*`, one dereference more than the address of the string itself.
+int __cdecl X_text_open(char *src_file_id, const char *section_id) {
+    if (strcmp(src_file_id, ScriptPopupFile) != 0) { return text_open(src_file_id, section_id); }
+    const int faction_id = ConsoleGlobal.faction_id_;
+    if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0 && ExpansionEnabled != 0) {
+        if (text_open(PopupStartAltFile1, section_id) == 0) { return 0; }
+    }
+    return text_open(src_file_id, section_id);
+}
+
+
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x005BED20 0x005BEFE0 0x005BEFF0 0x005BED70
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x005BED20 0x005BEFF0 0x005BF004 0x005BED6A
+// ORIGINAL: 0x005BED20 ?do_unity_crash@@YAHHHH@Z 0x005BED20-0x005BEFDF BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"Recover Map bit2 event dispatch, spawn/morale and turn-based energy awards, and the live Base table radar scan with real UI/audio objects. The seed note calling this a unit scan is historical; the original stride134 and nativeBase count prove Bases. No byte/reference or runtime claim is granted.","evidence":["git:3f579310:src/unrecovered/005bed20.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/scenario-artifact-unity-owner-coverage.json","Original full span and native physical COFF emitted symbol ?do_unity_crash@@YAHHHH@Z; existing source owns all referenced storage and services."]}
+// NOTE: code bytes match the image with relocations masked; recover measure
+//       refuses it while ConsoleInfoWin/WorldClimateWorldWin lack bounded
+//       object spans. The image keeps two "unitfound_sm.pcx" literals (unpooled).
+// RECOVERY_LITERAL: v1 0x00691BF8 0x00691C09 $SG65289 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C0C 0x00691C19 $SG65290 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C1C 0x00691C2D $SG65293 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C30 0x00691C3B $SG65294 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C3C 0x00691C4C $SG65297 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C4C 0x00691C58 $SG65298 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C58 0x00691C60 $SG65305 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C60 0x00691C72 $SG65307 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C74 0x00691C7F $SG65308 0x005BED20
+int __cdecl do_unity_crash(int x, int y, int faction_id) {
+    const uint32_t event = MapTiles[static_cast<int>(MapLongitude) * y + (x >> 1)].bit2;
+    if ((event & 0x80004000u) != 0x4000u) {
+        return 0;
+    }
+
+    const int event_kind = static_cast<int>(event) >> 24;
+    switch (event_kind) {
+    case 0:
+    case 8: {
+        int prototype;
+        if (event_kind) {
+            prototype = 0x0C;
+            if (faction_id == ConsoleGlobal.faction_id_) {
+                g_FX.play(0x16);
+                NetMsgPrimary.pop("UNITYCHOPPER", -5000, 0, "unitfound_sm.pcx");
+                g_FX.fade(0x16);
+            }
+        } else {
+            prototype = 0x14;
+            if (faction_id == ConsoleGlobal.faction_id_) {
+                g_FX.play(0x16);
+                NetMsgPrimary.pop("UNITYMINER", -5000, 0, "unitfound_sm.pcx");
+                g_FX.fade(0x16);
+            }
+        }
+        Vehs[veh_init(prototype, faction_id, x, y)].morale = 2;
+        return 1;
+    }
+    case 10: {
+        // The award expression is written twice; VC6 CSEs it into one value.
+        PlayersData[faction_id].energy_reserves += (GameDataStateStorage.fields_.turn_current_num_ < 0x32) ? 150 : 300;
+        parse_num(0, (GameDataStateStorage.fields_.turn_current_num_ < 0x32) ? 150 : 300);
+        ConsoleInfoWin.on_redraw();
+        if (faction_id == ConsoleGlobal.faction_id_) {
+            g_FX.play(0x16);
+            NetMsgPrimary.pop("UNITYENGINE", -5000, 0, "foundeng_sm.pcx");
+            g_FX.fade(0x16);
+        }
+        return 1;
+    }
+    case 0x13: {
+        for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
+            StringTemp[0] = 0;
+            strcat(StringTemp, Players[Bases[base_id].faction_id_current].filename);
+            CharUpperA(StringTemp);
+            if (has_fac(1, base_id, 0)
+                && (Players[Bases[base_id].faction_id_current].rule_flags & RFLAG_ALIEN) == 0
+                && strcmp(StringTemp, "FUNGBOY") != 0) {
+                spot_loc(Bases[base_id].x, Bases[base_id].y, faction_id);
+            }
+        }
+        if (faction_id == ConsoleGlobal.faction_id_) {
+            draw_map(1);
+            WorldClimateWorldWin.field_239BC_ |= 4;
+            WorldClimateWorldWin.GraphicWin::redraw();
+            g_FX.play(0x16);
+            NetMsgPrimary.pop("UNITYRADAR", -5000, 0, "foundradar_sm.pcx");
+            g_FX.fade(0x16);
+        }
+        return 1;
+    }
+    }
+    return 0;
+}
+
+/*
+Purpose: Check whether there is a sensor available in the specified tile.
+// ORIGINAL: 0x005BF010 ?is_sensor@@YAHHH@Z 0x005BF010-0x005BF12D BYTE_EXACT
+// LEVER: a prior pass's comment read "removed unnecessary duplicate calculation of distX",
+//        caching `x_dist(x, Bases[base_id].x)` into a local before the `!dist_x || dist_x
+//        == 2` check. The image calls `x_dist` (0x00644F3A, abs()) TWICE - once per side of
+//        the `||`, with no CSE across it - while `dist_y` (a plain `abs()`, not `x_dist`) IS
+//        computed once and cached, exactly as this tree already had it. Restoring the
+//        second `x_dist` call moved the compiled instruction count from 73 toward the
+//        image's 102 (73 -> 87).
+// TRIED: remaining divergence starts in the prologue - `mov ecx,[ebp+0xc]` (image) vs
+//            this tree spilling y to ebx (`push ebx; mov ebx,[ebp+0xc]`) - the same
+//            register-allocation plateau as the rest of this family.
+// size      285 bytes
+// prototype int (__cdecl ?is_sensor@@YAHHH@Z)(int xCoord, int yCoord)
+// callers   8   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E3B80 0x0050BA00 0x00644F3A
+Return Value: 0 (no sensor), 1 (sensor array via terraforming), 2 (Geosynchronous Survey Pod)
+Status: Complete
+*/
+int __cdecl is_sensor(int x, int y) {
+    if (bit_at(x, y) & BIT_SENSOR_ARRAY) {
+        return 1; // Sensor Array built in tile
+    }
+    int base_id = base_find(x, y);
+    if (base_id != -1) {
+        if (!x_dist(x, Bases[base_id].x) || x_dist(x, Bases[base_id].x) == 2) {
+            int dist_y = y - Bases[base_id].y;
+            if (!dist_y || (dist_y >= 0 ? dist_y : Bases[base_id].y - y) == 2) {
+                if (has_fac(FAC_GEOSYNC_SURVEY_POD, base_id, 0)) {
+                    return 2; // Geosynchronous Survey Pod
+                }
+            }
+        }
+    }
+    return 0; // No sensor found
+}
+
+
+/*
+Purpose: Check if faction controls the initial tile (code offset 0) of the Manifold Nexus.
+// ORIGINAL: 0x005BF130 ?has_temple@@YAHH@Z 0x005BF130-0x005BF1EE BYTE_EXACT
+// LEVER: needs /Oy- (the marker's own `frame` flag) to even form the ebp-frame
+//        prologue the image has; that alone was 3/70 -> 51/70. Caching
+//        `uint32_t bit2 = map_loc(x, y)->bit2;` once and testing
+//        `bit2 & MASK` / `!(bit2 >> 24)` against the LOCAL (rather than
+//        `bit2_at(x, y)` / `code_at(x, y)` as two separate inline calls) let
+//        VC6 fold the `*sizeof(Map)` scale into the load's own SIB addressing
+//        the way the image does, taking it to 65/70, 0.986 similar.
+//        TRIED: caching a `Map *tile` pointer instead of the `bit2` value
+//        (65->21/70 - the pointer materialises with its own `lea` first,
+//        which the image never does); swapping the final visibility test's
+//        `&` operand order (no change, still 65/70) - the one remaining
+//        differing run (`map_loc(x, y)->visibility & (1 << faction_id)`,
+//        register choice only: esi/edx/eax vs image's eax/ecx/edx for the
+//        same three values) did not move under either.
+// TRIED (2026-09-03): hoisting `int mask = 1 << faction_id` ahead of the
+//            loop, dropping the `bit2` local in favour of two inline
+//            accessor calls (51/70, worse), and swapping the `&` operands -
+//            all still 65/70. The image keeps the tile index in eax across
+//            the whose_territory call and puts the mask in edx; this tree
+//            puts the index in esi and the mask in eax.
+// size      190 bytes
+// prototype int (__cdecl ?has_temple@@YAHH@Z)(int factionID)
+// callers   1   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E3EF0
+Return Value: Does faction control Nexus? true/false
+Status: Complete
+*/
+BOOL __cdecl has_temple(int faction_id) {
+    for (int y = 0; y < MapLatitudeBounds; y++) {
+        for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
+            uint32_t bit2 = map_loc(x, y)->bit2;
+            if ((bit2 & (BIT2_UNK_80000000 | BIT2_NEXUS)) == BIT2_NEXUS
+                && !(bit2 >> 24)
+                && faction_id == whose_territory(faction_id, x, y, NULL, false)
+                && map_loc(x, y)->visibility & (1 << faction_id)) { // tile visible
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+/*
+Purpose: Check whether the prototype has a specific ability.
+// ORIGINAL: 0x005BF1F0 ?has_abil@@YAHHH@Z 0x005BF1F0-0x005BF310 BYTE_EXACT
+// TRIED: a negative-proto_id guard clause (with its log_say call) that call_diff flagged as an extra call the image does not make; now 13/109 instructions agree, 0.825 similar (best flags), up from a structurally-unrelated function body before
+// size      288 bytes
+// prototype int (__cdecl ?has_abil@@YAHHH@Z)(int protoID, int abilityID)
+// callers   54   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005B9F20
+Return Value: Does prototype have ability? true/false
+Status: Complete
+*/
+BOOL __cdecl has_abil(int proto_id, int ability_id) {
+    // BUG IN THE ORIGINAL: no guard against a negative proto_id here - it flows straight
+    // into `proto_id / MaxVehProtoFactionNum` and an out-of-bounds VehPrototypes[] read.
+    // A prior pass added a guard clause (with a log_say call) that is NOT in the image;
+    // call_diff flagged the extra call, and the disassembly at 0x005BF1F0 confirms the
+    // first instructions compute proto_id*sizeof(VehPrototype) directly, no branch first.
+    int faction_id = proto_id / MaxVehProtoFactionNum;
+    if (VehPrototypes[proto_id].ability_flags & ability_id) {
+        return true;
+    }
+    if (!faction_id) {
+        return false; // skip basic prototypes from #UNITS
+    }
+    if ((Players[faction_id].rule_flags & RFLAG_ALIEN) && ability_id == ABL_DEEP_RADAR) {
+        return true; // Caretakers + Usurpers > "Deep Radar" ability for all units
+    }
+    for (int i = 0; i < Players[faction_id].faction_bonus_count; i++) {
+        if (Players[faction_id].faction_bonus_id[i] == RULE_FREEABIL) {
+            // Original 0x5BF298 rereads the bonus value after has_tech returns.
+            if (has_tech(Ability[Players[faction_id].faction_bonus_val1[i]].preq_tech, faction_id) &&
+                (ability_id & (1 << Players[faction_id].faction_bonus_val1[i]))) {
+                // Pirates > "Marine Detachment" ability for combat sea units with Adaptive Doctrine
+                return true;
+            }
+        }
+    }
+    if (VehPrototypes[proto_id].weapon_id == WPN_PROBE_TEAM && ability_id == ABL_ALGO_ENHANCEMENT
+        && has_project(SP_NETHACK_TERMINUS, faction_id)) {
+        return true; // All Probe Teams act as though they have the "Algorithmic Enhancement"
+    }
+    return false;
+}
 
 // The shared popup implementation owns these dialogs in popup.cpp. Keep the
 // declarations local to this TU: the public popup header does not expose them.
@@ -567,12 +901,12 @@ int __cdecl X_pop(char *caption, const char *label, int a3, char *a4, int a5,
     // alienuscript.txt: only an expansion alien faction redirects these
     // two captions.
     if (strcmp(caption, XPopModCheckString1()) == 0 ||
-// RECOVERY_LITERAL: v1 0x00691C80 0x00691C8B $SG50453 0x005BF480
+// RECOVERY_LITERAL: v1 0x00691C80 0x00691C8B $SG65556 0x005BF480
         strcmp(caption, "SCRIPT.txt") == 0) {
         if ((Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) != 0) {
             if (ExpansionEnabled != 0) {
-// RECOVERY_LITERAL: v1 0x00691C90 0x00691CA1 $SG50458 0x005BF480
-// RECOVERY_LITERAL: v1 0x00691C8C 0x00691C8F $SG50457 0x005BF480
+// RECOVERY_LITERAL: v1 0x00691C90 0x00691CA1 $SG65561 0x005BF480
+// RECOVERY_LITERAL: v1 0x00691C8C 0x00691C8F $SG65560 0x005BF480
                 FILE *const fp = fopen("alienIscript.txt", "rb");
                 if (fp != nullptr) {
                     fclose(fp);
@@ -586,8 +920,8 @@ int __cdecl X_pop(char *caption, const char *label, int a3, char *a4, int a5,
                   PopupDialogFactionID < 8 &&
                   (Players[PopupDialogFactionID].rule_flags &
                    RFLAG_ALIEN) != 0) {
-// RECOVERY_LITERAL: v1 0x00691CA8 0x00691CB9 $SG50467 0x005BF480
-// RECOVERY_LITERAL: v1 0x00691CA4 0x00691CA7 $SG50466 0x005BF480
+// RECOVERY_LITERAL: v1 0x00691CA8 0x00691CB9 $SG65570 0x005BF480
+// RECOVERY_LITERAL: v1 0x00691CA4 0x00691CA7 $SG65569 0x005BF480
             FILE *const fp = fopen("alienuscript.txt", "rb");
             if (fp != nullptr) {
                 fclose(fp);
@@ -666,16 +1000,16 @@ int __cdecl X_pop_ask(char *caption, const char *label, int value,
 
     char *const section = const_cast<char *>(label);
     if (strcmp(caption, XPopModCheckString1()) != 0 &&
-// RECOVERY_LITERAL: v1 0x00691CF8 0x00691D03 $SG50519 0x005BFBC0
+// RECOVERY_LITERAL: v1 0x00691CF8 0x00691D03 $SG65622 0x005BFBC0
         strcmp(caption, "SCRIPT.txt") != 0) {
         return pop_ask(caption, section, value, text, callback, flags);
     }
 
     if ((Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) != 0) {
         if (ExpansionEnabled != 0) {
-// RECOVERY_LITERAL: v1 0x00691D08 0x00691D19 $SG50524 0x005BFBC0
+// RECOVERY_LITERAL: v1 0x00691D08 0x00691D19 $SG65627 0x005BFBC0
             FILE *const file = fopen("alienIscript.txt",
-// RECOVERY_LITERAL: v1 0x00691D04 0x00691D07 $SG50523 0x005BFBC0
+// RECOVERY_LITERAL: v1 0x00691D04 0x00691D07 $SG65626 0x005BFBC0
                                           "rb");
             if (file != nullptr) {
                 fclose(file);
@@ -687,9 +1021,9 @@ int __cdecl X_pop_ask(char *caption, const char *label, int value,
     } else if (ExpansionEnabled != 0 && PopupDialogFactionID > 0 &&
                PopupDialogFactionID < 8 &&
                (Players[PopupDialogFactionID].rule_flags & RFLAG_ALIEN) != 0) {
-// RECOVERY_LITERAL: v1 0x00691D20 0x00691D31 $SG50532 0x005BFBC0
+// RECOVERY_LITERAL: v1 0x00691D20 0x00691D31 $SG65635 0x005BFBC0
         FILE *const file = fopen("alienuscript.txt",
-// RECOVERY_LITERAL: v1 0x00691D1C 0x00691D1F $SG50531 0x005BFBC0
+// RECOVERY_LITERAL: v1 0x00691D1C 0x00691D1F $SG65634 0x005BFBC0
                                       "rb");
         if (file != nullptr) {
             fclose(file);
@@ -754,16 +1088,16 @@ int __cdecl X_pop_ask_number(char *caption, const char *label, int value,
 
     char *const section = const_cast<char *>(label);
     if (strcmp(caption, XPopModCheckString1()) != 0 &&
-// RECOVERY_LITERAL: v1 0x00691D34 0x00691D3F $SG50559 0x005BFD70
+// RECOVERY_LITERAL: v1 0x00691D34 0x00691D3F $SG65662 0x005BFD70
         strcmp(caption, "SCRIPT.txt") != 0) {
         return pop_ask_number(caption, section, value, callback);
     }
 
     if ((Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) != 0) {
         if (ExpansionEnabled != 0) {
-// RECOVERY_LITERAL: v1 0x00691D44 0x00691D55 $SG50564 0x005BFD70
+// RECOVERY_LITERAL: v1 0x00691D44 0x00691D55 $SG65667 0x005BFD70
             FILE *const file = fopen("alienIscript.txt",
-// RECOVERY_LITERAL: v1 0x00691D40 0x00691D43 $SG50563 0x005BFD70
+// RECOVERY_LITERAL: v1 0x00691D40 0x00691D43 $SG65666 0x005BFD70
                                           "rb");
             if (file != nullptr) {
                 fclose(file);
@@ -775,9 +1109,9 @@ int __cdecl X_pop_ask_number(char *caption, const char *label, int value,
     } else if (ExpansionEnabled != 0 && PopupDialogFactionID > 0 &&
                PopupDialogFactionID < 8 &&
                (Players[PopupDialogFactionID].rule_flags & RFLAG_ALIEN) != 0) {
-// RECOVERY_LITERAL: v1 0x00691D5C 0x00691D6D $SG50572 0x005BFD70
+// RECOVERY_LITERAL: v1 0x00691D5C 0x00691D6D $SG65675 0x005BFD70
         FILE *const file = fopen("alienuscript.txt",
-// RECOVERY_LITERAL: v1 0x00691D58 0x00691D5B $SG50571 0x005BFD70
+// RECOVERY_LITERAL: v1 0x00691D58 0x00691D5B $SG65674 0x005BFD70
                                       "rb");
         if (file != nullptr) {
             fclose(file);
@@ -822,7 +1156,7 @@ int __cdecl X_pops(char *caption, const char *label, int text_length,
 
     char *const mutable_label = const_cast<char *>(label);
     if (strcmp(caption, XPopModCheckString1()) != 0 &&
-// RECOVERY_LITERAL: v1 0x00691CBC 0x00691CC7 $SG50606 0x005BF930
+// RECOVERY_LITERAL: v1 0x00691CBC 0x00691CC7 $SG65709 0x005BF930
         strcmp(caption, "SCRIPT.txt") != 0) {
         return pops(caption, mutable_label, text_length, text, value,
                     sprite, flag_a, flag_b, callback);
@@ -830,9 +1164,9 @@ int __cdecl X_pops(char *caption, const char *label, int text_length,
 
     if ((Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) != 0) {
         if (ExpansionEnabled != 0) {
-// RECOVERY_LITERAL: v1 0x00691CCC 0x00691CDD $SG50611 0x005BF930
+// RECOVERY_LITERAL: v1 0x00691CCC 0x00691CDD $SG65714 0x005BF930
             FILE *const file = fopen("alienIscript.txt",
-// RECOVERY_LITERAL: v1 0x00691CC8 0x00691CCB $SG50610 0x005BF930
+// RECOVERY_LITERAL: v1 0x00691CC8 0x00691CCB $SG65713 0x005BF930
                                           "rb");
             if (file != 0) {
                 fclose(file);
@@ -847,9 +1181,9 @@ int __cdecl X_pops(char *caption, const char *label, int text_length,
     } else if (ExpansionEnabled != 0 && PopupDialogFactionID > 0 &&
                PopupDialogFactionID < 8 &&
                (Players[PopupDialogFactionID].rule_flags & RFLAG_ALIEN) != 0) {
-// RECOVERY_LITERAL: v1 0x00691CE4 0x00691CF5 $SG50620 0x005BF930
+// RECOVERY_LITERAL: v1 0x00691CE4 0x00691CF5 $SG65723 0x005BF930
         FILE *const file = fopen("alienuscript.txt",
-// RECOVERY_LITERAL: v1 0x00691CE0 0x00691CE3 $SG50619 0x005BF930
+// RECOVERY_LITERAL: v1 0x00691CE0 0x00691CE3 $SG65722 0x005BF930
                                       "rb");
         if (file != 0) {
             fclose(file);

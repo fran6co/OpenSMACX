@@ -16,74 +16,30 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
-
-// Not an original translation unit. The 2026-11-08 TU regroup moved the
-// evidenced pieces out (filefind.cpp, parse.cpp, trig.cpp, number_parsing.cpp,
-// mci_video.cpp, movie_media_decoder.cpp, interface_fonts.cpp, game.cpp).
-// Remaining pieces and their likely owners, without enough evidence to move:
-// - bit_count 0x0050BA30: battle-TU tail after bitmask (battle.cpp);
-// - checksum_file/checksum/checksum_password 0x00538FE0: netdaemon-TU tail;
-// - sub_5391a0 0x005391A0: inside the faction TU (faction.cpp);
-// The JACKAL.LIB pieces (mem_get, env_open, HSV_to_RGB, quick_root and
-// sound_header_version) moved to their library members in src/jackal.
-
-
-#include "council.h"
-#include <math.h> // sin(double), lowered to the CRT's _sin
-#include <cstring>
-#include <ddraw.h>  // IDirectDraw::Release in the DirectDraw teardown stage
-// _disable / _enable for sub_5d4240, the VGA DAC loader - real VC6 intrinsics
-// reproducing the image's cli/sti, not inline assembly.
-#include <dos.h>
-// _outp for the same body's DAC port writes.
-#include <conio.h>
-// VC6's real intrinsic lowering emits cli/out/sti without importing
-// nonexistent _enable helpers. pushad/popad remain a documented
-// source-vs-original caller-register-preservation obligation.
-#pragma intrinsic(_disable, _enable, _outp)
-#include "sprite.h"
-#include "popup.h"
-#include "buffer.h"
-#include "main.h"  // legacy include; PopupAllocHook is owned by BasePop via popup.h
-
 #include "general.h"
-#include "movie_media.h"
-#include "alpha.h"
-#include "game.h"
-#include "log.h" // log_say
-#include "mapwin.h" // draw_map, promoted out of temp.h
-#include "strings.h"
-#include "text.h"
-// free bodies homed here out of the archive reach these
-#include "map.h"     // zoc_any
-#include "veh.h"     // can_arty
-#include "alphamovie.h"  // MCIVideo - 0x00600330 is one of its members
-#include "netdaemon.h"  // Shared receiver hierarchy and NetDaemonNet storage.
-#include "xpops.h"   // X_pop
-#include "filemap.h" // Filemap::open_read
-// Utility bodies below use these source-owned drawing interfaces.
-#include "palette.h"
-#include "win.h"
-#include "buffer.h"
-#include "checkbox.h"
-#include "checkbutton.h"
-#include "radiobutton.h"
-#include "basebutton.h"
-#include "font.h"
-#include "basepop.h"
-#include "filewin.h"
-#include "cursor.h"
-#include "time.h"
 
-
-
-
-
-
-
-
-
-
+/*
+Purpose: Calculate the offset and bitmask for the specified input.
+// ORIGINAL: 0x0050BA00 ?bitmask@@YAXHPAHPAH@Z 0x0050BA00-0x0050BA27 BYTE_EXACT
+// symbol    ?bitmask@@YAXHPAH0@Z
+// size      39 bytes
+// prototype void (__cdecl ?bitmask@@YAXHPAHPAH@Z)(int input, int* offset, int* mask)
+// callers   103   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+// Pinned 0x50BA00..0x50BA27 performs signed /8, then writes offset before
+// the mask. The by-value input preserves callers that alias an out slot.
+// Original mapped callers use this shared utility; the older header-inline
+// policy was not supported by positive inline evidence.
+void __cdecl bitmask(int input, int *offset, int *mask) {
+    const int shift = input & 7;
+    *offset = input / 8;
+    *mask = 1 << shift;
+}
 
 /*
 Purpose: Count the number of unsigned bits set. Replaced the original code with Brian Kernighan's 

@@ -156,7 +156,6 @@ set(OPENSMACX_SOURCES
     src/movie_decoder_idct.cpp
     src/graphicwin_events.cpp
     src/graphicwin.cpp
-    src/sprite_objects.cpp
     src/stdafx.cpp
     src/popup.cpp
     src/basebutton.cpp
@@ -181,7 +180,6 @@ set(OPENSMACX_SOURCES
     src/maininterface.cpp
     src/interlude.cpp
     src/main.cpp
-    src/console_menu_policy.cpp
     src/mapwin.cpp
     src/mapwin_terrain.cpp
     src/messagewin.cpp
@@ -194,7 +192,6 @@ set(OPENSMACX_SOURCES
     src/pickwin.cpp
     src/planwin.cpp
     src/popup_wrappers.cpp
-    src/prefwin_geometry.cpp
     src/prefwin.cpp
     src/prodpicker.cpp
     src/quaylewin.cpp
@@ -203,7 +200,6 @@ set(OPENSMACX_SOURCES
     src/socialwin.cpp
     src/checkbutton.cpp
     src/statuswin.cpp
-    src/interface_palette.cpp
     src/tutwin.cpp
     src/uv2player.cpp
     src/vehicle_render.cpp
@@ -218,26 +214,21 @@ set(OPENSMACX_SOURCES
     src/base_build.cpp
     src/string_formatting.cpp
     src/battle.cpp
+    src/bitmask.cpp
     src/aggression.cpp
-    src/time.cpp
     src/map.cpp
     src/console.cpp
     src/turn.cpp
     src/council.cpp
     src/netdaemon.cpp
-    src/general.cpp
     src/faction.cpp
-    src/technology_queries.cpp
     src/font_queue.cpp
     src/faction_treaty.cpp
     src/enemy.cpp
     src/veh.cpp
-    src/wave.cpp
     src/alpha.cpp
     src/interface_fonts.cpp
     src/newgame.cpp
-    src/squarelock.cpp
-    src/playerlock.cpp
     src/lock.cpp
     src/datalink_entries.cpp
     src/map_grid.cpp
@@ -248,8 +239,8 @@ set(OPENSMACX_SOURCES
     src/path.cpp
     src/basepop.cpp
     src/popmenu.cpp
+    src/prefs.cpp
     src/probe.cpp
-    src/strings.cpp
     src/vehicle_cost.cpp
     src/winnodelist.cpp
     src/game.cpp
@@ -258,7 +249,6 @@ set(OPENSMACX_SOURCES
     src/setup.cpp
     src/veh_stack.cpp
     src/technology.cpp
-    src/application_text.cpp
     src/xpops.cpp
     src/veh_queries.cpp
     src/vehicle_storage.cpp
@@ -337,12 +327,6 @@ set_source_files_properties(
     src/credits.cpp src/font_queue.cpp src/alphanet_records.cpp
     src/stringbox.cpp src/checkbutton.cpp src/main.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
-# These owners retain frame-based parameter accesses. Match their
-# existing explicit recovery measurement profiles without changing the
-# application's default compiler flags.
-set_source_files_properties(
-    src/wave.cpp
-    PROPERTIES COMPILE_OPTIONS "/Oy-")
 # The Midi, device-wrapper and sound-loader bodies also retain frame-based
 # argument accesses in the measured application release profile.
 set_source_files_properties(
@@ -382,7 +366,7 @@ set_source_files_properties(
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Original interface palette initialization and font lookup retain a frame
 # pointer; generic library bodies have independently measured profiles.
-set_source_files_properties(src/interface_palette.cpp src/interface_fonts.cpp
+set_source_files_properties(src/interface_fonts.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # The co-located Sound-family lifetimes retain the original frame-based
 # cleanup/deleting entries. Release already supplies /Ob2 for base inlining.
@@ -433,7 +417,6 @@ set_source_files_properties(
     src/statuswin.cpp
     src/prodpicker.cpp
     src/alphamenu.cpp
-    src/console_menu_policy.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve measured frame-based accesses in the qualifying owner cohort.
 # Generic Sprite implementation and networking retain their measured default recipes.
@@ -452,7 +435,6 @@ set_source_files_properties(
 # owners without changing their other compiler options.
 set_source_files_properties(
     src/popmenu.cpp
-    src/squarelock.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Application formatters retain calls into the separately compiled string table.
 # The Strings implementation keeps its independently measured default recipe.
@@ -488,12 +470,11 @@ set_source_files_properties(
 set_source_files_properties(
     src/interlude.cpp
     src/netmsg.cpp
-    src/playerlock.cpp
     src/probe.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve Alpha's measured frame-based application context.
 # Shared graphics language state and its setter have a separate library owner.
-set_source_files_properties(src/alpha.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
+set_source_files_properties(src/alpha.cpp src/prefs.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve the measured frame-based AlphaNet controller context. Its record
 # and lifecycle owner remains on the default application profile.
 set_source_files_properties(src/alphanet.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
@@ -506,7 +487,6 @@ set_source_files_properties(
     src/multiwin.cpp
     src/socialwin.cpp
     src/technology.cpp
-    src/technology_queries.cpp
     src/uv2player.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve the original frame-based AlphaMovie owner context without changing
@@ -520,6 +500,7 @@ set_source_files_properties(src/gamma.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
 # reference checks consume each production object's own types and relocations.
 set_property(SOURCE
     src/alpha.cpp
+    src/prefs.cpp
     src/base.cpp
     src/base_build.cpp
     src/faction.cpp
@@ -531,7 +512,6 @@ set_property(SOURCE
     src/battle.cpp
     src/veh_stack.cpp
     src/enemy.cpp
-    src/strings.cpp
     src/sounddevice.cpp
     src/fx.cpp
     src/sound.cpp
@@ -546,7 +526,6 @@ set_property(SOURCE
     src/setup.cpp
     src/colortables.cpp
     src/game_calendar.cpp
-    src/interface_palette.cpp
     src/interface_assets.cpp
     src/maininterface.cpp
     src/map.cpp
@@ -563,7 +542,6 @@ set_property(SOURCE
     src/designwin.cpp
     src/diplowin.cpp
     src/win.cpp
-    src/general.cpp
     src/infowin.cpp
     src/messagewin.cpp
     src/netwin.cpp
@@ -576,13 +554,9 @@ set_source_files_properties(
     src/span_math.cpp
     src/scale_adjustment.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
-# Application timer integration retains the pinned argument frame. The generic
-# Time implementation is compiled separately in Jackal with its existing profile.
-set_source_files_properties(src/time.cpp
-    PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Application arithmetic and text utilities use the established frame profile.
 # The remaining General helpers retain their existing source recipe.
-set_source_files_properties(src/application_math.cpp src/application_text.cpp
+set_source_files_properties(src/application_math.cpp src/bitmask.cpp 
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Terraforming providers and actions retain their pinned EBP-based frames.
 set_property(SOURCE src/terraforming_actions.cpp APPEND PROPERTY COMPILE_OPTIONS "/Oy-")

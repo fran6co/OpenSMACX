@@ -56,10 +56,6 @@ int CouncilPbemGate;
 // init raises this modal-council flag; key/button teardown clears it.
 // RECOVERY_OBJECT: v2 0x00703DE4 0x00703DE8 ?CouncilDialogActive@@3HA 0x00427230
 int CouncilDialogActive;
-// RECOVERY_OBJECT: v2 0x00703DEC 0x00703E0C ?CouncilNotifyFormSlots@@3PAHA 0x004243F0
-int CouncilNotifyFormSlots[8];
-// RECOVERY_OBJECT: v2 0x00703E0C 0x00703E2C ?CouncilNotifyPluralSlots@@3PAHA 0x004243F0
-int CouncilNotifyPluralSlots[8];
 
 // call_council's original multiplayer deferral stores three message arguments
 // here; net_upkeep 5294D3..529536 sends them and resets each to -1. Their
@@ -68,76 +64,6 @@ int CouncilNotifyPluralSlots[8];
 // Extent: compiled sizeof 0xc; int[3]; net_upkeep resets the three; later hits are not references.
 // RECOVERY_OBJECT: v2 0x0068BF38 0x0068BF44 ?CouncilPendingMessageArgs@@3PAHA 0x005294D3
 int CouncilPendingMessageArgs[3] = {-1, -1, -1};
-
-
-
-// ORIGINAL: 0x004243D0 ?clear_council_notify@@YAXH@Z 0x004243D0-0x004243E8 BYTE_EXACT
-// size      24 bytes
-// prototype 
-// callers   1   call targets   0
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     (none)
-// 0x004243D0  ?clear_council_notify@@YAXH@Z  ->  ?clear_council_notify@@YAXH@Z
-//
-// Historical byte-match context: this overload was first recorded before it
-// had a compiled source owner. Its implementation and BYTE_EXACT record are
-// now retained here in the Council owner.
-
-
-void __cdecl clear_council_notify(int a1) {
-    CouncilNotifyFormSlots[a1] = 0;
-    CouncilNotifyPluralSlots[a1] = 0;
-}
-
-// ORIGINAL: 0x004243F0 ?clear_council_notify@@YAXXZ 0x004243F0-0x0042440D FILE BYTE_EXACT
-// size      29 bytes
-// prototype 
-// callers   1   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// PRESERVED UNIT - measured BYTE_EXACT.
-//
-// Historical context: the source-form observations below came from earlier
-// compiler-matching work on this preserved unit. They describe useful
-// compiler-sensitive forms, not instructions to regenerate a translation
-// unit or verification artifact.
-//
-// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
-// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
-// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
-// and declaring `int i` twice in one function (VC6 leaks for-scope).
-// static_cast/reinterpret_cast are fine and are the right spelling.
-//
-// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
-// attempts to it. They are here rather than in a prompt so the next
-// agent does not rediscover them:
-//
-//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
-//    swapped; `if (x) {...}` gives `je`.
-//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
-//    two special cases branching FAR away, write them negated and
-//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
-//    sequential guard clauses, which inline each body instead.
-//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
-//    an indirect virtual call use the generated VCall shim below; for a
-//    thiscall function POINTER, take a member-function pointer of a
-//    dummy class instead of spelling the convention.
-//  * Loop form is visible: while / do-while / for lower differently,
-//    and so does counting up versus down.
-//  * If the original dedicates a callee-saved register to a constant
-//    across the whole body (an extra `push ebx`/`push edi` in the
-//    prologue), it had enough register pressure to do so. That is a
-//    hard case - the tool reports a similarity ratio so you can tell a
-//    near miss from a wrong body.
-
-void __cdecl clear_council_notify() {
-    for (int i = 0; i < 8; i++) {
-        CouncilNotifyFormSlots[i] = 0;
-        CouncilNotifyPluralSlots[i] = 0;
-    }
-}
 
 
 
@@ -913,22 +839,22 @@ proposal values themselves match CouncilProposals.
 // ORIGINAL: 0x0052BF60 ?council_action@@YAXHH@Z 0x0052BF60-0x0052C650 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0052bf60.cpp", "src/council.h", "src/game.cpp", "recovery/tests/test_council_action_behavior.py"], "reason": "Recovered complete proposal dispatch in its Council owner with genuine shared resolution arrays, Player and PlayerData members, Console lifetime references and shared climate state; preserves callback-sensitive faction reloads. Existing seed retains original extent/provenance."}
 // TRIED: literal Ghidra transcription of the switch(a1){1,2,5,6,7} body, using the already-declared g_ADDR globals with pointer arithmetic scaled to match each DAT_ symbol's Ghidra-inferred width (uint*/byte* casts per site) compiles and preserves the case order and every call, but several popp() call sites show 4 explicit pushes in the raw disassembly against a 5-arg cdecl cleanup (`add esp,0x14`) - trusted Ghidra's resolved 5-arg call form over the raw push count, which is an unreconciled discrepancy. Diverges from the framed-prologue build around #2.
-// RECOVERY_LITERAL: v1 0x0068BF44 0x0068BF52 $SG57939 0x0052BF60
-// RECOVERY_LITERAL: v1 0x0068BF54 0x0068BF62 $SG57940 0x0052BF60
-// RECOVERY_LITERAL: v1 0x0068BF64 0x0068BF72 $SG57941 0x0052BF60
-// RECOVERY_LITERAL: v1 0x0068BF74 0x0068BF7D $SG57942 0x0052BF60
-// RECOVERY_LITERAL: v1 0x0068BF80 0x0068BF8E $SG57947 0x0052BF60
-// RECOVERY_LITERAL: v1 0x0068BF90 0x0068BF9E $SG57948 0x0052BF60
-// RECOVERY_LITERAL: v1 0x0068BFA0 0x0068BFAE $SG57949 0x0052BF60
-// RECOVERY_LITERAL: v1 0x0068BFB0 0x0068BFB9 $SG57950 0x0052BF60
-// RECOVERY_LITERAL: v1 0x0068BFBC 0x0068BFCA $SG57962 0x0052BF60
-// RECOVERY_LITERAL: v1 0x0068BFCC 0x0068BFD3 $SG57963 0x0052BF60
-// RECOVERY_LITERAL: v1 0x0068C008 0x0068C017 $SG57983 0x0052BF60
-// RECOVERY_LITERAL: v1 0x0068C018 0x0068C01D $SG57984 0x0052BF60
-// RECOVERY_LITERAL: v1 0x0068BFD4 0x0068BFE2 $SG57974 0x0052BF60
-// RECOVERY_LITERAL: v1 0x0068BFE4 0x0068BFEF $SG57975 0x0052BF60
-// RECOVERY_LITERAL: v1 0x0068BFF0 0x0068BFFE $SG57979 0x0052BF60
-// RECOVERY_LITERAL: v1 0x0068C000 0x0068C007 $SG57980 0x0052BF60
+// RECOVERY_LITERAL: v1 0x0068BF44 0x0068BF52 $SG57930 0x0052BF60
+// RECOVERY_LITERAL: v1 0x0068BF54 0x0068BF62 $SG57931 0x0052BF60
+// RECOVERY_LITERAL: v1 0x0068BF64 0x0068BF72 $SG57932 0x0052BF60
+// RECOVERY_LITERAL: v1 0x0068BF74 0x0068BF7D $SG57933 0x0052BF60
+// RECOVERY_LITERAL: v1 0x0068BF80 0x0068BF8E $SG57938 0x0052BF60
+// RECOVERY_LITERAL: v1 0x0068BF90 0x0068BF9E $SG57939 0x0052BF60
+// RECOVERY_LITERAL: v1 0x0068BFA0 0x0068BFAE $SG57940 0x0052BF60
+// RECOVERY_LITERAL: v1 0x0068BFB0 0x0068BFB9 $SG57941 0x0052BF60
+// RECOVERY_LITERAL: v1 0x0068BFBC 0x0068BFCA $SG57953 0x0052BF60
+// RECOVERY_LITERAL: v1 0x0068BFCC 0x0068BFD3 $SG57954 0x0052BF60
+// RECOVERY_LITERAL: v1 0x0068C008 0x0068C017 $SG57974 0x0052BF60
+// RECOVERY_LITERAL: v1 0x0068C018 0x0068C01D $SG57975 0x0052BF60
+// RECOVERY_LITERAL: v1 0x0068BFD4 0x0068BFE2 $SG57965 0x0052BF60
+// RECOVERY_LITERAL: v1 0x0068BFE4 0x0068BFEF $SG57966 0x0052BF60
+// RECOVERY_LITERAL: v1 0x0068BFF0 0x0068BFFE $SG57970 0x0052BF60
+// RECOVERY_LITERAL: v1 0x0068C000 0x0068C007 $SG57971 0x0052BF60
 void __cdecl council_action(int proposal, int faction_id) {
     // Preserve the native proposal index before dispatch. Unsupported proposal
     // values still update their in-range resolution records, then fall through.

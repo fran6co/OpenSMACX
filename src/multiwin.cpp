@@ -36,6 +36,50 @@
 #include "popup.h"
 #include <stdlib.h>     // _itoa
 
+// ORIGINAL: 0x00477E10 _$E26 0x00477E10-0x00477E26 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682550 selects original initializer0x477e10..0x477e26, registering fini0x477e30..0x477e3a; complete independent decode establishes exclusive boundaries.", "Source-owned object?MultiWindow@@3VMultiWin@@A identifies original storage0x7fd648. Startup arguments/calls: call 0x47a590; push 0x477e30. Cleanup receiver/calls: mov ecx, 0x7fd648; jmp 0x47a430. Constructor/destructor targets retain their existing class-owned source mappings.", "Fresh physical src/game.cpp COFF selects _$E26 through .CRT$XCU and registers _$E24, both referencing the genuine source global. Original NetMsg argument triples and implicit PlanWin/Console most-derived flags are preserved by the existing declarations; complete virtual-base teardown is compiler-owned, not authored offsets.", "Current local helper symbols interpret present emission, not original debug names or historical TU boundaries. Object starts do not prove allocation extents. This binding establishes neither cross-TU global order, masked-reference correctness, strict linked preservation, dependency-provider equivalence nor runtime/game acceptance; excluded guarded sprite cleanup remains separate."], "reason": "Bind original startup identity to the genuine compiler-generated lifetime of ?MultiWindow@@3VMultiWin@@A in its actual source owner; no manual lifecycle callback is authored."}
+// symbol    _$E16
+// ORIGINAL: 0x00477E30 _$E24 0x00477E30-0x00477E3A FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682550 selects original initializer0x477e10..0x477e26, registering fini0x477e30..0x477e3a; complete independent decode establishes exclusive boundaries.", "Source-owned object?MultiWindow@@3VMultiWin@@A identifies original storage0x7fd648. Startup arguments/calls: call 0x47a590; push 0x477e30. Cleanup receiver/calls: mov ecx, 0x7fd648; jmp 0x47a430. Constructor/destructor targets retain their existing class-owned source mappings.", "Fresh physical src/game.cpp COFF selects _$E26 through .CRT$XCU and registers _$E24, both referencing the genuine source global. Original NetMsg argument triples and implicit PlanWin/Console most-derived flags are preserved by the existing declarations; complete virtual-base teardown is compiler-owned, not authored offsets.", "Current local helper symbols interpret present emission, not original debug names or historical TU boundaries. Object starts do not prove allocation extents. This binding establishes neither cross-TU global order, masked-reference correctness, strict linked preservation, dependency-provider equivalence nor runtime/game acceptance; excluded guarded sprite cleanup remains separate."], "reason": "Bind original exit identity to the genuine compiler-generated lifetime of ?MultiWindow@@3VMultiWin@@A in its actual source owner; no manual lifecycle callback is authored."}
+// symbol    _$E14
+// The window the loop paints colour 9 over and hides while the game boots,
+// showing it again for a PBEM session, is ConsoleGlobal.cover_window_: the
+// GraphicWin ??0Console builds at +0x21A68 (0x009156B0 + 0x21A68 =
+// 0x00937118). The image names it with `mov ecx, 0x937118` immediates; the
+// member path keeps that fold. Its historical CoverWindow identity is
+// retained beside ConsoleGlobal in console.cpp.
+
+// The multiplayer window - REAL STORAGE at the image's 0x007FD648, not the
+// `GraphicWin *const MultiWindow` binding (see game.h). Its class is
+// MultiWin. The source now uses its real C++ constructor and destructor;
+// their placement in the original initializer/finalizer sequence is still
+// an independent restoration obligation.
+// Its 0x28B8-byte owned layout ends at the independently catalogued
+// g_MULTIWIN_WAVE pointer at 0x007FFF00. The game object file emits
+// ?MultiWindow@@3VMultiWin@@A with real constructor/destructor references.
+// RECOVERY_OBJECT: v2 0x007FD648 0x007FFF00 ?MultiWindow@@3VMultiWin@@A 0x0047A590
+// This cell was misrepresented as standalone ?MultiWindowOpen; it is the
+// existing open-state member, retaining the image's loader-zero initial value.
+// RECOVERY_OBJECT: v3 0x007FE06C ?MultiWindowOpen@@3HA member ?MultiWindow@@3VMultiWin@@A panel_open_
+MultiWin MultiWindow;  // 0x007FD648
+
+// ORIGINAL: 0x00477E40 _$E51 0x00477E40-0x00477E56 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT dispatcher 0x00644DEC-0x00644DFB supplies [0x00682000,0x006826CC) to 0x00644ED8, which calls each non-null dword. Slot 0x00682554 selects init 0x00477E40, which registers exit callback 0x00477E60.", "Original init span 0x00477E40-0x00477E56 and exit span 0x00477E60-0x00477E6A are independently disassembled; both identify receiver 0x007FFF00 and Wave constructor/destructor 0x004C66E0/0x004C67C0.", "Historical earlier wave.cpp physical COFF selected local STATIC init _$E51 via .CRT$XCU, relocating to g_MULTIWIN_WAVE, Wave construction, paired local fini _$E49 and atexit; fini relocates to the same object and Wave destruction. Native comparator can select these physical local function symbols.", "Independent pin/COFF/source review supports individual lifetime ownership. These mappings do not establish complete global initialization order, linked retained selection, full data layout, original debug names or runtime acceptance."], "reason": "Bind the original startup operation to the genuine compiler-emitted lifetime of source-owned g_MULTIWIN_WAVE. The local symbol identifies current emitted code, not an original debug name; no callback body is authored."}
+// symbol    _$E21
+// ORIGINAL: 0x00477E60 _$E49 0x00477E60-0x00477E6A FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT dispatcher 0x00644DEC-0x00644DFB supplies [0x00682000,0x006826CC) to 0x00644ED8, which calls each non-null dword. Slot 0x00682554 selects init 0x00477E40, which registers exit callback 0x00477E60.", "Original init span 0x00477E40-0x00477E56 and exit span 0x00477E60-0x00477E6A are independently disassembled; both identify receiver 0x007FFF00 and Wave constructor/destructor 0x004C66E0/0x004C67C0.", "Historical earlier wave.cpp physical COFF selected local STATIC init _$E51 via .CRT$XCU, relocating to g_MULTIWIN_WAVE, Wave construction, paired local fini _$E49 and atexit; fini relocates to the same object and Wave destruction. Native comparator can select these physical local function symbols.", "Independent pin/COFF/source review supports individual lifetime ownership. These mappings do not establish complete global initialization order, linked retained selection, full data layout, original debug names or runtime acceptance."], "reason": "Bind the original exit operation to the genuine compiler-emitted lifetime of source-owned g_MULTIWIN_WAVE. The local symbol identifies current emitted code, not an original debug name; no callback body is authored."}
+// symbol    _$E19
+// ===== MANAGED GLOBALS - real objects, homed to their domain =====
+// In the shipped image these live at fixed data addresses and are
+// constructed before WinMain by the CRT's dynamic-initializer walk
+// (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
+// Here the same recovered constructors run through this build's own
+// startup, and the matching destructors close them at exit. Addresses of
+// the ones documented individually live beside their definitions.
+
+// RECOVERY_OBJECT: v1 0x007FFF00 ?g_MULTIWIN_WAVE@@3VWave@@A
+Wave g_MULTIWIN_WAVE;  // 0x007FFF00
+
 // Shared separator objects the image pushes instead of unit literals.
 extern const char BufferJoinSpace[];
 extern char SocialWinColonSpaceText[];
@@ -264,7 +308,7 @@ void MultiWin::on_right_click(int x, int y) {
         parse_says(1, Players[faction].name_leader, -1, -1);
         parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
         parse_says(2, Players[faction].noun_faction, -1, -1);
-        // RECOVERY_LITERAL: v1 0x0068677C 0x00686787 $SG58594 0x00478150
+        // RECOVERY_LITERAL: v1 0x0068677C 0x00686787 $SG58617 0x00478150
         NetMsgPrimary.pop("ELIMINATED", 5000, 0, 0);
         return;
     }

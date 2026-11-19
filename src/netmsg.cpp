@@ -268,13 +268,3 @@ void NetMsg::pop(const char *label, int duration, int channel,
     netmsg_pop_budget_probe4(5);  // WORKAROUND(inline): see netmsg_pop_budget_probe1
 }
 
-// Pinned wrapper reads [ebp+8/+0xc], uses plain RET, and callers clean both args.
-// VC6 static __cdecl control matches this shape without hidden this.
-// ORIGINAL: 0x0050B9E0 ?pop@NetMsg@@QAAXPBDPBD@Z 0x0050B9E0-0x0050B9FE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/0050b9e0.cpp"], "reason": "Complete genuine NetMsg owner implementation replaces executable aliases/forwarders; original seed establishes catalogue identity and spans, native emitted symbols are separately recorded. Full private application compile/link and both native flag sets checked; preserve seed and historical claims, no exactness granted by binding. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
-// body src/netmsg.h
-// kind      game
-// symbol    ?pop@NetMsg@@SAXPBD0@Z
-// BODY IN netmsg.h, as `MEASURED inline`.
-// RECOVERY_GENERATED: v1 vtable 0x0066CB60 ? ??_7NetMsg@@6BWin@@@ 0x0047ACF0
-// RECOVERY_GENERATED: v1 vtable 0x0066CB58 ? ??_7NetMsg@@6BBuffer@@@ 0x0047ACF0

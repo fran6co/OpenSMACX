@@ -17,12 +17,12 @@
  */
 // ORIGINAL: 0x0052DB10 _$E21 0x0052DB10-0x0052DB26 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682634 selects init 0x0052DB10-0x0052DB26, registering fini 0x0052DB30-0x0052DB3A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x0093CD90; scalar NetDaemon constructor/destructor 0x005389F0/0x00538D10.", "Current owner physical COFF selects _$E21 via .CRT$XCU and registers _$E19, with relocations naming ?NetDaemonNet@@3VNetDaemon@@A; the genuine global definition owns this lifetime, including possible inline scalar construction.", "Current helper names are compiler-output interpretations, not original debug symbols. These individual bindings do not establish full initialization order, allocation extents, linked retained selection or runtime acceptance."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned NetDaemonNet; no callback body is authored."}
-// symbol    _$E16
+// symbol    _$E21
 // ORIGINAL: 0x0052DB30 _$E19 0x0052DB30-0x0052DB3A FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682634 selects init 0x0052DB10-0x0052DB26, registering fini 0x0052DB30-0x0052DB3A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x0093CD90; scalar NetDaemon constructor/destructor 0x005389F0/0x00538D10.", "Current owner physical COFF selects _$E21 via .CRT$XCU and registers _$E19, with relocations naming ?NetDaemonNet@@3VNetDaemon@@A; the genuine global definition owns this lifetime, including possible inline scalar construction.", "Current helper names are compiler-output interpretations, not original debug symbols. These individual bindings do not establish full initialization order, allocation extents, linked retained selection or runtime acceptance."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned NetDaemonNet; no callback body is authored."}
-// symbol    _$E14
-// ORIGINAL: 0x0052DB40 sub_52db40 0x0052DB40-0x0052DB67 BYTE_EXACT
 // symbol    _$E19
+// ORIGINAL: 0x0052DB40 sub_52db40 0x0052DB40-0x0052DB67 BYTE_EXACT
+// symbol    _$E24
 // size      39 bytes
 // prototype
 // callers   0   call targets   0
@@ -1846,6 +1846,15 @@ int NetDaemon::open_channel(int payload_10, int payload_14) {
 }
 
 
+// ORIGINAL: 0x0052DAC0 _$E971 0x0052DAC0-0x0052DAE4 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682630 selects init 0x0052DAC0-0x0052DAE4, registering fini 0x0052DAF0-0x0052DB04; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x0093AA70; array count 12, stride 0x2C, Sprite constructor/destructor 0x005E37E0/0x00406850 and vector iterators 0x006457C2/0x006456E4.", "Current owner physical COFF selects _$E971 via .CRT$XCU and registers _$E969, with relocations naming ?g_CURSOR_SPRITES@@3PAVSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned g_CURSOR_SPRITES; no callback body is authored."}
+// symbol    _$E16
+// ORIGINAL: 0x0052DAF0 _$E969 0x0052DAF0-0x0052DB04 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682630 selects init 0x0052DAC0-0x0052DAE4, registering fini 0x0052DAF0-0x0052DB04; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x0093AA70; array count 12, stride 0x2C, Sprite constructor/destructor 0x005E37E0/0x00406850 and vector iterators 0x006457C2/0x006456E4.", "Current owner physical COFF selects _$E971 via .CRT$XCU and registers _$E969, with relocations naming ?g_CURSOR_SPRITES@@3PAVSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned g_CURSOR_SPRITES; no callback body is authored."}
+// symbol    _$E14
+// RECOVERY_OBJECT: v2 0x0093AA70 0x0093AC80 ?g_CURSOR_SPRITES@@3PAVSprite@@A 0x00454FC0
+Sprite g_CURSOR_SPRITES[12];
+
 // The daemon's Net, 0x0093CD90 in the image - see netdaemon.h. The image's
 // dynamic initializer at 0x0052DB10 constructs it at the fixed address
 // before WinMain; the recovered NetDaemon constructor here runs through this
@@ -1909,7 +1918,7 @@ int NetDaemon::lock(int target, int x, int y, int payload_18, int payload_1C, in
         if (veh_locked_ != 0) {
             return 1;
         }
-// RECOVERY_LITERAL: v1 0x0068C21C 0x0068C228 $SG63732 0x00530630
+// RECOVERY_LITERAL: v1 0x0068C21C 0x0068C228 $SG63744 0x00530630
         NetMsgPrimary.pop("MOVEPENDING", 0, 2, (const char *)0);
         return 1;
     }
@@ -2198,7 +2207,7 @@ void NetDaemon::unlock() {
     // 0x1BC8 and 0x1BCC are that entry's dword_[2], dword_[3], dword_[9] and
     // dword_[10]. Named through the declared member rather than a raw offset.
     if (IsMultiplayerNet != 0) {
-        // RECOVERY_LITERAL: v1 0x0068C2DC 0x0068C2F2 $SG63870 0x00530D00
+        // RECOVERY_LITERAL: v1 0x0068C2DC 0x0068C2F2 $SG63882 0x00530D00
         log_say("Client releasing lock", ConsoleGlobal.faction_id_, 0, 0);
         message_data(0x2212, 0, 0, 0, 0, 0);
         exec_pending_ = 0;
@@ -2213,8 +2222,8 @@ void NetDaemon::unlock() {
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00530D50-0x00530E48"], "reason": "Recover the base-menu network guard through real Base records, shared turn state and NetDaemon lock-state members; original calls establish argument forwarding and log strings."}
 // Pinned arguments identify these NUL-terminated keys in the original;
 // the literal spans cover their text and terminators, not surrounding storage.
-// RECOVERY_LITERAL: v1 0x0068C2F4 0x0068C2FD $SG63878 0x00530D50
-// RECOVERY_LITERAL: v1 0x0068C300 0x0068C314 $SG63883 0x00530D50
+// RECOVERY_LITERAL: v1 0x0068C2F4 0x0068C2FD $SG63890 0x00530D50
+// RECOVERY_LITERAL: v1 0x0068C300 0x0068C314 $SG63895 0x00530D50
 int NetDaemon::lock_base(int base_id, int target, int payload_1C, int payload_20) {
     log_say("LockBase", UnkGlobal0093A934, ConsoleControlTurnActive,
             BaseIDCurrentSelected);
@@ -2314,7 +2323,7 @@ void NetDaemon::unlock_base(int base_id) {
 // (2026-09-04).
 // Pinned arguments identify these NUL-terminated keys in the original;
 // the literal spans cover their text and terminators, not surrounding storage.
-// RECOVERY_LITERAL: v1 0x0068C340 0x0068C34C $SG63901 0x00531020
+// RECOVERY_LITERAL: v1 0x0068C340 0x0068C34C $SG63913 0x00531020
 int NetDaemon::lock_veh(int *veh_id, int target, int payload_1C,
                         int payload_20, int payload_18) {
     if (IsMultiplayerNet == 0) {
@@ -2640,7 +2649,7 @@ int NetDaemon::maybe_lock(int *veh_id, int flag, int payload_1C, int payload_20,
       ++move_requests_;
       // The image compares the count SIGNED here (`jle`), not unsigned.
       if (1 < move_requests_) {
-        // RECOVERY_LITERAL: v1 0x0068C474 0x0068C480 $SG63996 0x00531700
+        // RECOVERY_LITERAL: v1 0x0068C474 0x0068C480 $SG64008 0x00531700
         NetMsgPrimary.pop("MOVEPENDING", 0, 2, 0);
       }
     }
@@ -2974,6 +2983,7 @@ void NetDaemon::end_of_event(int faction_id, int turn_value) {
 
 #include "netdaemon_message_record.h"
 
+
 // Shared separator objects the image pushes instead of unit literals.
 extern const char BufferJoinSpace[];
 extern char SocialWinColonSpaceText[];
@@ -3249,12 +3259,12 @@ void __cdecl rebuild_base_bits() {
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00532C30 0x00532DA4 0x00532DC0 0x00532C47
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x00532C30 0x00532DC0 0x00532DF1 0x00532C41
-// RECOVERY_LITERAL: v1 0x0068C594 0x0068C5A5 $SG64461 0x00532C30
-// RECOVERY_LITERAL: v1 0x0068C5C8 0x0068C5DA $SG64467 0x00532C30
-// RECOVERY_LITERAL: v1 0x0068C584 0x0068C592 $SG64459 0x00532C30
-// RECOVERY_LITERAL: v1 0x0068C5A8 0x0068C5B7 $SG64463 0x00532C30
-// RECOVERY_LITERAL: v1 0x0068C5B8 0x0068C5C7 $SG64465 0x00532C30
-// RECOVERY_LITERAL: v1 0x0068C5DC 0x0068C5EB $SG64469 0x00532C30
+// RECOVERY_LITERAL: v1 0x0068C594 0x0068C5A5 $SG64473 0x00532C30
+// RECOVERY_LITERAL: v1 0x0068C5C8 0x0068C5DA $SG64479 0x00532C30
+// RECOVERY_LITERAL: v1 0x0068C584 0x0068C592 $SG64471 0x00532C30
+// RECOVERY_LITERAL: v1 0x0068C5A8 0x0068C5B7 $SG64475 0x00532C30
+// RECOVERY_LITERAL: v1 0x0068C5B8 0x0068C5C7 $SG64477 0x00532C30
+// RECOVERY_LITERAL: v1 0x0068C5DC 0x0068C5EB $SG64481 0x00532C30
 // ORIGINAL: 0x00532C30 ?synch_display@@YAXHHHH@Z 0x00532C30-0x00532DA2 FILE BYTE_EXACT
 // size      370 bytes
 // prototype 

@@ -1955,6 +1955,15 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
   close();
 }
 
+
+// ORIGINAL: 0x00444D90 ?diplo@@YAXHH@Z 0x00444D90-0x00444DA7 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:a1347e25:src/recovered/00444d90.cpp complete original identity/spans and historical claims/findings.", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x444d90 full native body review.", "source:src/game.cpp existing real state owners; no executable-address alias or synthetic receiver."], "reason": "Recover the complete short helper through established source-owned diplomacy, vehicle, text or window state; preserve signed sentinel behavior, original receiver/argument order and conditional callbacks."}
+// symbol    ?diplo@@YAXHH@Z
+// TRIED: homed into game.cpp (its real TU) 2026-09-03 - does not compile there: the body's only call is `DiploWin::exec` at 0x00443F10, which diplowin.h does not declare and no product TU defines yet. Declaring `void exec(int,int)` on DiploWin without a definition is a link error, so the body stays here until 0x00443F10 is homed into diplowin.cpp and `exec` declared on the class. The `#include "diplowin.h"` game.cpp needs for it is already added.
+void __cdecl diplo(int faction_id, int faction_id_with) {
+  DiploWindow.exec(faction_id, faction_id_with);
+}
+
 // DiploWin owns cleanup through its real typed subobjects. Its destructor
 // body has no separate unregister or global-state operation; C++ performs
 // reverse-order member/base destruction after this body.
@@ -1986,3 +1995,140 @@ DiploWin::DiploWin() {}
 // RECOVERY_GENERATED: v1 vtable 0x0066B634 ? ??_7DiploWin@@6BWin@@@ 0x00444FC0
 // RECOVERY_GENERATED: v1 vtable 0x0066B62C ? ??_7DiploWin@@6BBuffer@@@ 0x00444FC0
 // RECOVERY_GENERATED: v1 vtable 0x0066B5E0 ? ??_7DiploWin@@6B@ 0x00444FC0
+
+extern int BreakthroughTurnsGlobal;
+
+extern int NetIncomeGlobal;
+
+// Callees owned outside this TU. slide_show now has its full C++ body in
+// popup.cpp. The remaining original-address helpers retain their seed
+// findings until complete compiled owners replace them; these are only
+// declarations, not additional function definitions.
+void __cdecl energy_compute(int faction_id, int mode);   // 0x00445130
+
+// The report and social screens share this accounting block. The original
+// accesses a 512-entry per-base table immediately after the maintenance sum,
+// followed by three totals, 70 facility counters, and commerce/net totals.
+// RECOVERY_OBJECT: v2 0x007492DC 0x007492E0 ?EnergyMaintenanceTotal@@3HA 0x00445130
+int EnergyMaintenanceTotal;
+
+// RECOVERY_OBJECT: v2 0x007492E0 0x00749AE0 ?EnergyBaseMaintenance@@3PAHA 0x00445130
+int EnergyBaseMaintenance[MaxBaseNum];
+
+// RECOVERY_OBJECT: v2 0x00749AE0 0x00749AE4 ?EnergyLabsTotal@@3HA 0x00445130
+int EnergyLabsTotal;
+
+// RECOVERY_OBJECT: v2 0x00749AE8 0x00749AEC ?EnergyEconomyTotal@@3HA 0x00445130
+int EnergyEconomyTotal;
+
+// RECOVERY_OBJECT: v2 0x00749AEC 0x00749C04 ?EnergyFacilityCounts@@3PAHA 0x00445130
+int EnergyFacilityCounts[70];
+
+// RECOVERY_OBJECT: v2 0x00749C04 0x00749C08 ?EnergyCommerceDelta@@3HA 0x00445130
+int EnergyCommerceDelta;
+// Historical EnergyDiscountBaseIndex at 0x009A6578 is the source-owned
+// SecretProject.self_aware_colony field (+0x64), written with the other
+// project locations. A separate initialized scalar severed that lifetime.
+
+// ORIGINAL: 0x00445130 ?energy_compute@@YAXHH@Z 0x00445130-0x00445433 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00445130.cpp", "src/base.h", "src/faction.h", "git:3ea0467addad98356ec7ab97d41d8b02fab9debd:src/hypothesis_layouts.h"], "reason": "Recover the shared energy accounting pass through Base and PlayerData fields, owning its report totals and per-base/facility tables instead of calling a fixed executable address."}
+// TRIED: translated per-instruction against the disasm (cross-checked against the Ghidra hypothesis for the per-base accumulation, tech-level clamp, and pairwise unit-bonus loop) rather than reusing ghidra's `(int*)param_1` pointer-cast style; the neg/sbb/neg boolean idiom collapsed to a plain `(a&b)!=0` comparison, the cdq/sar halving collapsed to `/2`. MISMATCH #10 mov/xor in the zero-fill prologue; compiles and follows the disasm's three sections (per-base loop, tech-rate energy cost, cross-faction facility bonus loop) in order.
+void __cdecl energy_compute(int faction_id, int recompute_bases) {
+    EnergyLabsTotal = 0;
+    NetIncomeGlobal = 0;
+    EnergyMaintenanceTotal = 0;
+    EnergyEconomyTotal = 0;
+    EnergyCommerceDelta = 0;
+    for (int i = 0; i < 70; i++) {
+        EnergyFacilityCounts[i] = 0;
+    }
+
+    int discount_carry = 0;
+    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
+        EnergyBaseMaintenance[base_id] = 0;
+        if (Bases[base_id].faction_id_current != faction_id) continue;
+        if (recompute_bases) {
+            set_base(base_id);
+            base_compute(1);
+        }
+
+        int maintenance = 0;
+        for (int facility = 0; facility < 70; ++facility) {
+            if (has_fac(facility, base_id, 0)) {
+                ++EnergyFacilityCounts[facility];
+                maintenance += fac_maint(facility, faction_id);
+            }
+        }
+        if (has_project(SP_SELF_AWARE_COLONY, faction_id)) {
+            // The image carries the odd half-maintenance remainder across
+            // bases; keep its order rather than rounding each base alone.
+            if (discount_carry) ++maintenance;
+            discount_carry = maintenance & 1;
+            maintenance /= 2;
+        }
+
+        EnergyBaseMaintenance[base_id] = maintenance;
+        EnergyLabsTotal += Bases[base_id].labs_total;
+        NetIncomeGlobal += Bases[base_id].economy_total - maintenance;
+        EnergyMaintenanceTotal += maintenance;
+        EnergyEconomyTotal += Bases[base_id].economy_total;
+    }
+
+    const int research_cost = tech_rate(faction_id);
+    EnergyLabsTotal = (range(PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::RESEARCH], -5, 5)
+        + 10) * EnergyLabsTotal * 10;
+    if (EnergyLabsTotal > 0) {
+        BreakthroughTurnsGlobal = (EnergyLabsTotal - 1 + research_cost * 100) / EnergyLabsTotal;
+    } else {
+        BreakthroughTurnsGlobal = 9999;
+    }
+
+    for (int other = 1; other < 8; ++other) {
+        if (other == faction_id || !is_alive(other) || !is_alive(faction_id) ||
+            (PlayersData[faction_id].diplo_treaties[other] & 0x10u)) continue;
+
+        if (PlayersData[faction_id].loan_balance[other] &&
+            !PlayersData[other].sanction_turns) {
+            const int payment = PlayersData[faction_id].loan_payment[other];
+            NetIncomeGlobal -= payment;
+            EnergyCommerceDelta -= payment;
+        }
+        if (PlayersData[other].loan_balance[faction_id] &&
+            !PlayersData[faction_id].sanction_turns) {
+            const int payment = PlayersData[other].loan_payment[faction_id];
+            NetIncomeGlobal += payment;
+            EnergyCommerceDelta += payment;
+        }
+    }
+}
+
+
+
+// ---------------------------------------------------------------------------
+// Merged from the retired src/game_recovery.cpp on 2026-08-20, following
+// src/text_recovery.cpp, which went into text.cpp on 2026-08-15. A class's
+// bodies in two translation units is not a neutral choice: which unit a
+// piece compiles in decides what can be inlined into it.
+// ---------------------------------------------------------------------------
+
+/*
+Purpose: The ceiling on a single energy allocation slider. The legacy
+         implementation is a constant return.
+// ORIGINAL: 0x00445440 ?energy_limit@@YAHH@Z 0x00445440-0x00445446 BYTE_EXACT
+// body      src/game.cpp
+// size      6 bytes
+// prototype int (__cdecl ?energy_limit@@YAHH@Z)(int factionID)
+// callers   3   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: 10
+Status: Complete
+*/
+// HISTORICAL: LPSTR v = Labels.strings_ptr[i]; return StringTable.get(v); IN game.h, as `MEASURED inline`: the image writes it out at
+// HISTORICAL: some call sites and calls it at others, and a .cpp definition is only ever
+// HISTORICAL: one of those. The marker stays here because that is where the catalogue
+// HISTORICAL: reads it.
+MEASURED int __cdecl energy_limit(int) {
+    return 10;
+}

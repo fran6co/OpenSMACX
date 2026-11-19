@@ -465,51 +465,6 @@ Status: Complete
 // The marker stays here because that is where the catalogue reads it.
 
 
-/*
-Purpose: Check whether the prototype has a specific ability.
-// ORIGINAL: 0x005BF1F0 ?has_abil@@YAHHH@Z 0x005BF1F0-0x005BF310 BYTE_EXACT
-// TRIED: a negative-proto_id guard clause (with its log_say call) that call_diff flagged as an extra call the image does not make; now 13/109 instructions agree, 0.825 similar (best flags), up from a structurally-unrelated function body before
-// size      288 bytes
-// prototype int (__cdecl ?has_abil@@YAHHH@Z)(int protoID, int abilityID)
-// callers   54   call targets   1
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x005B9F20
-Return Value: Does prototype have ability? true/false
-Status: Complete
-*/
-BOOL __cdecl has_abil(int proto_id, int ability_id) {
-    // BUG IN THE ORIGINAL: no guard against a negative proto_id here - it flows straight
-    // into `proto_id / MaxVehProtoFactionNum` and an out-of-bounds VehPrototypes[] read.
-    // A prior pass added a guard clause (with a log_say call) that is NOT in the image;
-    // call_diff flagged the extra call, and the disassembly at 0x005BF1F0 confirms the
-    // first instructions compute proto_id*sizeof(VehPrototype) directly, no branch first.
-    int faction_id = proto_id / MaxVehProtoFactionNum;
-    if (VehPrototypes[proto_id].ability_flags & ability_id) {
-        return true;
-    }
-    if (!faction_id) {
-        return false; // skip basic prototypes from #UNITS
-    }
-    if ((Players[faction_id].rule_flags & RFLAG_ALIEN) && ability_id == ABL_DEEP_RADAR) {
-        return true; // Caretakers + Usurpers > "Deep Radar" ability for all units
-    }
-    for (int i = 0; i < Players[faction_id].faction_bonus_count; i++) {
-        if (Players[faction_id].faction_bonus_id[i] == RULE_FREEABIL) {
-            // Original 0x5BF298 rereads the bonus value after has_tech returns.
-            if (has_tech(Ability[Players[faction_id].faction_bonus_val1[i]].preq_tech, faction_id) &&
-                (ability_id & (1 << Players[faction_id].faction_bonus_val1[i]))) {
-                // Pirates > "Marine Detachment" ability for combat sea units with Adaptive Doctrine
-                return true;
-            }
-        }
-    }
-    if (VehPrototypes[proto_id].weapon_id == WPN_PROBE_TEAM && ability_id == ABL_ALGO_ENHANCEMENT
-        && has_project(SP_NETHACK_TERMINUS, faction_id)) {
-        return true; // All Probe Teams act as though they have the "Algorithmic Enhancement"
-    }
-    return false;
-}
 
 // 0x009A64C8
 // RECOVERY_OBJECT: v1 0x009B2280 ?VehDropLiftVehID@@3HA
@@ -2061,32 +2016,32 @@ Status: Complete
 void __cdecl say_defense(LPSTR stat, int proto_id) {
     char num_buf[80];
     if (has_abil(proto_id, ABL_AAA)) {
-// RECOVERY_LITERAL: v1 0x0068F118 0x0068F11A $SG62723 0x0057D6D0
+// RECOVERY_LITERAL: v1 0x0068F118 0x0068F11A $SG62708 0x0057D6D0
         strcat(stat, "<");
     }
     int def_rating = armor_proto(proto_id, -1, 0);
     _itoa(def_rating, num_buf, 10);
     strcat(stat, num_buf);
     if (has_abil(proto_id, ABL_COMM_JAMMER)) {
-// RECOVERY_LITERAL: v1 0x0068F11C 0x0068F11E $SG62726 0x0057D6D0
+// RECOVERY_LITERAL: v1 0x0068F11C 0x0068F11E $SG62711 0x0057D6D0
         strcat(stat, "+");
     }
     if (has_abil(proto_id, ABL_TRANCE)) {
-// RECOVERY_LITERAL: v1 0x0068F120 0x0068F122 $SG62728 0x0057D6D0
+// RECOVERY_LITERAL: v1 0x0068F120 0x0068F122 $SG62713 0x0057D6D0
         strcat(stat, "t");
     }
     if (has_abil(proto_id, ABL_AAA)) {
-// RECOVERY_LITERAL: v1 0x0068F124 0x0068F126 $SG62730 0x0057D6D0
+// RECOVERY_LITERAL: v1 0x0068F124 0x0068F126 $SG62715 0x0057D6D0
         strcat(stat, ">");
     }
     if (VehPrototypes[proto_id].armor_id == ARM_PULSE_3_ARMOR
         || VehPrototypes[proto_id].armor_id == ARM_PULSE_8_ARMOR) {
-// RECOVERY_LITERAL: v1 0x0068F128 0x0068F12A $SG62733 0x0057D6D0
+// RECOVERY_LITERAL: v1 0x0068F128 0x0068F12A $SG62718 0x0057D6D0
         strcat(stat, "p");
     }
     if (VehPrototypes[proto_id].armor_id == ARM_RESONANCE_3_ARMOR
         || VehPrototypes[proto_id].armor_id == ARM_RESONANCE_8_ARMOR) {
-// RECOVERY_LITERAL: v1 0x0068F12C 0x0068F12E $SG62736 0x0057D6D0
+// RECOVERY_LITERAL: v1 0x0068F12C 0x0068F12E $SG62721 0x0057D6D0
         strcat(stat, "r");
     }
 }
@@ -2119,29 +2074,29 @@ void __cdecl say_stats_3(LPSTR stat, int proto_id) {
     char num_buf[80];
     int8_t off_rating = get_proto_offense_rating(proto_id);
     if (off_rating < 0) {
-// RECOVERY_LITERAL: v1 0x0068F130 0x0068F132 $SG62744 0x0057D7D0
+// RECOVERY_LITERAL: v1 0x0068F130 0x0068F132 $SG62729 0x0057D7D0
         strcat(stat, "?"); // PSI
     } else if (off_rating >= 99) {
-// RECOVERY_LITERAL: v1 0x0068F134 0x0068F136 $SG62747 0x0057D7D0
+// RECOVERY_LITERAL: v1 0x0068F134 0x0068F136 $SG62732 0x0057D7D0
         strcat(stat, "*");
     } else {
         say_offense(stat, proto_id);
     }
-// RECOVERY_LITERAL: v1 0x0068F138 0x0068F13A $SG62749 0x0057D7D0
+// RECOVERY_LITERAL: v1 0x0068F138 0x0068F13A $SG62734 0x0057D7D0
     strcat(stat, "-");
     if (get_proto_defense_rating(proto_id) < 0) {
-// RECOVERY_LITERAL: v1 0x0068F13C 0x0068F13E $SG62751 0x0057D7D0
+// RECOVERY_LITERAL: v1 0x0068F13C 0x0068F13E $SG62736 0x0057D7D0
         strcat(stat, "?");
     } else {
         say_defense(stat, proto_id);
     }
-// RECOVERY_LITERAL: v1 0x0068F140 0x0068F142 $SG62753 0x0057D7D0
+// RECOVERY_LITERAL: v1 0x0068F140 0x0068F142 $SG62738 0x0057D7D0
     strcat(stat, "-");
     int speed = speed_proto(proto_id) / Rules.move_rate_roads;
     _itoa(speed, num_buf, 10);
     strcat(stat, num_buf);
     if (VehPrototypes[proto_id].reactor_id > RECT_FISSION) {
-// RECOVERY_LITERAL: v1 0x0068F144 0x0068F146 $SG62756 0x0057D7D0
+// RECOVERY_LITERAL: v1 0x0068F144 0x0068F146 $SG62741 0x0057D7D0
         strcat(stat, "*");
         _itoa(VehPrototypes[proto_id].reactor_id, num_buf, 10);
         strcat(stat, num_buf);

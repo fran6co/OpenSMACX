@@ -1285,101 +1285,10 @@ void __cdecl energy_compute(int faction_id, int mode);   // 0x00445130
 void __cdecl slide_show(GraphicWin *window, int mode);   // 0x0045D440
 void __cdecl slide_hide(GraphicWin *window, int mode);   // 0x0045D970
 void __cdecl do_all_draws();                             // 0x005FCBB0, in temp.cpp
-
-// The report and social screens share this accounting block. The original
-// accesses a 512-entry per-base table immediately after the maintenance sum,
-// followed by three totals, 70 facility counters, and commerce/net totals.
-// RECOVERY_OBJECT: v2 0x007492DC 0x007492E0 ?EnergyMaintenanceTotal@@3HA 0x00445130
-int EnergyMaintenanceTotal;
-// RECOVERY_OBJECT: v2 0x007492E0 0x00749AE0 ?EnergyBaseMaintenance@@3PAHA 0x00445130
-int EnergyBaseMaintenance[MaxBaseNum];
-// RECOVERY_OBJECT: v2 0x00749AE0 0x00749AE4 ?EnergyLabsTotal@@3HA 0x00445130
-int EnergyLabsTotal;
 // RECOVERY_OBJECT: v2 0x00749AE4 0x00749AE8 ?BreakthroughTurnsGlobal@@3HA 0x00445130
 int BreakthroughTurnsGlobal;
-// RECOVERY_OBJECT: v2 0x00749AE8 0x00749AEC ?EnergyEconomyTotal@@3HA 0x00445130
-int EnergyEconomyTotal;
-// RECOVERY_OBJECT: v2 0x00749AEC 0x00749C04 ?EnergyFacilityCounts@@3PAHA 0x00445130
-int EnergyFacilityCounts[70];
-// RECOVERY_OBJECT: v2 0x00749C04 0x00749C08 ?EnergyCommerceDelta@@3HA 0x00445130
-int EnergyCommerceDelta;
 // RECOVERY_OBJECT: v2 0x00749C0C 0x00749C10 ?NetIncomeGlobal@@3HA 0x00445130
 int NetIncomeGlobal;
-// Historical EnergyDiscountBaseIndex at 0x009A6578 is the source-owned
-// SecretProject.self_aware_colony field (+0x64), written with the other
-// project locations. A separate initialized scalar severed that lifetime.
-
-// ORIGINAL: 0x00445130 ?energy_compute@@YAXHH@Z 0x00445130-0x00445433 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00445130.cpp", "src/base.h", "src/faction.h", "git:3ea0467addad98356ec7ab97d41d8b02fab9debd:src/hypothesis_layouts.h"], "reason": "Recover the shared energy accounting pass through Base and PlayerData fields, owning its report totals and per-base/facility tables instead of calling a fixed executable address."}
-// TRIED: translated per-instruction against the disasm (cross-checked against the Ghidra hypothesis for the per-base accumulation, tech-level clamp, and pairwise unit-bonus loop) rather than reusing ghidra's `(int*)param_1` pointer-cast style; the neg/sbb/neg boolean idiom collapsed to a plain `(a&b)!=0` comparison, the cdq/sar halving collapsed to `/2`. MISMATCH #10 mov/xor in the zero-fill prologue; compiles and follows the disasm's three sections (per-base loop, tech-rate energy cost, cross-faction facility bonus loop) in order.
-void __cdecl energy_compute(int faction_id, int recompute_bases) {
-    EnergyLabsTotal = 0;
-    NetIncomeGlobal = 0;
-    EnergyMaintenanceTotal = 0;
-    EnergyEconomyTotal = 0;
-    EnergyCommerceDelta = 0;
-    for (int i = 0; i < 70; i++) {
-        EnergyFacilityCounts[i] = 0;
-    }
-
-    int discount_carry = 0;
-    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
-        EnergyBaseMaintenance[base_id] = 0;
-        if (Bases[base_id].faction_id_current != faction_id) continue;
-        if (recompute_bases) {
-            set_base(base_id);
-            base_compute(1);
-        }
-
-        int maintenance = 0;
-        for (int facility = 0; facility < 70; ++facility) {
-            if (has_fac(facility, base_id, 0)) {
-                ++EnergyFacilityCounts[facility];
-                maintenance += fac_maint(facility, faction_id);
-            }
-        }
-        if (has_project(SP_SELF_AWARE_COLONY, faction_id)) {
-            // The image carries the odd half-maintenance remainder across
-            // bases; keep its order rather than rounding each base alone.
-            if (discount_carry) ++maintenance;
-            discount_carry = maintenance & 1;
-            maintenance /= 2;
-        }
-
-        EnergyBaseMaintenance[base_id] = maintenance;
-        EnergyLabsTotal += Bases[base_id].labs_total;
-        NetIncomeGlobal += Bases[base_id].economy_total - maintenance;
-        EnergyMaintenanceTotal += maintenance;
-        EnergyEconomyTotal += Bases[base_id].economy_total;
-    }
-
-    const int research_cost = tech_rate(faction_id);
-    EnergyLabsTotal = (range(PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::RESEARCH], -5, 5)
-        + 10) * EnergyLabsTotal * 10;
-    if (EnergyLabsTotal > 0) {
-        BreakthroughTurnsGlobal = (EnergyLabsTotal - 1 + research_cost * 100) / EnergyLabsTotal;
-    } else {
-        BreakthroughTurnsGlobal = 9999;
-    }
-
-    for (int other = 1; other < 8; ++other) {
-        if (other == faction_id || !is_alive(other) || !is_alive(faction_id) ||
-            (PlayersData[faction_id].diplo_treaties[other] & 0x10u)) continue;
-
-        if (PlayersData[faction_id].loan_balance[other] &&
-            !PlayersData[other].sanction_turns) {
-            const int payment = PlayersData[faction_id].loan_payment[other];
-            NetIncomeGlobal -= payment;
-            EnergyCommerceDelta -= payment;
-        }
-        if (PlayersData[other].loan_balance[faction_id] &&
-            !PlayersData[faction_id].sanction_turns) {
-            const int payment = PlayersData[other].loan_payment[faction_id];
-            NetIncomeGlobal += payment;
-            EnergyCommerceDelta += payment;
-        }
-    }
-}
 
 
 /*
@@ -1750,14 +1659,14 @@ void SocialWin::draw_info() {
             > 10 - PlayersData[factionID_].se_alloc_psych - PlayersData[factionID_].se_alloc_labs) {
             _itoa(-range(shift * imbalance, 0, 0x28), number, 10);
             strcat(StringTemp, number);
-// RECOVERY_LITERAL: v1 0x00687480 0x00687483 $SG59444 0x004AFB60
+// RECOVERY_LITERAL: v1 0x00687480 0x00687483 $SG59406 0x004AFB60
             strcat(StringTemp, "% ");
             strcat(StringTemp, label_get(60));
             if (10 - PlayersData[factionID_].se_alloc_psych - PlayersData[factionID_].se_alloc_labs != 0) {
                 strcat(StringTemp, SocialWinCommaSpaceText);
                 _itoa(-range(shift * imbalance * 2, 0, 0x50), number, 10);
                 strcat(StringTemp, number);
-// RECOVERY_LITERAL: v1 0x00687484 0x00687487 $SG59446 0x004AFB60
+// RECOVERY_LITERAL: v1 0x00687484 0x00687487 $SG59408 0x004AFB60
                 strcat(StringTemp, "% ");
                 strcat(StringTemp, label_get(169));
             }
@@ -1765,14 +1674,14 @@ void SocialWin::draw_info() {
             if (PlayersData[factionID_].se_alloc_labs != 0) {
                 _itoa(-range(shift * imbalance * 2, 0, 0x50), number, 10);
                 strcat(StringTemp, number);
-// RECOVERY_LITERAL: v1 0x00687488 0x0068748B $SG59449 0x004AFB60
+// RECOVERY_LITERAL: v1 0x00687488 0x0068748B $SG59411 0x004AFB60
                 strcat(StringTemp, "% ");
                 strcat(StringTemp, label_get(60));
                 strcat(StringTemp, SocialWinCommaSpaceText);
             }
             _itoa(-range(shift * imbalance, 0, 0x28), number, 10);
             strcat(StringTemp, number);
-// RECOVERY_LITERAL: v1 0x0068748C 0x0068748F $SG59450 0x004AFB60
+// RECOVERY_LITERAL: v1 0x0068748C 0x0068748F $SG59412 0x004AFB60
             strcat(StringTemp, "% ");
             strcat(StringTemp, label_get(169));
         }
@@ -1785,7 +1694,7 @@ void SocialWin::draw_info() {
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(350));
         strcat(StringTemp, SocialWinColonSpaceText);
-// RECOVERY_LITERAL: v1 0x00687490 0x00687492 $SG59452 0x004AFB60
+// RECOVERY_LITERAL: v1 0x00687490 0x00687492 $SG59414 0x004AFB60
         strcat(StringTemp, "+");
         _itoa(-upheaval, number, 10);
         strcat(StringTemp, number);
@@ -1867,7 +1776,7 @@ void SocialWin::draw_overview() {
         }
 
         StringTemp[0] = 0;
-// RECOVERY_LITERAL: v1 0x0068749C 0x006874A0 $SG59477 0x004B0410
+// RECOVERY_LITERAL: v1 0x0068749C 0x006874A0 $SG59439 0x004B0410
         strcat(StringTemp, "SOC");
         strcat(StringTemp, SocialEffects[effect].set1);
         if (text_open(0, StringTemp) != 0) {
@@ -1914,7 +1823,7 @@ void SocialWin::draw_overview() {
 
         StringTemp[0] = 0;
         if (socEffect_.values_[effect] > 0) {
-// RECOVERY_LITERAL: v1 0x006874A0 0x006874A2 $SG59497 0x004B0410
+// RECOVERY_LITERAL: v1 0x006874A0 0x006874A2 $SG59459 0x004B0410
             strcat(StringTemp, "+");
         }
         char number[80];
@@ -2168,11 +2077,11 @@ void SocialWin::draw_mouseover() {
 
                 StringTemp[0] = 0;
                 if (value < 0) {
-// RECOVERY_LITERAL: v1 0x006874A4 0x006874A6 $SG59592 0x004B1080
+// RECOVERY_LITERAL: v1 0x006874A4 0x006874A6 $SG59554 0x004B1080
                     strcat(StringTemp, "-");
                     MainInterfaceGlobal.Buffer::set_text_color(0x67, -1, 1, 1);
                 } else {
-// RECOVERY_LITERAL: v1 0x006874A8 0x006874AA $SG59594 0x004B1080
+// RECOVERY_LITERAL: v1 0x006874A8 0x006874AA $SG59556 0x004B1080
                     strcat(StringTemp, "+");
                     MainInterfaceGlobal.Buffer::set_text_color(0x98, -1, 1, 1);
                 }
@@ -2272,7 +2181,7 @@ int SocialWin::on_button_text_draw(GraphicWin *window, char *text, int button_id
 
     StringTemp[0] = 0;
     if (socEffect_.values_[effect] > 0) {
-// RECOVERY_LITERAL: v1 0x006874AC 0x006874AE $SG59624 0x004B17A0
+// RECOVERY_LITERAL: v1 0x006874AC 0x006874AE $SG59586 0x004B17A0
         strcat(StringTemp, "+");
     }
     char number[80];
@@ -2515,7 +2424,7 @@ void SocialWin::init(int faction_id) {
     font9_.init(DefaultLargeFontFace, 0xe, 1);
 
     if (!effectIcons_[0].has_pixel_pointer()) {
-// RECOVERY_LITERAL: v1 0x006874B0 0x006874BB $SG59657 0x004B2740
+// RECOVERY_LITERAL: v1 0x006874B0 0x006874BB $SG59619 0x004B2740
         sheet.load_pcx("socwin.pcx", 0, 10, 0xec);
         // Ten rows of three triplets; x restarts in the row clause.
         Sprite *icon = effectIcons_;
@@ -2816,7 +2725,7 @@ void SocialWin::init(int faction_id) {
             // 0x4B3C0B: test; jne to the vbase adjustment, null arm first.
             GraphicWin *graphics = window == 0
                 ? 0 : static_cast<GraphicWin *>(window);
-// RECOVERY_LITERAL: v1 0x006874BC 0x006874C3 $SG59765 0x004B2740
+// RECOVERY_LITERAL: v1 0x006874BC 0x006874C3 $SG59727 0x004B2740
             TutorialWindow.tut_win(graphics, "SOCWIN", out_a, out_b,
                 0, 1, -1, -1);
         }

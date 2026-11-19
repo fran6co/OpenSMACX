@@ -43,6 +43,7 @@
 #include "strings.h"
 #include "tutwin.h"
 
+
 // This checked lookup describes the existing StringList current-text operation.
 // Its two call sites retain separate original lookup phases; the name is local.
 static inline char *current_message_text(StringList &items) {
@@ -55,16 +56,19 @@ static inline uint32_t current_message_height(StringList &items) {
 // 0x007F67F8, declared in messagewin.h.
 // RECOVERY_OBJECT: v1 0x007F67F8 ?InterfaceMessageWin@@3VMessageWin@@A
 MessageWin InterfaceMessageWin;  // 0x007F67F8
+// ORIGINAL: 0x00471350 _$E966 0x00471350-0x00471374 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682548 selects init 0x00471350-0x00471374, registering fini 0x00471380-0x00471394; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x007F67C8; array count 1, stride 0x2C, Sprite constructor/destructor 0x005E37E0/0x00406850 and vector iterators 0x006457C2/0x006456E4.", "Current owner physical COFF selects _$E966 via .CRT$XCU and registers _$E964, with relocations naming ?g_IFACE_GREEN_RIGHT_ARROW_SPRITE@@3PAVSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned g_IFACE_GREEN_RIGHT_ARROW_SPRITE; no callback body is authored."}
+// symbol    _$E21
+// ORIGINAL: 0x00471380 _$E964 0x00471380-0x00471394 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682548 selects init 0x00471350-0x00471374, registering fini 0x00471380-0x00471394; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x007F67C8; array count 1, stride 0x2C, Sprite constructor/destructor 0x005E37E0/0x00406850 and vector iterators 0x006457C2/0x006456E4.", "Current owner physical COFF selects _$E966 via .CRT$XCU and registers _$E964, with relocations naming ?g_IFACE_GREEN_RIGHT_ARROW_SPRITE@@3PAVSprite@@A; genuine C++ global declaration owns the lifetime, including inline scalar constructor emission.", "Current local helper names are compiler-output interpretations, not original debug names. Individual lifetime binding does not prove full initialization order, linked retained selection, data-layout completeness or runtime acceptance."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned g_IFACE_GREEN_RIGHT_ARROW_SPRITE; no callback body is authored."}
+// symbol    _$E19
+// RECOVERY_OBJECT: v2 0x007F67C8 0x007F67F4 ?g_IFACE_GREEN_RIGHT_ARROW_SPRITE@@3PAVSprite@@A 0x00453A70
+Sprite g_IFACE_GREEN_RIGHT_ARROW_SPRITE[1];
+
 // The 0x009393D0 message counter is ConsoleGlobal.message_count_; its
 // historical object identity is retained beside ConsoleGlobal in console.cpp.
 // RECOVERY_OBJECT: v2 0x007F9F54 0x007F9F58 ?MessageWinMenuBusy@@3HA 0x004718C0
 int MessageWinMenuBusy;  // 0x007F9F54; initial storage passed both trials.
-// 0x0093A7B0 is eight faction-indexed StringList records. The independent
-// add_base and leaf_recoveries seeds agree on the 0x30 stride and pending
-// text/metadata fields. Initial storage/extent passed two VC6 trials; runtime
-// construction, ownership and retained linker selection remain unverified.
-// RECOVERY_OBJECT: v2 0x0093A7B0 0x0093A930 ?MessageWinDeferredBaseMessages@@3PAVStringList@@A 0x004713B0
-StringList MessageWinDeferredBaseMessages[8];
 // The two text colours (0x0068A5A4, 0x0068A5B0) are elements of
 // interface_assets.cpp's IfaceColorTable; their identities moved there.
 
@@ -461,16 +465,10 @@ int MessageWin::init() {
 
 // Real MessageWinDeferredBaseMessages array lifecycle, compiler-generated.
 /*
-// ORIGINAL: 0x0051DF80 sub_51df80 0x0051DF80-0x0051DFA4 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:ac4a630920605babb8184f2126ed77052521a59e:src/recovered/units/0051df80.cpp", "image:0x51df80", "source:src/messagewin.cpp"], "reason": "The native eight-StringList array at93A7B0 has30-byte stride, constructor4450B0 and complete teardown406820. The real typed MessageWinDeferredBaseMessages owns forward construction with atexit registration and reverse derived/base destruction. Preserve original identity, complete spans and historical claims; generated delegation is current lowering, not exact layout or linked-selection proof."}
-// symbol    _$E21
 */
 // Historical seed finding: The standalone initializer scaffold was reported measured exact in prose, but had no formal byte claim; do not grant one from that report.
 
 // Real MessageWinDeferredBaseMessages array lifecycle, compiler-generated.
 /*
-// ORIGINAL: 0x0051DFB0 sub_51dfb0 0x0051DFB0-0x0051DFC4 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:ac4a630920605babb8184f2126ed77052521a59e:src/recovered/units/0051dfb0.cpp", "image:0x51dfb0", "source:src/messagewin.cpp"], "reason": "The native eight-StringList array at93A7B0 has30-byte stride, constructor4450B0 and complete teardown406820. The real typed MessageWinDeferredBaseMessages owns forward construction with atexit registration and reverse derived/base destruction. Preserve original identity, complete spans and historical claims; generated delegation is current lowering, not exact layout or linked-selection proof."}
-// symbol    _$E19
 */
 // Historical seed finding: The old free __thiscall callback prototype failed VC6 C4234; opaque callback pointers were a scaffold workaround. Real class-array destruction supplies the typed compiler helper.

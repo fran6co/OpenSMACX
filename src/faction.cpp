@@ -451,6 +451,35 @@ static inline void diplo_spend(int x) {
     if (x == 2) x = 3;
 }
 
+/*
+Purpose: Get tech string for techID and store it into stringTemp buffer.
+// ORIGINAL: 0x005591A0 ?say_tech@@YAXHH@Z 0x005591A0-0x005591BA BYTE_EXACT
+// size      26 bytes
+// prototype
+// callers   2   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005B9C40
+Return Value: n/a
+Status: Complete
+*/
+// body src/technology.h
+// BODY IN technology.h, as `MEASURED inline`.
+
+/*
+Purpose: Validate region bounds. Bad regions include: 0, 63, 64, 127, 128.
+// ORIGINAL: 0x005591C0 ?bad_reg@@YAHH@Z 0x005591C0-0x005591DD BYTE_EXACT
+// body      src/map.h
+// size      29 bytes
+// prototype 
+// callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: Is region bad? true/false
+Status: Complete
+*/
+
 // ORIGINAL: 0x0053EB50 ?buy_council_vote@@YAXHHHH@Z 0x0053EB50-0x00540193;0x0065E75A-0x0065EB33 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned53EB50..540193 and65E75A..65EB33; git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0053eb50.cpp", "Native EDI=OTHER and EBX=FACTION; peer vote query precedes OTHER query; technology valuation rereads turn after every call; promised gift and treaty state reload after modal/parser callbacks. Popup teardown is ordinary lexical destruction, without duplicate close.", "RulesTechnology.name is the heap string address returned by Strings::put, not an ordinal; parse_say takes that address through its native32-bit integer ABI. Dialogue labels verified against bounded original strings and owned as C++ literals.", "recovery/tasks/interface-contract-report-closure.json; recovery/tests/test_council_vote_purchase.py actual-source corruption controls"], "reason": "Recover complete council vote purchasing in its genuine faction owner, including the custom modal negotiation missing from the retained seed. Use lexical Popup and source-owned labels, actual player/council/network storage and calls; preserve original spans, retained seed and all historical obligations. This is not matching or game acceptance."}
 // TRIED: plain `Popup popup;` local (compiler-generated dtor order diverges from original's manual close()+~Scroll()/~BasePop() split-unwind pattern); tail dialog/ListBox/EditGroup/SpriteBox/ CheckBox construction (menuResult<1 branch) is a raw vtable- poke sequence into untyped stack buffers (aiStack_3220 etc.) that was not reproduced - only the surrounding call order was.
@@ -883,49 +912,6 @@ Return Value: Treaty status between the two factions, generally treated as a boo
 Status: Complete
 */
 
-
-/*
-Purpose: Get the faction's name adjective.
-// ORIGINAL: 0x0050B910 ?get_adjective@@YAHH@Z 0x0050B910-0x0050B92A BYTE_EXACT
-// body      src/faction.h
-// symbol    ?get_adjective@@YAPADH@Z
-// size      26 bytes
-// prototype int (__cdecl ?get_adjective@@YAHH@Z)(int factionID)
-// callers   3   call targets   0
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     (none)
-Return Value: Faction name adjective
-Status: Complete
-*/
-// BODY IN faction.h, as `MEASURED inline`.
-
-
-/*
-Purpose: Get the faction's noun.
-// ORIGINAL: 0x0050B930 ?get_noun@@YAHH@Z 0x0050B930-0x0050B964 BYTE_EXACT
-// body      src/faction.h
-// LEVER: calling `parse_set(...)` grouped the two field reads together (matching
-//        the image's read/read/store/store order) but gave the temps the wrong
-//        registers (edx for gender, ecx for plurality). Assigning `GenderDefault`
-//        and `PluralityDefault` directly, without going through parse_set, keeps
-//        the image's register choice (ecx for gender, edx for plurality) - moved
-//        10/15 -> 12/15. Remaining divergence: the image computes the
-//        `noun_faction` return pointer (`lea eax,[eax+0x946d34]`) only after BOTH
-//        stores; this tree's O2 hoists that address computation right after the
-//        first read and reaches the second field off the new eax
-//        (`mov edx,[eax+0x1c]`) instead of off the original one - scheduling only.
-// symbol    ?get_noun@@YAPADH@Z
-// size      52 bytes
-// prototype int (__cdecl ?get_noun@@YAHH@Z)(int factionID)
-// callers   5   call targets   0
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     (none)
-Return Value: Faction noun
-Status: Complete
-*/
-// BODY IN faction.h, as `MEASURED inline`.
 
 /*
 Purpose: Determine whether automatic contact is enabled for net or PBEM games.
@@ -4854,6 +4840,34 @@ void __cdecl commlink_attempt(int target_faction) {
         treaty_on(local_faction, target_faction, 0x88000008);
     }
 }
+
+// ORIGINAL: 0x00559000 sub_559000 0x00559000-0x0055903A BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["original:0x0055468E-0x005546A5:shared-Popup-receiver", "original:0x00559000-0x0055903A", "source:src/basepop.h:caller_sprite_,dialogs_", "git:0af6726c:src/recovered/units/00559000.cpp"], "reason": "The original communicate caller uses the same local Popup receiver for start and this member. Existing BasePop caller_sprite_ and owned Dialogs/SpriteBox state explain the observed member accesses. Clear only the stored caller picture when the list is nonempty; always forward the incoming picture to SpriteBox::sprite. The behavior-derived method name is provisional; the original name remains unknown."}
+// symbol    ?set_picture@Popup@@QAEHPAVSprite@@HPAD@Z
+// Provisional behavior-derived name; original method name is unknown.
+// Historical seed evidence: direct ECX-relative field accesses identify a
+// thiscall receiver, despite the old scaffold's initial free-stdcall guess.
+// body src/popup.h
+// BODY IN popup.h, as an in-class `MEASURED` inline member.
+
+
+/*
+Purpose: Start a popup from a label and a value, defaulting the rest.
+// ORIGINAL: 0x00559040 ?start@Popup@@QAEXPBDH@Z 0x00559040-0x0055905F BYTE_EXACT
+// size      31 bytes
+// prototype void (__thiscall ?start@Popup@@QAEXPBDH@Z)(Popup* this, int8* sectionID, int)
+// callers   2   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00406380
+Return Value: n/a
+Status: Complete
+*/
+// body src/popup.h
+// BODY IN popup.h, as an in-class `MEASURED` inline member.
+
+
+
 
 /*
 Purpose: Wait out the diplomatic lock: announce it, clamp the caller's

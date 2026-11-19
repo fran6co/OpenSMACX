@@ -265,7 +265,7 @@
           "/Ob2"
         ]
       },
-      "src/application_text.cpp": {
+      "src/bitmask.cpp": {
         "flags": [
           "/c",
           "/Og",
@@ -545,19 +545,6 @@
           "-c"
         ]
       },
-      "src/prefwin_geometry.cpp": {
-        "flags": [
-          "/c",
-          "/Og",
-          "/Ot",
-          "/Oy",
-          "/Gs",
-          "/Gy",
-          "/GR-",
-          "/GX",
-          "/Ob2"
-        ]
-      },
       "src/popmenu.cpp": {
         "flags": [
           "/c",
@@ -618,23 +605,6 @@
           "/Ob2"
         ]
       },
-      "src/technology_queries.cpp": {
-        "flags": [
-          "/nologo",
-          "/TP",
-          "/Zm200",
-          "/GX",
-          "/Og",
-          "/Ot",
-          "/Gs",
-          "/Gy",
-          "/Ob2",
-          "-MT",
-          "/W4",
-          "/Oy-",
-          "-c"
-        ]
-      },
       "src/sound.cpp": {
         "flags": [
           "/nologo",
@@ -653,49 +623,6 @@
           "-c"
         ]
       },
-      "src/squarelock.cpp": {
-        "flags": [
-          "/c",
-          "/Og",
-          "/Ot",
-          "/Gs",
-          "/Gy",
-          "/GR-",
-          "/GX",
-          "/Oy-",
-          "/Ob2"
-        ]
-      },
-      "src/wave.cpp": {
-        "flags": [
-          "/nologo",
-          "/TP",
-          "/Zm200",
-          "/GX",
-          "/Og",
-          "/Ot",
-          "/Gs",
-          "/Gy",
-          "/Ob2",
-          "-MT",
-          "/W4",
-          "/Oy-",
-          "-c"
-        ]
-      },
-      "src/sprite_objects.cpp": {
-        "flags": [
-          "/c",
-          "/Og",
-          "/Ot",
-          "/Oy",
-          "/Gs",
-          "/Gy",
-          "/GR-",
-          "/GX",
-          "/Ob2"
-        ]
-      },
       "src/jackal/time.cpp": {
         "flags": [
           "/c",
@@ -707,23 +634,6 @@
           "/GR-",
           "/GX",
           "/Ob2"
-        ]
-      },
-      "src/time.cpp": {
-        "flags": [
-          "/nologo",
-          "/TP",
-          "/Zm200",
-          "/GX",
-          "/Og",
-          "/Ot",
-          "/Gs",
-          "/Gy",
-          "/Ob2",
-          "-MT",
-          "/W4",
-          "/Oy-",
-          "-c"
         ]
       },
       "src/map.cpp": {
@@ -790,24 +700,6 @@
           "/Gy",
           "/GR-",
           "/GX"
-        ]
-      },
-      "src/interface_palette.cpp": {
-        "flags": [
-          "/nologo",
-          "/TP",
-          "/Zm200",
-          "/GX",
-          "/Og",
-          "/Ot",
-          "/Gs",
-          "/Gy",
-          "/Ob2",
-          "-MT",
-          "/W4",
-          "/Oy-",
-          "/Z7",
-          "-c"
         ]
       },
       "src/interface_fonts.cpp": {
@@ -1036,6 +928,24 @@
         ]
       },
       "src/alpha.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/Og",
+          "/Ot",
+          "/Gs",
+          "/Gy",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "/Z7",
+          "-c"
+        ]
+      },
+      "src/prefs.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -1530,24 +1440,6 @@
           "-c"
         ]
       },
-      "src/strings.cpp": {
-        "flags": [
-          "/nologo",
-          "/TP",
-          "/Zm200",
-          "/GX",
-          "/Og",
-          "/Ot",
-          "/Oy",
-          "/Gs",
-          "/Gy",
-          "/Ob2",
-          "-MT",
-          "/W4",
-          "/Z7",
-          "-c"
-        ]
-      },
       "src/netmsg.cpp": {
         "flags": [
           "/nologo",
@@ -1861,24 +1753,6 @@
           "/W4",
           "/Z7",
           "/Oy-",
-          "-c"
-        ]
-      },
-      "src/general.cpp": {
-        "flags": [
-          "/nologo",
-          "/TP",
-          "/Zm200",
-          "/GX",
-          "/Og",
-          "/Ot",
-          "/Oy",
-          "/Gs",
-          "/Gy",
-          "/Ob2",
-          "-MT",
-          "/W4",
-          "/Z7",
           "-c"
         ]
       },
@@ -2455,23 +2329,6 @@
           "/W4",
           "/Oy-",
           "/Z7",
-          "-c"
-        ]
-      },
-      "src/console_menu_policy.cpp": {
-        "flags": [
-          "/nologo",
-          "/TP",
-          "/Zm200",
-          "/GX",
-          "/Og",
-          "/Ot",
-          "/Gs",
-          "/Gy",
-          "/Ob2",
-          "-MT",
-          "/W4",
-          "/Oy-",
           "-c"
         ]
       },
@@ -3222,23 +3079,6 @@
         ]
       },
       "src/path.cpp": {
-        "flags": [
-          "/nologo",
-          "/TP",
-          "/Zm200",
-          "/GX",
-          "-MT",
-          "/W4",
-          "/Og",
-          "/Ot",
-          "/Gs",
-          "/Gy",
-          "/Ob2",
-          "/Oy-",
-          "-c"
-        ]
-      },
-      "src/playerlock.cpp": {
         "flags": [
           "/nologo",
           "/TP",

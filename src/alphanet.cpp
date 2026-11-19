@@ -59,6 +59,37 @@
 #include <cstdlib>
 #include <cstring>
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x004E2400 sub_4e2400 0x004E2400-0x004E2444 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682614 directly selects0x4E2400 as the first callback in the adjacent network-state startup sequence.", "The callback stores only options bytes0,1,2,4,5,6,7,8,9,A,B; NetWinSessionOptionsStorage contains only the existing 0x18-byte NetWinSessionOptionsState at offset zero and its constructor performs exactly those stores."], "reason": "Own the original selected options initialization in the storage object's constructor without adding value-initialization or changing the shared wire type."}
+// symbol    _$E14
+// RECOVERY_OBJECT: v4 0x0090E8E0 0x0090E8F8 ?NetWinSessionOptions@@3UNetWinSessionOptionsState@@A 0x0047B450 target ?NetWinSessionOptions@@3UNetWinSessionOptionsStorage@@A
+NetWinSessionOptionsStorage NetWinSessionOptions;
+
+// ORIGINAL: 0x004E2450 sub_4e2450 0x004E2450-0x004E245D FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682618 directly selects0x4E2450 between the options and lobby-row initializers.", "The callback writes only NetWinSessionData.mode_ and scenario_text_wire_tail_[0]; its real owner is the storage global at0x0090E778."], "reason": "Recover the pinned global's selected startup stores as construction of its owning storage object; keep the wire/POD member unchanged."}
+// symbol    _$E17
+// size      13 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// Return Value: n/a
+// Status: Complete
+// RECOVERY_OBJECT: v4 0x0090E778 0x0090E8E0 ?NetWinSessionData@@3UNetWinSessionBlock@@A 0x0047B450 target ?NetWinSessionData@@3UNetWinSessionDataStorage@@A
+NetWinSessionDataStorage NetWinSessionData;
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x004E2460 sub_4e2460 0x004E2460-0x004E248F FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x68261C directly selects0x4E2460 after the options and session-data callbacks.", "The callback stores only six fields in each of eight 0x17C-byte rows; NetWinLobbyRowsStorage contains only the existing eight-row array at offset zero and its constructor writes those same fields."], "reason": "Own the original selected lobby-row initialization in the storage object's constructor while preserving the shared wire-row type and untouched bytes."}
+// symbol    _$E20
+// The pinned PE's .data raw contents end at 0x006A8000, while its virtual
+// extent includes 0x0090DB98..0x0090E778: these rows start zero-filled.
+// config_players and the network receive path subsequently populate them.
+// RECOVERY_OBJECT: v4 0x0090DB98 0x0090E778 ?NetWinLobbyRows@@3PAUNetWinLobbyRow@@A 0x0047B450 target ?NetWinLobbyRows@@3UNetWinLobbyRowsStorage@@A
+NetWinLobbyRowsStorage NetWinLobbyRows;
+
 // Language arrays declare seven bytes; original allocation bounds and lifetimes remain unproved.
 // Eight distinct writable original seven-byte script-name instances are
 // observed at the respective call operands. These provisional role names
@@ -310,8 +341,8 @@ int AlphaNet::do_join_or_create() {
     // 4E 45 54 43 4F 4E 4E 45 43 54 5F 4A 4F 49 4E 5F 4F 52 5F 43 52 45 41
     // 54 45 00 at 0x689240. This writable-data correspondence does not claim
     // runtime immutability or linker selection.
-    // RECOVERY_LITERAL: v1 0x689240 0x68925A $SG57025 0x4E29E0
-    // RECOVERY_LITERAL: v1 0x68925C 0x689263 $SG57026 0x4E29E0
+    // RECOVERY_LITERAL: v1 0x689240 0x68925A $SG57045 0x4E29E0
+    // RECOVERY_LITERAL: v1 0x68925C 0x689263 $SG57046 0x4E29E0
     const int selected = x_pop_caption_flags("jackal", "NETCONNECT_JOIN_OR_CREATE", 0x50, 0);
     if (selected < 0) return 1;
     if (selected == 1) {

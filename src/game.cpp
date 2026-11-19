@@ -15,12 +15,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
-// ORIGINAL: 0x00477E10 _$E26 0x00477E10-0x00477E26 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682550 selects original initializer0x477e10..0x477e26, registering fini0x477e30..0x477e3a; complete independent decode establishes exclusive boundaries.", "Source-owned object?MultiWindow@@3VMultiWin@@A identifies original storage0x7fd648. Startup arguments/calls: call 0x47a590; push 0x477e30. Cleanup receiver/calls: mov ecx, 0x7fd648; jmp 0x47a430. Constructor/destructor targets retain their existing class-owned source mappings.", "Fresh physical src/game.cpp COFF selects _$E26 through .CRT$XCU and registers _$E24, both referencing the genuine source global. Original NetMsg argument triples and implicit PlanWin/Console most-derived flags are preserved by the existing declarations; complete virtual-base teardown is compiler-owned, not authored offsets.", "Current local helper symbols interpret present emission, not original debug names or historical TU boundaries. Object starts do not prove allocation extents. This binding establishes neither cross-TU global order, masked-reference correctness, strict linked preservation, dependency-provider equivalence nor runtime/game acceptance; excluded guarded sprite cleanup remains separate."], "reason": "Bind original startup identity to the genuine compiler-generated lifetime of ?MultiWindow@@3VMultiWin@@A in its actual source owner; no manual lifecycle callback is authored."}
-// symbol    _$E20
-// ORIGINAL: 0x00477E30 _$E24 0x00477E30-0x00477E3A FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682550 selects original initializer0x477e10..0x477e26, registering fini0x477e30..0x477e3a; complete independent decode establishes exclusive boundaries.", "Source-owned object?MultiWindow@@3VMultiWin@@A identifies original storage0x7fd648. Startup arguments/calls: call 0x47a590; push 0x477e30. Cleanup receiver/calls: mov ecx, 0x7fd648; jmp 0x47a430. Constructor/destructor targets retain their existing class-owned source mappings.", "Fresh physical src/game.cpp COFF selects _$E26 through .CRT$XCU and registers _$E24, both referencing the genuine source global. Original NetMsg argument triples and implicit PlanWin/Console most-derived flags are preserved by the existing declarations; complete virtual-base teardown is compiler-owned, not authored offsets.", "Current local helper symbols interpret present emission, not original debug names or historical TU boundaries. Object starts do not prove allocation extents. This binding establishes neither cross-TU global order, masked-reference correctness, strict linked preservation, dependency-provider equivalence nor runtime/game acceptance; excluded guarded sprite cleanup remains separate."], "reason": "Bind original exit identity to the genuine compiler-generated lifetime of ?MultiWindow@@3VMultiWin@@A in its actual source owner; no manual lifecycle callback is authored."}
-// symbol    _$E18
 #include "stdafx.h"
 
 #include <shellapi.h>
@@ -206,15 +200,6 @@ void __cdecl clear_all_offers() {
     }
 }
 
-
-// ORIGINAL: 0x00444D90 ?diplo@@YAXHH@Z 0x00444D90-0x00444DA7 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:a1347e25:src/recovered/00444d90.cpp complete original identity/spans and historical claims/findings.", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x444d90 full native body review.", "source:src/game.cpp existing real state owners; no executable-address alias or synthetic receiver."], "reason": "Recover the complete short helper through established source-owned diplomacy, vehicle, text or window state; preserve signed sentinel behavior, original receiver/argument order and conditional callbacks."}
-// symbol    ?diplo@@YAXHH@Z
-// TRIED: homed into game.cpp (its real TU) 2026-09-03 - does not compile there: the body's only call is `DiploWin::exec` at 0x00443F10, which diplowin.h does not declare and no product TU defines yet. Declaring `void exec(int,int)` on DiploWin without a definition is a link error, so the body stays here until 0x00443F10 is homed into diplowin.cpp and `exec` declared on the class. The `#include "diplowin.h"` game.cpp needs for it is already added.
-void __cdecl diplo(int faction_id, int faction_id_with) {
-  DiploWindow.exec(faction_id, faction_id_with);
-}
-
 // 0x009A6494
 // 0x009A6498
 // 0x009A649C
@@ -286,37 +271,6 @@ int NextTurnReady;
 int NetUpkeepPhase;
 
 
-
-// ---------------------------------------------------------------------------
-// Merged from the retired src/game_recovery.cpp on 2026-08-20, following
-// src/text_recovery.cpp, which went into text.cpp on 2026-08-15. A class's
-// bodies in two translation units is not a neutral choice: which unit a
-// piece compiles in decides what can be inlined into it.
-// ---------------------------------------------------------------------------
-
-/*
-Purpose: The ceiling on a single energy allocation slider. The legacy
-         implementation is a constant return.
-// ORIGINAL: 0x00445440 ?energy_limit@@YAHH@Z 0x00445440-0x00445446 BYTE_EXACT
-// body      src/game.cpp
-// size      6 bytes
-// prototype int (__cdecl ?energy_limit@@YAHH@Z)(int factionID)
-// callers   3   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: 10
-Status: Complete
-*/
-// HISTORICAL: LPSTR v = Labels.strings_ptr[i]; return StringTable.get(v); IN game.h, as `MEASURED inline`: the image writes it out at
-// HISTORICAL: some call sites and calls it at others, and a .cpp definition is only ever
-// HISTORICAL: one of those. The marker stays here because that is where the catalogue
-// HISTORICAL: reads it.
-MEASURED int __cdecl energy_limit(int) {
-    return 10;
-}
-
-
 // ---------------------------------------------------------------------------
 // The main loop.
 // ---------------------------------------------------------------------------
@@ -382,27 +336,6 @@ char SaveGameFileName[1];  // 0x0093AA0C
 char SaveNameBuffer[256];
 // RECOVERY_OBJECT: v2 0x009B2178 0x009B2278 ?ScenarioSaveNameBuffer@@3PADA 0x005A6AC0
 char ScenarioSaveNameBuffer[256];
-
-// The window the loop paints colour 9 over and hides while the game boots,
-// showing it again for a PBEM session, is ConsoleGlobal.cover_window_: the
-// GraphicWin ??0Console builds at +0x21A68 (0x009156B0 + 0x21A68 =
-// 0x00937118). The image names it with `mov ecx, 0x937118` immediates; the
-// member path keeps that fold. Its historical CoverWindow identity is
-// retained beside ConsoleGlobal in console.cpp.
-
-// The multiplayer window - REAL STORAGE at the image's 0x007FD648, not the
-// `GraphicWin *const MultiWindow` binding (see game.h). Its class is
-// MultiWin. The source now uses its real C++ constructor and destructor;
-// their placement in the original initializer/finalizer sequence is still
-// an independent restoration obligation.
-// Its 0x28B8-byte owned layout ends at the independently catalogued
-// g_MULTIWIN_WAVE pointer at 0x007FFF00. The game object file emits
-// ?MultiWindow@@3VMultiWin@@A with real constructor/destructor references.
-// RECOVERY_OBJECT: v2 0x007FD648 0x007FFF00 ?MultiWindow@@3VMultiWin@@A 0x0047A590
-// This cell was misrepresented as standalone ?MultiWindowOpen; it is the
-// existing open-state member, retaining the image's loader-zero initial value.
-// RECOVERY_OBJECT: v3 0x007FE06C ?MultiWindowOpen@@3HA member ?MultiWindow@@3VMultiWin@@A panel_open_
-MultiWin MultiWindow;  // 0x007FD648
 
 
 
@@ -2985,87 +2918,4 @@ int FactionTurnCombatLosses[MaxPlayerNum];
 // It begins after PendingDiplomacyFlags, not inside that matrix or NetDaemon.
 // RECOVERY_OBJECT: v2 0x0093F798 0x0093F79C ?GameDataPlayerCountSnapshot@@3HA 0x005A94F0
 int GameDataPlayerCountSnapshot;
-
-
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x005BED20 0x005BEFE0 0x005BEFF0 0x005BED70
-// RECOVERY_ASSOCIATED: v1 switch_selector 0x005BED20 0x005BEFF0 0x005BF004 0x005BED6A
-// ORIGINAL: 0x005BED20 ?do_unity_crash@@YAHHHH@Z 0x005BED20-0x005BEFDF BYTE_EXACT
-// RECOVERY_BINDING: v1 {"reason":"Recover Map bit2 event dispatch, spawn/morale and turn-based energy awards, and the live Base table radar scan with real UI/audio objects. The seed note calling this a unit scan is historical; the original stride134 and nativeBase count prove Bases. No byte/reference or runtime claim is granted.","evidence":["git:3f579310:src/unrecovered/005bed20.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/scenario-artifact-unity-owner-coverage.json","Original full span and native physical COFF emitted symbol ?do_unity_crash@@YAHHHH@Z; existing source owns all referenced storage and services."]}
-// NOTE: code bytes match the image with relocations masked; recover measure
-//       refuses it while ConsoleInfoWin/WorldClimateWorldWin lack bounded
-//       object spans. The image keeps two "unitfound_sm.pcx" literals (unpooled).
-// RECOVERY_LITERAL: v1 0x00691BF8 0x00691C09 $SG66538 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C0C 0x00691C19 $SG66539 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C1C 0x00691C2D $SG66542 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C30 0x00691C3B $SG66543 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C3C 0x00691C4C $SG66546 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C4C 0x00691C58 $SG66547 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C58 0x00691C60 $SG66554 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C60 0x00691C72 $SG66556 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C74 0x00691C7F $SG66557 0x005BED20
-int __cdecl do_unity_crash(int x, int y, int faction_id) {
-    const uint32_t event = MapTiles[static_cast<int>(MapLongitude) * y + (x >> 1)].bit2;
-    if ((event & 0x80004000u) != 0x4000u) {
-        return 0;
-    }
-
-    const int event_kind = static_cast<int>(event) >> 24;
-    switch (event_kind) {
-    case 0:
-    case 8: {
-        int prototype;
-        if (event_kind) {
-            prototype = 0x0C;
-            if (faction_id == ConsoleGlobal.faction_id_) {
-                g_FX.play(0x16);
-                NetMsgPrimary.pop("UNITYCHOPPER", -5000, 0, "unitfound_sm.pcx");
-                g_FX.fade(0x16);
-            }
-        } else {
-            prototype = 0x14;
-            if (faction_id == ConsoleGlobal.faction_id_) {
-                g_FX.play(0x16);
-                NetMsgPrimary.pop("UNITYMINER", -5000, 0, "unitfound_sm.pcx");
-                g_FX.fade(0x16);
-            }
-        }
-        Vehs[veh_init(prototype, faction_id, x, y)].morale = 2;
-        return 1;
-    }
-    case 10: {
-        // The award expression is written twice; VC6 CSEs it into one value.
-        PlayersData[faction_id].energy_reserves += (GameDataStateStorage.fields_.turn_current_num_ < 0x32) ? 150 : 300;
-        parse_num(0, (GameDataStateStorage.fields_.turn_current_num_ < 0x32) ? 150 : 300);
-        ConsoleInfoWin.on_redraw();
-        if (faction_id == ConsoleGlobal.faction_id_) {
-            g_FX.play(0x16);
-            NetMsgPrimary.pop("UNITYENGINE", -5000, 0, "foundeng_sm.pcx");
-            g_FX.fade(0x16);
-        }
-        return 1;
-    }
-    case 0x13: {
-        for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
-            StringTemp[0] = 0;
-            strcat(StringTemp, Players[Bases[base_id].faction_id_current].filename);
-            CharUpperA(StringTemp);
-            if (has_fac(1, base_id, 0)
-                && (Players[Bases[base_id].faction_id_current].rule_flags & RFLAG_ALIEN) == 0
-                && strcmp(StringTemp, "FUNGBOY") != 0) {
-                spot_loc(Bases[base_id].x, Bases[base_id].y, faction_id);
-            }
-        }
-        if (faction_id == ConsoleGlobal.faction_id_) {
-            draw_map(1);
-            WorldClimateWorldWin.field_239BC_ |= 4;
-            WorldClimateWorldWin.GraphicWin::redraw();
-            g_FX.play(0x16);
-            NetMsgPrimary.pop("UNITYRADAR", -5000, 0, "foundradar_sm.pcx");
-            g_FX.fade(0x16);
-        }
-        return 1;
-    }
-    }
-    return 0;
-}
 

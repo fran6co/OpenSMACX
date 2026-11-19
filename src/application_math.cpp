@@ -32,28 +32,6 @@ Return Value: Bounded input
 Status: Complete
 */
 
-/*
-Purpose: Calculate the offset and bitmask for the specified input.
-// ORIGINAL: 0x0050BA00 ?bitmask@@YAXHPAHPAH@Z 0x0050BA00-0x0050BA27 BYTE_EXACT
-// symbol    ?bitmask@@YAXHPAH0@Z
-// size      39 bytes
-// prototype void (__cdecl ?bitmask@@YAXHPAHPAH@Z)(int input, int* offset, int* mask)
-// callers   103   call targets   0
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-// Pinned 0x50BA00..0x50BA27 performs signed /8, then writes offset before
-// the mask. The by-value input preserves callers that alias an out slot.
-// Original mapped callers use this shared utility; the older header-inline
-// policy was not supported by positive inline evidence.
-void __cdecl bitmask(int input, int *offset, int *mask) {
-    const int shift = input & 7;
-    *offset = input / 8;
-    *mask = 1 << shift;
-}
 
 /*
 Purpose: Divide, rounding the quotient AWAY from zero when there is a

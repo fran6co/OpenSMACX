@@ -3541,6 +3541,154 @@ L_4ffea4:
     return base_id;
 }
 
+// Clear the first character without disturbing the reusable buffer storage.
+// ORIGINAL: 0x00500120 ?clear@@YAXXZ 0x00500120-0x00500128 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00500120-0x00500128 writes 0x009B86A0", "git:49d164a4:src/recovered/00500120.cpp;source:src/strings.cpp:StringTemp"], "reason": "The original zeroes the first byte of the shared scratch buffer, whose real storage is StringTemp in this translation unit."}
+// body src/strings.h
+// BODY IN strings.h, as `MEASURED inline`.
+
+
+// Append a caller-supplied string to the shared scratch buffer.
+// ORIGINAL: 0x00500130 ?says@@YAXPBD@Z 0x00500130-0x00500146 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00500130-0x00500146 calls strcat with 0x009B86A0", "git:49d164a4:src/recovered/units/00500130.cpp;source:src/strings.cpp:StringTemp"], "reason": "The original appends a caller string into the source-owned shared StringTemp buffer."}
+// body src/strings.h
+// BODY IN strings.h, as `MEASURED inline`.
+
+/*
+Purpose: Get the bit shifted (down) altitude of the specified tile.
+// ORIGINAL: 0x00500150 ?alt_at@@YAHHH@Z 0x00500150-0x0050017B BYTE_EXACT
+// body      src/map.h
+// TRIED: best 12/16, 0.875 similar (MISMATCH) at every flag set - image
+//            schedules `xor ecx,ecx` (the future zero-extend register) right
+//            after computing the tile index, before loading the map_tiles()
+//            pointer into edx; this tree always loads the pointer first and
+//            zeroes the OTHER register later for the byte-load. Tried: a
+//            local `Map *tile` before the field read; a local `uint32_t
+//            climate` read before the shift. Neither moved the schedule -
+//            same plateau shape as abstract_at's register-tie, but here the
+//            mnemonics themselves differ (xor vs mov), not just the operand,
+//            so it does not qualify for `semantic` either.
+// size      43 bytes
+// prototype int (__cdecl ?alt_at@@YAHHH@Z)(int xCoord, int yCoord)
+// callers   1   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+Return Value: Altitude
+Status: Complete
+*/
+// BODY IN map.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+// TRIED: best MNEMONIC_ONLY, 10/12 instructions, 1.000 similar (best flag
+//            set /O2 /Gy /GR- /Oy- /GX). Same index-fold plateau as
+//            alt_at/alt_detail_at: the image computes `edx + eax` then
+//            indexes `[ecx + edx]` (map_tiles()-style base loaded before the
+//            offset add), this tree's `(x >> 1) + y * (bounds >> 1)` compiles
+//            `eax + ecx` then `[eax + edx]` - operands and registers both
+//            swapped from a single array-index expression. Not chased
+//            further; register-allocation-only, not a source-shape fix.
+
+
+
+/*
+Purpose: Get the altitude details of the specified tile.
+// ORIGINAL: 0x00500180 ?alt_detail_at@@YAHHH@Z 0x00500180-0x005001A9 BYTE_EXACT
+// body      src/map.h
+// TRIED: same plateau as `alt_at` - image schedules `xor ecx,ecx` before
+//            loading the map_tiles() pointer into edx; this tree loads the
+//            pointer into ecx first and zeroes edx later for the byte-load.
+//            Best 11/15, MISMATCH at every flag set.
+// size      41 bytes
+// prototype int (__cdecl ?alt_detail_at@@YAHHH@Z)(int xCoord, int yCoord)
+// callers   1   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+Return Value: Altitude detail
+Status: Complete
+*/
+
+/*
+Purpose: Get the bit of the specified tile.
+// ORIGINAL: 0x005001B0 ?bit_at@@YAHHH@Z 0x005001B0-0x005001D5 BYTE_EXACT
+// body      src/map.h
+// size      37 bytes
+// prototype int (__cdecl ?bit_at@@YAHHH@Z)(int xCoord, int yCoord)
+// callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: Bitfield
+Status: Complete
+*/
+
+
+/*
+Purpose: Check whether the specified tile is part of an ocean.
+// ORIGINAL: 0x005001E0 ?is_ocean@@YAHHH@Z 0x005001E0-0x00500211 BYTE_EXACT
+// body      src/map.h
+// TRIED: same root plateau as `alt_at` (image schedules `xor ecx,ecx`
+//            before loading the map_tiles() pointer; this tree loads the
+//            pointer first). Downstream that also means the image has a
+//            spare zeroed register (`eax`) to build the boolean with
+//            `setl al`, while this tree materialises it with `sbb eax,eax;
+//            neg eax` instead - a consequence of the same register-tie, not
+//            an independent divergence. Best 9/18, 0.800 similar, MISMATCH.
+// size      49 bytes
+// prototype int (__cdecl ?is_ocean@@YAHHH@Z)(int xCoord, int yCoord)
+// callers   3   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: Is tile ocean? true/false
+Status: Complete
+*/
+
+
+/*
+Purpose: Get the region of the specified tile.
+// ORIGINAL: 0x00500220 ?region_at@@YAHHH@Z 0x00500220-0x00500249 BYTE_EXACT
+// body      src/map.h
+// TRIED: same plateau as `alt_at` - image schedules `xor ecx,ecx` before
+//            loading the map_tiles() pointer into edx; this tree loads the
+//            pointer into ecx first and zeroes edx later for the byte-load.
+//            Tried a local `Map *tile` before the field read - no change.
+//            Best 11/15, MISMATCH at every flag set.
+// size      41 bytes
+// prototype int (__cdecl ?region_at@@YAHHH@Z)(int xCoord, int yCoord)
+// callers   2   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: Region
+Status: Complete
+*/
+
+/*
+Purpose: Get the owner of the specified tile if there is a unit in it.
+// ORIGINAL: 0x00500250 ?veh_who@@YAHHH@Z 0x00500250-0x00500288 BYTE_EXACT
+// body      src/map.h
+// size      56 bytes
+// prototype int (__cdecl ?veh_who@@YAHHH@Z)(int xCoord, int yCoord)
+// callers   3   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: Owner (faction id) or -1
+Status: Complete
+*/
+// BODY IN map.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
+
+
+
+
+
 /*
 Purpose: Checks whether the facility (non-SP) has been build in the currently selected base.
 // ORIGINAL: 0x00500290 ?has_fac_built@@YA_NH@Z 0x00500290-0x005002DE BYTE_EXACT
