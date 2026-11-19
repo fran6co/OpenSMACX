@@ -1082,14 +1082,14 @@ void Datalink::draw_social() {
         parse_says(0, tech_name(technology, 0), -1, -1);
         parse_num(0, technology + 140000);
     }
-    StringTemp[0] = 0;
-    strcat(StringTemp, "HELPSOC");
+    clear();
+    says("HELPSOC");
     char number[80];
     _itoa(category, number, 10);
-    strcat(StringTemp, number);
+    says(number);
     if (model >= 0) {
         _itoa(model, number, 10);
-        strcat(StringTemp, number);
+        says(number);
     }
     popup.start(DatalinkHelpFile, StringTemp, -1, 0, 0, 0);
     set_font(&body_font_, 0, 0, &link_font_);
@@ -1118,14 +1118,14 @@ void Datalink::draw_social() {
             for (i = 0; i < 11; ++i) {
                 const int value = SocialCategories[category].model_effect[model].values_[i];
                 if (value != 0) {
-                    StringTemp[0] = 0;
+                    clear();
                     _itoa(value, number, 10);
-                    strcat(StringTemp, number);
+                    says(number);
                     // 0x0043041E tests the buffer address before strlen: the
                     // guarded full-length writer.
                     write_right_l(StringTemp, x, y);
-                    StringTemp[0] = 0;
-                    strcat(StringTemp, BufferJoinSpace);
+                    clear();
+                    space();
                     char link[20];
                     _itoa(i + 130000, link, 10);
                     help_create_link(StringTemp, SocialEffects[i].set2, link);
@@ -1135,7 +1135,6 @@ void Datalink::draw_social() {
             }
         }
     }
-    dl_social_budget_probe(0);  // WORKAROUND(inline): see the helper
     dl_social_budget_probe(0);  // WORKAROUND(inline): see the helper
 }
 // ORIGINAL: 0x00430C80 ?draw_faction@Datalink@@QAEXXZ 0x00430C80-0x0043117E;0x00653BA8-0x00653C7A BYTE_EXACT
