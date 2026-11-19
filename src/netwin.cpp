@@ -1105,11 +1105,11 @@ void NetWin::pick_map() {
             } else {
                 NetWinSessionOptions.fields_.rule_bits_c_ &= ~0x10u;
             }
-            NetWinSessionOptions.fields_.difficulty_ =
-                static_cast<uint8_t>(GameDataStateStorage.fields_.diff_level_current_);
             NetWinSessionOptions.fields_.status_ =
                 GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
             NetWinSessionOptions.fields_.rule_bits_a_ = GameDataStateStorage.fields_.game_rules_;
+            NetWinSessionOptions.fields_.difficulty_ =
+                static_cast<uint8_t>(GameDataStateStorage.fields_.diff_level_current_);
             send_session_packet(
                 NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id()), 0);
         }
