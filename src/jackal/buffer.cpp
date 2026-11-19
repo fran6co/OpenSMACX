@@ -4931,30 +4931,28 @@ int Buffer::tile(Sprite *sprite, int src_x, int src_y, int x, int y, int w,
     set_clip(&clipRect);
 
     const int tileWidth = sprite->iWidth_;
-    const int tileHeight = sprite->iHeight_;
-
     // Early returns, as in the image: its prologue saves every register
     // before the pixel-storage guard. A zero tile dimension returns with the
     // clip rectangle still installed.
-    if (tileWidth == 0 || tileHeight == 0) {
+    if (tileWidth == 0 || sprite->iHeight_ == 0) {
         return 0;
     }
     int tilesX = w / tileWidth;
     if (tilesX * tileWidth < w) {
         tilesX++;
     }
-    int tilesY = h / tileHeight;
-    if (tilesY * tileHeight < h) {
+    int tilesY = h / sprite->iHeight_;
+    if (tilesY * sprite->iHeight_ < h) {
         tilesY++;
     }
 
     const int startX = x - src_x % tileWidth;
-    y -= src_y % tileHeight;
+    y -= src_y % sprite->iHeight_;
 
     if (tilesX * tileWidth + startX < rectRight) {
         tilesX++;
     }
-    if (tilesY * tileHeight + y < rectBottom) {
+    if (tilesY * sprite->iHeight_ + y < rectBottom) {
         tilesY++;
     }
 
@@ -4967,7 +4965,7 @@ int Buffer::tile(Sprite *sprite, int src_x, int src_y, int x, int y, int w,
             x += tileWidth;
         }
         x = startX;
-        y += tileHeight;
+        y += sprite->iHeight_;
     }
 
     set_clip(&selfRect);
