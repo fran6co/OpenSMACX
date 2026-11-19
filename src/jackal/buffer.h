@@ -141,8 +141,6 @@ static_assert(sizeof(BoxSpriteParams) == 0x28,
               "BoxSpriteParams is ten dwords: eight sprite pointers, a mask "
               "buffer and a colour");
 
-extern BoxSpriteParams InterfaceBoxStyles[51];
-
 // Observed input prefix at 5D7AE0: data +0x0C, size +0x10 on the original
 // 32-bit ABI. Producer, full allocation and original type name remain unknown.
 struct PcxInputView {
@@ -942,6 +940,8 @@ static const size_t BufferSurfaceUnlockSlot = 0x80;
 // address. Wave-3 handoff, 2026-09-05.
 extern Buffer g_PCX_PARSE_TEMP_BUFFER1;  // 0x00798668
 extern Buffer g_IFACE_BOX_SPRITE_BUFFERS[51];
+// The 51 interface box styles whose sprites those buffers hold.
+extern BoxSpriteParams InterfaceBoxStyles[51];
 extern Buffer g_IFACE_STD_POPUPS_MIDDLE_BUFFER;
 extern Buffer g_VEHDRAW_BUFFER;  // 0x008CC298
 

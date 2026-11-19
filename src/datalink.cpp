@@ -38,32 +38,6 @@
 // symbol    _$E14
 #define DIALOGS_DTOR_INLINE  // stand-in: see ~Dialogs in dialogs.h
 #include "stdafx.h"
-// WORKAROUND(decl): Datalink::set_cat_social 0x0042B630 ties on how many declarations precede
-// game.h's (pads here or before stdafx.h move it; pads after the last
-// include never do). fe sweep 2026-11-19, 0-63 pads: exact at 19-22 and 51-54, no
-// other function of the unit changes. The original header declaration
-// set is unknown; re-tune after header batches.
-// HEADER-PADS: function DatalinkHeaderPad
-void DatalinkHeaderPad0();
-void DatalinkHeaderPad1();
-void DatalinkHeaderPad2();
-void DatalinkHeaderPad3();
-void DatalinkHeaderPad4();
-void DatalinkHeaderPad5();
-void DatalinkHeaderPad6();
-void DatalinkHeaderPad7();
-void DatalinkHeaderPad8();
-void DatalinkHeaderPad9();
-void DatalinkHeaderPad10();
-void DatalinkHeaderPad11();
-void DatalinkHeaderPad12();
-void DatalinkHeaderPad13();
-void DatalinkHeaderPad14();
-void DatalinkHeaderPad15();
-void DatalinkHeaderPad16();
-void DatalinkHeaderPad17();
-void DatalinkHeaderPad18();
-void DatalinkHeaderPad19();
 #include "interface_fonts.h"
 #include "game.h"  // shared state-window owner
 #include "datalink.h"
