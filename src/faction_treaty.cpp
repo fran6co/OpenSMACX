@@ -417,13 +417,13 @@ Purpose: Determine whether the current faction has intelligence visibility of
 Status: Complete
 
 */
+// The middle operand is has_project expanded (its `base < 0 ? 0 : ==` form
+// is the ternary the LEVER above describes); enemies_war calls it there.
 int __cdecl spying(int subject) {
     const int faction = ConsoleGlobal.faction_id_;
     return (PlayersData[faction].diplo_treaties[subject]
             & 0x1000U) != 0
-           || (GameDataStateStorage.fields_.secret_project_.empath_guild() >= 0
-               ? (Bases[GameDataStateStorage.fields_.secret_project_.empath_guild()].faction_id_current == faction)
-               : 0) != 0
+           || has_project(SP_EMPATH_GUILD, faction)
            || (faction == GameDataStateStorage.fields_.governor_faction_
                && (Players[static_cast<size_t>(subject)].rule_flags &
                    RFLAG_ALIEN) == 0);
@@ -747,16 +747,9 @@ void __cdecl pact_attacks(int faction_id, int faction_id_with) {
     PluralityDefault = FALSE;
     parse_says(1, Players[faction_id].name_leader, -1, -1);
 
-    GenderDefault = Players[faction_id].noun_gender;
-    PluralityDefault = Players[faction_id].is_noun_plural;
-    parse_says(2, Players[faction_id].noun_faction, -1, -1);
-
+    parse_says(2, get_noun(faction_id), -1, -1);
     parse_says(3, get_he_she(faction_id, 0), -1, -1);
-
-    GenderDefault = Players[faction_id_with].noun_gender;
-    PluralityDefault = Players[faction_id_with].is_noun_plural;
-    parse_says(4, Players[faction_id_with].noun_faction, -1, -1);
-
+    parse_says(4, get_noun(faction_id_with), -1, -1);
     NetMsgPrimary.pop(DiploLabelPACTATTACKS, 5000, 0, 0);
 }
 
@@ -767,6 +760,16 @@ void __cdecl pact_attacks(int faction_id, int faction_id_with) {
 // /Ob2 budget cut-off in this caller; enemies_unpact 0x0055CE20 in the same
 // unit expands get_noun. Without the region every header inline expands
 // (184 rows); the budget arrangement is not found.
+// Owners found (2026-11-19, par-1): the two PACTATTACKS arms are
+// pact_attacks(f, w) / pact_attacks(w, f) expanded (0x0055C730 has no
+// caller; its Plurality-first stores and the image's get_noun calls match),
+// the notice test is spying(f) || spying(w) || game_state & 0x80 (has_project
+// is spying's nested call), the revenge blocks are rnd(..., "ENEMIESWAR"/
+// "ENEMIESWAR2") (both labels are unreferenced literals in the image) around
+// set_agenda/set_treaty (the last set_treaty is the image's one call).
+// Without the region that source reaches the image's call multiset except
+// get_noun (image 3 calls, ours 1) at best 79 rows (512 raw/call choices of
+// the ten revenge statements); pass 2 still has room for get_noun.
 #pragma inline_depth(0)
 // ORIGINAL: 0x0055C840 ?enemies_war@@YAXHH@Z 0x0055C840-0x0055CC9A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x0055C840:complete-mapped-spans", "git:2ab1312e:src/recovered/units/0055c840.cpp", "source:src/faction.h:PlayersData-and-diplomacy-interfaces"], "reason": "Use genuine player treaty rows, local console, owned NetMsg and parser state for war declarations. The observed protected-notice bit is 0x1000, not 0x100000; preserve the original treaty and agenda calls and notice ordering."}
