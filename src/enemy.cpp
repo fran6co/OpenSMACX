@@ -4242,6 +4242,12 @@ int __cdecl enemy_move(int veh_id) {
     // variables for the same reason; keep_count stays for the two ring scans
     // whose reduced index the image keeps there.
     int garrison;
+    // The automatic-terraformer flag is its own variable, not j: VC6 packs
+    // slots last-fit in descending reference count (MATCHING_GUIDE 3.3), and
+    // the image's j slot (-0x30) takes the radius-loop temporary at 0x56D9F9
+    // although slots -0x54 and -0x60 are free there, so the j slot was
+    // created late: its occupants are light variables, not one 59-reference j.
+    int auto_former;
     int ring, sea_unit, sea_veh, fights;
     // ---- chunk 0: 0x56b5b0-0x56d265 ----
     best_dir = -1;
@@ -6613,15 +6619,15 @@ L_572922:
             && (PlayersData[faction_id].diplo_treaties[zoc_owner - 1] & 0x10))) {
         goto L_57707f;
     }
-    j = (Vehs[veh_id].state & 0x200) && VehPrototypes[Vehs[veh_id].proto_id].plan == 9
+    auto_former = (Vehs[veh_id].state & 0x200) && VehPrototypes[Vehs[veh_id].proto_id].plan == 9
         && Vehs[veh_id].order_auto_type == 3;
     own_ground = 0;
     if (Vehs[veh_id].order != ORDER_MOVE_TO) {
-        if (!j && home_base >= 0) {
+        if (!auto_former && home_base >= 0) {
             base_id = home_base;
         } else {
             base_id = Vehs[veh_id].home_base_id;
-            if (j) {
+            if (auto_former) {
                 if (base_id < 0) base_id = home_base;
                 goto L_572a5c;
             }
@@ -6641,7 +6647,7 @@ L_572a5c:
                     && on_map(PlayersData[faction_id].goals[k].x, PlayersData[faction_id].goals[k].y)
                     && PlayersData[faction_id].goals[k].priority != 0
                     && (map_dist(PlayersData[faction_id].goals[k].x, PlayersData[faction_id].goals[k].y, Bases[base_id].x, Bases[base_id].y) <= 2
-                        || (!j && PlayersData[faction_id].goals[k].base_id == base_id))) {
+                        || (!auto_former && PlayersData[faction_id].goals[k].base_id == base_id))) {
                     if (!map_range(x, y, PlayersData[faction_id].goals[k].x, PlayersData[faction_id].goals[k].y)) {
                         Vehs[veh_id].order = 0;
                         own_ground = 1;
@@ -6682,7 +6688,7 @@ L_572c77:
         }
     }
     // An order 0x18 unit arrives here with base_id from earlier code.
-    if (j && !own_ground) {
+    if (auto_former && !own_ground) {
         if (map_range(x, y, Bases[base_id].x, Bases[base_id].y) > 2
             && Vehs[veh_id].order != ORDER_MOVE_TO) {
             go_to(veh_id, 0x68, Bases[base_id].x, Bases[base_id].y);
@@ -6694,7 +6700,7 @@ L_572d66:
         best_score = 9999999;
         for (base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
             if (Bases[base_id].faction_id_current != faction_id) continue;
-            if (j) {
+            if (auto_former) {
                 if (Vehs[veh_id].home_base_id >= 0) {
                     if (base_id != Vehs[veh_id].home_base_id) continue;
                 } else if (base_id != home_base) {
@@ -6746,7 +6752,7 @@ L_572ffa:
             }
         }
     }
-    k = can_terraform(faction_id, x, y, at_goal(faction_id, 9, x, y) || j, home_base);
+    k = can_terraform(faction_id, x, y, at_goal(faction_id, 9, x, y) || auto_former, home_base);
     if (!near_hostile
         && (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == 2
             || at_sea == (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == 1))
@@ -6756,7 +6762,7 @@ L_572ffa:
             Vehs[veh_id].order = 0xD;
             goto L_578f46;
         }
-        if (at_goal(faction_id, 0x29, x, y) && !j && alt <= 5) {
+        if (at_goal(faction_id, 0x29, x, y) && !auto_former && alt <= 5) {
             PlayersData[faction_id].energy_reserves = range(PlayersData[faction_id].energy_reserves
                 - range(terraform_cost(x, y, faction_id), 0, PlayersData[faction_id].energy_reserves / 4),
                 0, 99999);
@@ -6776,7 +6782,7 @@ L_572ffa:
             Vehs[veh_id].order = 0x12;
             goto L_578f46;
         }
-        if (!at_sea && !j
+        if (!at_sea && !auto_former
             && !(faction_bit & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)
             && terrain_avail(TERRA_RAISE_LAND, at_sea, faction_id)
             && (Continents[region].tile_count < 50
@@ -6903,7 +6909,7 @@ L_573942:
     }
     // 0x5739aa
     if (!(Vehs[veh_id].order == ORDER_MOVE_TO || near_hostile)) {
-        if (j) {
+        if (auto_former) {
             base_id = Vehs[veh_id].home_base_id;
             alt = Bases[base_id].x;
             n = Bases[base_id].y;
@@ -6974,7 +6980,7 @@ L_573942:
                          || (Vehs[other_id].faction_id == faction_id
                              && !stack_check(other_id, 2, 9, -1, -1)))
                         && can_terraform(faction_id, tx, ty,
-                               (faction_bit & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_) && j,
+                               (faction_bit & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_) && auto_former,
                                base_id)) {
                         score = map_dist(Bases[base_id].x, Bases[base_id].y, tx, ty);
                         if (score <= 2) {
@@ -7022,7 +7028,7 @@ L_573f3c:
                     // falls through into chunk 5 at 0x573fd0
                     // ---- chunk 5: 0x573fd0-0x575b27 ----
 L_573fd0:
-                    if (!j || map_dist(x, y, tx, ty) <= 2) {
+                    if (!auto_former || map_dist(x, y, tx, ty) <= 2) {
                         for (other_id = 0; other_id < GameDataStateStorage.fields_.vehicle_current_count_; other_id++) {
                             if (Vehs[other_id].faction_id == faction_id
                                 && VehPrototypes[Vehs[other_id].proto_id].plan == PLAN_TERRAFORMING
@@ -7057,7 +7063,7 @@ L_57408e:
                 }
             }
         }
-        if (j && !Vehs[veh_id].order) {
+        if (auto_former && !Vehs[veh_id].order) {
             Vehs[veh_id].state &= ~0x200;
             Vehs[veh_id].order = ORDER_NONE;
             return 0;
