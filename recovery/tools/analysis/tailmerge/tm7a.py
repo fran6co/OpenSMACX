@@ -1,0 +1,20 @@
+import tm7, sys
+V = []
+def add(k, A, **kw): V.append((k, tm7.fn('t_' + k, A, **kw)))
+add('base', tm7.arms())
+add('base_lastpop', tm7.arms(last_other=False))
+add('n2', tm7.arms(n=2))
+add('eh_fn', tm7.arms(), pro='  D d;\n')
+add('eh_arm_before', tm7.arms(wrap=lambda j, b: '{ D d; use(d.v); } ' + b))
+add('eh_arm_around', tm7.arms(wrap=lambda j, b: 'D d; ' + b))
+add('eh_alt', tm7.arms(wrap=lambda j, b: ('D d; ' + b) if j % 2 else b))
+add('ret_used', tm7.arms(tail=lambda j: 'g9 = f2r(%d, %d);' % (j, j + 100)))
+add('ret_ignored', tm7.arms(tail=lambda j: 'f2r(%d, %d);' % (j, j + 100)))
+add('same_args', tm7.arms(tail='f2(1, 2);'))
+add('ovl', tm7.arms(tail=lambda j: ('M::pop2("a%d", "b");' if j % 2 else 'M::pop("a%d", "b", 0);') % j))
+add('ovl_same', tm7.arms(tail=lambda j: 'M::pop("a%d", "b");' % j))
+add('goto_lbl', tm7.arms(tail=lambda j: 'goto L%d; L%d: f2(%d, %d);' % (j, j, j, j + 100)))
+add('extern2', tm7.arms(tail=lambda j: ('f2x(%d, %d);' if j % 2 else 'f2(%d, %d);') % (j, j + 100)))
+if __name__ == '__main__':
+    res = tm7.run(V, show=sys.argv[1:])
+    tm7.report(res, V)

@@ -2942,6 +2942,55 @@ Layout
     0x4D61A0: the image cross-jumps the three Psi Gate `NetMsgPrimary.pop`
     calls into the first and lays the `finish:` unlock right after it; ours
     keeps three identical `mov ecx; call pop; jmp finish` copies.
+- **Which predecessor hosts a join (measured, `analysis/tailmerge/tm7*.py`,
+  2026-11-19).** When no arm falls into the join in source order (the last
+  arm leaves with `return`/`goto`), VC6 places the join after one
+  predecessor and cross-jumps into it only the tails identical to that
+  host. Tails identical only to each other stay as separate copies, so
+  "the image keeps N identical tails" usually means "the image chose a
+  different host", not "something blocked the merge".
+  1. Default: the **first arm in source order whose tail has a partner**
+     (any other predecessor ending in the same last instruction, one
+     `add esp,N` is enough). The partner's length and how many partners there
+     are do not matter: `FFPPPPP` hosts F with one 1-instruction partner over
+     five 2-instruction P tails (tm7g, tm7h `AAPPP`, `QAPPA`). With no
+     partner at all the first arm hosts.
+  2. Priority: a tail that ends the then-arm of an if/else inside an arm,
+     where the else does not end in that tail, promotes its pair over every
+     earlier pair (tm7h `QSsWB`, `QSYWB`, `QSNWB`; `QSWsB` hosts the earlier
+     member W of that pair). A tail in a lone `if`, or in the else-arm,
+     gets no priority (`QSnWB`, `QSeWB`). Inverting the test does not change
+     this (VC6 normalizes the if/else): probe's action-3 GOTENERGY pop
+     measured the same both ways.
+  3. Deferred pops decide partnership. A call before the tail whose
+     `add esp` was deferred into the tail's makes it `add esp,0x10` where a
+     tail after a branch has `add esp,0xc` (the branch flushes pending pops),
+     so an arm-level straight-line tail is not a partner of a tail inside an
+     `if`, but an arm-level tail after an inner if/else is (`QAPPB` hosts P,
+     `QSPPB`/`QSWWB` host S). This is the only blocker found that is
+     invisible in the source and visible in the bytes.
+- **Not blockers (each measured with the tm7 families):** a function-scope
+  object with a destructor, an empty inline destructor inside or around
+  the tail, frame size / `__chkstk` (12 KB local), function size (2,500 filler
+  blocks before or after), the number of merges in the function (400 pairs,
+  no cap), an inline wrapper or a forwarding overload around the call, a
+  member vs static call, distinct callees (they still merge at `add esp`),
+  an ignored return value, a `goto` label at the tail start, codeless
+  statements after the tail (`;`, empty `if`, dead local, `do {} while (0)`),
+  constant vs global arguments.
+- **A source label after an if/else blocks the jumper-into-jumper merge of
+  its arms** (tm7m `label_after`, `label_in_then`: `use(k); f2(k, n);` in both
+  arms stays as two copies; a switch end, loop end or `break` does not block
+  it). It does not block a merge into a fallthrough host (ternary-argument
+  pops, tm7h `QSKWB`). Worth a try where ours makes a JJ merge the image
+  lacks and the original plausibly had a `goto` target there.
+- **probe 0x0059F120 is still open.** The image hosts the join after action
+  2's draw_tile (partner: action 7's popp `add esp,0xc`) and keeps seven
+  pop tails; by rules 1-2 the original's action-3 GOTENERGY tail (a then-arm,
+  partner TOOKENERGY / ASSASSINATED) would have won, so the original's pop
+  tails were not partners. Every invisible factor above was tried in place
+  (labels, nested else-if, the inverted test, a pcx local); only a distinct
+  store after each pop moves the host (1877 -> 1778 rows).
 
 Types
 - Wrong declarations hide as casts: a member cast at each use, a byte buffer
