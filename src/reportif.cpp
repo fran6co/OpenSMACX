@@ -3940,9 +3940,10 @@ void ReportWin::draw_sat() {
     for (satellite_index_ = 0; satellite_index_ < 16; ++satellite_index_) {
         radius_x[satellite_index_] = field_59A4_ / 2 - 10;
         radius_y[satellite_index_] = radius_x[satellite_index_];
+        // 0x0049FC23: imul eax,eax / lea ecx,[eax+eax] - the doubled square of the
+        // shared radius, not rx*rx + ry*ry (which VC6 folds to add eax,eax).
         satellite_acceleration_[satellite_index_] = static_cast<float>(sqrt(static_cast<double>(
-            radius_x[satellite_index_] * radius_x[satellite_index_]
-            + radius_y[satellite_index_] * radius_y[satellite_index_])));
+            2 * radius_x[satellite_index_] * radius_x[satellite_index_])));
         satellite_acceleration_[satellite_index_] = static_cast<float>(
             sqrt(1.0 / (satellite_acceleration_[satellite_index_]
                         * satellite_acceleration_[satellite_index_]
