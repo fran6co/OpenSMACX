@@ -18,7 +18,7 @@
 #include "stdafx.h"
 #include "worldwin.h"
 #include "general.h"
-#include "crt_random_inline.h"
+#include "crt_random.h"
 #include "time.h"
 #include "win.h"
 #include "faction.h"
@@ -701,7 +701,7 @@ void __cdecl rankings(int apply_ranks) {
                 + ((PlayersData[faction_id].flags_ext & PFLAGEXT_SHAMELESS_BETRAY_HUMANS) ? 4 : 0)
                 + (revenge ? 4 : 0))
                 * weight;
-            if ((int)bounded_crt_random((vendetta_count - PlayersData[faction_id].ai_fight + 2) * 256) < urge) {
+            if ((int)rnd((vendetta_count - PlayersData[faction_id].ai_fight + 2) * 256, "RANKINGS") < urge) {
                 set_treaty(faction_id, target_id, DTREATY_SHALL_BETRAY, true);
             }
         }
