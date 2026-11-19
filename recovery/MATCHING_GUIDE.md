@@ -2592,6 +2592,41 @@ Using it
   inlines after those returns, rule 4 reservations) give the image's EH map,
   frame and call multiset except one ??_DStringList at the vehicle-count return.
   The `triad = ...` initialiser stays raw: through get_triad it adds a frame slot.
+
+Closing a teardown function with code-identical spellings (2026-11-19 par-4;
+PickTech::pick 0x00486510 and popb 0x0048C650, both recorded). Once the EH map
+and the call multiset are right except for one or two late sites, the last
+moves are spellings that leave the code alone and change only the caller's
+size or the order of its decisions:
+- **Exact-code size from the 2.1 cost table.** `if (noted != 0)` compiles to
+  the same bytes as `if (noted)` but costs about 0.5 store unit more (2.1).
+  Eleven note tests in pick gave back about 5.5 units of pass-2 room that the
+  eax-first table_text/label_get helpers had taken, and the last ~FlatButton
+  site expanded again as in the image. Use such spellings (`!= 0`, braces,
+  `x = x + 1`) to tune caller size by fractions of a unit without a probe.
+- **A field read back through a const local gives a homed value with a
+  cache.** `row_count_ = items / columns + (...); const int rows = row_count_;`
+  keeps rows in a home slot with a cached register copy, as the image does
+  ([ebp+0x14]). Writing the expression into the local first
+  (`const int rows = ...; row_count_ = rows;`) lets VC6 copy-propagate the
+  local into a register with no home.
+- **A named local decides argument evaluation order.** VC6 evaluates call
+  arguments right to left; `const int width = (cell_width + 1) * columns + 1;`
+  before `GraphicWin::init(0, 0, width, ...)` computes the width first (in
+  ecx, evicting the rows cache) and the height afterwards from the rows home,
+  as in the image.
+- **Structure that removes a phantom closing-brace teardown.** popb's
+  `if (input_poll_state) { ... } else { result chain }` added the
+  closing-brace teardown (2.2) after the else arm: 16 extra EH states. With
+  the test returning 0 in its arm and the result chain at top level ending
+  in `return result`, the unwind map has the image's two post-exec teardowns.
+  Before tuning spend in a function whose EH distance is a block of states
+  after the last statement, rewrite an if/else whose one arm returns as a
+  guard clause.
+- popb then needed about 20 if-units of pass-1 charge after the early
+  returns (a marked dead probe, `popb_budget_probe`); the original spend
+  there is not identified. Owner screens of the focus block and the staple
+  items give EH 0 but leave ??_DDialogs called.
   Round 16 (par-2): the remaining ??_DStringList was the ceiling (rule 7), not
   room. Two of the four supply_options_budget_probe calls retired: EH, named
   call multiset and frame all equal to the image (three or none leave the final
