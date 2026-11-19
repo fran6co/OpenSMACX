@@ -2088,6 +2088,7 @@ void SocialWin::draw_mouseover() {
             int value;
             if (hover_selection_ == -2) {
                 value = SOCIAL_ABS(PlayersData[factionID_].soc_effect_base.values_[effect]);
+                count += value != 0;
             } else {
                 if (has_project(SP_CLONING_VATS, factionID_)
                     && ((category == 2 && model == 1) || (category == 3 && model == 3))
@@ -2099,8 +2100,8 @@ void SocialWin::draw_mouseover() {
                     continue;
                 }
                 value = SOCIAL_ABS(SocialCategories[category].model_effect[model].values_[effect]);
+                count += value != 0;
             }
-            count += value != 0;
         }
 
         const int line_height = effectIcons_[0].height();
