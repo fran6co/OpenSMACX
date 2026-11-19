@@ -7055,6 +7055,30 @@ Re-tests and stack loops (par-2 2026-11-19, enemy_move 0x0056B5B0)
   before the `mov reg,[reg*0x34+next]`). Look for it in every walk the image
   shows with two sign tests per step (enemy_move's sea-transport scan
   0x56F0BD and coast-region passenger check 0x576183, 3134ae26b7).
+- **`jcc TARGET | jmp JOIN` at the end of an if-arm is a separate last
+  statement; `jncc JOIN | jmp TARGET` is an `||` chain.** When an arm ends
+  in `if (A || B || C) continue;` (or `goto X;`) and its join is not the
+  next block, VC6 emits the chain's last term inverted over a `jmp` to the
+  target; written as `if (A || B) continue; if (C) continue;` the last
+  term jumps straight to the target and the arm ends in `jmp JOIN`
+  (pc probe: `base` against `sep`/`base1`; enemy_move 0x56F190, 0x57518D,
+  0x57196F). Read the image's last jcc of the arm: if it goes to the
+  continue/goto target, split off the last term.
+- **A loop that leaves through `jge EXIT | jmp TOP` with a guard, where ours
+  is top-tested (`jge EXIT ... jmp TEST`), had a test after the loop**
+  that VC6 threads: a scan whose found path `goto`s out and whose
+  fall-through runs the not-found code was written `for (...) { if (f)
+  goto next; } if (i >= n) { not_found; }` (enemy_move 0x572BE1).
+- **A return that the image `jne`s to the function's final return block
+  is `goto` to that label**, not a `return` of the same value in line
+  (enemy_move 0x575B1C). The final block's `xor eax,eax` before the pops
+  with a second entry after it (`jne 0x579201`) is a `return 1` path that
+  arrives with eax = 1 already.
+- **Equilibria: a correct split can flip the whole function's register and
+  slot state.** Judge such a flip by the slot agreement of `slotmap.py`
+  (aligned rows whose image and our `[ebp-N]` agree), after block layout:
+  enemy_move's 0x577C67 split closes four layout hunks and opens five, and
+  swaps the two hottest slots (1661 -> 1345 of ~2800); it was not kept.
 
 ## 4. Measured and neutral (do not retry without new evidence)
 
