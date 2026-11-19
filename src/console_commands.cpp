@@ -2420,28 +2420,20 @@ void Console::go_to(int subject, int order, int grouped) {
                 }
             } while (changed);
         } else {
-            do {
-                changed = 0;
-                for (i = 0; i < GameDataStateStorage.fields_.base_current_count_ - 1; i++) {
-                    if (_stricmp(Bases[ids[i]].name_string, Bases[ids[i + 1]].name_string) > 0) {
-                        changed = 1;
-                        swap(&ids[i], &ids[i + 1]);
-                    }
-                }
-            } while (changed);
+            sub_4d5ff0(ids);
         }
         for (i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
             const int id = ids[i];
             if (Bases[id].faction_id_current != faction) {
                 if (order == 128) {
-                    if (!has_treaty(faction, Bases[id].faction_id_current, 0x10)) {
+                    if (!(PlayersData[faction].diplo_treaties[Bases[id].faction_id_current] & 0x10)) {
                         continue;
                     }
                 } else {
                     if (order < 0) {
                         continue;
                     }
-                    if (!has_treaty(faction, Bases[id].faction_id_current, 1)) {
+                    if (!(PlayersData[faction].diplo_treaties[Bases[id].faction_id_current] & 1)) {
                         continue;
                     }
                 }
