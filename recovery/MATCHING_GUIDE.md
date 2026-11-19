@@ -1905,6 +1905,36 @@ say_label/say_tech batch, 86cc2f1fd4..39c52fa497, 89 probe calls retired)
 - **A `vector_dist`-style computation is inlined.** Write a two-level static
   inline helper modelled on the existing ones.
 
+- **Auditing a header helper (par-5, 2026-11-19).** Three screens, in order:
+  - *Out-of-line copy as a wrapper.* A small image body whose local sits in a
+    dead parameter's home is often an expanded inline, not `&param` aliasing:
+    has_fac_built(int) 0x00500290 is byte-exact as
+    `return has_fac(facility_id, BaseIDCurrentSelected, 0);` (offset at
+    `[ebp+8]`, the base id loaded before the range test as the argument
+    temporary). Defined plainly after its only caller it stays a call at all
+    16 sites without `auto_inline(off)`.
+  - *Macro screen.* Replace a single-return header inline by a macro of the
+    same expression and run `feall.py --all --base`. Helpers whose expanded
+    sites show named-parameter temporaries lose exact functions as macros and
+    are real inlines: wrap_map_x (76 lost), map_range/map_dist (18),
+    rect_width/rect_height (10), table_text (7), map_loc (7), the veh.h
+    triad/rating accessors (Console::destroy, spot_all 1359 -> 3904),
+    compass_name (say_orders). Helpers that only spend or reserve /Ob2 budget
+    move functions both ways (is_human: base_build 4527 -> 3690, control_turn
+    313 -> 850; map_tiles(): gen_terrain_poly -51, order_veh +55): decide
+    those per function, by call multiset. Subtract the counter effect: any
+    definition removed from a shared header moves the count canaries.
+  - *Removal cost.* Deleting a never-called inline or in-class member, or
+    replacing a reference accessor (`T &f() { return G; }`) by its global,
+    changes no code; it flips 3-7 count canaries per removal, most of them
+    restored by a whole-unit pad sweep against the final headers.
+- **A dead budget probe may be standing in for a costlier original callee.**
+  popb 0x0048C650 needed `popb_budget_probe4` only while its Brood Pit test
+  used an invented cheap bit-test helper; written as the real
+  `has_fac(id, base, 0)` the probe is redundant (35 -> 23 rows). Before
+  tuning probes, check that every helper the function expands exists in the
+  image.
+
 ### 3.2 Registers and order
 Scratch registers and scheduling (2026-11-19 par-5; probes in
 `recovery/tools/analysis/sched/`, see its README; diagnosis with
