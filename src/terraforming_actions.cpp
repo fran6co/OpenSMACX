@@ -2595,8 +2595,7 @@ void __cdecl action_give(int vehicle_id, int faction_id) {
             }
         }
     } else if (original_owner == ConsoleGlobal.faction_id_) {
-        parse_set(Players[faction_id].noun_gender, Players[faction_id].is_noun_plural);
-        parse_says(3, Players[faction_id].noun_faction, -1, -1);
+        parse_says(3, get_noun(faction_id), -1, -1);
         if (faction_id) {
             NetMsgPrimary.pop("GAVEUNIT", 5000, 0, nullptr);
         } else {
