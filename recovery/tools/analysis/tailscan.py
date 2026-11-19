@@ -401,6 +401,19 @@ def host_report(C, O, lo, src, i2o, o2i, iline, srclines):
         out.append('       ours preds: ' + fmt(pc))
         adv = []
         pr_c, why_c = predict_host(pc, then)
+        # rule 0: a predecessor that falls into the join in source order (nothing but closing braces,
+        # else-keywords and labels between its tail and the join) hosts it
+        jn = lnum(oline(Jc_))
+        fall = None
+        if jn is not None:
+            for p in sorted((p for p in pc if p['kind'] != 'xjmp' and p['n'] is not None and p['n'] < jn),
+                            key=lambda p: -p['n']):
+                between = '\n'.join(srclines[p['n']:jn - 1])
+                if not re.search(r'\b(goto|return|break|continue)\b', between):
+                    fall = p
+                break
+        if fall is not None:
+            pr_c, why_c = fall, 'rule 0 (source fallthrough %s)' % fall['line']
         pr_i1, _ = predict_host(pi, lambda p: False)
         adv.append('rules on ours predict %s (%s): %s' % (pr_c['line'] if pr_c else '?', why_c,
                                                            'agrees' if pr_c and pr_c['n'] == hc['n'] else 'DISAGREES'))
@@ -425,6 +438,10 @@ def host_report(C, O, lo, src, i2o, o2i, iline, srclines):
             else:
                 adv.append('%s tail [%s] in the image, [%s] in ours: partnership differs' % (
                     p['line'], p['mkey'], q['mkey']))
+        if why_c.startswith('rule 0') and pr_c['n'] == hc['n']:
+            adv.append('ours hosts at the source fallthrough %s; the image does not: in the original the last '
+                       'arm before the join left by goto/return, sat elsewhere (test order: compare the image\'s '
+                       'branch order), or the join code followed %s' % (hc['line'], hi_['line']))
         if pr_i1 is not None and pr_i1['n'] != hi_['n']:
             adv.append('image host %s is not the first partnered arm (%s): rule-2 priority, the original ended %s '
                        'in the then-arm of an inner if/else whose else does not end in it' % (

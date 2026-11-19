@@ -3168,7 +3168,39 @@ Layout
   partner TOOKENERGY / ASSASSINATED) would have won, so the original's pop
   tails were not partners. Every invisible factor above was tried in place
   (labels, nested else-if, the inverted test, a pcx local); only a distinct
-  store after each pop moves the host (1877 -> 1778 rows).
+  store after each pop moves the host (1877 -> 1778 rows). 2026-11-19
+  (par-4): the then-arm is not the cause. GOT and TOOK as two lone ifs
+  (`if (f == me) {...} if (f != me && t == me) {...}`) host TOOK; a store
+  after GOT alone hosts TOOK (an else-arm lone if); stores after GOT and TOOK
+  host action 4's DRONEINCITE0 (a lone if in a then-arm); only stores after
+  all six pops of actions 3-4 give draw_tile (ASSASSINATED, alone in action
+  5, is then unpartnered). So inside probe's chain every partnered `add
+  esp,8` pop group beats the earlier draw_tile/popp pair, unlike the tm7
+  families (QBnnB, QBWWB host B). Still open.
+- **Rule 0: the source fallthrough hosts; the image's branch order shows
+  which arm was last** (2026-11-19, par-4, `tailscan.py` HOST lines). When
+  the source's last arm falls into the join, it hosts. A join the image
+  hosts elsewhere means that arm was not last in the original, and the
+  image's compare order shows the original if/else:
+  - Console::go_to 0x004D61A0 (991 -> 454): the image's finish compares -2
+    first (`je` join), then -1 with `jne` into the first Psi Gate unlock_veh
+    copy, unlock_base falling through. `if (order != -2) { if (order == -1)
+    unlock_base; else unlock_veh; }` makes unlock_veh the last (else) arm;
+    VC6 then hosts the redraw join after the first partnered arm (GATENOBASE's
+    threaded unlock_veh) and cross-jumps the other copies into it. The old
+    `if (order == -1) ... else if (order != -2) unlock_veh` made the finish
+    the host; the inverted inner test (`order != -1`) hosts unlock_base.
+  - vehdraw_scoot_start 0x004BFE00 (171 -> 81): `if (!terrain) { flat }
+    else { switch }` makes case 7 the last arm and host (case 3 cross-jumps
+    into it); `if (terrain) { switch } else { flat }` hosted the flat arm.
+  - communicate 0x0054FFD0 (host only, 1568 -> 1566): the pay code written
+    after the bribe arm (half-pay falls into it), the non-bribe test as
+    `if (result != 2) { if (!result) goto refuse; }`, refusal as a goto-only
+    block.
+  So inverting an if/else is NOT normalized when it changes which arm falls
+  into a join shared with other predecessors (go_to, vehdraw). It is
+  normalized for two plain arms (enemy_diplomacy's `attack_type = 3` arm:
+  identical code both ways; save_game above).
 
 Types
 - Wrong declarations hide as casts: a member cast at each use, a byte buffer
