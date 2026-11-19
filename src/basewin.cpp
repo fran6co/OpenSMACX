@@ -6455,7 +6455,10 @@ void BaseWin::base_editor_proj() {
     base_editor_proj_budget_probe(1004);  // WORKAROUND(inline)
     base_editor_proj_budget_probe(1005);  // WORKAROUND(inline)
     base_editor_proj_budget_probe(1006);  // WORKAROUND(inline)
-    parse_say(0, Facility[FacilitySPStart + project].name, -1, -1);
+    // A named facility id: in an EH function VC6 keeps the +70 in the scaled
+    // index (0x0041BD85 lea edx,[esi+esi*2+0xD2]; MATCHING_GUIDE 3.4).
+    const int facility_id = FacilitySPStart + project;
+    parse_say(0, Facility[facility_id].name, -1, -1);
     PopupModalState = 6;
     popup.start("PICKAPLACE", 0x42);
     {
