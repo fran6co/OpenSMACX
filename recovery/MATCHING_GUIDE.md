@@ -1572,6 +1572,12 @@ not see, and those are the levers:
   back to a slot) and an image-only `dwordptr[ecx+<r>` ebx role marked
   "source variable home" (the mask load itself owning the register to the
   final test): one source name too many.
+- **A byte member at +1 and a dword read at +0 of the same union are one
+  web** (par-5 2026-11-19): when a union overlays a dword with bytes, VC6's
+  web builder joins a read of the byte member at offset +1 and a read of the
+  dword at +0 of the same object into one allocation web, so they compete
+  for (and share) one register home instead of two. Count them as one
+  candidate when reading register priorities.
 - **A global cached across a loop** (2026-11-19 par-5; probes in
   `analysis/regalloc` style, game flags; base_support, CouncWin::on_left_click).
   Rule 10's "globals across calls are not candidates" is too strong: VC6 forms
@@ -5682,6 +5688,11 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   is `pop > 3 ? 4 : 0`).
 - **Bool-to-flag forms differ.** `x ? 1 : 2` gives `neg/sbb/add 2`, while
   `2 - (x != 0)` gives `setne/sub`. `(c ? 1 : 0) + K` avoids `and ecx,0xff`.
+- **`g -= c + 1` with a bool `c` folds to `or reg,-1; sub`** (par-5
+  2026-11-19): VC6 rewrites `c + 1` of a 0/1 value as a branchless
+  `neg/sbb`-style constant and subtracts it. Only the ternary
+  `g -= c ? 2 : 1` keeps the image's `setcc; inc; sub` sequence; `c + 1`,
+  `1 + c`, `(c != 0) + 1` and a named temporary all give the `or -1` form.
 - **Altitude tests.**
   - `& ~0x1F` gives a dword compare; `& 0xE0` gives a byte compare.
   - `climate >> 5` against an `ALT_*` level gives an int compare after a byte
@@ -7079,6 +7090,68 @@ Re-tests and stack loops (par-2 2026-11-19, enemy_move 0x0056B5B0)
   (aligned rows whose image and our `[ebp-N]` agree), after block layout:
   enemy_move's 0x577C67 split closes four layout hunks and opens five, and
   swaps the two hottest slots (1661 -> 1345 of ~2800); it was not kept.
+
+### 3.8 VC5 (Caviar/VOX) x87 rules (2026-11-19 par-5)
+
+The Caviar/VOX units compile with VC5 /O2 /Ob1 (COMPILER_EVIDENCE.md,
+"Caviar library compiler"). Probes: `analysis/probes/vc5x87/` (`v5.py`
+compiles probe text with that recipe; `x87sym.py <unit> <addr> [--ours]
+[--names reg+off=name,..]` replays a function's x87 code symbolically and
+prints every store as an expression tree in the operand order the code used,
+with `{...}` around values reloaded from a slot the function stored, so the
+image's and our expression trees and spills can be compared directly).
+
+- **Commutative x87 operand order is not the spelling.** `a*b`, `b*a`, a
+  named local copy of either operand and the declaration order of the
+  locals all give the same `fld X; fmul Y`; so do `+`. VC5 even
+  reassociates: `G1*G2*G3`, `G3*G2*G1` and `G1*(G2*G3)` compile to the
+  same `fld G3; fmul G2; fmul G1`, and `G1*G2 + G3*H1` equals
+  `G3*H1 + G1*G2`. In vox_matrix_matrix_mul all 48 spellings of a cell
+  (3 orders of the products x operand flips) collapse to four results, set
+  only by which product is added last. `-` and `/` keep source order.
+- **What decides the order:** two loads off the same base go higher
+  displacement first (`s->a * s->b` with a at +0 loads +4 first; `p[0] *
+  p[2]` loads `[eax+8]`; a reversed struct loads its +8 member first).
+  Loads of different symbols are ordered by a symbol key that is neither
+  the declaration order nor the spelling (`extern float G1, G2` loads G2
+  first; `extern float H2, H1` loads H1 first; parameters `p, q` and `q, p`
+  both load q first). So read an image operand order as a compiler key,
+  not a source fact, and do not search spellings for it.
+- **The key moves with earlier declarations in bands.** Unused
+  `extern int f(int);` / `extern int v;` declarations placed before
+  vox_matrix_matrix_mul flip its rows in bands of about eight
+  declarations (54 -> 22..30, period 16), and vox_matrix_inverse cycles
+  through four states (139/128/121/126, period 32); a probe's
+  `x = x * p->scale` flips once (load scale first -> load x first) after
+  about 90 earlier symbols and stays. caviar_apply_rotation does not move
+  with 0..39 declarations before it, nor with any of the 720 orders of its
+  six sine/cosine locals (best 87 rows, frame always 0x18 against the
+  image's 0x14), so its residual is not the key.
+- **Every named float local is stored.** VC5 writes each named float
+  local to its home with `fst` as soon as it is computed, even when the
+  value stays on the FPU stack and is used from there; a common
+  subexpression without a name is kept on the stack or spilled to an
+  unnamed slot by stack pressure. Dead parameter slots are reused as
+  float homes (caviar_apply_rotation's image stores two of its six trig
+  values at `[esp+0x18]`/`[esp+0x1c]`, the angles/matrix argument slots).
+  So the count of stored float slots in the image is the count of named
+  float locals plus spilled common subexpressions: apply_rotation's image
+  has 7 (six trig values and `sz*sy`) and keeps `cz*sy` on the stack;
+  ours spills `cz*sy` too (8 slots, frame +4). Naming `cz*sy` (93 rows),
+  writing the trig values without locals (154), or double locals (101) do
+  not give the image's frame.
+- **Scheduling around integer code is not the key either.** In
+  vox_draw_scene the nine `part[i][j] * node->scale_` products interleave
+  with the callback test (`mov eax,[edi+0x58]; add esp,0xc; test`) one
+  load earlier in the image than ours. Hoisting the callback load (before,
+  inside or after the products), `*=`, a scale-first spelling, a loop, and
+  0..30 declarations before the function are all neutral or worse; a probe
+  of the same block (with and without the loop around it) always places the
+  integer code after the ninth load, like ours. Unresolved.
+- **uV is VC6, not VC5.** movie_media.cpp under VC5 (/O2 /Ob1 or the
+  unit's /Og /Oi /Ot /Oy /Gs /Gy /Ob1) gives 7 exact functions against
+  VC6's 29 (three bodies patched to return a value, which VC5 requires:
+  C2561/C2202 on int functions without a return).
 
 ## 4. Measured and neutral (do not retry without new evidence)
 
