@@ -16,7 +16,7 @@ comment, #include lines) is dropped except for includes C lacks, which are added
 `git rm`, and CMakeLists.txt, recovery/project.json (measurement.unit_flag_sets) and every
 `// compile_context A` annotation are rewritten to C.
 --move: the same for single functions (the source file is kept; only the includes named with
---include '"x.h"' are added). When C.cpp does not exist, `--new-like L.cpp [--after P.cpp]` creates it: the licence
+--include '"x.h"' are added; --include '*' adds every include of the hosts that C lacks). When C.cpp does not exist, `--new-like L.cpp [--after P.cpp]` creates it: the licence
 and #include lines of L, listed after P (default L) in OPENSMACX_SOURCES, L's per-source property commands and
 project.json flag set duplicated (and L's entry in the worktree's build/compile_commands.json, for fe).
 `--deps` also moves the host's unmarked top-level pieces (objects, helpers, #define blocks) that only the moved
@@ -637,7 +637,7 @@ def merge(srcs, into, dry=False, addrs=None, top=False, with_inc=None, new_like=
             warn.append('%s: unit-level preprocessor lines before/among the includes: %s' % (s, '; '.join(d.strip() for d in defs)))
         for inc in incs:
             name = re.search(r'([<"][^>"]+[>"])', inc).group(1)
-            if addrs is not None and name not in have and name not in (with_inc or ()):
+            if addrs is not None and name not in have and name not in (with_inc or ()) and '*' not in (with_inc or ()):
                 skipped.append(name)
                 continue
             if name not in have:
