@@ -2325,13 +2325,11 @@ void __cdecl time_controls_dialog(Popup *popup) {
     popup->start(PopupStartCaption, "TIMECONTROLS", -1, nullptr, 0x40, nullptr);
     for (int index = 0; index < MaxTimeControlNum; ++index) {
         StringTemp[0] = '\0';
-        strcat(StringTemp, StringTable.get(TimeControl[index].name));
+        strcat(StringTemp, table_text(TimeControl[index].name));
         strcat(StringTemp, "|");
         say_open_paren();
 
-        if (!(index != 0)) {
-            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x474 / 4]));
-        } else {
+        if (index != 0) {
             say_num(TimeControl[index].turn);
             space();
             strcat(StringTemp, label_get(0x468 / 4));
@@ -2347,8 +2345,9 @@ void __cdecl time_controls_dialog(Popup *popup) {
             say_num(TimeControl[index].unit);
             space();
             strcat(StringTemp, label_get(0x470 / 4));
+        } else {
+            strcat(StringTemp, label_get(0x474 / 4));
         }
-
         say_close_paren();
         popup->dialogs().item(StringTemp, index);
     }
