@@ -23,6 +23,8 @@
 // at 4, 16-20, 22 and 29, so 18. The original header declaration
 // set is unknown; re-tune after header batches.
 // After the dead-helper batch (d64959c815), whole-unit fe sweep: exact at 0-1, 14, 16-27, 32-35, 39, 62-63, so 21.
+// Re-tuned 2026-11-19 against the sprite.h/popup.h headers (declpad padfree): exact at 10, 22-28, 38-39, 42-47 and
+// 51-62, so 56.
 // HEADER-PADS: function VehicleRenderHeaderPad
 void VehicleRenderHeaderPad0();
 void VehicleRenderHeaderPad1();
@@ -45,6 +47,41 @@ void VehicleRenderHeaderPad17();
 void VehicleRenderHeaderPad18();
 void VehicleRenderHeaderPad19();
 void VehicleRenderHeaderPad20();
+void VehicleRenderHeaderPad21();
+void VehicleRenderHeaderPad22();
+void VehicleRenderHeaderPad23();
+void VehicleRenderHeaderPad24();
+void VehicleRenderHeaderPad25();
+void VehicleRenderHeaderPad26();
+void VehicleRenderHeaderPad27();
+void VehicleRenderHeaderPad28();
+void VehicleRenderHeaderPad29();
+void VehicleRenderHeaderPad30();
+void VehicleRenderHeaderPad31();
+void VehicleRenderHeaderPad32();
+void VehicleRenderHeaderPad33();
+void VehicleRenderHeaderPad34();
+void VehicleRenderHeaderPad35();
+void VehicleRenderHeaderPad36();
+void VehicleRenderHeaderPad37();
+void VehicleRenderHeaderPad38();
+void VehicleRenderHeaderPad39();
+void VehicleRenderHeaderPad40();
+void VehicleRenderHeaderPad41();
+void VehicleRenderHeaderPad42();
+void VehicleRenderHeaderPad43();
+void VehicleRenderHeaderPad44();
+void VehicleRenderHeaderPad45();
+void VehicleRenderHeaderPad46();
+void VehicleRenderHeaderPad47();
+void VehicleRenderHeaderPad48();
+void VehicleRenderHeaderPad49();
+void VehicleRenderHeaderPad50();
+void VehicleRenderHeaderPad51();
+void VehicleRenderHeaderPad52();
+void VehicleRenderHeaderPad53();
+void VehicleRenderHeaderPad54();
+void VehicleRenderHeaderPad55();
 
 #include "general.h"  // range is used by veh.h inline members.
 #include "veh.h"
