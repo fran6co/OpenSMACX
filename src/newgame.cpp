@@ -1151,8 +1151,6 @@ int __cdecl size_of_planet(int mode) {
     size_of_planet_budget_probe(1005);  // WORKAROUND(inline)
     size_of_planet_budget_probe(1006);  // WORKAROUND(inline)
     size_of_planet_budget_probe(1007);  // WORKAROUND(inline)
-    size_of_planet_budget_probe(1008);  // WORKAROUND(inline)
-    size_of_planet_budget_probe(1009);  // WORKAROUND(inline)
     Popup popup;
     SetupWin setup;
     popup.start(WorldSizePopupLabel, mode != 2 ? 0x40 : 0);
@@ -1172,14 +1170,14 @@ int __cdecl size_of_planet(int mode) {
             if (item_count > 0x20) item_count = 0x20;
             for (int item = 0; item < item_count; ++item) {
                 text_get();
-                StringTemp[0] = 0;
-                strcat(StringTemp, text_item());
+                clear();
+                says(text_item());
                 popup.item(StringTemp, item);
                 width_for_choice[item] = text_item_number();
                 height_for_choice[item] = text_item_number();
             }
-            StringTemp[0] = 0;
-            strcat(StringTemp, label_get(0x1104 / 4));
+            clear();
+            say_label(0x1104 / 4);
             popup.item(StringTemp, 0x63);
 
             int choice = static_cast<int>(AlphaIniPrefs.custom_world[0]);
