@@ -8089,7 +8089,6 @@ int communicate_truce_other;
 int communicate_truce_shared;
 int communicate_report_min;
 int communicate_report_third;
-int communicate_report_region_rival;
 int communicate_report_rival;
 int communicate_report_region;
 
@@ -10569,7 +10568,7 @@ if ((has_treaty(faction_id, faction_id_with, 1) || has_treaty(faction_id_with, f
     communicate_stack_3c = 0;
     communicate_report_min = 9999;
     communicate_report_third = 0;
-    communicate_report_region_rival = 0;
+    communicate_stack_48 = 0;
     communicate_report_rival = 0;
     for (communicate_stack_c = 1; communicate_stack_c < 8; communicate_stack_c++) {
         if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << communicate_stack_c)) &&
@@ -10594,13 +10593,13 @@ if ((has_treaty(faction_id, faction_id_with, 1) || has_treaty(faction_id_with, f
                             PlayersData[faction_id_with].region_total_combat_vehs[communicate_report_region] +
                             PlayersData[faction_id_with].region_force_rating[communicate_report_region] &&
                         contiguous(faction_id_with, communicate_stack_c, communicate_report_region, 0)) {
-                        communicate_report_region_rival = communicate_stack_c;
+                        communicate_stack_48 = communicate_stack_c;
                         communicate_report_min = PlayersData[communicate_stack_c].mil_strength_1;
                         goto communicate_report_next;
                     }
                 }
             }
-            if (communicate_report_region_rival != communicate_stack_c &&
+            if (communicate_stack_48 != communicate_stack_c &&
                 communicate_report_rival != communicate_stack_c) {
                 communicate_report_third = communicate_stack_c;
             }
@@ -10629,16 +10628,16 @@ communicate_report_next:;
             goto communicate_late_contact_map_done;
         }
     }
-    if (communicate_report_region_rival && !has_treaty(faction_id, faction_id_with, 0x2000)) {
+    if (communicate_stack_48 && !has_treaty(faction_id, faction_id_with, 0x2000)) {
         for (communicate_stack_c = 1; communicate_stack_c < 128; communicate_stack_c++) {
             if (!bad_reg(communicate_stack_c) && DiplomacyRegionMask[communicate_stack_c] &&
-                (1 << communicate_report_region_rival) &&
+                (1 << communicate_stack_48) &&
                 PlayersData[faction_id_with].region_force_rating[communicate_stack_c] >
-                    PlayersData[communicate_report_region_rival].region_total_combat_vehs[communicate_stack_c]) {
-                parse_says(0, get_adjective(communicate_report_region_rival), -1, -1);
-                parse_says(1, get_title(communicate_report_region_rival), -1, -1);
-                parse_says(2, get_name(communicate_report_region_rival), -1, -1);
-                parse_says(3, get_phrase(communicate_report_region_rival, 5), -1, -1);
+                    PlayersData[communicate_stack_48].region_total_combat_vehs[communicate_stack_c]) {
+                parse_says(0, get_adjective(communicate_stack_48), -1, -1);
+                parse_says(1, get_title(communicate_stack_48), -1, -1);
+                parse_says(2, get_name(communicate_stack_48), -1, -1);
+                parse_says(3, get_phrase(communicate_stack_48, 5), -1, -1);
                 X_pops("REPORTWINNING", 0x100000,
                        FactionDiplomacyPortraits[faction_id_with], pop_wait);
                 goto communicate_late_contact_map_done;
