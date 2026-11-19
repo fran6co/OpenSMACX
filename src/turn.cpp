@@ -5425,7 +5425,7 @@ void __cdecl control_game() {
             if ((GetAsyncKeyState(VK_SHIFT) & 0x8000) == 0) {
                 g_FX.init();
             }
-            for (;;) {
+            do {
                 if (GameRestartQueued != 0) {
                     if (g_WAVE_GENERAL.Wave::is_playing() != 0) {
                         g_WAVE_GENERAL.Sound::fade(2000);
@@ -5487,10 +5487,13 @@ void __cdecl control_game() {
                     control_turn();
                 }
                 desktop_close();
-                if (GameRestartQueued == 0) {
-                    goto close_game;
-                }
-            }
+            } while (GameRestartQueued != 0);
+            // The image saves ebx, esi and edi in the prologue although the guard above needs none:
+            // a return inside the body (guide 2.6, deferred register saves). VC6 merges these closes
+            // with the labelled tail.
+            game_close(0);
+            system_close();
+            return;
 
     close_opening:
             close_opening();
