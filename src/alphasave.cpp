@@ -32,51 +32,6 @@
 #include "maininterface.h"
 #include "palette.h"
 
-// The EditBox deleting entries share the header-owned lifetime and its
-// independent AlphaSave-TU emission. The pinned constructor links their
-// Win/Buffer slots to these original identities. Binding rationales
-// retain older editbox.cpp owner-copy observations as historical
-// evidence, not current linked-selection proof; the class definition
-// remains in editbox.h.
-// ORIGINAL: 0x004083A0 ??_GEditBox@@WEEE@AEPAXI@Z 0x004083A0-0x004083AB FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned original ??_GEditBox@@WEEE@AEPAXI@Z at 0x004083a0 is an 11-byte secondary scalar deleting adjustor; it subtracts 0x444 from ECX and tail-jumps to the complete-object EditBox scalar deleting entry without touching stack or flags.", "Historical seed correction: the earlier `??3` deallocation interpretation was refuted; the original is a `??_G` scalar-deleting adjustor. `WEEE` demangles to adjustor{1092}, equal to 0x444.", "Pinned EditBox constructor at 0x00614e8a stores Buffer-view vftable 0x0066a030 at this+0x444; the source owner is the typed EditBox GraphicWin/Buffer multiple-inheritance view.", "Current src/editbox.cpp COFF Buffer-view vftable first slot selects generated ??_EEditBox@@WEEE@AEPAXI@Z; its body performs the same 0x444 adjustment and preserves the flag argument.", "Current EditBox COFF weak external ??_EEditBox@@UAEPAXI@Z records search mode 2 (library search) and fallback target ??_GEditBox@@UAEPAXI@Z; this linked image resolves both primary labels to the same physical class deleting body. The object fallback and linked address are per-build evidence, not a general E/G equivalence or owner-selection rule.", "That measured current primary body calls EditBox::~EditBox, tests flags bit 0, calls operator delete only when bit 0 is set, returns the saved object pointer, and uses ret 4; this is the per-class measured E-to-G scalar path, not a general vector/scalar equivalence.", "The removed transitional C++ names were ?adjust_this_edit_box@@YIPAXPAX0I@Z and ?scalar_delete_edit_box@@YIPAXPAX0I@Z; no callers exist outside deleting_thunks.cpp/.h, and the current generated Buffer vftable uses the class-owned E adjustor instead.", "Historical seed metadata noted flags hidden;sp_ready;purged_ok, zero direct callers, and no direct call targets. These remain historical observations only; they do not establish virtual-dispatch completeness or acceptance.", "The old secondary record had no BYTE_EXACT or SEMANTIC claim. Its original identity, full span, kind and parsed history are moved unchanged; no matching claim is granted."], "reason": "Bind the pinned secondary scalar deleting identity for EditBox to its measured genuine Buffer-view generated adjustor. Keep the original G identity and point its current symbol fact at the owner-emitted E adjustor; the per-object weak fallback and bit-0 path above establish why this exact current implementation preserves the original operation."}
-// symbol    ??_EEditBox@@WEEE@AEPAXI@Z
-// kind      game
-// ORIGINAL: 0x00408080 ??_GEditBox@@UAEPAXI@Z 0x00408080-0x004080A1 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["historical deleting-thunk source src/deleting_thunks.cpp; original full spans retained: 0x00408080-0x004080A1", "Pinned class constructor ??0EditBox@@QAE@XZ at 0x00614E50 stores original class/view table VA 0x66a038 at 0x00614E84 (mov dword ptr [esi], 0x66a038); the current genuine owner vftable ??_7EditBox@@6BWin@@@ selects generated ??_GEditBox@@UAEPAXI@Z in slot 0 (+0x0) through weak entry ??_EEditBox@@UAEPAXI@Z (mode 2).", "Pinned ??_GEditBox@@UAEPAXI@Z at 0x00408080 calls the source-mapped ??1EditBox@@QAE@XZ at 0x00408010, then tests byte ptr [ebp + 8], 1; je 0x40809a bypasses scalar delete when bit 0 is clear, while bit 0 set calls 0x0064557F; it save original this; call destructor; delete only when flags bit 0 is set; return saved this with ret 4.", "The real class lifetime is owned by src/editbox.cpp; its compiler-emitted deleting symbol and vftable slot carry this original identity. Hand-written adapter bodies with live adjustor callers remain until those callers are independently qualified and transferred. The linked weak/COMDAT copy is not used to choose source ownership.", "the source writer preserves the historical mapping's exactness state (historical exactness obligation retained); current compiler extent is not asserted equal to the original span"], "reason": "Bind the original EditBox scalar deleting-destructor identity to the actual compiler-emitted class deleting destructor in its genuine owner translation unit. The original constructor's pinned vptr store and the current owner's physical table slot identify this class/view; no callback/thunk body is hand-authored here."}
-// symbol    ??_GEditBox@@UAEPAXI@Z
-// kind      game
-// These independent destructor mappings are emitted in this translation
-// unit from their real class-header definitions. AlphaSave destruction
-// also expands the same member lifetimes; it is a separate mapping.
-/*
-Purpose: Tear down a FileWin: close it, then destroy the ListBox, EditBox and
-         two FlatButton members in reverse declaration order. C++ owns the
-         member/base destruction and partial-construction unwind.
-// ORIGINAL: 0x00407F00 ??1FileWin@@QAE@XZ 0x00407F00-0x00408003;0x00650C80-0x00650CE8 FILE BYTE_EXACT
-// body src/jackal/filewin.h
-// size      363 bytes
-// prototype void (__thiscall ??1FileWin@@QAE@XZ)(FileWin* this)
-// callers   2   call targets   8
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x005D4DD0 0x00607040 0x00607DA0 0x00608E10 0x00609EC0 0x00613900 0x00614F30 0x00616200
-// TRIED: MEASURED 14/62 agreeing with named members - better than the
-//            preserved artifact's raw-offset form (src/recovered/units/
-//            00407f00.cpp, since deleted, reported divergence 1 against a
-//            DIFFERENT flag set/scaffold). First mismatch is again register
-//            allocation (`sub esp,8` vs `,0xc`; `push esi` vs `push ebx`)
-//            starting right after the SEH prologue, which matches through
-//            instruction 6.
-Return Value: n/a
-Status: Complete
-*/
-
-// ORIGINAL: 0x00408010 ??1EditBox@@QAE@XZ 0x00408010-0x00408077;0x00650CF0-0x00650D10 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00408010.cpp", "Original constructor/destructor direct-call receivers and unwind stages"], "reason": "408010 closes EditBox then destroys its Time member and nonvirtual GraphicWin base; normal and unwind paths agree."}
-// body src/jackal/editbox.h
-// Deleted seed provenance: git:ee30a69d14801283c26950b1385f39f087e6d82b:src/unrecovered/00408010.cpp
-// symbol    ??1EditBox@@UAE@XZ
 
 extern int TextColourTable[195];
 extern BoxSpriteParams InterfaceStandardPopupBoxStyle;
@@ -105,6 +60,10 @@ void __cdecl alpha_save_filebox_draw(GraphicWin *window, int item_kind,
                              window->Buffer::pixel_width(), height);
     }
     FileWin::filebox_draw(window, item_kind, item_id, x, y, height);
+}
+
+// ORIGINAL: 0x00407350 ??0AlphaSave@@QAE@XZ 0x00407350-0x00407410;0x00650BF0-0x00650C60 BYTE_EXACT
+AlphaSave::AlphaSave() {
 }
 
 void __cdecl scroll_hide(GraphicWin *window, Scroll *scroll);
@@ -206,151 +165,11 @@ void AlphaSave::init() {
     cancel.redraw();
 }
 
-// ORIGINAL: 0x00407350 ??0AlphaSave@@QAE@XZ 0x00407350-0x00407410;0x00650BF0-0x00650C60 BYTE_EXACT
-AlphaSave::AlphaSave() {
-}
-
-// ORIGINAL: 0x00408170 ??1AlphaSave@@QAE@XZ 0x00408170-0x00408383;0x00650D10-0x00650E20 BYTE_EXACT
-// body src/alphasave.h
-// symbol    ??1AlphaSave@@UAE@XZ
-// TRIED: plain reinterpret_cast pointer-offset calls into close()/dtors in disasm order; no local subobjects so no SEH frame is generated (diverges at #1, the missing try/finally prologue)
-
 
 // ORIGINAL: 0x00407910 ?close@AlphaSave@@QAEXXZ 0x00407910-0x00407915 BYTE_EXACT
 // LEVER: thiscall shim - a synthetic GraphicWin class exposes close() as a member so reinterpret_cast<GraphicWin*>(this)->close() folds into the original's bare 5-byte jmp (same shim shape as 0x004210F0)
 void AlphaSave::close() {
     GraphicWin::close();
-}
-
-// ORIGINAL: 0x00407CF0 ?on_double_clicked@AlphaSave@@QAEXH@Z 0x00407CF0-0x00407D06 BYTE_EXACT
-// symbol    ?on_double_clicked@AlphaSave@@UAEXH@Z
-void AlphaSave::on_double_clicked(int button_id) {
-    file_win_.on_double_clicked(button_id);
-}
-
-// ORIGINAL: 0x00407CD0 ?on_button_clicked@AlphaSave@@QAEXH@Z 0x00407CD0-0x00407CE6 BYTE_EXACT
-// symbol    ?forward_button_click@AlphaSave@@QAEXH@Z
-// The image symbol is nonvirtual; using that spelling here would override
-// Win::on_button_clicked and change AlphaSave's vtable.
-void AlphaSave::forward_button_click(int button_id) {
-    file_win_.on_button_clicked(button_id);
-}
-
-// ORIGINAL: 0x00407ED0 ?on_listbox_scroll_delete@AlphaSave@@QAEHPAUScroll@@@Z 0x00407ED0-0x00407EF3 BYTE_EXACT
-// symbol    ?on_listbox_scroll_delete@AlphaSave@@UAEPAVScroll@@PAV2@@Z
-Scroll *AlphaSave::on_listbox_scroll_delete(Scroll *scroll) {
-    if (Win::is_visible()) {
-        scroll_hide(this, scroll);
-    }
-    return 0;
-}
-
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x00407D10 0x00407D64 0x00407D84 0x00407D1F
-// ORIGINAL: 0x00407D10 ?on_key_click@AlphaSave@@QAEXHH@Z 0x00407D10-0x00407D62 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00407d10.cpp and original symbol", "image:constructor4073F2 installs669EC8; slot25 selects407D10", "image:407D37/407D57 last calls and407D3E/407D5F returns preserve EAX from Win key_down_event/key_click_event"], "reason": "Recover the real AlphaSave key override through typed FileWin subobjects and forward the actual last-call result. The catalogue void spelling is retained as original identity, not the virtual return contract; no arbitrary constant or extra callback slot."}
-// Deleted seed provenance: git:28a4ec38e1680226fae6cf691d558aea79d7185d:src/recovered/units/00407d10.cpp
-// symbol    ?on_key_click@AlphaSave@@UAEHHH@Z
-int AlphaSave::on_key_click(int key, int flags) {
-    switch (flags) {
-    case 0x21:
-    case 0x22:
-    case 0x26:
-    case 0x28:
-        return file_win_.list_box_key_down(flags);
-    default:
-        file_win_.edit_box().key_down_event(flags);
-        return file_win_.edit_box().key_click_event(key, flags);
-    }
-}
-
-// ORIGINAL: 0x004080E0 ?on_scrolling@AlphaSave@@QAEXHH@Z 0x004080E0-0x0040810C BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004080e0.cpp and original symbol"], "reason": "Existing AlphaSave owner forwards to its typed FileWin subobjects; original symbol and seed establish identity and extent"}
-// symbol    ?on_scrolled@AlphaSave@@UAEXHH@Z
-// Deleted seed provenance: git:28a4ec38e1680226fae6cf691d558aea79d7185d:src/recovered/units/004080e0.cpp
-void AlphaSave::on_scrolled(int code, int pos) {
-    // The embedded ListBox dispatches this notification through its Win base.
-    file_win_.list_box().on_scrolled(code, pos);
-}
-
-// ORIGINAL: 0x00408110 ?on_scrolled@AlphaSave@@QAEXHH@Z 0x00408110-0x0040813C BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00408110.cpp and original symbol"], "reason": "Existing AlphaSave owner forwards to its typed FileWin subobjects; original symbol and seed establish identity and extent"}
-// symbol    ?on_scrolling@AlphaSave@@UAEXHH@Z
-// Deleted seed provenance: git:28a4ec38e1680226fae6cf691d558aea79d7185d:src/recovered/units/00408110.cpp
-void AlphaSave::on_scrolling(int code, int pos) {
-    // This is the next Win virtual notification, not ListBox's direct handler.
-    file_win_.list_box().on_scrolling(code, pos);
-}
-
-// ORIGINAL: 0x00407E80 ?on_listbox_scroll_create@AlphaSave@@QAEHXZ 0x00407E80-0x00407ECA BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00407e80.cpp;src/popup.cpp:Popup::on_listbox_scroll_create;src/alphasave.h:scroll_"], "reason": "AlphaSave owns the Scroll at 0x3DD8; original call sequence matches the typed Popup scroll-create pattern and seed evidence"}
-// symbol    ?on_listbox_scroll_create@AlphaSave@@UAEPAVScroll@@XZ
-// Deleted seed provenance: git:28a4ec38e1680226fae6cf691d558aea79d7185d:src/recovered/units/00407e80.cpp
-Scroll *AlphaSave::on_listbox_scroll_create() {
-    scroll_normal();
-    scroll_.init(0x147, 0x15, 0x18, 0xd8, this, -1, 1);
-    scroll_.hide();
-    if (Win::is_visible()) {
-        scroll_show(this, &scroll_);
-    }
-    return &scroll_;
-}
-
-// ORIGINAL: 0x00407BE0 ?show@AlphaSave@@QAEXH@Z 0x00407BE0-0x00407C57 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned AlphaSave constructor at 0x00407350 installs primary vftable VA 0x00669EC8.", "Pinned table word at 0x00669ECC has an absolute HIGHLOW relocation resolving to 0x00407BE0, this ORIGINAL body; the same slot in qualified AlphaSave COFF previously resolved to Win::show at 0x005ED9D0.", "Win declares virtual void show(int) at inherited slot 1 (src/win.h); AlphaSave has no other source call sites for the former show_save_window helper.", "The body still calls Win::show explicitly in the same branches and order; only the member identity changes to the inherited virtual override."], "reason": "The original AlphaSave primary vftable at 0x00669EC8 selects the mapped show operation in inherited Win slot 1. Restoring the genuine override name makes the compiler emit the class entry; the existing body and its explicit Win::show call remain unchanged."}
-// symbol    ?show@AlphaSave@@UAEXH@Z
-// The exact standalone unit was retired after this source body was recorded.
-// This routine does not read its argument: the choice is whether the main
-// Console is already visible, not the caller's requested display mode.
-void AlphaSave::show(int) {
-    if (Win::is_visible()) {
-        return;
-    }
-    if (ConsoleGlobal.is_visible()) {
-        slide_show(this, 0);
-        if (file_win_.list_box().has_scroll_flags()) {
-            scroll_show(this, &scroll_);
-        }
-        Win::show(3);
-    } else {
-        Win::show(2);
-    }
-    ActiveAlphaSave = this;
-}
-
-// ORIGINAL: 0x00407C60 ?hide@AlphaSave@@QAEXXZ 0x00407C60-0x00407CC4 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned AlphaSave constructor at 0x00407350 installs primary vftable VA 0x00669EC8.", "Pinned table word at 0x00669ED0 has an absolute HIGHLOW relocation resolving to 0x00407C60, this ORIGINAL body; the same slot in qualified AlphaSave COFF previously resolved to Win::hide at 0x005EDCD0.", "Win declares virtual void hide() at inherited slot 2 (src/win.h); AlphaSave has no other source call sites for the former hide_save_window helper.", "The body still calls Win::hide explicitly in the same final position; only the member identity changes to the inherited virtual override."], "reason": "The original AlphaSave primary vftable at 0x00669EC8 selects the mapped hide operation in inherited Win slot 2. Restoring the genuine override name makes the compiler emit the class entry; the existing body and its explicit Win::hide call remain unchanged."}
-// symbol    ?hide@AlphaSave@@UAEXXZ
-// The exact standalone unit was retired after this typed path was recorded.
-void AlphaSave::hide() {
-    if (!Win::is_visible()) {
-        return;
-    }
-    if (ConsoleGlobal.is_visible()) {
-        if (file_win_.list_box().has_scroll_flags()) {
-            scroll_hide(this, &scroll_);
-        }
-        slide_hide(this, 0);
-    }
-    ActiveAlphaSave = 0;
-    Win::hide();
-}
-
-// ORIGINAL: 0x00407D90 ?on_selected@AlphaSave@@QAEXH@Z 0x00407D90-0x00407E7B BYTE_EXACT
-// symbol    ?on_selected@AlphaSave@@UAEXH@Z
-// The callback argument is unused in the image. The selected position is
-// held by the embedded ListBox's Dialog virtual base, whose StringList
-// supplies the filename. Three things make the image's code: the controls
-// are addressed as direct members of file_win_ (one `this + vbdisp` base
-// register for every Dialog field), the item list is bound once, and the
-// text is the guarded current_entry() chase that StringList::current_text
-// (0x005E3630) is the out-of-line copy of.
-void AlphaSave::on_selected(int) {
-    StringList &list = file_win_.list_box_.item_list_;
-    list.seek_pos(file_win_.list_box_.selected_position_);
-    file_win_.edit_box_.set_text(
-        list.head_ != 0 ? list.current_entry()->text : 0);
-    file_win_.edit_box_.select_all();
-    file_win_.edit_box_.redraw();
 }
 
 // ORIGINAL: 0x00407920 ?save@AlphaSave@@QAEXXZ 0x00407920-0x00407A7E BYTE_EXACT
@@ -446,3 +265,185 @@ char *AlphaSave::load() {
     // load_map tests that pointer, including null with nonempty defaults.
     return selected;
 }
+
+// ORIGINAL: 0x00407BE0 ?show@AlphaSave@@QAEXH@Z 0x00407BE0-0x00407C57 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned AlphaSave constructor at 0x00407350 installs primary vftable VA 0x00669EC8.", "Pinned table word at 0x00669ECC has an absolute HIGHLOW relocation resolving to 0x00407BE0, this ORIGINAL body; the same slot in qualified AlphaSave COFF previously resolved to Win::show at 0x005ED9D0.", "Win declares virtual void show(int) at inherited slot 1 (src/win.h); AlphaSave has no other source call sites for the former show_save_window helper.", "The body still calls Win::show explicitly in the same branches and order; only the member identity changes to the inherited virtual override."], "reason": "The original AlphaSave primary vftable at 0x00669EC8 selects the mapped show operation in inherited Win slot 1. Restoring the genuine override name makes the compiler emit the class entry; the existing body and its explicit Win::show call remain unchanged."}
+// symbol    ?show@AlphaSave@@UAEXH@Z
+// The exact standalone unit was retired after this source body was recorded.
+// This routine does not read its argument: the choice is whether the main
+// Console is already visible, not the caller's requested display mode.
+void AlphaSave::show(int) {
+    if (Win::is_visible()) {
+        return;
+    }
+    if (ConsoleGlobal.is_visible()) {
+        slide_show(this, 0);
+        if (file_win_.list_box().has_scroll_flags()) {
+            scroll_show(this, &scroll_);
+        }
+        Win::show(3);
+    } else {
+        Win::show(2);
+    }
+    ActiveAlphaSave = this;
+}
+
+// ORIGINAL: 0x00407C60 ?hide@AlphaSave@@QAEXXZ 0x00407C60-0x00407CC4 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned AlphaSave constructor at 0x00407350 installs primary vftable VA 0x00669EC8.", "Pinned table word at 0x00669ED0 has an absolute HIGHLOW relocation resolving to 0x00407C60, this ORIGINAL body; the same slot in qualified AlphaSave COFF previously resolved to Win::hide at 0x005EDCD0.", "Win declares virtual void hide() at inherited slot 2 (src/win.h); AlphaSave has no other source call sites for the former hide_save_window helper.", "The body still calls Win::hide explicitly in the same final position; only the member identity changes to the inherited virtual override."], "reason": "The original AlphaSave primary vftable at 0x00669EC8 selects the mapped hide operation in inherited Win slot 2. Restoring the genuine override name makes the compiler emit the class entry; the existing body and its explicit Win::hide call remain unchanged."}
+// symbol    ?hide@AlphaSave@@UAEXXZ
+// The exact standalone unit was retired after this typed path was recorded.
+void AlphaSave::hide() {
+    if (!Win::is_visible()) {
+        return;
+    }
+    if (ConsoleGlobal.is_visible()) {
+        if (file_win_.list_box().has_scroll_flags()) {
+            scroll_hide(this, &scroll_);
+        }
+        slide_hide(this, 0);
+    }
+    ActiveAlphaSave = 0;
+    Win::hide();
+}
+
+// ORIGINAL: 0x00407CD0 ?on_button_clicked@AlphaSave@@QAEXH@Z 0x00407CD0-0x00407CE6 BYTE_EXACT
+// symbol    ?forward_button_click@AlphaSave@@QAEXH@Z
+// The image symbol is nonvirtual; using that spelling here would override
+// Win::on_button_clicked and change AlphaSave's vtable.
+void AlphaSave::forward_button_click(int button_id) {
+    file_win_.on_button_clicked(button_id);
+}
+
+// ORIGINAL: 0x00407CF0 ?on_double_clicked@AlphaSave@@QAEXH@Z 0x00407CF0-0x00407D06 BYTE_EXACT
+// symbol    ?on_double_clicked@AlphaSave@@UAEXH@Z
+void AlphaSave::on_double_clicked(int button_id) {
+    file_win_.on_double_clicked(button_id);
+}
+
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00407D10 0x00407D64 0x00407D84 0x00407D1F
+// ORIGINAL: 0x00407D10 ?on_key_click@AlphaSave@@QAEXHH@Z 0x00407D10-0x00407D62 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00407d10.cpp and original symbol", "image:constructor4073F2 installs669EC8; slot25 selects407D10", "image:407D37/407D57 last calls and407D3E/407D5F returns preserve EAX from Win key_down_event/key_click_event"], "reason": "Recover the real AlphaSave key override through typed FileWin subobjects and forward the actual last-call result. The catalogue void spelling is retained as original identity, not the virtual return contract; no arbitrary constant or extra callback slot."}
+// Deleted seed provenance: git:28a4ec38e1680226fae6cf691d558aea79d7185d:src/recovered/units/00407d10.cpp
+// symbol    ?on_key_click@AlphaSave@@UAEHHH@Z
+int AlphaSave::on_key_click(int key, int flags) {
+    switch (flags) {
+    case 0x21:
+    case 0x22:
+    case 0x26:
+    case 0x28:
+        return file_win_.list_box_key_down(flags);
+    default:
+        file_win_.edit_box().key_down_event(flags);
+        return file_win_.edit_box().key_click_event(key, flags);
+    }
+}
+
+// ORIGINAL: 0x00407D90 ?on_selected@AlphaSave@@QAEXH@Z 0x00407D90-0x00407E7B BYTE_EXACT
+// symbol    ?on_selected@AlphaSave@@UAEXH@Z
+// The callback argument is unused in the image. The selected position is
+// held by the embedded ListBox's Dialog virtual base, whose StringList
+// supplies the filename. Three things make the image's code: the controls
+// are addressed as direct members of file_win_ (one `this + vbdisp` base
+// register for every Dialog field), the item list is bound once, and the
+// text is the guarded current_entry() chase that StringList::current_text
+// (0x005E3630) is the out-of-line copy of.
+void AlphaSave::on_selected(int) {
+    StringList &list = file_win_.list_box_.item_list_;
+    list.seek_pos(file_win_.list_box_.selected_position_);
+    file_win_.edit_box_.set_text(
+        list.head_ != 0 ? list.current_entry()->text : 0);
+    file_win_.edit_box_.select_all();
+    file_win_.edit_box_.redraw();
+}
+
+// ORIGINAL: 0x00407E80 ?on_listbox_scroll_create@AlphaSave@@QAEHXZ 0x00407E80-0x00407ECA BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00407e80.cpp;src/popup.cpp:Popup::on_listbox_scroll_create;src/alphasave.h:scroll_"], "reason": "AlphaSave owns the Scroll at 0x3DD8; original call sequence matches the typed Popup scroll-create pattern and seed evidence"}
+// symbol    ?on_listbox_scroll_create@AlphaSave@@UAEPAVScroll@@XZ
+// Deleted seed provenance: git:28a4ec38e1680226fae6cf691d558aea79d7185d:src/recovered/units/00407e80.cpp
+Scroll *AlphaSave::on_listbox_scroll_create() {
+    scroll_normal();
+    scroll_.init(0x147, 0x15, 0x18, 0xd8, this, -1, 1);
+    scroll_.hide();
+    if (Win::is_visible()) {
+        scroll_show(this, &scroll_);
+    }
+    return &scroll_;
+}
+
+// ORIGINAL: 0x00407ED0 ?on_listbox_scroll_delete@AlphaSave@@QAEHPAUScroll@@@Z 0x00407ED0-0x00407EF3 BYTE_EXACT
+// symbol    ?on_listbox_scroll_delete@AlphaSave@@UAEPAVScroll@@PAV2@@Z
+Scroll *AlphaSave::on_listbox_scroll_delete(Scroll *scroll) {
+    if (Win::is_visible()) {
+        scroll_hide(this, scroll);
+    }
+    return 0;
+}
+
+// The EditBox deleting entries share the header-owned lifetime and its
+// independent AlphaSave-TU emission. The pinned constructor links their
+// Win/Buffer slots to these original identities. Binding rationales
+// retain older editbox.cpp owner-copy observations as historical
+// evidence, not current linked-selection proof; the class definition
+// remains in editbox.h.
+// ORIGINAL: 0x004083A0 ??_GEditBox@@WEEE@AEPAXI@Z 0x004083A0-0x004083AB FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original ??_GEditBox@@WEEE@AEPAXI@Z at 0x004083a0 is an 11-byte secondary scalar deleting adjustor; it subtracts 0x444 from ECX and tail-jumps to the complete-object EditBox scalar deleting entry without touching stack or flags.", "Historical seed correction: the earlier `??3` deallocation interpretation was refuted; the original is a `??_G` scalar-deleting adjustor. `WEEE` demangles to adjustor{1092}, equal to 0x444.", "Pinned EditBox constructor at 0x00614e8a stores Buffer-view vftable 0x0066a030 at this+0x444; the source owner is the typed EditBox GraphicWin/Buffer multiple-inheritance view.", "Current src/editbox.cpp COFF Buffer-view vftable first slot selects generated ??_EEditBox@@WEEE@AEPAXI@Z; its body performs the same 0x444 adjustment and preserves the flag argument.", "Current EditBox COFF weak external ??_EEditBox@@UAEPAXI@Z records search mode 2 (library search) and fallback target ??_GEditBox@@UAEPAXI@Z; this linked image resolves both primary labels to the same physical class deleting body. The object fallback and linked address are per-build evidence, not a general E/G equivalence or owner-selection rule.", "That measured current primary body calls EditBox::~EditBox, tests flags bit 0, calls operator delete only when bit 0 is set, returns the saved object pointer, and uses ret 4; this is the per-class measured E-to-G scalar path, not a general vector/scalar equivalence.", "The removed transitional C++ names were ?adjust_this_edit_box@@YIPAXPAX0I@Z and ?scalar_delete_edit_box@@YIPAXPAX0I@Z; no callers exist outside deleting_thunks.cpp/.h, and the current generated Buffer vftable uses the class-owned E adjustor instead.", "Historical seed metadata noted flags hidden;sp_ready;purged_ok, zero direct callers, and no direct call targets. These remain historical observations only; they do not establish virtual-dispatch completeness or acceptance.", "The old secondary record had no BYTE_EXACT or SEMANTIC claim. Its original identity, full span, kind and parsed history are moved unchanged; no matching claim is granted."], "reason": "Bind the pinned secondary scalar deleting identity for EditBox to its measured genuine Buffer-view generated adjustor. Keep the original G identity and point its current symbol fact at the owner-emitted E adjustor; the per-object weak fallback and bit-0 path above establish why this exact current implementation preserves the original operation."}
+// symbol    ??_EEditBox@@WEEE@AEPAXI@Z
+// kind      game
+// ORIGINAL: 0x00408080 ??_GEditBox@@UAEPAXI@Z 0x00408080-0x004080A1 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["historical deleting-thunk source src/deleting_thunks.cpp; original full spans retained: 0x00408080-0x004080A1", "Pinned class constructor ??0EditBox@@QAE@XZ at 0x00614E50 stores original class/view table VA 0x66a038 at 0x00614E84 (mov dword ptr [esi], 0x66a038); the current genuine owner vftable ??_7EditBox@@6BWin@@@ selects generated ??_GEditBox@@UAEPAXI@Z in slot 0 (+0x0) through weak entry ??_EEditBox@@UAEPAXI@Z (mode 2).", "Pinned ??_GEditBox@@UAEPAXI@Z at 0x00408080 calls the source-mapped ??1EditBox@@QAE@XZ at 0x00408010, then tests byte ptr [ebp + 8], 1; je 0x40809a bypasses scalar delete when bit 0 is clear, while bit 0 set calls 0x0064557F; it save original this; call destructor; delete only when flags bit 0 is set; return saved this with ret 4.", "The real class lifetime is owned by src/editbox.cpp; its compiler-emitted deleting symbol and vftable slot carry this original identity. Hand-written adapter bodies with live adjustor callers remain until those callers are independently qualified and transferred. The linked weak/COMDAT copy is not used to choose source ownership.", "the source writer preserves the historical mapping's exactness state (historical exactness obligation retained); current compiler extent is not asserted equal to the original span"], "reason": "Bind the original EditBox scalar deleting-destructor identity to the actual compiler-emitted class deleting destructor in its genuine owner translation unit. The original constructor's pinned vptr store and the current owner's physical table slot identify this class/view; no callback/thunk body is hand-authored here."}
+// symbol    ??_GEditBox@@UAEPAXI@Z
+// kind      game
+// These independent destructor mappings are emitted in this translation
+// unit from their real class-header definitions. AlphaSave destruction
+// also expands the same member lifetimes; it is a separate mapping.
+/*
+Purpose: Tear down a FileWin: close it, then destroy the ListBox, EditBox and
+         two FlatButton members in reverse declaration order. C++ owns the
+         member/base destruction and partial-construction unwind.
+// ORIGINAL: 0x00407F00 ??1FileWin@@QAE@XZ 0x00407F00-0x00408003;0x00650C80-0x00650CE8 FILE BYTE_EXACT
+// body src/jackal/filewin.h
+// size      363 bytes
+// prototype void (__thiscall ??1FileWin@@QAE@XZ)(FileWin* this)
+// callers   2   call targets   8
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D4DD0 0x00607040 0x00607DA0 0x00608E10 0x00609EC0 0x00613900 0x00614F30 0x00616200
+// TRIED: MEASURED 14/62 agreeing with named members - better than the
+//            preserved artifact's raw-offset form (src/recovered/units/
+//            00407f00.cpp, since deleted, reported divergence 1 against a
+//            DIFFERENT flag set/scaffold). First mismatch is again register
+//            allocation (`sub esp,8` vs `,0xc`; `push esi` vs `push ebx`)
+//            starting right after the SEH prologue, which matches through
+//            instruction 6.
+Return Value: n/a
+Status: Complete
+*/
+
+// ORIGINAL: 0x00408010 ??1EditBox@@QAE@XZ 0x00408010-0x00408077;0x00650CF0-0x00650D10 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00408010.cpp", "Original constructor/destructor direct-call receivers and unwind stages"], "reason": "408010 closes EditBox then destroys its Time member and nonvirtual GraphicWin base; normal and unwind paths agree."}
+// body src/jackal/editbox.h
+// Deleted seed provenance: git:ee30a69d14801283c26950b1385f39f087e6d82b:src/unrecovered/00408010.cpp
+// symbol    ??1EditBox@@UAE@XZ
+
+// ORIGINAL: 0x004080E0 ?on_scrolling@AlphaSave@@QAEXHH@Z 0x004080E0-0x0040810C BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004080e0.cpp and original symbol"], "reason": "Existing AlphaSave owner forwards to its typed FileWin subobjects; original symbol and seed establish identity and extent"}
+// symbol    ?on_scrolled@AlphaSave@@UAEXHH@Z
+// Deleted seed provenance: git:28a4ec38e1680226fae6cf691d558aea79d7185d:src/recovered/units/004080e0.cpp
+void AlphaSave::on_scrolled(int code, int pos) {
+    // The embedded ListBox dispatches this notification through its Win base.
+    file_win_.list_box().on_scrolled(code, pos);
+}
+
+// ORIGINAL: 0x00408110 ?on_scrolled@AlphaSave@@QAEXHH@Z 0x00408110-0x0040813C BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00408110.cpp and original symbol"], "reason": "Existing AlphaSave owner forwards to its typed FileWin subobjects; original symbol and seed establish identity and extent"}
+// symbol    ?on_scrolling@AlphaSave@@UAEXHH@Z
+// Deleted seed provenance: git:28a4ec38e1680226fae6cf691d558aea79d7185d:src/recovered/units/00408110.cpp
+void AlphaSave::on_scrolling(int code, int pos) {
+    // This is the next Win virtual notification, not ListBox's direct handler.
+    file_win_.list_box().on_scrolling(code, pos);
+}
+
+// ORIGINAL: 0x00408170 ??1AlphaSave@@QAE@XZ 0x00408170-0x00408383;0x00650D10-0x00650E20 BYTE_EXACT
+// body src/alphasave.h
+// symbol    ??1AlphaSave@@UAE@XZ
+// TRIED: plain reinterpret_cast pointer-offset calls into close()/dtors in disasm order; no local subobjects so no SEH frame is generated (diverges at #1, the missing try/finally prologue)
