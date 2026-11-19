@@ -405,16 +405,20 @@ def piece_names(pc):
     return 'object', {name}
 
 
-def pull_deps(host_text, pe, moved_keys):
+def pull_deps(host_text, pe, moved_keys, deps=True):
     """--move --deps: the unmarked pieces of the host that only the moved chunks use travel with them.
     -> (moved chunks with their pieces glued in file order, remaining host text, report lines)"""
     cs = chunks(host_text, pe)
     rep = []
     P = []          # [chunk index, text, kind, names, marked, moved]
     for ci, (k, s) in enumerate(cs):
-        if k in moved_keys:
-            P.append([ci, s, 'moved', set(), True, True]); continue
-        for pc in pieces(s):
+        mv = k in moved_keys
+        pl = pieces(s)
+        for pi, pc in enumerate(pl):
+            has = [bool(ORIG.search(x)) and ('// ORIGINAL: 0x%08X ' % k) in x for x in pl] if mv else []
+            if mv and (has[pi] or (not any(has) and pi == len(pl) - 1)):
+                # the marked piece itself; the unmarked pieces glued in front of it are ordinary candidates
+                P.append([ci, pc, 'moved', set(), True, True]); continue
             kind, names = piece_names(pc)
             ms = list(re.finditer(r'// ORIGINAL: 0x[0-9A-F]{8} (\S+)', pc))
             if ms and kind == 'function' and not any(re.search(r'(?<![A-Za-z0-9_])' + re.escape(nm) + r'(?![A-Za-z0-9_])', m.group(1))
@@ -444,7 +448,7 @@ def pull_deps(host_text, pe, moved_keys):
         changed = False
         used_moved = set().union(*[ID[i] for i, p in enumerate(P) if p[5]]) if any(p[5] for p in P) else set()
         for i, p in enumerate(P):
-            if p[5] or p[4] or not p[3] or i in copies:
+            if p[5] or p[4] or not p[3] or i in copies or not deps:
                 continue
             if not (p[3] & used_moved):
                 continue
@@ -458,7 +462,7 @@ def pull_deps(host_text, pe, moved_keys):
             rep.append('  dep moved: %s %s (%d lines)' % (p[2], ' '.join(sorted(p[3])), p[1].count('\n')))
     used_moved = set().union(*[ID[i] for i, p in enumerate(P) if p[5]]) if any(p[5] for p in P) else set()
     for i, p in enumerate(P):
-        if not p[5] and not p[4] and i not in copies and p[3] & used_moved:
+        if deps and not p[5] and not p[4] and i not in copies and p[3] & used_moved:
             rep.append('  dep SHARED, left in the host (%s %s; also used by code that stays)' % (p[2], ' '.join(sorted(p[3]))))
     # glue: every pulled piece goes in front of the next moved chunk in file order (the last one when none follows)
     order = [i for i, p in enumerate(P) if p[5] or i in copies]
@@ -477,7 +481,12 @@ def pull_deps(host_text, pe, moved_keys):
     moved = []
     for i in mchunks:
         k = cs[P[i][0]][0]
-        moved.append([k, out[i] + P[i][1] + (tailadd if i == mchunks[-1] else '')])
+        if moved and moved[-1][0] == k:
+            moved[-1][1] += out[i] + P[i][1]        # a chunk's marker block and its last piece
+        else:
+            moved.append([k, out[i] + P[i][1]])
+    if moved:
+        moved[-1][1] += tailadd
     keep = host_text[:pe] + ''.join(p[1] for i, p in enumerate(P) if not p[5])
     return moved, keep, rep
 
@@ -608,18 +617,11 @@ def merge(srcs, into, dry=False, addrs=None, top=False, with_inc=None, new_like=
             deprep += rep
             objnames |= onames
         incs, defs, cs = split_foreign(R + '/' + s, ts)
-        if addrs is not None and deps:
-            cs, keep_src[s], rep = pull_deps(ts, prelude_end(ts), addrs)
+        if addrs is not None:
+            # a moved function takes only its own piece (and with --deps the unmarked pieces only it uses)
+            cs, keep_src[s], rep = pull_deps(ts, prelude_end(ts), addrs, deps)
             deprep += rep
             cs = ocs + cs
-        elif addrs is not None:
-            mine = [c for c in cs if c[0] in addrs]
-            # a moved function takes only its own item text: re-chunk without glue
-            keep = ts
-            for c in mine:
-                keep = keep.replace(c[1], '', 1)
-            keep_src[s] = keep
-            cs = ocs + mine
         elif defs:
             warn.append('%s: unit-level preprocessor lines before/among the includes: %s' % (s, '; '.join(d.strip() for d in defs)))
         for inc in incs:
