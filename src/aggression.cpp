@@ -288,10 +288,10 @@ int __cdecl steal_tech(int faction_id, int faction_id_with,
         ? const_cast<char *>
 // Technology selection and the stolen-technology popup use these distinct script topics.
 // Bounds cover the literal payload, not surrounding allocation or lifetime.
-// RECOVERY_LITERAL: v1 0x0068A334 0x0068A33E $SG62892 0x0050C340
+// RECOVERY_LITERAL: v1 0x0068A334 0x0068A33E $SG62893 0x0050C340
             ("STEALTECH")
         : const_cast<char *>
-// RECOVERY_LITERAL: v1 0x0068A340 0x0068A34C $SG62893 0x0050C340
+// RECOVERY_LITERAL: v1 0x0068A340 0x0068A34C $SG62894 0x0050C340
             ("ACQUIRETECH");
     int cost = tech_pick(faction_id, 0, faction_id_with, topic);
     if (cost < 0) {
@@ -311,7 +311,7 @@ int __cdecl steal_tech(int faction_id, int faction_id_with,
         StringTemp[0] = '\0';
         say_tech(StringTemp, cost, 0);
         parse_says(1, StringTemp, -1, -1);
-// RECOVERY_LITERAL: v1 0x0068A34C 0x0068A356 $SG62898 0x0050C340
+// RECOVERY_LITERAL: v1 0x0068A34C 0x0068A356 $SG62899 0x0050C340
         NetMsgPrimary.pop("STOLETECH", 5000, 0, NULL);
     }
 

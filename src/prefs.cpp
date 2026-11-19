@@ -572,7 +572,7 @@ static __forceinline void prefs_put_inline(LPCSTR key_name, int value, BOOL tgl_
     WritePrivateProfileStringA(PrefsSection, key_name, StringTemp, PrefsFile);
 }
 
-// RECOVERY_LITERAL: v1 0x00690208 0x00690215 $SG51428 0x0059E5D0
+// RECOVERY_LITERAL: v1 0x00690208 0x00690215 $SG51429 0x0059E5D0
 /*
 Purpose: Save the most common preferences from memory to the game's ini. 
 // ORIGINAL: 0x0059E5D0 ?prefs_save@@YAXH@Z 0x0059E5D0-0x0059E946 BYTE_EXACT

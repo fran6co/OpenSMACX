@@ -1774,7 +1774,7 @@ void DesignWin::draw_special_1(int redraw) {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x228 / 4));
     strcat(StringTemp, BufferJoinSpace);
-// RECOVERY_LITERAL: v1 0x00683554 0x00683556 $SG61611 0x00435B30
+// RECOVERY_LITERAL: v1 0x00683554 0x00683556 $SG61612 0x00435B30
     strcat(StringTemp, "1"); // Original first special-ability title numeral.
     CharUpperA(StringTemp);
     Buffer::set_text_color(TextColourTable[156], TextColourTable[157], 1, 1);
@@ -1820,7 +1820,7 @@ void DesignWin::draw_special_2(int redraw) {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x228 / 4));
     strcat(StringTemp, BufferJoinSpace);
-// RECOVERY_LITERAL: v1 0x00683560 0x00683562 $SG61624 0x00435DE0
+// RECOVERY_LITERAL: v1 0x00683560 0x00683562 $SG61625 0x00435DE0
     strcat(StringTemp, "2"); // Original second special-ability title numeral.
     CharUpperA(StringTemp);
     Buffer::set_text_color(TextColourTable[156], TextColourTable[157], 1, 1);

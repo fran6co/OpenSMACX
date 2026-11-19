@@ -101,7 +101,7 @@ FileWin::FileWin() {
     file_name_[0] = 0;
     extension_count_ = 0;
     directory_[0] = 0;
-// RECOVERY_LITERAL: v1 0x00697118 0x0069711A $SG45378 0x00613850
+// RECOVERY_LITERAL: v1 0x00697118 0x0069711A $SG45379 0x00613850
     strcat(directory_, ".");
     modal_window_ = 0;
     directory_list_handle_ = 0;
@@ -144,7 +144,7 @@ void FileWin::close() {
     file_name_[0] = 0;
     extension_count_ = 0;
     directory_[0] = 0;
-// RECOVERY_LITERAL: v1 0x0069711C 0x0069711E $SG45382 0x00613900
+// RECOVERY_LITERAL: v1 0x0069711C 0x0069711E $SG45383 0x00613900
     strcat(directory_, ".");
     shared_sprite1_.close();
     shared_sprite0_.close();
@@ -248,7 +248,7 @@ int FileWin::init(char *, GraphicWin *parent, FileWinConstruct *parameters) {
 int FileWin::prepare_sprites() {
     Buffer sheet;
     int result;
-// RECOVERY_LITERAL: v1 0x00697128 0x00697133 $SG45449 0x00613BA0
+// RECOVERY_LITERAL: v1 0x00697128 0x00697133 $SG45450 0x00613BA0
     if (sheet.load_pcx("jackal.pcx", 0, 10, 0xEC) != 0) {
         result = shared_sprite1_.create_blank(0x10, 0x10, 9);
         if (result != 0) return result;
@@ -898,8 +898,8 @@ int __cdecl FileWin::init_class() {
         free(s_filewin_text_ptr);
         s_filewin_text_ptr = nullptr;
     }
-// RECOVERY_LITERAL: v1 0x006971CC 0x006971D4 $SG45729 0x00614D90
-// RECOVERY_LITERAL: v1 0x006971D4 0x006971DB $SG45730 0x00614D90
+// RECOVERY_LITERAL: v1 0x006971CC 0x006971D4 $SG45730 0x00614D90
+// RECOVERY_LITERAL: v1 0x006971D4 0x006971DB $SG45731 0x00614D90
     if (text_open("jackal", "FILEWIN") != 0) {
         return 6;
     }

@@ -147,15 +147,15 @@ int __cdecl X_text_open(char *src_file_id, const char *section_id) {
 // NOTE: code bytes match the image with relocations masked; recover measure
 //       refuses it while ConsoleInfoWin/WorldClimateWorldWin lack bounded
 //       object spans. The image keeps two "unitfound_sm.pcx" literals (unpooled).
-// RECOVERY_LITERAL: v1 0x00691BF8 0x00691C09 $SG65289 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C0C 0x00691C19 $SG65290 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C1C 0x00691C2D $SG65293 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C30 0x00691C3B $SG65294 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C3C 0x00691C4C $SG65297 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C4C 0x00691C58 $SG65298 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C58 0x00691C60 $SG65305 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C60 0x00691C72 $SG65307 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C74 0x00691C7F $SG65308 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691BF8 0x00691C09 $SG65290 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C0C 0x00691C19 $SG65291 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C1C 0x00691C2D $SG65294 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C30 0x00691C3B $SG65295 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C3C 0x00691C4C $SG65298 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C4C 0x00691C58 $SG65299 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C58 0x00691C60 $SG65306 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C60 0x00691C72 $SG65308 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C74 0x00691C7F $SG65309 0x005BED20
 int __cdecl do_unity_crash(int x, int y, int faction_id) {
     const uint32_t event = MapTiles[static_cast<int>(MapLongitude) * y + (x >> 1)].bit2;
     if ((event & 0x80004000u) != 0x4000u) {
@@ -901,12 +901,12 @@ int __cdecl X_pop(char *caption, const char *label, int a3, char *a4, int a5,
     // alienuscript.txt: only an expansion alien faction redirects these
     // two captions.
     if (strcmp(caption, XPopModCheckString1()) == 0 ||
-// RECOVERY_LITERAL: v1 0x00691C80 0x00691C8B $SG65556 0x005BF480
+// RECOVERY_LITERAL: v1 0x00691C80 0x00691C8B $SG65557 0x005BF480
         strcmp(caption, "SCRIPT.txt") == 0) {
         if ((Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) != 0) {
             if (ExpansionEnabled != 0) {
-// RECOVERY_LITERAL: v1 0x00691C90 0x00691CA1 $SG65561 0x005BF480
-// RECOVERY_LITERAL: v1 0x00691C8C 0x00691C8F $SG65560 0x005BF480
+// RECOVERY_LITERAL: v1 0x00691C90 0x00691CA1 $SG65562 0x005BF480
+// RECOVERY_LITERAL: v1 0x00691C8C 0x00691C8F $SG65561 0x005BF480
                 FILE *const fp = fopen("alienIscript.txt", "rb");
                 if (fp != nullptr) {
                     fclose(fp);
@@ -920,8 +920,8 @@ int __cdecl X_pop(char *caption, const char *label, int a3, char *a4, int a5,
                   PopupDialogFactionID < 8 &&
                   (Players[PopupDialogFactionID].rule_flags &
                    RFLAG_ALIEN) != 0) {
-// RECOVERY_LITERAL: v1 0x00691CA8 0x00691CB9 $SG65570 0x005BF480
-// RECOVERY_LITERAL: v1 0x00691CA4 0x00691CA7 $SG65569 0x005BF480
+// RECOVERY_LITERAL: v1 0x00691CA8 0x00691CB9 $SG65571 0x005BF480
+// RECOVERY_LITERAL: v1 0x00691CA4 0x00691CA7 $SG65570 0x005BF480
             FILE *const fp = fopen("alienuscript.txt", "rb");
             if (fp != nullptr) {
                 fclose(fp);
@@ -1000,16 +1000,16 @@ int __cdecl X_pop_ask(char *caption, const char *label, int value,
 
     char *const section = const_cast<char *>(label);
     if (strcmp(caption, XPopModCheckString1()) != 0 &&
-// RECOVERY_LITERAL: v1 0x00691CF8 0x00691D03 $SG65622 0x005BFBC0
+// RECOVERY_LITERAL: v1 0x00691CF8 0x00691D03 $SG65623 0x005BFBC0
         strcmp(caption, "SCRIPT.txt") != 0) {
         return pop_ask(caption, section, value, text, callback, flags);
     }
 
     if ((Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) != 0) {
         if (ExpansionEnabled != 0) {
-// RECOVERY_LITERAL: v1 0x00691D08 0x00691D19 $SG65627 0x005BFBC0
+// RECOVERY_LITERAL: v1 0x00691D08 0x00691D19 $SG65628 0x005BFBC0
             FILE *const file = fopen("alienIscript.txt",
-// RECOVERY_LITERAL: v1 0x00691D04 0x00691D07 $SG65626 0x005BFBC0
+// RECOVERY_LITERAL: v1 0x00691D04 0x00691D07 $SG65627 0x005BFBC0
                                           "rb");
             if (file != nullptr) {
                 fclose(file);
@@ -1021,9 +1021,9 @@ int __cdecl X_pop_ask(char *caption, const char *label, int value,
     } else if (ExpansionEnabled != 0 && PopupDialogFactionID > 0 &&
                PopupDialogFactionID < 8 &&
                (Players[PopupDialogFactionID].rule_flags & RFLAG_ALIEN) != 0) {
-// RECOVERY_LITERAL: v1 0x00691D20 0x00691D31 $SG65635 0x005BFBC0
+// RECOVERY_LITERAL: v1 0x00691D20 0x00691D31 $SG65636 0x005BFBC0
         FILE *const file = fopen("alienuscript.txt",
-// RECOVERY_LITERAL: v1 0x00691D1C 0x00691D1F $SG65634 0x005BFBC0
+// RECOVERY_LITERAL: v1 0x00691D1C 0x00691D1F $SG65635 0x005BFBC0
                                       "rb");
         if (file != nullptr) {
             fclose(file);
@@ -1088,16 +1088,16 @@ int __cdecl X_pop_ask_number(char *caption, const char *label, int value,
 
     char *const section = const_cast<char *>(label);
     if (strcmp(caption, XPopModCheckString1()) != 0 &&
-// RECOVERY_LITERAL: v1 0x00691D34 0x00691D3F $SG65662 0x005BFD70
+// RECOVERY_LITERAL: v1 0x00691D34 0x00691D3F $SG65663 0x005BFD70
         strcmp(caption, "SCRIPT.txt") != 0) {
         return pop_ask_number(caption, section, value, callback);
     }
 
     if ((Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) != 0) {
         if (ExpansionEnabled != 0) {
-// RECOVERY_LITERAL: v1 0x00691D44 0x00691D55 $SG65667 0x005BFD70
+// RECOVERY_LITERAL: v1 0x00691D44 0x00691D55 $SG65668 0x005BFD70
             FILE *const file = fopen("alienIscript.txt",
-// RECOVERY_LITERAL: v1 0x00691D40 0x00691D43 $SG65666 0x005BFD70
+// RECOVERY_LITERAL: v1 0x00691D40 0x00691D43 $SG65667 0x005BFD70
                                           "rb");
             if (file != nullptr) {
                 fclose(file);
@@ -1109,9 +1109,9 @@ int __cdecl X_pop_ask_number(char *caption, const char *label, int value,
     } else if (ExpansionEnabled != 0 && PopupDialogFactionID > 0 &&
                PopupDialogFactionID < 8 &&
                (Players[PopupDialogFactionID].rule_flags & RFLAG_ALIEN) != 0) {
-// RECOVERY_LITERAL: v1 0x00691D5C 0x00691D6D $SG65675 0x005BFD70
+// RECOVERY_LITERAL: v1 0x00691D5C 0x00691D6D $SG65676 0x005BFD70
         FILE *const file = fopen("alienuscript.txt",
-// RECOVERY_LITERAL: v1 0x00691D58 0x00691D5B $SG65674 0x005BFD70
+// RECOVERY_LITERAL: v1 0x00691D58 0x00691D5B $SG65675 0x005BFD70
                                       "rb");
         if (file != nullptr) {
             fclose(file);
@@ -1156,7 +1156,7 @@ int __cdecl X_pops(char *caption, const char *label, int text_length,
 
     char *const mutable_label = const_cast<char *>(label);
     if (strcmp(caption, XPopModCheckString1()) != 0 &&
-// RECOVERY_LITERAL: v1 0x00691CBC 0x00691CC7 $SG65709 0x005BF930
+// RECOVERY_LITERAL: v1 0x00691CBC 0x00691CC7 $SG65710 0x005BF930
         strcmp(caption, "SCRIPT.txt") != 0) {
         return pops(caption, mutable_label, text_length, text, value,
                     sprite, flag_a, flag_b, callback);
@@ -1164,9 +1164,9 @@ int __cdecl X_pops(char *caption, const char *label, int text_length,
 
     if ((Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) != 0) {
         if (ExpansionEnabled != 0) {
-// RECOVERY_LITERAL: v1 0x00691CCC 0x00691CDD $SG65714 0x005BF930
+// RECOVERY_LITERAL: v1 0x00691CCC 0x00691CDD $SG65715 0x005BF930
             FILE *const file = fopen("alienIscript.txt",
-// RECOVERY_LITERAL: v1 0x00691CC8 0x00691CCB $SG65713 0x005BF930
+// RECOVERY_LITERAL: v1 0x00691CC8 0x00691CCB $SG65714 0x005BF930
                                           "rb");
             if (file != 0) {
                 fclose(file);
@@ -1181,9 +1181,9 @@ int __cdecl X_pops(char *caption, const char *label, int text_length,
     } else if (ExpansionEnabled != 0 && PopupDialogFactionID > 0 &&
                PopupDialogFactionID < 8 &&
                (Players[PopupDialogFactionID].rule_flags & RFLAG_ALIEN) != 0) {
-// RECOVERY_LITERAL: v1 0x00691CE4 0x00691CF5 $SG65723 0x005BF930
+// RECOVERY_LITERAL: v1 0x00691CE4 0x00691CF5 $SG65724 0x005BF930
         FILE *const file = fopen("alienuscript.txt",
-// RECOVERY_LITERAL: v1 0x00691CE0 0x00691CE3 $SG65722 0x005BF930
+// RECOVERY_LITERAL: v1 0x00691CE0 0x00691CE3 $SG65723 0x005BF930
                                       "rb");
         if (file != 0) {
             fclose(file);

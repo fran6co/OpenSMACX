@@ -426,16 +426,16 @@ void PickWin::init(void (__cdecl *callback)(int), int mode, int faction) {
 // operand at the relocation site and checked against the literal text in
 // the body; the repeated "JENN282" and "|" are separate unpooled copies at
 // distinct addresses, in source order.
-// RECOVERY_LITERAL: v1 0x00686AD0 0x00686AD9 $SG51149 0x00489BA0
-// RECOVERY_LITERAL: v1 0x00686ADC 0x00686AE8 $SG51153 0x00489BA0
-// RECOVERY_LITERAL: v1 0x00686AE8 0x00686AF0 $SG51163 0x00489BA0
-// RECOVERY_LITERAL: v1 0x00686AF0 0x00686AF8 $SG51164 0x00489BA0
-// RECOVERY_LITERAL: v1 0x00686AF8 0x00686B00 $SG51172 0x00489BA0
-// RECOVERY_LITERAL: v1 0x00686B00 0x00686B02 $SG51173 0x00489BA0
-// RECOVERY_LITERAL: v1 0x00686B04 0x00686B0C $SG51204 0x00489BA0
-// RECOVERY_LITERAL: v1 0x00686B0C 0x00686B14 $SG51205 0x00489BA0
-// RECOVERY_LITERAL: v1 0x00686B14 0x00686B1C $SG51214 0x00489BA0
-// RECOVERY_LITERAL: v1 0x00686B1C 0x00686B1E $SG51215 0x00489BA0
+// RECOVERY_LITERAL: v1 0x00686AD0 0x00686AD9 $SG51150 0x00489BA0
+// RECOVERY_LITERAL: v1 0x00686ADC 0x00686AE8 $SG51154 0x00489BA0
+// RECOVERY_LITERAL: v1 0x00686AE8 0x00686AF0 $SG51164 0x00489BA0
+// RECOVERY_LITERAL: v1 0x00686AF0 0x00686AF8 $SG51165 0x00489BA0
+// RECOVERY_LITERAL: v1 0x00686AF8 0x00686B00 $SG51173 0x00489BA0
+// RECOVERY_LITERAL: v1 0x00686B00 0x00686B02 $SG51174 0x00489BA0
+// RECOVERY_LITERAL: v1 0x00686B04 0x00686B0C $SG51205 0x00489BA0
+// RECOVERY_LITERAL: v1 0x00686B0C 0x00686B14 $SG51206 0x00489BA0
+// RECOVERY_LITERAL: v1 0x00686B14 0x00686B1C $SG51215 0x00489BA0
+// RECOVERY_LITERAL: v1 0x00686B1C 0x00686B1E $SG51216 0x00489BA0
 // ORIGINAL: 0x00489BA0 ?on_button_clicked@PickWin@@QAEXH@Z 0x00489BA0-0x0048A798;0x00657F85-0x006581C9 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00489ba0.cpp"], "reason": "Recover genuine typed PickWin owner behavior and automatic subobject lifetime from pinned native flow and preserved seed; historical identity and restoration obligations retained, no exactness claim."}
 // TRIED: automatic C++ RAII destruction for Popup/PullDown's ~20 embedded subobjects (Dialogs, EditGroup, SpriteBox, CheckBox, ListBox, Dialog, Sprite, StringStruct x2, FlatButton x2, Heap, nested GraphicWin) - the scaffold's classes represent several of these as raw byte/uint32 padding, so auto-generated dtors would skip real cleanup the original calls explicitly. Used mechanical EBP(x)-buffer-offset transcription (verified against pickwin.h's `Popup popup_` size comment == sizeof(BasePop)+sizeof(Scroll), and cross-checked field offsets against pickwin.h directly) instead, matching each explicit close()/dtor call site.

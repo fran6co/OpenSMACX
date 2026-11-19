@@ -216,7 +216,7 @@ void Flic::close() {
     }
 }
 
-// RECOVERY_LITERAL: v1 0x00697470 0x00697473 $SG40689 0x00629E50
+// RECOVERY_LITERAL: v1 0x00697470 0x00697473 $SG40690 0x00629E50
 /*
 Purpose: Open a FLIC file and prepare the first frame: zero the per-file
          state, read and validate the 128-byte header, cache both ring

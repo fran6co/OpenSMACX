@@ -1289,7 +1289,7 @@ Status: Complete
 */
 void __cdecl world_climate() {
     do_checksums(2);
-// RECOVERY_LITERAL: v1 0x00691E2C 0x00691E4A $SG58510 0x005C5A30
+// RECOVERY_LITERAL: v1 0x00691E2C 0x00691E4A $SG58511 0x005C5A30
     log_say("-- ADJUSTING WORLD CLIMATE --", 0, 0, 0);
     world_shorelines();
     world_temperature();
@@ -1313,7 +1313,7 @@ void __cdecl world_climate() {
         WorldClimateWorldWin.clear_terrain();
     }
 
-// RECOVERY_LITERAL: v1 0x00691E4C 0x00691E69 $SG58519 0x005C5A30
+// RECOVERY_LITERAL: v1 0x00691E4C 0x00691E69 $SG58520 0x005C5A30
     log_say("-- WORLD CLIMATE COMPLETE --", 0, 0, 0);
     do_checksums(3);
 }
