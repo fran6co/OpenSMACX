@@ -296,9 +296,7 @@ void NetSessionPickerWin::refresh_player_list() {
   // Native63C874 reloads the virtual Dialog view between the two clears.
   // Each call's following stores use that call's captured list receiver.
   StringList &items = sessions_view_.item_list_;
-  items.remove_all();
-  items.current_position_ = 0;
-  items.allocator_ = 0;
+  items.reset();
 
   if (sessions_.entry_count_ == 0) {
     view->item("NO SESSIONS (Translate this)", 0);

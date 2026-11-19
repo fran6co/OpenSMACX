@@ -230,9 +230,7 @@ void Datalink::draw_unit() {
     write_cent_l(StringTemp, &title_rect_);
     rect.left += illustration_rect_.right - illustration_rect_.left + 3;
     char number[80];
-    description.remove_all();
-    description.current_position_ = 0;
-    description.allocator_ = 0;
+    description.reset();
     StringTemp[0] = 0;
     const uint8_t mode = Weapon[VehPrototypes[id].weapon_id].mode;
     if (mode < 3) {
@@ -415,9 +413,7 @@ void Datalink::draw_chassis() {
     write_cent_l(StringTemp, &title_rect_);
     rect.left += illustration_rect_.right - illustration_rect_.left + 3;
     char number[80];
-    description.remove_all();
-    description.current_position_ = 0;
-    description.allocator_ = 0;
+    description.reset();
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x1C / 4));
     strcat(StringTemp, SocialWinColonSpaceText);
@@ -555,9 +551,7 @@ void Datalink::draw_reactor() {
     parse_says(1, tech_name(tech, 0), -1, -1);
     const int link = tech + 140000;
     parse_num(1, link);
-    description.remove_all();
-    description.current_position_ = 0;
-    description.allocator_ = 0;
+    description.reset();
     description.load(DatalinkHelpFile, "HELPREACTOR", 1, 0);
     set_font(&body_font_, 0, 0, tech >= 0 ? &link_font_ : 0);
     set_text_color(0x98, -1, 1, 1);
@@ -692,9 +686,7 @@ void Datalink::draw_defense() {
     parse_says(2, tech_name(technology, 0), -1, -1);
     const int link = technology + 140000;
     parse_num(2, link);
-    help.remove_all();
-    help.current_position_ = 0;
-    help.allocator_ = 0;
+    help.reset();
     help.load(DatalinkHelpFile,
               Armor[armor_id].defense_rating < 0 ? "HELPDEFENSE2" : "HELPDEFENSE", 1, 0);
     set_font(&body_font_, 0, 0, technology >= 0 ? &link_font_ : 0);
@@ -780,9 +772,7 @@ void Datalink::draw_ability() {
     parse_say(2, Ability[ability_id].description, -1, -1);
     parse_says(3, StringTemp, -1, -1);
     parse_num(0, technology + 140000);
-    help.remove_all();
-    help.current_position_ = 0;
-    help.allocator_ = 0;
+    help.reset();
     help.load(DatalinkHelpFile, "HELPABIL", 1, 0);
     set_font(&body_font_, 0, 0, &link_font_);
     set_text_color(0x98, -1, 1, 1);

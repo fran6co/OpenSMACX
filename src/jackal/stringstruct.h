@@ -269,6 +269,15 @@ class StringStruct : public virtual StringAllocationBase {
 #endif
     current_position_ = 0;
   }
+  // WORKAROUND(decl): the name is descriptive. Explicit list clears drain
+  // and then store +0x14 and +0x18 through the one receiver register that
+  // carried the drain call (ProdPicker::calculate 0x00492FBB..0x00492FF1,
+  // NetSessionPickerWin 0x0063C874): one inline member body.
+  void reset() {
+    remove_all();
+    current_position_ = 0;
+    allocator_ = 0;
+  }
 #ifdef STRINGSTRUCT_REMOVE_ALL_CALLED
   // WORKAROUND(inline): Datalink's drawers call 0x00402970 out of line for
   // their explicit clear (0x0042CB5F, 0x0042D7CA) while the destructor walks

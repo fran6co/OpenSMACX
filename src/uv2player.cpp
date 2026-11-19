@@ -376,9 +376,7 @@ void UV2Player::show_post_movie_text() {
         text_get();
         LPSTR help_line = text_get();
 
-        help_lines.remove_all();
-        help_lines.current_position_ = 0;
-        help_lines.allocator_ = 0;
+        help_lines.reset();
         while (help_line != 0 && help_line[0] != '\0') {
             if (help_line[0] == '@') {
                 help_lines.load(DatalinkHelpFile, help_line + 1, 0, 0);

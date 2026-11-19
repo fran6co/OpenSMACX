@@ -16,9 +16,6 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
-// WORKAROUND(decl): calculate calls StringStruct::remove_all (0x00402970)
-// out of line for all three lists (0x00492FC3..0x00492FE9).
-#define STRINGSTRUCT_REMOVE_ALL_OUT_OF_LINE
 #include "font_metrics.h"
 #include "interface_fonts.h"
 #include "basepop.h"
@@ -534,15 +531,9 @@ void ProdPicker::calculate() {
     char active[80];
     char queued[80];
 
-    prod_a_.remove_all();
-    prod_a_.current_position_ = 0;
-    prod_a_.allocator_ = 0;
-    prod_b_.remove_all();
-    prod_b_.current_position_ = 0;
-    prod_b_.allocator_ = 0;
-    prod_c_.remove_all();
-    prod_c_.current_position_ = 0;
-    prod_c_.allocator_ = 0;
+    prod_a_.reset();
+    prod_b_.reset();
+    prod_c_.reset();
     field_A818_ = 0;
     field_A774_ = -1;
     field_A77C_ = 0;
