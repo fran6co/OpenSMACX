@@ -376,7 +376,8 @@ int Sprite::extract(Buffer *buffer, int transparent, int left, int top,
         pixels = buffer->get_data(left + iLeftOffset_, top + iTopOffset_);
         uint8_t *out = pcBits_;
         do_sound();
-        for (rows = iSpriteHeight_; rows > 0; rows--) {
+        rows = iSpriteHeight_;
+        while (rows--) {
             memcpy(out, pixels, iSpriteWidth_);
             out += iSpriteWidth_;
             pixels += stride;
