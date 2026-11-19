@@ -3241,6 +3241,15 @@ void ReportWin::on_selected(int selection_id, int) {
     soft_update();
 }
 
+// The specialist row's sprite index is a helper call, the twin of basewin.cpp's
+// psych_specialist_type: inlined, its argument is formed before the Buffer*
+// conversion of the draw call, which then stays in ebx across best_specialist
+// and pushes the loop index into [ebp-0x10] (0x0049E42B..0x0049E4E2).
+static inline int report_specialist_type(int i) {
+    return i >= 16 ? best_specialist()
+        : (BaseCurrent->spec[i >> 3] >> ((i & 7) * 4)) & 15;
+}
+
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0049D540 0x0049EAEC 0x0049EB0C 0x0049D882
 // ORIGINAL: 0x0049D540 ?draw_ops@ReportWin@@QAEXXZ 0x0049D540-0x0049EAEB;0x00659435-0x00659447
 // RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/unrecovered/0049d540.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
@@ -3541,10 +3550,8 @@ void ReportWin::draw_ops() {
                 for (int specialist = 0; specialist < BaseCurrent->specialist_total; ++specialist) {
                     rect1_.left -= spacing;
                     spot_.add(list_index, 0, rect1_.left, rect1_.top, spacing, pitch);
-                    const int index = BaseCurrent->specialist_total - specialist - 1;
-                    const int type = index >= 16 ? best_specialist()
-                        : (BaseCurrent->spec[index >> 3] >> ((index & 7) * 4)) & 15;
-                    g_AL_SPECIALIST_SM_CURSOR_SPRITES[type].draw(this, rect1_.left, rect1_.top);
+                    g_AL_SPECIALIST_SM_CURSOR_SPRITES[report_specialist_type(
+                        BaseCurrent->specialist_total - specialist - 1)].draw(this, rect1_.left, rect1_.top);
                 }
                 for (int drone = 0; drone < BaseCurrent->drone_total; ++drone) {
                     rect1_.left -= spacing;
@@ -3570,10 +3577,8 @@ void ReportWin::draw_ops() {
                 for (int specialist = 0; specialist < BaseCurrent->specialist_total; ++specialist) {
                     rect1_.left -= spacing;
                     spot_.add(list_index, 0, rect1_.left, rect1_.top, spacing, pitch);
-                    const int index = BaseCurrent->specialist_total - specialist - 1;
-                    const int type = index >= 16 ? best_specialist()
-                        : (BaseCurrent->spec[index >> 3] >> ((index & 7) * 4)) & 15;
-                    g_SPECIALIST_SM_CURSOR_SPRITES[type].draw(this, rect1_.left, rect1_.top);
+                    g_SPECIALIST_SM_CURSOR_SPRITES[report_specialist_type(
+                        BaseCurrent->specialist_total - specialist - 1)].draw(this, rect1_.left, rect1_.top);
                 }
                 // UNSURE (the three rng loops): the image loads rect1_.left/top
                 // and the Buffer* conversion into frame slots ([ebp-0x24],
