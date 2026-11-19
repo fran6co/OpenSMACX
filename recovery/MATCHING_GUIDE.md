@@ -4597,6 +4597,20 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   store and later ones lose theirs (ProdPicker::on_scrolled 0x00493CB0).
 - **Two same-type locals in disjoint block scopes share one slot**
   (on_scrolled's two shifted rectangles in a 0x10 frame).
+- **A RECT packs with a later address-taken array** (par-5 2026-11-19,
+  `analysis/probes/rectpack/run.py`). A RECT local whose address is never
+  taken out of line shares its frame slot with a later `char[16]` whose
+  address is passed to a call, whenever their live ranges do not overlap:
+  declaration order, function or block scope, a `RECT *` alias, an inline
+  helper taking `&rect`, a whole-struct copy out and a loop around the array
+  alone all keep the shared 16-byte slot. Only two shapes keep them apart (a
+  32-byte frame): a loop around both uses, or an out-of-line call taking the
+  RECT's address. So an image frame with the RECT and the buffer in separate
+  slots means one of those two, not a declaration change; a shared slot in
+  ours where the image has two means our source lost the loop or the call.
+  NetDaemon::synch's block-local `stage` pointer reached the image frame by
+  sharing one loop counter between source and destination where the image
+  has two: an accidental match, not taken.
 - **One name reused for unrelated values costs a slot or reorders slots,
   even when the live ranges do not overlap** (par-3 2026-11-19). VC6 gives a
   named local one home per name; two disjoint webs under one name are

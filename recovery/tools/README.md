@@ -531,6 +531,13 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   (Net::drop_player 0x00632350: both inner switches A -> exact).
 - `analysis/probes/rettail/run.py [name ...]` probe family for return-tail copies (guards, switch arms, loops, the
   drop_player, veh_init and NetDaemon::init shapes); prints each `ret` copy's value and how it is entered.
+- `analysis/rdeck.py <unit> <addr> VARIANTS.py [KEY,..]` replacement deck: VARIANTS.py defines
+  `V = {key: [(old, new), ...]}` (each old string unique in the unit); ranks the variants by differing rows, writes the
+  named variants under `build/recovery/fe/rd/`, and with `RDF=1` prints each variant's `sub esp` frame line (frame-first
+  judging, MATCHING_GUIDE 1.1).
+- `analysis/probes/rectpack/run.py [name]` probe family behind MATCHING_GUIDE 3.3 "A RECT packs with a later
+  address-taken array": frame and slot map of each RECT/char[16] variant (common loop, out-of-line `&rect` call, block
+  scopes, pointer and copy spellings).
 - `analysis/splitaudit.py <unit> <addr> [--min K] | --from FEALL.json [--rows N] [--keep DIR]` split screen, the reverse
   of imgmerge.py (MATCHING_GUIDE 3.3 "One name over two image homes"; one compile per function, about 8 s): our named
   locals whose paired accesses fall into two or more image homes over disjoint source line ranges, with the first image
