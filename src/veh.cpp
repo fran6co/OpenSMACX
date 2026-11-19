@@ -1969,7 +1969,7 @@ reroll:
         if (PlayersData[faction_id].current_num_bases < 2) goto reroll;
         if (is_sea) goto reroll;
         if (IsMultiplayerNet) goto reroll;
-        if (bounded_crt_random(PlayersData[faction_id].unk_96 * 2 + 2)) goto reroll;
+        if (rnd(PlayersData[faction_id].unk_96 * 2 + 2, "GAHOODY1")) goto reroll;
         PlayersData[faction_id].unk_96++;
         g_FX.play(8);
         world_raise_alt(x, y);
@@ -1978,7 +1978,7 @@ reroll:
             const int tx = wrap_map_x(x + RadiusOffsetX[i]);
             const int ty = y + RadiusOffsetY[i];
             if (on_map(tx, ty)) {
-                if (bit_at(tx, ty) & 4 && !(rand() % 3)) {
+                if (bit_at(tx, ty) & 4 && !rnd(3, "GOODY6")) {
                     bit_set(tx, ty, 4, 0);
                     synch_bit(tx, ty, faction_id);
                 }
@@ -2021,15 +2021,15 @@ reroll:
             && VehPrototypes[Vehs[veh_id].proto_id].plan != 8) {
             radius = (VehPrototypes[Vehs[veh_id].proto_id].plan != 9 ? 16 : 0) + 8;
         } else {
-            if (!(rand() % 2)) goto reroll;
+            if (!rnd(2, "GAHOODY2")) goto reroll;
             radius = 8;
         }
         int tx;
         int ty;
         for (;;) {
-            const int rx = bounded_crt_random(MapLongitudeBounds);
+            const int rx = rnd(MapLongitudeBounds, "GOODY7");
             tx = rx;
-            ty = bounded_crt_random(MapLatitudeBounds);
+            ty = rnd(MapLatitudeBounds, "GOODY8");
             if (rx & 1) {
                 tx = rx - 1;
             }
@@ -2301,8 +2301,8 @@ reroll:
     }
     case 10: {
         if (GameDataStateStorage.fields_.net_turn_flags_ & 2) goto reroll;
-        if (!(rand() % 4)) {
-            const int other = rand() % 7 + 1;
+        if (!rnd(4, "GOODYCOMM")) {
+            const int other = rnd(7, "GOODYCOMM2") + 1;
             if (other != faction_id
                 && !(PlayersData[faction_id].diplo_treaties[other] & DTREATY_COMMLINK)
                 && is_alive(other) && !is_human(other) && is_human(faction_id)
@@ -2335,7 +2335,7 @@ reroll:
                 }
             }
         }
-        const int start = rand() % 89;
+        const int start = rnd(89, "GOODYDATA");
         int i;
         int tech_id;
         for (i = 0; i < 89; i++) {
@@ -2403,14 +2403,14 @@ reroll:
         if (!is_sea) {
             base_find(x, y);
             if (BaseFindDist < 3) goto reroll;
-            which = rand() % 4;
+            which = rnd(4, "GAHOODY3");
         } else {
             which = 0;
         }
         site_radius(x, y, 0);
         int changed = 0;
         for (int i = 0; i < 9; i++) {
-            if (i && !bounded_crt_random(3 - (which > 1))) continue;
+            if (i && !rnd(3 - (which > 1), "GOODYFOREST2")) continue;
             const int tx = wrap_map_x(x + RadiusOffsetX[i]);
             const int ty = y + RadiusOffsetY[i];
             if (!on_map(tx, ty)) continue;
@@ -2576,7 +2576,7 @@ reroll:
     }
     case 18: {
         if (is_sea) {
-            if (rand() % 4) goto reroll;
+            if (rnd(4, "GOODY11")) goto reroll;
         } else if (!Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating) {
             goto reroll;
         }
@@ -2642,7 +2642,7 @@ reroll:
             veh_battle_msg("GOODYRESOURCE", "supply_sm.pcx");
         }
         draw_tile(x, y, 2);
-        if (rand() % 3 && !retry) {
+        if (rnd(3, "GAHOODY4") && !retry) {
             retry = 2;
             goto reroll;
         }

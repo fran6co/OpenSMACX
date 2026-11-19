@@ -1106,7 +1106,7 @@ void __cdecl enemies_trade_tech(int faction_id, int faction_id_with) {
                 }
                 if (eligible) {
                     const int value = tech_val(tech_id, faction_id, FALSE);
-                    const int score = value - 1 <= 0 ? 0 : rand() % value;
+                    const int score = rnd(value, "ENEMIES1");
                     if (score > best_value_to_faction) {
                         best_value_to_faction = score;
                         best_tech_to_faction = tech_id;
@@ -1141,7 +1141,7 @@ void __cdecl enemies_trade_tech(int faction_id, int faction_id_with) {
         }
         if (eligible) {
             const int value = tech_val(tech_id, faction_id_with, FALSE);
-            const int score = value - 1 <= 0 ? 0 : rand() % value;
+            const int score = rnd(value, "ENEMIES2");
             if (score > best_value_to_partner) {
                 best_value_to_partner = score;
                 best_tech_to_partner = tech_id;
@@ -1202,7 +1202,7 @@ void __cdecl enemies_treaty(int faction_id, int faction_id_with,
             } else {
                 threshold = GameDataStateStorage.fields_.diff_level_current_;
             }
-            if (rand() % 16 >= PlayersData[faction_id].ai_fight
+            if ((int)rnd(16, "ENEMIESTREATY") >= PlayersData[faction_id].ai_fight
                     + PlayersData[faction_id_with].ai_fight - threshold + 8) {
                 goto evaluate_existing_state;
             }
@@ -2056,7 +2056,7 @@ void __cdecl enemy_diplomacy(int faction_id) {
         if (PlayersData[faction_id].diplo_treaties[i] & 0x400) {
             int odds = range(8 - ((static_cast<unsigned>(PlayersData[faction_id].diplo_agenda[i]) >> 9) & 2)
                              - PlayersData[i].integrity_blemishes, 1, 8);
-            if (!bounded_crt_random(odds) || (PlayersData[faction_id].diplo_treaties[i] & DTREATY_PACT)) {
+            if (!rnd(odds, "ENEMIES4") || (PlayersData[faction_id].diplo_treaties[i] & DTREATY_PACT)) {
                 if (PlayersData[faction_id].diplo_treaties[i] & DTREATY_PACT) {
                     cause_friction(faction_id, i, 20);
                     PlayersData[faction_id].diplo_treaties[i] &= ~0x20C00u;

@@ -2450,7 +2450,7 @@ void __cdecl base_ecology() {
     int faction = BaseCurrent->faction_id_current;
     int divisor = range(4 - PlayersData[faction].soc_effect_pending.values_[SocialEffect::PLANET], 1, 99);
     PlayersData[faction].unk_49 += BaseCurrent->eco_damage * 4 / divisor;
-    if (rand() % 100 >= BaseCurrent->eco_damage
+    if ((int)rnd(100, "BASEECOLOGY") >= BaseCurrent->eco_damage
             / ((GameDataStateStorage.fields_.game_state_ & 0x100000) ? 2 : 1)) {
         return;
     }
@@ -2512,7 +2512,7 @@ void __cdecl base_ecology() {
                 prob = (prob + 1) / 2;
             }
             prob *= 10;
-            int roll = bounded_crt_random(prob);
+            int roll = rnd(prob, "BASEECOLOGY2");
             if (roll > best_roll) {
                 best_roll = roll;
                 best_index = i;
@@ -2530,7 +2530,7 @@ void __cdecl base_ecology() {
     int spread = 1;
     if (is_ocean(event_x, event_y) && ecology >= 4) {
         int chance = 10 - ecology / 8 - PlayersData[faction].diff_level;
-        if (!bounded_crt_random(chance)) {
+        if (!rnd(chance, "SEASPREAD")) {
             spread = 9;
         }
     }
@@ -2604,9 +2604,9 @@ void __cdecl base_ecology() {
             interlude(5, BaseCurrent->name_string, 1, 0);
         }
     }
-    if (!is_human(faction) && !(rand() % 2)) {
+    if (!is_human(faction) && !rnd(2, "LEADERPLANET1")) {
         int odds = GameDataStateStorage.fields_.diff_level_current_ + 1;
-        if (bounded_crt_random(odds)) {
+        if (rnd(odds, "LEADERPLANET2")) {
             PlayersData[faction].planet_ecology--;
             return;
         }
@@ -3048,7 +3048,7 @@ void __cdecl base_check_support() {
             }
         }
         int divisor = PlayersData[faction].ai_fight + 2;
-        if (bounded_crt_random(divisor)) {
+        if (rnd(divisor, "BASECHECKSUPPORT")) {
             continue;
         }
         int score = map_range(Vehs[veh_id].x, Vehs[veh_id].y, BaseCurrent->x, BaseCurrent->y) * 100
@@ -8952,7 +8952,7 @@ int __cdecl base_upkeep(int base_id) {
 
     if (GameDataStateStorage.fields_.turn_current_num_ > 1) base_maint();
     base_terraform(0);
-    if ((BaseCurrent->state & 0x10000u) != 0 && (rand() % 3) == 0 &&
+    if ((BaseCurrent->state & 0x10000u) != 0 && rnd(3, "BASE1") == 0 &&
         (GameDataStateStorage.fields_.game_state_ & STATE_UNK_1) == 0) {
         if (Bases[BaseIDCurrentSelected].faction_id_current == ConsoleGlobal.faction_id_
             || ((1 << ConsoleGlobal.faction_id_) & Bases[BaseIDCurrentSelected].visibility)) {
@@ -9135,7 +9135,7 @@ void __cdecl drone_riot() {
     // Continued riots: chance to destroy a facility.
     int odds = PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::POLICE]
         + has_fac(FAC_BROOD_PIT, BaseIDCurrentSelected, 0) * 2 + 7;
-    if (bounded_crt_random(odds)) {
+    if (rnd(odds, "RIOT")) {
         return;
     }
     if (has_fac(FAC_HEADQUARTERS, BaseIDCurrentSelected, 0)) {
@@ -9147,7 +9147,7 @@ void __cdecl drone_riot() {
     if (BaseCurrent->assimilation_turns_left >= 45) {
         return;
     }
-    if (BaseCurrent->population_size < 4 && rand() % 3) {
+    if (BaseCurrent->population_size < 4 && rnd(3, "RIOT0")) {
         return;
     }
     int tries = BaseCurrent->population_size - PlayersData[faction_id].diff_level
@@ -9156,7 +9156,7 @@ void __cdecl drone_riot() {
     int facility_id;
     // do/while, not for: the image runs the body once even when tries < 0.
     do {
-        facility_id = rand() % 70;
+        facility_id = rnd(70, "RIOT1");
         BOOL removable = true;
         for (int k = 0; k < Players[faction_id].faction_bonus_count; k++) {
             if ((Players[faction_id].faction_bonus_id[k] == 2
