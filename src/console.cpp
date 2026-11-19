@@ -5438,22 +5438,7 @@ int Console::on_key_click(int a1, int a2) {
     }
 
     go_reset();
-    // 0x517EDB..0x517F71 is Console::cursor_off (0x510520) expanded.
-    // WORKAROUND(inline): written out; a cursor_off() call stays out of line in this unit (menu_proc).
-    field_23D10_ = 0;
-    size_t cursor_slot;
-    for (cursor_slot = 0; cursor_slot < MapWinTableSlots; ++cursor_slot) {
-        MapWin *const window = MapWinTable[cursor_slot];
-        if (window != 0 && (cursor_slot == 0 || window->view_active_ != 0)) {
-            window->reset_cursor();
-            const uint32_t flags = MapWinTable[cursor_slot]->field_1DD70_;
-            if ((flags & 0x00C40000) != 0) {
-                MapWinTable[cursor_slot]->field_1DD70_ = flags & 0xFF3BFFFF;
-                MapWinTable[cursor_slot]->draw_map(1);
-            }
-            do_non_input();
-        }
-    }
+    cursor_off();  // 0x510520 expanded (0x517EDB..0x517F71)
 
     if (a2 == 0x0D && IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 5) {
         ReportIfGlobal.done();
@@ -6656,24 +6641,7 @@ void Console::menu_proc(int command) {
 
     TutorialWindow.reset();
     go_reset();
-    // 0x51BCAE..0x51BD41 is Console::cursor_off (0x510520) expanded.
-    // WORKAROUND(inline): written out; a cursor_off() call stays out of line
-    // here (C4711 refuses it: over the auto-inline size cap).
-    field_23D10_ = 0;
-    for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
-        MapWin *const window = MapWinTable[slot];
-        if (window == nullptr || (slot != 0 && window->view_active_ == 0)) {
-            continue;
-        }
-        window->reset_cursor();
-        // cursor_off's post-callback reload through the table.
-        const uint32_t dirty = MapWinTable[slot]->field_1DD70_;
-        if ((dirty & 0x00C40000u) != 0) {
-            MapWinTable[slot]->field_1DD70_ = dirty & ~0x00C40000u;
-            MapWinTable[slot]->draw_map(1);
-        }
-        do_non_input();
-    }
+    cursor_off();  // 0x510520 expanded (0x51BCAE..0x51BD41)
 
     if (IsMultiplayerNet != 0) {
         if (ConsoleControlTurnActive != 0 ||
