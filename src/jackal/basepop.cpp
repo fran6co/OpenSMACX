@@ -602,6 +602,7 @@ void BasePop::set_width(int width) {
 /*
 Purpose: Run the popup modally with no completion callback.
 // ORIGINAL: 0x005A5900 ?exec@BasePop@@QAEHXZ 0x005A5900-0x005A590A BYTE_EXACT
+// compile_context src/probe.cpp
 // size      10 bytes
 // prototype int (__thiscall ?exec@BasePop@@QAEHXZ)(BasePop* this)
 // callers   1   call targets   1
