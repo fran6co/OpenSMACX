@@ -93,13 +93,6 @@ inline int __cdecl has_treaty(int faction_id, int faction_id_with, int treaty) {
 // src/console_commands.cpp` computes the pad count (none needed now).
 // CANARY: 0x004E2000 ?corner_the_market@Console@@QAEXXZ residues 6,15-45
 // CANARY-PADS: function ConsoleCommandsDeclFnPad
-void ConsoleCommandsDeclFnPad0();
-void ConsoleCommandsDeclFnPad1();
-void ConsoleCommandsDeclFnPad2();
-void ConsoleCommandsDeclFnPad3();
-void ConsoleCommandsDeclFnPad4();
-void ConsoleCommandsDeclFnPad5();
-void ConsoleCommandsDeclFnPad6();
 
 // Shared separator objects the image pushes instead of unit literals.
 extern const char BufferJoinSpace[];

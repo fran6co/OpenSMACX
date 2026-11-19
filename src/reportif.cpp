@@ -58,18 +58,6 @@
 #include "rectangle_operations.h"
 #include "text.h"
 #include "help_link.h"
-// WORKAROUND(decl): unused extern names. ReportIf::on_iface_button_clicked
-// (0x004A6330) reloads this/button after ReportWinGlobal.redraw() in the
-// image's order only when the unit declares exactly six more distinct extern
-// names (5 and 7 both flip it). The unit's 231 literals now match the image
-// one for one, so the shortfall is in declarations the original saw, which
-// are not yet identified.
-extern int ReportIfDeclPad0;
-extern int ReportIfDeclPad1;
-extern int ReportIfDeclPad2;
-extern int ReportIfDeclPad3;
-extern int ReportIfDeclPad4;
-extern int ReportIfDeclPad5;
 // WORKAROUND(decl): counter coupling. After faction.h began defining
 // get_name/get_title and this unit switched to help_link.h, the same
 // this/button reload order also needs more distinct unused function
@@ -79,11 +67,10 @@ extern int ReportIfDeclPad5;
 // RulesOrder, RulesCitizen and Player ideology rows only 12 matches (1-11, 13,
 // 14 and 16 flip it); before those retypes the window was 6-8. spot.h's gated
 // Spot::add RECT inline moved it again. The tie-break is the front-end symbol counter modulo 64 (guide 2.5);
-// `recover canary src/reportif.cpp` computes the pad count.
+// `recover canary src/reportif.cpp` computes the pad count (none after
+// pass 8; re-tune after the header batch).
 // CANARY: 0x004A6330 ?on_iface_button_clicked@ReportIf@@UAEXH@Z residues 0-27,38,49-53
 // CANARY-PADS: function ReportIfDeclFnPad
-void ReportIfDeclFnPad0();
-void ReportIfDeclFnPad1();
 
 // Shared punctuation objects the image pushes instead of unit literals.
 extern char SocialWinCloseParenText[];
