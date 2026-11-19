@@ -4829,10 +4829,11 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
     case 0x13:
         if (outgoing) {
             log_say("Sending SYNCH_BASE", Bases[a2].name_string, a2, 0, 0);
+            size = sizeof(Base);
         } else {
             log_say("Received SYNCH_BASE", Bases[a2].name_string, a2, 0, 0);
+            size = sizeof(Base);
         }
-        size = sizeof(Base);
         break;
     case 0x14:
         if (!GameDataStateStorage.fields_.base_current_count_) return;
