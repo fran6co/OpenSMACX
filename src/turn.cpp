@@ -1987,10 +1987,13 @@ void __cdecl do_fungal_towers() {
     }
 }
 
-// WORKAROUND(inline): dead budget probe. Four flat inline units spent after
-// interlude's last early return give the image's EH state numbering (final
-// teardown 0x26..0x29, last early return three states deep instead of four);
-// four calls give that numbering, three and five do not. Natural spends tried and neutral: clear() for
+// WORKAROUND(inline): dead budget probe. Flat inline spend after
+// interlude's last early return gives the image's EH state numbering (final
+// teardown 0x26..0x29, last early return three states deep instead of four).
+// With the four CARETAKE label reads written out (the image pushes the two
+// -1 arguments before the label load, hoisted above the branch, which an
+// inline label_get argument does not allow) two calls give that numbering,
+// one and three do not. Natural spends tried and neutral: clear() for
 // the five StringTemp clears, get_title/get_name for the leader parse_says.
 static inline int interlude_spend(int x) {
     if (x == 1) return 2;
@@ -2082,11 +2085,11 @@ void __cdecl interlude(int id, char *text, int mode, int ending) {
     says(Players[ConsoleGlobal.faction_id_].search_key);
     CharUpperA(StringTemp);
     if (strcmp(StringTemp, "CARETAKE")) {
-        parse_says(6, label_get(1127), -1, -1);
-        parse_says(7, label_get(1130), -1, -1);
+        parse_says(6, StringTable.get(Labels.strings_ptr[1127]), -1, -1);
+        parse_says(7, StringTable.get(Labels.strings_ptr[1130]), -1, -1);
     } else {
-        parse_says(6, label_get(1128), -1, -1);
-        parse_says(7, label_get(1129), -1, -1);
+        parse_says(6, StringTable.get(Labels.strings_ptr[1128]), -1, -1);
+        parse_says(7, StringTable.get(Labels.strings_ptr[1129]), -1, -1);
     }
     if (id >= 32) {
         // Restored original behaviour: the image re-tests the faction here
@@ -2098,6 +2101,7 @@ void __cdecl interlude(int id, char *text, int mode, int ending) {
     } else {
         if (Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) return;
     }
+    interlude_spend(0);
     interlude_spend(0);
     GameDataStateStorage.fields_.game_interlude_flags_ |= 1 << id;
     clear();
