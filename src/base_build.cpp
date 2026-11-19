@@ -938,7 +938,8 @@ L_4f9c43:
 L_4f9e89:
     // Frontier: unexplored or foreign (unfriendly) tiles in the base radius.
     l_c0 = 0;
-    for (l_44 = 0; l_44 < 49; l_44++) {
+    l_44 = 0;
+    do {
         int x = wrap_map_x(RadiusOffsetX[l_44] + BaseCurrent->x);
         int y = RadiusOffsetY[l_44] + BaseCurrent->y;
         if (on_map(x, y)) {
@@ -969,7 +970,7 @@ L_4f9e89:
                 }
             }
         }
-    }
+    } while (++l_44 < 49);
     // Best choices: a_114 scores, a_130 ids.
     a_114[2] = 999999;
     a_114[0] = 999999;
