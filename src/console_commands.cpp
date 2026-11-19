@@ -1449,6 +1449,15 @@ static inline int terraform_budget_probe(int x) {
     if (x == 15) x = 46;
     return x;
 }
+// WORKAROUND(inline): the three "StringTemp[0] = 0; say_tech; parse_says"
+// runs of terraform as one inline helper (no out-of-line copy in the image);
+// as a helper /Ob2 refuses ~Scroll at two more early teardown sites, toward
+// the image's suffix. The original helper's name and home are unknown.
+static inline void terraform_say_tech(int tech) {
+    StringTemp[0] = 0;
+    say_tech(StringTemp, tech, 0);
+    parse_says(0, StringTemp, -1, -1);
+}
 void Console::terraform(int vehicle_id, int terraform_id) {
     terraform_budget_probe(2);  // WORKAROUND(inline): see terraform_budget_probe // 0x004D3470
     Popup popup;
@@ -1511,9 +1520,7 @@ void Console::terraform(int vehicle_id, int terraform_id) {
     if (!terrain_avail(terraform_id, is_sea, faction_id_) &&
         (terraform_id != TERRA_REMOVE_FUNGUS ||
          !has_abil(Vehs[vehicle_id].proto_id, 0x2000))) {
-        StringTemp[0] = 0;
-        say_tech(StringTemp, Terraforming[terraform_id].prerequisite_tech[is_sea], 0);
-        parse_says(0, StringTemp, -1, -1);
+        terraform_say_tech(Terraforming[terraform_id].prerequisite_tech[is_sea]);
         if (terraform_id == TERRA_MAGTUBE) {
             veh_battle_msg("HASROAD", nullptr);
         } else if (terraform_id == TERRA_SOIL_ENR) {
@@ -1582,9 +1589,7 @@ void Console::terraform(int vehicle_id, int terraform_id) {
                 if (Rules.tech_build_roads_fungus < 0) {
                     veh_battle_msg("NOTINFUNGUS", nullptr);
                 } else {
-                    StringTemp[0] = 0;
-                    say_tech(StringTemp, Rules.tech_build_roads_fungus, 0);
-                    parse_says(0, StringTemp, -1, -1);
+                    terraform_say_tech(Rules.tech_build_roads_fungus);
                     veh_battle_msg("NOTYETFUNGUS", nullptr);
                 }
                 return;
@@ -1594,9 +1599,7 @@ void Console::terraform(int vehicle_id, int terraform_id) {
                 if (Rules.tech_improve_fungus_sqr < 0) {
                     veh_battle_msg("NOTINFUNGUS", nullptr);
                 } else {
-                    StringTemp[0] = 0;
-                    say_tech(StringTemp, Rules.tech_improve_fungus_sqr, 0);
-                    parse_says(0, StringTemp, -1, -1);
+                    terraform_say_tech(Rules.tech_improve_fungus_sqr);
                     veh_battle_msg("NOTYETFUNGUS", nullptr);
                 }
                 return;
@@ -1669,24 +1672,24 @@ void Console::terraform(int vehicle_id, int terraform_id) {
             return;
         }
         if (terraform_id == TERRA_RAISE_LAND) {
-            const int level = alt_at(x, y);
-            if (level < 3) {
-                if (level >= 2) {
+            const int level = map_loc(x, y)->climate & ~0x1F;
+            if (level < 0x60) {
+                if (level >= 0x40) {
                     veh_battle_msg("SEATOOHIGH", nullptr);
                     return;
                 }
-            } else if (level >= 6) {
+            } else if (level >= 0xC0) {
                 veh_battle_msg("TOOHIGH", nullptr);
                 return;
             }
         } else if (terraform_id == TERRA_LOWER_LAND) {
-            const int level = alt_at(x, y);
-            if (level < 3) {
+            const int level = map_loc(x, y)->climate & ~0x1F;
+            if (level < 0x60) {
                 if (level == 0) {
                     // No return: the order is given anyway.
                     veh_battle_msg("SEATOOLOW", nullptr);
                 }
-            } else if (level <= 3) {
+            } else if (level <= 0x60) {
                 veh_battle_msg("TOOLOW", nullptr);
                 return;
             }
@@ -1732,11 +1735,7 @@ void Console::terraform(int vehicle_id, int terraform_id) {
         } else {
             const int level = range(alt_at(x, y) - 1, 0, 6);
             if (level < 3) {
-                int depth = 3 - level;
-                if (depth < 0) {
-                    depth = -depth;
-                }
-                steps = RadiusRange[depth + 1];
+                steps = RadiusRange[(3 - level < 0 ? level - 3 : 3 - level) + 1];
             }
         }
 
@@ -1790,7 +1789,7 @@ void Console::terraform(int vehicle_id, int terraform_id) {
 
     if (terraform_id != TERRA_REMOVE_FUNGUS && terraform_id != TERRA_RAISE_LAND &&
         terraform_id != TERRA_LOWER_LAND) {
-        const int final_altitude = (map_loc(x, y)->climate & ~0x1F);
+        const int final_altitude = altitude_at(x, y);
         if (final_altitude >= 0x40) {
             const uint32_t conflict =
                 Terraforming[terraform_id].bit_incompatible & bit_at(x, y);
