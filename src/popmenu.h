@@ -86,6 +86,16 @@
   // `call rel32`. Spelled `class X : Base` - private, since that is
   // what `class` means - those calls do not compile at all, and the
   // seam that stood in for them cost the caller `call [ptr]`.
+// PopMenu's four vftables, each read from the image operand of the store
+// that installs it: PickWin::on_button_clicked 0x00489BA0 writes them at
+// +0x48, +0x52, +0x5C and +0x66 after the Popup and PullDown constructors,
+// and the scalar deleting destructor 0x00421640 is their slot 0. The
+// extents are the emitted table sizes (8, 360, 8 and 388 bytes), which
+// tile 0x0066A730..0x0066AA2C without a gap.
+// RECOVERY_GENERATED: v1 vtable 0x0066A8A8 0x0066AA2C ??_7PopMenu@@6BWin@@Popup@@@ 0x00421640
+// RECOVERY_GENERATED: v1 vtable 0x0066A8A0 0x0066A8A8 ??_7PopMenu@@6BBuffer@@Popup@@@ 0x00421640
+// RECOVERY_GENERATED: v1 vtable 0x0066A738 0x0066A8A0 ??_7PopMenu@@6BWin@@PullDown@@@ 0x00421640
+// RECOVERY_GENERATED: v1 vtable 0x0066A730 0x0066A738 ??_7PopMenu@@6BBuffer@@PullDown@@@ 0x00421640
 class PopMenu : public Popup, public PullDown {
  public:
   PopMenu() { ; }

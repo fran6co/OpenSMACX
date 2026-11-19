@@ -113,6 +113,9 @@ const char *PrefsSection = "Alpha Centauri";       // 0x006900D0
 // [0x691AFC]` at 0x00585E34) ahead of text_open; the DWORD there points at
 // the "ALPHAX" literal at 0x00691B58.
 // RECOVERY_OBJECT: v2 0x00691AFC 0x00691B00 ?AlphaxFileID@@3PBDB 0x0048207D
+// The initialiser's own literal: the image DWORD at 0x00691AFC holds
+// 0x00691B58, where the seven bytes "ALPHAX\0" sit.
+// RECOVERY_LITERAL: v1 0x00691B58 0x00691B5F $SG51329 0x0048207D
 LPCSTR AlphaxFileID = "ALPHAX";
 // Alpha owns the parsed #COMPASS pointer IDs populated by read_rules.
 // RECOVERY_OBJECT: v1 0x00945D48 ?Compass@@3PAPADA
