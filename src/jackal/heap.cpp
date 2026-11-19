@@ -23,21 +23,6 @@
 // This current source home places the generic allocator beside reconstructed
 // Jackal code. It does not independently prove original archive membership.
 
-/*
-// ORIGINAL: 0x005D4560 ??0Heap@@QAE@XZ 0x005D4560-0x005D4573 BYTE_EXACT
-// size      19 bytes
-// prototype void (__thiscall ??0Heap@@QAE@XZ)(Heap* this)
-// callers   6   call targets   0
-// notes     Staged hybrid export redirect calls the source-owned constructor
-*/
-Heap::Heap() {
-    // IMAGE ORDER: current_ before base_, free_size_ before base_size_.
-    err_flags_ = 0;
-    current_ = nullptr;
-    base_ = nullptr;
-    free_size_ = 0;
-    base_size_ = 0;
-}
 
 /*
 Historical seed description (the adapter has been removed):
@@ -70,6 +55,22 @@ Status: Complete
 */
 
 void Heap::Heap2() {
+    err_flags_ = 0;
+    current_ = nullptr;
+    base_ = nullptr;
+    free_size_ = 0;
+    base_size_ = 0;
+}
+
+/*
+// ORIGINAL: 0x005D4560 ??0Heap@@QAE@XZ 0x005D4560-0x005D4573 BYTE_EXACT
+// size      19 bytes
+// prototype void (__thiscall ??0Heap@@QAE@XZ)(Heap* this)
+// callers   6   call targets   0
+// notes     Staged hybrid export redirect calls the source-owned constructor
+*/
+Heap::Heap() {
+    // IMAGE ORDER: current_ before base_, free_size_ before base_size_.
     err_flags_ = 0;
     current_ = nullptr;
     base_ = nullptr;
