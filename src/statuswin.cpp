@@ -1346,8 +1346,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
         if ((GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) &&
             (GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE)) {
             strcat(StringTemp, SocialWinOpenParenText);
-            _itoa(vehicle_id, digits, 10);
-            strcat(StringTemp, digits);
+            say_num(vehicle_id);
             strcat(StringTemp, SocialWinCloseParenText);
         }
         MainInterfaceGlobal.set_text_color(TextColourTable[12], TextColourTable[13], 1, 1);
@@ -1427,15 +1426,12 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
                     strcat(StringTemp, SocialWinColonSpaceText);
                     int moves = veh_moves(vehicle_id);
                     int fraction = moves % Rules.move_rate_roads;
-                    _itoa(moves / Rules.move_rate_roads, digits, 10);
-                    strcat(StringTemp, digits);
+                    say_num(moves / Rules.move_rate_roads);
                     if (fraction) {
                         strcat(StringTemp, BufferJoinSpace);
-                        _itoa(fraction, digits, 10);
-                        strcat(StringTemp, digits);
+                        say_num(fraction);
                         strcat(StringTemp, "/");
-                        _itoa(Rules.move_rate_roads, digits, 10);
-                        strcat(StringTemp, digits);
+                        say_num(Rules.move_rate_roads);
                     }
                     line_y = MainInterfaceGlobal.wrap(StringTemp, content_x, line_y,
                                           area.right - area.left);
@@ -1452,14 +1448,12 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
                     * (Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].range
                        + (moves == 0) - Vehs[vehicle_id].terraforming_turns)
                     - Vehs[vehicle_id].moves_expended) / Rules.move_rate_roads;
-                _itoa(fuel, digits, 10);
-                strcat(StringTemp, digits);
+                say_num(fuel);
                 strcat(StringTemp, "/");
                 fuel = speed(vehicle_id, 0)
                     * Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].range
                     / Rules.move_rate_roads;
-                _itoa(fuel, digits, 10);
-                strcat(StringTemp, digits);
+                say_num(fuel);
                 MainInterfaceGlobal.set_text_color(0xfa, -1, 1, 1);
                 if (Vehs[vehicle_id].terraforming_turns
                     && Vehs[vehicle_id].terraforming_turns
@@ -1482,12 +1476,10 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
                 strcat(StringTemp, label_get(0x360 / 4));
                 strcat(StringTemp, SocialWinColonSpaceText);
                 int cargo = veh_cargo(vehicle_id) - stack_veh(vehicle_id, 0);
-                _itoa(cargo, digits, 10);
-                strcat(StringTemp, digits);
+                say_num(cargo);
                 strcat(StringTemp, "/");
                 cargo = veh_cargo(vehicle_id);
-                _itoa(cargo, digits, 10);
-                strcat(StringTemp, digits);
+                say_num(cargo);
                 MainInterfaceGlobal.write_l(StringTemp, content_x, line_y);
                 line_y += row_pitch;
             }
@@ -1505,8 +1497,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
                 MainInterfaceGlobal.set_text_color(0xf9, -1, 1, 1);
             }
             StringTemp[0] = '\0';
-            _itoa(status_damage_percent(vehicle_id), digits, 10);
-            strcat(StringTemp, digits);
+            say_num(status_damage_percent(vehicle_id));
             strcat(StringTemp, "%");
             MainInterfaceGlobal.write_l(StringTemp, next_x, line_y);
             MainInterfaceGlobal.set_text_color(MessageWinTextColor, MessageWinTextBackground, 1, 1);
@@ -1538,8 +1529,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
                 strcat(StringTemp, "[");
                 strcat(StringTemp, label_get(0x71c / 4));
                 strcat(StringTemp, SocialWinColonSpaceText);
-                _itoa(turns + 1, digits, 10);
-                strcat(StringTemp, digits);
+                say_num(turns + 1);
                 strcat(StringTemp, "]");
                 MainInterfaceGlobal.set_text_color(0xfb, -1, 1, 1);
                 MainInterfaceGlobal.write_l(StringTemp, content_x, line_y);
@@ -1593,8 +1583,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
             (GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE)) {
             strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, SocialWinOpenParenText);
-            _itoa(base_id, digits, 10);
-            strcat(StringTemp, digits);
+            say_num(base_id);
             strcat(StringTemp, SocialWinCloseParenText);
         }
         line_y = MainInterfaceGlobal.wrap_cent(&font3_, StringTemp, content_x, line_y,
@@ -1647,8 +1636,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
                 StringTemp[0] = '\0';
                 strcat(StringTemp, label_get(0xb08 / 4));
                 strcat(StringTemp, SocialWinColonSpaceText);
-                _itoa(Bases[base_id].nerve_staple_turns_left, digits, 10);
-                strcat(StringTemp, digits);
+                say_num(Bases[base_id].nerve_staple_turns_left);
                 MainInterfaceGlobal.set_text_color(0xfb, -1, 1, 1);
                 line_y = MainInterfaceGlobal.wrap_cent(StringTemp, content_x, line_y,
                                            area.right - area.left);
@@ -1676,12 +1664,10 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
             if (Bases[base_id].queue_production_id[0] != -69) {
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, SocialWinOpenParenText);
-                _itoa(Bases[base_id].minerals_accumulated, digits, 10);
-                strcat(StringTemp, digits);
+                say_num(Bases[base_id].minerals_accumulated);
                 strcat(StringTemp, "/");
                 cost *= cost_factor(Bases[base_id].faction_id_current, 1, -1);
-                _itoa(cost, digits, 10);
-                strcat(StringTemp, digits);
+                say_num(cost);
                 strcat(StringTemp, SocialWinCloseParenText);
             }
             if (strlen(StringTemp)) {

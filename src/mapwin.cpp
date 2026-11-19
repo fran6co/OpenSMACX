@@ -4804,8 +4804,7 @@ nexus_done:
         if ((a6 & 4) != 0) {
             StringTemp[0] = 0;
             uVar12 = site_at(a7, a8, 0);
-            _itoa(uVar12, numbuf, 10);
-            strcat(StringTemp, numbuf);
+            say_num(uVar12);
             text_rect.left = a9;
             text_rect.top = a10;
             text_rect.bottom = a10 + local_78 * 2;
@@ -4822,8 +4821,7 @@ nexus_done:
             StringTemp[0] = 0;
             // 0x466793 expands Path::get inline ((MapLongitudeBounds >> 1)
             // row stride).
-            _itoa(Paths.get(a7, a8), numbuf, 10);
-            strcat(StringTemp, numbuf);
+            say_num(Paths.get(a7, a8));
             window->set_text_color(0xff, 0, 1, 1);
             window->set_font(&window->font_b_, 0, 0, 0);
             text_rect.left = a9;
@@ -4842,8 +4840,7 @@ nexus_done:
             window->set_text_color(InfoFactionTextColors[(MapTiles[MapLongitude * a8 + local_14].val3 >> 3) & 7], 0, 1, 1);
             window->set_font(&window->font_b_, 0, 0, 0);
             StringTemp[0] = 0;
-            _itoa((MapTiles[MapLongitude * a8 + local_14].val3 >> 3) & 7, numbuf, 10);
-            strcat(StringTemp, numbuf);
+            say_num((MapTiles[MapLongitude * a8 + local_14].val3 >> 3) & 7);
             window->write_cent_l(StringTemp, &text_rect);
         }
         if ((a6 & 0x80000) != 0 && (MapTiles[MapLongitude * a8 + local_14].val3 & 0x38) != 0) {
@@ -4854,8 +4851,7 @@ nexus_done:
             window->set_text_color(InfoFactionTextColors[(MapTiles[MapLongitude * a8 + local_14].val3 >> 3) & 7], 0, 1, 1);
             window->set_font(&window->font_b_, 0, 0, 0);
             StringTemp[0] = 0;
-            _itoa((MapTiles[MapLongitude * a8 + local_14].val3 >> 3) & 7, numbuf, 10);
-            strcat(StringTemp, numbuf);
+            say_num((MapTiles[MapLongitude * a8 + local_14].val3 >> 3) & 7);
             window->write_cent_l(StringTemp, &text_rect);
         }
     }

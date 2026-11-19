@@ -1522,15 +1522,12 @@ void BaseWin::draw_flash(int redraw_mode) {
                 const int moves = veh_moves(vehicle_id);
                 const int whole = moves / Rules.move_rate_roads;
                 const int fraction = moves % Rules.move_rate_roads;
-                _itoa(whole, number, 10);
-                strcat(StringTemp, number);
+                say_num(whole);
                 if (fraction) {
                     space();
-                    _itoa(fraction, number, 10);
-                    strcat(StringTemp, number);
+                    say_num(fraction);
                     strcat(StringTemp, "/");
-                    _itoa(Rules.move_rate_roads, number, 10);
-                    strcat(StringTemp, number);
+                    say_num(Rules.move_rate_roads);
                 }
                 y = MainInterfaceGlobal.wrap(StringTemp, x, y, area.right - area.left);
             }
@@ -1544,18 +1541,14 @@ void BaseWin::draw_flash(int redraw_mode) {
             const int next_x = MainInterfaceGlobal.write_l(StringTemp, x, y);
             StringTemp[0] = 0;
             const int remaining = veh_moves(vehicle_id);
-            _itoa((speed(vehicle_id, 0)
+            say_num((speed(vehicle_id, 0)
                        * (Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].range
                           + (remaining == 0) - Vehs[vehicle_id].terraforming_turns)
-                   - Vehs[vehicle_id].moves_expended) / Rules.move_rate_roads,
-                  number, 10);
-            strcat(StringTemp, number);
+                   - Vehs[vehicle_id].moves_expended) / Rules.move_rate_roads);
             strcat(StringTemp, "/");
-            _itoa(speed(vehicle_id, 0)
+            say_num(speed(vehicle_id, 0)
                       * Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].range
-                      / Rules.move_rate_roads,
-                  number, 10);
-            strcat(StringTemp, number);
+                      / Rules.move_rate_roads);
             MainInterfaceGlobal.set_text_color(0xFA, -1, 1, 1);
             if (Vehs[vehicle_id].terraforming_turns
                 && Vehs[vehicle_id].terraforming_turns
@@ -1575,12 +1568,10 @@ void BaseWin::draw_flash(int redraw_mode) {
             strcat(StringTemp, label_get(0x360 / 4));
             say_colon();
             int cargo = veh_cargo(vehicle_id) - stack_veh(vehicle_id, 0);
-            _itoa(cargo, number, 10);
-            strcat(StringTemp, number);
+            say_num(cargo);
             strcat(StringTemp, "/");
             cargo = veh_cargo(vehicle_id);
-            _itoa(cargo, number, 10);
-            strcat(StringTemp, number);
+            say_num(cargo);
             MainInterfaceGlobal.write_l(StringTemp, x, y);
             y += line;
         }
@@ -1596,11 +1587,9 @@ void BaseWin::draw_flash(int redraw_mode) {
         if (Vehs[vehicle_id].dmg_incurred >= proto_power(vehicle_id) * 2 / 3)
             MainInterfaceGlobal.set_text_color(0xF9, -1, 1, 1);
         StringTemp[0] = 0;
-        _itoa((proto_power(vehicle_id)
+        say_num((proto_power(vehicle_id)
                - range(proto_power(vehicle_id) - Vehs[vehicle_id].dmg_incurred, 0, 9999))
-                  * 100 / proto_power(vehicle_id),
-              number, 10);
-        strcat(StringTemp, number);
+                  * 100 / proto_power(vehicle_id));
         strcat(StringTemp, "%");
         MainInterfaceGlobal.write_l(StringTemp, next_x, y);
         MainInterfaceGlobal.set_text_color(MessageWinTextColor, MessageWinTextBackground, 1, 1);
@@ -1619,8 +1608,7 @@ void BaseWin::draw_flash(int redraw_mode) {
             strcat(StringTemp, "[");
             strcat(StringTemp, label_get(0x71C / 4));
             say_colon();
-            _itoa(turns + 1, number, 10);
-            strcat(StringTemp, number);
+            say_num(turns + 1);
             strcat(StringTemp, "]");
             MainInterfaceGlobal.set_text_color(0xFB, -1, 1, 1);
             MainInterfaceGlobal.write_l(StringTemp, x, y);
@@ -1758,8 +1746,7 @@ void BaseWin::draw_production(int update_mode) {
             space();
             strcat(StringTemp, "+");
             const int factor = prototype_factor(vehicle_id);
-            _itoa(factor, number, 10);
-            strcat(StringTemp, number);
+            say_num(factor);
             say_percent();
             content.top = MainInterfaceGlobal.wrap_cent(StringTemp,
                 center_x, text_y, 0);
@@ -1916,14 +1903,11 @@ void BaseWin::draw_production(int update_mode) {
                 space();
                 if (text_y > current_minerals) {
                     const int remaining = text_y - current_minerals;
-                    _itoa(range((BaseCurrent->mineral_surplus + remaining - 1)
+                    say_num(range((BaseCurrent->mineral_surplus + remaining - 1)
                                     / range(BaseCurrent->mineral_surplus, 1, 0x1869F),
-                                0, 0xF423F),
-                          number, 10);
-                    strcat(StringTemp, number);
+                                0, 0xF423F));
                 } else {
-                    _itoa(0, number, 10);
-                    strcat(StringTemp, number);
+                    say_num(0);
                 }
             } else {
                 strcat(StringTemp, label_get(67));

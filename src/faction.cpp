@@ -4513,8 +4513,7 @@ int __cdecl propose_pact(int myFac, int otherFac) {
             parse_says(3, get_phrase(myFac, 3), -1, -1);
             clear();
             strcat(StringTemp, "REJPACTAHEAD");
-            _itoa(random(0, 2), number, 10);
-            strcat(StringTemp, number);
+            say_num(random(0, 2));
             X_pops(StringTemp, 0x100000, FactionDiplomacyPortraits[otherFac], pop_wait);
             return 1;
         }
@@ -4595,8 +4594,7 @@ int __cdecl propose_pact(int myFac, int otherFac) {
             }
             clear();
             strcat(StringTemp, "GIMMETECH");
-            _itoa(DiploScratchFA18 >= 0 ? 2 : random(0, 2), number, 10);
-            strcat(StringTemp, number);
+            say_num(DiploScratchFA18 >= 0 ? 2 : random(0, 2));
             response = X_pops(StringTemp, 0x100000, FactionDiplomacyPortraits[otherFac], pop_wait);
             if (response <= 1) {
                 break;
@@ -4626,8 +4624,7 @@ int __cdecl propose_pact(int myFac, int otherFac) {
         parse_says(1, Players[otherFac].title_leader, -1, -1);
         clear();
         strcat(StringTemp, "GIMMEENERGY");
-        _itoa(random(0, 2), number, 10);
-        strcat(StringTemp, number);
+        say_num(random(0, 2));
         if (X_pops(StringTemp, 0x100000, FactionDiplomacyPortraits[otherFac], pop_wait)) {
             // Image 0x5449F4: net_energy expanded (log_say(myFac, otherFac,
             // -cap); message_data(0x2447, 0, myFac, -cap, otherFac, cap)).

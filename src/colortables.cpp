@@ -371,8 +371,7 @@ make_basic:
     for (i = 0; i < 13; ++i) {
         StringTemp[0] = '\0';
         strcat(StringTemp, "explosions");
-        _itoa(i, number, 10);
-        strcat(StringTemp, number);
+        say_num(i);
         if (text_open("system", StringTemp) == 0) {
             for (j = 0; j < 16; ++j) {
                 text_get();
@@ -483,8 +482,7 @@ make_explosions:
         if (i >= 13) break;
         StringTemp[0] = '\0';
         strcat(StringTemp, "explosions");
-        _itoa(i, number, 10);
-        strcat(StringTemp, number);
+        say_num(i);
         strcat(StringTemp, ".tmp");
         if ((cache = file.open(StringTemp, 1)) == 0) goto make_explosions;
         memcpy(ExplosionColorTables[i], cache, sizeof(ExplosionColorTables[i]));

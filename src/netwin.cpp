@@ -2244,13 +2244,11 @@ void NetWin::draw_session_info() {
     says("}");
     space();
     if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] != 0) {
-        _itoa(NetWinSessionOptions.fields_.option_4_, tally, 10);
-        strcat(StringTemp, tally);
+        say_num(NetWinSessionOptions.fields_.option_4_);
         space();
         says("X");
         space();
-        _itoa(NetWinSessionOptions.fields_.option_5_, tally, 10);
-        strcat(StringTemp, tally);
+        say_num(NetWinSessionOptions.fields_.option_5_);
     } else if (NetWinSessionOptions.fields_.planet_size_ == -1) {
         says(label_get(0xFE4 / 4));
     } else {
@@ -2435,8 +2433,7 @@ void NetWin::draw_session_info() {
         say_colon();
         says("}");
         space();
-        _itoa(unclaimed, tally, 10);
-        strcat(StringTemp, tally);
+        say_num(unclaimed);
         avail = field.right - col - 10;
         if (Buffer::text_width(StringTemp) > avail) {
             written = field.right - 10;
