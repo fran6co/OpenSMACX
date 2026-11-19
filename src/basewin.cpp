@@ -7125,7 +7125,7 @@ void BaseWin::init() {
         window_height = rect_height(&production_content_rect_) + 401;
     }
     r = commerce_outer_rect_;
-    r.top = r.bottom + 3;
+    r.top = commerce_outer_rect_.bottom + 3;
     r.bottom = rect6_.top - 6;
     rect5_ = r;
     selected_queue_slot_ = 0;
