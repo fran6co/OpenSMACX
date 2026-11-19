@@ -15,11 +15,13 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
+
 // ORIGINAL: 0x004068E0 ??_GFlatButton@@UAEPAXI@Z 0x004068E0-0x00406901 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical deleting-thunk source src/deleting_thunks.cpp; original full spans retained: 0x004068E0-0x00406901", "Pinned class constructor ??0FlatButton@@QAE@XZ at 0x00607CF0 stores original class/view table VA 0x669754 at 0x00607CFB (mov dword ptr [esi], 0x669754); the current genuine owner vftable ??_7FlatButton@@6BWin@@@ selects generated ??_GFlatButton@@UAEPAXI@Z in slot 0 (+0x0) through weak entry ??_EFlatButton@@UAEPAXI@Z (mode 2).", "Pinned ??_GFlatButton@@UAEPAXI@Z at 0x004068E0 calls the source-mapped ??1FlatButton@@QAE@XZ at 0x00406880, then tests byte ptr [ebp + 8], 1; je 0x4068fa bypasses scalar delete when bit 0 is clear, while bit 0 set calls 0x0064557F; it save original this; call destructor; delete only when flags bit 0 is set; return saved this with ret 4.", "The real class lifetime is owned by src/flatbutton.cpp; its compiler-emitted deleting symbol and vftable slot carry this original identity. Hand-written adapter bodies with live adjustor callers remain until those callers are independently qualified and transferred. The linked weak/COMDAT copy is not used to choose source ownership.", "the source writer preserves the historical mapping's exactness state (historical exactness obligation retained); current compiler extent is not asserted equal to the original span"], "reason": "Bind the original FlatButton scalar deleting-destructor identity to the actual compiler-emitted class deleting destructor in its genuine owner translation unit. The original constructor's pinned vptr store and the current owner's physical table slot identify this class/view; no callback/thunk body is hand-authored here."}
 // compile_context src/alphasave.cpp
 // symbol    ??_GFlatButton@@UAEPAXI@Z
 // kind      game
+
 #include "stdafx.h"
 #include "flatbutton.h"
 #include "win.h"
@@ -57,98 +59,6 @@ Sprite *FlatButtonDefaultBottomLeft[3];
 Sprite *FlatButtonDefaultBottomRight[3];
 // RECOVERY_OBJECT: v1 0x009B8EA4 ?FlatButtonDefaultCenterTiles@@3PAPAVSprite@@A
 Sprite *FlatButtonDefaultCenterTiles[3];
-/*
-Purpose: Close the primary Time member, reset FlatButton orientation state,
-         close the BaseButton base, and reload all nine three-entry tables.
-The historical forwarding notes below predate the separate timer lifecycle TU;
-this definition now calls the actual Time member.
-// ORIGINAL: 0x00607DA0 ?close@FlatButton@@QAEXXZ 0x00607DA0-0x00607E41 BYTE_EXACT
-// LEVER: two fixes, stacked. (1) a real out-of-line `time_close_call`
-//        forwarder (same idiom as `sleep_call`/`base_cost_call` in
-//        veh.cpp) so `time1_.close()` compiles the `call rel32` the image
-//        has instead of inlining away under /O2 - `Time::close()` is
-//        itself separately claimed BYTE_EXACT at 0x00616780. (2)
-//        `FlatButtonDefaultsTable` (a real constant pointer to the fixed image address)
-//        in place of dereferencing the `FlatButtonDefaults` VARIABLE,
-//        which read a runtime pointer VALUE where the image folds a
-//        compile-time address - same table the constructor already binds
-//        this way; `FlatButtonDefaults` itself is now unused and removed.
-//        0/41 (70 instructions, unrelated indirect calls from the inlined
-//        `Time::close()`) -> 0.557 similar (38 instructions, matching
-//        shape).
-// TRIED: an explicit 9-way unroll of the inner group loop, matching
-//            what the CONSTRUCTOR's own identical table copy compiles to
-//            - here it makes things WORSE (80 instructions: the two real
-//            calls ahead of the unrolled block push VC6 to hoist nine
-//            `sub reg,esi` address computations before the loop even
-//            starts). The plain nested `for` loop the constructor also
-//            uses is closer here despite not being unrolled - the two
-//            functions are NOT under the same codegen heuristic once the
-//            forwarder call is added.
-// LEVER: three more, stacked on top of the two above and worth 0 -> 28 of 41
-//   with the instruction count now exactly the image's 41.
-//   (3) `time_close_call` is `__fastcall`, not `__cdecl`. The image reaches
-//   Time::close as a thiscall - `lea ecx, [esi + 0xa1c]; call 0x616780` - so a
-//   __cdecl forwarder costs the `push`/`add esp, 4` pair around it (38 -> 36
-//   instructions).
-//   (4) THE DESTINATION IS A WALKING POINTER, and that is what un-blocks the
-//   9-way unroll the TRIED below rejected. `object[(0xAE0 / 4) + g * 3 +
-//   index]` gives VC6 one induction variable for nine destinations and nine
-//   `mov reg, <table>; sub reg, esi` differences hoisted before the loop (70-80
-//   instructions). `uint32_t *dest = object + 0xAE0 / 4; ... ++dest;` with the
-//   nine reads written out gives the image's TWO induction variables - EAX
-//   walking the object, ECX indexing the table - and drops EBX/EBP, hence the
-//   image's bare `push esi; push edi` prologue.
-//   (5) RETURN THE WALKER, not the address. `dest` ends at this + 0xAEC, which
-//   is what the image leaves in EAX as pure loop residue; returning
-//   `reinterpret_cast<uintptr_t>(this) + 0xAEC` instead emits a `lea eax,
-//   [esi + 0xaec]` the image does not have (42 -> 41 instructions).
-// TRIED: the residual 13 instructions are ONE strength-reduction choice and
-//   no source form moved it. The image starts its table index at zero
-//   (`xor ecx, ecx`, then `mov edx, [ecx + 0x9b8e44]` nine times at 0xC
-//   strides, `cmp ecx, 0xc; jl`); this tree bases the same induction variable
-//   on the SECOND column instead (`mov ecx, 0x9b8e50`, `mov edx, [ecx - 0xc]`),
-//   which re-spells all nine displacements. MEASURED at the same 28 of 41:
-//   `FlatButtonDefaultsTable[index + g * 3]`, `*(FlatButtonDefaultsTable + index + g * 3)`, a
-//   `const int *const table` local, `index != 3` for the loop test, and a
-//   `column` pointer recomputed as `FlatButtonDefaultsTable + index` each iteration. A
-//   byte-offset loop (`for (offset = 0; offset < 12; offset += 4)`) reproduces
-//   the image's `[ecx + 0x9b8e44]` form but loses more elsewhere: 21 of 41.
-//   Walking a SECOND pointer over the table alongside `dest` is far worse,
-//   0 of 41 at 46 instructions.
-// symbol    ?close@FlatButton@@UAEXXZ
-// size      161 bytes
-// prototype void (__thiscall ?close@FlatButton@@QAEXXZ)(FlatButton* this)
-// callers   134   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x006070C0 0x00616780
-Return Value: None; the old pointer-valued return reproduced incidental EAX.
-The LEVER/TRIED notes above describe historical spelling experiments, not a
-license to walk unrelated members or invent a result. Slot90 is genuine virtual
-cleanup; load_interface owns the shared default-table producer.
-*/
-void FlatButton::close() {
-    time1_.close();
-    field_A18_ = 0;
-    field_A14_ = 0;
-    field_AB8_ = 0xFFFFFFFFU;
-    BaseButton::close();
-    for (int column = 0; column < 3; ++column) {
-        field_ABC_[column] = 0xFFFFFFFFU;
-        config[column] = FlatButtonDefaultLeftTiles[column];
-        config[column + 3] = FlatButtonDefaultRightTiles[column];
-        config[column + 6] = FlatButtonDefaultTopTiles[column];
-        config[column + 9] = FlatButtonDefaultBottomTiles[column];
-        config[column + 12] = FlatButtonDefaultTopLeft[column];
-        config[column + 15] = FlatButtonDefaultTopRight[column];
-        config[column + 18] = FlatButtonDefaultBottomLeft[column];
-        config[column + 21] = FlatButtonDefaultBottomRight[column];
-        config[column + 24] = FlatButtonDefaultCenterTiles[column];
-        field_AD4_[column] = nullptr;
-        border_styles_[column] = 0;
-    }
-}
 
 
 /*
@@ -167,6 +77,28 @@ Purpose: Destroy a FlatButton by installing its two virtual tables, closing
 Return Value: Instance pointer in EAX
 Status: Complete
 */
+
+/*
+Purpose: Step the receiver back to the subobject ??_GFlatButton@@UAEPAXI@Z
+         expects, then forward unchanged.
+// ORIGINAL: 0x004070E0 ??_GFlatButton@@WEEE@AEPAXI@Z 0x004070E0-0x004070EB BYTE_EXACT
+// compile_context src/alphasave.cpp
+// symbol    ??_EFlatButton@@WEEE@AEPAXI@Z
+// CORRECTED from ??3FlatButton@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x004068E0` into
+//   ??_GFlatButton@@UAEPAXI@Z, which executes `ret 4`; no stack access
+//   and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/
+
 // MOVED IN-CLASS 2026-09-02 (body: src/flatbutton.h) so ??1DipEdit can expand
 // its five FlatButton teardowns the way the image does; this class's own
 // COMDAT keeps being emitted here and still measures 24/24 against
@@ -315,102 +247,95 @@ FlatButton::FlatButton() {
 }
 
 /*
-Purpose: Step the receiver back to the subobject ??_GFlatButton@@UAEPAXI@Z
-         expects, then forward unchanged.
-// ORIGINAL: 0x004070E0 ??_GFlatButton@@WEEE@AEPAXI@Z 0x004070E0-0x004070EB BYTE_EXACT
-// compile_context src/alphasave.cpp
-// symbol    ??_EFlatButton@@WEEE@AEPAXI@Z
-// CORRECTED from ??3FlatButton@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x004068E0` into
-//   ??_GFlatButton@@UAEPAXI@Z, which executes `ret 4`; no stack access
-//   and the receiver stays in ECX. `WEEE@` re-demangles to
-//   adjustor{1092} and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
+Purpose: Close the primary Time member, reset FlatButton orientation state,
+         close the BaseButton base, and reload all nine three-entry tables.
+The historical forwarding notes below predate the separate timer lifecycle TU;
+this definition now calls the actual Time member.
+// ORIGINAL: 0x00607DA0 ?close@FlatButton@@QAEXXZ 0x00607DA0-0x00607E41 BYTE_EXACT
+// LEVER: two fixes, stacked. (1) a real out-of-line `time_close_call`
+//        forwarder (same idiom as `sleep_call`/`base_cost_call` in
+//        veh.cpp) so `time1_.close()` compiles the `call rel32` the image
+//        has instead of inlining away under /O2 - `Time::close()` is
+//        itself separately claimed BYTE_EXACT at 0x00616780. (2)
+//        `FlatButtonDefaultsTable` (a real constant pointer to the fixed image address)
+//        in place of dereferencing the `FlatButtonDefaults` VARIABLE,
+//        which read a runtime pointer VALUE where the image folds a
+//        compile-time address - same table the constructor already binds
+//        this way; `FlatButtonDefaults` itself is now unused and removed.
+//        0/41 (70 instructions, unrelated indirect calls from the inlined
+//        `Time::close()`) -> 0.557 similar (38 instructions, matching
+//        shape).
+// TRIED: an explicit 9-way unroll of the inner group loop, matching
+//            what the CONSTRUCTOR's own identical table copy compiles to
+//            - here it makes things WORSE (80 instructions: the two real
+//            calls ahead of the unrolled block push VC6 to hoist nine
+//            `sub reg,esi` address computations before the loop even
+//            starts). The plain nested `for` loop the constructor also
+//            uses is closer here despite not being unrolled - the two
+//            functions are NOT under the same codegen heuristic once the
+//            forwarder call is added.
+// LEVER: three more, stacked on top of the two above and worth 0 -> 28 of 41
+//   with the instruction count now exactly the image's 41.
+//   (3) `time_close_call` is `__fastcall`, not `__cdecl`. The image reaches
+//   Time::close as a thiscall - `lea ecx, [esi + 0xa1c]; call 0x616780` - so a
+//   __cdecl forwarder costs the `push`/`add esp, 4` pair around it (38 -> 36
+//   instructions).
+//   (4) THE DESTINATION IS A WALKING POINTER, and that is what un-blocks the
+//   9-way unroll the TRIED below rejected. `object[(0xAE0 / 4) + g * 3 +
+//   index]` gives VC6 one induction variable for nine destinations and nine
+//   `mov reg, <table>; sub reg, esi` differences hoisted before the loop (70-80
+//   instructions). `uint32_t *dest = object + 0xAE0 / 4; ... ++dest;` with the
+//   nine reads written out gives the image's TWO induction variables - EAX
+//   walking the object, ECX indexing the table - and drops EBX/EBP, hence the
+//   image's bare `push esi; push edi` prologue.
+//   (5) RETURN THE WALKER, not the address. `dest` ends at this + 0xAEC, which
+//   is what the image leaves in EAX as pure loop residue; returning
+//   `reinterpret_cast<uintptr_t>(this) + 0xAEC` instead emits a `lea eax,
+//   [esi + 0xaec]` the image does not have (42 -> 41 instructions).
+// TRIED: the residual 13 instructions are ONE strength-reduction choice and
+//   no source form moved it. The image starts its table index at zero
+//   (`xor ecx, ecx`, then `mov edx, [ecx + 0x9b8e44]` nine times at 0xC
+//   strides, `cmp ecx, 0xc; jl`); this tree bases the same induction variable
+//   on the SECOND column instead (`mov ecx, 0x9b8e50`, `mov edx, [ecx - 0xc]`),
+//   which re-spells all nine displacements. MEASURED at the same 28 of 41:
+//   `FlatButtonDefaultsTable[index + g * 3]`, `*(FlatButtonDefaultsTable + index + g * 3)`, a
+//   `const int *const table` local, `index != 3` for the loop test, and a
+//   `column` pointer recomputed as `FlatButtonDefaultsTable + index` each iteration. A
+//   byte-offset loop (`for (offset = 0; offset < 12; offset += 4)`) reproduces
+//   the image's `[ecx + 0x9b8e44]` form but loses more elsewhere: 21 of 41.
+//   Walking a SECOND pointer over the table alongside `dest` is far worse,
+//   0 of 41 at 46 instructions.
+// symbol    ?close@FlatButton@@UAEXXZ
+// size      161 bytes
+// prototype void (__thiscall ?close@FlatButton@@QAEXXZ)(FlatButton* this)
+// callers   134   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
+// calls     0x006070C0 0x00616780
+Return Value: None; the old pointer-valued return reproduced incidental EAX.
+The LEVER/TRIED notes above describe historical spelling experiments, not a
+license to walk unrelated members or invent a result. Slot90 is genuine virtual
+cleanup; load_interface owns the shared default-table producer.
 */
-
-// ??_GBaseButton@@WEEE@AEPAXI@Z (0x00607CE0) moved to basebutton.cpp,
-// 2026-09-03: this unit emits no BaseButton symbol at all, so the claim
-// measured UNRESOLVED from here. ??_EBaseButton is defined by basebutton.obj
-// alone - that is where ~BaseButton lives - and read from there it is the
-// image's own 11 bytes. A comparison compiles a TRANSLATION UNIT, so the
-// claim has to live where the COMDAT is emitted. The full TRIED evidence
-// that named this move is folded into the marker's new home.
-
-// ORIGINAL: 0x00608500 ?on_mouse_move@FlatButton@@QAEXHH@Z 0x00608500-0x00608657 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"reason":"Recover the complete body in its genuine C++ owner, with real embedded members, shared virtual bases, lifecycle and parent operations. Compiler-generated overrides/adjustors replace executable-address or vbtable stand-ins; no current matching claim is granted.","evidence":["git:391d42a9:src/recovered/units/00608500.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/ui-eight-owner-coverage.json","Original entry 0x00608500; physical VC6 COFF emitted symbol ?on_mouse_move@FlatButton@@UAEXHH@Z."]}
-// symbol    ?on_mouse_move@FlatButton@@UAEXHH@Z
-void FlatButton::on_mouse_move(int x, int y) {
-    Win *active = WinPointerOwner1;
-    if (active == nullptr) {
-        active = WinPointerOwner2;
-    }
-    if (active == this) {
-        BaseButton::on_mouse_move(x, y);
-        return;
-    }
-    RECT hit_rect = this->Buffer::rect2_;
-    const uint32_t dy = 0u - static_cast<uint32_t>(hit_rect.top);
-    const uint32_t dx = 0u - static_cast<uint32_t>(hit_rect.left);
-    hit_rect.left = static_cast<int32_t>(static_cast<uint32_t>(hit_rect.left) + dx);
-    hit_rect.right = static_cast<int32_t>(static_cast<uint32_t>(hit_rect.right) + dx);
-    hit_rect.top = static_cast<int32_t>(static_cast<uint32_t>(hit_rect.top) + dy);
-    hit_rect.bottom = static_cast<int32_t>(static_cast<uint32_t>(hit_rect.bottom) + dy);
-    if (in_box(x, y, &hit_rect) == 0) {
-        if (field_A74_ == 1) {
-            time1_.stop();
-            if (bubble_text_ != 0) Win::clear_bubble_text();
-            field_A74_ = 0;
-            if (win_parent_ != 0) {
-                win_parent_->on_button_passover(static_cast<int>(field_A78_), 0);
-            }
-            redraw();
-        }
-    } else if (field_A74_ == 0) {
-        if (WinButtonHoverHook != 0) WinButtonHoverHook();
-        field_A74_ = 1;
-        if (win_parent_ != 0) {
-            win_parent_->on_button_passover(static_cast<int>(field_A78_), 1);
-        }
-        if (bubble_text_ != 0) {
-            time1_.init(base_button_timer_callback, 0,
-                        static_cast<BaseButton *>(this), 1000, 5);
-            time1_.pulse();
-        }
-        redraw();
-    }
-}
-
-// ORIGINAL: 0x00608660 ?on_mouse_leave@FlatButton@@QAEXHH@Z 0x00608660-0x006086EC FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original608660..6086EC; retired seed git:ee30a69d:src/unrecovered/00608660.cpp records the same identity and spans.", "The pressed/hover state is basebutton.h's own model: time1_ at 0xA1C (time.h's own stop), field_A74_/field_A78_, bubble_text_ at 0xA80, plus the hover-pair slots 0x009B7ACC/0x9B7AD0/0x9B7AD4 and the buddy pointer at +0xC4 in GraphicWin's region.", "Pinned FlatButton vtable at 0x669754 selects 0x608660 in inherited Win slot 18; the body dispatches slots 17/40/62. Current Win/BaseButton/GraphicWin declarations own the callback slots, state, timer and parent fields."], "reason": "Move the complete leave callback into FlatButton's genuine slot-18 override; preserve the pinned state, timer, bubble, parent-notification and redraw order."}
-// symbol    ?on_mouse_leave@FlatButton@@UAEXHH@Z
-void FlatButton::on_mouse_leave(int x, int y) {
-    Win *active = WinPointerOwner1;
-    if (active == nullptr) {
-        active = WinPointerOwner2;
-    }
-    if (active == this && WinSizingFlag == 1) {
-        on_mouse_move(x, y);
-        return;
-    }
-
-    if (field_A74_ == 1) {
-        time1_.stop();
-        if (bubble_text_ != nullptr) {
-            Win::clear_bubble_text();
-        }
-        Win *const buddy = win_parent_;
-        field_A74_ = 0;
-        if (buddy != nullptr) {
-            buddy->on_button_passover(static_cast<int>(field_A78_), 0);
-        }
-        redraw();
+void FlatButton::close() {
+    time1_.close();
+    field_A18_ = 0;
+    field_A14_ = 0;
+    field_AB8_ = 0xFFFFFFFFU;
+    BaseButton::close();
+    for (int column = 0; column < 3; ++column) {
+        field_ABC_[column] = 0xFFFFFFFFU;
+        config[column] = FlatButtonDefaultLeftTiles[column];
+        config[column + 3] = FlatButtonDefaultRightTiles[column];
+        config[column + 6] = FlatButtonDefaultTopTiles[column];
+        config[column + 9] = FlatButtonDefaultBottomTiles[column];
+        config[column + 12] = FlatButtonDefaultTopLeft[column];
+        config[column + 15] = FlatButtonDefaultTopRight[column];
+        config[column + 18] = FlatButtonDefaultBottomLeft[column];
+        config[column + 21] = FlatButtonDefaultBottomRight[column];
+        config[column + 24] = FlatButtonDefaultCenterTiles[column];
+        field_AD4_[column] = nullptr;
+        border_styles_[column] = 0;
     }
 }
 
@@ -570,4 +495,83 @@ void FlatButton::on_redraw() {
       write_l("...", &rectangle);
     }
   }
+}
+
+// ??_GBaseButton@@WEEE@AEPAXI@Z (0x00607CE0) moved to basebutton.cpp,
+// 2026-09-03: this unit emits no BaseButton symbol at all, so the claim
+// measured UNRESOLVED from here. ??_EBaseButton is defined by basebutton.obj
+// alone - that is where ~BaseButton lives - and read from there it is the
+// image's own 11 bytes. A comparison compiles a TRANSLATION UNIT, so the
+// claim has to live where the COMDAT is emitted. The full TRIED evidence
+// that named this move is folded into the marker's new home.
+
+// ORIGINAL: 0x00608500 ?on_mouse_move@FlatButton@@QAEXHH@Z 0x00608500-0x00608657 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"Recover the complete body in its genuine C++ owner, with real embedded members, shared virtual bases, lifecycle and parent operations. Compiler-generated overrides/adjustors replace executable-address or vbtable stand-ins; no current matching claim is granted.","evidence":["git:391d42a9:src/recovered/units/00608500.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/ui-eight-owner-coverage.json","Original entry 0x00608500; physical VC6 COFF emitted symbol ?on_mouse_move@FlatButton@@UAEXHH@Z."]}
+// symbol    ?on_mouse_move@FlatButton@@UAEXHH@Z
+void FlatButton::on_mouse_move(int x, int y) {
+    Win *active = WinPointerOwner1;
+    if (active == nullptr) {
+        active = WinPointerOwner2;
+    }
+    if (active == this) {
+        BaseButton::on_mouse_move(x, y);
+        return;
+    }
+    RECT hit_rect = this->Buffer::rect2_;
+    const uint32_t dy = 0u - static_cast<uint32_t>(hit_rect.top);
+    const uint32_t dx = 0u - static_cast<uint32_t>(hit_rect.left);
+    hit_rect.left = static_cast<int32_t>(static_cast<uint32_t>(hit_rect.left) + dx);
+    hit_rect.right = static_cast<int32_t>(static_cast<uint32_t>(hit_rect.right) + dx);
+    hit_rect.top = static_cast<int32_t>(static_cast<uint32_t>(hit_rect.top) + dy);
+    hit_rect.bottom = static_cast<int32_t>(static_cast<uint32_t>(hit_rect.bottom) + dy);
+    if (in_box(x, y, &hit_rect) == 0) {
+        if (field_A74_ == 1) {
+            time1_.stop();
+            if (bubble_text_ != 0) Win::clear_bubble_text();
+            field_A74_ = 0;
+            if (win_parent_ != 0) {
+                win_parent_->on_button_passover(static_cast<int>(field_A78_), 0);
+            }
+            redraw();
+        }
+    } else if (field_A74_ == 0) {
+        if (WinButtonHoverHook != 0) WinButtonHoverHook();
+        field_A74_ = 1;
+        if (win_parent_ != 0) {
+            win_parent_->on_button_passover(static_cast<int>(field_A78_), 1);
+        }
+        if (bubble_text_ != 0) {
+            time1_.init(base_button_timer_callback, 0,
+                        static_cast<BaseButton *>(this), 1000, 5);
+            time1_.pulse();
+        }
+        redraw();
+    }
+}
+
+// ORIGINAL: 0x00608660 ?on_mouse_leave@FlatButton@@QAEXHH@Z 0x00608660-0x006086EC FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Original608660..6086EC; retired seed git:ee30a69d:src/unrecovered/00608660.cpp records the same identity and spans.", "The pressed/hover state is basebutton.h's own model: time1_ at 0xA1C (time.h's own stop), field_A74_/field_A78_, bubble_text_ at 0xA80, plus the hover-pair slots 0x009B7ACC/0x9B7AD0/0x9B7AD4 and the buddy pointer at +0xC4 in GraphicWin's region.", "Pinned FlatButton vtable at 0x669754 selects 0x608660 in inherited Win slot 18; the body dispatches slots 17/40/62. Current Win/BaseButton/GraphicWin declarations own the callback slots, state, timer and parent fields."], "reason": "Move the complete leave callback into FlatButton's genuine slot-18 override; preserve the pinned state, timer, bubble, parent-notification and redraw order."}
+// symbol    ?on_mouse_leave@FlatButton@@UAEXHH@Z
+void FlatButton::on_mouse_leave(int x, int y) {
+    Win *active = WinPointerOwner1;
+    if (active == nullptr) {
+        active = WinPointerOwner2;
+    }
+    if (active == this && WinSizingFlag == 1) {
+        on_mouse_move(x, y);
+        return;
+    }
+
+    if (field_A74_ == 1) {
+        time1_.stop();
+        if (bubble_text_ != nullptr) {
+            Win::clear_bubble_text();
+        }
+        Win *const buddy = win_parent_;
+        field_A74_ = 0;
+        if (buddy != nullptr) {
+            buddy->on_button_passover(static_cast<int>(field_A78_), 0);
+        }
+        redraw();
+    }
 }
