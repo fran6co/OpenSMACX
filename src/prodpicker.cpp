@@ -518,7 +518,6 @@ void __cdecl ProdPicker::UNK2(int, ProdPicker *picker) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00492fa0.cpp", "Pinned original coordinator review: actual label-pointer dereference, camera word3F48F5C3, static cdecl callback ABI, row-end clamps and modal-parent/button suppression order."], "reason": "Recover ProdPicker owner behavior through existing window bases, owned StringLists/controls and typed Base/Caviar camera state; preserve historical seed identity and extents as restoration obligations, not current match claims."}
 // TRIED: void return confirmed (0,1,2,3 are switch-derived flag bits; 9999/999999 are itoa() display clamps, not status codes - the single `ret` has no `mov eax,K` before it, eax at exit is whatever Font::init() last returned). Structural transcription via named ProdPicker::field_XXXX_ members instead of raw pointer casts didn't close the divergence; prologue shape differs (#0 push vs sub) from local layout, not a wrong op.
 void ProdPicker::calculate() {
-    int found = 0;
     const int base_id = BaseIDCurrentSelected;
     int has_proto_cost = 0;
     char name[256];
@@ -540,6 +539,7 @@ void ProdPicker::calculate() {
 
     // A faction with any researched prerequisite above its current weapon,
     // armor, or chassis technology receives the editor's upgrade action.
+    int found = 0;
     int i;
     for (i = 0; i < MaxWeaponNum; i++) {
         if (Weapon[i].offense_rating > 1 && has_tech(Weapon[i].preq_tech, field_A76C_)) {
