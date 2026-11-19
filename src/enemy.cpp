@@ -320,6 +320,13 @@ static inline int base_owner_of(const Map *tile) {
 }
 
 void __cdecl enemy_strategy(int faction_id) {
+    // Function-scope scratch variables named by their image home (imgmerge.py, par-6):
+    // v_2c  [ebp-0x2c] the unit's triad in the census, the abstract-map row of the
+    //       bridgehead search, the goal cost of the assignment pass
+    // x_40  [ebp-0x40] the unit x of the census and of the assignment pass, the
+    //       abstract-map column
+    int v_2c;
+    int x_40;
     int base_id;
     int veh_id;
     int colony_count = 0;
@@ -501,13 +508,13 @@ void __cdecl enemy_strategy(int faction_id) {
             continue;
         }
 
-        int x = Vehs[veh_id].x;
+        x_40 = Vehs[veh_id].x;
         int y = Vehs[veh_id].y;
         int proto_id = Vehs[veh_id].proto_id;
-        int region = region_at(x, y);
-        BOOL ocean = is_ocean(x, y);
+        int region = region_at(x_40, y);
+        BOOL ocean = is_ocean(x_40, y);
         int plan = VehPrototypes[proto_id].plan;
-        int triad = Chassis[VehPrototypes[proto_id].chassis_id].triad;
+        v_2c = Chassis[VehPrototypes[proto_id].chassis_id].triad;
         PlayersData[faction_id].proto_id_active[proto_id]++;
         if (Vehs[veh_id].year_end_lurking) {
             if (!--Vehs[veh_id].year_end_lurking) {
@@ -529,10 +536,10 @@ void __cdecl enemy_strategy(int faction_id) {
                 && old_plan != PlayersData[faction_id].region_base_plan[region]
                 && (old_plan != 3 || PlayersData[faction_id].region_base_plan[region] != 8
                     || Vehs[veh_id].order == 2)
-                && (base_who(x, y) < 0 || stack_check(veh_id, 1, faction_id, -1, -1) > 1)
-                && (map_loc(x, y)->climate >> 5) >= ALT_SHORE_LINE
+                && (base_who(x_40, y) < 0 || stack_check(veh_id, 1, faction_id, -1, -1) > 1)
+                && (map_loc(x_40, y)->climate >> 5) >= ALT_SHORE_LINE
                 && PlayersData[faction_id].region_base_plan[region] != 2
-                && !zoc_sea(x, y, faction_id)) {
+                && !zoc_sea(x_40, y, faction_id)) {
                 BOOL better = false;
                 uint8_t veh_plan = VehPrototypes[Vehs[veh_id].proto_id].plan;
                 if (veh_plan <= 1) {
@@ -577,20 +584,20 @@ void __cdecl enemy_strategy(int faction_id) {
             && GameDataStateStorage.fields_.turn_current_num_ > 25
             && proto_id == BSC_SCOUT_PATROL
             && (PlayersData[faction_id].region_base_plan[region] == 7 || Vehs[veh_id].order == 2)
-            && (base_who(x, y) < 0 || stack_check(veh_id, 0xE, faction_id, -1, -1) > 1)
-            && alt_at(x, y) >= ALT_SHORE_LINE
+            && (base_who(x_40, y) < 0 || stack_check(veh_id, 0xE, faction_id, -1, -1) > 1)
+            && alt_at(x_40, y) >= ALT_SHORE_LINE
             && PlayersData[faction_id].region_base_plan[region] != 2
-            && !zoc_sea(x, y, faction_id)
+            && !zoc_sea(x_40, y, faction_id)
             && Vehs[veh_id].move_to_ai_type != '1') {
             kill(veh_id);
             continue;
         }
         Vehs[veh_id].state &= 0xCFFFFFDB;
         if (!(self_bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)
-            && Vehs[veh_id].order == 1 && (triad || !ocean)) {
+            && Vehs[veh_id].order == 1 && (v_2c || !ocean)) {
             Vehs[veh_id].order = 0;
         }
-        if (ocean && !triad && base_who(x, y) < 0) {
+        if (ocean && !v_2c && base_who(x_40, y) < 0) {
             if (stack_check(veh_id, 2, 7, -1, -1)) {
                 if (Vehs[veh_id].order != 1) {
                     sleep(veh_id);
@@ -602,7 +609,7 @@ void __cdecl enemy_strategy(int faction_id) {
                 continue;
             }
         }
-        if (!ocean && triad == TRIAD_SEA && base_who(x, y) < 0) {
+        if (!ocean && v_2c == TRIAD_SEA && base_who(x_40, y) < 0) {
             if (!(Vehs[veh_id].flags & 0x20)) {
                 veh_kill(veh_id);
             }
@@ -634,7 +641,7 @@ void __cdecl enemy_strategy(int faction_id) {
             formers[region]++;
             if (Vehs[veh_id].home_base_id >= 0) {
                 int home_id = Vehs[veh_id].home_base_id;
-                uint32_t mask = (triad != TRIAD_SEA) ? 0x20 : 0x80000;
+                uint32_t mask = (v_2c != TRIAD_SEA) ? 0x20 : 0x80000;
                 if ((mask & Bases[home_id].state)
                     && !(self_bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)) {
                     int best_dist = 9999;
@@ -671,22 +678,22 @@ void __cdecl enemy_strategy(int faction_id) {
         } else if (plan == 11) {
             PlayersData[faction_id].unk_77[region] |= 0x1000;
         } else if (plan == 3) {
-            if (base_who(x, y) < 0) {
+            if (base_who(x_40, y) < 0) {
                 PlayersData[faction_id].unk_77[region] |= 0x2000;
             }
         }
         if (plan <= 7) {
             PlayersData[faction_id].total_mil_veh++;
-            if (region >= 0 && !triad) {
+            if (region >= 0 && !v_2c) {
                 if (!ocean) {
                     PlayersData[faction_id].region_total_combat_vehs[region]++;
                 }
                 goto transport_check;
             }
         }
-        if (triad == TRIAD_SEA) {
+        if (v_2c == TRIAD_SEA) {
             PlayersData[faction_id].unk_70++;
-        } else if (triad == TRIAD_AIR) {
+        } else if (v_2c == TRIAD_AIR) {
             if (!plan) {
                 PlayersData[faction_id].unk_105++;
             } else if (plan == 4) {
@@ -1044,15 +1051,15 @@ void __cdecl enemy_strategy(int faction_id) {
             int bridge_y;
             int site_x;
             int site_y;
-            for (int ay = 0; ay < MapAbstractLatBounds; ay++) {
-                for (int ax = ay & 1; ax < MapAbstractLongBounds; ax += 2) {
-                    if (abstract_at_call(ax, ay) != region) {
+            for (v_2c = 0; v_2c < MapAbstractLatBounds; v_2c++) {
+                for (x_40 = v_2c & 1; x_40 < MapAbstractLongBounds; x_40 += 2) {
+                    if (abstract_at_call(x_40, v_2c) != region) {
                         continue;
                     }
                     int score = 0;
                     int found = -1;
                     for (int dir = 0; dir < 8; dir++) {
-                        int nx = ax + VehMoveDeltaX[dir];
+                        int nx = x_40 + VehMoveDeltaX[dir];
                         if (!(MapIsFlat & 1)) {
                             if (nx < 0) {
                                 nx += MapAbstractLongBounds;
@@ -1060,7 +1067,7 @@ void __cdecl enemy_strategy(int faction_id) {
                                 nx -= MapAbstractLongBounds;
                             }
                         }
-                        int ny = ay + VehMoveDeltaY[dir];
+                        int ny = v_2c + VehMoveDeltaY[dir];
                         if (nx < 0 || nx >= MapAbstractLongBounds || ny < 0 || ny >= MapAbstractLatBounds) {
                             continue;
                         }
@@ -1071,8 +1078,8 @@ void __cdecl enemy_strategy(int faction_id) {
                         }
                         score += 2;
                         for (int k = 0; k < 8; k++) {
-                            int tx = wrap_map_x(ax * 5 + VehMoveDeltaX[k]);
-                            int ty = ay * 5 + VehMoveDeltaY[k];
+                            int tx = wrap_map_x(x_40 * 5 + VehMoveDeltaX[k]);
+                            int ty = v_2c * 5 + VehMoveDeltaY[k];
                             if (!on_map(tx, ty) || is_ocean(tx, ty)) {
                                 continue;
                             }
@@ -1239,9 +1246,9 @@ void __cdecl enemy_strategy(int faction_id) {
             if (!pass && Vehs[veh_id].move_to_ai_type != '2') {
                 continue;
             }
-            int x = Vehs[veh_id].x;
+            x_40 = Vehs[veh_id].x;
             int y = Vehs[veh_id].y;
-            Map *sq = map_loc(x, y);
+            Map *sq = map_loc(x_40, y);
             int region = sq->region;
             int plan = VehPrototypes[Vehs[veh_id].proto_id].plan;
             if (pass && Vehs[veh_id].move_to_ai_type == '1') {
@@ -1291,20 +1298,20 @@ void __cdecl enemy_strategy(int faction_id) {
             }
             uint8_t triad = Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad;
             if (triad != TRIAD_AIR) {
-                BOOL ocean = is_ocean(x, y);
+                BOOL ocean = is_ocean(x_40, y);
                 BOOL sea = (triad == TRIAD_SEA);
                 if (ocean != sea) {
-                    if (base_who(x, y) < 0) {
+                    if (base_who(x_40, y) < 0) {
                         continue;
                     }
                     // BUG(original): compares this tile's own altitude, never a neighbour's.
                     for (int dir = 0; dir < 8; dir++) {
-                        int nx = wrap_map_x(VehMoveDeltaX[dir] + x);
+                        int nx = wrap_map_x(VehMoveDeltaX[dir] + x_40);
                         int ny = VehMoveDeltaY[dir] + y;
-                        if (on_map(nx, ny) && is_ocean(x, y) == sea) {
-                            x = nx;
+                        if (on_map(nx, ny) && is_ocean(x_40, y) == sea) {
+                            x_40 = nx;
                             y = ny;
-                            region = region_at(x, y);
+                            region = region_at(x_40, y);
                             break;
                         }
                     }
@@ -1335,13 +1342,13 @@ void __cdecl enemy_strategy(int faction_id) {
                 plan = 0;
                 retreat = 1;
             }
-            if (Vehs[veh_id].order == 2 && !retreat && base_who(x, y) >= 0) {
+            if (Vehs[veh_id].order == 2 && !retreat && base_who(x_40, y) >= 0) {
                 int artifacts = stack_check(veh_id, 2, 12, -1, -1);
                 if (stack_check(veh_id, 1, -1, -1, -1) - artifacts <= 1) {
                     continue;
                 }
                 if (plan == 2 || plan == 3 || plan == 1) {
-                    int base_id_here = base_at(x, y);
+                    int base_id_here = base_at(x_40, y);
                     if (stack_check(veh_id, 0x10, -1, -1, -1) < garrison_check(base_id_here)) {
                         continue;
                     }
@@ -1398,7 +1405,7 @@ void __cdecl enemy_strategy(int faction_id) {
                     }
                 }
                 int goal_base = base_at(goal.x, goal.y);
-                int cost = vector_dist(x, y, goal.x, goal.y) << 8;
+                v_2c = vector_dist(x_40, y, goal.x, goal.y) << 8;
                 int taken = 0;
                 if (!retreat
                     && (goal_base < 0 || Bases[goal_base].faction_id_current != faction_id
@@ -1413,7 +1420,7 @@ void __cdecl enemy_strategy(int faction_id) {
                     continue;
                 }
                 if (goal.type == AI_GOAL_SCOUT && plan != 3) {
-                    cost *= 2;
+                    v_2c *= 2;
                     if (Vehs[veh_id].state & 0x10000000) {
                         continue;
                     }
@@ -1424,7 +1431,7 @@ void __cdecl enemy_strategy(int faction_id) {
                 if (taken && (goal.type == AI_GOAL_SCOUT || goal.type == AI_GOAL_COLONIZE)) {
                     continue;
                 }
-                if (cost > 6 / (taken + 1)
+                if (v_2c > 6 / (taken + 1)
                                * Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].speed * left
                                - taken + 4
                     && PlayersData[faction_id].region_base_plan[region] != plan
@@ -1438,7 +1445,7 @@ void __cdecl enemy_strategy(int faction_id) {
                 if (Vehs[veh_id].state & 0x10000000) {
                     int other = veh_at(goal.x, goal.y);
                     if (other >= 0
-                        && stack_check(other, 0xB, 0x10000000, 0x10000000, faction_id) > (cost == 0)) {
+                        && stack_check(other, 0xB, 0x10000000, 0x10000000, faction_id) > (v_2c == 0)) {
                         continue;
                     }
                 }
@@ -1446,7 +1453,7 @@ void __cdecl enemy_strategy(int faction_id) {
                     int goal_home = goal.base_id;
                     if (goal_home >= 0 && (Bases[goal_home].state & 0x20)
                         && Vehs[veh_id].home_base_id != goal_home) {
-                        cost *= 3;
+                        v_2c *= 3;
                     }
                     int closer = 0;
                     for (int other_id = 0; other_id < GameDataStateStorage.fields_.vehicle_current_count_;
@@ -1459,7 +1466,7 @@ void __cdecl enemy_strategy(int faction_id) {
                                 && Vehs[other_id].home_base_id != goal_home) {
                                 dist *= 3;
                             }
-                            if (dist < cost) {
+                            if (dist < v_2c) {
                                 closer = 1;
                                 break;
                             }
@@ -1472,7 +1479,7 @@ void __cdecl enemy_strategy(int faction_id) {
                         continue;
                     }
                 }
-                int weighted = cost;
+                int weighted = v_2c;
                 int owner = whose_territory(faction_id, goal.x, goal.y, 0, 0);
                 if (owner >= 0 && owner != faction_id) {
                     uint32_t treaty = PlayersData[faction_id].diplo_treaties[owner];
@@ -1484,7 +1491,7 @@ void __cdecl enemy_strategy(int faction_id) {
                             if (treaty & 2) {
                                 continue;
                             }
-                            weighted = cost * 2;
+                            weighted = v_2c * 2;
                         }
                     }
                 }
