@@ -197,6 +197,7 @@ def main():
     ap.add_argument('--raw-webs', action='store_true', help='plain def-use webs (no split at label changes)')
     ap.add_argument('--tie', default='last', choices=['last', 'slot'],
                     help='order among equal counts: earlier last access first (probe g14) or the image slot (oracle)')
+    ap.add_argument('--no-tail', dest='tail', action='store_false', help='plain home liveness for temporaries')
     ap.add_argument('--slots', default='', help='print the web timeline of these image slots')
     a = ap.parse_args()
     unit = a.unit if a.unit.startswith('src/') else 'src/' + a.unit
@@ -255,6 +256,10 @@ def main():
     # liveness of a set of instruction indices in one slot (packsim.relabel on the image)
     LV = {}
 
+    def tail_of(key):
+        # optimizer temporaries (no named web) stay live over their scratch reload tail (live.reload_tail)
+        return a.tail and not any(is_named(webs[i]['name']) for i in key)
+
     succ = [i['s'] for i in I.ins]
 
     def reach(starts, nxt):
@@ -292,6 +297,8 @@ def main():
         # so a maybe-uninitialised read does not hold the slot over the other arm
         if wr:
             liv &= reach(wr, succ) | wr
+        if tail_of(key):
+            liv |= I.reload_tail(rd)
         LV[key] = (liv, wr)
         return LV[key]
 

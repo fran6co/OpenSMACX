@@ -39,6 +39,8 @@ ap.add_argument('--fit', default='last', choices=['last', 'first', 'smallest'], 
 ap.add_argument('--pfx', default=os.environ.get('FE_PFX_BASE', '29'))
 ap.add_argument('--defined', action='store_true', help='interference on live AND defined (a home is live only where one of '
                 'its own stores reaches), not plain flow liveness')
+ap.add_argument('--no-tail', dest='tail', action='store_false', help='plain home liveness for optimizer temporaries '
+                '(default: a spilled temporary stays live over its scratch-register reload tail, boom 0x00504AA0)')
 ap.add_argument('--tie', default='last', choices=['last', 'first', 'actual'],
                 help='order among equal counts: earlier LAST reference first (probe g14, default), or the actual slot (oracle)')
 a = ap.parse_args()
@@ -125,6 +127,8 @@ def relabel(sym):
             reach.add(n)
             work.extend(F.ins[n]['s'])
         liv &= reach | wr
+    if a.tail and sym.startswith('T'):
+        liv |= F.reload_tail(rd)
     return liv, wr
 
 

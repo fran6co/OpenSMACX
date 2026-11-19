@@ -126,6 +126,37 @@ class Func:
             groups[find(('u', u))][1].add(u)
         return [g for g in groups.values() if g[0] != {'entry'} or g[1]]
 
+    def reload_tail(self, reads):
+        """Instructions over which a value reloaded from a frame home into a SCRATCH register (`mov eax|ecx|edx,
+        [ebp-K]`) is still used: straight-line successors up to the register's last use before it is redefined.
+        A spilled optimizer temporary's packing interference is its VALUE's liveness, so its home stays busy
+        over this tail (boom 0x00504AA0: the spilled &pixel_y[slot] reloaded into eax and stored through after
+        the new pixel_y value was homed; the two share no slot). Named variables keep plain home liveness."""
+        out = set()
+        for n in reads:
+            m = re.match(r'mov (eax|ecx|edx), dword ptr \[ebp', self.ins[n]['txt'])
+            if not m:
+                continue
+            r = m.group(1)
+            path, last, k = [], None, n
+            while len(path) < 40:
+                nx = self.ins[k]['s']
+                if len(nx) != 1:
+                    break
+                k = nx[0]
+                t = self.ins[k]['txt']
+                mn, _, ops = t.partition(' ')
+                path.append(k)
+                dst, _, srcs = ops.partition(',')
+                if re.search(r'\b%s\b' % r, srcs) or ('[' in dst and re.search(r'\b%s\b' % r, dst)) or \
+                        (not srcs and re.search(r'\b%s\b' % r, dst)) or (dst.strip() == r and mn not in WRITE_ONLY | {'xor'}):
+                    last = len(path)
+                if (dst.strip() == r and mn in WRITE_ONLY | {'xor'}) or mn == 'call':
+                    break
+            if last:
+                out.update(path[:last])
+        return out
+
 
 def _build(data, org, code_end, tables):
     """tables: dict table_addr -> [targets]"""
