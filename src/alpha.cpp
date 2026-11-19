@@ -21,8 +21,14 @@
 // declarations precede game.h's (guide 2.5). After the dead-helper batch
 // (d64959c815) it read 373 rows with no pads; fe sweep 0-63: 11 rows at 1-7,
 // 10, 13-14, 17, 20-39, 43, 46-50, 53, 56-57, 59-62 and 373-412 elsewhere, no
-// other function of the unit changes, so 30. The original header declaration
-// set is unknown; re-tune after header batches.
+// other function of the unit changes, so 30. After newgame.cpp joined this
+// unit (2026-11-19) the fe sweep reads 11 rows at 0-4, 11-22, 26-29, 31-38,
+// 41, 44-45, 48, 53-63 and 373-412 elsewhere (404 at 30), so 31. At those
+// counts VC6 itself homes &custom_world[slot] and &planet_rules_[slot]
+// ([ebp-0x1C], [ebp-0x14] in the image) and lets slot die at the switch; named
+// pointer locals for the two addresses read 84 rows at best, so they are not
+// the original spelling. Left: i and the two address homes permuted. The
+// original header declaration set is unknown; re-tune after header batches.
 // HEADER-PADS: function NewGameHeaderPad
 void NewGameHeaderPad0();
 void NewGameHeaderPad1();
@@ -54,6 +60,7 @@ void NewGameHeaderPad26();
 void NewGameHeaderPad27();
 void NewGameHeaderPad28();
 void NewGameHeaderPad29();
+void NewGameHeaderPad30();
 
 // Separate writable comparison strings identified by the pinned operand sites.
 // These descriptive names do not claim original names or allocation bounds.
