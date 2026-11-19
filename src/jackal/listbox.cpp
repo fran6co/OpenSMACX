@@ -257,10 +257,10 @@ void ListBox::set_selected_pos(int position, int notify) {
     if (position >= 0) {
         // The scroll position is updated in place; the step is re-read
         // every iteration.
-        while (Dialog::selected_position_ < static_cast<int>(field_18_)) {
+        while (Dialog::selected_position_ < field_18_) {
             moved = 1;
             field_18_ -= Dialog::column_count_ > 1 ? Dialog::row_count_ : 1;
-            if (static_cast<int>(field_18_) < 0) {
+            if (field_18_ < 0) {
                 field_18_ = 0;
             }
         }
@@ -277,9 +277,9 @@ void ListBox::set_selected_pos(int position, int notify) {
         if (moved != 0 &&
             Dialog::item_list_.entry_count_ > static_cast<int>(field_1C_)) {
             if (Dialog::column_count_ > 1) {
-                set_horz_pos(static_cast<int>(field_18_));
+                set_horz_pos(field_18_);
             } else {
-                set_vert_pos(static_cast<int>(field_18_));
+                set_vert_pos(field_18_);
             }
         }
 
@@ -579,9 +579,9 @@ int ListBox::attach(GraphicWin *a1, int a2, int a3, int a4) {
 
     if (static_cast<int32_t>(field_20_) > static_cast<int32_t>(field_1C_)) {
         if (Dialog::column_count_ > 1) {
-            set_horz_pos(static_cast<int32_t>(field_18_));
+            set_horz_pos(field_18_);
         } else {
-            set_vert_pos(static_cast<int32_t>(field_18_));
+            set_vert_pos(field_18_);
         }
     }
 
@@ -602,8 +602,8 @@ int ListBox::attach(GraphicWin *a1, int a2, int a3, int a4) {
         static_cast<int>(Dialog::text_color_3d_));
     Buffer::set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
 
-    set_vert_pos(static_cast<int32_t>(field_18_));
-    set_horz_pos(static_cast<int32_t>(field_18_) / Dialog::column_count_);
+    set_vert_pos(field_18_);
+    set_horz_pos(field_18_ / Dialog::column_count_);
 
     return 0;
 }
@@ -720,7 +720,7 @@ void ListBox::on_left_down(int x, int y) {
                        * Dialog::row_count_
                    + y / (Dialog::field_68_ + Dialog::field_44_);
     } else {
-        this->Dialog::item_list_.seek_pos(static_cast<int>(field_18_) - 1);
+        this->Dialog::item_list_.seek_pos(field_18_ - 1);
         position = 0;
         for (int rows = Dialog::item_list_.entry_count_; rows > 0 && y >= 0; --rows) {
             ++position;
@@ -738,7 +738,7 @@ void ListBox::on_left_down(int x, int y) {
         --position;
     }
     if (position >= static_cast<int>(field_1C_)) return;
-    const int clicked = static_cast<int>(field_18_) + position;
+    const int clicked = field_18_ + position;
     if (clicked >= Dialog::item_list_.entry_count_) return;
 
     if (field_4_ != 0 && clicked != Dialog::selected_position_) {
@@ -816,11 +816,11 @@ int ListBox::on_key_down(int key) {
         ++columns_needed;
     }
     const int last_visible =
-        static_cast<int>(field_1C_) + static_cast<int>(field_18_) - 1;
+        static_cast<int>(field_1C_) + field_18_ - 1;
     if (Dialog::selected_position_ == -1) {
         Dialog::selected_position_ = 0;
     }
-    const int old_top = static_cast<int>(field_18_);
+    const int old_top = field_18_;
     const int old_selected = Dialog::selected_position_;
 
     switch (key) {
@@ -831,7 +831,7 @@ int ListBox::on_key_down(int key) {
         }
         Dialog::selected_position_ = old_selected - 1;
         if (static_cast<int>(field_1C_) < count
-            && Dialog::selected_position_ < static_cast<int>(field_18_)) {
+            && Dialog::selected_position_ < field_18_) {
             if (Dialog::column_count_ == 1) {
                 field_18_ = static_cast<uint32_t>(Dialog::selected_position_);
             } else {
@@ -844,19 +844,19 @@ int ListBox::on_key_down(int key) {
     case VK_NUMPAD2:
         if (static_cast<int>(field_1C_) < count) {
             if (Dialog::column_count_ == 1) {
-                if (old_selected + 1 > static_cast<int>(field_18_) + Dialog::row_count_ - 1
+                if (old_selected + 1 > field_18_ + Dialog::row_count_ - 1
                     || old_selected == count - 1) {
-                    if (static_cast<int>(field_18_) < count - 1) {
+                    if (field_18_ < count - 1) {
                         ++field_18_;
                     }
                 }
             } else {
                 if (old_selected + 1 > last_visible
-                    && static_cast<int>(field_18_) + Dialog::row_count_ <= count - 1) {
+                    && field_18_ + Dialog::row_count_ <= count - 1) {
                     field_18_ += static_cast<uint32_t>(Dialog::row_count_);
                 }
                 if (Dialog::selected_position_ == count - 1
-                    && static_cast<int>(field_18_) < (columns_needed - 1) * Dialog::row_count_) {
+                    && field_18_ < (columns_needed - 1) * Dialog::row_count_) {
                     field_18_ += static_cast<uint32_t>(Dialog::row_count_);
                 }
             }
@@ -875,7 +875,7 @@ int ListBox::on_key_down(int key) {
             Dialog::selected_position_ = old_selected - Dialog::row_count_;
         }
         if (static_cast<int>(field_1C_) < count
-            && Dialog::selected_position_ < static_cast<int>(field_18_)) {
+            && Dialog::selected_position_ < field_18_) {
             field_18_ -= static_cast<uint32_t>(Dialog::row_count_);
         }
         break;
@@ -887,13 +887,13 @@ int ListBox::on_key_down(int key) {
         }
         if (static_cast<int>(field_1C_) < count) {
             if (old_selected >= (Dialog::column_count_ - 1) * Dialog::row_count_
-                                    + static_cast<int>(field_18_)) {
-                if (static_cast<int>(field_18_) + Dialog::row_count_ <= count - 1) {
+                                    + field_18_) {
+                if (field_18_ + Dialog::row_count_ <= count - 1) {
                     field_18_ += static_cast<uint32_t>(Dialog::row_count_);
                 }
             } else if (old_selected >= (columns_needed - 1) * Dialog::row_count_
-                                           + static_cast<int>(field_18_)
-                       && static_cast<int>(field_18_) < (columns_needed - 1) * Dialog::row_count_) {
+                                           + field_18_
+                       && field_18_ < (columns_needed - 1) * Dialog::row_count_) {
                 field_18_ += static_cast<uint32_t>(Dialog::row_count_);
             }
         }
@@ -931,12 +931,12 @@ int ListBox::on_key_down(int key) {
     }
     }
 
-    if (Dialog::selected_position_ < static_cast<int>(field_18_)
+    if (Dialog::selected_position_ < field_18_
         || Dialog::selected_position_ >= static_cast<int>(field_1C_ + field_18_)) {
         field_18_ = static_cast<uint32_t>(Dialog::selected_position_);
     }
-    set_vert_pos(static_cast<int>(field_18_));
-    set_horz_pos(static_cast<int>(field_18_) / Dialog::column_count_);
+    set_vert_pos(field_18_);
+    set_horz_pos(field_18_ / Dialog::column_count_);
     if (selection_callback_ != 0) {
         selection_callback_(Dialog::get_selected_id());
     }
@@ -951,14 +951,14 @@ int ListBox::on_key_down(int key) {
             child->play();
         }
     }
-    if (static_cast<int>(field_18_) != old_top) {
+    if (field_18_ != old_top) {
         redraw();
         return 1;
     }
     if (old_selected != Dialog::selected_position_) {
-        ListBoxDrawOffset = old_selected - static_cast<int>(field_18_);
+        ListBoxDrawOffset = old_selected - field_18_;
         draw_item(old_selected);
-        ListBoxDrawOffset = Dialog::selected_position_ - static_cast<int>(field_18_);
+        ListBoxDrawOffset = Dialog::selected_position_ - field_18_;
         draw_item(Dialog::selected_position_);
     }
     GraphicWin::soft_update();
@@ -998,8 +998,8 @@ void ListBox::draw_item(int index) {
 
     if (Dialog::field_4C_ == 1) {
         int occupied = 0;
-        this->Dialog::item_list_.seek_pos(static_cast<int>(field_18_) - 1);
-        const int steps = index - static_cast<int>(field_18_);
+        this->Dialog::item_list_.seek_pos(field_18_ - 1);
+        const int steps = index - field_18_;
         for (int i = 0; i < steps; ++i) {
             StringList *const list = &this->Dialog::item_list_;
             StringStructEntry *const head = list->head_;
@@ -1033,7 +1033,7 @@ void ListBox::draw_item(int index) {
     } else {
         // 0x0060B71C..0x0060B775 applies the column offset before it divides
         // again for the row offset.
-        const int relative = index - static_cast<int>(field_18_);
+        const int relative = index - field_18_;
         const int along = (static_cast<int>(Dialog::field_64_)
                            + Dialog::field_44_)
             * (relative / Dialog::row_count_);
@@ -1062,7 +1062,7 @@ void ListBox::draw_item(int index) {
     int callback_result = 0;
     if (fill_callback_ != 0) {
         callback_result = fill_callback_(this, Dialog::pos_to_id(index),
-            static_cast<int>(field_18_) + ListBoxDrawOffset, &row);
+            field_18_ + ListBoxDrawOffset, &row);
     }
 
     Buffer::set_text_color(Dialog::text_color_a_, Dialog::text_color_b_,
@@ -1148,7 +1148,7 @@ frame_done:
     if (draw_callback_ != 0) {
         CurrentListBoxDraw = this;
         draw_callback_(this, item_id,
-                       static_cast<int>(field_18_) + ListBoxDrawOffset,
+                       field_18_ + ListBoxDrawOffset,
                        row.left, row.top, row.bottom - row.top);
     }
 
@@ -1337,14 +1337,14 @@ void ListBox::on_redraw() {
     }
 
     if (Dialog::item_list_.entry_count_ == 0) return;
-    this->Dialog::item_list_.seek_pos(static_cast<int>(field_18_) - 1);
+    this->Dialog::item_list_.seek_pos(field_18_ - 1);
 
     ListBoxDrawOffset = 0;
     for (int column = 0; column < Dialog::column_count_; ++column) {
         for (int row = 0; row < Dialog::row_count_; ++row) {
-            draw_item(static_cast<int>(field_18_) + ListBoxDrawOffset);
+            draw_item(field_18_ + ListBoxDrawOffset);
             if (++ListBoxDrawOffset
-                == Dialog::item_list_.entry_count_ - static_cast<int>(field_18_)) {
+                == Dialog::item_list_.entry_count_ - field_18_) {
                 break;
             }
         }
@@ -1387,7 +1387,7 @@ void ListBox::on_scrolling(int a, int b) {
     WinCallbackWindow = parent_window();
 
     const int top_entry = Dialog::selected_position_;
-    const int old_position = static_cast<int>(field_18_);
+    const int old_position = field_18_;
     if (a != -2) {
         if (a == -1) {
             field_18_ = static_cast<uint32_t>(b);
@@ -1398,10 +1398,10 @@ void ListBox::on_scrolling(int a, int b) {
     }
 
     if (ListBoxGlobalDDC != 0) {
-        set_selected_pos(static_cast<int>(field_18_), 1);
+        set_selected_pos(field_18_, 1);
     }
 
-    if (static_cast<int>(field_18_) != old_position) {
+    if (field_18_ != old_position) {
         redraw();
     } else {
         if (top_entry != Dialog::selected_position_) {
@@ -1764,7 +1764,7 @@ void ListBox::on_mouse_move(int x, int y) {
                        * Dialog::row_count_
                    + y / (Dialog::field_68_ + Dialog::field_44_);
     } else {
-        this->Dialog::item_list_.seek_pos(static_cast<int>(field_18_) - 1);
+        this->Dialog::item_list_.seek_pos(field_18_ - 1);
         position = 0;
         for (int rows = Dialog::item_list_.entry_count_; rows > 0 && y >= 0; --rows) {
             ++position;
@@ -1786,21 +1786,21 @@ void ListBox::on_mouse_move(int x, int y) {
         --position;
     }
 
-    const int hovered = static_cast<int>(field_18_) + position;
+    const int hovered = field_18_ + position;
     if (hovered >= Dialog::item_list_.entry_count_) return;
     if (hovered == Dialog::selected_position_) {
         if (static_cast<int>(Dialog::field_F0_) == -1) return;
         Dialog::field_F0_ = static_cast<uint32_t>(-1);
-        ListBoxDrawOffset = previous_hover - static_cast<int>(field_18_);
+        ListBoxDrawOffset = previous_hover - field_18_;
         draw_item(previous_hover);
     } else {
         Dialog::field_F0_ = static_cast<uint32_t>(hovered);
         if (static_cast<int>(Dialog::field_F0_) == previous_hover) return;
         if (previous_hover != -1) {
-            ListBoxDrawOffset = previous_hover - static_cast<int>(field_18_);
+            ListBoxDrawOffset = previous_hover - field_18_;
             draw_item(previous_hover);
         }
-        ListBoxDrawOffset = static_cast<int>(Dialog::field_F0_) - static_cast<int>(field_18_);
+        ListBoxDrawOffset = static_cast<int>(Dialog::field_F0_) - field_18_;
         draw_item(static_cast<int>(Dialog::field_F0_));
         GraphicWin::soft_update();
         return;

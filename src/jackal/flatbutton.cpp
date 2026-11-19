@@ -480,7 +480,7 @@ void FlatButton::on_redraw() {
       const int shift = wrap_height(name_, rect_width(&rectangle) - 6)
           - text_line_height() + text_height();
       const int y = (rect_height(&rectangle) - shift) / 2 + rectangle.top;
-      if (y >= 0 && (static_cast<int>(field_18_) >= 2
+      if (y >= 0 && (field_18_ >= 2
                      || flatbutton_text_fits(this, name_,
                                              rect_width(&rectangle)))) {
         wrap_cent(name_, rectangle.left + 3, y, rect_width(&rectangle) - 6);

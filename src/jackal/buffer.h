@@ -690,7 +690,7 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   BufferWriteStringsCallback field_C_;
   uint32_t field_10_;
   uint32_t field_14_;
-  uint32_t field_18_;
+  int field_18_;
   // 0x1C. The `tgl` argument `Buffer::init` was given, stored as its last
   // act; `Buffer::close` tests bit 2 of it - the same `tgl & 4` that made
   // `init` take the surface and clipper from the caller - to decide whether
