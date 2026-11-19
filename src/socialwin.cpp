@@ -2332,8 +2332,8 @@ void SocialWin::init(int faction_id) {
     rect.left += 3;
     rect.right = rect.left + 0x14;
     rect.top += 3;
-    tutRects1_[3] = rect;
     rect.bottom = rect.top + 0x14;
+    tutRects1_[3] = rect;
     rect = tooltipEconomy_;
     rect.top += 3;
     rect.right -= 3;
