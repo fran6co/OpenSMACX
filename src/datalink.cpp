@@ -234,15 +234,201 @@ Datalink::Datalink() {
     field_29DC_ = 2;
 }
 
-// Reverse-order member/base destruction belongs to the compiler. In particular,
-// Caviar::~Caviar owns close(); this body must not close the renderer twice.
-// ORIGINAL: 0x00432290 ??1Datalink@@QAE@XZ 0x00432290-0x004325AA;0x006531D0-0x006533A2 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/recovered/units/00432290.cpp"], "reason": "Original construction and reverse teardown establish real Flic/Caviar, an eighteen-element FlatButton array and eleven Font members. The owner performs its scalar initialization/reset; genuine member/base lifetimes replace manual vtables and original-address teardown."}
-// symbol    ??1Datalink@@UAE@XZ
-Datalink::~Datalink() {
-    history_[0] = 0;
-    field_2A34_ = 0;
-    field_2A38_ = 0;
+// ORIGINAL: 0x0042A100 ?on_dialog_back_draw@Datalink@@QAEHPAUGraphicWin@@@Z 0x0042A100-0x0042A150 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x42A100", "git:b7076e2d4a242bc54aa68d9b48b52eacc10f2ec0:src/recovered/units/0042a100.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
+// symbol    ?on_dialog_back_draw@Datalink@@UAEHPAVGraphicWin@@@Z
+int Datalink::on_dialog_back_draw(GraphicWin *win) {
+    RECT rect = win->clip_rect();
+    const RECT &outer = win->outer_rect();
+    win->tile(InterfaceBoxStyles[0].mask_, outer.left, outer.top,
+              0, 0, rect.right - rect.left, rect.bottom - rect.top);
+    return 1;
+}
+
+// ORIGINAL: 0x0042A150 ?on_dialog_item_back_draw@Datalink@@QAEHPAUGraphicWin@@HHPAURECT@@@Z 0x0042A150-0x0042A260 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x42A150", "git:b7076e2d4a242bc54aa68d9b48b52eacc10f2ec0:src/unrecovered/0042a150.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
+// symbol    ?on_dialog_item_back_draw@Datalink@@UAEHPAVGraphicWin@@HHPAUtagRECT@@@Z
+// Historical scaffold experiment, retained from the replaced seed:
+// TRIED: computing width/height/x/y once and branching only on the `tile()` colour argument folds the compiler's output to 187 bytes (vs 272) - VC6 does not hoist a same-polarity guard's body out of line (see 0x0042A100's sibling note), so each of the three `a3` cases needs its own fully-duplicated width/height/x/y/call block. That form (cand2, below) reaches 0.834 mnemonic similarity but still differs on the exact ebx/esi/edi register allocation the original chose; landing the closest.
+int Datalink::on_dialog_item_back_draw(GraphicWin *win, int id, int mode,
+                                      RECT *rect) {
+    const int left = rect->left;
+    const int top = rect->top;
+    if (mode == 2) {
+        win->tile(InterfaceBoxStyles[28].mask_, win->outer_rect().left + left,
+                  win->outer_rect().top + top, left, top,
+                  rect->right - left, rect->bottom - top);
+    } else if (mode == 1) {
+        win->tile(InterfaceBoxStyles[27].mask_, win->outer_rect().left + left,
+                  win->outer_rect().top + top, left, top,
+                  rect->right - left, rect->bottom - top);
+    } else {
+        win->tile(InterfaceBoxStyles[0].mask_, win->outer_rect().left + left,
+                  win->outer_rect().top + top, left, top,
+                  rect->right - left, rect->bottom - top);
+    }
+    if (field_29DC_ == 12) {
+        win->set_text_color(255 - (id - id / 10000 * 10000) / 5, -1, 1, 1);
+    }
+    return 1;
+}
+
+// ORIGINAL: 0x0042BEB0 ?UNK7@Datalink@@QAEXPADPAD@Z 0x0042BEB0-0x0042BEFA BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x42BEB0", "git:b7076e2d4a242bc54aa68d9b48b52eacc10f2ec0:src/recovered/0042beb0.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
+// symbol    ?UNK7@Datalink@@QAEXPAD0@Z
+void Datalink::UNK7(char *file, char *section) {
+    if (MainInterfaceTileFlag) {
+        blurb_box_.clear();
+        blurb_box_.strings().load(file, section, 1, 0);
+        blurb_box_.add_fixup();
+        blurb_box_.show(0);
+    }
+}
+
+static inline void append_upper_name(LPSTR name);
+
+static inline void append_tech_topic();
+
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0042BF10 0x0042C29C 0x0042C2DC 0x0042C0A0
+// ORIGINAL: 0x0042BF10 ?draw_entry@Datalink@@QAEXXZ 0x0042BF10-0x0042C29A BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x42BF10", "git:b7076e2d4a242bc54aa68d9b48b52eacc10f2ec0:src/recovered/units/0042bf10.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
+void Datalink::draw_entry() {
+    restore_clip();
+    if (field_29DC_ == 2) {
+        ReportWinGlobal.reset();
+    }
+    clear_links();
+    int selected = listBox_.get_selected_id();
+    int category = selected / 10000;
+    history_[0] = selected - category * 10000;
+    if (!field_2A38_) {
+        // WORKAROUND(inline): the image expands push_history (0x0042BD80,
+        // emitted with no callers) here at 0x0042BF92..0x0042BFE2; VC6 does
+        // not auto-inline the out-of-line member in this build, and an
+        // `inline` definition would drop the emitted copy. Same body.
+        const int topic = category * 10000 + history_[0];
+        const int count = field_2A34_;
+        if (count == 0 || history_[count] != topic) {
+            if (count == 0x14) {
+                for (int i = 0; i < 0x13; ++i) {
+                    history_[1 + i] = history_[2 + i];
+                }
+                --field_2A34_;
+            }
+            history_[field_2A34_ + 1] = topic;
+            ++field_2A34_;
+        }
+    }
+    set_clip(&entry_clip_rect_);
+    RECT frame = entry_frame_rect_;
+    frame.left -= 23;
+    frame.right -= 9;
+    box_sprite(&frame, &InterfaceBoxStyles[9]);
+    restore_clip();
+    box_sprite(&panel_rect_, &InterfaceBoxStyles[0]);
+    box_sprite(&title_rect_, &InterfaceBoxStyles[6]);
+    blurb_box_.hide();
+    concept_box_.hide();
+    detail_box_.hide();
+    stringBox_.hide();
+    // The image lays the arms out unit..terraform, then concept/advanced
+    // concept, then facility onward (jump table 0x0042C29C).
+    switch (category) {
+    case 3: draw_unit(); break;
+    case 4: draw_chassis(); break;
+    case 5: draw_reactor(); break;
+    case 6: draw_weapon(); break;
+    case 7: draw_defense(); break;
+    case 8: draw_ability(); break;
+    case 9: draw_terraform(); break;
+    case 0: draw_concept(); break;
+    case 1: draw_adv_concept(); break;
+    case 10: draw_facility(); break;
+    case 11: draw_project(); break;
+    case 12: draw_social(); break;
+    case 13: draw_effect(); break;
+    case 14:
+        // WORKAROUND(inline): the image expands draw_tech (0x00430B30) and its
+        // UNK7 call here (0x0042C143..0x0042C26B, same "TECH" object
+        // 0x006834D8); a draw_tech() call is not expanded in this build.
+        // draw_tech and UNK7 keep their own emitted, mapped bodies.
+        set_font(&font1_, 0, 0, 0);
+        set_text_color(0xE0, -1, 1, 1);
+        StringTemp[0] = 0;
+        append_upper_name(Technology[history_[0]].name);
+        write_cent_l(StringTemp, &title_rect_);
+        ReportWinGlobal.reset();
+        ReportWinGlobal.shared_research_focus() = history_[0];
+        ReportIfGlobal.field_8_ = 2;
+        ReportWinGlobal.draw_labs();
+        StringTemp[0] = 0;
+        append_tech_topic();
+        char number[80];
+        _itoa(history_[0], number, 10);
+        strcat(StringTemp, number);
+        UNK7(DatalinkBlurbFile, StringTemp);
+        break;
+    case 15: draw_faction(); break;
+    }
+    soft_update(&entry_update_rect_);
+    MainInterfaceGlobal.soft_update(&interface_update_rect_);
+}
+
+// The image tests the list through a computed list pointer.
+static inline char *dl_current_text(StringList *list) {
+    return list->head_ != 0 ? list->current_->string_payload()->text : 0;
+}
+
+// stand-in: the two topic helpers below spend the concept draws' /Ob2
+// budget so their Popup teardowns call ~FlatButton out of line, as the
+// image's EH tables show; the pointer argument keeps the late history_ load.
+static inline void dl_title_text(ListBox *box, int id) {
+    StringTemp[0] = 0;
+    box->item_list_.seek_id(id);
+    strcat(StringTemp, dl_current_text(&box->item_list_));
+    CharUpperA(StringTemp);
+}
+static inline void dl_topic_id(char *prefix, int *n) {
+    StringTemp[0] = 0;
+    strcat(StringTemp, prefix);
+    char number[80];
+    int value = *n;
+    _itoa(value, number, 10);
+    strcat(StringTemp, number);
+}
+
+// ORIGINAL: 0x0042C2E0 ?draw_concept@Datalink@@QAEXXZ 0x0042C2E0-0x0042C64D;0x0065358E-0x00653650 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x42C2E0", "git:b7076e2d4a242bc54aa68d9b48b52eacc10f2ec0:src/recovered/units/0042c2e0.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
+void Datalink::draw_concept() {
+    Popup popup;
+    int id = history_[0];
+    set_font(&font1_, 0, 0, 0);
+    set_text_color(0xE0, -1, 1, 1);
+    dl_title_text(&listBox_, id);
+    write_cent_l(StringTemp, &title_rect_);
+    dl_topic_id("CONCEPT", &history_[0]);
+    concept_box_.clear();
+    concept_box_.strings().load("CONCEPTSX", StringTemp, 1, 0);
+    concept_box_.add_fixup();
+    concept_box_.show(0);
+    soft_update(&description_rect_);
+}
+
+// ORIGINAL: 0x0042C650 ?draw_adv_concept@Datalink@@QAEXXZ 0x0042C650-0x0042C9C0;0x00653650-0x00653712 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x42C650", "git:b7076e2d4a242bc54aa68d9b48b52eacc10f2ec0:src/recovered/units/0042c650.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
+void Datalink::draw_adv_concept() {
+    Popup popup;
+    int id = history_[0] + 10000;
+    set_font(&font1_, 0, 0, 0);
+    set_text_color(0xE0, -1, 1, 1);
+    dl_title_text(&listBox_, id);
+    write_cent_l(StringTemp, &title_rect_);
+    dl_topic_id("ADVCONCEPT", &history_[0]);
+    concept_box_.clear();
+    concept_box_.strings().load("CONCEPTSX", StringTemp, 1, 0);
+    concept_box_.add_fixup();
+    concept_box_.show(0);
+    soft_update(&description_rect_);
 }
 
 // ORIGINAL: 0x0042C9C0 ?draw_unit@Datalink@@QAEXXZ 0x0042C9C0-0x0042D608;0x00653712-0x00653746
@@ -432,6 +618,7 @@ void Datalink::draw_unit() {
     // 0x42D4A6 selects the whole entry update rectangle (+0x103B4).
     soft_update(&entry_update_rect_);
 }
+
 // ORIGINAL: 0x0042D610 ?draw_chassis@Datalink@@QAEXXZ 0x0042D610-0x0042DEEF;0x00653746-0x0065377A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/unrecovered/0042d610.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
 // Historical scaffold experiment, retained from the replaced seed:
@@ -567,6 +754,7 @@ void Datalink::draw_chassis() {
     }
     soft_update(&description_rect_);
 }
+
 // ORIGINAL: 0x0042DEF0 ?draw_reactor@Datalink@@QAEXXZ 0x0042DEF0-0x0042E2D3;0x0065377A-0x006537AE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/recovered/units/0042def0.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
 void Datalink::draw_reactor() {
@@ -609,6 +797,7 @@ void Datalink::draw_reactor() {
     }
     soft_update(&description_rect_);
 }
+
 // ORIGINAL: 0x0042E2E0 ?draw_weapon@Datalink@@QAEXXZ 0x0042E2E0-0x0042E8D3;0x006537AE-0x006537E2 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/unrecovered/0042e2e0.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
 // Historical scaffold experiment, retained from the replaced seed:
@@ -685,6 +874,7 @@ void Datalink::draw_weapon() {
     }
     soft_update(&description_rect_);
 }
+
 // ORIGINAL: 0x0042E8E0 ?draw_defense@Datalink@@QAEXXZ 0x0042E8E0-0x0042EE26;0x006537E2-0x00653816 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/recovered/units/0042e8e0.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
 void Datalink::draw_defense() {
@@ -750,6 +940,7 @@ void Datalink::draw_defense() {
     }
     soft_update(&description_rect_);
 }
+
 // ORIGINAL: 0x0042EE30 ?draw_ability@Datalink@@QAEXXZ 0x0042EE30-0x0042F468;0x00653816-0x0065384A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/unrecovered/0042ee30.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
 // Historical scaffold experiment, retained from the replaced seed:
@@ -832,6 +1023,323 @@ void Datalink::draw_ability() {
     }
     soft_update(&description_rect_);
 }
+
+// ORIGINAL: 0x0042F490 ?draw_facility@Datalink@@QAEXXZ 0x0042F490-0x0042FAC5;0x0065384A-0x00653927 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/unrecovered/0042f490.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
+// Historical scaffold experiment, retained from the replaced seed:
+// TRIED: this function's tail is a compiler-generated SEH unwind chain for ~20 local C++ objects (Popup embeds Scroll+BasePop, and BasePop already embeds Heap/2xFlatButton/Sprite/dialogs_ per the scaffold, so declaring one `Popup popup;` local reproduces a lot of that chain automatically); the separate Dialog/StringStruct/sub_4066c0 teardown calls visible in the disassembly are NOT accounted for by any local this body declares, since their true declared type/order could not be pinned down from the given evidence - left unmodelled rather than guessed. Ghidra's own decompile of this function is unusable (SEH state-machine noise, not real control flow); this body was written directly from the raw disassembly instead. popup.start()/write_strings() receiver args (the ebp-0x3274 StringList) are approximated with a fresh default-constructed local, since the real asm never visibly initializes that memory in view.
+void Datalink::draw_facility() {
+    Popup popup;
+    int id = history_[0];
+    RECT rect = description_rect_;
+    rect.left += 3;
+    rect.top += 3;
+    rect.right -= 3;
+    set_font(&font1_, 0, 0, 0);
+    set_text_color(0xE0, -1, 1, 1);
+    dl_upper_name(Facility[id].name);
+    write_cent_l(StringTemp, &title_rect_);
+    g_FACILITY_ICON_SPRITES[id].draw(this, illustration_rect_.left,
+                   illustration_rect_.top, rect_width(&illustration_rect_),
+                   g_FACILITY_ICON_SPRITES[id].width());
+    rect.left += illustration_rect_.right - illustration_rect_.left + 6;
+    parse_num(0, cost_factor(ConsoleGlobal.faction_id_, 1, -1) * Facility[id].cost);
+    parse_num(1, fac_maint(id, ConsoleGlobal.faction_id_));
+    int technology = Facility[id].preq_tech;
+    parse_says(1, tech_name(technology, 0), -1, -1);
+    const int link = technology + 140000;
+    parse_num(2, link);
+    StringTemp[0] = 0;
+    strcat(StringTemp, "HELPFAC");
+    popup.start(DatalinkHelpFile, StringTemp, -1, 0, 0, 0);
+    set_font(&body_font_, 0, 0, Facility[id].preq_tech >= 0 ? &link_font_ : 0);
+    dl_body_colors(this, 0x96);
+    write_strings(&popup.unit_ids_, rect.left, rect.top, rect.right - rect.left, 0);
+    StringTemp[0] = 0;
+    strcat(StringTemp, "HELPFAC");
+    char number[80];
+    _itoa(id, number, 10);
+    strcat(StringTemp, number);
+    popup.start(DatalinkHelpFile, StringTemp, -1, 0, 0, 0);
+    set_font(&body_font_, 0, 0, Facility[id].preq_tech >= 0 ? &link_font_ : 0);
+    dl_body_colors(this, 0x96);
+    rect = lower_description_rect_;
+    rect.left += 3;
+    rect.top += 3;
+    rect.right -= 3;
+    write_strings(&popup.unit_ids_, rect.left, rect.top, rect.right - rect.left, 0);
+    StringTemp[0] = 0;
+    strcat(StringTemp, "HELPFAC");
+    _itoa(id, number, 10);
+    strcat(StringTemp, number);
+    UNK7(DatalinkBlurbFile, StringTemp);
+}
+
+// ORIGINAL: 0x0042FAD0 ?draw_project@Datalink@@QAEXXZ 0x0042FAD0-0x00430087;0x00653927-0x006539F9 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/unrecovered/0042fad0.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
+// Historical scaffold experiment, retained from the replaced seed:
+// TRIED: exact local-object footprint for Popup's embedded destructor cascade (same shape as 0x00430C80's draw_faction) - modelled as a single `Popup popup;` with popup.close() and implicit dtor; business logic (project/tech title, cost_factor/parse_num/ tech_name/parse_says formatting, sprite draw, two write_strings panels, StringBox blurb branch) transcribed field-by-field.
+void Datalink::draw_project() {
+    Popup popup;
+    const int id = history_[0];
+    RECT rect = description_rect_;
+    rect.left += 3;
+    rect.top += 3;
+    rect.right -= 3;
+    set_font(&font1_, 0, 0, 0);
+    set_text_color(0xE0, -1, 1, 1);
+    dl_upper_name(Facility[id].name);
+    write_cent_l(StringTemp, &title_rect_);
+    // 42FBEC loads the first project sprite's +0x18, without indexing it.
+    g_SECRET_PROJECT_ICON_SPRITES[id - 70].draw(this,
+                   illustration_rect_.left, illustration_rect_.top,
+                   rect_width(&illustration_rect_),
+                   g_SECRET_PROJECT_ICON_SPRITES[0].width());
+    const int project = id - 70;
+    rect.left += illustration_rect_.right - illustration_rect_.left + 6;
+    parse_num(0, cost_factor(ConsoleGlobal.faction_id_, 1, -1) * Facility[id].cost);
+    parse_num(1, Facility[id].maint);
+    const int technology = Facility[id].preq_tech;
+    parse_says(1, tech_name(technology, 0), -1, -1);
+    const int link = technology + 140000;
+    parse_num(2, link);
+    popup.start(DatalinkHelpFile, "HELPPROJ", -1, 0, 0, 0);
+    set_font(&body_font_, 0, 0, &link_font_);
+    dl_body_colors(this, 0x96);
+    write_strings(&popup.unit_ids_, rect.left, rect.top, rect.right - rect.left, 0);
+    // 0x0042FD3C and 0x0042FE16 number both topics by the project slot
+    // (id - 70), not by the facility id.
+    StringTemp[0] = 0;
+    strcat(StringTemp, "HELPPROJ");
+    char number[80];
+    _itoa(project, number, 10);
+    strcat(StringTemp, number);
+    popup.start(DatalinkHelpFile, StringTemp, -1, 0, 0, 0);
+    set_font(&body_font_, 0, 0, &link_font_);
+    dl_body_colors(this, 0x96);
+    rect = lower_description_rect_;
+    rect.left += 3;
+    rect.top += 3;
+    rect.right -= 3;
+    write_strings(&popup.unit_ids_, rect.left, rect.top, rect.right - rect.left, 0);
+    StringTemp[0] = 0;
+    strcat(StringTemp, "PROJECT");
+    _itoa(project, number, 10);
+    strcat(StringTemp, number);
+    UNK7(DatalinkBlurbFile, StringTemp);
+}
+
+// ORIGINAL: 0x00430090 ?draw_social@Datalink@@QAEXXZ 0x00430090-0x00430765;0x006539F9-0x00653AD6
+// RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/unrecovered/00430090.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
+// Historical scaffold experiment, retained from the replaced seed:
+// TRIED: Popup popup; (RAII) for the outer object, mechanical RD()-based field reads for the tech-tier/quotient-remainder lookups, itoa/strcat scratch buffer building, and the per-faction tally loop; deliberately did NOT model the second local object built by sub_4066c0 (Dialog/Dialogs/ StringStruct/Sprite/extra FlatButtons torn down around 0x430642) - its class is unrecoverable from this brief, so popup.close() + RAII stands in for that whole cascade. NO_COMPILE C2660 (set_font arg count) fixed first; MISMATCH #0 (prologue) not chased further.
+// WORKAROUND(inline): draw_social's image calls the first BasePop list's
+// ~StringList (0x004066C0) out of line at 0x00430642 and expands the second
+// one level (remove_all 0x0043068F, ~StringStruct 0x004306A8). Two calls of
+// this dead branchy spend reproduce that call sequence (2026-11-19: three now
+// call ~StringList at 0x004306A8 too; none leaves 59 of the image's 60 calls).
+// The repeated _itoa/strcat runs as a helper do not replace it (runscan
+// --try). The original's natural spend is not identified.
+static inline void dl_social_budget_probe(int x) {
+    if (x == 1) x = 2;
+    if (x == 2) x = 3;
+    if (x == 3) x = 4;
+}
+void Datalink::draw_social() {
+    Popup popup;
+    int category = history_[0] / 5;
+    int model = history_[0] % 5 - 1;
+    RECT rect = description_rect_;
+    rect.left += 3;
+    rect.right -= 3;
+    rect.top += 3;
+    rect.bottom -= 3;
+    set_font(&font1_, 0, 0, 0);
+    set_text_color(0xE0, -1, 1, 1);
+    // 0x00430157 selects the name in two arms that share one upper-casing
+    // tail; category stays in EBX and the Buffer base is reloaded from
+    // EBP-0x10. A ?: argument puts category in memory instead.
+    if (model < 0) {
+        dl_upper_name(SocialCategories[category].type);
+    } else {
+        dl_upper_name(SocialCategories[category].name[model]);
+    }
+    write_cent_l(StringTemp, &title_rect_);
+    if (model >= 0) {
+        const int technology = SocialCategories[category].preq_tech[model];
+        parse_says(0, tech_name(technology, 0), -1, -1);
+        parse_num(0, technology + 140000);
+    }
+    clear();
+    says("HELPSOC");
+    char number[80];
+    _itoa(category, number, 10);
+    says(number);
+    if (model >= 0) {
+        _itoa(model, number, 10);
+        says(number);
+    }
+    popup.start(DatalinkHelpFile, StringTemp, -1, 0, 0, 0);
+    set_font(&body_font_, 0, 0, &link_font_);
+    dl_body_colors(this, 0x96);
+    write_strings(&popup.unit_ids_, rect.left, rect.top, rect.right - rect.left, 0);
+    rect = lower_description_rect_;
+    rect.left += 3;
+    rect.top += 3;
+    rect.right -= 3;
+    rect.bottom -= 3;
+    if (model >= 0) {
+        int count = 0;
+        int i;
+        for (i = 0; i < 11; ++i) {
+            if (SocialCategories[category].model_effect[model].values_[i] != 0) {
+                ++count;
+            }
+        }
+        if (count == 0) {
+            rect.left += 20;
+            write_l(table_text(Labels.strings_ptr[0xFD4 / 4]), &rect);
+        } else {
+            const int x = rect.left + 20;
+            int y = rect.top
+                + (rect.bottom - font_line_advance(body_font_) * count - rect.top) / 2;
+            for (i = 0; i < 11; ++i) {
+                const int value = SocialCategories[category].model_effect[model].values_[i];
+                if (value != 0) {
+                    clear();
+                    _itoa(value, number, 10);
+                    says(number);
+                    // 0x0043041E tests the buffer address before strlen: the
+                    // guarded full-length writer.
+                    write_right_l(StringTemp, x, y);
+                    clear();
+                    space();
+                    char link[20];
+                    _itoa(i + 130000, link, 10);
+                    help_create_link(StringTemp, SocialEffects[i].set2, link);
+                    write_l(StringTemp, x, y);
+                    y += font_line_advance(body_font_);
+                }
+            }
+        }
+    }
+    dl_social_budget_probe(0);  // WORKAROUND(inline): see the helper
+}
+
+// ORIGINAL: 0x00430770 ?draw_effect@Datalink@@QAEXXZ 0x00430770-0x00430B30;0x00653AD6-0x00653BA8 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x430770", "git:b7076e2d4a242bc54aa68d9b48b52eacc10f2ec0:src/recovered/units/00430770.cpp"], "reason": "Recover the preserved topic drawer with source-owned state and real popup/window lifetimes."}
+void Datalink::draw_effect() {
+    Popup popup;
+    RECT rect = description_rect_;
+    rect.left += 3;
+    rect.top += 3;
+    rect.right -= 3;
+    const int entry = history_[0];
+    set_font(&font1_, 0, 0, 0);
+    set_text_color(0xE0, -1, 1, 1);
+    StringTemp[0] = 0;
+    strcat(StringTemp, SocialEffects[entry].set2);
+    CharUpperA(StringTemp);
+    write_cent_l(StringTemp, &title_rect_);
+    StringTemp[0] = 0;
+    strcat(StringTemp, "HELPEFFECT");
+    char number[80];
+    _itoa(entry, number, 10);
+    strcat(StringTemp, number);
+    popup.start(DatalinkHelpFile, StringTemp, -1, 0, 0, 0);
+    set_font(&body_font_, 0, 0, &link_font_);
+    set_text_color(0x98, -1, 1, 1);
+    set_text_color2(0x96, -1, 1, 1);
+    set_text_color_hyper(0x96, -1, 1, 1);
+    // [ebp-0x3270] is Popup+0x2180, BasePop's unit_ids_ text list that
+    // BasePop::start fills; no separate local list is constructed here.
+    write_strings(&popup.unit_ids_, rect.left, rect.top,
+                  rect.right - rect.left, 0);
+}
+
+// ORIGINAL: 0x00430B30 ?draw_tech@Datalink@@QAEXXZ 0x00430B30-0x00430C76 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x430B30", "git:b7076e2d4a242bc54aa68d9b48b52eacc10f2ec0:src/recovered/units/00430b30.cpp"], "reason": "Recover the preserved topic drawer with source-owned state and real popup/window lifetimes."}
+// Inline boundary the image's register choice for the title test shows.
+static inline void append_upper_name(LPSTR name) {
+    strcat(StringTemp, StringTable.get(name));
+    CharUpperA(StringTemp);
+}
+
+// The unpooled TU still has one "TECH" object for draw_tech and the copy
+// draw_entry expands: both sites go through this helper's literal.
+static inline void append_tech_topic() {
+    // RECOVERY_LITERAL: v1 0x006834D8 0x006834DD $SG55235 0x00430B30
+    strcat(StringTemp, "TECH");
+}
+
+void Datalink::draw_tech() {
+    set_font(&font1_, 0, 0, 0);
+    set_text_color(0xE0, -1, 1, 1);
+    StringTemp[0] = 0;
+    append_upper_name(Technology[history_[0]].name);
+    // Both the standalone original (0x430BA5..0x430BAC) and draw_entry's
+    // inline technology case (0x42C1A7..0x42C1AE) test the buffer ADDRESS,
+    // not its first byte. StringTemp has real storage, so even an empty
+    // technology title reaches write_cent_l.
+    write_cent_l(StringTemp, &title_rect_);
+    ReportWinGlobal.reset();
+    ReportWinGlobal.shared_research_focus() = history_[0];
+    ReportIfGlobal.field_8_ = 2;
+    ReportWinGlobal.draw_labs();
+    StringTemp[0] = 0;
+    // One "TECH" object serves both this body (0x00430BF5) and the copy
+    // draw_entry expands (0x0042C1F7): both push 0x006834D8.
+    append_tech_topic();
+    char number[80];
+    _itoa(history_[0], number, 10);
+    strcat(StringTemp, number);
+    UNK7(DatalinkBlurbFile, StringTemp);
+}
+
+// ORIGINAL: 0x00430C80 ?draw_faction@Datalink@@QAEXXZ 0x00430C80-0x0043117E;0x00653BA8-0x00653C7A BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/unrecovered/00430c80.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
+// Historical scaffold experiment, retained from the replaced seed:
+// TRIED: exact local-object footprint for Popup's embedded Scroll/FlatButton/ Heap/Sprite/Spot/Dialogs cascade (huge MI vtable-poke cleanup chain, 0x53a0-byte frame) - modelled as a single `Popup popup;` with popup.close() and implicit dtor instead of the full inlined destructor cascade; business logic (font/text-color/string/sprite/ popup.start branches) transcribed field-by-field from the disasm.
+void Datalink::draw_faction() {
+    Popup popup;
+    int faction = history_[0];
+    RECT rect = panel_rect_;
+    rect.left += 5;
+    rect.top += 5;
+    rect.right -= 5;
+    set_font(&font1_, 0, 0, 0);
+    set_text_color(0xE0, -1, 1, 1);
+    StringTemp[0] = 0;
+    strcat(StringTemp, Players[faction].formal_name_faction);
+    CharUpperA(StringTemp);
+    write_cent_l(StringTemp, &title_rect_);
+    FactionsArt[faction].datalink.draw(this, rect.left, rect.top, 1, 1);
+    rect.left += FactionsArt[faction].datalink.width() + 5;
+    char *file = Players[faction].filename;
+    popup.start(file, "DATALINKS1", -1, 0, 0, 0);
+    set_font(&body_font_, 0, 0, 0);
+    set_wrap_width(20);
+    dl_body_colors(this, 0xFE);
+    int width = rect.right - rect.left;
+    rect.top = write_strings(&popup.unit_ids_, rect.left, rect.top, width, 0);
+    rect.top += font_line_advance(body_font_);
+    if (WinScreenWidth == 800) {
+        set_wrap_width(0);
+        stringBox_.clear();
+        if (stringBox_.strings().load(file, "DATALINKS2", 1, 0) == 0) {
+            stringBox_.add_fixup();
+            stringBox_.show(0);
+        }
+    } else {
+        popup.start(file, "DATALINKS2", -1, 0, 0, 0);
+        set_font(&secondary_body_font_, 0, 0, 0);
+        write_strings(&popup.unit_ids_, rect.left, rect.top, width, 0);
+        set_wrap_width(0);
+    }
+    popup.start(file, "BLURB", -1, 0, 0, 0);
+    UNK7(file, "BLURB");
+}
+
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00431180 0x00431D54 0x00431DA4 0x004312BF
 // ORIGINAL: 0x00431180 ?draw_terraform@Datalink@@QAEXXZ 0x00431180-0x00431D51;0x00653C7A-0x00653E66 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/unrecovered/00431180.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
@@ -980,509 +1488,16 @@ void Datalink::draw_terraform() {
     }
     write_strings(&popup.unit_ids_, rect.left, rect.top, rect.right - rect.left, 0);
 }
-// ORIGINAL: 0x0042F490 ?draw_facility@Datalink@@QAEXXZ 0x0042F490-0x0042FAC5;0x0065384A-0x00653927 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/unrecovered/0042f490.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
-// Historical scaffold experiment, retained from the replaced seed:
-// TRIED: this function's tail is a compiler-generated SEH unwind chain for ~20 local C++ objects (Popup embeds Scroll+BasePop, and BasePop already embeds Heap/2xFlatButton/Sprite/dialogs_ per the scaffold, so declaring one `Popup popup;` local reproduces a lot of that chain automatically); the separate Dialog/StringStruct/sub_4066c0 teardown calls visible in the disassembly are NOT accounted for by any local this body declares, since their true declared type/order could not be pinned down from the given evidence - left unmodelled rather than guessed. Ghidra's own decompile of this function is unusable (SEH state-machine noise, not real control flow); this body was written directly from the raw disassembly instead. popup.start()/write_strings() receiver args (the ebp-0x3274 StringList) are approximated with a fresh default-constructed local, since the real asm never visibly initializes that memory in view.
-void Datalink::draw_facility() {
-    Popup popup;
-    int id = history_[0];
-    RECT rect = description_rect_;
-    rect.left += 3;
-    rect.top += 3;
-    rect.right -= 3;
-    set_font(&font1_, 0, 0, 0);
-    set_text_color(0xE0, -1, 1, 1);
-    dl_upper_name(Facility[id].name);
-    write_cent_l(StringTemp, &title_rect_);
-    g_FACILITY_ICON_SPRITES[id].draw(this, illustration_rect_.left,
-                   illustration_rect_.top, rect_width(&illustration_rect_),
-                   g_FACILITY_ICON_SPRITES[id].width());
-    rect.left += illustration_rect_.right - illustration_rect_.left + 6;
-    parse_num(0, cost_factor(ConsoleGlobal.faction_id_, 1, -1) * Facility[id].cost);
-    parse_num(1, fac_maint(id, ConsoleGlobal.faction_id_));
-    int technology = Facility[id].preq_tech;
-    parse_says(1, tech_name(technology, 0), -1, -1);
-    const int link = technology + 140000;
-    parse_num(2, link);
-    StringTemp[0] = 0;
-    strcat(StringTemp, "HELPFAC");
-    popup.start(DatalinkHelpFile, StringTemp, -1, 0, 0, 0);
-    set_font(&body_font_, 0, 0, Facility[id].preq_tech >= 0 ? &link_font_ : 0);
-    dl_body_colors(this, 0x96);
-    write_strings(&popup.unit_ids_, rect.left, rect.top, rect.right - rect.left, 0);
-    StringTemp[0] = 0;
-    strcat(StringTemp, "HELPFAC");
-    char number[80];
-    _itoa(id, number, 10);
-    strcat(StringTemp, number);
-    popup.start(DatalinkHelpFile, StringTemp, -1, 0, 0, 0);
-    set_font(&body_font_, 0, 0, Facility[id].preq_tech >= 0 ? &link_font_ : 0);
-    dl_body_colors(this, 0x96);
-    rect = lower_description_rect_;
-    rect.left += 3;
-    rect.top += 3;
-    rect.right -= 3;
-    write_strings(&popup.unit_ids_, rect.left, rect.top, rect.right - rect.left, 0);
-    StringTemp[0] = 0;
-    strcat(StringTemp, "HELPFAC");
-    _itoa(id, number, 10);
-    strcat(StringTemp, number);
-    UNK7(DatalinkBlurbFile, StringTemp);
-}
-// ORIGINAL: 0x0042FAD0 ?draw_project@Datalink@@QAEXXZ 0x0042FAD0-0x00430087;0x00653927-0x006539F9 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/unrecovered/0042fad0.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
-// Historical scaffold experiment, retained from the replaced seed:
-// TRIED: exact local-object footprint for Popup's embedded destructor cascade (same shape as 0x00430C80's draw_faction) - modelled as a single `Popup popup;` with popup.close() and implicit dtor; business logic (project/tech title, cost_factor/parse_num/ tech_name/parse_says formatting, sprite draw, two write_strings panels, StringBox blurb branch) transcribed field-by-field.
-void Datalink::draw_project() {
-    Popup popup;
-    const int id = history_[0];
-    RECT rect = description_rect_;
-    rect.left += 3;
-    rect.top += 3;
-    rect.right -= 3;
-    set_font(&font1_, 0, 0, 0);
-    set_text_color(0xE0, -1, 1, 1);
-    dl_upper_name(Facility[id].name);
-    write_cent_l(StringTemp, &title_rect_);
-    // 42FBEC loads the first project sprite's +0x18, without indexing it.
-    g_SECRET_PROJECT_ICON_SPRITES[id - 70].draw(this,
-                   illustration_rect_.left, illustration_rect_.top,
-                   rect_width(&illustration_rect_),
-                   g_SECRET_PROJECT_ICON_SPRITES[0].width());
-    const int project = id - 70;
-    rect.left += illustration_rect_.right - illustration_rect_.left + 6;
-    parse_num(0, cost_factor(ConsoleGlobal.faction_id_, 1, -1) * Facility[id].cost);
-    parse_num(1, Facility[id].maint);
-    const int technology = Facility[id].preq_tech;
-    parse_says(1, tech_name(technology, 0), -1, -1);
-    const int link = technology + 140000;
-    parse_num(2, link);
-    popup.start(DatalinkHelpFile, "HELPPROJ", -1, 0, 0, 0);
-    set_font(&body_font_, 0, 0, &link_font_);
-    dl_body_colors(this, 0x96);
-    write_strings(&popup.unit_ids_, rect.left, rect.top, rect.right - rect.left, 0);
-    // 0x0042FD3C and 0x0042FE16 number both topics by the project slot
-    // (id - 70), not by the facility id.
-    StringTemp[0] = 0;
-    strcat(StringTemp, "HELPPROJ");
-    char number[80];
-    _itoa(project, number, 10);
-    strcat(StringTemp, number);
-    popup.start(DatalinkHelpFile, StringTemp, -1, 0, 0, 0);
-    set_font(&body_font_, 0, 0, &link_font_);
-    dl_body_colors(this, 0x96);
-    rect = lower_description_rect_;
-    rect.left += 3;
-    rect.top += 3;
-    rect.right -= 3;
-    write_strings(&popup.unit_ids_, rect.left, rect.top, rect.right - rect.left, 0);
-    StringTemp[0] = 0;
-    strcat(StringTemp, "PROJECT");
-    _itoa(project, number, 10);
-    strcat(StringTemp, number);
-    UNK7(DatalinkBlurbFile, StringTemp);
-}
-// ORIGINAL: 0x00430090 ?draw_social@Datalink@@QAEXXZ 0x00430090-0x00430765;0x006539F9-0x00653AD6
-// RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/unrecovered/00430090.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
-// Historical scaffold experiment, retained from the replaced seed:
-// TRIED: Popup popup; (RAII) for the outer object, mechanical RD()-based field reads for the tech-tier/quotient-remainder lookups, itoa/strcat scratch buffer building, and the per-faction tally loop; deliberately did NOT model the second local object built by sub_4066c0 (Dialog/Dialogs/ StringStruct/Sprite/extra FlatButtons torn down around 0x430642) - its class is unrecoverable from this brief, so popup.close() + RAII stands in for that whole cascade. NO_COMPILE C2660 (set_font arg count) fixed first; MISMATCH #0 (prologue) not chased further.
-// WORKAROUND(inline): draw_social's image calls the first BasePop list's
-// ~StringList (0x004066C0) out of line at 0x00430642 and expands the second
-// one level (remove_all 0x0043068F, ~StringStruct 0x004306A8). Two calls of
-// this dead branchy spend reproduce that call sequence (2026-11-19: three now
-// call ~StringList at 0x004306A8 too; none leaves 59 of the image's 60 calls).
-// The repeated _itoa/strcat runs as a helper do not replace it (runscan
-// --try). The original's natural spend is not identified.
-static inline void dl_social_budget_probe(int x) {
-    if (x == 1) x = 2;
-    if (x == 2) x = 3;
-    if (x == 3) x = 4;
-}
-void Datalink::draw_social() {
-    Popup popup;
-    int category = history_[0] / 5;
-    int model = history_[0] % 5 - 1;
-    RECT rect = description_rect_;
-    rect.left += 3;
-    rect.right -= 3;
-    rect.top += 3;
-    rect.bottom -= 3;
-    set_font(&font1_, 0, 0, 0);
-    set_text_color(0xE0, -1, 1, 1);
-    // 0x00430157 selects the name in two arms that share one upper-casing
-    // tail; category stays in EBX and the Buffer base is reloaded from
-    // EBP-0x10. A ?: argument puts category in memory instead.
-    if (model < 0) {
-        dl_upper_name(SocialCategories[category].type);
-    } else {
-        dl_upper_name(SocialCategories[category].name[model]);
-    }
-    write_cent_l(StringTemp, &title_rect_);
-    if (model >= 0) {
-        const int technology = SocialCategories[category].preq_tech[model];
-        parse_says(0, tech_name(technology, 0), -1, -1);
-        parse_num(0, technology + 140000);
-    }
-    clear();
-    says("HELPSOC");
-    char number[80];
-    _itoa(category, number, 10);
-    says(number);
-    if (model >= 0) {
-        _itoa(model, number, 10);
-        says(number);
-    }
-    popup.start(DatalinkHelpFile, StringTemp, -1, 0, 0, 0);
-    set_font(&body_font_, 0, 0, &link_font_);
-    dl_body_colors(this, 0x96);
-    write_strings(&popup.unit_ids_, rect.left, rect.top, rect.right - rect.left, 0);
-    rect = lower_description_rect_;
-    rect.left += 3;
-    rect.top += 3;
-    rect.right -= 3;
-    rect.bottom -= 3;
-    if (model >= 0) {
-        int count = 0;
-        int i;
-        for (i = 0; i < 11; ++i) {
-            if (SocialCategories[category].model_effect[model].values_[i] != 0) {
-                ++count;
-            }
-        }
-        if (count == 0) {
-            rect.left += 20;
-            write_l(table_text(Labels.strings_ptr[0xFD4 / 4]), &rect);
-        } else {
-            const int x = rect.left + 20;
-            int y = rect.top
-                + (rect.bottom - font_line_advance(body_font_) * count - rect.top) / 2;
-            for (i = 0; i < 11; ++i) {
-                const int value = SocialCategories[category].model_effect[model].values_[i];
-                if (value != 0) {
-                    clear();
-                    _itoa(value, number, 10);
-                    says(number);
-                    // 0x0043041E tests the buffer address before strlen: the
-                    // guarded full-length writer.
-                    write_right_l(StringTemp, x, y);
-                    clear();
-                    space();
-                    char link[20];
-                    _itoa(i + 130000, link, 10);
-                    help_create_link(StringTemp, SocialEffects[i].set2, link);
-                    write_l(StringTemp, x, y);
-                    y += font_line_advance(body_font_);
-                }
-            }
-        }
-    }
-    dl_social_budget_probe(0);  // WORKAROUND(inline): see the helper
-}
-// ORIGINAL: 0x00430C80 ?draw_faction@Datalink@@QAEXXZ 0x00430C80-0x0043117E;0x00653BA8-0x00653C7A BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/unrecovered/00430c80.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
-// Historical scaffold experiment, retained from the replaced seed:
-// TRIED: exact local-object footprint for Popup's embedded Scroll/FlatButton/ Heap/Sprite/Spot/Dialogs cascade (huge MI vtable-poke cleanup chain, 0x53a0-byte frame) - modelled as a single `Popup popup;` with popup.close() and implicit dtor instead of the full inlined destructor cascade; business logic (font/text-color/string/sprite/ popup.start branches) transcribed field-by-field from the disasm.
-void Datalink::draw_faction() {
-    Popup popup;
-    int faction = history_[0];
-    RECT rect = panel_rect_;
-    rect.left += 5;
-    rect.top += 5;
-    rect.right -= 5;
-    set_font(&font1_, 0, 0, 0);
-    set_text_color(0xE0, -1, 1, 1);
-    StringTemp[0] = 0;
-    strcat(StringTemp, Players[faction].formal_name_faction);
-    CharUpperA(StringTemp);
-    write_cent_l(StringTemp, &title_rect_);
-    FactionsArt[faction].datalink.draw(this, rect.left, rect.top, 1, 1);
-    rect.left += FactionsArt[faction].datalink.width() + 5;
-    char *file = Players[faction].filename;
-    popup.start(file, "DATALINKS1", -1, 0, 0, 0);
-    set_font(&body_font_, 0, 0, 0);
-    set_wrap_width(20);
-    dl_body_colors(this, 0xFE);
-    int width = rect.right - rect.left;
-    rect.top = write_strings(&popup.unit_ids_, rect.left, rect.top, width, 0);
-    rect.top += font_line_advance(body_font_);
-    if (WinScreenWidth == 800) {
-        set_wrap_width(0);
-        stringBox_.clear();
-        if (stringBox_.strings().load(file, "DATALINKS2", 1, 0) == 0) {
-            stringBox_.add_fixup();
-            stringBox_.show(0);
-        }
-    } else {
-        popup.start(file, "DATALINKS2", -1, 0, 0, 0);
-        set_font(&secondary_body_font_, 0, 0, 0);
-        write_strings(&popup.unit_ids_, rect.left, rect.top, width, 0);
-        set_wrap_width(0);
-    }
-    popup.start(file, "BLURB", -1, 0, 0, 0);
-    UNK7(file, "BLURB");
-}
 
-// ORIGINAL: 0x0042A100 ?on_dialog_back_draw@Datalink@@QAEHPAUGraphicWin@@@Z 0x0042A100-0x0042A150 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x42A100", "git:b7076e2d4a242bc54aa68d9b48b52eacc10f2ec0:src/recovered/units/0042a100.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
-// symbol    ?on_dialog_back_draw@Datalink@@UAEHPAVGraphicWin@@@Z
-int Datalink::on_dialog_back_draw(GraphicWin *win) {
-    RECT rect = win->clip_rect();
-    const RECT &outer = win->outer_rect();
-    win->tile(InterfaceBoxStyles[0].mask_, outer.left, outer.top,
-              0, 0, rect.right - rect.left, rect.bottom - rect.top);
-    return 1;
-}
-
-// ORIGINAL: 0x0042A150 ?on_dialog_item_back_draw@Datalink@@QAEHPAUGraphicWin@@HHPAURECT@@@Z 0x0042A150-0x0042A260 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x42A150", "git:b7076e2d4a242bc54aa68d9b48b52eacc10f2ec0:src/unrecovered/0042a150.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
-// symbol    ?on_dialog_item_back_draw@Datalink@@UAEHPAVGraphicWin@@HHPAUtagRECT@@@Z
-// Historical scaffold experiment, retained from the replaced seed:
-// TRIED: computing width/height/x/y once and branching only on the `tile()` colour argument folds the compiler's output to 187 bytes (vs 272) - VC6 does not hoist a same-polarity guard's body out of line (see 0x0042A100's sibling note), so each of the three `a3` cases needs its own fully-duplicated width/height/x/y/call block. That form (cand2, below) reaches 0.834 mnemonic similarity but still differs on the exact ebx/esi/edi register allocation the original chose; landing the closest.
-int Datalink::on_dialog_item_back_draw(GraphicWin *win, int id, int mode,
-                                      RECT *rect) {
-    const int left = rect->left;
-    const int top = rect->top;
-    if (mode == 2) {
-        win->tile(InterfaceBoxStyles[28].mask_, win->outer_rect().left + left,
-                  win->outer_rect().top + top, left, top,
-                  rect->right - left, rect->bottom - top);
-    } else if (mode == 1) {
-        win->tile(InterfaceBoxStyles[27].mask_, win->outer_rect().left + left,
-                  win->outer_rect().top + top, left, top,
-                  rect->right - left, rect->bottom - top);
-    } else {
-        win->tile(InterfaceBoxStyles[0].mask_, win->outer_rect().left + left,
-                  win->outer_rect().top + top, left, top,
-                  rect->right - left, rect->bottom - top);
-    }
-    if (field_29DC_ == 12) {
-        win->set_text_color(255 - (id - id / 10000 * 10000) / 5, -1, 1, 1);
-    }
-    return 1;
-}
-
-// ORIGINAL: 0x0042BEB0 ?UNK7@Datalink@@QAEXPADPAD@Z 0x0042BEB0-0x0042BEFA BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x42BEB0", "git:b7076e2d4a242bc54aa68d9b48b52eacc10f2ec0:src/recovered/0042beb0.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
-// symbol    ?UNK7@Datalink@@QAEXPAD0@Z
-void Datalink::UNK7(char *file, char *section) {
-    if (MainInterfaceTileFlag) {
-        blurb_box_.clear();
-        blurb_box_.strings().load(file, section, 1, 0);
-        blurb_box_.add_fixup();
-        blurb_box_.show(0);
-    }
-}
-
-// The image tests the list through a computed list pointer.
-static inline char *dl_current_text(StringList *list) {
-    return list->head_ != 0 ? list->current_->string_payload()->text : 0;
-}
-
-// stand-in: the two topic helpers below spend the concept draws' /Ob2
-// budget so their Popup teardowns call ~FlatButton out of line, as the
-// image's EH tables show; the pointer argument keeps the late history_ load.
-static inline void dl_title_text(ListBox *box, int id) {
-    StringTemp[0] = 0;
-    box->item_list_.seek_id(id);
-    strcat(StringTemp, dl_current_text(&box->item_list_));
-    CharUpperA(StringTemp);
-}
-static inline void dl_topic_id(char *prefix, int *n) {
-    StringTemp[0] = 0;
-    strcat(StringTemp, prefix);
-    char number[80];
-    int value = *n;
-    _itoa(value, number, 10);
-    strcat(StringTemp, number);
-}
-// ORIGINAL: 0x0042C2E0 ?draw_concept@Datalink@@QAEXXZ 0x0042C2E0-0x0042C64D;0x0065358E-0x00653650 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x42C2E0", "git:b7076e2d4a242bc54aa68d9b48b52eacc10f2ec0:src/recovered/units/0042c2e0.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
-void Datalink::draw_concept() {
-    Popup popup;
-    int id = history_[0];
-    set_font(&font1_, 0, 0, 0);
-    set_text_color(0xE0, -1, 1, 1);
-    dl_title_text(&listBox_, id);
-    write_cent_l(StringTemp, &title_rect_);
-    dl_topic_id("CONCEPT", &history_[0]);
-    concept_box_.clear();
-    concept_box_.strings().load("CONCEPTSX", StringTemp, 1, 0);
-    concept_box_.add_fixup();
-    concept_box_.show(0);
-    soft_update(&description_rect_);
-}
-
-// ORIGINAL: 0x0042C650 ?draw_adv_concept@Datalink@@QAEXXZ 0x0042C650-0x0042C9C0;0x00653650-0x00653712 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x42C650", "git:b7076e2d4a242bc54aa68d9b48b52eacc10f2ec0:src/recovered/units/0042c650.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
-void Datalink::draw_adv_concept() {
-    Popup popup;
-    int id = history_[0] + 10000;
-    set_font(&font1_, 0, 0, 0);
-    set_text_color(0xE0, -1, 1, 1);
-    dl_title_text(&listBox_, id);
-    write_cent_l(StringTemp, &title_rect_);
-    dl_topic_id("ADVCONCEPT", &history_[0]);
-    concept_box_.clear();
-    concept_box_.strings().load("CONCEPTSX", StringTemp, 1, 0);
-    concept_box_.add_fixup();
-    concept_box_.show(0);
-    soft_update(&description_rect_);
-}
-
-// ORIGINAL: 0x00430770 ?draw_effect@Datalink@@QAEXXZ 0x00430770-0x00430B30;0x00653AD6-0x00653BA8 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x430770", "git:b7076e2d4a242bc54aa68d9b48b52eacc10f2ec0:src/recovered/units/00430770.cpp"], "reason": "Recover the preserved topic drawer with source-owned state and real popup/window lifetimes."}
-void Datalink::draw_effect() {
-    Popup popup;
-    RECT rect = description_rect_;
-    rect.left += 3;
-    rect.top += 3;
-    rect.right -= 3;
-    const int entry = history_[0];
-    set_font(&font1_, 0, 0, 0);
-    set_text_color(0xE0, -1, 1, 1);
-    StringTemp[0] = 0;
-    strcat(StringTemp, SocialEffects[entry].set2);
-    CharUpperA(StringTemp);
-    write_cent_l(StringTemp, &title_rect_);
-    StringTemp[0] = 0;
-    strcat(StringTemp, "HELPEFFECT");
-    char number[80];
-    _itoa(entry, number, 10);
-    strcat(StringTemp, number);
-    popup.start(DatalinkHelpFile, StringTemp, -1, 0, 0, 0);
-    set_font(&body_font_, 0, 0, &link_font_);
-    set_text_color(0x98, -1, 1, 1);
-    set_text_color2(0x96, -1, 1, 1);
-    set_text_color_hyper(0x96, -1, 1, 1);
-    // [ebp-0x3270] is Popup+0x2180, BasePop's unit_ids_ text list that
-    // BasePop::start fills; no separate local list is constructed here.
-    write_strings(&popup.unit_ids_, rect.left, rect.top,
-                  rect.right - rect.left, 0);
-}
-
-// ORIGINAL: 0x00430B30 ?draw_tech@Datalink@@QAEXXZ 0x00430B30-0x00430C76 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x430B30", "git:b7076e2d4a242bc54aa68d9b48b52eacc10f2ec0:src/recovered/units/00430b30.cpp"], "reason": "Recover the preserved topic drawer with source-owned state and real popup/window lifetimes."}
-// Inline boundary the image's register choice for the title test shows.
-static inline void append_upper_name(LPSTR name) {
-    strcat(StringTemp, StringTable.get(name));
-    CharUpperA(StringTemp);
-}
-
-// The unpooled TU still has one "TECH" object for draw_tech and the copy
-// draw_entry expands: both sites go through this helper's literal.
-static inline void append_tech_topic() {
-    // RECOVERY_LITERAL: v1 0x006834D8 0x006834DD $SG55235 0x00430B30
-    strcat(StringTemp, "TECH");
-}
-
-void Datalink::draw_tech() {
-    set_font(&font1_, 0, 0, 0);
-    set_text_color(0xE0, -1, 1, 1);
-    StringTemp[0] = 0;
-    append_upper_name(Technology[history_[0]].name);
-    // Both the standalone original (0x430BA5..0x430BAC) and draw_entry's
-    // inline technology case (0x42C1A7..0x42C1AE) test the buffer ADDRESS,
-    // not its first byte. StringTemp has real storage, so even an empty
-    // technology title reaches write_cent_l.
-    write_cent_l(StringTemp, &title_rect_);
-    ReportWinGlobal.reset();
-    ReportWinGlobal.shared_research_focus() = history_[0];
-    ReportIfGlobal.field_8_ = 2;
-    ReportWinGlobal.draw_labs();
-    StringTemp[0] = 0;
-    // One "TECH" object serves both this body (0x00430BF5) and the copy
-    // draw_entry expands (0x0042C1F7): both push 0x006834D8.
-    append_tech_topic();
-    char number[80];
-    _itoa(history_[0], number, 10);
-    strcat(StringTemp, number);
-    UNK7(DatalinkBlurbFile, StringTemp);
-}
-
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x0042BF10 0x0042C29C 0x0042C2DC 0x0042C0A0
-// ORIGINAL: 0x0042BF10 ?draw_entry@Datalink@@QAEXXZ 0x0042BF10-0x0042C29A BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x42BF10", "git:b7076e2d4a242bc54aa68d9b48b52eacc10f2ec0:src/recovered/units/0042bf10.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
-void Datalink::draw_entry() {
-    restore_clip();
-    if (field_29DC_ == 2) {
-        ReportWinGlobal.reset();
-    }
-    clear_links();
-    int selected = listBox_.get_selected_id();
-    int category = selected / 10000;
-    history_[0] = selected - category * 10000;
-    if (!field_2A38_) {
-        // WORKAROUND(inline): the image expands push_history (0x0042BD80,
-        // emitted with no callers) here at 0x0042BF92..0x0042BFE2; VC6 does
-        // not auto-inline the out-of-line member in this build, and an
-        // `inline` definition would drop the emitted copy. Same body.
-        const int topic = category * 10000 + history_[0];
-        const int count = field_2A34_;
-        if (count == 0 || history_[count] != topic) {
-            if (count == 0x14) {
-                for (int i = 0; i < 0x13; ++i) {
-                    history_[1 + i] = history_[2 + i];
-                }
-                --field_2A34_;
-            }
-            history_[field_2A34_ + 1] = topic;
-            ++field_2A34_;
-        }
-    }
-    set_clip(&entry_clip_rect_);
-    RECT frame = entry_frame_rect_;
-    frame.left -= 23;
-    frame.right -= 9;
-    box_sprite(&frame, &InterfaceBoxStyles[9]);
-    restore_clip();
-    box_sprite(&panel_rect_, &InterfaceBoxStyles[0]);
-    box_sprite(&title_rect_, &InterfaceBoxStyles[6]);
-    blurb_box_.hide();
-    concept_box_.hide();
-    detail_box_.hide();
-    stringBox_.hide();
-    // The image lays the arms out unit..terraform, then concept/advanced
-    // concept, then facility onward (jump table 0x0042C29C).
-    switch (category) {
-    case 3: draw_unit(); break;
-    case 4: draw_chassis(); break;
-    case 5: draw_reactor(); break;
-    case 6: draw_weapon(); break;
-    case 7: draw_defense(); break;
-    case 8: draw_ability(); break;
-    case 9: draw_terraform(); break;
-    case 0: draw_concept(); break;
-    case 1: draw_adv_concept(); break;
-    case 10: draw_facility(); break;
-    case 11: draw_project(); break;
-    case 12: draw_social(); break;
-    case 13: draw_effect(); break;
-    case 14:
-        // WORKAROUND(inline): the image expands draw_tech (0x00430B30) and its
-        // UNK7 call here (0x0042C143..0x0042C26B, same "TECH" object
-        // 0x006834D8); a draw_tech() call is not expanded in this build.
-        // draw_tech and UNK7 keep their own emitted, mapped bodies.
-        set_font(&font1_, 0, 0, 0);
-        set_text_color(0xE0, -1, 1, 1);
-        StringTemp[0] = 0;
-        append_upper_name(Technology[history_[0]].name);
-        write_cent_l(StringTemp, &title_rect_);
-        ReportWinGlobal.reset();
-        ReportWinGlobal.shared_research_focus() = history_[0];
-        ReportIfGlobal.field_8_ = 2;
-        ReportWinGlobal.draw_labs();
-        StringTemp[0] = 0;
-        append_tech_topic();
-        char number[80];
-        _itoa(history_[0], number, 10);
-        strcat(StringTemp, number);
-        UNK7(DatalinkBlurbFile, StringTemp);
-        break;
-    case 15: draw_faction(); break;
-    }
-    soft_update(&entry_update_rect_);
-    MainInterfaceGlobal.soft_update(&interface_update_rect_);
+// Reverse-order member/base destruction belongs to the compiler. In particular,
+// Caviar::~Caviar owns close(); this body must not close the renderer twice.
+// ORIGINAL: 0x00432290 ??1Datalink@@QAE@XZ 0x00432290-0x004325AA;0x006531D0-0x006533A2 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/recovered/units/00432290.cpp"], "reason": "Original construction and reverse teardown establish real Flic/Caviar, an eighteen-element FlatButton array and eleven Font members. The owner performs its scalar initialization/reset; genuine member/base lifetimes replace manual vtables and original-address teardown."}
+// symbol    ??1Datalink@@UAE@XZ
+Datalink::~Datalink() {
+    history_[0] = 0;
+    field_2A34_ = 0;
+    field_2A38_ = 0;
 }
 
 /*
@@ -1592,329 +1607,400 @@ void Datalink::repaint_slot() {
     listBox_.redraw();
 }
 
-/*
-Purpose: Unknown; the legacy implementation is a bare return with no body.
-// ORIGINAL: 0x0042BEA0 ?UNK6@Datalink@@QAEXXZ 0x0042BEA0-0x0042BEA1 BYTE_EXACT
-// size      1 bytes
-// prototype void (__thiscall ?UNK6@Datalink@@QAEXXZ)(Datalink* this)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void Datalink::UNK6() {
+
+// Original interface table 0x0066AF30 slot 1 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_iface_scrolled@Datalink@@UAEXHH@Z 0x00432060
+void Datalink::on_iface_scrolled(int, int) {}
+// Original interface table 0x0066AF30 slot 2 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_iface_scrolling@Datalink@@UAEXHH@Z 0x00432060
+void Datalink::on_iface_scrolling(int, int) {}
+// Original interface table 0x0066AF30 slot 6 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_iface_left_up@Datalink@@UAEXHH@Z 0x00432060
+void Datalink::on_iface_left_up(int, int) {}
+
+// Original interface table 0x0066AF30 slot 14 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404250 0x00404255 ?on_iface_button_pressed@Datalink@@UAEHH@Z 0x00432060
+int Datalink::on_iface_button_pressed(int) {
+    return 0;
 }
 
-/*
-Purpose: Unknown; the legacy implementation is a bare return with no body.
-// ORIGINAL: 0x0042BF00 ?UNK8@Datalink@@QAEXXZ 0x0042BF00-0x0042BF01 BYTE_EXACT
-// size      1 bytes
-// prototype void (__thiscall ?UNK8@Datalink@@QAEXXZ)(Datalink* this)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void Datalink::UNK8() {
+// Original interface table 0x0066AF30 slot 17 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404250 0x00404255 ?on_iface_dialog_back_draw@Datalink@@UAEHPAVGraphicWin@@@Z 0x00432060
+int Datalink::on_iface_dialog_back_draw(GraphicWin *) {
+    return 0;
 }
 
-/*
-Purpose: Unknown; the legacy implementation is a bare return with no body.
-// ORIGINAL: 0x00431DB0 ?UNK9@Datalink@@QAEXXZ 0x00431DB0-0x00431DB1 BYTE_EXACT
-// size      1 bytes
-// prototype void (__thiscall ?UNK9@Datalink@@QAEXXZ)(Datalink* this)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void Datalink::UNK9() {
+// Original interface table 0x0066AF30 slot 18 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404240 0x00404245 ?on_iface_dialog_item_back_draw@Datalink@@UAEHPAVGraphicWin@@HHPAUtagRECT@@@Z 0x00432060
+int Datalink::on_iface_dialog_item_back_draw(GraphicWin *, int, int, RECT *) {
+    return 0;
 }
 
 
+// ORIGINAL: 0x00429180 ?exec@Datalink@@QAEXIH@Z 0x00429180-0x004292FC BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:datalink-owner-coverage", "pinned:terranx_original.exe:429180..4292FC complete geometry, saved-state, list redraw, modal and restoration sequence", "source:src/reportwin.h:ReportWinGlobal shared_research_focus owns885F30; src/reportif.h existing category/faction fields", "historical seed:src/recovered/units/00429180.cpp"], "reason": "Recover the complete modal Datalink operation through its existing class, embedded text/list controls and real shared ReportWin/ReportIf state; preserve the original identity and seed findings without a new byte claim."}
+void Datalink::exec(unsigned int topic, int index) {
+    if (WinScreenWidth == 0x320) {
+        RECT area = lower_description_rect_;
+        area.left += 3;
+        area.top += 3;
+        area.right -= 3;
+        area.bottom -= 6;
+        area.left += FactionsArt[1].datalink.width() + 5;
+        const int x = area.left;
+        const int y = area.top;
+        const int width = area.right - area.left;
+        const int height = area.bottom - area.top;
 
-
-/*
-Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-// ORIGINAL: 0x00431EB0 ?on_left_click@Datalink@@QAEXHH@Z 0x00431EB0-0x00431EB3 BYTE_EXACT
-// symbol    ?on_left_click@Datalink@@UAEXHH@Z
-// size      3 bytes
-// prototype void (__thiscall ?on_left_click@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void Datalink::on_left_click(int, int) {
-}
-
-
-/*
-Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-// ORIGINAL: 0x00431FB0 ?on_group_clicked@Datalink@@QAEXHH@Z 0x00431FB0-0x00431FB3 BYTE_EXACT
-// symbol    ?on_group_clicked@Datalink@@UAEXHH@Z
-// size      3 bytes
-// prototype void (__thiscall ?on_group_clicked@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void Datalink::on_group_clicked(int, int) {
-}
-
-
-/*
-Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-// ORIGINAL: 0x00432000 ?on_mouse_move@Datalink@@QAEXHH@Z 0x00432000-0x00432003 BYTE_EXACT
-// symbol    ?on_mouse_move@Datalink@@UAEXHH@Z
-// size      3 bytes
-// prototype void (__thiscall ?on_mouse_move@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void Datalink::on_mouse_move(int, int) {
-}
-
-
-/*
-Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-// ORIGINAL: 0x00432160 ?on_iface_left_click@Datalink@@QAEXHH@Z 0x00432160-0x00432163 BYTE_EXACT
-// symbol    ?on_iface_left_click@Datalink@@UAEXHH@Z
-// size      3 bytes
-// prototype void (__thiscall ?on_iface_left_click@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void Datalink::on_iface_left_click(int, int) {
-}
-
-
-/*
-Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-// ORIGINAL: 0x00432170 ?on_iface_right_click@Datalink@@QAEXHH@Z 0x00432170-0x00432173 BYTE_EXACT
-// symbol    ?on_iface_right_click@Datalink@@UAEXHH@Z
-// size      3 bytes
-// prototype void (__thiscall ?on_iface_right_click@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void Datalink::on_iface_right_click(int, int) {
-}
-
-
-/*
-Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-// ORIGINAL: 0x00432180 ?on_iface_left_down@Datalink@@QAEXHH@Z 0x00432180-0x00432183 BYTE_EXACT
-// symbol    ?on_iface_left_down@Datalink@@UAEXHH@Z
-// size      3 bytes
-// prototype void (__thiscall ?on_iface_left_down@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void Datalink::on_iface_left_down(int, int) {
-}
-
-
-/*
-Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-// ORIGINAL: 0x00432190 ?on_iface_right_down@Datalink@@QAEXHH@Z 0x00432190-0x00432193 BYTE_EXACT
-// symbol    ?on_iface_right_down@Datalink@@UAEXHH@Z
-// size      3 bytes
-// prototype void (__thiscall ?on_iface_right_down@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void Datalink::on_iface_right_down(int, int) {
-}
-
-
-/*
-Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-// ORIGINAL: 0x004321A0 ?on_iface_mouse_move@Datalink@@QAEXHH@Z 0x004321A0-0x004321A3 BYTE_EXACT
-// symbol    ?on_iface_mouse_move@Datalink@@UAEXHH@Z
-// size      3 bytes
-// prototype void (__thiscall ?on_iface_mouse_move@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void Datalink::on_iface_mouse_move(int, int) {
-}
-
-
-/*
-Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-// ORIGINAL: 0x004321B0 ?on_iface_mouse_leave@Datalink@@QAEXHH@Z 0x004321B0-0x004321B3 BYTE_EXACT
-// symbol    ?on_iface_mouse_leave@Datalink@@UAEXHH@Z
-// size      3 bytes
-// prototype void (__thiscall ?on_iface_mouse_leave@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void Datalink::on_iface_mouse_leave(int, int) {
-}
-
-
-/*
-Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-// ORIGINAL: 0x004321C0 ?on_iface_selected@Datalink@@QAEXHH@Z 0x004321C0-0x004321C3 BYTE_EXACT
-// symbol    ?on_iface_selected@Datalink@@UAEXHH@Z
-// size      3 bytes
-// prototype void (__thiscall ?on_iface_selected@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void Datalink::on_iface_selected(int, int) {
-}
-
-
-/*
-Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-// ORIGINAL: 0x004321D0 ?on_iface_left_double_click@Datalink@@QAEXHH@Z 0x004321D0-0x004321D3 BYTE_EXACT
-// symbol    ?on_iface_left_double_click@Datalink@@UAEXHH@Z
-// size      3 bytes
-// prototype void (__thiscall ?on_iface_left_double_click@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void Datalink::on_iface_left_double_click(int, int) {
-}
-
-
-/*
-Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-// ORIGINAL: 0x004321E0 ?on_iface_right_double_click@Datalink@@QAEXHH@Z 0x004321E0-0x004321E3 BYTE_EXACT
-// symbol    ?on_iface_right_double_click@Datalink@@UAEXHH@Z
-// size      3 bytes
-// prototype void (__thiscall ?on_iface_right_double_click@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void Datalink::on_iface_right_double_click(int, int) {
-}
-
-
-/*
-Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-// ORIGINAL: 0x004321F0 ?on_iface_button_clicked@Datalink@@QAEXH@Z 0x004321F0-0x004321F3 BYTE_EXACT
-// symbol    ?on_iface_button_clicked@Datalink@@UAEXH@Z
-// size      3 bytes
-// prototype void (__thiscall ?on_iface_button_clicked@Datalink@@QAEXH@Z)(Datalink* this, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void Datalink::on_iface_button_clicked(int) {
-}
-
-
-/*
-Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-// ORIGINAL: 0x00432200 ?on_iface_button_toggled@Datalink@@QAEXHH@Z 0x00432200-0x00432203 BYTE_EXACT
-// symbol    ?on_iface_button_toggled@Datalink@@UAEXHH@Z
-// size      3 bytes
-// prototype void (__thiscall ?on_iface_button_toggled@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void Datalink::on_iface_button_toggled(int, int) {
-}
-
-
-// The image routes this callback through DatalinkIface slot 16. The compiler
-// adjusts the secondary-base receiver back to Datalink; the seed's +0xEC14
-// ListBox access from that receiver is the owned listBox_ at +0xF628.
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00432210 ?on_iface_group_clicked@Datalink@@QAEXHHH@Z 0x00432210-0x0043228B BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00432210.cpp preserves the 123-byte BYTE_EXACT historical callback; image:0x0066AF30 slot 16 points to 0x00432210; source:src/datalink.h models DatalinkIface at +0xA14 and ListBox at +0xF628"], "reason": "Restore the category-click path through the real Datalink owner and ListBox member, with the compiler's secondary-base adjustment rather than seed pointer arithmetic."}
-// symbol    ?on_iface_group_clicked@Datalink@@UAEXHHH@Z
-void Datalink::on_iface_group_clicked(int, int, int category) {
-    if (listBox_.item_list_.entry_count_ != 0) {
-        set_cat(category, 0);
-        // 0x43224B/0x43225A use the secondary receiver (full this+0xA14).
-        // Its +0x2024 is full Datalink+0x2A38: suppress history during selection.
-        field_2A38_ = 1;
-        listBox_.set_selected_pos(0, 1);
-        field_2A38_ = 0;
-        listBox_.redraw();
-        draw_entry();
+        stringBox_.init(x, y, width, height, static_cast<Win *>(this),
+                        0, -1);
+        Font *const hyperlink_font = &link_font_;
+        stringBox_.set_font(&secondary_body_font_, 0, 0, hyperlink_font);
+        stringBox_.set_text_color(0x98, -1, 1, 1);
+        stringBox_.set_text_color2(0x96, -1, 1, 1);
+        stringBox_.set_text_color_hyper(0x96, -1, 1, 1);
     }
+
+    field_A1C_ = static_cast<uint32_t>(ReportWinGlobal.shared_research_focus());
+    field_A20_ = ReportIfGlobal.field_8_;
+    field_A24_ = static_cast<uint32_t>(ReportIfGlobal.report_faction_id_);
+    ReportIfGlobal.report_faction_id_ = ConsoleGlobal.faction_id_;
+
+    set_cat(topic, 1);
+    history_[0] = index;
+    listBox_.set_selected_id(field_29DC_ * 10000 + index);
+    repaint_slot();
+    set_modal(1, pop_wait, &MainInterfaceGlobal);
+
+    ReportWinGlobal.shared_research_focus() = static_cast<int32_t>(field_A1C_);
+    ReportIfGlobal.field_8_ = field_A20_;
+    ReportIfGlobal.report_faction_id_ = static_cast<int32_t>(field_A24_);
+    SubInterface::release_iface_mode();
 }
 
 
-/*
-Purpose: Close the datalink display, clearing the three values it caches.
-// ORIGINAL: 0x0042BD20 ?close@Datalink@@QAEXXZ 0x0042BD20-0x0042BD35 BYTE_EXACT
-// size      21 bytes
-// prototype void (__thiscall ?close@Datalink@@QAEXXZ)(Datalink* this)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void Datalink::close() {
+
+// ORIGINAL: 0x00429300 ?init@Datalink@@QAEXXZ 0x00429300-0x0042A012;0x00653579-0x0065358E
+// RECOVERY_BINDING: v1 {"evidence": ["task:datalink-initializer-owner", "Pinned429300..42A012 establishes18RECT rows, typed UI receivers and distinct box bounds/fonts;653579..65358E cleans the local Buffer.", "historical seed:src/unrecovered/00429300.cpp"], "reason": "Recover Datalink initialization through real UI members, panel geometry, renderer camera and local Buffer lifetime; native call arguments supersede the retained seed approximations. Original spans and historical findings are retained without a matching or runtime claim."}
+// TRIED: huge UI-construction initializer (fonts, rects, a 16-entry facility-button loop at self+0x2a3c stride 0xb4c, 3 more BaseButtons, 4 StringBoxes) mostly transcribed from Ghidra (reliable for the field writes) plus raw-disasm-derived `this` pointers for every dropped-this call (Buffer at self+0x444, Caviar at self+0x150c, per-Font self+offset table, ListBox/ Dialog at self+0xf628 through a virtual-base-offset chase). The two uncatalogued quaternion helpers (sub_627d00/sub_6280e0) and the two extra StringBox instances' rect math are best-effort approximations, not individually verified against raw bytes.
+void Datalink::init() {
+    // The retained body constructs this local Buffer at entry and tears it
+    // down on exit; it participates in the recorded cold cleanup span even
+    // though no ordinary expression reads the local object.
+    Buffer temporary_buffer;
     history_[0] = 0;
     field_2A34_ = 0;
     field_2A38_ = 0;
+    register_iface(8);
+    // 0x0042935B keeps this flag (setne) for the font block; the geometry
+    // below compares the width again.
+    const int wide = WinScreenWidth != 800;
+    int content_height;
+    int side_width;
+    if (WinScreenWidth == 800) {
+        side_width = 0;
+        content_height = 600 - MainInterfaceGlobal.panel_height();
+    } else {
+        side_width = 0x8a;
+        content_height = 0x2e2 - MainInterfaceGlobal.panel_height();
+    }
+    const int left = (WinScreenWidth - 800) / 2;
+    const int top = WinScreenHeight - MainInterfaceGlobal.panel_height() - content_height;
+
+    interface_update_rect_ = MainInterfaceGlobal.main_layout_rect();
+    // [A] 0x004293FB..0x00429411 stores left, right, top, bottom; written
+    // left, top, right, bottom through a reference, VC6 schedules them that
+    // way and holds 7/0xE6 in the image's ecx/eax (direct member stores
+    // reorder and swap them).
+    RECT &category_rect = category_rect_;
+    category_rect.left = 30;
+    category_rect.top = 7;
+    category_rect.right = 230;
+    category_rect.bottom = 0x1b;
+    field_103E4_rect_.right = 0xe6;
+    field_103E4_rect_.bottom = side_width + 0x143;
+    field_103E4_rect_.left = 0x1e;
+    field_103E4_rect_.top = 0x1d;
+
+    illustration_rect_.left = 0xf8;
+    illustration_rect_.top = 0x2c;
+    illustration_rect_.right = 0x177;
+    illustration_rect_.bottom = 0xab;
+
+    // [B] 0x00429468..0x0042948B stores title top, left, right, bottom right
+    // after the illustration rect. The image keeps the dead `left = 0xDB`
+    // store (0x00429475) that title_left overwrites below: the first stores
+    // went through a reference, like description_rect's (whose dead 0xDB
+    // store at 0x004294A4 also survives); direct member stores drop it.
+    RECT &title_rect = title_rect_;
+    title_rect.top = 7;
+    title_rect.left = 0xdb;
+    title_rect.right = 0x302;
+    title_rect.bottom = 0x22;
+    RECT &description_rect = description_rect_;
+    description_rect.left = 0xdb;
+    description_rect.top = 0x24;
+    description_rect.right = 0x302;
+    description_rect.bottom = side_width / 2 + 0xb4;
+    // Image 4294D0/4294F2 passes the member itself to UnionRect.
+    // Keep the later detail-box geometry bound to that same live rectangle.
+    RECT &lower_description_rect = lower_description_rect_;
+    lower_description_rect.left = 0xdb;
+    lower_description_rect.top = side_width / 2 + 0xb6;
+    lower_description_rect.right = 0x302;
+    lower_description_rect.bottom = lower_description_rect.top + side_width / 2 + 0x8d;
+    const int title_left = field_103E4_rect_.right + 9;
+    title_rect_.left = title_left;
+    description_rect.left = title_left;
+    lower_description_rect.left = title_left;
+    UnionRect(&panel_rect_, &description_rect, &lower_description_rect);
+    UnionRect(&entry_clip_rect_, &description_rect, &lower_description_rect);
+    UnionRect(&entry_clip_rect_, &entry_clip_rect_, &title_rect_);
+    entry_update_rect_ = entry_clip_rect_;
+    expand_rect(&entry_update_rect_, 3, 3);
+    RECT &entry_update_rect = entry_update_rect_;
+    entry_clip_rect_ = panel_rect_;
+    RECT &entry_frame_rect = entry_frame_rect_;
+    entry_frame_rect.left = left;
+    entry_frame_rect.top = top;
+    entry_frame_rect.right = left + 0x340;
+    entry_frame_rect.bottom = top + content_height;
+
+    // Native row stores establish eighteen consecutive RECTs; index 16 is
+    // deliberately overwritten after the two panel-row loops.
+    RECT rect = MainInterfaceGlobal.main_frame_rect();
+    rect.left += 4;
+    rect.right -= 4;
+    rect.bottom -= 4;
+    rect.top = rect.bottom - 0x15;
+    ++rect.bottom;
+    int i;
+    for (i = 7; i >= 0; --i) {
+        topic_button_bounds_[i] = rect;
+        rect.top -= 0x18;
+        rect.bottom -= 0x18;
+    }
+    rect = MainInterfaceGlobal.right_frame_rect();
+    rect.left += 4;
+    rect.right -= 4;
+    rect.bottom -= 4;
+    rect.top = rect.bottom - 0x15;
+    ++rect.bottom;
+    for (i = 8; i < 17; ++i) {
+        topic_button_bounds_[i] = rect;
+        rect.top -= 0x18;
+        rect.bottom -= 0x18;
+    }
+
+    // [F] 0x004296A3..0x004296E1: bottom is derived from the stored top
+    // (lea ecx,[eax+0x14] / add eax,0x14), never side_width+0x162 directly;
+    // [16] stores left, right, top, bottom.
+    topic_button_bounds_[16].left = 0x98;
+    topic_button_bounds_[16].right = 0x18e;
+    topic_button_bounds_[16].top = side_width + 0x14e;
+    topic_button_bounds_[16].bottom = topic_button_bounds_[16].top + 0x14;
+    // [17] keeps its top in a register and adds 0x14 to it in place
+    // (0x004296CE..0x004296E1) instead of reusing [16]'s bottom.
+    RECT &bounds17 = topic_button_bounds_[17];
+    bounds17.left = 0x192;
+    bounds17.right = 0x288;
+    int top17 = side_width + 0x14e;
+    bounds17.top = top17;
+    top17 += 0x14;
+    bounds17.bottom = top17;
+
+    if (!wide) {
+        auxiliary_font10_.init(DefaultFontFace, 12, 4);
+        auxiliary_font11_.init(DefaultFontFace, 12, 0);
+        font1_.init(DefaultFontFace, 18, 1);
+        font3_.init(DefaultFontFace, 14, 1);
+        auxiliary_font4_.init(DefaultFontFace, 14, 1);
+        auxiliary_font5_.init(DefaultFontFace, 14, 1);
+        body_font_.init(DefaultFontFace, 14, 1);
+        secondary_body_font_.init(DefaultFontFace, 14, 0);
+        link_font_.init(DefaultFontFace, 14, 5);
+        auxiliary_font8_.init(DefaultFontFace, 10, 0);
+        auxiliary_font8_.unk_1_ = 4;
+        font2_.init(DefaultFontFace, 12, 0);
+    } else {
+        auxiliary_font10_.init(DefaultFontFace, 14, 4);
+        auxiliary_font11_.init(DefaultFontFace, 14, 0);
+        font1_.init(DefaultFontFace, 18, 1);
+        font3_.init(DefaultFontFace, 14, 1);
+        auxiliary_font4_.init(DefaultFontFace, 14, 1);
+        auxiliary_font5_.init(DefaultFontFace, 14, 1);
+        body_font_.init(DefaultFontFace, 14, 1);
+        secondary_body_font_.init(DefaultFontFace, 14, 0);
+        link_font_.init(DefaultFontFace, 14, 5);
+        auxiliary_font8_.init(DefaultFontFace, 12, 0);
+        font2_.init(DefaultFontFace, 14, 0);
+    }
+
+    caviar_.init();
+    caviar_.set_field_A4(0);
+    float angles[3];
+    angles[0] = 0.0f;
+    angles[1] = 0.0f;
+    angles[2] = 0.785f;
+    VOX_Matrix camera_rotation;
+    caviar_apply_rotation(angles, &camera_rotation);
+    camera_rotation.values[2][0] = -camera_rotation.values[2][0];
+    camera_rotation.values[2][1] = -camera_rotation.values[2][1];
+    camera_rotation.values[2][2] = -camera_rotation.values[2][2];
+    VOX_Vect vector;
+    vector.values[0] = camera_rotation.values[2][0] * -10000.0f;
+    vector.values[1] = camera_rotation.values[2][1] * -10000.0f;
+    vector.values[2] = camera_rotation.values[2][2] * -10000.0f;
+    caviar_.set_camera_direct(&vector, &camera_rotation);
+    caviar_.set_scene_rotation(3.14f / 6, 0.0f, 0.0f);
+    // 0x0042997C reuses the camera position's slot for the forward vector.
+    vector.values[0] = 0.0f;
+    vector.values[1] = 0.0f;
+    vector.values[2] = 1.0f;
+    float transformed_forward[3];
+    vox_matrix_vector_mul(camera_rotation.values, vector.values,
+                          transformed_forward);
+    caviar_.shadow_vector() = vector;
+    caviar_.light_vector() = vector;
+
+    // The legacy parent computation reaches Console's real Win base. Its
+    // static conversion applies the compiler's current virtual-base layout.
+    // [G] 0x004299C7..0x00429A23: the parent is converted first and kept in
+    // a frame slot ([ebp-0x20]); height then width are computed before any
+    // push, and left/top are reloaded for their own pushes.
+    Win *parent = static_cast<Win *>(&ConsoleGlobal);
+    const int frame_height = entry_frame_rect_.bottom - entry_frame_rect_.top;
+    const int frame_width = entry_frame_rect_.right - entry_frame_rect_.left;
+    GraphicWin::init(entry_frame_rect_.left, entry_frame_rect_.top,
+                     frame_width, frame_height, 0x1000000, parent);
+    GraphicWin::fill(9);
+
+    rect.left = 0x17;
+    rect.top = 0;
+    rect.right = 0x309;
+    rect.bottom = content_height;
+    box_sprite(&rect, &InterfaceBoxStyles[9]);
+    box_sprite(&entry_update_rect, &InterfaceBoxStyles[3]);
+    UnionRect(&rect, &topic_button_bounds_[17], &topic_button_bounds_[16]);
+    rect.left -= 3;
+    rect.right += 3;
+    rect.top -= 3;
+    rect.bottom += 3;
+    box_sprite(&rect, &InterfaceBoxStyles[3]);
+    box_sprite(&category_rect_, &InterfaceBoxStyles[6]);
+    UnionRect(&rect, &category_rect_, &field_103E4_rect_);
+    rect.left -= 3;
+    rect.right += 3;
+    rect.top -= 3;
+    rect.bottom += 3;
+    box_sprite(&rect, &InterfaceBoxStyles[3]);
+    rect = field_103E4_rect_;
+    box_sprite(&rect, &InterfaceBoxStyles[6]);
+    rect.left += 3;
+    rect.right -= 3;
+    rect.top += 3;
+    rect.bottom -= 3;
+
+    listBox_.init(&rect, static_cast<Heap *>(0));
+    listBox_.field_8_ = 1;
+    listBox_.field_2C_ = 0;
+    listBox_.set_field_44(0);
+    listBox_.field_B4_ = 0;
+    listBox_.set_dialog_font(&font2_, 0, 0);
+    listBox_.attach(static_cast<GraphicWin *>(this), rect.left, rect.top,
+                    0x1000020);
+    buttonGroup_.init(0, 0);
+
+    for (i = 0; i < 16; ++i) {
+        const RECT &row = topic_button_bounds_[i];
+        topic_buttons_[i].init(label_get(0xb20 / 4 + i), i,
+                               row.left, row.top, row.right - row.left,
+                               row.bottom - row.top,
+                               static_cast<Win *>(&MainInterfaceGlobal), 0);
+        topic_buttons_[i].set_border_styles(&InterfaceBoxStyles[27],
+                                             &InterfaceBoxStyles[28],
+                                             &InterfaceBoxStyles[29]);
+        topic_buttons_[i].Buffer::set_font(
+            &auxiliary_font4_, 0, 0, 0);
+        topic_buttons_[i].redraw();
+        topic_buttons_[i].hide();
+        buttonGroup_.add(&topic_buttons_[i]);
+    }
+
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x9c / 4));
+    CharUpperA(StringTemp);
+    FlatButton *button = &topic_buttons_[17];
+    button->init(StringTemp, 0x11,
+                            topic_button_bounds_[17].left,
+                            topic_button_bounds_[17].top,
+                            topic_button_bounds_[17].right - topic_button_bounds_[17].left,
+                            topic_button_bounds_[17].bottom - topic_button_bounds_[17].top,
+                            static_cast<Win *>(this), 0);
+    button->Buffer::set_font(
+        &auxiliary_font4_, 0, 0, 0);
+    button->redraw();
+    button->hide();
+
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0xa60 / 4));
+    CharUpperA(StringTemp);
+    button = &topic_buttons_[16];
+    button->init(StringTemp, 0x10,
+                            topic_button_bounds_[16].left,
+                            topic_button_bounds_[16].top,
+                            topic_button_bounds_[16].right - topic_button_bounds_[16].left,
+                            topic_button_bounds_[16].bottom - topic_button_bounds_[16].top,
+                            static_cast<Win *>(this), 0);
+    button->Buffer::set_font(
+        &auxiliary_font4_, 0, 0, 0);
+    button->redraw();
+    button->hide();
+
+    // [H] 0x00429E26/0x00429EC2/0x00429F65: each StringBox rect is a whole
+    // copy of its source rect adjusted in place; the image loads bottom,
+    // top, right, left and adjusts bottom, right, top, left.
+    rect = interface_update_rect_;
+    rect.left += 3;
+    rect.right -= 3;
+    rect.top += 3;
+    rect.bottom -= 3;
+    blurb_box_.init(rect.left, rect.top, rect.right - rect.left,
+                    rect.bottom - rect.top,
+                    static_cast<Win *>(&MainInterfaceGlobal), 0, -1);
+    blurb_box_.Buffer::set_font(&auxiliary_font8_, 0, 0, 0);
+    blurb_box_.Buffer::set_text_color(0x98, -1, 1, 1);
+    blurb_box_.Buffer::set_text_color2(0x96, -1, 1, 1);
+    blurb_box_.Buffer::set_text_color_hyper(0x96, -1, 1, 1);
+
+    // [H] same order as above.
+    rect = panel_rect_;
+    rect.left += 3;
+    rect.right -= 3;
+    rect.top += 3;
+    rect.bottom -= 3;
+    concept_box_.init(rect.left, rect.top, rect.right - rect.left,
+                      rect.bottom - rect.top,
+                      static_cast<Win *>(this), 0, -1);
+    concept_box_.Buffer::set_font(&body_font_, 0, 0, &link_font_);
+    concept_box_.Buffer::set_text_color(0x98, -1, 1, 1);
+    concept_box_.Buffer::set_text_color2(0x96, -1, 1, 1);
+    concept_box_.Buffer::set_text_color_hyper(0x96, -1, 1, 1);
+
+    // [H] same order as above.
+    rect = lower_description_rect;
+    rect.left += 6;
+    rect.right -= 6;
+    rect.top += 6;
+    rect.bottom -= 6;
+    detail_box_.init(rect.left, rect.top, rect.right - rect.left,
+                     rect.bottom - rect.top,
+                     static_cast<Win *>(this), 0, -1);
+    detail_box_.Buffer::set_font(&body_font_, 0, 0, &link_font_);
+    detail_box_.Buffer::set_text_color(0x98, -1, 1, 1);
+    detail_box_.Buffer::set_text_color2(0x96, -1, 1, 1);
+    detail_box_.Buffer::set_text_color_hyper(0x96, -1, 1, 1);
+    (void)temporary_buffer;
 }
 
 
@@ -1989,21 +2075,6 @@ void Datalink::parse_id(int id, uint32_t *out_category, int *out_remainder) {
 }
 
 /*
-Purpose: Parse a decimal Datalink id into its category and entry components.
-         The quotient/remainder are the same split used by parse_id; this
-         overload receives the encoded id as text from a link target.
-*/
-// ORIGINAL: 0x0042A0B0 ?UNK2@Datalink@@QAEXPADPAHPAH@Z 0x0042A0B0-0x0042A0F1 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x0042A0B0-0x0042A0F1 calls atoi then stores quotient and remainder; git:85463515:src/recovered/units/0042a0b0.cpp contains the historical analysis and source:src/datalink.cpp:parse_id implements the matching numeric split"], "reason": "The product Datalink parser owns this text-to-category/remainder operation; its original span and name are preserved in Git provenance."}
-// symbol    ?UNK2@Datalink@@QAEXPADPAH1@Z
-void Datalink::UNK2(char *text, int *category, int *entry) {
-    const int id = atoi(text);
-    const int quotient = id / 10000;
-    *category = quotient;
-    *entry = id - quotient * 10000;
-}
-
-/*
 Purpose: Format a category and entry suffix as the decimal Datalink id.
          This is the inverse of parse_id's quotient/remainder split.
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -2018,144 +2089,20 @@ void Datalink::construct_id(char *out, int category, int suffix) {
     _itoa(category * 10000 + suffix, out, 10);
 }
 
-
-
 /*
-// ORIGINAL: 0x00432040 ?on_selected@Datalink@@QAEXH@Z 0x00432040-0x00432052 BYTE_EXACT
-// symbol    ?on_selected@Datalink@@UAEXH@Z
-// size      18 bytes
-// prototype void (__thiscall ?on_selected@Datalink@@QAEXH@Z)(Datalink* this, int)
-// callers   0   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x0042BF10
-Status: Complete
+Purpose: Parse a decimal Datalink id into its category and entry components.
+         The quotient/remainder are the same split used by parse_id; this
+         overload receives the encoded id as text from a link target.
 */
-void Datalink::on_selected(int index) {
-    int v = field_2A38_;
-    if (v == 0) {
-        draw_entry();
-    }
-}
 
-/*
-// ORIGINAL: 0x0042BD40 ?show@Datalink@@QAEXH@Z 0x0042BD40-0x0042BD5B BYTE_EXACT
-// symbol    ?show@Datalink@@UAEXH@Z
-// size      27 bytes
-// prototype void (__thiscall ?show@Datalink@@QAEXH@Z)(Datalink* this, int)
-// callers   1   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x0045D310 0x005F7E90
-Status: Complete
-*/
-void Datalink::show(int visible) {
-    if (!Win::is_visible()) {
-        SubInterface::set_iface_mode();
-    }
-}
-
-/*
-// ORIGINAL: 0x0042BD60 ?hide@Datalink@@QAEXXZ 0x0042BD60-0x0042BD79 BYTE_EXACT
-// symbol    ?hide@Datalink@@UAEXXZ
-// size      25 bytes
-// prototype void (__thiscall ?hide@Datalink@@QAEXXZ)(Datalink* this)
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x0045D380 0x005F7E90
-Status: Complete
-*/
-void Datalink::hide() {
-    if (Win::is_visible()) {
-        SubInterface::release_iface_mode();
-    }
-}
-
-
-
-/*
-Purpose: Push a topic onto the back-history ring UNK5 pops, unless the panel
-         is already showing it or the ring is switched off.
-
-         The 10000-folded topic id is compared against the ring slot AFTER
-         the last one pushed - `0x29e0 + count*4` - and stored one slot past
-         that, `0x29e4 + count*4`. Slot 0 of the ring is the facility id, so
-         the first store lands at ring[1] and never at ring[0]: that is the
-         original's own arithmetic, not a slipped base.
-// ORIGINAL: 0x0042BD80 ?UNK4@Datalink@@QAEXHH@Z 0x0042BD80-0x0042BDFA FILE BYTE_EXACT
-// MISMATCH 19/39, first divergence at 6. TRIED: the ring declared as `facilityID_` plus a tail array (two bases where the image's compare and store read `0x29e0+count*4` and `0x29e4+count*4` off one), and the eviction loop as `int *slot = &history_[1]` (which matches).
-//            The image's catalogue name is ours to spell from behaviour:
-//            the catalogue calls this ?UNK4@Datalink@@QAEXHH@Z.
-// symbol    ?push_history@Datalink@@QAEXHH@Z
-// size      122 bytes
-// prototype void (__thiscall ?UNK4@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     (none)
-// TRIED: a single named `int *ring` base for the 20-entry buffer (the compiler keeps it live across the whole body and schedules the two prologue pushes differently); recomputing `self+0x29e0` and `self+0x29e4` separately (matching the two distinct bases the disasm itself uses) got the divergence from #4 to #29, where `--*(int*)(...); count = *(int*)(...);` CSEs into a register (`mov`) instead of the original's separate `dec [mem]` + reload.
-Return Value: n/a
-Status: Complete
-*/
-void Datalink::push_history(int category, int index) {
-    if (field_2A38_ != 0) {
-        return;
-    }
-
-    const int topic = category * 10000 + index;
-    int count = field_2A34_;
-    if (count != 0 && history_[count] == topic) {
-        return;
-    }
-
-    if (count == 0x14) {
-        for (int i = 0; i < 0x13; ++i) {
-            history_[1 + i] = history_[2 + i];
-        }
-        --field_2A34_;
-    }
-
-    history_[field_2A34_ + 1] = topic;
-    ++field_2A34_;
-}
-
-/*
-Purpose: Pop the back-history ring and re-show the topic it held.
-
-         Reads `0x29e0 + --count*4`, the slot UNK4 last wrote, splits it back
-         into its category and facility halves the way parse_id does, then
-         walks the chain set_cat / set_selected_id / slot 62 / draw_entry that
-         UNK3 runs in the forward direction.
-// ORIGINAL: 0x0042BE00 ?UNK5@Datalink@@QAEXXZ 0x0042BE00-0x0042BE9D FILE BYTE_EXACT
-// MISMATCH 8/49, first divergence at 4 - the receiver-spill order again: the image takes `this` into esi after saving ebx/edi, ours before. TRIED: `history_[--field_2A34_]` for the pop, `topic - category*10000` for the remainder instead of `%`, and a hoisted `&listBox_` base.
-//            The image's catalogue name is ours to spell from behaviour:
-//            the catalogue calls this ?UNK5@Datalink@@QAEXXZ.
-// symbol    ?pop_history@Datalink@@QAEXXZ
-// size      157 bytes
-// prototype void (__thiscall ?UNK5@Datalink@@QAEXXZ)(Datalink* this)
-// callers   0   call targets   3
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x0042A2C0 0x0042BF10 0x00609FA0
-// indirect  0x0042BE8C
-Return Value: n/a
-Status: Complete
-*/
-void Datalink::pop_history() {
-    if (field_2A34_ <= 1) {
-        return;
-    }
-
-    const int topic = history_[--field_2A34_];
-    const int category = topic / 10000;
-
-    set_cat(static_cast<unsigned int>(category), 0);
-    const int facility = topic - category * 10000;
-    history_[0] = facility;
-    listBox_.set_selected_id(field_29DC_ * 10000 + facility);
-    repaint_slot();
-    draw_entry();
+// ORIGINAL: 0x0042A0B0 ?UNK2@Datalink@@QAEXPADPAHPAH@Z 0x0042A0B0-0x0042A0F1 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x0042A0B0-0x0042A0F1 calls atoi then stores quotient and remainder; git:85463515:src/recovered/units/0042a0b0.cpp contains the historical analysis and source:src/datalink.cpp:parse_id implements the matching numeric split"], "reason": "The product Datalink parser owns this text-to-category/remainder operation; its original span and name are preserved in Git provenance."}
+// symbol    ?UNK2@Datalink@@QAEXPADPAH1@Z
+void Datalink::UNK2(char *text, int *category, int *entry) {
+    const int id = atoi(text);
+    const int quotient = id / 10000;
+    *category = quotient;
+    *entry = id - quotient * 10000;
 }
 
 /*
@@ -2184,42 +2131,6 @@ void Datalink::show_topic(unsigned int category, int index) {
     history_[0] = index;
     listBox_.set_selected_id(field_29DC_ * 10000 + index);
     repaint_slot();
-}
-
-/*
-Purpose: Follow a hyperlink in the topic text: "category*10000+facility".
-
-         Facilities above 1000 are not real ones - they are the ids the
-         prototype list invented - so they are ignored. The return is 0
-         whatever happened; the image returns 0 on the ignored path and
-         falls off the end (also 0) after the chain.
-// ORIGINAL: 0x00431DC0 ?on_link_clicked@Datalink@@QAEHHPAD@Z 0x00431DC0-0x00431E64 FILE BYTE_EXACT
-// symbol    ?on_link_clicked@Datalink@@UAEHHPAD@Z
-// MISMATCH 24/58, first divergence at 24 - the image reloads the facility slot after the set_cat call where ours folds it into the store. TRIED: the guard as `facility > 1000` in both polarities, and `atoi` against the CRT's own binding.
-// size      161 bytes
-// prototype int (__thiscall ?on_link_clicked@Datalink@@QAEHHPAD@Z)(Datalink* this, int, char *)
-// callers   0   call targets   3
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x0042A2C0 0x00609FA0
-// indirect  0x00431E5B
-Return Value: always 0
-Status: Complete
-*/
-int Datalink::on_link_clicked(int, char *link) {
-    const int topic = atoi(link);
-    const int category = topic / 10000;
-    const int facility = topic - category * 10000;
-
-    if (facility > 1000) {
-        return 0;
-    }
-
-    set_cat(static_cast<unsigned int>(category), 0);
-    history_[0] = facility;
-    listBox_.set_selected_id(field_29DC_ * 10000 + facility);
-    repaint_slot();
-    return 0;
 }
 
 /*
@@ -3181,6 +3092,274 @@ void Datalink::set_cat_terraform() {
     soft_update(&category_rect_);
 }
 
+// ORIGINAL: 0x0042BCC0 ?set_index@Datalink@@QAEXHH@Z 0x0042BCC0-0x0042BD14 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x0042BCC0-0x0042BD14 stores the first argument at Datalink+0x29E0, combines it with category at +0x29DC for ListBox::set_selected_id, then dispatches GraphicWin redraw through the embedded list", "source:src/datalink.h maps history_[0], field_29DC_ and listBox_ at those offsets", "source:src/datalink.cpp repaint_slot names the embedded ListBox redraw operation"], "reason": "Select a Datalink entry through its typed history/category/ListBox state and the already named repaint operation, replacing seed receiver arithmetic and an opaque slot shim."}
+void Datalink::set_index(int index, int) {
+    const int category = field_29DC_;
+    history_[0] = index;
+    listBox_.set_selected_id(category * 10000 + index);
+    repaint_slot();
+}
+
+
+/*
+Purpose: Close the datalink display, clearing the three values it caches.
+// ORIGINAL: 0x0042BD20 ?close@Datalink@@QAEXXZ 0x0042BD20-0x0042BD35 BYTE_EXACT
+// size      21 bytes
+// prototype void (__thiscall ?close@Datalink@@QAEXXZ)(Datalink* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void Datalink::close() {
+    history_[0] = 0;
+    field_2A34_ = 0;
+    field_2A38_ = 0;
+}
+
+/*
+// ORIGINAL: 0x0042BD40 ?show@Datalink@@QAEXH@Z 0x0042BD40-0x0042BD5B BYTE_EXACT
+// symbol    ?show@Datalink@@UAEXH@Z
+// size      27 bytes
+// prototype void (__thiscall ?show@Datalink@@QAEXH@Z)(Datalink* this, int)
+// callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0045D310 0x005F7E90
+Status: Complete
+*/
+void Datalink::show(int visible) {
+    if (!Win::is_visible()) {
+        SubInterface::set_iface_mode();
+    }
+}
+
+/*
+// ORIGINAL: 0x0042BD60 ?hide@Datalink@@QAEXXZ 0x0042BD60-0x0042BD79 BYTE_EXACT
+// symbol    ?hide@Datalink@@UAEXXZ
+// size      25 bytes
+// prototype void (__thiscall ?hide@Datalink@@QAEXXZ)(Datalink* this)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0045D380 0x005F7E90
+Status: Complete
+*/
+void Datalink::hide() {
+    if (Win::is_visible()) {
+        SubInterface::release_iface_mode();
+    }
+}
+
+
+
+/*
+Purpose: Push a topic onto the back-history ring UNK5 pops, unless the panel
+         is already showing it or the ring is switched off.
+
+         The 10000-folded topic id is compared against the ring slot AFTER
+         the last one pushed - `0x29e0 + count*4` - and stored one slot past
+         that, `0x29e4 + count*4`. Slot 0 of the ring is the facility id, so
+         the first store lands at ring[1] and never at ring[0]: that is the
+         original's own arithmetic, not a slipped base.
+// ORIGINAL: 0x0042BD80 ?UNK4@Datalink@@QAEXHH@Z 0x0042BD80-0x0042BDFA FILE BYTE_EXACT
+// MISMATCH 19/39, first divergence at 6. TRIED: the ring declared as `facilityID_` plus a tail array (two bases where the image's compare and store read `0x29e0+count*4` and `0x29e4+count*4` off one), and the eviction loop as `int *slot = &history_[1]` (which matches).
+//            The image's catalogue name is ours to spell from behaviour:
+//            the catalogue calls this ?UNK4@Datalink@@QAEXHH@Z.
+// symbol    ?push_history@Datalink@@QAEXHH@Z
+// size      122 bytes
+// prototype void (__thiscall ?UNK4@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// TRIED: a single named `int *ring` base for the 20-entry buffer (the compiler keeps it live across the whole body and schedules the two prologue pushes differently); recomputing `self+0x29e0` and `self+0x29e4` separately (matching the two distinct bases the disasm itself uses) got the divergence from #4 to #29, where `--*(int*)(...); count = *(int*)(...);` CSEs into a register (`mov`) instead of the original's separate `dec [mem]` + reload.
+Return Value: n/a
+Status: Complete
+*/
+void Datalink::push_history(int category, int index) {
+    if (field_2A38_ != 0) {
+        return;
+    }
+
+    const int topic = category * 10000 + index;
+    int count = field_2A34_;
+    if (count != 0 && history_[count] == topic) {
+        return;
+    }
+
+    if (count == 0x14) {
+        for (int i = 0; i < 0x13; ++i) {
+            history_[1 + i] = history_[2 + i];
+        }
+        --field_2A34_;
+    }
+
+    history_[field_2A34_ + 1] = topic;
+    ++field_2A34_;
+}
+
+/*
+Purpose: Pop the back-history ring and re-show the topic it held.
+
+         Reads `0x29e0 + --count*4`, the slot UNK4 last wrote, splits it back
+         into its category and facility halves the way parse_id does, then
+         walks the chain set_cat / set_selected_id / slot 62 / draw_entry that
+         UNK3 runs in the forward direction.
+// ORIGINAL: 0x0042BE00 ?UNK5@Datalink@@QAEXXZ 0x0042BE00-0x0042BE9D FILE BYTE_EXACT
+// MISMATCH 8/49, first divergence at 4 - the receiver-spill order again: the image takes `this` into esi after saving ebx/edi, ours before. TRIED: `history_[--field_2A34_]` for the pop, `topic - category*10000` for the remainder instead of `%`, and a hoisted `&listBox_` base.
+//            The image's catalogue name is ours to spell from behaviour:
+//            the catalogue calls this ?UNK5@Datalink@@QAEXXZ.
+// symbol    ?pop_history@Datalink@@QAEXXZ
+// size      157 bytes
+// prototype void (__thiscall ?UNK5@Datalink@@QAEXXZ)(Datalink* this)
+// callers   0   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0042A2C0 0x0042BF10 0x00609FA0
+// indirect  0x0042BE8C
+Return Value: n/a
+Status: Complete
+*/
+void Datalink::pop_history() {
+    if (field_2A34_ <= 1) {
+        return;
+    }
+
+    const int topic = history_[--field_2A34_];
+    const int category = topic / 10000;
+
+    set_cat(static_cast<unsigned int>(category), 0);
+    const int facility = topic - category * 10000;
+    history_[0] = facility;
+    listBox_.set_selected_id(field_29DC_ * 10000 + facility);
+    repaint_slot();
+    draw_entry();
+}
+
+/*
+Purpose: Unknown; the legacy implementation is a bare return with no body.
+// ORIGINAL: 0x0042BEA0 ?UNK6@Datalink@@QAEXXZ 0x0042BEA0-0x0042BEA1 BYTE_EXACT
+// size      1 bytes
+// prototype void (__thiscall ?UNK6@Datalink@@QAEXXZ)(Datalink* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void Datalink::UNK6() {
+}
+
+/*
+Purpose: Unknown; the legacy implementation is a bare return with no body.
+// ORIGINAL: 0x0042BF00 ?UNK8@Datalink@@QAEXXZ 0x0042BF00-0x0042BF01 BYTE_EXACT
+// size      1 bytes
+// prototype void (__thiscall ?UNK8@Datalink@@QAEXXZ)(Datalink* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void Datalink::UNK8() {
+}
+
+/*
+Purpose: Unknown; the legacy implementation is a bare return with no body.
+// ORIGINAL: 0x00431DB0 ?UNK9@Datalink@@QAEXXZ 0x00431DB0-0x00431DB1 BYTE_EXACT
+// size      1 bytes
+// prototype void (__thiscall ?UNK9@Datalink@@QAEXXZ)(Datalink* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void Datalink::UNK9() {
+}
+
+/*
+Purpose: Follow a hyperlink in the topic text: "category*10000+facility".
+
+         Facilities above 1000 are not real ones - they are the ids the
+         prototype list invented - so they are ignored. The return is 0
+         whatever happened; the image returns 0 on the ignored path and
+         falls off the end (also 0) after the chain.
+// ORIGINAL: 0x00431DC0 ?on_link_clicked@Datalink@@QAEHHPAD@Z 0x00431DC0-0x00431E64 FILE BYTE_EXACT
+// symbol    ?on_link_clicked@Datalink@@UAEHHPAD@Z
+// MISMATCH 24/58, first divergence at 24 - the image reloads the facility slot after the set_cat call where ours folds it into the store. TRIED: the guard as `facility > 1000` in both polarities, and `atoi` against the CRT's own binding.
+// size      161 bytes
+// prototype int (__thiscall ?on_link_clicked@Datalink@@QAEHHPAD@Z)(Datalink* this, int, char *)
+// callers   0   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0042A2C0 0x00609FA0
+// indirect  0x00431E5B
+Return Value: always 0
+Status: Complete
+*/
+int Datalink::on_link_clicked(int, char *link) {
+    const int topic = atoi(link);
+    const int category = topic / 10000;
+    const int facility = topic - category * 10000;
+
+    if (facility > 1000) {
+        return 0;
+    }
+
+    set_cat(static_cast<unsigned int>(category), 0);
+    history_[0] = facility;
+    listBox_.set_selected_id(field_29DC_ * 10000 + facility);
+    repaint_slot();
+    return 0;
+}
+
+/*
+Purpose: Restore the interface and Datalink surface clips, repaint the
+         interface background, then draw the selected Datalink entry.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00431E70 ?on_redraw@Datalink@@QAEXXZ 0x00431E70-0x00431EA6 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00431E70-0x00431EA6 calls Buffer::set_clip twice, MainInterface::restore_back and Datalink::draw_entry", "image:0x007AEC64 is the Buffer base of MainInterfaceGlobal at 0x007AE820+0x444; 0x007AEC94 is its rect2_ at +0x474", "source:src/recovered/units/00431e70.cpp preserves the byte-exact historical unit"], "reason": "Use the existing MainInterface object and real Buffer bases instead of fixed executable addresses and a raw Datalink offset."}
+// symbol    ?on_redraw@Datalink@@UAEXXZ
+// size      54 bytes
+// callers   0   call targets   3
+// calls     0x0042BF10 0x0045C290 0x005D8000
+Return Value: n/a
+Status: Product body; historical seed claim remains a restoration obligation.
+*/
+void Datalink::on_redraw() {
+    MainInterfaceGlobal.restore_clip();
+    restore_clip();
+    MainInterfaceGlobal.restore_back(1);
+    draw_entry();
+}
+
+
+
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+// ORIGINAL: 0x00431EB0 ?on_left_click@Datalink@@QAEXHH@Z 0x00431EB0-0x00431EB3 BYTE_EXACT
+// symbol    ?on_left_click@Datalink@@UAEXHH@Z
+// size      3 bytes
+// prototype void (__thiscall ?on_left_click@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void Datalink::on_left_click(int, int) {
+}
+
 // ---- seams the category fillers call out to -------------------------------
 //
 // ReportWin::reset now lives in reportwin.cpp; StringList::sort lives with its
@@ -3223,43 +3402,21 @@ void Datalink::on_button_clicked(int button_id) {
     }
 }
 
-// ORIGINAL: 0x00432010 ?on_button_passover@Datalink@@QAEXHH@Z 0x00432010-0x00432032 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x00432010-0x00432032 tests Datalink category at +0x29DC against 0xE before forwarding both arguments", "source:src/datalink.h field_29DC_ is the category at 0x29DC", "source:src/reportwin.h declares ReportWin::on_button_passover; its authorized link-only body remains explicitly unfinished in reportwin.cpp"], "reason": "Forward button passover only while the Datalink is displaying report category 0xE, using the established category member and typed ReportWin callback."}
-// symbol    ?on_button_passover@Datalink@@UAEXHH@Z
-void Datalink::on_button_passover(int button_id, int state) {
-    if (field_29DC_ == 0xe) {
-        // Original432029 calls49B220 directly, not through ReportWin's vtable.
-        ReportWinGlobal.ReportWin::on_button_passover(button_id, state);
-    }
-}
-
-// ORIGINAL: 0x0042BCC0 ?set_index@Datalink@@QAEXHH@Z 0x0042BCC0-0x0042BD14 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x0042BCC0-0x0042BD14 stores the first argument at Datalink+0x29E0, combines it with category at +0x29DC for ListBox::set_selected_id, then dispatches GraphicWin redraw through the embedded list", "source:src/datalink.h maps history_[0], field_29DC_ and listBox_ at those offsets", "source:src/datalink.cpp repaint_slot names the embedded ListBox redraw operation"], "reason": "Select a Datalink entry through its typed history/category/ListBox state and the already named repaint operation, replacing seed receiver arithmetic and an opaque slot shim."}
-void Datalink::set_index(int index, int) {
-    const int category = field_29DC_;
-    history_[0] = index;
-    listBox_.set_selected_id(category * 10000 + index);
-    repaint_slot();
-}
 
 /*
-Purpose: Restore the interface and Datalink surface clips, repaint the
-         interface background, then draw the selected Datalink entry.
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00431E70 ?on_redraw@Datalink@@QAEXXZ 0x00431E70-0x00431EA6 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x00431E70-0x00431EA6 calls Buffer::set_clip twice, MainInterface::restore_back and Datalink::draw_entry", "image:0x007AEC64 is the Buffer base of MainInterfaceGlobal at 0x007AE820+0x444; 0x007AEC94 is its rect2_ at +0x474", "source:src/recovered/units/00431e70.cpp preserves the byte-exact historical unit"], "reason": "Use the existing MainInterface object and real Buffer bases instead of fixed executable addresses and a raw Datalink offset."}
-// symbol    ?on_redraw@Datalink@@UAEXXZ
-// size      54 bytes
-// callers   0   call targets   3
-// calls     0x0042BF10 0x0045C290 0x005D8000
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+// ORIGINAL: 0x00431FB0 ?on_group_clicked@Datalink@@QAEXHH@Z 0x00431FB0-0x00431FB3 BYTE_EXACT
+// symbol    ?on_group_clicked@Datalink@@UAEXHH@Z
+// size      3 bytes
+// prototype void (__thiscall ?on_group_clicked@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
-Status: Product body; historical seed claim remains a restoration obligation.
+Status: Complete
 */
-void Datalink::on_redraw() {
-    MainInterfaceGlobal.restore_clip();
-    restore_clip();
-    MainInterfaceGlobal.restore_back(1);
-    draw_entry();
+void Datalink::on_group_clicked(int, int) {
 }
 
 // Escape and Enter close the Datalink; other keys are delegated to its entry
@@ -3275,6 +3432,53 @@ int Datalink::on_key_click(int, int key) {
     }
     release_modal();
     return 1;
+}
+
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+// ORIGINAL: 0x00432000 ?on_mouse_move@Datalink@@QAEXHH@Z 0x00432000-0x00432003 BYTE_EXACT
+// symbol    ?on_mouse_move@Datalink@@UAEXHH@Z
+// size      3 bytes
+// prototype void (__thiscall ?on_mouse_move@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void Datalink::on_mouse_move(int, int) {
+}
+
+// ORIGINAL: 0x00432010 ?on_button_passover@Datalink@@QAEXHH@Z 0x00432010-0x00432032 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00432010-0x00432032 tests Datalink category at +0x29DC against 0xE before forwarding both arguments", "source:src/datalink.h field_29DC_ is the category at 0x29DC", "source:src/reportwin.h declares ReportWin::on_button_passover; its authorized link-only body remains explicitly unfinished in reportwin.cpp"], "reason": "Forward button passover only while the Datalink is displaying report category 0xE, using the established category member and typed ReportWin callback."}
+// symbol    ?on_button_passover@Datalink@@UAEXHH@Z
+void Datalink::on_button_passover(int button_id, int state) {
+    if (field_29DC_ == 0xe) {
+        // Original432029 calls49B220 directly, not through ReportWin's vtable.
+        ReportWinGlobal.ReportWin::on_button_passover(button_id, state);
+    }
+}
+
+
+
+/*
+// ORIGINAL: 0x00432040 ?on_selected@Datalink@@QAEXH@Z 0x00432040-0x00432052 BYTE_EXACT
+// symbol    ?on_selected@Datalink@@UAEXH@Z
+// size      18 bytes
+// prototype void (__thiscall ?on_selected@Datalink@@QAEXH@Z)(Datalink* this, int)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0042BF10
+Status: Complete
+*/
+void Datalink::on_selected(int index) {
+    int v = field_2A38_;
+    if (v == 0) {
+        draw_entry();
+    }
 }
 
 // The original status receiver is the SubInterface at Datalink+0xA14.
@@ -3339,398 +3543,211 @@ void Datalink::on_status(int visible) {
     }
 }
 
-// Original interface table 0x0066AF30 slot 1 targets this shared complete body.
-// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_iface_scrolled@Datalink@@UAEXHH@Z 0x00432060
-void Datalink::on_iface_scrolled(int, int) {}
-// Original interface table 0x0066AF30 slot 2 targets this shared complete body.
-// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_iface_scrolling@Datalink@@UAEXHH@Z 0x00432060
-void Datalink::on_iface_scrolling(int, int) {}
-// Original interface table 0x0066AF30 slot 6 targets this shared complete body.
-// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_iface_left_up@Datalink@@UAEXHH@Z 0x00432060
-void Datalink::on_iface_left_up(int, int) {}
 
-// Original interface table 0x0066AF30 slot 14 targets this shared complete body.
-// RECOVERY_SHARED: v1 0x00404250 0x00404255 ?on_iface_button_pressed@Datalink@@UAEHH@Z 0x00432060
-int Datalink::on_iface_button_pressed(int) {
-    return 0;
-}
-
-// Original interface table 0x0066AF30 slot 17 targets this shared complete body.
-// RECOVERY_SHARED: v1 0x00404250 0x00404255 ?on_iface_dialog_back_draw@Datalink@@UAEHPAVGraphicWin@@@Z 0x00432060
-int Datalink::on_iface_dialog_back_draw(GraphicWin *) {
-    return 0;
-}
-
-// Original interface table 0x0066AF30 slot 18 targets this shared complete body.
-// RECOVERY_SHARED: v1 0x00404240 0x00404245 ?on_iface_dialog_item_back_draw@Datalink@@UAEHPAVGraphicWin@@HHPAUtagRECT@@@Z 0x00432060
-int Datalink::on_iface_dialog_item_back_draw(GraphicWin *, int, int, RECT *) {
-    return 0;
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+// ORIGINAL: 0x00432160 ?on_iface_left_click@Datalink@@QAEXHH@Z 0x00432160-0x00432163 BYTE_EXACT
+// symbol    ?on_iface_left_click@Datalink@@UAEXHH@Z
+// size      3 bytes
+// prototype void (__thiscall ?on_iface_left_click@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void Datalink::on_iface_left_click(int, int) {
 }
 
 
-// ORIGINAL: 0x00429180 ?exec@Datalink@@QAEXIH@Z 0x00429180-0x004292FC BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["task:datalink-owner-coverage", "pinned:terranx_original.exe:429180..4292FC complete geometry, saved-state, list redraw, modal and restoration sequence", "source:src/reportwin.h:ReportWinGlobal shared_research_focus owns885F30; src/reportif.h existing category/faction fields", "historical seed:src/recovered/units/00429180.cpp"], "reason": "Recover the complete modal Datalink operation through its existing class, embedded text/list controls and real shared ReportWin/ReportIf state; preserve the original identity and seed findings without a new byte claim."}
-void Datalink::exec(unsigned int topic, int index) {
-    if (WinScreenWidth == 0x320) {
-        RECT area = lower_description_rect_;
-        area.left += 3;
-        area.top += 3;
-        area.right -= 3;
-        area.bottom -= 6;
-        area.left += FactionsArt[1].datalink.width() + 5;
-        const int x = area.left;
-        const int y = area.top;
-        const int width = area.right - area.left;
-        const int height = area.bottom - area.top;
-
-        stringBox_.init(x, y, width, height, static_cast<Win *>(this),
-                        0, -1);
-        Font *const hyperlink_font = &link_font_;
-        stringBox_.set_font(&secondary_body_font_, 0, 0, hyperlink_font);
-        stringBox_.set_text_color(0x98, -1, 1, 1);
-        stringBox_.set_text_color2(0x96, -1, 1, 1);
-        stringBox_.set_text_color_hyper(0x96, -1, 1, 1);
-    }
-
-    field_A1C_ = static_cast<uint32_t>(ReportWinGlobal.shared_research_focus());
-    field_A20_ = ReportIfGlobal.field_8_;
-    field_A24_ = static_cast<uint32_t>(ReportIfGlobal.report_faction_id_);
-    ReportIfGlobal.report_faction_id_ = ConsoleGlobal.faction_id_;
-
-    set_cat(topic, 1);
-    history_[0] = index;
-    listBox_.set_selected_id(field_29DC_ * 10000 + index);
-    repaint_slot();
-    set_modal(1, pop_wait, &MainInterfaceGlobal);
-
-    ReportWinGlobal.shared_research_focus() = static_cast<int32_t>(field_A1C_);
-    ReportIfGlobal.field_8_ = field_A20_;
-    ReportIfGlobal.report_faction_id_ = static_cast<int32_t>(field_A24_);
-    SubInterface::release_iface_mode();
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+// ORIGINAL: 0x00432170 ?on_iface_right_click@Datalink@@QAEXHH@Z 0x00432170-0x00432173 BYTE_EXACT
+// symbol    ?on_iface_right_click@Datalink@@UAEXHH@Z
+// size      3 bytes
+// prototype void (__thiscall ?on_iface_right_click@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void Datalink::on_iface_right_click(int, int) {
 }
 
 
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+// ORIGINAL: 0x00432180 ?on_iface_left_down@Datalink@@QAEXHH@Z 0x00432180-0x00432183 BYTE_EXACT
+// symbol    ?on_iface_left_down@Datalink@@UAEXHH@Z
+// size      3 bytes
+// prototype void (__thiscall ?on_iface_left_down@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void Datalink::on_iface_left_down(int, int) {
+}
 
-// ORIGINAL: 0x00429300 ?init@Datalink@@QAEXXZ 0x00429300-0x0042A012;0x00653579-0x0065358E
-// RECOVERY_BINDING: v1 {"evidence": ["task:datalink-initializer-owner", "Pinned429300..42A012 establishes18RECT rows, typed UI receivers and distinct box bounds/fonts;653579..65358E cleans the local Buffer.", "historical seed:src/unrecovered/00429300.cpp"], "reason": "Recover Datalink initialization through real UI members, panel geometry, renderer camera and local Buffer lifetime; native call arguments supersede the retained seed approximations. Original spans and historical findings are retained without a matching or runtime claim."}
-// TRIED: huge UI-construction initializer (fonts, rects, a 16-entry facility-button loop at self+0x2a3c stride 0xb4c, 3 more BaseButtons, 4 StringBoxes) mostly transcribed from Ghidra (reliable for the field writes) plus raw-disasm-derived `this` pointers for every dropped-this call (Buffer at self+0x444, Caviar at self+0x150c, per-Font self+offset table, ListBox/ Dialog at self+0xf628 through a virtual-base-offset chase). The two uncatalogued quaternion helpers (sub_627d00/sub_6280e0) and the two extra StringBox instances' rect math are best-effort approximations, not individually verified against raw bytes.
-void Datalink::init() {
-    // The retained body constructs this local Buffer at entry and tears it
-    // down on exit; it participates in the recorded cold cleanup span even
-    // though no ordinary expression reads the local object.
-    Buffer temporary_buffer;
-    history_[0] = 0;
-    field_2A34_ = 0;
-    field_2A38_ = 0;
-    register_iface(8);
-    // 0x0042935B keeps this flag (setne) for the font block; the geometry
-    // below compares the width again.
-    const int wide = WinScreenWidth != 800;
-    int content_height;
-    int side_width;
-    if (WinScreenWidth == 800) {
-        side_width = 0;
-        content_height = 600 - MainInterfaceGlobal.panel_height();
-    } else {
-        side_width = 0x8a;
-        content_height = 0x2e2 - MainInterfaceGlobal.panel_height();
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+// ORIGINAL: 0x00432190 ?on_iface_right_down@Datalink@@QAEXHH@Z 0x00432190-0x00432193 BYTE_EXACT
+// symbol    ?on_iface_right_down@Datalink@@UAEXHH@Z
+// size      3 bytes
+// prototype void (__thiscall ?on_iface_right_down@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void Datalink::on_iface_right_down(int, int) {
+}
+
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+// ORIGINAL: 0x004321A0 ?on_iface_mouse_move@Datalink@@QAEXHH@Z 0x004321A0-0x004321A3 BYTE_EXACT
+// symbol    ?on_iface_mouse_move@Datalink@@UAEXHH@Z
+// size      3 bytes
+// prototype void (__thiscall ?on_iface_mouse_move@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void Datalink::on_iface_mouse_move(int, int) {
+}
+
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+// ORIGINAL: 0x004321B0 ?on_iface_mouse_leave@Datalink@@QAEXHH@Z 0x004321B0-0x004321B3 BYTE_EXACT
+// symbol    ?on_iface_mouse_leave@Datalink@@UAEXHH@Z
+// size      3 bytes
+// prototype void (__thiscall ?on_iface_mouse_leave@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void Datalink::on_iface_mouse_leave(int, int) {
+}
+
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+// ORIGINAL: 0x004321C0 ?on_iface_selected@Datalink@@QAEXHH@Z 0x004321C0-0x004321C3 BYTE_EXACT
+// symbol    ?on_iface_selected@Datalink@@UAEXHH@Z
+// size      3 bytes
+// prototype void (__thiscall ?on_iface_selected@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void Datalink::on_iface_selected(int, int) {
+}
+
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+// ORIGINAL: 0x004321D0 ?on_iface_left_double_click@Datalink@@QAEXHH@Z 0x004321D0-0x004321D3 BYTE_EXACT
+// symbol    ?on_iface_left_double_click@Datalink@@UAEXHH@Z
+// size      3 bytes
+// prototype void (__thiscall ?on_iface_left_double_click@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void Datalink::on_iface_left_double_click(int, int) {
+}
+
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+// ORIGINAL: 0x004321E0 ?on_iface_right_double_click@Datalink@@QAEXHH@Z 0x004321E0-0x004321E3 BYTE_EXACT
+// symbol    ?on_iface_right_double_click@Datalink@@UAEXHH@Z
+// size      3 bytes
+// prototype void (__thiscall ?on_iface_right_double_click@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void Datalink::on_iface_right_double_click(int, int) {
+}
+
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+// ORIGINAL: 0x004321F0 ?on_iface_button_clicked@Datalink@@QAEXH@Z 0x004321F0-0x004321F3 BYTE_EXACT
+// symbol    ?on_iface_button_clicked@Datalink@@UAEXH@Z
+// size      3 bytes
+// prototype void (__thiscall ?on_iface_button_clicked@Datalink@@QAEXH@Z)(Datalink* this, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void Datalink::on_iface_button_clicked(int) {
+}
+
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+// ORIGINAL: 0x00432200 ?on_iface_button_toggled@Datalink@@QAEXHH@Z 0x00432200-0x00432203 BYTE_EXACT
+// symbol    ?on_iface_button_toggled@Datalink@@UAEXHH@Z
+// size      3 bytes
+// prototype void (__thiscall ?on_iface_button_toggled@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void Datalink::on_iface_button_toggled(int, int) {
+}
+
+
+// The image routes this callback through DatalinkIface slot 16. The compiler
+// adjusts the secondary-base receiver back to Datalink; the seed's +0xEC14
+// ListBox access from that receiver is the owned listBox_ at +0xF628.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00432210 ?on_iface_group_clicked@Datalink@@QAEXHHH@Z 0x00432210-0x0043228B BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00432210.cpp preserves the 123-byte BYTE_EXACT historical callback; image:0x0066AF30 slot 16 points to 0x00432210; source:src/datalink.h models DatalinkIface at +0xA14 and ListBox at +0xF628"], "reason": "Restore the category-click path through the real Datalink owner and ListBox member, with the compiler's secondary-base adjustment rather than seed pointer arithmetic."}
+// symbol    ?on_iface_group_clicked@Datalink@@UAEXHHH@Z
+void Datalink::on_iface_group_clicked(int, int, int category) {
+    if (listBox_.item_list_.entry_count_ != 0) {
+        set_cat(category, 0);
+        // 0x43224B/0x43225A use the secondary receiver (full this+0xA14).
+        // Its +0x2024 is full Datalink+0x2A38: suppress history during selection.
+        field_2A38_ = 1;
+        listBox_.set_selected_pos(0, 1);
+        field_2A38_ = 0;
+        listBox_.redraw();
+        draw_entry();
     }
-    const int left = (WinScreenWidth - 800) / 2;
-    const int top = WinScreenHeight - MainInterfaceGlobal.panel_height() - content_height;
-
-    interface_update_rect_ = MainInterfaceGlobal.main_layout_rect();
-    // [A] 0x004293FB..0x00429411 stores left, right, top, bottom; written
-    // left, top, right, bottom through a reference, VC6 schedules them that
-    // way and holds 7/0xE6 in the image's ecx/eax (direct member stores
-    // reorder and swap them).
-    RECT &category_rect = category_rect_;
-    category_rect.left = 30;
-    category_rect.top = 7;
-    category_rect.right = 230;
-    category_rect.bottom = 0x1b;
-    field_103E4_rect_.right = 0xe6;
-    field_103E4_rect_.bottom = side_width + 0x143;
-    field_103E4_rect_.left = 0x1e;
-    field_103E4_rect_.top = 0x1d;
-
-    illustration_rect_.left = 0xf8;
-    illustration_rect_.top = 0x2c;
-    illustration_rect_.right = 0x177;
-    illustration_rect_.bottom = 0xab;
-
-    // [B] 0x00429468..0x0042948B stores title top, left, right, bottom right
-    // after the illustration rect. The image keeps the dead `left = 0xDB`
-    // store (0x00429475) that title_left overwrites below: the first stores
-    // went through a reference, like description_rect's (whose dead 0xDB
-    // store at 0x004294A4 also survives); direct member stores drop it.
-    RECT &title_rect = title_rect_;
-    title_rect.top = 7;
-    title_rect.left = 0xdb;
-    title_rect.right = 0x302;
-    title_rect.bottom = 0x22;
-    RECT &description_rect = description_rect_;
-    description_rect.left = 0xdb;
-    description_rect.top = 0x24;
-    description_rect.right = 0x302;
-    description_rect.bottom = side_width / 2 + 0xb4;
-    // Image 4294D0/4294F2 passes the member itself to UnionRect.
-    // Keep the later detail-box geometry bound to that same live rectangle.
-    RECT &lower_description_rect = lower_description_rect_;
-    lower_description_rect.left = 0xdb;
-    lower_description_rect.top = side_width / 2 + 0xb6;
-    lower_description_rect.right = 0x302;
-    lower_description_rect.bottom = lower_description_rect.top + side_width / 2 + 0x8d;
-    const int title_left = field_103E4_rect_.right + 9;
-    title_rect_.left = title_left;
-    description_rect.left = title_left;
-    lower_description_rect.left = title_left;
-    UnionRect(&panel_rect_, &description_rect, &lower_description_rect);
-    UnionRect(&entry_clip_rect_, &description_rect, &lower_description_rect);
-    UnionRect(&entry_clip_rect_, &entry_clip_rect_, &title_rect_);
-    entry_update_rect_ = entry_clip_rect_;
-    expand_rect(&entry_update_rect_, 3, 3);
-    RECT &entry_update_rect = entry_update_rect_;
-    entry_clip_rect_ = panel_rect_;
-    RECT &entry_frame_rect = entry_frame_rect_;
-    entry_frame_rect.left = left;
-    entry_frame_rect.top = top;
-    entry_frame_rect.right = left + 0x340;
-    entry_frame_rect.bottom = top + content_height;
-
-    // Native row stores establish eighteen consecutive RECTs; index 16 is
-    // deliberately overwritten after the two panel-row loops.
-    RECT rect = MainInterfaceGlobal.main_frame_rect();
-    rect.left += 4;
-    rect.right -= 4;
-    rect.bottom -= 4;
-    rect.top = rect.bottom - 0x15;
-    ++rect.bottom;
-    int i;
-    for (i = 7; i >= 0; --i) {
-        topic_button_bounds_[i] = rect;
-        rect.top -= 0x18;
-        rect.bottom -= 0x18;
-    }
-    rect = MainInterfaceGlobal.right_frame_rect();
-    rect.left += 4;
-    rect.right -= 4;
-    rect.bottom -= 4;
-    rect.top = rect.bottom - 0x15;
-    ++rect.bottom;
-    for (i = 8; i < 17; ++i) {
-        topic_button_bounds_[i] = rect;
-        rect.top -= 0x18;
-        rect.bottom -= 0x18;
-    }
-
-    // [F] 0x004296A3..0x004296E1: bottom is derived from the stored top
-    // (lea ecx,[eax+0x14] / add eax,0x14), never side_width+0x162 directly;
-    // [16] stores left, right, top, bottom.
-    topic_button_bounds_[16].left = 0x98;
-    topic_button_bounds_[16].right = 0x18e;
-    topic_button_bounds_[16].top = side_width + 0x14e;
-    topic_button_bounds_[16].bottom = topic_button_bounds_[16].top + 0x14;
-    // [17] keeps its top in a register and adds 0x14 to it in place
-    // (0x004296CE..0x004296E1) instead of reusing [16]'s bottom.
-    RECT &bounds17 = topic_button_bounds_[17];
-    bounds17.left = 0x192;
-    bounds17.right = 0x288;
-    int top17 = side_width + 0x14e;
-    bounds17.top = top17;
-    top17 += 0x14;
-    bounds17.bottom = top17;
-
-    if (!wide) {
-        auxiliary_font10_.init(DefaultFontFace, 12, 4);
-        auxiliary_font11_.init(DefaultFontFace, 12, 0);
-        font1_.init(DefaultFontFace, 18, 1);
-        font3_.init(DefaultFontFace, 14, 1);
-        auxiliary_font4_.init(DefaultFontFace, 14, 1);
-        auxiliary_font5_.init(DefaultFontFace, 14, 1);
-        body_font_.init(DefaultFontFace, 14, 1);
-        secondary_body_font_.init(DefaultFontFace, 14, 0);
-        link_font_.init(DefaultFontFace, 14, 5);
-        auxiliary_font8_.init(DefaultFontFace, 10, 0);
-        auxiliary_font8_.unk_1_ = 4;
-        font2_.init(DefaultFontFace, 12, 0);
-    } else {
-        auxiliary_font10_.init(DefaultFontFace, 14, 4);
-        auxiliary_font11_.init(DefaultFontFace, 14, 0);
-        font1_.init(DefaultFontFace, 18, 1);
-        font3_.init(DefaultFontFace, 14, 1);
-        auxiliary_font4_.init(DefaultFontFace, 14, 1);
-        auxiliary_font5_.init(DefaultFontFace, 14, 1);
-        body_font_.init(DefaultFontFace, 14, 1);
-        secondary_body_font_.init(DefaultFontFace, 14, 0);
-        link_font_.init(DefaultFontFace, 14, 5);
-        auxiliary_font8_.init(DefaultFontFace, 12, 0);
-        font2_.init(DefaultFontFace, 14, 0);
-    }
-
-    caviar_.init();
-    caviar_.set_field_A4(0);
-    float angles[3];
-    angles[0] = 0.0f;
-    angles[1] = 0.0f;
-    angles[2] = 0.785f;
-    VOX_Matrix camera_rotation;
-    caviar_apply_rotation(angles, &camera_rotation);
-    camera_rotation.values[2][0] = -camera_rotation.values[2][0];
-    camera_rotation.values[2][1] = -camera_rotation.values[2][1];
-    camera_rotation.values[2][2] = -camera_rotation.values[2][2];
-    VOX_Vect vector;
-    vector.values[0] = camera_rotation.values[2][0] * -10000.0f;
-    vector.values[1] = camera_rotation.values[2][1] * -10000.0f;
-    vector.values[2] = camera_rotation.values[2][2] * -10000.0f;
-    caviar_.set_camera_direct(&vector, &camera_rotation);
-    caviar_.set_scene_rotation(3.14f / 6, 0.0f, 0.0f);
-    // 0x0042997C reuses the camera position's slot for the forward vector.
-    vector.values[0] = 0.0f;
-    vector.values[1] = 0.0f;
-    vector.values[2] = 1.0f;
-    float transformed_forward[3];
-    vox_matrix_vector_mul(camera_rotation.values, vector.values,
-                          transformed_forward);
-    caviar_.shadow_vector() = vector;
-    caviar_.light_vector() = vector;
-
-    // The legacy parent computation reaches Console's real Win base. Its
-    // static conversion applies the compiler's current virtual-base layout.
-    // [G] 0x004299C7..0x00429A23: the parent is converted first and kept in
-    // a frame slot ([ebp-0x20]); height then width are computed before any
-    // push, and left/top are reloaded for their own pushes.
-    Win *parent = static_cast<Win *>(&ConsoleGlobal);
-    const int frame_height = entry_frame_rect_.bottom - entry_frame_rect_.top;
-    const int frame_width = entry_frame_rect_.right - entry_frame_rect_.left;
-    GraphicWin::init(entry_frame_rect_.left, entry_frame_rect_.top,
-                     frame_width, frame_height, 0x1000000, parent);
-    GraphicWin::fill(9);
-
-    rect.left = 0x17;
-    rect.top = 0;
-    rect.right = 0x309;
-    rect.bottom = content_height;
-    box_sprite(&rect, &InterfaceBoxStyles[9]);
-    box_sprite(&entry_update_rect, &InterfaceBoxStyles[3]);
-    UnionRect(&rect, &topic_button_bounds_[17], &topic_button_bounds_[16]);
-    rect.left -= 3;
-    rect.right += 3;
-    rect.top -= 3;
-    rect.bottom += 3;
-    box_sprite(&rect, &InterfaceBoxStyles[3]);
-    box_sprite(&category_rect_, &InterfaceBoxStyles[6]);
-    UnionRect(&rect, &category_rect_, &field_103E4_rect_);
-    rect.left -= 3;
-    rect.right += 3;
-    rect.top -= 3;
-    rect.bottom += 3;
-    box_sprite(&rect, &InterfaceBoxStyles[3]);
-    rect = field_103E4_rect_;
-    box_sprite(&rect, &InterfaceBoxStyles[6]);
-    rect.left += 3;
-    rect.right -= 3;
-    rect.top += 3;
-    rect.bottom -= 3;
-
-    listBox_.init(&rect, static_cast<Heap *>(0));
-    listBox_.field_8_ = 1;
-    listBox_.field_2C_ = 0;
-    listBox_.set_field_44(0);
-    listBox_.field_B4_ = 0;
-    listBox_.set_dialog_font(&font2_, 0, 0);
-    listBox_.attach(static_cast<GraphicWin *>(this), rect.left, rect.top,
-                    0x1000020);
-    buttonGroup_.init(0, 0);
-
-    for (i = 0; i < 16; ++i) {
-        const RECT &row = topic_button_bounds_[i];
-        topic_buttons_[i].init(label_get(0xb20 / 4 + i), i,
-                               row.left, row.top, row.right - row.left,
-                               row.bottom - row.top,
-                               static_cast<Win *>(&MainInterfaceGlobal), 0);
-        topic_buttons_[i].set_border_styles(&InterfaceBoxStyles[27],
-                                             &InterfaceBoxStyles[28],
-                                             &InterfaceBoxStyles[29]);
-        topic_buttons_[i].Buffer::set_font(
-            &auxiliary_font4_, 0, 0, 0);
-        topic_buttons_[i].redraw();
-        topic_buttons_[i].hide();
-        buttonGroup_.add(&topic_buttons_[i]);
-    }
-
-    StringTemp[0] = 0;
-    strcat(StringTemp, label_get(0x9c / 4));
-    CharUpperA(StringTemp);
-    FlatButton *button = &topic_buttons_[17];
-    button->init(StringTemp, 0x11,
-                            topic_button_bounds_[17].left,
-                            topic_button_bounds_[17].top,
-                            topic_button_bounds_[17].right - topic_button_bounds_[17].left,
-                            topic_button_bounds_[17].bottom - topic_button_bounds_[17].top,
-                            static_cast<Win *>(this), 0);
-    button->Buffer::set_font(
-        &auxiliary_font4_, 0, 0, 0);
-    button->redraw();
-    button->hide();
-
-    StringTemp[0] = 0;
-    strcat(StringTemp, label_get(0xa60 / 4));
-    CharUpperA(StringTemp);
-    button = &topic_buttons_[16];
-    button->init(StringTemp, 0x10,
-                            topic_button_bounds_[16].left,
-                            topic_button_bounds_[16].top,
-                            topic_button_bounds_[16].right - topic_button_bounds_[16].left,
-                            topic_button_bounds_[16].bottom - topic_button_bounds_[16].top,
-                            static_cast<Win *>(this), 0);
-    button->Buffer::set_font(
-        &auxiliary_font4_, 0, 0, 0);
-    button->redraw();
-    button->hide();
-
-    // [H] 0x00429E26/0x00429EC2/0x00429F65: each StringBox rect is a whole
-    // copy of its source rect adjusted in place; the image loads bottom,
-    // top, right, left and adjusts bottom, right, top, left.
-    rect = interface_update_rect_;
-    rect.left += 3;
-    rect.right -= 3;
-    rect.top += 3;
-    rect.bottom -= 3;
-    blurb_box_.init(rect.left, rect.top, rect.right - rect.left,
-                    rect.bottom - rect.top,
-                    static_cast<Win *>(&MainInterfaceGlobal), 0, -1);
-    blurb_box_.Buffer::set_font(&auxiliary_font8_, 0, 0, 0);
-    blurb_box_.Buffer::set_text_color(0x98, -1, 1, 1);
-    blurb_box_.Buffer::set_text_color2(0x96, -1, 1, 1);
-    blurb_box_.Buffer::set_text_color_hyper(0x96, -1, 1, 1);
-
-    // [H] same order as above.
-    rect = panel_rect_;
-    rect.left += 3;
-    rect.right -= 3;
-    rect.top += 3;
-    rect.bottom -= 3;
-    concept_box_.init(rect.left, rect.top, rect.right - rect.left,
-                      rect.bottom - rect.top,
-                      static_cast<Win *>(this), 0, -1);
-    concept_box_.Buffer::set_font(&body_font_, 0, 0, &link_font_);
-    concept_box_.Buffer::set_text_color(0x98, -1, 1, 1);
-    concept_box_.Buffer::set_text_color2(0x96, -1, 1, 1);
-    concept_box_.Buffer::set_text_color_hyper(0x96, -1, 1, 1);
-
-    // [H] same order as above.
-    rect = lower_description_rect;
-    rect.left += 6;
-    rect.right -= 6;
-    rect.top += 6;
-    rect.bottom -= 6;
-    detail_box_.init(rect.left, rect.top, rect.right - rect.left,
-                     rect.bottom - rect.top,
-                     static_cast<Win *>(this), 0, -1);
-    detail_box_.Buffer::set_font(&body_font_, 0, 0, &link_font_);
-    detail_box_.Buffer::set_text_color(0x98, -1, 1, 1);
-    detail_box_.Buffer::set_text_color2(0x96, -1, 1, 1);
-    detail_box_.Buffer::set_text_color_hyper(0x96, -1, 1, 1);
-    (void)temporary_buffer;
 }
 
