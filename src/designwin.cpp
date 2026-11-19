@@ -44,6 +44,7 @@
 // at 0-9, 13-31 and 55-63, so no pads. The original header declaration
 // set is unknown; re-tune after header batches.
 // After the dead-helper batch (d64959c815), whole-unit fe sweep: exact at 0, 5-28 and 58-63, so 16.
+// Re-tuned 2026-11-19 against the sprite.h/popup.h headers (declpad padfree): draw_armor exact at 20-35 and 40-63, so 51.
 // HEADER-PADS: function DesignWinHeaderPad
 void DesignWinHeaderPad0();
 void DesignWinHeaderPad1();
@@ -61,6 +62,41 @@ void DesignWinHeaderPad12();
 void DesignWinHeaderPad13();
 void DesignWinHeaderPad14();
 void DesignWinHeaderPad15();
+void DesignWinHeaderPad16();
+void DesignWinHeaderPad17();
+void DesignWinHeaderPad18();
+void DesignWinHeaderPad19();
+void DesignWinHeaderPad20();
+void DesignWinHeaderPad21();
+void DesignWinHeaderPad22();
+void DesignWinHeaderPad23();
+void DesignWinHeaderPad24();
+void DesignWinHeaderPad25();
+void DesignWinHeaderPad26();
+void DesignWinHeaderPad27();
+void DesignWinHeaderPad28();
+void DesignWinHeaderPad29();
+void DesignWinHeaderPad30();
+void DesignWinHeaderPad31();
+void DesignWinHeaderPad32();
+void DesignWinHeaderPad33();
+void DesignWinHeaderPad34();
+void DesignWinHeaderPad35();
+void DesignWinHeaderPad36();
+void DesignWinHeaderPad37();
+void DesignWinHeaderPad38();
+void DesignWinHeaderPad39();
+void DesignWinHeaderPad40();
+void DesignWinHeaderPad41();
+void DesignWinHeaderPad42();
+void DesignWinHeaderPad43();
+void DesignWinHeaderPad44();
+void DesignWinHeaderPad45();
+void DesignWinHeaderPad46();
+void DesignWinHeaderPad47();
+void DesignWinHeaderPad48();
+void DesignWinHeaderPad49();
+void DesignWinHeaderPad50();
 #include "font_metrics.h"
 #include "interface_fonts.h"
 #include "map.h"
@@ -1774,7 +1810,7 @@ void DesignWin::draw_special_1(int redraw) {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x228 / 4));
     strcat(StringTemp, BufferJoinSpace);
-// RECOVERY_LITERAL: v1 0x00683554 0x00683556 $SG61590 0x00435B30
+// RECOVERY_LITERAL: v1 0x00683554 0x00683556 $SG61625 0x00435B30
     strcat(StringTemp, "1"); // Original first special-ability title numeral.
     CharUpperA(StringTemp);
     Buffer::set_text_color(TextColourTable[156], TextColourTable[157], 1, 1);
@@ -1820,7 +1856,7 @@ void DesignWin::draw_special_2(int redraw) {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x228 / 4));
     strcat(StringTemp, BufferJoinSpace);
-// RECOVERY_LITERAL: v1 0x00683560 0x00683562 $SG61603 0x00435DE0
+// RECOVERY_LITERAL: v1 0x00683560 0x00683562 $SG61638 0x00435DE0
     strcat(StringTemp, "2"); // Original second special-ability title numeral.
     CharUpperA(StringTemp);
     Buffer::set_text_color(TextColourTable[156], TextColourTable[157], 1, 1);
@@ -3884,7 +3920,7 @@ void DesignWin::select_name() {
     // The original prompt token at 0x006838F4 is DESIGNNAME.
 // The retained prototype-name prompt identifies DESIGNNAME independently of measurement.
 // Bounds cover the literal payload, not surrounding allocation or lifetime.
-// RECOVERY_LITERAL: v1 0x006838F4 0x006838FF $SG62418 0x0043BE30
+// RECOVERY_LITERAL: v1 0x006838F4 0x006838FF $SG62453 0x0043BE30
     if (X_pop_ask("DESIGNNAME", 31, name, 0, 0) == 0) {
         if (strlen(ParseStrBuffer[0].str) == 0) {
             prototype_name_[0] = 0;
