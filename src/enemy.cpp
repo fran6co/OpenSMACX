@@ -6308,8 +6308,10 @@ L_571853:
         if (plan != 2 || region_plan <= 2 || avail < garrison ||
             (Bases[home_base].state & 0x4000000)) goto L_57707f;
         // BUG(original)? region_total_combat_vehs is read from PlayersData[0].
-        if (avail <= 1 && (PlayersData[0].region_total_combat_vehs[region] ||
-                           (PlayersData[faction_id].flags & 0x10000))) goto L_57707f;
+        if (avail <= 1) {
+            if (PlayersData[0].region_total_combat_vehs[region]) goto L_57707f;
+            if (PlayersData[faction_id].flags & 0x10000) goto L_57707f;
+        }
         goto L_571982;
     }
 L_571977:
