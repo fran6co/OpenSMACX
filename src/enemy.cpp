@@ -6800,7 +6800,10 @@ L_5733d7:
             Vehs[veh_id].order = 9;
             goto L_578f46;
         }
-        if (home_dist <= 2) {
+        // Not the first test's spelling: the image re-tests the cached value
+        // (0x573451 cmp edx,2; jg) on every failing edge of the block above,
+        // which a textually identical `home_dist <= 2` lets VC6 thread away.
+        if (2 >= home_dist) {
             m = radius_move(Bases[home_base].x, Bases[home_base].y, x, y, 21);
         } else {
             m = 0;
