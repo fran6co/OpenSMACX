@@ -4406,6 +4406,7 @@ again:
             strcat(StringTemp, "- ");
             strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x1b8 / 4]));
             strcat(StringTemp, " -");
+            popup.item(StringTemp, prototype_id);
         } else {
             if (prototype_faction == 0
                 && !has_tech(VehPrototypes[prototype_id].preq_tech, faction_id))
@@ -4430,8 +4431,8 @@ again:
             strcat(StringTemp, number);
             strcat(StringTemp, SocialWinCommaSpaceText);
             say_stats(StringTemp, prototype_id, 0);
+            popup.item(StringTemp, prototype_id);
         }
-        popup.item(StringTemp, prototype_id);
     }
 
     int selected = popup.exec();
