@@ -462,10 +462,6 @@ int __cdecl veh_init(int prototype, int faction, int x, int y) {
 // Historical object identity moved to GameDataStateStorage; see the transport manifest.
 
 
-// 0x00691DC0, the log_say title. The image logs every vehicle removal with the
-// vehicle id, its owner and its prototype as the three substitutions.
-// RECOVERY_OBJECT: v2 0x00691DC0 0x00691DDB ?VehLogKillingVehicle@@3PADA 0x005C08C0
-char VehLogKillingVehicle[] = "Killing vehicle (v,who,v2)";
 
 // 0x009B227C..0x009B2280 is veh_find's four-byte distance output. Its pinned
 // initial bytes are zero; the function resets it to 9999 at 0x005C0CBF and
@@ -513,7 +509,8 @@ void __cdecl veh_kill(int veh_id) {
         NetDaemonNet.deletion_list_.add_deletion(veh_id);
     }
 
-    log_say(VehLogKillingVehicle, veh_id, Vehs[veh_id].faction_id,
+// RECOVERY_LITERAL: v1 0x00691DC0 0x00691DDB $SG60373 0x005C08C0
+    log_say("Killing vehicle (v,who,v2)", veh_id, Vehs[veh_id].faction_id,
             Vehs[veh_id].proto_id);
 
     const int faction_id = Vehs[veh_id].faction_id;
