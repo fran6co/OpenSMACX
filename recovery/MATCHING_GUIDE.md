@@ -1112,6 +1112,20 @@ not see, and those are the levers:
   draw_farm's 21-tile loop (hoisted `longitude` local) and alien_move's
   first neighbour wrap (bounds loaded before the flat test); there
   wrap_map_x costs 6-50 rows. Test each site.
+- **A copy splits a web; a reassignment keeps one.** `const int mask = f & 0x10;
+  … uint32_t sel = mask; if (n > 1) { …; int r = popup.exec(); if (r < 0)
+  return; sel = r; } if (sel & 0x10) …` makes `mask` and `sel` two webs; `sel`
+  spans the popup and lost its register to a frame slot (an extra 4-byte
+  local, frame 0x538C against 0x5388). The image has one variable: `int
+  ability = f & 0x10; … ability = popup.exec(); if (ability < 0) return;`
+  (`and ebx,0x10` … `mov ebx,eax; test ebx,ebx`): the mask and the result reach
+  the same `& 0x10` test, so they are one web in ebx, and the freed slot is
+  shared by entry_x and the teardown temporaries (Console::use_ability
+  0x004D7F60, 208 -> 27 after re-tuning its budget probes). candset.py shows
+  it as an ours-only `wb[-0x10]{selected_ability}` role (the copy, written
+  back to a slot) and an image-only `dwordptr[ecx+<r>` ebx role marked
+  "source variable home" (the mask load itself owning the register to the
+  final test): one source name too many.
 - **Hoisted loop-invariant globals are candidates.** In can_terraform's
   radius census the image hoists MapLongitudeBounds (four references per
   iteration) into edi and rereads MapLongitude; the statement form of the

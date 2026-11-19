@@ -2762,18 +2762,18 @@ void Console::use_ability(int vehicle_id) {
         return;
     }
 
-    const int entry_ability_mask =
+    int ability =
         VehPrototypes[Vehs[vehicle_id].proto_id].ability_flags & 0x10;
     const int missile_former =
         Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].missile != 0 &&
         (VehPrototypes[Vehs[vehicle_id].proto_id].plan == PLAN_TECTONIC_MISSILE ||
          VehPrototypes[Vehs[vehicle_id].proto_id].plan == PLAN_FUNGAL_MISSILE);
 
-    if (!entry_ability_mask && !missile_former) {
+    if (!ability && !missile_former) {
         veh_battle_msg("NOABILITY", nullptr);
         return;
     }
-    if (entry_ability_mask && !missile_former &&
+    if (ability && !missile_former &&
         (Vehs[vehicle_id].moves_expended != 0 ||
          veh_ready(vehicle_id) == 0)) {
         veh_battle_msg("UNITMOVED", nullptr);
@@ -2857,8 +2857,7 @@ void Console::use_ability(int vehicle_id) {
         return;
     }
 
-    uint32_t selected_ability = static_cast<uint32_t>(entry_ability_mask);
-    if (bit_count(static_cast<int>(selected_ability)) > 1) {
+    if (bit_count(ability) > 1) {
         popup.init(0x40, 0);
         for (int ability_id = 0; ability_id < MaxAbilityNum; ++ability_id) {
             const uint32_t ability_bit = 1u << ability_id;
@@ -2869,17 +2868,15 @@ void Console::use_ability(int vehicle_id) {
             popup.item(StringTable.get(Ability[ability_id].name),
                                  static_cast<int>(ability_bit));
         }
-        const int result = popup.exec();
-        if (result < 0) {
+        ability = popup.exec();
+        if (ability < 0) {
             return;
         }
-        selected_ability = static_cast<uint32_t>(result);
     }
 
-    if ((selected_ability & 0x10u) != 0) {
+    if ((ability & 0x10) != 0) {
         if (base_who(entry_x, entry_y) < 0 &&
             !(bit_at(entry_x, entry_y) & BIT_AIRBASE)) {
-            use_ability_budget_probe4(5);  // WORKAROUND(inline): see use_ability_budget_probe1
             use_ability_budget_probe4(5);  // WORKAROUND(inline): see use_ability_budget_probe1
             use_ability_budget_probe4(5);  // WORKAROUND(inline): see use_ability_budget_probe1
             X_pop("DROPBASE", nullptr);
@@ -2897,8 +2894,8 @@ void Console::use_ability(int vehicle_id) {
 
     // A switch, not an if: the image tests `cmp ebx,0x10; je` over the
     // closing teardown (0x004D8969) and numbers the case's return first.
-    switch (selected_ability) {
-    case 0x10u:
+    switch (ability) {
+    case 0x10:
         ConsoleGlobal.cursor_on(4, drop_range(entry_faction));
         return;
     default:
