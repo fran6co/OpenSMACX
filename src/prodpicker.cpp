@@ -124,6 +124,9 @@ void ProdPicker::on_mousewheel(int delta) {
 void ProdPicker::draw_item(int item, int update) {
     if (item < field_A77C_ || item >= field_A77C_ + field_A82C_) return;
 
+    // Function scope: the image gives it a slot of its own ([ebp-0x38]);
+    // block-local it packed with the vehicle arm's float temporaries.
+    BOOL has_cost;
     const int relative = item - field_A77C_;
     const int y = relative / column_count_ * row_height_;
     const int x = relative % column_count_ * cell_width_ + 0x17;
@@ -202,7 +205,6 @@ void ProdPicker::draw_item(int item, int update) {
         }
         MapWinCaptionScale = -1;
         MapWinCaptionDivisor = -1;
-        BOOL has_cost;
         veh_cost(id, BaseIDCurrentSelected, &has_cost);
         if (has_cost) {
             set_font(&font3_, 0, 0, 0);
