@@ -8252,9 +8252,9 @@ void __cdecl base_ecology() {
         if (Rules.freq_global_warming_num * GameDataStateStorage.fields_.ecology_event_accumulator_
                 / Rules.freq_global_warming_denom >= sea_level * 3 / rise_divisor + 6) {
             GameDataStateStorage.fields_.ecology_event_accumulator_ = 0;
-            int increase = range(PlayersData[faction].planet_ecology / 6 - 1, 1, 3);
-            MapSeaLevelCouncil += increase;
-            GameDataStateStorage.fields_.climate_sea_level_delta_ += rises * increase / 3;
+            best_index = range(PlayersData[faction].planet_ecology / 6 - 1, 1, 3);
+            MapSeaLevelCouncil += best_index;
+            GameDataStateStorage.fields_.climate_sea_level_delta_ += rises * best_index / 3;
             GameDataStateStorage.fields_.climate_rise_step_ =
                 GameDataStateStorage.fields_.climate_sea_level_delta_ < 0
                     ? -GameDataStateStorage.fields_.climate_sea_level_delta_
