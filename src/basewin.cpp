@@ -1528,7 +1528,7 @@ void BaseWin::draw_flash(int redraw_mode) {
         if (Vehs[vehicle_id].faction_id == ConsoleGlobal.faction_id_) {
             if (veh_moves(vehicle_id) == 0) {
                 StringTemp[0] = 0;
-                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x9E4 / 4]));
+                strcat(StringTemp, label_get(0x9E4 / 4));
                 MainInterfaceGlobal.set_text_color(0xF9, -1, 1, 1);
                 y = MainInterfaceGlobal.wrap(StringTemp, x, y, area.right - area.left);
             } else {
