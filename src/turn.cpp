@@ -1993,8 +1993,8 @@ void __cdecl interlude(int id, char *text, int mode, int ending) {
     }
     if (GameDataStateStorage.fields_.game_state_ & 0x10) return;
     if (GameDataStateStorage.fields_.game_rules_ & 0x200000) return;
-    StringTemp[0] = 0;
-    strcat(StringTemp, Players[ConsoleGlobal.faction_id_].filename);
+    clear();
+    says(Players[ConsoleGlobal.faction_id_].filename);
     CharUpperA(StringTemp);
     if (!strcmp(StringTemp, "FUNGBOY")) return;
     if (id < 32) GameDataStateStorage.fields_.game_interlude_flags_ = GameDataStateStorage.fields_.game_interlude_flags_ | (1 << id);
@@ -2005,12 +2005,12 @@ void __cdecl interlude(int id, char *text, int mode, int ending) {
     parse_num(0, game_year(turn));
     parse_num(1, game_year(turn));
     parse_num(2, game_year(turn));
-    StringTemp[0] = 0;
+    clear();
     if (mode) {
-        if (mode == 2) strcat(StringTemp, "EPILOGUE");
-        else if (mode == 3) strcat(StringTemp, "EPILOGUE2");
-        else if (mode == 4) strcat(StringTemp, "EPILOGUE3");
-        else strcat(StringTemp, "INTERLUDE");
+        if (mode == 2) says("EPILOGUE");
+        else if (mode == 3) says("EPILOGUE2");
+        else if (mode == 4) says("EPILOGUE3");
+        else says("INTERLUDE");
         X_pop(InterludeTextFile, StringTemp, nullptr);
     }
     parse_num(1, game_year(turn) - game_year(0));
@@ -2023,9 +2023,9 @@ void __cdecl interlude(int id, char *text, int mode, int ending) {
     parse_says(1, Players[ConsoleGlobal.faction_id_].name_leader, -1, -1);
     parse_says(8, Players[ConsoleGlobal.faction_id_].assistant_name, -1, -1);
     parse_says(9, Players[ConsoleGlobal.faction_id_].scientist_name, -1, -1);
-    StringTemp[0] = 0;
+    clear();
     parse_set(Players[ConsoleGlobal.faction_id_].is_leader_female, 0);
-    strcat(StringTemp, Players[ConsoleGlobal.faction_id_].name_leader);
+    says(Players[ConsoleGlobal.faction_id_].name_leader);
     CharLowerA(StringTemp);
     parse_says(3, StringTemp, -1, -1);
 
@@ -2058,8 +2058,8 @@ void __cdecl interlude(int id, char *text, int mode, int ending) {
         }
     }
     if (text) parse_says(5, text, -1, -1);
-    StringTemp[0] = 0;
-    strcat(StringTemp, Players[ConsoleGlobal.faction_id_].search_key);
+    clear();
+    says(Players[ConsoleGlobal.faction_id_].search_key);
     CharUpperA(StringTemp);
     if (strcmp(StringTemp, "CARETAKE")) {
         parse_says(6, label_get(1127), -1, -1);
@@ -2079,12 +2079,9 @@ void __cdecl interlude(int id, char *text, int mode, int ending) {
         if (Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) return;
     }
     interlude_spend(0);
-    interlude_spend(0);
-    interlude_spend(0);
-    interlude_spend(0);
     GameDataStateStorage.fields_.game_interlude_flags_ |= 1 << id;
-    StringTemp[0] = 0;
-    strcat(StringTemp, "INTERLUDE");
+    clear();
+    says("INTERLUDE");
     say_num(id);
     popup.exec(StringTemp);
 }
