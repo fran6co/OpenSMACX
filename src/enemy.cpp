@@ -3187,14 +3187,14 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                 return -2;
             }
             int pick = -1;
-            int pick_value = -1;
+            best = -1;
             for (i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
                 if (Bases[i].faction_id_current == faction_id) {
                     int dist = map_range(*a4, *a5, Bases[i].x, Bases[i].y);
                     if (dist <= return_range) {
                         int value = bounded_crt_random(dist + 1);
-                        if (value > pick_value) {
-                            pick_value = value;
+                        if (value > best) {
+                            best = value;
                             pick = i;
                         }
                     }
@@ -3391,7 +3391,6 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                     }
                     odds = battle_fight(veh_id, 0, Vehs[i].x, Vehs[i].y, 0, 0, 0);
                     odds = compute_odds(odds, faction_id, veh_id, i, -2);
-                    int weight;
                     if (base_id >= 0) {
                         if (!pods) {
                             for (int k = 0; k < 25; k++) {
@@ -3404,18 +3403,18 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                             }
                         }
                         if (pods) {
-                            weight = 16;
+                            best = 16;
                         } else {
                             odds /= 2;
-                            weight = 4;
+                            best = 4;
                         }
                     } else {
                         odds /= 2;
-                        weight = 4;
+                        best = 4;
                         if (!stack_check(i, 2, 7, -1, -1)
                             && (!stack_check(i, 2, 9, -1, -1) || !is_ocean(Vehs[i].x, Vehs[i].y))
                             && whose_territory(faction_id, Vehs[i].x, Vehs[i].y, 0, 0) != faction_id) {
-                            weight = 2;
+                            best = 2;
                             odds /= 2;
                         } else {
                             pods++;
@@ -3425,15 +3424,15 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                     int units = stack_check(i, 1, -1, -1, -1) - artifacts;
                     if (stack_check(i, 3, 2, -1, -1) >= units) {
                         odds *= 2;
-                        weight *= 2;
+                        best *= 2;
                         pods++;
                     }
                     if (pods) {
                         if (is_human(owner)) {
-                            weight *= 2;
+                            best *= 2;
                         }
                         if (PlayersData[owner].ranking == 7) {
-                            weight *= 2;
+                            best *= 2;
                         }
                     }
                     if (close) {
@@ -3442,10 +3441,10 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                     int value = odds / 2;
                     if (map_range(*a4, *a5, Vehs[i].x, Vehs[i].y)
                         > speed(veh_id, 0) / Rules.move_rate_roads - Rules.move_rate_roads) {
-                        weight /= 2;
+                        best /= 2;
                     }
                     if (value >= 8) {
-                        value *= weight;
+                        value *= best;
                         if (value >= threshold) {
                             threshold = value;
                             if (!(map_range(*a4, *a5, Vehs[i].x, Vehs[i].y)
@@ -3704,10 +3703,10 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                 if (!on_map(x, y)) {
                     continue;
                 }
-                int target = stack_fix(veh_at(x, y));
-                if (target < 0 || Vehs[target].faction_id == faction_id
-                    || !(PlayersData[faction_id].diplo_treaties[Vehs[target].faction_id] & DTREATY_VENDETTA)
-                    || Chassis[VehPrototypes[Vehs[target].proto_id].chassis_id].triad == TRIAD_AIR) {
+                target_y = stack_fix(veh_at(x, y));
+                if (target_y < 0 || Vehs[target_y].faction_id == faction_id
+                    || !(PlayersData[faction_id].diplo_treaties[Vehs[target_y].faction_id] & DTREATY_VENDETTA)
+                    || Chassis[VehPrototypes[Vehs[target_y].proto_id].chassis_id].triad == TRIAD_AIR) {
                     continue;
                 }
                 uint8_t triad = Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad;
@@ -3715,27 +3714,27 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                     if (!is_known(x, y, faction_id)) {
                         continue;
                     }
-                    if (base_who(x, y) < 0 && !(Vehs[target].visibility & (1 << faction_id))) {
+                    if (base_who(x, y) < 0 && !(Vehs[target_y].visibility & (1 << faction_id))) {
                         continue;
                     }
                     if (is_ocean(x, y) != (triad == TRIAD_SEA)) {
                         continue;
                     }
                 }
-                int score = offense_proto(Vehs[target].proto_id, -1, 0);
-                if (Chassis[VehPrototypes[Vehs[target].proto_id].chassis_id].triad == TRIAD_LAND) {
+                int score = offense_proto(Vehs[target_y].proto_id, -1, 0);
+                if (Chassis[VehPrototypes[Vehs[target_y].proto_id].chassis_id].triad == TRIAD_LAND) {
                     score *= 3;
                 }
-                if (is_ocean(x, y) && stack_check(target, 2, 9, -1, -1)) {
+                if (is_ocean(x, y) && stack_check(target_y, 2, 9, -1, -1)) {
                     score *= 2;
                     if (PlayersData[faction_id].flags & 0x80000) {
                         score *= 2;
                     }
                     // BUG(original): doubles the stale odds, not the score.
-                    if (Vehs[target].order == 0x14) {
+                    if (Vehs[target_y].order == 0x14) {
                         odds *= 2;
                     }
-                    if (Vehs[target].order == 0x15) {
+                    if (Vehs[target_y].order == 0x15) {
                         odds *= 2;
                     }
                 }
