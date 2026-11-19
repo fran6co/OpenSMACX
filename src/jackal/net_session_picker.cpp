@@ -290,8 +290,7 @@ int NetSessionPickerWin::initialize(Net *network, char *caption,
   tail_.rows_rect_.top = tail_.first_label_rect_.bottom;
 
   tail_.rows_rect_.bottom = action_button_.client_rect().top - margin_y * 2;
-  tail_.row_height_ = (tail_.rows_rect_.bottom - tail_.boxes_per_row_ * 2
-                       - tail_.rows_rect_.top) / rows;
+  tail_.row_height_ = (rect_height(&tail_.rows_rect_) - tail_.boxes_per_row_ * 2) / rows;
   tail_.rows_rect_.bottom = tail_.row_height_ * rows + tail_.rows_rect_.top;
 
   sessions_view_.close();
