@@ -74,6 +74,13 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   the count-sensitive canaries and the broken claims) and `rungs.json` (every rung's image/our values per function);
   `--md` prints the summary kept in MATCHING_GUIDE 4.0. This table is the work list; use the per-rung tool on one
   function for the detail.
+  Rung 4 is split by cause in the `4x` column (`layout.sub`): a return tails, b block count (`b:jcc`, `b:jmp`, `b:mix`,
+  `b:tgt` = a jump lands inside a block, `b:sw` jump tables), c order only, p prologue-save class, `+d` loop set (headers,
+  back edges by dominance, `jmp`-closed back edges, entry by a jump to the test), `+r` loop-head reload skips only; each
+  line ends with the first block where the block sequences stop aligning (image address, our offset, our source line).
+- `analysis/probes/looptest/run.py [name ...]` loop-test probes (guard + bottom test, top test with `jmp` back, no guard)
+  and `analysis/probes/switchlower/run.py [name ...]` switch lowering by case count and span (subtract chain, direct
+  table, byte index table, tree): MATCHING_GUIDE 3.7 "Loop tests" and "Switch lowering".
 - `analysis/callees.py <unit> <addr> [--src ALT] [--pfx N]` named call multisets: image direct calls named
   through the ORIGINAL markers (plus a CRT table learned from aligned call sequences), `call [IAT]` through the
   image's import directory, ours through relocations; prints the callees on one side only.

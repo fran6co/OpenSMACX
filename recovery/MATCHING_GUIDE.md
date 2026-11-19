@@ -5667,6 +5667,56 @@ skeleton keeps only branches, `ret` and numbered `use(K)` markers)
   the following tests that the first operand already decides) can never be
   inverted, so its copy always stays (facility_avail 0x005BA0E0 second
   guard, `jg 0x5BA13D`).
+- **Loop tests: VC6 duplicates the test, it never jumps to it** (par-2
+  2026-11-19; `analysis/probes/looptest/run.py`, 54 one-loop probes). Every
+  `for` and `while` whose test is not a compile-time constant becomes `guard
+  jncc OUT | body | step | test jcc body` (class DUP): constant, parameter,
+  global, member, array and expression bounds, a call in the test (the call
+  is emitted twice: `for_call`, `wh_call`), `&&` chains (the guard is the
+  first term, the later terms sit at the top of the body with the first
+  term at the bottom: `for_and`, `for_andcall`), pointer walks, nested
+  loops, loops in an if or else arm, `continue`/`break` inside. A constant
+  trip (`i < 8`, `p < &gt[8]`) and `do { } while` have no guard (NONE); a
+  hand-written `if (c) do { } while (c);` is the `for`'s code (do_guard).
+  Only three spellings keep the test at the top with a `jmp` back (TOP):
+  `while (1) { if (x) break; ... }`, a `||` test (`for_or`), and a test
+  that is an inline function returning `a && b` (`for_inl2`:
+  `jge OUT | je OUT | body | jmp top`; the same test written in the `for`
+  is rotated). A break test at the bottom of `while (1)` is a do-while
+  (`wh_1b`), and `for (i = 1; ; i++) { if (i >= K) break; ...` is the plain
+  `for` (enemy_diplomacy, three spellings, same bytes). No probe gives
+  `jmp TEST` into the loop. Where the image has a `jmp` over the first
+  instructions of a loop, they are register loads the entry already holds
+  (`mov ebx, [BaseCurrent]` in BaseWin::draw_pop 0x414CF2 / 0x414E80,
+  `mov edx, [ebp+8]` in ours for wants_prototype): the value is reloaded on
+  the back edge because a register was taken from it in the body. That is
+  an allocation fact (2.7), not a loop form; `rungs.py` counts these
+  separately (`+r`) from real loop-set differences (`+d`).
+- **Switch lowering** (par-2 2026-11-19;
+  `analysis/probes/switchlower/run.py`). One to three cases are a subtract
+  chain (`dec eax | je | dec eax | je`; `sub eax, K` across a gap, `sub eax,
+  0` for case 0), with or without `default`. From four cases on, a dense
+  set is a jump table (`dec eax | cmp eax, span | ja | jmp [eax*4+T]`): four
+  cases over a span of up to 9 values and five over 9 use the direct table;
+  a wider span (4 cases over 10..20, 5 over 13..30, 8 over 200, two runs of
+  four 100 apart) gets a byte index table in front (`mov dl, [eax+B] | jmp
+  [edx*4+T]`), also when all the cases share one body. Outliers split a
+  tree instead: `1,2,3,4,500` is `cmp eax, 3 | jg | je | dec | dec | ... |
+  cmp eax, 4 | cmp eax, 500` (the run of four is a chain, not a table), and
+  decades (`1, 20, 300, 4000, ...`) are a binary tree on the median with
+  subtract chains in the leaves. So the lowering names the case set: a
+  direct table of span n has at least four cases within 9; a chain of three
+  `dec`/`sub` cannot have had a fourth case in range; an index table means
+  the smallest and largest case are more than 9 apart.
+- **Block placement that no spelling moved** (enemy_diplomacy 0x0055F930, 8
+  rows): the satellite loop's shared `attack_type = 3` block sits behind the
+  `ret` in the image and jumps back to the `action_sat_attack` call, with
+  the loop latch as `jge OUT | jmp HEAD`; ours lays it in front of the call
+  and the latch as `jl HEAD | jmp OUT`. Thirteen CFG-equal spellings (goto
+  to a label at either site, either site hosting the label, the last arm
+  negated or nested, the block after the `break`, `for (;;)` with a break
+  test, the arm with its own call and `break`) compile to our bytes or
+  worse: VC6 normalizes them. The cause is not in the arm structure.
 - **Open: when identical epilogue copies are merged in a large function**
   (facility_avail, 16 `ret` in the image, 15 in ours; hand-over to the
   return-tail work). There every invertible `jncc over | copy` is turned into
@@ -5738,6 +5788,60 @@ Broken claims (4 functions, 42 rows):
 | 5 slots | 0 | 0 |  |
 | 6 regs | 1 | 10 | ReportIf::draw_security 0x004AB600 (10) |
 | 7 bytes | 1 | 3 | Credits::unload 0x00428830 (3) |
+
+Rung 4 by cause (`rungs.py`, the `4x` column and `layout.sub`; head
+47c61fb0bc + this split). a = return-tail count; b = block count with
+equal tails (`jcc` a conditional branch more or less, `jmp` an unconditional
+one = a tail merged or duplicated, `mix` both, `tgt` the same branches but a
+jump lands inside a block = a tail cross-jumped at another depth); c = same
+counts, another order; p = prologue-save class only; `+d` the loop set
+differs (headers, back edges, `jmp`-closed back edges, entry by a jump to
+the test); `+r` only loop-head reload skips differ (allocation):
+
+| cause | functions | rows | largest |
+|---|---|---|---|
+| a | 6 | 117 | Buffer::copy 0x005DFF00 (53), upgrade_prototype 0x004EFE80 (27), AlphaNetStringStruct::add 0x00401D80 (13), NetDaemon::init 0x0052DF30 (8) |
+| a+r | 1 | 1051 | air_power 0x005678C0 (1051) |
+| b:jcc | 4 | 243 | Buffer::line 0x005E15F0 (92), ReportIf::draw_sat 0x004AA970 (54), double_cross 0x0050BCC0 (49), stack_veh 0x005B8EE0 (48) |
+| b:jmp | 20 | 5025 | communicate 0x0054FFD0 (1513), ReportWin::draw_energy 0x0049BCD0 (506), ReportWin::labs_line 0x0049B450 (485), BasePop::exec 0x00602600 (303) |
+| b:jmp+d | 1 | 167 | prune_protos 0x0057F4B0 (167) |
+| b:jmp+r | 12 | 3858 | consider_designs 0x00581260 (958), Path::find 0x0059A530 (876), diplomacy_check 0x0053A980 (704), BaseWin::draw_farm 0x0040F0F0 (386) |
+| b:mix | 6 | 3025 | gen_terrain_poly 0x004632D0 (1516), ReportWin::draw_labs 0x00498B30 (605), PickTech::draw_tech 0x00484C60 (303), DiploWin::exec 0x00443F10 (291) |
+| b:mix+d | 1 | 3640 | base_build 0x004F81A0 (3640) |
+| b:mix+r | 1 | 232 | world_rainfall 0x005C4470 (232) |
+| b:tgt | 30 | 4691 | base_terraform 0x004ECBF0 (922), Console::on_key_click 0x005178C0 (633), Console::give_hints 0x00511BB0 (570), Buffer::line 0x005E09D0 (393) |
+| b:tgt+d | 4 | 973 | StatusWin::draw_status 0x004B6570 (331), drone_riot 0x004F4FB0 (317), goody_box 0x0057A660 (317), enemy_diplomacy 0x0055F930 (8) |
+| b:tgt+r | 2 | 743 | setup_player 0x005B0E00 (591), ReportWin::draw_projects 0x0049EB10 (152) |
+| c | 20 | 2865 | time_warp 0x005AEDE0 (675), BattleWin::battle_report 0x00421B50 (357), base_production 0x004F07E0 (289), base_yield 0x004E80B0 (229) |
+| c+d | 1 | 5690 | enemy_move 0x0056B5B0 (5690) |
+| c+r | 1 | 271 | world_rivers 0x005C38B0 (271) |
+| p | 3 | 114 | success_rates 0x0059EEE0 (53), Buffer::write_vertical 0x005DB450 (51), Console::chat 0x00515770 (10) |
+
+No rung-4 function differs in its jump-table count (`sw` equal in all 113),
+and only 7 differ in their loop set; 17 more differ only in loop-head
+reload skips. The bulk is b:jmp / b:tgt (69 functions, 15,290 rows): the
+same branches with a tail merged, duplicated or cross-jumped at another
+depth, i.e. the cross-jump and join-host rules of 3.7, which follow
+register allocation as often as source shape. Real loop-set cases to read
+first: StatusWin::draw_status (image 8 loops, ours 7), prune_protos and
+goody_box (the image closes one more loop with `jmp`), drone_riot (ours
+closes one with `jmp`).
+
+queue_click 0x00409200, second reading (2026-11-19 par-2): the code between
+return sites 1 and 2 is the image's instruction for instruction (only the
+`BaseIDCurrentSelected` temporary is ecx/eax swapped at the lock and unlock
+calls), so no expansion is missing or extra there. Measured on the site
+pattern: every first-level inline instance after a site counts one unit
+whatever its size (expression, ternary, one or two ifs, void: same step);
+`queue_change_blocked()` between the sites is one such unit for site 1
+only (with the field read raw, sites 1 and 2 flip together: `D D` at three
+probes, `s s` at four); a two-level dead inline (free outer around 1, 2 or 3
+inners of 1, 3 or 6 ifs) between the sites never refuses site 2 alone
+(36 variants). The image's closing teardown also expands one small
+destructor more than ours (0x409555: the member at `[ebp-0x4184]` restores
+a global from its saved field in line; ours calls the destructor of the
+object at `[ebp-0x41AC]`), so the image has room left at the end while it
+refuses site 2: not a shortage, a reservation held against site 2 only.
 
 Reading rung 1 (all 16 looked at, 2026-11-19 par-2): none is a class or
 lifetime fact. Every image/our FuncInfo pair has the same teardown sites
