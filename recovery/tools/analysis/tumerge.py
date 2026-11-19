@@ -526,7 +526,7 @@ def extract_objects(ts, addrs, withnames=()):
     sys.path.insert(0, os.path.dirname(HERE))
     import fe
     ms = {int(m.group(1), 16): m for m in EMARK.finditer(ts)}
-    em = {a: m for a, m in ms.items() if ENAME.match(m.group(2))}
+    em = {a: m for a, m in ms.items() if ENAME.match(m.group(2)) or re.search(r'^// symbol\s+_?\$E\d+\s*$', m.group(5), re.M)}
     heads = sorted(a for a in addrs if a in em)
     rep = []
     if not heads and not withnames:
@@ -569,6 +569,9 @@ def extract_objects(ts, addrs, withnames=()):
         if len(oaddr) == 1:
             line = '0x%08X ' % oaddr[0]
             idx = [i for i, pc in enumerate(pcs) if re.search(r'// RECOVERY_OBJECT: v\d+ ' + line, pc) and kinds[i][0] == 'object']
+        if not idx:
+            # the marker block stands directly above a definition: that is the thunk's object
+            idx = [i for i, pc in enumerate(pcs) if kinds[i][0] == 'object' and any('// ORIGINAL: 0x%08X ' % g in pc for g in grp)]
         if not idx and not (extra and len(groups) == 1):
             rep.append('  WARN thunk 0x%08X: %s; its definition was not moved (name it with --with)' % (
                 a, 'no RECOVERY_OBJECT address in its code' if not oaddr else 'object addresses ' + ' '.join('0x%08X' % o for o in oaddr)))
@@ -583,9 +586,10 @@ def extract_objects(ts, addrs, withnames=()):
     res = []
     gone_blocks = []
     for a, grp, oaddr in groups:
-        txt = ''.join(em[g].group(0) for g in grp)
-        gone_blocks += [em[g].group(0) for g in grp]
         defs = ''.join(pcs[i].lstrip('\n') for i in sorted(pull) if pull[i] == a)
+        loose = [em[g].group(0) for g in grp if em[g].group(0) not in defs]     # blocks not already above the definition
+        txt = ''.join(loose)
+        gone_blocks += loose
         res.append([a, '\n' + txt + defs])
     if not groups and extra:
         res.append([None, ''.join(pcs[i] for i in extra)])
