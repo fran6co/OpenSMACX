@@ -4544,10 +4544,11 @@ skip_upkeep_synch:
             if (net_upkeep_phase(NetUpkeepPhase) != 0) {
                 return;
             }
+            TurnUpkeepPhase = 0;
         } else {
             log_say(NetUpkeepSkippingResearchSynch, NetUpkeepPhase, 0, 0);
+            TurnUpkeepPhase = 0;
         }
-        TurnUpkeepPhase = 0;
         ++NetUpkeepPhase;
         if ((flags & 2u) != 0 && (GameDataStateStorage.fields_.game_rules_ & 0x200u) != 0) {
             ConsoleGlobal.set_ai(ConsoleGlobal.faction_id_);
