@@ -123,3 +123,24 @@ def patches_for_spans(patches, spans) -> tuple[ImagePatch, ...]:
         if inside:
             selected.append(patch)
     return tuple(selected)
+
+
+def covering_run(extents, start: int, end: int):
+    """Indices of the instructions that cover `[start, end)` exactly, else None.
+
+    `extents` is every decoded instruction as `(offset, size)` in one
+    coordinate space with `start`/`end`. The run must begin at `start`, end
+    at `end`, and contain only whole instructions: a patch replaces complete
+    instructions and nothing straddles an edge. This one rule is shared by
+    the comparison (compiled COMDAT) and by the post-link applier (built
+    executable), so the two cannot disagree about what a span may replace.
+    """
+    extents = list(extents)
+    inside = [index for index, (offset, _size) in enumerate(extents) if start <= offset < end]
+    starts = {offset for offset, _size in extents}
+    ends = {offset + size for offset, size in extents}
+    if (start not in starts or end not in ends or not inside
+            or sum(extents[index][1] for index in inside) != end - start
+            or any(extents[index][0] + extents[index][1] > end for index in inside)):
+        return None
+    return inside

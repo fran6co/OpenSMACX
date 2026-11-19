@@ -31,6 +31,16 @@ def parser() -> argparse.ArgumentParser:
     debug.add_argument("--path-map", action="append", default=[], metavar="OLD=NEW",
                        help="Explicit source prefix translation, applied in argument order")
     debug.add_argument("--summary", action="store_true", help="Report diagnostic counts and bounded examples")
+    patcher = commands.add_parser(
+        "apply-image-patches",
+        help="Write a copy of a linked executable with every source-declared RECOVERY_IMAGE_PATCH applied")
+    patcher.add_argument("--root", type=Path, default=Path.cwd())
+    for option in ("exe", "map", "out"):
+        patcher.add_argument("--" + option, type=Path, required=True)
+    patcher.add_argument("--summary", action="store_true", help="Omit per-patch instruction listings")
+    patcher.add_argument("--warn-only", action="store_true",
+                         help="Exit 0 on a refused patch (the output is still removed); for build steps "
+                              "that must not fail while a patched function is being reworked")
     agent = commands.add_parser("agent", help="Bridge a configured prompt-driven command to a recovery role protocol")
     agent.add_argument("role", choices=("worker", "reviewer", "coordinator", "planner"))
     agent.add_argument("--root", type=Path, default=Path.cwd())
@@ -174,6 +184,14 @@ def _dispatch(args) -> int:
             if args.summary:
                 notes = output.pop("diagnostics")
                 output.update(diagnostic_count=len(notes), diagnostic_examples=notes[:8])
+        elif args.command == "apply-image-patches":
+            from .image_patch_apply import apply_image_patches
+            output = apply_image_patches(args.root, args.exe, args.map, args.out)
+            if args.summary:
+                for row in output["patches"]:
+                    row.pop("replaced_instructions", None)
+            print(json.dumps(output, indent=2, sort_keys=True))
+            return 0 if output["result"] == "pass" or args.warn_only else 1
         elif args.command == "agent":
             from .agent_command import run_agent
             from .records import parse_json

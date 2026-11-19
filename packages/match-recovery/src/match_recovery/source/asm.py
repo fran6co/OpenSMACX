@@ -32,7 +32,8 @@ from ..pe_coff import Coff, CoffRecords, PeImage
 from ..source_inventory import image_pin
 from .eh_regions import bind_eh_regions, eh_action_semantic_difference, original_eh_action_count
 from .grammar import is_assembler_source
-from .image_patch import PREFIX as IMAGE_PATCH_PREFIX, parse_image_patches, patches_for_spans
+from .image_patch import (PREFIX as IMAGE_PATCH_PREFIX, covering_run, parse_image_patches,
+                          patches_for_spans)
 from .model import (DecompilationState, FRAGMENT_EH_CLEANUP, FRAGMENT_TERMINAL, Mode, Tier,
                     fragment_fact_kind)
 
@@ -1263,15 +1264,10 @@ def apply_image_patches(patches, original: Listing, compiled: Listing) -> tuple[
             notes.append(f"declared image patch {patch.describe()} not applied: the compiled body "
                          "ends before the span does")
             continue
-        inside = [instruction for instruction in compiled.instructions
-                  if start <= instruction.address - compiled.base < end]
-        starts = {instruction.address - compiled.base for instruction in compiled.instructions}
-        ends = {instruction.address - compiled.base + instruction.size
-                for instruction in compiled.instructions}
-        if (start not in starts or end not in ends or not inside
-                or sum(instruction.size for instruction in inside) != end - start
-                or any(instruction.address - compiled.base + instruction.size > end
-                       for instruction in inside)):
+        run = covering_run(((instruction.address - compiled.base, instruction.size)
+                            for instruction in compiled.instructions), start, end)
+        inside = [compiled.instructions[index] for index in run or ()]
+        if run is None:
             notes.append(f"declared image patch {patch.describe()} not applied: no run of complete "
                          "compiled instructions covers exactly that span")
             continue

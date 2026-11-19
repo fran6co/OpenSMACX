@@ -595,6 +595,22 @@ masked comparer applies declarations: the strict associated-data route
 the fast screens in `recovery/tools/` do not, and report such a function as not
 exact. Function fragments are not supported.
 
+The build applies the same declarations after linking (`recover
+apply-image-patches --exe <linked> --map <its MAP> --out <patched>`, a CMake
+post-link step): `build/OpenSMACX.patched.exe` is `build/OpenSMACX.exe` with
+each declared form written at the function's built address (its emitted symbol
+in the link's own MAP) plus the span's offset. The linked executable is never
+modified: the MAP, the debugger sidecar, the link observation and every linked
+recovery check describe the linker's output, and the patcher must find the
+compiled instructions there. A patch is written only when the built bytes decode
+to complete instructions covering the span exactly (the comparer's rule), no
+base relocation field crosses a span edge, the bytes are not already the patch,
+and a `nop-jmp` destination is an instruction start inside the same function
+(the jump is relative, so it moves with the function). Relocation entries are
+left as they are, as the original patcher left them. Any refusal removes the
+patched output; it fails the build only with `-DOPENSMACX_REQUIRE_IMAGE_PATCHES=ON`.
+The source declarations are the only list of patches.
+
 ## Shared original function bodies
 
 `// RECOVERY_SHARED: v1 <start> <end> <emitted-symbol> <evidence-address>`

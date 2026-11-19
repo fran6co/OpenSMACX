@@ -696,6 +696,33 @@ add_custom_command(TARGET OpenSMACX POST_BUILD
     COMMENT "Building the gdb sidecar"
     VERBATIM)
 
+# The shipped image was patched after it was linked (the `RECOVERY_IMAGE_PATCH`
+# declarations in the source: instructions overwritten with nops in the file).
+# Reproducing the shipped file therefore has the same second step. It writes
+# OpenSMACX.patched.exe and leaves OpenSMACX.exe as the linker produced it:
+# the MAP, the sidecar, the link observation and the linked recovery checks
+# describe the linker's output, and the patcher itself must find the compiled
+# instructions (not an earlier run's nops) to verify what it replaces. The
+# source declarations are the only list; a patch whose built bytes are not
+# complete instructions covering its span is refused and no patched file is
+# left behind. A refusal fails the build only with
+# -DOPENSMACX_REQUIRE_IMAGE_PATCHES=ON, so reworking a patched function's body
+# never stops the application from building and linking.
+option(OPENSMACX_REQUIRE_IMAGE_PATCHES
+       "Fail the build when a declared post-link image patch cannot be applied" OFF)
+add_custom_command(TARGET OpenSMACX POST_BUILD
+    COMMAND "${OPENSMACX_UV_EXECUTABLE}" run --project "${CMAKE_CURRENT_SOURCE_DIR}"
+            recover apply-image-patches
+            --root "${CMAKE_CURRENT_SOURCE_DIR}"
+            --exe "$<TARGET_FILE:OpenSMACX>"
+            --map "${CMAKE_CURRENT_BINARY_DIR}/OpenSMACX.map"
+            --out "${CMAKE_CURRENT_BINARY_DIR}/OpenSMACX.patched.exe"
+            --summary
+            "$<IF:$<BOOL:${OPENSMACX_REQUIRE_IMAGE_PATCHES}>,--summary,--warn-only>"
+    BYPRODUCTS "${CMAKE_CURRENT_BINARY_DIR}/OpenSMACX.patched.exe"
+    COMMENT "Applying the declared post-link image patches"
+    VERBATIM)
+
 # `/subsystem:windows`, because the entry point is `WinMain` and not `main`.
 # Left at the default the linker looks for `main`, finds only `_WinMain@16` and
 # fails with LNK2001 - the property is what selects which of the two CRT entry
