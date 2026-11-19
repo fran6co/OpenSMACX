@@ -29,3 +29,9 @@ counter) and prints the distinct results: every family here gave one result.
 | p10_sched | small scheduling cases: `xor eax,eax` before or after a final store, store order of two loaded values, a thiscall receiver against local stores | S3 |
 | p11_byteonce | Console::set_ai's "byte loaded once, movsx per use": char/signed char globals and locals, casts, `!= 0`, shifts all give one `movsx` and `shr/and` pieces here; the image form is not reproduced | open |
 | p12_leaadd | CouncWin::set_vote's `lea ecx,[ebx+K]` for a last virtual call on a member array element: every probe spelling gives the image's `lea`; the real function's `add ebx,K; mov ecx,ebx` comes from its context, not the call's spelling | open |
+| p13_argtemps | single vs multi-use values after one cursor step, pending vs flushed stack pops, call-result arguments: pops do not move the cursor | S1, S7 |
+| p14_multiuse | a value used twice takes eax and leaves the cursor; single-use values continue the cursor around it | S7 |
+| p15_named, p17_named2, p18_namedarg, p19_namedmem, p21_csreg, p24_namedarith, p24b_namedarith | a named local / inline parameter of a plain load as a call argument: forward-substituted, identical to the expression in every isolated shape (cdecl, thiscall, members, params, callee-saved bases) | S7 (caution) |
+| p16_thiscall | `char *v = gpp[5]; gst.get(v)` (label_get's shape): the named argument takes eax outside the cursor; the written-out argument takes the cursor | S7 |
+| p20_flush | `if (gc) return;` loads into eax without moving the cursor; `nv()` changes nothing in isolation | S7 |
+| p22_subchain, p23_subchain2 | `a - b - c` order and constant folding are canonical: 16 spellings, casts and helpers give one order | S8 |

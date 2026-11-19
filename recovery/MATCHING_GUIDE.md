@@ -1894,7 +1894,9 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   five units predicts 73% of allocations, no better than "lowest free
   register" (75%): the scheduler reorders instructions after allocation and
   liveness read from a listing is approximate. Use the rule to locate the
-  window where the count diverges, not to predict a single row.
+  window where the count diverges, not to predict a single row. Much of the
+  rest is S7: values used twice, zero tests and named values take the lowest
+  free register and do not move the cursor.
 - **S2. Evaluation order sets allocation order.** Call arguments are
   evaluated right to left, and the receiver temporary of `p++->f(...)` is
   created before the arguments that follow it in the push order (p08): the
@@ -1956,6 +1958,61 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   (`shadow_vector() = d; light_vector() = d;`, or named references) VC6
   emits one whole copy, then the other. StatusWin::init became exact with the
   direct members (Caviar friend stand-in).
+
+- **S7. Named values sit outside the cursor** (par-2 2026-11-19; high on the
+  probe classes below, high on five real functions; probes p13, p14, p16,
+  p20). Three kinds of value take the lowest free scratch register (eax
+  first) and leave the S1 cursor where it was: a value used more than once
+  (`gb = gc; gd = gc;` loads gc into eax whatever the cursor says, and the
+  next single-use value continues the cursor as if gc had not been
+  allocated, p14), a load only tested against zero (`if (gc) return;` ->
+  `mov eax, gc; test eax, eax`, p20), and a named local or inline parameter
+  that VC6 cannot forward-substitute into its use (a thiscall argument read
+  before the receiver is set: `char *v = gpp[5]; gst.get(v)` or label_get's
+  `label_value`, p16). Single-use anonymous expression temporaries
+  (arguments, `x + 14`, `lea` of a buffer) take the cursor. This is the rule
+  behind most of the "arguments in the opposite order" ties: when a pair of
+  argument registers is the image's rotated by one, the image either made a
+  named value of something ours computes as a temporary (or the reverse),
+  in the window or before it. Measured fixes: get_noun_phrase 0x0058F8B0
+  (`phrase_id = phrase_id + 9; if (phrase_id > 0) { i = phrase_id; do ... }`
+  -> `for (i = 0; i < phrase_id + 9; i++)`: the reassigned parameter was a
+  named value, the image's bound is a temporary; exact), PickWin::
+  on_button_clicked 0x00489BA0 (`const int rows = field_5DB0_;` then
+  `item(StringTemp, rows + 14)`: exact), Menu::add_menu 0x005FAEF0 (the
+  strcat destination `entries_[slot].text` read into a block local at three
+  sites: exact; an inline `cat_to(d, s)` helper is the same), ProdPicker::
+  on_right_click 0x00493EA0 (written-out `StringTable.get(Labels...)`
+  instead of label_get at one site, and the faction read inside the `|=`
+  instead of a named const: 8 -> 4), QuayleWin::on_redraw 0x004956D0
+  (`_itoa` of the chapter through a named local: 13 -> 9).
+  Caution: in isolated probes a named local of a plain load is
+  forward-substituted and compiles exactly like the expression (p15, p17,
+  p18, p19, p21, p24: about 60 pairs, globals, members, params, pointer
+  reads, cdecl and thiscall, pending or flushed stack pops, callee-saved
+  bases), so whether a site is affected depends on its function; the rule
+  says what to try, not where. Screen with `schedscan.py <unit> <addr> --try`:
+  it wraps one argument (nvarg) or one operand inside an argument (nvop,
+  `nv(count) + 14`) in an identity inline `nv(x)` (a named value without
+  knowing the type), and tries label_get <-> written out and unname, one
+  site per candidate. A hit is a WORKAROUND(inline) until the original's
+  spelling (a named local, an accessor, a helper's parameter) is chosen.
+- **S8. Constant folding and subtraction order in a chain are canonical**
+  (par-2 2026-11-19, p22, p23; high). `a - b - c` with b a field and c a
+  named local compiles to `a - b - c` for every spelling tried: the
+  operands in either order, `a - (b + c)`, `-c + w`, unsigned casts on each
+  term, an inline `rect_width`, `w -= c` as a separate statement; only a
+  store in between (`out = a - c; out -= b;` to a member) changes it. The
+  same holds for constants: redo_caption_buttons 0x005F2760's `- 2` folds
+  into `lea eax, [ebx + ebx + 2]` whether written as `2 * w`, `w + w`,
+  `w * 2U`, `2 * (w + 1)`, through `nv()`, an inline `twice(w)`, a local
+  holding 2 or a separate `x -= 2` (about 40 forms; only `w << 1` keeps
+  the `sub esi, 2`, with the shift scheduled last). draw_labs 0x004A7000
+  (image `right - inset - left`, ours `right - left - inset`; 48 forms) and
+  redo_caption_buttons stay open: the order is not a spelling choice, so
+  look for a different data flow (a value stored and re-read, a different
+  type for one field, a value computed in another statement that is used
+  twice).
 
 - **Operand order of commutatives.** See S4 above: the destination is the
   operand referenced later in the function. For `f(a) OP f(b)` it calls the

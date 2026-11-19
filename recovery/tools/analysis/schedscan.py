@@ -24,7 +24,7 @@ Read with MATCHING_GUIDE 3.2 "Scratch registers and scheduling" (rules S1..S6).
    original, somewhere in the code generated since the previous allocation in sync.
 3. --try: single-site source sweep for the window's cause (MATCHING_GUIDE 3.2 S7..S9). Every
    candidate is one rewrite inside the function, compiled and ranked by fe rows:
-     nvarg     one call argument passed through an identity inline (`nv(x)`): the argument becomes a
+     nvarg     one call argument (nvop: one operand inside it, `nv(count) + 14`) passed through an identity inline (`nv(x)`): the argument becomes a
                named value, allocated outside the round-robin cursor (S7). A hit means the original
                read it into a named local or passed it through an inline helper's parameter.
      labelraw / labelget   label_get(k) <-> StringTable.get(Labels.strings_ptr[k]) (S7).
@@ -32,6 +32,7 @@ Read with MATCHING_GUIDE 3.2 "Scratch registers and scheduling" (rules S1..S6).
      expand / contract     one-return inline helpers written out or contracted (S1).
      forbound  `p = p + K; if (p > 0) { i = p; do .. --i; while (i != 0) }`-style reassigned
                parameters are not rewritten automatically: see S8.
+     nvany     (opt-in) any operand read in the body, conditions and right-hand sides included.
    --try-rules picks a subset (comma list); --top N rows of the ranking.
 Screen only: confirm a fix with fe.py."""
 import sys, os, re, argparse, difflib
@@ -245,6 +246,33 @@ def rule_nvarg(t, mt, pos, end):
             lead = len(raw) - len(raw.lstrip())
             s0 = a0 + lead
             yield (s0, s0 + len(a), 'nv(' + a + ')', 'nvarg')
+            # operands inside a compound argument (`count + 14`: nv(count) + 14)
+            for om in OPERAND.finditer(mt, s0, s0 + len(a)):
+                o0, o1 = om.span()
+                if (o0, o1) == (s0, s0 + len(a)) or om.group(0) in KEYWORDS or mt[o1:o1 + 1] == '(' \
+                        or re.fullmatch(r'[A-Z_][A-Z0-9_]*|this', om.group(0)) or mt[o0 - 1:o0] in '.>&*':
+                    continue
+                if mt[o1:].lstrip().startswith('('):
+                    continue
+                yield (o0, o1, 'nv(' + t[o0:o1] + ')', 'nvop')
+
+
+def rule_nvany(t, mt, pos, end):
+    """wrap any operand read in the body (conditions, assignments' right-hand sides, subscripts)"""
+    body = mt.find('{', pos)
+    for om in OPERAND.finditer(mt, body, end):
+        o0, o1 = om.span()
+        w = om.group(0)
+        if w in KEYWORDS or re.fullmatch(r'[A-Z_][A-Z0-9_]*|this|int|char|unsigned|signed|short|long|const|void|static|else|do|break|continue|goto|case|default|struct|class', w):
+            continue
+        if mt[o0 - 1:o0] in '.>&*' or mt[o1:].lstrip()[:1] in ('(', ':') or re.match(r'\s*(=[^=]|\+=|-=|\*=|/=|\|=|&=|\^=|<<=|>>=|\+\+|--)', mt[o1:o1 + 4]):
+            continue
+        if re.search(r'(\+\+|--)\s*$', mt[o0 - 3:o0]) or re.match(r'[ \t]*(?:\w+[ \t]*\**[ \t]*)$', mt[mt.rfind('\n', 0, o0) + 1:o0]) and re.match(r'\s*(=|;|,|\[)', mt[o1:o1 + 3]):
+            continue  # a declaration's name
+        yield (o0, o1, 'nv(' + t[o0:o1] + ')', 'nvany')
+
+
+OPERAND = re.compile(r'(?<![\w.>])[A-Za-z_]\w*(?:(?:\.|->)[A-Za-z_]\w*|\[[^\[\]]*\])*')
 
 
 def try_sweep(unit, addr, text, base_diff, rule_names, top):
@@ -263,6 +291,8 @@ def try_sweep(unit, addr, text, base_diff, rule_names, top):
     for rn in rule_names:
         if rn == 'nvarg':
             cands = rule_nvarg(text, mt, lo, hi)
+        elif rn == 'nvany':
+            cands = rule_nvany(text, mt, lo, hi)
         else:
             cands = rules.RULES[rn](text, mt, lo)
         for cand in cands:
@@ -272,7 +302,7 @@ def try_sweep(unit, addr, text, base_diff, rule_names, top):
                     break
                 continue
             v = text[:s0] + rep + text[e0:]
-            if rn == 'nvarg' and 'inline T nv(T v)' not in text:
+            if rn in ('nvarg', 'nvany') and 'inline T nv(T v)' not in text:
                 v = v[:lo] + NV_TEMPLATE + v[lo:]
             line = text.count('\n', 0, s0) + 1
             deck.append(('%s L%d `%s` -> `%s`' % (label, line, ' '.join(text[s0:e0].split())[:50], ' '.join(rep.split())[:60]), v))
