@@ -4019,10 +4019,21 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   slots): of 13 shared slots only the unit x ([ebp-0x40]) and the triad/row/
   cost scratch ([ebp-0x2C]) improve the slot map (102 -> 75); the other eleven,
   merged alone or together, move it away. time_warp 0x005AEDE0: one slot
-  (best score / scan index / best quality at [ebp-0x1C], 150 -> 142).
+  (best score / scan index / best quality at [ebp-0x1C], 150 -> 142), a
+  second one on the next round (coast flag / path counter, 142 -> 132; the
+  first round had measured it neutral, so rerun after every kept merge).
+  Tree pass over the 89 non-exact functions of 120+ rows: 14 had two or more
+  block-locals in one image slot, 5 kept a merge, all at an unchanged frame:
+  spot_all 0x005B6260 (match flag / base id, then the stack id: slot map
+  104 -> 70, 1357 -> 1222 rows), ReportWin::draw_ops (item cost / citizen
+  loop counters, 41 -> 29, 371 -> 323), base_yield (scan index / best
+  position, 39 -> 25, 263 -> 229), world_rainfall (altitude of both passes,
+  251 -> 232), ReportWin::draw_labs (rate / scan index, 613 -> 605).
   order_veh, consider_designs, setup_text, social_ai, communicate,
-  can_terraform, battle_fight, base_build: nothing to merge, their shared
-  slots already sit at the image's rank.
+  can_terraform, battle_fight, base_build, goody_box, prune_protos,
+  base_terraform, base_production, base_ecology, setup_player,
+  Console::on_key_click, config_game, DesignWin::draw_vehicle: nothing kept,
+  their shared slots already sit at the image's rank.
   `--fscope` extends the proof to two function-scope variables in one image
   slot; its refusals name the lines where our source keeps both alive. In
   base_build 0x004F81A0 `w` and the convoy counter `l_34` share [ebp-0x34]
