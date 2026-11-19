@@ -244,6 +244,7 @@ void Datalink::draw_unit() {
             strcat(StringTemp, number);
         }
         strcat(StringTemp, "}");
+        description.pending_text_ = StringTemp;
     } else {
         strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x200 / 4]));
         strcat(StringTemp, SocialWinColonSpaceText);
@@ -266,8 +267,8 @@ void Datalink::draw_unit() {
             }
             strcat(StringTemp, "}");
         }
+        description.pending_text_ = StringTemp;
     }
-    description.pending_text_ = StringTemp;
     description.field_20_ = 4;
     description.field_24_ = 0;
     description.add(0);
