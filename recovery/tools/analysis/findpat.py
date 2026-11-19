@@ -3,6 +3,10 @@
 Patterns (regexes over 'mnemonic op_str' rows, consecutive within a window):
   addsub  `sub A,B` then `lea A,[A + B - K]` / `add A,B` within 3 rows: (x - y) + y kept unsimplified
   bytecse `mov r8,byte ptr [...]` then two or more `movsx r32, r8` of that byte register (byte held, extended per use)
+  ctrsub  `lea r,[r+r*k]` (+ `shl r,n`) into a callee-saved register that is multiplied again at two or more later sites
+          (`lea t,[r+r*k]`, `imul t,r,K`): the unfolded inner product of a counter subscript A[p][k++] (MATCHING_GUIDE 2.4)
+  latectr `mov [frame slot],K` between two pushes of one call's arguments, K rising over 2+ sites of one slot: the store
+          of a constant-propagated post-increment counter used inside an argument (f(A[k++], ...))
   negcopy `neg dword ptr [ebp + N]` / `neg r; mov [ebp + N], r` followed by a load of [ebp + N]: negate in place, copy
 Prints address, function, marker status (X = BYTE_EXACT claimed) and the matched rows.
 Usage: uv run python recovery/tools/analysis/findpat.py addsub [--nonexact]"""
@@ -68,7 +72,48 @@ def negcopy(L):
                     out.append((a, ['%s %s' % (m, o), '%s %s' % (L[j][1], L[j][2])])); break
     return out
 
-PAT = {'addsub': addsub, 'bytecse': bytecse, 'negcopy': negcopy}
+def ctrsub(L):
+    out = []
+    for k, (a, m, o) in enumerate(L):
+        mm = re.match(r'(ebx|esi|edi|ebp|eax|ecx|edx), \[\1 \+ \1\*[248]\]$', o) if m == 'lea' else None
+        if not mm:
+            continue
+        r = mm.group(1); first = ['%s %s' % (m, o)]; j0 = k + 1
+        if j0 < len(L) and L[j0][1] == 'shl' and L[j0][2].startswith(r + ','):
+            first.append('shl %s' % L[j0][2]); j0 += 1
+        sites = []
+        for j in range(j0, min(k + 400, len(L))):
+            a2, m2, o2 = L[j]
+            d = o2.split(',')[0].strip()
+            if (m2 == 'lea' and re.search(r'\[%s \+ %s\*[248]\]|\[%s\*[248]' % (r, r, r), o2) and d != r) or (m2 == 'imul' and re.match(r'\w+, %s, ' % r, o2)):
+                sites.append('%x' % a2)
+            elif d == r and m2 in ('mov', 'lea', 'xor', 'pop', 'movsx', 'movzx', 'imul', 'add', 'sub', 'shl', 'sar'):
+                break
+        if len(sites) >= 2:
+            out.append((a, first + ['x%d at %s' % (len(sites), ','.join(sites[:8]))]))
+    return out
+
+def latectr(L):
+    import collections
+    by = collections.defaultdict(list)
+    for k, (a, m, o) in enumerate(L):
+        mm = re.match(r'dword ptr \[(e[bs]p [-+] [0-9a-fx]+)\], (0x[0-9a-f]+|\d+)$', o) if m == 'mov' else None
+        if not mm or k == 0 or k + 1 >= len(L):
+            continue
+        if L[k - 1][1] != 'push':
+            continue
+        nxt = [x[1] for x in L[k + 1:k + 8]]
+        if 'push' not in nxt[:3] and 'call' not in nxt[:2]:
+            continue
+        by[mm.group(1)].append((a, int(mm.group(2), 0)))
+    out = []
+    for s, v in by.items():
+        vals = [x[1] for x in v]
+        if len(v) >= 2 and all(0 < x < 64 for x in vals) and len(set(vals)) >= 2:
+            out.append((v[0][0], ['[%s]' % s] + ['%x:=%d' % x for x in v[:10]]))
+    return out
+
+PAT = {'latectr': latectr, 'ctrsub': ctrsub, 'addsub': addsub, 'bytecse': bytecse, 'negcopy': negcopy}
 if __name__ == '__main__':
     pat = PAT[sys.argv[1]]; nonexact = '--nonexact' in sys.argv
     n = 0

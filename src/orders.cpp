@@ -1586,7 +1586,7 @@ L_597350:
                 } else if (fac <= 1 || fac >= 65) {
                     continue;
                 }
-                flag_68 = has_fac_built(fac, base_id);
+                flag_68 = has_fac(fac, base_id, 0);
                 if (flag_68 && ok) {
                     break;
                 }
