@@ -2206,14 +2206,27 @@ void __cdecl Console::goto_routine(int base_id) {
 // homes unknown). Together they spend the /Ob2 room a dead 20-if
 // go_to_budget_probe stood in for (runscan --try: same fe rows; either alone,
 // or neither, expands StringStruct::remove_all at the closing teardown where
-// the image calls it). ~Scroll is still expanded at the first three return
-// teardowns, where the image calls it.
+// the image calls it). The first three return teardowns call ~Scroll as the
+// image does since the late free helpers (MATCHING_GUIDE 2.8).
 static inline void go_to_refuse(const char *message) {
     NetMsgPrimary.pop(message, 5000, 0, 0);
 }
 static inline void go_to_waypoint(int veh_id, int base_id) {
     Vehs[veh_id].waypoint_x[0] = Bases[base_id].x;
     Vehs[veh_id].waypoint_y[0] = Bases[base_id].y;
+}
+// WORKAROUND(inline): the three sort buttons (name, size, distance labels
+// 0x1C3..0x1C5) as an inline owner (no out-of-line copy in the image; name
+// and home unknown). With it the closing teardown calls
+// StringStruct::remove_all out of line (image 0x004D6897) and expands the
+// base ~StringStruct, as the image does; EH and call multiset stay equal to
+// the image's (ownerhunt: any small depth-2 owner of the popup set-up or the
+// "(label)" item run gives the same decisions; this run is the one with a
+// natural boundary). fe 637 -> 286.
+static inline void go_to_sort_buttons(Popup &popup) {
+    popup.button(label_get(0x1C3));
+    popup.button(label_get(0x1C4));
+    popup.button(label_get(0x1C5));
 }
 void Console::go_to(int subject, int order, int grouped) {
     int artifact = 0;
@@ -2363,9 +2376,7 @@ void Console::go_to(int subject, int order, int grouped) {
             break;
         }
         popup.start(StringTemp, 0x42);
-        popup.button(label_get(0x1C3));
-        popup.button(label_get(0x1C4));
-        popup.button(label_get(0x1C5));
+        go_to_sort_buttons(popup);
         popup.set_loc(-10, -10);
         if (order == -2) {
             popup.button(label_get(0x1C6));
