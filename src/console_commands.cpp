@@ -984,7 +984,10 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
                     Vehs[veh_id].morale = static_cast<uint8_t>(range(Vehs[veh_id].morale + 1, 0, 6));
                 }
                 if (!has_abil(choice, 0x4000) && has_abil(Vehs[veh_id].proto_id, 0x4000)) {
-                    Vehs[veh_id].morale = static_cast<uint8_t>(range(Vehs[veh_id].morale - 1, 0, 6));
+                    {
+                        uint8_t adj8 = Vehs[veh_id].morale;
+                        Vehs[veh_id].morale = static_cast<uint8_t>(range(adj8 - 1, 0, 6));
+                    }
                 }
                 veh_skip(veh_id);
                 ::draw_tile(Vehs[veh_id].x, Vehs[veh_id].y, 1);
@@ -1013,7 +1016,10 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
                     Vehs[veh_id].morale = static_cast<uint8_t>(range(Vehs[veh_id].morale + 1, 0, 6));
                 }
                 if (!has_abil(choice, 0x4000) && has_abil(Vehs[veh_id].proto_id, 0x4000)) {
-                    Vehs[veh_id].morale = static_cast<uint8_t>(range(Vehs[veh_id].morale - 1, 0, 6));
+                    {
+                        uint32_t adj11 = Vehs[veh_id].morale;
+                        Vehs[veh_id].morale = static_cast<uint8_t>(range(adj11 - 1, 0, 6));
+                    }
                 }
                 veh_skip(veh_id);
                 ::draw_tile(Vehs[veh_id].x, Vehs[veh_id].y, 1);
