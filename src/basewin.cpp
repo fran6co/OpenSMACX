@@ -6499,39 +6499,30 @@ void BaseWin::base_editor_proj() {
     // Popup owns complete member/base teardown, including cancellation paths.
 }
 
-// WORKAROUND(inline): dead /Ob2 budget probe for base_editor_copy (folds away,
-// spends budget). Without it the image's EH map (24 states) is 33 here: the
-// cancel-return and closing teardowns each expand one level deeper than the
-// image's (0x0041C4xx calls ??1Dialogs/??1Dialog out of line; the closing one
-// calls ??1BasePop 0x004064D0). Five three-if expansions before the Popup
-// reproduce the image's map and teardown calls (six or more expand
-// ??_DDialogs at the cancel return); the original's spend is not yet identified.
-static inline int base_editor_copy_budget_probe(int x) {
-    if (x == 0) x = 7;
-    if (x == 1) x = 8;
-    if (x == 2) x = 9;
-    return x;
+// WORKAROUND(inline): base_editor_copy's two "StringTemp = label; item" runs
+// as one inline helper (no out-of-line copy in the image; name and home
+// unknown). It replaces five dead three-if budget probes: without spend the
+// cancel-return and closing teardowns expand one level deeper than the image's
+// (0x0041C4xx calls ??1Dialogs/??1Dialog out of line; the closing one calls
+// ??1BasePop 0x004064D0). The helper reproduces them only when it takes the
+// label's byte offset and divides inside (`label_get(label)` with the index
+// falls 42 rows short); the parameter form is a cost stand-in.
+static inline void base_editor_label_item(Popup &popup, int offset, int id) {
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(offset / 4));
+    popup.item(StringTemp, id);
 }
 
 // ORIGINAL: 0x0041C240 ?base_editor_copy@BaseWin@@QAEXH@Z 0x0041C240-0x0041C798;0x006526E3-0x006527EF BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/unrecovered/0041c240.cpp", "source:src/basewin.h", "image:0x41c240"], "reason": "Recover the full base-editor callee in its actual BaseWin owner with one genuine Popup lifetime and original cancellation, menu IDs, typed data mutations and virtual redraw; preserve original seed evidence and outstanding structural/matching obligations."}
 void BaseWin::base_editor_copy(int copy_to) {
-    base_editor_copy_budget_probe(1000);  // WORKAROUND(inline): see base_editor_copy_budget_probe
-    base_editor_copy_budget_probe(1001);  // WORKAROUND(inline)
-    base_editor_copy_budget_probe(1002);  // WORKAROUND(inline)
-    base_editor_copy_budget_probe(1003);  // WORKAROUND(inline)
-    base_editor_copy_budget_probe(1004);  // WORKAROUND(inline)
     Popup popup;
     parse_says(0, BaseCurrent->name_string, -1, -1);
     PopupModalState = 6;
     popup.start(copy_to ? "EDITORBASECOPYTO" : "EDITORBASECOPY", 0x42);
     if (copy_to) {
-        StringTemp[0] = 0;
-        strcat(StringTemp, label_get(0xE64 / 4));
-        popup.item(StringTemp, 9998);
-        StringTemp[0] = 0;
-        strcat(StringTemp, label_get(0xE68 / 4));
-        popup.item(StringTemp, 9999);
+        base_editor_label_item(popup, 0xE64, 9998);
+        base_editor_label_item(popup, 0xE68, 9999);
     }
     // Own-faction bases first, then other-faction bases. Both include the
     // selected base; the original does not filter it from this menu.
