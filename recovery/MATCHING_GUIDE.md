@@ -990,6 +990,21 @@ Using it (regprio.py uses 4b and 4c by default; `--model old` is rule 4 only):
     and removes the penalty; one reference inside the stretch removes it in
     that block.
   - otherwise one reference in a heavy block, as before.
+- Check the class first: `regalloc/tiescan.py <feall.json>` lists the
+  functions whose whole diff is one renaming of esi/edi/ebx/ebp. On
+  2026-11-19 that was 5 of 387 non-exact functions (popp 0x0048C0A0,
+  say_orders 0x004B43E0, compute_score 0x005ACBE0, Win::flip 0x005EFD20,
+  Palette::fade_to 0x005FF930 with two more rows). Of the "register tie" list
+  of the 2026-11-18 screen, Menu::on_key_click, base_editor_fac, DiploPop::init
+  and double_cross differ mostly in eax/ecx/edx (scratch choice and
+  scheduling, not this model); Dialog::init, draw_garrison and compute_score
+  are mostly callee-saved; fade_to's swapped rows are two frame slots of
+  strength-reduced array differences, with the registers equal.
+  Model-guided tries that moved nothing: fade_to `weight` hoisted next to
+  `frame` (4c; worse, 4 -> 14: the image's deferred `push ebp` puts `weight`
+  inside the `if`), term and declaration order; Dialog::init 36 orders of the
+  geometry locals and member stores; compute_score's tail (`*total`
+  spellings, named sum, pointer loop).
 - Pair accuracy of regprio on 90 exact functions (two per unit, 0x120-0x600
   bytes): 250 of 413 interfering register pairs with rule 4 alone, 260 of 412
   with 4b/4c. The remaining misses are candidate-set errors (temporaries,
