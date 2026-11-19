@@ -497,8 +497,13 @@ void CheckBox::on_left_down(int x, int y) {
     }
     WinNotificationCallback callback = key_notification_callback_;
     if (callback != 0) callback(box->selected_position_);
-    int state = get_state_id(id);
-    draw_item(Dialog::id_to_pos(id), state, 1);
+    // The final redraw re-finds the id and reads the mask at the cursor
+    // through `box` (the image forms the Dialog base once, loads the cursor
+    // and the state word from it); get_state_id(id) here ties 7 rows.
+    box->item_list_.seek_id(id);
+    const int current_position = box->item_list_.current_position_;
+    draw_item(Dialog::id_to_pos(id),
+              static_cast<int>((1u << static_cast<uint32_t>(current_position)) & box->selected_position_), 1);
     soft_update();
 }
 
