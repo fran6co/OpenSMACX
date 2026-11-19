@@ -4221,7 +4221,8 @@ turn_loop:
                 if (CouncilPbemGate != 0) {
                     council(ConsoleGlobal.faction_id_, 0, 0);
                 } else if (CouncilNotifyPluralSlots[ConsoleGlobal.faction_id_] != 0) {
-                    parse_say(0, Proposal[CouncilNotifyFormSlots[ConsoleGlobal.faction_id_]].name, -1, -1);
+                    char *name = Proposal[CouncilNotifyFormSlots[ConsoleGlobal.faction_id_]].name;
+                    parse_say(0, name, -1, -1);
                     if (CouncilNotifyFormSlots[ConsoleGlobal.faction_id_] != 0) {
                         if (CouncilNotifyPluralSlots[ConsoleGlobal.faction_id_] == 1) {
                             popp(ScriptPopupFile, "COUNCILHOTPASS", 0, "council_sm.pcx", 0);
