@@ -24,7 +24,7 @@ CRT = {0x645470: '_strcat', 0x645460: '_strcpy', 0x64601d: '_rand', 0x6453e0: '_
        0x646544: '_sqrt', 0x6458f0: '_strncmp', 0x646f5d: '__beginthread', 0x64628f: '_toupper', 0x650231: '__hypot',
        0x6473f0: '_memchr', 0x64557f: '??3@YAXPAX@Z', 0x6501f0: '_DirectSoundCreate@12', 0x647067: '__endthread',
        0x646829: '__mkdir', 0x634280: '_compress', 0x634330: '_uncompress', 0x5d44fc: '_DirectDrawCreate@12',
-       0x6474a0: '_strcspn', 0x644dc6: '_ICSendMessage@16', 0x64697a: '_isupper'}
+       0x6474a0: '_strcspn', 0x644dc6: '_ICSendMessage@16', 0x64697a: '_isupper', 0x645c70: '_memcmp'}
 ALIAS = {'__strcmpi': '__stricmp'}
 
 _A2S = None
@@ -37,7 +37,7 @@ def addr2sym():
         _A2S = {}
         for p in glob.glob(fe.R + '/src/**/*.cpp', recursive=True) + glob.glob(fe.R + '/src/**/*.h', recursive=True):
             t = open(p, encoding='latin-1').read()
-            for m in re.finditer(r'// ORIGINAL: 0x([0-9A-F]{8}) (\S+) 0x[0-9A-Fa-f]+-0x[0-9A-Fa-f]+[^\n]*\n((?://[^\n]*\n)*)', t):
+            for m in re.finditer(r'// ORIGINAL: 0x([0-9A-F]{8}) (\S+) 0x[0-9A-Fa-f]+-0x[0-9A-Fa-f]+[^\n]*\n((?://(?! ORIGINAL:)[^\n]*\n)*)', t):
                 m2 = re.search(r'// symbol\s+(\S+)', m.group(3))
                 _A2S[int(m.group(1), 16)] = m2.group(1) if m2 else m.group(2)
         for a, n in CRT.items():

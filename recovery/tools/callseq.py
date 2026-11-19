@@ -7,7 +7,7 @@ R=fe.R
 addr2sym={}
 for p in glob.glob(R+'/src/**/*.cpp',recursive=True):
     t=open(p,encoding='latin-1').read()
-    for m in re.finditer(r'// ORIGINAL: 0x([0-9A-F]{8}) (\S+) 0x[0-9A-Fa-f]+-0x[0-9A-Fa-f]+[^\n]*\n((?://[^\n]*\n)*)',t):
+    for m in re.finditer(r'// ORIGINAL: 0x([0-9A-F]{8}) (\S+) 0x[0-9A-Fa-f]+-0x[0-9A-Fa-f]+[^\n]*\n((?://(?! ORIGINAL:)[^\n]*\n)*)',t):
         sym=m.group(2); m2=re.search(r'// symbol\s+(\S+)',m.group(3))
         addr2sym[int(m.group(1),16)]=m2.group(1) if m2 else sym
 CRT={'sub_645470':'_strcat','sub_645460':'_strcpy','sub_64601d':'_rand','sub_6453e0':'_strlen','sub_644f3a':'_abs','sub_64fc88':'__itoa','sub_644ef2':'_free','sub_644dff':'_exit','sub_645660':'_strcmp','sub_645550':'__chkstk','sub_64558a':'??2@YAPAXI@Z','sub_6458c8':'__ftol','sub_647851':'_floor','sub_645da7':'_atoi','sub_645dd0':'_strchr','sub_6468d0':'_strstr','sub_645e90':'_strncpy','sub_6465f0':'_memset','sub_645930':'_memcpy'}

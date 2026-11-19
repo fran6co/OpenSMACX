@@ -95,7 +95,7 @@ def align(A,B):
         else: out.append((t,i1,i2,j1,j2))
     return out
 def ident(text,addr):
-    m=re.search(r'// ORIGINAL: 0x%08X (\S+) 0x([0-9A-Fa-f]+)-0x([0-9A-Fa-f]+)[^\n]*\n((?://[^\n]*\n)*)'%addr,text)
+    m=re.search(r'// ORIGINAL: 0x%08X (\S+) 0x([0-9A-Fa-f]+)-0x([0-9A-Fa-f]+)[^\n]*\n((?://(?! ORIGINAL:)[^\n]*\n)*)'%addr,text)
     if not m: return None
     sym=m.group(1); m2=re.search(r'// symbol\s+(\S+)',m.group(4))
     if m2: sym=m2.group(1)

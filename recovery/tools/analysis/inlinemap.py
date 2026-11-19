@@ -37,7 +37,7 @@ def markers():
     a2s, spans = {}, {}
     for p in glob.glob(R + '/src/**/*.cpp', recursive=True):
         t = open(p, encoding='latin-1').read()
-        for m in re.finditer(r'// ORIGINAL: 0x([0-9A-F]{8}) (\S+) 0x([0-9A-Fa-f]+)-0x([0-9A-Fa-f]+)[^\n]*\n((?://[^\n]*\n)*)', t):
+        for m in re.finditer(r'// ORIGINAL: 0x([0-9A-F]{8}) (\S+) 0x([0-9A-Fa-f]+)-0x([0-9A-Fa-f]+)[^\n]*\n((?://(?! ORIGINAL:)[^\n]*\n)*)', t):
             sym = m.group(2)
             m2 = re.search(r'// symbol\s+(\S+)', m.group(5))
             if m2:

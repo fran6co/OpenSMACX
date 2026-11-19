@@ -8,7 +8,7 @@ R=fe.R; pfx=sys.argv[1] if len(sys.argv)>1 else '20'
 addr2sym={}
 for p in glob.glob(R+'/src/**/*.cpp',recursive=True):
     t=open(p,encoding='latin-1').read()
-    for m in re.finditer(r'// ORIGINAL: 0x([0-9A-F]{8}) (\S+) 0x[0-9A-Fa-f]+-0x[0-9A-Fa-f]+[^\n]*\n((?://[^\n]*\n)*)',t):
+    for m in re.finditer(r'// ORIGINAL: 0x([0-9A-F]{8}) (\S+) 0x[0-9A-Fa-f]+-0x[0-9A-Fa-f]+[^\n]*\n((?://(?! ORIGINAL:)[^\n]*\n)*)',t):
         sym=m.group(2); m2=re.search(r'// symbol\s+(\S+)',m.group(3))
         addr2sym[int(m.group(1),16)]=m2.group(1) if m2 else sym
 cc=json.load(open(R+'/build/compile_commands.json'))

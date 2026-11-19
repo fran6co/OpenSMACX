@@ -85,7 +85,7 @@ def match(t,i,o,c):
             if d==0: return j
     return len(t)-1
 def func_body(text,clean,addr):
-    m=re.search(r'// ORIGINAL: 0x%08X [^\n]*\n((?://[^\n]*\n)*)'%addr,text)
+    m=re.search(r'// ORIGINAL: 0x%08X [^\n]*\n((?://(?! ORIGINAL:)[^\n]*\n)*)'%addr,text)
     if not m or re.search(r'// body ',m.group(1)): return None
     i=clean.find('{',m.end())
     if i<0: return None
