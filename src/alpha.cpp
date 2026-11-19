@@ -494,6 +494,77 @@ int __cdecl arm_name(LPSTR name) {
     return 0;
 }
 
+// Each binary preference default in pinned prefs_load 0x0059DCF0 has its own
+// "1"/"0" literal pair (0x00690160/64, 0x00690174/78, 0x006901B4/B8,
+// 0x006901C4/C8), so the bit loop is written out at every site rather than
+// being one inline function; a macro keeps the per-site spelling. It clears
+// StringTemp after `non_pad` is zeroed, which is why the image stores the
+// clear from the register holding that zero (`mov [StringTemp], bl`).
+#define PREFS_GET_BINARY(value) \
+    { \
+        int non_pad = 0; \
+        StringTemp[0] = 0; \
+        for (int shift = 31; shift >= 0; shift--) { \
+            if ((1 << shift) & (value)) { \
+                non_pad = 1; \
+                strcat(StringTemp, "1"); \
+            } else if (non_pad || shift < 8) { \
+                strcat(StringTemp, "0"); \
+            } \
+        } \
+    }
+
+// WORKAROUND(noinline): prefs_load expands default_prefs/default_prefs2 but
+// still calls prefs_get 0x0059DB40 for their "Laptop" queries (0x0059DF17,
+// 0x0059E016), while the standalone bodies expand it. These twins call the
+// out-of-line overload.
+static inline uint32_t default_prefs_load() {
+    uint32_t base_prefs = PREF_ADV_RADIO_BTN_NOT_SEL_SING_CLK | PREF_AUTO_FORMER_BUILD_ADV
+        | PREF_AUTO_FORMER_PLANT_FORESTS | PREF_AUTO_END_MOVE_SPOT_VEH_WAR
+        | PREF_AUTO_END_MOVE_SPOT_VEH_TRUCE | PREF_AUTO_END_MOVE_SPOT_VEH_TREATY
+        | PREF_AUTO_AIR_VEH_RET_HOME_FUEL_RNG | PREF_BSC_DONT_QUICK_MOVE_ALLY_VEH
+        | PREF_BSC_AUTO_DESIGN_VEH | PREF_BSC_MOUSE_EDGE_SCROLL_VIEW | PREF_AV_BACKGROUND_MUSIC
+        | PREF_AV_SOUND_EFFECTS | PREF_MAP_SHOW_GRID | PREF_UNK_10
+        | PREF_BSC_DONT_QUICK_MOVE_ENEMY_VEH | PREF_BSC_AUTOSAVE_EACH_TURN
+        | PREF_AUTO_WAKE_VEH_TRANS_REACH_LAND;
+    return prefs_get(alpha_primary_laptop_key, 0, false) ? base_prefs : base_prefs
+        | PREF_AV_SECRET_PROJECT_MOVIES | PREF_AV_SLIDING_WINDOWS | PREF_AV_MAP_ANIMATIONS;
+}
+
+static inline uint32_t default_prefs2_load() {
+    uint32_t base_prefs2 = MPREF_ADV_DETAIL_MAIN_MENUS | MPREF_BSC_AUTO_PRUNE_OBS_VEH
+        | MPREF_AV_VOICEOVER_STOP_CLOSE_POPUP | MPREF_AV_VOICEOVER_TECH_FAC
+        | MPREF_MAP_SHOW_BASE_NAMES | MPREF_MAP_SHOW_PROD_WITH_BASE_NAMES
+        | MPREF_ADV_RIGHT_CLICK_POPS_UP_MENU | MPREF_ADV_QUICK_MOVE_VEH_ORDERS
+        | MPREF_AUTO_FORMER_BUILD_SENSORS | MPREF_AUTO_FORMER_REMOVE_FUNGUS;
+    return prefs_get(alpha_secondary_laptop_key, 0, false) ? base_prefs2 : base_prefs2 | MPREF_AV_SLIDING_SCROLLBARS;
+}
+
+// body src/alpha.h
+// BODY IN alpha.h, as `MEASURED inline`.
+
+/*
+Purpose: Get the label string from a label offset. Created to reduce code complexity.
+Original Offset: n/a
+Return Value: Pointer to label string
+Status: Complete
+*/
+// BODY IN alpha.h, as plain `inline` (no ORIGINAL marker of its own - "Original
+// Offset: n/a"): say_base (base.cpp) needs it folded to `StringTable.get(...)`
+// the way the image does.
+
+// ORIGINAL: 0x00585120 ?text_get_number@@YAHHH@Z 0x00585120-0x00585150 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned585120 calls5FD570 then5FD740 and uses an EBP frame; adjacent585170 is read_basic_rules.", "Fresh complete application COFF at421b46dbe: alpha.cpp emitted header helper matches18/18; library text.cpp emits67.", "Canonical identity, full spans, historical claim and lessons moved intact from src/text.cpp; definition remains src/text.h."], "reason": "Current application rules-parser ownership; the header definition remains shared. Library-TU emission inlines both wrappers and is not this original body. No original TU or linked selection claim."}
+// body      src/jackal/text.h
+// LEVER: BYTE_EXACT 18/18, from 2/18 and 71 compiled instructions against the image's 18. The body went through `text_get_number_source(&Txt, ...)`, so both parses were written out INLINE; the image CALLS the zero-arg wrappers, `call 0x005FD570` then `call 0x005FD740`, and open-codes only the range() clamp. call_diff said exactly that - 1 call against the image's 2. Rewritten in text.h as `text_get(); return range(text_item_number(), min, max);`, which is the same two-statement shape alpha.cpp's LEVER already spells out at its own 83 call sites. Nothing else calls text_get_number(), so no caller moved.
+// size      48 bytes
+// prototype int (__cdecl ?text_get_number@@YAHHH@Z)(int min, int max)
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005FD570 0x005FD740
+// notes     Staged hybrid export redirect calls the source-owned wrapper
+
 /*
 Purpose: Parse the current tech name inside the Txt item buffer into a tech id.
 // ORIGINAL: 0x00585150 ?tech_item@@YAHXZ 0x00585150-0x00585164 BYTE_EXACT
@@ -2076,77 +2147,6 @@ void __cdecl prefs_fac_load() {
         strcpy(Players[i].search_key, TextBufferGetPtr);
     }
 }
-
-// Each binary preference default in pinned prefs_load 0x0059DCF0 has its own
-// "1"/"0" literal pair (0x00690160/64, 0x00690174/78, 0x006901B4/B8,
-// 0x006901C4/C8), so the bit loop is written out at every site rather than
-// being one inline function; a macro keeps the per-site spelling. It clears
-// StringTemp after `non_pad` is zeroed, which is why the image stores the
-// clear from the register holding that zero (`mov [StringTemp], bl`).
-#define PREFS_GET_BINARY(value) \
-    { \
-        int non_pad = 0; \
-        StringTemp[0] = 0; \
-        for (int shift = 31; shift >= 0; shift--) { \
-            if ((1 << shift) & (value)) { \
-                non_pad = 1; \
-                strcat(StringTemp, "1"); \
-            } else if (non_pad || shift < 8) { \
-                strcat(StringTemp, "0"); \
-            } \
-        } \
-    }
-
-// WORKAROUND(noinline): prefs_load expands default_prefs/default_prefs2 but
-// still calls prefs_get 0x0059DB40 for their "Laptop" queries (0x0059DF17,
-// 0x0059E016), while the standalone bodies expand it. These twins call the
-// out-of-line overload.
-static inline uint32_t default_prefs_load() {
-    uint32_t base_prefs = PREF_ADV_RADIO_BTN_NOT_SEL_SING_CLK | PREF_AUTO_FORMER_BUILD_ADV
-        | PREF_AUTO_FORMER_PLANT_FORESTS | PREF_AUTO_END_MOVE_SPOT_VEH_WAR
-        | PREF_AUTO_END_MOVE_SPOT_VEH_TRUCE | PREF_AUTO_END_MOVE_SPOT_VEH_TREATY
-        | PREF_AUTO_AIR_VEH_RET_HOME_FUEL_RNG | PREF_BSC_DONT_QUICK_MOVE_ALLY_VEH
-        | PREF_BSC_AUTO_DESIGN_VEH | PREF_BSC_MOUSE_EDGE_SCROLL_VIEW | PREF_AV_BACKGROUND_MUSIC
-        | PREF_AV_SOUND_EFFECTS | PREF_MAP_SHOW_GRID | PREF_UNK_10
-        | PREF_BSC_DONT_QUICK_MOVE_ENEMY_VEH | PREF_BSC_AUTOSAVE_EACH_TURN
-        | PREF_AUTO_WAKE_VEH_TRANS_REACH_LAND;
-    return prefs_get(alpha_primary_laptop_key, 0, false) ? base_prefs : base_prefs
-        | PREF_AV_SECRET_PROJECT_MOVIES | PREF_AV_SLIDING_WINDOWS | PREF_AV_MAP_ANIMATIONS;
-}
-
-static inline uint32_t default_prefs2_load() {
-    uint32_t base_prefs2 = MPREF_ADV_DETAIL_MAIN_MENUS | MPREF_BSC_AUTO_PRUNE_OBS_VEH
-        | MPREF_AV_VOICEOVER_STOP_CLOSE_POPUP | MPREF_AV_VOICEOVER_TECH_FAC
-        | MPREF_MAP_SHOW_BASE_NAMES | MPREF_MAP_SHOW_PROD_WITH_BASE_NAMES
-        | MPREF_ADV_RIGHT_CLICK_POPS_UP_MENU | MPREF_ADV_QUICK_MOVE_VEH_ORDERS
-        | MPREF_AUTO_FORMER_BUILD_SENSORS | MPREF_AUTO_FORMER_REMOVE_FUNGUS;
-    return prefs_get(alpha_secondary_laptop_key, 0, false) ? base_prefs2 : base_prefs2 | MPREF_AV_SLIDING_SCROLLBARS;
-}
-
-// body src/alpha.h
-// BODY IN alpha.h, as `MEASURED inline`.
-
-/*
-Purpose: Get the label string from a label offset. Created to reduce code complexity.
-Original Offset: n/a
-Return Value: Pointer to label string
-Status: Complete
-*/
-// BODY IN alpha.h, as plain `inline` (no ORIGINAL marker of its own - "Original
-// Offset: n/a"): say_base (base.cpp) needs it folded to `StringTable.get(...)`
-// the way the image does.
-
-// ORIGINAL: 0x00585120 ?text_get_number@@YAHHH@Z 0x00585120-0x00585150 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned585120 calls5FD570 then5FD740 and uses an EBP frame; adjacent585170 is read_basic_rules.", "Fresh complete application COFF at421b46dbe: alpha.cpp emitted header helper matches18/18; library text.cpp emits67.", "Canonical identity, full spans, historical claim and lessons moved intact from src/text.cpp; definition remains src/text.h."], "reason": "Current application rules-parser ownership; the header definition remains shared. Library-TU emission inlines both wrappers and is not this original body. No original TU or linked selection claim."}
-// body      src/jackal/text.h
-// LEVER: BYTE_EXACT 18/18, from 2/18 and 71 compiled instructions against the image's 18. The body went through `text_get_number_source(&Txt, ...)`, so both parses were written out INLINE; the image CALLS the zero-arg wrappers, `call 0x005FD570` then `call 0x005FD740`, and open-codes only the range() clamp. call_diff said exactly that - 1 call against the image's 2. Rewritten in text.h as `text_get(); return range(text_item_number(), min, max);`, which is the same two-statement shape alpha.cpp's LEVER already spells out at its own 83 call sites. Nothing else calls text_get_number(), so no caller moved.
-// size      48 bytes
-// prototype int (__cdecl ?text_get_number@@YAHHH@Z)(int min, int max)
-// callers   0   call targets   2
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x005FD570 0x005FD740
-// notes     Staged hybrid export redirect calls the source-owned wrapper
 
 /*
 Purpose: Load the most common preferences from the game's ini to globals.
