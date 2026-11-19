@@ -3265,8 +3265,29 @@ int __cdecl wants_to_speak(int faction_id, int other_faction_id) {
     return DiplomacyContactResult;
 }
 
-// Defined before call_off_vendetta below.
-static void call_off_vendetta_budget_probe(int x);
+// stand-in: the noun-form setup plus parse_says pair recurs across many TUs
+// and was likely a shared inline; as a TU helper its /Ob2 cost spends the
+// budget the image spends before introduce's, pact_ends' and
+// call_off_vendetta's Popup teardowns. Defined ahead of introduce, its first
+// user. WORKAROUND(inline): the const reference parameter is a cost stand-in
+// (with an int parameter introduce misses the image's teardown, 119 rows).
+static void say_faction_noun(int slot, const int &faction) {
+    parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
+    parse_says(slot, Players[faction].noun_faction, -1, -1);
+}
+
+// WORKAROUND(decl): introduce's two "leader title, leader name" parse pairs as
+// one helper (no out-of-line copy in the image; name and home unknown). With
+// it and say_faction_noun, /Ob2 calls ~Dialogs out of line at introduce's
+// closing teardown as the image does (0x0053DAEB), which eight dead budget
+// probes stood in for. WORKAROUND(inline): the const reference parameter is a
+// cost stand-in; with int (or Player * / Player &) both helpers fall short.
+static void say_leader(int title_slot, int name_slot, const int &faction) {
+    parse_set(Players[faction].is_leader_female, 0);
+    parse_says(title_slot, Players[faction].title_leader, -1, -1);
+    parse_set(Players[faction].is_leader_female, 0);
+    parse_says(name_slot, Players[faction].name_leader, -1, -1);
+}
 
 // ORIGINAL: 0x0053D360 ?introduce@@YAXHH@Z 0x0053D360-0x0053DCB9;0x0065E53A-0x0065E622 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0053d360.cpp", "image:terranx_original.exe:0x0053D360"], "reason": "Recover the genuine faction contact/introduction owner using Popup lifetime, typed Player/PlayerData, real diplomacy state and portrait storage; native guards and callee order correct retained seed contradictions."}
@@ -3277,16 +3298,9 @@ void __cdecl introduce(int faction_id, int other_faction_id) {
     DiplomacyActive = 1;
     diplomacy_caption(faction_id, other_faction_id);
 
-    parse_set(Players[faction_id].is_leader_female, 0);
-    parse_says(0, Players[faction_id].title_leader, -1, -1);
-    parse_set(Players[faction_id].is_leader_female, 0);
-    parse_says(1, Players[faction_id].name_leader, -1, -1);
-    parse_set(Players[other_faction_id].is_leader_female, 0);
-    parse_says(2, Players[other_faction_id].title_leader, -1, -1);
-    parse_set(Players[other_faction_id].is_leader_female, 0);
-    parse_says(3, Players[other_faction_id].name_leader, -1, -1);
-    parse_set(Players[other_faction_id].noun_gender, Players[other_faction_id].is_noun_plural);
-    parse_says(4, Players[other_faction_id].noun_faction, -1, -1);
+    say_leader(0, 1, faction_id);
+    say_leader(2, 3, other_faction_id);
+    say_faction_noun(4, other_faction_id);
     parse_says(8, Players[other_faction_id].adj_name_faction, -1, -1);
     parse_says(9, Players[faction_id].adj_leader, -1, -1);
 
@@ -3355,8 +3369,7 @@ void __cdecl introduce(int faction_id, int other_faction_id) {
         parse_says(6, get_phrase(other_faction_id, 1), -1, -1);
         switch (choice) {
         case 2:
-            parse_set(Players[faction_id].noun_gender, Players[faction_id].is_noun_plural);
-            parse_says(5, Players[faction_id].noun_faction, -1, -1);
+            say_faction_noun(5, faction_id);
             break;
         case 3: {
             char description[80];
@@ -3404,16 +3417,6 @@ void __cdecl introduce(int faction_id, int other_faction_id) {
             set_treaty(faction_id, other_faction_id, 0x4000, 1);
         }
     }
-    // WORKAROUND(inline): dead /Ob2 budget probes (pattern 164). ~Dialogs is
-    // a header inline (dialogs.h) that larger callers in this unit expand,
-    // but the image calls its copy (0x0053DAEB) here while still expanding
-    // both ~StringList; the original's spending in introduce is unidentified
-    // (has_treaty spellings and faction_parse_leader_fields do not move it).
-    // Seven to nine probes reproduce the image.
-    call_off_vendetta_budget_probe(0); call_off_vendetta_budget_probe(0);
-    call_off_vendetta_budget_probe(0); call_off_vendetta_budget_probe(0);
-    call_off_vendetta_budget_probe(0); call_off_vendetta_budget_probe(0);
-    call_off_vendetta_budget_probe(0); call_off_vendetta_budget_probe(0);
 }
 
 
@@ -3505,30 +3508,6 @@ static int DiploScratchFA5C;
 static int DiploScratchFA30;
 // RECOVERY_OBJECT: v4 0x0093FA7C ?DiploScratchFA7C@@3HA target _DiploScratchFA7C
 static int DiploScratchFA7C;
-
-// stand-in: the noun-form setup plus parse_says pair recurs across many TUs
-// and was likely a shared inline; as a TU helper its /Ob2 cost spends the
-// budget the image spends before pact_ends' and call_off_vendetta's Popup
-// teardowns. Defined ahead of call_off_vendetta, its first user.
-static void say_faction_noun(int slot, int faction) {
-    parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
-    parse_says(slot, Players[faction].noun_faction, -1, -1);
-}
-
-// WORKAROUND(inline): dead /Ob2 budget probe (pattern 164). Called with 0 it
-// folds away, emitting nothing, but still spends /Ob2 budget. Only introduce
-// uses it now: call_off_vendetta and diplomacy_menu reach the image's
-// teardown depth through the restored Popup/BasePop wrapper calls.
-static void call_off_vendetta_budget_probe(int x) {
-    if (x == 1) x = 11;
-    if (x == 2) x = 12;
-    if (x == 3) x = 13;
-    if (x == 4) x = 14;
-    if (x == 5) x = 15;
-    if (x == 6) x = 16;
-    if (x == 7) x = 17;
-    if (x == 8) x = 18;
-}
 
 // Every source line is consumed even when its menu item is suppressed.
 static void read_diplomacy_menu_line() {
